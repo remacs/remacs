@@ -25,7 +25,6 @@
 2015-01-04  Dmitry Gutov  <dgutov@yandex.ru>
 
 	Add mouse interaction to xref.
-
 	* progmodes/xref.el (xref--button-map): New variable.
 	(xref--mouse-2): New command.
 	(xref--insert-xrefs): Add `mouse-face' and `keymap' properties to
@@ -54,7 +53,6 @@
 2015-01-04  Dmitry Gutov  <dgutov@yandex.ru>
 
 	Unbreak `mouse-action' property in text buttons.
-
 	* button.el (push-button): Fix regression from 2012-12-06.
 
 2015-01-03  Dmitry Gutov  <dgutov@yandex.ru>
@@ -168,11 +166,9 @@
 2014-12-29  Dmitry Gutov  <dgutov@yandex.ru>
 
 	Unbreak jumping to an alias's definition.
-
 	* emacs-lisp/find-func.el (find-function-library): Return a pair
 	(ORIG-FUNCTION . LIBRARY) instead of just its second element.
 	(find-function-noselect): Use it.
-
 	* progmodes/elisp-mode.el (elisp--xref-identifier-file): Rename to
 	`elisp--xref-identifier-location', incorporate logic from
 	`elisp--xref-find-definitions', use the changed
@@ -241,7 +237,6 @@
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	python.el: Native readline completion.
-
 	* progmodes/python.el (python-shell-completion-native-disabled-interpreters)
 	(python-shell-completion-native-enable)
 	(python-shell-completion-native-output-timeout): New defcustoms.
@@ -260,9 +255,8 @@
 
 	python.el: Enhance shell user interaction and deprecate
 	python-shell-get-or-create-process.
-
-	* progmodes/python.el
-	(python-shell-get-process-or-error): New function.
+	* progmodes/python.el (python-shell-get-process-or-error):
+	New function.
 	(python-shell-with-shell-buffer): Use it.
 	(python-shell-send-string, python-shell-send-region)
 	(python-shell-send-buffer, python-shell-send-defun)
@@ -290,22 +284,15 @@
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	python.el: Fix message when sending region.
-
 	* progmodes/python.el (python-shell-send-region): Rename argument
 	send-main from nomain.  Fix message.
 	(python-shell-send-buffer): Rename argument send-main from arg.
 
-2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
-
 	python.el: Cleanup temp files even with eval errors.
-
 	* progmodes/python.el (python-shell-send-file): Make file-name
 	mandatory.  Fix temp file removal in the majority of cases.
 
-2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
-
 	python.el: Handle file encoding for shell.
-
 	* progmodes/python.el (python-rx-constituents): Add coding-cookie.
 	(python-shell--save-temp-file): Write file with proper encoding.
 	(python-shell-buffer-substring): Add coding cookie for detected
@@ -367,7 +354,7 @@
 
 2014-12-27  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* lisp/subr.el (redisplay-dont-pause): Mark as obsolete.
+	* subr.el (redisplay-dont-pause): Mark as obsolete.
 
 2014-12-27  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -440,7 +427,6 @@
 2014-12-26  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	python.el: Generate clearer shell buffer names.
-
 	* progmodes/python.el (python-shell-get-process-name)
 	(python-shell-internal-get-process-name): Use `buffer-name`.
 	(python-shell-internal-get-or-create-process): Simplify.
@@ -563,7 +549,7 @@
 2014-12-19  Alan Mackenzie  <acm@muc.de>
 
 	Make C++11 uniform init syntax work.
-	New keywords "final" and "override"
+	New keywords "final" and "override".
 	* progmodes/cc-engine.el (c-back-over-member-initializer-braces):
 	New function.
 	(c-guess-basic-syntax): Set `containing-sex' and `lim' using the
@@ -599,8 +585,7 @@
 
 2014-12-18  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* let-alist.el (let-alist): Evaluate the `alist' argument only
-	once.
+	* let-alist.el (let-alist): Evaluate the `alist' argument only once.
 
 2014-12-18  Sam Steingold  <sds@gnu.org>
 
@@ -614,8 +599,7 @@
 	Add code for "preserving" window sizes.
 	* dired.el (dired-pop-to-buffer): Call fit-window-to-buffer with
 	`preserve-size' t.
-	(dired-mark-pop-up): Preserve size of window showing marked
-	files.
+	(dired-mark-pop-up): Preserve size of window showing marked files.
 	* electric.el (Electric-pop-up-window):
 	* help.el (resize-temp-buffer-window): Call fit-window-to-buffer
 	with `preserve-size' t.
@@ -630,8 +614,7 @@
 	`window-preserve-size'.
 	(window-min-pixel-size, window--preservable-size)
 	(window-preserve-size, window-preserved-size)
-	(window--preserve-size, window--min-size-ignore-p): New
-	functions.
+	(window--preserve-size, window--min-size-ignore-p): New functions.
 	(window-min-size, window-min-delta, window--resizable)
 	(window--resize-this-window, split-window-below)
 	(split-window-right): Amend doc-string.
@@ -646,8 +629,7 @@
 	window above or below.
 	(window--state-put-2): Handle horizontal scroll bars.
 	(window--display-buffer): Call `preserve-size' if asked for.
-	(display-buffer): Mention `preserve-size' alist member in
-	doc-string.
+	(display-buffer): Mention `preserve-size' alist member in doc-string.
 	(fit-window-to-buffer): New argument PRESERVE-SIZE.
 	* textmodes/ispell.el (ispell-command-loop): Suppress horizontal
 	scroll bar on ispell's windows.  Don't count window lines and
@@ -735,7 +717,7 @@
 
 2014-12-14  Alan Mackenzie  <acm@muc.de>
 
-	* lisp/cus-start.el (all): Add fast-but-imprecise-scrolling.
+	* cus-start.el (all): Add fast-but-imprecise-scrolling.
 
 2014-12-14  Artur Malabarba  <bruce.connor.am@gmail.com>
 
@@ -1881,7 +1863,7 @@
 
 2014-11-19  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/ido.el (ido-bury-buffer-at-head): New command.
+	* ido.el (ido-bury-buffer-at-head): New command.
 	(ido-buffer-completion-map): Bind it to C-S-b.
 
 2014-11-18  Juri Linkov  <juri@linkov.net>

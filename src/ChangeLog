@@ -46,7 +46,7 @@
 	Fixes Bug#15880.
 	This patch also makes Q constants (e.g., Qnil) constant addresses
 	from the C point of view.
-	* alloc.c, bidi.c, buffer.c, bytecode.c, callint.c, casefiddle:
+	* alloc.c, bidi.c, buffer.c, bytecode.c, callint.c, casefiddle.c:
 	* casetab.c, category.c, ccl.c, charset.c, chartab.c, cmds.c, coding.c:
 	* composite.c, data.c, dbusbind.c, decompress.c, dired.c, dispnew.c:
 	* doc.c, editfns.c, emacs.c, eval.c, fileio.c, fns.c, font.c, fontset.c:
@@ -76,7 +76,7 @@
 	(syms_of_alloc): Add lispsym count to symbols_consed.
 	* buffer.c (init_buffer_once): Compare to Qnil, not to make_number (0),
 	when testing whether storage is all bits zero.
-	* dispextern (struct image_type):
+	* dispextern.h (struct image_type):
 	* font.c (font_property_table):
 	* frame.c (struct frame_parm_table, frame_parms):
 	* keyboard.c (scroll_bar_parts, struct event_head):
