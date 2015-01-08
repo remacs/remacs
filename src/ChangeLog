@@ -1,3 +1,10 @@
+2015-01-08  Eli Zaretskii  <eliz@gnu.org>
+
+	* dispnew.c (buffer_posn_from_coords): Fix the value of the column
+	returned for right-to-left screen lines.  (Before the change on
+	2014-12-30, the incorrectly-computed X pixel coordinate concealed
+	this bug.)
+
 2015-01-05  Eli Zaretskii  <eliz@gnu.org>
 
 	* xdisp.c (move_it_to, try_cursor_movement): Don't use the window
