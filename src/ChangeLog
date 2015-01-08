@@ -1,5 +1,11 @@
 2015-01-08  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Port new Lisp symbol init to x86 --with-wide-int
+	* lisp.h (DEFINE_LISP_SYMBOL_BEGIN, DEFINE_LISP_SYMBOL_END):
+	Define to empty on platforms where EMACS_INT_MAX != INTPTR_MAX, as
+	GCC (at least) does not allow a constant initializer to widen an
+	address constant.
+
 	* lisp.h (TAG_SYMPTR): Don't do arithmetic on NULL.
 	This is a followup to the "Port Qnil==0 XUNTAG to clang" patch.
 	Although clang doesn't need it, some other compiler might, and

@@ -734,12 +734,17 @@ struct Lisp_Symbol
 
 /* Declare extern constants for Lisp symbols.  These can be helpful
    when using a debugger like GDB, on older platforms where the debug
-   format does not represent C macros.  Athough these symbols are
-   useless on modern platforms, they don't hurt performance all that much.  */
-#define DEFINE_LISP_SYMBOL_BEGIN(name) \
-   DEFINE_GDB_SYMBOL_BEGIN (Lisp_Object, name)
-#define DEFINE_LISP_SYMBOL_END(name) \
-   DEFINE_GDB_SYMBOL_END (LISP_INITIALLY (TAG_SYMPTR (name)))
+   format does not represent C macros.  However, they don't work with
+   GCC if INTPTR_MAX != EMACS_INT_MAX.  */
+#if EMACS_INT_MAX == INTPTR_MAX
+# define DEFINE_LISP_SYMBOL_BEGIN(name) \
+    DEFINE_GDB_SYMBOL_BEGIN (Lisp_Object, name)
+# define DEFINE_LISP_SYMBOL_END(name) \
+    DEFINE_GDB_SYMBOL_END (LISP_INITIALLY (TAG_SYMPTR (name)))
+#else
+# define DEFINE_LISP_SYMBOL_BEGIN(name) /* empty */
+# define DEFINE_LISP_SYMBOL_END(name) /* empty */
+#endif
 
 #include "globals.h"
 
