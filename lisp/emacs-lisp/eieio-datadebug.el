@@ -1,6 +1,6 @@
 ;;; eieio-datadebug.el --- EIEIO extensions to the data debugger.  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2007-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: OO, lisp
@@ -137,7 +137,7 @@ PREBUTTONTEXT is some text between PREFIX and the object button."
   (let* ((eieio-pre-method-execution-functions
 	  (lambda (l) (throw 'moose l) ))
 	 (data
-	  (catch 'moose (eieio-generic-call
+	  (catch 'moose (eieio--generic-call
 			 method (list class))))
 	 (_buf (data-debug-new-buffer "*Method Invocation*"))
 	 (data2 (mapcar (lambda (sym)

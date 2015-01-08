@@ -542,10 +542,10 @@ METHOD is the method that was attempting to be called."
   (should (same-class-p eitest-a 'class-a))
   (should (class-a-p eitest-a))
   (should (not (class-a-p eitest-ab)))
-  (should (class-a-child-p eitest-a))
-  (should (class-a-child-p eitest-ab))
+  (should (cl-typep eitest-a 'class-a))
+  (should (cl-typep eitest-ab 'class-a))
   (should (not (class-a-p "foo")))
-  (should (not (class-a-child-p "foo"))))
+  (should (not (cl-typep "foo" 'class-a))))
 
 (ert-deftest eieio-test-24-object-predicates ()
   (let ((listooa (list (class-ab) (class-a)))

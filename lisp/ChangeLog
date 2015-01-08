@@ -1,3 +1,18 @@
+2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio-generic.el: New file.
+	* emacs-lisp/eieio-core.el: Move all generic function code to
+	eieio-generic.el.
+	(eieio--defmethod): Declare.
+	* emacs-lisp/eieio.el: Require eieio-generic.  Move all generic
+	function code to eieio-generic.el.
+	* emacs-lisp/eieio-opt.el (eieio-help-generic): Move to
+	eieio-generic.el.
+	* emacs-lisp/eieio-datadebug.el (eieio-debug-methodinvoke): Update call
+	to eieio--generic-call.
+	* emacs-lisp/eieio-base.el (eieio-instance-inheritor): Don't use
+	<class>-child type.
+
 2015-01-07  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/chart.el (chart-add-sequence, chart-bar-quickie):

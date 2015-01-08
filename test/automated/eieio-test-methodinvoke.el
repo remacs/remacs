@@ -1,6 +1,6 @@
 ;;; eieio-testsinvoke.el -- eieio tests for method invocation
 
-;; Copyright (C) 2005, 2008, 2010, 2013-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2005, 2008, 2010, 2013-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -60,7 +60,7 @@
 (defun eieio-test-method-store ()
   "Store current invocation class symbol in the invocation order list."
   (let* ((keysym (aref [ :STATIC :BEFORE :PRIMARY :AFTER ]
-		       (or eieio-generic-call-key 0)))
+		       (or eieio--generic-call-key 0)))
          ;; FIXME: Don't depend on `eieio--scoped-class'!
 	 (c (list keysym (eieio--class-symbol (eieio--scoped-class)))))
     (push c eieio-test-method-order-list)))

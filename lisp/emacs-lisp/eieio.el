@@ -53,6 +53,7 @@
   (message eieio-version))
 
 (require 'eieio-core)
+(require 'eieio-generic)
 
 
 ;;; Defining a new class
@@ -147,70 +148,6 @@ a string."
   (apply (class-constructor class) initargs))
 
 
-;;; CLOS methods and generics
-;;
-(defmacro defgeneric (method _args &optional doc-string)
-  "Create a generic function METHOD.
-DOC-STRING is the base documentation for this class.  A generic
-function has no body, as its purpose is to decide which method body
-is appropriate to use.  Uses `defmethod' to create methods, and calls
-`defgeneric' for you.  With this implementation the ARGS are
-currently ignored.  You can use `defgeneric' to apply specialized
-top level documentation to a method."
-  (declare (doc-string 3))
-  `(eieio--defalias ',method
-                    (eieio--defgeneric-init-form ',method ,doc-string)))
-
-(defmacro defmethod (method &rest args)
-  "Create a new METHOD through `defgeneric' with ARGS.
-
-The optional second argument KEY is a specifier that
-modifies how the method is called, including:
-   :before  - Method will be called before the :primary
-   :primary - The default if not specified
-   :after   - Method will be called after the :primary
-   :static  - First arg could be an object or class
-The next argument is the ARGLIST.  The ARGLIST specifies the arguments
-to the method as with `defun'.  The first argument can have a type
-specifier, such as:
-  ((VARNAME CLASS) ARG2 ...)
-where VARNAME is the name of the local variable for the method being
-created.  The CLASS is a class symbol for a class made with `defclass'.
-A DOCSTRING comes after the ARGLIST, and is optional.
-All the rest of the args are the BODY of the method.  A method will
-return the value of the last form in the BODY.
-
-Summary:
-
- (defmethod mymethod [:before | :primary | :after | :static]
-                     ((typearg class-name) arg2 &optional opt &rest rest)
-    \"doc-string\"
-     body)"
-  (declare (doc-string 3)
-           (debug
-            (&define                    ; this means we are defining something
-             [&or name ("setf" :name setf name)]
-             ;; ^^ This is the methods symbol
-             [ &optional symbolp ]                ; this is key :before etc
-             list                                 ; arguments
-             [ &optional stringp ]                ; documentation string
-             def-body                             ; part to be debugged
-             )))
-  (let* ((key (if (keywordp (car args)) (pop args)))
-	 (params (car args))
-	 (arg1 (car params))
-         (fargs (if (consp arg1)
-                   (cons (car arg1) (cdr params))
-                 params))
-	 (class (if (consp arg1) (nth 1 arg1)))
-         (code `(lambda ,fargs ,@(cdr args))))
-    `(progn
-       ;; Make sure there is a generic and the byte-compiler sees it.
-       (defgeneric ,method ,args
-         ,(or (documentation code)
-              (format "Generically created method `%s'." method)))
-       (eieio--defmethod ',method ',key ',class #',code))))
-
 ;;; Get/Set slots in an object.
 ;;
 (defmacro oref (obj slot)
@@ -519,44 +456,6 @@ If SLOT is unbound, do nothing."
       nil
     (eieio-oset object slot (delete item (eieio-oref object slot)))))
 
-;;;
-;; Method Calling Functions
-
-(defun next-method-p ()
-  "Return non-nil if there is a next method.
-Returns a list of lambda expressions which is the `next-method'
-order."
-  eieio-generic-call-next-method-list)
-
-(defun call-next-method (&rest replacement-args)
-  "Call the superclass method from a subclass method.
-The superclass method is specified in the current method list,
-and is called the next method.
-
-If REPLACEMENT-ARGS is non-nil, then use them instead of
-`eieio-generic-call-arglst'.  The generic arg list are the
-arguments passed in at the top level.
-
-Use `next-method-p' to find out if there is a next method to call."
-  (if (not (eieio--scoped-class))
-      (error "`call-next-method' not called within a class specific method"))
-  (if (and (/= eieio-generic-call-key eieio--method-primary)
-	   (/= eieio-generic-call-key eieio--method-static))
-      (error "Cannot `call-next-method' except in :primary or :static methods")
-    )
-  (let ((newargs (or replacement-args eieio-generic-call-arglst))
-	(next (car eieio-generic-call-next-method-list))
-	)
-    (if (not (and next (car next)))
-	(apply #'no-next-method newargs)
-      (let* ((eieio-generic-call-next-method-list
-	      (cdr eieio-generic-call-next-method-list))
-	     (eieio-generic-call-arglst newargs)
-	     (fcn (car next))
-	     )
-	(eieio--with-scoped-class (cdr next)
-	  (apply fcn newargs)) ))))
-
 ;;; Here are some CLOS items that need the CL package
 ;;
 
@@ -685,34 +584,6 @@ In CLOS, the argument list is (CLASS OBJECT SLOT-NAME), but
 EIEIO can only dispatch on the first argument, so the first two are swapped."
   (signal 'unbound-slot (list (eieio-class-name class) (eieio-object-name object)
 			      slot-name fn)))
-
-(defgeneric no-applicable-method (object method &rest args)
-  "Called if there are no implementations for OBJECT in METHOD.")
-
-(defmethod no-applicable-method ((object eieio-default-superclass)
-				 method &rest _args)
-  "Called if there are no implementations for OBJECT in METHOD.
-OBJECT is the object which has no method implementation.
-ARGS are the arguments that were passed to METHOD.
-
-Implement this for a class to block this signal.  The return
-value becomes the return value of the original method call."
-  (signal 'no-method-definition (list method (eieio-object-name object)))
-  )
-
-(defgeneric no-next-method (object &rest args)
-"Called from `call-next-method' when no additional methods are available.")
-
-(defmethod no-next-method ((object eieio-default-superclass)
-			   &rest args)
-  "Called from `call-next-method' when no additional methods are available.
-OBJECT is othe object being called on `call-next-method'.
-ARGS are the arguments it is called by.
-This method signals `no-next-method' by default.  Override this
-method to not throw an error, and its return value becomes the
-return value of `call-next-method'."
-  (signal 'no-next-method (list (eieio-object-name object) args))
-  )
 
 (defgeneric clone (obj &rest params)
   "Make a copy of OBJ, and then supply PARAMS.
@@ -865,7 +736,6 @@ of `eq'."
   (error "EIEIO: `change-class' is unimplemented"))
 
 ;; Hook ourselves into help system for describing classes and methods.
-(add-hook 'help-fns-describe-function-functions 'eieio-help-generic)
 (add-hook 'help-fns-describe-function-functions 'eieio-help-constructor)
 
 ;;; Interfacing with edebug
@@ -903,7 +773,7 @@ Optional argument GROUP is the sub-group of slots to display.
 
 ;;;***
 
-;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "6377e022e85d377b399f44c98b4eab4a")
+;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "7267115a161243e1e6ea75f2d25c8ebc")
 ;;; Generated autoloads from eieio-opt.el
 
 (autoload 'eieio-browse "eieio-opt" "\
@@ -923,11 +793,6 @@ If CLASS is actually an object, then also display current values of that object.
 Describe CTR if it is a class constructor.
 
 \(fn CTR)" nil nil)
-
-(autoload 'eieio-help-generic "eieio-opt" "\
-Describe GENERIC if it is a generic function.
-
-\(fn GENERIC)" nil nil)
 
 ;;;***
 

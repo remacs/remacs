@@ -1,6 +1,6 @@
 ;;; eieio-opt.el -- eieio optional functions (debug, printing, speedbar)
 
-;; Copyright (C) 1996, 1998-2003, 2005, 2008-2014 Free Software
+;; Copyright (C) 1996, 1998-2003, 2005, 2008-2015 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
@@ -310,69 +310,6 @@ are not abstract."
 	  (insert (propertize "\n\nClass description:\n" 'face 'bold))
 	  (eieio-help-class ctr))
 	))))
-
-
-;;;###autoload
-(defun eieio-help-generic (generic)
-  "Describe GENERIC if it is a generic function."
-  (when (and (symbolp generic) (generic-p generic))
-    (save-excursion
-      (goto-char (point-min))
-      (when (re-search-forward " in `.+'.$" nil t)
-	(replace-match ".")))
-    (save-excursion
-      (insert "\n\nThis is a generic function"
-	      (cond
-	       ((and (generic-primary-only-p generic)
-		     (generic-primary-only-one-p generic))
-		" with only one primary method")
-	       ((generic-primary-only-p generic)
-		" with only primary methods")
-	       (t ""))
-	      ".\n\n")
-      (insert (propertize "Implementations:\n\n" 'face 'bold))
-      (let ((i 4)
-	    (prefix [ ":STATIC" ":BEFORE" ":PRIMARY" ":AFTER" ] ))
-	;; Loop over fanciful generics
-	(while (< i 7)
-	  (let ((gm (aref (get generic 'eieio-method-tree) i)))
-	    (when gm
-	      (insert "Generic "
-		      (aref prefix (- i 3))
-		      "\n"
-		      (or (nth 2 gm) "Undocumented")
-		      "\n\n")))
-	  (setq i (1+ i)))
-	(setq i 0)
-	;; Loop over defined class-specific methods
-	(while (< i 4)
-	  (let* ((gm (reverse (aref (get generic 'eieio-method-tree) i)))
-		 cname location)
-	    (while gm
-	      (setq cname (caar gm))
-	      (insert "`")
-	      (help-insert-xref-button (symbol-name cname)
-				       'help-variable cname)
-	      (insert "' " (aref prefix i) " ")
-	      ;; argument list
-	      (let* ((func (cdr (car gm)))
-		     (arglst (help-function-arglist func)))
-		(prin1 arglst (current-buffer)))
-	      (insert "\n"
-		      (or (documentation (cdr (car gm)))
-			  "Undocumented"))
-	      ;; Print file location if available
-	      (when (and (setq location (get generic 'method-locations))
-			 (setq location (assoc cname location)))
-		(setq location (cadr location))
-		(insert "\n\nDefined in `")
-		(help-insert-xref-button
-		 (file-name-nondirectory location)
-		 'eieio-method-def cname generic location)
-		(insert "'\n"))
-	      (setq gm (cdr gm))
-	      (insert "\n")))
-	  (setq i (1+ i)))))))
 
 (defun eieio-all-generic-functions (&optional class)
   "Return a list of all generic functions.

@@ -1,3 +1,11 @@
+2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/eieio-tests.el (eieio-test-23-inheritance-check): Don't use
+	<foo>-child-p.
+
+	* automated/eieio-test-methodinvoke.el (eieio-test-method-store):
+	Update reference to eieio--generic-call-key.
+
 2015-01-07  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* automated/eieio-tests.el: Use cl-lib.  Don't use <class> as a variable.
