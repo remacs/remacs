@@ -1,3 +1,8 @@
+2015-01-09  Eli Zaretskii  <eliz@gnu.org>
+
+	* emacs.c (usage_message): Fix the description of the -nl switch.
+	(Bug#19542)
+
 2015-01-08  Eli Zaretskii  <eliz@gnu.org>
 
 	* dispnew.c (buffer_posn_from_coords): Fix the value of the column
