@@ -1112,6 +1112,25 @@ make_lisp_proc (struct Lisp_Process *p)
 #define XSETBOOL_VECTOR(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_BOOL_VECTOR))
 #define XSETSUB_CHAR_TABLE(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_SUB_CHAR_TABLE))
 
+/* Efficiently convert a pointer to a Lisp object and back.  The
+   pointer is represented as a Lisp integer, so the garbage collector
+   does not know about it.  The pointer should not have both Lisp_Int1
+   bits set, which makes this conversion inherently unportable.  */
+
+INLINE void *
+XINTPTR (Lisp_Object a)
+{
+  return XUNTAG (a, Lisp_Int0);
+}
+
+INLINE Lisp_Object
+make_pointer_integer (void *p)
+{
+  Lisp_Object a = XIL (TAG_PTR (Lisp_Int0, p));
+  eassert (INTEGERP (a) && XINTPTR (a) == p);
+  return a;
+}
+
 /* Type checking.  */
 
 LISP_MACRO_DEFUN_VOID (CHECK_TYPE,

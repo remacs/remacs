@@ -1,3 +1,12 @@
+2015-01-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Refactor pointer-to-integer conversion
+	* gfilenotify.c (monitor_to_lisp, lisp_to_monitor):
+	Rename and move to lisp.h.  All uses changed.
+	* lisp.h (XINTPTR, make_pointer_integer): New inline functions,
+	which are renamed from gfilenotify.c's lisp_to_monitor and
+	monitor_to_lisp, and with more-generic void * signatures.
+
 2015-01-08  Eli Zaretskii  <eliz@gnu.org>
 
 	* dispnew.c (buffer_posn_from_coords): Fix the value of the column
