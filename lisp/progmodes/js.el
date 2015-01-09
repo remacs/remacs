@@ -248,7 +248,7 @@ name as matched contains
 
 (defconst js--function-heading-1-re
   (concat
-   "^\\s-*function\\s-+\\(" js--name-re "\\)")
+   "^\\s-*function\\(?:\\s-\\|\\*\\)+\\(" js--name-re "\\)")
   "Regexp matching the start of a JavaScript function header.
 Match group 1 is the name of the function.")
 
@@ -796,6 +796,9 @@ determined.  Otherwise, return nil."
   (let ((name t))
     (forward-word)
     (forward-comment most-positive-fixnum)
+    (when (eq (char-after) ?*)
+      (forward-char)
+      (forward-comment most-positive-fixnum))
     (when (looking-at js--name-re)
       (setq name (match-string-no-properties 0))
       (goto-char (match-end 0)))

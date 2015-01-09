@@ -1,3 +1,9 @@
+2015-01-09  Daniel Colascione  <dancol@dancol.org>
+
+	* progmodes/js.el (js--function-heading-1-re)
+	(js--function-prologue-beginning): Parse ES6 generator function
+	declarations.  (That is, "function* name()").
+
 2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/eieio.el (defclass): Move from eieio-defclass all the code
