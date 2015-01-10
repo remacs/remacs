@@ -894,8 +894,7 @@ START, and END.  Note that START and END should be markers."
   (add-text-properties
    start (point)
    (list 'shr-url url
-	 'help-echo (let ((iri (or (with-demoted-errors
-				       "shr-urlify: %s"
+	 'help-echo (let ((iri (or (ignore-errors
 				     (decode-coding-string
 				      (url-unhex-string url)
 				      'utf-8 t))

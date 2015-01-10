@@ -1,3 +1,8 @@
+2015-01-10  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/shr.el (shr-urlify): Don't bother the user about
+	invalidly-encoded display strings.
+
 2015-01-10  Ivan Shmakov  <ivan@siamics.net>
 
 	* net/shr.el (shr-urlify): Decode URLs before using them as titles
