@@ -894,7 +894,13 @@ START, and END.  Note that START and END should be markers."
   (add-text-properties
    start (point)
    (list 'shr-url url
-	 'help-echo (if title (shr-fold-text (format "%s (%s)" url title)) url)
+	 'help-echo (let ((iri (or (with-demoted-errors
+				       "shr-urlify: %s"
+				     (decode-coding-string
+				      (url-unhex-string url)
+				      'utf-8 t))
+				   url)))
+		      (if title (format "%s (%s)" iri title) iri))
 	 'follow-link t
 	 'mouse-face 'highlight
 	 'keymap shr-map)))
