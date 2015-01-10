@@ -4,6 +4,7 @@
 	as plain URLs, even if they have spaces in them (bug#19556).
 	(eww): Also interpret things like "en.wikipedia.org/wiki/Free
 	software" as an URL.
+	(eww): Don't interpret "org/foo" as an URL.
 
 2015-01-10  Daniel Colascione  <dancol@dancol.org>
 

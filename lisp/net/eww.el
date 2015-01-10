@@ -258,7 +258,7 @@ word(s) will be searched for via `eww-search-prefix'."
          (if (or (string-match "\\`https?:" url)
 		 ;; Also try to match "naked" URLs like
 		 ;; en.wikipedia.org/wiki/Free software
-		 (string-match "\\`[a-z._]+/" url)
+		 (string-match "\\`[A-Za-z_]+\\.[A-Za-z._]+/" url)
 		 (and (= (length (split-string url)) 1)
 		      (or (and (not (string-match-p "\\`[\"\'].*[\"\']\\'" url))
 			       (> (length (split-string url "[.:]")) 1))
