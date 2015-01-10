@@ -1,3 +1,24 @@
+2015-01-10  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32fns.c (Fw32_register_hot_key): Use XINT instead of XLI.
+
+	* w32notify.c (Fw32notify_add_watch, w32_get_watch_object): Use
+	make_pointer_integer instead of XIL.
+	(Fw32notify_rm_watch): Use XINTPTR instead of XLI.
+
+	* w32inevt.c (handle_file_notifications): Use make_pointer_integer
+	instead of XIL.  Put a list of the descriptor, action, and file
+	name in event->arg, instead of spreading them between event->code
+	and event->arg.
+
+	* w32term.c (queue_notifications): Use make_pointer_integer
+	instead of XIL.  Put a list of the descriptor, action, and file
+	name in event->arg, instead of spreading them between event->code
+	and event->arg.
+
+	* keyboard.c (kbd_buffer_get_event) [HAVE_W32NOTIFY]: Adjust Lisp
+	event creation to changes in w32term.c and w32inevt.c above.
+
 2015-01-09  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Refactor pointer-to-integer conversion

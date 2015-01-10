@@ -4025,11 +4025,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 	{
 #ifdef HAVE_W32NOTIFY
 	  /* Make an event (file-notify (DESCRIPTOR ACTION FILE) CALLBACK).  */
-	  obj = list3 (Qfile_notify,
-		       list3 (make_number (event->code),
-			      XCAR (event->arg),
-			      XCDR (event->arg)),
-		       event->frame_or_window);
+	  obj = list3 (Qfile_notify, event->arg, event->frame_or_window);
 #else
           obj = make_lispy_event (event);
 #endif

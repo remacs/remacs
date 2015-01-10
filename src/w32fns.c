@@ -7235,7 +7235,7 @@ The return value is the hotkey-id if registered, otherwise nil.  */)
       /* Notify input thread about new hot-key definition, so that it
 	 takes effect without needing to switch focus.  */
       PostThreadMessage (dwWindowsThreadId, WM_EMACS_REGISTER_HOT_KEY,
-			 (WPARAM) XLI (key), 0);
+			 (WPARAM) XINT (key), 0);
     }
 
   return key;

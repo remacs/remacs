@@ -657,11 +657,12 @@ handle_file_notifications (struct input_event *hold_quit)
 	      Lisp_Object action = lispy_file_action (fni->Action);
 
 	      inev.kind = FILE_NOTIFY_EVENT;
-	      inev.code = (ptrdiff_t)XINT (XIL ((EMACS_INT)notifications_desc));
 	      inev.timestamp = GetTickCount ();
 	      inev.modifiers = 0;
 	      inev.frame_or_window = callback;
 	      inev.arg = Fcons (action, fname);
+	      inev.arg = list3 (make_pointer_integer (notifications_desc),
+				action, fname);
 	      kbd_buffer_store_event_hold (&inev, hold_quit);
 
 	      if (!fni->NextEntryOffset)

@@ -3247,12 +3247,11 @@ queue_notifications (struct input_event *event, W32Msg *msg, struct frame *f,
 	      Lisp_Object action = lispy_file_action (fni->Action);
 
 	      event->kind = FILE_NOTIFY_EVENT;
-	      event->code
-		= (ptrdiff_t)XINT (XIL ((EMACS_INT)notifications_desc));
 	      event->timestamp = msg->msg.time;
 	      event->modifiers = 0;
 	      event->frame_or_window = callback;
-	      event->arg = Fcons (action, fname);
+	      event->arg = list3 (make_pointer_integer (notifications_desc),
+				  action, fname);
 	      kbd_buffer_store_event (event);
 	      (*evcount)++;
 
