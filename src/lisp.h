@@ -725,25 +725,20 @@ struct Lisp_Symbol
 #define TAG_PTR(tag, ptr) \
   ((USE_LSB_TAG ? (tag) : (EMACS_UINT) (tag) << VALBITS) + (uintptr_t) (ptr))
 
-/* Yield an integer that tags PTR as a symbol.  */
-#define TAG_SYMPTR(ptr)					    \
+/* Yield an integer that contains a symbol tag along with OFFSET.
+   OFFSET should be the offset in bytes from 'lispsym' to the symbol.  */
+#define TAG_SYMOFFSET(offset)				    \
   TAG_PTR (Lisp_Symbol,					    \
-	   ((uintptr_t) ((char *) (ptr) - (char *) lispsym) \
-	    >> (USE_LSB_TAG ? 0 : GCTYPEBITS)))
+	   ((uintptr_t) (offset) >> (USE_LSB_TAG ? 0 : GCTYPEBITS)))
 
 /* Declare extern constants for Lisp symbols.  These can be helpful
    when using a debugger like GDB, on older platforms where the debug
-   format does not represent C macros.  However, they don't work with
-   GCC if INTPTR_MAX != EMACS_INT_MAX.  */
-#if EMACS_INT_MAX == INTPTR_MAX
-# define DEFINE_LISP_SYMBOL_BEGIN(name) \
-    DEFINE_GDB_SYMBOL_BEGIN (Lisp_Object, name)
-# define DEFINE_LISP_SYMBOL_END(name) \
-    DEFINE_GDB_SYMBOL_END (LISP_INITIALLY (TAG_SYMPTR (name)))
-#else
-# define DEFINE_LISP_SYMBOL_BEGIN(name) /* empty */
-# define DEFINE_LISP_SYMBOL_END(name) /* empty */
-#endif
+   format does not represent C macros.  */
+#define DEFINE_LISP_SYMBOL_BEGIN(name) \
+   DEFINE_GDB_SYMBOL_BEGIN (Lisp_Object, name)
+#define DEFINE_LISP_SYMBOL_END(name) \
+   DEFINE_GDB_SYMBOL_END (LISP_INITIALLY (TAG_SYMOFFSET (i##name \
+							 * sizeof *lispsym)))
 
 #include "globals.h"
 
@@ -973,9 +968,9 @@ XSTRING (Lisp_Object a)
   return XUNTAG (a, Lisp_String);
 }
 
-/* XSYMBOL_INIT (Qfoo) is like XSYMBOL (Qfoo), except it is valid in
-   static initializers, and SYM must be a C-defined symbol.  */
-#define XSYMBOL_INIT(sym) a##sym
+/* The index of the C-defined Lisp symbol SYM.
+   This can be used in a static initializer.  */
+#define SYMBOL_INDEX(sym) i##sym
 
 INLINE struct Lisp_Float *
 XFLOAT (Lisp_Object a)
@@ -1054,9 +1049,15 @@ make_lisp_ptr (void *ptr, enum Lisp_Type type)
 INLINE Lisp_Object
 make_lisp_symbol (struct Lisp_Symbol *sym)
 {
-  Lisp_Object a = XIL (TAG_SYMPTR (sym));
+  Lisp_Object a = XIL (TAG_SYMOFFSET ((char *) sym - (char *) lispsym));
   eassert (XSYMBOL (a) == sym);
   return a;
+}
+
+INLINE Lisp_Object
+builtin_lisp_symbol (int index)
+{
+  return make_lisp_symbol (lispsym + index);
 }
 
 INLINE Lisp_Object

@@ -548,8 +548,8 @@ static struct image_type *
 define_image_type (struct image_type *type)
 {
   struct image_type *p = NULL;
-  struct Lisp_Symbol *new_type = type->type;
-  bool type_valid = 1;
+  int new_type = type->type;
+  bool type_valid = true;
 
   block_input ();
 
@@ -561,14 +561,15 @@ define_image_type (struct image_type *type)
     {
 #if defined HAVE_NTGUI && defined WINDOWSNT
       /* If we failed to load the library before, don't try again.  */
-      Lisp_Object tested = Fassq (make_lisp_symbol (new_type), Vlibrary_cache);
+      Lisp_Object tested = Fassq (builtin_lisp_symbol (new_type),
+				  Vlibrary_cache);
       if (CONSP (tested) && NILP (XCDR (tested)))
-	type_valid = 0;
+	type_valid = false;
       else
 #endif
 	{
 	  type_valid = type->init ();
-	  CACHE_IMAGE_TYPE (make_lisp_symbol (new_type),
+	  CACHE_IMAGE_TYPE (builtin_lisp_symbol (new_type),
 			    type_valid ? Qt : Qnil);
 	}
     }
@@ -1747,7 +1748,7 @@ lookup_image (struct frame *f, Lisp_Object spec)
 
 	  /* Do image transformations and compute masks, unless we
 	     don't have the image yet.  */
-	  if (!EQ (make_lisp_symbol (img->type->type), Qpostscript))
+	  if (!EQ (builtin_lisp_symbol (img->type->type), Qpostscript))
 	    postprocess_image (f, img);
 	}
 
@@ -2332,7 +2333,7 @@ static const struct image_keyword xbm_format[XBM_LAST] =
 
 static struct image_type xbm_type =
 {
-  XSYMBOL_INIT (Qxbm),
+  SYMBOL_INDEX (Qxbm),
   xbm_image_p,
   xbm_load,
   x_clear_image,
@@ -3138,7 +3139,7 @@ static bool init_xpm_functions (void);
 
 static struct image_type xpm_type =
 {
-  XSYMBOL_INIT (Qxpm),
+  SYMBOL_INDEX (Qxpm),
   xpm_image_p,
   xpm_load,
   x_clear_image,
@@ -5066,7 +5067,7 @@ static const struct image_keyword pbm_format[PBM_LAST] =
 
 static struct image_type pbm_type =
 {
-  XSYMBOL_INIT (Qpbm),
+  SYMBOL_INDEX (Qpbm),
   pbm_image_p,
   pbm_load,
   x_clear_image,
@@ -5453,7 +5454,7 @@ static bool init_png_functions (void);
 
 static struct image_type png_type =
 {
-  XSYMBOL_INIT (Qpng),
+  SYMBOL_INDEX (Qpng),
   png_image_p,
   png_load,
   x_clear_image,
@@ -6105,7 +6106,7 @@ static bool init_jpeg_functions (void);
 
 static struct image_type jpeg_type =
 {
-  XSYMBOL_INIT (Qjpeg),
+  SYMBOL_INDEX (Qjpeg),
   jpeg_image_p,
   jpeg_load,
   x_clear_image,
@@ -6705,7 +6706,7 @@ static bool init_tiff_functions (void);
 
 static struct image_type tiff_type =
 {
-  XSYMBOL_INIT (Qtiff),
+  SYMBOL_INDEX (Qtiff),
   tiff_image_p,
   tiff_load,
   x_clear_image,
@@ -7164,7 +7165,7 @@ static bool init_gif_functions (void);
 
 static struct image_type gif_type =
 {
-  XSYMBOL_INIT (Qgif),
+  SYMBOL_INDEX (Qgif),
   gif_image_p,
   gif_load,
   gif_clear_image,
@@ -7851,7 +7852,7 @@ static bool init_imagemagick_functions (void);
 
 static struct image_type imagemagick_type =
   {
-    XSYMBOL_INIT (Qimagemagick),
+    SYMBOL_INDEX (Qimagemagick),
     imagemagick_image_p,
     imagemagick_load,
     imagemagick_clear_image,
@@ -8623,7 +8624,7 @@ static bool init_svg_functions (void);
 
 static struct image_type svg_type =
 {
-  XSYMBOL_INIT (Qsvg),
+  SYMBOL_INDEX (Qsvg),
   svg_image_p,
   svg_load,
   x_clear_image,
@@ -9039,7 +9040,7 @@ static const struct image_keyword gs_format[GS_LAST] =
 
 static struct image_type gs_type =
 {
-  XSYMBOL_INIT (Qpostscript),
+  SYMBOL_INDEX (Qpostscript),
   gs_image_p,
   gs_load,
   gs_clear_image,

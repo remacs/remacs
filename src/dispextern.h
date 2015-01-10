@@ -2906,8 +2906,8 @@ struct redisplay_interface
 
 struct image_type
 {
-  /* A symbol uniquely identifying the image type, e.g., 'jpeg'.  */
-  struct Lisp_Symbol *type;
+  /* Index of a symbol uniquely identifying the image type, e.g., 'jpeg'.  */
+  int type;
 
   /* Check that SPEC is a valid image specification for the given
      image type.  Value is true if SPEC is valid.  */

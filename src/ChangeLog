@@ -1,5 +1,27 @@
 2015-01-10  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Port to 32-bit --with-wide-int
+	Prefer symbol indexes to struct Lisp_Symbol * casted and then
+	widened, as the latter had trouble with GCC on Fedora 21 when
+	configured --with-wide-int and when used in static initializers.
+	* alloc.c (garbage_collect_1, which_symbols):
+	* lread.c (init_obarray):
+	Prefer builtin_lisp_symbol when it can be used.
+	* dispextern.h (struct image_type.type):
+	* font.c (font_property_table.key):
+	* frame.c (struct frame_parm_table.sym):
+	* keyboard.c (scroll_bar_parts, struct event_head):
+	* xdisp.c (struct props.name):
+	Use the index of a builtin symbol rather than its address.
+	All uses changed.
+	* lisp.h (TAG_SYMPTR, XSYMBOL_INIT): Remove, replacing with ...
+	(TAG_SYMOFFSET, SYMBOL_INDEX): ... new macros that deal with
+	symbol indexes rather than pointers, and which work better on MSB
+	hosts because they shift right before tagging.  All uses changed.
+	(DEFINE_LISP_SYMBOL_BEGIN, DEFINE_LISP_SYMBOL_END):
+	No longer noops on wide-int hosts, since they work now.
+	(builtin_lisp_symbol): New function.
+
 	Port to HAVE_FREETYPE && !HAVE_XFT
 	* dispextern.h (struct face.extra) [HAVE_FREETYPE && !HAVE_XFT]:
 	* font.h (syms_of_xftfont) [HAVE_FREETYPE && !HAVE_XFT]:

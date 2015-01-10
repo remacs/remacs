@@ -622,8 +622,8 @@ enum prop_handled
 
 struct props
 {
-  /* The name of the property.  */
-  struct Lisp_Symbol *name;
+  /* The symbol index of the name of the property.  */
+  short name;
 
   /* A unique index for the property.  */
   enum prop_idx idx;
@@ -644,14 +644,14 @@ static enum prop_handled handle_fontified_prop (struct it *);
 
 static struct props it_props[] =
 {
-  {XSYMBOL_INIT (Qfontified),		FONTIFIED_PROP_IDX,	handle_fontified_prop},
+  {SYMBOL_INDEX (Qfontified),	FONTIFIED_PROP_IDX,	handle_fontified_prop},
   /* Handle `face' before `display' because some sub-properties of
      `display' need to know the face.  */
-  {XSYMBOL_INIT (Qface),		FACE_PROP_IDX,		handle_face_prop},
-  {XSYMBOL_INIT (Qdisplay),		DISPLAY_PROP_IDX,	handle_display_prop},
-  {XSYMBOL_INIT (Qinvisible),		INVISIBLE_PROP_IDX,	handle_invisible_prop},
-  {XSYMBOL_INIT (Qcomposition),	COMPOSITION_PROP_IDX,	handle_composition_prop},
-  {NULL,		0,			NULL}
+  {SYMBOL_INDEX (Qface),	FACE_PROP_IDX,		handle_face_prop},
+  {SYMBOL_INDEX (Qdisplay),	DISPLAY_PROP_IDX,	handle_display_prop},
+  {SYMBOL_INDEX (Qinvisible),	INVISIBLE_PROP_IDX,	handle_invisible_prop},
+  {SYMBOL_INDEX (Qcomposition),	COMPOSITION_PROP_IDX, handle_composition_prop},
+  {0,				0,			NULL}
 };
 
 /* Value is the position described by X.  If X is a marker, value is
@@ -3516,7 +3516,8 @@ compute_stop_pos (struct it *it)
 
       /* Get properties here.  */
       for (p = it_props; p->handler; ++p)
-	values_here[p->idx] = textget (iv->plist, make_lisp_symbol (p->name));
+	values_here[p->idx] = textget (iv->plist,
+				       builtin_lisp_symbol (p->name));
 
       /* Look for an interval following iv that has different
 	 properties.  */
@@ -3529,7 +3530,7 @@ compute_stop_pos (struct it *it)
 	  for (p = it_props; p->handler; ++p)
 	    {
 	      Lisp_Object new_value = textget (next_iv->plist,
-					       make_lisp_symbol (p->name));
+					       builtin_lisp_symbol (p->name));
 	      if (!EQ (values_here[p->idx], new_value))
 		break;
 	    }

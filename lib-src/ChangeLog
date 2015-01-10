@@ -1,5 +1,10 @@
 2015-01-10  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Port to 32-bit --with-wide-int
+	* make-docfile.c (write_globals): Define and use symbols like
+	iQnil (a small integer, like 0) rather than aQnil (an address
+	constant).
+
 	Port to 32-bit Sun C 5.12 sparc
 	* make-docfile.c (close_emacs_globals): Align lispsym to GCALIGNMENT.
 	The alignment is required on all platforms; it just happens to have

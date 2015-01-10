@@ -639,30 +639,30 @@ font_prop_validate_otf (Lisp_Object prop, Lisp_Object val)
    values.  */
 static const struct
 {
-  /* Pointer to the key symbol.  */
-  struct Lisp_Symbol *key;
+  /* Index of the key symbol.  */
+  int key;
   /* Function to validate PROP's value VAL, or NULL if any value is
      ok.  The value is VAL or its regularized value if VAL is valid,
      and Qerror if not.  */
   Lisp_Object (*validator) (Lisp_Object prop, Lisp_Object val);
 } font_property_table[] =
-  { { XSYMBOL_INIT (QCtype), font_prop_validate_symbol },
-    { XSYMBOL_INIT (QCfoundry), font_prop_validate_symbol },
-    { XSYMBOL_INIT (QCfamily), font_prop_validate_symbol },
-    { XSYMBOL_INIT (QCadstyle), font_prop_validate_symbol },
-    { XSYMBOL_INIT (QCregistry), font_prop_validate_symbol },
-    { XSYMBOL_INIT (QCweight), font_prop_validate_style },
-    { XSYMBOL_INIT (QCslant), font_prop_validate_style },
-    { XSYMBOL_INIT (QCwidth), font_prop_validate_style },
-    { XSYMBOL_INIT (QCsize), font_prop_validate_non_neg },
-    { XSYMBOL_INIT (QCdpi), font_prop_validate_non_neg },
-    { XSYMBOL_INIT (QCspacing), font_prop_validate_spacing },
-    { XSYMBOL_INIT (QCavgwidth), font_prop_validate_non_neg },
+  { { SYMBOL_INDEX (QCtype), font_prop_validate_symbol },
+    { SYMBOL_INDEX (QCfoundry), font_prop_validate_symbol },
+    { SYMBOL_INDEX (QCfamily), font_prop_validate_symbol },
+    { SYMBOL_INDEX (QCadstyle), font_prop_validate_symbol },
+    { SYMBOL_INDEX (QCregistry), font_prop_validate_symbol },
+    { SYMBOL_INDEX (QCweight), font_prop_validate_style },
+    { SYMBOL_INDEX (QCslant), font_prop_validate_style },
+    { SYMBOL_INDEX (QCwidth), font_prop_validate_style },
+    { SYMBOL_INDEX (QCsize), font_prop_validate_non_neg },
+    { SYMBOL_INDEX (QCdpi), font_prop_validate_non_neg },
+    { SYMBOL_INDEX (QCspacing), font_prop_validate_spacing },
+    { SYMBOL_INDEX (QCavgwidth), font_prop_validate_non_neg },
     /* The order of the above entries must match with enum
        font_property_index.  */
-    { XSYMBOL_INIT (QClang), font_prop_validate_symbol },
-    { XSYMBOL_INIT (QCscript), font_prop_validate_symbol },
-    { XSYMBOL_INIT (QCotf), font_prop_validate_otf }
+    { SYMBOL_INDEX (QClang), font_prop_validate_symbol },
+    { SYMBOL_INDEX (QCscript), font_prop_validate_symbol },
+    { SYMBOL_INDEX (QCotf), font_prop_validate_otf }
   };
 
 /* Return an index number of font property KEY or -1 if KEY is not an
@@ -674,7 +674,7 @@ get_font_prop_index (Lisp_Object key)
   int i;
 
   for (i = 0; i < ARRAYELTS (font_property_table); i++)
-    if (EQ (key, make_lisp_symbol (font_property_table[i].key)))
+    if (EQ (key, builtin_lisp_symbol (font_property_table[i].key)))
       return i;
   return -1;
 }
@@ -691,7 +691,7 @@ font_prop_validate (int idx, Lisp_Object prop, Lisp_Object val)
   if (NILP (val))
     return val;
   if (NILP (prop))
-    prop = make_lisp_symbol (font_property_table[idx].key);
+    prop = builtin_lisp_symbol (font_property_table[idx].key);
   else
     {
       idx = get_font_prop_index (prop);

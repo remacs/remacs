@@ -5164,17 +5164,17 @@ static const char *const lispy_drag_n_drop_names[] =
   "drag-n-drop"
 };
 
-/* An array of scroll bar parts, indexed by an enum scroll_bar_part value.
-   Note that Qnil corresponds to scroll_bar_nowhere and should not appear
-   in Lisp events.  */
-static struct Lisp_Symbol *const scroll_bar_parts[] = {
-  XSYMBOL_INIT (Qnil), XSYMBOL_INIT (Qabove_handle), XSYMBOL_INIT (Qhandle),
-  XSYMBOL_INIT (Qbelow_handle), XSYMBOL_INIT (Qup), XSYMBOL_INIT (Qdown),
-  XSYMBOL_INIT (Qtop), XSYMBOL_INIT (Qbottom), XSYMBOL_INIT (Qend_scroll),
-  XSYMBOL_INIT (Qratio), XSYMBOL_INIT (Qbefore_handle),
-  XSYMBOL_INIT (Qhorizontal_handle), XSYMBOL_INIT (Qafter_handle),
-  XSYMBOL_INIT (Qleft), XSYMBOL_INIT (Qright), XSYMBOL_INIT (Qleftmost),
-  XSYMBOL_INIT (Qrightmost), XSYMBOL_INIT (Qend_scroll), XSYMBOL_INIT (Qratio)
+/* An array of symbol indexes of scroll bar parts, indexed by an enum
+   scroll_bar_part value.  Note that Qnil corresponds to
+   scroll_bar_nowhere and should not appear in Lisp events.  */
+static short const scroll_bar_parts[] = {
+  SYMBOL_INDEX (Qnil), SYMBOL_INDEX (Qabove_handle), SYMBOL_INDEX (Qhandle),
+  SYMBOL_INDEX (Qbelow_handle), SYMBOL_INDEX (Qup), SYMBOL_INDEX (Qdown),
+  SYMBOL_INDEX (Qtop), SYMBOL_INDEX (Qbottom), SYMBOL_INDEX (Qend_scroll),
+  SYMBOL_INDEX (Qratio), SYMBOL_INDEX (Qbefore_handle),
+  SYMBOL_INDEX (Qhorizontal_handle), SYMBOL_INDEX (Qafter_handle),
+  SYMBOL_INDEX (Qleft), SYMBOL_INDEX (Qright), SYMBOL_INDEX (Qleftmost),
+  SYMBOL_INDEX (Qrightmost), SYMBOL_INDEX (Qend_scroll), SYMBOL_INDEX (Qratio)
 };
 
 /* A vector, indexed by button number, giving the down-going location
@@ -5448,7 +5448,7 @@ make_scroll_bar_position (struct input_event *ev, Lisp_Object type)
 {
   return list5 (ev->frame_or_window, type, Fcons (ev->x, ev->y),
 		make_number (ev->timestamp),
-		make_lisp_symbol (scroll_bar_parts[ev->part]));
+		builtin_lisp_symbol (scroll_bar_parts[ev->part]));
 }
 
 /* Given a struct input_event, build the lisp event which represents
@@ -6087,7 +6087,7 @@ make_lispy_movement (struct frame *frame, Lisp_Object bar_window, enum scroll_ba
     {
       Lisp_Object part_sym;
 
-      part_sym = make_lisp_symbol (scroll_bar_parts[part]);
+      part_sym = builtin_lisp_symbol (scroll_bar_parts[part]);
       return list2 (Qscroll_bar_movement,
 		    list5 (bar_window,
 			   Qvertical_scroll_bar,
@@ -10986,28 +10986,27 @@ init_keyboard (void)
 
 /* This type's only use is in syms_of_keyboard, to put properties on the
    event header symbols.  */
-struct event_head {
-  struct Lisp_Symbol *var;
-  struct Lisp_Symbol *kind;
+struct event_head
+{
+  short var;
+  short kind;
 };
 
-
-
 static const struct event_head head_table[] = {
-  {XSYMBOL_INIT (Qmouse_movement),      XSYMBOL_INIT (Qmouse_movement)},
-  {XSYMBOL_INIT (Qscroll_bar_movement), XSYMBOL_INIT (Qmouse_movement)},
+  {SYMBOL_INDEX (Qmouse_movement),      SYMBOL_INDEX (Qmouse_movement)},
+  {SYMBOL_INDEX (Qscroll_bar_movement), SYMBOL_INDEX (Qmouse_movement)},
 
   /* Some of the event heads.  */
-  {XSYMBOL_INIT (Qswitch_frame),        XSYMBOL_INIT (Qswitch_frame)},
+  {SYMBOL_INDEX (Qswitch_frame),        SYMBOL_INDEX (Qswitch_frame)},
 
-  {XSYMBOL_INIT (Qfocus_in),            XSYMBOL_INIT (Qfocus_in)},
-  {XSYMBOL_INIT (Qfocus_out),           XSYMBOL_INIT (Qfocus_out)},
-  {XSYMBOL_INIT (Qdelete_frame),        XSYMBOL_INIT (Qdelete_frame)},
-  {XSYMBOL_INIT (Qiconify_frame),       XSYMBOL_INIT (Qiconify_frame)},
-  {XSYMBOL_INIT (Qmake_frame_visible),  XSYMBOL_INIT (Qmake_frame_visible)},
+  {SYMBOL_INDEX (Qfocus_in),            SYMBOL_INDEX (Qfocus_in)},
+  {SYMBOL_INDEX (Qfocus_out),           SYMBOL_INDEX (Qfocus_out)},
+  {SYMBOL_INDEX (Qdelete_frame),        SYMBOL_INDEX (Qdelete_frame)},
+  {SYMBOL_INDEX (Qiconify_frame),       SYMBOL_INDEX (Qiconify_frame)},
+  {SYMBOL_INDEX (Qmake_frame_visible),  SYMBOL_INDEX (Qmake_frame_visible)},
   /* `select-window' should be handled just like `switch-frame'
      in read_key_sequence.  */
-  {XSYMBOL_INIT (Qselect_window),       XSYMBOL_INIT (Qswitch_frame)}
+  {SYMBOL_INDEX (Qselect_window),       SYMBOL_INDEX (Qswitch_frame)}
 };
 
 void
@@ -11180,8 +11179,8 @@ syms_of_keyboard (void)
     for (i = 0; i < ARRAYELTS (head_table); i++)
       {
 	const struct event_head *p = &head_table[i];
-	Lisp_Object var = make_lisp_symbol (p->var);
-	Lisp_Object kind = make_lisp_symbol (p->kind);
+	Lisp_Object var = builtin_lisp_symbol (p->var);
+	Lisp_Object kind = builtin_lisp_symbol (p->kind);
 	Fput (var, Qevent_kind, kind);
 	Fput (var, Qevent_symbol_elements, list1 (var));
       }

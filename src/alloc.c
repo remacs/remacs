@@ -5630,7 +5630,7 @@ garbage_collect_1 (void *end)
   mark_buffer (&buffer_local_symbols);
 
   for (i = 0; i < ARRAYELTS (lispsym); i++)
-    mark_object (make_lisp_symbol (&lispsym[i]));
+    mark_object (builtin_lisp_symbol (i));
 
   for (i = 0; i < staticidx; i++)
     mark_object (*staticvec[i]);
@@ -7019,7 +7019,7 @@ which_symbols (Lisp_Object obj, EMACS_INT find_max)
      {
        for (int i = 0; i < ARRAYELTS (lispsym); i++)
 	 {
-	   Lisp_Object sym = make_lisp_symbol (&lispsym[i]);
+	   Lisp_Object sym = builtin_lisp_symbol (i);
 	   if (symbol_uses_obj (sym, obj))
 	     {
 	       found = Fcons (sym, found);

@@ -613,7 +613,7 @@ compare_globals (const void *a, const void *b)
   if (ga->type != gb->type)
     return ga->type - gb->type;
 
-  /* Consider "nil" to be the least, so that aQnil is firat.  That
+  /* Consider "nil" to be the least, so that iQnil is zero.  That
      way, Qnil's internal representation is zero, which is a bit faster.  */
   if (ga->type == SYMBOL)
     {
@@ -701,9 +701,9 @@ write_globals (void)
 	}
       else if (globals[i].type == SYMBOL)
 	printf (("DEFINE_LISP_SYMBOL_BEGIN (%s)\n"
-		 "#define a%s (&lispsym[%d])\n"
-		 "#define %s make_lisp_symbol (a%s)\n"
-		 "DEFINE_LISP_SYMBOL_END (a%s)\n\n"),
+		 "#define i%s %d\n"
+		 "#define %s builtin_lisp_symbol (i%s)\n"
+		 "DEFINE_LISP_SYMBOL_END (%s)\n\n"),
 		globals[i].name, globals[i].name, symnum++,
 		globals[i].name, globals[i].name, globals[i].name);
       else

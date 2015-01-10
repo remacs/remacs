@@ -2925,48 +2925,48 @@ or bottommost possible position (that stays within the screen).  */)
 
 struct frame_parm_table {
   const char *name;
-  struct Lisp_Symbol *sym;
+  int sym;
 };
 
 static const struct frame_parm_table frame_parms[] =
 {
-  {"auto-raise",		XSYMBOL_INIT (Qauto_raise)},
-  {"auto-lower",		XSYMBOL_INIT (Qauto_lower)},
-  {"background-color",		0},
-  {"border-color",		XSYMBOL_INIT (Qborder_color)},
-  {"border-width",		XSYMBOL_INIT (Qborder_width)},
-  {"cursor-color",		XSYMBOL_INIT (Qcursor_color)},
-  {"cursor-type",		XSYMBOL_INIT (Qcursor_type)},
-  {"font",			0},
-  {"foreground-color",		0},
-  {"icon-name",			XSYMBOL_INIT (Qicon_name)},
-  {"icon-type",			XSYMBOL_INIT (Qicon_type)},
-  {"internal-border-width",	XSYMBOL_INIT (Qinternal_border_width)},
-  {"right-divider-width",	XSYMBOL_INIT (Qright_divider_width)},
-  {"bottom-divider-width",	XSYMBOL_INIT (Qbottom_divider_width)},
-  {"menu-bar-lines",		XSYMBOL_INIT (Qmenu_bar_lines)},
-  {"mouse-color",		XSYMBOL_INIT (Qmouse_color)},
-  {"name",			XSYMBOL_INIT (Qname)},
-  {"scroll-bar-width",		XSYMBOL_INIT (Qscroll_bar_width)},
-  {"scroll-bar-height",		XSYMBOL_INIT (Qscroll_bar_height)},
-  {"title",			XSYMBOL_INIT (Qtitle)},
-  {"unsplittable",		XSYMBOL_INIT (Qunsplittable)},
-  {"vertical-scroll-bars",	XSYMBOL_INIT (Qvertical_scroll_bars)},
-  {"horizontal-scroll-bars",	XSYMBOL_INIT (Qhorizontal_scroll_bars)},
-  {"visibility",		XSYMBOL_INIT (Qvisibility)},
-  {"tool-bar-lines",		XSYMBOL_INIT (Qtool_bar_lines)},
-  {"scroll-bar-foreground",	XSYMBOL_INIT (Qscroll_bar_foreground)},
-  {"scroll-bar-background",	XSYMBOL_INIT (Qscroll_bar_background)},
-  {"screen-gamma",		XSYMBOL_INIT (Qscreen_gamma)},
-  {"line-spacing",		XSYMBOL_INIT (Qline_spacing)},
-  {"left-fringe",		XSYMBOL_INIT (Qleft_fringe)},
-  {"right-fringe",		XSYMBOL_INIT (Qright_fringe)},
-  {"wait-for-wm",		XSYMBOL_INIT (Qwait_for_wm)},
-  {"fullscreen",                XSYMBOL_INIT (Qfullscreen)},
-  {"font-backend",		XSYMBOL_INIT (Qfont_backend)},
-  {"alpha",			XSYMBOL_INIT (Qalpha)},
-  {"sticky",			XSYMBOL_INIT (Qsticky)},
-  {"tool-bar-position",		XSYMBOL_INIT (Qtool_bar_position)},
+  {"auto-raise",		SYMBOL_INDEX (Qauto_raise)},
+  {"auto-lower",		SYMBOL_INDEX (Qauto_lower)},
+  {"background-color",		-1},
+  {"border-color",		SYMBOL_INDEX (Qborder_color)},
+  {"border-width",		SYMBOL_INDEX (Qborder_width)},
+  {"cursor-color",		SYMBOL_INDEX (Qcursor_color)},
+  {"cursor-type",		SYMBOL_INDEX (Qcursor_type)},
+  {"font",			-1},
+  {"foreground-color",		-1},
+  {"icon-name",			SYMBOL_INDEX (Qicon_name)},
+  {"icon-type",			SYMBOL_INDEX (Qicon_type)},
+  {"internal-border-width",	SYMBOL_INDEX (Qinternal_border_width)},
+  {"right-divider-width",	SYMBOL_INDEX (Qright_divider_width)},
+  {"bottom-divider-width",	SYMBOL_INDEX (Qbottom_divider_width)},
+  {"menu-bar-lines",		SYMBOL_INDEX (Qmenu_bar_lines)},
+  {"mouse-color",		SYMBOL_INDEX (Qmouse_color)},
+  {"name",			SYMBOL_INDEX (Qname)},
+  {"scroll-bar-width",		SYMBOL_INDEX (Qscroll_bar_width)},
+  {"scroll-bar-height",		SYMBOL_INDEX (Qscroll_bar_height)},
+  {"title",			SYMBOL_INDEX (Qtitle)},
+  {"unsplittable",		SYMBOL_INDEX (Qunsplittable)},
+  {"vertical-scroll-bars",	SYMBOL_INDEX (Qvertical_scroll_bars)},
+  {"horizontal-scroll-bars",	SYMBOL_INDEX (Qhorizontal_scroll_bars)},
+  {"visibility",		SYMBOL_INDEX (Qvisibility)},
+  {"tool-bar-lines",		SYMBOL_INDEX (Qtool_bar_lines)},
+  {"scroll-bar-foreground",	SYMBOL_INDEX (Qscroll_bar_foreground)},
+  {"scroll-bar-background",	SYMBOL_INDEX (Qscroll_bar_background)},
+  {"screen-gamma",		SYMBOL_INDEX (Qscreen_gamma)},
+  {"line-spacing",		SYMBOL_INDEX (Qline_spacing)},
+  {"left-fringe",		SYMBOL_INDEX (Qleft_fringe)},
+  {"right-fringe",		SYMBOL_INDEX (Qright_fringe)},
+  {"wait-for-wm",		SYMBOL_INDEX (Qwait_for_wm)},
+  {"fullscreen",                SYMBOL_INDEX (Qfullscreen)},
+  {"font-backend",		SYMBOL_INDEX (Qfont_backend)},
+  {"alpha",			SYMBOL_INDEX (Qalpha)},
+  {"sticky",			SYMBOL_INDEX (Qsticky)},
+  {"tool-bar-position",		SYMBOL_INDEX (Qtool_bar_position)},
 };
 
 #ifdef HAVE_WINDOW_SYSTEM
@@ -4824,9 +4824,9 @@ syms_of_frame (void)
 
     for (i = 0; i < ARRAYELTS (frame_parms); i++)
       {
-	Lisp_Object v = (frame_parms[i].sym
-			 ? make_lisp_symbol (frame_parms[i].sym)
-			 : intern_c_string (frame_parms[i].name));
+	Lisp_Object v = (frame_parms[i].sym < 0
+			 ? intern_c_string (frame_parms[i].name)
+			 : builtin_lisp_symbol (frame_parms[i].sym));
 	Fput (v, Qx_frame_parameter, make_number (i));
       }
   }
