@@ -21,6 +21,15 @@
 
 2015-01-09  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Port Qnil==0 changes to 32-bit --with-wide-int
+	* lisp.h (lisp_h_XSYMBOL, XSYMBOL): Assume USE_LSB_TAG in the
+	macro-implemented version.  For the non-USE_LSB_TAG case, supply
+	a new inline function that is the inverse of the new TAG_SYMPTR.
+	(lisp_h_XUNTAGBASE, XUNTAGBASE): Remove.  All uses removed.
+	(TAG_SYMPTR) [!USE_LSB_TAG]: If the pointer subtraction yields a
+	negative number, don't allow sign bits to bleed into the encoded
+	value.  Shift in zero bits instead.
+
 	Refactor pointer-to-integer conversion
 	* gfilenotify.c (monitor_to_lisp, lisp_to_monitor):
 	Rename and move to lisp.h.  All uses changed.
