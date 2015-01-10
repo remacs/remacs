@@ -1,3 +1,10 @@
+2015-01-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port to HAVE_FREETYPE && !HAVE_XFT
+	* dispextern.h (struct face.extra) [HAVE_FREETYPE && !HAVE_XFT]:
+	* font.h (syms_of_xftfont) [HAVE_FREETYPE && !HAVE_XFT]:
+	Declare in this case too.
+
 2015-01-10  Eli Zaretskii  <eliz@gnu.org>
 
 	* w32fns.c (Fw32_register_hot_key): Use XINT instead of XLI.

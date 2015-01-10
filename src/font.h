@@ -780,10 +780,10 @@ extern void syms_of_xfont (void);
 extern void syms_of_ftxfont (void);
 #ifdef HAVE_XFT
 extern struct font_driver xftfont_driver;
-extern void syms_of_xftfont (void);
 #endif
 #if defined HAVE_FREETYPE || defined HAVE_XFT
 extern struct font_driver ftxfont_driver;
+extern void syms_of_xftfont (void);
 #endif
 #ifdef HAVE_BDFFONT
 extern void syms_of_bdffont (void);
