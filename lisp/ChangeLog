@@ -1,3 +1,8 @@
+2015-01-10  Daniel Colascione  <dancol@dancol.org>
+
+	* vc/vc-hooks.el (vc-prefix-map): Bind vc-delete-file to C-x v x,
+	by analogy with dired.
+
 2015-01-09  Daniel Colascione  <dancol@dancol.org>
 
 	* progmodes/js.el (js--function-heading-1-re)
