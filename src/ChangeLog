@@ -1,3 +1,8 @@
+2015-01-10  Eli Zaretskii  <eliz@gnu.org>
+
+	* indent.c (Fvertical_motion): Return zero if we started from ZV
+	and there's an overlay after-string there.  (Bug#19553)
+
 2015-01-09  Eli Zaretskii  <eliz@gnu.org>
 
 	* emacs.c (usage_message): Fix the description of the -nl switch.

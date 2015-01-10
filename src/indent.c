@@ -2137,10 +2137,15 @@ whether or not it is currently displayed in some window.  */)
 	      if (nlines > 1)
 		move_it_by_lines (&it, min (PTRDIFF_MAX, nlines - 1));
 	    }
-	  else
+	  else	/* it_start = ZV */
 	    {
 	      it.vpos = 0;
 	      move_it_by_lines (&it, min (PTRDIFF_MAX, nlines));
+	      /* We could have some display or overlay string at ZV,
+		 in which case it.vpos will be nonzero now, while
+		 actually we didn't move vertically at all.  */
+	      if (IT_CHARPOS (it) == CHARPOS (pt) && CHARPOS (pt) == it_start)
+		it.vpos = 0;
 	    }
 	}
 
