@@ -256,6 +256,9 @@ word(s) will be searched for via `eww-search-prefix'."
          (user-error "FTP is not supported."))
         (t
          (if (or (string-match "\\`https?:" url)
+		 ;; Also try to match "naked" URLs like
+		 ;; en.wikipedia.org/wiki/Free software
+		 (string-match "\\`[a-z._]+/" url)
 		 (and (= (length (split-string url)) 1)
 		      (or (and (not (string-match-p "\\`[\"\'].*[\"\']\\'" url))
 			       (> (length (split-string url "[.:]")) 1))
@@ -263,7 +266,7 @@ word(s) will be searched for via `eww-search-prefix'."
              (progn
                (unless (string-match-p "\\`[a-zA-Z][-a-zA-Z0-9+.]*://" url)
                  (setq url (concat "http://" url)))
-               ;; some site don't redirect final /
+               ;; Some sites do not redirect final /
                (when (string= (url-filename (url-generic-parse-url url)) "")
                  (setq url (concat url "/"))))
            (setq url (concat eww-search-prefix
