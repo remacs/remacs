@@ -611,7 +611,7 @@ Horizontal scroll bars are turned off by default.
     `scroll-bar-height'.
 
 +++
-** The height of a frame's menu and tool bar are no more counted in the
+** The height of a frame's menu and tool bar are no longer counted in the
 frame's text height.  This means that the text height stands only for
 the height of the frame's root window plus that of the echo area (if
 present).  This was already the behavior for frames with external tool
