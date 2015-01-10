@@ -1,3 +1,8 @@
+2015-01-10  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/eww.el (eww): Always interpret URLs that start with https?:
+	as plain URLs, even if they have spaces in them (bug#19556).
+
 2015-01-10  Daniel Colascione  <dancol@dancol.org>
 
 	* vc/vc-hooks.el (vc-prefix-map): Bind vc-delete-file to C-x v x,
