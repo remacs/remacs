@@ -5,6 +5,8 @@
 	(eww): Also interpret things like "en.wikipedia.org/wiki/Free
 	software" as an URL.
 	(eww): Don't interpret "org/foo" as an URL.
+	(eww): Clear the title when loading so that we don't display
+	misleading information.
 
 2015-01-10  Daniel Colascione  <dancol@dancol.org>
 

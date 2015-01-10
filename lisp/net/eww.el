@@ -277,6 +277,7 @@ word(s) will be searched for via `eww-search-prefix'."
 	(eww-save-history))
     (eww-setup-buffer)
     (plist-put eww-data :url url)
+    (plist-put eww-data :title "")
     (eww-update-header-line-format)
     (let ((inhibit-read-only t))
       (insert (format "Loading %s..." url))
