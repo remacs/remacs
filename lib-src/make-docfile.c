@@ -635,7 +635,7 @@ close_emacs_globals (int num_symbols)
 	   "#ifndef DEFINE_SYMBOLS\n"
 	   "extern\n"
 	   "#endif\n"
-	   "struct Lisp_Symbol lispsym[%d];\n"),
+	   "struct Lisp_Symbol alignas (GCALIGNMENT) lispsym[%d];\n"),
 	  num_symbols);
 }
 

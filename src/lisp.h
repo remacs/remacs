@@ -233,8 +233,8 @@ extern bool suppress_checking EXTERNALLY_VISIBLE;
 
    USE_LSB_TAG not only requires the least 3 bits of pointers returned by
    malloc to be 0 but also needs to be able to impose a mult-of-8 alignment
-   on the few static Lisp_Objects used: all the defsubr as well
-   as the two special buffers buffer_defaults and buffer_local_symbols.  */
+   on the few static Lisp_Objects used: lispsym, all the defsubr, and
+   the two special buffers buffer_defaults and buffer_local_symbols.  */
 
 enum Lisp_Bits
   {

@@ -1,3 +1,10 @@
+2015-01-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port to 32-bit Sun C 5.12 sparc
+	* make-docfile.c (close_emacs_globals): Align lispsym to GCALIGNMENT.
+	The alignment is required on all platforms; it just happens to have
+	been properly aligned on the previous platforms we tested.
+
 2015-01-05  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Use 0 for Qnil
