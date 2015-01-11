@@ -1,3 +1,7 @@
+2015-01-11  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* coding.c (Fcoding_system_plist): Use common style for docstring.
+
 2015-01-11  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Port to MSB hosts without optimization
