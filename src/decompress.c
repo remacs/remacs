@@ -28,8 +28,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <verify.h>
 
-static Lisp_Object Qzlib_dll;
-
 #ifdef WINDOWSNT
 # include <windows.h>
 # include "w32.h"

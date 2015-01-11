@@ -245,7 +245,9 @@ extern void _DebPrint (const char *fmt, ...);
 # define ATTRIBUTE_MALLOC
 #endif
 
-#if 4 < __GNUC__ + (3 <= __GNUC_MINOR__)
+#if (__clang__					\
+     ? __has_attribute (alloc_size)		\
+     : 4 < __GNUC__ + (3 <= __GNUC_MINOR__))
 # define ATTRIBUTE_ALLOC_SIZE(args) __attribute__ ((__alloc_size__ args))
 #else
 # define ATTRIBUTE_ALLOC_SIZE(args)

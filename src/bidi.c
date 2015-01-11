@@ -262,7 +262,6 @@ typedef enum {
 } bidi_category_t;
 
 static Lisp_Object paragraph_start_re, paragraph_separate_re;
-static Lisp_Object Qparagraph_start, Qparagraph_separate;
 
 
 /***********************************************************************

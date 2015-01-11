@@ -34,8 +34,6 @@ GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
 #include "nsterm.h"
 #include "frame.h"
 
-extern Lisp_Object QCfile, QCdata;
-
 /* call tracing */
 #if 0
 int image_trace_num = 0;

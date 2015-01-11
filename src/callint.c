@@ -28,18 +28,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "window.h"
 #include "keymap.h"
 
-Lisp_Object Qminus, Qplus;
-static Lisp_Object Qfuncall_interactively;
-static Lisp_Object Qcommand_debug_status;
-static Lisp_Object Qenable_recursive_minibuffers;
-
-static Lisp_Object Qhandle_shift_selection;
-static Lisp_Object Qread_number;
-
-Lisp_Object Qmouse_leave_buffer_hook;
-
-static Lisp_Object Qlist, Qlet, Qletx, Qsave_excursion, Qif;
-Lisp_Object Qwhen, Qprogn;
 static Lisp_Object preserved_fns;
 
 /* Marker used within call-interactively to refer to point.  */
@@ -477,7 +465,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
 		error ("Attempt to select inactive minibuffer window");
 
 	      /* If the current buffer wants to clean up, let it.  */
-              Frun_hooks (1, &Qmouse_leave_buffer_hook);
+              run_hook (Qmouse_leave_buffer_hook);
 
 	      Fselect_window (w, Qnil);
 	    }

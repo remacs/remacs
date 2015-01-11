@@ -657,7 +657,6 @@ extern ptrdiff_t c_string_width (const unsigned char *, ptrdiff_t, int,
 extern ptrdiff_t lisp_string_width (Lisp_Object, ptrdiff_t,
 				    ptrdiff_t *, ptrdiff_t *);
 
-extern Lisp_Object Qcharacterp;
 extern Lisp_Object Vchar_unify_table;
 extern Lisp_Object string_escape_byte8 (Lisp_Object);
 

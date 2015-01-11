@@ -1,4 +1,4 @@
-;;; eieio-custom.el -- eieio object customization
+;;; eieio-custom.el -- eieio object customization  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1999-2001, 2005, 2007-2015 Free Software Foundation,
 ;; Inc.
@@ -70,7 +70,7 @@ of these.")
 	     :documentation "A number of thingies."))
   "A class for testing the widget on.")
 
-(defcustom eieio-widget-test (eieio-widget-test-class "Foo")
+(defcustom eieio-widget-test (eieio-widget-test-class)
   "Test variable for editing an object."
   :type 'object
   :group 'eieio)
@@ -136,7 +136,7 @@ Updates occur regardless of the current customization group.")
 	   ))
     (widget-value-set vc (widget-value vc))))
 
-(defun eieio-custom-toggle-parent (widget &rest ignore)
+(defun eieio-custom-toggle-parent (widget &rest _)
   "Toggle visibility of parent of WIDGET.
 Optional argument IGNORE is an extraneous parameter."
   (eieio-custom-toggle-hide (widget-get widget :parent)))
@@ -154,7 +154,7 @@ Optional argument IGNORE is an extraneous parameter."
   :clone-object-children nil
   )
 
-(defun eieio-object-match (widget value)
+(defun eieio-object-match (_widget _value)
   "Match info for WIDGET against VALUE."
   ;; Write me
   t)
@@ -193,7 +193,7 @@ Optional argument IGNORE is an extraneous parameter."
   (let* ((chil nil)
 	 (obj (widget-get widget :value))
 	 (master-group (widget-get widget :eieio-group))
-	 (cv (class-v (eieio--object-class obj)))
+	 (cv (eieio--object-class-object obj))
 	 (slots (eieio--class-public-a cv))
 	 (flabel (eieio--class-public-custom-label cv))
 	 (fgroup (eieio--class-public-custom-group cv))
@@ -208,7 +208,8 @@ Optional argument IGNORE is an extraneous parameter."
 			 chil)))
     ;; Display information about the group being shown
     (when master-group
-      (let ((groups (class-option (eieio--object-class obj) :custom-groups)))
+      (let ((groups (eieio--class-option (eieio--object-class-object obj)
+                                         :custom-groups)))
 	(widget-insert "Groups:")
 	(while groups
 	  (widget-insert "  ")
@@ -216,7 +217,7 @@ Optional argument IGNORE is an extraneous parameter."
 	      (widget-insert "*" (capitalize (symbol-name master-group)) "*")
 	    (widget-create 'push-button
 			   :thing (cons obj (car groups))
-			   :notify (lambda (widget &rest stuff)
+			   :notify (lambda (widget &rest _)
 				     (eieio-customize-object
 				      (car (widget-get widget :thing))
 				      (cdr (widget-get widget :thing))))
@@ -260,8 +261,8 @@ Optional argument IGNORE is an extraneous parameter."
 				 (car flabel)
 			       (let ((s (symbol-name
 					 (or
-					  (class-slot-initarg
-					   (eieio--object-class obj)
+					  (eieio--class-slot-initarg
+					   (eieio--object-class-object obj)
 					   (car slots))
 					  (car slots)))))
 				 (capitalize
@@ -288,7 +289,7 @@ Optional argument IGNORE is an extraneous parameter."
   "Get the value of WIDGET."
   (let* ((obj (widget-get widget :value))
 	 (master-group eieio-cog)
-	 (cv (class-v (eieio--object-class obj)))
+	 (cv (eieio--object-class-object obj))
 	 (fgroup (eieio--class-public-custom-group cv))
 	 (wids (widget-get widget :children))
 	 (name (if (widget-get widget :eieio-show-name)
@@ -296,7 +297,7 @@ Optional argument IGNORE is an extraneous parameter."
 		 nil))
 	 (chil (if (widget-get widget :eieio-show-name)
 		   (nthcdr 1 wids) wids))
-	 (cv (class-v (eieio--object-class obj)))
+	 (cv (eieio--object-class-object obj))
 	 (slots (eieio--class-public-a cv))
 	 (fcust (eieio--class-public-custom cv)))
     ;; If there are any prefix widgets, clear them.
@@ -317,11 +318,11 @@ Optional argument IGNORE is an extraneous parameter."
 	    fgroup (cdr fgroup)
 	    fcust (cdr fcust)))
     ;; Set any name updates on it.
-    (if name (setf (eieio--object-name obj) name))
+    (if name (eieio-object-set-name-string obj name))
     ;; This is the same object we had before.
     obj))
 
-(defmethod eieio-done-customizing ((obj eieio-default-superclass))
+(defmethod eieio-done-customizing ((_obj eieio-default-superclass))
   "When applying change to a widget, call this method.
 This method is called by the default widget-edit commands.
 User made commands should also call this method when applying changes.
@@ -385,18 +386,18 @@ These groups are specified with the `:group' slot flag."
     (make-local-variable 'eieio-cog)
     (setq eieio-cog g)))
 
-(defmethod eieio-custom-object-apply-reset ((obj eieio-default-superclass))
+(defmethod eieio-custom-object-apply-reset ((_obj eieio-default-superclass))
   "Insert an Apply and Reset button into the object editor.
 Argument OBJ is the object being customized."
   (widget-create 'push-button
-		 :notify (lambda (&rest ignore)
+		 :notify (lambda (&rest _)
 			   (widget-apply eieio-wo :value-get)
 			   (eieio-done-customizing eieio-co)
 			   (bury-buffer))
 		 "Accept")
   (widget-insert "   ")
   (widget-create 'push-button
-		 :notify (lambda (&rest ignore)
+		 :notify (lambda (&rest _)
 			   ;; I think the act of getting it sets
 			   ;; its value through the get function.
 			   (message "Applying Changes...")
@@ -406,13 +407,13 @@ Argument OBJ is the object being customized."
 		 "Apply")
   (widget-insert "   ")
   (widget-create 'push-button
-		 :notify (lambda (&rest ignore)
+		 :notify (lambda (&rest _)
 			   (message "Resetting")
 			   (eieio-customize-object eieio-co eieio-cog))
 		 "Reset")
   (widget-insert "   ")
   (widget-create 'push-button
-		 :notify (lambda (&rest ignore)
+		 :notify (lambda (&rest _)
 			   (bury-buffer))
 		 "Cancel"))
 
@@ -431,13 +432,11 @@ Must return the created widget."
   :clone-object-children t
   )
 
-(defun eieio-object-value-to-abstract (widget value)
+(defun eieio-object-value-to-abstract (_widget value)
   "For WIDGET, convert VALUE to an abstract /safe/ representation."
-  (if (eieio-object-p value) value
-    (if (null value) value
-      nil)))
+  (if (eieio-object-p value) value))
 
-(defun eieio-object-abstract-to-value (widget value)
+(defun eieio-object-abstract-to-value (_widget value)
   "For WIDGET, convert VALUE from an abstract /safe/ representation."
   value)
 
@@ -453,7 +452,7 @@ Must return the created widget."
 	    (vector (concat "Group " (symbol-name group))
 		    (list 'customize-object obj (list 'quote group))
 		    t))
-	  (class-option (eieio--object-class obj) :custom-groups)))
+	  (eieio--class-option (eieio--object-class-object obj) :custom-groups)))
 
 (defvar eieio-read-custom-group-history nil
   "History for the custom group reader.")
@@ -461,7 +460,8 @@ Must return the created widget."
 (defmethod eieio-read-customization-group ((obj eieio-default-superclass))
   "Do a completing read on the name of a customization group in OBJ.
 Return the symbol for the group, or nil"
-  (let ((g (class-option (eieio--object-class obj) :custom-groups)))
+  (let ((g (eieio--class-option (eieio--object-class-object obj)
+                                :custom-groups)))
     (if (= (length g) 1)
 	(car g)
       ;; Make the association list

@@ -5604,14 +5604,22 @@ If NOERROR, don't signal an error if we can't move that many lines."
 		(>  (cdr temporary-goal-column) 0))
 	    (setq target-hscroll (cdr temporary-goal-column)))
       ;; Otherwise, we should reset `temporary-goal-column'.
-      (let ((posn (posn-at-point)))
+      (let ((posn (posn-at-point))
+	    x-pos)
 	(cond
 	 ;; Handle the `overflow-newline-into-fringe' case:
 	 ((eq (nth 1 posn) 'right-fringe)
 	  (setq temporary-goal-column (cons (- (window-width) 1) hscroll)))
 	 ((car (posn-x-y posn))
+	  (setq x-pos (car (posn-x-y posn)))
+	  ;; In R2L lines, the X pixel coordinate is measured from the
+	  ;; left edge of the window, but columns are still counted
+	  ;; from the logical-order beginning of the line, i.e. from
+	  ;; the right edge in this case.  We need to adjust for that.
+	  (if (eq (current-bidi-paragraph-direction) 'right-to-left)
+	      (setq x-pos (- (window-body-width nil t) 1 x-pos)))
 	  (setq temporary-goal-column
-		(cons (/ (float (car (posn-x-y posn)))
+		(cons (/ (float x-pos)
 			 (frame-char-width))
                       hscroll))))))
     (if target-hscroll

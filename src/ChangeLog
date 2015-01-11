@@ -1,3 +1,246 @@
+2015-01-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port to MSB hosts without optimization
+	E.g., when configuring --with-wide-int CFLAGS='-O0' on x86,
+	the inline function XTYPE needs to be declared before being used.
+	* lisp.h (XTYPE): New forward declaration.
+
+2015-01-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port to 32-bit --with-wide-int
+	Prefer symbol indexes to struct Lisp_Symbol * casted and then
+	widened, as the latter had trouble with GCC on Fedora 21 when
+	configured --with-wide-int and when used in static initializers.
+	* alloc.c (garbage_collect_1, which_symbols):
+	* lread.c (init_obarray):
+	Prefer builtin_lisp_symbol when it can be used.
+	* dispextern.h (struct image_type.type):
+	* font.c (font_property_table.key):
+	* frame.c (struct frame_parm_table.sym):
+	* keyboard.c (scroll_bar_parts, struct event_head):
+	* xdisp.c (struct props.name):
+	Use the index of a builtin symbol rather than its address.
+	All uses changed.
+	* lisp.h (TAG_SYMPTR, XSYMBOL_INIT): Remove, replacing with ...
+	(TAG_SYMOFFSET, SYMBOL_INDEX): ... new macros that deal with
+	symbol indexes rather than pointers, and which work better on MSB
+	hosts because they shift right before tagging.  All uses changed.
+	(DEFINE_LISP_SYMBOL_BEGIN, DEFINE_LISP_SYMBOL_END):
+	No longer noops on wide-int hosts, since they work now.
+	(builtin_lisp_symbol): New function.
+
+	Port to HAVE_FREETYPE && !HAVE_XFT
+	* dispextern.h (struct face.extra) [HAVE_FREETYPE && !HAVE_XFT]:
+	* font.h (syms_of_xftfont) [HAVE_FREETYPE && !HAVE_XFT]:
+	Declare in this case too.
+
+2015-01-10  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32fns.c (Fw32_register_hot_key): Use XINT instead of XLI.
+
+	* w32notify.c (Fw32notify_add_watch, w32_get_watch_object): Use
+	make_pointer_integer instead of XIL.
+	(Fw32notify_rm_watch): Use XINTPTR instead of XLI.
+
+	* w32inevt.c (handle_file_notifications): Use make_pointer_integer
+	instead of XIL.  Put a list of the descriptor, action, and file
+	name in event->arg, instead of spreading them between event->code
+	and event->arg.
+
+	* w32term.c (queue_notifications): Use make_pointer_integer
+	instead of XIL.  Put a list of the descriptor, action, and file
+	name in event->arg, instead of spreading them between event->code
+	and event->arg.
+
+	* keyboard.c (kbd_buffer_get_event) [HAVE_W32NOTIFY]: Adjust Lisp
+	event creation to changes in w32term.c and w32inevt.c above.
+
+2015-01-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port Qnil==0 changes to 32-bit --with-wide-int
+	* lisp.h (lisp_h_XSYMBOL, XSYMBOL): Assume USE_LSB_TAG in the
+	macro-implemented version.  For the non-USE_LSB_TAG case, supply
+	a new inline function that is the inverse of the new TAG_SYMPTR.
+	(lisp_h_XUNTAGBASE, XUNTAGBASE): Remove.  All uses removed.
+	(TAG_SYMPTR) [!USE_LSB_TAG]: If the pointer subtraction yields a
+	negative number, don't allow sign bits to bleed into the encoded
+	value.  Shift in zero bits instead.
+
+	Refactor pointer-to-integer conversion
+	* gfilenotify.c (monitor_to_lisp, lisp_to_monitor):
+	Rename and move to lisp.h.  All uses changed.
+	* lisp.h (XINTPTR, make_pointer_integer): New inline functions,
+	which are renamed from gfilenotify.c's lisp_to_monitor and
+	monitor_to_lisp, and with more-generic void * signatures.
+
+2015-01-08  Eli Zaretskii  <eliz@gnu.org>
+
+	* dispnew.c (buffer_posn_from_coords): Fix the value of the column
+	returned for right-to-left screen lines.  (Before the change on
+	2014-12-30, the incorrectly-computed X pixel coordinate concealed
+	this bug.)
+
+	* .gdbinit (xsymname): New subroutine.
+	(xprintsym, initial-tbreak): Use it to access the name of a symbol
+	in a way that doesn't cause GDB to barf when it tries to
+	dereference a NULL pointer.
+
+	* xdisp.c (next_element_from_c_string): Use Lisp integer zero as
+	the object.
+	(set_cursor_from_row, try_cursor_movement, dump_glyph)
+	(insert_left_trunc_glyphs, append_space_for_newline)
+	(extend_face_to_end_of_line, highlight_trailing_whitespace)
+	(find_row_edges, ROW_GLYPH_NEWLINE_P, Fmove_point_visually)
+	(Fbidi_resolved_levels, produce_special_glyphs)
+	(rows_from_pos_range, mouse_face_from_buffer_pos)
+	(note_mouse_highlight): Use nil as the object for glyphs inserted
+	by the display engine, and test with NILP instead of INTEGERP.
+	(Bug#19535)
+
+	* w32fns.c (Fx_show_tip): Use NILP to test for glyphs inserted by
+	the display engine.
+
+	* xfns.c (Fx_show_tip): Use NILP to test for glyphs inserted by
+	the display engine.
+
+	* dispextern.h (struct glyph, struct it): Update comments for the
+	OBJECT members.
+
+2015-01-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port new Lisp symbol init to x86 --with-wide-int
+	* lisp.h (DEFINE_LISP_SYMBOL_BEGIN, DEFINE_LISP_SYMBOL_END):
+	Define to empty on platforms where EMACS_INT_MAX != INTPTR_MAX, as
+	GCC (at least) does not allow a constant initializer to widen an
+	address constant.
+
+	* lisp.h (TAG_SYMPTR): Don't do arithmetic on NULL.
+	This is a followup to the "Port Qnil==0 XUNTAG to clang" patch.
+	Although clang doesn't need it, some other compiler might, and
+	it's easy enough to be safe.
+
+	* conf_post.h (ATTRIBUTE_ALLOC_SIZE): Port to clang 3.5.0.
+	Apparently clang removed support for the alloc_size attribute.
+
+	Port Qnil==0 XUNTAG to clang
+	clang has undefined behavior if the program subtracts an integer
+	from (char *) 0.  Problem reported by YAMAMOTO Mitsuharu in:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-01/msg00132.html
+	* lisp.h (lisp_h_XUNTAG) [USE_LSB_TAG]:
+	(XUNTAG) [!USE_LSB_TAG]: Port to clang 3.5.0.
+
+	Port GFileMonitor * hack to Qnil==0 platforms
+	Reported by Glenn Morris in: http://bugs.gnu.org/15880#112
+	* gfilenotify.c (monitor_to_lisp, lisp_to_monitor): New functions.
+	(dir_monitor_callback, Fgfile_add_watch, Fgfile_rm_watch): Use them.
+
+2015-01-06  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (x_set_window_size): Call updateFrameSize to get real
+	size instead of using widht/height.  The frame may be constrained.
+
+2015-01-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lisp.h (XSYMBOL): Parenthesize id in forward decl.
+	Needed when neither optimizing nor inlining.
+	Also, sort decls alphabetically.
+
+2015-01-05  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32proc.c, w32.h, w32fns.c, w32font.c, w32menu.c, w32notify.c:
+	* w32proc.c, w32select.c, w32term.c, w32uniscribe.c: Remove
+	declarations of Q* variables that represent symbols.
+
+2015-01-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use 0 for Qnil
+	Fixes Bug#15880.
+	If USE_LSB_TAG, arrange for the representation of Qnil to be zero so
+	that NILP (x) is equivalent to testing whether x is 0 at the
+	machine level.  The overall effects of this and the previous patch
+	shrink the size of the text segment by 2.3% and speeds up
+	compilation of all the .elc files by about 0.5% on my platform,
+	which is Fedora 20 x86-64.
+	* lisp.h (lisp_h_XPNTR, lisp_h_XSYMBOL, lisp_h_XUNTAG)
+	(make_lisp_symbol) [USE_LSB_TAG]:
+	Symbols now tag the difference from lispsym, not the pointer.
+	(lisp_h_XUNTAGBASE, TAG_SYMPTR): New macros.
+	(Lisp_Int0, Lisp_Int1, Lisp_Symbol, Lisp_Misc, Lisp_String, Lisp_Cons):
+	Renumber so that Lisp_Symbol is 0, so that Qnil is zero.
+	(XSYMBOL): New forward decl.
+	(XUNTAGBASE): New function.
+	(XUNTAG): Use it.
+
+	Compute C decls for DEFSYMs automatically
+	Fixes Bug#15880.
+	This patch also makes Q constants (e.g., Qnil) constant addresses
+	from the C point of view.
+	* alloc.c, bidi.c, buffer.c, bytecode.c, callint.c, casefiddle.c:
+	* casetab.c, category.c, ccl.c, charset.c, chartab.c, cmds.c, coding.c:
+	* composite.c, data.c, dbusbind.c, decompress.c, dired.c, dispnew.c:
+	* doc.c, editfns.c, emacs.c, eval.c, fileio.c, fns.c, font.c, fontset.c:
+	* frame.c, fringe.c, ftfont.c, ftxfont.c, gfilenotify.c, gnutls.c:
+	* image.c, inotify.c, insdel.c, keyboard.c, keymap.c, lread.c:
+	* macfont.m, macros.c, minibuf.c, nsfns.m, nsfont.m, nsimage.m:
+	* nsmenu.m, nsselect.m, nsterm.m, print.c, process.c, profiler.c:
+	* search.c, sound.c, syntax.c, term.c, terminal.c, textprop.c, undo.c:
+	* window.c, xdisp.c, xfaces.c, xfns.c, xftfont.c, xmenu.c, xml.c:
+	* xselect.c, xsettings.c, xterm.c:
+	Remove Q vars that represent symbols (e.g., Qnil, Qt, Qemacs).
+	These names are now defined automatically by make-docfile.
+	* alloc.c (init_symbol): New function.
+	(Fmake_symbol): Use it.
+	(c_symbol_p): New function.
+	(valid_lisp_object_p, purecopy): Use it.
+	* alloc.c (marked_pinned_symbols):
+	Use make_lisp_symbol instead of make_lisp_ptr.
+	(garbage_collect_1): Mark lispsym symbols.
+	(CHECK_ALLOCATED_AND_LIVE_SYMBOL): New macro.
+	(mark_object): Use it.
+	(sweep_symbols): Sweep lispsym symbols.
+	(symbol_uses_obj): New function.
+	(which_symbols): Use it.  Work for lispsym symbols, too.
+	(init_alloc_once): Initialize Vpurify_flag here; no need to wait,
+	since Qt's address is already known now.
+	(syms_of_alloc): Add lispsym count to symbols_consed.
+	* buffer.c (init_buffer_once): Compare to Qnil, not to make_number (0),
+	when testing whether storage is all bits zero.
+	* dispextern.h (struct image_type):
+	* font.c (font_property_table):
+	* frame.c (struct frame_parm_table, frame_parms):
+	* keyboard.c (scroll_bar_parts, struct event_head):
+	* xdisp.c (struct props):
+	Use XSYMBOL_INIT (Qfoo) and struct Lisp_Symbol * rather than &Qfoo and
+	Lisp_Object *, since Qfoo is no longer an object whose address can be
+	taken.  All uses changed.
+	* eval.c (run_hook): New function.  Most uses of Frun_hooks changed to
+	use it, so that they no longer need to take the address of a Lisp sym.
+	(syms_of_eval): Don't use DEFSYM on Vrun_hooks, as it's a variable.
+	* frame.c (syms_of_frame): Add defsyms for the frame_parms table.
+	* keyboard.c (syms_of_keyboard): Don't DEFSYM Qmenu_bar here.
+	DEFSYM Qdeactivate_mark before the corresponding var.
+	* keymap.c (syms_of_keymap): Use DEFSYM for Qmenu_bar and Qmode_line
+	instead of interning their symbols; this avoids duplicates.
+	(LISP_INITIALLY, TAG_PTR)
+	(DEFINE_LISP_SYMBOL_BEGIN, DEFINE_LISP_SYMBOL_END, XSYMBOL_INIT):
+	New macros.
+	(LISP_INITIALLY_ZERO): Use it.
+	(enum symbol_interned, enum symbol_redirect, struct Lisp_Symbol)
+	(EXFUN, DEFUN_ARGS_MANY, DEFUN_ARGS_UNEVALLED, DEFUN_ARGS_*):
+	Move decls up, to avoid forward uses.  Include globals.h earlier, too.
+	(make_lisp_symbol): New function.
+	(XSETSYMBOL): Use it.
+	(DEFSYM): Now just a placeholder for make-docfile.
+	* lread.c (DEFINE_SYMBOLS): Define, for globals.h.
+	(intern_sym): New function, with body taken from old intern_driver.
+	(intern_driver): Use it.  Last arg is now Lisp integer, not ptrdiff_t.
+	All uses changed.
+	(define_symbol): New function.
+	(init_obarray): Define the C symbols taken from lispsym.
+	Use plain DEFSYM for Qt and Qnil.
+	* syntax.c (init_syntax_once): No need to worry about
+	Qchar_table_extra_slots.
+
 2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
 
 	'temacs -nw' should not call missing functions
@@ -145,6 +388,10 @@
 
 	* xterm.c (do_ewmh_fullscreen): Don't remove maximized_horz/vert
 	when going to fullscreen (Bug#0x180004f).
+
+2014-12-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* window.c (Fwindow_body_width): Doc fix.  (Bug#19395)
 
 2014-12-27  Stefan Monnier  <monnier@iro.umontreal.ca>
 

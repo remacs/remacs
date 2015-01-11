@@ -47,10 +47,6 @@ struct uniscribe_font_info
 
 int uniscribe_available = 0;
 
-/* Defined in w32font.c, since it is required there as well.  */
-extern Lisp_Object Quniscribe;
-extern Lisp_Object Qopentype;
-
 /* EnumFontFamiliesEx callback.  */
 static int CALLBACK ALIGN_STACK add_opentype_font_name_to_list (ENUMLOGFONTEX *,
 								NEWTEXTMETRICEX *,

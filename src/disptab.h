@@ -48,9 +48,6 @@ extern struct Lisp_Char_Table *window_display_table (struct window *);
 /* Defined in indent.c.  */
 extern struct Lisp_Char_Table *buffer_display_table (void);
 
-/* This is the `purpose' slot of a display table.  */
-extern Lisp_Object Qdisplay_table;
-
 /* Return the current length of the GLYPH table,
    or 0 if the table isn't currently valid.  */
 #define GLYPH_TABLE_LENGTH  \

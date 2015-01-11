@@ -84,12 +84,6 @@ static struct re_registers search_regs;
    Qnil if no searching has been done yet.  */
 static Lisp_Object last_thing_searched;
 
-/* Error condition signaled when regexp compile_pattern fails.  */
-static Lisp_Object Qinvalid_regexp;
-
-/* Error condition used for failing searches.  */
-static Lisp_Object Qsearch_failed;
-
 static void set_search_regs (ptrdiff_t, ptrdiff_t);
 static void save_search_regs (void);
 static EMACS_INT simple_search (EMACS_INT, unsigned char *, ptrdiff_t,
@@ -3329,7 +3323,10 @@ syms_of_search (void)
     }
   searchbuf_head = &searchbufs[0];
 
+  /* Error condition used for failing searches.  */
   DEFSYM (Qsearch_failed, "search-failed");
+
+  /* Error condition signaled when regexp compile_pattern fails.  */
   DEFSYM (Qinvalid_regexp, "invalid-regexp");
 
   Fput (Qsearch_failed, Qerror_conditions,

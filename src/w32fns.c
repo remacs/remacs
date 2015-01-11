@@ -93,19 +93,6 @@ extern char * w32_strerror (int error_no);
 #define IDC_HAND MAKEINTRESOURCE(32649)
 #endif
 
-Lisp_Object Qundefined_color;
-Lisp_Object Qcancel_timer;
-Lisp_Object Qfont_param;
-Lisp_Object Qhyper;
-Lisp_Object Qsuper;
-Lisp_Object Qmeta;
-Lisp_Object Qalt;
-Lisp_Object Qctrl;
-Lisp_Object Qcontrol;
-Lisp_Object Qshift;
-static Lisp_Object Qgeometry, Qworkarea, Qmm_size, Qframes;
-
-
 /* Prefix for system colors.  */
 #define SYSTEM_COLOR_PREFIX "System"
 #define SYSTEM_COLOR_PREFIX_LEN (sizeof (SYSTEM_COLOR_PREFIX) - 1)
@@ -6141,7 +6128,7 @@ Text larger than the specified size is clipped.  */)
 		 place the cursor there.  Don't include the width of
 		 this glyph.  */
 	      last = &row->glyphs[TEXT_AREA][row->used[TEXT_AREA] - 1];
-	      if (INTEGERP (last->object))
+	      if (NILP (last->object))
 		row_width -= last->pixel_width;
 	    }
 	  else
@@ -6151,7 +6138,7 @@ Text larger than the specified size is clipped.  */)
 		 Don't count that glyph.  */
 	      struct glyph *g = row->glyphs[TEXT_AREA];
 
-	      if (g->type == STRETCH_GLYPH && INTEGERP (g->object))
+	      if (g->type == STRETCH_GLYPH && NILP (g->object))
 		{
 		  row_width -= g->pixel_width;
 		  seen_reversed_p = 1;
@@ -6200,7 +6187,7 @@ Text larger than the specified size is clipped.  */)
 	  if (row->used[TEXT_AREA] && !row->reversed_p)
 	    {
 	      last = &row->glyphs[TEXT_AREA][row->used[TEXT_AREA] - 1];
-	      if (INTEGERP (last->object))
+	      if (NILP (last->object))
 		row_width -= last->pixel_width;
 	    }
 
@@ -7248,7 +7235,7 @@ The return value is the hotkey-id if registered, otherwise nil.  */)
       /* Notify input thread about new hot-key definition, so that it
 	 takes effect without needing to switch focus.  */
       PostThreadMessage (dwWindowsThreadId, WM_EMACS_REGISTER_HOT_KEY,
-			 (WPARAM) XLI (key), 0);
+			 (WPARAM) XINT (key), 0);
     }
 
   return key;

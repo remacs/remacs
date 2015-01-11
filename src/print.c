@@ -75,9 +75,6 @@ static ptrdiff_t print_buffer_pos;
 /* Bytes stored in print_buffer.  */
 static ptrdiff_t print_buffer_pos_byte;
 
-Lisp_Object Qprint_escape_newlines;
-static Lisp_Object Qprint_escape_multibyte, Qprint_escape_nonascii;
-
 /* Vprint_number_table is a table, that keeps objects that are going to
    be printed, to allow use of #n= and #n# to express sharing.
    For any given object, the table can give the following values:
@@ -510,7 +507,7 @@ temp_output_buffer_setup (const char *bufname)
   Ferase_buffer ();
   XSETBUFFER (buf, current_buffer);
 
-  Frun_hooks (1, &Qtemp_buffer_setup_hook);
+  run_hook (Qtemp_buffer_setup_hook);
 
   unbind_to (count, Qnil);
 
@@ -718,10 +715,6 @@ is used instead.  */)
   UNGCPRO;
   return object;
 }
-
-/* The subroutine object for external-debugging-output is kept here
-   for the convenience of the debugger.  */
-Lisp_Object Qexternal_debugging_output;
 
 DEFUN ("external-debugging-output", Fexternal_debugging_output, Sexternal_debugging_output, 1, 1, 0,
        doc: /* Write CHARACTER to stderr.
@@ -2235,7 +2228,10 @@ print_interval (INTERVAL interval, Lisp_Object printcharfun)
 void
 init_print_once (void)
 {
+  /* The subroutine object for external-debugging-output is kept here
+     for the convenience of the debugger.  */
   DEFSYM (Qexternal_debugging_output, "external-debugging-output");
+
   defsubr (&Sexternal_debugging_output);
 }
 

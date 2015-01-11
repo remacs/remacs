@@ -1,3 +1,12 @@
+2015-01-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Default to 'configure --enable-silent-rules'
+	* NEWS: Document this.
+
+2015-01-10  Daniel Colascione  <dancol@dancol.org>
+
+	* NEWS: Fix typo
+
 2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
 
 	batch write-region no longer says "Wrote FOO"

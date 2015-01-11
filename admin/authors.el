@@ -40,6 +40,7 @@ files.")
 
 (defconst authors-aliases
   '(
+    (nil "A\\. N\\. Other")  ; unknown author 2014-12-03, later removed
     ("Aaron S. Hawley" "Aaron Hawley")
     ("Alexandru Harsanyi" "Alex Harsanyi")
     ("Andrew Csillag" "Drew Csillag")

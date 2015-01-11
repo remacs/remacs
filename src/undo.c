@@ -34,12 +34,6 @@ static struct buffer *last_undo_buffer;
 static struct buffer *last_boundary_buffer;
 static ptrdiff_t last_boundary_position;
 
-Lisp_Object Qinhibit_read_only;
-
-/* Marker for function call undo list elements.  */
-
-Lisp_Object Qapply;
-
 /* The first time a command records something for undo.
    it also allocates the undo-boundary object
    which will be added to the list at the end of the command.
@@ -461,6 +455,8 @@ void
 syms_of_undo (void)
 {
   DEFSYM (Qinhibit_read_only, "inhibit-read-only");
+
+  /* Marker for function call undo list elements.  */
   DEFSYM (Qapply, "apply");
 
   pending_boundary = Qnil;

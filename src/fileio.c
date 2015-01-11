@@ -113,49 +113,9 @@ static bool auto_save_error_occurred;
 static bool valid_timestamp_file_system;
 static dev_t timestamp_file_system;
 
-/* The symbol bound to coding-system-for-read when
-   insert-file-contents is called for recovering a file.  This is not
-   an actual coding system name, but just an indicator to tell
-   insert-file-contents to use `emacs-mule' with a special flag for
-   auto saving and recovering a file.  */
-static Lisp_Object Qauto_save_coding;
-
-/* Property name of a file name handler,
-   which gives a list of operations it handles..  */
-static Lisp_Object Qoperations;
-
-/* Lisp functions for translating file formats.  */
-static Lisp_Object Qformat_decode, Qformat_annotate_function;
-
-/* Lisp function for setting buffer-file-coding-system and the
-   multibyteness of the current buffer after inserting a file.  */
-static Lisp_Object Qafter_insert_file_set_coding;
-
-static Lisp_Object Qwrite_region_annotate_functions;
 /* Each time an annotation function changes the buffer, the new buffer
    is added here.  */
 static Lisp_Object Vwrite_region_annotation_buffers;
-
-static Lisp_Object Qdelete_by_moving_to_trash;
-
-/* Lisp function for moving files to trash.  */
-static Lisp_Object Qmove_file_to_trash;
-
-/* Lisp function for recursively copying directories.  */
-static Lisp_Object Qcopy_directory;
-
-/* Lisp function for recursively deleting directories.  */
-static Lisp_Object Qdelete_directory;
-
-static Lisp_Object Qsubstitute_env_in_file_name;
-static Lisp_Object Qget_buffer_window_list;
-
-Lisp_Object Qfile_error, Qfile_notify_error;
-static Lisp_Object Qfile_already_exists, Qfile_date_error;
-static Lisp_Object Qexcl;
-Lisp_Object Qfile_name_history;
-
-static Lisp_Object Qcar_less_than_car;
 
 static bool a_write (int, Lisp_Object, ptrdiff_t, ptrdiff_t,
 		     Lisp_Object *, struct coding_system *);
@@ -291,43 +251,6 @@ restore_point_unwind (Lisp_Object location)
 }
 
 
-static Lisp_Object Qexpand_file_name;
-static Lisp_Object Qsubstitute_in_file_name;
-static Lisp_Object Qdirectory_file_name;
-static Lisp_Object Qfile_name_directory;
-static Lisp_Object Qfile_name_nondirectory;
-static Lisp_Object Qunhandled_file_name_directory;
-static Lisp_Object Qfile_name_as_directory;
-static Lisp_Object Qcopy_file;
-static Lisp_Object Qmake_directory_internal;
-static Lisp_Object Qmake_directory;
-static Lisp_Object Qdelete_directory_internal;
-Lisp_Object Qdelete_file;
-static Lisp_Object Qrename_file;
-static Lisp_Object Qadd_name_to_file;
-static Lisp_Object Qmake_symbolic_link;
-Lisp_Object Qfile_exists_p;
-static Lisp_Object Qfile_executable_p;
-static Lisp_Object Qfile_readable_p;
-static Lisp_Object Qfile_writable_p;
-static Lisp_Object Qfile_symlink_p;
-static Lisp_Object Qaccess_file;
-Lisp_Object Qfile_directory_p;
-static Lisp_Object Qfile_regular_p;
-static Lisp_Object Qfile_accessible_directory_p;
-static Lisp_Object Qfile_modes;
-static Lisp_Object Qset_file_modes;
-static Lisp_Object Qset_file_times;
-static Lisp_Object Qfile_selinux_context;
-static Lisp_Object Qset_file_selinux_context;
-static Lisp_Object Qfile_acl;
-static Lisp_Object Qset_file_acl;
-static Lisp_Object Qfile_newer_than_file_p;
-Lisp_Object Qinsert_file_contents;
-Lisp_Object Qwrite_region;
-static Lisp_Object Qverify_visited_file_modtime;
-static Lisp_Object Qset_visited_file_modtime;
-
 DEFUN ("find-file-name-handler", Ffind_file_name_handler,
        Sfind_file_name_handler, 2, 2, 0,
        doc: /* Return FILENAME's handler function for OPERATION, if it has one.
@@ -5866,7 +5789,10 @@ init_fileio (void)
 void
 syms_of_fileio (void)
 {
+  /* Property name of a file name handler,
+     which gives a list of operations it handles.  */
   DEFSYM (Qoperations, "operations");
+
   DEFSYM (Qexpand_file_name, "expand-file-name");
   DEFSYM (Qsubstitute_in_file_name, "substitute-in-file-name");
   DEFSYM (Qdirectory_file_name, "directory-file-name");
@@ -5903,6 +5829,12 @@ syms_of_fileio (void)
   DEFSYM (Qwrite_region, "write-region");
   DEFSYM (Qverify_visited_file_modtime, "verify-visited-file-modtime");
   DEFSYM (Qset_visited_file_modtime, "set-visited-file-modtime");
+
+  /* The symbol bound to coding-system-for-read when
+     insert-file-contents is called for recovering a file.  This is not
+     an actual coding system name, but just an indicator to tell
+     insert-file-contents to use `emacs-mule' with a special flag for
+     auto saving and recovering a file.  */
   DEFSYM (Qauto_save_coding, "auto-save-coding");
 
   DEFSYM (Qfile_name_history, "file-name-history");
@@ -5938,9 +5870,14 @@ On MS-Windows, the value of this variable is largely ignored if
 behaves as if file names were encoded in `utf-8'.  */);
   Vdefault_file_name_coding_system = Qnil;
 
+  /* Lisp functions for translating file formats.  */
   DEFSYM (Qformat_decode, "format-decode");
   DEFSYM (Qformat_annotate_function, "format-annotate-function");
+
+  /* Lisp function for setting buffer-file-coding-system and the
+     multibyteness of the current buffer after inserting a file.  */
   DEFSYM (Qafter_insert_file_set_coding, "after-insert-file-set-coding");
+
   DEFSYM (Qcar_less_than_car, "car-less-than-car");
 
   Fput (Qfile_error, Qerror_conditions,
@@ -6094,11 +6031,17 @@ When non-nil, certain file deletion commands use the function
 This includes interactive calls to `delete-file' and
 `delete-directory' and the Dired deletion commands.  */);
   delete_by_moving_to_trash = 0;
-  Qdelete_by_moving_to_trash = intern_c_string ("delete-by-moving-to-trash");
+  DEFSYM (Qdelete_by_moving_to_trash, "delete-by-moving-to-trash");
 
+  /* Lisp function for moving files to trash.  */
   DEFSYM (Qmove_file_to_trash, "move-file-to-trash");
+
+  /* Lisp function for recursively copying directories.  */
   DEFSYM (Qcopy_directory, "copy-directory");
+
+  /* Lisp function for recursively deleting directories.  */
   DEFSYM (Qdelete_directory, "delete-directory");
+
   DEFSYM (Qsubstitute_env_in_file_name, "substitute-env-in-file-name");
   DEFSYM (Qget_buffer_window_list, "get-buffer-window-list");
 

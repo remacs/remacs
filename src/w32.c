@@ -242,8 +242,6 @@ typedef struct _REPARSE_DATA_BUFFER {
 typedef HRESULT (WINAPI * ShGetFolderPath_fn)
   (IN HWND, IN int, IN HANDLE, IN DWORD, OUT char *);
 
-Lisp_Object QCloaded_from;
-
 void globals_of_w32 (void);
 static DWORD get_rid (PSID);
 static int is_symlink (const char *);

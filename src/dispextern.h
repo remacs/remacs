@@ -393,10 +393,9 @@ struct glyph
 
   /* Lisp object source of this glyph.  Currently either a buffer or a
      string, if the glyph was produced from characters which came from
-     a buffer or a string; or Lisp integer zero (a.k.a. "null object")
-     if the glyph was inserted by redisplay for its own purposes, such
-     as padding or truncation/continuation glyphs, or the
-     overlay-arrow glyphs on TTYs.  */
+     a buffer or a string; or nil if the glyph was inserted by
+     redisplay for its own purposes, such as padding, truncation, or
+     continuation glyphs, or the overlay-arrow glyphs on TTYs.  */
   Lisp_Object object;
 
   /* Width in pixels.  */
@@ -1727,8 +1726,8 @@ struct face
      attributes except the font.  */
   struct face *ascii_face;
 
-#ifdef HAVE_XFT
-  /* Extra member that a font-driver uses privately.  */
+#if defined HAVE_XFT || defined HAVE_FREETYPE
+/* Extra member that a font-driver uses privately.  */
   void *extra;
 #endif
 };
@@ -2552,11 +2551,11 @@ struct it
      Object is normally the buffer which is being rendered, but it can
      also be a Lisp string in case the current display element comes
      from an overlay string or from a display string (before- or
-     after-string).  It may also be nil when a C string is being
-     rendered, e.g., during mode-line or header-line update.  It can
-     also be a cons cell of the form `(space ...)', when we produce a
-     stretch glyph from a `display' specification.  Finally, it can be
-     a zero-valued Lisp integer, but only temporarily, when we are
+     after-string).  It may also be a zero-valued Lisp integer when a
+     C string is being rendered, e.g., during mode-line or header-line
+     update.  It can also be a cons cell of the form `(space ...)',
+     when we produce a stretch glyph from a `display' specification.
+     Finally, it can be nil, but only temporarily, when we are
      producing special glyphs for display purposes, like truncation
      and continuation glyphs, or blanks that extend each line to the
      edge of the window on a TTY.
@@ -2934,8 +2933,8 @@ struct redisplay_interface
 
 struct image_type
 {
-  /* A symbol uniquely identifying the image type, .e.g `jpeg'.  */
-  Lisp_Object *type;
+  /* Index of a symbol uniquely identifying the image type, e.g., 'jpeg'.  */
+  int type;
 
   /* Check that SPEC is a valid image specification for the given
      image type.  Value is true if SPEC is valid.  */
@@ -3249,7 +3248,6 @@ void move_it_in_display_line (struct it *it,
 			      enum move_operation_enum op);
 bool in_display_vector_p (struct it *);
 int frame_mode_line_height (struct frame *);
-extern Lisp_Object Qtool_bar;
 extern bool redisplaying_p;
 extern bool help_echo_showing_p;
 extern Lisp_Object help_echo_string, help_echo_window;
@@ -3429,7 +3427,6 @@ int face_at_string_position (struct window *w, Lisp_Object string,
 int merge_faces (struct frame *, Lisp_Object, int, int);
 int compute_char_face (struct frame *, int, Lisp_Object);
 void free_all_realized_faces (Lisp_Object);
-extern Lisp_Object Qforeground_color, Qbackground_color;
 extern char unspecified_fg[], unspecified_bg[];
 
 /* Defined in xfns.c.  */
@@ -3519,7 +3516,6 @@ void do_pending_window_change (bool);
 void change_frame_size (struct frame *, int, int, bool, bool, bool, bool);
 void init_display (void);
 void syms_of_display (void);
-extern Lisp_Object Qredisplay_dont_pause;
 extern void spec_glyph_lookup_face (struct window *, GLYPH *);
 extern void fill_up_frame_row_with_spaces (struct glyph_row *, int);
 

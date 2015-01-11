@@ -34,8 +34,6 @@ GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
 #include "termhooks.h"
 #include "keyboard.h"
 
-static Lisp_Object QCLIPBOARD, QSECONDARY, QTEXT, QFILE_NAME;
-
 static Lisp_Object Vselection_alist;
 
 /* NSGeneralPboard is pretty much analogous to X11 CLIPBOARD */

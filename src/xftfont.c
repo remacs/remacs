@@ -38,9 +38,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Xft font driver.  */
 
-Lisp_Object Qxft;
-static Lisp_Object QChinting, QCautohint, QChintstyle, QCrgba, QCembolden,
-  QClcdfilter;
 
 /* The actual structure for Xft font that can be cast to struct
    font.  */

@@ -37,10 +37,6 @@ static int next_terminal_id;
 /* The initial terminal device, created by initial_term_init.  */
 struct terminal *initial_terminal;
 
-Lisp_Object Qrun_hook_with_args;
-static Lisp_Object Qterminal_live_p;
-static Lisp_Object Qdelete_terminal_functions;
-
 static void delete_initial_terminal (struct terminal *);
 
 /* This setter is used only in this file, so it can be private.  */

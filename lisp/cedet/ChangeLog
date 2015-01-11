@@ -1,3 +1,52 @@
+2015-01-07  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Don't use <class> as a variable and don't assume that <class>-list-p is
+	automatically defined.
+
+	* ede/speedbar.el (ede-speedbar-compile-line)
+	(ede-speedbar-get-top-project-for-line):
+	* ede.el (ede-buffer-belongs-to-target-p)
+	(ede-buffer-belongs-to-project-p, ede-build-forms-menu)
+	(ede-add-project-to-global-list):
+	* semantic/db-typecache.el (semanticdb-get-typecache):
+	* semantic/db-file.el (semanticdb-load-database):
+	* semantic/db-el.el (semanticdb-elisp-sym->tag):
+	* semantic/db-ebrowse.el (semanticdb-ebrowse-load-helper):
+	* ede/project-am.el (project-am-preferred-target-type):
+	* ede/proj.el (ede-proj-load):
+	* ede/custom.el (ede-customize-current-target, ede-customize-target):
+	* semantic/ede-grammar.el ("semantic grammar"):
+	* semantic/scope.el (semantic-scope-reset-cache)
+	(semantic-calculate-scope):
+	* srecode/map.el (srecode-map-update-map):
+	* srecode/insert.el (srecode-insert-show-error-report)
+	(srecode-insert-method, srecode-insert-include-lookup)
+	(srecode-insert-method):
+	* srecode/fields.el (srecode-active-template-region):
+	* srecode/compile.el (srecode-flush-active-templates)
+	(srecode-compile-inserter): Don't use <class> as a variable.
+	Use `oref-default' for class slots.
+
+	* semantic/grammar.el (semantic-grammar-eldoc-last-data): New var.
+	(semantic-grammar-eldoc-get-macro-docstring): Use it instead of
+	eldoc-last-data.
+	* semantic/fw.el (semantic-exit-on-input): Use `declare'.
+	(semantic-throw-on-input): Use `with-current-buffer'.
+	* semantic/db.el (semanticdb-abstract-table-list): Define if not
+	pre-defined.
+	* semantic/db-find.el (semanticdb-find-tags-collector):
+	Use save-current-buffer.
+	(semanticdb-find-tags-collector): Don't use <class> as a variable.
+	* semantic/complete.el (semantic-complete-active-default)
+	(semantic-complete-current-matched-tag): Declare.
+	(semantic-complete-inline-custom-type): Don't use <class> as a variable.
+	* semantic/bovine/make.el (semantic-analyze-possible-completions):
+	Use with-current-buffer.
+	* semantic.el (semantic-parser-warnings): Declare.
+	* ede/base.el (ede-target-list): Define if not pre-defined.
+	(ede-with-projectfile): Prefer find-file-noselect over
+	save-window-excursion.
+
 2014-12-22  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* srecode/srt-mode.el (srecode-macro-help): Use eieio-class-children.

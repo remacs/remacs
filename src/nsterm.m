@@ -225,14 +225,6 @@ static unsigned convert_ns_to_X_keysym[] =
   0x1B,				0x1B   /* escape */
 };
 
-static Lisp_Object Qmodifier_value;
-Lisp_Object Qalt, Qcontrol, Qhyper, Qmeta, Qsuper;
-extern Lisp_Object Qcursor_color, Qcursor_type, Qns;
-
-static Lisp_Object QUTF8_STRING;
-static Lisp_Object Qcocoa, Qgnustep;
-static Lisp_Object Qfile, Qurl;
-
 /* On OS X picks up the default NSGlobalDomain AppleAntiAliasingThreshold,
    the maximum font size to NOT antialias.  On GNUstep there is currently
    no way to control this behavior. */
@@ -1412,15 +1404,8 @@ x_set_window_size (struct frame *f,
     [view setBoundsOrigin: origin];
   }
 
-  change_frame_size (f, width, height, 0, 1, 0, pixelwise);
-/*  SET_FRAME_GARBAGED (f); // this short-circuits expose call in drawRect */
-
-  mark_window_cursors_off (XWINDOW (f->root_window));
-  cancel_mouse_face (f);
-
+  [view updateFrameSize: NO];
   unblock_input ();
-
-  do_pending_window_change (0);
 }
 
 

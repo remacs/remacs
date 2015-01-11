@@ -55,76 +55,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "widget.h"
 #endif
 
-#ifdef HAVE_NS
-Lisp_Object Qns_parse_geometry;
-#endif
-
-Lisp_Object Qframep, Qframe_live_p;
-Lisp_Object Qicon, Qmodeline;
-Lisp_Object Qonly, Qnone;
-Lisp_Object Qx, Qw32, Qpc, Qns;
-Lisp_Object Qvisible;
-Lisp_Object Qdisplay_type;
-static Lisp_Object Qbackground_mode;
-Lisp_Object Qnoelisp;
-
-static Lisp_Object Qx_frame_parameter;
-Lisp_Object Qx_resource_name;
-Lisp_Object Qterminal;
-
-/* Frame parameters (set or reported).  */
-
-Lisp_Object Qauto_raise, Qauto_lower;
-Lisp_Object Qborder_color, Qborder_width;
-Lisp_Object Qcursor_color, Qcursor_type;
-Lisp_Object Qheight, Qwidth;
-Lisp_Object Qicon_left, Qicon_top, Qicon_type, Qicon_name;
-Lisp_Object Qtooltip;
-Lisp_Object Qinternal_border_width;
-Lisp_Object Qright_divider_width, Qbottom_divider_width;
-Lisp_Object Qmouse_color;
-Lisp_Object Qminibuffer;
-Lisp_Object Qscroll_bar_width, Qvertical_scroll_bars;
-Lisp_Object Qscroll_bar_height, Qhorizontal_scroll_bars;
-Lisp_Object Qvisibility;
-Lisp_Object Qscroll_bar_foreground, Qscroll_bar_background;
-Lisp_Object Qscreen_gamma;
-Lisp_Object Qline_spacing;
-static Lisp_Object Quser_position, Quser_size;
-Lisp_Object Qwait_for_wm;
-static Lisp_Object Qwindow_id;
-#ifdef HAVE_X_WINDOWS
-static Lisp_Object Qouter_window_id;
-#endif
-Lisp_Object Qparent_id;
-Lisp_Object Qtitle, Qname;
-static Lisp_Object Qexplicit_name;
-Lisp_Object Qunsplittable;
-Lisp_Object Qmenu_bar_lines, Qtool_bar_lines, Qtool_bar_position;
-Lisp_Object Qleft_fringe, Qright_fringe;
-Lisp_Object Qbuffer_predicate;
-static Lisp_Object Qbuffer_list, Qburied_buffer_list;
-Lisp_Object Qtty_color_mode;
-Lisp_Object Qtty, Qtty_type;
-
-Lisp_Object Qfullscreen, Qfullwidth, Qfullheight, Qfullboth, Qmaximized;
-Lisp_Object Qsticky;
-Lisp_Object Qfont_backend;
-Lisp_Object Qalpha;
-
-Lisp_Object Qface_set_after_frame_default;
-
-static Lisp_Object Qfocus_in_hook;
-static Lisp_Object Qfocus_out_hook;
-static Lisp_Object Qdelete_frame_functions;
-static Lisp_Object Qframe_windows_min_size;
-static Lisp_Object Qgeometry, Qworkarea, Qmm_size, Qframes, Qsource;
-
-Lisp_Object Qframe_position, Qframe_outer_size, Qframe_inner_size;
-Lisp_Object Qexternal_border_size, Qtitle_height;
-Lisp_Object Qmenu_bar_external, Qmenu_bar_size;
-Lisp_Object Qtool_bar_external, Qtool_bar_size;
-
 /* The currently selected frame.  */
 
 Lisp_Object selected_frame;
@@ -1221,7 +1151,7 @@ to that frame.  */)
 {
   /* Preserve prefix arg that the command loop just cleared.  */
   kset_prefix_arg (current_kboard, Vcurrent_prefix_arg);
-  Frun_hooks (1, &Qmouse_leave_buffer_hook);
+  run_hook (Qmouse_leave_buffer_hook);
   /* `switch-frame' implies a focus in.  */
   call1 (intern ("handle-focus-in"), event);
   return do_switch_frame (event, 0, 0, Qnil);
@@ -2995,48 +2925,48 @@ or bottommost possible position (that stays within the screen).  */)
 
 struct frame_parm_table {
   const char *name;
-  Lisp_Object *variable;
+  int sym;
 };
 
 static const struct frame_parm_table frame_parms[] =
 {
-  {"auto-raise",		&Qauto_raise},
-  {"auto-lower",		&Qauto_lower},
-  {"background-color",		0},
-  {"border-color",		&Qborder_color},
-  {"border-width",		&Qborder_width},
-  {"cursor-color",		&Qcursor_color},
-  {"cursor-type",		&Qcursor_type},
-  {"font",			0},
-  {"foreground-color",		0},
-  {"icon-name",			&Qicon_name},
-  {"icon-type",			&Qicon_type},
-  {"internal-border-width",	&Qinternal_border_width},
-  {"right-divider-width",	&Qright_divider_width},
-  {"bottom-divider-width",	&Qbottom_divider_width},
-  {"menu-bar-lines",		&Qmenu_bar_lines},
-  {"mouse-color",		&Qmouse_color},
-  {"name",			&Qname},
-  {"scroll-bar-width",		&Qscroll_bar_width},
-  {"scroll-bar-height",		&Qscroll_bar_height},
-  {"title",			&Qtitle},
-  {"unsplittable",		&Qunsplittable},
-  {"vertical-scroll-bars",	&Qvertical_scroll_bars},
-  {"horizontal-scroll-bars",	&Qhorizontal_scroll_bars},
-  {"visibility",		&Qvisibility},
-  {"tool-bar-lines",		&Qtool_bar_lines},
-  {"scroll-bar-foreground",	&Qscroll_bar_foreground},
-  {"scroll-bar-background",	&Qscroll_bar_background},
-  {"screen-gamma",		&Qscreen_gamma},
-  {"line-spacing",		&Qline_spacing},
-  {"left-fringe",		&Qleft_fringe},
-  {"right-fringe",		&Qright_fringe},
-  {"wait-for-wm",		&Qwait_for_wm},
-  {"fullscreen",                &Qfullscreen},
-  {"font-backend",		&Qfont_backend},
-  {"alpha",			&Qalpha},
-  {"sticky",			&Qsticky},
-  {"tool-bar-position",		&Qtool_bar_position},
+  {"auto-raise",		SYMBOL_INDEX (Qauto_raise)},
+  {"auto-lower",		SYMBOL_INDEX (Qauto_lower)},
+  {"background-color",		-1},
+  {"border-color",		SYMBOL_INDEX (Qborder_color)},
+  {"border-width",		SYMBOL_INDEX (Qborder_width)},
+  {"cursor-color",		SYMBOL_INDEX (Qcursor_color)},
+  {"cursor-type",		SYMBOL_INDEX (Qcursor_type)},
+  {"font",			-1},
+  {"foreground-color",		-1},
+  {"icon-name",			SYMBOL_INDEX (Qicon_name)},
+  {"icon-type",			SYMBOL_INDEX (Qicon_type)},
+  {"internal-border-width",	SYMBOL_INDEX (Qinternal_border_width)},
+  {"right-divider-width",	SYMBOL_INDEX (Qright_divider_width)},
+  {"bottom-divider-width",	SYMBOL_INDEX (Qbottom_divider_width)},
+  {"menu-bar-lines",		SYMBOL_INDEX (Qmenu_bar_lines)},
+  {"mouse-color",		SYMBOL_INDEX (Qmouse_color)},
+  {"name",			SYMBOL_INDEX (Qname)},
+  {"scroll-bar-width",		SYMBOL_INDEX (Qscroll_bar_width)},
+  {"scroll-bar-height",		SYMBOL_INDEX (Qscroll_bar_height)},
+  {"title",			SYMBOL_INDEX (Qtitle)},
+  {"unsplittable",		SYMBOL_INDEX (Qunsplittable)},
+  {"vertical-scroll-bars",	SYMBOL_INDEX (Qvertical_scroll_bars)},
+  {"horizontal-scroll-bars",	SYMBOL_INDEX (Qhorizontal_scroll_bars)},
+  {"visibility",		SYMBOL_INDEX (Qvisibility)},
+  {"tool-bar-lines",		SYMBOL_INDEX (Qtool_bar_lines)},
+  {"scroll-bar-foreground",	SYMBOL_INDEX (Qscroll_bar_foreground)},
+  {"scroll-bar-background",	SYMBOL_INDEX (Qscroll_bar_background)},
+  {"screen-gamma",		SYMBOL_INDEX (Qscreen_gamma)},
+  {"line-spacing",		SYMBOL_INDEX (Qline_spacing)},
+  {"left-fringe",		SYMBOL_INDEX (Qleft_fringe)},
+  {"right-fringe",		SYMBOL_INDEX (Qright_fringe)},
+  {"wait-for-wm",		SYMBOL_INDEX (Qwait_for_wm)},
+  {"fullscreen",                SYMBOL_INDEX (Qfullscreen)},
+  {"font-backend",		SYMBOL_INDEX (Qfont_backend)},
+  {"alpha",			SYMBOL_INDEX (Qalpha)},
+  {"sticky",			SYMBOL_INDEX (Qsticky)},
+  {"tool-bar-position",		SYMBOL_INDEX (Qtool_bar_position)},
 };
 
 #ifdef HAVE_WINDOW_SYSTEM
@@ -4854,17 +4784,49 @@ syms_of_frame (void)
   DEFSYM (Qns_parse_geometry, "ns-parse-geometry");
 #endif
 
+  DEFSYM (Qalpha, "alpha");
+  DEFSYM (Qauto_lower, "auto-lower");
+  DEFSYM (Qauto_raise, "auto-raise");
+  DEFSYM (Qborder_color, "border-color");
+  DEFSYM (Qborder_width, "border-width");
+  DEFSYM (Qbottom_divider_width, "bottom-divider-width");
+  DEFSYM (Qcursor_color, "cursor-color");
+  DEFSYM (Qcursor_type, "cursor-type");
+  DEFSYM (Qfont_backend, "font-backend");
+  DEFSYM (Qfullscreen, "fullscreen");
+  DEFSYM (Qhorizontal_scroll_bars, "horizontal-scroll-bars");
+  DEFSYM (Qicon_name, "icon-name");
+  DEFSYM (Qicon_type, "icon-type");
+  DEFSYM (Qinternal_border_width, "internal-border-width");
+  DEFSYM (Qleft_fringe, "left-fringe");
+  DEFSYM (Qline_spacing, "line-spacing");
+  DEFSYM (Qmenu_bar_lines, "menu-bar-lines");
+  DEFSYM (Qmouse_color, "mouse-color");
+  DEFSYM (Qname, "name");
+  DEFSYM (Qright_divider_width, "right-divider-width");
+  DEFSYM (Qright_fringe, "right-fringe");
+  DEFSYM (Qscreen_gamma, "screen-gamma");
+  DEFSYM (Qscroll_bar_background, "scroll-bar-background");
+  DEFSYM (Qscroll_bar_foreground, "scroll-bar-foreground");
+  DEFSYM (Qscroll_bar_height, "scroll-bar-height");
+  DEFSYM (Qscroll_bar_width, "scroll-bar-width");
+  DEFSYM (Qsticky, "sticky");
+  DEFSYM (Qtitle, "title");
+  DEFSYM (Qtool_bar_lines, "tool-bar-lines");
+  DEFSYM (Qtool_bar_position, "tool-bar-position");
+  DEFSYM (Qunsplittable, "unsplittable");
+  DEFSYM (Qvertical_scroll_bars, "vertical-scroll-bars");
+  DEFSYM (Qvisibility, "visibility");
+  DEFSYM (Qwait_for_wm, "wait-for-wm");
+
   {
     int i;
 
     for (i = 0; i < ARRAYELTS (frame_parms); i++)
       {
-	Lisp_Object v = intern_c_string (frame_parms[i].name);
-	if (frame_parms[i].variable)
-	  {
-	    *frame_parms[i].variable = v;
-	    staticpro (frame_parms[i].variable);
-	  }
+	Lisp_Object v = (frame_parms[i].sym < 0
+			 ? intern_c_string (frame_parms[i].name)
+			 : builtin_lisp_symbol (frame_parms[i].sym));
 	Fput (v, Qx_frame_parameter, make_number (i));
       }
   }

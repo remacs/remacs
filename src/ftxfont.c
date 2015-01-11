@@ -35,8 +35,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* FTX font driver.  */
 
-static Lisp_Object Qftx;
-
 struct font_driver ftxfont_driver;
 
 struct ftxfont_frame_data

@@ -76,12 +76,6 @@ Lisp_Object control_x_map;	/* The keymap used for globally bound
 				   bindings when spaces are not encouraged
 				   in the minibuf.  */
 
-/* Keymap used for minibuffers when doing completion.  */
-/* Keymap used for minibuffers when doing completion and require a match.  */
-static Lisp_Object Qkeymapp, Qnon_ascii;
-Lisp_Object Qkeymap, Qmenu_item, Qremap;
-static Lisp_Object QCadvertised_binding;
-
 /* Alist of elements like (DEL . "\d").  */
 static Lisp_Object exclude_keys;
 
@@ -653,8 +647,6 @@ map_keymap (Lisp_Object map, map_keymap_function_t fun, Lisp_Object args,
     }
   UNGCPRO;
 }
-
-static Lisp_Object Qkeymap_canonicalize;
 
 /* Same as map_keymap, but does it right, properly eliminating duplicate
    bindings due to inheritance.   */
@@ -1998,7 +1990,6 @@ then the value includes only maps for prefixes that start with PREFIX.  */)
     }
   return maps;
 }
-static Lisp_Object Qsingle_key_description, Qkey_description;
 
 /* This function cannot GC.  */
 
@@ -3734,12 +3725,15 @@ be preferred.  */);
   Vwhere_is_preferred_modifier = Qnil;
   where_is_preferred_modifier = 0;
 
+  DEFSYM (Qmenu_bar, "menu-bar");
+  DEFSYM (Qmode_line, "mode-line");
+
   staticpro (&Vmouse_events);
   Vmouse_events = listn (CONSTYPE_PURE, 9,
-			 intern_c_string ("menu-bar"),
+			 Qmenu_bar,
 			 intern_c_string ("tool-bar"),
 			 intern_c_string ("header-line"),
-			 intern_c_string ("mode-line"),
+			 Qmode_line,
 			 intern_c_string ("mouse-1"),
 			 intern_c_string ("mouse-2"),
 			 intern_c_string ("mouse-3"),
@@ -3748,6 +3742,9 @@ be preferred.  */);
 
   DEFSYM (Qsingle_key_description, "single-key-description");
   DEFSYM (Qkey_description, "key-description");
+
+  /* Keymap used for minibuffers when doing completion.  */
+  /* Keymap used for minibuffers when doing completion and require a match.  */
   DEFSYM (Qkeymapp, "keymapp");
   DEFSYM (Qnon_ascii, "non-ascii");
   DEFSYM (Qmenu_item, "menu-item");

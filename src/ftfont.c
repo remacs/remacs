@@ -38,12 +38,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "font.h"
 #include "ftfont.h"
 
-/* Symbolic type of this font-driver.  */
-static Lisp_Object Qfreetype;
-
-/* Fontconfig's generic families and their aliases.  */
-static Lisp_Object Qmonospace, Qsans_serif, Qserif, Qmono, Qsans, Qsans__serif;
-
 /* Flag to tell if FcInit is already called or not.  */
 static bool fc_initialized;
 
@@ -2667,7 +2661,10 @@ ftfont_filter_properties (Lisp_Object font, Lisp_Object alist)
 void
 syms_of_ftfont (void)
 {
+  /* Symbolic type of this font-driver.  */
   DEFSYM (Qfreetype, "freetype");
+
+  /* Fontconfig's generic families and their aliases.  */
   DEFSYM (Qmonospace, "monospace");
   DEFSYM (Qsans_serif, "sans-serif");
   DEFSYM (Qserif, "serif");

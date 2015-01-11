@@ -41,16 +41,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "xterm.h"
 #endif
 
-Lisp_Object Qstring_lessp;
-static Lisp_Object Qstring_collate_lessp, Qstring_collate_equalp;
-static Lisp_Object Qprovide, Qrequire;
-static Lisp_Object Qyes_or_no_p_history;
-Lisp_Object Qcursor_in_echo_area;
-static Lisp_Object Qwidget_type;
-static Lisp_Object Qcodeset, Qdays, Qmonths, Qpaper;
-
-static Lisp_Object Qmd5, Qsha1, Qsha224, Qsha256, Qsha384, Qsha512;
-
 static void sort_vector_copy (Lisp_Object, ptrdiff_t,
 			      Lisp_Object [restrict], Lisp_Object [restrict]);
 static bool internal_equal (Lisp_Object, Lisp_Object, int, bool, Lisp_Object);
@@ -2788,8 +2778,6 @@ advisable.  */)
   return ret;
 }
 
-static Lisp_Object Qsubfeatures;
-
 DEFUN ("featurep", Ffeaturep, Sfeaturep, 1, 2, 0,
        doc: /* Return t if FEATURE is present in this Emacs.
 
@@ -2807,8 +2795,6 @@ SUBFEATURE can be used to check a specific subfeature of FEATURE.  */)
     tem = Fmember (subfeature, Fget (feature, Qsubfeatures));
   return (NILP (tem)) ? Qnil : Qt;
 }
-
-static Lisp_Object Qfuncall;
 
 DEFUN ("provide", Fprovide, Sprovide, 1, 2, 0,
        doc: /* Announce that FEATURE is a feature of the current Emacs.
@@ -3595,14 +3581,6 @@ base64_decode_1 (const char *from, char *to, ptrdiff_t length,
 /* The list of all weak hash tables.  Don't staticpro this one.  */
 
 static struct Lisp_Hash_Table *weak_hash_tables;
-
-/* Various symbols.  */
-
-static Lisp_Object Qhash_table_p;
-static Lisp_Object Qkey, Qvalue, Qeql;
-Lisp_Object Qeq, Qequal;
-Lisp_Object QCtest, QCsize, QCrehash_size, QCrehash_threshold, QCweakness;
-static Lisp_Object Qhash_table_test, Qkey_or_value, Qkey_and_value;
 
 
 /***********************************************************************

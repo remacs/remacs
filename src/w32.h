@@ -172,7 +172,6 @@ extern void init_timers (void);
 extern int _sys_read_ahead (int fd);
 extern int _sys_wait_accept (int fd);
 
-extern Lisp_Object QCloaded_from;
 extern HMODULE w32_delayed_load (Lisp_Object);
 
 extern int (WINAPI *pMultiByteToWideChar)(UINT,DWORD,LPCSTR,int,LPWSTR,int);

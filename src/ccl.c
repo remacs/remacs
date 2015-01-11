@@ -34,21 +34,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "ccl.h"
 #include "coding.h"
 
-Lisp_Object Qccl, Qcclp;
-
-/* This symbol is a property which associates with ccl program vector.
-   Ex: (get 'ccl-big5-encoder 'ccl-program) returns ccl program vector.  */
-static Lisp_Object Qccl_program;
-
-/* These symbols are properties which associate with code conversion
-   map and their ID respectively.  */
-static Lisp_Object Qcode_conversion_map;
-static Lisp_Object Qcode_conversion_map_id;
-
-/* Symbols of ccl program have this property, a value of the property
-   is an index for Vccl_program_table. */
-static Lisp_Object Qccl_program_idx;
-
 /* Table of registered CCL programs.  Each element is a vector of
    NAME, CCL_PROG, RESOLVEDP, and UPDATEDP, where NAME (symbol) is the
    name of the program, CCL_PROG (vector) is the compiled code of the
@@ -2297,8 +2282,17 @@ syms_of_ccl (void)
 
   DEFSYM (Qccl, "ccl");
   DEFSYM (Qcclp, "cclp");
+
+  /* This symbol is a property which associates with ccl program vector.
+     Ex: (get 'ccl-big5-encoder 'ccl-program) returns ccl program vector.  */
   DEFSYM (Qccl_program, "ccl-program");
+
+  /* Symbols of ccl program have this property, a value of the property
+     is an index for Vccl_program_table. */
   DEFSYM (Qccl_program_idx, "ccl-program-idx");
+
+  /* These symbols are properties which associate with code conversion
+     map and their ID respectively.  */
   DEFSYM (Qcode_conversion_map, "code-conversion-map");
   DEFSYM (Qcode_conversion_map_id, "code-conversion-map-id");
 

@@ -29,24 +29,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "process.h"
 
 
-/* Subroutines.  */
-static Lisp_Object Qgfile_add_watch;
-static Lisp_Object Qgfile_rm_watch;
-
-/* Filter objects.  */
-static Lisp_Object Qwatch_mounts;      /* G_FILE_MONITOR_WATCH_MOUNTS  */
-static Lisp_Object Qsend_moved;        /* G_FILE_MONITOR_SEND_MOVED  */
-
-/* Event types.  */
-static Lisp_Object Qchanged;           /* G_FILE_MONITOR_EVENT_CHANGED  */
-static Lisp_Object Qchanges_done_hint; /* G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT  */
-static Lisp_Object Qdeleted;           /* G_FILE_MONITOR_EVENT_DELETED  */
-static Lisp_Object Qcreated;           /* G_FILE_MONITOR_EVENT_CREATED  */
-static Lisp_Object Qattribute_changed; /* G_FILE_MONITOR_EVENT_ATTRIBUTE_CHANGED  */
-static Lisp_Object Qpre_unmount;       /* G_FILE_MONITOR_EVENT_PRE_UNMOUNT  */
-static Lisp_Object Qunmounted;         /* G_FILE_MONITOR_EVENT_UNMOUNTED  */
-static Lisp_Object Qmoved;             /* G_FILE_MONITOR_EVENT_MOVED  */
-
 static Lisp_Object watch_list;
 
 /* This is the callback function for arriving signals from
@@ -95,7 +77,7 @@ dir_monitor_callback (GFileMonitor *monitor,
     }
 
   /* Determine callback function.  */
-  monitor_object = XIL ((intptr_t) monitor);
+  monitor_object = make_pointer_integer (monitor);
   eassert (INTEGERP (monitor_object));
   watch_object = assq_no_quit (monitor_object, watch_list);
 
@@ -164,7 +146,7 @@ FILE is the name of the file whose event is being reported.  FILE1
 will be reported only in case of the 'moved' event.  */)
   (Lisp_Object file, Lisp_Object flags, Lisp_Object callback)
 {
-  Lisp_Object watch_descriptor, watch_object;
+  Lisp_Object watch_object;
   GFile *gfile;
   GFileMonitor *monitor;
   GFileMonitorFlags gflags = G_FILE_MONITOR_NONE;
@@ -194,10 +176,9 @@ will be reported only in case of the 'moved' event.  */)
   if (! monitor)
     xsignal2 (Qfile_notify_error, build_string ("Cannot watch file"), file);
 
-  /* On all known glib platforms, converting MONITOR directly to a
-     Lisp_Object value results is a Lisp integer, which is safe.  This
-     assumption is dicey, though, so check it now.  */
-  watch_descriptor = XIL ((intptr_t) monitor);
+  Lisp_Object watch_descriptor = make_pointer_integer (monitor);
+
+  /* Check the dicey assumption that make_pointer_integer is safe.  */
   if (! INTEGERP (watch_descriptor))
     {
       g_object_unref (monitor);
@@ -221,8 +202,6 @@ DEFUN ("gfile-rm-watch", Fgfile_rm_watch, Sgfile_rm_watch, 1, 1, 0,
 WATCH-DESCRIPTOR should be an object returned by `gfile-add-watch'.  */)
      (Lisp_Object watch_descriptor)
 {
-  intptr_t int_monitor;
-  GFileMonitor *monitor;
   Lisp_Object watch_object = assq_no_quit (watch_descriptor, watch_list);
 
   if (! CONSP (watch_object))
@@ -230,8 +209,7 @@ WATCH-DESCRIPTOR should be an object returned by `gfile-add-watch'.  */)
 	      watch_descriptor);
 
   eassert (INTEGERP (watch_descriptor));
-  int_monitor = XLI (watch_descriptor);
-  monitor = (GFileMonitor *) int_monitor;
+  GFileMonitor *monitor = XINTPTR (watch_descriptor);
   if (!g_file_monitor_cancel (monitor))
     xsignal2 (Qfile_notify_error, build_string ("Could not rm watch"),
 	      watch_descriptor);
@@ -258,23 +236,27 @@ globals_of_gfilenotify (void)
 void
 syms_of_gfilenotify (void)
 {
-
   DEFSYM (Qgfile_add_watch, "gfile-add-watch");
   defsubr (&Sgfile_add_watch);
 
   DEFSYM (Qgfile_rm_watch, "gfile-rm-watch");
   defsubr (&Sgfile_rm_watch);
 
-  DEFSYM (Qwatch_mounts, "watch-mounts");
-  DEFSYM (Qsend_moved, "send-moved");
-  DEFSYM (Qchanged, "changed");
+  /* Filter objects.  */
+  DEFSYM (Qwatch_mounts, "watch-mounts"); /* G_FILE_MONITOR_WATCH_MOUNTS  */
+  DEFSYM (Qsend_moved, "send-moved");	/* G_FILE_MONITOR_SEND_MOVED  */
+
+  /* Event types.  */
+  DEFSYM (Qchanged, "changed");	/* G_FILE_MONITOR_EVENT_CHANGED  */
   DEFSYM (Qchanges_done_hint, "changes-done-hint");
-  DEFSYM (Qdeleted, "deleted");
-  DEFSYM (Qcreated, "created");
+				/* G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT  */
+  DEFSYM (Qdeleted, "deleted");	/* G_FILE_MONITOR_EVENT_DELETED  */
+  DEFSYM (Qcreated, "created");	/* G_FILE_MONITOR_EVENT_CREATED  */
   DEFSYM (Qattribute_changed, "attribute-changed");
-  DEFSYM (Qpre_unmount, "pre-unmount");
-  DEFSYM (Qunmounted, "unmounted");
-  DEFSYM (Qmoved, "moved");
+				/* G_FILE_MONITOR_EVENT_ATTRIBUTE_CHANGED  */
+  DEFSYM (Qpre_unmount, "pre-unmount");	/* G_FILE_MONITOR_EVENT_PRE_UNMOUNT  */
+  DEFSYM (Qunmounted, "unmounted");	/* G_FILE_MONITOR_EVENT_UNMOUNTED  */
+  DEFSYM (Qmoved, "moved");	/* G_FILE_MONITOR_EVENT_MOVED  */
 
   staticpro (&watch_list);
 

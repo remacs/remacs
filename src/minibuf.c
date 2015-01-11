@@ -54,36 +54,9 @@ static Lisp_Object minibuf_save_list;
 
 EMACS_INT minibuf_level;
 
-/* The maximum length of a minibuffer history.  */
-
-static Lisp_Object Qhistory_length;
-
 /* Fread_minibuffer leaves the input here as a string.  */
 
 Lisp_Object last_minibuf_string;
-
-static Lisp_Object Qminibuffer_history, Qbuffer_name_history;
-
-static Lisp_Object Qread_file_name_internal;
-
-/* Normal hooks for entry to and exit from minibuffer.  */
-
-static Lisp_Object Qminibuffer_setup_hook;
-static Lisp_Object Qminibuffer_exit_hook;
-
-Lisp_Object Qcompletion_ignore_case;
-static Lisp_Object Qminibuffer_completion_table;
-static Lisp_Object Qminibuffer_completion_predicate;
-static Lisp_Object Qminibuffer_completion_confirm;
-static Lisp_Object Qcustom_variable_p;
-
-static Lisp_Object Qminibuffer_default;
-
-static Lisp_Object Qcurrent_input_method, Qactivate_input_method;
-
-static Lisp_Object Qcase_fold_search;
-
-static Lisp_Object Qread_expression_history;
 
 /* Prompt to display in front of the mini-buffer contents.  */
 
@@ -699,7 +672,7 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
   if (STRINGP (input_method) && !NILP (Ffboundp (Qactivate_input_method)))
     call1 (Qactivate_input_method, input_method);
 
-  Frun_hooks (1, &Qminibuffer_setup_hook);
+  run_hook (Qminibuffer_setup_hook);
 
   /* Don't allow the user to undo past this point.  */
   bset_undo_list (current_buffer, Qnil);
@@ -1821,8 +1794,6 @@ the values STRING, PREDICATE and `lambda'.  */)
     return Qt;
 }
 
-static Lisp_Object Qmetadata;
-
 DEFUN ("internal-complete-buffer", Finternal_complete_buffer, Sinternal_complete_buffer, 3, 3, 0,
        doc: /* Perform completion on buffer names.
 STRING and PREDICATE have the same meanings as in `try-completion',
@@ -1956,9 +1927,14 @@ syms_of_minibuf (void)
   Fset (Qbuffer_name_history, Qnil);
 
   DEFSYM (Qcustom_variable_p, "custom-variable-p");
+
+  /* Normal hooks for entry to and exit from minibuffer.  */
   DEFSYM (Qminibuffer_setup_hook, "minibuffer-setup-hook");
   DEFSYM (Qminibuffer_exit_hook, "minibuffer-exit-hook");
+
+  /* The maximum length of a minibuffer history.  */
   DEFSYM (Qhistory_length, "history-length");
+
   DEFSYM (Qcurrent_input_method, "current-input-method");
   DEFSYM (Qactivate_input_method, "activate-input-method");
   DEFSYM (Qcase_fold_search, "case-fold-search");

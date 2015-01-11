@@ -255,14 +255,18 @@ word(s) will be searched for via `eww-search-prefix'."
         ((string-match-p "\\`ftp://" url)
          (user-error "FTP is not supported."))
         (t
-         (if (and (= (length (split-string url)) 1)
-		  (or (and (not (string-match-p "\\`[\"\'].*[\"\']\\'" url))
-			   (> (length (split-string url "[.:]")) 1))
-		      (string-match eww-local-regex url)))
+         (if (or (string-match "\\`https?:" url)
+		 ;; Also try to match "naked" URLs like
+		 ;; en.wikipedia.org/wiki/Free software
+		 (string-match "\\`[A-Za-z_]+\\.[A-Za-z._]+/" url)
+		 (and (= (length (split-string url)) 1)
+		      (or (and (not (string-match-p "\\`[\"\'].*[\"\']\\'" url))
+			       (> (length (split-string url "[.:]")) 1))
+			  (string-match eww-local-regex url))))
              (progn
                (unless (string-match-p "\\`[a-zA-Z][-a-zA-Z0-9+.]*://" url)
                  (setq url (concat "http://" url)))
-               ;; some site don't redirect final /
+               ;; Some sites do not redirect final /
                (when (string= (url-filename (url-generic-parse-url url)) "")
                  (setq url (concat url "/"))))
            (setq url (concat eww-search-prefix
@@ -273,6 +277,7 @@ word(s) will be searched for via `eww-search-prefix'."
 	(eww-save-history))
     (eww-setup-buffer)
     (plist-put eww-data :url url)
+    (plist-put eww-data :title "")
     (eww-update-header-line-format)
     (let ((inhibit-read-only t))
       (insert (format "Loading %s..." url))

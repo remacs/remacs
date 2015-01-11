@@ -278,56 +278,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #define FACE_CACHE_BUCKETS_SIZE 1001
 
-/* Keyword symbols used for face attribute names.  */
-
-Lisp_Object QCfamily, QCheight, QCweight, QCslant;
-static Lisp_Object QCunderline;
-static Lisp_Object QCinverse_video, QCstipple;
-Lisp_Object QCforeground, QCbackground;
-Lisp_Object QCwidth;
-static Lisp_Object QCfont, QCbold, QCitalic;
-static Lisp_Object QCreverse_video;
-static Lisp_Object QCoverline, QCstrike_through, QCbox, QCinherit;
-static Lisp_Object QCfontset, QCdistant_foreground;
-
-/* Symbols used for attribute values.  */
-
-Lisp_Object Qnormal;
-Lisp_Object Qbold;
-static Lisp_Object Qline, Qwave;
-Lisp_Object Qextra_light, Qlight;
-Lisp_Object Qsemi_light, Qsemi_bold, Qextra_bold, Qultra_bold;
-Lisp_Object Qoblique;
-Lisp_Object Qitalic;
-static Lisp_Object Qreleased_button, Qpressed_button;
-static Lisp_Object QCstyle, QCcolor, QCline_width;
-Lisp_Object Qunspecified;	/* used in dosfns.c */
-static Lisp_Object QCignore_defface;
-
 char unspecified_fg[] = "unspecified-fg", unspecified_bg[] = "unspecified-bg";
-
-/* The name of the function to call when the background of the frame
-   has changed, frame_set_background_mode.  */
-
-static Lisp_Object Qframe_set_background_mode;
-
-/* Names of basic faces.  */
-
-Lisp_Object Qdefault, Qtool_bar, Qfringe;
-static Lisp_Object Qregion;
-Lisp_Object Qheader_line, Qscroll_bar, Qcursor;
-static Lisp_Object Qborder, Qmouse, Qmenu;
-Lisp_Object Qmode_line_inactive;
-static Lisp_Object Qvertical_border;
-static Lisp_Object Qwindow_divider;
-static Lisp_Object Qwindow_divider_first_pixel;
-static Lisp_Object Qwindow_divider_last_pixel;
-
-/* The symbol `face-alias'.  A symbols having that property is an
-   alias for another face.  Value of the property is the name of
-   the aliased face.  */
-
-static Lisp_Object Qface_alias;
 
 /* Alist of alternative font families.  Each element is of the form
    (FAMILY FAMILY1 FAMILY2 ...).  If fonts of FAMILY can't be loaded,
@@ -341,32 +292,6 @@ Lisp_Object Vface_alternative_font_family_alist;
 
 Lisp_Object Vface_alternative_font_registry_alist;
 
-/* Allowed scalable fonts.  A value of nil means don't allow any
-   scalable fonts.  A value of t means allow the use of any scalable
-   font.  Otherwise, value must be a list of regular expressions.  A
-   font may be scaled if its name matches a regular expression in the
-   list.  */
-
-static Lisp_Object Qscalable_fonts_allowed;
-
-/* The symbols `foreground-color' and `background-color' which can be
-   used as part of a `face' property.  This is for compatibility with
-   Emacs 20.2.  */
-
-Lisp_Object Qforeground_color, Qbackground_color;
-
-/* The symbols `face' and `mouse-face' used as text properties.  */
-
-Lisp_Object Qface;
-
-/* Property for basic faces which other faces cannot inherit.  */
-
-static Lisp_Object Qface_no_inherit;
-
-/* Error symbol for wrong_type_argument in load_pixmap.  */
-
-static Lisp_Object Qbitmap_spec_p;
-
 /* The next ID to assign to Lisp faces.  */
 
 static int next_lface_id;
@@ -375,14 +300,6 @@ static int next_lface_id;
 
 static Lisp_Object *lface_id_to_name;
 static ptrdiff_t lface_id_to_name_size;
-
-/* TTY color-related functions (defined in tty-colors.el).  */
-
-static Lisp_Object Qtty_color_desc, Qtty_color_by_index, Qtty_color_standard_values;
-
-/* The name of the function used to compute colors on TTYs.  */
-
-static Lisp_Object Qtty_color_alist;
 
 #ifdef HAVE_WINDOW_SYSTEM
 
@@ -6397,9 +6314,17 @@ DEFUN ("show-face-resources", Fshow_face_resources, Sshow_face_resources,
 void
 syms_of_xfaces (void)
 {
+  /* The symbols `face' and `mouse-face' used as text properties.  */
   DEFSYM (Qface, "face");
+
+  /* Property for basic faces which other faces cannot inherit.  */
   DEFSYM (Qface_no_inherit, "face-no-inherit");
+
+  /* Error symbol for wrong_type_argument in load_pixmap.  */
   DEFSYM (Qbitmap_spec_p, "bitmap-spec-p");
+
+  /* The name of the function to call when the background of the frame
+     has changed, frame_set_background_mode.  */
   DEFSYM (Qframe_set_background_mode, "frame-set-background-mode");
 
   /* Lisp face attribute keywords.  */
@@ -6442,12 +6367,22 @@ syms_of_xfaces (void)
   DEFSYM (Qultra_bold, "ultra-bold");
   DEFSYM (Qoblique, "oblique");
   DEFSYM (Qitalic, "italic");
+
+  /* The symbols `foreground-color' and `background-color' which can be
+     used as part of a `face' property.  This is for compatibility with
+     Emacs 20.2.  */
   DEFSYM (Qbackground_color, "background-color");
   DEFSYM (Qforeground_color, "foreground-color");
+
   DEFSYM (Qunspecified, "unspecified");
   DEFSYM (QCignore_defface, ":ignore-defface");
 
+  /* The symbol `face-alias'.  A symbol having that property is an
+     alias for another face.  Value of the property is the name of
+     the aliased face.  */
   DEFSYM (Qface_alias, "face-alias");
+
+  /* Names of basic faces.  */
   DEFSYM (Qdefault, "default");
   DEFSYM (Qtool_bar, "tool-bar");
   DEFSYM (Qregion, "region");
@@ -6460,13 +6395,23 @@ syms_of_xfaces (void)
   DEFSYM (Qmouse, "mouse");
   DEFSYM (Qmode_line_inactive, "mode-line-inactive");
   DEFSYM (Qvertical_border, "vertical-border");
+
+  /* TTY color-related functions (defined in tty-colors.el).  */
   DEFSYM (Qwindow_divider, "window-divider");
   DEFSYM (Qwindow_divider_first_pixel, "window-divider-first-pixel");
   DEFSYM (Qwindow_divider_last_pixel, "window-divider-last-pixel");
   DEFSYM (Qtty_color_desc, "tty-color-desc");
   DEFSYM (Qtty_color_standard_values, "tty-color-standard-values");
   DEFSYM (Qtty_color_by_index, "tty-color-by-index");
+
+  /* The name of the function used to compute colors on TTYs.  */
   DEFSYM (Qtty_color_alist, "tty-color-alist");
+
+  /* Allowed scalable fonts.  A value of nil means don't allow any
+     scalable fonts.  A value of t means allow the use of any scalable
+     font.  Otherwise, value must be a list of regular expressions.  A
+     font may be scaled if its name matches a regular expression in the
+     list.  */
   DEFSYM (Qscalable_fonts_allowed, "scalable-fonts-allowed");
 
   Vparam_value_alist = list1 (Fcons (Qnil, Qnil));

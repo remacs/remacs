@@ -853,13 +853,13 @@ Argument FILE is the file to extract the end directory name from."
 (defun project-am-preferred-target-type (file)
   "For FILE, return the preferred type for that file."
   (cond ((string-match "\\.texi?\\(nfo\\)$" file)
-	 project-am-texinfo)
+	 'project-am-texinfo)
 	((string-match "\\.[0-9]$" file)
-	 project-am-man)
+	 'project-am-man)
 	((string-match "\\.el$" file)
-	 project-am-lisp)
+	 'project-am-lisp)
 	(t
-	 project-am-program)))
+	 'project-am-program)))
 
 (defmethod ede-buffer-header-file((this project-am-objectcode) buffer)
   "There are no default header files."

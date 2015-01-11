@@ -40,8 +40,10 @@ or by sticking with Emacs 24.4.
 ** The configure option `--with-pkg-config-prog' has been removed.
 Use './configure PKG_CONFIG=/full/name/of/pkg-config' if you need to.
 
-** The configure option '--enable-silent-rules' and the command
-'make V=0' now do a better job of suppressing chatter.
+** The configure option '--enable-silent-rules' is now the default,
+and silent rules are now quieter.  To get the old behavior where
+'make' chatters a lot, configure with '--disable-silent-rules' or
+build with 'make V=1'.
 
 ---
 ** The `grep-changelog' script (and its manual page) are no longer included.
@@ -141,10 +143,6 @@ this has no effect.
 ** A new text property `inhibit-read-only' can be used in read-only
 buffers to allow certain parts of the text to be writable.
 
-** A new function `file-tree-walk' allows to apply a certain action
-to all the files and subdirectories of a directory, similarly to the C
-library function `ftw'.
-
 ** A new function `directory-files-recursively' returns all matching
 files (recursively) under a directory.
 
@@ -165,6 +163,8 @@ characters, which can be used for geometry-related calculations.
 
 
 * Editing Changes in Emacs 25.1
+
+** Unicode names entered via C-x 8 RET now use substring completion by default.
 
 ** New minor mode global-eldoc-mode is enabled by default.
 
@@ -191,10 +191,16 @@ Unicode standards.
 
 When you invoke `shell' interactively, the *shell* buffer will now
 display in a new window.  However, you can customize this behavior via
-the new `shell-display-buffer-actions' variable.  For example, to get
+the `display-buffer-alist' variable.  For example, to get
 the old behavior -- *shell* buffer displays in current window -- use
-(setq shell-display-buffer-actions '(display-buffer-same-window)).
+(add-to-list 'display-buffer-alist
+     '("^\\*shell\\*$" . (display-buffer-same-window))).
 
+
+** EIEIO
+*** The <class>-list-p and <class>-child-p functions are declared obsolete.
+*** The <class> variables are declared obsolete.
+*** The <initarg> variables are declared obsolete.
 ** ido
 *** New command `ido-bury-buffer-at-head' bound to C-S-b
 Bury the buffer at the head of `ido-matches', analogous to how C-k
@@ -607,7 +613,7 @@ Horizontal scroll bars are turned off by default.
     `scroll-bar-height'.
 
 +++
-** The height of a frame's menu and tool bar are no more counted in the
+** The height of a frame's menu and tool bar are no longer counted in the
 frame's text height.  This means that the text height stands only for
 the height of the frame's root window plus that of the echo area (if
 present).  This was already the behavior for frames with external tool

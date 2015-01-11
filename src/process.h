@@ -197,15 +197,6 @@ pset_gnutls_cred_type (struct Lisp_Process *p, Lisp_Object val)
    when exiting.  */
 extern bool inhibit_sentinels;
 
-extern Lisp_Object Qeuid, Qegid, Qcomm, Qstate, Qppid, Qpgrp, Qsess, Qttname;
-extern Lisp_Object Qminflt, Qmajflt, Qcminflt, Qcmajflt, Qutime, Qstime;
-extern Lisp_Object Qcutime, Qpri, Qnice, Qthcount, Qstart, Qvsize, Qrss, Qargs;
-extern Lisp_Object Quser, Qgroup, Qetime, Qpcpu, Qpmem, Qtpgid, Qcstime;
-extern Lisp_Object Qtime, Qctime;
-extern Lisp_Object QCspeed;
-extern Lisp_Object QCbytesize, QCstopbits, QCparity, Qodd, Qeven;
-extern Lisp_Object QCflowcontrol, Qhw, Qsw, QCsummary;
-
 /* Exit statuses for GNU programs that exec other programs.  */
 enum
 {

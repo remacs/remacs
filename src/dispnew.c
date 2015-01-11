@@ -106,8 +106,6 @@ static void set_window_update_flags (struct window *w, bool on_p);
 
 bool display_completed;
 
-Lisp_Object Qdisplay_table, Qredisplay_dont_pause;
-
 /* True means SIGWINCH happened when not safe.  */
 
 static bool delayed_size_change;
@@ -5177,7 +5175,7 @@ buffer_posn_from_coords (struct window *w, int *x, int *y, struct display_pos *p
 
   Fset_buffer (old_current_buffer);
 
-  *dx = x0 + it.first_visible_x - it.current_x;
+  *dx = to_x - it.current_x;
   *dy = *y - it.current_y;
 
   string = w->contents;
@@ -5252,9 +5250,9 @@ buffer_posn_from_coords (struct window *w, int *x, int *y, struct display_pos *p
     }
 
   /* Add extra (default width) columns if clicked after EOL. */
-  x1 = max (0, it.current_x + it.pixel_width - it.first_visible_x);
-  if (x0 > x1)
-    it.hpos += (x0 - x1) / WINDOW_FRAME_COLUMN_WIDTH (w);
+  x1 = max (0, it.current_x + it.pixel_width);
+  if (to_x > x1)
+    it.hpos += (to_x - x1) / WINDOW_FRAME_COLUMN_WIDTH (w);
 
   *x = it.hpos;
   *y = it.vpos;
@@ -6204,7 +6202,9 @@ syms_of_display (void)
   frame_and_buffer_state = Fmake_vector (make_number (20), Qlambda);
   staticpro (&frame_and_buffer_state);
 
+  /* This is the "purpose" slot of a display table.  */
   DEFSYM (Qdisplay_table, "display-table");
+
   DEFSYM (Qredisplay_dont_pause, "redisplay-dont-pause");
 
   DEFVAR_INT ("baud-rate", baud_rate,

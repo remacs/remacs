@@ -35,7 +35,6 @@ saturated_add (EMACS_INT a, EMACS_INT b)
 
 typedef struct Lisp_Hash_Table log_t;
 
-static Lisp_Object Qprofiler_backtrace_equal;
 static struct hash_table_test hashtest_profiler;
 
 static Lisp_Object

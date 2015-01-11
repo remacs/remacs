@@ -763,23 +763,7 @@ extern Lisp_Object from_unicode_buffer (const wchar_t *wstr);
 extern Lisp_Object preferred_coding_system (void);
 
 
-extern Lisp_Object Qutf_8, Qutf_8_emacs;
-
-extern Lisp_Object Qcoding_category_index;
-extern Lisp_Object Qcoding_system_p;
-extern Lisp_Object Qraw_text, Qemacs_mule, Qno_conversion, Qundecided;
-extern Lisp_Object Qbuffer_file_coding_system;
-
-extern Lisp_Object Qunix, Qdos;
-
-extern Lisp_Object Qtranslation_table;
-extern Lisp_Object Qtranslation_table_id;
-
 #ifdef emacs
-extern Lisp_Object Qfile_coding_system;
-extern Lisp_Object Qcall_process, Qcall_process_region;
-extern Lisp_Object Qstart_process, Qopen_network_stream;
-extern Lisp_Object Qwrite_region;
 
 extern char *emacs_strerror (int);
 
@@ -788,9 +772,6 @@ extern char *emacs_strerror (int);
 extern struct coding_system safe_terminal_coding;
 
 #endif
-
-/* Error signaled when there's a problem with detecting coding system */
-extern Lisp_Object Qcoding_system_error;
 
 extern char emacs_mule_bytes[256];
 

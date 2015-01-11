@@ -1085,7 +1085,6 @@ struct glyph *get_phys_cursor_glyph (struct window *w);
   CHECK_TYPE (WINDOW_LIVE_P (WINDOW), Qwindow_live_p, WINDOW)
 
 /* These used to be in lisp.h.  */
-extern Lisp_Object Qwindow_live_p;
 extern Lisp_Object Vwindow_list;
 
 extern Lisp_Object window_list (void);

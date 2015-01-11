@@ -65,10 +65,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    must specify physical bitmap symbols.
 */
 
-static Lisp_Object Qtruncation, Qcontinuation, Qoverlay_arrow;
-static Lisp_Object Qempty_line, Qtop_bottom;
-static Lisp_Object Qhollow_small;
-
 enum fringe_bitmap_align
 {
   ALIGN_BITMAP_CENTER = 0,

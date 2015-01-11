@@ -38,28 +38,17 @@ struct handler *handlerlist;
 int gcpro_level;
 #endif
 
-Lisp_Object Qautoload, Qmacro, Qexit, Qinteractive, Qcommandp;
-Lisp_Object Qinhibit_quit;
-Lisp_Object Qand_rest;
-static Lisp_Object Qand_optional;
-static Lisp_Object Qinhibit_debugger;
-static Lisp_Object Qdeclare;
-Lisp_Object Qinternal_interpreter_environment, Qclosure;
-
-static Lisp_Object Qdebug;
-
-/* This holds either the symbol `run-hooks' or nil.
-   It is nil at an early stage of startup, and when Emacs
-   is shutting down.  */
-
-Lisp_Object Vrun_hooks;
-
 /* Non-nil means record all fset's and provide's, to be undone
    if the file being autoloaded is not fully loaded.
    They are recorded by being consed onto the front of Vautoload_queue:
    (FUN . ODEF) for a defun, (0 . OFEATURES) for a provide.  */
 
 Lisp_Object Vautoload_queue;
+
+/* This holds either the symbol `run-hooks' or nil.
+   It is nil at an early stage of startup, and when Emacs
+   is shutting down.  */
+Lisp_Object Vrun_hooks;
 
 /* Current number of specbindings allocated in specpdl, not counting
    the dummy entry specpdl[-1].  */
@@ -2363,14 +2352,10 @@ Instead, use `add-hook' and specify t for the LOCAL argument.
 usage: (run-hooks &rest HOOKS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  Lisp_Object hook[1];
   ptrdiff_t i;
 
   for (i = 0; i < nargs; i++)
-    {
-      hook[0] = args[i];
-      run_hook_with_args (1, hook, funcall_nil);
-    }
+    run_hook (args[i]);
 
   return Qnil;
 }
@@ -2534,6 +2519,14 @@ run_hook_with_args (ptrdiff_t nargs, Lisp_Object *args,
       UNGCPRO;
       return ret;
     }
+}
+
+/* Run the hook HOOK, giving each function no args.  */
+
+void
+run_hook (Lisp_Object hook)
+{
+  Frun_hook_with_args (1, &hook);
 }
 
 /* Run the hook HOOK, giving each function the two args ARG1 and ARG2.  */
@@ -3762,7 +3755,8 @@ alist of active lexical bindings.  */);
      (Just imagine if someone makes it buffer-local).  */
   Funintern (Qinternal_interpreter_environment, Qnil);
 
-  DEFSYM (Vrun_hooks, "run-hooks");
+  Vrun_hooks = intern_c_string ("run-hooks");
+  staticpro (&Vrun_hooks);
 
   staticpro (&Vautoload_queue);
   Vautoload_queue = Qnil;

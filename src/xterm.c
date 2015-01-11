@@ -183,17 +183,9 @@ static Time ignore_next_mouse_click_timeout;
 
 static int x_noop_count;
 
-static Lisp_Object Qalt, Qhyper, Qmeta, Qsuper, Qmodifier_value;
-
-static Lisp_Object Qvendor_specific_keysyms;
-static Lisp_Object Qlatin_1;
-
 #ifdef USE_GTK
 /* The name of the Emacs icon file.  */
 static Lisp_Object xg_default_icon_file;
-
-/* Used in gtkutil.c.  */
-Lisp_Object Qx_gtk_map_stock;
 #endif
 
 /* Some functions take this as char *, not const char *.  */
