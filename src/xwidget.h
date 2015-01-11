@@ -4,7 +4,7 @@
 void x_draw_xwidget_glyph_string (struct glyph_string *s);
 void syms_of_xwidget ();
 
-extern Lisp_Object Qxwidget;
+//extern Lisp_Object Qxwidget;
 
 
 int valid_xwidget_spec_p (Lisp_Object object) ;

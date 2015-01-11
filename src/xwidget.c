@@ -113,23 +113,6 @@ allocate_xwidget_view (void)
 #define XSETXWIDGET(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_XWIDGET))
 #define XSETXWIDGET_VIEW(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_XWIDGET_VIEW))
 
-Lisp_Object Qxwidget;
-Lisp_Object QCxwidget;
-Lisp_Object QCtitle;
-Lisp_Object Qxwidget_set_keyboard_grab;
-Lisp_Object Qxwidget_embed_steal_window;
-Lisp_Object Qxwidget_info;
-Lisp_Object Qxwidget_resize;
-Lisp_Object Qxwidget_send_keyboard_event;
-Lisp_Object QCxwgir_class;
-Lisp_Object Qbutton, Qtoggle, Qslider, Qsocket, Qsocket_osr, Qcairo, Qxwgir,
-  Qwebkit_osr, QCplist;
-Lisp_Object Qxwidgetp, Qxwidget_view_p;
-
-
-extern Lisp_Object  QCtype;
-extern Lisp_Object QCwidth, QCheight;
-
 struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *w);
 Lisp_Object xwidget_spec_value ( Lisp_Object spec, Lisp_Object  key,  int *found);
 gboolean offscreen_damage_event (GtkWidget *widget, GdkEvent *event, gpointer data);
@@ -1564,12 +1547,12 @@ syms_of_xwidget (void)
   defsubr (&Sset_xwidget_query_on_exit_flag);
   defsubr (&Sset_frame_visible);
 
-#ifdef HAVE_WEBKIT_OSR
+  #ifdef HAVE_WEBKIT_OSR
   defsubr (&Sxwidget_webkit_goto_uri);
   defsubr (&Sxwidget_webkit_execute_script);
   defsubr (&Sxwidget_webkit_get_title);
-  DEFSYM (Qwebkit_osr ,"webkit-osr");
-#endif
+  DEFSYM (Qwebkit_osr, "webkit-osr");
+  #endif
 
   defsubr (&Sxwgir_xwidget_call_method  );
   defsubr (&Sxwgir_require_namespace);

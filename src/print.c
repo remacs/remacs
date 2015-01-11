@@ -40,13 +40,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef HAVE_XWIDGETS
 #include "xwidget.h"
 #endif
-Lisp_Object Qstandard_output;
-
-static Lisp_Object Qtemp_buffer_setup_hook;
-
-/* These are used to print like we read.  */
-
-static Lisp_Object Qfloat_output_format;
 
 #include <float.h>
 #include <ftoastr.h>

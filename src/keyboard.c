@@ -11102,8 +11102,7 @@ syms_of_keyboard (void)
 #endif
 
 #ifdef HAVE_XWIDGETS
-  Qxwidget_event = intern ("xwidget-event");
-  staticpro (&Qxwidget_event);
+  DEFSYM (Qxwidget_event,"xwidget-event");
 #endif /* HAVE_XWIDGETS */
 #ifdef USE_FILE_NOTIFY
   DEFSYM (Qfile_notify, "file-notify");
