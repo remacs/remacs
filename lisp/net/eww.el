@@ -255,7 +255,9 @@ word(s) will be searched for via `eww-search-prefix'."
         ((string-match-p "\\`ftp://" url)
          (user-error "FTP is not supported."))
         (t
-         (if (or (string-match "\\`https?:" url)
+	 ;; Anything that starts with something that vaguely looks
+	 ;; like a protocol designator is interpreted as a full URL.
+         (if (or (string-match "\\`[A-Za-z]+:" url)
 		 ;; Also try to match "naked" URLs like
 		 ;; en.wikipedia.org/wiki/Free software
 		 (string-match "\\`[A-Za-z_]+\\.[A-Za-z._]+/" url)

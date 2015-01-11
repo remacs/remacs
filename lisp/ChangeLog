@@ -3,6 +3,11 @@
 	* files.el (directory-files-recursively): Do not include
 	superfluous remote file names.
 
+2015-01-11  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/eww.el (eww): Interpret anything that looks like a protocol
+	designator as a full URL.
+
 2015-01-10  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/shr.el (shr-urlify): Don't bother the user about
