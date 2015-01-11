@@ -1,3 +1,16 @@
+2015-01-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Default to 'configure --enable-silent-rules'
+	This greatly shortens the 'make' output, making it more readable
+	and useful.  For example, on my platform it shortens a
+	4125-character line "gcc -std=gnu99 -c -Demacs -I. -I. -I../lib
+	... emacs.c" -- a line so long that it's hard to see what's going
+	on or where the diagnostics are -- to just "CC emacs.o".
+	* INSTALL: Document this.
+	* configure.ac: Add AM_SILENT_RULES([yes]).
+	(AM_DEFAULT_VERBOSITY): Remove now-unnecessary initialization.
+	Fixes: bug#19501
+
 2015-01-06  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Merge from gnulib

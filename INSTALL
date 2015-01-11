@@ -316,10 +316,9 @@ generated warnings may still be useful, though you may prefer building
 with 'make WERROR_CFLAGS=' so that the warnings are not treated as
 errors.
 
-Use --enable-silent-rules to cause 'make' to chatter less.  This is
-helpful when combined with options like --enable-gcc-warnings that
-generate long shell-command lines.  'make V=0' also suppresses the
-chatter.
+Use --disable-silent-rules to cause 'make' to give more details about
+the commands it executes.  This can be helpful when debugging a build
+that goes awry.  'make V=1' also enables the extra chatter.
 
 Use --enable-link-time-optimization to enable link-time optimizer.  If
 you're using GNU compiler, this feature is supported since version 4.5.0.

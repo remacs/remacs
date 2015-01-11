@@ -1011,9 +1011,11 @@ if test "${enableval}" != "no"; then
    fi
 fi)
 
+dnl Prefer silent make output.  For verbose output, use
+dnl 'configure --disable-silent-rules' or 'make V=1' .
+AM_SILENT_RULES([yes])
 dnl Port to Automake 1.11.
 dnl This section can be removed once we assume Automake 1.14 or later.
-: ${AM_DEFAULT_VERBOSITY=1}
 : ${AM_V=$AM_DEFAULT_VERBOSITY}
 : ${AM_DEFAULT_V=$AM_DEFAULT_VERBOSITY}
 AC_SUBST([AM_V])

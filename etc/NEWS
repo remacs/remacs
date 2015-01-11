@@ -40,8 +40,10 @@ or by sticking with Emacs 24.4.
 ** The configure option `--with-pkg-config-prog' has been removed.
 Use './configure PKG_CONFIG=/full/name/of/pkg-config' if you need to.
 
-** The configure option '--enable-silent-rules' and the command
-'make V=0' now do a better job of suppressing chatter.
+** The configure option '--enable-silent-rules' is now the default,
+and silent rules are now quieter.  To get the old behavior where
+'make' chatters a lot, configure with '--disable-silent-rules' or
+build with 'make V=1'.
 
 ---
 ** The `grep-changelog' script (and its manual page) are no longer included.
