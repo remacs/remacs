@@ -1,3 +1,9 @@
+2015-01-11  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* buffer.c (init_buffer_once): Initialize buffer_local_flags before
+	calling reset_buffer_local_variables, and make sure we initialize
+	it completely.
+
 2015-01-11  Dmitry Antipov  <dmantipov@yandex.ru>
 
 	* coding.c (Fcoding_system_plist): Use common style for docstring.
