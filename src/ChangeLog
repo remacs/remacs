@@ -1,3 +1,10 @@
+2015-01-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Have 'make' output better GEN names
+	* Makefile.in (gl-stamp, globals.h): Simplify by putting the new
+	contents of globals.h into gl-stamp.  This lets us use AM_V_GEN
+	more naturally so that 'make' can output more-accurate names.
+
 2015-01-11  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* buffer.c (init_buffer_once): Initialize buffer_local_flags before

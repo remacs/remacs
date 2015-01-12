@@ -150,7 +150,8 @@ setwins_for_subdirs=for file in `find ${srcdir} -type d -print`; do \
 # we add them here to make sure they get built.
 all: compile-main $(lisp)/cus-load.el $(lisp)/finder-inf.el
 
-.PHONY: all custom-deps finder-data autoloads update-subdirs
+PHONY_EXTRAS =
+.PHONY: all custom-deps finder-data autoloads update-subdirs $(PHONY_EXTRAS)
 
 # custom-deps and finder-data both used to scan _all_ the *.el files.
 # This could lead to problems in parallel builds if automatically
@@ -166,18 +167,19 @@ all: compile-main $(lisp)/cus-load.el $(lisp)/finder-inf.el
 # Nowadays these commands don't scan automatically generated files,
 # since they will never contain any useful information
 # (see finder-no-scan-regexp and custom-dependencies-no-scan-regexp).
-$(lisp)/cus-load.el:
-	$(MAKE) custom-deps
 custom-deps:
+	$(AM_V_at)$(MAKE) PHONY_EXTRAS=$(lisp)/cus-load.el $(lisp)/cus-load.el
+$(lisp)/cus-load.el:
 	$(AM_V_GEN)$(setwins_almost); \
 	echo Directories: $$wins; \
 	$(emacs) -l cus-dep \
 	  --eval '(setq generated-custom-dependencies-file (unmsys--file-name "$(srcdir)/cus-load.el"))' \
 	  -f custom-make-dependencies $$wins
 
-$(lisp)/finder-inf.el:
-	$(MAKE) finder-data
 finder-data:
+	$(AM_V_at)$(MAKE) PHONY_EXTRAS=$(lisp)/finder-inf.el \
+	  $(lisp)/finder-inf.el
+$(lisp)/finder-inf.el:
 	$(AM_V_GEN)$(setwins_finder); \
 	echo Directories: $$wins; \
 	$(emacs) -l finder \
@@ -190,21 +192,22 @@ finder-data:
 # Note that we set no-update-autoloads in _generated_ leim files.
 # If you want to allow autoloads in such files, remove that,
 # and make this depend on leim.
-autoloads: $(LOADDEFS)
+autoloads .PHONY: $(lisp)/loaddefs.el
+$(lisp)/loaddefs.el: $(LOADDEFS)
 	$(AM_V_GEN)$(setwins_almost); \
 	echo Directories: $$wins; \
 	$(emacs) -l autoload \
 	    --eval '(setq autoload-ensure-writable t)' \
 	    --eval '(setq autoload-builtin-package-versions t)' \
-	    --eval '(setq generated-autoload-file (expand-file-name (unmsys--file-name "$(srcdir)/loaddefs.el")))' \
+	    --eval '(setq generated-autoload-file (expand-file-name (unmsys--file-name "$@")))' \
 	    -f batch-update-autoloads $$wins
 
 # This is required by the bootstrap-emacs target in ../src/Makefile, so
 # we know that if we have an emacs executable, we also have a subdirs.el.
 $(lisp)/subdirs.el:
-	$(MAKE) update-subdirs
+	$(AM_V_GEN)$(MAKE) update-subdirs
 update-subdirs:
-	$(AM_V_GEN)$(setwins_for_subdirs); \
+	$(AM_V_at)$(setwins_for_subdirs); \
 	for file in $$wins; do \
 	   $(srcdir)/../build-aux/update-subdirs $$file; \
 	done;

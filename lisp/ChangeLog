@@ -1,5 +1,16 @@
 2015-01-12  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Have 'make' output better GEN names
+	* Makefile.in (PHONY_EXTRAS): New macro.
+	(.PHONY): Depend on it, and on $(lisp)/loaddefs.el, so that the
+	relevant files' time stamps are ignored.
+	(custom-deps, $(lisp)/cus-load.el, finder-data)
+	($(lisp)/finder-inf.el): Use PHONY_EXTRAS.
+	(custom-deps, $(lisp)/cus-load.el, finder-data)
+	($(lisp)/finder-inf.el, autoloads, $(lisp)/loaddefs.el)
+	($(lisp)/subdirs.el, update-subdirs):
+	Output more-accurate destination names with GEN.
+
 	Say "ELC foo.elc" instead of "GEN foo.elc"
 	* Makefile.in (AM_V_ELC, am__v_ELC_, am__v_ELC_0, am__v_ELC_1):
 	New macros.
