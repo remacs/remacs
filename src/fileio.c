@@ -522,8 +522,6 @@ For a Unix-syntax file name, just appends a slash.  */)
   USE_SAFE_ALLOCA;
 
   CHECK_STRING (file);
-  if (NILP (file))
-    return Qnil;
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
@@ -590,9 +588,6 @@ In Unix-syntax, this function just removes the final slash.  */)
   USE_SAFE_ALLOCA;
 
   CHECK_STRING (directory);
-
-  if (NILP (directory))
-    return Qnil;
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */

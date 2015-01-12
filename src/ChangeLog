@@ -1,3 +1,10 @@
+2015-01-12  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* fileio.c (Ffile_name_as_directory, Fdirectory_file_name):
+	Remove dead NILP check.
+	* image.c (Flookup_image): Use regular format for docstring.
+	* keyboard.c (apply_modifiers_uncached): Use stpcpy.
+
 2015-01-12  Martin Rudalics  <rudalics@gmx.at>
 
 	* dispnew.c (change_frame_size_1): Pass Qchange_frame_size to

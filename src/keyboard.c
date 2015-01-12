@@ -6270,10 +6270,10 @@ apply_modifiers_uncached (int modifiers, char *base, int base_len, int base_len_
     if (modifiers & meta_modifier)  { *p++ = 'M'; *p++ = '-'; }
     if (modifiers & shift_modifier) { *p++ = 'S'; *p++ = '-'; }
     if (modifiers & super_modifier) { *p++ = 's'; *p++ = '-'; }
-    if (modifiers & double_modifier)  { strcpy (p, "double-");  p += 7; }
-    if (modifiers & triple_modifier)  { strcpy (p, "triple-");  p += 7; }
-    if (modifiers & down_modifier)  { strcpy (p, "down-");  p += 5; }
-    if (modifiers & drag_modifier)  { strcpy (p, "drag-");  p += 5; }
+    if (modifiers & double_modifier) p = stpcpy (p, "double-");
+    if (modifiers & triple_modifier) p = stpcpy (p, "triple-");
+    if (modifiers & down_modifier) p = stpcpy (p, "down-");
+    if (modifiers & drag_modifier) p = stpcpy (p, "drag-");
     /* The click modifier is denoted by the absence of other modifiers.  */
 
     *p = '\0';
