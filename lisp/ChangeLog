@@ -1,3 +1,10 @@
+2015-01-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Say "ELC foo.elc" instead of "GEN foo.elc"
+	* Makefile.in (AM_V_ELC, am__v_ELC_, am__v_ELC_0, am__v_ELC_1):
+	New macros.
+	($(THEFILE)c, .el.elc): Use them.
+
 2015-01-11  Michael Albinus  <michael.albinus@gmx.de>
 
 	* files.el (directory-files-recursively): Do not include

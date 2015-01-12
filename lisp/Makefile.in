@@ -31,6 +31,11 @@ XARGS_LIMIT = @XARGS_LIMIT@
 # 'make' verbosity.
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 
+AM_V_ELC = $(am__v_ELC_@AM_V@)
+am__v_ELC_ = $(am__v_ELC_@AM_DEFAULT_V@)
+am__v_ELC_0 = @echo "  ELC     " $@;
+am__v_ELC_1 =
+
 AM_V_GEN = $(am__v_GEN_@AM_V@)
 am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
 am__v_GEN_0 = @echo "  GEN     " $@;
@@ -260,7 +265,7 @@ TAGS: $(lisptagsfiles1) $(lisptagsfiles2) $(lisptagsfiles3) $(lisptagsfiles4)
 THEFILE = no-such-file
 .PHONY: $(THEFILE)c
 $(THEFILE)c:
-	$(AM_V_GEN)$(emacs) $(BYTE_COMPILE_FLAGS) \
+	$(AM_V_ELC)$(emacs) $(BYTE_COMPILE_FLAGS) \
 		-l bytecomp -f byte-compile-refresh-preloaded \
 		-f batch-byte-compile $(THEFILE)
 
@@ -276,7 +281,7 @@ $(THEFILE)c:
 # An old-fashioned suffix rule, which, according to the GNU Make manual,
 # cannot have prerequisites.
 .el.elc:
-	$(AM_V_GEN)$(emacs) $(BYTE_COMPILE_FLAGS) -f batch-byte-compile $<
+	$(AM_V_ELC)$(emacs) $(BYTE_COMPILE_FLAGS) -f batch-byte-compile $<
 
 .PHONY: compile-first compile-main compile compile-always
 

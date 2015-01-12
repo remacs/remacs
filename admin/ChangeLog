@@ -1,3 +1,10 @@
+2015-01-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Say "ELC foo.elc" instead of "GEN foo.elc"
+	* unidata/Makefile.in (AM_V_ELC, am__v_ELC_, am__v_ELC_0)
+	(am__v_ELC_1): New macros.
+	(%.elc): Use them.
+
 2015-01-08  Glenn Morris  <rgm@gnu.org>
 
 	* authors.el (authors-aliases): Add an entry to ignore.
