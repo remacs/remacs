@@ -275,23 +275,22 @@ there (in decreasing order of priority)."
       ;; by the lines added in x-create-frame for the tool-bar and
       ;; switch `tool-bar-mode' off.
       (when (display-graphic-p)
-	(let ((tool-bar-lines
-	       (or (assq 'tool-bar-lines initial-frame-alist)
-		   (assq 'tool-bar-lines window-system-frame-alist)
-		   (assq 'tool-bar-lines default-frame-alist))))
-	  ;; Shrink frame by its initial tool bar height iff either zero
-	  ;; tool bar lines have been requested in one of the frame's
-	  ;; alists or tool bar mode has been turned off explicitly in
-	  ;; the user's init file.
-	  (when (and tool-bar-lines
-		     (> frame-initial-frame-tool-bar-height 0)
-		     (or (not tool-bar-mode)
-			 (null (cdr tool-bar-lines))
-			 (eq 0 (cdr tool-bar-lines))))
-	    (set-frame-height
-	     frame-initial-frame (- (frame-text-height frame-initial-frame)
-				    frame-initial-frame-tool-bar-height)
-	     nil t)
+	(let* ((init-lines
+		(assq 'tool-bar-lines initial-frame-alist))
+	       (other-lines
+		(or (assq 'tool-bar-lines window-system-frame-alist)
+		    (assq 'tool-bar-lines default-frame-alist)))
+	       (lines (or init-lines other-lines))
+	       (height (tool-bar-height frame-initial-frame t)))
+	  ;; Adjust frame top if either zero (nil) tool bar lines have
+	  ;; been requested in the most relevant of the frame's alists
+	  ;; or tool bar mode has been explicitly turned off in the
+	  ;; user's init file.
+	  (when (and (> height 0)
+		     (or (and lines
+			      (or (null (cdr lines))
+				  (eq 0 (cdr lines))))
+			 (not tool-bar-mode)))
 	    (let* ((initial-top
 		    (cdr (assq 'top frame-initial-geometry-arguments)))
 		   (top (frame-parameter frame-initial-frame 'top)))
@@ -299,15 +298,19 @@ there (in decreasing order of priority)."
 		(let ((adjusted-top
 		       (cond
 			((and (consp top) (eq '+ (car top)))
-			 (list '+ (+ (cadr top)
-				     frame-initial-frame-tool-bar-height)))
+			 (list '+ (+ (cadr top) height)))
 			((and (consp top) (eq '- (car top)))
-			 (list '- (- (cadr top)
-				     frame-initial-frame-tool-bar-height)))
-			(t (+ top frame-initial-frame-tool-bar-height)))))
+			 (list '- (- (cadr top) height)))
+			(t (+ top height)))))
 		  (modify-frame-parameters
 		   frame-initial-frame `((top . ,adjusted-top))))))
-	    (tool-bar-mode -1))))
+	    ;; Reset `tool-bar-mode' when zero tool bar lines have been
+	    ;; requested for the window-system or default frame alists.
+	    (when (and tool-bar-mode
+		       (and other-lines
+			    (or (null (cdr other-lines))
+				(eq 0 (cdr other-lines)))))
+	      (tool-bar-mode -1)))))
 
       ;; The initial frame we create above always has a minibuffer.
       ;; If the user wants to remove it, or make it a minibuffer-only
@@ -682,6 +685,9 @@ the new frame according to its own rules."
 	(push p params)))
     ;; Now make the frame.
     (run-hooks 'before-make-frame-hook)
+
+;;     (setq frame-adjust-size-history '(t))
+
     (setq frame
           (funcall (gui-method frame-creation-function w) params))
     (normal-erase-is-backspace-setup-frame frame)
@@ -690,6 +696,12 @@ the new frame according to its own rules."
       (unless (assq param parameters)   ;Overridden by explicit parameters.
         (let ((val (frame-parameter oldframe param)))
           (when val (set-frame-parameter frame param val)))))
+
+    (when (eq (car frame-adjust-size-history) t)
+      (setq frame-adjust-size-history
+	    (cons t (cons (list "Frame made")
+			  (cdr frame-adjust-size-history)))))
+
     (run-hook-with-args 'after-make-frame-functions frame)
     frame))
 

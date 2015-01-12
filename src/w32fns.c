@@ -1744,8 +1744,11 @@ x_change_tool_bar_height (struct frame *f, int height)
   /* Recalculate toolbar height.  */
   f->n_tool_bar_rows = 0;
 
-  adjust_frame_size (f, -1, -1, (old_height == 0 || height == 0) ? 2 : 4, 0,
-		     Qtool_bar_lines);
+  adjust_frame_size (f, -1, -1,
+		     (!f->tool_bar_redisplayed_once ? 1
+		      : (old_height == 0 || height == 0) ? 2
+		      : 4),
+		     0, Qtool_bar_lines);
 
   /* adjust_frame_size might not have done anything, garbage frame
      here.  */
@@ -4617,7 +4620,8 @@ This function is an internal primitive--use `make-frame' instead.  */)
      had one frame line vs one toolbar line which left us with a zero
      root window height which was obviously wrong as well ...  */
   adjust_frame_size (f, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
-		     FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 5, 1, Qnil);
+		     FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 5, 1,
+		     Qx_create_frame_1);
 
   /* The X resources controlling the menu-bar and tool-bar are
      processed specially at startup, and reflected in the mode
@@ -4685,7 +4689,8 @@ This function is an internal primitive--use `make-frame' instead.  */)
   /* Allow x_set_window_size, now.  */
   f->can_x_set_window_size = true;
 
-  adjust_frame_size (f, FRAME_TEXT_WIDTH (f), FRAME_TEXT_HEIGHT (f), 0, 1, Qnil);
+  adjust_frame_size (f, FRAME_TEXT_WIDTH (f), FRAME_TEXT_HEIGHT (f), 0, 1,
+		     Qx_create_frame_2);
 
   /* Tell the server what size and position, etc, we want, and how
      badly we want them.  This should be done after we have the menu

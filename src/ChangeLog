@@ -1,3 +1,49 @@
+2015-01-12  Martin Rudalics  <rudalics@gmx.at>
+
+	* dispnew.c (change_frame_size_1): Pass Qchange_frame_size to
+	adjust_frame_size.
+	* frame.c (frame_default_tool_bar_height): New variable.
+	(adjust_frame_size): Possibly add requested adjustment to
+	Vframe_adjust_size_history.
+	(make_frame): Initialize tool_bar_redisplayed_once slot.
+	(Fset_frame_height, Fset_frame_width, Fset_frame_size): Clarify
+	doc-string.  Call adjust_frame_size unconditionally (the frame's
+	text size may remain unaltered but the pixel size may change).
+	(x_figure_window_size): If frame_default_tool_bar_height was
+	set, use it instead of calculating the tool bar height from
+	DEFAULT_TOOL_BAR_IMAGE_HEIGHT.  Don't set
+	Vframe_initial_frame_tool_bar_height.
+	(Qchange_frame_size, Qxg_frame_set_char_size)
+	(Qset_window_configuration, Qx_create_frame_1)
+	(Qx_create_frame_2): New symbols.
+	(Vframe_initial_frame_tool_bar_height): Remove.
+	(Vframe_adjust_size_history): New history variable for debugging
+	frame size adjustments.
+	* frame.h (struct frame): New boolean slot
+	tool_bar_redisplayed_once.
+	(frame_default_tool_bar_height): Extern.
+	* gtkutil.c (xg_frame_set_char_size): Pass Qxg_frame_set_char_size
+	to adjust_frame_size.
+	* nsfns.m (Fx_create_frame): Pass Pass Qx_create_frame_1 and
+	Qx_create_frame_2 to adjust_frame_size.
+	* w32fns.c (x_change_tool_bar_height): Call adjust_frame_size with
+	inhibit 1 when we have not redisplayed the tool bar yet.
+	(Fx_create_frame): Pass Pass Qx_create_frame_1 and
+	Qx_create_frame_2 to adjust_frame_size.
+	* w32menu.c (set_frame_menubar): Simplify adjust_frame_size
+	call.
+	* window.c (Fset_window_configuration): Pass
+	Qset_window_configuration to adjust_frame_size.
+	* xdisp.c (redisplay_tool_bar): Assign new height to
+	frame_default_tool_bar_height.
+	(redisplay_internal): If we haven't redisplayed this frame's
+	tool bar, call redisplay_tool_bar early so we can adjust the
+	frame size accordingly.
+	* xfns.c (x_change_tool_bar_height): Call adjust_frame_size with
+	inhibit 1 when we have not redisplayed the tool bar yet.
+	(Fx_create_frame): Pass Pass Qx_create_frame_1 and
+	Qx_create_frame_2 to adjust_frame_size.
+
 2015-01-12  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Have 'make' output better GEN names

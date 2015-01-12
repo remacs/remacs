@@ -501,8 +501,7 @@ set_frame_menubar (struct frame *f, bool first_time, bool deep_p)
     /* Force the window size to be recomputed so that the frame's text
        area remains the same, if menubar has just been created.  */
     if (old_widget == NULL)
-      adjust_frame_size (f, FRAME_TEXT_WIDTH (f),
-			 FRAME_TEXT_HEIGHT (f), 2, 0, Qmenu_bar_lines);
+      adjust_frame_size (f, -1, -1, 2, 0, Qmenu_bar_lines);
   }
 
   unblock_input ();

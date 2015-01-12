@@ -954,7 +954,7 @@ xg_frame_set_char_size (struct frame *f, int width, int height)
       x_wait_for_event (f, ConfigureNotify);
     }
   else
-    adjust_frame_size (f, -1, -1, 5, 0, Qnil);
+    adjust_frame_size (f, -1, -1, 5, 0, Qxg_frame_set_char_size);
 }
 
 /* Handle height/width changes (i.e. add/remove/move menu/toolbar).

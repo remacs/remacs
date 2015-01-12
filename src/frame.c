@@ -67,6 +67,9 @@ static struct frame *last_nonminibuf_frame;
 /* False means there are no visible garbaged frames.  */
 bool frame_garbaged;
 
+/* The default tool bar height for future frames.  */
+int frame_default_tool_bar_height;
+
 #ifdef HAVE_WINDOW_SYSTEM
 static void x_report_frame_params (struct frame *, Lisp_Object *);
 #endif
@@ -358,6 +361,20 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
   Lisp_Object frame;
 
   XSETFRAME (frame, f);
+
+  /* `make-frame' initializes Vframe_adjust_size_history to (Qt) and
+     strips its car when exiting.  Just in case make sure its size never
+     exceeds 100.  */
+  if (!NILP (Fconsp (Vframe_adjust_size_history))
+      && EQ (Fcar (Vframe_adjust_size_history), Qt)
+      && XFASTINT (Fsafe_length (Vframe_adjust_size_history)) <= 100)
+    Vframe_adjust_size_history =
+      Fcons (Qt, Fcons (list5 (make_number (0),
+			       make_number (new_text_width),
+			       make_number (new_text_height),
+			       make_number (inhibit), parameter),
+			Fcdr (Vframe_adjust_size_history)));
+
   /* The following two values are calculated from the old window body
      sizes and any "new" settings for scroll bars, dividers, fringes and
      margins (though the latter should have been processed already).  */
@@ -424,6 +441,17 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
 	new_text_width = old_text_width;
       else if (inhibit_vertical)
 	new_text_height = old_text_height;
+
+      if (!NILP (Fconsp (Vframe_adjust_size_history))
+	  && EQ (Fcar (Vframe_adjust_size_history), Qt)
+	  && XFASTINT (Fsafe_length (Vframe_adjust_size_history)) <= 100)
+	Vframe_adjust_size_history =
+	  Fcons (Qt, Fcons (list5 (make_number (1),
+				   make_number (new_text_width),
+				   make_number (new_text_height),
+				   make_number (new_cols),
+				   make_number (new_lines)),
+			    Fcdr (Vframe_adjust_size_history)));
 
       x_set_window_size (f, 0, new_text_width, new_text_height, 1);
       f->resized_p = true;
@@ -496,6 +524,17 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
   SET_FRAME_COLS (f, new_cols);
   SET_FRAME_LINES (f, new_lines);
 
+  if (!NILP (Fconsp (Vframe_adjust_size_history))
+      && EQ (Fcar (Vframe_adjust_size_history), Qt)
+      && XFASTINT (Fsafe_length (Vframe_adjust_size_history)) <= 100)
+    Vframe_adjust_size_history =
+      Fcons (Qt, Fcons (list5 (make_number (2),
+			       make_number (new_text_width),
+			       make_number (new_text_height),
+			       make_number (new_cols),
+			       make_number (new_lines)),
+			Fcdr (Vframe_adjust_size_history)));
+
   {
     struct window *w = XWINDOW (FRAME_SELECTED_WINDOW (f));
     int text_area_x, text_area_y, text_area_width, text_area_height;
@@ -554,6 +593,7 @@ make_frame (bool mini_p)
   f->garbaged = true;
   f->can_x_set_window_size = false;
   f->can_run_window_configuration_change_hook = false;
+  f->tool_bar_redisplayed_once = false;
   f->column_width = 1;  /* !FRAME_WINDOW_P value.  */
   f->line_height = 1;  /* !FRAME_WINDOW_P value.  */
 #ifdef HAVE_WINDOW_SYSTEM
@@ -2808,7 +2848,7 @@ DEFUN ("frame-bottom-divider-width", Fbottom_divider_width, Sbottom_divider_widt
 }
 
 DEFUN ("set-frame-height", Fset_frame_height, Sset_frame_height, 2, 4, 0,
-       doc: /* Set height of frame FRAME to HEIGHT lines.
+       doc: /* Set text height of frame FRAME to HEIGHT lines.
 Optional third arg PRETEND non-nil means that redisplay should use
 HEIGHT lines but that the idea of the actual height of the frame should
 not be changed.
@@ -2827,14 +2867,13 @@ multiple of the default frame font height.  */)
   pixel_height = (!NILP (pixelwise)
 		  ? XINT (height)
 		  : XINT (height) * FRAME_LINE_HEIGHT (f));
-  if (pixel_height != FRAME_TEXT_HEIGHT (f))
-    adjust_frame_size (f, -1, pixel_height, 1, !NILP (pretend), Qheight);
+  adjust_frame_size (f, -1, pixel_height, 1, !NILP (pretend), Qheight);
 
   return Qnil;
 }
 
 DEFUN ("set-frame-width", Fset_frame_width, Sset_frame_width, 2, 4, 0,
-       doc: /* Set width of frame FRAME to WIDTH columns.
+       doc: /* Set text width of frame FRAME to WIDTH columns.
 Optional third arg PRETEND non-nil means that redisplay should use WIDTH
 columns but that the idea of the actual width of the frame should not
 be changed.
@@ -2853,14 +2892,13 @@ multiple of the default frame font width.  */)
   pixel_width = (!NILP (pixelwise)
 		 ? XINT (width)
 		 : XINT (width) * FRAME_COLUMN_WIDTH (f));
-  if (pixel_width != FRAME_TEXT_WIDTH (f))
-    adjust_frame_size (f, pixel_width, -1, 1, !NILP (pretend), Qwidth);
+  adjust_frame_size (f, pixel_width, -1, 1, !NILP (pretend), Qwidth);
 
   return Qnil;
 }
 
 DEFUN ("set-frame-size", Fset_frame_size, Sset_frame_size, 3, 4, 0,
-       doc: /* Set size of FRAME to WIDTH by HEIGHT, measured in characters.
+       doc: /* Set text size of FRAME to WIDTH by HEIGHT, measured in characters.
 Optional argument PIXELWISE non-nil means to measure in pixels.  Note:
 When `frame-resize-pixelwise' is nil, some window managers may refuse to
 honor a WIDTH that is not an integer multiple of the default frame font
@@ -2880,10 +2918,7 @@ font height.  */)
   pixel_height = (!NILP (pixelwise)
 		  ? XINT (height)
 		  : XINT (height) * FRAME_LINE_HEIGHT (f));
-
-  if (pixel_width != FRAME_TEXT_WIDTH (f)
-      || pixel_height != FRAME_TEXT_HEIGHT (f))
-    adjust_frame_size (f, pixel_width, pixel_height, 1, 0, Qsize);
+  adjust_frame_size (f, pixel_width, pixel_height, 1, 0, Qsize);
 
   return Qnil;
 }
@@ -4492,23 +4527,27 @@ x_figure_window_size (struct frame *f, Lisp_Object parms, bool toolbar_p)
      frames without having to guess how tall the tool bar will get.  */
   if (toolbar_p && FRAME_TOOL_BAR_LINES (f))
     {
-      int margin, relief;
-
-      relief = (tool_bar_button_relief >= 0
-		? tool_bar_button_relief
-		: DEFAULT_TOOL_BAR_BUTTON_RELIEF);
-
-      if (RANGED_INTEGERP (1, Vtool_bar_button_margin, INT_MAX))
-	margin = XFASTINT (Vtool_bar_button_margin);
-      else if (CONSP (Vtool_bar_button_margin)
-	       && RANGED_INTEGERP (1, XCDR (Vtool_bar_button_margin), INT_MAX))
-	margin = XFASTINT (XCDR (Vtool_bar_button_margin));
+      if (frame_default_tool_bar_height)
+	FRAME_TOOL_BAR_HEIGHT (f) = frame_default_tool_bar_height;
       else
-	margin = 0;
+	{
+	  int margin, relief;
 
-      FRAME_TOOL_BAR_HEIGHT (f)
-	= DEFAULT_TOOL_BAR_IMAGE_HEIGHT + 2 * margin + 2 * relief;
-      Vframe_initial_frame_tool_bar_height = make_number (FRAME_TOOL_BAR_HEIGHT (f));
+	  relief = (tool_bar_button_relief >= 0
+		    ? tool_bar_button_relief
+		    : DEFAULT_TOOL_BAR_BUTTON_RELIEF);
+
+	  if (RANGED_INTEGERP (1, Vtool_bar_button_margin, INT_MAX))
+	    margin = XFASTINT (Vtool_bar_button_margin);
+	  else if (CONSP (Vtool_bar_button_margin)
+		   && RANGED_INTEGERP (1, XCDR (Vtool_bar_button_margin), INT_MAX))
+	    margin = XFASTINT (XCDR (Vtool_bar_button_margin));
+	  else
+	    margin = 0;
+
+	  FRAME_TOOL_BAR_HEIGHT (f)
+	    = DEFAULT_TOOL_BAR_IMAGE_HEIGHT + 2 * margin + 2 * relief;
+	}
     }
 
   top = x_get_arg (dpyinfo, parms, Qtop, 0, 0, RES_TYPE_NUMBER);
@@ -4779,6 +4818,11 @@ syms_of_frame (void)
   DEFSYM (Qtool_bar_external, "tool-bar-external");
   DEFSYM (Qtool_bar_size, "tool-bar-size");
   DEFSYM (Qframe_inner_size, "frame-inner-size");
+  DEFSYM (Qchange_frame_size, "change-frame-size");
+  DEFSYM (Qxg_frame_set_char_size, "xg-frame-set-char-size");
+  DEFSYM (Qset_window_configuration, "set-window-configuration");
+  DEFSYM (Qx_create_frame_1, "x-create-frame-1");
+  DEFSYM (Qx_create_frame_2, "x-create-frame-2");
 
 #ifdef HAVE_NS
   DEFSYM (Qns_parse_geometry, "ns-parse-geometry");
@@ -4968,10 +5012,6 @@ or call the function `tool-bar-mode'.  */);
   Vtool_bar_mode = Qnil;
 #endif
 
-  DEFVAR_LISP ("frame-initial-frame-tool-bar-height", Vframe_initial_frame_tool_bar_height,
-               doc: /* Height of tool bar of initial frame.  */);
-  Vframe_initial_frame_tool_bar_height = make_number (0);
-
   DEFVAR_KBOARD ("default-minibuffer-frame", Vdefault_minibuffer_frame,
 		 doc: /* Minibufferless frames use this frame's minibuffer.
 Emacs cannot create minibufferless frames unless this is set to an
@@ -5049,6 +5089,10 @@ even if this option is non-nil.  */);
 #else
   frame_inhibit_implied_resize = Qt;
 #endif
+
+  DEFVAR_LISP ("frame-adjust-size-history", Vframe_adjust_size_history,
+               doc: /* History of frame size adjustments.  */);
+  Vframe_adjust_size_history = Qnil;
 
   staticpro (&Vframe_list);
 

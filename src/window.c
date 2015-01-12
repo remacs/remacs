@@ -6421,7 +6421,7 @@ the return value is nil.  Otherwise the value is t.  */)
       /* Allow x_set_window_size again and apply frame size changes if
 	 needed.  */
       f->can_x_set_window_size = true;
-      adjust_frame_size (f, -1, -1, 1, 0, Qnil);
+      adjust_frame_size (f, -1, -1, 1, 0, Qset_window_configuration);
 
       adjust_frame_glyphs (f);
       unblock_input ();
