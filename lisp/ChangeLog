@@ -1,5 +1,8 @@
 2015-01-12  Martin Rudalics  <rudalics@gmx.at>
 
+	* progmodes/xref.el (xref-marker-stack-empty-p): Add autoload
+	cookie (Bug#19554).
+
 	* frame.el (frame-notice-user-settings): Remove code dealing with
 	frame-initial-frame-tool-bar-height.  Turn off `tool-bar-mode'
 	only if `window-system-frame-alist' or `default-frame-alist' ask
