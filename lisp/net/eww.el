@@ -1,4 +1,4 @@
-;;; eww.el --- Emacs Web Wowser
+;;; eww.el --- Emacs Web Wowser  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2013-2015 Free Software Foundation, Inc.
 
@@ -552,7 +552,7 @@ See the `eww-search-prefix' variable for the search engine used."
   "Return URI of the Web page the current EWW buffer is visiting."
   (plist-get eww-data :url))
 
-(defun eww-links-at-point (&optional pt)
+(defun eww-links-at-point ()
   "Return list of URIs, if any, linked at point."
   (remq nil
 	(list (get-text-property (point) 'shr-url)
@@ -631,17 +631,13 @@ the like."
 
 (defvar eww-mode-map
   (let ((map (make-sparse-keymap)))
-    (suppress-keymap map)
-    (define-key map "q" 'quit-window)
-    (define-key map "g" 'eww-reload)
+    (set-keymap-parent map special-mode-map)
+    (define-key map "g" 'eww-reload) ;FIXME: revert-buffer-function instead!
     (define-key map "G" 'eww)
     (define-key map [?\t] 'shr-next-link)
     (define-key map [?\M-\t] 'shr-previous-link)
     (define-key map [backtab] 'shr-previous-link)
     (define-key map [delete] 'scroll-down-command)
-    (define-key map [?\S-\ ] 'scroll-down-command)
-    (define-key map "\177" 'scroll-down-command)
-    (define-key map " " 'scroll-up-command)
     (define-key map "l" 'eww-back-url)
     (define-key map "r" 'eww-forward-url)
     (define-key map "n" 'eww-next-url)
@@ -699,21 +695,19 @@ the like."
     map)
   "Tool bar for `eww-mode'.")
 
-(define-derived-mode eww-mode nil "eww"
-  "Mode for browsing the web.
-
-\\{eww-mode-map}"
+(define-derived-mode eww-mode special-mode "eww"
+  "Mode for browsing the web."
   (setq-local eww-data (list :title ""))
-  (setq-local browse-url-browser-function 'eww-browse-url)
-  (setq-local after-change-functions 'eww-process-text-input)
+  (setq-local browse-url-browser-function #'eww-browse-url)
+  (add-hook 'after-change-functions #'eww-process-text-input nil t)
   (setq-local eww-history nil)
   (setq-local eww-history-position 0)
   (when (boundp 'tool-bar-map)
-   (setq-local tool-bar-map eww-tool-bar-map))
+    (setq-local tool-bar-map eww-tool-bar-map))
   ;; desktop support
-  (setq-local desktop-save-buffer 'eww-desktop-misc-data)
+  (setq-local desktop-save-buffer #'eww-desktop-misc-data)
   ;; multi-page isearch support
-  (setq-local multi-isearch-next-buffer-function 'eww-isearch-next-buffer)
+  (setq-local multi-isearch-next-buffer-function #'eww-isearch-next-buffer)
   (setq truncate-lines t)
   (buffer-disable-undo)
   (setq buffer-read-only t))
@@ -1056,7 +1050,7 @@ See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
     (insert value)
     (shr-ensure-newline)
     (when (< (count-lines start (point)) lines)
-      (dotimes (i (- lines (count-lines start (point))))
+      (dotimes (_ (- lines (count-lines start (point))))
 	(insert "\n")))
     (setq end (point-marker))
     (goto-char start)
@@ -1848,7 +1842,7 @@ Also used when saving `eww-history'.")
     ;; .
     r))
 
-(defun eww-desktop-misc-data (directory)
+(defun eww-desktop-misc-data (_directory)
   "Return a property list with data used to restore eww buffers.
 This list will contain, as :history, the list, whose first element is
 the value of `eww-data', and the tail is `eww-history'.
@@ -1896,7 +1890,7 @@ Otherwise, the restored buffer will contain a prompt to do so by using
 
 ;;; Isearch support
 
-(defun eww-isearch-next-buffer (&optional buffer wrap)
+(defun eww-isearch-next-buffer (&optional _buffer wrap)
   "Go to the next page to search using `rel' attribute for navigation."
   (if wrap
       (condition-case nil

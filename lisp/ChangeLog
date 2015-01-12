@@ -1,10 +1,17 @@
+2015-01-14  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* net/eww.el: Use lexical-binding.
+	(eww-links-at-point): Remove unused arg.
+	(eww-mode-map): Inherit from special-mode-map.
+	(eww-mode): Derive from special-mode.  Don't use `setq' on a hook.
+
 2015-01-13  Alan Mackenzie  <acm@muc.de>
 
 	Allow compilation during loading of Modes derived from a CC Mode mode.
 	Fixes debbugs#19206.
 
-	* progmodes/cc-bytecomp.el (cc-bytecomp-compiling-or-loading): new
-	function which walks the stack to discover whether we're compiling
+	* progmodes/cc-bytecomp.el (cc-bytecomp-compiling-or-loading):
+	New function which walks the stack to discover whether we're compiling
 	or loading.
 	(cc-bytecomp-is-compiling): Reformulate, and move towards
 	beginning.
@@ -21,8 +28,8 @@
 	symbol's 'source property.
 	(c-lang-const): Use cc-bytecomp-is-compiling.
 
-	* progmodes/cc-langs.el (c-make-init-lang-vars-fun): Use
-	cc-bytecomp-is-compiling.
+	* progmodes/cc-langs.el (c-make-init-lang-vars-fun):
+	Use cc-bytecomp-is-compiling.
 
 2015-01-13  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -439,8 +446,8 @@
 	to `pre-command-hook'.
 	(xref--xref-buffer-mode-map): Don't remap `next-line' and
 	`previous-line'.  Additionally bind `xref-next-line' and
-	`xref-prev-line' to `n' and `p' respectively.  Bind
-	`xref-show-location-at-point' to `C-o'.
+	`xref-prev-line' to `n' and `p' respectively.
+	Bind `xref-show-location-at-point' to `C-o'.
 
 2015-01-01  Eli Zaretskii  <eliz@gnu.org>
 
@@ -629,15 +636,15 @@
 	Add argument MSG to display user-friendly message when no process
 	is running.
 	(python-shell-switch-to-shell): Call pop-to-buffer with NORECORD.
-	(python-shell-make-comint): Rename argument SHOW from POP.  Use
-	display-buffer instead of pop-to-buffer.
+	(python-shell-make-comint): Rename argument SHOW from POP.
+	Use display-buffer instead of pop-to-buffer.
 	(run-python): Doc fix.  Return process.
 	(python-shell-get-or-create-process): Make obsolete.
 
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
-	* progmodes/python.el (python-shell-buffer-substring): Handle
-	cornercase when region sent starts at point-min.
+	* progmodes/python.el (python-shell-buffer-substring):
+	Handle cornercase when region sent starts at point-min.
 
 2014-12-27  Eli Zaretskii  <eliz@gnu.org>
 
@@ -809,8 +816,8 @@
 
 2014-12-25  Filipp Gunbin  <fgunbin@fastmail.fm>
 
-	* dired-aux.el (dired-maybe-insert-subdir): Make
-	dired-maybe-insert-subdir always skip trivial files.
+	* dired-aux.el (dired-maybe-insert-subdir):
+	Make dired-maybe-insert-subdir always skip trivial files.
 
 2014-12-25  Helmut Eller  <eller.helmut@gmail.com>
             Dmitry Gutov  <dgutov@yandex.ru>
@@ -855,8 +862,8 @@
 
 	* window.el (mouse-autoselect-window-position-1): New variable.
 	(mouse-autoselect-window-cancel)
-	(mouse-autoselect-window-select, handle-select-window): With
-	delayed autoselection select window only if mouse moves after
+	(mouse-autoselect-window-select, handle-select-window):
+	With delayed autoselection select window only if mouse moves after
 	selecting its frame.
 
 2014-12-24  Michael Albinus  <michael.albinus@gmx.de>
