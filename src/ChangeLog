@@ -1,3 +1,12 @@
+2015-01-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port to 32-bit MingGW --with-wide-int
+	Problem reported by Eli Zaretskii in:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-01/msg00265.html
+	* lisp.h (struct Lisp_Sub_Char_Table): Check that offset matches
+	what we think it is, rather than checking only its alignment (and
+	doing so incorrectly on MinGW).
+
 2015-01-12  Dmitry Antipov  <dmantipov@yandex.ru>
 
 	* fileio.c (Ffile_name_as_directory, Fdirectory_file_name):

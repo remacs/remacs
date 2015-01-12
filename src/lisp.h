@@ -1689,10 +1689,9 @@ CHAR_TABLE_EXTRA_SLOTS (struct Lisp_Char_Table *ct)
 	  - CHAR_TABLE_STANDARD_SLOTS);
 }
 
-/* Make sure that sub char-table contents slot
-   is aligned on a multiple of Lisp_Objects.  */
-verify ((offsetof (struct Lisp_Sub_Char_Table, contents)
-	 - offsetof (struct Lisp_Sub_Char_Table, depth)) % word_size == 0);
+/* Make sure that sub char-table contents slot is where we think it is.  */
+verify (offsetof (struct Lisp_Sub_Char_Table, contents)
+	== offsetof (struct Lisp_Vector, contents[SUB_CHAR_TABLE_OFFSET]));
 
 /***********************************************************************
 			       Symbols
