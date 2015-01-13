@@ -1,3 +1,42 @@
+2015-01-13  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix problems with 32-bit wide-int build exposed by MinGW.
+	* lisp.h (XPNTR): Move definition to after XTYPE, to avoid
+	compilation error in an unoptimized build when !USE_LSB_TAG.
+
+	* w32heap.c (DUMPED_HEAP_SIZE): For 32-bit wide-int build, use the
+	same larger value as for the 64-bit build.
+
+	* w32term.h (SCROLL_BAR_PACK): Cast the result to UINT_PTR to
+	avoid compiler warnings.
+
+	* w32proc.c (Fw32_get_codepage_charset, Fw32_set_keyboard_layout):
+	Avoid compiler warnings about cast from integer to pointer of
+	different size.
+
+	* w32menu.c (menubar_selection_callback, w32_menu_show): Cast to
+	UINT_PTR instead of EMACS_INT, to avoid compiler warnings about
+	casting from integer to pointer of different size.
+	(add_menu_item): Pass the help-echo string as a pointer to
+	Lisp_String, not as a Lisp_Object.
+	(w32_menu_display_help): Use make_lisp_ptr to reconstruct a Lisp
+	string object from its C pointer.
+
+	* w32fns.c (w32_msg_pump) <WM_EMACS_UNREGISTER_HOT_KEY>: Use
+	make_lisp_ptr instead of XIL, to reconstruct a Lisp_Cons from its
+	C pointer.
+	<WM_EMACS_TOGGLE_LOCK_KEY>: msg.lparam is now a C integer.
+	(Fx_create_frame): Type-cast the result of XFASTINT to avoild
+	compiler warnings about size differences.
+	(Fw32_unregister_hot_key): Pass the tail of w32_grabbed_keys as a
+	pointer to a Lisp_Cons struct, not as a disguised EMACS_INT.
+	(Fw32_toggle_lock_key): Pass the new state of the key as a C
+	integer; use -1 for nil.  Doc fix.
+
+	* .gdbinit (xgetsym): New subroutine.
+	(xsymname, xsymbol): Use it.
+	(xprintsym): No need to call xgetptr.
+
 2015-01-13  Martin Rudalics  <rudalics@gmx.at>
 
 	* frame.c (adjust_frame_size): Make sure new numbers of

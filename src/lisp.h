@@ -820,9 +820,6 @@ DEFINE_GDB_SYMBOL_END (VALMASK)
 #define MOST_POSITIVE_FIXNUM (EMACS_INT_MAX >> INTTYPEBITS)
 #define MOST_NEGATIVE_FIXNUM (-1 - MOST_POSITIVE_FIXNUM)
 
-/* Extract the pointer hidden within A.  */
-LISP_MACRO_DEFUN (XPNTR, void *, (Lisp_Object a), (a))
-
 #if USE_LSB_TAG
 
 LISP_MACRO_DEFUN (make_number, Lisp_Object, (EMACS_INT n), (n))
@@ -911,6 +908,9 @@ XUNTAG (Lisp_Object a, int type)
 }
 
 #endif /* ! USE_LSB_TAG */
+
+/* Extract the pointer hidden within A.  */
+LISP_MACRO_DEFUN (XPNTR, void *, (Lisp_Object a), (a))
 
 /* Extract A's value as an unsigned integer.  */
 INLINE EMACS_UINT
