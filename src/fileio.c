@@ -5733,25 +5733,35 @@ then any auto-save counts as "recent".  */)
      they're never autosaved.  */
   return (SAVE_MODIFF < BUF_AUTOSAVE_MODIFF (current_buffer) ? Qt : Qnil);
 }
-
-/* Reading and completing file names */
+
+/* We want Fnext_read_file_uses_dialog_p to have ATTRIBUTE_CONST
+   regardless of #ifdefs, so there is a trivial workaround.  See
+   http://lists.gnu.org/archive/html/emacs-devel/2015-01/msg00289.html.  */
+
+static bool
+next_read_file_uses_dialog_p (void)
+{
+#if defined (USE_MOTIF) || defined (HAVE_NTGUI) || defined (USE_GTK) \
+  || defined (HAVE_NS)
+  return ((NILP (last_nonmenu_event) || CONSP (last_nonmenu_event))
+	  && use_dialog_box
+	  && use_file_dialog
+	  && window_system_available (SELECTED_FRAME ()));
+#endif
+  return false;
+}
+
+/* Reading and completing file names.  */
 
 DEFUN ("next-read-file-uses-dialog-p", Fnext_read_file_uses_dialog_p,
        Snext_read_file_uses_dialog_p, 0, 0, 0,
        doc: /* Return t if a call to `read-file-name' will use a dialog.
 The return value is only relevant for a call to `read-file-name' that happens
-before any other event (mouse or keypress) is handled.  */)
+before any other event (mouse or keypress) is handled.  */
+       attributes: const)
   (void)
 {
-#if defined (USE_MOTIF) || defined (HAVE_NTGUI) || defined (USE_GTK) \
-  || defined (HAVE_NS)
-  if ((NILP (last_nonmenu_event) || CONSP (last_nonmenu_event))
-      && use_dialog_box
-      && use_file_dialog
-      && window_system_available (SELECTED_FRAME ()))
-    return Qt;
-#endif
-  return Qnil;
+  return next_read_file_uses_dialog_p () ? Qt : Qnil;
 }
 
 void
