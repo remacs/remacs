@@ -1307,7 +1307,7 @@ method invocation orders of the involved classes."
 ;; To support .elc files compiled for older versions of EIEIO.
 
 (defun eieio-defclass (cname superclasses slots options)
-  (eval `(defclass ,cname ,superclasses ,slots ,options)))
+  (eval `(defclass ,cname ,superclasses ,slots ,@options)))
 
 
 (provide 'eieio-core)
