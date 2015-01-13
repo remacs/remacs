@@ -5,6 +5,7 @@
 	the pkg-desc, with desc-kind set to KIND.
 	(package-dir-info): New function. Find package information for a
 	directory. The return result is a `package-desc'.
+	(package-install-from-buffer): Install packages from dired buffer.
 
 2015-01-16  Jorgen Schaefer  <contact@jorgenschaefer.de>
 
