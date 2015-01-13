@@ -1,3 +1,9 @@
+2015-01-13  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* menu-bar.el (menu-bar-goto-menu): Before calling
+	`xref-marker-stack-empty-p', first check that `xref' is loaded.
+	(Bug#19554)
+
 2015-01-12  Martin Rudalics  <rudalics@gmx.at>
 
 	* progmodes/xref.el (xref-marker-stack-empty-p): Add autoload
