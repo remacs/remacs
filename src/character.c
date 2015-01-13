@@ -232,14 +232,16 @@ DEFUN ("characterp", Fcharacterp, Scharacterp, 1, 2, 0,
 In Emacs Lisp, characters are represented by character codes, which
 are non-negative integers.  The function `max-char' returns the
 maximum character code.
-usage: (characterp OBJECT)  */)
+usage: (characterp OBJECT)  */
+       attributes: const)
   (Lisp_Object object, Lisp_Object ignore)
 {
   return (CHARACTERP (object) ? Qt : Qnil);
 }
 
 DEFUN ("max-char", Fmax_char, Smax_char, 0, 0, 0,
-       doc: /* Return the character of the maximum code.  */)
+       doc: /* Return the character of the maximum code.  */
+       attributes: const)
   (void)
 {
   return make_number (MAX_CHAR);

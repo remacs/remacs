@@ -3000,7 +3000,8 @@ resize_root_window (Lisp_Object window, Lisp_Object delta, Lisp_Object horizonta
 /* Placeholder used by temacs -nw before window.el is loaded.  */
 DEFUN ("window--sanitize-window-sizes", Fwindow__sanitize_window_sizes,
        Swindow__sanitize_window_sizes, 2, 2, 0,
-       doc: /* */)
+       doc: /* */
+       attributes: const)
      (Lisp_Object frame, Lisp_Object horizontal)
 {
   return Qnil;

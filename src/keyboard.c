@@ -1163,7 +1163,8 @@ top_level_1 (Lisp_Object ignore)
 
 DEFUN ("top-level", Ftop_level, Stop_level, 0, 0, "",
        doc: /* Exit all recursive editing levels.
-This also exits all active minibuffers.  */)
+This also exits all active minibuffers.  */
+       attributes: noreturn)
   (void)
 {
 #ifdef HAVE_WINDOW_SYSTEM
@@ -1186,7 +1187,8 @@ user_error (const char *msg)
 
 /* _Noreturn will be added to prototype by make-docfile.  */
 DEFUN ("exit-recursive-edit", Fexit_recursive_edit, Sexit_recursive_edit, 0, 0, "",
-       doc: /* Exit from the innermost recursive edit or minibuffer.  */)
+       doc: /* Exit from the innermost recursive edit or minibuffer.  */
+       attributes: noreturn)
   (void)
 {
   if (command_loop_level > 0 || minibuf_level > 0)
@@ -1197,7 +1199,8 @@ DEFUN ("exit-recursive-edit", Fexit_recursive_edit, Sexit_recursive_edit, 0, 0, 
 
 /* _Noreturn will be added to prototype by make-docfile.  */
 DEFUN ("abort-recursive-edit", Fabort_recursive_edit, Sabort_recursive_edit, 0, 0, "",
-       doc: /* Abort the command that requested this recursive edit or minibuffer input.  */)
+       doc: /* Abort the command that requested this recursive edit or minibuffer input.  */
+       attributes: noreturn)
   (void)
 {
   if (command_loop_level > 0 || minibuf_level > 0)

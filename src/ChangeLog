@@ -1,3 +1,23 @@
+2015-01-13  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Add DEFUN attributes.
+	* callint.c (Finteractive):
+	* character.c (Fcharacterp, Fmax_char):
+	* data.c (Feq, Fnull, Fconsp, Fatom, Flistp, Fnlistp, Fsymbolp)
+	(Fstringp, Fchar_or_string_p, Fintegerp, Fnatnump, Fnumberp)
+	(Ffloatp, Fbyteorder):
+	* decompress.c (Fzlib_available_p):
+	* fns.c (Fidentity):
+	* frame.c (Fframe_windows_min_size):
+	* gnutls.c (Fgnutls_error_p, Fgnutls_available_p):
+	* window.c (Fwindow__sanitize_window_sizes):
+	* xdisp.c (Ftool_bar_height):
+	* xfaces.c (Fface_attribute_relative_p): Add const attribute.
+	* emacs.c (Fkill_emacs):
+	* eval.c (Fthrow):
+	* keyboard.c (Ftop_level, Fexit_recursive_edit)
+	(Fabor_recursive_edit): Add noreturn attribute.
+
 2015-01-12  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Port to 32-bit MingGW --with-wide-int

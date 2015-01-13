@@ -88,7 +88,8 @@ unwind_decompress (void *ddata)
 }
 
 DEFUN ("zlib-available-p", Fzlib_available_p, Szlib_available_p, 0, 0, 0,
-       doc: /* Return t if zlib decompression is available in this instance of Emacs.  */)
+       doc: /* Return t if zlib decompression is available in this instance of Emacs.  */
+       attributes: const)
      (void)
 {
 #ifdef WINDOWSNT

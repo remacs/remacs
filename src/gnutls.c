@@ -695,7 +695,8 @@ See also `gnutls-boot'.  */)
 DEFUN ("gnutls-errorp", Fgnutls_errorp, Sgnutls_errorp, 1, 1, 0,
        doc: /* Return t if ERROR indicates a GnuTLS problem.
 ERROR is an integer or a symbol with an integer `gnutls-code' property.
-usage: (gnutls-errorp ERROR)  */)
+usage: (gnutls-errorp ERROR)  */
+       attributes: const)
   (Lisp_Object err)
 {
   if (EQ (err, Qt)) return Qnil;
@@ -1603,7 +1604,8 @@ This function may also return `gnutls-e-again', or
 #endif	/* HAVE_GNUTLS */
 
 DEFUN ("gnutls-available-p", Fgnutls_available_p, Sgnutls_available_p, 0, 0, 0,
-       doc: /* Return t if GnuTLS is available in this instance of Emacs.  */)
+       doc: /* Return t if GnuTLS is available in this instance of Emacs.  */
+       attributes: const)
      (void)
 {
 #ifdef HAVE_GNUTLS

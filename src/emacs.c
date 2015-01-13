@@ -1892,7 +1892,8 @@ or SIGHUP, and upon SIGINT in batch mode.
 
 The value of `kill-emacs-hook', if not void,
 is a list of functions (of no args),
-all of which are called before Emacs is actually killed.  */)
+all of which are called before Emacs is actually killed.  */
+       attributes: noreturn)
   (Lisp_Object arg)
 {
   struct gcpro gcpro1;

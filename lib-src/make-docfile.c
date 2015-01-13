@@ -562,6 +562,7 @@ struct global
 {
   enum global_type type;
   char *name;
+  int flags;
   union
   {
     int value;
@@ -569,13 +570,16 @@ struct global
   } v;
 };
 
+/* Bit values for FLAGS field from the above.  Applied for DEFUNs only.  */
+enum { DEFUN_noreturn = 1, DEFUN_const = 2 };
+
 /* All the variable names we saw while scanning C sources in `-g'
    mode.  */
 int num_globals;
 int num_globals_allocated;
 struct global *globals;
 
-static void
+static struct global *
 add_global (enum global_type type, char *name, int value, char const *svalue)
 {
   /* Ignore the one non-symbol that can occur.  */
@@ -601,7 +605,10 @@ add_global (enum global_type type, char *name, int value, char const *svalue)
 	globals[num_globals - 1].v.svalue = svalue;
       else
 	globals[num_globals - 1].v.value = value;
+      globals[num_globals - 1].flags = 0;
+      return globals + num_globals - 1;
     }
+  return NULL;
 }
 
 static int
@@ -708,13 +715,7 @@ write_globals (void)
 		globals[i].name, globals[i].name, globals[i].name);
       else
 	{
-	  /* It would be nice to have a cleaner way to deal with these
-	     special hacks.  */
-	  if (strcmp (globals[i].name, "Fthrow") == 0
-	      || strcmp (globals[i].name, "Ftop_level") == 0
-	      || strcmp (globals[i].name, "Fkill_emacs") == 0
-	      || strcmp (globals[i].name, "Fexit_recursive_edit") == 0
-	      || strcmp (globals[i].name, "Fabort_recursive_edit") == 0)
+	  if (globals[i].flags & DEFUN_noreturn)
 	    fputs ("_Noreturn ", stdout);
 
 	  printf ("EXFUN (%s, ", globals[i].name);
@@ -726,36 +727,7 @@ write_globals (void)
 	    printf ("%d", globals[i].v.value);
 	  putchar (')');
 
-	  /* It would be nice to have a cleaner way to deal with these
-	     special hacks, too.  */
-	  if (strcmp (globals[i].name, "Fatom") == 0
-	      || strcmp (globals[i].name, "Fbyteorder") == 0
-	      || strcmp (globals[i].name, "Fcharacterp") == 0
-	      || strcmp (globals[i].name, "Fchar_or_string_p") == 0
-	      || strcmp (globals[i].name, "Fconsp") == 0
-	      || strcmp (globals[i].name, "Feq") == 0
-	      || strcmp (globals[i].name, "Fface_attribute_relative_p") == 0
-	      || strcmp (globals[i].name, "Fframe_windows_min_size") == 0
-	      || strcmp (globals[i].name, "Fgnutls_errorp") == 0
-	      || strcmp (globals[i].name, "Fidentity") == 0
-	      || strcmp (globals[i].name, "Fintegerp") == 0
-	      || strcmp (globals[i].name, "Finteractive") == 0
-	      || strcmp (globals[i].name, "Ffloatp") == 0
-	      || strcmp (globals[i].name, "Flistp") == 0
-	      || strcmp (globals[i].name, "Fmax_char") == 0
-	      || strcmp (globals[i].name, "Fnatnump") == 0
-	      || strcmp (globals[i].name, "Fnlistp") == 0
-	      || strcmp (globals[i].name, "Fnull") == 0
-	      || strcmp (globals[i].name, "Fnumberp") == 0
-	      || strcmp (globals[i].name, "Fstringp") == 0
-	      || strcmp (globals[i].name, "Fsymbolp") == 0
-	      || strcmp (globals[i].name, "Ftool_bar_height") == 0
-	      || strcmp (globals[i].name, "Fwindow__sanitize_window_sizes") == 0
-#ifndef WINDOWSNT
-	      || strcmp (globals[i].name, "Fgnutls_available_p") == 0
-	      || strcmp (globals[i].name, "Fzlib_available_p") == 0
-#endif
-	      || 0)
+	  if (globals[i].flags & DEFUN_const)
 	    fputs (" ATTRIBUTE_CONST", stdout);
 
 	  puts (";");
@@ -815,6 +787,23 @@ scan_c_file (char *filename, const char *mode)
   /* Reset extension to be able to detect duplicate files.  */
   filename[strlen (filename) - 1] = extension;
   return scan_c_stream (infile);
+}
+
+/* Return 1 if next input from INFILE is equal to P, -1 if EOF,
+   0 if input doesn't match.  */
+
+static int
+stream_match (FILE *infile, const char *p)
+{
+  for (; *p; p++)
+    {
+      int c = getc (infile);
+      if (c == EOF)
+       return -1;
+      if (c != *p)
+       return 0;
+    }
+  return 1;
 }
 
 static int
@@ -1033,7 +1022,63 @@ scan_c_stream (FILE *infile)
 
       if (generate_globals)
 	{
-	  add_global (FUNCTION, name, maxargs, 0);
+	  struct global *g = add_global (FUNCTION, name, maxargs, 0);
+
+	  /* The following code tries to recognize function attributes
+	     specified after the docstring, e.g.:
+
+	     DEFUN ("foo", Ffoo, Sfoo, X, Y, Z,
+		   doc: /\* doc *\/
+		   attributes: attribute1 attribute2 ...)
+	       (Lisp_Object arg...)
+
+	     Now only 'noreturn' and 'const' attributes are used.  */
+
+	  /* Advance to the end of docstring.  */
+	  c = getc (infile);
+	  if (c == EOF)
+	    goto eof;
+	  int d = getc (infile);
+	  if (d == EOF)
+	    goto eof;
+	  while (1)
+	    {
+	      if (c == '*' && d == '/')
+		break;
+	      c = d, d = getc (infile);
+	      if (d == EOF)
+		goto eof;
+	    }
+	  /* Skip spaces, if any.  */
+	  do
+	    {
+	      c = getc (infile);
+	      if (c == EOF)
+		goto eof;
+	    }
+	  while (c == ' ' || c == '\n' || c == '\r' || c == '\t');
+	  /* Check for 'attributes:' token.  */
+	  if (c == 'a' && stream_match (infile, "ttributes:"))
+	    {
+	      char *p = input_buffer;
+	      /* Collect attributes up to ')'.  */
+	      while (1)
+		{
+		  c = getc (infile);
+		  if (c == EOF)
+		    goto eof;
+		  if (c == ')')
+		    break;
+		  if (p - input_buffer > sizeof (input_buffer))
+		    abort ();
+		  *p++ = c;
+		}
+	      *p = 0;
+	      if (strstr (input_buffer, "noreturn"))
+		g->flags |= DEFUN_noreturn;
+	      if (strstr (input_buffer, "const"))
+		g->flags |= DEFUN_const;
+	    }
 	  continue;
 	}
 

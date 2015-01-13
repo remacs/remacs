@@ -46,7 +46,8 @@ static void sort_vector_copy (Lisp_Object, ptrdiff_t,
 static bool internal_equal (Lisp_Object, Lisp_Object, int, bool, Lisp_Object);
 
 DEFUN ("identity", Fidentity, Sidentity, 1, 1, 0,
-       doc: /* Return the argument unchanged.  */)
+       doc: /* Return the argument unchanged.  */
+       attributes: const)
   (Lisp_Object arg)
 {
   return arg;

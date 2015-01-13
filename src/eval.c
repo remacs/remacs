@@ -1162,7 +1162,8 @@ unwind_to_catch (struct handler *catch, Lisp_Object value)
 
 DEFUN ("throw", Fthrow, Sthrow, 2, 2, 0,
        doc: /* Throw to the catch for TAG and return VALUE from it.
-Both TAG and VALUE are evalled.  */)
+Both TAG and VALUE are evalled.  */
+       attributes: noreturn)
   (register Lisp_Object tag, Lisp_Object value)
 {
   struct handler *c;
