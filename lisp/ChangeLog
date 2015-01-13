@@ -3,6 +3,8 @@
 	* emacs-lisp/package.el (package--read-pkg-desc): New
 	function. Read a `define-package' form in current buffer. Return
 	the pkg-desc, with desc-kind set to KIND.
+	(package-dir-info): New function. Find package information for a
+	directory. The return result is a `package-desc'.
 
 2015-01-16  Jorgen Schaefer  <contact@jorgenschaefer.de>
 

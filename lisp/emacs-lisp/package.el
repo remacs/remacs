@@ -1281,6 +1281,24 @@ The return result is a `package-desc'."
           (package--read-pkg-desc 'tar)
         (kill-buffer (current-buffer))))))
 
+(defun package-dir-info ()
+  "Find package information for a directory.
+The return result is a `package-desc'."
+  (cl-assert (derived-mode-p 'dired-mode))
+  (let* ((desc-file (package--description-file default-directory)))
+    (if (file-readable-p desc-file)
+        (with-temp-buffer
+          (insert-file-contents desc-file)
+          (package--read-pkg-desc 'dir))
+      (let ((files (directory-files default-directory t "\\.el\\'" t))
+            info)
+        (while files
+          (with-temp-buffer
+            (insert-file-contents (pop files))
+            (if (setq info (ignore-errors (package-buffer-info)))
+                (setq files nil)
+              (setf (package-desc-kind info) 'dir))))))))
+
 (defun package--read-pkg-desc (kind)
   "Read a `define-package' form in current buffer.
 Return the pkg-desc, with desc-kind set to KIND."
