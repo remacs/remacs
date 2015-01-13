@@ -1,3 +1,9 @@
+2015-01-16  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* emacs-lisp/package.el (package--read-pkg-desc): New
+	function. Read a `define-package' form in current buffer. Return
+	the pkg-desc, with desc-kind set to KIND.
+
 2015-01-16  Jorgen Schaefer  <contact@jorgenschaefer.de>
 
 	* emacs-lisp/package.el: Provide repository priorities.

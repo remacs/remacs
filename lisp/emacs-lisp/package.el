@@ -1277,18 +1277,24 @@ The return result is a `package-desc'."
     (unless tar-desc
       (error "No package descriptor file found"))
     (with-current-buffer (tar--extract tar-desc)
-      (goto-char (point-min))
       (unwind-protect
-          (let* ((pkg-def-parsed (read (current-buffer)))
-                 (pkg-desc
-                  (if (not (eq (car pkg-def-parsed) 'define-package))
-                      (error "Can't find define-package in %s"
-                             (tar-header-name tar-desc))
-                    (apply #'package-desc-from-define
-                           (append (cdr pkg-def-parsed))))))
-            (setf (package-desc-kind pkg-desc) 'tar)
-            pkg-desc)
+          (package--read-pkg-desc 'tar)
         (kill-buffer (current-buffer))))))
+
+(defun package--read-pkg-desc (kind)
+  "Read a `define-package' form in current buffer.
+Return the pkg-desc, with desc-kind set to KIND."
+  (goto-char (point-min))
+  (unwind-protect
+      (let* ((pkg-def-parsed (read (current-buffer)))
+             (pkg-desc
+              (if (not (eq (car pkg-def-parsed) 'define-package))
+                  (error "Can't find define-package in %s"
+                         (tar-header-name tar-desc))
+                (apply #'package-desc-from-define
+                  (append (cdr pkg-def-parsed))))))
+        (setf (package-desc-kind pkg-desc) kind)
+        pkg-desc)))
 
 
 ;;;###autoload
