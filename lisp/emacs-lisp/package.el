@@ -1368,8 +1368,12 @@ Downloads and installs required packages as needed."
 The file can either be a tar file or an Emacs Lisp file."
   (interactive "fPackage file name: ")
   (with-temp-buffer
-    (insert-file-contents-literally file)
-    (when (string-match "\\.tar\\'" file) (tar-mode))
+    (if (file-directory-p file)
+        (progn
+          (setq default-directory file)
+          (dired-mode))
+      (insert-file-contents-literally file)
+      (when (string-match "\\.tar\\'" file) (tar-mode)))
     (package-install-from-buffer)))
 
 (defun package-delete (pkg-desc)
