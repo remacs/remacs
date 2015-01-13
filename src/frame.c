@@ -335,6 +335,8 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
   int unit_height = FRAME_LINE_HEIGHT (f);
   int old_pixel_width = FRAME_PIXEL_WIDTH (f);
   int old_pixel_height = FRAME_PIXEL_HEIGHT (f);
+  int old_cols = FRAME_COLS (f);
+  int old_lines = FRAME_LINES (f);
   int new_pixel_width, new_pixel_height;
   /* The following two values are calculated from the old frame pixel
      sizes and any "new" settings for tool bar, menu bar and internal
@@ -466,7 +468,9 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
       && new_windows_width == old_windows_width
       && new_windows_height == old_windows_height
       && new_pixel_width == old_pixel_width
-      && new_pixel_height == old_pixel_height)
+      && new_pixel_height == old_pixel_height
+      && new_cols == old_cols
+      && new_lines == old_lines)
     /* No change.  Sanitize window sizes and return.  */
     {
       sanitize_window_sizes (frame, Qt);

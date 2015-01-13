@@ -1,3 +1,8 @@
+2015-01-13  Martin Rudalics  <rudalics@gmx.at>
+
+	* frame.c (adjust_frame_size): Make sure new numbers of
+	lines/columns get installed after font size change (Bug#19575).
+
 2015-01-13  Dmitry Antipov  <dmantipov@yandex.ru>
 
 	Add DEFUN attributes.
