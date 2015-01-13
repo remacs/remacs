@@ -1,3 +1,29 @@
+2015-01-13  Alan Mackenzie  <acm@muc.de>
+
+	Allow compilation during loading of Modes derived from a CC Mode mode.
+	Fixes debbugs#19206.
+
+	* progmodes/cc-bytecomp.el (cc-bytecomp-compiling-or-loading): new
+	function which walks the stack to discover whether we're compiling
+	or loading.
+	(cc-bytecomp-is-compiling): Reformulate, and move towards
+	beginning.
+	(cc-bytecomp-is-loading): New defsubst.
+	(cc-bytecomp-setup-environment, cc-bytecomp-restore-environment):
+	Use the above defsubsts.
+	(cc-require-when-compile, cc-bytecomp-defvar)
+	(cc-bytecomp-defun): Simplify conditionals.
+
+	* progmodes/cc-defs.el (cc-bytecomp-compiling-or-loading):
+	"Borrow" this function from cc-bytecomp.el.
+	(c-get-current-file): Reformulate using the above.
+	(c-lang-defconst): Prevent duplicate entries of file names in a
+	symbol's 'source property.
+	(c-lang-const): Use cc-bytecomp-is-compiling.
+
+	* progmodes/cc-langs.el (c-make-init-lang-vars-fun): Use
+	cc-bytecomp-is-compiling.
+
 2015-01-13  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/eieio-core.el (eieio-defclass): Fix call to `defclass'
