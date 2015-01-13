@@ -96,7 +96,7 @@ This is available in case a file has been moved."
   "Return the descriptor to be used in `file-notify-*-watch'.
 For `gfilenotify' and `w32notify' it is the same descriptor as
 used in the low-level file notification package."
-  (if (eq file-notify--library 'inotify)
+  (if (and (natnump descriptor) (eq file-notify--library 'inotify))
       (cons descriptor file)
     descriptor))
 
