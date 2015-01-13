@@ -1,5 +1,16 @@
 2015-01-13  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Don't say Fnext_read_file_uses_dialog_p is const
+	It's const only if a windowing system is not used; don't say it's
+	const otherwise.  See:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-01/msg00310.html
+	* fileio.c (next_read_file_uses_dialog_p): Remove.
+	Move guts back to ...
+	(Fnext_read_file_uses_dialog_p): ... here.
+	Don't declare as const, as make-docfile.c now has a special case
+	for this function.  This is an ugly hack, but it's better than
+	lying to the compiler.
+
 	Remove now-unnecessary forward XTYPE decl
 	* lisp.h (XTYPE): Remove forward declaration.  The recent merge
 	from emacs-24 fixed the problem in a better way, by moving XPNTR's
