@@ -634,23 +634,14 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
       name = DECODE_FILE (name);
 
       {
-	Lisp_Object regexps;
+	Lisp_Object regexps, table = (completion_ignore_case
+				      ? Vascii_canon_table : Qnil);
 
 	/* Ignore this element if it fails to match all the regexps.  */
-	if (completion_ignore_case)
-	  {
-	    for (regexps = Vcompletion_regexp_list; CONSP (regexps);
-		 regexps = XCDR (regexps))
-	      if (fast_string_match_ignore_case (XCAR (regexps), name) < 0)
-		break;
-	  }
-	else
-	  {
-	    for (regexps = Vcompletion_regexp_list; CONSP (regexps);
-		 regexps = XCDR (regexps))
-	      if (fast_string_match (XCAR (regexps), name) < 0)
-		break;
-	  }
+	for (regexps = Vcompletion_regexp_list; CONSP (regexps);
+	     regexps = XCDR (regexps))
+	  if (fast_string_match_internal (XCAR (regexps), name, table) < 0)
+	    break;
 
 	if (CONSP (regexps))
 	  continue;

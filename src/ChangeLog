@@ -18,6 +18,15 @@
 	* keyboard.c (Ftop_level, Fexit_recursive_edit)
 	(Fabor_recursive_edit): Add noreturn attribute.
 
+	* search.c (fast_string_match_internal): New function,
+	consolidated from...
+	(fast_string_match, fast_string_match_ignore_case): ...functions
+	which are...
+	* lisp.h (fast_string_match, fast_string_match_ignore_case):
+	inlined from here now.
+	(fast_string_match_internal): Add prototype.
+	* dired.c (file_name_completion): Use fast_string_match_internal.
+
 2015-01-12  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Port to 32-bit MingGW --with-wide-int

@@ -459,17 +459,18 @@ matched by parenthesis constructs in the pattern.  */)
   return string_match_1 (regexp, string, start, 1);
 }
 
-/* Match REGEXP against STRING, searching all of STRING,
-   and return the index of the match, or negative on failure.
-   This does not clobber the match data.  */
+/* Match REGEXP against STRING using translation table TABLE,
+   searching all of STRING, and return the index of the match,
+   or negative on failure.  This does not clobber the match data.  */
 
 ptrdiff_t
-fast_string_match (Lisp_Object regexp, Lisp_Object string)
+fast_string_match_internal (Lisp_Object regexp, Lisp_Object string,
+			    Lisp_Object table)
 {
   ptrdiff_t val;
   struct re_pattern_buffer *bufp;
 
-  bufp = compile_pattern (regexp, 0, Qnil,
+  bufp = compile_pattern (regexp, 0, table,
 			  0, STRING_MULTIBYTE (string));
   immediate_quit = 1;
   re_match_object = string;
@@ -504,26 +505,6 @@ fast_c_string_match_ignore_case (Lisp_Object regexp,
   return val;
 }
 
-/* Like fast_string_match but ignore case.  */
-
-ptrdiff_t
-fast_string_match_ignore_case (Lisp_Object regexp, Lisp_Object string)
-{
-  ptrdiff_t val;
-  struct re_pattern_buffer *bufp;
-
-  bufp = compile_pattern (regexp, 0, Vascii_canon_table,
-			  0, STRING_MULTIBYTE (string));
-  immediate_quit = 1;
-  re_match_object = string;
-
-  val = re_search (bufp, SSDATA (string),
-		   SBYTES (string), 0,
-		   SBYTES (string), 0);
-  immediate_quit = 0;
-  return val;
-}
-
 /* Match REGEXP against the characters after POS to LIMIT, and return
    the number of matched characters.  If STRING is non-nil, match
    against the characters in it.  In that case, POS and LIMIT are
