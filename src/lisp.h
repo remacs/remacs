@@ -610,7 +610,6 @@ INLINE bool (VECTORLIKEP) (Lisp_Object);
 INLINE bool WINDOWP (Lisp_Object);
 INLINE struct Lisp_Save_Value *XSAVE_VALUE (Lisp_Object);
 INLINE struct Lisp_Symbol *(XSYMBOL) (Lisp_Object);
-INLINE enum Lisp_Type (XTYPE) (Lisp_Object);
 INLINE void *(XUNTAG) (Lisp_Object, int);
 
 /* Defined in chartab.c.  */

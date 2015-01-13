@@ -1,3 +1,10 @@
+2015-01-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Remove now-unnecessary forward XTYPE decl
+	* lisp.h (XTYPE): Remove forward declaration.  The recent merge
+	from emacs-24 fixed the problem in a better way, by moving XPNTR's
+	definition to after XTYPE's.
+
 2015-01-13  Eli Zaretskii  <eliz@gnu.org>
 
 	Fix problems with 32-bit wide-int build exposed by MinGW.
