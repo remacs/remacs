@@ -1,3 +1,8 @@
+2015-01-14  Dima Kogan  <dima@secretsauce.net>
+
+	* erc-backend.el (define-erc-response-handler): Give hook-name
+	default value of nil and add-to-list (bug#19363)
+
 2014-11-10  Kelvin White  <kwhite@gnu.org>
 
 	* erc-stamp.el (erc-timestamp-intangible): Change version tag to 24.5.
