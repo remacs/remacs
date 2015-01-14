@@ -1,3 +1,8 @@
+2015-01-14  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32fns.c (w32_wnd_proc): Ignore MENUITEMINFO's dwItemData data
+	when FLAGS indicate the item is not highlighted.  (Bug#19596)
+
 2015-01-14  Martin Rudalics  <rudalics@gmx.at>
 
 	* xmenu.c (update_frame_menubar): Remove garbaged code.

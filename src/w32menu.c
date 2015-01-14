@@ -1476,11 +1476,24 @@ w32_menu_display_help (HWND owner, HMENU menu, UINT item, UINT flags)
       struct frame *f = x_window_to_frame (&one_w32_display_info, owner);
       Lisp_Object frame, help;
 
-      /* No help echo on owner-draw menu items, or when the keyboard is used
-	 to navigate the menus, since tooltips are distracting if they pop
-	 up elsewhere.  */
-      if (flags & MF_OWNERDRAW || flags & MF_POPUP
-	  || !(flags & MF_MOUSESELECT))
+      /* No help echo on owner-draw menu items, or when the keyboard
+	 is used to navigate the menus, since tooltips are distracting
+	 if they pop up elsewhere.  */
+      if ((flags & MF_OWNERDRAW) || (flags & MF_POPUP)
+	  || !(flags & MF_MOUSESELECT)
+	  /* Ignore any dwItemData for menu items whose flags don't
+	     have the MF_HILITE bit set.  These are dwItemData that
+	     Windows sends our way, but they aren't pointers to our
+	     Lisp_String objects, so trying to create Lisp_Strings out
+	     of them below and pass that to the keyboard queue will
+	     crash Emacs when we try to display those "strings".  It
+	     is unclear why we get these dwItemData, or what they are:
+	     sometimes they point to a wchar_t string that is the menu
+	     title, sometimes to someting that doesn't look like text
+	     at all.  (The problematic data also comes with the 0x0800
+	     bit set, but this bit is not documented, so we don't want
+	     to depend on it.)  */
+	  || !(flags & MF_HILITE))
 	help = Qnil;
       else
 	{
