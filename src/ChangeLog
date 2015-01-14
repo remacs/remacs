@@ -6,6 +6,10 @@
 	Do not check for STRING_MULTIBYTE because encode_file_name
 	is a no-op for unibyte strings.
 
+	* process.h (remove_slash_colon): New function.
+	* callproc.c (encode_current_directory, call_process):
+	* process.c (Fstart_process): Use it.
+
 2015-01-14  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Use bool for boolean in xmenu.c, xml.c

@@ -1517,11 +1517,8 @@ usage: (start-process NAME BUFFER PROGRAM &rest PROGRAM-ARGS)  */)
 	  tem = program;
 	}
 
-      /* If program file name starts with /: for quoting a magic name,
-	 discard that.  */
-      if (SBYTES (tem) > 2 && SREF (tem, 0) == '/'
-	  && SREF (tem, 1) == ':')
-	tem = Fsubstring (tem, make_number (2), Qnil);
+      /* Remove "/:" from TEM.  */
+      tem = remove_slash_colon (tem);
 
       {
 	Lisp_Object arg_encoding = Qnil;

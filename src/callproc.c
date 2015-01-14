@@ -131,11 +131,9 @@ encode_current_directory (void)
     report_file_error ("Setting current directory",
 		       BVAR (current_buffer, directory));
 
-  /* Remove "/:" from dir.  */
-  if (! NILP (Fstring_match (build_string ("^/:"), dir, Qnil)))
-    dir = Fsubstring (dir, make_number (2), Qnil);
+  /* Remove "/:" from DIR and encode it.  */
+  dir = ENCODE_FILE (remove_slash_colon (dir));
 
-  dir = ENCODE_FILE (dir);
   if (! file_accessible_directory_p (dir))
     report_file_error ("Setting current directory",
 		       BVAR (current_buffer, directory));
@@ -467,11 +465,8 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
       report_file_error ("Searching for program", args[0]);
   }
 
-  /* If program file name starts with /: for quoting a magic name,
-     discard that.  */
-  if (SBYTES (path) > 2 && SREF (path, 0) == '/'
-      && SREF (path, 1) == ':')
-    path = Fsubstring (path, make_number (2), Qnil);
+  /* Remove "/:" from PATH.  */
+  path = remove_slash_colon (path);
 
   SAFE_NALLOCA (new_argv, 1, nargs < 4 ? 2 : nargs - 2);
 
