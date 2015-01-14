@@ -641,7 +641,6 @@ update_frame_menubar (struct frame *f)
   /* For reasons I don't know Lucid wants to add one pixel to the frame
      height when adding the menu bar.  Compensate that here.  */
   new_height = FRAME_TEXT_HEIGHT (f) - 1;
-s);
 #endif /* USE_LUCID */
   adjust_frame_size (f, -1, new_height, 2, false, Qmenu_bar_lines);
   unblock_input ();

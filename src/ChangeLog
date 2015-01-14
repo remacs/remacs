@@ -1,3 +1,7 @@
+2015-01-14  Martin Rudalics  <rudalics@gmx.at>
+
+	* xmenu.c (update_frame_menubar): Remove garbaged code.
+
 2015-01-14  Paul Eggert  <eggert@cs.ucla.edu>
 
 	remove_slash_colon need not be inline
