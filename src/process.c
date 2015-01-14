@@ -3827,6 +3827,18 @@ Data that is unavailable is returned as nil.  */)
 #endif
 }
 
+/* If program file NAME starts with /: for quoting a magic
+   name, remove that, preserving the multibyteness of NAME.  */
+
+Lisp_Object
+remove_slash_colon (Lisp_Object name)
+{
+  return
+    ((SBYTES (name) > 2 && SREF (name, 0) == '/' && SREF (name, 1) == ':')
+     ? make_specified_string (SSDATA (name) + 2, SCHARS (name) - 2,
+			      SBYTES (name) - 2, STRING_MULTIBYTE (name))
+     : name);
+}
 
 /* Turn off input and output for process PROC.  */
 

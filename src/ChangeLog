@@ -1,3 +1,9 @@
+2015-01-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	remove_slash_colon need not be inline
+	* process.c, process.h (remove_slash_colon): No longer inline.
+	This saves text bytes without hurting runtime performance.
+
 2015-01-14  Dmitry Antipov  <dmantipov@yandex.ru>
 
 	Avoid extra multibyteness check in ENCODE_FILE users.
