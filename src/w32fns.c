@@ -1732,6 +1732,50 @@ x_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
   run_window_configuration_change_hook (f);
 }
 
+static void
+w32_set_title_bar_text (struct frame *f, Lisp_Object name)
+{
+  if (FRAME_W32_WINDOW (f))
+    {
+      block_input ();
+#ifdef __CYGWIN__
+      GUI_FN (SetWindowText) (FRAME_W32_WINDOW (f),
+                              GUI_SDATA (GUI_ENCODE_SYSTEM (name)));
+#else
+      /* The frame's title many times shows the name of the file
+	 visited in the selected window's buffer, so it makes sense to
+	 support non-ASCII characters outside of the current system
+	 codepage in the title.  */
+      if (w32_unicode_filenames)
+	{
+	  Lisp_Object encoded_title = ENCODE_UTF_8 (name);
+	  wchar_t *title_w;
+	  int tlen = pMultiByteToWideChar (CP_UTF8, 0, SSDATA (encoded_title),
+					   -1, NULL, 0);
+
+	  if (tlen > 0)
+	    {
+	      /* Windows truncates the title text beyond what fits on
+		 a single line, so we can limit the length to some
+		 reasonably large value, and use alloca.  */
+	      if (tlen > 10000)
+		tlen = 10000;
+	      title_w = alloca ((tlen + 1) * sizeof (wchar_t));
+	      pMultiByteToWideChar (CP_UTF8, 0, SSDATA (encoded_title), -1,
+				    title_w, tlen);
+	      title_w[tlen] = L'\0';
+	      SetWindowTextW (FRAME_W32_WINDOW (f), title_w);
+	    }
+	  else	/* Conversion to UTF-16 failed, so we punt.  */
+	    SetWindowTextA (FRAME_W32_WINDOW (f),
+			    SSDATA (ENCODE_SYSTEM (name)));
+	}
+      else
+	SetWindowTextA (FRAME_W32_WINDOW (f), SSDATA (ENCODE_SYSTEM (name)));
+#endif
+      unblock_input ();
+    }
+}
 
 /* Change the name of frame F to NAME.  If NAME is nil, set F's name to
        w32_id_name.
@@ -1785,13 +1829,7 @@ x_set_name (struct frame *f, Lisp_Object name, int explicit)
   if (! NILP (f->title))
     name = f->title;
 
-  if (FRAME_W32_WINDOW (f))
-    {
-      block_input ();
-      GUI_FN (SetWindowText) (FRAME_W32_WINDOW (f),
-                              GUI_SDATA (GUI_ENCODE_SYSTEM (name)));
-      unblock_input ();
-    }
+  w32_set_title_bar_text (f, name);
 }
 
 /* This function should be called when the user's lisp code has
@@ -1829,13 +1867,7 @@ x_set_title (struct frame *f, Lisp_Object name, Lisp_Object old_name)
   if (NILP (name))
     name = f->name;
 
-  if (FRAME_W32_WINDOW (f))
-    {
-      block_input ();
-      GUI_FN (SetWindowText) (FRAME_W32_WINDOW (f),
-                              GUI_SDATA (GUI_ENCODE_SYSTEM (name)));
-      unblock_input ();
-    }
+  w32_set_title_bar_text (f, name);
 }
 
 void
