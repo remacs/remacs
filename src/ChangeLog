@@ -1,3 +1,25 @@
+2015-01-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use bool for boolean in xmenu.c, xml.c
+	* xmenu.c (x_menu_set_in_use, popup_get_selection)
+	(Fx_menu_bar_open_internal, popup_widget_loop)
+	(x_activate_menubar, xg_crazy_callback_abort)
+	(update_frame_menubar, set_frame_menubar)
+	(initialize_frame_menubar, free_frame_menubar)
+	(create_and_show_popup_menu, x_menu_show)
+	(create_and_show_dialog, x_dialog_show):
+	* xml.c (libxml2_loaded_p, init_libxml2_functions, parse_region)
+	(Flibxml_parse_html_region, Flibxml_parse_xml_region):
+	* xrdb.c (main) [TESTRM]:
+	* xsettings.c (init_gsettings):
+	* xterm.c (XFillRectangle, xg_scroll_callback)
+	(xg_end_scroll_callback):
+	* xterm.h (x_menu_set_in_use) [USE_GTK || USE_MOTIF]:
+	Use bool for boolean.
+	* xmenu.c (TRUE): Remove; no longer used.
+	(show_help_event): Remove long-unused code.
+	(set_frame_menubar): Remove "#if 1" and corresponding "#endif" lines.
+
 2015-01-13  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Don't say Fnext_read_file_uses_dialog_p is const

@@ -43,14 +43,12 @@ DEF_DLL_FN (void, xmlFreeDoc, (xmlDocPtr));
 DEF_DLL_FN (void, xmlCleanupParser, (void));
 DEF_DLL_FN (void, xmlCheckVersion, (int));
 
-static int
+static bool
 libxml2_loaded_p (void)
 {
   Lisp_Object found = Fassq (Qlibxml2_dll, Vlibrary_cache);
 
-  if (CONSP (found))
-    return EQ (XCDR (found), Qt) ? 1 : 0;
-  return 0;
+  return CONSP (found) && EQ (XCDR (found), Qt);
 }
 
 # undef htmlReadMemory
@@ -81,20 +79,20 @@ load_dll_functions (HMODULE library)
 
 #else  /* !WINDOWSNT */
 
-static int
+static bool
 libxml2_loaded_p (void)
 {
-  return 1;
+  return true;
 }
 
 #endif	/* !WINDOWSNT */
 
-static int
+static bool
 init_libxml2_functions (void)
 {
 #ifdef WINDOWSNT
   if (libxml2_loaded_p ())
-    return 1;
+    return true;
   else
     {
       HMODULE library;
@@ -102,22 +100,22 @@ init_libxml2_functions (void)
       if (!(library = w32_delayed_load (Qlibxml2_dll)))
 	{
 	  message1 ("libxml2 library not found");
-	  return 0;
+	  return false;
 	}
 
       if (! load_dll_functions (library))
 	goto bad_library;
 
       Vlibrary_cache = Fcons (Fcons (Qlibxml2_dll, Qt), Vlibrary_cache);
-      return 1;
+      return true;
     }
 
  bad_library:
   Vlibrary_cache = Fcons (Fcons (Qlibxml2_dll, Qnil), Vlibrary_cache);
 
-  return 0;
+  return false;
 #else  /* !WINDOWSNT */
-  return 1;
+  return true;
 #endif	/* !WINDOWSNT */
 }
 
@@ -177,7 +175,8 @@ make_dom (xmlNode *node)
 }
 
 static Lisp_Object
-parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, Lisp_Object discard_comments, int htmlp)
+parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url,
+	      Lisp_Object discard_comments, bool htmlp)
 {
   xmlDoc *doc;
   Lisp_Object result = Qnil;
@@ -263,7 +262,7 @@ If DISCARD-COMMENTS is non-nil, all HTML comments are discarded. */)
   (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, Lisp_Object discard_comments)
 {
   if (init_libxml2_functions ())
-    return parse_region (start, end, base_url, discard_comments, 1);
+    return parse_region (start, end, base_url, discard_comments, true);
   return Qnil;
 }
 
@@ -276,7 +275,7 @@ If DISCARD-COMMENTS is non-nil, all HTML comments are discarded. */)
   (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, Lisp_Object discard_comments)
 {
   if (init_libxml2_functions ())
-    return parse_region (start, end, base_url, discard_comments, 0);
+    return parse_region (start, end, base_url, discard_comments, false);
   return Qnil;
 }
 

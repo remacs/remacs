@@ -804,7 +804,7 @@ init_gsettings (void)
     GSettingsSchema *sc = g_settings_schema_source_lookup
       (g_settings_schema_source_get_default (),
        GSETTINGS_SCHEMA,
-       TRUE);
+       true);
     schema_found = sc != NULL;
     if (sc) g_settings_schema_unref (sc);
   }

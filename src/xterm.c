@@ -3041,7 +3041,7 @@ XTflash (struct frame *f)
     gc = gdk_gc_new_with_values (window,
                                  &vals, GDK_GC_FUNCTION | GDK_GC_FOREGROUND);
 #define XFillRectangle(d, win, gc, x, y, w, h) \
-    gdk_draw_rectangle (window, gc, TRUE, x, y, w, h)
+    gdk_draw_rectangle (window, gc, true, x, y, w, h)
 #endif /* ! HAVE_GTK3 */
 #else /* ! USE_GTK */
     GC gc;
@@ -4594,7 +4594,7 @@ xg_scroll_callback (GtkRange     *range,
   GtkAdjustment *adj = GTK_ADJUSTMENT (gtk_range_get_adjustment (range));
   struct frame *f = g_object_get_data (G_OBJECT (range), XG_FRAME_DATA);
 
-  if (xg_ignore_gtk_scrollbar) return FALSE;
+  if (xg_ignore_gtk_scrollbar) return false;
 
   switch (scroll)
     {
@@ -4650,7 +4650,7 @@ xg_scroll_callback (GtkRange     *range,
 			       bar->horizontal);
     }
 
-  return FALSE;
+  return false;
 }
 
 /* Callback for button release. Sets dragging to -1 when dragging is done.  */
@@ -4669,7 +4669,7 @@ xg_end_scroll_callback (GtkWidget *widget,
       window_being_scrolled = Qnil;
     }
 
-  return FALSE;
+  return false;
 }
 
 
