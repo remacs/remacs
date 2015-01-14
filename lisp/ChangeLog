@@ -1,5 +1,15 @@
 2015-01-14  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* emacs-lisp/cl-generic.el: New file.
+
+	* emacs-lisp/cl-macs.el (cl-flet): Allow (FUN EXP) forms.
+	(cl-load-time-value, cl-labels): Use closures rather than
+	backquoted lambdas.
+	(cl-macrolet): Use `eval' to create the function value, and support CL
+	style arguments in for the defined macros.
+
+2015-01-14  Stefan Monnier  <monnier@iro.umontreal.ca>
+
 	* net/eww.el: Use lexical-binding.
 	(eww-links-at-point): Remove unused arg.
 	(eww-mode-map): Inherit from special-mode-map.

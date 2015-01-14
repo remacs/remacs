@@ -625,14 +625,20 @@ The result of the body appears to the compiler as a quoted constant."
 	     (set `(setq ,temp ,form)))
 	(if (and (fboundp 'byte-compile-file-form-defmumble)
 		 (boundp 'this-kind) (boundp 'that-one))
-	    (fset 'byte-compile-file-form
-		  `(lambda (form)
-                     (fset 'byte-compile-file-form
-                           ',(symbol-function 'byte-compile-file-form))
-                     (byte-compile-file-form ',set)
-                     (byte-compile-file-form form)))
-	  (print set (symbol-value 'byte-compile--outbuffer)))
-	`(symbol-value ',temp))
+            ;; Else, we can't output right away, so we have to delay it to the
+            ;; next time we're at the top-level.
+            ;; FIXME: Use advice-add/remove.
+            (fset 'byte-compile-file-form
+                  (let ((old (symbol-function 'byte-compile-file-form)))
+                    (lambda (form)
+                      (fset 'byte-compile-file-form old)
+                      (byte-compile-file-form set)
+                      (byte-compile-file-form form))))
+          ;; If we're not in the middle of compiling something, we can
+          ;; output directly to byte-compile-outbuffer, to make sure
+          ;; temp is set before we use it.
+          (print set byte-compile--outbuffer))
+	temp)
     `',(eval form)))
 
 
@@ -1824,18 +1830,30 @@ a `let' form, except that the list of symbols can be computed at run-time."
 (defmacro cl-flet (bindings &rest body)
   "Make local function definitions.
 Like `cl-labels' but the definitions are not recursive.
+Each binding can take the form (FUNC EXP) where
+FUNC is the function name, and EXP is an expression that returns the
+function value to which it should be bound, or it can take the more common
+form \(FUNC ARGLIST BODY...) which is a shorthand
+for (FUNC (lambda ARGLIST BODY)).
 
 \(fn ((FUNC ARGLIST BODY...) ...) FORM...)"
   (declare (indent 1) (debug ((&rest (cl-defun)) cl-declarations body)))
   (let ((binds ()) (newenv macroexpand-all-environment))
     (dolist (binding bindings)
-      (let ((var (make-symbol (format "--cl-%s--" (car binding)))))
-	(push (list var `(cl-function (lambda . ,(cdr binding)))) binds)
+      (let ((var (make-symbol (format "--cl-%s--" (car binding))))
+            (args-and-body (cdr binding)))
+        (if (and (= (length args-and-body) 1) (symbolp (car args-and-body)))
+            ;; Optimize (cl-flet ((fun var)) body).
+            (setq var (car args-and-body))
+          (push (list var (if (= (length args-and-body) 1)
+                              (car args-and-body)
+                            `(cl-function (lambda . ,args-and-body))))
+                binds))
 	(push (cons (car binding)
-                    `(lambda (&rest cl-labels-args)
-                       (cl-list* 'funcall ',var
-                                 cl-labels-args)))
+                    (lambda (&rest cl-labels-args)
+                      (cl-list* 'funcall var cl-labels-args)))
               newenv)))
+    ;; FIXME: Eliminate those functions which aren't referenced.
     `(let ,(nreverse binds)
        ,@(macroexp-unprogn
           (macroexpand-all
@@ -1869,9 +1887,8 @@ in closures will only work if `lexical-binding' is in use.
       (let ((var (make-symbol (format "--cl-%s--" (car binding)))))
 	(push (list var `(cl-function (lambda . ,(cdr binding)))) binds)
 	(push (cons (car binding)
-                    `(lambda (&rest cl-labels-args)
-                       (cl-list* 'funcall ',var
-                                 cl-labels-args)))
+                    (lambda (&rest cl-labels-args)
+                      (cl-list* 'funcall var cl-labels-args)))
               newenv)))
     (macroexpand-all `(letrec ,(nreverse binds) ,@body)
                      ;; Don't override lexical-let's macro-expander.
@@ -1898,7 +1915,8 @@ This is like `cl-flet', but for macros instead of functions.
 	     (res (cl--transform-lambda (cdar bindings) name)))
 	(eval (car res))
 	(macroexpand-all (macroexp-progn body)
-			 (cons (cons name `(lambda ,@(cdr res)))
+			 (cons (cons name
+                                     (eval `(cl-function (lambda ,@(cdr res))) t))
 			       macroexpand-all-environment))))))
 
 (defconst cl--old-macroexpand

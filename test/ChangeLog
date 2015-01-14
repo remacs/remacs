@@ -1,3 +1,7 @@
+2015-01-14  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/cl-generic-tests.el: New file.
+
 2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* automated/eieio-tests.el (eieio-test-23-inheritance-check): Don't use
