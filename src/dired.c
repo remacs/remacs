@@ -176,10 +176,8 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
   /* Note: ENCODE_FILE and DECODE_FILE can GC because they can run
      run_pre_post_conversion_on_str which calls Lisp directly and
      indirectly.  */
-  if (STRING_MULTIBYTE (dirfilename))
-    dirfilename = ENCODE_FILE (dirfilename);
-  encoded_directory = (STRING_MULTIBYTE (directory)
-		       ? ENCODE_FILE (directory) : directory);
+  dirfilename = ENCODE_FILE (dirfilename);
+  encoded_directory = ENCODE_FILE (directory);
 
   /* Now *bufp is the compiled form of MATCH; don't call anything
      which might compile a new regexp until we're done with the loop!  */
@@ -482,7 +480,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
   /* Actually, this is not quite true any more: we do most of the completion
      work with decoded file names, but we still do some filtering based
      on the encoded file name.  */
-  encoded_file = STRING_MULTIBYTE (file) ? ENCODE_FILE (file) : file;
+  encoded_file = ENCODE_FILE (file);
 
   encoded_dir = ENCODE_FILE (Fdirectory_file_name (dirname));
 

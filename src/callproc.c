@@ -135,8 +135,7 @@ encode_current_directory (void)
   if (! NILP (Fstring_match (build_string ("^/:"), dir, Qnil)))
     dir = Fsubstring (dir, make_number (2), Qnil);
 
-  if (STRING_MULTIBYTE (dir))
-    dir = ENCODE_FILE (dir);
+  dir = ENCODE_FILE (dir);
   if (! file_accessible_directory_p (dir))
     report_file_error ("Setting current directory",
 		       BVAR (current_buffer, directory));
@@ -267,7 +266,7 @@ usage: (call-process PROGRAM &optional INFILE DESTINATION DISPLAY &rest ARGS)  *
     infile = build_string (NULL_DEVICE);
 
   GCPRO1 (infile);
-  encoded_infile = STRING_MULTIBYTE (infile) ? ENCODE_FILE (infile) : infile;
+  encoded_infile = ENCODE_FILE (infile);
 
   filefd = emacs_open (SSDATA (encoded_infile), O_RDONLY, 0);
   if (filefd < 0)
@@ -439,9 +438,9 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 
     GCPRO4 (buffer, current_dir, error_file, output_file);
 
-    if (STRINGP (error_file) && STRING_MULTIBYTE (error_file))
+    if (STRINGP (error_file))
       error_file = ENCODE_FILE (error_file);
-    if (STRINGP (output_file) && STRING_MULTIBYTE (output_file))
+    if (STRINGP (output_file))
       output_file = ENCODE_FILE (output_file);
     UNGCPRO;
   }
@@ -498,8 +497,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
       }
     else
       new_argv[1] = 0;
-    if (STRING_MULTIBYTE (path))
-      path = ENCODE_FILE (path);
+    path = ENCODE_FILE (path);
     new_argv[0] = SSDATA (path);
     UNGCPRO;
   }
