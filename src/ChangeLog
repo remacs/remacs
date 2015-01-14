@@ -21,6 +21,10 @@
 	(Fencode_time): ... adjusted user.
 	(Fset_time_zone_rule): Use decode_time_zone.
 
+	* editfns.c (make_buffer_string_both): If requested range intersects
+	the gap, don't move the latter but copy in two regions, thus avoiding
+	unnecessary relocation of buffer data.
+
 2015-01-14  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Use bool for boolean in xmenu.c, xml.c

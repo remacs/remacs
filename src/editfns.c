@@ -2624,15 +2624,34 @@ make_buffer_string_both (ptrdiff_t start, ptrdiff_t start_byte,
 			 ptrdiff_t end, ptrdiff_t end_byte, bool props)
 {
   Lisp_Object result, tem, tem1;
+  ptrdiff_t beg0, end0, beg1, end1, size;
 
-  if (start < GPT && GPT < end)
-    move_gap_both (start, start_byte);
+  if (start_byte < GPT_BYTE && GPT_BYTE < end_byte)
+    {
+      /* Two regions, before and after the gap.  */
+      beg0 = start_byte;
+      end0 = GPT_BYTE;
+      beg1 = GPT_BYTE + GAP_SIZE - BEG_BYTE;
+      end1 = end_byte + GAP_SIZE - BEG_BYTE;
+    }
+  else
+    {
+      /* The only region.  */
+      beg0 = start_byte;
+      end0 = end_byte;
+      beg1 = -1;
+      end1 = -1;
+    }
 
   if (! NILP (BVAR (current_buffer, enable_multibyte_characters)))
     result = make_uninit_multibyte_string (end - start, end_byte - start_byte);
   else
     result = make_uninit_string (end - start);
-  memcpy (SDATA (result), BYTE_POS_ADDR (start_byte), end_byte - start_byte);
+
+  size = end0 - beg0;
+  memcpy (SDATA (result), BYTE_POS_ADDR (beg0), size);
+  if (beg1 != -1)
+    memcpy (SDATA (result) + size, BEG_ADDR + beg1, end1 - beg1);
 
   /* If desired, update and copy the text properties.  */
   if (props)
