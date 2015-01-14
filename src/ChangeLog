@@ -16,6 +16,11 @@
 	* callproc.c (encode_current_directory, call_process):
 	* process.c (Fstart_process): Use it.
 
+	Consistently handle time zone specification.
+	* editfns.c (decode_time_zone): New function, refactored out from ...
+	(Fencode_time): ... adjusted user.
+	(Fset_time_zone_rule): Use decode_time_zone.
+
 2015-01-14  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Use bool for boolean in xmenu.c, xml.c
