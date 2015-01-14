@@ -413,6 +413,7 @@ Slots:
   (pcase (package-desc-kind pkg-desc)
     (`single ".el")
     (`tar ".tar")
+    (`dir "")
     (kind (error "Unknown package kind: %s" kind))))
 
 (defun package-desc--keywords (pkg-desc)
@@ -939,6 +940,9 @@ GnuPG keyring is located under \"gnupg\" in `package-user-dir'."
 
 (defun package-install-from-archive (pkg-desc)
   "Download and install a tar package."
+  ;; This won't happen, unless the archive is doing something wrong.
+  (when (eq (package-desc-kind pkg-desc) 'dir)
+    (error "Can't install directory package from archive"))
   (let* ((location (package-archive-base pkg-desc))
 	 (file (concat (package-desc-full-name pkg-desc)
 		       (package-desc-suffix pkg-desc)))

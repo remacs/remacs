@@ -7,6 +7,11 @@
 	directory. The return result is a `package-desc'.
 	(package-install-from-buffer): Install packages from dired buffer.
 	(package-install-file): Install packages from directory.
+	(package-desc-suffix)
+	(package-install-from-archive)
+	* emacs-lisp/package-x.el (package-upload-buffer-internal): Ensure
+	all remaining instances of `package-desc-kind' handle the 'dir
+	value.
 
 2015-01-16  Jorgen Schaefer  <contact@jorgenschaefer.de>
 
