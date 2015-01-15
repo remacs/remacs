@@ -1403,6 +1403,7 @@ buffer-local variable interactively, just as it is useful to create
 buffer-local variables interactively.
 @end deffn
 
+@cindex local variables, killed by major mode
 @defun kill-all-local-variables
 This function eliminates all the buffer-local variable bindings of the
 current buffer except for variables marked as ``permanent'' and local

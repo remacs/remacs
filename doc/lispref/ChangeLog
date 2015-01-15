@@ -1,3 +1,8 @@
+2015-01-15  Eli Zaretskii  <eliz@gnu.org>
+
+	* variables.texi (Creating Buffer-Local): Improve indexing.
+	(Bug#19608)
+
 2015-01-04  Eli Zaretskii  <eliz@gnu.org>
 
 	* frames.texi (Display Feature Testing): Make the description of
