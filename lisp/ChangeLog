@@ -38,6 +38,10 @@
 
 2015-01-15  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* emacs-lisp/cl-macs.el (cl--labels-magic): New constant.
+	(cl--labels-convert): Use it to ask the macro what is its replacement
+	in the #'f case.
+
 	* emacs-lisp/cl-generic.el (cl--generic-build-combined-method):
 	Return the value of the primary rather than the after method.
 
