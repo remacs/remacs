@@ -305,10 +305,10 @@ which case this method will be invoked when the argument is `eql' to VAL.
         (setq i (1+ i))))
     (if me (setcdr me (cons uses-cnm function))
       (setf (cl--generic-method-table generic)
-            (cons `(,key ,uses-cnm . ,function) mt))
-      ;; For aliases, cl--generic-name gives us the actual name.
-      (defalias (cl--generic-name generic)
-        (cl--generic-make-function generic)))))
+            (cons `(,key ,uses-cnm . ,function) mt)))
+    ;; For aliases, cl--generic-name gives us the actual name.
+    (defalias (cl--generic-name generic)
+      (cl--generic-make-function generic))))
 
 (defmacro cl--generic-with-memoization (place &rest code)
   (declare (indent 1) (debug t))

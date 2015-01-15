@@ -1,3 +1,10 @@
+2015-01-15  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/eieio-test-methodinvoke.el (eieio-test-method-store): Add
+	keysym arg instead of relying on internal var eieio--generic-call-key.
+	Update all callers.
+	(eieio-test-cl-generic-1): New tests.
+
 2015-01-14  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* automated/cl-generic-tests.el: New file.

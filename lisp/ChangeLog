@@ -1,3 +1,14 @@
+2015-01-15  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio-core.el: Provide support for cl-generic.
+	(eieio--generic-tagcode): New function.
+	(cl-generic-tagcode-function): Use it.
+	(eieio--generic-tag-types): New function.
+	(cl-generic-tag-types-function): Use it.
+	(eieio-object-p): Tighten up the test.
+
+	* emacs-lisp/cl-generic.el (cl-generic-define-method): Fix paren typo.
+
 2015-01-14  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/cl-generic.el: New file.
