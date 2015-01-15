@@ -1,5 +1,12 @@
 2015-01-15  Wolfgang Jenkner  <wjenkner@inode.at>
 
+	* automated/calc-tests.el (calc-tests-equal, calc-tests-simple):
+	New functions.
+	(test-calc-remove-units, test-calc-extract-units)
+	(test-calc-convert-units): New tests.
+
+2015-01-15  Wolfgang Jenkner  <wjenkner@inode.at>
+
 	* automated/Makefile.in (WRITE_LOG): Use POSIX redirection.
 
 2015-01-15  Stefan Monnier  <monnier@iro.umontreal.ca>
