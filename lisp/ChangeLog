@@ -38,6 +38,9 @@
 
 2015-01-15  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* emacs-lisp/cl-generic.el (cl--generic-build-combined-method):
+	Return the value of the primary rather than the after method.
+
 	* emacs-lisp/eieio-core.el: Provide support for cl-generic.
 	(eieio--generic-tagcode): New function.
 	(cl-generic-tagcode-function): Use it.

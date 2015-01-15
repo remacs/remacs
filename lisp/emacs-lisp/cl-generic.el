@@ -411,9 +411,10 @@ for all those different tags in the method-cache.")
               (setq fun (lambda (&rest args)
                           (dolist (bf before)
                             (apply bf args))
-                          (apply next args)
-                          (dolist (af after)
-                            (apply af args))))))
+                          (prog1
+                              (apply next args)
+                            (dolist (af after)
+                              (apply af args)))))))
           (cl--generic-nest fun (alist-get :around mets-by-qual))))))))
 
 (defun cl--generic-cache-miss (generic dispatch-arg dispatches-left tags)
