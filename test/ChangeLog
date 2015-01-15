@@ -1,3 +1,7 @@
+2015-01-15  Wolfgang Jenkner  <wjenkner@inode.at>
+
+	* automated/Makefile.in (WRITE_LOG): Use POSIX redirection.
+
 2015-01-15  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* automated/eieio-test-methodinvoke.el (eieio-test-method-store): Add
