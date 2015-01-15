@@ -122,6 +122,8 @@ DEF_DLL_FN (void, gnutls_transport_set_push_function,
 	    (gnutls_session_t, gnutls_push_func));
 DEF_DLL_FN (int, gnutls_x509_crt_check_hostname,
 	    (gnutls_x509_crt_t, const char *));
+DEF_DLL_FN (int, gnutls_x509_crt_check_issuer,
+              (gnutls_x509_crt_t, gnutls_x509_crt_t));
 DEF_DLL_FN (void, gnutls_x509_crt_deinit, (gnutls_x509_crt_t));
 DEF_DLL_FN (int, gnutls_x509_crt_import,
 	    (gnutls_x509_crt_t, const gnutls_datum_t *,
@@ -236,6 +238,7 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_transport_set_pull_function);
   LOAD_DLL_FN (library, gnutls_transport_set_push_function);
   LOAD_DLL_FN (library, gnutls_x509_crt_check_hostname);
+  LOAD_DLL_FN (library, gnutls_x509_crt_check_issuer);
   LOAD_DLL_FN (library, gnutls_x509_crt_deinit);
   LOAD_DLL_FN (library, gnutls_x509_crt_import);
   LOAD_DLL_FN (library, gnutls_x509_crt_init);
@@ -329,6 +332,7 @@ init_gnutls_functions (void)
 # define gnutls_transport_set_pull_function fn_gnutls_transport_set_pull_function
 # define gnutls_transport_set_push_function fn_gnutls_transport_set_push_function
 # define gnutls_x509_crt_check_hostname fn_gnutls_x509_crt_check_hostname
+# define gnutls_x509_crt_check_issuer fn_gnutls_x509_crt_check_issuer
 # define gnutls_x509_crt_deinit fn_gnutls_x509_crt_deinit
 # define gnutls_x509_crt_get_activation_time fn_gnutls_x509_crt_get_activation_time
 # define gnutls_x509_crt_get_dn fn_gnutls_x509_crt_get_dn
@@ -982,6 +986,10 @@ DEFUN ("gnutls-peer-status-warning-describe", Fgnutls_peer_status_warning_descri
   if (EQ (status_symbol, intern (":self-signed")))
     return build_string ("certificate signer was not found (self-signed)");
 
+  if (EQ (status_symbol, intern (":unknown-ca")))
+    return build_string ("the certificate was signed by an unknown "
+                         "and therefore untrusted authority");
+
   if (EQ (status_symbol, intern (":not-ca")))
     return build_string ("certificate signer is not a CA");
 
@@ -1026,7 +1034,7 @@ The return value is a property list with top-level keys :warnings and
     warnings = Fcons (intern (":revoked"), warnings);
 
   if (verification & GNUTLS_CERT_SIGNER_NOT_FOUND)
-    warnings = Fcons (intern (":self-signed"), warnings);
+    warnings = Fcons (intern (":unknown-ca"), warnings);
 
   if (verification & GNUTLS_CERT_SIGNER_NOT_CA)
     warnings = Fcons (intern (":not-ca"), warnings);
@@ -1043,6 +1051,13 @@ The return value is a property list with top-level keys :warnings and
   if (XPROCESS (proc)->gnutls_extra_peer_verification &
       CERTIFICATE_NOT_MATCHING)
     warnings = Fcons (intern (":no-host-match"), warnings);
+
+  /* This could get called in the INIT stage, when the certificate is
+     not yet set. */
+  if (XPROCESS (proc)->gnutls_certificate != NULL &&
+      gnutls_x509_crt_check_issuer(XPROCESS (proc)->gnutls_certificate,
+                                   XPROCESS (proc)->gnutls_certificate))
+    warnings = Fcons (intern (":self-signed"), warnings);
 
   if (!NILP (warnings))
     result = list2 (intern (":warnings"), warnings);
