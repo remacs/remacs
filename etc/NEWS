@@ -588,6 +588,10 @@ been obsoleted.
 undocumented integer-pair format.  Instead, they return a list of two
 integers.
 
++++
+** New function `set-binary-mode' allows to switch a standard stream
+of the Emacs process to binary I/O mode.
+
 
 * Changes in Frames and Windows Code in Emacs 25.1
 

@@ -1,3 +1,8 @@
+2015-01-15  Eli Zaretskii  <eliz@gnu.org>
+
+	* unidata/uvs.el (uvs-print-table-ivd): Call set-binary-mode on
+	stdout.
+
 2015-01-12  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Say "ELC foo.elc" instead of "GEN foo.elc"

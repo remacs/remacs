@@ -86,6 +86,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <careadlinkat.h>
 #include <stat-time.h>
 
+#include <binary-io.h>
+
 #ifdef HPUX
 #include <netio.h>
 #endif
@@ -5754,6 +5756,48 @@ before any other event (mouse or keypress) is handled.  */)
   return Qnil;
 }
 
+
+DEFUN ("set-binary-mode", Fset_binary_mode, Sset_binary_mode, 2, 2, 0,
+       doc: /* Switch STREAM to binary I/O mode or text I/O mode.
+STREAM can be one of the symbols `stdin', `stdout', or `stderr'.
+If MODE is non-nil, switch STREAM to binary mode, otherwise switch
+it to text mode.
+
+As a side effect, this function flushes any pending STREAM's data.
+
+Value is the previous value of STREAM's I/O mode, nil for text mode,
+non-nil for binary mode.
+
+On MS-Windows and MS-DOS, binary mode is needed to read or write
+arbitrary binary data, and for disabling translation between CR-LF
+pairs and a single newline character.  Examples include generation
+of text files with Unix-style end-of-line format using `princ' in
+batch mode, with standard output redirected to a file.
+
+On Posix systems, this function always returns non-nil, and has no
+effect except for flushing STREAM's data.  */)
+  (Lisp_Object stream, Lisp_Object mode)
+{
+  FILE *fp = NULL;
+  int binmode;
+
+  CHECK_SYMBOL (stream);
+  if (EQ (stream, Qstdin))
+    fp = stdin;
+  else if (EQ (stream, Qstdout))
+    fp = stdout;
+  else if (EQ (stream, Qstderr))
+    fp = stderr;
+  else
+    xsignal2 (Qerror, build_string ("unsupported stream"), stream);
+
+  binmode = NILP (mode) ? O_TEXT : O_BINARY;
+  if (fp != stdin)
+    fflush (fp);
+
+  return (set_binary_mode (fileno (fp), binmode) == O_BINARY) ? Qt : Qnil;
+}
+
 void
 init_fileio (void)
 {
@@ -6040,6 +6084,10 @@ This includes interactive calls to `delete-file' and
   DEFSYM (Qsubstitute_env_in_file_name, "substitute-env-in-file-name");
   DEFSYM (Qget_buffer_window_list, "get-buffer-window-list");
 
+  DEFSYM (Qstdin, "stdin");
+  DEFSYM (Qstdout, "stdout");
+  DEFSYM (Qstderr, "stderr");
+
   defsubr (&Sfind_file_name_handler);
   defsubr (&Sfile_name_directory);
   defsubr (&Sfile_name_nondirectory);
@@ -6088,6 +6136,8 @@ This includes interactive calls to `delete-file' and
   defsubr (&Srecent_auto_save_p);
 
   defsubr (&Snext_read_file_uses_dialog_p);
+
+  defsubr (&Sset_binary_mode);
 
 #ifdef HAVE_SYNC
   defsubr (&Sunix_sync);

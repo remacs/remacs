@@ -1,3 +1,10 @@
+2015-01-15  Eli Zaretskii  <eliz@gnu.org>
+
+	* fileio.c: Include binary-io.h.
+	(Fset_binary_mode): New function.
+	(syms_of_fileio): Defsubr it.
+	(syms_of_fileio) <Qstdin, Qstdout, Qstderr>: DEFSYM them.
+
 2015-01-15  Teodor Zlatanov  <tzz@lifelogs.com>
 
 	* gnutls.c (init_gnutls_functions): Import gnutls_x509_crt_check_issuer.
