@@ -2063,6 +2063,29 @@ check_tm_member (Lisp_Object obj, int offset)
   return n - offset;
 }
 
+/* Decode ZONE as a time zone specification.  */
+
+static Lisp_Object
+decode_time_zone (Lisp_Object zone)
+{
+  if (EQ (zone, Qt))
+    return build_string ("UTC0");
+  else if (STRINGP (zone))
+    return zone;
+  else if (INTEGERP (zone))
+    {
+      static char const tzbuf_format[] = "XXX%s%"pI"d:%02d:%02d";
+      char tzbuf[sizeof tzbuf_format + INT_STRLEN_BOUND (EMACS_INT)];
+      EMACS_INT abszone = eabs (XINT (zone)), zone_hr = abszone / (60 * 60);
+      int zone_min = (abszone / 60) % 60, zone_sec = abszone % 60;
+
+      return make_formatted_string (tzbuf, tzbuf_format, &"-"[XINT (zone) < 0],
+				    zone_hr, zone_min, zone_sec);
+    }
+  else
+    xsignal2 (Qerror, build_string ("Invalid time zone specification"), zone);
+}
+
 DEFUN ("encode-time", Fencode_time, Sencode_time, 6, MANY, 0,
        doc: /* Convert SECOND, MINUTE, HOUR, DAY, MONTH, YEAR and ZONE to internal time.
 This is the reverse operation of `decode-time', which see.
@@ -2105,30 +2128,7 @@ usage: (encode-time SECOND MINUTE HOUR DAY MONTH YEAR &optional ZONE)  */)
     value = mktime (&tm);
   else
     {
-      static char const tzbuf_format[] = "XXX%s%"pI"d:%02d:%02d";
-      char tzbuf[sizeof tzbuf_format + INT_STRLEN_BOUND (EMACS_INT)];
-      const char *tzstring;
-
-      if (EQ (zone, Qt))
-	tzstring = "UTC0";
-      else if (STRINGP (zone))
-	tzstring = SSDATA (zone);
-      else if (INTEGERP (zone))
-	{
-	  EMACS_INT abszone = eabs (XINT (zone));
-	  EMACS_INT zone_hr = abszone / (60*60);
-	  int zone_min = (abszone/60) % 60;
-	  int zone_sec = abszone % 60;
-	  sprintf (tzbuf, tzbuf_format, &"-"[XINT (zone) < 0],
-		   zone_hr, zone_min, zone_sec);
-	  tzstring = tzbuf;
-	}
-      else
-	tzstring = 0;
-
-      timezone_t tz = tzstring ? tzalloc (tzstring) : 0;
-      if (! tz)
-	error ("Invalid time zone specification");
+      timezone_t tz = tzalloc (SSDATA (decode_time_zone (zone)));
       value = mktime_z (tz, &tm);
       tzfree (tz);
     }
@@ -2265,7 +2265,8 @@ the data it can't find.  */)
 DEFUN ("set-time-zone-rule", Fset_time_zone_rule, Sset_time_zone_rule, 1, 1, 0,
        doc: /* Set the local time zone using TZ, a string specifying a time zone rule.
 If TZ is nil, use implementation-defined default time zone information.
-If TZ is t, use Universal Time.
+If TZ is t, use Universal Time.  If TZ is an integer, it is treated as in
+`encode-time'.
 
 Instead of calling this function, you typically want (setenv "TZ" TZ).
 That changes both the environment of the Emacs process and the
@@ -2273,17 +2274,7 @@ variable `process-environment', whereas `set-time-zone-rule' affects
 only the former.  */)
   (Lisp_Object tz)
 {
-  const char *tzstring;
-
-  if (! (NILP (tz) || EQ (tz, Qt)))
-    CHECK_STRING (tz);
-
-  if (NILP (tz))
-    tzstring = initial_tz;
-  else if (EQ (tz, Qt))
-    tzstring = "UTC0";
-  else
-    tzstring = SSDATA (tz);
+  const char *tzstring = NILP (tz) ? initial_tz : SSDATA (decode_time_zone (tz));
 
   block_input ();
   set_time_zone_rule (tzstring);
@@ -2633,15 +2624,34 @@ make_buffer_string_both (ptrdiff_t start, ptrdiff_t start_byte,
 			 ptrdiff_t end, ptrdiff_t end_byte, bool props)
 {
   Lisp_Object result, tem, tem1;
+  ptrdiff_t beg0, end0, beg1, end1, size;
 
-  if (start < GPT && GPT < end)
-    move_gap_both (start, start_byte);
+  if (start_byte < GPT_BYTE && GPT_BYTE < end_byte)
+    {
+      /* Two regions, before and after the gap.  */
+      beg0 = start_byte;
+      end0 = GPT_BYTE;
+      beg1 = GPT_BYTE + GAP_SIZE - BEG_BYTE;
+      end1 = end_byte + GAP_SIZE - BEG_BYTE;
+    }
+  else
+    {
+      /* The only region.  */
+      beg0 = start_byte;
+      end0 = end_byte;
+      beg1 = -1;
+      end1 = -1;
+    }
 
   if (! NILP (BVAR (current_buffer, enable_multibyte_characters)))
     result = make_uninit_multibyte_string (end - start, end_byte - start_byte);
   else
     result = make_uninit_string (end - start);
-  memcpy (SDATA (result), BYTE_POS_ADDR (start_byte), end_byte - start_byte);
+
+  size = end0 - beg0;
+  memcpy (SDATA (result), BYTE_POS_ADDR (beg0), size);
+  if (beg1 != -1)
+    memcpy (SDATA (result) + size, BEG_ADDR + beg1, end1 - beg1);
 
   /* If desired, update and copy the text properties.  */
   if (props)

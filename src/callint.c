@@ -101,7 +101,8 @@ If the string begins with `^' and `shift-select-mode' is non-nil,
  Emacs first calls the function `handle-shift-selection'.
 You may use `@', `*', and `^' together.  They are processed in the
  order that they appear, before reading any arguments.
-usage: (interactive &optional ARGS)  */)
+usage: (interactive &optional ARGS)  */
+       attributes: const)
   (Lisp_Object args)
 {
   return Qnil;

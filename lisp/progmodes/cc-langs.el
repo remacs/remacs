@@ -3260,10 +3260,7 @@ function it returns is byte compiled with all the evaluated results
 from the language constants.  Use the `c-init-language-vars' macro to
 accomplish that conveniently."
 
-  (if (and (not load-in-progress)
-	   (boundp 'byte-compile-dest-file)
-	   (stringp byte-compile-dest-file))
-
+  (if (cc-bytecomp-is-compiling)
       ;; No need to byte compile this lambda since the byte compiler is
       ;; smart enough to detect the `funcall' construct in the
       ;; `c-init-language-vars' macro below and compile it all straight

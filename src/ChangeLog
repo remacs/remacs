@@ -1,3 +1,236 @@
+2015-01-14  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32fns.c (w32_wnd_proc): Ignore MENUITEMINFO's dwItemData data
+	when FLAGS indicate the item is not highlighted.  (Bug#19596)
+
+2015-01-14  Martin Rudalics  <rudalics@gmx.at>
+
+	* xmenu.c (update_frame_menubar): Remove garbaged code.
+
+2015-01-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	remove_slash_colon need not be inline
+	* process.c, process.h (remove_slash_colon): No longer inline.
+	This saves text bytes without hurting runtime performance.
+
+2015-01-14  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Avoid extra multibyteness check in ENCODE_FILE users.
+	* callproc.c (encode_current_directory, Fcall_process, call_process):
+	* dired.c (directory_files_internal, file_name_completion):
+	Do not check for STRING_MULTIBYTE because encode_file_name
+	is a no-op for unibyte strings.
+
+	* process.h (remove_slash_colon): New function.
+	* callproc.c (encode_current_directory, call_process):
+	* process.c (Fstart_process): Use it.
+
+	Consistently handle time zone specification.
+	* editfns.c (decode_time_zone): New function, refactored out from ...
+	(Fencode_time): ... adjusted user.
+	(Fset_time_zone_rule): Use decode_time_zone.
+
+	* editfns.c (make_buffer_string_both): If requested range intersects
+	the gap, don't move the latter but copy in two regions, thus avoiding
+	unnecessary relocation of buffer data.
+
+2015-01-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use bool for boolean in xmenu.c, xml.c
+	* xmenu.c (x_menu_set_in_use, popup_get_selection)
+	(Fx_menu_bar_open_internal, popup_widget_loop)
+	(x_activate_menubar, xg_crazy_callback_abort)
+	(update_frame_menubar, set_frame_menubar)
+	(initialize_frame_menubar, free_frame_menubar)
+	(create_and_show_popup_menu, x_menu_show)
+	(create_and_show_dialog, x_dialog_show):
+	* xml.c (libxml2_loaded_p, init_libxml2_functions, parse_region)
+	(Flibxml_parse_html_region, Flibxml_parse_xml_region):
+	* xrdb.c (main) [TESTRM]:
+	* xsettings.c (init_gsettings):
+	* xterm.c (XFillRectangle, xg_scroll_callback)
+	(xg_end_scroll_callback):
+	* xterm.h (x_menu_set_in_use) [USE_GTK || USE_MOTIF]:
+	Use bool for boolean.
+	* xmenu.c (TRUE): Remove; no longer used.
+	(show_help_event): Remove long-unused code.
+	(set_frame_menubar): Remove "#if 1" and corresponding "#endif" lines.
+
+2015-01-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Don't say Fnext_read_file_uses_dialog_p is const
+	It's const only if a windowing system is not used; don't say it's
+	const otherwise.  See:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-01/msg00310.html
+	* fileio.c (next_read_file_uses_dialog_p): Remove.
+	Move guts back to ...
+	(Fnext_read_file_uses_dialog_p): ... here.
+	Don't declare as const, as make-docfile.c now has a special case
+	for this function.  This is an ugly hack, but it's better than
+	lying to the compiler.
+
+	Remove now-unnecessary forward XTYPE decl
+	* lisp.h (XTYPE): Remove forward declaration.  The recent merge
+	from emacs-24 fixed the problem in a better way, by moving XPNTR's
+	definition to after XTYPE's.
+
+2015-01-13  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix problems with 32-bit wide-int build exposed by MinGW.
+	* lisp.h (XPNTR): Move definition to after XTYPE, to avoid
+	compilation error in an unoptimized build when !USE_LSB_TAG.
+
+	* w32heap.c (DUMPED_HEAP_SIZE): For 32-bit wide-int build, use the
+	same larger value as for the 64-bit build.
+
+	* w32term.h (SCROLL_BAR_PACK): Cast the result to UINT_PTR to
+	avoid compiler warnings.
+
+	* w32proc.c (Fw32_get_codepage_charset, Fw32_set_keyboard_layout):
+	Avoid compiler warnings about cast from integer to pointer of
+	different size.
+
+	* w32menu.c (menubar_selection_callback, w32_menu_show): Cast to
+	UINT_PTR instead of EMACS_INT, to avoid compiler warnings about
+	casting from integer to pointer of different size.
+	(add_menu_item): Pass the help-echo string as a pointer to
+	Lisp_String, not as a Lisp_Object.
+	(w32_menu_display_help): Use make_lisp_ptr to reconstruct a Lisp
+	string object from its C pointer.
+
+	* w32fns.c (w32_msg_pump) <WM_EMACS_UNREGISTER_HOT_KEY>: Use
+	make_lisp_ptr instead of XIL, to reconstruct a Lisp_Cons from its
+	C pointer.
+	<WM_EMACS_TOGGLE_LOCK_KEY>: msg.lparam is now a C integer.
+	(Fx_create_frame): Type-cast the result of XFASTINT to avoild
+	compiler warnings about size differences.
+	(Fw32_unregister_hot_key): Pass the tail of w32_grabbed_keys as a
+	pointer to a Lisp_Cons struct, not as a disguised EMACS_INT.
+	(Fw32_toggle_lock_key): Pass the new state of the key as a C
+	integer; use -1 for nil.  Doc fix.
+
+	* .gdbinit (xgetsym): New subroutine.
+	(xsymname, xsymbol): Use it.
+	(xprintsym): No need to call xgetptr.
+
+2015-01-13  Martin Rudalics  <rudalics@gmx.at>
+
+	* frame.c (adjust_frame_size): Make sure new numbers of
+	lines/columns get installed after font size change (Bug#19575).
+
+2015-01-13  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Add DEFUN attributes.
+	* callint.c (Finteractive):
+	* character.c (Fcharacterp, Fmax_char):
+	* data.c (Feq, Fnull, Fconsp, Fatom, Flistp, Fnlistp, Fsymbolp)
+	(Fstringp, Fchar_or_string_p, Fintegerp, Fnatnump, Fnumberp)
+	(Ffloatp, Fbyteorder):
+	* decompress.c (Fzlib_available_p):
+	* fns.c (Fidentity):
+	* frame.c (Fframe_windows_min_size):
+	* gnutls.c (Fgnutls_error_p, Fgnutls_available_p):
+	* window.c (Fwindow__sanitize_window_sizes):
+	* xdisp.c (Ftool_bar_height):
+	* xfaces.c (Fface_attribute_relative_p): Add const attribute.
+	* emacs.c (Fkill_emacs):
+	* eval.c (Fthrow):
+	* keyboard.c (Ftop_level, Fexit_recursive_edit)
+	(Fabor_recursive_edit): Add noreturn attribute.
+
+	* search.c (fast_string_match_internal): New function,
+	consolidated from...
+	(fast_string_match, fast_string_match_ignore_case): ...functions
+	which are...
+	* lisp.h (fast_string_match, fast_string_match_ignore_case):
+	inlined from here now.
+	(fast_string_match_internal): Add prototype.
+	* dired.c (file_name_completion): Use fast_string_match_internal.
+
+	* fileio.c (next_read_file_uses_dialog_p): New workaround ...
+	(Fnext_read_file_uses_dialog_p): ... called from here to avoid
+	ATTRIBUTE_CONST dependency from #ifdefs.  For details, see
+	http://lists.gnu.org/archive/html/emacs-devel/2015-01/msg00289.html.
+
+2015-01-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port to 32-bit MingGW --with-wide-int
+	Problem reported by Eli Zaretskii in:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-01/msg00265.html
+	* lisp.h (struct Lisp_Sub_Char_Table): Check that offset matches
+	what we think it is, rather than checking only its alignment (and
+	doing so incorrectly on MinGW).
+
+2015-01-12  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* fileio.c (Ffile_name_as_directory, Fdirectory_file_name):
+	Remove dead NILP check.
+	* image.c (Flookup_image): Use regular format for docstring.
+	* keyboard.c (apply_modifiers_uncached): Use stpcpy.
+
+2015-01-12  Martin Rudalics  <rudalics@gmx.at>
+
+	* dispnew.c (change_frame_size_1): Pass Qchange_frame_size to
+	adjust_frame_size.
+	* frame.c (frame_default_tool_bar_height): New variable.
+	(adjust_frame_size): Possibly add requested adjustment to
+	Vframe_adjust_size_history.
+	(make_frame): Initialize tool_bar_redisplayed_once slot.
+	(Fset_frame_height, Fset_frame_width, Fset_frame_size): Clarify
+	doc-string.  Call adjust_frame_size unconditionally (the frame's
+	text size may remain unaltered but the pixel size may change).
+	(x_figure_window_size): If frame_default_tool_bar_height was
+	set, use it instead of calculating the tool bar height from
+	DEFAULT_TOOL_BAR_IMAGE_HEIGHT.  Don't set
+	Vframe_initial_frame_tool_bar_height.
+	(Qchange_frame_size, Qxg_frame_set_char_size)
+	(Qset_window_configuration, Qx_create_frame_1)
+	(Qx_create_frame_2): New symbols.
+	(Vframe_initial_frame_tool_bar_height): Remove.
+	(Vframe_adjust_size_history): New history variable for debugging
+	frame size adjustments.
+	* frame.h (struct frame): New boolean slot
+	tool_bar_redisplayed_once.
+	(frame_default_tool_bar_height): Extern.
+	* gtkutil.c (xg_frame_set_char_size): Pass Qxg_frame_set_char_size
+	to adjust_frame_size.
+	* nsfns.m (Fx_create_frame): Pass Pass Qx_create_frame_1 and
+	Qx_create_frame_2 to adjust_frame_size.
+	* w32fns.c (x_change_tool_bar_height): Call adjust_frame_size with
+	inhibit 1 when we have not redisplayed the tool bar yet.
+	(Fx_create_frame): Pass Pass Qx_create_frame_1 and
+	Qx_create_frame_2 to adjust_frame_size.
+	* w32menu.c (set_frame_menubar): Simplify adjust_frame_size
+	call.
+	* window.c (Fset_window_configuration): Pass
+	Qset_window_configuration to adjust_frame_size.
+	* xdisp.c (redisplay_tool_bar): Assign new height to
+	frame_default_tool_bar_height.
+	(redisplay_internal): If we haven't redisplayed this frame's
+	tool bar, call redisplay_tool_bar early so we can adjust the
+	frame size accordingly.
+	* xfns.c (x_change_tool_bar_height): Call adjust_frame_size with
+	inhibit 1 when we have not redisplayed the tool bar yet.
+	(Fx_create_frame): Pass Pass Qx_create_frame_1 and
+	Qx_create_frame_2 to adjust_frame_size.
+
+2015-01-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Have 'make' output better GEN names
+	* Makefile.in (gl-stamp, globals.h): Simplify by putting the new
+	contents of globals.h into gl-stamp.  This lets us use AM_V_GEN
+	more naturally so that 'make' can output more-accurate names.
+
+2015-01-11  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* buffer.c (init_buffer_once): Initialize buffer_local_flags before
+	calling reset_buffer_local_variables, and make sure we initialize
+	it completely.
+
+2015-01-11  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* coding.c (Fcoding_system_plist): Use common style for docstring.
+
 2015-01-11  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Port to MSB hosts without optimization

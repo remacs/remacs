@@ -10671,7 +10671,7 @@ Any alias or subsidiary coding system is not a base coding system.  */)
 
 DEFUN ("coding-system-plist", Fcoding_system_plist, Scoding_system_plist,
        1, 1, 0,
-       doc: "Return the property list of CODING-SYSTEM.")
+       doc: /* Return the property list of CODING-SYSTEM.  */)
   (Lisp_Object coding_system)
 {
   Lisp_Object spec, attrs;

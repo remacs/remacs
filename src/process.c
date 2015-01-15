@@ -1517,11 +1517,8 @@ usage: (start-process NAME BUFFER PROGRAM &rest PROGRAM-ARGS)  */)
 	  tem = program;
 	}
 
-      /* If program file name starts with /: for quoting a magic name,
-	 discard that.  */
-      if (SBYTES (tem) > 2 && SREF (tem, 0) == '/'
-	  && SREF (tem, 1) == ':')
-	tem = Fsubstring (tem, make_number (2), Qnil);
+      /* Remove "/:" from TEM.  */
+      tem = remove_slash_colon (tem);
 
       {
 	Lisp_Object arg_encoding = Qnil;
@@ -3830,6 +3827,18 @@ Data that is unavailable is returned as nil.  */)
 #endif
 }
 
+/* If program file NAME starts with /: for quoting a magic
+   name, remove that, preserving the multibyteness of NAME.  */
+
+Lisp_Object
+remove_slash_colon (Lisp_Object name)
+{
+  return
+    ((SBYTES (name) > 2 && SREF (name, 0) == '/' && SREF (name, 1) == ':')
+     ? make_specified_string (SSDATA (name) + 2, SCHARS (name) - 2,
+			      SBYTES (name) - 2, STRING_MULTIBYTE (name))
+     : name);
+}
 
 /* Turn off input and output for process PROC.  */
 

@@ -131,12 +131,9 @@ encode_current_directory (void)
     report_file_error ("Setting current directory",
 		       BVAR (current_buffer, directory));
 
-  /* Remove "/:" from dir.  */
-  if (! NILP (Fstring_match (build_string ("^/:"), dir, Qnil)))
-    dir = Fsubstring (dir, make_number (2), Qnil);
+  /* Remove "/:" from DIR and encode it.  */
+  dir = ENCODE_FILE (remove_slash_colon (dir));
 
-  if (STRING_MULTIBYTE (dir))
-    dir = ENCODE_FILE (dir);
   if (! file_accessible_directory_p (dir))
     report_file_error ("Setting current directory",
 		       BVAR (current_buffer, directory));
@@ -267,7 +264,7 @@ usage: (call-process PROGRAM &optional INFILE DESTINATION DISPLAY &rest ARGS)  *
     infile = build_string (NULL_DEVICE);
 
   GCPRO1 (infile);
-  encoded_infile = STRING_MULTIBYTE (infile) ? ENCODE_FILE (infile) : infile;
+  encoded_infile = ENCODE_FILE (infile);
 
   filefd = emacs_open (SSDATA (encoded_infile), O_RDONLY, 0);
   if (filefd < 0)
@@ -439,9 +436,9 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 
     GCPRO4 (buffer, current_dir, error_file, output_file);
 
-    if (STRINGP (error_file) && STRING_MULTIBYTE (error_file))
+    if (STRINGP (error_file))
       error_file = ENCODE_FILE (error_file);
-    if (STRINGP (output_file) && STRING_MULTIBYTE (output_file))
+    if (STRINGP (output_file))
       output_file = ENCODE_FILE (output_file);
     UNGCPRO;
   }
@@ -468,11 +465,8 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
       report_file_error ("Searching for program", args[0]);
   }
 
-  /* If program file name starts with /: for quoting a magic name,
-     discard that.  */
-  if (SBYTES (path) > 2 && SREF (path, 0) == '/'
-      && SREF (path, 1) == ':')
-    path = Fsubstring (path, make_number (2), Qnil);
+  /* Remove "/:" from PATH.  */
+  path = remove_slash_colon (path);
 
   SAFE_NALLOCA (new_argv, 1, nargs < 4 ? 2 : nargs - 2);
 
@@ -498,8 +492,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
       }
     else
       new_argv[1] = 0;
-    if (STRING_MULTIBYTE (path))
-      path = ENCODE_FILE (path);
+    path = ENCODE_FILE (path);
     new_argv[0] = SSDATA (path);
     UNGCPRO;
   }

@@ -237,4 +237,6 @@ extern Lisp_Object network_interface_list (void);
 extern Lisp_Object network_interface_info (Lisp_Object);
 #endif
 
+extern Lisp_Object remove_slash_colon (Lisp_Object);
+
 INLINE_HEADER_END

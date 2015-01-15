@@ -12332,7 +12332,8 @@ DEFUN ("tool-bar-height", Ftool_bar_height, Stool_bar_height,
        0, 2, 0,
        doc: /* Return the number of lines occupied by the tool bar of FRAME.
 If FRAME is nil or omitted, use the selected frame.  Optional argument
-PIXELWISE non-nil means return the height of the tool bar in pixels.  */)
+PIXELWISE non-nil means return the height of the tool bar in pixels.  */
+       attributes: const)
   (Lisp_Object frame, Lisp_Object pixelwise)
 {
   int height = 0;
@@ -12408,6 +12409,7 @@ redisplay_tool_bar (struct frame *f)
       if (new_height != WINDOW_PIXEL_HEIGHT (w))
 	{
 	  x_change_tool_bar_height (f, new_height);
+	  frame_default_tool_bar_height = new_height;
 	  /* Always do that now.  */
 	  clear_glyph_matrix (w->desired_matrix);
 	  f->fonts_changed = 1;
@@ -12502,6 +12504,7 @@ redisplay_tool_bar (struct frame *f)
 	  if (change_height_p)
 	    {
 	      x_change_tool_bar_height (f, new_height);
+	      frame_default_tool_bar_height = new_height;
 	      clear_glyph_matrix (w->desired_matrix);
 	      f->n_tool_bar_rows = nrows;
 	      f->fonts_changed = 1;
@@ -13830,6 +13833,17 @@ redisplay_internal (void)
 	    continue;
 
 	retry_frame:
+
+#if defined (HAVE_WINDOW_SYSTEM) && !defined (USE_GTK) && !defined (HAVE_NS)
+	  /* Redisplay internal tool bar if this is the first time so we
+	     can adjust the frame height right now, if necessary.  */
+	  if (!f->tool_bar_redisplayed_once)
+	    {
+	      if (redisplay_tool_bar (f))
+		adjust_frame_glyphs (f);
+	      f->tool_bar_redisplayed_once = true;
+	    }
+#endif
 
 	  if (FRAME_WINDOW_P (f) || FRAME_TERMCAP_P (f) || f == sf)
 	    {

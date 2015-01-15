@@ -3077,13 +3077,18 @@ yield nil.  */)
   (Lisp_Object cp)
 {
   CHARSETINFO info;
+  DWORD dwcp;
 
   CHECK_NUMBER (cp);
 
   if (!IsValidCodePage (XINT (cp)))
     return Qnil;
 
-  if (TranslateCharsetInfo ((DWORD *) XINT (cp), &info, TCI_SRCCODEPAGE))
+  /* Going through a temporary DWORD variable avoids compiler warning
+     about cast to pointer from integer of different size, when
+     building --with-wide-int.  */
+  dwcp = XINT (cp);
+  if (TranslateCharsetInfo ((DWORD *) dwcp, &info, TCI_SRCCODEPAGE))
     return make_number (info.ciCharset);
 
   return Qnil;
@@ -3142,8 +3147,8 @@ If successful, the new layout id is returned, otherwise nil.  */)
   CHECK_NUMBER_CAR (layout);
   CHECK_NUMBER_CDR (layout);
 
- kl = (HKL) ((XINT (XCAR (layout)) & 0xffff)
-	     | (XINT (XCDR (layout)) << 16));
+  kl = (HKL) (UINT_PTR) ((XINT (XCAR (layout)) & 0xffff)
+			 | (XINT (XCDR (layout)) << 16));
 
   /* Synchronize layout with input thread.  */
   if (dwWindowsThreadId)

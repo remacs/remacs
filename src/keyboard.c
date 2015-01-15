@@ -1163,7 +1163,8 @@ top_level_1 (Lisp_Object ignore)
 
 DEFUN ("top-level", Ftop_level, Stop_level, 0, 0, "",
        doc: /* Exit all recursive editing levels.
-This also exits all active minibuffers.  */)
+This also exits all active minibuffers.  */
+       attributes: noreturn)
   (void)
 {
 #ifdef HAVE_WINDOW_SYSTEM
@@ -1186,7 +1187,8 @@ user_error (const char *msg)
 
 /* _Noreturn will be added to prototype by make-docfile.  */
 DEFUN ("exit-recursive-edit", Fexit_recursive_edit, Sexit_recursive_edit, 0, 0, "",
-       doc: /* Exit from the innermost recursive edit or minibuffer.  */)
+       doc: /* Exit from the innermost recursive edit or minibuffer.  */
+       attributes: noreturn)
   (void)
 {
   if (command_loop_level > 0 || minibuf_level > 0)
@@ -1197,7 +1199,8 @@ DEFUN ("exit-recursive-edit", Fexit_recursive_edit, Sexit_recursive_edit, 0, 0, 
 
 /* _Noreturn will be added to prototype by make-docfile.  */
 DEFUN ("abort-recursive-edit", Fabort_recursive_edit, Sabort_recursive_edit, 0, 0, "",
-       doc: /* Abort the command that requested this recursive edit or minibuffer input.  */)
+       doc: /* Abort the command that requested this recursive edit or minibuffer input.  */
+       attributes: noreturn)
   (void)
 {
   if (command_loop_level > 0 || minibuf_level > 0)
@@ -6293,10 +6296,10 @@ apply_modifiers_uncached (int modifiers, char *base, int base_len, int base_len_
     if (modifiers & meta_modifier)  { *p++ = 'M'; *p++ = '-'; }
     if (modifiers & shift_modifier) { *p++ = 'S'; *p++ = '-'; }
     if (modifiers & super_modifier) { *p++ = 's'; *p++ = '-'; }
-    if (modifiers & double_modifier)  { strcpy (p, "double-");  p += 7; }
-    if (modifiers & triple_modifier)  { strcpy (p, "triple-");  p += 7; }
-    if (modifiers & down_modifier)  { strcpy (p, "down-");  p += 5; }
-    if (modifiers & drag_modifier)  { strcpy (p, "drag-");  p += 5; }
+    if (modifiers & double_modifier) p = stpcpy (p, "double-");
+    if (modifiers & triple_modifier) p = stpcpy (p, "triple-");
+    if (modifiers & down_modifier) p = stpcpy (p, "down-");
+    if (modifiers & drag_modifier) p = stpcpy (p, "drag-");
     /* The click modifier is denoted by the absence of other modifiers.  */
 
     *p = '\0';

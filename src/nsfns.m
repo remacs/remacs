@@ -1251,7 +1251,8 @@ This function is an internal primitive--use `make-frame' instead.  */)
 
   /* Read comment about this code in corresponding place in xfns.c.  */
   adjust_frame_size (f, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
-		     FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 5, 1, Qnil);
+		     FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 5, 1,
+		     Qx_create_frame_1);
 
   /* The resources controlling the menu-bar and tool-bar are
      processed specially at startup, and reflected in the mode
@@ -1325,7 +1326,8 @@ This function is an internal primitive--use `make-frame' instead.  */)
   /* Allow x_set_window_size, now.  */
   f->can_x_set_window_size = true;
 
-  adjust_frame_size (f, FRAME_TEXT_WIDTH (f), FRAME_TEXT_HEIGHT (f), 0, 1, Qnil);
+  adjust_frame_size (f, FRAME_TEXT_WIDTH (f), FRAME_TEXT_HEIGHT (f), 0, 1,
+		     Qx_create_frame_2);
 
   if (! f->output_data.ns->explicit_parent)
     {

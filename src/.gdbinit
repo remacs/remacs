@@ -70,14 +70,18 @@ define xgettype
   set $type = (enum Lisp_Type) (USE_LSB_TAG ? $bugfix & (1 << GCTYPEBITS) - 1 : (EMACS_UINT) $bugfix >> VALBITS)
 end
 
+define xgetsym
+  xgetptr $arg0
+  if (!USE_LSB_TAG)
+    set $ptr = ($ptr << GCTYPEBITS)
+  end
+  set $ptr = ((struct Lisp_Symbol *) ((char *)lispsym + $ptr))
+end
+
 # Access the name of a symbol
 define xsymname
-  if (CHECK_LISP_OBJECT_TYPE)
-    set $bugfix = $arg0.i
-  else
-    set $bugfix = $arg0
-  end
-  set $symname = ((struct Lisp_Symbol *) ((char *)lispsym + $bugfix))->name
+  xgetsym $arg0
+  set $symname = $ptr->name
 end
 
 # Set up something to print out s-expressions.
@@ -760,7 +764,7 @@ end
 
 define xsymbol
   set $sym = $
-  xgetptr $sym
+  xgetsym $sym
   print (struct Lisp_Symbol *) $ptr
   xprintsym $sym
   echo \n
@@ -1082,8 +1086,7 @@ define xprintstr
 end
 
 define xprintsym
-  xgetptr $arg0
-  xsymname $ptr
+  xsymname $arg0
   xgetptr $symname
   set $sym_name = (struct Lisp_String *) $ptr
   xprintstr $sym_name

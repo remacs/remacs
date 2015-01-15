@@ -217,9 +217,9 @@ menubar_selection_callback (struct frame *f, void * client_data)
       else
 	{
 	  entry = AREF (vector, i + MENU_ITEMS_ITEM_VALUE);
-	  /* The EMACS_INT cast avoids a warning.  There's no problem
+	  /* The UINT_PTR cast avoids a warning.  There's no problem
 	     as long as pointers have enough bits to hold small integers.  */
-	  if ((int) (EMACS_INT) client_data == i)
+	  if ((int) (UINT_PTR) client_data == i)
 	    {
 	      int j;
 	      struct input_event buf;
@@ -501,8 +501,7 @@ set_frame_menubar (struct frame *f, bool first_time, bool deep_p)
     /* Force the window size to be recomputed so that the frame's text
        area remains the same, if menubar has just been created.  */
     if (old_widget == NULL)
-      adjust_frame_size (f, FRAME_TEXT_WIDTH (f),
-			 FRAME_TEXT_HEIGHT (f), 2, 0, Qmenu_bar_lines);
+      adjust_frame_size (f, -1, -1, 2, 0, Qmenu_bar_lines);
   }
 
   unblock_input ();
@@ -707,7 +706,7 @@ w32_menu_show (struct frame *f, int x, int y, int menuflags,
 	    wv->key = SSDATA (descrip);
 	  /* Use the contents index as call_data, since we are
              restricted to 16-bits.  */
-	  wv->call_data = !NILP (def) ? (void *) (EMACS_INT) i : 0;
+	  wv->call_data = !NILP (def) ? (void *) (UINT_PTR) i : 0;
 
 	  if (NILP (type))
 	    wv->button_type = BUTTON_TYPE_NONE;
@@ -1402,17 +1401,21 @@ add_menu_item (HMENU menu, widget_value *wv, HMENU item)
 	  info.cbSize = sizeof (info);
 	  info.fMask = MIIM_DATA;
 
-	  /* Set help string for menu item.  Leave it as a Lisp_Object
-	     until it is ready to be displayed, since GC can happen while
-	     menus are active.  */
+	  /* Set help string for menu item.  Leave it as a pointer to
+	     a Lisp_String until it is ready to be displayed, since GC
+	     can happen while menus are active.  */
 	  if (!NILP (wv->help))
 	    {
+	      /* We use XUNTAG below because in a 32-bit build
+		 --with-wide-int we cannot pass a Lisp_Object
+		 via a DWORD member of MENUITEMINFO.  */
 	      /* As of Jul-2012, w32api headers say that dwItemData
 		 has DWORD type, but that's a bug: it should actually
 		 be ULONG_PTR, which is correct for 32-bit and 64-bit
 		 Windows alike.  MSVC headers get it right; hopefully,
 		 MinGW headers will, too.  */
-	      info.dwItemData = (ULONG_PTR) XLI (wv->help);
+	      eassert (STRINGP (wv->help));
+	      info.dwItemData = (ULONG_PTR) XUNTAG (wv->help, Lisp_String);
 	    }
 	  if (wv->button_type == BUTTON_TYPE_RADIO)
 	    {
@@ -1473,11 +1476,24 @@ w32_menu_display_help (HWND owner, HMENU menu, UINT item, UINT flags)
       struct frame *f = x_window_to_frame (&one_w32_display_info, owner);
       Lisp_Object frame, help;
 
-      /* No help echo on owner-draw menu items, or when the keyboard is used
-	 to navigate the menus, since tooltips are distracting if they pop
-	 up elsewhere.  */
-      if (flags & MF_OWNERDRAW || flags & MF_POPUP
-	  || !(flags & MF_MOUSESELECT))
+      /* No help echo on owner-draw menu items, or when the keyboard
+	 is used to navigate the menus, since tooltips are distracting
+	 if they pop up elsewhere.  */
+      if ((flags & MF_OWNERDRAW) || (flags & MF_POPUP)
+	  || !(flags & MF_MOUSESELECT)
+	  /* Ignore any dwItemData for menu items whose flags don't
+	     have the MF_HILITE bit set.  These are dwItemData that
+	     Windows sends our way, but they aren't pointers to our
+	     Lisp_String objects, so trying to create Lisp_Strings out
+	     of them below and pass that to the keyboard queue will
+	     crash Emacs when we try to display those "strings".  It
+	     is unclear why we get these dwItemData, or what they are:
+	     sometimes they point to a wchar_t string that is the menu
+	     title, sometimes to someting that doesn't look like text
+	     at all.  (The problematic data also comes with the 0x0800
+	     bit set, but this bit is not documented, so we don't want
+	     to depend on it.)  */
+	  || !(flags & MF_HILITE))
 	help = Qnil;
       else
 	{
@@ -1488,7 +1504,10 @@ w32_menu_display_help (HWND owner, HMENU menu, UINT item, UINT flags)
 	  info.fMask = MIIM_DATA;
 	  get_menu_item_info (menu, item, FALSE, &info);
 
-	  help = info.dwItemData ? XIL (info.dwItemData) : Qnil;
+	  help =
+	    info.dwItemData
+	    ? make_lisp_ptr ((void *) info.dwItemData, Lisp_String)
+	    : Qnil;
 	}
 
       /* Store the help echo in the keyboard buffer as the X toolkit

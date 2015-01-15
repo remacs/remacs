@@ -502,14 +502,13 @@ buildobj.h: Makefile
 	done >$@.tmp
 	$(AM_V_at)mv $@.tmp $@
 
-globals.h: gl-stamp; @true
-
 GLOBAL_SOURCES = $(base_obj:.o=.c) $(NS_OBJC_OBJ:.o=.m)
 
 gl-stamp: $(libsrc)/make-docfile$(EXEEXT) $(GLOBAL_SOURCES)
-	$(AM_V_GEN)$(libsrc)/make-docfile -d $(srcdir) -g $(obj) > gl.tmp
-	$(AM_V_at)$(top_srcdir)/build-aux/move-if-change gl.tmp globals.h
-	$(AM_V_at)echo timestamp > $@
+	$(AM_V_GEN)$(libsrc)/make-docfile -d $(srcdir) -g $(obj) >$@
+
+globals.h: gl-stamp
+	$(AM_V_GEN)cmp $< $@ >/dev/null || cp $< $@
 
 $(ALLOBJS): globals.h
 

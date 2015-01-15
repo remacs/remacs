@@ -1744,8 +1744,11 @@ x_change_tool_bar_height (struct frame *f, int height)
   /* Recalculate toolbar height.  */
   f->n_tool_bar_rows = 0;
 
-  adjust_frame_size (f, -1, -1, (old_height == 0 || height == 0) ? 2 : 4, 0,
-		     Qtool_bar_lines);
+  adjust_frame_size (f, -1, -1,
+		     (!f->tool_bar_redisplayed_once ? 1
+		      : (old_height == 0 || height == 0) ? 2
+		      : 4),
+		     0, Qtool_bar_lines);
 
   /* adjust_frame_size might not have done anything, garbage frame
      here.  */
@@ -2540,7 +2543,7 @@ w32_msg_pump (deferred_msg * msg_buf)
                  thread-safe.  The next line is okay because the cons
                  cell is never made into garbage and is not relocated by
                  GC.  */
-	      XSETCAR (XIL ((EMACS_INT) msg.lParam), Qnil);
+	      XSETCAR (make_lisp_ptr ((void *)msg.lParam, Lisp_Cons), Qnil);
 	      if (!PostThreadMessage (dwMainThreadId, WM_EMACS_DONE, 0, 0))
 		emacs_abort ();
 	      break;
@@ -2548,16 +2551,10 @@ w32_msg_pump (deferred_msg * msg_buf)
 	      {
 		int vk_code = (int) msg.wParam;
 		int cur_state = (GetKeyState (vk_code) & 1);
-		Lisp_Object new_state = XIL ((EMACS_INT) msg.lParam);
+		int new_state = msg.lParam;
 
-		/* NB: This code must be thread-safe.  It is safe to
-                   call NILP because symbols are not relocated by GC,
-                   and pointer here is not touched by GC (so the markbit
-                   can't be set).  Numbers are safe because they are
-                   immediate values.  */
-		if (NILP (new_state)
-		    || (NUMBERP (new_state)
-			&& ((XUINT (new_state)) & 1) != cur_state))
+		if (new_state == -1
+		    || ((new_state & 1) != cur_state))
 		  {
 		    one_w32_display_info.faked_key = vk_code;
 
@@ -4520,7 +4517,9 @@ This function is an internal primitive--use `make-frame' instead.  */)
   /* Specify the parent under which to make this window.  */
   if (!NILP (parent))
     {
-      f->output_data.w32->parent_desc = (Window) XFASTINT (parent);
+      /* Cast to UINT_PTR shuts up compiler warnings about cast to
+	 pointer from integer of different size.  */
+      f->output_data.w32->parent_desc = (Window) (UINT_PTR) XFASTINT (parent);
       f->output_data.w32->explicit_parent = 1;
     }
   else
@@ -4617,7 +4616,8 @@ This function is an internal primitive--use `make-frame' instead.  */)
      had one frame line vs one toolbar line which left us with a zero
      root window height which was obviously wrong as well ...  */
   adjust_frame_size (f, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
-		     FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 5, 1, Qnil);
+		     FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 5, 1,
+		     Qx_create_frame_1);
 
   /* The X resources controlling the menu-bar and tool-bar are
      processed specially at startup, and reflected in the mode
@@ -4685,7 +4685,8 @@ This function is an internal primitive--use `make-frame' instead.  */)
   /* Allow x_set_window_size, now.  */
   f->can_x_set_window_size = true;
 
-  adjust_frame_size (f, FRAME_TEXT_WIDTH (f), FRAME_TEXT_HEIGHT (f), 0, 1, Qnil);
+  adjust_frame_size (f, FRAME_TEXT_WIDTH (f), FRAME_TEXT_HEIGHT (f), 0, 1,
+		     Qx_create_frame_2);
 
   /* Tell the server what size and position, etc, we want, and how
      badly we want them.  This should be done after we have the menu
@@ -7255,10 +7256,17 @@ DEFUN ("w32-unregister-hot-key", Fw32_unregister_hot_key,
 
   if (!NILP (item))
     {
+      LPARAM lparam;
+
+      eassert (CONSP (item));
+      /* Pass the tail of the list as a pointer to a Lisp_Cons cell,
+	 so that it works in a --with-wide-int build as well.  */
+      lparam = (LPARAM) XUNTAG (item, Lisp_Cons);
+
       /* Notify input thread about hot-key definition being removed, so
 	 that it takes effect without needing focus switch.  */
       if (PostThreadMessage (dwWindowsThreadId, WM_EMACS_UNREGISTER_HOT_KEY,
-			     (WPARAM) XINT (XCAR (item)), (LPARAM) XLI (item)))
+			     (WPARAM) XINT (XCAR (item)), lparam))
 	{
 	  MSG msg;
 	  GetMessage (&msg, NULL, WM_EMACS_DONE, WM_EMACS_DONE);
@@ -7313,10 +7321,15 @@ DEFUN ("w32-toggle-lock-key", Fw32_toggle_lock_key,
        doc: /* Toggle the state of the lock key KEY.
 KEY can be `capslock', `kp-numlock', or `scroll'.
 If the optional parameter NEW-STATE is a number, then the state of KEY
-is set to off if the low bit of NEW-STATE is zero, otherwise on.  */)
+is set to off if the low bit of NEW-STATE is zero, otherwise on.
+If NEW-STATE is omitted or nil, the function toggles the state,
+
+Value is the new state of the key, or nil if the function failed
+to change the state.  */)
   (Lisp_Object key, Lisp_Object new_state)
 {
   int vk_code;
+  LPARAM lparam;
 
   if (EQ (key, intern ("capslock")))
     vk_code = VK_CAPITAL;
@@ -7330,8 +7343,12 @@ is set to off if the low bit of NEW-STATE is zero, otherwise on.  */)
   if (!dwWindowsThreadId)
     return make_number (w32_console_toggle_lock_key (vk_code, new_state));
 
+  if (NILP (new_state))
+    lparam = -1;
+  else
+    lparam = (XUINT (new_state)) & 1;
   if (PostThreadMessage (dwWindowsThreadId, WM_EMACS_TOGGLE_LOCK_KEY,
-			 (WPARAM) vk_code, (LPARAM) XLI (new_state)))
+			 (WPARAM) vk_code, lparam))
     {
       MSG msg;
       GetMessage (&msg, NULL, WM_EMACS_DONE, WM_EMACS_DONE);

@@ -3003,7 +3003,8 @@ resize_root_window (Lisp_Object window, Lisp_Object delta, Lisp_Object horizonta
 /* Placeholder used by temacs -nw before window.el is loaded.  */
 DEFUN ("window--sanitize-window-sizes", Fwindow__sanitize_window_sizes,
        Swindow__sanitize_window_sizes, 2, 2, 0,
-       doc: /* */)
+       doc: /* */
+       attributes: const)
      (Lisp_Object frame, Lisp_Object horizontal)
 {
   return Qnil;
@@ -6427,7 +6428,7 @@ the return value is nil.  Otherwise the value is t.  */)
       /* Allow x_set_window_size again and apply frame size changes if
 	 needed.  */
       f->can_x_set_window_size = true;
-      adjust_frame_size (f, -1, -1, 1, 0, Qnil);
+      adjust_frame_size (f, -1, -1, 1, 0, Qset_window_configuration);
 
       adjust_frame_glyphs (f);
       unblock_input ();

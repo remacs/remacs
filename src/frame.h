@@ -336,6 +336,10 @@ struct frame
      for this frame.  */
   bool_bf can_run_window_configuration_change_hook : 1;
 
+  /* True means tool bar has been redisplayed at least once in current
+     session.  */
+  bool_bf tool_bar_redisplayed_once : 1;
+
   /* Bitfield area ends here.  */
 
   /* Number of lines (rounded up) of tool bar.  REMOVE THIS  */
@@ -1095,6 +1099,8 @@ SET_FRAME_VISIBLE (struct frame *f, int v)
   (f)->iconified = (eassert (0 <= (i) && (i) <= 1), (i))
 
 extern Lisp_Object selected_frame;
+
+extern int frame_default_tool_bar_height;
 
 extern struct frame *decode_window_system_frame (Lisp_Object);
 extern struct frame *decode_live_frame (Lisp_Object);

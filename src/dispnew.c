@@ -5536,7 +5536,8 @@ change_frame_size_1 (struct frame *f, int new_width, int new_height,
 
       /* Adjust frame size but make sure x_set_window_size does not
 	 get called.  */
-      adjust_frame_size (f, new_width, new_height, 5, pretend, Qnil);
+      adjust_frame_size (f, new_width, new_height, 5, pretend,
+			 Qchange_frame_size);
     }
 }
 

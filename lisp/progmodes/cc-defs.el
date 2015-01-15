@@ -1983,19 +1983,22 @@ system."
 
 (defvar c-lang-const-expansion nil)
 
+;; Ugly hack to pull in the definition of `cc-bytecomp-compiling-or-loading`
+;; from cc-bytecomp to make it available at loadtime.  This is the same
+;; mechanism used in cc-mode.el for `c-populate-syntax-table'.
+(defalias 'cc-bytecomp-compiling-or-loading
+  (cc-eval-when-compile
+    (let ((f (symbol-function 'cc-bytecomp-compiling-or-loading)))
+      (if (byte-code-function-p f) f (byte-compile f)))))
+
 (defsubst c-get-current-file ()
   ;; Return the base name of the current file.
-  (let ((file (cond
-	       (load-in-progress
-		;; Being loaded.
-		load-file-name)
-	       ((and (boundp 'byte-compile-dest-file)
-		     (stringp byte-compile-dest-file))
-		;; Being compiled.
-		byte-compile-dest-file)
-	       (t
-		;; Being evaluated interactively.
-		(buffer-file-name)))))
+  (let* ((c-or-l (cc-bytecomp-compiling-or-loading))
+	 (file
+	  (cond
+	   ((eq c-or-l 'loading) load-file-name)
+	   ((eq c-or-l 'compiling) byte-compile-dest-file)
+	   ((null c-or-l) (buffer-file-name)))))
     (and file
 	 (file-name-sans-extension
 	  (file-name-nondirectory file)))))
@@ -2062,6 +2065,9 @@ constant.  A file is identified by its base name."
 	 ;; language constant source definitions.)
 	 (c-lang-const-expansion 'call)
 	 (c-langs-are-parametric t)
+	 (file (intern
+		(or (c-get-current-file)
+		    (error "`c-lang-defconst' can only be used in a file"))))
 	 bindings
 	 pre-files)
 
@@ -2121,9 +2127,14 @@ constant.  A file is identified by its base name."
     ;; definitions for this symbol, to make sure the order in the
     ;; `source' property is correct even when files are loaded out of
     ;; order.
-    (setq pre-files (nreverse
-		     ;; Reverse to get the right load order.
-		     (mapcar 'car (get sym 'source))))
+    (setq pre-files (mapcar 'car (get sym 'source)))
+    (if (memq file pre-files)
+	;; This can happen when the source file (e.g. cc-langs.el) is first
+	;; loaded as source, setting a 'source property entry, and then itself
+	;; being compiled.
+	(setq pre-files (cdr (memq file pre-files))))
+    ;; Reverse to get the right load order.
+    (setq pre-files (nreverse pre-files))
 
     `(eval-and-compile
        (c-define-lang-constant ',name ,bindings
@@ -2233,9 +2244,7 @@ quoted."
         (if (or (eq c-lang-const-expansion 'call)
                 (and (not c-lang-const-expansion)
                      (not mode))
-                load-in-progress
-                (not (boundp 'byte-compile-dest-file))
-                (not (stringp byte-compile-dest-file)))
+		(not (cc-bytecomp-is-compiling)))
             ;; Either a straight call is requested in the context, or
             ;; we're in an "uncontrolled" context and got no language,
             ;; or we're not being byte compiled so the compile time

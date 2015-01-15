@@ -522,8 +522,6 @@ For a Unix-syntax file name, just appends a slash.  */)
   USE_SAFE_ALLOCA;
 
   CHECK_STRING (file);
-  if (NILP (file))
-    return Qnil;
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
@@ -590,9 +588,6 @@ In Unix-syntax, this function just removes the final slash.  */)
   USE_SAFE_ALLOCA;
 
   CHECK_STRING (directory);
-
-  if (NILP (directory))
-    return Qnil;
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
@@ -5738,8 +5733,8 @@ then any auto-save counts as "recent".  */)
      they're never autosaved.  */
   return (SAVE_MODIFF < BUF_AUTOSAVE_MODIFF (current_buffer) ? Qt : Qnil);
 }
-
-/* Reading and completing file names */
+
+/* Reading and completing file names.  */
 
 DEFUN ("next-read-file-uses-dialog-p", Fnext_read_file_uses_dialog_p,
        Snext_read_file_uses_dialog_p, 0, 0, 0,
@@ -5748,8 +5743,8 @@ The return value is only relevant for a call to `read-file-name' that happens
 before any other event (mouse or keypress) is handled.  */)
   (void)
 {
-#if defined (USE_MOTIF) || defined (HAVE_NTGUI) || defined (USE_GTK) \
-  || defined (HAVE_NS)
+#if (defined USE_GTK || defined USE_MOTIF \
+     || defined HAVE_NS || defined HAVE_NTGUI)
   if ((NILP (last_nonmenu_event) || CONSP (last_nonmenu_event))
       && use_dialog_box
       && use_file_dialog

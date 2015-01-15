@@ -176,7 +176,8 @@ args_out_of_range_3 (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
 /* Data type predicates.  */
 
 DEFUN ("eq", Feq, Seq, 2, 2, 0,
-       doc: /* Return t if the two args are the same Lisp object.  */)
+       doc: /* Return t if the two args are the same Lisp object.  */
+       attributes: const)
   (Lisp_Object obj1, Lisp_Object obj2)
 {
   if (EQ (obj1, obj2))
@@ -185,7 +186,8 @@ DEFUN ("eq", Feq, Seq, 2, 2, 0,
 }
 
 DEFUN ("null", Fnull, Snull, 1, 1, 0,
-       doc: /* Return t if OBJECT is nil.  */)
+       doc: /* Return t if OBJECT is nil.  */
+       attributes: const)
   (Lisp_Object object)
 {
   if (NILP (object))
@@ -263,7 +265,8 @@ for example, (type-of 1) returns `integer'.  */)
 }
 
 DEFUN ("consp", Fconsp, Sconsp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a cons cell.  */)
+       doc: /* Return t if OBJECT is a cons cell.  */
+       attributes: const)
   (Lisp_Object object)
 {
   if (CONSP (object))
@@ -272,7 +275,8 @@ DEFUN ("consp", Fconsp, Sconsp, 1, 1, 0,
 }
 
 DEFUN ("atom", Fatom, Satom, 1, 1, 0,
-       doc: /* Return t if OBJECT is not a cons cell.  This includes nil.  */)
+       doc: /* Return t if OBJECT is not a cons cell.  This includes nil.  */
+       attributes: const)
   (Lisp_Object object)
 {
   if (CONSP (object))
@@ -282,7 +286,8 @@ DEFUN ("atom", Fatom, Satom, 1, 1, 0,
 
 DEFUN ("listp", Flistp, Slistp, 1, 1, 0,
        doc: /* Return t if OBJECT is a list, that is, a cons cell or nil.
-Otherwise, return nil.  */)
+Otherwise, return nil.  */
+       attributes: const)
   (Lisp_Object object)
 {
   if (CONSP (object) || NILP (object))
@@ -291,7 +296,8 @@ Otherwise, return nil.  */)
 }
 
 DEFUN ("nlistp", Fnlistp, Snlistp, 1, 1, 0,
-       doc: /* Return t if OBJECT is not a list.  Lists include nil.  */)
+       doc: /* Return t if OBJECT is not a list.  Lists include nil.  */
+       attributes: const)
   (Lisp_Object object)
 {
   if (CONSP (object) || NILP (object))
@@ -300,7 +306,8 @@ DEFUN ("nlistp", Fnlistp, Snlistp, 1, 1, 0,
 }
 
 DEFUN ("symbolp", Fsymbolp, Ssymbolp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a symbol.  */)
+       doc: /* Return t if OBJECT is a symbol.  */
+       attributes: const)
   (Lisp_Object object)
 {
   if (SYMBOLP (object))
@@ -333,7 +340,8 @@ DEFUN ("vectorp", Fvectorp, Svectorp, 1, 1, 0,
 }
 
 DEFUN ("stringp", Fstringp, Sstringp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a string.  */)
+       doc: /* Return t if OBJECT is a string.  */
+       attributes: const)
   (Lisp_Object object)
 {
   if (STRINGP (object))
@@ -436,7 +444,8 @@ DEFUN ("byte-code-function-p", Fbyte_code_function_p, Sbyte_code_function_p,
 }
 
 DEFUN ("char-or-string-p", Fchar_or_string_p, Schar_or_string_p, 1, 1, 0,
-       doc: /* Return t if OBJECT is a character or a string.  */)
+       doc: /* Return t if OBJECT is a character or a string.  */
+       attributes: const)
   (register Lisp_Object object)
 {
   if (CHARACTERP (object) || STRINGP (object))
@@ -445,7 +454,8 @@ DEFUN ("char-or-string-p", Fchar_or_string_p, Schar_or_string_p, 1, 1, 0,
 }
 
 DEFUN ("integerp", Fintegerp, Sintegerp, 1, 1, 0,
-       doc: /* Return t if OBJECT is an integer.  */)
+       doc: /* Return t if OBJECT is an integer.  */
+       attributes: const)
   (Lisp_Object object)
 {
   if (INTEGERP (object))
@@ -463,7 +473,8 @@ DEFUN ("integer-or-marker-p", Finteger_or_marker_p, Sinteger_or_marker_p, 1, 1, 
 }
 
 DEFUN ("natnump", Fnatnump, Snatnump, 1, 1, 0,
-       doc: /* Return t if OBJECT is a nonnegative integer.  */)
+       doc: /* Return t if OBJECT is a nonnegative integer.  */
+       attributes: const)
   (Lisp_Object object)
 {
   if (NATNUMP (object))
@@ -472,7 +483,8 @@ DEFUN ("natnump", Fnatnump, Snatnump, 1, 1, 0,
 }
 
 DEFUN ("numberp", Fnumberp, Snumberp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a number (floating point or integer).  */)
+       doc: /* Return t if OBJECT is a number (floating point or integer).  */
+       attributes: const)
   (Lisp_Object object)
 {
   if (NUMBERP (object))
@@ -492,7 +504,8 @@ DEFUN ("number-or-marker-p", Fnumber_or_marker_p,
 }
 
 DEFUN ("floatp", Ffloatp, Sfloatp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a floating point number.  */)
+       doc: /* Return t if OBJECT is a floating point number.  */
+       attributes: const)
   (Lisp_Object object)
 {
   if (FLOATP (object))
@@ -2954,7 +2967,8 @@ DEFUN ("lognot", Flognot, Slognot, 1, 1, 0,
 DEFUN ("byteorder", Fbyteorder, Sbyteorder, 0, 0, 0,
        doc: /* Return the byteorder for the machine.
 Returns 66 (ASCII uppercase B) for big endian machines or 108 (ASCII
-lowercase l) for small endian machines.  */)
+lowercase l) for small endian machines.  */
+       attributes: const)
   (void)
 {
   unsigned i = 0x04030201;

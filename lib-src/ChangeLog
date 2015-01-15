@@ -1,3 +1,20 @@
+2015-01-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Don't say Fnext_read_file_uses_dialog_p is const
+	* make-docfile.c (write_globals):
+	Add a special hack for Fnext_read_file_uses_dialog_p.
+
+2015-01-13  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Support DEFUN attributes.
+	* make-docfile.c (struct global): New field 'flags'.
+	(DEFUN_noreturn, DEFUN_const): New enum bitfields.
+	(add_global): Now return pointer to global.
+	(write_globals): Add _Noreturn and ATTRIBUTE_CONST attributes
+	if requested by global's flags.
+	(stream_match): New function.
+	(scan_c_stream): Recognize 'attributes:' of DEFUN.
+
 2015-01-10  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Port to 32-bit --with-wide-int

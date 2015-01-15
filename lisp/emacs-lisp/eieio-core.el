@@ -264,7 +264,7 @@ Return nil if that option doesn't exist."
 
 (defsubst eieio-object-p (obj)
   "Return non-nil if OBJ is an EIEIO object."
-  (and (arrayp obj)
+  (and (vectorp obj)
        (condition-case nil
            (eq (aref (eieio--object-class-object obj) 0) 'defclass)
          (error nil))))
@@ -1303,11 +1303,35 @@ method invocation orders of the involved classes."
 (define-error 'unbound-slot "Unbound slot")
 (define-error 'inconsistent-class-hierarchy "Inconsistent class hierarchy")
 
+;;; Hooking into cl-generic.
+
+(require 'cl-generic)
+
+(add-function :before-until cl-generic-tagcode-function
+              #'eieio--generic-tagcode)
+(defun eieio--generic-tagcode (type name)
+  ;; CLHS says:
+  ;;    A class must be defined before it can be used as a parameter
+  ;;    specializer in a defmethod form.
+  ;; So we can ignore types that are not known to denote classes.
+  (and (class-p type)
+       ;; Prefer (aref ,name 0) over (eieio--class-tag ,name) so that
+       ;; the tagcode is identical to the tagcode used for cl-struct.
+       `(50 . (and (vectorp ,name) (aref ,name 0)))))
+
+(add-function :before-until cl-generic-tag-types-function
+              #'eieio--generic-tag-types)
+(defun eieio--generic-tag-types (tag)
+  (and (symbolp tag) (boundp tag) (eieio--class-p (symbol-value tag))
+       (mapcar #'eieio--class-symbol
+               (eieio--class-precedence-list (symbol-value tag)))))
+
 ;;; Backward compatibility functions
 ;; To support .elc files compiled for older versions of EIEIO.
 
 (defun eieio-defclass (cname superclasses slots options)
-  (eval `(defclass ,cname ,superclasses ,slots ,options)))
+  (declare (obsolete eieio-defclass-internal "25.1"))
+  (eval `(defclass ,cname ,superclasses ,slots ,@options)))
 
 
 (provide 'eieio-core)

@@ -9288,7 +9288,8 @@ DEFUN ("imagep", Fimagep, Simagep, 1, 1, 0,
 }
 
 
-DEFUN ("lookup-image", Flookup_image, Slookup_image, 1, 1, 0, "")
+DEFUN ("lookup-image", Flookup_image, Slookup_image, 1, 1, 0,
+       doc: /* */)
   (Lisp_Object spec)
 {
   ptrdiff_t id = -1;

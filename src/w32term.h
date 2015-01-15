@@ -493,8 +493,8 @@ struct scroll_bar {
   (XSETINT ((low),   ((DWORDLONG)(int64))        & 0xffffffff), \
    XSETINT ((high), ((DWORDLONG)(int64) >> 32) & 0xffffffff))
 #else  /* not _WIN64 */
-/* Building a 32-bit C integer from two 16-bit lisp integers.  */
-#define SCROLL_BAR_PACK(low, high) (XINT (high) << 16 | XINT (low))
+/* Building a 32-bit C unsigned integer from two 16-bit lisp integers.  */
+#define SCROLL_BAR_PACK(low, high) ((UINT_PTR)(XINT (high) << 16 | XINT (low)))
 
 /* Setting two lisp integers to the low and high words of a 32-bit C int.  */
 #define SCROLL_BAR_UNPACK(low, high, int32) \

@@ -667,7 +667,7 @@ main (int argc, char **argv)
   /* In a real program, you'd want to also do this: */
   display->db = xdb;
 
-  while (1)
+  while (true)
     {
       char query_name[90];
       char query_class[90];

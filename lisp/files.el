@@ -740,7 +740,10 @@ This function works recursively.  Files are returned in \"depth first\"
 and alphabetical order.
 If INCLUDE-DIRECTORIES, also include directories that have matching names."
   (let ((result nil)
-	(files nil))
+	(files nil)
+	;; When DIR is "/", remote file names like "/method:" could
+	;; also be offered.  We shall suppress them.
+	(tramp-mode (and tramp-mode (file-remote-p dir))))
     (dolist (file (sort (file-name-all-completions "" dir)
 			'string<))
       (unless (member file '("./" "../"))
