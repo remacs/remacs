@@ -1,3 +1,7 @@
+2015-01-16  Daniel Colascione  <dancol@dancol.org>
+
+	* cus-start.el (all): Make `ring-bell-function' customizable.
+
 2015-01-16  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* vc/vc-svn.el (vc-svn-dir-status-files): Pass t as
