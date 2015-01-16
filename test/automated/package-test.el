@@ -243,7 +243,7 @@ Must called from within a `tar-mode' buffer."
       (package-refresh-contents)
       (package-install 'simple-single)
 
-      (let ((installed (cdr (assq 'simple-single package-alist))))
+      (let ((installed (cadr (assq 'simple-single package-alist))))
         (should (version-list-= '(1 3)
                                 (package-desc-version installed)))))))
 
