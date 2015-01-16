@@ -1,5 +1,7 @@
 2015-01-16  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
+	* dom.el (dom-strings): New function.
+
 	* files.el (directory-files-recursively): Don't use the word
 	"path" for a file name.
 
