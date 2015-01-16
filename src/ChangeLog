@@ -1,3 +1,14 @@
+2015-01-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Give up on -Wsuggest-attribute=const
+	* decompress.c (Fzlib_available_p):
+	* gnutls.c (Fgnutls_available_p):
+	* gtkutil.h (xg_uses_old_file_dialog):
+	* xdisp.c (Ftool_bar_height):
+	* xmenu.c (popup_activated):
+	No longer const, since it's not const on at lest some
+	configurations, and we shouldn't lie to the compiler.
+
 2015-01-15  Eli Zaretskii  <eliz@gnu.org>
 
 	* fileio.c: Include binary-io.h.

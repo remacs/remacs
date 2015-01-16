@@ -1619,8 +1619,7 @@ This function may also return `gnutls-e-again', or
 #endif	/* HAVE_GNUTLS */
 
 DEFUN ("gnutls-available-p", Fgnutls_available_p, Sgnutls_available_p, 0, 0, 0,
-       doc: /* Return t if GnuTLS is available in this instance of Emacs.  */
-       attributes: const)
+       doc: /* Return t if GnuTLS is available in this instance of Emacs.  */)
      (void)
 {
 #ifdef HAVE_GNUTLS

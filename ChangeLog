@@ -1,3 +1,11 @@
+2015-01-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Give up on -Wsuggest-attribute=const
+	The attribute doesn't help performance significantly, and the
+	warning seems to be more trouble than it's worth.  See the thread at:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-01/msg00361.html
+	* configure.ac (WERROR_CFLAGS): Don't use -Wsuggest-attribute=const.
+
 2015-01-11  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Default to 'configure --enable-silent-rules'

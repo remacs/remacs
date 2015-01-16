@@ -1,3 +1,9 @@
+2015-01-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Give up on -Wsuggest-attribute=const
+	* make-docfile.c (write_globals):
+	Remove special hack for Fnext_read_file_uses_dialog_p
+
 2015-01-13  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Don't say Fnext_read_file_uses_dialog_p is const
