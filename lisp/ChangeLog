@@ -1,3 +1,8 @@
+2015-01-16  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* files.el (directory-files-recursively): Don't use the word
+	"path" for a file name.
+
 2015-01-15  Wolfgang Jenkner  <wjenkner@inode.at>
 
 	* calc/calc-units.el (math-units-in-expr-p)
