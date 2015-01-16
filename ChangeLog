@@ -1,3 +1,10 @@
+2015-01-21  Ulrich Müller  <ulm@gentoo.org>
+
+	* configure.ac (gamegroup): New AC_SUBST.
+	(--with-gameuser): Allow to specify a group instead of a user.
+	In the default case, check at configure time if a 'games' user
+	exists.
+
 2015-01-16  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Give up on -Wsuggest-attribute=const

@@ -46,6 +46,13 @@ and silent rules are now quieter.  To get the old behavior where
 build with 'make V=1'.
 
 ---
+** The configure option '--with-gameuser' now allows to specify a
+group instead of a user if its argument is prefixed by ':' (a colon).
+This will cause the game score files in ${localstatedir}/games/emacs
+to be owned by that group, and the helper program for updating them to
+be installed setgid.
+
+---
 ** The `grep-changelog' script (and its manual page) are no longer included.
 It has no particular connection to Emacs and has not changed in years,
 so if you want to use it, you can always take a copy from an older Emacs.

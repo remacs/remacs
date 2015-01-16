@@ -486,13 +486,13 @@ FILE is created there."
 	 (not (zerop (logand (file-modes
 			      (expand-file-name "update-game-score"
 						exec-directory))
-			     #o4000)))))
+			     #o6000)))))
     (cond ((file-name-absolute-p file)
 	   (gamegrid-add-score-insecure file score))
 	  ((and gamegrid-shared-game-dir
 		(file-exists-p (expand-file-name file shared-game-score-directory)))
-	   ;; Use the setuid "update-game-score" program to update a
-	   ;; system-wide score file.
+	   ;; Use the setuid (or setgid) "update-game-score" program
+	   ;; to update a system-wide score file.
 	   (gamegrid-add-score-with-update-game-score-1 file
 	    (expand-file-name file shared-game-score-directory) score))
 	  ;; Else: Add the score to a score file in the user's home

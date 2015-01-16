@@ -1,3 +1,8 @@
+2015-01-21  Ulrich Müller  <ulm@gentoo.org>
+
+	* play/gamegrid.el (gamegrid-add-score-with-update-game-score):
+	Allow the 'update-game-score' helper program to run suid or sgid.
+
 2015-01-21  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/eieio.el: Use cl-defmethod.

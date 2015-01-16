@@ -1,3 +1,15 @@
+2015-01-21  Ulrich Müller  <ulm@gentoo.org>
+
+	* update-game-score.c: Allow the program to run sgid instead
+	of suid, in order to match common practice for most games.
+	(main): Check if we are running sgid.  Pass appropriate file
+	permission bits to 'write_scores'.
+	(write_scores): New 'mode' argument, instead of hardcoding 0644.
+	(get_prefix): Update error message.
+	* Makefile.in (gamegroup): New variable, set by configure.
+	($(DESTDIR)${archlibdir}): Handle both suid or sgid when
+	installing the 'update-game-score' program.
+
 2015-01-16  Eli Zaretskii  <eliz@gnu.org>
 
 	* Makefile.in (AM_V_RC, am__v_RC_, am__v_RC_0, am__v_RC_1): New
