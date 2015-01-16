@@ -254,6 +254,15 @@ get_named_terminal (const char *name)
   return NULL;
 }
 
+/* Allocate basically initialized terminal.  */
+
+static struct terminal *
+allocate_terminal (void)
+{
+  return ALLOCATE_ZEROED_PSEUDOVECTOR
+    (struct terminal, next_terminal, PVEC_TERMINAL);
+}
+
 /* Create a new terminal object of TYPE and add it to the terminal list.  RIF
    may be NULL if this terminal type doesn't support window-based redisplay.  */
 

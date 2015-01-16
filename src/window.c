@@ -3642,7 +3642,16 @@ temp_output_buffer_show (register Lisp_Object buf)
       }
     }
 }
-
+
+/* Allocate basically initialized window.  */
+
+static struct window *
+allocate_window (void)
+{
+  return ALLOCATE_ZEROED_PSEUDOVECTOR
+    (struct window, current_matrix, PVEC_WINDOW);
+}
+
 /* Make new window, have it replace WINDOW in window-tree, and make
    WINDOW its only vertical child (HORFLAG 1 means make WINDOW its only
    horizontal child).   */

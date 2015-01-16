@@ -1,3 +1,20 @@
+2015-01-16  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Tune pseudovector allocation assuming Qnil == 0.
+	* alloc.c (allocate_pseudovector): Use memset for both
+	Lisp_Objects and regular slots.  Add zerolen arg.
+	* lisp.h (allocate_pseudovector): Adjust prototype.
+	(ALLOCATE_PSEUDOVECTOR): Adjust user.
+	(ALLOCATE_ZEROED_PSEUDOVECTOR): New macro.
+	(allocate_hash_table, allocate_window, allocate_frame)
+	(allocate_process, allocate_terminal): Remove prototypes.
+	* fns.c (allocate_hash_table): Now static here.
+	* frame.c (allocate_frame):
+	* process.c (allocate_process):
+	* terminal.c (allocate_terminal):
+	* window.c (allocate_window): Now static here.
+	Use ALLOCATE_ZEROED_PSEUDOVECTOR.  Add comment.
+
 2015-01-16  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Give up on -Wsuggest-attribute=const

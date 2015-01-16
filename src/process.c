@@ -687,7 +687,15 @@ allocate_pty (char pty_name[PTY_NAME_SIZE])
 #endif /* HAVE_PTYS */
   return -1;
 }
-
+
+/* Allocate basically initialized process.  */
+
+static struct Lisp_Process *
+allocate_process (void)
+{
+  return ALLOCATE_ZEROED_PSEUDOVECTOR (struct Lisp_Process, pid, PVEC_PROCESS);
+}
+
 static Lisp_Object
 make_process (Lisp_Object name)
 {

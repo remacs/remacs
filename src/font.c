@@ -156,7 +156,7 @@ font_make_spec (void)
   struct font_spec *spec
     = ((struct font_spec *)
        allocate_pseudovector (VECSIZE (struct font_spec),
-			      FONT_SPEC_MAX, PVEC_FONT));
+			      FONT_SPEC_MAX, FONT_SPEC_MAX, PVEC_FONT));
   XSETFONT (font_spec, spec);
   return font_spec;
 }
@@ -168,7 +168,7 @@ font_make_entity (void)
   struct font_entity *entity
     = ((struct font_entity *)
        allocate_pseudovector (VECSIZE (struct font_entity),
-			      FONT_ENTITY_MAX, PVEC_FONT));
+			      FONT_ENTITY_MAX, FONT_ENTITY_MAX, PVEC_FONT));
   XSETFONT (font_entity, entity);
   return font_entity;
 }
@@ -181,7 +181,8 @@ font_make_object (int size, Lisp_Object entity, int pixelsize)
 {
   Lisp_Object font_object;
   struct font *font
-    = (struct font *) allocate_pseudovector (size, FONT_OBJECT_MAX, PVEC_FONT);
+    = (struct font *) allocate_pseudovector (size, FONT_OBJECT_MAX,
+					     FONT_OBJECT_MAX, PVEC_FONT);
   int i;
 
   /* GC can happen before the driver is set up,
