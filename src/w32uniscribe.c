@@ -183,8 +183,9 @@ uniscribe_otf_capability (struct font *font)
 static Lisp_Object
 uniscribe_shape (Lisp_Object lgstring)
 {
-  struct font * font;
-  struct uniscribe_font_info * uniscribe_font;
+  struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
+  struct uniscribe_font_info *uniscribe_font
+    = (struct uniscribe_font_info *) font;
   EMACS_UINT nchars;
   int nitems, max_items, i, max_glyphs, done_glyphs;
   wchar_t *chars;
@@ -198,9 +199,6 @@ uniscribe_shape (Lisp_Object lgstring)
   struct frame * f = NULL;
   HDC context = NULL;
   HFONT old_font = NULL;
-
-  CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring), font);
-  uniscribe_font = (struct uniscribe_font_info *) font;
 
   /* Get the chars from lgstring in a form we can use with uniscribe.  */
   max_glyphs = nchars = LGSTRING_GLYPH_LEN (lgstring);

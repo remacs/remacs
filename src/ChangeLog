@@ -18,6 +18,17 @@
 	* lisp.h (XTERMINAL): Add eassert.
 	* process.c (make_lisp_proc): Now static here.
 
+	Prefer INLINE functions in font.h to match style used in lisp.h.
+	* font.h (FONTP, FONT_SPEC_P, FONT_ENTITY_P, FONT_OBJECT_P)
+	(CHECK_FONT, CHECK_FONT_SPEC, CHECK_FONT_ENTITY, CHECK_FONT_OBJECT)
+	(XFONT_SPEC, XFONT_ENTITY, XFONT_OBJECT, CHECK_FONT_GET_OBJECT):
+	Now functions.
+	* font.c (Ffont_otf_alternates, Fquery_font, Ffont_get_glyphs):
+	* ftfont.c (ftfont_shape):
+	* macfont.m (macfont_shape):
+	* w32uniscribe.c (uniscribe_shape):
+	* xftfont.c (xftfont_shape): Adjust CHECK_FONT_GET_OBJECT users.
+
 2015-01-16  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Give up on -Wsuggest-attribute=const

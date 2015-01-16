@@ -413,45 +413,90 @@ struct font_bitmap
 /* Predicates to check various font-related objects.  */
 
 /* True iff X is one of font-spec, font-entity, and font-object.  */
-#define FONTP(x) PSEUDOVECTORP (x, PVEC_FONT)
+INLINE bool
+FONTP (Lisp_Object x)
+{
+  return PSEUDOVECTORP (x, PVEC_FONT);
+}
+
 /* True iff X is font-spec.  */
-#define FONT_SPEC_P(x)	\
-  (FONTP (x) && (ASIZE (x) & PSEUDOVECTOR_SIZE_MASK) == FONT_SPEC_MAX)
+INLINE bool
+FONT_SPEC_P (Lisp_Object x)
+{
+  return FONTP (x) && (ASIZE (x) & PSEUDOVECTOR_SIZE_MASK) == FONT_SPEC_MAX;
+}
+
 /* True iff X is font-entity.  */
-#define FONT_ENTITY_P(x)	\
-  (FONTP (x) && (ASIZE (x) & PSEUDOVECTOR_SIZE_MASK) == FONT_ENTITY_MAX)
+INLINE bool
+FONT_ENTITY_P (Lisp_Object x)
+{
+  return FONTP (x) && (ASIZE (x) & PSEUDOVECTOR_SIZE_MASK) == FONT_ENTITY_MAX;
+}
+
 /* True iff X is font-object.  */
-#define FONT_OBJECT_P(x)	\
-  (FONTP (x) && (ASIZE (x) & PSEUDOVECTOR_SIZE_MASK) == FONT_OBJECT_MAX)
+INLINE bool
+FONT_OBJECT_P (Lisp_Object x)
+{
+  return FONTP (x) && (ASIZE (x) & PSEUDOVECTOR_SIZE_MASK) == FONT_OBJECT_MAX;
+}
 
-/* Check macros for various font-related objects.  */
+/* Type checking functions for various font-related objects.  */
 
-#define CHECK_FONT(x)	\
-  do { if (! FONTP (x)) wrong_type_argument (Qfont, x); } while (false)
-#define CHECK_FONT_SPEC(x)	\
-  do { if (! FONT_SPEC_P (x)) wrong_type_argument (Qfont_spec, x); } \
-  while (false)
-#define CHECK_FONT_ENTITY(x)	\
-  do { if (! FONT_ENTITY_P (x)) wrong_type_argument (Qfont_entity, x); } \
-  while (false)
-#define CHECK_FONT_OBJECT(x)	\
-  do { if (! FONT_OBJECT_P (x)) wrong_type_argument (Qfont_object, x); } \
-  while (false)
+INLINE void
+CHECK_FONT (Lisp_Object x)
+{
+  CHECK_TYPE (FONTP (x), Qfont, x);
+}
 
-#define CHECK_FONT_GET_OBJECT(x, font)	\
-  do {					\
-    CHECK_FONT_OBJECT (x);		\
-    font = XFONT_OBJECT (x);		\
-  } while (false)
+INLINE void
+CHECK_FONT_SPEC (Lisp_Object x)
+{
+  CHECK_TYPE (FONT_SPEC_P (x), Qfont_spec, x);
+}
 
-#define XFONT_SPEC(p)	\
-  (eassert (FONT_SPEC_P (p)), (struct font_spec *) XUNTAG (p, Lisp_Vectorlike))
-#define XFONT_ENTITY(p)	\
-  (eassert (FONT_ENTITY_P (p)), \
-   (struct font_entity *) XUNTAG (p, Lisp_Vectorlike))
-#define XFONT_OBJECT(p)	\
-  (eassert (FONT_OBJECT_P (p)), (struct font *) XUNTAG (p, Lisp_Vectorlike))
+INLINE void
+CHECK_FONT_ENTITY (Lisp_Object x)
+{
+  CHECK_TYPE (FONT_ENTITY_P (x), Qfont_entity, x);
+}
+
+INLINE void
+CHECK_FONT_OBJECT (Lisp_Object x)
+{
+  CHECK_TYPE (FONT_OBJECT_P (x), Qfont_object, x);
+}
+
+/* C pointer extraction functions for various font-related objects.  */
+
+INLINE struct font_spec *
+XFONT_SPEC (Lisp_Object p)
+{
+  eassert (FONT_SPEC_P (p));
+  return XUNTAG (p, Lisp_Vectorlike);
+}
+
+INLINE struct font_entity *
+XFONT_ENTITY (Lisp_Object p)
+{
+  eassert (FONT_ENTITY_P (p));
+  return XUNTAG (p, Lisp_Vectorlike);
+}
+
+INLINE struct font *
+XFONT_OBJECT (Lisp_Object p)
+{
+  eassert (FONT_OBJECT_P (p));
+  return XUNTAG (p, Lisp_Vectorlike);
+}
+
 #define XSETFONT(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_FONT))
+
+INLINE struct font *
+CHECK_FONT_GET_OBJECT (Lisp_Object x)
+{
+  CHECK_FONT_OBJECT (x);
+  return XFONT_OBJECT (x);
+}
 
 /* Number of pt per inch (from the TeXbook).  */
 #define PT_PER_INCH 72.27

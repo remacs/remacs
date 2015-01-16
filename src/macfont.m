@@ -2788,9 +2788,9 @@ macfont_draw (struct glyph_string *s, int from, int to, int x, int y,
 static Lisp_Object
 macfont_shape (Lisp_Object lgstring)
 {
-  struct font *font;
-  struct macfont_info *macfont_info;
-  FontRef macfont;
+  struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
+  struct macfont_info *macfont_info = (struct macfont_info *) font;
+  FontRef macfont = macfont_info->macfont;
   ptrdiff_t glyph_len, len, i, j;
   CFIndex nonbmp_len;
   UniChar *unichars;
@@ -2798,10 +2798,6 @@ macfont_shape (Lisp_Object lgstring)
   CFStringRef string;
   CFIndex used = 0;
   struct mac_glyph_layout *glyph_layouts;
-
-  CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring), font);
-  macfont_info = (struct macfont_info *) font;
-  macfont = macfont_info->macfont;
 
   glyph_len = LGSTRING_GLYPH_LEN (lgstring);
   nonbmp_len = 0;
