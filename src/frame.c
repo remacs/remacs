@@ -570,6 +570,13 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
   run_window_configuration_change_hook (f);
 }
 
+/* Allocate basically initialized frame.  */
+
+static struct frame *
+allocate_frame (void)
+{
+  return ALLOCATE_ZEROED_PSEUDOVECTOR (struct frame, face_cache, PVEC_FRAME);
+}
 
 struct frame *
 make_frame (bool mini_p)

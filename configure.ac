@@ -894,6 +894,10 @@ else
   # Emacs's use of alloca inhibits protecting the stack.
   nw="$nw -Wstack-protector"
 
+  # Emacs's use of partly-const functions such as Fgnutls_available_p
+  # make this option problematic.
+  nw="$nw -Wsuggest-attribute=const"
+
   # Emacs's use of partly-pure functions such as CHECK_TYPE make this
   # option problematic.
   nw="$nw -Wsuggest-attribute=pure"
@@ -1976,7 +1980,6 @@ fi
 if test "$window_system" = none && test "$gl_gcc_warnings" = yes; then
    # Too many warnings for now.
    nw=
-   nw="$nw -Wsuggest-attribute=const"
    nw="$nw -Wsuggest-attribute=noreturn"
    gl_MANYWARN_COMPLEMENT([WARN_CFLAGS], [$WARN_CFLAGS], [$nw])
 

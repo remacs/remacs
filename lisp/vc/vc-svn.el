@@ -164,6 +164,7 @@ If you want to force an empty list of arguments, use t."
 
 ;; FIXME it would be better not to have the "remote" argument,
 ;; but to distinguish the two output formats based on content.
+;; FIXME: the local format isn't used by the (sole) caller anymore.
 (defun vc-svn-after-dir-status (callback &optional remote)
   (let ((state-map '((?A . added)
                      (?C . conflict)
@@ -208,7 +209,7 @@ CALLBACK is called as (CALLBACK RESULT BUFFER), where
 RESULT is a list of conses (FILE . STATE) for directory DIR."
   ;; FIXME shouldn't this rather default to all the files in dir?
   (apply #'vc-svn-command (current-buffer) 'async nil "status" "-u" files)
-  (vc-run-delayed (vc-svn-after-dir-status callback)))
+  (vc-run-delayed (vc-svn-after-dir-status callback t)))
 
 (defun vc-svn-dir-extra-headers (_dir)
   "Generate extra status headers for a Subversion working copy."

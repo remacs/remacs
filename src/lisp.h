@@ -608,6 +608,7 @@ INLINE bool SUBRP (Lisp_Object);
 INLINE bool (SYMBOLP) (Lisp_Object);
 INLINE bool (VECTORLIKEP) (Lisp_Object);
 INLINE bool WINDOWP (Lisp_Object);
+INLINE bool TERMINALP (Lisp_Object);
 INLINE struct Lisp_Save_Value *XSAVE_VALUE (Lisp_Object);
 INLINE struct Lisp_Symbol *(XSYMBOL) (Lisp_Object);
 INLINE void *(XUNTAG) (Lisp_Object, int);
@@ -1003,6 +1004,7 @@ XWINDOW (Lisp_Object a)
 INLINE struct terminal *
 XTERMINAL (Lisp_Object a)
 {
+  eassert (TERMINALP (a));
   return XUNTAG (a, Lisp_Vectorlike);
 }
 
@@ -1063,12 +1065,6 @@ INLINE Lisp_Object
 builtin_lisp_symbol (int index)
 {
   return make_lisp_symbol (lispsym + index);
-}
-
-INLINE Lisp_Object
-make_lisp_proc (struct Lisp_Process *p)
-{
-  return make_lisp_ptr (p, Lisp_Vectorlike);
 }
 
 #define XSETINT(a, b) ((a) = make_number (b))
@@ -3785,16 +3781,25 @@ make_uninit_sub_char_table (int depth, int min_char)
   return v;
 }
 
-extern struct Lisp_Vector *allocate_pseudovector (int, int, enum pvec_type);
-#define ALLOCATE_PSEUDOVECTOR(typ,field,tag)				\
-  ((typ*)								\
-   allocate_pseudovector						\
-       (VECSIZE (typ), PSEUDOVECSIZE (typ, field), tag))
-extern struct Lisp_Hash_Table *allocate_hash_table (void);
-extern struct window *allocate_window (void);
-extern struct frame *allocate_frame (void);
-extern struct Lisp_Process *allocate_process (void);
-extern struct terminal *allocate_terminal (void);
+extern struct Lisp_Vector *allocate_pseudovector (int, int, int,
+						  enum pvec_type);
+
+/* Allocate partially initialized pseudovector where all Lisp_Object
+   slots are set to Qnil but the rest (if any) is left uninitialized.  */
+
+#define ALLOCATE_PSEUDOVECTOR(type, field, tag)			       \
+  ((type *) allocate_pseudovector (VECSIZE (type),		       \
+				   PSEUDOVECSIZE (type, field),	       \
+				   PSEUDOVECSIZE (type, field), tag))
+
+/* Allocate fully initialized pseudovector where all Lisp_Object
+   slots are set to Qnil and the rest (if any) is zeroed.  */
+
+#define ALLOCATE_ZEROED_PSEUDOVECTOR(type, field, tag)		       \
+  ((type *) allocate_pseudovector (VECSIZE (type),		       \
+				   PSEUDOVECSIZE (type, field),	       \
+				   VECSIZE (type), tag))
+
 extern bool gc_in_progress;
 extern bool abort_on_gc;
 extern Lisp_Object make_float (double);

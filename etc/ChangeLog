@@ -1,3 +1,7 @@
+2015-01-15  Eli Zaretskii  <eliz@gnu.org>
+
+	* NEWS: Mention 'set-binary-mode'.
+
 2015-01-11  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Default to 'configure --enable-silent-rules'

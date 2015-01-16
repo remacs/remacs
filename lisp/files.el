@@ -749,14 +749,15 @@ If INCLUDE-DIRECTORIES, also include directories that have matching names."
       (unless (member file '("./" "../"))
 	(if (directory-name-p file)
 	    (let* ((leaf (substring file 0 (1- (length file))))
-		   (path (expand-file-name leaf dir)))
+		   (full-file (expand-file-name leaf dir)))
 	      ;; Don't follow symlinks to other directories.
-	      (unless (file-symlink-p path)
-		(setq result (nconc result (directory-files-recursively
-					    path match include-directories))))
+	      (unless (file-symlink-p full-file)
+		(setq result
+		      (nconc result (directory-files-recursively
+				     full-file match include-directories))))
 	      (when (and include-directories
 			 (string-match match leaf))
-		(setq result (nconc result (list path)))))
+		(setq result (nconc result (list full-file)))))
 	  (when (string-match match file)
 	    (push (expand-file-name file dir) files)))))
     (nconc result (nreverse files))))

@@ -1,3 +1,7 @@
+2015-01-15  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* nntp.el (nntp-send-authinfo): Error out if the password is wrong.
+
 2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* registry.el: Don't use <class> as a variable.

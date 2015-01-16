@@ -156,7 +156,7 @@ font_make_spec (void)
   struct font_spec *spec
     = ((struct font_spec *)
        allocate_pseudovector (VECSIZE (struct font_spec),
-			      FONT_SPEC_MAX, PVEC_FONT));
+			      FONT_SPEC_MAX, FONT_SPEC_MAX, PVEC_FONT));
   XSETFONT (font_spec, spec);
   return font_spec;
 }
@@ -168,7 +168,7 @@ font_make_entity (void)
   struct font_entity *entity
     = ((struct font_entity *)
        allocate_pseudovector (VECSIZE (struct font_entity),
-			      FONT_ENTITY_MAX, PVEC_FONT));
+			      FONT_ENTITY_MAX, FONT_ENTITY_MAX, PVEC_FONT));
   XSETFONT (font_entity, entity);
   return font_entity;
 }
@@ -181,7 +181,8 @@ font_make_object (int size, Lisp_Object entity, int pixelsize)
 {
   Lisp_Object font_object;
   struct font *font
-    = (struct font *) allocate_pseudovector (size, FONT_OBJECT_MAX, PVEC_FONT);
+    = (struct font *) allocate_pseudovector (size, FONT_OBJECT_MAX,
+					     FONT_OBJECT_MAX, PVEC_FONT);
   int i;
 
   /* GC can happen before the driver is set up,
@@ -4532,12 +4533,11 @@ character code corresponding to the glyph or nil if there's no
 corresponding character.  */)
   (Lisp_Object font_object, Lisp_Object character, Lisp_Object otf_features)
 {
-  struct font *font;
+  struct font *font = CHECK_FONT_GET_OBJECT (font_object);
   Lisp_Object gstring_in, gstring_out, g;
   Lisp_Object alternates;
   int i, num;
 
-  CHECK_FONT_GET_OBJECT (font_object, font);
   if (! font->driver->otf_drive)
     error ("Font backend %s can't drive OpenType GSUB table",
 	   SDATA (SYMBOL_NAME (font->driver->type)));
@@ -4647,12 +4647,9 @@ FEATURE is a symbol representing OpenType feature tag.
 If the font is not OpenType font, CAPABILITY is nil.  */)
   (Lisp_Object font_object)
 {
-  struct font *font;
-  Lisp_Object val;
+  struct font *font = CHECK_FONT_GET_OBJECT (font_object);
+  Lisp_Object val = make_uninit_vector (9);
 
-  CHECK_FONT_GET_OBJECT (font_object, font);
-
-  val = make_uninit_vector (9);
   ASET (val, 0, AREF (font_object, FONT_NAME_INDEX));
   ASET (val, 1, AREF (font_object, FONT_FILE_INDEX));
   ASET (val, 2, make_number (font->pixel_size));
@@ -4691,12 +4688,11 @@ the corresponding element is nil.  */)
   (Lisp_Object font_object, Lisp_Object from, Lisp_Object to,
    Lisp_Object object)
 {
-  struct font *font;
+  struct font *font = CHECK_FONT_GET_OBJECT (font_object);
   ptrdiff_t i, len;
   Lisp_Object *chars, vec;
   USE_SAFE_ALLOCA;
 
-  CHECK_FONT_GET_OBJECT (font_object, font);
   if (NILP (object))
     {
       ptrdiff_t charpos, bytepos;

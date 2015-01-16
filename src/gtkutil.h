@@ -78,7 +78,7 @@ typedef struct xg_menu_item_cb_data_
 
 } xg_menu_item_cb_data;
 
-extern bool xg_uses_old_file_dialog (void) ATTRIBUTE_CONST;
+extern bool xg_uses_old_file_dialog (void);
 
 extern char *xg_get_file_name (struct frame *f,
                                char *prompt,

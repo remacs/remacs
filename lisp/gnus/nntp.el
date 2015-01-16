@@ -1219,14 +1219,17 @@ If SEND-IF-FORCE, only send authinfo to the server if the
 	      nntp-authinfo-user user))
       (unless (member user '(nil ""))
 	(nntp-send-command "^3.*\r?\n" "AUTHINFO USER" user)
-	(when t				;???Should check if AUTHINFO succeeded
-	  (nntp-send-command
-	   "^2.*\r?\n" "AUTHINFO PASS"
-	   (or passwd
-	       nntp-authinfo-password
-	       (setq nntp-authinfo-password
-		     (read-passwd (format "NNTP (%s@%s) password: "
-					  user nntp-address))))))))))
+	(let ((result
+	       (nntp-send-command
+		"^2.*\r?\n" "AUTHINFO PASS"
+		(or passwd
+		    nntp-authinfo-password
+		    (setq nntp-authinfo-password
+			  (read-passwd (format "NNTP (%s@%s) password: "
+					       user nntp-address)))))))
+	  (if (not result)
+	      (signal 'nntp-authinfo-rejected "Password rejected")
+	    result))))))
 
 ;;; Internal functions.
 

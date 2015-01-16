@@ -3163,19 +3163,19 @@ allocate_vector (EMACS_INT len)
 /* Allocate other vector-like structures.  */
 
 struct Lisp_Vector *
-allocate_pseudovector (int memlen, int lisplen, enum pvec_type tag)
+allocate_pseudovector (int memlen, int lisplen,
+		       int zerolen, enum pvec_type tag)
 {
   struct Lisp_Vector *v = allocate_vectorlike (memlen);
-  int i;
 
   /* Catch bogus values.  */
   eassert (tag <= PVEC_FONT);
   eassert (memlen - lisplen <= (1 << PSEUDOVECTOR_REST_BITS) - 1);
   eassert (lisplen <= (1 << PSEUDOVECTOR_SIZE_BITS) - 1);
 
-  /* Only the first lisplen slots will be traced normally by the GC.  */
-  for (i = 0; i < lisplen; ++i)
-    v->contents[i] = Qnil;
+  /* Only the first lisplen slots will be traced normally by the GC.
+     But since Qnil == 0, we can memset Lisp_Object slots as well.  */
+  memset (v->contents, 0, zerolen * word_size);
 
   XSETPVECTYPESIZE (v, tag, lisplen, memlen - lisplen);
   return v;
@@ -3192,60 +3192,6 @@ allocate_buffer (void)
   all_buffers = b;
   /* Note that the rest fields of B are not initialized.  */
   return b;
-}
-
-struct Lisp_Hash_Table *
-allocate_hash_table (void)
-{
-  return ALLOCATE_PSEUDOVECTOR (struct Lisp_Hash_Table, count, PVEC_HASH_TABLE);
-}
-
-struct window *
-allocate_window (void)
-{
-  struct window *w;
-
-  w = ALLOCATE_PSEUDOVECTOR (struct window, current_matrix, PVEC_WINDOW);
-  /* Users assumes that non-Lisp data is zeroed.  */
-  memset (&w->current_matrix, 0,
-	  sizeof (*w) - offsetof (struct window, current_matrix));
-  return w;
-}
-
-struct terminal *
-allocate_terminal (void)
-{
-  struct terminal *t;
-
-  t = ALLOCATE_PSEUDOVECTOR (struct terminal, next_terminal, PVEC_TERMINAL);
-  /* Users assumes that non-Lisp data is zeroed.  */
-  memset (&t->next_terminal, 0,
-	  sizeof (*t) - offsetof (struct terminal, next_terminal));
-  return t;
-}
-
-struct frame *
-allocate_frame (void)
-{
-  struct frame *f;
-
-  f = ALLOCATE_PSEUDOVECTOR (struct frame, face_cache, PVEC_FRAME);
-  /* Users assumes that non-Lisp data is zeroed.  */
-  memset (&f->face_cache, 0,
-	  sizeof (*f) - offsetof (struct frame, face_cache));
-  return f;
-}
-
-struct Lisp_Process *
-allocate_process (void)
-{
-  struct Lisp_Process *p;
-
-  p = ALLOCATE_PSEUDOVECTOR (struct Lisp_Process, pid, PVEC_PROCESS);
-  /* Users assumes that non-Lisp data is zeroed.  */
-  memset (&p->pid, 0,
-	  sizeof (*p) - offsetof (struct Lisp_Process, pid));
-  return p;
 }
 
 DEFUN ("make-vector", Fmake_vector, Smake_vector, 2, 2, 0,

@@ -1,3 +1,59 @@
+2015-01-16  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Tune pseudovector allocation assuming Qnil == 0.
+	* alloc.c (allocate_pseudovector): Use memset for both
+	Lisp_Objects and regular slots.  Add zerolen arg.
+	* lisp.h (allocate_pseudovector): Adjust prototype.
+	(ALLOCATE_PSEUDOVECTOR): Adjust user.
+	(ALLOCATE_ZEROED_PSEUDOVECTOR): New macro.
+	(allocate_hash_table, allocate_window, allocate_frame)
+	(allocate_process, allocate_terminal): Remove prototypes.
+	* fns.c (allocate_hash_table): Now static here.
+	* frame.c (allocate_frame):
+	* process.c (allocate_process):
+	* terminal.c (allocate_terminal):
+	* window.c (allocate_window): Now static here.
+	Use ALLOCATE_ZEROED_PSEUDOVECTOR.  Add comment.
+
+	* lisp.h (XTERMINAL): Add eassert.
+	* process.c (make_lisp_proc): Now static here.
+
+	Prefer INLINE functions in font.h to match style used in lisp.h.
+	* font.h (FONTP, FONT_SPEC_P, FONT_ENTITY_P, FONT_OBJECT_P)
+	(CHECK_FONT, CHECK_FONT_SPEC, CHECK_FONT_ENTITY, CHECK_FONT_OBJECT)
+	(XFONT_SPEC, XFONT_ENTITY, XFONT_OBJECT, CHECK_FONT_GET_OBJECT):
+	Now functions.
+	* font.c (Ffont_otf_alternates, Fquery_font, Ffont_get_glyphs):
+	* ftfont.c (ftfont_shape):
+	* macfont.m (macfont_shape):
+	* w32uniscribe.c (uniscribe_shape):
+	* xftfont.c (xftfont_shape): Adjust CHECK_FONT_GET_OBJECT users.
+
+2015-01-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Give up on -Wsuggest-attribute=const
+	* decompress.c (Fzlib_available_p):
+	* gnutls.c (Fgnutls_available_p):
+	* gtkutil.h (xg_uses_old_file_dialog):
+	* xdisp.c (Ftool_bar_height):
+	* xmenu.c (popup_activated):
+	No longer const, since it's not const on at lest some
+	configurations, and we shouldn't lie to the compiler.
+
+2015-01-15  Eli Zaretskii  <eliz@gnu.org>
+
+	* fileio.c: Include binary-io.h.
+	(Fset_binary_mode): New function.
+	(syms_of_fileio): Defsubr it.
+	(syms_of_fileio) <Qstdin, Qstdout, Qstderr>: DEFSYM them.
+
+2015-01-15  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* gnutls.c (init_gnutls_functions): Import gnutls_x509_crt_check_issuer.
+	(Fgnutls_peer_status): Use it to set the :self-signed flag.
+	Rename the previous :self-signed to :unknown-ca. (Bug#19404)
+	(Fgnutls_peer_status_warning_describe): Explain :unknown-ca flag.
+
 2015-01-14  Eli Zaretskii  <eliz@gnu.org>
 
 	* w32fns.c (w32_wnd_proc): Ignore MENUITEMINFO's dwItemData data

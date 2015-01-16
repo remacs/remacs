@@ -422,6 +422,11 @@ pset_write_queue (struct Lisp_Process *p, Lisp_Object val)
 }
 
 
+static Lisp_Object
+make_lisp_proc (struct Lisp_Process *p)
+{
+  return make_lisp_ptr (p, Lisp_Vectorlike);
+}
 
 static struct fd_callback_data
 {
@@ -687,7 +692,15 @@ allocate_pty (char pty_name[PTY_NAME_SIZE])
 #endif /* HAVE_PTYS */
   return -1;
 }
-
+
+/* Allocate basically initialized process.  */
+
+static struct Lisp_Process *
+allocate_process (void)
+{
+  return ALLOCATE_ZEROED_PSEUDOVECTOR (struct Lisp_Process, pid, PVEC_PROCESS);
+}
+
 static Lisp_Object
 make_process (Lisp_Object name)
 {

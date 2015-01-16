@@ -41,6 +41,24 @@ WERROR_CFLAGS = @WERROR_CFLAGS@
 # Program name transformation.
 TRANSFORM = @program_transform_name@
 
+# 'make' verbosity.
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+
+AM_V_CC = $(am__v_CC_@AM_V@)
+am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
+am__v_CC_0 = @echo "  CC      " $@;
+am__v_CC_1 =
+
+AM_V_CCLD = $(am__v_CCLD_@AM_V@)
+am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
+am__v_CCLD_0 = @echo "  CCLD    " $@;
+am__v_CCLD_1 =
+
+AM_V_RC = $(am__v_RC_@AM_V@)
+am__v_RC_ = $(am__v_RC_@AM_DEFAULT_V@)
+am__v_RC_0 = @echo "  RC      " $@;
+am__v_RC_1 =
+
 # ==================== Where To Install Things ====================
 
 # The default location for installation.  Everything is placed in
@@ -213,18 +231,18 @@ TAGS: ${EXE_FILES:${EXEEXT}=.c}
 
 ## Build the programs
 addpm${EXEEXT}: ${srcdir}/addpm.c ../src/epaths.h
-	$(CC) ${ALL_CFLAGS} $< $(LIBS_ADDPM) -o $@
+	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< $(LIBS_ADDPM) -o $@
 
 ddeclient${EXEEXT}: ${srcdir}/ddeclient.c
-	$(CC) ${ALL_CFLAGS} $< -o $@
+	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< -o $@
 
 cmdproxy${EXEEXT}: ${srcdir}/cmdproxy.c
-	$(CC) ${ALL_CFLAGS} $< -o $@
+	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< -o $@
 
 runemacs${EXEEXT}: ${srcdir}/runemacs.c $(EMACSRES)
-	$(CC) ${ALL_CFLAGS} $^ -mwindows -o $@
+	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $^ -mwindows -o $@
 
 ## Also used in ../src/Makefile.
 emacs.res ../src/emacs.res: emacs.rc ${srcdir}/icons/emacs.ico \
   ${srcdir}/icons/hand.cur ${srcdir}/$(EMACS_MANIFEST)
-	${WINDRES} -I ${srcdir} -O coff -o $@ $<
+	$(AM_V_RC)${WINDRES} -I ${srcdir} -O coff -o $@ $<

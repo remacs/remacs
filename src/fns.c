@@ -3814,6 +3814,15 @@ hashfn_user_defined (struct hash_table_test *ht, Lisp_Object key)
   return hashfn_eq (ht, hash);
 }
 
+/* Allocate basically initialized hash table.  */
+
+static struct Lisp_Hash_Table *
+allocate_hash_table (void)
+{
+  return ALLOCATE_PSEUDOVECTOR (struct Lisp_Hash_Table,
+				count, PVEC_HASH_TABLE);
+}
+
 /* An upper bound on the size of a hash table index.  It must fit in
    ptrdiff_t and be a valid Emacs fixnum.  */
 #define INDEX_SIZE_BOUND \

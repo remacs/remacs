@@ -339,6 +339,25 @@ shared structures.  @xref{Circular Objects}.  Its default value is
 @code{t}.
 @end defvar
 
+@cindex binary I/O in batch mode
+When reading or writing from the standard input/output streams of the
+Emacs process in batch mode, it is sometimes required to make sure any
+arbitrary binary data will be read/written verbatim, and/or that no
+translation of newlines to or from CR-LF pairs are performed.  This
+issue does not exist on Posix hosts, only on MS-Windows and MS-DOS.
+The following function allows to control the I/O mode of any standard
+stream of the Emacs process.
+
+@defun set-binary-mode stream mode
+Switch @var{stream} into binary or text I/O mode.  If @var{mode} is
+non-@code{nil}, switch to binary mode, otherwise switch to text mode.
+The value of @var{stream} can be one of @code{stdin}, @code{stdout},
+or @code{stderr}.  This function flushes any pending output data of
+@var{stream} as a side effect, and returns the previous value of I/O
+mode for @var{stream}.  On Posix hosts, it always returns a
+non-@code{nil} value and does nothing except flushing pending output.
+@end defun
+
 @node Output Streams
 @section Output Streams
 @cindex stream (for printing)
@@ -685,6 +704,11 @@ This function outputs @var{object} to @var{stream}, just like
 @code{prin1}, but does it in a more ``pretty'' way.  That is, it'll
 indent and fill the object to make it more readable for humans.
 @end defun
+
+If you need to use binary I/O in batch mode, e.g., use the functions
+described in this section to write out arbitrary binary data or avoid
+conversion of newlines on non-Posix hosts, see @ref{Input Functions,
+set-binary-mode}.
 
 @node Output Variables
 @section Variables Affecting Output

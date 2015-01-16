@@ -103,6 +103,14 @@ A name is a symbol like `td'."
 	(cons dom matches)
       matches)))
 
+(defun dom-strings (dom)
+  "Return elements in DOM that are strings."
+  (cl-loop for child in (dom-children dom)
+	   if (stringp child)
+	   collect child
+	   else
+	   append (dom-strings child)))
+
 (defun dom-by-class (dom match)
   "Return elements in DOM that have a class name that matches regexp MATCH."
   (dom-elements dom 'class match))

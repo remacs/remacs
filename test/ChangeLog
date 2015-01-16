@@ -1,3 +1,19 @@
+2015-01-16  Jorgen Schaefer  <contact@jorgenschaefer.de>
+
+	* automated/package-test.el (package-test-install-prioritized):
+	New test.
+
+2015-01-15  Wolfgang Jenkner  <wjenkner@inode.at>
+
+	* automated/calc-tests.el (calc-tests-equal, calc-tests-simple):
+	New functions.
+	(test-calc-remove-units, test-calc-extract-units)
+	(test-calc-convert-units): New tests.
+
+2015-01-15  Wolfgang Jenkner  <wjenkner@inode.at>
+
+	* automated/Makefile.in (WRITE_LOG): Use POSIX redirection.
+
 2015-01-15  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* automated/eieio-test-methodinvoke.el (eieio-test-method-store): Add

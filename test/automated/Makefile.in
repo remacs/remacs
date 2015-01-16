@@ -64,7 +64,7 @@ all: check
 
 ## Ignore any test errors so we can continue to test other files.
 ## But compilation errors are always fatal.
-WRITE_LOG = >& $@ || { stat=ERROR; cat $@; }; echo $$stat: $@
+WRITE_LOG = > $@ 2>&1 || { stat=ERROR; cat $@; }; echo $$stat: $@
 
 ## I'd prefer to use -emacs -f ert-run-tests-batch-and-exit rather
 ## than || true, since the former makes problems more obvious.

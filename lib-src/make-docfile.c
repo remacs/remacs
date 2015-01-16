@@ -729,18 +729,6 @@ write_globals (void)
 
 	  if (globals[i].flags & DEFUN_const)
 	    fputs (" ATTRIBUTE_CONST", stdout);
-	  else if (strcmp (globals[i].name, "Fnext_read_file_uses_dialog_p")
-		   == 0)
-	    {
-	      /* It would be nice to have a cleaner way to deal with this
-		 special hack.  */
-	      fputs (("\n"
-		      "#if ! (defined USE_GTK || defined USE_MOTIF \\\n"
-		      "       || defined HAVE_NS || defined HAVE_NTGUI)\n"
-		      "\tATTRIBUTE_CONST\n"
-		      "#endif\n"),
-		     stdout);
-	    }
 
 	  puts (";");
 	}

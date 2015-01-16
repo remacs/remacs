@@ -228,6 +228,22 @@ a package can run arbitrary code."
   :group 'package
   :version "24.1")
 
+(defcustom package-archive-priorities nil
+  "An alist of priorities for packages.
+
+Each element has the form (ARCHIVE-ID . PRIORITY).
+
+When installing packages, the package with the highest version
+number from the archive with the highest priority is
+selected. When higher versions are available from archives with
+lower priorities, the user has to select those manually.
+
+Archives not in this list have the priority 0."
+  :type 'integer
+  :risky t
+  :group 'package
+  :version "25.1")
+
 (defcustom package-pinned-packages nil
   "An alist of packages that are pinned to specific archives.
 This can be useful if you have multiple package archives enabled,
@@ -1114,23 +1130,32 @@ Also, add the originating archive to the `package-desc' structure."
                         ;; Older archive-contents files have only 4
                         ;; elements here.
                         (package--ac-desc-extras (cdr package)))))
-         (existing-packages (assq name package-archive-contents))
          (pinned-to-archive (assoc name package-pinned-packages)))
-    (cond
-     ;; Skip entirely if pinned to another archive.
-     ((and pinned-to-archive
-           (not (equal (cdr pinned-to-archive) archive)))
-      nil)
-     ((not existing-packages)
-      (push (list name pkg-desc) package-archive-contents))
-     (t
-      (while
-          (if (and (cdr existing-packages)
-                   (version-list-<
-                    version (package-desc-version (cadr existing-packages))))
-              (setq existing-packages (cdr existing-packages))
-            (push pkg-desc (cdr existing-packages))
-            nil))))))
+    ;; Skip entirely if pinned to another archive.
+    (when (not (and pinned-to-archive
+                    (not (equal (cdr pinned-to-archive) archive))))
+      (setq package-archive-contents
+            (package--add-to-alist pkg-desc package-archive-contents)))))
+
+(defun package--add-to-alist (pkg-desc alist)
+  "Add PKG-DESC to ALIST.
+
+Packages are grouped by name. The package descriptions are sorted
+by version number."
+  (let* ((name (package-desc-name pkg-desc))
+         (priority-version (package-desc-priority-version pkg-desc))
+         (existing-packages (assq name alist)))
+    (if (not existing-packages)
+        (cons (list name pkg-desc)
+              alist)
+      (while (if (and (cdr existing-packages)
+                      (version-list-< priority-version
+                                      (package-desc-priority-version
+                                       (cadr existing-packages))))
+                 (setq existing-packages (cdr existing-packages))
+               (push pkg-desc (cdr existing-packages))
+               nil))
+      alist)))
 
 (defun package-download-transaction (packages)
   "Download and install all the packages in PACKAGES.
@@ -1318,6 +1343,25 @@ The file can either be a tar file or an Emacs Lisp file."
 (defun package-archive-base (desc)
   "Return the archive containing the package NAME."
   (cdr (assoc (package-desc-archive desc) package-archives)))
+
+(defun package-archive-priority (archive)
+  "Return the priority of ARCHIVE.
+
+The archive priorities are specified in
+`package-archive-priorities'. If not given there, the priority
+defaults to 0."
+  (or (cdr (assoc archive package-archive-priorities))
+      0))
+
+(defun package-desc-priority-version (pkg-desc)
+  "Return the version PKG-DESC with the archive priority prepended.
+
+This allows for easy comparison of package versions from
+different archives if archive priorities are meant to be taken in
+consideration."
+  (cons (package-archive-priority
+         (package-desc-archive pkg-desc))
+        (package-desc-version pkg-desc)))
 
 (defun package--download-one-archive (archive file)
   "Retrieve an archive file FILE from ARCHIVE, and cache it.
@@ -1991,18 +2035,18 @@ If optional arg BUTTON is non-nil, describe its associated package."
       ;; ENTRY is (PKG-DESC [NAME VERSION STATUS DOC])
       (let ((pkg-desc (car entry))
 	    (status (aref (cadr entry) 2)))
-	(cond ((member status '("installed" "unsigned"))
-	       (push pkg-desc installed))
-	      ((member status '("available" "new"))
-	       (push (cons (package-desc-name pkg-desc) pkg-desc)
-                     available)))))
+        (cond ((member status '("installed" "unsigned"))
+               (push pkg-desc installed))
+              ((member status '("available" "new"))
+               (setq available (package--add-to-alist pkg-desc available))))))
     ;; Loop through list of installed packages, finding upgrades.
     (dolist (pkg-desc installed)
-      (let ((avail-pkg (assq (package-desc-name pkg-desc) available)))
-	(and avail-pkg
-	     (version-list-< (package-desc-version pkg-desc)
-                             (package-desc-version (cdr avail-pkg)))
-	     (push avail-pkg upgrades))))
+      (let* ((name (package-desc-name pkg-desc))
+             (avail-pkg (cadr (assq name available))))
+        (and avail-pkg
+             (version-list-< (package-desc-priority-version pkg-desc)
+                             (package-desc-priority-version avail-pkg))
+             (push (cons name avail-pkg) upgrades))))
     upgrades))
 
 (defun package-menu-mark-upgrades ()

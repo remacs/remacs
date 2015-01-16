@@ -1,3 +1,12 @@
+2015-01-16  Eli Zaretskii  <eliz@gnu.org>
+
+	* Makefile.in (AM_V_CC, am__v_CC_, am__v_CC_0, am__v_CC_1)
+	(AM_V_CCLD, am__v_CCLD_, am__v_CCLD_0, am__v_CCLD_1, AM_V_RC)
+	(am__v_RC_, am__v_RC_0, am__v_RC_1): New macros.
+	(addpm${EXEEXT}, ddeclient${EXEEXT}, cmdproxy${EXEEXT})
+	(runemacs${EXEEXT}): Use $(AM_V_CCLD).
+	(emacs.res, ../src/emacs.res): Use $(AM_V_RC).
+
 2014-12-26  Eli Zaretskii  <eliz@gnu.org>
 
 	* gnulib.mk (stpcpy, string): Sync with the latest change in

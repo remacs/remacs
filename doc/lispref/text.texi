@@ -4507,6 +4507,9 @@ which is a regular expression.
 Return all nodes in @var{dom} that have IDs that match @var{match},
 which is a regular expression.
 
+@item dom-strings @var{dom}
+Return all strings in @var{DOM}.
+
 @end table
 
 Utility functions:

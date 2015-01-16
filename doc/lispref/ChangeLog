@@ -1,3 +1,9 @@
+2015-01-15  Eli Zaretskii  <eliz@gnu.org>
+
+	* streams.texi (Input Functions): Document 'set-binary-mode'.
+	(Output Functions): Cross-reference to documentation of
+	'set-binary-mode'.
+
 2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
 
 	batch write-region no longer says "Wrote FOO"

@@ -2576,13 +2576,10 @@ ftfont_shape_by_flt (Lisp_Object lgstring, struct font *font,
 Lisp_Object
 ftfont_shape (Lisp_Object lgstring)
 {
-  struct font *font;
-  struct ftfont_info *ftfont_info;
-  OTF *otf;
+  struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
+  struct ftfont_info *ftfont_info = (struct ftfont_info *) font;
+  OTF *otf = ftfont_get_otf (ftfont_info);
 
-  CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring), font);
-  ftfont_info = (struct ftfont_info *) font;
-  otf = ftfont_get_otf (ftfont_info);
   if (! otf)
     return make_number (0);
   return ftfont_shape_by_flt (lgstring, font, ftfont_info->ft_size->face, otf,

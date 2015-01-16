@@ -421,6 +421,12 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 						    "21.1")
              ;; term.c
              (visible-cursor cursor boolean "22.1")
+             ;; terminal.c
+             (ring-bell-function display
+              (choice
+               (const :tag "Default" nil)
+               (const :tag "Silent" ignore)
+               function))
 	     ;; undo.c
 	     (undo-limit undo integer)
 	     (undo-strong-limit undo integer)

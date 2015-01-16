@@ -2288,7 +2288,7 @@ x_menu_show (struct frame *f, int x, int y, int menuflags,
 /* Detect if a dialog or menu has been posted.  MSDOS has its own
    implementation on msdos.c.  */
 
-int ATTRIBUTE_CONST
+int
 popup_activated (void)
 {
   return popup_activated_flag;
