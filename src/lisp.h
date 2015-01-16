@@ -608,6 +608,7 @@ INLINE bool SUBRP (Lisp_Object);
 INLINE bool (SYMBOLP) (Lisp_Object);
 INLINE bool (VECTORLIKEP) (Lisp_Object);
 INLINE bool WINDOWP (Lisp_Object);
+INLINE bool TERMINALP (Lisp_Object);
 INLINE struct Lisp_Save_Value *XSAVE_VALUE (Lisp_Object);
 INLINE struct Lisp_Symbol *(XSYMBOL) (Lisp_Object);
 INLINE void *(XUNTAG) (Lisp_Object, int);
@@ -998,6 +999,7 @@ XWINDOW (Lisp_Object a)
 INLINE struct terminal *
 XTERMINAL (Lisp_Object a)
 {
+  eassert (TERMINALP (a));
   return XUNTAG (a, Lisp_Vectorlike);
 }
 
@@ -1058,12 +1060,6 @@ INLINE Lisp_Object
 builtin_lisp_symbol (int index)
 {
   return make_lisp_symbol (lispsym + index);
-}
-
-INLINE Lisp_Object
-make_lisp_proc (struct Lisp_Process *p)
-{
-  return make_lisp_ptr (p, Lisp_Vectorlike);
 }
 
 #define XSETINT(a, b) ((a) = make_number (b))

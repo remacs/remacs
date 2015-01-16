@@ -422,6 +422,11 @@ pset_write_queue (struct Lisp_Process *p, Lisp_Object val)
 }
 
 
+static Lisp_Object
+make_lisp_proc (struct Lisp_Process *p)
+{
+  return make_lisp_ptr (p, Lisp_Vectorlike);
+}
 
 static struct fd_callback_data
 {

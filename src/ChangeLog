@@ -15,6 +15,9 @@
 	* window.c (allocate_window): Now static here.
 	Use ALLOCATE_ZEROED_PSEUDOVECTOR.  Add comment.
 
+	* lisp.h (XTERMINAL): Add eassert.
+	* process.c (make_lisp_proc): Now static here.
+
 2015-01-16  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Give up on -Wsuggest-attribute=const
