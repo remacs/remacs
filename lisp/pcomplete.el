@@ -755,8 +755,7 @@ this is `comint-dynamic-complete-functions'."
 	    pcomplete-index 0
 	    pcomplete-stub (pcomplete-arg 'last))
       (let ((begin (pcomplete-begin 'last)))
-	(if (and pcomplete-cycle-completions
-		 (listp pcomplete-stub) ;??
+	(if (and (listp pcomplete-stub) ;??
 		 (not pcomplete-expand-only-p))
 	    (let* ((completions pcomplete-stub) ;??
 		   (common-stub (car completions))
