@@ -1,3 +1,9 @@
+2015-01-16  Eli Zaretskii  <eliz@gnu.org>
+
+	* Makefile.in (AM_V_RC, am__v_RC_, am__v_RC_0, am__v_RC_1): New
+	macros.
+	(emacsclient.res): Use $(AM_V_RC).
+
 2015-01-16  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Give up on -Wsuggest-attribute=const

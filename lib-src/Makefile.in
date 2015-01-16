@@ -58,6 +58,11 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 =
 
+AM_V_RC = $(am__v_RC_@AM_V@)
+am__v_RC_ = $(am__v_RC_@AM_DEFAULT_V@)
+am__v_RC_0 = @echo "  RC      " $@;
+am__v_RC_1 =
+
 # ==================== Where To Install Things ====================
 
 # Location to install Emacs.app under GNUstep / Mac OS X.
@@ -381,6 +386,6 @@ update-game-score${EXEEXT}: ${srcdir}/update-game-score.c $(NTLIB) $(config_h)
 	  $< $(NTLIB) $(LOADLIBES) -o $@
 
 emacsclient.res: ../nt/emacsclient.rc $(NTINC)/../icons/emacs.ico
-	$(WINDRES) -O coff --include-dir=$(NTINC)/.. -o $@ $<
+	$(AM_V_RC)$(WINDRES) -O coff --include-dir=$(NTINC)/.. -o $@ $<
 
 ## Makefile ends here.
