@@ -1,6 +1,6 @@
 2015-01-16  Jorgen Schaefer  <contact@jorgenschaefer.de>
 
-	* lisp/package.el: Provide repository priorities.
+	* emacs-lisp/package.el: Provide repository priorities.
 	(package-archive-priorities): New variable.
 	(package--add-to-alist): New function.
 	(package--add-to-archive-contents): Use it.
@@ -66,27 +66,22 @@
 
 2015-01-13  Alan Mackenzie  <acm@muc.de>
 
-	Allow compilation during loading of Modes derived from a CC Mode mode.
-	Fixes debbugs#19206.
-
+	Allow compilation during loading of CC Mode-derived modes (bug#19206).
 	* progmodes/cc-bytecomp.el (cc-bytecomp-compiling-or-loading):
 	New function which walks the stack to discover whether we're compiling
 	or loading.
-	(cc-bytecomp-is-compiling): Reformulate, and move towards
-	beginning.
+	(cc-bytecomp-is-compiling): Reformulate, and move towards beginning.
 	(cc-bytecomp-is-loading): New defsubst.
 	(cc-bytecomp-setup-environment, cc-bytecomp-restore-environment):
 	Use the above defsubsts.
 	(cc-require-when-compile, cc-bytecomp-defvar)
 	(cc-bytecomp-defun): Simplify conditionals.
-
 	* progmodes/cc-defs.el (cc-bytecomp-compiling-or-loading):
 	"Borrow" this function from cc-bytecomp.el.
 	(c-get-current-file): Reformulate using the above.
 	(c-lang-defconst): Prevent duplicate entries of file names in a
 	symbol's 'source property.
 	(c-lang-const): Use cc-bytecomp-is-compiling.
-
 	* progmodes/cc-langs.el (c-make-init-lang-vars-fun):
 	Use cc-bytecomp-is-compiling.
 
