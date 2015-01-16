@@ -39,6 +39,12 @@
               (xwidget-insert (point-min) 'Button  "button" 60  50)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
+(xwidget-demo "a-button-bidi"
+              (xwidget-insert (point-min) 'Button  "button" 60  50)
+              (set (make-local-variable 'bidi-paragraph-direction) 'right-to-left)
+              (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
+
+
 (xwidget-demo "a-toggle-button"
               (xwidget-insert (point-min) 'ToggleButton  "toggle" 60  50)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
