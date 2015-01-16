@@ -25863,17 +25863,33 @@ produce_xwidget_glyph (struct it *it)
 	  glyph->descent = it->descent;
 	  glyph->voffset = it->voffset;
 	  glyph->type = XWIDGET_GLYPH;
-
+	  glyph->avoid_cursor_p = it->avoid_cursor_p;
 	  glyph->multibyte_p = it->multibyte_p;
-	  glyph->left_box_line_p = it->start_of_box_run_p;
-	  glyph->right_box_line_p = it->end_of_box_run_p;
-	  glyph->overlaps_vertically_p = 0;
+	  if (it->glyph_row->reversed_p && area == TEXT_AREA)
+	    {
+	      /* In R2L rows, the left and the right box edges need to be
+		 drawn in reverse direction.  */
+	      glyph->right_box_line_p = it->start_of_box_run_p;
+	      glyph->left_box_line_p = it->end_of_box_run_p;
+	    }
+	  else
+	    {
+	      glyph->left_box_line_p = it->start_of_box_run_p;
+	      glyph->right_box_line_p = it->end_of_box_run_p;
+	    }
+          glyph->overlaps_vertically_p = 0;
           glyph->padding_p = 0;
 	  glyph->glyph_not_available_p = 0;
 	  glyph->face_id = it->face_id;
           glyph->u.xwidget = it->xwidget;
           //assert_valid_xwidget_id(glyph->u.xwidget_id,"produce_xwidget_glyph");
 	  glyph->font_type = FONT_TYPE_UNKNOWN;
+	  if (it->bidi_p)
+	    {
+	      glyph->resolved_level = it->bidi_it.resolved_level;
+	      eassert ((it->bidi_it.type & 7) == it->bidi_it.type);
+	      glyph->bidi_type = it->bidi_it.type;
+	    }
 	  ++it->glyph_row->used[area];
 	}
       else
