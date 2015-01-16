@@ -1,3 +1,8 @@
+2015-01-16  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* vc/vc-svn.el (vc-svn-dir-status-files): Pass t as
+	vc-svn-after-dir-status's second argument.  (Bug#19429)
+
 2015-01-16  Samer Masterson  <samer@samertm.com>  (tiny change)
 
 	* pcomplete.el (pcomplete-parse-arguments): Parse arguments
