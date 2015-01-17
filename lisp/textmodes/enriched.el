@@ -314,7 +314,8 @@ the region, and the START and END of each region."
 ;;;###autoload
 (defun enriched-encode (from to orig-buf)
   (if enriched-verbose (message "Enriched: encoding document..."))
-  (let ((inhibit-read-only t))
+  (let ((inhibit-read-only t)
+	(inhibit-point-motion-hooks t))
     (save-restriction
       (narrow-to-region from to)
       (delete-to-left-margin)

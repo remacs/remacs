@@ -10,6 +10,10 @@
 	in place of the file name while working on non-file buffers, just
 	like hack-dir-local-variables already does.  (Bug#19140)
 
+	* textmodes/enriched.el (enriched-encode): Use
+	inhibit-point-motion-hooks in addition to inhibit-read-only.
+	(Bug#18246)
+
 2015-01-17  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/eieio-core.el (eieio--class-constructor): Rename from
