@@ -1,3 +1,48 @@
+2015-01-17  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Improve handling of doc-strings and describe-function for cl-generic.
+
+	* help-mode.el (help-function-def): Add optional arg `type'.
+
+	* help-fns.el (find-lisp-object-file-name): Accept any `type' as long
+	as it's a symbol.
+	(help-fns-short-filename): New function.
+	(describe-function-1): Use it.  Use autoload-do-load.
+
+	* emacs-lisp/find-func.el: Use lexical-binding.
+	(find-function-regexp): Don't rule out `defgeneric'.
+	(find-function-regexp-alist): Document new possibility of including
+	a function instead of a regexp.
+	(find-function-search-for-symbol): Implement that new possibility.
+	(find-function-library): Don't assume that `function' is a symbol.
+	(find-function-do-it): Remove unused var `orig-buf'.
+
+	* emacs-lisp/eieio-generic.el (eieio--defalias): Move from eieio-core.
+	(eieio--defgeneric-init-form): Don't throw away a previous docstring.
+	(eieio--method-optimize-primary): Don't mess with the docstring.
+	(defgeneric): Keep the `args' in the docstring.
+	(defmethod): Don't use the method's docstring for the generic
+	function's docstring.
+
+	* emacs-lisp/eieio-core.el (eieio--defalias): Move to eieio-generic.el.
+	(eieio-defclass-autoload): Don't record the superclasses any more.
+	(eieio-defclass-internal): Reuse the old class object if it was just an
+	autoload stub.
+	(eieio--class-precedence-list): Load the class if it's autoloaded.
+
+	* emacs-lisp/cl-generic.el (cl-generic-ensure-function): It's OK to
+	override an autoload.
+	(cl-generic-current-method-specializers): Replace dyn-bind variable
+	with a lexically-scoped macro.
+	(cl--generic-lambda): Update accordingly.
+	(cl-generic-define-method): Record manually in the load-history with
+	type `cl-defmethod'.
+	(cl--generic-get-dispatcher): Minor optimization.
+	(cl--generic-search-method): New function.
+	(find-function-regexp-alist): Add entry for `cl-defmethod' type.
+	(cl--generic-search-method): Add hyperlinks for methods.  Merge the
+	specializers and the function's arguments.
+
 2015-01-16  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* emacs-lisp/package.el (package--read-pkg-desc): New

@@ -34,19 +34,6 @@
 (require 'cl-lib)
 (require 'pcase)
 
-(put 'eieio--defalias 'byte-hunk-handler
-     #'byte-compile-file-form-defalias) ;;(get 'defalias 'byte-hunk-handler)
-(defun eieio--defalias (name body)
-  "Like `defalias', but with less side-effects.
-More specifically, it has no side-effects at all when the new function
-definition is the same (`eq') as the old one."
-  (while (and (fboundp name) (symbolp (symbol-function name)))
-    ;; Follow aliases, so methods applied to obsolete aliases still work.
-    (setq name (symbol-function name)))
-  (unless (and (fboundp name)
-               (eq (symbol-function name) body))
-    (defalias name body)))
-
 ;;;
 ;; A few functions that are better in the official EIEIO src, but
 ;; used from the core.
@@ -292,7 +279,7 @@ Abstract classes cannot be instantiated."
 
 ;; We autoload this because it's used in `make-autoload'.
 ;;;###autoload
-(defun eieio-defclass-autoload (cname superclasses filename doc)
+(defun eieio-defclass-autoload (cname _superclasses filename doc)
   "Create autoload symbols for the EIEIO class CNAME.
 SUPERCLASSES are the superclasses that CNAME inherits from.
 DOC is the docstring for CNAME.
@@ -301,58 +288,35 @@ SUPERCLASSES as children.
 It creates an autoload function for CNAME's constructor."
   ;; Assume we've already debugged inputs.
 
+  ;; We used to store the list of superclasses in the `parent' slot (as a list
+  ;; of class names).  But now this slot holds a list of class objects, and
+  ;; those parents may not exist yet, so the corresponding class objects may
+  ;; simply not exist yet.  So instead we just don't store the list of parents
+  ;; here in eieio-defclass-autoload at all, since it seems that they're just
+  ;; not needed before the class is actually loaded.
   (let* ((oldc (when (class-p cname) (eieio--class-v cname)))
 	 (newc (eieio--class-make cname))
 	 )
     (if oldc
 	nil ;; Do nothing if we already have this class.
 
-      (let ((clear-parent nil))
-	;; No parents?
-	(when (not superclasses)
-	  (setq superclasses '(eieio-default-superclass)
-		clear-parent t)
-	  )
+      ;; turn this into a usable self-pointing symbol
+      (when eieio-backward-compatibility
+        (set cname cname)
+        (make-obsolete-variable cname (format "use '%s instead" cname) "25.1"))
 
-	;; Hook our new class into the existing structures so we can
-	;; autoload it later.
-	(dolist (SC superclasses)
+      ;; Store the new class vector definition into the symbol.  We need to
+      ;; do this first so that we can call defmethod for the accessor.
+      ;; The vector will be updated by the following while loop and will not
+      ;; need to be stored a second time.
+      (setf (eieio--class-v cname) newc)
 
-
-	  ;; TODO - If we create an autoload that is in the map, that
-	  ;;        map needs to be cleared!
-
-
-          ;; Save the child in the parent.
-          (cl-pushnew cname (if (class-p SC)
-                                (eieio--class-children (eieio--class-v SC))
-                              ;; Parent doesn't exist yet.
-                              (gethash SC eieio-defclass-autoload-map)))
-
-	  ;; Save parent in child.
-          (push (eieio--class-v SC) (eieio--class-parent newc)))
-
-	;; turn this into a usable self-pointing symbol
-        (when eieio-backward-compatibility
-          (set cname cname)
-          (make-obsolete-variable cname (format "use '%s instead" cname) "25.1"))
-
-	;; Store the new class vector definition into the symbol.  We need to
-	;; do this first so that we can call defmethod for the accessor.
-	;; The vector will be updated by the following while loop and will not
-	;; need to be stored a second time.
-	(setf (eieio--class-v cname) newc)
-
-	;; Clear the parent
-	(if clear-parent (setf (eieio--class-parent newc) nil))
-
-	;; Create an autoload on top of our constructor function.
-	(autoload cname filename doc nil nil)
-	(autoload (intern (concat (symbol-name cname) "-p")) filename "" nil nil)
-	(autoload (intern (concat (symbol-name cname) "-child-p")) filename "" nil nil)
-	(autoload (intern (concat (symbol-name cname) "-list-p")) filename "" nil nil)
-
-	))))
+      ;; Create an autoload on top of our constructor function.
+      (autoload cname filename doc nil nil)
+      (autoload (intern (format "%s-p" cname)) filename "" nil nil)
+      (when eieio-backward-compatibility
+        (autoload (intern (format "%s-child-p" cname)) filename "" nil nil)
+        (autoload (intern (format "%s-list-p" cname)) filename "" nil nil)))))
 
 (defsubst eieio-class-un-autoload (cname)
   "If class CNAME is in an autoload state, load its file."
@@ -378,8 +342,13 @@ See `defclass' for more information."
   (setq eieio-hook nil)
 
   (let* ((pname superclasses)
-	 (newc (eieio--class-make cname))
 	 (oldc (when (class-p cname) (eieio--class-v cname)))
+	 (newc (if (and oldc (not (eieio--class-default-object-cache oldc)))
+                   ;; The oldc class is a stub setup by eieio-defclass-autoload.
+                   ;; Reuse it instead of creating a new one, so that existing
+                   ;; references are still valid.
+                   oldc
+                 (eieio--class-make cname)))
 	 (groups nil) ;; list of groups id'd from slots
 	 (clearparent nil))
 
@@ -1284,6 +1253,8 @@ The order, in which the parents are returned depends on the
 method invocation orders of the involved classes."
   (if (or (null class) (eq class eieio-default-superclass))
       nil
+    (unless (eieio--class-default-object-cache class)
+      (eieio-class-un-autoload (eieio--class-symbol class)))
     (cl-case (eieio--class-method-invocation-order class)
       (:depth-first
        (eieio--class-precedence-dfs class))

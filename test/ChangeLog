@@ -1,3 +1,13 @@
+2015-01-17  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/eieio-test-methodinvoke.el (eieio-test-cl-generic-1): Reset
+	eieio-test--1.
+
+	* automated/cl-generic-tests.el (cl-generic-test-8-after/before):
+	Rename from cl-generic-test-7-after/before.
+	(cl--generic-test-advice): New function.
+	(cl-generic-test-9-advice): New test.
+
 2015-01-16  Jorgen Schaefer  <contact@jorgenschaefer.de>
 
 	* automated/package-test.el (package-test-install-prioritized):

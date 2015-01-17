@@ -33,6 +33,19 @@
 (require 'eieio-core)
 (declare-function child-of-class-p "eieio")
 
+(put 'eieio--defalias 'byte-hunk-handler
+     #'byte-compile-file-form-defalias) ;;(get 'defalias 'byte-hunk-handler)
+(defun eieio--defalias (name body)
+  "Like `defalias', but with less side-effects.
+More specifically, it has no side-effects at all when the new function
+definition is the same (`eq') as the old one."
+  (while (and (fboundp name) (symbolp (symbol-function name)))
+    ;; Follow aliases, so methods applied to obsolete aliases still work.
+    (setq name (symbol-function name)))
+  (unless (and (fboundp name)
+               (eq (symbol-function name) body))
+    (defalias name body)))
+
 (defconst eieio--method-static 0 "Index into :static tag on a method.")
 (defconst eieio--method-before 1 "Index into :before tag on a method.")
 (defconst eieio--method-primary 2 "Index into :primary tag on a method.")
@@ -101,7 +114,7 @@ Methods with only primary implementations are executed in an optimized way."
     ;; Make sure the method tables are installed.
     (eieio--mt-install method)
     ;; Construct the actual body of this function.
-    (put method 'function-documentation doc-string)
+    (if doc-string (put method 'function-documentation doc-string))
     (eieio--defgeneric-form method))
    ((generic-p method) (symbol-function method))           ;Leave it as-is.
    (t (error "You cannot create a generic/method over an existing symbol: %s"
@@ -177,20 +190,18 @@ but remove reference to all implementations of METHOD."
     ;;
     ;; If this method, after this setup, only has primary methods, then
     ;; we can setup the generic that way.
-    (let ((doc-string (documentation method 'raw)))
-      (put method 'function-documentation doc-string)
-      ;; Use `defalias' so as to interact properly with nadvice.el.
-      (defalias method
-        (if (eieio--generic-primary-only-p method)
-            ;; If there is only one primary method, then we can go one more
-            ;; optimization step.
-            (if (eieio--generic-primary-only-one-p method)
-                (let* ((M (get method 'eieio-method-tree))
-                       (entry (car (aref M eieio--method-primary))))
-                  (eieio--defgeneric-form-primary-only-one
-                   method (car entry) (cdr entry)))
-              (eieio--defgeneric-form-primary-only method))
-          (eieio--defgeneric-form method))))))
+    ;; Use `defalias' so as to interact properly with nadvice.el.
+    (defalias method
+      (if (eieio--generic-primary-only-p method)
+          ;; If there is only one primary method, then we can go one more
+          ;; optimization step.
+          (if (eieio--generic-primary-only-one-p method)
+              (let* ((M (get method 'eieio-method-tree))
+                     (entry (car (aref M eieio--method-primary))))
+                (eieio--defgeneric-form-primary-only-one
+                 method (car entry) (cdr entry)))
+            (eieio--defgeneric-form-primary-only method))
+        (eieio--defgeneric-form method)))))
 
 (defun eieio--defmethod (method kind argclass code)
   "Work part of the `defmethod' macro defining METHOD with ARGS."
@@ -627,7 +638,7 @@ is memorized for faster future use."
 
 ;;; CLOS methods and generics
 ;;
-(defmacro defgeneric (method _args &optional doc-string)
+(defmacro defgeneric (method args &optional doc-string)
   "Create a generic function METHOD.
 DOC-STRING is the base documentation for this class.  A generic
 function has no body, as its purpose is to decide which method body
@@ -637,7 +648,9 @@ currently ignored.  You can use `defgeneric' to apply specialized
 top level documentation to a method."
   (declare (doc-string 3))
   `(eieio--defalias ',method
-                    (eieio--defgeneric-init-form ',method ,doc-string)))
+                    (eieio--defgeneric-init-form
+                     ',method
+                     ,(if doc-string (help-add-fundoc-usage doc-string args)))))
 
 (defmacro defmethod (method &rest args)
   "Create a new METHOD through `defgeneric' with ARGS.
@@ -684,9 +697,7 @@ Summary:
          (code `(lambda ,fargs ,@(cdr args))))
     `(progn
        ;; Make sure there is a generic and the byte-compiler sees it.
-       (defgeneric ,method ,args
-         ,(or (documentation code)
-              (format "Generically created method `%s'." method)))
+       (defgeneric ,method ,args)
        (eieio--defmethod ',method ',key ',class #',code))))
 
 

@@ -384,6 +384,7 @@
 (cl-defgeneric eieio-test--1 (x y))
 
 (ert-deftest eieio-test-cl-generic-1 ()
+  (cl-defgeneric eieio-test--1 (x y))
   (cl-defmethod eieio-test--1 (x y) (list x y))
   (cl-defmethod eieio-test--1 ((_x CNM-0) y)
     (cons "CNM-0" (cl-call-next-method 7 y)))
