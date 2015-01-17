@@ -209,11 +209,8 @@ CLASS is a symbol."                     ;FIXME: Is it a vector or a symbol?
   (format "#<class %s>" (symbol-name class)))
 (define-obsolete-function-alias 'class-name #'eieio-class-name "24.4")
 
-(defmacro class-constructor (class)
-  "Return the symbol representing the constructor of CLASS."
-  (declare (debug t))
-  ;; FIXME: How/when would this not be a costly identity function?
-  `(eieio--class-symbol (eieio--class-v ,class)))
+(defalias 'eieio--class-constructor #'identity
+  "Return the symbol representing the constructor of CLASS.")
 
 (defmacro eieio--class-option-assoc (list option)
   "Return from LIST the found OPTION, or nil if it doesn't exist."

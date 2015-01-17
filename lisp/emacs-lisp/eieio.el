@@ -301,7 +301,7 @@ In EIEIO, the class' constructor requires a name for use when printing.
 `make-instance' in CLOS doesn't use names the way Emacs does, so the
 class is used as the name slot instead when INITARGS doesn't start with
 a string."
-  (apply (class-constructor class) initargs))
+  (apply (eieio--class-constructor class) initargs))
 
 
 ;;; Get/Set slots in an object.
@@ -821,7 +821,7 @@ this object."
     ;; Each slot's slot is writen using its :writer.
     (princ (make-string (* eieio-print-depth 2) ? ))
     (princ "(")
-    (princ (symbol-name (class-constructor (eieio-object-class this))))
+    (princ (symbol-name (eieio--class-constructor (eieio-object-class this))))
     (princ " ")
     (prin1 (eieio-object-name-string this))
     (princ "\n")

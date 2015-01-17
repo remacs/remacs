@@ -1,5 +1,9 @@
 2015-01-17  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* emacs-lisp/eieio-core.el (eieio--class-constructor): Rename from
+	class-constructor, and make it an alias for `identity'.
+	Update all callers.
+
 	* emacs-lisp/eieio.el (eieio-constructor): Handle obsolete object name
 	argument here (bug#19620)...
 	(defclass): ...instead of in the constructor here.
