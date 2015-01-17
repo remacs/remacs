@@ -105,10 +105,8 @@ this reports on the current state of the sources, which may not
 correspond to the running Emacs.
 
 Optional argument DIR is a directory to use instead of
-`source-directory'.  Optional argument EXTERNAL non-nil means to
-maybe ask the VCS itself, if the sources appear to be under
-version control.  If `force', always ask.  the VCS. Otherwise
-only ask the VCS if we cannot find any information ourselves."
+`source-directory'.  Optional argument EXTERNAL is ignored and is
+retained for compatibility."
   (or dir (setq dir source-directory))
   (cond ((file-directory-p (expand-file-name ".git" dir))
 	 (message "Waiting for git...")
