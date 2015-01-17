@@ -1,7 +1,13 @@
+2015-01-17  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio.el (eieio-constructor): Handle obsolete object name
+	argument here (bug#19620)...
+	(defclass): ...instead of in the constructor here.
+
 2015-01-16  Jorgen Schaefer  <contact@jorgenschaefer.de>
 
-	* emacs-lisp/package.el (package-archive-priorities): Specify
-	correct type.
+	* emacs-lisp/package.el (package-archive-priorities):
+	Specify correct type.
 
 2015-01-17  Ulrich Müller  <ulm@gentoo.org>
 
@@ -71,8 +77,8 @@
 
 2015-01-16  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* emacs-lisp/package.el (package--read-pkg-desc): New
-	function. Read a `define-package' form in current buffer. Return
+	* emacs-lisp/package.el (package--read-pkg-desc):
+	New function. Read a `define-package' form in current buffer. Return
 	the pkg-desc, with desc-kind set to KIND.
 	(package-dir-info): New function. Find package information for a
 	directory. The return result is a `package-desc'.
@@ -80,8 +86,8 @@
 	(package-install-file): Install packages from directory.
 	(package-desc-suffix)
 	(package-install-from-archive)
-	* emacs-lisp/package-x.el (package-upload-buffer-internal): Ensure
-	all remaining instances of `package-desc-kind' handle the 'dir
+	* emacs-lisp/package-x.el (package-upload-buffer-internal):
+	Ensure all remaining instances of `package-desc-kind' handle the 'dir
 	value.
 
 2015-01-16  Jorgen Schaefer  <contact@jorgenschaefer.de>

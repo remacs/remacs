@@ -276,12 +276,6 @@ and reference them using the function `class-option'."
           `(defun ,name (&rest slots)
              ,(format "Create a new object with name NAME of class type %S."
                       name)
-             (if (and slots
-                      (let ((x (car slots)))
-                        (or (stringp x) (null x))))
-                 (funcall (if eieio-backward-compatibility #'ignore #'message)
-                          "Obsolete name %S passed to %S constructor"
-                          (pop slots) ',name))
              (apply #'eieio-constructor ',name slots))))))
 
 
@@ -656,7 +650,14 @@ SLOTS are the initialization slots used by `shared-initialize'.
 This static method is called when an object is constructed.
 It allocates the vector used to represent an EIEIO object, and then
 calls `shared-initialize' on that object."
-  (let* ((new-object (copy-sequence (eieio--class-default-object-cache (eieio--class-v class)))))
+  (let* ((new-object (copy-sequence (eieio--class-default-object-cache
+                                     (eieio--class-v class)))))
+    (if (and slots
+             (let ((x (car slots)))
+               (or (stringp x) (null x))))
+        (funcall (if eieio-backward-compatibility #'ignore #'message)
+                 "Obsolete name %S passed to %S constructor"
+                 (pop slots) class))
     ;; Call the initialize method on the new object with the slots
     ;; that were passed down to us.
     (initialize-instance new-object slots)

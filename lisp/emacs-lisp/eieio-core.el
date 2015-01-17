@@ -212,6 +212,7 @@ CLASS is a symbol."                     ;FIXME: Is it a vector or a symbol?
 (defmacro class-constructor (class)
   "Return the symbol representing the constructor of CLASS."
   (declare (debug t))
+  ;; FIXME: How/when would this not be a costly identity function?
   `(eieio--class-symbol (eieio--class-v ,class)))
 
 (defmacro eieio--class-option-assoc (list option)

@@ -892,6 +892,15 @@ Subclasses to override slot attributes.")
   (should (= (length (eieio-build-class-alist 'opt-test1 nil)) 2))
   (should (= (length (eieio-build-class-alist 'opt-test1 t)) 1)))
 
+(defclass eieio--testing ()
+  ())
+
+(defmethod constructor :static ((_x eieio--testing) newname &rest _args)
+  (list newname 2))
+
+(ert-deftest eieio-test-37-obsolete-name-in-constructor ()
+  (should (equal (eieio--testing "toto") '("toto" 2))))
+
 (provide 'eieio-tests)
 
 ;;; eieio-tests.el ends here
