@@ -58,11 +58,9 @@
 (defvar eieio-test-method-order-list nil
   "List of symbols stored during method invocation.")
 
-(defun eieio-test-method-store (keysym)
+(defun eieio-test-method-store (&rest args)
   "Store current invocation class symbol in the invocation order list."
-  ;; FIXME: Don't depend on `eieio--scoped-class'!
-  (let* ((c (list keysym (eieio--class-symbol (eieio--scoped-class)))))
-    (push c eieio-test-method-order-list)))
+  (push args eieio-test-method-order-list))
 
 (defun eieio-test-match (rightanswer)
   "Do a test match."
@@ -86,36 +84,36 @@
 (defclass eitest-B (eitest-B-base1 eitest-B-base2) ())
 
 (defmethod eitest-F :BEFORE ((p eitest-B-base1))
-  (eieio-test-method-store :BEFORE))
+  (eieio-test-method-store :BEFORE 'eitest-B-base1))
 
 (defmethod eitest-F :BEFORE ((p eitest-B-base2))
-  (eieio-test-method-store :BEFORE))
+  (eieio-test-method-store :BEFORE 'eitest-B-base2))
 
 (defmethod eitest-F :BEFORE ((p eitest-B))
-  (eieio-test-method-store :BEFORE))
+  (eieio-test-method-store :BEFORE 'eitest-B))
 
 (defmethod eitest-F ((p eitest-B))
-  (eieio-test-method-store :PRIMARY)
+  (eieio-test-method-store :PRIMARY 'eitest-B)
   (call-next-method))
 
 (defmethod eitest-F ((p eitest-B-base1))
-  (eieio-test-method-store :PRIMARY)
+  (eieio-test-method-store :PRIMARY 'eitest-B-base1)
   (call-next-method))
 
 (defmethod eitest-F ((p eitest-B-base2))
-  (eieio-test-method-store :PRIMARY)
+  (eieio-test-method-store :PRIMARY 'eitest-B-base2)
   (when (next-method-p)
     (call-next-method))
   )
 
 (defmethod eitest-F :AFTER ((p eitest-B-base1))
-  (eieio-test-method-store :AFTER))
+  (eieio-test-method-store :AFTER 'eitest-B-base1))
 
 (defmethod eitest-F :AFTER ((p eitest-B-base2))
-  (eieio-test-method-store :AFTER))
+  (eieio-test-method-store :AFTER 'eitest-B-base2))
 
 (defmethod eitest-F :AFTER ((p eitest-B))
-  (eieio-test-method-store :AFTER))
+  (eieio-test-method-store :AFTER 'eitest-B))
 
 (ert-deftest eieio-test-method-order-list-3 ()
   (let ((eieio-test-method-order-list nil)
@@ -150,15 +148,15 @@
 ;;; Return value from :PRIMARY
 ;;
 (defmethod eitest-I :BEFORE ((a eitest-A))
-  (eieio-test-method-store :BEFORE)
+  (eieio-test-method-store :BEFORE 'eitest-A)
   ":before")
 
 (defmethod eitest-I :PRIMARY ((a eitest-A))
-  (eieio-test-method-store :PRIMARY)
+  (eieio-test-method-store :PRIMARY 'eitest-A)
   ":primary")
 
 (defmethod eitest-I :AFTER ((a eitest-A))
-  (eieio-test-method-store :AFTER)
+  (eieio-test-method-store :AFTER 'eitest-A)
   ":after")
 
 (ert-deftest eieio-test-method-order-list-5 ()
@@ -177,17 +175,17 @@
 
 ;; Just use the obsolete name once, to make sure it also works.
 (defmethod constructor :STATIC ((p C-base1) &rest args)
-  (eieio-test-method-store :STATIC)
+  (eieio-test-method-store :STATIC 'C-base1)
   (if (next-method-p) (call-next-method))
   )
 
 (defmethod eieio-constructor :STATIC ((p C-base2) &rest args)
-  (eieio-test-method-store :STATIC)
+  (eieio-test-method-store :STATIC 'C-base2)
   (if (next-method-p) (call-next-method))
   )
 
 (defmethod eieio-constructor :STATIC ((p C) &rest args)
-  (eieio-test-method-store :STATIC)
+  (eieio-test-method-store :STATIC 'C)
   (call-next-method)
   )
 
@@ -214,24 +212,24 @@
 
 (defmethod eitest-F ((p D))
   "D"
-  (eieio-test-method-store :PRIMARY)
+  (eieio-test-method-store :PRIMARY 'D)
   (call-next-method))
 
 (defmethod eitest-F ((p D-base0))
   "D-base0"
-  (eieio-test-method-store :PRIMARY)
+  (eieio-test-method-store :PRIMARY 'D-base0)
   ;; This should have no next
   ;; (when (next-method-p) (call-next-method))
   )
 
 (defmethod eitest-F ((p D-base1))
   "D-base1"
-  (eieio-test-method-store :PRIMARY)
+  (eieio-test-method-store :PRIMARY 'D-base1)
   (call-next-method))
 
 (defmethod eitest-F ((p D-base2))
   "D-base2"
-  (eieio-test-method-store :PRIMARY)
+  (eieio-test-method-store :PRIMARY 'D-base2)
   (when (next-method-p)
     (call-next-method))
   )
@@ -256,21 +254,21 @@
 (defclass E (E-base1 E-base2) () :method-invocation-order :breadth-first)
 
 (defmethod eitest-F ((p E))
-  (eieio-test-method-store :PRIMARY)
+  (eieio-test-method-store :PRIMARY 'E)
   (call-next-method))
 
 (defmethod eitest-F ((p E-base0))
-  (eieio-test-method-store :PRIMARY)
+  (eieio-test-method-store :PRIMARY 'E-base0)
   ;; This should have no next
   ;; (when (next-method-p) (call-next-method))
   )
 
 (defmethod eitest-F ((p E-base1))
-  (eieio-test-method-store :PRIMARY)
+  (eieio-test-method-store :PRIMARY 'E-base1)
   (call-next-method))
 
 (defmethod eitest-F ((p E-base2))
-  (eieio-test-method-store :PRIMARY)
+  (eieio-test-method-store :PRIMARY 'E-base2)
   (when (next-method-p)
     (call-next-method))
   )

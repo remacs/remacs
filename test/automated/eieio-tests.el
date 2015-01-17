@@ -563,7 +563,7 @@ METHOD is the method that was attempting to be called."
   (should (eq (oref eitest-t1 slot-1) 'moose))
   (should (eq (oref eitest-t1 :moose) 'moose))
   ;; Don't pass reference of private slot
-  (should-error (oref eitest-t1 slot-2) :type 'invalid-slot-name)
+  ;;PRIVATE (should-error (oref eitest-t1 slot-2) :type 'invalid-slot-name)
   ;; Check private slot accessor
   (should (string= (get-slot-2 eitest-t1) "penguin"))
   ;; Pass string instead of symbol
@@ -583,7 +583,7 @@ METHOD is the method that was attempting to be called."
   (should (eq (oref eitest-t2 slot-1) 'moose))
   (should (eq (oref eitest-t2 :moose) 'moose))
   (should (string= (get-slot-2 eitest-t2) "linux"))
-  (should-error (oref eitest-t2 slot-2) :type 'invalid-slot-name)
+  ;;PRIVATE (should-error (oref eitest-t2 slot-2) :type 'invalid-slot-name)
   (should (string= (get-slot-2 eitest-t2) "linux"))
   (should-error (class-subc :moose "not a symbol") :type 'invalid-slot-type))
 
@@ -654,20 +654,23 @@ Do not override for `prot-2'."
   ;; Access public slots
   (oref eitest-p1 slot-1)
   (oref eitest-p2 slot-1)
-  ;; Accessing protected slot out of context must fail
-  (should-error (oref eitest-p1 slot-2) :type 'invalid-slot-name)
+  ;; Accessing protected slot out of context used to fail, but we dropped this
+  ;; feature, since it was underused and noone noticed that the check was
+  ;; incorrect (much too loose).
+  ;;PROTECTED (should-error (oref eitest-p1 slot-2) :type 'invalid-slot-name)
   ;; Access protected slot in method
   (prot1-slot-2 eitest-p1)
   ;; Protected slot in subclass method
   (prot1-slot-2 eitest-p2)
   ;; Protected slot from parent class method
   (prot0-slot-2 eitest-p1)
-  ;; Accessing private slot out of context must fail
-  (should-error (oref eitest-p1 slot-3) :type 'invalid-slot-name)
+  ;; Accessing private slot out of context used to fail, but we dropped this
+  ;; feature, since it was not used.
+  ;;PRIVATE (should-error (oref eitest-p1 slot-3) :type 'invalid-slot-name)
   ;; Access private slot in method
   (prot1-slot-3 eitest-p1)
   ;; Access private slot in subclass method must fail
-  (should-error (prot1-slot-3 eitest-p2) :type 'invalid-slot-name)
+  ;;PRIVATE (should-error (prot1-slot-3 eitest-p2) :type 'invalid-slot-name)
   ;; Access private slot by same class
   (prot1-slot-3-only eitest-p1)
   ;; Access private slot by subclass in sameclass method
@@ -729,12 +732,13 @@ Subclasses to override slot attributes.")
 
 (ert-deftest eieio-test-30-slot-attribute-override ()
   ;; Subclass should not override :protection slot attribute
-  (should-error
-	(eval
-	 '(defclass slotattr-fail (slotattr-base)
-	    ((protection :protection :public)
-	     )
-	    "This class should throw an error.")))
+  ;;PROTECTION is gone.
+  ;;(should-error
+  ;;       (eval
+  ;;        '(defclass slotattr-fail (slotattr-base)
+  ;;           ((protection :protection :public)
+  ;;            )
+  ;;           "This class should throw an error.")))
 
   ;; Subclass should not override :type slot attribute
   (should-error
@@ -782,12 +786,13 @@ Subclasses to override slot attributes.")
 
 (ert-deftest eieio-test-31-slot-attribute-override-class-allocation ()
   ;; Same as test-30, but with class allocation
-  (should-error
-      (eval
-       '(defclass slotattr-fail (slotattr-class-base)
-	  ((protection :protection :public)
-	   )
-	  "This class should throw an error.")))
+  ;;PROTECTION is gone.
+  ;;(should-error
+  ;;     (eval
+  ;;      '(defclass slotattr-fail (slotattr-class-base)
+  ;;         ((protection :protection :public)
+  ;;          )
+  ;;         "This class should throw an error.")))
   (should-error
       (eval
        '(defclass slotattr-fail (slotattr-class-base)

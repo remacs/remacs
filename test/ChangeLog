@@ -1,7 +1,18 @@
 2015-01-17  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* automated/eieio-test-methodinvoke.el (eieio-test-cl-generic-1): Reset
-	eieio-test--1.
+	* automated/eieio-tests.el (eieio-test-25-slot-tests)
+	(eieio-test-26-default-inheritance, eieio-test-28-slot-protection)
+	(eieio-test-30-slot-attribute-override)
+	(eieio-test-31-slot-attribute-override-class-allocation): Don't check
+	that we enforce :protection since we don't any more.
+
+	* automated/eieio-test-methodinvoke.el (eieio-test-method-store):
+	Use an explicit arg instead of eieio--scoped-class.  Update all callers.
+
+2015-01-17  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/eieio-test-methodinvoke.el (eieio-test-cl-generic-1):
+	Reset eieio-test--1.
 
 	* automated/cl-generic-tests.el (cl-generic-test-8-after/before):
 	Rename from cl-generic-test-7-after/before.

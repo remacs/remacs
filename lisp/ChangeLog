@@ -1,5 +1,17 @@
 2015-01-17  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* emacs-lisp/eieio-generic.el (call-next-method): Don't bother checking
+	eieio--scoped-class any more.
+
+	* emacs-lisp/eieio-core.el (eieio--scoped-class-stack): Remove var.
+	(eieio--scoped-class): Remove function.
+	(eieio--with-scoped-class): Remove macro.  Replace uses with `progn'.
+	(eieio--slot-name-index): Don't check the :protection anymore.
+	(eieio-initializing-object): Remove var.
+	(eieio-set-defaults): Don't let-bind eieio-initializing-object.
+
+2015-01-17  Stefan Monnier  <monnier@iro.umontreal.ca>
+
 	Improve handling of doc-strings and describe-function for cl-generic.
 
 	* help-mode.el (help-function-def): Add optional arg `type'.

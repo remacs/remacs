@@ -76,8 +76,6 @@ being the slots residing in that class definition.  Supported tags are:
               - A string documenting use of this slot.
 
 The following are extensions on CLOS:
-  :protection - Specify protection for this slot.
-                Defaults to `:public'.  Also use `:protected', or `:private'.
   :custom     - When customizing an object, the custom :type.  Public only.
   :label      - A text string label used for a slot when customizing.
   :group      - Name of a customization group this slot belongs in.
@@ -672,14 +670,13 @@ Called from the constructor routine.")
 (defmethod shared-initialize ((obj eieio-default-superclass) slots)
   "Set slots of OBJ with SLOTS which is a list of name/value pairs.
 Called from the constructor routine."
-  (eieio--with-scoped-class (eieio--object-class-object obj)
-    (while slots
-      (let ((rn (eieio--initarg-to-attribute (eieio--object-class-object obj)
-                                             (car slots))))
-	(if (not rn)
-	    (slot-missing obj (car slots) 'oset (car (cdr slots)))
-	  (eieio-oset obj rn (car (cdr slots)))))
-      (setq slots (cdr (cdr slots))))))
+  (while slots
+    (let ((rn (eieio--initarg-to-attribute (eieio--object-class-object obj)
+                                           (car slots))))
+      (if (not rn)
+          (slot-missing obj (car slots) 'oset (car (cdr slots)))
+        (eieio-oset obj rn (car (cdr slots)))))
+    (setq slots (cdr (cdr slots)))))
 
 (defgeneric initialize-instance (this &optional slots)
   "Construct the new object THIS based on SLOTS.")

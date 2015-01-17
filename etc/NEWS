@@ -202,6 +202,7 @@ the old behavior -- *shell* buffer displays in current window -- use
 
 
 ** EIEIO
+*** The `:protection' slot option is not obeyed any more.
 *** The <class>-list-p and <class>-child-p functions are declared obsolete.
 *** The <class> variables are declared obsolete.
 *** The <initarg> variables are declared obsolete.

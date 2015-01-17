@@ -174,8 +174,7 @@ IMPL is the symbol holding the method implementation."
               (eieio--generic-call-key eieio--method-primary)
               (eieio--generic-call-arglst local-args)
               )
-          (eieio--with-scoped-class (eieio--class-v class)
-            (apply impl local-args)))))))
+          (apply impl local-args))))))
 
 (defun eieio-unbind-method-implementations (method)
   "Make the generic method METHOD have no implementations.
@@ -287,11 +286,9 @@ This should only be called from a generic function."
       )
     ;; Now create a list in reverse order of all the calls we have
     ;; make in order to successfully do this right.  Rules:
-    ;; 1) Only call generics if scoped-class is not defined
-    ;;    This prevents multiple calls in the case of recursion
-    ;; 2) Only call static if this is a static method.
-    ;; 3) Only call specifics if the definition allows for them.
-    ;; 4) Call in order based on :before, :primary, and :after
+    ;; 1) Only call static if this is a static method.
+    ;; 2) Only call specifics if the definition allows for them.
+    ;; 3) Call in order based on :before, :primary, and :after
     (when (eieio-object-p firstarg)
       ;; Non-static calls do all this stuff.
 
@@ -357,22 +354,21 @@ This should only be called from a generic function."
     (let ((rval nil) (lastval nil) (found nil))
       (while lambdas
 	(if (car lambdas)
-	    (eieio--with-scoped-class (cdr (car lambdas))
-	      (let* ((eieio--generic-call-key (car keys))
-		     (has-return-val
-		      (or (= eieio--generic-call-key eieio--method-primary)
-			  (= eieio--generic-call-key eieio--method-static)))
-		     (eieio--generic-call-next-method-list
-		      ;; Use the cdr, as the first element is the fcn
-		      ;; we are calling right now.
-		      (when has-return-val (cdr primarymethodlist)))
-		     )
-		(setq found t)
-		;;(setq rval (apply (car (car lambdas)) newargs))
-		(setq lastval (apply (car (car lambdas)) newargs))
-		(when has-return-val
-		  (setq rval lastval))
-		)))
+            (let* ((eieio--generic-call-key (car keys))
+                   (has-return-val
+                    (or (= eieio--generic-call-key eieio--method-primary)
+                        (= eieio--generic-call-key eieio--method-static)))
+                   (eieio--generic-call-next-method-list
+                    ;; Use the cdr, as the first element is the fcn
+                    ;; we are calling right now.
+                    (when has-return-val (cdr primarymethodlist)))
+                   )
+              (setq found t)
+              ;;(setq rval (apply (car (car lambdas)) newargs))
+              (setq lastval (apply (car (car lambdas)) newargs))
+              (when has-return-val
+                (setq rval lastval))
+              ))
 	(setq lambdas (cdr lambdas)
 	      keys (cdr keys)))
       (if (not found)
@@ -425,33 +421,32 @@ for this common case to improve performance."
 
     ;; Now loop through all occurrences forms which we must execute
     ;; (which are happily sorted now) and execute them all!
-    (eieio--with-scoped-class (cdr lambdas)
-      (let* ((rval nil) (lastval nil)
-	     (eieio--generic-call-key eieio--method-primary)
-	     ;; Use the cdr, as the first element is the fcn
-	     ;; we are calling right now.
-	     (eieio--generic-call-next-method-list (cdr primarymethodlist))
-	     )
+    (let* ((rval nil) (lastval nil)
+           (eieio--generic-call-key eieio--method-primary)
+           ;; Use the cdr, as the first element is the fcn
+           ;; we are calling right now.
+           (eieio--generic-call-next-method-list (cdr primarymethodlist))
+           )
 
-	(if (or (not lambdas) (not (car lambdas)))
+      (if (or (not lambdas) (not (car lambdas)))
 
-	    ;; No methods found for this impl...
-	    (if (eieio-object-p (car args))
-		(setq rval (apply #'no-applicable-method
-                                  (car args) method args))
-	      (signal
-	       'no-method-definition
-	       (list method args)))
+          ;; No methods found for this impl...
+          (if (eieio-object-p (car args))
+              (setq rval (apply #'no-applicable-method
+                                (car args) method args))
+            (signal
+             'no-method-definition
+             (list method args)))
 
-	  ;; Do the regular implementation here.
+        ;; Do the regular implementation here.
 
-	  (run-hook-with-args 'eieio-pre-method-execution-functions
-			      lambdas)
+        (run-hook-with-args 'eieio-pre-method-execution-functions
+                            lambdas)
 
-	  (setq lastval (apply (car lambdas) newargs))
-	  (setq rval lastval))
+        (setq lastval (apply (car lambdas) newargs))
+        (setq rval lastval))
 
-	rval))))
+      rval)))
 
 (defun eieio--mt-method-list (method key class)
   "Return an alist list of methods lambdas.
@@ -721,8 +716,6 @@ If REPLACEMENT-ARGS is non-nil, then use them instead of
 arguments passed in at the top level.
 
 Use `next-method-p' to find out if there is a next method to call."
-  (if (not (eieio--scoped-class))
-      (error "`call-next-method' not called within a class specific method"))
   (if (and (/= eieio--generic-call-key eieio--method-primary)
 	   (/= eieio--generic-call-key eieio--method-static))
       (error "Cannot `call-next-method' except in :primary or :static methods")
@@ -737,8 +730,7 @@ Use `next-method-p' to find out if there is a next method to call."
 	     (eieio--generic-call-arglst newargs)
 	     (fcn (car next))
 	     )
-	(eieio--with-scoped-class (cdr next)
-	  (apply fcn newargs)) ))))
+        (apply fcn newargs)) )))
 
 (defgeneric no-applicable-method (object method &rest args)
   "Called if there are no implementations for OBJECT in METHOD.")

@@ -62,9 +62,6 @@ default setting for optimization purposes.")
 (defvar eieio-optimize-primary-methods-flag t
   "Non-nil means to optimize the method dispatch on primary methods.")
 
-(defvar eieio-initializing-object  nil
-  "Set to non-nil while initializing an object.")
-
 (defvar eieio-backward-compatibility t
   "If nil, drop support for some behaviors of older versions of EIEIO.
 Currently under control of this var:
@@ -81,29 +78,6 @@ Currently under control of this var:
 ;; This is a bootstrap for eieio-default-superclass so it has a value
 ;; while it is being built itself.
 (defvar eieio-default-superclass nil)
-
-;;;
-;; Class currently in scope.
-;;
-;; When invoking methods, the running method needs to know which class
-;; is currently in scope.  Generally this is the class of the method
-;; being called, but 'call-next-method' needs to query this state,
-;; and change it to be then next super class up.
-;;
-;; Thus, the scoped class is a stack that needs to be managed.
-
-(defvar eieio--scoped-class-stack nil
-  "A stack of the classes currently in scope during method invocation.")
-
-(defun eieio--scoped-class ()
-  "Return the class object currently in scope, or nil."
-  (car-safe eieio--scoped-class-stack))
-
-(defmacro eieio--with-scoped-class (class &rest forms)
-  "Set CLASS as the currently scoped class while executing FORMS."
-  (declare (indent 1))
-  `(let ((eieio--scoped-class-stack (cons ,class eieio--scoped-class-stack)))
-     ,@forms))
 
 (progn
   ;; Arrange for field access not to bother checking if the access is indeed
@@ -1029,27 +1003,26 @@ Fills in the default value in CLASS' in SLOT with VALUE."
   (setq class (eieio--class-object class))
   (eieio--check-type eieio--class-p class)
   (eieio--check-type symbolp slot)
-  (eieio--with-scoped-class class
-    (let* ((c (eieio--slot-name-index class nil slot)))
-      (if (not c)
-	  ;; It might be missing because it is a :class allocated slot.
-	  ;; Let's check that info out.
-	  (if (setq c (eieio--class-slot-name-index class slot))
-	      (progn
-		;; Oref that slot.
-		(eieio--validate-class-slot-value class c value slot)
-		(aset (eieio--class-class-allocation-values class) c
-		      value))
-	    (signal 'invalid-slot-name (list (eieio--class-symbol class) slot)))
-	(eieio--validate-slot-value class c value slot)
-	;; Set this into the storage for defaults.
-	(setcar (nthcdr (- c (eval-when-compile eieio--object-num-slots))
-                        (eieio--class-public-d class))
-		value)
-	;; Take the value, and put it into our cache object.
-	(eieio-oset (eieio--class-default-object-cache class)
-		    slot value)
-	))))
+  (let* ((c (eieio--slot-name-index class nil slot)))
+    (if (not c)
+        ;; It might be missing because it is a :class allocated slot.
+        ;; Let's check that info out.
+        (if (setq c (eieio--class-slot-name-index class slot))
+            (progn
+              ;; Oref that slot.
+              (eieio--validate-class-slot-value class c value slot)
+              (aset (eieio--class-class-allocation-values class) c
+                    value))
+          (signal 'invalid-slot-name (list (eieio--class-symbol class) slot)))
+      (eieio--validate-slot-value class c value slot)
+      ;; Set this into the storage for defaults.
+      (setcar (nthcdr (- c (eval-when-compile eieio--object-num-slots))
+                      (eieio--class-public-d class))
+              value)
+      ;; Take the value, and put it into our cache object.
+      (eieio-oset (eieio--class-default-object-cache class)
+                  slot value)
+      )))
 
 
 ;;; EIEIO internal search functions
@@ -1080,27 +1053,7 @@ reverse-lookup that name, and recurse with the associated slot value."
   (let* ((fsym (gethash slot (eieio--class-symbol-hashtable class)))
 	 (fsi (car fsym)))
     (if (integerp fsi)
-	(cond
-	 ((not (cdr fsym))
-	  (+ (eval-when-compile eieio--object-num-slots) fsi))
-	 ((and (eq (cdr fsym) 'protected)
-	       (eieio--scoped-class)
-	       (or (child-of-class-p class (eieio--scoped-class))
-		   (and (eieio-object-p obj)
-                        ;; AFAICT, for all callers, if `obj' is not a class,
-                        ;; then its class is `class'.
-			;;(child-of-class-p class (eieio--object-class-object obj))
-                        (progn
-                          (cl-assert (eq class (eieio--object-class-object obj)))
-                          t))))
-	  (+ (eval-when-compile eieio--object-num-slots) fsi))
-	 ((and (eq (cdr fsym) 'private)
-	       (or (and (eieio--scoped-class)
-			(eieio--slot-originating-class-p
-                         (eieio--scoped-class) slot))
-		   eieio-initializing-object))
-	  (+ (eval-when-compile eieio--object-num-slots) fsi))
-	 (t nil))
+        (+ (eval-when-compile eieio--object-num-slots) fsi)
       (let ((fn (eieio--initarg-to-attribute class slot)))
 	(if fn (eieio--slot-name-index class obj fn) nil)))))
 
@@ -1128,14 +1081,12 @@ reverse-lookup that name, and recurse with the associated slot value."
 If SET-ALL is non-nil, then when a default is nil, that value is
 reset.  If SET-ALL is nil, the slots are only reset if the default is
 not nil."
-  (eieio--with-scoped-class (eieio--object-class-object obj)
-    (let ((eieio-initializing-object t)
-	  (pub (eieio--class-public-a (eieio--object-class-object obj))))
-      (while pub
-	(let ((df (eieio-oref-default obj (car pub))))
-	  (if (or df set-all)
-	      (eieio-oset obj (car pub) df)))
-	(setq pub (cdr pub))))))
+  (let ((pub (eieio--class-public-a (eieio--object-class-object obj))))
+    (while pub
+      (let ((df (eieio-oref-default obj (car pub))))
+        (if (or df set-all)
+            (eieio-oset obj (car pub) df)))
+      (setq pub (cdr pub)))))
 
 (defun eieio--initarg-to-attribute (class initarg)
   "For CLASS, convert INITARG to the actual attribute name.
