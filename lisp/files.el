@@ -1489,8 +1489,9 @@ expand wildcards (if any) and visit multiple files."
     (if (listp value)
 	(progn
 	  (setq value (nreverse value))
-	  (cons (switch-to-buffer-other-window (car value))
-		(mapcar 'switch-to-buffer (cdr value))))
+	  (switch-to-buffer-other-window (car value))
+	  (mapc 'switch-to-buffer (cdr value))
+	  value)
       (switch-to-buffer-other-window value))))
 
 (defun find-file-other-frame (filename &optional wildcards)
@@ -1512,8 +1513,9 @@ expand wildcards (if any) and visit multiple files."
     (if (listp value)
 	(progn
 	  (setq value (nreverse value))
-	  (cons (switch-to-buffer-other-frame (car value))
-		(mapcar 'switch-to-buffer (cdr value))))
+	  (switch-to-buffer-other-frame (car value))
+	  (mapc 'switch-to-buffer (cdr value))
+	  value)
       (switch-to-buffer-other-frame value))))
 
 (defun find-file-existing (filename)
