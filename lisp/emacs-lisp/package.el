@@ -239,7 +239,8 @@ selected. When higher versions are available from archives with
 lower priorities, the user has to select those manually.
 
 Archives not in this list have the priority 0."
-  :type 'integer
+  :type '(alist :key-type (string :tag "Archive name")
+                :value-type (integer :tag "Priority (default is 0)"))
   :risky t
   :group 'package
   :version "25.1")
