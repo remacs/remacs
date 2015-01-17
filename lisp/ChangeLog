@@ -17,6 +17,9 @@
 	* desktop.el (desktop-read): Do not call desktop-clear when no
 	desktop file is found.  (Bug#18371)
 
+	* misearch.el (multi-isearch-unload-function): New function.
+	(misearch-unload-function): New alias.  (Bug#19566)
+
 2015-01-17  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/eieio-core.el (eieio--class-constructor): Rename from

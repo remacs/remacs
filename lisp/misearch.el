@@ -377,6 +377,25 @@ whose file names match the specified wildcard."
     (goto-char (if isearch-forward (point-min) (point-max)))
     (isearch-forward-regexp nil t)))
 
+(defun multi-isearch-unload-function ()
+  "Remove autoloaded variables from `unload-function-defs-list'.
+Also prevent the feature from being reloaded via `isearch-mode-hook'."
+  (remove-hook 'isearch-mode-hook 'multi-isearch-setup)
+  (let ((defs (list (car unload-function-defs-list)))
+	(auto '(multi-isearch-next-buffer-function
+		multi-isearch-next-buffer-current-function
+		multi-isearch-current-buffer
+		multi-isearch-buffer-list multi-isearch-file-list)))
+    (dolist (def (cdr unload-function-defs-list))
+      (unless (and (symbolp def)
+		   (memq def auto))
+	(push def defs)))
+    (setq unload-function-defs-list (nreverse defs))
+    ;; .
+    nil))
+
+(defalias 'misearch-unload-function 'multi-isearch-unload-function)
+
 
 (provide 'multi-isearch)
 (provide 'misearch)
