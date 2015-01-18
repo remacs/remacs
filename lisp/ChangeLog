@@ -1,3 +1,8 @@
+2015-01-18  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* emacs-lisp/package.el (package--append-to-alist): Renamed from
+	`package--add-to-alist'
+
 2015-01-18  Leo Liu  <sdl.web@gmail.com>
 
 	* emacs-lisp/cl-extra.el (cl-subseq): Use seq-subseq and fix
