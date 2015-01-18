@@ -1,3 +1,8 @@
+2015-01-18  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/xref.el (xref-goto-xref): Perform the jump even inside
+	indentation or at eol.
+
 2015-01-18  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/eieio-core.el: Add `subclass' specializer for cl-generic.

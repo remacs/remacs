@@ -379,8 +379,9 @@ WINDOW controls how the buffer is displayed:
 (defvar-local xref--window nil)
 
 (defun xref-goto-xref ()
-  "Jump to the xref at point and bury the xref buffer."
+  "Jump to the xref on the current line and bury the xref buffer."
   (interactive)
+  (back-to-indentation)
   (let ((loc (or (xref--location-at-point)
                  (error "No reference at point")))
         (window xref--window))
