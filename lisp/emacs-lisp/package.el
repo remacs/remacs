@@ -1157,10 +1157,12 @@ Also, add the originating archive to the `package-desc' structure."
             (package--append-to-alist pkg-desc package-archive-contents)))))
 
 (defun package--append-to-alist (pkg-desc alist)
-  "Add PKG-DESC to ALIST.
+  "Append an entry for PKG-DESC to the start of ALIST and return it.
+This entry takes the form (`package-desc-name' PKG-DESC).
 
-Packages are grouped by name. The package descriptions are sorted
-by version number."
+If ALIST already has an entry with this name, destructively add
+PKG-DESC to the cdr of this entry instead, sorted by version
+number."
   (let* ((name (package-desc-name pkg-desc))
          (priority-version (package-desc-priority-version pkg-desc))
          (existing-packages (assq name alist)))
