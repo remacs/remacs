@@ -1227,6 +1227,8 @@ method invocation orders of the involved classes."
 
 (require 'cl-generic)
 
+;;;; General support to dispatch based on the type of the argument.
+
 (add-function :before-until cl-generic-tagcode-function
               #'eieio--generic-tagcode)
 (defun eieio--generic-tagcode (type name)
@@ -1245,6 +1247,29 @@ method invocation orders of the involved classes."
   (and (symbolp tag) (boundp tag) (eieio--class-p (symbol-value tag))
        (mapcar #'eieio--class-symbol
                (eieio--class-precedence-list (symbol-value tag)))))
+
+;;;; Dispatch for arguments which are classes.
+
+;; Since EIEIO does not support metaclasses, users can't easily use the
+;; "dispatch on argument type" for class arguments.  That's why EIEIO's
+;; `defmethod' added the :static qualifier.  For cl-generic, such a qualifier
+;; would not make much sense (e.g. to which argument should it apply?).
+;; Instead, we add a new "subclass" specializer.
+
+(add-function :before-until cl-generic-tagcode-function
+              #'eieio--generic-subclass-tagcode)
+(defun eieio--generic-subclass-tagcode (type name)
+  (when (eq 'subclass (car-safe type))
+    `(60 . (and (symbolp ,name) (eieio--class-v ,name)))))
+
+(add-function :before-until cl-generic-tag-types-function
+              #'eieio--generic-subclass-tag-types)
+(defun eieio--generic-subclass-tag-types (tag)
+  (when (eieio--class-p tag)
+    (mapcar (lambda (class)
+              `(subclass
+                ,(if (symbolp class) class (eieio--class-symbol class))))
+            (eieio--class-precedence-list tag))))
 
 ;;; Backward compatibility functions
 ;; To support .elc files compiled for older versions of EIEIO.

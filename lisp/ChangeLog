@@ -1,5 +1,10 @@
 2015-01-18  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* emacs-lisp/eieio-core.el: Add `subclass' specializer for cl-generic.
+	(eieio--generic-subclass-tagcode, eieio--generic-subclass-tag-types):
+	New functions.
+	(cl-generic-tagcode-function, cl-generic-tag-types-function): Use them.
+
 	* emacs-lisp/eieio.el (defclass): Add obsolescence warning for the
 	`newname' argument.
 
@@ -152,8 +157,8 @@
 2015-01-16  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* emacs-lisp/package.el (package--read-pkg-desc):
-	New function. Read a `define-package' form in current buffer. Return
-	the pkg-desc, with desc-kind set to KIND.
+	New function. Read a `define-package' form in current buffer.
+	Return the pkg-desc, with desc-kind set to KIND.
 	(package-dir-info): New function. Find package information for a
 	directory. The return result is a `package-desc'.
 	(package-install-from-buffer): Install packages from dired buffer.
