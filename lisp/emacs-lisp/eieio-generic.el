@@ -33,6 +33,19 @@
 (require 'eieio-core)
 (declare-function child-of-class-p "eieio")
 
+(put 'eieio--defalias 'byte-hunk-handler
+     #'byte-compile-file-form-defalias) ;;(get 'defalias 'byte-hunk-handler)
+(defun eieio--defalias (name body)
+  "Like `defalias', but with less side-effects.
+More specifically, it has no side-effects at all when the new function
+definition is the same (`eq') as the old one."
+  (while (and (fboundp name) (symbolp (symbol-function name)))
+    ;; Follow aliases, so methods applied to obsolete aliases still work.
+    (setq name (symbol-function name)))
+  (unless (and (fboundp name)
+               (eq (symbol-function name) body))
+    (defalias name body)))
+
 (defconst eieio--method-static 0 "Index into :static tag on a method.")
 (defconst eieio--method-before 1 "Index into :before tag on a method.")
 (defconst eieio--method-primary 2 "Index into :primary tag on a method.")
@@ -101,7 +114,7 @@ Methods with only primary implementations are executed in an optimized way."
     ;; Make sure the method tables are installed.
     (eieio--mt-install method)
     ;; Construct the actual body of this function.
-    (put method 'function-documentation doc-string)
+    (if doc-string (put method 'function-documentation doc-string))
     (eieio--defgeneric-form method))
    ((generic-p method) (symbol-function method))           ;Leave it as-is.
    (t (error "You cannot create a generic/method over an existing symbol: %s"
@@ -161,8 +174,7 @@ IMPL is the symbol holding the method implementation."
               (eieio--generic-call-key eieio--method-primary)
               (eieio--generic-call-arglst local-args)
               )
-          (eieio--with-scoped-class (eieio--class-v class)
-            (apply impl local-args)))))))
+          (apply impl local-args))))))
 
 (defun eieio-unbind-method-implementations (method)
   "Make the generic method METHOD have no implementations.
@@ -177,20 +189,18 @@ but remove reference to all implementations of METHOD."
     ;;
     ;; If this method, after this setup, only has primary methods, then
     ;; we can setup the generic that way.
-    (let ((doc-string (documentation method 'raw)))
-      (put method 'function-documentation doc-string)
-      ;; Use `defalias' so as to interact properly with nadvice.el.
-      (defalias method
-        (if (eieio--generic-primary-only-p method)
-            ;; If there is only one primary method, then we can go one more
-            ;; optimization step.
-            (if (eieio--generic-primary-only-one-p method)
-                (let* ((M (get method 'eieio-method-tree))
-                       (entry (car (aref M eieio--method-primary))))
-                  (eieio--defgeneric-form-primary-only-one
-                   method (car entry) (cdr entry)))
-              (eieio--defgeneric-form-primary-only method))
-          (eieio--defgeneric-form method))))))
+    ;; Use `defalias' so as to interact properly with nadvice.el.
+    (defalias method
+      (if (eieio--generic-primary-only-p method)
+          ;; If there is only one primary method, then we can go one more
+          ;; optimization step.
+          (if (eieio--generic-primary-only-one-p method)
+              (let* ((M (get method 'eieio-method-tree))
+                     (entry (car (aref M eieio--method-primary))))
+                (eieio--defgeneric-form-primary-only-one
+                 method (car entry) (cdr entry)))
+            (eieio--defgeneric-form-primary-only method))
+        (eieio--defgeneric-form method)))))
 
 (defun eieio--defmethod (method kind argclass code)
   "Work part of the `defmethod' macro defining METHOD with ARGS."
@@ -276,11 +286,9 @@ This should only be called from a generic function."
       )
     ;; Now create a list in reverse order of all the calls we have
     ;; make in order to successfully do this right.  Rules:
-    ;; 1) Only call generics if scoped-class is not defined
-    ;;    This prevents multiple calls in the case of recursion
-    ;; 2) Only call static if this is a static method.
-    ;; 3) Only call specifics if the definition allows for them.
-    ;; 4) Call in order based on :before, :primary, and :after
+    ;; 1) Only call static if this is a static method.
+    ;; 2) Only call specifics if the definition allows for them.
+    ;; 3) Call in order based on :before, :primary, and :after
     (when (eieio-object-p firstarg)
       ;; Non-static calls do all this stuff.
 
@@ -346,22 +354,21 @@ This should only be called from a generic function."
     (let ((rval nil) (lastval nil) (found nil))
       (while lambdas
 	(if (car lambdas)
-	    (eieio--with-scoped-class (cdr (car lambdas))
-	      (let* ((eieio--generic-call-key (car keys))
-		     (has-return-val
-		      (or (= eieio--generic-call-key eieio--method-primary)
-			  (= eieio--generic-call-key eieio--method-static)))
-		     (eieio--generic-call-next-method-list
-		      ;; Use the cdr, as the first element is the fcn
-		      ;; we are calling right now.
-		      (when has-return-val (cdr primarymethodlist)))
-		     )
-		(setq found t)
-		;;(setq rval (apply (car (car lambdas)) newargs))
-		(setq lastval (apply (car (car lambdas)) newargs))
-		(when has-return-val
-		  (setq rval lastval))
-		)))
+            (let* ((eieio--generic-call-key (car keys))
+                   (has-return-val
+                    (or (= eieio--generic-call-key eieio--method-primary)
+                        (= eieio--generic-call-key eieio--method-static)))
+                   (eieio--generic-call-next-method-list
+                    ;; Use the cdr, as the first element is the fcn
+                    ;; we are calling right now.
+                    (when has-return-val (cdr primarymethodlist)))
+                   )
+              (setq found t)
+              ;;(setq rval (apply (car (car lambdas)) newargs))
+              (setq lastval (apply (car (car lambdas)) newargs))
+              (when has-return-val
+                (setq rval lastval))
+              ))
 	(setq lambdas (cdr lambdas)
 	      keys (cdr keys)))
       (if (not found)
@@ -414,33 +421,32 @@ for this common case to improve performance."
 
     ;; Now loop through all occurrences forms which we must execute
     ;; (which are happily sorted now) and execute them all!
-    (eieio--with-scoped-class (cdr lambdas)
-      (let* ((rval nil) (lastval nil)
-	     (eieio--generic-call-key eieio--method-primary)
-	     ;; Use the cdr, as the first element is the fcn
-	     ;; we are calling right now.
-	     (eieio--generic-call-next-method-list (cdr primarymethodlist))
-	     )
+    (let* ((rval nil) (lastval nil)
+           (eieio--generic-call-key eieio--method-primary)
+           ;; Use the cdr, as the first element is the fcn
+           ;; we are calling right now.
+           (eieio--generic-call-next-method-list (cdr primarymethodlist))
+           )
 
-	(if (or (not lambdas) (not (car lambdas)))
+      (if (or (not lambdas) (not (car lambdas)))
 
-	    ;; No methods found for this impl...
-	    (if (eieio-object-p (car args))
-		(setq rval (apply #'no-applicable-method
-                                  (car args) method args))
-	      (signal
-	       'no-method-definition
-	       (list method args)))
+          ;; No methods found for this impl...
+          (if (eieio-object-p (car args))
+              (setq rval (apply #'no-applicable-method
+                                (car args) method args))
+            (signal
+             'no-method-definition
+             (list method args)))
 
-	  ;; Do the regular implementation here.
+        ;; Do the regular implementation here.
 
-	  (run-hook-with-args 'eieio-pre-method-execution-functions
-			      lambdas)
+        (run-hook-with-args 'eieio-pre-method-execution-functions
+                            lambdas)
 
-	  (setq lastval (apply (car lambdas) newargs))
-	  (setq rval lastval))
+        (setq lastval (apply (car lambdas) newargs))
+        (setq rval lastval))
 
-	rval))))
+      rval)))
 
 (defun eieio--mt-method-list (method key class)
   "Return an alist list of methods lambdas.
@@ -627,7 +633,7 @@ is memorized for faster future use."
 
 ;;; CLOS methods and generics
 ;;
-(defmacro defgeneric (method _args &optional doc-string)
+(defmacro defgeneric (method args &optional doc-string)
   "Create a generic function METHOD.
 DOC-STRING is the base documentation for this class.  A generic
 function has no body, as its purpose is to decide which method body
@@ -637,7 +643,9 @@ currently ignored.  You can use `defgeneric' to apply specialized
 top level documentation to a method."
   (declare (doc-string 3))
   `(eieio--defalias ',method
-                    (eieio--defgeneric-init-form ',method ,doc-string)))
+                    (eieio--defgeneric-init-form
+                     ',method
+                     ,(if doc-string (help-add-fundoc-usage doc-string args)))))
 
 (defmacro defmethod (method &rest args)
   "Create a new METHOD through `defgeneric' with ARGS.
@@ -684,9 +692,7 @@ Summary:
          (code `(lambda ,fargs ,@(cdr args))))
     `(progn
        ;; Make sure there is a generic and the byte-compiler sees it.
-       (defgeneric ,method ,args
-         ,(or (documentation code)
-              (format "Generically created method `%s'." method)))
+       (defgeneric ,method ,args)
        (eieio--defmethod ',method ',key ',class #',code))))
 
 
@@ -710,8 +716,6 @@ If REPLACEMENT-ARGS is non-nil, then use them instead of
 arguments passed in at the top level.
 
 Use `next-method-p' to find out if there is a next method to call."
-  (if (not (eieio--scoped-class))
-      (error "`call-next-method' not called within a class specific method"))
   (if (and (/= eieio--generic-call-key eieio--method-primary)
 	   (/= eieio--generic-call-key eieio--method-static))
       (error "Cannot `call-next-method' except in :primary or :static methods")
@@ -726,8 +730,7 @@ Use `next-method-p' to find out if there is a next method to call."
 	     (eieio--generic-call-arglst newargs)
 	     (fcn (car next))
 	     )
-	(eieio--with-scoped-class (cdr next)
-	  (apply fcn newargs)) ))))
+        (apply fcn newargs)) )))
 
 (defgeneric no-applicable-method (object method &rest args)
   "Called if there are no implementations for OBJECT in METHOD.")

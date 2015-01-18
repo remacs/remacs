@@ -1,3 +1,149 @@
+2015-01-18  Leo Liu  <sdl.web@gmail.com>
+
+	* emacs-lisp/cl-extra.el (cl-subseq): Use seq-subseq and fix
+	multiple evaluation.  (Bug#19519)
+
+	* emacs-lisp/seq.el (seq-subseq): Throw bad bounding indices
+	error.  (Bug#19434)
+
+2015-01-18  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/cl-macs.el (cl-defstruct): Minor optimization when include
+	or print is nil.
+	(cl-struct-type-p): New function.
+
+	* emacs-lisp/cl-generic.el: Add support for cl-next-method-p.
+	(cl-defmethod): Add edebug spec.
+	(cl--generic-build-combined-method): Fix call to
+	cl-no-applicable-method.
+	(cl--generic-nnm-sample, cl--generic-cnm-sample): New constant.
+	(cl--generic-isnot-nnm-p): New function.
+	(cl--generic-lambda): Use it to add support for cl-next-method-p.
+	(cl-no-next-method, cl-no-applicable-method): Simplify arg list.
+	(cl-next-method-p): New function.
+
+2015-01-17  Ulrich Müller  <ulm@gentoo.org>
+
+	* version.el (emacs-repository-get-version): Update docstring.
+
+2015-01-17  Ivan Shmakov  <ivan@siamics.net>
+
+	* url/url-cookie.el (url-cookie-write-file): Let-bind print-length
+	and print-level to nil to avoid writing a garbled list.  (Bug#16805)
+
+	* files.el (find-file-other-window, find-file-other-frame):
+	Use mapc instead of mapcar.  (Bug#18175)
+
+	* files.el (dir-locals-collect-variables): Use default-directory
+	in place of the file name while working on non-file buffers, just
+	like hack-dir-local-variables already does.  (Bug#19140)
+
+	* textmodes/enriched.el (enriched-encode):
+	Use inhibit-point-motion-hooks in addition to inhibit-read-only.
+	(Bug#18246)
+
+	* desktop.el (desktop-read): Do not call desktop-clear when no
+	desktop file is found.  (Bug#18371)
+
+	* misearch.el (multi-isearch-unload-function): New function.
+	(misearch-unload-function): New alias.  (Bug#19566)
+
+2015-01-17  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio-core.el (eieio--class-constructor): Rename from
+	class-constructor, and make it an alias for `identity'.
+	Update all callers.
+
+	* emacs-lisp/eieio.el (eieio-constructor): Handle obsolete object name
+	argument here (bug#19620)...
+	(defclass): ...instead of in the constructor here.
+
+2015-01-16  Jorgen Schaefer  <contact@jorgenschaefer.de>
+
+	* emacs-lisp/package.el (package-archive-priorities):
+	Specify correct type.
+
+2015-01-17  Ulrich Müller  <ulm@gentoo.org>
+
+	* version.el (emacs-bzr-version-dirstate, emacs-bzr-version-bzr):
+	Remove.
+	(emacs-repository-get-version): Discard the Bazaar case.
+	* vc/vc-bzr.el (vc-bzr-version-dirstate): Rename from
+	emacs-bzr-version-dirstate and move from version.el to here.
+	(vc-bzr-working-revision): Use it.
+
+2015-01-17  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio-generic.el (call-next-method): Don't bother checking
+	eieio--scoped-class any more.
+
+	* emacs-lisp/eieio-core.el (eieio--scoped-class-stack): Remove var.
+	(eieio--scoped-class): Remove function.
+	(eieio--with-scoped-class): Remove macro.  Replace uses with `progn'.
+	(eieio--slot-name-index): Don't check the :protection anymore.
+	(eieio-initializing-object): Remove var.
+	(eieio-set-defaults): Don't let-bind eieio-initializing-object.
+
+2015-01-17  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Improve handling of doc-strings and describe-function for cl-generic.
+
+	* help-mode.el (help-function-def): Add optional arg `type'.
+
+	* help-fns.el (find-lisp-object-file-name): Accept any `type' as long
+	as it's a symbol.
+	(help-fns-short-filename): New function.
+	(describe-function-1): Use it.  Use autoload-do-load.
+
+	* emacs-lisp/find-func.el: Use lexical-binding.
+	(find-function-regexp): Don't rule out `defgeneric'.
+	(find-function-regexp-alist): Document new possibility of including
+	a function instead of a regexp.
+	(find-function-search-for-symbol): Implement that new possibility.
+	(find-function-library): Don't assume that `function' is a symbol.
+	(find-function-do-it): Remove unused var `orig-buf'.
+
+	* emacs-lisp/eieio-generic.el (eieio--defalias): Move from eieio-core.
+	(eieio--defgeneric-init-form): Don't throw away a previous docstring.
+	(eieio--method-optimize-primary): Don't mess with the docstring.
+	(defgeneric): Keep the `args' in the docstring.
+	(defmethod): Don't use the method's docstring for the generic
+	function's docstring.
+
+	* emacs-lisp/eieio-core.el (eieio--defalias): Move to eieio-generic.el.
+	(eieio-defclass-autoload): Don't record the superclasses any more.
+	(eieio-defclass-internal): Reuse the old class object if it was just an
+	autoload stub.
+	(eieio--class-precedence-list): Load the class if it's autoloaded.
+
+	* emacs-lisp/cl-generic.el (cl-generic-ensure-function): It's OK to
+	override an autoload.
+	(cl-generic-current-method-specializers): Replace dyn-bind variable
+	with a lexically-scoped macro.
+	(cl--generic-lambda): Update accordingly.
+	(cl-generic-define-method): Record manually in the load-history with
+	type `cl-defmethod'.
+	(cl--generic-get-dispatcher): Minor optimization.
+	(cl--generic-search-method): New function.
+	(find-function-regexp-alist): Add entry for `cl-defmethod' type.
+	(cl--generic-search-method): Add hyperlinks for methods.  Merge the
+	specializers and the function's arguments.
+
+2015-01-16  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* emacs-lisp/package.el (package--read-pkg-desc):
+	New function. Read a `define-package' form in current buffer. Return
+	the pkg-desc, with desc-kind set to KIND.
+	(package-dir-info): New function. Find package information for a
+	directory. The return result is a `package-desc'.
+	(package-install-from-buffer): Install packages from dired buffer.
+	(package-install-file): Install packages from directory.
+	(package-desc-suffix)
+	(package-install-from-archive)
+	* emacs-lisp/package-x.el (package-upload-buffer-internal):
+	Ensure all remaining instances of `package-desc-kind' handle the 'dir
+	value.
+
 2015-01-16  Jorgen Schaefer  <contact@jorgenschaefer.de>
 
 	* emacs-lisp/package.el: Provide repository priorities.
@@ -37,6 +183,13 @@
 	(math-extract-units): Handle the `neg' operator.  (Bug#19582)
 
 2015-01-15  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/cl-macs.el (cl--labels-magic): New constant.
+	(cl--labels-convert): Use it to ask the macro what is its replacement
+	in the #'f case.
+
+	* emacs-lisp/cl-generic.el (cl--generic-build-combined-method):
+	Return the value of the primary rather than the after method.
 
 	* emacs-lisp/eieio-core.el: Provide support for cl-generic.
 	(eieio--generic-tagcode): New function.

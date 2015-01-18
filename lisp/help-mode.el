@@ -191,7 +191,7 @@ The format is (FUNCTION ARGS...).")
 
 (define-button-type 'help-function-def
   :supertype 'help-xref
-  'help-function (lambda (fun file)
+  'help-function (lambda (fun file &optional type)
 		   (require 'find-func)
 		   (when (eq file 'C-source)
 		     (setq file
@@ -199,7 +199,7 @@ The format is (FUNCTION ARGS...).")
 		   ;; Don't use find-function-noselect because it follows
 		   ;; aliases (which fails for built-in functions).
 		   (let ((location
-			  (find-function-search-for-symbol fun nil file)))
+			  (find-function-search-for-symbol fun type file)))
 		     (pop-to-buffer (car location))
 		     (if (cdr location)
 			 (goto-char (cdr location))

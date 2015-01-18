@@ -34,19 +34,6 @@
 (require 'cl-lib)
 (require 'pcase)
 
-(put 'eieio--defalias 'byte-hunk-handler
-     #'byte-compile-file-form-defalias) ;;(get 'defalias 'byte-hunk-handler)
-(defun eieio--defalias (name body)
-  "Like `defalias', but with less side-effects.
-More specifically, it has no side-effects at all when the new function
-definition is the same (`eq') as the old one."
-  (while (and (fboundp name) (symbolp (symbol-function name)))
-    ;; Follow aliases, so methods applied to obsolete aliases still work.
-    (setq name (symbol-function name)))
-  (unless (and (fboundp name)
-               (eq (symbol-function name) body))
-    (defalias name body)))
-
 ;;;
 ;; A few functions that are better in the official EIEIO src, but
 ;; used from the core.
@@ -75,9 +62,6 @@ default setting for optimization purposes.")
 (defvar eieio-optimize-primary-methods-flag t
   "Non-nil means to optimize the method dispatch on primary methods.")
 
-(defvar eieio-initializing-object  nil
-  "Set to non-nil while initializing an object.")
-
 (defvar eieio-backward-compatibility t
   "If nil, drop support for some behaviors of older versions of EIEIO.
 Currently under control of this var:
@@ -94,29 +78,6 @@ Currently under control of this var:
 ;; This is a bootstrap for eieio-default-superclass so it has a value
 ;; while it is being built itself.
 (defvar eieio-default-superclass nil)
-
-;;;
-;; Class currently in scope.
-;;
-;; When invoking methods, the running method needs to know which class
-;; is currently in scope.  Generally this is the class of the method
-;; being called, but 'call-next-method' needs to query this state,
-;; and change it to be then next super class up.
-;;
-;; Thus, the scoped class is a stack that needs to be managed.
-
-(defvar eieio--scoped-class-stack nil
-  "A stack of the classes currently in scope during method invocation.")
-
-(defun eieio--scoped-class ()
-  "Return the class object currently in scope, or nil."
-  (car-safe eieio--scoped-class-stack))
-
-(defmacro eieio--with-scoped-class (class &rest forms)
-  "Set CLASS as the currently scoped class while executing FORMS."
-  (declare (indent 1))
-  `(let ((eieio--scoped-class-stack (cons ,class eieio--scoped-class-stack)))
-     ,@forms))
 
 (progn
   ;; Arrange for field access not to bother checking if the access is indeed
@@ -248,10 +209,8 @@ CLASS is a symbol."                     ;FIXME: Is it a vector or a symbol?
   (format "#<class %s>" (symbol-name class)))
 (define-obsolete-function-alias 'class-name #'eieio-class-name "24.4")
 
-(defmacro class-constructor (class)
-  "Return the symbol representing the constructor of CLASS."
-  (declare (debug t))
-  `(eieio--class-symbol (eieio--class-v ,class)))
+(defalias 'eieio--class-constructor #'identity
+  "Return the symbol representing the constructor of CLASS.")
 
 (defmacro eieio--class-option-assoc (list option)
   "Return from LIST the found OPTION, or nil if it doesn't exist."
@@ -292,7 +251,7 @@ Abstract classes cannot be instantiated."
 
 ;; We autoload this because it's used in `make-autoload'.
 ;;;###autoload
-(defun eieio-defclass-autoload (cname superclasses filename doc)
+(defun eieio-defclass-autoload (cname _superclasses filename doc)
   "Create autoload symbols for the EIEIO class CNAME.
 SUPERCLASSES are the superclasses that CNAME inherits from.
 DOC is the docstring for CNAME.
@@ -301,58 +260,35 @@ SUPERCLASSES as children.
 It creates an autoload function for CNAME's constructor."
   ;; Assume we've already debugged inputs.
 
+  ;; We used to store the list of superclasses in the `parent' slot (as a list
+  ;; of class names).  But now this slot holds a list of class objects, and
+  ;; those parents may not exist yet, so the corresponding class objects may
+  ;; simply not exist yet.  So instead we just don't store the list of parents
+  ;; here in eieio-defclass-autoload at all, since it seems that they're just
+  ;; not needed before the class is actually loaded.
   (let* ((oldc (when (class-p cname) (eieio--class-v cname)))
 	 (newc (eieio--class-make cname))
 	 )
     (if oldc
 	nil ;; Do nothing if we already have this class.
 
-      (let ((clear-parent nil))
-	;; No parents?
-	(when (not superclasses)
-	  (setq superclasses '(eieio-default-superclass)
-		clear-parent t)
-	  )
+      ;; turn this into a usable self-pointing symbol
+      (when eieio-backward-compatibility
+        (set cname cname)
+        (make-obsolete-variable cname (format "use '%s instead" cname) "25.1"))
 
-	;; Hook our new class into the existing structures so we can
-	;; autoload it later.
-	(dolist (SC superclasses)
+      ;; Store the new class vector definition into the symbol.  We need to
+      ;; do this first so that we can call defmethod for the accessor.
+      ;; The vector will be updated by the following while loop and will not
+      ;; need to be stored a second time.
+      (setf (eieio--class-v cname) newc)
 
-
-	  ;; TODO - If we create an autoload that is in the map, that
-	  ;;        map needs to be cleared!
-
-
-          ;; Save the child in the parent.
-          (cl-pushnew cname (if (class-p SC)
-                                (eieio--class-children (eieio--class-v SC))
-                              ;; Parent doesn't exist yet.
-                              (gethash SC eieio-defclass-autoload-map)))
-
-	  ;; Save parent in child.
-          (push (eieio--class-v SC) (eieio--class-parent newc)))
-
-	;; turn this into a usable self-pointing symbol
-        (when eieio-backward-compatibility
-          (set cname cname)
-          (make-obsolete-variable cname (format "use '%s instead" cname) "25.1"))
-
-	;; Store the new class vector definition into the symbol.  We need to
-	;; do this first so that we can call defmethod for the accessor.
-	;; The vector will be updated by the following while loop and will not
-	;; need to be stored a second time.
-	(setf (eieio--class-v cname) newc)
-
-	;; Clear the parent
-	(if clear-parent (setf (eieio--class-parent newc) nil))
-
-	;; Create an autoload on top of our constructor function.
-	(autoload cname filename doc nil nil)
-	(autoload (intern (concat (symbol-name cname) "-p")) filename "" nil nil)
-	(autoload (intern (concat (symbol-name cname) "-child-p")) filename "" nil nil)
-	(autoload (intern (concat (symbol-name cname) "-list-p")) filename "" nil nil)
-
-	))))
+      ;; Create an autoload on top of our constructor function.
+      (autoload cname filename doc nil nil)
+      (autoload (intern (format "%s-p" cname)) filename "" nil nil)
+      (when eieio-backward-compatibility
+        (autoload (intern (format "%s-child-p" cname)) filename "" nil nil)
+        (autoload (intern (format "%s-list-p" cname)) filename "" nil nil)))))
 
 (defsubst eieio-class-un-autoload (cname)
   "If class CNAME is in an autoload state, load its file."
@@ -378,8 +314,13 @@ See `defclass' for more information."
   (setq eieio-hook nil)
 
   (let* ((pname superclasses)
-	 (newc (eieio--class-make cname))
 	 (oldc (when (class-p cname) (eieio--class-v cname)))
+	 (newc (if (and oldc (not (eieio--class-default-object-cache oldc)))
+                   ;; The oldc class is a stub setup by eieio-defclass-autoload.
+                   ;; Reuse it instead of creating a new one, so that existing
+                   ;; references are still valid.
+                   oldc
+                 (eieio--class-make cname)))
 	 (groups nil) ;; list of groups id'd from slots
 	 (clearparent nil))
 
@@ -1060,27 +1001,26 @@ Fills in the default value in CLASS' in SLOT with VALUE."
   (setq class (eieio--class-object class))
   (eieio--check-type eieio--class-p class)
   (eieio--check-type symbolp slot)
-  (eieio--with-scoped-class class
-    (let* ((c (eieio--slot-name-index class nil slot)))
-      (if (not c)
-	  ;; It might be missing because it is a :class allocated slot.
-	  ;; Let's check that info out.
-	  (if (setq c (eieio--class-slot-name-index class slot))
-	      (progn
-		;; Oref that slot.
-		(eieio--validate-class-slot-value class c value slot)
-		(aset (eieio--class-class-allocation-values class) c
-		      value))
-	    (signal 'invalid-slot-name (list (eieio--class-symbol class) slot)))
-	(eieio--validate-slot-value class c value slot)
-	;; Set this into the storage for defaults.
-	(setcar (nthcdr (- c (eval-when-compile eieio--object-num-slots))
-                        (eieio--class-public-d class))
-		value)
-	;; Take the value, and put it into our cache object.
-	(eieio-oset (eieio--class-default-object-cache class)
-		    slot value)
-	))))
+  (let* ((c (eieio--slot-name-index class nil slot)))
+    (if (not c)
+        ;; It might be missing because it is a :class allocated slot.
+        ;; Let's check that info out.
+        (if (setq c (eieio--class-slot-name-index class slot))
+            (progn
+              ;; Oref that slot.
+              (eieio--validate-class-slot-value class c value slot)
+              (aset (eieio--class-class-allocation-values class) c
+                    value))
+          (signal 'invalid-slot-name (list (eieio--class-symbol class) slot)))
+      (eieio--validate-slot-value class c value slot)
+      ;; Set this into the storage for defaults.
+      (setcar (nthcdr (- c (eval-when-compile eieio--object-num-slots))
+                      (eieio--class-public-d class))
+              value)
+      ;; Take the value, and put it into our cache object.
+      (eieio-oset (eieio--class-default-object-cache class)
+                  slot value)
+      )))
 
 
 ;;; EIEIO internal search functions
@@ -1111,27 +1051,7 @@ reverse-lookup that name, and recurse with the associated slot value."
   (let* ((fsym (gethash slot (eieio--class-symbol-hashtable class)))
 	 (fsi (car fsym)))
     (if (integerp fsi)
-	(cond
-	 ((not (cdr fsym))
-	  (+ (eval-when-compile eieio--object-num-slots) fsi))
-	 ((and (eq (cdr fsym) 'protected)
-	       (eieio--scoped-class)
-	       (or (child-of-class-p class (eieio--scoped-class))
-		   (and (eieio-object-p obj)
-                        ;; AFAICT, for all callers, if `obj' is not a class,
-                        ;; then its class is `class'.
-			;;(child-of-class-p class (eieio--object-class-object obj))
-                        (progn
-                          (cl-assert (eq class (eieio--object-class-object obj)))
-                          t))))
-	  (+ (eval-when-compile eieio--object-num-slots) fsi))
-	 ((and (eq (cdr fsym) 'private)
-	       (or (and (eieio--scoped-class)
-			(eieio--slot-originating-class-p
-                         (eieio--scoped-class) slot))
-		   eieio-initializing-object))
-	  (+ (eval-when-compile eieio--object-num-slots) fsi))
-	 (t nil))
+        (+ (eval-when-compile eieio--object-num-slots) fsi)
       (let ((fn (eieio--initarg-to-attribute class slot)))
 	(if fn (eieio--slot-name-index class obj fn) nil)))))
 
@@ -1159,14 +1079,12 @@ reverse-lookup that name, and recurse with the associated slot value."
 If SET-ALL is non-nil, then when a default is nil, that value is
 reset.  If SET-ALL is nil, the slots are only reset if the default is
 not nil."
-  (eieio--with-scoped-class (eieio--object-class-object obj)
-    (let ((eieio-initializing-object t)
-	  (pub (eieio--class-public-a (eieio--object-class-object obj))))
-      (while pub
-	(let ((df (eieio-oref-default obj (car pub))))
-	  (if (or df set-all)
-	      (eieio-oset obj (car pub) df)))
-	(setq pub (cdr pub))))))
+  (let ((pub (eieio--class-public-a (eieio--object-class-object obj))))
+    (while pub
+      (let ((df (eieio-oref-default obj (car pub))))
+        (if (or df set-all)
+            (eieio-oset obj (car pub) df)))
+      (setq pub (cdr pub)))))
 
 (defun eieio--initarg-to-attribute (class initarg)
   "For CLASS, convert INITARG to the actual attribute name.
@@ -1284,6 +1202,8 @@ The order, in which the parents are returned depends on the
 method invocation orders of the involved classes."
   (if (or (null class) (eq class eieio-default-superclass))
       nil
+    (unless (eieio--class-default-object-cache class)
+      (eieio-class-un-autoload (eieio--class-symbol class)))
     (cl-case (eieio--class-method-invocation-order class)
       (:depth-first
        (eieio--class-precedence-dfs class))

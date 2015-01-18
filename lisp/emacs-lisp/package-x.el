@@ -207,6 +207,10 @@ if it exists."
 	       (pkg-version (package-version-join split-version))
 	       (pkg-buffer (current-buffer)))
 
+          ;; `package-upload-file' will error if given a directory,
+          ;; but we check it here as well just in case.
+          (when (eq 'dir file-type)
+            (user-error "Can't upload directory, tar it instead"))
 	  ;; Get archive-contents from ARCHIVE-URL if it's non-nil, or
 	  ;; from `package-archive-upload-base' otherwise.
 	  (let ((contents (or (package--archive-contents-from-url archive-url)

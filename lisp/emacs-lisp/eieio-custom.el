@@ -184,7 +184,7 @@ Optional argument IGNORE is an extraneous parameter."
   (if (not (widget-get widget :value))
       (widget-put widget
 		  :value (cond ((widget-get widget :objecttype)
-				(funcall (class-constructor
+				(funcall (eieio--class-constructor
 					  (widget-get widget :objecttype))
 					 "Custom-new"))
 			       ((widget-get widget :objectcreatefcn)

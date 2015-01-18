@@ -129,5 +129,31 @@
     (cons "x&y-int" (cl-call-next-method)))
   (should (equal (cl--generic-1 1 2) '("x&y-int" "y-int" "x-int" 1 2))))
 
+(ert-deftest cl-generic-test-8-after/before ()
+  (let ((log ()))
+    (cl-defgeneric cl--generic-1 (x y))
+    (cl-defmethod cl--generic-1 ((_x t) y) (cons y log))
+    (cl-defmethod cl--generic-1 ((_x (eql 4)) _y)
+    (cons "quatre" (cl-call-next-method)))
+    (cl-defmethod cl--generic-1 :after (x _y)
+      (push (list :after x) log))
+    (cl-defmethod cl--generic-1 :before (x _y)
+      (push (list :before x) log))
+    (should (equal (cl--generic-1 4 6) '("quatre" 6 (:before 4))))
+    (should (equal log '((:after 4) (:before 4))))))
+
+(defun cl--generic-test-advice (&rest args) (cons "advice" (apply args)))
+
+(ert-deftest cl-generic-test-9-advice ()
+  (cl-defgeneric cl--generic-1 (x y) "My doc.")
+  (cl-defmethod cl--generic-1 (x y) (list x y))
+  (advice-add 'cl--generic-1 :around #'cl--generic-test-advice)
+  (should (equal (cl--generic-1 4 5) '("advice" 4 5)))
+  (cl-defmethod cl--generic-1 ((_x integer) _y)
+    (cons "integer" (cl-call-next-method)))
+  (should (equal (cl--generic-1 4 5) '("advice" "integer" 4 5)))
+  (advice-remove 'cl--generic-1 #'cl--generic-test-advice)
+  (should (equal (cl--generic-1 4 5) '("integer" 4 5))))
+
 (provide 'cl-generic-tests)
 ;;; cl-generic-tests.el ends here

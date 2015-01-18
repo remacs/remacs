@@ -1807,6 +1807,8 @@ a `let' form, except that the list of symbols can be computed at run-time."
            (push (list (pop ,syms) (list 'quote (pop ,vals))) ,binds))
          (eval (list 'let ,binds (list 'funcall (list 'quote ,bodyfun))))))))
 
+(defconst cl--labels-magic (make-symbol "cl--labels-magic"))
+
 (defvar cl--labels-convert-cache nil)
 
 (defun cl--labels-convert (f)
@@ -1818,10 +1820,12 @@ a `let' form, except that the list of symbols can be computed at run-time."
    ;; being expanded even though we don't receive it.
    ((eq f (car cl--labels-convert-cache)) (cdr cl--labels-convert-cache))
    (t
-    (let ((found (assq f macroexpand-all-environment)))
-      (if (and found (ignore-errors
-                       (eq (cadr (cl-caddr found)) 'cl-labels-args)))
-          (cadr (cl-caddr (cl-cadddr found)))
+    (let* ((found (assq f macroexpand-all-environment))
+           (replacement (and found
+                             (ignore-errors
+                               (funcall (cdr found) cl--labels-magic)))))
+      (if (and replacement (eq cl--labels-magic (car replacement)))
+          (nth 1 replacement)
         (let ((res `(function ,f)))
           (setq cl--labels-convert-cache (cons f res))
           res))))))
@@ -1850,17 +1854,18 @@ for (FUNC (lambda ARGLIST BODY)).
                             `(cl-function (lambda . ,args-and-body))))
                 binds))
 	(push (cons (car binding)
-                    (lambda (&rest cl-labels-args)
-                      (cl-list* 'funcall var cl-labels-args)))
+                    (lambda (&rest args)
+                      (if (eq (car args) cl--labels-magic)
+                          (list cl--labels-magic var)
+                        `(funcall ,var ,@args))))
               newenv)))
     ;; FIXME: Eliminate those functions which aren't referenced.
-    `(let ,(nreverse binds)
-       ,@(macroexp-unprogn
-          (macroexpand-all
-           `(progn ,@body)
-           ;; Don't override lexical-let's macro-expander.
-           (if (assq 'function newenv) newenv
-             (cons (cons 'function #'cl--labels-convert) newenv)))))))
+    (macroexp-let* (nreverse binds)
+                   (macroexpand-all
+                    `(progn ,@body)
+                    ;; Don't override lexical-let's macro-expander.
+                    (if (assq 'function newenv) newenv
+                      (cons (cons 'function #'cl--labels-convert) newenv))))))
 
 ;;;###autoload
 (defmacro cl-flet* (bindings &rest body)
@@ -1887,8 +1892,10 @@ in closures will only work if `lexical-binding' is in use.
       (let ((var (make-symbol (format "--cl-%s--" (car binding)))))
 	(push (list var `(cl-function (lambda . ,(cdr binding)))) binds)
 	(push (cons (car binding)
-                    (lambda (&rest cl-labels-args)
-                      (cl-list* 'funcall var cl-labels-args)))
+                    (lambda (&rest args)
+                      (if (eq (car args) cl--labels-magic)
+                          (list cl--labels-magic var)
+                        (cl-list* 'funcall var args))))
               newenv)))
     (macroexpand-all `(letrec ,(nreverse binds) ,@body)
                      ;; Don't override lexical-let's macro-expander.

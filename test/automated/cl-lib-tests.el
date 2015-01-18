@@ -245,4 +245,7 @@
 (ert-deftest cl-loop-destructuring-with ()
   (should (equal (cl-loop with (a b c) = '(1 2 3) return (+ a b c)) 6)))
 
+(ert-deftest cl-flet-test ()
+  (should (equal (cl-flet ((f1 (x) x)) (let ((x #'f1)) (funcall x 5))) 5)))
+
 ;;; cl-lib.el ends here

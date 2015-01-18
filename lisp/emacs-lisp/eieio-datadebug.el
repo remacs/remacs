@@ -88,7 +88,7 @@ PREBUTTONTEXT is some text between PREFIX and the object button."
 			     "Name: ")
     (let* ((cl (eieio-object-class obj))
 	   (cv (eieio--class-v cl)))
-      (data-debug-insert-thing (class-constructor cl)
+      (data-debug-insert-thing (eieio--class-constructor cl)
 			       prefix
 			       "Class: ")
       ;; Loop over all the public slots

@@ -36,11 +36,11 @@
 ;;   Retrieved from:
 ;;   http://192.220.96.201/dylan/linearization-oopsla96.html
 
-;; There is funny stuff going on with typep and deftype.  This
-;; is the only way I seem to be able to make this stuff load properly.
-
 ;; @TODO - fix :initform to be a form, not a quoted value
 ;; @TODO - Prefix non-clos functions with `eieio-'.
+
+;; TODO: better integrate CL's defstructs and classes.  E.g. make it possible
+;; to create a new class that inherits from a struct.
 
 ;;; Code:
 
@@ -76,8 +76,6 @@ being the slots residing in that class definition.  Supported tags are:
               - A string documenting use of this slot.
 
 The following are extensions on CLOS:
-  :protection - Specify protection for this slot.
-                Defaults to `:public'.  Also use `:protected', or `:private'.
   :custom     - When customizing an object, the custom :type.  Public only.
   :label      - A text string label used for a slot when customizing.
   :group      - Name of a customization group this slot belongs in.
@@ -278,12 +276,6 @@ and reference them using the function `class-option'."
           `(defun ,name (&rest slots)
              ,(format "Create a new object with name NAME of class type %S."
                       name)
-             (if (and slots
-                      (let ((x (car slots)))
-                        (or (stringp x) (null x))))
-                 (funcall (if eieio-backward-compatibility #'ignore #'message)
-                          "Obsolete name %S passed to %S constructor"
-                          (pop slots) ',name))
              (apply #'eieio-constructor ',name slots))))))
 
 
@@ -309,7 +301,7 @@ In EIEIO, the class' constructor requires a name for use when printing.
 `make-instance' in CLOS doesn't use names the way Emacs does, so the
 class is used as the name slot instead when INITARGS doesn't start with
 a string."
-  (apply (class-constructor class) initargs))
+  (apply (eieio--class-constructor class) initargs))
 
 
 ;;; Get/Set slots in an object.
@@ -658,7 +650,14 @@ SLOTS are the initialization slots used by `shared-initialize'.
 This static method is called when an object is constructed.
 It allocates the vector used to represent an EIEIO object, and then
 calls `shared-initialize' on that object."
-  (let* ((new-object (copy-sequence (eieio--class-default-object-cache (eieio--class-v class)))))
+  (let* ((new-object (copy-sequence (eieio--class-default-object-cache
+                                     (eieio--class-v class)))))
+    (if (and slots
+             (let ((x (car slots)))
+               (or (stringp x) (null x))))
+        (funcall (if eieio-backward-compatibility #'ignore #'message)
+                 "Obsolete name %S passed to %S constructor"
+                 (pop slots) class))
     ;; Call the initialize method on the new object with the slots
     ;; that were passed down to us.
     (initialize-instance new-object slots)
@@ -672,14 +671,13 @@ Called from the constructor routine.")
 (defmethod shared-initialize ((obj eieio-default-superclass) slots)
   "Set slots of OBJ with SLOTS which is a list of name/value pairs.
 Called from the constructor routine."
-  (eieio--with-scoped-class (eieio--object-class-object obj)
-    (while slots
-      (let ((rn (eieio--initarg-to-attribute (eieio--object-class-object obj)
-                                             (car slots))))
-	(if (not rn)
-	    (slot-missing obj (car slots) 'oset (car (cdr slots)))
-	  (eieio-oset obj rn (car (cdr slots)))))
-      (setq slots (cdr (cdr slots))))))
+  (while slots
+    (let ((rn (eieio--initarg-to-attribute (eieio--object-class-object obj)
+                                           (car slots))))
+      (if (not rn)
+          (slot-missing obj (car slots) 'oset (car (cdr slots)))
+        (eieio-oset obj rn (car (cdr slots)))))
+    (setq slots (cdr (cdr slots)))))
 
 (defgeneric initialize-instance (this &optional slots)
   "Construct the new object THIS based on SLOTS.")
@@ -823,7 +821,7 @@ this object."
     ;; Each slot's slot is writen using its :writer.
     (princ (make-string (* eieio-print-depth 2) ? ))
     (princ "(")
-    (princ (symbol-name (class-constructor (eieio-object-class this))))
+    (princ (symbol-name (eieio--class-constructor (eieio-object-class this))))
     (princ " ")
     (prin1 (eieio-object-name-string this))
     (princ "\n")
@@ -926,7 +924,7 @@ variable PRINT-FUNCTION.  Optional argument NOESCAPE is passed to
 
 ;;; Start of automatically extracted autoloads.
 
-;;;### (autoloads nil "eieio-custom" "eieio-custom.el" "9a908efef1720439feb6323c1dd01770")
+;;;### (autoloads nil "eieio-custom" "eieio-custom.el" "6baa78cfc590cc0422e12b7eb55abf24")
 ;;; Generated autoloads from eieio-custom.el
 
 (autoload 'customize-object "eieio-custom" "\

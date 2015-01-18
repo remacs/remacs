@@ -239,7 +239,8 @@ selected. When higher versions are available from archives with
 lower priorities, the user has to select those manually.
 
 Archives not in this list have the priority 0."
-  :type 'integer
+  :type '(alist :key-type (string :tag "Archive name")
+                :value-type (integer :tag "Priority (default is 0)"))
   :risky t
   :group 'package
   :version "25.1")
@@ -413,6 +414,7 @@ Slots:
   (pcase (package-desc-kind pkg-desc)
     (`single ".el")
     (`tar ".tar")
+    (`dir "")
     (kind (error "Unknown package kind: %s" kind))))
 
 (defun package-desc--keywords (pkg-desc)
@@ -800,6 +802,20 @@ untar into a directory named DIR; otherwise, signal an error."
          (dirname (package-desc-full-name pkg-desc))
 	 (pkg-dir (expand-file-name dirname package-user-dir)))
     (pcase (package-desc-kind pkg-desc)
+      (`dir
+       (make-directory pkg-dir t)
+       (let ((file-list
+              (directory-files
+               default-directory 'full "\\`[^.].*\\.el\\'" 'nosort)))
+         (dolist (source-file file-list)
+           (let ((target-el-file
+                  (expand-file-name (file-name-nondirectory source-file) pkg-dir)))
+             (copy-file source-file target-el-file t)))
+         ;; Now that the files have been installed, this package is
+         ;; indistinguishable from a `tar' or a `single'. Let's make
+         ;; things simple by ensuring we're one of them.
+         (setf (package-desc-kind pkg-desc)
+               (if (> (length file-list) 1) 'tar 'single))))
       (`tar
        (make-directory package-user-dir t)
        ;; FIXME: should we delete PKG-DIR if it exists?
@@ -925,6 +941,9 @@ GnuPG keyring is located under \"gnupg\" in `package-user-dir'."
 
 (defun package-install-from-archive (pkg-desc)
   "Download and install a tar package."
+  ;; This won't happen, unless the archive is doing something wrong.
+  (when (eq (package-desc-kind pkg-desc) 'dir)
+    (error "Can't install directory package from archive"))
   (let* ((location (package-archive-base pkg-desc))
 	 (file (concat (package-desc-full-name pkg-desc)
 		       (package-desc-suffix pkg-desc)))
@@ -1277,30 +1296,69 @@ The return result is a `package-desc'."
     (unless tar-desc
       (error "No package descriptor file found"))
     (with-current-buffer (tar--extract tar-desc)
-      (goto-char (point-min))
       (unwind-protect
-          (let* ((pkg-def-parsed (read (current-buffer)))
-                 (pkg-desc
-                  (if (not (eq (car pkg-def-parsed) 'define-package))
-                      (error "Can't find define-package in %s"
-                             (tar-header-name tar-desc))
-                    (apply #'package-desc-from-define
-                           (append (cdr pkg-def-parsed))))))
-            (setf (package-desc-kind pkg-desc) 'tar)
-            pkg-desc)
+          (package--read-pkg-desc 'tar)
         (kill-buffer (current-buffer))))))
+
+(defun package-dir-info ()
+  "Find package information for a directory.
+The return result is a `package-desc'."
+  (cl-assert (derived-mode-p 'dired-mode))
+  (let* ((desc-file (package--description-file default-directory)))
+    (if (file-readable-p desc-file)
+        (with-temp-buffer
+          (insert-file-contents desc-file)
+          (package--read-pkg-desc 'dir))
+      (let ((files (directory-files default-directory t "\\.el\\'" t))
+            info)
+        (while files
+          (with-temp-buffer
+            (insert-file-contents (pop files))
+            (if (setq info (ignore-errors (package-buffer-info)))
+                (setq files nil)
+              (setf (package-desc-kind info) 'dir))))))))
+
+(defun package--read-pkg-desc (kind)
+  "Read a `define-package' form in current buffer.
+Return the pkg-desc, with desc-kind set to KIND."
+  (goto-char (point-min))
+  (unwind-protect
+      (let* ((pkg-def-parsed (read (current-buffer)))
+             (pkg-desc
+              (if (not (eq (car pkg-def-parsed) 'define-package))
+                  (error "Can't find define-package in %s"
+                         (tar-header-name tar-desc))
+                (apply #'package-desc-from-define
+                  (append (cdr pkg-def-parsed))))))
+        (setf (package-desc-kind pkg-desc) kind)
+        pkg-desc)))
 
 
 ;;;###autoload
 (defun package-install-from-buffer ()
   "Install a package from the current buffer.
-The current buffer is assumed to be a single .el or .tar file that follows the
-packaging guidelines; see info node `(elisp)Packaging'.
+The current buffer is assumed to be a single .el or .tar file or
+a directory.  These must follow the packaging guidelines (see
+info node `(elisp)Packaging').
+
+Specially, if current buffer is a directory, the -pkg.el
+description file is not mandatory, in which case the information
+is derived from the main .el file in the directory.
+
 Downloads and installs required packages as needed."
   (interactive)
-  (let ((pkg-desc (if (derived-mode-p 'tar-mode)
-                      (package-tar-file-info)
-                    (package-buffer-info))))
+  (let ((pkg-desc
+         (cond
+          ((derived-mode-p 'dired-mode)
+           ;; This is the only way a package-desc object with a `dir'
+           ;; desc-kind can be created.  Such packages can't be
+           ;; uploaded or installed from archives, they can only be
+           ;; installed from local buffers or directories.
+           (package-dir-info))
+          ((derived-mode-p 'tar-mode)
+           (package-tar-file-info))
+          (t
+           (package-buffer-info)))))
     ;; Download and install the dependencies.
     (let* ((requires (package-desc-reqs pkg-desc))
            (transaction (package-compute-transaction nil requires)))
@@ -1315,8 +1373,12 @@ Downloads and installs required packages as needed."
 The file can either be a tar file or an Emacs Lisp file."
   (interactive "fPackage file name: ")
   (with-temp-buffer
-    (insert-file-contents-literally file)
-    (when (string-match "\\.tar\\'" file) (tar-mode))
+    (if (file-directory-p file)
+        (progn
+          (setq default-directory file)
+          (dired-mode))
+      (insert-file-contents-literally file)
+      (when (string-match "\\.tar\\'" file) (tar-mode)))
     (package-install-from-buffer)))
 
 (defun package-delete (pkg-desc)

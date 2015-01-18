@@ -1191,7 +1191,6 @@ Using it may cause conflicts.  Use it anyway? " owner)))))
 	    (desktop-auto-save-enable)
 	    t))
       ;; No desktop file found.
-      (desktop-clear)
       (let ((default-directory desktop-dirname))
         (run-hooks 'desktop-no-desktop-file-hook))
       (message "No desktop file.")

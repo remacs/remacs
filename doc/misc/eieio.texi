@@ -538,9 +538,14 @@ to quote the symbol.  If you wanted to run a function on load, you
 can output the code to do the construction of the value.
 
 @item :protection
+This is an old option that is not supported any more.
+
 When using a slot referencing function such as @code{slot-value}, and
 the value behind @var{slot} is private or protected, then the current
 scope of operation must be within a method of the calling object.
+
+This protection is not enforced by the code any more, so it's only useful
+as documentation.
 
 Valid values are:
 
