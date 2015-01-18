@@ -182,7 +182,12 @@ Evaluate BODY for each created sequence.
     (should (same-contents-p (seq-subseq seq 1 -1) '(3 4))))
   (should (vectorp (seq-subseq [2 3 4 5] 2)))
   (should (stringp (seq-subseq "foo" 2 3)))
-  (should (listp (seq-subseq '(2 3 4 4) 2 3))))
+  (should (listp (seq-subseq '(2 3 4 4) 2 3)))
+  (should-error (seq-subseq '(1 2 3) 4))
+  (should-not   (seq-subseq '(1 2 3) 3))
+  (should       (seq-subseq '(1 2 3) -3))
+  (should-error (seq-subseq '(1 2 3) 1 4))
+  (should       (seq-subseq '(1 2 3) 1 3)))
 
 (ert-deftest test-seq-concatenate ()
   (with-test-sequences (seq '(2 4 6))

@@ -38,6 +38,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'seq)
 
 ;;; Type coercion.
 
@@ -521,28 +522,10 @@ If END is omitted, it defaults to the length of the sequence.
 If START or END is negative, it counts from the end."
   (declare (gv-setter
             (lambda (new)
-              `(progn (cl-replace ,seq ,new :start1 ,start :end1 ,end)
-                      ,new))))
-  (if (stringp seq) (substring seq start end)
-    (let (len)
-      (and end (< end 0) (setq end (+ end (setq len (length seq)))))
-      (if (< start 0) (setq start (+ start (or len (setq len (length seq))))))
-      (cond ((listp seq)
-	     (if (> start 0) (setq seq (nthcdr start seq)))
-	     (if end
-		 (let ((res nil))
-		   (while (>= (setq end (1- end)) start)
-		     (push (pop seq) res))
-		   (nreverse res))
-	       (copy-sequence seq)))
-	    (t
-	     (or end (setq end (or len (length seq))))
-	     (let ((res (make-vector (max (- end start) 0) nil))
-		   (i 0))
-	       (while (< start end)
-		 (aset res i (aref seq start))
-		 (setq i (1+ i) start (1+ start)))
-	       res))))))
+              (macroexp-let2 nil new new
+		`(progn (cl-replace ,seq ,new :start1 ,start :end1 ,end)
+			,new)))))
+  (seq-subseq seq start end))
 
 ;;;###autoload
 (defun cl-concatenate (type &rest seqs)
