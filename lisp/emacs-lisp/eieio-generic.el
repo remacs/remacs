@@ -110,7 +110,7 @@ Methods with only primary implementations are executed in an optimized way."
 
   (cond
    ((or (not (fboundp method))
-        (eq 'autoload (car-safe (symbol-function method))))
+        (autoloadp (symbol-function method)))
     ;; Make sure the method tables are installed.
     (eieio--mt-install method)
     ;; Construct the actual body of this function.

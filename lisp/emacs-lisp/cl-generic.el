@@ -212,13 +212,13 @@ This macro can only be used within the lexical scope of a cl-generic method."
             (macroenv (cons `(cl-generic-current-method-specializers
                               . ,(lambda () specializers))
                             macroexpand-all-environment)))
+        (require 'cl-lib)        ;Needed to expand `cl-flet' and `cl-function'.
         (if (not with-cnm)
             (cons nil (macroexpand-all fun macroenv))
           ;; First macroexpand away the cl-function stuff (e.g. &key and
           ;; destructuring args, `declare' and whatnot).
           (pcase (macroexpand fun macroenv)
             (`#'(lambda ,args . ,body)
-             (require 'cl-lib)          ;Needed to expand `cl-flet'.
              (let* ((doc-string (and doc-string (stringp (car body))
                                      (pop body)))
                     (cnm (make-symbol "cl--cnm"))
@@ -287,6 +287,13 @@ which case this method will be invoked when the argument is `eql' to VAL.
                                              (cadr name))))
               (setq name setter)
               code))
+         ,(and (get name 'byte-obsolete-info)
+               (or (not (fboundp 'byte-compile-warning-enabled-p))
+                   (byte-compile-warning-enabled-p 'obsolete))
+               (let* ((obsolete (get name 'byte-obsolete-info)))
+                 (macroexp--warn-and-return
+                  (macroexp--obsolete-warning name obsolete "generic function")
+                  nil)))
          (cl-generic-define-method ',name ',qualifiers ',args
                                    ,uses-cnm ,fun)))))
 
@@ -308,13 +315,14 @@ which case this method will be invoked when the argument is `eql' to VAL.
     (dolist (specializer specializers)
       (let* ((tagcode (funcall cl-generic-tagcode-function specializer 'arg))
              (x (assq i dispatches)))
-        (if (not x)
-            (setf (cl--generic-dispatches generic)
-                  (setq dispatches (cons (list i tagcode) dispatches)))
-          (unless (member tagcode (cdr x))
-            (setf (cdr x)
-                  (nreverse (sort (cons tagcode (cdr x))
-                                  #'car-less-than-car)))))
+        (unless x
+          (setq x (list i (funcall cl-generic-tagcode-function t 'arg)))
+          (setf (cl--generic-dispatches generic)
+                (setq dispatches (cons x dispatches))))
+        (unless (member tagcode (cdr x))
+          (setf (cdr x)
+                (nreverse (sort (cons tagcode (cdr x))
+                                #'car-less-than-car))))
         (setq i (1+ i))))
     (if me (setcdr me (cons uses-cnm function))
       (setf (cl--generic-method-table generic)
@@ -478,7 +486,8 @@ for all those different tags in the method-cache.")
   (let ((types (apply #'append (mapcar cl-generic-tag-types-function tags)))
         (methods '()))
     (dolist (method-desc (cl--generic-method-table generic))
-      (let ((m (member (nth dispatch-arg (caar method-desc)) types)))
+      (let* ((specializer (or (nth dispatch-arg (caar method-desc)) t))
+             (m (member specializer types)))
         (when m
           (push (cons (length m) method-desc) methods))))
     ;; Sort the methods, most specific first.

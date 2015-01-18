@@ -29,12 +29,12 @@
 (cl-defgeneric cl--generic-1 (x y))
 (cl-defgeneric (setf cl--generic-1) (v y z) "My generic doc.")
 
-(ert-deftest cl-generic-test-0 ()
+(ert-deftest cl-generic-test-00 ()
   (cl-defgeneric cl--generic-1 (x y))
   (cl-defmethod cl--generic-1 ((x t) y) (cons x y))
   (should (equal (cl--generic-1 'a 'b) '(a . b))))
 
-(ert-deftest cl-generic-test-1-eql ()
+(ert-deftest cl-generic-test-01-eql ()
   (cl-defgeneric cl--generic-1 (x y))
   (cl-defmethod cl--generic-1 ((x t) y) (cons x y))
   (cl-defmethod cl--generic-1 ((_x (eql 4)) _y)
@@ -53,7 +53,7 @@
 (cl-defstruct (cl-generic-struct-child11 (:include cl-generic-struct-child1)) d)
 (cl-defstruct (cl-generic-struct-child2 (:include cl-generic-struct-parent)) e)
 
-(ert-deftest cl-generic-test-2-struct ()
+(ert-deftest cl-generic-test-02-struct ()
   (cl-defgeneric cl--generic-1 (x y) "My doc.")
   (cl-defmethod cl--generic-1 ((x t) y) "Doc 1." (cons x y))
   (cl-defmethod cl--generic-1 ((_x cl-generic-struct-parent) y)
@@ -73,7 +73,7 @@
   (should (equal (cl--generic-1 (make-cl-generic-struct-child11) nil)
                  '("child11" "around""child1" "parent" a))))
 
-(ert-deftest cl-generic-test-3-setf ()
+(ert-deftest cl-generic-test-03-setf ()
   (cl-defmethod (setf cl--generic-1) (v (y t) z) (list v y z))
   (cl-defmethod (setf cl--generic-1) (v (_y (eql 4)) z) (list v "four" z))
   (should (equal (setf (cl--generic-1 'a 'b) 'v) '(v a b)))
@@ -85,7 +85,7 @@
                    '(v a b)))
     (should (equal x '(3 2 1)))))
 
-(ert-deftest cl-generic-test-4-overlapping-tagcodes ()
+(ert-deftest cl-generic-test-04-overlapping-tagcodes ()
   (cl-defgeneric cl--generic-1 (x y) "My doc.")
   (cl-defmethod cl--generic-1 ((y t) z) (list y z))
   (cl-defmethod cl--generic-1 ((_y (eql 4)) _z)
@@ -98,7 +98,7 @@
   (should (equal (cl--generic-1 1 'b) '("integer" "number" 1 b)))
   (should (equal (cl--generic-1 4 'b) '("four" "integer" "number" 4 b))))
 
-(ert-deftest cl-generic-test-5-alias ()
+(ert-deftest cl-generic-test-05-alias ()
   (cl-defgeneric cl--generic-1 (x y) "My doc.")
   (defalias 'cl--generic-2 #'cl--generic-1)
   (cl-defmethod cl--generic-1 ((y t) z) (list y z))
@@ -106,7 +106,7 @@
                 (cons "four" (cl-call-next-method)))
   (should (equal (cl--generic-1 4 'b) '("four" 4 b))))
 
-(ert-deftest cl-generic-test-6-multiple-dispatch ()
+(ert-deftest cl-generic-test-06-multiple-dispatch ()
   (cl-defgeneric cl--generic-1 (x y) "My doc.")
   (cl-defmethod cl--generic-1 (x y) (list x y))
   (cl-defmethod cl--generic-1 (_x (_y integer))
@@ -117,7 +117,7 @@
     (cons "x&y-int" (cl-call-next-method)))
   (should (equal (cl--generic-1 1 2) '("x&y-int" "x-int" "y-int" 1 2))))
 
-(ert-deftest cl-generic-test-7-apo ()
+(ert-deftest cl-generic-test-07-apo ()
   (cl-defgeneric cl--generic-1 (x y)
     (:documentation "My doc.") (:argument-precedence-order y x))
   (cl-defmethod cl--generic-1 (x y) (list x y))
@@ -129,7 +129,7 @@
     (cons "x&y-int" (cl-call-next-method)))
   (should (equal (cl--generic-1 1 2) '("x&y-int" "y-int" "x-int" 1 2))))
 
-(ert-deftest cl-generic-test-8-after/before ()
+(ert-deftest cl-generic-test-08-after/before ()
   (let ((log ()))
     (cl-defgeneric cl--generic-1 (x y))
     (cl-defmethod cl--generic-1 ((_x t) y) (cons y log))
@@ -144,7 +144,7 @@
 
 (defun cl--generic-test-advice (&rest args) (cons "advice" (apply args)))
 
-(ert-deftest cl-generic-test-9-advice ()
+(ert-deftest cl-generic-test-09-advice ()
   (cl-defgeneric cl--generic-1 (x y) "My doc.")
   (cl-defmethod cl--generic-1 (x y) (list x y))
   (advice-add 'cl--generic-1 :around #'cl--generic-test-advice)
@@ -154,6 +154,17 @@
   (should (equal (cl--generic-1 4 5) '("advice" "integer" 4 5)))
   (advice-remove 'cl--generic-1 #'cl--generic-test-advice)
   (should (equal (cl--generic-1 4 5) '("integer" 4 5))))
+
+(ert-deftest cl-generic-test-10-weird ()
+  (cl-defgeneric cl--generic-1 (x &rest r) "My doc.")
+  (cl-defmethod cl--generic-1 (x &rest r) (cons x r))
+  ;; This kind of definition is not valid according to CLHS, but it does show
+  ;; up in EIEIO's tests for no-next-method, so we should either
+  ;; detect it and signal an error or do something meaningful with it.
+  (cl-defmethod cl--generic-1 (x (y integer) &rest r)
+    `("integer" ,y ,x ,@r))
+  (should (equal (cl--generic-1 'a 'b) '(a b)))
+  (should (equal (cl--generic-1 1 2) '("integer" 2 1))))
 
 (provide 'cl-generic-tests)
 ;;; cl-generic-tests.el ends here
