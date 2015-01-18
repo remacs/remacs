@@ -36,11 +36,11 @@
 ;;   Retrieved from:
 ;;   http://192.220.96.201/dylan/linearization-oopsla96.html
 
-;; There is funny stuff going on with typep and deftype.  This
-;; is the only way I seem to be able to make this stuff load properly.
-
 ;; @TODO - fix :initform to be a form, not a quoted value
 ;; @TODO - Prefix non-clos functions with `eieio-'.
+
+;; TODO: better integrate CL's defstructs and classes.  E.g. make it possible
+;; to create a new class that inherits from a struct.
 
 ;;; Code:
 
@@ -924,7 +924,7 @@ variable PRINT-FUNCTION.  Optional argument NOESCAPE is passed to
 
 ;;; Start of automatically extracted autoloads.
 
-;;;### (autoloads nil "eieio-custom" "eieio-custom.el" "9a908efef1720439feb6323c1dd01770")
+;;;### (autoloads nil "eieio-custom" "eieio-custom.el" "6baa78cfc590cc0422e12b7eb55abf24")
 ;;; Generated autoloads from eieio-custom.el
 
 (autoload 'customize-object "eieio-custom" "\
