@@ -1,3 +1,8 @@
+2015-01-19  Ivan Shmakov  <ivan@siamics.net>
+
+	* cus-dep.el (custom-make-dependencies): Ensure that
+	default-directory is interpreted as a directory (see bug#19140.)
+
 2015-01-19  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* progmodes/xref.el (xref--display-position):

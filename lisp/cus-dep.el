@@ -62,7 +62,8 @@ Usage: emacs -batch -l ./cus-dep.el -f custom-make-dependencies DIRS"
       (while (setq subdir (pop command-line-args-left))
         (message "Directory %s" subdir)
         (let ((files (directory-files subdir nil "\\`[^=.].*\\.el\\'"))
-              (default-directory (expand-file-name subdir))
+              (default-directory
+                (file-name-as-directory (expand-file-name subdir)))
               (preloaded (concat "\\`\\(\\./+\\)?"
                                  (regexp-opt preloaded-file-list t)
                                  "\\.el\\'")))
