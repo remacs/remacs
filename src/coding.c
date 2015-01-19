@@ -11272,13 +11272,10 @@ internal character representation.  */);
     Vtranslation_table_for_input = Qnil;
 
   {
-    Lisp_Object args[coding_arg_undecided_max];
+    verify (NIL_IS_ZERO);
+    Lisp_Object args[coding_arg_undecided_max] = { LISP_INITIALLY_ZERO, };
+
     Lisp_Object plist[16];
-    int i;
-
-    for (i = 0; i < coding_arg_undecided_max; i++)
-      args[i] = Qnil;
-
     plist[0] = intern_c_string (":name");
     plist[1] = args[coding_arg_name] = Qno_conversion;
     plist[2] = intern_c_string (":mnemonic");

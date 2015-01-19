@@ -2517,16 +2517,14 @@ usage: (nconc &rest LISTS)  */)
 static void
 mapcar1 (EMACS_INT leni, Lisp_Object *vals, Lisp_Object fn, Lisp_Object seq)
 {
-  register Lisp_Object tail;
-  Lisp_Object dummy;
-  register EMACS_INT i;
+  Lisp_Object tail, dummy;
+  EMACS_INT i;
   struct gcpro gcpro1, gcpro2, gcpro3;
 
   if (vals)
     {
       /* Don't let vals contain any garbage when GC happens.  */
-      for (i = 0; i < leni; i++)
-	vals[i] = Qnil;
+      memsetnil (vals, leni);
 
       GCPRO3 (dummy, fn, seq);
       gcpro1.var = vals;
@@ -3688,7 +3686,7 @@ Lisp_Object
 larger_vector (Lisp_Object vec, ptrdiff_t incr_min, ptrdiff_t nitems_max)
 {
   struct Lisp_Vector *v;
-  ptrdiff_t i, incr, incr_max, old_size, new_size;
+  ptrdiff_t incr, incr_max, old_size, new_size;
   ptrdiff_t C_language_max = min (PTRDIFF_MAX, SIZE_MAX) / sizeof *v->contents;
   ptrdiff_t n_max = (0 <= nitems_max && nitems_max < C_language_max
 		     ? nitems_max : C_language_max);
@@ -3702,8 +3700,7 @@ larger_vector (Lisp_Object vec, ptrdiff_t incr_min, ptrdiff_t nitems_max)
   new_size = old_size + incr;
   v = allocate_vector (new_size);
   memcpy (v->contents, XVECTOR (vec)->contents, old_size * sizeof *v->contents);
-  for (i = old_size; i < new_size; ++i)
-    v->contents[i] = Qnil;
+  memsetnil (v->contents + old_size, new_size - old_size);
   XSETVECTOR (vec, v);
   return vec;
 }

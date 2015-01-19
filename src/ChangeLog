@@ -1,3 +1,29 @@
+2015-01-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Prefer memset to repeatedly assigning Qnil
+	* alloc.c (allocate_pseudovector): Catch more bogus values.
+	* alloc.c (allocate_pseudovector):
+	* callint.c (Fcall_interactively):
+	* coding.c (syms_of_coding):
+	* fringe.c (init_fringe):
+	Verify that Qnil == 0.
+	* callint.c (Fcall_interactively):
+	* eval.c (Fapply, Ffuncall):
+	* fns.c (mapcar1, larger_vector):
+	* font.c (font_expand_wildcards):
+	* fringe.c (init_fringe):
+	Prefer memset to assigning zeros by hand.
+	* callint.c (Fcall_interactively):
+	Remove duplicate assignment of Qnil to args[i].
+	* coding.c (syms_of_coding):
+	Prefer LISP_INITIALLY_ZERO to assigning zeros by hand.
+	* fileio.c (Ffile_selinux_context):
+	Rewrite to avoid need for Lisp_Object array.
+	* lisp.h (XLI_BUILTIN_LISPSYM): New macro.
+	(DEFINE_LISP_SYMBOL_END): Use it.
+	(NIL_IS_ZERO): New constant.
+	(memsetnil): New function.
+
 2015-01-16  Dmitry Antipov  <dmantipov@yandex.ru>
 
 	Tune pseudovector allocation assuming Qnil == 0.
