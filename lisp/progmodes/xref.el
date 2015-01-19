@@ -51,6 +51,7 @@
 (require 'cl-lib)
 (require 'eieio)
 (require 'ring)
+(require 'pcase)
 
 (defgroup xref nil "Cross-referencing commands"
   :group 'tools)
@@ -333,19 +334,31 @@ WINDOW controls how the buffer is displayed:
 
 ;; The xref buffer is used to display a set of xrefs.
 
-(defvar-local xref--window-configuration nil)
+(defvar-local xref--display-history nil
+  "List of pairs (BUFFER . WINDOW), for temporarily displayed buffers.")
 
-(defun xref--display-position (pos other-window recenter-arg)
-  ;; show the location, but don't hijack focus.
+(defun xref--save-to-history (buf win)
+  (let ((restore (window-parameter win 'quit-restore)))
+    ;; Save the new entry if the window displayed another buffer
+    ;; previously.
+    (when (and restore (not (eq (car restore) 'same)))
+      (push (cons buf win) xref--display-history))))
+
+(defun xref--display-position (pos other-window recenter-arg xref-buf)
+  ;; Show the location, but don't hijack focus.
   (with-selected-window (display-buffer (current-buffer) other-window)
     (goto-char pos)
-    (recenter recenter-arg)))
+    (recenter recenter-arg)
+    (let ((buf (current-buffer))
+          (win (selected-window)))
+      (with-current-buffer xref-buf
+        (xref--save-to-history buf win)))))
 
 (defun xref--show-location (location)
   (condition-case err
-      (progn
+      (let ((xref-buf (current-buffer)))
         (xref--goto-location location)
-        (xref--display-position (point) t 1))
+        (xref--display-position (point) t 1 xref-buf))
     (user-error (message (error-message-string err)))))
 
 (defun xref-show-location-at-point ()
@@ -353,13 +366,7 @@ WINDOW controls how the buffer is displayed:
   (interactive)
   (let ((loc (xref--location-at-point)))
     (when loc
-      (setq xref--window-configuration (current-window-configuration))
       (xref--show-location loc))))
-
-(defun xref--restore-window-configuration ()
-  (when xref--window-configuration
-    (set-window-configuration xref--window-configuration)
-    (setq xref--window-configuration nil)))
 
 (defun xref-next-line ()
   "Move to the next xref and display its source in the other window."
@@ -385,16 +392,15 @@ WINDOW controls how the buffer is displayed:
   (let ((loc (or (xref--location-at-point)
                  (error "No reference at point")))
         (window xref--window))
-    (quit-window)
+    (xref--quit)
     (xref--pop-to-location loc window)))
 
 (define-derived-mode xref--xref-buffer-mode fundamental-mode "XREF"
   "Mode for displaying cross-references."
-  (setq buffer-read-only t)
-  (add-hook 'pre-command-hook #'xref--restore-window-configuration nil t))
+  (setq buffer-read-only t))
 
 (let ((map xref--xref-buffer-mode-map))
-  (define-key map (kbd "q") #'quit-window)
+  (define-key map (kbd "q") #'xref--quit)
   (define-key map (kbd "n") #'xref-next-line)
   (define-key map (kbd "p") #'xref-prev-line)
   (define-key map (kbd "RET") #'xref-goto-xref)
@@ -403,6 +409,18 @@ WINDOW controls how the buffer is displayed:
   ;; suggested by Johan Claesson "to further reduce finger movement":
   (define-key map (kbd ".") #'xref-next-line)
   (define-key map (kbd ",") #'xref-prev-line))
+
+(defun xref--quit ()
+  "Quit all windows in `xref--display-history', then quit current window."
+  (interactive)
+  (let ((window (selected-window))
+        (history xref--display-history))
+    (setq xref--display-history nil)
+    (pcase-dolist (`(,buf . ,win) history)
+      (when (and (window-live-p win)
+                 (eq buf (window-buffer win)))
+        (quit-window nil win)))
+    (quit-window nil window)))
 
 (defconst xref-buffer-name "*xref*"
   "The name of the buffer to show xrefs.")

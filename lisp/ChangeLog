@@ -1,3 +1,17 @@
+2015-01-19  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/xref.el (xref--display-history): New variable.
+	(xref--window-configuration): Remove.
+	(xref--save-to-history): New function.
+	(xref--display-position): Use it.  Add new argument.
+	(xref--restore-window-configuration): Remove.
+	(xref--show-location, xref-show-location-at-point): Update
+	accordingly.
+	(xref--xref-buffer-mode): Don't use `pre-command-hook'.
+	(xref--quit): New command.
+	(xref-goto-xref): Use it.
+	(xref--xref-buffer-mode-map): Bind `q' to it.
+
 2015-01-18  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* progmodes/xref.el (xref-goto-xref): Perform the jump even inside
