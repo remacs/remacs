@@ -2747,6 +2747,9 @@ init_iterator (struct it *it, struct window *w,
     }
 
   /* Clear IT.  */
+  /* As a side effect, this sets it->object to nil, so verify we will
+     indeed get that.  */
+  verify (NIL_IS_ZERO);
   memset (it, 0, sizeof *it);
   it->current.overlay_string_index = -1;
   it->current.dpvec_index = -1;

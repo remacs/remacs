@@ -1,3 +1,13 @@
+2015-01-19  Eli Zaretskii  <eliz@gnu.org>
+
+	* dispnew.c (adjust_glyph_matrix, realloc_glyph_pool): Verify that
+	Qnil is represented as zero, before using that to initialize parts
+	of the glyph structure.
+
+	* xdisp.c (init_iterator): Verify that Qnil is represented as
+	zero, before using that to initialize parts of the iterator
+	structure.
+
 2015-01-19  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Prefer memset to repeatedly assigning Qnil
