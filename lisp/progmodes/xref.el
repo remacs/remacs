@@ -352,6 +352,7 @@ WINDOW controls how the buffer is displayed:
     (let ((buf (current-buffer))
           (win (selected-window)))
       (with-current-buffer xref-buf
+        (setq-local other-window-scroll-buffer buf)
         (xref--save-to-history buf win)))))
 
 (defun xref--show-location (location)
@@ -390,7 +391,7 @@ WINDOW controls how the buffer is displayed:
   (interactive)
   (back-to-indentation)
   (let ((loc (or (xref--location-at-point)
-                 (error "No reference at point")))
+                 (user-error "No reference at point")))
         (window xref--window))
     (xref--quit)
     (xref--pop-to-location loc window)))
