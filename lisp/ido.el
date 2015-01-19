@@ -208,13 +208,13 @@
 ;;
 ;; Customize the Ido group to change the Ido functionality.
 ;;
-;; To modify the keybindings, use the ido-setup-hook.  For example:
-;;(add-hook 'ido-setup-hook 'ido-my-keys)
+;; To modify the keybindings, use `define-key' on
+;; `ido-common-completion-map' or one of the specialized keymaps:
+;; `ido-file-dir-completion-map', `ido-file-completion-map' or
+;; `ido-buffer-completion-map'.
 ;;
-;;(defun ido-my-keys ()
-;;  "Add my keybindings for ido."
-;;  (define-key ido-completion-map " " 'ido-next-match)
-;;  )
+;; (with-eval-after-load 'ido
+;;   (define-key ido-common-completion-map " " 'ido-next-match))
 
 ;; Seeing all the matching buffers or files
 ;; ----------------------------------------
