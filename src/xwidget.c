@@ -76,6 +76,7 @@
 #ifdef HAVE_GTK3
 //for gtk3; sockets and plugs
 #include <gtk/gtkx.h>
+#include <gtk/gtkscrolledwindow.h>
 #include "emacsgtkfixed.h"
 #endif
 
@@ -146,6 +147,9 @@ gboolean webkit_osr_navigation_policy_decision_requested_callback(WebKitWebView 
                                                                   gpointer                   user_data);
 
 GtkWidget* xwgir_create(char* class, char* namespace);
+
+
+
 static void
 send_xembed_ready_event (struct xwidget* xw, int xembedid);
 DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 8, 0,
@@ -194,6 +198,8 @@ TYPE is a symbol which can take one of the following values:
   xw->plist = Qnil;
 
 
+
+
 #ifdef HAVE_WEBKIT_OSR
   /* DIY mvc. widget is rendered offscreen,
      later bitmap copied to the views.
@@ -204,9 +210,17 @@ TYPE is a symbol which can take one of the following values:
       block_input();
       xw->widgetwindow_osr = gtk_offscreen_window_new ();
       gtk_window_resize(GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
+      xw->widgetscrolledwindow_osr = NULL; //webkit osr is the only scrolled component atm
 
-      if (EQ(xw->type, Qwebkit_osr))
-          xw->widget_osr = webkit_web_view_new();
+      if (EQ(xw->type, Qwebkit_osr)){
+        xw->widgetscrolledwindow_osr =   gtk_scrolled_window_new(NULL, NULL);
+        gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(xw->widgetscrolledwindow_osr ),xw->height);
+        gtk_scrolled_window_set_min_content_width(GTK_SCROLLED_WINDOW(xw->widgetscrolledwindow_osr ),xw->width);
+        gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(xw->widgetscrolledwindow_osr ), GTK_POLICY_ALWAYS, GTK_POLICY_ALWAYS);
+
+        xw->widget_osr=webkit_web_view_new();
+        gtk_container_add(GTK_CONTAINER(xw->widgetscrolledwindow_osr ), GTK_WIDGET( WEBKIT_WEB_VIEW(xw->widget_osr)));
+      }
       if(EQ(xw->type, Qsocket_osr))
           xw->widget_osr = gtk_socket_new();
       if(!NILP (Fget(xw->type, QCxwgir_class)))
@@ -214,10 +228,16 @@ TYPE is a symbol which can take one of the following values:
                                         SDATA(Fcar(Fget(xw->type, QCxwgir_class))));
 
       gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);
-      gtk_container_add (GTK_CONTAINER (xw->widgetwindow_osr), xw->widget_osr);
+
+      if (EQ(xw->type, Qwebkit_osr)){
+        gtk_container_add (GTK_CONTAINER (xw->widgetwindow_osr), xw->widgetscrolledwindow_osr);
+      }else{
+        gtk_container_add (GTK_CONTAINER (xw->widgetwindow_osr), xw->widget_osr);
+      }
 
       gtk_widget_show (xw->widget_osr);
       gtk_widget_show (xw->widgetwindow_osr);
+      gtk_widget_show (xw->widgetscrolledwindow_osr);
 
       /* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. */
       g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw));
@@ -541,8 +561,11 @@ xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
   cairo_rectangle(cr, 0,0, xv->clip_right, xv->clip_bottom);//xw->width, xw->height);
   cairo_clip(cr);
 
-  gtk_widget_draw (xw->widget_osr, cr);
-
+  //
+  if(xw->widgetscrolledwindow_osr !=  NULL)
+    gtk_widget_draw (xw->widgetscrolledwindow_osr, cr);
+  else
+    gtk_widget_draw (xw->widget_osr, cr);
   return FALSE;
 }
 
@@ -564,7 +587,18 @@ xwidget_osr_event_forward (GtkWidget *widget,
   //((GdkEventAny*)eventcopy)->window = gtk_widget_get_window(xw->widget_osr);
   //eventcopy->any.window = gtk_widget_get_window(GTK_WIDGET (xw->widgetwindow_osr));
   //((GdkEventAny*)eventcopy)->window = gtk_widget_get_window(xwgir_create_debug);
-  eventcopy->any.window = gtk_widget_get_window(xw->widget_osr);//gtk_widget_get_window(xwgir_create_debug);
+
+
+
+  eventcopy->any.window = gtk_widget_get_window(xw->widget_osr);// works
+  //eventcopy->any.window = gtk_widget_get_window(xw->widgetwindow_osr);//nothing happens
+  //eventcopy->any.window = gtk_widget_get_window(gtk_scrolled_window_get_vscrollbar (GTK_SCROLLED_WINDOW(xw->widgetscrolledwindow_osr)));
+  //eventcopy->any.window = gtk_widget_get_window(xw->widgetscrolledwindow_osr); //nothing happens
+  //eventcopy->any.send_event = TRUE;
+  //gtk_scrolled_window_scroll_child (xw->widgetscrolledwindow_osr, GTK_SCROLL_STEP_DOWN, FALSE); // private
+
+
+
   //eventcopy->any.window = gtk_button_get_event_window(GTK_BUTTON(xw->widget_osr));//gtk_widget_get_window(xwgir_create_debug);
   //eventcopy->button.x=200; eventcopy->button.y=200;
   //event->button.button = GDK_BUTTON_PRIMARY; //debug
@@ -1149,7 +1183,7 @@ DEFUN ("xwidget-webkit-get-title", Fxwidget_webkit_get_title,  Sxwidget_webkit_g
 }
 
 //TODO missnamed
-DEFUN("xwidget-disable-plugin-for-mime", Fxwidget_disable_plugin_for_mime , Sxwidget_disable_plugin_for_mime,
+DEFUN ("xwidget-disable-plugin-for-mime", Fxwidget_disable_plugin_for_mime , Sxwidget_disable_plugin_for_mime,
       1,1,0, doc: /* */)
   (Lisp_Object mime)
 {
@@ -1219,8 +1253,6 @@ DEFUN ("xwidget-webkit-dom-dump", Fxwidget_webkit_dom_dump,  Sxwidget_webkit_dom
 
 
 
-
-
 DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0, doc:
        /* Resize XWIDGET.
           NEW_WIDTH NEW_HEIGHT defines the new size.)
@@ -1252,6 +1284,10 @@ DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0, doc:
     gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height); //minimum size
     //gtk_window_resize(    GTK_WINDOW(xw->widget_osr), xw->width, xw->height);
     gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
+    gtk_window_resize(    GTK_WINDOW(xw->widgetscrolledwindow_osr), xw->width, xw->height);
+    gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(xw->widgetscrolledwindow_osr ),xw->height);
+    gtk_scrolled_window_set_min_content_width(GTK_SCROLLED_WINDOW(xw->widgetscrolledwindow_osr ),xw->width);
+
     //gtk_container_resize_children ( GTK_WINDOW(xw->widgetwindow_osr));
     gtk_container_resize_children (GTK_CONTAINER(xw->widgetwindow_osr));
 
@@ -1271,8 +1307,38 @@ DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0, doc:
   return Qnil;
 }
 
+
+
+DEFUN ("xwidget-set-adjustment", Fxwidget_set_adjustment, Sxwidget_set_adjustment, 4, 4, 0, doc:
+       /* set scrolling  */)
+  (Lisp_Object xwidget, Lisp_Object axis, Lisp_Object relative, Lisp_Object value)
+{
+  CHECK_XWIDGET (xwidget);
+  struct xwidget* xw = XXWIDGET(xwidget);
+  GtkAdjustment* adjustment;
+  float final_value=0.0;
+
+  if(EQ(Qvertical, axis)){
+    adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(xw->widgetscrolledwindow_osr));
+  }
+  if(EQ(Qhorizontal, axis)){
+    adjustment = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(xw->widgetscrolledwindow_osr));
+  }
+
+  if(EQ(Qt, relative)){
+    final_value=gtk_adjustment_get_value(adjustment)+XFASTINT(value);
+  }else{
+     final_value=0.0+XFASTINT(value);
+  }
+
+  gtk_adjustment_set_value(adjustment, final_value);
+
+  return Qnil;
+}
+
+
 DEFUN ("xwidget-size-request", Fxwidget_size_request, Sxwidget_size_request, 1, 1, 0, doc:
--       /* Desired size of the XWIDGET.
+       /* Desired size of the XWIDGET.
 
   This can be used to read the xwidget desired size,  and resizes the Emacs allocated area accordingly.
 
@@ -1566,6 +1632,8 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_buffer);
   defsubr (&Sset_xwidget_plist);
 
+  defsubr (&Sxwidget_set_adjustment);
+
   DEFSYM (Qxwidget, "xwidget");
 
   DEFSYM (QCxwidget, ":xwidget");
@@ -1580,6 +1648,9 @@ syms_of_xwidget (void)
   DEFSYM (Qsocket, "socket");
   DEFSYM (Qsocket_osr, "socket-osr");
   DEFSYM (Qcairo, "cairo");
+
+  DEFSYM (Qvertical, "vertical");
+  DEFSYM (Qhorizontal, "horizontal");
 
   DEFSYM (QCplist, ":plist");
 

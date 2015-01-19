@@ -34,6 +34,8 @@ struct xwidget{
   //for offscreen widgets, unused if not osr
   GtkWidget* widget_osr;
   GtkWidget* widgetwindow_osr;
+  //this is used if the widget (webkit) is to be wrapped in a scrolled window,
+  GtkWidget* widgetscrolledwindow_osr;
   /* Non-nil means kill silently if Emacs is exited. */
   unsigned int kill_without_query : 1;
 
