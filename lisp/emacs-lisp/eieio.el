@@ -276,6 +276,17 @@ and reference them using the function `class-option'."
           `(defun ,name (&rest slots)
              ,(format "Create a new object with name NAME of class type %S."
                       name)
+             (declare (compiler-macro
+                       (lambda (whole)
+                         (if (not (stringp (car slots)))
+                             whole
+                           (macroexp--warn-and-return
+                            (format "Obsolete name arg %S to constructor %S"
+                                    (car slots) (car whole))
+                            ;; Keep the name arg, for backward compatibility,
+                            ;; but hide it so we don't trigger indefinitely.
+                            `(,(car whole) (identity ,(car slots))
+                              ,@(cdr slots)))))))
              (apply #'eieio-constructor ',name slots))))))
 
 

@@ -732,14 +732,18 @@ struct Lisp_Symbol
   TAG_PTR (Lisp_Symbol,					    \
 	   ((uintptr_t) (offset) >> (USE_LSB_TAG ? 0 : GCTYPEBITS)))
 
+/* XLI_BUILTIN_LISPSYM (iQwhatever) is equivalent to
+   XLI (builtin_lisp_symbol (Qwhatever)),
+   except the former expands to an integer constant expression.  */
+#define XLI_BUILTIN_LISPSYM(iname) TAG_SYMOFFSET ((iname) * sizeof *lispsym)
+
 /* Declare extern constants for Lisp symbols.  These can be helpful
    when using a debugger like GDB, on older platforms where the debug
    format does not represent C macros.  */
 #define DEFINE_LISP_SYMBOL_BEGIN(name) \
-   DEFINE_GDB_SYMBOL_BEGIN (Lisp_Object, name)
+  DEFINE_GDB_SYMBOL_BEGIN (Lisp_Object, name)
 #define DEFINE_LISP_SYMBOL_END(name) \
-   DEFINE_GDB_SYMBOL_END (LISP_INITIALLY (TAG_SYMOFFSET (i##name \
-							 * sizeof *lispsym)))
+  DEFINE_GDB_SYMBOL_END (LISP_INITIALLY (XLI_BUILTIN_LISPSYM (i##name)))
 
 #include "globals.h"
 
@@ -1502,6 +1506,20 @@ gc_aset (Lisp_Object array, ptrdiff_t idx, Lisp_Object val)
      sweep_weak_table calls set_hash_key etc. while the table is marked.  */
   eassert (0 <= idx && idx < (ASIZE (array) & ~ARRAY_MARK_FLAG));
   XVECTOR (array)->contents[idx] = val;
+}
+
+/* True, since Qnil's representation is zero.  Every place in the code
+   that assumes Qnil is zero should verify (NIL_IS_ZERO), to make it easy
+   to find such assumptions later if we change Qnil to be nonzero.  */
+enum { NIL_IS_ZERO = XLI_BUILTIN_LISPSYM (iQnil) == 0 };
+
+/* Set a Lisp_Object array V's SIZE entries to nil.  */
+INLINE void
+memsetnil (Lisp_Object *v, ptrdiff_t size)
+{
+  eassert (0 <= size);
+  verify (NIL_IS_ZERO);
+  memset (v, 0, size * sizeof *v);
 }
 
 /* If a struct is made to look like a vector, this macro returns the length

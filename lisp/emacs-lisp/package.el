@@ -1154,13 +1154,15 @@ Also, add the originating archive to the `package-desc' structure."
     (when (not (and pinned-to-archive
                     (not (equal (cdr pinned-to-archive) archive))))
       (setq package-archive-contents
-            (package--add-to-alist pkg-desc package-archive-contents)))))
+            (package--append-to-alist pkg-desc package-archive-contents)))))
 
-(defun package--add-to-alist (pkg-desc alist)
-  "Add PKG-DESC to ALIST.
+(defun package--append-to-alist (pkg-desc alist)
+  "Append an entry for PKG-DESC to the start of ALIST and return it.
+This entry takes the form (`package-desc-name' PKG-DESC).
 
-Packages are grouped by name. The package descriptions are sorted
-by version number."
+If ALIST already has an entry with this name, destructively add
+PKG-DESC to the cdr of this entry instead, sorted by version
+number."
   (let* ((name (package-desc-name pkg-desc))
          (priority-version (package-desc-priority-version pkg-desc))
          (existing-packages (assq name alist)))
@@ -2100,7 +2102,7 @@ If optional arg BUTTON is non-nil, describe its associated package."
         (cond ((member status '("installed" "unsigned"))
                (push pkg-desc installed))
               ((member status '("available" "new"))
-               (setq available (package--add-to-alist pkg-desc available))))))
+               (setq available (package--append-to-alist pkg-desc available))))))
     ;; Loop through list of installed packages, finding upgrades.
     (dolist (pkg-desc installed)
       (let* ((name (package-desc-name pkg-desc))

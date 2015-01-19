@@ -2299,8 +2299,7 @@ usage: (apply FUNCTION &rest ARGUMENTS)  */)
       /* Avoid making funcall cons up a yet another new vector of arguments
 	 by explicitly supplying nil's for optional values.  */
       SAFE_ALLOCA_LISP (funcall_args, 1 + XSUBR (fun)->max_args);
-      for (i = numargs; i < XSUBR (fun)->max_args; /* nothing */)
-	funcall_args[++i] = Qnil;
+      memsetnil (funcall_args + numargs + 1, XSUBR (fun)->max_args - numargs);
       funcall_nargs = 1 + XSUBR (fun)->max_args;
     }
   else
@@ -2638,8 +2637,8 @@ usage: (funcall FUNCTION &rest ARGUMENTS)  */)
   ptrdiff_t numargs = nargs - 1;
   Lisp_Object lisp_numargs;
   Lisp_Object val;
-  register Lisp_Object *internal_args;
-  ptrdiff_t i, count;
+  Lisp_Object *internal_args;
+  ptrdiff_t count;
 
   QUIT;
 
@@ -2694,8 +2693,8 @@ usage: (funcall FUNCTION &rest ARGUMENTS)  */)
 	      eassert (XSUBR (fun)->max_args <= ARRAYELTS (internal_argbuf));
 	      internal_args = internal_argbuf;
 	      memcpy (internal_args, args + 1, numargs * word_size);
-	      for (i = numargs; i < XSUBR (fun)->max_args; i++)
-		internal_args[i] = Qnil;
+	      memsetnil (internal_args + numargs,
+			 XSUBR (fun)->max_args - numargs);
 	    }
 	  else
 	    internal_args = args + 1;

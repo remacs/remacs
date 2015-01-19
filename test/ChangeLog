@@ -1,7 +1,20 @@
+2015-01-18  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/Makefile.in (EMACS_EXTRAOPT): New var.
+	(EMACSOPT): Use it.
+
+	* automated/cl-generic-tests.el (cl-generic-test-10-weird): New test.
+	Rename other tests to preserve ordering.
+
 2015-01-18  Leo Liu  <sdl.web@gmail.com>
 
 	* automated/seq-tests.el (test-seq-subseq): Add more tests.
 	(Bug#19434)
+
+2015-01-18  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/eieio-test-methodinvoke.el (eieio-test-cl-generic-1):
+	Test `subclass' specializer.
 
 2015-01-17  Stefan Monnier  <monnier@iro.umontreal.ca>
 

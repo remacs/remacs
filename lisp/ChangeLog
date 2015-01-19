@@ -1,3 +1,74 @@
+2015-01-19  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* ido.el: Update Customization instructions.
+
+2015-01-19  Jonas Bernoulli  <jonas@bernoul.li>
+
+	Define Ido keymaps once (bug#17000).
+	* ido.el (ido-common-completion-map)
+	(ido-file-dir-completion-map)
+	(ido-file-completion-map, ido-buffer-completion-map): Set up key
+	bindings when each variable is defined.
+	(ido-completion-map): Move definition.
+	(ido-init-completion-maps): Noop.
+	(ido-common-initialization): Don't call it.
+	(ido-setup-completion-map): Improve doc-string, cleanup.
+
+2015-01-19  Ivan Shmakov  <ivan@siamics.net>
+
+	* cus-dep.el (custom-make-dependencies): Ensure that
+	default-directory is interpreted as a directory (see bug#19140.)
+
+2015-01-19  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/xref.el (xref--display-position):
+	Set `other-window-scroll-buffer'.
+	(xref-goto-xref): Use `user-error'.
+
+2015-01-19  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/xref.el (xref--display-history): New variable.
+	(xref--window-configuration): Remove.
+	(xref--save-to-history): New function.
+	(xref--display-position): Use it.  Add new argument.
+	(xref--restore-window-configuration): Remove.
+	(xref--show-location, xref-show-location-at-point): Update
+	accordingly.
+	(xref--xref-buffer-mode): Don't use `pre-command-hook'.
+	(xref--quit): New command.
+	(xref-goto-xref): Use it.
+	(xref--xref-buffer-mode-map): Bind `q' to it.
+
+2015-01-18  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/xref.el (xref-goto-xref): Perform the jump even inside
+	indentation or at eol.
+
+2015-01-18  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio-core.el: Add `subclass' specializer for cl-generic.
+	(eieio--generic-subclass-tagcode, eieio--generic-subclass-tag-types):
+	New functions.
+	(cl-generic-tagcode-function, cl-generic-tag-types-function): Use them.
+
+	* emacs-lisp/eieio.el (defclass): Add obsolescence warning for the
+	`newname' argument.
+
+	* emacs-lisp/cl-generic.el (cl-generic-define-method): Correctly handle
+	introduction of a new dispatch argument.
+	(cl--generic-cache-miss): Handle dispatch on an argument which was not
+	considered as dispatchable for this method.
+	(cl-defmethod): Warn when adding a method to an obsolete generic function.
+	(cl--generic-lambda): Make sure it works if cl-lib is not yet loaded.
+
+	* emacs-lisp/eieio-generic.el (eieio--defgeneric-init-form): Use autoloadp.
+
+2015-01-18  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* emacs-lisp/package.el (package--append-to-alist): Rename from
+	`package--add-to-alist'
+	Updated docstring due to new name.
+
 2015-01-18  Leo Liu  <sdl.web@gmail.com>
 
 	* emacs-lisp/cl-extra.el (cl-subseq): Use seq-subseq and fix
@@ -132,8 +203,8 @@
 2015-01-16  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* emacs-lisp/package.el (package--read-pkg-desc):
-	New function. Read a `define-package' form in current buffer. Return
-	the pkg-desc, with desc-kind set to KIND.
+	New function. Read a `define-package' form in current buffer.
+	Return the pkg-desc, with desc-kind set to KIND.
 	(package-dir-info): New function. Find package information for a
 	directory. The return result is a `package-desc'.
 	(package-install-from-buffer): Install packages from dired buffer.
@@ -856,8 +927,8 @@
 2014-12-27  Eli Zaretskii  <eliz@gnu.org>
 
 	* language/misc-lang.el (composition-function-table): Add Syriac
-	characters and also ZWJ/ZWNJ.  See
-	http://lists.gnu.org/archive/html/help-gnu-emacs/2014-12/msg00248.html
+	characters and also ZWJ/ZWNJ.
+	See http://lists.gnu.org/archive/html/help-gnu-emacs/2014-12/msg00248.html
 	for the details.
 
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>

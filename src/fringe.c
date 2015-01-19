@@ -1723,15 +1723,12 @@ init_fringe_once (void)
 void
 init_fringe (void)
 {
-  int i;
-
   max_fringe_bitmaps = MAX_STANDARD_FRINGE_BITMAPS + 20;
 
   fringe_bitmaps = xzalloc (max_fringe_bitmaps * sizeof *fringe_bitmaps);
-  fringe_faces = xmalloc (max_fringe_bitmaps * sizeof *fringe_faces);
 
-  for (i = 0; i < max_fringe_bitmaps; i++)
-    fringe_faces[i] = Qnil;
+  verify (NIL_IS_ZERO);
+  fringe_faces = xzalloc (max_fringe_bitmaps * sizeof *fringe_faces);
 }
 
 #ifdef HAVE_NTGUI

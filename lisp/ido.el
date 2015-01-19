@@ -208,13 +208,13 @@
 ;;
 ;; Customize the Ido group to change the Ido functionality.
 ;;
-;; To modify the keybindings, use the ido-setup-hook.  For example:
-;;(add-hook 'ido-setup-hook 'ido-my-keys)
+;; To modify the keybindings, use `define-key' on
+;; `ido-common-completion-map' or one of the specialized keymaps:
+;; `ido-file-dir-completion-map', `ido-file-completion-map' or
+;; `ido-buffer-completion-map'.
 ;;
-;;(defun ido-my-keys ()
-;;  "Add my keybindings for ido."
-;;  (define-key ido-completion-map " " 'ido-next-match)
-;;  )
+;; (with-eval-after-load 'ido
+;;   (define-key ido-common-completion-map " " 'ido-next-match))
 
 ;; Seeing all the matching buffers or files
 ;; ----------------------------------------
@@ -323,8 +323,8 @@
 
 (defvar recentf-list)
 
-;;; User Variables
-;;
+;;;; Options
+
 ;; These are some things you might want to change.
 
 (defun ido-fractionp (n)
@@ -978,24 +978,89 @@ The fallback command is passed as an argument to the functions."
   :type 'hook
   :group 'ido)
 
-;;; Internal Variables
+;;;; Keymaps
 
-;; Persistent variables
-
-(defvar ido-completion-map nil
-  "Currently active keymap for Ido commands.")
-
-(defvar ido-common-completion-map nil
+(defvar ido-common-completion-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map minibuffer-local-map)
+    (define-key map "\C-a" 'ido-toggle-ignore)
+    (define-key map "\C-c" 'ido-toggle-case)
+    (define-key map "\C-e" 'ido-edit-input)
+    (define-key map "\t" 'ido-complete)
+    (define-key map " " 'ido-complete-space)
+    (define-key map "\C-j" 'ido-select-text)
+    (define-key map "\C-m" 'ido-exit-minibuffer)
+    (define-key map "\C-p" 'ido-toggle-prefix)
+    (define-key map "\C-r" 'ido-prev-match)
+    (define-key map "\C-s" 'ido-next-match)
+    (define-key map [?\C-.] 'ido-next-match)
+    (define-key map [?\C-,] 'ido-prev-match)
+    (define-key map "\C-t" 'ido-toggle-regexp)
+    (define-key map "\C-z" 'ido-undo-merge-work-directory)
+    (define-key map [(control ?\s)] 'ido-restrict-to-matches)
+    (define-key map [(meta ?\s)] 'ido-take-first-match)
+    (define-key map [(control ?@)] 'ido-restrict-to-matches)
+    (define-key map [right] 'ido-next-match)
+    (define-key map [left] 'ido-prev-match)
+    (define-key map "?" 'ido-completion-help)
+    (define-key map "\C-b" 'ido-magic-backward-char)
+    (define-key map "\C-f" 'ido-magic-forward-char)
+    (define-key map "\C-d" 'ido-magic-delete-char)
+    map)
   "Keymap for all Ido commands.")
 
-(defvar ido-file-completion-map nil
-  "Keymap for Ido file commands.")
-
-(defvar ido-file-dir-completion-map nil
+(defvar ido-file-dir-completion-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map ido-common-completion-map)
+    (define-key map "\C-x\C-b" 'ido-enter-switch-buffer)
+    (define-key map "\C-x\C-f" 'ido-fallback-command)
+    (define-key map "\C-x\C-d" 'ido-enter-dired)
+    (define-key map [down] 'ido-next-match-dir)
+    (define-key map [up]   'ido-prev-match-dir)
+    (define-key map [(meta up)] 'ido-prev-work-directory)
+    (define-key map [(meta down)] 'ido-next-work-directory)
+    (define-key map [backspace] 'ido-delete-backward-updir)
+    (define-key map "\d"        'ido-delete-backward-updir)
+    (define-key map [remap delete-backward-char] 'ido-delete-backward-updir) ; BS
+    (define-key map [remap backward-kill-word] 'ido-delete-backward-word-updir)  ; M-DEL
+    (define-key map [(control backspace)] 'ido-up-directory)
+    (define-key map "\C-l" 'ido-reread-directory)
+    (define-key map [(meta ?d)] 'ido-wide-find-dir-or-delete-dir)
+    (define-key map [(meta ?b)] 'ido-push-dir)
+    (define-key map [(meta ?v)] 'ido-push-dir-first)
+    (define-key map [(meta ?f)] 'ido-wide-find-file-or-pop-dir)
+    (define-key map [(meta ?k)] 'ido-forget-work-directory)
+    (define-key map [(meta ?m)] 'ido-make-directory)
+    (define-key map [(meta ?n)] 'ido-next-work-directory)
+    (define-key map [(meta ?o)] 'ido-prev-work-file)
+    (define-key map [(meta control ?o)] 'ido-next-work-file)
+    (define-key map [(meta ?p)] 'ido-prev-work-directory)
+    (define-key map [(meta ?s)] 'ido-merge-work-directories)
+    map)
   "Keymap for Ido file and directory commands.")
 
-(defvar ido-buffer-completion-map nil
+(defvar ido-file-completion-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map ido-file-dir-completion-map)
+    (define-key map "\C-k" 'ido-delete-file-at-head)
+    (define-key map "\C-o" 'ido-copy-current-word)
+    (define-key map "\C-w" 'ido-copy-current-file-name)
+    (define-key map [(meta ?l)] 'ido-toggle-literal)
+    map)
+  "Keymap for Ido file commands.")
+
+(defvar ido-buffer-completion-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map ido-common-completion-map)
+    (define-key map "\C-x\C-f" 'ido-enter-find-file)
+    (define-key map "\C-x\C-b" 'ido-fallback-command)
+    (define-key map "\C-k" 'ido-kill-buffer-at-head)
+    (define-key map [?\C-\S-b] 'ido-bury-buffer-at-head)
+    (define-key map "\C-o" 'ido-toggle-virtual-buffers)
+    map)
   "Keymap for Ido buffer commands.")
+
+;;;; Persistent variables
 
 (defvar  ido-file-history nil
   "History of files selected using `ido-find-file'.")
@@ -1027,7 +1092,10 @@ Each element in the list is of the form (DIR (MTIME) FILE...).")
 Intended to be let-bound by functions which call Ido repeatedly.
 Should never be set permanently.")
 
-;; Temporary storage
+;;;; Temporary storage
+
+(defvar ido-completion-map nil
+  "Currently active keymap for Ido commands.")
 
 (defvar ido-eoinput 1
   "Point where minibuffer input ends and completion info begins.
@@ -1086,13 +1154,14 @@ Value is an integer which is number of chars to right of prompt.")
 This is a copy of `recentf-list', pared down and with faces applied.
 Only used if `ido-use-virtual-buffers' is non-nil.")
 
-;;; Variables with dynamic bindings.
-;;; Declared here to keep the byte compiler quiet.
+;;;; Variables with dynamic bindings.
+
+;; These are declared here to keep the byte compiler quiet.
 
 ;; Stores the current ido item type ('file, 'dir, 'buffer, or 'list).
 (defvar ido-cur-item)
 
-;;; Stores the current default item
+;; Stores the current default item.
 (defvar ido-default-item)
 
 ;; Stores the current list of items that will be searched through.
@@ -1502,7 +1571,6 @@ Removes badly formatted data and ignored directories."
   (ido-save-history))
 
 (defun ido-common-initialization ()
-  (ido-init-completion-maps)
   (add-hook 'minibuffer-setup-hook 'ido-minibuffer-setup)
   (add-hook 'choose-completion-string-functions 'ido-choose-completion-string))
 
@@ -1596,120 +1664,51 @@ This function also adds a hook to the minibuffer."
 
 
 ;;; IDO KEYMAP
-(defun ido-init-completion-maps ()
-  "Set up the completion keymaps used by Ido."
 
-  ;; Common map
-  (let ((map (make-sparse-keymap)))
-    (define-key map "\C-a" 'ido-toggle-ignore)
-    (define-key map "\C-c" 'ido-toggle-case)
-    (define-key map "\C-e" 'ido-edit-input)
-    (define-key map "\t" 'ido-complete)
-    (define-key map " " 'ido-complete-space)
-    (define-key map "\C-j" 'ido-select-text)
-    (define-key map "\C-m" 'ido-exit-minibuffer)
-    (define-key map "\C-p" 'ido-toggle-prefix)
-    (define-key map "\C-r" 'ido-prev-match)
-    (define-key map "\C-s" 'ido-next-match)
-    (define-key map [?\C-.] 'ido-next-match)
-    (define-key map [?\C-,] 'ido-prev-match)
-    (define-key map "\C-t" 'ido-toggle-regexp)
-    (define-key map "\C-z" 'ido-undo-merge-work-directory)
-    (define-key map [(control ?\s)] 'ido-restrict-to-matches)
-    (define-key map [(meta ?\s)] 'ido-take-first-match)
-    (define-key map [(control ?@)] 'ido-restrict-to-matches)
-    (define-key map [right] 'ido-next-match)
-    (define-key map [left] 'ido-prev-match)
-    (define-key map "?" 'ido-completion-help)
-    ;; Magic commands.
-    (define-key map "\C-b" 'ido-magic-backward-char)
-    (define-key map "\C-f" 'ido-magic-forward-char)
-    (define-key map "\C-d" 'ido-magic-delete-char)
-    (set-keymap-parent map minibuffer-local-map)
-    (setq ido-common-completion-map map))
-
-  ;; File and directory map
-  (let ((map (make-sparse-keymap)))
-    (define-key map "\C-x\C-b" 'ido-enter-switch-buffer)
-    (define-key map "\C-x\C-f" 'ido-fallback-command)
-    (define-key map "\C-x\C-d" 'ido-enter-dired)
-    (define-key map [down] 'ido-next-match-dir)
-    (define-key map [up]   'ido-prev-match-dir)
-    (define-key map [(meta up)] 'ido-prev-work-directory)
-    (define-key map [(meta down)] 'ido-next-work-directory)
-    (define-key map [backspace] 'ido-delete-backward-updir)
-    (define-key map "\d"        'ido-delete-backward-updir)
-    (define-key map [remap delete-backward-char] 'ido-delete-backward-updir) ; BS
-    (define-key map [remap backward-kill-word] 'ido-delete-backward-word-updir)  ; M-DEL
-
-    (define-key map [(control backspace)] 'ido-up-directory)
-    (define-key map "\C-l" 'ido-reread-directory)
-    (define-key map [(meta ?d)] 'ido-wide-find-dir-or-delete-dir)
-    (define-key map [(meta ?b)] 'ido-push-dir)
-    (define-key map [(meta ?v)] 'ido-push-dir-first)
-    (define-key map [(meta ?f)] 'ido-wide-find-file-or-pop-dir)
-    (define-key map [(meta ?k)] 'ido-forget-work-directory)
-    (define-key map [(meta ?m)] 'ido-make-directory)
-    (define-key map [(meta ?n)] 'ido-next-work-directory)
-    (define-key map [(meta ?o)] 'ido-prev-work-file)
-    (define-key map [(meta control ?o)] 'ido-next-work-file)
-    (define-key map [(meta ?p)] 'ido-prev-work-directory)
-    (define-key map [(meta ?s)] 'ido-merge-work-directories)
-    (set-keymap-parent map ido-common-completion-map)
-    (setq ido-file-dir-completion-map map))
-
-  ;; File only map
-  (let ((map (make-sparse-keymap)))
-    (define-key map "\C-k" 'ido-delete-file-at-head)
-    (define-key map "\C-o" 'ido-copy-current-word)
-    (define-key map "\C-w" 'ido-copy-current-file-name)
-    (define-key map [(meta ?l)] 'ido-toggle-literal)
-    (set-keymap-parent map ido-file-dir-completion-map)
-    (setq ido-file-completion-map map))
-
-  ;; Buffer map
-  (let ((map (make-sparse-keymap)))
-    (define-key map "\C-x\C-f" 'ido-enter-find-file)
-    (define-key map "\C-x\C-b" 'ido-fallback-command)
-    (define-key map "\C-k" 'ido-kill-buffer-at-head)
-    (define-key map [?\C-\S-b] 'ido-bury-buffer-at-head)
-    (define-key map "\C-o" 'ido-toggle-virtual-buffers)
-    (set-keymap-parent map ido-common-completion-map)
-    (setq ido-buffer-completion-map map)))
-
+(defalias 'ido-init-completion-maps 'ignore "")
+(make-obsolete 'ido-init-completion-maps "it does nothing." "25.1")
 
 (defun ido-setup-completion-map ()
-  "Set up the keymap for Ido."
+  "Set up the completion keymap used by Ido.
 
+Create a keymap, bind `ido-completion-map' to it, and depending
+on what is being completed (`ido-cur-item') set its parent keymap
+to one of:
+
+  `ido-common-completion-map'
+  `ido-file-dir-completion-map'
+  `ido-file-completion-map'
+  `ido-buffer-completion-map'
+
+If option `ido-context-switch-command' is non-nil or `viper-mode'
+is enabled then some keybindings are changed in the keymap."
   ;; generated every time so that it can inherit new functions.
   (let ((map (make-sparse-keymap))
 	(viper-p (if (boundp 'viper-mode) viper-mode)))
-
     (when viper-p
       (define-key map [remap viper-intercept-ESC-key] 'ignore))
-
-    (cond
-     ((memq ido-cur-item '(file dir))
+    (pcase ido-cur-item
+     ((or `file `dir)
       (when ido-context-switch-command
 	(define-key map "\C-x\C-b" ido-context-switch-command)
 	(define-key map "\C-x\C-d" 'ignore))
       (when viper-p
-	(define-key map [remap viper-backward-char] 'ido-delete-backward-updir)
-	(define-key map [remap viper-del-backward-char-in-insert] 'ido-delete-backward-updir)
-	(define-key map [remap viper-delete-backward-word] 'ido-delete-backward-word-updir))
+	(define-key map [remap viper-backward-char]
+	  'ido-delete-backward-updir)
+	(define-key map [remap viper-del-backward-char-in-insert]
+	  'ido-delete-backward-updir)
+	(define-key map [remap viper-delete-backward-word]
+	  'ido-delete-backward-word-updir))
       (set-keymap-parent map
 			 (if (eq ido-cur-item 'file)
 			     ido-file-completion-map
 			   ido-file-dir-completion-map)))
-
-     ((eq ido-cur-item 'buffer)
+     (`buffer
       (when ido-context-switch-command
 	(define-key map "\C-x\C-f" ido-context-switch-command))
       (set-keymap-parent map ido-buffer-completion-map))
-
-     (t
+     (_
       (set-keymap-parent map ido-common-completion-map)))
-
     (setq ido-completion-map map)))
 
 (defun ido-final-slash (dir &optional fix-it)
