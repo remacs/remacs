@@ -1,3 +1,15 @@
+2015-01-19  Jonas Bernoulli  <jonas@bernoul.li>
+
+	Define Ido keymaps once (bug#17000).
+	* lisp/ido (ido-common-completion-map)
+	(ido-file-dir-completion-map)
+	(ido-file-completion-map, ido-buffer-completion-map): Set up key
+	bindings when each variable is defined.
+	(ido-completion-map): Move definition.
+	(ido-init-completion-maps): Noop.
+	(ido-common-initialization): Don't call it.
+	(ido-setup-completion-map): Improve doc-string, cleanup.
+
 2015-01-19  Ivan Shmakov  <ivan@siamics.net>
 
 	* cus-dep.el (custom-make-dependencies): Ensure that
