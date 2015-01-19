@@ -5,7 +5,7 @@
 2015-01-19  Jonas Bernoulli  <jonas@bernoul.li>
 
 	Define Ido keymaps once (bug#17000).
-	* lisp/ido (ido-common-completion-map)
+	* ido.el (ido-common-completion-map)
 	(ido-file-dir-completion-map)
 	(ido-file-completion-map, ido-buffer-completion-map): Set up key
 	bindings when each variable is defined.
