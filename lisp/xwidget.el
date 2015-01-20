@@ -14,8 +14,14 @@
 (eval-when-compile (require 'cl))
 (require 'reporter)
 
+(defcustom xwidget-webkit-scroll-behaviour 'native
+  "Scroll behaviour of the webkit instance.
+'native or 'image."
+  :group 'xwidgets)
+
 (defun xwidget-insert (pos type title width height)
-  "Insert an xwidget at POS, given ID, TYPE, TITLE WIDTH and
+  "Insert an xwidget at POS.
+given ID, TYPE, TITLE WIDTH and
 HEIGHT in the current buffer.
 
 Return ID
@@ -59,8 +65,8 @@ see `make-xwidget' for types suitable for TYPE."
 ;;               )))))
 
 (defun xwidget-display (xwidget)
-  "Force xwidget to be displayed to create a xwidget_view. Return
-the window displaying XWIDGET."
+  "Force XWIDGET to be displayed to create a xwidget_view.
+Return the window displaying XWIDGET."
   (let* ((buffer (xwidget-buffer xwidget))
          (window (display-buffer buffer))
          (frame (window-frame window)))
@@ -102,6 +108,7 @@ defaults to the string looking like a url around the cursor position."
 (defadvice image-display-size (around image-display-size-for-xwidget
                                       (spec &optional pixels frame)
                                       activate)
+  "Advice for re-using image mode for xwidget."
   (if (eq (car spec) 'xwidget)
       (setq ad-return-value (xwidget-image-display-size spec pixels frame))
     ad-do-it))
@@ -111,7 +118,7 @@ defaults to the string looking like a url around the cursor position."
 (defvar xwidget-webkit-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "g" 'xwidget-webkit-browse-url)
-    (define-key map "a" 'xwidget-webkit-adjust-size-to-content)
+    (define-key map "a" 'xwidget-webkit-adjust-size-dispatch)
     (define-key map "b" 'xwidget-webkit-back )
     (define-key map "r" 'xwidget-webkit-reload )
     (define-key map "t" (lambda () (interactive) (message "o")) )
@@ -119,19 +126,19 @@ defaults to the string looking like a url around the cursor position."
     (define-key map "w" 'xwidget-webkit-current-url)
 
     ;;similar to image mode bindings
-    (define-key map (kbd "SPC")                    'image-scroll-up)
-    (define-key map (kbd "DEL")                    'image-scroll-down)
+    (define-key map (kbd "SPC")                    'xwidget-webkit-scroll-up)
+    (define-key map (kbd "DEL")                    'xwidget-webkit-scroll-down)
 
-    (define-key map [remap scroll-up]              'image-scroll-up)
-    (define-key map [remap scroll-up-command]      'image-scroll-up)
+    (define-key map [remap scroll-up]              'xwidget-webkit-scroll-up)
+    (define-key map [remap scroll-up-command]      'xwidget-webkit-scroll-up)
 
-    (define-key map [remap scroll-down]            'image-scroll-down)
-    (define-key map [remap scroll-down-command]    'image-scroll-down)
+    (define-key map [remap scroll-down]            'xwidget-webkit-scroll-down)
+    (define-key map [remap scroll-down-command]    'xwidget-webkit-scroll-down)
 
-    (define-key map [remap forward-char]           'image-forward-hscroll)
-    (define-key map [remap backward-char]          'image-backward-hscroll)
-    (define-key map [remap right-char]             'image-forward-hscroll)
-    (define-key map [remap left-char]              'image-backward-hscroll)
+    (define-key map [remap forward-char]           'xwidget-webkit-scroll-forward)
+    (define-key map [remap backward-char]          'xwidget-webkit-scroll-backward)
+    (define-key map [remap right-char]             'xwidget-webkit-scroll-forward)
+    (define-key map [remap left-char]              'xwidget-webkit-scroll-backward)
     (define-key map [remap previous-line]          'image-previous-line)
     (define-key map [remap next-line]              'image-next-line)
 
@@ -142,11 +149,37 @@ defaults to the string looking like a url around the cursor position."
     map)
   "Keymap for `xwidget-webkit-mode'.")
 
+(defun xwidget-webkit-scroll-up ()
+  (interactive)
+  (if (eq xwidget-webkit-scroll-behaviour 'native)
+      (xwidget-set-adjustment (xwidget-webkit-last-session) 'vertical t 50) )
+      (image-scroll-up))
+
+(defun xwidget-webkit-scroll-down ()
+  (interactive)
+  (if (eq xwidget-webkit-scroll-behaviour 'native)
+      (xwidget-set-adjustment (xwidget-webkit-last-session) 'vertical t -50) )
+      (image-scroll-down))
+
+(defun xwidget-webkit-scroll-forward ()
+  (interactive)
+  (if (eq xwidget-webkit-scroll-behaviour 'native)
+      (xwidget-set-adjustment (xwidget-webkit-last-session) 'horizontal t 50) )
+      (xwidget-webkit-scroll-forward))
+
+(defun xwidget-webkit-scroll-backward ()
+  (interactive)
+  (if (eq xwidget-webkit-scroll-behaviour 'native)
+      (xwidget-set-adjustment (xwidget-webkit-last-session) 'horizontal t -50) )
+      (xwidget-webkit-scroll-backward))
+
+
 ;;the xwidget event needs to go into a higher level handler
 ;;since the xwidget can generate an event even if its offscreen
 ;;TODO this needs to use callbacks and consider different xw ev types
 (define-key (current-global-map) [xwidget-event] 'xwidget-event-handler)
 (defun xwidget-log ( &rest msg)
+  "Log MSG to a buffer."
   (let ( (buf  (get-buffer-create "*xwidget-log*")))
     (save-excursion
       (buffer-disable-undo buf)
@@ -168,13 +201,17 @@ defaults to the string looking like a url around the cursor position."
     (funcall  'xwidget-webkit-callback xwidget xwidget-event-type)))
 
 (defun xwidget-webkit-callback (xwidget xwidget-event-type)
+  "Callback for xwidgets.
+XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
   (save-excursion
     (cond ((buffer-live-p (xwidget-buffer xwidget))
            (set-buffer (xwidget-buffer xwidget))
            (let* ((strarg  (nth 3 last-input-event)))
              (cond ((eq xwidget-event-type 'document-load-finished)
                     (xwidget-log "webkit finished loading: '%s'" (xwidget-webkit-get-title xwidget))
-                    (xwidget-adjust-size-to-content xwidget)
+                    ;;TODO - check the native/internal scroll
+                    ;;(xwidget-adjust-size-to-content xwidget)
+                    (xwidget-webkit-adjust-size-dispatch) ;;TODO send xwidget here
                     (rename-buffer (format "*xwidget webkit: %s *" (xwidget-webkit-get-title xwidget)))
                     (pop-to-buffer (current-buffer)))
                    ((eq xwidget-event-type 'navigation-policy-decision-requested)
@@ -338,6 +375,18 @@ Argument STR string."
   (interactive)
   (xwidget-adjust-size-to-content (xwidget-webkit-current-session)))
 
+(defun xwidget-webkit-adjust-size-dispatch ()
+  "Adjust size according to mode."
+  (interactive)
+  (if (eq xwidget-webkit-scroll-behaviour 'native)
+      (xwidget-webkit-adjust-size-to-window)
+    (xwidget-webkit-adjust-size-to-content)))
+
+(defun xwidget-webkit-adjust-size-to-window ()
+  "Adjust webkit to window."
+  (interactive)
+    (xwidget-resize ( xwidget-webkit-current-session) (window-pixel-width) (window-pixel-height)))
+
 (defun xwidget-webkit-adjust-size (w h)
   "Manualy set webkit size.
 Argument W width.
@@ -347,6 +396,7 @@ Argument H height."
   (xwidget-resize ( xwidget-webkit-current-session) w h))
 
 (defun xwidget-webkit-fit-width ()
+  "Adjust width of webkit to window width."
   (interactive)
   (xwidget-webkit-adjust-size (- (caddr (window-inside-pixel-edges))
                                  (car (window-inside-pixel-edges)))
@@ -383,7 +433,7 @@ Argument H height."
   (xwidget-webkit-execute-script (xwidget-webkit-current-session)  "history.go(0);"))
 
 (defun xwidget-webkit-current-url ()
-  "Get the webkit url. place it on kill ring."
+  "Get the webkit url.  place it on kill ring."
   (interactive)
   (let* ((rv (xwidget-webkit-execute-script-rv (xwidget-webkit-current-session)
                                                "document.URL"))
@@ -392,10 +442,13 @@ Argument H height."
     url))
 
 (defun xwidget-webkit-execute-script-rv (xw script &optional default)
-  "same as xwidget-webkit-execute-script but also wraps an ugly hack to return a value"
-  ;;notice the fugly "title" hack. it is needed because the webkit api doesnt support returning values.
-  ;;this is a wrapper for the title hack so its easy to remove should webkit someday support JS return values
-  ;;or we find some other way to access the DOM
+  "Same as 'xwidget-webkit-execute-script' but but with return value.
+XW is the webkit instance.  SCRIPT is the script to execut.
+DEFAULT is the defaultreturn value."
+  ;;notice the fugly "title" hack. it is needed because the webkit api
+  ;;doesnt support returning values.  this is a wrapper for the title
+  ;;hack so its easy to remove should webkit someday support JS return
+  ;;values or we find some other way to access the DOM
 
   ;;reset webkit title. fugly.
   (let* ((emptytag "titlecantbewhitespaceohthehorror")
@@ -416,10 +469,12 @@ Argument H height."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun xwidget-webkit-get-selection ()
+  "Get the webkit selection."
   (xwidget-webkit-execute-script-rv (xwidget-webkit-current-session)
                                     "window.getSelection().toString();"))
 
 (defun xwidget-webkit-copy-selection-as-kill ()
+  "Get the webkit selection and put it on the kill ring."
   (interactive)
   (kill-new (xwidget-webkit-get-selection)))
 
@@ -442,6 +497,7 @@ It can be retrieved with `(xwidget-get XWIDGET PROPNAME)'."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun xwidget-delete-zombies ()
+  "Helper for xwidget-cleanup."
   (dolist (xwidget-view xwidget-view-list)
     (when (or (not (window-live-p (xwidget-view-window xwidget-view)))
               (not (memq (xwidget-view-model xwidget-view)
