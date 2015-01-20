@@ -6,6 +6,7 @@
 	(xref-location-marker): New method implementation.
 
 	* progmodes/xref.el: Mention that xref-location is an EIEIO class.
+	(xref--insert-xrefs): Expand help-echo string.
 
 2015-01-19  Dmitry Gutov  <dgutov@yandex.ru>
 

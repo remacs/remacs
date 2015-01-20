@@ -458,7 +458,7 @@ GROUP is a string for decoration purposes and XREF is an
                              'face 'font-lock-keyword-face
                              'mouse-face 'highlight
                              'keymap xref--button-map
-                             'help-echo "mouse-2: display, RET or mouse-1: navigate")
+                             'help-echo "mouse-2: display in another window, RET or mouse-1: navigate")
                        description))
                     (when (or more1 more2)
                       (insert "\n")))))
