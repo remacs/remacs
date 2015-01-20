@@ -1,3 +1,8 @@
+2015-01-20  Jorgen Schaefer  <contact@jorgenschaefer.de>
+
+	* automated/package-test.el (package-test-install-prioritized):
+	Removed test due to unreproducable failures.
+
 2015-01-20  Michal Nazarewicz  <mina86@mina86.com>
 
 	* automated/descr-text-test.el: New file with tests for
