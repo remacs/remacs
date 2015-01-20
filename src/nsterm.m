@@ -4313,7 +4313,7 @@ ns_term_init (Lisp_Object display_name)
 
   dpyinfo->name_list_element = Fcons (display_name, Qnil);
 
-  terminal->name = xstrdup (SSDATA (display_name));
+  terminal->name = xlispstrdup (display_name);
 
   unblock_input ();
 

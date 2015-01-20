@@ -2238,7 +2238,7 @@ x_window (struct frame *f, long window_prompting, int minibuffer_only)
      for the window manager, so GC relocation won't bother it.
 
      Elsewhere we specify the window name for the window manager.  */
-  f->namebuf = xstrdup (SSDATA (Vx_resource_name));
+  f->namebuf = xlispstrdup (Vx_resource_name);
 
   ac = 0;
   XtSetArg (al[ac], XtNallowShellResize, 1); ac++;
@@ -5995,12 +5995,12 @@ nil, it defaults to the selected frame. */)
   XSETFONT (font, FRAME_FONT (f));
   font_param = Ffont_get (font, intern (":name"));
   if (STRINGP (font_param))
-    default_name = xstrdup (SSDATA (font_param));
+    default_name = xlispstrdup (font_param);
   else
     {
       font_param = Fframe_parameter (frame, Qfont_param);
       if (STRINGP (font_param))
-        default_name = xstrdup (SSDATA (font_param));
+        default_name = xlispstrdup (font_param);
     }
 
   font = xg_get_font (f, default_name);

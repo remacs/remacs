@@ -1,3 +1,11 @@
+2015-01-20  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Prefer xlispstrdup to avoid dumb calls to strlen.
+	* nsfont.m (ns_get_family):
+	* nsterm.m (ns_term_init):
+	* w32fns.c (w32_window):
+	* xfns.c (x_window, Fx_select_font): Use xlispstrdup.
+
 2015-01-20  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Correct an old fix for GTK font selection

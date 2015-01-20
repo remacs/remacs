@@ -93,7 +93,7 @@ ns_get_family (Lisp_Object font_spec)
       return nil;
   else
     {
-      char *tmp = xstrdup (SSDATA (SYMBOL_NAME (tem)));
+      char *tmp = xlispstrdup (SYMBOL_NAME (tem));
       NSString *family;
       ns_unescape_name (tmp);
       family = [NSString stringWithUTF8String: tmp];
