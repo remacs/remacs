@@ -1,3 +1,7 @@
+2015-01-20  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (EV_TRAILER2): Set Vinhibit_quit to Qt (Bug#19531).
+
 2015-01-20  Dmitry Antipov  <dmantipov@yandex.ru>
 
 	Prefer xlispstrdup to avoid dumb calls to strlen.
