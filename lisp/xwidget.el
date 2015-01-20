@@ -139,23 +139,25 @@ defaults to the string looking like a url around the cursor position."
     (define-key map [remap backward-char]          'xwidget-webkit-scroll-backward)
     (define-key map [remap right-char]             'xwidget-webkit-scroll-forward)
     (define-key map [remap left-char]              'xwidget-webkit-scroll-backward)
-    (define-key map [remap previous-line]          'image-previous-line)
-    (define-key map [remap next-line]              'image-next-line)
+    ;; (define-key map [remap previous-line]          'image-previous-line)
+    ;; (define-key map [remap next-line]              'image-next-line)
 
-    (define-key map [remap move-beginning-of-line] 'image-bol)
-    (define-key map [remap move-end-of-line]       'image-eol)
-    (define-key map [remap beginning-of-buffer]    'image-bob)
-    (define-key map [remap end-of-buffer]          'image-eob)
+    ;; (define-key map [remap move-beginning-of-line] 'image-bol)
+    ;; (define-key map [remap move-end-of-line]       'image-eol)
+    ;; (define-key map [remap beginning-of-buffer]    'image-bob)
+    ;; (define-key map [remap end-of-buffer]          'image-eob)
     map)
   "Keymap for `xwidget-webkit-mode'.")
 
 (defun xwidget-webkit-scroll-up ()
+  "Scroll webkit up,either native or like image mode."
   (interactive)
   (if (eq xwidget-webkit-scroll-behaviour 'native)
       (xwidget-set-adjustment (xwidget-webkit-last-session) 'vertical t 50) )
       (image-scroll-up))
 
 (defun xwidget-webkit-scroll-down ()
+  "Scroll webkit down,either native or like image mode."
   (interactive)
   (if (eq xwidget-webkit-scroll-behaviour 'native)
       (xwidget-set-adjustment (xwidget-webkit-last-session) 'vertical t -50) )
