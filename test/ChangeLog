@@ -1,4 +1,4 @@
-2014-01-20  Michal Nazarewicz  <mina86@mina86.com>
+2015-01-20  Michal Nazarewicz  <mina86@mina86.com>
 
 	* automated/tildify-tests.el (tildify-space-undo-test--test):
 	A new helper function for testing `tildify-double-space-undos'
