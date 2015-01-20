@@ -1,3 +1,8 @@
+2015-01-20  Daniel Colascione  <dancol@dancol.org>
+
+	* vc/vc-dir.el (vc-dir): Default to repository root, not
+	default-directory.
+
 2015-01-20  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* progmodes/etags.el (xref-etags-location): New class.
