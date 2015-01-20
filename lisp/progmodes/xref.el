@@ -34,7 +34,9 @@
 ;;
 ;; One would usually call `make-xref' and `xref-make-file-location',
 ;; `xref-make-buffer-location' or `xref-make-bogus-location' to create
-;; them.
+;; them.  More generally, a location must be an instance of an EIEIO
+;; class inheriting from `xref-location' and implementing
+;; `xref-location-group' and `xref-location-marker'.
 ;;
 ;; Each identifier must be represented as a string.  Implementers can
 ;; use string properties to store additional information about the
