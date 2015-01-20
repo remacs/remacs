@@ -53,7 +53,6 @@
   (message eieio-version))
 
 (require 'eieio-core)
-(require 'eieio-generic)
 
 
 ;;; Defining a new class
