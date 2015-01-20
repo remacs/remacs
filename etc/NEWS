@@ -208,6 +208,8 @@ If you need your objects to be named, do it by inheriting from `eieio-named'.
 *** The <class>-list-p and <class>-child-p functions are declared obsolete.
 *** The <class> variables are declared obsolete.
 *** The <initarg> variables are declared obsolete.
+*** defgeneric and defmethod are declared obsolete.
+
 ** ido
 *** New command `ido-bury-buffer-at-head' bound to C-S-b
 Bury the buffer at the head of `ido-matches', analogous to how C-k
@@ -238,8 +240,12 @@ typing RET.
 result of the calculation into the current buffer.
 
 ** ElDoc
-*** New minor mode global-eldoc-mode
-*** eldoc-documentation-function now defaults to nil
+*** New minor mode `global-eldoc-mode'
+*** `eldoc-documentation-function' now defaults to `ignore'
+*** `describe-char-eldoc' displays information about character at point,
+and can be used as a default value of `eldoc-documentation-function'.  It is
+useful when, for example, one needs to distinguish various spaces (e.g. ] [,
+] [, ] [, etc.) while using mono-spaced font.
 
 ** eww
 
@@ -494,6 +500,11 @@ As a result of the above, these commands are now obsolete:
 ** let-alist is a new macro (and a package) that allows one to easily
 let-bind the values stored in an alist.
 
+** `tildify-mode' allows to automatically insert hard spaces as one
+types the text.  Breaking line after a single-character words is
+forbidden by Czech and Polish typography (and may be discouraged in
+other languages), so `auto-tildify-mode' makes it easier to create
+a typographically-correct documents.
 
 * Incompatible Lisp Changes in Emacs 25.1
 

@@ -373,8 +373,11 @@ static CGPoint menu_mouse_point;
       if (e) emacs_event->timestamp = EV_TIMESTAMP (e);                 \
       if (q_event_ptr)                                                  \
         {                                                               \
+          Lisp_Object tem = Vinhibit_quit;                              \
+          Vinhibit_quit = Qt;                                           \
           n_emacs_events_pending++;                                     \
           kbd_buffer_store_event_hold (emacs_event, q_event_ptr);       \
+          Vinhibit_quit = tem;                                          \
         }                                                               \
       else                                                              \
         hold_event (emacs_event);                                       \
@@ -4313,7 +4316,7 @@ ns_term_init (Lisp_Object display_name)
 
   dpyinfo->name_list_element = Fcons (display_name, Qnil);
 
-  terminal->name = xstrdup (SSDATA (display_name));
+  terminal->name = xlispstrdup (display_name);
 
   unblock_input ();
 

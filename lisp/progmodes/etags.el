@@ -2100,16 +2100,34 @@ for \\[find-tag] (which see)."
                       (< (hash-table-count marks) etags--xref-limit))
             (when (funcall order-fun pattern)
               (beginning-of-line)
-              (cl-destructuring-bind (hint line &rest pos) (etags-snarf-tag)
+              (pcase-let* ((tag-info (etags-snarf-tag))
+                           (`(,hint ,line . _) tag-info))
                 (unless (eq hint t) ; hint==t if we are in a filename line
                   (let* ((file (file-of-tag))
                          (mark-key (cons file line)))
                     (unless (gethash mark-key marks)
-                      (let ((loc (xref-make-file-location
-                                  (expand-file-name file) line 0)))
+                      (let ((loc (xref-make-etags-location
+                                  tag-info (expand-file-name file))))
                         (push (xref-make hint loc) xrefs)
                         (puthash mark-key t marks)))))))))))
     (nreverse xrefs)))
+
+(defclass xref-etags-location (xref-location)
+  ((tag-info :type list   :initarg :tag-info)
+   (file     :type string :initarg :file
+             :reader xref-location-group))
+  :documentation "Location of an etags tag.")
+
+(defun xref-make-etags-location (tag-info file)
+  (make-instance 'xref-etags-location :tag-info tag-info
+                 :file (expand-file-name file)))
+
+(defmethod xref-location-marker ((l xref-etags-location))
+  (with-slots (tag-info file) l
+    (let ((buffer (find-file-noselect file)))
+      (with-current-buffer buffer
+        (etags-goto-tag-location tag-info)
+        (point-marker)))))
 
 
 (provide 'etags)

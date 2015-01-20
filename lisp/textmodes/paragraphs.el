@@ -168,11 +168,11 @@ to obtain the value of this variable."
   :type '(choice regexp (const :tag "Use default value" nil)))
 (put 'sentence-end 'safe-local-variable 'string-or-null-p)
 
-(defcustom sentence-end-base "[.?!][]\"'”)}]*"
+(defcustom sentence-end-base "[.?!…‽][]\"'”’)}]*"
   "Regexp matching the basic end of a sentence, not including following space."
   :group 'paragraphs
   :type 'string
-  :version "22.1")
+  :version "25.1")
 (put 'sentence-end-base 'safe-local-variable 'stringp)
 
 (defun sentence-end ()

@@ -37,9 +37,26 @@
 ;; Added elements:
 ;; - We support aliases to generic functions.
 ;; - The kind of thing on which to dispatch can be extended.
-;;   There is support in this file for (eql <val>) dispatch as well as dispatch
-;;   on the type of CL structs, and eieio-core.el adds support for EIEIO
-;;   defclass objects.
+;;   There is support in this file for dispatch on:
+;;   - (eql <val>)
+;;   - plain old types
+;;   - type of CL structs
+;;   eieio-core adds dispatch on:
+;;   - class of eieio objects
+;;   - actual class argument, using the syntax (subclass <class>).
+
+;; Efficiency considerations: overall, I've made an effort to make this fairly
+;; efficient for the expected case (e.g. no constant redefinition of methods).
+;; - Generic functions which do not dispatch on any argument are implemented
+;;   optimally (just as efficient as plain old functions).
+;; - Generic functions which only dispatch on one argument are fairly efficient
+;;   (not a lot of room for improvement, I think).
+;; - Multiple dispatch is implemented rather naively.  There's an extra `apply'
+;;   function call for every dispatch; we don't optimize each dispatch
+;;   based on the set of candidate methods remaining; we don't optimize the
+;;   order in which we performs the dispatches either;  If/when this
+;;   becomes a problem, we can try and optimize it.
+;; - call-next-method could be made more efficient, but isn't too terrible.
 
 ;;; Code:
 

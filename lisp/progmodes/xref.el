@@ -34,7 +34,9 @@
 ;;
 ;; One would usually call `make-xref' and `xref-make-file-location',
 ;; `xref-make-buffer-location' or `xref-make-bogus-location' to create
-;; them.
+;; them.  More generally, a location must be an instance of an EIEIO
+;; class inheriting from `xref-location' and implementing
+;; `xref-location-group' and `xref-location-marker'.
 ;;
 ;; Each identifier must be represented as a string.  Implementers can
 ;; use string properties to store additional information about the
@@ -456,7 +458,7 @@ GROUP is a string for decoration purposes and XREF is an
                              'face 'font-lock-keyword-face
                              'mouse-face 'highlight
                              'keymap xref--button-map
-                             'help-echo "mouse-2: display, RET or mouse-1: navigate")
+                             'help-echo "mouse-2: display in another window, RET or mouse-1: navigate")
                        description))
                     (when (or more1 more2)
                       (insert "\n")))))

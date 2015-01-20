@@ -1,3 +1,77 @@
+2015-01-20  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio-generic.el: Remove.
+	(defgeneric, defmethod): Move to eieio-compat.el.  Mark obsolete.
+	* emacs-lisp/eieio-compat.el: New file.
+	* emacs-lisp/eieio.el: Don't require eieio-generic any more.
+	* emacs-lisp/eieio-core.el (eieio--slot-originating-class-p):
+	Remove unused function.
+	(eieio-defclass): Move to eieio-compat.el.
+	* emacs-lisp/macroexp.el (macroexp-macroexpand): New function.
+	(macroexp--expand-all): Use it.
+	* emacs-lisp/bytecomp.el (byte-compile-recurse-toplevel): Here too.
+
+2015-01-20  Michal Nazarewicz  <mina86@mina86.com>
+
+	* emacs-lisp/eldoc.el (eldoc-documentation-function): Describe how
+	major modes should use `add-function' to alter value of the variable.
+	* hexl.el (hexl-mode):
+	* ielm.el (inferior-emacs-lisp-mode):
+	* progmodes/cfengine.el (cfengine3-mode):
+	* progmodes/elisp-mode (emacs-lisp-mode):
+	* progmodes/octave.el (octave-mode):
+	* progmodes/python.el (python-mode):
+	* simple.el (read--expression): Set `eldoc-documentation-function'
+	using `add-function' so the default value is always used.
+
+	* descr-text.el (describe-char-eldoc): New function returning
+	basic Unicode codepoint information (e.g. name) about character
+	at point.  It is meant to be used as a default value of the
+	`eldoc-documentation-function' variable.
+	(describe-char-eldoc--format, describe-char-eldoc--truncate):
+	New helper functions for `describe-char-eldoc' function.
+
+2015-01-20  Michal Nazarewicz  <mina86@mina86.com>
+
+	* textmodes/paragraphs.el (sentence-end-base): Include an
+	ellipsis (…) and interrobang (‽) characters as end of a sentence,
+	and a closing single quote (’) as an end of a quote.
+
+2015-01-20  Michal Nazarewicz  <mina86@mina86.com>
+
+	* textmodes/tildify.el (tildify-double-space-undos): A new
+	variable specifying whether pressing space in `tildify-mode' after
+	a space has been replaced with hard space undos the substitution.
+	(tildify-space): Add code branch for handling `tildify-doule-space'.
+
+	* textmodes/tildify.el (tildify-space): A new function
+	which can be used as a `post-self-insert-hook' to automatically
+	convert spaces into hard spaces.
+	(tildify-space-pattern): A new variable specifying pattern where
+	`tildify-space' should take effect.
+	(tildify-space-predicates): A new variable specifying list of
+	predicate functions that all must return non-nil for
+	`tildify-space' to take effect.
+	(tildify-space-region-predicate): A new functions meant to be
+	used as a predicate in `tildify-space-predicates' list.
+	(tildify-mode): A new minor mode enabling `tildify-space' as a
+	`post-self-insert-hook'
+
+2015-01-20  Daniel Colascione  <dancol@dancol.org>
+
+	* vc/vc-dir.el (vc-dir): Default to repository root, not
+	default-directory.
+
+2015-01-20  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/etags.el (xref-etags-location): New class.
+	(xref-make-etags-location): New function.
+	(etags--xref-find-definitions): Use it.
+	(xref-location-marker): New method implementation.
+
+	* progmodes/xref.el: Mention that xref-location is an EIEIO class.
+	(xref--insert-xrefs): Expand help-echo string.
+
 2015-01-19  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* ido.el: Update Customization instructions.
@@ -32,8 +106,8 @@
 	(xref--save-to-history): New function.
 	(xref--display-position): Use it.  Add new argument.
 	(xref--restore-window-configuration): Remove.
-	(xref--show-location, xref-show-location-at-point): Update
-	accordingly.
+	(xref--show-location, xref-show-location-at-point):
+	Update accordingly.
 	(xref--xref-buffer-mode): Don't use `pre-command-hook'.
 	(xref--quit): New command.
 	(xref-goto-xref): Use it.
@@ -78,6 +152,11 @@
 	error.  (Bug#19434)
 
 2015-01-18  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio-core.el: Add `subclass' specializer for cl-generic.
+	(eieio--generic-subclass-tagcode, eieio--generic-subclass-tag-types):
+	New functions.
+	(cl-generic-tagcode-function, cl-generic-tag-types-function): Use them.
 
 	* emacs-lisp/cl-macs.el (cl-defstruct): Minor optimization when include
 	or print is nil.

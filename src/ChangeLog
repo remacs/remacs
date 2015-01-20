@@ -1,3 +1,57 @@
+2015-01-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Undo port to hypothetical nonzero Qnil case
+	This mostly undoes the previous change in this area.  See:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-01/msg00570.html
+	* alloc.c (allocate_pseudovector):
+	* callint.c (Fcall_interactively):
+	* dispnew.c (realloc_glyph_pool):
+	* fringe.c (init_fringe):
+	* lisp.h (memsetnil):
+	* xdisp.c (init_iterator):
+	Simplify by assuming that Qnil is zero, but verify the assumption.
+	* lisp.h (NIL_IS_ZERO): Revert back to this symbol, removing
+	NIL_IS_NONZERO.  All uses changed.
+
+2015-01-20  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (EV_TRAILER2): Set Vinhibit_quit to Qt (Bug#19531).
+
+2015-01-20  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Prefer xlispstrdup to avoid dumb calls to strlen.
+	* nsfont.m (ns_get_family):
+	* nsterm.m (ns_term_init):
+	* w32fns.c (w32_window):
+	* xfns.c (x_window, Fx_select_font): Use xlispstrdup.
+
+2015-01-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Correct an old fix for GTK font selection
+	* gtkutil.c (xg_get_font): Fix off-by-2 typo.
+	Fixes: bug#3228
+
+	Fix minor bugs with printing null bytes
+	* minibuf.c (read_minibuf_noninteractive):
+	* xdisp.c (Ftrace_to_stderr) [GLYPH_DEBUG]:
+	Work even if the Lisp string contains a null byte.
+
+	Port to hypothetical case where Qnil is nonzero
+	* alloc.c (allocate_pseudovector):
+	* callint.c (Fcall_interactively):
+	* coding.c (syms_of_coding):
+	* dispnew.c (realloc_glyph_pool):
+	* fringe.c (init_fringe):
+	* lisp.h (memsetnil):
+	* xdisp.c (init_iterator):
+	Port to the currently-hypothetical case where Qnil is nonzero.
+	* dispnew.c (adjust_glyph_matrix): Remove unnecessary verification,
+	as there are no Lisp_Object values in the data here.
+	* lisp.h (NIL_IS_NONZERO): New symbol, replacing NIL_IS_ZERO.
+	All uses changed.  Define only if not already defined, so that one
+	can debug with -DNIL_IS_NONZERO.
+	* xdisp.c (init_iterator): Remove unnecessary initializations to 0.
+
 2015-01-19  Eli Zaretskii  <eliz@gnu.org>
 
 	* dispnew.c (adjust_glyph_matrix, realloc_glyph_pool): Verify that

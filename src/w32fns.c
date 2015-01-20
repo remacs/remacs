@@ -4208,7 +4208,7 @@ w32_window (struct frame *f, long window_prompting, int minibuffer_only)
      for the window manager, so GC relocation won't bother it.
 
      Elsewhere we specify the window name for the window manager.  */
-  f->namebuf = xstrdup (SSDATA (Vx_resource_name));
+  f->namebuf = xlispstrdup (Vx_resource_name);
 
   my_create_window (f);
 

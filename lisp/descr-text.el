@@ -825,6 +825,102 @@ relevant to POS."
 
 (define-obsolete-function-alias 'describe-char-after 'describe-char "22.1")
 
+;;; Describe-Char-ElDoc
+
+(defun describe-char-eldoc--truncate (name width)
+  "Truncate NAME at white spaces such that it is no longer than WIDTH.
+
+Split NAME on white space character and return string with as
+many leading words of NAME as possible without exceeding WIDTH
+characters.  If NAME consists of white space characters only,
+return an empty string.  Three dots (\"...\") are appended to
+returned string if some of the words from NAME have been omitted.
+
+NB: Function may return string longer than WIDTH if name consists
+of a single word, or it's first word is longer than WIDTH
+characters."
+  (let ((words (split-string name)))
+    (if words
+        (let ((last words))
+          (setq width (- width (length (car words))))
+          (while (and (cdr last)
+                      (<= (+ (length (cadr last)) (if (cddr last) 4 1)) width))
+            (setq last (cdr last))
+            (setq width (- width (length (car last)) 1)))
+          (let ((ellipsis (and (cdr last) "...")))
+            (setcdr last nil)
+            (concat (mapconcat 'identity words " ") ellipsis)))
+      "")))
+
+(defun describe-char-eldoc--format (ch &optional width)
+  "Format a description for character CH which is no more than WIDTH characters.
+
+Full description message has a \"U+HEX: NAME (GC: GENERAL-CATEGORY)\"
+format where:
+- HEX is a hexadecimal codepoint of the character (zero-padded to at
+  least four digits),
+- NAME is name of the character.
+- GC is a two-letter abbreviation of the general-category of the
+  character, and
+- GENERAL-CATEGORY is full name of the general-category of the
+  character.
+
+If WIDTH is non-nil some elements of the description may be
+omitted to accommodate the length restriction.  Under certain
+condition, the function may return string longer than WIDTH, see
+`describe-char-eldoc--truncate'."
+  (let ((name (get-char-code-property ch 'name)))
+    (when name
+      (let* ((code (propertize (format "U+%04X" ch)
+                               'face 'font-lock-constant-face))
+             (gc (get-char-code-property ch 'general-category))
+             (gc-desc (char-code-property-description 'general-category gc)))
+
+        (unless (or (not width) (<= (length name) width))
+          (setq name (describe-char-eldoc--truncate name width)))
+        (setq name (concat (substring name 0 1) (downcase (substring name 1))))
+        (setq name (propertize name 'face 'font-lock-variable-name-face))
+
+        (setq gc (propertize (symbol-name gc) 'face 'font-lock-comment-face))
+        (when gc-desc
+          (setq gc-desc (propertize gc-desc 'face 'font-lock-comment-face)))
+
+        (let ((lcode    (length code))
+              (lname    (length name))
+              (lgc      (length gc))
+              (lgc-desc (and gc-desc (length gc-desc))))
+          (cond
+           ((and gc-desc
+                 (or (not width) (<= (+ lcode lname lgc lgc-desc 7) width)))
+            (concat code ": " name " (" gc ": " gc-desc ")"))
+           ((and gc-desc (<= (+ lcode lname lgc-desc 5) width))
+            (concat code ": " name " (" gc-desc ")"))
+           ((or (not width) (<= (+ lcode lname lgc 5) width))
+            (concat code ": " name " (" gc ")"))
+           ((<= (+ lname lgc 3) width)
+            (concat name " (" gc ")"))
+           (t name)))))))
+
+;;;###autoload
+(defun describe-char-eldoc ()
+  "Return a description of character at point for use by ElDoc mode.
+
+Return nil if character at point is a printable ASCII
+character (i.e. codepoint between 32 and 127 inclusively).
+Otherwise return a description formatted by
+`describe-char-eldoc--format' function taking into account value
+of `eldoc-echo-area-use-multiline-p' variable and width of
+minibuffer window for width limit.
+
+This function is meant to be used as a value of
+`eldoc-documentation-function' variable."
+  (let ((ch (following-char)))
+    (when (and (not (zerop ch)) (or (< ch 32) (> ch 127)))
+      (describe-char-eldoc--format
+       ch
+       (unless (eq eldoc-echo-area-use-multiline-p t)
+         (1- (window-width (minibuffer-window))))))))
+
 (provide 'descr-text)
 
 ;;; descr-text.el ends here

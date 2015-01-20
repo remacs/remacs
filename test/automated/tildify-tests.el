@@ -185,6 +185,77 @@ The function must terminate as soon as callback returns nil."
       (+ (point-min) 10) (+ (point-min) 20)))) ; start at "3" end past "5"
 
 
+(defun tildify-space-test--test (modes nbsp env-open &optional set-space-string)
+  (with-temp-buffer
+    (dolist (mode modes)
+      (funcall mode)
+      (when set-space-string
+        (setq-local tildify-space-string nbsp))
+      (let ((header (concat "Testing `tildify-space' in "
+                            (symbol-name mode) "\n")))
+        ;; Replace space with hard space.
+        (erase-buffer)
+        (insert header "Lorem v ")
+        (should (tildify-space))
+        (should (string-equal (concat header "Lorem v" nbsp) (buffer-string)))
+        ;; Inside and ignore environment, replacing does not happen.
+        (erase-buffer)
+        (insert header env-open "Lorem v ")
+        (should (not (tildify-space)))
+        (should (string-equal (concat header env-open "Lorem v ")
+                              (buffer-string)))))))
+
+(ert-deftest tildify-space-test-html ()
+  "Tests auto-tildification in an HTML document"
+  (tildify-space-test--test '(html-mode sgml-mode) " " "<pre>"))
+
+(ert-deftest tildify-space-test-html-nbsp ()
+  "Tests auto-tildification in an HTML document"
+  (tildify-space-test--test '(html-mode sgml-mode) "&nbsp;" "<pre>" t))
+
+(ert-deftest tildify-space-test-xml ()
+  "Tests auto-tildification in an XML document"
+  (tildify-space-test--test '(nxml-mode) " " "<! -- "))
+
+(ert-deftest tildify-space-test-tex ()
+  "Tests tildification in a TeX document"
+  (tildify-space-test--test '(tex-mode latex-mode plain-tex-mode)
+                            "~" "\\verb# "))
+
+
+(defun tildify-space-undo-test--test
+    (modes nbsp env-open &optional set-space-string)
+  (with-temp-buffer
+    (dolist (mode modes)
+      (funcall mode)
+      (when set-space-string
+        (setq-local tildify-space-string nbsp))
+      (let ((header (concat "Testing double-space-undos in "
+                            (symbol-name mode) "\n")))
+        (erase-buffer)
+        (insert header "Lorem v" nbsp " ")
+        (should (not (tildify-space)))
+        (should (string-equal (concat header "Lorem v ") (buffer-string)))))))
+
+(ert-deftest tildify-space-undo-test-html ()
+  "Tests auto-tildification in an HTML document"
+  (tildify-space-undo-test--test '(html-mode sgml-mode) " " "<pre>"))
+
+(ert-deftest tildify-space-undo-test-html-nbsp ()
+  "Tests auto-tildification in an HTML document"
+  (tildify-space-undo-test--test '(html-mode sgml-mode) "&nbsp;" "<pre>" t))
+
+(ert-deftest tildify-space-undo-test-xml ()
+  "Tests auto-tildification in an XML document"
+  (tildify-space-undo-test--test '(nxml-mode) " " "<! -- "))
+
+(ert-deftest tildify-space-undo-test-tex ()
+  "Tests tildification in a TeX document"
+  (tildify-space-undo-test--test '(tex-mode latex-mode plain-tex-mode)
+                                 "~" "\\verb# "))
+
+
+
 (provide 'tildify-tests)
 
 ;;; tildify-tests.el ends here

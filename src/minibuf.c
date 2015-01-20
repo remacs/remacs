@@ -217,7 +217,7 @@ read_minibuf_noninteractive (Lisp_Object map, Lisp_Object initial,
       suppress_echo_on_tty (fileno (stdin));
     }
 
-  fprintf (stdout, "%s", SDATA (prompt));
+  fwrite (SDATA (prompt), 1, SBYTES (prompt), stdout);
   fflush (stdout);
 
   val = Qnil;
