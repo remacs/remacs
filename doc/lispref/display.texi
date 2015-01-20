@@ -5511,10 +5511,12 @@ Set @var{button}'s @var{prop} property to @var{val}.
 @end defun
 
 @defun button-activate button &optional use-mouse-action
-Call @var{button}'s @code{action} property (i.e., invoke it).  If
-@var{use-mouse-action} is non-@code{nil}, try to invoke the button's
-@code{mouse-action} property instead of @code{action}; if the button
-has no @code{mouse-action} property, use @code{action} as normal.
+Call @var{button}'s @code{action} property (i.e., invoke the function
+that is the value of that property, passing it the single argument
+@var{button}).  If @var{use-mouse-action} is non-@code{nil}, try to
+invoke the button's @code{mouse-action} property instead of
+@code{action}; if the button has no @code{mouse-action} property, use
+@code{action} as normal.
 @end defun
 
 @defun button-label button
