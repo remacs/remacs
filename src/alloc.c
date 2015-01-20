@@ -3175,10 +3175,9 @@ allocate_pseudovector (int memlen, int lisplen,
   eassert (lisplen <= (1 << PSEUDOVECTOR_SIZE_BITS) - 1);
 
   /* Only the first LISPLEN slots will be traced normally by the GC.
-     If Qnil is nonzero, clear the non-Lisp data separately.  */
+     Since Qnil == 0, we can memset Lisp and non-Lisp data at one go.  */
+  verify (NIL_IS_ZERO);
   memsetnil (v->contents, zerolen);
-  if (NIL_IS_NONZERO)
-    memset (v->contents + lisplen, 0, (zerolen - lisplen) * word_size);
 
   XSETPVECTYPESIZE (v, tag, lisplen, memlen - lisplen);
   return v;

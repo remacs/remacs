@@ -1727,9 +1727,8 @@ init_fringe (void)
 
   fringe_bitmaps = xzalloc (max_fringe_bitmaps * sizeof *fringe_bitmaps);
 
+  verify (NIL_IS_ZERO);
   fringe_faces = xzalloc (max_fringe_bitmaps * sizeof *fringe_faces);
-  if (NIL_IS_NONZERO)
-    memsetnil (fringe_faces, max_fringe_bitmaps);
 }
 
 #ifdef HAVE_NTGUI

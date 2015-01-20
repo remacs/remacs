@@ -2747,17 +2747,12 @@ init_iterator (struct it *it, struct window *w,
     }
 
   /* Clear IT.  */
+
+  /* The code assumes it->object and other Lisp_Object components are
+     set to nil, so verify that memset does this.  */
+  verify (NIL_IS_ZERO);
   memset (it, 0, sizeof *it);
-  if (NIL_IS_NONZERO)
-    {
-      it->string = Qnil;
-      it->from_overlay = Qnil;
-      it->slice.x = it->slice.y = it->slice.width = it->slice.height = Qnil;
-      it->space_width = Qnil;
-      it->font_height = Qnil;
-      it->object = Qnil;
-      it->bidi_it.string.lstring = Qnil;
-    }
+
   it->current.overlay_string_index = -1;
   it->current.dpvec_index = -1;
   it->base_face_id = remapped_base_face_id;
