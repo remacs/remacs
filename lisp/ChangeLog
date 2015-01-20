@@ -1,3 +1,7 @@
+2015-01-20  Eli Zaretskii  <eliz@gnu.org>
+
+	* button.el (button-activate, push-button): Doc fix.  (Bug#19628)
+
 2015-01-16  Samer Masterson  <samer@samertm.com>  (tiny change)
 
 	* pcomplete.el (pcomplete-parse-arguments): Parse arguments
