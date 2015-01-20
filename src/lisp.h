@@ -1503,18 +1503,22 @@ gc_aset (Lisp_Object array, ptrdiff_t idx, Lisp_Object val)
   XVECTOR (array)->contents[idx] = val;
 }
 
-/* True, since Qnil's representation is zero.  Every place in the code
-   that assumes Qnil is zero should verify (NIL_IS_ZERO), to make it easy
-   to find such assumptions later if we change Qnil to be nonzero.  */
-enum { NIL_IS_ZERO = XLI_BUILTIN_LISPSYM (iQnil) == 0 };
+/* True if Qnil's representation is nonzero.  This is always false currently,
+   but there is fallback code for hypothetical alternative implementations.
+   Compile with -DNIL_IS_NONZERO to test the fallback code.  */
+#ifndef NIL_IS_NONZERO
+enum { NIL_IS_NONZERO = XLI_BUILTIN_LISPSYM (iQnil) != 0 };
+#endif
 
-/* Set a Lisp_Object array V's SIZE entries to nil.  */
+/* Set a Lisp_Object array V's N entries to nil.  */
 INLINE void
-memsetnil (Lisp_Object *v, ptrdiff_t size)
+memsetnil (Lisp_Object *v, ptrdiff_t n)
 {
-  eassert (0 <= size);
-  verify (NIL_IS_ZERO);
-  memset (v, 0, size * sizeof *v);
+  eassert (0 <= n);
+  memset (v, 0, n * sizeof *v);
+  if (NIL_IS_NONZERO)
+    for (ptrdiff_t i = 0; i < n; i++)
+      v[i] = Qnil;
 }
 
 /* If a struct is made to look like a vector, this macro returns the length

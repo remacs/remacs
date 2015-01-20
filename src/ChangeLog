@@ -1,3 +1,21 @@
+2015-01-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port to hypothetical case where Qnil is nonzero
+	* alloc.c (allocate_pseudovector):
+	* callint.c (Fcall_interactively):
+	* coding.c (syms_of_coding):
+	* dispnew.c (realloc_glyph_pool):
+	* fringe.c (init_fringe):
+	* lisp.h (memsetnil):
+	* xdisp.c (init_iterator):
+	Port to the currently-hypothetical case where Qnil is nonzero.
+	* dispnew.c (adjust_glyph_matrix): Remove unnecessary verification,
+	as there are no Lisp_Object values in the data here.
+	* lisp.h (NIL_IS_NONZERO): New symbol, replacing NIL_IS_ZERO.
+	All uses changed.  Define only if not already defined, so that one
+	can debug with -DNIL_IS_NONZERO.
+	* xdisp.c (init_iterator): Remove unnecessary initializations to 0.
+
 2015-01-19  Eli Zaretskii  <eliz@gnu.org>
 
 	* dispnew.c (adjust_glyph_matrix, realloc_glyph_pool): Verify that

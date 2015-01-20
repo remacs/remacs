@@ -418,7 +418,6 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 	 relies on the object of special glyphs (truncation and
 	 continuation glyps and also blanks used to extend each line
 	 on a TTY) to be nil.  */
-      verify (NIL_IS_ZERO);
       memset (matrix->rows + old_alloc, 0,
 	      (matrix->rows_allocated - old_alloc) * sizeof *matrix->rows);
     }
@@ -1345,14 +1344,15 @@ realloc_glyph_pool (struct glyph_pool *pool, struct dim matrix_dim)
       ptrdiff_t old_nglyphs = pool->nglyphs;
       pool->glyphs = xpalloc (pool->glyphs, &pool->nglyphs,
 			      needed - old_nglyphs, -1, sizeof *pool->glyphs);
-      /* As a side effect, this sets the object of each glyph to nil,
-	 so verify we will indeed get that.  Redisplay relies on the
-	 object of special glyphs (truncation and continuation glyps
-	 and also blanks used to extend each line on a TTY) to be
-	 nil.  */
-      verify (NIL_IS_ZERO);
       memset (pool->glyphs + old_nglyphs, 0,
 	      (pool->nglyphs - old_nglyphs) * sizeof *pool->glyphs);
+
+      /* Set the object of each glyph to nil.  Redisplay relies on
+	 this for objects of special glyphs (truncation and continuation
+	 glyphs and also blanks used to extend each line on a TTY).  */
+      if (NIL_IS_NONZERO)
+	for (ptrdiff_t i = old_nglyphs; i < pool->nglyphs; i++)
+	  pool->glyphs[i].object = Qnil;
     }
 
   /* Remember the number of rows and columns because (a) we use them

@@ -2747,19 +2747,22 @@ init_iterator (struct it *it, struct window *w,
     }
 
   /* Clear IT.  */
-  /* As a side effect, this sets it->object to nil, so verify we will
-     indeed get that.  */
-  verify (NIL_IS_ZERO);
   memset (it, 0, sizeof *it);
+  if (NIL_IS_NONZERO)
+    {
+      it->string = Qnil;
+      it->from_overlay = Qnil;
+      it->slice.x = it->slice.y = it->slice.width = it->slice.height = Qnil;
+      it->space_width = Qnil;
+      it->font_height = Qnil;
+      it->object = Qnil;
+      it->bidi_it.string.lstring = Qnil;
+    }
   it->current.overlay_string_index = -1;
   it->current.dpvec_index = -1;
   it->base_face_id = remapped_base_face_id;
-  it->string = Qnil;
   IT_STRING_CHARPOS (*it) = IT_STRING_BYTEPOS (*it) = -1;
   it->paragraph_embedding = L2R;
-  it->bidi_it.string.lstring = Qnil;
-  it->bidi_it.string.s = NULL;
-  it->bidi_it.string.bufpos = 0;
   it->bidi_it.w = w;
 
   /* The window in which we iterate over current_buffer:  */
@@ -2780,7 +2783,6 @@ init_iterator (struct it *it, struct window *w,
 				  * FRAME_LINE_HEIGHT (it->f));
       else if (it->f->extra_line_spacing > 0)
 	it->extra_line_spacing = it->f->extra_line_spacing;
-      it->max_extra_line_spacing = 0;
     }
 
   /* If realized faces have been removed, e.g. because of face
@@ -2792,10 +2794,6 @@ init_iterator (struct it *it, struct window *w,
   if (FRAME_FACE_CACHE (it->f)->used == 0)
     recompute_basic_faces (it->f);
 
-  /* Current value of the `slice', `space-width', and 'height' properties.  */
-  it->slice.x = it->slice.y = it->slice.width = it->slice.height = Qnil;
-  it->space_width = Qnil;
-  it->font_height = Qnil;
   it->override_ascent = -1;
 
   /* Are control characters displayed as `^C'?  */
@@ -2833,21 +2831,19 @@ init_iterator (struct it *it, struct window *w,
   it->tab_width = SANE_TAB_WIDTH (current_buffer);
 
   /* Are lines in the display truncated?  */
-  if (base_face_id != DEFAULT_FACE_ID
-      || it->w->hscroll
-      || (! WINDOW_FULL_WIDTH_P (it->w)
-	  && ((!NILP (Vtruncate_partial_width_windows)
-	       && !INTEGERP (Vtruncate_partial_width_windows))
-	      || (INTEGERP (Vtruncate_partial_width_windows)
-		  /* PXW: Shall we do something about this?  */
-		  && (WINDOW_TOTAL_COLS (it->w)
-		      < XINT (Vtruncate_partial_width_windows))))))
+  if (TRUNCATE != 0)
     it->line_wrap = TRUNCATE;
-  else if (NILP (BVAR (current_buffer, truncate_lines)))
+  if (base_face_id == DEFAULT_FACE_ID
+      && !it->w->hscroll
+      && (WINDOW_FULL_WIDTH_P (it->w)
+	  || NILP (Vtruncate_partial_width_windows)
+	  || (INTEGERP (Vtruncate_partial_width_windows)
+	      /* PXW: Shall we do something about this?  */
+	      && (XINT (Vtruncate_partial_width_windows)
+		  <= WINDOW_TOTAL_COLS (it->w))))
+      && NILP (BVAR (current_buffer, truncate_lines)))
     it->line_wrap = NILP (BVAR (current_buffer, word_wrap))
       ? WINDOW_WRAP : WORD_WRAP;
-  else
-    it->line_wrap = TRUNCATE;
 
   /* Get dimensions of truncation and continuation glyphs.  These are
      displayed as fringe bitmaps under X, but we need them for such
