@@ -1,5 +1,10 @@
 2015-01-20  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Fix minor bugs with printing null bytes
+	* minibuf.c (read_minibuf_noninteractive):
+	* xdisp.c (Ftrace_to_stderr) [GLYPH_DEBUG]:
+	Work even if the Lisp string contains a null byte.
+
 	Port to hypothetical case where Qnil is nonzero
 	* alloc.c (allocate_pseudovector):
 	* callint.c (Fcall_interactively):

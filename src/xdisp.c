@@ -18815,7 +18815,7 @@ usage: (trace-to-stderr STRING &rest OBJECTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
   Lisp_Object s = Fformat (nargs, args);
-  fprintf (stderr, "%s", SDATA (s));
+  fwrite (SDATA (s), 1, SBYTES (s), stderr);
   return Qnil;
 }
 
