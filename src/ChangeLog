@@ -1,5 +1,9 @@
 2015-01-21  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Fix coding.c subscript error
+	* coding.c (CODING_ISO_INVOKED_CHARSET):
+	Avoid undefined behavior if CODING_ISO_INVOCATION returns negative.
+
 	Backport: correct old fix for GTK font selection
 	* gtkutil.c (xg_get_font): Fix off-by-2 typo.
 	Fixes: bug#3228
