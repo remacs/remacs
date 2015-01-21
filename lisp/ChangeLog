@@ -1,5 +1,9 @@
 2015-01-21  Dmitry Gutov  <dgutov@yandex.ru>
 
+	* progmodes/xref.el (xref--xref-buffer-mode-map): Define before
+	the major mode.  Remap `quit-window' to `xref-quit'.
+	(xref--xref-buffer-mode): Inherit from special-mode.
+
 	xref: Keep track of temporary buffers  (bug#19466).
 	* progmodes/xref.el (xref--temporary-buffers, xref--selected)
 	(xref--inhibit-mark-selected): New variables.

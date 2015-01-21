@@ -421,20 +421,21 @@ Used for temporary buffers.")
     (xref-quit)
     (xref--pop-to-location loc window)))
 
-(define-derived-mode xref--xref-buffer-mode fundamental-mode "XREF"
+(defvar xref--xref-buffer-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [remap quit-window] #'xref-quit)
+    (define-key map (kbd "n") #'xref-next-line)
+    (define-key map (kbd "p") #'xref-prev-line)
+    (define-key map (kbd "RET") #'xref-goto-xref)
+    (define-key map (kbd "C-o") #'xref-show-location-at-point)
+    ;; suggested by Johan Claesson "to further reduce finger movement":
+    (define-key map (kbd ".") #'xref-next-line)
+    (define-key map (kbd ",") #'xref-prev-line)
+    map))
+
+(define-derived-mode xref--xref-buffer-mode special-mode "XREF"
   "Mode for displaying cross-references."
   (setq buffer-read-only t))
-
-(let ((map xref--xref-buffer-mode-map))
-  (define-key map (kbd "q") #'xref-quit)
-  (define-key map (kbd "n") #'xref-next-line)
-  (define-key map (kbd "p") #'xref-prev-line)
-  (define-key map (kbd "RET") #'xref-goto-xref)
-  (define-key map (kbd "C-o") #'xref-show-location-at-point)
-
-  ;; suggested by Johan Claesson "to further reduce finger movement":
-  (define-key map (kbd ".") #'xref-next-line)
-  (define-key map (kbd ",") #'xref-prev-line))
 
 (defun xref-quit (&optional kill)
   "Perform cleanup, then quit the current window.
@@ -445,7 +446,7 @@ created in the process of showing xrefs.
 Exceptions are made for buffers switched to by the user in the
 meantime, and other window configuration changes.  These are
 preserved."
-  (interactive "P")a
+  (interactive "P")
   (let ((window (selected-window))
         (history xref--display-history))
     (setq xref--display-history nil)
