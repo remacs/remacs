@@ -190,13 +190,27 @@ Summary:
                                 (if split (cdr split) docstring))))
                 (new-docstring (help-add-fundoc-usage doc-only
                                                       (cons 'cl-cnm args))))
-           ;; FIXME: ¡Add the new-docstring to those closures!
+           ;; FIXME: ¡Add new-docstring to those closures!
            (lambda (cnm &rest args)
              (cl-letf (((symbol-function 'call-next-method) cnm)
                        ((symbol-function 'next-method-p)
                         (lambda () (cl--generic-isnot-nnm-p cnm))))
                (apply code args))))
-       code))))
+       code))
+    ;; The old EIEIO code did not signal an error when there are methods
+    ;; applicable but only of the before/after kind.  So if we add a :before
+    ;; or :after, make sure there's a matching dummy primary.
+    (when (and (memq kind '(:before :after))
+               (not (assoc (cons (mapcar (lambda (arg)
+                                           (if (consp arg) (nth 1 arg) t))
+                                         specializers)
+                                 :primary)
+                           (cl--generic-method-table (cl--generic method)))))
+      (cl-generic-define-method method () specializers t
+                                (lambda (cnm &rest args)
+                                  (if (cl--generic-isnot-nnm-p cnm)
+                                      (apply cnm args)))))
+    method))
 
 ;; Compatibility with code which tries to catch `no-method-definition' errors.
 (push 'no-method-definition (get 'cl-no-applicable-method 'error-conditions))
@@ -212,7 +226,12 @@ Summary:
   (apply #'cl-no-applicable-method method object args))
 
 (define-obsolete-function-alias 'call-next-method 'cl-call-next-method "25.1")
-(define-obsolete-function-alias 'next-method-p 'cl-next-method-p "25.1")
+(defun next-method-p ()
+  (declare (obsolete cl-next-method-p "25.1"))
+  ;; EIEIO's `next-method-p' just returned nil when called in an
+  ;; invalid context.
+  (message "next-method-p called outside of a primary or around method")
+  nil)
 
 ;;;###autoload
 (defun eieio-defmethod (method args)
@@ -225,11 +244,9 @@ Summary:
 (defun eieio-defgeneric (method doc-string)
   "Obsolete work part of an old version of the `defgeneric' macro."
   (declare (obsolete cl-defgeneric "24.1"))
-  ;; Don't do this over and over.
-  (unless (fboundp 'method)
-    (eval `(defgeneric ,method (x) ,@(if doc-string `(,doc-string))))
-    ;; Return the method
-    'method))
+  (eval `(defgeneric ,method (x) ,@(if doc-string `(,doc-string))))
+  ;; Return the method
+  'method)
 
 ;;;###autoload
 (defun eieio-defclass (cname superclasses slots options)

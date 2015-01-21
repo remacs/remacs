@@ -292,6 +292,7 @@
 
 (defmethod initialize-instance :after ((this eitest-Ja) &rest slots)
   ;(message "+Ja")
+  ;; FIXME: Using next-method-p in an after-method is invalid!
   (when (next-method-p)
     (call-next-method))
   ;(message "-Ja")
@@ -302,6 +303,7 @@
 
 (defmethod initialize-instance :after ((this eitest-Jb) &rest slots)
   ;(message "+Jb")
+  ;; FIXME: Using next-method-p in an after-method is invalid!
   (when (next-method-p)
     (call-next-method))
   ;(message "-Jb")

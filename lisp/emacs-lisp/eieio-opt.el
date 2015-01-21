@@ -122,29 +122,18 @@ If CLASS is actually an object, then also display current values of that object.
   ;; Describe all the slots in this class.
   (eieio-help-class-slots class)
   ;; Describe all the methods specific to this class.
-  (let ((methods (eieio-all-generic-functions class))
-	(type [":STATIC" ":BEFORE" ":PRIMARY" ":AFTER"])
-	counter doc)
-    (when methods
+  (let ((generics (eieio-all-generic-functions class)))
+    (when generics
       (insert (propertize "Specialized Methods:\n\n" 'face 'bold))
-      (while methods
-	(setq doc (eieio-method-documentation (car methods) class))
-	(insert "`")
-	(help-insert-xref-button (symbol-name (car methods))
-				 'help-function (car methods))
-	(insert "'")
-	(if (not doc)
-	    (insert "  Undocumented")
-	  (setq counter 0)
-	  (dolist (cur doc)
-	    (when cur
-	      (insert " " (aref type counter) " "
-		      (prin1-to-string (car cur) (current-buffer))
-		      "\n"
-		      (or (cdr cur) "")))
-	    (setq counter (1+ counter))))
-	(insert "\n\n")
-	(setq methods (cdr methods))))))
+      (dolist (generic generics)
+        (insert "`")
+        (help-insert-xref-button (symbol-name generic) 'help-function generic)
+        (insert "'")
+	(pcase-dolist (`(,qualifier ,args ,doc)
+                       (eieio-method-documentation generic class))
+          (insert (format " %S %S\n" qualifier args)
+                  (or doc "")))
+	(insert "\n\n")))))
 
 (defun eieio-help-class-slots (class)
   "Print help description for the slots in CLASS.
@@ -311,6 +300,20 @@ are not abstract."
 	  (eieio-help-class ctr))
 	))))
 
+(defun eieio--specializers-apply-to-class-p (specializers class)
+  "Return non-nil if a method with SPECIALIZERS applies to CLASS."
+  (let ((applies nil))
+    (dolist (specializer specializers)
+      (if (eq 'subclass (car-safe specializer))
+          (setq specializer (nth 1 specializer)))
+      ;; Don't include the methods that are "too generic", such as those
+      ;; applying to `eieio-default-superclass'.
+      (and (not (memq specializer '(t eieio-default-superclass)))
+           (class-p specializer)
+           (child-of-class-p class specializer)
+           (setq applies t)))
+    applies))
+
 (defun eieio-all-generic-functions (&optional class)
   "Return a list of all generic functions.
 Optional CLASS argument returns only those functions that contain
@@ -318,53 +321,31 @@ methods for CLASS."
   (let ((l nil))
     (mapatoms
      (lambda (symbol)
-       (let ((tree (get symbol 'eieio-method-hashtable)))
-         (when tree
-           ;; A symbol might be interned for that class in one of
-           ;; these three slots in the method-obarray.
-           (if (or (not class)
-                   (car (gethash class (aref tree 0)))
-                   (car (gethash class (aref tree 1)))
-                   (car (gethash class (aref tree 2))))
-               (setq l (cons symbol l)))))))
+       (let ((generic (and (fboundp symbol) (cl--generic symbol))))
+         (and generic
+	      (catch 'found
+		(if (null class) (throw 'found t))
+		(pcase-dolist (`((,specializers . ,_qualifier) . ,_)
+			       (cl--generic-method-table generic))
+		  (if (eieio--specializers-apply-to-class-p
+		       specializers class)
+		      (throw 'found t))))
+	      (push symbol l)))))
     l))
 
 (defun eieio-method-documentation (generic class)
-  "Return a list of the specific documentation of GENERIC for CLASS.
-If there is not an explicit method for CLASS in GENERIC, or if that
-function has no documentation, then return nil."
-  (let ((tree (get generic 'eieio-method-hashtable)))
-    (when tree
-      ;; A symbol might be interned for that class in one of
-      ;; these three slots in the method-hashtable.
-      ;; FIXME: Where do these 0/1/2 come from?  Isn't 0 for :static,
-      ;; 1 for before, and 2 for primary (and 3 for after)?
-      (let ((before  (car (gethash class (aref tree 0))))
-	    (primary (car (gethash class (aref tree 1))))
-	    (after   (car (gethash class (aref tree 2)))))
-        (if (not (or before primary after))
-            nil
-          (list (if before
-                    (cons (help-function-arglist before)
-                          (documentation before))
-                  nil)
-                (if primary
-                    (cons (help-function-arglist primary)
-                          (documentation primary))
-                  nil)
-                (if after
-                    (cons (help-function-arglist after)
-                          (documentation after))
-                  nil)))))))
-
-(defvar eieio-read-generic nil
-  "History of the `eieio-read-generic' prompt.")
-
-(defun eieio-read-generic (prompt &optional historyvar)
-  "Read a generic function from the minibuffer with PROMPT.
-Optional argument HISTORYVAR is the variable to use as history."
-  (intern (completing-read prompt obarray #'generic-p
-			   t nil (or historyvar 'eieio-read-generic))))
+  "Return info for all methods of GENERIC applicable to CLASS.
+The value returned is a list of elements of the form
+\(QUALIFIER ARGS DOC)."
+  (let ((generic (cl--generic generic))
+        (docs ()))
+    (when generic
+      (dolist (method (cl--generic-method-table generic))
+        (pcase-let ((`((,specializers . ,_qualifier) . ,_) method))
+          (when (eieio--specializers-apply-to-class-p
+                 specializers class)
+            (push (cl--generic-method-info method) docs)))))
+    docs))
 
 ;;; METHOD STATS
 ;;

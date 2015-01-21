@@ -1,3 +1,36 @@
+2015-01-21  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio.el: Use cl-defmethod.
+	(defclass): Generate cl-defmethod calls; use setf methods for :accessor.
+	(eieio-object-name-string): Declare as obsolete.
+
+	* emacs-lisp/eieio-opt.el: Adapt to cl-generic.
+	(eieio--specializers-apply-to-class-p):	New function.
+	(eieio-all-generic-functions): Use it.
+	(eieio-method-documentation): Use it as well as cl--generic-method-info.
+	Change format of return value.
+	(eieio-help-class): Adapt accordingly.
+
+	* emacs-lisp/eieio-compat.el (eieio--defmethod): Avoid no-next-method
+	errors when there's a `before' but no `primary' (bug#19645).
+	(next-method-p): Return nil rather than signal an error.
+	(eieio-defgeneric): Remove bogus (fboundp 'method).
+
+	* emacs-lisp/eieio-speedbar.el:
+	* emacs-lisp/eieio-datadebug.el:
+	* emacs-lisp/eieio-custom.el:
+	* emacs-lisp/eieio-base.el: Use cl-defmethod.
+
+	* emacs-lisp/cl-generic.el (cl-defgeneric): Add support for `declare'.
+	(cl--generic-setf-rewrite): Setup the setf expander right away.
+	(cl-defmethod): Make sure the setf expander is setup before we expand
+	the body.
+	(cl-defmethod): Silence byte-compiler warnings.
+	(cl-generic-define-method): Shuffle code to change return value.
+	(cl--generic-method-info): New function, extracted from
+	cl--generic-describe.
+	(cl--generic-describe): Use it.
+
 2015-01-21  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* progmodes/xref.el (xref--xref-buffer-mode-map): Define before

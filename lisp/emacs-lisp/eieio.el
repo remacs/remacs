@@ -179,36 +179,31 @@ and reference them using the function `class-option'."
 	;; of the specified name, and also performs a `defsetf' if applicable
 	;; so that users can `setf' the space returned by this function.
 	(when acces
-          ;; FIXME: The defmethod below only defines a part of the generic
-          ;; function (good), but the define-setter below affects the whole
-          ;; generic function (bad)!
-          (push `(gv-define-setter ,acces (store object)
-                   ;; Apparently, eieio-oset-default doesn't work like
-                   ;;  oref-default and only accept class arguments!
-                   (list ',(if nil ;; (eq alloc :class)
-                               'eieio-oset-default
-                             'eieio-oset)
-                         object '',sname store))
+          (push `(cl-defmethod (setf ,acces) (value (this ,name))
+                   (eieio-oset this ',sname value))
                 accessors)
-          (push `(defmethod ,acces ,(if (eq alloc :class) :static :primary)
-                   ((this ,name))
+          (push `(cl-defmethod ,acces ((this ,name))
                    ,(format
                      "Retrieve the slot `%S' from an object of class `%S'."
                      sname name)
-                   (if (slot-boundp this ',sname)
-                       ;; Use oref-default for :class allocated slots, since
-                       ;; these also accept the use of a class argument instead
-                       ;; of an object argument.
-                       (,(if (eq alloc :class) 'eieio-oref-default 'eieio-oref)
-                        this ',sname)
-                     ;; Else - Some error?  nil?
-                     nil))
-                accessors))
+                   ;; FIXME: Why is this different from the :reader case?
+                   (if (slot-boundp this ',sname) (eieio-oref this ',sname)))
+                accessors)
+          (when (and eieio-backward-compatibility (eq alloc :class))
+            ;; FIXME: How could I declare this *method* as obsolete.
+            (push `(cl-defmethod ,acces ((this (subclass ,name)))
+                     ,(format
+                       "Retrieve the class slot `%S' from a class `%S'.
+This method is obsolete."
+                       sname name)
+                     (if (slot-boundp this ',sname)
+                         (eieio-oref-default this ',sname)))
+                  accessors)))
 
 	;; If a writer is defined, then create a generic method of that
 	;; name whose purpose is to set the value of the slot.
 	(if writer
-            (push `(defmethod ,writer ((this ,name) value)
+            (push `(cl-defmethod ,writer ((this ,name) value)
                      ,(format "Set the slot `%S' of an object of class `%S'."
                               sname name)
                      (setf (slot-value this ',sname) value))
@@ -216,7 +211,7 @@ and reference them using the function `class-option'."
 	;; If a reader is defined, then create a generic method
 	;; of that name whose purpose is to access this slot value.
 	(if reader
-            (push `(defmethod ,reader ((this ,name))
+            (push `(cl-defmethod ,reader ((this ,name))
                      ,(format "Access the slot `%S' from object of class `%S'."
                               sname name)
                      (slot-value this ',sname))
@@ -372,6 +367,10 @@ variable name of the same name as the slot."
 (define-obsolete-function-alias
   'object-class-fast #'eieio--object-class-name "24.4")
 
+(cl-defgeneric eieio-object-name-string (obj)
+  "Return a string which is OBJ's name."
+  (declare (obsolete eieio-named "25.1")))
+
 (defun eieio-object-name (obj &optional extra)
   "Return a Lisp like symbol string for object OBJ.
 If EXTRA, include that in the string returned to represent the symbol."
@@ -386,15 +385,13 @@ If EXTRA, include that in the string returned to represent the symbol."
 ;; below "for free".  Since this field is very rarely used, we got rid of it
 ;; and instead we keep it in a weak hash-tables, for those very rare objects
 ;; that use it.
-(defmethod eieio-object-name-string (obj)
-  "Return a string which is OBJ's name."
-  (declare (obsolete eieio-named "25.1"))
+(cl-defmethod eieio-object-name-string (obj)
   (or (gethash obj eieio--object-names)
       (symbol-name (eieio-object-class obj))))
 (define-obsolete-function-alias
   'object-name-string #'eieio-object-name-string "24.4")
 
-(defmethod eieio-object-set-name-string (obj name)
+(cl-defmethod eieio-object-set-name-string (obj name)
   "Set the string which is OBJ's NAME."
   (declare (obsolete eieio-named "25.1"))
   (eieio--check-type stringp name)
@@ -648,13 +645,13 @@ This class is not stored in the `parent' slot of a class vector."
 
 (defalias 'standard-class 'eieio-default-superclass)
 
-(defgeneric eieio-constructor (class &rest slots)
+(cl-defgeneric eieio-constructor (class &rest slots)
   "Default constructor for CLASS `eieio-default-superclass'.")
 
 (define-obsolete-function-alias 'constructor #'eieio-constructor "25.1")
 
-(defmethod eieio-constructor :static
-  ((class eieio-default-superclass) &rest slots)
+(cl-defmethod eieio-constructor
+  ((class (subclass eieio-default-superclass)) &rest slots)
   "Default constructor for CLASS `eieio-default-superclass'.
 SLOTS are the initialization slots used by `shared-initialize'.
 This static method is called when an object is constructed.
@@ -674,11 +671,11 @@ calls `shared-initialize' on that object."
     ;; Return the created object.
     new-object))
 
-(defgeneric shared-initialize (obj slots)
+(cl-defgeneric shared-initialize (obj slots)
   "Set slots of OBJ with SLOTS which is a list of name/value pairs.
 Called from the constructor routine.")
 
-(defmethod shared-initialize ((obj eieio-default-superclass) slots)
+(cl-defmethod shared-initialize ((obj eieio-default-superclass) slots)
   "Set slots of OBJ with SLOTS which is a list of name/value pairs.
 Called from the constructor routine."
   (while slots
@@ -689,10 +686,10 @@ Called from the constructor routine."
         (eieio-oset obj rn (car (cdr slots)))))
     (setq slots (cdr (cdr slots)))))
 
-(defgeneric initialize-instance (this &optional slots)
+(cl-defgeneric initialize-instance (this &optional slots)
   "Construct the new object THIS based on SLOTS.")
 
-(defmethod initialize-instance ((this eieio-default-superclass)
+(cl-defmethod initialize-instance ((this eieio-default-superclass)
 				&optional slots)
   "Construct the new object THIS based on SLOTS.
 SLOTS is a tagged list where odd numbered elements are tags, and
@@ -724,10 +721,10 @@ dynamically set from SLOTS."
   ;; Shared initialize will parse our slots for us.
   (shared-initialize this slots))
 
-(defgeneric slot-missing (object slot-name operation &optional new-value)
+(cl-defgeneric slot-missing (object slot-name operation &optional new-value)
   "Method invoked when an attempt to access a slot in OBJECT fails.")
 
-(defmethod slot-missing ((object eieio-default-superclass) slot-name
+(cl-defmethod slot-missing ((object eieio-default-superclass) slot-name
 			 _operation &optional _new-value)
   "Method invoked when an attempt to access a slot in OBJECT fails.
 SLOT-NAME is the name of the failed slot, OPERATION is the type of access
@@ -739,10 +736,10 @@ directly reference slots in EIEIO objects."
   (signal 'invalid-slot-name (list (eieio-object-name object)
 				   slot-name)))
 
-(defgeneric slot-unbound (object class slot-name fn)
+(cl-defgeneric slot-unbound (object class slot-name fn)
   "Slot unbound is invoked during an attempt to reference an unbound slot.")
 
-(defmethod slot-unbound ((object eieio-default-superclass)
+(cl-defmethod slot-unbound ((object eieio-default-superclass)
 			 class slot-name fn)
   "Slot unbound is invoked during an attempt to reference an unbound slot.
 OBJECT is the instance of the object being reference.  CLASS is the
@@ -757,14 +754,14 @@ EIEIO can only dispatch on the first argument, so the first two are swapped."
   (signal 'unbound-slot (list (eieio-class-name class) (eieio-object-name object)
 			      slot-name fn)))
 
-(defgeneric clone (obj &rest params)
+(cl-defgeneric clone (obj &rest params)
   "Make a copy of OBJ, and then supply PARAMS.
 PARAMS is a parameter list of the same form used by `initialize-instance'.
 
 When overloading `clone', be sure to call `call-next-method'
 first and modify the returned object.")
 
-(defmethod clone ((obj eieio-default-superclass) &rest params)
+(cl-defmethod clone ((obj eieio-default-superclass) &rest params)
   "Make a copy of OBJ, and then apply PARAMS."
   (let ((nobj (copy-sequence obj)))
     (if (stringp (car params))
@@ -773,24 +770,24 @@ first and modify the returned object.")
     (if params (shared-initialize nobj params))
     nobj))
 
-(defgeneric destructor (this &rest params)
+(cl-defgeneric destructor (this &rest params)
   "Destructor for cleaning up any dynamic links to our object.")
 
-(defmethod destructor ((_this eieio-default-superclass) &rest _params)
+(cl-defmethod destructor ((_this eieio-default-superclass) &rest _params)
   "Destructor for cleaning up any dynamic links to our object.
 Argument THIS is the object being destroyed.  PARAMS are additional
 ignored parameters."
   ;; No cleanup... yet.
   )
 
-(defgeneric object-print (this &rest strings)
+(cl-defgeneric object-print (this &rest strings)
   "Pretty printer for object THIS.  Call function `object-name' with STRINGS.
 
 It is sometimes useful to put a summary of the object into the
 default #<notation> string when using EIEIO browsing tools.
 Implement this method to customize the summary.")
 
-(defmethod object-print ((this eieio-default-superclass) &rest strings)
+(cl-defmethod object-print ((this eieio-default-superclass) &rest strings)
   "Pretty printer for object THIS.  Call function `object-name' with STRINGS.
 The default method for printing object THIS is to use the
 function `object-name'.
@@ -807,11 +804,11 @@ to prepend a space."
 (defvar eieio-print-depth 0
   "When printing, keep track of the current indentation depth.")
 
-(defgeneric object-write (this &optional comment)
+(cl-defgeneric object-write (this &optional comment)
   "Write out object THIS to the current stream.
 Optional COMMENT will add comments to the beginning of the output.")
 
-(defmethod object-write ((this eieio-default-superclass) &optional comment)
+(cl-defmethod object-write ((this eieio-default-superclass) &optional comment)
   "Write object THIS out to the current stream.
 This writes out the vector version of this object.  Complex and recursive
 object are discouraged from being written.

@@ -322,7 +322,7 @@ Optional argument IGNORE is an extraneous parameter."
     ;; This is the same object we had before.
     obj))
 
-(defmethod eieio-done-customizing ((_obj eieio-default-superclass))
+(cl-defmethod eieio-done-customizing ((_obj eieio-default-superclass))
   "When applying change to a widget, call this method.
 This method is called by the default widget-edit commands.
 User made commands should also call this method when applying changes.
@@ -345,7 +345,7 @@ Optional argument GROUP is the sub-group of slots to display."
   "Major mode for customizing EIEIO objects.
 \\{eieio-custom-mode-map}")
 
-(defmethod eieio-customize-object ((obj eieio-default-superclass)
+(cl-defmethod eieio-customize-object ((obj eieio-default-superclass)
 				   &optional group)
   "Customize OBJ in a specialized custom buffer.
 To override call the `eieio-custom-widget-insert' to just insert the
@@ -386,7 +386,7 @@ These groups are specified with the `:group' slot flag."
     (make-local-variable 'eieio-cog)
     (setq eieio-cog g)))
 
-(defmethod eieio-custom-object-apply-reset ((_obj eieio-default-superclass))
+(cl-defmethod eieio-custom-object-apply-reset ((_obj eieio-default-superclass))
   "Insert an Apply and Reset button into the object editor.
 Argument OBJ is the object being customized."
   (widget-create 'push-button
@@ -417,7 +417,7 @@ Argument OBJ is the object being customized."
 			   (bury-buffer))
 		 "Cancel"))
 
-(defmethod eieio-custom-widget-insert ((obj eieio-default-superclass)
+(cl-defmethod eieio-custom-widget-insert ((obj eieio-default-superclass)
 				       &rest flags)
   "Insert the widget used for editing object OBJ in the current buffer.
 Arguments FLAGS are widget compatible flags.
@@ -446,7 +446,7 @@ Must return the created widget."
 ;; These functions provide the ability to create dynamic menus to
 ;; customize specific sections of an object.  They do not hook directly
 ;; into a filter, but can be used to create easymenu vectors.
-(defmethod eieio-customize-object-group ((obj eieio-default-superclass))
+(cl-defmethod eieio-customize-object-group ((obj eieio-default-superclass))
   "Create a list of vectors for customizing sections of OBJ."
   (mapcar (lambda (group)
 	    (vector (concat "Group " (symbol-name group))
@@ -457,7 +457,7 @@ Must return the created widget."
 (defvar eieio-read-custom-group-history nil
   "History for the custom group reader.")
 
-(defmethod eieio-read-customization-group ((obj eieio-default-superclass))
+(cl-defmethod eieio-read-customization-group ((obj eieio-default-superclass))
   "Do a completing read on the name of a customization group in OBJ.
 Return the symbol for the group, or nil"
   (let ((g (eieio--class-option (eieio--object-class-object obj)
