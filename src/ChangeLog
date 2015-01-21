@@ -1,3 +1,9 @@
+2015-01-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Backport: correct old fix for GTK font selection
+	* gtkutil.c (xg_get_font): Fix off-by-2 typo.
+	Fixes: bug#3228
+
 2015-01-21  Jan Djärv  <jan.h.d@swipnet.se>
 
         * nsterm.m (EV_TRAILER2): Set Vinhibit_quit to Qt (Bug#19531).
