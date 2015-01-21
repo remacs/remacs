@@ -1055,9 +1055,6 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   //the widget can also move inside the clipping area, which happens later
   moved = (xv->x  + xv->clip_left != x+clip_left)
     || ((xv->y + xv->clip_top)!= (y+clip_top));
-  if(moved)    printf ("lxwidget moved: id:%d (%d,%d)->(%d,%d) y+clip_top:%d\n", xww, xv->x, xv->y, x, y, y + clip_top);
-  else
-    printf ("lxwidget DIDNT move: id:%d (%d,%d)->(%d,%d) y+clip_top:%d\n", xww, xv->x, xv->y, x, y, y + clip_top);
   xv->x = x;
   xv->y = y;
   if (moved)	//has it moved?
@@ -1079,8 +1076,6 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
      || (xv->clip_left != clip_left)){
     gtk_widget_set_size_request (xv->widgetwindow,  clip_right + clip_left, clip_bottom + clip_top);
     gtk_fixed_move(GTK_FIXED(xv->widgetwindow), xv->widget, -clip_left, -clip_top);
-    printf("reclip %d %d -> %d %d  clip_top:%d clip_left:%d\n",xv->clip_right, xv->clip_bottom,  clip_right, clip_bottom, clip_top , clip_left);
-
 
     xv->clip_right = clip_right; xv->clip_bottom = clip_bottom; xv->clip_top = clip_top;xv->clip_left = clip_left;
   }
@@ -1744,23 +1739,6 @@ lookup_xwidget (Lisp_Object  spec)
   value = xwidget_spec_value (spec, QCxwidget, &found1);
   xw = XXWIDGET(value);
 
-  /* value = xwidget_spec_value (spec, QCtype, &found); */
-  /* xw->type = SYMBOLP (value) ? value : Qbutton;	//default to button */
-  /* value = xwidget_spec_value (spec, QCtitle, &found2); */
-  /* xw->title = STRINGP (value) ? (char *) SDATA (value) : "?";	//funky cast FIXME TODO */
-
-  /* value = xwidget_spec_value (spec, QCheight, NULL); */
-  /* xw->height = INTEGERP (value) ? XFASTINT (value) : 50;  */
-  /* value = xwidget_spec_value (spec, QCwidth, NULL); */
-  /* xw->width = INTEGERP (value) ? XFASTINT (value) : 50; */
-
-  /* value = xwidget_spec_value (spec, QCplist, NULL); */
-  /* xw->plist = value; */
-  /* coordinates are not known here */
-  printf ("lookup_xwidget xwidget_id:%d type:%d found:%d %d %d title:'%s' (%d,%d)\n", xw,
-          xw->type, found, found1, found2, xw->title, xw->height, xw->width);
-
-  //assert_valid_xwidget_id (id, "lookup_xwidget");
   return xw;
 }
 
