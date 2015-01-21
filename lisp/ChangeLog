@@ -1,3 +1,7 @@
+2015-01-20  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* emacs-lisp/package.el (package-dir-info): Fix `while' logic.
+
 2015-01-20  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/eieio-generic.el: Remove.
