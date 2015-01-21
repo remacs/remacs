@@ -153,27 +153,27 @@ defaults to the string looking like a url around the cursor position."
   "Scroll webkit up,either native or like image mode."
   (interactive)
   (if (eq xwidget-webkit-scroll-behaviour 'native)
-      (xwidget-set-adjustment (xwidget-webkit-last-session) 'vertical t 50) )
-      (image-scroll-up))
+      (xwidget-set-adjustment (xwidget-webkit-last-session) 'vertical t 50)
+    (image-scroll-up)))
 
 (defun xwidget-webkit-scroll-down ()
   "Scroll webkit down,either native or like image mode."
   (interactive)
   (if (eq xwidget-webkit-scroll-behaviour 'native)
-      (xwidget-set-adjustment (xwidget-webkit-last-session) 'vertical t -50) )
-      (image-scroll-down))
+      (xwidget-set-adjustment (xwidget-webkit-last-session) 'vertical t -50)
+    (image-scroll-down)))
 
 (defun xwidget-webkit-scroll-forward ()
   (interactive)
   (if (eq xwidget-webkit-scroll-behaviour 'native)
-      (xwidget-set-adjustment (xwidget-webkit-last-session) 'horizontal t 50) )
-      (xwidget-webkit-scroll-forward))
+      (xwidget-set-adjustment (xwidget-webkit-last-session) 'horizontal t 50)
+    (xwidget-webkit-scroll-forward)))
 
 (defun xwidget-webkit-scroll-backward ()
   (interactive)
   (if (eq xwidget-webkit-scroll-behaviour 'native)
-      (xwidget-set-adjustment (xwidget-webkit-last-session) 'horizontal t -50) )
-      (xwidget-webkit-scroll-backward))
+      (xwidget-set-adjustment (xwidget-webkit-last-session) 'horizontal t -50)
+    (xwidget-webkit-scroll-backward)))
 
 
 ;;the xwidget event needs to go into a higher level handler
