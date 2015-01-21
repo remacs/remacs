@@ -581,45 +581,14 @@ xwidget_osr_event_forward (GtkWidget *widget,
   /* copy events that arrive at the outer widget to the offscreen widget */
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
   GdkEvent* eventcopy =  gdk_event_copy(event);
-  //GdkEvent* eventcopy =  gdk_event_new(GDK_BUTTON_PRESS);
-
-
-  //((GdkEventAny*)eventcopy)->window = gtk_widget_get_window(xw->widget_osr);
-  //eventcopy->any.window = gtk_widget_get_window(GTK_WIDGET (xw->widgetwindow_osr));
-  //((GdkEventAny*)eventcopy)->window = gtk_widget_get_window(xwgir_create_debug);
-
-
-
   eventcopy->any.window = gtk_widget_get_window(xw->widget_osr);// works
-  //eventcopy->any.window = gtk_widget_get_window(xw->widgetwindow_osr);//nothing happens
-  //eventcopy->any.window = gtk_widget_get_window(gtk_scrolled_window_get_vscrollbar (GTK_SCROLLED_WINDOW(xw->widgetscrolledwindow_osr)));
-  //eventcopy->any.window = gtk_widget_get_window(xw->widgetscrolledwindow_osr); //nothing happens
-  //eventcopy->any.send_event = TRUE;
-  //gtk_scrolled_window_scroll_child (xw->widgetscrolledwindow_osr, GTK_SCROLL_STEP_DOWN, FALSE); // private
 
-
-
-  //eventcopy->any.window = gtk_button_get_event_window(GTK_BUTTON(xw->widget_osr));//gtk_widget_get_window(xwgir_create_debug);
-  //eventcopy->button.x=200; eventcopy->button.y=200;
-  //event->button.button = GDK_BUTTON_PRIMARY; //debug
-
-  //eventcopy->any.window = xw->widgetwindow_osr;//gtk_widget_get_window(xwgir_create_debug);
-  /* eventcopy->any.send_event = TRUE; */
-  /* eventcopy->button.time = GDK_CURRENT_TIME; */
-  /* eventcopy->button.device =   event->button.device; */
-
-
-  printf("xwidget_osr_event_forward redirect event to window:%d\n",   ((GdkEventAny*)eventcopy)->window);
-  printf("A type:%d x:%f y:%f \n",   event->type, event->button.x, event->button.y);
-  printf("B type:%d x:%f y:%f \n",   eventcopy->type, eventcopy->button.x, eventcopy->button.y);
+  /* printf("xwidget_osr_event_forward redirect event to window:%d\n",   ((GdkEventAny*)eventcopy)->window); */
+  /* printf("A type:%d x:%f y:%f \n",   event->type, event->button.x, event->button.y); */
+  /* printf("B type:%d x:%f y:%f \n",   eventcopy->type, eventcopy->button.x, eventcopy->button.y); */
     //gtk_button_get_event_window(xwgir_create_debug);
   gtk_main_do_event(eventcopy); //TODO this will leak events. they should be deallocated later, perhaps in xwgir_event_callback
-  //printf("gtk_widget_event:%d\n",gtk_widget_event(xw->widget_osr, eventcopy));
-  //gdk_event_put(eventcopy);
-  //gdk_event_queue_append(eventcopy);
-  //gdk_event_free(eventcopy);
   return TRUE; //dont propagate this event furter
-  //return FALSE; //dont propagate this event furter
 }
 
 GIRepository *girepository ;

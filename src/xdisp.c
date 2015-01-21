@@ -5219,7 +5219,6 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 #ifdef HAVE_XWIDGETS
       else if (valid_xwidget_spec_p(value))
 	{
-          //printf("handle_single_display_spec: im an xwidget!!\n");
           it->what = IT_XWIDGET;
           it->method = GET_FROM_XWIDGET;
           it->position = start_pos;
@@ -8050,9 +8049,6 @@ static int
 next_element_from_xwidget (struct it *it)
 {
   it->what = IT_XWIDGET;
-  //assert_valid_xwidget_id(it->xwidget_id,"next_element_from_xwidget");
-  //this is shaky because why do we set "what" if we dont set the other parts??
-  //printf("xwidget_id %d: in next_element_from_xwidget: FIXME \n", it->xwidget_id);
   return 1;
 }
 #endif
@@ -18676,7 +18672,6 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
 	       glyph->left_box_line_p,
 	       glyph->right_box_line_p);
 
-      //      printf("dump xwidget glyph\n");
     }
 #endif
 }
@@ -24099,7 +24094,7 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 #ifdef HAVE_XWIDGETS
 	  if (FRAME_WINDOW_P (it->f) && valid_xwidget_spec_p (prop))
 	    {
-              printf("calc_pixel_width_or_height: return dummy size FIXME\n");
+              //TODO dont return dummy size
               return OK_PIXELS (width_p ? 100 : 100);
             }
 #endif
@@ -24612,13 +24607,11 @@ static void
 fill_xwidget_glyph_string (struct glyph_string *s)
 {
   eassert (s->first_glyph->type == XWIDGET_GLYPH);
-  printf("fill_xwidget_glyph_string: width:%d \n",s->first_glyph->pixel_width);
   s->face = FACE_FROM_ID (s->f, s->first_glyph->face_id);
   s->font = s->face->font;
   s->width = s->first_glyph->pixel_width;
   s->ybase += s->first_glyph->voffset;
   s->xwidget = s->first_glyph->u.xwidget;
-  //assert_valid_xwidget_id ( s->xwidget, "fill_xwidget_glyph_string");
 }
 #endif
 /* Fill glyph string S from a sequence of stretch glyphs.
@@ -24960,7 +24953,6 @@ compute_overhangs_and_x (struct glyph_string *s, int x, int backward_p)
 #define BUILD_XWIDGET_GLYPH_STRING(START, END, HEAD, TAIL, HL, X, LAST_X) \
      do									\
        { \
-         printf("BUILD_XWIDGET_GLYPH_STRING\n");                                                      \
 	 s = (struct glyph_string *) alloca (sizeof *s);		\
 	 INIT_GLYPH_STRING (s, NULL, w, row, area, START, HL);		\
 	 fill_xwidget_glyph_string (s);					\
@@ -25798,7 +25790,6 @@ produce_xwidget_glyph (struct it *it)
   struct xwidget* xw;
   struct face *face;
   int glyph_ascent, crop;
-  printf("produce_xwidget_glyph:\n");
   eassert (it->what == IT_XWIDGET);
 
   face = FACE_FROM_ID (it->f, it->face_id);
@@ -27615,7 +27606,6 @@ get_window_cursor_type (struct window *w, struct glyph *glyph, int *width,
 
 #ifdef HAVE_XWIDGETS
       if (glyph != NULL && glyph->type == XWIDGET_GLYPH){
-        //printf("attempt xwidget cursor avoidance in get_window_cursor_type\n");
         return NO_CURSOR;
       }
 #endif

@@ -6081,7 +6081,6 @@ make_lispy_event (struct input_event *event)
 #ifdef HAVE_XWIDGETS
     case XWIDGET_EVENT:
       {
-        printf("cool, an xwidget event arrived in make_lispy_event!\n");
         return  Fcons (Qxwidget_event,event->arg);
       }
 #endif /* HAVE_XWIDGETS */

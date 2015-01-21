@@ -8028,7 +8028,6 @@ x_draw_bar_cursor (struct window *w, struct glyph_row *row, int width, enum text
 
 #ifdef HAVE_XWIDGETS
   if (cursor_glyph->type == XWIDGET_GLYPH){
-    printf("tried avoiding xwidget cursor\n");
     return; //experimental avoidance of cursor on xwidget
   }
 #endif
