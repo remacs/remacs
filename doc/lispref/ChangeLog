@@ -1,3 +1,9 @@
+2015-01-21  Daniel Koning  <dk@danielkoning.com>  (tiny change)
+
+	* commands.texi (Drag Events, Motion Events, Event Examples)
+	(Accessing Mouse): Describe actual range of values that mouse
+	position objects can have.
+
 2015-01-20  Eli Zaretskii  <eliz@gnu.org>
 
 	* display.texi (Manipulating Buttons): Explain more about the

@@ -1485,8 +1485,10 @@ prefix @samp{drag-}.  For example, dragging the mouse with button 2
 held down generates a @code{drag-mouse-2} event.  The second and third
 elements of the event give the starting and ending position of the
 drag, as mouse position lists (@pxref{Click Events}).  You can access
-the second element of any mouse event in the same way, with no need to
-distinguish drag events from others.
+the second element of any mouse event in the same way.  However, the
+drag event may end outside the boundaries of the frame that was
+initially selected.  In that case, the third element's position list
+contains that frame in place of a window.
 
 The @samp{drag-} prefix follows the modifier key prefixes such as
 @samp{C-} and @samp{M-}.
@@ -1631,7 +1633,10 @@ represented by lists that look like this:
 
 @noindent
 @var{position} is a mouse position list (@pxref{Click Events}),
-specifying the current position of the mouse cursor.
+specifying the current position of the mouse cursor.  As with the
+end-position of a drag event, this position list may represent a
+location outside the boundaries of the initially selected frame, in
+which case the list contains that frame in place of a window.
 
 The special form @code{track-mouse} enables generation of motion
 events within its body.  Outside of @code{track-mouse} forms, Emacs
@@ -1846,6 +1851,14 @@ into another window.  That produces a pair of events like these:
                    -453816))
 @end smallexample
 
+The frame with input focus might not take up the entire screen, and
+the user might move the mouse outside the scope of the frame. Inside
+the @code{track-mouse} special form, that produces an event like this:
+
+@smallexample
+(mouse-movement (#<frame *ielm* 0x102849a30> nil (563 . 205) 532301936))
+@end smallexample
+
 To handle a SIGUSR1 signal, define an interactive function, and
 bind it to the @code{signal usr1} event sequence:
 
@@ -2010,7 +2023,9 @@ Events}); and @code{nil} otherwise.
 various parts of it:
 
 @defun posn-window position
-Return the window that @var{position} is in.
+Return the window that @var{position} is in.  If @var{position}
+represents a location outside the frame where the event was initiated,
+return that frame instead.
 @end defun
 
 @defun posn-area position

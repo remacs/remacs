@@ -1,3 +1,10 @@
+2015-01-21  Daniel Koning  <dk@danielkoning.com>  (tiny change)
+
+	* subr.el (posnp): Correct docstring of `posnp'.
+	(posn-col-row): Make it work with all mouse position objects.
+	* textmodes/artist.el (artist-mouse-draw-continously): Cancel
+	timers if an error occurs during continuous drawing.  (Bug#6130)
+
 2015-01-20  Eli Zaretskii  <eliz@gnu.org>
 
 	* button.el (button-activate, push-button): Doc fix.  (Bug#19628)
