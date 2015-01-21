@@ -79,7 +79,7 @@ PREBUTTONTEXT is some text between PREFIX and the object button."
 ;;
 ;; Each object should have an opportunity to show stuff about itself.
 
-(defmethod data-debug/eieio-insert-slots ((obj eieio-default-superclass)
+(cl-defmethod data-debug/eieio-insert-slots ((obj eieio-default-superclass)
 					  prefix)
   "Insert the slots of OBJ into the current DDEBUG buffer."
   (let ((inhibit-read-only t))
@@ -124,7 +124,7 @@ PREBUTTONTEXT is some text between PREFIX and the object button."
 ;;
 ;; A generic function to run DDEBUG on an object and popup a new buffer.
 ;;
-(defmethod data-debug-show ((obj eieio-default-superclass))
+(cl-defmethod data-debug-show ((obj eieio-default-superclass))
   "Run ddebug against any EIEIO object OBJ."
   (data-debug-new-buffer (format "*%s DDEBUG*" (eieio-object-name obj)))
   (data-debug-insert-object-slots obj "]"))

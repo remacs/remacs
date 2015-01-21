@@ -1316,9 +1316,14 @@ The return result is a `package-desc'."
         (while files
           (with-temp-buffer
             (insert-file-contents (pop files))
-            (if (setq info (ignore-errors (package-buffer-info)))
-                (setq files nil)
-              (setf (package-desc-kind info) 'dir))))))))
+            ;; When we find the file with the data,
+            (when (setq info (ignore-errors (package-buffer-info)))
+              ;; stop looping,
+              (setq files nil)
+              ;; set the 'dir kind,
+              (setf (package-desc-kind info) 'dir))))
+        ;; and return the info.
+        info))))
 
 (defun package--read-pkg-desc (kind)
   "Read a `define-package' form in current buffer.

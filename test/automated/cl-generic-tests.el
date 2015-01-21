@@ -73,6 +73,11 @@
   (should (equal (cl--generic-1 (make-cl-generic-struct-child11) nil)
                  '("child11" "around""child1" "parent" a))))
 
+;; I don't know how to put this inside an `ert-test'.  This tests that `setf'
+;; can be used directly inside the body of the setf method.
+(cl-defmethod (setf cl--generic-2) (v (y integer) z)
+  (setf (cl--generic-2 (nth y z) z) v))
+
 (ert-deftest cl-generic-test-03-setf ()
   (cl-defmethod (setf cl--generic-1) (v (y t) z) (list v y z))
   (cl-defmethod (setf cl--generic-1) (v (_y (eql 4)) z) (list v "four" z))

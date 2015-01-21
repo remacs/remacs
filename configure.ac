@@ -394,10 +394,25 @@ OPTION_DEFAULT_ON([compress-install],
 make GZIP_PROG= install])
 
 AC_ARG_WITH(gameuser,dnl
-[AS_HELP_STRING([--with-gameuser=USER],[user for shared game score files])])
-test "X${with_gameuser}" != X && test "${with_gameuser}" != yes \
-  && gameuser="${with_gameuser}"
-test "X$gameuser" = X && gameuser=games
+[AS_HELP_STRING([--with-gameuser=USER_OR_GROUP],
+		[user for shared game score files.
+		An argument prefixed by ':' specifies a group instead.])])
+gameuser=
+gamegroup=
+case ${with_gameuser} in
+  no) ;;
+  "" | yes)
+    AC_MSG_CHECKING([whether a 'games' user exists])
+    if id -u games >/dev/null 2>&1; then
+      AC_MSG_RESULT([yes])
+      gameuser=games
+    else
+      AC_MSG_RESULT([no])
+    fi
+    ;;
+  :*) gamegroup=`echo "${with_gameuser}" | sed -e "s/://"` ;;
+  *) gameuser=${with_gameuser} ;;
+esac
 
 AC_ARG_WITH([gnustep-conf],dnl
 [AS_HELP_STRING([--with-gnustep-conf=FILENAME],
@@ -4721,6 +4736,7 @@ AC_SUBST(etcdocdir)
 AC_SUBST(bitmapdir)
 AC_SUBST(gamedir)
 AC_SUBST(gameuser)
+AC_SUBST(gamegroup)
 ## FIXME? Nothing uses @LD_SWITCH_X_SITE@.
 ## src/Makefile.in did add LD_SWITCH_X_SITE (as a cpp define) to the
 ## end of LIBX_BASE, but nothing ever set it.

@@ -196,19 +196,19 @@ that path."
 ;; when no other methods are found, allowing multiple inheritance to work
 ;; reliably with eieio-speedbar.
 
-(defmethod eieio-speedbar-description (object)
+(cl-defmethod eieio-speedbar-description (object)
   "Return a string describing OBJECT."
   (eieio-object-name-string object))
 
-(defmethod eieio-speedbar-derive-line-path (_object)
+(cl-defmethod eieio-speedbar-derive-line-path (_object)
   "Return the path which OBJECT has something to do with."
   nil)
 
-(defmethod eieio-speedbar-object-buttonname (object)
+(cl-defmethod eieio-speedbar-object-buttonname (object)
   "Return a string to use as a speedbar button for OBJECT."
   (eieio-object-name-string object))
 
-(defmethod eieio-speedbar-make-tag-line (object depth)
+(cl-defmethod eieio-speedbar-make-tag-line (object depth)
   "Insert a tag line into speedbar at point for OBJECT.
 By default, all objects appear as simple TAGS with no need to inherit from
 the special `eieio-speedbar' classes.  Child classes should redefine this
@@ -221,7 +221,7 @@ Argument DEPTH is the depth at which the tag line is inserted."
 			  'speedbar-tag-face
 			  depth))
 
-(defmethod eieio-speedbar-handle-click (object)
+(cl-defmethod eieio-speedbar-handle-click (object)
   "Handle a click action on OBJECT in speedbar.
 Any object can be represented as a tag in SPEEDBAR without special
 attributes.  These default objects will be pulled up in a custom
@@ -285,7 +285,7 @@ Add one of the child classes to this class to the parent list of a class."
 
 ;;; Methods to eieio-speedbar-* which do not need to be overridden
 ;;
-(defmethod eieio-speedbar-make-tag-line ((object eieio-speedbar)
+(cl-defmethod eieio-speedbar-make-tag-line ((object eieio-speedbar)
 					 depth)
   "Insert a tag line into speedbar at point for OBJECT.
 All objects a child of symbol `eieio-speedbar' can be created from
@@ -321,12 +321,12 @@ Argument DEPTH is the depth at which the tag line is inserted."
       (if exp
 	  (eieio-speedbar-expand object (1+ depth))))))
 
-(defmethod eieio-speedbar-child-make-tag-lines ((object eieio-speedbar) _depth)
+(cl-defmethod eieio-speedbar-child-make-tag-lines ((object eieio-speedbar) _depth)
   "Base method for creating tag lines for non-object children."
   (error "You must implement `eieio-speedbar-child-make-tag-lines' for %s"
 	 (eieio-object-name object)))
 
-(defmethod eieio-speedbar-expand ((object eieio-speedbar) depth)
+(cl-defmethod eieio-speedbar-expand ((object eieio-speedbar) depth)
   "Expand OBJECT at indentation DEPTH.
 Inserts a list of new tag lines representing expanded elements within
 OBJECT."
@@ -362,7 +362,7 @@ TOKEN is the object.  INDENT is the current indentation level."
 	(t (error "Ooops... not sure what to do")))
   (speedbar-center-buffer-smartly))
 
-(defmethod eieio-speedbar-child-description ((obj eieio-speedbar))
+(cl-defmethod eieio-speedbar-child-description ((obj eieio-speedbar))
   "Return a description for a child of OBJ which is not an object."
   (error "You must implement `eieio-speedbar-child-description' for %s"
 	 (eieio-object-name obj)))
@@ -412,7 +412,7 @@ Optional DEPTH is the depth we start at."
 
 ;;; Methods to the eieio-speedbar-* classes which need to be overridden.
 ;;
-(defmethod eieio-speedbar-object-children ((_object eieio-speedbar))
+(cl-defmethod eieio-speedbar-object-children ((_object eieio-speedbar))
   "Return a list of children to be displayed in speedbar.
 If the return value is a list of OBJECTs, then those objects are
 queried for details.  If the return list is made of strings,

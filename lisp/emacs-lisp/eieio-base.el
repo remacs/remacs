@@ -52,7 +52,7 @@ a parent instance.  When a slot in the child is referenced, and has
 not been set, use values from the parent."
   :abstract t)
 
-(defmethod slot-unbound ((object eieio-instance-inheritor)
+(cl-defmethod slot-unbound ((object eieio-instance-inheritor)
                          _class slot-name _fn)
   "If a slot OBJECT in this CLASS is unbound, try to inherit, or throw a signal.
 SLOT-NAME is the offending slot.  FN is the function signaling the error."
@@ -61,16 +61,16 @@ SLOT-NAME is the offending slot.  FN is the function signaling the error."
       ;; method if the parent instance's slot is unbound.
       (eieio-oref (oref object parent-instance) slot-name)
     ;; Throw the regular signal.
-    (call-next-method)))
+    (cl-call-next-method)))
 
-(defmethod clone ((obj eieio-instance-inheritor) &rest _params)
+(cl-defmethod clone ((obj eieio-instance-inheritor) &rest _params)
   "Clone OBJ, initializing `:parent' to OBJ.
 All slots are unbound, except those initialized with PARAMS."
-  (let ((nobj (call-next-method)))
+  (let ((nobj (cl-call-next-method)))
     (oset nobj parent-instance obj)
     nobj))
 
-(defmethod eieio-instance-inheritor-slot-boundp ((object eieio-instance-inheritor)
+(cl-defmethod eieio-instance-inheritor-slot-boundp ((object eieio-instance-inheritor)
 						slot)
   "Return non-nil if the instance inheritor OBJECT's SLOT is bound.
 See `slot-boundp' for details on binding slots.
@@ -103,7 +103,7 @@ Inheritors from this class must overload `tracking-symbol' which is
 a variable symbol used to store a list of all instances."
   :abstract t)
 
-(defmethod initialize-instance :AFTER ((this eieio-instance-tracker)
+(cl-defmethod initialize-instance :after ((this eieio-instance-tracker)
 				       &rest _slots)
   "Make sure THIS is in our master list of this class.
 Optional argument SLOTS are the initialization arguments."
@@ -112,7 +112,7 @@ Optional argument SLOTS are the initialization arguments."
     (if (not (memq this (symbol-value sym)))
 	(set sym (append (symbol-value sym) (list this))))))
 
-(defmethod delete-instance ((this eieio-instance-tracker))
+(cl-defmethod delete-instance ((this eieio-instance-tracker))
   "Remove THIS from the master list of this class."
   (set (oref this tracking-symbol)
        (delq this (symbol-value (oref this tracking-symbol)))))
@@ -140,7 +140,7 @@ Multiple calls to `make-instance' will return this object."))
 A singleton is a class which will only ever have one instance."
   :abstract t)
 
-(defmethod eieio-constructor :STATIC ((class eieio-singleton) &rest _slots)
+(cl-defmethod eieio-constructor ((class (subclass eieio-singleton)) &rest _slots)
   "Constructor for singleton CLASS.
 NAME and SLOTS initialize the new object.
 This constructor guarantees that no matter how many you request,
@@ -149,7 +149,7 @@ only one object ever exists."
   ;; with class allocated slots or default values.
   (let ((old (oref-default class singleton)))
     (if (eq old eieio-unbound)
-	(oset-default class singleton (call-next-method))
+	(oset-default class singleton (cl-call-next-method))
       old)))
 
 
@@ -198,7 +198,7 @@ object.  For this reason, only slots which do not have an `:initarg'
 specified will not be saved."
   :abstract t)
 
-(defmethod eieio-persistent-save-interactive ((this eieio-persistent) prompt
+(cl-defmethod eieio-persistent-save-interactive ((this eieio-persistent) prompt
 					      &optional name)
   "Prepare to save THIS.  Use in an `interactive' statement.
 Query user for file name with PROMPT if THIS does not yet specify
@@ -417,17 +417,17 @@ If no class is referenced there, then return nil."
 	 ;; No match, not a class.
 	 nil)))
 
-(defmethod object-write ((this eieio-persistent) &optional comment)
+(cl-defmethod object-write ((this eieio-persistent) &optional comment)
   "Write persistent object THIS out to the current stream.
 Optional argument COMMENT is a header line comment."
-  (call-next-method this (or comment (oref this file-header-line))))
+  (cl-call-next-method this (or comment (oref this file-header-line))))
 
-(defmethod eieio-persistent-path-relative ((this eieio-persistent) file)
+(cl-defmethod eieio-persistent-path-relative ((this eieio-persistent) file)
   "For object THIS, make absolute file name FILE relative."
   (file-relative-name (expand-file-name file)
 		      (file-name-directory (oref this file))))
 
-(defmethod eieio-persistent-save ((this eieio-persistent) &optional file)
+(cl-defmethod eieio-persistent-save ((this eieio-persistent) &optional file)
   "Save persistent object THIS to disk.
 Optional argument FILE overrides the file name specified in the object
 instance."
@@ -474,21 +474,21 @@ instance."
   "Object with a name."
   :abstract t)
 
-(defmethod eieio-object-name-string ((obj eieio-named))
+(cl-defmethod eieio-object-name-string ((obj eieio-named))
   "Return a string which is OBJ's name."
   (or (slot-value obj 'object-name)
       (symbol-name (eieio-object-class obj))))
 
-(defmethod eieio-object-set-name-string ((obj eieio-named) name)
+(cl-defmethod eieio-object-set-name-string ((obj eieio-named) name)
   "Set the string which is OBJ's NAME."
   (eieio--check-type stringp name)
   (eieio-oset obj 'object-name name))
 
-(defmethod clone ((obj eieio-named) &rest params)
+(cl-defmethod clone ((obj eieio-named) &rest params)
   "Clone OBJ, initializing `:parent' to OBJ.
 All slots are unbound, except those initialized with PARAMS."
   (let* ((newname (and (stringp (car params)) (pop params)))
-         (nobj (apply #'call-next-method obj params))
+         (nobj (apply #'cl-call-next-method obj params))
          (nm (slot-value obj 'object-name)))
     (eieio-oset obj 'object-name
                 (or newname
