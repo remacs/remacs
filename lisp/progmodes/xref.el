@@ -339,6 +339,20 @@ WINDOW controls how the buffer is displayed:
 (defvar-local xref--display-history nil
   "List of pairs (BUFFER . WINDOW), for temporarily displayed buffers.")
 
+(defvar-local xref--temporary-buffers nil
+  "List of buffers created by xref code.")
+
+(defvar-local xref--selected nil
+  "t if the current buffer has ever been selected.
+Used for temporary buffers.")
+
+(defvar xref--inhibit-mark-selected nil)
+
+(defun xref--mark-selected ()
+  (unless xref--inhibit-mark-selected
+    (setq xref--selected t))
+  (remove-hook 'buffer-list-update-hook #'xref--mark-selected t))
+
 (defun xref--save-to-history (buf win)
   (let ((restore (window-parameter win 'quit-restore)))
     ;; Save the new entry if the window displayed another buffer
@@ -359,8 +373,16 @@ WINDOW controls how the buffer is displayed:
 
 (defun xref--show-location (location)
   (condition-case err
-      (let ((xref-buf (current-buffer)))
+      (let ((xref-buf (current-buffer))
+            (bl (buffer-list))
+            (xref--inhibit-mark-selected t))
         (xref--goto-location location)
+        (let ((buf (current-buffer)))
+          (unless (memq buf bl)
+            ;; Newly created.
+            (add-hook 'buffer-list-update-hook #'xref--mark-selected nil t)
+            (with-current-buffer xref-buf
+              (push buf xref--temporary-buffers))))
         (xref--display-position (point) t 1 xref-buf))
     (user-error (message (error-message-string err)))))
 
@@ -386,7 +408,8 @@ WINDOW controls how the buffer is displayed:
 (defun xref--location-at-point ()
   (get-text-property (point) 'xref-location))
 
-(defvar-local xref--window nil)
+(defvar-local xref--window nil
+  "ACTION argument to call `display-buffer' with.")
 
 (defun xref-goto-xref ()
   "Jump to the xref on the current line and bury the xref buffer."
@@ -395,7 +418,7 @@ WINDOW controls how the buffer is displayed:
   (let ((loc (or (xref--location-at-point)
                  (user-error "No reference at point")))
         (window xref--window))
-    (xref--quit)
+    (xref-quit)
     (xref--pop-to-location loc window)))
 
 (define-derived-mode xref--xref-buffer-mode fundamental-mode "XREF"
@@ -403,7 +426,7 @@ WINDOW controls how the buffer is displayed:
   (setq buffer-read-only t))
 
 (let ((map xref--xref-buffer-mode-map))
-  (define-key map (kbd "q") #'xref--quit)
+  (define-key map (kbd "q") #'xref-quit)
   (define-key map (kbd "n") #'xref-next-line)
   (define-key map (kbd "p") #'xref-prev-line)
   (define-key map (kbd "RET") #'xref-goto-xref)
@@ -413,17 +436,31 @@ WINDOW controls how the buffer is displayed:
   (define-key map (kbd ".") #'xref-next-line)
   (define-key map (kbd ",") #'xref-prev-line))
 
-(defun xref--quit ()
-  "Quit all windows in `xref--display-history', then quit current window."
-  (interactive)
+(defun xref-quit (&optional kill)
+  "Perform cleanup, then quit the current window.
+The cleanup consists of burying all temporarily displayed
+buffers, and if KILL is non-nil, of killing all buffers that were
+created in the process of showing xrefs.
+
+Exceptions are made for buffers switched to by the user in the
+meantime, and other window configuration changes.  These are
+preserved."
+  (interactive "P")a
   (let ((window (selected-window))
         (history xref--display-history))
     (setq xref--display-history nil)
+    (when kill
+      (let ((xref--inhibit-mark-selected t)
+            kill-buffer-query-functions)
+        (dolist (buf xref--temporary-buffers)
+          (unless (buffer-local-value 'xref--selected buf)
+            (kill-buffer buf)))
+        (setq xref--temporary-buffers nil)))
     (pcase-dolist (`(,buf . ,win) history)
       (when (and (window-live-p win)
                  (eq buf (window-buffer win)))
         (quit-window nil win)))
-    (quit-window nil window)))
+    (quit-window kill window)))
 
 (defconst xref-buffer-name "*xref*"
   "The name of the buffer to show xrefs.")
@@ -471,7 +508,7 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
                     (xref-location-group (xref--xref-location x)))
                   #'equal))
 
-(defun xref--show-xref-buffer (xrefs window)
+(defun xref--show-xref-buffer (xrefs alist)
   (let ((xref-alist (xref--analyze xrefs)))
     (with-current-buffer (get-buffer-create xref-buffer-name)
       (let ((inhibit-read-only t))
@@ -480,7 +517,11 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
         (xref--xref-buffer-mode)
         (pop-to-buffer (current-buffer))
         (goto-char (point-min))
-        (setq xref--window window)
+        (setq xref--window (assoc-default 'window alist))
+        (setq xref--temporary-buffers (assoc-default 'temporary-buffers alist))
+        (dolist (buf xref--temporary-buffers)
+          (with-current-buffer buf
+            (add-hook 'buffer-list-update-hook #'xref--mark-selected nil t)))
         (current-buffer)))))
 
 
@@ -493,16 +534,21 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 (defvar xref-show-xrefs-function 'xref--show-xref-buffer
   "Function to display a list of xrefs.")
 
-(defun xref--show-xrefs (id kind xrefs window)
-  (cond
-   ((null xrefs)
-    (user-error "No known %s for: %s" kind id))
-   ((not (cdr xrefs))
-    (xref-push-marker-stack)
-    (xref--pop-to-location (xref--xref-location (car xrefs)) window))
-   (t
-    (xref-push-marker-stack)
-    (funcall xref-show-xrefs-function xrefs window))))
+(defun xref--show-xrefs (input kind arg window)
+  (let* ((bl (buffer-list))
+         (xrefs (funcall xref-find-function kind arg))
+         (tb (cl-set-difference (buffer-list) bl)))
+    (cond
+     ((null xrefs)
+      (user-error "No known %s for: %s" (symbol-name kind) input))
+     ((not (cdr xrefs))
+      (xref-push-marker-stack)
+      (xref--pop-to-location (xref--xref-location (car xrefs)) window))
+     (t
+      (xref-push-marker-stack)
+      (funcall xref-show-xrefs-function xrefs
+               `((window . ,window)
+                 (temporary-buffers . ,tb)))))))
 
 (defun xref--read-identifier (prompt)
   "Return the identifier at point or read it from the minibuffer."
@@ -517,9 +563,7 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 ;;; Commands
 
 (defun xref--find-definitions (id window)
-  (xref--show-xrefs id "definitions"
-                    (funcall xref-find-function 'definitions id)
-                    window))
+  (xref--show-xrefs id 'definitions id window))
 
 ;;;###autoload
 (defun xref-find-definitions (identifier)
@@ -546,9 +590,7 @@ prompt for it."
   "Find references to the identifier at point.
 With prefix argument, prompt for the identifier."
   (interactive (list (xref--read-identifier "Find references of: ")))
-  (xref--show-xrefs identifier "references"
-                    (funcall xref-find-function 'references identifier)
-                    nil))
+  (xref--show-xrefs identifier 'references identifier nil))
 
 ;;;###autoload
 (defun xref-find-apropos (pattern)
@@ -557,14 +599,13 @@ The argument has the same meaning as in `apropos'."
   (interactive (list (read-from-minibuffer
                       "Search for pattern (word list or regexp): ")))
   (require 'apropos)
-  (xref--show-xrefs pattern "apropos"
-                    (funcall xref-find-function 'apropos
-                             (apropos-parse-pattern
-                              (if (string-equal (regexp-quote pattern) pattern)
-                                  ;; Split into words
-                                  (or (split-string pattern "[ \t]+" t)
-                                      (user-error "No word list given"))
-                                pattern)))
+  (xref--show-xrefs pattern 'apropos
+                    (apropos-parse-pattern
+                     (if (string-equal (regexp-quote pattern) pattern)
+                         ;; Split into words
+                         (or (split-string pattern "[ \t]+" t)
+                             (user-error "No word list given"))
+                       pattern))
                     nil))
 
 

@@ -1,3 +1,27 @@
+2015-01-21  Dmitry Gutov  <dgutov@yandex.ru>
+
+	xref: Keep track of temporary buffers  (bug#19466).
+	* progmodes/xref.el (xref--temporary-buffers, xref--selected)
+	(xref--inhibit-mark-selected): New variables.
+	(xref--mark-selected): New function.
+	(xref--show-location): Maybe add the buffer to
+	`xref--temporary-buffers', add `xref--mark-selected' to
+	`buffer-list-update-hook' there.
+	(xref--window): Add docstring.
+	(xref-quit): Rename from `xref--quit'.  Update both references.
+	Add KILL argument.  When it's non-nil, kill the temporary buffers
+	that haven't been selected by the user.
+	(xref--show-xref-buffer): Change the second argument to alist,
+	extract the values for `xref--window' and
+	`xref--temporary-buffers' from it.  Add `xref--mark-selected' to
+	`buffer-list-update-hook' to each buffer in the list.
+	(xref--show-xrefs): Move the logic of calling `xref-find-function'
+	here.  Save the difference between buffer lists before and after
+	it's called as "temporary buffers", and `pass it to
+	`xref-show-xrefs-function'.
+	(xref--find-definitions, xref-find-references)
+	(xref-find-apropos): Update accordingly.
+
 2015-01-20  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* emacs-lisp/package.el (package-dir-info): Fix `while' logic.
