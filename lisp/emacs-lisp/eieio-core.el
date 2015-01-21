@@ -1258,7 +1258,7 @@ method invocation orders of the involved classes."
             (eieio--class-precedence-list tag))))
 
 
-;;;### (autoloads nil "eieio-compat" "eieio-compat.el" "51667b1cd372f45acdae14f838cedcc6")
+;;;### (autoloads nil "eieio-compat" "eieio-compat.el" "b177169dfbad7fb2e9d500b9c40002fa")
 ;;; Generated autoloads from eieio-compat.el
 
 (autoload 'eieio--defalias "eieio-compat" "\
@@ -1324,27 +1324,6 @@ Summary:
 
 
 \(fn METHOD KIND ARGCLASS CODE)" nil nil)
-
-(autoload 'eieio-defmethod "eieio-compat" "\
-Obsolete work part of an old version of the `defmethod' macro.
-
-\(fn METHOD ARGS)" nil nil)
-
-(make-obsolete 'eieio-defmethod 'cl-defmethod '"24.1")
-
-(autoload 'eieio-defgeneric "eieio-compat" "\
-Obsolete work part of an old version of the `defgeneric' macro.
-
-\(fn METHOD DOC-STRING)" nil nil)
-
-(make-obsolete 'eieio-defgeneric 'cl-defgeneric '"24.1")
-
-(autoload 'eieio-defclass "eieio-compat" "\
-
-
-\(fn CNAME SUPERCLASSES SLOTS OPTIONS)" nil nil)
-
-(make-obsolete 'eieio-defclass 'eieio-defclass-internal '"25.1")
 
 ;;;***
 
