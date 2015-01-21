@@ -1,3 +1,10 @@
+2015-01-30  Michal Nazarewicz  <mina86@mina86.com>
+
+	* lisp/files.el (save-buffers-kill-emacs): If `confirm-kill-emacs'
+	is set, but user has just been asked whether they really want to
+	kill Emacs (for example with a ‘Modified buffers exist; exit
+	anyway?’ prompt), do not ask them for another confirmation.
+
 2015-01-29  Jay Belanger  <jay.p.belanger@gmail.com>
 
 	* lisp/calc/calc-units.el (calc-convert-exact-units): New function.
