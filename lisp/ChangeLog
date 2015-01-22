@@ -1,3 +1,10 @@
+2015-01-22  Wolfgang Jenkner  <wjenkner@inode.at>
+
+	* calc/calc-units.el (math-units-in-expr-p)
+	(math-single-units-in-expr-p, math-find-compatible-unit-rec)
+	(math-extract-units): Handle the `neg' operator.  (Bug#19582)
+	[Backport]
+
 2015-01-21  Daniel Koning  <dk@danielkoning.com>  (tiny change)
 
 	* subr.el (posnp): Correct docstring of `posnp'.

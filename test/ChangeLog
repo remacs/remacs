@@ -1,3 +1,11 @@
+2015-01-22  Wolfgang Jenkner  <wjenkner@inode.at>
+
+	* automated/calc-tests.el (calc-tests-equal, calc-tests-simple):
+	New functions.
+	(test-calc-remove-units, test-calc-extract-units)
+	(test-calc-convert-units): New tests.
+	[Backport]
+
 2014-12-30  Michael Albinus  <michael.albinus@gmx.de>
 
 	* automated/tramp-tests.el (tramp--test-smb-or-windows-nt-p):
