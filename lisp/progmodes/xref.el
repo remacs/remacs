@@ -342,15 +342,15 @@ WINDOW controls how the buffer is displayed:
 (defvar-local xref--temporary-buffers nil
   "List of buffers created by xref code.")
 
-(defvar-local xref--selected nil
-  "t if the current buffer has ever been selected.
+(defvar-local xref--current nil
+  "Non-nil if this buffer was once current, except while displaying xrefs.
 Used for temporary buffers.")
 
-(defvar xref--inhibit-mark-selected nil)
+(defvar xref--inhibit-mark-current nil)
 
 (defun xref--mark-selected ()
-  (unless xref--inhibit-mark-selected
-    (setq xref--selected t))
+  (unless xref--inhibit-mark-current
+    (setq xref--current t))
   (remove-hook 'buffer-list-update-hook #'xref--mark-selected t))
 
 (defun xref--save-to-history (buf win)
@@ -375,7 +375,7 @@ Used for temporary buffers.")
   (condition-case err
       (let ((xref-buf (current-buffer))
             (bl (buffer-list))
-            (xref--inhibit-mark-selected t))
+            (xref--inhibit-mark-current t))
         (xref--goto-location location)
         (let ((buf (current-buffer)))
           (unless (memq buf bl)
@@ -438,29 +438,28 @@ Used for temporary buffers.")
   (setq buffer-read-only t))
 
 (defun xref-quit (&optional kill)
-  "Perform cleanup, then quit the current window.
-The cleanup consists of burying all temporarily displayed
-buffers, and if KILL is non-nil, of killing all buffers that were
-created in the process of showing xrefs.
+  "Bury temporarily displayed buffers, then quit the current window.
 
-Exceptions are made for buffers switched to by the user in the
-meantime, and other window configuration changes.  These are
-preserved."
+If KILL is non-nil, kill all buffers that were created in the
+process of showing xrefs, and also kill the current buffer.
+
+The buffers that the user has otherwise interacted with in the
+meantime are preserved."
   (interactive "P")
   (let ((window (selected-window))
         (history xref--display-history))
     (setq xref--display-history nil)
-    (when kill
-      (let ((xref--inhibit-mark-selected t)
-            kill-buffer-query-functions)
-        (dolist (buf xref--temporary-buffers)
-          (unless (buffer-local-value 'xref--selected buf)
-            (kill-buffer buf)))
-        (setq xref--temporary-buffers nil)))
     (pcase-dolist (`(,buf . ,win) history)
       (when (and (window-live-p win)
                  (eq buf (window-buffer win)))
         (quit-window nil win)))
+    (when kill
+      (let ((xref--inhibit-mark-current t)
+            kill-buffer-query-functions)
+        (dolist (buf xref--temporary-buffers)
+          (unless (buffer-local-value 'xref--current buf)
+            (kill-buffer buf)))
+        (setq xref--temporary-buffers nil)))
     (quit-window kill window)))
 
 (defconst xref-buffer-name "*xref*"
@@ -496,7 +495,9 @@ GROUP is a string for decoration purposes and XREF is an
                              'face 'font-lock-keyword-face
                              'mouse-face 'highlight
                              'keymap xref--button-map
-                             'help-echo "mouse-2: display in another window, RET or mouse-1: navigate")
+                             'help-echo
+                             (concat "mouse-2: display in another window, "
+                                     "RET or mouse-1: follow reference"))
                        description))
                     (when (or more1 more2)
                       (insert "\n")))))
@@ -535,6 +536,10 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 (defvar xref-show-xrefs-function 'xref--show-xref-buffer
   "Function to display a list of xrefs.")
 
+(defvar xref--read-identifier-history nil)
+
+(defvar xref--read-pattern-history nil)
+
 (defun xref--show-xrefs (input kind arg window)
   (let* ((bl (buffer-list))
          (xrefs (funcall xref-find-function kind arg))
@@ -557,7 +562,8 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
     (cond ((or current-prefix-arg (not id))
            (completing-read prompt
                             (funcall xref-identifier-completion-table-function)
-                            nil t id))
+                            nil t id
+                            'xref--read-identifier-history))
           (t id))))
 
 
@@ -593,12 +599,15 @@ With prefix argument, prompt for the identifier."
   (interactive (list (xref--read-identifier "Find references of: ")))
   (xref--show-xrefs identifier 'references identifier nil))
 
+(declare-function apropos-parse-pattern "apropos" (pattern))
+
 ;;;###autoload
 (defun xref-find-apropos (pattern)
   "Find all meaningful symbols that match PATTERN.
 The argument has the same meaning as in `apropos'."
   (interactive (list (read-from-minibuffer
-                      "Search for pattern (word list or regexp): ")))
+                      "Search for pattern (word list or regexp): "
+                      nil nil nil 'xref--read-pattern-history)))
   (require 'apropos)
   (xref--show-xrefs pattern 'apropos
                     (apropos-parse-pattern

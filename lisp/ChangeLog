@@ -1,3 +1,15 @@
+2015-01-22  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/xref.el (xref--current): Rename from `xref--selected'.
+	(xref--inhibit-mark-current): Rename from
+	`xref--inhibit-mark-selected'.  Update the usages.
+	(xref-quit): Reword the docstring.  Kill buffers after quitting
+	windows instead of before.
+	(xref--insert-xrefs): Tweak help-echo.
+	(xref--read-identifier-history, xref--read-pattern-history):
+	New variables.
+	(xref--read-identifier, xref-find-apropos): Use them.
+
 2015-01-21  Ulrich Müller  <ulm@gentoo.org>
 
 	* play/gamegrid.el (gamegrid-add-score-with-update-game-score):
