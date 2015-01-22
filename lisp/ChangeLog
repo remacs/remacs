@@ -1,5 +1,11 @@
 2015-01-22  Dmitry Gutov  <dgutov@yandex.ru>
 
+	* progmodes/xref.el (xref-location-marker, xref-location-group):
+	Use `cl-defgeneric' and `cl-defmethod' instead of the EIEIO
+	counterparts.
+
+	* progmodes/etags.el (xref-location-marker): Same.
+
 	* progmodes/xref.el (xref--current): Rename from `xref--selected'.
 	(xref--inhibit-mark-current): Rename from
 	`xref--inhibit-mark-selected'.  Update the usages.

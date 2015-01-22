@@ -2122,7 +2122,7 @@ for \\[find-tag] (which see)."
   (make-instance 'xref-etags-location :tag-info tag-info
                  :file (expand-file-name file)))
 
-(defmethod xref-location-marker ((l xref-etags-location))
+(cl-defmethod xref-location-marker ((l xref-etags-location))
   (with-slots (tag-info file) l
     (let ((buffer (find-file-noselect file)))
       (with-current-buffer buffer

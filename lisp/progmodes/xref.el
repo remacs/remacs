@@ -66,10 +66,10 @@
 
 ;; If a backend decides to subclass xref-location it can provide
 ;; methods for some of the following functions:
-(defgeneric xref-location-marker (location)
+(cl-defgeneric xref-location-marker (location)
   "Return the marker for LOCATION.")
 
-(defgeneric xref-location-group (location)
+(cl-defgeneric xref-location-group (location)
   "Return a string used to group a set of locations.
 This is typically the filename.")
 
@@ -88,7 +88,7 @@ Line numbers start from 1 and columns from 0.")
   "Create and return a new xref-file-location."
   (make-instance 'xref-file-location :file file :line line :column column))
 
-(defmethod xref-location-marker ((l xref-file-location))
+(cl-defmethod xref-location-marker ((l xref-file-location))
   (with-slots (file line column) l
     (with-current-buffer
         (or (get-file-buffer file)
@@ -102,7 +102,7 @@ Line numbers start from 1 and columns from 0.")
           (move-to-column column)
           (point-marker))))))
 
-(defmethod xref-location-group ((l xref-file-location))
+(cl-defmethod xref-location-group ((l xref-file-location))
   (oref l :file))
 
 (defclass xref-buffer-location (xref-location)
@@ -113,12 +113,12 @@ Line numbers start from 1 and columns from 0.")
   "Create and return a new xref-buffer-location."
   (make-instance 'xref-buffer-location :buffer buffer :position position))
 
-(defmethod xref-location-marker ((l xref-buffer-location))
+(cl-defmethod xref-location-marker ((l xref-buffer-location))
   (with-slots (buffer position) l
     (let ((m (make-marker)))
       (move-marker m position buffer))))
 
-(defmethod xref-location-group ((l xref-buffer-location))
+(cl-defmethod xref-location-group ((l xref-buffer-location))
   (with-slots (buffer) l
     (or (buffer-file-name buffer)
         (format "(buffer %s)" (buffer-name buffer)))))
@@ -134,10 +134,10 @@ actual location is not known.")
   "Create and return a new xref-bogus-location."
   (make-instance 'xref-bogus-location :message message))
 
-(defmethod xref-location-marker ((l xref-bogus-location))
+(cl-defmethod xref-location-marker ((l xref-bogus-location))
   (user-error "%s" (oref l :message)))
 
-(defmethod xref-location-group ((_ xref-bogus-location)) "(No location)")
+(cl-defmethod xref-location-group ((_ xref-bogus-location)) "(No location)")
 
 ;; This should be in elisp-mode.el, but it's preloaded, and we can't
 ;; preload defclass and defmethod (at least, not yet).
@@ -151,7 +151,7 @@ actual location is not known.")
 (defun xref-make-elisp-location (symbol type file)
   (make-instance 'xref-elisp-location :symbol symbol :type type :file file))
 
-(defmethod xref-location-marker ((l xref-elisp-location))
+(cl-defmethod xref-location-marker ((l xref-elisp-location))
   (with-slots (symbol type file) l
     (let ((buffer-point
            (pcase type
