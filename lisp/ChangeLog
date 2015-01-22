@@ -1,3 +1,10 @@
+2015-01-22  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* help.el (help-make-usage): Don't turn a "_" arg into an empty-string
+	arg (bug#19645).
+	* emacs-lisp/cl-generic.el (cl--generic-lambda): Don't confuse a string
+	body with a docstring.
+
 2015-01-22  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* progmodes/xref.el (xref-location-marker, xref-location-group):
