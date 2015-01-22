@@ -254,31 +254,41 @@ maybe-blessmail: $(BLESSMAIL_TARGET)
 $(DESTDIR)${archlibdir}: all
 	@echo
 	@echo "Installing utilities run internally by Emacs."
-	umask 022; ${MKDIR_P} "$(DESTDIR)${archlibdir}"
-	exp_archlibdir=`cd "$(DESTDIR)${archlibdir}" && /bin/pwd`; \
+	umask 022 && ${MKDIR_P} "$(DESTDIR)${archlibdir}"
+	exp_archlibdir=`cd "$(DESTDIR)${archlibdir}" && /bin/pwd` && \
 	if [ "$$exp_archlibdir" != "`/bin/pwd`" ]; then \
 	  for file in ${UTILITIES}; do \
-	    $(INSTALL_PROGRAM) $(INSTALL_STRIP) $$file "$(DESTDIR)${archlibdir}/$$file" ; \
+	    $(INSTALL_PROGRAM) $(INSTALL_STRIP) $$file \
+	      "$(DESTDIR)${archlibdir}/$$file" || exit; \
 	  done ; \
         fi
-	umask 022; ${MKDIR_P} "$(DESTDIR)${gamedir}"; \
-	touch "$(DESTDIR)${gamedir}/snake-scores"; \
-	touch "$(DESTDIR)${gamedir}/tetris-scores"
+	umask 022 && ${MKDIR_P} "$(DESTDIR)${gamedir}" && \
+	touch "$(DESTDIR)${gamedir}/snake-scores" \
+	      "$(DESTDIR)${gamedir}/tetris-scores"
 ifneq ($(gameuser),)
-	-if chown ${gameuser} "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}" && chmod u+s,go-r "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}"; then \
-	  chown ${gameuser} "$(DESTDIR)${gamedir}"; \
+	if chown ${gameuser} \
+	     "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}" && \
+	   chmod u+s,go-r \
+	     "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}"; \
+	then \
+	  chown ${gameuser} "$(DESTDIR)${gamedir}" && \
 	  chmod u=rwx,g=rx,o=rx "$(DESTDIR)${gamedir}"; \
 	fi
 else ifneq ($(gamegroup),)
-	-if chgrp ${gamegroup} "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}" && chmod g+s,o-r "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}"; then \
-	  chgrp ${gamegroup} "$(DESTDIR)${gamedir}"; \
+	if chgrp ${gamegroup} \
+	     "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}" && \
+	   chmod g+s,o-r \
+	     "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}"; \
+	then \
+	  chgrp ${gamegroup} "$(DESTDIR)${gamedir}" && \
 	  chmod u=rwx,g=rwx,o=rx "$(DESTDIR)${gamedir}"; \
 	fi
 endif
-	exp_archlibdir=`cd "$(DESTDIR)${archlibdir}" && /bin/pwd`; \
+	exp_archlibdir=`cd "$(DESTDIR)${archlibdir}" && /bin/pwd` && \
 	if [ "$$exp_archlibdir" != "`cd ${srcdir} && /bin/pwd`" ]; then \
 	  for file in ${SCRIPTS}; do \
-	    $(INSTALL_SCRIPT) ${srcdir}/$$file "$(DESTDIR)${archlibdir}/$$file"; \
+	    $(INSTALL_SCRIPT) ${srcdir}/$$file \
+	      "$(DESTDIR)${archlibdir}/$$file" || exit; \
 	  done ; \
 	fi
 
@@ -288,34 +298,38 @@ endif
 install: $(DESTDIR)${archlibdir}
 	@echo
 	@echo "Installing utilities for users to run."
-	umask 022; ${MKDIR_P} "$(DESTDIR)${bindir}"
+	umask 022 && ${MKDIR_P} "$(DESTDIR)${bindir}"
 	for file in ${INSTALLABLES} ; do \
-	  $(INSTALL_PROGRAM) $(INSTALL_STRIP) $${file} "$(DESTDIR)${bindir}"/`echo $${file} | sed -e 's/${EXEEXT}$$//' -e '$(TRANSFORM)'`${EXEEXT} ; \
+	  $(INSTALL_PROGRAM) $(INSTALL_STRIP) $${file} \
+	    "$(DESTDIR)${bindir}"/` \
+	      echo $${file} | sed -e 's/${EXEEXT}$$//' -e '$(TRANSFORM)' \
+	    `${EXEEXT} || exit; \
 	done
 
 uninstall:
 	for file in ${INSTALLABLES}; do \
-	  rm -f "$(DESTDIR)${bindir}"/`echo $${file} | sed -e 's/${EXEEXT}$$//' -e '$(TRANSFORM)'`${EXEEXT} ; \
+	  rm -f "$(DESTDIR)${bindir}"/` \
+	    echo $${file} | sed -e 's/${EXEEXT}$$//' -e '$(TRANSFORM)' \
+	  `${EXEEXT}; \
 	done
 	if [ -d "$(DESTDIR)${archlibdir}" ]; then \
-	  (cd "$(DESTDIR)${archlibdir}" && rm -f ${UTILITIES} ${SCRIPTS}) \
+	  cd "$(DESTDIR)${archlibdir}" && \
+	  rm -f ${UTILITIES} ${SCRIPTS}; \
 	fi
 
 mostlyclean:
-	-rm -f core *.o *.res
+	rm -f core *.o *.res
 
 clean: mostlyclean
-	-rm -f ${EXE_FILES}
+	rm -f ${EXE_FILES}
 
 distclean: clean
-	-rm -f TAGS
-	-rm -f Makefile blessmail
+	rm -f TAGS Makefile blessmail
 
 bootstrap-clean maintainer-clean: distclean
-	true
 
 extraclean: maintainer-clean
-	-rm -f *~ \#*
+	rm -f *~ \#*
 
 ## Test the contents of the directory.
 check:
