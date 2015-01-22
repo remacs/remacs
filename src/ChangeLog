@@ -1,3 +1,7 @@
+2015-01-22  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (init_iterator): Restore a comment lost in transition.
+
 2015-01-22  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Use bool for boolean in xfont.c, xftfont.c, xgselect.c

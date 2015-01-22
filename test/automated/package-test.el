@@ -230,6 +230,23 @@ Must called from within a `tar-mode' buffer."
     (package-refresh-contents)
     (package-install 'simple-single)))
 
+(ert-deftest package-test-install-prioritized ()
+  "Install a lower version from a higher-prioritized archive."
+  (with-package-test ()
+    (let* ((newer-version (expand-file-name "data/package/newer-versions"
+                                            package-test-file-dir))
+           (package-archives `(("older" . ,package-test-data-dir)
+                               ("newer" . ,newer-version)))
+           (package-archive-priorities '(("older" . 100))))
+
+      (package-initialize)
+      (package-refresh-contents)
+      (package-install 'simple-single)
+
+      (let ((installed (cadr (assq 'simple-single package-alist))))
+        (should (version-list-= '(1 3)
+                                (package-desc-version installed)))))))
+
 (ert-deftest package-test-install-multifile ()
   "Check properties of the installed multi-file package."
   (with-package-test (:basedir "data/package" :install '(multi-file))

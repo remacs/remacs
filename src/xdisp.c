@@ -2752,6 +2752,8 @@ init_iterator (struct it *it, struct window *w,
 	row = MATRIX_HEADER_LINE_ROW (w->desired_matrix);
     }
 
+  /* Clear IT, and set it->object and other IT's Lisp objects to Qnil.
+     Other parts of redisplay rely on that.  */
   memclear (it, sizeof *it);
   it->current.overlay_string_index = -1;
   it->current.dpvec_index = -1;
