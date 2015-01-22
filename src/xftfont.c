@@ -85,7 +85,7 @@ xftfont_get_colors (struct frame *f, struct face *face, GC gc,
   else
     {
       XGCValues xgcv;
-      bool fg_done = 0, bg_done = 0;
+      bool fg_done = false, bg_done = false;
 
       block_input ();
       XGetGCValues (FRAME_X_DISPLAY (f), gc,
@@ -93,15 +93,15 @@ xftfont_get_colors (struct frame *f, struct face *face, GC gc,
       if (xftface_info)
 	{
 	  if (xgcv.foreground == face->foreground)
-	    *fg = xftface_info->xft_fg, fg_done = 1;
+	    *fg = xftface_info->xft_fg, fg_done = true;
 	  else if (xgcv.foreground == face->background)
-	    *fg = xftface_info->xft_bg, fg_done = 1;
+	    *fg = xftface_info->xft_bg, fg_done = true;
 	  if (! bg)
-	    bg_done = 1;
+	    bg_done = true;
 	  else if (xgcv.background == face->background)
-	    *bg = xftface_info->xft_bg, bg_done = 1;
+	    *bg = xftface_info->xft_bg, bg_done = true;
 	  else if (xgcv.background == face->foreground)
-	    *bg = xftface_info->xft_fg, bg_done = 1;
+	    *bg = xftface_info->xft_fg, bg_done = true;
 	}
 
       if (! (fg_done & bg_done))
@@ -434,7 +434,7 @@ xftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
   font->baseline_offset = 0;
   font->relative_compose = 0;
   font->default_ascent = 0;
-  font->vertical_centering = 0;
+  font->vertical_centering = false;
 #ifdef FT_BDF_H
   if (! (ft_face->face_flags & FT_FACE_FLAG_SFNT))
     {
@@ -487,7 +487,7 @@ xftfont_prepare_face (struct frame *f, struct face *face)
 {
   struct xftface_info *xftface_info;
 
-#if 0
+#if false
   /* This doesn't work if face->ascii_face doesn't use an Xft font. */
   if (face != face->ascii_face)
     {
@@ -507,7 +507,7 @@ xftfont_done_face (struct frame *f, struct face *face)
 {
   struct xftface_info *xftface_info;
 
-#if 0
+#if false
   /* This doesn't work if face->ascii_face doesn't use an Xft font. */
   if (face != face->ascii_face
       || ! face->extra)
@@ -682,7 +682,7 @@ xftfont_cached_font_ok (struct frame *f, Lisp_Object font_object,
   Display *display = FRAME_X_DISPLAY (f);
   FcPattern *pat = FcPatternCreate ();
   FcBool b1, b2;
-  bool ok = 0;
+  bool ok = false;
   int i1, i2, r1, r2;
 
   xftfont_add_rendering_parameters (pat, entity);
@@ -712,7 +712,7 @@ xftfont_cached_font_ok (struct frame *f, Lisp_Object font_object,
   r2 = FcPatternGetInteger (oldpat, FC_RGBA, 0, &i2);
   if (r1 != r2 || i1 != i2) goto out;
 
-  ok = 1;
+  ok = true;
  out:
   FcPatternDestroy (pat);
   return ok;

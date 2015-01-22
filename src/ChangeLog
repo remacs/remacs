@@ -1,5 +1,14 @@
 2015-01-22  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Use bool for boolean in xfont.c, xftfont.c, xgselect.c
+	* xfont.c (xfont_driver, xfont_chars_supported)
+	(xfont_text_extents):
+	* xftfont.c (xftfont_get_colors, xftfont_open)
+	(xftfont_prepare_face, xftfont_done_face)
+	(xftfont_cached_font_ok):
+	* xgselect.c (xg_select):
+	Use bool for boolean.
+
 	Don't downcase system diagnostics' first letters
 	* fileio.c (report_file_errno): Don't downcase, and simplify.
 	Fixes: bug#19642
