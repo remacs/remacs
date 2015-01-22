@@ -509,8 +509,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
   visargs = args + nargs;
   varies = (signed char *) (visargs + nargs);
 
-  verify (NIL_IS_ZERO);
-  memset (args, 0, nargs * (2 * word_size + 1));
+  memclear (args, nargs * (2 * word_size + 1));
 
   GCPRO5 (prefix_arg, function, *args, *visargs, up_event);
   gcpro3.nvars = nargs;

@@ -741,7 +741,7 @@ files in the collection as well."
 		 (if (and (not recursive)
 			  (/= (length props) 1))
 		     (signal 'file-error (list "Removing directory"
-					       "directory not empty" url)))))
+					       "Directory not empty" url)))))
 
      (mapc (lambda (result)
 	     (setq status (plist-get (cdr result) 'DAV:status))
@@ -760,7 +760,7 @@ files in the collection as well."
 		 url lock-token
 		 (setq props (url-dav-get-properties url))
 		 (if (eq (plist-get (cdar props) 'DAV:resourcetype) 'DAV:collection)
-		     (signal 'file-error (list "Removing old name" "is a collection" url)))))
+		     (signal 'file-error (list "Removing old name" "Is a collection" url)))))
 
     (mapc (lambda (result)
 	    (setq status (plist-get (cdr result) 'DAV:status))
@@ -787,7 +787,7 @@ If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
 
     (when (and (= (length properties) 1)
 	       (not (url-dav-file-directory-p url)))
-      (signal 'file-error (list "Opening directory" "not a directory" url)))
+      (signal 'file-error (list "Opening directory" "Not a directory" url)))
 
     (while properties
       (setq child-props (pop properties)

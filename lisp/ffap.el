@@ -476,7 +476,7 @@ Returned values:
 	      ;; (file-error "connection failed" "address already in use"
 	      ;;	     "ftp.uu.net" "ffap-machine-p")
 	      ((equal mesg "connection failed")
-	       (if (equal (nth 2 error) "permission denied")
+	       (if (string= (downcase (nth 2 error)) "permission denied")
 		   nil			; host does not exist
 		 ;; Other errors mean the host exists:
 		 (nth 2 error)))
@@ -1439,7 +1439,7 @@ and the functions `ffap-file-at-point' and `ffap-url-at-point'."
 		 (expand-file-name filename)))
        ;; User does not want to find a non-existent file:
        ((signal 'file-error (list "Opening file buffer"
-				  "no such file or directory"
+				  "No such file or directory"
 				  filename)))))))
 
 ;; Shortcut: allow {M-x ffap} rather than {M-x find-file-at-point}.

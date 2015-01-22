@@ -538,6 +538,11 @@ position list returned for such events is now nil.
 These slots used to hold key-shortcut data, but have been obsolete since
 Emacs-21.
 
+** Emacs no longer downcases the first letter of a system diagnostic
+when signaling a file error.  For example, it now reports "Permission
+denied" instead of "permission denied".  The old behavior was problematic
+in languages like German where downcasing rules depend on grammar.
+
 
 * Lisp Changes in Emacs 25.1
 

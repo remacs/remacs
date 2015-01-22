@@ -655,7 +655,7 @@ Do not override for `prot-2'."
   (oref eitest-p1 slot-1)
   (oref eitest-p2 slot-1)
   ;; Accessing protected slot out of context used to fail, but we dropped this
-  ;; feature, since it was underused and noone noticed that the check was
+  ;; feature, since it was underused and no one noticed that the check was
   ;; incorrect (much too loose).
   ;;PROTECTED (should-error (oref eitest-p1 slot-2) :type 'invalid-slot-name)
   ;; Access protected slot in method

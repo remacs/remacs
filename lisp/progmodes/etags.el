@@ -308,7 +308,7 @@ file the tag was in."
     (save-excursion
       (or (visit-tags-table-buffer file)
 	  (signal 'file-error (list "Visiting tags table"
-				    "file does not exist"
+				    "No such file or directory"
 				    file)))
       ;; Set FILE to the expanded name.
       (setq file tags-file-name)))
@@ -2122,7 +2122,7 @@ for \\[find-tag] (which see)."
   (make-instance 'xref-etags-location :tag-info tag-info
                  :file (expand-file-name file)))
 
-(defmethod xref-location-marker ((l xref-etags-location))
+(cl-defmethod xref-location-marker ((l xref-etags-location))
   (with-slots (tag-info file) l
     (let ((buffer (find-file-noselect file)))
       (with-current-buffer buffer

@@ -2524,7 +2524,7 @@ mapcar1 (EMACS_INT leni, Lisp_Object *vals, Lisp_Object fn, Lisp_Object seq)
   if (vals)
     {
       /* Don't let vals contain any garbage when GC happens.  */
-      memsetnil (vals, leni);
+      memclear (vals, leni * word_size);
 
       GCPRO3 (dummy, fn, seq);
       gcpro1.var = vals;
@@ -3700,7 +3700,7 @@ larger_vector (Lisp_Object vec, ptrdiff_t incr_min, ptrdiff_t nitems_max)
   new_size = old_size + incr;
   v = allocate_vector (new_size);
   memcpy (v->contents, XVECTOR (vec)->contents, old_size * sizeof *v->contents);
-  memsetnil (v->contents + old_size, new_size - old_size);
+  memclear (v->contents + old_size, incr * word_size);
   XSETVECTOR (vec, v);
   return vec;
 }

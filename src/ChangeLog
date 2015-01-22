@@ -1,3 +1,21 @@
+2015-01-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Don't downcase system diagnostics' first letters
+	* fileio.c (report_file_errno): Don't downcase, and simplify.
+	Fixes: bug#19642
+
+	Isolate NIL_IS_ZERO-assuming code better
+	Suggested by Stefan Monnier in:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-01/msg00588.html
+	* alloc.c (allocate_pseudovector):
+	Use memclear, not memsetnil, to remove a 'verify'.
+	* callint.c (Fcall_interactively):
+	* dispnew.c (realloc_glyph_pool):
+	* xdisp.c (init_iterator):
+	Use memclear, not memset, to remove a 'verify'.
+	* lisp.h (memclear): Rename from memsetnil, and take a byte
+	count rather than a word count.  All callers changed.
+
 2015-01-20  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Undo port to hypothetical nonzero Qnil case

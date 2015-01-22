@@ -379,7 +379,7 @@ created subprocess, or nil."
                   (set-process-filter-multibyte process nil)))))
         (file-error
          (unless (and (string= "Cannot bind server socket" (nth 1 err))
-                      (string= "address already in use" (nth 2 err)))
+                      (string= "address already in use" (downcase (nth 2 err))))
            (signal (car err) (cdr err)))
          (setq port (1+ port))
          (unless (< port upper)
@@ -1264,4 +1264,3 @@ other client."
 ;; Local Variables:
 ;; indent-tabs-mode: nil
 ;; End:
-

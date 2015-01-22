@@ -1513,13 +1513,15 @@ gc_aset (Lisp_Object array, ptrdiff_t idx, Lisp_Object val)
    to find such assumptions later if we change Qnil to be nonzero.  */
 enum { NIL_IS_ZERO = XLI_BUILTIN_LISPSYM (iQnil) == 0 };
 
-/* Set a Lisp_Object array V's N entries to nil.  */
+/* Clear the object addressed by P, with size NBYTES, so that all its
+   bytes are zero and all its Lisp values are nil.  */
 INLINE void
-memsetnil (Lisp_Object *v, ptrdiff_t n)
+memclear (void *p, ptrdiff_t nbytes)
 {
-  eassert (0 <= n);
+  eassert (0 <= nbytes);
   verify (NIL_IS_ZERO);
-  memset (v, 0, n * sizeof *v);
+  /* Since Qnil is zero, memset suffices.  */
+  memset (p, 0, nbytes);
 }
 
 /* If a struct is made to look like a vector, this macro returns the length

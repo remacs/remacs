@@ -228,7 +228,8 @@ This macro can only be used within the lexical scope of a cl-generic method."
     "Make the lambda expression for a method with ARGS and BODY."
     (let ((plain-args ())
           (specializers nil)
-          (doc-string (if (stringp (car-safe body)) (pop body)))
+          (doc-string (if (and (stringp (car-safe body)) (cdr body))
+                          (pop body)))
           (mandatory t))
       (dolist (arg args)
         (push (pcase arg
@@ -252,7 +253,7 @@ This macro can only be used within the lexical scope of a cl-generic method."
           ;; destructuring args, `declare' and whatnot).
           (pcase (macroexpand fun macroenv)
             (`#'(lambda ,args . ,body)
-             (let* ((doc-string (and doc-string (stringp (car body))
+             (let* ((doc-string (and doc-string (stringp (car body)) (cdr body)
                                      (pop body)))
                     (cnm (make-symbol "cl--cnm"))
                     (nmp (make-symbol "cl--nmp"))

@@ -1,3 +1,41 @@
+2015-01-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Don't downcase system diagnostics' first letters
+	* emacs-lisp/bytecomp.el (byte-compile-file):
+	* ffap.el (find-file-at-point):
+	* files.el (insert-file-1):
+	* net/ange-ftp.el (ange-ftp-barf-if-not-directory)
+	(ange-ftp-copy-file-internal):
+	* progmodes/etags.el (visit-tags-table):
+	Keep diagnostics consistent with system's.
+	* ffap.el (ffap-machine-p):
+	Ignore case while comparing diagnostics.
+
+2015-01-22  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* help.el (help-make-usage): Don't turn a "_" arg into an empty-string
+	arg (bug#19645).
+	* emacs-lisp/cl-generic.el (cl--generic-lambda): Don't confuse a string
+	body with a docstring.
+
+2015-01-22  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/xref.el (xref-location-marker, xref-location-group):
+	Use `cl-defgeneric' and `cl-defmethod' instead of the EIEIO
+	counterparts.
+
+	* progmodes/etags.el (xref-location-marker): Same.
+
+	* progmodes/xref.el (xref--current): Rename from `xref--selected'.
+	(xref--inhibit-mark-current): Rename from
+	`xref--inhibit-mark-selected'.  Update the usages.
+	(xref-quit): Reword the docstring.  Kill buffers after quitting
+	windows instead of before.
+	(xref--insert-xrefs): Tweak help-echo.
+	(xref--read-identifier-history, xref--read-pattern-history):
+	New variables.
+	(xref--read-identifier, xref-find-apropos): Use them.
+
 2015-01-21  Ulrich Müller  <ulm@gentoo.org>
 
 	* play/gamegrid.el (gamegrid-add-score-with-update-game-score):

@@ -1445,7 +1445,7 @@ the same names as used in the original source code, when possible."
 		    (let ((name (symbol-name arg)))
 		      (cond
                        ((string-match "\\`&" name) arg)
-                       ((string-match "\\`_" name)
+                       ((string-match "\\`_." name)
                         (intern (upcase (substring name 1))))
                        (t (intern (upcase name)))))))
 		arglist)))

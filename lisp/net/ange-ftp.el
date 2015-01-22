@@ -1536,8 +1536,8 @@ then kill the related FTP process."
       (signal 'file-error
 	      (list "Opening directory"
 		    (if (file-exists-p directory)
-			"not a directory"
-		      "no such file or directory")
+			"Not a directory"
+		      "No such file or directory")
 		    directory))))
 
 ;;;; ------------------------------------------------------------
@@ -3664,7 +3664,7 @@ so return the size on the remote host exactly. See RFC 3659."
 
   (or (file-exists-p filename)
       (signal 'file-error
-	      (list "Copy file" "no such file or directory" filename)))
+	      (list "Copy file" "No such file or directory" filename)))
 
   ;; canonicalize newname if a directory.
   (if (file-directory-p newname)

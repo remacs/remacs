@@ -265,15 +265,15 @@ $(DESTDIR)${archlibdir}: all
 	touch "$(DESTDIR)${gamedir}/snake-scores"; \
 	touch "$(DESTDIR)${gamedir}/tetris-scores"
 ifneq ($(gameuser),)
-	chown ${gameuser} "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}"
-	chmod u+s,go-r "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}"
-	chown ${gameuser} "$(DESTDIR)${gamedir}"
-	chmod u=rwx,g=rx,o=rx "$(DESTDIR)${gamedir}"
+	-if chown ${gameuser} "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}" && chmod u+s,go-r "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}"; then \
+	  chown ${gameuser} "$(DESTDIR)${gamedir}"; \
+	  chmod u=rwx,g=rx,o=rx "$(DESTDIR)${gamedir}"; \
+	fi
 else ifneq ($(gamegroup),)
-	chgrp ${gamegroup} "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}"
-	chmod g+s,o-r "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}"
-	chgrp ${gamegroup} "$(DESTDIR)${gamedir}"
-	chmod u=rwx,g=rwx,o=rx "$(DESTDIR)${gamedir}"
+	-if chgrp ${gamegroup} "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}" && chmod g+s,o-r "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}"; then \
+	  chgrp ${gamegroup} "$(DESTDIR)${gamedir}"; \
+	  chmod u=rwx,g=rwx,o=rx "$(DESTDIR)${gamedir}"; \
+	fi
 endif
 	exp_archlibdir=`cd "$(DESTDIR)${archlibdir}" && /bin/pwd`; \
 	if [ "$$exp_archlibdir" != "`cd ${srcdir} && /bin/pwd`" ]; then \
