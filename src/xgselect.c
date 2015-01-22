@@ -50,7 +50,7 @@ xg_select (int fds_lim, fd_set *rfds, fd_set *wfds, fd_set *efds,
   struct timespec const *tmop = timeout;
 
   GMainContext *context;
-  int have_wfds = wfds != NULL;
+  bool have_wfds = wfds != NULL;
   GPollFD gfds_buf[128];
   GPollFD *gfds = gfds_buf;
   int gfds_size = ARRAYELTS (gfds_buf);
@@ -96,7 +96,7 @@ xg_select (int fds_lim, fd_set *rfds, fd_set *wfds, fd_set *efds,
         {
           FD_SET (gfds[i].fd, &all_wfds);
           if (gfds[i].fd > max_fds) max_fds = gfds[i].fd;
-          have_wfds = 1;
+          have_wfds = true;
         }
     }
 

@@ -132,7 +132,7 @@ static int xfont_check (struct frame *, struct font *);
 struct font_driver xfont_driver =
   {
     LISP_INITIALLY_ZERO,	/* Qx */
-    0,				/* case insensitive */
+    false,			/* case insensitive */
     xfont_get_cache,
     xfont_list,
     xfont_match,
@@ -269,7 +269,7 @@ xfont_chars_supported (Lisp_Object chars, XFontStruct *xfont,
 	}
       return (i >= 0);
     }
-  return 0;
+  return false;
 }
 
 /* A hash table recoding which font supports which scripts.  Each key
@@ -983,7 +983,7 @@ xfont_text_extents (struct font *font, unsigned int *code,
   int i, width = 0;
   bool first;
 
-  for (i = 0, first = 1; i < nglyphs; i++)
+  for (i = 0, first = true; i < nglyphs; i++)
     {
       XChar2b char2b;
       static XCharStruct *pcm;
@@ -1000,7 +1000,7 @@ xfont_text_extents (struct font *font, unsigned int *code,
 	  metrics->rbearing = pcm->rbearing;
 	  metrics->ascent = pcm->ascent;
 	  metrics->descent = pcm->descent;
-	  first = 0;
+	  first = false;
 	}
       else
 	{
