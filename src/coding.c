@@ -11273,7 +11273,7 @@ internal character representation.  */);
 
   {
     Lisp_Object args[coding_arg_undecided_max];
-    memsetnil (args, ARRAYELTS (args));
+    memclear (args, sizeof args);
 
     Lisp_Object plist[16];
     plist[0] = intern_c_string (":name");

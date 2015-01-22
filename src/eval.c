@@ -2299,7 +2299,8 @@ usage: (apply FUNCTION &rest ARGUMENTS)  */)
       /* Avoid making funcall cons up a yet another new vector of arguments
 	 by explicitly supplying nil's for optional values.  */
       SAFE_ALLOCA_LISP (funcall_args, 1 + XSUBR (fun)->max_args);
-      memsetnil (funcall_args + numargs + 1, XSUBR (fun)->max_args - numargs);
+      memclear (funcall_args + numargs + 1,
+		(XSUBR (fun)->max_args - numargs) * word_size);
       funcall_nargs = 1 + XSUBR (fun)->max_args;
     }
   else
@@ -2693,8 +2694,8 @@ usage: (funcall FUNCTION &rest ARGUMENTS)  */)
 	      eassert (XSUBR (fun)->max_args <= ARRAYELTS (internal_argbuf));
 	      internal_args = internal_argbuf;
 	      memcpy (internal_args, args + 1, numargs * word_size);
-	      memsetnil (internal_args + numargs,
-			 XSUBR (fun)->max_args - numargs);
+	      memclear (internal_args + numargs,
+			(XSUBR (fun)->max_args - numargs) * word_size);
 	    }
 	  else
 	    internal_args = args + 1;
