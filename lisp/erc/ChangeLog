@@ -1,3 +1,8 @@
+2015-01-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Don't downcase system diagnostics' first letters
+	* erc-dcc.el (erc-dcc-server): Ignore case while comparing diagnostics.
+
 2014-11-23  Michael Albinus  <michael.albinus@gmx.de>
 
 	* erc-desktop-notifications.el (erc-notifications-bus):

@@ -1863,8 +1863,8 @@ The value is non-nil if there were no errors, nil if errors."
 	    (signal 'file-error
 		    (list "Opening output file"
 			  (if (file-exists-p target-file)
-			      "cannot overwrite file"
-			    "directory not writable or nonexistent")
+			      "Cannot overwrite file"
+			    "Directory not writable or nonexistent")
 			  target-file)))
 	  (kill-buffer (current-buffer)))
 	(if (and byte-compile-generate-call-tree

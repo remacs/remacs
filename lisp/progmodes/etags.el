@@ -308,7 +308,7 @@ file the tag was in."
     (save-excursion
       (or (visit-tags-table-buffer file)
 	  (signal 'file-error (list "Visiting tags table"
-				    "file does not exist"
+				    "No such file or directory"
 				    file)))
       ;; Set FILE to the expanded name.
       (setq file tags-file-name)))

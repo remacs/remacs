@@ -1,3 +1,16 @@
+2015-01-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Don't downcase system diagnostics' first letters
+	* emacs-lisp/bytecomp.el (byte-compile-file):
+	* ffap.el (find-file-at-point):
+	* files.el (insert-file-1):
+	* net/ange-ftp.el (ange-ftp-barf-if-not-directory)
+	(ange-ftp-copy-file-internal):
+	* progmodes/etags.el (visit-tags-table):
+	Keep diagnostics consistent with system's.
+	* ffap.el (ffap-machine-p):
+	Ignore case while comparing diagnostics.
+
 2015-01-22  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* help.el (help-make-usage): Don't turn a "_" arg into an empty-string

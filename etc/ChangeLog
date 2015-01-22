@@ -1,3 +1,8 @@
+2015-01-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Don't downcase system diagnostics' first letters
+	* NEWS: Document this.
+
 2015-01-16  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* NEWS: Document installing packages from directories.

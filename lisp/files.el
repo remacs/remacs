@@ -2128,7 +2128,7 @@ This function ensures that none of these modifications will take place."
 
 (defun insert-file-1 (filename insert-func)
   (if (file-directory-p filename)
-      (signal 'file-error (list "Opening input file" "file is a directory"
+      (signal 'file-error (list "Opening input file" "Is a directory"
                                 filename)))
   ;; Check whether the file is uncommonly large
   (abort-if-file-too-large (nth 7 (file-attributes filename)) "insert" filename)
