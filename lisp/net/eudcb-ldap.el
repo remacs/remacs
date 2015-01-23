@@ -70,16 +70,17 @@
 		     ("mail" . eudc-display-mail)
 		     ("url" . eudc-display-url))
 		   'ldap)
-(eudc-protocol-set 'eudc-switch-to-server-hook
-		   '(eudc-ldap-check-base)
-		   'ldap)
 
 (defun eudc-ldap-cleanup-record-simple (record)
   "Do some cleanup in a RECORD to make it suitable for EUDC."
   (mapcar
    (function
     (lambda (field)
-      (cons (intern (car field))
+      ;; Some servers return case-sensitive names (e.g. givenName
+      ;; instead of givenname); downcase the field's name so that it
+      ;; can be matched against
+      ;; eudc-ldap-attributes-translation-alist.
+      (cons (intern (downcase (car field)))
 	    (if (cdr (cdr field))
 		(cdr field)
 	      (car (cdr field))))))
@@ -95,7 +96,7 @@
   (mapcar
    (function
     (lambda (field)
-      (let ((name (intern (car field)))
+      (let ((name (intern (downcase (car field))))
 	    (value (cdr field)))
 	(if (memq name '(postaladdress registeredaddress))
 	    (setq value (mapcar 'eudc-filter-$ value)))
@@ -170,14 +171,16 @@ attribute names are returned. Default to `person'"
 
 (defun eudc-ldap-format-query-as-rfc1558 (query)
   "Format the EUDC QUERY list as a RFC1558 LDAP search filter."
-  (format "(&%s)"
-	  (apply 'concat
-		 (mapcar (lambda (item)
-                           (format "(%s=%s)"
-                                   (car item)
-                                   (eudc-ldap-escape-query-special-chars (cdr item))))
-			 query))))
-
+  (let ((formatter (lambda (item &optional wildcard)
+		     (format "(%s=%s)"
+			     (car item)
+			     (concat
+			      (eudc-ldap-escape-query-special-chars
+			       (cdr item)) (if wildcard "*" ""))))))
+    (format "(&%s)"
+	    (concat
+	     (mapconcat formatter (butlast query) "")
+	     (funcall formatter (car (last query)) t)))))
 
 ;;}}}
 

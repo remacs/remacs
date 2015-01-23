@@ -137,7 +137,7 @@ location, etc@enddots{} More information about LDAP can be found at
 @url{http://www.openldap.org/}.
 
 EUDC requires external support to access LDAP directory servers
-(@pxref{LDAP Requirements})
+(@pxref{LDAP Configuration})
 
 
 @node CCSO PH/QI
@@ -213,17 +213,131 @@ email composition buffers (@pxref{Inline Query Expansion})
 @end lisp
 
 @menu
-* LDAP Requirements::           EUDC needs external support for LDAP
+* LDAP Configuration::           EUDC needs external support for LDAP
 @end menu
 
-@node LDAP Requirements
-@section LDAP Requirements
+@node LDAP Configuration
+@section LDAP Configuration
 
-LDAP support is added by means of @file{ldap.el}, which is part of Emacs.
-@file{ldap.el} needs an external command line utility named
-@file{ldapsearch}, available as part of Open LDAP
-(@url{http://www.openldap.org/}).
+LDAP support is added by means of @file{ldap.el}, which is part of
+Emacs.  @file{ldap.el} needs an external command line utility named
+@file{ldapsearch}, available as part of OpenLDAP
+(@url{http://www.openldap.org/}).  The configurations in this section
+were tested with OpenLDAP 2.4.23.
 
+The following examples use a base of
+@code{ou=people,dc=example,dc=com} and the host name
+@code{directory.example.com}, a server that supports LDAP-over-SSL
+(the @code{ldaps} protocol, with default port @code{636}) and which
+requires authentication by the user @code{emacsuser} with password
+@code{s3cr3t}.
+
+These configurations are meant to be self-contained; that is, each
+provides everything required for sensible TAB-completion of email
+fields.  BBDB lookups are attempted first; if a matching BBDB entry is
+found then EUDC will not attempt any LDAP lookups.
+
+Wildcard LDAP lookups are supported using the @code{*} character.  For
+example, attempting to TAB-complete the following:
+
+@example
+To: * Smith
+@end example
+
+will return all LDAP entries with surnames that begin with
+@code{Smith}.  In every LDAP query it makes, EUDC implicitly appends
+the wildcard character to the end of the last word.
+
+@subsection Emacs-only Configuration
+
+Emacs can pass most required configuration options via the
+@file{ldapsearch} command-line.  One exception is certificate
+configuration for LDAP-over-SSL, which must be specified in
+@file{/etc/openldap/ldap.conf}.  On systems that provide such
+certificates as part of the @code{OpenLDAP} installation, this can be
+as simple as one line:
+
+@example
+TLS_CACERTDIR /etc/openldap/certs
+@end example
+
+In @file{.emacs}, these expressions suffice to configure EUDC for
+LDAP:
+
+@lisp
+(eval-after-load "message"
+  '(define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
+(customize-set-variable 'eudc-server-hotlist
+                        '(("" . bbdb)
+                          ("ldaps://directory.example.com" . ldap)))
+(customize-set-variable 'ldap-host-parameters-alist
+                        '(("ldaps://directory.example.com"
+                           base "ou=people,dc=example,dc=com"
+                           binddn "example\\emacsuser"
+                           passwd ldap-password-read)))
+@end lisp
+
+Specifying the function @code{ldap-password-read} for @code{passwd}
+will cause Emacs to prompt interactively for the password.  The
+password will then be validated and cached, unless
+@code{password-cache} is nil.  You can customize
+@code{password-cache-expiry} to control the duration for which the
+password is cached.  If you want to clear the cache, call
+@code{password-reset}.
+
+@subsection External Configuration
+
+Your system may already be configured for a default LDAP server.  For
+example, @file{/etc/openldap/ldap.conf} might contain:
+
+@example
+BASE ou=people,dc=example,dc=com
+URI ldaps://directory.example.com
+TLS_CACERTDIR /etc/openldap/certs
+@end example
+
+To authenticate, the @dfn{bind distinguished name (binddn)} is
+required, in this case, @code{example\emacsuser}, along with the
+password.  These can be specified in @file{~/.authinfo.gpg} with the
+following line:
+
+@example
+machine ldaps://directory.example.com binddn example\emacsuser password s3cr3t
+@end example
+
+Then in the @file{.emacs} init file, these expressions suffice to
+configure EUDC for LDAP:
+
+@lisp
+(eval-after-load "message"
+  '(define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
+(customize-set-variable 'eudc-server-hotlist
+                        '(("" . bbdb)
+                          ("ldaps://directory.example.com" . ldap)))
+(customize-set-variable 'ldap-host-parameters-alist
+                        '(("ldaps://directory.example.com"
+                           auth-source t)))
+@end lisp
+
+For this example where we only care about one server, the server name
+can be omitted in @file{~/.authinfo.gpg} and @file{.emacs}, in which
+case @file{ldapsearch} defaults to the host name in
+@file{/etc/openldap/ldap.conf}.
+
+The @file{~/.authinfo.gpg} line becomes:
+
+@example
+binddn example\emacsuser password s3cr3t
+@end example
+
+and the @file{.emacs} expressions become:
+
+@lisp
+(eval-after-load "message"
+  '(define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
+(customize-set-variable 'eudc-server-hotlist '(("" . bbdb) ("" . ldap)))
+(customize-set-variable 'ldap-host-parameters-alist '(("" auth-source t)))
+@end lisp
 
 @node Usage
 @chapter Usage
