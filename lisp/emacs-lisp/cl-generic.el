@@ -462,9 +462,12 @@ for all those different tags in the method-cache.")
         (gethash (cons generic-name mets-by-qual)
                  cl--generic-combined-method-memoization)
       (cond
-       ((null mets-by-qual) (lambda (&rest args)
-                              (apply #'cl-no-applicable-method
-                                     generic-name args)))
+       ((null mets-by-qual)
+        (lambda (&rest args)
+          (apply #'cl-no-applicable-method generic-name args)))
+       ((null (alist-get :primary mets-by-qual))
+        (lambda (&rest args)
+          (apply #'cl-no-primary-method generic-name args)))
        (t
         (let* ((fun (lambda (&rest args)
                       ;; FIXME: CLOS passes as second arg the "calling method".
@@ -475,8 +478,6 @@ for all those different tags in the method-cache.")
                       ;; . QUALIFIER) USE-CNM . FUNCTION) entry from the method
                       ;; table, but the caller wouldn't be able to do much with
                       ;; it anyway.  So we pass nil for now.
-                      ;; FIXME: signal `no-primary-method' if there's
-                      ;; no primary.
                       (apply #'cl-no-next-method generic-name nil args)))
                ;; We use `cdr' to drop the `uses-cnm' annotations.
                (before
@@ -546,6 +547,7 @@ for all those different tags in the method-cache.")
 
 (define-error 'cl-no-method "No method for %S")
 (define-error 'cl-no-next-method "No next method for %S" 'cl-no-method)
+(define-error 'cl-no-primary-method "No primary method for %S" 'cl-no-method)
 (define-error 'cl-no-applicable-method "No applicable method for %S"
   'cl-no-method)
 
@@ -558,6 +560,11 @@ for all those different tags in the method-cache.")
   "Function called when a method call finds no applicable method.")
 (cl-defmethod cl-no-applicable-method (generic &rest args)
   (signal 'cl-no-applicable-method `(,generic ,@args)))
+
+(cl-defgeneric cl-no-primary-method (generic &rest args)
+  "Function called when a method call finds no primary method.")
+(cl-defmethod cl-no-primary-method (generic &rest args)
+  (signal 'cl-no-primary-method `(,generic ,@args)))
 
 (defun cl-call-next-method (&rest _args)
   "Function to call the next applicable method.
@@ -727,6 +734,7 @@ Can only be used from within the lexical body of a primary or around method."
 ;;     (foo 'major-mode toto titi)
 ;;
 ;; FIXME: Better would be to do that via dispatch on an "implicit argument".
+;; E.g. (cl-defmethod foo (y z &context (major-mode text-mode)) ...)
 
 ;; (defvar cl--generic-major-modes (make-hash-table :test #'eq))
 ;;
