@@ -95,6 +95,7 @@
           (package-archives `(("gnu" . ,package-test-data-dir)))
           (old-yes-no-defn (symbol-function 'yes-or-no-p))
           (default-directory package-test-file-dir)
+          abbreviated-home-dir
           package--initialized
           package-alist
           ,@(if update-news
@@ -339,8 +340,7 @@ Must called from within a `tar-mode' buffer."
      (goto-char (point-min))
      (should (search-forward "simple-single is an installed package." nil t))
      (should (search-forward
-              (format "Status: Installed in `%s/' (unsigned)."
-                      (expand-file-name "simple-single-1.3" package-user-dir))
+              "Status: Installed in `~/simple-single-1.3/' (unsigned)."
               nil t))
      (should (search-forward "Version: 1.3" nil t))
      (should (search-forward "Summary: A single-file package with no dependencies"
@@ -409,8 +409,7 @@ Must called from within a `tar-mode' buffer."
        (goto-char (point-min))
        (should (search-forward "signed-good is an installed package." nil t))
        (should (search-forward
-		(format "Status: Installed in `%s/'."
-			(expand-file-name "signed-good-1.0" package-user-dir))
+		"Status: Installed in `~/signed-good-1.0/'."
 		nil t))))))
 
 

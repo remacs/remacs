@@ -1,4 +1,12 @@
-2015-01-20  Jorgen Schaefer  <contact@jorgenschaefer.de>
+2015-01-23  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Fix package tests when TMPDIR is in HOME.  (Bug#19657)
+	* automated/package-test.el (with-package-test):
+	Bind `abbreviated-home-dir' to nil.
+	(package-test-describe-package, package-test-signed):
+	Expect abbreviated directory names.
+
+2015-01-22  Jorgen Schaefer  <contact@jorgenschaefer.de>
 
 	* automated/package-test.el (package-test-install-prioritized):
 	Re-add the test case and add priority to the correct repository
