@@ -1,3 +1,8 @@
+2015-01-24  Glenn Morris  <rgm@gnu.org>
+
+	* automated/regexp-tests.el: Require regexp-opt, which is
+	not preloaded --without-x.
+
 2015-01-23  Dmitry Gutov  <dgutov@yandex.ru>
 
 	Fix package tests when TMPDIR is in HOME.  (Bug#19657)
