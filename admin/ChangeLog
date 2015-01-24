@@ -1,3 +1,9 @@
+2015-01-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix a couple of AM_V_GEN bugs
+	* unidata/Makefile.in (unifiles): Use AM_V_at instead of AM_V_GEN,
+	since this doesn't generate a file.
+
 2015-01-15  Eli Zaretskii  <eliz@gnu.org>
 
 	* unidata/uvs.el (uvs-print-table-ivd): Call set-binary-mode on

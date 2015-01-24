@@ -58,10 +58,20 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 =
 
+AM_V_GEN = $(am__v_GEN_@AM_V@)
+am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
+am__v_GEN_0 = @echo "  GEN     " $@;
+am__v_GEN_1 =
+
 AM_V_RC = $(am__v_RC_@AM_V@)
 am__v_RC_ = $(am__v_RC_@AM_DEFAULT_V@)
 am__v_RC_0 = @echo "  RC      " $@;
 am__v_RC_1 =
+
+AM_V_at = $(am__v_at_@AM_V@)
+am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
+am__v_at_0 = @
+am__v_at_1 =
 
 # ==================== Where To Install Things ====================
 

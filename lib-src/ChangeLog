@@ -1,3 +1,10 @@
+2015-01-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix a couple of AM_V_GEN bugs
+	* Makefile.in (AM_V_GEN, am__v_GEN_, am__v_GEN_0, am__v_GEN_1)
+	(AM_V_at, am__v_at_, am__v_at_0, am__v_at_1):
+	New macros, copied from ../src/Makefile.in.
+
 2015-01-22  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Check exit statuses in lib-src/Makefile
