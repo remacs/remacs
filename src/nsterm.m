@@ -6750,7 +6750,9 @@ if (cols > 0 && rows > 0)
     return;
 
   ns_clear_frame_area (emacsframe, x, y, width, height);
+  block_input ();
   expose_frame (emacsframe, x, y, width, height);
+  unblock_input ();
 
   /*
     drawRect: may be called (at least in OS X 10.5) for invisible

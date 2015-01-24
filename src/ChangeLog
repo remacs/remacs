@@ -1,3 +1,7 @@
+2015-01-24  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (drawRect:): Add block/unblock_input (Bug#19660).
+
 2015-01-21  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix coding.c subscript error
