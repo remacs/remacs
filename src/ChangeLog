@@ -1,3 +1,13 @@
+2015-01-25  Eli Zaretskii  <eliz@gnu.org>
+
+	Use bool for boolean in w32fns.c
+	* w32fns.c (w32_defined_color, x_decode_color)
+	(Fxw_color_defined_p, Fxw_color_values, x_set_icon_type)
+	(x_set_menu_bar_lines, x_change_tool_bar_height)
+	(x_set_internal_border_width, x_explicitly_set_name)
+	(x_implicitly_set_name, Fx_create_frame, w32_window)
+	(x_create_tip_frame, Fx_show_tip): Use bool where appropriate.
+
 2015-01-25  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Use bool for boolean in xfns.c
