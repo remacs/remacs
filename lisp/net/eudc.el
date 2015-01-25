@@ -76,10 +76,6 @@
 
 (defvar mode-popup-menu)
 
-;; List of known servers
-;; Alist of (SERVER . PROTOCOL)
-(defvar eudc-server-hotlist nil)
-
 ;; List of variables that have server- or protocol-local bindings
 (defvar eudc-local-vars nil)
 
@@ -688,7 +684,8 @@ server for future sessions."
 						    (cons (symbol-name elt)
 							  elt))
 						 eudc-known-protocols)))))
-  (unless (or (member protocol
+  (unless (or (null protocol)
+	      (member protocol
 		      eudc-supported-protocols)
 	      (load (concat "eudcb-" (symbol-name protocol)) t))
     (error "Unsupported protocol: %s" protocol))
@@ -766,7 +763,6 @@ otherwise a list of symbols is returned."
 		  format (cdr format)))
 	  ;; If the same attribute appears more than once, merge
 	  ;; the corresponding values
-	  (setq query-alist (nreverse query-alist))
 	  (while query-alist
 	    (setq key (eudc-caar query-alist)
 		  val (eudc-cdar query-alist)
@@ -812,19 +808,29 @@ If REPLACE is non-nil, then this expansion replaces the name in the buffer.
 Multiple servers can be tried with the same query until one finds a match,
 see `eudc-inline-expansion-servers'"
   (interactive)
-  (if (memq eudc-inline-expansion-servers
-	    '(current-server server-then-hotlist))
-      (or eudc-server
-	  (call-interactively 'eudc-set-server))
+  (cond
+   ((eq eudc-inline-expansion-servers 'current-server)
+    (or eudc-server
+	(call-interactively 'eudc-set-server)))
+   ((eq eudc-inline-expansion-servers 'server-then-hotlist)
+    (or eudc-server
+	;; Allow server to be nil if hotlist is set.
+	eudc-server-hotlist
+	(call-interactively 'eudc-set-server)))
+   ((eq eudc-inline-expansion-servers 'hotlist)
     (or eudc-server-hotlist
 	(error "No server in the hotlist")))
+   (t
+    (error "Wrong value for `eudc-inline-expansion-servers': %S"
+	   eudc-inline-expansion-servers)))
   (let* ((end (point))
 	 (beg (save-excursion
 		(if (re-search-backward "\\([:,]\\|^\\)[ \t]*"
 					(point-at-bol) 'move)
 		    (goto-char (match-end 0)))
 		(point)))
-	 (query-words (split-string (buffer-substring beg end) "[ \t]+"))
+	 (query-words (split-string (buffer-substring-no-properties beg end)
+				    "[ \t]+"))
 	 query-formats
 	 response
 	 response-string
@@ -840,18 +846,17 @@ see `eudc-inline-expansion-servers'"
 	   ((eq eudc-inline-expansion-servers 'hotlist)
 	    eudc-server-hotlist)
 	   ((eq eudc-inline-expansion-servers 'server-then-hotlist)
-	    (cons (cons eudc-server eudc-protocol)
-		  (delete (cons eudc-server eudc-protocol) servers)))
+	    (if eudc-server
+		(cons (cons eudc-server eudc-protocol)
+		      (delete (cons eudc-server eudc-protocol) servers))
+	      eudc-server-hotlist))
 	   ((eq eudc-inline-expansion-servers 'current-server)
-	    (list (cons eudc-server eudc-protocol)))
-	   (t
-	    (error "Wrong value for `eudc-inline-expansion-servers': %S"
-		   eudc-inline-expansion-servers))))
+	    (list (cons eudc-server eudc-protocol)))))
     (if (and eudc-max-servers-to-query
 	     (> (length servers) eudc-max-servers-to-query))
 	(setcdr (nthcdr (1- eudc-max-servers-to-query) servers) nil))
 
-    (condition-case signal
+    (unwind-protect
 	(progn
 	  (setq response
 		(catch 'found
@@ -887,14 +892,15 @@ see `eudc-inline-expansion-servers'"
 
 	    ;; Process response through eudc-inline-expansion-format
 	    (while response
-	      (setq response-string (apply 'format
-					   (car eudc-inline-expansion-format)
-					   (mapcar (function
-						    (lambda (field)
-						      (or (cdr (assq field (car response)))
-							  "")))
-						   (eudc-translate-attribute-list
-						    (cdr eudc-inline-expansion-format)))))
+	      (setq response-string
+                    (apply 'format
+                           (car eudc-inline-expansion-format)
+                           (mapcar (function
+                                    (lambda (field)
+                                      (or (cdr (assq field (car response)))
+                                          "")))
+                                   (eudc-translate-attribute-list
+                                    (cdr eudc-inline-expansion-format)))))
 	      (if (> (length response-string) 0)
 		  (setq response-strings
 			(cons response-string response-strings)))
@@ -916,15 +922,10 @@ see `eudc-inline-expansion-servers'"
 	      (delete-region beg end)
 	      (insert (mapconcat 'identity response-strings ", ")))
 	     ((eq eudc-multiple-match-handling-method 'abort)
-	      (error "There is more than one match for the query"))))
-	  (or (and (equal eudc-server eudc-former-server)
-		   (equal eudc-protocol eudc-former-protocol))
-	      (eudc-set-server eudc-former-server eudc-former-protocol t)))
-      (error
-       (or (and (equal eudc-server eudc-former-server)
-		(equal eudc-protocol eudc-former-protocol))
-	   (eudc-set-server eudc-former-server eudc-former-protocol t))
-       (signal (car signal) (cdr signal))))))
+	      (error "There is more than one match for the query")))))
+      (or (and (equal eudc-server eudc-former-server)
+	       (equal eudc-protocol eudc-former-protocol))
+	  (eudc-set-server eudc-former-server eudc-former-protocol t)))))
 
 ;;;###autoload
 (defun eudc-query-form (&optional get-fields-from-server)

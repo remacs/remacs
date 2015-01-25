@@ -1,3 +1,8 @@
+2015-01-23  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+
+	* eudc.texi (LDAP Configuration): Rename from LDAP Requirements
+	and provide configuration examples.
+
 2015-01-17  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* eieio.texi (Slot Options): Document :protection as unsupported.
@@ -28,8 +33,8 @@
 
 2014-12-18  Eric Abrahamsen  <eric@ericabrahamsen.net>
 
-	* gnus.texi (Gnus Registry Setup): Explain pruning changes.  Mention
-	gnus-registry-prune-factor. Explain sorting changes and
+	* gnus.texi (Gnus Registry Setup): Explain pruning changes.
+	Mention gnus-registry-prune-factor. Explain sorting changes and
 	gnus-registry-default-sort-function. Correct file extension.
 
 2014-12-17  Jay Belanger  <jay.p.belanger@gmail.com>

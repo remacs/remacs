@@ -90,7 +90,7 @@ ${unidir}/charprop.el: ${srcdir}/unidata-gen.el \
 ## to generate a Makefile fragment explicitly listing the uni- files,
 ## which this file could include.  If no fragment, rebuild everything.
 unifiles: ${unidir}/charprop.el
-	$(AM_V_GEN)for f in `sed -n 's/^;; FILE: //p' < $<`; do \
+	$(AM_V_at)for f in `sed -n 's/^;; FILE: //p' < $<`; do \
 	  [ -f $(unidir)/$$f ] || exec $(MAKE) PHONY_EXTRAS=$< $<; \
 	done
 
