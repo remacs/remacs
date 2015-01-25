@@ -1,3 +1,7 @@
+2015-01-25  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* gnus-group.el (gnus-group-suspend): Close all backends.
+
 2015-01-15  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* nntp.el (nntp-send-authinfo): Error out if the password is wrong.
