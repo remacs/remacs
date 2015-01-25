@@ -3489,7 +3489,7 @@ x_update_menu_appearance (struct frame *f)
 	  Lisp_Object xlfd = Ffont_xlfd_name (LFACE_FONT (lface), Qnil);
 #ifdef USE_MOTIF
 	  const char *suffix = "List";
-	  Bool motif = True;
+	  bool motif = true;
 #else
 #if defined HAVE_X_I18N
 
@@ -3497,7 +3497,7 @@ x_update_menu_appearance (struct frame *f)
 #else
 	  const char *suffix = "";
 #endif
-	  Bool motif = False;
+	  bool motif = false;
 #endif
 
 	  if (! NILP (xlfd))

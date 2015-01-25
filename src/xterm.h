@@ -1067,8 +1067,8 @@ extern void x_clipboard_manager_save_frame (Lisp_Object);
 extern void x_clipboard_manager_save_all (void);
 
 #ifdef USE_GTK
-extern int xg_set_icon (struct frame *, Lisp_Object);
-extern int xg_set_icon_from_xpm_data (struct frame *, const char **);
+extern bool xg_set_icon (struct frame *, Lisp_Object);
+extern bool xg_set_icon_from_xpm_data (struct frame *, const char **);
 #endif /* USE_GTK */
 
 extern void xic_free_xfontset (struct frame *);
@@ -1081,7 +1081,7 @@ extern bool x_defined_color (struct frame *, const char *, XColor *, bool);
 #ifdef HAVE_X_I18N
 extern void free_frame_xic (struct frame *);
 # if defined HAVE_X_WINDOWS && defined USE_X_TOOLKIT
-extern char * xic_create_fontsetname (const char *base_fontname, int motif);
+extern char *xic_create_fontsetname (const char *, bool);
 # endif
 #endif
 

@@ -1,5 +1,23 @@
 2015-01-25  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Use bool for boolean in xfns.c
+	* xfaces.c (x_update_menu_appearance):
+	* xfns.c (x_real_positions, x_defined_color, x_decode_color)
+	(xg_set_icon, xg_set_icon_from_xpm_data, x_set_cursor_color)
+	(x_set_icon_type, x_set_icon_name, x_set_menu_bar_lines)
+	(x_change_tool_bar_height, x_set_internal_border_width)
+	(x_encode_text, x_set_name_internal, x_explicitly_set_name)
+	(x_implicitly_set_name, x_default_scroll_bar_color_parameter)
+	(hack_wm_protocols, xic_create_fontsetname, xic_free_xfontset)
+	(x_window, x_icon, Fx_wm_set_size_hint, Fx_create_frame)
+	(Fxw_color_defined_p, Fxw_color_values, x_create_tip_frame)
+	(Fx_show_tip, clean_up_file_dialog, Fx_file_dialog)
+	(clean_up_dialog, syms_of_xfns):
+	* xterm.h (xg_set_icon, xg_set_icon_from_xpm_data)
+	(xic_create_fontsetname):
+	Use bool for boolean.
+	* xfns.c: Include bitmaps/gray.xbm unconditionally.
+
 	Count MANY function args more reliably
 	* alloc.c (Fgc_status, purecopy, unbind_to, garbage_collect_1):
 	* buffer.c (Fbuffer_list, Fkill_buffer):
