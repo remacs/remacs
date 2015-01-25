@@ -164,12 +164,14 @@ defaults to the string looking like a url around the cursor position."
     (image-scroll-down)))
 
 (defun xwidget-webkit-scroll-forward ()
+  "Scroll webkit forward,either native or like image mode."
   (interactive)
   (if (eq xwidget-webkit-scroll-behaviour 'native)
       (xwidget-set-adjustment (xwidget-webkit-last-session) 'horizontal t 50)
     (xwidget-webkit-scroll-forward)))
 
 (defun xwidget-webkit-scroll-backward ()
+  "Scroll webkit backward,either native or like image mode."
   (interactive)
   (if (eq xwidget-webkit-scroll-behaviour 'native)
       (xwidget-set-adjustment (xwidget-webkit-last-session) 'horizontal t -50)
@@ -306,6 +308,8 @@ Argument STR string."
 
 
 (defun xwidget-webkit-begin-edit-textarea (xw text)
+  "Start editing of a webkit text area.
+XW is the xwidget identifier, TEXT is retrieved from the webkit."
   (switch-to-buffer
    (generate-new-buffer "textarea"))
 
@@ -313,6 +317,7 @@ Argument STR string."
   (insert text))
 
 (defun xwidget-webkit-end-edit-textarea ()
+    "End editing of a webkit text area."
   (interactive)
   (goto-char (point-min))
   (while (search-forward "\n" nil t)
@@ -323,7 +328,7 @@ Argument STR string."
   )
 
 (defun xwidget-webkit-show-named-element (xw element-name)
-  "make named-element show. for instance an anchor."
+  "Make named-element show. for instance an anchor."
   (interactive (list (xwidget-webkit-current-session) (read-string "element name:")))
   ;;TODO
   ;; since an xwidget is an Emacs object, it is not trivial to do some things that are taken for granted in a normal browser.
@@ -383,11 +388,15 @@ Argument STR string."
   (if (eq xwidget-webkit-scroll-behaviour 'native)
       (xwidget-webkit-adjust-size-to-window)
     (xwidget-webkit-adjust-size-to-content))
-  (recenter-top-bottom)
+  ;;the recenter is intended to correct a visual glitch
+  ;;it errors out if the buffer isnt visible, but then we dont get the glitch,
+  ;;so silence errors
+  (ignore-errors
+    (recenter-top-bottom))
   )
 
 (defun xwidget-webkit-adjust-size-to-window ()
-  "Adjust webkit to window."
+  "Adjust webkit to window."m
   (interactive)
     (xwidget-resize ( xwidget-webkit-current-session) (window-pixel-width) (window-pixel-height)))
 
