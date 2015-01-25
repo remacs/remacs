@@ -1106,13 +1106,7 @@ void
 syms_of_xfont (void)
 {
   staticpro (&xfont_scripts_cache);
-  { /* Here we rely on the fact that syms_of_xfont (via syms_of_font)
-       is called fairly late, when QCtest and Qequal are known to be set.  */
-    Lisp_Object args[2];
-    args[0] = QCtest;
-    args[1] = Qequal;
-    xfont_scripts_cache = Fmake_hash_table (2, args);
-  }
+  xfont_scripts_cache = CALLN (Fmake_hash_table, QCtest, Qequal);
   staticpro (&xfont_scratch_props);
   xfont_scratch_props = Fmake_vector (make_number (8), Qnil);
   xfont_driver.type = Qx;

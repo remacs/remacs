@@ -375,13 +375,7 @@ ftfont_lookup_cache (Lisp_Object key, enum ftfont_cache_for cache_for)
   if (NILP (cache))
     {
       if (NILP (ft_face_cache))
-	{
-	  Lisp_Object args[2];
-
-	  args[0] = QCtest;
-	  args[1] = Qequal;
-	  ft_face_cache = Fmake_hash_table (2, args);
-	}
+	ft_face_cache = CALLN (Fmake_hash_table, QCtest, Qequal);
       cache_data = xmalloc (sizeof *cache_data);
       cache_data->ft_face = NULL;
       cache_data->fc_charset = NULL;

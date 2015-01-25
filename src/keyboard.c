@@ -1844,7 +1844,7 @@ safe_run_hooks_error (Lisp_Object error, ptrdiff_t nargs, Lisp_Object *args)
   AUTO_STRING (format, "Error in %s (%S): %S");
   Lisp_Object hook = args[0];
   Lisp_Object fun = args[1];
-  Fmessage (4, (Lisp_Object []) {format, hook, fun, error});
+  CALLN (Fmessage, format, hook, fun, error);
 
   if (SYMBOLP (hook))
     {
@@ -1877,13 +1877,10 @@ safe_run_hooks_error (Lisp_Object error, ptrdiff_t nargs, Lisp_Object *args)
 static Lisp_Object
 safe_run_hook_funcall (ptrdiff_t nargs, Lisp_Object *args)
 {
-  Lisp_Object iargs[2];
-
   eassert (nargs == 2);
-  /* Yes, run_hook_with_args works this way.  */
-  iargs[0] = args[1];
-  iargs[1] = args[0];
-  internal_condition_case_n (safe_run_hooks_1, 2, iargs,
+  /* Yes, run_hook_with_args works with args in the other order.  */
+  internal_condition_case_n (safe_run_hooks_1,
+			     2, ((Lisp_Object []) {args[1], args[0]}),
 			     Qt, safe_run_hooks_error);
   return Qnil;
 }
@@ -1895,16 +1892,12 @@ safe_run_hook_funcall (ptrdiff_t nargs, Lisp_Object *args)
 void
 safe_run_hooks (Lisp_Object hook)
 {
-  Lisp_Object args[2];
   struct gcpro gcpro1;
   ptrdiff_t count = SPECPDL_INDEX ();
 
-  args[0] = hook;
-  args[1] = hook;
-
   GCPRO1 (hook);
   specbind (Qinhibit_quit, Qt);
-  run_hook_with_args (2, args, safe_run_hook_funcall);
+  run_hook_with_args (2, ((Lisp_Object []) {hook, hook}), safe_run_hook_funcall);
   unbind_to (count, Qnil);
   UNGCPRO;
 }
@@ -10756,25 +10749,25 @@ The elements of this list correspond to the arguments of
 `set-input-mode'.  */)
   (void)
 {
-  Lisp_Object val[4];
   struct frame *sf = XFRAME (selected_frame);
 
-  val[0] = interrupt_input ? Qt : Qnil;
+  Lisp_Object interrupt = interrupt_input ? Qt : Qnil;
+  Lisp_Object flow, meta;
   if (FRAME_TERMCAP_P (sf) || FRAME_MSDOS_P (sf))
     {
-      val[1] = FRAME_TTY (sf)->flow_control ? Qt : Qnil;
-      val[2] = (FRAME_TTY (sf)->meta_key == 2
-                ? make_number (0)
-                : (CURTTY ()->meta_key == 1 ? Qt : Qnil));
+      flow = FRAME_TTY (sf)->flow_control ? Qt : Qnil;
+      meta = (FRAME_TTY (sf)->meta_key == 2
+	      ? make_number (0)
+	      : (CURTTY ()->meta_key == 1 ? Qt : Qnil));
     }
   else
     {
-      val[1] = Qnil;
-      val[2] = Qt;
+      flow = Qnil;
+      meta = Qt;
     }
-  XSETFASTINT (val[3], quit_char);
+  Lisp_Object quit = make_number (quit_char);
 
-  return Flist (ARRAYELTS (val), val);
+  return list4 (interrupt, flow, meta, quit);
 }
 
 DEFUN ("posn-at-x-y", Fposn_at_x_y, Sposn_at_x_y, 2, 4, 0,

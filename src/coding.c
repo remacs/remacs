@@ -10776,12 +10776,7 @@ void
 syms_of_coding (void)
 {
   staticpro (&Vcoding_system_hash_table);
-  {
-    Lisp_Object args[2];
-    args[0] = QCtest;
-    args[1] = Qeq;
-    Vcoding_system_hash_table = Fmake_hash_table (2, args);
-  }
+  Vcoding_system_hash_table = CALLN (Fmake_hash_table, QCtest, Qeq);
 
   staticpro (&Vsjis_coding_system);
   Vsjis_coding_system = Qnil;
@@ -11269,60 +11264,59 @@ See also `keyboard-translate-table'.
 Use of this variable for character code unification was rendered
 obsolete in Emacs 23.1 and later, since Unicode is now the basis of
 internal character representation.  */);
-    Vtranslation_table_for_input = Qnil;
+  Vtranslation_table_for_input = Qnil;
 
-  {
-    Lisp_Object args[coding_arg_undecided_max];
-    memclear (args, sizeof args);
+  Lisp_Object args[coding_arg_undecided_max];
+  memclear (args, sizeof args);
 
-    Lisp_Object plist[16];
-    plist[0] = intern_c_string (":name");
-    plist[1] = args[coding_arg_name] = Qno_conversion;
-    plist[2] = intern_c_string (":mnemonic");
-    plist[3] = args[coding_arg_mnemonic] = make_number ('=');
-    plist[4] = intern_c_string (":coding-type");
-    plist[5] = args[coding_arg_coding_type] = Qraw_text;
-    plist[6] = intern_c_string (":ascii-compatible-p");
-    plist[7] = args[coding_arg_ascii_compatible_p] = Qt;
-    plist[8] = intern_c_string (":default-char");
-    plist[9] = args[coding_arg_default_char] = make_number (0);
-    plist[10] = intern_c_string (":for-unibyte");
-    plist[11] = args[coding_arg_for_unibyte] = Qt;
-    plist[12] = intern_c_string (":docstring");
-    plist[13] = build_pure_c_string ("Do no conversion.\n\
-\n\
-When you visit a file with this coding, the file is read into a\n\
-unibyte buffer as is, thus each byte of a file is treated as a\n\
-character.");
-    plist[14] = intern_c_string (":eol-type");
-    plist[15] = args[coding_arg_eol_type] = Qunix;
-    args[coding_arg_plist] = Flist (16, plist);
-    Fdefine_coding_system_internal (coding_arg_max, args);
+  Lisp_Object plist[] =
+    {
+      intern_c_string (":name"),
+      args[coding_arg_name] = Qno_conversion,
+      intern_c_string (":mnemonic"),
+      args[coding_arg_mnemonic] = make_number ('='),
+      intern_c_string (":coding-type"),
+      args[coding_arg_coding_type] = Qraw_text,
+      intern_c_string (":ascii-compatible-p"),
+      args[coding_arg_ascii_compatible_p] = Qt,
+      intern_c_string (":default-char"),
+      args[coding_arg_default_char] = make_number (0),
+      intern_c_string (":for-unibyte"),
+      args[coding_arg_for_unibyte] = Qt,
+      intern_c_string (":docstring"),
+      (build_pure_c_string
+       ("Do no conversion.\n"
+	"\n"
+	"When you visit a file with this coding, the file is read into a\n"
+	"unibyte buffer as is, thus each byte of a file is treated as a\n"
+	"character.")),
+      intern_c_string (":eol-type"),
+      args[coding_arg_eol_type] = Qunix,
+    };
+  args[coding_arg_plist] = CALLMANY (Flist, plist);
+  Fdefine_coding_system_internal (coding_arg_max, args);
 
-    plist[1] = args[coding_arg_name] = Qundecided;
-    plist[3] = args[coding_arg_mnemonic] = make_number ('-');
-    plist[5] = args[coding_arg_coding_type] = Qundecided;
-    /* This is already set.
-       plist[7] = args[coding_arg_ascii_compatible_p] = Qt; */
-    plist[8] = intern_c_string (":charset-list");
-    plist[9] = args[coding_arg_charset_list] = Fcons (Qascii, Qnil);
-    plist[11] = args[coding_arg_for_unibyte] = Qnil;
-    plist[13] = build_pure_c_string ("No conversion on encoding, automatic conversion on decoding.");
-    plist[15] = args[coding_arg_eol_type] = Qnil;
-    args[coding_arg_plist] = Flist (16, plist);
-    args[coding_arg_undecided_inhibit_null_byte_detection] = make_number (0);
-    args[coding_arg_undecided_inhibit_iso_escape_detection] = make_number (0);
-    Fdefine_coding_system_internal (coding_arg_undecided_max, args);
-  }
+  plist[1] = args[coding_arg_name] = Qundecided;
+  plist[3] = args[coding_arg_mnemonic] = make_number ('-');
+  plist[5] = args[coding_arg_coding_type] = Qundecided;
+  /* This is already set.
+     plist[7] = args[coding_arg_ascii_compatible_p] = Qt; */
+  plist[8] = intern_c_string (":charset-list");
+  plist[9] = args[coding_arg_charset_list] = Fcons (Qascii, Qnil);
+  plist[11] = args[coding_arg_for_unibyte] = Qnil;
+  plist[13] = build_pure_c_string ("No conversion on encoding, "
+				   "automatic conversion on decoding.");
+  plist[15] = args[coding_arg_eol_type] = Qnil;
+  args[coding_arg_plist] = CALLMANY (Flist, plist);
+  args[coding_arg_undecided_inhibit_null_byte_detection] = make_number (0);
+  args[coding_arg_undecided_inhibit_iso_escape_detection] = make_number (0);
+  Fdefine_coding_system_internal (coding_arg_undecided_max, args);
 
   setup_coding_system (Qno_conversion, &safe_terminal_coding);
 
-  {
-    int i;
+  for (int i = 0; i < coding_category_max; i++)
+    Fset (AREF (Vcoding_category_table, i), Qno_conversion);
 
-    for (i = 0; i < coding_category_max; i++)
-      Fset (AREF (Vcoding_category_table, i), Qno_conversion);
-  }
 #if defined (DOS_NT)
   system_eol_type = Qdos;
 #else

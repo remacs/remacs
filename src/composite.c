@@ -1891,36 +1891,18 @@ syms_of_composite (void)
   DEFSYM (Qcomposition, "composition");
 
   /* Make a hash table for static composition.  */
-  {
-    Lisp_Object args[6];
-
-    args[0] = QCtest;
-    args[1] = Qequal;
-    args[2] = QCweakness;
-    /* We used to make the hash table weak so that unreferenced
-       compositions can be garbage-collected.  But, usually once
-       created compositions are repeatedly used in an Emacs session,
-       and thus it's not worth to save memory in such a way.  So, we
-       make the table not weak.  */
-    args[3] = Qnil;
-    args[4] = QCsize;
-    args[5] = make_number (311);
-    composition_hash_table = Fmake_hash_table (6, args);
-    staticpro (&composition_hash_table);
-  }
+  /* We used to make the hash table weak so that unreferenced
+     compositions can be garbage-collected.  But, usually once
+     created compositions are repeatedly used in an Emacs session,
+     and thus it's not worth to save memory in such a way.  So, we
+     make the table not weak.  */
+  Lisp_Object args[] = {QCtest, Qequal, QCsize, make_number (311)};
+  composition_hash_table = CALLMANY (Fmake_hash_table, args);
+  staticpro (&composition_hash_table);
 
   /* Make a hash table for glyph-string.  */
-  {
-    Lisp_Object args[6];
-    args[0] = QCtest;
-    args[1] = Qequal;
-    args[2] = QCweakness;
-    args[3] = Qnil;
-    args[4] = QCsize;
-    args[5] = make_number (311);
-    gstring_hash_table = Fmake_hash_table (6, args);
-    staticpro (&gstring_hash_table);
-  }
+  gstring_hash_table = CALLMANY (Fmake_hash_table, args);
+  staticpro (&gstring_hash_table);
 
   staticpro (&gstring_work_headers);
   gstring_work_headers = make_uninit_vector (8);

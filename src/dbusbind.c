@@ -1849,12 +1849,7 @@ string denoting the bus address.  SERIAL is the serial number of the
 non-blocking method call, a reply is expected.  Both arguments must
 not be nil.  The value in the hash table is HANDLER, the function to
 be called when the D-Bus reply message arrives.  */);
-  {
-    Lisp_Object args[2];
-    args[0] = QCtest;
-    args[1] = Qequal;
-    Vdbus_registered_objects_table = Fmake_hash_table (2, args);
-  }
+  Vdbus_registered_objects_table = CALLN (Fmake_hash_table, QCtest, Qequal);
 
   DEFVAR_LISP ("dbus-debug", Vdbus_debug,
     doc: /* If non-nil, debug messages of D-Bus bindings are raised.  */);

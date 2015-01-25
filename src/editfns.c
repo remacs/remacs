@@ -2033,20 +2033,20 @@ DOW and ZONE.)  */)
   /* Avoid overflow when INT_MAX < EMACS_INT_MAX.  */
   EMACS_INT tm_year_base = TM_YEAR_BASE;
 
-  return Flist (9, ((Lisp_Object [])
-		    {make_number (local_tm.tm_sec),
-		     make_number (local_tm.tm_min),
-		     make_number (local_tm.tm_hour),
-		     make_number (local_tm.tm_mday),
-		     make_number (local_tm.tm_mon + 1),
-		     make_number (local_tm.tm_year + tm_year_base),
-		     make_number (local_tm.tm_wday),
-		     local_tm.tm_isdst ? Qt : Qnil,
-		     (HAVE_TM_GMTOFF
-		      ? make_number (tm_gmtoff (&local_tm))
-		      : gmtime_r (&time_spec, &gmt_tm)
-		      ? make_number (tm_diff (&local_tm, &gmt_tm))
-		      : Qnil)}));
+  return CALLN (Flist,
+		make_number (local_tm.tm_sec),
+		make_number (local_tm.tm_min),
+		make_number (local_tm.tm_hour),
+		make_number (local_tm.tm_mday),
+		make_number (local_tm.tm_mon + 1),
+		make_number (local_tm.tm_year + tm_year_base),
+		make_number (local_tm.tm_wday),
+		local_tm.tm_isdst ? Qt : Qnil,
+		(HAVE_TM_GMTOFF
+		 ? make_number (tm_gmtoff (&local_tm))
+		 : gmtime_r (&time_spec, &gmt_tm)
+		 ? make_number (tm_diff (&local_tm, &gmt_tm))
+		 : Qnil));
 }
 
 /* Return OBJ - OFFSET, checking that OBJ is a valid fixnum and that
@@ -2679,25 +2679,20 @@ update_buffer_properties (ptrdiff_t start, ptrdiff_t end)
      call them, specifying the range of the buffer being accessed.  */
   if (!NILP (Vbuffer_access_fontify_functions))
     {
-      Lisp_Object args[3];
-      Lisp_Object tem;
-
-      args[0] = Qbuffer_access_fontify_functions;
-      XSETINT (args[1], start);
-      XSETINT (args[2], end);
-
       /* But don't call them if we can tell that the work
 	 has already been done.  */
       if (!NILP (Vbuffer_access_fontified_property))
 	{
-	  tem = Ftext_property_any (args[1], args[2],
-				    Vbuffer_access_fontified_property,
-				    Qnil, Qnil);
-	  if (! NILP (tem))
-	    Frun_hook_with_args (3, args);
+	  Lisp_Object tem
+	    = Ftext_property_any (make_number (start), make_number (end),
+				  Vbuffer_access_fontified_property,
+				  Qnil, Qnil);
+	  if (NILP (tem))
+	    return;
 	}
-      else
-	Frun_hook_with_args (3, args);
+
+      CALLN (Frun_hook_with_args, Qbuffer_access_fontify_functions,
+	     make_number (start), make_number (end));
     }
 }
 
@@ -4516,7 +4511,7 @@ Lisp_Object
 format2 (const char *string1, Lisp_Object arg0, Lisp_Object arg1)
 {
   AUTO_STRING (format, string1);
-  return Fformat (3, (Lisp_Object []) {format, arg0, arg1});
+  return CALLN (Fformat, format, arg0, arg1);
 }
 
 DEFUN ("char-equal", Fchar_equal, Schar_equal, 2, 2, 0,

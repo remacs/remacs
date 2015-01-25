@@ -1255,8 +1255,10 @@ uniprop_encode_value_numeric (Lisp_Object table, Lisp_Object value)
       break;
   value = make_number (i);
   if (i == size)
-    set_char_table_extras (table, 4, Fvconcat (2, ((Lisp_Object []) {
-      XCHAR_TABLE (table)->extras[4], Fmake_vector (make_number (1), value) })));
+    set_char_table_extras (table, 4,
+			   CALLN (Fvconcat,
+				  XCHAR_TABLE (table)->extras[4],
+				  Fmake_vector (make_number (1), value)));
   return make_number (i);
 }
 

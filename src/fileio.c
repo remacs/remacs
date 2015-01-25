@@ -3650,11 +3650,9 @@ by calling `format-decode', which see.  */)
 	    {
 	      /* If we have not yet decided a coding system, check
                  file-coding-system-alist.  */
-	      Lisp_Object args[6];
-
-	      args[0] = Qinsert_file_contents, args[1] = orig_filename;
-	      args[2] = visit, args[3] = beg, args[4] = end, args[5] = replace;
-	      coding_system = Ffind_operation_coding_system (6, args);
+	      coding_system = CALLN (Ffind_operation_coding_system,
+				     Qinsert_file_contents, orig_filename,
+				     visit, beg, end, replace);
 	      if (CONSP (coding_system))
 		coding_system = XCAR (coding_system);
 	    }
@@ -4231,11 +4229,9 @@ by calling `format-decode', which see.  */)
 	    {
 	      /* If the coding system is not yet decided, check
 		 file-coding-system-alist.  */
-	      Lisp_Object args[6];
-
-	      args[0] = Qinsert_file_contents, args[1] = orig_filename;
-	      args[2] = visit, args[3] = beg, args[4] = end, args[5] = Qnil;
-	      coding_system = Ffind_operation_coding_system (6, args);
+	      coding_system = CALLN (Ffind_operation_coding_system,
+				     Qinsert_file_contents, orig_filename,
+				     visit, beg, end, Qnil);
 	      if (CONSP (coding_system))
 		coding_system = XCAR (coding_system);
 	    }
@@ -4563,12 +4559,9 @@ choose_write_coding_system (Lisp_Object start, Lisp_Object end, Lisp_Object file
       if (NILP (val))
 	{
 	  /* Check file-coding-system-alist.  */
-	  Lisp_Object args[7], coding_systems;
-
-	  args[0] = Qwrite_region; args[1] = start; args[2] = end;
-	  args[3] = filename; args[4] = append; args[5] = visit;
-	  args[6] = lockname;
-	  coding_systems = Ffind_operation_coding_system (7, args);
+	  Lisp_Object coding_systems
+	    = CALLN (Ffind_operation_coding_system, Qwrite_region, start, end,
+		     filename, append, visit, lockname);
 	  if (CONSP (coding_systems) && !NILP (XCDR (coding_systems)))
 	    val = XCDR (coding_systems);
 	}
@@ -5021,10 +5014,7 @@ DEFUN ("car-less-than-car", Fcar_less_than_car, Scar_less_than_car, 2, 2, 0,
        doc: /* Return t if (car A) is numerically less than (car B).  */)
   (Lisp_Object a, Lisp_Object b)
 {
-  Lisp_Object args[2];
-  args[0] = Fcar (a);
-  args[1] = Fcar (b);
-  return Flss (2, args);
+  return CALLN (Flss, Fcar (a), Fcar (b));
 }
 
 /* Build the complete list of annotations appropriate for writing out
@@ -5043,7 +5033,7 @@ build_annotations (Lisp_Object start, Lisp_Object end)
   struct gcpro gcpro1, gcpro2;
   Lisp_Object original_buffer;
   int i;
-  bool used_global = 0;
+  bool used_global = false;
 
   XSETBUFFER (original_buffer, current_buffer);
 
@@ -5055,11 +5045,10 @@ build_annotations (Lisp_Object start, Lisp_Object end)
       struct buffer *given_buffer = current_buffer;
       if (EQ (Qt, XCAR (p)) && !used_global)
 	{ /* Use the global value of the hook.  */
-	  Lisp_Object arg[2];
-	  used_global = 1;
-	  arg[0] = Fdefault_value (Qwrite_region_annotate_functions);
-	  arg[1] = XCDR (p);
-	  p = Fappend (2, arg);
+	  used_global = true;
+	  p = CALLN (Fappend,
+		     Fdefault_value (Qwrite_region_annotate_functions),
+		     XCDR (p));
 	  continue;
 	}
       Vwrite_region_annotations_so_far = annotations;
@@ -5388,9 +5377,8 @@ auto_save_error (Lisp_Object error_val)
   ring_bell (XFRAME (selected_frame));
 
   AUTO_STRING (format, "Auto-saving %s: %s");
-  msg = Fformat (3, ((Lisp_Object [])
-		     {format, BVAR (current_buffer, name),
-		      Ferror_message_string (error_val)}));
+  msg = CALLN (Fformat, format, BVAR (current_buffer, name),
+	       Ferror_message_string (error_val));
   GCPRO1 (msg);
 
   for (i = 0; i < 3; ++i)

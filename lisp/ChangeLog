@@ -1,3 +1,11 @@
+2015-01-25  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/cl-generic.el (cl--generic-no-next-method-function): New fun.
+	(cl--generic-build-combined-method, cl--generic-nnm-sample): Use it
+	(bug#19672).
+	(cl--generic-typeof-types): Add support for `sequence'.
+	(cl-defmethod): Add non-keywords in the qualifiers.
+
 2015-01-25  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* emacs-lisp/find-func.el (find-function-regexp): Don't match

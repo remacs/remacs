@@ -374,8 +374,7 @@ font_style_to_value (enum font_property_index prop, Lisp_Object val,
       elt = Fmake_vector (make_number (2), make_number (100));
       ASET (elt, 1, val);
       ASET (font_style_table, prop - FONT_WEIGHT_INDEX,
-	    Fvconcat (2, ((Lisp_Object [])
-	      { table, Fmake_vector (make_number (1), elt) })));
+	    CALLN (Fvconcat, table, Fmake_vector (make_number (1), elt)));
       return (100 << 8) | (i << 4);
     }
   else
@@ -3400,16 +3399,11 @@ font_open_by_spec (struct frame *f, Lisp_Object spec)
 Lisp_Object
 font_open_by_name (struct frame *f, Lisp_Object name)
 {
-  Lisp_Object args[2];
-  Lisp_Object spec, ret;
-
-  args[0] = QCname;
-  args[1] = name;
-  spec = Ffont_spec (2, args);
-  ret = font_open_by_spec (f, spec);
+  Lisp_Object spec = CALLN (Ffont_spec, QCname, name);
+  Lisp_Object ret = font_open_by_spec (f, spec);
   /* Do not lose name originally put in.  */
   if (!NILP (ret))
-    font_put_extra (ret, QCuser_spec, args[1]);
+    font_put_extra (ret, QCuser_spec, name);
 
   return ret;
 }
@@ -4181,13 +4175,7 @@ how close they are to PREFER.  */)
   else
     vec = font_vconcat_entity_vectors (list);
   if (n == 0 || n >= ASIZE (vec))
-    {
-      Lisp_Object args[2];
-
-      args[0] = vec;
-      args[1] = Qnil;
-      list = Fappend (2, args);
-    }
+    list = CALLN (Fappend, vec, Qnil);
   else
     {
       for (list = Qnil, n--; n >= 0; n--)

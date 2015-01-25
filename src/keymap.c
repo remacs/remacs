@@ -1292,7 +1292,7 @@ static Lisp_Object
 append_key (Lisp_Object key_sequence, Lisp_Object key)
 {
   AUTO_LIST1 (key_list, key);
-  return Fvconcat (2, ((Lisp_Object []) { key_sequence, key_list }));
+  return CALLN (Fvconcat, key_sequence, key_list);
 }
 
 /* Given a event type C which is a symbol,
@@ -2435,8 +2435,7 @@ where_is_internal (Lisp_Object definition, Lisp_Object keymaps,
       if (NILP (where_is_cache))
 	{
 	  /* We need to create the cache.  */
-	  Lisp_Object args[2];
-	  where_is_cache = Fmake_hash_table (0, args);
+	  where_is_cache = Fmake_hash_table (0, NULL);
 	  where_is_cache_keymaps = Qt;
 	}
       else

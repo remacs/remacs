@@ -1,3 +1,63 @@
+2015-01-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Count MANY function args more reliably
+	* alloc.c (Fgc_status, purecopy, unbind_to, garbage_collect_1):
+	* buffer.c (Fbuffer_list, Fkill_buffer):
+	* callint.c (read_file_name, Fcall_interactively):
+	* charset.c (Fset_charset_priority, syms_of_charset):
+	* chartab.c (uniprop_encode_value_numeric):
+	* coding.c (syms_of_coding):
+	* composite.c (syms_of_composite):
+	* data.c (wrong_range):
+	* dbusbind.c (syms_of_dbusbind):
+	* dired.c (file_attributes):
+	* editfns.c (Fdecode_time, update_buffer_properties, format2):
+	* eval.c (run_hook_with_args_2, apply1, call1, call2, call3)
+	(call4, call5, call6, call7):
+	* fileio.c (Finsert_file_contents, choose_write_coding_system)
+	(Fcar_less_than_car, build_annotations, auto_save_error):
+	* filelock.c (get_boot_time):
+	* fns.c (internal_equal, nconc2, Fyes_or_no_p, Fwidget_apply):
+	(maybe_resize_hash_table, secure_hash):
+	* font.c (font_style_to_value, font_open_by_name, Flist_fonts):
+	* fontset.c (fontset_add, Fset_fontset_font):
+	* ftfont.c (ftfont_lookup_cache):
+	* gtkutil.c (xg_get_font):
+	* insdel.c (signal_before_change, signal_after_change):
+	* keymap.c (append_key):
+	* lread.c (load_warn_old_style_backquotes, Fload, init_lread):
+	* minibuf.c (Fread_buffer):
+	* print.c (print_preprocess):
+	* process.c (Fformat_network_address, Fmake_network_process)
+	(server_accept_connection):
+	* sound.c (Fplay_sound_internal):
+	* term.c (Fsuspend_tty, Fresume_tty):
+	* window.c (window_list):
+	* xdisp.c (run_redisplay_end_trigger_hook, add_to_log)
+	(message_with_string):
+	* xfaces.c (Fx_list_fonts):
+	* xfont.c (syms_of_xfont):
+	* xselect.c (x_handle_selection_request)
+	(x_handle_selection_clear, x_clear_frame_selections)
+	(x_clipboard_manager_error_1):
+	Prefer CALLMANY and CALLN to counting args by hand.
+	* doc.c (reread_doc_file): Remove unused code.
+	* fns.c (concat2, concat3): Redo to avoid need for local-var vector.
+	(cmpfn_user_defined, hashfn_user_defined, Fmaphash):
+	Prefer call1 and call2 to Ffuncall.
+	* keyboard.c (safe_run_hook_funcall, safe_run_hooks):
+	Use struct literal rather than a local var, for simplicity.
+	* keymap.c (where_is_internal): Use NULL rather than a pointer
+	to unused args.
+	* lisp.h (CALLMANY, CALLN): New macros.
+	* sound.c (Fplay_sound_internal): Coalesce duplicate code.
+	Fixes: bug#19634
+
+	Use gnustep-config if available
+	* emacs.c [NS_IMPL_GNUSTEP]: Don't include <GNUstepBase/GSConfig.h>.
+	It doesn't appear to be needed, and the inclusion breaks on
+	Ubuntu 14.10 when 'configure' uses 'gnustep-config'.
+
 2015-01-22  Eli Zaretskii  <eliz@gnu.org>
 
 	* xdisp.c (init_iterator): Restore a comment lost in transition.

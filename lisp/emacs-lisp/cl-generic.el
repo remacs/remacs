@@ -27,6 +27,10 @@
 
 ;; Missing elements:
 ;; - We don't support make-method, call-method, define-method-combination.
+;;   CLOS's define-method-combination is IMO overly complicated, and it suffers
+;;   from a significant problem: the method-combination code returns a sexp
+;;   that needs to be `eval'uated or compiled.  IOW it requires run-time
+;;   code generation.
 ;; - Method and generic function objects: CLOS defines methods as objects
 ;;   (same for generic functions), whereas we don't offer such an abstraction.
 ;; - `no-next-method' should receive the "calling method" object, but since we
@@ -65,6 +69,10 @@
 ;; and the same set of arguments on which to dispatch.  This works, but is
 ;; often suboptimal since after one dispatch, the remaining dispatches can
 ;; usually be simplified, or even completely skipped.
+
+;; TODO/FIXME:
+;; - WIBNI we could use something like
+;;   (add-function :before (cl-method-function (cl-find-method ...)) ...)
 
 (eval-when-compile (require 'cl-lib))
 (eval-when-compile (require 'pcase))
@@ -313,7 +321,7 @@ which case this method will be invoked when the argument is `eql' to VAL.
         (setfizer (if (eq 'setf (car-safe name))
                       ;; Call it before we call cl--generic-lambda.
                       (cl--generic-setf-rewrite (cadr name)))))
-    (while (keywordp args)
+    (while (not (listp args))
       (push args qualifiers)
       (setq args (pop body)))
     (pcase-let* ((with-cnm (not (memq (car qualifiers) '(:before :after))))
@@ -454,6 +462,18 @@ This is particularly useful when many different tags select the same set
 of methods, since this table then allows us to share a single combined-method
 for all those different tags in the method-cache.")
 
+(defun cl--generic-no-next-method-function (generic)
+  (lambda (&rest args)
+    ;; FIXME: CLOS passes as second arg the "calling method".
+    ;; We don't currently have "method objects" like CLOS
+    ;; does so we can't really do it the CLOS way.
+    ;; The closest would be to pass the lambda corresponding
+    ;; to the method, or maybe the ((SPECIALIZERS
+    ;; . QUALIFIER) USE-CNM . FUNCTION) entry from the method
+    ;; table, but the caller wouldn't be able to do much with
+    ;; it anyway.  So we pass nil for now.
+    (apply #'cl-no-next-method generic nil args)))
+
 (defun cl--generic-build-combined-method (generic-name methods)
   (let ((mets-by-qual ()))
     (dolist (qm methods)
@@ -469,16 +489,7 @@ for all those different tags in the method-cache.")
         (lambda (&rest args)
           (apply #'cl-no-primary-method generic-name args)))
        (t
-        (let* ((fun (lambda (&rest args)
-                      ;; FIXME: CLOS passes as second arg the "calling method".
-                      ;; We don't currently have "method objects" like CLOS
-                      ;; does so we can't really do it the CLOS way.
-                      ;; The closest would be to pass the lambda corresponding
-                      ;; to the method, or maybe the ((SPECIALIZERS
-                      ;; . QUALIFIER) USE-CNM . FUNCTION) entry from the method
-                      ;; table, but the caller wouldn't be able to do much with
-                      ;; it anyway.  So we pass nil for now.
-                      (apply #'cl-no-next-method generic-name nil args)))
+        (let* ((fun (cl--generic-no-next-method-function generic-name))
                ;; We use `cdr' to drop the `uses-cnm' annotations.
                (before
                 (mapcar #'cdr (reverse (alist-get :before mets-by-qual))))
@@ -495,8 +506,7 @@ for all those different tags in the method-cache.")
                               (apply af args)))))))
           (cl--generic-nest fun (alist-get :around mets-by-qual))))))))
 
-(defconst cl--generic-nnm-sample
-  (cl--generic-build-combined-method nil '(((specializer . :qualifier)))))
+(defconst cl--generic-nnm-sample (cl--generic-no-next-method-function 'dummy))
 (defconst cl--generic-cnm-sample
   (funcall (cl--generic-build-combined-method
             nil `(((specializer . :primary) t . ,#'identity)))))
@@ -690,22 +700,24 @@ Can only be used from within the lexical body of a primary or around method."
          (push 'cl-struct types)        ;The "parent type" of all cl-structs.
          (nreverse types))))
 
-;;; Dispatch on "old-style types".
+;;; Dispatch on "system types".
 
 (defconst cl--generic-typeof-types
   ;; Hand made from the source code of `type-of'.
-  '((integer number) (symbol) (string array) (cons list)
+  '((integer number) (symbol) (string array sequence) (cons list sequence)
     ;; Markers aren't `numberp', yet they are accepted wherever integers are
     ;; accepted, pretty much.
     (marker) (overlay) (float number) (window-configuration)
-    (process) (window) (subr) (compiled-function) (buffer) (char-table array)
-    (bool-vector array)
+    (process) (window) (subr) (compiled-function) (buffer)
+    (char-table array sequence)
+    (bool-vector array sequence)
     (frame) (hash-table) (font-spec) (font-entity) (font-object)
-    (vector array)
+    (vector array sequence)
     ;; Plus, hand made:
-    (null list symbol)
-    (list)
-    (array)
+    (null symbol list sequence)
+    (list sequence)
+    (array sequence)
+    (sequence)
     (number)))
 
 (add-function :before-until cl-generic-tagcode-function
@@ -715,7 +727,7 @@ Can only be used from within the lexical body of a primary or around method."
   ;; as `character', `atom', `face', `function', ...
   (and (assq type cl--generic-typeof-types)
        (progn
-         (if (memq type '(vector array))
+         (if (memq type '(vector array sequence))
              (message "`%S' also matches CL structs and EIEIO classes" type))
          ;; FIXME: We could also change `type-of' to return `null' for nil.
          `(10 . (if ,name (type-of ,name) 'null)))))

@@ -1175,12 +1175,7 @@ print_preprocess (Lisp_Object obj)
   if (PRINT_CIRCLE_CANDIDATE_P (obj))
     {
       if (!HASH_TABLE_P (Vprint_number_table))
-	{
-	  Lisp_Object args[2];
-	  args[0] = QCtest;
-	  args[1] = Qeq;
-	  Vprint_number_table = Fmake_hash_table (2, args);
-	}
+	Vprint_number_table = CALLN (Fmake_hash_table, QCtest, Qeq);
 
       /* In case print-circle is nil and print-gensym is t,
 	 add OBJ to Vprint_number_table only when OBJ is a symbol.  */

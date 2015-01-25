@@ -947,7 +947,7 @@ load_warn_old_style_backquotes (Lisp_Object file)
   if (!NILP (Vold_style_backquotes))
     {
       AUTO_STRING (format, "Loading `%s': old-style backquotes detected!");
-      Fmessage (2, (Lisp_Object []) {format, file});
+      CALLN (Fmessage, format, file);
     }
 }
 
@@ -1100,12 +1100,7 @@ Return t if the file exists and loads successfully.  */)
 	{
 	  suffixes = Fget_load_suffixes ();
 	  if (NILP (must_suffix))
-	    {
-	      Lisp_Object arg[2];
-	      arg[0] = suffixes;
-	      arg[1] = Vload_file_rep_suffixes;
-	      suffixes = Fappend (2, arg);
-	    }
+	    suffixes = CALLN (Fappend, suffixes, Vload_file_rep_suffixes);
 	}
 
       fd = openp (Vload_path, file, suffixes, &found, Qnil, load_prefer_newer);
@@ -4401,12 +4396,10 @@ init_lread (void)
           /* Replace nils from EMACSLOADPATH by default.  */
           while (CONSP (elpath))
             {
-              Lisp_Object arg[2];
               elem = XCAR (elpath);
               elpath = XCDR (elpath);
-              arg[0] = Vload_path;
-              arg[1] = NILP (elem) ? default_lpath : Fcons (elem, Qnil);
-              Vload_path = Fappend (2, arg);
+              Vload_path = CALLN (Fappend, Vload_path,
+				  NILP (elem) ? default_lpath : list1 (elem));
             }
         }                       /* Fmemq (Qnil, Vload_path) */
     }

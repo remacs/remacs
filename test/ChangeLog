@@ -1,3 +1,9 @@
+2015-01-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* indent/shell.sh (bar): Use '[ $# -eq 0 ]', not '[ $# == 0 ]'.
+	This is more portable in shell scripts.
+	Fixes: bug#19658
+
 2015-01-23  Dmitry Gutov  <dgutov@yandex.ru>
 
 	Fix package tests when TMPDIR is in HOME.  (Bug#19657)
