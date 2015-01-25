@@ -36,6 +36,9 @@ should be able to work around the problem either by porting the Emacs
 undumping code to GCC under IRIX, or by configuring --with-wide-int,
 or by sticking with Emacs 24.4.
 
+** 'configure' now prefers gnustep-config when configuring GNUstep.
+If gnustep-config is not available, the old heuristics are used.
+
 ---
 ** The configure option `--with-pkg-config-prog' has been removed.
 Use './configure PKG_CONFIG=/full/name/of/pkg-config' if you need to.

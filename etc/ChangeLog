@@ -1,3 +1,8 @@
+2015-01-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use gnustep-config if available
+	* NEWS: Document this.
+
 2015-01-22  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Don't downcase system diagnostics' first letters

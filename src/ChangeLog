@@ -1,3 +1,10 @@
+2015-01-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use gnustep-config if available
+	* emacs.c [NS_IMPL_GNUSTEP]: Don't include <GNUstepBase/GSConfig.h>.
+	It doesn't appear to be needed, and the inclusion breaks on
+	Ubuntu 14.10 when 'configure' uses 'gnustep-config'.
+
 2015-01-22  Eli Zaretskii  <eliz@gnu.org>
 
 	* xdisp.c (init_iterator): Restore a comment lost in transition.

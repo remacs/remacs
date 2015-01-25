@@ -59,11 +59,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
 
-#ifdef NS_IMPL_GNUSTEP
-/* At least under Debian, GSConfig is in a subdirectory.  --Stef  */
-#include <GNUstepBase/GSConfig.h>
-#endif
-
 #include "commands.h"
 #include "intervals.h"
 #include "character.h"
