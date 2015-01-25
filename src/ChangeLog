@@ -1,5 +1,21 @@
 2015-01-25  Eli Zaretskii  <eliz@gnu.org>
 
+	Use bool for boolean in w32term.c
+	* w32term.c (x_update_window_begin, x_update_window_end)
+	(x_update_end, x_after_update_window_line)
+	(x_set_glyph_string_gc, x_draw_glyph_string_background)
+	(x_draw_glyph_string_foreground)
+	(x_draw_composite_glyph_string_foreground)
+	(x_draw_glyphless_glyph_string_foreground)
+	(x_draw_image_glyph_string, x_draw_glyph_string)
+	(x_draw_stretch_glyph_string, note_mouse_movement)
+	(w32_mouse_position, x_scroll_bar_report_motion)
+	(x_horizontal_scroll_bar_report_motion, w32_read_socket)
+	(w32_set_vertical_scroll_bar, w32_set_horizontal_scroll_bar)
+	(w32_draw_window_cursor, x_new_font, x_set_offset)
+	(x_set_window_size, x_make_frame_invisible, x_iconify_frame): Use
+	bool where appropriate.
+
 	Use bool for boolean in w32fns.c
 	* w32fns.c (w32_defined_color, x_decode_color)
 	(Fxw_color_defined_p, Fxw_color_values, x_set_icon_type)
