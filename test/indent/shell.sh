@@ -100,7 +100,7 @@ foo () {
         d)
             echo 3;;
     esac
-    
+
     case $as_nl`(ac_space=' '; set) 2>&1` in #(
         *${as_nl}ac_space=\ *)
             # `set' does not quote correctly, so add quotes: double-quote
@@ -117,7 +117,7 @@ foo () {
     esac |
         grep '.' |              # KNOWN INDENT BUG
         sed 1d
-    
+
     case toto in
         -exec-prefix=* | --exec_prefix=* | --exec-prefix=* | --exec-prefi=* \
             | --exec-pref=* | --exec-pre=* | --exec-pr=* | --exec-p=* \
@@ -133,7 +133,7 @@ foo () {
         5) hello ;;
         5) hello ;;
     esac
-    
+
     echo "'" wfgfe
 
     #!/bin/bash
@@ -152,7 +152,7 @@ help2
 EOF2
 }
 bar () {
-    if [ $# == 0 ]; then
+    if [ $# -eq 0 ]; then
         while
             f                   # KNOWN INDENT BUG
         do
@@ -163,18 +163,18 @@ bar () {
             # adsgsdg
             echo "screwed up"
         fi
-        
+
         $@ $? $#
-        
+
         for f in *
         do
             sdfg
         done
-        
+
         if swrgfef
         then blas
         else sdf
         fi
-        
+
     fi
 }
