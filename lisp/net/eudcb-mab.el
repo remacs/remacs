@@ -3,7 +3,7 @@
 ;; Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@newartisans.com>
-;; Maintainer: emacs-devel@gnu.org
+;; Maintainer: Thomas Fitzsimmons <fitzsim@fitzsim.org>
 ;; Keywords: comm
 ;; Package: eudc
 

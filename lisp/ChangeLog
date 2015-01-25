@@ -1,3 +1,9 @@
+2015-01-27  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+
+	* net/eudcb-bbdb.el, net/eudcb-ldap.el, net/eudcb-mab.el,
+	net/eudc-bob.el, net/eudcb-ph.el, net/eudc.el, net/eudc-export.el,
+	net/eudc-hotlist.el, net/eudc-vars.el: New maintainer.
+
 2015-01-27  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* isearch.el (isearch-process-search-char): Add docstring.
