@@ -2798,6 +2798,15 @@ enum maxargs
     UNEVALLED = -1
   };
 
+/* Call a function F that accepts many args, passing it ARRAY's elements.  */
+#define CALLMANY(f, array) (f) (ARRAYELTS (array), array)
+
+/* Call a function F that accepts many args, passing it the remaining args,
+   E.g., 'return CALLN (Fformat, fmt, text);' is less error-prone than
+   '{ Lisp_Object a[2]; a[0] = fmt; a[1] = text; return Fformat (2, a); }'.
+   CALLN is overkill for simple usages like 'Finsert (1, &text);'.  */
+#define CALLN(f, ...) CALLMANY (f, ((Lisp_Object []) {__VA_ARGS__}))
+
 extern void defvar_lisp (struct Lisp_Objfwd *, const char *, Lisp_Object *);
 extern void defvar_lisp_nopro (struct Lisp_Objfwd *, const char *, Lisp_Object *);
 extern void defvar_bool (struct Lisp_Boolfwd *, const char *, bool *);

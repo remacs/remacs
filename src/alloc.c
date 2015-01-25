@@ -4408,19 +4408,17 @@ DEFUN ("gc-status", Fgc_status, Sgc_status, 0, 0, "",
        doc: /* Show information about live and zombie objects.  */)
   (void)
 {
-  Lisp_Object args[8], zombie_list = Qnil;
-  EMACS_INT i;
-  for (i = 0; i < min (MAX_ZOMBIES, nzombies); i++)
+  Lisp_Object zombie_list = Qnil;
+  for (int i = 0; i < min (MAX_ZOMBIES, nzombies); i++)
     zombie_list = Fcons (zombies[i], zombie_list);
-  args[0] = build_string ("%d GCs, avg live/zombies = %.2f/%.2f (%f%%), max %d/%d\nzombies: %S");
-  args[1] = make_number (ngcs);
-  args[2] = make_float (avg_live);
-  args[3] = make_float (avg_zombies);
-  args[4] = make_float (avg_zombies / avg_live / 100);
-  args[5] = make_number (max_live);
-  args[6] = make_number (max_zombies);
-  args[7] = zombie_list;
-  return Fmessage (8, args);
+  return CALLN (Fmessage,
+		build_string ("%d GCs, avg live/zombies = %.2f/%.2f"
+			      " (%f%%), max %d/%d\nzombies: %S"),
+		make_number (ngcs), make_float (avg_live),
+		make_float (avg_zombies),
+		make_float (avg_zombies / avg_live / 100),
+		make_number (max_live), make_number (max_zombies),
+		zombie_list);
 }
 
 #endif /* GC_MARK_STACK == GC_USE_GCPROS_CHECK_ZOMBIES */
@@ -5297,10 +5295,8 @@ purecopy (Lisp_Object obj)
     }
   else
     {
-      Lisp_Object args[2];
-      args[0] = build_pure_c_string ("Don't know how to purify: %S");
-      args[1] = obj;
-      Fsignal (Qerror, (Fcons (Fformat (2, args), Qnil)));
+      Lisp_Object fmt = build_pure_c_string ("Don't know how to purify: %S");
+      Fsignal (Qerror, list1 (CALLN (Fformat, fmt, obj)));
     }
 
   if (HASH_TABLE_P (Vpurify_flag)) /* Hash consing.  */
@@ -5678,56 +5674,44 @@ garbage_collect_1 (void *end)
     }
 
   unbind_to (count, Qnil);
-  {
-    Lisp_Object total[11];
-    int total_size = 10;
 
-    total[0] = list4 (Qconses, make_number (sizeof (struct Lisp_Cons)),
-		      bounded_number (total_conses),
-		      bounded_number (total_free_conses));
-
-    total[1] = list4 (Qsymbols, make_number (sizeof (struct Lisp_Symbol)),
-		      bounded_number (total_symbols),
-		      bounded_number (total_free_symbols));
-
-    total[2] = list4 (Qmiscs, make_number (sizeof (union Lisp_Misc)),
-		      bounded_number (total_markers),
-		      bounded_number (total_free_markers));
-
-    total[3] = list4 (Qstrings, make_number (sizeof (struct Lisp_String)),
-		      bounded_number (total_strings),
-		      bounded_number (total_free_strings));
-
-    total[4] = list3 (Qstring_bytes, make_number (1),
-		      bounded_number (total_string_bytes));
-
-    total[5] = list3 (Qvectors,
-		      make_number (header_size + sizeof (Lisp_Object)),
-		      bounded_number (total_vectors));
-
-    total[6] = list4 (Qvector_slots, make_number (word_size),
-		      bounded_number (total_vector_slots),
-		      bounded_number (total_free_vector_slots));
-
-    total[7] = list4 (Qfloats, make_number (sizeof (struct Lisp_Float)),
-		      bounded_number (total_floats),
-		      bounded_number (total_free_floats));
-
-    total[8] = list4 (Qintervals, make_number (sizeof (struct interval)),
-		      bounded_number (total_intervals),
-		      bounded_number (total_free_intervals));
-
-    total[9] = list3 (Qbuffers, make_number (sizeof (struct buffer)),
-		      bounded_number (total_buffers));
+  Lisp_Object total[] = {
+    list4 (Qconses, make_number (sizeof (struct Lisp_Cons)),
+	   bounded_number (total_conses),
+	   bounded_number (total_free_conses)),
+    list4 (Qsymbols, make_number (sizeof (struct Lisp_Symbol)),
+	   bounded_number (total_symbols),
+	   bounded_number (total_free_symbols)),
+    list4 (Qmiscs, make_number (sizeof (union Lisp_Misc)),
+	   bounded_number (total_markers),
+	   bounded_number (total_free_markers)),
+    list4 (Qstrings, make_number (sizeof (struct Lisp_String)),
+	   bounded_number (total_strings),
+	   bounded_number (total_free_strings)),
+    list3 (Qstring_bytes, make_number (1),
+	   bounded_number (total_string_bytes)),
+    list3 (Qvectors,
+	   make_number (header_size + sizeof (Lisp_Object)),
+	   bounded_number (total_vectors)),
+    list4 (Qvector_slots, make_number (word_size),
+	   bounded_number (total_vector_slots),
+	   bounded_number (total_free_vector_slots)),
+    list4 (Qfloats, make_number (sizeof (struct Lisp_Float)),
+	   bounded_number (total_floats),
+	   bounded_number (total_free_floats)),
+    list4 (Qintervals, make_number (sizeof (struct interval)),
+	   bounded_number (total_intervals),
+	   bounded_number (total_free_intervals)),
+    list3 (Qbuffers, make_number (sizeof (struct buffer)),
+	   bounded_number (total_buffers)),
 
 #ifdef DOUG_LEA_MALLOC
-    total_size++;
-    total[10] = list4 (Qheap, make_number (1024),
-                       bounded_number ((mallinfo ().uordblks + 1023) >> 10),
-                       bounded_number ((mallinfo ().fordblks + 1023) >> 10));
+    list4 (Qheap, make_number (1024),
+	   bounded_number ((mallinfo ().uordblks + 1023) >> 10),
+	   bounded_number ((mallinfo ().fordblks + 1023) >> 10)),
 #endif
-    retval = Flist (total_size, total);
-  }
+  };
+  retval = CALLMANY (Flist, total);
 
 #if GC_MARK_STACK == GC_USE_GCPROS_CHECK_ZOMBIES
   {

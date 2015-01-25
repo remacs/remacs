@@ -2535,15 +2535,14 @@ run_hook (Lisp_Object hook)
 void
 run_hook_with_args_2 (Lisp_Object hook, Lisp_Object arg1, Lisp_Object arg2)
 {
-  Frun_hook_with_args (3, ((Lisp_Object []) { hook, arg1, arg2 }));
+  CALLN (Frun_hook_with_args, hook, arg1, arg2);
 }
 
 /* Apply fn to arg.  */
 Lisp_Object
 apply1 (Lisp_Object fn, Lisp_Object arg)
 {
-  return (NILP (arg) ? Ffuncall (1, &fn)
-	  : Fapply (2, ((Lisp_Object []) { fn, arg })));
+  return NILP (arg) ? Ffuncall (1, &fn) : CALLN (Fapply, fn, arg);
 }
 
 /* Call function fn on no arguments.  */
@@ -2558,7 +2557,7 @@ call0 (Lisp_Object fn)
 Lisp_Object
 call1 (Lisp_Object fn, Lisp_Object arg1)
 {
-  return Ffuncall (2, ((Lisp_Object []) { fn, arg1 }));
+  return CALLN (Ffuncall, fn, arg1);
 }
 
 /* Call function fn with 2 arguments arg1, arg2.  */
@@ -2566,7 +2565,7 @@ call1 (Lisp_Object fn, Lisp_Object arg1)
 Lisp_Object
 call2 (Lisp_Object fn, Lisp_Object arg1, Lisp_Object arg2)
 {
-  return Ffuncall (3, ((Lisp_Object []) { fn, arg1, arg2 }));
+  return CALLN (Ffuncall, fn, arg1, arg2);
 }
 
 /* Call function fn with 3 arguments arg1, arg2, arg3.  */
@@ -2574,7 +2573,7 @@ call2 (Lisp_Object fn, Lisp_Object arg1, Lisp_Object arg2)
 Lisp_Object
 call3 (Lisp_Object fn, Lisp_Object arg1, Lisp_Object arg2, Lisp_Object arg3)
 {
-  return Ffuncall (4, ((Lisp_Object []) { fn, arg1, arg2, arg3 }));
+  return CALLN (Ffuncall, fn, arg1, arg2, arg3);
 }
 
 /* Call function fn with 4 arguments arg1, arg2, arg3, arg4.  */
@@ -2583,7 +2582,7 @@ Lisp_Object
 call4 (Lisp_Object fn, Lisp_Object arg1, Lisp_Object arg2, Lisp_Object arg3,
        Lisp_Object arg4)
 {
-  return Ffuncall (5, ((Lisp_Object []) { fn, arg1, arg2, arg3, arg4 }));
+  return CALLN (Ffuncall, fn, arg1, arg2, arg3, arg4);
 }
 
 /* Call function fn with 5 arguments arg1, arg2, arg3, arg4, arg5.  */
@@ -2592,7 +2591,7 @@ Lisp_Object
 call5 (Lisp_Object fn, Lisp_Object arg1, Lisp_Object arg2, Lisp_Object arg3,
        Lisp_Object arg4, Lisp_Object arg5)
 {
-  return Ffuncall (6, ((Lisp_Object []) { fn, arg1, arg2, arg3, arg4, arg5 }));
+  return CALLN (Ffuncall, fn, arg1, arg2, arg3, arg4, arg5);
 }
 
 /* Call function fn with 6 arguments arg1, arg2, arg3, arg4, arg5, arg6.  */
@@ -2601,8 +2600,7 @@ Lisp_Object
 call6 (Lisp_Object fn, Lisp_Object arg1, Lisp_Object arg2, Lisp_Object arg3,
        Lisp_Object arg4, Lisp_Object arg5, Lisp_Object arg6)
 {
-  return Ffuncall (7, ((Lisp_Object [])
-    { fn, arg1, arg2, arg3, arg4, arg5, arg6 }));
+  return CALLN (Ffuncall, fn, arg1, arg2, arg3, arg4, arg5, arg6);
 }
 
 /* Call function fn with 7 arguments arg1, arg2, arg3, arg4, arg5, arg6, arg7.  */
@@ -2611,8 +2609,7 @@ Lisp_Object
 call7 (Lisp_Object fn, Lisp_Object arg1, Lisp_Object arg2, Lisp_Object arg3,
        Lisp_Object arg4, Lisp_Object arg5, Lisp_Object arg6, Lisp_Object arg7)
 {
-  return Ffuncall (8, ((Lisp_Object [])
-    { fn, arg1, arg2, arg3, arg4, arg5, arg6, arg7 }));
+  return CALLN (Ffuncall, fn, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 }
 
 /* The caller should GCPRO all the elements of ARGS.  */

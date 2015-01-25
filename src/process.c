@@ -1338,7 +1338,7 @@ Returns nil if format of ADDRESS is invalid.  */)
   if (CONSP (address))
     {
       AUTO_STRING (format, "<Family %d>");
-      return Fformat (2, (Lisp_Object []) {format, Fcar (address)});
+      return CALLN (Fformat, format, Fcar (address));
     }
 
   return Qnil;
@@ -3422,7 +3422,7 @@ usage: (make-network-process &rest ARGS)  */)
     struct gcpro gcpro1;
     /* Qt denotes we have not yet called Ffind_operation_coding_system.  */
     Lisp_Object coding_systems = Qt;
-    Lisp_Object fargs[5], val;
+    Lisp_Object val;
 
     if (!NILP (tem))
       {
@@ -3445,10 +3445,10 @@ usage: (make-network-process &rest ARGS)  */)
 	  coding_systems = Qnil;
 	else
 	  {
-	    fargs[0] = Qopen_network_stream, fargs[1] = name,
-	      fargs[2] = buffer, fargs[3] = host, fargs[4] = service;
 	    GCPRO1 (proc);
-	    coding_systems = Ffind_operation_coding_system (5, fargs);
+	    coding_systems = CALLN (Ffind_operation_coding_system,
+				    Qopen_network_stream, name, buffer,
+				    host, service);
 	    UNGCPRO;
 	  }
 	if (CONSP (coding_systems))
@@ -3478,10 +3478,10 @@ usage: (make-network-process &rest ARGS)  */)
 	      coding_systems = Qnil;
 	    else
 	      {
-		fargs[0] = Qopen_network_stream, fargs[1] = name,
-		  fargs[2] = buffer, fargs[3] = host, fargs[4] = service;
 		GCPRO1 (proc);
-		coding_systems = Ffind_operation_coding_system (5, fargs);
+		coding_systems = CALLN (Ffind_operation_coding_system,
+					Qopen_network_stream, name, buffer,
+					host, service);
 		UNGCPRO;
 	      }
 	  }
@@ -4064,12 +4064,12 @@ server_accept_connection (Lisp_Object server, int channel)
 	unsigned char *ip = (unsigned char *)&saddr.in.sin_addr.s_addr;
 
 	AUTO_STRING (ipv4_format, "%d.%d.%d.%d");
-	host = Fformat (5, ((Lisp_Object [])
-	  { ipv4_format, make_number (ip[0]),
-	    make_number (ip[1]), make_number (ip[2]), make_number (ip[3]) }));
+	host = CALLN (Fformat, ipv4_format,
+		      make_number (ip[0]), make_number (ip[1]),
+		      make_number (ip[2]), make_number (ip[3]));
 	service = make_number (ntohs (saddr.in.sin_port));
 	AUTO_STRING (caller_format, " <%s:%d>");
-	caller = Fformat (3, (Lisp_Object []) {caller_format, host, service});
+	caller = CALLN (Fformat, caller_format, host, service);
       }
       break;
 
@@ -4084,10 +4084,10 @@ server_accept_connection (Lisp_Object server, int channel)
 	args[0] = ipv6_format;
 	for (i = 0; i < 8; i++)
 	  args[i + 1] = make_number (ntohs (ip6[i]));
-	host = Fformat (9, args);
+	host = CALLMANY (Fformat, args);
 	service = make_number (ntohs (saddr.in.sin_port));
 	AUTO_STRING (caller_format, " <[%s]:%d>");
-	caller = Fformat (3, (Lisp_Object []) {caller_format, host, service});
+	caller = CALLN (Fformat, caller_format, host, service);
       }
       break;
 #endif

@@ -914,7 +914,6 @@ so last access time will always be midnight of that day.  */)
 static Lisp_Object
 file_attributes (int fd, char const *name, Lisp_Object id_format)
 {
-  Lisp_Object values[12];
   struct stat s;
   int lstat_result;
 
@@ -941,10 +940,6 @@ file_attributes (int fd, char const *name, Lisp_Object id_format)
   if (lstat_result < 0)
     return Qnil;
 
-  values[0] = (S_ISLNK (s.st_mode) ? emacs_readlinkat (fd, name)
-	       : S_ISDIR (s.st_mode) ? Qt : Qnil);
-  values[1] = make_number (s.st_nlink);
-
   if (!(NILP (id_format) || EQ (id_format, Qinteger)))
     {
       block_input ();
@@ -952,34 +947,35 @@ file_attributes (int fd, char const *name, Lisp_Object id_format)
       gname = stat_gname (&s);
       unblock_input ();
     }
-  if (uname)
-    values[2] = DECODE_SYSTEM (build_unibyte_string (uname));
-  else
-    values[2] = make_fixnum_or_float (s.st_uid);
-  if (gname)
-    values[3] = DECODE_SYSTEM (build_unibyte_string (gname));
-  else
-    values[3] = make_fixnum_or_float (s.st_gid);
-
-  values[4] = make_lisp_time (get_stat_atime (&s));
-  values[5] = make_lisp_time (get_stat_mtime (&s));
-  values[6] = make_lisp_time (get_stat_ctime (&s));
-
-  /* If the file size is a 4-byte type, assume that files of sizes in
-     the 2-4 GiB range wrap around to negative values, as this is a
-     common bug on older 32-bit platforms.  */
-  if (sizeof (s.st_size) == 4)
-    values[7] = make_fixnum_or_float (s.st_size & 0xffffffffu);
-  else
-    values[7] = make_fixnum_or_float (s.st_size);
 
   filemodestring (&s, modes);
-  values[8] = make_string (modes, 10);
-  values[9] = Qt;
-  values[10] = INTEGER_TO_CONS (s.st_ino);
-  values[11] = INTEGER_TO_CONS (s.st_dev);
 
-  return Flist (ARRAYELTS (values), values);
+  return CALLN (Flist,
+		(S_ISLNK (s.st_mode) ? emacs_readlinkat (fd, name)
+		 : S_ISDIR (s.st_mode) ? Qt : Qnil),
+		make_number (s.st_nlink),
+		(uname
+		 ? DECODE_SYSTEM (build_unibyte_string (uname))
+		 : make_fixnum_or_float (s.st_uid)),
+		(gname
+		 ? DECODE_SYSTEM (build_unibyte_string (gname))
+		 : make_fixnum_or_float (s.st_gid)),
+		make_lisp_time (get_stat_atime (&s)),
+		make_lisp_time (get_stat_mtime (&s)),
+		make_lisp_time (get_stat_ctime (&s)),
+
+		/* If the file size is a 4-byte type, assume that
+		   files of sizes in the 2-4 GiB range wrap around to
+		   negative values, as this is a common bug on older
+		   32-bit platforms.  */
+		make_fixnum_or_float (sizeof (s.st_size) == 4
+				      ? s.st_size & 0xffffffffu
+				      : s.st_size),
+
+		make_string (modes, 10),
+		Qt,
+		INTEGER_TO_CONS (s.st_ino),
+		INTEGER_TO_CONS (s.st_dev));
 }
 
 DEFUN ("file-attributes-lessp", Ffile_attributes_lessp, Sfile_attributes_lessp, 2, 2, 0,

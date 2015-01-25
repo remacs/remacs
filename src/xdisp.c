@@ -8286,22 +8286,18 @@ next_element_from_buffer (struct it *it)
 static void
 run_redisplay_end_trigger_hook (struct it *it)
 {
-  Lisp_Object args[3];
-
   /* IT->glyph_row should be non-null, i.e. we should be actually
      displaying something, or otherwise we should not run the hook.  */
   eassert (it->glyph_row);
 
-  /* Set up hook arguments.  */
-  args[0] = Qredisplay_end_trigger_functions;
-  args[1] = it->window;
-  XSETINT (args[2], it->redisplay_end_trigger_charpos);
+  ptrdiff_t charpos = it->redisplay_end_trigger_charpos;
   it->redisplay_end_trigger_charpos = 0;
 
   /* Since we are *trying* to run these functions, don't try to run
      them again, even if they get an error.  */
   wset_redisplay_end_trigger (it->w, Qnil);
-  Frun_hook_with_args (3, args);
+  CALLN (Frun_hook_with_args, Qredisplay_end_trigger_functions, it->window,
+	 make_number (charpos));
 
   /* Notice if it changed the face of the character we are on.  */
   handle_face_prop (it);
@@ -9800,7 +9796,6 @@ include the height of both, if present, in the return value.  */)
 void
 add_to_log (const char *format, Lisp_Object arg1, Lisp_Object arg2)
 {
-  Lisp_Object args[3];
   Lisp_Object msg, fmt;
   char *buffer;
   ptrdiff_t len;
@@ -9810,10 +9805,8 @@ add_to_log (const char *format, Lisp_Object arg1, Lisp_Object arg2)
   fmt = msg = Qnil;
   GCPRO4 (fmt, msg, arg1, arg2);
 
-  args[0] = fmt = build_string (format);
-  args[1] = arg1;
-  args[2] = arg2;
-  msg = Fformat (3, args);
+  fmt = build_string (format);
+  msg = CALLN (Fformat, fmt, arg1, arg2);
 
   len = SBYTES (msg) + 1;
   buffer = SAFE_ALLOCA (len);
@@ -10228,15 +10221,13 @@ message_with_string (const char *m, Lisp_Object string, int log)
 	 initialized yet, just toss it.  */
       if (f->glyphs_initialized_p)
 	{
-	  Lisp_Object args[2], msg;
 	  struct gcpro gcpro1, gcpro2;
 
-	  args[0] = build_string (m);
-	  args[1] = msg = string;
-	  GCPRO2 (args[0], msg);
-	  gcpro1.nvars = 2;
+	  Lisp_Object fmt = build_string (m);
+	  Lisp_Object msg = string;
+	  GCPRO2 (fmt, msg);
 
-	  msg = Fformat (2, args);
+	  msg = CALLN (Fformat, fmt, msg);
 
 	  if (log)
 	    message3 (msg);

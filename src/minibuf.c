@@ -1131,9 +1131,8 @@ function, instead of the usual behavior.  */)
 	    }
 
 	  AUTO_STRING (format, "%s (default %s): ");
-	  prompt = Fformat (3, ((Lisp_Object [])
-				{format, prompt,
-				 CONSP (def) ? XCAR (def) : def}));
+	  prompt = CALLN (Fformat, format, prompt,
+			  CONSP (def) ? XCAR (def) : def);
 	}
 
       result = Fcompleting_read (prompt, intern ("internal-complete-buffer"),
@@ -1141,8 +1140,7 @@ function, instead of the usual behavior.  */)
 				 Qbuffer_name_history, def, Qnil);
     }
   else
-    result = Ffuncall (4, ((Lisp_Object [])
-      { Vread_buffer_function, prompt, def, require_match }));
+    result = call3 (Vread_buffer_function, prompt, def, require_match);
   return unbind_to (count, result);
 }
 
@@ -1662,17 +1660,10 @@ Completion ignores case if the ambient value of
 See also `completing-read-function'.  */)
   (Lisp_Object prompt, Lisp_Object collection, Lisp_Object predicate, Lisp_Object require_match, Lisp_Object initial_input, Lisp_Object hist, Lisp_Object def, Lisp_Object inherit_input_method)
 {
-  Lisp_Object args[9];
-  args[0] = Fsymbol_value (intern ("completing-read-function"));
-  args[1] = prompt;
-  args[2] = collection;
-  args[3] = predicate;
-  args[4] = require_match;
-  args[5] = initial_input;
-  args[6] = hist;
-  args[7] = def;
-  args[8] = inherit_input_method;
-  return Ffuncall (9, args);
+  return CALLN (Ffuncall,
+		Fsymbol_value (intern ("completing-read-function")),
+		prompt, collection, predicate, require_match, initial_input,
+		hist, def, inherit_input_method);
 }
 
 /* Test whether TXT is an exact completion.  */

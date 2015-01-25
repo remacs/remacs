@@ -229,17 +229,10 @@ read_file_name (Lisp_Object default_filename, Lisp_Object mustmatch,
 		Lisp_Object initial, Lisp_Object predicate)
 {
   struct gcpro gcpro1;
-  Lisp_Object args[7];
-
   GCPRO1 (default_filename);
-  args[0] = intern ("read-file-name");
-  args[1] = callint_message;
-  args[2] = Qnil;
-  args[3] = default_filename;
-  args[4] = mustmatch;
-  args[5] = initial;
-  args[6] = predicate;
-  RETURN_UNGCPRO (Ffuncall (7, args));
+  RETURN_UNGCPRO (CALLN (Ffuncall, intern ("read-file-name"),
+			 callint_message, Qnil, default_filename,
+			 mustmatch, initial, predicate));
 }
 
 /* BEWARE: Calling this directly from C would defeat the purpose!  */
@@ -397,15 +390,11 @@ invoke it.  If KEYS is omitted or nil, the return value of
       Vreal_this_command = save_real_this_command;
       kset_last_command (current_kboard, save_last_command);
 
-      {
-	Lisp_Object args[3];
-	args[0] = Qfuncall_interactively;
-	args[1] = function;
-	args[2] = specs;
-	Lisp_Object result = unbind_to (speccount, Fapply (3, args));
-	SAFE_FREE ();
-	return result;
-      }
+      Lisp_Object result
+	= unbind_to (speccount, CALLN (Fapply, Qfuncall_interactively,
+				       function, specs));
+      SAFE_FREE ();
+      return result;
     }
 
   /* SPECS is set to a string; use it as an interactive prompt.

@@ -1580,43 +1580,38 @@ the WIDTH times as wide as FACE on FRAME.  */)
 	avgwidth *= XINT (width);
     }
 
-  {
-    Lisp_Object font_spec;
-    Lisp_Object args[2], tail;
+  Lisp_Object font_spec = font_spec_from_name (pattern);
+  if (!FONTP (font_spec))
+    signal_error ("Invalid font name", pattern);
 
-    font_spec = font_spec_from_name (pattern);
-    if (!FONTP (font_spec))
-      signal_error ("Invalid font name", pattern);
+  if (size)
+    {
+      Ffont_put (font_spec, QCsize, make_number (size));
+      Ffont_put (font_spec, QCavgwidth, make_number (avgwidth));
+    }
+  Lisp_Object fonts = Flist_fonts (font_spec, frame, maximum, font_spec);
+  for (Lisp_Object tail = fonts; CONSP (tail); tail = XCDR (tail))
+    {
+      Lisp_Object font_entity;
 
-    if (size)
-      {
-	Ffont_put (font_spec, QCsize, make_number (size));
-	Ffont_put (font_spec, QCavgwidth, make_number (avgwidth));
-      }
-    args[0] = Flist_fonts (font_spec, frame, maximum, font_spec);
-    for (tail = args[0]; CONSP (tail); tail = XCDR (tail))
-      {
-	Lisp_Object font_entity;
-
-	font_entity = XCAR (tail);
-	if ((NILP (AREF (font_entity, FONT_SIZE_INDEX))
-	     || XINT (AREF (font_entity, FONT_SIZE_INDEX)) == 0)
-	    && ! NILP (AREF (font_spec, FONT_SIZE_INDEX)))
-	  {
-	    /* This is a scalable font.  For backward compatibility,
-	       we set the specified size. */
-	    font_entity = copy_font_spec (font_entity);
-	    ASET (font_entity, FONT_SIZE_INDEX,
-		  AREF (font_spec, FONT_SIZE_INDEX));
-	  }
-	XSETCAR (tail, Ffont_xlfd_name (font_entity, Qnil));
-      }
-    if (NILP (frame))
-      /* We don't have to check fontsets.  */
-      return args[0];
-    args[1] = list_fontsets (f, pattern, size);
-    return Fnconc (2, args);
-  }
+      font_entity = XCAR (tail);
+      if ((NILP (AREF (font_entity, FONT_SIZE_INDEX))
+	   || XINT (AREF (font_entity, FONT_SIZE_INDEX)) == 0)
+	  && ! NILP (AREF (font_spec, FONT_SIZE_INDEX)))
+	{
+	  /* This is a scalable font.  For backward compatibility,
+	     we set the specified size. */
+	  font_entity = copy_font_spec (font_entity);
+	  ASET (font_entity, FONT_SIZE_INDEX,
+		AREF (font_spec, FONT_SIZE_INDEX));
+	}
+      XSETCAR (tail, Ffont_xlfd_name (font_entity, Qnil));
+    }
+  if (NILP (frame))
+    /* We don't have to check fontsets.  */
+    return fonts;
+  Lisp_Object fontsets = list_fontsets (f, pattern, size);
+  return CALLN (Fnconc, fonts, fontsets);
 }
 
 #endif /* HAVE_WINDOW_SYSTEM */

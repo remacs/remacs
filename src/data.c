@@ -972,9 +972,8 @@ wrong_range (Lisp_Object min, Lisp_Object max, Lisp_Object wrong)
   AUTO_STRING (value_should_be_from, "Value should be from ");
   AUTO_STRING (to, " to ");
   xsignal2 (Qerror,
-	    Fconcat (4, ((Lisp_Object [])
-			 {value_should_be_from, Fnumber_to_string (min),
-			  to, Fnumber_to_string (max)})),
+	    CALLN (Fconcat, value_should_be_from, Fnumber_to_string (min),
+		   to, Fnumber_to_string (max)),
 	    wrong);
 }
 

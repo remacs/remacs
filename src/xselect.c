@@ -817,14 +817,8 @@ x_handle_selection_request (struct input_event *event)
   /* Run the `x-sent-selection-functions' abnormal hook.  */
   if (!NILP (Vx_sent_selection_functions)
       && !EQ (Vx_sent_selection_functions, Qunbound))
-    {
-      Lisp_Object args[4];
-      args[0] = Qx_sent_selection_functions;
-      args[1] = selection_symbol;
-      args[2] = target_symbol;
-      args[3] = success ? Qt : Qnil;
-      Frun_hook_with_args (4, args);
-    }
+    CALLN (Frun_hook_with_args, Qx_sent_selection_functions,
+	   selection_symbol, target_symbol, success ? Qt : Qnil);
 
   unbind_to (count, Qnil);
   UNGCPRO;
@@ -937,12 +931,7 @@ x_handle_selection_clear (struct input_event *event)
   tset_selection_alist (dpyinfo->terminal, Vselection_alist);
 
   /* Run the `x-lost-selection-functions' abnormal hook.  */
-  {
-    Lisp_Object args[2];
-    args[0] = Qx_lost_selection_functions;
-    args[1] = selection_symbol;
-    Frun_hook_with_args (2, args);
-  }
+  CALLN (Frun_hook_with_args, Qx_lost_selection_functions, selection_symbol);
 
   redisplay_preserve_echo_area (20);
 }
@@ -978,10 +967,8 @@ x_clear_frame_selections (struct frame *f)
 	 && EQ (frame, XCAR (XCDR (XCDR (XCDR (XCAR (t->Vselection_alist)))))))
     {
       /* Run the `x-lost-selection-functions' abnormal hook.  */
-      Lisp_Object args[2];
-      args[0] = Qx_lost_selection_functions;
-      args[1] = Fcar (Fcar (t->Vselection_alist));
-      Frun_hook_with_args (2, args);
+      CALLN (Frun_hook_with_args, Qx_lost_selection_functions,
+	     Fcar (Fcar (t->Vselection_alist)));
 
       tset_selection_alist (t, XCDR (t->Vselection_alist));
     }
@@ -991,10 +978,8 @@ x_clear_frame_selections (struct frame *f)
     if (CONSP (XCDR (rest))
 	&& EQ (frame, XCAR (XCDR (XCDR (XCDR (XCAR (XCDR (rest))))))))
       {
-	Lisp_Object args[2];
-	args[0] = Qx_lost_selection_functions;
-	args[1] = XCAR (XCAR (XCDR (rest)));
-	Frun_hook_with_args (2, args);
+	CALLN (Frun_hook_with_args, Qx_lost_selection_functions,
+	       XCAR (XCAR (XCDR (rest))));
 	XSETCDR (rest, XCDR (XCDR (rest)));
 	break;
       }
@@ -2138,7 +2123,7 @@ x_clipboard_manager_error_1 (Lisp_Object err)
 {
   AUTO_STRING (format, "X clipboard manager error: %s\n\
 If the problem persists, set `x-select-enable-clipboard-manager' to nil.");
-  Fmessage (2, (Lisp_Object []) {format, CAR (CDR (err))});
+  CALLN (Fmessage, format, CAR (CDR (err)));
   return Qnil;
 }
 

@@ -1997,7 +1997,6 @@ signal_before_change (ptrdiff_t start_int, ptrdiff_t end_int,
   /* Now run the before-change-functions if any.  */
   if (!NILP (Vbefore_change_functions))
     {
-      Lisp_Object args[3];
       rvoe_arg.location = &Vbefore_change_functions;
       rvoe_arg.errorp = 1;
 
@@ -2008,10 +2007,8 @@ signal_before_change (ptrdiff_t start_int, ptrdiff_t end_int,
       record_unwind_protect_ptr (reset_var_on_error, &rvoe_arg);
 
       /* Actually run the hook functions.  */
-      args[0] = Qbefore_change_functions;
-      args[1] = FETCH_START;
-      args[2] = FETCH_END;
-      Frun_hook_with_args (3, args);
+      CALLN (Frun_hook_with_args, Qbefore_change_functions,
+	     FETCH_START, FETCH_END);
 
       /* There was no error: unarm the reset_on_error.  */
       rvoe_arg.errorp = 0;
@@ -2079,7 +2076,6 @@ signal_after_change (ptrdiff_t charpos, ptrdiff_t lendel, ptrdiff_t lenins)
 
   if (!NILP (Vafter_change_functions))
     {
-      Lisp_Object args[4];
       rvoe_arg.location = &Vafter_change_functions;
       rvoe_arg.errorp = 1;
 
@@ -2087,11 +2083,9 @@ signal_after_change (ptrdiff_t charpos, ptrdiff_t lendel, ptrdiff_t lenins)
       record_unwind_protect_ptr (reset_var_on_error, &rvoe_arg);
 
       /* Actually run the hook functions.  */
-      args[0] = Qafter_change_functions;
-      XSETFASTINT (args[1], charpos);
-      XSETFASTINT (args[2], charpos + lenins);
-      XSETFASTINT (args[3], lendel);
-      Frun_hook_with_args (4, args);
+      CALLN (Frun_hook_with_args, Qafter_change_functions,
+	     make_number (charpos), make_number (charpos + lenins),
+	     make_number (lendel));
 
       /* There was no error: unarm the reset_on_error.  */
       rvoe_arg.errorp = 0;
