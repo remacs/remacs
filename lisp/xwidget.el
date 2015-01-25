@@ -382,7 +382,9 @@ Argument STR string."
   (interactive)
   (if (eq xwidget-webkit-scroll-behaviour 'native)
       (xwidget-webkit-adjust-size-to-window)
-    (xwidget-webkit-adjust-size-to-content)))
+    (xwidget-webkit-adjust-size-to-content))
+  (recenter-top-bottom)
+  )
 
 (defun xwidget-webkit-adjust-size-to-window ()
   "Adjust webkit to window."
