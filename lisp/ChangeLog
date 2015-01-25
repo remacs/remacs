@@ -1,3 +1,8 @@
+2015-01-25  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* emacs-lisp/find-func.el (find-function-regexp): Don't match
+	`defgroup' (regression from the previous change here).
+
 2015-01-23  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
 	* net/ldap.el (ldap-search-internal): Mention binddn in invalid
