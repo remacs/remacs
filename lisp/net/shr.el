@@ -1667,11 +1667,17 @@ The preference is a float determined from `shr-prefer-media-type'."
 				   ;; remaining columns.
 				   (- (length widths) i)))
 		(dotimes (j (1- colspan))
-		  (if (> (+ i 1 j) (1- (length widths)))
-		      (setq width (aref widths (1- (length widths))))
-		    (setq width (+ width
-				   shr-table-separator-length
-				   (aref widths (+ i 1 j))))))
+		  (setq width
+			(if (> (+ i 1 j) (1- (length widths)))
+			    ;; If we have a colspan spec that's longer
+			    ;; than the table is wide, just use the last
+			    ;; width as the width.
+			    (aref widths (1- (length widths)))
+			  ;; Sum up the widths of the columns we're
+			  ;; spanning.
+			  (+ width
+			     shr-table-separator-length
+			     (aref widths (+ i 1 j))))))
 		(setq width-column (+ width-column (1- colspan))))
 	      (when (or column
 			(not fill))

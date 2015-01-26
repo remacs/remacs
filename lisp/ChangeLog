@@ -1,6 +1,7 @@
 2015-01-26  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* net/shr.el (shr-make-table-1): Fix colspan typo.
+	(shr-make-table-1): Add comments.
 
 	* net/eww.el (eww-add-bookmark): Fix prompt and clean up the code
 	slightly.
