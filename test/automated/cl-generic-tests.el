@@ -171,5 +171,13 @@
   (should (equal (cl--generic-1 'a 'b) '(a b)))
   (should (equal (cl--generic-1 1 2) '("integer" 2 1))))
 
+(ert-deftest cl-generic-test-11-next-method-p ()
+  (cl-defgeneric cl--generic-1 (x y))
+  (cl-defmethod cl--generic-1 ((x t) y)
+    (list x y (cl-next-method-p)))
+  (cl-defmethod cl--generic-1 ((_x (eql 4)) _y)
+    (cl-list* "quatre" (cl-next-method-p) (cl-call-next-method)))
+  (should (equal (cl--generic-1 4 5) '("quatre" t 4 5 nil))))
+
 (provide 'cl-generic-tests)
 ;;; cl-generic-tests.el ends here
