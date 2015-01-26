@@ -1,3 +1,7 @@
+2015-01-26  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* INSTALL.REPO: Mention minimum Git version.
+
 2015-01-25  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Use gnustep-config if available
