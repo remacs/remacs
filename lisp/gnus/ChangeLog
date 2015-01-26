@@ -1,3 +1,11 @@
+2015-01-26  Peder O. Klingenberg  <peder@klingenberg.no>
+
+	* mm-decode.el (mm-display-part): Make non-string methods work.
+	Non-string methods are funcalled and work just fine, the test was
+	bogus.
+	* mm-decode.el (mm-display-external): Show "external" lisp viewers in
+	whole frame.
+
 2015-01-26  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* nnimap.el (nnimap-request-accept-article): Allow respooling using

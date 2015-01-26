@@ -833,18 +833,18 @@ external if displayed external."
 		'inline)
 	    (setq external
 		  (and method	      ;; If nil, we always use "save".
-		       (stringp method) ;; 'mailcap-save-binary-file
 		       (or (eq mm-enable-external t)
 			   (and (eq mm-enable-external 'ask)
 				(y-or-n-p
 				 (concat
 				  "Display part (" type
-				  ") using external program"
-				  ;; Can non-string method ever happen?
+				  ") "
 				  (if (stringp method)
 				      (concat
-				       " \"" (format method filename) "\"")
-				    "")
+				       "using external program \""
+				       (format method filename) "\"")
+				    (format
+				     "by calling `%s' on the contents)" method))
 				  "? "))))))
 	    (if external
 		(mm-display-external
@@ -885,7 +885,15 @@ external if displayed external."
 				     (mm-handle-media-type handle) t))))
 	      (unwind-protect
 		  (if method
-		      (funcall method)
+		      (progn
+			(when (and (boundp 'gnus-summary-buffer)
+				   (bufferp gnus-summary-buffer)
+				   (buffer-name gnus-summary-buffer))
+			  ;; So that we pop back to the right place, sortof.
+			  (switch-to-buffer gnus-summary-buffer)
+			  (switch-to-buffer mm))
+			(delete-other-windows)
+			(funcall method))
 		    (mm-save-part handle))
 		(when (and (not non-viewer)
 			   method)
