@@ -2,6 +2,7 @@
 
 	* net/shr.el (shr-make-table-1): Fix colspan typo.
 	(shr-make-table-1): Add comments.
+	(shr-make-table-1): Make colspan display more sensibly.
 
 	* net/eww.el (eww-add-bookmark): Fix prompt and clean up the code
 	slightly.
