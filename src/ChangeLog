@@ -1,4 +1,58 @@
+2015-01-26  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* image.c (lookup_pixel_color): Reorder conditions that are
+	written backwards.
+	(x_to_xcolors): Likewise.
+	(x_detect_edges): Likewise.
+	(png_load_body): Likewise.
+	(gif_close): Likewise.
+	(gif_load): Likewise.
+
+2015-01-25  Eli Zaretskii  <eliz@gnu.org>
+
+	Use bool for boolean in w32term.c
+	* w32term.c (x_update_window_begin, x_update_window_end)
+	(x_update_end, x_after_update_window_line)
+	(x_set_glyph_string_gc, x_draw_glyph_string_background)
+	(x_draw_glyph_string_foreground)
+	(x_draw_composite_glyph_string_foreground)
+	(x_draw_glyphless_glyph_string_foreground)
+	(x_draw_image_glyph_string, x_draw_glyph_string)
+	(x_draw_stretch_glyph_string, note_mouse_movement)
+	(w32_mouse_position, x_scroll_bar_report_motion)
+	(x_horizontal_scroll_bar_report_motion, w32_read_socket)
+	(w32_set_vertical_scroll_bar, w32_set_horizontal_scroll_bar)
+	(w32_draw_window_cursor, x_new_font, x_set_offset)
+	(x_set_window_size, x_make_frame_invisible, x_iconify_frame): Use
+	bool where appropriate.
+
+	Use bool for boolean in w32fns.c
+	* w32fns.c (w32_defined_color, x_decode_color)
+	(Fxw_color_defined_p, Fxw_color_values, x_set_icon_type)
+	(x_set_menu_bar_lines, x_change_tool_bar_height)
+	(x_set_internal_border_width, x_explicitly_set_name)
+	(x_implicitly_set_name, Fx_create_frame, w32_window)
+	(x_create_tip_frame, Fx_show_tip): Use bool where appropriate.
+
 2015-01-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use bool for boolean in xfns.c
+	* xfaces.c (x_update_menu_appearance):
+	* xfns.c (x_real_positions, x_defined_color, x_decode_color)
+	(xg_set_icon, xg_set_icon_from_xpm_data, x_set_cursor_color)
+	(x_set_icon_type, x_set_icon_name, x_set_menu_bar_lines)
+	(x_change_tool_bar_height, x_set_internal_border_width)
+	(x_encode_text, x_set_name_internal, x_explicitly_set_name)
+	(x_implicitly_set_name, x_default_scroll_bar_color_parameter)
+	(hack_wm_protocols, xic_create_fontsetname, xic_free_xfontset)
+	(x_window, x_icon, Fx_wm_set_size_hint, Fx_create_frame)
+	(Fxw_color_defined_p, Fxw_color_values, x_create_tip_frame)
+	(Fx_show_tip, clean_up_file_dialog, Fx_file_dialog)
+	(clean_up_dialog, syms_of_xfns):
+	* xterm.h (xg_set_icon, xg_set_icon_from_xpm_data)
+	(xic_create_fontsetname):
+	Use bool for boolean.
+	* xfns.c: Include bitmaps/gray.xbm unconditionally.
 
 	Count MANY function args more reliably
 	* alloc.c (Fgc_status, purecopy, unbind_to, garbage_collect_1):

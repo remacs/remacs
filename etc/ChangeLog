@@ -1,3 +1,8 @@
+2015-01-26  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* publicsuffix.txt: Install an updated version of the file from
+	https://publicsuffix.org/list/effective_tld_names.dat.
+
 2015-01-25  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Use gnustep-config if available

@@ -4075,7 +4075,9 @@ If DONT-SCAN is non-nil, scan non-activated groups as well."
       (gnus-group-remove-mark group)
       ;; Bypass any previous denials from the server.
       (gnus-remove-denial (setq method (gnus-find-method-for-group group)))
-      (if (gnus-activate-group group (if dont-scan nil 'scan) nil method)
+      (if (or (and (not dont-scan)
+		   (gnus-request-group-scan group (gnus-get-info group)))
+	      (gnus-activate-group group (if dont-scan nil 'scan) nil method))
 	  (let ((info (gnus-get-info group))
 		(active (gnus-active group)))
 	    (when info

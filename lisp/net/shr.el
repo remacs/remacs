@@ -1660,7 +1660,7 @@ The preference is a float determined from `shr-prefer-media-type'."
 			(aref widths width-column)
 		      10))
 	      (when (and fill
-			 (setq colspan (dom-attr column colspan)))
+			 (setq colspan (dom-attr column 'colspan)))
 		(setq colspan (min (string-to-number colspan)
 				   ;; The colspan may be wrong, so
 				   ;; truncate it to the length of the

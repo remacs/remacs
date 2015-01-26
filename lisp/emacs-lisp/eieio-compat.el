@@ -181,7 +181,8 @@ Summary:
              (lambda (generic arg &rest args) (apply code arg generic args)))
             (_ code))))
     (cl-generic-define-method
-     method (if kind (list kind)) specializers uses-cnm
+     method (unless (memq kind '(nil :primary)) (list kind))
+     specializers uses-cnm
      (if uses-cnm
          (let* ((docstring (documentation code 'raw))
                 (args (help-function-arglist code 'preserve-names))
@@ -201,11 +202,11 @@ Summary:
     ;; applicable but only of the before/after kind.  So if we add a :before
     ;; or :after, make sure there's a matching dummy primary.
     (when (and (memq kind '(:before :after))
-               (not (assoc (cons (mapcar (lambda (arg)
-                                           (if (consp arg) (nth 1 arg) t))
-                                         specializers)
-                                 :primary)
-                           (cl--generic-method-table (cl--generic method)))))
+               ;; FIXME: Use `cl-find-method'?
+               (not (cl-find-method method ()
+                                    (mapcar (lambda (arg)
+                                              (if (consp arg) (nth 1 arg) t))
+                                            specializers))))
       (cl-generic-define-method method () specializers t
                                 (lambda (cnm &rest args)
                                   (if (cl--generic-isnot-nnm-p cnm)

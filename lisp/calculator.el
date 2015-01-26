@@ -312,8 +312,8 @@ user-defined operators, use `calculator-user-operators' instead.")
 
 It it possible have a unary prefix version of a binary operator if it
 comes later in this list.  If the list begins with the symbol 'nobind,
-then no key binding will take place -- this is only useful for predefined
-keys.
+then no key binding will take place -- this is only useful for
+predefined keys.
 
 Use `calculator-user-operators' to add operators to this list, see its
 documentation for an example.")
@@ -1124,9 +1124,15 @@ If optional argument FORCE is non-nil, don't use the cached string."
                    " "
                    (and calculator-display-fragile
                         calculator-saved-list
-                        (= (car calculator-stack)
-                           (nth calculator-saved-ptr
-                                calculator-saved-list))
+                        ;; Hack: use `eq' to compare the number: it's a
+                        ;; flonum, so `eq' means that its the actual
+                        ;; number rather than a computation that had an
+                        ;; equal result (eg, enter 1,3,2, use "v" to see
+                        ;; the average -- it now shows "2" instead of
+                        ;; "2 [3]").
+                        (eq (car calculator-stack)
+                            (nth calculator-saved-ptr
+                                 calculator-saved-list))
                         (if (= 0 calculator-saved-ptr)
                           (format "[%s]" (length calculator-saved-list))
                           (format "[%s/%s]"

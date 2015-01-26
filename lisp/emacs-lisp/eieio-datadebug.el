@@ -129,22 +129,6 @@ PREBUTTONTEXT is some text between PREFIX and the object button."
   (data-debug-new-buffer (format "*%s DDEBUG*" (eieio-object-name obj)))
   (data-debug-insert-object-slots obj "]"))
 
-;;; DEBUG FUNCTIONS
-;;
-(defun eieio-debug-methodinvoke (method class)
-  "Show the method invocation order for METHOD with CLASS object."
-  (interactive "aMethod: \nXClass Expression: ")
-  (let* ((eieio-pre-method-execution-functions
-	  (lambda (l) (throw 'moose l) ))
-	 (data
-	  (catch 'moose (eieio--generic-call
-			 method (list class))))
-	 (_buf (data-debug-new-buffer "*Method Invocation*"))
-	 (data2 (mapcar (lambda (sym)
-			  (symbol-function (car sym)))
-			  data)))
-    (data-debug-insert-thing data2 ">" "")))
-
 (provide 'eieio-datadebug)
 
 ;;; eieio-datadebug.el ends here

@@ -4423,7 +4423,7 @@ lookup_pixel_color (struct frame *f, unsigned long pixel)
       Colormap cmap;
       bool rc;
 
-      if (ct_colors_allocated_max <= ct_colors_allocated)
+      if (ct_colors_allocated >= ct_colors_allocated_max)
 	return FRAME_FOREGROUND_PIXEL (f);
 
 #ifdef HAVE_X_WINDOWS
@@ -4554,7 +4554,7 @@ x_to_xcolors (struct frame *f, struct image *img, bool rgb_p)
   HGDIOBJ prev;
 #endif /* HAVE_NTGUI */
 
-  if (min (PTRDIFF_MAX, SIZE_MAX) / sizeof *colors / img->width < img->height)
+  if (img->height > min (PTRDIFF_MAX, SIZE_MAX) / sizeof *colors / img->width)
     memory_full (SIZE_MAX);
   colors = xmalloc (sizeof *colors * img->width * img->height);
 
@@ -4695,7 +4695,7 @@ x_detect_edges (struct frame *f, struct image *img, int *matrix, int color_adjus
 
 #define COLOR(A, X, Y) ((A) + (Y) * img->width + (X))
 
-  if (min (PTRDIFF_MAX, SIZE_MAX) / sizeof *new / img->width < img->height)
+  if (img->height > min (PTRDIFF_MAX, SIZE_MAX) / sizeof *new / img->width)
     memory_full (SIZE_MAX);
   new = xmalloc (sizeof *new * img->width * img->height);
 
@@ -5917,8 +5917,8 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
   row_bytes = png_get_rowbytes (png_ptr, info_ptr);
 
   /* Allocate memory for the image.  */
-  if (min (PTRDIFF_MAX, SIZE_MAX) / sizeof *rows < height
-      || min (PTRDIFF_MAX, SIZE_MAX) / sizeof *pixels / height < row_bytes)
+  if (height > min (PTRDIFF_MAX, SIZE_MAX) / sizeof *rows
+      || row_bytes > min (PTRDIFF_MAX, SIZE_MAX) / sizeof *pixels / height)
     memory_full (SIZE_MAX);
   c->pixels = pixels = xmalloc (sizeof *pixels * row_bytes * height);
   c->rows = rows = xmalloc (height * sizeof *rows);
@@ -7235,7 +7235,7 @@ gif_image_p (Lisp_Object object)
 # ifdef WINDOWSNT
 
 /* GIF library details.  */
-#  if 5 < GIFLIB_MAJOR + (1 <= GIFLIB_MINOR)
+#  if GIFLIB_MAJOR + (GIFLIB_MINOR >= 1) > 5
 DEF_DLL_FN (int, DGifCloseFile, (GifFileType *, int *));
 #   else
 DEF_DLL_FN (int, DGifCloseFile, (GifFileType *));
@@ -7316,7 +7316,7 @@ gif_close (GifFileType *gif, int *err)
 {
   int retval;
 
-#if 5 < GIFLIB_MAJOR + (1 <= GIFLIB_MINOR)
+#if GIFLIB_MAJOR + (GIFLIB_MINOR >= 1) > 5
   retval = DGifCloseFile (gif, err);
 #else
   retval = DGifCloseFile (gif);
@@ -7471,7 +7471,7 @@ gif_load (struct frame *f, struct image *img)
       int subimg_height = subimage->ImageDesc.Height;
       int subimg_top = subimage->ImageDesc.Top;
       int subimg_left = subimage->ImageDesc.Left;
-      if (! (0 <= subimg_width && 0 <= subimg_height
+      if (! (subimg_width >= 0 && subimg_height >= 0
 	     && 0 <= subimg_top && subimg_top <= height - subimg_height
 	     && 0 <= subimg_left && subimg_left <= width - subimg_width))
 	{

@@ -1430,24 +1430,23 @@ Differences in #targets are ignored."
 (defvar eww-bookmarks nil)
 
 (defun eww-add-bookmark ()
-  "Add the current page to the bookmarks."
+  "Bookmark the current page."
   (interactive)
   (eww-read-bookmarks)
   (dolist (bookmark eww-bookmarks)
     (when (equal (plist-get eww-data :url) (plist-get bookmark :url))
       (user-error "Already bookmarked")))
-  (if (y-or-n-p "bookmark this page? ")
-      (progn
-	(let ((title (replace-regexp-in-string "[\n\t\r]" " "
-					       (plist-get eww-data :title))))
-	  (setq title (replace-regexp-in-string "\\` +\\| +\\'" "" title))
-	  (push (list :url (plist-get eww-data :url)
-		      :title title
-		      :time (current-time-string))
-		eww-bookmarks))
-	(eww-write-bookmarks)
-	(message "Bookmarked %s (%s)" (plist-get eww-data :url)
-		 (plist-get eww-data :title)))))
+  (when (y-or-n-p "Bookmark this page?")
+    (let ((title (replace-regexp-in-string "[\n\t\r]" " "
+					   (plist-get eww-data :title))))
+      (setq title (replace-regexp-in-string "\\` +\\| +\\'" "" title))
+      (push (list :url (plist-get eww-data :url)
+		  :title title
+		  :time (current-time-string))
+	    eww-bookmarks))
+    (eww-write-bookmarks)
+    (message "Bookmarked %s (%s)" (plist-get eww-data :url)
+	     (plist-get eww-data :title))))
 
 (defun eww-write-bookmarks ()
   (with-temp-file (expand-file-name "eww-bookmarks" eww-bookmarks-directory)
