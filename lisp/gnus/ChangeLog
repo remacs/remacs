@@ -1,3 +1,18 @@
+2015-01-26  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* nnimap.el (nnimap-request-accept-article): Allow respooling using
+	nnimap.
+
+	* gnus-group.el (gnus-group-get-new-news-this-group): Explicitly
+	request rescans when being run interactively.
+
+	* nnimap.el (nnimap-request-group): Don't rescan the group here,
+	because that can be very slow in large groups.
+
+	* gnus-int.el (gnus-request-group-scan): New backend function.
+
+	* nnimap.el (nnimap-request-scan-group): Implement in on IMAP.
+
 2015-01-25  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* gnus-group.el (gnus-group-suspend): Close all backends.

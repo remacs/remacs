@@ -792,42 +792,54 @@ textual parts.")
 	articles active marks high low)
     (with-current-buffer nntp-server-buffer
       (when result
-	(if (and dont-check
-		 (setq active (nth 2 (assoc group nnimap-current-infos))))
-	    (insert (format "211 %d %d %d %S\n"
-			    (- (cdr active) (car active))
-			    (car active)
-			    (cdr active)
-			    group))
-	  (with-current-buffer (nnimap-buffer)
-	    (erase-buffer)
-	    (let ((group-sequence
-		   (nnimap-send-command "SELECT %S" (utf7-encode group t)))
-		  (flag-sequence
-		   (nnimap-send-command "UID FETCH 1:* FLAGS")))
-	      (setf (nnimap-group nnimap-object) group)
-	      (nnimap-wait-for-response flag-sequence)
-	      (setq marks
-		    (nnimap-flags-to-marks
-		     (nnimap-parse-flags
-		      (list (list group-sequence flag-sequence
-				  1 group "SELECT")))))
-	      (when (and info
-			 marks)
-		(nnimap-update-infos marks (list info))
-		(nnimap-store-info info (gnus-active (gnus-info-group info))))
-	      (goto-char (point-max))
-	      (let ((uidnext (nth 5 (car marks))))
-		(setq high (or (if uidnext
-                                   (1- uidnext)
-                                 (nth 3 (car marks)))
-                               0)
-		      low (or (nth 4 (car marks)) uidnext 1)))))
-	  (erase-buffer)
-	  (insert
-	   (format
-	    "211 %d %d %d %S\n" (1+ (- high low)) low high group)))
+	(when (or (not dont-check)
+		  (not (setq active
+			     (nth 2 (assoc group nnimap-current-infos)))))
+	  (let ((sequences (nnimap-retrieve-group-data-early
+			    server (list info))))
+	    (nnimap-finish-retrieve-group-infos server (list info) sequences
+						t)
+	    (setq active (nth 2 (assoc group nnimap-current-infos)))))
+	(insert (format "211 %d %d %d %S\n"
+			(- (cdr active) (car active))
+			(car active)
+			(cdr active)
+			group))
 	t))))
+
+(deffoo nnimap-request-scan-group (group &optional server info)
+  (setq group (nnimap-decode-gnus-group group))
+  (let (marks high low)
+    (with-current-buffer (nnimap-buffer)
+      (erase-buffer)
+      (let ((group-sequence
+	     (nnimap-send-command "SELECT %S" (utf7-encode group t)))
+	    (flag-sequence
+	     (nnimap-send-command "UID FETCH 1:* FLAGS")))
+	(setf (nnimap-group nnimap-object) group)
+	(nnimap-wait-for-response flag-sequence)
+	(setq marks
+	      (nnimap-flags-to-marks
+	       (nnimap-parse-flags
+		(list (list group-sequence flag-sequence
+			    1 group "SELECT")))))
+	(when (and info
+		   marks)
+	  (nnimap-update-infos marks (list info))
+	  (nnimap-store-info info (gnus-active (gnus-info-group info))))
+	(goto-char (point-max))
+	(let ((uidnext (nth 5 (car marks))))
+	  (setq high (or (if uidnext
+			     (1- uidnext)
+			   (nth 3 (car marks)))
+			 0)
+		low (or (nth 4 (car marks)) uidnext 1)))))
+    (with-current-buffer nntp-server-buffer
+      (erase-buffer)
+      (insert
+       (format
+	"211 %d %d %d %S\n" (1+ (- high low)) low high group))
+      t)))
 
 (deffoo nnimap-request-create-group (group &optional server args)
   (setq group (nnimap-decode-gnus-group group))
@@ -1122,8 +1134,11 @@ If LIMIT, first try to limit the search to the N last articles."
     (setq group
 	  (caar
 	   (nnmail-article-group
+	    ;; We don't really care about the article number, because
+	    ;; that's determined by the IMAP server later.  So just
+	    ;; return the group name.
 	    `(lambda (group)
-	       (nnml-active-number group ,server))))))
+	       (list (list group)))))))
   (setq group (nnimap-decode-gnus-group group))
   (when (nnimap-change-group nil server)
     (nnmail-check-syntax)
@@ -1371,7 +1386,8 @@ If LIMIT, first try to limit the search to the N last articles."
 	command
       (nth 2 quirk))))
 
-(deffoo nnimap-finish-retrieve-group-infos (server infos sequences)
+(deffoo nnimap-finish-retrieve-group-infos (server infos sequences
+						   &optional dont-insert)
   (when (and sequences
 	     (nnimap-change-group nil server t)
 	     ;; Check that the process is still alive.
@@ -1391,19 +1407,20 @@ If LIMIT, first try to limit the search to the N last articles."
 			      (nnimap-parse-flags
 			       (nreverse sequences)))
 			     infos)
-	;; Finally, just return something resembling an active file in
-	;; the nntp buffer, so that the agent can save the info, too.
-	(with-current-buffer nntp-server-buffer
-	  (erase-buffer)
-	  (dolist (info infos)
-	    (let* ((group (gnus-info-group info))
-		   (active (gnus-active group)))
-	      (when active
-		(insert (format "%S %d %d y\n"
-				(decode-coding-string
-				 (gnus-group-real-name group) 'utf-8)
-				(cdr active)
-				(car active)))))))))))
+	(unless dont-insert
+	  ;; Finally, just return something resembling an active file in
+	  ;; the nntp buffer, so that the agent can save the info, too.
+	  (with-current-buffer nntp-server-buffer
+	    (erase-buffer)
+	    (dolist (info infos)
+	      (let* ((group (gnus-info-group info))
+		     (active (gnus-active group)))
+		(when active
+		  (insert (format "%S %d %d y\n"
+				  (decode-coding-string
+				   (gnus-group-real-name group) 'utf-8)
+				  (cdr active)
+				  (car active))))))))))))
 
 (defun nnimap-update-infos (flags infos)
   (dolist (info infos)
