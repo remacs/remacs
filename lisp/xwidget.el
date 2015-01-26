@@ -396,7 +396,7 @@ XW is the xwidget identifier, TEXT is retrieved from the webkit."
   )
 
 (defun xwidget-webkit-adjust-size-to-window ()
-  "Adjust webkit to window."m
+  "Adjust webkit to window."
   (interactive)
     (xwidget-resize ( xwidget-webkit-current-session) (window-pixel-width) (window-pixel-height)))
 
@@ -421,7 +421,7 @@ Argument H height."
       ((bufname (generate-new-buffer-name "*xwidget-webkit*"))
        xw)
     (setq xwidget-webkit-last-session-buffer (switch-to-buffer (get-buffer-create bufname)))
-    (insert " ")
+    (insert " 'a' adjusts the xwidget size.")
     (setq xw (xwidget-insert 1 'webkit-osr  bufname 1000 1000))
     (xwidget-put xw 'callback 'xwidget-webkit-callback)
     (xwidget-webkit-mode)
