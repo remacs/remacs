@@ -23,8 +23,8 @@
 
 ;;; Code:
 
-(require 'ert)
-(require 'cl-lib)
+(eval-when-compile (require 'ert)) ;Don't indirectly require cl-lib at run-time.
+(require 'cl-generic)
 
 (cl-defgeneric cl--generic-1 (x y))
 (cl-defgeneric (setf cl--generic-1) (v y z) "My generic doc.")

@@ -1,5 +1,10 @@
 2015-01-26  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* automated/cl-generic-tests.el: Try and make sure cl-lib is not
+	required at run-time.
+
+2015-01-26  Stefan Monnier  <monnier@iro.umontreal.ca>
+
 	* automated/cl-generic-tests.el (cl-generic-test-11-next-method-p):
 	New test.
 

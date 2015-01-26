@@ -203,11 +203,10 @@ Summary:
     ;; or :after, make sure there's a matching dummy primary.
     (when (and (memq kind '(:before :after))
                ;; FIXME: Use `cl-find-method'?
-               (not (assoc (cons (mapcar (lambda (arg)
-                                           (if (consp arg) (nth 1 arg) t))
-                                         specializers)
-                                 nil)
-                           (cl--generic-method-table (cl--generic method)))))
+               (not (cl-find-method method ()
+                                    (mapcar (lambda (arg)
+                                              (if (consp arg) (nth 1 arg) t))
+                                            specializers))))
       (cl-generic-define-method method () specializers t
                                 (lambda (cnm &rest args)
                                   (if (cl--generic-isnot-nnm-p cnm)

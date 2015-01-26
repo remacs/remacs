@@ -1,5 +1,27 @@
 2015-01-26  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+
+	* emacs-lisp/cl-generic.el (cl--generic-method): New struct.
+	(cl--generic): The method-table is now a (list-of cl--generic-method).
+	(cl--generic-member-method): New function.
+	(cl-generic-define-method): Use it.
+	(cl--generic-build-combined-method, cl--generic-cache-miss):
+	Adapt to new method-table.
+	(cl--generic-no-next-method-function): Add `method' argument.
+	(cl-generic-call-method): Adapt to new method representation.
+	(cl--generic-cnm-sample, cl--generic-nnm-sample): Adjust.
+	(cl-find-method, cl-method-qualifiers): New functions.
+	(cl--generic-method-info): Adapt to new method representation.
+	Return a string for the qualifiers.
+	(cl--generic-describe):
+	* emacs-lisp/eieio-opt.el (eieio-help-class): Adjust accordingly.
+	(eieio-all-generic-functions, eieio-method-documentation):
+	Adjust to new method representation.
+
+	* emacs-lisp/eieio-compat.el (eieio--defmethod): Use cl-find-method.
+
+2015-01-26  Stefan Monnier  <monnier@iro.umontreal.ca>
+
 	* emacs-lisp/cl-generic.el: Add a method-combination hook.
 	(cl-generic-method-combination-function): New var.
 	(cl--generic-lambda): Remove `with-cnm' arg.
