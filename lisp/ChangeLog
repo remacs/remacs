@@ -1,3 +1,8 @@
+2015-01-26  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* net/eww.el (eww-add-bookmark): Fix prompt and clean up the code
+	slightly.
+
 2015-01-25  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/cl-generic.el (cl--generic-no-next-method-function): New fun.
