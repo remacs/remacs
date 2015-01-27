@@ -2089,6 +2089,23 @@ def f():
    (python-nav-backward-up-list)
    (should (looking-at "def f():"))))
 
+(ert-deftest python-indent-dedent-line-backspace-1 ()
+  "Check de-indentation on first call.  Bug#18319."
+  (python-tests-with-temp-buffer
+   "
+if True:
+    x ()
+    if False:
+"
+   (python-tests-look-at "if False:")
+   (call-interactively #'python-indent-dedent-line-backspace)
+   (should (zerop (current-indentation)))
+   ;; XXX: This should be a call to `undo' but it's triggering errors.
+   (insert "    ")
+   (should (= (current-indentation) 4))
+   (call-interactively #'python-indent-dedent-line-backspace)
+   (should (zerop (current-indentation)))))
+
 
 ;;; Shell integration
 
