@@ -527,6 +527,10 @@ to avoid interfering with the kill ring.
 allow overriding the regular expression that recognizes the ldapsearch
 command line's password prompt.
 
++++
+** tar-mode: new `tar-new-entry' command, allowing for new members to
+be added to the archive.
+
 ** Obsolete packages
 
 ---

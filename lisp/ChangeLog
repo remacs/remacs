@@ -1,3 +1,13 @@
+2015-01-27  Ivan Shmakov  <ivan@siamics.net>
+
+	* tar-mode.el: Allow for adding new archive members.  (Bug#19274)
+	(tar-new-regular-file-header, tar--pad-to, tar--put-at)
+	(tar-header-serialize): New functions.
+	(tar-current-position): Split from tar-current-descriptor.
+	(tar-current-descriptor): Use it.
+	(tar-new-entry): New command.
+	(tar-mode-map): Bind it.
+
 2015-01-27  Sam Steingold  <sds@gnu.org>
 
 	* progmodes/python.el (python-check-custom-command): Buffer local
