@@ -1,3 +1,8 @@
+2015-01-27  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* nnir.el (nnir-imap-expr-to-imap): Check for literal+ capability in
+	IMAP.
+
 2015-01-27  Eric Abrahamsen  <eric@ericabrahamsen.net>
 
 	* nnir.el (nnir-run-imap): Enable non-ASCII IMAP searches.

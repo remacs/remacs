@@ -1069,29 +1069,30 @@ In future the following will be added to the language:
 (defun nnir-imap-expr-to-imap (criteria expr)
   "Convert EXPR into an IMAP search expression on CRITERIA"
   ;; What sort of expression is this, eh?
-  (cond
-   ;; Simple string term
-   ((stringp expr)
-    (format "%s %S" criteria expr))
-   ;; Trivial term: and
-   ((eq expr 'and) nil)
-   ;; Composite term: or expression
-   ((eq (car-safe expr) 'or)
-    (format "OR %s %s"
-	    (nnir-imap-expr-to-imap criteria (second expr))
-	    (nnir-imap-expr-to-imap criteria (third expr))))
-   ;; Composite term: just the fax, mam
-   ((eq (car-safe expr) 'not)
-    (format "NOT (%s)" (nnir-imap-query-to-imap criteria (rest expr))))
-   ;; Composite term: non-ascii search term
-   ((numberp (car-safe expr))
-    (format "%s {%d%s}\n%s" criteria (car expr)
-	    (if literal+ "+" "") (second expr)))
-   ;; Composite term: just expand it all.
-   ((and (not (null expr)) (listp expr))
-    (format "(%s)" (nnir-imap-query-to-imap criteria expr)))
-   ;; Complex value, give up for now.
-   (t (error "Unhandled input: %S" expr))))
+  (let ((literal+ (nnimap-capability "LITERAL+")))
+    (cond
+     ;; Simple string term
+     ((stringp expr)
+      (format "%s %S" criteria expr))
+     ;; Trivial term: and
+     ((eq expr 'and) nil)
+     ;; Composite term: or expression
+     ((eq (car-safe expr) 'or)
+      (format "OR %s %s"
+	      (nnir-imap-expr-to-imap criteria (second expr))
+	      (nnir-imap-expr-to-imap criteria (third expr))))
+     ;; Composite term: just the fax, mam
+     ((eq (car-safe expr) 'not)
+      (format "NOT (%s)" (nnir-imap-query-to-imap criteria (rest expr))))
+     ;; Composite term: non-ascii search term
+     ((numberp (car-safe expr))
+      (format "%s {%d%s}\n%s" criteria (car expr)
+	      (if literal+ "+" "") (second expr)))
+     ;; Composite term: just expand it all.
+     ((and (not (null expr)) (listp expr))
+      (format "(%s)" (nnir-imap-query-to-imap criteria expr)))
+     ;; Complex value, give up for now.
+     (t (error "Unhandled input: %S" expr)))))
 
 
 (defun nnir-imap-parse-query (string)
