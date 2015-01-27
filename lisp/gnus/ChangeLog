@@ -1,5 +1,7 @@
 2015-01-27  Eric Abrahamsen  <eric@ericabrahamsen.net>
 
+	* nnir.el (nnir-run-imap): Enable non-ASCII IMAP searches.
+
 	* nnmairix.el ("nnmairix"): Declare nnmairix as virtual.
 
 	* gnus-bcklg.el (gnus-backlog-enter-article): No virtual groups should
