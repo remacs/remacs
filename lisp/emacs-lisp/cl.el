@@ -377,7 +377,9 @@ The two cases that are handled are:
           res))))
    (t
     (setq cl--labels-convert-cache cl--function-convert-cache)
-    (cl--labels-convert f))))
+    (prog1
+	(cl--labels-convert f)
+      (setq cl--function-convert-cache cl--labels-convert-cache)))))
 
 (defmacro lexical-let (bindings &rest body)
   "Like `let', but lexically scoped.

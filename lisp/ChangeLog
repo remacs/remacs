@@ -1,3 +1,8 @@
+2015-01-27  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* emacs-lisp/cl.el (cl--function-convert):
+	Merge cache that cl--labels-convert adds (bug#19699).
+
 2015-01-27  Ivan Shmakov  <ivan@siamics.net>
 
 	* tar-mode.el: Allow for adding new archive members.  (Bug#19274)
