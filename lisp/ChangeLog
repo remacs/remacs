@@ -1,5 +1,9 @@
-2015-01-26  Stefan Monnier  <monnier@iro.umontreal.ca>
+2015-01-27  Katsumi Yamaoka  <yamaoka@jpl.org>
 
+	* emacs-lisp/cl.el (cl--function-convert): Run cl--labels-convert
+	for the case cl-flet or cl-labels form is wrapped with lexical-let.
+
+2015-01-26  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/cl-generic.el (cl--generic-method): New struct.
 	(cl--generic): The method-table is now a (list-of cl--generic-method).
