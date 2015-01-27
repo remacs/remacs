@@ -2349,6 +2349,8 @@ With argument, add COUNT copies of the character."
       (isearch-process-search-char char count))))
 
 (defun isearch-process-search-char (char &optional count)
+  "Add CHAR to the search string, COUNT times.
+Search is updated accordingly."
   ;; * and ? are special in regexps when not preceded by \.
   ;; } and | are special in regexps when preceded by \.
   ;; Nothing special for + because it matches at least once.

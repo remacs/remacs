@@ -1,3 +1,7 @@
+2015-01-27  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* isearch.el (isearch-process-search-char): Add docstring.
+
 2015-01-27  Oleh Krehel  <ohwoeowho@gmail.com>
 
 	* emacs-lisp/derived.el (define-derived-mode): Declare indent 3.
