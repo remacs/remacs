@@ -3432,7 +3432,22 @@ sys_readdir (DIR *dirp)
 	}
 
       if (dir_find_handle == INVALID_HANDLE_VALUE)
-	return NULL;
+	{
+	  switch (GetLastError ())
+	    {
+	    case ERROR_PATH_NOT_FOUND:
+	    case ERROR_ACCESS_DENIED:
+	    case ERROR_INVALID_DRIVE:
+	    case ERROR_BAD_NETPATH:
+	      /* This special value will be noticed by
+		 directory_files_internal, which see.  */
+	      errno = ENOTDIR;
+	      break;
+	    default:
+	      break;
+	    }
+	  return NULL;
+	}
     }
   else if (w32_unicode_filenames)
     {
