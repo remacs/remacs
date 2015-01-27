@@ -1,3 +1,9 @@
+2015-01-27  Sam Steingold  <sds@gnu.org>
+
+	* progmodes/python.el (python-check-custom-command): Buffer local
+	because it usually includes the buffer name.
+	(python-check-command): Set to epylint when pyflakes is not available.
+
 2015-01-27  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
 	* net/eudcb-bbdb.el, net/eudcb-ldap.el, net/eudcb-mab.el,
