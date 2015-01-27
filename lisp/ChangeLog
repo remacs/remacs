@@ -1,7 +1,8 @@
 2015-01-27  Katsumi Yamaoka  <yamaoka@jpl.org>
 
 	* emacs-lisp/cl.el (cl--function-convert): Run cl--labels-convert
-	for the case cl-flet or cl-labels form is wrapped with lexical-let.
+	for the case cl-flet or cl-labels form is wrapped with lexical-let
+	(bug#19613).
 
 2015-01-26  Stefan Monnier  <monnier@iro.umontreal.ca>
 
