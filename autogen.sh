@@ -226,6 +226,7 @@ if test -d .git/hooks; then
 	tailored_hooks="$tailored_hooks $hook"
     done
     for hook in applypatch-msg pre-applypatch; do
+	test ! -r .git/hooks/$hook.sample ||
 	cmp .git/hooks/$hook.sample .git/hooks/$hook >/dev/null 2>&1 ||
 	sample_hooks="$sample_hooks $hook"
     done
