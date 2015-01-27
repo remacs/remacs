@@ -1,3 +1,23 @@
+2015-01-26  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: New non-global state dependent indentation engine.
+	(Bug#18319, Bug#19595)
+
+	* progmodes/python.el (python-syntax-comment-or-string-p): Accept
+	PPSS as argument.
+	(python-syntax-closing-paren-p): New function.
+	(python-indent-current-level)
+	(python-indent-levels): Mark obsolete.
+	(python-indent-context): Return more context cases.
+	(python-indent--calculate-indentation)
+	(python-indent--calculate-levels): New functions.
+	(python-indent-calculate-levels): Use them.
+	(python-indent-calculate-indentation, python-indent-line):
+	(python-indent-line-function): Rewritten to use new API.
+	(python-indent-dedent-line): Simplify logic.
+	(python-indent-dedent-line-backspace): Use `unless`.
+	(python-indent-toggle-levels): Delete function.
+
 2015-01-22  Wolfgang Jenkner  <wjenkner@inode.at>
 
 	* calc/calc-units.el (math-units-in-expr-p)

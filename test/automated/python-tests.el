@@ -174,13 +174,13 @@ aliqua."
 foo = long_function_name(var_one, var_two,
                          var_three, var_four)
 "
-   (should (eq (car (python-indent-context)) 'no-indent))
+   (should (eq (car (python-indent-context)) :no-indent))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at "foo = long_function_name(var_one, var_two,")
-   (should (eq (car (python-indent-context)) 'after-line))
+   (should (eq (car (python-indent-context)) :after-line))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at "var_three, var_four)")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren))
    (should (= (python-indent-calculate-indentation) 25))))
 
 (ert-deftest python-indent-pep8-2 ()
@@ -192,19 +192,22 @@ def long_function_name(
         var_four):
     print (var_one)
 "
-   (should (eq (car (python-indent-context)) 'no-indent))
+   (should (eq (car (python-indent-context)) :no-indent))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at "def long_function_name(")
-   (should (eq (car (python-indent-context)) 'after-line))
+   (should (eq (car (python-indent-context)) :after-line))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at "var_one, var_two, var_three,")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context))
+               :inside-paren-newline-start-from-block))
    (should (= (python-indent-calculate-indentation) 8))
    (python-tests-look-at "var_four):")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context))
+               :inside-paren-newline-start-from-block))
    (should (= (python-indent-calculate-indentation) 8))
    (python-tests-look-at "print (var_one)")
-   (should (eq (car (python-indent-context)) 'after-beginning-of-block))
+   (should (eq (car (python-indent-context))
+               :after-block-start))
    (should (= (python-indent-calculate-indentation) 4))))
 
 (ert-deftest python-indent-pep8-3 ()
@@ -215,17 +218,33 @@ foo = long_function_name(
   var_one, var_two,
   var_three, var_four)
 "
-   (should (eq (car (python-indent-context)) 'no-indent))
+   (should (eq (car (python-indent-context)) :no-indent))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at "foo = long_function_name(")
-   (should (eq (car (python-indent-context)) 'after-line))
+   (should (eq (car (python-indent-context)) :after-line))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at "var_one, var_two,")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))
    (should (= (python-indent-calculate-indentation) 4))
    (python-tests-look-at "var_three, var_four)")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))
    (should (= (python-indent-calculate-indentation) 4))))
+
+(ert-deftest python-indent-base-case ()
+  "Check base case does not trigger errors."
+  (python-tests-with-temp-buffer
+   "
+
+"
+   (goto-char (point-min))
+   (should (eq (car (python-indent-context)) :no-indent))
+   (should (= (python-indent-calculate-indentation) 0))
+   (forward-line 1)
+   (should (eq (car (python-indent-context)) :after-line))
+   (should (= (python-indent-calculate-indentation) 0))
+   (forward-line 1)
+   (should (eq (car (python-indent-context)) :after-line))
+   (should (= (python-indent-calculate-indentation) 0))))
 
 (ert-deftest python-indent-after-comment-1 ()
   "The most simple after-comment case that shouldn't fail."
@@ -240,23 +259,23 @@ class Blag(object):
 # with the exception with which the first child failed.
 "
    (python-tests-look-at "# We only complete")
-   (should (eq (car (python-indent-context)) 'after-line))
+   (should (eq (car (python-indent-context)) :after-block-end))
    (should (= (python-indent-calculate-indentation) 8))
    (python-tests-look-at "# terminal state")
-   (should (eq (car (python-indent-context)) 'after-comment))
+   (should (eq (car (python-indent-context)) :after-comment))
    (should (= (python-indent-calculate-indentation) 8))
    (python-tests-look-at "# with the exception")
-   (should (eq (car (python-indent-context)) 'after-comment))
+   (should (eq (car (python-indent-context)) :after-comment))
    ;; This one indents relative to previous block, even given the fact
    ;; that it was under-indented.
    (should (= (python-indent-calculate-indentation) 4))
    (python-tests-look-at "# terminal state" -1)
    ;; It doesn't hurt to check again.
-   (should (eq (car (python-indent-context)) 'after-comment))
+   (should (eq (car (python-indent-context)) :after-comment))
    (python-indent-line)
    (should (= (current-indentation) 8))
    (python-tests-look-at "# with the exception")
-   (should (eq (car (python-indent-context)) 'after-comment))
+   (should (eq (car (python-indent-context)) :after-comment))
    ;; Now everything should be lined up.
    (should (= (python-indent-calculate-indentation) 8))))
 
@@ -275,33 +294,33 @@ now_we_do_mess_cause_this_is_not_a_comment = 1
 # yeah, that.
 "
    (python-tests-look-at "# I don't do much")
-   (should (eq (car (python-indent-context)) 'after-beginning-of-block))
+   (should (eq (car (python-indent-context)) :after-block-start))
    (should (= (python-indent-calculate-indentation) 4))
    (python-tests-look-at "return arg")
    ;; Comment here just gets ignored, this line is not a comment so
    ;; the rules won't apply here.
-   (should (eq (car (python-indent-context)) 'after-beginning-of-block))
+   (should (eq (car (python-indent-context)) :after-block-start))
    (should (= (python-indent-calculate-indentation) 4))
    (python-tests-look-at "# This comment is badly")
-   (should (eq (car (python-indent-context)) 'after-line))
+   (should (eq (car (python-indent-context)) :after-block-end))
    ;; The return keyword moves indentation backwards 4 spaces, but
    ;; let's assume this comment was placed there because the user
    ;; wanted to (manually adding spaces or whatever).
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at "# but we won't mess")
-   (should (eq (car (python-indent-context)) 'after-comment))
+   (should (eq (car (python-indent-context)) :after-comment))
    (should (= (python-indent-calculate-indentation) 4))
    ;; Behave the same for blank lines: potentially a comment.
    (forward-line 1)
-   (should (eq (car (python-indent-context)) 'after-comment))
+   (should (eq (car (python-indent-context)) :after-comment))
    (should (= (python-indent-calculate-indentation) 4))
    (python-tests-look-at "now_we_do_mess")
    ;; Here is where comment indentation starts to get ignored and
    ;; where the user can't freely indent anymore.
-   (should (eq (car (python-indent-context)) 'after-line))
+   (should (eq (car (python-indent-context)) :after-block-end))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at "# yeah, that.")
-   (should (eq (car (python-indent-context)) 'after-line))
+   (should (eq (car (python-indent-context)) :after-line))
    (should (= (python-indent-calculate-indentation) 0))))
 
 (ert-deftest python-indent-inside-paren-1 ()
@@ -325,49 +344,53 @@ data = {
 }
 "
    (python-tests-look-at "data = {")
-   (should (eq (car (python-indent-context)) 'after-line))
+   (should (eq (car (python-indent-context)) :after-line))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at "'key':")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))
    (should (= (python-indent-calculate-indentation) 4))
    (python-tests-look-at "{")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))
    (should (= (python-indent-calculate-indentation) 4))
    (python-tests-look-at "'objlist': [")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))
    (should (= (python-indent-calculate-indentation) 8))
    (python-tests-look-at "{")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))
    (should (= (python-indent-calculate-indentation) 12))
    (python-tests-look-at "'pk': 1,")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))
    (should (= (python-indent-calculate-indentation) 16))
    (python-tests-look-at "'name': 'first',")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))
    (should (= (python-indent-calculate-indentation) 16))
    (python-tests-look-at "},")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context))
+               :inside-paren-at-closing-nested-paren))
    (should (= (python-indent-calculate-indentation) 12))
    (python-tests-look-at "{")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))
    (should (= (python-indent-calculate-indentation) 12))
    (python-tests-look-at "'pk': 2,")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))
    (should (= (python-indent-calculate-indentation) 16))
    (python-tests-look-at "'name': 'second',")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))
    (should (= (python-indent-calculate-indentation) 16))
    (python-tests-look-at "}")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context))
+               :inside-paren-at-closing-nested-paren))
    (should (= (python-indent-calculate-indentation) 12))
    (python-tests-look-at "]")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context))
+               :inside-paren-at-closing-nested-paren))
    (should (= (python-indent-calculate-indentation) 8))
    (python-tests-look-at "}")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context))
+               :inside-paren-at-closing-nested-paren))
    (should (= (python-indent-calculate-indentation) 4))
    (python-tests-look-at "}")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-at-closing-paren))
    (should (= (python-indent-calculate-indentation) 0))))
 
 (ert-deftest python-indent-inside-paren-2 ()
@@ -384,32 +407,110 @@ data = {'key': {
 }}
 "
    (python-tests-look-at "data = {")
-   (should (eq (car (python-indent-context)) 'after-line))
+   (should (eq (car (python-indent-context)) :after-line))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at "'objlist': [")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))
    (should (= (python-indent-calculate-indentation) 4))
    (python-tests-look-at "{'pk': 1,")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))
    (should (= (python-indent-calculate-indentation) 8))
    (python-tests-look-at "'name': 'first'},")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren))
    (should (= (python-indent-calculate-indentation) 9))
    (python-tests-look-at "{'pk': 2,")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))
    (should (= (python-indent-calculate-indentation) 8))
    (python-tests-look-at "'name': 'second'}")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren))
    (should (= (python-indent-calculate-indentation) 9))
    (python-tests-look-at "]")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context))
+               :inside-paren-at-closing-nested-paren))
    (should (= (python-indent-calculate-indentation) 4))
    (python-tests-look-at "}}")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context))
+               :inside-paren-at-closing-nested-paren))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at "}")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-at-closing-paren))
    (should (= (python-indent-calculate-indentation) 0))))
+
+(ert-deftest python-indent-inside-paren-3 ()
+  "The simplest case possible."
+  (python-tests-with-temp-buffer
+   "
+data = ('these',
+        'are',
+        'the',
+        'tokens')
+"
+   (python-tests-look-at "data = ('these',")
+   (should (eq (car (python-indent-context)) :after-line))
+   (should (= (python-indent-calculate-indentation) 0))
+   (forward-line 1)
+   (should (eq (car (python-indent-context)) :inside-paren))
+   (should (= (python-indent-calculate-indentation) 8))
+   (forward-line 1)
+   (should (eq (car (python-indent-context)) :inside-paren))
+   (should (= (python-indent-calculate-indentation) 8))
+   (forward-line 1)
+   (should (eq (car (python-indent-context)) :inside-paren))
+   (should (= (python-indent-calculate-indentation) 8))))
+
+(ert-deftest python-indent-inside-paren-4 ()
+  "Respect indentation of first column."
+  (python-tests-with-temp-buffer
+   "
+data = [ [ 'these', 'are'],
+         ['the', 'tokens' ] ]
+"
+   (python-tests-look-at "data = [ [ 'these', 'are'],")
+   (should (eq (car (python-indent-context)) :after-line))
+   (should (= (python-indent-calculate-indentation) 0))
+   (forward-line 1)
+   (should (eq (car (python-indent-context)) :inside-paren))
+   (should (= (python-indent-calculate-indentation) 9))))
+
+(ert-deftest python-indent-inside-paren-5 ()
+  "Test when :inside-paren initial parens are skipped in context start."
+  (python-tests-with-temp-buffer
+   "
+while ((not some_condition) and
+       another_condition):
+    do_something_interesting(
+        with_some_arg)
+"
+   (python-tests-look-at "while ((not some_condition) and")
+   (should (eq (car (python-indent-context)) :after-line))
+   (should (= (python-indent-calculate-indentation) 0))
+   (forward-line 1)
+   (should (eq (car (python-indent-context)) :inside-paren))
+   (should (= (python-indent-calculate-indentation) 7))
+   (forward-line 1)
+   (should (eq (car (python-indent-context)) :after-block-start))
+   (should (= (python-indent-calculate-indentation) 4))
+   (forward-line 1)
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))
+   (should (= (python-indent-calculate-indentation) 8))))
+
+(ert-deftest python-indent-inside-paren-6 ()
+  "This should be aligned.."
+  (python-tests-with-temp-buffer
+   "
+CHOICES = (('some', 'choice'),
+           ('another', 'choice'),
+           ('more', 'choices'))
+"
+   (python-tests-look-at "CHOICES = (('some', 'choice'),")
+   (should (eq (car (python-indent-context)) :after-line))
+   (should (= (python-indent-calculate-indentation) 0))
+   (forward-line 1)
+   (should (eq (car (python-indent-context)) :inside-paren))
+   (should (= (python-indent-calculate-indentation) 11))
+   (forward-line 1)
+   (should (eq (car (python-indent-context)) :inside-paren))
+   (should (= (python-indent-calculate-indentation) 11))))
 
 (ert-deftest python-indent-after-block-1 ()
   "The most simple after-block case that shouldn't fail."
@@ -417,10 +518,10 @@ data = {'key': {
    "
 def foo(a, b, c=True):
 "
-   (should (eq (car (python-indent-context)) 'no-indent))
+   (should (eq (car (python-indent-context)) :no-indent))
    (should (= (python-indent-calculate-indentation) 0))
    (goto-char (point-max))
-   (should (eq (car (python-indent-context)) 'after-beginning-of-block))
+   (should (eq (car (python-indent-context)) :after-block-start))
    (should (= (python-indent-calculate-indentation) 4))))
 
 (ert-deftest python-indent-after-block-2 ()
@@ -432,8 +533,27 @@ def foo(a, b, c={
 }):
 "
    (goto-char (point-max))
-   (should (eq (car (python-indent-context)) 'after-beginning-of-block))
+   (should (eq (car (python-indent-context)) :after-block-start))
    (should (= (python-indent-calculate-indentation) 4))))
+
+(ert-deftest python-indent-after-block-3 ()
+  "A weird (malformed) sample, usually found in python shells."
+  (python-tests-with-temp-buffer
+   "
+In [1]:
+def func():
+pass
+
+In [2]:
+something
+"
+   (python-tests-look-at "pass")
+   (should (eq (car (python-indent-context)) :after-block-start))
+   (should (= (python-indent-calculate-indentation) 4))
+   (python-tests-look-at "something")
+   (end-of-line)
+   (should (eq (car (python-indent-context)) :after-line))
+   (should (= (python-indent-calculate-indentation) 0))))
 
 (ert-deftest python-indent-after-backslash-1 ()
   "The most common case."
@@ -444,16 +564,16 @@ from foo.bar.baz import something, something_1 \\\\
     something_4, something_5
 "
    (python-tests-look-at "from foo.bar.baz import something, something_1")
-   (should (eq (car (python-indent-context)) 'after-line))
+   (should (eq (car (python-indent-context)) :after-line))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at "something_2 something_3,")
-   (should (eq (car (python-indent-context)) 'after-backslash))
+   (should (eq (car (python-indent-context)) :after-backslash-first-line))
    (should (= (python-indent-calculate-indentation) 4))
    (python-tests-look-at "something_4, something_5")
-   (should (eq (car (python-indent-context)) 'after-backslash))
+   (should (eq (car (python-indent-context)) :after-backslash))
    (should (= (python-indent-calculate-indentation) 4))
    (goto-char (point-max))
-   (should (eq (car (python-indent-context)) 'after-line))
+   (should (eq (car (python-indent-context)) :after-line))
    (should (= (python-indent-calculate-indentation) 0))))
 
 (ert-deftest python-indent-after-backslash-2 ()
@@ -471,40 +591,104 @@ objects = Thing.objects.all() \\\\
                        .values_list()
 "
    (python-tests-look-at "objects = Thing.objects.all()")
-   (should (eq (car (python-indent-context)) 'after-line))
+   (should (eq (car (python-indent-context)) :after-line))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at ".filter(")
-   (should (eq (car (python-indent-context)) 'after-backslash))
+   (should (eq (car (python-indent-context))
+               :after-backslash-dotted-continuation))
    (should (= (python-indent-calculate-indentation) 23))
    (python-tests-look-at "type='toy',")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))
    (should (= (python-indent-calculate-indentation) 27))
    (python-tests-look-at "status='bought'")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))
    (should (= (python-indent-calculate-indentation) 27))
    (python-tests-look-at ") \\\\")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-at-closing-paren))
    (should (= (python-indent-calculate-indentation) 23))
    (python-tests-look-at ".aggregate(")
-   (should (eq (car (python-indent-context)) 'after-backslash))
+   (should (eq (car (python-indent-context))
+               :after-backslash-dotted-continuation))
    (should (= (python-indent-calculate-indentation) 23))
    (python-tests-look-at "Sum('amount')")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))
    (should (= (python-indent-calculate-indentation) 27))
    (python-tests-look-at ") \\\\")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren-at-closing-paren))
    (should (= (python-indent-calculate-indentation) 23))
    (python-tests-look-at ".values_list()")
-   (should (eq (car (python-indent-context)) 'after-backslash))
+   (should (eq (car (python-indent-context))
+               :after-backslash-dotted-continuation))
    (should (= (python-indent-calculate-indentation) 23))
    (forward-line 1)
-   (should (eq (car (python-indent-context)) 'after-line))
+   (should (eq (car (python-indent-context)) :after-line))
    (should (= (python-indent-calculate-indentation) 0))))
+
+(ert-deftest python-indent-after-backslash-3 ()
+  "Backslash continuation from block start."
+  (python-tests-with-temp-buffer
+   "
+with open('/path/to/some/file/you/want/to/read') as file_1, \\\\
+     open('/path/to/some/file/being/written', 'w') as file_2:
+    file_2.write(file_1.read())
+"
+   (python-tests-look-at
+    "with open('/path/to/some/file/you/want/to/read') as file_1, \\\\")
+   (should (eq (car (python-indent-context)) :after-line))
+   (should (= (python-indent-calculate-indentation) 0))
+   (python-tests-look-at
+    "open('/path/to/some/file/being/written', 'w') as file_2")
+   (should (eq (car (python-indent-context))
+               :after-backslash-block-continuation))
+   (should (= (python-indent-calculate-indentation) 5))
+   (python-tests-look-at "file_2.write(file_1.read())")
+   (should (eq (car (python-indent-context)) :after-block-start))
+   (should (= (python-indent-calculate-indentation) 4))))
+
+(ert-deftest python-indent-after-backslash-4 ()
+  "Backslash continuation from assignment."
+  (python-tests-with-temp-buffer
+   "
+super_awful_assignment = some_calculation() and \\\\
+                         another_calculation() and \\\\
+                         some_final_calculation()
+"
+   (python-tests-look-at
+    "super_awful_assignment = some_calculation() and \\\\")
+   (should (eq (car (python-indent-context)) :after-line))
+   (should (= (python-indent-calculate-indentation) 0))
+   (python-tests-look-at "another_calculation() and \\\\")
+   (should (eq (car (python-indent-context))
+               :after-backslash-assignment-continuation))
+   (should (= (python-indent-calculate-indentation) 25))
+   (python-tests-look-at "some_final_calculation()")
+   (should (eq (car (python-indent-context)) :after-backslash))
+   (should (= (python-indent-calculate-indentation) 25))))
+
+(ert-deftest python-indent-after-backslash-5 ()
+  "Dotted continuation bizarre example."
+  (python-tests-with-temp-buffer
+   "
+def delete_all_things():
+    Thing \\\\
+        .objects.all() \\\\
+                .delete()
+"
+   (python-tests-look-at "Thing \\\\")
+   (should (eq (car (python-indent-context)) :after-block-start))
+   (should (= (python-indent-calculate-indentation) 4))
+   (python-tests-look-at ".objects.all() \\\\")
+   (should (eq (car (python-indent-context)) :after-backslash-first-line))
+   (should (= (python-indent-calculate-indentation) 8))
+   (python-tests-look-at ".delete()")
+   (should (eq (car (python-indent-context))
+               :after-backslash-dotted-continuation))
+   (should (= (python-indent-calculate-indentation) 16))))
 
 (ert-deftest python-indent-block-enders-1 ()
   "Test de-indentation for pass keyword."
   (python-tests-with-temp-buffer
-      "
+   "
 Class foo(object):
 
     def bar(self):
@@ -516,17 +700,18 @@ Class foo(object):
         else:
             pass
 "
-    (python-tests-look-at "3)")
-    (forward-line 1)
-    (should (= (python-indent-calculate-indentation) 8))
-    (python-tests-look-at "pass")
-    (forward-line 1)
-    (should (= (python-indent-calculate-indentation) 8))))
+   (python-tests-look-at "3)")
+   (forward-line 1)
+   (should (= (python-indent-calculate-indentation) 8))
+   (python-tests-look-at "pass")
+   (forward-line 1)
+   (should (eq (car (python-indent-context)) :after-block-end))
+   (should (= (python-indent-calculate-indentation) 8))))
 
 (ert-deftest python-indent-block-enders-2 ()
   "Test de-indentation for return keyword."
   (python-tests-with-temp-buffer
-      "
+   "
 Class foo(object):
     '''raise lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
 
@@ -539,64 +724,68 @@ Class foo(object):
                     2,
                     3)
 "
-    (python-tests-look-at "def")
-    (should (= (python-indent-calculate-indentation) 4))
-    (python-tests-look-at "if")
-    (should (= (python-indent-calculate-indentation) 8))
-    (python-tests-look-at "return")
-    (should (= (python-indent-calculate-indentation) 12))
-    (goto-char (point-max))
-    (should (= (python-indent-calculate-indentation) 8))))
+   (python-tests-look-at "def")
+   (should (= (python-indent-calculate-indentation) 4))
+   (python-tests-look-at "if")
+   (should (= (python-indent-calculate-indentation) 8))
+   (python-tests-look-at "return")
+   (should (= (python-indent-calculate-indentation) 12))
+   (goto-char (point-max))
+   (should (eq (car (python-indent-context)) :after-block-end))
+   (should (= (python-indent-calculate-indentation) 8))))
 
 (ert-deftest python-indent-block-enders-3 ()
   "Test de-indentation for continue keyword."
   (python-tests-with-temp-buffer
-      "
+   "
 for element in lst:
     if element is None:
         continue
 "
-    (python-tests-look-at "if")
-    (should (= (python-indent-calculate-indentation) 4))
-    (python-tests-look-at "continue")
-    (should (= (python-indent-calculate-indentation) 8))
-    (forward-line 1)
-    (should (= (python-indent-calculate-indentation) 4))))
+   (python-tests-look-at "if")
+   (should (= (python-indent-calculate-indentation) 4))
+   (python-tests-look-at "continue")
+   (should (= (python-indent-calculate-indentation) 8))
+   (forward-line 1)
+   (should (eq (car (python-indent-context)) :after-block-end))
+   (should (= (python-indent-calculate-indentation) 4))))
 
 (ert-deftest python-indent-block-enders-4 ()
   "Test de-indentation for break keyword."
   (python-tests-with-temp-buffer
-      "
+   "
 for element in lst:
     if element is None:
         break
 "
-    (python-tests-look-at "if")
-    (should (= (python-indent-calculate-indentation) 4))
-    (python-tests-look-at "break")
-    (should (= (python-indent-calculate-indentation) 8))
-    (forward-line 1)
-    (should (= (python-indent-calculate-indentation) 4))))
+   (python-tests-look-at "if")
+   (should (= (python-indent-calculate-indentation) 4))
+   (python-tests-look-at "break")
+   (should (= (python-indent-calculate-indentation) 8))
+   (forward-line 1)
+   (should (eq (car (python-indent-context)) :after-block-end))
+   (should (= (python-indent-calculate-indentation) 4))))
 
 (ert-deftest python-indent-block-enders-5 ()
   "Test de-indentation for raise keyword."
   (python-tests-with-temp-buffer
-      "
+   "
 for element in lst:
     if element is None:
         raise ValueError('Element cannot be None')
 "
-    (python-tests-look-at "if")
-    (should (= (python-indent-calculate-indentation) 4))
-    (python-tests-look-at "raise")
-    (should (= (python-indent-calculate-indentation) 8))
-    (forward-line 1)
-    (should (= (python-indent-calculate-indentation) 4))))
+   (python-tests-look-at "if")
+   (should (= (python-indent-calculate-indentation) 4))
+   (python-tests-look-at "raise")
+   (should (= (python-indent-calculate-indentation) 8))
+   (forward-line 1)
+   (should (eq (car (python-indent-context)) :after-block-end))
+   (should (= (python-indent-calculate-indentation) 4))))
 
 (ert-deftest python-indent-dedenters-1 ()
   "Test de-indentation for the elif keyword."
   (python-tests-with-temp-buffer
-      "
+   "
 if save:
     try:
         write_to_disk(data)
@@ -604,15 +793,15 @@ if save:
         cleanup()
         elif
 "
-    (python-tests-look-at "elif\n")
-    (should (eq (car (python-indent-context)) 'dedenter-statement))
-    (should (= (python-indent-calculate-indentation) 0))
-    (should (equal (python-indent-calculate-levels) '(0)))))
+   (python-tests-look-at "elif\n")
+   (should (eq (car (python-indent-context)) :at-dedenter-block-start))
+   (should (= (python-indent-calculate-indentation) 0))
+   (should (= (python-indent-calculate-indentation t) 0))))
 
 (ert-deftest python-indent-dedenters-2 ()
   "Test de-indentation for the else keyword."
   (python-tests-with-temp-buffer
-      "
+   "
 if save:
     try:
         write_to_disk(data)
@@ -627,43 +816,50 @@ if save:
     finally:
         data.free()
 "
-    (python-tests-look-at "else\n")
-    (should (eq (car (python-indent-context)) 'dedenter-statement))
-    (should (= (python-indent-calculate-indentation) 8))
-    (should (equal (python-indent-calculate-levels) '(0 4 8)))))
+   (python-tests-look-at "else\n")
+   (should (eq (car (python-indent-context)) :at-dedenter-block-start))
+   (should (= (python-indent-calculate-indentation) 8))
+   (python-indent-line t)
+   (should (= (python-indent-calculate-indentation t) 4))
+   (python-indent-line t)
+   (should (= (python-indent-calculate-indentation t) 0))
+   (python-indent-line t)
+   (should (= (python-indent-calculate-indentation t) 8))))
 
 (ert-deftest python-indent-dedenters-3 ()
   "Test de-indentation for the except keyword."
   (python-tests-with-temp-buffer
-      "
+   "
 if save:
     try:
         write_to_disk(data)
         except
 "
-    (python-tests-look-at "except\n")
-    (should (eq (car (python-indent-context)) 'dedenter-statement))
-    (should (= (python-indent-calculate-indentation) 4))
-    (should (equal (python-indent-calculate-levels) '(4)))))
+   (python-tests-look-at "except\n")
+   (should (eq (car (python-indent-context)) :at-dedenter-block-start))
+   (should (= (python-indent-calculate-indentation) 4))
+   (python-indent-line t)
+   (should (= (python-indent-calculate-indentation t) 4))))
 
 (ert-deftest python-indent-dedenters-4 ()
   "Test de-indentation for the finally keyword."
   (python-tests-with-temp-buffer
-      "
+   "
 if save:
     try:
         write_to_disk(data)
         finally
 "
-    (python-tests-look-at "finally\n")
-    (should (eq (car (python-indent-context)) 'dedenter-statement))
-    (should (= (python-indent-calculate-indentation) 4))
-    (should (equal (python-indent-calculate-levels) '(4)))))
+   (python-tests-look-at "finally\n")
+   (should (eq (car (python-indent-context)) :at-dedenter-block-start))
+   (should (= (python-indent-calculate-indentation) 4))
+   (python-indent-line t)
+   (should (= (python-indent-calculate-indentation) 4))))
 
 (ert-deftest python-indent-dedenters-5 ()
   "Test invalid levels are skipped in a complex example."
   (python-tests-with-temp-buffer
-      "
+   "
 if save:
     try:
         write_to_disk(data)
@@ -676,29 +872,31 @@ if save:
             do_cleanup()
         else
 "
-    (python-tests-look-at "else\n")
-    (should (eq (car (python-indent-context)) 'dedenter-statement))
-    (should (= (python-indent-calculate-indentation) 8))
-    (should (equal (python-indent-calculate-levels) '(0 8)))))
+   (python-tests-look-at "else\n")
+   (should (eq (car (python-indent-context)) :at-dedenter-block-start))
+   (should (= (python-indent-calculate-indentation) 8))
+   (should (= (python-indent-calculate-indentation t) 0))
+   (python-indent-line t)
+   (should (= (python-indent-calculate-indentation t) 8))))
 
 (ert-deftest python-indent-dedenters-6 ()
   "Test indentation is zero when no opening block for dedenter."
   (python-tests-with-temp-buffer
-      "
+   "
 try:
     # if save:
         write_to_disk(data)
         else
 "
-    (python-tests-look-at "else\n")
-    (should (eq (car (python-indent-context)) 'dedenter-statement))
-    (should (= (python-indent-calculate-indentation) 0))
-    (should (equal (python-indent-calculate-levels) '(0)))))
+   (python-tests-look-at "else\n")
+   (should (eq (car (python-indent-context)) :at-dedenter-block-start))
+   (should (= (python-indent-calculate-indentation) 0))
+   (should (= (python-indent-calculate-indentation t) 0))))
 
 (ert-deftest python-indent-dedenters-7 ()
   "Test indentation case from Bug#15163."
   (python-tests-with-temp-buffer
-      "
+   "
 if a:
     if b:
         pass
@@ -706,10 +904,10 @@ if a:
         pass
         else:
 "
-    (python-tests-look-at "else:" 2)
-    (should (eq (car (python-indent-context)) 'dedenter-statement))
-    (should (= (python-indent-calculate-indentation) 0))
-    (should (equal (python-indent-calculate-levels) '(0)))))
+   (python-tests-look-at "else:" 2)
+   (should (eq (car (python-indent-context)) :at-dedenter-block-start))
+   (should (= (python-indent-calculate-indentation) 0))
+   (should (= (python-indent-calculate-indentation t) 0))))
 
 (ert-deftest python-indent-dedenters-8 ()
   "Test indentation for Bug#18432."
@@ -721,10 +919,99 @@ if (a == 1 or
 elif (a == 3 or
 a == 4):
 "
+   (python-tests-look-at "elif (a == 3 or")
+   (should (eq (car (python-indent-context)) :at-dedenter-block-start))
+   (should (= (python-indent-calculate-indentation) 0))
+   (should (= (python-indent-calculate-indentation t) 0))
    (python-tests-look-at "a == 4):\n")
-   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (eq (car (python-indent-context)) :inside-paren))
    (should (= (python-indent-calculate-indentation) 6))
-   (should (equal (python-indent-calculate-levels) '(0 4 6)))))
+   (python-indent-line)
+   (should (= (python-indent-calculate-indentation t) 4))
+   (python-indent-line t)
+   (should (= (python-indent-calculate-indentation t) 0))
+   (python-indent-line t)
+   (should (= (python-indent-calculate-indentation t) 6))))
+
+(ert-deftest python-indent-inside-string-1 ()
+  "Test indentation for strings."
+  (python-tests-with-temp-buffer
+   "
+multiline = '''
+bunch
+of
+lines
+'''
+"
+   (python-tests-look-at "multiline = '''")
+   (should (eq (car (python-indent-context)) :after-line))
+   (should (= (python-indent-calculate-indentation) 0))
+   (python-tests-look-at "bunch")
+   (should (eq (car (python-indent-context)) :inside-string))
+   (should (= (python-indent-calculate-indentation) 0))
+   (python-tests-look-at "of")
+   (should (eq (car (python-indent-context)) :inside-string))
+   (should (= (python-indent-calculate-indentation) 0))
+   (python-tests-look-at "lines")
+   (should (eq (car (python-indent-context)) :inside-string))
+   (should (= (python-indent-calculate-indentation) 0))
+   (python-tests-look-at "'''")
+   (should (eq (car (python-indent-context)) :inside-string))
+   (should (= (python-indent-calculate-indentation) 0))))
+
+(ert-deftest python-indent-inside-string-2 ()
+  "Test indentation for docstrings."
+  (python-tests-with-temp-buffer
+   "
+def fn(a, b, c=True):
+    '''docstring
+    bunch
+    of
+    lines
+    '''
+"
+   (python-tests-look-at "'''docstring")
+   (should (eq (car (python-indent-context)) :after-block-start))
+   (should (= (python-indent-calculate-indentation) 4))
+   (python-tests-look-at "bunch")
+   (should (eq (car (python-indent-context)) :inside-string))
+   (should (= (python-indent-calculate-indentation) 4))
+   (python-tests-look-at "of")
+   (should (eq (car (python-indent-context)) :inside-string))
+   (should (= (python-indent-calculate-indentation) 4))
+   (python-tests-look-at "lines")
+   (should (eq (car (python-indent-context)) :inside-string))
+   (should (= (python-indent-calculate-indentation) 4))
+   (python-tests-look-at "'''")
+   (should (eq (car (python-indent-context)) :inside-string))
+   (should (= (python-indent-calculate-indentation) 4))))
+
+(ert-deftest python-indent-inside-string-3 ()
+  "Test indentation for nested strings."
+  (python-tests-with-temp-buffer
+   "
+def fn(a, b, c=True):
+    some_var = '''
+    bunch
+    of
+    lines
+    '''
+"
+   (python-tests-look-at "some_var = '''")
+   (should (eq (car (python-indent-context)) :after-block-start))
+   (should (= (python-indent-calculate-indentation) 4))
+   (python-tests-look-at "bunch")
+   (should (eq (car (python-indent-context)) :inside-string))
+   (should (= (python-indent-calculate-indentation) 4))
+   (python-tests-look-at "of")
+   (should (eq (car (python-indent-context)) :inside-string))
+   (should (= (python-indent-calculate-indentation) 4))
+   (python-tests-look-at "lines")
+   (should (eq (car (python-indent-context)) :inside-string))
+   (should (= (python-indent-calculate-indentation) 4))
+   (python-tests-look-at "'''")
+   (should (eq (car (python-indent-context)) :inside-string))
+   (should (= (python-indent-calculate-indentation) 4))))
 
 (ert-deftest python-indent-electric-colon-1 ()
   "Test indentation case from Bug#18228."

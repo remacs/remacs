@@ -447,9 +447,14 @@ The type returned can be `comment', `string' or `paren'."
      ((nth 8 ppss) (if (nth 4 ppss) 'comment 'string))
      ((nth 1 ppss) 'paren))))
 
-(defsubst python-syntax-comment-or-string-p ()
-  "Return non-nil if point is inside 'comment or 'string."
-  (nth 8 (syntax-ppss)))
+(defsubst python-syntax-comment-or-string-p (&optional ppss)
+  "Return non-nil if PPSS is inside 'comment or 'string."
+  (nth 8 (or ppss (syntax-ppss))))
+
+(defsubst python-syntax-closing-paren-p ()
+  "Return non-nil if char after point is a closing paren."
+  (= (syntax-class (syntax-after (point)))
+     (syntax-class (string-to-syntax ")"))))
 
 (define-obsolete-function-alias
   'python-info-ppss-context #'python-syntax-context "24.3")
@@ -671,10 +676,28 @@ It makes underscores and dots word constituent chars.")
   'python-guess-indent 'python-indent-guess-indent-offset "24.3")
 
 (defvar python-indent-current-level 0
-  "Current indentation level `python-indent-line-function' is using.")
+  "Deprecated var available for compatibility.")
 
 (defvar python-indent-levels '(0)
-  "Levels of indentation available for `python-indent-line-function'.")
+  "Deprecated var available for compatibility.")
+
+(make-obsolete-variable
+ 'python-indent-current-level
+ "The indentation API changed to avoid global state.
+The function `python-indent-calculate-levels' does not use it
+anymore.  If you were defadvising it and or depended on this
+variable for indentation customizations, refactor your code to
+work on `python-indent-calculate-indentation' instead."
+ "24.5")
+
+(make-obsolete-variable
+ 'python-indent-levels
+ "The indentation API changed to avoid global state.
+The function `python-indent-calculate-levels' does not use it
+anymore.  If you were defadvising it and or depended on this
+variable for indentation customizations, refactor your code to
+work on `python-indent-calculate-indentation' instead."
+ "24.5")
 
 (defun python-indent-guess-indent-offset ()
   "Guess and set `python-indent-offset' for the current buffer."
@@ -714,356 +737,358 @@ It makes underscores and dots word constituent chars.")
                      python-indent-offset)))))))
 
 (defun python-indent-context ()
-  "Get information on indentation context.
-Context information is returned with a cons with the form:
-    (STATUS . START)
+  "Get information about the current indentation context.
+Context is returned in a cons with the form (STATUS . START).
 
-Where status can be any of the following symbols:
+STATUS can be one of the following:
 
- * after-comment: When current line might continue a comment block
- * inside-paren: If point in between (), {} or []
- * inside-string: If point is inside a string
- * after-backslash: Previous line ends in a backslash
- * after-beginning-of-block: Point is after beginning of block
- * after-line: Point is after normal line
- * dedenter-statement: Point is on a dedenter statement.
- * no-indent: Point is at beginning of buffer or other special case
-START is the buffer position where the sexp starts."
+keyword
+-------
+
+:after-comment
+ - Point is after a comment line.
+ - START is the position of the \"#\" character.
+:inside-string
+ - Point is inside string.
+ - START is the position of the first quote that starts it.
+:no-indent
+ - No possible indentation case matches.
+ - START is always zero.
+
+:inside-paren
+ - Fallback case when point is inside paren.
+ - START is the first non space char position *after* the open paren.
+:inside-paren-at-closing-nested-paren
+ - Point is on a line that contains a nested paren closer.
+ - START is the position of the open paren it closes.
+:inside-paren-at-closing-paren
+ - Point is on a line that contains a paren closer.
+ - START is the position of the open paren.
+:inside-paren-newline-start
+ - Point is inside a paren with items starting in their own line.
+ - START is the position of the open paren.
+:inside-paren-newline-start-from-block
+ - Point is inside a paren with items starting in their own line
+   from a block start.
+ - START is the position of the open paren.
+
+:after-backslash
+ - Fallback case when point is after backslash.
+ - START is the char after the position of the backslash.
+:after-backslash-assignment-continuation
+ - Point is after a backslashed assignment.
+ - START is the char after the position of the backslash.
+:after-backslash-block-continuation
+ - Point is after a backslashed block continuation.
+ - START is the char after the position of the backslash.
+:after-backslash-dotted-continuation
+ - Point is after a backslashed dotted continuation.  Previous
+   line must contain a dot to align with.
+ - START is the char after the position of the backslash.
+:after-backslash-first-line
+ - First line following a backslashed continuation.
+ - START is the char after the position of the backslash.
+
+:after-block-end
+ - Point is after a line containing a block ender.
+ - START is the position where the ender starts.
+:after-block-start
+ - Point is after a line starting a block.
+ - START is the position where the block starts.
+:after-line
+ - Point is after a simple line.
+ - START is the position where the previous line starts.
+:at-dedenter-block-start
+ - Point is on a line starting a dedenter block.
+ - START is the position where the dedenter block starts."
   (save-restriction
     (widen)
-    (let ((ppss (save-excursion (beginning-of-line) (syntax-ppss)))
-          (start))
-      (cons
-       (cond
-        ;; Beginning of buffer
-        ((save-excursion
-           (goto-char (line-beginning-position))
-           (bobp))
-         'no-indent)
-        ;; Comment continuation
-        ((save-excursion
-           (when (and
-                  (or
-                   (python-info-current-line-comment-p)
-                   (python-info-current-line-empty-p))
-                  (progn
-                    (forward-comment -1)
-                    (python-info-current-line-comment-p)))
-             (setq start (point))
-             'after-comment)))
-        ;; Inside string
-        ((setq start (python-syntax-context 'string ppss))
-         'inside-string)
-        ;; Inside a paren
-        ((setq start (python-syntax-context 'paren ppss))
-         'inside-paren)
-        ;; After backslash
-        ((setq start (when (not (or (python-syntax-context 'string ppss)
-                                    (python-syntax-context 'comment ppss)))
-                       (let ((line-beg-pos (line-number-at-pos)))
-                         (python-info-line-ends-backslash-p
-                          (1- line-beg-pos)))))
-         'after-backslash)
-        ;; After beginning of block
-        ((setq start (save-excursion
-                       (when (progn
-                               (back-to-indentation)
-                               (python-util-forward-comment -1)
-                               (equal (char-before) ?:))
-                         ;; Move to the first block start that's not in within
-                         ;; a string, comment or paren and that's not a
-                         ;; continuation line.
-                         (while (and (re-search-backward
-                                      (python-rx block-start) nil t)
-                                     (or
-                                      (python-syntax-context-type)
-                                      (python-info-continuation-line-p))))
-                         (when (looking-at (python-rx block-start))
-                           (point-marker)))))
-         'after-beginning-of-block)
-        ((when (setq start (python-info-dedenter-statement-p))
-           'dedenter-statement))
-        ;; After normal line
-        ((setq start (save-excursion
+    (let ((ppss (save-excursion
+                  (beginning-of-line)
+                  (syntax-ppss))))
+      (cond
+       ;; Beginning of buffer.
+       ((= (line-number-at-pos) 1)
+        (cons :no-indent 0))
+       ;; Comment continuation (maybe).
+       ((save-excursion
+          (when (and
+                 (or
+                  (python-info-current-line-comment-p)
+                  (python-info-current-line-empty-p))
+                 (forward-comment -1)
+                 (python-info-current-line-comment-p))
+            (cons :after-comment (point)))))
+       ;; Inside a string.
+       ((let ((start (python-syntax-context 'string ppss)))
+          (when start
+            (cons :inside-string start))))
+       ;; Inside a paren.
+       ((let* ((start (python-syntax-context 'paren ppss))
+               (starts-in-newline
+                (when start
+                  (save-excursion
+                    (goto-char start)
+                    (forward-char)
+                    (not
+                     (= (line-number-at-pos)
+                        (progn
+                          (python-util-forward-comment)
+                          (line-number-at-pos))))))))
+          (when start
+            (cond
+             ;; Current line only holds the closing paren.
+             ((save-excursion
+                (skip-syntax-forward " ")
+                (when (and (python-syntax-closing-paren-p)
+                           (progn
+                             (forward-char 1)
+                             (not (python-syntax-context 'paren))))
+                  (cons :inside-paren-at-closing-paren start))))
+             ;; Current line only holds a closing paren for nested.
+             ((save-excursion
+                (back-to-indentation)
+                (python-syntax-closing-paren-p))
+              (cons :inside-paren-at-closing-nested-paren start))
+             ;; This line starts from a opening block in its own line.
+             ((save-excursion
+                (goto-char start)
+                (when (and
+                       starts-in-newline
+                       (save-excursion
+                         (back-to-indentation)
+                         (looking-at (python-rx block-start))))
+                  (cons
+                   :inside-paren-newline-start-from-block start))))
+             (starts-in-newline
+              (cons :inside-paren-newline-start start))
+             ;; General case.
+             (t (cons :inside-paren
+                      (save-excursion
+                        (goto-char (1+ start))
+                        (skip-syntax-forward "(" 1)
+                        (skip-syntax-forward " ")
+                        (point))))))))
+       ;; After backslash.
+       ((let ((start (when (not (python-syntax-comment-or-string-p ppss))
+                       (python-info-line-ends-backslash-p
+                        (1- (line-number-at-pos))))))
+          (when start
+            (cond
+             ;; Continuation of dotted expression.
+             ((save-excursion
+                (back-to-indentation)
+                (when (eq (char-after) ?\.)
+                  ;; Move point back until it's not inside a paren.
+                  (while (prog2
+                             (forward-line -1)
+                             (and (not (bobp))
+                                  (python-syntax-context 'paren))))
+                  (goto-char (line-end-position))
+                  (while (and (search-backward
+                               "." (line-beginning-position) t)
+                              (python-syntax-context-type)))
+                  ;; Ensure previous statement has dot to align with.
+                  (when (and (eq (char-after) ?\.)
+                             (not (python-syntax-context-type)))
+                    (cons :after-backslash-dotted-continuation (point))))))
+             ;; Continuation of block definition.
+             ((let ((block-continuation-start
+                     (python-info-block-continuation-line-p)))
+                (when block-continuation-start
+                  (save-excursion
+                    (goto-char block-continuation-start)
+                    (re-search-forward
+                     (python-rx block-start (* space))
+                     (line-end-position) t)
+                    (cons :after-backslash-block-continuation (point))))))
+             ;; Continuation of assignment.
+             ((let ((assignment-continuation-start
+                     (python-info-assignment-continuation-line-p)))
+                (when assignment-continuation-start
+                  (save-excursion
+                    (goto-char assignment-continuation-start)
+                    (cons :after-backslash-assignment-continuation (point))))))
+             ;; First line after backslash continuation start.
+             ((save-excursion
+                (goto-char start)
+                (when (or (= (line-number-at-pos) 1)
+                          (not (python-info-beginning-of-backslash
+                                (1- (line-number-at-pos)))))
+                  (cons :after-backslash-first-line start))))
+             ;; General case.
+             (t (cons :after-backslash start))))))
+       ;; After beginning of block.
+       ((let ((start (save-excursion
                        (back-to-indentation)
-                       (skip-chars-backward (rx (or whitespace ?\n)))
+                       (python-util-forward-comment -1)
+                       (when (equal (char-before) ?:)
+                         (python-nav-beginning-of-block)))))
+          (when start
+            (cons :after-block-start start))))
+       ;; At dedenter statement.
+       ((let ((start (python-info-dedenter-statement-p)))
+          (when start
+            (cons :at-dedenter-block-start start))))
+       ;; After normal line.
+       ((let ((start (save-excursion
+                       (back-to-indentation)
+                       (skip-chars-backward " \t\n")
                        (python-nav-beginning-of-statement)
-                       (point-marker)))
-         'after-line)
-        ;; Do not indent
-        (t 'no-indent))
-       start))))
+                       (point))))
+          (when start
+            (if (save-excursion
+                  (python-util-forward-comment -1)
+                  (python-nav-beginning-of-statement)
+                  (looking-at (python-rx block-ender)))
+                (cons :after-block-end start)
+              (cons :after-line start)))))
+       ;; Default case: do not indent.
+       (t (cons :no-indent 0))))))
 
-(defun python-indent-calculate-indentation ()
-  "Calculate correct indentation offset for the current line."
-  (let* ((indentation-context (python-indent-context))
-         (context-status (car indentation-context))
-         (context-start (cdr indentation-context)))
-    (save-restriction
-      (widen)
-      (save-excursion
-        (pcase context-status
-          (`no-indent 0)
-          (`after-comment
-           (goto-char context-start)
-           (current-indentation))
-          ;; When point is after beginning of block just add one level
-          ;; of indentation relative to the context-start
-          (`after-beginning-of-block
-           (goto-char context-start)
-           (+ (current-indentation) python-indent-offset))
-          ;; When after a simple line just use previous line
-          ;; indentation.
-          (`after-line
-           (let* ((pair (save-excursion
-                          (goto-char context-start)
-                          (cons
-                           (current-indentation)
-                           (python-info-beginning-of-block-p))))
-                  (context-indentation (car pair))
-                  ;; TODO: Separate block enders into its own case.
-                  (adjustment
-                   (if (save-excursion
-                         (python-util-forward-comment -1)
-                         (python-nav-beginning-of-statement)
-                         (looking-at (python-rx block-ender)))
-                       python-indent-offset
-                     0)))
-             (- context-indentation adjustment)))
-          ;; When point is on a dedenter statement, search for the
-          ;; opening block that corresponds to it and use its
-          ;; indentation.  If no opening block is found just remove
-          ;; indentation as this is an invalid python file.
-          (`dedenter-statement
-           (let ((block-start-point
-                  (python-info-dedenter-opening-block-position)))
-             (save-excursion
-               (if (not block-start-point)
-                   0
-                 (goto-char block-start-point)
-                 (current-indentation)))))
-          ;; When inside of a string, do nothing. just use the current
-          ;; indentation.  XXX: perhaps it would be a good idea to
-          ;; invoke standard text indentation here
-          (`inside-string
-           (goto-char context-start)
-           (current-indentation))
-          ;; After backslash we have several possibilities.
-          (`after-backslash
-           (cond
-            ;; Check if current line is a dot continuation.  For this
-            ;; the current line must start with a dot and previous
-            ;; line must contain a dot too.
-            ((save-excursion
-               (back-to-indentation)
-               (when (looking-at "\\.")
-                 ;; If after moving one line back point is inside a paren it
-                 ;; needs to move back until it's not anymore
-                 (while (prog2
-                            (forward-line -1)
-                            (and (not (bobp))
-                                 (python-syntax-context 'paren))))
-                 (goto-char (line-end-position))
-                 (while (and (re-search-backward
-                              "\\." (line-beginning-position) t)
-                             (python-syntax-context-type)))
-                 (if (and (looking-at "\\.")
-                          (not (python-syntax-context-type)))
-                     ;; The indentation is the same column of the
-                     ;; first matching dot that's not inside a
-                     ;; comment, a string or a paren
-                     (current-column)
-                   ;; No dot found on previous line, just add another
-                   ;; indentation level.
-                   (+ (current-indentation) python-indent-offset)))))
-            ;; Check if prev line is a block continuation
-            ((let ((block-continuation-start
-                    (python-info-block-continuation-line-p)))
-               (when block-continuation-start
-                 ;; If block-continuation-start is set jump to that
-                 ;; marker and use first column after the block start
-                 ;; as indentation value.
-                 (goto-char block-continuation-start)
-                 (re-search-forward
-                  (python-rx block-start (* space))
-                  (line-end-position) t)
-                 (current-column))))
-            ;; Check if current line is an assignment continuation
-            ((let ((assignment-continuation-start
-                    (python-info-assignment-continuation-line-p)))
-               (when assignment-continuation-start
-                 ;; If assignment-continuation is set jump to that
-                 ;; marker and use first column after the assignment
-                 ;; operator as indentation value.
-                 (goto-char assignment-continuation-start)
-                 (current-column))))
-            (t
-             (forward-line -1)
-             (goto-char (python-info-beginning-of-backslash))
-             (if (save-excursion
-                   (and
-                    (forward-line -1)
-                    (goto-char
-                     (or (python-info-beginning-of-backslash) (point)))
-                    (python-info-line-ends-backslash-p)))
-                 ;; The two previous lines ended in a backslash so we must
-                 ;; respect previous line indentation.
-                 (current-indentation)
-               ;; What happens here is that we are dealing with the second
-               ;; line of a backslash continuation, in that case we just going
-               ;; to add one indentation level.
-               (+ (current-indentation) python-indent-offset)))))
-          ;; When inside a paren there's a need to handle nesting
-          ;; correctly
-          (`inside-paren
-           (cond
-            ;; If current line closes the outermost open paren use the
-            ;; current indentation of the context-start line.
-            ((save-excursion
-               (skip-syntax-forward "\s" (line-end-position))
-               (when (and (looking-at (regexp-opt '(")" "]" "}")))
-                          (progn
-                            (forward-char 1)
-                            (not (python-syntax-context 'paren))))
-                 (goto-char context-start)
-                 (current-indentation))))
-            ;; If open paren is contained on a line by itself add another
-            ;; indentation level, else look for the first word after the
-            ;; opening paren and use it's column position as indentation
-            ;; level.
-            ((let* ((content-starts-in-newline)
-                    (indent
-                     (save-excursion
-                       (if (setq content-starts-in-newline
-                                 (progn
-                                   (goto-char context-start)
-                                   (forward-char)
-                                   (save-restriction
-                                     (narrow-to-region
-                                      (line-beginning-position)
-                                      (line-end-position))
-                                     (python-util-forward-comment))
-                                   (looking-at "$")))
-                           (+ (current-indentation) python-indent-offset)
-                         (current-column)))))
-               ;; Adjustments
-               (cond
-                ;; If current line closes a nested open paren de-indent one
-                ;; level.
-                ((progn
-                   (back-to-indentation)
-                   (looking-at (regexp-opt '(")" "]" "}"))))
-                 (- indent python-indent-offset))
-                ;; If the line of the opening paren that wraps the current
-                ;; line starts a block add another level of indentation to
-                ;; follow new pep8 recommendation. See: http://ur1.ca/5rojx
-                ((save-excursion
-                   (when (and content-starts-in-newline
-                              (progn
-                                (goto-char context-start)
-                                (back-to-indentation)
-                                (looking-at (python-rx block-start))))
-                     (+ indent python-indent-offset))))
-                (t indent)))))))))))
+(defun python-indent--calculate-indentation ()
+  "Internal implementation of `python-indent-calculate-indentation'.
+May return an integer for the maximum possible indentation at
+current context or a list of integers.  The latter case is only
+happening for :at-dedenter-block-start context since the
+possibilities can be narrowed to especific indentation points."
+  (save-restriction
+    (widen)
+    (save-excursion
+      (pcase (python-indent-context)
+        (`(:no-indent . ,_) 0)
+        (`(,(or :after-line
+                :after-comment
+                :inside-string
+                :after-backslash
+                :inside-paren-at-closing-paren
+                :inside-paren-at-closing-nested-paren) . ,start)
+         ;; Copy previous indentation.
+         (goto-char start)
+         (current-indentation))
+        (`(,(or :after-block-start
+                :after-backslash-first-line
+                :inside-paren-newline-start) . ,start)
+         ;; Add one indentation level.
+         (goto-char start)
+         (+ (current-indentation) python-indent-offset))
+        (`(,(or :inside-paren
+                :after-backslash-block-continuation
+                :after-backslash-assignment-continuation
+                :after-backslash-dotted-continuation) . ,start)
+         ;; Use the column given by the context.
+         (goto-char start)
+         (current-column))
+        (`(:after-block-end . ,start)
+         ;; Subtract one indentation level.
+         (goto-char start)
+         (- (current-indentation) python-indent-offset))
+        (`(:at-dedenter-block-start . ,_)
+         ;; List all possible indentation levels from opening blocks.
+         (let ((opening-block-start-points
+                (python-info-dedenter-opening-block-positions)))
+           (if (not opening-block-start-points)
+               0  ; if not found default to first column
+             (mapcar (lambda (pos)
+                       (save-excursion
+                         (goto-char pos)
+                         (current-indentation)))
+                     opening-block-start-points))))
+        (`(,(or :inside-paren-newline-start-from-block) . ,start)
+         ;; Add two indentation levels to make the suite stand out.
+         (goto-char start)
+         (+ (current-indentation) (* python-indent-offset 2)))))))
+
+(defun python-indent--calculate-levels (indentation)
+  "Calculate levels list given INDENTATION.
+Argument INDENTATION can either be an integer or a list of
+integers.  Levels are returned in ascending order, and in the
+case INDENTATION is a list, this order is enforced."
+  (if (listp indentation)
+      (sort (copy-sequence indentation) #'<)
+    (let* ((remainder (% indentation python-indent-offset))
+           (steps (/ (- indentation remainder) python-indent-offset))
+           (levels (mapcar (lambda (step)
+                             (* python-indent-offset step))
+                           (number-sequence steps 0 -1))))
+      (reverse
+       (if (not (zerop remainder))
+           (cons indentation levels)
+         levels)))))
+
+(defun python-indent--previous-level (levels indentation)
+  "Return previous level from LEVELS relative to INDENTATION."
+  (let* ((levels (sort (copy-sequence levels) #'>))
+         (default (car levels)))
+    (catch 'return
+      (dolist (level levels)
+        (when (funcall #'< level indentation)
+          (throw 'return level)))
+      default)))
+
+(defun python-indent-calculate-indentation (&optional previous)
+  "Calculate indentation.
+Get indentation of PREVIOUS level when argument is non-nil.
+Return the max level of the cycle when indentation reaches the
+minimum."
+  (let* ((indentation (python-indent--calculate-indentation))
+         (levels (python-indent--calculate-levels indentation)))
+    (if previous
+        (python-indent--previous-level levels (current-indentation))
+      (apply #'max levels))))
+
+(defun python-indent-line (&optional previous)
+  "Internal implementation of `python-indent-line-function'.
+Use the PREVIOUS level when argument is non-nil, otherwise indent
+to the maxium available level.  When indentation is the minimum
+possible and PREVIOUS is non-nil, cycle back to the maximum
+level."
+  (let ((follow-indentation-p
+         ;; Check if point is within indentation.
+         (and (<= (line-beginning-position) (point))
+              (>= (+ (line-beginning-position)
+                     (current-indentation))
+                  (point)))))
+    (save-excursion
+      (indent-line-to
+       (python-indent-calculate-indentation previous))
+      (python-info-dedenter-opening-block-message))
+    (when follow-indentation-p
+      (back-to-indentation))))
 
 (defun python-indent-calculate-levels ()
-  "Calculate `python-indent-levels' and reset `python-indent-current-level'."
-  (if (or (python-info-continuation-line-p)
-          (not (python-info-dedenter-statement-p)))
-      ;; XXX: This asks for a refactor.  Even if point is on a
-      ;; dedenter statement, it could be multiline and in that case
-      ;; the continuation lines should be indented with normal rules.
-      (let* ((indentation (python-indent-calculate-indentation))
-             (remainder (% indentation python-indent-offset))
-             (steps (/ (- indentation remainder) python-indent-offset)))
-        (setq python-indent-levels (list 0))
-        (dotimes (step steps)
-          (push (* python-indent-offset (1+ step)) python-indent-levels))
-        (when (not (eq 0 remainder))
-          (push (+ (* python-indent-offset steps) remainder) python-indent-levels)))
-    (setq python-indent-levels
-          (or
-           (mapcar (lambda (pos)
-                     (save-excursion
-                       (goto-char pos)
-                       (current-indentation)))
-                   (python-info-dedenter-opening-block-positions))
-           (list 0))))
-  (setq python-indent-current-level (1- (length python-indent-levels))
-        python-indent-levels (nreverse python-indent-levels)))
-
-(defun python-indent-toggle-levels ()
-  "Toggle `python-indent-current-level' over `python-indent-levels'."
-  (setq python-indent-current-level (1- python-indent-current-level))
-  (when (< python-indent-current-level 0)
-    (setq python-indent-current-level (1- (length python-indent-levels)))))
-
-(defun python-indent-line (&optional force-toggle)
-  "Internal implementation of `python-indent-line-function'.
-Uses the offset calculated in
-`python-indent-calculate-indentation' and available levels
-indicated by the variable `python-indent-levels' to set the
-current indentation.
-
-When the variable `last-command' is equal to one of the symbols
-inside `python-indent-trigger-commands' or FORCE-TOGGLE is
-non-nil it cycles levels indicated in the variable
-`python-indent-levels' by setting the current level in the
-variable `python-indent-current-level'.
-
-When the variable `last-command' is not equal to one of the
-symbols inside `python-indent-trigger-commands' and FORCE-TOGGLE
-is nil it calculates possible indentation levels and saves them
-in the variable `python-indent-levels'.  Afterwards it sets the
-variable `python-indent-current-level' correctly so offset is
-equal to
-   (nth python-indent-current-level python-indent-levels)"
-  (or
-   (and (or (and (memq this-command python-indent-trigger-commands)
-                 (eq last-command this-command))
-            force-toggle)
-        (not (equal python-indent-levels '(0)))
-        (or (python-indent-toggle-levels) t))
-   (python-indent-calculate-levels))
-  (let* ((starting-pos (point-marker))
-         (indent-ending-position
-          (+ (line-beginning-position) (current-indentation)))
-         (follow-indentation-p
-          (or (bolp)
-              (and (<= (line-beginning-position) starting-pos)
-                   (>= indent-ending-position starting-pos))))
-         (next-indent (nth python-indent-current-level python-indent-levels)))
-    (unless (= next-indent (current-indentation))
-      (beginning-of-line)
-      (delete-horizontal-space)
-      (indent-to next-indent)
-      (goto-char starting-pos))
-    (and follow-indentation-p (back-to-indentation)))
-  (python-info-dedenter-opening-block-message))
+  "Return possible indentation levels."
+  (python-indent--calculate-levels
+   (python-indent--calculate-indentation)))
 
 (defun python-indent-line-function ()
   "`indent-line-function' for Python mode.
-See `python-indent-line' for details."
-  (python-indent-line))
+When the variable `last-command' is equal to one of the symbols
+inside `python-indent-trigger-commands' it cycles possible
+indentation levels from right to left."
+  (python-indent-line
+   (and (memq this-command python-indent-trigger-commands)
+        (eq last-command this-command))))
 
 (defun python-indent-dedent-line ()
   "De-indent current line."
   (interactive "*")
-  (when (and (not (python-syntax-comment-or-string-p))
-             (<= (point-marker) (save-excursion
-                                  (back-to-indentation)
-                                  (point-marker)))
-             (> (current-column) 0))
-    (python-indent-line t)
-    t))
+  (when (and (not (bolp))
+           (not (python-syntax-comment-or-string-p))
+           (= (+ (line-beginning-position)
+                 (current-indentation))
+              (point)))
+      (python-indent-line t)
+      t))
 
 (defun python-indent-dedent-line-backspace (arg)
   "De-indent current line.
 Argument ARG is passed to `backward-delete-char-untabify' when
 point is not in between the indentation."
   (interactive "*p")
-  (when (not (python-indent-dedent-line))
+  (unless (python-indent-dedent-line)
     (backward-delete-char-untabify arg)))
+
 (put 'python-indent-dedent-line-backspace 'delete-selection 'supersede)
 
 (defun python-indent-region (start end)
