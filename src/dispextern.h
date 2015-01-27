@@ -3407,23 +3407,20 @@ char *choose_face_font (struct frame *, Lisp_Object *, Lisp_Object,
 #ifdef HAVE_WINDOW_SYSTEM
 void prepare_face_for_display (struct frame *, struct face *);
 #endif
-int lookup_named_face (struct frame *, Lisp_Object, int);
+int lookup_named_face (struct frame *, Lisp_Object, bool);
 int lookup_basic_face (struct frame *, int);
 int smaller_face (struct frame *, int, int);
 int face_with_height (struct frame *, int, int);
-int lookup_derived_face (struct frame *, Lisp_Object, int, int);
+int lookup_derived_face (struct frame *, Lisp_Object, int, bool);
 void init_frame_faces (struct frame *);
 void free_frame_faces (struct frame *);
 void recompute_basic_faces (struct frame *);
-int face_at_buffer_position (struct window *w, ptrdiff_t pos,
-                             ptrdiff_t *endptr, ptrdiff_t limit,
-                             int mouse, int base_face_id);
-int face_for_overlay_string (struct window *w, ptrdiff_t pos,
-                             ptrdiff_t *endptr, ptrdiff_t limit,
-                             int mouse, Lisp_Object overlay);
-int face_at_string_position (struct window *w, Lisp_Object string,
-                             ptrdiff_t pos, ptrdiff_t bufpos,
-                             ptrdiff_t *endptr, enum face_id, int mouse);
+int face_at_buffer_position (struct window *, ptrdiff_t, ptrdiff_t *, ptrdiff_t,
+                             bool, int);
+int face_for_overlay_string (struct window *, ptrdiff_t, ptrdiff_t *, ptrdiff_t,
+                             bool, Lisp_Object);
+int face_at_string_position (struct window *, Lisp_Object, ptrdiff_t, ptrdiff_t,
+                             ptrdiff_t *, enum face_id, bool);
 int merge_faces (struct frame *, Lisp_Object, int, int);
 int compute_char_face (struct frame *, int, Lisp_Object);
 void free_all_realized_faces (Lisp_Object);

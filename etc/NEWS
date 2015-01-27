@@ -495,6 +495,38 @@ As a result of the above, these commands are now obsolete:
 `find-tag-other-window', `find-tag-other-frame', `find-tag-regexp',
 `tags-apropos' and `tags-loop-continue'.
 
+** EUDC
+EUDC's LDAP backend has been improved.
+
+*** EUDC supports LDAP-over-SSL URLs (ldaps://).
+
+*** EUDC passes LDAP passwords through a pipe to the ldapsearch
+subprocess instead of on the command line.
+
+*** EUDC handles LDAP wildcards automatically so the user shouldn't
+need to configure this manually anymore.
+
+*** The LDAP configuration section of EUDC's manual has been
+rewritten.
+
+There have also been customization changes.
+
+*** New custom variable `eudc-server-hotlist' to allow specifying
+multiple EUDC servers in init file.
+
+*** Custom variable `eudc-inline-query-format' defaults to completing
+on email and firstname instead of surname.
+
+*** Custom variable `eudc-expansion-overwrites-query' defaults to nil
+to avoid interfering with the kill ring.
+
+*** Custom variable `eudc-inline-expansion-format' defaults to
+"Firstname Surname <mail-address>".
+
+*** New custom variable `ldap-ldapsearch-password-prompt-regexp' to
+allow overriding the regular expression that recognizes the ldapsearch
+command line's password prompt.
+
 ** Obsolete packages
 
 ---

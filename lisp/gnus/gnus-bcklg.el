@@ -61,7 +61,7 @@
 
 (defun gnus-backlog-enter-article (group number buffer)
   (when (and (numberp number)
-	     (not (string-match "^nnvirtual" group)))
+	     (not (gnus-virtual-group-p group)))
     (gnus-backlog-setup)
     (let ((ident (intern (concat group ":" (int-to-string number))
 			 gnus-backlog-hashtb))
@@ -126,7 +126,7 @@
 
 (defun gnus-backlog-request-article (group number &optional buffer)
   (when (and (numberp number)
-	     (not (string-match "^nnvirtual" group)))
+	     (not (gnus-virtual-group-p group)))
     (gnus-backlog-setup)
     (let ((ident (intern (concat group ":" (int-to-string number))
 			 gnus-backlog-hashtb))

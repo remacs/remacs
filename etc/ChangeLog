@@ -1,3 +1,7 @@
+2015-01-27  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+
+	* NEWS: Document EUDC improvements.
+
 2015-01-26  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* publicsuffix.txt: Install an updated version of the file from

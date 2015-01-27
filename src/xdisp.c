@@ -3883,7 +3883,7 @@ handle_face_prop (struct it *it)
 				   &next_stop,
 				   (IT_CHARPOS (*it)
 				    + TEXT_PROP_DISTANCE_LIMIT),
-				   0, it->base_face_id);
+				   false, it->base_face_id);
 
       /* Is this a start of a run of characters with box face?
 	 Caveat: this can be called for a freshly initialized
@@ -3959,7 +3959,7 @@ handle_face_prop (struct it *it)
 				       &next_stop,
 				       (IT_CHARPOS (*it)
 					+ TEXT_PROP_DISTANCE_LIMIT),
-				       0,
+				       false,
 				       from_overlay);
 	}
       else
@@ -3994,7 +3994,7 @@ handle_face_prop (struct it *it)
 					     IT_STRING_CHARPOS (*it),
 					     bufpos,
 					     &next_stop,
-					     base_face_id, 0);
+					     base_face_id, false);
 
       /* Is this a start of a run of characters with box?  Caveat:
 	 this can be called for a freshly allocated iterator; face_id
@@ -4136,7 +4136,7 @@ face_before_or_after_it_pos (struct it *it, int before_p)
 					 charpos,
 					 bufpos,
 					 &next_check_charpos,
-					 base_face_id, 0);
+					 base_face_id, false);
 
       /* Correct the face for charsets different from ASCII.  Do it
 	 for the multibyte case only.  The face returned above is
@@ -4225,7 +4225,7 @@ face_before_or_after_it_pos (struct it *it, int before_p)
       face_id = face_at_buffer_position (it->w,
 					 CHARPOS (pos),
 					 &next_check_charpos,
-					 limit, 0, -1);
+					 limit, false, -1);
 
       /* Correct the face for charsets different from ASCII.  Do it
 	 for the multibyte case only.  The face returned above is
@@ -7203,7 +7203,7 @@ get_next_display_element (struct it *it)
 		    {
 		      next_face_id = face_at_buffer_position
 			(it->w, CHARPOS (pos), &ignore,
-			 CHARPOS (pos) + TEXT_PROP_DISTANCE_LIMIT, 0, -1);
+			 CHARPOS (pos) + TEXT_PROP_DISTANCE_LIMIT, false, -1);
 		      it->end_of_box_run_p
 			= (FACE_FROM_ID (it->f, next_face_id)->box
 			   == FACE_NO_BOX);
@@ -19632,7 +19632,7 @@ highlight_trailing_whitespace (struct frame *f, struct glyph_row *row)
 		  && glyph->u.ch == ' '))
 	  && trailing_whitespace_p (glyph->charpos))
 	{
-	  int face_id = lookup_named_face (f, Qtrailing_whitespace, 0);
+	  int face_id = lookup_named_face (f, Qtrailing_whitespace, false);
 	  if (face_id < 0)
 	    return;
 
@@ -23642,7 +23642,7 @@ display_string (const char *string, Lisp_Object lisp_string, Lisp_Object face_st
 
       it->face_id
 	= face_at_string_position (it->w, face_string, face_string_pos,
-				   0, &endptr, it->base_face_id, 0);
+				   0, &endptr, it->base_face_id, false);
       face = FACE_FROM_ID (it->f, it->face_id);
       it->face_box_p = face->box != FACE_NO_BOX;
     }
@@ -26307,7 +26307,7 @@ calc_line_height_property (struct it *it, Lisp_Object val, struct font *font,
       int face_id;
       struct face *face;
 
-      face_id = lookup_named_face (it->f, face_name, 0);
+      face_id = lookup_named_face (it->f, face_name, false);
       if (face_id < 0)
 	return make_number (-1);
 
@@ -29533,7 +29533,7 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 								charpos,
 								0, &ignore,
 								glyph->face_id,
-								1);
+								true);
 	  show_mouse_face (hlinfo, DRAW_MOUSE_FACE);
 
 	  if (NILP (pointer))
@@ -29861,7 +29861,7 @@ note_mouse_highlight (struct frame *f, int x, int y)
 	      hlinfo->mouse_face_window = window;
 	      hlinfo->mouse_face_face_id
 		= face_at_string_position (w, object, pos, 0, &ignore,
-					   glyph->face_id, 1);
+					   glyph->face_id, true);
 	      show_mouse_face (hlinfo, DRAW_MOUSE_FACE);
 	      cursor = No_Cursor;
 	    }

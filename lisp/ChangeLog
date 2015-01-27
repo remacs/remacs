@@ -1,5 +1,30 @@
-2015-01-26  Stefan Monnier  <monnier@iro.umontreal.ca>
+2015-01-27  Sam Steingold  <sds@gnu.org>
 
+	* progmodes/python.el (python-check-custom-command): Buffer local
+	because it usually includes the buffer name.
+	(python-check-command): Set to epylint when pyflakes is not available.
+
+2015-01-27  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+
+	* net/eudcb-bbdb.el, net/eudcb-ldap.el, net/eudcb-mab.el,
+	net/eudc-bob.el, net/eudcb-ph.el, net/eudc.el, net/eudc-export.el,
+	net/eudc-hotlist.el, net/eudc-vars.el: New maintainer.
+
+2015-01-27  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* isearch.el (isearch-process-search-char): Add docstring.
+
+2015-01-27  Oleh Krehel  <ohwoeowho@gmail.com>
+
+	* emacs-lisp/derived.el (define-derived-mode): Declare indent 3.
+
+2015-01-27  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* emacs-lisp/cl.el (cl--function-convert): Run cl--labels-convert
+	for the case cl-flet or cl-labels form is wrapped with lexical-let
+	(bug#19613).
+
+2015-01-26  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/cl-generic.el (cl--generic-method): New struct.
 	(cl--generic): The method-table is now a (list-of cl--generic-method).
