@@ -84,6 +84,20 @@ command line when `initial-buffer-choice' is non-nil.
 
 * Changes in Emacs 25.1
 
+** `isearch' and `query-replace' now perform character folding in matches.
+This is analogous to case-folding, but applies between Unicode
+characters and their ASCII counterparts. This means many characters
+will match entire groups of charactes.
+
+For instance, the " will match all variants of unicode double quotes
+(like “ and ”), and the letter a will match all of its accented
+cousins, even those composed of multiple characters, as well as many
+other symbols like ℀, ℁, ⒜, and ⓐ.
+
+** New function `isearch--character-folded-regexp' can be used
+by searching commands to produce a a regexp matching anything that
+character-folds into STRING.
+
 ** New command `checkdoc-package-keywords' checks if the
 current package keywords are recognized. Set the new option
 `checkdoc-package-keywords-flag' to non-nil to make

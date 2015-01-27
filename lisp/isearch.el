@@ -272,6 +272,79 @@ Default value, nil, means edit the string instead."
   :version "23.1"
   :group 'isearch)
 
+(defvar isearch-character-fold-search t
+  "Non-nil if isearch should fold similar characters.
+This means some characters will match entire groups of charactes.
+For instance, \" will match all variants of double quotes, and
+the letter a will match all of its accented versions (and then
+some).")
+
+(defconst isearch--character-fold-extras
+  '((?\" "＂" "“" "”" "”" "„" "⹂" "〞" "‟" "‟" "❞" "❝" "❠" "“" "„" "〝" "〟" "🙷" "🙶" "🙸" "«" "»")
+    (?' "❟" "❛" "❜" "‘" "’" "‚" "‛" "‚" "󠀢" "❮" "❯" "‹" "›")
+    (?` "❛" "‘" "‛" "󠀢" "❮" "‹")
+    ;; `isearch-character-fold-search' doesn't interact with
+    ;; `isearch-lax-whitespace' yet.  So we need to add this here.
+    (?\s "	" "\r" "\n"))
+  "Extra entries to add to `isearch--character-fold-table'.
+Used to specify character folding not covered by unicode
+decomposition.  Each car is a character and each cdr is a list of
+strings that it should match (itself excluded).")
+
+(defvar isearch--character-fold-table
+  (eval-when-compile
+    (require 'subr-x)
+    (let ((equiv (make-char-table 'character-fold-table)))
+      ;; Compile a list of all complex characters that each simple
+      ;; character should match.
+      (dotimes (i (length equiv))
+        (let ((dd (get-char-code-property i 'decomposition))
+              d k found)
+          ;; Skip trivial cases (?a decomposes to (?a)).
+          (unless (and (eq i (car dd)))
+            ;; Discard a possible formatting tag.
+            (when (symbolp (car-safe dd))
+              (setq dd (cdr dd)))
+            ;; Is k a number or letter, per unicode standard?
+            (setq d dd)
+            (while (and d (not found))
+              (setq k (pop d))
+              (setq found (and (characterp k)
+                               (memq (get-char-code-property k 'general-category)
+                                     '(Lu Ll Lt Lm Lo Nd Nl No)))))
+            ;; If there's no number or letter on the
+            ;; decomposition, find the first character in it.
+            (setq d dd)
+            (while (and d (not found))
+              (setq k (pop d))
+              (setq found (characterp k)))
+            ;; Add i to the list of characters that k can
+            ;; represent. Also add its decomposition, so we can
+            ;; match multi-char representations like (format "a%c" 769)
+            (when (and found (not (eq i k)))
+              (aset equiv k (cons (apply #'string dd)
+                                  (cons (char-to-string i)
+                                        (aref equiv k))))))))
+      (dotimes (i (length equiv))
+        (when-let ((chars (append (cdr (assq i isearch--character-fold-extras))
+                                  (aref equiv i))))
+          (aset equiv i (regexp-opt (cons (char-to-string i) chars)))))
+      equiv))
+  "Used for folding characters of the same group during search.")
+
+(defun isearch--character-folded-regexp (string)
+  "Return a regexp matching anything that character-folds into STRING.
+If `isearch-character-fold-search' is nil, `regexp-quote' string.
+Otherwise, any character in STRING that has an entry in
+`isearch--character-fold-table' is replaced with that entry
+\(which is a regexp) and other characters are `regexp-quote'd."
+  (if isearch-character-fold-search
+      (apply #'concat
+        (mapcar (lambda (c) (or (aref isearch--character-fold-table c)
+                           (regexp-quote (string c))))
+                string))
+    (regexp-quote string)))
+
 (defcustom isearch-lazy-highlight t
   "Controls the lazy-highlighting during incremental search.
 When non-nil, all text in the buffer matching the current search
@@ -2607,6 +2680,11 @@ Can be changed via `isearch-search-fun-function' for special needs."
       're-search-backward-lax-whitespace))
    (isearch-regexp
     (if isearch-forward 're-search-forward 're-search-backward))
+   (isearch-character-fold-search
+    (lambda (string &optional bound noerror count)
+      (funcall (if isearch-forward #'re-search-forward #'re-search-backward)
+        (isearch--character-folded-regexp string)
+        bound noerror count)))
    ((and isearch-lax-whitespace search-whitespace-regexp)
     (if isearch-forward
 	'search-forward-lax-whitespace

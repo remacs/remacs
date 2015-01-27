@@ -33,6 +33,14 @@
   :type 'boolean
   :group 'matching)
 
+(defcustom replace-character-fold t
+  "Non-nil means `query-replace' should do character folding in matches.
+This means, for instance, that ' will match a large variety of
+unicode quotes."
+  :type 'boolean
+  :group 'matching
+  :version "25.1")
+
 (defcustom replace-lax-whitespace nil
   "Non-nil means `query-replace' matches a sequence of whitespace chars.
 When you enter a space or spaces in the strings to be replaced,
@@ -2005,6 +2013,7 @@ It is called with three arguments, as if it were
   ;; used after `recursive-edit' might override them.
   (let* ((isearch-regexp regexp-flag)
 	 (isearch-word delimited-flag)
+         (isearch-character-fold-search replace-character-fold)
 	 (isearch-lax-whitespace
 	  replace-lax-whitespace)
 	 (isearch-regexp-lax-whitespace
