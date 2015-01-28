@@ -1,3 +1,9 @@
+2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix dired quoting bug with "Hit`N`Hide"
+	Fixes Bug#19498.
+	* files.el (shell-quote-wildcard-pattern): Also quote "`".
+
 2015-01-27  Katsumi Yamaoka  <yamaoka@jpl.org>
 
 	* emacs-lisp/cl.el (cl--function-convert):

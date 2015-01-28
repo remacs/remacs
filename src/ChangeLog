@@ -1,3 +1,20 @@
+2015-01-05  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (move_it_to, try_cursor_movement): Don't use the window
+	end information if the window_end_valid flag is unset.
+	(try_window_id): If the call to display_line invalidated the
+	window end information, give up the try_window_id optimization.
+	(Bug#19511)
+
+2015-01-04  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32fns.c (Fx_server_version, Fx_server_vendor): Doc fix.
+
+	* xfns.c (Fx_server_version, Fx_server_vendor): Doc fix.
+
+	* emacs.c (syms_of_emacs) <system-configuration>: Doc fix.
+	(Bug#19502)
+
 2015-01-27  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Use bool for boolean in xfaces.c
