@@ -6241,6 +6241,10 @@ parse_modifiers_uncached (Lisp_Object symbol, ptrdiff_t *modifier_end)
 	case 't':
 	  MULTI_LETTER_MOD (triple_modifier, "triple", 6);
 	  break;
+
+	case 'u':
+	  MULTI_LETTER_MOD (up_modifier, "up", 2);
+	  break;
 #undef MULTI_LETTER_MOD
 
 	}
@@ -6288,16 +6292,19 @@ apply_modifiers_uncached (int modifiers, char *base, int base_len, int base_len_
   /* Since BASE could contain nulls, we can't use intern here; we have
      to use Fintern, which expects a genuine Lisp_String, and keeps a
      reference to it.  */
-  char new_mods[sizeof "A-C-H-M-S-s-down-drag-double-triple-"];
+  char new_mods[sizeof "A-C-H-M-S-s-up-down-drag-double-triple-"];
   int mod_len;
 
   {
     char *p = new_mods;
 
-    /* Only the event queue may use the `up' modifier; it should always
-       be turned into a click or drag event before presented to lisp code.  */
-    if (modifiers & up_modifier)
-      emacs_abort ();
+    /* Mouse events should not exhibit the `up' modifier once they
+       leave the event queue only accessible to C code; `up' will
+       always be turned into a click or drag event before being
+       presented to lisp code.  But since lisp events can be
+       synthesized bypassing the event queue and pushed into
+       `unread-command-events' or its companions, it's better to just
+       deal with unexpected modifier combinations. */
 
     if (modifiers & alt_modifier)   { *p++ = 'A'; *p++ = '-'; }
     if (modifiers & ctrl_modifier)  { *p++ = 'C'; *p++ = '-'; }
@@ -6307,6 +6314,7 @@ apply_modifiers_uncached (int modifiers, char *base, int base_len, int base_len_
     if (modifiers & super_modifier) { *p++ = 's'; *p++ = '-'; }
     if (modifiers & double_modifier) p = stpcpy (p, "double-");
     if (modifiers & triple_modifier) p = stpcpy (p, "triple-");
+    if (modifiers & up_modifier) p = stpcpy (p, "up-");
     if (modifiers & down_modifier) p = stpcpy (p, "down-");
     if (modifiers & drag_modifier) p = stpcpy (p, "drag-");
     /* The click modifier is denoted by the absence of other modifiers.  */
@@ -6426,8 +6434,7 @@ DEFUN ("internal-event-symbol-parse-modifiers", Fevent_symbol_parse_modifiers,
    BASE must be unmodified.
 
    This is like apply_modifiers_uncached, but uses BASE's
-   Qmodifier_cache property, if present.  It also builds
-   Qevent_symbol_elements properties, since it has that info anyway.
+   Qmodifier_cache property, if present.
 
    apply_modifiers copies the value of BASE's Qevent_kind property to
    the modified symbol.  */
@@ -6771,6 +6778,10 @@ parse_solitary_modifier (Lisp_Object symbol)
 
     case 't':
       MULTI_LETTER_MOD (triple_modifier, "triple", 6);
+      break;
+
+    case 'u':
+      MULTI_LETTER_MOD (up_modifier, "up", 2);
       break;
 
 #undef SINGLE_LETTER_MOD
@@ -9486,14 +9497,16 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 		   Drags reduce to clicks.
 		   Double-clicks reduce to clicks.
 		   Triple-clicks reduce to double-clicks, then to clicks.
-		   Down-clicks are eliminated.
+		   Up/Down-clicks are eliminated.
 		   Double-downs reduce to downs, then are eliminated.
 		   Triple-downs reduce to double-downs, then to downs,
 		     then are eliminated.  */
-	      if (modifiers & (down_modifier | drag_modifier
+	      if (modifiers & (up_modifier | down_modifier
+			       | drag_modifier
 			       | double_modifier | triple_modifier))
 		{
-		  while (modifiers & (down_modifier | drag_modifier
+		  while (modifiers & (up_modifier | down_modifier
+				      | drag_modifier
 				      | double_modifier | triple_modifier))
 		    {
 		      Lisp_Object new_head, new_click;
@@ -9505,7 +9518,7 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 			modifiers &= ~drag_modifier;
 		      else
 			{
-			  /* Dispose of this `down' event by simply jumping
+			  /* Dispose of this `up/down' event by simply jumping
 			     back to replay_key, to get another event.
 
 			     Note that if this event came from mock input,
