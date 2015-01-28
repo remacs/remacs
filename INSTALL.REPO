@@ -1,3 +1,7 @@
+Copyright (C) 2002-2015 Free Software Foundation, Inc.
+See the end of the file for license conditions.
+
+
 	     Building and Installing Emacs from the Repository
 
 Simply run 'make'.  This should work if your files are freshly checked
