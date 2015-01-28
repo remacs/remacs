@@ -1850,10 +1850,10 @@ GLYPH_CODE_P (Lisp_Object gc)
 	       : TYPE_MAXIMUM (EMACS_INT)))));
 }
 
-/* Non-zero means face attributes have been changed since the last
+/* True means face attributes have been changed since the last
    redisplay.  Used in redisplay_internal.  */
 
-extern int face_change_count;
+extern bool face_change;
 
 /* For reordering of bidirectional text.  */
 

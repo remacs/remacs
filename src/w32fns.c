@@ -5668,7 +5668,7 @@ x_create_tip_frame (struct w32_display_info *dpyinfo,
   ptrdiff_t count = SPECPDL_INDEX ();
   struct gcpro gcpro1, gcpro2, gcpro3;
   struct kboard *kb;
-  int face_change_count_before = face_change_count;
+  bool face_change_before = face_change;
   Lisp_Object buffer;
   struct buffer *old_buffer;
 
@@ -5880,11 +5880,11 @@ x_create_tip_frame (struct w32_display_info *dpyinfo,
   f->can_x_set_window_size = true;
 
   /* Setting attributes of faces of the tooltip frame from resources
-     and similar will increment face_change_count, which leads to the
+     and similar will set face_change, which leads to the
      clearing of all current matrices.  Since this isn't necessary
-     here, avoid it by resetting face_change_count to the value it
+     here, avoid it by resetting face_change to the value it
      had before we created the tip frame.  */
-  face_change_count = face_change_count_before;
+  face_change = face_change_before;
 
   /* Discard the unwind_protect.  */
   return unbind_to (count, frame);

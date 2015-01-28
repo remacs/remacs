@@ -1,3 +1,11 @@
+2015-01-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use bool, not int, to track face changes
+	* xfaces.c (face_change): Rename from face_change_count, and
+	change from int to bool.  The var is now true (instead of nonzero)
+	if attributes have changed; this is simpler.  All uses changed.
+	Fixes: bug#19698
+
 2015-01-27  Eli Zaretskii  <eliz@gnu.org>
 
 	* dired.c (directory_files_internal) [WINDOWSNT]: If readdir
