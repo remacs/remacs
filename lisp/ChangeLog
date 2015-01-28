@@ -1,5 +1,32 @@
 2015-01-30  Oleh Krehel  <ohwoeowho@gmail.com>
 
+	* outline.el (outline-hide-entry): Rename from `hide-entry'.
+	(hide-entry): Declare as obsolete.
+	(outline-show-entry): Rename from `show-entry'.
+	(show-entry): Declare as obsolete.
+	(outline-hide-body): Rename from `hide-body'.
+	(hide-body): Declare as obsolete.
+	(outline-hide-region-body): Rename from `hide-region-body'.
+	(hide-region-body): Declare as obsolete.
+	(outline-show-all): Rename from `show-all'.
+	(show-all): Declare as obsolete.
+	(outline-hide-subtree): Rename from `hide-subtree'.
+	(hide-subtree): Declare as obsolete.
+	(outline-hide-leaves): Rename from `hide-leaves'.
+	(hide-leaves): Declare as obsolete.
+	(outline-show-subtree): Rename from `show-subtree'.
+	(show-subtree): Declare as obsolete.
+	(outline-hide-sublevels): Rename from `hide-sublevels'.
+	(hide-sublevels): Declare as obsolete.
+	(outline-hide-other): Rename from `hide-other'.
+	(hide-other): Declare as obsolete.
+	(outline-show-children): Rename from `show-children'.
+	(show-children): Declare as obsolete.
+	(outline-show-branches): Rename from `show-branches'.
+	(show-branches): Declare as obsolete.
+
+2015-01-30  Oleh Krehel  <ohwoeowho@gmail.com>
+
 	* outline.el (outline-mode): Clean up docstring.
 	(font-lock-warning-face): Remove obsolete declaration.
 	(outline-font-lock-face): Remove obsolete comment.

@@ -62,20 +62,20 @@ in the file it applies to.")
     (define-key map "@" 'outline-mark-subtree)
     (define-key map "\C-n" 'outline-next-visible-heading)
     (define-key map "\C-p" 'outline-previous-visible-heading)
-    (define-key map "\C-i" 'show-children)
-    (define-key map "\C-s" 'show-subtree)
-    (define-key map "\C-d" 'hide-subtree)
+    (define-key map "\C-i" 'outline-show-children)
+    (define-key map "\C-s" 'outline-show-subtree)
+    (define-key map "\C-d" 'outline-hide-subtree)
     (define-key map "\C-u" 'outline-up-heading)
     (define-key map "\C-f" 'outline-forward-same-level)
     (define-key map "\C-b" 'outline-backward-same-level)
-    (define-key map "\C-t" 'hide-body)
-    (define-key map "\C-a" 'show-all)
-    (define-key map "\C-c" 'hide-entry)
-    (define-key map "\C-e" 'show-entry)
-    (define-key map "\C-l" 'hide-leaves)
-    (define-key map "\C-k" 'show-branches)
-    (define-key map "\C-q" 'hide-sublevels)
-    (define-key map "\C-o" 'hide-other)
+    (define-key map "\C-t" 'outline-hide-body)
+    (define-key map "\C-a" 'outline-show-all)
+    (define-key map "\C-c" 'outline-hide-entry)
+    (define-key map "\C-e" 'outline-show-entry)
+    (define-key map "\C-l" 'outline-hide-leaves)
+    (define-key map "\C-k" 'outline-show-branches)
+    (define-key map "\C-q" 'outline-hide-sublevels)
+    (define-key map "\C-o" 'outline-hide-other)
     (define-key map "\C-^" 'outline-move-subtree-up)
     (define-key map "\C-v" 'outline-move-subtree-down)
     (define-key map [(control ?<)] 'outline-promote)
@@ -85,49 +85,43 @@ in the file it applies to.")
 
 (defvar outline-mode-menu-bar-map
   (let ((map (make-sparse-keymap)))
-
     (define-key map [hide] (cons "Hide" (make-sparse-keymap "Hide")))
-
-    (define-key map [hide hide-other]
-      '(menu-item "Hide Other" hide-other
+    (define-key map [hide outline-hide-other]
+      '(menu-item "Hide Other" outline-hide-other
 		  :help "Hide everything except current body and parent and top-level headings"))
-    (define-key map [hide hide-sublevels]
-      '(menu-item "Hide Sublevels" hide-sublevels
+    (define-key map [hide outline-hide-sublevels]
+      '(menu-item "Hide Sublevels" outline-hide-sublevels
 		  :help "Hide everything but the top LEVELS levels of headers, in whole buffer"))
-    (define-key map [hide hide-subtree]
-      '(menu-item "Hide Subtree" hide-subtree
+    (define-key map [hide outline-hide-subtree]
+      '(menu-item "Hide Subtree" outline-hide-subtree
 		  :help "Hide everything after this heading at deeper levels"))
-    (define-key map [hide hide-entry]
-      '(menu-item "Hide Entry" hide-entry
+    (define-key map [hide outline-hide-entry]
+      '(menu-item "Hide Entry" outline-hide-entry
 		  :help "Hide the body directly following this heading"))
-    (define-key map [hide hide-body]
-      '(menu-item "Hide Body" hide-body
+    (define-key map [hide outline-hide-body]
+      '(menu-item "Hide Body" outline-hide-body
 		  :help "Hide all body lines in buffer, leaving all headings visible"))
-    (define-key map [hide hide-leaves]
-      '(menu-item "Hide Leaves" hide-leaves
+    (define-key map [hide outline-hide-leaves]
+      '(menu-item "Hide Leaves" outline-hide-leaves
 		  :help "Hide the body after this heading and at deeper levels"))
-
     (define-key map [show] (cons "Show" (make-sparse-keymap "Show")))
-
-    (define-key map [show show-subtree]
-      '(menu-item "Show Subtree" show-subtree
+    (define-key map [show outline-show-subtree]
+      '(menu-item "Show Subtree" outline-show-subtree
 		  :help "Show everything after this heading at deeper levels"))
-    (define-key map [show show-children]
-      '(menu-item "Show Children" show-children
+    (define-key map [show outline-show-children]
+      '(menu-item "Show Children" outline-show-children
 		  :help "Show all direct subheadings of this heading"))
-    (define-key map [show show-branches]
-      '(menu-item "Show Branches" show-branches
+    (define-key map [show outline-show-branches]
+      '(menu-item "Show Branches" outline-show-branches
 		  :help "Show all subheadings of this heading, but not their bodies"))
-    (define-key map [show show-entry]
-      '(menu-item "Show Entry" show-entry
+    (define-key map [show outline-show-entry]
+      '(menu-item "Show Entry" outline-show-entry
 		  :help "Show the body directly following this heading"))
-    (define-key map [show show-all]
-      '(menu-item "Show All" show-all
+    (define-key map [show outline-show-all]
+      '(menu-item "Show All" outline-show-all
 		  :help "Show all of the text in the buffer"))
-
     (define-key map [headings]
       (cons "Headings" (make-sparse-keymap "Headings")))
-
     (define-key map [headings demote-subtree]
       '(menu-item "Demote Subtree" outline-demote
 		  :help "Demote headings lower down the tree"))
@@ -148,23 +142,18 @@ in the file it applies to.")
       '(menu-item "New Heading" outline-insert-heading
 		  :help "Insert a new heading at same depth at point"))
     (define-key map [headings outline-backward-same-level]
-
       '(menu-item "Previous Same Level" outline-backward-same-level
 		  :help "Move backward to the arg'th subheading at same level as this one."))
     (define-key map [headings outline-forward-same-level]
-
       '(menu-item "Next Same Level" outline-forward-same-level
 		  :help "Move forward to the arg'th subheading at same level as this one"))
     (define-key map [headings outline-previous-visible-heading]
-
       '(menu-item "Previous" outline-previous-visible-heading
 		  :help "Move to the previous heading line"))
     (define-key map [headings outline-next-visible-heading]
-
       '(menu-item "Next" outline-next-visible-heading
 		  :help "Move to the next visible heading line"))
     (define-key map [headings outline-up-heading]
-
       '(menu-item "Up" outline-up-heading
 		  :help "Move to the visible heading line of which the present line is a subheading"))
     map))
@@ -272,8 +261,9 @@ of the heading, so they move with it, if the line is killed and yanked
 back.  A heading with text hidden under it is marked with an ellipsis (...).
 
 \\{outline-mode-map}
-The commands `hide-subtree', `show-subtree', `show-children',
-`hide-entry', `show-entry', `hide-leaves', and `show-branches'
+The commands `outline-hide-subtree', `outline-show-subtree',
+`outline-show-children', `outline-hide-entry',
+`outline-show-entry', `outline-hide-leaves', and `outline-show-branches'
 are used when point is on a heading line.
 
 The variable `outline-regexp' can be changed to control what is a heading.
@@ -296,7 +286,7 @@ Turning on outline mode calls the value of `text-mode-hook' and then of
        '(outline-font-lock-keywords t nil nil backward-paragraph))
   (setq imenu-generic-expression
 	(list (list nil (concat "^\\(?:" outline-regexp "\\).*$") 0)))
-  (add-hook 'change-major-mode-hook 'show-all nil t))
+  (add-hook 'change-major-mode-hook 'outline-show-all nil t))
 
 (defcustom outline-minor-mode-prefix "\C-c@"
   "Prefix key to use for Outline commands in Outline minor mode.
@@ -329,7 +319,7 @@ See the command `outline-mode' for more information on this mode."
     ;; Cause use of ellipses for invisible text.
     (remove-from-invisibility-spec '(outline . t))
     ;; When turning off outline mode, get rid of any outline hiding.
-    (show-all)))
+    (outline-show-all)))
 
 (defvar outline-level 'outline-level
   "Function of no args to compute a header's nesting level in an outline.
@@ -633,7 +623,7 @@ the match data is set appropriately."
     (move-marker ins-point (point))
     (insert (delete-and-extract-region beg end))
     (goto-char ins-point)
-    (if folded (hide-subtree))
+    (if folded (outline-hide-subtree))
     (move-marker ins-point nil)))
 
 (defun outline-end-of-heading ()
@@ -695,7 +685,7 @@ This puts point at the start of the current subtree, and mark at the end."
 (defvar outline-isearch-open-invisible-function nil
   "Function called if `isearch' finishes in an invisible overlay.
 The function is called with the overlay as its only argument.
-If nil, `show-entry' is called to reveal the invisible text.")
+If nil, `outline-show-entry' is called to reveal the invisible text.")
 
 (put 'outline 'reveal-toggle-invisible 'outline-reveal-toggle-invisible)
 (defun outline-flag-region (from to flag)
@@ -719,51 +709,51 @@ If FLAG is nil then text is shown, while if FLAG is t the text is hidden."
   (save-excursion
     (goto-char (overlay-start o))
     (if hidep
-	;; When hiding the area again, we could just clean it up and let
-	;; reveal do the rest, by simply doing:
-	;; (remove-overlays (overlay-start o) (overlay-end o)
-	;;                  'invisible 'outline)
-	;;
-	;; That works fine as long as everything is in sync, but if the
-	;; structure of the document is changed while revealing parts of it,
-	;; the resulting behavior can be ugly.  I.e. we need to make
-	;; sure that we hide exactly a subtree.
-	(progn
-	  (let ((end (overlay-end o)))
-	    (delete-overlay o)
-	    (while (progn
-		     (hide-subtree)
-		     (outline-next-visible-heading 1)
-		     (and (not (eobp)) (< (point) end))))))
+        ;; When hiding the area again, we could just clean it up and let
+        ;; reveal do the rest, by simply doing:
+        ;; (remove-overlays (overlay-start o) (overlay-end o)
+        ;;                  'invisible 'outline)
+        ;;
+        ;; That works fine as long as everything is in sync, but if the
+        ;; structure of the document is changed while revealing parts of it,
+        ;; the resulting behavior can be ugly.  I.e. we need to make
+        ;; sure that we hide exactly a subtree.
+        (progn
+          (let ((end (overlay-end o)))
+            (delete-overlay o)
+            (while (progn
+                     (outline-hide-subtree)
+                     (outline-next-visible-heading 1)
+                     (and (not (eobp)) (< (point) end))))))
 
       ;; When revealing, we just need to reveal sublevels.  If point is
       ;; inside one of the sublevels, reveal will call us again.
       ;; But we need to preserve the original overlay.
       (let ((o1 (copy-overlay o)))
-	(overlay-put o 'invisible nil)	;Show (most of) the text.
-	(while (progn
-		 (show-entry)
-		 (show-children)
-		 ;; Normally just the above is needed.
-		 ;; But in odd cases, the above might fail to show anything.
-		 ;; To avoid an infinite loop, we have to make sure that
-		 ;; *something* gets shown.
-		 (and (equal (overlay-start o) (overlay-start o1))
-		      (< (point) (overlay-end o))
-		      (= 0 (forward-line 1)))))
-	;; If still nothing was shown, just kill the damn thing.
-	(when (equal (overlay-start o) (overlay-start o1))
-	  ;; I've seen it happen at the end of buffer.
-	  (delete-overlay o1))))))
+        (overlay-put o 'invisible nil)  ;Show (most of) the text.
+        (while (progn
+                 (outline-show-entry)
+                 (outline-show-children)
+                 ;; Normally just the above is needed.
+                 ;; But in odd cases, the above might fail to show anything.
+                 ;; To avoid an infinite loop, we have to make sure that
+                 ;; *something* gets shown.
+                 (and (equal (overlay-start o) (overlay-start o1))
+                      (< (point) (overlay-end o))
+                      (= 0 (forward-line 1)))))
+        ;; If still nothing was shown, just kill the damn thing.
+        (when (equal (overlay-start o) (overlay-start o1))
+          ;; I've seen it happen at the end of buffer.
+          (delete-overlay o1))))))
 
 ;; Function to be set as an outline-isearch-open-invisible' property
 ;; to the overlay that makes the outline invisible (see
 ;; `outline-flag-region').
 (defun outline-isearch-open-invisible (_overlay)
   ;; We rely on the fact that isearch places point on the matched text.
-  (show-entry))
+  (outline-show-entry))
 
-(defun hide-entry ()
+(defun outline-hide-entry ()
   "Hide the body directly following this heading."
   (interactive)
   (save-excursion
@@ -771,21 +761,30 @@ If FLAG is nil then text is shown, while if FLAG is t the text is hidden."
     (outline-end-of-heading)
     (outline-flag-region (point) (progn (outline-next-preface) (point)) t)))
 
-(defun show-entry ()
+(define-obsolete-function-alias
+    'hide-entry 'outline-hide-entry "25.1")
+
+(defun outline-show-entry ()
   "Show the body directly following this heading.
 Show the heading too, if it is currently invisible."
   (interactive)
   (save-excursion
     (outline-back-to-heading t)
     (outline-flag-region (1- (point))
-			 (progn (outline-next-preface) (point)) nil)))
+                         (progn (outline-next-preface) (point)) nil)))
 
-(defun hide-body ()
+(define-obsolete-function-alias
+    'show-entry 'outline-show-entry "25.1")
+
+(defun outline-hide-body ()
   "Hide all body lines in buffer, leaving all headings visible."
   (interactive)
-  (hide-region-body (point-min) (point-max)))
+  (outline-hide-region-body (point-min) (point-max)))
 
-(defun hide-region-body (start end)
+(define-obsolete-function-alias
+    'hide-body 'outline-hide-body "25.1")
+
+(defun outline-hide-region-body (start end)
   "Hide all body lines in the region, but not headings."
   ;; Nullify the hook to avoid repeated calls to `outline-flag-region'
   ;; wasting lots of time running `lazy-lock-fontify-after-outline'
@@ -806,29 +805,46 @@ Show the heading too, if it is currently invisible."
 	    (outline-end-of-heading))))))
   (run-hooks 'outline-view-change-hook))
 
-(defun show-all ()
+(define-obsolete-function-alias
+    'hide-region-body 'outline-hide-region-body "25.1")
+
+(defun outline-show-all ()
   "Show all of the text in the buffer."
   (interactive)
   (outline-flag-region (point-min) (point-max) nil))
 
-(defun hide-subtree ()
+(define-obsolete-function-alias
+    'show-all 'outline-show-all "25.1")
+
+(defun outline-hide-subtree ()
   "Hide everything after this heading at deeper levels."
   (interactive)
   (outline-flag-subtree t))
 
-(defun hide-leaves ()
+(define-obsolete-function-alias
+    'hide-subtree 'outline-hide-subtree "25.1")
+
+(defun outline-hide-leaves ()
   "Hide the body after this heading and at deeper levels."
   (interactive)
   (save-excursion
     (outline-back-to-heading)
-;; Turned off to fix bug reported by Otto Maddox on 22 Nov 2005.
-;;    (outline-end-of-heading)
-    (hide-region-body (point) (progn (outline-end-of-subtree) (point)))))
+    ;; Turned off to fix bug reported by Otto Maddox on 22 Nov 2005.
+    ;;    (outline-end-of-heading)
+    (outline-hide-region-body
+     (point)
+     (progn (outline-end-of-subtree) (point)))))
 
-(defun show-subtree ()
+(define-obsolete-function-alias
+    'hide-leaves 'outline-hide-leaves "25.1")
+
+(defun outline-show-subtree ()
   "Show everything after this heading at deeper levels."
   (interactive)
   (outline-flag-subtree nil))
+
+(define-obsolete-function-alias
+    'show-subtree 'outline-show-subtree "25.1")
 
 (defun outline-show-heading ()
   "Show the current heading and move to its end."
@@ -840,7 +856,7 @@ Show the heading too, if it is currently invisible."
 		       (progn (outline-end-of-heading) (point))
 		       nil))
 
-(defun hide-sublevels (levels)
+(defun outline-hide-sublevels (levels)
   "Hide everything but the top LEVELS levels of headers, in whole buffer."
   (interactive (list
 		(cond
@@ -878,14 +894,17 @@ Show the heading too, if it is currently invisible."
           (outline-flag-region (1- (point)) (point) nil))))
   (run-hooks 'outline-view-change-hook))
 
-(defun hide-other ()
+(define-obsolete-function-alias
+    'hide-sublevels 'outline-hide-sublevels "25.1")
+
+(defun outline-hide-other ()
   "Hide everything except current body and parent and top-level headings."
   (interactive)
-  (hide-sublevels 1)
+  (outline-hide-sublevels 1)
   (let (outline-view-change-hook)
     (save-excursion
       (outline-back-to-heading t)
-      (show-entry)
+      (outline-show-entry)
       (while (condition-case nil (progn (outline-up-heading 1 t) (not (bobp)))
 	       (error nil))
 	(outline-flag-region (1- (point))
@@ -893,15 +912,18 @@ Show the heading too, if it is currently invisible."
 			     nil))))
   (run-hooks 'outline-view-change-hook))
 
+(define-obsolete-function-alias
+    'hide-other 'outline-hide-other "25.1")
+
 (defun outline-toggle-children ()
   "Show or hide the current subtree depending on its current state."
   (interactive)
   (save-excursion
     (outline-back-to-heading)
     (if (not (outline-invisible-p (line-end-position)))
-	(hide-subtree)
-      (show-children)
-      (show-entry))))
+        (outline-hide-subtree)
+      (outline-show-children)
+      (outline-show-entry))))
 
 (defun outline-flag-subtree (flag)
   (save-excursion
@@ -928,12 +950,15 @@ Show the heading too, if it is currently invisible."
  	      ;; leave blank line before heading
  	      (forward-char -1))))))
 
-(defun show-branches ()
+(defun outline-show-branches ()
   "Show all subheadings of this heading, but not their bodies."
   (interactive)
-  (show-children 1000))
+  (outline-show-children 1000))
 
-(defun show-children (&optional level)
+(define-obsolete-function-alias
+    'show-branches 'outline-show-branches "25.1")
+
+(defun outline-show-children (&optional level)
   "Show all direct subheadings of this heading.
 Prefix arg LEVEL is how many levels below the current level should be shown.
 Default is enough to cause the following heading to appear."
@@ -959,6 +984,9 @@ Default is enough to cause the following heading to appear."
        (progn (outline-end-of-subtree)
 	      (if (eobp) (point-max) (1+ (point)))))))
   (run-hooks 'outline-view-change-hook))
+
+(define-obsolete-function-alias
+    'show-children 'outline-show-children "25.1")
 
 
 
