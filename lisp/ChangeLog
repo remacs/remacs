@@ -1,5 +1,9 @@
 2015-01-30  Oleh Krehel  <ohwoeowho@gmail.com>
 
+	* lisp/custom.el (defface): Set `indent' to 1.
+
+2015-01-30  Oleh Krehel  <ohwoeowho@gmail.com>
+
 	* emacs-lisp/easy-mmode.el (define-minor-mode): Set `indent' to 1.
 
 2015-01-30  Michal Nazarewicz  <mina86@mina86.com>
