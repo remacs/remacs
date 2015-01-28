@@ -1,3 +1,7 @@
+2015-01-03  Glenn Morris  <rgm@gnu.org>
+
+	* update_autogen (commit): Prepend "# " to commit message.
+
 2015-01-24  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix a couple of AM_V_GEN bugs
