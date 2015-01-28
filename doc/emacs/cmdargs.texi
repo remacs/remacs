@@ -165,9 +165,12 @@ Evaluate Lisp expression @var{expression}.
 @item --insert=@var{file}
 @opindex --insert
 @cindex insert file contents, command-line argument
-Insert the contents of @var{file} into the @file{*scratch*} buffer
-(@pxref{Lisp Interaction}).  This is like what @kbd{M-x insert-file}
-does (@pxref{Misc File Ops}).
+Insert the contents of @var{file} into the buffer that is current when
+this command-line argument is processed.  Usually, this is the
+@file{*scratch*} buffer (@pxref{Lisp Interaction}), but if arguments
+earlier on the command line visit files or switch buffers, that might
+be a different buffer.  The effect of this command-line argument is
+like what @kbd{M-x insert-file} does (@pxref{Misc File Ops}).
 
 @item --kill
 @opindex --kill

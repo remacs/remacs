@@ -1,3 +1,8 @@
+2015-01-24  Eli Zaretskii  <eliz@gnu.org>
+
+	* searching.texi (Regexp Search): Add a cross-reference to "Syntax
+	of Regexps".  (Bug#19668)
+
 2015-01-21  Daniel Koning  <dk@danielkoning.com>  (tiny change)
 
 	* commands.texi (Drag Events, Motion Events, Event Examples)

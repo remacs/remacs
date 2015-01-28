@@ -1,3 +1,16 @@
+2015-01-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* dired.c (directory_files_internal) [WINDOWSNT]: If readdir
+	returns NULL and errno is ENOTDIR, behave as if opendir failed to
+	open the directory.  (Bug#19701)
+
+	* w32.c (sys_readdir): If FindFirstFile fails because the
+	directory doesn't exist, set errno to ENOTDIR.
+
+2015-01-24  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (drawRect:): Add block/unblock_input (Bug#19660).
+
 2015-01-21  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix coding.c subscript error

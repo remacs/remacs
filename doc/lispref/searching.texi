@@ -988,10 +988,11 @@ list of characters @var{chars}.
 @cindex searching for regexp
 
   In GNU Emacs, you can search for the next match for a regular
-expression either incrementally or not.  For incremental search
-commands, see @ref{Regexp Search, , Regular Expression Search, emacs,
-The GNU Emacs Manual}.  Here we describe only the search functions
-useful in programs.  The principal one is @code{re-search-forward}.
+expression (@pxref{Syntax of Regexps}) either incrementally or not.
+For incremental search commands, see @ref{Regexp Search, , Regular
+Expression Search, emacs, The GNU Emacs Manual}.  Here we describe
+only the search functions useful in programs.  The principal one is
+@code{re-search-forward}.
 
   These search functions convert the regular expression to multibyte if
 the buffer is multibyte; they convert the regular expression to unibyte

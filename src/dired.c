@@ -238,6 +238,19 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 	      QUIT;
 	      continue;
 	    }
+#ifdef WINDOWSNT
+	  /* The MS-Windows implementation of 'opendir' doesn't
+	     actually open a directory until the first call to
+	     'readdir'.  If 'readdir' fails to open the directory, it
+	     sets errno to ENOTDIR; we convert it here to ENOENT so
+	     that the error message is similar to what happens on
+	     Posix hosts in such cases.  */
+	  if (errno == ENOTDIR)
+	    {
+	      errno = ENOENT;
+	      report_file_error ("Opening directory", directory);
+	    }
+#endif
 	  break;
 	}
 
