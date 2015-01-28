@@ -1,3 +1,9 @@
+2015-01-17  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (produce_image_glyph): Fix display of images in R2L
+	screen lines: prepend the new glyph to the ones already there
+	instead of appending it.
+
 2015-01-14  Eli Zaretskii  <eliz@gnu.org>
 
 	* w32fns.c (w32_set_title_bar_text): New function, including

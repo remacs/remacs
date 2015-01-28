@@ -1,3 +1,10 @@
+2015-01-20  Eli Zaretskii  <eliz@gnu.org>
+
+	* display.texi (Manipulating Buttons): Explain more about the
+	'action' property.  (Bug#19628)
+
+	* text.texi (Clickable Text): Improve indexing.  (Bug#19629)
+
 2015-01-15  Eli Zaretskii  <eliz@gnu.org>
 
 	* variables.texi (Creating Buffer-Local): Improve indexing.

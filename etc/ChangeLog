@@ -1,3 +1,8 @@
+2015-01-17  Eli Zaretskii  <eliz@gnu.org>
+
+	* tutorials/TUTORIAL.he: Use u+05f4 HEBREW PUNCTUATION GERSHAYIM
+	instead of u+0022 QUOTATION MARK in Hebrew acronyms.
+
 2015-01-27  Ivan Shmakov  <ivan@siamics.net>
 
 	* NEWS: Mention the new tar-new-entry command.  (Bug#19274)
