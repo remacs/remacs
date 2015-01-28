@@ -221,17 +221,21 @@
 (defvar reftex-syntax-table nil)
 (defvar reftex-syntax-table-for-bib nil)
 
-(unless reftex-syntax-table
+(defun reftex--prepare-syntax-tables ()
   (setq reftex-syntax-table (copy-syntax-table))
   (modify-syntax-entry ?\( "." reftex-syntax-table)
-  (modify-syntax-entry ?\) "." reftex-syntax-table))
+  (modify-syntax-entry ?\) "." reftex-syntax-table)
 
-(unless reftex-syntax-table-for-bib
   (setq reftex-syntax-table-for-bib (copy-syntax-table))
   (modify-syntax-entry ?\' "." reftex-syntax-table-for-bib)
   (modify-syntax-entry ?\" "." reftex-syntax-table-for-bib)
   (modify-syntax-entry ?\[ "." reftex-syntax-table-for-bib)
-  (modify-syntax-entry ?\] "." reftex-syntax-table-for-bib))
+  (modify-syntax-entry ?\] "." reftex-syntax-table-for-bib)
+  (modify-syntax-entry ?\( "." reftex-syntax-table-for-bib)
+  (modify-syntax-entry ?\) "." reftex-syntax-table-for-bib))
+
+(unless (and reftex-syntax-table reftex-syntax-table-for-bib)
+  (reftex--prepare-syntax-tables))
 
 ;; The following definitions are out of place, but I need them here
 ;; to make the compilation of reftex-mode not complain.
@@ -295,15 +299,7 @@ on the menu bar.
           (put 'reftex-auto-recenter-toc 'initialized t))
 
         ;; Prepare the special syntax tables.
-        (setq reftex-syntax-table (copy-syntax-table (syntax-table)))
-        (modify-syntax-entry ?\( "." reftex-syntax-table)
-        (modify-syntax-entry ?\) "." reftex-syntax-table)
-
-        (setq reftex-syntax-table-for-bib (copy-syntax-table))
-        (modify-syntax-entry ?\' "." reftex-syntax-table-for-bib)
-        (modify-syntax-entry ?\" "." reftex-syntax-table-for-bib)
-        (modify-syntax-entry ?\[ "." reftex-syntax-table-for-bib)
-        (modify-syntax-entry ?\] "." reftex-syntax-table-for-bib)
+	(reftex--prepare-syntax-tables)
 
         (run-hooks 'reftex-mode-hook))
     ;; Mode was turned off
