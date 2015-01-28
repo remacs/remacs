@@ -1,3 +1,7 @@
+2015-01-28  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/cl.el (cl--function-convert): Simplify.
+
 2015-01-28  Tassilo Horn  <tsdh@gnu.org>
 
 	* textmodes/reftex.el (reftex-syntax-table-for-bib): Give ( and )
@@ -11,8 +15,8 @@
 	python.el: New non-global state dependent indentation engine.
 	(Bug#18319, Bug#19595)
 
-	* progmodes/python.el (python-syntax-comment-or-string-p): Accept
-	PPSS as argument.
+	* progmodes/python.el (python-syntax-comment-or-string-p):
+	Accept PPSS as argument.
 	(python-syntax-closing-paren-p): New function.
 	(python-indent-current-level)
 	(python-indent-levels): Mark obsolete.
@@ -30,8 +34,8 @@
 
 	* subr.el (posnp): Correct docstring of `posnp'.
 	(posn-col-row): Make it work with all mouse position objects.
-	* textmodes/artist.el (artist-mouse-draw-continously): Cancel
-	timers if an error occurs during continuous drawing.  (Bug#6130)
+	* textmodes/artist.el (artist-mouse-draw-continously):
+	Cancel timers if an error occurs during continuous drawing.  (Bug#6130)
 
 2015-01-20  Eli Zaretskii  <eliz@gnu.org>
 
