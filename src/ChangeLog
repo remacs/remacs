@@ -1,3 +1,10 @@
+2015-01-14  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32fns.c (w32_set_title_bar_text): New function, including
+	support for titles with non-ASCII characters outside of the
+	current system codepage.
+	(x_set_name, x_set_title): Use it.  (Bug#19590)
+
 2015-01-10  Eli Zaretskii  <eliz@gnu.org>
 
 	* indent.c (Fvertical_motion): Return zero if we started from ZV

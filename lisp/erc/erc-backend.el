@@ -1162,8 +1162,11 @@ add things to `%s' instead."
           (cl-loop for alias in aliases
                    collect (intern (format "erc-server-%s-functions" alias)))))
     `(prog2
-         ;; Normal hook variable.
-         (defvar ,hook-name ',fn-name ,(format hook-doc name))
+         ;; Normal hook variable.  The variable may already have a
+         ;; value at this point, so I default to nil, and (add-hook)
+         ;; unconditionally
+         (defvar ,hook-name nil ,(format hook-doc name))
+         (add-to-list ',hook-name ',fn-name)
          ;; Handler function
          (defun ,fn-name (proc parsed)
            ,fn-doc

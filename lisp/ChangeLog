@@ -1,3 +1,15 @@
+2015-01-13  Michael Albinus  <michael.albinus@gmx.de>
+
+	* filenotify.el (file-notify-descriptors, file-notify-handle-event):
+	Adapt docstring.
+	(file-notify--descriptor): New defun.
+	(file-notify-callback, file-notify-add-watch, file-notify-rm-watch):
+	Adapt docstring.  Handle multiple values for
+	`file-notify-descriptors' entries.  (Bug#18880)
+
+	* net/tramp.el (tramp-handle-file-notify-rm-watch): Do not check
+	`file-notify-descriptors', the implementation has been changed.
+
 2015-01-09  Eli Zaretskii  <eliz@gnu.org>
 
 	* net/net-utils.el (net-utils-run-program, net-utils-run-simple):
