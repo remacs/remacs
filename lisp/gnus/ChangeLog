@@ -3,6 +3,11 @@
 	* nnimap.el (nnimap-find-expired-articles): Fix handling of
 	(expiry-wait . never).
 
+2015-01-28  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* nnimap.el (nnimap-request-group): Clear the buffer before returning
+	the data.
+
 2015-01-27  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* nnir.el (nnir-imap-expr-to-imap): Check for literal+ capability in

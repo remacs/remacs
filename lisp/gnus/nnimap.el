@@ -812,6 +812,7 @@ textual parts.")
 	    (nnimap-finish-retrieve-group-infos server (list info) sequences
 						t)
 	    (setq active (nth 2 (assoc group nnimap-current-infos)))))
+	(erase-buffer)
 	(insert (format "211 %d %d %d %S\n"
 			(- (cdr active) (car active))
 			(car active)
