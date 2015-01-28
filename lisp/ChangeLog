@@ -58,8 +58,6 @@
 	* progmodes/sh-script.el (sh-mode): Doc fix.
 	(sh-basic-indent-line): Handle electric newline.  (Bug#18756)
 
-2014-12-14  Steve Purcell  <steve@sanityinc.com>  (tiny change)
-
 2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix dired quoting bug with "Hit`N`Hide".  Fixes Bug#19498.
