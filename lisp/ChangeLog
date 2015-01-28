@@ -1,3 +1,9 @@
+2015-01-09  Eli Zaretskii  <eliz@gnu.org>
+
+	* net/net-utils.el (net-utils-run-program, net-utils-run-simple):
+	On MS-Windows, bind coding-system-for-read to the console output
+	codepage.  (Bug#19458)
+
 2015-01-04  Dmitry Gutov  <dgutov@yandex.ru>
 
 	Unbreak `mouse-action' property in text buttons.
