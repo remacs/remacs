@@ -1,3 +1,11 @@
+2015-01-28  Tassilo Horn  <tsdh@gnu.org>
+
+	* textmodes/reftex.el (reftex-syntax-table-for-bib): Give ( and )
+	punctuation syntax since to allow bibtex fields with values such
+	as {Test 1) and 2)} (bug#19205, bug#19707).
+	(reftex--prepare-syntax-tables): New function.
+	(reftex-mode): Use it.
+
 2015-01-26  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	python.el: New non-global state dependent indentation engine.
