@@ -1,4 +1,4 @@
-;;; xwidget.el --- api functions for xwidgets
+p;;; xwidget.el --- api functions for xwidgets  -*- lexical-binding: t -*-
 ;;  see xwidget.c for more api functions
 
 
@@ -224,11 +224,20 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
                    (t (xwidget-log "unhandled event:%s" xwidget-event-type)))))
           (t (xwidget-log "error: callback called for xwidget with dead buffer")))))
 
+(defvar bookmark-make-record-function)
 (define-derived-mode xwidget-webkit-mode
   special-mode "xwidget-webkit" "xwidget webkit view mode"
   (setq buffer-read-only t)
+  (setq-local bookmark-make-record-function
+              #'xwidget-webkit-bookmark-make-record)
   ;; Keep track of [vh]scroll when switching buffers
   (image-mode-setup-winprops))
+
+(defun xwidget-webkit-bookmark-make-record ()
+  (nconc (bookmark-make-record-default t t)
+         `((page     . ,(xwidget-webkit-current-url))
+           (handler  . (lambda (bmk) (browse-url   (bookmark-prop-get bmk 'page)))))))
+
 
 (defvar xwidget-webkit-last-session-buffer nil)
 
