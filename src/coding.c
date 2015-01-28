@@ -350,7 +350,8 @@ static Lisp_Object Vbig5_coding_system;
 #define CODING_ISO_BOL(coding)	\
   ((coding)->spec.iso_2022.bol)
 #define CODING_ISO_INVOKED_CHARSET(coding, plane)	\
-  CODING_ISO_DESIGNATION ((coding), CODING_ISO_INVOCATION ((coding), (plane)))
+  (CODING_ISO_INVOCATION (coding, plane) < 0 ? -1	\
+   : CODING_ISO_DESIGNATION (coding, CODING_ISO_INVOCATION (coding, plane)))
 #define CODING_ISO_CMP_STATUS(coding)	\
   (&(coding)->spec.iso_2022.cmp_status)
 #define CODING_ISO_EXTSEGMENT_LEN(coding)	\

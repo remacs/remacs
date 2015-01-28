@@ -1,3 +1,9 @@
+2015-01-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix coding.c subscript error
+	* coding.c (CODING_ISO_INVOKED_CHARSET):
+	Avoid undefined behavior if CODING_ISO_INVOCATION returns negative.
+
 2015-01-17  Eli Zaretskii  <eliz@gnu.org>
 
 	* xdisp.c (produce_image_glyph): Fix display of images in R2L

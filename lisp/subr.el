@@ -1082,7 +1082,12 @@ The return value is a positive integer."
 ;;;; Extracting fields of the positions in an event.
 
 (defun posnp (obj)
-  "Return non-nil if OBJ appears to be a valid `posn' object."
+  "Return non-nil if OBJ appears to be a valid `posn' object specifying a window.
+If OBJ is a valid `posn' object, but specifies a frame rather
+than a window, return nil."
+  ;; FIXME: Correct the behavior of this function so that all valid
+  ;; `posn' objects are recognized, after updating other code that
+  ;; depends on its present behavior.
   (and (windowp (car-safe obj))
        (atom (car-safe (setq obj (cdr obj))))                ;AREA-OR-POS.
        (integerp (car-safe (car-safe (setq obj (cdr obj))))) ;XOFFSET.
@@ -1142,24 +1147,28 @@ For a scroll-bar event, the result column is 0, and the row
 corresponds to the vertical position of the click in the scroll bar.
 POSITION should be a list of the form returned by the `event-start'
 and `event-end' functions."
-  (let* ((pair   (posn-x-y position))
-	 (window (posn-window position))
-	 (area   (posn-area position)))
+  (let* ((pair            (posn-x-y position))
+         (frame-or-window (posn-window position))
+         (frame           (if (framep frame-or-window)
+                              frame-or-window
+                            (window-frame frame-or-window)))
+         (window          (when (windowp frame-or-window) frame-or-window))
+         (area            (posn-area position)))
     (cond
-     ((null window)
+     ((null frame-or-window)
       '(0 . 0))
      ((eq area 'vertical-scroll-bar)
       (cons 0 (scroll-bar-scale pair (1- (window-height window)))))
      ((eq area 'horizontal-scroll-bar)
       (cons (scroll-bar-scale pair (window-width window)) 0))
      (t
-      (let* ((frame (if (framep window) window (window-frame window)))
-	     ;; FIXME: This should take line-spacing properties on
-	     ;; newlines into account.
-	     (spacing (when (display-graphic-p frame)
-			(or (with-current-buffer (window-buffer window)
-			      line-spacing)
-			    (frame-parameter frame 'line-spacing)))))
+      ;; FIXME: This should take line-spacing properties on
+      ;; newlines into account.
+      (let* ((spacing (when (display-graphic-p frame)
+                        (or (with-current-buffer
+                                (window-buffer (frame-selected-window frame))
+                              line-spacing)
+                            (frame-parameter frame 'line-spacing)))))
 	(cond ((floatp spacing)
 	       (setq spacing (truncate (* spacing
 					  (frame-char-height frame)))))
