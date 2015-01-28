@@ -57,6 +57,10 @@
 	* emacs.c (syms_of_emacs) <system-configuration>: Doc fix.
 	(Bug#19502)
 
+2015-01-28  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp.mk (lisp): Add cl-preloaded.
+
 2015-01-27  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Use bool for boolean in xfaces.c

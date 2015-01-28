@@ -724,6 +724,14 @@ Can only be used from within the lexical body of a primary or around method."
 
 (add-function :before-until cl-generic-tagcode-function
               #'cl--generic-struct-tagcode)
+
+(defun cl--generic-struct-tag (name)
+  `(and (vectorp ,name)
+        (> (length ,name) 0)
+        (let ((tag (aref ,name 0)))
+          (if (eq (symbol-function tag) :quick-object-witness-check)
+              tag))))
+
 (defun cl--generic-struct-tagcode (type name)
   (and (symbolp type)
        (get type 'cl-struct-type)
@@ -733,12 +741,19 @@ Can only be used from within the lexical body of a primary or around method."
        (or (equal '(cl-tag-slot) (car (get type 'cl-struct-slots)))
            (error "Can't dispatch on cl-struct %S: no tag in slot 0"
                   type))
-       ;; We could/should check the vector has length >0,
-       ;; but really, mixing vectors and structs is a bad idea,
-       ;; so let's not waste time trying to handle the case
-       ;; of an empty vector.
-       ;; BEWARE: this returns a bogus tag for non-struct vectors.
-       `(50 . (and (vectorp ,name) (aref ,name 0)))))
+       ;; It's tempting to use (and (vectorp ,name) (aref ,name 0))
+       ;; but that would suffer from some problems:
+       ;; - the vector may have size 0.
+       ;; - when called on an actual vector (rather than an object), we'd
+       ;;   end up returning an arbitrary value, possibly colliding with
+       ;;   other tagcode's values.
+       ;; - it can also result in returning all kinds of irrelevant
+       ;;   values which would end up filling up the method-cache with
+       ;;   lots of irrelevant/redundant entries.
+       ;; FIXME: We could speed this up by introducing a dedicated
+       ;; vector type at the C level, so we could do something like
+       ;; (and (vector-objectp ,name) (aref ,name 0))
+       `(50 . ,(cl--generic-struct-tag name))))
 
 (add-function :before-until cl-generic-tag-types-function
               #'cl--generic-struct-tag-types)

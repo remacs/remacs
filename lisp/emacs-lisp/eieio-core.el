@@ -224,9 +224,9 @@ Return nil if that option doesn't exist."
 (defsubst eieio-object-p (obj)
   "Return non-nil if OBJ is an EIEIO object."
   (and (vectorp obj)
-       (condition-case nil
-           (eq (aref (eieio--object-class-object obj) 0) 'defclass)
-         (error nil))))
+       (> (length obj) 0)
+       (eq (symbol-function (eieio--class-tag obj))
+           :quick-object-witness-check)))
 
 (defalias 'object-p 'eieio-object-p)
 
@@ -539,6 +539,7 @@ See `defclass' for more information."
           ;; objects readable.
           (tag (intern (format "eieio-class-tag--%s" cname))))
       (set tag newc)
+      (fset tag :quick-object-witness-check)
       (setf (eieio--object-class-tag cache) tag)
       (let ((eieio-skip-typecheck t))
 	;; All type-checking has been done to our satisfaction
@@ -1223,9 +1224,10 @@ method invocation orders of the involved classes."
   ;;    specializer in a defmethod form.
   ;; So we can ignore types that are not known to denote classes.
   (and (class-p type)
-       ;; Prefer (aref ,name 0) over (eieio--class-tag ,name) so that
-       ;; the tagcode is identical to the tagcode used for cl-struct.
-       `(50 . (and (vectorp ,name) (aref ,name 0)))))
+       ;; Use the exact same code as for cl-struct, so that methods
+       ;; that dispatch on both kinds of objects get to share this
+       ;; part of the dispatch code.
+       `(50 . ,(cl--generic-struct-tag name))))
 
 (add-function :before-until cl-generic-tag-types-function
               #'eieio--generic-tag-types)

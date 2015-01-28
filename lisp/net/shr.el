@@ -1628,6 +1628,8 @@ The preference is a float determined from `shr-prefer-media-type'."
   (let ((trs nil)
 	(shr-inhibit-decoration (not fill))
 	(rowspans (make-vector (length widths) 0))
+	(colspan-remaining 0)
+	colspan-width colspan-count
 	width colspan)
     (dolist (row (dom-non-text-children dom))
       (when (eq (dom-tag row) 'tr)
@@ -1659,24 +1661,39 @@ The preference is a float determined from `shr-prefer-media-type'."
 		    (if column
 			(aref widths width-column)
 		      10))
-	      (when (and fill
-			 (setq colspan (dom-attr column 'colspan)))
+	      (when (setq colspan (dom-attr column 'colspan))
 		(setq colspan (min (string-to-number colspan)
 				   ;; The colspan may be wrong, so
 				   ;; truncate it to the length of the
 				   ;; remaining columns.
 				   (- (length widths) i)))
 		(dotimes (j (1- colspan))
-		  (if (> (+ i 1 j) (1- (length widths)))
-		      (setq width (aref widths (1- (length widths))))
-		    (setq width (+ width
-				   shr-table-separator-length
-				   (aref widths (+ i 1 j))))))
-		(setq width-column (+ width-column (1- colspan))))
+		  (setq width
+			(if (> (+ i 1 j) (1- (length widths)))
+			    ;; If we have a colspan spec that's longer
+			    ;; than the table is wide, just use the last
+			    ;; width as the width.
+			    (aref widths (1- (length widths)))
+			  ;; Sum up the widths of the columns we're
+			  ;; spanning.
+			  (+ width
+			     shr-table-separator-length
+			     (aref widths (+ i 1 j))))))
+		(setq width-column (+ width-column (1- colspan))
+		      colspan-count colspan
+		      colspan-remaining colspan))
 	      (when (or column
 			(not fill))
-		(push (shr-render-td column width fill)
-		      tds))
+		(let ((data (shr-render-td column width fill)))
+		  (if (and (not fill)
+			   (> colspan-remaining 0))
+		      (progn
+			(when (= colspan-count colspan-remaining)
+			  (setq colspan-width data))
+			(let ((this-width (/ colspan-width colspan-count)))
+			  (push this-width tds)
+			  (setq colspan-remaining (1- colspan-remaining))))
+		    (push data tds))))
 	      (setq i (1+ i)
 		    width-column (1+ width-column))))
 	  (push (nreverse tds) trs))))
