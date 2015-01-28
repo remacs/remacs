@@ -1689,6 +1689,13 @@ likewise.  @kbd{v} extracts a file into a buffer in View mode
 another window, so you could edit the file and operate on the archive
 simultaneously.
 
+  The @kbd{I} key adds a new (regular) file to the archive.  The file
+is initially empty, but can readily be edited using the commands
+above.  The command inserts the new file before the current one, so
+that using it on the topmost line of the Tar buffer makes the new file
+the first one in the archive, and using it at the end of the buffer
+makes it the last one.
+
   @kbd{d} marks a file for deletion when you later use @kbd{x}, and
 @kbd{u} unmarks a file, as in Dired.  @kbd{C} copies a file from the
 archive to disk and @kbd{R} renames a file within the archive.

@@ -3816,7 +3816,9 @@ The skeleton will be bound to python-skeleton-NAME."
 ;;; Code check
 
 (defcustom python-check-command
-  "pyflakes"
+  (or (executable-find "pyflakes")
+      (executable-find "epylint")
+      "install pyflakes, pylint or something else")
   "Command used to check a Python file."
   :type 'string
   :group 'python)
@@ -3827,7 +3829,7 @@ The skeleton will be bound to python-skeleton-NAME."
   :type 'string
   :group 'python)
 
-(defvar python-check-custom-command nil
+(defvar-local python-check-custom-command nil
   "Internal use.")
 
 (defun python-check (command)

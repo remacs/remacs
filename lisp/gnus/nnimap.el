@@ -166,14 +166,21 @@ textual parts.")
   (nnimap-find-process-buffer nntp-server-buffer))
 
 (defun nnimap-header-parameters ()
-  (format "(UID RFC822.SIZE BODYSTRUCTURE %s)"
-	  (format
+  (let (params)
+    (push "UID" params)
+    (push "RFC822.SIZE" params)
+    (when (nnimap-capability "X-GM-EXT-1")
+      (push "X-GM-LABELS" params))
+    (push "BODYSTRUCTURE" params)
+    (push (format
 	   (if (nnimap-ver4-p)
 	       "BODY.PEEK[HEADER.FIELDS %s]"
 	     "RFC822.HEADER.LINES %s")
 	   (append '(Subject From Date Message-Id
 			     References In-Reply-To Xref)
-		   nnmail-extra-headers))))
+		   nnmail-extra-headers))
+	  params)
+    (format "%s" (nreverse params))))
 
 (deffoo nnimap-retrieve-headers (articles &optional group server fetch-old)
   (when group
@@ -197,7 +204,7 @@ textual parts.")
 
 (defun nnimap-transform-headers ()
   (goto-char (point-min))
-  (let (article lines size string)
+  (let (article lines size string labels)
     (block nil
       (while (not (eobp))
 	(while (not (looking-at "\\* [0-9]+ FETCH"))
@@ -232,6 +239,9 @@ textual parts.")
 				      t)
 		   (match-string 1)))
 	(beginning-of-line)
+	(when (search-forward "X-GM-LABELS" (line-end-position) t)
+	  (setq labels (ignore-errors (read (current-buffer)))))
+	(beginning-of-line)
 	(when (search-forward "BODYSTRUCTURE" (line-end-position) t)
 	  (let ((structure (ignore-errors
 			     (read (current-buffer)))))
@@ -251,6 +261,8 @@ textual parts.")
 	  (insert (format "Chars: %s\n" size)))
 	(when lines
 	  (insert (format "Lines: %s\n" lines)))
+	(when labels
+	  (insert (format "X-GM-LABELS: %s\n" labels)))
 	;; Most servers have a blank line after the headers, but
 	;; Davmail doesn't.
 	(unless (re-search-forward "^\r$\\|^)\r?$" nil t)

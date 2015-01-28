@@ -1258,7 +1258,7 @@ method invocation orders of the involved classes."
             (eieio--class-precedence-list tag))))
 
 
-;;;### (autoloads nil "eieio-compat" "eieio-compat.el" "57805f02023795a01567781e70aaf9f9")
+;;;### (autoloads nil "eieio-compat" "eieio-compat.el" "b568ffb3c90ed5d0ae673f0051d608ee")
 ;;; Generated autoloads from eieio-compat.el
 
 (autoload 'eieio--defalias "eieio-compat" "\

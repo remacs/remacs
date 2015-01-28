@@ -1828,7 +1828,7 @@ DEFUN ("internal-char-font", Finternal_char_font, Sinternal_char_font, 1, 2, 0,
       w = XWINDOW (window);
       f = XFRAME (w->frame);
       face_id = face_at_buffer_position (w, pos, &dummy,
-					 pos + 100, 0, -1);
+					 pos + 100, false, -1);
     }
   if (! CHAR_VALID_P (c))
     return Qnil;

@@ -1,3 +1,56 @@
+2015-01-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use bool for boolean in xfaces.c
+	* dispextern.h: Adjust to signature changes.
+	* font.c (font_at, font_range):
+	* fontset.c (Finternal_char_font):
+	* fringe.c (draw_fringe_bitmap_1):
+	* xdisp.c (handle_face_prop, face_before_or_after_it_pos)
+	(get_next_display_element, highlight_trailing_whitespace)
+	(display_string, calc_line_height_property)
+	(note_mode_line_or_margin_highlight, note_mouse_highlight):
+	* xfaces.c (tty_suppress_bold_inverse_default_colors_p)
+	(menu_face_changed_default, recompute_basic_faces)
+	(Fbitmap_spec_p, parse_rgb_list, tty_lookup_color)
+	(tty_defined_color, defined_color, face_color_gray_p)
+	(face_color_supported_p, load_color2, load_face_colors)
+	(Fx_list_fonts, LFACEP, push_named_merge_point)
+	(resolve_face_name, lface_from_face_name_no_resolve)
+	(lface_from_face_name, get_lface_attributes_no_remap)
+	(get_lface_attributes, lface_fully_specified_p)
+	(set_lface_from_font, merge_face_vectors, merge_named_face)
+	(merge_face_ref, Finternal_make_lisp_face)
+	(Finternal_lisp_face_p, Finternal_copy_lisp_face)
+	(Finternal_set_lisp_face_attribute)
+	(update_face_from_frame_parameter, set_font_frame_param)
+	(face_boolean_x_resource_value)
+	(Finternal_set_lisp_face_attribute_from_resource)
+	(x_update_menu_appearance, Finternal_get_lisp_face_attribute)
+	(Finternal_merge_in_global_face, Fface_font, face_attr_equal_p)
+	(lface_equal_p, Finternal_lisp_face_equal_p)
+	(Finternal_lisp_face_empty_p, lface_same_font_attributes_p)
+	(Fcolor_distance, lookup_named_face, lookup_basic_face)
+	(lookup_derived_face, Fface_attributes_as_vector)
+	(x_supports_face_attributes_p, tty_supports_face_attributes_p)
+	(Fdisplay_supports_face_attributes_p, realize_basic_faces)
+	(realize_default_face, realize_named_face)
+	(realize_non_ascii_face, realize_x_face, map_tty_color)
+	(realize_tty_face, compute_char_face, face_at_buffer_position)
+	(face_for_overlay_string, face_at_string_position):
+	Use bool for boolean.
+	* xfaces.c (set_lface_from_font):
+	Return void, since callers never use the result.
+
+2015-01-26  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* image.c (lookup_pixel_color): Reorder conditions that are
+	written backwards.
+	(x_to_xcolors): Likewise.
+	(x_detect_edges): Likewise.
+	(png_load_body): Likewise.
+	(gif_close): Likewise.
+	(gif_load): Likewise.
+
 2015-01-25  Eli Zaretskii  <eliz@gnu.org>
 
 	Use bool for boolean in w32term.c

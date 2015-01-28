@@ -417,7 +417,7 @@ Other back ends might or might not work.")
 
 (nnoo-define-basics nnmairix)
 
-(gnus-declare-backend "nnmairix" 'mail 'address)
+(gnus-declare-backend "nnmairix" 'mail 'address 'virtual)
 
 (deffoo nnmairix-open-server (server &optional definitions)
   ;; just set server variables

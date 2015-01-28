@@ -129,9 +129,9 @@ If CLASS is actually an object, then also display current values of that object.
         (insert "`")
         (help-insert-xref-button (symbol-name generic) 'help-function generic)
         (insert "'")
-	(pcase-dolist (`(,qualifier ,args ,doc)
+	(pcase-dolist (`(,qualifiers ,args ,doc)
                        (eieio-method-documentation generic class))
-          (insert (format " %S %S\n" qualifier args)
+          (insert (format " %s%S\n" qualifiers args)
                   (or doc "")))
 	(insert "\n\n")))))
 
@@ -325,10 +325,9 @@ methods for CLASS."
          (and generic
 	      (catch 'found
 		(if (null class) (throw 'found t))
-		(pcase-dolist (`((,specializers . ,_qualifier) . ,_)
-			       (cl--generic-method-table generic))
+		(dolist (method (cl--generic-method-table generic))
 		  (if (eieio--specializers-apply-to-class-p
-		       specializers class)
+		       (cl--generic-method-specializers method) class)
 		      (throw 'found t))))
 	      (push symbol l)))))
     l))
@@ -336,15 +335,14 @@ methods for CLASS."
 (defun eieio-method-documentation (generic class)
   "Return info for all methods of GENERIC applicable to CLASS.
 The value returned is a list of elements of the form
-\(QUALIFIER ARGS DOC)."
+\(QUALIFIERS ARGS DOC)."
   (let ((generic (cl--generic generic))
         (docs ()))
     (when generic
       (dolist (method (cl--generic-method-table generic))
-        (pcase-let ((`((,specializers . ,_qualifier) . ,_) method))
-          (when (eieio--specializers-apply-to-class-p
-                 specializers class)
-            (push (cl--generic-method-info method) docs)))))
+        (when (eieio--specializers-apply-to-class-p
+               (cl--generic-method-specializers method) class)
+          (push (cl--generic-method-info method) docs))))
     docs))
 
 ;;; METHOD STATS
