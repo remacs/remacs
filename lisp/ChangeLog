@@ -1,5 +1,21 @@
 2015-01-30  Oleh Krehel  <ohwoeowho@gmail.com>
 
+	* outline.el (outline-font-lock-face): Add docstring.
+	(outline-invisible-p): Improve docstring.
+	(outline-invent-heading): Add docstring.
+	(outline-promote): Improve docstring.
+	(outline-demote): Improve docstring.
+	(outline-head-from-level): Improve docstring.
+	(outline-end-of-heading): Add docstring.
+	(outline-next-visible-heading): Improve docstring.
+	(outline-previous-visible-heading): Improve docstring.
+	(outline-hide-region-body): Improve docstring.
+	(outline-flag-subtree): Add docstring.
+	(outline-end-of-subtree): Add docstring.
+	(outline-headers-as-kill): Improve docstring.
+
+2015-01-30  Oleh Krehel  <ohwoeowho@gmail.com>
+
 	* outline.el (outline-hide-entry): Rename from `hide-entry'.
 	(hide-entry): Declare as obsolete.
 	(outline-show-entry): Rename from `show-entry'.

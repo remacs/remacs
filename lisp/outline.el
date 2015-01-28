@@ -233,6 +233,7 @@ in the file it applies to.")
    outline-5 outline-6 outline-7 outline-8])
 
 (defun outline-font-lock-face ()
+  "Return one of `outline-font-lock-faces' for current level."
   (save-excursion
     (goto-char (match-beginning 0))
     (looking-at outline-regexp)
@@ -387,7 +388,8 @@ at the end of the buffer."
 		      nil 'move))
 
 (defsubst outline-invisible-p (&optional pos)
-  "Non-nil if the character after point is invisible."
+  "Non-nil if the character after POS is invisible.
+If POS is nil, use `point' instead."
   (get-char-property (or pos (point)) 'invisible))
 
 (defun outline-back-to-heading (&optional invisible-ok)
@@ -400,7 +402,7 @@ Only visible heading lines are considered, unless INVISIBLE-OK is non-nil."
 	  (while (not found)
 	    (or (re-search-backward (concat "^\\(?:" outline-regexp "\\)")
 				    nil t)
-		(error "before first heading"))
+                (error "Before first heading"))
 	    (setq found (and (or invisible-ok (not (outline-invisible-p)))
 			     (point)))))
 	(goto-char found)
@@ -435,6 +437,9 @@ If INVISIBLE-OK is non-nil, an invisible heading line is ok too."
     (run-hooks 'outline-insert-heading-hook)))
 
 (defun outline-invent-heading (head up)
+  "Create a heading by using heading HEAD as a template.
+When UP is non-nil, the created heading will be one level above.
+Otherwise, it will be one level below."
   (save-match-data
     ;; Let's try to invent one by repeating or deleting the last char.
     (let ((new-head (if up (substring head 0 -1)
@@ -450,7 +455,7 @@ If INVISIBLE-OK is non-nil, an invisible heading line is ok too."
 
 (defun outline-promote (&optional which)
   "Promote headings higher up the tree.
-If transient-mark-mode is on, and mark is active, promote headings in
+If `transient-mark-mode' is on, and mark is active, promote headings in
 the region (from a Lisp program, pass `region' for WHICH).  Otherwise:
 without prefix argument, promote current heading and all headings in the
 subtree (from a Lisp program, pass `subtree' for WHICH); with prefix
@@ -489,7 +494,7 @@ nil for WHICH, or do not pass any argument)."
 
 (defun outline-demote (&optional which)
   "Demote headings lower down the tree.
-If transient-mark-mode is on, and mark is active, demote headings in
+If `transient-mark-mode' is on, and mark is active, demote headings in
 the region (from a Lisp program, pass `region' for WHICH).  Otherwise:
 without prefix argument, demote current heading and all headings in the
 subtree (from a Lisp program, pass `subtree' for WHICH); with prefix
@@ -531,7 +536,7 @@ nil for WHICH, or do not pass any argument)."
       (replace-match down-head nil t)))))
 
 (defun outline-head-from-level (level head &optional alist)
-  "Get new heading with level LEVEL from ALIST.
+  "Get new heading with level LEVEL, closest to HEAD, from ALIST.
 If there are no such entries, return nil.
 ALIST defaults to `outline-heading-alist'.
 Similar to (car (rassoc LEVEL ALIST)).
@@ -627,12 +632,13 @@ the match data is set appropriately."
     (move-marker ins-point nil)))
 
 (defun outline-end-of-heading ()
+  "Move to one char before the next `outline-heading-end-regexp'."
   (if (re-search-forward outline-heading-end-regexp nil 'move)
       (forward-char -1)))
 
 (defun outline-next-visible-heading (arg)
   "Move to the next visible heading line.
-With argument, repeats or can move backward if negative.
+With ARG, repeats or can move backward if negative.
 A heading line is one that starts with a `*' (or that
 `outline-regexp' matches)."
   (interactive "p")
@@ -660,7 +666,7 @@ A heading line is one that starts with a `*' (or that
 
 (defun outline-previous-visible-heading (arg)
   "Move to the previous heading line.
-With argument, repeats or can move forward if negative.
+With ARG, repeats or can move forward if negative.
 A heading line is one that starts with a `*' (or that
 `outline-regexp' matches)."
   (interactive "p")
@@ -785,7 +791,7 @@ Show the heading too, if it is currently invisible."
     'hide-body 'outline-hide-body "25.1")
 
 (defun outline-hide-region-body (start end)
-  "Hide all body lines in the region, but not headings."
+  "Hide all body lines between START and END, but not headings."
   ;; Nullify the hook to avoid repeated calls to `outline-flag-region'
   ;; wasting lots of time running `lazy-lock-fontify-after-outline'
   ;; and run the hook finally.
@@ -926,6 +932,7 @@ Show the heading too, if it is currently invisible."
       (outline-show-entry))))
 
 (defun outline-flag-subtree (flag)
+  "Assign FLAG to the current subtree."
   (save-excursion
     (outline-back-to-heading)
     (outline-end-of-heading)
@@ -934,6 +941,7 @@ Show the heading too, if it is currently invisible."
 			  flag)))
 
 (defun outline-end-of-subtree ()
+  "Move to the end of the current subtree."
   (outline-back-to-heading)
   (let ((first t)
 	(level (funcall outline-level)))
@@ -1070,7 +1078,7 @@ If there is no such heading, return nil."
         (point)))))
 
 (defun outline-headers-as-kill (beg end)
-  "Save the visible outline headers in region at the start of the kill ring.
+  "Save the visible outline headers between BEG and END to the kill ring.
 
 Text shown between the headers isn't copied.  Two newlines are
 inserted between saved headers.  Yanking the result may be a
