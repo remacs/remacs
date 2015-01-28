@@ -145,7 +145,8 @@
   (file-error (load "ldefs-boot.el")))
 
 (load "emacs-lisp/nadvice")
-(load "minibuffer")
+(load "emacs-lisp/cl-preloaded")
+(load "minibuffer")            ;After loaddefs, for define-minor-mode.
 (load "abbrev")         ;lisp-mode.el and simple.el use define-abbrev-table.
 (load "simple")
 

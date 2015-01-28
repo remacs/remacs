@@ -1,3 +1,21 @@
+2015-01-28  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Tighten up the tagcode used for eieio and cl-struct objects.
+	* loadup.el: Load cl-preloaded.
+	* emacs-lisp/eieio-core.el (eieio-defclass-internal): Set the function
+	slot of the tag symbol to :quick-object-witness-check.
+	(eieio-object-p): Use :quick-object-witness-check.
+	(eieio--generic-tagcode): Use cl--generic-struct-tag.
+	* emacs-lisp/cl-preloaded.el: New file.
+	* emacs-lisp/cl-macs.el (cl--bind-inits): Remove, unused.
+	(cl--transform-lambda, cl-destructuring-bind): Remove cl--bind-inits.
+	(cl--make-usage-args): Strip away &aux args.
+	(cl-case, cl-typecase, cl--parse-loop-clause): Use macroexp-let2.
+	(cl-the, cl-check-type): Use macroexp-let2 and cl-typep.
+	(cl-defstruct): Use `declare' and cl-struct-define.
+	* emacs-lisp/cl-generic.el (cl--generic-struct-tag): New function.
+	(cl--generic-struct-tagcode): Use it to tighten the tagcode.
+
 2015-01-27  Katsumi Yamaoka  <yamaoka@jpl.org>
 
 	* emacs-lisp/cl.el (cl--function-convert):
