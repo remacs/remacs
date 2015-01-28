@@ -1,3 +1,16 @@
+2015-01-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* dired.c (directory_files_internal, file_name_completion)
+	[WINDOWSNT]: Signal an error when errno is set non-zero by
+	'readdir', regardless of its value.
+
+	* w32.c (sys_readdir): Set errno to ENOENT when the directory
+	doesn't exist and to EACCES when it's not accessible to the
+	current user.  Set errno to zero when FindNextFile exhausts the
+	directory, so that callers don't interpret that as an error and
+	don't signal a file-error.
+	(open_unc_volume): Set errno to ENOENT if WNetOpenEnum fails.
+
 2015-01-27  Eli Zaretskii  <eliz@gnu.org>
 
 	* dired.c (directory_files_internal) [WINDOWSNT]: If readdir

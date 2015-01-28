@@ -251,14 +251,9 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 	  /* The MS-Windows implementation of 'opendir' doesn't
 	     actually open a directory until the first call to
 	     'readdir'.  If 'readdir' fails to open the directory, it
-	     sets errno to ENOTDIR; we convert it here to ENOENT so
-	     that the error message is similar to what happens on
-	     Posix hosts in such cases.  */
-	  if (errno == ENOTDIR)
-	    {
-	      errno = ENOENT;
-	      report_file_error ("Opening directory", directory);
-	    }
+	     sets errno to ENOENT or EACCES, see w32.c.  */
+	  if (errno)
+	    report_file_error ("Opening directory", directory);
 #endif
 	  break;
 	}
@@ -530,6 +525,10 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
 	      QUIT;
 	      continue;
 	    }
+#ifdef WINDOWSNT
+	  if (errno)
+	    report_file_error ("Opening directory", dirname);
+#endif
 	  break;
 	}
 
