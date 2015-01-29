@@ -1,3 +1,8 @@
+2015-01-29  Hans Wennborg  <hwennborg@google.com>  (tiny change)
+
+	* emacs.c (decode_env_path): Add parentheses around ternary
+	operator to increase readability and pacify compiler warnings.
+
 2015-01-29  Eli Zaretskii  <eliz@gnu.org>
 
 	* w32.c (sys_readdir): Map ERROR_NOT_READY (as in "device not
