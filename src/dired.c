@@ -120,6 +120,25 @@ directory_files_internal_unwind (void *dh)
   unblock_input ();
 }
 
+/* Return the next directory entry from DIR; DIR's name is DIRNAME.
+   If there are no more directory entries, return a null pointer.
+   Signal any unrecoverable errors.  */
+
+static struct dirent *
+read_dirent (DIR *dir, Lisp_Object dirname)
+{
+  while (true)
+    {
+      errno = 0;
+      struct dirent *dp = readdir (dir);
+      if (dp || errno == 0)
+	return dp;
+      if (! (errno == EAGAIN || errno == EINTR))
+	report_file_error ("Reading directory", dirname);
+      QUIT;
+    }
+}
+
 /* Function shared by Fdirectory_files and Fdirectory_files_and_attributes.
    If not ATTRS, return a list of directory filenames;
    if ATTRS, return a list of directory filenames and their attributes.
@@ -138,7 +157,6 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
   bool needsep = 0;
   ptrdiff_t count = SPECPDL_INDEX ();
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
-  struct dirent *dp;
 #ifdef WINDOWSNT
   Lisp_Object w32_save = Qnil;
 #endif
@@ -221,36 +239,13 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
       || !IS_ANY_SEP (SREF (directory, directory_nbytes - 1)))
     needsep = 1;
 
-  /* Loop reading blocks until EOF or error.  */
-  for (;;)
+  /* Loop reading directory entries.  */
+  for (struct dirent *dp; (dp = read_dirent (d, directory)); )
     {
-      ptrdiff_t len;
-      bool wanted = 0;
-      Lisp_Object name, finalname;
+      ptrdiff_t len = dirent_namelen (dp);
+      Lisp_Object name = make_unibyte_string (dp->d_name, len);
+      Lisp_Object finalname = name;
       struct gcpro gcpro1, gcpro2;
-
-      errno = 0;
-      dp = readdir (d);
-      if (!dp)
-	{
-	  if (errno == EAGAIN || errno == EINTR)
-	    {
-	      QUIT;
-	      continue;
-	    }
-#ifdef WINDOWSNT
-	  /* The MS-Windows implementation of 'opendir' doesn't
-	     actually open a directory until the first call to
-	     'readdir'.  If 'readdir' fails to open the directory, it
-	     sets errno to ENOENT or EACCES, see w32.c.  */
-	  if (errno)
-	    report_file_error ("Opening directory", directory);
-#endif
-	  break;
-	}
-
-      len = dirent_namelen (dp);
-      name = finalname = make_unibyte_string (dp->d_name, len);
       GCPRO2 (finalname, name);
 
       /* Note: DECODE_FILE can GC; it should protect its argument,
@@ -263,9 +258,8 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
       immediate_quit = 1;
       QUIT;
 
-      if (NILP (match)
-	  || re_search (bufp, SSDATA (name), len, 0, len, 0) >= 0)
-	wanted = 1;
+      bool wanted = (NILP (match)
+		     || re_search (bufp, SSDATA (name), len, 0, len, 0) >= 0);
 
       immediate_quit = 0;
 
@@ -498,31 +492,11 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
 
   record_unwind_protect_ptr (directory_files_internal_unwind, d);
 
-  /* Loop reading blocks */
-  /* (att3b compiler bug requires do a null comparison this way) */
-  while (1)
+  /* Loop reading directory entries.  */
+  for (struct dirent *dp; (dp = read_dirent (d, dirname)); )
     {
-      struct dirent *dp;
-      ptrdiff_t len;
+      ptrdiff_t len = dirent_namelen (dp);
       bool canexclude = 0;
-
-      errno = 0;
-      dp = readdir (d);
-      if (!dp)
-	{
-	  if (errno == EAGAIN || errno == EINTR)
-	    {
-	      QUIT;
-	      continue;
-	    }
-#ifdef WINDOWSNT
-	  if (errno)
-	    report_file_error ("Opening directory", dirname);
-#endif
-	  break;
-	}
-
-      len = dirent_namelen (dp);
 
       QUIT;
       if (len < SCHARS (encoded_file)

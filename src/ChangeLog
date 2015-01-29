@@ -1,3 +1,13 @@
+2015-01-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Report readdir failures
+	Previously, on non-MS-Windows platforms the code treated most
+	readdir failures as EOF.  This was incorrect, e.g., when readdir
+	fails with errno == EOVERFLOW.  Signal an error instead.
+	* dired.c (read_dirent):
+	New function, which signals an error when readdir fails.
+	(directory_files_internal, file_name_completion): Use it.
+
 2015-01-29  Eli Zaretskii  <eliz@gnu.org>
 
 	* dired.c (directory_files_internal, file_name_completion)
