@@ -979,7 +979,7 @@ If COMP or STD is non-nil, put that in the units table instead."
   (or
    (and (eq (car-safe newunits) 'var)
         (assq (nth 1 newunits) math-standard-units-systems))
-   (math-numberp (math-get-units (list '/ expr newunits)))))
+   (math-numberp (math-get-units (math-to-standard-units (list '/ expr newunits) nil)))))
 
 (defun math-check-unit-consistency (expr units)
   "Give an error if EXPR and UNITS do not have consistent units."

@@ -2,6 +2,7 @@
 
 	* lisp/calc/calc-units.el (calc-convert-exact-units): New function.
 	(calc-convert-units): Check for missing units.
+	(math-consistent-units-p): Strengthen the test for consistent units.
 
 	* lisp/calc/calc-ext.el (calc-init-extensions):  Autoload
 	`calc-convert-exact-units' and assign it a keybinding.
