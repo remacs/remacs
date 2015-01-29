@@ -804,9 +804,10 @@ textual parts.")
 	articles active marks high low)
     (with-current-buffer nntp-server-buffer
       (when result
-	(when (or (not dont-check)
-		  (not (setq active
-			     (nth 2 (assoc group nnimap-current-infos)))))
+	(when (and info
+		   (or (not dont-check)
+		       (not (setq active
+				  (nth 2 (assoc group nnimap-current-infos))))))
 	  (let ((sequences (nnimap-retrieve-group-data-early
 			    server (list info))))
 	    (nnimap-finish-retrieve-group-infos server (list info) sequences

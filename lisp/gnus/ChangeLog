@@ -1,5 +1,8 @@
 2015-01-29  Lars Ingebrigtsen  <larsi@gnus.org>
 
+	* nnimap.el (nnimap-request-group): Allow running this function on
+	groups that don't exist in Gnus yet.
+
 	* message.el (message-smtpmail-send-it): Remove the mail header
 	separator before sending.
 
