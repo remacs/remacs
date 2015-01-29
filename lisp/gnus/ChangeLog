@@ -2,6 +2,8 @@
 
 	* nnimap.el (nnimap-request-group): Allow running this function on
 	groups that don't exist in Gnus yet.
+	(nnimap-request-group): Revert previous patch since that made it
+	impossible to enter nnimap groups.
 
 	* message.el (message-smtpmail-send-it): Remove the mail header
 	separator before sending.
