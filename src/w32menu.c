@@ -103,7 +103,7 @@ void set_frame_menubar (struct frame *, bool, bool);
 #ifdef HAVE_DIALOGS
 static Lisp_Object w32_dialog_show (struct frame *, Lisp_Object, Lisp_Object, char **);
 #else
-static int is_simple_dialog (Lisp_Object);
+static bool is_simple_dialog (Lisp_Object);
 static Lisp_Object simple_dialog_show (struct frame *, Lisp_Object, Lisp_Object);
 #endif
 
@@ -166,7 +166,7 @@ w32_popup_dialog (struct frame *f, Lisp_Object header, Lisp_Object contents)
 void
 x_activate_menubar (struct frame *f)
 {
-  set_frame_menubar (f, 0, 1);
+  set_frame_menubar (f, false, true);
 
   /* Lock out further menubar changes while active.  */
   f->output_data.w32->menubar_active = 1;
@@ -289,7 +289,7 @@ set_frame_menubar (struct frame *f, bool first_time, bool deep_p)
   XSETFRAME (Vmenu_updating_frame, f);
 
   if (! menubar_widget)
-    deep_p = 1;
+    deep_p = true;
 
   if (deep_p)
     {
@@ -388,7 +388,7 @@ set_frame_menubar (struct frame *f, bool first_time, bool deep_p)
 	  else
 	    first_wv->contents = wv;
 	  /* Don't set wv->name here; GC during the loop might relocate it.  */
-	  wv->enabled = 1;
+	  wv->enabled = true;
 	  wv->button_type = BUTTON_TYPE_NONE;
 	  prev_wv = wv;
 	}
@@ -501,7 +501,7 @@ set_frame_menubar (struct frame *f, bool first_time, bool deep_p)
     /* Force the window size to be recomputed so that the frame's text
        area remains the same, if menubar has just been created.  */
     if (old_widget == NULL)
-      adjust_frame_size (f, -1, -1, 2, 0, Qmenu_bar_lines);
+      adjust_frame_size (f, -1, -1, 2, false, Qmenu_bar_lines);
   }
 
   unblock_input ();
@@ -518,7 +518,7 @@ initialize_frame_menubar (struct frame *f)
   /* This function is called before the first chance to redisplay
      the frame.  It has to be, so the frame will have the right size.  */
   fset_menu_bar_items (f, menu_bar_items (FRAME_MENU_BAR_ITEMS (f)));
-  set_frame_menubar (f, 1, 1);
+  set_frame_menubar (f, true, true);
 }
 
 /* Get rid of the menu bar of frame F, and free its storage.
@@ -570,7 +570,7 @@ w32_menu_show (struct frame *f, int x, int y, int menuflags,
   Lisp_Object *subprefix_stack
     = (Lisp_Object *) alloca (menu_items_used * word_size);
   int submenu_depth = 0;
-  int first_pane;
+  bool first_pane;
 
   *error = NULL;
 
@@ -590,7 +590,7 @@ w32_menu_show (struct frame *f, int x, int y, int menuflags,
   wv = make_widget_value ("menu", NULL, true, Qnil);
   wv->button_type = BUTTON_TYPE_NONE;
   first_wv = wv;
-  first_pane = 1;
+  first_pane = true;
 
   /* Loop over all panes and items, filling in the tree.  */
   i = 0;
@@ -601,14 +601,14 @@ w32_menu_show (struct frame *f, int x, int y, int menuflags,
 	  submenu_stack[submenu_depth++] = save_wv;
 	  save_wv = prev_wv;
 	  prev_wv = 0;
-	  first_pane = 1;
+	  first_pane = false;
 	  i++;
 	}
       else if (EQ (AREF (menu_items, i), Qlambda))
 	{
 	  prev_wv = save_wv;
 	  save_wv = submenu_stack[--submenu_depth];
-	  first_pane = 0;
+	  first_pane = false;
 	  i++;
 	}
       else if (EQ (AREF (menu_items, i), Qt)
@@ -664,7 +664,7 @@ w32_menu_show (struct frame *f, int x, int y, int menuflags,
 	      save_wv = wv;
 	      prev_wv = 0;
 	    }
-	  first_pane = 0;
+	  first_pane = false;
 	  i += MENU_ITEMS_PANE_LENGTH;
 	}
       else
@@ -883,8 +883,9 @@ w32_dialog_show (struct frame *f, Lisp_Object title,
 
   /* Number of elements seen so far, before boundary.  */
   int left_count = 0;
-  /* 1 means we've seen the boundary between left-hand elts and right-hand.  */
-  int boundary_seen = 0;
+  /* true means we've seen the boundary between left-hand elts and
+     right-hand.  */
+  bool boundary_seen = false;
 
   *error = NULL;
 
@@ -928,7 +929,7 @@ w32_dialog_show (struct frame *f, Lisp_Object title,
 	  {
 	    /* This is the boundary between left-side elts
 	       and right-side elts.  Stop incrementing right_count.  */
-	    boundary_seen = 1;
+	    boundary_seen = true;
 	    i++;
 	    continue;
 	  }
@@ -986,7 +987,7 @@ w32_dialog_show (struct frame *f, Lisp_Object title,
   /* Actually create the dialog.  */
   dialog_id = widget_id_tick++;
   menu = lw_create_widget (first_wv->name, "dialog", dialog_id, first_wv,
-			   f->output_data.w32->widget, 1, 0,
+			   f->output_data.w32->widget, true, 0,
 			   dialog_selection_callback, 0);
   lw_modify_all_widgets (dialog_id, first_wv->contents, TRUE);
 
@@ -1037,25 +1038,25 @@ w32_dialog_show (struct frame *f, Lisp_Object title,
    anywhere in Emacs that uses the other specific dialog choices that
    MessageBox provides.  */
 
-static int
+static bool
 is_simple_dialog (Lisp_Object contents)
 {
   Lisp_Object options;
   Lisp_Object name, yes, no, other;
 
   if (!CONSP (contents))
-    return 0;
+    return false;
   options = XCDR (contents);
 
   yes = build_string ("Yes");
   no = build_string ("No");
 
   if (!CONSP (options))
-    return 0;
+    return false;
 
   name = XCAR (options);
   if (!CONSP (name))
-    return 0;
+    return false;
   name = XCAR (name);
 
   if (!NILP (Fstring_equal (name, yes)))
@@ -1063,18 +1064,18 @@ is_simple_dialog (Lisp_Object contents)
   else if (!NILP (Fstring_equal (name, no)))
     other = yes;
   else
-    return 0;
+    return false;
 
   options = XCDR (options);
   if (!CONSP (options))
-    return 0;
+    return false;
 
   name = XCAR (options);
   if (!CONSP (name))
-    return 0;
+    return false;
   name = XCAR (name);
   if (NILP (Fstring_equal (name, other)))
-    return 0;
+    return false;
 
   /* Check there are no more options.  */
   options = XCDR (options);

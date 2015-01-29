@@ -66,10 +66,10 @@ struct w32font_info
 Lisp_Object w32font_get_cache (struct frame *fe);
 Lisp_Object w32font_list_internal (struct frame *f,
                                    Lisp_Object font_spec,
-                                   int opentype_only);
+                                   bool opentype_only);
 Lisp_Object w32font_match_internal (struct frame *f,
                                     Lisp_Object font_spec,
-                                    int opentype_only);
+                                    bool opentype_only);
 int w32font_open_internal (struct frame *f, Lisp_Object font_entity,
                            int pixel_size, Lisp_Object font_object);
 void w32font_close (struct font *font);

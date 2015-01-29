@@ -67,7 +67,7 @@ memq_no_quit (Lisp_Object elt, Lisp_Object list)
 static Lisp_Object
 uniscribe_list (struct frame *f, Lisp_Object font_spec)
 {
-  Lisp_Object fonts = w32font_list_internal (f, font_spec, 1);
+  Lisp_Object fonts = w32font_list_internal (f, font_spec, true);
   FONT_ADD_LOG ("uniscribe-list", font_spec, fonts);
   return fonts;
 }
@@ -75,7 +75,7 @@ uniscribe_list (struct frame *f, Lisp_Object font_spec)
 static Lisp_Object
 uniscribe_match (struct frame *f, Lisp_Object font_spec)
 {
-  Lisp_Object entity = w32font_match_internal (f, font_spec, 1);
+  Lisp_Object entity = w32font_match_internal (f, font_spec, true);
   FONT_ADD_LOG ("uniscribe-match", font_spec, entity);
   return entity;
 }
