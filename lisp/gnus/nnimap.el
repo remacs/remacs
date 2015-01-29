@@ -994,7 +994,6 @@ textual parts.")
 	       (delete 0 (mapcar #'string-to-number
 				 (cdr (assoc "SEARCH" (cdr result)))))))))))
 
-
 (defun nnimap-find-article-by-message-id (group server message-id
 						&optional limit)
   "Search for message with MESSAGE-ID in GROUP from SERVER.
