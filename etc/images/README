@@ -25,12 +25,12 @@ File: mh-logo.xpm
   Author: Satyaki Das
   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
-Files: splash.pbm, splash.xpm, gnus.pbm
+Files: gnus.pbm
   Author: Luis Fernandes <elf@ee.ryerson.ca>
   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
-Files: splash.png, splash.svg
-  Author: Francesc Rocher <rocher@member.fsf.org>
+Files: splash.png, splash.svg, splash.pbm, splash.xpm
+  Author: Francesc Rocher <francesc.rocher@gmail.com>
   Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 Files: checked.xpm, unchecked.xpm
