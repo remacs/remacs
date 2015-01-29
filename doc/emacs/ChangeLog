@@ -1,3 +1,8 @@
+2015-01-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* mule.texi (Language Environments): Work around refill bug in
+	makeinfo 4.x.  (Bug#19697)
+
 2015-01-26  Eli Zaretskii  <eliz@gnu.org>
 
 	* cmdargs.texi (Action Arguments): Clarify into which buffer
