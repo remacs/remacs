@@ -1,3 +1,8 @@
+2015-01-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32.c (sys_readdir): Map ERROR_NOT_READY (as in "device not
+	ready") to ENOENT.
+
 2015-01-28  Eli Zaretskii  <eliz@gnu.org>
 
 	* dired.c (directory_files_internal, file_name_completion)
