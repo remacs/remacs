@@ -1,3 +1,14 @@
+2015-01-29  Jay Belanger  <jay.p.belanger@gmail.com>
+
+	* lisp/calc/calc-units.el (calc-convert-exact-units): New function.
+	(calc-convert-units): Check for missing units.
+
+	* lisp/calc/calc-ext.el (calc-init-extensions):  Autoload
+	`calc-convert-exact-units' and assign it a keybinding.
+
+	* lisp/calc/calc-help (calc-u-prefix-help): Add help for the
+	"un" keybinding.
+
 2015-01-28  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/cl.el (cl--function-convert): Simplify.

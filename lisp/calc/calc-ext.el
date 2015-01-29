@@ -561,6 +561,7 @@
   (define-key calc-mode-map "ud" 'calc-define-unit)
   (define-key calc-mode-map "ue" 'calc-explain-units)
   (define-key calc-mode-map "ug" 'calc-get-unit-definition)
+  (define-key calc-mode-map "un" 'calc-convert-exact-units)
   (define-key calc-mode-map "up" 'calc-permanent-units)
   (define-key calc-mode-map "ur" 'calc-remove-units)
   (define-key calc-mode-map "us" 'calc-simplify-units)
@@ -1176,7 +1177,8 @@ calc-trail-scroll-right calc-trail-yank)
  ("calc-undo" calc-last-args calc-redo)
 
  ("calc-units" calc-autorange-units calc-base-units
-calc-convert-temperature calc-convert-units calc-define-unit
+calc-convert-temperature calc-convert-units 
+calc-convert-exact-units calc-define-unit
 calc-enter-units-table calc-explain-units calc-extract-units
 calc-get-unit-definition calc-permanent-units calc-quick-units
 calc-remove-units calc-simplify-units calc-undefine-unit
