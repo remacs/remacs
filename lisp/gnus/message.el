@@ -4906,6 +4906,11 @@ evaluates `message-send-mail-hook' just before sending a message.
 It is useful if your ISP requires the POP-before-SMTP
 authentication.  See the Gnus manual for details."
   (run-hooks 'message-send-mail-hook)
+  ;; Change header-delimiter to be what smtpmail expects.
+  (goto-char (point-min))
+  (when (re-search-forward
+	 (concat "^" (regexp-quote mail-header-separator) "\n"))
+    (replace-match "\n"))
   (smtpmail-send-it))
 
 (defun message-send-mail-with-mailclient ()
