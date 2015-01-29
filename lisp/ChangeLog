@@ -1,7 +1,7 @@
 2015-01-29  Tassilo Horn  <tsdh@gnu.org>
 
 	* textmodes/reftex-vars.el (featurep): Conditionalize value of
-	reftex-label-regexps in order to stay compatible with XEmacs 25
+	reftex-label-regexps in order to stay compatible with XEmacs 21.5
 	which has no explicitly numbered groups in regexps (bug#19714).
 
 2015-01-28  Tassilo Horn  <tsdh@gnu.org>

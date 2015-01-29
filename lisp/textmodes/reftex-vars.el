@@ -867,8 +867,8 @@ DOWNCASE    t:   Downcase words before using them."
                 (option (boolean :tag "Downcase words          "))))
 
 (if (featurep 'xemacs)
-    ;; XEmacs 25 doesn't have explicitly numbered matching groups, so
-    ;; this list mustn't get any more items.
+    ;; XEmacs 21.5 doesn't have explicitly numbered matching groups,
+    ;; so this list mustn't get any more items.
     (defconst reftex-label-regexps '("\\\\label{\\([^}]*\\)}"))
   (defcustom reftex-label-regexps
     '(;; Normal \\label{foo} labels
