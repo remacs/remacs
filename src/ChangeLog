@@ -1,3 +1,16 @@
+2015-01-29  Eli Zaretskii  <eliz@gnu.org>
+
+	Use bool for boolean in w32menu.c, w32font.c, w32uniscribe.c.
+	* w32uniscribe.c (uniscribe_list, uniscribe_match): Use bool where
+	appropriate.
+
+	* w32font.c (struct font_callback_data, w32font_list_internal)
+	(w32font_driver, w32font_match_internal): Use bool where appropriate.
+
+	* w32menu.c (x_activate_menubar, set_frame_menubar)
+	(w32_dialog_show, initialize_frame_menubar, w32_menu_show)
+	(is_simple_dialog): Use bool where appropriate.
+
 2015-01-28  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Use bool, not int, to track face changes
