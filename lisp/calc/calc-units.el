@@ -544,7 +544,7 @@ If COMP or STD is non-nil, put that in the units table instead."
        (let ((res
               (list '* (math-mul (math-remove-units expr)
                                  (math-simplify-units
-                                  (list '/ old-units units)))
+                                  (math-to-standard-units (list '/ old-units units) nil)))
                     units)))
          (calc-enter-result 1 "cvxu" res))))))
 
