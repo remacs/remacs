@@ -889,7 +889,7 @@ external if displayed external."
 			(when (and (boundp 'gnus-summary-buffer)
 				   (bufferp gnus-summary-buffer)
 				   (buffer-name gnus-summary-buffer))
-			  ;; So that we pop back to the right place, sortof.
+			  ;; So that we pop back to the right place, sort of.
 			  (switch-to-buffer gnus-summary-buffer)
 			  (switch-to-buffer mm))
 			(delete-other-windows)
