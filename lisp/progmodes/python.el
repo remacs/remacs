@@ -1067,9 +1067,7 @@ indentation levels from right to left."
   (interactive "*")
   (when (and (not (bolp))
            (not (python-syntax-comment-or-string-p))
-           (= (+ (line-beginning-position)
-                 (current-indentation))
-              (point)))
+           (= (current-indentation) (current-column)))
       (python-indent-line t)
       t))
 

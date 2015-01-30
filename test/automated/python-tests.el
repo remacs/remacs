@@ -2127,6 +2127,55 @@ if True:
    (call-interactively #'python-indent-dedent-line-backspace)
    (should (zerop (current-indentation)))))
 
+(ert-deftest python-indent-dedent-line-backspace-2 ()
+  "Check de-indentation with tabs.  Bug#19730."
+  (let ((tab-width 8))
+    (python-tests-with-temp-buffer
+     "
+if x:
+\tabcdefg
+"
+     (python-tests-look-at "abcdefg")
+     (goto-char (line-end-position))
+     (call-interactively #'python-indent-dedent-line-backspace)
+     (should
+      (string= (buffer-substring-no-properties
+                (line-beginning-position) (line-end-position))
+               "\tabcdef")))))
+
+(ert-deftest python-indent-dedent-line-backspace-3 ()
+  "Paranoid check of de-indentation with tabs.  Bug#19730."
+  (let ((tab-width 8))
+    (python-tests-with-temp-buffer
+     "
+if x:
+\tif y:
+\t abcdefg
+"
+     (python-tests-look-at "abcdefg")
+     (goto-char (line-end-position))
+     (call-interactively #'python-indent-dedent-line-backspace)
+     (should
+      (string= (buffer-substring-no-properties
+                (line-beginning-position) (line-end-position))
+               "\t abcdef"))
+     (back-to-indentation)
+     (call-interactively #'python-indent-dedent-line-backspace)
+     (should
+      (string= (buffer-substring-no-properties
+                (line-beginning-position) (line-end-position))
+               "\tabcdef"))
+     (call-interactively #'python-indent-dedent-line-backspace)
+     (should
+      (string= (buffer-substring-no-properties
+                (line-beginning-position) (line-end-position))
+               "    abcdef"))
+     (call-interactively #'python-indent-dedent-line-backspace)
+     (should
+      (string= (buffer-substring-no-properties
+                (line-beginning-position) (line-end-position))
+               "abcdef")))))
+
 
 ;;; Shell integration
 

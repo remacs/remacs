@@ -1,5 +1,12 @@
 2015-01-30  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
+	python.el: Handle tabs in python-indent-dedent-line.
+
+	* progmodes/python.el (python-indent-dedent-line): Fixes for
+	indentation with tabs.  Thanks to <dale@codefu.org> (Bug#19730).
+
+2015-01-30  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
 	* progmodes/python.el (python-indent-context): Respect user
 	indentation after comment.
 
