@@ -1,3 +1,12 @@
+2015-01-30  Eli Zaretskii  <eliz@gnu.org>
+
+	* dired.c (read_dirent): Accept an additional argument
+	FIRST_ENTRY.  If readdir fails with ENOENT or EACCES the first
+	time it is called, report the error as if it happened in
+	open_directory.
+	(directory_files_internal, file_name_completion): Adjust callers
+	or read_dirent.
+
 2015-01-30  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Refactor calls to opendir for simplicity
