@@ -60,6 +60,11 @@
 	* automated/cl-generic-tests.el (setf cl--generic-2): Make sure
 	the setf can be used already in the body of the method.
 
+2015-01-20  Jorgen Schaefer  <contact@jorgenschaefer.de>
+
+	* automated/package-test.el (package-test-install-prioritized):
+	Remove test due to unreproducible failures.
+
 2015-01-20  Michal Nazarewicz  <mina86@mina86.com>
 
 	* automated/descr-text-test.el: New file with tests for
