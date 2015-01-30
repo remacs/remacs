@@ -176,7 +176,8 @@ nnmairix groups are specifically excluded because they are ephemeral."
 (make-obsolete-variable 'gnus-registry-max-track-groups nil "23.4")
 (make-obsolete-variable 'gnus-registry-entry-caching nil "23.4")
 (make-obsolete-variable 'gnus-registry-trim-articles-without-groups nil "23.4")
-(make-obsolete-variable 'gnus-registry-max-pruned-entries nil "24.4")
+;; FIXME it was simply deleted.
+(make-obsolete-variable 'gnus-registry-max-pruned-entries nil "25.1")
 
 (defcustom gnus-registry-track-extra '(subject sender recipient)
   "Whether the registry should track extra data about a message.
@@ -253,21 +254,18 @@ exactly how much less.  For example, given a maximum size of
 cut the registry back to \(- 50000 \(* 50000 0.1\)\) -> 45000
 entries.  The pruning process is constrained by the presence of
 \"precious\" entries."
-  :version "24.4"
+  :version "25.1"
   :group 'gnus-registry
   :type 'float)
 
 (defcustom gnus-registry-default-sort-function
   #'gnus-registry-sort-by-creation-time
   "Sort function to use when pruning the registry.
-
-Entries which sort to the front of the list will be pruned
-first.
-
+Entries that sort to the front of the list are pruned first.
 This can slow pruning down.  Set to nil to perform no sorting."
-  :version "24.4"
+  :version "25.1"
   :group 'gnus-registry
-  :type 'symbol)
+  :type '(choice (const :tag "No sorting" nil) function))
 
 (defun gnus-registry-sort-by-creation-time (l r)
   "Sort older entries to front of list."

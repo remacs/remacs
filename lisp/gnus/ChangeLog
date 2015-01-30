@@ -1,3 +1,10 @@
+2015-01-30  Glenn Morris  <rgm@gnu.org>
+
+	* gnus-registry.el (gnus-registry-max-pruned-entries)
+	(gnus-registry-prune-factor, gnus-registry-default-sort-function):
+	Fix :version.
+	(gnus-registry-default-sort-function): Improve :type.
+
 2015-01-29  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* nnimap.el (nnimap-request-group): Allow running this function on
