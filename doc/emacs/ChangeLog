@@ -1,9 +1,7 @@
-2015-01-26  Eli Zaretskii  <eliz@gnu.org>
+2015-01-28  Eli Zaretskii  <eliz@gnu.org>
 
 	* cmdargs.texi (Action Arguments): Clarify into which buffer
 	'--insert' inserts.  (Bug#19694)
-
-2015-01-21  Eli Zaretskii  <eliz@gnu.org>
 
 	* programs.texi (Custom C Indent): Fix a typo.  (Bug#19647)
 

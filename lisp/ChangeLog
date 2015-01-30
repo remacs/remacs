@@ -22,11 +22,10 @@
 	(reftex--prepare-syntax-tables): New function.
 	(reftex-mode): Use it.
 
-2015-01-26  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+2015-01-28  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	python.el: New non-global state dependent indentation engine.
 	(Bug#18319, Bug#19595)
-
 	* progmodes/python.el (python-syntax-comment-or-string-p):
 	Accept PPSS as argument.
 	(python-syntax-closing-paren-p): New function.
@@ -42,18 +41,18 @@
 	(python-indent-dedent-line-backspace): Use `unless`.
 	(python-indent-toggle-levels): Delete function.
 
-2015-01-21  Daniel Koning  <dk@danielkoning.com>  (tiny change)
+2015-01-28  Daniel Koning  <dk@danielkoning.com>  (tiny change)
 
 	* subr.el (posnp): Correct docstring of `posnp'.
 	(posn-col-row): Make it work with all mouse position objects.
 	* textmodes/artist.el (artist-mouse-draw-continously):
 	Cancel timers if an error occurs during continuous drawing.  (Bug#6130)
 
-2015-01-20  Eli Zaretskii  <eliz@gnu.org>
+2015-01-28  Eli Zaretskii  <eliz@gnu.org>
 
 	* button.el (button-activate, push-button): Doc fix.  (Bug#19628)
 
-2015-01-13  Michael Albinus  <michael.albinus@gmx.de>
+2015-01-28  Michael Albinus  <michael.albinus@gmx.de>
 
 	* filenotify.el (file-notify-descriptors, file-notify-handle-event):
 	Adapt docstring.
@@ -65,24 +64,23 @@
 	* net/tramp.el (tramp-handle-file-notify-rm-watch): Do not check
 	`file-notify-descriptors', the implementation has been changed.
 
-2015-01-09  Eli Zaretskii  <eliz@gnu.org>
+2015-01-28  Eli Zaretskii  <eliz@gnu.org>
 
 	* net/net-utils.el (net-utils-run-program, net-utils-run-simple):
 	On MS-Windows, bind coding-system-for-read to the console output
 	codepage.  (Bug#19458)
 
-2015-01-04  Dmitry Gutov  <dgutov@yandex.ru>
+2015-01-28  Dmitry Gutov  <dgutov@yandex.ru>
 
 	Unbreak `mouse-action' property in text buttons.
-
 	* button.el (push-button): Fix regression from 2012-12-06.
 
-2015-01-06  Glenn Morris  <rgm@gnu.org>
+2015-01-28  Glenn Morris  <rgm@gnu.org>
 
 	* progmodes/sh-script.el (sh-mode): Doc fix.
 	(sh-basic-indent-line): Handle electric newline.  (Bug#18756)
 
-2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
+2015-01-28  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix dired quoting bug with "Hit`N`Hide".  Fixes Bug#19498.
 	* files.el (shell-quote-wildcard-pattern): Also quote "`".

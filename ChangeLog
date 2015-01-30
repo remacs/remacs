@@ -12,7 +12,7 @@
 	2015-01-15 update-copyright: apply to self
 	2015-01-11 update-copyright: recognize groff's \(co marker
 
-2015-01-20  Eli Zaretskii  <eliz@gnu.org>
+2015-01-28  Eli Zaretskii  <eliz@gnu.org>
 
 	* configure.ac (HAVE_W32): Abort with error message if
 	--without-toolkit-scroll-bars was specified.  See

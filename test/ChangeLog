@@ -1,4 +1,4 @@
-2015-01-26  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+2015-01-28  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* automated/python-tests.el (python-indent-pep8-1)
 	(python-indent-pep8-2, python-indent-pep8-3)
@@ -20,7 +20,7 @@
 	(python-indent-inside-string-2, python-indent-inside-string-3)
 	(python-indent-dedent-line-backspace-1): New Tests.
 
-2015-01-24  Glenn Morris  <rgm@gnu.org>
+2015-01-28  Glenn Morris  <rgm@gnu.org>
 
 	* automated/regexp-tests.el: Require regexp-opt, which is
 	not preloaded --without-x.

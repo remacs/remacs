@@ -4,7 +4,7 @@
 	* images/splash.pbm, images/splash.xpm, images/README:
 	Splash images refurbished.
 
-2015-01-17  Eli Zaretskii  <eliz@gnu.org>
+2015-01-28  Eli Zaretskii  <eliz@gnu.org>
 
 	* tutorials/TUTORIAL.he: Use u+05f4 HEBREW PUNCTUATION GERSHAYIM
 	instead of u+0022 QUOTATION MARK in Hebrew acronyms.

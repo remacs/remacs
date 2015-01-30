@@ -1,4 +1,4 @@
-2015-01-03  Glenn Morris  <rgm@gnu.org>
+2015-01-28  Glenn Morris  <rgm@gnu.org>
 
 	* update_autogen (commit): Prepend "# " to commit message.
 

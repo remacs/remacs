@@ -25,18 +25,6 @@
 
 2015-01-29  Eli Zaretskii  <eliz@gnu.org>
 
-	* dired.c (directory_files_internal, file_name_completion)
-	[WINDOWSNT]: Signal an error when errno is set non-zero by
-	'readdir', regardless of its value.
-
-	* w32.c (sys_readdir): Set errno to ENOENT when the directory
-	doesn't exist and to EACCES when it's not accessible to the
-	current user.  Set errno to zero when FindNextFile exhausts the
-	directory, so that callers don't interpret that as an error and
-	don't signal a file-error.
-	(open_unc_volume): Set errno to ENOENT if WNetOpenEnum fails.
-2015-01-29  Eli Zaretskii  <eliz@gnu.org>
-
 	Use bool for boolean in w32menu.c, w32font.c, w32uniscribe.c.
 	* w32uniscribe.c (uniscribe_list, uniscribe_match): Use bool where
 	appropriate.
@@ -54,9 +42,20 @@
 	* xfaces.c (face_change): Rename from face_change_count, and
 	change from int to bool.  The var is now true (instead of nonzero)
 	if attributes have changed; this is simpler.  All uses changed.
-	Fixes: bug#19698
+	(Bug#19698)
 
-2015-01-27  Eli Zaretskii  <eliz@gnu.org>
+2015-01-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* dired.c (directory_files_internal, file_name_completion)
+	[WINDOWSNT]: Signal an error when errno is set non-zero by
+	'readdir', regardless of its value.
+
+	* w32.c (sys_readdir): Set errno to ENOENT when the directory
+	doesn't exist and to EACCES when it's not accessible to the
+	current user.  Set errno to zero when FindNextFile exhausts the
+	directory, so that callers don't interpret that as an error and
+	don't signal a file-error.
+	(open_unc_volume): Set errno to ENOENT if WNetOpenEnum fails.
 
 	* dired.c (directory_files_internal) [WINDOWSNT]: If readdir
 	returns NULL and errno is ENOTDIR, behave as if opendir failed to
@@ -65,40 +64,32 @@
 	* w32.c (sys_readdir): If FindFirstFile fails because the
 	directory doesn't exist, set errno to ENOTDIR.
 
-2015-01-24  Jan Djärv  <jan.h.d@swipnet.se>
+2015-01-28  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* nsterm.m (drawRect:): Add block/unblock_input (Bug#19660).
 
-2015-01-21  Paul Eggert  <eggert@cs.ucla.edu>
+2015-01-28  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix coding.c subscript error
 	* coding.c (CODING_ISO_INVOKED_CHARSET):
 	Avoid undefined behavior if CODING_ISO_INVOCATION returns negative.
 
-2015-01-17  Eli Zaretskii  <eliz@gnu.org>
+2015-01-28  Eli Zaretskii  <eliz@gnu.org>
 
 	* xdisp.c (produce_image_glyph): Fix display of images in R2L
 	screen lines: prepend the new glyph to the ones already there
 	instead of appending it.
-
-2015-01-14  Eli Zaretskii  <eliz@gnu.org>
 
 	* w32fns.c (w32_set_title_bar_text): New function, including
 	support for titles with non-ASCII characters outside of the
 	current system codepage.
 	(x_set_name, x_set_title): Use it.  (Bug#19590)
 
-2015-01-10  Eli Zaretskii  <eliz@gnu.org>
-
 	* indent.c (Fvertical_motion): Return zero if we started from ZV
 	and there's an overlay after-string there.  (Bug#19553)
 
-2015-01-09  Eli Zaretskii  <eliz@gnu.org>
-
 	* emacs.c (usage_message): Fix the description of the -nl switch.
 	(Bug#19542)
-
-2015-01-05  Eli Zaretskii  <eliz@gnu.org>
 
 	* xdisp.c (move_it_to, try_cursor_movement): Don't use the window
 	end information if the window_end_valid flag is unset.
@@ -106,14 +97,10 @@
 	window end information, give up the try_window_id optimization.
 	(Bug#19511)
 
-2015-01-04  Eli Zaretskii  <eliz@gnu.org>
-
 	* w32fns.c (Fx_server_version, Fx_server_vendor): Doc fix.
-
 	* xfns.c (Fx_server_version, Fx_server_vendor): Doc fix.
 
-	* emacs.c (syms_of_emacs) <system-configuration>: Doc fix.
-	(Bug#19502)
+	* emacs.c (syms_of_emacs) <system-configuration>: Doc fix.  (Bug#19502)
 
 2015-01-28  Stefan Monnier  <monnier@iro.umontreal.ca>
 

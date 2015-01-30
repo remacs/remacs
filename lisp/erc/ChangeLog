@@ -1,7 +1,7 @@
-2015-01-14  Dima Kogan  <dima@secretsauce.net>
+2015-01-28  Dima Kogan  <dima@secretsauce.net>
 
 	* erc-backend.el (define-erc-response-handler): Give hook-name
-	default value of nil and add-to-list (bug#19363)
+	default value of nil and add-to-list (bug#19363).
 
 2015-01-22  Paul Eggert  <eggert@cs.ucla.edu>
 
