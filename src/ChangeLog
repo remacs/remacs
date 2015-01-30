@@ -1,3 +1,7 @@
+2015-01-30  Eli Zaretskii  <eliz@gnu.org>
+
+	* dispextern.h (FACE_FOR_CHAR): Fix the commentary.
+
 2015-01-29  Hans Wennborg  <hwennborg@google.com>  (tiny change)
 
 	* emacs.c (decode_env_path): Add parentheses around ternary
