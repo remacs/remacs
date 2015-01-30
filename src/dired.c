@@ -66,8 +66,9 @@ dirent_namelen (struct dirent *dp)
 }
 
 static DIR *
-open_directory (char const *name, int *fdp)
+open_directory (Lisp_Object dirname, int *fdp)
 {
+  char *name = SSDATA (dirname);
   DIR *d;
   int fd, opendir_errno;
 
@@ -98,8 +99,9 @@ open_directory (char const *name, int *fdp)
 
   unblock_input ();
 
+  if (!d)
+    report_file_errno ("Opening directory", dirname, opendir_errno);
   *fdp = fd;
-  errno = opendir_errno;
   return d;
 }
 
@@ -149,8 +151,6 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 			  Lisp_Object match, Lisp_Object nosort, bool attrs,
 			  Lisp_Object id_format)
 {
-  DIR *d;
-  int fd;
   ptrdiff_t directory_nbytes;
   Lisp_Object list, dirfilename, encoded_directory;
   struct re_pattern_buffer *bufp = NULL;
@@ -200,9 +200,8 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
   /* Now *bufp is the compiled form of MATCH; don't call anything
      which might compile a new regexp until we're done with the loop!  */
 
-  d = open_directory (SSDATA (dirfilename), &fd);
-  if (d == NULL)
-    report_file_error ("Opening directory", directory);
+  int fd;
+  DIR *d = open_directory (dirfilename, &fd);
 
   /* Unfortunately, we can now invoke expand-file-name and
      file-attributes on filenames, both of which can throw, so we must
@@ -448,8 +447,6 @@ static Lisp_Object
 file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
 		      Lisp_Object predicate)
 {
-  DIR *d;
-  int fd;
   ptrdiff_t bestmatchsize = 0;
   int matchcount = 0;
   /* If ALL_FLAG is 1, BESTMATCH is the list of all matches, decoded.
@@ -483,13 +480,9 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
      work with decoded file names, but we still do some filtering based
      on the encoded file name.  */
   encoded_file = ENCODE_FILE (file);
-
   encoded_dir = ENCODE_FILE (Fdirectory_file_name (dirname));
-
-  d = open_directory (SSDATA (encoded_dir), &fd);
-  if (!d)
-    report_file_error ("Opening directory", dirname);
-
+  int fd;
+  DIR *d = open_directory (encoded_dir, &fd);
   record_unwind_protect_ptr (directory_files_internal_unwind, d);
 
   /* Loop reading directory entries.  */

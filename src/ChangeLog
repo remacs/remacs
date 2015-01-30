@@ -1,3 +1,9 @@
+2015-01-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Refactor calls to opendir for simplicity
+	* dired.c (open_directory): Accept Lisp_Object, not char *, for
+	dirname.  Signal an error if the open fails.  All callers changed.
+
 2015-01-29  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Report readdir failures
