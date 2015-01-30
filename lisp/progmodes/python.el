@@ -943,7 +943,7 @@ keyword
 May return an integer for the maximum possible indentation at
 current context or a list of integers.  The latter case is only
 happening for :at-dedenter-block-start context since the
-possibilities can be narrowed to especific indentation points."
+possibilities can be narrowed to specific indentation points."
   (save-restriction
     (widen)
     (save-excursion
@@ -1032,7 +1032,7 @@ minimum."
 (defun python-indent-line (&optional previous)
   "Internal implementation of `python-indent-line-function'.
 Use the PREVIOUS level when argument is non-nil, otherwise indent
-to the maxium available level.  When indentation is the minimum
+to the maximum available level.  When indentation is the minimum
 possible and PREVIOUS is non-nil, cycle back to the maximum
 level."
   (let ((follow-indentation-p
