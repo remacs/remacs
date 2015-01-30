@@ -35,9 +35,6 @@
 
 ;;; Code:
 
-(defvar font-lock-warning-face)
-
-
 (defgroup outlines nil
   "Support for hierarchical outlining."
   :prefix "outline-"
@@ -84,7 +81,6 @@ in the file it applies to.")
     (define-key map [(control ?<)] 'outline-promote)
     (define-key map [(control ?>)] 'outline-demote)
     (define-key map "\C-m" 'outline-insert-heading)
-    ;; Where to bind outline-cycle ?
     map))
 
 (defvar outline-mode-menu-bar-map
@@ -190,7 +186,6 @@ in the file it applies to.")
 				   outline-mode-menu-bar-map))))))
     map))
 
-
 (defvar outline-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c" outline-mode-prefix-map)
@@ -198,7 +193,7 @@ in the file it applies to.")
     map))
 
 (defvar outline-font-lock-keywords
-  '(;;
+  '(
     ;; Highlight headings according to the level.
     (eval . (list (concat "^\\(?:" outline-regexp "\\).+")
 		  0 '(outline-font-lock-face) nil t)))
@@ -248,33 +243,13 @@ in the file it applies to.")
   [outline-1 outline-2 outline-3 outline-4
    outline-5 outline-6 outline-7 outline-8])
 
-;; (defvar outline-font-lock-levels nil)
-;; (make-variable-buffer-local 'outline-font-lock-levels)
-
 (defun outline-font-lock-face ()
-  ;; (save-excursion
-  ;;   (outline-back-to-heading t)
-  ;;   (let* ((count 0)
-  ;; 	   (start-level (funcall outline-level))
-  ;; 	   (level start-level)
-  ;; 	   face-level)
-  ;;     (while (not (setq face-level
-  ;; 			(if (or (bobp) (eq level 1)) 0
-  ;; 			  (cdr (assq level outline-font-lock-levels)))))
-  ;; 	(outline-up-heading 1 t)
-  ;; 	(setq count (1+ count))
-  ;; 	(setq level (funcall outline-level)))
-  ;;     ;; Remember for later.
-  ;;     (unless (zerop count)
-  ;; 	(setq face-level (+ face-level count))
-  ;; 	(push (cons start-level face-level) outline-font-lock-levels))
-  ;;     (condition-case nil
-  ;; 	  (aref outline-font-lock-faces face-level)
-  ;; 	(error font-lock-warning-face))))
   (save-excursion
     (goto-char (match-beginning 0))
     (looking-at outline-regexp)
-    (aref outline-font-lock-faces (% (1- (funcall outline-level)) (length outline-font-lock-faces)))))
+    (aref outline-font-lock-faces
+          (% (1- (funcall outline-level))
+             (length outline-font-lock-faces)))))
 
 (defvar outline-view-change-hook nil
   "Normal hook to be run after outline visibility changes.")
@@ -296,29 +271,10 @@ invisible, or visible again.  Invisible lines are attached to the end
 of the heading, so they move with it, if the line is killed and yanked
 back.  A heading with text hidden under it is marked with an ellipsis (...).
 
-Commands:\\<outline-mode-map>
-\\[outline-next-visible-heading]   outline-next-visible-heading      move by visible headings
-\\[outline-previous-visible-heading]   outline-previous-visible-heading
-\\[outline-forward-same-level]   outline-forward-same-level        similar but skip subheadings
-\\[outline-backward-same-level]   outline-backward-same-level
-\\[outline-up-heading]   outline-up-heading		    move from subheading to heading
-
-\\[hide-body]	make all text invisible (not headings).
-\\[show-all]	make everything in buffer visible.
-\\[hide-sublevels]  make only the first N levels of headers visible.
-
-The remaining commands are used when point is on a heading line.
-They apply to some of the body or subheadings of that heading.
-\\[hide-subtree]   hide-subtree	make body and subheadings invisible.
-\\[show-subtree]   show-subtree	make body and subheadings visible.
-\\[show-children]   show-children	make direct subheadings visible.
-		 No effect on body, or subheadings 2 or more levels down.
-		 With arg N, affects subheadings N levels down.
-\\[hide-entry]	   make immediately following body invisible.
-\\[show-entry]	   make it visible.
-\\[hide-leaves]	   make body under heading and under its subheadings invisible.
-		     The subheadings remain visible.
-\\[show-branches]  make all subheadings at all levels visible.
+\\{outline-mode-map}
+The commands `hide-subtree', `show-subtree', `show-children',
+`hide-entry', `show-entry', `hide-leaves', and `show-branches'
+are used when point is on a heading line.
 
 The variable `outline-regexp' can be changed to control what is a heading.
 A line is a heading if `outline-regexp' matches something at the
