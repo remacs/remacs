@@ -1,3 +1,8 @@
+2015-01-30  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/backquote.el (backquote-delay-process): Don't reuse `s'
+	since it may be "equivalent" in some sense, yet different (bug#19734).
+
 2015-01-30  Oleh Krehel  <ohwoeowho@gmail.com>
 
 	* outline.el (outline-font-lock-face): Add docstring.
