@@ -124,11 +124,10 @@ directory_files_internal_unwind (void *dh)
 
 /* Return the next directory entry from DIR; DIR's name is DIRNAME.
    If there are no more directory entries, return a null pointer.
-   Signal any unrecoverable errors.  FIRST_ENTRY true means this is
-   the first call after open_directory.  */
+   Signal any unrecoverable errors.  */
 
 static struct dirent *
-read_dirent (DIR *dir, Lisp_Object dirname, bool first_entry)
+read_dirent (DIR *dir, Lisp_Object dirname)
 {
   while (true)
     {
@@ -138,14 +137,15 @@ read_dirent (DIR *dir, Lisp_Object dirname, bool first_entry)
 	return dp;
       if (! (errno == EAGAIN || errno == EINTR))
 	{
+#ifdef MSDOS
 	  /* The MS-Windows implementation of 'opendir' doesn't
 	     actually open a directory until the first call to
 	     'readdir'.  If 'readdir' fails to open the directory, it
 	     sets errno to ENOENT or EACCES, see w32.c.  */
-	  if (first_entry && (errno == ENOENT || errno == EACCES))
+	  if (errno == ENOENT || errno == EACCES)
 	    report_file_error ("Opening directory", dirname);
-	  else
-	    report_file_error ("Reading directory", dirname);
+#endif
+	  report_file_error ("Reading directory", dirname);
 	}
       QUIT;
     }
@@ -249,16 +249,13 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
     needsep = 1;
 
   /* Loop reading directory entries.  */
-  bool first_entry = true;
-  for (struct dirent *dp; (dp = read_dirent (d, directory, first_entry)); )
+  for (struct dirent *dp; (dp = read_dirent (d, directory)); )
     {
       ptrdiff_t len = dirent_namelen (dp);
       Lisp_Object name = make_unibyte_string (dp->d_name, len);
       Lisp_Object finalname = name;
       struct gcpro gcpro1, gcpro2;
       GCPRO2 (finalname, name);
-
-      first_entry = false;
 
       /* Note: DECODE_FILE can GC; it should protect its argument,
 	 though.  */
@@ -499,13 +496,11 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
   record_unwind_protect_ptr (directory_files_internal_unwind, d);
 
   /* Loop reading directory entries.  */
-  bool first_entry = true;
-  for (struct dirent *dp; (dp = read_dirent (d, dirname, first_entry)); )
+  for (struct dirent *dp; (dp = read_dirent (d, dirname)); )
     {
       ptrdiff_t len = dirent_namelen (dp);
       bool canexclude = 0;
 
-      first_entry = false;
       QUIT;
       if (len < SCHARS (encoded_file)
 	  || (scmp (dp->d_name, SSDATA (encoded_file),
