@@ -705,6 +705,7 @@ extern Lisp_Object code_convert_string_norecord (Lisp_Object, Lisp_Object,
 extern Lisp_Object encode_file_name (Lisp_Object);
 extern Lisp_Object decode_file_name (Lisp_Object);
 extern Lisp_Object raw_text_coding_system (Lisp_Object);
+extern bool raw_text_coding_system_p (struct coding_system *);
 extern Lisp_Object coding_inherit_eol_type (Lisp_Object, Lisp_Object);
 extern Lisp_Object complement_process_encoding_system (Lisp_Object);
 

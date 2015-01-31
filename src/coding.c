@@ -5979,6 +5979,15 @@ raw_text_coding_system (Lisp_Object coding_system)
 	  : AREF (raw_text_eol_type, 2));
 }
 
+/* Return true if CODING corresponds to raw-text coding-system.  */
+
+bool
+raw_text_coding_system_p (struct coding_system *coding)
+{
+  return (coding->decoder == decode_coding_raw_text
+	  && coding->encoder == encode_coding_raw_text) ? true : false;
+}
+
 
 /* If CODING_SYSTEM doesn't specify end-of-line format, return one of
    the subsidiary that has the same eol-spec as PARENT (if it is not
