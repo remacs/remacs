@@ -5135,7 +5135,8 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 #endif /* not HAVE_WINDOW_SYSTEM */
              || (CONSP (value) && EQ (XCAR (value), Qspace))
 #ifdef HAVE_XWIDGETS
-             || valid_xwidget_spec_p(value)
+             || ((it ? FRAME_WINDOW_P (it->f) : frame_window_p)
+		 && valid_xwidget_spec_p(value))
 #endif
              );
 
