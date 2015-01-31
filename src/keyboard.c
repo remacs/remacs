@@ -3639,7 +3639,9 @@ kbd_buffer_store_event_hold (register struct input_event *event,
      as input, set quit-flag to cause an interrupt.  */
   if (!NILP (Vthrow_on_input)
       && event->kind != FOCUS_IN_EVENT
+      && event->kind != FOCUS_OUT_EVENT
       && event->kind != HELP_EVENT
+      && event->kind != ICONIFY_EVENT
       && event->kind != DEICONIFY_EVENT)
     {
       Vquit_flag = Vthrow_on_input;

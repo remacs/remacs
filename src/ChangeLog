@@ -1,5 +1,9 @@
 2015-01-31  Eli Zaretskii  <eliz@gnu.org>
 
+	* keyboard.c (kbd_buffer_store_event_hold): Ignore FOCUS_OUT_EVENT
+	and ICONIFY_EVENT for the purposes of breaking while-no-input
+	loops.  (Bug#19547)
+
 	* dired.c (read_dirent): Correct the "MSDOS hacks" hack: the
 	special code for errno = ENOENT or EACCES is needed for WINDOWSNT,
 	not for MSDOS.
