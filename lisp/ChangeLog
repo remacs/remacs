@@ -1,3 +1,38 @@
+2015-01-31  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio.el (defclass): Use new eieio-make-class-predicate
+	and eieio-make-child-predicate.
+	(eieio-class-parents): Use eieio--class-object.
+	(slot-boundp, find-class, eieio-override-prin1): Avoid class-p.
+	(slot-exists-p): Use find-class.
+
+	* emacs-lisp/eieio-opt.el (eieio-help-class, eieio-help-constructor):
+	Use find-lisp-object-file-name, help-fns-short-filename and new calling
+	convention for eieio-class-def.
+	(eieio-build-class-list): Remove function, unused.
+	(eieio-method-def): Remove button type, unused.
+	(eieio-class-def): Inherit from help-function-def.
+	(eieio--defclass-regexp): New constant.
+	(find-function-regexp-alist): Use it.
+	(eieio--specializers-apply-to-class-p): Handle eieio--static as well.
+	(eieio-help-find-method-definition, eieio-help-find-class-definition):
+	Remove functions.
+
+	* emacs-lisp/eieio-core.el (eieio--check-type): Remove.
+	Use cl-check-type everywhere instead.
+	(eieio-class-object): Remove, use find-class instead when needed.
+	(class-p): Don't inline.
+	(eieio-object-p): Check more thoroughly, so we don't treat cl-structs,
+	such as eieio classes, as objects.  Don't inline.
+	(object-p): Mark as obsolete.
+	(eieio-defclass-autoload, eieio-defclass-internal, eieio-oref)
+	(eieio--generic-tagcode): Avoid `class-p'.
+	(eieio-make-class-predicate, eieio-make-child-predicate): New functions.
+	(eieio-defclass-internal): Use current-load-list rather than
+	`class-location'.
+
+	* emacs-lisp/cl-generic.el (cl--generic-search-method): Fix regexp.
+
 2015-01-30  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/backquote.el (backquote-delay-process): Don't reuse `s'

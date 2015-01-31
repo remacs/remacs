@@ -635,7 +635,8 @@ Can only be used from within the lexical body of a primary or around method."
 
 (defun cl--generic-search-method (met-name)
   (let ((base-re (concat "(\\(?:cl-\\)?defmethod[ \t]+"
-                         (regexp-quote (format "%s\\_>" (car met-name))))))
+                         (regexp-quote (format "%s" (car met-name)))
+			 "\\_>")))
     (or
      (re-search-forward
       (concat base-re "[^&\"\n]*"

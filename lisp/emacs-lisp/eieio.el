@@ -110,7 +110,7 @@ Options in CLOS not supported in EIEIO:
 Due to the way class options are set up, you can add any tags you wish,
 and reference them using the function `class-option'."
   (declare (doc-string 4))
-  (eieio--check-type listp superclasses)
+  (cl-check-type superclasses list)
 
   (cond ((and (stringp (car options-and-doc))
               (/= 1 (% (length options-and-doc) 2)))
@@ -223,18 +223,9 @@ This method is obsolete."
        ;; referencing classes.  ei, a class whose slot can contain only
        ;; pointers to itself.
 
-       ;; Create the test function.
-       (defun ,testsym1 (obj)
-         ,(format "Test OBJ to see if it an object of type %S." name)
-         (and (eieio-object-p obj)
-              (same-class-p obj ',name)))
-
-       (defun ,testsym2 (obj)
-         ,(format
-           "Test OBJ to see if it an object is a child of type %S."
-           name)
-         (and (eieio-object-p obj)
-              (object-of-class-p obj ',name)))
+       ;; Create the test functions.
+       (defalias ',testsym1 (eieio-make-class-predicate ',name))
+       (defalias ',testsym2 (eieio-make-child-predicate ',name))
 
        ,@(when eieio-backward-compatibility
            (let ((f (intern (format "%s-child-p" name))))
@@ -374,7 +365,7 @@ variable name of the same name as the slot."
 (defun eieio-object-name (obj &optional extra)
   "Return a Lisp like symbol string for object OBJ.
 If EXTRA, include that in the string returned to represent the symbol."
-  (eieio--check-type eieio-object-p obj)
+  (cl-check-type obj eieio-object)
   (format "#<%s %s%s>" (eieio--object-class-name obj)
 	  (eieio-object-name-string obj) (or extra "")))
 (define-obsolete-function-alias 'object-name #'eieio-object-name "24.4")
@@ -394,7 +385,7 @@ If EXTRA, include that in the string returned to represent the symbol."
 (cl-defmethod eieio-object-set-name-string (obj name)
   "Set the string which is OBJ's NAME."
   (declare (obsolete eieio-named "25.1"))
-  (eieio--check-type stringp name)
+  (cl-check-type name string)
   (setf (gethash obj eieio--object-names) name))
 (define-obsolete-function-alias
   'object-set-name-string 'eieio-object-set-name-string "24.4")
@@ -402,7 +393,7 @@ If EXTRA, include that in the string returned to represent the symbol."
 (defun eieio-object-class (obj)
   "Return the class struct defining OBJ."
   ;; FIXME: We say we return a "struct" but we return a symbol instead!
-  (eieio--check-type eieio-object-p obj)
+  (cl-check-type obj eieio-object)
   (eieio--object-class-name obj))
 (define-obsolete-function-alias 'object-class #'eieio-object-class "24.4")
 ;; CLOS name, maybe?
@@ -410,7 +401,7 @@ If EXTRA, include that in the string returned to represent the symbol."
 
 (defun eieio-object-class-name (obj)
   "Return a Lisp like symbol name for OBJ's class."
-  (eieio--check-type eieio-object-p obj)
+  (cl-check-type obj eieio-object)
   (eieio-class-name (eieio--object-class-name obj)))
 (define-obsolete-function-alias
   'object-class-name 'eieio-object-class-name "24.4")
@@ -419,15 +410,14 @@ If EXTRA, include that in the string returned to represent the symbol."
   "Return parent classes to CLASS.  (overload of variable).
 
 The CLOS function `class-direct-superclasses' is aliased to this function."
-  (let ((c (eieio-class-object class)))
-    (eieio--class-parent c)))
+  (eieio--class-parent (eieio--class-object class)))
 
 (define-obsolete-function-alias 'class-parents #'eieio-class-parents "24.4")
 
 (defun eieio-class-children (class)
   "Return child classes to CLASS.
 The CLOS function `class-direct-subclasses' is aliased to this function."
-  (eieio--check-type class-p class)
+  (cl-check-type class class)
   (eieio--class-children (eieio--class-v class)))
 (define-obsolete-function-alias
   'class-children #'eieio-class-children "24.4")
@@ -446,13 +436,13 @@ The CLOS function `class-direct-subclasses' is aliased to this function."
 (defun same-class-p (obj class)
   "Return t if OBJ is of class-type CLASS."
   (setq class (eieio--class-object class))
-  (eieio--check-type eieio--class-p class)
-  (eieio--check-type eieio-object-p obj)
+  (cl-check-type class eieio--class)
+  (cl-check-type obj eieio-object)
   (eq (eieio--object-class-object obj) class))
 
 (defun object-of-class-p (obj class)
   "Return non-nil if OBJ is an instance of CLASS or CLASS' subclasses."
-  (eieio--check-type eieio-object-p obj)
+  (cl-check-type obj eieio-object)
   ;; class will be checked one layer down
   (child-of-class-p (eieio--object-class-object obj) class))
 ;; Backwards compatibility
@@ -461,13 +451,13 @@ The CLOS function `class-direct-subclasses' is aliased to this function."
 (defun child-of-class-p (child class)
   "Return non-nil if CHILD class is a subclass of CLASS."
   (setq child (eieio--class-object child))
-  (eieio--check-type eieio--class-p child)
+  (cl-check-type child eieio--class)
   ;; `eieio-default-superclass' is never mentioned in eieio--class-parent,
   ;; so we have to special case it here.
   (or (eq class 'eieio-default-superclass)
       (let ((p nil))
         (setq class (eieio--class-object class))
-        (eieio--check-type eieio--class-p class)
+        (cl-check-type class eieio--class)
         (while (and child (not (eq child class)))
           (setq p (append p (eieio--class-parent child))
                 child (pop p)))
@@ -475,11 +465,11 @@ The CLOS function `class-direct-subclasses' is aliased to this function."
 
 (defun object-slots (obj)
   "Return list of slots available in OBJ."
-  (eieio--check-type eieio-object-p obj)
+  (cl-check-type obj eieio-object)
   (eieio--class-public-a (eieio--object-class-object obj)))
 
 (defun eieio--class-slot-initarg (class slot) "Fetch from CLASS, SLOT's :initarg."
-  (eieio--check-type eieio--class-p class)
+  (cl-check-type class eieio--class)
   (let ((ia (eieio--class-initarg-tuples class))
 	(f nil))
     (while (and ia (not f))
@@ -517,7 +507,7 @@ OBJECT can be an instance or a class."
     ;; Return nil if the magic symbol is in there.
     (not (eq (cond
 	      ((eieio-object-p object) (eieio-oref object slot))
-	      ((class-p object)        (eieio-oref-default object slot))
+	      ((symbolp object)        (eieio-oref-default object slot))
 	      (t (signal 'wrong-type-argument (list 'eieio-object-p object))))
 	     eieio-unbound))))
 
@@ -529,7 +519,8 @@ OBJECT can be an instance or a class."
   "Return non-nil if OBJECT-OR-CLASS has SLOT."
   (let ((cv (cond ((eieio-object-p object-or-class)
                    (eieio--object-class-object object-or-class))
-                  (t (eieio-class-object object-or-class)))))
+                  ((eieio--class-p object-or-class) object-or-class)
+                  (t (find-class object-or-class 'error)))))
     (or (memq slot (eieio--class-public-a cv))
 	(memq slot (eieio--class-class-allocation-a cv)))
     ))
@@ -538,10 +529,10 @@ OBJECT can be an instance or a class."
   "Return the class that SYMBOL represents.
 If there is no class, nil is returned if ERRORP is nil.
 If ERRORP is non-nil, `wrong-argument-type' is signaled."
-  (if (not (class-p symbol))
-      (if errorp (signal 'wrong-type-argument (list 'class-p symbol))
-	nil)
-    (eieio--class-v symbol)))
+  (let ((class (eieio--class-v symbol)))
+    (cond
+     ((eieio--class-p class) class)
+     (errorp (signal 'wrong-type-argument (list 'class-p symbol))))))
 
 ;;; Slightly more complex utility functions for objects
 ;;
@@ -551,7 +542,7 @@ LIST is a list of objects whose slots are searched.
 Objects in LIST do not need to have a slot named SLOT, nor does
 SLOT need to be bound.  If these errors occur, those objects will
 be ignored."
-  (eieio--check-type listp list)
+  (cl-check-type list list)
   (while (and list (not (condition-case nil
 			    ;; This prevents errors for missing slots.
 			    (equal key (eieio-oref (car list) slot))
@@ -563,7 +554,7 @@ be ignored."
   "Return an association list with the contents of SLOT as the key element.
 LIST must be a list of objects with SLOT in it.
 This is useful when you need to do completing read on an object group."
-  (eieio--check-type listp list)
+  (cl-check-type list list)
   (let ((assoclist nil))
     (while list
       (setq assoclist (cons (cons (eieio-oref (car list) slot)
@@ -577,7 +568,7 @@ This is useful when you need to do completing read on an object group."
 LIST must be a list of objects, but those objects do not need to have
 SLOT in it.  If it does not, then that element is left out of the association
 list."
-  (eieio--check-type listp list)
+  (cl-check-type list list)
   (let ((assoclist nil))
     (while list
       (if (slot-exists-p (car list) slot)
@@ -869,12 +860,8 @@ this object."
 	 (object-write thing))
 	((consp thing)
 	 (eieio-list-prin1 thing))
-	((class-p thing)
+	((eieio--class-p thing)
 	 (princ (eieio-class-name thing)))
-	((or (keywordp thing) (booleanp thing))
-	 (prin1 thing))
-	((symbolp thing)
-	 (princ (concat "'" (symbol-name thing))))
 	(t (prin1 thing))))
 
 (defun eieio-list-prin1 (list)
@@ -942,7 +929,7 @@ Optional argument GROUP is the sub-group of slots to display.
 
 ;;;***
 
-;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "b849f8bf1312d5ef57e53d02173e4b5a")
+;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "ff1097f185bc2c253276a7d19fe2f54a")
 ;;; Generated autoloads from eieio-opt.el
 
 (autoload 'eieio-browse "eieio-opt" "\
