@@ -1,5 +1,8 @@
 2015-01-31  Eli Zaretskii  <eliz@gnu.org>
 
+	* custom.texi (Customization Groups): Update the looks of the
+	Customize Group buffer.
+
 	* programs.texi (Hungry Delete): Fix a typo: "C-d" instead of
 	"C-c C-d" in hungry-delete mode.
 
