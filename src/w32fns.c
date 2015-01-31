@@ -1759,6 +1759,50 @@ x_change_tool_bar_height (struct frame *f, int height)
     x_clear_under_internal_border (f);
 }
 
+static void
+w32_set_title_bar_text (struct frame *f, Lisp_Object name)
+{
+  if (FRAME_W32_WINDOW (f))
+    {
+      block_input ();
+#ifdef __CYGWIN__
+      GUI_FN (SetWindowText) (FRAME_W32_WINDOW (f),
+                              GUI_SDATA (GUI_ENCODE_SYSTEM (name)));
+#else
+      /* The frame's title many times shows the name of the file
+	 visited in the selected window's buffer, so it makes sense to
+	 support non-ASCII characters outside of the current system
+	 codepage in the title.  */
+      if (w32_unicode_filenames)
+	{
+	  Lisp_Object encoded_title = ENCODE_UTF_8 (name);
+	  wchar_t *title_w;
+	  int tlen = pMultiByteToWideChar (CP_UTF8, 0, SSDATA (encoded_title),
+					   -1, NULL, 0);
+
+	  if (tlen > 0)
+	    {
+	      /* Windows truncates the title text beyond what fits on
+		 a single line, so we can limit the length to some
+		 reasonably large value, and use alloca.  */
+	      if (tlen > 10000)
+		tlen = 10000;
+	      title_w = alloca ((tlen + 1) * sizeof (wchar_t));
+	      pMultiByteToWideChar (CP_UTF8, 0, SSDATA (encoded_title), -1,
+				    title_w, tlen);
+	      title_w[tlen] = L'\0';
+	      SetWindowTextW (FRAME_W32_WINDOW (f), title_w);
+	    }
+	  else	/* Conversion to UTF-16 failed, so we punt.  */
+	    SetWindowTextA (FRAME_W32_WINDOW (f),
+			    SSDATA (ENCODE_SYSTEM (name)));
+	}
+      else
+	SetWindowTextA (FRAME_W32_WINDOW (f), SSDATA (ENCODE_SYSTEM (name)));
+#endif
+      unblock_input ();
+    }
+}
 
 /* Change the name of frame F to NAME.  If NAME is nil, set F's name to
        w32_id_name.
@@ -1812,13 +1856,7 @@ x_set_name (struct frame *f, Lisp_Object name, bool explicit)
   if (! NILP (f->title))
     name = f->title;
 
-  if (FRAME_W32_WINDOW (f))
-    {
-      block_input ();
-      GUI_FN (SetWindowText) (FRAME_W32_WINDOW (f),
-                              GUI_SDATA (GUI_ENCODE_SYSTEM (name)));
-      unblock_input ();
-    }
+  w32_set_title_bar_text (f, name);
 }
 
 /* This function should be called when the user's lisp code has
@@ -1856,13 +1894,7 @@ x_set_title (struct frame *f, Lisp_Object name, Lisp_Object old_name)
   if (NILP (name))
     name = f->name;
 
-  if (FRAME_W32_WINDOW (f))
-    {
-      block_input ();
-      GUI_FN (SetWindowText) (FRAME_W32_WINDOW (f),
-                              GUI_SDATA (GUI_ENCODE_SYSTEM (name)));
-      unblock_input ();
-    }
+  w32_set_title_bar_text (f, name);
 }
 
 void
@@ -4895,25 +4927,38 @@ If omitted or nil, that stands for the selected frame's display.  */)
 }
 
 DEFUN ("x-server-vendor", Fx_server_vendor, Sx_server_vendor, 0, 1, 0,
-       doc: /* Return the "vendor ID" string of the W32 system (Microsoft).
-The optional argument DISPLAY specifies which display to ask about.
-DISPLAY should be either a frame or a display name (a string).
+       doc: /* Return the "vendor ID" string of the GUI software on TERMINAL.
+
+\(Labeling every distributor as a "vendor" embodies the false assumption
+that operating systems cannot be developed and distributed noncommercially.)
+
+For GNU and Unix systems, this queries the X server software; for
+MS-Windows, this queries the OS.
+
+The optional argument TERMINAL specifies which display to ask about.
+TERMINAL should be a terminal object, a frame or a display name (a string).
 If omitted or nil, that stands for the selected frame's display.  */)
-  (Lisp_Object display)
+  (Lisp_Object terminal)
 {
   return build_string ("Microsoft Corp.");
 }
 
 DEFUN ("x-server-version", Fx_server_version, Sx_server_version, 0, 1, 0,
-       doc: /* Return the version numbers of the server of DISPLAY.
-The value is a list of three integers: the major and minor
-version numbers of the X Protocol in use, and the distributor-specific
-release number.  See also the function `x-server-vendor'.
+       doc: /* Return the version numbers of the GUI software on TERMINAL.
+The value is a list of three integers specifying the version of the GUI
+software in use.
 
-The optional argument DISPLAY specifies which display to ask about.
-DISPLAY should be either a frame or a display name (a string).
+For GNU and Unix system, the first 2 numbers are the version of the X
+Protocol used on TERMINAL and the 3rd number is the distributor-specific
+release number.  For MS-Windows, the 3 numbers report the version and
+the build number of the OS.
+
+See also the function `x-server-vendor'.
+
+The optional argument TERMINAL specifies which display to ask about.
+TERMINAL should be a terminal object, a frame or a display name (a string).
 If omitted or nil, that stands for the selected frame's display.  */)
-  (Lisp_Object display)
+  (Lisp_Object terminal)
 {
   return list3i (w32_major_version, w32_minor_version, w32_build_number);
 }
@@ -5623,7 +5668,7 @@ x_create_tip_frame (struct w32_display_info *dpyinfo,
   ptrdiff_t count = SPECPDL_INDEX ();
   struct gcpro gcpro1, gcpro2, gcpro3;
   struct kboard *kb;
-  int face_change_count_before = face_change_count;
+  bool face_change_before = face_change;
   Lisp_Object buffer;
   struct buffer *old_buffer;
 
@@ -5835,11 +5880,11 @@ x_create_tip_frame (struct w32_display_info *dpyinfo,
   f->can_x_set_window_size = true;
 
   /* Setting attributes of faces of the tooltip frame from resources
-     and similar will increment face_change_count, which leads to the
+     and similar will set face_change, which leads to the
      clearing of all current matrices.  Since this isn't necessary
-     here, avoid it by resetting face_change_count to the value it
+     here, avoid it by resetting face_change to the value it
      had before we created the tip frame.  */
-  face_change_count = face_change_count_before;
+  face_change = face_change_before;
 
   /* Discard the unwind_protect.  */
   return unbind_to (count, frame);

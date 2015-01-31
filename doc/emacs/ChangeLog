@@ -1,3 +1,15 @@
+2015-01-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* cmdargs.texi (Action Arguments): Clarify into which buffer
+	'--insert' inserts.  (Bug#19694)
+
+	* programs.texi (Custom C Indent): Fix a typo.  (Bug#19647)
+
+2015-01-27  Ivan Shmakov  <ivan@siamics.net>
+
+	* files.texi (File Archives): Document "I" for tar-new-entry.
+	(Bug#19274)
+
 2014-12-31  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Less 'make' chatter for Emacs doc

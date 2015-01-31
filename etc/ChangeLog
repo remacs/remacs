@@ -1,3 +1,18 @@
+2015-01-29  Francesc Rocher  <francesc.rocher@gmail.com>
+
+	* images/splash.svg, images/splash.png:
+	* images/splash.pbm, images/splash.xpm, images/README:
+	Splash images refurbished.
+
+2015-01-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* tutorials/TUTORIAL.he: Use u+05f4 HEBREW PUNCTUATION GERSHAYIM
+	instead of u+0022 QUOTATION MARK in Hebrew acronyms.
+
+2015-01-27  Ivan Shmakov  <ivan@siamics.net>
+
+	* NEWS: Mention the new tar-new-entry command.  (Bug#19274)
+
 2015-01-27  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
 	* NEWS: Document EUDC improvements.

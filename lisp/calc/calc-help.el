@@ -647,7 +647,7 @@ C-w  Describe how there is no warranty for Calc."
 (defun calc-u-prefix-help ()
   (interactive)
   (calc-do-prefix-help
-   '("Simplify, Convert, Temperature-convert, Base-units"
+   '("Simplify, Convert, coNvert exact, Temperature-convert, Base-units"
      "Autorange; Remove, eXtract; Explain; View-table; 0-9"
      "Define, Undefine, Get-defn, Permanent"
      "SHIFT + View-table-other-window"

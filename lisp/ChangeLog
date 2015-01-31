@@ -1,14 +1,232 @@
+2015-01-31  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio.el (defclass): Use new eieio-make-class-predicate
+	and eieio-make-child-predicate.
+	(eieio-class-parents): Use eieio--class-object.
+	(slot-boundp, find-class, eieio-override-prin1): Avoid class-p.
+	(slot-exists-p): Use find-class.
+
+	* emacs-lisp/eieio-opt.el (eieio-help-class, eieio-help-constructor):
+	Use find-lisp-object-file-name, help-fns-short-filename and new calling
+	convention for eieio-class-def.
+	(eieio-build-class-list): Remove function, unused.
+	(eieio-method-def): Remove button type, unused.
+	(eieio-class-def): Inherit from help-function-def.
+	(eieio--defclass-regexp): New constant.
+	(find-function-regexp-alist): Use it.
+	(eieio--specializers-apply-to-class-p): Handle eieio--static as well.
+	(eieio-help-find-method-definition, eieio-help-find-class-definition):
+	Remove functions.
+
+	* emacs-lisp/eieio-core.el (eieio--check-type): Remove.
+	Use cl-check-type everywhere instead.
+	(eieio-class-object): Remove, use find-class instead when needed.
+	(class-p): Don't inline.
+	(eieio-object-p): Check more thoroughly, so we don't treat cl-structs,
+	such as eieio classes, as objects.  Don't inline.
+	(object-p): Mark as obsolete.
+	(eieio-defclass-autoload, eieio-defclass-internal, eieio-oref)
+	(eieio--generic-tagcode): Avoid `class-p'.
+	(eieio-make-class-predicate, eieio-make-child-predicate): New functions.
+	(eieio-defclass-internal): Use current-load-list rather than
+	`class-location'.
+
+	* emacs-lisp/cl-generic.el (cl--generic-search-method): Fix regexp.
+
+2015-01-30  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/backquote.el (backquote-delay-process): Don't reuse `s'
+	since it may be "equivalent" in some sense, yet different (bug#19734).
+
+2015-01-30  Oleh Krehel  <ohwoeowho@gmail.com>
+
+	* outline.el (outline-font-lock-face): Add docstring.
+	(outline-invisible-p): Improve docstring.
+	(outline-invent-heading): Add docstring.
+	(outline-promote): Improve docstring.
+	(outline-demote): Improve docstring.
+	(outline-head-from-level): Improve docstring.
+	(outline-end-of-heading): Add docstring.
+	(outline-next-visible-heading): Improve docstring.
+	(outline-previous-visible-heading): Improve docstring.
+	(outline-hide-region-body): Improve docstring.
+	(outline-flag-subtree): Add docstring.
+	(outline-end-of-subtree): Add docstring.
+	(outline-headers-as-kill): Improve docstring.
+
+2015-01-30  Oleh Krehel  <ohwoeowho@gmail.com>
+
+	* outline.el (outline-hide-entry): Rename from `hide-entry'.
+	(hide-entry): Declare as obsolete.
+	(outline-show-entry): Rename from `show-entry'.
+	(show-entry): Declare as obsolete.
+	(outline-hide-body): Rename from `hide-body'.
+	(hide-body): Declare as obsolete.
+	(outline-hide-region-body): Rename from `hide-region-body'.
+	(hide-region-body): Declare as obsolete.
+	(outline-show-all): Rename from `show-all'.
+	(show-all): Declare as obsolete.
+	(outline-hide-subtree): Rename from `hide-subtree'.
+	(hide-subtree): Declare as obsolete.
+	(outline-hide-leaves): Rename from `hide-leaves'.
+	(hide-leaves): Declare as obsolete.
+	(outline-show-subtree): Rename from `show-subtree'.
+	(show-subtree): Declare as obsolete.
+	(outline-hide-sublevels): Rename from `hide-sublevels'.
+	(hide-sublevels): Declare as obsolete.
+	(outline-hide-other): Rename from `hide-other'.
+	(hide-other): Declare as obsolete.
+	(outline-show-children): Rename from `show-children'.
+	(show-children): Declare as obsolete.
+	(outline-show-branches): Rename from `show-branches'.
+	(show-branches): Declare as obsolete.
+
+2015-01-30  Oleh Krehel  <ohwoeowho@gmail.com>
+
+	* outline.el (outline-mode): Clean up docstring.
+	(font-lock-warning-face): Remove obsolete declaration.
+	(outline-font-lock-face): Remove obsolete comment.
+
+2015-01-30  Oleh Krehel  <ohwoeowho@gmail.com>
+
+	* lisp/custom.el (defface): Set `indent' to 1.
+
+2015-01-30  Oleh Krehel  <ohwoeowho@gmail.com>
+
+	* emacs-lisp/easy-mmode.el (define-minor-mode): Set `indent' to 1.
+
+2015-01-30  Michal Nazarewicz  <mina86@mina86.com>
+
+	* lisp/files.el (save-buffers-kill-emacs): If `confirm-kill-emacs'
+	is set, but user has just been asked whether they really want to
+	kill Emacs (for example with a ‘Modified buffers exist; exit
+	anyway?’ prompt), do not ask them for another confirmation.
+
+2015-01-29  Jay Belanger  <jay.p.belanger@gmail.com>
+
+	* lisp/calc/calc-units.el (calc-convert-exact-units): New function.
+	(calc-convert-units): Check for missing units.
+	(math-consistent-units-p): Strengthen the test for consistent units.
+
+	* lisp/calc/calc-ext.el (calc-init-extensions):  Autoload
+	`calc-convert-exact-units' and assign it a keybinding.
+
+	* lisp/calc/calc-help (calc-u-prefix-help): Add help for the
+	"un" keybinding.
+
+2015-01-28  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/cl.el (cl--function-convert): Simplify.
+
+2015-01-28  Tassilo Horn  <tsdh@gnu.org>
+
+	* textmodes/reftex.el (reftex-syntax-table-for-bib): Give ( and )
+	punctuation syntax since to allow bibtex fields with values such
+	as {Test 1) and 2)} (bug#19205, bug#19707).
+	(reftex--prepare-syntax-tables): New function.
+	(reftex-mode): Use it.
+
+2015-01-28  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: New non-global state dependent indentation engine.
+	(Bug#18319, Bug#19595)
+	* progmodes/python.el (python-syntax-comment-or-string-p):
+	Accept PPSS as argument.
+	(python-syntax-closing-paren-p): New function.
+	(python-indent-current-level)
+	(python-indent-levels): Mark obsolete.
+	(python-indent-context): Return more context cases.
+	(python-indent--calculate-indentation)
+	(python-indent--calculate-levels): New functions.
+	(python-indent-calculate-levels): Use them.
+	(python-indent-calculate-indentation, python-indent-line):
+	(python-indent-line-function): Rewritten to use new API.
+	(python-indent-dedent-line): Simplify logic.
+	(python-indent-dedent-line-backspace): Use `unless`.
+	(python-indent-toggle-levels): Delete function.
+
+2015-01-28  Daniel Koning  <dk@danielkoning.com>  (tiny change)
+
+	* subr.el (posnp): Correct docstring of `posnp'.
+	(posn-col-row): Make it work with all mouse position objects.
+	* textmodes/artist.el (artist-mouse-draw-continously):
+	Cancel timers if an error occurs during continuous drawing.  (Bug#6130)
+
+2015-01-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* button.el (button-activate, push-button): Doc fix.  (Bug#19628)
+
+2015-01-28  Michael Albinus  <michael.albinus@gmx.de>
+
+	* filenotify.el (file-notify-descriptors, file-notify-handle-event):
+	Adapt docstring.
+	(file-notify--descriptor): New defun.
+	(file-notify-callback, file-notify-add-watch, file-notify-rm-watch):
+	Adapt docstring.  Handle multiple values for
+	`file-notify-descriptors' entries.  (Bug#18880)
+
+	* net/tramp.el (tramp-handle-file-notify-rm-watch): Do not check
+	`file-notify-descriptors', the implementation has been changed.
+
+2015-01-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* net/net-utils.el (net-utils-run-program, net-utils-run-simple):
+	On MS-Windows, bind coding-system-for-read to the console output
+	codepage.  (Bug#19458)
+
+2015-01-28  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Unbreak `mouse-action' property in text buttons.
+	* button.el (push-button): Fix regression from 2012-12-06.
+
+2015-01-28  Glenn Morris  <rgm@gnu.org>
+
+	* progmodes/sh-script.el (sh-mode): Doc fix.
+	(sh-basic-indent-line): Handle electric newline.  (Bug#18756)
+
+2015-01-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix dired quoting bug with "Hit`N`Hide".  Fixes Bug#19498.
+	* files.el (shell-quote-wildcard-pattern): Also quote "`".
+
+2015-01-28  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Tighten up the tagcode used for eieio and cl-struct objects.
+	* loadup.el: Load cl-preloaded.
+	* emacs-lisp/eieio-core.el (eieio-defclass-internal): Set the function
+	slot of the tag symbol to :quick-object-witness-check.
+	(eieio-object-p): Use :quick-object-witness-check.
+	(eieio--generic-tagcode): Use cl--generic-struct-tag.
+	* emacs-lisp/cl-preloaded.el: New file.
+	* emacs-lisp/cl-macs.el (cl--bind-inits): Remove, unused.
+	(cl--transform-lambda, cl-destructuring-bind): Remove cl--bind-inits.
+	(cl--make-usage-args): Strip away &aux args.
+	(cl-case, cl-typecase, cl--parse-loop-clause): Use macroexp-let2.
+	(cl-the, cl-check-type): Use macroexp-let2 and cl-typep.
+	(cl-defstruct): Use `declare' and cl-struct-define.
+	* emacs-lisp/cl-generic.el (cl--generic-struct-tag): New function.
+	(cl--generic-struct-tagcode): Use it to tighten the tagcode.
+
+2015-01-27  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* emacs-lisp/cl.el (cl--function-convert):
+	Merge cache that cl--labels-convert adds (bug#19699).
+
+2015-01-27  Ivan Shmakov  <ivan@siamics.net>
+
+	* tar-mode.el: Allow for adding new archive members.  (Bug#19274)
+	(tar-new-regular-file-header, tar--pad-to, tar--put-at)
+	(tar-header-serialize): New functions.
+	(tar-current-position): Split from tar-current-descriptor.
+	(tar-current-descriptor): Use it.
+	(tar-new-entry): New command.
+	(tar-mode-map): Bind it.
+
 2015-01-27  Sam Steingold  <sds@gnu.org>
 
 	* progmodes/python.el (python-check-custom-command): Buffer local
 	because it usually includes the buffer name.
 	(python-check-command): Set to epylint when pyflakes is not available.
-
-2015-01-27  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
-
-	* net/eudcb-bbdb.el, net/eudcb-ldap.el, net/eudcb-mab.el,
-	net/eudc-bob.el, net/eudcb-ph.el, net/eudc.el, net/eudc-export.el,
-	net/eudc-hotlist.el, net/eudc-vars.el: New maintainer.
 
 2015-01-27  Artur Malabarba  <bruce.connor.am@gmail.com>
 
@@ -70,6 +288,8 @@
 2015-01-26  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* net/shr.el (shr-make-table-1): Fix colspan typo.
+	(shr-make-table-1): Add comments.
+	(shr-make-table-1): Make colspan display more sensibly.
 
 	* net/eww.el (eww-add-bookmark): Fix prompt and clean up the code
 	slightly.
@@ -1742,8 +1962,7 @@
 2014-12-14  Steve Purcell  <steve@sanityinc.com>  (tiny change)
 
 	* emacs-lisp/package.el (package-menu-mode): Use an extra column
-	for the "Version" column, to accomodate date-and-time-based
-	versions.
+	for the "Version" column, to accomodate date-and-time-based versions.
 
 2014-12-14  Cameron Desautels  <camdez@gmail.com>
 

@@ -376,7 +376,6 @@ The two cases that are handled are:
           (setq cl--function-convert-cache (cons newf res))
           res))))
    (t
-    (setq cl--labels-convert-cache cl--function-convert-cache)
     (cl--labels-convert f))))
 
 (defmacro lexical-let (bindings &rest body)

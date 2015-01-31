@@ -1,3 +1,38 @@
+2015-01-31  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/eieio-tests.el (eieio-test-23-inheritance-check): Simplify.
+
+2015-01-30  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/core-elisp-tests.el (core-elisp-tests-3-backquote): New test.
+
+2015-01-28  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el (python-indent-pep8-1)
+	(python-indent-pep8-2, python-indent-pep8-3)
+	(python-indent-after-comment-1, python-indent-after-comment-2)
+	(python-indent-inside-paren-1, python-indent-inside-paren-2)
+	(python-indent-after-block-1, python-indent-after-block-2)
+	(python-indent-after-backslash-1, python-indent-after-backslash-2)
+	(python-indent-after-backslash-3, python-indent-block-enders-1)
+	(python-indent-block-enders-2, python-indent-block-enders-3)
+	(python-indent-block-enders-4, python-indent-block-enders-5)
+	(python-indent-dedenters-1, python-indent-dedenters-2)
+	(python-indent-dedenters-3, python-indent-dedenters-4)
+	(python-indent-dedenters-5, python-indent-dedenters-6)
+	(python-indent-dedenters-7, python-indent-dedenters-8): Fix tests.
+	(python-indent-base-case, python-indent-after-block-3)
+	(python-indent-after-backslash-5, python-indent-inside-paren-3)
+	(python-indent-inside-paren-4, python-indent-inside-paren-5)
+	(python-indent-inside-paren-6, python-indent-inside-string-1)
+	(python-indent-inside-string-2, python-indent-inside-string-3)
+	(python-indent-dedent-line-backspace-1): New Tests.
+
+2015-01-28  Glenn Morris  <rgm@gnu.org>
+
+	* automated/regexp-tests.el: Require regexp-opt, which is
+	not preloaded --without-x.
+
 2015-01-26  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* automated/cl-generic-tests.el: Try and make sure cl-lib is not
@@ -32,6 +67,11 @@
 
 	* automated/cl-generic-tests.el (setf cl--generic-2): Make sure
 	the setf can be used already in the body of the method.
+
+2015-01-20  Jorgen Schaefer  <contact@jorgenschaefer.de>
+
+	* automated/package-test.el (package-test-install-prioritized):
+	Remove test due to unreproducible failures.
 
 2015-01-20  Michal Nazarewicz  <mina86@mina86.com>
 

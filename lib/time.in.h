@@ -55,6 +55,8 @@
 #   include <sys/time.h>
 #  elif @PTHREAD_H_DEFINES_STRUCT_TIMESPEC@
 #   include <pthread.h>
+#  elif @UNISTD_H_DEFINES_STRUCT_TIMESPEC@
+#   include <unistd.h>
 #  else
 
 #   ifdef __cplusplus

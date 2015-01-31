@@ -40,6 +40,8 @@
 (declare-function slot-unbound "eieio")
 (declare-function slot-missing "eieio")
 (declare-function child-of-class-p "eieio")
+(declare-function same-class-p "eieio")
+(declare-function object-of-class-p "eieio")
 
 
 ;;;
@@ -154,15 +156,6 @@ Currently under control of this var:
 
 
 ;;; Important macros used internally in eieio.
-;;
-(defmacro eieio--check-type (type obj)
-  (unless (symbolp obj)
-    (error "eieio--check-type wants OBJ to be a variable"))
-  `(if (not ,(cond
-              ((eq 'or (car-safe type))
-               `(or ,@(mapcar (lambda (type) `(,type ,obj)) (cdr type))))
-              (t `(,type ,obj))))
-       (signal 'wrong-type-argument (list ',type ,obj))))
 
 (defmacro eieio--class-v (class)        ;Use a macro, so it acts as a GV place.
   "Internal: Return the class vector from the CLASS symbol."
@@ -183,27 +176,17 @@ Currently under control of this var:
       (eq (aref class 0) 'defclass)
     (error nil)))
 
-(defsubst eieio-class-object (class)
-  "Check that CLASS is a class and return the corresponding object."
-  (let ((c (eieio--class-object class)))
-    (eieio--check-type eieio--class-p c)
-    c))
-
-(defsubst class-p (class)
+(defun class-p (class)
   "Return non-nil if CLASS is a valid class vector.
 CLASS is a symbol."                     ;FIXME: Is it a vector or a symbol?
-  ;; this new method is faster since it doesn't waste time checking lots of
-  ;; things.
-  (condition-case nil
-      (eq (aref (eieio--class-v class) 0) 'defclass)
-    (error nil)))
+  (and (symbolp class) (eieio--class-p (eieio--class-v class))))
 
 (defun eieio-class-name (class)
   "Return a Lisp like symbol name for CLASS."
   ;; FIXME: What's a "Lisp like symbol name"?
   ;; FIXME: CLOS returns a symbol, but the code returns a string.
   (if (eieio--class-p class) (setq class (eieio--class-symbol class)))
-  (eieio--check-type class-p class)
+  (cl-check-type class class)
   ;; I think this is supposed to return a symbol, but to me CLASS is a symbol,
   ;; and I wanted a string.  Arg!
   (format "#<class %s>" (symbol-name class)))
@@ -221,14 +204,17 @@ CLASS is a symbol."                     ;FIXME: Is it a vector or a symbol?
 Return nil if that option doesn't exist."
   (eieio--class-option-assoc (eieio--class-options class) option))
 
-(defsubst eieio-object-p (obj)
+(defun eieio-object-p (obj)
   "Return non-nil if OBJ is an EIEIO object."
   (and (vectorp obj)
-       (condition-case nil
-           (eq (aref (eieio--object-class-object obj) 0) 'defclass)
-         (error nil))))
+       (> (length obj) 0)
+       (let ((tag (eieio--object-class-tag obj)))
+         (and (symbolp tag)
+              ;; (eq (symbol-function tag) :quick-object-witness-check)
+              (boundp tag)
+              (eieio--class-p (symbol-value tag))))))
 
-(defalias 'object-p 'eieio-object-p)
+(define-obsolete-function-alias 'object-p 'eieio-object-p "25.1")
 
 (defsubst class-abstract-p (class)
   "Return non-nil if CLASS is abstract.
@@ -266,10 +252,9 @@ It creates an autoload function for CNAME's constructor."
   ;; simply not exist yet.  So instead we just don't store the list of parents
   ;; here in eieio-defclass-autoload at all, since it seems that they're just
   ;; not needed before the class is actually loaded.
-  (let* ((oldc (when (class-p cname) (eieio--class-v cname)))
-	 (newc (eieio--class-make cname))
-	 )
-    (if oldc
+  (let* ((oldc (eieio--class-v cname))
+	 (newc (eieio--class-make cname)))
+    (if (eieio--class-p oldc)
 	nil ;; Do nothing if we already have this class.
 
       ;; turn this into a usable self-pointing symbol
@@ -300,7 +285,21 @@ It creates an autoload function for CNAME's constructor."
                      (cl-every (lambda (elem) (cl-typep elem ',elem-type))
                                list)))))
 
-(declare-function eieio--defmethod "eieio-generic" (method kind argclass code))
+
+(defun eieio-make-class-predicate (class)
+  (lambda (obj)
+    ;; (:docstring (format "Test OBJ to see if it's an object of type %S."
+    ;;                     class))
+    (and (eieio-object-p obj)
+         (same-class-p obj class))))
+
+(defun eieio-make-child-predicate (class)
+  (lambda (obj)
+    ;; (:docstring (format
+    ;;              "Test OBJ to see if it's an object is a child of type %S."
+    ;;              class))
+    (and (eieio-object-p obj)
+         (object-of-class-p obj class))))
 
 (defun eieio-defclass-internal (cname superclasses slots options)
   "Define CNAME as a new subclass of SUPERCLASSES.
@@ -314,7 +313,7 @@ See `defclass' for more information."
   (setq eieio-hook nil)
 
   (let* ((pname superclasses)
-	 (oldc (when (class-p cname) (eieio--class-v cname)))
+	 (oldc (let ((c (eieio--class-v cname))) (if (eieio--class-p c) c)))
 	 (newc (if (and oldc (not (eieio--class-default-object-cache oldc)))
                    ;; The oldc class is a stub setup by eieio-defclass-autoload.
                    ;; Reuse it instead of creating a new one, so that existing
@@ -342,19 +341,20 @@ See `defclass' for more information."
     (if pname
 	(progn
 	  (dolist (p pname)
-	    (if (and p (symbolp p))
-		(if (not (class-p p))
+	    (if (not (and p (symbolp p)))
+		(error "Invalid parent class %S" p)
+              (let ((c (eieio--class-v p)))
+                (if (not (eieio--class-p c))
 		    ;; bad class
 		    (error "Given parent class %S is not a class" p)
 		  ;; good parent class...
 		  ;; save new child in parent
-                  (cl-pushnew cname (eieio--class-children (eieio--class-v p)))
+                  (cl-pushnew cname (eieio--class-children c))
 		  ;; Get custom groups, and store them into our local copy.
 		  (mapc (lambda (g) (cl-pushnew g groups :test #'equal))
-			(eieio--class-option (eieio--class-v p) :custom-groups))
-		  ;; save parent in child
-                  (push (eieio--class-v p) (eieio--class-parent newc)))
-	      (error "Invalid parent class %S" p)))
+			(eieio--class-option c :custom-groups))
+		  ;; Save parent in child.
+                  (push c (eieio--class-parent newc))))))
 	  ;; Reverse the list of our parents so that they are prioritized in
 	  ;; the same order as specified in the code.
 	  (cl-callf nreverse (eieio--class-parent newc)))
@@ -506,13 +506,7 @@ See `defclass' for more information."
 	 (eieio--class-option-assoc options :documentation))
 
     ;; Save the file location where this class is defined.
-    (let ((fname (if load-in-progress
-		     load-file-name
-		   buffer-file-name)))
-      (when fname
-	(when (string-match "\\.elc\\'" fname)
-	  (setq fname (substring fname 0 (1- (length fname)))))
-	(put cname 'class-location fname)))
+    (add-to-list 'current-load-list `(eieio-defclass . ,cname))
 
     ;; We have a list of custom groups.  Store them into the options.
     (let ((g (eieio--class-option-assoc options :custom-groups)))
@@ -539,6 +533,7 @@ See `defclass' for more information."
           ;; objects readable.
           (tag (intern (format "eieio-class-tag--%s" cname))))
       (set tag newc)
+      (fset tag :quick-object-witness-check)
       (setf (eieio--object-class-tag cache) tag)
       (let ((eieio-skip-typecheck t))
 	;; All type-checking has been done to our satisfaction
@@ -908,12 +903,13 @@ Argument FN is the function calling this verifier."
 ;;
 (defun eieio-oref (obj slot)
   "Return the value in OBJ at SLOT in the object vector."
-  (eieio--check-type (or eieio-object-p class-p) obj)
-  (eieio--check-type symbolp slot)
-  (if (class-p obj) (eieio-class-un-autoload obj))
+  (cl-check-type slot symbol)
+  (cl-check-type obj (or eieio-object class))
   (let* ((class (cond ((symbolp obj)
                        (error "eieio-oref called on a class!")
-                       (eieio--class-v obj))
+                       (let ((c (eieio--class-v obj)))
+                         (if (eieio--class-p c) (eieio-class-un-autoload obj))
+                         c))
                       (t (eieio--object-class-object obj))))
 	 (c (eieio--slot-name-index class obj slot)))
     (if (not c)
@@ -928,15 +924,15 @@ Argument FN is the function calling this verifier."
 	  (slot-missing obj slot 'oref)
 	  ;;(signal 'invalid-slot-name (list (eieio-object-name obj) slot))
 	  )
-      (eieio--check-type eieio-object-p obj)
+      (cl-check-type obj eieio-object)
       (eieio-barf-if-slot-unbound (aref obj c) obj slot 'oref))))
 
 
 (defun eieio-oref-default (obj slot)
   "Do the work for the macro `oref-default' with similar parameters.
 Fills in OBJ's SLOT with its default value."
-  (eieio--check-type (or eieio-object-p class-p) obj)
-  (eieio--check-type symbolp slot)
+  (cl-check-type obj (or eieio-object class))
+  (cl-check-type slot symbol)
   (let* ((cl (cond ((symbolp obj) (eieio--class-v obj))
                    (t (eieio--object-class-object obj))))
 	 (c (eieio--slot-name-index cl obj slot)))
@@ -974,8 +970,8 @@ Fills in OBJ's SLOT with its default value."
 (defun eieio-oset (obj slot value)
   "Do the work for the macro `oset'.
 Fills in OBJ's SLOT with VALUE."
-  (eieio--check-type eieio-object-p obj)
-  (eieio--check-type symbolp slot)
+  (cl-check-type obj eieio-object)
+  (cl-check-type slot symbol)
   (let* ((class (eieio--object-class-object obj))
          (c (eieio--slot-name-index class obj slot)))
     (if (not c)
@@ -999,8 +995,8 @@ Fills in OBJ's SLOT with VALUE."
   "Do the work for the macro `oset-default'.
 Fills in the default value in CLASS' in SLOT with VALUE."
   (setq class (eieio--class-object class))
-  (eieio--check-type eieio--class-p class)
-  (eieio--check-type symbolp slot)
+  (cl-check-type class eieio--class)
+  (cl-check-type slot symbol)
   (let* ((c (eieio--slot-name-index class nil slot)))
     (if (not c)
         ;; It might be missing because it is a :class allocated slot.
@@ -1222,10 +1218,11 @@ method invocation orders of the involved classes."
   ;;    A class must be defined before it can be used as a parameter
   ;;    specializer in a defmethod form.
   ;; So we can ignore types that are not known to denote classes.
-  (and (class-p type)
-       ;; Prefer (aref ,name 0) over (eieio--class-tag ,name) so that
-       ;; the tagcode is identical to the tagcode used for cl-struct.
-       `(50 . (and (vectorp ,name) (aref ,name 0)))))
+  (and (eieio--class-p (eieio--class-object type))
+       ;; Use the exact same code as for cl-struct, so that methods
+       ;; that dispatch on both kinds of objects get to share this
+       ;; part of the dispatch code.
+       `(50 . ,(cl--generic-struct-tag name))))
 
 (add-function :before-until cl-generic-tag-types-function
               #'eieio--generic-tag-types)

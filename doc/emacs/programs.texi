@@ -546,7 +546,7 @@ your selected @dfn{style} with the syntactic construct and adds this
 onto the indentation of the @dfn{anchor statement}.
 
 @table @kbd
-@item C-c . @key{RET} @var{style} @key{RET}
+@item C-c . @var{style} @key{RET}
 Select a predefined style @var{style} (@code{c-set-style}).
 @end table
 

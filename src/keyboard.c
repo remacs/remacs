@@ -2288,30 +2288,41 @@ read_decoded_event_from_main_queue (struct timespec *end_time,
 	    { /* An encoded byte sequence, let's try to decode it.  */
 	      struct coding_system *coding
 		= TERMINAL_KEYBOARD_CODING (terminal);
-	      unsigned char src[MAX_ENCODED_BYTES];
-	      unsigned char dest[MAX_ENCODED_BYTES * MAX_MULTIBYTE_LENGTH];
-	      int i;
-	      for (i = 0; i < n; i++)
-		src[i] = XINT (events[i]);
-	      if (meta_key != 2)
-		for (i = 0; i < n; i++)
-		  src[i] &= ~0x80;
-	      coding->destination = dest;
-	      coding->dst_bytes = sizeof dest;
-	      decode_coding_c_string (coding, src, n, Qnil);
-	      eassert (coding->produced_char <= n);
-	      if (coding->produced_char == 0)
-		{ /* The encoded sequence is incomplete.  */
-		  if (n < MAX_ENCODED_BYTES) /* Avoid buffer overflow.  */
-		    continue;		     /* Read on!  */
+
+	      if (raw_text_coding_system_p (coding))
+		{
+		  int i;
+		  if (meta_key != 2)
+		    for (i = 0; i < n; i++)
+		      events[i] = make_number (XINT (events[i]) & ~0x80);
 		}
 	      else
 		{
-		  const unsigned char *p = coding->destination;
-		  eassert (coding->carryover_bytes == 0);
-		  n = 0;
-		  while (n < coding->produced_char)
-		    events[n++] = make_number (STRING_CHAR_ADVANCE (p));
+		  unsigned char src[MAX_ENCODED_BYTES];
+		  unsigned char dest[MAX_ENCODED_BYTES * MAX_MULTIBYTE_LENGTH];
+		  int i;
+		  for (i = 0; i < n; i++)
+		    src[i] = XINT (events[i]);
+		  if (meta_key != 2)
+		    for (i = 0; i < n; i++)
+		      src[i] &= ~0x80;
+		  coding->destination = dest;
+		  coding->dst_bytes = sizeof dest;
+		  decode_coding_c_string (coding, src, n, Qnil);
+		  eassert (coding->produced_char <= n);
+		  if (coding->produced_char == 0)
+		    { /* The encoded sequence is incomplete.  */
+		      if (n < MAX_ENCODED_BYTES) /* Avoid buffer overflow.  */
+			continue;		     /* Read on!  */
+		    }
+		  else
+		    {
+		      const unsigned char *p = coding->destination;
+		      eassert (coding->carryover_bytes == 0);
+		      n = 0;
+		      while (n < coding->produced_char)
+			events[n++] = make_number (STRING_CHAR_ADVANCE (p));
+		    }
 		}
 	    }
 	  /* Now `events' should hold decoded events.
@@ -3639,7 +3650,9 @@ kbd_buffer_store_event_hold (register struct input_event *event,
      as input, set quit-flag to cause an interrupt.  */
   if (!NILP (Vthrow_on_input)
       && event->kind != FOCUS_IN_EVENT
+      && event->kind != FOCUS_OUT_EVENT
       && event->kind != HELP_EVENT
+      && event->kind != ICONIFY_EVENT
       && event->kind != DEICONIFY_EVENT)
     {
       Vquit_flag = Vthrow_on_input;

@@ -1,3 +1,30 @@
+2015-01-30  Glenn Morris  <rgm@gnu.org>
+
+	* gnus-registry.el (gnus-registry-max-pruned-entries)
+	(gnus-registry-prune-factor, gnus-registry-default-sort-function):
+	Fix :version.
+	(gnus-registry-default-sort-function): Improve :type.
+
+2015-01-29  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* nnimap.el (nnimap-request-group): Allow running this function on
+	groups that don't exist in Gnus yet.
+	(nnimap-request-group): Revert previous patch since that made it
+	impossible to enter nnimap groups.
+
+	* message.el (message-smtpmail-send-it): Remove the mail header
+	separator before sending.
+
+2015-01-28  Elias Oltmanns  <eo@nebensachen.de>
+
+	* nnimap.el (nnimap-find-expired-articles): Fix handling of
+	(expiry-wait . never).
+
+2015-01-28  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* nnimap.el (nnimap-request-group): Clear the buffer before returning
+	the data.
+
 2015-01-27  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* nnir.el (nnir-imap-expr-to-imap): Check for literal+ capability in

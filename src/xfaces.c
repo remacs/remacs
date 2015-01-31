@@ -313,10 +313,10 @@ static int clear_font_table_count;
 
 #endif /* HAVE_WINDOW_SYSTEM */
 
-/* Non-zero means face attributes have been changed since the last
+/* True means face attributes have been changed since the last
    redisplay.  Used in redisplay_internal.  */
 
-int face_change_count;
+bool face_change;
 
 /* True means don't display bold text if a face's foreground
    and background colors are the inverse of the default colors of the
@@ -694,7 +694,7 @@ Optional THOROUGHLY non-nil means try to free unused fonts, too.  */)
   (Lisp_Object thoroughly)
 {
   clear_face_cache (!NILP (thoroughly));
-  ++face_change_count;
+  face_change = true;
   windows_or_buffers_changed = 53;
   return Qnil;
 }
@@ -2530,11 +2530,11 @@ Value is a vector of face attributes.  */)
   /* Changing a named face means that all realized faces depending on
      that face are invalid.  Since we cannot tell which realized faces
      depend on the face, make sure they are all removed.  This is done
-     by incrementing face_change_count.  The next call to
-     init_iterator will then free realized faces.  */
+     by setting face_change.  The next call to init_iterator will then
+     free realized faces.  */
   if (NILP (Fget (face, Qface_no_inherit)))
     {
-      ++face_change_count;
+      face_change = true;
       windows_or_buffers_changed = 54;
     }
 
@@ -2609,11 +2609,11 @@ The value is TO.  */)
   /* Changing a named face means that all realized faces depending on
      that face are invalid.  Since we cannot tell which realized faces
      depend on the face, make sure they are all removed.  This is done
-     by incrementing face_change_count.  The next call to
-     init_iterator will then free realized faces.  */
+     by setting face_change.  The next call to init_iterator will then
+     free realized faces.  */
   if (NILP (Fget (to, Qface_no_inherit)))
     {
-      ++face_change_count;
+      face_change = true;
       windows_or_buffers_changed = 55;
     }
 
@@ -3107,13 +3107,13 @@ FRAME 0 means change the face on all frames, and change the default
   /* Changing a named face means that all realized faces depending on
      that face are invalid.  Since we cannot tell which realized faces
      depend on the face, make sure they are all removed.  This is done
-     by incrementing face_change_count.  The next call to
-     init_iterator will then free realized faces.  */
+     by setting face_change.  The next call to init_iterator will then
+     free realized faces.  */
   if (!EQ (frame, Qt)
       && NILP (Fget (face, Qface_no_inherit))
       && NILP (Fequal (old_value, value)))
     {
-      ++face_change_count;
+      face_change = true;
       windows_or_buffers_changed = 56;
     }
 
@@ -3281,12 +3281,12 @@ update_face_from_frame_parameter (struct frame *f, Lisp_Object param,
   /* Changing a named face means that all realized faces depending on
      that face are invalid.  Since we cannot tell which realized faces
      depend on the face, make sure they are all removed.  This is done
-     by incrementing face_change_count.  The next call to
-     init_iterator will then free realized faces.  */
+     by setting face_change.  The next call to init_iterator will then
+     free realized faces.  */
   if (!NILP (face)
       && NILP (Fget (face, Qface_no_inherit)))
     {
-      ++face_change_count;
+      face_change = true;
       windows_or_buffers_changed = 57;
     }
 }
@@ -5820,7 +5820,7 @@ is non-nil.  */)
   (Lisp_Object suppress)
 {
   tty_suppress_bold_inverse_default_colors_p = !NILP (suppress);
-  ++face_change_count;
+  face_change = true;
   return suppress;
 }
 

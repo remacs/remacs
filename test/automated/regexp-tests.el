@@ -23,6 +23,8 @@
 
 ;;; Code:
 
+(require 'regexp-opt)
+
 (ert-deftest regexp-test-regexp-opt ()
   "Test the `compilation-error-regexp-alist' regexps.
 The test data is in `compile-tests--test-regexps-data'."

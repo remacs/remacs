@@ -350,7 +350,8 @@ static Lisp_Object Vbig5_coding_system;
 #define CODING_ISO_BOL(coding)	\
   ((coding)->spec.iso_2022.bol)
 #define CODING_ISO_INVOKED_CHARSET(coding, plane)	\
-  CODING_ISO_DESIGNATION ((coding), CODING_ISO_INVOCATION ((coding), (plane)))
+  (CODING_ISO_INVOCATION (coding, plane) < 0 ? -1	\
+   : CODING_ISO_DESIGNATION (coding, CODING_ISO_INVOCATION (coding, plane)))
 #define CODING_ISO_CMP_STATUS(coding)	\
   (&(coding)->spec.iso_2022.cmp_status)
 #define CODING_ISO_EXTSEGMENT_LEN(coding)	\
@@ -5976,6 +5977,15 @@ raw_text_coding_system (Lisp_Object coding_system)
   return (EQ (eol_type, Qunix) ? AREF (raw_text_eol_type, 0)
 	  : EQ (eol_type, Qdos) ? AREF (raw_text_eol_type, 1)
 	  : AREF (raw_text_eol_type, 2));
+}
+
+/* Return true if CODING corresponds to raw-text coding-system.  */
+
+bool
+raw_text_coding_system_p (struct coding_system *coding)
+{
+  return (coding->decoder == decode_coding_raw_text
+	  && coding->encoder == encode_coding_raw_text) ? true : false;
 }
 
 

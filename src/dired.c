@@ -66,8 +66,9 @@ dirent_namelen (struct dirent *dp)
 }
 
 static DIR *
-open_directory (char const *name, int *fdp)
+open_directory (Lisp_Object dirname, int *fdp)
 {
+  char *name = SSDATA (dirname);
   DIR *d;
   int fd, opendir_errno;
 
@@ -98,8 +99,9 @@ open_directory (char const *name, int *fdp)
 
   unblock_input ();
 
+  if (!d)
+    report_file_errno ("Opening directory", dirname, opendir_errno);
   *fdp = fd;
-  errno = opendir_errno;
   return d;
 }
 
@@ -120,6 +122,35 @@ directory_files_internal_unwind (void *dh)
   unblock_input ();
 }
 
+/* Return the next directory entry from DIR; DIR's name is DIRNAME.
+   If there are no more directory entries, return a null pointer.
+   Signal any unrecoverable errors.  */
+
+static struct dirent *
+read_dirent (DIR *dir, Lisp_Object dirname)
+{
+  while (true)
+    {
+      errno = 0;
+      struct dirent *dp = readdir (dir);
+      if (dp || errno == 0)
+	return dp;
+      if (! (errno == EAGAIN || errno == EINTR))
+	{
+#ifdef WINDOWSNT
+	  /* The MS-Windows implementation of 'opendir' doesn't
+	     actually open a directory until the first call to
+	     'readdir'.  If 'readdir' fails to open the directory, it
+	     sets errno to ENOENT or EACCES, see w32.c.  */
+	  if (errno == ENOENT || errno == EACCES)
+	    report_file_error ("Opening directory", dirname);
+#endif
+	  report_file_error ("Reading directory", dirname);
+	}
+      QUIT;
+    }
+}
+
 /* Function shared by Fdirectory_files and Fdirectory_files_and_attributes.
    If not ATTRS, return a list of directory filenames;
    if ATTRS, return a list of directory filenames and their attributes.
@@ -130,15 +161,12 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 			  Lisp_Object match, Lisp_Object nosort, bool attrs,
 			  Lisp_Object id_format)
 {
-  DIR *d;
-  int fd;
   ptrdiff_t directory_nbytes;
   Lisp_Object list, dirfilename, encoded_directory;
   struct re_pattern_buffer *bufp = NULL;
   bool needsep = 0;
   ptrdiff_t count = SPECPDL_INDEX ();
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
-  struct dirent *dp;
 #ifdef WINDOWSNT
   Lisp_Object w32_save = Qnil;
 #endif
@@ -182,9 +210,8 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
   /* Now *bufp is the compiled form of MATCH; don't call anything
      which might compile a new regexp until we're done with the loop!  */
 
-  d = open_directory (SSDATA (dirfilename), &fd);
-  if (d == NULL)
-    report_file_error ("Opening directory", directory);
+  int fd;
+  DIR *d = open_directory (dirfilename, &fd);
 
   /* Unfortunately, we can now invoke expand-file-name and
      file-attributes on filenames, both of which can throw, so we must
@@ -221,28 +248,13 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
       || !IS_ANY_SEP (SREF (directory, directory_nbytes - 1)))
     needsep = 1;
 
-  /* Loop reading blocks until EOF or error.  */
-  for (;;)
+  /* Loop reading directory entries.  */
+  for (struct dirent *dp; (dp = read_dirent (d, directory)); )
     {
-      ptrdiff_t len;
-      bool wanted = 0;
-      Lisp_Object name, finalname;
+      ptrdiff_t len = dirent_namelen (dp);
+      Lisp_Object name = make_unibyte_string (dp->d_name, len);
+      Lisp_Object finalname = name;
       struct gcpro gcpro1, gcpro2;
-
-      errno = 0;
-      dp = readdir (d);
-      if (!dp)
-	{
-	  if (errno == EAGAIN || errno == EINTR)
-	    {
-	      QUIT;
-	      continue;
-	    }
-	  break;
-	}
-
-      len = dirent_namelen (dp);
-      name = finalname = make_unibyte_string (dp->d_name, len);
       GCPRO2 (finalname, name);
 
       /* Note: DECODE_FILE can GC; it should protect its argument,
@@ -255,9 +267,8 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
       immediate_quit = 1;
       QUIT;
 
-      if (NILP (match)
-	  || re_search (bufp, SSDATA (name), len, 0, len, 0) >= 0)
-	wanted = 1;
+      bool wanted = (NILP (match)
+		     || re_search (bufp, SSDATA (name), len, 0, len, 0) >= 0);
 
       immediate_quit = 0;
 
@@ -446,8 +457,6 @@ static Lisp_Object
 file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
 		      Lisp_Object predicate)
 {
-  DIR *d;
-  int fd;
   ptrdiff_t bestmatchsize = 0;
   int matchcount = 0;
   /* If ALL_FLAG is 1, BESTMATCH is the list of all matches, decoded.
@@ -481,36 +490,16 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
      work with decoded file names, but we still do some filtering based
      on the encoded file name.  */
   encoded_file = ENCODE_FILE (file);
-
   encoded_dir = ENCODE_FILE (Fdirectory_file_name (dirname));
-
-  d = open_directory (SSDATA (encoded_dir), &fd);
-  if (!d)
-    report_file_error ("Opening directory", dirname);
-
+  int fd;
+  DIR *d = open_directory (encoded_dir, &fd);
   record_unwind_protect_ptr (directory_files_internal_unwind, d);
 
-  /* Loop reading blocks */
-  /* (att3b compiler bug requires do a null comparison this way) */
-  while (1)
+  /* Loop reading directory entries.  */
+  for (struct dirent *dp; (dp = read_dirent (d, dirname)); )
     {
-      struct dirent *dp;
-      ptrdiff_t len;
+      ptrdiff_t len = dirent_namelen (dp);
       bool canexclude = 0;
-
-      errno = 0;
-      dp = readdir (d);
-      if (!dp)
-	{
-	  if (errno == EAGAIN || errno == EINTR)
-	    {
-	      QUIT;
-	      continue;
-	    }
-	  break;
-	}
-
-      len = dirent_namelen (dp);
 
       QUIT;
       if (len < SCHARS (encoded_file)

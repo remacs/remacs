@@ -2730,9 +2730,9 @@ init_iterator (struct it *it, struct window *w,
      free realized faces now because they depend on face definitions
      that might have changed.  Don't free faces while there might be
      desired matrices pending which reference these faces.  */
-  if (face_change_count && !inhibit_free_realized_faces)
+  if (face_change && !inhibit_free_realized_faces)
     {
-      face_change_count = 0;
+      face_change = false;
       free_all_realized_faces (Qnil);
     }
 
@@ -9316,6 +9316,7 @@ move_it_to (struct it *it, ptrdiff_t to_charpos, int to_x, int to_y, int to_vpos
       && it->current_x == it->last_visible_x - 1
       && it->c != '\n'
       && it->c != '\t'
+      && it->w->window_end_valid
       && it->vpos < it->w->window_end_vpos)
     {
       it->continuation_lines_width += it->current_x;
@@ -13425,10 +13426,10 @@ redisplay_internal (void)
   last_glyphless_glyph_frame = NULL;
   last_glyphless_glyph_face_id = (1 << FACE_ID_BITS);
 
-  /* If face_change_count is non-zero, init_iterator will free all
-     realized faces, which includes the faces referenced from current
-     matrices.  So, we can't reuse current matrices in this case.  */
-  if (face_change_count)
+  /* If face_change, init_iterator will free all realized faces, which
+     includes the faces referenced from current matrices.  So, we
+     can't reuse current matrices in this case.  */
+  if (face_change)
     windows_or_buffers_changed = 47;
 
   if ((FRAME_TERMCAP_P (sf) || FRAME_MSDOS_P (sf))
@@ -15436,7 +15437,8 @@ try_cursor_movement (Lisp_Object window, struct text_pos startp, int *scroll_ste
   /* Likewise there was a check whether window_end_vpos is nil or larger
      than the window.  Now window_end_vpos is int and so never nil, but
      let's leave eassert to check whether it fits in the window.  */
-  eassert (w->window_end_vpos < w->current_matrix->nrows);
+  eassert (!w->window_end_valid
+	   || w->window_end_vpos < w->current_matrix->nrows);
 
   /* Handle case where text has not changed, only point, and it has
      not moved off the frame.  */
@@ -18183,6 +18185,21 @@ try_window_id (struct window *w)
   if (f->fonts_changed)
     return -1;
 
+  /* The redisplay iterations in display_line above could have
+     triggered font-lock, which could have done something that
+     invalidates IT->w window's end-point information, on which we
+     rely below.  E.g., one package, which will remain unnamed, used
+     to install a font-lock-fontify-region-function that called
+     bury-buffer, whose side effect is to switch the buffer displayed
+     by IT->w, and that predictably resets IT->w's window_end_valid
+     flag, which we already tested at the entry to this function.
+     Amply punish such packages/modes by giving up on this
+     optimization in those cases.  */
+  if (!w->window_end_valid)
+    {
+      clear_glyph_matrix (w->desired_matrix);
+      return -1;
+    }
 
   /* Compute differences in buffer positions, y-positions etc.  for
      lines reused at the bottom of the window.  Compute what we can
@@ -25728,6 +25745,15 @@ produce_image_glyph (struct it *it)
       enum glyph_row_area area = it->area;
 
       glyph = it->glyph_row->glyphs[area] + it->glyph_row->used[area];
+      if (it->glyph_row->reversed_p)
+	{
+	  struct glyph *g;
+
+	  /* Make room for the new glyph.  */
+	  for (g = glyph - 1; g >= it->glyph_row->glyphs[it->area]; g--)
+	    g[1] = *g;
+	  glyph = it->glyph_row->glyphs[it->area];
+	}
       if (glyph < it->glyph_row->glyphs[area + 1])
 	{
 	  glyph->charpos = CHARPOS (it->position);

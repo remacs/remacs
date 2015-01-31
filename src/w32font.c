@@ -95,7 +95,7 @@ struct font_callback_data
   /* The list to add matches to.  */
   Lisp_Object list;
   /* Whether to match only opentype fonts.  */
-  int opentype_only;
+  bool opentype_only;
 };
 
 /* Handles the problem that EnumFontFamiliesEx will not return all
@@ -746,7 +746,8 @@ w32font_otf_drive (struct font *font, Lisp_Object features,
    Additional parameter opentype_only restricts the returned fonts to
    opentype fonts, which can be used with the Uniscribe backend.  */
 Lisp_Object
-w32font_list_internal (struct frame *f, Lisp_Object font_spec, int opentype_only)
+w32font_list_internal (struct frame *f, Lisp_Object font_spec,
+		       bool opentype_only)
 {
   struct font_callback_data match_data;
   HDC dc;
@@ -798,7 +799,8 @@ w32font_list_internal (struct frame *f, Lisp_Object font_spec, int opentype_only
    Additional parameter opentype_only restricts the returned fonts to
    opentype fonts, which can be used with the Uniscribe backend.  */
 Lisp_Object
-w32font_match_internal (struct frame *f, Lisp_Object font_spec, int opentype_only)
+w32font_match_internal (struct frame *f, Lisp_Object font_spec,
+			bool opentype_only)
 {
   struct font_callback_data match_data;
   HDC dc;
@@ -2459,7 +2461,7 @@ w32font_filter_properties (Lisp_Object font, Lisp_Object alist)
 struct font_driver w32font_driver =
   {
     LISP_INITIALLY_ZERO, /* Qgdi */
-    0, /* case insensitive */
+    false, /* case insensitive */
     w32font_get_cache,
     w32font_list,
     w32font_match,

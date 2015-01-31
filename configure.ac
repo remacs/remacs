@@ -1940,6 +1940,9 @@ CM_OBJ="cm.o"
 XARGS_LIMIT=
 if test "${HAVE_W32}" = "yes"; then
   AC_DEFINE(HAVE_NTGUI, 1, [Define to use native MS Windows GUI.])
+  if test "$with_toolkit_scroll_bars" = "no"; then
+    AC_MSG_ERROR([Non-toolkit scroll bars are not implemented for w32 build.])
+  fi
   AC_CHECK_TOOL(WINDRES, [windres],
                 [AC_MSG_ERROR([No resource compiler found.])])
   W32_OBJ="w32fns.o w32menu.o w32reg.o w32font.o w32term.o"

@@ -4963,52 +4963,55 @@ The event, EV, is the mouse event."
     (artist-funcall init-fn x1 y1)
     (if (not artist-rubber-banding)
 	(artist-no-rb-set-point1 x1 y1))
-    (track-mouse
-      (while (or (mouse-movement-p ev)
-		 (member 'down (event-modifiers ev)))
-	(setq ev-start-pos (artist-coord-win-to-buf
-			    (posn-col-row (event-start ev))))
-	(setq x1 (car ev-start-pos))
-	(setq y1 (cdr ev-start-pos))
+    (unwind-protect
+        (track-mouse
+          (while (or (mouse-movement-p ev)
+                     (member 'down (event-modifiers ev)))
+            (setq ev-start-pos (artist-coord-win-to-buf
+                                (posn-col-row (event-start ev))))
+            (setq x1 (car ev-start-pos))
+            (setq y1 (cdr ev-start-pos))
 
-	;; Cancel previous timer
-	(if timer
-	    (cancel-timer timer))
+            ;; Cancel previous timer
+            (if timer
+                (cancel-timer timer))
 
-	(if (not (eq initial-win (posn-window (event-start ev))))
-	    ;; If we moved outside the window, do nothing
-	    nil
+            (if (not (eq initial-win (posn-window (event-start ev))))
+                ;; If we moved outside the window, do nothing
+                nil
 
-	  ;; Still in same window:
-	  ;;
-	  ;; Check if user presses or releases shift key
-	  (if (artist-shift-has-changed shift-state ev)
+              ;; Still in same window:
+              ;;
+              ;; Check if user presses or releases shift key
+              (if (artist-shift-has-changed shift-state ev)
 
-	      ;; First check that the draw-how is the same as we
-	      ;; already have. Otherwise, ignore the changed shift-state.
-	      (if (not (eq draw-how
-			   (artist-go-get-draw-how-from-symbol
-			    (if (not shift-state) shifted unshifted))))
-		  (message "Cannot switch to shifted operation")
+                  ;; First check that the draw-how is the same as we
+                  ;; already have. Otherwise, ignore the changed shift-state.
+                  (if (not (eq draw-how
+                               (artist-go-get-draw-how-from-symbol
+                                (if (not shift-state) shifted unshifted))))
+                      (message "Cannot switch to shifted operation")
 
-		;; progn is "implicit" since this is the else-part
-		(setq shift-state (not shift-state))
-		(setq op          (if shift-state shifted unshifted))
-		(setq draw-how    (artist-go-get-draw-how-from-symbol op))
-		(setq draw-fn     (artist-go-get-draw-fn-from-symbol op))))
+                    ;; progn is "implicit" since this is the else-part
+                    (setq shift-state (not shift-state))
+                    (setq op          (if shift-state shifted unshifted))
+                    (setq draw-how    (artist-go-get-draw-how-from-symbol op))
+                    (setq draw-fn     (artist-go-get-draw-fn-from-symbol op))))
 
-	  ;; Draw the new shape
-	  (setq shape (artist-funcall draw-fn x1 y1))
-	  (artist-move-to-xy x1 y1)
+              ;; Draw the new shape
+              (setq shape (artist-funcall draw-fn x1 y1))
+              (artist-move-to-xy x1 y1)
 
-	  ;; Start the timer to call `draw-fn' repeatedly every
-	  ;; `interval' second
-	  (if (and interval draw-fn)
-	      (setq timer (run-at-time interval interval draw-fn x1 y1))))
+              ;; Start the timer to call `draw-fn' repeatedly every
+              ;; `interval' second
+              (if (and interval draw-fn)
+                  (setq timer (run-at-time interval interval draw-fn x1 y1))))
 
-	;; Read next event
-	(setq ev (read-event))))
-
+            ;; Read next event
+            (setq ev (read-event))))
+      ;; Cleanup: get rid of any active timer.
+      (if timer
+          (cancel-timer timer)))
     ;; Cancel any timers
     (if timer
 	(cancel-timer timer))

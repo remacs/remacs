@@ -3,7 +3,7 @@ eval '(exit $?0)' && eval 'exec perl -wS -0777 -pi "$0" ${1+"$@"}'
     if 0;
 # Update an FSF copyright year list to include the current year.
 
-my $VERSION = '2013-01-03.09:41'; # UTC
+my $VERSION = '2015-01-15.20:53'; # UTC
 
 # Copyright (C) 2009-2015 Free Software Foundation, Inc.
 #
@@ -124,7 +124,7 @@ use strict;
 use warnings;
 
 my $copyright_re = 'Copyright';
-my $circle_c_re = '(?:\([cC]\)|@copyright{}|&copy;)';
+my $circle_c_re = '(?:\([cC]\)|@copyright{}|\\\\\(co|&copy;)';
 my $holder = $ENV{UPDATE_COPYRIGHT_HOLDER};
 $holder ||= 'Free Software Foundation, Inc.';
 my $prefix_max = 5;

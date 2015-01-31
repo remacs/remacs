@@ -45,7 +45,7 @@ variable `eieio-default-superclass'."
 						nil t)))
 		 nil))
   (if (not root-class) (setq root-class 'eieio-default-superclass))
-  (eieio--check-type class-p root-class)
+  (cl-check-type root-class class)
   (display-buffer (get-buffer-create "*EIEIO OBJECT BROWSE*") t)
   (with-current-buffer (get-buffer "*EIEIO OBJECT BROWSE*")
     (erase-buffer)
@@ -58,7 +58,7 @@ variable `eieio-default-superclass'."
 Argument THIS-ROOT is the local root of the tree.
 Argument PREFIX is the character prefix to use.
 Argument CH-PREFIX is another character prefix to display."
-  (eieio--check-type class-p this-root)
+  (cl-check-type this-root class)
   (let ((myname (symbol-name this-root))
 	(chl (eieio--class-children (eieio--class-v this-root)))
 	(fprefix (concat ch-prefix "  +--"))
@@ -85,12 +85,12 @@ If CLASS is actually an object, then also display current values of that object.
 	      "n abstract"
 	    "")
 	  " class")
-  (let ((location (get class 'class-location)))
+  (let ((location (find-lisp-object-file-name class 'eieio-defclass)))
     (when location
       (insert " in `")
       (help-insert-xref-button
-       (file-name-nondirectory location)
-       'eieio-class-def class location)
+       (help-fns-short-filename location)
+       'eieio-class-def class location 'eieio-defclass)
       (insert "'")))
   (insert ".\n")
   ;; Parents
@@ -204,15 +204,6 @@ Outputs to the current buffer."
 	    prot (cdr prot)
 	    i (1+ i)))))
 
-(defun eieio-build-class-list (class)
-  "Return a list of all classes that inherit from CLASS."
-  (if (class-p class)
-      (cl-mapcan
-       (lambda (c)
-         (append (list c) (eieio-build-class-list c)))
-       (eieio--class-children (eieio--class-v class)))
-    (list class)))
-
 (defun eieio-build-class-alist (&optional class instantiable-only buildlist)
   "Return an alist of all currently active classes for completion purposes.
 Optional argument CLASS is the class to start with.
@@ -256,24 +247,22 @@ are not abstract."
 
 ;;; METHOD COMPLETION / DOC
 
-(define-button-type 'eieio-method-def
-  :supertype 'help-xref
-  'help-function (lambda (class method file)
-		   (eieio-help-find-method-definition class method file))
-  'help-echo (purecopy "mouse-2, RET: find method's definition"))
-
 (define-button-type 'eieio-class-def
-  :supertype 'help-xref
-  'help-function (lambda (class file)
-		   (eieio-help-find-class-definition class file))
+  :supertype 'help-function-def
   'help-echo (purecopy "mouse-2, RET: find class definition"))
+
+(defconst eieio--defclass-regexp "(defclass[ \t\r\n]+%s[ \t\r\n]+")
+(with-eval-after-load 'find-func
+  (defvar find-function-regexp-alist)
+  (add-to-list 'find-function-regexp-alist
+               `(eieio-defclass . eieio--defclass-regexp)))
 
 ;;;###autoload
 (defun eieio-help-constructor (ctr)
   "Describe CTR if it is a class constructor."
   (when (class-p ctr)
     (erase-buffer)
-    (let ((location (get ctr 'class-location))
+    (let ((location (find-lisp-object-file-name ctr 'eieio-defclass))
 	  (def (symbol-function ctr)))
       (goto-char (point-min))
       (prin1 ctr)
@@ -288,8 +277,8 @@ are not abstract."
       (when location
 	(insert " in `")
 	(help-insert-xref-button
-	 (file-name-nondirectory location)
-	 'eieio-class-def ctr location)
+	 (help-fns-short-filename location)
+	 'eieio-class-def ctr location 'eieio-defclass)
 	(insert "'"))
       (insert ".\nCreates an object of class " (symbol-name ctr) ".")
       (goto-char (point-max))
@@ -304,7 +293,7 @@ are not abstract."
   "Return non-nil if a method with SPECIALIZERS applies to CLASS."
   (let ((applies nil))
     (dolist (specializer specializers)
-      (if (eq 'subclass (car-safe specializer))
+      (if (memq (car-safe specializer) '(subclass eieio--static))
           (setq specializer (nth 1 specializer)))
       ;; Don't include the methods that are "too generic", such as those
       ;; applying to `eieio-default-superclass'.
@@ -443,60 +432,6 @@ The value returned is a list of elements of the form
     (terpri)
     ))
 
-;;; HELP AUGMENTATION
-;;
-(defun eieio-help-find-method-definition (class method file)
-  (let ((filename (find-library-name file))
-	location buf)
-    (when (symbolp class)
-      (setq class (symbol-name class)))
-    (when (symbolp method)
-      (setq method (symbol-name method)))
-    (when (null filename)
-      (error "Cannot find library %s" file))
-    (setq buf (find-file-noselect filename))
-    (with-current-buffer buf
-      (goto-char (point-min))
-      (when
-	  (re-search-forward
-	   ;; Regexp for searching methods.
-	   (concat "(defmethod[ \t\r\n]+" method
-		   "\\([ \t\r\n]+:[a-zA-Z]+\\)?"
-		   "[ \t\r\n]+(\\s-*(\\(\\sw\\|\\s_\\)+\\s-+"
-		   class
-		   "\\s-*)")
-	   nil t)
-	(setq location (match-beginning 0))))
-    (if (null location)
-	(message "Unable to find location in file")
-      (pop-to-buffer buf)
-      (goto-char location)
-      (recenter)
-      (beginning-of-line))))
-
-(defun eieio-help-find-class-definition (class file)
-  (when (symbolp class)
-    (setq class (symbol-name class)))
-  (let ((filename (find-library-name file))
-	location buf)
-    (when (null filename)
-      (error "Cannot find library %s" file))
-    (setq buf (find-file-noselect filename))
-    (with-current-buffer buf
-      (goto-char (point-min))
-      (when
-	  (re-search-forward
-	   ;; Regexp for searching a class.
-	   (concat "(defclass[ \t\r\n]+" class "[ \t\r\n]+")
-	   nil t)
-	(setq location (match-beginning 0))))
-    (if (null location)
-	(message "Unable to find location in file")
-      (pop-to-buffer buf)
-      (goto-char location)
-      (recenter)
-      (beginning-of-line))))
-
 ;;; SPEEDBAR SUPPORT
 ;;
 
@@ -546,7 +481,7 @@ current expansion depth."
 
 (defun eieio-class-button (class depth)
   "Draw a speedbar button at the current point for CLASS at DEPTH."
-  (eieio--check-type class-p class)
+  (cl-check-type class class)
   (let ((subclasses (eieio--class-children (eieio--class-v class))))
     (if subclasses
 	(speedbar-make-tag-line 'angle ?+

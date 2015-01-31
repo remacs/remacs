@@ -812,6 +812,7 @@ textual parts.")
 	    (nnimap-finish-retrieve-group-infos server (list info) sequences
 						t)
 	    (setq active (nth 2 (assoc group nnimap-current-infos)))))
+	(erase-buffer)
 	(insert (format "211 %d %d %d %S\n"
 			(- (cdr active) (car active))
 			(car active)
@@ -1020,20 +1021,20 @@ textual parts.")
 
 (defun nnimap-find-expired-articles (group)
   (let ((cutoff (nnmail-expired-article-p group nil nil)))
-    (with-current-buffer (nnimap-buffer)
-      (let ((result
-	     (nnimap-command
-	      "UID SEARCH SENTBEFORE %s"
-	      (format-time-string
-	       (format "%%d-%s-%%Y"
-		       (upcase
-			(car (rassoc (nth 4 (decode-time cutoff))
-				     parse-time-months))))
-	       cutoff))))
-	(and (car result)
-	     (delete 0 (mapcar #'string-to-number
-			       (cdr (assoc "SEARCH" (cdr result))))))))))
-
+    (when cutoff
+      (with-current-buffer (nnimap-buffer)
+	(let ((result
+	       (nnimap-command
+		"UID SEARCH SENTBEFORE %s"
+		(format-time-string
+		 (format "%%d-%s-%%Y"
+			 (upcase
+			  (car (rassoc (nth 4 (decode-time cutoff))
+				       parse-time-months))))
+		 cutoff))))
+	  (and (car result)
+	       (delete 0 (mapcar #'string-to-number
+				 (cdr (assoc "SEARCH" (cdr result)))))))))))
 
 (defun nnimap-find-article-by-message-id (group server message-id
 						&optional limit)

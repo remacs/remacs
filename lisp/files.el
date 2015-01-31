@@ -6094,7 +6094,7 @@ and `list-directory-verbose-switches'."
 
 PATTERN is assumed to represent a file-name wildcard suitable for the
 underlying filesystem.  For Unix and GNU/Linux, each character from the
-set [ \\t\\n;<>&|()'\"#$] is quoted with a backslash; for DOS/Windows, all
+set [ \\t\\n;<>&|()`'\"#$] is quoted with a backslash; for DOS/Windows, all
 the parts of the pattern which don't include wildcard characters are
 quoted with double quotes.
 
@@ -6108,12 +6108,12 @@ need to be passed verbatim to shell commands."
       ;; argument has quotes, we can safely assume it is already
       ;; quoted by the caller.
       (if (or (string-match "[\"]" pattern)
-	      ;; We quote [&()#$'] in case their shell is a port of a
+	      ;; We quote [&()#$`'] in case their shell is a port of a
 	      ;; Unixy shell.  We quote [,=+] because stock DOS and
 	      ;; Windows shells require that in some cases, such as
 	      ;; passing arguments to batch files that use positional
 	      ;; arguments like %1.
-	      (not (string-match "[ \t;&()#$',=+]" pattern)))
+	      (not (string-match "[ \t;&()#$`',=+]" pattern)))
 	  pattern
 	(let ((result "\"")
 	      (beg 0)
@@ -6128,7 +6128,7 @@ need to be passed verbatim to shell commands."
 	  (concat result (substring pattern beg) "\""))))
      (t
       (let ((beg 0))
-	(while (string-match "[ \t\n;<>&|()'\"#$]" pattern beg)
+	(while (string-match "[ \t\n;<>&|()`'\"#$]" pattern beg)
 	  (setq pattern
 		(concat (substring pattern 0 (match-beginning 0))
 			"\\"
@@ -6590,35 +6590,40 @@ Runs the members of `kill-emacs-query-functions' in turn and stops
 if any returns nil.  If `confirm-kill-emacs' is non-nil, calls it."
   (interactive "P")
   (save-some-buffers arg t)
-  (and (or (not (memq t (mapcar (function
-				  (lambda (buf) (and (buffer-file-name buf)
-						     (buffer-modified-p buf))))
-				(buffer-list))))
-	   (yes-or-no-p "Modified buffers exist; exit anyway? "))
-       (or (not (fboundp 'process-list))
-	   ;; process-list is not defined on MSDOS.
-	   (let ((processes (process-list))
-		 active)
-	     (while processes
-	       (and (memq (process-status (car processes)) '(run stop open listen))
-		    (process-query-on-exit-flag (car processes))
-		    (setq active t))
-	       (setq processes (cdr processes)))
-	     (or (not active)
-		 (with-current-buffer-window
-		  (get-buffer-create "*Process List*") nil
-		  #'(lambda (window _value)
-		      (with-selected-window window
-			(unwind-protect
-			    (yes-or-no-p "Active processes exist; kill them and exit anyway? ")
-			  (when (window-live-p window)
-			    (quit-restore-window window 'kill)))))
-		  (list-processes t)))))
-       ;; Query the user for other things, perhaps.
-       (run-hook-with-args-until-failure 'kill-emacs-query-functions)
-       (or (null confirm-kill-emacs)
-	   (funcall confirm-kill-emacs "Really exit Emacs? "))
-       (kill-emacs)))
+  (let ((confirm confirm-kill-emacs))
+    (and
+     (or (not (memq t (mapcar (function
+                               (lambda (buf) (and (buffer-file-name buf)
+                                                  (buffer-modified-p buf))))
+                              (buffer-list))))
+         (progn (setq confirm nil)
+                (yes-or-no-p "Modified buffers exist; exit anyway? ")))
+     (or (not (fboundp 'process-list))
+         ;; process-list is not defined on MSDOS.
+         (let ((processes (process-list))
+               active)
+           (while processes
+             (and (memq (process-status (car processes)) '(run stop open listen))
+                  (process-query-on-exit-flag (car processes))
+                  (setq active t))
+             (setq processes (cdr processes)))
+           (or (not active)
+               (with-current-buffer-window
+                (get-buffer-create "*Process List*") nil
+                #'(lambda (window _value)
+                    (with-selected-window window
+                      (unwind-protect
+                          (progn
+                            (setq confirm nil)
+                            (yes-or-no-p "Active processes exist; kill them and exit anyway? "))
+                        (when (window-live-p window)
+                          (quit-restore-window window 'kill)))))
+                (list-processes t)))))
+     ;; Query the user for other things, perhaps.
+     (run-hook-with-args-until-failure 'kill-emacs-query-functions)
+     (or (null confirm)
+         (funcall confirm "Really exit Emacs? "))
+     (kill-emacs))))
 
 (defun save-buffers-kill-terminal (&optional arg)
   "Offer to save each buffer, then kill the current connection.

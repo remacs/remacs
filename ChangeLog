@@ -1,12 +1,31 @@
+2015-01-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib and try to repair bad merge
+	This attempts to repair problems introduced by the bad merge
+	5491fd1098d27b3ba3db054076b9ab60fb3558dc.  The easiest way for me
+	to fix the badly-merged gnulib files was to run
+	'admin/merge-gnulib', so I did that, which also imported the
+	following changes:
+	* build-aux/update-copyright, m4/gnulib.m4:
+	Update from gnulib, incorporating:
+	2015-01-15 time: port to MinGW32 3.21
+	2015-01-15 update-copyright: apply to self
+	2015-01-11 update-copyright: recognize groff's \(co marker
+
+2015-01-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* configure.ac (HAVE_W32): Abort with error message if
+	--without-toolkit-scroll-bars was specified.  See
+	http://lists.gnu.org/archive/html/emacs-devel/2015-01/msg00525.html
+	for the details.
+
 2015-01-27  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Port autogen.sh hook creation to Apple Git
+	Port autogen.sh hook creation to private templates
 	* autogen.sh: Do not assume that the hook samples exist.
-	This ports to git version 1.9.3 (Apple Git-50).
-	For some reason Apple decided to populate the git hooks directory
-	in a different way from the way that standard Git does it.
-	The downside is that patch applications won't be checked on Apple,
-	but that's better than autogen.sh failing.
+	This ports to developers who override templatedir in their Git
+	configuration.  The downside is that patch applications won't be
+	checked, but that's better than autogen.sh failing.
 	Problem reported by Sam Steingold in:
 	http://lists.gnu.org/archive/html/emacs-devel/2015-01/msg00898.html
 

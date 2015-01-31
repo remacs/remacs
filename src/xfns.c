@@ -3542,10 +3542,15 @@ If omitted or nil, that stands for the selected frame's display.  */)
 }
 
 DEFUN ("x-server-vendor", Fx_server_vendor, Sx_server_vendor, 0, 1, 0,
-       doc: /* Return the "vendor ID" string of the X server of display TERMINAL.
+       doc: /* Return the "vendor ID" string of the GUI software on TERMINAL.
+
 \(Labeling every distributor as a "vendor" embodies the false assumption
 that operating systems cannot be developed and distributed noncommercially.)
 The optional argument TERMINAL specifies which display to ask about.
+
+For GNU and Unix systems, this queries the X server software; for
+MS-Windows, this queries the OS.
+
 TERMINAL should be a terminal object, a frame or a display name (a string).
 If omitted or nil, that stands for the selected frame's display.  */)
   (Lisp_Object terminal)
@@ -3558,10 +3563,16 @@ If omitted or nil, that stands for the selected frame's display.  */)
 }
 
 DEFUN ("x-server-version", Fx_server_version, Sx_server_version, 0, 1, 0,
-       doc: /* Return the version numbers of the X server of display TERMINAL.
-The value is a list of three integers: the major and minor
-version numbers of the X Protocol in use, and the distributor-specific release
-number.  See also the function `x-server-vendor'.
+       doc: /* Return the version numbers of the GUI software on TERMINAL.
+The value is a list of three integers specifying the version of the GUI
+software in use.
+
+For GNU and Unix system, the first 2 numbers are the version of the X
+Protocol used on TERMINAL and the 3rd number is the distributor-specific
+release number.  For MS-Windows, the 3 numbers report the version and
+the build number of the OS.
+
+See also the function `x-server-vendor'.
 
 The optional argument TERMINAL specifies which display to ask about.
 TERMINAL should be a terminal object, a frame or a display name (a string).
@@ -4921,7 +4932,7 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
   int width, height;
   ptrdiff_t count = SPECPDL_INDEX ();
   struct gcpro gcpro1, gcpro2, gcpro3;
-  int face_change_count_before = face_change_count;
+  bool face_change_before = face_change;
   Lisp_Object buffer;
   struct buffer *old_buffer;
 
@@ -5218,11 +5229,11 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
   f->can_x_set_window_size = true;
 
   /* Setting attributes of faces of the tooltip frame from resources
-     and similar will increment face_change_count, which leads to the
-     clearing of all current matrices.  Since this isn't necessary
-     here, avoid it by resetting face_change_count to the value it
-     had before we created the tip frame.  */
-  face_change_count = face_change_count_before;
+     and similar will set face_change, which leads to the clearing of
+     all current matrices.  Since this isn't necessary here, avoid it
+     by resetting face_change to the value it had before we created
+     the tip frame.  */
+  face_change = face_change_before;
 
   /* Discard the unwind_protect.  */
   return unbind_to (count, frame);

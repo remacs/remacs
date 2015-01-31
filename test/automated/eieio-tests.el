@@ -537,9 +537,8 @@ METHOD is the method that was attempting to be called."
   (should (object-of-class-p eitest-ab 'class-b))
   (should (object-of-class-p eitest-ab 'class-ab))
   (should (eq (eieio-class-parents 'class-a) nil))
-  ;; FIXME: eieio-class-parents now returns class objects!
-  (should (equal (mapcar #'eieio-class-object (eieio-class-parents 'class-ab))
-                 (mapcar #'eieio-class-object '(class-a class-b))))
+  (should (equal (eieio-class-parents 'class-ab)
+                 (mapcar #'find-class '(class-a class-b))))
   (should (same-class-p eitest-a 'class-a))
   (should (class-a-p eitest-a))
   (should (not (class-a-p eitest-ab)))

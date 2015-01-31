@@ -3632,7 +3632,7 @@ x_set_font_backend (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
 
       XSETFRAME (frame, f);
       x_set_font (f, Fframe_parameter (frame, Qfont), Qnil);
-      ++face_change_count;
+      face_change = true;
       windows_or_buffers_changed = 18;
     }
 }

@@ -219,7 +219,7 @@ for CLASS.  Optional ALLOW-SUBCLASS says that it is ok for
 being pedantic."
   (unless class
     (message "Unsafe call to `eieio-persistent-read'."))
-  (when class (eieio--check-type class-p class))
+  (when class (cl-check-type class class))
   (let ((ret nil)
 	(buffstr nil))
     (unwind-protect
@@ -481,7 +481,7 @@ instance."
 
 (cl-defmethod eieio-object-set-name-string ((obj eieio-named) name)
   "Set the string which is OBJ's NAME."
-  (eieio--check-type stringp name)
+  (cl-check-type name string)
   (eieio-oset obj 'object-name name))
 
 (cl-defmethod clone ((obj eieio-named) &rest params)

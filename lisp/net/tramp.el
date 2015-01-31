@@ -64,7 +64,6 @@
 (defvar bkup-backup-directory-info)
 (defvar directory-sep-char)
 (defvar eshell-path-env)
-(defvar file-notify-descriptors)
 (defvar ls-lisp-use-insert-directory-program)
 (defvar outline-regexp)
 
@@ -3415,7 +3414,7 @@ of."
 (defun tramp-handle-file-notify-rm-watch (proc)
   "Like `file-notify-rm-watch' for Tramp files."
   ;; The descriptor must be a process object.
-  (unless (and (processp proc) (gethash proc file-notify-descriptors))
+  (unless (processp proc)
     (tramp-error proc 'file-notify-error "Not a valid descriptor %S" proc))
   (tramp-message proc 6 "Kill %S" proc)
   (kill-process proc))

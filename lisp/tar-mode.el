@@ -50,9 +50,6 @@
 ;;
 ;; o  chmod should understand "a+x,og-w".
 ;;
-;; o  It's not possible to add a NEW file to a tar archive; not that
-;;    important, but still...
-;;
 ;; o  The code is less efficient that it could be - in a lot of places, I
 ;;    pull a 512-character string out of the buffer and parse it, when I could
 ;;    be parsing it in place, not garbaging a string.  Should redo that.
@@ -369,6 +366,80 @@ write-date, checksum, link-type, and link-name."
 	string)
   (tar-parse-octal-integer string))
 
+(defun tar-new-regular-file-header (filename &optional size time)
+  "Return a Tar header for a regular file.
+The header will lack a proper checksum; use `tar-header-block-checksum'
+to compute one, or request `tar-header-serialize' to do that.
+
+Other tar-mode facilities may also require the data-start header
+field to be set to a valid value.
+
+If SIZE is not given or nil, it defaults to 0.
+If TIME is not given or nil, assume now."
+  (make-tar-header
+   nil
+   filename
+   #o644 0 0 (or size 0)
+   (or time (current-time))
+   nil				; checksum
+   nil nil
+   nil nil nil nil nil))
+
+(defun tar--pad-to (pos)
+  (make-string (+ pos (- (point)) (point-min)) 0))
+
+(defun tar--put-at (pos val &optional fmt mask)
+  (when val
+    (insert (tar--pad-to pos)
+	    (if fmt
+		(format fmt (if mask (logand mask val) val))
+	      val))))
+
+(defun tar-header-serialize (header &optional update-checksum)
+  "Return the serialization of a Tar HEADER as a string.
+This function calls `tar-header-block-check-checksum' to ensure the
+checksum is correct.
+
+If UPDATE-CHECKSUM is non-nil, update HEADER with the newly-computed
+checksum before doing the check."
+  (with-temp-buffer
+    (set-buffer-multibyte nil)
+    (let ((encoded-name
+	   (encode-coding-string (tar-header-name header)
+				 tar-file-name-coding-system)))
+      (unless (< (length encoded-name) 99)
+	;; FIXME: Implement it.
+	(error "Long file name support is not implemented"))
+      (insert encoded-name))
+    (tar--put-at tar-mode-offset (tar-header-mode header) "%6o\0 " #o777777)
+    (tar--put-at tar-uid-offset  (tar-header-uid  header) "%6o\0 " #o777777)
+    (tar--put-at tar-gid-offset  (tar-header-gid  header) "%6o\0 " #o777777)
+    (tar--put-at tar-size-offset (tar-header-size header) "%11o ")
+    (insert (tar--pad-to tar-time-offset)
+	    (tar-octal-time (tar-header-date header))
+	    " ")
+    ;; Omit tar-header-checksum (tar-chk-offset) for now.
+    (tar--put-at   tar-linkp-offset (tar-header-link-type header))
+    (tar--put-at   tar-link-offset  (tar-header-link-name header))
+    (when (tar-header-magic header)
+      (tar--put-at tar-magic-offset (tar-header-magic header))
+      (tar--put-at tar-uname-offset (tar-header-uname header))
+      (tar--put-at tar-gname-offset (tar-header-gname header))
+      (tar--put-at tar-dmaj-offset (tar-header-dmaj header) "%7o\0" #o7777777)
+      (tar--put-at tar-dmin-offset (tar-header-dmin header) "%7o\0" #o7777777))
+    (tar--put-at 512 "")
+    (let ((ck (tar-header-block-checksum (buffer-string))))
+      (goto-char (+ (point-min) tar-chk-offset))
+      (delete-char 8)
+      (insert (format "%6o\0 " ck))
+      (when update-checksum
+	(setf (tar-header-checksum header) ck))
+      (tar-header-block-check-checksum (buffer-string)
+				       (tar-header-checksum header)
+				       (tar-header-name header)))
+    ;; .
+    (buffer-string)))
+
 
 (defun tar-header-block-checksum (string)
   "Compute and return a tar-acceptable checksum for this block."
@@ -547,6 +618,7 @@ MODE should be an integer which is a file mode value."
     (define-key map "p" 'tar-previous-line)
     (define-key map "\^P" 'tar-previous-line)
     (define-key map [up] 'tar-previous-line)
+    (define-key map "I" 'tar-new-entry)
     (define-key map "R" 'tar-rename-entry)
     (define-key map "u" 'tar-unflag)
     (define-key map "v" 'tar-view)
@@ -731,10 +803,14 @@ tar-file's buffer."
   (interactive "p")
   (tar-next-line (- arg)))
 
+(defun tar-current-position ()
+  "Return the `tar-parse-info' index for the current line."
+  (count-lines (point-min) (line-beginning-position)))
+
 (defun tar-current-descriptor (&optional noerror)
   "Return the tar-descriptor of the current line, or signals an error."
   ;; I wish lines had plists, like in ZMACS...
-  (or (nth (count-lines (point-min) (line-beginning-position))
+  (or (nth (tar-current-position)
 	   tar-parse-info)
       (if noerror
 	  nil
@@ -947,6 +1023,37 @@ the current tar-entry."
       (let ((coding-system-for-write 'no-conversion))
 	(write-region start end to-file nil nil nil t)))
     (message "Copied tar entry %s to %s" name to-file)))
+
+(defun tar-new-entry (filename &optional index)
+  "Insert a new empty regular file before point."
+  (interactive "*sFile name: ")
+  (let* ((buffer  (current-buffer))
+	 (index   (or index (tar-current-position)))
+	 (d-list  (and (not (zerop index))
+		       (nthcdr (+ -1 index) tar-parse-info)))
+	 (pos     (if d-list
+		      (tar-header-data-end (car d-list))
+		    (point-min)))
+	 (new-descriptor
+	  (tar-new-regular-file-header filename)))
+    ;; Update the data buffer; fill the missing descriptor fields.
+    (with-current-buffer tar-data-buffer
+      (goto-char pos)
+      (insert (tar-header-serialize new-descriptor t))
+      (setf  (tar-header-data-start new-descriptor)
+	     (copy-marker (point) nil)))
+    ;; Update tar-parse-info.
+    (if d-list
+	(setcdr d-list     (cons new-descriptor (cdr d-list)))
+      (setq tar-parse-info (cons new-descriptor tar-parse-info)))
+    ;; Update the listing buffer.
+    (save-excursion
+      (goto-char (point-min))
+      (forward-line index)
+      (let ((inhibit-read-only t))
+	(insert (tar-header-block-summarize new-descriptor) ?\n)))
+    ;; .
+    index))
 
 (defun tar-flag-deleted (p &optional unflag)
   "In Tar mode, mark this sub-file to be deleted from the tar file.

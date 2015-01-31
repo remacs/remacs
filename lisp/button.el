@@ -224,10 +224,10 @@ changes to a supertype are not reflected in its subtypes)."
 	  prop val))))
 
 (defun button-activate (button &optional use-mouse-action)
-  "Call BUTTON's action property.
-If USE-MOUSE-ACTION is non-nil, invoke the button's mouse-action
-instead of its normal action; if the button has no mouse-action,
-the normal action is used instead.
+  "Call BUTTON's `action' property.
+If USE-MOUSE-ACTION is non-nil, invoke the button's `mouse-action'
+property instead of `action'; if the button has no `mouse-action',
+the value of `action' is used instead.
 
 The action can either be a marker or a function.  If it's a
 marker then goto it.  Otherwise it it is a function then it is
@@ -429,11 +429,13 @@ instead of starting at the next button."
 (defun push-button (&optional pos use-mouse-action)
   "Perform the action specified by a button at location POS.
 POS may be either a buffer position or a mouse-event.  If
-USE-MOUSE-ACTION is non-nil, invoke the button's mouse-action
-instead of its normal action; if the button has no mouse-action,
-the normal action is used instead.  The action may be either a
-function to call or a marker to display and is invoked using
-`button-activate' (which see).
+USE-MOUSE-ACTION is non-nil, invoke the button's `mouse-action'
+property instead of its `action' property; if the button has no
+`mouse-action', the value of `action' is used instead.
+
+The action in both cases may be either a function to call or a
+marker to display and is invoked using `button-activate' (which
+see).
 
 POS defaults to point, except when `push-button' is invoked
 interactively as the result of a mouse-event, in which case, the
