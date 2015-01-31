@@ -1,3 +1,8 @@
+2015-01-31  Eli Zaretskii  <eliz@gnu.org>
+
+	* programs.texi (Hungry Delete): Fix a typo: "C-d" instead of
+	"C-c C-d" in hungry-delete mode.
+
 2015-01-29  Eli Zaretskii  <eliz@gnu.org>
 
 	* mule.texi (Language Environments): Work around refill bug in
