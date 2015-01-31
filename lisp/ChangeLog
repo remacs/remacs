@@ -1,3 +1,15 @@
+2015-01-31  Alan Mackenzie  <acm@muc.de>
+
+	Handle "#" operator properly inside macro.  Fix coding bug.
+
+	* progmodes/cc-mode.el (c-neutralize-syntax-in-and-mark-CPP): On
+	finding a "#" which looks like the start of a macro, check it
+	isn't already inside a macro.
+
+	* progmodes/cc-engine.el (c-state-safe-place): Don't record a new
+	"safe" position into the list of them when this is beyond our
+	current position.
+
 2015-01-31  Martin Rudalics  <rudalics@gmx.at>
 
 	* menu-bar.el (menu-bar-non-minibuffer-window-p): Return nil when
