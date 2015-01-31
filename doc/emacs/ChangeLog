@@ -1,5 +1,8 @@
 2015-01-31  Eli Zaretskii  <eliz@gnu.org>
 
+	* msdog.texi (Windows Files): Document characters invalid in
+	Windows file names.  (Bug#19463)
+
 	* custom.texi (Customization Groups): Update the looks of the
 	Customize Group buffer.
 
