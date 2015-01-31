@@ -137,7 +137,7 @@ read_dirent (DIR *dir, Lisp_Object dirname)
 	return dp;
       if (! (errno == EAGAIN || errno == EINTR))
 	{
-#ifdef MSDOS
+#ifdef WINDOWSNT
 	  /* The MS-Windows implementation of 'opendir' doesn't
 	     actually open a directory until the first call to
 	     'readdir'.  If 'readdir' fails to open the directory, it
