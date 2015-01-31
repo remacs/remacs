@@ -1,4 +1,4 @@
-p;;; xwidget.el --- api functions for xwidgets  -*- lexical-binding: t -*-
+;;; xwidget.el --- api functions for xwidgets  -*- lexical-binding: t -*-
 ;;  see xwidget.c for more api functions
 
 
@@ -13,6 +13,7 @@ p;;; xwidget.el --- api functions for xwidgets  -*- lexical-binding: t -*-
 
 (eval-when-compile (require 'cl))
 (require 'reporter)
+(require 'bookmark)
 
 (defcustom xwidget-webkit-scroll-behaviour 'native
   "Scroll behaviour of the webkit instance.
@@ -315,14 +316,14 @@ Argument STR string."
                   (xwidget-webkit-begin-edit-textarea xww field-value))))))
   (xwidget-webkit-execute-script xw (format "findactiveelement(document).value='%s'" str)))
 
-
+(defvar xwidget-xwbl)
 (defun xwidget-webkit-begin-edit-textarea (xw text)
   "Start editing of a webkit text area.
 XW is the xwidget identifier, TEXT is retrieved from the webkit."
   (switch-to-buffer
    (generate-new-buffer "textarea"))
 
-  (set (make-local-variable 'xwbl) xw)
+  (set (make-local-variable 'xwidget-xwbl) xw)
   (insert text))
 
 (defun xwidget-webkit-end-edit-textarea ()
@@ -331,7 +332,7 @@ XW is the xwidget identifier, TEXT is retrieved from the webkit."
   (goto-char (point-min))
   (while (search-forward "\n" nil t)
     (replace-match "\\n" nil t))
-  (xwidget-webkit-execute-script xwbl (format "findactiveelement(document).value='%s'"
+  (xwidget-webkit-execute-script xwidget-xwbl (format "findactiveelement(document).value='%s'"
                                               (buffer-substring (point-min) (point-max))))
   ;;TODO convert linefeed to \n
   )
