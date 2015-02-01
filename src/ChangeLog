@@ -1,3 +1,7 @@
+2015-02-01  Martin Rudalics  <rudalics@gmx.at>
+
+	* xdisp.c (Fwindow_text_pixel_size): Add optional argument BUFFER.
+
 2015-02-01  Joakim Verona  <joakim@verona.se>
 	Support for the new Xwidget feature.
 	* window.c, Makefile.in, buffer.c, dispextern.h, dispnew.c, emacs.c:

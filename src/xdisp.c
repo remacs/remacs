@@ -9703,7 +9703,7 @@ in_display_vector_p (struct it *it)
 	  && it->dpvec + it->current.dpvec_index != it->dpend);
 }
 
-DEFUN ("window-text-pixel-size", Fwindow_text_pixel_size, Swindow_text_pixel_size, 0, 6, 0,
+DEFUN ("window-text-pixel-size", Fwindow_text_pixel_size, Swindow_text_pixel_size, 0, 7, 0,
        doc: /* Return the size of the text of WINDOW's buffer in pixels.
 WINDOW must be a live window and defaults to the selected one.  The
 return value is a cons of the maximum pixel-width of any text line and
@@ -9736,28 +9736,42 @@ Optional argument MODE-AND-HEADER-LINE nil or omitted means do not
 include the height of the mode- or header-line of WINDOW in the return
 value.  If it is either the symbol `mode-line' or `header-line', include
 only the height of that line, if present, in the return value.  If t,
-include the height of both, if present, in the return value.  */)
-  (Lisp_Object window, Lisp_Object from, Lisp_Object to, Lisp_Object x_limit, Lisp_Object y_limit,
-   Lisp_Object mode_and_header_line)
+include the height of both, if present, in the return value.
+
+Optional argument BUFFER nil means to return the size of the text of
+WINDOW's buffer.  BUFFER t means to return the size of the text of the
+current buffer as if it were displayed in WINDOW.  Else BUFFER has to
+specify a live buffer and this function returns the size of the text of
+BUFFER as if it were displayed in WINDOW.  */)
+  (Lisp_Object window, Lisp_Object from, Lisp_Object to, Lisp_Object x_limit,
+   Lisp_Object y_limit, Lisp_Object mode_and_header_line, Lisp_Object buffer)
 {
   struct window *w = decode_live_window (window);
-  Lisp_Object buf;
   struct buffer *b;
   struct it it;
-  struct buffer *old_buffer = NULL;
+  struct buffer *old_b = NULL;
   ptrdiff_t start, end, pos;
   struct text_pos startp;
   void *itdata = NULL;
   int c, max_y = -1, x = 0, y = 0;
 
-  buf = w->contents;
-  CHECK_BUFFER (buf);
-  b = XBUFFER (buf);
-
-  if (b != current_buffer)
+  if (EQ (buffer, Qt))
+    b = current_buffer;
+  else
     {
-      old_buffer = current_buffer;
-      set_buffer_internal (b);
+      if (NILP (buffer))
+	buffer = w->contents;
+
+      CHECK_BUFFER (buffer);
+      if (!BUFFER_LIVE_P (XBUFFER (buffer)))
+	error ("Not a live buffer");
+
+      b = XBUFFER (buffer);
+      if (b != current_buffer)
+	{
+	  old_b = current_buffer;
+	  set_buffer_internal (b);
+	}
     }
 
   if (NILP (from))
@@ -9833,8 +9847,8 @@ include the height of both, if present, in the return value.  */)
 
   bidi_unshelve_cache (itdata, 0);
 
-  if (old_buffer)
-    set_buffer_internal (old_buffer);
+  if (old_b)
+    set_buffer_internal (old_b);
 
   return Fcons (make_number (x), make_number (y));
 }
