@@ -374,7 +374,7 @@ otherwise for the first of `gfile' or `inotify' that is usable.])
  ],
  [with_file_notification=$with_features])
 
-OPTION_DEFAULT_OFF([xwidgets],[enable use of some gtk widgets it Emacs buffers])
+OPTION_DEFAULT_OFF([xwidgets],[enable use of some gtk widgets in Emacs buffers])
 
 ## For the times when you want to build Emacs but don't have
 ## a suitable makeinfo, and can live without the manuals.
