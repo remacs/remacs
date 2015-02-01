@@ -1,3 +1,11 @@
+2015-02-01  Alan Mackenzie  <acm@muc.de>
+
+	CC Mode: Stop Font Lock forcing fontification from BOL.  Fixes
+	debbugs#19669.
+
+	* progmodes/cc-mode.el (c-font-lock-init): Setq
+	font-lock-extend-region-functions to nil.
+
 2015-04-06  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	python.el: Do not break IPython magic completions.  (Bug#19736)
