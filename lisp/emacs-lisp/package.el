@@ -342,7 +342,7 @@ which packages are no more needed.
 You can use it to (re)install packages on other machines
 by running `package-user-selected-packages-install'."
   :group 'package
-  :type '(repeat (choice symbol)))
+  :type '(repeat symbol))
 
 (defvar package--default-summary "No description available.")
 
