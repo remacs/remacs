@@ -1198,13 +1198,13 @@ using `package-compute-transaction'."
   (mapc #'package-install-from-archive packages))
 
 ;;;###autoload
-(defun package-install (pkg &optional arg)
+(defun package-install (pkg &optional mark-selected)
   "Install the package PKG.
 PKG can be a package-desc or the package name of one the available packages
-in an archive in `package-archives'.  Interactively, prompt for its name
-and add PKG to `package-selected-packages'.
-When called from lisp you will have to use ARG if you want to
-simulate an interactive call to add PKG to `package-selected-packages'."
+in an archive in `package-archives'.  Interactively, prompt for its name.
+
+If called interactively or if MARK-SELECTED is non-nil, add PKG
+to `package-selected-packages'."
   (interactive
    (progn
      ;; Initialize the package system to get the list of package
@@ -1221,8 +1221,8 @@ simulate an interactive call to add PKG to `package-selected-packages'."
                                       (symbol-name (car elt))))
                                   package-archive-contents))
                     nil t))
-           "\p")))
-  (when (and arg (not (memq pkg package-selected-packages)))
+           t)))
+  (when (and mark-selected (not (memq pkg package-selected-packages)))
     (customize-save-variable 'package-selected-packages
                             (cons pkg package-selected-packages)))
   (package-download-transaction

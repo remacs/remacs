@@ -1,6 +1,7 @@
 2015-02-01  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* emacs-lisp/package.el (package-selected-packages): Fix :type
+	(package-install): Rename ARG to MARK-SELECTED.
 
 2015-02-01  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
 
