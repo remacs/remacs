@@ -333,6 +333,17 @@ contents of the archive."
   :group 'package
   :version "24.4")
 
+(defcustom package-selected-packages nil
+  "Store here packages installed explicitely by user.
+This variable will be feeded automatically by emacs,
+when installing a new package.
+This variable will be used by `package-autoremove' to decide
+which packages are no more needed.
+You can use it to (re)install packages on other machines
+by running `package-user-selected-packages-install'."
+  :group 'package
+  :type '(repeat (choice symbol)))
+
 (defvar package--default-summary "No description available.")
 
 (cl-defstruct (package-desc
@@ -1187,10 +1198,13 @@ using `package-compute-transaction'."
   (mapc #'package-install-from-archive packages))
 
 ;;;###autoload
-(defun package-install (pkg)
+(defun package-install (pkg &optional arg)
   "Install the package PKG.
 PKG can be a package-desc or the package name of one the available packages
-in an archive in `package-archives'.  Interactively, prompt for its name."
+in an archive in `package-archives'.  Interactively, prompt for its name
+and add PKG to `package-selected-packages'.
+When called from lisp you will have to use ARG if you want to
+simulate an interactive call to add PKG to `package-selected-packages'."
   (interactive
    (progn
      ;; Initialize the package system to get the list of package
@@ -1206,13 +1220,27 @@ in an archive in `package-archives'.  Interactively, prompt for its name."
                                     (unless (package-installed-p (car elt))
                                       (symbol-name (car elt))))
                                   package-archive-contents))
-                    nil t)))))
+                    nil t))
+           "\p")))
+  (when (and arg (not (memq pkg package-selected-packages)))
+    (customize-save-variable 'package-selected-packages
+                            (cons pkg package-selected-packages)))
   (package-download-transaction
    (if (package-desc-p pkg)
        (package-compute-transaction (list pkg)
                                     (package-desc-reqs pkg))
      (package-compute-transaction ()
                                   (list (list pkg))))))
+
+;;;###autoload
+(defun package-reinstall (pkg)
+  "Reinstall package PKG."
+  (interactive (list (intern (completing-read
+                              "Reinstall package: "
+                              (mapcar 'symbol-name
+                                      (mapcar 'car package-alist))))))
+  (package-delete (cadr (assq pkg package-alist)) t)
+  (package-install pkg))
 
 (defun package-strip-rcs-id (str)
   "Strip RCS version ID from the version string STR.
@@ -1354,24 +1382,29 @@ is derived from the main .el file in the directory.
 
 Downloads and installs required packages as needed."
   (interactive)
-  (let ((pkg-desc
-         (cond
-          ((derived-mode-p 'dired-mode)
-           ;; This is the only way a package-desc object with a `dir'
-           ;; desc-kind can be created.  Such packages can't be
-           ;; uploaded or installed from archives, they can only be
-           ;; installed from local buffers or directories.
-           (package-dir-info))
-          ((derived-mode-p 'tar-mode)
-           (package-tar-file-info))
-          (t
-           (package-buffer-info)))))
+  (let* ((pkg-desc
+          (cond
+            ((derived-mode-p 'dired-mode)
+             ;; This is the only way a package-desc object with a `dir'
+             ;; desc-kind can be created.  Such packages can't be
+             ;; uploaded or installed from archives, they can only be
+             ;; installed from local buffers or directories.
+             (package-dir-info))
+            ((derived-mode-p 'tar-mode)
+             (package-tar-file-info))
+            (t
+             (package-buffer-info))))
+         (name (package-desc-name pkg-desc)))
     ;; Download and install the dependencies.
     (let* ((requires (package-desc-reqs pkg-desc))
            (transaction (package-compute-transaction nil requires)))
       (package-download-transaction transaction))
     ;; Install the package itself.
     (package-unpack pkg-desc)
+    (unless (memq name package-selected-packages)
+      (push name package-selected-packages)
+      (customize-save-variable 'package-selected-packages
+                               package-selected-packages))
     pkg-desc))
 
 ;;;###autoload
@@ -1388,26 +1421,120 @@ The file can either be a tar file or an Emacs Lisp file."
       (when (string-match "\\.tar\\'" file) (tar-mode)))
     (package-install-from-buffer)))
 
-(defun package-delete (pkg-desc)
-  (let ((dir (package-desc-dir pkg-desc)))
-    (if (not (string-prefix-p (file-name-as-directory
-                               (expand-file-name package-user-dir))
-                              (expand-file-name dir)))
-        ;; Don't delete "system" packages.
-	(error "Package `%s' is a system package, not deleting"
-               (package-desc-full-name pkg-desc))
-      (delete-directory dir t t)
-      ;; Remove NAME-VERSION.signed file.
-      (let ((signed-file (concat dir ".signed")))
-	(if (file-exists-p signed-file)
-	    (delete-file signed-file)))
-      ;; Update package-alist.
-      (let* ((name (package-desc-name pkg-desc))
-             (pkgs (assq name package-alist)))
-        (delete pkg-desc pkgs)
-        (unless (cdr pkgs)
-          (setq package-alist (delq pkgs package-alist))))
-      (message "Package `%s' deleted." (package-desc-full-name pkg-desc)))))
+(defun package--get-deps (pkg &optional only)
+  (let* ((pkg-desc (cadr (assq pkg package-alist)))
+         (direct-deps (cl-loop for p in (package-desc-reqs pkg-desc)
+                               for name = (car p)
+                               when (assq name package-alist)
+                               collect name))
+         (indirect-deps (unless (eq only 'direct)
+                          (cl-loop for p in direct-deps
+                                   for dep = (cadr (assq p package-alist))
+                                   when (and dep (assq p package-alist))
+                                   append (mapcar 'car
+                                                  (package-desc-reqs
+                                                   dep))))))
+    (cl-case only
+      (direct   direct-deps)
+      (separate (list direct-deps indirect-deps))
+      (indirect indirect-deps)
+      (t        (append direct-deps indirect-deps)))))
+
+;;;###autoload
+(defun package-user-selected-packages-install ()
+  "Ensure packages in `package-selected-packages' are installed.
+If some packages are not installed propose to install them."
+  (interactive)
+  (cl-loop for p in package-selected-packages
+           unless (package-installed-p p)
+           collect p into lst
+           finally
+           (if lst
+               (when (y-or-n-p
+                      (format "%s packages will be installed:\n%s, proceed?"
+                              (length lst)
+                              (mapconcat 'symbol-name lst ", ")))
+                 (mapc 'package-install lst))
+               (message "All your packages are already installed"))))
+
+(defun package-used-elsewhere-p (pkg-desc &optional pkg-list)
+  "Check in PKG-LIST if PKG-DESC is used elsewhere as dependency.
+
+When not specified, PKG-LIST default to `package-alist'
+with PKG-DESC entry removed.
+Returns the first package found in PKG-LIST where PKG is used as dependency."
+  (unless (string= (package-desc-status pkg-desc) "obsolete")
+    (let ((pkg (package-desc-name pkg-desc)))
+      (cl-loop with alist = (or pkg-list
+                                (remove (assq pkg package-alist)
+                                        package-alist))
+               for p in alist thereis
+               (and (memq pkg (mapcar 'car (package-desc-reqs (cadr p))))
+                    (car p))))))
+
+(defun package-delete (pkg-desc &optional force)
+  "Delete package PKG-DESC.
+
+Argument PKG-DESC is a full description of package as vector.
+When package is used elsewhere as dependency of another package,
+refuse deleting it and return an error.
+If FORCE is non--nil package will be deleted even if it is used
+elsewhere."
+  (let ((dir (package-desc-dir pkg-desc))
+        (name (package-desc-name pkg-desc))
+        pkg-used-elsewhere-by)
+    (cond ((not (string-prefix-p (file-name-as-directory
+                                  (expand-file-name package-user-dir))
+                                 (expand-file-name dir)))
+           ;; Don't delete "system" packages.
+           (error "Package `%s' is a system package, not deleting"
+                  (package-desc-full-name pkg-desc)))
+          ((and (null force)
+                (setq pkg-used-elsewhere-by
+                      (package-used-elsewhere-p pkg-desc)))
+           ;; Don't delete packages used as dependency elsewhere.
+           (error "Package `%s' is used by `%s' as dependency, not deleting"
+                  (package-desc-full-name pkg-desc)
+                  pkg-used-elsewhere-by))
+          (t
+           (delete-directory dir t t)
+           ;; Remove NAME-VERSION.signed file.
+           (let ((signed-file (concat dir ".signed")))
+             (if (file-exists-p signed-file)
+                 (delete-file signed-file)))
+           ;; Update package-alist.
+           (let ((pkgs (assq name package-alist)))
+             (delete pkg-desc pkgs)
+             (unless (cdr pkgs)
+               (setq package-alist (delq pkgs package-alist))))
+           (message "Package `%s' deleted." (package-desc-full-name pkg-desc))))))
+
+;;;###autoload
+(defun package-autoremove ()
+  "Remove packages that are no more needed.
+
+Packages that are no more needed by other packages in
+`package-selected-packages' and their dependencies
+will be deleted."
+  (interactive)
+  (let* (old-direct
+         (needed (cl-loop for p in package-selected-packages
+                          if (assq p package-alist)
+                          append (package--get-deps p) into lst
+                          else do (push p old-direct)
+                          finally return lst)))
+    (cl-loop for p in (mapcar 'car package-alist)
+             unless (or (memq p needed)
+                        (memq p package-selected-packages))
+             collect p into lst
+             finally (if lst
+                         (when (y-or-n-p (format "%s packages will be deleted:\n%s, proceed? "
+                                                 (length lst)
+                                                 (mapconcat 'symbol-name lst ", ")))
+                           (mapc (lambda (p)
+                                   (package-delete (cadr (assq p package-alist)) t))
+                                 lst))
+                       (message "Nothing to autoremove")))))
 
 (defun package-archive-base (desc)
   "Return the archive containing the package NAME."
@@ -1721,7 +1848,7 @@ If optional arg NO-ACTIVATE is non-nil, don't activate packages."
   (let ((pkg-desc (button-get button 'package-desc)))
     (when (y-or-n-p (format "Install package `%s'? "
                             (package-desc-full-name pkg-desc)))
-      (package-install pkg-desc)
+      (package-install pkg-desc 1)
       (revert-buffer nil t)
       (goto-char (point-min)))))
 
@@ -2178,7 +2305,9 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
                       (length install-list)
                       (mapconcat #'package-desc-full-name
                                  install-list ", ")))))
-	  (mapc 'package-install install-list)))
+          (mapc (lambda (p)
+                  (package-install p (and (null (package-installed-p p)) 1)))
+                install-list)))
     ;; Delete packages, prompting if necessary.
     (when delete-list
       (if (or
