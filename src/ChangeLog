@@ -1,3 +1,7 @@
+2015-02-01  Martin Rudalics  <rudalics@gmx.at>
+
+	* xdisp.c (Fwindow_text_pixel_size): Add optional argument BUFFER.
+
 2015-01-31  Eli Zaretskii  <eliz@gnu.org>
 
 	* coding.c (raw_text_coding_system_p): New function.
