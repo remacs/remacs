@@ -3,6 +3,7 @@
 	* emacs-lisp/package.el (package--find-non-dependencies): New
 	function.
 	(package-initialize): Use it to populate `package-selected-packages'.
+	(package-menu-execute): Clean unnecessary `and'.
 
 2015-02-02  Michael Albinus  <michael.albinus@gmx.de>
 

@@ -2323,7 +2323,7 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
                       (mapconcat #'package-desc-full-name
                                  install-list ", ")))))
           (mapc (lambda (p)
-                  (package-install p (and (null (package-installed-p p)) 1)))
+                  (package-install p (null (package-installed-p p))))
                 install-list)))
     ;; Delete packages, prompting if necessary.
     (when delete-list
