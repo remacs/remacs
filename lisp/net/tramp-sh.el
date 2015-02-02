@@ -65,13 +65,13 @@ files conditionalize this setup based on the TERM environment variable."
   :type 'string)
 
 ;;;###tramp-autoload
-(defcustom tramp-histfile-override "/dev/null"
+(defcustom tramp-histfile-override 'unset
   "When invoking a shell, override the HISTFILE with this value.
-By default, the HISTFILE is set to the \"/dev/null\" value, which
-is special on Unix systems and indicates the shell history should
-not be logged (this avoids clutter due to Tramp commands).
-
-The symbol `unset' removes any setting of HISTFILE.
+By default, it is set to the symbol `unset', which unsets any
+setting of HISTFILE.  When setting to a string, it redirects the
+shell history to that file.  Be careful when setting to
+\"/dev/null\"; this might result in undesired results when using
+\"bash\" as shell.
 
 If you set this variable to nil, however, the *override* is
 disabled, so the history will go to the default storage
@@ -79,8 +79,7 @@ location, e.g. \"$HOME/.sh_history\"."
   :group 'tramp
   :version "25.1"
   :type '(choice (const :tag "Do not override HISTFILE" nil)
-                 (const :tag "Unset HISTFILE" 'unset)
-                 (const :tag "Empty the history (/dev/null)" "/dev/null")
+                 (const :tag "Unset HISTFILE" unset)
                  (string :tag "Redirect to a file")))
 
 ;;;###tramp-autoload
