@@ -1,3 +1,8 @@
+2015-02-02  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-ssh-controlmaster-options): Use "%C" for
+	ControlPath if possible.  (Bug#19702)
+
 2015-02-02  Glenn Morris  <rgm@gnu.org>
 
 	* emacs-lisp/authors.el (authors-obsolete-files-regexps)
