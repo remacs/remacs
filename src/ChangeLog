@@ -1,3 +1,12 @@
+2015-02-02  Eli Zaretskii  <eliz@gnu.org>
+
+	* dispnew.c (adjust_glyph_matrix): Set the update_mode_line flag
+	of the window whose current glyph matrix was resized, which
+	disables the mode-line row as side effect.
+
+	* xdisp.c (redisplay_window): Don't avoid redisplay of a window
+	whose update_mode_line flag is set.  (Bug#19721)
+
 2015-01-30  Eli Zaretskii  <eliz@gnu.org>
 
 	* dispextern.h (FACE_FOR_CHAR): Fix the commentary.

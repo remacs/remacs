@@ -15964,6 +15964,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
   if (!just_this_one_p
       && REDISPLAY_SOME_P ()
       && !w->redisplay
+      && !w->update_mode_line
       && !f->redisplay
       && !buffer->text->redisplay
       && BUF_PT (buffer) == w->last_point)
