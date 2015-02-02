@@ -19,7 +19,7 @@
 
 2014-11-17  Oscar Fuentes  <ofv@wanadoo.es>
 
-	* admin/CPP-DEFINES: Mention MINGW_W64.
+	* CPP-DEFINES: Mention MINGW_W64.
 
 2014-11-15  Glenn Morris  <rgm@gnu.org>
 
@@ -29,9 +29,10 @@
 
 2014-11-11  Eric S. Raymond  <esr@thyrsus.com>
 
-	* make-tarball.txt, update-copyright, admin/notes/bugtracker,
-	admin/notes/tags, admin/update-copyright, admin/update_autogen:
-	admin/repo.notes: git transition.
+	* make-tarball.txt, notes/bugtracker, notes/repo, notes/tags:
+	Git transition.
+	* update-copyright: Use git ls-files.
+	* update_autogen: Remove some bzr conditionals.
 
 2014-11-09  Eli Zaretskii  <eliz@gnu.org>
 
@@ -52,8 +53,8 @@
 
 2014-10-31  Eric S. Raymond  <esr@thyrsus.com>
 
-	* notes/bzr: Renamed to notes/repo, reorganized to separate
-	VCS-dependent from VCS-independent stuff.  Added guidance about
+	* notes/bzr: Rename to notes/repo, reorganize to separate
+	VCS-dependent from VCS-independent stuff.  Add guidance about
 	commit-comment format under DVCSes.
 
 	* notes/BRANCH: Merged into notes/repo.
