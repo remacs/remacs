@@ -1,3 +1,8 @@
+2015-02-02  Glenn Morris  <rgm@gnu.org>
+
+	* admin.el (manual-meta-string): Use bug-gnu-emacs@gnu email address
+	rather than webmasters@gnu.
+
 2015-01-03  Glenn Morris  <rgm@gnu.org>
 
 	* update_autogen (commit): Prepend "# " to commit message.
