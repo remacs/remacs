@@ -1239,7 +1239,8 @@ to `package-selected-packages'."
                               "Reinstall package: "
                               (mapcar #'symbol-name
                                       (mapcar #'car package-alist))))))
-  (package-delete (cadr (assq pkg package-alist)) t)
+  (package-delete (cadr (assq pkg package-alist)) 'force
+                  (memq pkg package-selected-packages))
   (package-install pkg))
 
 (defun package-strip-rcs-id (str)
@@ -1470,7 +1471,7 @@ with PKG-DESC entry removed."
                (and (memq pkg (mapcar #'car (package-desc-reqs (cadr p))))
                     (car p))))))
 
-(defun package-delete (pkg-desc &optional force)
+(defun package-delete (pkg-desc &optional force nosave)
   "Delete package PKG-DESC.
 
 Argument PKG-DESC is a full description of package as vector.
@@ -1506,7 +1507,8 @@ elsewhere."
              (unless (cdr pkgs)
                (setq package-alist (delq pkgs package-alist))))
            ;; Update package-selected-packages.
-           (when (memq name package-selected-packages)
+           (when (and (memq name package-selected-packages)
+                      (null nosave))
              (customize-save-variable
               'package-selected-packages (remove name package-selected-packages)))
            (message "Package `%s' deleted." (package-desc-full-name pkg-desc))))))
