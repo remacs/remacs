@@ -3911,7 +3911,7 @@ file exists and nonzero exit status otherwise."
 		 "HISTFILE="
 		 (if (eq tramp-histfile-override 'unset)
 		     ""
-		   (tramp-shell-quote-argument tramp-histfile-override))))
+		   (tramp-shell-quote-argument tramp-histfile-override)))
               "")
 	    (tramp-shell-quote-argument tramp-end-of-output)
 	    shell (or extra-args ""))
