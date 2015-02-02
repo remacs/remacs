@@ -1,5 +1,9 @@
 2015-02-02  Eli Zaretskii  <eliz@gnu.org>
 
+	* xdisp.c (set_iterator_to_next): Set value of stop_charpos
+	according to the object we are about to resume iterating.
+	(Bug#19307)
+
 	* dispnew.c (adjust_glyph_matrix): Set the update_mode_line flag
 	of the window whose current glyph matrix was resized, which
 	disables the mode-line row as side effect.

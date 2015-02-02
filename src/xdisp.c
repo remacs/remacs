@@ -7488,7 +7488,12 @@ set_iterator_to_next (struct it *it, int reseat_p)
 
 	  /* Maybe recheck faces after display vector.  */
 	  if (recheck_faces)
-	    it->stop_charpos = IT_CHARPOS (*it);
+	    {
+	      if (it->method == GET_FROM_STRING)
+		it->stop_charpos = IT_STRING_CHARPOS (*it);
+	      else
+		it->stop_charpos = IT_CHARPOS (*it);
+	    }
 	}
       break;
 
