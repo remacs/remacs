@@ -1,3 +1,9 @@
+2015-02-02  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
+
+	* emacs-lisp/package.el (package-delete): Remove package from
+	package-selected-packages.
+	(package-autoremove): Remove unneeded variable.
+
 2015-02-01  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* emacs-lisp/package.el (package-selected-packages): Fix :type

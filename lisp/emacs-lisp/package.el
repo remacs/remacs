@@ -1505,6 +1505,10 @@ elsewhere."
              (delete pkg-desc pkgs)
              (unless (cdr pkgs)
                (setq package-alist (delq pkgs package-alist))))
+           ;; Update package-selected-packages.
+           (when (memq name package-selected-packages)
+             (customize-save-variable
+              'package-selected-packages (remove name package-selected-packages)))
            (message "Package `%s' deleted." (package-desc-full-name pkg-desc))))))
 
 ;;;###autoload
@@ -1515,12 +1519,9 @@ Packages that are no more needed by other packages in
 `package-selected-packages' and their dependencies
 will be deleted."
   (interactive)
-  (let* (old-direct
-         (needed (cl-loop for p in package-selected-packages
-                          if (assq p package-alist)
-                          append (package--get-deps p) into lst
-                          else do (push p old-direct)
-                          finally return lst)))
+  (let ((needed (cl-loop for p in package-selected-packages
+                      if (assq p package-alist)
+                      append (package--get-deps p))))
     (cl-loop for p in (mapcar #'car package-alist)
              unless (or (memq p needed)
                         (memq p package-selected-packages))
