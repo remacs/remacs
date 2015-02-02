@@ -1428,9 +1428,9 @@ The file can either be a tar file or an Emacs Lisp file."
                                when (assq name package-alist)
                                collect name))
          (indirect-deps (unless (eq only 'direct)
-                          (apply #'append
-                            direct-deps
-                            (mapcar #'package--get-deps direct-deps)))))
+                          (delete-dups
+                           (cl-loop for p in direct-deps
+                                    append (package--get-deps p))))))
     (cl-case only
       (direct   direct-deps)
       (separate (list direct-deps indirect-deps))
