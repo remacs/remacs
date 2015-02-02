@@ -71,12 +71,15 @@ By default, the HISTFILE is set to the \"/dev/null\" value, which
 is special on Unix systems and indicates the shell history should
 not be logged (this avoids clutter due to Tramp commands).
 
+The symbol `unset' removes any setting of HISTFILE.
+
 If you set this variable to nil, however, the *override* is
 disabled, so the history will go to the default storage
 location, e.g. \"$HOME/.sh_history\"."
   :group 'tramp
   :version "25.1"
   :type '(choice (const :tag "Do not override HISTFILE" nil)
+                 (const :tag "Unset HISTFILE" 'unset)
                  (const :tag "Empty the history (/dev/null)" "/dev/null")
                  (string :tag "Redirect to a file")))
 
@@ -3902,9 +3905,13 @@ file exists and nonzero exit status otherwise."
       ;; the prompt in /bin/bash, it must be discarded as well.
       (tramp-send-command
        vec (format
-	    "exec env ENV=''%s PROMPT_COMMAND='' PS1=%s PS2='' PS3='' %s %s"
+	    "exec env ENV='' %s PROMPT_COMMAND='' PS1=%s PS2='' PS3='' %s %s"
             (if tramp-histfile-override
-                (concat " HISTFILE=" tramp-histfile-override)
+                (concat
+		 "HISTFILE="
+		 (if (eq tramp-histfile-override 'unset)
+		     ""
+		   (tramp-shell-quote-argument tramp-histfile-override))))
               "")
 	    (tramp-shell-quote-argument tramp-end-of-output)
 	    shell (or extra-args ""))
@@ -4628,7 +4635,9 @@ connection if a previous connection has died for some reason."
 	      (setenv "TERM" tramp-terminal-type)
 	      (setenv "LC_ALL" "en_US.utf8")
 	      (when tramp-histfile-override
-                (setenv "HISTFILE" tramp-histfile-override))
+                (setenv "HISTFILE"
+			(and (not (eq tramp-histfile-override 'unset))
+			     tramp-histfile-override)))
 	      (setenv "PROMPT_COMMAND")
 	      (setenv "PS1" tramp-initial-end-of-output)
 	      (let* ((target-alist (tramp-compute-multi-hops vec))
