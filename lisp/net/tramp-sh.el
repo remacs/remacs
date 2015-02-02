@@ -65,21 +65,20 @@ files conditionalize this setup based on the TERM environment variable."
   :type 'string)
 
 ;;;###tramp-autoload
-(defcustom tramp-histfile-override 'unset
+(defcustom tramp-histfile-override t
   "When invoking a shell, override the HISTFILE with this value.
-By default, it is set to the symbol `unset', which unsets any
-setting of HISTFILE.  When setting to a string, it redirects the
-shell history to that file.  Be careful when setting to
-\"/dev/null\"; this might result in undesired results when using
-\"bash\" as shell.
+When setting to a string, it redirects the shell history to that
+file.  Be careful when setting to \"/dev/null\"; this might
+result in undesired results when using \"bash\" as shell.
 
+The value t, the default value, unsets any setting of HISTFILE.
 If you set this variable to nil, however, the *override* is
 disabled, so the history will go to the default storage
 location, e.g. \"$HOME/.sh_history\"."
   :group 'tramp
   :version "25.1"
   :type '(choice (const :tag "Do not override HISTFILE" nil)
-                 (const :tag "Unset HISTFILE" unset)
+                 (const :tag "Unset HISTFILE" t)
                  (string :tag "Redirect to a file")))
 
 ;;;###tramp-autoload
@@ -3908,9 +3907,8 @@ file exists and nonzero exit status otherwise."
             (if tramp-histfile-override
                 (concat
 		 "HISTFILE="
-		 (if (eq tramp-histfile-override 'unset)
-		     ""
-		   (tramp-shell-quote-argument tramp-histfile-override)))
+		 (if (stringp tramp-histfile-override)
+		     (tramp-shell-quote-argument tramp-histfile-override) ""))
               "")
 	    (tramp-shell-quote-argument tramp-end-of-output)
 	    shell (or extra-args ""))
@@ -4635,7 +4633,7 @@ connection if a previous connection has died for some reason."
 	      (setenv "LC_ALL" "en_US.utf8")
 	      (when tramp-histfile-override
                 (setenv "HISTFILE"
-			(and (not (eq tramp-histfile-override 'unset))
+			(and (stringp tramp-histfile-override)
 			     tramp-histfile-override)))
 	      (setenv "PROMPT_COMMAND")
 	      (setenv "PS1" tramp-initial-end-of-output)
