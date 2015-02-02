@@ -1,3 +1,8 @@
+2015-02-02  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp/authors.el (authors-obsolete-files-regexps)
+	(authors-valid-file-names, authors-renamed-files-alist): Additions.
+
 2015-02-01  Alan Mackenzie  <acm@muc.de>
 
 	CC Mode: Stop Font Lock forcing fontification from BOL.  Fixes
