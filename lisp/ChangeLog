@@ -2,6 +2,18 @@
 
 	* emacs-lisp/package.el (package-delete): Document NOSAVE.
 	(package--get-deps): delete-dups when ONLY is nil.
+	(package-autoremove): Warn the user if `package-selected-packages'
+	is empty.
+
+	(package--user-selected-p): New function.
+	(package-delete, package-install, package-install-from-buffer):
+	Use it
+	(package-selected-packages): Mention it.
+
+	(package-initialize): Don't populate `package-selected-packages'.
+	(package-install-user-selected-packages, package-autoremove):
+	Special handling for empty `package-selected-packages'.
+	(package-install): Fix when PKG is a package-desc.
 
 2015-02-03  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
 
