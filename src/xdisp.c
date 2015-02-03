@@ -3434,7 +3434,6 @@ handle_stop (struct it *it)
   it->dpvec = NULL;
   it->current.dpvec_index = -1;
   handle_overlay_change_p = !it->ignore_overlay_strings_at_pos_p;
-  it->ignore_overlay_strings_at_pos_p = 0;
   it->ellipsis_p = 0;
 
   /* Use face of preceding text for ellipsis (if invisible) */
@@ -3525,7 +3524,6 @@ handle_stop (struct it *it)
 		pop_it (it);
 	      else
 		{
-		  it->ignore_overlay_strings_at_pos_p = true;
 		  it->string_from_display_prop_p = 0;
 		  it->from_disp_prop_p = 0;
 		  handle_overlay_change_p = 0;
@@ -5121,11 +5119,6 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		  iterate_out_of_display_property (it);
 		  *position = it->position;
 		}
-	      /* If we were to display this fringe bitmap,
-		 next_element_from_image would have reset this flag.
-		 Do the same, to avoid affecting overlays that
-		 follow.  */
-	      it->ignore_overlay_strings_at_pos_p = 0;
 	      return 1;
 	    }
 	}
@@ -5145,9 +5138,6 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	      iterate_out_of_display_property (it);
 	      *position = it->position;
 	    }
-	  if (it)
-	    /* Reset this flag like next_element_from_image would.  */
-	    it->ignore_overlay_strings_at_pos_p = 0;
 	  return 1;
 	}
 
@@ -5639,6 +5629,12 @@ next_overlay_string (struct it *it)
 	 get_overlay_strings_1.  */
       if (it->sp > 0 && STRINGP (it->string) && !SCHARS (it->string))
 	pop_it (it);
+
+      /* Since we've exhausted overlay strings at this buffer
+	 position, set the flag to ignore overlays until we move to
+	 another position.  The flag is reset in
+	 next_element_from_buffer.  */
+      it->ignore_overlay_strings_at_pos_p = true;
 
       /* If we're at the end of the buffer, record that we have
 	 processed the overlay strings there already, so that
@@ -7478,10 +7474,6 @@ set_iterator_to_next (struct it *it, int reseat_p)
 	    reseat_at_next_visible_line_start (it, 1);
 	  else if (it->dpvec_char_len > 0)
 	    {
-	      if (it->method == GET_FROM_STRING
-		  && it->current.overlay_string_index >= 0
-		  && it->n_overlay_strings > 0)
-		it->ignore_overlay_strings_at_pos_p = true;
 	      it->len = it->dpvec_char_len;
 	      set_iterator_to_next (it, reseat_p);
 	    }
@@ -8110,7 +8102,6 @@ static int
 next_element_from_image (struct it *it)
 {
   it->what = IT_IMAGE;
-  it->ignore_overlay_strings_at_pos_p = 0;
   return 1;
 }
 
@@ -8280,6 +8271,7 @@ next_element_from_buffer (struct it *it)
 	     and handle the last stop_charpos that precedes our
 	     current position.  */
 	  handle_stop_backwards (it, it->stop_charpos);
+	  it->ignore_overlay_strings_at_pos_p = false;
 	  return GET_NEXT_DISPLAY_ELEMENT (it);
 	}
       else
@@ -8296,6 +8288,7 @@ next_element_from_buffer (struct it *it)
 		it->base_level_stop = it->stop_charpos;
 	    }
 	  handle_stop (it);
+	  it->ignore_overlay_strings_at_pos_p = false;
 	  return GET_NEXT_DISPLAY_ELEMENT (it);
 	}
     }
@@ -8323,6 +8316,7 @@ next_element_from_buffer (struct it *it)
 	}
       else
 	handle_stop_backwards (it, it->base_level_stop);
+      it->ignore_overlay_strings_at_pos_p = false;
       return GET_NEXT_DISPLAY_ELEMENT (it);
     }
   else
@@ -8334,7 +8328,7 @@ next_element_from_buffer (struct it *it)
 
       /* We moved to the next buffer position, so any info about
 	 previously seen overlays is no longer valid.  */
-      it->ignore_overlay_strings_at_pos_p = 0;
+      it->ignore_overlay_strings_at_pos_p = false;
 
       /* Maybe run the redisplay end trigger hook.  Performance note:
 	 This doesn't seem to cost measurable time.  */
