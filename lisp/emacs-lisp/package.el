@@ -1536,6 +1536,18 @@ If NOSAVE is non-nil, the package is not removed from
               'package-selected-packages (remove name package-selected-packages)))
            (message "Package `%s' deleted." (package-desc-full-name pkg-desc))))))
 
+(defun package--removable-packages ()
+  "Return a list of names of packages no longer needed.
+These are packages which are neither contained in
+`package-selected-packages' nor a dependency of one that is."
+  (let ((needed (cl-loop for p in package-selected-packages
+                         if (assq p package-alist)
+                         ;; `p' and its dependencies are needed.
+                         append (cons p (package--get-deps p)))))
+    (cl-loop for p in (mapcar #'car package-alist)
+             unless (memq p needed)
+             collect p)))
+
 ;;;###autoload
 (defun package-autoremove ()
   "Remove packages that are no more needed.
@@ -1550,22 +1562,16 @@ will be deleted."
   (when (or package-selected-packages
             (yes-or-no-p
              "`package-selected-packages' is empty! Really remove ALL packages? "))
-    (let ((needed (cl-loop for p in package-selected-packages
-                           if (assq p package-alist)
-                           ;; `p' and its dependencies are needed.
-                           append (cons p (package--get-deps p)))))
-      (cl-loop for p in (mapcar #'car package-alist)
-               unless (memq p needed)
-               collect p into lst
-               finally (if lst
-                           (when (y-or-n-p
-                                  (format "%s packages will be deleted:\n%s, proceed? "
-                                          (length lst)
-                                          (mapconcat #'symbol-name lst ", ")))
-                             (mapc (lambda (p)
-                                     (package-delete (cadr (assq p package-alist)) t))
-                               lst))
-                         (message "Nothing to autoremove"))))))
+    (let ((removable (package--removable-packages)))
+      (if removable
+          (when (y-or-n-p
+                 (format "%s packages will be deleted:\n%s, proceed? "
+                   (length removable)
+                   (mapconcat #'symbol-name removable ", ")))
+            (mapc (lambda (p)
+                    (package-delete (cadr (assq p package-alist)) t))
+              removable)
+            (message "Nothing to autoremove"))))))
 
 (defun package-archive-base (desc)
   "Return the archive containing the package NAME."
@@ -2377,9 +2383,18 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
                 (package-delete elt)
               (error (message (cadr err)))))
         (error "Aborted")))
-    (if (or delete-list install-list)
-        (package-menu--generate t t)
-      (message "No operations specified."))))
+    (if (not (or delete-list install-list))
+        (message "No operations specified.")
+      (when package-selected-packages
+        (let ((removable (package--removable-packages)))
+          (when (and removable
+                     (y-or-n-p
+                      (format "These %d packages are no longer needed, delete them (%s)? "
+                              (length removable)
+                              (mapconcat #'symbol-name removable ", "))))
+            (mapc (lambda (p) (package-delete (cadr (assq p package-alist))))
+                  removable))))
+      (package-menu--generate t t))))
 
 (defun package-menu--version-predicate (A B)
   (let ((vA (or (aref (cadr A) 1)  '(0)))
