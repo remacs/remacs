@@ -1477,8 +1477,10 @@ with PKG-DESC entry removed."
 Argument PKG-DESC is a full description of package as vector.
 When package is used elsewhere as dependency of another package,
 refuse deleting it and return an error.
-If FORCE is non--nil package will be deleted even if it is used
-elsewhere."
+If FORCE is non-nil package will be deleted even if it is used
+elsewhere.
+If NOSAVE is non-nil, the package is not removed from
+`package-selected-packages'."
   (let ((dir (package-desc-dir pkg-desc))
         (name (package-desc-name pkg-desc))
         pkg-used-elsewhere-by)
