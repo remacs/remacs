@@ -1436,7 +1436,7 @@ The file can either be a tar file or an Emacs Lisp file."
       (direct   direct-deps)
       (separate (list direct-deps indirect-deps))
       (indirect indirect-deps)
-      (t        (append direct-deps indirect-deps)))))
+      (t        (delete-dups (append direct-deps indirect-deps))))))
 
 ;;;###autoload
 (defun package-install-user-selected-packages ()

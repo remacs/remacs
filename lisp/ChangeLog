@@ -1,6 +1,7 @@
 2015-02-03  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* emacs-lisp/package.el (package-delete): Document NOSAVE.
+	(package--get-deps): delete-dups when ONLY is nil.
 
 2015-02-03  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
 
