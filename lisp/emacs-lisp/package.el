@@ -1759,7 +1759,7 @@ If optional arg NO-ACTIVATE is non-nil, don't activate packages."
                                'font-lock-face 'font-lock-builtin-face)
                    "."))
           (pkg-dir
-           (insert (propertize (if (equal status "unsigned")
+           (insert (propertize (if (member status '("unsigned" "dependency"))
                                    "Installed"
                                  (capitalize status)) ;FIXME: Why comment-face?
                                'font-lock-face 'font-lock-comment-face))
@@ -2025,7 +2025,8 @@ package PKG-DESC, add one.  The alist is keyed with PKG-DESC."
          (lle (assq name package-load-list))
          (held (cadr lle))
          (version (package-desc-version pkg-desc))
-         (signed (package-desc-signed pkg-desc)))
+         (signed (or (not package-list-unsigned)
+                     (package-desc-signed pkg-desc))))
     (cond
      ((eq dir 'builtin) "built-in")
      ((and lle (null held)) "disabled")
@@ -2040,7 +2041,9 @@ package PKG-DESC, add one.  The alist is keyed with PKG-DESC."
       (cond
        ((not (file-exists-p (package-desc-dir pkg-desc))) "deleted")
        ((eq pkg-desc (cadr (assq name package-alist)))
-        (if (or (not package-list-unsigned) signed) "installed" "unsigned"))
+        (if (not signed) "unsigned"
+          (if (package--user-selected-p name)
+              "installed" "dependency")))
        (t "obsolete")))
      (t
       (let* ((ins (cadr (assq name package-alist)))
@@ -2051,8 +2054,9 @@ package PKG-DESC, add one.  The alist is keyed with PKG-DESC."
               "new" "available"))
          ((version-list-< version ins-v) "obsolete")
          ((version-list-= version ins-v)
-          (if (or (not package-list-unsigned) signed)
-              "installed" "unsigned"))))))))
+          (if (not signed) "unsigned"
+            (if (package--user-selected-p name)
+                "installed" "dependency")))))))))
 
 (defun package-menu--refresh (&optional packages keywords)
   "Re-populate the `tabulated-list-entries'.
@@ -2181,6 +2185,7 @@ Return (PKG-DESC [NAME VERSION STATUS DOC])."
                  (`"held"      'font-lock-constant-face)
                  (`"disabled"  'font-lock-warning-face)
                  (`"installed" 'font-lock-comment-face)
+                 (`"dependency" 'font-lock-comment-face)
                  (`"unsigned"  'font-lock-warning-face)
                  (_            'font-lock-warning-face)))) ; obsolete.
     (list pkg-desc
@@ -2223,7 +2228,8 @@ If optional arg BUTTON is non-nil, describe its associated package."
 (defun package-menu-mark-delete (&optional _num)
   "Mark a package for deletion and move to the next line."
   (interactive "p")
-  (if (member (package-menu-get-status) '("installed" "obsolete" "unsigned"))
+  (if (member (package-menu-get-status)
+              '("installed" "dependency" "obsolete" "unsigned"))
       (tabulated-list-put-tag "D" t)
     (forward-line)))
 
@@ -2277,7 +2283,7 @@ If optional arg BUTTON is non-nil, describe its associated package."
       ;; ENTRY is (PKG-DESC [NAME VERSION STATUS DOC])
       (let ((pkg-desc (car entry))
             (status (aref (cadr entry) 2)))
-        (cond ((member status '("installed" "unsigned"))
+        (cond ((member status '("installed" "dependency" "unsigned"))
                (push pkg-desc installed))
               ((member status '("available" "new"))
                (setq available (package--append-to-alist pkg-desc available))))))
@@ -2393,6 +2399,8 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
           ((string= sB "available") nil)
           ((string= sA "installed") t)
           ((string= sB "installed") nil)
+          ((string= sA "dependency") t)
+          ((string= sB "dependency") nil)
           ((string= sA "unsigned") t)
           ((string= sB "unsigned") nil)
           ((string= sA "held") t)

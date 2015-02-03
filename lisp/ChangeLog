@@ -15,6 +15,12 @@
 	Special handling for empty `package-selected-packages'.
 	(package-install): Fix when PKG is a package-desc.
 
+	(package-desc-status): Add "dependency" status to the Package
+	Menu.
+	(package-menu--status-predicate, package-menu--print-info)
+	(package-menu-mark-delete, package-menu--find-upgrades)
+	(package-menu--status-predicate, describe-package-1): Use it
+
 2015-02-03  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
 
 	* emacs-lisp/package.el (package-reinstall): Don't change package's selected status.
