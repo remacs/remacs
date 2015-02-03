@@ -324,8 +324,8 @@ useful only in combination with `tramp-default-proxies-alist'.")
 	    (goto-char (point-min))
 	    (if (search-forward-regexp "unknown.+key" nil t)
 		(setq result
-		      (concat result " -o ControlPath=tramp.%%r@%%h:%%p"))
-	      (setq result (concat result " -o ControlPath=tramp.%%C"))))
+		      (concat result " -o ControlPath='tramp.%%r@%%h:%%p'"))
+	      (setq result (concat result " -o ControlPath='tramp.%%C'"))))
 	  (with-temp-buffer
 	    (call-process "ssh" nil t nil "-o" "ControlPersist")
 	    (goto-char (point-min))
