@@ -1,3 +1,9 @@
+2015-02-03  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-histfile-override): Fix docstring.
+	(tramp-open-shell, tramp-maybe-open-connection): Set also
+	HISTFILESIZE and HISTSIZE when needed.  (Bug#19731)
+
 2015-02-02  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* emacs-lisp/package.el (package--find-non-dependencies): New
