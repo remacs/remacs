@@ -2,6 +2,7 @@
 
 	* erc.texi (Advanced Usage, Options): Add descriptions and examples
 	for erc-format-nick-function and erc-rename-buffers options.
+	(Connecting): fix typo
 
 2014-12-29  Michael Albinus  <michael.albinus@gmx.de>
 
