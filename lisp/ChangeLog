@@ -7,6 +7,7 @@
 	selected. When given a package-desc object which is already
 	installed, the package is not downloaded again, but it is marked
 	as selected (if it wasn't already).
+	(package-reinstall): Accept package-desc objects.
 
 2015-02-03  Artur Malabarba  <bruce.connor.am@gmail.com>
 

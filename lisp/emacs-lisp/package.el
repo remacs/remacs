@@ -1265,12 +1265,16 @@ to install it but still mark it as selected."
 
 ;;;###autoload
 (defun package-reinstall (pkg)
-  "Reinstall package PKG."
+  "Reinstall package PKG.
+PKG shoul be either a symbol, the package name, or a package-desc
+object."
   (interactive (list (intern (completing-read
                               "Reinstall package: "
                               (mapcar #'symbol-name
                                       (mapcar #'car package-alist))))))
-  (package-delete (cadr (assq pkg package-alist)) 'force 'nosave)
+  (package-delete
+   (if (package-desc-p pkg) pkg (cadr (assq pkg package-alist)))
+   'force 'nosave)
   (package-install pkg))
 
 (defun package-strip-rcs-id (str)
