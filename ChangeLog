@@ -1,3 +1,7 @@
+2015-02-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* .gitattributes: Ignore blanks at EOL in texinfo.tex.
+
 2015-01-28  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Merge from gnulib and try to repair bad merge
