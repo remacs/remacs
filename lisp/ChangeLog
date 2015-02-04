@@ -1,3 +1,8 @@
+2015-02-04  Sam Steingold  <sds@gnu.org>
+
+	* progmodes/python.el (python-indent-calculate-indentation): Avoid
+	the error when computing top-level indentation.
+
 2015-02-04  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/cl-generic.el (cl--generic-member-method): Fix paren typo.

@@ -1068,7 +1068,9 @@ minimum."
          (levels (python-indent--calculate-levels indentation)))
     (if previous
         (python-indent--previous-level levels (current-indentation))
-      (apply #'max levels))))
+      (if levels
+          (apply #'max levels)
+        0))))
 
 (defun python-indent-line (&optional previous)
   "Internal implementation of `python-indent-line-function'.
