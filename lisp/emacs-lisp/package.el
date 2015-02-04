@@ -1002,7 +1002,7 @@ should be a version list.
 If PACKAGE is a package-desc object, MIN-VERSION is ignored."
   (unless package--initialized (error "package.el is not yet initialized!"))
   (if (package-desc-p package)
-      (let ((dir (package-desc-dir pkg-desc)))
+      (let ((dir (package-desc-dir package)))
         (and (stringp dir)
              (file-exists-p dir)))
     (or

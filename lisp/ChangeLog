@@ -1,3 +1,8 @@
+2015-02-04  Tassilo Horn  <tsdh@gnu.org>
+
+	* emacs-lisp/package.el (package-installed-p): Fix typo causing
+	void-variable error.
+
 2015-02-04  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* emacs-lisp/package.el (package-delete): Remove package from
