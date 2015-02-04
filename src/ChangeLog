@@ -1,3 +1,11 @@
+2015-02-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Remove no-longer-used two_byte_p calculations
+	* dispextern.h (struct glyph_string): Remove member two_byte_p.
+	All uses removed.
+	* xdisp.c (get_glyph_face_and_encoding): Remove arg two_byte_p.
+	All callers changed.
+
 2015-02-03  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Omit unnecessary var if GTK or NS
