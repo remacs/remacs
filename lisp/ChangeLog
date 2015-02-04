@@ -1,3 +1,10 @@
+2015-02-04  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* textmodes/flyspell.el: Use lexical-binding and cl-lib.
+	(mail-mode-flyspell-verify): Fix last change.
+	(flyspell-external-point-words, flyspell-large-region):
+	Avoid add-to-list on local vars.
+
 2015-02-04  Tassilo Horn  <tsdh@gnu.org>
 
 	* emacs-lisp/package.el (package-installed-p): Fix typo causing
@@ -57,8 +64,8 @@
 
 2015-02-02  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* emacs-lisp/package.el (package--find-non-dependencies): New
-	function.
+	* emacs-lisp/package.el (package--find-non-dependencies):
+	New function.
 	(package-initialize): Use it to populate `package-selected-packages'.
 	(package-menu-execute): Clean unnecessary `and'.
 	(package--get-deps): Fix returning duplicates.
