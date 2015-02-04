@@ -1,5 +1,7 @@
 2015-02-04  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* emacs-lisp/cl-generic.el (cl--generic-member-method): Fix paren typo.
+
 	* textmodes/flyspell.el: Use lexical-binding and cl-lib.
 	(mail-mode-flyspell-verify): Fix last change.
 	(flyspell-external-point-words, flyspell-large-region):
