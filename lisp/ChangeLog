@@ -1,3 +1,8 @@
+2015-02-04  Nicolas Petton  <nicolas@petton.fr>
+
+	* emacs-lisp/authors.el (authors-ignored-files)
+	(authors-renamed-files-alist): Additions.
+
 2015-02-03  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp.el (tramp-ssh-controlmaster-options): Don't use a
