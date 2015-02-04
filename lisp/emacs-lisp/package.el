@@ -1506,6 +1506,13 @@ If NOSAVE is non-nil, the package is not removed from
   (let ((dir (package-desc-dir pkg-desc))
         (name (package-desc-name pkg-desc))
         pkg-used-elsewhere-by)
+    ;; If the user is trying to delete this package, they definitely
+    ;; don't want it marked as selected, so we remove it from
+    ;; `package-selected-packages' even if it can't be deleted.
+    (when (and (null nosave)
+               (package--user-selected-p name))
+      (customize-save-variable
+       'package-selected-packages (remove name package-selected-packages)))
     (cond ((not (string-prefix-p (file-name-as-directory
                                   (expand-file-name package-user-dir))
                                  (expand-file-name dir)))
@@ -1530,11 +1537,6 @@ If NOSAVE is non-nil, the package is not removed from
              (delete pkg-desc pkgs)
              (unless (cdr pkgs)
                (setq package-alist (delq pkgs package-alist))))
-           ;; Update package-selected-packages.
-           (when (and (null nosave)
-                      (package--user-selected-p name))
-             (customize-save-variable
-              'package-selected-packages (remove name package-selected-packages)))
            (message "Package `%s' deleted." (package-desc-full-name pkg-desc))))))
 
 (defun package--removable-packages ()
