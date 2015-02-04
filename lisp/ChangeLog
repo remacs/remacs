@@ -1,3 +1,9 @@
+2015-02-04  Robert Pluim  <rpluim@gmail.com>  (tiny change)
+
+	* calendar/todo-mode.el (todo-item-done): When done items are
+	hidden, restore point to its location prior to invoking this
+	command.  (Bug#19727)
+
 2015-02-04  Eli Zaretskii  <eliz@gnu.org>
 
 	* textmodes/artist.el (artist-ellipse-compute-fill-info): Use
