@@ -1,3 +1,9 @@
+2015-02-04  Eli Zaretskii  <eliz@gnu.org>
+
+	* textmodes/artist.el (artist-ellipse-compute-fill-info): Use
+	mapcar, not mapc, to create the other half of fill-info.
+	(Bug#19763)
+
 2015-02-04  Nicolas Petton  <nicolas@petton.fr>
 
 	* emacs-lisp/authors.el (authors-ignored-files)
