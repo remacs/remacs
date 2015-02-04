@@ -1,3 +1,7 @@
+2015-02-04  Kelvin White  <kwhite@gnu.org>
+
+	* MAINTAINERS: Add myself to section 2
+
 2015-02-02  Glenn Morris  <rgm@gnu.org>
 
 	* admin.el (manual-meta-string): Use bug-gnu-emacs@gnu email address
