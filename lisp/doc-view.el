@@ -415,7 +415,6 @@ Typically \"page-%s.png\".")
     (define-key map "H"               'doc-view-fit-height-to-window)
     (define-key map "P"               'doc-view-fit-page-to-window)
     ;; Killing the buffer (and the process)
-    (define-key map (kbd "k")         'doc-view-kill-proc-and-buffer)
     (define-key map (kbd "K")         'doc-view-kill-proc)
     ;; Slicing the image
     (define-key map (kbd "s s")       'doc-view-set-slice)
@@ -645,12 +644,8 @@ at the top edge of the page moves to the previous page."
     (setq doc-view--current-timer nil))
   (setq mode-line-process nil))
 
-(defun doc-view-kill-proc-and-buffer ()
-  "Kill the current converter process and buffer."
-  (interactive)
-  (doc-view-kill-proc)
-  (when (eq major-mode 'doc-view-mode)
-    (kill-buffer (current-buffer))))
+(define-obsolete-function-alias 'doc-view-kill-proc-and-buffer
+  #'image-kill-buffer "25.1")
 
 (defun doc-view-make-safe-dir (dir)
   (condition-case nil
