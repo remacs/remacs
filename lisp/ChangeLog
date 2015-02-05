@@ -1,5 +1,24 @@
 2015-02-05  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* emacs-lisp/cconv.el (cconv--convert-function):
+	Add `docstring' argument.
+	(cconv-convert): Use it to handle the new (:documentation ...) form.
+	(cconv-analyze-form): Handle the new (:documentation ...) form.
+
+	* emacs-lisp/bytecomp.el:
+	(byte-compile-initial-macro-environment): Use macroexp-progn.
+	(byte-compile-cl-warn): Don't silence use of cl-macroexpand-all.
+	(byte-compile-file-form-defvar-function): Rename from
+	byte-compile-file-form-define-abbrev-table.
+	(defvaralias, byte-compile-file-form-custom-declare-variable): Use it.
+	(byte-compile): Use byte-compile-top-level rather than
+	byte-compile-lambda so we can compile non-values.
+	(byte-compile-form): Add warnings for failed uses of lexical vars via
+	quoted symbols.
+	(byte-compile-unfold-bcf): Improve message for failed inlining.
+	(byte-compile-make-closure): Handle new format of internal-make-closure
+	for dynamically-generated docstrings.
+
 	* delsel.el: Deprecate the `kill' option.  Use lexical-binding.
 	(open-line): Delete like all other commands, instead of killing.
 	(delete-active-region): Don't define any return any value.
