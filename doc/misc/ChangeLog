@@ -1,3 +1,7 @@
+2015-02-05  Glenn Morris  <rgm@gnu.org>
+
+	* auth.texi (Multiple GMail accounts with Gnus): Markup fix.
+
 2015-02-05  Teodor Zlatanov  <tzz@lifelogs.com>
 
 	* auth.texi (Multiple GMail accounts with Gnus): Add FAQ.
