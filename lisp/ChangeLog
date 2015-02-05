@@ -1,3 +1,8 @@
+2015-02-05  Era Eriksson  <era+emacs@iki.fi>
+
+	* json.el (json-end-of-file): New error (bug#19768).
+	(json-pop, json-read): Use it.
+
 2015-02-05  Kelly Dean <kelly@prtime.org>
 
 	* help-mode.el (help-xref-interned): Pass BUFFER and FRAME to
@@ -14384,7 +14389,7 @@
 	Change default to "# encoding: %s" to differentiate it from the
 	default Ruby encoding comment template.
 
-2013-11-20  era eriksson  <era+emacsbugs@iki.fi>
+2013-11-20  Era Eriksson  <era+emacsbugs@iki.fi>
 
 	* ses.el (ses-mode): Doc fix.  (Bug#14748)
 
