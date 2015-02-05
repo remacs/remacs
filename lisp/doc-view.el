@@ -1685,6 +1685,9 @@ If BACKWARD is non-nil, jump to the previous match."
 ;; desktop.el integration
 
 (defun doc-view-desktop-save-buffer (_desktop-dirname)
+  ;; FIXME: This is wrong, since this info is per-window but we only do it once
+  ;; here for the buffer.  IOW it should be saved via something like
+  ;; `window-persistent-parameters'.
   `((page . ,(doc-view-current-page))
     (slice . ,(doc-view-current-slice))))
 
@@ -1695,8 +1698,13 @@ If BACKWARD is non-nil, jump to the previous match."
   (let ((page  (cdr (assq 'page misc)))
 	(slice (cdr (assq 'slice misc))))
     (desktop-restore-file-buffer file name misc)
+    ;; FIXME: We need to run this code after displaying the buffer.
     (with-selected-window (or (get-buffer-window (current-buffer) 0)
 			      (selected-window))
+      ;; FIXME: This should be done for all windows restored that show
+      ;; this buffer.  Basically, the page/slice should be saved as
+      ;; window-parameters in the window-state(s) and then restoring this
+      ;; window-state should call us back (to interpret/use those parameters).
       (doc-view-goto-page page)
       (when slice (apply 'doc-view-set-slice slice)))))
 
