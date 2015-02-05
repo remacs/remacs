@@ -1,3 +1,8 @@
+2015-02-05  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* gnus-sum.el (gnus-select-newsgroup): Pass the group info along so
+	that nnimap works for non-activated backends.
+
 2015-02-04  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* mm-util.el (mm-with-unibyte-current-buffer): Don't emit a warning

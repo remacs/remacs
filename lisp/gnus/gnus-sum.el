@@ -5620,7 +5620,7 @@ If SELECT-ARTICLES, only select those articles from GROUP."
 	   (mm-decode-coding-string group charset)
 	   (mm-decode-coding-string (gnus-status-message group) charset))))
 
-    (unless (gnus-request-group group t)
+    (unless (gnus-request-group group t nil (gnus-get-info group))
       (when (derived-mode-p 'gnus-summary-mode)
 	(gnus-kill-buffer (current-buffer)))
       (error "Couldn't request group %s: %s"
