@@ -1,3 +1,18 @@
+2015-02-05  Juri Linkov  <juri@linkov.net>
+
+	Revert the previous change of comint-line-beginning-position callers,
+	and modify comint-line-beginning-position instead.
+
+	* comint.el (comint-history-isearch-search)
+	(comint-history-isearch-message, comint-history-isearch-wrap):
+	Use comint-line-beginning-position instead of field-beginning.
+	(comint-send-input): Use either end-of-line or field-end
+	depending on comint-use-prompt-regexp.
+	(comint-line-beginning-position): Search backward
+	for comint-prompt-regexp if comint-use-prompt-regexp is non-nil.
+	Use field-beginning instead of line-beginning-position
+	if comint-use-prompt-regexp is nil.  (Bug#19710)
+
 2015-02-04  Robert Pluim  <rpluim@gmail.com>  (tiny change)
 
 	* calendar/todo-mode.el (todo-item-done): When done items are
