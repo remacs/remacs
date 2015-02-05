@@ -1510,6 +1510,11 @@ with PKG-DESC entry removed."
                (and (memq pkg (mapcar #'car (package-desc-reqs (cadr p))))
                     (car p))))))
 
+(defun package--newest-p (pkg)
+  "Return t if PKG is the newest package with its name."
+  (equal (cadr (assq (package-desc-name pkg) package-alist))
+         pkg))
+
 (defun package-delete (pkg-desc &optional force nosave)
   "Delete package PKG-DESC.
 
@@ -1527,7 +1532,10 @@ If NOSAVE is non-nil, the package is not removed from
     ;; don't want it marked as selected, so we remove it from
     ;; `package-selected-packages' even if it can't be deleted.
     (when (and (null nosave)
-               (package--user-selected-p name))
+               (package--user-selected-p name)
+               ;; Don't delesect if this is an older version of an
+               ;; upgraded package.
+               (package--newest-p pkg-desc))
       (customize-save-variable
        'package-selected-packages (remove name package-selected-packages)))
     (cond ((not (string-prefix-p (file-name-as-directory
