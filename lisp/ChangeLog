@@ -4,6 +4,7 @@
 	function.  Return PACKAGE-LIST sorted by dependencies.
 	(package-menu-execute): Use it to delete packages in order.
 	(package--sort-deps-in-alist): New function.
+	(package-menu-mark-install): Can mark dependencies.
 
 2015-02-05  Stefan Monnier  <monnier@iro.umontreal.ca>
 

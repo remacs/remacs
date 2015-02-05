@@ -2262,7 +2262,7 @@ If optional arg BUTTON is non-nil, describe its associated package."
 (defun package-menu-mark-install (&optional _num)
   "Mark a package for installation and move to the next line."
   (interactive "p")
-  (if (member (package-menu-get-status) '("available" "new"))
+  (if (member (package-menu-get-status) '("available" "new" "dependency"))
       (tabulated-list-put-tag "I" t)
     (forward-line)))
 
@@ -2418,7 +2418,13 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
                       (mapconcat #'package-desc-full-name
                                  install-list ", ")))))
           (mapc (lambda (p)
-                  (package-install p (null (package-installed-p p))))
+                  ;; Mark as selected if it's the exact version of a
+                  ;; package that's already installed, or if it's not
+                  ;; installed at all.  Don't mark if it's a new
+                  ;; version of an installed package.
+                  (package-install p (or (package-installed-p p)
+                                         (not (package-installed-p
+                                               (package-desc-name p))))))
                 install-list)))
     ;; Delete packages, prompting if necessary.
     (when delete-list
