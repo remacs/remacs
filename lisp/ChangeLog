@@ -1,3 +1,13 @@
+2015-02-05  Kelly Dean <kelly@prtime.org>
+
+	* help-mode.el (help-xref-interned): Pass BUFFER and FRAME to
+	`describe-variable'.
+
+	* help-fns.el (describe-function-or-variable): New function.
+
+	* help.el (help-map): Bind `describe-function-or-variable' to o.
+	(help-for-help-internal): Document o key.
+
 2015-02-05  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* delsel.el: Deprecate the `kill' option.  Use lexical-binding.
