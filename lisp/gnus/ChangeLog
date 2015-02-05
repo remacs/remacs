@@ -1,5 +1,8 @@
 2015-02-05  Lars Ingebrigtsen  <larsi@gnus.org>
 
+	* gnus-sum.el (gnus-extra-headers): Add the popular Gmail X-GM-LABELS
+	as a default.
+
 	* nnimap.el (nnimap-request-group-scan): Ensure that we've selected the
 	correct server.
 
