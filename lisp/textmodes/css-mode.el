@@ -455,7 +455,7 @@
 (defun scss-smie--not-interpolation-p ()
   (save-excursion
     (forward-char -1)
-    (or (zerop (skip-chars-backward "[:alnum:]"))
+    (or (zerop (skip-chars-backward "-[:alnum:]"))
         (not (looking-back "#{\\$" (- (point) 3))))))
 
 ;;;###autoload (add-to-list 'auto-mode-alist '("\\.scss\\'" . scss-mode))
