@@ -1,3 +1,8 @@
+2015-02-05  Simen Heggestøyl  <simenheg@gmail.com>  (tiny change)
+
+	* textmodes/css-mode.el (css-fill-paragraph): Fix filling in presence
+	of variable interpolation (bug#19751).
+
 2015-02-05  Era Eriksson  <era+emacs@iki.fi>
 
 	* json.el (json-end-of-file): New error (bug#19768).
