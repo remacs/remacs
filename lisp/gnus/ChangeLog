@@ -1,3 +1,9 @@
+2015-02-05  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* gnus-start.el (gnus-save-newsrc-file-check-timestamp): Remove
+	variable; always check the newrc timestamp.
+	(gnus-save-newsrc-file): Always check timestamp.
+
 2015-02-05  Timo Lilja  <timo.lilja@iki.fi>  (tiny change)
 
 	* mail-source.el (mail-source-call-script): If scripts exit with an
