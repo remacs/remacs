@@ -1,3 +1,9 @@
+2015-02-05  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/python.el: Try to preserve compatibility with Emacs-24.
+	(python-mode): Don't assume eldoc-documentation-function has a non-nil
+	default.
+
 2015-02-04  Sam Steingold  <sds@gnu.org>
 
 	* progmodes/python.el (python-indent-calculate-indentation): Avoid

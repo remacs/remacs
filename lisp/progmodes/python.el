@@ -4684,8 +4684,12 @@ Arguments START and END narrow the buffer region to work on."
                                                  (current-column))))
          (^ '(- (1+ (current-indentation))))))
 
-  (add-function :before-until (local 'eldoc-documentation-function)
-                #'python-eldoc-function)
+  (if (null eldoc-documentation-function)
+      ;; Emacs<25
+      (setq (make-local-variable 'eldoc-documentation-function)
+            #'python-eldoc-function)
+    (add-function :before-until (local 'eldoc-documentation-function)
+                  #'python-eldoc-function))
 
   (add-to-list 'hs-special-modes-alist
                `(python-mode "^\\s-*\\(?:def\\|class\\)\\>" nil "#"
