@@ -9,6 +9,8 @@
 	(package-delete): Don't delesect when deleting an older version of
 	an upgraded package.
 
+	* emacs-lisp/package.el: Add missing (require 'subr-x)
+
 2015-02-05  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* textmodes/css-mode.el (scss-smie--not-interpolation-p): Vars can be

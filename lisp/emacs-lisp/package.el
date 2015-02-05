@@ -161,6 +161,7 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'subr-x))
 (eval-when-compile (require 'cl-lib))
 (eval-when-compile (require 'epg))      ;For setf accessors.
 
