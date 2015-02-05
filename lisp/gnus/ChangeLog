@@ -1,3 +1,8 @@
+2015-02-05  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* nnimap.el (nnimap-request-group-scan): Ensure that we've selected the
+	correct server.
+
 2015-02-05  Vincent Bernat  <bernat@luffy.cx>  (tiny change)
 
 	* nnimap.el (nnimap-request-group-scan): Fix the function name.
