@@ -1,3 +1,7 @@
+2015-02-05  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* gnus.texi (Using IMAP): Fix menu node name.
+
 2015-02-04  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* texinfo.tex: Update from gnulib.
