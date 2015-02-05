@@ -1,6 +1,7 @@
 2015-02-05  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* automated/package-test.el (package-test-get-deps): Fix typo.
+	(package-test-sort-by-dependence): New test
 
 2015-02-03  Artur Malabarba  <bruce.connor.am@gmail.com>
 
