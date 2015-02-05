@@ -1,5 +1,15 @@
 2015-02-05  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* emacs-lisp/eieio-compat.el (eieio--defmethod): Use new
+	special (:documentation ...) feature.
+	* emacs-lisp/eieio-core.el (eieio-make-class-predicate)
+	(eieio-make-child-predicate): Same.
+	(eieio-copy-parents-into-subclass): Remove unused arg.
+	(eieio-defclass-internal): Adjust call accordingly and remove redundant
+	`pname' var.
+	(eieio--slot-name-index): Remove unused arg `obj' and adjust all
+	callers accordingly.
+
 	* emacs-lisp/cconv.el (cconv--convert-function):
 	Add `docstring' argument.
 	(cconv-convert): Use it to handle the new (:documentation ...) form.
