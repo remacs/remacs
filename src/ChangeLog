@@ -1,3 +1,10 @@
+2015-02-05  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (move_it_in_display_line_to): Handle the case where the
+	last character of a screen line is whitespace, and we are under
+	word-wrap with overflow-newline-into-fringe turned on.
+	(Bug#19769)
+
 2015-02-03  Eli Zaretskii  <eliz@gnu.org>
 
 	* xdisp.c (handle_stop, handle_single_display_spec)
