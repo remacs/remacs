@@ -2351,6 +2351,40 @@ call will upgrade the package."
                (length upgrades)
                (if (= (length upgrades) 1) "" "s")))))
 
+(defun package--sort-deps-in-alist (package only)
+  "Return a list of dependencies for PACKAGE sorted by dependency.
+PACKAGE is included as the first element of the returned list.
+ONLY is an alist associating package names to package objects.
+Only these packages will be in the return value an their cdrs are
+destructively set to nil in ONLY."
+  (let ((out))
+    (dolist (dep (package-desc-reqs package))
+      (when-let ((cell (assq (car dep) only))
+                 (dep-package (cdr-safe cell)))
+        (setcdr cell nil)
+        (setq out (append (package--sort-deps-in-alist dep-package only)
+                          out))))
+    (cons package out)))
+
+(defun package--sort-by-dependence (package-list)
+  "Return PACKAGE-LIST sorted by dependence.
+That is, any element of the returned list is guaranteed to not
+directly depend on any elements that come before it.
+
+PACKAGE-LIST is a list of package-desc objects.
+Indirect dependencies are guaranteed to be returned in order only
+if all the in-between dependencies are also in PACKAGE-LIST."
+  (let ((alist (mapcar (lambda (p) (cons (package-desc-name p) p)) package-list))
+        out-list)
+    (dolist (cell alist out-list)
+      ;; `package--sort-deps-in-alist' destructively changes alist, so
+      ;; some cells might already be empty.  We check this here.
+      (when-let ((pkg-desc (cdr cell)))
+        (setcdr cell nil)
+        (setq out-list
+              (append (package--sort-deps-in-alist pkg-desc alist)
+                      out-list))))))
+
 (defun package-menu-execute (&optional noquery)
   "Perform marked Package Menu actions.
 Packages marked for installation are downloaded and installed;
@@ -2398,7 +2432,7 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
                      (length delete-list)
                      (mapconcat #'package-desc-full-name
                                 delete-list ", ")))))
-          (dolist (elt delete-list)
+          (dolist (elt (package--sort-by-dependence delete-list))
             (condition-case-unless-debug err
                 (package-delete elt)
               (error (message (cadr err)))))
@@ -2412,7 +2446,8 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
                       (format "These %d packages are no longer needed, delete them (%s)? "
                               (length removable)
                               (mapconcat #'symbol-name removable ", "))))
-            (mapc (lambda (p) (package-delete (cadr (assq p package-alist))))
+            ;; We know these are removable, so we can use force instead of sorting them.
+            (mapc (lambda (p) (package-delete (cadr (assq p package-alist)) 'force 'nosave))
                   removable))))
       (package-menu--generate t t))))
 
