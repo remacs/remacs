@@ -498,7 +498,7 @@ Must called from within a `tar-mode' buffer."
                      (list 1 package-x-test--single-archive-entry-1-4))))))
 
 (ert-deftest package-test-get-deps ()
-  "Test `package-test-get-deps' with complex structures."
+  "Test `package--get-deps' with complex structures."
   (let ((package-alist
          (mapcar (lambda (p) (list (package-desc-name p) p))
            (list simple-single-desc
