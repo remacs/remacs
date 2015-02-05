@@ -820,7 +820,7 @@ textual parts.")
 			group))
 	t))))
 
-(deffoo nnimap-request-scan-group (group &optional server info)
+(deffoo nnimap-request-group-scan (group &optional server info)
   (setq group (nnimap-decode-gnus-group group))
   (let (marks high low)
     (with-current-buffer (nnimap-buffer)
