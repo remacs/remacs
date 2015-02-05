@@ -1,13 +1,17 @@
 2015-02-05  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* delsel.el: Deprecate the `kill' option.  Use lexical-binding.
+	(open-line): Delete like all other commands, instead of killing.
+	(delete-active-region): Don't define any return any value.
+
 	* progmodes/python.el: Try to preserve compatibility with Emacs-24.
 	(python-mode): Don't assume eldoc-documentation-function has a non-nil
 	default.
 
 2015-02-04  Sam Steingold  <sds@gnu.org>
 
-	* progmodes/python.el (python-indent-calculate-indentation): Avoid
-	the error when computing top-level indentation.
+	* progmodes/python.el (python-indent-calculate-indentation):
+	Avoid the error when computing top-level indentation.
 
 2015-02-04  Stefan Monnier  <monnier@iro.umontreal.ca>
 
