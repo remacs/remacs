@@ -1,3 +1,8 @@
+2015-02-05  Timo Lilja  <timo.lilja@iki.fi>  (tiny change)
+
+	* mail-source.el (mail-source-call-script): If scripts exit with an
+	error, pop up an error buffer.
+
 2015-02-05  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* gnus-sum.el (gnus-extra-headers): Add the popular Gmail X-GM-LABELS
