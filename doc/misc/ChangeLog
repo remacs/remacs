@@ -1,3 +1,7 @@
+2015-02-05  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* auth.texi (Multiple GMail accounts with Gnus): Add FAQ.
+
 2015-02-05  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* gnus.texi (Using IMAP): Fix menu node name.
