@@ -1,3 +1,7 @@
+2015-02-02 Nicolas Petton <nicolas@petton.fr>
+
+	* automated/seq-tests.el: New test for seq-mapcat.
+
 2015-02-05  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* automated/package-test.el (package-test-get-deps): Fix typo.

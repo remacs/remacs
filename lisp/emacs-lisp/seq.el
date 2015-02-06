@@ -2,9 +2,9 @@
 
 ;; Copyright (C) 2014-2015 Free Software Foundation, Inc.
 
-;; Author: Nicolas Petton <petton.nicolas@gmail.com>
+;; Author: Nicolas Petton <nicolas@petton.fr>
 ;; Keywords: sequences
-;; Version: 1.0
+;; Version: 1.1
 
 ;; Maintainer: emacs-devel@gnu.org
 
@@ -223,6 +223,12 @@ TYPE must be one of following symbols: vector, string or list.
     (`string (apply #'concat seqs))
     (`list (apply #'append (append seqs '(nil))))
     (t (error "Not a sequence type name: %s" type))))
+
+(defun seq-mapcat (function seq &optional type)
+  "Concatenate the result of applying FUNCTION to each element of SEQ.
+The result is a sequence of type TYPE, or a list if TYPE is nil."
+  (apply #'seq-concatenate (or type 'list)
+         (seq-map function seq)))
 
 (defun seq--drop-list (list n)
   "Optimized version of `seq-drop' for lists."

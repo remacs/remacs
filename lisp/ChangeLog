@@ -1,3 +1,7 @@
+2015-02-06  Nicolas Petton <nicolas@petton.fr>
+
+	* emacs-lisp/seq.el (seq-mapcat): New function.
+
 2015-02-06  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* doc-view.el (doc-view-kill-proc-and-buffer): Obsolete. Use
