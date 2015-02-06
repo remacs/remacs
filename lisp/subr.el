@@ -316,7 +316,7 @@ Defaults to `error'."
   (unless parent (setq parent 'error))
   (let ((conditions
          (if (consp parent)
-             (apply #'nconc
+             (apply #'append
                     (mapcar (lambda (parent)
                               (cons parent
                                     (or (get parent 'error-conditions)

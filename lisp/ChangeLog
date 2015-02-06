@@ -1,3 +1,8 @@
+2015-02-06  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* subr.el (define-error): The error conditions may be constant
+	lists, so use `append' to concatenate them.
+
 2015-02-06  Wolfgang Jenkner  <wjenkner@inode.at>
 
 	* net/network-stream.el (network-stream-open-tls): Respect the
