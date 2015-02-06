@@ -230,6 +230,33 @@ The result is a sequence of type TYPE, or a list if TYPE is nil."
   (apply #'seq-concatenate (or type 'list)
          (seq-map function seq)))
 
+(defun seq-partition (seq n)
+  "Return a list of the elements of SEQ grouped into sub-sequences of length N.
+The last sequence may contain less than N elements.  If N is a
+negative integer or 0, nil is returned."
+  (unless (< n 1)
+    (let ((result '()))
+      (while (not (seq-empty-p seq))
+        (push (seq-take seq n) result)
+        (setq seq (seq-drop seq n)))
+      (nreverse result))))
+
+(defun seq-group-by (function seq)
+  "Apply FUNCTION to each element of SEQ.
+Separate the elements of SEQ into an alist using the results as
+keys.  Keys are compared using `equal'."
+  (nreverse
+   (seq-reduce
+    (lambda (acc elt)
+      (let* ((key (funcall function elt))
+             (cell (assoc key acc)))
+        (if cell
+            (setcdr cell (push elt (cdr cell)))
+          (push (list key elt) acc))
+        acc))
+    seq
+    nil)))
+
 (defun seq--drop-list (list n)
   "Optimized version of `seq-drop' for lists."
   (while (and list (> n 0))

@@ -1,6 +1,7 @@
-2015-02-02 Nicolas Petton <nicolas@petton.fr>
+2015-02-06 Nicolas Petton <nicolas@petton.fr>
 
-	* automated/seq-tests.el: New test for seq-mapcat.
+	* automated/seq-tests.el: New tests for seq-mapcat, seq-partition
+	and seq-group-by.
 
 2015-02-05  Artur Malabarba  <bruce.connor.am@gmail.com>
 
