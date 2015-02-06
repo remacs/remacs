@@ -1,3 +1,7 @@
+2015-02-06  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+
+	* net/ldap.el (ldap-search-internal): Fix docstring.
+
 2015-02-06  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* subr.el (define-error): The error conditions may be constant
