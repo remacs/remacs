@@ -1,3 +1,8 @@
+2015-02-06  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* vc/vc-cvs.el (vc-cvs-dir-status-files): Don't pass DIR to
+	`vc-cvs-command' (bug#19732).
+
 2015-02-06  Nicolas Petton <nicolas@petton.fr>
 
 	* emacs-lisp/seq.el (seq-mapcat, seq-partition, seq-group-by): New functions.
