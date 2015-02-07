@@ -1,3 +1,9 @@
+2015-02-07  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* automated/vc-tests.el (vc-test--working-revision): Fix
+	`vc-working-revision' checks to be compared against nil, which is
+	what is should return for unregistered files.
+
 2015-02-06 Nicolas Petton <nicolas@petton.fr>
 
 	* automated/seq-tests.el: New tests for seq-mapcat, seq-partition
