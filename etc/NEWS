@@ -33,11 +33,13 @@ otherwise leave it unmarked.
 
 * Changes in Specialized Modes and Packages in Emacs 24.5
 
++++
 ** `call-process-shell-command' and `process-file-shell-command'
 don't take "&rest args" any more.
 
 ** Obsolete packages
 
+---
 *** cc-compat.el
 
 ---
