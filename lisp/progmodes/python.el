@@ -3921,15 +3921,29 @@ See `python-check-command' for the default."
   :type 'string
   :group 'python)
 
+(defun python-eldoc--get-symbol-at-point ()
+  "Get the current symbol for eldoc.
+Returns the current symbol handling point within arguments."
+  (save-excursion
+    (let ((start (python-syntax-context 'paren)))
+      (when start
+        (goto-char start))
+      (when (or start
+                (eobp)
+                (memq (char-syntax (char-after)) '(?\ ?-)))
+        ;; Try to adjust to closest symbol if not in one.
+        (python-util-forward-comment -1)))
+    (python-info-current-symbol t)))
+
 (defun python-eldoc--get-doc-at-point (&optional force-input force-process)
   "Internal implementation to get documentation at point.
-If not FORCE-INPUT is passed then what `python-info-current-symbol'
+If not FORCE-INPUT is passed then what `python-eldoc--get-symbol-at-point'
 returns will be used.  If not FORCE-PROCESS is passed what
 `python-shell-get-process' returns is used."
   (let ((process (or force-process (python-shell-get-process))))
     (when process
       (let ((input (or force-input
-                       (python-info-current-symbol t))))
+                       (python-eldoc--get-symbol-at-point))))
         (and input
              ;; Prevent resizing the echo area when iPython is
              ;; enabled.  Bug#18794.
@@ -3949,7 +3963,7 @@ inferior Python process is updated properly."
   "Get help on SYMBOL using `help'.
 Interactively, prompt for symbol."
   (interactive
-   (let ((symbol (python-info-current-symbol t))
+   (let ((symbol (python-eldoc--get-symbol-at-point))
          (enable-recursive-minibuffers t))
      (list (read-string (if symbol
                             (format "Describe symbol (default %s): " symbol)

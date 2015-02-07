@@ -1,6 +1,14 @@
 2015-02-07  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* automated/python-tests.el
+	(python-eldoc--get-symbol-at-point-1)
+	(python-eldoc--get-symbol-at-point-2)
+	(python-eldoc--get-symbol-at-point-3)
+	(python-eldoc--get-symbol-at-point-4): New tests.
+
+2015-02-07  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el
 	(python-tests-visible-string): New function.
 	(python-parens-electric-indent-1)
 	(python-triple-quote-pairing): Fix indentation, move require calls.

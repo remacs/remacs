@@ -2943,6 +2943,63 @@ class Foo(models.Model):
 
 ;;; Eldoc
 
+(ert-deftest python-eldoc--get-symbol-at-point-1 ()
+  "Test paren handling."
+  (python-tests-with-temp-buffer
+   "
+map(xx
+map(codecs.open('somefile'
+"
+   (python-tests-look-at "ap(xx")
+   (should (string= (python-eldoc--get-symbol-at-point) "map"))
+   (goto-char (line-end-position))
+   (should (string= (python-eldoc--get-symbol-at-point) "map"))
+   (python-tests-look-at "('somefile'")
+   (should (string= (python-eldoc--get-symbol-at-point) "map"))
+   (goto-char (line-end-position))
+   (should (string= (python-eldoc--get-symbol-at-point) "codecs.open"))))
+
+(ert-deftest python-eldoc--get-symbol-at-point-2 ()
+  "Ensure self is replaced with the class name."
+  (python-tests-with-temp-buffer
+   "
+class TheClass:
+
+    def some_method(self, n):
+        return n
+
+    def other(self):
+        return self.some_method(1234)
+
+"
+   (python-tests-look-at "self.some_method")
+   (should (string= (python-eldoc--get-symbol-at-point)
+                    "TheClass.some_method"))
+   (python-tests-look-at "1234)")
+   (should (string= (python-eldoc--get-symbol-at-point)
+                    "TheClass.some_method"))))
+
+(ert-deftest python-eldoc--get-symbol-at-point-3 ()
+  "Ensure symbol is found when point is at end of buffer."
+  (python-tests-with-temp-buffer
+   "
+some_symbol
+
+"
+   (goto-char (point-max))
+   (should (string= (python-eldoc--get-symbol-at-point)
+                    "some_symbol"))))
+
+(ert-deftest python-eldoc--get-symbol-at-point-4 ()
+  "Ensure symbol is found when point is at whitespace."
+  (python-tests-with-temp-buffer
+   "
+some_symbol   some_other_symbol
+"
+   (python-tests-look-at "  some_other_symbol")
+   (should (string= (python-eldoc--get-symbol-at-point)
+                    "some_symbol"))))
+
 
 ;;; Imenu
 

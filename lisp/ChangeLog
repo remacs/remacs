@@ -1,5 +1,13 @@
 2015-02-07  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
+	python.el: Keep eldoc visible while typing args.  (Bug#19637)
+
+	* progmodes/python.el (python-eldoc--get-symbol-at-point): New
+	function.
+	(python-eldoc--get-doc-at-point, python-eldoc-at-point): Use it.
+
+2015-02-07  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
 	Fix hideshow integration.  (Bug#19761)
 
 	* progmodes/python.el
