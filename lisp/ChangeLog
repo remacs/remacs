@@ -1,3 +1,8 @@
+2015-02-07  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-check-custom-command): Do not use
+	defvar-local for compat with Emacs<24.3.
+
 2015-02-07  Martin Rudalics  <rudalics@gmx.at>
 
 	* frame.el (frame-notice-user-settings): Update
