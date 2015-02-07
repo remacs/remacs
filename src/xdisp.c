@@ -10116,7 +10116,7 @@ message3_nolog (Lisp_Object m)
 
 	  fwrite (SDATA (s), SBYTES (s), 1, stderr);
 	}
-      if (cursor_in_echo_area == 0)
+      if (!cursor_in_echo_area)
 	fprintf (stderr, "\n");
       fflush (stderr);
     }
@@ -10258,7 +10258,7 @@ vmessage (const char *m, va_list ap)
 	    putc ('\n', stderr);
 	  noninteractive_need_newline = 0;
 	  vfprintf (stderr, m, ap);
-	  if (cursor_in_echo_area == 0)
+	  if (!cursor_in_echo_area)
 	    fprintf (stderr, "\n");
 	  fflush (stderr);
 	}

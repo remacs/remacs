@@ -1,3 +1,12 @@
+2015-02-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Remove no-longer-used cursor_in_echo_area code
+	* dispnew.c (set_window_cursor_after_update, update_frame_1):
+	Remove checks for negative cursor_in_echo_area, since this var is
+	a boolean, and has been a boolean for some time.  Simplify.
+	* dispnew.c (init_display):
+	* xdisp.c (message3_nolog, vmessage): Use bool for boolean.
+
 2015-02-05  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* eval.c (Ffunction): Handle the new (:documentation ...) form.
