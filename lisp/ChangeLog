@@ -1,5 +1,15 @@
 2015-02-07  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
+	Fix hideshow integration.  (Bug#19761)
+
+	* progmodes/python.el
+	(python-hideshow-forward-sexp-function): New function based on
+	Carlos Pita <carlosjosepita@gmail.com> patch.
+	(python-mode): Make `hs-special-modes-alist` use it and initialize
+	the end regexp with the empty string to avoid skipping parens.
+
+2015-02-07  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
 	* progmodes/python.el (python-check-custom-command): Do not use
 	defvar-local for compat with Emacs<24.3.
 

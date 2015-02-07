@@ -1,3 +1,12 @@
+2015-02-07  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el
+	(python-tests-visible-string): New function.
+	(python-parens-electric-indent-1)
+	(python-triple-quote-pairing): Fix indentation, move require calls.
+	(python-hideshow-hide-levels-1)
+	(python-hideshow-hide-levels-2): New tests.
+
 2015-02-07  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* automated/vc-tests.el (vc-test--working-revision): Fix

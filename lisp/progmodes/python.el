@@ -3958,6 +3958,17 @@ Interactively, prompt for symbol."
   (message (python-eldoc--get-doc-at-point symbol)))
 
 
+;;; Hideshow
+
+(defun python-hideshow-forward-sexp-function (arg)
+  "Python specific `forward-sexp' function for `hs-minor-mode'.
+Argument ARG is ignored."
+  arg  ; Shut up, byte compiler.
+  (python-nav-end-of-defun)
+  (unless (python-info-current-line-empty-p)
+    (backward-char)))
+
+
 ;;; Imenu
 
 (defvar python-imenu-format-item-label-function
@@ -4693,11 +4704,16 @@ Arguments START and END narrow the buffer region to work on."
     (add-function :before-until (local 'eldoc-documentation-function)
                   #'python-eldoc-function))
 
-  (add-to-list 'hs-special-modes-alist
-               `(python-mode "^\\s-*\\(?:def\\|class\\)\\>" nil "#"
-                             ,(lambda (_arg)
-                                (python-nav-end-of-defun))
-                             nil))
+  (add-to-list
+   'hs-special-modes-alist
+   `(python-mode
+     "\\s-*\\(?:def\\|class\\)\\>"
+     ;; Use the empty string as end regexp so it doesn't default to
+     ;; "\\s)".  This way parens at end of defun are properly hidden.
+     ""
+     "#"
+     python-hideshow-forward-sexp-function
+     nil))
 
   (set (make-local-variable 'outline-regexp)
        (python-rx (* space) block-start))
