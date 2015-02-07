@@ -1,3 +1,12 @@
+2015-02-07  Martin Rudalics  <rudalics@gmx.at>
+
+	* frame.el (frame-notice-user-settings): Update
+	`frame-size-history'.
+	(make-frame): Update `frame-size-history'.  Call
+	`frame-after-make-frame'.
+	* faces.el (face-set-after-frame-default): Remove call to
+	frame-can-run-window-configuration-change-hook.
+
 2015-02-06  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* vc/vc-cvs.el (vc-cvs-dir-status-files): Don't pass DIR to

@@ -1,3 +1,79 @@
+2015-02-07  Martin Rudalics  <rudalics@gmx.at>
+
+	* frame.c (frame_size_history_add): New function.
+	(frame_inhibit_resize): Consider frame_inhibit_implied_resize
+	only after frame's after_make_frame slot is true.  Inhibit
+	resizing fullwidth-/height frames in one direction only.  Update
+	frame_size_history.
+	(adjust_frame_size): Call frame_size_history_add.
+	(make_frame): Initalize after_make_frame slot.
+	(Fmake_terminal_frame): Adjust adjust_frame_size call.
+	(Fcan_run_window_configuration_change_hook): Rename to
+	Fframe_after_make_frame.  Set after_make_frame slot.  Return
+	second argument.
+	(x_set_frame_parameters): Postpone handling fullscreen parameter
+	until after width and height parameters have been set.  Apply
+	width and height changes only if can_x_set_window_size is true.
+	Update frame_size_history.
+	(Qadjust_frame_size_1, Qadjust_frame_size_2)
+	(Qadjust_frame_size_3, QEmacsFrameResize, Qframe_inhibit_resize)
+	(Qx_set_fullscreen, Qx_check_fullscreen, Qx_set_window_size_1)
+	(Qxg_frame_resized, Qxg_frame_set_char_size_1)
+	(Qxg_frame_set_char_size_2, Qxg_frame_set_char_size_3)
+	(Qxg_change_toolbar_position, Qx_net_wm_state)
+	(Qx_handle_net_wm_state, Qtb_size_cb, Qupdate_frame_tool_bar)
+	(Qfree_frame_tool_bar): New symbol for updating
+	frame_size_history.
+	(Qtip_frame, Qterminal_frame): New symbols.
+	(Vframe_adjust_size_history): Rename to frame_size_history.
+	* frame.h (struct frame): Rename
+	can_run_window_configuration_change_hook slot to
+	after_make_frame.
+	(frame_size_history_add): Extern.
+	* gtkutil.c (xg_frame_resized): Call frame_size_history_add.
+	Don't set FRAME_PIXEL_WIDTH and FRAME_PIXEL_HEIGHT here.
+	(xg_frame_set_char_size): Try to preserve the status of
+	fullwidth/-height frames.  Call frame_size_history_add.
+	(tb_size_cb, update_frame_tool_bar, free_frame_tool_bar)
+	(xg_change_toolbar_position): Call frame_size_history_add.
+	* w32fns.c (x_change_tool_bar_height): Handle frame's fullscreen
+	status.
+	(Fx_create_frame): Process fullscreen parameter after frame has
+	been resized.
+	(x_create_tip_frame): Pass Qtip_frame to adjust_frame_size.
+	(Fx_frame_geometry): Don't pollute pure storage.
+	* w32term.c (w32_read_socket): For WM_WINDOWPOSCHANGED,
+	WM_ACTIVATE and WM_ACTIVATEAPP set frame's visibility before
+	calling w32fullscreen_hook.  For WM_DISPLAYCHANGE call
+	w32fullscreen_hook immediately.
+	(x_fullscreen_adjust, x_check_fullscreen): Remove.
+	(w32fullscreen_hook): Call change_frame_size just as with a
+	"normal" frame resize operation.  Call do_pending_window_change.
+	(x_set_window_size): Try to handle fullwidth and fullheight more
+	accurately.  Don't rely on w32_enable_frame_resize_hack.
+	(w32_enable_frame_resize_hack): Remove variable.
+	* widget.c (EmacsFrameResize): Remove dead code.  Call
+	frame_size_history_add
+	* window.c (run_window_configuration_change_hook): Check
+	f->after_make_frame instead of
+	f->can_run_window_configuration_change_hook.
+	* xfns.c (x_change_tool_bar_height): Handle frame's fullscreen status.
+	(Fx_create_frame): Process fullscreen parameter after frame has
+	been resized.
+	(Fx_frame_geometry): Don't pollute pure storage.
+	* xterm.c (x_net_wm_state, x_handle_net_wm_state): Call
+	frame_size_history_add.
+	(do_ewmh_fullscreen): Handle x_frame_normalize_before_maximize.
+	(x_check_fullscreen): Count in menubar when calling
+	XResizeWindow.  Wait for ConfigureNotify event.  Call
+	frame_size_history_add.
+	(x_set_window_size_1): Remove PIXELWISE argument.  Try to handle
+	changing a fullheight frame's width or a fullwidth frame's
+	height.  Call frame_size_history_add.
+	(x_set_window_size): Simplify xg_frame_set_char_size and
+	x_set_window_size_1 calls.
+	(x_frame_normalize_before_maximize): New variable.
+
 2015-02-07  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Remove no-longer-used cursor_in_echo_area code
