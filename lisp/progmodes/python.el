@@ -2333,57 +2333,55 @@ goes wrong and syntax highlighting in the shell gets messed up."
   (interactive)
   (python-shell-with-shell-buffer
     (python-shell-font-lock-with-font-lock-buffer
-      (delete-region (point-min) (point-max)))))
+      (erase-buffer))))
 
 (defun python-shell-font-lock-comint-output-filter-function (output)
   "Clean up the font-lock buffer after any OUTPUT."
-  (when (and (not (string= "" output))
-             ;; Is end of output and is not just a prompt.
-             (not (member
-                   (python-shell-comint-end-of-output-p
-                    (ansi-color-filter-apply output))
-                   '(nil 0))))
-    ;; If output is other than an input prompt then "real" output has
-    ;; been received and the font-lock buffer must be cleaned up.
-    (python-shell-font-lock-cleanup-buffer))
+  (if (and (not (string= "" output))
+           ;; Is end of output and is not just a prompt.
+           (not (member
+                 (python-shell-comint-end-of-output-p
+                  (ansi-color-filter-apply output))
+                 '(nil 0))))
+      ;; If output is other than an input prompt then "real" output has
+      ;; been received and the font-lock buffer must be cleaned up.
+      (python-shell-font-lock-cleanup-buffer)
+    ;; Otherwise just add a newline.
+    (python-shell-font-lock-with-font-lock-buffer
+      (goto-char (point-max))
+      (newline)))
   output)
 
 (defun python-shell-font-lock-post-command-hook ()
   "Fontifies current line in shell buffer."
-  (if (eq this-command 'comint-send-input)
-      ;; Add a newline when user sends input as this may be a block.
-      (python-shell-font-lock-with-font-lock-buffer
-        (goto-char (line-end-position))
-        (newline))
-    (when (and (python-util-comint-last-prompt)
-               (> (point) (cdr (python-util-comint-last-prompt))))
-      (let ((input (buffer-substring-no-properties
-                    (cdr (python-util-comint-last-prompt)) (point-max)))
-            (old-input (python-shell-font-lock-with-font-lock-buffer
-                         (buffer-substring-no-properties
-                          (line-beginning-position) (point-max))))
-            (current-point (point))
-            (buffer-undo-list t))
-        ;; When input hasn't changed, do nothing.
-        (when (not (string= input old-input))
-          (delete-region (cdr (python-util-comint-last-prompt)) (point-max))
-          (insert
-           (python-shell-font-lock-with-font-lock-buffer
-             (delete-region (line-beginning-position)
-                            (line-end-position))
-             (insert input)
-             ;; Ensure buffer is fontified, keeping it
-             ;; compatible with Emacs < 24.4.
-             (if (fboundp 'font-lock-ensure)
-                 (funcall 'font-lock-ensure)
-               (font-lock-default-fontify-buffer))
-             ;; Replace FACE text properties with FONT-LOCK-FACE so
-             ;; they are not overwritten by comint buffer's font lock.
-             (python-util-text-properties-replace-name
-              'face 'font-lock-face)
-             (buffer-substring (line-beginning-position)
-                               (line-end-position))))
-          (goto-char current-point))))))
+  (when (and (python-util-comint-last-prompt)
+             (> (point) (cdr (python-util-comint-last-prompt))))
+    (let ((input (buffer-substring-no-properties
+                  (cdr (python-util-comint-last-prompt)) (point-max)))
+          (pos (point))
+          (buffer-undo-list t))
+      ;; Keep all markers untouched, this prevents `hippie-expand' and
+      ;; others from getting confused.  Bug#19650.
+      (insert-before-markers
+       (python-shell-font-lock-with-font-lock-buffer
+	 (delete-region (line-beginning-position)
+                        (line-end-position))
+         (insert input)
+	 ;; Ensure buffer is fontified, keeping it
+	 ;; compatible with Emacs < 24.4.
+	 (if (fboundp 'font-lock-ensure)
+	     (funcall 'font-lock-ensure)
+	   (font-lock-default-fontify-buffer))
+	 ;; Replace FACE text properties with FONT-LOCK-FACE so
+	 ;; they are not overwritten by comint buffer's font lock.
+	 (python-util-text-properties-replace-name
+	  'face 'font-lock-face)
+	 (buffer-substring (line-beginning-position)
+                           (line-end-position))))
+      ;; Remove non-fontified original text.
+      (delete-region pos (cdr (python-util-comint-last-prompt)))
+      ;; Point should be already at pos, this is for extra safety.
+      (goto-char pos))))
 
 (defun python-shell-font-lock-turn-on (&optional msg)
   "Turn on shell font-lock.
