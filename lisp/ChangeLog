@@ -4,8 +4,8 @@
 	frame parameters after calling tty-handle-reverse-video.  Call
 	face-set-after-frame-default with the actual parameters, to avoid
 	resetting colors back to unspecified.
-	(set-background-color, set-foreground-color): Pass the selected
-	color to face-set-after-frame-default.  (Bug#19802)
+	(set-background-color, set-foreground-color): Pass the foreground
+	and background colors to face-set-after-frame-default.  (Bug#19802)
 
 2015-02-06  Wolfgang Jenkner  <wjenkner@inode.at>
 

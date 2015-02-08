@@ -1191,7 +1191,13 @@ To get the frame's current background color, use `frame-parameters'."
   (or window-system
       (face-set-after-frame-default (selected-frame)
 				    (list
-				     (cons 'background-color color-name)))))
+				     (cons 'background-color color-name)
+				     ;; Pass the foreground-color as
+				     ;; well, if defined, to avoid
+				     ;; losing it when faces are reset
+				     ;; to their defaults.
+				     (assq 'foreground-color
+					   (frame-parameters))))))
 
 (defun set-foreground-color (color-name)
   "Set the foreground color of the selected frame to COLOR-NAME.
@@ -1203,7 +1209,13 @@ To get the frame's current foreground color, use `frame-parameters'."
   (or window-system
       (face-set-after-frame-default (selected-frame)
 				    (list
-				     (cons 'foreground-color color-name)))))
+				     (cons 'foreground-color color-name)
+				     ;; Pass the background-color as
+				     ;; well, if defined, to avoid
+				     ;; losing it when faces are reset
+				     ;; to their defaults.
+				     (assq 'background-color
+					   (frame-parameters))))))
 
 (defun set-cursor-color (color-name)
   "Set the text cursor color of the selected frame to COLOR-NAME.
