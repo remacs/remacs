@@ -1481,7 +1481,7 @@ Unlike `comment-dwim', this always comments whole lines."
        (apply #'max range)))
     (forward-line 1)
     (back-to-indentation)
-    (unless (natnump n) (setq this-command 'comment-line-backward)))
+    (unless (natnump n) (setq this-command 'comment-line-backward))))
 
 (provide 'newcomment)
 
