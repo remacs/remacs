@@ -2359,13 +2359,15 @@ goes wrong and syntax highlighting in the shell gets messed up."
     (let ((input (buffer-substring-no-properties
                   (cdr (python-util-comint-last-prompt)) (point-max)))
           (pos (point))
-          (buffer-undo-list t))
+          (buffer-undo-list t)
+          (font-lock-buffer-pos nil))
       ;; Keep all markers untouched, this prevents `hippie-expand' and
       ;; others from getting confused.  Bug#19650.
       (insert-before-markers
        (python-shell-font-lock-with-font-lock-buffer
 	 (delete-region (line-beginning-position)
-                        (line-end-position))
+                        (point-max))
+         (setq font-lock-buffer-pos (point))
          (insert input)
 	 ;; Ensure buffer is fontified, keeping it
 	 ;; compatible with Emacs < 24.4.
@@ -2376,8 +2378,8 @@ goes wrong and syntax highlighting in the shell gets messed up."
 	 ;; they are not overwritten by comint buffer's font lock.
 	 (python-util-text-properties-replace-name
 	  'face 'font-lock-face)
-	 (buffer-substring (line-beginning-position)
-                           (line-end-position))))
+	 (buffer-substring font-lock-buffer-pos
+                           (point-max))))
       ;; Remove non-fontified original text.
       (delete-region pos (cdr (python-util-comint-last-prompt)))
       ;; Point should be already at pos, this is for extra safety.

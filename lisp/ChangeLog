@@ -1,5 +1,13 @@
 2015-02-08  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
+	python.el: Fix shell font-lock multiline input.  (Bug#19744)
+
+	* progmodes/python.el
+	(python-shell-font-lock-post-command-hook): Handle multiline
+	input.
+
+2015-02-08  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
 	python.el: Make shell font-lock respect markers.  (Bug#19650)
 
 	* progmodes/python.el (python-shell-font-lock-cleanup-buffer): Use
