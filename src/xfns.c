@@ -3184,7 +3184,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
 		       "title", "Title", RES_TYPE_STRING);
   x_default_parameter (f, parms, Qwait_for_wm, Qt,
 		       "waitForWM", "WaitForWM", RES_TYPE_BOOLEAN);
- x_default_parameter (f, parms, Qtool_bar_position,
+  x_default_parameter (f, parms, Qtool_bar_position,
                        FRAME_TOOL_BAR_POSITION (f), 0, 0, RES_TYPE_SYMBOL);
 
   /* Compute the size of the X window.  */

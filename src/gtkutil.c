@@ -50,12 +50,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "emacsgtkfixed.h"
 #endif
 
-/** #define FRAME_TOTAL_PIXEL_HEIGHT(f) \ **/
-/**   (FRAME_PIXEL_HEIGHT (f) + FRAME_MENUBAR_HEIGHT (f) + FRAME_TOOLBAR_HEIGHT (f)) **/
-
-/** #define FRAME_TOTAL_PIXEL_WIDTH(f) \ **/
-/**   (FRAME_PIXEL_WIDTH (f) + FRAME_TOOLBAR_WIDTH (f)) **/
-
 #ifndef HAVE_GTK_WIDGET_SET_HAS_WINDOW
 #define gtk_widget_set_has_window(w, b) \
   (gtk_fixed_set_has_window (GTK_FIXED (w), b))
@@ -903,9 +897,6 @@ xg_frame_resized (struct frame *f, int pixelwidth, int pixelheight)
       || pixelwidth != FRAME_PIXEL_WIDTH (f)
       || pixelheight != FRAME_PIXEL_HEIGHT (f))
     {
-/**       FRAME_PIXEL_WIDTH (f) = pixelwidth; **/
-/**       FRAME_PIXEL_HEIGHT (f) = pixelheight; **/
-
       xg_clear_under_internal_border (f);
       change_frame_size (f, width, height, 0, 1, 0, 1);
       SET_FRAME_GARBAGED (f);

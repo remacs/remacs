@@ -155,14 +155,13 @@ frame_size_history_add (struct frame *f, Lisp_Object fun_symbol,
 			int width, int height, Lisp_Object rest)
 {
   Lisp_Object frame;
-  int number;
 
   XSETFRAME (frame, f);
   if (CONSP (frame_size_history)
-      && NUMBERP (Fcar (frame_size_history))
-      && ((number = XINT (Fcar (frame_size_history))) > 0))
+      && INTEGERP (XCAR (frame_size_history))
+      && 0 < XINT (XCAR (frame_size_history)))
     frame_size_history =
-      Fcons (make_number (number - 1),
+      Fcons (make_number (XINT (XCAR (frame_size_history)) - 1),
 	     Fcons (list4
 		    (frame, fun_symbol,
 		     ((width > 0)
@@ -172,7 +171,7 @@ frame_size_history_add (struct frame *f, Lisp_Object fun_symbol,
 			       make_number (height))
 		      : Qnil),
 		     rest),
-		    Fcdr (frame_size_history)));
+		    XCDR (frame_size_history)));
 }
 
 
@@ -2298,9 +2297,7 @@ otherwise used with utter care to avoid that running functions on
   (Lisp_Object frame, Lisp_Object made)
 {
   struct frame *f = decode_live_frame (frame);
-
-  f->after_make_frame = NILP (made) ? false : true;
-
+  f->after_make_frame = !NILP (made);
   return made;
 }
 

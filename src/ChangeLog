@@ -1,3 +1,12 @@
+2015-02-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Minor tweaks to frame_size_history_add
+	* frame.c (frame_size_history_add): Don't assume length fits in 'int'.
+	Prefer XCAR and XCDR to Fcar and Fcdr when the arg is a cons.
+	(Fframe_after_make_frame): Simplify.
+	* gtkutil.c: Remove commented-out code.
+	* xfns.c (Fx_create_frame): Fix indenting.
+
 2015-02-08  Eli Zaretskii  <eliz@gnu.org>
 
 	* frame.c (Fframe_parameter): Don't replace a non-nil value of
