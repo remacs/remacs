@@ -1,3 +1,9 @@
+2015-02-08  Eli Zaretskii  <eliz@gnu.org>
+
+	* frame.c (Fframe_parameter): Don't replace a non-nil value of
+	foreground-color or background-color parameters with a nil value.
+	(Bug#19802)
+
 2015-02-08  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* data.c (Findirect_function): Like `symbol-function', don't signal an

@@ -2615,7 +2615,12 @@ If FRAME is nil, describe the currently selected frame.  */)
 		 important when param_alist's notion of colors is
 		 "unspecified".  We need to do the same here.  */
 	      if (STRINGP (value) && !FRAME_WINDOW_P (f))
-		value = frame_unspecified_color (f, value);
+		{
+		  Lisp_Object tem = frame_unspecified_color (f, value);
+
+		  if (!NILP (tem))
+		    value = tem;
+		}
 	    }
 	  else
 	    value = Fcdr (Fassq (parameter, Fframe_parameters (frame)));
