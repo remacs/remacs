@@ -53,7 +53,7 @@ build with 'make V=1'.
 group instead of a user if its argument is prefixed by ':' (a colon).
 This will cause the game score files in ${localstatedir}/games/emacs
 to be owned by that group, and the helper program for updating them to
-be installed setgid.
+be installed setgid.  The option now defaults to the 'games' group.
 
 ---
 ** The `grep-changelog' script (and its manual page) are no longer included.
