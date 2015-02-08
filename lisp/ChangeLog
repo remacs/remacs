@@ -1,10 +1,13 @@
+2015-02-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* subr.el (indirect-function): Change advertised calling convention.
+
 2015-02-08  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	python.el: Fix completion-at-point.  (Bug#19667)
 
 	* progmodes/python.el
-	(python-shell-completion-native-get-completions): Force process
-	buffer.
+	(python-shell-completion-native-get-completions): Force process buffer.
 	(python-shell-completion-at-point): Handle case where call is not
 	in a shell buffer.
 
@@ -13,17 +16,16 @@
 	python.el: Fix shell font-lock multiline input.  (Bug#19744)
 
 	* progmodes/python.el
-	(python-shell-font-lock-post-command-hook): Handle multiline
-	input.
+	(python-shell-font-lock-post-command-hook): Handle multiline input.
 
 2015-02-08  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	python.el: Make shell font-lock respect markers.  (Bug#19650)
 
-	* progmodes/python.el (python-shell-font-lock-cleanup-buffer): Use
-	`erase-buffer`.
-	(python-shell-font-lock-comint-output-filter-function): Handle
-	newlines.
+	* progmodes/python.el (python-shell-font-lock-cleanup-buffer):
+	Use `erase-buffer`.
+	(python-shell-font-lock-comint-output-filter-function):
+	Handle newlines.
 	(python-shell-font-lock-post-command-hook): Respect markers on
 	text fontification.
 
@@ -31,8 +33,8 @@
 
 	python.el: Keep eldoc visible while typing args.  (Bug#19637)
 
-	* progmodes/python.el (python-eldoc--get-symbol-at-point): New
-	function based on Carlos Pita <carlosjosepita@gmail.com> patch.
+	* progmodes/python.el (python-eldoc--get-symbol-at-point):
+	New function based on Carlos Pita <carlosjosepita@gmail.com> patch.
 	(python-eldoc--get-doc-at-point, python-eldoc-at-point): Use it.
 
 2015-02-07  Fabián Ezequiel Gallina  <fgallina@gnu.org>
@@ -52,10 +54,10 @@
 
 2015-02-07  Martin Rudalics  <rudalics@gmx.at>
 
-	* frame.el (frame-notice-user-settings): Update
-	`frame-size-history'.
-	(make-frame): Update `frame-size-history'.  Call
-	`frame-after-make-frame'.
+	* frame.el (frame-notice-user-settings):
+	Update `frame-size-history'.
+	(make-frame): Update `frame-size-history'.
+	Call `frame-after-make-frame'.
 	* faces.el (face-set-after-frame-default): Remove call to
 	frame-can-run-window-configuration-change-hook.
 
@@ -91,8 +93,8 @@
 
 2015-02-05  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* emacs-lisp/package.el (package--sort-by-dependence): New
-	function.  Return PACKAGE-LIST sorted by dependencies.
+	* emacs-lisp/package.el (package--sort-by-dependence):
+	New function.  Return PACKAGE-LIST sorted by dependencies.
 	(package-menu-execute): Use it to delete packages in order.
 	(package--sort-deps-in-alist): New function.
 	(package-menu-mark-install): Can mark dependencies.
