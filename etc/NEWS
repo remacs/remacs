@@ -66,6 +66,8 @@ so if you want to use it, you can always take a copy from an older Emacs.
 
 * Changes in Emacs 25.1
 
+** New command `comment-line' bound to `C-x C-;'.
+
 ** New function `custom-prompt-customize-unsaved-options' checks for
 unsaved customizations and prompts user to customize (if found).
 
