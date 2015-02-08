@@ -3150,67 +3150,68 @@ With argument MSG show activation/deactivation message."
   "Get completions using native readline for PROCESS.
 When IMPORT is non-nil takes precedence over INPUT for
 completion."
-  (when (and python-shell-completion-native-enable
-             (python-util-comint-last-prompt)
-             (>= (point) (cdr (python-util-comint-last-prompt))))
-    (let* ((input (or import input))
-           (original-filter-fn (process-filter process))
-           (redirect-buffer (get-buffer-create
-                             python-shell-completion-native-redirect-buffer))
-           (separators (python-rx
-                        (or whitespace open-paren close-paren)))
-           (trigger "\t\t\t")
-           (new-input (concat input trigger))
-           (input-length
-            (save-excursion
-              (+ (- (point-max) (comint-bol)) (length new-input))))
-           (delete-line-command (make-string input-length ?\b))
-           (input-to-send (concat new-input delete-line-command)))
-      ;; Ensure restoring the process filter, even if the user quits
-      ;; or there's some other error.
-      (unwind-protect
-          (with-current-buffer redirect-buffer
-            ;; Cleanup the redirect buffer
-            (delete-region (point-min) (point-max))
-            ;; Mimic `comint-redirect-send-command', unfortunately it
-            ;; can't be used here because it expects a newline in the
-            ;; command and that's exactly what we are trying to avoid.
-            (let ((comint-redirect-echo-input nil)
-                  (comint-redirect-verbose nil)
-                  (comint-redirect-perform-sanity-check nil)
-                  (comint-redirect-insert-matching-regexp nil)
-                  ;; Feed it some regex that will never match.
-                  (comint-redirect-finished-regexp "^\\'$")
-                  (comint-redirect-output-buffer redirect-buffer))
-              ;; Compatibility with Emacs 24.x.  Comint changed and
-              ;; now `comint-redirect-filter' gets 3 args.  This
-              ;; checks which version of `comint-redirect-filter' is
-              ;; in use based on its args and uses `apply-partially'
-              ;; to make it up for the 3 args case.
-              (if (= (length
-                      (help-function-arglist 'comint-redirect-filter)) 3)
-                  (set-process-filter
-                   process (apply-partially
-                            #'comint-redirect-filter original-filter-fn))
-                (set-process-filter process #'comint-redirect-filter))
-              (process-send-string process input-to-send)
-              (accept-process-output
-               process
-               python-shell-completion-native-output-timeout)
-              ;; XXX: can't use `python-shell-accept-process-output'
-              ;; here because there are no guarantees on how output
-              ;; ends.  The workaround here is to call
-              ;; `accept-process-output' until we don't find anything
-              ;; else to accept.
-              (while (accept-process-output
-                      process
-                      python-shell-completion-native-output-timeout))
-              (cl-remove-duplicates
-               (split-string
-                (buffer-substring-no-properties
-                 (point-min) (point-max))
-                separators t))))
-        (set-process-filter process original-filter-fn)))))
+  (with-current-buffer (process-buffer process)
+    (when (and python-shell-completion-native-enable
+               (python-util-comint-last-prompt)
+               (>= (point) (cdr (python-util-comint-last-prompt))))
+      (let* ((input (or import input))
+             (original-filter-fn (process-filter process))
+             (redirect-buffer (get-buffer-create
+                               python-shell-completion-native-redirect-buffer))
+             (separators (python-rx
+                          (or whitespace open-paren close-paren)))
+             (trigger "\t\t\t")
+             (new-input (concat input trigger))
+             (input-length
+              (save-excursion
+                (+ (- (point-max) (comint-bol)) (length new-input))))
+             (delete-line-command (make-string input-length ?\b))
+             (input-to-send (concat new-input delete-line-command)))
+        ;; Ensure restoring the process filter, even if the user quits
+        ;; or there's some other error.
+        (unwind-protect
+            (with-current-buffer redirect-buffer
+              ;; Cleanup the redirect buffer
+              (delete-region (point-min) (point-max))
+              ;; Mimic `comint-redirect-send-command', unfortunately it
+              ;; can't be used here because it expects a newline in the
+              ;; command and that's exactly what we are trying to avoid.
+              (let ((comint-redirect-echo-input nil)
+                    (comint-redirect-verbose nil)
+                    (comint-redirect-perform-sanity-check nil)
+                    (comint-redirect-insert-matching-regexp nil)
+                    ;; Feed it some regex that will never match.
+                    (comint-redirect-finished-regexp "^\\'$")
+                    (comint-redirect-output-buffer redirect-buffer))
+                ;; Compatibility with Emacs 24.x.  Comint changed and
+                ;; now `comint-redirect-filter' gets 3 args.  This
+                ;; checks which version of `comint-redirect-filter' is
+                ;; in use based on its args and uses `apply-partially'
+                ;; to make it up for the 3 args case.
+                (if (= (length
+                        (help-function-arglist 'comint-redirect-filter)) 3)
+                    (set-process-filter
+                     process (apply-partially
+                              #'comint-redirect-filter original-filter-fn))
+                  (set-process-filter process #'comint-redirect-filter))
+                (process-send-string process input-to-send)
+                (accept-process-output
+                 process
+                 python-shell-completion-native-output-timeout)
+                ;; XXX: can't use `python-shell-accept-process-output'
+                ;; here because there are no guarantees on how output
+                ;; ends.  The workaround here is to call
+                ;; `accept-process-output' until we don't find anything
+                ;; else to accept.
+                (while (accept-process-output
+                        process
+                        python-shell-completion-native-output-timeout))
+                (cl-remove-duplicates
+                 (split-string
+                  (buffer-substring-no-properties
+                   (point-min) (point-max))
+                  separators t))))
+          (set-process-filter process original-filter-fn))))))
 
 (defun python-shell-completion-get-completions (process import input)
   "Do completion at point using PROCESS for IMPORT or INPUT.
@@ -3253,20 +3254,23 @@ completion."
 Optional argument PROCESS forces completions to be retrieved
 using that one instead of current buffer's process."
   (setq process (or process (get-buffer-process (current-buffer))))
-  (let* ((last-prompt-end (cdr (python-util-comint-last-prompt)))
+  (let* ((line-start (if (derived-mode-p 'inferior-python-mode)
+                         ;; Working on a shell buffer: use prompt end.
+                         (cdr (python-util-comint-last-prompt))
+                       (line-beginning-position)))
          (import-statement
           (when (string-match-p
                  (rx (* space) word-start (or "from" "import") word-end space)
-                 (buffer-substring-no-properties last-prompt-end (point)))
-            (buffer-substring-no-properties last-prompt-end (point))))
+                 (buffer-substring-no-properties line-start (point)))
+            (buffer-substring-no-properties line-start (point))))
          (start
           (save-excursion
             (if (not (re-search-backward
                       (python-rx
                        (or whitespace open-paren close-paren string-delimiter))
-                      last-prompt-end
+                      line-start
                       t 1))
-                last-prompt-end
+                line-start
               (forward-char (length (match-string-no-properties 0)))
               (point))))
          (end (point))
