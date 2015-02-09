@@ -1,3 +1,11 @@
+2015-02-09  Leo Liu  <sdl.web@gmail.com>
+
+	* emacs-lisp/pcase.el (pcase-lambda): New Macro.  (Bug#19814)
+
+	* emacs-lisp/lisp-mode.el (el-kws-re): Include `pcase-lambda'.
+
+	* emacs-lisp/macroexp.el (macroexp-parse-body): New function.
+
 2015-02-08  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Port to platforms lacking test -a and -o
