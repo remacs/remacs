@@ -1,3 +1,10 @@
+2015-02-09  Dima Kogan  <dima@secretsauce.net>
+
+	* xfaces.c (realize_basic_faces): Don't set Qscalable_fonts_allowed to
+	t.
+	* font.c (font_score): Try to find a font without scaling first,
+	and only accept scalable fonts if we did not get a match (Bug#19117).
+
 2015-02-09  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* keyboard.c (syms_of_keyboard): Use non-nil default value.
