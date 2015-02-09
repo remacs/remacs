@@ -1,3 +1,8 @@
+2015-02-09  Nicolas Petton <nicolas@petton.fr>
+
+	* emacs-lisp/seq.el (seq-group-by): Improves seq-group-by to
+	return sequence elements in correct order.
+
 2015-02-11  Martin Rudalics  <rudalics@gmx.at>
 
 	* frame.el (toggle-frame-maximized, toggle-frame-fullscreen):

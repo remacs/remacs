@@ -4,6 +4,11 @@
 	fullscreen frame parameter.  Describe `fullscreen-restore'
 	parameter.
 
+2015-02-09 Nicolas Petton <nicolas@petton.fr>
+
+	* sequences.texi (Sequence Functions): Update documentation
+	examples for seq-group-by.
+
 2015-02-09  Eli Zaretskii  <eliz@gnu.org>
 
 	* positions.texi (Screen Lines): Update the documentation of

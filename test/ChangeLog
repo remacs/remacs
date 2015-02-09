@@ -3,6 +3,12 @@
 	* automated/package-test.el (package-test-signed):
 	More informative failure messages.
 
+2015-02-09  Nicolas Petton <nicolas@petton.fr>
+
+	* automated/seq-tests.el (test-seq-group-by): Update test for
+	seq-group-by to check that sequence elements are returned in the
+	correct order.
+
 2015-02-07  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* automated/python-tests.el (python-eldoc--get-symbol-at-point-1)

@@ -4,7 +4,7 @@
 
 ;; Author: Nicolas Petton <nicolas@petton.fr>
 ;; Keywords: sequences
-;; Version: 1.1
+;; Version: 1.1.1
 
 ;; Maintainer: emacs-devel@gnu.org
 
@@ -245,17 +245,16 @@ negative integer or 0, nil is returned."
   "Apply FUNCTION to each element of SEQ.
 Separate the elements of SEQ into an alist using the results as
 keys.  Keys are compared using `equal'."
-  (nreverse
-   (seq-reduce
-    (lambda (acc elt)
-      (let* ((key (funcall function elt))
-             (cell (assoc key acc)))
-        (if cell
-            (setcdr cell (push elt (cdr cell)))
-          (push (list key elt) acc))
-        acc))
-    seq
-    nil)))
+  (seq-reduce
+   (lambda (acc elt)
+     (let* ((key (funcall function elt))
+            (cell (assoc key acc)))
+       (if cell
+           (setcdr cell (push elt (cdr cell)))
+         (push (list key elt) acc))
+       acc))
+   (seq-reverse seq)
+   nil))
 
 (defun seq--drop-list (list n)
   "Return a list from LIST without its first N elements.
