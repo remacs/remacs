@@ -1,3 +1,7 @@
+2015-02-09  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* keyboard.c (syms_of_keyboard): Use non-nil default value.
+
 2015-02-09  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Use C99's INFINITY and NAN macros

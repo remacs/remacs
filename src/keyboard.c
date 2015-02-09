@@ -11707,7 +11707,7 @@ the previous echo area message.
 The input method function should refer to the variables
 `input-method-use-echo-area' and `input-method-exit-on-first-char'
 for guidance on what to do.  */);
-  Vinput_method_function = Qnil;
+  Vinput_method_function = Qlist;
 
   DEFVAR_LISP ("input-method-previous-message",
 	       Vinput_method_previous_message,
