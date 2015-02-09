@@ -1,5 +1,11 @@
 2015-02-09  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Check for some overflows in vertical-motion
+	* indent.c (window_column_x): New function.
+	(Fvertical_motion): Use it to protect against integer overflow
+	when computing column.  Prefer extract_float to doing things by hand.
+	Avoid unnecessary casts.
+
 	* xfont.c: Minor style fixes
 	(xfont_list_pattern): Reindent to 80 cols and use Emacs-style comments.
 	Redo loop so that less indentation is needed.

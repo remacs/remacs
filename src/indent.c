@@ -1928,6 +1928,21 @@ vmotion (register ptrdiff_t from, register ptrdiff_t from_byte,
 			 -1, hscroll, 0, w);
 }
 
+/* In window W (derived from WINDOW), return x coordinate for column
+   COL (derived from COLUMN).  */
+static int
+window_column_x (struct window *w, Lisp_Object window,
+		 double col, Lisp_Object column)
+{
+  double x = col * FRAME_COLUMN_WIDTH (XFRAME (w->frame)) + 0.5;
+
+  /* FIXME: Should this be limited to W's dimensions?  */
+  if (! (INT_MIN <= x && x <= INT_MAX))
+    args_out_of_range (window, column);
+
+  return x;
+}
+
 DEFUN ("vertical-motion", Fvertical_motion, Svertical_motion, 1, 3, 0,
        doc: /* Move point to start of the screen line LINES lines down.
 If LINES is negative, this means moving up.
@@ -1970,15 +1985,14 @@ whether or not it is currently displayed in some window.  */)
   Lisp_Object old_buffer;
   EMACS_INT old_charpos IF_LINT (= 0), old_bytepos IF_LINT (= 0);
   struct gcpro gcpro1;
-  Lisp_Object lcols = Qnil;
-  double cols IF_LINT (= 0);
+  Lisp_Object lcols;
   void *itdata = NULL;
 
   /* Allow LINES to be of the form (HPOS . VPOS) aka (COLUMNS . LINES).  */
-  if (CONSP (lines) && (NUMBERP (XCAR (lines))))
+  bool lcols_given = CONSP (lines);
+  if (lcols_given)
     {
       lcols = XCAR (lines);
-      cols = INTEGERP (lcols) ? (double) XINT (lcols) : XFLOAT_DATA (lcols);
       lines = XCDR (lines);
     }
 
@@ -2013,20 +2027,14 @@ whether or not it is currently displayed in some window.  */)
       ptrdiff_t nlines = XINT (lines);
       int vpos_init = 0;
       double start_col;
-      int start_x;
-      bool start_x_given = false;
+      int start_x IF_LINT (= 0);
       int to_x = -1;
 
-      if (!NILP (cur_col))
+      bool start_x_given = !NILP (cur_col);
+      if (start_x_given)
 	{
-	  CHECK_NUMBER_OR_FLOAT (cur_col);
-	  start_col =
-	    INTEGERP (cur_col)
-	    ? (double) XINT (cur_col)
-	    : XFLOAT_DATA (cur_col);
-	  start_x =
-	    (int)(start_col * FRAME_COLUMN_WIDTH (XFRAME (w->frame)) + 0.5);
-	  start_x_given = true;
+	  start_col = extract_float (cur_col);
+	  start_x = window_column_x (w, window, start_col, cur_col);
 	}
 
       itdata = bidi_shelve_cache ();
@@ -2066,7 +2074,7 @@ whether or not it is currently displayed in some window.  */)
 
       if (start_x_given)
 	{
-	  it.hpos = (int) start_col;
+	  it.hpos = start_col;
 	  it.current_x = start_x;
 	}
       else
@@ -2138,8 +2146,8 @@ whether or not it is currently displayed in some window.  */)
 	     return the correct value to the caller.  */
 	  vpos_init = -1;
 	}
-      if (!NILP (lcols))
-	to_x = (int)(cols * FRAME_COLUMN_WIDTH (XFRAME (w->frame)) + 0.5);
+      if (lcols_given)
+	to_x = window_column_x (w, window, extract_float (lcols), lcols);
       if (nlines <= 0)
 	{
 	  it.vpos = vpos_init;
@@ -2185,7 +2193,7 @@ whether or not it is currently displayed in some window.  */)
       /* Move to the goal column, if one was specified.  If the window
 	 was originally hscrolled, the goal column is interpreted as
 	 an addition to the hscroll amount.  */
-      if (!NILP (lcols))
+      if (lcols_given)
 	move_it_in_display_line (&it, ZV, first_x + to_x, MOVE_TO_X);
 
       SET_PT_BOTH (IT_CHARPOS (it), IT_BYTEPOS (it));
