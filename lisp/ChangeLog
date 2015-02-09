@@ -1,3 +1,10 @@
+2015-02-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port to platforms lacking test -a and -o
+	* Makefile.in (compile-clean):
+	* net/tramp-sh.el (tramp-find-executable):
+	Prefer '&&' and '||' to 'test -a' and 'test -o'.
+
 2015-02-08  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* newcomment.el (comment-line): Fix missing paren.
