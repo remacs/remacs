@@ -1,5 +1,11 @@
 2015-02-09  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Use C99's INFINITY and NAN macros
+	* lread.c: Include <math.h>.
+	(string_to_number): Use INFINITY and NAN rather than rolling our own.
+	This avoids some runtime diagnostics when building with
+	gcc -fsanitize=undefined.
+
 	Fix bidi_explicit_dir_char undefined behavior
 	* bidi.c (bidi_explicit_dir_char): Avoid subscript error when
 	argument is BIDI_EOB.  This can happen in bidi_level_of_next_char.
