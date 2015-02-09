@@ -1,3 +1,7 @@
+2015-02-09  Simen Heggestøyl  <simenheg@gmail.com>  (tiny change)
+
+	* textmodes/css-mode.el (css-smie-rules): Fix paren indent (bug#19815).
+
 2015-02-09  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/cl-generic.el (cl--generic-lambda): Use macroexp-parse-body.
