@@ -1,3 +1,10 @@
+2015-02-09  Kelly Dean  <kelly@prtime.org>
+
+	* desktop.el: Save mark-ring less verbosely.
+	(desktop-var-serdes-funs): New var.
+	(desktop-buffer-info, desktop-create-buffer): Use it.
+	(desktop-file-version): Update to 208.
+
 2015-02-09  Leo Liu  <sdl.web@gmail.com>
 
 	* emacs-lisp/pcase.el (pcase-lambda): New Macro.  (Bug#19814)
