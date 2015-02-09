@@ -1,3 +1,13 @@
+2015-02-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Better distinguish infinite from invalid times
+	* editfns.c (check_time_validity): New function.
+	(decode_time_components): Return int, not bool.
+	Return -1 (not 0) if the time is out of range.
+	All callers changed.
+	(lisp_time_struct, lisp_seconds_argument): Distinguish better
+	between time overflow and invalid time values.
+
 2015-02-08  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Minor tweaks to frame_size_history_add
