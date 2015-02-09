@@ -1,3 +1,10 @@
+2015-02-09  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/cl-generic.el (cl--generic-lambda): Use macroexp-parse-body.
+
+	* emacs-lisp/eieio-core.el (eieio-oset-default): Catch the unexpected
+	case where the default value would be re-interpreted as a form!
+
 2015-02-09  Christopher Genovese  <genovese@cmu.edu>  (tiny change)
 
 	* help-fns.el (help-fns--signature): Keep doc for keymap.
