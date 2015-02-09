@@ -1,3 +1,7 @@
+2015-02-09  Christopher Genovese  <genovese@cmu.edu>  (tiny change)
+
+	* help-fns.el (help-fns--signature): Keep doc for keymap.
+
 2015-02-09  Kelly Dean  <kelly@prtime.org>
 
 	* desktop.el: Save mark-ring less verbosely.
