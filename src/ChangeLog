@@ -1,3 +1,10 @@
+2015-02-09  Eli Zaretskii  <eliz@gnu.org>
+
+	* indent.c (Fvertical_motion): Accept an additional argument
+	CUR-COL and use it as the starting screen coordinate.
+	* window.c (window_scroll_line_based, Fmove_to_window_line): All
+	callers of vertical-motion changed.
+
 2015-02-09  Dima Kogan  <dima@secretsauce.net>
 
 	* font.c (font_score): Remove unused variable assignment.
