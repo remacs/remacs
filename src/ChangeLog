@@ -1,5 +1,9 @@
 2015-02-09  Dima Kogan  <dima@secretsauce.net>
 
+	* font.c (font_score): Remove unused variable assignment.
+
+2015-02-09  Dima Kogan  <dima@secretsauce.net>
+
 	* xfaces.c (realize_basic_faces): Don't set Qscalable_fonts_allowed to
 	t.
 	* font.c (font_score): Try to find a font without scaling first,
