@@ -1,5 +1,9 @@
 2015-02-09  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Fix bidi_explicit_dir_char undefined behavior
+	* bidi.c (bidi_explicit_dir_char): Avoid subscript error when
+	argument is BIDI_EOB.  This can happen in bidi_level_of_next_char.
+
 	Better distinguish infinite from invalid times
 	* editfns.c (check_time_validity): New function.
 	(decode_time_components): Return int, not bool.
