@@ -1,3 +1,35 @@
+2015-02-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use bool for boolean in xdisp.c
+	* dispextern.h (display_prop_intangible_p, resize_mini_window)
+	(pixel_to_glyph_coords, mark_window_display_accurate)
+	(compute_display_string_pos, handle_tool_bar_click)
+	(x_intersect_rectangles, clear_mouse_face, display_tty_menu_item):
+	* lisp.h (setup_echo_area_for_printing, message_with_string)
+	(pos_visible_p): Use bool for boolean.
+	* xdisp.c: Use bool, true, false intstead of int, 1, 0.
+	Remove unnecessary forward decls.
+	(trace_move) [DEBUG_TRACE_MOVE]: Now static.
+	(CHECK_IT, CHECK_WINDOW_END):
+	Now an inline function that is always defined.
+	(check_it) [0]:
+	(check_window_end) [oGLYPH_DEBUG && ENABLE_CHECKING]:
+	Remove; no longer needed.
+	(handle_stop): Prefer (X && !Y) to (X ? !Y : 0).
+	(get_overlay_strings): Omit unnecessary casts.
+	(forward_to_next_line_start):
+	(Ftool_bar_height):
+	Prefer !BOOL to (BOOL ? 0 : 1).
+	(next_element_function): New typedef.
+	(get_next_element): Use it.  Now const.
+	(IT_POS_VALID_AFTER_MOVE_P): Prefer !X || Y==0 to (X ? Y==0 : 1).
+	(vmessage): Now ATTRIBUTE_FORMAT_PRINTF (1, 0), to pacify GCC 4.9.2
+	(display_echo_area): Prefer BOOLEXPR to BOOLEXPR ? 1 : 0.
+	(tool_bar_item_info): Simplify.
+	(invisible_prop): Rename from invisible_p, since it doesn't
+	return bool.  All callers changed.
+	(x_produce_glyphs): Simplify.
+
 2015-02-09  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Check for some overflows in vertical-motion
