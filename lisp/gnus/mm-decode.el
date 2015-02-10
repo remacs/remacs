@@ -30,8 +30,9 @@
 (autoload 'gnus-map-function "gnus-util")
 (autoload 'gnus-replace-in-string "gnus-util")
 (autoload 'gnus-read-shell-command "gnus-util")
-(autoload 'gnus-overlays-at "gnus-util")
-(autoload 'gnus-overlay-put "gnus-util")
+
+(autoload 'gnus-overlays-at "gnus")
+(autoload 'gnus-overlay-put "gnus")
 
 (autoload 'mm-inline-partial "mm-partial")
 (autoload 'mm-inline-external-body "mm-extern")
