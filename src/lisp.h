@@ -3640,7 +3640,7 @@ extern bool noninteractive_need_newline;
 extern Lisp_Object echo_area_buffer[2];
 extern void add_to_log (const char *, Lisp_Object, Lisp_Object);
 extern void check_message_stack (void);
-extern void setup_echo_area_for_printing (int);
+extern void setup_echo_area_for_printing (bool);
 extern bool push_message (void);
 extern void pop_message_unwind (void);
 extern Lisp_Object restore_message_unwind (Lisp_Object);
@@ -3653,7 +3653,7 @@ extern void message1_nolog (const char *);
 extern void message3 (Lisp_Object);
 extern void message3_nolog (Lisp_Object);
 extern void message_dolog (const char *, ptrdiff_t, bool, bool);
-extern void message_with_string (const char *, Lisp_Object, int);
+extern void message_with_string (const char *, Lisp_Object, bool);
 extern void message_log_maybe_newline (void);
 extern void update_echo_area (void);
 extern void truncate_echo_area (ptrdiff_t);
@@ -3663,8 +3663,8 @@ void set_frame_cursor_types (struct frame *, Lisp_Object);
 extern void syms_of_xdisp (void);
 extern void init_xdisp (void);
 extern Lisp_Object safe_eval (Lisp_Object);
-extern int pos_visible_p (struct window *, ptrdiff_t, int *,
-                          int *, int *, int *, int *, int *);
+extern bool pos_visible_p (struct window *, ptrdiff_t, int *,
+			   int *, int *, int *, int *, int *);
 
 /* Defined in xsettings.c.  */
 extern void syms_of_xsettings (void);

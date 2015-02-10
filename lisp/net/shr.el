@@ -516,9 +516,9 @@ size, and full-buffer size."
 	(when bolp
 	  (shr-mark-fill start))
 	(when shr-use-fonts
-	  (add-face-text-property start (point)
-				  (or shr-current-font 'variable-pitch)
-				  t)))))))
+	  (put-text-property start (point)
+			     'face
+			     (or shr-current-font 'variable-pitch))))))))
 
 (defun shr-fill-lines (start end)
   (if (<= shr-internal-width 0)
@@ -1644,8 +1644,9 @@ The preference is a float determined from `shr-prefer-media-type'."
 		   (propertize " "
 			       'display `(space :align-to (,pixel-align))
 			       'face (and (> (length line) 0)
-					  (get-text-property
-					   (1- (length line)) 'face line))
+					  (shr-face-background
+					   (get-text-property
+					    (1- (length line)) 'face line)))
 			       'shr-table-indent shr-table-id)
 		   shr-table-vertical-line)
 		  (shr-colorize-region
@@ -1667,6 +1668,16 @@ The preference is a float determined from `shr-prefer-media-type'."
 	(shr-insert-table-ruler widths)))
     (unless (= start (point))
       (put-text-property start (1+ start) 'shr-table-id shr-table-id))))
+
+(defun shr-face-background (face)
+  (and (consp face)
+       (let ((background nil))
+	 (dolist (elem face)
+	   (when (and (consp elem)
+		      (eq (car elem) :background))
+	     (setq background (cadr elem))))
+	 (and background
+	      (list :background background)))))
 
 (defun shr-expand-alignments (start end)
   (while (< (setq start (next-single-property-change
