@@ -1,3 +1,8 @@
+2015-02-10  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* mm-decode.el (mm-convert-shr-links): Delete useless variable `face';
+	use gnus-overlays-at and gnus-overlay-put.
+
 2015-02-10  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* mm-decode.el (mm-shr): Only pass the fill column when not using

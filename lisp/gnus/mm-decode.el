@@ -30,6 +30,8 @@
 (autoload 'gnus-map-function "gnus-util")
 (autoload 'gnus-replace-in-string "gnus-util")
 (autoload 'gnus-read-shell-command "gnus-util")
+(autoload 'gnus-overlays-at "gnus-util")
+(autoload 'gnus-overlay-put "gnus-util")
 
 (autoload 'mm-inline-partial "mm-partial")
 (autoload 'mm-inline-external-body "mm-extern")
@@ -1894,15 +1896,14 @@ If RECURSIVE, search recursively."
 		(< start (point-max)))
       (when (setq start (text-property-not-all start (point-max) 'shr-url nil))
 	(setq end (next-single-property-change start 'shr-url nil (point-max)))
-	(setq face (get-text-property start 'face))
 	(widget-convert-button
 	 'url-link start end
 	 :help-echo (get-text-property start 'help-echo)
 	 :keymap shr-map
 	 (get-text-property start 'shr-url))
 	(put-text-property start end 'local-map nil)
-	(dolist (overlay (overlays-at start))
-	  (overlay-put overlay 'face nil))
+	(dolist (overlay (gnus-overlays-at start))
+	  (gnus-overlay-put overlay 'face nil))
 	(setq start end)))))
 
 (defun mm-handle-filename (handle)
