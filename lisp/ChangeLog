@@ -34,6 +34,7 @@
 	(shr-dom-max-natural-width): New function.
 	(shr-tag-h1): Don't use variable-pitch fonts on fontless rendering.
 	(shr-tag-tt): New function.
+	(shr-tag-hr): Compute the right length when using fonts.
 
 2015-02-10  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 

@@ -1476,8 +1476,12 @@ The preference is a float determined from `shr-prefer-media-type'."
 
 (defun shr-tag-hr (_dom)
   (shr-ensure-newline)
-  ;; FIXME: Should try to make a line of the required pixel size.
-  (insert (make-string (window-width) shr-hr-line) "\n"))
+  (insert (make-string (if (not shr-use-fonts)
+			   shr-internal-width
+			 (1+ (/ shr-internal-width
+				shr-table-separator-pixel-width)))
+		       shr-hr-line)
+	  "\n"))
 
 (defun shr-tag-title (dom)
   (shr-heading dom 'bold 'underline))
