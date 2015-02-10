@@ -35,6 +35,9 @@
 	(shr-tag-h1): Don't use variable-pitch fonts on fontless rendering.
 	(shr-tag-tt): New function.
 	(shr-tag-hr): Compute the right length when using fonts.
+	(shr-table-widths): Off-by-one error in width computation.
+	(shr-expand-newlines): Remove dead code.
+	(shr-insert-table): Extend background colors to the end of the column.
 
 2015-02-10  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 

@@ -1017,44 +1017,6 @@ ones, in case fg and bg are nil."
 				  t)))
       new-colors)))
 
-(defun shr-expand-newlines (start end color)
-  (save-restriction
-    ;; Skip past all white space at the start and ends.
-    (goto-char start)
-    (skip-chars-forward " \t\n")
-    (beginning-of-line)
-    (setq start (point))
-    (goto-char end)
-    (skip-chars-backward " \t\n")
-    (forward-line 1)
-    (setq end (point))
-    (narrow-to-region start end)
-    (let ((width (shr-buffer-width))
-	  column)
-      (goto-char (point-min))
-      (while (not (eobp))
-	(end-of-line)
-	(when (and (< (setq column (current-column)) width)
-		   (< (setq column (shr-previous-newline-padding-width column))
-		      width))
-	  (let ((overlay (make-overlay (point) (1+ (point)))))
-	    (overlay-put overlay 'before-string
-			 (concat
-			  (mapconcat
-			   (lambda (overlay)
-			     (let ((string (plist-get
-					    (overlay-properties overlay)
-					    'before-string)))
-			       (if (not string)
-				   ""
-				 (overlay-put overlay 'before-string "")
-				 string)))
-			   (overlays-at (point))
-			   "")
-			  (propertize (make-string (- width column) ? )
-				      'face (list :background color))))))
-	(forward-line 1)))))
-
 (defun shr-previous-newline-padding-width (width)
   (let ((overlays (overlays-at (point)))
 	(previous-width 0))
@@ -1677,11 +1639,15 @@ The preference is a float determined from `shr-prefer-media-type'."
 	      (dolist (line lines)
 		(end-of-line)
 		(let ((start (point)))
-		  (insert line
-			  (propertize " "
-				      'display `(space :align-to (,pixel-align))
-				      'shr-table-indent shr-table-id)
-			  shr-table-vertical-line)
+		  (insert
+		   line
+		   (propertize " "
+			       'display `(space :align-to (,pixel-align))
+			       'face (and (> (length line) 0)
+					  (get-text-property
+					   (1- (length line)) 'face line))
+			       'shr-table-indent shr-table-id)
+		   shr-table-vertical-line)
 		  (shr-colorize-region
 		   start (1- (point)) (nth 5 column) (nth 6 column)))
 		(forward-line 1))
@@ -1758,7 +1724,7 @@ The preference is a float determined from `shr-prefer-media-type'."
 	  (setq i (1+ i)))))
     (let ((extra (- (apply '+ (append suggested-widths nil))
 		    (apply '+ (append widths nil))
-		    (* shr-table-separator-pixel-width (length widths))))
+		    (* shr-table-separator-pixel-width (1+ (length widths)))))
 	  (expanded-columns 0))
       ;; We have extra, unused space, so divide this space amongst the
       ;; columns.
