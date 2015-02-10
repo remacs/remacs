@@ -1,3 +1,38 @@
+2015-02-10  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* net/shr.el (shr-use-fonts): New variable.
+	(shr-fill-text): Rename from "fold".
+	(shr-pixel-column, shr-pixel-region, shr-string-pixel-width): New
+	functions.
+	(shr-insert): Just insert, don't fill the text.  Filling is now
+	done afterwards per display unit.
+	(shr-fill-lines, shr-fill-line): New functions to fill text on a
+	per-unit base.
+	(shr-find-fill-point): Take a "beginning" parameter.
+	(shr-indent): Indent using the :width display parameter when using
+	fonts.
+	(shr-parse-style): Ignore "inherit" values, since we already do that.
+	(shr-tag-img): Remove the insertion states.
+	(shr-tag-blockquote): New-style filling.
+	(shr-tag-dd): Ditto.
+	(shr-tag-li): Ditto.
+	(shr-mark-fill): New function to mark lines that need filling.
+	(shr-tag-h1): Use a larger font.
+	(shr-tag-table-1): Get the natural and suggested widths in one
+	rendering.
+	(shr-tag-table): Create the "fixed" version of the table only once
+	so that we can cache data in the table.
+	(shr-insert-table): Get colspan calculations right by having
+	zero-width columns after colspan ones.
+	(shr-expand-alignments): New function to make :align-to specs work
+	right when rendered in one buffer and displayed in another one.
+	(shr-insert-table-ruler): Use :align-to to get the widths right.
+	(shr-make-table): Cache more.
+	(shr-make-table-1): Use the new <td> data layout.
+	(shr-pixel-buffer-width): New function.
+	(shr-render-td): Add a caching layer.
+	(shr-dom-max-natural-width): New function.
+
 2015-02-10  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	python.el: Improved shell font lock respecting markers.  (Bug#19650)

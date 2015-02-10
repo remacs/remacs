@@ -1,3 +1,15 @@
+2015-02-10  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* mm-decode.el (mm-shr): Only pass the fill column when not using
+	fonts, because limiting the width to what's appropriate for followups
+	doesn't really help when not using proportional fonts.
+
+2015-02-09  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* mm-decode.el (mm-convert-shr-links): Don't overwrite the faces from
+	shr, beacause that breaks folding.
+	(mm-shr): Don't shorten the width when using fonts.
+
 2015-02-05  Teodor Zlatanov  <tzz@lifelogs.com>
 
 	* gnus-start.el (gnus-save-newsrc-file-check-timestamp): Remove
