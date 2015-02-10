@@ -1,3 +1,12 @@
+2015-02-10  Eli Zaretskii  <eliz@gnu.org>
+
+	* cmdproxy.c (get_next_token): Don't make backslashes disappear
+	without a trace when they are not followed by a quote.
+	(search_dir): Support searching programs whose file name already
+	has an arbitrary extension.  (Bug#19817)
+	(main): When passing a command line to the shell, use cmd.exe
+	rules for quoting command-line tail.
+
 2014-11-17  Oscar Fuentes  <ofv@wanadoo.es>
 
 	* inc/ms-w32.h: Define MINGW_W64.
