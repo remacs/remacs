@@ -4709,8 +4709,8 @@ returned as is."
 
   (if (null eldoc-documentation-function)
       ;; Emacs<25
-      (setq (make-local-variable 'eldoc-documentation-function)
-            #'python-eldoc-function)
+      (set (make-local-variable 'eldoc-documentation-function)
+           #'python-eldoc-function)
     (add-function :before-until (local 'eldoc-documentation-function)
                   #'python-eldoc-function))
 
