@@ -1,3 +1,15 @@
+2015-02-10  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Improved shell font lock respecting markers.  (Bug#19650)
+
+	* progmodes/python.el
+	(python-shell-font-lock-get-or-create-buffer): Use special buffer name.
+	(python-shell-font-lock-with-font-lock-buffer): Enable font lock.
+	(python-shell-font-lock-post-command-hook): Fontify by copying text
+	properties from fontified buffer to shell, keeping markers unchanged.
+	(python-shell-font-lock-turn-off): Fix typo.
+	(python-util-text-properties-replace-name): Delete function.
+
 2015-02-09  Simen Heggestøyl  <simenheg@gmail.com>  (tiny change)
 
 	* textmodes/css-mode.el (css-smie-rules): Fix paren indent (bug#19815).
