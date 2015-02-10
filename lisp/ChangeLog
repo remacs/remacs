@@ -1,3 +1,13 @@
+2015-02-10  Juri Linkov  <juri@linkov.net>
+
+	Better support for the case of typing RET on the prompt in comint.
+
+	* comint.el (comint-get-old-input-default): Go to the field end
+	when comint-use-prompt-regexp is nil.
+	(comint-line-beginning-position): Check if point is already
+	on the prompt before searching for the prompt when
+	comint-use-prompt-regexp is non-nil.  (Bug#19710)
+
 2015-02-08  Eli Zaretskii  <eliz@gnu.org>
 
 	* frame.el (frame-notice-user-settings): Refresh the value of
