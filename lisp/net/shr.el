@@ -1168,6 +1168,10 @@ ones, in case fg and bg are nil."
 (defun shr-tag-u (dom)
   (shr-fontize-dom dom 'underline))
 
+(defun shr-tag-tt (dom)
+  (let ((shr-current-font 'default))
+    (shr-generic dom)))
+
 (defun shr-parse-style (style)
   (when style
     (save-match-data
@@ -1451,7 +1455,9 @@ The preference is a float determined from `shr-prefer-media-type'."
   (shr-generic dom))
 
 (defun shr-tag-h1 (dom)
-  (shr-heading dom '(variable-pitch (:height 1.3 :weight bold))))
+  (shr-heading dom (if shr-use-fonts
+		       '(variable-pitch (:height 1.3 :weight bold))
+		     'bold)))
 
 (defun shr-tag-h2 (dom)
   (shr-heading dom 'bold))

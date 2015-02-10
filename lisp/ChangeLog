@@ -32,6 +32,8 @@
 	(shr-pixel-buffer-width): New function.
 	(shr-render-td): Add a caching layer.
 	(shr-dom-max-natural-width): New function.
+	(shr-tag-h1): Don't use variable-pitch fonts on fontless rendering.
+	(shr-tag-tt): New function.
 
 2015-02-10  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
