@@ -1,15 +1,17 @@
+2015-02-10  Glenn Morris  <rgm@gnu.org>
+
+	* automated/package-test.el (package-test-signed):
+	More informative failure messages.
+
 2015-02-07  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
-	* automated/python-tests.el
-	(python-eldoc--get-symbol-at-point-1)
+	* automated/python-tests.el (python-eldoc--get-symbol-at-point-1)
 	(python-eldoc--get-symbol-at-point-2)
 	(python-eldoc--get-symbol-at-point-3)
 	(python-eldoc--get-symbol-at-point-4): New tests.
 
-2015-02-07  Fabián Ezequiel Gallina  <fgallina@gnu.org>
-
-	* automated/python-tests.el
-	(python-tests-visible-string): New function.
+	* automated/python-tests.el (python-tests-visible-string):
+	New function.
 	(python-parens-electric-indent-1)
 	(python-triple-quote-pairing): Fix indentation, move require calls.
 	(python-hideshow-hide-levels-1)
