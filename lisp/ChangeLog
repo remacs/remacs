@@ -38,6 +38,9 @@
 	(shr-table-widths): Off-by-one error in width computation.
 	(shr-expand-newlines): Remove dead code.
 	(shr-insert-table): Extend background colors to the end of the column.
+	(shr-insert-table): Only copy the background, not underline and
+	the like.
+	(shr-face-background): New function.
 
 2015-02-10  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
