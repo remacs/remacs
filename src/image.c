@@ -1299,6 +1299,14 @@ static void
 x_clear_image (struct frame *f, struct image *img)
 {
   block_input ();
+#ifdef USE_CAIRO
+  if (img->cr_data)
+    {
+      cairo_surface_destroy ((cairo_surface_t *)img->cr_data);
+      unblock_input ();
+      return;
+    }
+#endif
   x_clear_image_1 (f, img,
 		   CLEAR_IMAGE_PIXMAP | CLEAR_IMAGE_MASK | CLEAR_IMAGE_COLORS);
   unblock_input ();
@@ -5403,7 +5411,7 @@ pbm_load (struct frame *f, struct image *img)
 				 PNG
  ***********************************************************************/
 
-#if defined (HAVE_PNG) || defined (HAVE_NS)
+#if defined (HAVE_PNG) || defined (HAVE_NS) || defined (USE_CAIRO)
 
 /* Function prototypes.  */
 
@@ -5477,10 +5485,10 @@ png_image_p (Lisp_Object object)
   return fmt[PNG_FILE].count + fmt[PNG_DATA].count == 1;
 }
 
-#endif /* HAVE_PNG || HAVE_NS */
+#endif /* HAVE_PNG || HAVE_NS || USE_CAIRO */
 
 
-#if defined HAVE_PNG && !defined HAVE_NS
+#if defined HAVE_PNG && !defined HAVE_NS && !defined USE_CAIRO
 
 # ifdef WINDOWSNT
 /* PNG library details.  */
@@ -6049,7 +6057,44 @@ png_load (struct frame *f, struct image *img)
                         image_spec_value (img->spec, QCdata, NULL));
 }
 
-#endif /* HAVE_NS */
+#elif defined USE_CAIRO
+
+static bool
+png_load (struct frame *f, struct image *img)
+{
+  Lisp_Object file;
+  Lisp_Object specified_file = image_spec_value (img->spec, QCfile, NULL);
+  cairo_surface_t *surface;
+
+  if (! STRINGP (specified_file))
+    {
+      image_error ("Invalid image spec, file missing `%s'", img->spec, Qnil);
+      return false;
+    }
+
+  file = x_find_image_file (specified_file);
+  if (! STRINGP (file))
+    {
+      image_error ("Cannot find image file `%s'", specified_file, Qnil);
+      return false;
+    }
+
+  surface = cairo_image_surface_create_from_png (SSDATA (file));
+  if (! surface)
+    {
+      image_error ("Error creating surface from file `%s'",
+                   specified_file, Qnil);
+      return false;
+    }
+  img->width = cairo_image_surface_get_width (surface);
+  img->height = cairo_image_surface_get_height (surface);
+  img->cr_data = surface;
+  img->pixmap = 0;
+
+  return true;
+}
+
+#endif /* USE_CAIRO */
 
 
 
@@ -9353,7 +9398,7 @@ lookup_image_type (Lisp_Object type)
     return define_image_type (&gif_type);
 #endif
 
-#if defined (HAVE_PNG) || defined (HAVE_NS)
+#if defined (HAVE_PNG) || defined (HAVE_NS) || defined (USE_CAIRO)
   if (EQ (type, Qpng))
     return define_image_type (&png_type);
 #endif

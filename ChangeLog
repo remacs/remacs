@@ -1,3 +1,10 @@
+2015-02-11  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* configure.ac (with-cairo): New option.
+	(USE_CAIRO): Default to yes for Gtk+ 3.  Add code to test for cairo,
+	set CAIRO_CFLAGS, CAIRO_LIBS.  Add ftcrfonto to FONT_OBJ if cairo.
+	Output "Does Emacs use cairo?".
+
 2015-02-09  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* configure.ac (HAVE_LIBXML2): Add missing comma.

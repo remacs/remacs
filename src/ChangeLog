@@ -1,3 +1,141 @@
+2015-02-11  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
+	    Jan Djärv  <jan.h.d@swipnet.se>
+
+	* xterm.h: Add include of cairo header files.
+	(x_bitmap_record): Add img if cairo.
+	(x_gc_ext_data): New struct for cairo.
+	(x_display_info): Add ext_codes for cairo.
+	(x_output): Add cr_context and cr_surface for cairo.
+	(x_clear_area): Change arguments from Display*/Window to frame pointer.
+	(x_query_color, x_begin_cr_clip, x_end_cr_clip)
+	(x_set_cr_source_with_gc_foreground, x_set_cr_source_with_gc_background)
+	(x_cr_draw_frame, x_cr_export_frames): Declare.
+
+	* xterm.c (x_clear_area1, x_prepare_for_xlibdraw)
+	(x_set_clip_rectangles, x_reset_clip_rectangles, x_fill_rectangle)
+	(x_draw_rectangle, x_fill_trapezoid_for_relief, x_clear_window)
+	(x_gc_get_ext_data, x_extension_initialize, x_cr_accumulate_data):
+	Declare.
+	(FRAME_CR_CONTEXT, FRAME_CR_SURFACE): New macros.
+	(max_fringe_bmp, fringe_bmp): New variables.
+	(x_gc_get_ext_data, x_extension_initialize)
+	(x_cr_destroy_surface, x_begin_cr_clip, x_end_cr_clip)
+	(x_set_cr_source_with_gc_foreground)
+	(x_set_cr_source_with_gc_background, x_cr_define_fringe_bitmap)
+	(x_cr_destroy_fringe_bitmap, x_cr_draw_image, x_cr_draw_frame)
+	(x_cr_accumulate_data, x_cr_destroy, x_cr_export_frames)
+	(x_prepare_for_xlibdraw, x_set_clip_rectangles)
+	(x_reset_clip_rectangles, x_fill_rectangle, x_draw_rectangle)
+	(x_clear_window, x_fill_trapezoid_for_relief): New functions.
+	(x_update_begin): Create cairo surface if needed.
+	(x_draw_vertical_window_border): Call x_fill_rectangle for cairo.
+	(x_update_end): Paint cairo drawing surface to xlib surface.
+	(x_clear_under_internal_border, x_after_update_window_line): Adjust
+	arguments to x_clear_area.
+	(x_draw_fringe_bitmap): Call x_fill_rectangle.  Get GC values and
+	call x_cr_draw_image for cairo.  Call x_reset_clip_rectangles instead
+	of XSetClipMask.
+	(x_set_glyph_string_clipping)
+	(x_set_glyph_string_clipping_exactly): Use x_set_clip_rectangles
+	instead of XSetClipRectangles.
+	(x_clear_glyph_string_rect, x_draw_glyph_string_background): Use
+	x_fill_rectangle instead of XFillRectangle.
+	(x_draw_glyph_string_foreground)
+	(x_draw_composite_glyph_string_foreground)
+	(x_draw_glyphless_glyph_string_foreground): Use x_draw_rectangle instead
+	of XDrawRectangle.
+	(x_draw_relief_rect): Add code for USE_CAIRO.
+	Call x_reset_clip_rectangles instead of XSetClipMask.
+	(x_draw_box_rect): x_set_clip_rectangles instead of XSetClipRectangles,
+	x_fill_rectangle instead of XFillRectangle, x_reset_clip_rectangles
+	instead of XSetClipMask.
+	(x_draw_image_foreground, x_draw_image_foreground_1):
+	x_draw_rectangle instead of XDrawRectangle.
+	(x_draw_glyph_string_bg_rect): x_fill_rectangle instead of
+	XFillRectangle.
+	(x_draw_image_glyph_string): If img has cr_data, use it as
+	a cairo surface.
+	(x_draw_stretch_glyph_string): x_set_clip_rectangles instead of
+	XSetClipRectangles, x_fill_rectangle instead of XFillRectangle.
+	(x_draw_glyph_string): x_fill_rectangle instead of XFillRectangle.,
+	x_reset_clip_rectangles instead of XSetClipMask.
+	(x_shift_glyphs_for_insert): Call x_prepare_for_xlibdraw.
+	(x_clear_area1): New function that calls XClearArea.
+	(x_clear_area): Takes frame as parameter, calls x_clear_area1 for
+	non-cairo.
+	(x_clear_frame): x_clear_window instead of XClearWindow.
+	(x_scroll_run): Set frame garbaged if cairo.
+	(XTmouse_position): Initialize *part to 0.
+	(x_scroll_bar_create): Adjust arguments to x_clear_area.
+	(x_scroll_bar_set_handle): x_clear_area1 instead of x_clear_area,
+	x_fill_rectangle instead of XFillRectangle.
+	(XTset_vertical_scroll_bar, XTset_horizontal_scroll_bar): Adjust
+	arguments to x_clear_area.
+	(x_scroll_bar_expose): x_draw_rectangle instead of XDrawRectangle.
+	(handle_one_xevent): Adjust arguments to x_clear_area.
+	Destroy cairo surface for frame if ConfigureNotify.
+	(x_clip_to_row): x_set_clip_rectangles instead of XSetClipRectangles.
+	(x_draw_hollow_cursor): x_draw_rectangle instead of XDrawRectangle,
+	x_reset_clip_rectangles instead of XSetClipMask.
+	(x_draw_bar_cursor): x_fill_rectangle instead of XFillRectangle,
+	x_reset_clip_rectangles instead of XSetClipMask.
+	(x_clear_frame_area): Adjust arguments to x_clear_area.
+	(x_free_frame_resources): Call x_prepare_for_xlibdraw.
+	(x_term_init): Call x_extension_initialize if cairo.
+	(x_redisplay_interface): Add x_cr_define_fringe_bitmap,
+	x_cr_destroy_fringe_bitmap for cairo.
+	(x_initialize): Call x_cr_init_fringe for cairo.
+
+	* xfns.c: New section Printing.
+	(x-export-frames, x-page-setup-dialog, x-get-page-setup)
+	(x-print-frames-dialog): New printing functions.
+	(Fx_create_frame, x_create_tip_frame): Register ftcrfont if
+	cairo.
+	(syms_of_xfns): Defsym Qorientation, Qtop_margin, Qbottom_margin,
+	Qportrait, Qlandscape, Qreverse_portrait, Qreverse_landscape).
+	(syms_of_xfns): Provide cairo and defvar cairo-version-string.
+	defsubr Sx_page_setup_dialog, Sx_get_page_setup, Sx_print_frames_dialog.
+
+	* image.c: Add defined (USE_CAIRO) for PNG.
+	Add !defined USE_CAIRO for W32 PNG code.
+	(x_clear_image): If cairo, destroy the surface in cr_data.
+	(png_load): Add new cairo compatible implementation.
+	(lookup_image_type): Add defined (USE_CAIRO) for define png_type.
+
+	* gtkutil.h (xg_page_setup_dialog, xg_get_page_setup)
+	(xg_print_frames_dialog): Declare.
+
+	* gtkutil.c (xg_clear_under_internal_border)
+	(xg_update_scrollbar_pos, xg_update_horizontal_scrollbar_pos): Only
+	queue_draw if not cairo.  Change args to x_clear_area.
+	(xg_get_font): Use Qftcr when using cairo, Qxft otherwise.
+	(xg_page_setup_dialog, xg_get_page_setup, draw_page)
+	(xg_print_frames_dialog): New functions for printing.
+
+	* ftfont.h (ftfont_open2, ftfont_info_size): Declare.
+
+	* ftfont.c (ftfont_info_size); New global variable.
+	(ftfont_open2): New extern function almost the same as old ftfont_open,
+	but takes the font_object as argument.
+	(ftfont_open): Build font object and call ftfont_open2.
+
+	* ftcrfont.c: New font driver for cairo, based on the ftfont driver.
+
+	* fringe.c (x_cr_init_fringe): New function name that shares code
+	with w32_init_fringe.
+
+	* font.h (ftcrfont_driver, syms_of_ftcrfont): Declare
+
+	* font.c (syms_of_font): Call syms_of_ftcrfont for cairo.
+
+	* dispextern.h (struct image): Add cr_data for cairo.
+	(x_cr_init_fringe): Declare.
+
+	* Makefile.in (CAIRO_CFLAGS, CAIRO_LIBS): New variables.
+	(FONT_OBJ): Add comment about ftcrfont.
+	(ALL_CFLAGS): Add CAIRO_CFLAGS.
+	(LIBES): Add CAIRO_LIBS.
+
 2015-02-11  Martin Rudalics  <rudalics@gmx.at>
 
 	* w32term.c (w32_read_socket): In SIZE_MAXIMIZED and

@@ -1731,10 +1731,14 @@ init_fringe (void)
   fringe_faces = xzalloc (max_fringe_bitmaps * sizeof *fringe_faces);
 }
 
-#ifdef HAVE_NTGUI
+#if defined (HAVE_NTGUI) || defined (USE_CAIRO)
 
 void
+#ifdef HAVE_NTGUI
 w32_init_fringe (struct redisplay_interface *rif)
+#else
+x_cr_init_fringe (struct redisplay_interface *rif)
+#endif
 {
   int bt;
 
@@ -1747,7 +1751,9 @@ w32_init_fringe (struct redisplay_interface *rif)
       rif->define_fringe_bitmap (bt, fb->bits, fb->height, fb->width);
     }
 }
+#endif
 
+#ifdef HAVE_NTGUI
 void
 w32_reset_fringes (void)
 {
