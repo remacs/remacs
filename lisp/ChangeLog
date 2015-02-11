@@ -1,3 +1,8 @@
+2015-02-11  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* hi-lock.el (hi-lock-unface-buffer): Don't call
+	font-lock-remove-keywords if not needed (bug#19737).
+
 2015-02-11  Nicolas Petton <nicolas@petton.fr>
 
 	* emacs-lisp/seq.el (seq-reverse): Add a backward-compatible
@@ -8,8 +13,7 @@
 
 	* frame.el (toggle-frame-maximized, toggle-frame-fullscreen):
 	Rename frame parameter `maximized' to `fullscreen-restore'.
-	Restore fullwidth/-height after fullboth state.  Update
-	doc-strings.
+	Restore fullwidth/-height after fullboth state.  Update doc-strings.
 
 2015-02-11  Lars Ingebrigtsen  <larsi@gnus.org>
 
@@ -23,8 +27,8 @@
 
 	* net/shr.el (shr-use-fonts): New variable.
 	(shr-fill-text): Rename from "fold".
-	(shr-pixel-column, shr-pixel-region, shr-string-pixel-width): New
-	functions.
+	(shr-pixel-column, shr-pixel-region, shr-string-pixel-width):
+	New functions.
 	(shr-insert): Just insert, don't fill the text.  Filling is now
 	done afterwards per display unit.
 	(shr-fill-lines, shr-fill-line): New functions to fill text on a
