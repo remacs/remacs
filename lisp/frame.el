@@ -1906,7 +1906,7 @@ is already fullscreen.
 Before making the frame fullscreen remember the current value of
 the frame's `fullscreen' parameter in the `fullscreen-restore'
 parameter of the frame.  That value is used to restore the
-frame's size when toggling fullscreen the next time.
+frame's fullscreen state when toggling fullscreen the next time.
 
 Note that with some window managers you may have to set
 `frame-resize-pixelwise' to non-nil in order to make a frame

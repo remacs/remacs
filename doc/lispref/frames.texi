@@ -757,6 +757,24 @@ make a frame truly appear ``maximized'' or ``fullscreen''.  Moreover,
 some window managers might not support smooth transition between the
 various fullscreen or maximization states.  Customizing the variable
 @code{x-frame-normalize-before-maximize} can help to overcome that.
+
+@vindex fullscreen-restore, a frame parameter
+@item fullscreen-restore
+This parameter specifies the desired ``fullscreen'' state of the frame
+after invoking the @code{toggle-frame-fullscreen} command (@pxref{Frame
+Commands,,, emacs, The GNU Emacs Manual}) in the ``fullboth'' state.
+Normally this parameter is installed automatically by that command when
+toggling the state to fullboth.  If, however, you start Emacs in the
+fullboth state, you have to specify the desired behavior in your initial
+file as, for example
+
+@example
+(setq default-frame-alist
+    '((fullscreen . fullboth) (fullscreen-restore . fullheight)))
+@end example
+
+This will give a new frame full height after typing in it @key{F11} for
+the first time.
 @end table
 
 
