@@ -4,7 +4,7 @@
 
 ;; Author: Nicolas Petton <nicolas@petton.fr>
 ;; Keywords: sequences
-;; Version: 1.1.1
+;; Version: 1.2
 
 ;; Maintainer: emacs-devel@gnu.org
 
@@ -171,9 +171,7 @@ The result is a sequence of the same type as SEQ."
   (if (listp seq)
       (sort (seq-copy seq) pred)
     (let ((result (seq-sort pred (append seq nil))))
-      (cond ((stringp seq) (concat result))
-            ((vectorp seq) (vconcat result))
-            (t (error "Unsupported sequence: %s" seq))))))
+      (seq--into result (type-of seq)))))
 
 (defun seq-contains-p (seq elt &optional testfn)
   "Return the first element in SEQ that equals to ELT.
@@ -256,6 +254,27 @@ keys.  Keys are compared using `equal'."
    (seq-reverse seq)
    nil))
 
+(defalias 'seq-reverse
+  (if (ignore-errors (reverse [1 2]))
+      #'reverse
+    (lambda (seq)
+      "Return the reversed copy of list, vector, or string SEQ.
+See also the function `nreverse', which is used more often."
+      (let ((result '()))
+        (seq-map (lambda (elt) (push elt result))
+                 seq)
+        (if (listp seq)
+            result
+          (seq--into result (type-of seq)))))))
+
+(defun seq--into (seq type)
+  "Convert the sequence SEQ into a sequence of type TYPE."
+  (pcase type
+    (`vector (vconcat seq))
+    (`string (concat seq))
+    (`list (append seq nil))
+    (t (error "Not a sequence type name: %s" type))))
+
 (defun seq--drop-list (list n)
   "Return a list from LIST without its first N elements.
 This is an optimization for lists in `seq-drop'."
@@ -299,7 +318,6 @@ This is an optimization for lists in `seq-take-while'."
 
 (defalias 'seq-copy #'copy-sequence)
 (defalias 'seq-elt #'elt)
-(defalias 'seq-reverse #'reverse)
 (defalias 'seq-length #'length)
 (defalias 'seq-do #'mapc)
 (defalias 'seq-each #'seq-do)

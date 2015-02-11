@@ -1,7 +1,8 @@
-2015-02-09  Nicolas Petton <nicolas@petton.fr>
+2015-02-11  Nicolas Petton <nicolas@petton.fr>
 
-	* emacs-lisp/seq.el (seq-group-by): Improves seq-group-by to
-	return sequence elements in correct order.
+	* emacs-lisp/seq.el (seq-reverse): Add a backward-compatible
+	version of seq-reverse that works on sequences in Emacs 24.
+	Bump seq.el version to 1.2.
 
 2015-02-11  Martin Rudalics  <rudalics@gmx.at>
 
@@ -73,6 +74,11 @@
 	properties from fontified buffer to shell, keeping markers unchanged.
 	(python-shell-font-lock-turn-off): Fix typo.
 	(python-util-text-properties-replace-name): Delete function.
+
+2015-02-09  Nicolas Petton <nicolas@petton.fr>
+
+	* emacs-lisp/seq.el (seq-group-by): Improves seq-group-by to
+	return sequence elements in correct order.
 
 2015-02-09  Simen Heggestøyl  <simenheg@gmail.com>  (tiny change)
 

@@ -1,3 +1,9 @@
+2015-02-11  Nicolas Petton <nicolas@petton.fr>
+
+	* automated/seq-tests.el (test-seq-reverse, test-seq-group-by):
+	Add a test for seq-reverse and update test for seq-group-by to
+	test vectors and strings, not only lists.
+
 2015-02-10  Glenn Morris  <rgm@gnu.org>
 
 	* automated/package-test.el (package-test-signed):
