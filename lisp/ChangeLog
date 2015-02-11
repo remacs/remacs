@@ -16,6 +16,15 @@
 	version of seq-reverse that works on sequences in Emacs 24.
 	Bump seq.el version to 1.2.
 
+2015-02-11  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* emacs-lisp/package.el (package--incompatible-p): New function.
+	Return non-nil if PKG has no chance of being installable.
+	(package--emacs-version-list): New variable.
+	(describe-package-1, package-desc-status)
+	(package-menu--print-info, package-menu--status-predicate):
+	Account for the "incompat" status.
+
 2015-02-11  Martin Rudalics  <rudalics@gmx.at>
 
 	* frame.el (toggle-frame-maximized, toggle-frame-fullscreen):
