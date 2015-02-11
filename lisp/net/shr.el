@@ -494,31 +494,32 @@ size, and full-buffer size."
    ((eq shr-folding-mode 'none)
     (insert text))
    (t
-    (when (and (string-match "\\`[ \t\n\r ]" text)
-	       (not (bolp))
-	       (not (eq (char-after (1- (point))) ? )))
-      (insert " "))
-    (let ((start (point))
-	  (bolp (bolp)))
-      (insert text)
-      (save-restriction
-	(narrow-to-region start (point))
-	(goto-char start)
-	(when (looking-at "[ \t\n\r ]+")
-	  (replace-match "" t t))
-	(while (re-search-forward "[ \t\n\r ]+" nil t)
-	  (replace-match " " t t))
-	(goto-char (point-max)))
-      ;; We may have removed everything we inserted if if was just
-      ;; spaces.
-      (unless (= start (point))
-	;; Mark all lines that should possibly be folded afterwards.
-	(when bolp
-	  (shr-mark-fill start))
-	(when shr-use-fonts
-	  (put-text-property start (point)
-			     'face
-			     (or shr-current-font 'variable-pitch))))))))
+    (let ((font-start (point)))
+      (when (and (string-match "\\`[ \t\n\r ]" text)
+		 (not (bolp))
+		 (not (eq (char-after (1- (point))) ? )))
+	(insert " "))
+      (let ((start (point))
+	    (bolp (bolp)))
+	(insert text)
+	(save-restriction
+	  (narrow-to-region start (point))
+	  (goto-char start)
+	  (when (looking-at "[ \t\n\r ]+")
+	    (replace-match "" t t))
+	  (while (re-search-forward "[ \t\n\r ]+" nil t)
+	    (replace-match " " t t))
+	  (goto-char (point-max)))
+	;; We may have removed everything we inserted if if was just
+	;; spaces.
+	(unless (= font-start (point))
+	  ;; Mark all lines that should possibly be folded afterwards.
+	  (when bolp
+	    (shr-mark-fill start))
+	  (when shr-use-fonts
+	    (put-text-property font-start (point)
+			       'face
+			       (or shr-current-font 'variable-pitch)))))))))
 
 (defun shr-fill-lines (start end)
   (if (<= shr-internal-width 0)
