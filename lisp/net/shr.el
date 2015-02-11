@@ -719,23 +719,32 @@ size, and full-buffer size."
 
 (defun shr-ensure-paragraph ()
   (unless (bobp)
-    (if (<= (current-column) shr-indentation)
-	(unless (save-excursion
-		  (forward-line -1)
-		  (looking-at " *$"))
-	  (insert "\n"))
-      (if (save-excursion
-	    (beginning-of-line)
-	    ;; If the current line is totally blank, and doesn't even
-	    ;; have any face properties set, then delete the blank
-	    ;; space.
-	    (and (looking-at " *$")
-		 (not (get-text-property (point) 'face))
-		 (not (= (next-single-property-change (point) 'face nil
-						      (line-end-position))
-			 (line-end-position)))))
-	  (delete-region (match-beginning 0) (match-end 0))
-	(insert "\n\n")))))
+    (let ((prefix (get-text-property (line-beginning-position)
+				     'shr-prefix-length)))
+      (cond
+       ((and (bolp)
+	     (save-excursion
+	       (forward-line -1)
+	       (looking-at " *$")))
+	;; We're already at a new paragraph; do nothing.
+	)
+       ((and prefix
+	     (= prefix (- (point) (line-beginning-position))))
+	;; Do nothing; we're at the start of a <li>.
+	)
+       ((save-excursion
+	  (beginning-of-line)
+	  ;; If the current line is totally blank, and doesn't even
+	  ;; have any face properties set, then delete the blank
+	  ;; space.
+	  (and (looking-at " *$")
+	       (not (get-text-property (point) 'face))
+	       (not (= (next-single-property-change (point) 'face nil
+						    (line-end-position))
+		       (line-end-position)))))
+	(delete-region (match-beginning 0) (match-end 0)))
+       (t
+	(insert "\n\n"))))))
 
 (defun shr-indent ()
   (when (> shr-indentation 0)
@@ -1406,6 +1415,7 @@ The preference is a float determined from `shr-prefer-media-type'."
 				(shr-string-pixel-width bullet))))
 	(put-text-property start (1+ start)
 			   'shr-continuation-indentation shr-indentation)
+	(put-text-property start (1+ start) 'shr-prefix-length (length bullet))
 	(shr-generic dom)))))
 
 (defun shr-mark-fill (start)
