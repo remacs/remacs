@@ -3,6 +3,13 @@
 	* hi-lock.el (hi-lock-unface-buffer): Don't call
 	font-lock-remove-keywords if not needed (bug#19737).
 
+2015-02-11  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* emacs-lisp/package.el (package-install): Invert the second
+	argument, for better backwards compatibility.
+	(package-install-button-action, package-reinstall)
+	(package-menu-execute): Account for the change.
+
 2015-02-11  Nicolas Petton <nicolas@petton.fr>
 
 	* emacs-lisp/seq.el (seq-reverse): Add a backward-compatible
