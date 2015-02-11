@@ -1,3 +1,8 @@
+2015-02-11  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* gnus-art.el (gnus-treat-buttonize): Don't re-buttonize URLs in HTML
+	parts, because that breaks filling (since buttons are in a bold face).
+
 2015-02-10  Katsumi Yamaoka  <yamaoka@jpl.org>
 
 	* mm-decode.el (mm-convert-shr-links): Delete useless variable `face';

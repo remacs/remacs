@@ -1139,7 +1139,7 @@ predicate.  See Info node `(gnus)Customizing Articles'."
   :type gnus-article-treat-custom)
 (put 'gnus-treat-highlight-signature 'highlight t)
 
-(defcustom gnus-treat-buttonize 100000
+(defcustom gnus-treat-buttonize '(and 100000 (typep "text/plain"))
   "Add buttons.
 Valid values are nil, t, `head', `first', `last', an integer or a
 predicate.  See Info node `(gnus)Customizing Articles'."
