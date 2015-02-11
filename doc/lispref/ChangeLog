@@ -1,3 +1,8 @@
+2015-02-11  Martin Rudalics  <rudalics@gmx.at>
+
+	* frames.texi (Size Parameters): Update description of
+	fullscreen frame parameter.
+
 2015-02-09  Eli Zaretskii  <eliz@gnu.org>
 
 	* positions.texi (Screen Lines): Update the documentation of

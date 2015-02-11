@@ -1,3 +1,15 @@
+2015-02-11  Martin Rudalics  <rudalics@gmx.at>
+
+	* w32term.c (w32_read_socket): In SIZE_MAXIMIZED and
+	SIZE_RESTORED cases correctly handle `maximized' value for the
+	`fullscreen' parameter.  Don't use 'maximized' frame parameter
+	any more.
+	(w32fullscreen_hook): Include menu bar height when calculating
+	new text height in FULLSCREEN_BOTH case.
+	* xterm.c (do_ewmh_fullscreen): Handle transition from
+	FULLSCREEN_BOTH to FULLSCREEN_MAXIMIZED when
+	x_frame_normalize_before_maximize is set.
+
 2015-02-10  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Use bool for boolean in xdisp.c

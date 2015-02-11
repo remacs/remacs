@@ -1,3 +1,10 @@
+2015-02-11  Martin Rudalics  <rudalics@gmx.at>
+
+	* frame.el (toggle-frame-maximized, toggle-frame-fullscreen):
+	Rename frame parameter `maximized' to `fullscreen-restore'.
+	Restore fullwidth/-height after fullboth state.  Update
+	doc-strings.
+
 2015-02-11  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* net/shr.el (shr-insert): Make sure the space inserted has the
