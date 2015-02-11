@@ -2,6 +2,7 @@
 
 	* net/shr.el (shr-insert): Make sure the space inserted has the
 	right font (for width).
+	(shr-fill-line): Preserve background colours when indenting/folding.
 
 2015-02-10  Lars Ingebrigtsen  <larsi@gnus.org>
 

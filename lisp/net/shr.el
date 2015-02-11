@@ -550,7 +550,12 @@ size, and full-buffer size."
 		       (point) 'shr-continuation-indentation))
 	start)
     (put-text-property (point) (1+ (point)) 'shr-indentation nil)
-    (shr-indent)
+    (let ((face (get-text-property (point) 'face))
+	  (background-start (point)))
+      (shr-indent)
+      (when face
+	(put-text-property background-start (point) 'face
+			   `,(shr-face-background face))))
     (setq start (point))
     (setq shr-indentation (or continuation shr-indentation))
     (shr-vertical-motion shr-internal-width)
@@ -570,8 +575,13 @@ size, and full-buffer size."
       ;; Success; continue.
       (when (= (preceding-char) ?\s)
 	(delete-char -1))
-      (insert "\n")
-      (shr-indent)
+      (let ((face (get-text-property (point) 'face))
+	    (background-start (point)))
+	(insert "\n")
+	(shr-indent)
+	(when face
+	  (put-text-property background-start (point) 'face
+			     `,(shr-face-background face))))
       (setq start (point))
       (shr-vertical-motion shr-internal-width)
       (when (looking-at " $")
