@@ -54,6 +54,23 @@ These emulations of old editors are believed to be no longer relevant
 *** vi.el, vip.el (try M-x viper instead)
 
 
+* ERC Changes in Emacs 24.5
+
++++
+** `erc-rename-buffers' if non-nil will rename buffers to reflect the
+current network name instead of using SERVER:PORT
+---
+** `erc-version' now follows current emacs version
++++
+** `erc-format-@nick' displays all user modes instead of only op and
+voice
+---
+** `erc-my-nick-prefix-face' and `erc-nick-prefix-face' for changing
+the faces for user mode prefixes
+---
+** display of irc commands in current buffer has been disabled
+
+
 * Installation Changes in Emacs 24.4
 
 ** Emacs can now be compiled with ACL (access control list) support.
