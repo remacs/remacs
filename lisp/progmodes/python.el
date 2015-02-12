@@ -2301,12 +2301,11 @@ Signals an error if no shell buffer is available for current buffer."
 
 (defun python-shell-font-lock-kill-buffer ()
   "Kill the font-lock buffer safely."
-  (python-shell-with-shell-buffer
-    (when (and python-shell--font-lock-buffer
-               (buffer-live-p python-shell--font-lock-buffer))
-      (kill-buffer python-shell--font-lock-buffer)
-      (when (derived-mode-p 'inferior-python-mode)
-        (setq python-shell--font-lock-buffer nil)))))
+  (when (and python-shell--font-lock-buffer
+             (buffer-live-p python-shell--font-lock-buffer))
+    (kill-buffer python-shell--font-lock-buffer)
+    (when (derived-mode-p 'inferior-python-mode)
+      (setq python-shell--font-lock-buffer nil))))
 
 (defmacro python-shell-font-lock-with-font-lock-buffer (&rest body)
   "Execute the forms in BODY in the font-lock buffer.
@@ -2357,7 +2356,8 @@ goes wrong and syntax highlighting in the shell gets messed up."
 (defun python-shell-font-lock-post-command-hook ()
   "Fontifies current line in shell buffer."
   (let ((prompt-end (cdr (python-util-comint-last-prompt))))
-    (when (and prompt-end (> (point) prompt-end))
+    (when (and prompt-end (> (point) prompt-end)
+               (process-live-p (get-buffer-process (current-buffer))))
       (let* ((input (buffer-substring-no-properties
                      prompt-end (point-max)))
              (start-pos prompt-end)

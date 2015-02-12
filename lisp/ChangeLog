@@ -1,3 +1,12 @@
+2015-02-12  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Allow killing shell buffer if process is dead.  (Bug#19823)
+
+	* progmodes/python.el (python-shell-font-lock-kill-buffer): Don't
+	require a running process.
+	(python-shell-font-lock-post-command-hook): Fontify only if the
+	shell process is running.
+
 2015-02-11  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* hi-lock.el (hi-lock-unface-buffer): Don't call
