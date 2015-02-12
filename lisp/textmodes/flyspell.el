@@ -92,7 +92,7 @@ downcased before comparing with these exceptions."
   :version "21.1"
   :type 'boolean)
 
-(defcustom flyspell-duplicate-distance -1
+(defcustom flyspell-duplicate-distance 400000
   "The maximum distance for finding duplicates of unrecognized words.
 This applies to the feature that when a word is not found in the dictionary,
 if the same spelling occurs elsewhere in the buffer,
@@ -1010,17 +1010,33 @@ Mostly we check word delimiters."
 ;;*---------------------------------------------------------------------*/
 (defun flyspell-word-search-backward (word bound &optional ignore-case)
   (save-excursion
-    (let ((r '())
-	  (inhibit-point-motion-hooks t)
-	  p)
-      (while (and (not r) (setq p (search-backward word bound t)))
-	(let ((lw (flyspell-get-word)))
-	  (if (and (consp lw)
-		   (if ignore-case
-		       (string-equal (downcase (car lw)) (downcase word))
-		     (string-equal (car lw) word)))
-	      (setq r p)
-	    (goto-char p))))
+    (let* ((r '())
+	   (inhibit-point-motion-hooks t)
+	   (flyspell-not-casechars (flyspell-get-not-casechars))
+	   (bound (if (and bound
+			   (> bound (point-min)))
+		      (- bound 1)))
+	   (word-re (concat
+                     "\\(?:" flyspell-not-casechars "\\|\\`\\)"
+                     (regexp-quote word)
+                     flyspell-not-casechars))
+	   p)
+      (while
+	  (and (not r)
+               (setq p
+                     (and
+                      (re-search-backward word-re bound t)
+		      (if (bobp)
+			  (point)
+                        (forward-char)
+                        (point)))))
+        (let ((lw (flyspell-get-word)))
+          (if (and (consp lw)
+                   (if ignore-case
+                       (string-equal (downcase (car lw)) (downcase word))
+                     (string-equal (car lw) word)))
+              (setq r p)
+            (goto-char p))))
       r)))
 
 ;;*---------------------------------------------------------------------*/
@@ -1028,14 +1044,28 @@ Mostly we check word delimiters."
 ;;*---------------------------------------------------------------------*/
 (defun flyspell-word-search-forward (word bound)
   (save-excursion
-    (let ((r '())
-	  (inhibit-point-motion-hooks t)
-	  p)
-      (while (and (not r) (setq p (search-forward word bound t)))
-	(let ((lw (flyspell-get-word)))
-	  (if (and (consp lw) (string-equal (car lw) word))
-	      (setq r p)
-	    (goto-char (1+ p)))))
+    (let* ((r '())
+	   (inhibit-point-motion-hooks t)
+	   (flyspell-not-casechars (flyspell-get-not-casechars))
+	   (bound (if (and bound
+			   (< bound (point-max)))
+		      (+ bound 1)))
+	   (word-re (concat flyspell-not-casechars
+                            (regexp-quote word)
+                            "\\(?:" flyspell-not-casechars "\\|\\'\\)"))
+	   p)
+      (while
+	  (and (not r)
+               (setq p (and
+                        (re-search-forward word-re bound t)
+                        (if (eobp)
+                            (point)
+                          (backward-char)
+                          (point)))))
+        (let ((lw (flyspell-get-word)))
+          (if (and (consp lw) (string-equal (car lw) word))
+              (setq r p)
+            (goto-char (1+ p)))))
       r)))
 
 ;;*---------------------------------------------------------------------*/
