@@ -1,3 +1,9 @@
+2015-02-12  Oleh Krehel  <ohwoeowho@gmail.com>
+
+	* progmodes/gdb-mi.el (gdb-display-io-nopopup): New defcustom.
+	(gdb-inferior-filter): Don't pop up the buried output buffer when
+	`gdb-display-io-nopopup' is non-nil.
+
 2015-02-12  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	python.el: Allow killing shell buffer if process is dead.  (Bug#19823)
