@@ -740,10 +740,17 @@ struct Lisp_Symbol
 /* Declare extern constants for Lisp symbols.  These can be helpful
    when using a debugger like GDB, on older platforms where the debug
    format does not represent C macros.  */
-#define DEFINE_LISP_SYMBOL_BEGIN(name) \
-  DEFINE_GDB_SYMBOL_BEGIN (Lisp_Object, name)
-#define DEFINE_LISP_SYMBOL_END(name) \
+#define DEFINE_LISP_SYMBOL(name) \
+  DEFINE_GDB_SYMBOL_BEGIN (Lisp_Object, name) \
   DEFINE_GDB_SYMBOL_END (LISP_INITIALLY (XLI_BUILTIN_LISPSYM (i##name)))
+
+/* By default, define macros for Qt, etc., as this leads to a bit
+   better performance in the core Emacs interpreter.  A plugin can
+   define DEFINE_NONNIL_Q_SYMBOL_MACROS to be false, to be portable to
+   other Emacs instances that assign different values to Qt, etc.  */
+#ifndef DEFINE_NONNIL_Q_SYMBOL_MACROS
+# define DEFINE_NONNIL_Q_SYMBOL_MACROS true
+#endif
 
 #include "globals.h"
 

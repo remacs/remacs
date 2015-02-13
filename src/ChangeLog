@@ -1,3 +1,10 @@
+2015-02-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Better support for future plugins
+	* lisp.h (DEFINE_LISP_SYMBOL): New macro, replacing and simplifying
+	DEFINE_LISP_SYMBOL_BEGIN / DEFINE_LISP_SYMBOL_END.  All uses changed.
+	(DEFINE_NONNIL_Q_SYMBOL_MACROS): New macro, defaulting to true.
+
 2015-02-11  Martin Rudalics  <rudalics@gmx.at>
 
 	* w32term.c (w32_read_socket): In SIZE_MAXIMIZED and
