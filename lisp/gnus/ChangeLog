@@ -1,3 +1,8 @@
+2015-02-13  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* nnmail.el (nnmail-expiry-target-group): Supply the info structure to
+	`gnus-request-group'.
+
 2015-02-12  Katsumi Yamaoka  <yamaoka@jpl.org>
 
 	* gnus-art.el (gnus-article-browse-html-save-cid-content)
