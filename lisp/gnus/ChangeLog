@@ -1,5 +1,9 @@
 2015-02-13  Lars Ingebrigtsen  <larsi@gnus.org>
 
+	* gnus-msg.el (gnus-msg-mail): Don't let-bind `gnus-newsgroup-name' so
+	that we don't get a warning when setting the buffer-local variable
+	(bug#19573).
+
 	* nnmail.el (nnmail-expiry-target-group): Supply the info structure to
 	`gnus-request-group'.
 
