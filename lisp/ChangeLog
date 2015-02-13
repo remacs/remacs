@@ -1,3 +1,8 @@
+2015-02-13  Glenn Morris  <rgm@gnu.org>
+
+	* textmodes/flyspell.el (flyspell-duplicate-distance):
+	Bump :version.
+
 2015-02-13  Eli Zaretskii  <eliz@gnu.org>
 
 	* textmodes/text-mode.el (text-mode-syntax-table): Make some
@@ -9,7 +14,6 @@
 2015-02-12  Agustín Martín Domingo <agustin6martin@gmail.com>
 
 	Improve string search in `flyspell-word-search-*`. (Bug#16800)
-
 	* flyspell.el (flyspell-duplicate-distance): Limit default search
 	distance for duplicated words to 40000.
 	(flyspell-word-search-backward, flyspell-word-search-forward):
@@ -18,7 +22,6 @@
 2015-02-10  Juri Linkov  <juri@linkov.net>
 
 	Better support for the case of typing RET on the prompt in comint.
-
 	* comint.el (comint-get-old-input-default): Go to the field end
 	when comint-use-prompt-regexp is nil.
 	(comint-line-beginning-position): Check if point is already
