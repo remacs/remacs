@@ -28,7 +28,7 @@ otherwise leave it unmarked.
 ** The default value of `history-length' has increased to 100.
 
 +++
-** `redisplay-dont-pause' is declared as obsolete.
+** The variable `redisplay-dont-pause' is obsolete.
 
 
 * Changes in Specialized Modes and Packages in Emacs 24.5
@@ -36,6 +36,23 @@ otherwise leave it unmarked.
 +++
 ** `call-process-shell-command' and `process-file-shell-command'
 don't take "&rest args" any more.
+
+** ERC
+
++++
+*** New option `erc-rename-buffers'.
+
+---
+*** New faces `erc-my-nick-prefix-face' and `erc-nick-prefix-face'.
+
++++
+*** `erc-format-@nick' displays all user modes instead of only op and voice.
+
+---
+*** The display of irc commands in the current buffer has been disabled.
+
+---
+*** `erc-version' now follows the Emacs version.
 
 ** Obsolete packages
 
@@ -52,23 +69,6 @@ These emulations of old editors are believed to be no longer relevant
 
 ---
 *** vi.el, vip.el (try M-x viper instead)
-
-
-* ERC Changes in Emacs 24.5
-
-+++
-** `erc-rename-buffers' if non-nil will rename buffers to reflect the
-current network name instead of using SERVER:PORT
----
-** `erc-version' now follows current emacs version
-+++
-** `erc-format-@nick' displays all user modes instead of only op and
-voice
----
-** `erc-my-nick-prefix-face' and `erc-nick-prefix-face' for changing
-the faces for user mode prefixes
----
-** display of irc commands in current buffer has been disabled
 
 
 * Installation Changes in Emacs 24.4
