@@ -1,3 +1,7 @@
+2015-02-13  Eli Zaretskii  <eliz@gnu.org>
+
+	* simple.el (transient-mark-mode): Doc fix.  (Bug#19841)
+
 2015-02-12  Agustín Martín Domingo <agustin6martin@gmail.com>
 
 	Improve string search in `flyspell-word-search-*`. (Bug#16800)
