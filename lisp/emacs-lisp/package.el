@@ -468,6 +468,19 @@ called via `package-initialize'.  To change which packages are
 loaded and/or activated, customize `package-load-list'.")
 (put 'package-alist 'risky-local-variable t)
 
+(defvar package--compatibility-table nil
+  "Hash table connecting package names to their compatibility.
+Each key is a symbol, the name of a package.
+
+The value is either nil, representing an incompatible package, or
+a version list, representing the highest compatible version of
+that package which is available.
+
+A package is considered incompatible if it requires an Emacs
+version higher than the one being used.  To check for package
+\(in)compatibility, don't read this table directly, use
+`package--incompatible-p' which also checks dependencies.")
+
 (defvar package-activated-list nil
   ;; FIXME: This should implicitly include all builtin packages.
   "List of the names of currently activated packages.")
@@ -1131,7 +1144,10 @@ Will throw an error if the archive version is too new."
 If successful, set `package-archive-contents'."
   (setq package-archive-contents nil)
   (dolist (archive package-archives)
-    (package-read-archive-contents (car archive))))
+    (package-read-archive-contents (car archive)))
+  ;; Build compat table.
+  (setq package--compatibility-table (make-hash-table :test 'eq))
+  (package--mapc #'package--add-to-compatibility-table))
 
 (defun package-read-archive-contents (archive)
   "Re-read archive contents for ARCHIVE.
@@ -1728,6 +1744,19 @@ If optional arg NO-ACTIVATE is non-nil, don't activate packages."
       (package-activate (car elt))))
   (setq package--initialized t))
 
+(defun package--add-to-compatibility-table (pkg)
+  "If PKG is compatible (without dependencies), add to the compatibility table.
+PKG is a package-desc object.
+Only adds if its version is higher than what's already stored in
+the table."
+  (unless (package--incompatible-p pkg 'shallow)
+    (let* ((name (package-desc-name pkg))
+           (version (or (package-desc-version pkg) '(0)))
+           (table-version (gethash name package--compatibility-table)))
+      (when (or (not table-version)
+                (version-list-< table-version version))
+        (puthash name version package--compatibility-table)))))
+
 
 ;;;; Package description buffer.
 
@@ -2059,21 +2088,32 @@ package PKG-DESC, add one.  The alist is keyed with PKG-DESC."
 (defvar package--emacs-version-list (version-to-list emacs-version)
   "`emacs-version', as a list.")
 
-(defun package--incompatible-p (pkg)
+(defun package--incompatible-p (pkg &optional shallow)
   "Return non-nil if PKG has no chance of being installable.
 PKG is a package-desc object.
-Return value is a string describing the reason why the package is
-incompatible.
 
-Currently, this only checks if PKG depends on a higher
-`emacs-version' than the one being used."
+If SHALLOW is non-nil, this only checks if PKG depends on a
+higher `emacs-version' than the one being used.  Otherwise, also
+checks the viability of dependencies, according to
+`package--compatibility-table'.
+
+If PKG requires an incompatible Emacs version, the return value
+is this version (as a string).
+If PKG requires incompatible packages, the return value is a list
+of these dependencies, similar to the list returned by
+`package-desc-reqs'."
   (let* ((reqs    (package-desc-reqs pkg))
          (version (cadr (assq 'emacs reqs))))
     (if (and version (version-list-< package--emacs-version-list version))
-        (format "`%s' requires Emacs %s, but current version is %s"
-          (package-desc-full-name pkg)
-          (package-version-join version)
-          emacs-version))))
+        (package-version-join version)
+      (unless shallow
+        (let (out)
+          (dolist (dep (package-desc-reqs pkg) out)
+            (let ((dep-name (car dep)))
+              (unless (eq 'emacs dep-name)
+                (let ((cv (gethash dep-name package--compatibility-table)))
+                  (when (version-list-< (or cv '(0)) (or (cadr dep) '(0)))
+                    (push dep out)))))))))))
 
 (defun package-desc-status (pkg-desc)
   (let* ((name (package-desc-name pkg-desc))

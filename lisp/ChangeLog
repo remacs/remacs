@@ -1,3 +1,10 @@
+2015-02-13  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* emacs-lisp/package.el (package--compatibility-table): New var.
+	(package--add-to-compatibility-table): New function.
+	(package-read-all-archive-contents): Populate compatibility table.
+	(package--incompatible-p): Also look in dependencies.
+
 2015-02-13  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* net/rfc2104.el: Moved here from lisp/gnus.
