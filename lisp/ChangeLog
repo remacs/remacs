@@ -1,3 +1,8 @@
+2015-02-13  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* net/shr.el (shr-tag-li): Speed up rendering pages with lots of
+	<ul>.
+
 2015-02-12  Oleh Krehel  <ohwoeowho@gmail.com>
 
 	* progmodes/gdb-mi.el (gdb-display-io-nopopup): New defcustom.
