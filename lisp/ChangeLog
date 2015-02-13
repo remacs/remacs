@@ -1,5 +1,9 @@
 2015-02-13  Eli Zaretskii  <eliz@gnu.org>
 
+	* textmodes/text-mode.el (text-mode-syntax-table): Make some
+	punctuation character behave as word-constituent, for more
+	compatibility with Unicode.
+
 	* simple.el (transient-mark-mode): Doc fix.  (Bug#19841)
 
 2015-02-12  Agustín Martín Domingo <agustin6martin@gmail.com>
