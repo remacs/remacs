@@ -1,3 +1,7 @@
+2015-02-13  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* net/rfc2104.el: Moved here from lisp/gnus.
+
 2015-02-13  Magnus Henoch  <magnus.henoch@gmail.com>
 
 	* net/sasl-scram-rfc.el: New file.
