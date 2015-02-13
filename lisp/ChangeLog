@@ -1,3 +1,12 @@
+2015-02-25  Oleh Krehel  <ohwoeowho@gmail.com>
+
+	* emacs-lisp/check-declare.el (check-declare-ext-errors): New
+	defcustom.
+	(check-declare): New defgroup.
+	(check-declare-verify): When `check-declare-ext-errors' is
+	non-nil, warn about an unfound function, instead of saying
+	"skipping external file".
+
 2015-02-25  Tassilo Horn  <tsdh@gnu.org>
 
 	* textmodes/reftex-vars.el (reftex-include-file-commands): Call

@@ -125,6 +125,14 @@ With optional argument FULL, sums the number of elements in each element."
 
 (autoload 'byte-compile-arglist-signature "bytecomp")
 
+(defgroup check-declare nil
+  "Check declare-function statements."
+  :group 'tools)
+
+(defcustom check-declare-ext-errors nil
+  "When non-nil, warn abount functions not found in :ext."
+  :type 'boolean)
+
 (defun check-declare-verify (fnfile fnlist)
   "Check that FNFILE contains function definitions matching FNLIST.
 Each element of FNLIST has the form (FILE FN ARGLIST FILEONLY), where
@@ -226,7 +234,8 @@ method\\|class\\)\\|fset\\)\\>" type)
       (when type
         (setq errlist (cons (list (car e) (cadr e) type) errlist))))
     (message "%s%s" m
-             (if (or re (not ext))
+             (if (or re (or check-declare-ext-errors
+                            (not ext)))
                  (check-declare-errmsg errlist)
                (progn
                  (setq errlist nil)
