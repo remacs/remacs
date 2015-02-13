@@ -1811,6 +1811,8 @@ the table."
          (installable (and archive (not built-in)))
          (status (if desc (package-desc-status desc) "orphan"))
          (signed (if desc (package-desc-signed desc))))
+    (when (string= status "incompat")
+      (setq status "incompatible"))
     (prin1 name)
     (princ " is ")
     (princ (if (memq (aref status 0) '(?a ?e ?i ?o ?u)) "an " "a "))
@@ -1825,9 +1827,7 @@ the table."
           (pkg-dir
            (insert (propertize (if (member status '("unsigned" "dependency"))
                                    "Installed"
-                                 (if (equal status "incompat")
-                                     "Incompatible"
-                                   (capitalize status))) ;FIXME: Why comment-face?
+                                 (capitalize status)) ;FIXME: Why comment-face?
                                'font-lock-face 'font-lock-comment-face))
            (insert " in `")
            ;; Todo: Add button for uninstalling.

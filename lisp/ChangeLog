@@ -4,6 +4,7 @@
 	(package--add-to-compatibility-table): New function.
 	(package-read-all-archive-contents): Populate compatibility table.
 	(package--incompatible-p): Also look in dependencies.
+	(describe-package-1): Fix "incompat" handling.
 
 2015-02-13  Lars Ingebrigtsen  <larsi@gnus.org>
 
