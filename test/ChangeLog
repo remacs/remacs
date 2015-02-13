@@ -1,3 +1,7 @@
+2015-02-13  Magnus Henoch  <magnus.henoch@gmail.com>
+
+	* automated/sasl-scram-rfc-tests.el: New file.
+
 2015-02-11  Nicolas Petton <nicolas@petton.fr>
 
 	* automated/seq-tests.el (test-seq-reverse, test-seq-group-by):

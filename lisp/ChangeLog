@@ -1,3 +1,12 @@
+2015-02-13  Magnus Henoch  <magnus.henoch@gmail.com>
+
+	* net/sasl-scram-rfc.el: New file.
+
+	* net/sasl.el (sasl-mechanisms): Remove SCRAM-MD5.  Add
+	SCRAM-SHA-1 first.
+	(sasl-mechanism-alist): Remove SCRAM-MD5 entry.  Add SCRAM-SHA-1
+	entry (bug#17636).
+
 2015-02-13  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* net/shr.el (shr-tag-li): Speed up rendering pages with lots of
