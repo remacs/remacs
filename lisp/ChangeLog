@@ -1,5 +1,12 @@
 2015-02-25  Oleh Krehel  <ohwoeowho@gmail.com>
 
+	* emacs-lisp/check-declare.el (check-declare-warn): Use
+	compilation-style warnings.
+	(check-declare-files): Make sure that
+	`check-declare-warning-buffer' is in `compilation-mode'.
+
+2015-02-25  Oleh Krehel  <ohwoeowho@gmail.com>
+
 	* emacs-lisp/check-declare.el (check-declare-ext-errors): New
 	defcustom.
 	(check-declare): New defgroup.
