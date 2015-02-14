@@ -1,3 +1,8 @@
+2015-02-14  Eli Zaretskii  <eliz@gnu.org>
+
+	* menu.c (Fx_popup_menu) [HAVE_X_WINDOWS]: Call
+	mouse_position_for_popup only for X frames.  (Bug#19862)
+
 2015-02-13  Eli Zaretskii  <eliz@gnu.org>
 
 	* buffer.c (syms_of_buffer): Doc fix.  (Bug#19841)
