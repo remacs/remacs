@@ -1,3 +1,8 @@
+2015-02-14  Eli Zaretskii  <eliz@gnu.org>
+
+	* menu.c (Fx_popup_menu) [HAVE_X_WINDOWS]: Call
+	x_relative_mouse_position only for X frames.  (Bug#19862)
+
 2015-02-13  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Better support for future plugins
