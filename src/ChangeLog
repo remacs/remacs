@@ -1,3 +1,8 @@
+2015-02-14  Martin Rudalics  <rudalics@gmx.at>
+
+	* xterm.c (x_frame_normalize_before_maximize): Fix doc-string.
+	Suggested by Alan Mackenzie <acm@muc.de>.
+
 2015-02-14  Eli Zaretskii  <eliz@gnu.org>
 
 	* menu.c (Fx_popup_menu) [HAVE_X_WINDOWS]: Call
