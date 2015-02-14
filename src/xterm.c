@@ -518,6 +518,7 @@ x_cr_define_fringe_bitmap (which, bits, h, wd)
       data += stride;
     }
 
+  cairo_surface_mark_dirty (surface);
   pattern = cairo_pattern_create_for_surface (surface);
   cairo_surface_destroy (surface);
 

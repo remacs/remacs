@@ -1,3 +1,10 @@
+2015-02-14  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
+
+	* fringe.c (init_fringe_bitmap) [USE_CAIRO]: Adjust bitmap data for
+	cairo image surface.
+
+	* xterm.c (x_cr_define_fringe_bitmap): Call cairo_surface_mark_dirty.
+
 2015-02-11  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
 	    Jan Djärv  <jan.h.d@swipnet.se>
 
