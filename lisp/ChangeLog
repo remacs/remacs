@@ -1,5 +1,19 @@
 2015-02-14  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* emacs-lisp/cl-preloaded.el (cl-struct-define): Register as children
+	of the parent.
+	(cl--assertion-failed): New function.
+	(cl-assertion-failed): Move in from cl-lib.el.
+
+	* emacs-lisp/cl-macs.el (cl-defstruct): Don't generate code to register
+	as children of its parents.
+	(cl--make-type-test, cl--compiler-macro-typep): Remove functions.
+	(cl-typep): Reimplement using define-inline.
+	(cl-assert): Use cl--assertion-failed.
+	(cl-struct-slot-value): Use define-inline.
+
+	* emacs-lisp/cl-lib.el: Move autoloaded code to cl-preload.
+
 	* textmodes/flyspell.el (flyspell-word): Defvar (bug#19844).
 	(flyspell-generic-check-word-p): Mark as obsolete.
 
