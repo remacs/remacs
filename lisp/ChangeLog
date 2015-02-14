@@ -5,6 +5,7 @@
 	(package-refresh-contents, package-initialize): Do build the
 	compatibility table.
 	(package--build-compatibility-table): New function.
+	(describe-package-1): Describe why a package is incompatible.
 
 2015-02-14  Stefan Monnier  <monnier@iro.umontreal.ca>
 
