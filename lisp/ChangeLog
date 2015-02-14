@@ -1,3 +1,11 @@
+2015-02-14  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* emacs-lisp/package.el (package-read-all-archive-contents): Don't
+	build the compatibility table.
+	(package-refresh-contents, package-initialize): Do build the
+	compatibility table.
+	(package--build-compatibility-table): New function.
+
 2015-02-14  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/cl-preloaded.el (cl-struct-define): Register as children

@@ -1144,10 +1144,7 @@ Will throw an error if the archive version is too new."
 If successful, set `package-archive-contents'."
   (setq package-archive-contents nil)
   (dolist (archive package-archives)
-    (package-read-archive-contents (car archive)))
-  ;; Build compat table.
-  (setq package--compatibility-table (make-hash-table :test 'eq))
-  (package--mapc #'package--add-to-compatibility-table))
+    (package-read-archive-contents (car archive))))
 
 (defun package-read-archive-contents (archive)
   "Re-read archive contents for ARCHIVE.
@@ -1691,6 +1688,12 @@ similar to an entry in `package-alist'.  Save the cached copy to
     (epg-import-keys-from-file context file)
     (message "Importing %s...done" (file-name-nondirectory file))))
 
+(defun package--build-compatibility-table ()
+  "Build `package--compatibility-table' with `package--mapc'."
+  ;; Build compat table.
+  (setq package--compatibility-table (make-hash-table :test 'eq))
+  (package--mapc #'package--add-to-compatibility-table))
+
 ;;;###autoload
 (defun package-refresh-contents ()
   "Download the ELPA archive description if needed.
@@ -1713,7 +1716,8 @@ makes them available for download."
         (package--download-one-archive archive "archive-contents")
       (error (message "Failed to download `%s' archive."
                       (car archive)))))
-  (package-read-all-archive-contents))
+  (package-read-all-archive-contents)
+  (package--build-compatibility-table))
 
 (defun package--find-non-dependencies ()
   "Return a list of installed packages which are not dependencies.
@@ -1742,7 +1746,10 @@ If optional arg NO-ACTIVATE is non-nil, don't activate packages."
   (unless no-activate
     (dolist (elt package-alist)
       (package-activate (car elt))))
-  (setq package--initialized t))
+  (setq package--initialized t)
+  ;; This uses `package--mapc' so it must be called after
+  ;; `package--initialized' is t.
+  (package--build-compatibility-table))
 
 (defun package--add-to-compatibility-table (pkg)
   "If PKG is compatible (without dependencies), add to the compatibility table.
