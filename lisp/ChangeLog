@@ -1,3 +1,8 @@
+2015-02-14  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* textmodes/flyspell.el (flyspell-word): Defvar (bug#19844).
+	(flyspell-generic-check-word-p): Mark as obsolete.
+
 2015-02-13  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* emacs-lisp/package.el (package--compatibility-table): New var.
@@ -14,8 +19,8 @@
 
 	* net/sasl-scram-rfc.el: New file.
 
-	* net/sasl.el (sasl-mechanisms): Remove SCRAM-MD5.  Add
-	SCRAM-SHA-1 first.
+	* net/sasl.el (sasl-mechanisms): Remove SCRAM-MD5.
+	Add SCRAM-SHA-1 first.
 	(sasl-mechanism-alist): Remove SCRAM-MD5 entry.  Add SCRAM-SHA-1
 	entry (bug#17636).
 
@@ -34,8 +39,8 @@
 
 	python.el: Allow killing shell buffer if process is dead.  (Bug#19823)
 
-	* progmodes/python.el (python-shell-font-lock-kill-buffer): Don't
-	require a running process.
+	* progmodes/python.el (python-shell-font-lock-kill-buffer):
+	Don't require a running process.
 	(python-shell-font-lock-post-command-hook): Fontify only if the
 	shell process is running.
 
