@@ -1,3 +1,8 @@
+2015-02-15  Jérémy Compostella  <jeremy.compostella@gmail.com>
+
+	* net/tramp-sh.el (tramp-remote-process-environment): Disable paging
+	with PAGER=cat.  (Bug#19870)
+
 2015-02-13  Glenn Morris  <rgm@gnu.org>
 
 	* textmodes/flyspell.el (flyspell-duplicate-distance):
