@@ -1066,7 +1066,8 @@ command whose response triggered the error."
       (setq defs (cons (list 'nntp-port-number (car defs)) (cdr defs))))
     (unless (assq 'nntp-address defs)
       (setq defs (append defs (list (list 'nntp-address server)))))
-    (nnoo-change-server 'nntp server defs)
+    (with-current-buffer nntp-server-buffer
+      (nnoo-change-server 'nntp server defs))
     (if connectionless
 	t
       (or (nntp-find-connection nntp-server-buffer)

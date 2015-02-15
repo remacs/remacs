@@ -1,3 +1,8 @@
+2015-02-14  Ivan Shmakov  <ivan@siamics.net>
+
+	* nntp.el (nntp-open-server): Set variables in the correct buffer
+	(bug#19583).
+
 2015-02-14  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* mm-decode.el (mm-head-p): New function.
