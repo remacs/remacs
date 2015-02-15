@@ -1,3 +1,8 @@
+2015-02-14  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* mm-decode.el (mm-head-p): New function.
+	(mm-display-part): Go to a blank line when inserting parts internally.
+
 2015-02-13  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* gnus-msg.el (gnus-msg-mail): Don't let-bind `gnus-newsgroup-name' so
