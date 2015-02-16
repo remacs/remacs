@@ -1,5 +1,28 @@
 2015-02-16  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* emacs-lisp/eieio.el (defclass): Use make-instance rather than
+	eieio-constructor.
+	(set-slot-value): Mark as obsolete.
+	(eieio-object-class-name): Improve call to eieio-class-name.
+	(eieio-slot-descriptor-name, eieio-class-slots): New functions.
+	(object-slots): Use it.  Declare obsolete.
+	(eieio-constructor): Merge it with `make-instance'.
+	(initialize-instance): Use `dolist'.
+	(eieio-override-prin1, eieio-edebug-prin1-to-string):
+	Use eieio--class-print-name.
+
+	* emacs-lisp/eieio-core.el (eieio--class-print-name): New function.
+	(eieio-class-name): Make it do what the docstring claims.
+	(eieio-defclass-internal): Simplify since `prots' isn't used any more.
+	(eieio--slot-name-index): Simplify accordingly.
+	(eieio-barf-if-slot-unbound): Pass the class object rather than its
+	name to `slot-unbound'.
+
+	* emacs-lisp/eieio-base.el (make-instance): Add a method here rather
+	than on eieio-constructor.
+
+2015-02-16  Stefan Monnier  <monnier@iro.umontreal.ca>
+
 	* emacs-lisp/cl-macs.el (cl-defstruct): Keep type=nil by default.
 	* emacs-lisp/cl-preloaded.el (cl-struct-define): Add sanity checks
 	about relationship between `type', `named', and `slots'.
