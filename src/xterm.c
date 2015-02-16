@@ -329,12 +329,10 @@ record_event (char *locus, int type)
 static void x_prepare_for_xlibdraw (struct frame *);
 static void x_set_clip_rectangles (struct frame *, GC, XRectangle *, int);
 static void x_reset_clip_rectangles (struct frame *, GC);
-static void x_fill_rectangle (struct frame *, GC, int, int,
-                              unsigned int, unsigned int);
-static void x_draw_rectangle (struct frame *, GC, int, int,
-                              unsigned int, unsigned int);
+static void x_fill_rectangle (struct frame *, GC, int, int, int, int);
+static void x_draw_rectangle (struct frame *, GC, int, int, int, int);
 static void x_fill_trapezoid_for_relief (struct frame *, GC, int, int,
-                                         unsigned int, unsigned int, int);
+					 int, int, int);
 static void x_clear_window (struct frame *);
 
 #ifdef USE_CAIRO
@@ -529,16 +527,9 @@ x_cr_destroy_fringe_bitmap (int which)
 }
 
 static void
-x_cr_draw_image (struct frame *f,
-                 GC gc,
-                 cairo_pattern_t *image,
-                 int src_x,
-                 int src_y,
-                 unsigned int width,
-                 unsigned int height,
-		 int dest_x,
-                 int dest_y,
-                 bool overlay_p)
+x_cr_draw_image (struct frame *f, GC gc, cairo_pattern_t *image,
+		 int src_x, int src_y, int width, int height,
+		 int dest_x, int dest_y, bool overlay_p)
 {
   cairo_t *cr;
   cairo_matrix_t matrix;
@@ -767,8 +758,7 @@ x_reset_clip_rectangles (struct frame *f, GC gc)
 }
 
 static void
-x_fill_rectangle (struct frame *f, GC gc, int x, int y,
-		  unsigned int width, unsigned int height)
+x_fill_rectangle (struct frame *f, GC gc, int x, int y, int width, int height)
 {
 #ifdef USE_CAIRO
   cairo_t *cr;
@@ -785,8 +775,7 @@ x_fill_rectangle (struct frame *f, GC gc, int x, int y,
 }
 
 static void
-x_draw_rectangle (struct frame *f, GC gc, int x, int y,
-		  unsigned int width, unsigned int height)
+x_draw_rectangle (struct frame *f, GC gc, int x, int y, int width, int height)
 {
 #ifdef USE_CAIRO
   cairo_t *cr;
@@ -821,7 +810,7 @@ x_clear_window (struct frame *f)
 #ifdef USE_CAIRO
 static void
 x_fill_trapezoid_for_relief (struct frame *f, GC gc, int x, int y,
-			     unsigned int width, unsigned int height, int top_p)
+			     int width, int height, int top_p)
 {
   cairo_t *cr;
 
