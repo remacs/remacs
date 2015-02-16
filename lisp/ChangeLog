@@ -1,3 +1,10 @@
+2015-02-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Do not deactivate mark on shell fontification.  (Bug#19871)
+
+	* progmodes/python.el (python-shell-font-lock-post-command-hook):
+	Do not deactivate mark on fontification.
+
 2015-02-16  Ivan Shmakov  <ivan@siamics.net>
 
 	* net/eww.el: Fix desktop support.  (Bug#19226)
