@@ -875,6 +875,47 @@ x_fill_trapezoid_for_relief (f, gc, x, y, width, height, top_p)
   cairo_fill (cr);
   x_end_cr_clip (f);
 }
+
+static void
+x_draw_horizontal_wave (struct frame *f, GC gc, int x, int y,
+			int width, int height, int wave_length)
+{
+  cairo_t *cr;
+  double dx = wave_length, dy = height - 1;
+  int xoffset, n;
+
+  cr = x_begin_cr_clip (f, gc);
+  x_set_cr_source_with_gc_foreground (f, gc);
+  cairo_rectangle (cr, x, y, width, height);
+  cairo_clip (cr);
+
+  if (x >= 0)
+    {
+      xoffset = x % (wave_length * 2);
+      if (xoffset == 0)
+	xoffset = wave_length * 2;
+    }
+  else
+    xoffset = x % (wave_length * 2) + wave_length * 2;
+  n = (width + xoffset) / wave_length + 1;
+  if (xoffset > wave_length)
+    {
+      xoffset -= wave_length;
+      --n;
+      y += height - 1;
+      dy = -dy;
+    }
+
+  cairo_move_to (cr, x - xoffset + 0.5, y + 0.5);
+  while (--n >= 0)
+    {
+      cairo_rel_line_to (cr, dx, dy);
+      dy = -dy;
+    }
+  cairo_set_line_width (cr, 1);
+  cairo_stroke (cr);
+  x_end_cr_clip (f);
+}
 #endif
 
 
@@ -3255,6 +3296,10 @@ static void
 x_draw_underwave (struct glyph_string *s)
 {
   int wave_height = 3, wave_length = 2;
+#ifdef USE_CAIRO
+  x_draw_horizontal_wave (s->f, s->gc, s->x, s->ybase - wave_height + 3,
+			  s->width, wave_height, wave_length);
+#else  /* not USE_CAIRO */
   int dx, dy, x0, y0, width, x1, y1, x2, y2, xmax;
   bool odd;
   XRectangle wave_clip, string_clip, final_clip;
@@ -3304,6 +3349,7 @@ x_draw_underwave (struct glyph_string *s)
 
   /* Restore previous clipping rectangle(s) */
   XSetClipRectangles (s->display, s->gc, 0, 0, s->clip, s->num_clips, Unsorted);
+#endif	/* not USE_CAIRO */
 }
 
 

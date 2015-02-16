@@ -2,6 +2,8 @@
 
 	* xterm.c (x_draw_window_divider): Use x_fill_rectangle instead of
 	XFillRectangle.
+	(x_draw_horizontal_wave) [USE_CAIRO]: New function.
+	(x_draw_underwave) [USE_CAIRO]: Use it.
 
 2015-02-14  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
 
