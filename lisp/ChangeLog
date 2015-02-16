@@ -1,5 +1,10 @@
 2015-02-16  Kelly Dean  <kelly@prtime.org>
 
+	* emacs-lisp/package-x.el (package-upload-buffer-internal):
+	Create valid tar files. (Bug#19536)
+
+2015-02-16  Kelly Dean  <kelly@prtime.org>
+
 	* desktop.el (desktop-read): Conditionally re-enable desktop autosave.
 	(Bug#19059)
 
