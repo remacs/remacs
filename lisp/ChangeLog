@@ -2,6 +2,7 @@
 
 	* emacs-lisp/easy-mmode.el (define-minor-mode): Process macro
 	arguments correctly. (Bug#19685)
+	(define-minor-mode): Clarify docstring.
 
 2015-02-16  Kelly Dean  <kelly@prtime.org>
 

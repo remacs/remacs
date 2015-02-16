@@ -114,9 +114,12 @@ Optional KEYMAP is the default keymap bound to the mode keymap.
 BODY contains code to execute each time the mode is enabled or disabled.
   It is executed after toggling the mode, and before running MODE-hook.
   Before the actual body code, you can write keyword arguments, i.e.
-  alternating keywords and values.  These following special keywords
-  are supported (other keywords are passed to `defcustom' if the minor
-  mode is global):
+  alternating keywords and values.  If you provide BODY, then you must
+  provide (even if just nil) INIT-VALUE, LIGHTER, and KEYMAP, or provide
+  at least one keyword argument, or both; otherwise, BODY would be
+  misinterpreted as the first omitted argument.  The following special
+  keywords are supported (other keywords are passed to `defcustom' if
+  the minor mode is global):
 
 :group GROUP	Custom group name to use in all generated `defcustom' forms.
 		Defaults to MODE without the possible trailing \"-mode\".
