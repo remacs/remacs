@@ -1,3 +1,8 @@
+2015-02-16  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
+
+	* xterm.c (x_draw_window_divider): Use x_fill_rectangle instead of
+	XFillRectangle.
+
 2015-02-14  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
 
 	* fringe.c (init_fringe_bitmap) [USE_CAIRO]: Adjust bitmap data for

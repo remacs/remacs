@@ -1101,39 +1101,38 @@ x_draw_window_divider (struct window *w, int x0, int x1, int y0, int y1)
 			      ? face_last->foreground
 			      : FRAME_FOREGROUND_PIXEL (f));
   Display *display = FRAME_X_DISPLAY (f);
-  Window window = FRAME_X_WINDOW (f);
 
   if (y1 - y0 > x1 - x0 && x1 - x0 > 2)
     /* Vertical.  */
     {
       XSetForeground (display, f->output_data.x->normal_gc, color_first);
-      XFillRectangle (display, window, f->output_data.x->normal_gc,
-		      x0, y0, 1, y1 - y0);
+      x_fill_rectangle (f, f->output_data.x->normal_gc,
+			x0, y0, 1, y1 - y0);
       XSetForeground (display, f->output_data.x->normal_gc, color);
-      XFillRectangle (display, window, f->output_data.x->normal_gc,
-		      x0 + 1, y0, x1 - x0 - 2, y1 - y0);
+      x_fill_rectangle (f, f->output_data.x->normal_gc,
+			x0 + 1, y0, x1 - x0 - 2, y1 - y0);
       XSetForeground (display, f->output_data.x->normal_gc, color_last);
-      XFillRectangle (display, window, f->output_data.x->normal_gc,
-		      x1 - 1, y0, 1, y1 - y0);
+      x_fill_rectangle (f, f->output_data.x->normal_gc,
+			x1 - 1, y0, 1, y1 - y0);
     }
   else if (x1 - x0 > y1 - y0 && y1 - y0 > 3)
     /* Horizontal.  */
     {
       XSetForeground (display, f->output_data.x->normal_gc, color_first);
-      XFillRectangle (display, window, f->output_data.x->normal_gc,
-		      x0, y0, x1 - x0, 1);
+      x_fill_rectangle (f, f->output_data.x->normal_gc,
+			x0, y0, x1 - x0, 1);
       XSetForeground (display, f->output_data.x->normal_gc, color);
-      XFillRectangle (display, window, f->output_data.x->normal_gc,
-		      x0, y0 + 1, x1 - x0, y1 - y0 - 2);
+      x_fill_rectangle (f, f->output_data.x->normal_gc,
+			x0, y0 + 1, x1 - x0, y1 - y0 - 2);
       XSetForeground (display, f->output_data.x->normal_gc, color_last);
-      XFillRectangle (display, window, f->output_data.x->normal_gc,
-		      x0, y1 - 1, x1 - x0, 1);
+      x_fill_rectangle (f, f->output_data.x->normal_gc,
+			x0, y1 - 1, x1 - x0, 1);
     }
   else
     {
       XSetForeground (display, f->output_data.x->normal_gc, color);
-      XFillRectangle (display, window, f->output_data.x->normal_gc,
-		      x0, y0, x1 - x0, y1 - y0);
+      x_fill_rectangle (f, f->output_data.x->normal_gc,
+			x0, y0, x1 - x0, y1 - y0);
     }
 }
 
