@@ -1,5 +1,9 @@
 2015-02-16  Kelly Dean  <kelly@prtime.org>
 
+	* lisp/files.el (insert-file-contents-literally): Fix docstring typo.
+
+2015-02-16  Kelly Dean  <kelly@prtime.org>
+
 	* emacs-lisp/easy-mmode.el (define-minor-mode): Process macro
 	arguments correctly. (Bug#19685)
 	(define-minor-mode): Clarify docstring.
