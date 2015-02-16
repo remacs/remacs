@@ -1,5 +1,10 @@
 2015-02-16  Kelly Dean  <kelly@prtime.org>
 
+	* desktop.el (desktop-read): Conditionally re-enable desktop autosave.
+	(Bug#19059)
+
+2015-02-16  Kelly Dean  <kelly@prtime.org>
+
 	* help-mode.el (help-do-xref): Prevent duplicated display of Info
 	buffer, and prevent interference with existing buffer. (Bug#13190)
 
