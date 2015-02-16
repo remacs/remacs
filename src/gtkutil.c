@@ -4051,7 +4051,7 @@ static GtkPrintSettings *print_settings = NULL;
 static GtkPageSetup *page_setup = NULL;
 
 void
-xg_page_setup_dialog ()
+xg_page_setup_dialog (void)
 {
   GtkPageSetup *new_page_setup = NULL;
 
@@ -4065,7 +4065,7 @@ xg_page_setup_dialog ()
 }
 
 Lisp_Object
-xg_get_page_setup ()
+xg_get_page_setup (void)
 {
   Lisp_Object result, orientation_symbol;
   GtkPageOrientation orientation;
@@ -4107,11 +4107,8 @@ xg_get_page_setup ()
 }
 
 static void
-draw_page (operation, context, page_nr, user_data)
-     GtkPrintOperation *operation;
-     GtkPrintContext *context;
-     gint page_nr;
-     gpointer user_data;
+draw_page (GtkPrintOperation *operation, GtkPrintContext *context,
+	   gint page_nr, gpointer user_data)
 {
   Lisp_Object frames = *((Lisp_Object *) user_data);
   struct frame *f = XFRAME (Fnth (make_number (page_nr), frames));
@@ -4121,8 +4118,7 @@ draw_page (operation, context, page_nr, user_data)
 }
 
 void
-xg_print_frames_dialog (frames)
-     Lisp_Object frames;
+xg_print_frames_dialog (Lisp_Object frames)
 {
   GtkPrintOperation *print;
   GtkPrintOperationResult res;

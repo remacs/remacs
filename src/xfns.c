@@ -6158,8 +6158,7 @@ FRAMES should be nil (the selected frame), a frame, or a list of
 frames (each of which corresponds to one page).  Optional arg TYPE
 should be either `pdf' (default), `png', `ps', or `svg'.  Supported
 types are determined by the compile-time configuration of cairo.  */)
-     (frames, type)
-     Lisp_Object frames, type;
+     (Lisp_Object frames, Lisp_Object type)
 {
   Lisp_Object result, rest, tmp;
   cairo_surface_type_t surface_type;
@@ -6224,7 +6223,7 @@ types are determined by the compile-time configuration of cairo.  */)
 DEFUN ("x-page-setup-dialog", Fx_page_setup_dialog, Sx_page_setup_dialog, 0, 0, 0,
        doc: /* Pop up a page setup dialog.
 The current page setup can be obtained using `x-get-page-setup'.  */)
-     ()
+     (void)
 {
   block_input ();
   xg_page_setup_dialog ();
@@ -6247,7 +6246,7 @@ The return value is an alist containing the following keys:
 The paper width can be obtained as the sum of width, left-margin, and
 right-margin values.  Likewise, the paper height is the sum of height,
 top-margin, and bottom-margin values.  */)
-     ()
+     (void)
 {
   Lisp_Object result;
 
@@ -6263,8 +6262,7 @@ DEFUN ("x-print-frames-dialog", Fx_print_frames_dialog, Sx_print_frames_dialog, 
 FRAMES should be nil (the selected frame), a frame, or a list of
 frames (each of which corresponds to one page).  Each frame should be
 visible.  */)
-     (frames)
-     Lisp_Object frames;
+     (Lisp_Object frames)
 {
   Lisp_Object rest, tmp;
 

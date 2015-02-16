@@ -1,9 +1,23 @@
 2015-02-16  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
 
+	* gtkutil.c (xg_page_setup_dialog, xg_get_page_setup, draw_page)
+	(xg_print_frames_dialog): Modernize k&r declarations.
+
+	* xfns.c (Fx_export_frames, Fx_page_setup_dialog, Fx_get_page_setup)
+	(Fx_print_frames_dialog): Modernize k&r declarations.
+
 	* xterm.c (x_draw_window_divider): Use x_fill_rectangle instead of
 	XFillRectangle.
 	(x_draw_horizontal_wave) [USE_CAIRO]: New function.
 	(x_draw_underwave) [USE_CAIRO]: Use it.
+	(x_gc_get_ext_data, x_extension_initialize, x_begin_cr_clip)
+	(x_end_cr_clip, x_set_cr_source_with_gc_foreground)
+	(x_set_cr_source_with_gc_background, x_cr_define_fringe_bitmap)
+	(x_cr_destroy_fringe_bitmap, x_cr_draw_frame, x_cr_accumulate_data)
+	(x_cr_destroy, x_cr_export_frames, x_prepare_for_xlibdraw)
+	(x_set_clip_rectangles, x_reset_clip_rectangles, x_fill_rectangle)
+	(x_draw_rectangle, x_clear_window, x_fill_trapezoid_for_relief)
+	(x_clear_area): Modernize k&r declarations.
 
 2015-02-14  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
 

@@ -348,10 +348,7 @@ static cairo_status_t x_cr_accumulate_data (void *,
 #define FRAME_CR_SURFACE(f)	((f)->output_data.x->cr_surface)
 
 static struct x_gc_ext_data *
-x_gc_get_ext_data (f, gc, create_if_not_found_p)
-     struct frame *f;
-     GC gc;
-     int create_if_not_found_p;
+x_gc_get_ext_data (struct frame *f, GC gc, int create_if_not_found_p)
 {
   struct x_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
   XEDataObject object;
@@ -376,8 +373,7 @@ x_gc_get_ext_data (f, gc, create_if_not_found_p)
 }
 
 static void
-x_extension_initialize (dpyinfo)
-     struct x_display_info *dpyinfo;
+x_extension_initialize (struct x_display_info *dpyinfo)
 {
   XExtCodes *ext_codes = XAddExtension (dpyinfo->display);
 
@@ -398,9 +394,7 @@ x_cr_destroy_surface (struct frame *f)
 }
 
 cairo_t *
-x_begin_cr_clip (f, gc)
-     struct frame *f;
-     GC gc;
+x_begin_cr_clip (struct frame *f, GC gc)
 {
   cairo_t *cr = FRAME_CR_CONTEXT (f);
 
@@ -445,16 +439,13 @@ x_begin_cr_clip (f, gc)
 }
 
 void
-x_end_cr_clip (f)
-     struct frame *f;
+x_end_cr_clip (struct frame *f)
 {
   cairo_restore (FRAME_CR_CONTEXT (f));
 }
 
 void
-x_set_cr_source_with_gc_foreground (f, gc)
-     struct frame *f;
-     GC gc;
+x_set_cr_source_with_gc_foreground (struct frame *f, GC gc)
 {
   XGCValues xgcv;
   XColor color;
@@ -467,9 +458,7 @@ x_set_cr_source_with_gc_foreground (f, gc)
 }
 
 void
-x_set_cr_source_with_gc_background (f, gc)
-     struct frame *f;
-     GC gc;
+x_set_cr_source_with_gc_background (struct frame *f, GC gc)
 {
   XGCValues xgcv;
   XColor color;
@@ -487,10 +476,7 @@ static int max_fringe_bmp = 0;
 static cairo_pattern_t **fringe_bmp = 0;
 
 static void
-x_cr_define_fringe_bitmap (which, bits, h, wd)
-     int which;
-     unsigned short *bits;
-     int h, wd;
+x_cr_define_fringe_bitmap (int which, unsigned short *bits, int h, int wd)
 {
   int i, stride;
   cairo_surface_t *surface;
@@ -528,8 +514,7 @@ x_cr_define_fringe_bitmap (which, bits, h, wd)
 }
 
 static void
-x_cr_destroy_fringe_bitmap (which)
-     int which;
+x_cr_destroy_fringe_bitmap (int which)
 {
   if (which >= max_fringe_bmp)
     return;
@@ -588,9 +573,7 @@ x_cr_draw_image (struct frame *f,
 }
 
 void
-x_cr_draw_frame (cr, f)
-     cairo_t *cr;
-     struct frame *f;
+x_cr_draw_frame (cairo_t *cr, struct frame *f)
 {
   int width, height;
 
@@ -605,10 +588,8 @@ x_cr_draw_frame (cr, f)
 }
 
 static cairo_status_t
-x_cr_accumulate_data (closure, data, length)
-     void *closure;
-     const unsigned char *data;
-     unsigned int length;
+x_cr_accumulate_data (void *closure, const unsigned char *data,
+		      unsigned int length)
 {
   Lisp_Object *acc = (Lisp_Object *) closure;
 
@@ -618,8 +599,7 @@ x_cr_accumulate_data (closure, data, length)
 }
 
 static void
-x_cr_destroy (arg)
-     Lisp_Object arg;
+x_cr_destroy (Lisp_Object arg)
 {
   cairo_t *cr = (cairo_t *) XSAVE_POINTER (arg, 0);
 
@@ -629,9 +609,7 @@ x_cr_destroy (arg)
 }
 
 Lisp_Object
-x_cr_export_frames (frames, surface_type)
-     Lisp_Object frames;
-     cairo_surface_type_t surface_type;
+x_cr_export_frames (Lisp_Object frames, cairo_surface_type_t surface_type)
 {
   struct frame *f;
   cairo_surface_t *surface;
@@ -730,8 +708,7 @@ x_cr_export_frames (frames, surface_type)
 #endif	/* USE_CAIRO */
 
 static void
-x_prepare_for_xlibdraw (f)
-     struct frame *f;
+x_prepare_for_xlibdraw (struct frame *f)
 {
 #ifdef USE_CAIRO
   if (f == NULL)
@@ -760,11 +737,7 @@ x_prepare_for_xlibdraw (f)
 }
 
 static void
-x_set_clip_rectangles (f, gc, rectangles, n)
-     struct frame *f;
-     GC gc;
-     XRectangle *rectangles;
-     int n;
+x_set_clip_rectangles (struct frame *f, GC gc, XRectangle *rectangles, int n)
 {
   XSetClipRectangles (FRAME_X_DISPLAY (f), gc, 0, 0, rectangles, n, Unsorted);
 #ifdef USE_CAIRO
@@ -780,9 +753,7 @@ x_set_clip_rectangles (f, gc, rectangles, n)
 }
 
 static void
-x_reset_clip_rectangles (f, gc)
-     struct frame *f;
-     GC gc;
+x_reset_clip_rectangles (struct frame *f, GC gc)
 {
   XSetClipMask (FRAME_X_DISPLAY (f), gc, None);
 #ifdef USE_CAIRO
@@ -796,11 +767,8 @@ x_reset_clip_rectangles (f, gc)
 }
 
 static void
-x_fill_rectangle (f, gc, x, y, width, height)
-     struct frame *f;
-     GC gc;
-     int x, y;
-     unsigned int width, height;
+x_fill_rectangle (struct frame *f, GC gc, int x, int y,
+		  unsigned int width, unsigned int height)
 {
 #ifdef USE_CAIRO
   cairo_t *cr;
@@ -817,11 +785,8 @@ x_fill_rectangle (f, gc, x, y, width, height)
 }
 
 static void
-x_draw_rectangle (f, gc, x, y, width, height)
-     struct frame *f;
-     GC gc;
-     int x, y;
-     unsigned int width, height;
+x_draw_rectangle (struct frame *f, GC gc, int x, int y,
+		  unsigned int width, unsigned int height)
 {
 #ifdef USE_CAIRO
   cairo_t *cr;
@@ -839,8 +804,7 @@ x_draw_rectangle (f, gc, x, y, width, height)
 }
 
 static void
-x_clear_window (f)
-     struct frame *f;
+x_clear_window (struct frame *f)
 {
 #ifdef USE_CAIRO
   cairo_t *cr;
@@ -856,12 +820,8 @@ x_clear_window (f)
 
 #ifdef USE_CAIRO
 static void
-x_fill_trapezoid_for_relief (f, gc, x, y, width, height, top_p)
-     struct frame *f;
-     GC gc;
-     int x, y;
-     unsigned int width, height;
-     int top_p;
+x_fill_trapezoid_for_relief (struct frame *f, GC gc, int x, int y,
+			     unsigned int width, unsigned int height, int top_p)
 {
   cairo_t *cr;
 
@@ -3667,10 +3627,7 @@ x_clear_area1 (Display *dpy, Window window,
 
 
 void
-x_clear_area (f, x, y, width, height)
-     struct frame *f;
-     int x, y;
-     int width, height;
+x_clear_area (struct frame *f, int x, int y, int width, int height)
 {
 #ifdef USE_CAIRO
   cairo_t *cr;
