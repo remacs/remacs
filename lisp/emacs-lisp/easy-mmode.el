@@ -284,14 +284,23 @@ the mode if ARG is omitted or nil, and toggle it if ARG is `toggle'.
            (if (called-interactively-p 'any)
                (progn
                  ,(if (and globalp (symbolp mode))
+		      ;; Unnecessary but harmless if mode set buffer-locally
                       `(customize-mark-as-set ',mode))
                  ;; Avoid overwriting a message shown by the body,
                  ;; but do overwrite previous messages.
                  (unless (and (current-message)
                               (not (equal ,last-message
                                           (current-message))))
-                   (message ,(format "%s %%sabled" pretty-name)
-                            (if ,mode "en" "dis")))))
+                   (let ((local
+			  ,(if globalp
+			       (if (symbolp mode)
+				   `(if (local-variable-p ',mode)
+					" in current buffer"
+				      "")
+				 "")
+			     " in current buffer")))
+		     (message ,(format "%s %%sabled%%s" pretty-name)
+			      (if ,mode "en" "dis") local)))))
 	   ,@(when after-hook `(,after-hook)))
 	 (force-mode-line-update)
 	 ;; Return the new setting.
