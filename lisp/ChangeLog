@@ -1,3 +1,8 @@
+2015-02-16  Kelly Dean  <kelly@prtime.org>
+
+	* help-mode.el (help-do-xref): Prevent duplicated display of Info
+	buffer, and prevent interference with existing buffer. (Bug#13190)
+
 2015-02-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	python.el: Do not deactivate mark on shell fontification.  (Bug#19871)
