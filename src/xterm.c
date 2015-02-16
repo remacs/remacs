@@ -2547,8 +2547,8 @@ x_draw_relief_rect (struct frame *f,
 				     right_x + 1 - left_x, width, 0);
     }
 
-  x_set_clip_rectangles (f, top_left_gc, clip_rect, 1);
-  x_set_clip_rectangles (f, bottom_right_gc, clip_rect, 1);
+  x_reset_clip_rectangles (f, top_left_gc);
+  x_reset_clip_rectangles (f, bottom_right_gc);
 #else
   Display *dpy = FRAME_X_DISPLAY (f);
   Window window = FRAME_X_WINDOW (f);

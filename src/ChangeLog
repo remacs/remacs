@@ -23,6 +23,7 @@
 	width and height args.
 	(x_draw_stretch_glyph_string): Call x_reset_clip_rectangles instead
 	of XSetClipMask.
+	(x_draw_relief_rect) [USE_CAIRO]: Reset clipping.
 
 2015-02-14  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
 
