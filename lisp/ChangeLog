@@ -4,6 +4,9 @@
 	(eww-mode): Add autoload cookie.
 	(eww-restore-desktop): Use inhibit-read-only.
 
+	* net/eww.el (eww-suggest-uris): Add autoload cookie, so that
+	add-hook works correctly even if the file is not yet loaded.
+
 2015-02-16  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/eieio.el (defclass): Use make-instance rather than

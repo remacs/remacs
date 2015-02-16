@@ -60,6 +60,7 @@
   :group 'eww
   :type 'string)
 
+;;;###autoload
 (defcustom eww-suggest-uris
   '(eww-links-at-point
     url-get-url-at-point
