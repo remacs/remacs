@@ -820,7 +820,6 @@ x_fill_trapezoid_for_relief (struct frame *f, GC gc, int x, int y,
   cairo_line_to (cr, x, y + height);
   cairo_line_to (cr, top_p ? x + width - height : x + width, y + height);
   cairo_line_to (cr, x + width, y);
-  cairo_close_path (cr);
   cairo_fill (cr);
   x_end_cr_clip (f);
 }
