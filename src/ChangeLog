@@ -21,6 +21,8 @@
 	(x_cr_draw_image, x_fill_rectangle, x_draw_rectangle)
 	(x_fill_trapezoid_for_relief): Use int instead of unsigned int for
 	width and height args.
+	(x_draw_stretch_glyph_string): Call x_reset_clip_rectangles instead
+	of XSetClipMask.
 
 2015-02-14  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
 
