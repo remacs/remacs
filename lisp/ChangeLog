@@ -1,5 +1,10 @@
 2015-02-16  Kelly Dean  <kelly@prtime.org>
 
+	* emacs-lisp/easy-mmode.el (define-minor-mode): Process macro
+	arguments correctly. (Bug#19685)
+
+2015-02-16  Kelly Dean  <kelly@prtime.org>
+
 	* emacs-lisp/package-x.el (package-upload-buffer-internal):
 	Create valid tar files. (Bug#19536)
 

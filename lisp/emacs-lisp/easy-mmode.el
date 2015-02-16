@@ -159,7 +159,8 @@ For example, you could write
   ;; Allow skipping the first three args.
   (cond
    ((keywordp init-value)
-    (setq body `(,init-value ,lighter ,keymap ,@body)
+    (setq body (if keymap `(,init-value ,lighter ,keymap ,@body)
+		 `(,init-value ,lighter))
 	  init-value nil lighter nil keymap nil))
    ((keywordp lighter)
     (setq body `(,lighter ,keymap ,@body) lighter nil keymap nil))
