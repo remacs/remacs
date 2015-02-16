@@ -4441,7 +4441,7 @@ timer_check_2 (Lisp_Object timers, Lisp_Object idle_timers)
       /* Set TIMER and TIMER_DIFFERENCE
 	 based on the next ordinary timer.
 	 TIMER_DIFFERENCE is the distance in time from NOW to when
-	 this timer becomes ripe (negative if it's already ripe).
+	 this timer becomes ripe.
          Skip past invalid timers and timers already handled.  */
       if (CONSP (timers))
 	{

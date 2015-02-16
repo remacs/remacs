@@ -1,3 +1,7 @@
+2015-02-16  Kelly Dean  <kelly@prtime.org>
+
+	* src/keyboard.c (timer_check_2): Fix incorrect comment.
+
 2015-02-14  Martin Rudalics  <rudalics@gmx.at>
 
 	* xterm.c (x_frame_normalize_before_maximize): Fix doc-string.
