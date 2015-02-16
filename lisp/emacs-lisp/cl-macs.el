@@ -2494,7 +2494,7 @@ non-nil value, that slot cannot be set via `setf'.
 	    (or (memq type '(vector list))
 		(error "Invalid :type specifier: %s" type))
 	    (if named (setq tag name)))
-	(setq type 'vector named 'true)))
+	(setq named 'true)))
     (or named (setq descs (delq (assq 'cl-tag-slot descs) descs)))
     (when (and (null predicate) named)
       (setq predicate (intern (format "cl--struct-%s-p" name))))
@@ -2503,7 +2503,7 @@ non-nil value, that slot cannot be set via `setf'.
 				       (length (memq (assq 'cl-tag-slot descs)
 						     descs)))))
 			   (cond
-                            ((eq type 'vector)
+                            ((memq type '(nil vector))
                              `(and (vectorp cl-x)
                                    (>= (length cl-x) ,(length descs))
                                    (memq (aref cl-x ,pos) ,tag-symbol)))
@@ -2535,7 +2535,7 @@ non-nil value, that slot cannot be set via `setf'.
 			      (list `(or ,pred-check
                                          (error "%s accessing a non-%s"
                                                 ',accessor ',name))))
-                       ,(if (eq type 'vector) `(aref cl-x ,pos)
+                       ,(if (memq type '(nil vector)) `(aref cl-x ,pos)
                           (if (= pos 0) '(car cl-x)
                             `(nth ,pos cl-x))))
                     forms)
@@ -2593,7 +2593,7 @@ non-nil value, that slot cannot be set via `setf'.
                    (&cl-defs '(nil ,@descs) ,@args)
                  ,@(if (cl--safe-expr-p `(progn ,@(mapcar #'cl-second descs)))
                        '((declare (side-effect-free t))))
-                 (,type ,@make))
+                 (,(or type #'vector) ,@make))
               forms)))
     (if print-auto (nconc print-func (list '(princ ")" cl-s) t)))
     ;; Don't bother adding to cl-custom-print-functions since it's not used

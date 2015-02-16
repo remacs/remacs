@@ -28,8 +28,12 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'cl-lib))
+
 (defun cl-struct-define (name docstring parent type named slots children-sym
                               tag print-auto)
+  (cl-assert (or type (equal '(cl-tag-slot) (car slots))))
+  (cl-assert (or type (not named)))
   (if (boundp children-sym)
       (add-to-list children-sym tag)
     (set children-sym (list tag)))

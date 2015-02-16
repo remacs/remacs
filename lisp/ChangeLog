@@ -1,3 +1,11 @@
+2015-02-16  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/cl-macs.el (cl-defstruct): Keep type=nil by default.
+	* emacs-lisp/cl-preloaded.el (cl-struct-define): Add sanity checks
+	about relationship between `type', `named', and `slots'.
+	* emacs-lisp/cl-generic.el (cl--generic-struct-tagcode): Adjust to new
+	value of `cl-struct-type' property.
+
 2015-02-15  Jérémy Compostella  <jeremy.compostella@gmail.com>
 
 	* net/tramp-sh.el (tramp-remote-process-environment): Disable paging
@@ -5,8 +13,8 @@
 
 2015-02-14  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* emacs-lisp/package.el (package-read-all-archive-contents): Don't
-	build the compatibility table.
+	* emacs-lisp/package.el (package-read-all-archive-contents):
+	Don't build the compatibility table.
 	(package-refresh-contents, package-initialize): Do build the
 	compatibility table.
 	(package--build-compatibility-table): New function.
