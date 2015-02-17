@@ -1,3 +1,11 @@
+2015-02-17  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
+
+	* xterm.c [USE_CAIRO]: Include math.h.
+	(enum corners) [USE_CAIRO]: New enum.
+	(x_erase_corners_for_relief) [USE_CAIRO]: New function.
+	(x_draw_relief_rect) [USE_CAIRO]: Use it.  If box width is larger
+	than 1, draw the outermost line using the black relief.
+
 2015-02-16  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
 
 	* gtkutil.c (xg_page_setup_dialog, xg_get_page_setup, draw_page)

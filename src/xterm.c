@@ -22,6 +22,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <stdio.h>
+#ifdef USE_CAIRO
+#include <math.h>
+#endif
 
 #include "lisp.h"
 #include "blockinput.h"
@@ -820,6 +823,48 @@ x_fill_trapezoid_for_relief (struct frame *f, GC gc, int x, int y,
   cairo_line_to (cr, x, y + height);
   cairo_line_to (cr, top_p ? x + width - height : x + width, y + height);
   cairo_line_to (cr, x + width, y);
+  cairo_fill (cr);
+  x_end_cr_clip (f);
+}
+
+enum corners
+  {
+    CORNER_BOTTOM_RIGHT,	/* 0 -> pi/2 */
+    CORNER_BOTTOM_LEFT,		/* pi/2 -> pi */
+    CORNER_TOP_LEFT,		/* pi -> 3pi/2 */
+    CORNER_TOP_RIGHT,		/* 3pi/2 -> 2pi */
+    CORNER_LAST
+  };
+
+static void
+x_erase_corners_for_relief (struct frame *f, GC gc, int x, int y,
+			    int width, int height,
+			    double radius, double margin, int corners)
+{
+  cairo_t *cr;
+  int i;
+
+  cr = x_begin_cr_clip (f, gc);
+  x_set_cr_source_with_gc_background (f, gc);
+  for (i = 0; i < CORNER_LAST; i++)
+    if (corners & (1 << i))
+      {
+	double xm, ym, xc, yc;
+
+	if (i == CORNER_TOP_LEFT || i == CORNER_BOTTOM_LEFT)
+	  xm = x - margin, xc = xm + radius;
+	else
+	  xm = x + width + margin, xc = xm - radius;
+	if (i == CORNER_TOP_LEFT || i == CORNER_TOP_RIGHT)
+	  ym = y - margin, yc = ym + radius;
+	else
+	  ym = y + height + margin, yc = ym - radius;
+
+	cairo_move_to (cr, xm, ym);
+	cairo_arc (cr, xc, yc, radius, i * M_PI_2, (i + 1) * M_PI_2);
+      }
+  cairo_clip (cr);
+  cairo_rectangle (cr, x, y, width, height);
   cairo_fill (cr);
   x_end_cr_clip (f);
 }
@@ -2505,6 +2550,7 @@ x_draw_relief_rect (struct frame *f,
 {
 #ifdef USE_CAIRO
   GC top_left_gc, bottom_right_gc;
+  int corners = 0;
 
   if (raised_p)
     {
@@ -2521,11 +2567,23 @@ x_draw_relief_rect (struct frame *f,
   x_set_clip_rectangles (f, bottom_right_gc, clip_rect, 1);
 
   if (left_p)
-    x_fill_rectangle (f, top_left_gc, left_x, top_y,
-		      width, bottom_y + 1 - top_y);
+    {
+      x_fill_rectangle (f, top_left_gc, left_x, top_y,
+			width, bottom_y + 1 - top_y);
+      if (top_p)
+	corners |= 1 << CORNER_TOP_LEFT;
+      if (bot_p)
+	corners |= 1 << CORNER_BOTTOM_LEFT;
+    }
   if (right_p)
-    x_fill_rectangle (f, bottom_right_gc, right_x + 1 - width, top_y,
-		      width, bottom_y + 1 - top_y);
+    {
+      x_fill_rectangle (f, bottom_right_gc, right_x + 1 - width, top_y,
+			width, bottom_y + 1 - top_y);
+      if (top_p)
+	corners |= 1 << CORNER_TOP_RIGHT;
+      if (bot_p)
+	corners |= 1 << CORNER_BOTTOM_RIGHT;
+    }
   if (top_p)
     {
       if (!right_p)
@@ -2544,6 +2602,20 @@ x_draw_relief_rect (struct frame *f,
 	x_fill_trapezoid_for_relief (f, bottom_right_gc,
 				     left_x, bottom_y + 1 - width,
 				     right_x + 1 - left_x, width, 0);
+    }
+  if (left_p && width != 1)
+    x_fill_rectangle (f, bottom_right_gc, left_x, top_y,
+		      1, bottom_y + 1 - top_y);
+  if (top_p && width != 1)
+    x_fill_rectangle (f, bottom_right_gc, left_x, top_y,
+		      right_x + 1 - left_x, 1);
+  if (corners)
+    {
+      XSetBackground (FRAME_X_DISPLAY (f), top_left_gc,
+		      FRAME_BACKGROUND_PIXEL (f));
+      x_erase_corners_for_relief (f, top_left_gc, left_x, top_y,
+				  right_x - left_x + 1, bottom_y - top_y + 1,
+				  6, 1, corners);
     }
 
   x_reset_clip_rectangles (f, top_left_gc);
