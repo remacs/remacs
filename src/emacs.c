@@ -1896,9 +1896,6 @@ all of which are called before Emacs is actually killed.  */
 
   GCPRO1 (arg);
 
-  if (feof (stdin))
-    arg = Qt;
-
   /* Fsignal calls emacs_abort () if it sees that waiting_for_input is
      set.  */
   waiting_for_input = 0;
@@ -1910,7 +1907,7 @@ all of which are called before Emacs is actually killed.  */
   x_clipboard_manager_save_all ();
 #endif
 
-  shut_down_emacs (0, STRINGP (arg) ? arg : Qnil);
+  shut_down_emacs (0, (STRINGP (arg) && !feof (stdin)) ? arg : Qnil);
 
 #ifdef HAVE_NS
   ns_release_autorelease_pool (ns_pool);
