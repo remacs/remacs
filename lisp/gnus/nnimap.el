@@ -1265,7 +1265,7 @@ If LIMIT, first try to limit the search to the N last articles."
 	    (group (buffer-substring-no-properties
 		    (progn (skip-chars-forward " \"")
 			   (point))
-		    (progn (move-end-of-line 1)
+		    (progn (end-of-line)
 			   (skip-chars-backward " \"")
 			   (point)))))
 	(unless (member '%NoSelect flags)
