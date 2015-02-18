@@ -1,3 +1,8 @@
+2015-02-18  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/checkdoc.el (checkdoc-show-diagnostics): Don't make bogus
+	assumptions about window ordering.
+
 2015-02-16  Kelly Dean  <kelly@prtime.org>
 
 	* lisp/files.el (insert-file-contents-literally): Fix docstring typo.
