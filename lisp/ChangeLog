@@ -1,5 +1,10 @@
 2015-02-18  Kelly Dean  <kelly@prtime.org>
 
+	* rect.el (rectangle-mark-mode):
+	Suppress superfluous "Mark set" message from push-mark.
+
+2015-02-18  Kelly Dean  <kelly@prtime.org>
+
 	* help-mode.el (help-go-back, help-go-forward, help-follow):
 	* simple.el (yank-pop, pop-to-mark-command, exchange-point-and-mark):
 	* winner.el (winner-redo):
