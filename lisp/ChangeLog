@@ -1,5 +1,11 @@
 2015-02-18  Kelly Dean  <kelly@prtime.org>
 
+	* register.el (jump-to-register):
+	* emacs-lisp/lisp.el (check-parens):
+	Push mark before goto-char so user doesn't lose his previous place.
+
+2015-02-18  Kelly Dean  <kelly@prtime.org>
+
 	* rect.el (rectangle-mark-mode):
 	Suppress superfluous "Mark set" message from push-mark.
 
