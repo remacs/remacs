@@ -1,3 +1,8 @@
+2015-02-18  Eric Abrahamsen  <eric@ericabrahamsen.net>
+
+	* nnimap.el (nnimap-get-groups): Correctly read unquoted group names
+	from the server LIST response.
+
 2015-02-14  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* nnimap.el (nnimap-retrieve-headers): If the server closes connection
