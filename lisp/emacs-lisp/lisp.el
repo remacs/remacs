@@ -263,7 +263,7 @@ This command assumes point is not in a string or comment."
           (backward-up-list arg)
           (kill-sexp)
           (insert current-sexp))
-      (error "Not at a sexp"))))
+      (user-error "Not at a sexp"))))
 
 (defvar beginning-of-defun-function nil
   "If non-nil, function for `beginning-of-defun-raw' to call.
