@@ -1,3 +1,9 @@
+2015-02-18  Oscar Fuentes <ofv@wanadoo.es>
+
+	* keyboard.c (read_char): When there is an input method function,
+	do not restore the echo area if a prefix argument is being
+	introduced.  (Bug#19875)
+
 2015-02-16  Kelly Dean  <kelly@prtime.org>
 
 	* src/keyboard.c (timer_check_2): Fix incorrect comment.
