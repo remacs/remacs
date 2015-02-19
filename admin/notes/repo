@@ -82,7 +82,9 @@ The exception is, if you know that the change will be difficult to
 merge to the trunk (eg because the trunk code has changed a lot).
 In that case, it's helpful if you can apply the change to both trunk
 and branch yourself (when committing the branch change, indicate
-in the commit log that it should not be merged to the trunk; see below).
+in the commit log that it should not be merged to the trunk, by
+including the phrase "Not to be merged to master", or any other phrase
+that matches "merge").
 
 * Installing changes from your personal branches.
 
