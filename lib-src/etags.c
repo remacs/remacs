@@ -1532,7 +1532,14 @@ process_file_name (char *file, language *lang)
   if (real_name == compressed_name)
     {
       char *cmd = concat (compr->command, " ", real_name);
+
+      /* Unix implementations of 'popen' generally don't support "rb", whereas
+	 DOS_NT needs it.  */
+#ifdef DOS_NT
       inf = popen (cmd, "rb");
+#else
+      inf = popen (cmd, "r");
+#endif
       free (cmd);
     }
   else
