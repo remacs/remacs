@@ -1,3 +1,9 @@
+2015-02-19  Fujii Hironori  <fujii.hironori@gmail.com>  (tiny change)
+
+	* w32fns.c (w32_wnd_proc) <WM_IME_STARTCOMPOSITION>: Pass the
+	message to DefWindowProc, after positioning the IME window, to
+	trigger its display.  (Bug#11732)
+
 2015-02-18  Eli Zaretskii  <eliz@gnu.org>
 
 	* emacs.c (Fkill_emacs): Exit with specified exit code even if
