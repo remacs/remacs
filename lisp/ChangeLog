@@ -1,3 +1,11 @@
+2015-02-19  Juri Linkov  <juri@linkov.net>
+
+	* comint.el (comint-line-beginning-position): Revert searching for
+	the prompt when comint-use-prompt-regexp is non-nil because it
+	doesn't distinguish input from output.  Check the field property
+	`output' for the case when comint-use-prompt-regexp is nil.
+	(Bug#19710)
+
 2015-02-15  Jérémy Compostella  <jeremy.compostella@gmail.com>
 
 	* net/tramp-sh.el (tramp-remote-process-environment): Disable paging

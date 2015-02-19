@@ -2267,8 +2267,6 @@ a buffer local variable."
       ;; Use comint-prompt-regexp
       (save-excursion
 	(beginning-of-line)
-	(unless (looking-at comint-prompt-regexp)
-	  (re-search-backward comint-prompt-regexp nil t))
 	(comint-skip-prompt)
 	(point))
     ;; Use input fields.  Note that, unlike the behavior of
@@ -2278,7 +2276,10 @@ a buffer local variable."
     ;; if there are two fields on a line, then the first one is the
     ;; prompt, and the second one is an input field, and is front-sticky
     ;; (as input fields should be).
-    (constrain-to-field (field-beginning) (line-end-position))))
+    (constrain-to-field (if (eq (field-at-pos (point)) 'output)
+                            (line-beginning-position)
+                          (field-beginning))
+                        (line-end-position))))
 
 (defun comint-bol (&optional arg)
   "Go to the beginning of line, then skip past the prompt, if any.
