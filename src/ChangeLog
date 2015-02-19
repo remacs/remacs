@@ -1,3 +1,9 @@
+2015-02-19  Eli Zaretskii  <eliz@gnu.org>
+
+	* keyboard.c (read_char): Make sure this_single_command_key_start
+	is in sync with this_command_key_count, around the call to
+	input-method-function.  (Bug#19774)
+
 2015-02-19  Fujii Hironori  <fujii.hironori@gmail.com>  (tiny change)
 
 	* w32fns.c (w32_wnd_proc) <WM_IME_STARTCOMPOSITION>: Pass the
