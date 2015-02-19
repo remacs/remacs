@@ -531,6 +531,30 @@ will use an up-to-date value of `auto-revert-interval'"
       ;; Fallback to file checks.
       (set (make-local-variable 'auto-revert-use-notify) nil))))
 
+;; If we have file notifications, we want to update the auto-revert buffers
+;; immediately when a notification occurs. Since file updates can happen very
+;; often, we want to skip some revert operations so that we don't spend all our
+;; time reverting the buffer.
+;;
+;; We do this by reverting immediately in response to the first in a flurry of
+;; notifications. We suppress subsequent notifications until the next time
+;; `auto-revert-buffers' is called (this happens on a timer with a period set by
+;; `auto-revert-interval').
+(defvar auto-revert-buffers-counter 1
+  "Incremented each time `auto-revert-buffers' is called")
+(defvar-local auto-revert-buffers-counter-lockedout 0
+  "Buffer-local value to indicate whether we should immediately
+update the buffer on a notification event or not. If
+
+  (= auto-revert-buffers-counter-lockedout
+     auto-revert-buffers-counter)
+
+then the updates are locked out, and we wait until the next call
+of `auto-revert-buffers' to revert the buffer. If no lockout is
+present, then we revert immediately and set the lockout, so that
+no more reverts are possible until the next call of
+`auto-revert-buffers'")
+
 (defun auto-revert-notify-handler (event)
   "Handle an EVENT returned from file notification."
   (with-demoted-errors
@@ -566,6 +590,14 @@ will use an up-to-date value of `auto-revert-interval'"
                                 (file-name-nondirectory buffer-file-name)))))
                 ;; Mark buffer modified.
                 (setq auto-revert-notify-modified-p t)
+
+                ;; Revert the buffer now if we're not locked out
+                (when (/= auto-revert-buffers-counter-lockedout
+                          auto-revert-buffers-counter)
+                  (auto-revert-handler)
+                  (setq auto-revert-buffers-counter-lockedout
+                        auto-revert-buffers-counter))
+
                 ;; No need to check other buffers.
                 (cl-return)))))))))
 
@@ -686,6 +718,10 @@ are checked first the next time this function is called.
 This function is also responsible for removing buffers no longer in
 Auto-Revert mode from `auto-revert-buffer-list', and for canceling
 the timer when no buffers need to be checked."
+
+  (setq auto-revert-buffers-counter
+        (1+ auto-revert-buffers-counter))
+
   (save-match-data
     (let ((bufs (if global-auto-revert-mode
 		    (buffer-list)

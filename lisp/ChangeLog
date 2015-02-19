@@ -1,3 +1,11 @@
+2015-02-19  Dima Kogan  <dima@secretsauce.net>
+
+	* autorevert.el (auto-revert-buffers-counter)
+	(auto-revert-buffers-counter-lockedout): New variables.
+	(auto-revert-buffers): Increase `auto-revert-buffers-counter'.
+	(auto-revert-notify-handler): Apply `auto-revert-handler' if not
+	suppressed by lockout.  (Bug#18958)
+
 2015-02-19  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/eieio-opt.el (eieio-help-class): `eieio-class-parents'
@@ -29,7 +37,7 @@
 	* files.el (find-alternate-file, abort-if-file-too-large, write-file)
 	(set-visited-file-name):
 	* emacs-lisp/lisp.el (kill-backward-up-list):
-	Use user-error instead of error. (Bug#14480)
+	Use user-error instead of error.  (Bug#14480)
 
 2015-02-18  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -45,12 +53,12 @@
 	* emacs-lisp/easy-mmode.el (define-minor-mode): Process macro
 	arguments correctly. (Bug#19685)
 	(define-minor-mode): Clarify docstring.
-	Clarify mode switch messages for minor modes. (Bug#19690)
+	Clarify mode switch messages for minor modes.  (Bug#19690)
 
 2015-02-16  Kelly Dean  <kelly@prtime.org>
 
 	* emacs-lisp/package-x.el (package-upload-buffer-internal):
-	Create valid tar files. (Bug#19536)
+	Create valid tar files.  (Bug#19536)
 
 2015-02-16  Kelly Dean  <kelly@prtime.org>
 
@@ -60,7 +68,7 @@
 2015-02-16  Kelly Dean  <kelly@prtime.org>
 
 	* help-mode.el (help-do-xref): Prevent duplicated display of Info
-	buffer, and prevent interference with existing buffer. (Bug#13190)
+	buffer, and prevent interference with existing buffer.  (Bug#13190)
 
 2015-02-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
