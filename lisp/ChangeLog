@@ -1,3 +1,7 @@
+2015-02-19  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/smie.el (smie-prec2->grammar): Fix corner case problem.
+
 2015-02-18  Kelly Dean  <kelly@prtime.org>
 
 	* register.el (jump-to-register):
