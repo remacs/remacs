@@ -2978,9 +2978,9 @@ STRUCT and SLOT-NAME are symbols.  INST is a structure instance."
        ;; We could use `elt', but since the byte compiler will resolve the
        ;; branch below at compile time, it's more efficient to use the
        ;; type-specific accessor.
-       (if (eq (cl-struct-sequence-type ,struct-type) 'vector)
-           (aref ,inst (cl-struct-slot-offset ,struct-type ,slot-name))
-         (nth (cl-struct-slot-offset ,struct-type ,slot-name) ,inst))))))
+       (if (eq (cl-struct-sequence-type ,struct-type) 'list)
+           (nth (cl-struct-slot-offset ,struct-type ,slot-name) ,inst)
+         (aref ,inst (cl-struct-slot-offset ,struct-type ,slot-name)))))))
 
 (run-hooks 'cl-macs-load-hook)
 
