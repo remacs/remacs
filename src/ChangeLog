@@ -1,3 +1,7 @@
+2015-02-19  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
+
+	* ftcrfont.c (ftcrfont_draw): Don't flush when drawing to screen.
+
 2015-02-17  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
 
 	* xterm.c [USE_CAIRO]: Include math.h.

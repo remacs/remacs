@@ -246,6 +246,7 @@ ftcrfont_draw (struct glyph_string *s,
   cairo_t *cr;
   cairo_glyph_t *glyphs;
   cairo_surface_t *surface;
+  cairo_surface_type_t surface_type;
   int len = to - from;
   int i;
 
@@ -282,7 +283,12 @@ ftcrfont_draw (struct glyph_string *s,
   FT_Activate_Size (ftcrfont_info->ft_size_draw);
   cairo_show_glyphs (cr, glyphs, len);
   surface = cairo_get_target (cr);
-  if (cairo_surface_get_type (surface) != CAIRO_SURFACE_TYPE_XLIB)
+  /* XXX: It used to be necessary to flush when exporting.  It might
+     be the case that this is no longer necessary.  */
+  surface_type = cairo_surface_get_type (surface);
+  if (surface_type != CAIRO_SURFACE_TYPE_XLIB
+      && (surface_type != CAIRO_SURFACE_TYPE_IMAGE
+	  || cairo_image_surface_get_format (surface) != CAIRO_FORMAT_ARGB32))
     cairo_surface_flush (surface);
 
   x_end_cr_clip (f);
