@@ -1,5 +1,8 @@
 2015-02-19  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* emacs-lisp/eieio-opt.el (eieio-help-class): `eieio-class-parents'
+	returns classes, not class names (bug#19891).
+
 	* emacs-lisp/cl-macs.el (cl-struct-slot-value): Handle a nil type.
 
 	* emacs-lisp/smie.el (smie-prec2->grammar): Fix corner case problem.
