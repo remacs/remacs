@@ -1,3 +1,12 @@
+2015-02-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Simplify binary I/O configuration
+	* lread.c (Fload): Prefer FOPEN_TEXT and FOPEN_BINARY to #ifdef DOS_NT.
+	* sysstdio.h: Add copyright notice.  Include <fcntl.h>.
+	(FOPEN_BINARY, FOPEN_TEXT): New macros.
+	* xfaces.c (Fx_load_color_file): Use FOPEN_TEXT, since POSIX
+	doesn't guarantee that "t" will work.
+
 2015-02-19  Eli Zaretskii  <eliz@gnu.org>
 
 	* keyboard.c (read_char): Make sure this_single_command_key_start
