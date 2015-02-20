@@ -1,3 +1,8 @@
+2015-02-20  Glenn Morris  <rgm@gnu.org>
+
+	* progmodes/f90.el (f90-keywords-re, f90-procedures-re)
+	(f90-font-lock-keywords-2): Some F2008 additions.
+
 2015-02-19  Dima Kogan  <dima@secretsauce.net>
 
 	* autorevert.el (auto-revert-buffers-counter)
