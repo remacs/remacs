@@ -1,3 +1,7 @@
+2015-02-20  Glenn Morris  <rgm@gnu.org>
+
+	* fileio.c (Fmake_temp_name): Doc tweaks.  (Bug#19858)
+
 2015-02-14  Eli Zaretskii  <eliz@gnu.org>
 
 	* menu.c (Fx_popup_menu) [HAVE_X_WINDOWS]: Call
