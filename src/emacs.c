@@ -345,13 +345,13 @@ _Noreturn void
 terminate_due_to_signal (int sig, int backtrace_limit)
 {
   signal (sig, SIG_DFL);
-  totally_unblock_input ();
 
   /* If fatal error occurs in code below, avoid infinite recursion.  */
   if (! fatal_error_in_progress)
     {
       fatal_error_in_progress = 1;
 
+      totally_unblock_input ();
       if (sig == SIGTERM || sig == SIGHUP || sig == SIGINT)
         Fkill_emacs (make_number (sig));
 

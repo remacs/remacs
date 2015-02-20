@@ -1,3 +1,9 @@
+2015-02-20  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* emacs.c (terminate_due_to_signal): Move totally_unblock_input after
+	setting fatal_error_in_progress, so gobble_input and *read_socket are
+	not read if there are pending_signals.
+
 2015-02-20  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Simplify binary I/O configuration
