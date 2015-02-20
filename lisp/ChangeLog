@@ -1,5 +1,9 @@
 2015-02-20  Glenn Morris  <rgm@gnu.org>
 
+	* calendar/solar.el (solar-sunrise-sunset-string):
+	Shorten message a little.
+	(sunrise-sunset): Use message rather than a window.  (Bug#19859)
+
 	* progmodes/f90.el (f90-keywords-re, f90-procedures-re)
 	(f90-font-lock-keywords-2): Some F2008 additions.
 
