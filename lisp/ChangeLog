@@ -1,3 +1,36 @@
+2015-02-21  Reto Zimmermann  <reto@gnu.org>
+
+	Sync with upstream vhdl mode v3.37.1.  Add VHDL'08 support.
+	* progmodes/vhdl-mode.el (vhdl-version, vhdl-time-stamp)
+	(vhdl-doc-release-notes): Update.
+	(vhdl-standard): Add VHDL'08 option.
+	(vhdl-sensitivity-list-all): New option.
+	(vhdl-directive-keywords): Add psl.
+	(vhdl-offsets-alist-default, vhdl-mode-abbrev-table-init)
+	(vhdl-template-construct-alist-init, vhdl-create-mode-menu):
+	(vhdl-imenu-generic-expression): Add context, directive.
+	(vhdl-offsets-alist, vhdl-mode, vhdl-doc-keywords): Doc fixes.
+	(vhdl-template-map-init): Add vhdl-template-context.
+	(vhdl-mode-syntax-table): Support VHDL'08 block comments.
+	(vhdl-create-mode-menu): Add some entries.
+	(vhdl-08-keywords, vhdl-08-types, vhdl-08-attributes)
+	(vhdl-08-functions, vhdl-08-packages, vhdl-08-directives):
+	New constants.
+	(vhdl-directives): New variable.
+	(vhdl-words-init, vhdl-template-process)
+	(vhdl-template-replace-header-keywords): Support VHDL'08.
+	(vhdl-abbrev-list-init): Add vhdl-directives.
+	(vhdl-in-comment-p, vhdl-in-literal, vhdl-win-il)
+	(vhdl-forward-syntactic-ws, vhdl-get-syntactic-context)
+	(vhdl-lineup-comment): Handle block comments and directives.
+	(vhdl-beginning-of-directive, vhdl-template-context)
+	(vhdl-template-context-hook): New functions.
+	(vhdl-libunit-re, vhdl-defun-re, vhdl-begin-p)
+	(vhdl-corresponding-begin, vhdl-get-library-unit, vhdl-regress-line)
+	(vhdl-align-declarations, vhdl-beginning-of-block, vhdl-end-of-block)
+	(vhdl-font-lock-keywords-2, vhdl-get-end-of-unit)
+	(vhdl-scan-context-clause): Add context.
+
 2015-02-20  Glenn Morris  <rgm@gnu.org>
 
 	* calendar/solar.el (solar-sunrise-sunset-string):
