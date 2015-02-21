@@ -1384,9 +1384,6 @@
 
 2015-01-17  Ivan Shmakov  <ivan@siamics.net>
 
-	* url/url-cookie.el (url-cookie-write-file): Let-bind print-length
-	and print-level to nil to avoid writing a garbled list.  (Bug#16805)
-
 	* files.el (find-file-other-window, find-file-other-frame):
 	Use mapc instead of mapcar.  (Bug#18175)
 
