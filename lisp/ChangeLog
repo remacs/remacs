@@ -1,3 +1,7 @@
+2015-02-21  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* bindings.el (ctl-x-map): Fix `comment-line' binding.
+
 2015-02-21  Michael Albinus  <michael.albinus@gmx.de>
 
 	* autorevert.el (auto-revert-notify-add-watch)
