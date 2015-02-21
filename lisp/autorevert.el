@@ -505,16 +505,22 @@ will use an up-to-date value of `auto-revert-interval'"
   ;; `auto-revert-use-notify' are non-nil.
   (when (or (string-match auto-revert-notify-exclude-dir-regexp
 			  (expand-file-name default-directory))
-	    (file-symlink-p buffer-file-name))
+	    (file-symlink-p (or buffer-file-name default-directory)))
     ;; Fallback to file checks.
     (set (make-local-variable 'auto-revert-use-notify) nil))
 
   (when (not auto-revert-notify-watch-descriptor)
     (setq auto-revert-notify-watch-descriptor
 	  (ignore-errors
-	    (file-notify-add-watch
-	     (expand-file-name buffer-file-name default-directory)
-	     '(change attribute-change) 'auto-revert-notify-handler)))
+	    (if buffer-file-name
+		(file-notify-add-watch
+		 (expand-file-name buffer-file-name default-directory)
+		 '(change attribute-change)
+		 'auto-revert-notify-handler)
+	      (file-notify-add-watch
+	       (expand-file-name default-directory)
+	       '(change)
+	       'auto-revert-notify-handler))))
     (if auto-revert-notify-watch-descriptor
 	(progn
 	  (puthash
@@ -563,40 +569,40 @@ no more reverts are possible until the next call of
 			     auto-revert-notify-watch-descriptor-hash-list)))
       ;; Check, that event is meant for us.
       (cl-assert descriptor)
-      ;; We do not handle `deleted', because nothing has to be refreshed.
-      (unless (eq action 'deleted)
-        (cl-assert (memq action '(attribute-changed changed created renamed))
-                   t)
-        ;; Since we watch a directory, a file name must be returned.
-        (cl-assert (stringp file))
-        (when (eq action 'renamed) (cl-assert (stringp file1)))
-        ;; Loop over all buffers, in order to find the intended one.
-        (cl-dolist (buffer buffers)
-          (when (buffer-live-p buffer)
-            (with-current-buffer buffer
-              (when (and (stringp buffer-file-name)
-                         (or
-                          (and (memq action '(attribute-changed changed
-                                              created))
-                               (string-equal
-                                (file-name-nondirectory file)
-                                (file-name-nondirectory buffer-file-name)))
-                          (and (eq action 'renamed)
-                               (string-equal
-                                (file-name-nondirectory file1)
-                                (file-name-nondirectory buffer-file-name)))))
-                ;; Mark buffer modified.
-                (setq auto-revert-notify-modified-p t)
+      ;; Since we watch a directory, a file name must be returned.
+      (cl-assert (stringp file))
+      (when (eq action 'renamed) (cl-assert (stringp file1)))
+      ;; Loop over all buffers, in order to find the intended one.
+      (cl-dolist (buffer buffers)
+	(when (buffer-live-p buffer)
+	  (with-current-buffer buffer
+	    (when (or
+		   ;; A buffer associated with a file.
+		   (and (stringp buffer-file-name)
+			(or
+			 (and (memq action '(attribute-changed changed created))
+			      (string-equal
+			       (file-name-nondirectory file)
+			       (file-name-nondirectory buffer-file-name)))
+			 (and (eq action 'renamed)
+			      (string-equal
+			       (file-name-nondirectory file1)
+			       (file-name-nondirectory buffer-file-name)))))
+		   ;; A buffer w/o a file, like dired.
+		   (and (null buffer-file-name)
+			(memq action '(created renamed deleted))))
+	      ;; Mark buffer modified.
+	      (setq auto-revert-notify-modified-p t)
 
-                ;; Revert the buffer now if we're not locked out
-                (when (/= auto-revert-buffers-counter-lockedout
-                          auto-revert-buffers-counter)
-                  (auto-revert-handler)
-                  (setq auto-revert-buffers-counter-lockedout
-                        auto-revert-buffers-counter))
+	      ;; Revert the buffer now if we're not locked out.
+	      (when (/= auto-revert-buffers-counter-lockedout
+			auto-revert-buffers-counter)
+		(auto-revert-handler)
+		(setq auto-revert-buffers-counter-lockedout
+		      auto-revert-buffers-counter))
 
-                ;; No need to check other buffers.
-                (cl-return)))))))))
+	      ;; No need to check other buffers.
+	      (cl-return))))))))
 
 (defun auto-revert-active-p ()
   "Check if auto-revert is active (in current buffer or globally)."
@@ -750,7 +756,7 @@ the timer when no buffers need to be checked."
 			  (delq buf auto-revert-buffer-list)))
 		(when (auto-revert-active-p)
 		  ;; Enable file notification.
-		  (when (and auto-revert-use-notify buffer-file-name
+		  (when (and auto-revert-use-notify
 			     (not auto-revert-notify-watch-descriptor))
 		    (auto-revert-notify-add-watch))
 		  (auto-revert-handler)))

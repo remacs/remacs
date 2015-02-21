@@ -1,3 +1,9 @@
+2015-02-21  Michael Albinus  <michael.albinus@gmx.de>
+
+	* autorevert.el (auto-revert-notify-add-watch)
+	(auto-revert-notify-handler, auto-revert-buffers): Handle also
+	buffers without an associated file, like dired buffers.
+
 2015-02-21  Dima Kogan  <dima@secretsauce.net>
 
 	* autorevert.el (auto-revert-mode, auto-revert-tail-mode)
