@@ -558,6 +558,9 @@ command line's password prompt.
 ** tar-mode: new `tar-new-entry' command, allowing for new members to
 be added to the archive.
 
+** Autorevert: dired buffers are also auto-reverted via file
+notifications, if Emacs is compiled with file notification support.
+
 ** Obsolete packages
 
 ---
