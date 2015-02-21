@@ -1,3 +1,10 @@
+2015-02-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* bindings.el (ctl-x-map): There is no 'C-;'.
+	For now, make do with 'M-;'; this allows 'make bootstrap' to work.
+	Perhaps some other binding should be chosen.
+	Fixes: bug#19826
+
 2015-02-21  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* bindings.el (ctl-x-map): Fix `comment-line' binding.
