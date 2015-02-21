@@ -849,9 +849,9 @@ ns_cursor_type_to_lisp (int arg)
   switch (arg)
     {
     case FILLED_BOX_CURSOR: return Qbox;
-    case HOLLOW_BOX_CURSOR: return intern ("hollow");
-    case HBAR_CURSOR:	    return intern ("hbar");
-    case BAR_CURSOR:	    return intern ("bar");
+    case HOLLOW_BOX_CURSOR: return Qhollow;
+    case HBAR_CURSOR:	    return Qhbar;
+    case BAR_CURSOR:	    return Qbar;
     case NO_CURSOR:
     default:		    return intern ("no");
     }

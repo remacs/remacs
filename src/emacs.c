@@ -1570,13 +1570,11 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 	  if (filename_from_ansi (file, file_utf8) == 0)
 	    file = file_utf8;
 #endif
-	  Vtop_level = list2 (intern_c_string ("load"),
-			      build_unibyte_string (file));
+	  Vtop_level = list2 (Qload, build_unibyte_string (file));
 	}
       /* Unless next switch is -nl, load "loadup.el" first thing.  */
       if (! no_loadup)
-	Vtop_level = list2 (intern_c_string ("load"),
-			    build_string ("loadup.el"));
+	Vtop_level = list2 (Qload, build_string ("loadup.el"));
     }
 
   /* Set up for profiling.  This is known to work on FreeBSD,

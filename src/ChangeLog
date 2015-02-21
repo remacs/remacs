@@ -1,3 +1,32 @@
+2015-02-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Prefer 'Qfoo' to 'intern ("foo")'
+	* buffer.c (syms_of_buffer):
+	* bytecode.c (exec_byte_code):
+	* callint.c (Fcall_interactively):
+	* callproc.c (create_temp_file):
+	* charset.c (define_charset_internal):
+	* coding.c (syms_of_coding):
+	* editfns.c (syms_of_editfns):
+	* emacs.c (main):
+	* fns.c (syms_of_fns):
+	* frame.c (delete_frame, Fframe_parameters):
+	* keyboard.c (syms_of_keyboard):
+	* keymap.c (syms_of_keymap):
+	* minibuf.c (read_minibuf, syms_of_minibuf):
+	* nsfns.m (ns_cursor_type_to_lisp):
+	* textprop.c (syms_of_textprop):
+	* xdisp.c (Fformat_mode_line, syms_of_xdisp):
+	* xfns.c (x_create_tip_frame, Fx_select_font):
+	* xml.c (parse_region):
+	Prefer constants like 'Qfoo' to calls like 'intern ("foo")'.
+	* buffer.c (syms_of_buffer): OK to do (put 'erase-buffer 'disabled
+	t) here now ...
+	(keys_of_buffer): ... instead of here.
+	* ftfont.c (syms_of_ftfont): Move DEFSYM of Qmono from here ...
+	* xfns.c (syms_of_xfns): ... to here, since ftfont.c is more
+	optional than xfns.c.
+
 2015-02-20  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* emacs.c (terminate_due_to_signal): Move totally_unblock_input after

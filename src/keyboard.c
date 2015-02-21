@@ -11598,7 +11598,7 @@ and the minor mode maps regardless of `overriding-local-map'.  */);
 
   DEFVAR_LISP ("special-event-map", Vspecial_event_map,
 	       doc: /* Keymap defining bindings for special events to execute at low level.  */);
-  Vspecial_event_map = list1 (intern_c_string ("keymap"));
+  Vspecial_event_map = list1 (Qkeymap);
 
   DEFVAR_LISP ("track-mouse", do_mouse_tracking,
 	       doc: /* Non-nil means generate motion events for mouse motion.  */);

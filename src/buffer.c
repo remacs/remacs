@@ -5408,7 +5408,7 @@ syms_of_buffer (void)
   DEFSYM (Qoverwrite_mode, "overwrite-mode");
   Fput (Qoverwrite_mode, Qchoice,
 	list3 (Qnil, intern ("overwrite-mode-textual"),
-	       intern ("overwrite-mode-binary")));
+	       Qoverwrite_mode_binary));
 
   Fput (Qprotected_field, Qerror_conditions,
 	listn (CONSTYPE_PURE, 2, Qprotected_field, Qerror));
@@ -6326,6 +6326,8 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Soverlay_get);
   defsubr (&Soverlay_put);
   defsubr (&Srestore_buffer_modified_p);
+
+  Fput (intern_c_string ("erase-buffer"), Qdisabled, Qt);
 }
 
 void
@@ -6333,8 +6335,4 @@ keys_of_buffer (void)
 {
   initial_define_key (control_x_map, 'b', "switch-to-buffer");
   initial_define_key (control_x_map, 'k', "kill-buffer");
-
-  /* This must not be in syms_of_buffer, because Qdisabled is not
-     initialized when that function gets called.  */
-  Fput (intern_c_string ("erase-buffer"), Qdisabled, Qt);
 }
