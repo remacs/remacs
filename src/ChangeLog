@@ -1,3 +1,10 @@
+2015-02-21  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32term.c (queue_notifications):
+	* w32inevt.c (handle_file_notifications):
+	* w32font.c (w32_enumfont_pattern_entity): Prefer 'Qfoo' to
+	'intern ("foo")'.
+
 2015-02-21  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Prefer 'Qfoo' to 'intern ("foo")'
