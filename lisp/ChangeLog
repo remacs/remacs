@@ -1,3 +1,10 @@
+2015-02-21  Dima Kogan  <dima@secretsauce.net>
+
+	* autorevert.el (auto-revert-mode, auto-revert-tail-mode)
+	(global-auto-revert-mode): Remove (let (auto-revert-use-notify) ... )
+	wrappers.  Call (auto-revert-buffers) consequently in order to
+	install handlers.
+
 2015-02-21  Wilson Snyder  <wsnyder@wsnyder.org>
 
 	Sync with upstream verilog-mode revision 0d6420b.

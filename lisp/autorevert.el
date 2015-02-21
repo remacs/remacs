@@ -361,9 +361,8 @@ without being changed in the part that is already in the buffer."
 	  (delq (current-buffer) auto-revert-buffer-list)))
   (auto-revert-set-timer)
   (when auto-revert-mode
-    (let (auto-revert-use-notify)
-      (auto-revert-buffers)
-      (setq auto-revert-tail-mode nil))))
+    (auto-revert-buffers)
+    (setq auto-revert-tail-mode nil)))
 
 
 ;;;###autoload
@@ -417,8 +416,7 @@ Use `auto-revert-mode' for changes other than appends!"
            (y-or-n-p "File changed on disk, content may be missing.  \
 Perform a full revert? ")
            ;; Use this (not just revert-buffer) for point-preservation.
-	   (let (auto-revert-use-notify)
-	     (auto-revert-handler)))
+           (auto-revert-buffers))
       ;; else we might reappend our own end when we save
       (add-hook 'before-save-hook (lambda () (auto-revert-tail-mode 0)) nil t)
       (or (local-variable-p 'auto-revert-tail-pos) ; don't lose prior position
@@ -463,8 +461,7 @@ specifies in the mode line."
   :global t :group 'auto-revert :lighter global-auto-revert-mode-text
   (auto-revert-set-timer)
   (if global-auto-revert-mode
-      (let (auto-revert-use-notify)
-	(auto-revert-buffers))
+      (auto-revert-buffers)
     (dolist (buf (buffer-list))
       (with-current-buffer buf
 	(when auto-revert-use-notify
