@@ -1,3 +1,15 @@
+2015-02-21  Wilson Snyder  <wsnyder@wsnyder.org>
+
+	Sync with upstream verilog-mode revision 0d6420b.
+	* progmodes/verilog-mode.el (verilog-mode-version): Update.
+	(vector-skip-list): Remove.
+	(verilog-auto-inst-port, verilog-auto-inst-port-list)
+	(verilog-auto-inst, verilog-auto-inst-param):
+	Use arguments rather than vector-skip.
+	(verilog-auto-inst-port): Fix AUTOINST interfaces to not show
+	modport if signal attachment is itself a modport.  Reported by
+	Matthew Lovell.
+
 2015-02-21  Reto Zimmermann  <reto@gnu.org>
 
 	Sync with upstream vhdl mode v3.37.1.  Add VHDL'08 support.
