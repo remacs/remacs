@@ -1,3 +1,8 @@
+2015-02-24  Bozhidar Batsov  <bozhidar@batsov.com>
+
+	* comint.el (comint-clear-buffer): New command.
+	(comint-mode-map): Bind `comint-clear-buffer' to 'C-c M-o'.
+
 2015-02-23  Pete Williamson  <petewil0@googlemail.com>  (tiny change)
 
 	Use ${EXEEXT} more uniformly in makefiles
