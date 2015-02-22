@@ -1,3 +1,7 @@
+2015-02-22  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* dom.el (dom-previous-sibling): New function.
+
 2015-02-21  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* bindings.el (ctl-x-map): There is no 'C-;'.
