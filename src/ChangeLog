@@ -1,3 +1,9 @@
+2015-02-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Spelling fixes
+	* lisp.h (DEFINE_NON_NIL_Q_SYMBOL_MACROS):
+	Rename from DEFINE_NONNIL_Q_SYMBOL_MACROS.  All uses changed.
+
 2015-02-21  Eli Zaretskii  <eliz@gnu.org>
 
 	* w32term.c (queue_notifications):

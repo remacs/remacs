@@ -534,7 +534,7 @@
 	(package--sort-deps-in-alist): New function.
 	(package-menu-mark-install): Can mark dependencies.
 	(package--newest-p): New function.
-	(package-delete): Don't delesect when deleting an older version of
+	(package-delete): Don't deselect when deleting an older version of
 	an upgraded package.
 
 	* emacs-lisp/package.el: Add missing (require 'subr-x)

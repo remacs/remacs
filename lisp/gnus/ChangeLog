@@ -827,7 +827,7 @@
 2014-01-30  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* nnmail.el (nnmail-split-it): Instead of redoing the search to restore
-	the match data, just save and restore it explictly (bug#12375).
+	the match data, just save and restore it explicitly (bug#12375).
 
 	* gnus-sum.el (gnus-summary-read-group-1): Initialize the spam code if
 	that's needed.
@@ -24084,7 +24084,7 @@
 	(spam-ham-copy-or-move-routine): Return the number of processed
 	ham messages.
 	(spam-summary-prepare-exit): Use the above values to decide
-	whether status messages shouled be displayed.
+	whether status messages should be displayed.
 
 2004-05-20  Katsumi Yamaoka  <yamaoka@jpl.org>
 
