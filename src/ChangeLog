@@ -1,3 +1,8 @@
+2015-02-22  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsfns.m (Fx_frame_geometry): New function.
+	(syms_of_nsfns): Defsubr Sx_frame_geometry.
+
 2015-02-22  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Spelling fixes
