@@ -1,3 +1,9 @@
+2015-02-23  Tassilo Horn  <tsdh@gnu.org>
+
+	* mailcap.el (mailcap-mime-data): Support `pdf-view-mode' (from PDF
+	Tools: https://github.com/politza/pdf-tools) for viewing PDF
+	attachments in emacs.
+
 2015-02-23  Katsumi Yamaoka  <yamaoka@jpl.org>
 
 	* gnus-art.el (gnus-mime-display-single): Avoid "End of buffer" error.
