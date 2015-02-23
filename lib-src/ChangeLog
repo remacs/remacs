@@ -1,3 +1,8 @@
+2015-02-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use ${EXEEXT} more uniformly in makefiles
+	* Makefile.in (EMACS): Append ${EXEEXT}.
+
 2015-02-20  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Simplify binary I/O configuration

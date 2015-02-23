@@ -1,3 +1,8 @@
+2015-02-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use ${EXEEXT} more uniformly in makefiles
+	* Makefile.in (EMACS): Append ${EXEEXT}.
+
 2015-02-23  Sam Steingold  <sds@gnu.org>
 
 	* files.el (recover-session): Handle `auto-save-list-file-prefix'
