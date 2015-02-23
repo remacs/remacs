@@ -1,3 +1,9 @@
+2015-02-23  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Introduce `xref-etags-mode'.
+	* progmodes/xref.el (xref-etags-mode--saved): New variable.
+	(xref-etags-mode): New minor mode.  (Bug#19466)
+
 2015-02-22  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* dom.el (dom-previous-sibling): New function.
