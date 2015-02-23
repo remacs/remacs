@@ -1,3 +1,11 @@
+2015-02-23  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/macroexp.el (macroexp-parse-body): Handle cl-declare
+	and :documentation.  Change return value format accordingly.
+	* emacs-lisp/cl-generic.el (cl--generic-lambda):
+	* emacs-lisp/pcase.el (pcase-lambda): Adjust accordingly.
+	* emacs-lisp/cl-macs.el (cl--transform-lambda): Use macroexp-parse-body.
+
 2015-02-23  Dmitry Gutov  <dgutov@yandex.ru>
 
 	Introduce `xref-etags-mode'.
