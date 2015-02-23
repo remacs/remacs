@@ -1,3 +1,8 @@
+2015-02-23  Sam Steingold  <sds@gnu.org>
+
+	* files.el (recover-session): Handle `auto-save-list-file-prefix'
+	being a directory (empty non-directory part).
+
 2015-02-23  Magnus Henoch  <magnus.henoch@gmail.com>
 
 	* net/sasl.el (sasl-mechanism-alist): Refer to sasl-scram-rfc
