@@ -1,4 +1,4 @@
-2015-02-23  Paul Eggert  <eggert@cs.ucla.edu>
+2015-02-23  Pete Williamson  <petewil0@googlemail.com>  (tiny change)
 
 	Use ${EXEEXT} more uniformly in makefiles
 	* Makefile.in (EMACS): Append ${EXEEXT}.
