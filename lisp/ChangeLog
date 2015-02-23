@@ -1,3 +1,9 @@
+2015-02-23  Eli Zaretskii  <eliz@gnu.org>
+
+	* frame.el (blink-cursor-timer-function): Don't increment
+	blink-cursor-blinks-done counter when a menu is active on a w32
+	frame.  (Bug#19925)
+
 2015-02-19  Juri Linkov  <juri@linkov.net>
 
 	* comint.el (comint-line-beginning-position): Revert searching for
