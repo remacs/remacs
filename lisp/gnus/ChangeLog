@@ -1,3 +1,7 @@
+2015-02-23  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* gnus-art.el (gnus-mime-display-single): Avoid "End of buffer" error.
+
 2015-02-18  Eric Abrahamsen  <eric@ericabrahamsen.net>
 
 	* nnimap.el (nnimap-get-groups): Correctly read unquoted group names
