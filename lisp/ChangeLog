@@ -1,3 +1,9 @@
+2015-02-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix the desired binding for comment-line
+	* bindings.el (ctl-x-map): Use [?\C-\;] to get the desired binding.
+	Fixes: bug#19826
+
 2015-02-23  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/macroexp.el (macroexp-parse-body): Handle cl-declare
