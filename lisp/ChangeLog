@@ -1,3 +1,13 @@
+2015-02-23  Magnus Henoch  <magnus.henoch@gmail.com>
+
+	* net/sasl.el (sasl-mechanism-alist): Refer to sasl-scram-rfc
+	instead of sasl-scram-sha-1, as the former is the name that can be
+	required.
+
+	* net/sasl-scram-rfc.el (sasl-scram-sha-1-steps)
+	(sasl-scram-sha-1-client-final-message)
+	(sasl-scram-sha-1-authenticate-server): Move to end of file.
+
 2015-02-23  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix the desired binding for comment-line
