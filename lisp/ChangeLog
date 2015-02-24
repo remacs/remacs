@@ -1,3 +1,11 @@
+2015-02-24  Samer Masterson  <nosefrog@gmail.com>
+
+	* eshell/em-hist.el (eshell-hist-parse-word-designator):
+	Return args joined with " ".
+	* eshell/em-pred.el (eshell-parse-modifiers): Correct docstring.
+	(eshell-hist-parse-modifier): Pass mod a list instead of a string
+	(bug#18960).
+
 2015-02-24  Karl Fogel  <kfogel@red-bean.com>  (tiny change)
 
 	* comint.el (comint-mode-map): Fix obvious typo.
@@ -100,8 +108,8 @@
 	(verilog-auto-inst, verilog-auto-inst-param):
 	Use arguments rather than vector-skip.
 	(verilog-auto-inst-port): Fix AUTOINST interfaces to not show
-	modport if signal attachment is itself a modport.  Reported by
-	Matthew Lovell.
+	modport if signal attachment is itself a modport.
+	Reported by Matthew Lovell.
 
 2015-02-21  Reto Zimmermann  <reto@gnu.org>
 
@@ -341,7 +349,7 @@
 2015-02-11  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* hi-lock.el (hi-lock-unface-buffer): Don't call
-	font-lock-remove-keywords if not needed (bug#19737).
+	font-lock-remove-keywords if not needed (bug#19796).
 
 2015-02-11  Artur Malabarba  <bruce.connor.am@gmail.com>
 
@@ -1622,7 +1630,7 @@
 	* vc/vc-svn.el (vc-svn-dir-status-files): Pass t as
 	vc-svn-after-dir-status's second argument.  (Bug#19429)
 
-2015-01-16  Samer Masterson  <samer@samertm.com>  (tiny change)
+2015-01-16  Samer Masterson  <samer@samertm.com>
 
 	* pcomplete.el (pcomplete-parse-arguments): Parse arguments
 	regardless of pcomplete-cycle-completions's value.  (Bug#18950)
