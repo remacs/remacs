@@ -1,3 +1,8 @@
+2015-02-24  Glenn Morris  <rgm@gnu.org>
+
+	* mail/rmailsum.el (rmail-summary-previous-all)
+	(rmail-summary-previous-msg): Simplify.
+
 2015-02-25  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* simple.el (region-active-p): Fix doc to say non-nil.
