@@ -1,3 +1,14 @@
+2015-03-03  Agustín Martín Domingo <agustin6martin@gmail.com>
+
+	* textmodes/ispell.el (ispell-dicts-name2locale-equivs-alist)
+	(ispell-hunspell-fill-dictionary-entry)
+	(ispell-find-hunspell-dictionaries)
+	(ispell-set-spellchecker-params): New generic name for
+	`ispell-hunspell-dictionary-equivs-alist'.
+	(ispell-aspell-add-aliases): Also use
+	`ispell-dicts-name2locale-equivs-alist' to get aspell aliases for
+	standard dict names.
+
 2015-02-24  Glenn Morris  <rgm@gnu.org>
 
 	* net/browse-url.el (browse-url-firefox-startup-arguments):

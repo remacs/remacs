@@ -775,7 +775,7 @@ here just for backwards compatibility.")
 (make-obsolete-variable 'ispell-aspell-supports-utf8
                         'ispell-encoding8-command "23.1")
 
-(defvar ispell-hunspell-dictionary-equivs-alist
+(defvar ispell-dicts-name2locale-equivs-alist
   '(("american"      "en_US")
     ("brasileiro"    "pt_BR")
     ("british"       "en_GB")
@@ -807,7 +807,7 @@ here just for backwards compatibility.")
     ("slovenian"     "sl_SI")
     ("svenska"       "sv_SE")
     ("hebrew"        "he_IL"))
-  "Alist with matching hunspell dict names for standard dict names in
+  "Alist with known matching locales for standard dict names in
   `ispell-dictionary-base-alist'.")
 
 (defvar ispell-emacs-alpha-regexp
@@ -1130,6 +1130,13 @@ Return the new dictionary alist."
 		 (realdict (assoc realname alist)))
 	    (when (and realdict (not already-exists-p))
 	      (push (cons aliasname (cdr realdict)) alist))))))
+    ;; Add entries for standard dict-names with found locale-matching entry
+    (dolist (dict-map-entry ispell-dicts-name2locale-equivs-alist)
+      (let ((name (car dict-map-entry))
+	    (locale (cadr dict-map-entry)))
+	(unless (assoc name alist) ;; skip if already present
+	  (if (assoc locale alist)
+	      (push (cons name (cdr (assoc locale alist))) alist)))))
     alist))
 
 ;; Make ispell.el work better with hunspell.
@@ -1153,12 +1160,12 @@ all uninitialized dicts using that affix file."
   (if (cadr (assoc dict ispell-dictionary-alist))
       (message "ispell-hfde: Non void entry for %s. Skipping.\n" dict)
     (let ((dict-alias
-           (cadr (assoc dict ispell-hunspell-dictionary-equivs-alist)))
+           (cadr (assoc dict ispell-dicts-name2locale-equivs-alist)))
 	  (use-for-dicts (list dict))
 	  (dict-args-cdr (cdr (ispell-parse-hunspell-affix-file dict)))
 	  newlist)
       ;; Get a list of uninitialized dicts using the same affix file.
-      (dolist (dict-equiv-alist-entry ispell-hunspell-dictionary-equivs-alist)
+      (dolist (dict-equiv-alist-entry ispell-dicts-name2locale-equivs-alist)
 	(let ((dict-equiv-key (car dict-equiv-alist-entry))
 	      (dict-equiv-value (cadr dict-equiv-alist-entry)))
 	  (if (or (member dict dict-equiv-alist-entry)
@@ -1223,7 +1230,7 @@ Return a list in `ispell-dictionary-alist' format."
   "Look for installed hunspell dictionaries.
 Will initialize `ispell-hunspell-dictionary-alist' and
 `ispell-hunspell-dictionary-alist' after values found
-and remove `ispell-hunspell-dictionary-equivs-alist'
+and remove `ispell-dicts-name2locale-equivs-alist'
 entries if a specific dict was found."
   (let ((hunspell-found-dicts
 	 (split-string
@@ -1262,15 +1269,15 @@ entries if a specific dict was found."
              "-- ispell-fhd: Skipping entry: %s\n" dict)))))
     ;; Remove entry from aliases alist if explicit dict was found.
     (let (newlist)
-      (dolist (dict ispell-hunspell-dictionary-equivs-alist)
+      (dolist (dict ispell-dicts-name2locale-equivs-alist)
 	(if (assoc (car dict) ispell-hunspell-dict-paths-alist)
 	    (ispell-print-if-debug
              "-- ispell-fhd: Excluding %s alias. Standalone dict found.\n"
              (car dict))
 	  (add-to-list 'newlist dict)))
-      (setq ispell-hunspell-dictionary-equivs-alist newlist))
+      (setq ispell-dicts-name2locale-equivs-alist newlist))
     ;; Add known hunspell aliases
-    (dolist (dict-equiv ispell-hunspell-dictionary-equivs-alist)
+    (dolist (dict-equiv ispell-dicts-name2locale-equivs-alist)
       (let ((dict-equiv-key (car dict-equiv))
 	    (dict-equiv-value (cadr dict-equiv))
 	    (exclude-aliases (list   ;; Exclude TeX aliases
@@ -1367,7 +1374,7 @@ aspell is used along with Emacs).")
 	      (let* ((dict-name (nth 0 adict))
 		     (dict-equiv
 		      (cadr (assoc dict-name
-				   ispell-hunspell-dictionary-equivs-alist)))
+				   ispell-dicts-name2locale-equivs-alist)))
 		     (ispell-args (nth 5 adict))
 		     (ispell-args-has-d (member "-d" ispell-args))
 		     skip-dict)
