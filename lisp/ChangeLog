@@ -1,5 +1,9 @@
 2015-02-24  Glenn Morris  <rgm@gnu.org>
 
+	* mail/rmailsum.el (rmail-summary-next-all)
+	(rmail-summary-previous-all, rmail-summary-next-msg):
+	Fix handling of optional argument.  (Bug#19916)
+
 	* progmodes/f90.el (f90-beginning-of-subprogram)
 	(f90-end-of-subprogram, f90-match-end):
 	Handle continued strings where the continuation does not start
