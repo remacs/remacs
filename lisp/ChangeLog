@@ -1,3 +1,7 @@
+2015-02-24  Karl Fogel  <kfogel@red-bean.com>  (tiny change)
+
+	* comint.el (comint-mode-map): Fix obvious typo.
+
 2015-02-24  Johan Claesson  <johanclaesson@bredband.net>  (tiny change)
 
 	* filecache.el (file-cache-filter-regexps):
