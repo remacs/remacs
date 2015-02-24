@@ -1,3 +1,8 @@
+2015-02-24  Johan Claesson  <johanclaesson@bredband.net>  (tiny change)
+
+	* filecache.el (file-cache-filter-regexps):
+	Add lock files.  (Bug#19516)
+
 2015-02-24  Glenn Morris  <rgm@gnu.org>
 
 	* mail/rmailsum.el (rmail-summary-next-all)
