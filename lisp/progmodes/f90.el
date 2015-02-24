@@ -1634,7 +1634,10 @@ Return (TYPE NAME), or nil if not found."
                 (re-search-backward f90-program-block-re nil 'move))
       (beginning-of-line)
       (skip-chars-forward " \t0-9")
-      (cond ((setq matching-beg (f90-looking-at-program-block-start))
+      ;; Check if in string in case using non-standard feature where
+      ;; continued strings do not need "&" at start of continuations.
+      (cond ((f90-in-string))
+            ((setq matching-beg (f90-looking-at-program-block-start))
              (setq count (1- count)))
             ((f90-looking-at-program-block-end)
              (setq count (1+ count)))))
@@ -1659,7 +1662,8 @@ Return (TYPE NAME), or nil if not found."
                 (re-search-forward f90-program-block-re nil 'move))
       (beginning-of-line)
       (skip-chars-forward " \t0-9")
-      (cond ((f90-looking-at-program-block-start)
+      (cond ((f90-in-string))
+            ((f90-looking-at-program-block-start)
              (setq count (1+ count)))
             ((setq matching-end (f90-looking-at-program-block-end))
              (setq count (1- count))))
@@ -2199,8 +2203,12 @@ Leave point at the end of line."
         (end-point (point))
         (case-fold-search t)
         matching-beg beg-name end-name beg-block end-block end-struct)
+    ;; Check if in string in case using non-standard feature where
+    ;; continued strings do not need "&" at start of continuations.
     (when (save-excursion (beginning-of-line) (skip-chars-forward " \t0-9")
-                          (setq end-struct (f90-looking-at-program-block-end)))
+                          (unless (f90-in-string)
+                            (setq end-struct
+                                  (f90-looking-at-program-block-end))))
       (setq end-block (car end-struct)
             end-name  (cadr end-struct))
       (save-excursion

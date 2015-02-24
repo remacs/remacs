@@ -1,3 +1,10 @@
+2015-02-24  Glenn Morris  <rgm@gnu.org>
+
+	* progmodes/f90.el (f90-beginning-of-subprogram)
+	(f90-end-of-subprogram, f90-match-end):
+	Handle continued strings where the continuation does not start
+	with "&" and happens to match our regexp.  (Bug#19809)
+
 2015-02-24  Bozhidar Batsov  <bozhidar@batsov.com>
 
 	* comint.el (comint-clear-buffer): New command.

@@ -1,3 +1,7 @@
+2015-02-24  Glenn Morris  <rgm@gnu.org>
+
+	* automated/f90.el (f90-test-bug-19809): New test.
+
 2015-02-22  Michael Albinus  <michael.albinus@gmx.de>
 
 	* automated/tramp-tests.el (tramp-test17-insert-directory):
