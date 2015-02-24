@@ -29,6 +29,8 @@ with a prefix argument or by typing C-u C-h C-n.
 ** `call-process-shell-command' and `process-file-shell-command' no longer
 take "&rest args".
 
+** The option `browse-url-firefox-startup-arguments' no longer has an effect.
+
 ** ERC
 
 *** New option `erc-rename-buffers'.

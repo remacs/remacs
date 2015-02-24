@@ -1,3 +1,11 @@
+2015-02-24  Glenn Morris  <rgm@gnu.org>
+
+	* net/browse-url.el (browse-url-firefox-startup-arguments):
+	Make obsolete.
+	(browse-url-firefox): Doc fix.  Remove -remote, which no longer
+	exists in Firefox 36.  (Bug#19921)
+	(browse-url-firefox-sentinel): Remove function.
+
 2015-02-23  Eli Zaretskii  <eliz@gnu.org>
 
 	* frame.el (blink-cursor-timer-function): Don't increment
