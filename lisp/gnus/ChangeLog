@@ -1,3 +1,10 @@
+2015-02-25  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* mm-decode.el (mm-shr)
+	* mm-view.el (mm-inline-text-html-render-with-w3m):
+	Revert my bogus change that made the start marker of a part
+	the "moves after insertion" type.
+
 2015-02-23  Tassilo Horn  <tsdh@gnu.org>
 
 	* mailcap.el (mailcap-mime-data): Support `pdf-view-mode' (from PDF
