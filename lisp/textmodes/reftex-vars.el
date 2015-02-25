@@ -263,6 +263,7 @@ distribution.  Mixed-case symbols are convenience aliases.")
 The file name is expected after the command, either in braces or separated
 by whitespace."
   :group 'reftex-table-of-contents-browser
+  :set 'reftex-set-dirty
   :type '(repeat string))
 
 (defcustom reftex-max-section-depth 12
