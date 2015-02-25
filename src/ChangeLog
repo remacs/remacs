@@ -1,3 +1,13 @@
+2015-02-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Backtrace after malloc arena is corrupted
+	Without this change, if the malloc arena is corrupted and then
+	'backtrace' is called, the backtrace can crash because 'backtrace'
+	calls 'malloc'.  For more, please see:
+	https://sourceware.org/ml/libc-alpha/2015-02/msg00678.html
+	* emacs.c (main): Initialize tables used by 'backtrace'.
+	* sysdep.c (emacs_backtrace): Document the newly used part of the API.
+
 2015-02-22  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* nsfns.m (Fx_frame_geometry): New function.

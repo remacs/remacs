@@ -884,6 +884,8 @@ main (int argc, char **argv)
 
   clearerr (stdin);
 
+  emacs_backtrace (-1);
+
 #if !defined SYSTEM_MALLOC && !defined HYBRID_MALLOC
   /* Arrange to get warning messages as memory fills up.  */
   memory_warnings (0, malloc_warning);
