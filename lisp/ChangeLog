@@ -1,3 +1,7 @@
+2015-02-25  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* simple.el (region-active-p): Fix doc to say non-nil.
+
 2015-02-24  Samer Masterson  <nosefrog@gmail.com>
 
 	* eshell/em-hist.el (eshell-hist-parse-word-designator):
