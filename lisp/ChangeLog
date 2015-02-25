@@ -1,3 +1,9 @@
+2015-02-25  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/edebug.el (edebug--display): Save-excursion (bug#19611).
+	* emacs-lisp/debug.el (debugger-env-macro): Remove redundant
+	save-excursion.
+
 2015-02-24  Glenn Morris  <rgm@gnu.org>
 
 	* mail/rmailsum.el (rmail-summary-previous-all)
