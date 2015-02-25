@@ -1,3 +1,7 @@
+2015-02-25  Nicolas Richard  <theonewiththeevillook@yahoo.fr>
+
+	* progmodes/elisp-mode.el (elisp--eval-last-sexp): Document argument.
+
 2015-02-25  Oleh Krehel  <ohwoeowho@gmail.com>
 
 	* emacs-lisp/check-declare.el (check-declare-warn): Use
