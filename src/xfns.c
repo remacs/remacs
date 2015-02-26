@@ -334,15 +334,16 @@ x_real_pos_and_offsets (struct frame *f,
   if (yptr) *yptr = real_y;
 
   if (right_offset_x || bottom_offset_y)
-  {
-    unsigned int ign, fw, fh;
-    Window rootw;
+    {
+      int xy_ign;
+      unsigned int ign, fw, fh;
+      Window rootw;
 
-    XGetGeometry (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
-                  &rootw, &ign, &ign, &fw, &fh, &ign, &ign);
-    if (right_offset_x) *right_offset_x = ow - fw + outer_x;
-    if (bottom_offset_y) *bottom_offset_y = oh - fh + outer_y;
-  }
+      XGetGeometry (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
+		    &rootw, &xy_ign, &xy_ign, &fw, &fh, &ign, &ign);
+      if (right_offset_x) *right_offset_x = ow - fw + outer_x;
+      if (bottom_offset_y) *bottom_offset_y = oh - fh + outer_y;
+    }
 }
 
 /* Store the screen positions of frame F into XPTR and YPTR.
