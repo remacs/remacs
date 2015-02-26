@@ -5360,7 +5360,10 @@ Compressed files like .gz and .bz2 are decompressed."
 							      'gnus-data))))
 	(setq b btn))
       (if (and (not arg) (mm-handle-undisplayer handle))
-	  (mm-remove-part handle)
+	  (progn
+	    (setq b (copy-marker b)
+		  btn (copy-marker btn))
+	    (mm-remove-part handle))
 	(cond
 	 ((not arg) nil)
 	 ((numberp arg)
@@ -5374,6 +5377,9 @@ Compressed files like .gz and .bz2 are decompressed."
 	  (forward-line 1))
 	(mm-display-inline handle))
       ;; Toggle the button appearance between `[button]...' and `[button]'.
+      (when (markerp btn)
+	(setq btn (prog1 (marker-position btn)
+		    (set-marker btn nil))))
       (goto-char btn)
       (let ((displayed-p (mm-handle-displayed-p handle)))
 	(gnus-insert-mime-button handle (get-text-property btn 'gnus-part)
@@ -5409,6 +5415,9 @@ Compressed files like .gz and .bz2 are decompressed."
 		   '((gnus-treat-highlight-headers
 		      gnus-article-highlight-headers))))
 	      (gnus-treat-article 'head)))))
+      (when (markerp b)
+	(setq b (prog1 (marker-position b)
+		  (set-marker b nil))))
       (goto-char b))))
 
 (defun gnus-mime-set-charset-parameters (handle charset)
@@ -5731,7 +5740,8 @@ all parts."
 		point (previous-single-property-change start 'gnus-data))
 	  (if (mm-handle-displayed-p handle)
 	      ;; This will remove the part.
-	      (setq retval (mm-display-part handle))
+	      (setq point (copy-marker point)
+		    retval (mm-display-part handle))
 	    (let ((part (or (and (mm-inlinable-p handle)
 				 (mm-inlined-p handle)
 				 t)
@@ -5762,6 +5772,9 @@ all parts."
 					    ,(point-max-marker)))))))
 		    (part
 		     (mm-display-inline handle))))))
+      (when (markerp point)
+	(setq point (prog1 (marker-position point)
+		      (set-marker point nil))))
       (goto-char point)
       ;; Toggle the button appearance between `[button]...' and `[button]'.
       (let ((displayed-p (mm-handle-displayed-p handle)))
