@@ -1,3 +1,9 @@
+2015-02-26  Ivan Shmakov  <ivan@siamics.net>
+
+	* faces.el (face-list-p): Split from face-at-point.
+	(face-at-point): Use it.
+	* facemenu.el (facemenu-add-face): Likewise.  (Bug#19912)
+
 2015-02-26  Oscar Fuentes  <ofv@wanadoo.es>
 
 	* vc/vc.el (vc-annotate-switches): New defcustom.
