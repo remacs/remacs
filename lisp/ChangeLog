@@ -1,3 +1,38 @@
+2015-02-26  Alan Mackenzie  <acm@muc.de>
+
+	Handle "#" operator properly inside macro.  Fix coding bug.
+
+	* progmodes/cc-mode.el (c-neutralize-syntax-in-and-mark-CPP): On
+	finding a "#" which looks like the start of a macro, check it
+	isn't already inside a macro.
+
+	* progmodes/cc-engine.el (c-state-safe-place): Don't record a new
+	"safe" position into the list of them when this is beyond our
+	current position.
+
+2015-02-26  Martin Rudalics  <rudalics@gmx.at>
+
+	* menu-bar.el (menu-bar-non-minibuffer-window-p): Return nil when
+	the menu frame is dead.  (Bug#19728)
+
+2015-02-26  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Handle tabs in python-indent-dedent-line.
+
+	* progmodes/python.el (python-indent-dedent-line): Fixes for
+	indentation with tabs.  Thanks to <dale@codefu.org> (Bug#19730).
+
+2015-02-26  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-indent-context): Respect user
+	indentation after comment.
+
+2015-02-26  Tassilo Horn  <tsdh@gnu.org>
+
+	* textmodes/reftex-vars.el (featurep): Conditionalize value of
+	reftex-label-regexps in order to stay compatible with XEmacs 21.5
+	which has no explicitly numbered groups in regexps (bug#19714).
+
 2015-02-26  Daiki Ueno  <ueno@gnu.org>
 
 	* net/dbus.el (dbus-register-signal): Convert "N" of ":argN" to

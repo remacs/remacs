@@ -2247,7 +2247,7 @@ decode_env_path (const char *evarname, const char *defalt, bool empty)
       p = strchr (path, SEPCHAR);
       if (!p)
 	p = path + strlen (path);
-      element = (p - path ? make_unibyte_string (path, p - path)
+      element = ((p - path) ? make_unibyte_string (path, p - path)
 		 : empty_element);
       if (! NILP (element))
         {
