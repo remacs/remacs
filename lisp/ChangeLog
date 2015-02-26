@@ -1,3 +1,8 @@
+2015-02-26  Daiki Ueno  <ueno@gnu.org>
+
+	* net/dbus.el (dbus-register-signal): Convert "N" of ":argN" to
+	integer before comparison.
+
 2015-02-25  Nicolas Richard  <theonewiththeevillook@yahoo.fr>
 
 	* progmodes/elisp-mode.el (elisp--eval-last-sexp): Document argument.
