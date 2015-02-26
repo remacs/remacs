@@ -1,3 +1,10 @@
+2015-02-26  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* xmenu.c (create_and_show_popup_menu): Call XTranslateCoordinates,
+	dont use OUTER_TO_INNER macros.
+	(x_menu_show): Call x_real_pos_and_offsets, don't use
+	OUTER_TO_INNER macros.
+
 2015-02-26  Eli Zaretskii  <eliz@gnu.org>
 
 	* dispextern.h (FACE_FOR_CHAR): Fix the commentary.
