@@ -1,3 +1,19 @@
+2015-02-26  Oscar Fuentes  <ofv@wanadoo.es>
+
+	* vc/vc.el (vc-annotate-switches): New defcustom.
+	* vc/vc-bzr.el (vc-bzr-annotate-switches): New defcustom.
+	(vc-bzr-annotate-command): Use it.
+	* vc/vc-cvs.el (vc-cvs-annotate-switches): New defcustom.
+	(vc-cvs-annotate-command): Use it.
+	* vc/vc-git.el (vc-git-annotate-switches): New defcustom.
+	(vc-git-annotate-command): Use it.
+	* vc/vc-hg.el (vc-hg-annotate-switches): New defcustom.
+	(vc-hg-annotate-command): Use it.
+	* vc/vc-mtn.el (vc-mtn-annotate-switches): New defcustom.
+	(vc-mtn-annotate-command): Use it.
+	* vc/vc-svn.el (vc-svn-annotate-switches): New defcustom.
+	(vc-svn-annotate-command): Use it.
+
 2015-02-26  Alan Mackenzie  <acm@muc.de>
 
 	Handle "#" operator properly inside macro.  Fix coding bug.
