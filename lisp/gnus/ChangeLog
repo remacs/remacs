@@ -1,3 +1,11 @@
+2015-02-26  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* gnus-art.el (gnus-article-edit-part): Make jumping to the next part
+	really work when deleting or stripping.
+	(gnus-mime-buttonize-attachments-in-header): Make header attachment
+	buttons identical to the one in the article body so as to work deleting
+	and stripping.
+
 2015-02-25  Katsumi Yamaoka  <yamaoka@jpl.org>
 
 	* mm-decode.el (mm-shr)

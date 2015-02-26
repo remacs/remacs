@@ -5064,6 +5064,7 @@ and `gnus-mime-delete-part', and not provided at run-time normally."
     (let ((gnus-mime-buttonized-part-id current-id))
       (gnus-article-edit-done))
     (gnus-configure-windows 'article)
+    (sit-for 0)
     (when (and current-id (integerp gnus-auto-select-part))
       (gnus-article-jump-to-part
        (min (max (+ current-id gnus-auto-select-part) 1)
@@ -6432,8 +6433,7 @@ in the body.  Use `gnus-header-face-alist' to highlight buttons."
 	      (dolist (button (nreverse buttons))
 		(setq st (point))
 		(insert " ")
-		(mm-handle-set-undisplayer
-		 (setq handle (copy-sequence (cdr button))) nil)
+		(mm-handle-set-undisplayer (setq handle (cdr button)) nil)
 		(gnus-insert-mime-button handle (car button))
 		(skip-chars-backward "\t\n ")
 		(delete-region (point) (point-max))
