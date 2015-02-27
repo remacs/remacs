@@ -1,3 +1,15 @@
+2015-02-27  Mark Laws  <mdl@60hz.org>
+
+	Support daemon mode on MS-Windows (bug#19688)
+	* server.el (server-process-filter): Force GUI frames on
+	MS-Windows in daemon mode, even if a TTY frame was requested.
+
+	* frameset.el (frameset-keep-original-display-p): Don't assume
+	windows-nt cannot be in daemon mode.
+
+	* frame.el (window-system-for-display): Don't assume windows-nt
+	cannot be in daemon mode.
+
 2015-02-26  Ivan Shmakov  <ivan@siamics.net>
 
 	* faces.el (face-list-p): Split from face-at-point.

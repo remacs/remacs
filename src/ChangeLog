@@ -1,3 +1,23 @@
+2015-02-27  Mark Laws  <mdl@60hz.org>
+
+	Support daemon mode on MS-Windows (bug#19688)
+	* emacs.c <w32_daemon_event> [WINDOWSNT]: New global var.
+	(main) [WINDOWSNT]: Initialize it to NULL.  Create the event to
+	signal clients we are ready for connections.
+	(Fdaemon_initialized): Use DAEMON_RUNNING.
+	[WINDOWSNT]: MS-Windows specific code to signal clients we are
+	ready for connections.
+
+	* lisp.h (DAEMON_RUNNING): New macro, encapsulates Posix and
+	MS-Windows conditions for running in daemon mode.
+
+	* minibuf.c (read_minibuf): Use DAEMON_RUNNING.
+
+	* keyboard.c (kbd_buffer_get_event): Use DAEMON_RUNNING.
+
+	* dispnew.c (init_display) [WINDOWSNT]: Initialize frames/terminal
+	even in daemon mode.
+
 2015-02-26  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* xmenu.c (create_and_show_popup_menu): Call XTranslateCoordinates,

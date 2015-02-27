@@ -546,7 +546,8 @@ is not considered (see `next-frame')."
 Return nil if we don't know how to interpret DISPLAY."
   ;; MS-Windows doesn't know how to create a GUI frame in a -nw session.
   (if (and (eq system-type 'windows-nt)
-	   (null (window-system)))
+	   (null (window-system))
+	   (not (daemonp)))
       nil
     (cl-loop for descriptor in display-format-alist
 	     for pattern = (car descriptor)

@@ -4222,9 +4222,16 @@ extern bool noninteractive;
 extern bool no_site_lisp;
 
 /* Pipe used to send exit notification to the daemon parent at
-   startup.  */
+   startup.  On Windows, we use a kernel event instead.  */
+#ifndef WINDOWSNT
 extern int daemon_pipe[2];
 #define IS_DAEMON (daemon_pipe[1] != 0)
+#define DAEMON_RUNNING (daemon_pipe[1] >= 0)
+#else  /* WINDOWSNT */
+extern void *w32_daemon_event;
+#define IS_DAEMON (w32_daemon_event != NULL)
+#define DAEMON_RUNNING (w32_daemon_event != INVALID_HANDLE_VALUE)
+#endif
 
 /* True if handling a fatal error already.  */
 extern bool fatal_error_in_progress;
