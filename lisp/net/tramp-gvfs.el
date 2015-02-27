@@ -1223,7 +1223,7 @@ file-notify events."
 
     ;; The end.
     (when (or (eq visit t) (null visit) (stringp visit))
-      (tramp-message v 0 "Wrote %s" filename))
+      (tramp-message v 0 "Wrote %d characters to `%s'" (- end start) filename))
     (run-hooks 'tramp-handle-write-region-hook)))
 
 

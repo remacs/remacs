@@ -3411,7 +3411,8 @@ the result will be a local, non-Tramp, file name."
         (when need-chown
           (tramp-set-file-uid-gid filename uid gid))
 	(when (or (eq visit t) (null visit) (stringp visit))
-	  (tramp-message v 0 "Wrote %s" filename))
+          (tramp-message v 0 "Wrote %d characters to `%s'"
+                         (- end start) filename))
 	(run-hooks 'tramp-handle-write-region-hook)))))
 
 (defvar tramp-vc-registered-file-names nil

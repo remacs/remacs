@@ -3284,7 +3284,7 @@ system TYPE.")
 		(set-buffer-modified-p nil)))
 	  ;; ensure `last-coding-system-used' has an appropriate value
 	  (setq last-coding-system-used coding-system-used)
-	  (ange-ftp-message "Wrote %s" abbr)
+	  (ange-ftp-message "Wrote %d characters to `%s'" (- end start) abbr)
 	  (ange-ftp-add-file-entry filename))
       (ange-ftp-real-write-region start end filename append visit))))
 

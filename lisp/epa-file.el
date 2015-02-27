@@ -290,7 +290,7 @@ If no one is selected, symmetric encryption will be performed.  "
     (if (or (eq visit t)
 	    (eq visit nil)
 	    (stringp visit))
-	(message "Wrote %s" buffer-file-name))))
+	(message "Wrote %d characters to `%s'" (- end start) buffer-file-name))))
 (put 'write-region 'epa-file 'epa-file-write-region)
 
 (defun epa-file-select-keys ()

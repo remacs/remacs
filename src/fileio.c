@@ -5150,13 +5150,16 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
     }
 
   if (!auto_saving && !noninteractive)
-    message_with_string ((NUMBERP (append)
-			  ? "Updated %s"
-			  : ! NILP (append)
-			  ? "Added to %s"
-			  : "Wrote %s"),
-			 visit_file, 1);
-
+    {
+      AUTO_STRING (format, NUMBERP (append)
+                   ? "Updated %d characters of `%s'"
+                   : ! NILP (append)
+                   ? "Added %d characters to `%s'"
+                   : "Wrote %d characters to `%s'");
+      CALLN (Fmessage, format,
+             make_number (XINT (end) - XINT (start)),
+             visit_file);
+    }
   return Qnil;
 }
 
