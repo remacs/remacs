@@ -780,6 +780,11 @@ AC_DEFUN([gl_CRYPTO_CHECK])
 # Avoid gnulib's tests for HAVE_WORKING_O_NOATIME and HAVE_WORKING_O_NOFOLLOW,
 # as we don't use them.
 AC_DEFUN([gl_FCNTL_O_FLAGS])
+# Use the system putenv even if it lacks GNU features, as we don't need them,
+# and the gnulib replacement runs afoul of a FreeBSD 10.1 bug; see Bug#19874.
+AC_CHECK_FUNCS_ONCE([putenv])
+AC_DEFUN([gl_FUNC_PUTENV],
+  [test "$ac_cv_func_putenv" = yes || REPLACE_PUTENV=1])
 
 # Initialize gnulib right after choosing the compiler.
 dnl Amongst other things, this sets AR and ARFLAGS.
