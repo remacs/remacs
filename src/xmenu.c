@@ -2077,7 +2077,7 @@ x_menu_show (struct frame *f, int x, int y, int menuflags,
     int left_off, top_off;
 
     x_real_pos_and_offsets (f, &left_off, NULL, &top_off, NULL,
-                            NULL, NULL, NULL, NULL);
+                            NULL, NULL, NULL, NULL, NULL);
 
     x += left_off;
     y += top_off;

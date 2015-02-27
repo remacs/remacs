@@ -1,3 +1,15 @@
+2015-02-27  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* xterm.h (x_real_pos_and_offsets): Take outer_border as arg also.
+
+	* xmenu.c (x_menu_show): Adjust for new arg to x_real_pos_and_offsets.
+
+	* xfns.c (x_real_pos_and_offsets): Take outer_border as arg also.
+	Initialize all args.  Get outer_border from window attributes.
+	Fix typo for top_offset_y.
+	(x_real_positions): Adjust for new arg to x_real_pos_and_offsets.
+	(Fx_frame_geometry): Get outer_border also.  Use attrs.width/height.
+
 2015-02-27  Mark Laws  <mdl@60hz.org>
 
 	Support daemon mode on MS-Windows (bug#19688)
