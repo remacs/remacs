@@ -756,6 +756,9 @@ Those features have been deprecated in Gtk+ for a long time.
 or Windows Server 2003.  The built binaries still run on all versions
 of Windows starting with Windows 9X.
 
++++
+** Emacs running on MS-Windows now supports the daemon mode.
+
 ** OS X 10.5 or older is no longer supported.
 
 ** OS X on PowerPC is no longer supported.
