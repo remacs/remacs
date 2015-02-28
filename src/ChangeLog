@@ -1,3 +1,16 @@
+2015-02-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* character.c (alphabeticp, decimalnump): New functions.
+	* character.h (alphabeticp, decimalnump): Add prototypes.
+
+	* regex.c (ISALNUM, ISALPHA): Check Unicode character properties
+	for multibyte characters by calling alphabeticp and decimalnump.
+	(BIT_ALPHA, BIT_ALNUM): New bit masks.
+	(re_wctype_to_bit): Return them when the class is RECC_ALPHA or
+	RECC_ALNUM.
+	(re_match_2_internal): Call ISALPHA and ISALNUM when appropriate.
+	(Bug#19878)
+
 2015-02-27  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* xterm.h (x_real_pos_and_offsets): Take outer_border as arg also.

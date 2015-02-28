@@ -612,6 +612,12 @@ when signaling a file error.  For example, it now reports "Permission
 denied" instead of "permission denied".  The old behavior was problematic
 in languages like German where downcasing rules depend on grammar.
 
++++
+** The character classes [:alpha:] and [:alnum:] in regular expressions
+now match multibyte characters using Unicode character properties.
+If you want the old behavior where they matched any character with
+word syntax, use `\sw' instead.
+
 
 * Lisp Changes in Emacs 25.1
 
