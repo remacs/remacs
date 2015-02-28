@@ -1,3 +1,9 @@
+2015-02-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* character.c (alphabeticp, decimalnump): Avoid undefined behavior
+	if CATEGORY is not an integer, or is an integer out of
+	unicode_category_t range.
+
 2015-02-28  Martin Rudalics  <rudalics@gmx.at>
 
 	* frame.c (make_initial_frame, Fmake_terminal_frame): Set
