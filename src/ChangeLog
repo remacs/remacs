@@ -1,3 +1,11 @@
+2015-02-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* search.c (find_newline): Avoid assertion violations in
+	CHAR_TO_BYTE when a portion of the buffer was deleted and we look
+	for newlines near the end of the buffer.  This happens in Rmail
+	hen JIT font-lock fontifies a newly displayed portion of the
+	buffer.
+
 2015-02-23  Eli Zaretskii  <eliz@gnu.org>
 
 	* w32fns.c (Fw32__menu_bar_in_use): New internal function.
