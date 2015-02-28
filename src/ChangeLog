@@ -1,3 +1,8 @@
+2015-02-28  Martin Rudalics  <rudalics@gmx.at>
+
+	* frame.c (make_initial_frame, Fmake_terminal_frame): Set
+	can_x_set_window_size and after_make_frame (Bug#19962).
+
 2015-02-28  Eli Zaretskii  <eliz@gnu.org>
 
 	* character.c (alphabeticp, decimalnump): New functions.

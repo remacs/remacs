@@ -871,6 +871,9 @@ make_initial_frame (void)
 
   last_nonminibuf_frame = f;
 
+  f->can_x_set_window_size = true;
+  f->after_make_frame = true;
+
   return f;
 }
 
@@ -1064,6 +1067,10 @@ affects all frames on the same terminal device.  */)
      be copied as well.  */
   for (tem = f->face_alist; CONSP (tem); tem = XCDR (tem))
     XSETCDR (XCAR (tem), Fcopy_sequence (XCDR (XCAR (tem))));
+
+  f->can_x_set_window_size = true;
+  f->after_make_frame = true;
+
   return frame;
 }
 
