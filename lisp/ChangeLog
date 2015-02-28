@@ -1,3 +1,9 @@
+2015-02-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* mail/rmailmm.el (rmail-mime-insert-html): Decode HTML payload
+	when the charset is only given by the HTML <head>, and allow to
+	specify the encoding with "C-x RET c".
+
 2015-02-27  Mark Laws  <mdl@60hz.org>
 
 	Support daemon mode on MS-Windows (bug#19688)
