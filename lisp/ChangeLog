@@ -1,3 +1,7 @@
+2015-03-01  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/shr.el (shr-insert): Remove soft hyphens.
+
 2015-02-28  Eli Zaretskii  <eliz@gnu.org>
 
 	* mail/rmailmm.el (rmail-mime-insert-html): Decode HTML payload

@@ -512,6 +512,10 @@ size, and full-buffer size."
 	    (replace-match "" t t))
 	  (while (re-search-forward "[ \t\n\r ]+" nil t)
 	    (replace-match " " t t))
+	  ;; Remove soft hyphens.
+	  (goto-char (point-min))
+	  (while (search-forward "­" nil t)
+	    (replace-match "" t t))
 	  (goto-char (point-max)))
 	;; We may have removed everything we inserted if if was just
 	;; spaces.
