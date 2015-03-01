@@ -495,7 +495,15 @@ size, and full-buffer size."
     (insert "\n"))
   (cond
    ((eq shr-folding-mode 'none)
-    (insert text))
+    (let ((start (point)))
+      (insert text)
+      (save-restriction
+	(narrow-to-region start (point))
+	;; Remove soft hyphens.
+	(goto-char (point-min))
+	(while (search-forward "­" nil t)
+	  (replace-match "" t t))
+	(goto-char (point-max)))))
    (t
     (let ((font-start (point)))
       (when (and (string-match "\\`[ \t\n\r ]" text)
