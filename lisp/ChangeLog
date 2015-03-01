@@ -1,3 +1,16 @@
+2015-03-01  Michael Albinus  <michael.albinus@gmx.de>
+
+	* vc/vc-hooks.el (vc-state, vc-working-revision):
+	Use `vc-responsible-backend' in order to support unregistered files.
+
+	* vc/vc-rcs.el (vc-rcs-unregister): Support unregistered files.
+
+	* vc/vc-rcs.el (vc-rcs-fetch-master-state):
+	* vc/vc-sccs.el (vc-sccs-working-revision): Handle undefined
+	master name.
+
+	* vc/vc-src.el (vc-src-working-revision): Do not return an empty string.
+
 2015-03-01  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/shr.el (shr-insert): Remove soft hyphens.
