@@ -950,6 +950,7 @@ use."
 	(vc-call-backend bk 'create-repo))
       (throw 'found bk))))
 
+;;;###autoload
 (defun vc-responsible-backend (file)
   "Return the name of a backend system that is responsible for FILE.
 
