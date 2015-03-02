@@ -1,3 +1,21 @@
+2015-03-02  Daniel Colascione  <dancol@dancol.org>
+
+	* print.c (print_object): Print finalizers.
+
+	* alloc.c:
+	(finalizers, doomed_finalizers): New variables.
+	(init_finalizer_list, finalizer_insert, unchain_finalizer)
+	(mark_finalizer_list, queue_doomed_finalizers)
+	(run_finalizer_handler, run_finalizer_function, run_finalizers):
+	New functions.
+	(garbage_collect_1, mark_object, sweep_misc)
+	(init_alloc_once, syms_of_alloc): Support finalizers.
+	(gc-precise-p): New Lisp variable.
+
+	* lisp.h (Lisp_Misc_Type): New value Lisp_Misc_Finalizer.
+	(FINALIZERP, XFINALIZER): New functions.
+	(Lisp_Finalizer): New structure.
+
 2015-02-28  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* character.c (alphabeticp, decimalnump): Avoid undefined behavior
