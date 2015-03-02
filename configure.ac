@@ -2664,6 +2664,11 @@ fi
 
 dnl MS Windows native file monitor is available for mingw32 only.
 case $with_file_notification,$opsys in
+  w32,cygwin)
+    AC_MSG_ERROR([`--with-file-notification=w32' was specified, but
+    this is only supported on MS-Windows native and MinGW32 builds.
+    Consider using gfile instead.])
+    ;;
   w32,* | yes,mingw32)
     AC_CHECK_HEADER(windows.h)
     if test "$ac_cv_header_windows_h" = yes ; then
