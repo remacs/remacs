@@ -1,5 +1,7 @@
 2015-03-02  Daniel Colascione  <dancol@dancol.org>
 
+	* automated/generator-tests.el: New tests
+
 	* automated/finalizer-tests.el (finalizer-basic)
 	(finalizer-circular-reference, finalizer-cross-reference)
 	(finalizer-error): New tests.

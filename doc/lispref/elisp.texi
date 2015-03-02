@@ -464,6 +464,7 @@ Control Structures
 * Conditionals::            @code{if}, @code{cond}, @code{when}, @code{unless}.
 * Combining Conditions::    @code{and}, @code{or}, @code{not}.
 * Iteration::               @code{while} loops.
+* Generators::              Generic sequences and coroutines.
 * Nonlocal Exits::          Jumping out of a sequence.
 
 Nonlocal Exits

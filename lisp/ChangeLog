@@ -1,6 +1,8 @@
 2015-03-02  Daniel Colascione  <dancol@dancol.org>
 
-	* vc/vc.el (vc-responsible-backend): Add autoload cooking for
+	* emacs-lisp/generator.el: New file.
+
+	* vc/vc.el (vc-responsible-backend): Add autoload cookie for
 	`vc-responsible-backend'.
 
 2015-03-01  Michael Albinus  <michael.albinus@gmx.de>

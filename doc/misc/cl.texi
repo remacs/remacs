@@ -2237,6 +2237,11 @@ This clause is like @code{always}, except that the loop returns
 This clause stops the loop when the specified form is non-@code{nil};
 in this case, it returns that non-@code{nil} value.  If all the
 values were @code{nil}, the loop returns @code{nil}.
+
+@item iter-by @var{iterator}
+This clause iterates over the values from the specified form, an
+iterator object.  See (@pxref{Generators,,,elisp,GNU Emacs Lisp
+Reference Manual}).
 @end table
 
 @node Accumulation Clauses
