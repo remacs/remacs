@@ -1,3 +1,9 @@
+2015-03-03  Daniel Colascione  <dancol@dancol.org>
+
+	* objects.texi (Finalizer Type): New section for finalizer objects.
+	(Type Predicates): Mention finalizers in `type-of' documentation.
+	* elisp.texi (Top): Link to finalizer type.
+
 2015-03-02  Daniel Colascione  <dancol@dancol.org>
 
 	* control.texi (Generators): New section

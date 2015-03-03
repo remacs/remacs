@@ -76,3 +76,6 @@
       (should (equal
                (buffer-substring (point) (point-at-eol))
                "finalizer failed: (error \"ABCDEF\")")))))
+
+(ert-deftest finalizer-object-type ()
+  (should (equal (type-of (make-finalizer nil)) 'finalizer)))

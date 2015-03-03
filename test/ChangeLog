@@ -1,3 +1,8 @@
+2015-03-03  Daniel Colascione  <dancol@dancol.org>
+
+	* automated/finalizer-tests.el (finalizer-object-type): Test that
+	`type-of' works correctly for finalizers.
+
 2015-03-02  Daniel Colascione  <dancol@dancol.org>
 
 	* automated/generator-tests.el: New tests
