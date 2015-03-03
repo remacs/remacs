@@ -1,3 +1,9 @@
+2015-03-03  Glenn Morris  <rgm@gnu.org>
+
+	* automated/generator-tests.el (cps-while-incf):
+	Replace undefined incf with cl-incf.
+	(cps-test-iter-do): Use should not undefined assert.
+
 2015-03-03  Daniel Colascione  <dancol@dancol.org>
 
 	* automated/finalizer-tests.el (finalizer-object-type): Test that

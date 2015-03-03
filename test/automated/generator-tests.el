@@ -109,7 +109,7 @@ identical output.
 (cps-testcase cps-while-incf
  (let* ((i 0) (j 10))
    (while (< i 10)
-     (incf i)
+     (cl-incf i)
      (setf j (+ j (* i 10))))
    j))
 
@@ -202,8 +202,7 @@ identical output.
   (let (mylist)
     (iter-do (x (mygenerator 4))
       (push x mylist))
-
-    (assert (equal mylist '(2 4 1)))))
+    (should (equal mylist '(2 4 1)))))
 
 (iter-defun gen-using-yield-value ()
   (let (f)
