@@ -1,5 +1,33 @@
 2015-03-03  Glenn Morris  <rgm@gnu.org>
 
+	* net/browse-url.el (browse-url-firefox-startup-arguments):
+	Make obsolete.
+	(browse-url-firefox): Doc fix.  Remove -remote, which no longer
+	exists in Firefox 36.  (Bug#19921)
+	(browse-url-firefox-sentinel): Remove function.
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* frame.el (blink-cursor-timer-function): Don't increment
+	blink-cursor-blinks-done counter when a menu is active on a w32
+	frame.  (Bug#19925)
+
+2015-03-03  Juri Linkov  <juri@linkov.net>
+
+	* comint.el (comint-line-beginning-position): Revert searching for
+	the prompt when comint-use-prompt-regexp is non-nil because it
+	doesn't distinguish input from output.  Check the field property
+	`output' for the case when comint-use-prompt-regexp is nil.
+	(Bug#19710)
+
+2015-03-03  Jérémy Compostella  <jeremy.compostella@gmail.com>
+
+	* net/tramp-sh.el (tramp-remote-process-environment): Disable paging
+	with PAGER=cat.  (Bug#19870)
+
+2015-03-03  Glenn Morris  <rgm@gnu.org>
+2015-03-03  Glenn Morris  <rgm@gnu.org>
+
 	* textmodes/flyspell.el (flyspell-duplicate-distance):
 	Bump :version.
 

@@ -220,7 +220,7 @@ get_next_token (char * buf, const char ** pSrc)
 		{
 		  /* Output literal backslashes.  Note that we don't
 		     treat a backslash as an escape character here,
-		     since it doesn't preceed a quote.  */
+		     since it doesn't precede a quote.  */
 		  for ( ; escape_char_run > 0; escape_char_run--)
 		    *o++ = escape_char;
 		}

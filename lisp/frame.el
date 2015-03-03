@@ -1816,8 +1816,12 @@ command starts, by installing a pre-command hook."
 (defun blink-cursor-timer-function ()
   "Timer function of timer `blink-cursor-timer'."
   (internal-show-cursor nil (not (internal-show-cursor-p)))
+  ;; Suspend counting blinks when the w32 menu-bar menu is displayed,
+  ;; since otherwise menu tooltips will behave erratically.
+  (or (and (fboundp 'w32--menu-bar-in-use)
+	   (w32--menu-bar-in-use))
+      (setq blink-cursor-blinks-done (1+ blink-cursor-blinks-done)))
   ;; Each blink is two calls to this function.
-  (setq blink-cursor-blinks-done (1+ blink-cursor-blinks-done))
   (when (and (> blink-cursor-blinks 0)
              (<= (* 2 blink-cursor-blinks) blink-cursor-blinks-done))
     (blink-cursor-suspend)

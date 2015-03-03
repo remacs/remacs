@@ -1,5 +1,28 @@
 2015-03-03  Eli Zaretskii  <eliz@gnu.org>
 
+	* search.c (find_newline): Avoid assertion violations in
+	CHAR_TO_BYTE when a portion of the buffer was deleted and we look
+	for newlines near the end of the buffer.  This happens in Rmail
+	hen JIT font-lock fontifies a newly displayed portion of the
+	buffer.
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32fns.c (Fw32__menu_bar_in_use): New internal function.
+	(Bug#19925)
+
+2015-03-03  Glenn Morris  <rgm@gnu.org>
+
+	* fileio.c (Fmake_temp_name): Doc tweaks.  (Bug#19858)
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* menu.c (Fx_popup_menu) [HAVE_X_WINDOWS]: Call
+	mouse_position_for_popup only for X frames.  (Bug#19862)
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
 	* buffer.c (syms_of_buffer): Doc fix.  (Bug#19841)
 
 2015-03-03  Eli Zaretskii  <eliz@gnu.org>
