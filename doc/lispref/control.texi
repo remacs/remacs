@@ -661,7 +661,7 @@ indicates that the current iterator should pause and return
 @code{iter-yield-from} yields all the values that @var{iterator}
 produces and evaluates to the value that @var{iterator}'s generator
 function returns normally.  While it has control, @var{iterator}
-receives sent to the iterator using @code{iter-next}.
+receives values sent to the iterator using @code{iter-next}.
 @end defmac
 
   To use a generator function, first call it normally, producing a
@@ -693,9 +693,11 @@ evaluating any @code{iter-yield} form.
 @end defun
 
 @defun iter-close iterator
-If @var{iterator} is suspended inside a @code{unwind-protect} and
-becomes unreachable, Emacs will eventually run unwind handlers after a
-garbage collection pass.  To ensure that these handlers are run before
+If @var{iterator} is suspended inside an @code{unwind-protect}'s
+@code{bodyform} and becomes unreachable, Emacs will eventually run
+unwind handlers after a garbage collection pass.  (Note that
+@code{iter-yield} is illegal inside an @code{unwind-protect}'s
+@code{unwindforms}.)  To ensure that these handlers are run before
 then, use @code{iter-close}.
 @end defun
 
@@ -716,8 +718,8 @@ working with iterators.
 @example
 (iter-defun my-iter (x)
   (iter-yield (1+ (iter-yield (1+ x))))
-  -1 ;; Return normally
-  )
+   ;; Return normally
+  -1)
 
 (let* ((iter (my-iter 5))
        (iter2 (my-iter 0)))

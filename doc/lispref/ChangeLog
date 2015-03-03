@@ -1,5 +1,9 @@
 2015-03-03  Daniel Colascione  <dancol@dancol.org>
 
+	* control.texi (Generators): Correct missing word.  Clarify which
+	forms are legal in which parts of `unwind-protect'.  Fix orphaned
+	close parenthesis.
+
 	* objects.texi (Finalizer Type): New section for finalizer objects.
 	(Type Predicates): Mention finalizers in `type-of' documentation.
 	* elisp.texi (Top): Link to finalizer type.

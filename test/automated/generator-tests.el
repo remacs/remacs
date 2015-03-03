@@ -54,7 +54,7 @@ identical output.
          (funcall (lambda () ,@body))
          (iter-next
           (funcall
-           (let ((cps-disable-atomic-optimization t))
+           (let ((cps-inhibit-atomic-optimization t))
              (iter-lambda () (iter-yield (progn ,@body)))))))))))
 
 (put 'cps-testcase 'lisp-indent-function 1)

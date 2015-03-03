@@ -86,6 +86,12 @@
 (defvar cps--cleanup-table-symbol nil)
 (defvar cps--cleanup-function nil)
 
+(defmacro cps--gensym (fmt &rest args)
+  ;; Change this function to use `cl-gensym' if you want the generated
+  ;; code to be easier to read and debug.
+  ;; (cl-gensym (apply #'format fmt args))
+  `(make-symbol ,fmt))
+
 (defvar cps--dynamic-wrappers '(identity)
   "List of transformer functions to apply to atomic forms we
 evaluate in CPS context.")
@@ -154,13 +160,13 @@ DYNAMIC-VAR bound to STATIC-VAR."
 (defun cps--add-state (kind body)
   "Create a new CPS state with body BODY and return the state's name."
   (declare (indent 1))
-  (let* ((state (cl-gensym (format "cps-state-%s-" kind))))
+  (let* ((state (cps--gensym "cps-state-%s-" kind)))
     (push (list state body cps--cleanup-function) cps--states)
     (push state cps--bindings)
     state))
 
 (defun cps--add-binding (original-name)
-  (car (push (cl-gensym (format "cps-binding-%s-" original-name))
+  (car (push (cps--gensym (format "cps-binding-%s-" original-name))
              cps--bindings)))
 
 (defun cps--find-special-form-handler (form)
@@ -168,7 +174,7 @@ DYNAMIC-VAR bound to STATIC-VAR."
          (handler (intern-soft handler-name)))
     (and (fboundp handler) handler)))
 
-(defvar cps-disable-atomic-optimization nil
+(defvar cps-inhibit-atomic-optimization nil
   "When t, always rewrite forms into cps even when they
 don't yield.")
 
@@ -177,13 +183,14 @@ don't yield.")
 (defun cps--atomic-p (form)
   "Return whether the given form never yields."
 
-  (and (not cps-disable-atomic-optimization)
+  (and (not cps-inhibit-atomic-optimization)
        (let* ((cps--yield-seen))
          (ignore (macroexpand-all
                   `(cl-macrolet ((cps-internal-yield
                                      (_val)
                                    (setf cps--yield-seen t)))
-                     ,form)))
+                     ,form)
+                  macroexpand-all-environment))
          (not cps--yield-seen))))
 
 (defun cps--make-atomic-state (form next-state)
@@ -403,7 +410,7 @@ don't yield.")
       ;; Signal the evaluator-generator that it needs to generate code
       ;; to handle cleanup forms.
       (unless cps--cleanup-table-symbol
-        (setf cps--cleanup-table-symbol (cl-gensym "cps-cleanup-table-")))
+        (setf cps--cleanup-table-symbol (cps--gensym "cps-cleanup-table-")))
       (let* ((unwind-state
               (cps--add-state
                   "unwind"
@@ -431,7 +438,7 @@ don't yield.")
       ;; need our states to be self-referential. (That's what makes the
       ;; state a loop.)
       (let* ((loop-state
-                (cl-gensym "cps-state-while-"))
+                (cps--gensym "cps-state-while-"))
              (eval-loop-condition-state
               (cps--transform-1 test loop-state))
              (loop-state-body
@@ -489,7 +496,7 @@ don't yield.")
             (cl-loop for argument in arguments
                collect (if (atom argument)
                            argument
-                         (cl-gensym "cps-argument-")))))
+                         (cps--gensym "cps-argument-")))))
 
        (cps--transform-1
         `(let* ,(cl-loop for argument in arguments
@@ -505,7 +512,7 @@ don't yield.")
 (defun cps--make-catch-wrapper (tag-binding next-state)
   (lambda (form)
     (let ((normal-exit-symbol
-           (cl-gensym "cps-normal-exit-from-catch-")))
+           (cps--gensym "cps-normal-exit-from-catch-")))
       `(let (,normal-exit-symbol)
          (prog1
              (catch ,tag-binding
@@ -521,7 +528,7 @@ don't yield.")
   ;; encounter the given error.
 
   (let* ((error-symbol (cps--add-binding "condition-case-error"))
-         (lexical-error-symbol (cl-gensym "cps-lexical-error-"))
+         (lexical-error-symbol (cps--gensym "cps-lexical-error-"))
          (processed-handlers
           (cl-loop for (condition . body) in handlers
              collect (cons condition
@@ -549,13 +556,14 @@ don't yield.")
 This routine does not modify FORM. Instead, it returns a
 modified copy."
   (macroexpand-all
-   `(cl-symbol-macrolet ((,var ,new-var)) ,form)))
+   `(cl-symbol-macrolet ((,var ,new-var)) ,form)
+   macroexpand-all-environment))
 
 (defun cps--make-unwind-wrapper (unwind-forms)
   (cl-assert lexical-binding)
   (lambda (form)
     (let ((normal-exit-symbol
-           (cl-gensym "cps-normal-exit-from-unwind-")))
+           (cps--gensym "cps-normal-exit-from-unwind-")))
       `(let (,normal-exit-symbol)
          (unwind-protect
               (prog1
@@ -576,12 +584,12 @@ modified copy."
     `(setf ,cps--state-symbol ,terminal-state
            ,cps--value-symbol nil)))
 
-(defun cps-generate-evaluator (form)
+(defun cps-generate-evaluator (body)
   (let* (cps--states
          cps--bindings
          cps--cleanup-function
-         (cps--value-symbol (cl-gensym "cps-current-value-"))
-         (cps--state-symbol (cl-gensym "cps-current-state-"))
+         (cps--value-symbol (cps--gensym "cps-current-value-"))
+         (cps--state-symbol (cps--gensym "cps-current-state-"))
          ;; We make *cps-cleanup-table-symbol** non-nil when we notice
          ;; that we have cleanup processing to perform.
          (cps--cleanup-table-symbol nil)
@@ -589,12 +597,17 @@ modified copy."
                            `(signal 'iter-end-of-sequence
                                     ,cps--value-symbol)))
          (initial-state (cps--transform-1
-                         (macroexpand-all form)
+                         (macroexpand-all
+                          `(cl-macrolet
+                               ((iter-yield (value)
+                                  `(cps-internal-yield ,value)))
+                             ,@body)
+                          macroexpand-all-environment)
                          terminal-state))
          (finalizer-symbol
           (when cps--cleanup-table-symbol
             (when cps--cleanup-table-symbol
-              (cl-gensym "cps-iterator-finalizer-")))))
+              (cps--gensym "cps-iterator-finalizer-")))))
     `(let ,(append (list cps--state-symbol cps--value-symbol)
                    (when cps--cleanup-table-symbol
                      (list cps--cleanup-table-symbol))
@@ -656,8 +669,8 @@ The values that the sub-iterator yields are passed directly to
 the caller, and values supplied to `iter-next' are sent to the
 sub-iterator.  `iter-yield-from' evaluates to the value that the
 sub-iterator function returns via `iter-end-of-sequence'."
-  (let ((errsym (cl-gensym "yield-from-result"))
-        (valsym (cl-gensym "yield-from-value")))
+  (let ((errsym (cps--gensym "yield-from-result"))
+        (valsym (cps--gensym "yield-from-value")))
     `(let ((,valsym ,value))
        (unwind-protect
             (condition-case ,errsym
@@ -681,9 +694,7 @@ of values.  Callers can retrieve each value using `iter-next'."
       (push (pop body) preamble))
     `(defun ,name ,arglist
        ,@(nreverse preamble)
-       ,(cps-generate-evaluator
-         `(cl-macrolet ((iter-yield (value) `(cps-internal-yield ,value)))
-            ,@body)))))
+       ,(cps-generate-evaluator body))))
 
 (defmacro iter-lambda (arglist &rest body)
   "Return a lambda generator.
@@ -691,9 +702,7 @@ of values.  Callers can retrieve each value using `iter-next'."
   (declare (indent defun))
   (cl-assert lexical-binding)
   `(lambda ,arglist
-     ,(cps-generate-evaluator
-       `(cl-macrolet ((iter-yield (value) `(cps-internal-yield ,value)))
-          ,@body))))
+     ,(cps-generate-evaluator body)))
 
 (defun iter-next (iterator &optional yield-result)
   "Extract a value from an iterator.
@@ -715,10 +724,10 @@ is blocked."
 Evaluate BODY with VAR bound to each value from ITERATOR.
 Return the value with which ITERATOR finished iteration."
   (declare (indent 1))
-  (let ((done-symbol (cl-gensym "iter-do-iterator-done"))
-        (condition-symbol (cl-gensym "iter-do-condition"))
-        (it-symbol (cl-gensym "iter-do-iterator"))
-        (result-symbol (cl-gensym "iter-do-result")))
+  (let ((done-symbol (cps--gensym "iter-do-iterator-done"))
+        (condition-symbol (cps--gensym "iter-do-condition"))
+        (it-symbol (cps--gensym "iter-do-iterator"))
+        (result-symbol (cps--gensym "iter-do-result")))
     `(let (,var
            ,result-symbol
            (,done-symbol nil)
@@ -745,7 +754,7 @@ Return the value with which ITERATOR finished iteration."
 
 (defmacro cps--initialize-for (iterator)
   ;; See cps--handle-loop-for
-  (let ((cs (cl-gensym "cps--loop-temp")))
+  (let ((cs (cps--gensym "cps--loop-temp")))
     `(let ((,cs (cons nil ,iterator)))
        (cps--advance-for ,cs))))
 
@@ -781,13 +790,7 @@ Return the value with which ITERATOR finished iteration."
      '(("(\\(iter-defun\\)\\_>\\s *\\(\\(?:\\sw\\|\\s_\\)+\\)?"
         (1 font-lock-keyword-face nil t)
         (2 font-lock-function-name-face nil t))
-       ("(\\(iter-next\\)\\_>"
-        (1 font-lock-keyword-face nil t))
-       ("(\\(iter-lambda\\)\\_>"
-        (1 font-lock-keyword-face nil t))
-       ("(\\(iter-yield\\)\\_>"
-        (1 font-lock-keyword-face nil t))
-       ("(\\(iter-yield-from\\)\\_>"
+       ("(\\(iter-\\(?:next\\|lambda\\|yield\\|yield-from\\)\\)\\_>"
         (1 font-lock-keyword-face nil t))))))
 
 (provide 'generator)
