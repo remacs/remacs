@@ -14,23 +14,20 @@ and NEWS.1-17 for changes in older Emacs versions.
 You can narrow news to a specific version by calling `view-emacs-news'
 with a prefix argument or by typing C-u C-h C-n.
 
+Temporary note:
++++ indicates that all necessary documentation updates are complete.
+    (This means all relevant manuals in doc/ AND lisp doc-strings.)
+--- means no change in the manuals is needed.
+When you add a new item, use the appropriate mark if you are sure it applies,
+otherwise leave it unmarked.
+
 
 * Installation Changes in Emacs 25.1
 
 +++
-
 ** Building Emacs now requires C99 or later.
 
-** The default value of `history-length' has increased to 100.
-
-** The variable `redisplay-dont-pause' is obsolete.
-
 ** Building Emacs now requires GNU make, version 3.81 or later.
-
-** `call-process-shell-command' and `process-file-shell-command' no longer
-take "&rest args".
-
-** The option `browse-url-firefox-startup-arguments' no longer has an effect.
 
 ** By default, Emacs no longer works on IRIX.  We expect that Emacs
 users are not affected by this, as SGI stopped supporting IRIX in
@@ -39,40 +36,17 @@ should be able to work around the problem either by porting the Emacs
 undumping code to GCC under IRIX, or by configuring --with-wide-int,
 or by sticking with Emacs 24.4.
 
-** ERC
-
 ** 'configure' now prefers gnustep-config when configuring GNUstep.
 If gnustep-config is not available, the old heuristics are used.
-
-+++
-*** New option `erc-rename-buffers'.
-
-*** New faces `erc-my-nick-prefix-face' and `erc-nick-prefix-face'.
-
-*** `erc-format-@nick' displays all user modes instead of only op and voice.
-
-*** The display of irc commands in the current buffer has been disabled.
-
-*** `erc-version' now follows the Emacs version.
-
-** Obsolete packages
-
-*** cc-compat.el
 
 ---
 ** The configure option `--with-pkg-config-prog' has been removed.
 Use './configure PKG_CONFIG=/full/name/of/pkg-config' if you need to.
 
-*** crisp.el (moved to elpa.gnu.org)
-
 ** The configure option '--enable-silent-rules' is now the default,
 and silent rules are now quieter.  To get the old behavior where
 'make' chatters a lot, configure with '--disable-silent-rules' or
 build with 'make V=1'.
-
-*** tpu-edt.el, ws-mode.el
-These emulations of old editors are believed to be no longer relevant
- - contact emacs-devel@gnu.org if you disagree.
 
 ---
 ** The configure option '--with-gameuser' now allows to specify a
@@ -85,8 +59,6 @@ be installed setgid.  The option now defaults to the 'games' group.
 ** The `grep-changelog' script (and its manual page) are no longer included.
 It has no particular connection to Emacs and has not changed in years,
 so if you want to use it, you can always take a copy from an older Emacs.
-
-*** vi.el, vip.el (try M-x viper instead)
 
 
 * Startup Changes in Emacs 25.1

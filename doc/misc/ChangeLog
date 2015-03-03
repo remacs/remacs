@@ -4,7 +4,6 @@
 	for erc-format-nick-function and erc-rename-buffers options.
 	(Connecting): fix typo
 
-2015-03-03  Michael Albinus  <michael.albinus@gmx.de>
 2015-03-02  Daniel Colascione  <dancol@dancol.org>
 
 	* cl.texi (Iteration Clauses): Mention iterator support.

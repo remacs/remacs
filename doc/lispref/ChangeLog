@@ -3,7 +3,6 @@
 	* processes.texi (Synchronous Processes): Update documentation of
 	call-process-shell-command and process-file-shell-command.
 
-2015-03-03  Eli Zaretskii  <eliz@gnu.org>
 2015-03-03  Daniel Colascione  <dancol@dancol.org>
 
 	* control.texi (Generators): Correct missing word.  Clarify which

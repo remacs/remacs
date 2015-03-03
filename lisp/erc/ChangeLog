@@ -4,7 +4,6 @@
 	package.el compatibility
 
 2015-03-03  Glenn Morris  <rgm@gnu.org>
-2015-03-03  Glenn Morris  <rgm@gnu.org>
 
 	* erc.el (erc-rename-buffers): Doc fix.  Add :version.
 

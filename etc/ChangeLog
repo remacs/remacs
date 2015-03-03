@@ -1,8 +1,7 @@
 2015-03-03  Kelvin White  <kwhite@gnu.org>
 
-	* NEWS: Add section to include ERC changes
+	* NEWS.24: Add section to include ERC changes.
 
-2015-03-03  Eli Zaretskii  <eliz@gnu.org>
 2015-03-02  Daniel Colascione  <dancol@dancol.org>
 
 	* NEWS: Mention finalizers.

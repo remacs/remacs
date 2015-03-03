@@ -21,11 +21,9 @@
 	mouse_position_for_popup only for X frames.  (Bug#19862)
 
 2015-03-03  Eli Zaretskii  <eliz@gnu.org>
-2015-03-03  Eli Zaretskii  <eliz@gnu.org>
 
 	* buffer.c (syms_of_buffer): Doc fix.  (Bug#19841)
 
-2015-03-03  Eli Zaretskii  <eliz@gnu.org>
 2015-03-03  Eli Zaretskii  <eliz@gnu.org>
 
 	* xfaces.c (map_tty_color): Use assoc_no_quit instead of
@@ -33,14 +31,12 @@
 	(Bug#19802)
 
 2015-03-03  Eli Zaretskii  <eliz@gnu.org>
-2015-03-03  Eli Zaretskii  <eliz@gnu.org>
 
 	* xdisp.c (move_it_in_display_line_to): Handle the case where the
 	last character of a screen line is whitespace, and we are under
 	word-wrap with overflow-newline-into-fringe turned on.
 	(Bug#19769)
 
-2015-03-03  Eli Zaretskii  <eliz@gnu.org>
 2015-03-03  Eli Zaretskii  <eliz@gnu.org>
 
 	* xdisp.c (handle_stop, handle_single_display_spec)

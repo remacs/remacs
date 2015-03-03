@@ -1,3 +1,21 @@
+2015-03-03  Agustín Martín Domingo <agustin6martin@gmail.com>
+
+	* textmodes/ispell.el (ispell-aspell-find-dictionary): Make sure
+	.dat files for aspell dicts are also searched for in location
+	described by `ispell-aspell-dict-dir', matching aspell's dict-dir
+	variable.
+
+2015-03-03  Agustín Martín Domingo <agustin6martin@gmail.com>
+
+	* textmodes/ispell.el (ispell-dicts-name2locale-equivs-alist)
+	(ispell-hunspell-fill-dictionary-entry)
+	(ispell-find-hunspell-dictionaries)
+	(ispell-set-spellchecker-params): New generic name for
+	`ispell-hunspell-dictionary-equivs-alist'.
+	(ispell-aspell-add-aliases): Also use
+	`ispell-dicts-name2locale-equivs-alist' to get aspell aliases for
+	standard dict names.
+
 2015-03-03  Glenn Morris  <rgm@gnu.org>
 
 	* net/browse-url.el (browse-url-firefox-startup-arguments):
@@ -26,7 +44,6 @@
 	with PAGER=cat.  (Bug#19870)
 
 2015-03-03  Glenn Morris  <rgm@gnu.org>
-2015-03-03  Glenn Morris  <rgm@gnu.org>
 
 	* textmodes/flyspell.el (flyspell-duplicate-distance):
 	Bump :version.
@@ -47,7 +64,6 @@
 	(flyspell-word-search-backward, flyspell-word-search-forward):
 	Search as full word with defined casechars, not as substring.
 
-2015-03-03  Juri Linkov  <juri@linkov.net>
 2015-03-03  Juri Linkov  <juri@linkov.net>
 
 	Better support for the case of typing RET on the prompt in comint.
@@ -71,7 +87,6 @@
 	* net/network-stream.el (network-stream-open-tls): Respect the
 	:end-of-capability setting.
 
-2015-03-03  Juri Linkov  <juri@linkov.net>
 2015-03-03  Juri Linkov  <juri@linkov.net>
 
 	Revert the previous change of comint-line-beginning-position callers,
@@ -100,7 +115,6 @@
 	(Bug#19763)
 
 2015-03-03  Nicolas Petton  <nicolas@petton.fr>
-2015-03-03  Nicolas Petton  <nicolas@petton.fr>
 
 	* emacs-lisp/authors.el (authors-ignored-files)
 	(authors-renamed-files-alist): Additions.
@@ -120,7 +134,6 @@
 	* emacs-lisp/authors.el (authors-obsolete-files-regexps)
 	(authors-valid-file-names, authors-renamed-files-alist): Additions.
 
-2015-03-03  Alan Mackenzie  <acm@muc.de>
 2015-03-03  Alan Mackenzie  <acm@muc.de>
 
 	CC Mode: Stop Font Lock forcing fontification from BOL.  Fixes
