@@ -1,5 +1,7 @@
 2015-03-03  Daniel Colascione  <dancol@dancol.org>
 
+	* emacs-lisp/cl-macs.el (cl-iter-defun): Add cl-iter-defun.
+
 	* emacs-lisp/generator.el (iter-defun): Correctly propagate
 	docstrings and declarations to underlying function.
 
