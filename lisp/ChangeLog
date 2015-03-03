@@ -1,7 +1,28 @@
+2015-03-03  Glenn Morris  <rgm@gnu.org>
+
+	* textmodes/flyspell.el (flyspell-duplicate-distance):
+	Bump :version.
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* textmodes/text-mode.el (text-mode-syntax-table): Make some
+	punctuation character behave as word-constituent, for more
+	compatibility with Unicode.
+
+	* simple.el (transient-mark-mode): Doc fix.  (Bug#19841)
+
+2015-03-03  Agustín Martín Domingo <agustin6martin@gmail.com>
+
+	Improve string search in `flyspell-word-search-*`. (Bug#16800)
+	* flyspell.el (flyspell-duplicate-distance): Limit default search
+	distance for duplicated words to 40000.
+	(flyspell-word-search-backward, flyspell-word-search-forward):
+	Search as full word with defined casechars, not as substring.
+
+2015-03-03  Juri Linkov  <juri@linkov.net>
 2015-03-03  Juri Linkov  <juri@linkov.net>
 
 	Better support for the case of typing RET on the prompt in comint.
-
 	* comint.el (comint-get-old-input-default): Go to the field end
 	when comint-use-prompt-regexp is nil.
 	(comint-line-beginning-position): Check if point is already

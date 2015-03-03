@@ -197,7 +197,8 @@ parameters and authentication."
          (set sym (if (functionp val) (funcall val) val))))
 
 (defcustom erc-rename-buffers nil
-  "When this is set to t, buffers will be renamed to network name if available"
+  "Non-nil means rename buffers with network name, if available."
+  :version "24.5"
   :group 'erc
   :type 'boolean)
 
@@ -1148,6 +1149,7 @@ which the local user typed."
   "Faces for ERC."
   :group 'erc)
 
+;; FIXME faces should not end in "-face".
 (defface erc-default-face '((t))
   "ERC default face."
   :group 'erc-faces)

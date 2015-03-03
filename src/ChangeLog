@@ -1,5 +1,10 @@
 2015-03-03  Eli Zaretskii  <eliz@gnu.org>
 
+	* buffer.c (syms_of_buffer): Doc fix.  (Bug#19841)
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
 	* xfaces.c (map_tty_color): Use assoc_no_quit instead of
 	assq_no_quit to fetch color definition by its string name.
 	(Bug#19802)
