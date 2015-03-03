@@ -261,7 +261,7 @@ identical output.
       (should (not cps-test-closed-flag)))))
 
 (ert-deftest cps-test-iter-close-finalizer ()
-  (skip-unless gc-precise-p)
+  (skip-unless gc-precise)
   (garbage-collect)
   (let ((cps-test-closed-flag nil))
     (let ((iter (funcall

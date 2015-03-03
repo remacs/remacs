@@ -31,7 +31,7 @@
 
 (ert-deftest finalizer-basic ()
   "Test that finalizers run at all."
-  (skip-unless gc-precise-p)
+  (skip-unless gc-precise)
   (let* ((finalized nil)
          (finalizer (make-finalizer (lambda () (setf finalized t)))))
     (garbage-collect)
@@ -42,7 +42,7 @@
 
 (ert-deftest finalizer-circular-reference ()
   "Test references from a callback to a finalizer."
-  (skip-unless gc-precise-p)
+  (skip-unless gc-precise)
   (let ((finalized nil))
     (let* ((value nil)
            (finalizer (make-finalizer (lambda () (setf finalized value)))))
@@ -53,7 +53,7 @@
 
 (ert-deftest finalizer-cross-reference ()
   "Test that between-finalizer references do not prevent collection."
-  (skip-unless gc-precise-p)
+  (skip-unless gc-precise)
   (let ((d nil) (fc 0))
     (let* ((f1-data (cons nil nil))
            (f2-data (cons nil nil))
@@ -68,7 +68,7 @@
 
 (ert-deftest finalizer-error ()
   "Test that finalizer errors are suppressed"
-  (skip-unless gc-precise-p)
+  (skip-unless gc-precise)
   (make-finalizer (lambda () (error "ABCDEF")))
   (garbage-collect)
   (with-current-buffer "*Messages*"

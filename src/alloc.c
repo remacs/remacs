@@ -7266,7 +7266,7 @@ init_alloc_once (void)
 {
   /* Even though Qt's contents are not set up, its address is known.  */
   Vpurify_flag = Qt;
-  gc_precise_p = (GC_MARK_STACK == GC_USE_GCPROS_AS_BEFORE);
+  gc_precise = (GC_MARK_STACK == GC_USE_GCPROS_AS_BEFORE);
 
   purebeg = PUREBEG;
   pure_size = PURESIZE;
@@ -7410,9 +7410,10 @@ The time is in seconds as a floating point value.  */);
   DEFVAR_INT ("gcs-done", gcs_done,
               doc: /* Accumulated number of garbage collections done.  */);
 
-  DEFVAR_BOOL ("gc-precise-p", gc_precise_p,
+  DEFVAR_BOOL ("gc-precise", gc_precise,
                doc: /* Non-nil means GC stack marking is precise.
 Useful mainly for automated GC tests.  Build time constant.*/);
+  XSYMBOL (intern_c_string ("gc-precise"))->constant = 1;
 
   defsubr (&Scons);
   defsubr (&Slist);

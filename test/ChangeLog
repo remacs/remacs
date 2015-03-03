@@ -1,3 +1,12 @@
+2015-03-03  Daniel Colascione  <dancol@dancol.org>
+
+	* automated/finalizer-tests.el (finalizer-basic)
+	(finalizer-circular-reference, finalizer-cross-reference)
+	(finalizer-error): Rename `gc-precise-p' to `gc-precise'.
+
+	* automated/generator-tests.el (cps-test-iter-close-finalizer):
+	Rename `gc-precise-p' to `gc-precise'.
+
 2015-03-03  Glenn Morris  <rgm@gnu.org>
 
 	* automated/generator-tests.el (cps-while-incf):
