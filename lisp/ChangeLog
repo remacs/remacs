@@ -1,3 +1,9 @@
+2015-03-03  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/gud.el: Use lexical-binding (bug#19966).
+
+	* emacs-lisp/gv.el (gv-ref): Warn about likely problematic cases.
+
 2015-03-03  Daniel Colascione  <dancol@dancol.org>
 
 	* emacs-lisp/generator.el: Make globals conform to elisp
@@ -6,8 +12,8 @@
 	`cps-disable-atomic-optimization'.
 	(cps--gensym): New macro; replaces `cl-gensym' throughout.
 	(cps-generate-evaluator): Move the `iter-yield' local macro
-	definition here
-	(iter-defun, iter-lambda): from here.
+	definition here...
+	(iter-defun, iter-lambda): ...from here.
 
 2015-03-03  Artur Malabarba  <bruce.connor.am@gmail.com>
 
