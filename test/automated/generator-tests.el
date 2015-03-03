@@ -287,3 +287,12 @@ identical output.
     (should (equal (iter-next iter) 1))
     (should-error (iter-next iter))
     (should (equal nr-unwound 1))))
+
+(iter-defun generator-with-docstring ()
+  "Documentation!"
+  (declare (indent 5))
+  nil)
+
+(ert-deftest cps-test-declarations-preserved ()
+  (should (equal (documentation 'generator-with-docstring) "Documentation!"))
+  (should (equal (get 'generator-with-docstring 'lisp-indent-function) 5)))

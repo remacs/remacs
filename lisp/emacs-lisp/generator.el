@@ -687,14 +687,12 @@ encapsulates the state of a computation that produces a sequence
 of values.  Callers can retrieve each value using `iter-next'."
   (declare (indent defun))
   (cl-assert lexical-binding)
-  (let (preamble)
-    (when (stringp (car body))
-      (push (pop body) preamble))
-    (when (eq (car-safe (car body)) 'declare)
-      (push (pop body) preamble))
+  (let* ((parsed-body (macroexp-parse-body body))
+         (declarations (car parsed-body))
+         (exps (cdr parsed-body)))
     `(defun ,name ,arglist
-       ,@(nreverse preamble)
-       ,(cps-generate-evaluator body))))
+       ,@declarations
+       ,(cps-generate-evaluator exps))))
 
 (defmacro iter-lambda (arglist &rest body)
   "Return a lambda generator.

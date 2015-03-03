@@ -1,3 +1,18 @@
+2015-03-03  Daniel Colascione  <dancol@dancol.org>
+
+	* emacs-lisp/generator.el: Make globals conform to elisp
+	style throughout.  Use more efficient font-lock patterns.
+	(cps-inhibit-atomic-optimization): Rename from
+	`cps-disable-atomic-optimization'.
+	(cps--gensym): New macro; replaces `cl-gensym' throughout.
+	(cps-generate-evaluator): Move the `iter-yield' local macro
+	definition here
+	(iter-defun, iter-lambda): from here.
+
+	(iter-defun): Use `macroexp-parse-body'.
+
+2015-03-03  Daniel Colascione  <dancol@dancol.org>
+
 2015-03-03  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* progmodes/gud.el: Use lexical-binding (bug#19966).

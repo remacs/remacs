@@ -3,6 +3,7 @@
 	* automated/generator-tests.el (cps-testcase): Use
 	`cps-inhibit-atomic-optimization' instead of
 	`cps-disable-atomic-optimization'.
+	(cps-test-declarations-preserved): New test.
 
 	* automated/finalizer-tests.el (finalizer-basic)
 	(finalizer-circular-reference, finalizer-cross-reference)
