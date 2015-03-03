@@ -25,7 +25,7 @@
 
 ;; This package implements generators for Emacs Lisp through a
 ;; continuation-passing transformation.  It provides essentially the
-;; same generator API and iterator facilties that Python and
+;; same generator API and iterator facilities that Python and
 ;; JavaScript ES6 provide.
 ;;
 ;; `iter-lambda' and `iter-defun' work like `lambda' and `defun',
@@ -57,7 +57,7 @@
 ;; and each iterator maintains its own internal state.
 ;;
 ;; This raw form of iteration is general, but a bit awkward to use, so
-;; this library also provides soem convenience functions:
+;; this library also provides some convenience functions:
 ;;
 ;; `iter-do' is like `cl-do', except that instead of walking a list,
 ;; it walks an iterator.  `cl-loop' is also extended with a new
