@@ -79,14 +79,14 @@
 (require 'cl-lib)
 (require 'pcase)
 
-(defvar *cps-bindings* nil)
-(defvar *cps-states* nil)
-(defvar *cps-value-symbol* nil)
-(defvar *cps-state-symbol* nil)
-(defvar *cps-cleanup-table-symbol* nil)
-(defvar *cps-cleanup-function* nil)
+(defvar cps--bindings nil)
+(defvar cps--states nil)
+(defvar cps--value-symbol nil)
+(defvar cps--state-symbol nil)
+(defvar cps--cleanup-table-symbol nil)
+(defvar cps--cleanup-function nil)
 
-(defvar *cps-dynamic-wrappers* '(identity)
+(defvar cps--dynamic-wrappers '(identity)
   "List of transformer functions to apply to atomic forms we
 evaluate in CPS context.")
 
@@ -128,10 +128,10 @@ control flow non-locally in goo that diverts this control flow to
 the CPS state machinery.
 "
   (declare (indent 1))
-  `(let ((*cps-dynamic-wrappers*
+  `(let ((cps--dynamic-wrappers
           (cons
            ,wrapper
-           *cps-dynamic-wrappers*)))
+           cps--dynamic-wrappers)))
      ,@body))
 
 (defun cps--make-dynamic-binding-wrapper (dynamic-var static-var)
@@ -155,13 +155,13 @@ DYNAMIC-VAR bound to STATIC-VAR."
   "Create a new CPS state with body BODY and return the state's name."
   (declare (indent 1))
   (let* ((state (cl-gensym (format "cps-state-%s-" kind))))
-    (push (list state body *cps-cleanup-function*) *cps-states*)
-    (push state *cps-bindings*)
+    (push (list state body cps--cleanup-function) cps--states)
+    (push state cps--bindings)
     state))
 
 (defun cps--add-binding (original-name)
   (car (push (cl-gensym (format "cps-binding-%s-" original-name))
-             *cps-bindings*)))
+             cps--bindings)))
 
 (defun cps--find-special-form-handler (form)
   (let* ((handler-name (format "cps--transform-%s" (car-safe form)))
@@ -187,17 +187,17 @@ don't yield.")
          (not cps--yield-seen))))
 
 (defun cps--make-atomic-state (form next-state)
-  (let ((tform `(prog1 ,form (setf ,*cps-state-symbol* ,next-state))))
-    (cl-loop for wrapper in *cps-dynamic-wrappers*
+  (let ((tform `(prog1 ,form (setf ,cps--state-symbol ,next-state))))
+    (cl-loop for wrapper in cps--dynamic-wrappers
        do (setf tform (funcall wrapper tform)))
-    ;; Bind *cps-cleanup-function* to nil here because the wrapper
+    ;; Bind cps--cleanup-function to nil here because the wrapper
     ;; function mechanism is responsible for cleanup here, not the
     ;; generic cleanup mechanism.  If we didn't make this binding,
     ;; we'd run cleanup handlers twice on anything that made it out
     ;; to toplevel.
-    (let ((*cps-cleanup-function* nil))
+    (let ((cps--cleanup-function nil))
       (cps--add-state "atom"
-        `(setf ,*cps-value-symbol* ,tform)))))
+        `(setf ,cps--value-symbol ,tform)))))
 
 (defun cps--transform-1 (form next-state)
   (pcase form
@@ -221,8 +221,8 @@ don't yield.")
       (cps--transform-1
        condition
        (cps--add-state "and"
-         `(setf ,*cps-state-symbol*
-                (if ,*cps-value-symbol*
+         `(setf ,cps--state-symbol
+                (if ,cps--value-symbol
                     ,(cps--transform-1 `(and ,@rest)
                                        next-state)
                   ,next-state)))))
@@ -233,8 +233,8 @@ don't yield.")
       (let ((tag-binding (cps--add-binding "catch-tag")))
         (cps--transform-1 tag
                           (cps--add-state "cps-update-tag"
-                            `(setf ,tag-binding ,*cps-value-symbol*
-                                   ,*cps-state-symbol*
+                            `(setf ,tag-binding ,cps--value-symbol
+                                   ,cps--state-symbol
                                    ,(cps--with-value-wrapper
                                      (cps--make-catch-wrapper
                                       tag-binding next-state)
@@ -269,8 +269,8 @@ don't yield.")
     (`(if ,cond ,then . ,else)
       (cps--transform-1 cond
                         (cps--add-state "if"
-                          `(setf ,*cps-state-symbol*
-                                 (if ,*cps-value-symbol*
+                          `(setf ,cps--state-symbol
+                                 (if ,cps--value-symbol
                                      ,(cps--transform-1 then
                                                         next-state)
                                    ,(cps--transform-1 `(progn ,@else)
@@ -328,8 +328,8 @@ don't yield.")
         (cps--transform-1
          value-form
          (cps--add-state "let*"
-           `(setf ,new-var ,*cps-value-symbol*
-                  ,*cps-state-symbol*
+           `(setf ,new-var ,cps--value-symbol
+                  ,cps--state-symbol
                   ,(if (or (not lexical-binding) (special-variable-p var))
                        (cps--with-dynamic-binding var new-var
                          (cps--transform-1
@@ -349,8 +349,8 @@ don't yield.")
       (cps--transform-1
        condition
        (cps--add-state "or"
-         `(setf ,*cps-state-symbol*
-                (if ,*cps-value-symbol*
+         `(setf ,cps--state-symbol
+                (if ,cps--value-symbol
                     ,next-state
                   ,(cps--transform-1
                     `(or ,@rest) next-state))))))
@@ -364,13 +364,13 @@ don't yield.")
        (let ((temp-var-symbol (cps--add-binding "prog1-temp")))
          (cps--add-state "prog1"
            `(setf ,temp-var-symbol
-                  ,*cps-value-symbol*
-                  ,*cps-state-symbol*
+                  ,cps--value-symbol
+                  ,cps--state-symbol
                   ,(cps--transform-1
                     `(progn ,@body)
                     (cps--add-state "prog1inner"
-                      `(setf ,*cps-value-symbol* ,temp-var-symbol
-                             ,*cps-state-symbol* ,next-state))))))))
+                      `(setf ,cps--value-symbol ,temp-var-symbol
+                             ,cps--state-symbol ,next-state))))))))
 
     ;; Process `prog2'.
 
@@ -402,8 +402,8 @@ don't yield.")
     (`(unwind-protect ,bodyform . ,unwindforms)
       ;; Signal the evaluator-generator that it needs to generate code
       ;; to handle cleanup forms.
-      (unless *cps-cleanup-table-symbol*
-        (setf *cps-cleanup-table-symbol* (cl-gensym "cps-cleanup-table-")))
+      (unless cps--cleanup-table-symbol
+        (setf cps--cleanup-table-symbol (cl-gensym "cps-cleanup-table-")))
       (let* ((unwind-state
               (cps--add-state
                   "unwind"
@@ -412,10 +412,10 @@ don't yield.")
                 ;; references inside it with lifted equivalents.
                 `(progn
                    ,@unwindforms
-                   (setf ,*cps-state-symbol* ,next-state))))
-             (old-cleanup *cps-cleanup-function*)
-             (*cps-cleanup-function*
-              (let ((*cps-cleanup-function* nil))
+                   (setf ,cps--state-symbol ,next-state))))
+             (old-cleanup cps--cleanup-function)
+             (cps--cleanup-function
+              (let ((cps--cleanup-function nil))
                 (cps--add-state "cleanup"
                   `(progn
                      ,(when old-cleanup `(funcall ,old-cleanup))
@@ -436,25 +436,25 @@ don't yield.")
               (cps--transform-1 test loop-state))
              (loop-state-body
                 `(progn
-                   (setf ,*cps-state-symbol*
-                         (if ,*cps-value-symbol*
+                   (setf ,cps--state-symbol
+                         (if ,cps--value-symbol
                              ,(cps--transform-1
                                `(progn ,@body)
                                eval-loop-condition-state)
                            ,next-state)))))
-        (push (list loop-state loop-state-body *cps-cleanup-function*)
-              *cps-states*)
-        (push loop-state *cps-bindings*)
+        (push (list loop-state loop-state-body cps--cleanup-function)
+              cps--states)
+        (push loop-state cps--bindings)
         eval-loop-condition-state))
 
     ;; Process various kinds of `quote'.
 
     (`(quote ,arg) (cps--add-state "quote"
-                     `(setf ,*cps-value-symbol* (quote ,arg)
-                            ,*cps-state-symbol* ,next-state)))
+                     `(setf ,cps--value-symbol (quote ,arg)
+                            ,cps--state-symbol ,next-state)))
     (`(function ,arg) (cps--add-state "function"
-                        `(setf ,*cps-value-symbol* (function ,arg)
-                               ,*cps-state-symbol* ,next-state)))
+                        `(setf ,cps--value-symbol (function ,arg)
+                               ,cps--state-symbol ,next-state)))
 
     ;; Deal with `iter-yield'.
 
@@ -463,12 +463,12 @@ don't yield.")
        value
        (cps--add-state "iter-yield"
          `(progn
-            (setf ,*cps-state-symbol*
-                  ,(if *cps-cleanup-function*
+            (setf ,cps--state-symbol
+                  ,(if cps--cleanup-function
                        (cps--add-state "after-yield"
-                         `(setf ,*cps-state-symbol* ,next-state))
+                         `(setf ,cps--state-symbol ,next-state))
                        next-state))
-            (throw 'cps--yield ,*cps-value-symbol*)))))
+            (throw 'cps--yield ,cps--value-symbol)))))
 
     ;; Catch any unhandled special forms.
 
@@ -513,7 +513,7 @@ don't yield.")
                    ,form
                  (setf ,normal-exit-symbol t)))
            (unless ,normal-exit-symbol
-             (setf ,*cps-state-symbol* ,next-state)))))))
+             (setf ,cps--state-symbol ,next-state)))))))
 
 (defun cps--make-condition-wrapper (var next-state handlers)
   ;; Each handler is both one of the transformers with which we wrap
@@ -541,7 +541,7 @@ don't yield.")
                 `(,condition
                   (setf ,error-symbol
                         ,lexical-error-symbol
-                        ,*cps-state-symbol*
+                        ,cps--state-symbol
                         ,error-state)))))))
 
 (defun cps--replace-variable-references (var new-var form)
@@ -568,47 +568,47 @@ modified copy."
 (put 'iter-end-of-sequence 'error-message "iteration terminated")
 
 (defun cps--make-close-iterator-form (terminal-state)
-  (if *cps-cleanup-table-symbol*
-      `(let ((cleanup (cdr (assq ,*cps-state-symbol* ,*cps-cleanup-table-symbol*))))
-         (setf ,*cps-state-symbol* ,terminal-state
-               ,*cps-value-symbol* nil)
+  (if cps--cleanup-table-symbol
+      `(let ((cleanup (cdr (assq ,cps--state-symbol ,cps--cleanup-table-symbol))))
+         (setf ,cps--state-symbol ,terminal-state
+               ,cps--value-symbol nil)
          (when cleanup (funcall cleanup)))
-    `(setf ,*cps-state-symbol* ,terminal-state
-           ,*cps-value-symbol* nil)))
+    `(setf ,cps--state-symbol ,terminal-state
+           ,cps--value-symbol nil)))
 
 (defun cps-generate-evaluator (form)
-  (let* (*cps-states*
-         *cps-bindings*
-         *cps-cleanup-function*
-         (*cps-value-symbol* (cl-gensym "cps-current-value-"))
-         (*cps-state-symbol* (cl-gensym "cps-current-state-"))
+  (let* (cps--states
+         cps--bindings
+         cps--cleanup-function
+         (cps--value-symbol (cl-gensym "cps-current-value-"))
+         (cps--state-symbol (cl-gensym "cps-current-state-"))
          ;; We make *cps-cleanup-table-symbol** non-nil when we notice
          ;; that we have cleanup processing to perform.
-         (*cps-cleanup-table-symbol* nil)
+         (cps--cleanup-table-symbol nil)
          (terminal-state (cps--add-state "terminal"
                            `(signal 'iter-end-of-sequence
-                                    ,*cps-value-symbol*)))
+                                    ,cps--value-symbol)))
          (initial-state (cps--transform-1
                          (macroexpand-all form)
                          terminal-state))
          (finalizer-symbol
-          (when *cps-cleanup-table-symbol*
-            (when *cps-cleanup-table-symbol*
+          (when cps--cleanup-table-symbol
+            (when cps--cleanup-table-symbol
               (cl-gensym "cps-iterator-finalizer-")))))
-    `(let ,(append (list *cps-state-symbol* *cps-value-symbol*)
-                   (when *cps-cleanup-table-symbol*
-                     (list *cps-cleanup-table-symbol*))
+    `(let ,(append (list cps--state-symbol cps--value-symbol)
+                   (when cps--cleanup-table-symbol
+                     (list cps--cleanup-table-symbol))
                    (when finalizer-symbol
                      (list finalizer-symbol))
-                   (nreverse *cps-bindings*))
+                   (nreverse cps--bindings))
        ;; Order state list so that cleanup states are always defined
        ;; before they're referenced.
-       ,@(cl-loop for (state body cleanup) in (nreverse *cps-states*)
+       ,@(cl-loop for (state body cleanup) in (nreverse cps--states)
             collect `(setf ,state (lambda () ,body))
             when cleanup
-            do (cl-assert *cps-cleanup-table-symbol*)
-            and collect `(push (cons ,state ,cleanup) ,*cps-cleanup-table-symbol*))
-       (setf ,*cps-state-symbol* ,initial-state)
+            do (cl-assert cps--cleanup-table-symbol)
+            and collect `(push (cons ,state ,cleanup) ,cps--cleanup-table-symbol))
+       (setf ,cps--state-symbol ,initial-state)
 
        (let ((iterator
               (lambda (op value)
@@ -621,13 +621,13 @@ modified copy."
                   ((eq op :close)
                    ,(cps--make-close-iterator-form terminal-state))
                   ((eq op :next)
-                   (setf ,*cps-value-symbol* value)
+                   (setf ,cps--value-symbol value)
                    (let ((yielded nil))
                      (unwind-protect
                           (prog1
                               (catch 'cps--yield
                                 (while t
-                                  (funcall ,*cps-state-symbol*)))
+                                  (funcall ,cps--state-symbol)))
                             (setf yielded t))
                        (unless yielded
                          ;; If we're exiting non-locally (error, quit,

@@ -1,3 +1,8 @@
+2015-03-03  Daniel Colascione  <dancol@dancol.org>
+
+	* emacs-lisp/generator.el: Make globals conform to elisp
+	style throughout.
+
 2015-03-03  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* emacs-lisp/package.el (package-autoremove): Fix if logic.
