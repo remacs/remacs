@@ -1058,27 +1058,35 @@ Assumes that value contains no whitespace."
   "For aspell dictionary DICT-NAME, return a list of parameters if an
 associated data file is found or nil otherwise.  List format is that
 of `ispell-dictionary-base-alist' elements."
+
+  ;; Make sure `ispell-aspell-dict-dir' is defined
+  (or ispell-aspell-dict-dir
+      (setq ispell-aspell-dict-dir
+	    (ispell-get-aspell-config-value "dict-dir")))
+
   ;; Make sure `ispell-aspell-data-dir' is defined
   (or ispell-aspell-data-dir
       (setq ispell-aspell-data-dir
 	    (ispell-get-aspell-config-value "data-dir")))
-  ;; Try finding associated datafile
-  (let* ((datafile1
-	  (concat ispell-aspell-data-dir "/"
-		  ;; Strip out variant, country code, etc.
-		  (and (string-match "^[[:alpha:]]+" dict-name)
-		       (match-string 0 dict-name)) ".dat"))
-	 (datafile2
-	  (concat ispell-aspell-data-dir "/"
-		  ;; Strip out anything but xx_YY.
-		  (and (string-match "^[[:alpha:]_]+" dict-name)
-		       (match-string 0 dict-name)) ".dat"))
-	 (data-file
-	  (if (file-readable-p datafile1)
-	      datafile1
-	    (if (file-readable-p datafile2)
-		datafile2)))
-	 otherchars)
+
+  ;; Try finding associated datafile. aspell will look for master .dat
+  ;; file in `dict-dir' and `data-dir'. Associated .dat files must be
+  ;; in the same directory as master file.
+  (let ((data-file
+	 (catch 'datafile
+	   (dolist ( tmp-path (list ispell-aspell-dict-dir
+				    ispell-aspell-data-dir ))
+	     ;; Try xx.dat first, strip out variant, country code, etc,
+	     ;; then try xx_YY.dat (without stripping country code).
+	     (dolist (tmp-regexp (list "^[[:alpha:]]+"
+				       "^[[:alpha:]_]+"))
+	       (let ((fullpath
+		      (concat tmp-path "/"
+			      (and (string-match tmp-regexp dict-name)
+				   (match-string 0 dict-name)) ".dat")))
+		 (if (file-readable-p fullpath)
+		     (throw 'datafile fullpath)))))))
+	otherchars)
 
     (if data-file
 	(with-temp-buffer

@@ -1,5 +1,12 @@
 2015-03-03  Agustín Martín Domingo <agustin6martin@gmail.com>
 
+	* textmodes/ispell.el (ispell-aspell-find-dictionary): Make sure
+	.dat files for aspell dicts are also searched for in location
+	described by `ispell-aspell-dict-dir', matching aspell's dict-dir
+	variable.
+
+2015-03-03  Agustín Martín Domingo <agustin6martin@gmail.com>
+
 	* textmodes/ispell.el (ispell-dicts-name2locale-equivs-alist)
 	(ispell-hunspell-fill-dictionary-entry)
 	(ispell-find-hunspell-dictionaries)
