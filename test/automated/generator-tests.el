@@ -283,7 +283,7 @@ identical output.
                             (iter-yield 1)
                             (error "test")
                             (iter-yield 2))
-                       (incf nr-unwound))))))
+                       (cl-incf nr-unwound))))))
     (should (equal (iter-next iter) 1))
     (should-error (iter-next iter))
     (should (equal nr-unwound 1))))
