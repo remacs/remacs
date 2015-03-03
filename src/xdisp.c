@@ -8604,7 +8604,16 @@ move_it_in_display_line_to (struct it *it,
 			  if (BUFFER_POS_REACHED_P ())
 			    {
 			      if (it->line_wrap != WORD_WRAP
-				  || wrap_it.sp < 0)
+				  || wrap_it.sp < 0
+				  /* If we've just found whitespace to
+				     wrap, effectively ignore the
+				     previous wrap point -- it is no
+				     longer relevant, but we won't
+				     have an opportunity to update it,
+				     since we've reached the edge of
+				     this screen line.  */
+				  || (may_wrap
+				      && IT_OVERFLOW_NEWLINE_INTO_FRINGE (it)))
 				{
 				  it->hpos = hpos_before_this_char;
 				  it->current_x = x_before_this_char;
@@ -8668,7 +8677,26 @@ move_it_in_display_line_to (struct it *it,
 		  else
 		    IT_RESET_X_ASCENT_DESCENT (it);
 
-		  if (wrap_it.sp >= 0)
+		  /* If the screen line ends with whitespace, and we
+		     are under word-wrap, don't use wrap_it: it is no
+		     longer relevant, but we won't have an opportunity
+		     to update it, since we are done with this screen
+		     line.  */
+		  if (may_wrap && IT_OVERFLOW_NEWLINE_INTO_FRINGE (it))
+		    {
+		      /* If we've found TO_X, go back there, as we now
+			 know the last word fits on this screen line.  */
+		      if ((op & MOVE_TO_X) && new_x == it->last_visible_x
+			  && atx_it.sp >= 0)
+			{
+			  RESTORE_IT (it, &atx_it, atx_data);
+			  atpos_it.sp = -1;
+			  atx_it.sp = -1;
+			  result = MOVE_X_REACHED;
+			  break;
+			}
+		    }
+		  else if (wrap_it.sp >= 0)
 		    {
 		      RESTORE_IT (it, &wrap_it, wrap_data);
 		      atpos_it.sp = -1;

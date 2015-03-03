@@ -1,3 +1,31 @@
+2015-03-03  Juri Linkov  <juri@linkov.net>
+
+	Revert the previous change of comint-line-beginning-position callers,
+	and modify comint-line-beginning-position instead.
+
+	* comint.el (comint-history-isearch-search)
+	(comint-history-isearch-message, comint-history-isearch-wrap):
+	Use comint-line-beginning-position instead of field-beginning.
+	(comint-send-input): Use either end-of-line or field-end
+	depending on comint-use-prompt-regexp.
+	(comint-line-beginning-position): Search backward
+	for comint-prompt-regexp if comint-use-prompt-regexp is non-nil.
+	Use field-beginning instead of line-beginning-position
+	if comint-use-prompt-regexp is nil.  (Bug#19710)
+
+2015-03-03  Robert Pluim  <rpluim@gmail.com>  (tiny change)
+
+	* calendar/todo-mode.el (todo-item-done): When done items are
+	hidden, restore point to its location prior to invoking this
+	command.  (Bug#19727)
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* textmodes/artist.el (artist-ellipse-compute-fill-info): Use
+	mapcar, not mapc, to create the other half of fill-info.
+	(Bug#19763)
+
+2015-03-03  Nicolas Petton  <nicolas@petton.fr>
 2015-03-03  Nicolas Petton  <nicolas@petton.fr>
 
 	* emacs-lisp/authors.el (authors-ignored-files)
