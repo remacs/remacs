@@ -1,3 +1,8 @@
+2015-03-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* alloc.c (run_finalizers): Omit unused local.
+	Also, redo newly-added code as per usual Emacs style.
+
 2015-03-03  Martin Rudalics  <rudalics@gmx.at>
 
 	* frame.c (adjust_frame_size): If the pixel sizes remain

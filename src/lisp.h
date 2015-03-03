@@ -2186,18 +2186,18 @@ XSAVE_OBJECT (Lisp_Object obj, int n)
   return XSAVE_VALUE (obj)->data[n].object;
 }
 
-/* A finalizer sentinel.  We run FUNCTION when this value becomes
-   unreachable.  We treat these values specially in the GC to ensure
-   that we still run the finalizer even if FUNCTION contains a
-   reference to the finalizer; i.e., we run a finalizer's function
-   when FUNCTION is reachable _only_ through finalizers.  */
+/* A finalizer sentinel.  */
 struct Lisp_Finalizer
   {
     struct Lisp_Misc_Any base;
-    /* Circular list of all active weak references */
+
+    /* Circular list of all active weak references.  */
     struct Lisp_Finalizer *prev;
     struct Lisp_Finalizer *next;
-     /* Called when this object becomes unreachable */
+
+    /* Call FUNCTION when the finalizer becomes unreachable, even if
+       FUNCTION contains a reference to the finalizer; i.e., call
+       FUNCTION when it is reachable _only_ through finalizers.  */
     Lisp_Object function;
   };
 

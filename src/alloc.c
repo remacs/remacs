@@ -3714,7 +3714,7 @@ init_finalizer_list (struct Lisp_Finalizer *head)
 
 static void
 finalizer_insert (struct Lisp_Finalizer *element,
-                  struct Lisp_Finalizer* finalizer)
+                  struct Lisp_Finalizer *finalizer)
 {
   eassert (finalizer->prev == NULL);
   eassert (finalizer->next == NULL);
@@ -3727,12 +3727,13 @@ finalizer_insert (struct Lisp_Finalizer *element,
 static void
 unchain_finalizer (struct Lisp_Finalizer *finalizer)
 {
-  if (finalizer->prev != NULL) {
-    eassert (finalizer->next != NULL);
-    finalizer->prev->next = finalizer->next;
-    finalizer->next->prev = finalizer->prev;
-    finalizer->prev = finalizer->next = NULL;
-  }
+  if (finalizer->prev != NULL)
+    {
+      eassert (finalizer->next != NULL);
+      finalizer->prev->next = finalizer->next;
+      finalizer->next->prev = finalizer->prev;
+      finalizer->prev = finalizer->next = NULL;
+    }
 }
 
 static void
@@ -3742,21 +3743,20 @@ mark_finalizer_list (struct Lisp_Finalizer *head)
        finalizer != head;
        finalizer = finalizer->next)
     {
-      finalizer->base.gcmarkbit = 1;
+      finalizer->base.gcmarkbit = true;
       mark_object (finalizer->function);
     }
 }
 
-/* Move doomed finalizers in list SRC onto list DEST.  A doomed
+/* Move doomed finalizers to list DEST from list SRC.  A doomed
    finalizer is one that is not GC-reachable and whose
-   finalizer->function is non-nil.  (We reset finalizer->function to
-   before attempting to run it.)  */
+   finalizer->function is non-nil.  */
 
 static void
 queue_doomed_finalizers (struct Lisp_Finalizer *dest,
                          struct Lisp_Finalizer *src)
 {
-  struct Lisp_Finalizer* finalizer = src->next;
+  struct Lisp_Finalizer *finalizer = src->next;
   while (finalizer != src)
     {
       struct Lisp_Finalizer *next = finalizer->next;
@@ -3791,23 +3791,23 @@ run_finalizer_function (Lisp_Object function)
 }
 
 static void
-run_finalizers (struct Lisp_Finalizer* finalizers)
+run_finalizers (struct Lisp_Finalizer *finalizers)
 {
-  struct Lisp_Finalizer* finalizer;
+  struct Lisp_Finalizer *finalizer;
   Lisp_Object function;
-  struct gcpro gcpro1;
 
-  while (finalizers->next != finalizers) {
-    finalizer = finalizers->next;
-    eassert (finalizer->base.type == Lisp_Misc_Finalizer);
-    unchain_finalizer (finalizer);
-    function = finalizer->function;
-    if (!NILP (function))
-      {
-        finalizer->function = Qnil;
-        run_finalizer_function (function);
-      }
-  }
+  while (finalizers->next != finalizers)
+    {
+      finalizer = finalizers->next;
+      eassert (finalizer->base.type == Lisp_Misc_Finalizer);
+      unchain_finalizer (finalizer);
+      function = finalizer->function;
+      if (!NILP (function))
+	{
+	  finalizer->function = Qnil;
+	  run_finalizer_function (function);
+	}
+    }
 }
 
 DEFUN ("make-finalizer", Fmake_finalizer, Smake_finalizer, 1, 1, 0,
@@ -3819,11 +3819,8 @@ count as reachable for the purpose of deciding whether to run
 FUNCTION.  FUNCTION will be run once per finalizer object.  */)
   (Lisp_Object function)
 {
-  Lisp_Object val;
-  struct Lisp_Finalizer *finalizer;
-
-  val = allocate_misc (Lisp_Misc_Finalizer);
-  finalizer = XFINALIZER (val);
+  Lisp_Object val = allocate_misc (Lisp_Misc_Finalizer);
+  struct Lisp_Finalizer *finalizer = XFINALIZER (val);
   finalizer->function = function;
   finalizer->prev = finalizer->next = NULL;
   finalizer_insert (&finalizers, finalizer);
@@ -6514,7 +6511,7 @@ mark_object (Lisp_Object arg)
           break;
 
         case Lisp_Misc_Finalizer:
-          XMISCANY (obj)->gcmarkbit = 1;
+          XMISCANY (obj)->gcmarkbit = true;
           mark_object (XFINALIZER (obj)->function);
           break;
 
