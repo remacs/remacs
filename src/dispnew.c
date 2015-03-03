@@ -567,6 +567,12 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 	      for (i = 0; i < matrix->nrows; ++i)
 		matrix->rows[i].enabled_p = false;
 	    }
+	  /* We've disabled the mode-line row, so force redrawing of
+	     the mode line, if any, since otherwise it will remain
+	     disabled in the current matrix, and expose events won't
+	     redraw it.  */
+	  if (WINDOW_WANTS_MODELINE_P (w))
+	    w->update_mode_line = 1;
 	}
       else if (matrix == w->desired_matrix)
 	{

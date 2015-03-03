@@ -1,3 +1,30 @@
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (handle_stop, handle_single_display_spec)
+	(next-element_from_image): Don't reset the
+	ignore_overlay_strings_at_pos_p flag here.
+	(next_element_from_buffer): Reset ignore_overlay_strings_at_pos_p
+	here.
+	(next_overlay_string): Set ignore_overlay_strings_at_pos_p here,
+	after we've exhausted all the overlay strings at the current
+	position.  (Bug#19307)
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (set_iterator_to_next): Set value of stop_charpos
+	according to the object we are about to resume iterating.
+	(Bug#19307)
+
+	* dispnew.c (adjust_glyph_matrix): Set the update_mode_line flag
+	of the window whose current glyph matrix was resized, which
+	disables the mode-line row as side effect.
+
+	* xdisp.c (redisplay_window): Don't avoid redisplay of a window
+	whose update_mode_line flag is set.  (Bug#19721)
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* dispextern.h (FACE_FOR_CHAR): Fix the commentary.
 2015-03-03  Daniel Colascione  <dancol@dancol.org>
 
 	* alloc.c (syms_of_alloc): Rename `gc-precise-p' to `gc-precise'.

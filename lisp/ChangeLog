@@ -1,3 +1,24 @@
+2015-03-03  Nicolas Petton  <nicolas@petton.fr>
+
+	* emacs-lisp/authors.el (authors-ignored-files)
+	(authors-renamed-files-alist): Additions.
+
+2015-03-03  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-ssh-controlmaster-options): Don't use a
+	tempfile for ControlPath.  (Bug#19702)
+
+2015-03-03  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-ssh-controlmaster-options): Use "%C" for
+	ControlPath if possible.  (Bug#19702)
+
+2015-03-03  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp/authors.el (authors-obsolete-files-regexps)
+	(authors-valid-file-names, authors-renamed-files-alist): Additions.
+
+2015-03-03  Alan Mackenzie  <acm@muc.de>
 2015-03-03  Alan Mackenzie  <acm@muc.de>
 
 	CC Mode: Stop Font Lock forcing fontification from BOL.  Fixes
