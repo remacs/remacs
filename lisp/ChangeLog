@@ -1,5 +1,30 @@
 2015-03-03  Juri Linkov  <juri@linkov.net>
 
+	Better support for the case of typing RET on the prompt in comint.
+
+	* comint.el (comint-get-old-input-default): Go to the field end
+	when comint-use-prompt-regexp is nil.
+	(comint-line-beginning-position): Check if point is already
+	on the prompt before searching for the prompt when
+	comint-use-prompt-regexp is non-nil.  (Bug#19710)
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* frame.el (frame-notice-user-settings): Refresh the value of
+	frame parameters after calling tty-handle-reverse-video.  Call
+	face-set-after-frame-default with the actual parameters, to avoid
+	resetting colors back to unspecified.
+	(set-background-color, set-foreground-color): Pass the foreground
+	and background colors to face-set-after-frame-default.  (Bug#19802)
+
+2015-03-03  Wolfgang Jenkner  <wjenkner@inode.at>
+
+	* net/network-stream.el (network-stream-open-tls): Respect the
+	:end-of-capability setting.
+
+2015-03-03  Juri Linkov  <juri@linkov.net>
+2015-03-03  Juri Linkov  <juri@linkov.net>
+
 	Revert the previous change of comint-line-beginning-position callers,
 	and modify comint-line-beginning-position instead.
 

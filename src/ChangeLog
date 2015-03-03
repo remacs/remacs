@@ -1,5 +1,12 @@
 2015-03-03  Eli Zaretskii  <eliz@gnu.org>
 
+	* xfaces.c (map_tty_color): Use assoc_no_quit instead of
+	assq_no_quit to fetch color definition by its string name.
+	(Bug#19802)
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
 	* xdisp.c (move_it_in_display_line_to): Handle the case where the
 	last character of a screen line is whitespace, and we are under
 	word-wrap with overflow-newline-into-fringe turned on.

@@ -29,6 +29,10 @@ otherwise leave it unmarked.
 
 ** Building Emacs now requires GNU make, version 3.81 or later.
 
++++
+** `call-process-shell-command' and `process-file-shell-command'
+don't take "&rest args" any more.
+
 ** By default, Emacs no longer works on IRIX.  We expect that Emacs
 users are not affected by this, as SGI stopped supporting IRIX in
 December 2013.  If you are affected, please send a bug report.  You
@@ -38,6 +42,9 @@ or by sticking with Emacs 24.4.
 
 ** 'configure' now prefers gnustep-config when configuring GNUstep.
 If gnustep-config is not available, the old heuristics are used.
+
+---
+*** cc-compat.el
 
 ---
 ** The configure option `--with-pkg-config-prog' has been removed.
