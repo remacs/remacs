@@ -674,10 +674,16 @@ encapsulates the state of a computation that produces a sequence
 of values.  Callers can retrieve each value using `iter-next'."
   (declare (indent defun))
   (cl-assert lexical-binding)
-  `(defun ,name ,arglist
-     ,(cps-generate-evaluator
-       `(cl-macrolet ((iter-yield (value) `(cps-internal-yield ,value)))
-          ,@body))))
+  (let (preamble)
+    (when (stringp (car body))
+      (push (pop body) preamble))
+    (when (eq (car-safe (car body)) 'declare)
+      (push (pop body) preamble))
+    `(defun ,name ,arglist
+       ,@(nreverse preamble)
+       ,(cps-generate-evaluator
+         `(cl-macrolet ((iter-yield (value) `(cps-internal-yield ,value)))
+            ,@body)))))
 
 (defmacro iter-lambda (arglist &rest body)
   "Return a lambda generator.
