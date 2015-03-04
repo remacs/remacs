@@ -1,8 +1,7 @@
-2015-03-04  Filipp Gunbin <fgunbin@fastmail.fm>
+2015-03-04  Filipp Gunbin  <fgunbin@fastmail.fm>
 
-	* autorevert.el (auto-revert-notify-add-watch): fix handler
-	installation
-	Fixes: bug#20000
+	* autorevert.el (auto-revert-notify-add-watch):
+	Fix handler installation.  (Bug#20000)
 
 2015-03-04  Rüdiger Sonderfeld  <ruediger@c-plusplus.net>
 
@@ -65,14 +64,14 @@
 
 	* net/trampver.el: Update release number.
 
-2015-03-03  Agustín Martín Domingo <agustin6martin@gmail.com>
+2015-03-03  Agustín Martín Domingo  <agustin6martin@gmail.com>
 
 	* textmodes/ispell.el (ispell-aspell-find-dictionary): Make sure
 	.dat files for aspell dicts are also searched for in location
 	described by `ispell-aspell-dict-dir', matching aspell's dict-dir
 	variable.
 
-2015-03-03  Agustín Martín Domingo <agustin6martin@gmail.com>
+2015-03-03  Agustín Martín Domingo  <agustin6martin@gmail.com>
 
 	* textmodes/ispell.el (ispell-dicts-name2locale-equivs-alist)
 	(ispell-hunspell-fill-dictionary-entry)
@@ -123,7 +122,7 @@
 
 	* simple.el (transient-mark-mode): Doc fix.  (Bug#19841)
 
-2015-03-03  Agustín Martín Domingo <agustin6martin@gmail.com>
+2015-03-03  Agustín Martín Domingo  <agustin6martin@gmail.com>
 
 	Improve string search in `flyspell-word-search-*`. (Bug#16800)
 	* flyspell.el (flyspell-duplicate-distance): Limit default search
@@ -203,11 +202,9 @@
 
 2015-03-03  Alan Mackenzie  <acm@muc.de>
 
-	CC Mode: Stop Font Lock forcing fontification from BOL.  Fixes
-	debbugs#19669.
-
-	* progmodes/cc-mode.el (c-font-lock-init): Setq
-	font-lock-extend-region-functions to nil.
+	CC Mode: Stop Font Lock forcing fontification from BOL.  (Bug#19669)
+	* progmodes/cc-mode.el (c-font-lock-init):
+	Set font-lock-extend-region-functions to nil.
 
 2015-03-03  Daniel Colascione  <dancol@dancol.org>
 
@@ -342,7 +339,6 @@
 2015-02-26  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	python.el: Handle tabs in python-indent-dedent-line.
-
 	* progmodes/python.el (python-indent-dedent-line): Fixes for
 	indentation with tabs.  Thanks to <dale@codefu.org> (Bug#19730).
 
@@ -457,9 +453,8 @@
 
 2015-02-23  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Fix the desired binding for comment-line
 	* bindings.el (ctl-x-map): Use [?\C-\;] to get the desired binding.
-	Fixes: bug#19826
+	(Bug#19826)
 
 2015-02-23  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -483,8 +478,7 @@
 
 	* bindings.el (ctl-x-map): There is no 'C-;'.
 	For now, make do with 'M-;'; this allows 'make bootstrap' to work.
-	Perhaps some other binding should be chosen.
-	Fixes: bug#19826
+	Perhaps some other binding should be chosen.  (Bug#19826)
 
 2015-02-21  Artur Malabarba  <bruce.connor.am@gmail.com>
 
@@ -762,7 +756,7 @@
 	(package-install-button-action, package-reinstall)
 	(package-menu-execute): Account for the change.
 
-2015-02-11  Nicolas Petton <nicolas@petton.fr>
+2015-02-11  Nicolas Petton  <nicolas@petton.fr>
 
 	* emacs-lisp/seq.el (seq-reverse): Add a backward-compatible
 	version of seq-reverse that works on sequences in Emacs 24.
@@ -847,7 +841,7 @@
 	(python-shell-font-lock-turn-off): Fix typo.
 	(python-util-text-properties-replace-name): Delete function.
 
-2015-02-09  Nicolas Petton <nicolas@petton.fr>
+2015-02-09  Nicolas Petton  <nicolas@petton.fr>
 
 	* emacs-lisp/seq.el (seq-group-by): Improves seq-group-by to
 	return sequence elements in correct order.
@@ -911,7 +905,7 @@
 2015-02-08  Oleh Krehel  <ohwoeowho@gmail.com>
 
 	* outline.el (outline-show-entry): Fix one invisible char for the
-	file's last outline.  Fixes Bug#19493.
+	file's last outline.  (Bug#19493)
 
 2015-02-08  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -947,7 +941,6 @@
 2015-02-07  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	python.el: Keep eldoc visible while typing args.  (Bug#19637)
-
 	* progmodes/python.el (python-eldoc--get-symbol-at-point):
 	New function based on Carlos Pita <carlosjosepita@gmail.com> patch.
 	(python-eldoc--get-doc-at-point, python-eldoc-at-point): Use it.
@@ -955,7 +948,6 @@
 2015-02-07  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	Fix hideshow integration.  (Bug#19761)
-
 	* progmodes/python.el
 	(python-hideshow-forward-sexp-function): New function based on
 	Carlos Pita <carlosjosepita@gmail.com> patch.
@@ -981,11 +973,13 @@
 	* vc/vc-cvs.el (vc-cvs-dir-status-files): Don't pass DIR to
 	`vc-cvs-command' (bug#19732).
 
-2015-02-06  Nicolas Petton <nicolas@petton.fr>
+2015-02-06  Nicolas Petton  <nicolas@petton.fr>
 
-	* emacs-lisp/seq.el (seq-mapcat, seq-partition, seq-group-by): New functions.
+	* emacs-lisp/seq.el (seq-mapcat, seq-partition, seq-group-by):
+	New functions.
 	* emacs-lisp/seq.el (seq-drop-while, seq-take-while, seq-count)
-	(seq--drop-list, seq--take-list, seq--take-while-list): Better docstring.
+	(seq--drop-list, seq--take-list, seq--take-while-list):
+	Better docstring.
 
 2015-02-06  Artur Malabarba  <bruce.connor.am@gmail.com>
 
@@ -1032,7 +1026,7 @@
 	* json.el (json-end-of-file): New error (bug#19768).
 	(json-pop, json-read): Use it.
 
-2015-02-05  Kelly Dean <kelly@prtime.org>
+2015-02-05  Kelly Dean  <kelly@prtime.org>
 
 	* help-mode.el (help-xref-interned): Pass BUFFER and FRAME to
 	`describe-variable'.
@@ -1402,8 +1396,8 @@
 
 2015-01-28  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Fix dired quoting bug with "Hit`N`Hide".  Fixes Bug#19498.
-	* files.el (shell-quote-wildcard-pattern): Also quote "`".
+	Fix dired quoting bug with "Hit`N`Hide".
+	* files.el (shell-quote-wildcard-pattern): Also quote "`".  (Bug#19498)
 
 2015-01-28  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -3140,7 +3134,7 @@
 	* emacs-lisp/package.el (package--list-loaded-files): Don't call
 	file-truename on load-history elements (bug#19390).
 
-2014-12-16  Nicolas Petton <petton.nicolas@gmail.com>
+2014-12-16  Nicolas Petton  <petton.nicolas@gmail.com>
 
 	* emacs-lisp/seq.el: New file.
 
@@ -3786,7 +3780,7 @@
 	Pass correct status to `newsticker--sentinel-work'.
 	(newsticker--sentinel-work): Use "newsticker--download-error" as
 	guid in order to prevent multiple "Could not download..."
-	messages.  Fixes bug#19166.
+	messages.  (Bug#19166)
 
 2014-12-01  Ivan Shmakov  <ivan@siamics.net>
 
@@ -4197,15 +4191,13 @@
 2014-11-22  Alan Mackenzie  <acm@muc.de>
 
 	Fix error with `mark-defun' and "protected:" in C++ Mode.
-	Fixes: debbugs:19134.
-
 	* progmodes/cc-cmds.el (c-where-wrt-brace-construct): Handle a
-	return code of (label) from c-beginning-of-decl-1.
+	return code of (label) from c-beginning-of-decl-1.  (Bug#19134)
 
 2014-11-22  Ulf Jasper  <ulf.jasper@web.de>
 
 	* net/newst-backend.el (newsticker--sentinel-work):
-	Tell `libxml-parse-xml-region' to discard comments.  Fixes bug#18787.
+	Tell `libxml-parse-xml-region' to discard comments.  (Bug#18787)
 
 2014-11-22  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -4543,7 +4535,7 @@
 	(python-shell-calculate-process-environment): Use it.
 	(python-shell-calculate-exec-path): Add comment.
 
-2014-11-16  Thierry Banel <tbanelwebmin@free.fr>  (tiny change)
+2014-11-16  Thierry Banel  <tbanelwebmin@free.fr>  (tiny change)
 
 	* calc/calc-arith.el (math-max-list, math-min-list): Fix bug
 	for date handling.
@@ -4568,7 +4560,7 @@
 	* mail/emacsbug.el (report-emacs-bug): Make a better guess at
 	  envelope-from when reporting through sendmail (bug#19054).
 
-2014-11-16  Oscar Fuentes <ofv@wanadoo.es>
+2014-11-16  Oscar Fuentes  <ofv@wanadoo.es>
 
 	Add faces for the VC modeline state indicator.
 	* vc/vc-hooks.el:
@@ -4795,11 +4787,11 @@
 
 2014-11-08  Alan Mackenzie  <acm@muc.de>
 
-	Fix wrong bound to c-font-lock-declarators.  Fixes bug #18948.
+	Fix wrong bound to c-font-lock-declarators.
 	* progmodes/cc-fonts.el (c-font-lock-declarations):
 	Pass "(point-max)" as bound to c-font-lock-declarators, not "limit", as
 	the buffer is sometimes narrowed to less than "limit" (e.g., in
-	the presence of macros).
+	the presence of macros).  (Bug#18948)
 
 2014-11-08  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -5024,20 +5016,20 @@
 	correct buffer.
 	(eww-view-source): Use it.
 
-2014-11-02  Ivan Shmakov <ivan@siamics.net>
+2014-11-02  Ivan Shmakov  <ivan@siamics.net>
 
 	* net/eww.el (eww): Recognize colon-delimited IPv6 addresses.
 	(Bug#18603).
 
-2014-11-02  Brian McKenna <brian@brianmckenna.org>  (tiny change)
+2014-11-02  Brian McKenna  <brian@brianmckenna.org>  (tiny change)
 
 	* net/eww.el (eww-submit): Encode empty form values as "".  (Bug#17785).
 
-2014-11-02  Ivan Shmakov <ivan@siamics.net>
+2014-11-02  Ivan Shmakov  <ivan@siamics.net>
 
 	* net/eww.el (eww): Allow "file:/file/name" URLs.  (Bug#18825).
 
-2014-11-02  Ivan Shmakov <ivan@siamics.net>
+2014-11-02  Ivan Shmakov  <ivan@siamics.net>
 
 	* net/eww.el (eww-mode-map): Remove mentions of `eww-quit'.
 	(Bug#18834).
@@ -5613,9 +5605,8 @@
 2014-10-18  Alan Mackenzie  <acm@muc.de>
 
 	Check that a "macro" found near point-min isn't a ## operator.
-	Fixes bug #18749.
 	* progmodes/cc-engine.el (c-macro-is-genuine-p): New function.
-	(c-beginning-of-macro): Use the above new function.
+	(c-beginning-of-macro): Use the above new function.  (Bug#18749)
 
 2014-10-18  Teodor Zlatanov  <tzz@lifelogs.com>
 
