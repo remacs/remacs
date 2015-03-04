@@ -69,6 +69,7 @@
 2015-03-03  Eli Zaretskii  <eliz@gnu.org>
 
 	* dispextern.h (FACE_FOR_CHAR): Fix the commentary.
+
 2015-03-03  Daniel Colascione  <dancol@dancol.org>
 
 	* alloc.c (syms_of_alloc): Rename `gc-precise-p' to `gc-precise'.
