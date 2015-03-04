@@ -1,3 +1,41 @@
+2015-03-04  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp): Add :link property.
+	(tramp-login-prompt-regexp): Allow also "user", as required by
+	Fritz!Box telnet.
+	(tramp-autoload-file-name-handler): Use "/".
+	(tramp-handle-unhandled-file-name-directory): Return nil when
+	required by the spec.
+
+	* net/tramp-cache.el (tramp-dump-connection-properties):
+	Use `with-temp-file'.
+
+	* net/tramp-sh.el (tramp-perl-file-attributes)
+	(tramp-perl-directory-files-and-attributes): Escape apostrophs in
+	file names.
+	(tramp-do-file-attributes-with-stat): Quote file name.
+	(tramp-sh-handle-directory-files-and-attributes): Fall back to
+	`tramp-handle-directory-files-and-attributes' in case of problems.
+	(tramp-do-directory-files-and-attributes-with-stat)
+	(tramp-sh-handle-file-name-all-completions)
+	(tramp-sh-handle-delete-directory)
+	(tramp-sh-handle-expand-file-name, tramp-sh-handle-process-file):
+	Normalize use of "cd".
+	(tramp-do-directory-files-and-attributes-with-stat): Use the
+	`quoting-style' arg of `ls' if possible.  Make it also working for
+	file names with apostrophs.
+	(tramp-sh-handle-file-name-all-completions): Use arguments of `ls'
+	in proper order.
+	(tramp-do-copy-or-rename-file-via-buffer)
+	(tramp-sh-handle-file-local-copy): Use `with-temp-file'.
+	(tramp-get-remote-locale): Accept also \r in output.
+	(tramp-get-ls-command-with-quoting-style): New defun.
+	(tramp-get-inline-coding): Set `default-directory' to a local
+	directory.  Sporadically, `call-process-region' does not handle a
+	remote default directory properly.
+
+	* net/trampver.el: Update release number.
+
 2015-03-03  Agustín Martín Domingo <agustin6martin@gmail.com>
 
 	* textmodes/ispell.el (ispell-aspell-find-dictionary): Make sure
