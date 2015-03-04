@@ -1,11 +1,11 @@
-2015-03-03  Agustín Martín Domingo <agustin6martin@gmail.com>
+2015-03-03  Agustín Martín Domingo  <agustin6martin@gmail.com>
 
 	* textmodes/ispell.el (ispell-aspell-find-dictionary): Make sure
 	.dat files for aspell dicts are also searched for in location
 	described by `ispell-aspell-dict-dir', matching aspell's dict-dir
 	variable.
 
-2015-03-03  Agustín Martín Domingo <agustin6martin@gmail.com>
+2015-03-03  Agustín Martín Domingo  <agustin6martin@gmail.com>
 
 	* textmodes/ispell.el (ispell-dicts-name2locale-equivs-alist)
 	(ispell-hunspell-fill-dictionary-entry)
@@ -56,7 +56,7 @@
 
 	* simple.el (transient-mark-mode): Doc fix.  (Bug#19841)
 
-2015-02-12  Agustín Martín Domingo <agustin6martin@gmail.com>
+2015-02-12  Agustín Martín Domingo  <agustin6martin@gmail.com>
 
 	Improve string search in `flyspell-word-search-*`. (Bug#16800)
 	* flyspell.el (flyspell-duplicate-distance): Limit default search
