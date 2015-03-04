@@ -1,3 +1,9 @@
+2015-03-04  Rüdiger Sonderfeld  <ruediger@c-plusplus.net>
+
+	* net/eww.el (eww-search-prefix, eww-open-file, eww-search-words)
+	(eww-same-page-p,eww-set-character-encoding): Fix docstring.
+	(eww): Do not end error messages with a period.
+
 2015-03-04  Zhongwei Yao  <ashi08104@gmail.com>
 
 	* net/tramp-adb.el (tramp-adb-connect-if-not-connected):

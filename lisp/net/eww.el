@@ -49,7 +49,7 @@
   :type 'string)
 
 (defcustom eww-search-prefix "https://duckduckgo.com/html/?q="
-  "Prefix URL to search engine"
+  "Prefix URL to search engine."
   :version "24.4"
   :group 'eww
   :type 'string)
@@ -254,7 +254,7 @@ word(s) will be searched for via `eww-search-prefix'."
   (cond ((string-match-p "\\`file:/" url))
 	;; Don't mangle file: URLs at all.
         ((string-match-p "\\`ftp://" url)
-         (user-error "FTP is not supported."))
+         (user-error "FTP is not supported"))
         (t
 	 ;; Anything that starts with something that vaguely looks
 	 ;; like a protocol designator is interpreted as a full URL.
@@ -292,7 +292,7 @@ word(s) will be searched for via `eww-search-prefix'."
 
 ;;;###autoload
 (defun eww-open-file (file)
-  "Render a file using EWW."
+  "Render FILE using EWW."
   (interactive "fFile: ")
   (eww (concat "file://"
 	       (and (memq system-type '(windows-nt ms-dos))
@@ -301,7 +301,7 @@ word(s) will be searched for via `eww-search-prefix'."
 
 ;;;###autoload
 (defun eww-search-words (&optional beg end)
-  "Search the web for the text between the point and marker.
+  "Search the web for the text between BEG and END.
 See the `eww-search-prefix' variable for the search engine used."
   (interactive "r")
   (eww (buffer-substring beg end)))
@@ -1363,7 +1363,7 @@ If EXTERNAL is double prefix, browse in new buffer."
       (eww-browse-url url external)))))
 
 (defun eww-same-page-p (url1 url2)
-  "Return non-nil if both URLs represent the same page.
+  "Return non-nil if URL1 and URL2 represent the same page.
 Differences in #targets are ignored."
   (let ((obj1 (url-generic-parse-url url1))
 	(obj2 (url-generic-parse-url url2)))
@@ -1413,7 +1413,8 @@ Differences in #targets are ignored."
       (expand-file-name file directory)))
 
 (defun eww-set-character-encoding (charset)
-  "Set character encoding."
+  "Set character encoding to CHARSET.
+If CHARSET is nil then use UTF-8."
   (interactive "zUse character set (default utf-8): ")
   (if (null charset)
       (eww-reload nil 'utf-8)
