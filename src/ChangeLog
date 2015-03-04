@@ -1,9 +1,14 @@
+2015-03-04  Martin Rudalics  <rudalics@gmx.at>
+
+	* frame.c (x_set_font): Try to keep frame height and width
+	unchanged if tool bar size changes with new font.
+
 2015-03-03  Eli Zaretskii  <eliz@gnu.org>
 
 	* search.c (find_newline): Avoid assertion violations in
 	CHAR_TO_BYTE when a portion of the buffer was deleted and we look
 	for newlines near the end of the buffer.  This happens in Rmail
-	hen JIT font-lock fontifies a newly displayed portion of the
+	when JIT font-lock fontifies a newly displayed portion of the
 	buffer.
 
 2015-03-03  Eli Zaretskii  <eliz@gnu.org>
