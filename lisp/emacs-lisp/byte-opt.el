@@ -390,7 +390,7 @@
 	   (and (nth 1 form)
 		(not for-effect)
 		form))
-	  ((eq 'lambda (car-safe fn))
+	  ((memq (car-safe fn) '(lambda closure))
 	   (let ((newform (byte-compile-unfold-lambda form)))
 	     (if (eq newform form)
 		 ;; Some error occurred, avoid infinite recursion

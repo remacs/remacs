@@ -1,3 +1,53 @@
+2015-03-05  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Replace *-function vars with generic functions in cl-generic.
+	* emacs-lisp/cl-generic.el (cl--generic-generalizer): New struct.
+	(cl-generic-tagcode-function, cl-generic-tag-types-function): Remove.
+	(cl--generic-t-generalizer): New const.
+	(cl--generic-make-method): Rename from `cl--generic-method-make'.
+	(cl--generic-make): Change calling convention.
+	(cl--generic): Add `options' field.
+	(cl-generic-function-options): New function.
+	(cl-defgeneric): Rewrite handling of options.  Add support for :method
+	options and allow the use of a default body.
+	(cl-generic-define): Save options in the corresponding new field.
+	(cl-defmethod): Fix ordering of qualifiers.
+	(cl-generic-define-method): Use cl-generic-generalizers.
+	(cl--generic-get-dispatcher): Change calling convention, and change
+	calling convention of the returned function as well so as to take the
+	list of methods separately from the generic function object, so that it
+	can receive the original generic function object.
+	(cl--generic-make-next-function): New function, extracted from
+	cl--generic-make-function.
+	(cl--generic-make-function): Use it.
+	(cl-generic-method-combination-function): Remove.
+	(cl--generic-cyclic-definition): New error.
+	(cl-generic-call-method): Take a generic function object rather than
+	its name.
+	(cl-method-qualifiers): New alias.
+	(cl--generic-build-combined-method): Use cl-generic-combine-methods,
+	don't segregate by qualifiers here any more.
+	(cl--generic-standard-method-combination): Segregate by qualifiers
+	here instead.  Add support for the `:extra' qualifier.
+	(cl--generic-cache-miss): Move earlier, adjust to new calling convention.
+	(cl-generic-generalizers, cl-generic-combine-methods):
+	New generic functions.
+	(cl-no-next-method, cl-no-applicable-method, cl-no-primary-method):
+	Use the new "default method in defgeneric" functionality, change
+	calling convention to receive a generic function object.
+	(cl--generic-head-used): New var.
+	(cl--generic-head-generalizer, cl--generic-eql-generalizer)
+	(cl--generic-struct-generalizer, cl--generic-typeof-generalizer):
+	New consts.
+	* emacs-lisp/eieio-core.el (eieio--generic-generalizer)
+	(eieio--generic-subclass-generalizer): New consts.
+	(cl-generic-generalizers): New methods.
+	* emacs-lisp/eieio-compat.el (eieio--generic-static-symbol-generalizer)
+	(eieio--generic-static-object-generalizer): New consts.
+	(cl-generic-generalizers) <(head eieio--static)>: New method.
+	* emacs-lisp/byte-opt.el (byte-optimize-form-code-walker):
+	Unfold closures like lambdas.
+
 2015-03-04  Filipp Gunbin  <fgunbin@fastmail.fm>
 
 	* autorevert.el (auto-revert-notify-add-watch):
@@ -142,8 +192,8 @@
 2015-03-03  Eli Zaretskii  <eliz@gnu.org>
 
 	* frame.el (frame-notice-user-settings): Refresh the value of
-	frame parameters after calling tty-handle-reverse-video.  Call
-	face-set-after-frame-default with the actual parameters, to avoid
+	frame parameters after calling tty-handle-reverse-video.
+	Call face-set-after-frame-default with the actual parameters, to avoid
 	resetting colors back to unspecified.
 	(set-background-color, set-foreground-color): Pass the foreground
 	and background colors to face-set-after-frame-default.  (Bug#19802)
@@ -176,8 +226,8 @@
 
 2015-03-03  Eli Zaretskii  <eliz@gnu.org>
 
-	* textmodes/artist.el (artist-ellipse-compute-fill-info): Use
-	mapcar, not mapc, to create the other half of fill-info.
+	* textmodes/artist.el (artist-ellipse-compute-fill-info):
+	Use mapcar, not mapc, to create the other half of fill-info.
 	(Bug#19763)
 
 2015-03-03  Nicolas Petton  <nicolas@petton.fr>
@@ -323,8 +373,8 @@
 
 	Handle "#" operator properly inside macro.  Fix coding bug.
 
-	* progmodes/cc-mode.el (c-neutralize-syntax-in-and-mark-CPP): On
-	finding a "#" which looks like the start of a macro, check it
+	* progmodes/cc-mode.el (c-neutralize-syntax-in-and-mark-CPP):
+	On finding a "#" which looks like the start of a macro, check it
 	isn't already inside a macro.
 
 	* progmodes/cc-engine.el (c-state-safe-place): Don't record a new
@@ -364,15 +414,15 @@
 
 2015-02-25  Oleh Krehel  <ohwoeowho@gmail.com>
 
-	* emacs-lisp/check-declare.el (check-declare-warn): Use
-	compilation-style warnings.
+	* emacs-lisp/check-declare.el (check-declare-warn):
+	Use compilation-style warnings.
 	(check-declare-files): Make sure that
 	`check-declare-warning-buffer' is in `compilation-mode'.
 
 2015-02-25  Oleh Krehel  <ohwoeowho@gmail.com>
 
-	* emacs-lisp/check-declare.el (check-declare-ext-errors): New
-	defcustom.
+	* emacs-lisp/check-declare.el (check-declare-ext-errors):
+	New defcustom.
 	(check-declare): New defgroup.
 	(check-declare-verify): When `check-declare-ext-errors' is
 	non-nil, warn about an unfound function, instead of saying
@@ -380,8 +430,8 @@
 
 2015-02-25  Tassilo Horn  <tsdh@gnu.org>
 
-	* textmodes/reftex-vars.el (reftex-include-file-commands): Call
-	reftex-set-dirty on changes.
+	* textmodes/reftex-vars.el (reftex-include-file-commands):
+	Call reftex-set-dirty on changes.
 
 2015-02-25  Stefan Monnier  <monnier@iro.umontreal.ca>
 
