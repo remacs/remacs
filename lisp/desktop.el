@@ -756,6 +756,24 @@ is nil, ask the user where to save the desktop."
 
 ;; ----------------------------------------------------------------------------
 (defun desktop-buffer-info (buffer)
+  "Return information describing BUFFER.
+This function is not pure, as BUFFER is made current with
+`set-buffer'.
+
+Returns a list of all the necessary information to recreate the
+buffer, which is (in order):
+
+    `uniquify-buffer-base-name';
+    `buffer-file-name';
+    `buffer-name';
+    `major-mode';
+    list of minor-modes,;
+    `point';
+    `mark';
+    `buffer-read-only';
+    auxiliary information given by `desktop-save-buffer';
+    local variables;
+    auxiliary information given by `desktop-var-serdes-funs'."
   (set-buffer buffer)
   (list
    ;; base name of the buffer; replaces the buffer name if managed by uniquify

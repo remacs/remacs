@@ -1,5 +1,7 @@
 2015-03-05  Artur Malabarba  <bruce.connor.am@gmail.com>
 
+	* desktop.el (desktop-buffer-info): Write docstring.
+
 	* emacs-lisp/package.el (package-refresh-contents): Update doc.
 
 2015-03-05  Dmitry Gutov  <dgutov@yandex.ru>
