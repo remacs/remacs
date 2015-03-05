@@ -306,6 +306,12 @@ See the `eww-search-prefix' variable for the search engine used."
   (interactive "r")
   (eww (buffer-substring beg end)))
 
+(defun eww-html-p (content-type)
+  "Return non-nil if CONTENT-TYPE designates an HTML content type.
+Currently this means either text/html or application/xhtml+xml."
+  (member content-type '("text/html"
+			 "application/xhtml+xml")))
+
 (defun eww-render (status url &optional point buffer encode)
   (let ((redirect (plist-get status :redirect)))
     (when redirect
@@ -318,8 +324,7 @@ See the `eww-search-prefix' variable for the search engine used."
 	 (charset (intern
 		   (downcase
 		    (or (cdr (assq 'charset (cdr content-type)))
-			(eww-detect-charset (equal (car content-type)
-						   "text/html"))
+			(eww-detect-charset (eww-html-p (car content-type)))
 			"utf-8"))))
 	 (data-buffer (current-buffer)))
     ;; Save the https peer status.
@@ -332,7 +337,7 @@ See the `eww-search-prefix' variable for the search engine used."
                  (string-match-p eww-use-external-browser-for-content-type
                                  (car content-type)))
             (eww-browse-with-external-browser url))
-	   ((equal (car content-type) "text/html")
+	   ((eww-html-p (car content-type))
 	    (eww-display-html charset url nil point buffer encode))
 	   ((equal (car content-type) "application/pdf")
 	    (eww-display-pdf))

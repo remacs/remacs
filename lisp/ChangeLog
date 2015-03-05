@@ -1,3 +1,8 @@
+2015-03-05  Ivan Shmakov  <ivan@siamics.net>
+
+	* net/eww.el (eww-html-p): New function (bug#20009).
+	(eww-render): Use it.
+
 2015-03-05  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* desktop.el (desktop-buffer-info): Write docstring.
