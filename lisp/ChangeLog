@@ -1,3 +1,7 @@
+2015-03-05  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/js.el (js-mode-syntax-table): Add an entry for `.
+
 2015-03-05  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	Replace *-function vars with generic functions in cl-generic.

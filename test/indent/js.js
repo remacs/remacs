@@ -60,3 +60,6 @@ var evens = [e for each (e in range(0, 21))
 a++
 b +=
   c
+
+baz(`http://foo.bar/${tee}`)
+  .qux();
