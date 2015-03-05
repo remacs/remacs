@@ -1695,9 +1695,10 @@ similar to an entry in `package-alist'.  Save the cached copy to
 
 ;;;###autoload
 (defun package-refresh-contents ()
-  "Download the ELPA archive description if needed.
-This informs Emacs about the latest versions of all packages, and
-makes them available for download."
+  "Download the description of all configured ELPAs.
+For each archive configured in the variable `package-archives',
+this informs Emacs about the latest versions of all packages it
+offers, and makes them available for download."
   (interactive)
   ;; FIXME: Do it asynchronously.
   (unless (file-exists-p package-user-dir)
