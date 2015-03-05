@@ -784,16 +784,13 @@ buffer, which is (in order):
    major-mode
    ;; minor modes
    (let (ret)
-     (mapc
-      #'(lambda (minor-mode)
-	  (and (boundp minor-mode)
-	       (symbol-value minor-mode)
-	       (let* ((special (assq minor-mode desktop-minor-mode-table))
-		      (value (cond (special (cadr special))
-				   ((functionp minor-mode) minor-mode))))
-		 (when value (add-to-list 'ret value)))))
-      (mapcar #'car minor-mode-alist))
-     ret)
+     (dolist (minor-mode (mapcar #'car minor-mode-alist) ret)
+       (and (boundp minor-mode)
+            (symbol-value minor-mode)
+            (let* ((special (assq minor-mode desktop-minor-mode-table))
+                   (value (cond (special (cadr special))
+                                ((functionp minor-mode) minor-mode))))
+              (when value (cl-pushnew value ret))))))
    ;; point and mark, and read-only status
    (point)
    (list (mark t) mark-active)

@@ -1,6 +1,8 @@
 2015-03-05  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* desktop.el (desktop-buffer-info): Write docstring.
+	(desktop-buffer-info): Use `pushnew' instead of `add-to-list' and
+	unquote lamda.
 
 	* emacs-lisp/package.el (package-refresh-contents): Update doc.
 
