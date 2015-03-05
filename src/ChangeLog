@@ -1,3 +1,9 @@
+2015-03-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Work around x86 glibc backtrace bug
+	* sysdep.c (emacs_backtrace): Don't dump core on x86.
+	Fixes: bug#19959
+
 2015-03-05  Eli Zaretskii  <eliz@gnu.org>
 
 	* keyboard.c (make_lispy_position): When the click is on the
