@@ -1,3 +1,9 @@
+2015-03-07  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/byte-opt.el (byte-optimize-form-code-walker): Don't try to
+	unfold `closure's since byte-compile-unfold-lambda doesn't know how to
+	do it.
+
 2015-03-06  Oscar Fuentes  <ofv@wanadoo.es>
 
 	* net/browse-url.el (browse-url-firefox): Removed outdated
