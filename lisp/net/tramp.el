@@ -308,7 +308,7 @@ started on the local host.  You should specify a remote host
 useful only in combination with `tramp-default-proxies-alist'.")
 
 ;;;###tramp-autoload
-(defconst tramp-ssh-controlmaster-options
+(defcustom tramp-ssh-controlmaster-options
   (let ((result "")
 	(case-fold-search t))
     (ignore-errors
@@ -334,7 +334,10 @@ useful only in combination with `tramp-default-proxies-alist'.")
 	      (setq result (concat result " -o ControlPersist=no")))))))
     result)
     "Call ssh to detect whether it supports the Control* arguments.
-Return a string to be used in `tramp-methods'.")
+Return a string to be used in `tramp-methods'."
+    :group 'tramp
+    :version "24.5"
+    :type 'string)
 
 ;;;###tramp-autoload
 (defcustom tramp-use-ssh-controlmaster-options
