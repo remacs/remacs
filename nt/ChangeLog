@@ -1,3 +1,8 @@
+2015-03-07  Eli Zaretskii  <eliz@gnu.org>
+
+	* INSTALL: Add some more installation instructions for mingw-get
+	users.  (Bug#19989)
+
 2015-02-10  Noam Postavsky  <npostavs@users.sourceforget.net>
 
 	* nt/cmdproxy.c (batch_file_p): New function.
