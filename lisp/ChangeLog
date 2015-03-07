@@ -1,12 +1,16 @@
 2015-03-07  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* battery.el (battery-echo-area-format): Simplify default.
+	(battery-linux-sysfs): Standardize on energy&power.  Accept ADP1
+	for AC adapter.
+
 	* emacs-lisp/byte-opt.el (byte-optimize-form-code-walker): Don't try to
 	unfold `closure's since byte-compile-unfold-lambda doesn't know how to
 	do it.
 
 2015-03-06  Oscar Fuentes  <ofv@wanadoo.es>
 
-	* net/browse-url.el (browse-url-firefox): Removed outdated
+	* net/browse-url.el (browse-url-firefox): Remove outdated
 	MS-Windows limitations.
 
 2015-03-06  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
@@ -16,8 +20,8 @@
 	(eudc-ldap-cleanup-record-filtering-addresses): Add docstring.
 	Don't clean up postal addresses if ldap-ignore-attribute-codings
 	is set.  Combine mail addresses into one field. (Bug#17720)
-	(eudc-ldap-simple-query-internal): Call
-	eudc-ldap-cleanup-record-filtering-addresses instead of
+	(eudc-ldap-simple-query-internal):
+	Call eudc-ldap-cleanup-record-filtering-addresses instead of
 	eudc-ldap-cleanup-record-simple.
 	(eudc-ldap-get-field-list): Likewise.
 
