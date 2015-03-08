@@ -1,3 +1,8 @@
+2015-03-08  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* indent/js.js: Set `js-indent-level' to 2. Fix indentation in an
+	example.
+
 2015-03-04  Michael Albinus  <michael.albinus@gmx.de>
 
 	* automated/tramp-tests.el (top): Declare `tramp-get-remote-stat'
