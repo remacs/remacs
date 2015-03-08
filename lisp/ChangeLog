@@ -68,8 +68,8 @@
 2015-02-12  Agustín Martín Domingo  <agustin6martin@gmail.com>
 
 	Improve string search in `flyspell-word-search-*`. (Bug#16800)
-	* flyspell.el (flyspell-duplicate-distance): Limit default search
-	distance for duplicated words to 40000.
+	* textmodes/flyspell.el (flyspell-duplicate-distance): Limit
+	default search distance for duplicated words to 40000.
 	(flyspell-word-search-backward, flyspell-word-search-forward):
 	Search as full word with defined casechars, not as substring.
 
