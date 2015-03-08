@@ -1,3 +1,9 @@
+2015-03-08  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/ruby-mode.el (ruby-font-lock-keywords): Use
+	`font-lock-constant-face' for nil, true and false.  Highlight
+	`self' as a keyword.  (Bug#17733)
+
 2015-03-08  Nobuyoshi Nakada  <nobu@ruby-lang.org>
 
 	* progmodes/ruby-mode.el (ruby-syntax-before-regexp-re): Expect
