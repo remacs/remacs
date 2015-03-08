@@ -509,6 +509,50 @@ getting timeout messages."
   :type 'integer
   :group 'js)
 
+(defcustom js-indent-first-initialiser nil
+  "Specially indent the first variable declaration's initialiser
+in variable statements.
+
+Normally, the first declaration's initialiser is unindented, and
+subsequent declarations have their identifiers lined up against
+the first:
+
+  var o = {
+      foo: 3
+  };
+
+  var o = {
+      foo: 3
+  },
+      bar = 2;
+
+When t, always indent the first declaration's initialiser by an
+additional level:
+
+  var o = {
+          foo: 3
+      };
+
+  var o = {
+          foo: 3
+      },
+      bar = 2;
+
+When `dynamic', if there is only one declaration, don't indent
+the first one's initialiser; otherwise, indent it.
+
+  var o = {
+      foo: 3
+  };
+
+  var o = {
+          foo: 3
+      },
+      bar = 2;"
+  :type 'boolean
+  :safe 'symbolp
+  :group 'js)
+
 ;;; KeyMap
 
 (defvar js-mode-map
@@ -1858,6 +1902,36 @@ In particular, return the buffer position of the first `for' kwd."
       (goto-char for-kwd)
       (current-column))))
 
+(defun js--maybe-goto-declaration-keyword-end (parse-status)
+  "Helper function for `js--proper-indentation'.
+Depending on the value of `js-indent-first-initialiser', move
+point to the end of a variable declaration keyword so that
+indentation is aligned to that column."
+  (cond
+   ((eq js-indent-first-initialiser t)
+    (when (looking-at js--declaration-keyword-re)
+      (goto-char (1+ (match-end 0)))))
+   ((eq js-indent-first-initialiser 'dynamic)
+    (let ((bracket (nth 1 parse-status))
+          declaration-keyword-end
+          at-closing-bracket-p
+          comma-p)
+      (when (looking-at js--declaration-keyword-re)
+        (setq declaration-keyword-end (match-end 0))
+        (save-excursion
+          (goto-char bracket)
+          (setq at-closing-bracket-p
+                (condition-case nil
+                    (progn
+                      (forward-sexp)
+                      t)
+                  (error nil)))
+          (when at-closing-bracket-p
+            (while (forward-comment 1))
+            (setq comma-p (looking-at-p ","))))
+        (when comma-p
+          (goto-char (1+ declaration-keyword-end))))))))
+
 (defun js--proper-indentation (parse-status)
   "Return the proper indentation for the current line."
   (save-excursion
@@ -1891,6 +1965,7 @@ In particular, return the buffer position of the first `for' kwd."
                    (skip-syntax-backward " ")
                    (when (eq (char-before) ?\)) (backward-list))
                    (back-to-indentation)
+                   (js--maybe-goto-declaration-keyword-end parse-status)
                    (let* ((in-switch-p (unless same-indent-p
                                          (looking-at "\\_<switch\\_>")))
                           (same-indent-p (or same-indent-p
