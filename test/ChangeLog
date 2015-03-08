@@ -1,5 +1,7 @@
 2015-03-08  Dmitry Gutov  <dgutov@yandex.ru>
 
+	* indent/ruby.rb: Add an example for bug#20026.
+
 	* indent/js.js: Set `js-indent-level' to 2. Fix indentation in an
 	example.
 
