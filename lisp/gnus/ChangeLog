@@ -1,3 +1,10 @@
+2015-03-08  Rasmus Pank Roulund  <rasmus@pank.eu>
+
+	* gnus-notifications.el (gnus-notifications-action): Raise window
+	frame.
+	(gnus-notifications-action): Allow mark as read.
+	(gnus-notifications-notify): Show uption to mark as read.
+
 2015-03-08  Adam Sjøgren  <asjo@koldfront.dk>
 
 	* message.el (message-insert-formatted-citation-line): Change %F to
