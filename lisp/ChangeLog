@@ -2,6 +2,8 @@
 
 	* progmodes/ruby-mode.el (ruby-font-lock-keywords): Don't consider
 	`=' a part of symbol when followed by `>'.  (Bug#18644)
+	(ruby-syntax-before-regexp-re): Detect regexps after `!'.
+	(Bug#19285)
 
 2015-03-09  Eli Zaretskii  <eliz@gnu.org>
 
