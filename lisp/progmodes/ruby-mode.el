@@ -2155,8 +2155,16 @@ See `font-lock-syntax-table'.")
     ;; Keywords that evaluate to certain values.
     ("\\_<__\\(?:LINE\\|ENCODING\\|FILE\\)__\\_>"
      (0 font-lock-builtin-face))
-    ;; Symbols.
-    ("\\(^\\|[^:]\\)\\(:\\([-+~]@?\\|[/%&|^`]\\|\\*\\*?\\|<\\(<\\|=>?\\)?\\|>[>=]?\\|===?\\|=~\\|![~=]?\\|\\[\\]=?\\|@?\\(\\w\\|_\\)+\\([!?=]\\|\\b_*\\)\\|#{[^}\n\\\\]*\\(\\\\.[^}\n\\\\]*\\)*}\\)\\)"
+    ;; Symbols with symbol characters.
+    ("\\(^\\|[^:]\\)\\(:@?\\(?:\\w\\|_\\)+\\)\\([!?=]\\)?"
+     (2 font-lock-constant-face)
+     (3 (unless (and (eq (char-before (match-end 3)) ?=)
+                     (eq (char-after (match-end 3)) ?>))
+          ;; bug#18466
+          font-lock-constant-face)
+        nil t))
+    ;; Symbols with special characters.
+    ("\\(^\\|[^:]\\)\\(:\\([-+~]@?\\|[/%&|^`]\\|\\*\\*?\\|<\\(<\\|=>?\\)?\\|>[>=]?\\|===?\\|=~\\|![~=]?\\|\\[\\]=?\\|#{[^}\n\\\\]*\\(\\\\.[^}\n\\\\]*\\)*}\\)\\)"
      2 font-lock-constant-face)
     ;; Special globals.
     (,(concat "\\$\\(?:[:\"!@;,/\\._><\\$?~=*&`'+0-9]\\|-[0adFiIlpvw]\\|"

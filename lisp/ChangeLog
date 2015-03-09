@@ -1,3 +1,8 @@
+2015-03-09  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/ruby-mode.el (ruby-font-lock-keywords): Don't consider
+	`=' a part of symbol when followed by `>'.  (Bug#18644)
+
 2015-03-09  Eli Zaretskii  <eliz@gnu.org>
 
 	* dired.el (dired-delete-file): Doc fix.  (Bug#20021)
