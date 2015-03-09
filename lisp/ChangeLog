@@ -1,3 +1,6 @@
+2015-03-09  Eli Zaretskii  <eliz@gnu.org>
+
+	* dired.el (dired-delete-file): Doc fix.  (Bug#20021)
 2015-03-06  Sergio Durigan Junior  <sergiodj@sergiodj.net>
 	    Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
