@@ -1,3 +1,7 @@
+2015-03-09  Nicolas Petton <nicolas@petton.fr>
+
+	* automated/seq-tests.el (test-seq-into): Add a test for seq-into.
+
 2015-03-08  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* indent/ruby.rb: Add an example for bug#20026.
