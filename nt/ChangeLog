@@ -9,7 +9,6 @@
 	(spawn): If calling a quoted batch file pass NULL for progname.
 	(Bug#18745)
 
-2015-03-09  Eli Zaretskii  <eliz@gnu.org>
 2015-03-03  Eli Zaretskii  <eliz@gnu.org>
 
 	* cmdproxy.c (get_next_token): Don't make backslashes disappear
