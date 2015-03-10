@@ -7,6 +7,7 @@
 
 	* progmodes/js.el (js-indent-first-initialiser): New option.
 	(js--maybe-goto-declaration-keyword-end): New function.
+	(js--proper-indentation): Use js--maybe-goto-declaration-keyword-end.
 
 2015-03-10  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
