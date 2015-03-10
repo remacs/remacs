@@ -1,3 +1,16 @@
+2015-03-10  Przemyslaw Wojnowski  <esperanto@cumego.com>
+
+	* automated/cl-lib-tests.el: Add tests for plusp, second, ...
+	(cl-lib-test-plusp, cl-lib-test-minusp)
+	(cl-lib-test-oddp, cl-lib-test-evenp, cl-lib-test-first)
+	(cl-lib-test-second, cl-lib-test-third, cl-lib-test-fourth)
+	(cl-lib-test-fifth, cl-lib-test-sixth, cl-lib-test-seventh)
+	(cl-lib-test-eighth, cl-lib-test-ninth, cl-lib-test-tenth)
+	(cl-lib-test-endp, cl-lib-test-nth-value)
+	(cl-lib-nth-value-test-multiple-values, cl-test-caaar, cl-test-caadr)
+	(cl-test-ldiff): New tests.
+	(cl-digit-char-p): Tighten the test.
+
 2015-03-09  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* indent/Makefile: Call 'rm' with '-f'.  Default EMACS to
