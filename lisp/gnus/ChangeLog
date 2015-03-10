@@ -1,3 +1,8 @@
+2015-03-10  Glenn Morris  <rgm@gnu.org>
+
+	* message.el (message-valid-fqdn-regexp): Bump :version for
+	2014-11-17 change.
+
 2015-03-08  Rasmus Pank Roulund  <rasmus@pank.eu>
 
 	* gnus-notifications.el (gnus-notifications-action): Raise window
