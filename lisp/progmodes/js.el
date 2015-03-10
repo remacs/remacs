@@ -510,12 +510,9 @@ getting timeout messages."
   :group 'js)
 
 (defcustom js-indent-first-initialiser nil
-  "Specially indent the first variable declaration's initialiser
-in variable statements.
-
+  "Non-nil means specially indent the first variable declaration's initialiser.
 Normally, the first declaration's initialiser is unindented, and
-subsequent declarations have their identifiers lined up against
-the first:
+subsequent declarations have their identifiers aligned with it:
 
   var o = {
       foo: 3
@@ -526,8 +523,8 @@ the first:
   },
       bar = 2;
 
-When t, always indent the first declaration's initialiser by an
-additional level:
+If this option has the value t, indent the first declaration's
+initialiser by an additional level:
 
   var o = {
           foo: 3
@@ -538,8 +535,8 @@ additional level:
       },
       bar = 2;
 
-When `dynamic', if there is only one declaration, don't indent
-the first one's initialiser; otherwise, indent it.
+If this option has the value `dynamic', if there is only one declaration,
+don't indent the first one's initialiser; otherwise, indent it.
 
   var o = {
       foo: 3
@@ -549,7 +546,8 @@ the first one's initialiser; otherwise, indent it.
           foo: 3
       },
       bar = 2;"
-  :type 'boolean
+  :version "25.1"
+  :type '(choice (const nil) (const t) (const dynamic))
   :safe 'symbolp
   :group 'js)
 

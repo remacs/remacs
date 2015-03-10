@@ -1,16 +1,12 @@
+2015-03-10  Glenn Morris  <rgm@gnu.org>
+
+	* progmodes/js.el (js-indent-first-initialiser):
+	Fix doc, type, version.
+
 2015-03-10  Jackson Ray Hamilton  <jackson@jacksonrayhamilton.com>
 
-	* lisp/progmodes/js.el (js--proper-indentation): Add new custom
-	option `js-indent-first-initialiser' and a function to utilize it,
-	`js--maybe-goto-declaration-keyword-end'.
-
-	* test/indent/js.js: Add local variables.
-
-	* test/indent/js-indent-first-initialiser-t.js: New test for
-	`js-indent-first-initialiser'.
-
-	* test/indent/js-indent-first-initialiser-dynamic.js: New test for
-	`js-indent-first-initialiser'.
+	* progmodes/js.el (js-indent-first-initialiser): New option.
+	(js--maybe-goto-declaration-keyword-end): New function.
 
 2015-03-10  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
