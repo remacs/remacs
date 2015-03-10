@@ -509,9 +509,9 @@ getting timeout messages."
   :type 'integer
   :group 'js)
 
-(defcustom js-indent-first-initialiser nil
-  "Non-nil means specially indent the first variable declaration's initialiser.
-Normally, the first declaration's initialiser is unindented, and
+(defcustom js-indent-first-init nil
+  "Non-nil means specially indent the first variable declaration's initializer.
+Normally, the first declaration's initializer is unindented, and
 subsequent declarations have their identifiers aligned with it:
 
   var o = {
@@ -524,7 +524,7 @@ subsequent declarations have their identifiers aligned with it:
       bar = 2;
 
 If this option has the value t, indent the first declaration's
-initialiser by an additional level:
+initializer by an additional level:
 
   var o = {
           foo: 3
@@ -536,7 +536,7 @@ initialiser by an additional level:
       bar = 2;
 
 If this option has the value `dynamic', if there is only one declaration,
-don't indent the first one's initialiser; otherwise, indent it.
+don't indent the first one's initializer; otherwise, indent it.
 
   var o = {
       foo: 3
@@ -1902,14 +1902,14 @@ In particular, return the buffer position of the first `for' kwd."
 
 (defun js--maybe-goto-declaration-keyword-end (parse-status)
   "Helper function for `js--proper-indentation'.
-Depending on the value of `js-indent-first-initialiser', move
+Depending on the value of `js-indent-first-init', move
 point to the end of a variable declaration keyword so that
 indentation is aligned to that column."
   (cond
-   ((eq js-indent-first-initialiser t)
+   ((eq js-indent-first-init t)
     (when (looking-at js--declaration-keyword-re)
       (goto-char (1+ (match-end 0)))))
-   ((eq js-indent-first-initialiser 'dynamic)
+   ((eq js-indent-first-init 'dynamic)
     (let ((bracket (nth 1 parse-status))
           declaration-keyword-end
           at-closing-bracket-p

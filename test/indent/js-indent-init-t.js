@@ -17,5 +17,5 @@ var foo = function() {
 // Local Variables:
 // indent-tabs-mode: nil
 // js-indent-level: 2
-// js-indent-first-initialiser: t
+// js-indent-first-init: t
 // End:

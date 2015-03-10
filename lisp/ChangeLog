@@ -1,3 +1,10 @@
+2015-03-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Prefer "initialize" to "initialise"
+	* progmodes/js.el (js-indent-first-init):
+	Rename from js-indent-first-initialiser, to avoid worrying about
+	American vs British spelling.  All uses changed.
+
 2015-03-10  Glenn Morris  <rgm@gnu.org>
 
 	* progmodes/js.el (js-indent-first-initialiser):
@@ -4551,7 +4558,7 @@
 	(tildify-foreach-region-function): New variable specifying
 	a function determining portions of buffer that should be
 	tildified.  It allows major modes to create a filtering function
-	more elaborate than a set of regular expressions.  Initialised to
+	more elaborate than a set of regular expressions.  Initialized to
 	`tildify--deprecated-ignore-evironments' by default to handle now
 	deprecated `tildify-ignored-environments-alist' variable.
 	(tildify--foreach-region): A new function that takes
@@ -9015,7 +9022,7 @@
 	file-format 2 --- ie. no local printers --- and 3 --- i.e. may have
 	local printers.
 	(ses-localvars): Add local variables needed for local printer handling.
-	(ses-set-localvars): Handle hashmap initialisation.
+	(ses-set-localvars): Handle hashmap initialization.
 	(ses-paramlines-plist): Add param-line for number of local printers.
 	(ses-paramfmt-plist): New defconst, needed for code factorization
 	between functions `ses-set-parameter' and
@@ -12275,7 +12282,7 @@
 	* progmodes/cc-mode.el (c-initialize-cc-mode): Add CC Mode hooks
 	to electric-indent-{,local-}-mode.
 	(c-basic-common-init): Set electric-indent-inhibit.
-	Initialise c-electric-flag from electric-indent-mode.
+	Initialize c-electric-flag from electric-indent-mode.
 	(c-electric-indent-mode-hook, c-electric-indent-local-mode-hook):
 	New hook functions which propagate electric-indent-mode to CC mode.
 
@@ -24212,7 +24219,7 @@
 
 2013-04-30  Alan Mackenzie  <acm@muc.de>
 
-	Handle arbitrarily long C++ member initialisation lists.
+	Handle arbitrarily long C++ member initialization lists.
 	* progmodes/cc-engine.el (c-back-over-member-initializers):
 	new function.
 	(c-guess-basic-syntax): New CASE 5R (extracted from 5B) to handle
