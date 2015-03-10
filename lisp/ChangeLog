@@ -1,3 +1,8 @@
+2015-03-10  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+
+	* net/ldap.el (ldap-attribute-syntaxes-alist): Add LDAP attributes
+	from RFC2798 Section 9.1.1.  (Bug#8983)
+
 2015-03-09  Nicolas Petton <nicolas@petton.fr>
 
 	* emacs-lisp/seq.el (seq-into): New function.
