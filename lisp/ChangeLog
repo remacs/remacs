@@ -173,7 +173,7 @@
 	Use `with-temp-file'.
 
 	* net/tramp-sh.el (tramp-perl-file-attributes)
-	(tramp-perl-directory-files-and-attributes): Escape apostrophs in
+	(tramp-perl-directory-files-and-attributes): Escape apostrophes in
 	file names.
 	(tramp-do-file-attributes-with-stat): Quote file name.
 	(tramp-sh-handle-directory-files-and-attributes): Fall back to
@@ -185,7 +185,7 @@
 	Normalize use of "cd".
 	(tramp-do-directory-files-and-attributes-with-stat): Use the
 	`quoting-style' arg of `ls' if possible.  Make it also working for
-	file names with apostrophs.
+	file names with apostrophes.
 	(tramp-sh-handle-file-name-all-completions): Use arguments of `ls'
 	in proper order.
 	(tramp-do-copy-or-rename-file-via-buffer)

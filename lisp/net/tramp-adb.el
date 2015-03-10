@@ -1013,7 +1013,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	  (tramp-set-connection-property v "process-buffer" nil))))))
 
 (defun tramp-adb-get-device (vec)
-  "Return full host name from VEC to be used in shell exceution.
+  "Return full host name from VEC to be used in shell execution.
 E.g. a host name \"192.168.1.1#5555\" returns \"192.168.1.1:5555\"
      a host name \"R38273882DE\" returns \"R38273882DE\"."
   ;; Sometimes this is called before there is a connection process

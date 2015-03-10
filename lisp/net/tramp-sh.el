@@ -1695,7 +1695,7 @@ be non-negative integers."
      ;; "-"; this would confuse xargs.  "ls -aQ" might be a solution,
      ;; but it does not work on all remote systems.  Therefore, we
      ;; use \000 as file separator.
-     ;; Apostrophs in the stat output are masked as \037 character, in
+     ;; Apostrophes in the stat output are masked as \037 characters, in
      ;; order to make a proper shell escape of them in file names.
      "cd %s && echo \"(\"; (%s %s -a | "
      "xargs %s -c "
@@ -1703,7 +1703,7 @@ be non-negative integers."
      " -- 2>/dev/null | sed -e 's/\"/\\\\\"/g' -e 's/\037/\"/g'); echo \")\"")
     (tramp-shell-quote-argument localname)
     (tramp-get-ls-command vec)
-    ;; On systems which have no quotings style, file names with
+    ;; On systems which have no quoting style, file names with
     ;; special characters could fail.
     (if (tramp-get-ls-command-with-quoting-style vec)
 	"--quoting-style=shell" "")
