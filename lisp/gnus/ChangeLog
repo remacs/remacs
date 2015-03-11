@@ -1,3 +1,17 @@
+2015-03-11  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* gnus-registry.el (gnus-registry-handle-action)
+	(gnus-registry-post-process-groups): Don't add-to-list on a local var.
+	(gnus-registry-keywords): Make it do something.
+	(gnus-registry-import-eld): Remove unused var `new-entry'.
+	(gnus-registry-action): Remove unused var `to-name'.
+	(gnus-registry-make-db): Prefer `make-instance' to avoid
+	compiler warnings.
+	(gnus-registry-load, gnus-registry-fixup-registry): Avoid `oset'.
+
+	* registry.el (registry-db): Don't oset-default an instance-allocated
+	slot.
+
 2015-03-10  Glenn Morris  <rgm@gnu.org>
 
 	* message.el (message-valid-fqdn-regexp): Bump :version for
