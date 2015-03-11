@@ -1,3 +1,7 @@
+2015-03-10  Jackson Ray Hamilton  <jackson@jacksonrayhamilton.com>
+
+	* indent/js-indent-init-dynamic.js: Fix spelling error.
+
 2015-03-10  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Prefer "initialize" to "initialise"

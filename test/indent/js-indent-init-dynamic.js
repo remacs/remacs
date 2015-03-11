@@ -17,7 +17,7 @@ var foo = function() {
 // Local Variables:
 // indent-tabs-mode: nil
 // js-indent-level: 2
-// js-indent-first-initializer: dynamic
+// js-indent-first-init: dynamic
 // End:
 
 // The following test intentionally produces a scan error and should
