@@ -1,5 +1,8 @@
 2015-03-11  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* international/quail.el (quail-input-method):
+	Use with-silent-modifications.
+
 	* simple.el (goto-history-element): Don't burp on t history.
 
 2015-03-10  Paul Eggert  <eggert@cs.ucla.edu>
