@@ -1,3 +1,8 @@
+2015-03-12  Glenn Morris  <rgm@gnu.org>
+
+	* frame.h (x_set_bitmap_icon): Don't set the icon if icon-type is
+	nil/not present in the parameter alist.  (Bug#19680)
+
 2015-02-28  Eli Zaretskii  <eliz@gnu.org>
 
 	* search.c (find_newline): Avoid assertion violations in
