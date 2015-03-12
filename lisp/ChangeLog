@@ -1,3 +1,8 @@
+2015-03-12  Rasmus Pank Roulund  <emacs@pank.eu>
+
+	* ido.el (ido-add-virtual-buffers-to-list): Include bookmark-alist
+	files (bug#19335).
+
 2015-03-12  Eli Zaretskii  <eliz@gnu.org>
 
 	* international/fontset.el (script-representative-chars): Add a
