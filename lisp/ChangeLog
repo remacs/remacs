@@ -1,3 +1,9 @@
+2015-03-12  Juri Linkov  <juri@linkov.net>
+
+	* simple.el (next-line-or-history-element)
+	(previous-line-or-history-element): Remember the goal column of
+	possibly multi-line input, and restore it afterwards.  (Bug#19824)
+
 2015-03-12  Rasmus Pank Roulund  <emacs@pank.eu>
 
 	* ido.el (ido-add-virtual-buffers-to-list): Include bookmark-alist
