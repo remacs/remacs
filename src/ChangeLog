@@ -1,5 +1,7 @@
 2015-03-13  Paul Eggert  <eggert@cs.ucla.edu>
 
+	* frame.c (x_get_resource_string) [!USE_GTK]: Don't define.
+
 	* editfns.c, systime.h (mktime_z) [!HAVE_TZALLOC]: Now static.
 
 2015-03-12  Eli Zaretskii  <eliz@gnu.org>
