@@ -1,3 +1,7 @@
+2015-03-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* editfns.c, systime.h (mktime_z) [!HAVE_TZALLOC]: Now static.
+
 2015-03-12  Eli Zaretskii  <eliz@gnu.org>
 
 	* w32font.c (font_supported_scripts): Add subranges for Latin
