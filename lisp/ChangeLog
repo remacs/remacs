@@ -1,4 +1,4 @@
-2015-03-13  Kevin Ryde  <user42_kevin <at> yahoo.com.au>
+2015-03-13  Kevin Ryde  <user42_kevin@yahoo.com.au>
 
 	info-look fixes for Texinfo 5
 	* info-look.el (c-mode, bison-mode, makefile-mode)
