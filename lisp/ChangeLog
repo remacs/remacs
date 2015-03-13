@@ -1,3 +1,13 @@
+2015-03-13  Kevin Ryde  <user42_kevin <at> yahoo.com.au>
+
+	info-look fixes for Texinfo 5
+	* info-look.el (c-mode, bison-mode, makefile-mode)
+	(makefile-automake-mode, texinfo-mode, autoconf-mode, awk-mode)
+	(latex-mode, emacs-lisp-mode, sh-mode, cfengine-mode): Match
+	`foo' and 'foo' and ‘foo’ for @item and similar.
+	(latex-mode): Match multi-arg \frac{num}{den} or \sqrt[root]{n} in
+	suffix regexp.
+
 2015-03-12  Juri Linkov  <juri@linkov.net>
 
 	* simple.el (next-line-or-history-element)
