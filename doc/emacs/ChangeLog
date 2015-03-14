@@ -1,3 +1,14 @@
+2015-03-14  Eli Zaretskii  <eliz@gnu.org>
+
+	* basic.texi (Moving Point): Improve indexing for HOME and END.
+
+	* cmdargs.texi (General Variables): Improve indexing for
+	environment variables.
+
+	* msdog.texi (Windows HOME):
+	* msdog-xtra.texi (MS-DOS File Names): Remove markup from HOME in
+	the index entries.  (Bug#20105)
+
 2015-01-31  Eli Zaretskii  <eliz@gnu.org>
 
 	* msdog.texi (Windows Files): Document characters invalid in
