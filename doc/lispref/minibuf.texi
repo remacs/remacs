@@ -723,7 +723,7 @@ just one matching completion, and the match is exact, it returns
 @code{t}.  Otherwise, it returns the longest initial sequence common
 to all possible matching completions.
 
-If @var{collection} is an list, the permissible completions are
+If @var{collection} is a list, the permissible completions are
 specified by the elements of the list, each of which should be either
 a string, or a cons cell whose @sc{car} is either a string or a symbol
 (a symbol is converted to a string using @code{symbol-name}).  If the
