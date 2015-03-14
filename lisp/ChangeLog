@@ -1,3 +1,11 @@
+2015-03-15  Tassilo Horn  <tsdh@gnu.org>
+
+	* emacs-lisp/lisp-mode.el (lisp--el-macro-regexp): New defconst.
+	(lisp--el-update-macro-regexp, lisp--el-update-after-load)
+	(lisp--el-match-macro): New functions.
+	(lisp-mode-variables): Update lisp--el-macro-regexp and add
+	lisp--el-update-after-load to after-load-functions.
+
 2015-03-15  Daniel Colascione  <dancol@dancol.org>
 
 	* emacs-lisp/cl-indent.el
