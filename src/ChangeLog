@@ -1449,7 +1449,8 @@
 2015-01-06  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* nsterm.m (x_set_window_size): Call updateFrameSize to get real
-	size instead of using widht/height.  The frame may be constrained.
+	size instead of using widht/height.  The frame may be
+	constrained (Bug#19482).
 
 2015-01-05  Paul Eggert  <eggert@cs.ucla.edu>
 
