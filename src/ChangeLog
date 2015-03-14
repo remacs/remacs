@@ -1,3 +1,8 @@
+2015-03-14  Daniel Colascione  <dancol@dancol.org>
+
+	* emacs.c (standard_args): Add --no-x-resources.
+	(usage_message): Document that -Q implies --no-x-resources.
+
 2015-03-13  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* frame.c (x_get_resource_string) [!USE_GTK]: Don't define.
