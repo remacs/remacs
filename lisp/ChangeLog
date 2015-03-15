@@ -1,3 +1,12 @@
+2015-03-15  Daniel Colascione  <dancol@dancol.org>
+
+	* emacs-lisp/cl-indent.el
+	(lisp-indent-backquote-substitution-mode): New user option.
+	(common-lisp-indent-function-1, common-lisp-loop-part-indentation)
+	(common-lisp-indent-function): Support normally indenting
+	backquote substitutions.
+	(extended-loop-p): Rename to `lisp-extended-loop-p'.
+
 2015-03-14  Michael R. Mauger  <michael@mauger.com>
 
 	* progmodes/sql.el: Version 3.5
