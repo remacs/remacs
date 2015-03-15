@@ -1,3 +1,9 @@
+2015-03-14  Michael R. Mauger  <michael@mauger.com>
+
+	* progmodes/sql.el: Version 3.5
+	(sql-starts-with-prompt-re, sql-ends-with-prompt-re): Match password prompts.
+	(sql-interactive-remove-continuation-prompt): Fixed regression. (Bug#6686)
+
 2015-03-14  Daniel Colascione  <dancol@dancol.org>
 
 	* startup.el (command-line): Process "--no-x-resources".
