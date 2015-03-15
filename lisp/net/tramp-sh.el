@@ -40,6 +40,7 @@
 (defvar vc-git-program)
 (defvar vc-hg-program)
 
+;;;###tramp-autoload
 (defcustom tramp-inline-compress-start-size 4096
   "The minimum size of compressing where inline transfer.
 When inline transfer, compress transferred data of file
@@ -48,6 +49,7 @@ If it is nil, no compression at all will be applied."
   :group 'tramp
   :type '(choice (const nil) integer))
 
+;;;###tramp-autoload
 (defcustom tramp-copy-size-limit 10240
   "The maximum file size where inline copying is preferred over an \
 out-of-the-band copy.
@@ -104,6 +106,27 @@ detected as prompt when being sent on echoing hosts, therefore.")
 
 (defconst tramp-end-of-heredoc (md5 tramp-end-of-output)
   "String used to recognize end of heredoc strings.")
+
+;;;###tramp-autoload
+(defcustom tramp-use-ssh-controlmaster-options t
+  "Whether to use `tramp-ssh-controlmaster-options'."
+  :group 'tramp
+  :version "24.4"
+  :type 'boolean)
+
+(defvar tramp-ssh-controlmaster-options nil
+  "Which ssh Control* arguments to use.
+
+If it is a string, it should have the form
+\"-o ControlMaster=auto -o ControlPath='tramp.%%r@%%h:%%p'
+-o ControlPersist=no\".  Percent characters in the ControlPath
+spec must be doubled, because the string is used as format string.
+
+Otherwise, it will be auto-detected by Tramp, if
+`tramp-use-ssh-controlmaster-options' is non-nil.  The value
+depends on the installed local ssh version.
+
+The string is used in `tramp-methods'.")
 
 ;; Initialize `tramp-methods' with the supported methods.
 ;;;###tramp-autoload
@@ -489,6 +512,7 @@ not be set here. Instead, it should be set via `tramp-remote-path'."
   :version "24.4"
   :type '(repeat string))
 
+;;;###tramp-autoload
 (defcustom tramp-sh-extra-args '(("/bash\\'" . "-norc -noprofile"))
   "Alist specifying extra arguments to pass to the remote shell.
 Entries are (REGEXP . ARGS) where REGEXP is a regular expression
@@ -2354,10 +2378,7 @@ The method used must be an out-of-band method."
 	      spec (format-spec-make
 		    ?t (tramp-get-connection-property
 			(tramp-get-connection-process v) "temp-file" ""))
-	      options (format-spec
-		       (if tramp-use-ssh-controlmaster-options
-			   tramp-ssh-controlmaster-options "")
-		       spec)
+	      options (format-spec (tramp-ssh-controlmaster-options v) spec)
 	      spec (format-spec-make
 		    ?h host ?u user ?p port ?r listener ?c options
 		    ?k (if keep-date " " ""))
@@ -4566,6 +4587,49 @@ Gateway hops are already opened."
     ;; Result.
     target-alist))
 
+(defun tramp-ssh-controlmaster-options (vec)
+  "Return the Control* arguments of the local ssh."
+  (cond
+   ;; No options to be computed.
+   ((or (null tramp-use-ssh-controlmaster-options)
+	(null (assoc "%c" (tramp-get-method-parameter
+			   (tramp-file-name-method vec) 'tramp-login-args))))
+    "")
+
+   ;; There is already a value to be used.
+   ((stringp tramp-ssh-controlmaster-options) tramp-ssh-controlmaster-options)
+
+   ;; Determine the options.
+   (t (setq tramp-ssh-controlmaster-options "")
+      (let ((case-fold-search t))
+	(ignore-errors
+	  (when (executable-find "ssh")
+	    (with-temp-buffer
+	      (tramp-call-process vec "ssh" nil t nil "-o" "ControlMaster")
+	      (goto-char (point-min))
+	      (when (search-forward-regexp "missing.+argument" nil t)
+		(setq tramp-ssh-controlmaster-options "-o ControlMaster=auto")))
+	    (unless (zerop (length tramp-ssh-controlmaster-options))
+	      (with-temp-buffer
+		(tramp-call-process
+		 vec "ssh" nil t nil
+		 "-o" "ControlPath=%C" "host.does.not.exist")
+		(goto-char (point-min))
+		(setq tramp-ssh-controlmaster-options
+		      (if (search-forward-regexp "unknown.+key" nil t)
+			  (concat tramp-ssh-controlmaster-options
+				  " -o ControlPath='tramp.%%r@%%h:%%p'")
+			(concat tramp-ssh-controlmaster-options
+				" -o ControlPath='tramp.%%C'"))))
+	      (with-temp-buffer
+		(tramp-call-process vec "ssh" nil t nil "-o" "ControlPersist")
+		(goto-char (point-min))
+		(when (search-forward-regexp "missing.+argument" nil t)
+		  (setq tramp-ssh-controlmaster-options
+			(concat tramp-ssh-controlmaster-options
+				" -o ControlPersist=no"))))))))
+      tramp-ssh-controlmaster-options)))
+
 (defun tramp-maybe-open-connection (vec)
   "Maybe open a connection VEC.
 Does not do anything if a connection is already open, but re-opens the
@@ -4647,8 +4711,7 @@ connection if a previous connection has died for some reason."
 	      (let* ((target-alist (tramp-compute-multi-hops vec))
 		     ;; We will apply `tramp-ssh-controlmaster-options'
 		     ;; only for the first hop.
-		     (options (if tramp-use-ssh-controlmaster-options
-				  tramp-ssh-controlmaster-options ""))
+		     (options (tramp-ssh-controlmaster-options vec))
 		     (process-connection-type tramp-process-connection-type)
 		     (process-adaptive-read-buffering nil)
 		     (coding-system-for-read nil)

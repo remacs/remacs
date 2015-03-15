@@ -1,3 +1,23 @@
+2015-03-15  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-adb.el:
+	* net/tramp-gvfs.el:
+	* net/tramp-sh.el:
+	* net/tramp-smb.el: Set tramp-autoload cookie for all defcustoms.
+
+	* net/tramp.el (tramp-ssh-controlmaster-options)
+	(tramp-use-ssh-controlmaster-options): Move them to tramp-sh.el.
+	(tramp-default-method): Do not check for
+	`tramp-ssh-controlmaster-options'.
+
+	* net/tramp-sh.el (tramp-use-ssh-controlmaster-options):
+	New defcustom, moved from tramp.el.
+	(tramp-ssh-controlmaster-options): New defvar, moved from tramp.el
+	but with a nil initial value.
+	(tramp-ssh-controlmaster-options): New defun.
+	(tramp-do-copy-or-rename-file-out-of-band)
+	(tramp-maybe-open-connection): Use it.  (Bug#20015)
+
 2015-03-15  Tassilo Horn  <tsdh@gnu.org>
 
 	* emacs-lisp/lisp-mode.el (lisp--el-macro-regexp): New defconst.
