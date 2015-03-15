@@ -6,6 +6,10 @@
 
 2015-03-14  Daniel Colascione  <dancol@dancol.org>
 
+	* widget.el (define-widget): Check that documentation is a string
+	or nil; prevent wailing and gnashing of teeth when users forget to
+	pass a docstring and wonder why their properties don't work.
+
 	* startup.el (command-line): Process "--no-x-resources".
 
 2015-03-13  Kevin Ryde  <user42_kevin@yahoo.com.au>
