@@ -1,8 +1,12 @@
+2015-03-15  Martin Rudalics  <rudalics@gmx.at>
+
+	* efaq.texi (Fullscreen mode on MS-Windows): Fix description (Bug#20110).
+
 2015-02-04  Kelvin White  <kwhite@gnu.org>
 
 	* erc.texi (Advanced Usage, Options): Add descriptions and examples
 	for erc-format-nick-function and erc-rename-buffers options.
-	(Connecting): fix typo
+	(Connecting): Fix typo
 
 2014-12-29  Michael Albinus  <michael.albinus@gmx.de>
 
