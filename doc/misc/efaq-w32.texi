@@ -191,7 +191,7 @@ development site.
 @section How can I compile Emacs myself?
 @cindex compiling Emacs
 
-To compile Emacs on Windows, you will need the MingW port of GCC and
+To compile Emacs on Windows, you will need the MinGW port of GCC and
 Binutils, the MinGW runtime and development environment, and the MSYS
 suite of tools.  For the details, see the file @file{nt/INSTALL} in
 the Emacs source distribution.
@@ -739,7 +739,7 @@ you ran @command{addpm}, you'll need to delete the Start Menu group
 too.  The registry entries inserted by @command{addpm} will not cause
 any problems if you leave them there, but for the sake of
 completeness, you can use @command{regedit} to remove the keys under
-@code{HKEY_LOCAL_MACHINE} orx @code{HKEY_CURRENT_USER}:
+@code{HKEY_LOCAL_MACHINE} or @code{HKEY_CURRENT_USER}:
 @code{SOFTWARE\GNU\Emacs}, and the key
 @code{HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App
 Paths\emacs.exe} if it exists.
@@ -1907,7 +1907,7 @@ tools to build your project.
 
 Christopher Payne wrote a Visual Studio add-in that makes Emacs the
 default text editor, this has now been taken over by Jeff Paquette.
-See the following two URLS for details:
+See the following two URLs for details:
 @itemize
 @item @uref{http://sourceforge.net/projects/visemacs/} for the latest version.
 @item @uref{http://www.smathers.net/VisEmacs.htm} for notes on usage.
@@ -2174,7 +2174,7 @@ to port software to Windows.
 The @uref{https://sourceforge.net/projects/ezwinports/, EZWinPorts
 project} provides many useful ports of recent versions of GNU and Unix
 software.  This includes all the optional libraries used by Emacs
-(image libraries, libxml2, GnuTLS), RCS, Terxinfo, a clone of
+(image libraries, libxml2, GnuTLS), RCS, Texinfo, a clone of
 @command{man} command, Grep, xz, bzip2, bsdtar, ID Utils, Findutils,
 Hunspell, Gawk, GNU Make, Groff, GDB.
 
