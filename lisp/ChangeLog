@@ -1,3 +1,18 @@
+2015-03-17  Tassilo Horn  <tsdh@gnu.org>
+
+	* emacs-lisp/byte-run.el (macro-declarations-alist): New
+	declaration no-font-lock-keyword.
+	(defmacro): Flush font-lock in existing elisp buffers.
+
+	* emacs-lisp/lisp-mode.el (lisp--el-update-after-load)
+	(lisp--el-update-macro-regexp, lisp--el-macro-regexp): Delete
+	functions and defconst.
+	(lisp--el-match-keyword): Rename from lisp--el-match-macro.
+	(lisp--el-font-lock-flush-elisp-buffers): New function.
+	(lisp-mode-variables): Remove code for updating
+	lisp--el-macro-regexp, and add
+	lisp--el-font-lock-flush-elisp-buffers to after-load-functions.
+
 2015-03-17  Simen Heggestøyl  <simenheg@gmail.com>
 
 	* textmodes/css-mode.el (css--font-lock-keywords): Discriminate
