@@ -1,3 +1,13 @@
+2015-03-16  Alan Mackenzie  <acm@muc.de>
+
+	Make Edebug work with Follow Mode.
+
+	* emacs-lisp/edebug.el (edebug--display-1): Remove call to
+	edebug-adjust-window.
+	(edebug--recursive-edit): Don't bind pre/post-command-hooks to nil
+	over the recursive edit.
+	(edebug-adjust-window): Remove.
+
 2015-03-15  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp-adb.el:

@@ -2446,9 +2446,6 @@ MSG is printed after `::::} '."
                               edebug-function)
                 ))
 
-	  (setcdr edebug-window-data
-		  (edebug-adjust-window (cdr edebug-window-data)))
-
 	  ;; Test if there is input, not including keyboard macros.
 	  (if (input-pending-p)
 	      (progn
@@ -2677,12 +2674,6 @@ MSG is printed after `::::} '."
 	      (defining-kbd-macro
 		(if edebug-continue-kbd-macro defining-kbd-macro))
 
-	      ;; Disable command hooks.  This is essential when
-	      ;; a hook function is instrumented - to avoid infinite loop.
-	      ;; This may be more than we need, however.
-	      (pre-command-hook nil)
-	      (post-command-hook nil)
-
 	      ;; others??
 	      )
 
@@ -2721,31 +2712,6 @@ MSG is printed after `::::} '."
 
 
 ;;; Display related functions
-
-(defun edebug-adjust-window (old-start)
-  ;; If pos is not visible, adjust current window to fit following context.
-  ;; (message "window: %s old-start: %s window-start: %s pos: %s"
-  ;;          (selected-window) old-start (window-start) (point)) (sit-for 5)
-  (if (not (pos-visible-in-window-p))
-      (progn
-	;; First try old-start
-	(if old-start
-	    (set-window-start (selected-window) old-start))
-	(if (not (pos-visible-in-window-p))
-	    (progn
-	;; (message "resetting window start") (sit-for 2)
-	(set-window-start
-	 (selected-window)
-	 (save-excursion
-	   (forward-line
-	    (if (< (point) (window-start)) -1	; one line before if in back
-	      (- (/ (window-height) 2)) ; center the line moving forward
-	      ))
-	   (beginning-of-line)
-	   (point)))))))
-  (window-start))
-
-
 
 (defconst edebug-arrow-alist
   '((Continue-fast . "=")
