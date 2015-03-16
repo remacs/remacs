@@ -1,3 +1,13 @@
+2015-03-16  Alan Mackenzie  <acm@muc.de>
+
+	Edebug: Allow "S" to work during trace mode.  Fixes debbugs #20074.
+	Also display the overlay arrow in go and go-nonstop modes.
+
+	* emacs-lisp/edebug.el (edebug--display-1): Move the
+	`input-pending' test to after trace mode's `sit-for'.
+	(edebug--recursive-edit): Insert "(sit-for 0)" after
+	"(edebug-overlay-arrow)".
+
 2015-03-16  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/cl-macs.el (cl--transform-lambda): Rework to avoid

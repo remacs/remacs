@@ -2446,15 +2446,6 @@ MSG is printed after `::::} '."
                               edebug-function)
                 ))
 
-	  ;; Test if there is input, not including keyboard macros.
-	  (if (input-pending-p)
-	      (progn
-		(setq edebug-execution-mode 'step
-		      edebug-stop t)
-		(edebug-stop)
-		;;	    (discard-input)		; is this unfriendly??
-		))
-
           ;; Make sure we bind those in the right buffer (bug#16410).
           (let ((overlay-arrow-position overlay-arrow-position)
                 (overlay-arrow-string overlay-arrow-string))
@@ -2507,14 +2498,18 @@ MSG is printed after `::::} '."
              ((eq edebug-execution-mode 'Trace-fast)
               (sit-for 0)))		; Force update and continue.
 
+            (when (input-pending-p)
+	      (setq edebug-stop t)
+	      (setq edebug-execution-mode 'step) ; for `edebug-overlay-arrow'
+	      (edebug-stop))
+
+	    (edebug-overlay-arrow)
+
             (unwind-protect
                 (if (or edebug-stop
                         (memq edebug-execution-mode '(step next))
                         (eq arg-mode 'error))
-                    (progn
-                      ;; (setq edebug-execution-mode 'step)
-                      ;; (edebug-overlay-arrow)	; This doesn't always show up.
-                      (edebug--recursive-edit arg-mode))) ; <--- Recursive edit
+		    (edebug--recursive-edit arg-mode)) ; <--- Recursive edit
 
               ;; Reset the edebug-window-data to whatever it is now.
               (let ((window (if (eq (window-buffer) edebug-buffer)
@@ -2702,8 +2697,9 @@ MSG is printed after `::::} '."
 	    (if (buffer-name edebug-buffer) ; if it still exists
 		(progn
 		  (set-buffer edebug-buffer)
-		  (if (memq edebug-execution-mode '(go Go-nonstop))
-		      (edebug-overlay-arrow))
+		  (when (memq edebug-execution-mode '(go Go-nonstop))
+		    (edebug-overlay-arrow)
+		    (sit-for 0))
                   (edebug-mode -1))
 	      ;; gotta have a buffer to let its buffer local variables be set
 	      (get-buffer-create " bogus edebug buffer"))
@@ -2721,7 +2717,7 @@ MSG is printed after `::::} '."
     (step . "=>")
     (next . "=>")
     (go . "<>")
-    (Go-nonstop . "..")  ; not used
+    (Go-nonstop . "..")
     )
   "Association list of arrows for each edebug mode.")
 
