@@ -1,3 +1,10 @@
+2015-03-16  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* obsolete/iswitchb.el (iswitchb-read-buffer): Add `predicate' arg.
+	* isearchb.el (isearchb-iswitchb): Adjust accordingly.
+	* ido.el (ido-read-buffer): Add `predicate' argument.
+	* misearch.el (unload-function-defs-list): Declare before use.
+
 2015-03-16  Vibhav Pant  <vibhavp@gmail.com>
 
 	* net/browse-url.el (browse-url-browser-function): Add "Conkeror".

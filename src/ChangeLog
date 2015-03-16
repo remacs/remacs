@@ -1,3 +1,8 @@
+2015-03-16  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* minibuf.c (Fread_buffer): Add `predicate' argument.
+	* callint.c (Fcall_interactively): Adjust calls accordingly.
+
 2015-03-15  Eli Zaretskii  <eliz@gnu.org>
 
 	* xdisp.c (handle_invisible_prop): Fix up it->position even when
