@@ -1,3 +1,7 @@
+2015-03-16  Eli Zaretskii  <eliz@gnu.org>
+
+	* efaq-w32.texi: Remove outdated information and update.
+
 2015-03-15  Martin Rudalics  <rudalics@gmx.at>
 
 	* efaq.texi (Fullscreen mode on MS-Windows): Fix description (Bug#20110).
