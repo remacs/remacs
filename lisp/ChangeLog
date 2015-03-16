@@ -1,5 +1,15 @@
 2015-03-16  Vibhav Pant  <vibhavp@gmail.com>
 
+	* net/browse-url.el (browse-url-browser-function): Add "Conkeror".
+	(browse-url-conkeror-program, browse-url-conkeror-arguments)
+	(browse-url-conkeror-new-window-is-buffer): New defcustoms.
+	(browse-url-default-browser): Check for `browse-url-conkeror'
+	and call `browse-url-conkeror-program'.
+	(browse-url-conkeror): New command.
+	(bug#19863)
+
+2015-03-16  Vibhav Pant  <vibhavp@gmail.com>
+
 	* eshell/esh-mode.el (eshell/clear): New function.
 
 2015-03-16  Alan Mackenzie  <acm@muc.de>

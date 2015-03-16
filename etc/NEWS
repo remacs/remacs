@@ -560,6 +560,10 @@ command line's password prompt.
 
 *** The new built-in command `clear' can scroll window contents out of sight.
 
+** Browse-url
+
+*** browse-url now supports the Conkeror Web Browser.
+
 +++
 ** tar-mode: new `tar-new-entry' command, allowing for new members to
 be added to the archive.
