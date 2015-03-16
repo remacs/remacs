@@ -1,3 +1,7 @@
+2015-03-16  Vibhav Pant  <vibhavp@gmail.com>
+
+	* eshell/esh-mode.el (eshell/clear): New function.
+
 2015-03-16  Alan Mackenzie  <acm@muc.de>
 
 	Make Edebug work with Follow Mode.
