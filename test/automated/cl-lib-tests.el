@@ -427,4 +427,21 @@
 (ert-deftest cl-flet-test ()
   (should (equal (cl-flet ((f1 (x) x)) (let ((x #'f1)) (funcall x 5))) 5)))
 
+(ert-deftest cl-lib-test-typep ()
+  (cl-deftype cl-lib-test-type (&optional x) `(member ,x))
+  ;; Make sure we correctly implement the rule that deftype's optional args
+  ;; default to `*' rather than to nil.
+  (should (cl-typep '* 'cl-lib-test-type))
+  (should-not (cl-typep 1 'cl-lib-test-type)))
+
+(ert-deftest cl-lib-arglist-performance ()
+  ;; An `&aux' should not cause lambda's arglist to be turned into an &rest
+  ;; that's parsed by hand.
+  (should (eq () (nth 1 (nth 1 (macroexpand
+                                '(cl-function (lambda (&aux (x 1)) x)))))))
+  (cl-defstruct (cl-lib--s (:constructor cl-lib--s-make (&optional a))) a)
+  ;; Similarly the &cl-defs thingy shouldn't cause fallback to manual parsing
+  ;; of args if the default for optional args is nil.
+  (should (equal '(&optional a) (help-function-arglist 'cl-lib--s-make))))
+
 ;;; cl-lib.el ends here

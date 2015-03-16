@@ -1,5 +1,12 @@
 2015-03-16  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* emacs-lisp/cl-macs.el (cl--transform-lambda): Rework to avoid
+	cl--do-arglist in more cases; add comments to explain what's going on.
+	(cl--do-&aux): New function extracted from cl--do-arglist.
+	(cl--do-arglist): Use it.
+
+	* emacs-lisp/cl-generic.el: Add Version: header, for ELPA purposes.
+
 	* obsolete/iswitchb.el (iswitchb-read-buffer): Add `predicate' arg.
 	* isearchb.el (isearchb-iswitchb): Adjust accordingly.
 	* ido.el (ido-read-buffer): Add `predicate' argument.
