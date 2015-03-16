@@ -1,3 +1,8 @@
+2015-03-16  Ken Brown  <kbrown@cornell.edu>
+
+	* automated/tramp-tests.el (tramp--test-special-characters): Don't
+	test "\t" in file names on Cygwin.  (Bug#20119)
+
 2015-03-10  Jackson Ray Hamilton  <jackson@jacksonrayhamilton.com>
 
 	* indent/js-indent-init-dynamic.js: Fix spelling error.
