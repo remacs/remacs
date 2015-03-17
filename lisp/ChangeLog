@@ -5,6 +5,14 @@
 	(css-pseudo-ids): Remove.
 	(css-pseudo-class-ids): New variable.
 	(css-pseudo-element-ids): New variable.
+	(css--complete-property): New function for completing CSS
+	properties.
+	(css--complete-pseudo-element-or-class): New function for
+	completing CSS pseudo-elements and pseudo-classes.
+	(css--complete-at-rule): New function for completing CSS at-rules.
+	(css-completion-at-point): New function providing completion for
+	`css-mode'.
+	(css-mode): Add support for completion.
 
 2015-03-17  Bozhidar Batsov  <bozhidar@batsov.com>
 

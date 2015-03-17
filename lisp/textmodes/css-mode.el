@@ -29,7 +29,7 @@
 
 ;; - electric ; and }
 ;; - filling code with auto-fill-mode
-;; - completion
+;; - attribute value completion
 ;; - fix font-lock errors with multi-line selectors
 
 ;;; Code:
@@ -346,6 +346,45 @@
     (`(:before . ,(or "{" "("))
      (if (smie-rule-hanging-p) (smie-rule-parent 0)))))
 
+;;; Completion
+
+(defun css--complete-property ()
+  "Complete property at point."
+  (save-excursion
+    (let ((pos (point)))
+      (skip-chars-backward "-[:alnum:]")
+      (let ((start (point)))
+        (skip-chars-backward " \t\r\n")
+        (when (memq (char-before) '(?\{ ?\;))
+          (list start pos css-property-ids))))))
+
+(defun css--complete-pseudo-element-or-class ()
+  "Complete pseudo-element or pseudo-class at point."
+  (save-excursion
+    (let ((pos (point)))
+      (skip-chars-backward "-[:alnum:]")
+      (when (eq (char-before) ?\:)
+        (list (point) pos
+              (if (eq (char-before (- (point) 1)) ?\:)
+                  css-pseudo-element-ids
+                css-pseudo-class-ids))))))
+
+(defun css--complete-at-rule ()
+  "Complete at-rule (statement beginning with `@') at point."
+  (save-excursion
+    (let ((pos (point)))
+      (skip-chars-backward "-[:alnum:]")
+      (when (eq (char-before) ?\@)
+        (list (point) pos css-at-ids)))))
+
+(defun css-completion-at-point ()
+  "Complete current symbol at point.
+Currently supports completion of CSS properties, pseudo-elements,
+pesudo-classes, and at-rules."
+  (or (css--complete-property)
+      (css--complete-pseudo-element-or-class)
+      (css--complete-at-rule)))
+
 ;;;###autoload
 (define-derived-mode css-mode fundamental-mode "CSS"
   "Major mode to edit Cascading Style Sheets."
@@ -361,7 +400,9 @@
               :forward-token #'css-smie--forward-token
               :backward-token #'css-smie--backward-token)
   (setq-local electric-indent-chars
-              (append css-electric-keys electric-indent-chars)))
+              (append css-electric-keys electric-indent-chars))
+  (add-hook 'completion-at-point-functions
+            #'css-completion-at-point nil 'local))
 
 (defvar comment-continue)
 
