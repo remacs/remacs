@@ -9,6 +9,11 @@
 	the next time the menu is requested.
 	(w32-fixed-font-alist): Fix to use correct names of Courier fonts.
 
+2015-03-17  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/cl-macs.el (cl--transform-lambda): Refine last change
+	(bug#20125).
+
 2015-03-17  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp-sh.el (tramp-ssh-controlmaster-options): Change test
