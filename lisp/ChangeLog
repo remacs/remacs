@@ -13,6 +13,14 @@
 	(css-completion-at-point): New function providing completion for
 	`css-mode'.
 	(css-mode): Add support for completion.
+	(css-extract-keyword-list): Remove function in favor of manual
+	extraction.
+	(css-extract-parse-val-grammar): Remove function in favor of
+	manual extraction.
+	(css-extract-props-and-vals): Remove function in favor of manual
+	extraction.
+	(css-at-ids): Update list of CSS at-rule ids.
+	(css-property-ids): Update list of CSS properties.
 
 2015-03-17  Bozhidar Batsov  <bozhidar@batsov.com>
 
