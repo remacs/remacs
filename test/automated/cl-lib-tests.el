@@ -1,4 +1,4 @@
-;;; cl-lib.el --- tests for emacs-lisp/cl-lib.el
+;;; cl-lib.el --- tests for emacs-lisp/cl-lib.el  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2013-2015 Free Software Foundation, Inc.
 
@@ -204,7 +204,10 @@
                     :b :a :a 42)
            '(42 :a))))
 
-(cl-defstruct mystruct (abc :readonly t) def)
+(cl-defstruct (mystruct
+               (:constructor cl-lib--con-1 (&aux (abc 1)))
+               (:constructor cl-lib--con-2 (&optional def)))
+  (abc 5 :readonly t) (def nil))
 (ert-deftest cl-lib-struct-accessors ()
   (let ((x (make-mystruct :abc 1 :def 2)))
     (should (eql (cl-struct-slot-value 'mystruct 'abc x) 1))
@@ -213,8 +216,17 @@
     (should (eql (cl-struct-slot-value 'mystruct 'def x) -1))
     (should (eql (cl-struct-slot-offset 'mystruct 'abc) 1))
     (should-error (cl-struct-slot-offset 'mystruct 'marypoppins))
-    (should (equal (cl-struct-slot-info 'mystruct)
-                   '((cl-tag-slot) (abc :readonly t) (def))))))
+    (should (pcase (cl-struct-slot-info 'mystruct)
+              (`((cl-tag-slot) (abc 5 :readonly t)
+                 (def . ,(or `nil `(nil))))
+               t)))))
+
+(ert-deftest cl-lib-arglist-performance ()
+  ;; An `&aux' should not cause lambda's arglist to be turned into an &rest
+  ;; that's parsed by hand.
+  (should (equal () (help-function-arglist 'cl-lib--con-1)))
+  (should (pcase (help-function-arglist 'cl-lib--con-2)
+            (`(&optional ,_) t))))
 
 (ert-deftest cl-the ()
   (should (eql (cl-the integer 42) 42))
@@ -433,15 +445,5 @@
   ;; default to `*' rather than to nil.
   (should (cl-typep '* 'cl-lib-test-type))
   (should-not (cl-typep 1 'cl-lib-test-type)))
-
-(ert-deftest cl-lib-arglist-performance ()
-  ;; An `&aux' should not cause lambda's arglist to be turned into an &rest
-  ;; that's parsed by hand.
-  (should (eq () (nth 1 (nth 1 (macroexpand
-                                '(cl-function (lambda (&aux (x 1)) x)))))))
-  (cl-defstruct (cl-lib--s (:constructor cl-lib--s-make (&optional a))) a)
-  ;; Similarly the &cl-defs thingy shouldn't cause fallback to manual parsing
-  ;; of args if the default for optional args is nil.
-  (should (equal '(&optional a) (help-function-arglist 'cl-lib--s-make))))
 
 ;;; cl-lib.el ends here

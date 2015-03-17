@@ -257,11 +257,7 @@ FORM is of the form (ARGS . BODY)."
         (setq cl--bind-defs (cadr cl-defs))
 	;; Remove "&cl-defs DEFS" from args.
         (setcdr cl-defs (cddr cl-defs))
-	(setq args (delq '&cl-defs args))
-	;; Optimize away trivial &cl-defs.
-	(if (and (null (car cl--bind-defs))
-		 (cl-every (lambda (x) (null (cadr x))) (cdr cl--bind-defs)))
-	    (setq cl--bind-defs nil))))
+	(setq args (delq '&cl-defs args))))
     (if (setq cl--bind-enquote (memq '&cl-quote args))
 	(setq args (delq '&cl-quote args)))
     (if (memq '&whole args) (error "&whole not currently implemented"))
@@ -272,11 +268,19 @@ FORM is of the form (ARGS . BODY)."
     ;; Take away all the simple args whose parsing can be handled more
     ;; efficiently by a plain old `lambda' than the manual parsing generated
     ;; by `cl--do-arglist'.
-    (while (and args (symbolp (car args))
-		(not (memq (car args) '(nil &rest &body &key &aux)))
-		(not (and (eq (car args) '&optional)
-			  (or cl--bind-defs (consp (cadr args))))))
-      (push (pop args) simple-args))
+    (let ((optional nil))
+      (while (and args (symbolp (car args))
+                  (not (memq (car args) '(nil &rest &body &key &aux)))
+                  (or (not optional)
+                      ;; Optional args whose default is nil are simple.
+                      (null (nth 1 (assq (car args) (cdr cl--bind-defs)))))
+                  (not (and (eq (car args) '&optional) (setq optional t)
+                            (car cl--bind-defs))))
+        (push (pop args) simple-args))
+      (when optional
+        (if args (push '&optional args))
+        ;; Don't keep a dummy trailing &optional without actual optional args.
+        (if (eq '&optional (car simple-args)) (pop simple-args))))
     (or (eq cl--bind-block 'cl-none)
 	(setq body (list `(cl-block ,cl--bind-block ,@body))))
     (let* ((cl--bind-lets nil) (cl--bind-forms nil)
@@ -292,7 +296,7 @@ FORM is of the form (ARGS . BODY)."
               ;; "manual" parsing.
               (let ((slen (length simple-args)))
                 (when (memq '&optional simple-args)
-                  (push '&optional args) (cl-decf slen))
+                  (cl-decf slen))
                 (setq header
                       ;; Macro expansion can take place in the middle of
                       ;; apparently harmless computation, so it should not
