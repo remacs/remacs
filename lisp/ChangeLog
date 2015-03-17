@@ -1,3 +1,8 @@
+2015-03-17  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-ssh-controlmaster-options): Change test
+	for ControlPath in order to avoid DNS timeouts.  (Bug#20015)
+
 2015-03-16  Alan Mackenzie  <acm@muc.de>
 
 	Edebug: Allow "S" to work during trace mode.  Fixes debbugs #20074.

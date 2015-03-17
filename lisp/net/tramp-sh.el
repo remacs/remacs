@@ -4565,7 +4565,7 @@ Gateway hops are already opened."
 
     ;; In case the host name is not used for the remote shell
     ;; command, the user could be misguided by applying a random
-    ;; hostname.
+    ;; host name.
     (let* ((v (car target-alist))
 	   (method (tramp-file-name-method v))
 	   (host (tramp-file-name-host v)))
@@ -4611,9 +4611,13 @@ Gateway hops are already opened."
 		(setq tramp-ssh-controlmaster-options "-o ControlMaster=auto")))
 	    (unless (zerop (length tramp-ssh-controlmaster-options))
 	      (with-temp-buffer
+		;; When we use a non-existing host name, we could run
+		;; into DNS timeouts.  So we use "localhost" with an
+		;; improper port, expecting nobody runs sshd on the
+		;; telnet port.
 		(tramp-call-process
 		 vec "ssh" nil t nil
-		 "-o" "ControlPath=%C" "host.does.not.exist")
+		 "-p" "23" "-o" "ControlPath=%C" "localhost")
 		(goto-char (point-min))
 		(setq tramp-ssh-controlmaster-options
 		      (if (search-forward-regexp "unknown.+key" nil t)
