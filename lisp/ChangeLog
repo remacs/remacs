@@ -1,3 +1,8 @@
+2015-03-17  Bozhidar Batsov  <bozhidar@batsov.com>
+
+	* progmodes/ruby-mode.el (ruby-font-lock-keywords): Font-lock
+	more Kernel methods.
+
 2015-03-17  Michael Albinus  <michael.albinus@gmx.de>
 
 	* tramp-sh.el (tramp-maybe-send-script): Avoid leading tabs in
