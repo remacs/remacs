@@ -1,3 +1,8 @@
+2015-03-17  Michael Albinus  <michael.albinus@gmx.de>
+
+	* tramp-sh.el (tramp-maybe-send-script): Avoid leading tabs in
+	shell scripts.  (Bug#20118)
+
 2015-03-17  Eli Zaretskii  <eliz@gnu.org>
 
 	* mouse.el (mouse-appearance-menu): If w32-use-w32-font-dialog is

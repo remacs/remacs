@@ -3725,6 +3725,10 @@ Only send the definition if it has not already been done."
 		  (tramp-get-connection-process vec) "scripts" nil)))
     (unless (member name scripts)
       (with-tramp-progress-reporter vec 5 (format "Sending script `%s'" name)
+	;; In bash, leading TABs like in `tramp-vc-registered-read-file-names'
+	;; could result in unwanted command expansion.  Avoid this.
+	(setq script (tramp-compat-replace-regexp-in-string
+		      (make-string 1 ?\t) (make-string 8 ? ) script))
 	;; The script could contain a call of Perl.  This is masked with `%s'.
 	(when (and (string-match "%s" script)
 		   (not (tramp-get-remote-perl vec)))
