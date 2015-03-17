@@ -1,3 +1,14 @@
+2015-03-17  Eli Zaretskii  <eliz@gnu.org>
+
+	* mouse.el (mouse-appearance-menu): If w32-use-w32-font-dialog is
+	nil, construct a menu of fixed fonts.  This resurrects a feature
+	lost in Emacs 23.
+
+	* w32-vars.el (w32-use-w32-font-dialog): Add a ':set' function to
+	reset mouse-appearance-menu-map, so the font dialog is recomputed
+	the next time the menu is requested.
+	(w32-fixed-font-alist): Fix to use correct names of Courier fonts.
+
 2015-03-17  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp-sh.el (tramp-ssh-controlmaster-options): Change test
