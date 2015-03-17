@@ -1801,6 +1801,8 @@ choose a font."
 (declare-function buffer-face-mode-invoke "face-remap"
                   (face arg &optional interactive))
 (declare-function font-face-attributes "font.c" (font &optional frame))
+(defvar w32-use-w32-font-dialog)
+(defvar w32-fixed-font-alist)
 
 (defun mouse-appearance-menu (event)
   "Show a menu for changing the default face in the current buffer."
