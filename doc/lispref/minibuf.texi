@@ -102,7 +102,7 @@ the minibuffer is in a separate frame.  @xref{Minibuffers and Frames}.
   When Emacs is running in batch mode, any request to read from the
 minibuffer actually reads a line from the standard input descriptor that
 was supplied when Emacs was started.  This supports only basic input:
-none of the special minibuffer features (history, completion, etc.)
+none of the special minibuffer features (history, completion, etc.)@:
 are available in batch mode.
 
 @node Text from Minibuffer

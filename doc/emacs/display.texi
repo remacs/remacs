@@ -138,7 +138,7 @@ instructs the scrolling commands not to fontify (@pxref{Font Lock})
 any unfontified text they scroll over, instead to assume it has the
 default face.  This can cause Emacs to scroll to somewhat wrong buffer
 positions when the faces in use are not all the same size, even with
-single (i.e. without auto-repeat) scrolling operations.
+single (i.e., without auto-repeat) scrolling operations.
 
 @vindex scroll-up
 @vindex scroll-down
