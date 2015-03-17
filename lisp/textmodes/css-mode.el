@@ -3,6 +3,7 @@
 ;; Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
+;; Maintainer: Simen Heggestøyl <simenheg@gmail.com>
 ;; Keywords: hypermedia
 
 ;; This file is part of GNU Emacs.
@@ -120,10 +121,17 @@
 ;;    (media . "^ +\\* '\\([^ '\n]+\\)' media group")
 ;;    (property . "^ +\\* '\\([^ '\n]+\\)',")))
 
-(defconst css-pseudo-ids
-  '("active" "after" "before" "first" "first-child" "first-letter" "first-line"
-    "focus" "hover" "lang" "left" "link" "right" "visited")
-  "Identifiers for pseudo-elements and pseudo-classes.")
+(defconst css-pseudo-class-ids
+  '("active" "checked" "disabled" "empty" "enabled" "first"
+    "first-child" "first-of-type" "focus" "hover" "indeterminate" "lang"
+    "last-child" "last-of-type" "left" "link" "nth-child"
+    "nth-last-child" "nth-last-of-type" "nth-of-type" "only-child"
+    "only-of-type" "right" "root" "target" "visited")
+  "Identifiers for pseudo-classes.")
+
+(defconst css-pseudo-element-ids
+  '("after" "before" "first-letter" "first-line")
+  "Identifiers for pseudo-elements.")
 
 (defconst css-at-ids
   '("charset" "font-face" "import" "media" "page")
@@ -258,7 +266,11 @@
          (concat "\\(?:" scss--hash-re
                  "\\|[^@/:{} \t\n#]\\)"
                  "[^:{}#]*\\(?:" scss--hash-re "[^:{}#]*\\)*"))
-       "\\(?::" (regexp-opt css-pseudo-ids t)
+       ;; Even though pseudo-elements should be prefixed by ::, a
+       ;; single colon is accepted for backward compatibility.
+       "\\(?:\\(:" (regexp-opt (append css-pseudo-class-ids
+                                       css-pseudo-element-ids) t)
+       "\\|\\::" (regexp-opt css-pseudo-element-ids t) "\\)"
        "\\(?:([^\)]+)\\)?"
        (if (not sassy)
            "[^:{}\n]*"

@@ -1,3 +1,11 @@
+2015-03-17  Simen Heggestøyl  <simenheg@gmail.com>
+
+	* textmodes/css-mode.el (css--font-lock-keywords): Discriminate
+	between pseudo-classes and pseudo-elements.
+	(css-pseudo-ids): Remove.
+	(css-pseudo-class-ids): New variable.
+	(css-pseudo-element-ids): New variable.
+
 2015-03-17  Bozhidar Batsov  <bozhidar@batsov.com>
 
 	* progmodes/ruby-mode.el (ruby-font-lock-keywords): Font-lock
