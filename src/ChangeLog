@@ -1,3 +1,8 @@
+2015-03-18  Glenn Morris  <rgm@gnu.org>
+
+	* frame.h (x_set_bitmap_icon): Don't set the icon if icon-type is
+	nil/not present in the parameter alist.  (Bug#19680)
+
 2015-03-18  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* alloc.c (purecopy): Handle hash-tables.
