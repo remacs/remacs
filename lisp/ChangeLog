@@ -1,3 +1,9 @@
+2015-03-18  Dima Kogan  <dima@secretsauce.net>
+
+	Have gud-display-line not display source buffer in gud window.
+	* lisp/progmodes/gud.el (gud-display-line): Make display-buffer
+	not reuse selected window.  (Bug#17675, Bug#19901, Bug#20034)
+
 2015-03-17  Tassilo Horn  <tsdh@gnu.org>
 
 	* emacs-lisp/byte-run.el (macro-declarations-alist): New
