@@ -364,7 +364,7 @@
 (defun css-completion-at-point ()
   "Complete current symbol at point.
 Currently supports completion of CSS properties, pseudo-elements,
-pesudo-classes, and at-rules."
+pseudo-classes, and at-rules."
   (or (css--complete-property)
       (css--complete-pseudo-element-or-class)
       (css--complete-at-rule)))
