@@ -903,8 +903,8 @@ Can only be used from within the lexical body of a primary or around method."
      ;; take place without requiring cl-lib.
      (let ((class (cl--find-class type)))
        (and (cl-typep class 'cl-structure-class)
-            (when (cl--struct-class-type class)
-              (error "Can't dispatch on cl-struct %S: type is %S"
+            (or (null (cl--struct-class-type class))
+		(error "Can't dispatch on cl-struct %S: type is %S"
                      type (cl--struct-class-type class)))
             (progn (cl-assert (null (cl--struct-class-named class))) t)
             (list cl--generic-struct-generalizer))))
