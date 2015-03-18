@@ -862,8 +862,7 @@ first, if that exists."
 ;;;###autoload
 (defun browse-url-at-point (&optional arg)
   "Ask a WWW browser to load the URL at or before point.
-Don't let you edit the URL like `browse-url'.  Variable
-`browse-url-browser-function' says which browser to use."
+Variable `browse-url-browser-function' says which browser to use."
   (interactive "P")
   (let ((url (browse-url-url-at-point)))
     (if url
@@ -876,9 +875,8 @@ Don't let you edit the URL like `browse-url'.  Variable
 (defun browse-url-at-mouse (event)
   "Ask a WWW browser to load a URL clicked with the mouse.
 The URL is the one around or before the position of the mouse click
-but point is not changed.  Don't let you edit the URL like
-`browse-url'.  Variable `browse-url-browser-function' says which browser
-to use."
+but point is not changed.  Variable `browse-url-browser-function'
+says which browser to use."
   (interactive "e")
   (save-excursion
     (mouse-set-point event)
