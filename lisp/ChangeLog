@@ -1,3 +1,8 @@
+2015-03-18  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-do-directory-files-and-attributes-with-stat):
+	Mark apostrophs with ?/ instead of \037.  (Bug#20117)
+
 2015-03-18  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	Add classes as run-time descriptors of cl-structs.
@@ -72,7 +77,7 @@
 
 2015-03-17  Michael Albinus  <michael.albinus@gmx.de>
 
-	* tramp-sh.el (tramp-maybe-send-script): Avoid leading tabs in
+	* net/tramp-sh.el (tramp-maybe-send-script): Avoid leading tabs in
 	shell scripts.  (Bug#20118)
 
 2015-03-17  Eli Zaretskii  <eliz@gnu.org>
