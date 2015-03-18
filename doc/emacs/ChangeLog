@@ -1,3 +1,12 @@
+2015-03-18  Eli Zaretskii  <eliz@gnu.org>
+
+	* misc.texi (Term Mode):
+	* programs.texi (Basic Indent, Custom C Indent):
+	* mini.texi (Minibuffer History):
+	* text.texi (Org Mode):
+	* display.texi (View Mode): Use @kbd where @key was mistakenly
+	used.  (Bug#20135)
+
 2015-03-14  Eli Zaretskii  <eliz@gnu.org>
 
 	* basic.texi (Moving Point): Improve indexing for HOME and END.
