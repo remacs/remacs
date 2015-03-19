@@ -1,5 +1,13 @@
 2015-03-19  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Better port of pthread usage to FreeBSD
+	* configure.ac (ac_func_list): Omit pthread_sigmask, since
+	we check for that ourselves rather than relying on gnulib.
+	(HAVE_PTHREAD, LIB_PTHREAD, _THREAD_SAFE): Port better to FreeBSD,
+	by also checking for pthread_create, pthread_self, pthread_sigmask.
+	Tighten the test for pthread_atfork while we're at it.
+	Fixes: bug#20136
+
 	Merge from gnulib
 	This incorporates:
 	2015-03-19 fdopendir: port better to MinGW
