@@ -1,3 +1,9 @@
+2015-03-19  Vibhav Pant  <vibhavp@gmail.com>
+
+	* lisp/leim/quail/hangul.el
+	* lisp/progmodes/cperl-mode.el: Use delete-char instead of
+	delete-backward-char, fixes compilation warnings.
+
 2015-03-18  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp-sh.el (tramp-do-directory-files-and-attributes-with-stat):
