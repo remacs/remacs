@@ -1,5 +1,7 @@
 2015-03-19  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* emacs-lisp/pcase.el (pcase-lambda): Rewrite.
+
 	* emacs-lisp/eieio.el (object-slots): Return slot names as before
 	(bug#20141).
 
