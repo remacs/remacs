@@ -453,10 +453,11 @@ The CLOS function `class-direct-subclasses' is aliased to this function."
   (mapcar #'identity (eieio--class-slots class)))
 
 (defun object-slots (obj)
-  "Return list of slots available in OBJ."
+  "Return list of slot names available in OBJ."
   (declare (obsolete eieio-class-slots "25.1"))
   (cl-check-type obj eieio-object)
-  (eieio-class-slots (eieio--object-class obj)))
+  (mapcar #'cl--slot-descriptor-name
+	  (eieio-class-slots (eieio--object-class obj))))
 
 (defun eieio--class-slot-initarg (class slot)
   "Fetch from CLASS, SLOT's :initarg."
