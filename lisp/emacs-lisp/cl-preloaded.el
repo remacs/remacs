@@ -212,7 +212,9 @@
   ;; Intended to be shared between defstruct and defclass.
   (name nil :type symbol)               ;The type name.
   (docstring nil :type string)
-  (parents nil :type (or cl--class (list-of cl--class)))
+  ;; For structs there can only be one parent, but when EIEIO classes inherit
+  ;; from cl--class, we'll need this to hold a list.
+  (parents nil :type (list-of cl--class))
   (slots nil :type (vector cl-slot-descriptor))
   (index-table nil :type hash-table))
 
