@@ -2588,7 +2588,7 @@ Will untabify if `cperl-electric-backspace-untabify' is non-nil."
 	  (delete-region (point) p))
       (if cperl-electric-backspace-untabify
 	  (backward-delete-char-untabify arg)
-	(delete-char (- arg))))))
+	(call-interactively 'delete-backward-char)))))
 
 (put 'cperl-electric-backspace 'delete-selection 'supersede)
 
