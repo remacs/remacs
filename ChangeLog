@@ -1,3 +1,14 @@
+2015-03-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib
+	This incorporates:
+	2015-03-19 fdopendir: port better to MinGW
+	2015-03-18 fdopendir: fix typo in comment
+	2015-02-24 glob, etc.: port to MSVC v18 on MS-Windows 8.1
+	* lib/dirent.in.h, lib/fdopendir.c: Update from gnulib.
+	* lib/dirfd.c, m4/dirfd.m4: New files from gnulib.
+	* lib/gnulib.mk, m4/gnulib-comp.m4: Regenerate.
+
 2015-03-02  Robert Pluim  <rpluim@gmail.com>  (tiny change)
 
 	* configure.ac: Error out if with-file-notification=w32 is
