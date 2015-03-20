@@ -345,7 +345,7 @@ Returns the number of deleted entries."
 			(* (oref db :max-size)
 			   (oref db :prune-factor))))
 	candidates)
-    (if (> size target-size)
+    (if (> size (oref db :max-size))
 	(progn
 	  (setq candidates
 		(registry-collect-prune-candidates

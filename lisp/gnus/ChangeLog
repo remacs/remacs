@@ -1,5 +1,10 @@
 2015-03-19  Eric Abrahamsen  <eric@ericabrahamsen.net>
 
+	* registry.el (registry-prune): Allow registry to reach full size
+	before pruning.
+
+2015-03-19  Eric Abrahamsen  <eric@ericabrahamsen.net>
+
 	* registry.el (registry-collect-prune-candidates): Fix call to
 	cl-subseq.
 
