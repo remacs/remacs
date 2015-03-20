@@ -2234,7 +2234,7 @@ if test "$ac_cv_header_pthread_h" && test "$opsys" != "mingw32"; then
       hpux* | sol*)
 	AC_DEFINE([_REENTRANT], 1,
 	  [Define to 1 if your system requires this in multithreaded code.]);;
-      aix4-2 | darwin | freebsd)
+      aix4-2)
 	AC_DEFINE([_THREAD_SAFE], 1,
 	  [Define to 1 if your system requires this in multithreaded code.]);;
     esac
