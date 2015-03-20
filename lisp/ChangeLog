@@ -6,7 +6,7 @@
 
 2015-03-19  Vibhav Pant  <vibhavp@gmail.com>
 
-	* lisp/progmodes/cperl-mode.el (cperl-electric-backspace):
+	* progmodes/cperl-mode.el (cperl-electric-backspace):
 	Call delete-backward-space interactively instead of delete-char.
 
 2015-03-19  Stefan Monnier  <monnier@iro.umontreal.ca>
@@ -73,9 +73,9 @@
 
 2015-03-19  Vibhav Pant  <vibhavp@gmail.com>
 
-	* lisp/leim/quail/hangul.el (hangul-delete-backward-char)
+	* leim/quail/hangul.el (hangul-delete-backward-char)
 	(hangul-to-hanja-conversion):
-	* lisp/progmodes/cperl-mode.el (cperl-electric-keyword)
+	* progmodes/cperl-mode.el (cperl-electric-keyword)
 	(cperl-electric-backspace): Use delete-char instead of
 	delete-backward-char, fixes compilation warnings.
 
@@ -115,7 +115,7 @@
 2015-03-18  Dima Kogan  <dima@secretsauce.net>
 
 	Have gud-display-line not display source buffer in gud window.
-	* lisp/progmodes/gud.el (gud-display-line): Make display-buffer
+	* progmodes/gud.el (gud-display-line): Make display-buffer
 	not reuse selected window.  (Bug#17675, Bug#19901, Bug#20034)
 
 2015-03-17  Tassilo Horn  <tsdh@gnu.org>
@@ -1767,7 +1767,7 @@
 
 2015-01-30  Oleh Krehel  <ohwoeowho@gmail.com>
 
-	* lisp/custom.el (defface): Set `indent' to 1.
+	* custom.el (defface): Set `indent' to 1.
 
 2015-01-30  Oleh Krehel  <ohwoeowho@gmail.com>
 
@@ -1775,21 +1775,21 @@
 
 2015-01-30  Michal Nazarewicz  <mina86@mina86.com>
 
-	* lisp/files.el (save-buffers-kill-emacs): If `confirm-kill-emacs'
+	* files.el (save-buffers-kill-emacs): If `confirm-kill-emacs'
 	is set, but user has just been asked whether they really want to
 	kill Emacs (for example with a ‘Modified buffers exist; exit
 	anyway?’ prompt), do not ask them for another confirmation.
 
 2015-01-29  Jay Belanger  <jay.p.belanger@gmail.com>
 
-	* lisp/calc/calc-units.el (calc-convert-exact-units): New function.
+	* calc/calc-units.el (calc-convert-exact-units): New function.
 	(calc-convert-units): Check for missing units.
 	(math-consistent-units-p): Strengthen the test for consistent units.
 
-	* lisp/calc/calc-ext.el (calc-init-extensions):  Autoload
+	* calc/calc-ext.el (calc-init-extensions):  Autoload
 	`calc-convert-exact-units' and assign it a keybinding.
 
-	* lisp/calc/calc-help (calc-u-prefix-help): Add help for the
+	* calc/calc-help (calc-u-prefix-help): Add help for the
 	"un" keybinding.
 
 2015-01-28  Stefan Monnier  <monnier@iro.umontreal.ca>
