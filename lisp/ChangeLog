@@ -1,5 +1,10 @@
 2015-03-20  Dmitry Gutov  <dgutov@yandex.ru>
 
+	* progmodes/ruby-mode.el (ruby-syntax-before-regexp-re): Detect
+	regexps after `!'.  (Bug#19285)
+
+2015-03-20  Dmitry Gutov  <dgutov@yandex.ru>
+
 	* progmodes/ruby-mode.el (ruby-font-lock-keywords): Use
 	`font-lock-constant-face' for nil, true and false.  Highlight
 	`self' as a keyword.  (Bug#17733)

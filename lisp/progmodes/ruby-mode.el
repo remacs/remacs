@@ -1777,7 +1777,7 @@ It will be properly highlighted even when the call omits parens.")
   (defvar ruby-syntax-before-regexp-re
     (concat
      ;; Special tokens that can't be followed by a division operator.
-     "\\(^\\|[[{|=(,~;<>]"
+     "\\(^\\|[[{|=(,~;<>!]"
      ;; Distinguish ternary operator tokens.
      ;; FIXME: They don't really have to be separated with spaces.
      "\\|[?:] "
