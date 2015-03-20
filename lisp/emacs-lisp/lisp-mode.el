@@ -320,14 +320,18 @@
     `( ;; Definitions.
       (,(concat "(" el-defs-re "\\_>"
                 ;; Any whitespace and defined object.
-                "[ \t'\(]*"
-                "\\(\\(?:\\sw\\|\\s_\\)+\\)?")
+                "[ \t']*"
+		;; With cl-defstruct, the name may follow a paren,
+		;; e.g. (cl-defstruct (foo-struct opts)...).
+                "\\(([ \t']*\\)?\\(\\(?:\\sw\\|\\s_\\)+\\)?")
        (1 font-lock-keyword-face)
-       (2 (let ((type (get (intern-soft (match-string 1)) 'lisp-define-type)))
-            (cond ((eq type 'var) font-lock-variable-name-face)
-                  ((eq type 'type) font-lock-type-face)
-                  (t font-lock-function-name-face)))
-          nil t))
+       (3 (let ((type (get (intern-soft (match-string 1)) 'lisp-define-type)))
+	    (cond ((eq type 'var) font-lock-variable-name-face)
+		  ((eq type 'type) font-lock-type-face)
+		  ;; If match-string 2 is non-nil, we encountered a
+		  ;; form like (defalias (intern (concat s "-p"))).
+		  ((not (match-string 2)) font-lock-function-name-face)))
+	  nil t))
       ;; Emacs Lisp autoload cookies.  Supports the slightly different
       ;; forms used by mh-e, calendar, etc.
       ("^;;;###\\([-a-z]*autoload\\)" 1 font-lock-warning-face prepend))

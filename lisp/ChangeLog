@@ -1,3 +1,8 @@
+2015-03-20  Tassilo Horn  <tsdh@gnu.org>
+
+	* emacs-lisp/lisp-mode.el (lisp-el-font-lock-keywords-1): Fix
+	false positive in function name font-locking.
+
 2015-03-20  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/cl-macs.el (cl-defsubst): Ignore false-positive
