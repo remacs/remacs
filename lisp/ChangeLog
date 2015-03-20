@@ -1,3 +1,9 @@
+2015-03-20  Nobuyoshi Nakada  <nobu@ruby-lang.org>
+
+	* progmodes/ruby-mode.el (ruby-syntax-before-regexp-re): Expect
+	beginning of regexp also after open brace or vertical bar.
+	(Bug#20026)
+
 2015-03-07  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp.el (tramp-ssh-controlmaster-options): Make it a
