@@ -1,3 +1,10 @@
+2015-03-20  Alan Mackenzie  <acm@muc.de>
+
+	Fix debbugs#20146
+
+	* font-lock.el (font-lock-extend-jit-lock-region-after-change):
+	Return the calculated values, as per spec.
+
 2015-03-20  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* progmodes/ruby-mode.el (ruby-font-lock-keywords): Move `at_exit'

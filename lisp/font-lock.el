@@ -1325,11 +1325,13 @@ This function does 2 things:
       (when (memq 'font-lock-extend-region-wholelines
                   font-lock-extend-region-functions)
         (goto-char beg)
-        (setq jit-lock-start (min jit-lock-start (line-beginning-position)))
+        (setq beg (min jit-lock-start (line-beginning-position)))
         (goto-char end)
-        (setq jit-lock-end
+        (setq end
               (max jit-lock-end
-                   (if (bolp) (point) (line-beginning-position 2))))))))
+                   (if (bolp) (point) (line-beginning-position 2)))))
+      (setq jit-lock-start beg
+	    jit-lock-end end))))
 
 (defun font-lock-fontify-block (&optional arg)
   "Fontify some lines the way `font-lock-fontify-buffer' would.
