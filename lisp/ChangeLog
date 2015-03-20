@@ -1,3 +1,8 @@
+2015-03-20  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/cl-macs.el (cl-defsubst): Ignore false-positive
+	occurrences of args via &cl-defs (bug#20149).
+
 2015-03-20  Alan Mackenzie  <acm@muc.de>
 
 	Fix debbugs#20146
