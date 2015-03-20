@@ -1,3 +1,9 @@
+2015-03-20  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/ruby-mode.el (ruby-font-lock-keywords): Move `at_exit'
+	and `callcc' to the "methods with required arguments" section,
+	they need a block argument.  Remove a `throw' duplicate.
+
 2015-03-19  Vibhav Pant  <vibhavp@gmail.com>
 
 	* lisp/progmodes/cperl-mode.el (cperl-electric-backspace):
