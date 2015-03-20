@@ -2,6 +2,7 @@
 
 	* emacs-lisp/lisp-mode.el (lisp-el-font-lock-keywords-1): Fix
 	false positive in function name font-locking.
+	(lisp-cl-font-lock-keywords-1): Ditto.
 
 2015-03-20  Stefan Monnier  <monnier@iro.umontreal.ca>
 

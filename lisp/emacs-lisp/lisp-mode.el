@@ -341,13 +341,16 @@
     `( ;; Definitions.
       (,(concat "(" cl-defs-re "\\_>"
                 ;; Any whitespace and defined object.
-                "[ \t'\(]*"
-                "\\(setf[ \t]+\\(?:\\sw\\|\\s_\\)+\\|\\(?:\\sw\\|\\s_\\)+\\)?")
+                "[ \t']*"
+		"\\(([ \t']*\\)?" ;; An opening paren.
+                "\\(\\(setf\\)[ \t]+\\(?:\\sw\\|\\s_\\)+\\|\\(?:\\sw\\|\\s_\\)+\\)?")
        (1 font-lock-keyword-face)
-       (2 (let ((type (get (intern-soft (match-string 1)) 'lisp-define-type)))
+       (3 (let ((type (get (intern-soft (match-string 1)) 'lisp-define-type)))
             (cond ((eq type 'var) font-lock-variable-name-face)
                   ((eq type 'type) font-lock-type-face)
-                  (t font-lock-function-name-face)))
+                  ((or (not (match-string 2))  ;; Normal defun.
+		       (and (match-string 2)   ;; Setf-expander.
+			    (match-string 4))) font-lock-function-name-face)))
           nil t)))
     "Subdued level highlighting for Lisp modes.")
 
