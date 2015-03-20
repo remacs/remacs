@@ -371,7 +371,7 @@ entries first and return candidates from beginning of list."
     ;; list of entry keys.
     (when sortfunc
       (setq candidates (sort candidates sortfunc)))
-    (delq nil (cl-subseq (mapcar #'car candidates) 0 limit))))
+    (cl-subseq (mapcar #'car candidates) 0 (min limit (length candidates)))))
 
 (provide 'registry)
 ;;; registry.el ends here
