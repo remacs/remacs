@@ -249,7 +249,7 @@
               (eieio-tdefs '("defclass"))
               (eieio-kw '("with-slots"))
               ;; Common-Lisp constructs supported by cl-lib.
-              (cl-lib-fdefs '("defmacro" "defsubst" "defun"))
+              (cl-lib-fdefs '("defmacro" "defsubst" "defun" "defmethod"))
               (cl-lib-tdefs '("defstruct" "deftype"))
               (cl-lib-kw '("progv" "eval-when" "case" "ecase" "typecase"
                            "etypecase" "ccase" "ctypecase" "loop" "do" "do*"
@@ -321,16 +321,19 @@
       (,(concat "(" el-defs-re "\\_>"
                 ;; Any whitespace and defined object.
                 "[ \t']*"
-		;; With cl-defstruct, the name may follow a paren,
-		;; e.g. (cl-defstruct (foo-struct opts)...).
-                "\\(([ \t']*\\)?\\(\\(?:\\sw\\|\\s_\\)+\\)?")
+		"\\(([ \t']*\\)?" ;; An opening paren.
+                "\\(\\(setf\\)[ \t]+\\(?:\\sw\\|\\s_\\)+\\|\\(?:\\sw\\|\\s_\\)+\\)?")
        (1 font-lock-keyword-face)
        (3 (let ((type (get (intern-soft (match-string 1)) 'lisp-define-type)))
 	    (cond ((eq type 'var) font-lock-variable-name-face)
 		  ((eq type 'type) font-lock-type-face)
 		  ;; If match-string 2 is non-nil, we encountered a
-		  ;; form like (defalias (intern (concat s "-p"))).
-		  ((not (match-string 2)) font-lock-function-name-face)))
+		  ;; form like (defalias (intern (concat s "-p"))),
+		  ;; unless match-string 4 is also there.  Then its a
+		  ;; defmethod with (setf foo) as name.
+		  ((or (not (match-string 2))  ;; Normal defun.
+		       (and (match-string 2)   ;; Setf method.
+			    (match-string 4))) font-lock-function-name-face)))
 	  nil t))
       ;; Emacs Lisp autoload cookies.  Supports the slightly different
       ;; forms used by mh-e, calendar, etc.
@@ -349,7 +352,7 @@
             (cond ((eq type 'var) font-lock-variable-name-face)
                   ((eq type 'type) font-lock-type-face)
                   ((or (not (match-string 2))  ;; Normal defun.
-		       (and (match-string 2)   ;; Setf-expander.
+		       (and (match-string 2)   ;; Setf function.
 			    (match-string 4))) font-lock-function-name-face)))
           nil t)))
     "Subdued level highlighting for Lisp modes.")

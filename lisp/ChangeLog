@@ -1,3 +1,8 @@
+2015-03-21  Tassilo Horn  <tsdh@gnu.org>
+
+	* emacs-lisp/lisp-mode.el (lisp-el-font-lock-keywords-1): Also
+	recognize (cl-)defmethod with (setf method) name.
+
 2015-03-20  Tassilo Horn  <tsdh@gnu.org>
 
 	* emacs-lisp/lisp-mode.el (lisp-el-font-lock-keywords-1): Fix
