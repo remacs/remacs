@@ -187,6 +187,26 @@ know it does not, mark the NEWS entry with "---".  If you know
 that *all* the necessary documentation updates have been made, mark
 the entry with "+++". Otherwise do not mark it.
 
+Please see (info "(elisp)Documentation Tips") or
+https://www.gnu.org/software/emacs/manual/html_node/elisp/Documentation-Tips.html
+for more specific tips on Emacs's doc style.  Use `checkdoc' to check
+for documentation errors before submitting a patch.
+
+** Test your changes.
+
+Please test your changes before committing them or sending them to the
+list.
+
+Emacs uses ERT, Emacs Lisp Regression Testing, for testing.  See (info
+"(ert)") or https://www.gnu.org/software/emacs/manual/html_node/ert/
+for more information on writing and running tests.
+
+To run tests on the entire Emacs tree, run "make check" from the
+top-level directory.  Most tests are in the directory
+"test/automated".  From the "test/automated" directory, run "make
+<filename>" to run the tests for <filename>.el(c).  See
+"test/automated/Makefile" for more information.
+
 ** Understanding Emacs Internals.
 
 The best way to understand Emacs Internals is to read the code,

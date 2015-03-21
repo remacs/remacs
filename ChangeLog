@@ -1,3 +1,8 @@
+2015-03-21  Samer Masterson  <samer@samertm.com>
+
+	* CONTRIBUTE (Test your changes.): New section.
+	(Document your changes.): Add doc tips.
+
 2015-03-19  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Better port of pthread usage to FreeBSD
