@@ -1,3 +1,9 @@
+2015-03-21  Eli Zaretskii  <eliz@gnu.org>
+
+	* emacs.c (synchronize_locale) [WINDOWSNT]: Ignore 'category' and
+	always use LC_ALL instead.  Fixes problems with setting
+	system-time-locale to something non-default.
+
 2015-03-18  Glenn Morris  <rgm@gnu.org>
 
 	* frame.h (x_set_bitmap_icon): Don't set the icon if icon-type is
