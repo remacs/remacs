@@ -1,3 +1,8 @@
+2015-03-21  Titus von der Malsburg  <malsburg@posteo.de>
+
+	* NEWS: Mention `default-font-width', `window-font-height',
+	`window-font-width', and `window-max-chars-per-line'.
+
 2015-03-03  Kelvin White  <kwhite@gnu.org>
 
 	* NEWS.24: Add section to include ERC changes.

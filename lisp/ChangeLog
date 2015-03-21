@@ -1,3 +1,11 @@
+2015-03-21  Titus von der Malsburg  <malsburg@posteo.de>
+
+	* window.el (window-font-width, window-font-height)
+	(window-max-chars-per-line): New functions.
+
+	* simple.el (default-font-height): Doc fix.
+	(default-font-width): New function.
+
 2015-03-21  Tassilo Horn  <tsdh@gnu.org>
 
 	* emacs-lisp/lisp-mode.el (lisp-el-font-lock-keywords-1): Also
