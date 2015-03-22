@@ -1,3 +1,8 @@
+2015-03-22  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* fontset.c (fontset_pattern_regexp): Replace + 1 with + 3 for
+	regexsize (Bug#20156).
+
 2015-03-21  Eli Zaretskii  <eliz@gnu.org>
 
 	* emacs.c (synchronize_locale) [WINDOWSNT]: Ignore 'category' and
