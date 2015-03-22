@@ -1,3 +1,9 @@
+2015-03-22  Richard Stallman  <rms@gnu.org>
+
+	* net/browse-url.el (browse-url-firefox-program): Prefer IceCat, doc.
+	(browse-url-firefox-arguments)
+	(browse-url-firefox-startup-arguments): Doc fix.
+
 2015-02-01  Joakim Verona  <joakim@verona.se>
 	Support for the new Xwidget feature.
 	* xwidget.el:

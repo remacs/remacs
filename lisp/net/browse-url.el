@@ -317,21 +317,21 @@ Defaults to the value of `browse-url-mozilla-arguments' at the time
   :group 'browse-url)
 
 (defcustom browse-url-firefox-program
-  (let ((candidates '("firefox" "iceweasel" "icecat")))
+  (let ((candidates '("icecat" "iceweasel" "firefox")))
     (while (and candidates (not (executable-find (car candidates))))
       (setq candidates (cdr candidates)))
     (or (car candidates) "firefox"))
-  "The name by which to invoke Firefox."
+  "The name by which to invoke Firefox or a variant of it."
   :type 'string
   :group 'browse-url)
 
 (defcustom browse-url-firefox-arguments nil
-  "A list of strings to pass to Firefox as arguments."
+  "A list of strings to pass to Firefox (or variant) as arguments."
   :type '(repeat (string :tag "Argument"))
   :group 'browse-url)
 
 (defcustom browse-url-firefox-startup-arguments browse-url-firefox-arguments
-  "A list of strings to pass to Firefox when it starts up.
+  "A list of strings to pass to Firefox (or variant) when it starts up.
 Defaults to the value of `browse-url-firefox-arguments' at the time
 `browse-url' is loaded."
   :type '(repeat (string :tag "Argument"))
