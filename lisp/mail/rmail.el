@@ -2762,7 +2762,8 @@ The current mail message becomes the message displayed."
   (let ((mbox-buf rmail-buffer)
 	(view-buf rmail-view-buffer)
 	blurb beg end body-start coding-system character-coding
-	is-text-message header-style)
+	is-text-message header-style
+	showing-message)
     (if (not msg)
 	(setq msg rmail-current-message))
     (unless (setq blurb (rmail-no-mail-p))
@@ -2788,7 +2789,8 @@ The current mail message becomes the message displayed."
 	(setq beg (rmail-msgbeg msg)
 	      end (rmail-msgend msg))
 	(when (> (- end beg) rmail-show-message-verbose-min)
-	  (message "Showing message %d" msg))
+	  (setq showing-message t)
+	  (message "Showing message %d..." msg))
 	(narrow-to-region beg end)
 	(goto-char beg)
 	(with-current-buffer rmail-view-buffer
@@ -2802,6 +2804,8 @@ The current mail message becomes the message displayed."
 		 (re-search-forward "mime-version: 1.0" nil t))
 	    (let ((rmail-buffer mbox-buf)
 		  (rmail-view-buffer view-buf))
+	      (setq showing-message t)
+	      (message "Showing message %d..." msg)
 	      (set (make-local-variable 'rmail-mime-decoded) t)
 	      (funcall rmail-show-mime-function))
 	  (setq body-start (search-forward "\n\n" nil t))
@@ -2881,8 +2885,8 @@ The current mail message becomes the message displayed."
 	(rmail-swap-buffers)
 	(setq rmail-buffer-swapped t)
 	(run-hooks 'rmail-show-message-hook)
-	(when (> (- end beg) rmail-show-message-verbose-min)
-	  (message "Showing message %d...done" msg))))
+	(when showing-message
+	  (setq blurb (format "Showing message %d...done" msg)))))
     blurb))
 
 (defun rmail-copy-headers (beg end &optional ignored-headers)
