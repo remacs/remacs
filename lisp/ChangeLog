@@ -1,3 +1,8 @@
+2015-03-22  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* simple.el (deactivate-mark): Only modify PRIMARY if we own
+	PRIMARY (Bug#18939).
+
 2015-03-22  Martin Rudalics  <rudalics@gmx.at>
 
 	* emacs-lisp/debug.el (debug): Don't try using "previous" window
