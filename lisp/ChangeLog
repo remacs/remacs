@@ -1,3 +1,9 @@
+2015-03-22  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* json.el (json-decode-char0): Delete this alias.
+	(json-encode-string): Rewrite to improve performance (bug#20154).
+	(json-encode-char): Fold into `json-encode-string'.
+
 2015-03-22  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* menu-bar.el (menu-bar-update-buffers): Count displayed buffers
