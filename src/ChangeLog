@@ -1,3 +1,8 @@
+2015-03-22  John F Carr <jfc@mit.edu>
+
+	* fontset.c (fontset_pattern_regexp): Backport: Replace + 1 with
+	+ 3 in alloca (Bug#20156) (tiny change)
+
 2015-03-12  Glenn Morris  <rgm@gnu.org>
 
 	* frame.h (x_set_bitmap_icon): Don't set the icon if icon-type is

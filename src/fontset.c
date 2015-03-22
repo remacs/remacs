@@ -1097,9 +1097,9 @@ fontset_pattern_regexp (Lisp_Object pattern)
 	 we convert "*" to "[^-]*" which is much faster in regular
 	 expression matching.  */
       if (ndashes < 14)
-	p1 = regex = alloca (SBYTES (pattern) + 2 * nstars + 2 * nescs + 1);
+	p1 = regex = alloca (SBYTES (pattern) + 2 * nstars + 2 * nescs + 3);
       else
-	p1 = regex = alloca (SBYTES (pattern) + 5 * nstars + 2 * nescs + 1);
+	p1 = regex = alloca (SBYTES (pattern) + 5 * nstars + 2 * nescs + 3);
 
       *p1++ = '^';
       for (p0 = SDATA (pattern); *p0; p0++)
