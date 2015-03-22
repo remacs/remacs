@@ -1,7 +1,7 @@
-2015-03-22  John F Carr <jfc@mit.edu>
+2015-03-22  John F Carr  <jfc@mit.edu>  (tiny change)
 
 	* fontset.c (fontset_pattern_regexp): Backport: Replace + 1 with
-	+ 3 in alloca (Bug#20156) (tiny change)
+	+ 3 in alloca (Bug#20156).
 
 2015-03-12  Glenn Morris  <rgm@gnu.org>
 
