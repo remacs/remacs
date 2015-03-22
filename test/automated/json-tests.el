@@ -1,6 +1,6 @@
 ;;; json-tests.el --- Test suite for json.el
 
-;; Copyright (C) 2015  Dmitry Gutov
+;; Copyright (C) 2015 Free Software Foundation, Inc.
 
 ;; Author: Dmitry Gutov <dgutov@yandex.ru>
 
