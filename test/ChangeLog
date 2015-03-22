@@ -1,3 +1,7 @@
+2015-03-22  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* automated/json-tests.el: New file.
+
 2015-03-19  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* automated/eieio-tests.el (eieio-test-17-virtual-slot): Don't use
