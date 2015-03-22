@@ -4532,17 +4532,22 @@ encoded string (and the same mask) will decode the string."
 	(let ((coding-system-for-read coding-system-for-read)
 	      (case-fold-search t)
 	      unquote
-	      armor-start armor-prefix armor-end after-end)
+	      armor-start armor-prefix armor-end-regexp armor-end after-end)
 
 	  (setq armor-start (match-beginning 0)
 		armor-prefix (buffer-substring
 			      (line-beginning-position)
-			      armor-start)
-		armor-end (re-search-forward
-			   (concat "^"
-				   armor-prefix
-				   "-----END PGP MESSAGE-----$")
-			   nil t))
+			      armor-start))
+	  (if (string-match "<pre>\\'" armor-prefix)
+	      (setq armor-prefix ""))
+
+	  (setq armor-end-regexp
+		(concat "^"
+			armor-prefix
+			"-----END PGP MESSAGE-----$"))
+	  (setq armor-end (re-search-forward armor-end-regexp
+					     nil t))
+
 	  (unless armor-end
 	    (error "Encryption armor beginning has no matching end"))
 	  (goto-char armor-start)
@@ -4563,13 +4568,13 @@ encoded string (and the same mask) will decode the string."
 
 		;; Use the charset specified in the armor.
 		(unless coding-system-for-read
-		  (if (re-search-forward "^Charset: \\(.*\\)" nil t)
+		  (if (re-search-forward "^[ \t]*Charset[ \t\n]*:[ \t\n]*\\(.*\\)" nil t)
 		      (setq coding-system-for-read
 			    (epa--find-coding-system-for-mime-charset
 			     (intern (downcase (match-string 1)))))))
 
 		(goto-char (point-min))
-		(if (re-search-forward "^[ \t]*Content-transfer-encoding[ \t]*:[ \t]*quoted-printable[ \t]*$" nil t)
+		(if (re-search-forward "^[ \t]*Content-transfer-encoding[ \t\n]*:[ \t\n]*quoted-printable[ \t]*$" nil t)
 		    (setq unquote t)))))
 
 	  (when unquote
@@ -4587,7 +4592,8 @@ encoded string (and the same mask) will decode the string."
 	       (goto-char armor-start)
 	       (current-buffer))))
 
-	  (push (list armor-start (- (point-max) after-end))
+	  (push (list armor-start (- (point-max) after-end) mime
+		      armor-end-regexp)
 		decrypts)))
 
       (unless decrypts
@@ -4603,14 +4609,35 @@ encoded string (and the same mask) will decode the string."
 	      (narrow-to-region beg end)
 	      (goto-char (point-min))
 	      (dolist (d decrypts)
+		;; Find, in the real Rmail buffer, the same armors
+		;; that we found and decrypted in the view buffer.
 		(if (re-search-forward "-----BEGIN PGP MESSAGE-----$" nil t)
-		    (let (armor-start armor-end)
+		    (let (armor-start armor-end armor-end-regexp)
 		      (setq armor-start (match-beginning 0)
-			    armor-end (re-search-forward "^-----END PGP MESSAGE-----$"
-							 nil t))
+			    armor-end-regexp (nth 3 d)
+			    armor-end (re-search-forward
+				       armor-end-regexp
+				       nil t))
+
+		      ;; Found as expected -- now replace it with the decrypt.
 		      (when armor-end
 			(delete-region armor-start armor-end)
-			(insert-buffer-substring from-buffer (nth 0 d) (nth 1 d)))))))))))))
+			(insert-buffer-substring from-buffer (nth 0 d) (nth 1 d)))
+
+		      ;; Change the mime type (if this is in a mime part)
+		      ;; so this part will display by default
+		      ;; when the message is shown later.
+		      (when (nth 2 d)
+			(goto-char armor-start)
+			(when (re-search-backward "^--" nil t)
+			  (save-restriction
+			    (narrow-to-region (point) armor-start)
+			    (when (re-search-forward "^content-type[ \t\n]*:[ \t\n]*" nil t)
+			      (when (looking-at "[^\n \t;]+")
+				(let ((value (match-string 0)))
+				  (unless (member value '("text/plain" "text/html"))
+				    (replace-match "text/plain"))))))))
+		      ))))))))))
  
 
 ;;;;  Desktop support
