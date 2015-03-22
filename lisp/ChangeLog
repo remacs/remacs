@@ -1,3 +1,8 @@
+2015-03-22  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* menu-bar.el (menu-bar-update-buffers): Count displayed buffers
+	for `buffers-menu-max-size', not total buffers.
+
 2015-03-21  Titus von der Malsburg  <malsburg@posteo.de>
 
 	* window.el (window-font-width, window-font-height)
