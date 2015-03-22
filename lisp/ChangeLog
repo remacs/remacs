@@ -1,3 +1,9 @@
+2015-03-22  Jackson Ray Hamilton  <jackson@jacksonrayhamilton.com>
+
+	* textmodes/sgml-mode.el (sgml-attribute-offset): New defcustom.
+	(sgml-calculate-indent): Use `sgml-attribute-offset' for attribute
+	indentation (bug#20161).
+
 2015-03-22  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* json.el (json-decode-char0): Delete this alias.
