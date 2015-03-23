@@ -1,3 +1,8 @@
+2015-03-23  Ben Bacarisse  <ben.lists@bsb.me.uk>  (tiny change)
+
+	* nnmh.el (nnmh-request-expire-articles):
+	Work for the case nnmail-expiry-target is an nnmh group (bug#20170).
+
 2015-03-21  Eric Abrahamsen  <eric@ericabrahamsen.net>
 
 	* registry.el (registry-lookup-secondary, registry-full)

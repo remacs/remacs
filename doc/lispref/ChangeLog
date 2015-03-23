@@ -1,3 +1,11 @@
+2015-03-23  Eli Zaretskii  <eliz@gnu.org>
+
+	* commands.texi (Event Input Misc): Fix incorrect usage of @code.
+	(Bug#20174)
+	(Accessing Mouse): Expand documentation of 'posn-actual-col-row'.
+	(Bug#20169)
+	More accurate description of 'posn-object-x-y'.  (Bug#20168)
+
 2015-03-23  Daiki Ueno  <ueno@gnu.org>
 
 	* processes.texi (Asynchronous Processes): Mention `make-process'.

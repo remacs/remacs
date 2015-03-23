@@ -4807,7 +4807,8 @@ run `deactivate-mark-hook'."
       ;; the region prior to the last command modifying the buffer.
       ;; Set the selection to that, or to the current region.
       (cond (saved-region-selection
-	     (gui-set-selection 'PRIMARY saved-region-selection)
+	     (if (gui-call gui-selection-owner-p 'PRIMARY)
+		 (gui-set-selection 'PRIMARY saved-region-selection))
 	     (setq saved-region-selection nil))
 	    ;; If another program has acquired the selection, region
 	    ;; deactivation should not clobber it (Bug#11772).

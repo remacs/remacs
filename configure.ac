@@ -3197,10 +3197,12 @@ if test "${opsys}" = "mingw32"; then
   AH_TEMPLATE(HAVE_JPEG, [Define to 1 if you have the jpeg library (-ljpeg).])dnl
   if test "${HAVE_JPEG}" = "yes"; then
     AC_DEFINE(HAVE_JPEG)
-    AC_EGREP_CPP([version= *(6[2-9]|[7-9][0-9])],
-        [#include <jpeglib.h>
-	 version=JPEG_LIB_VERSION
-],
+    AC_EGREP_CPP([version 6b or later],
+	[#include <jpeglib.h>
+	 #if JPEG_LIB_VERSION >= 62
+	 version 6b or later
+	 #endif
+	],
         [AC_DEFINE(HAVE_JPEG)],
         [AC_MSG_WARN([libjpeg found, but not version 6b or later])
         HAVE_JPEG=no])
@@ -3216,10 +3218,12 @@ elif test "${HAVE_X11}" = "yes" || test "${HAVE_W32}" = "yes"; then
   AH_TEMPLATE(HAVE_JPEG, [Define to 1 if you have the jpeg library (-ljpeg).])dnl
   if test "${HAVE_JPEG}" = "yes"; then
     AC_DEFINE(HAVE_JPEG)
-    AC_EGREP_CPP([version= *(6[2-9]|[7-9][0-9])],
+    AC_EGREP_CPP([version 6b or later],
 	[#include <jpeglib.h>
-	 version=JPEG_LIB_VERSION
-],
+	 #if JPEG_LIB_VERSION >= 62
+	 version 6b or later
+	 #endif
+	],
 	[AC_DEFINE(HAVE_JPEG)],
 	[AC_MSG_WARN([libjpeg found, but not version 6b or later])
 	HAVE_JPEG=no])

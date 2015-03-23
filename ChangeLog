@@ -1,3 +1,7 @@
+2015-03-23  Andreas Schwab  <schwab@suse.de>
+
+	* configure.ac: Fix jpeg version check to work with gcc >= 5.
+
 2015-03-21  Samer Masterson  <samer@samertm.com>
 
 	* CONTRIBUTE (Test your changes.): New section.
