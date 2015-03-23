@@ -1,3 +1,20 @@
+2015-03-23  Daniel Colascione  <dancol@dancol.org>
+
+	Automatically adjust process window sizes.
+
+	* window.el (window-adjust-process-window-size-function): New
+	customizable variable.
+	(window-adjust-process-window-size)
+	(window-adjust-process-window-size-smallest)
+	(window-adjust-process-window-size-largest)
+	(window--process-window-list, window--adjust-process-windows):
+	New functions.
+	(window-configuration-change-hook): Add
+	`window--adjust-process-windows'.
+	* term.el (term-mode): Observe result of
+	`window-adjust-process-window-size-function'.
+	(term-check-size): Delete.
+
 2015-03-22  Jackson Ray Hamilton  <jackson@jacksonrayhamilton.com>
 
 	* textmodes/sgml-mode.el (sgml-attribute-offset): New defcustom.
