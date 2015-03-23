@@ -1,3 +1,8 @@
+2015-03-23  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* json.el (json-decode-char0): Delete this alias as well.
+	(json-read-escaped-char): Don't call it (bug#20154).
+
 2015-03-23  Daniel Colascione  <dancol@dancol.org>
 
 	* emacs-lisp/lisp-mode.el (lisp--el-non-funcall-position-p): New function.
@@ -33,7 +38,7 @@
 
 2015-03-22  Dmitry Gutov  <dgutov@yandex.ru>
 
-	* json.el (json-decode-char0): Delete this alias.
+	* json.el (json-encode-char0): Delete this alias.
 	(json-encode-string): Rewrite to improve performance (bug#20154).
 	(json-encode-char): Fold into `json-encode-string'.
 

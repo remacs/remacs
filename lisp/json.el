@@ -52,12 +52,6 @@
 
 ;;; Code:
 
-
-;; Compatibility code
-
-(defalias 'json-decode-char0 'decode-char)
-
-
 ;; Parameters
 
 (defvar json-object-type 'alist
@@ -286,7 +280,7 @@ representation will be parsed correctly."
      ((looking-at "[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]")
       (let ((hex (match-string 0)))
         (json-advance 4)
-        (json-decode-char0 'ucs (string-to-number hex 16))))
+        (string-to-number hex 16)))
      (t
       (signal 'json-string-escape (list (point)))))))
 
