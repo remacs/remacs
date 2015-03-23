@@ -1,3 +1,8 @@
+2015-03-23  Daniel Colascione  <dancol@dancol.org>
+
+	* emacs-lisp/lisp-mode.el (lisp--el-non-funcall-position-p): New function.
+	(lisp--el-match-keyword): Use it.
+
 2015-03-23  Daiki Ueno  <ueno@gnu.org>
 
 	* subr.el (start-process): New function, ported from the C

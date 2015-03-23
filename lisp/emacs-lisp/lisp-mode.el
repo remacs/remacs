@@ -181,13 +181,47 @@
             nil)))
     res))
 
+(defun lisp--el-non-funcall-position-p (&optional pos)
+  "Heuristically determine whether POS is an evaluated position."
+  (setf pos (or pos (point)))
+  (save-match-data
+    (save-excursion
+      (goto-char pos)
+      (or (eql (char-before) ?\')
+          (let ((parent
+                 (ignore-errors
+                   (up-list -1)
+                   (cond
+                     ((looking-at (rx "(" (* (syntax -)) "("))
+                      (up-list -1)
+                      (when (looking-at "(\\_<let\\*?\\_>")
+                        (goto-char (match-end 0))
+                        'let))
+                     ((looking-at
+                       (rx "("
+                           (group-n 1 (+ (or (syntax w) (syntax _))))
+                           symbol-end))
+                      (prog1 (intern-soft (match-string-no-properties 1))
+                        (goto-char (match-end 1))))))))
+            (or (eq parent 'declare)
+                (and (eq parent 'let)
+                     (progn
+                       (forward-sexp 1)
+                       (< pos (point))))
+                (and (eq parent 'condition-case)
+                     (progn
+                       (forward-sexp 2)
+                       (< (point) pos)))))))))
+
 (defun lisp--el-match-keyword (limit)
   (catch 'found
     (while (re-search-forward "(\\(\\(?:\\sw\\|\\s_\\)+\\)\\_>" limit t)
       (let ((sym (intern-soft (match-string 1))))
 	(when (or (special-form-p sym)
 		  (and (macrop sym)
-		       (not (get sym 'no-font-lock-keyword))))
+                       (not (get sym 'no-font-lock-keyword))
+                       (not (lisp--el-non-funcall-position-p
+                             (match-beginning 0)))))
 	  (throw 'found t))))))
 
 (defun lisp--el-font-lock-flush-elisp-buffers (&optional file)
