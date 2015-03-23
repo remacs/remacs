@@ -2,6 +2,8 @@
 
 	* commands.texi (Event Input Misc): Fix incorrect usage of @code.
 	(Bug#20174)
+	(Accessing Mouse): Expand documentation of 'posn-actual-col-row'.
+	(Bug#20169)
 
 2015-03-14  Eli Zaretskii  <eliz@gnu.org>
 
