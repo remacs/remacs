@@ -1399,7 +1399,6 @@ usage: (make-process &rest ARGS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
   Lisp_Object buffer, name, command, program, proc, contact, current_dir, tem;
-  ptrdiff_t i;
   ptrdiff_t count = SPECPDL_INDEX ();
   struct gcpro gcpro1;
   USE_SAFE_ALLOCA;
@@ -1515,7 +1514,7 @@ usage: (make-process &rest ARGS)  */)
 	ptrdiff_t nargs2 = 3 + XINT (Flength (command));
 	Lisp_Object tem2;
 	SAFE_ALLOCA_LISP (args2, nargs2);
-	i = 0;
+	ptrdiff_t i = 0;
 	args2[i++] = Qstart_process;
 	args2[i++] = name;
 	args2[i++] = buffer;
@@ -1547,7 +1546,7 @@ usage: (make-process &rest ARGS)  */)
 	    ptrdiff_t nargs2 = 3 + XINT (Flength (command));
 	    Lisp_Object tem2;
 	    SAFE_ALLOCA_LISP (args2, nargs2);
-	    i = 0;
+	    ptrdiff_t i = 0;
 	    args2[i++] = Qstart_process;
 	    args2[i++] = name;
 	    args2[i++] = buffer;
@@ -1582,8 +1581,6 @@ usage: (make-process &rest ARGS)  */)
   if (!NILP (program))
     {
       Lisp_Object program_args = XCDR (command);
-      unsigned char **new_argv;
-      ptrdiff_t new_argc;
 
       /* If program file name is not absolute, search our path for it.
 	 Put the name we will really use in TEM.  */
@@ -1612,51 +1609,50 @@ usage: (make-process &rest ARGS)  */)
       /* Remove "/:" from TEM.  */
       tem = remove_slash_colon (tem);
 
-      {
-	Lisp_Object arg_encoding = Qnil, tem2;
-	struct gcpro gcpro1;
-	GCPRO1 (tem);
+      Lisp_Object arg_encoding = Qnil;
+      struct gcpro gcpro1;
+      GCPRO1 (tem);
 
-	/* Encode the file name and put it in NEW_ARGV.
-	   That's where the child will use it to execute the program.  */
-	tem = list1 (ENCODE_FILE (tem));
+      /* Encode the file name and put it in NEW_ARGV.
+	 That's where the child will use it to execute the program.  */
+      tem = list1 (ENCODE_FILE (tem));
+      ptrdiff_t new_argc = 1;
 
-	/* Here we encode arguments by the coding system used for sending
-	   data to the process.  We don't support using different coding
-	   systems for encoding arguments and for encoding data sent to the
-	   process.  */
+      /* Here we encode arguments by the coding system used for sending
+	 data to the process.  We don't support using different coding
+	 systems for encoding arguments and for encoding data sent to the
+	 process.  */
 
-	for (tem2 = program_args; CONSP (tem2); tem2 = XCDR (tem2))
-	  {
-	    tem = Fcons (XCAR (tem2), tem);
-	    CHECK_STRING (XCAR (tem));
-	    if (STRING_MULTIBYTE (XCAR (tem)))
-	      {
-		if (NILP (arg_encoding))
-		  arg_encoding = (complement_process_encoding_system
-				  (XPROCESS (proc)->encode_coding_system));
-		XSETCAR (tem,
-			 code_convert_string_norecord
-			 (XCAR (tem), arg_encoding, 1));
-	      }
-	  }
+      for (Lisp_Object tem2 = program_args; CONSP (tem2); tem2 = XCDR (tem2))
+	{
+	  Lisp_Object arg = XCAR (tem2);
+	  CHECK_STRING (arg);
+	  if (STRING_MULTIBYTE (arg))
+	    {
+	      if (NILP (arg_encoding))
+		arg_encoding = (complement_process_encoding_system
+				(XPROCESS (proc)->encode_coding_system));
+	      arg = code_convert_string_norecord (arg, arg_encoding, 1);
+	    }
+	  tem = Fcons (arg, tem);
+	  new_argc++;
+	}
 
-	UNGCPRO;
-      }
+      UNGCPRO;
 
       /* Now that everything is encoded we can collect the strings into
 	 NEW_ARGV.  */
-      new_argc = XINT (Flength (tem));
+      char **new_argv;
       SAFE_NALLOCA (new_argv, 1, new_argc + 1);
       new_argv[new_argc] = 0;
 
-      for (i = new_argc - 1; i >= 0; i--)
+      for (ptrdiff_t i = new_argc - 1; i >= 0; i--)
 	{
-	  new_argv[i] = SDATA (XCAR (tem));
+	  new_argv[i] = SSDATA (XCAR (tem));
 	  tem = XCDR (tem);
 	}
 
-      create_process (proc, (char **) new_argv, current_dir);
+      create_process (proc, new_argv, current_dir);
     }
   else
     create_pty (proc);

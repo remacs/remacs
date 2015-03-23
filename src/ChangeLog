@@ -1,3 +1,9 @@
+2015-03-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Minor refactoring of new Fmake_process code
+	* process.c (Fmake_process): Refactor to avoid call to Flength, to
+	avoid cast to 'char **', and to reduce indenting and reuse of locals.
+
 2015-03-23  Daiki Ueno  <ueno@gnu.org>
 
 	* process.c (Fmake_process): New function.
