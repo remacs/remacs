@@ -4,6 +4,7 @@
 	(Bug#20174)
 	(Accessing Mouse): Expand documentation of 'posn-actual-col-row'.
 	(Bug#20169)
+	More accurate description of 'posn-object-x-y'.  (Bug#20168)
 
 2015-03-14  Eli Zaretskii  <eliz@gnu.org>
 

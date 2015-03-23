@@ -2109,8 +2109,9 @@ Return the image or string object in @var{position}, either
 @defun posn-object-x-y position
 Return the pixel-based x and y coordinates relative to the upper left
 corner of the object in @var{position} as a cons cell @code{(@var{dx}
-. @var{dy})}.  If the @var{position} is a buffer position, return the
-relative position in the character at that position.
+. @var{dy})}.  If the @var{position} is on buffer text, return the
+relative position of the buffer-text character closest to that
+position.
 @end defun
 
 @defun posn-object-width-height position
