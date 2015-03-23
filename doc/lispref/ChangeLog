@@ -1,3 +1,8 @@
+2015-03-23  Eli Zaretskii  <eliz@gnu.org>
+
+	* commands.texi (Event Input Misc): Fix incorrect usage of @code.
+	(Bug#20174)
+
 2015-03-14  Eli Zaretskii  <eliz@gnu.org>
 
 	* minibuf.texi (Basic Completion): Fix a typo.  (Bug#20108)
