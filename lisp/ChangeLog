@@ -1,3 +1,8 @@
+2015-03-23  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp/authors.el (authors-aliases)
+	(authors-obsolete-files-regexps): Additions.
+
 2015-03-22  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* simple.el (deactivate-mark): Only modify PRIMARY if we own
