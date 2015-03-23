@@ -2768,6 +2768,28 @@ non-nil value, that slot cannot be set via `setf'.
                            ',print-auto))
        ',name)))
 
+;;; Add cl-struct support to pcase
+
+;;;###autoload
+(pcase-defmacro cl-struct (type &rest fields)
+  "Pcase patterns to match cl-structs.
+Elements of FIELDS can be of the form (NAME UPAT) in which case the contents of
+field NAME is matched against UPAT, or they can be of the form NAME which
+is a shorthand for (NAME NAME)."
+  ;; FIXME: This works well for a destructuring pcase-let, but for straight
+  ;; pcase, it suffers seriously from a lack of support for cl-typep in
+  ;; pcase--mutually-exclusive-p.
+  `(and (pred (pcase--swap cl-typep ',type))
+        ,@(mapcar
+           (lambda (field)
+             (let* ((name (if (consp field) (car field) field))
+                    (pat (if (consp field) (cadr field) field)))
+               `(app ,(if (eq (cl-struct-sequence-type type) 'list)
+                          `(nth ,(cl-struct-slot-offset type name))
+                        `(pcase--flip aref ,(cl-struct-slot-offset type name)))
+                     ,pat)))
+           fields)))
+
 (defun cl-struct-sequence-type (struct-type)
   "Return the sequence used to build STRUCT-TYPE.
 STRUCT-TYPE is a symbol naming a struct type.  Return 'vector or

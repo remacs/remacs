@@ -346,7 +346,7 @@ invalid certificates are marked in red.
 transformed into multipart/related messages before sending.
 
 ** pcase
-*** New UPatterns `quote' and `app'.
+*** New UPatterns `quote', `app', `cl-struct', and `eieio'.
 *** New UPatterns can be defined with `pcase-defmacro'.
 +++
 *** New vector QPattern.

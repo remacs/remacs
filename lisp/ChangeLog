@@ -1,3 +1,15 @@
+2015-03-23  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Add new `cl-struct' and `eieio' pcase patterns.
+	* emacs-lisp/cl-macs.el (cl-struct): New pcase pattern.
+	* emacs-lisp/eieio.el (eieio-pcase-slot-index-table)
+	(eieio-pcase-slot-index-from-index-table): New functions.
+	(eieio): New pcase pattern.
+	* emacs-lisp/pcase.el (pcase--make-docstring): New function.
+	(pcase): Use it to build the docstring.
+	(pcase-defmacro): Make sure the macro is lazy-loaded.
+	(\`): Move its docstring from `pcase'.
+
 2015-03-23  Glenn Morris  <rgm@gnu.org>
 
 	* emacs-lisp/authors.el (authors-aliases)
