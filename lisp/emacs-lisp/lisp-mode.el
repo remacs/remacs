@@ -190,19 +190,22 @@
         (goto-char pos)
         (or (eql (char-before) ?\')
             (let ((parent
-                   (up-list -1)
-                    (cond
-                      ((looking-at (rx "(" (* (syntax -)) "("))
-                       (up-list -1)
-                       (when (looking-at "(\\_<let\\*?\\_>")
-                         (goto-char (match-end 0))
-                         'let))
-                      ((looking-at
-                        (rx "("
-                            (group-n 1 (+ (or (syntax w) (syntax _))))
-                            symbol-end))
-                       (prog1 (intern-soft (match-string-no-properties 1))
-                         (goto-char (match-end 1)))))))
+                   (progn
+                     (up-list -1)
+                     (cond
+                       ((ignore-errors
+                          (and (eql (char-after) ?\()
+                               (progn
+                                 (up-list -1)
+                                 (looking-at "(\\_<let\\*?\\_>"))))
+                        (goto-char (match-end 0))
+                        'let)
+                       ((looking-at
+                         (rx "("
+                             (group-n 1 (+ (or (syntax w) (syntax _))))
+                             symbol-end))
+                        (prog1 (intern-soft (match-string-no-properties 1))
+                          (goto-char (match-end 1))))))))
               (or (eq parent 'declare)
                   (and (eq parent 'let)
                        (progn
