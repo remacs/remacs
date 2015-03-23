@@ -1,3 +1,7 @@
+2015-03-23  Daiki Ueno  <ueno@gnu.org>
+
+	* NEWS: Mention `make-process'.
+
 2015-03-21  Titus von der Malsburg  <malsburg@posteo.de>
 
 	* NEWS: Mention `default-font-width', `window-font-height',

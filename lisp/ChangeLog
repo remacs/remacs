@@ -1,3 +1,8 @@
+2015-03-23  Daiki Ueno  <ueno@gnu.org>
+
+	* subr.el (start-process): New function, ported from the C
+	implementation.
+
 2015-03-23  Daniel Colascione  <dancol@dancol.org>
 
 	Automatically adjust process window sizes.

@@ -1,3 +1,7 @@
+2015-03-23  Daiki Ueno  <ueno@gnu.org>
+
+	* processes.texi (Asynchronous Processes): Mention `make-process'.
+
 2015-03-18  Eli Zaretskii  <eliz@gnu.org>
 
 	* minibuf.texi (Basic Completion): Fix a typo.  (Bug#20108)

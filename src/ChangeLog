@@ -1,3 +1,11 @@
+2015-03-23  Daiki Ueno  <ueno@gnu.org>
+
+	* process.c (Fmake_process): New function.
+	(create_process, create_pty): Check p->pty_flag instead of
+	Vprocess_connection_type.
+	(syms_of_process): Register QCcommand, QCconnection_type, Qpty,
+	Qpipe, and Smake_process.  Unregister Sstart_process.
+
 2015-03-22  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* fontset.c (fontset_pattern_regexp): Replace + 1 with + 3 for
