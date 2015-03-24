@@ -1,3 +1,7 @@
+2015-03-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* numbers.texi (Float Basics): Improve ldexp documentation.
+
 2015-03-23  Eli Zaretskii  <eliz@gnu.org>
 
 	* commands.texi (Event Input Misc): Fix incorrect usage of @code.

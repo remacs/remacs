@@ -1,3 +1,10 @@
+2015-03-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix minor ldexp issues
+	* floatfns.c (Fldexp): Require 2 args.  Avoid undefined behavior
+	if the exponent is out of 'int' range.  Improve documentation.
+	Fixes: bug#20185
+
 2015-03-24  Daniel Colascione  <dancol@dancol.org>
 
 	* process.c (Fprocess_running_child_p): Return number identifier of
