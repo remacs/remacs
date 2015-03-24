@@ -1,3 +1,8 @@
+2015-03-24  Daiki Ueno  <ueno@gnu.org>
+
+	* epg.el (epg-start-generate-key): Fix typo in "gpg --gen-key"
+	invocation; make the PARAMETERS documentation clearer.
+
 2015-03-24  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	Add cl-struct specific optimizations to pcase.
