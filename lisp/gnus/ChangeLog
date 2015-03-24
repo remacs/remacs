@@ -1,3 +1,8 @@
+2015-03-24  Eric Abrahamsen  <eric@ericabrahamsen.net>
+
+	* nnimap.el (nnimap-split-incoming-mail): If a message is already
+	in the group it should be split to, don't re-copy it into the group.
+
 2015-03-23  Ben Bacarisse  <ben.lists@bsb.me.uk>  (tiny change)
 
 	* nnmh.el (nnmh-request-expire-articles):
