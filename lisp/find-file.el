@@ -242,11 +242,11 @@ the preceding slash.  The star represents all the subdirectories except
 
 (defcustom cc-other-file-alist
   '(("\\.cc\\'"  (".hh" ".h"))
-    ("\\.hh\\'"  (".cc" ".C"))
+    ("\\.hh\\'"  (".cc" ".C" ".CC" ".cxx" ".cpp" ".c++"))
 
     ("\\.c\\'"   (".h"))
     ("\\.m\\'"   (".h"))
-    ("\\.h\\'"   (".c" ".cc" ".C" ".CC" ".cxx" ".cpp" ".m"))
+    ("\\.h\\'"   (".c" ".cc" ".C" ".CC" ".cxx" ".cpp" ".c++" ".m"))
 
     ("\\.C\\'"   (".H"  ".hh" ".h"))
     ("\\.H\\'"   (".C"  ".CC"))
