@@ -1,3 +1,9 @@
+2015-03-24  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-do-file-attributes-with-ls)
+	(tramp-do-file-attributes-with-stat): Quote file names in output.
+	(tramp-do-directory-files-and-attributes-with-stat): Use "//" as marker.
+
 2015-03-24  Daiki Ueno  <ueno@gnu.org>
 
 	* epg.el (epg-start-generate-key): Fix typo in "gpg --gen-key"
