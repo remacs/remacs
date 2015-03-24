@@ -1,3 +1,12 @@
+2015-03-24  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Add cl-struct specific optimizations to pcase.
+	* emacs-lisp/cl-macs.el (cl--struct-all-parents)
+	(cl--pcase-mutually-exclusive-p): New functions.
+	(pcase--mutually-exclusive-p): Advise to optimize cl-struct patterns.
+
+	* emacs-lisp/pcase.el (pcase--split-pred): Handle quoted string.
+
 2015-03-23  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	Add new `cl-struct' and `eieio' pcase patterns.

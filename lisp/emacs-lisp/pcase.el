@@ -582,6 +582,7 @@ MATCH is the pattern that needs to be matched, of the form:
                   (cond ((eq 'pred (car-safe pat)) (cadr pat))
                         ((not (eq 'quote (car-safe pat))) nil)
                         ((consp (cadr pat)) #'consp)
+                        ((stringp (cadr pat)) #'stringp)
                         ((vectorp (cadr pat)) #'vectorp)
                         ((byte-code-function-p (cadr pat))
                          #'byte-code-function-p))))

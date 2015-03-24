@@ -2770,16 +2770,25 @@ non-nil value, that slot cannot be set via `setf'.
 
 ;;; Add cl-struct support to pcase
 
+(defun cl--struct-all-parents (class)
+  (when (cl--struct-class-p class)
+    (let ((res ())
+          (classes (list class)))
+      ;; BFS precedence.
+      (while (let ((class (pop classes)))
+               (push class res)
+               (setq classes
+                     (append classes
+                             (cl--class-parents class)))))
+      (nreverse res))))
+
 ;;;###autoload
 (pcase-defmacro cl-struct (type &rest fields)
   "Pcase patterns to match cl-structs.
 Elements of FIELDS can be of the form (NAME UPAT) in which case the contents of
 field NAME is matched against UPAT, or they can be of the form NAME which
 is a shorthand for (NAME NAME)."
-  ;; FIXME: This works well for a destructuring pcase-let, but for straight
-  ;; pcase, it suffers seriously from a lack of support for cl-typep in
-  ;; pcase--mutually-exclusive-p.
-  `(and (pred (pcase--swap cl-typep ',type))
+  `(and (pred (pcase--flip cl-typep ',type))
         ,@(mapcar
            (lambda (field)
              (let* ((name (if (consp field) (car field) field))
@@ -2789,6 +2798,41 @@ is a shorthand for (NAME NAME)."
                         `(pcase--flip aref ,(cl-struct-slot-offset type name)))
                      ,pat)))
            fields)))
+
+(defun cl--pcase-mutually-exclusive-p (orig pred1 pred2)
+  "Extra special cases for `cl-typep' predicates."
+  (let* ((x1 pred1) (x2 pred2)
+         (t1
+          (and (eq 'pcase--flip (car-safe x1)) (setq x1 (cdr x1))
+               (eq 'cl-typep (car-safe x1))    (setq x1 (cdr x1))
+               (null (cdr-safe x1))            (setq x1 (car x1))
+               (eq 'quote (car-safe x1))       (cadr x1)))
+         (t2
+          (and (eq 'pcase--flip (car-safe x2)) (setq x2 (cdr x2))
+               (eq 'cl-typep (car-safe x2))    (setq x2 (cdr x2))
+               (null (cdr-safe x2))            (setq x2 (car x2))
+               (eq 'quote (car-safe x2))       (cadr x2))))
+    (or
+     (and (symbolp t1) (symbolp t2)
+          (let ((c1 (cl--find-class t1))
+                (c2 (cl--find-class t2)))
+            (and c1 c2
+                 (not (or (memq c1 (cl--struct-all-parents c2))
+                          (memq c2 (cl--struct-all-parents c1)))))))
+     (let ((c1 (and (symbolp t1) (cl--find-class t1))))
+       (and c1 (cl--struct-class-p c1)
+            (funcall orig (if (eq 'list (cl-struct-sequence-type t1))
+                              'consp 'vectorp)
+                     pred2)))
+     (let ((c2 (and (symbolp t2) (cl--find-class t2))))
+       (and c2 (cl--struct-class-p c2)
+            (funcall orig pred1
+                     (if (eq 'list (cl-struct-sequence-type t2))
+                         'consp 'vectorp))))
+     (funcall orig pred1 pred2))))
+(advice-add 'pcase--mutually-exclusive-p
+            :around #'cl--pcase-mutually-exclusive-p)
+
 
 (defun cl-struct-sequence-type (struct-type)
   "Return the sequence used to build STRUCT-TYPE.
