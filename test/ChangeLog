@@ -1,3 +1,9 @@
+2015-03-24  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/tramp-tests.el (tramp-test18-file-attributes)
+	(tramp--test-check-files): Extend tests.
+	(tramp-test31-utf8): Do not skip for tramp-adb.el.
+
 2015-03-24  Daiki Ueno  <ueno@gnu.org>
 
 	* automated/epg-tests.el: New file.
