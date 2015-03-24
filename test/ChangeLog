@@ -1,3 +1,9 @@
+2015-03-24  Daiki Ueno  <ueno@gnu.org>
+
+	* automated/epg-tests.el: New file.
+	* automated/data/epg/pubkey.asc: New file.
+	* automated/data/epg/seckey.asc: New file.
+
 2015-03-22  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* automated/json-tests.el: New file.
