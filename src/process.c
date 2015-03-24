@@ -5739,9 +5739,10 @@ emacs_get_tty_pgrp (struct Lisp_Process *p)
 
 DEFUN ("process-running-child-p", Fprocess_running_child_p,
        Sprocess_running_child_p, 0, 1, 0,
-       doc: /* Return t if PROCESS has given the terminal to a child.
-If the operating system does not make it possible to find out,
-return t unconditionally.  */)
+       doc: /* Return non-nil if PROCESS has given the terminal to a
+child.  If the operating system does not make it possible to find out,
+return t.  If we can find out, return the numeric ID of the foreground
+process group.  */)
   (Lisp_Object process)
 {
   /* Initialize in case ioctl doesn't exist or gives an error,
@@ -5764,6 +5765,8 @@ return t unconditionally.  */)
 
   if (gid == p->pid)
     return Qnil;
+  if (gid != -1)
+    return make_number (gid);
   return Qt;
 }
 
