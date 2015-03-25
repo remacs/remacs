@@ -258,7 +258,6 @@ representation will be parsed correctly."
 (defvar json-special-chars
   '((?\" . ?\")
     (?\\ . ?\\)
-    (?/ . ?/)
     (?b . ?\b)
     (?f . ?\f)
     (?n . ?\n)
@@ -313,8 +312,9 @@ representation will be parsed correctly."
   (let ((l (length string))
         (start 0)
         res mb)
-    ;; Skip over ASCIIish printable characters.
-    (while (setq mb (string-match "[\"\\/\b\f\n\r\t]\\|[^ -~]" string start))
+    ;; Only escape quotation mark, backslash and the control
+    ;; characters U+0000 to U+001F (RFC 4627, ECMA-404).
+    (while (setq mb (string-match "[\"\\[:cntrl:]]" string start))
       (let* ((c (aref string mb))
              (special (rassq c json-special-chars)))
         (push (substring string start mb) res)

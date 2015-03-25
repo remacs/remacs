@@ -1,3 +1,10 @@
+2015-03-25  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* json.el (json-special-chars): Don't treat `/' specially, there's
+	no need to.
+	(json-encode-string): Only escape quotation mark, backslash and
+	the control characters U+0000 to U+001F.
+
 2015-03-25  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* emacs-lisp/checkdoc.el (checkdoc-this-string-valid-engine):

@@ -35,8 +35,8 @@
 (ert-deftest json-encode-string-with-special-chars ()
   (should (equal (json-encode-string "a\n\fb")
                  "\"a\\n\\fb\""))
-  (should (equal (json-encode-string "\nasdфывfgh\t")
-                 "\"\\nasd\\u0444\\u044b\\u0432fgh\\t\"")))
+  (should (equal (json-encode-string "\nasdфыв\u001f\u007ffgh\t")
+                 "\"\\nasdфыв\\u001f\u007ffgh\\t\"")))
 
 (ert-deftest json-read-string-with-special-chars ()
   (should (equal (json-read-from-string "\"\\nasd\\u0444\\u044b\\u0432fgh\\t\"")
