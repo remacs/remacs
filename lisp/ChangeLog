@@ -1,3 +1,8 @@
+2015-03-25  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* emacs-lisp/checkdoc.el (checkdoc-this-string-valid-engine):
+	Don't complain about args starting with _.
+
 2015-03-25  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* international/mule-cmds.el (mule--ucs-names-annotation): New func.
