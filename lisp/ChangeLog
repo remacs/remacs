@@ -1,5 +1,8 @@
 2015-03-25  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* international/mule-cmds.el (mule--ucs-names-annotation): New func.
+	(read-char-by-name): Use it.
+
 	* xt-mouse.el (xterm-mouse--read-number-from-terminal): Fix last commit.
 
 2015-03-25  Nicolas Petton <nicolas@petton.fr>
