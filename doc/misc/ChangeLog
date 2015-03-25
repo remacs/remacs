@@ -1,5 +1,7 @@
 2015-03-25  Glenn Morris  <rgm@gnu.org>
 
+	* remember.texi (Function Reference): Copyedit.
+
 	* idlwave.texi (HTML Help Browser Tips): Remove obsolete info.
 
 2015-03-18  Eli Zaretskii  <eliz@gnu.org>
