@@ -1,3 +1,7 @@
+2015-03-25  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* TODO: Remove obsolete entries.
+
 2015-03-24  Daniel Colascione  <dancol@dancol.org>
 
 	* NEWS: Mention change to `process-running-child-p`.
