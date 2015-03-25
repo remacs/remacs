@@ -217,6 +217,8 @@ Unicode standards.
 
 
 * Changes in Specialized Modes and Packages in Emacs 25.1
+** xterm-mouse-mode now supports mouse-tracking (if your xterm supports it).
+
 ** package.el
 *** `package-install-from-buffer' and `package-install-file' work on directories.
 This follows the same rules as installing from a .tar file, except the

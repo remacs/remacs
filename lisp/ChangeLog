@@ -1,3 +1,19 @@
+2015-03-25  Olaf Rogalsky  <olaf.rogalsky@gmail.com>
+
+	* xt-mouse.el: Add mouse-tracking support (bug#19416).
+	(xterm-mouse-translate-1): Handle mouse-movement events.
+	(xterm-mouse--read-event-sequence-1000)
+	(xterm-mouse--read-event-sequence-1006): Delete functions.
+	(xterm-mouse--read-event-sequence): New function that handles both at
+	the same time.  Handle mouse-movements.
+	(xterm-mouse--read-utf8-char, xterm-mouse--read-number-from-terminal):
+	New functions.
+	(xterm-mouse-event): Simplify.
+	(xterm-mouse-tracking-enable-sequence)
+	(xterm-mouse-tracking-disable-sequence): Enable mouse tracking.
+
+	* mouse.el (mouse-drag-line): Also ignore `vertical-line' prefix events.
+
 2015-03-24  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp-sh.el (tramp-do-file-attributes-with-ls)
