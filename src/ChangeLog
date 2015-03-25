@@ -1,3 +1,8 @@
+2015-03-25  Martin Rudalics  <rudalics@gmx.at>
+
+	* gtkutil.c (update_theme_scrollbar_width): Don't round up
+	scroll bar width with GTK3 (Bug#20182).
+
 2015-03-22  John F Carr  <jfc@mit.edu>  (tiny change)
 
 	* fontset.c (fontset_pattern_regexp): Backport: Replace + 1 with
