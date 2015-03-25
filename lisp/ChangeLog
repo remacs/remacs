@@ -1,3 +1,7 @@
+2015-03-25  Nicolas Petton <nicolas@petton.fr>
+
+	* emacs-lisp/seq.el: Documentation improvements.
+
 2015-03-25  Glenn Morris  <rgm@gnu.org>
 
 	* net/browse-url.el (browse-url-browser-function)
