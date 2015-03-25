@@ -1,3 +1,7 @@
+2015-03-25  Glenn Morris  <rgm@gnu.org>
+
+	* objects.texi (Equality Predicates): Fix typo in example.
+
 2015-03-23  Eli Zaretskii  <eliz@gnu.org>
 
 	* commands.texi (Event Input Misc): Fix incorrect usage of @code.
