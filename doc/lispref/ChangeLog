@@ -1,3 +1,8 @@
+2015-03-25  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* positions.texi (Excursions, Narrowing): `save-excursion' does not
+	save&restore the mark any more.
+
 2015-03-24  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* numbers.texi (Float Basics): Improve ldexp documentation.

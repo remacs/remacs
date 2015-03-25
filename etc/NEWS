@@ -617,6 +617,8 @@ a typographically-correct documents.
 
 * Incompatible Lisp Changes in Emacs 25.1
 
+** `save-excursion' does not save&restore the mark any more.
+
 ** read-buffer-function can now be called with a 4th argument (`predicate').
 
 ** completion-table-dynamic stays in the minibuffer.
