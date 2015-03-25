@@ -1,5 +1,7 @@
 2015-03-25  Glenn Morris  <rgm@gnu.org>
 
+	* newsticker.texi (Supported Formats): Remove dead url.
+
 	* remember.texi (Function Reference): Copyedit.
 
 	* idlwave.texi (HTML Help Browser Tips): Remove obsolete info.
