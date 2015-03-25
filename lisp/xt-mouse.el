@@ -170,7 +170,7 @@ The optional arguments PROMPT and SECONDS work like in
                    (<= ?0 c ?9))
             (setq n (+ (* 10 n) c (- ?0))))
           (cons n c))
-      (cons (- (setq c (read-utf8-char)) 32) c))))
+      (cons (- (setq c (xterm-mouse--read-utf8-char)) 32) c))))
 
 ;; XTerm reports mouse events as
 ;; <EVENT-CODE> <X> <Y> in default mode, and
