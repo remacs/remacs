@@ -1,3 +1,26 @@
+2015-03-25  Glenn Morris  <rgm@gnu.org>
+
+	* net/browse-url.el (browse-url-browser-function)
+	(browse-url-default-browser):
+	Remove obsolete items from the explicit listing.
+	(browse-url-new-window-flag, browse-url-of-file-hook): Doc fixes.
+	(browse-url-netscape-program, browse-url-netscape-arguments)
+	(browse-url-netscape-startup-arguments)
+	(browse-url-galeon-program, browse-url-galeon-arguments)
+	(browse-url-galeon-startup-arguments)
+	(browse-url-gnome-moz-program, browse-url-gnome-moz-arguments)
+	(browse-url-galeon-new-window-is-tab)
+	(browse-url-netscape-new-window-is-tab)
+	(browse-url-mosaic-program, browse-url-mosaic-arguments)
+	(browse-url-mosaic-pidfile, browse-url-CCI-port)
+	(browse-url-CCI-host, browse-url-netscape-version)
+	(browse-url-netscape, browse-url-netscape-sentinel)
+	(browse-url-netscape-reload, browse-url-netscape-send)
+	(browse-url-galeon, browse-url-galeon-sentinel)
+	(browse-url-gnome-moz, browse-url-mosaic, browse-url-cci)
+	(browse-url-w3-gnudoit): Make obsolete.
+	* ffap.el (ffap-url-fetcher): Simplify default and doc.
+
 2015-03-25  Olaf Rogalsky  <olaf.rogalsky@gmail.com>
 
 	* xt-mouse.el: Add mouse-tracking support (bug#19416).

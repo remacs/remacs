@@ -582,7 +582,10 @@ command line's password prompt.
 
 ** Browse-url
 
-*** browse-url now supports the Conkeror Web Browser.
+*** Support for the Conkeror web browser.
+
+---
+*** Support for several ancient browsers is now officially obsolete.
 
 +++
 ** tar-mode: new `tar-new-entry' command, allowing for new members to
