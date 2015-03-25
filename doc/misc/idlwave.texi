@@ -3817,7 +3817,7 @@ equivalents (yet can be bookmarked, browsed as history, searched,
 etc.).
 
 @c Not updated in over a decade.
-@C Maybe you want to recommend eww these days.
+@c Maybe you want to recommend eww these days.
 @ignore
 @noindent Individual platform recommendations:
 
