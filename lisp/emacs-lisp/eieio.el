@@ -130,7 +130,7 @@ and reference them using the function `class-option'."
       (error "Method invocation order %s is not allowed" io)))
 
   (let ((testsym1 (intern (concat (symbol-name name) "-p")))
-        (testsym2 (intern (format "eieio--childp--%s" name)))
+        (testsym2 (intern (format "%s--eieio-childp" name)))
         (accessors ()))
 
     ;; Collect the accessors we need to define.

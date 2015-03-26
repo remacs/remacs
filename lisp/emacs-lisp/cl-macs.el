@@ -1752,7 +1752,7 @@ An implicit nil block is established around the loop.
   (declare (debug ((symbolp form &optional form) cl-declarations body))
            (indent 1))
   (let ((loop `(dolist ,spec ,@body)))
-    (if (advice-member-p #'cl--wrap-in-nil-block 'dolist)
+    (if (advice-member-p 'cl--wrap-in-nil-block 'dolist)
         loop `(cl-block nil ,loop))))
 
 ;;;###autoload
@@ -1765,7 +1765,7 @@ nil.
 \(fn (VAR COUNT [RESULT]) BODY...)"
   (declare (debug cl-dolist) (indent 1))
   (let ((loop `(dotimes ,spec ,@body)))
-    (if (advice-member-p #'cl--wrap-in-nil-block 'dotimes)
+    (if (advice-member-p 'cl--wrap-in-nil-block 'dotimes)
         loop `(cl-block nil ,loop))))
 
 (defvar cl--tagbody-alist nil)

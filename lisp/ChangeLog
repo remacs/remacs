@@ -1,3 +1,10 @@
+2015-03-26  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio.el (defclass): Change internal name so as to make
+	sure only EIEIO files should have "eieio--" prefixes in their .elc.
+
+	* emacs-lisp/cl-macs.el (cl-dolist, cl-dotimes): Silence byte-compiler.
+
 2015-03-26  Boruch Baum  <boruch_baum@gmx.com>  (tiny change)
 
 	* bookmark.el (bookmark-show-all-annotations): Sort them (bug#20177).
