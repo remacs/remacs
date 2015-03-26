@@ -1,3 +1,8 @@
+2015-03-26  Daniel Colascione  <dancol@dancol.org>
+	* progmodes/python.el
+	(python-indent-guess-indent-offset-verbose): New defcustom.
+	(python-indent-guess-indent-offset): Use it.
+
 2015-03-26  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/eieio.el (defclass): Change internal name so as to make
