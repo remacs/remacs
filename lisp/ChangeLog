@@ -1,3 +1,9 @@
+2015-03-26  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/smie.el (smie-backward-sexp-command)
+	(smie-forward-sexp-command): Don't pretend the arg is optional
+	(bug#20205).
+
 2015-03-23  Glenn Morris  <rgm@gnu.org>
 
 	* emacs-lisp/authors.el (authors-aliases)
@@ -20,19 +26,19 @@
 
 2015-03-20  Dmitry Gutov  <dgutov@yandex.ru>
 
-	* progmodes/ruby-mode.el (ruby-syntax-before-regexp-re): Detect
-	regexps after `!'.  (Bug#19285)
+	* progmodes/ruby-mode.el (ruby-syntax-before-regexp-re):
+	Detect regexps after `!'.  (Bug#19285)
 
 2015-03-20  Dmitry Gutov  <dgutov@yandex.ru>
 
-	* progmodes/ruby-mode.el (ruby-font-lock-keywords): Use
-	`font-lock-constant-face' for nil, true and false.  Highlight
-	`self' as a keyword.  (Bug#17733)
+	* progmodes/ruby-mode.el (ruby-font-lock-keywords):
+	Use `font-lock-constant-face' for nil, true and false.
+	Highlight `self' as a keyword.  (Bug#17733)
 
 2015-03-20  Nobuyoshi Nakada  <nobu@ruby-lang.org>
 
-	* progmodes/ruby-mode.el (ruby-syntax-before-regexp-re): Expect
-	beginning of regexp also after open brace or vertical bar.
+	* progmodes/ruby-mode.el (ruby-syntax-before-regexp-re):
+	Expect beginning of regexp also after open brace or vertical bar.
 	(Bug#20026)
 
 2015-03-07  Michael Albinus  <michael.albinus@gmx.de>
@@ -105,8 +111,8 @@
 2015-02-12  Agustín Martín Domingo  <agustin6martin@gmail.com>
 
 	Improve string search in `flyspell-word-search-*`. (Bug#16800)
-	* textmodes/flyspell.el (flyspell-duplicate-distance): Limit
-	default search distance for duplicated words to 40000.
+	* textmodes/flyspell.el (flyspell-duplicate-distance):
+	Limit default search distance for duplicated words to 40000.
 	(flyspell-word-search-backward, flyspell-word-search-forward):
 	Search as full word with defined casechars, not as substring.
 
@@ -122,8 +128,8 @@
 2015-02-08  Eli Zaretskii  <eliz@gnu.org>
 
 	* frame.el (frame-notice-user-settings): Refresh the value of
-	frame parameters after calling tty-handle-reverse-video.  Call
-	face-set-after-frame-default with the actual parameters, to avoid
+	frame parameters after calling tty-handle-reverse-video.
+	Call face-set-after-frame-default with the actual parameters, to avoid
 	resetting colors back to unspecified.
 	(set-background-color, set-foreground-color): Pass the foreground
 	and background colors to face-set-after-frame-default.  (Bug#19802)
@@ -156,8 +162,8 @@
 
 2015-02-04  Eli Zaretskii  <eliz@gnu.org>
 
-	* textmodes/artist.el (artist-ellipse-compute-fill-info): Use
-	mapcar, not mapc, to create the other half of fill-info.
+	* textmodes/artist.el (artist-ellipse-compute-fill-info):
+	Use mapcar, not mapc, to create the other half of fill-info.
 	(Bug#19763)
 
 2015-02-04  Nicolas Petton  <nicolas@petton.fr>
@@ -182,18 +188,18 @@
 
 2015-02-01  Alan Mackenzie  <acm@muc.de>
 
-	CC Mode: Stop Font Lock forcing fontification from BOL.  Fixes
-	debbugs#19669.
+	CC Mode: Stop Font Lock forcing fontification from BOL.
+	Fixes debbugs#19669.
 
-	* progmodes/cc-mode.el (c-font-lock-init): Setq
-	font-lock-extend-region-functions to nil.
+	* progmodes/cc-mode.el (c-font-lock-init):
+	Setq font-lock-extend-region-functions to nil.
 
 2015-01-31  Alan Mackenzie  <acm@muc.de>
 
 	Handle "#" operator properly inside macro.  Fix coding bug.
 
-	* progmodes/cc-mode.el (c-neutralize-syntax-in-and-mark-CPP): On
-	finding a "#" which looks like the start of a macro, check it
+	* progmodes/cc-mode.el (c-neutralize-syntax-in-and-mark-CPP):
+	On finding a "#" which looks like the start of a macro, check it
 	isn't already inside a macro.
 
 	* progmodes/cc-engine.el (c-state-safe-place): Don't record a new
@@ -236,8 +242,8 @@
 	python.el: New non-global state dependent indentation engine.
 	(Bug#18319, Bug#19595)
 
-	* progmodes/python.el (python-syntax-comment-or-string-p): Accept
-	PPSS as argument.
+	* progmodes/python.el (python-syntax-comment-or-string-p):
+	Accept PPSS as argument.
 	(python-syntax-closing-paren-p): New function.
 	(python-indent-current-level)
 	(python-indent-levels): Mark obsolete.
@@ -262,8 +268,8 @@
 
 	* subr.el (posnp): Correct docstring of `posnp'.
 	(posn-col-row): Make it work with all mouse position objects.
-	* textmodes/artist.el (artist-mouse-draw-continously): Cancel
-	timers if an error occurs during continuous drawing.  (Bug#6130)
+	* textmodes/artist.el (artist-mouse-draw-continously):
+	Cancel timers if an error occurs during continuous drawing.  (Bug#6130)
 
 2015-01-20  Eli Zaretskii  <eliz@gnu.org>
 
@@ -368,8 +374,8 @@
 
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
-	* progmodes/python.el (python-shell-buffer-substring): Handle
-	cornercase when region sent starts at point-min.
+	* progmodes/python.el (python-shell-buffer-substring):
+	Handle cornercase when region sent starts at point-min.
 
 2014-12-27  Eli Zaretskii  <eliz@gnu.org>
 
