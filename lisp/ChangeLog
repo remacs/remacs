@@ -1,3 +1,7 @@
+2015-03-26  Boruch Baum  <boruch_baum@gmx.com>  (tiny change)
+
+	* bookmark.el (bookmark-show-all-annotations): Sort them (bug#20177).
+
 2015-03-25  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* json.el (json-special-chars): Don't treat `/' specially, there's
