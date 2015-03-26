@@ -8080,13 +8080,13 @@ the given windows."
 (defun window-adjust-process-window-size-smallest (process windows)
   "Adjust the process window size of PROCESS.
 WINDOWS is a list of windows associated with PROCESS.  Choose the
-smallest area availabe for displaying PROCESS's output."
+smallest area available for displaying PROCESS's output."
   (window-adjust-process-window-size #'min process windows))
 
 (defun window-adjust-process-window-size-largest (process windows)
   "Adjust the process window size of PROCESS.
 WINDOWS is a list of windows associated with PROCESS.  Choose the
-largest area availabe for displaying PROCESS's output."
+largest area available for displaying PROCESS's output."
   (window-adjust-process-window-size #'max process windows))
 
 (defun window--process-window-list ()

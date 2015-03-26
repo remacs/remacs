@@ -155,9 +155,9 @@ The optional arguments PROMPT and SECONDS work like in
 ;; In default mode, each numeric parameter of XTerm's mouse report is
 ;; a single char, possibly encoded as utf-8.  The actual numeric
 ;; parameter then is obtained by subtracting 32 from the character
-;; code.  In extendend mode the parameters are returned as decimal
-;; string delemited either by semicolons or for the last parameter by
-;; one of the characters "m" or "M". If the last character is a "m",
+;; code.  In extended mode the parameters are returned as decimal
+;; string delimited either by semicolons or for the last parameter by
+;; one of the characters "m" or "M".  If the last character is a "m",
 ;; then the mouse event was a button release, else it was a button
 ;; press or a mouse motion.  Return value is a cons cell with
 ;; (NEXT-NUMERIC-PARAMETER . LAST-CHAR)
@@ -176,7 +176,7 @@ The optional arguments PROMPT and SECONDS work like in
 ;; <EVENT-CODE> <X> <Y> in default mode, and
 ;; <EVENT-CODE> ";" <X> ";" <Y> <"M" or "m"> in extended mode.
 ;; The macro read-number-from-terminal takes care of reading
-;; the response parameters appropriatly. The EVENT-CODE differs
+;; the response parameters appropriately.  The EVENT-CODE differs
 ;; slightly between default and extended mode.
 ;; Return a list (EVENT-TYPE-SYMBOL X Y).
 (defun xterm-mouse--read-event-sequence (&optional extension)
