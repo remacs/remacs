@@ -1,3 +1,9 @@
+2015-03-26  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* url-handlers.el (url-insert-file-contents): Call
+	after-insert-file-set-coding like insert-file-contents, to set
+	buffer-file-coding-system (bug#20010).  [Backport]
+
 2014-10-20  Glenn Morris  <rgm@gnu.org>
 
 	* url-vars.el (url-bug-address): Make into an obsolete alias.
