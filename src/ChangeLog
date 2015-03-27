@@ -1,6 +1,20 @@
 2015-03-27  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Avoid some core dumps in X session management
+	Derived from a bug report by Nicolas Richard in:
+	http://bugs.gnu.org/20191#20
+	* xsmfns.c (smc_save_yourself_CB): Don't dump core if
+	invocation-name is not a string.  Initialize user-login-name if it
+	is not already initialized, and don't dump core if it is not a
+	string.
+	(create_client_leader_window): Don't dump core if x-resource-name
+	and x-resource-class are not both strings.
+	(x_session_initialize): Don't dump core if x-session-previous-id,
+	invocation-directory, and invocation-name are not strings.
+
 	Port user-login-name initialization to Qnil == 0
+	Derived from a bug report by Nicolas Richard in:
+	http://bugs.gnu.org/20191#20
 	* editfns.c (Fuser_login_name, Fuser_real_login_name)
 	(syms_of_editfns): Don't rely on all-bits-zero being an Elisp integer,
 	as this is no longer true now that Qnil == 0.
