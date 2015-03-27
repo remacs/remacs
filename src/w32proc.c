@@ -1011,7 +1011,9 @@ reader_thread (void *arg)
     {
       int rc;
 
-      if (cp->fd >= 0 && fd_info[cp->fd].flags & FILE_LISTEN)
+      if (cp->fd >= 0 && (fd_info[cp->fd].flags & FILE_CONNECT) != 0)
+	rc = _sys_wait_connect (cp->fd);
+      else if (cp->fd >= 0 && (fd_info[cp->fd].flags & FILE_LISTEN) != 0)
 	rc = _sys_wait_accept (cp->fd);
       else
 	rc = _sys_read_ahead (cp->fd);
@@ -1031,8 +1033,8 @@ reader_thread (void *arg)
 	  return 1;
 	}
 
-      if (rc == STATUS_READ_ERROR)
-	return 1;
+      if (rc == STATUS_READ_ERROR || rc == STATUS_CONNECT_FAILED)
+	return 2;
 
       /* If the read died, the child has died so let the thread die */
       if (rc == STATUS_READ_FAILED)
@@ -1929,7 +1931,7 @@ int
 sys_select (int nfds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
 	    struct timespec *timeout, void *ignored)
 {
-  SELECT_TYPE orfds;
+  SELECT_TYPE orfds, owfds;
   DWORD timeout_ms, start_time;
   int i, nh, nc, nr;
   DWORD active;
@@ -1947,15 +1949,27 @@ sys_select (int nfds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
       return 0;
     }
 
-  /* Otherwise, we only handle rfds, so fail otherwise.  */
-  if (rfds == NULL || wfds != NULL || efds != NULL)
+  /* Otherwise, we only handle rfds and wfds, so fail otherwise.  */
+  if ((rfds == NULL && wfds == NULL) || efds != NULL)
     {
       errno = EINVAL;
       return -1;
     }
 
-  orfds = *rfds;
-  FD_ZERO (rfds);
+  if (rfds)
+    {
+      orfds = *rfds;
+      FD_ZERO (rfds);
+    }
+  else
+    FD_ZERO (&orfds);
+  if (wfds)
+    {
+      owfds = *wfds;
+      FD_ZERO (wfds);
+    }
+  else
+    FD_ZERO (&owfds);
   nr = 0;
 
   /* If interrupt_handle is available and valid, always wait on it, to
@@ -1970,7 +1984,7 @@ sys_select (int nfds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
 
   /* Build a list of pipe handles to wait on.  */
   for (i = 0; i < nfds; i++)
-    if (FD_ISSET (i, &orfds))
+    if (FD_ISSET (i, &orfds) || FD_ISSET (i, &owfds))
       {
 	if (i == 0)
 	  {
@@ -1984,7 +1998,7 @@ sys_select (int nfds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
 
 	    /* Check for any emacs-generated input in the queue since
 	       it won't be detected in the wait */
-	    if (detect_input_pending ())
+	    if (rfds && detect_input_pending ())
 	      {
 		FD_SET (i, rfds);
 		return 1;
@@ -1999,6 +2013,13 @@ sys_select (int nfds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
 	  {
 	    /* Child process and socket/comm port input.  */
 	    cp = fd_info[i].cp;
+	    if (FD_ISSET (i, &owfds)
+		&& cp
+		&& (fd_info[i].flags && FILE_CONNECT) == 0)
+	      {
+		DebPrint (("sys_select: fd %d is in wfds, but FILE_CONNECT is reset!\n", i));
+		cp = NULL;
+	      }
 	    if (cp)
 	      {
 		int current_status = cp->status;
@@ -2007,6 +2028,8 @@ sys_select (int nfds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
 		  {
 		    /* Tell reader thread which file handle to use. */
 		    cp->fd = i;
+		    /* Zero out the error code.  */
+		    cp->errcode = 0;
 		    /* Wake up the reader thread for this process */
 		    cp->status = STATUS_READ_READY;
 		    if (!SetEvent (cp->char_consumed))
@@ -2197,7 +2220,7 @@ count_children:
 
 	  if (cp->fd >= 0 && (fd_info[cp->fd].flags & FILE_AT_EOF) == 0)
 	    fd_info[cp->fd].flags |= FILE_SEND_SIGCHLD;
-	  /* SIG_DFL for SIGCHLD is ignore */
+	  /* SIG_DFL for SIGCHLD is ignored */
 	  else if (sig_handlers[SIGCHLD] != SIG_DFL &&
 		   sig_handlers[SIGCHLD] != SIG_IGN)
 	    {
@@ -2214,7 +2237,7 @@ count_children:
 	  errno = EINTR;
 	  return -1;
 	}
-      else if (fdindex[active] == 0)
+      else if (rfds && fdindex[active] == 0)
 	{
 	  /* Keyboard input available */
 	  FD_SET (0, rfds);
@@ -2222,9 +2245,33 @@ count_children:
 	}
       else
 	{
-	  /* must be a socket or pipe - read ahead should have
-             completed, either succeeding or failing.  */
-	  FD_SET (fdindex[active], rfds);
+	  /* Must be a socket or pipe - read ahead should have
+             completed, either succeeding or failing.  If this handle
+             was waiting for an async 'connect', reset the connect
+             flag, so it could read from now on.  */
+	  if (wfds && (fd_info[fdindex[active]].flags & FILE_CONNECT) != 0)
+	    {
+	      cp = fd_info[fdindex[active]].cp;
+	      if (cp)
+		{
+		  /* Don't reset the FILE_CONNECT bit and don't
+		     acknowledge the read if the status is
+		     STATUS_CONNECT_FAILED or some other
+		     failure. That's because the thread exits in those
+		     cases, so it doesn't need the ACK, and we want to
+		     keep the FILE_CONNECT bit as evidence that the
+		     connect failed, to be checked in sys_read.  */
+		  if (cp->status == STATUS_READ_SUCCEEDED)
+		    {
+		      fd_info[cp->fd].flags &= ~FILE_CONNECT;
+		      cp->status = STATUS_READ_ACKNOWLEDGED;
+		    }
+		  ResetEvent (cp->char_avail);
+		}
+	      FD_SET (fdindex[active], wfds);
+	    }
+	  else if (rfds)
+	    FD_SET (fdindex[active], rfds);
 	  nr++;
 	}
 
