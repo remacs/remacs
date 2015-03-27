@@ -1,3 +1,7 @@
+2015-04-01  Nicolas Petton  <nicolas@petton.fr>
+
+	* Version 24.5 released.
+
 2015-03-25  Martin Rudalics  <rudalics@gmx.at>
 
 	* gtkutil.c (update_theme_scrollbar_width): Don't round up
