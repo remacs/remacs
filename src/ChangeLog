@@ -1,5 +1,10 @@
 2015-03-27  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Port user-login-name initialization to Qnil == 0
+	* editfns.c (Fuser_login_name, Fuser_real_login_name)
+	(syms_of_editfns): Don't rely on all-bits-zero being an Elisp integer,
+	as this is no longer true now that Qnil == 0.
+
 	Assume !BROKEN_NON_BLOCKING_CONNECT
 	From a suggestion by Eli Zaretskii in:
 	http://lists.gnu.org/archive/html/emacs-devel/2015-03/msg00824.html

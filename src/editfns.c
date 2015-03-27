@@ -1191,7 +1191,7 @@ of the user with that uid, or nil if there is no such user.  */)
   /* Set up the user name info if we didn't do it before.
      (That can happen if Emacs is dumpable
      but you decide to run `temacs -l loadup' and not dump.  */
-  if (INTEGERP (Vuser_login_name))
+  if (NILP (Vuser_login_name))
     init_editfns ();
 
   if (NILP (uid))
@@ -1214,7 +1214,7 @@ This ignores the environment variables LOGNAME and USER, so it differs from
   /* Set up the user name info if we didn't do it before.
      (That can happen if Emacs is dumpable
      but you decide to run `temacs -l loadup' and not dump.  */
-  if (INTEGERP (Vuser_login_name))
+  if (NILP (Vuser_login_name))
     init_editfns ();
   return Vuser_real_login_name;
 }
@@ -4955,6 +4955,7 @@ functions if all the text being accessed has this property.  */);
 
   DEFVAR_LISP ("user-login-name", Vuser_login_name,
 	       doc: /* The user's name, taken from environment variables if possible.  */);
+  Vuser_login_name = Qnil;
 
   DEFVAR_LISP ("user-real-login-name", Vuser_real_login_name,
 	       doc: /* The user's name, based upon the real uid only.  */);
