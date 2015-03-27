@@ -1,3 +1,12 @@
+2015-03-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Assume !BROKEN_NON_BLOCKING_CONNECT
+	From a suggestion by Eli Zaretskii in:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-03/msg00824.html
+	* process.c (NON_BLOCKING_CONNECT): Simplify by assuming that
+	BROKEN_NON_BLOCKING_CONNECT is not defined.
+	(SELECT_CAN_DO_WRITE_MASK): Remove, and assume it's now true.
+
 2015-03-27  Eli Zaretskii  <eliz@gnu.org>
 
 	* lread.c (substitute_object_recurse): For sub-char-tables, start

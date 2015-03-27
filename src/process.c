@@ -195,24 +195,15 @@ static EMACS_INT process_tick;
 /* Number of events for which the user or sentinel has been notified.  */
 static EMACS_INT update_tick;
 
-/* Define NON_BLOCKING_CONNECT if we can support non-blocking connects.  */
+/* Define NON_BLOCKING_CONNECT if we can support non-blocking connects.
+   The code can be simplified by assuming NON_BLOCKING_CONNECT once
+   Emacs starts assuming POSIX 1003.1-2001 or later.  */
 
-/* Only W32 has this, it really means that select can't take write mask.  */
-#ifdef BROKEN_NON_BLOCKING_CONNECT
-#undef NON_BLOCKING_CONNECT
-enum { SELECT_CAN_DO_WRITE_MASK = false };
-#else
-enum { SELECT_CAN_DO_WRITE_MASK = true };
-#ifndef NON_BLOCKING_CONNECT
-#ifdef HAVE_SELECT
-#if defined (HAVE_GETPEERNAME) || defined (GNU_LINUX)
-#if defined (EWOULDBLOCK) || defined (EINPROGRESS)
-#define NON_BLOCKING_CONNECT
-#endif /* EWOULDBLOCK || EINPROGRESS */
-#endif /* HAVE_GETPEERNAME || GNU_LINUX */
-#endif /* HAVE_SELECT */
-#endif /* NON_BLOCKING_CONNECT */
-#endif /* BROKEN_NON_BLOCKING_CONNECT */
+#if (defined HAVE_SELECT				\
+     && (defined GNU_LINUX || defined HAVE_GETPEERNAME)	\
+     && (defined EWOULDBLOCK || defined EINPROGRESS))
+# define NON_BLOCKING_CONNECT
+#endif
 
 /* Define DATAGRAM_SOCKETS if datagrams can be used safely on
    this system.  We need to read full packets, so we need a
@@ -4606,7 +4597,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	    Available = input_wait_mask;
           Writeok = write_mask;
  	  check_delay = wait_proc ? 0 : process_output_delay_count;
-	  check_write = SELECT_CAN_DO_WRITE_MASK;
+	  check_write = true;
 	}
 
       /* If frame size has changed or the window is newly mapped,
