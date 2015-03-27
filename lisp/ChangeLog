@@ -1,3 +1,16 @@
+2015-03-27  Wolfgang Jenkner  <wjenkner@inode.at>
+
+	* font-lock.el (font-lock--remove-face-from-text-property): New
+	function.  Adapted from the previously commented out
+	remove-single-text-property.
+	Remove previously unused and commented out auxiliary function
+	remove-text-property and obsolete comment.
+	* comint.el (comint-output-filter): Use it to remove
+	comint-highlight-prompt.
+	(comint-snapshot-last-prompt, comint-output-filter): Use
+	font-lock-prepend-text-property for comint-highlight-prompt.
+	(Bug#20084)
+
 2015-03-26  Daniel Colascione  <dancol@dancol.org>
 	* progmodes/python.el
 	(python-indent-guess-indent-offset-verbose): New defcustom.

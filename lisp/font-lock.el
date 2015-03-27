@@ -1418,37 +1418,33 @@ Optional argument OBJECT is the string or buffer containing the text."
       (put-text-property start next prop value object)
       (setq start (text-property-any next end prop nil object)))))
 
-;; For completeness: this is to `remove-text-properties' as `put-text-property'
-;; is to `add-text-properties', etc.
-;;(defun remove-text-property (start end property &optional object)
-;;  "Remove a property from text from START to END.
-;;Argument PROPERTY is the property to remove.
-;;Optional argument OBJECT is the string or buffer containing the text.
-;;Return t if the property was actually removed, nil otherwise."
-;;  (remove-text-properties start end (list property) object))
-
-;; For consistency: maybe this should be called `remove-single-property' like
-;; `next-single-property-change' (not `next-single-text-property-change'), etc.
-;;(defun remove-single-text-property (start end prop value &optional object)
-;;  "Remove a specific property value from text from START to END.
-;;Arguments PROP and VALUE specify the property and value to remove.  The
-;;resulting property values are not equal to VALUE nor lists containing VALUE.
-;;Optional argument OBJECT is the string or buffer containing the text."
-;;  (let ((start (text-property-not-all start end prop nil object)) next prev)
-;;    (while start
-;;      (setq next (next-single-property-change start prop object end)
-;;	    prev (get-text-property start prop object))
-;;      (cond ((and (symbolp prev) (eq value prev))
-;;	     (remove-text-property start next prop object))
-;;	    ((and (listp prev) (memq value prev))
-;;	     (let ((new (delq value prev)))
-;;	       (cond ((null new)
-;;		      (remove-text-property start next prop object))
-;;		     ((= (length new) 1)
-;;		      (put-text-property start next prop (car new) object))
-;;		     (t
-;;		      (put-text-property start next prop new object))))))
-;;      (setq start (text-property-not-all next end prop nil object)))))
+(defun font-lock--remove-face-from-text-property (start
+						  end
+						  prop value &optional object)
+  "Remove a specific property value from text from START to END.
+Arguments PROP and VALUE specify the property and value to remove.  The
+resulting property values are not `eq' to VALUE nor lists containing VALUE.
+Optional argument OBJECT is the string or buffer containing the text."
+  (let ((start (text-property-not-all start end prop nil object)) next prev)
+    (while start
+      (setq next (next-single-property-change start prop object end)
+	    prev (get-text-property start prop object))
+      (cond ((or (atom prev)
+		 (keywordp (car prev))
+		 (eq (car prev) 'foreground-color)
+		 (eq (car prev) 'background-color))
+	     (when (eq value prev)
+	       (remove-list-of-text-properties start next (list prop) object)))
+	    ((memq value prev)		;Assume prev is not dotted.
+	     (let ((new (remq value prev)))
+	       (cond ((null new)
+		      (remove-list-of-text-properties start next (list prop)
+						      object))
+		     ((= (length new) 1)
+		      (put-text-property start next prop (car new) object))
+		     (t
+		      (put-text-property start next prop new object))))))
+      (setq start (text-property-not-all next end prop nil object)))))
 
 ;;; End of Additional text property functions.
 
