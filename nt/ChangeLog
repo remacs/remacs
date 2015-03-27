@@ -1,7 +1,7 @@
 2015-03-27  Eli Zaretskii  <eliz@gnu.org>
 
 	* inc/ms-w32.h (BROKEN_NON_BLOCKING_CONNECT): Don't define.
-	(Bug#20207)
+	(Bug#20159)
 
 2015-03-09  Eli Zaretskii  <eliz@gnu.org>
 

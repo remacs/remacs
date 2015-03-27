@@ -12,7 +12,7 @@
 	fd_info member doesn't have its FILE_CONNECT flag set, ignore the
 	descriptor.  Otherwise, acknowledge a successful non-blocking
 	connect by resetting the FILE_CONNECT flag and setting cp->status
-	to STATUS_READ_ACKNOWLEDGED.  (Bug#20207)
+	to STATUS_READ_ACKNOWLEDGED.  (Bug#20159)
 
 	* w32.h (STATUS_CONNECT_FAILED): New enumeration value.
 	(struct _child_process): New member 'errcode'.
