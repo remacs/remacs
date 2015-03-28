@@ -1717,7 +1717,8 @@ and make them available for download."
       (error (message "Failed to download `%s' archive."
                       (car archive)))))
   (package-read-all-archive-contents)
-  (package--build-compatibility-table))
+  (package--build-compatibility-table)
+  (message "Package refersh done"))
 
 (defun package--find-non-dependencies ()
   "Return a list of installed packages which are not dependencies.

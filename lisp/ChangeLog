@@ -1,3 +1,8 @@
+2015-03-28  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* emacs-lisp/package.el (package-refresh-contents): Add a message at
+	the end so it does not appear to have hanged (Bug#17879).
+
 2015-03-27  Wolfgang Jenkner  <wjenkner@inode.at>
 
 	* font-lock.el (font-lock--remove-face-from-text-property): New
