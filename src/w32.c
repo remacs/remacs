@@ -7489,8 +7489,8 @@ sys_connect (int s, const struct sockaddr * name, int namelen)
 	      errno = EINPROGRESS; /* that's what process.c expects */
 	      fd_info[s].flags |= FILE_CONNECT;
 	    }
-	  return rc;
 	}
+      return rc;
     }
   errno = ENOTSOCK;
   return SOCKET_ERROR;
