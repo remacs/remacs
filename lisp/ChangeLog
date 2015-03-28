@@ -1,3 +1,8 @@
+2015-03-30  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* emacs-lisp/package.el: Reorganize package.el and divide it with
+	page-breaks and comments.
+
 2015-03-30  Alan Mackenzie  <acm@muc.de>
 
 	Correct calculation of CC Mode's font-lock region.
