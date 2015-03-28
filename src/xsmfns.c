@@ -169,6 +169,11 @@ smc_save_yourself_CB (SmcConn smcConn,
   int props_idx = 0;
   int i;
   char *smid_opt, *chdir_opt = NULL;
+  Lisp_Object user_login_name = Fuser_login_name (Qnil);
+
+  // Must have these.
+  if (! STRINGP (Vinvocation_name) || ! STRINGP (user_login_name))
+    return;
 
   /* How to start a new instance of Emacs.  */
   props[props_idx] = &prop_ptr[props_idx];
@@ -180,32 +185,25 @@ smc_save_yourself_CB (SmcConn smcConn,
   props[props_idx]->vals[0].value = emacs_program;
   ++props_idx;
 
-  if (STRINGP (Vinvocation_name))
-    {
-      /* The name of the program.  */
-      props[props_idx] = &prop_ptr[props_idx];
-      props[props_idx]->name = xstrdup (SmProgram);
-      props[props_idx]->type = xstrdup (SmARRAY8);
-      props[props_idx]->num_vals = 1;
-      props[props_idx]->vals = &values[val_idx++];
-      props[props_idx]->vals[0].length = SBYTES (Vinvocation_name);
-      props[props_idx]->vals[0].value = SDATA (Vinvocation_name);
-      ++props_idx;
-    }
+  /* The name of the program.  */
+  props[props_idx] = &prop_ptr[props_idx];
+  props[props_idx]->name = xstrdup (SmProgram);
+  props[props_idx]->type = xstrdup (SmARRAY8);
+  props[props_idx]->num_vals = 1;
+  props[props_idx]->vals = &values[val_idx++];
+  props[props_idx]->vals[0].length = SBYTES (Vinvocation_name);
+  props[props_idx]->vals[0].value = SDATA (Vinvocation_name);
+  ++props_idx;
 
   /* User id.  */
-  Lisp_Object user_login_name = Fuser_login_name (Qnil);
-  if (STRINGP (user_login_name))
-    {
-      props[props_idx] = &prop_ptr[props_idx];
-      props[props_idx]->name = xstrdup (SmUserID);
-      props[props_idx]->type = xstrdup (SmARRAY8);
-      props[props_idx]->num_vals = 1;
-      props[props_idx]->vals = &values[val_idx++];
-      props[props_idx]->vals[0].length = SBYTES (user_login_name);
-      props[props_idx]->vals[0].value = SDATA (user_login_name);
-      ++props_idx;
-    }
+  props[props_idx] = &prop_ptr[props_idx];
+  props[props_idx]->name = xstrdup (SmUserID);
+  props[props_idx]->type = xstrdup (SmARRAY8);
+  props[props_idx]->num_vals = 1;
+  props[props_idx]->vals = &values[val_idx++];
+  props[props_idx]->vals[0].length = SBYTES (user_login_name);
+  props[props_idx]->vals[0].value = SDATA (user_login_name);
+  ++props_idx;
 
   char *cwd = get_current_dir_name ();
   if (cwd)

@@ -1,3 +1,8 @@
+2015-03-28  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* xsmfns.c (smc_save_yourself_CB): Return if Vinvocation_name or
+	user_login_name are not strings.
+
 2015-03-28  Eli Zaretskii  <eliz@gnu.org>
 
 	* w32.c (sys_connect): Fix a mistake in previous commit that broke
