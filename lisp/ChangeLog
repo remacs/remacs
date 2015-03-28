@@ -1,3 +1,9 @@
+2015-03-28  Tom Willemse  <tom@ryuslash.org>
+
+	* elec-pair.el (electric-pair-local-mode): New command.
+	(electric-pair-mode): Mention `electric-pair-local-mode' in the
+	docstring.
+
 2015-03-28  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* emacs-lisp/package.el (package-refresh-contents): Add a message at

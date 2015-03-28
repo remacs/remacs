@@ -215,6 +215,9 @@ Unicode standards.
 
 ** You can access `mouse-buffer-menu' (C-down-mouse-1) using C-f10.
 
++++
+** New buffer-local `electric-pair-local-mode'.
+
 
 * Changes in Specialized Modes and Packages in Emacs 25.1
 ** xterm-mouse-mode now supports mouse-tracking (if your xterm supports it).
