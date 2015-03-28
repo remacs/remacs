@@ -1718,7 +1718,7 @@ and make them available for download."
                       (car archive)))))
   (package-read-all-archive-contents)
   (package--build-compatibility-table)
-  (message "Package refersh done"))
+  (message "Package refresh done"))
 
 (defun package--find-non-dependencies ()
   "Return a list of installed packages which are not dependencies.
