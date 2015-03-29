@@ -1,3 +1,9 @@
+2015-03-29  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* gtkutil.c (xg_display_open):
+	* xterm.c (x_display_ok, x_term_init): Block SIGIO when opening
+	a display (Bug#19175).
+
 2015-04-01  Nicolas Petton  <nicolas@petton.fr>
 
 	* Version 24.5 released.
