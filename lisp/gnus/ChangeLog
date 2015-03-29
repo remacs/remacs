@@ -1,3 +1,8 @@
+2015-03-28  Adam Sjøgren  <asjo@koldfront.dk>
+
+	* gnus-sum.el (gnus-summary-make-menu-bar): Add "Display HTML images"
+	to "Display" menu.
+
 2015-03-24  Eric Abrahamsen  <eric@ericabrahamsen.net>
 
 	* nnimap.el (nnimap-split-incoming-mail): If a message is already
