@@ -1,3 +1,12 @@
+2015-03-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix 'commit-msg' to cite 'CONTRIBUTE'
+	As suggested in:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-03/msg00947.html
+	Also, have the two files match better.
+	* CONTRIBUTE: Match what's in build-aux/git-hooks/commit-msg.
+	* build-aux/git-hooks/commit-msg: Mention 'CONTRIBUTE'.
+
 2015-03-23  Andreas Schwab  <schwab@suse.de>
 
 	* configure.ac: Fix jpeg version check to work with gcc >= 5.
