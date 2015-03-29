@@ -60,7 +60,7 @@ following modifications:
 
 - Commit messages should contain only printable UTF-8 characters.
 
-- Commit messages should not contained the "Signed-off-by:" lines that
+- Commit messages should not contain the "Signed-off-by:" lines that
   are used in some other projects.
 
 ** ChangeLog notes
