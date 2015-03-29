@@ -1,3 +1,8 @@
+2015-03-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* build-aux/dir_top (File): Fix the description of selecting a
+	menu item by its number.  (Bug#20213)
+
 2015-04-01  Nicolas Petton  <nicolas@petton.fr>
 
 	* Version 24.5 released.
