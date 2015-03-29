@@ -1,3 +1,8 @@
+2015-03-29  Martin Rudalics  <rudalics@gmx.at>
+
+	* gtkutil.c (update_theme_scrollbar_width): Don't round up
+	scroll bar width with GTK3 (Bug#20182).
+
 2015-03-28  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* xsmfns.c (smc_save_yourself_CB): Return if Vinvocation_name or

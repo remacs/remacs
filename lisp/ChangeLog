@@ -1,3 +1,24 @@
+2015-03-29  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/smie.el (smie-backward-sexp-command)
+	(smie-forward-sexp-command): Don't pretend the arg is optional
+	(bug#20205).
+
+2015-03-29  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/ruby-mode.el (ruby-syntax-before-regexp-re):
+	Detect regexps after `!'.  (Bug#19285)
+
+	* progmodes/ruby-mode.el (ruby-font-lock-keywords):
+	Use `font-lock-constant-face' for nil, true and false.
+	Highlight `self' as a keyword.  (Bug#17733)
+
+2015-03-29  Nobuyoshi Nakada  <nobu@ruby-lang.org>
+
+	* progmodes/ruby-mode.el (ruby-syntax-before-regexp-re):
+	Expect beginning of regexp also after open brace or vertical bar.
+	(Bug#20026)
+
 2015-03-28  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* emacs-lisp/package.el (package-refresh-contents): Fix spelling

@@ -1,3 +1,7 @@
+2015-03-29  Glenn Morris  <rgm@gnu.org>
+
+	* objects.texi (Equality Predicates): Fix typo in example.
+
 2015-03-25  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* positions.texi (Excursions, Narrowing): `save-excursion' does not

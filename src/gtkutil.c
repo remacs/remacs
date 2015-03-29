@@ -3516,7 +3516,9 @@ update_theme_scrollbar_width (void)
   gtk_widget_destroy (wscroll);
   g_object_unref (G_OBJECT (wscroll));
   w += 2*b;
+#ifndef HAVE_GTK3
   if (w < 16) w = 16;
+#endif
   scroll_bar_width_for_theme = w;
 }
 
