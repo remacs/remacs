@@ -1,3 +1,9 @@
+2015-03-30  Richard Ryniker  <ryniker@alum.mit.edu>  (tiny change)
+
+	* mail/sendmail.el (sendmail-send-it): Do not attempt to switch
+	to non-existent buffer (errbuf is not created when customization
+	variable mail-interactive is nil).  (Bug#20211)
+
 2015-03-29  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/smie.el (smie-backward-sexp-command)
