@@ -1,3 +1,26 @@
+2015-03-30  Alan Mackenzie  <acm@muc.de>
+
+	Correct calculation of CC Mode's font-lock region.
+
+	* progmodes/cc-mode.el (c-fl-decl-start): Renamed from
+	c-set-fl-decl-start.  Change signature such that nil is returned
+	when no declaration is found.
+	(c-change-expand-fl-region): Renamed from
+	c-change-set-fl-decl-start.  This now also handles expanding the
+	font lock region to whole lines.
+	(c-context-expand-fl-region): Renamed from
+	c-context-set-fl-decl-start.  This now also handles expanding the
+	font lock region to whole lines.
+	(c-font-lock-fontify-region): When a change font lock region is
+	spuriously enlarged to the beginning-of-line by jit-lock, fontify
+	the extra bit separately from the region calculated by CC Mode.
+	(c-extend-after-change-region): Explicitly apply 'fontified
+	properties to the extended bits of the font lock region.
+
+	* progmodes/cc-langs.el (c-before-font-lock-functions)
+	(c-before-context-fontification-functions): Use new names for
+	existing functions (see above).
+
 2015-03-30  Richard Ryniker  <ryniker@alum.mit.edu>  (tiny change)
 
 	* mail/sendmail.el (sendmail-send-it): Do not attempt to switch
