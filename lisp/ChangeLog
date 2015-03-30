@@ -1,14 +1,20 @@
+2015-03-30  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio-base.el (make-instance) <eieio-named>: New instance
+	which stores the old-style object name argument into the
+	object-name field.
+
 2015-03-30  Alan Mackenzie  <acm@muc.de>
 
 	Correct calculation of CC Mode's font-lock region.
 
-	* progmodes/cc-mode.el (c-fl-decl-start): Renamed from
+	* progmodes/cc-mode.el (c-fl-decl-start): Rename from
 	c-set-fl-decl-start.  Change signature such that nil is returned
 	when no declaration is found.
-	(c-change-expand-fl-region): Renamed from
+	(c-change-expand-fl-region): Rename from
 	c-change-set-fl-decl-start.  This now also handles expanding the
 	font lock region to whole lines.
-	(c-context-expand-fl-region): Renamed from
+	(c-context-expand-fl-region): Rename from
 	c-context-set-fl-decl-start.  This now also handles expanding the
 	font lock region to whole lines.
 	(c-font-lock-fontify-region): When a change font lock region is
@@ -66,15 +72,15 @@
 
 2015-03-27  Wolfgang Jenkner  <wjenkner@inode.at>
 
-	* font-lock.el (font-lock--remove-face-from-text-property): New
-	function.  Adapted from the previously commented out
+	* font-lock.el (font-lock--remove-face-from-text-property):
+	New function.  Adapted from the previously commented out
 	remove-single-text-property.
 	Remove previously unused and commented out auxiliary function
 	remove-text-property and obsolete comment.
 	* comint.el (comint-output-filter): Use it to remove
 	comint-highlight-prompt.
-	(comint-snapshot-last-prompt, comint-output-filter): Use
-	font-lock-prepend-text-property for comint-highlight-prompt.
+	(comint-snapshot-last-prompt, comint-output-filter):
+	Use font-lock-prepend-text-property for comint-highlight-prompt.
 	(Bug#20084)
 
 2015-03-26  Daniel Colascione  <dancol@dancol.org>
@@ -221,15 +227,15 @@
 
 	Automatically adjust process window sizes.
 
-	* window.el (window-adjust-process-window-size-function): New
-	customizable variable.
+	* window.el (window-adjust-process-window-size-function):
+	New customizable variable.
 	(window-adjust-process-window-size)
 	(window-adjust-process-window-size-smallest)
 	(window-adjust-process-window-size-largest)
 	(window--process-window-list, window--adjust-process-windows):
 	New functions.
-	(window-configuration-change-hook): Add
-	`window--adjust-process-windows'.
+	(window-configuration-change-hook):
+	Add `window--adjust-process-windows'.
 	* term.el (term-mode): Observe result of
 	`window-adjust-process-window-size-function'.
 	(term-check-size): Delete.
@@ -261,13 +267,13 @@
 
 2015-03-21  Tassilo Horn  <tsdh@gnu.org>
 
-	* emacs-lisp/lisp-mode.el (lisp-el-font-lock-keywords-1): Also
-	recognize (cl-)defmethod with (setf method) name.
+	* emacs-lisp/lisp-mode.el (lisp-el-font-lock-keywords-1):
+	Also recognize (cl-)defmethod with (setf method) name.
 
 2015-03-20  Tassilo Horn  <tsdh@gnu.org>
 
-	* emacs-lisp/lisp-mode.el (lisp-el-font-lock-keywords-1): Fix
-	false positive in function name font-locking.
+	* emacs-lisp/lisp-mode.el (lisp-el-font-lock-keywords-1):
+	Fix false positive in function name font-locking.
 	(lisp-cl-font-lock-keywords-1): Ditto.
 
 2015-03-20  Stefan Monnier  <monnier@iro.umontreal.ca>

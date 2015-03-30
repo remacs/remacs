@@ -498,6 +498,15 @@ All slots are unbound, except those initialized with PARAMS."
                         (concat nm "-1")))))
     nobj))
 
+(cl-defmethod make-instance ((class (subclass eieio-named)) &rest args)
+  (if (not (stringp (car args)))
+      (cl-call-next-method)
+    (funcall (if eieio-backward-compatibility #'ignore #'message)
+             "Obsolete: name passed without :object-name to %S constructor"
+             class)
+    (apply #'cl-call-next-method class :object-name args)))
+
+
 (provide 'eieio-base)
 
 ;;; eieio-base.el ends here
