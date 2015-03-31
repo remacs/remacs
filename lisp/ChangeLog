@@ -1,5 +1,7 @@
 2015-03-31  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* jit-lock.el (jit-lock--run-functions): Fix min/max copy&paste error.
+
 	Let jit-lock know the result of font-lock-extend-region-functions.
 	* jit-lock.el (jit-lock--run-functions): New function.
 	(jit-lock-fontify-now): Use it.  Handle fontification bounds more

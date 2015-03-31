@@ -369,8 +369,8 @@ is active."
          ;; already run to avoid running them redundantly when we get to
          ;; those chunks.
          (setq tight-beg (max (or tight-beg (point-min)) this-beg))
-         (setq tight-end (max (or tight-end (point-max)) this-end))
-         (setq loose-beg (max loose-beg this-beg))
+         (setq tight-end (min (or tight-end (point-max)) this-end))
+         (setq loose-beg (min loose-beg this-beg))
          (setq loose-end (max loose-end this-end))
          nil)))
     `(,(min tight-beg beg) ,(max tight-end end) ,loose-beg ,loose-end)))
@@ -417,7 +417,8 @@ Defaults to the whole buffer.  END can be out of bounds."
                    (quit (put-text-property start next 'fontified nil)
                          (signal (car err) (cdr err))))))
 
-             ;; In case we fontified more than requested, take note.
+             ;; In case we fontified more than requested, take advantage of the
+             ;; good news.
              (when (or (< tight-beg start) (> tight-end next))
                (put-text-property tight-beg tight-end 'fontified t))
 
