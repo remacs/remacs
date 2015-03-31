@@ -1,3 +1,8 @@
+2015-03-27  Pete Williamson  <petewil@chromium.org>  (tiny change)
+
+	Add NaCl target
+	* configure.ac: Add a target for Chromium Native Client (NaCl).
+
 2015-03-29  Eli Zaretskii  <eliz@gnu.org>
 
 	* build-aux/dir_top (File): Fix the description of selecting a
