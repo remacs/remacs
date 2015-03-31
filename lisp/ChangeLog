@@ -1,3 +1,18 @@
+2015-03-31  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Let jit-lock know the result of font-lock-extend-region-functions.
+	* jit-lock.el (jit-lock--run-functions): New function.
+	(jit-lock-fontify-now): Use it.  Handle fontification bounds more
+	precisely in case the backend functions fontify more than requested.
+	Don't round up to whole lines since that shouldn't be needed
+	any more.
+	* font-lock.el (font-lock-fontify-region-function): Adjust docstring.
+	(font-lock-inhibit-thing-lock): Make obsolete.
+	(font-lock-default-fontify-region): Return the bounds actually used.
+
+	* emacs-lisp/eieio-base.el (eieio-persistent-validate/fix-slot-value):
+	Fix compilation error.
+
 2015-03-30  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* emacs-lisp/package.el: Reorganize package.el and divide it with

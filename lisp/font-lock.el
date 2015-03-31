@@ -585,11 +585,14 @@ This is normally set via `font-lock-defaults'.")
 This is used when turning off Font Lock mode.
 This is normally set via `font-lock-defaults'.")
 
-(defvar font-lock-fontify-region-function 'font-lock-default-fontify-region
+(defvar font-lock-fontify-region-function #'font-lock-default-fontify-region
   "Function to use for fontifying a region.
 It should take two args, the beginning and end of the region, and an optional
 third arg VERBOSE.  If VERBOSE is non-nil, the function should print status
-messages.  This is normally set via `font-lock-defaults'.")
+messages.  This is normally set via `font-lock-defaults'.
+If it fontifies a larger region, it should ideally return a list of the form
+\(jit-lock-bounds BEG . END) indicating the bounds of the region actually
+fontified.")
 
 (defvar font-lock-unfontify-region-function 'font-lock-default-unfontify-region
   "Function to use for unfontifying a region.
@@ -600,6 +603,7 @@ This is normally set via `font-lock-defaults'.")
   "List of Font Lock mode related modes that should not be turned on.
 Currently, valid mode names are `fast-lock-mode', `jit-lock-mode' and
 `lazy-lock-mode'.  This is normally set via `font-lock-defaults'.")
+(make-obsolete-variable 'font-lock-inhibit-thing-lock nil "25.1")
 
 (defvar-local font-lock-multiline nil
   "Whether font-lock should cater to multiline keywords.
@@ -935,7 +939,7 @@ The value of this variable is used when Font Lock mode is turned on."
      ;; Don't fontify eagerly (and don't abort if the buffer is large).
      (set (make-local-variable 'font-lock-fontified) t)
      ;; Use jit-lock.
-     (jit-lock-register 'font-lock-fontify-region
+     (jit-lock-register #'font-lock-fontify-region
                         (not font-lock-keywords-only))
      ;; Tell jit-lock how we extend the region to refontify.
      (add-hook 'jit-lock-after-change-extend-region-functions
@@ -1220,7 +1224,8 @@ This function is the default `font-lock-fontify-region-function'."
             (font-lock-fontify-syntactic-keywords-region start end)))
         (unless font-lock-keywords-only
           (font-lock-fontify-syntactically-region beg end loudly))
-        (font-lock-fontify-keywords-region beg end loudly)))))
+        (font-lock-fontify-keywords-region beg end loudly)
+        `(jit-lock-bounds ,beg . ,end)))))
 
 ;; The following must be rethought, since keywords can override fontification.
 ;;    ;; Now scan for keywords, but not if we are inside a comment now.
