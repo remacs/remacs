@@ -362,8 +362,14 @@ is active."
             (`(,this-beg . ,this-end)
              (if (eq (car-safe res) 'jit-lock-bounds)
                  (cdr res) (cons beg end))))
-         (setq tight-beg (max tight-beg (or this-beg (point-min))))
-         (setq tight-end (max tight-end (or this-end (point-max))))
+         ;; If all functions don't fontify the same region, we currently
+         ;; just try to "still be correct".  But we could go further and for
+         ;; the chunks of text that was fontified by some functions but not
+         ;; all, we could add text-properties indicating which functions were
+         ;; already run to avoid running them redundantly when we get to
+         ;; those chunks.
+         (setq tight-beg (max (or tight-beg (point-min)) this-beg))
+         (setq tight-end (max (or tight-end (point-max)) this-end))
          (setq loose-beg (max loose-beg this-beg))
          (setq loose-end (max loose-end this-end))
          nil)))
@@ -402,7 +408,7 @@ Defaults to the whole buffer.  END can be out of bounds."
                ;; `tight' is the part we've fully refontified, and `loose'
                ;; is the part we've partly refontified (some of the
                ;; functions have refontified it but maybe not all).
-               ((`(,tight-beg ,tight-end ,loose-beg ,loose-end)
+               ((`(,tight-beg ,tight-end ,loose-beg ,_loose-end)
                  (condition-case err
                      (jit-lock--run-functions start next)
                    ;; If the user quits (which shouldn't happen in normal
