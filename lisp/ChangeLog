@@ -1,3 +1,7 @@
+2015-03-31  Simen Heggestøyl  <simenheg@gmail.com>
+
+	* textmodes/css-mode.el (css-mode): Derive from `prog-mode'.
+
 2015-03-31  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* jit-lock.el (jit-lock--run-functions): Fix min/max copy&paste error.
