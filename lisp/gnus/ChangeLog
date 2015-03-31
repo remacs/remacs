@@ -1,3 +1,8 @@
+2015-03-31  Daiki Ueno  <ueno@gnu.org>
+
+	* plstore.el (plstore--decrypt): Clear entry in
+	`plstore-passphrase-alist' if decryption failed (bug#20030).
+
 2015-03-28  Adam Sjøgren  <asjo@koldfront.dk>
 
 	* gnus-sum.el (gnus-summary-make-menu-bar): Add "Display HTML images"
