@@ -341,11 +341,12 @@ from the front of the list are deleted first.
 
 Returns the number of deleted entries."
   (let ((size (registry-size db))
-	(target-size (- (oref db max-size)
-			(* (oref db max-size)
-			   (oref db prune-factor))))
+	(target-size
+	 (floor (- (oref db max-size)
+		   (* (oref db max-size)
+		      (oref db prune-factor)))))
 	candidates)
-    (if (> size (oref db max-size))
+    (if (registry-full db)
 	(progn
 	  (setq candidates
 		(registry-collect-prune-candidates
