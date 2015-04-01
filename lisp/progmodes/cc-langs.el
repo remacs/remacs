@@ -495,7 +495,7 @@ parameters \(point-min) and \(point-max).")
 (c-lang-defconst c-before-font-lock-functions
   ;; For documentation see the following c-lang-defvar of the same name.
   ;; The value here may be a list of functions or a single function.
-  t 'c-change-set-fl-decl-start
+  t 'c-change-expand-fl-region
   (c c++ objc) '(c-neutralize-syntax-in-and-mark-CPP
 		 c-change-expand-fl-region)
   awk 'c-awk-extend-and-syntax-tablify-region)
