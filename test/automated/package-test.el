@@ -326,7 +326,7 @@ Must called from within a `tar-mode' buffer."
 
         ;; New version should be available and old version should be installed
         (goto-char (point-min))
-        (should (re-search-forward "^\\s-+simple-single\\s-+1.4\\s-+new" nil t))
+        (should (re-search-forward "^\\s-+simple-single\\s-+1.4\\s-+available" nil t))
         (should (re-search-forward "^\\s-+simple-single\\s-+1.3\\s-+installed" nil t))
 
         (goto-char (point-min))

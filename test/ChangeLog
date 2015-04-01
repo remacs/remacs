@@ -1,6 +1,7 @@
 2015-04-01  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* automated/package-test.el: Avoid async while testing.
+	(package-test-update-archives): Fix test.
 
 2015-03-27  Wolfgang Jenkner  <wjenkner@inode.at>
 
