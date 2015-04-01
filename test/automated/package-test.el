@@ -36,6 +36,8 @@
 (require 'ert)
 (require 'cl-lib)
 
+(setq package-menu-async nil)
+
 (defvar package-test-user-dir nil
   "Directory to use for installing packages during testing.")
 
