@@ -2241,7 +2241,7 @@ will be deleted."
     map)
   "Local keymap for `package-menu-mode' buffers.")
 
-(defvar package-menu--new-package-list nil
+(defvar-local package-menu--new-package-list nil
   "List of newly-available packages since `list-packages' was last called.")
 
 (define-derived-mode package-menu-mode tabulated-list-mode "Package Menu"
@@ -2749,6 +2749,49 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
   (string< (or (package-desc-archive (car A)) "")
            (or (package-desc-archive (car B)) "")))
 
+(defvar-local package-menu--old-archive-contents nil
+  "`package-archive-contents' before the latest refresh.")
+
+(defun package-menu--populate-new-package-list ()
+  "Decide which packages are new in `package-archives-contents'.
+Store this list in `package-menu--new-package-list'."
+  ;; Find which packages are new.
+  (when package-menu--old-archive-contents
+    (dolist (elt package-archive-contents)
+      (unless (assq (car elt) package-menu--old-archive-contents)
+        (push (car elt) package-menu--new-package-list)))
+    (setq package-menu--old-archive-contents nil)))
+
+(defun package-menu--find-and-notify-upgrades ()
+  "Notify the user of upgradeable packages."
+  (when-let ((upgrades (package-menu--find-upgrades)))
+    (message "%d package%s can be upgraded; type `%s' to mark %s for upgrading."
+      (length upgrades)
+      (if (= (length upgrades) 1) "" "s")
+      (substitute-command-keys "\\[package-menu-mark-upgrades]")
+      (if (= (length upgrades) 1) "it" "them"))))
+
+(defun package-menu--post-refresh ()
+  "Function to be called after `package-refresh-contents' is done.
+Checks for new packages, reverts the *Packages* buffer, and
+checks for upgrades.
+This goes in `package--post-download-archives-hook', so that it
+works with async refresh as well."
+  (package-menu--populate-new-package-list)
+  (let ((buf (get-buffer "*Packages*")))
+    (when (buffer-live-p buf)
+      (with-current-buffer buf
+        (revert-buffer nil 'noconfirm))))
+  (package-menu--find-and-notify-upgrades))
+
+(defcustom package-menu-async t
+  "If non-nil, package-menu will use async operations when possible.
+Currently, only the refreshing of archive contents supports
+asynchronous operations.  Package transactions are still done
+synchronously."
+  :type 'boolean
+  :group 'package)
+
 ;;;###autoload
 (defun list-packages (&optional no-fetch)
   "Display a list of packages.
@@ -2760,36 +2803,24 @@ The list is displayed in a buffer named `*Packages*'."
   ;; Initialize the package system if necessary.
   (unless package--initialized
     (package-initialize t))
-  (let (old-archives new-packages)
-    (unless no-fetch
-      ;; Read the locally-cached archive-contents.
-      (package-read-all-archive-contents)
-      (setq old-archives package-archive-contents)
-      ;; Fetch the remote list of packages.
-      (package-refresh-contents)
-      ;; Find which packages are new.
-      (dolist (elt package-archive-contents)
-        (unless (assq (car elt) old-archives)
-          (push (car elt) new-packages))))
+  ;; Integrate the package-menu with updating the archives.
+  (add-hook 'package--post-download-archives-hook
+            #'package-menu--post-refresh)
 
-    ;; Generate the Package Menu.
-    (let ((buf (get-buffer-create "*Packages*")))
-      (with-current-buffer buf
-        (package-menu-mode)
-        (set (make-local-variable 'package-menu--new-package-list)
-             new-packages)
-        (package-menu--generate nil t))
-      ;; The package menu buffer has keybindings.  If the user types
-      ;; `M-x list-packages', that suggests it should become current.
-      (switch-to-buffer buf))
+  (unless no-fetch
+    (setq package-menu--old-archive-contents package-archive-contents)
+    (setq package-menu--new-package-list nil)
+    ;; Fetch the remote list of packages.
+    (package-refresh-contents package-menu-async))
 
-    (let ((upgrades (package-menu--find-upgrades)))
-      (if upgrades
-          (message "%d package%s can be upgraded; type `%s' to mark %s for upgrading."
-                   (length upgrades)
-                   (if (= (length upgrades) 1) "" "s")
-                   (substitute-command-keys "\\[package-menu-mark-upgrades]")
-                   (if (= (length upgrades) 1) "it" "them"))))))
+  ;; Generate the Package Menu.
+  (let ((buf (get-buffer-create "*Packages*")))
+    (with-current-buffer buf
+      (package-menu-mode)
+      (package-menu--generate nil t))
+    ;; The package menu buffer has keybindings.  If the user types
+    ;; `M-x list-packages', that suggests it should become current.
+    (switch-to-buffer buf)))
 
 ;;;###autoload
 (defalias 'package-list-packages 'list-packages)

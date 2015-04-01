@@ -10,6 +10,15 @@
 	(package--post-download-archives-hook): New variable.  Hook run
 	after every refresh.
 
+	* emacs-lisp/package.el: Make package-menu asynchronous.
+	(package-menu-async): New variable.  Controls whether
+	`list-packages' is asynchronous.
+	(list-packages): Now asynchronous by default.
+	(package-menu--new-package-list): Always buffer-local.
+	(package-menu--post-refresh)
+	(package-menu--find-and-notify-upgrades)
+	(package-menu--populate-new-package-list): New functions.
+
 2015-03-31  Simen Heggestøyl  <simenheg@gmail.com>
 
 	* textmodes/css-mode.el (css-mode): Derive from `prog-mode'.
