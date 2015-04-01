@@ -558,8 +558,8 @@ shall not contain a timeout."
 
 (ert-deftest tramp-test06-directory-file-name ()
   "Check `directory-file-name'.
-This checks also `file-name-as-directory', `file-name-directory'
-and `file-name-nondirectory'."
+This checks also `file-name-as-directory', `file-name-directory',
+`file-name-nondirectory' and `unhandled-file-name-directory'."
   (should
    (string-equal
     (directory-file-name "/method:host:/path/to/file")
@@ -589,8 +589,7 @@ and `file-name-nondirectory'."
   (should
    (string-equal (file-name-nondirectory "/method:host:/path/to/file/") ""))
   (should-not
-   (file-remote-p
-    (unhandled-file-name-directory "/method:host:/path/to/file"))))
+   (unhandled-file-name-directory "/method:host:/path/to/file")))
 
 (ert-deftest tramp-test07-file-exists-p ()
   "Check `file-exist-p', `write-region' and `delete-file'."
