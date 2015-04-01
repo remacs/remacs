@@ -3355,10 +3355,11 @@ User is always nil."
 
 (defun tramp-handle-unhandled-file-name-directory (_filename)
   "Like `unhandled-file-name-directory' for Tramp files."
-  ;; With Emacs 23, we could simply return `nil'.  But we must keep it
-  ;; for backward compatibility.  "~/" cannot be returned, because
-  ;; there might be machines without a HOME directory (like hydra).
-  "/")
+  ;; Starting with Emacs 23, we must simply return `nil'.  But we must
+  ;; keep backward compatibility, also with XEmacs.  "~/" cannot be
+  ;; returned, because there might be machines without a HOME
+  ;; directory (like hydra).
+  (and (< emacs-major-version 23) "/"))
 
 (defun tramp-handle-set-visited-file-modtime (&optional time-list)
   "Like `set-visited-file-modtime' for Tramp files."

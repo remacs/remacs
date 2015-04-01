@@ -1,3 +1,8 @@
+2015-04-01  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-handle-unhandled-file-name-directory):
+	Return nil when required by the spec.  (Bug#20233)
+
 2015-04-01  Nicolas Petton  <nicolas@petton.fr>
 
 	* Version 24.5 released.
