@@ -1,3 +1,15 @@
+2015-04-01  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* emacs-lisp/package.el: Implement asynchronous refreshing.
+	(package--with-work-buffer-async)
+	(package--check-signature-content)
+	(package--update-downloads-in-progress): New functions.
+	(package--check-signature, package--download-one-archive)
+	(package--download-and-read-archives, package-refresh-contents):
+	Optional arguments for async usage.
+	(package--post-download-archives-hook): New variable.  Hook run
+	after every refresh.
+
 2015-03-31  Simen Heggestøyl  <simenheg@gmail.com>
 
 	* textmodes/css-mode.el (css-mode): Derive from `prog-mode'.

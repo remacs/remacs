@@ -1082,20 +1082,43 @@ buffer is killed afterwards.  Return the last value in BODY."
        (insert-file-contents (expand-file-name ,file ,location)))
      ,@body))
 
-(defun package--check-signature (location file)
-  "Check signature of the current buffer.
-GnuPG keyring is located under \"gnupg\" in `package-user-dir'."
+(defmacro package--with-work-buffer-async (location file async &rest body)
+  "Run BODY in a buffer containing the contents of FILE at LOCATION.
+If ASYNC is non-nil, and if it is possible, the operation is run
+asynchronously.  If an error is encountered and ASYNC is a
+function, it is called with no arguments (instead of executing
+body), otherwise the error is propagated.  For description on the
+other arguments see `package--with-work-buffer'."
+  (declare (indent 3) (debug t))
+  `(if (or (not ,async)
+           (not (string-match-p "\\`https?:" ,location)))
+       (package--with-work-buffer ,location ,file ,@body)
+     (url-retrieve (concat ,location ,file)
+                   (lambda (status)
+                     (if (eq (car status) :error)
+                         (if (functionp ,async)
+                             (funcall ,async)
+                           (signal (cdar status) (cddr status)))
+                       (goto-char (point-min))
+                       (unless (search-forward "\n\n" nil 'noerror)
+                         (error "Invalid url response"))
+                       (delete-region (point-min) (point))
+                       ,@body)
+                     (kill-buffer (current-buffer)))
+                   nil
+                   'silent)))
+
+(defun package--check-signature-content (content string &optional sig-file)
+  "Check signature CONTENT against STRING.
+SIG-FILE is the name of the signature file, used when signaling
+errors."
   (let* ((context (epg-make-context 'OpenPGP))
-         (homedir (expand-file-name "gnupg" package-user-dir))
-         (sig-file (concat file ".sig"))
-         (sig-content (package--with-work-buffer location sig-file
-                        (buffer-string))))
+         (homedir (expand-file-name "gnupg" package-user-dir)))
     (setf (epg-context-home-directory context) homedir)
     (condition-case error
-        (epg-verify-string context sig-content (buffer-string))
-      (error
-       (package--display-verify-error context sig-file)
-       (signal (car error) (cdr error))))
+        (epg-verify-string context content string)
+      (error (package--display-verify-error context sig-file)
+        (signal (car error) (cdr error))))
     (let (good-signatures had-fatal-error)
       ;; The .sig file may contain multiple signatures.  Success if one
       ;; of the signatures is good.
@@ -1113,6 +1136,30 @@ GnuPG keyring is located under \"gnupg\" in `package-user-dir'."
         (package--display-verify-error context sig-file)
         (error "Failed to verify signature %s" sig-file))
       good-signatures)))
+
+(defun package--check-signature (location file &optional string async callback)
+  "Check signature of the current buffer.
+Signature file is downloaded from LOCATION by appending \".sig\"
+to FILE.
+GnuPG keyring is located under \"gnupg\" in `package-user-dir'.
+STRING is the string to verify, it defaults to `buffer-string'.
+If ASYNC is non-nil, the download of the signature file is
+done asynchronously.
+
+If the signature is verified and CALLBACK was provided, CALLBACK
+is `funcall'ed with the list of good signatures as argument (the
+list can be empty).  If the signatures file is not found,
+CALLBACK is called with no arguments."
+  (let ((sig-file (concat file ".sig"))
+        (string (or string (buffer-string))))
+    (condition-case nil
+        (package--with-work-buffer-async
+            location sig-file (when async (or callback t))
+          (let ((sig (package--check-signature-content
+                      (buffer-string) string sig-file)))
+            (when callback (funcall callback sig))
+            sig))
+      (file-error (funcall callback)))))
 
 
 ;;; Packages on Archives
@@ -1281,36 +1328,8 @@ If optional arg NO-ACTIVATE is non-nil, don't activate packages."
 ;;;; Populating `package-archive-contents' from archives
 ;; This subsection populates the variables listed above from the
 ;; actual archives, instead of from a local cache.
-(defun package--download-one-archive (archive file)
-  "Retrieve an archive file FILE from ARCHIVE, and cache it.
-ARCHIVE should be a cons cell of the form (NAME . LOCATION),
-similar to an entry in `package-alist'.  Save the cached copy to
-\"archives/NAME/archive-contents\" in `package-user-dir'."
-  (let ((dir (expand-file-name (format "archives/%s" (car archive))
-                               package-user-dir))
-        (sig-file (concat file ".sig"))
-        good-signatures)
-    (package--with-work-buffer (cdr archive) file
-      ;; Check signature of archive-contents, if desired.
-      (if (and package-check-signature
-               (not (member archive package-unsigned-archives)))
-          (if (package--archive-file-exists-p (cdr archive) sig-file)
-              (setq good-signatures (package--check-signature (cdr archive)
-                                                              file))
-            (unless (eq package-check-signature 'allow-unsigned)
-              (error "Unsigned archive `%s'"
-                (car archive)))))
-      ;; Read the retrieved buffer to make sure it is valid (e.g. it
-      ;; may fetch a URL redirect page).
-      (when (listp (read (current-buffer)))
-        (make-directory dir t)
-        (write-region nil nil (expand-file-name file dir) nil 'silent)))
-    (when good-signatures
-      ;; Write out good signatures into archive-contents.signed file.
-      (write-region (mapconcat #'epg-signature-to-string good-signatures "\n")
-                    nil
-                    (expand-file-name (concat file ".signed") dir)
-                    nil 'silent))))
+(defvar package--downloads-in-progress nil
+  "List of in-progress asynchronous downloads.")
 
 (declare-function epg-check-configuration "epg-config"
                   (config &optional minimum-version))
@@ -1331,12 +1350,81 @@ similar to an entry in `package-alist'.  Save the cached copy to
     (epg-import-keys-from-file context file)
     (message "Importing %s...done" (file-name-nondirectory file))))
 
+(defvar package--post-download-archives-hook nil
+  "Hook run after the archive contents are downloaded.
+Don't run this hook directly.  It is meant to be run as part of
+`package--update-downloads-in-progress'.")
+(put 'package--post-download-archives-hook 'risky-local-variable t)
+
+(defun package--update-downloads-in-progress (entry)
+  "Remove ENTRY from `package--downloads-in-progress'.
+Once it's empty, run `package--post-download-archives-hook'."
+  ;; Keep track of the downloading progress.
+  (setq package--downloads-in-progress
+        (remove entry package--downloads-in-progress))
+  ;; If this was the last download, run the hook.
+  (unless package--downloads-in-progress
+    (package--build-compatibility-table)
+    (package-read-all-archive-contents)
+    ;; We message before running the hook, so the hook can give
+    ;; messages as well.
+    (message "Package refresh done")
+    (run-hooks 'package--post-download-archives-hook)))
+
+(defun package--download-one-archive (archive file &optional async)
+  "Retrieve an archive file FILE from ARCHIVE, and cache it.
+ARCHIVE should be a cons cell of the form (NAME . LOCATION),
+similar to an entry in `package-alist'.  Save the cached copy to
+\"archives/NAME/FILE\" in `package-user-dir'."
+  (package--with-work-buffer-async (cdr archive) file async
+    (let* ((location (cdr archive))
+           (name (car archive))
+           (content (buffer-string))
+           (dir (expand-file-name (format "archives/%s" name) package-user-dir))
+           (local-file (expand-file-name file dir)))
+      (when (listp (read-from-string content))
+        (make-directory dir t)
+        (if (or (not package-check-signature)
+                (member archive package-unsigned-archives))
+            ;; If we don't care about the signature, save the file and
+            ;; we're done.
+            (progn (write-region content nil local-file nil 'silent)
+                   (package--update-downloads-in-progress archive))
+          ;; If we care, check it (perhaps async) and *then* write the file.
+          (package--check-signature
+           location file content async
+           (lambda (&optional good-sigs)
+             (unless (or good-sigs (eq package-check-signature 'allow-unsigned))
+               (error "Unsigned archive `%s'" name))
+             ;; Write out the archives file.
+             (write-region content nil local-file nil 'silent)
+             ;; Write out good signatures into archive-contents.signed file.
+             (when good-sigs
+               (write-region (mapconcat #'epg-signature-to-string good-sigs "\n")
+                             nil (concat local-file ".signed") nil 'silent))
+             (package--update-downloads-in-progress archive))))))))
+
+(defun package--download-and-read-archives (&optional async)
+  "Download descriptions of all `package-archives' and read them.
+This populates `package-archive-contents'.  If ASYNC is non-nil,
+the downloads are performed asynchronously."
+  ;; The dowloaded archive contents will be read as part of
+  ;; `package--update-downloads-in-progress'.
+  (setq package--downloads-in-progress package-archives)
+  (dolist (archive package-archives)
+    (condition-case-unless-debug nil
+        (package--download-one-archive archive "archive-contents" async)
+      (error (message "Failed to download `%s' archive."
+               (car archive))))))
+
 ;;;###autoload
-(defun package-refresh-contents ()
+(defun package-refresh-contents (&optional async)
   "Download descriptions of all configured ELPA packages.
 For each archive configured in the variable `package-archives',
 inform Emacs about the latest versions of all packages it offers,
-and make them available for download."
+and make them available for download.
+Optional argument, ASYNC, specifies whether the downloads should
+be performed in the background."
   (interactive)
   ;; FIXME: Do it asynchronously.
   (unless (file-exists-p package-user-dir)
@@ -1349,14 +1437,7 @@ and make them available for download."
             (epg-check-configuration (epg-configuration))
             (package-import-keyring default-keyring))
         (error (message "Cannot import default keyring: %S" (cdr error))))))
-  (dolist (archive package-archives)
-    (condition-case-unless-debug nil
-        (package--download-one-archive archive "archive-contents")
-      (error (message "Failed to download `%s' archive."
-               (car archive)))))
-  (package-read-all-archive-contents)
-  (package--build-compatibility-table)
-  (message "Package refresh done"))
+  (package--download-and-read-archives async))
 
 
 ;;; Dependency Management
