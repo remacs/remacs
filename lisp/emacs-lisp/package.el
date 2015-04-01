@@ -1084,11 +1084,11 @@ buffer is killed afterwards.  Return the last value in BODY."
 
 (defmacro package--with-work-buffer-async (location file async &rest body)
   "Run BODY in a buffer containing the contents of FILE at LOCATION.
-If ASYNC is non-nil, and if it is possible, the operation is run
+If ASYNC is non-nil, and if it is possible, run BODY
 asynchronously.  If an error is encountered and ASYNC is a
-function, it is called with no arguments (instead of executing
-body), otherwise the error is propagated.  For description on the
-other arguments see `package--with-work-buffer'."
+function, call it with no arguments (instead of executing BODY),
+otherwise propagate the error.  For description of the other
+arguments see `package--with-work-buffer'."
   (declare (indent 3) (debug t))
   `(if (or (not ,async)
            (not (string-match-p "\\`https?:" ,location)))
@@ -1139,7 +1139,7 @@ errors."
 
 (defun package--check-signature (location file &optional string async callback)
   "Check signature of the current buffer.
-Signature file is downloaded from LOCATION by appending \".sig\"
+Download the signature file from LOCATION by appending \".sig\"
 to FILE.
 GnuPG keyring is located under \"gnupg\" in `package-user-dir'.
 STRING is the string to verify, it defaults to `buffer-string'.
@@ -1407,8 +1407,8 @@ similar to an entry in `package-alist'.  Save the cached copy to
 (defun package--download-and-read-archives (&optional async)
   "Download descriptions of all `package-archives' and read them.
 This populates `package-archive-contents'.  If ASYNC is non-nil,
-the downloads are performed asynchronously."
-  ;; The dowloaded archive contents will be read as part of
+perform the downloads asynchronously."
+  ;; The downloaded archive contents will be read as part of
   ;; `package--update-downloads-in-progress'.
   (setq package--downloads-in-progress package-archives)
   (dolist (archive package-archives)
@@ -1423,8 +1423,8 @@ the downloads are performed asynchronously."
 For each archive configured in the variable `package-archives',
 inform Emacs about the latest versions of all packages it offers,
 and make them available for download.
-Optional argument, ASYNC, specifies whether the downloads should
-be performed in the background."
+Optional argument ASYNC specifies whether to perform the
+downloads in the background."
   (interactive)
   ;; FIXME: Do it asynchronously.
   (unless (file-exists-p package-user-dir)
@@ -2763,7 +2763,7 @@ Store this list in `package-menu--new-package-list'."
     (setq package-menu--old-archive-contents nil)))
 
 (defun package-menu--find-and-notify-upgrades ()
-  "Notify the user of upgradeable packages."
+  "Notify the user of upgradable packages."
   (when-let ((upgrades (package-menu--find-upgrades)))
     (message "%d package%s can be upgraded; type `%s' to mark %s for upgrading."
       (length upgrades)
@@ -2772,10 +2772,9 @@ Store this list in `package-menu--new-package-list'."
       (if (= (length upgrades) 1) "it" "them"))))
 
 (defun package-menu--post-refresh ()
-  "Function to be called after `package-refresh-contents' is done.
-Checks for new packages, reverts the *Packages* buffer, and
-checks for upgrades.
-This goes in `package--post-download-archives-hook', so that it
+  "Check for new packages, revert the *Packages* buffer, and check for upgrades.
+This function is called after `package-refresh-contents' is done.
+It goes in `package--post-download-archives-hook', so that it
 works with async refresh as well."
   (package-menu--populate-new-package-list)
   (let ((buf (get-buffer "*Packages*")))

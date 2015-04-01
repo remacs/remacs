@@ -1,3 +1,7 @@
+2015-04-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* emacs-lisp/package.el: Spelling fixes and use active voice.
+
 2015-04-01  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* emacs-lisp/package.el: Implement asynchronous refreshing.
