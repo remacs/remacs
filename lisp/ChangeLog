@@ -1,9 +1,13 @@
+2015-04-02  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/lisp-mnt.el (lm-version): Don't burp in a non-file buffer.
+
 2015-04-01  Alan Mackenzie  <acm@muc.de>
 
 	Fix the CC Mode fixes from 2015-03-30.  Fixes debbugs#20240.
 
-	* progmodes/cc-mode.el (c-extend-after-change-region): Widen
-	before applying text properties.
+	* progmodes/cc-mode.el (c-extend-after-change-region):
+	Widen before applying text properties.
 	* progmodes/cc-langs.el (c-before-font-lock-functions): Update an
 	entry to a new function name.
 
