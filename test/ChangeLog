@@ -1,11 +1,11 @@
+2015-04-10  Nicolas Petton  <nicolas@petton.fr>
+
+	* Version 24.5 released.
+
 2015-04-01  Michael Albinus  <michael.albinus@gmx.de>
 
 	* automated/tramp-tests.el (tramp-test06-directory-file-name):
 	Fix docstring and last test.
-
-2015-04-01  Nicolas Petton  <nicolas@petton.fr>
-
-	* Version 24.5 released.
 
 2015-01-30  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
