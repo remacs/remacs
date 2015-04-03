@@ -52,9 +52,11 @@ General steps (for each step, check for possible errors):
     number to that of the actual release.  Pick a date about a week
     from now when you intend to make the release.  Use M-x add-release-logs
     to add the ChangeLog entries for that date to the tar file (but
-    not yet to the repository).  Name the tar file as
-    emacs-XX.Y-rc1.tar.  If all goes well in the following week, you
-    can simply rename the file and use it for the actual release.
+    do not commit the entries to the repository until the actual release).
+    Name the tar file as emacs-XX.Y-rc1.tar.  If all goes well in the
+    following week, you can simply rename the file and use it for the
+    actual release.  If you need another release candidate, remember
+    to adjust the ChangeLog entries.
 
 4.   autoreconf -i -I m4 --force
      make bootstrap
