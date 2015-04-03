@@ -1,3 +1,7 @@
+2015-04-03  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* Makefile.in (CAIRO_CFLAGS): Add.
+
 2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Less 'make' chatter for lwlib
