@@ -1,3 +1,8 @@
+2015-04-03  Nicolas Richard  <theonewiththeevillook@yahoo.fr>
+
+	* pcmpl-unix.el (pcmpl-ssh-known-hosts): Use `char-before' instead
+	of `looking-back' (bug#17284).
+
 2015-04-03  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* progmodes/js.el (js-indent-line): Do nothing when bol is inside
