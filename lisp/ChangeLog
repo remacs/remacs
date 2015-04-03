@@ -1,3 +1,9 @@
+2015-04-03  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-cache.el (tramp-flush-file-property)
+	(tramp-flush-directory-property): Use `directory-file-name' of the
+	truename.  (Bug#20249)
+
 2015-04-03  Nicolas Richard  <theonewiththeevillook@yahoo.fr>
 
 	* pcmpl-unix.el (pcmpl-ssh-known-hosts): Use `char-before' instead
