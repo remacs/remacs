@@ -1,3 +1,8 @@
+2015-04-03  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/js.el (js-indent-line): Do nothing when bol is inside
+	a string (https://github.com/mooz/js2-mode/issues/227).
+
 2015-04-02  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* abbrev.el (define-abbrev-table): Treat a non-string "docstring" as
