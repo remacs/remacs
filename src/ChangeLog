@@ -1,3 +1,8 @@
+2015-04-03  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* xterm.c (handle_one_xevent): Always redraw tool tips on
+	MapNotify.  Update tool tip frame sizes on ConfigureNotify.
+
 2015-03-31  Eli Zaretskii  <eliz@gnu.org>
 
 	* keyboard.c (read_key_sequence): Don't let
