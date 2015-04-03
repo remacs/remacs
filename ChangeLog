@@ -1,3 +1,8 @@
+2015-04-03  Ulrich Müller  <ulm@gentoo.org>
+
+	* configure.ac (LD_SWITCH_SYSTEM_TEMACS): Add -nopie option if it
+	is supported, in order to avoid segfaults in temacs.  (Bug#18784)
+
 2015-03-27  Pete Williamson  <petewil@chromium.org>  (tiny change)
 
 	Add NaCl target

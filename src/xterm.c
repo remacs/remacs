@@ -7792,11 +7792,6 @@ handle_one_xevent (struct x_display_info *dpyinfo,
       goto OTHER;
 
     case MapNotify:
-      if (event->xmap.window == tip_window)
-        /* The tooltip has been drawn already.  Avoid
-           the SET_FRAME_GARBAGED below.  */
-        goto OTHER;
-
       /* We use x_top_window_to_frame because map events can
          come for sub-windows and they don't mean that the
          frame is visible.  */
@@ -8329,6 +8324,18 @@ handle_one_xevent (struct x_display_info *dpyinfo,
       if (f)
         {
 	  x_net_wm_state (f, event->xconfigure.window);
+
+#ifdef USE_X_TOOLKIT
+          /* Tip frames are pure X window, set size for them.  */
+          if (! NILP (tip_frame) && XFRAME (tip_frame) == f)
+            {
+              if (FRAME_PIXEL_HEIGHT (f) != event->xconfigure.height
+                  || FRAME_PIXEL_WIDTH (f) != event->xconfigure.width)
+                SET_FRAME_GARBAGED (f);
+              FRAME_PIXEL_HEIGHT (f) = event->xconfigure.height;
+              FRAME_PIXEL_WIDTH (f) = event->xconfigure.width;
+            }
+#endif
 
 #ifndef USE_X_TOOLKIT
 #ifndef USE_GTK

@@ -5055,10 +5055,21 @@ case "$opsys" in
    esac
    ;;
 
-  openbsd) LD_SWITCH_SYSTEM_TEMACS='-nopie' ;;
-
   *) LD_SWITCH_SYSTEM_TEMACS= ;;
 esac
+
+AC_CACHE_CHECK([whether the linker accepts -nopie],
+  [emacs_cv_prog_cc_nopie],
+  [emacs_save_LDFLAGS=$LDFLAGS
+  LDFLAGS="$LDFLAGS -nopie"
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
+    [emacs_cv_prog_cc_nopie=yes],
+    [emacs_cv_prog_cc_nopie=no])
+  LDFLAGS=$emacs_save_LDFLAGS])
+if test "$emacs_cv_prog_cc_nopie" = yes; then
+  # Disable PIE to avoid segfaults in temacs (bug#18784)
+  LD_SWITCH_SYSTEM_TEMACS="$LD_SWITCH_SYSTEM_TEMACS -nopie"
+fi
 
 if test x$ac_enable_profiling != x ; then
   case $opsys in
