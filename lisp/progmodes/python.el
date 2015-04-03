@@ -4,7 +4,7 @@
 
 ;; Author: Fabián E. Gallina <fabian@anue.biz>
 ;; URL: https://github.com/fgallina/python.el
-;; Version: 0.24.4
+;; Version: 0.24.5
 ;; Maintainer: emacs-devel@gnu.org
 ;; Created: Jul 2010
 ;; Keywords: languages
@@ -696,6 +696,12 @@ It makes underscores and dots word constituent chars.")
   :group 'python
   :safe 'booleanp)
 
+(defcustom python-indent-guess-indent-offset-verbose t
+  "Non-nil means to emit a warning when indentation guessing fails."
+  :type 'boolean
+  :group 'python
+  :safe' booleanp)
+
 (defcustom python-indent-trigger-commands
   '(indent-for-tab-command yas-expand yas/expand)
   "Commands that might trigger a `python-indent-line' call."
@@ -766,8 +772,9 @@ work on `python-indent-calculate-indentation' instead."
                  (current-indentation))))
           (if (and indentation (not (zerop indentation)))
               (set (make-local-variable 'python-indent-offset) indentation)
-            (message "Can't guess python-indent-offset, using defaults: %s"
-                     python-indent-offset)))))))
+            (when python-indent-guess-indent-offset-verbose
+              (message "Can't guess python-indent-offset, using defaults: %s"
+                       python-indent-offset))))))))
 
 (defun python-indent-context ()
   "Get information about the current indentation context.
@@ -843,15 +850,6 @@ keyword
        ;; Beginning of buffer.
        ((= (line-number-at-pos) 1)
         (cons :no-indent 0))
-       ;; Comment continuation (maybe).
-       ((save-excursion
-          (when (and
-                 (or
-                  (python-info-current-line-comment-p)
-                  (python-info-current-line-empty-p))
-                 (forward-comment -1)
-                 (python-info-current-line-comment-p))
-            (cons :after-comment (point)))))
        ;; Inside a string.
        ((let ((start (python-syntax-context 'string ppss)))
           (when start
@@ -963,28 +961,29 @@ keyword
        ((let ((start (python-info-dedenter-statement-p)))
           (when start
             (cons :at-dedenter-block-start start))))
-       ;; After normal line.
-       ((let ((start (save-excursion
-                       (back-to-indentation)
-                       (skip-chars-backward " \t\n")
-                       (python-nav-beginning-of-statement)
-                       (point))))
-          (when start
-            (if (save-excursion
-                  (python-util-forward-comment -1)
-                  (python-nav-beginning-of-statement)
-                  (looking-at (python-rx block-ender)))
-                (cons :after-block-end start)
-              (cons :after-line start)))))
-       ;; Default case: do not indent.
-       (t (cons :no-indent 0))))))
+       ;; After normal line, comment or ender (default case).
+       ((save-excursion
+          (back-to-indentation)
+          (skip-chars-backward " \t\n")
+          (python-nav-beginning-of-statement)
+          (cons
+           (cond ((python-info-current-line-comment-p)
+                  :after-comment)
+                 ((save-excursion
+                    (goto-char (line-end-position))
+                    (python-util-forward-comment -1)
+                    (python-nav-beginning-of-statement)
+                    (looking-at (python-rx block-ender)))
+                  :after-block-end)
+                 (t :after-line))
+           (point))))))))
 
 (defun python-indent--calculate-indentation ()
   "Internal implementation of `python-indent-calculate-indentation'.
 May return an integer for the maximum possible indentation at
 current context or a list of integers.  The latter case is only
 happening for :at-dedenter-block-start context since the
-possibilities can be narrowed to especific indentation points."
+possibilities can be narrowed to specific indentation points."
   (save-restriction
     (widen)
     (save-excursion
@@ -1075,7 +1074,7 @@ minimum."
 (defun python-indent-line (&optional previous)
   "Internal implementation of `python-indent-line-function'.
 Use the PREVIOUS level when argument is non-nil, otherwise indent
-to the maxium available level.  When indentation is the minimum
+to the maximum available level.  When indentation is the minimum
 possible and PREVIOUS is non-nil, cycle back to the maximum
 level."
   (let ((follow-indentation-p
@@ -1110,9 +1109,7 @@ indentation levels from right to left."
   (interactive "*")
   (when (and (not (bolp))
            (not (python-syntax-comment-or-string-p))
-           (= (+ (line-beginning-position)
-                 (current-indentation))
-              (point)))
+           (= (current-indentation) (current-column)))
       (python-indent-line t)
       t))
 
@@ -2301,12 +2298,11 @@ Signals an error if no shell buffer is available for current buffer."
 
 (defun python-shell-font-lock-kill-buffer ()
   "Kill the font-lock buffer safely."
-  (python-shell-with-shell-buffer
-    (when (and python-shell--font-lock-buffer
-               (buffer-live-p python-shell--font-lock-buffer))
-      (kill-buffer python-shell--font-lock-buffer)
-      (when (derived-mode-p 'inferior-python-mode)
-        (setq python-shell--font-lock-buffer nil)))))
+  (when (and python-shell--font-lock-buffer
+             (buffer-live-p python-shell--font-lock-buffer))
+    (kill-buffer python-shell--font-lock-buffer)
+    (when (derived-mode-p 'inferior-python-mode)
+      (setq python-shell--font-lock-buffer nil))))
 
 (defmacro python-shell-font-lock-with-font-lock-buffer (&rest body)
   "Execute the forms in BODY in the font-lock buffer.
@@ -2357,9 +2353,11 @@ goes wrong and syntax highlighting in the shell gets messed up."
 (defun python-shell-font-lock-post-command-hook ()
   "Fontifies current line in shell buffer."
   (let ((prompt-end (cdr (python-util-comint-last-prompt))))
-    (when (and prompt-end (> (point) prompt-end))
+    (when (and prompt-end (> (point) prompt-end)
+               (process-live-p (get-buffer-process (current-buffer))))
       (let* ((input (buffer-substring-no-properties
                      prompt-end (point-max)))
+             (deactivate-mark nil)
              (start-pos prompt-end)
              (buffer-undo-list t)
              (font-lock-buffer-pos nil)

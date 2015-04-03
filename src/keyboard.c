@@ -3034,6 +3034,7 @@ read_char (int commandflag, Lisp_Object map,
       Lisp_Object keys;
       ptrdiff_t key_count;
       bool key_count_reset;
+      ptrdiff_t command_key_start;
       struct gcpro gcpro1;
       ptrdiff_t count = SPECPDL_INDEX ();
 
@@ -3057,6 +3058,7 @@ read_char (int commandflag, Lisp_Object map,
       /* Save the this_command_keys status.  */
       key_count = this_command_key_count;
       key_count_reset = this_command_key_count_reset;
+      command_key_start = this_single_command_key_start;
 
       if (key_count > 0)
 	keys = Fcopy_sequence (this_command_keys);
@@ -3067,6 +3069,7 @@ read_char (int commandflag, Lisp_Object map,
       /* Clear out this_command_keys.  */
       this_command_key_count = 0;
       this_command_key_count_reset = 0;
+      this_single_command_key_start = 0;
 
       /* Now wipe the echo area.  */
       if (!NILP (echo_area_buffer[0]))
@@ -3090,12 +3093,20 @@ read_char (int commandflag, Lisp_Object map,
 	 and this_command_keys state.  */
       this_command_key_count = key_count;
       this_command_key_count_reset = key_count_reset;
+      this_single_command_key_start = command_key_start;
       if (key_count > 0)
 	this_command_keys = keys;
 
       cancel_echoing ();
       ok_to_echo_at_next_pause = saved_ok_to_echo;
-      kset_echo_string (current_kboard, saved_echo_string);
+      /* Do not restore the echo area string when the user is
+         introducing a prefix argument. Otherwise we end with
+         repetitions of the partially introduced prefix
+         argument. (bug#19875) */
+      if (NILP (intern ("prefix-arg")))
+        {
+          kset_echo_string (current_kboard, saved_echo_string);
+        }
       current_kboard->echo_after_prompt = saved_echo_after_prompt;
       if (saved_immediate_echo)
 	echo_now ();
@@ -3842,7 +3853,7 @@ kbd_buffer_get_event (KBOARD **kbp,
   if (noninteractive
       /* In case we are running as a daemon, only do this before
 	 detaching from the terminal.  */
-      || (IS_DAEMON && daemon_pipe[1] >= 0))
+      || (IS_DAEMON && DAEMON_RUNNING))
     {
       int c = getchar ();
       XSETINT (obj, c);
@@ -4441,7 +4452,7 @@ timer_check_2 (Lisp_Object timers, Lisp_Object idle_timers)
       /* Set TIMER and TIMER_DIFFERENCE
 	 based on the next ordinary timer.
 	 TIMER_DIFFERENCE is the distance in time from NOW to when
-	 this timer becomes ripe (negative if it's already ripe).
+	 this timer becomes ripe.
          Skip past invalid timers and timers already handled.  */
       if (CONSP (timers))
 	{
@@ -5349,9 +5360,9 @@ make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
 	  dy = yret = wy;
 	}
 
-      /* For clicks in the text area, fringes, or margins, call
-	 buffer_posn_from_coords to extract TEXTPOS, the buffer
-	 position nearest to the click.  */
+      /* For clicks in the text area, fringes, margins, or vertical
+	 scroll bar, call buffer_posn_from_coords to extract TEXTPOS,
+	 the buffer position nearest to the click.  */
       if (!textpos)
 	{
 	  Lisp_Object string2, object2 = Qnil;
@@ -5359,11 +5370,14 @@ make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
 	  int dx2, dy2;
 	  int width2, height2;
 	  /* The pixel X coordinate passed to buffer_posn_from_coords
-	     is the X coordinate relative to the text area for
-	     text-area and right-margin clicks, zero otherwise.  */
+	     is the X coordinate relative to the text area for clicks
+	     in text-area, right-margin/fringe and right-side vertical
+	     scroll bar, zero otherwise.  */
 	  int x2
 	    = (part == ON_TEXT) ? xret
-	    : (part == ON_RIGHT_FRINGE || part == ON_RIGHT_MARGIN)
+	    : (part == ON_RIGHT_FRINGE || part == ON_RIGHT_MARGIN
+	       || (part == ON_VERTICAL_SCROLL_BAR
+		   && WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_RIGHT (w)))
 	    ? (XINT (x) - window_box_left (w, TEXT_AREA))
 	    : 0;
 	  int y2 = wy;
@@ -9577,6 +9591,18 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 
       /* Record what part of this_command_keys is the current key sequence.  */
       this_single_command_key_start = this_command_key_count - t;
+      /* When 'input-method-function' called above causes events to be
+	 put on 'unread-post-input-method-events', and as result
+	 'reread' is set to 'true', the value of 't' can become larger
+	 than 'this_command_key_count', because 'add_command_key' is
+	 not called to update 'this_command_key_count'.  If this
+	 happens, 'this_single_command_key_start' will become negative
+	 above, and any call to 'this-single-command-keys' will return
+	 a garbled vector.  See bug #20223 for one such situation.
+	 Here we force 'this_single_command_key_start' to never become
+	 negative, to avoid that.  */
+      if (this_single_command_key_start < 0)
+	this_single_command_key_start = 0;
 
       /* Look for this sequence in input-decode-map.
 	 Scan from indec.end until we find a bound suffix.  */
@@ -11587,7 +11613,7 @@ and the minor mode maps regardless of `overriding-local-map'.  */);
 
   DEFVAR_LISP ("special-event-map", Vspecial_event_map,
 	       doc: /* Keymap defining bindings for special events to execute at low level.  */);
-  Vspecial_event_map = list1 (intern_c_string ("keymap"));
+  Vspecial_event_map = list1 (Qkeymap);
 
   DEFVAR_LISP ("track-mouse", do_mouse_tracking,
 	       doc: /* Non-nil means generate motion events for mouse motion.  */);

@@ -179,12 +179,12 @@
   (if (next-method-p) (call-next-method))
   )
 
-(defmethod eieio-constructor :STATIC ((p C-base2) &rest args)
+(defmethod make-instance :STATIC ((p C-base2) &rest args)
   (eieio-test-method-store :STATIC 'C-base2)
   (if (next-method-p) (call-next-method))
   )
 
-(defmethod eieio-constructor :STATIC ((p C) &rest args)
+(cl-defmethod make-instance ((p (subclass C)) &rest args)
   (eieio-test-method-store :STATIC 'C)
   (call-next-method)
   )

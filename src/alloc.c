@@ -441,6 +441,15 @@ mmap_lisp_allowed_p (void)
   return pointers_fit_in_lispobj_p () && !might_dump;
 }
 
+/* Head of a circularly-linked list of extant finalizers. */
+static struct Lisp_Finalizer finalizers;
+
+/* Head of a circularly-linked list of finalizers that must be invoked
+   because we deemed them unreachable.  This list must be global, and
+   not a local inside garbage_collect_1, in case we GC again while
+   running finalizers.  */
+static struct Lisp_Finalizer doomed_finalizers;
+
 
 /************************************************************************
 				Malloc
@@ -3414,7 +3423,7 @@ union aligned_Lisp_Misc
 };
 
 /* Allocation of markers and other objects that share that structure.
-   Works like allocation of conses. */
+   Works like allocation of conses.  */
 
 #define MARKER_BLOCK_SIZE \
   ((1020 - sizeof (struct marker_block *)) / sizeof (union aligned_Lisp_Misc))
@@ -3695,6 +3704,128 @@ make_event_array (ptrdiff_t nargs, Lisp_Object *args)
   }
 }
 
+static void
+init_finalizer_list (struct Lisp_Finalizer *head)
+{
+  head->prev = head->next = head;
+}
+
+/* Insert FINALIZER before ELEMENT.  */
+
+static void
+finalizer_insert (struct Lisp_Finalizer *element,
+                  struct Lisp_Finalizer *finalizer)
+{
+  eassert (finalizer->prev == NULL);
+  eassert (finalizer->next == NULL);
+  finalizer->next = element;
+  finalizer->prev = element->prev;
+  finalizer->prev->next = finalizer;
+  element->prev = finalizer;
+}
+
+static void
+unchain_finalizer (struct Lisp_Finalizer *finalizer)
+{
+  if (finalizer->prev != NULL)
+    {
+      eassert (finalizer->next != NULL);
+      finalizer->prev->next = finalizer->next;
+      finalizer->next->prev = finalizer->prev;
+      finalizer->prev = finalizer->next = NULL;
+    }
+}
+
+static void
+mark_finalizer_list (struct Lisp_Finalizer *head)
+{
+  for (struct Lisp_Finalizer *finalizer = head->next;
+       finalizer != head;
+       finalizer = finalizer->next)
+    {
+      finalizer->base.gcmarkbit = true;
+      mark_object (finalizer->function);
+    }
+}
+
+/* Move doomed finalizers to list DEST from list SRC.  A doomed
+   finalizer is one that is not GC-reachable and whose
+   finalizer->function is non-nil.  */
+
+static void
+queue_doomed_finalizers (struct Lisp_Finalizer *dest,
+                         struct Lisp_Finalizer *src)
+{
+  struct Lisp_Finalizer *finalizer = src->next;
+  while (finalizer != src)
+    {
+      struct Lisp_Finalizer *next = finalizer->next;
+      if (!finalizer->base.gcmarkbit && !NILP (finalizer->function))
+        {
+          unchain_finalizer (finalizer);
+          finalizer_insert (dest, finalizer);
+        }
+
+      finalizer = next;
+    }
+}
+
+static Lisp_Object
+run_finalizer_handler (Lisp_Object args)
+{
+  add_to_log ("finalizer failed: %S", args, Qnil);
+  return Qnil;
+}
+
+static void
+run_finalizer_function (Lisp_Object function)
+{
+  struct gcpro gcpro1;
+  ptrdiff_t count = SPECPDL_INDEX ();
+
+  GCPRO1 (function);
+  specbind (Qinhibit_quit, Qt);
+  internal_condition_case_1 (call0, function, Qt, run_finalizer_handler);
+  unbind_to (count, Qnil);
+  UNGCPRO;
+}
+
+static void
+run_finalizers (struct Lisp_Finalizer *finalizers)
+{
+  struct Lisp_Finalizer *finalizer;
+  Lisp_Object function;
+
+  while (finalizers->next != finalizers)
+    {
+      finalizer = finalizers->next;
+      eassert (finalizer->base.type == Lisp_Misc_Finalizer);
+      unchain_finalizer (finalizer);
+      function = finalizer->function;
+      if (!NILP (function))
+	{
+	  finalizer->function = Qnil;
+	  run_finalizer_function (function);
+	}
+    }
+}
+
+DEFUN ("make-finalizer", Fmake_finalizer, Smake_finalizer, 1, 1, 0,
+       doc: /* Make a finalizer that will run FUNCTION.
+FUNCTION will be called after garbage collection when the returned
+finalizer object becomes unreachable.  If the finalizer object is
+reachable only through references from finalizer objects, it does not
+count as reachable for the purpose of deciding whether to run
+FUNCTION.  FUNCTION will be run once per finalizer object.  */)
+  (Lisp_Object function)
+{
+  Lisp_Object val = allocate_misc (Lisp_Misc_Finalizer);
+  struct Lisp_Finalizer *finalizer = XFINALIZER (val);
+  finalizer->function = function;
+  finalizer->prev = finalizer->next = NULL;
+  finalizer_insert (&finalizers, finalizer);
+  return val;
+}
 
 
 /************************************************************************
@@ -4613,7 +4744,7 @@ mark_maybe_pointer (void *p)
 #endif
 
 /* Mark Lisp objects referenced from the address range START+OFFSET..END
-   or END+OFFSET..START. */
+   or END+OFFSET..START.  */
 
 static void ATTRIBUTE_NO_SANITIZE_ADDRESS
 mark_memory (void *start, void *end)
@@ -5225,7 +5356,6 @@ make_pure_vector (ptrdiff_t len)
   return new;
 }
 
-
 DEFUN ("purecopy", Fpurecopy, Spurecopy, 1, 1, 0,
        doc: /* Make a copy of object OBJ in pure storage.
 Recursively copies contents of vectors and cons cells.
@@ -5260,28 +5390,26 @@ purecopy (Lisp_Object obj)
   else if (FLOATP (obj))
     obj = make_pure_float (XFLOAT_DATA (obj));
   else if (STRINGP (obj))
-    obj = make_pure_string (SSDATA (obj), SCHARS (obj),
-			    SBYTES (obj),
-			    STRING_MULTIBYTE (obj));
-  else if (COMPILEDP (obj) || VECTORP (obj))
     {
-      register struct Lisp_Vector *vec;
+      if (XSTRING (obj)->intervals)
+	message ("Dropping text-properties when making string pure");
+      obj = make_pure_string (SSDATA (obj), SCHARS (obj),
+			      SBYTES (obj),
+			      STRING_MULTIBYTE (obj));
+    }
+  else if (COMPILEDP (obj) || VECTORP (obj) || HASH_TABLE_P (obj))
+    {
+      struct Lisp_Vector *objp = XVECTOR (obj);
+      ptrdiff_t nbytes = vector_nbytes (objp);
+      struct Lisp_Vector *vec = pure_alloc (nbytes, Lisp_Vectorlike);
       register ptrdiff_t i;
-      ptrdiff_t size;
-
-      size = ASIZE (obj);
+      ptrdiff_t size = ASIZE (obj);
       if (size & PSEUDOVECTOR_FLAG)
 	size &= PSEUDOVECTOR_SIZE_MASK;
-      vec = XVECTOR (make_pure_vector (size));
+      memcpy (vec, objp, nbytes);
       for (i = 0; i < size; i++)
-	vec->contents[i] = purecopy (AREF (obj, i));
-      if (COMPILEDP (obj))
-	{
-	  XSETPVECTYPE (vec, PVEC_COMPILED);
-	  XSETCOMPILED (obj, vec);
-	}
-      else
-	XSETVECTOR (obj, vec);
+	vec->contents[i] = purecopy (vec->contents[i]);
+      XSETVECTOR (obj, vec);
     }
   else if (SYMBOLP (obj))
     {
@@ -5291,6 +5419,7 @@ purecopy (Lisp_Object obj)
 	  XSYMBOL (obj)->pinned = true;
 	  symbol_block_pinned = symbol_block;
 	}
+      /* Don't hash-cons it.  */
       return obj;
     }
   else
@@ -5613,9 +5742,9 @@ garbage_collect_1 (void *end)
   mark_stack (end);
 #endif
 
-  /* Everything is now marked, except for the data in font caches
-     and undo lists.  They're compacted by removing an items which
-     aren't reachable otherwise.  */
+  /* Everything is now marked, except for the data in font caches,
+     undo lists, and finalizers.  The first two are compacted by
+     removing an items which aren't reachable otherwise.  */
 
   compact_font_caches ();
 
@@ -5627,6 +5756,16 @@ garbage_collect_1 (void *end)
 	 in the undo_list any more, we can finally mark the list.  */
       mark_object (BVAR (nextb, undo_list));
     }
+
+  /* Now pre-sweep finalizers.  Here, we add any unmarked finalizers
+     to doomed_finalizers so we can run their associated functions
+     after GC.  It's important to scan finalizers at this stage so
+     that we can be sure that unmarked finalizers are really
+     unreachable except for references from their associated functions
+     and from other finalizers. */
+
+  queue_doomed_finalizers (&doomed_finalizers, &finalizers);
+  mark_finalizer_list (&doomed_finalizers);
 
   gc_sweep ();
 
@@ -5727,6 +5866,9 @@ garbage_collect_1 (void *end)
     ++ngcs;
   }
 #endif
+
+  /* GC is complete: now we can run our finalizer callbacks.  */
+  run_finalizers (&doomed_finalizers);
 
   if (!NILP (Vpost_gc_hook))
     {
@@ -6085,13 +6227,14 @@ mark_discard_killed_buffers (Lisp_Object list)
 void
 mark_object (Lisp_Object arg)
 {
-  register Lisp_Object obj = arg;
+  register Lisp_Object obj;
   void *po;
 #ifdef GC_CHECK_MARKED_OBJECTS
   struct mem_node *m;
 #endif
   ptrdiff_t cdr_count = 0;
 
+  obj = arg;
  loop:
 
   po = XPNTR (obj);
@@ -6364,7 +6507,12 @@ mark_object (Lisp_Object arg)
 
 	case Lisp_Misc_Overlay:
 	  mark_overlay (XOVERLAY (obj));
-	  break;
+          break;
+
+        case Lisp_Misc_Finalizer:
+          XMISCANY (obj)->gcmarkbit = true;
+          mark_object (XFINALIZER (obj)->function);
+          break;
 
 	default:
 	  emacs_abort ();
@@ -6721,7 +6869,7 @@ sweep_symbols (void)
   total_free_symbols = num_free;
 }
 
-NO_INLINE /* For better stack traces */
+NO_INLINE /* For better stack traces.  */
 static void
 sweep_misc (void)
 {
@@ -6746,6 +6894,8 @@ sweep_misc (void)
             {
               if (mblk->markers[i].m.u_any.type == Lisp_Misc_Marker)
                 unchain_marker (&mblk->markers[i].m.u_marker);
+              if (mblk->markers[i].m.u_any.type == Lisp_Misc_Finalizer)
+                unchain_finalizer (&mblk->markers[i].m.u_finalizer);
               /* Set the type of the freed object to Lisp_Misc_Free.
                  We could leave the type alone, since nobody checks it,
                  but this might catch bugs faster.  */
@@ -7115,11 +7265,14 @@ init_alloc_once (void)
 {
   /* Even though Qt's contents are not set up, its address is known.  */
   Vpurify_flag = Qt;
+  gc_precise = (GC_MARK_STACK == GC_USE_GCPROS_AS_BEFORE);
 
   purebeg = PUREBEG;
   pure_size = PURESIZE;
 
   verify_alloca ();
+  init_finalizer_list (&finalizers);
+  init_finalizer_list (&doomed_finalizers);
 
 #if GC_MARK_STACK || defined GC_MALLOC_CHECK
   mem_init ();
@@ -7254,7 +7407,12 @@ do hash-consing of the objects allocated to pure space.  */);
 	       doc: /* Accumulated time elapsed in garbage collections.
 The time is in seconds as a floating point value.  */);
   DEFVAR_INT ("gcs-done", gcs_done,
-	      doc: /* Accumulated number of garbage collections done.  */);
+              doc: /* Accumulated number of garbage collections done.  */);
+
+  DEFVAR_BOOL ("gc-precise", gc_precise,
+               doc: /* Non-nil means GC stack marking is precise.
+Useful mainly for automated GC tests.  Build time constant.*/);
+  XSYMBOL (intern_c_string ("gc-precise"))->constant = 1;
 
   defsubr (&Scons);
   defsubr (&Slist);
@@ -7267,6 +7425,7 @@ The time is in seconds as a floating point value.  */);
   defsubr (&Smake_bool_vector);
   defsubr (&Smake_symbol);
   defsubr (&Smake_marker);
+  defsubr (&Smake_finalizer);
   defsubr (&Spurecopy);
   defsubr (&Sgarbage_collect);
   defsubr (&Smemory_limit);

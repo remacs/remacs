@@ -3241,7 +3241,6 @@ handle_stop (struct it *it)
   it->dpvec = NULL;
   it->current.dpvec_index = -1;
   handle_overlay_change_p = !it->ignore_overlay_strings_at_pos_p;
-  it->ignore_overlay_strings_at_pos_p = false;
   it->ellipsis_p = false;
 
   /* Use face of preceding text for ellipsis (if invisible) */
@@ -3331,7 +3330,6 @@ handle_stop (struct it *it)
 		pop_it (it);
 	      else
 		{
-		  it->ignore_overlay_strings_at_pos_p = true;
 		  it->string_from_display_prop_p = false;
 		  it->from_disp_prop_p = false;
 		  handle_overlay_change_p = false;
@@ -4414,6 +4412,27 @@ handle_invisible_prop (struct it *it)
 	      IT_BYTEPOS (*it) = CHAR_TO_BYTE (newpos);
 	    }
 
+	  if (display_ellipsis_p)
+            {
+              /* Make sure that the glyphs of the ellipsis will get
+                 correct `charpos' values.  If we would not update
+                 it->position here, the glyphs would belong to the
+                 last visible character _before_ the invisible
+                 text, which confuses `set_cursor_from_row'.
+
+                 We use the last invisible position instead of the
+                 first because this way the cursor is always drawn on
+                 the first "." of the ellipsis, whenever PT is inside
+                 the invisible text.  Otherwise the cursor would be
+                 placed _after_ the ellipsis when the point is after the
+                 first invisible character.  */
+	      if (!STRINGP (it->object))
+		{
+		  it->position.charpos = newpos - 1;
+		  it->position.bytepos = CHAR_TO_BYTE (it->position.charpos);
+		}
+	    }
+
 	  /* If there are before-strings at the start of invisible
 	     text, and the text is invisible because of a text
 	     property, arrange to show before-strings because 20.x did
@@ -4445,23 +4464,6 @@ handle_invisible_prop (struct it *it)
 	    }
 	  else if (display_ellipsis_p)
             {
-              /* Make sure that the glyphs of the ellipsis will get
-                 correct `charpos' values.  If we would not update
-                 it->position here, the glyphs would belong to the
-                 last visible character _before_ the invisible
-                 text, which confuses `set_cursor_from_row'.
-
-                 We use the last invisible position instead of the
-                 first because this way the cursor is always drawn on
-                 the first "." of the ellipsis, whenever PT is inside
-                 the invisible text.  Otherwise the cursor would be
-                 placed _after_ the ellipsis when the point is after the
-                 first invisible character.  */
-	      if (!STRINGP (it->object))
-		{
-		  it->position.charpos = newpos - 1;
-		  it->position.bytepos = CHAR_TO_BYTE (it->position.charpos);
-		}
 	      it->ellipsis_p = true;
 	      /* Let the ellipsis display before
 		 considering any properties of the following char.
@@ -4505,6 +4507,11 @@ setup_for_ellipsis (struct it *it, int len)
      saved_face_id was set to preceding char's face in handle_stop.  */
   if (it->saved_face_id < 0 || it->saved_face_id != it->face_id)
     it->saved_face_id = it->face_id = DEFAULT_FACE_ID;
+
+  /* If the ellipsis represents buffer text, it means we advanced in
+     the buffer, so we should no longer ignore overlay strings.  */
+  if (it->method == GET_FROM_BUFFER)
+    it->ignore_overlay_strings_at_pos_p = false;
 
   it->method = GET_FROM_DISPLAY_VECTOR;
   it->ellipsis_p = true;
@@ -4925,11 +4932,6 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		  iterate_out_of_display_property (it);
 		  *position = it->position;
 		}
-	      /* If we were to display this fringe bitmap,
-		 next_element_from_image would have reset this flag.
-		 Do the same, to avoid affecting overlays that
-		 follow.  */
-	      it->ignore_overlay_strings_at_pos_p = false;
 	      return 1;
 	    }
 	}
@@ -4949,9 +4951,6 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	      iterate_out_of_display_property (it);
 	      *position = it->position;
 	    }
-	  if (it)
-	    /* Reset this flag like next_element_from_image would.  */
-	    it->ignore_overlay_strings_at_pos_p = false;
 	  return 1;
 	}
 
@@ -5437,7 +5436,6 @@ next_overlay_string (struct it *it)
 		   && it->stop_charpos <= it->end_charpos));
       it->current.overlay_string_index = -1;
       it->n_overlay_strings = 0;
-      it->overlay_strings_charpos = -1;
       /* If there's an empty display string on the stack, pop the
 	 stack, to resync the bidi iterator with IT's position.  Such
 	 empty strings are pushed onto the stack in
@@ -5445,11 +5443,27 @@ next_overlay_string (struct it *it)
       if (it->sp > 0 && STRINGP (it->string) && !SCHARS (it->string))
 	pop_it (it);
 
+      /* Since we've exhausted overlay strings at this buffer
+	 position, set the flag to ignore overlays until we move to
+	 another position.  The flag is reset in
+	 next_element_from_buffer.  */
+      it->ignore_overlay_strings_at_pos_p = true;
+
       /* If we're at the end of the buffer, record that we have
 	 processed the overlay strings there already, so that
 	 next_element_from_buffer doesn't try it again.  */
-      if (NILP (it->string) && IT_CHARPOS (*it) >= it->end_charpos)
+      if (NILP (it->string)
+	  && IT_CHARPOS (*it) >= it->end_charpos
+	  && it->overlay_strings_charpos >= it->end_charpos)
 	it->overlay_strings_at_end_processed_p = true;
+      /* Note: we reset overlay_strings_charpos only here, to make
+	 sure the just-processed overlays were indeed at EOB.
+	 Otherwise, overlays on text with invisible text property,
+	 which are processed with IT's position past the invisible
+	 text, might fool us into thinking the overlays at EOB were
+	 already processed (linum-mode can cause this, for
+	 example).  */
+      it->overlay_strings_charpos = -1;
     }
   else
     {
@@ -7289,17 +7303,18 @@ set_iterator_to_next (struct it *it, bool reseat_p)
 	    reseat_at_next_visible_line_start (it, true);
 	  else if (it->dpvec_char_len > 0)
 	    {
-	      if (it->method == GET_FROM_STRING
-		  && it->current.overlay_string_index >= 0
-		  && it->n_overlay_strings > 0)
-		it->ignore_overlay_strings_at_pos_p = true;
 	      it->len = it->dpvec_char_len;
 	      set_iterator_to_next (it, reseat_p);
 	    }
 
 	  /* Maybe recheck faces after display vector.  */
 	  if (recheck_faces)
-	    it->stop_charpos = IT_CHARPOS (*it);
+	    {
+	      if (it->method == GET_FROM_STRING)
+		it->stop_charpos = IT_STRING_CHARPOS (*it);
+	      else
+		it->stop_charpos = IT_CHARPOS (*it);
+	    }
 	}
       break;
 
@@ -7916,7 +7931,6 @@ static bool
 next_element_from_image (struct it *it)
 {
   it->what = IT_IMAGE;
-  it->ignore_overlay_strings_at_pos_p = false;
   return true;
 }
 
@@ -8086,6 +8100,7 @@ next_element_from_buffer (struct it *it)
 	     and handle the last stop_charpos that precedes our
 	     current position.  */
 	  handle_stop_backwards (it, it->stop_charpos);
+	  it->ignore_overlay_strings_at_pos_p = false;
 	  return GET_NEXT_DISPLAY_ELEMENT (it);
 	}
       else
@@ -8102,6 +8117,7 @@ next_element_from_buffer (struct it *it)
 		it->base_level_stop = it->stop_charpos;
 	    }
 	  handle_stop (it);
+	  it->ignore_overlay_strings_at_pos_p = false;
 	  return GET_NEXT_DISPLAY_ELEMENT (it);
 	}
     }
@@ -8129,6 +8145,7 @@ next_element_from_buffer (struct it *it)
 	}
       else
 	handle_stop_backwards (it, it->base_level_stop);
+      it->ignore_overlay_strings_at_pos_p = false;
       return GET_NEXT_DISPLAY_ELEMENT (it);
     }
   else
@@ -8605,7 +8622,16 @@ move_it_in_display_line_to (struct it *it,
 			  if (BUFFER_POS_REACHED_P ())
 			    {
 			      if (it->line_wrap != WORD_WRAP
-				  || wrap_it.sp < 0)
+				  || wrap_it.sp < 0
+				  /* If we've just found whitespace to
+				     wrap, effectively ignore the
+				     previous wrap point -- it is no
+				     longer relevant, but we won't
+				     have an opportunity to update it,
+				     since we've reached the edge of
+				     this screen line.  */
+				  || (may_wrap
+				      && IT_OVERFLOW_NEWLINE_INTO_FRINGE (it)))
 				{
 				  it->hpos = hpos_before_this_char;
 				  it->current_x = x_before_this_char;
@@ -8669,7 +8695,26 @@ move_it_in_display_line_to (struct it *it,
 		  else
 		    IT_RESET_X_ASCENT_DESCENT (it);
 
-		  if (wrap_it.sp >= 0)
+		  /* If the screen line ends with whitespace, and we
+		     are under word-wrap, don't use wrap_it: it is no
+		     longer relevant, but we won't have an opportunity
+		     to update it, since we are done with this screen
+		     line.  */
+		  if (may_wrap && IT_OVERFLOW_NEWLINE_INTO_FRINGE (it))
+		    {
+		      /* If we've found TO_X, go back there, as we now
+			 know the last word fits on this screen line.  */
+		      if ((op & MOVE_TO_X) && new_x == it->last_visible_x
+			  && atx_it.sp >= 0)
+			{
+			  RESTORE_IT (it, &atx_it, atx_data);
+			  atpos_it.sp = -1;
+			  atx_it.sp = -1;
+			  result = MOVE_X_REACHED;
+			  break;
+			}
+		    }
+		  else if (wrap_it.sp >= 0)
 		    {
 		      RESTORE_IT (it, &wrap_it, wrap_data);
 		      atpos_it.sp = -1;
@@ -15799,6 +15844,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
   if (!just_this_one_p
       && REDISPLAY_SOME_P ()
       && !w->redisplay
+      && !w->update_mode_line
       && !f->redisplay
       && !buffer->text->redisplay
       && BUF_PT (buffer) == w->last_point)
@@ -22656,7 +22702,7 @@ are the selected window and the WINDOW's buffer).  */)
   else
     {
       mode_line_string_list = Fnreverse (mode_line_string_list);
-      str = Fmapconcat (intern ("identity"), mode_line_string_list,
+      str = Fmapconcat (Qidentity, mode_line_string_list,
 			empty_unibyte_string);
     }
 
@@ -30491,8 +30537,7 @@ syms_of_xdisp (void)
 
   DEFSYM (Qinhibit_free_realized_faces, "inhibit-free-realized-faces");
 
-  list_of_error = list1 (list2 (intern_c_string ("error"),
-				intern_c_string ("void-variable")));
+  list_of_error = list1 (list2 (Qerror, Qvoid_variable));
   staticpro (&list_of_error);
 
   /* Values of those variables at last redisplay are stored as

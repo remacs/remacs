@@ -124,30 +124,41 @@ Summary:
        (defgeneric ,method ,args)
        (eieio--defmethod ',method ',key ',class #',code))))
 
-(add-function :before-until cl-generic-tagcode-function
-              #'eieio--generic-static-tagcode)
-(defun eieio--generic-static-tagcode (type name)
-  (and (eq 'eieio--static (car-safe type))
-       `(40 . (cond
-               ((symbolp ,name) (eieio--class-v ,name))
-               ((vectorp ,name) (aref ,name 0))))))
-
-(add-function :around cl-generic-tag-types-function
-              #'eieio--generic-static-tag-types)
-(defun eieio--generic-static-tag-types (orig-fun tag)
-  (cond
-   ((or (eieio--class-p tag)
-        (and (symbolp tag) (boundp tag) (eieio--class-p (symbol-value tag))))
-    (let ((superclasses (funcall orig-fun tag))
-          (types ()))
-      ;; Interleave: (subclass <foo>) (eieio--static <foo>) <subclass <bar>) ..
+(defun eieio--generic-static-symbol-specializers (tag)
+  (cl-assert (or (null tag) (eieio--class-p tag)))
+  (when (eieio--class-p tag)
+    (let ((superclasses (eieio--generic-subclass-specializers tag))
+	  (specializers ()))
       (dolist (superclass superclasses)
-        (push superclass types)
-        (push `(eieio--static
-                ,(if (consp superclass) (cadr superclass) superclass))
-              types))
-      (nreverse types)))
-   (t (funcall orig-fun tag))))
+	(push superclass specializers)
+	(push `(eieio--static ,(cadr superclass)) specializers))
+      (nreverse specializers))))
+
+(defconst eieio--generic-static-symbol-generalizer
+  (cl-generic-make-generalizer
+   ;; Give it a slightly higher priority than `subclass' so that the
+   ;; interleaved list comes before subclass's non-interleaved list.
+   61 (lambda (name) `(and (symbolp ,name) (eieio--class-v ,name)))
+   #'eieio--generic-static-symbol-specializers))
+(defconst eieio--generic-static-object-generalizer
+  (cl-generic-make-generalizer
+   ;; Give it a slightly higher priority than `class' so that the
+   ;; interleaved list comes before the class's non-interleaved list.
+   51 #'cl--generic-struct-tag
+   (lambda (tag)
+     (and (symbolp tag) (boundp tag) (setq tag (symbol-value tag))
+          (eieio--class-p tag)
+          (let ((superclasses (eieio--class-precedence-list tag))
+                (specializers ()))
+            (dolist (superclass superclasses)
+              (setq superclass (eieio--class-name superclass))
+              (push superclass specializers)
+              (push `(eieio--static ,superclass) specializers))
+            (nreverse specializers))))))
+
+(cl-defmethod cl-generic-generalizers ((_specializer (head eieio--static)))
+  (list eieio--generic-static-symbol-generalizer
+        eieio--generic-static-object-generalizer))
 
 ;;;###autoload
 (defun eieio--defgeneric-init-form (method doc-string)

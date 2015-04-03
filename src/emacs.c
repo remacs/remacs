@@ -195,9 +195,13 @@ bool no_site_lisp;
 /* Name for the server started by the daemon.*/
 static char *daemon_name;
 
+#ifndef WINDOWSNT
 /* Pipe used to send exit notification to the daemon parent at
    startup.  */
 int daemon_pipe[2];
+#else
+HANDLE w32_daemon_event;
+#endif
 
 /* Save argv and argc.  */
 char **initial_argv;
@@ -233,6 +237,7 @@ Initialization options:\n\
 --no-init-file, -q          load neither ~/.emacs nor default.el\n\
 --no-loadup, -nl            do not load loadup.el into bare Emacs\n\
 --no-site-file              do not load site-start.el\n\
+--no-x-resources            do not load X resources\n\
 --no-site-lisp, -nsl        do not add site-lisp directories to load-path\n\
 --no-splash                 do not display a splash screen on startup\n\
 --no-window-system, -nw     do not communicate with X, ignoring $DISPLAY\n\
@@ -240,6 +245,7 @@ Initialization options:\n\
     "\
 --quick, -Q                 equivalent to:\n\
                               -q --no-site-file --no-site-lisp --no-splash\n\
+                              --no-x-resources\n\
 --script FILE               run FILE as an Emacs Lisp script\n\
 --terminal, -t DEVICE       use DEVICE for terminal I/O\n\
 --user, -u USER             load ~USER/.emacs instead of your own\n\
@@ -345,13 +351,13 @@ _Noreturn void
 terminate_due_to_signal (int sig, int backtrace_limit)
 {
   signal (sig, SIG_DFL);
-  totally_unblock_input ();
 
   /* If fatal error occurs in code below, avoid infinite recursion.  */
   if (! fatal_error_in_progress)
     {
       fatal_error_in_progress = 1;
 
+      totally_unblock_input ();
       if (sig == SIGTERM || sig == SIGHUP || sig == SIGINT)
         Fkill_emacs (make_number (sig));
 
@@ -884,6 +890,8 @@ main (int argc, char **argv)
 
   clearerr (stdin);
 
+  emacs_backtrace (-1);
+
 #if !defined SYSTEM_MALLOC && !defined HYBRID_MALLOC
   /* Arrange to get warning messages as memory fills up.  */
   memory_warnings (0, malloc_warning);
@@ -980,8 +988,12 @@ main (int argc, char **argv)
       exit (0);
     }
 
+#ifndef WINDOWSNT
   /* Make sure IS_DAEMON starts up as false.  */
   daemon_pipe[1] = 0;
+#else
+  w32_daemon_event = NULL;
+#endif
 
   if (argmatch (argv, argc, "-daemon", "--daemon", 5, NULL, &skip_args)
       || argmatch (argv, argc, "-daemon", "--daemon", 5, &dname_arg, &skip_args))
@@ -1105,16 +1117,25 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
       }
 #endif /* DAEMON_MUST_EXEC */
 
-      if (dname_arg)
-       	daemon_name = xstrdup (dname_arg);
       /* Close unused reading end of the pipe.  */
       emacs_close (daemon_pipe[0]);
 
       setsid ();
-#else /* DOS_NT */
+#elif defined(WINDOWSNT)
+      /* Indicate that we want daemon mode.  */
+      w32_daemon_event = CreateEvent (NULL, TRUE, FALSE, W32_DAEMON_EVENT);
+      if (w32_daemon_event == NULL)
+        {
+          fprintf (stderr, "Couldn't create MS-Windows event for daemon: %s\n",
+		   w32_strerror (0));
+          exit (1);
+        }
+#else /* MSDOS */
       fprintf (stderr, "This platform does not support the -daemon flag.\n");
       exit (1);
-#endif /* DOS_NT */
+#endif /* MSDOS */
+      if (dname_arg)
+	daemon_name = xstrdup (dname_arg);
     }
 
 #if defined HAVE_PTHREAD && !defined SYSTEM_MALLOC \
@@ -1570,13 +1591,11 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 	  if (filename_from_ansi (file, file_utf8) == 0)
 	    file = file_utf8;
 #endif
-	  Vtop_level = list2 (intern_c_string ("load"),
-			      build_unibyte_string (file));
+	  Vtop_level = list2 (Qload, build_unibyte_string (file));
 	}
       /* Unless next switch is -nl, load "loadup.el" first thing.  */
       if (! no_loadup)
-	Vtop_level = list2 (intern_c_string ("load"),
-			    build_string ("loadup.el"));
+	Vtop_level = list2 (Qload, build_string ("loadup.el"));
     }
 
   /* Set up for profiling.  This is known to work on FreeBSD,
@@ -1644,6 +1663,7 @@ static const struct standard_args standard_args[] =
   { "-quick", 0, 55, 0 },
   { "-q", "--no-init-file", 50, 0 },
   { "-no-init-file", 0, 50, 0 },
+  { "-no-x-resources", "--no-x-resources", 40, 0 },
   { "-no-site-file", "--no-site-file", 40, 0 },
   { "-u", "--user", 30, 1 },
   { "-user", 0, 30, 1 },
@@ -1896,9 +1916,6 @@ all of which are called before Emacs is actually killed.  */
 
   GCPRO1 (arg);
 
-  if (feof (stdin))
-    arg = Qt;
-
   /* Fsignal calls emacs_abort () if it sees that waiting_for_input is
      set.  */
   waiting_for_input = 0;
@@ -1910,7 +1927,7 @@ all of which are called before Emacs is actually killed.  */
   x_clipboard_manager_save_all ();
 #endif
 
-  shut_down_emacs (0, STRINGP (arg) ? arg : Qnil);
+  shut_down_emacs (0, (STRINGP (arg) && !feof (stdin)) ? arg : Qnil);
 
 #ifdef HAVE_NS
   ns_release_autorelease_pool (ns_pool);
@@ -2135,6 +2152,13 @@ synchronize_locale (int category, Lisp_Object *plocale, Lisp_Object desired_loca
 {
   if (! EQ (*plocale, desired_locale))
     {
+#ifdef WINDOWSNT
+      /* Changing categories like LC_TIME usually requires to specify
+	 an encoding suitable for the new locale, but MS-Windows's
+	 'setlocale' will only switch the encoding when LC_ALL is
+	 specified.  So we ignore CATEGORY and use LC_ALL instead.  */
+      category = LC_ALL;
+#endif
       *plocale = desired_locale;
       setlocale (category, (STRINGP (desired_locale)
 			    ? SSDATA (desired_locale)
@@ -2250,7 +2274,7 @@ decode_env_path (const char *evarname, const char *defalt, bool empty)
       p = strchr (path, SEPCHAR);
       if (!p)
 	p = path + strlen (path);
-      element = (p - path ? make_unibyte_string (path, p - path)
+      element = ((p - path) ? make_unibyte_string (path, p - path)
 		 : empty_element);
       if (! NILP (element))
         {
@@ -2316,17 +2340,18 @@ This finishes the daemonization process by doing the other half of detaching
 from the parent process and its tty file descriptors.  */)
   (void)
 {
-  int nfd;
   bool err = 0;
 
   if (!IS_DAEMON)
     error ("This function can only be called if emacs is run as a daemon");
 
-  if (daemon_pipe[1] < 0)
+  if (!DAEMON_RUNNING)
     error ("The daemon has already been initialized");
 
   if (NILP (Vafter_init_time))
     error ("This function can only be called after loading the init files");
+#ifndef WINDOWSNT
+  int nfd;
 
   /* Get rid of stdin, stdout and stderr.  */
   nfd = emacs_open ("/dev/null", O_RDWR, 0);
@@ -2347,6 +2372,13 @@ from the parent process and its tty file descriptors.  */)
   err |= emacs_close (daemon_pipe[1]) != 0;
   /* Set it to an invalid value so we know we've already run this function.  */
   daemon_pipe[1] = -1;
+#else  /* WINDOWSNT */
+  /* Signal the waiting emacsclient process.  */
+  err |= SetEvent (w32_daemon_event) == 0;
+  err |= CloseHandle (w32_daemon_event) == 0;
+  /* Set it to an invalid value so we know we've already run this function.  */
+  w32_daemon_event = INVALID_HANDLE_VALUE;
+#endif
 
   if (err)
     error ("I/O error during daemon initialization");

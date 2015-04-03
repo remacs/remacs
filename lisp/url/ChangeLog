@@ -1,8 +1,19 @@
+2015-03-15  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* url-handlers.el (url-insert-file-contents): Call
+	after-insert-file-set-coding like insert-file-contents, to set
+	buffer-file-coding-system (bug#20010).
+
 2015-01-22  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Don't downcase system diagnostics' first letters
 	* url-dav.el (url-dav-delete-directory, url-dav-delete-file)
 	(url-dav-directory-files): Keep diagnostics consistent with system's.
+
+2015-01-17  Ivan Shmakov  <ivan@siamics.net>
+
+	* url-cookie.el (url-cookie-write-file): Let-bind print-length
+	and print-level to nil to avoid writing a garbled list.  (Bug#16805)
 
 2014-12-12  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 

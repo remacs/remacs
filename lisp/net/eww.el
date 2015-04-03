@@ -49,7 +49,7 @@
   :type 'string)
 
 (defcustom eww-search-prefix "https://duckduckgo.com/html/?q="
-  "Prefix URL to search engine"
+  "Prefix URL to search engine."
   :version "24.4"
   :group 'eww
   :type 'string)
@@ -60,6 +60,7 @@
   :group 'eww
   :type 'string)
 
+;;;###autoload
 (defcustom eww-suggest-uris
   '(eww-links-at-point
     url-get-url-at-point
@@ -253,7 +254,7 @@ word(s) will be searched for via `eww-search-prefix'."
   (cond ((string-match-p "\\`file:/" url))
 	;; Don't mangle file: URLs at all.
         ((string-match-p "\\`ftp://" url)
-         (user-error "FTP is not supported."))
+         (user-error "FTP is not supported"))
         (t
 	 ;; Anything that starts with something that vaguely looks
 	 ;; like a protocol designator is interpreted as a full URL.
@@ -291,7 +292,7 @@ word(s) will be searched for via `eww-search-prefix'."
 
 ;;;###autoload
 (defun eww-open-file (file)
-  "Render a file using EWW."
+  "Render FILE using EWW."
   (interactive "fFile: ")
   (eww (concat "file://"
 	       (and (memq system-type '(windows-nt ms-dos))
@@ -300,10 +301,16 @@ word(s) will be searched for via `eww-search-prefix'."
 
 ;;;###autoload
 (defun eww-search-words (&optional beg end)
-  "Search the web for the text between the point and marker.
+  "Search the web for the text between BEG and END.
 See the `eww-search-prefix' variable for the search engine used."
   (interactive "r")
   (eww (buffer-substring beg end)))
+
+(defun eww-html-p (content-type)
+  "Return non-nil if CONTENT-TYPE designates an HTML content type.
+Currently this means either text/html or application/xhtml+xml."
+  (member content-type '("text/html"
+			 "application/xhtml+xml")))
 
 (defun eww-render (status url &optional point buffer encode)
   (let ((redirect (plist-get status :redirect)))
@@ -317,8 +324,7 @@ See the `eww-search-prefix' variable for the search engine used."
 	 (charset (intern
 		   (downcase
 		    (or (cdr (assq 'charset (cdr content-type)))
-			(eww-detect-charset (equal (car content-type)
-						   "text/html"))
+			(eww-detect-charset (eww-html-p (car content-type)))
 			"utf-8"))))
 	 (data-buffer (current-buffer)))
     ;; Save the https peer status.
@@ -331,7 +337,7 @@ See the `eww-search-prefix' variable for the search engine used."
                  (string-match-p eww-use-external-browser-for-content-type
                                  (car content-type)))
             (eww-browse-with-external-browser url))
-	   ((equal (car content-type) "text/html")
+	   ((eww-html-p (car content-type))
 	    (eww-display-html charset url nil point buffer encode))
 	   ((equal (car content-type) "application/pdf")
 	    (eww-display-pdf))
@@ -686,6 +692,8 @@ the like."
     map)
   "Tool bar for `eww-mode'.")
 
+;; Autoload cookie needed by desktop.el.
+;;;###autoload
 (define-derived-mode eww-mode special-mode "eww"
   "Mode for browsing the web."
   (setq-local eww-data (list :title ""))
@@ -1360,7 +1368,7 @@ If EXTERNAL is double prefix, browse in new buffer."
       (eww-browse-url url external)))))
 
 (defun eww-same-page-p (url1 url2)
-  "Return non-nil if both URLs represent the same page.
+  "Return non-nil if URL1 and URL2 represent the same page.
 Differences in #targets are ignored."
   (let ((obj1 (url-generic-parse-url url1))
 	(obj2 (url-generic-parse-url url2)))
@@ -1410,7 +1418,8 @@ Differences in #targets are ignored."
       (expand-file-name file directory)))
 
 (defun eww-set-character-encoding (charset)
-  "Set character encoding."
+  "Set character encoding to CHARSET.
+If CHARSET is nil then use UTF-8."
   (interactive "zUse character set (default utf-8): ")
   (if (null charset)
       (eww-reload nil 'utf-8)
@@ -1877,8 +1886,9 @@ Otherwise, the restored buffer will contain a prompt to do so by using
 	(case eww-restore-desktop
 	  ((t auto) (eww (plist-get eww-data :url)))
 	  ((zerop (buffer-size))
-	   (insert (substitute-command-keys
-		    eww-restore-reload-prompt))))))
+	   (let ((inhibit-read-only t))
+	     (insert (substitute-command-keys
+		      eww-restore-reload-prompt)))))))
     ;; .
     (current-buffer)))
 

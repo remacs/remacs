@@ -181,6 +181,63 @@
             nil)))
     res))
 
+(defun lisp--el-non-funcall-position-p (&optional pos)
+  "Heuristically determine whether POS is an evaluated position."
+  (setf pos (or pos (point)))
+  (save-match-data
+    (save-excursion
+      (ignore-errors
+        (goto-char pos)
+        (or (eql (char-before) ?\')
+            (let ((parent
+                   (progn
+                     (up-list -1)
+                     (cond
+                       ((ignore-errors
+                          (and (eql (char-after) ?\()
+                               (progn
+                                 (up-list -1)
+                                 (looking-at "(\\_<let\\*?\\_>"))))
+                        (goto-char (match-end 0))
+                        'let)
+                       ((looking-at
+                         (rx "("
+                             (group-n 1 (+ (or (syntax w) (syntax _))))
+                             symbol-end))
+                        (prog1 (intern-soft (match-string-no-properties 1))
+                          (goto-char (match-end 1))))))))
+              (or (eq parent 'declare)
+                  (and (eq parent 'let)
+                       (progn
+                         (forward-sexp 1)
+                         (< pos (point))))
+                  (and (eq parent 'condition-case)
+                       (progn
+                         (forward-sexp 2)
+                         (< (point) pos))))))))))
+
+(defun lisp--el-match-keyword (limit)
+  (catch 'found
+    (while (re-search-forward "(\\(\\(?:\\sw\\|\\s_\\)+\\)\\_>" limit t)
+      (let ((sym (intern-soft (match-string 1))))
+	(when (or (special-form-p sym)
+		  (and (macrop sym)
+                       (not (get sym 'no-font-lock-keyword))
+                       (not (lisp--el-non-funcall-position-p
+                             (match-beginning 0)))))
+	  (throw 'found t))))))
+
+(defun lisp--el-font-lock-flush-elisp-buffers (&optional file)
+  ;; Don't flush during load unless called from after-load-functions.
+  ;; In that case, FILE is non-nil.  It's somehow strange that
+  ;; load-in-progress is t when an after-load-function is called since
+  ;; that should run *after* the load...
+  (when (or (not load-in-progress) file)
+    (dolist (buf (buffer-list))
+      (with-current-buffer buf
+	(when (derived-mode-p 'emacs-lisp-mode)
+	  (font-lock-flush))))))
+
 (pcase-let
     ((`(,vdefs ,tdefs
         ,el-defs-re ,cl-defs-re
@@ -194,7 +251,9 @@
                          "when" "unless" "with-output-to-string"
                          "ignore-errors" "dotimes" "dolist" "declare"))
               (lisp-errs '("warn" "error" "signal"))
-              ;; Elisp constructs.  FIXME: update dynamically from obarray.
+              ;; Elisp constructs.  Now they are update dynamically
+              ;; from obarray but they are also used for setting up
+              ;; the keywords for Common Lisp.
               (el-fdefs '("define-advice" "defadvice" "defalias"
                           "define-derived-mode" "define-minor-mode"
                           "define-generic-mode" "define-global-minor-mode"
@@ -227,7 +286,7 @@
               (eieio-tdefs '("defclass"))
               (eieio-kw '("with-slots"))
               ;; Common-Lisp constructs supported by cl-lib.
-              (cl-lib-fdefs '("defmacro" "defsubst" "defun"))
+              (cl-lib-fdefs '("defmacro" "defsubst" "defun" "defmethod"))
               (cl-lib-tdefs '("defstruct" "deftype"))
               (cl-lib-kw '("progv" "eval-when" "case" "ecase" "typecase"
                            "etypecase" "ccase" "ctypecase" "loop" "do" "do*"
@@ -298,14 +357,21 @@
     `( ;; Definitions.
       (,(concat "(" el-defs-re "\\_>"
                 ;; Any whitespace and defined object.
-                "[ \t'\(]*"
-                "\\(\\(?:\\sw\\|\\s_\\)+\\)?")
+                "[ \t']*"
+		"\\(([ \t']*\\)?" ;; An opening paren.
+                "\\(\\(setf\\)[ \t]+\\(?:\\sw\\|\\s_\\)+\\|\\(?:\\sw\\|\\s_\\)+\\)?")
        (1 font-lock-keyword-face)
-       (2 (let ((type (get (intern-soft (match-string 1)) 'lisp-define-type)))
-            (cond ((eq type 'var) font-lock-variable-name-face)
-                  ((eq type 'type) font-lock-type-face)
-                  (t font-lock-function-name-face)))
-          nil t))
+       (3 (let ((type (get (intern-soft (match-string 1)) 'lisp-define-type)))
+	    (cond ((eq type 'var) font-lock-variable-name-face)
+		  ((eq type 'type) font-lock-type-face)
+		  ;; If match-string 2 is non-nil, we encountered a
+		  ;; form like (defalias (intern (concat s "-p"))),
+		  ;; unless match-string 4 is also there.  Then its a
+		  ;; defmethod with (setf foo) as name.
+		  ((or (not (match-string 2))  ;; Normal defun.
+		       (and (match-string 2)   ;; Setf method.
+			    (match-string 4))) font-lock-function-name-face)))
+	  nil t))
       ;; Emacs Lisp autoload cookies.  Supports the slightly different
       ;; forms used by mh-e, calendar, etc.
       ("^;;;###\\([-a-z]*autoload\\)" 1 font-lock-warning-face prepend))
@@ -315,13 +381,16 @@
     `( ;; Definitions.
       (,(concat "(" cl-defs-re "\\_>"
                 ;; Any whitespace and defined object.
-                "[ \t'\(]*"
-                "\\(setf[ \t]+\\(?:\\sw\\|\\s_\\)+\\|\\(?:\\sw\\|\\s_\\)+\\)?")
+                "[ \t']*"
+		"\\(([ \t']*\\)?" ;; An opening paren.
+                "\\(\\(setf\\)[ \t]+\\(?:\\sw\\|\\s_\\)+\\|\\(?:\\sw\\|\\s_\\)+\\)?")
        (1 font-lock-keyword-face)
-       (2 (let ((type (get (intern-soft (match-string 1)) 'lisp-define-type)))
+       (3 (let ((type (get (intern-soft (match-string 1)) 'lisp-define-type)))
             (cond ((eq type 'var) font-lock-variable-name-face)
                   ((eq type 'type) font-lock-type-face)
-                  (t font-lock-function-name-face)))
+                  ((or (not (match-string 2))  ;; Normal defun.
+		       (and (match-string 2)   ;; Setf function.
+			    (match-string 4))) font-lock-function-name-face)))
           nil t)))
     "Subdued level highlighting for Lisp modes.")
 
@@ -333,7 +402,7 @@
      `( ;; Regexp negated char group.
        ("\\[\\(\\^\\)" 1 font-lock-negation-char-face prepend)
        ;; Control structures.  Common Lisp forms.
-       (,(concat "(" el-kws-re "\\_>") . 1)
+       (lisp--el-match-keyword . 1)
        ;; Exit/Feature symbols as constants.
        (,(concat "(\\(catch\\|throw\\|featurep\\|provide\\|require\\)\\_>"
                  "[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?")
@@ -514,6 +583,7 @@ font-lock keywords will not be case sensitive."
 	   . lisp-font-lock-syntactic-face-function)))
   (setq-local prettify-symbols-alist lisp--prettify-symbols-alist)
   (when elisp
+    (add-hook 'after-load-functions #'lisp--el-font-lock-flush-elisp-buffers)
     (setq-local electric-pair-text-pairs
                 (cons '(?\` . ?\') electric-pair-text-pairs)))
   (setq-local electric-pair-skip-whitespace 'chomp)

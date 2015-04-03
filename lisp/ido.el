@@ -1590,10 +1590,10 @@ enable the mode if ARG is omitted or nil."
   (when ido-everywhere
     (when (memq ido-mode '(both file))
       (put 'ido-everywhere 'file (cons read-file-name-function nil))
-      (setq read-file-name-function 'ido-read-file-name))
+      (setq read-file-name-function #'ido-read-file-name))
     (when (memq ido-mode '(both buffer))
       (put 'ido-everywhere 'buffer (cons read-buffer-function nil))
-      (setq read-buffer-function 'ido-read-buffer))))
+      (setq read-buffer-function #'ido-read-buffer))))
 
 (defvar ido-minor-mode-map-entry nil)
 
@@ -3480,8 +3480,14 @@ This is to make them appear as if they were \"virtual buffers\"."
   ;; the file which the user might thought was still open.
   (unless recentf-mode (recentf-mode 1))
   (setq ido-virtual-buffers nil)
-  (let (name)
-    (dolist (head recentf-list)
+  (let ((bookmarks (and (boundp 'bookmark-alist)
+                        bookmark-alist))
+        name)
+    (dolist (head (append
+                   recentf-list
+                   (delq nil (mapcar (lambda (bookmark)
+                                       (cdr (assoc 'filename bookmark)))
+                                     bookmarks))))
       (setq name (file-name-nondirectory head))
       ;; In case HEAD is a directory with trailing /.  See bug#14552.
       (when (equal name "")
@@ -4776,7 +4782,7 @@ Modified from `icomplete-completions'."
 (put 'dired-do-rename 'ido 'ignore)
 
 ;;;###autoload
-(defun ido-read-buffer (prompt &optional default require-match)
+(defun ido-read-buffer (prompt &optional default require-match predicate)
   "Ido replacement for the built-in `read-buffer'.
 Return the name of a buffer selected.
 PROMPT is the prompt to give to the user.  DEFAULT if given is the default
@@ -4790,7 +4796,7 @@ If REQUIRE-MATCH is non-nil, an existing buffer must be selected."
     (if (eq ido-exit 'fallback)
 	(let ((read-buffer-function nil))
 	  (run-hook-with-args 'ido-before-fallback-functions 'read-buffer)
-	  (read-buffer prompt default require-match))
+	  (read-buffer prompt default require-match predicate))
       buf)))
 
 ;;;###autoload

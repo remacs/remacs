@@ -531,13 +531,13 @@ invoke it.  If KEYS is omitted or nil, the return value of
 	  args[i] = Fcurrent_buffer ();
 	  if (EQ (selected_window, minibuf_window))
 	    args[i] = Fother_buffer (args[i], Qnil, Qnil);
-	  args[i] = Fread_buffer (callint_message, args[i], Qt);
+	  args[i] = Fread_buffer (callint_message, args[i], Qt, Qnil);
 	  break;
 
 	case 'B':		/* Name of buffer, possibly nonexistent.  */
 	  args[i] = Fread_buffer (callint_message,
 				  Fother_buffer (Fcurrent_buffer (), Qnil, Qnil),
-				  Qnil);
+				  Qnil, Qnil);
 	  break;
 
         case 'c':		/* Character.  */
@@ -615,9 +615,9 @@ invoke it.  If KEYS is omitted or nil, the return value of
 	      {
 		Lisp_Object tem2;
 
-		teml = Fget (teml, intern ("event-symbol-elements"));
+		teml = Fget (teml, Qevent_symbol_elements);
 		/* Ignore first element, which is the base key.  */
-		tem2 = Fmemq (intern ("down"), Fcdr (teml));
+		tem2 = Fmemq (Qdown, Fcdr (teml));
 		if (! NILP (tem2))
 		  up_event = Fread_event (Qnil, Qnil, Qnil);
 	      }
@@ -647,9 +647,9 @@ invoke it.  If KEYS is omitted or nil, the return value of
 	      {
 		Lisp_Object tem2;
 
-		teml = Fget (teml, intern ("event-symbol-elements"));
+		teml = Fget (teml, Qevent_symbol_elements);
 		/* Ignore first element, which is the base key.  */
-		tem2 = Fmemq (intern ("down"), Fcdr (teml));
+		tem2 = Fmemq (Qdown, Fcdr (teml));
 		if (! NILP (tem2))
 		  up_event = Fread_event (Qnil, Qnil, Qnil);
 	      }

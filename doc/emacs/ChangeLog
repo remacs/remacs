@@ -1,3 +1,43 @@
+2015-03-29  Dani Moncayo  <dmoncayo@gmail.com>
+
+	* files.texi (Diff Mode): Doc fix.
+
+2015-03-18  Eli Zaretskii  <eliz@gnu.org>
+
+	* misc.texi (Term Mode):
+	* programs.texi (Basic Indent, Custom C Indent):
+	* mini.texi (Minibuffer History):
+	* text.texi (Org Mode):
+	* display.texi (View Mode): Use @kbd where @key was mistakenly
+	used.  (Bug#20135)
+
+2015-03-18  Eli Zaretskii  <eliz@gnu.org>
+
+	* basic.texi (Moving Point): Improve indexing for HOME and END.
+
+	* cmdargs.texi (General Variables): Improve indexing for
+	environment variables.
+
+	* msdog.texi (Windows HOME):
+	* msdog-xtra.texi (MS-DOS File Names): Remove markup from HOME in
+	the index entries.  (Bug#20105)
+
+2015-02-26  Eli Zaretskii  <eliz@gnu.org>
+
+	* msdog.texi (Windows Files): Document characters invalid in
+	Windows file names.  (Bug#19463)
+
+	* custom.texi (Customization Groups): Update the looks of the
+	Customize Group buffer.
+
+	* programs.texi (Hungry Delete): Fix a typo: "C-d" instead of
+	"C-c C-d" in hungry-delete mode.
+
+2015-02-26  Eli Zaretskii  <eliz@gnu.org>
+
+	* mule.texi (Language Environments): Work around refill bug in
+	makeinfo 4.x.  (Bug#19697)
+
 2015-01-28  Eli Zaretskii  <eliz@gnu.org>
 
 	* cmdargs.texi (Action Arguments): Clarify into which buffer

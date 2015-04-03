@@ -173,6 +173,24 @@ possible inaccuracies in the end position.
 In particular, it now returns the average width of the font's
 characters, which can be used for geometry-related calculations.
 
+** A new function `default-font-width' returns the average width of a
+character in the current buffer's default font.  If the default face
+is remapped (see `face-remapping-alist'), the value for the remapped
+face is returned.  This function complements the existing function
+`default-font-height'.
+
+** New functions `window-font-height' and `window-font-width' return
+the height and average width of characters in a specified face and
+window.  If FACE is remapped (see `face-remapping-alist'), the
+function returns the information for the remapped face.
+
+** A new function `window-max-chars-per-line' returns the maximal
+number of characters that can be displayed on one line.  If a face
+and/or window are provided, these values are used for the
+calculation.  This function is different from `window-body-width' in
+that it accounts for (i) continuation glyphs, (ii) the size of the
+font, and (iii) the specified window.
+
 
 * Editing Changes in Emacs 25.1
 
@@ -197,8 +215,13 @@ Unicode standards.
 
 ** You can access `mouse-buffer-menu' (C-down-mouse-1) using C-f10.
 
++++
+** New buffer-local `electric-pair-local-mode'.
+
 
 * Changes in Specialized Modes and Packages in Emacs 25.1
+** xterm-mouse-mode now supports mouse-tracking (if your xterm supports it).
+
 ** package.el
 *** `package-install-from-buffer' and `package-install-file' work on directories.
 This follows the same rules as installing from a .tar file, except the
@@ -235,6 +258,7 @@ If you need your objects to be named, do it by inheriting from `eieio-named'.
 *** The <class> variables are declared obsolete.
 *** The <initarg> variables are declared obsolete.
 *** defgeneric and defmethod are declared obsolete.
+*** `constructor' is now an obsolete alias for `make-instance'.
 
 ** ido
 *** New command `ido-bury-buffer-at-head' bound to C-S-b
@@ -327,7 +351,7 @@ invalid certificates are marked in red.
 transformed into multipart/related messages before sending.
 
 ** pcase
-*** New UPatterns `quote' and `app'.
+*** New UPatterns `quote', `app', `cl-struct', and `eieio'.
 *** New UPatterns can be defined with `pcase-defmacro'.
 +++
 *** New vector QPattern.
@@ -387,6 +411,8 @@ The remainder were:
 **** The nil and list forms of `diary-display-function'.
 
 ** New ERT function `ert-summarize-tests-batch-and-exit'.
+
+** New js.el option `js-indent-first-init'.
 
 ---
 ** `Info-fontify-maximum-menu-size' can be t for no limit.
@@ -465,6 +491,8 @@ allows to customize this.
 
 *** Two new faces `compare-windows-removed' and `compare-windows-added'
 replace the obsolete face `compare-windows'.
+
+** VHDL mode supports VHDL'08.
 
 ** Calculator: decimal display mode uses "," groups, so it's more
 fitting for use in money calculations; factorial works with
@@ -551,9 +579,23 @@ to avoid interfering with the kill ring.
 allow overriding the regular expression that recognizes the ldapsearch
 command line's password prompt.
 
+** Eshell
+
+*** The new built-in command `clear' can scroll window contents out of sight.
+
+** Browse-url
+
+*** Support for the Conkeror web browser.
+
+---
+*** Support for several ancient browsers is now officially obsolete.
+
 +++
 ** tar-mode: new `tar-new-entry' command, allowing for new members to
 be added to the archive.
+
+** Autorevert: dired buffers are also auto-reverted via file
+notifications, if Emacs is compiled with file notification support.
 
 ** Obsolete packages
 
@@ -578,6 +620,10 @@ a typographically-correct documents.
 
 * Incompatible Lisp Changes in Emacs 25.1
 
+** `save-excursion' does not save&restore the mark any more.
+
+** read-buffer-function can now be called with a 4th argument (`predicate').
+
 ** completion-table-dynamic stays in the minibuffer.
 If you want the old behavior of calling the function in the buffer
 from which the minibuffer was entered, call it with the new argument
@@ -591,6 +637,9 @@ active region handling.
 ** deactivate-mark is now buffer-local.
 
 ** `cl-the' now asserts that its argument is of the given type.
+
+** `process-running-child-p` may now return a numeric process
+group ID instead of `t'.
 
 +++
 ** Mouse click events on mode line or header line no longer include
@@ -606,8 +655,26 @@ when signaling a file error.  For example, it now reports "Permission
 denied" instead of "permission denied".  The old behavior was problematic
 in languages like German where downcasing rules depend on grammar.
 
++++
+** The character classes [:alpha:] and [:alnum:] in regular expressions
+now match multibyte characters using Unicode character properties.
+If you want the old behavior where they matched any character with
+word syntax, use `\sw' instead.
+
 
 * Lisp Changes in Emacs 25.1
+
+** New function `make-process' provides an alternative interface to
+`start-process'.  It allows programs to set process parameters such as
+process filter, sentinel, etc., through keyword arguments (similar to
+`make-network-process').
+
+** `read-buffer' takes a new `predicate' argument.
+
+** Emacs Lisp now supports generators.
+
+** New finalizer facility for running code when objects
+   become unreachable.
 
 ** lexical closures can use (:documentation <form>) to build their docstring.
 It should be placed right where the docstring would be, and <form> is then
@@ -749,6 +816,9 @@ Those features have been deprecated in Gtk+ for a long time.
 ** Building Emacs for MS-Windows requires at least Windows XP
 or Windows Server 2003.  The built binaries still run on all versions
 of Windows starting with Windows 9X.
+
++++
+** Emacs running on MS-Windows now supports the daemon mode.
 
 ** OS X 10.5 or older is no longer supported.
 

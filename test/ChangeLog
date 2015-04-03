@@ -1,7 +1,219 @@
+2015-04-01  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* automated/package-test.el: Avoid async while testing.
+	(package-test-update-archives): Fix test.
+
+2015-03-27  Wolfgang Jenkner  <wjenkner@inode.at>
+
+	* automated/textprop-tests.el: New file.
+	(textprop-tests-font-lock--remove-face-from-text-property): New test.
+
+2015-03-24  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/tramp-tests.el (tramp-test18-file-attributes)
+	(tramp--test-check-files): Extend tests.
+	(tramp-test31-utf8): Do not skip for tramp-adb.el.
+
+2015-03-24  Daiki Ueno  <ueno@gnu.org>
+
+	* automated/epg-tests.el: New file.
+	* automated/data/epg/pubkey.asc: New file.
+	* automated/data/epg/seckey.asc: New file.
+
+2015-03-22  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* automated/json-tests.el: New file.
+
+2015-03-19  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/eieio-tests.el (eieio-test-17-virtual-slot): Don't use
+	initarg in `oset'.
+	(eieio-test-32-slot-attribute-override-2): Adjust to new
+	slot representation.
+
+	* automated/eieio-test-persist.el (persist-test-save-and-compare):
+	Adjust to new slot representation.
+
+	* automated/eieio-test-methodinvoke.el (make-instance): Use new-style
+	`subclass' specializer for a change.
+
+2015-03-17  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/cl-lib-tests.el: Use lexical-binding.
+	(cl-lib-arglist-performance): Refine test to the case where one of the
+	fields has a non-nil default value.  Use existing `mystruct' defstruct.
+	(cl-lib-struct-accessors): Use `pcase' to be a bit more flexible in the
+	accepted outputs.
+
+2015-03-16  Ken Brown  <kbrown@cornell.edu>
+
+	* automated/tramp-tests.el (tramp--test-special-characters):
+	Don't test "\t" in file names on Cygwin.  (Bug#20119)
+
+2015-03-10  Jackson Ray Hamilton  <jackson@jacksonrayhamilton.com>
+
+	* indent/js-indent-init-dynamic.js: Fix spelling error.
+
+2015-03-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Prefer "initialize" to "initialise"
+	* indent/js-indent-init-t.js: Rename from
+	indent/js-indent-first-initialiser-t.js.
+	* indent/js-indent-init-dynamic.js: Rename from
+	test/indent/js-indent-first-initialiser-dynamic.js.
+
+2015-03-10  Jackson Ray Hamilton  <jackson@jacksonrayhamilton.com>
+
+	* indent/js.js: Add local variables.
+
+	* indent/js-indent-first-initialiser-t.js:
+	* indent/js-indent-first-initialiser-dynamic.js:
+	New tests for `js-indent-first-initialiser'.
+
+2015-03-10  Przemyslaw Wojnowski  <esperanto@cumego.com>
+
+	* automated/cl-lib-tests.el: Add tests for plusp, second, ...
+	(cl-lib-test-plusp, cl-lib-test-minusp)
+	(cl-lib-test-oddp, cl-lib-test-evenp, cl-lib-test-first)
+	(cl-lib-test-second, cl-lib-test-third, cl-lib-test-fourth)
+	(cl-lib-test-fifth, cl-lib-test-sixth, cl-lib-test-seventh)
+	(cl-lib-test-eighth, cl-lib-test-ninth, cl-lib-test-tenth)
+	(cl-lib-test-endp, cl-lib-test-nth-value)
+	(cl-lib-nth-value-test-multiple-values, cl-test-caaar, cl-test-caadr)
+	(cl-test-ldiff): New tests.
+	(cl-digit-char-p): Tighten the test.
+
+2015-03-09  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* indent/Makefile: Call 'rm' with '-f'.  Default EMACS to
+	'../../src/emacs'.  Remove *.new in 'clean'.  Set 'all' target to
+	run all examples.
+
+2015-03-09  Nicolas Petton <nicolas@petton.fr>
+
+	* automated/seq-tests.el (test-seq-into): Add a test for seq-into.
+
+2015-03-08  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* indent/ruby.rb: Add an example for bug#20026.
+
+	* indent/js.js: Set `js-indent-level' to 2. Fix indentation in an
+	example.
+
+2015-03-04  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/tramp-tests.el (top): Declare `tramp-get-remote-stat'
+	and `tramp-get-remote-perl'.
+	(tramp-test06-directory-file-name): Fix docstring and last test.
+	(tramp-test08-file-local-copy): Extend test.
+	(tramp-test13-make-directory): Test also PARENTS arg.
+	(tramp-test17-insert-directory): Do not expect any order in
+	directory listing.
+	(tramp--test-adb-p): New defun.
+	(tramp--test-check-files): Fix doxstring.  Extend tests.
+	(tramp--test-special-characters): New defun.  Use body from
+	`tramp-test30-special-characters'.  Adapt check for tramp-adb.el.
+	(tramp-test30-special-characters): Use it.
+	(tramp--test-utf8): New defun.  Use body from
+	`tramp-test31-utf8'.  Add test string.
+	(tramp-test31-utf8): Use it.
+	(tramp-test30-special-characters-with-stat)
+	(tramp-test30-special-characters-with-perl)
+	(tramp-test30-special-characters-with-ls):
+	(tramp-test31-utf8-with-stat, tramp-test31-utf8-with-perl)
+	(tramp-test31-utf8-with-ls): New tests.
+
+2015-03-03  Daniel Colascione  <dancol@dancol.org>
+
+	* automated/generator-tests.el (cps-testcase):
+	Use `cps-inhibit-atomic-optimization' instead of
+	`cps-disable-atomic-optimization'.
+	(cps-test-declarations-preserved): New test.
+
+	* automated/finalizer-tests.el (finalizer-basic)
+	(finalizer-circular-reference, finalizer-cross-reference)
+	(finalizer-error): Rename `gc-precise-p' to `gc-precise'.
+
+	* automated/generator-tests.el (cps-test-iter-close-finalizer):
+	Rename `gc-precise-p' to `gc-precise'.
+
+2015-03-03  Glenn Morris  <rgm@gnu.org>
+
+	* automated/generator-tests.el (cps-while-incf)
+	(cps-test-iter-cleanup-once-only): Replace undefined incf with cl-incf.
+	(cps-test-iter-do): Use should not undefined assert.
+
+2015-03-03  Daniel Colascione  <dancol@dancol.org>
+
+	* automated/finalizer-tests.el (finalizer-object-type): Test that
+	`type-of' works correctly for finalizers.
+
+2015-03-02  Daniel Colascione  <dancol@dancol.org>
+
+	* automated/generator-tests.el: New tests
+
+	* automated/finalizer-tests.el (finalizer-basic)
+	(finalizer-circular-reference, finalizer-cross-reference)
+	(finalizer-error): New tests.
+
+2015-03-01  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/vc-tests.el (vc-test--create-repo): Add check for
+	`vc-responsible-backend'.
+	(vc-test--register): Do not print a message when unsupported.
+	(vc-test--state, vc-test--working-revision): Rework.  Raise no
+	error in case of inconsistent result, but document everything.
+	(vc-test--checkout-model): New defun.
+	(vc-test-*-checkout-model): New tests.
+
+2015-02-26  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el
+	(python-indent-dedent-line-backspace-2)
+	(python-indent-dedent-line-backspace-3): New tests.
+
+2015-02-26  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el (python-indent-pep8-1)
+	(python-indent-pep8-2, python-indent-pep8-3)
+	(python-indent-after-comment-2): Fix tests.
+	(python-indent-after-comment-3): New test.
+
+2015-02-24  Glenn Morris  <rgm@gnu.org>
+
+	* automated/f90.el (f90-test-bug-19809): New test.
+
+2015-02-22  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/tramp-tests.el (tramp-test17-insert-directory):
+	Suppress localized settings in order to have a proper check for
+	the summary line.
+
+2015-02-16  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/eieio-test-methodinvoke.el (make-instance): Add methods
+	here rather than on eieio-constructor.
+
+2015-02-13  Magnus Henoch  <magnus.henoch@gmail.com>
+
+	* automated/sasl-scram-rfc-tests.el: New file.
+
+2015-02-11  Nicolas Petton <nicolas@petton.fr>
+
+	* automated/seq-tests.el (test-seq-reverse, test-seq-group-by):
+	Add a test for seq-reverse and update test for seq-group-by to
+	test vectors and strings, not only lists.
+
 2015-02-10  Glenn Morris  <rgm@gnu.org>
 
 	* automated/package-test.el (package-test-signed):
 	More informative failure messages.
+
+2015-02-09  Nicolas Petton <nicolas@petton.fr>
+
+	* automated/seq-tests.el (test-seq-group-by): Update test for
+	seq-group-by to check that sequence elements are returned in the
+	correct order.
 
 2015-02-07  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
@@ -19,8 +231,8 @@
 
 2015-02-07  Dmitry Gutov  <dgutov@yandex.ru>
 
-	* automated/vc-tests.el (vc-test--working-revision): Fix
-	`vc-working-revision' checks to be compared against nil, which is
+	* automated/vc-tests.el (vc-test--working-revision):
+	Fix `vc-working-revision' checks to be compared against nil, which is
 	what is should return for unregistered files.
 
 2015-02-06 Nicolas Petton <nicolas@petton.fr>

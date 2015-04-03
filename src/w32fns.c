@@ -157,8 +157,8 @@ typedef BOOL (WINAPI * TrackMouseEvent_Proc)
 typedef LONG (WINAPI * ImmGetCompositionString_Proc)
   (IN HIMC context, IN DWORD index, OUT LPVOID buffer, IN DWORD bufLen);
 typedef HIMC (WINAPI * ImmGetContext_Proc) (IN HWND window);
-typedef HWND (WINAPI * ImmReleaseContext_Proc) (IN HWND wnd, IN HIMC context);
-typedef HWND (WINAPI * ImmSetCompositionWindow_Proc) (IN HIMC context,
+typedef BOOL (WINAPI * ImmReleaseContext_Proc) (IN HWND wnd, IN HIMC context);
+typedef BOOL (WINAPI * ImmSetCompositionWindow_Proc) (IN HIMC context,
 						      IN COMPOSITIONFORM *form);
 typedef HMONITOR (WINAPI * MonitorFromPoint_Proc) (IN POINT pt, IN DWORD flags);
 typedef BOOL (WINAPI * GetMonitorInfo_Proc)
@@ -345,10 +345,6 @@ x_real_positions (struct frame *f, int *xptr, int *yptr)
 
   /* Convert (0, 0) in the client area to screen co-ordinates.  */
   ClientToScreen (FRAME_W32_WINDOW (f), &pt);
-
-  /* Remember x_pixels_diff and y_pixels_diff.  */
-  f->x_pixels_diff = pt.x - rect.left;
-  f->y_pixels_diff = pt.y - rect.top;
 
   *xptr = rect.left;
   *yptr = rect.top;
@@ -3295,12 +3291,12 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	     field being reset to nil.  */
 	  f = x_window_to_frame (dpyinfo, hwnd);
 	  if (!(f && FRAME_LIVE_P (f)))
-	    break;
+	    goto dflt;
 	  w = XWINDOW (FRAME_SELECTED_WINDOW (f));
 	  /* Punt if someone changed the frame's selected window
 	     behind our back. */
 	  if (w != w32_system_caret_window)
-	    break;
+	    goto dflt;
 
 	  form.dwStyle = CFS_RECT;
 	  form.ptCurrentPos.x = w32_system_caret_x;
@@ -3318,16 +3314,22 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	  /* Punt if the window was deleted behind our back.  */
 	  if (!BUFFERP (w->contents))
-	    break;
+	    goto dflt;
 
 	  context = get_ime_context_fn (hwnd);
 
 	  if (!context)
-	    break;
+	    goto dflt;
 
 	  set_ime_composition_window_fn (context, &form);
 	  release_ime_context_fn (hwnd, context);
 	}
+      /* We should "goto dflt" here to pass WM_IME_STARTCOMPOSITION to
+	 DefWindowProc, so that the composition window will actually
+	 be displayed.  But doing so causes trouble with displaying
+	 dialog boxes, such as the file selection dialog or font
+	 selection dialog.  So something else is needed to fix the
+	 former without breaking the latter.  See bug#11732.  */
       break;
 
     case WM_IME_ENDCOMPOSITION:
@@ -8240,6 +8242,15 @@ w32_sys_ring_bell (struct frame *f)
     MessageBeep (sound_type);
 }
 
+DEFUN ("w32--menu-bar-in-use", Fw32__menu_bar_in_use, Sw32__menu_bar_in_use,
+       0, 0, 0,
+       doc: /* Return non-nil when a menu-bar menu is being used.
+Internal use only.  */)
+  (void)
+{
+  return menubar_in_use ? Qt : Qnil;
+}
+
 
 /***********************************************************************
 			    Initialization
@@ -8617,6 +8628,7 @@ only be necessary if the default setting causes problems.  */);
   defsubr (&Sw32_frame_rect);
   defsubr (&Sw32_frame_menu_bar_size);
   defsubr (&Sw32_battery_status);
+  defsubr (&Sw32__menu_bar_in_use);
 
 #ifdef WINDOWSNT
   defsubr (&Sfile_system_info);

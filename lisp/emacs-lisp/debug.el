@@ -106,10 +106,10 @@ This is to optimize `debugger-make-xrefs'.")
   "Non-nil if we expect to get back in the debugger soon.")
 
 (defvar inhibit-debug-on-entry nil
-  "Non-nil means that debug-on-entry is disabled.")
+  "Non-nil means that `debug-on-entry' is disabled.")
 
 (defvar debugger-jumping-flag nil
-  "Non-nil means that debug-on-entry is disabled.
+  "Non-nil means that `debug-on-entry' is disabled.
 This variable is used by `debugger-jump', `debugger-step-through',
 and `debugger-reenable' to temporarily disable debug-on-entry.")
 
@@ -165,7 +165,6 @@ first will be printed into the backtrace buffer."
       ;; Don't let these magic variables affect the debugger itself.
       (let ((last-command nil) this-command track-mouse
 	    (inhibit-trace t)
-	    (inhibit-debug-on-entry t)
 	    unread-command-events
 	    unread-post-input-method-events
 	    last-input-event last-command-event last-nonmenu-event
@@ -193,8 +192,10 @@ first will be printed into the backtrace buffer."
 	       debugger-buffer
 	       `((display-buffer-reuse-window
 		  display-buffer-in-previous-window)
-		  . (,(when debugger-previous-window
-			`(previous-window . ,debugger-previous-window)))))
+		 . (,(when (and (window-live-p debugger-previous-window)
+				(frame-visible-p
+				 (window-frame debugger-previous-window)))
+		       `(previous-window . ,debugger-previous-window)))))
 	      (setq debugger-window (selected-window))
 	      (if (eq debugger-previous-window debugger-window)
 		  (when debugger-jumping-flag
@@ -535,11 +536,7 @@ Applies to the frame whose line point is on in the backtrace."
 (defmacro debugger-env-macro (&rest body)
   "Run BODY in original environment."
   (declare (indent 0))
-  `(save-excursion
-    (if (null (buffer-live-p debugger-old-buffer))
-        ;; old buffer deleted
-        (setq debugger-old-buffer (current-buffer)))
-    (set-buffer debugger-old-buffer)
+  `(progn
     (set-match-data debugger-outer-match-data)
     (prog1
         (progn ,@body)
@@ -767,7 +764,8 @@ A call to this function is inserted by `debug-on-entry' to cause
 functions to break on entry."
   (if (or inhibit-debug-on-entry debugger-jumping-flag)
       nil
-    (funcall debugger 'debug)))
+    (let ((inhibit-debug-on-entry t))
+      (funcall debugger 'debug))))
 
 ;;;###autoload
 (defun debug-on-entry (function)

@@ -1,3 +1,544 @@
+2015-03-31  Eli Zaretskii  <eliz@gnu.org>
+
+	* keyboard.c (read_key_sequence): Don't let
+	this_single_command_key_start become negative.  (Bug#20223)
+
+2015-03-29  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* gtkutil.c (xg_display_open):
+	* xterm.c (x_display_ok, x_term_init): Block SIGIO when opening
+	a display (Bug#19175).
+
+2015-03-29  Martin Rudalics  <rudalics@gmx.at>
+
+	* gtkutil.c (update_theme_scrollbar_width): Don't round up
+	scroll bar width with GTK3 (Bug#20182).
+
+2015-03-28  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* xsmfns.c (smc_save_yourself_CB): Return if Vinvocation_name or
+	user_login_name are not strings.
+
+2015-03-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32.c (sys_connect): Fix a mistake in previous commit that broke
+	blocking connections.  (Bug#20159)
+
+2015-03-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Avoid some core dumps in X session management
+	Derived from a bug report by Nicolas Richard in:
+	http://bugs.gnu.org/20191#20
+	* xsmfns.c (smc_save_yourself_CB): Don't dump core if
+	invocation-name is not a string.  Initialize user-login-name if it
+	is not already initialized, and don't dump core if it is not a
+	string.
+	(create_client_leader_window): Don't dump core if x-resource-name
+	and x-resource-class are not both strings.
+	(x_session_initialize): Don't dump core if x-session-previous-id,
+	invocation-directory, and invocation-name are not strings.
+
+	Port user-login-name initialization to Qnil == 0
+	Derived from a bug report by Nicolas Richard in:
+	http://bugs.gnu.org/20191#20
+	* editfns.c (Fuser_login_name, Fuser_real_login_name)
+	(syms_of_editfns): Don't rely on all-bits-zero being an Elisp integer,
+	as this is no longer true now that Qnil == 0.
+
+	Assume !BROKEN_NON_BLOCKING_CONNECT
+	From a suggestion by Eli Zaretskii in:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-03/msg00824.html
+	* process.c (NON_BLOCKING_CONNECT): Simplify by assuming that
+	BROKEN_NON_BLOCKING_CONNECT is not defined.
+	(SELECT_CAN_DO_WRITE_MASK): Remove, and assume it's now true.
+
+2015-03-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* lread.c (substitute_object_recurse): For sub-char-tables, start
+	the recursive SUBSTITUTE loop from index of 2, to skip the
+	non-Lisp members of the sub-char-table.  See the discussion at
+	http://lists.gnu.org/archive/html/emacs-devel/2015-03/msg00520.html
+	for the details.
+
+	Support non-blocking connect on MS-Windows.
+	Based on ideas from Kim F. Storm <storm@cua.dk>, see
+	http://lists.gnu.org/archive/html/emacs-devel/2006-12/msg00873.html.
+
+	* w32proc.c (reader_thread): If the FILE_CONNECT flag is set, call
+	'_sys_wait_connect'.  If it returns STATUS_CONNECT_FAILED, exit
+	the thread with code 2.
+	(sys_select): Support 'wfds' in addition to 'rfds'.  If a
+	descriptor in 'wfds' has its bit set, but the corresponding
+	fd_info member doesn't have its FILE_CONNECT flag set, ignore the
+	descriptor.  Otherwise, acknowledge a successful non-blocking
+	connect by resetting the FILE_CONNECT flag and setting cp->status
+	to STATUS_READ_ACKNOWLEDGED.  (Bug#20159)
+
+	* w32.h (STATUS_CONNECT_FAILED): New enumeration value.
+	(struct _child_process): New member 'errcode'.
+	(FILE_CONNECT): New flag.
+	(_sys_wait_connect): Add prototype.
+
+	* w32.c (pfn_WSAEnumNetworkEvents): New function pointer.
+	(init_winsock): Load WSAEnumNetworkEvents from winsock DLL.
+	(set_errno): Map WSAEWOULDBLOCK and WSAENOTCONN.
+	(sys_connect): Support non-blocking 'connect' calls by setting the
+	FILE_CONNECT flag in the fd_info member and returning EINPROGRESS.
+	(_sys_read_ahead): Add debug message if this function is called
+	for a descriptor that waits for a non-blocking connect to complete.
+	(_sys_wait_connect): New function.
+	(sys_read): Support STATUS_CONNECT_FAILED.  Return the error code
+	recorded by _sys_wait_connect when the non-blocking connect
+	failed.  Don't call WSAGetLastError before a call to set_errno had
+	a chance to use its value, since WSAGetLastError clears the last
+	error.
+
+2015-03-25  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* editfns.c (save_excursion_save): Don't save the mark.
+	(save_excursion_restore): Don't restore the mark.
+	(Fsave_excursion): Fix docstring accordingly.
+
+2015-03-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix minor ldexp issues
+	* floatfns.c (Fldexp): Require 2 args.  Avoid undefined behavior
+	if the exponent is out of 'int' range.  Improve documentation.
+	Fixes: bug#20185
+
+2015-03-24  Daniel Colascione  <dancol@dancol.org>
+
+	* process.c (Fprocess_running_child_p): Return number identifier of
+	the foreground process group if we know it.
+
+2015-03-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Minor refactoring of new Fmake_process code
+	* process.c (Fmake_process): Refactor to avoid call to Flength, to
+	avoid cast to 'char **', and to reduce indenting and reuse of locals.
+
+2015-03-23  Daiki Ueno  <ueno@gnu.org>
+
+	* process.c (Fmake_process): New function.
+	(create_process, create_pty): Check p->pty_flag instead of
+	Vprocess_connection_type.
+	(syms_of_process): Register QCcommand, QCconnection_type, Qpty,
+	Qpipe, and Smake_process.  Unregister Sstart_process.
+
+2015-03-22  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* fontset.c (fontset_pattern_regexp): Replace + 1 with + 3 for
+	regexsize (Bug#20156).
+
+2015-03-21  Eli Zaretskii  <eliz@gnu.org>
+
+	* emacs.c (synchronize_locale) [WINDOWSNT]: Ignore 'category' and
+	always use LC_ALL instead.  Fixes problems with setting
+	system-time-locale to something non-default.
+
+2015-03-18  Glenn Morris  <rgm@gnu.org>
+
+	* frame.h (x_set_bitmap_icon): Don't set the icon if icon-type is
+	nil/not present in the parameter alist.  (Bug#19680)
+
+2015-03-18  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* alloc.c (purecopy): Handle hash-tables.
+
+2015-03-16  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* minibuf.c (Fread_buffer): Add `predicate' argument.
+	* callint.c (Fcall_interactively): Adjust calls accordingly.
+
+2015-03-15  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (handle_invisible_prop): Fix up it->position even when
+	we are going to load overlays at the beginning of the invisible text.
+	(setup_for_ellipsis): Reset the ignore_overlay_strings_at_pos_p
+	flag also here.
+	(next_overlay_string): Set the overlay_strings_at_end_processed_p
+	flag only if the overlays just processed were actually loaded at EOB.
+
+2015-03-14  Daniel Colascione  <dancol@dancol.org>
+
+	* emacs.c (standard_args): Add --no-x-resources.
+	(usage_message): Document that -Q implies --no-x-resources.
+
+2015-03-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* frame.c (x_get_resource_string) [!USE_GTK]: Don't define.
+
+	* editfns.c, systime.h (mktime_z) [!HAVE_TZALLOC]: Now static.
+
+2015-03-12  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32font.c (font_supported_scripts): Add subranges for Latin
+	Supplement, Latin Extended-A/B, Vai, Supplemental Punctuation, Tai
+	Le, Buginese, Yijing Hexagrams, Ancient Greek Numbers, Tai Xuan
+	Jing, Counting Rods, Sundanese, Lepcha, Ol Chiki, Saurashtra,
+	Kayah Li, Rejang, Ancient Symbols, Phistos Disc, Carian, Lycian,
+	Lydian, Dominoe Tiles, and Mahjong Tiles.  Break the Mathematical
+	Alphanumeric Symbols into several "scripts" like fontset.el does.
+	(Bug#19993)
+	(syms_of_w32font): DEFSYM all the new script symbols.
+
+2015-03-07  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32fns.c <ImmReleaseContext_Proc, ImmSetCompositionWindow_Proc>:
+	Fix typedefs to be consistent with the corresponding w32 API
+	signatures.
+	(w32_wnd_proc) <WM_IME_STARTCOMPOSITION>: Don't invoke
+	DefWindowProc if we successfully handled the message, as doing so
+	causes problems in displaying selection dialogs.  (Bug#11732)
+
+2015-03-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Work around x86 glibc backtrace bug
+	* sysdep.c (emacs_backtrace): Don't dump core on x86.
+	Fixes: bug#19959
+
+2015-03-05  Eli Zaretskii  <eliz@gnu.org>
+
+	* keyboard.c (make_lispy_position): When the click is on the
+	right-side vertical scroll bar, pass the rightmost X coordinate to
+	buffer_posn_from_coords, so that the returned text position
+	reflects the closest point to the click.  Fixes region extension
+	when mouse moves outside the Emacs frame that has scroll bars on
+	the right.
+
+2015-03-04  Martin Rudalics  <rudalics@gmx.at>
+
+	* frame.c (x_set_font): Try to keep frame height and width
+	unchanged if tool bar size changes with new font.
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* search.c (find_newline): Avoid assertion violations in
+	CHAR_TO_BYTE when a portion of the buffer was deleted and we look
+	for newlines near the end of the buffer.  This happens in Rmail
+	when JIT font-lock fontifies a newly displayed portion of the
+	buffer.
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32fns.c (Fw32__menu_bar_in_use): New internal function.
+	(Bug#19925)
+
+2015-03-03  Glenn Morris  <rgm@gnu.org>
+
+	* fileio.c (Fmake_temp_name): Doc tweaks.  (Bug#19858)
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* menu.c (Fx_popup_menu) [HAVE_X_WINDOWS]: Call
+	mouse_position_for_popup only for X frames.  (Bug#19862)
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* buffer.c (syms_of_buffer): Doc fix.  (Bug#19841)
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* xfaces.c (map_tty_color): Use assoc_no_quit instead of
+	assq_no_quit to fetch color definition by its string name.
+	(Bug#19802)
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (move_it_in_display_line_to): Handle the case where the
+	last character of a screen line is whitespace, and we are under
+	word-wrap with overflow-newline-into-fringe turned on.
+	(Bug#19769)
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (handle_stop, handle_single_display_spec)
+	(next-element_from_image): Don't reset the
+	ignore_overlay_strings_at_pos_p flag here.
+	(next_element_from_buffer): Reset ignore_overlay_strings_at_pos_p
+	here.
+	(next_overlay_string): Set ignore_overlay_strings_at_pos_p here,
+	after we've exhausted all the overlay strings at the current
+	position.  (Bug#19307)
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (set_iterator_to_next): Set value of stop_charpos
+	according to the object we are about to resume iterating.
+	(Bug#19307)
+
+	* dispnew.c (adjust_glyph_matrix): Set the update_mode_line flag
+	of the window whose current glyph matrix was resized, which
+	disables the mode-line row as side effect.
+
+	* xdisp.c (redisplay_window): Don't avoid redisplay of a window
+	whose update_mode_line flag is set.  (Bug#19721)
+
+2015-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* dispextern.h (FACE_FOR_CHAR): Fix the commentary.
+
+2015-03-03  Daniel Colascione  <dancol@dancol.org>
+
+	* alloc.c (syms_of_alloc): Rename `gc-precise-p' to `gc-precise'.
+
+2015-03-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* alloc.c (run_finalizers): Omit unused local.
+	Also, redo newly-added code as per usual Emacs style.
+
+2015-03-03  Martin Rudalics  <rudalics@gmx.at>
+
+	* frame.c (adjust_frame_size): If the pixel sizes remain
+	unchanged but the number of lines or columns of the frame
+	changes, run `window--pixel-to-total' (Bug#19972).
+	(Qwindow_pixel_to_total): DEFSYM it.
+
+2015-03-03  Daniel Colascione  <dancol@dancol.org>
+
+	* print.c (print_object): Print whether a finalizer has
+	been called.
+
+	* data.c (Ftype_of): Make `type-of' work with finalizers.
+	(syms_of_data): Register Qfinalizer.
+
+2015-03-02  Daniel Colascione  <dancol@dancol.org>
+
+	* print.c (print_object): Print finalizers.
+
+	* alloc.c:
+	(finalizers, doomed_finalizers): New variables.
+	(init_finalizer_list, finalizer_insert, unchain_finalizer)
+	(mark_finalizer_list, queue_doomed_finalizers)
+	(run_finalizer_handler, run_finalizer_function, run_finalizers):
+	New functions.
+	(garbage_collect_1, mark_object, sweep_misc)
+	(init_alloc_once, syms_of_alloc): Support finalizers.
+	(gc-precise-p): New Lisp variable.
+
+	* lisp.h (Lisp_Misc_Type): New value Lisp_Misc_Finalizer.
+	(FINALIZERP, XFINALIZER): New functions.
+	(Lisp_Finalizer): New structure.
+
+2015-02-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* character.c (alphabeticp, decimalnump): Avoid undefined behavior
+	if CATEGORY is not an integer, or is an integer out of
+	unicode_category_t range.
+
+2015-02-28  Martin Rudalics  <rudalics@gmx.at>
+
+	* frame.c (make_initial_frame, Fmake_terminal_frame):
+	Set can_x_set_window_size and after_make_frame (Bug#19962).
+
+2015-02-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* character.c (alphabeticp, decimalnump): New functions.
+	* character.h (alphabeticp, decimalnump): Add prototypes.
+
+	* regex.c (ISALNUM, ISALPHA): Check Unicode character properties
+	for multibyte characters by calling alphabeticp and decimalnump.
+	(BIT_ALPHA, BIT_ALNUM): New bit masks.
+	(re_wctype_to_bit): Return them when the class is RECC_ALPHA or
+	RECC_ALNUM.
+	(re_match_2_internal): Call ISALPHA and ISALNUM when appropriate.
+	(Bug#19878)
+
+2015-02-27  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* xterm.h (x_real_pos_and_offsets): Take outer_border as arg also.
+
+	* xmenu.c (x_menu_show): Adjust for new arg to x_real_pos_and_offsets.
+
+	* xfns.c (x_real_pos_and_offsets): Take outer_border as arg also.
+	Initialize all args.  Get outer_border from window attributes.
+	Fix typo for top_offset_y.
+	(x_real_positions): Adjust for new arg to x_real_pos_and_offsets.
+	(Fx_frame_geometry): Get outer_border also.  Use attrs.width/height.
+
+2015-02-27  Mark Laws  <mdl@60hz.org>
+
+	Support daemon mode on MS-Windows (bug#19688)
+	* emacs.c <w32_daemon_event> [WINDOWSNT]: New global var.
+	(main) [WINDOWSNT]: Initialize it to NULL.  Create the event to
+	signal clients we are ready for connections.
+	(Fdaemon_initialized): Use DAEMON_RUNNING.
+	[WINDOWSNT]: MS-Windows specific code to signal clients we are
+	ready for connections.
+
+	* lisp.h (DAEMON_RUNNING): New macro, encapsulates Posix and
+	MS-Windows conditions for running in daemon mode.
+
+	* minibuf.c (read_minibuf): Use DAEMON_RUNNING.
+
+	* keyboard.c (kbd_buffer_get_event): Use DAEMON_RUNNING.
+
+	* dispnew.c (init_display) [WINDOWSNT]: Initialize frames/terminal
+	even in daemon mode.
+
+2015-02-26  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* xmenu.c (create_and_show_popup_menu): Call XTranslateCoordinates,
+	dont use OUTER_TO_INNER macros.
+	(x_menu_show): Call x_real_pos_and_offsets, don't use
+	OUTER_TO_INNER macros.
+
+2015-02-26  Eli Zaretskii  <eliz@gnu.org>
+
+	* dispextern.h (FACE_FOR_CHAR): Fix the commentary.
+
+2015-02-26  Hans Wennborg  <hwennborg@google.com>  (tiny change)
+
+	* emacs.c (decode_env_path): Add parentheses around ternary
+	operator to increase readability and pacify compiler warnings.
+
+2015-02-26  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32.c (sys_readdir): Map ERROR_NOT_READY (as in "device not
+	ready") to ENOENT.
+
+2015-02-26  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* xfns.c (x_real_pos_and_offsets): Fix pointer signedness.
+
+2015-02-25  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* xterm.h (struct x_output): Remove x_pixels_outer_diff,
+	y_pixels_outer_diff, FRAME_OUTER_TO_INNER_DIFF_X,
+	FRAME_OUTER_TO_INNER_DIFF_Y. Declare x_real_pos_and_offsets.
+
+	* xmenu.c (create_and_show_popup_menu): Use XTranslateCoordinates
+	instead of OUTER_TO_INNER_DIFF macros.
+
+	* xfns.c (x_real_pos_and_offsets): New function, basically the code
+	from x_real_positions.
+	(x_real_positions): Call x_real_pos_and_offsets.
+	(x_relative_mouse_position): Use XTranslateCoordinates instead of
+	OUTER_TO_INNER_DIFF macros.
+	(Fx_frame_geometry): Get offsets with x_real_pos_and_offsets,
+	border from window attributes.  Adjust tool bar and menu widths.
+
+	* w32fns.c (x_real_positions): Remove setting of x_pixels_diff,
+	y_pixels_diff.
+
+	* frame.h (struct frame): Remove x_pixels_diff, y_pixels_diff.
+
+2015-02-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Backtrace after malloc arena is corrupted
+	Without this change, if the malloc arena is corrupted and then
+	'backtrace' is called, the backtrace can crash because 'backtrace'
+	calls 'malloc'.  For more, please see:
+	https://sourceware.org/ml/libc-alpha/2015-02/msg00678.html
+	* emacs.c (main): Initialize tables used by 'backtrace'.
+	* sysdep.c (emacs_backtrace): Document the newly used part of the API.
+
+2015-02-22  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsfns.m (Fx_frame_geometry): New function.
+	(syms_of_nsfns): Defsubr Sx_frame_geometry.
+
+2015-02-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Spelling fixes
+	* lisp.h (DEFINE_NON_NIL_Q_SYMBOL_MACROS):
+	Rename from DEFINE_NONNIL_Q_SYMBOL_MACROS.  All uses changed.
+
+2015-02-21  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32term.c (queue_notifications):
+	* w32inevt.c (handle_file_notifications):
+	* w32font.c (w32_enumfont_pattern_entity): Prefer 'Qfoo' to
+	'intern ("foo")'.
+
+2015-02-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Prefer 'Qfoo' to 'intern ("foo")'
+	* buffer.c (syms_of_buffer):
+	* bytecode.c (exec_byte_code):
+	* callint.c (Fcall_interactively):
+	* callproc.c (create_temp_file):
+	* charset.c (define_charset_internal):
+	* coding.c (syms_of_coding):
+	* editfns.c (syms_of_editfns):
+	* emacs.c (main):
+	* fns.c (syms_of_fns):
+	* frame.c (delete_frame, Fframe_parameters):
+	* keyboard.c (syms_of_keyboard):
+	* keymap.c (syms_of_keymap):
+	* minibuf.c (read_minibuf, syms_of_minibuf):
+	* nsfns.m (ns_cursor_type_to_lisp):
+	* textprop.c (syms_of_textprop):
+	* xdisp.c (Fformat_mode_line, syms_of_xdisp):
+	* xfns.c (x_create_tip_frame, Fx_select_font):
+	* xml.c (parse_region):
+	Prefer constants like 'Qfoo' to calls like 'intern ("foo")'.
+	* buffer.c (syms_of_buffer): OK to do (put 'erase-buffer 'disabled
+	t) here now ...
+	(keys_of_buffer): ... instead of here.
+	* ftfont.c (syms_of_ftfont): Move DEFSYM of Qmono from here ...
+	* xfns.c (syms_of_xfns): ... to here, since ftfont.c is more
+	optional than xfns.c.
+
+2015-02-20  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* emacs.c (terminate_due_to_signal): Move totally_unblock_input after
+	setting fatal_error_in_progress, so gobble_input and *read_socket are
+	not read if there are pending_signals.
+
+2015-02-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Simplify binary I/O configuration
+	* lread.c (Fload): Prefer FOPEN_TEXT and FOPEN_BINARY to #ifdef DOS_NT.
+	* sysstdio.h: Add copyright notice.  Include <fcntl.h>.
+	(FOPEN_BINARY, FOPEN_TEXT): New macros.
+	* xfaces.c (Fx_load_color_file): Use FOPEN_TEXT, since POSIX
+	doesn't guarantee that "t" will work.
+
+2015-02-19  Eli Zaretskii  <eliz@gnu.org>
+
+	* keyboard.c (read_char): Make sure this_single_command_key_start
+	is in sync with this_command_key_count, around the call to
+	input-method-function.  (Bug#19774)
+
+2015-02-19  Fujii Hironori  <fujii.hironori@gmail.com>  (tiny change)
+
+	* w32fns.c (w32_wnd_proc) <WM_IME_STARTCOMPOSITION>: Pass the
+	message to DefWindowProc, after positioning the IME window, to
+	trigger its display.  (Bug#11732)
+
+2015-02-18  Eli Zaretskii  <eliz@gnu.org>
+
+	* emacs.c (Fkill_emacs): Exit with specified exit code even if
+	stdin is at EOF.  (Bug#19897)
+
+2015-02-18  Oscar Fuentes <ofv@wanadoo.es>
+
+	* keyboard.c (read_char): When there is an input method function,
+	do not restore the echo area if a prefix argument is being
+	introduced.  (Bug#19875)
+
+2015-02-16  Kelly Dean  <kelly@prtime.org>
+
+	* src/keyboard.c (timer_check_2): Fix incorrect comment.
+
+2015-02-14  Martin Rudalics  <rudalics@gmx.at>
+
+	* xterm.c (x_frame_normalize_before_maximize): Fix doc-string.
+	Suggested by Alan Mackenzie <acm@muc.de>.
+
+2015-02-14  Eli Zaretskii  <eliz@gnu.org>
+
+	* menu.c (Fx_popup_menu) [HAVE_X_WINDOWS]: Call
+	x_relative_mouse_position only for X frames.  (Bug#19862)
+
+2015-02-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Better support for future plugins
+	* lisp.h (DEFINE_LISP_SYMBOL): New macro, replacing and simplifying
+	DEFINE_LISP_SYMBOL_BEGIN / DEFINE_LISP_SYMBOL_END.  All uses changed.
+	(DEFINE_NONNIL_Q_SYMBOL_MACROS): New macro, defaulting to true.
+
 2015-02-19  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
 
 	* ftcrfont.c (ftcrfont_draw): Don't flush when drawing to screen.
@@ -243,8 +784,8 @@
 
 	* indent.c (Fvertical_motion): Accept an additional argument
 	CUR-COL and use it as the starting screen coordinate.
-	* window.c (window_scroll_line_based, Fmove_to_window_line): All
-	callers of vertical-motion changed.
+	* window.c (window_scroll_line_based, Fmove_to_window_line):
+	All callers of vertical-motion changed.
 
 2015-02-09  Dima Kogan  <dima@secretsauce.net>
 
@@ -1259,7 +1800,8 @@
 2015-01-06  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* nsterm.m (x_set_window_size): Call updateFrameSize to get real
-	size instead of using widht/height.  The frame may be constrained.
+	size instead of using widht/height.  The frame may be
+	constrained (Bug#19482).
 
 2015-01-05  Paul Eggert  <eggert@cs.ucla.edu>
 

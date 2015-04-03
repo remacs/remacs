@@ -98,7 +98,12 @@
             :type (or null float)
             :documentation "The registry version.")
    (max-size :initarg :max-size
-             ;; :initform most-positive-fixnum ;; see below
+	     ;; EIEIO's :initform is not 100% compatible with CLOS in
+	     ;; that if the form is an atom, it assumes it's constant
+	     ;; value rather than an expression, so in order to get the value
+	     ;; of `most-positive-fixnum', we need to use an
+	     ;; expression that's not just a symbol.
+             :initform (symbol-value 'most-positive-fixnum)
              :type integer
              :custom integer
              :documentation "The maximum number of registry entries.")
@@ -123,8 +128,6 @@
    (data :initarg :data
          :type hash-table
          :documentation "The data hashtable.")))
-;; Do this separately, since defclass doesn't allow expressions in :initform.
-(oset-default 'registry-db max-size most-positive-fixnum)
 
 (defmethod initialize-instance :BEFORE ((this registry-db) slots)
   "Check whether a registry object needs to be upgraded."
@@ -155,7 +158,7 @@
 (defmethod registry-lookup ((db registry-db) keys)
   "Search for KEYS in the registry-db THIS.
 Returns an alist of the key followed by the entry in a list, not a cons cell."
-  (let ((data (oref db :data)))
+  (let ((data (oref db data)))
     (delq nil
 	  (mapcar
 	   (lambda (k)
@@ -166,7 +169,7 @@ Returns an alist of the key followed by the entry in a list, not a cons cell."
 (defmethod registry-lookup-breaks-before-lexbind ((db registry-db) keys)
   "Search for KEYS in the registry-db THIS.
 Returns an alist of the key followed by the entry in a list, not a cons cell."
-  (let ((data (oref db :data)))
+  (let ((data (oref db data)))
     (delq nil
 	  (loop for key in keys
 		when (gethash key data)
@@ -182,8 +185,8 @@ When CREATE is not nil, create the secondary index hashtable if needed."
       (when create
 	(puthash tracksym
 		 (make-hash-table :size 800 :rehash-size 2.0 :test 'equal)
-		 (oref db :tracker))
-	(gethash tracksym (oref db :tracker))))))
+		 (oref db tracker))
+	(gethash tracksym (oref db tracker))))))
 
 (defmethod registry-lookup-secondary-value ((db registry-db) tracksym val
 					    &optional set)
@@ -227,7 +230,7 @@ The test order is to check :all first, then :member, then :regex."
     (let ((all (plist-get spec :all))
 	  (member (plist-get spec :member))
 	  (regex (plist-get spec :regex)))
-      (loop for k being the hash-keys of (oref db :data)
+      (loop for k being the hash-keys of (oref db data)
 	    using (hash-values v)
 	    when (or
 		  ;; :all non-nil returns all
@@ -243,10 +246,10 @@ The test order is to check :all first, then :member, then :regex."
 If KEYS is nil, use SPEC to do a search.
 Updates the secondary ('tracked') indices as well.
 With assert non-nil, errors out if the key does not exist already."
-  (let* ((data (oref db :data))
+  (let* ((data (oref db data))
 	 (keys (or keys
 		   (apply 'registry-search db spec)))
-	 (tracked (oref db :tracked)))
+	 (tracked (oref db tracked)))
 
     (dolist (key keys)
       (let ((entry (gethash key data)))
@@ -273,20 +276,20 @@ With assert non-nil, errors out if the key does not exist already."
 
 (defmethod registry-size ((db registry-db))
   "Returns the size of the registry-db object THIS.
-This is the key count of the :data slot."
-  (hash-table-count (oref db :data)))
+This is the key count of the `data' slot."
+  (hash-table-count (oref db data)))
 
 (defmethod registry-full ((db registry-db))
   "Checks if registry-db THIS is full."
   (>= (registry-size db)
-      (oref db :max-size)))
+      (oref db max-size)))
 
 (defmethod registry-insert ((db registry-db) key entry)
   "Insert ENTRY under KEY into the registry-db THIS.
 Updates the secondary ('tracked') indices as well.
 Errors out if the key exists already."
 
-  (assert (not (gethash key (oref db :data))) nil
+  (assert (not (gethash key (oref db data))) nil
 	  "Key already exists in database")
 
   (assert (not (registry-full db))
@@ -294,10 +297,10 @@ Errors out if the key exists already."
 	  "registry max-size limit reached")
 
   ;; store the entry
-  (puthash key entry (oref db :data))
+  (puthash key entry (oref db data))
 
   ;; store the secondary indices
-  (dolist (tr (oref db :tracked))
+  (dolist (tr (oref db tracked))
     ;; for every value in the entry under that key...
     (dolist (val (cdr-safe (assq tr entry)))
       (let* ((value-keys (registry-lookup-secondary-value db tr val)))
@@ -308,8 +311,8 @@ Errors out if the key exists already."
 (defmethod registry-reindex ((db registry-db))
   "Rebuild the secondary indices of registry-db THIS."
   (let ((count 0)
-	(expected (* (length (oref db :tracked)) (registry-size db))))
-    (dolist (tr (oref db :tracked))
+	(expected (* (length (oref db tracked)) (registry-size db))))
+    (dolist (tr (oref db tracked))
       (let (values)
 	(maphash
 	 (lambda (key v)
@@ -322,7 +325,7 @@ Errors out if the key exists already."
 	     (let* ((value-keys (registry-lookup-secondary-value db tr val)))
 	       (push key value-keys)
 	       (registry-lookup-secondary-value db tr val value-keys))))
-	 (oref db :data))))))
+	 (oref db data))))))
 
 (defmethod registry-prune ((db registry-db) &optional sortfunc)
   "Prunes the registry-db object DB.
@@ -338,11 +341,12 @@ from the front of the list are deleted first.
 
 Returns the number of deleted entries."
   (let ((size (registry-size db))
-	(target-size (- (oref db :max-size)
-			(* (oref db :max-size)
-			   (oref db :prune-factor))))
+	(target-size
+	 (floor (- (oref db max-size)
+		   (* (oref db max-size)
+		      (oref db prune-factor)))))
 	candidates)
-    (if (> size target-size)
+    (if (registry-full db)
 	(progn
 	  (setq candidates
 		(registry-collect-prune-candidates
@@ -356,10 +360,10 @@ Returns the number of deleted entries."
 Proposes only entries without the :precious keys, and attempts to
 return LIMIT such candidates.  If SORTFUNC is provided, sort
 entries first and return candidates from beginning of list."
-  (let* ((precious (oref db :precious))
+  (let* ((precious (oref db precious))
 	 (precious-p (lambda (entry-key)
 		       (cdr (memq (car entry-key) precious))))
-	 (data (oref db :data))
+	 (data (oref db data))
 	 (candidates (cl-loop for k being the hash-keys of data
 			      using (hash-values v)
 			      when (notany precious-p v)
@@ -368,7 +372,7 @@ entries first and return candidates from beginning of list."
     ;; list of entry keys.
     (when sortfunc
       (setq candidates (sort candidates sortfunc)))
-    (delq nil (cl-subseq (mapcar #'car candidates) 0 limit))))
+    (cl-subseq (mapcar #'car candidates) 0 (min limit (length candidates)))))
 
 (provide 'registry)
 ;;; registry.el ends here

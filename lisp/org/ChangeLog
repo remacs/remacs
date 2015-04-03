@@ -852,7 +852,7 @@
 	in a table.el table last.
 
 	* org.el (org-delete-property): Don't suggest to delete the
-	CATEGORY property when the category is not explicitely set in the
+	CATEGORY property when the category is not explicitly set in the
 	property drawer.  Also enforce matching when completing.
 	(org-insert-heading): Fix regression: with two universal prefixes,
 	insert heading at the end of the subtree.
@@ -13109,7 +13109,7 @@
 2012-01-03  Nicolas Goaziou  <n.goaziou@gmail.com>
 
 	* org.el (org-fontify-meta-lines-and-blocks-1):
-	Recognize "name" as a valid keyword that can preceed a block.
+	Recognize "name" as a valid keyword that can precede a block.
 
 2012-01-03  Eric Schulte  <schulte.eric@gmail.com>
 

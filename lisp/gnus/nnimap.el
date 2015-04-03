@@ -196,6 +196,8 @@ textual parts.")
 	  (nnimap-article-ranges (gnus-compress-sequence articles))
 	  (nnimap-header-parameters))
 	 t)
+	(unless (process-live-p (get-buffer-process (current-buffer)))
+	  (error "Server closed connection"))
 	(nnimap-transform-headers)
 	(nnheader-remove-cr-followed-by-lf))
       (insert-buffer-substring
@@ -1260,7 +1262,12 @@ If LIMIT, first try to limit the search to the N last articles."
     (while (search-forward "* LIST " nil t)
       (let ((flags (read (current-buffer)))
 	    (separator (read (current-buffer)))
-	    (group (read (current-buffer))))
+	    (group (buffer-substring-no-properties
+		    (progn (skip-chars-forward " \"")
+			   (point))
+		    (progn (end-of-line)
+			   (skip-chars-backward " \"")
+			   (point)))))
 	(unless (member '%NoSelect flags)
 	  (push (utf7-decode (if (stringp group)
 				 group
@@ -2079,12 +2086,15 @@ Return the server's response to the SELECT or EXAMINE command."
 		    (ranges (cdr spec)))
 		(if (eq group 'junk)
 		    (setq junk-articles ranges)
-		  (push (list (nnimap-send-command
-			       "UID COPY %s %S"
-			       (nnimap-article-ranges ranges)
-			       (utf7-encode group t))
-			      ranges)
-			sequences))))
+		  ;; Don't copy if the message is already in its
+		  ;; target group.
+		  (unless (string= group nnimap-inbox)
+		   (push (list (nnimap-send-command
+				"UID COPY %s %S"
+				(nnimap-article-ranges ranges)
+				(utf7-encode group t))
+			       ranges)
+			 sequences)))))
 	    ;; Wait for the last COPY response...
 	    (when sequences
 	      (nnimap-wait-for-response (caar sequences))

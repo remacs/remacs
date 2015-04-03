@@ -140,7 +140,7 @@ Multiple calls to `make-instance' will return this object."))
 A singleton is a class which will only ever have one instance."
   :abstract t)
 
-(cl-defmethod eieio-constructor ((class (subclass eieio-singleton)) &rest _slots)
+(cl-defmethod make-instance ((class (subclass eieio-singleton)) &rest _slots)
   "Constructor for singleton CLASS.
 NAME and SLOTS initialize the new object.
 This constructor guarantees that no matter how many you request,
@@ -254,25 +254,28 @@ malicious code.
 
 Note: This function recurses when a slot of :type of some object is
 identified, and needing more object creation."
-  (let ((objclass (nth 0 inputlist))
-	;; (objname (nth 1 inputlist))
-	(slots (nthcdr 2 inputlist))
-	(createslots nil))
-
-    ;; If OBJCLASS is an eieio autoload object, then we need to load it.
-    (eieio-class-un-autoload objclass)
+  (let* ((objclass (nth 0 inputlist))
+	 ;; (objname (nth 1 inputlist))
+	 (slots (nthcdr 2 inputlist))
+	 (createslots nil)
+	 (class
+	  (progn
+	    ;; If OBJCLASS is an eieio autoload object, then we need to
+	    ;; load it.
+	    (eieio-class-un-autoload objclass)
+	    (eieio--class-object objclass))))
 
     (while slots
-      (let ((name (car slots))
+      (let ((initarg (car slots))
 	    (value (car (cdr slots))))
 
 	;; Make sure that the value proposed for SLOT is valid.
 	;; In addition, strip out quotes, list functions, and update
 	;; object constructors as needed.
 	(setq value (eieio-persistent-validate/fix-slot-value
-		     (eieio--class-v objclass) name value))
+		     class (eieio--initarg-to-attribute class initarg) value))
 
-	(push name createslots)
+	(push initarg createslots)
 	(push value createslots)
 	)
 
@@ -290,16 +293,12 @@ constructor functions are considered valid.
 Second, any text properties will be stripped from strings."
   (cond ((consp proposed-value)
 	 ;; Lists with something in them need special treatment.
-	 (let ((slot-idx (eieio--slot-name-index class slot))
-	       (type nil)
-	       (classtype nil))
-	   (setq slot-idx (- slot-idx
-                             (eval-when-compile eieio--object-num-slots)))
-	   (setq type (aref (eieio--class-public-type class)
-			    slot-idx))
-
-	   (setq classtype (eieio-persistent-slot-type-is-class-p
-			    type))
+	 (let* ((slot-idx (- (eieio--slot-name-index class slot)
+                             (eval-when-compile
+                               (length (cl-struct-slot-info 'eieio--object)))))
+                (type (cl--slot-descriptor-type (aref (eieio--class-slots class)
+                                                      slot-idx)))
+                (classtype (eieio-persistent-slot-type-is-class-p type)))
 
 	   (cond ((eq (car proposed-value) 'quote)
 		  (car (cdr proposed-value)))
@@ -499,6 +498,15 @@ All slots are unbound, except those initialized with PARAMS."
                                     "-" (int-to-string num)))
                         (concat nm "-1")))))
     nobj))
+
+(cl-defmethod make-instance ((class (subclass eieio-named)) &rest args)
+  (if (not (stringp (car args)))
+      (cl-call-next-method)
+    (funcall (if eieio-backward-compatibility #'ignore #'message)
+             "Obsolete: name passed without :object-name to %S constructor"
+             class)
+    (apply #'cl-call-next-method class :object-name args)))
+
 
 (provide 'eieio-base)
 

@@ -5700,7 +5700,7 @@ map_tty_color (struct frame *f, struct face *face,
   if (STRINGP (color)
       && SCHARS (color)
       && CONSP (Vtty_defined_color_alist)
-      && (def = assq_no_quit (color, call1 (Qtty_color_alist, frame)),
+      && (def = assoc_no_quit (color, call1 (Qtty_color_alist, frame)),
 	  CONSP (def)))
     {
       /* Associations in tty-defined-color-alist are of the form
@@ -6187,7 +6187,7 @@ where R,G,B are numbers between 0 and 255 and name is an arbitrary string.  */)
   abspath = Fexpand_file_name (filename, Qnil);
 
   block_input ();
-  fp = emacs_fopen (SSDATA (abspath), "rt");
+  fp = emacs_fopen (SSDATA (abspath), "r" FOPEN_TEXT);
   if (fp)
     {
       char buf[512];

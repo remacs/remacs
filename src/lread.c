@@ -1033,12 +1033,8 @@ Return t if the file exists and loads successfully.  */)
   bool compiled = 0;
   Lisp_Object handler;
   bool safe_p = 1;
-  const char *fmode = "r";
+  const char *fmode = "r" FOPEN_TEXT;
   int version;
-
-#ifdef DOS_NT
-  fmode = "rt";
-#endif /* DOS_NT */
 
   CHECK_STRING (file);
 
@@ -1223,10 +1219,7 @@ Return t if the file exists and loads successfully.  */)
 	  compiled = 1;
 
 	  efound = ENCODE_FILE (found);
-
-#ifdef DOS_NT
-	  fmode = "rb";
-#endif /* DOS_NT */
+	  fmode = "r" FOPEN_BINARY;
 
           /* openp already checked for newness, no point doing it again.
              FIXME would be nice to get a message when openp
@@ -3287,7 +3280,7 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
     {
     case Lisp_Vectorlike:
       {
-	ptrdiff_t i, length = 0;
+	ptrdiff_t i = 0, length = 0;
 	if (BOOL_VECTOR_P (subtree))
 	  return subtree;		/* No sub-objects anyway.  */
 	else if (CHAR_TABLE_P (subtree) || SUB_CHAR_TABLE_P (subtree)
@@ -3302,7 +3295,9 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
 	     behavior.  */
 	  wrong_type_argument (Qsequencep, subtree);
 
-	for (i = 0; i < length; i++)
+	if (SUB_CHAR_TABLE_P (subtree))
+	  i = 2;
+	for ( ; i < length; i++)
 	  SUBSTITUTE (AREF (subtree, i),
 		      ASET (subtree, i, true_value));
 	return subtree;

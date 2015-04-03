@@ -1628,10 +1628,10 @@ killed."
             (confirm-nonexistent-file-or-buffer) file-name)
 	   t)))
   (unless (run-hook-with-args-until-failure 'kill-buffer-query-functions)
-    (error "Aborted"))
+    (user-error "Aborted"))
   (and (buffer-modified-p) buffer-file-name
        (not (yes-or-no-p "Kill and replace the buffer without saving it? "))
-       (error "Aborted"))
+       (user-error "Aborted"))
   (let ((obuf (current-buffer))
 	(ofile buffer-file-name)
 	(onum buffer-file-number)
@@ -1844,7 +1844,7 @@ OP-TYPE specifies the file operation being performed (for message to user)."
 	     (not (y-or-n-p (format "File %s is large (%s), really %s? "
 				    (file-name-nondirectory filename)
 				    (file-size-human-readable size) op-type))))
-    (error "Aborted")))
+    (user-error "Aborted")))
 
 (defun warn-maybe-out-of-memory (size)
   "Warn if an attempt to open file of SIZE bytes may run out of memory."
@@ -2110,7 +2110,7 @@ Do you want to revisit the file normally now? ")
 (defun insert-file-contents-literally (filename &optional visit beg end replace)
   "Like `insert-file-contents', but only reads in the file literally.
 A buffer may be modified in several ways after reading into the buffer,
-to Emacs features such as format decoding, character code
+due to Emacs features such as format decoding, character code
 conversion, `find-file-hook', automatic uncompression, etc.
 
 This function ensures that none of these modifications will take place."
@@ -3883,7 +3883,7 @@ the old visited file has been renamed to the new name FILENAME."
 	   (not no-query)
 	   (not (y-or-n-p (format "A buffer is visiting %s; proceed? "
 				  filename)))
-	   (error "Aborted")))
+	   (user-error "Aborted")))
     (or (equal filename buffer-file-name)
 	(progn
 	  (and filename (lock-buffer filename))
@@ -4007,7 +4007,7 @@ Interactively, confirmation is required unless you supply a prefix argument."
 		       (listp last-nonmenu-event)
 		       use-dialog-box))
 	     (or (y-or-n-p (format "File `%s' exists; overwrite? " filename))
-		 (error "Canceled")))
+		 (user-error "Canceled")))
 	(set-visited-file-name filename (not confirm))))
   (set-buffer-modified-p t)
   ;; Make buffer writable if file is writable.
@@ -5664,13 +5664,14 @@ Then you'll be asked about a number of files to recover."
   (interactive)
   (if (null auto-save-list-file-prefix)
       (error "You set `auto-save-list-file-prefix' to disable making session files"))
-  (let ((dir (file-name-directory auto-save-list-file-prefix)))
+  (let ((dir (file-name-directory auto-save-list-file-prefix))
+        (nd (file-name-nondirectory auto-save-list-file-prefix)))
     (unless (file-directory-p dir)
       (make-directory dir t))
     (unless (directory-files dir nil
-			     (concat "\\`" (regexp-quote
-					    (file-name-nondirectory
-					     auto-save-list-file-prefix)))
+                             (if (string= "" nd)
+                                 directory-files-no-dot-files-regexp
+                               (concat "\\`" (regexp-quote nd)))
 			     t)
       (error "No previous sessions to recover")))
   (let ((ls-lisp-support-shell-wildcards t))

@@ -976,7 +976,8 @@ Properties with special meaning:
   ;; We used to manually add the docstring, but we also want to record this
   ;; location as the definition of the variable (in load-history), so we may
   ;; as well just use `defvar'.
-  (eval `(defvar ,tablename nil ,@(if (stringp docstring) (list docstring))))
+  (eval `(defvar ,tablename nil ,@(if (stringp docstring) (list docstring)
+				    (when props (push docstring props) nil))))
   (let ((table (if (boundp tablename) (symbol-value tablename))))
     (unless table
       (setq table (make-abbrev-table))
@@ -987,6 +988,7 @@ Properties with special meaning:
     ;; if the table was pre-existing as is the case if it was created by
     ;; loading the user's abbrev file.
     (while (consp props)
+      (unless (cdr props) (error "Missing value for property %S" (car props)))
       (abbrev-table-put table (pop props) (pop props)))
     (dolist (elt definitions)
       (apply 'define-abbrev table elt))))

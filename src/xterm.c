@@ -11471,7 +11471,10 @@ get_bits_and_offset (unsigned long mask, int *bits, int *offset)
 bool
 x_display_ok (const char *display)
 {
+  /* XOpenDisplay fails if it gets a signal.  Block SIGIO which may arrive.  */
+  unrequest_sigio ();
   Display *dpy = XOpenDisplay (display);
+  request_sigio ();
   if (!dpy)
     return false;
   XCloseDisplay (dpy);
@@ -11651,7 +11654,9 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 
         /* gtk_init does set_locale.  Fix locale before and after.  */
         fixup_locale ();
+        unrequest_sigio (); /* See comment in x_display_ok.  */
         gtk_init (&argc, &argv2);
+        request_sigio ();
         fixup_locale ();
 
         g_log_remove_handler ("GLib", id);
@@ -11701,10 +11706,12 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 	argv[argc++] = xrm_option;
       }
     turn_on_atimers (false);
+    unrequest_sigio ();  /* See comment in x_display_ok.  */
     dpy = XtOpenDisplay (Xt_app_con, SSDATA (display_name),
 			 resource_name, EMACS_CLASS,
 			 emacs_options, XtNumber (emacs_options),
 			 &argc, argv);
+    request_sigio ();
     turn_on_atimers (true);
 
 #ifdef HAVE_X11XTR6
@@ -11715,7 +11722,9 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 
 #else /* not USE_X_TOOLKIT */
   XSetLocaleModifiers ("");
+  unrequest_sigio ();  // See comment in x_display_ok.
   dpy = XOpenDisplay (SSDATA (display_name));
+  request_sigio ();
 #endif /* not USE_X_TOOLKIT */
 #endif /* not USE_GTK*/
 
@@ -12529,9 +12538,11 @@ default is nil, which is the same as `super'.  */);
   DEFVAR_BOOL ("x-frame-normalize-before-maximize",
 	       x_frame_normalize_before_maximize,
     doc: /* Non-nil means normalize frame before maximizing.
-If this variable is t, Emacs asks the window manager to give the frame
-intermediately its normal size whenever changing from a full-height or
-full-width state to the fully maximized one and vice versa.
+If this variable is t, Emacs first asks the window manager to give the
+frame its normal size, and only then the final state, whenever changing
+from a full-height, full-width or full-both state to the maximized one
+or when changing from the maximized to the full-height or full-width
+state.
 
 Set this variable only if your window manager cannot handle the
 transition between the various maximization states.  */);
