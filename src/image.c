@@ -1019,6 +1019,7 @@ prepare_image_for_display (struct frame *f, struct image *img)
   /* We're about to display IMG, so set its timestamp to `now'.  */
   img->timestamp = current_timespec ();
 
+#ifndef USE_CAIRO
   /* If IMG doesn't have a pixmap yet, load it now, using the image
      type dependent loader function.  */
   if (img->pixmap == NO_PIXMAP && !img->load_failed_p)
@@ -1031,6 +1032,7 @@ prepare_image_for_display (struct frame *f, struct image *img)
       image_sync_to_pixmaps (f, img);
       unblock_input ();
     }
+#endif
 #endif
 }
 
@@ -1303,8 +1305,7 @@ x_clear_image (struct frame *f, struct image *img)
   if (img->cr_data)
     {
       cairo_surface_destroy ((cairo_surface_t *)img->cr_data);
-      unblock_input ();
-      return;
+      if (img->ximg && img->ximg->obdata) xfree (img->ximg->obdata);
     }
 #endif
   x_clear_image_1 (f, img,
@@ -3162,9 +3163,11 @@ static struct image_type xpm_type =
    color allocation failures more gracefully than the ones on the XPM
    lib.  */
 
+#ifndef USE_CAIRO
 #if defined XpmAllocColor && defined XpmFreeColors && defined XpmColorClosure
 #define ALLOC_XPM_COLORS
 #endif
+#endif /* USE_CAIRO */
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef ALLOC_XPM_COLORS
@@ -3625,6 +3628,56 @@ xpm_load (struct frame *f, struct image *img)
 #endif /* HAVE_NTGUI */
     }
 
+#ifdef USE_CAIRO
+  // Load very specific Xpm:s.
+  if (rc == XpmSuccess
+      && img->ximg->format == ZPixmap
+      && img->ximg->bits_per_pixel == 32
+      && img->mask_img->bits_per_pixel == 1)
+    {
+      cairo_surface_t *surface;
+      int width = img->ximg->width;
+      int height = img->ximg->height;
+      cairo_format_t format = CAIRO_FORMAT_ARGB32;
+      int stride = cairo_format_stride_for_width (format, width);
+      unsigned char *data = (unsigned char *)
+        xmalloc (width*height*4);
+      int i;
+      uint32_t *od = (uint32_t *)data;
+      uint32_t *id = (uint32_t *)img->ximg->data;
+      unsigned char *mid = img->mask_img->data;
+
+      for (i = 0; i < height; ++i)
+        {
+          int k;
+          for (k = 0; k < width; ++k)
+            {
+              int idx = i * img->ximg->bytes_per_line/4 + k;
+              int maskidx = i * img->mask_img->bytes_per_line + k/8;
+              int mask = mid[maskidx] & (1 << (k % 8));
+
+              if (mask) od[idx] = id[idx] + 0xff000000; // ff => full alpha
+              else od[idx] = 0;
+            }
+        }
+
+      surface = cairo_image_surface_create_for_data (data,
+                                                     format,
+                                                     width,
+                                                     height,
+                                                     stride);
+      img->width = cairo_image_surface_get_width (surface);
+      img->height = cairo_image_surface_get_height (surface);
+      img->cr_data = surface;
+      img->pixmap = 0;
+      img->ximg->obdata = (char *)data;
+    }
+  else
+    {
+      rc = XpmFileInvalid;
+      x_clear_image (f, img);
+    }
+#else
 #ifdef HAVE_X_WINDOWS
   if (rc == XpmSuccess)
     {
@@ -3650,6 +3703,7 @@ xpm_load (struct frame *f, struct image *img)
 	}
     }
 #endif
+#endif /* ! USE_CAIRO */
 
   if (rc == XpmSuccess)
     {

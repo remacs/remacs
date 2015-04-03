@@ -1,5 +1,12 @@
 2015-04-03  Jan Djärv  <jan.h.d@swipnet.se>
 
+	* image.c (prepare_image_for_display): Don't load if USE_CAIRO.
+	(x_clear_image): If USE_CAIRO, also free possible img->ximg->obdata and
+	don't return early.
+	(ALLOC_XPM_COLORS): Don't define when USE_CAIRO.
+	(xpm_load): Convert simple Xpms (32 bit ZPixmap) to CAIRO_FORMAT_ARGB32
+	and create a surface.
+
 	* xterm.c (handle_one_xevent): Always redraw tool tips on
 	MapNotify.  Update tool tip frame sizes on ConfigureNotify.
 	(x_update_begin): Don't create any surface for non-visible

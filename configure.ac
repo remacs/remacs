@@ -2361,28 +2361,6 @@ fail;
 fi
 
 
-### Use -lrsvg-2 if available, unless `--with-rsvg=no' is specified.
-HAVE_RSVG=no
-if test "${HAVE_X11}" = "yes" || test "${HAVE_NS}" = "yes" || test "${opsys}" = "mingw32"; then
-  if test "${with_rsvg}" != "no"; then
-    RSVG_REQUIRED=2.11.0
-    RSVG_MODULE="librsvg-2.0 >= $RSVG_REQUIRED"
-
-    EMACS_CHECK_MODULES([RSVG], [$RSVG_MODULE])
-    AC_SUBST(RSVG_CFLAGS)
-    AC_SUBST(RSVG_LIBS)
-
-    if test $HAVE_RSVG = yes; then
-      AC_DEFINE(HAVE_RSVG, 1, [Define to 1 if using librsvg.])
-      CFLAGS="$CFLAGS $RSVG_CFLAGS"
-      # Windows loads librsvg dynamically
-      if test "${opsys}" = "mingw32"; then
-       	RSVG_LIBS=
-      fi
-    fi
-  fi
-fi
-
 HAVE_IMAGEMAGICK=no
 if test "${HAVE_X11}" = "yes" || test "${HAVE_NS}" = "yes" || test "${HAVE_W32}" = "yes"; then
   if test "${with_imagemagick}" != "no"; then
@@ -3111,15 +3089,37 @@ if test "${HAVE_X11}" = "yes"; then
     else
       AC_MSG_ERROR([cairo requested but not found.])
     fi
-    with_xpm=no
     with_jpeg=no
     with_gif=no
     with_tiff=no
+    with_rsvg=no
 
     CFLAGS="$CFLAGS $CAIRO_CFLAGS"
     LIBS="$LIBS $CAIRO_LIBS"
     AC_SUBST(CAIRO_CFLAGS)
     AC_SUBST(CAIRO_LIBS)
+  fi
+fi
+
+### Use -lrsvg-2 if available, unless `--with-rsvg=no' is specified.
+HAVE_RSVG=no
+if test "${HAVE_X11}" = "yes" || test "${HAVE_NS}" = "yes" || test "${opsys}" = "mingw32"; then
+  if test "${with_rsvg}" != "no"; then
+    RSVG_REQUIRED=2.11.0
+    RSVG_MODULE="librsvg-2.0 >= $RSVG_REQUIRED"
+
+    EMACS_CHECK_MODULES([RSVG], [$RSVG_MODULE])
+    AC_SUBST(RSVG_CFLAGS)
+    AC_SUBST(RSVG_LIBS)
+
+    if test $HAVE_RSVG = yes; then
+      AC_DEFINE(HAVE_RSVG, 1, [Define to 1 if using librsvg.])
+      CFLAGS="$CFLAGS $RSVG_CFLAGS"
+      # Windows loads librsvg dynamically
+      if test "${opsys}" = "mingw32"; then
+        RSVG_LIBS=
+      fi
+    fi
   fi
 fi
 

@@ -1,3 +1,8 @@
+2015-04-03  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* configure.ac (HAVE_RSVG): Move after cairo.
+	(USE_CAIRO): Disable rsvg, don't disable Xpm.
+
 2015-04-03  Ulrich Müller  <ulm@gentoo.org>
 
 	* configure.ac (LD_SWITCH_SYSTEM_TEMACS): Add -nopie option if it
