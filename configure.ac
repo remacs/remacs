@@ -883,6 +883,7 @@ if test "$gl_gcc_warnings" != yes; then
      gl_WARN_ADD([-Wno-tautological-constant-out-of-range-compare])
      gl_WARN_ADD([-Wno-pointer-sign])
      gl_WARN_ADD([-Wno-string-plus-int])
+     gl_WARN_ADD([-Wno-unknown-attributes])
   fi
 else
   isystem='-isystem '
@@ -5030,16 +5031,22 @@ case "$opsys" in
   *) LD_SWITCH_SYSTEM_TEMACS= ;;
 esac
 
-AC_CACHE_CHECK([whether the linker accepts -nopie],
+# -nopie fixes a temacs segfault on Gentoo for some reason (Bug#18784).
+# We don't know why -nopie works, but not segfaulting is better than
+# segfaulting.  Use -Werror when trying -nopie, otherwise clang keeps
+# warning that it does not understand -nopie.
+AC_CACHE_CHECK([whether $CC accepts -nopie],
   [emacs_cv_prog_cc_nopie],
-  [emacs_save_LDFLAGS=$LDFLAGS
-  LDFLAGS="$LDFLAGS -nopie"
-  AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
-    [emacs_cv_prog_cc_nopie=yes],
-    [emacs_cv_prog_cc_nopie=no])
-  LDFLAGS=$emacs_save_LDFLAGS])
+  [emacs_save_CFLAGS=$CFLAGS
+   emacs_save_LDFLAGS=$LDFLAGS
+   CFLAGS="$CFLAGS -Werror"
+   LDFLAGS="$LDFLAGS -nopie"
+   AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
+     [emacs_cv_prog_cc_nopie=yes],
+     [emacs_cv_prog_cc_nopie=no])
+   CFLAGS=$emacs_save_CFLAGS
+   LDFLAGS=$emacs_save_LDFLAGS])
 if test "$emacs_cv_prog_cc_nopie" = yes; then
-  # Disable PIE to avoid segfaults in temacs (bug#18784)
   LD_SWITCH_SYSTEM_TEMACS="$LD_SWITCH_SYSTEM_TEMACS -nopie"
 fi
 
