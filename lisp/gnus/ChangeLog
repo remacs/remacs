@@ -1,3 +1,10 @@
+2015-04-03  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* gnus-art.el (gnus-article-browse-html-save-cid-content):
+	Always return relative file name.
+	(gnus-article-browse-html-parts):
+	Make external links absolute and cid file names relative.
+
 2015-04-01  Eric Abrahamsen  <eric@ericabrahamsen.net>
 
 	* registry.el (registry-prune): Re-use `registry-full' in
