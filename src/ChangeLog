@@ -2,6 +2,8 @@
 
 	* xterm.c (handle_one_xevent): Always redraw tool tips on
 	MapNotify.  Update tool tip frame sizes on ConfigureNotify.
+	(x_update_begin): Don't create any surface for non-visible
+	tip frames, the geometry may be wrong.
 
 2015-03-31  Eli Zaretskii  <eliz@gnu.org>
 

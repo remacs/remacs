@@ -1038,6 +1038,10 @@ static void
 x_update_begin (struct frame *f)
 {
 #ifdef USE_CAIRO
+  if (! NILP (tip_frame) && XFRAME (tip_frame) == f
+      && ! FRAME_VISIBLE_P (f))
+    return;
+
   if (! FRAME_CR_SURFACE (f))
     {
       int width, height;
