@@ -5031,7 +5031,8 @@ case "$opsys" in
   *) LD_SWITCH_SYSTEM_TEMACS= ;;
 esac
 
-# -nopie fixes a temacs segfault on Gentoo for some reason (Bug#18784).
+# -nopie fixes a temacs segfault on Gentoo, OpenBSD, and other systems
+# with "hardened" GCC configurations for some reason (Bug#18784).
 # We don't know why -nopie works, but not segfaulting is better than
 # segfaulting.  Use -Werror when trying -nopie, otherwise clang keeps
 # warning that it does not understand -nopie.
