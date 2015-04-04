@@ -1,3 +1,10 @@
+2015-04-04  Alan Mackenzie  <acm@muc.de>
+
+	Fix debbugs#20240 part two (jit-lock error during `comment-dwim').
+
+	* jit-lock.el (jit-lock-after-change): Widen the buffer before
+	putting 'fontified text properties.
+
 2015-04-03  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp-cache.el (tramp-flush-file-property)
