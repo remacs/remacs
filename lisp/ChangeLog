@@ -1,3 +1,8 @@
+2015-04-04  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-cache.el (tramp-flush-directory-property): Quote directory
+	name when used in regexp.
+
 2015-04-04  Alan Mackenzie  <acm@muc.de>
 
 	Fix debbugs#20240 part two (jit-lock error during `comment-dwim').

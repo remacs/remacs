@@ -196,7 +196,8 @@ Remove also properties of all files in subdirectories."
     (maphash
      (lambda (key _value)
        (when (and (stringp (tramp-file-name-localname key))
-		  (string-match directory (tramp-file-name-localname key)))
+		  (string-match (regexp-quote directory)
+				(tramp-file-name-localname key)))
 	 (remhash key tramp-cache-data)))
      tramp-cache-data)))
 
