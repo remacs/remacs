@@ -1410,7 +1410,9 @@ This populates `package-archive-contents'.  If ASYNC is non-nil,
 perform the downloads asynchronously."
   ;; The downloaded archive contents will be read as part of
   ;; `package--update-downloads-in-progress'.
-  (setq package--downloads-in-progress package-archives)
+  (setq package--downloads-in-progress
+        (append package-archives
+                package--downloads-in-progress))
   (dolist (archive package-archives)
     (condition-case-unless-debug nil
         (package--download-one-archive archive "archive-contents" async)
