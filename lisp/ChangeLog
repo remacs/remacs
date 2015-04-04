@@ -1,3 +1,8 @@
+2015-04-04  Alan Mackenzie  <acm@muc.de>
+
+	* progmodes/cc-mode.el (c-font-lock-init): Revert 2015-02-01 change
+	"Stop Font Lock forcing fontification from BOL."  (Bug#20245)
+
 2015-04-04  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* emacs-lisp/package.el (package--download-and-read-archives): Add
