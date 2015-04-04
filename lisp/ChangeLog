@@ -14,6 +14,9 @@
 	`package-archives' to `package--downloads-in-progress' instead of
 	overwriting it.
 	(package--with-work-buffer-async): Protect macro arguments.
+	(package--download-one-archive)
+	(package--download-and-read-archives): Prevent
+	downloads-in-progress list from becoming outdated.
 
 2015-04-04  Michael Albinus  <michael.albinus@gmx.de>
 

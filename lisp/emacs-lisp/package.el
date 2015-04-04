@@ -1397,8 +1397,12 @@ similar to an entry in `package-alist'.  Save the cached copy to
           ;; If we care, check it (perhaps async) and *then* write the file.
           (package--check-signature
            location file content async
+           ;; This function will be called after signature checking.
            (lambda (&optional good-sigs)
              (unless (or good-sigs (eq package-check-signature 'allow-unsigned))
+               ;; Even if the sig fails, this download is done, so
+               ;; remove it from the in-progress list.
+               (package--update-downloads-in-progress archive)
                (error "Unsigned archive `%s'" name))
              ;; Write out the archives file.
              (write-region content nil local-file nil 'silent)
@@ -1419,7 +1423,11 @@ perform the downloads asynchronously."
                 package--downloads-in-progress))
   (dolist (archive package-archives)
     (condition-case-unless-debug nil
-        (package--download-one-archive archive "archive-contents" async)
+        (package--download-one-archive
+         archive "archive-contents"
+         ;; Called if the async download fails
+         (when async
+           (lambda () (package--update-downloads-in-progress archive))))
       (error (message "Failed to download `%s' archive."
                (car archive))))))
 
