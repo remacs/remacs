@@ -1,3 +1,12 @@
+2015-04-04  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* xselect.c (x_reply_selection_request)
+	(receive_incremental_selection): Call set_property_change_object
+	inside block_input.
+	(wait_for_property_change): Move set property_change_reply(_object)
+	outside of this function (Bug#16737).
+	(set_property_change_object): New function.
+
 2015-04-03  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* xterm.c (handle_one_xevent): Always redraw tool tips on
