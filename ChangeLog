@@ -1,8 +1,8 @@
 2015-04-03  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Port 'configure' to clang 3.5
-	* configure.ac: Add -Wno-unknown-attributes if clang; otherwise
-	clang 3.5.0 (Fedora 21 x86-64) complains
+	* configure.ac: Add -Wno-unknown-attributes if clang;
+	otherwise clang 3.5.0 (Fedora 21 x86-64) complains
 	"/usr/include/glib-2.0/glib/gmem.h: ... warning: unknown attribute
 	'__alloc_size__' ignored".  Use -Werror when checking for -nopie;
 	otherwise clang warns about -nopie instead of failing, and then
