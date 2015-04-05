@@ -2943,6 +2943,7 @@ struct image
 
 #ifdef USE_CAIRO
   void *cr_data;
+  void *cr_data2;
 #endif
 #ifdef HAVE_X_WINDOWS
   /* X images of the image, corresponding to the above Pixmaps.

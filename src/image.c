@@ -88,6 +88,10 @@ typedef struct w32_bitmap_record Bitmap_Record;
 
 #endif /* HAVE_NTGUI */
 
+#ifdef USE_CAIRO
+#undef COLOR_TABLE_SUPPORT
+#endif
+
 #ifdef HAVE_NS
 #undef COLOR_TABLE_SUPPORT
 
@@ -1303,10 +1307,8 @@ x_clear_image (struct frame *f, struct image *img)
   block_input ();
 #ifdef USE_CAIRO
   if (img->cr_data)
-    {
-      cairo_surface_destroy ((cairo_surface_t *)img->cr_data);
-      if (img->ximg && img->ximg->obdata) xfree (img->ximg->obdata);
-    }
+    cairo_surface_destroy ((cairo_surface_t *)img->cr_data);
+  if (img->cr_data2) xfree (img->cr_data2);
 #endif
   x_clear_image_1 (f, img,
 		   CLEAR_IMAGE_PIXMAP | CLEAR_IMAGE_MASK | CLEAR_IMAGE_COLORS);
@@ -3670,7 +3672,7 @@ xpm_load (struct frame *f, struct image *img)
       img->height = cairo_image_surface_get_height (surface);
       img->cr_data = surface;
       img->pixmap = 0;
-      img->ximg->obdata = (char *)data;
+      img->cr_data2 = data;
     }
   else
     {
@@ -8993,6 +8995,45 @@ svg_load_image (struct frame *f,         /* Pointer to emacs frame structure.  *
   eassert (gdk_pixbuf_get_has_alpha (pixbuf));
   eassert (gdk_pixbuf_get_bits_per_sample (pixbuf) == 8);
 
+#ifdef USE_CAIRO
+  {
+    cairo_surface_t *surface;
+    cairo_format_t format = CAIRO_FORMAT_ARGB32;
+    int stride = cairo_format_stride_for_width (format, width);
+    unsigned char *data = (unsigned char *) xmalloc (width*height*4);
+    int y;
+
+    for (y = 0; y < height; ++y)
+      {
+        const guchar *iconptr = pixels + y * rowstride;
+        uint32_t *dataptr = (uint32_t *) (data + y * rowstride);
+        int x;
+
+        for (x = 0; x < width; ++x)
+          {
+            *dataptr = (iconptr[0] << 16)
+              | (iconptr[1] << 8)
+              | iconptr[2]
+              | (iconptr[3] << 24);
+            iconptr += 4;
+            ++dataptr;
+          }
+      }
+
+    surface = cairo_image_surface_create_for_data (data,
+                                                   format,
+                                                   width,
+                                                   height,
+                                                   stride);
+
+    g_object_unref (pixbuf);
+    img->width  = width;
+    img->height = height;
+    img->cr_data = surface;
+    img->cr_data2 = data;
+    img->pixmap = 0;
+  }
+#else
   /* Try to create a x pixmap to hold the svg pixmap.  */
   if (!image_create_x_image_and_pixmap (f, img, width, height, 0, &ximg, 0))
     {
@@ -9064,6 +9105,7 @@ svg_load_image (struct frame *f,         /* Pointer to emacs frame structure.  *
 
   /* Put ximg into the image.  */
   image_put_x_image (f, img, ximg, 0);
+#endif /* ! USE_CAIRO */
 
   return 1;
 
@@ -9331,15 +9373,16 @@ x_kill_gs_process (Pixmap pixmap, struct frame *f)
 	  /* For each pixel of the image, look its color up in the
 	     color table.  After having done so, the color table will
 	     contain an entry for each color used by the image.  */
+#ifdef COLOR_TABLE_SUPPORT
 	  for (y = 0; y < img->height; ++y)
 	    for (x = 0; x < img->width; ++x)
 	      {
 		unsigned long pixel = XGetPixel (ximg, x, y);
+
 		lookup_pixel_color (f, pixel);
 	      }
 
 	  /* Record colors in the image.  Free color table and XImage.  */
-#ifdef COLOR_TABLE_SUPPORT
 	  img->colors = colors_in_color_table (&img->ncolors);
 	  free_color_table ();
 #endif

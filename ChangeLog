@@ -1,3 +1,7 @@
+2015-04-05  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* configure.ac: Allow rsvg with cairo.  Move back HAVE_RSVG.
+
 2015-04-03  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* configure.ac (HAVE_RSVG): Move after cairo.
