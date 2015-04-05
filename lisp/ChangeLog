@@ -1,3 +1,8 @@
+2015-04-05  Eli Zaretskii  <eliz@gnu.org>
+
+	* ses.el (ses-sym-rowcol): Move up, before the first use, to avoid
+	byte-compiler warnings.
+
 2015-04-05  Alan Mackenzie  <acm@muc.de>
 
 	* jit-lock.el (jit-lock-after-change): Widen the buffer only

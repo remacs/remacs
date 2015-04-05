@@ -418,6 +418,14 @@ functions refer to its value."
   (declare (debug t))
   `(ses-cell--references ,(if col `(ses-get-cell ,row ,col) row)))
 
+(defmacro ses-sym-rowcol (sym)
+  "From a cell-symbol SYM, gets the cons (row . col).  A1 => (0 . 0).  Result
+is nil if SYM is not a symbol that names a cell."
+  `(let ((rc (and (symbolp ,sym) (get ,sym 'ses-cell))))
+     (if (eq rc :ses-named)
+	 (gethash ,sym ses--named-cell-hashmap)
+       rc)))
+
 (defun ses-cell-p (cell)
   "Return non-nil if CELL is a cell of current buffer."
   (and (vectorp cell)
@@ -466,14 +474,6 @@ the corresponding cell with name PROPERTY-NAME."
 (defmacro ses-col-printer (col)
   "Return the default printer for column COL."
   `(aref ses--col-printers ,col))
-
-(defmacro ses-sym-rowcol (sym)
-  "From a cell-symbol SYM, gets the cons (row . col).  A1 => (0 . 0).  Result
-is nil if SYM is not a symbol that names a cell."
-  `(let ((rc (and (symbolp ,sym) (get ,sym 'ses-cell))))
-     (if (eq rc :ses-named)
-	 (gethash ,sym ses--named-cell-hashmap)
-       rc)))
 
 (defun ses-is-cell-sym-p (sym)
   "Check whether SYM point at a cell of this spread sheet."
