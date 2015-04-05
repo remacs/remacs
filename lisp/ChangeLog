@@ -1,3 +1,41 @@
+2015-04-05  Alan Mackenzie  <acm@muc.de>
+
+	Rationalize use of c[ad]+r, expunging cl-c[ad]\{3,4\}r.
+	Also expunge eudc-c[ad]+r.
+
+	* subr.el (internal--compiler-macro-cXXr): "New" function, copied
+	from cl--compiler-macro-cXXr.
+	(caar, cadr, cdar, cddr): Changed from defsubsts to defuns with
+	the above compiler-macro.
+
+	* net/eudc.el (eudc-cadr, eudc-cdar, eudc-caar, eudc-cdaar): Remove.
+
+	* emacs-lisp/cl.el (Top level dolist doing defaliases): Remove
+	caaar, etc., from list of new alias functions.
+
+	* emacs-lisp/cl-lib.el (cl-caaar, etc): Rename to caaar, etc.
+	(gen-cXXr--rawname, gen-cXXr-all-cl-aliases): New function/macro
+	which generate obsolete cl- aliases for caaar, etc.  Invoke them.
+
+	* desktop.el:
+	* edmacro.el:
+	* emacs-lisp/cl-macs.el:
+	* frameset.el:
+	* ibuffer.el:
+	* mail/footnote.el:
+	* net/dbus.el:
+	* net/eudc-export.el:
+	* net/eudc.el:
+	* net/eudcb-ph.el:
+	* net/rcirc.el:
+	* net/secrets.el:
+	* play/5x5.el:
+	* play/decipher.el:
+	* play/hanoi.el:
+	* progmodes/hideif.el:
+	* ses.el: Replace cl-caaar, eudc-cadr, etc. with caaar and cadr,
+	etc.
+
 2015-04-05  Richard Stallman  <rms@gnu.org>
 
 	* mail/rmail.el (rmail-show-message-1): When displaying a mime message,

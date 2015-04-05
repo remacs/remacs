@@ -644,7 +644,7 @@ by using `Footnote-back-to-message'."
   (interactive "*P")
   (let ((num
          (if footnote-text-marker-alist
-             (if (< (point) (cl-cadar (last footnote-pointer-marker-alist)))
+             (if (< (point) (cadar (last footnote-pointer-marker-alist)))
                  (Footnote-make-hole)
                (1+ (caar (last footnote-text-marker-alist))))
            1)))

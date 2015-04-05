@@ -259,30 +259,6 @@
                copy-list
                ldiff
                list*
-               cddddr
-               cdddar
-               cddadr
-               cddaar
-               cdaddr
-               cdadar
-               cdaadr
-               cdaaar
-               cadddr
-               caddar
-               cadadr
-               cadaar
-               caaddr
-               caadar
-               caaadr
-               caaaar
-               cdddr
-               cddar
-               cdadr
-               cdaar
-               caddr
-               cadar
-               caadr
-               caaar
                tenth
                ninth
                eighth
@@ -397,7 +373,7 @@ lexical closures as in Common Lisp.
 	  (macroexpand-all
            `(cl-symbol-macrolet
                 ,(mapcar (lambda (x)
-                           `(,(car x) (symbol-value ,(cl-caddr x))))
+                           `(,(car x) (symbol-value ,(caddr x))))
                          vars)
               ,@body)
 	   (cons (cons 'function #'cl--function-convert)
@@ -410,20 +386,20 @@ lexical closures as in Common Lisp.
         ;; dynamic scoping, since with lexical scoping we'd need
         ;; (let ((foo <val>)) ...foo...).
 	`(progn
-           ,@(mapcar (lambda (x) `(defvar ,(cl-caddr x))) vars)
-           (let ,(mapcar (lambda (x) (list (cl-caddr x) (cadr x))) vars)
+           ,@(mapcar (lambda (x) `(defvar ,(caddr x))) vars)
+           (let ,(mapcar (lambda (x) (list (caddr x) (cadr x))) vars)
            ,(cl-sublis (mapcar (lambda (x)
-                              (cons (cl-caddr x)
-                                    `',(cl-caddr x)))
+                              (cons (caddr x)
+                                    `',(caddr x)))
                             vars)
                     ebody)))
       `(let ,(mapcar (lambda (x)
-                       (list (cl-caddr x)
+                       (list (caddr x)
                              `(make-symbol ,(format "--%s--" (car x)))))
                      vars)
          (setf ,@(apply #'append
                         (mapcar (lambda (x)
-                                  (list `(symbol-value ,(cl-caddr x)) (cadr x)))
+                                  (list `(symbol-value ,(caddr x)) (cadr x)))
                                 vars)))
          ,ebody))))
 

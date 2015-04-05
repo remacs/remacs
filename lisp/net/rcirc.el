@@ -2148,7 +2148,7 @@ activity.  Only run if the buffer is not visible and
 	    (when (and (listp x) (listp (cadr x)))
 	      (setcdr x (if (> (length (cdr x)) 1)
 			    (rcirc-make-trees (cdr x))
-			  (setcdr x (list (cl-cdadr x)))))))
+			  (setcdr x (list (cdadr x)))))))
 	  alist)))
 
 ;;; /commands these are called with 3 args: PROCESS, TARGET, which is
@@ -2693,7 +2693,7 @@ the only argument."
 (defun rcirc-handler-KICK (process sender args _text)
   (let* ((channel (car args))
 	 (nick (cadr args))
-	 (reason (cl-caddr args))
+	 (reason (caddr args))
 	 (message (concat nick " " channel " " reason)))
     (rcirc-print process sender "KICK" channel message t)
     ;; print in private chat buffer if it exists
@@ -2777,7 +2777,7 @@ the only argument."
   "RPL_AWAY"
   (let* ((nick (cadr args))
 	 (rec (assoc-string nick rcirc-nick-away-alist))
-	 (away-message (cl-caddr args)))
+	 (away-message (caddr args)))
     (when (or (not rec)
 	      (not (string= (cdr rec) away-message)))
       ;; away message has changed
@@ -2806,7 +2806,7 @@ the only argument."
   (let ((buffer (or (rcirc-get-buffer process (cadr args))
 		    (rcirc-get-temp-buffer-create process (cadr args)))))
     (with-current-buffer buffer
-      (setq rcirc-topic (cl-caddr args)))))
+      (setq rcirc-topic (caddr args)))))
 
 (defun rcirc-handler-333 (process sender args _text)
   "333 says who set the topic and when.
@@ -2814,16 +2814,16 @@ Not in rfc1459.txt"
   (let ((buffer (or (rcirc-get-buffer process (cadr args))
 		    (rcirc-get-temp-buffer-create process (cadr args)))))
     (with-current-buffer buffer
-      (let ((setter (cl-caddr args))
+      (let ((setter (caddr args))
 	    (time (current-time-string
 		   (seconds-to-time
-		    (string-to-number (cl-cadddr args))))))
+		    (string-to-number (cadddr args))))))
 	(rcirc-print process sender "TOPIC" (cadr args)
 		     (format "%s (%s on %s)" rcirc-topic setter time))))))
 
 (defun rcirc-handler-477 (process sender args _text)
   "ERR_NOCHANMODES"
-  (rcirc-print process sender "477" (cadr args) (cl-caddr args)))
+  (rcirc-print process sender "477" (cadr args) (caddr args)))
 
 (defun rcirc-handler-MODE (process sender args _text)
   (let ((target (car args))
@@ -2883,9 +2883,9 @@ Passwords are stored in `rcirc-authinfo' (which see)."
     (dolist (i rcirc-authinfo)
       (let ((process (rcirc-buffer-process))
 	    (server (car i))
-	    (nick (cl-caddr i))
+	    (nick (caddr i))
 	    (method (cadr i))
-	    (args (cl-cdddr i)))
+	    (args (cdddr i)))
 	(when (and (string-match server rcirc-server))
           (if (and (memq method '(nickserv chanserv bitlbee))
                    (string-match nick rcirc-nick))

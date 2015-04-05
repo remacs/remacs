@@ -70,6 +70,9 @@
       (setq form `(cons ,(car args) ,form)))
     form))
 
+;; Note: `cl--compiler-macro-cXXr' has been copied to
+;; `internal--compiler-macro-cXXr' in subr.el.  If you amend either
+;; one, you may want to amend the other, too.
 ;;;###autoload
 (defun cl--compiler-macro-cXXr (form x)
   (let* ((head (car form))
@@ -500,7 +503,7 @@ its argument list allows full Common Lisp conventions."
   (while (and (eq (car args) '&aux) (pop args))
     (while (and args (not (memq (car args) cl--lambda-list-keywords)))
       (if (consp (car args))
-          (if (and cl--bind-enquote (cl-cadar args))
+          (if (and cl--bind-enquote (cadar args))
               (cl--do-arglist (caar args)
                               `',(cadr (pop args)))
             (cl--do-arglist (caar args) (cadr (pop args))))
@@ -584,7 +587,7 @@ its argument list allows full Common Lisp conventions."
                              (if (eq ?_ (aref name 0))
                                  (setq name (substring name 1)))
                              (intern (format ":%s" name)))))
-		   (varg (if (consp (car arg)) (cl-cadar arg) (car arg)))
+		   (varg (if (consp (car arg)) (cadar arg) (car arg)))
 		   (def (if (cdr arg) (cadr arg)
                           ;; The ordering between those two or clauses is
                           ;; irrelevant, since in practice only one of the two
@@ -1188,10 +1191,10 @@ For more details, see Info node `(cl)Loop Facility'.
 		(if (memq (car cl--loop-args) '(downto above))
 		    (error "Must specify `from' value for downward cl-loop"))
 		(let* ((down (or (eq (car cl--loop-args) 'downfrom)
-				 (memq (cl-caddr cl--loop-args)
+				 (memq (caddr cl--loop-args)
                                        '(downto above))))
 		       (excl (or (memq (car cl--loop-args) '(above below))
-				 (memq (cl-caddr cl--loop-args)
+				 (memq (caddr cl--loop-args)
                                        '(above below))))
 		       (start (and (memq (car cl--loop-args)
                                          '(from upfrom downfrom))
@@ -1291,7 +1294,7 @@ For more details, see Info node `(cl)Loop Facility'.
 		      (temp-idx
                        (if (eq (car cl--loop-args) 'using)
                            (if (and (= (length (cadr cl--loop-args)) 2)
-                                    (eq (cl-caadr cl--loop-args) 'index))
+                                    (eq (caadr cl--loop-args) 'index))
                                (cadr (cl--pop2 cl--loop-args))
                              (error "Bad `using' clause"))
                          (make-symbol "--cl-idx--"))))
@@ -1323,8 +1326,8 @@ For more details, see Info node `(cl)Loop Facility'.
 		       (other
                         (if (eq (car cl--loop-args) 'using)
                             (if (and (= (length (cadr cl--loop-args)) 2)
-                                     (memq (cl-caadr cl--loop-args) hash-types)
-                                     (not (eq (cl-caadr cl--loop-args) word)))
+                                     (memq (caadr cl--loop-args) hash-types)
+                                     (not (eq (caadr cl--loop-args) word)))
                                 (cadr (cl--pop2 cl--loop-args))
                               (error "Bad `using' clause"))
                           (make-symbol "--cl-var--"))))
@@ -1386,8 +1389,8 @@ For more details, see Info node `(cl)Loop Facility'.
 		      (other
                        (if (eq (car cl--loop-args) 'using)
                            (if (and (= (length (cadr cl--loop-args)) 2)
-                                    (memq (cl-caadr cl--loop-args) key-types)
-                                    (not (eq (cl-caadr cl--loop-args) word)))
+                                    (memq (caadr cl--loop-args) key-types)
+                                    (not (eq (caadr cl--loop-args) word)))
                                (cadr (cl--pop2 cl--loop-args))
                              (error "Bad `using' clause"))
                          (make-symbol "--cl-var--"))))
@@ -1611,7 +1614,7 @@ If BODY is `setq', then use SPECS for assignments rather than for bindings."
   (let ((temps nil) (new nil))
     (when par
       (let ((p specs))
-        (while (and p (or (symbolp (car-safe (car p))) (null (cl-cadar p))))
+        (while (and p (or (symbolp (car-safe (car p))) (null (cadar p))))
           (setq p (cdr p)))
         (when p
           (setq par nil)
@@ -1686,7 +1689,7 @@ such that COMBO is equivalent to (and . CLAUSES)."
 	      (setq clauses (cons (nconc (butlast (car clauses))
 					 (if (eq (car-safe (cadr clauses))
 						 'progn)
-					     (cl-cdadr clauses)
+					     (cdadr clauses)
 					   (list (cadr clauses))))
 				  (cddr clauses)))
             ;; A final (progn ,@A t) is moved outside of the `and'.
@@ -1828,7 +1831,7 @@ from OBARRAY.
      (let (,(car spec))
        (mapatoms #'(lambda (,(car spec)) ,@body)
                  ,@(and (cadr spec) (list (cadr spec))))
-       ,(cl-caddr spec))))
+       ,(caddr spec))))
 
 ;;;###autoload
 (defmacro cl-do-all-symbols (spec &rest body)
@@ -2105,9 +2108,9 @@ by EXPANSION, and (setq NAME ...) will act like (setf EXPANSION ...).
                    ;; FIXME: For N bindings, this will traverse `body' N times!
                    (macroexpand-all (macroexp-progn body)
                                     (cons (list (symbol-name (caar bindings))
-                                                (cl-cadar bindings))
+                                                (cadar bindings))
                                           macroexpand-all-environment))))
-              (if (or (null (cdar bindings)) (cl-cddar bindings))
+              (if (or (null (cdar bindings)) (cddar bindings))
                   (macroexp--warn-and-return
                    (format "Malformed `cl-symbol-macrolet' binding: %S"
                            (car bindings))
@@ -2216,7 +2219,7 @@ values.  For compatibility, (cl-values A B C) is a synonym for (list A B C).
 	((and (eq (car-safe spec) 'warn) (boundp 'byte-compile-warnings))
 	 (while (setq spec (cdr spec))
 	   (if (consp (car spec))
-	       (if (eq (cl-cadar spec) 0)
+	       (if (eq (cadar spec) 0)
                    (byte-compile-disable-warning (caar spec))
                  (byte-compile-enable-warning (caar spec)))))))
   nil)
@@ -2660,9 +2663,9 @@ non-nil value, that slot cannot be set via `setf'.
                             (t `(and (consp cl-x)
 				     (memq (nth ,pos cl-x) ,tag-symbol))))))
 	  pred-check (and pred-form (> safety 0)
-			  (if (and (eq (cl-caadr pred-form) 'vectorp)
+			  (if (and (eq (caadr pred-form) 'vectorp)
 				   (= safety 1))
-			      (cons 'and (cl-cdddr pred-form))
+			      (cons 'and (cdddr pred-form))
                             `(,predicate cl-x))))
     (let ((pos 0) (descp descs))
       (while descp
@@ -3090,14 +3093,14 @@ macro that returns its `&whole' argument."
              cl-fifth cl-sixth cl-seventh
              cl-eighth cl-ninth cl-tenth
              cl-rest cl-endp cl-plusp cl-minusp
-             cl-caaar cl-caadr cl-cadar
-             cl-caddr cl-cdaar cl-cdadr
-             cl-cddar cl-cdddr cl-caaaar
-             cl-caaadr cl-caadar cl-caaddr
-             cl-cadaar cl-cadadr cl-caddar
-             cl-cadddr cl-cdaaar cl-cdaadr
-             cl-cdadar cl-cdaddr cl-cddaar
-             cl-cddadr cl-cdddar cl-cddddr))
+             caaar caadr cadar
+             caddr cdaar cdadr
+             cddar cdddr caaaar
+             caaadr caadar caaddr
+             cadaar cadadr caddar
+             cadddr cdaaar cdaadr
+             cdadar cdaddr cddaar
+             cddadr cdddar cddddr))
   (put y 'side-effect-free t))
 
 ;;; Things that are inline.

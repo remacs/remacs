@@ -277,7 +277,7 @@ BITS must be of length nrings.  Start at START-TIME."
 	     ;; Disable display of line and column numbers, for speed.
 	     (line-number-mode nil) (column-number-mode nil))
 	  ;; do it!
-	  (hanoi-n bits rings (car poles) (cadr poles) (cl-caddr poles)
+	  (hanoi-n bits rings (car poles) (cadr poles) (caddr poles)
 		   start-time))
 	(message "Done"))
     (setq buffer-read-only t)
