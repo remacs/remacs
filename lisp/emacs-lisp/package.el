@@ -1773,13 +1773,16 @@ using `package-compute-transaction'."
               (kill-buffer (current-buffer)))))))))
 
 ;;;###autoload
-(defun package-install (pkg &optional dont-select)
+(defun package-install (pkg &optional dont-select async callback)
   "Install the package PKG.
 PKG can be a package-desc or the package name of one the available packages
 in an archive in `package-archives'.  Interactively, prompt for its name.
 
 If called interactively or if DONT-SELECT nil, add PKG to
 `package-selected-packages'.
+If ASYNC is non-nil, perform the downloads asynchronously.
+If CALLBACK is non-nil, call it with no arguments once the
+entire operation is done.
 
 If PKG is a package-desc and it is already installed, don't try
 to install it but still mark it as selected."
@@ -1807,15 +1810,14 @@ to install it but still mark it as selected."
     (unless (or dont-select (package--user-selected-p name))
       (customize-save-variable 'package-selected-packages
                                (cons name package-selected-packages))))
-  (if (package-desc-p pkg)
-      (if (package-installed-p pkg)
-          (message "`%s' is already installed" (package-desc-full-name pkg))
-        (package-download-transaction
-         (package-compute-transaction (list pkg)
-                                      (package-desc-reqs pkg))))
-    (package-download-transaction
-     (package-compute-transaction ()
-                                  (list (list pkg))))))
+  (if-let ((transaction
+            (if (package-desc-p pkg)
+                (unless (package-installed-p pkg)
+                  (package-compute-transaction (list pkg)
+                                               (package-desc-reqs pkg)))
+              (package-compute-transaction () (list (list pkg))))))
+      (package-download-transaction transaction async callback)
+    (message "`%s' is already installed" (package-desc-full-name pkg))))
 
 (defun package-strip-rcs-id (str)
   "Strip RCS version ID from the version string STR.
