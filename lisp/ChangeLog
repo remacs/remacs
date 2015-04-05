@@ -1,5 +1,10 @@
 2015-04-05  Alan Mackenzie  <acm@muc.de>
 
+	* jit-lock.el (jit-lock-after-change): Widen the buffer only
+	whilst putting the 'fontified text properties.
+
+2015-04-05  Alan Mackenzie  <acm@muc.de>
+
 	Rationalize use of c[ad]+r, expunging cl-c[ad]\{3,4\}r.
 	Also expunge eudc-c[ad]+r.
 
