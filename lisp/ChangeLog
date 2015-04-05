@@ -88,6 +88,8 @@
 	(package-menu-execute): Use it to prompt the user about operations
 	to be executed.
 	(package-install): Add ASYNC and CALLBACK arguments.
+	(package-menu--perform-transaction): New function.
+	(package-menu-execute): Use it to install and delete packages.
 
 2015-04-05  Pete Williamson  <petewil@chromium.org>  (tiny-change)
 

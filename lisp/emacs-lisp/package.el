@@ -1368,8 +1368,8 @@ Once it's empty, run `package--post-download-archives-hook'."
         (remove entry package--downloads-in-progress))
   ;; If this was the last download, run the hook.
   (unless package--downloads-in-progress
-    (package--build-compatibility-table)
     (package-read-all-archive-contents)
+    (package--build-compatibility-table)
     ;; We message before running the hook, so the hook can give
     ;; messages as well.
     (message "Package refresh done")
@@ -2724,6 +2724,36 @@ not both."
             (mapconcat #'package-desc-full-name del ", ")))))
     "? ")))
 
+(defun package-menu--perform-transaction (install-list delete-list &optional async)
+  "Install packages in INSTALL-LIST and delete DELETE-LIST.
+If ASYNC is non-nil, perform the installation downloads
+asynchronously."
+  ;; While there are packages to install, call `package-install' on
+  ;; the next one and defer deletion to the callback function.
+  (if install-list
+      (let* ((pkg (car install-list))
+             (rest (cdr install-list))
+             ;; Don't mark as selected if it's a new version of an
+             ;; installed package.
+             (dont-mark (and (not (package-installed-p pkg))
+                             (package-installed-p
+                              (package-desc-name pkg)))))
+        (package-install
+         pkg dont-mark async
+         (lambda () (package-menu--perform-transaction rest delete-list async))))
+    ;; Once there are no more packages to install, proceed to
+    ;; deletion.
+    (dolist (elt (package--sort-by-dependence delete-list))
+      (condition-case-unless-debug err
+          (package-delete elt)
+        (error (message (cadr err)))))
+    (when package-selected-packages
+      (when-let ((removable (package--removable-packages)))
+        (message "These %d packages are no longer needed, type `M-x package-autoremove' to remove them (%s)"
+          (length removable)
+          (mapconcat #'symbol-name removable ", "))))
+    (package-menu--post-refresh)))
+
 (defun package-menu-execute (&optional noquery)
   "Perform marked Package Menu actions.
 Packages marked for installation are downloaded and installed;
@@ -2749,28 +2779,9 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
       (user-error "No operations specified"))
     (when (or noquery
               (package-menu--prompt-transaction-p install-list delete-list))
-      ;; Don't mark as selected if it's a new version of an installed
-      ;; package.
-      (mapc (lambda (p) (package-install p (and (not (package-installed-p p))
-                                           (package-installed-p
-                                            (package-desc-name p)))))
-            install-list)
-      ;; Delete packages.
-      (dolist (elt (package--sort-by-dependence delete-list))
-        (condition-case-unless-debug err
-            (package-delete elt)
-          (error (message (cadr err)))))
-      (when package-selected-packages
-        (let ((removable (package--removable-packages)))
-          (when (and removable
-                     (y-or-n-p
-                      (format "These %d packages are no longer needed, delete them (%s)? "
-                              (length removable)
-                              (mapconcat #'symbol-name removable ", "))))
-            ;; We know these are removable, so we can use force instead of sorting them.
-            (mapc (lambda (p) (package-delete (cadr (assq p package-alist)) 'force 'nosave))
-                  removable)))))
-    (package-menu--generate t t)))
+      ;; This calls `package-menu--generate' after everything's done.
+      (package-menu--perform-transaction
+       install-list delete-list package-menu-async))))
 
 (defun package-menu--version-predicate (A B)
   (let ((vA (or (aref (cadr A) 1)  '(0)))
@@ -2843,9 +2854,8 @@ Store this list in `package-menu--new-package-list'."
 
 (defun package-menu--post-refresh ()
   "Check for new packages, revert the *Packages* buffer, and check for upgrades.
-This function is called after `package-refresh-contents' is done.
-It goes in `package--post-download-archives-hook', so that it
-works with async refresh as well."
+This function is called after `package-refresh-contents' and
+after `package-menu--perform-transaction'."
   (package-menu--populate-new-package-list)
   (let ((buf (get-buffer "*Packages*")))
     (when (buffer-live-p buf)
@@ -2855,9 +2865,8 @@ works with async refresh as well."
 
 (defcustom package-menu-async t
   "If non-nil, package-menu will use async operations when possible.
-Currently, only the refreshing of archive contents supports
-asynchronous operations.  Package transactions are still done
-synchronously."
+This includes refreshing archive contents as well as installing
+packages."
   :type 'boolean
   :group 'package)
 
