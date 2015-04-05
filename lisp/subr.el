@@ -136,8 +136,8 @@ ARGS is a list of the first N arguments to pass to FUN.
 The result is a new function which does the same as FUN, except that
 the first N arguments are fixed at the values with which this function
 was called."
-  `(closure (t) (&rest args)
-            (apply ',fun ,@(mapcar (lambda (arg) `',arg) args) args)))
+  (lambda (&rest args2)
+    (apply fun (append args args2))))
 
 (defmacro push (newelt place)
   "Add NEWELT to the list stored in the generalized variable PLACE.
@@ -316,7 +316,7 @@ Defaults to `error'."
   (unless parent (setq parent 'error))
   (let ((conditions
          (if (consp parent)
-             (apply #'nconc
+             (apply #'append
                     (mapcar (lambda (parent)
                               (cons parent
                                     (or (get parent 'error-conditions)
@@ -1274,6 +1274,7 @@ is converted into a string by expressing it in decimal."
 (set-advertised-calling-convention
  'all-completions '(string collection &optional predicate) "23.1")
 (set-advertised-calling-convention 'unintern '(name obarray) "23.3")
+(set-advertised-calling-convention 'indirect-function '(object) "25.1")
 (set-advertised-calling-convention 'redirect-frame-focus '(frame focus-frame) "24.3")
 (set-advertised-calling-convention 'decode-char '(ch charset) "21.4")
 (set-advertised-calling-convention 'encode-char '(ch charset) "21.4")
@@ -1899,6 +1900,30 @@ and the file name is displayed in the echo area."
 
 
 ;;;; Process stuff.
+
+(defun start-process (name buffer program &rest program-args)
+  "Start a program in a subprocess.  Return the process object for it.
+NAME is name for process.  It is modified if necessary to make it unique.
+BUFFER is the buffer (or buffer name) to associate with the process.
+
+Process output (both standard output and standard error streams) goes
+at end of BUFFER, unless you specify an output stream or filter
+function to handle the output.  BUFFER may also be nil, meaning that
+this process is not associated with any buffer.
+
+PROGRAM is the program file name.  It is searched for in `exec-path'
+\(which see).  If nil, just associate a pty with the buffer.  Remaining
+arguments are strings to give program as arguments.
+
+If you want to separate standard output from standard error, invoke
+the command through a shell and redirect one of them using the shell
+syntax."
+  (unless (fboundp 'make-process)
+    (error "Emacs was compiled without subprocess support"))
+  (apply #'make-process
+	 (append (list :name name :buffer buffer)
+		 (if program
+		     (list :command (cons program program-args))))))
 
 (defun process-lines (program &rest args)
   "Execute PROGRAM with ARGS, returning its output as a list of lines.

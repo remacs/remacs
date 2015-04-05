@@ -1,6 +1,125 @@
-2015-02-01  Joakim Verona  <joakim@verona.se>
-	Support for the new Xwidget feature.
-	* configure.ac:
+2015-04-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port 'configure' to clang 3.5
+	* configure.ac: Add -Wno-unknown-attributes if clang; otherwise
+	clang 3.5.0 (Fedora 21 x86-64) complains
+	"/usr/include/glib-2.0/glib/gmem.h: ... warning: unknown attribute
+	'__alloc_size__' ignored".  Use -Werror when checking for -nopie;
+	otherwise clang warns about -nopie instead of failing, and then
+	later it warns everytime the build uses -nopie.
+
+2015-04-03  Ulrich Müller  <ulm@gentoo.org>
+
+	* configure.ac (LD_SWITCH_SYSTEM_TEMACS): Add -nopie option if it
+	is supported, in order to avoid segfaults in temacs.  (Bug#18784)
+
+2015-03-27  Pete Williamson  <petewil@chromium.org>  (tiny change)
+
+	Add NaCl target
+	* configure.ac: Add a target for Chromium Native Client (NaCl).
+
+2015-03-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* build-aux/dir_top (File): Fix the description of selecting a
+	menu item by its number.  (Bug#20213)
+
+2015-03-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix 'commit-msg' to cite 'CONTRIBUTE'
+	As suggested in:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-03/msg00947.html
+	Also, have the two files match better.
+	* CONTRIBUTE: Match what's in build-aux/git-hooks/commit-msg.
+	* build-aux/git-hooks/commit-msg: Mention 'CONTRIBUTE'.
+
+2015-03-23  Andreas Schwab  <schwab@suse.de>
+
+	* configure.ac: Fix jpeg version check to work with gcc >= 5.
+
+2015-03-21  Samer Masterson  <samer@samertm.com>
+
+	* CONTRIBUTE (Test your changes.): New section.
+	(Document your changes.): Add doc tips.
+
+2015-03-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Better port of pthread usage to FreeBSD
+	* configure.ac (ac_func_list): Omit pthread_sigmask, since
+	we check for that ourselves rather than relying on gnulib.
+	(HAVE_PTHREAD, LIB_PTHREAD): Port better to FreeBSD,
+	by also checking for pthread_create, pthread_self, pthread_sigmask.
+	Tighten the test for pthread_atfork while we're at it.
+	Fixes: bug#20136
+
+	Merge from gnulib
+	This incorporates:
+	2015-03-19 fdopendir: port better to MinGW
+	2015-03-18 fdopendir: fix typo in comment
+	2015-02-24 glob, etc.: port to MSVC v18 on MS-Windows 8.1
+	* lib/dirent.in.h, lib/fdopendir.c: Update from gnulib.
+	* lib/dirfd.c, m4/dirfd.m4: New files from gnulib.
+	* lib/gnulib.mk, m4/gnulib-comp.m4: Regenerate.
+
+2015-03-02  Robert Pluim  <rpluim@gmail.com>  (tiny change)
+
+	* configure.ac: Error out if with-file-notification=w32 is
+	specified on Cygwin.  (Bug#19909)
+
+2015-02-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Don't require GNU putenv
+	* configure.ac: Use system putenv even if it lacks GNU features, as
+	we don't need them.  This works around a bug in FreeBSD 10.1 getenv.
+	Fixes: bug#19874
+
+2015-02-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib
+	* lib/getdtablesize.c, m4/dup2.m4, m4/fcntl.m4:
+	Update from gnulib, incorporating:
+	2015-02-23 dup2: doc and test for Android bug
+	2015-02-23 Replace dup2() on Android
+	2015-02-22 Android doesn't define RLIM_SAVED_*
+
+2015-02-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib
+	* lib/getdtablesize.c, lib/getopt.c, lib/signal.in.h, lib/tempname.c:
+	* lib/tempname.h, m4/dup2.m4, m4/fcntl.m4, m4/getdtablesize.m4:
+	Update from gnulib, incorporating:
+	2015-02-20 getdtablesize: port better for Android
+	2015-02-19 fcntl: Fix cross compiling
+	2015-02-18 dup2, fcntl: cross-compile better for Android
+	2015-02-18 getopt: don't crash on memory exhaustion
+	2015-02-17 tempname: allow compilation with C++ (trivial)
+	2015-02-17 dup2, fcntl: port to AIX
+	2015-02-16 getdtablesize, dup2, fcntl: port to Android
+	2015-02-11 getdtablesize, signal_h: Fix Android build
+	2015-02-11 maint: various whitespace cleanups in tempname
+
+2015-02-13  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* configure.ac: Set locallisppath to empty for NS self contained,
+	unless --enable-loadllisppath was given (Bug#19850).
+
+2015-02-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* configure.ac (HAVE_LIBXML2): Add missing comma.
+
+2015-02-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port to platforms lacking test -a and -o
+	* configure.ac (HAVE_LIBXML2):
+	Prefer '&&' and '||' to 'test -a' and 'test -o'.
+
+2015-02-08  Ulrich Müller  <ulm@gentoo.org>
+
+	* configure.ac (--with-gameuser): Default to 'games' group instead
+	of 'games' user.
+
+2015-02-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* .gitattributes: Ignore blanks at EOL in texinfo.tex.
 
 2015-01-28  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -337,7 +456,7 @@
 
 2014-11-25  Glenn Morris  <rgm@gnu.org>
 
-	* configure.ac: Fix yesterday's use of uninitialised $version.
+	* configure.ac: Fix yesterday's use of uninitialized $version.
 
 2014-11-25  Oscar Fuentes  <ofv@wanadoo.es>
 

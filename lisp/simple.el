@@ -1940,7 +1940,9 @@ The argument NABS specifies the absolute history position."
 	(user-error (if minibuffer-default
                         "End of defaults; no next item"
                       "End of history; no default available")))
-    (if (> nabs (length (symbol-value minibuffer-history-variable)))
+    (if (> nabs (if (listp (symbol-value minibuffer-history-variable))
+                    (length (symbol-value minibuffer-history-variable))
+                  0))
 	(user-error "Beginning of history; no preceding item"))
     (unless (memq last-command '(next-history-element
 				 previous-history-element))
@@ -1990,7 +1992,14 @@ When point moves over the bottom line of multi-line minibuffer, puts ARGth
 next element of the minibuffer history in the minibuffer."
   (interactive "^p")
   (or arg (setq arg 1))
-  (let ((old-point (point)))
+  (let* ((old-point (point))
+	 ;; Remember the original goal column of possibly multi-line input
+	 ;; excluding the length of the prompt on the first line.
+	 (prompt-end (minibuffer-prompt-end))
+	 (old-column (unless (and (eolp) (> (point) prompt-end))
+		       (if (= (line-number-at-pos) 1)
+			   (max (- (current-column) (1- prompt-end)) 0)
+			 (current-column)))))
     (condition-case nil
 	(with-no-warnings
 	  (next-line arg))
@@ -1998,7 +2007,14 @@ next element of the minibuffer history in the minibuffer."
        ;; Restore old position since `line-move-visual' moves point to
        ;; the end of the line when it fails to go to the next line.
        (goto-char old-point)
-       (next-history-element arg)))))
+       (next-history-element arg)
+       ;; Restore the original goal column on the last line
+       ;; of possibly multi-line input.
+       (goto-char (point-max))
+       (when old-column
+	 (if (= (line-number-at-pos) 1)
+	     (move-to-column (+ old-column (1- (minibuffer-prompt-end))))
+	   (move-to-column old-column)))))))
 
 (defun previous-line-or-history-element (&optional arg)
   "Move cursor vertically up ARG lines, or to the previous history element.
@@ -2006,7 +2022,14 @@ When point moves over the top line of multi-line minibuffer, puts ARGth
 previous element of the minibuffer history in the minibuffer."
   (interactive "^p")
   (or arg (setq arg 1))
-  (let ((old-point (point)))
+  (let* ((old-point (point))
+	 ;; Remember the original goal column of possibly multi-line input
+	 ;; excluding the length of the prompt on the first line.
+	 (prompt-end (minibuffer-prompt-end))
+	 (old-column (unless (and (eolp) (> (point) prompt-end))
+		       (if (= (line-number-at-pos) 1)
+			   (max (- (current-column) (1- prompt-end)) 0)
+			 (current-column)))))
     (condition-case nil
 	(with-no-warnings
 	  (previous-line arg))
@@ -2014,7 +2037,15 @@ previous element of the minibuffer history in the minibuffer."
        ;; Restore old position since `line-move-visual' moves point to
        ;; the beginning of the line when it fails to go to the previous line.
        (goto-char old-point)
-       (previous-history-element arg)))))
+       (previous-history-element arg)
+       ;; Restore the original goal column on the first line
+       ;; of possibly multi-line input.
+       (goto-char (minibuffer-prompt-end))
+       (if old-column
+	   (if (= (line-number-at-pos) 1)
+	       (move-to-column (+ old-column (1- (minibuffer-prompt-end))))
+	     (move-to-column old-column))
+	 (goto-char (line-end-position)))))))
 
 (defun next-complete-history-element (n)
   "Get next history element which completes the minibuffer before the point.
@@ -4326,7 +4357,7 @@ When this command inserts killed text into the buffer, it honors
 doc string for `insert-for-yank-1', which see."
   (interactive "*p")
   (if (not (eq last-command 'yank))
-      (error "Previous command was not a yank"))
+      (user-error "Previous command was not a yank"))
   (setq this-command 'yank)
   (unless arg (setq arg 1))
   (let ((inhibit-read-only t)
@@ -4776,7 +4807,8 @@ run `deactivate-mark-hook'."
       ;; the region prior to the last command modifying the buffer.
       ;; Set the selection to that, or to the current region.
       (cond (saved-region-selection
-	     (gui-set-selection 'PRIMARY saved-region-selection)
+	     (if (gui-call gui-selection-owner-p 'PRIMARY)
+		 (gui-set-selection 'PRIMARY saved-region-selection))
 	     (setq saved-region-selection nil))
 	    ;; If another program has acquired the selection, region
 	    ;; deactivation should not clobber it (Bug#11772).
@@ -4865,7 +4897,7 @@ For some commands, it may be appropriate to ignore the value of
        (or use-empty-active-region (> (region-end) (region-beginning)))))
 
 (defun region-active-p ()
-  "Return t if Transient Mark mode is enabled and the mark is active.
+  "Return non-nil if Transient Mark mode is enabled and the mark is active.
 
 Some commands act specially on the region when Transient Mark
 mode is enabled.  Usually, such commands should use
@@ -4958,7 +4990,7 @@ Start discarding off end if gets this big."
 \(Does not affect global mark ring)."
   (interactive)
   (if (null (mark t))
-      (error "No mark set in this buffer")
+      (user-error "No mark set in this buffer")
     (if (= (point) (mark t))
 	(message "Mark popped"))
     (goto-char (mark t))
@@ -5107,7 +5139,7 @@ mode temporarily."
   (let ((omark (mark t))
 	(temp-highlight (eq (car-safe transient-mark-mode) 'only)))
     (if (null omark)
-        (error "No mark set in this buffer"))
+        (user-error "No mark set in this buffer"))
     (set-mark (point))
     (goto-char omark)
     (cond (temp-highlight
@@ -5168,10 +5200,11 @@ positive, and disable it otherwise.  If called from Lisp, enable
 Transient Mark mode if ARG is omitted or nil.
 
 Transient Mark mode is a global minor mode.  When enabled, the
-region is highlighted whenever the mark is active.  The mark is
-\"deactivated\" by changing the buffer, and after certain other
-operations that set the mark but whose main purpose is something
-else--for example, incremental search, \\[beginning-of-buffer], and \\[end-of-buffer].
+region is highlighted with the `region' face whenever the mark
+is active.  The mark is \"deactivated\" by changing the buffer,
+and after certain other operations that set the mark but whose
+main purpose is something else--for example, incremental search,
+\\[beginning-of-buffer], and \\[end-of-buffer].
 
 You can also deactivate the mark by typing \\[keyboard-quit] or
 \\[keyboard-escape-quit].
@@ -5377,7 +5410,10 @@ lines."
 (declare-function font-info "font.c" (name &optional frame))
 
 (defun default-font-height ()
-  "Return the height in pixels of the current buffer's default face font."
+  "Return the height in pixels of the current buffer's default face font.
+
+If the default font is remapped (see `face-remapping-alist'), the
+function returns the height of the remapped face."
   (let ((default-font (face-font 'default)))
     (cond
      ((and (display-multi-font-p)
@@ -5387,6 +5423,25 @@ lines."
 	   (not (string= (frame-parameter nil 'font) default-font)))
       (aref (font-info default-font) 3))
      (t (frame-char-height)))))
+
+(defun default-font-width ()
+  "Return the width in pixels of the current buffer's default face font.
+
+If the default font is remapped (see `face-remapping-alist'), the
+function returns the width of the remapped face."
+  (let ((default-font (face-font 'default)))
+    (cond
+     ((and (display-multi-font-p)
+	   ;; Avoid calling font-info if the frame's default font was
+	   ;; not changed since the frame was created.  That's because
+	   ;; font-info is expensive for some fonts, see bug #14838.
+	   (not (string= (frame-parameter nil 'font) default-font)))
+      (let* ((info (font-info (face-font 'default)))
+	     (width (aref info 11)))
+	(if (> width 0)
+	    width
+	  (aref info 10))))
+     (t (frame-char-width)))))
 
 (defun default-line-height ()
   "Return the pixel height of current buffer's default-face text line.

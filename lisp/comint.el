@@ -472,6 +472,7 @@ executed once when the buffer is created."
     (define-key map "\C-c\C-\\"   'comint-quit-subjob)
     (define-key map "\C-c\C-m" 	  'comint-copy-old-input)
     (define-key map "\C-c\C-o" 	  'comint-delete-output)
+    (define-key map "\C-c\M-o"    'comint-clear-buffer)
     (define-key map "\C-c\C-r" 	  'comint-show-output)
     (define-key map "\C-c\C-e" 	  'comint-show-maximum-output)
     (define-key map "\C-c\C-l" 	  'comint-dynamic-list-input-ring)
@@ -1475,7 +1476,7 @@ Intended to be added to `isearch-mode-hook' in `comint-mode'."
       (or
        ;; 1. First try searching in the initial comint text
        (funcall search-fun string
-		(if isearch-forward bound (field-beginning))
+		(if isearch-forward bound (comint-line-beginning-position))
 		noerror)
        ;; 2. If the above search fails, start putting next/prev history
        ;; elements in the comint successively, and search the string
@@ -1491,7 +1492,7 @@ Intended to be added to `isearch-mode-hook' in `comint-mode'."
 			(when (null comint-input-ring-index)
 			  (error "End of history; no next item"))
 			(comint-next-input 1)
-			(goto-char (field-beginning)))
+			(goto-char (comint-line-beginning-position)))
 		       (t
 			;; Signal an error here explicitly, because
 			;; `comint-previous-input' doesn't signal an error.
@@ -1509,7 +1510,7 @@ Intended to be added to `isearch-mode-hook' in `comint-mode'."
 				      (unless isearch-forward
 					;; For backward search, don't search
 					;; in the comint prompt
-					(field-beginning))
+					(comint-line-beginning-position))
 				      noerror)))
 	       ;; Return point of the new search result
 	       (point))
@@ -1533,16 +1534,16 @@ the function `isearch-message'."
     (if (overlayp comint-history-isearch-message-overlay)
 	(move-overlay comint-history-isearch-message-overlay
 		      (save-excursion
-			(goto-char (field-beginning))
+			(goto-char (comint-line-beginning-position))
 			(forward-line 0)
 			(point))
-                      (field-beginning))
+                      (comint-line-beginning-position))
       (setq comint-history-isearch-message-overlay
 	    (make-overlay (save-excursion
-			    (goto-char (field-beginning))
+			    (goto-char (comint-line-beginning-position))
 			    (forward-line 0)
 			    (point))
-                          (field-beginning)))
+                          (comint-line-beginning-position)))
       (overlay-put comint-history-isearch-message-overlay 'evaporate t))
     (overlay-put comint-history-isearch-message-overlay
 		 'display (isearch-message-prefix ellipsis isearch-nonincremental))
@@ -1563,7 +1564,7 @@ or to the last history element for a backward search."
       (comint-goto-input (1- (ring-length comint-input-ring)))
     (comint-goto-input nil))
   (setq isearch-success t)
-  (goto-char (if isearch-forward (field-beginning) (point-max))))
+  (goto-char (if isearch-forward (comint-line-beginning-position) (point-max))))
 
 (defun comint-history-isearch-push-state ()
   "Save a function restoring the state of input history search.
@@ -1787,7 +1788,10 @@ Similarly for Soar, Scheme, etc."
       (widen)
       (let* ((pmark (process-mark proc))
              (intxt (if (>= (point) (marker-position pmark))
-                        (progn (if comint-eol-on-send (goto-char (field-end)))
+                        (progn (if comint-eol-on-send
+				   (if comint-use-prompt-regexp
+				       (end-of-line)
+				     (goto-char (field-end))))
                                (buffer-substring pmark (point)))
                       (let ((copy (funcall comint-get-old-input)))
                         (goto-char pmark)
@@ -1926,10 +1930,10 @@ the start, the cdr to the end of the last prompt recognized.")
 Freezes the `font-lock-face' text property in place."
   (when comint-last-prompt
     (with-silent-modifications
-      (add-text-properties
+      (font-lock-prepend-text-property
        (car comint-last-prompt)
        (cdr comint-last-prompt)
-       '(font-lock-face comint-highlight-prompt)))
+       'font-lock-face 'comint-highlight-prompt))
     ;; Reset comint-last-prompt so later on comint-output-filter does
     ;; not remove the font-lock-face text property of the previous
     ;; (this) prompt.
@@ -2080,14 +2084,19 @@ Make backspaces delete the previous character."
 		  (add-text-properties prompt-start (point)
 				       '(read-only t front-sticky (read-only)))))
 	      (when comint-last-prompt
-		(remove-text-properties (car comint-last-prompt)
-					(cdr comint-last-prompt)
-					'(font-lock-face)))
+		(with-silent-modifications
+		  (font-lock--remove-face-from-text-property
+		   (car comint-last-prompt)
+		   (cdr comint-last-prompt)
+		   'font-lock-face
+		   'comint-highlight-prompt)))
 	      (setq comint-last-prompt
 		    (cons (copy-marker prompt-start) (point-marker)))
-	      (add-text-properties prompt-start (point)
-				   '(rear-nonsticky t
-				     font-lock-face comint-highlight-prompt)))
+	      (with-silent-modifications
+		(font-lock-prepend-text-property prompt-start (point)
+						 'font-lock-face
+						 'comint-highlight-prompt)
+		(add-text-properties prompt-start (point) '(rear-nonsticky t))))
 	    (goto-char saved-point)))))))
 
 (defun comint-preinput-scroll-to-bottom ()
@@ -2218,7 +2227,10 @@ the current line with any initial string matching the regexp
              (null (get-char-property (setq bof (field-beginning)) 'field)))
 	(field-string-no-properties bof)
       (comint-bol)
-      (buffer-substring-no-properties (point) (line-end-position)))))
+      (buffer-substring-no-properties (point)
+				      (if comint-use-prompt-regexp
+					  (line-end-position)
+					(field-end))))))
 
 (defun comint-copy-old-input ()
   "Insert after prompt old input at point as new input to be edited.
@@ -2276,7 +2288,10 @@ a buffer local variable."
     ;; if there are two fields on a line, then the first one is the
     ;; prompt, and the second one is an input field, and is front-sticky
     ;; (as input fields should be).
-    (constrain-to-field (line-beginning-position) (line-end-position))))
+    (constrain-to-field (if (eq (field-at-pos (point)) 'output)
+                            (line-beginning-position)
+                          (field-beginning))
+                        (line-end-position))))
 
 (defun comint-bol (&optional arg)
   "Go to the beginning of line, then skip past the prompt, if any.
@@ -2428,6 +2443,11 @@ Sets mark to the value of point when this command is run."
 	   (goto-char (field-beginning pos))
 	   (set-window-start (selected-window) (point))))))
 
+(defun comint-clear-buffer ()
+  "Clear the comint buffer."
+  (interactive)
+  (let ((comint-buffer-maximum-size 0))
+    (comint-truncate-buffer)))
 
 (defun comint-interrupt-subjob ()
   "Interrupt the current subjob.

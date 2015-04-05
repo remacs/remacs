@@ -28,6 +28,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <sys/file.h>
 #include <errno.h>
 #include <limits.h>	/* For CHAR_BIT.  */
+#include <math.h>
 #include <stat-time.h>
 #include "lisp.h"
 #include "intervals.h"
@@ -1032,12 +1033,8 @@ Return t if the file exists and loads successfully.  */)
   bool compiled = 0;
   Lisp_Object handler;
   bool safe_p = 1;
-  const char *fmode = "r";
+  const char *fmode = "r" FOPEN_TEXT;
   int version;
-
-#ifdef DOS_NT
-  fmode = "rt";
-#endif /* DOS_NT */
 
   CHECK_STRING (file);
 
@@ -1222,10 +1219,7 @@ Return t if the file exists and loads successfully.  */)
 	  compiled = 1;
 
 	  efound = ENCODE_FILE (found);
-
-#ifdef DOS_NT
-	  fmode = "rb";
-#endif /* DOS_NT */
+	  fmode = "r" FOPEN_BINARY;
 
           /* openp already checked for newness, no point doing it again.
              FIXME would be nice to get a message when openp
@@ -3286,7 +3280,7 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
     {
     case Lisp_Vectorlike:
       {
-	ptrdiff_t i, length = 0;
+	ptrdiff_t i = 0, length = 0;
 	if (BOOL_VECTOR_P (subtree))
 	  return subtree;		/* No sub-objects anyway.  */
 	else if (CHAR_TABLE_P (subtree) || SUB_CHAR_TABLE_P (subtree)
@@ -3301,7 +3295,9 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
 	     behavior.  */
 	  wrong_type_argument (Qsequencep, subtree);
 
-	for (i = 0; i < length; i++)
+	if (SUB_CHAR_TABLE_P (subtree))
+	  i = 2;
+	for ( ; i < length; i++)
 	  SUBSTITUTE (AREF (subtree, i),
 		      ASET (subtree, i, true_value));
 	return subtree;
@@ -3369,10 +3365,6 @@ string_to_number (char const *string, int base, bool ignore_trailing)
   bool float_syntax = 0;
   double value = 0;
 
-  /* Compute NaN and infinities using a variable, to cope with compilers that
-     think they are smarter than we are.  */
-  double zero = 0;
-
   /* Negate the value ourselves.  This treats 0, NaNs, and infinity properly on
      IEEE floating point hosts, and works around a formerly-common bug where
      atof ("-0.0") drops the sign.  */
@@ -3424,30 +3416,15 @@ string_to_number (char const *string, int base, bool ignore_trailing)
 	    {
 	      state |= E_EXP;
 	      cp += 3;
-	      value = 1.0 / zero;
+	      value = INFINITY;
 	    }
 	  else if (cp[-1] == '+'
 		   && cp[0] == 'N' && cp[1] == 'a' && cp[2] == 'N')
 	    {
 	      state |= E_EXP;
 	      cp += 3;
-	      value = zero / zero;
-
-	      /* If that made a "negative" NaN, negate it.  */
-	      {
-		int i;
-		union { double d; char c[sizeof (double)]; }
-		  u_data, u_minus_zero;
-		u_data.d = value;
-		u_minus_zero.d = -0.0;
-		for (i = 0; i < sizeof (double); i++)
-		  if (u_data.c[i] & u_minus_zero.c[i])
-		    {
-		      value = -value;
-		      break;
-		    }
-	      }
-	      /* Now VALUE is a positive NaN.  */
+	      /* NAN is a "positive" NaN on all known Emacs hosts.  */
+	      value = NAN;
 	    }
 	  else
 	    cp = ecp;

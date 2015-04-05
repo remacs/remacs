@@ -223,7 +223,9 @@ for example, (type-of 1) returns `integer'.  */)
 	case Lisp_Misc_Overlay:
 	  return Qoverlay;
 	case Lisp_Misc_Float:
-	  return Qfloat;
+          return Qfloat;
+        case Lisp_Misc_Finalizer:
+          return Qfinalizer;
 	}
       emacs_abort ();
 
@@ -2125,8 +2127,6 @@ DEFUN ("indirect-function", Findirect_function, Sindirect_function, 1, 2, 0,
        doc: /* Return the function at the end of OBJECT's function chain.
 If OBJECT is not a symbol, just return it.  Otherwise, follow all
 function indirections to find the final function binding and return it.
-If the final symbol in the chain is unbound, signal a void-function error.
-Optional arg NOERROR non-nil means to return nil instead of signaling.
 Signal a cyclic-function-indirection error if there is a loop in the
 function chain of symbols.  */)
   (register Lisp_Object object, Lisp_Object noerror)
@@ -2140,9 +2140,6 @@ function chain of symbols.  */)
     result = indirect_function (result);
   if (!NILP (result))
     return result;
-
-  if (NILP (noerror))
-    xsignal1 (Qvoid_function, object);
 
   return Qnil;
 }
@@ -3552,6 +3549,7 @@ syms_of_data (void)
   DEFSYM (Qcons, "cons");
   DEFSYM (Qmarker, "marker");
   DEFSYM (Qoverlay, "overlay");
+  DEFSYM (Qfinalizer, "finalizer");
   DEFSYM (Qfloat, "float");
   DEFSYM (Qwindow_configuration, "window-configuration");
   DEFSYM (Qprocess, "process");

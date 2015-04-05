@@ -259,6 +259,10 @@ there (in decreasing order of priority)."
 	    (let ((newparms (frame-parameters))
 		  (frame (selected-frame)))
 	      (tty-handle-reverse-video frame newparms)
+	      ;; tty-handle-reverse-video might change the frame's
+	      ;; color parameters, and we need to use the updated
+	      ;; value below.
+	      (setq newparms (frame-parameters))
 	      ;; If we changed the background color, we need to update
 	      ;; the background-mode parameter, and maybe some faces,
 	      ;; too.
@@ -266,7 +270,7 @@ there (in decreasing order of priority)."
 		(unless (or (assq 'background-mode initial-frame-alist)
 			    (assq 'background-mode default-frame-alist))
 		  (frame-set-background-mode frame))
-		(face-set-after-frame-default frame))))))
+		(face-set-after-frame-default frame newparms))))))
 
     ;; If the initial frame is still around, apply initial-frame-alist
     ;; and default-frame-alist to it.
@@ -465,6 +469,16 @@ there (in decreasing order of priority)."
 		(frame-set-background-mode frame-initial-frame))
 	      (face-set-after-frame-default frame-initial-frame)
 	      (setq newparms (delq new-bg newparms)))
+
+	    (when (numberp (car frame-size-history))
+	      (setq frame-size-history
+		    (cons (1- (car frame-size-history))
+			  (cons
+			   (list frame-initial-frame
+				 "frame-notice-user-settings"
+				 nil newparms)
+			   (cdr frame-size-history)))))
+
 	    (modify-frame-parameters frame-initial-frame newparms)))))
 
     ;; Restore the original buffer.
@@ -536,7 +550,8 @@ is not considered (see `next-frame')."
 Return nil if we don't know how to interpret DISPLAY."
   ;; MS-Windows doesn't know how to create a GUI frame in a -nw session.
   (if (and (eq system-type 'windows-nt)
-	   (null (window-system)))
+	   (null (window-system))
+	   (not (daemonp)))
       nil
     (cl-loop for descriptor in display-format-alist
 	     for pattern = (car descriptor)
@@ -686,7 +701,7 @@ the new frame according to its own rules."
     ;; Now make the frame.
     (run-hooks 'before-make-frame-hook)
 
-;;     (setq frame-adjust-size-history '(t))
+;;     (setq frame-size-history '(1000))
 
     (setq frame
           (funcall (gui-method frame-creation-function w) params))
@@ -697,11 +712,14 @@ the new frame according to its own rules."
         (let ((val (frame-parameter oldframe param)))
           (when val (set-frame-parameter frame param val)))))
 
-    (when (eq (car frame-adjust-size-history) t)
-      (setq frame-adjust-size-history
-	    (cons t (cons (list "Frame made")
-			  (cdr frame-adjust-size-history)))))
+    (when (numberp (car frame-size-history))
+      (setq frame-size-history
+	    (cons (1- (car frame-size-history))
+		  (cons (list frame "make-frame")
+			(cdr frame-size-history)))))
 
+    ;; We can run `window-configuration-change-hook' for this frame now.
+    (frame-after-make-frame frame t)
     (run-hook-with-args 'after-make-frame-functions frame)
     frame))
 
@@ -1187,7 +1205,15 @@ To get the frame's current background color, use `frame-parameters'."
   (modify-frame-parameters (selected-frame)
 			   (list (cons 'background-color color-name)))
   (or window-system
-      (face-set-after-frame-default (selected-frame))))
+      (face-set-after-frame-default (selected-frame)
+				    (list
+				     (cons 'background-color color-name)
+				     ;; Pass the foreground-color as
+				     ;; well, if defined, to avoid
+				     ;; losing it when faces are reset
+				     ;; to their defaults.
+				     (assq 'foreground-color
+					   (frame-parameters))))))
 
 (defun set-foreground-color (color-name)
   "Set the foreground color of the selected frame to COLOR-NAME.
@@ -1197,7 +1223,15 @@ To get the frame's current foreground color, use `frame-parameters'."
   (modify-frame-parameters (selected-frame)
 			   (list (cons 'foreground-color color-name)))
   (or window-system
-      (face-set-after-frame-default (selected-frame))))
+      (face-set-after-frame-default (selected-frame)
+				    (list
+				     (cons 'foreground-color color-name)
+				     ;; Pass the background-color as
+				     ;; well, if defined, to avoid
+				     ;; losing it when faces are reset
+				     ;; to their defaults.
+				     (assq 'background-color
+					   (frame-parameters))))))
 
 (defun set-cursor-color (color-name)
   "Set the text cursor color of the selected frame to COLOR-NAME.
@@ -1782,8 +1816,12 @@ command starts, by installing a pre-command hook."
 (defun blink-cursor-timer-function ()
   "Timer function of timer `blink-cursor-timer'."
   (internal-show-cursor nil (not (internal-show-cursor-p)))
+  ;; Suspend counting blinks when the w32 menu-bar menu is displayed,
+  ;; since otherwise menu tooltips will behave erratically.
+  (or (and (fboundp 'w32--menu-bar-in-use)
+	   (w32--menu-bar-in-use))
+      (setq blink-cursor-blinks-done (1+ blink-cursor-blinks-done)))
   ;; Each blink is two calls to this function.
-  (setq blink-cursor-blinks-done (1+ blink-cursor-blinks-done))
   (when (and (> blink-cursor-blinks 0)
              (<= (* 2 blink-cursor-blinks) blink-cursor-blinks-done))
     (blink-cursor-suspend)
@@ -1861,57 +1899,56 @@ terminals, cursor blinking is controlled by the terminal."
 ;; Frame maximization/fullscreen
 
 (defun toggle-frame-maximized ()
-  "Toggle maximization state of the selected frame.
-Maximize the selected frame or un-maximize if it is already maximized.
-Respect window manager screen decorations.
-If the frame is in fullscreen mode, don't change its mode,
-just toggle the temporary frame parameter `maximized',
-so the frame will go to the right maximization state
-after disabling fullscreen mode.
+  "Toggle maximization state of selected frame.
+Maximize selected frame or un-maximize if it is already maximized.
+
+If the frame is in fullscreen state, don't change its state, but
+set the frame's `fullscreen-restore' parameter to `maximized', so
+the frame will be maximized after disabling fullscreen state.
 
 Note that with some window managers you may have to set
 `frame-resize-pixelwise' to non-nil in order to make a frame
-appear truly maximized.
+appear truly maximized.  In addition, you may have to set
+`x-frame-normalize-before-maximize' in order to enable
+transitions from one fullscreen state to another.
 
 See also `toggle-frame-fullscreen'."
   (interactive)
-  (if (memq (frame-parameter nil 'fullscreen) '(fullscreen fullboth))
-      (modify-frame-parameters
-       nil
-       `((maximized
-	  . ,(unless (eq (frame-parameter nil 'maximized) 'maximized)
-	       'maximized))))
-    (modify-frame-parameters
-     nil
-     `((fullscreen
-	. ,(unless (eq (frame-parameter nil 'fullscreen) 'maximized)
-	     'maximized))))))
+  (let ((fullscreen (frame-parameter nil 'fullscreen)))
+    (cond
+     ((memq fullscreen '(fullscreen fullboth))
+      (set-frame-parameter nil 'fullscreen-restore 'maximized))
+     ((eq fullscreen 'maximized)
+      (set-frame-parameter nil 'fullscreen nil))
+     (t
+      (set-frame-parameter nil 'fullscreen 'maximized)))))
 
 (defun toggle-frame-fullscreen ()
-  "Toggle fullscreen mode of the selected frame.
-Enable fullscreen mode of the selected frame or disable if it is
-already fullscreen.  Ignore window manager screen decorations.
-When turning on fullscreen mode, remember the previous value of the
-maximization state in the temporary frame parameter `maximized'.
-Restore the maximization state when turning off fullscreen mode.
+  "Toggle fullscreen state of selected frame.
+Make selected frame fullscreen or restore its previous size if it
+is already fullscreen.
+
+Before making the frame fullscreen remember the current value of
+the frame's `fullscreen' parameter in the `fullscreen-restore'
+parameter of the frame.  That value is used to restore the
+frame's fullscreen state when toggling fullscreen the next time.
 
 Note that with some window managers you may have to set
 `frame-resize-pixelwise' to non-nil in order to make a frame
-appear truly fullscreen.
+appear truly fullscreen.  In addition, you may have to set
+`x-frame-normalize-before-maximize' in order to enable
+transitions from one fullscreen state to another.
 
 See also `toggle-frame-maximized'."
   (interactive)
-  (modify-frame-parameters
-   nil
-   `((maximized
-      . ,(unless (memq (frame-parameter nil 'fullscreen) '(fullscreen fullboth))
-	   (frame-parameter nil 'fullscreen)))
-     (fullscreen
-      . ,(if (memq (frame-parameter nil 'fullscreen) '(fullscreen fullboth))
-	     (if (eq (frame-parameter nil 'maximized) 'maximized)
-		 'maximized)
-	   'fullscreen)))))
-
+  (let ((fullscreen (frame-parameter nil 'fullscreen)))
+    (if (memq fullscreen '(fullscreen fullboth))
+	(let ((fullscreen-restore (frame-parameter nil 'fullscreen-restore)))
+	  (if (memq fullscreen-restore '(maximized fullheight fullwidth))
+	      (set-frame-parameter nil 'fullscreen fullscreen-restore)
+	    (set-frame-parameter nil 'fullscreen nil)))
+      (modify-frame-parameters
+       nil `((fullscreen . fullboth) (fullscreen-restore . ,fullscreen))))))
 
 ;;;; Key bindings
 

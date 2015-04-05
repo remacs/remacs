@@ -48,10 +48,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
 
-#ifdef HAVE_XWIDGETS
-#include "xwidget.h"
-#endif
-
 #include <errno.h>
 
 #include <fpending.h>
@@ -571,6 +567,12 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 	      for (i = 0; i < matrix->nrows; ++i)
 		matrix->rows[i].enabled_p = false;
 	    }
+	  /* We've disabled the mode-line row, so force redrawing of
+	     the mode line, if any, since otherwise it will remain
+	     disabled in the current matrix, and expose events won't
+	     redraw it.  */
+	  if (WINDOW_WANTS_MODELINE_P (w))
+	    w->update_mode_line = 1;
 	}
       else if (matrix == w->desired_matrix)
 	{
@@ -3546,9 +3548,6 @@ update_window (struct window *w, bool force_p)
   add_window_display_history (w, w->current_matrix->method, paused_p);
 #endif
 
-#ifdef HAVE_XWIDGETS
-  xwidget_end_redisplay(w, w->current_matrix);
-#endif
   clear_glyph_matrix (desired_matrix);
 
   return paused_p;
@@ -3911,45 +3910,35 @@ set_window_cursor_after_update (struct window *w)
     {
       cx = cy = vpos = hpos = 0;
 
-      if (cursor_in_echo_area >= 0)
+      /* If the mini-buffer is several lines high, find the last
+	 line that has any text on it.  Note: either all lines
+	 are enabled or none.  Otherwise we wouldn't be able to
+	 determine Y.  */
+      struct glyph_row *last_row = NULL;
+      int yb = window_text_bottom_y (w);
+
+      for (struct glyph_row *row = w->current_matrix->rows;
+	   row->enabled_p && (!last_row || MATRIX_ROW_BOTTOM_Y (row) <= yb);
+	   row++)
+	if (row->used[TEXT_AREA] && row->glyphs[TEXT_AREA][0].charpos >= 0)
+	  last_row = row;
+
+      if (last_row)
 	{
-	  /* If the mini-buffer is several lines high, find the last
-	     line that has any text on it.  Note: either all lines
-	     are enabled or none.  Otherwise we wouldn't be able to
-	     determine Y.  */
-	  struct glyph_row *row, *last_row;
-	  struct glyph *glyph;
-	  int yb = window_text_bottom_y (w);
+	  struct glyph *start = last_row->glyphs[TEXT_AREA];
+	  struct glyph *last = start + last_row->used[TEXT_AREA] - 1;
 
-	  last_row = NULL;
-	  row = w->current_matrix->rows;
-	  while (row->enabled_p
-		 && (last_row == NULL
-		     || MATRIX_ROW_BOTTOM_Y (row) <= yb))
+	  while (last > start && last->charpos < 0)
+	    --last;
+
+	  for (struct glyph *glyph = start; glyph < last; glyph++)
 	    {
-	      if (row->used[TEXT_AREA]
-		  && row->glyphs[TEXT_AREA][0].charpos >= 0)
-		last_row = row;
-	      ++row;
+	      cx += glyph->pixel_width;
+	      hpos++;
 	    }
 
-	  if (last_row)
-	    {
-	      struct glyph *start = last_row->glyphs[TEXT_AREA];
-	      struct glyph *last = start + last_row->used[TEXT_AREA] - 1;
-
-	      while (last > start && last->charpos < 0)
-		--last;
-
-	      for (glyph = start; glyph < last; ++glyph)
-		{
-		  cx += glyph->pixel_width;
-		  ++hpos;
-		}
-
-	      cy = last_row->y;
-	      vpos = MATRIX_ROW_VPOS (last_row, w->current_matrix);
-	    }
+	  cy = last_row->y;
+	  vpos = MATRIX_ROW_VPOS (last_row, w->current_matrix);
 	}
     }
   else
@@ -4131,11 +4120,6 @@ scrolling_window (struct window *w, bool header_line_p)
       else
 	break;
     }
-
-#ifdef HAVE_XWIDGETS
- //currently this is needed to detect xwidget movement reliably. or probably not.
-    return 0;
-#endif
 
   /* Give up if some rows in the desired matrix are not enabled.  */
   if (! MATRIX_ROW_ENABLED_P (desired_matrix, i))
@@ -4569,58 +4553,43 @@ update_frame_1 (struct frame *f, bool force_p, bool inhibit_id_p,
 	  && EQ (FRAME_MINIBUF_WINDOW (f), echo_area_window))
 	{
 	  int top = WINDOW_TOP_EDGE_LINE (XWINDOW (FRAME_MINIBUF_WINDOW (f)));
-	  int row, col;
+	  int col;
 
-	  if (cursor_in_echo_area < 0)
+	  /* Put cursor at the end of the prompt.  If the mini-buffer
+	     is several lines high, find the last line that has
+	     any text on it.  */
+	  int row = FRAME_TOTAL_LINES (f);
+	  do
 	    {
-	      /* Negative value of cursor_in_echo_area means put
-                 cursor at beginning of line.  */
-	      row = top;
+	      row--;
 	      col = 0;
+
+	      if (MATRIX_ROW_ENABLED_P (current_matrix, row))
+		{
+		  /* Frame rows are filled up with spaces that
+		     must be ignored here.  */
+		  struct glyph_row *r = MATRIX_ROW (current_matrix, row);
+		  struct glyph *start = r->glyphs[TEXT_AREA];
+
+		  col = r->used[TEXT_AREA];
+		  while (0 < col && start[col - 1].charpos < 0)
+		    col--;
+		}
 	    }
-	  else
+	  while (row > top && col == 0);
+
+	  /* Make sure COL is not out of range.  */
+	  if (col >= FRAME_CURSOR_X_LIMIT (f))
 	    {
-	      /* Positive value of cursor_in_echo_area means put
-		 cursor at the end of the prompt.  If the mini-buffer
-		 is several lines high, find the last line that has
-		 any text on it.  */
-	      row = FRAME_TOTAL_LINES (f);
-	      do
+	      /* If we have another row, advance cursor into it.  */
+	      if (row < FRAME_TOTAL_LINES (f) - 1)
 		{
-		  --row;
-		  col = 0;
-
-		  if (MATRIX_ROW_ENABLED_P (current_matrix, row))
-		    {
-		      /* Frame rows are filled up with spaces that
-			 must be ignored here.  */
-		      struct glyph_row *r = MATRIX_ROW (current_matrix,
-							row);
-		      struct glyph *start = r->glyphs[TEXT_AREA];
-		      struct glyph *last = start + r->used[TEXT_AREA];
-
-		      while (last > start
-			     && (last - 1)->charpos < 0)
-			--last;
-
-		      col = last - start;
-		    }
+		  col = FRAME_LEFT_SCROLL_BAR_COLS (f);
+		  row++;
 		}
-	      while (row > top && col == 0);
-
-	      /* Make sure COL is not out of range.  */
-	      if (col >= FRAME_CURSOR_X_LIMIT (f))
-		{
-		  /* If we have another row, advance cursor into it.  */
-		  if (row < FRAME_TOTAL_LINES (f) - 1)
-		    {
-		      col = FRAME_LEFT_SCROLL_BAR_COLS (f);
-		      row++;
-		    }
-		  /* Otherwise move it back in range.  */
-		  else
-		    col = FRAME_CURSOR_X_LIMIT (f) - 1;
-		}
+	      /* Otherwise move it back in range.  */
+	      else
+		col = FRAME_CURSOR_X_LIMIT (f) - 1;
 	    }
 
 	  cursor_to (f, row, col);
@@ -5966,7 +5935,7 @@ init_display (void)
   space_glyph.charpos = -1;
 
   inverse_video = 0;
-  cursor_in_echo_area = 0;
+  cursor_in_echo_area = false;
 
   /* Now is the time to initialize this; it's used by init_sys_modes
      during startup.  */
@@ -5986,9 +5955,12 @@ init_display (void)
     }
 #endif /* SIGWINCH */
 
-  /* If running as a daemon, no need to initialize any frames/terminal. */
+  /* If running as a daemon, no need to initialize any frames/terminal,
+     except on Windows, where we at least want to initialize it.  */
+#ifndef WINDOWSNT
   if (IS_DAEMON)
       return;
+#endif
 
   /* If the user wants to use a window system, we shouldn't bother
      initializing the terminal.  This is especially important when the

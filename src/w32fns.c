@@ -157,8 +157,8 @@ typedef BOOL (WINAPI * TrackMouseEvent_Proc)
 typedef LONG (WINAPI * ImmGetCompositionString_Proc)
   (IN HIMC context, IN DWORD index, OUT LPVOID buffer, IN DWORD bufLen);
 typedef HIMC (WINAPI * ImmGetContext_Proc) (IN HWND window);
-typedef HWND (WINAPI * ImmReleaseContext_Proc) (IN HWND wnd, IN HIMC context);
-typedef HWND (WINAPI * ImmSetCompositionWindow_Proc) (IN HIMC context,
+typedef BOOL (WINAPI * ImmReleaseContext_Proc) (IN HWND wnd, IN HIMC context);
+typedef BOOL (WINAPI * ImmSetCompositionWindow_Proc) (IN HIMC context,
 						      IN COMPOSITIONFORM *form);
 typedef HMONITOR (WINAPI * MonitorFromPoint_Proc) (IN POINT pt, IN DWORD flags);
 typedef BOOL (WINAPI * GetMonitorInfo_Proc)
@@ -345,10 +345,6 @@ x_real_positions (struct frame *f, int *xptr, int *yptr)
 
   /* Convert (0, 0) in the client area to screen co-ordinates.  */
   ClientToScreen (FRAME_W32_WINDOW (f), &pt);
-
-  /* Remember x_pixels_diff and y_pixels_diff.  */
-  f->x_pixels_diff = pt.x - rect.left;
-  f->y_pixels_diff = pt.y - rect.top;
 
   *xptr = rect.left;
   *yptr = rect.top;
@@ -1722,6 +1718,7 @@ x_change_tool_bar_height (struct frame *f, int height)
   int old_height = FRAME_TOOL_BAR_HEIGHT (f);
   int lines = (height + unit - 1) / unit;
   int old_text_height = FRAME_TEXT_HEIGHT (f);
+  Lisp_Object fullscreen;
 
   /* Make sure we redisplay all windows in this frame.  */
   windows_or_buffers_changed = 23;
@@ -1746,7 +1743,10 @@ x_change_tool_bar_height (struct frame *f, int height)
   f->n_tool_bar_rows = 0;
 
   adjust_frame_size (f, -1, -1,
-		     (!f->tool_bar_redisplayed_once ? 1
+		     ((!f->tool_bar_redisplayed_once
+		       && (NILP (fullscreen =
+				 get_frame_param (f, Qfullscreen))
+			   || EQ (fullscreen, Qfullwidth))) ? 1
 		      : (old_height == 0 || height == 0) ? 2
 		      : 4),
 		     false, Qtool_bar_lines);
@@ -3291,12 +3291,12 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	     field being reset to nil.  */
 	  f = x_window_to_frame (dpyinfo, hwnd);
 	  if (!(f && FRAME_LIVE_P (f)))
-	    break;
+	    goto dflt;
 	  w = XWINDOW (FRAME_SELECTED_WINDOW (f));
 	  /* Punt if someone changed the frame's selected window
 	     behind our back. */
 	  if (w != w32_system_caret_window)
-	    break;
+	    goto dflt;
 
 	  form.dwStyle = CFS_RECT;
 	  form.ptCurrentPos.x = w32_system_caret_x;
@@ -3314,16 +3314,22 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	  /* Punt if the window was deleted behind our back.  */
 	  if (!BUFFERP (w->contents))
-	    break;
+	    goto dflt;
 
 	  context = get_ime_context_fn (hwnd);
 
 	  if (!context)
-	    break;
+	    goto dflt;
 
 	  set_ime_composition_window_fn (context, &form);
 	  release_ime_context_fn (hwnd, context);
 	}
+      /* We should "goto dflt" here to pass WM_IME_STARTCOMPOSITION to
+	 DefWindowProc, so that the composition window will actually
+	 be displayed.  But doing so causes trouble with displaying
+	 dialog boxes, such as the file selection dialog or font
+	 selection dialog.  So something else is needed to fix the
+	 former without breaking the latter.  See bug#11732.  */
       break;
 
     case WM_IME_ENDCOMPOSITION:
@@ -4668,8 +4674,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
 		       "bufferPredicate", "BufferPredicate", RES_TYPE_SYMBOL);
   x_default_parameter (f, parameters, Qtitle, Qnil,
 		       "title", "Title", RES_TYPE_STRING);
-  x_default_parameter (f, parameters, Qfullscreen, Qnil,
-		       "fullscreen", "Fullscreen", RES_TYPE_SYMBOL);
 
   f->output_data.w32->dwStyle = WS_OVERLAPPEDWINDOW;
   f->output_data.w32->parent_desc = FRAME_DISPLAY_INFO (f)->root_window;
@@ -4727,6 +4731,12 @@ This function is an internal primitive--use `make-frame' instead.  */)
   block_input ();
   x_wm_set_size_hint (f, window_prompting, false);
   unblock_input ();
+
+  /* Process fullscreen parameter here in the hope that normalizing a
+     fullheight/fullwidth frame will produce the size set by the last
+     adjust_frame_size call.  */
+  x_default_parameter (f, parameters, Qfullscreen, Qnil,
+		       "fullscreen", "Fullscreen", RES_TYPE_SYMBOL);
 
   /* Make the window appear on the frame and enable display, unless
      the caller says not to.  However, with explicit parent, Emacs
@@ -5832,7 +5842,7 @@ x_create_tip_frame (struct w32_display_info *dpyinfo,
   SET_FRAME_COLS (f, 0);
   SET_FRAME_LINES (f, 0);
   adjust_frame_size (f, width * FRAME_COLUMN_WIDTH (f),
-		     height * FRAME_LINE_HEIGHT (f), 0, true, Qnil);
+		     height * FRAME_LINE_HEIGHT (f), 0, true, Qtip_frame);
 
   /* Add `tooltip' frame parameter's default value. */
   if (NILP (Fframe_parameter (frame, Qtooltip)))
@@ -7558,7 +7568,7 @@ elements (all size values are in pixels).
     menu_bar_height = single_bar_height;
 
   return
-    listn (CONSTYPE_PURE, 10,
+    listn (CONSTYPE_HEAP, 10,
 	   Fcons (Qframe_position,
 		  Fcons (make_number (frame_outer_edges.left),
 			 make_number (frame_outer_edges.top))),
@@ -8232,6 +8242,15 @@ w32_sys_ring_bell (struct frame *f)
     MessageBeep (sound_type);
 }
 
+DEFUN ("w32--menu-bar-in-use", Fw32__menu_bar_in_use, Sw32__menu_bar_in_use,
+       0, 0, 0,
+       doc: /* Return non-nil when a menu-bar menu is being used.
+Internal use only.  */)
+  (void)
+{
+  return menubar_in_use ? Qt : Qnil;
+}
+
 
 /***********************************************************************
 			    Initialization
@@ -8609,6 +8628,7 @@ only be necessary if the default setting causes problems.  */);
   defsubr (&Sw32_frame_rect);
   defsubr (&Sw32_frame_menu_bar_size);
   defsubr (&Sw32_battery_status);
+  defsubr (&Sw32__menu_bar_in_use);
 
 #ifdef WINDOWSNT
   defsubr (&Sfile_system_info);

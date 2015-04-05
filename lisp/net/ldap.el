@@ -376,9 +376,19 @@ RFC2252 section 4.3.2")
     (houseidentifier . 15)
     (supportedalgorithms . 49)
     (deltarevocationlist . 9)
-    (dmdname . 15))
+    (dmdname . 15)
+    (carlicense . 15)
+    (departmentnumber . 15)
+    (displayname . 15)
+    (employeenumber . 15)
+    (employeetype . 15)
+    (jpegphoto . 28)
+    (preferredlanguage . 15)
+    (usersmimecertificate . 5)
+    (userpkcs12 . 5))
   "A map of LDAP attribute names to their type object id minor number.
-This table is built from RFC2252 Section 5 and RFC2256 Section 5")
+This table is built from RFC2252 Section 5, RFC2256 Section 5 and
+RFC2798 Section 9.1.1")
 
 
 ;; Coding/decoding functions
@@ -546,8 +556,8 @@ not their associated values.
   `auth' is one of the symbols `simple', `krbv41' or `krbv42'.
   `base' is the base for the search as described in RFC 1779.
   `scope' is one of the three symbols `sub', `base' or `one'.
-  `binddn' is the distinguished name of the user to bind as (in RFC 1779 syntax).
-  `auth' is one of the symbols `simple', `krbv41' or `krbv42'
+  `binddn' is the distinguished name of the user to bind as (in
+RFC 1779 syntax).
   `passwd' is the password to use for simple authentication.
   `deref' is one of the symbols `never', `always', `search' or `find'.
   `timelimit' is the timeout limit for the connection in seconds.

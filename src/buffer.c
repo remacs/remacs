@@ -42,9 +42,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "keymap.h"
 #include "frame.h"
 
-#ifdef HAVE_XWIDGETS
-#include "xwidget.h"
-#endif  /* HAVE_XWIDGETS */
 #ifdef WINDOWSNT
 #include "w32heap.h"		/* for mmap_* */
 #endif
@@ -1758,11 +1755,6 @@ cleaning up all windows currently displaying the buffer to be killed. */)
   kill_buffer_processes (buffer);
   UNGCPRO;
 
-#ifdef HAVE_XWIDGETS
-  GCPRO1 (buffer);
-  kill_buffer_xwidgets (buffer);
-  UNGCPRO;
-#endif  /* HAVE_XWIDGETS */
   /* Killing buffer processes may run sentinels which may have killed
      our buffer.  */
   if (!BUFFER_LIVE_P (b))
@@ -5416,7 +5408,7 @@ syms_of_buffer (void)
   DEFSYM (Qoverwrite_mode, "overwrite-mode");
   Fput (Qoverwrite_mode, Qchoice,
 	list3 (Qnil, intern ("overwrite-mode-textual"),
-	       intern ("overwrite-mode-binary")));
+	       Qoverwrite_mode_binary));
 
   Fput (Qprotected_field, Qerror_conditions,
 	listn (CONSTYPE_PURE, 2, Qprotected_field, Qerror));
@@ -6204,6 +6196,7 @@ If the buffer has never been shown in a window, the value is nil.  */);
 See the command `transient-mark-mode' for a description of this minor mode.
 
 Non-nil also enables highlighting of the region whenever the mark is active.
+The region is highlighted with the `region' face.
 The variable `highlight-nonselected-windows' controls whether to highlight
 all windows or just the selected window.
 
@@ -6334,6 +6327,8 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Soverlay_get);
   defsubr (&Soverlay_put);
   defsubr (&Srestore_buffer_modified_p);
+
+  Fput (intern_c_string ("erase-buffer"), Qdisabled, Qt);
 }
 
 void
@@ -6341,8 +6336,4 @@ keys_of_buffer (void)
 {
   initial_define_key (control_x_map, 'b', "switch-to-buffer");
   initial_define_key (control_x_map, 'k', "kill-buffer");
-
-  /* This must not be in syms_of_buffer, because Qdisabled is not
-     initialized when that function gets called.  */
-  Fput (intern_c_string ("erase-buffer"), Qdisabled, Qt);
 }

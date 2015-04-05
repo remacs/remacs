@@ -44,9 +44,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef MSDOS
 #include "msdos.h"
 #endif
-#ifdef HAVE_XWIDGETS
-#include "xwidget.h"
-#endif
 
 static int displayed_window_lines (struct window *);
 static int count_windows (struct window *);
@@ -3332,7 +3329,7 @@ run_window_configuration_change_hook (struct frame *f)
 
   if (NILP (Vrun_hooks)
       || !(f->can_x_set_window_size)
-      || !(f->can_run_window_configuration_change_hook))
+      || !(f->after_make_frame))
     return;
 
   /* Use the right buffer.  Matters when running the local hooks.  */
@@ -4562,9 +4559,6 @@ Signal an error when WINDOW is the only window on its frame.  */)
 
       /* Block input.  */
       block_input ();
-#ifdef HAVE_XWIDGETS
-      xwidget_view_delete_all_in_window(w);
-#endif
       window_resize_apply (p, horflag);
       /* If this window is referred to by the dpyinfo's mouse
 	 highlight, invalidate that slot to be safe (Bug#9904).  */
@@ -5356,14 +5350,14 @@ window_scroll_line_based (Lisp_Object window, int n, bool whole, int noerror)
 
   if (NILP (tem))
     {
-      Fvertical_motion (make_number (- (ht / 2)), window);
+      Fvertical_motion (make_number (- (ht / 2)), window, Qnil);
       startpos = PT;
       startbyte = PT_BYTE;
     }
 
   SET_PT_BOTH (startpos, startbyte);
   lose = n < 0 && PT == BEGV;
-  Fvertical_motion (make_number (n), window);
+  Fvertical_motion (make_number (n), window, Qnil);
   pos = PT;
   pos_byte = PT_BYTE;
   bolp = Fbolp ();
@@ -5395,7 +5389,7 @@ window_scroll_line_based (Lisp_Object window, int n, bool whole, int noerror)
 	  && (whole || !EQ (Vscroll_preserve_screen_position, Qt)))
 	{
 	  SET_PT_BOTH (pos, pos_byte);
-	  Fvertical_motion (original_pos, window);
+	  Fvertical_motion (original_pos, window, Qnil);
 	}
       /* If we scrolled forward, put point enough lines down
 	 that it is outside the scroll margin.  */
@@ -5406,7 +5400,7 @@ window_scroll_line_based (Lisp_Object window, int n, bool whole, int noerror)
 	  if (this_scroll_margin > 0)
 	    {
 	      SET_PT_BOTH (pos, pos_byte);
-	      Fvertical_motion (make_number (this_scroll_margin), window);
+	      Fvertical_motion (make_number (this_scroll_margin), window, Qnil);
 	      top_margin = PT;
 	    }
 	  else
@@ -5418,7 +5412,7 @@ window_scroll_line_based (Lisp_Object window, int n, bool whole, int noerror)
 	  else if (!NILP (Vscroll_preserve_screen_position))
 	    {
 	      SET_PT_BOTH (pos, pos_byte);
-	      Fvertical_motion (original_pos, window);
+	      Fvertical_motion (original_pos, window, Qnil);
 	    }
 	  else
 	    SET_PT (top_margin);
@@ -5430,7 +5424,8 @@ window_scroll_line_based (Lisp_Object window, int n, bool whole, int noerror)
 	  /* If we scrolled backward, put point near the end of the window
 	     but not within the scroll margin.  */
 	  SET_PT_BOTH (pos, pos_byte);
-	  tem = Fvertical_motion (make_number (ht - this_scroll_margin), window);
+	  tem = Fvertical_motion (make_number (ht - this_scroll_margin), window,
+				  Qnil);
 	  if (XFASTINT (tem) == ht - this_scroll_margin)
 	    bottom_margin = PT;
 	  else
@@ -5444,10 +5439,10 @@ window_scroll_line_based (Lisp_Object window, int n, bool whole, int noerror)
 	      if (!NILP (Vscroll_preserve_screen_position))
 		{
 		  SET_PT_BOTH (pos, pos_byte);
-		  Fvertical_motion (original_pos, window);
+		  Fvertical_motion (original_pos, window, Qnil);
 		}
 	      else
-		Fvertical_motion (make_number (-1), window);
+		Fvertical_motion (make_number (-1), window, Qnil);
 	    }
 	}
     }
@@ -6005,7 +6000,7 @@ zero means top of window, negative means relative to bottom of window.  */)
   if (start < BEGV || start > ZV)
     {
       int height = window_internal_height (w);
-      Fvertical_motion (make_number (- (height / 2)), window);
+      Fvertical_motion (make_number (- (height / 2)), window, Qnil);
       set_marker_both (w->start, w->contents, PT, PT_BYTE);
       w->start_at_line_beg = !NILP (Fbolp ());
       w->force_start = 1;
@@ -6046,7 +6041,7 @@ zero means top of window, negative means relative to bottom of window.  */)
   if (w->vscroll)
     XSETINT (arg, XINT (arg) + 1);
 
-  return Fvertical_motion (arg, window);
+  return Fvertical_motion (arg, window, Qnil);
 }
 
 

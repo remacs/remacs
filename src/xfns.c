@@ -168,12 +168,26 @@ check_x_display_info (Lisp_Object object)
   return dpyinfo;
 }
 
-/* Store the screen positions of frame F into XPTR and YPTR.
+/* Return the screen positions and offsets of frame F.
+   Store the offsets between FRAME_OUTER_WINDOW and the containing
+   window manager window into LEFT_OFFSET_X, RIGHT_OFFSET_X,
+   TOP_OFFSET_Y and BOTTOM_OFFSET_Y.
+   Store the offsets between FRAME_X_WINDOW and the containing
+   window manager window into X_PIXELS_DIFF and Y_PIXELS_DIFF.
+   Store the screen positions of frame F into XPTR and YPTR.
    These are the positions of the containing window manager window,
    not Emacs's own window.  */
-
 void
-x_real_positions (struct frame *f, int *xptr, int *yptr)
+x_real_pos_and_offsets (struct frame *f,
+                        int *left_offset_x,
+                        int *right_offset_x,
+                        int *top_offset_y,
+                        int *bottom_offset_y,
+                        int *x_pixels_diff,
+                        int *y_pixels_diff,
+                        int *xptr,
+                        int *yptr,
+                        int *outer_border)
 {
   int win_x, win_y, outer_x IF_LINT (= 0), outer_y IF_LINT (= 0);
   int real_x = 0, real_y = 0;
@@ -187,10 +201,21 @@ x_real_positions (struct frame *f, int *xptr, int *yptr)
   Display *dpy = FRAME_X_DISPLAY (f);
   unsigned char *tmp_data = NULL;
   Atom target_type = XA_CARDINAL;
+  unsigned int ow IF_LINT (= 0), oh IF_LINT (= 0);
 
   block_input ();
 
   x_catch_errors (dpy);
+
+  if (x_pixels_diff) *x_pixels_diff = 0;
+  if (y_pixels_diff) *y_pixels_diff = 0;
+  if (left_offset_x) *left_offset_x = 0;
+  if (top_offset_y) *top_offset_y = 0;
+  if (right_offset_x) *right_offset_x = 0;
+  if (bottom_offset_y) *bottom_offset_y = 0;
+  if (xptr) *xptr = 0;
+  if (yptr) *yptr = 0;
+  if (outer_border) *outer_border = 0;
 
   if (win == dpyinfo->root_window)
     win = FRAME_OUTER_WINDOW (f);
@@ -230,7 +255,14 @@ x_real_positions (struct frame *f, int *xptr, int *yptr)
 
       /* Get the real coordinates for the WM window upper left corner */
       XGetGeometry (FRAME_X_DISPLAY (f), win,
-                    &rootw, &real_x, &real_y, &ign, &ign, &ign, &ign);
+                    &rootw, &real_x, &real_y, &ow, &oh, &ign, &ign);
+
+      if (outer_border)
+        {
+          XWindowAttributes atts;
+          XGetWindowAttributes (FRAME_X_DISPLAY (f), win, &atts);
+          *outer_border = atts.border_width;
+        }
 
       /* Translate real coordinates to coordinates relative to our
          window.  For our window, the upper left corner is 0, 0.
@@ -310,15 +342,39 @@ x_real_positions (struct frame *f, int *xptr, int *yptr)
 
   if (had_errors) return;
 
-  f->x_pixels_diff = -win_x;
-  f->y_pixels_diff = -win_y;
+  if (x_pixels_diff) *x_pixels_diff = -win_x;
+  if (y_pixels_diff) *y_pixels_diff = -win_y;
 
-  FRAME_X_OUTPUT (f)->x_pixels_outer_diff = -outer_x;
-  FRAME_X_OUTPUT (f)->y_pixels_outer_diff = -outer_y;
+  if (left_offset_x) *left_offset_x = -outer_x;
+  if (top_offset_y) *top_offset_y = -outer_y;
 
-  *xptr = real_x;
-  *yptr = real_y;
+  if (xptr) *xptr = real_x;
+  if (yptr) *yptr = real_y;
+
+  if (right_offset_x || bottom_offset_y)
+    {
+      int xy_ign;
+      unsigned int ign, fw, fh;
+      Window rootw;
+
+      XGetGeometry (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
+		    &rootw, &xy_ign, &xy_ign, &fw, &fh, &ign, &ign);
+      if (right_offset_x) *right_offset_x = ow - fw + outer_x;
+      if (bottom_offset_y) *bottom_offset_y = oh - fh + outer_y;
+    }
 }
+
+/* Store the screen positions of frame F into XPTR and YPTR.
+   These are the positions of the containing window manager window,
+   not Emacs's own window.  */
+
+void
+x_real_positions (struct frame *f, int *xptr, int *yptr)
+{
+  x_real_pos_and_offsets (f, NULL, NULL, NULL, NULL, NULL, NULL, xptr, yptr,
+                          NULL);
+}
+
 
 /* Get the mouse position in frame relative coordinates.  */
 
@@ -351,11 +407,19 @@ x_relative_mouse_position (struct frame *f, int *x, int *y)
                     we don't care.  */
                  (unsigned int *) &dummy);
 
-  unblock_input ();
+  XTranslateCoordinates (FRAME_X_DISPLAY (f),
 
-  /* Translate root window coordinates to window coordinates.  */
-  *x -= f->left_pos + FRAME_OUTER_TO_INNER_DIFF_X (f);
-  *y -= f->top_pos + FRAME_OUTER_TO_INNER_DIFF_Y (f);
+                         /* From-window, to-window.  */
+                         FRAME_DISPLAY_INFO (f)->root_window,
+                         FRAME_X_WINDOW (f),
+
+                         /* From-position, to-position.  */
+                         *x, *y, x, y,
+
+                         /* Child of win.  */
+                         &dummy_window);
+
+  unblock_input ();
 }
 
 /* Gamma-correct COLOR on frame F.  */
@@ -1095,6 +1159,7 @@ x_change_tool_bar_height (struct frame *f, int height)
   int unit = FRAME_LINE_HEIGHT (f);
   int old_height = FRAME_TOOL_BAR_HEIGHT (f);
   int lines = (height + unit - 1) / unit;
+  Lisp_Object fullscreen;
 
   /* Make sure we redisplay all windows in this frame.  */
   windows_or_buffers_changed = 60;
@@ -1126,7 +1191,10 @@ x_change_tool_bar_height (struct frame *f, int height)
   f->n_tool_bar_rows = 0;
 
   adjust_frame_size (f, -1, -1,
-		     (!f->tool_bar_redisplayed_once ? 1
+		     ((!f->tool_bar_redisplayed_once
+		       && (NILP (fullscreen =
+				 get_frame_param (f, Qfullscreen))
+			   || EQ (fullscreen, Qfullwidth))) ? 1
 		      : (old_height == 0 || height == 0) ? 2
 		      : 4),
 		     false, Qtool_bar_lines);
@@ -3180,8 +3248,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
 		       "title", "Title", RES_TYPE_STRING);
   x_default_parameter (f, parms, Qwait_for_wm, Qt,
 		       "waitForWM", "WaitForWM", RES_TYPE_BOOLEAN);
-  x_default_parameter (f, parms, Qfullscreen, Qnil,
-		       "fullscreen", "Fullscreen", RES_TYPE_SYMBOL);
   x_default_parameter (f, parms, Qtool_bar_position,
                        FRAME_TOOL_BAR_POSITION (f), 0, 0, RES_TYPE_SYMBOL);
 
@@ -3258,6 +3324,12 @@ This function is an internal primitive--use `make-frame' instead.  */)
   block_input ();
   x_wm_set_size_hint (f, window_prompting, false);
   unblock_input ();
+
+  /* Process fullscreen parameter here in the hope that normalizing a
+     fullheight/fullwidth frame will produce the size set by the last
+     adjust_frame_size call.  */
+  x_default_parameter (f, parms, Qfullscreen, Qnil,
+		       "fullscreen", "Fullscreen", RES_TYPE_SYMBOL);
 
   /* Make the window appear on the frame and enable display, unless
      the caller says not to.  However, with explicit parent, Emacs
@@ -4271,13 +4343,26 @@ elements (all size values are in pixels).
   Lisp_Object fullscreen = Fframe_parameter (frame, Qfullscreen);
   int menu_bar_height, menu_bar_width, tool_bar_height, tool_bar_width;
 
-  border = FRAME_OUTER_TO_INNER_DIFF_X (f);
-  title = FRAME_X_OUTPUT (f)->y_pixels_outer_diff - border;
+  int left_off, right_off, top_off, bottom_off, outer_border;
+  XWindowAttributes atts;
 
-  outer_width = FRAME_PIXEL_WIDTH (f) + 2 * border;
-  outer_height = (FRAME_PIXEL_HEIGHT (f)
-		  + FRAME_OUTER_TO_INNER_DIFF_Y (f)
-		  + FRAME_OUTER_TO_INNER_DIFF_X (f));
+  block_input ();
+
+  XGetWindowAttributes (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f), &atts);
+
+  x_real_pos_and_offsets (f, &left_off, &right_off, &top_off, &bottom_off,
+                          NULL, NULL, NULL, NULL, &outer_border);
+
+
+  unblock_input ();
+
+  border = atts.border_width;
+  title = top_off;
+
+  outer_width = atts.width + 2 * border + right_off + left_off
+    + 2 * outer_border;
+  outer_height = atts.height + 2 * border + top_off + bottom_off
+    + 2 * outer_border;
 
 #if defined (USE_GTK)
   {
@@ -4290,16 +4375,10 @@ elements (all size values are in pixels).
     tool_bar_height = (tool_bar_left_right
 		       ? FRAME_PIXEL_HEIGHT (f)
 		       : FRAME_TOOLBAR_HEIGHT (f));
-    if (tool_bar_left_right)
-      /* For some reason FRAME_OUTER_TO_INNER_DIFF_X does not count the
-	 width of a tool bar.  */
-      outer_width += FRAME_TOOLBAR_WIDTH (f);
   }
 #else
   tool_bar_height = FRAME_TOOL_BAR_HEIGHT (f);
-  tool_bar_width = ((tool_bar_height > 0)
-		    ? outer_width - 2 * FRAME_INTERNAL_BORDER_WIDTH (f)
-		    : 0);
+  tool_bar_width = tool_bar_height > 0 ? FRAME_PIXEL_WIDTH (f) : 0;
 #endif
 
 #if defined (USE_X_TOOLKIT) || defined (USE_GTK)
@@ -4308,9 +4387,7 @@ elements (all size values are in pixels).
   menu_bar_height = FRAME_MENU_BAR_HEIGHT (f);
 #endif
 
-  menu_bar_width = ((menu_bar_height > 0)
-		    ? outer_width - 2 * border
-		    : 0);
+  menu_bar_width = menu_bar_height > 0 ? FRAME_PIXEL_WIDTH (f) : 0;
 
   if (!FRAME_EXTERNAL_MENU_BAR (f))
     inner_height -= menu_bar_height;
@@ -4318,7 +4395,7 @@ elements (all size values are in pixels).
     inner_height -= tool_bar_height;
 
   return
-    listn (CONSTYPE_PURE, 10,
+    listn (CONSTYPE_HEAP, 10,
 	   Fcons (Qframe_position,
 		  Fcons (make_number (f->left_pos), make_number (f->top_pos))),
 	   Fcons (Qframe_outer_size,
@@ -5177,7 +5254,7 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
     Lisp_Object disptype;
 
     if (FRAME_DISPLAY_INFO (f)->n_planes == 1)
-      disptype = intern ("mono");
+      disptype = Qmono;
     else if (FRAME_DISPLAY_INFO (f)->visual->class == GrayScale
              || FRAME_DISPLAY_INFO (f)->visual->class == StaticGray)
       disptype = intern ("grayscale");
@@ -5999,7 +6076,7 @@ nil, it defaults to the selected frame. */)
   GCPRO2 (font_param, font);
 
   XSETFONT (font, FRAME_FONT (f));
-  font_param = Ffont_get (font, intern (":name"));
+  font_param = Ffont_get (font, QCname);
   if (STRINGP (font_param))
     default_name = xlispstrdup (font_param);
   else
@@ -6186,6 +6263,7 @@ syms_of_xfns (void)
   DEFSYM (Qcompound_text, "compound-text");
   DEFSYM (Qcancel_timer, "cancel-timer");
   DEFSYM (Qfont_param, "font-parameter");
+  DEFSYM (Qmono, "mono");
 
   Fput (Qundefined_color, Qerror_conditions,
 	listn (CONSTYPE_PURE, 2, Qundefined_color, Qerror));

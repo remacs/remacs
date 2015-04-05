@@ -168,14 +168,16 @@ Returns VALUE."
 ;;;###tramp-autoload
 (defun tramp-flush-file-property (key file)
   "Remove all properties of FILE in the cache context of KEY."
-  ;; Remove file properties of symlinks.
-  (let ((truename (tramp-get-file-property key file "file-truename" nil)))
+  (let* ((file (tramp-run-real-handler
+		'directory-file-name (list file)))
+	 (truename (tramp-get-file-property key file "file-truename" nil)))
+    ;; Remove file properties of symlinks.
     (when (and (stringp truename)
-	       (not (string-equal file truename)))
+	       (not (string-equal file (directory-file-name truename))))
       (tramp-flush-file-property key truename)))
   ;; Unify localname.
   (setq key (copy-sequence key))
-  (aset key 3 (tramp-run-real-handler 'directory-file-name (list file)))
+  (aset key 3 file)
   (tramp-message key 8 "%s" file)
   (remhash key tramp-cache-data))
 
@@ -188,13 +190,14 @@ Remove also properties of all files in subdirectories."
 	 (truename (tramp-get-file-property key directory "file-truename" nil)))
     ;; Remove file properties of symlinks.
     (when (and (stringp truename)
-	       (not (string-equal directory truename)))
+	       (not (string-equal directory (directory-file-name truename))))
       (tramp-flush-directory-property key truename))
     (tramp-message key 8 "%s" directory)
     (maphash
      (lambda (key _value)
        (when (and (stringp (tramp-file-name-localname key))
-		  (string-match directory (tramp-file-name-localname key)))
+		  (string-match (regexp-quote directory)
+				(tramp-file-name-localname key)))
 	 (remhash key tramp-cache-data)))
      tramp-cache-data)))
 
@@ -362,7 +365,7 @@ KEY identifies the connection, it is either a process or a vector."
 	     (remhash key cache)))
 	 cache)
 	;; Dump it.
-	(with-temp-buffer
+	(with-temp-file tramp-persistency-file-name
 	  (insert
 	   ";; -*- emacs-lisp -*-"
 	   ;; `time-stamp-string' might not exist in all (X)Emacs flavors.
@@ -376,9 +379,7 @@ KEY identifies the connection, it is either a process or a vector."
 	   ";; Tramp connection history.  Don't change this file.\n"
 	   ";; You can delete it, forcing Tramp to reapply the checks.\n\n"
 	   (with-output-to-string
-	     (pp (read (format "(%s)" (tramp-cache-print cache))))))
-	  (write-region
-	   (point-min) (point-max) tramp-persistency-file-name))))))
+	     (pp (read (format "(%s)" (tramp-cache-print cache)))))))))))
 
 (unless noninteractive
   (add-hook 'kill-emacs-hook 'tramp-dump-connection-properties))

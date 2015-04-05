@@ -348,10 +348,6 @@ enum glyph_type
 
   /* Glyph is a space of fractional width and/or height.  */
   STRETCH_GLYPH
-#ifdef HAVE_XWIDGETS
-  /* Glyph is an external widget drawn by the GUI toolkit.   */
-  ,XWIDGET_GLYPH
-#endif
 };
 
 
@@ -503,9 +499,6 @@ struct glyph
     /* Image ID for image glyphs (type == IMAGE_GLYPH).  */
     int img_id;
 
-#ifdef HAVE_XWIDGETS
-    struct xwidget* xwidget;
-#endif
     /* Sub-structure for type == STRETCH_GLYPH.  */
     struct
     {
@@ -1313,9 +1306,6 @@ struct glyph_string
   /* True means the background of this string has been drawn.  */
   bool_bf background_filled_p : 1;
 
-  /* True means glyph string must be drawn with 16-bit functions.  */
-  bool_bf two_byte_p : 1;
-
   /* True means that the original font determined for drawing this glyph
      string could not be loaded.  The member `font' has been set to
      the frame's default font in this case.  */
@@ -1360,9 +1350,6 @@ struct glyph_string
   /* Image, if any.  */
   struct image *img;
 
-#ifdef HAVE_XWIDGETS
-  struct xwidget* xwidget;
-#endif
   /* Slice */
   struct glyph_slice slice;
 
@@ -1823,8 +1810,10 @@ struct face_cache
   ((FACE) == (FACE)->ascii_face)
 
 /* Return the id of the realized face on frame F that is like the face
-   with id ID but is suitable for displaying character CHAR.
-   This macro is only meaningful for multibyte character CHAR.  */
+   FACE, but is suitable for displaying character CHAR at buffer or
+   string position POS.  OBJECT is the string object, or nil for
+   buffer.  This macro is only meaningful for multibyte character
+   CHAR.  */
 
 #define FACE_FOR_CHAR(F, FACE, CHAR, POS, OBJECT)	\
   face_for_char ((F), (FACE), (CHAR), (POS), (OBJECT))
@@ -2107,10 +2096,6 @@ enum display_element_type
 
   /* Continuation glyphs.  See the comment for IT_TRUNCATION.  */
   IT_CONTINUATION
-
-#ifdef HAVE_XWIDGETS
-  ,IT_XWIDGET
-#endif
 };
 
 
@@ -2174,9 +2159,6 @@ enum it_method {
   GET_FROM_C_STRING,
   GET_FROM_IMAGE,
   GET_FROM_STRETCH,
-#ifdef HAVE_XWIDGETS
-  GET_FROM_XWIDGET,
-#endif
   NUM_IT_METHODS
 };
 
@@ -2398,12 +2380,6 @@ struct it
       struct {
 	Lisp_Object object;
       } stretch;
-#ifdef HAVE_XWIDGETS
-      /* method == GET_FROM_XWIDGET */
-      struct {
-	Lisp_Object object;
-      } xwidget;
-#endif
     } u;
 
     /* Current text and display positions.  */
@@ -2528,10 +2504,6 @@ struct it
   /* If what == IT_IMAGE, the id of the image to display.  */
   ptrdiff_t image_id;
 
-#ifdef HAVE_XWIDGETS
-  /* If what == IT_XWIDGET*/
-  struct xwidget* xwidget;
-#endif
   /* Values from `slice' property.  */
   struct it_slice slice;
 
@@ -3212,9 +3184,9 @@ struct glyph_row *row_containing_pos (struct window *, ptrdiff_t,
                                       struct glyph_row *, int);
 int line_bottom_y (struct it *);
 int default_line_pixel_height (struct window *);
-int display_prop_intangible_p (Lisp_Object, Lisp_Object, ptrdiff_t, ptrdiff_t);
+bool display_prop_intangible_p (Lisp_Object, Lisp_Object, ptrdiff_t, ptrdiff_t);
 void resize_echo_area_exactly (void);
-int resize_mini_window (struct window *, int);
+bool resize_mini_window (struct window *, bool);
 void set_vertical_scroll_bar (struct window *);
 void set_horizontal_scroll_bar (struct window *);
 int try_window (Lisp_Object, struct text_pos, int);
@@ -3229,10 +3201,10 @@ int window_box_right (struct window *, enum glyph_row_area);
 int estimate_mode_line_height (struct frame *, enum face_id);
 int move_it_to (struct it *, ptrdiff_t, int, int, int, int);
 void pixel_to_glyph_coords (struct frame *, int, int, int *, int *,
-                            NativeRectangle *, int);
+                            NativeRectangle *, bool);
 void remember_mouse_glyph (struct frame *, int, int, NativeRectangle *);
 
-void mark_window_display_accurate (Lisp_Object, int);
+void mark_window_display_accurate (Lisp_Object, bool);
 void redisplay_preserve_echo_area (int);
 void init_iterator (struct it *, struct window *, ptrdiff_t,
                     ptrdiff_t, struct glyph_row *, enum face_id);
@@ -3258,7 +3230,7 @@ extern void reseat_at_previous_visible_line_start (struct it *);
 extern Lisp_Object lookup_glyphless_char_display (int, struct it *);
 extern ptrdiff_t compute_display_string_pos (struct text_pos *,
 					     struct bidi_string_data *,
-					     struct window *, int, int *);
+					     struct window *, bool, int *);
 extern ptrdiff_t compute_display_string_end (ptrdiff_t,
 					     struct bidi_string_data *);
 extern void produce_stretch_glyph (struct it *);
@@ -3301,21 +3273,20 @@ extern void get_glyph_string_clip_rect (struct glyph_string *,
 extern Lisp_Object find_hot_spot (Lisp_Object, int, int);
 
 extern void handle_tool_bar_click (struct frame *,
-                                   int, int, int, int);
+                                   int, int, bool, int);
 
 extern void expose_frame (struct frame *, int, int, int, int);
-extern int x_intersect_rectangles (XRectangle *, XRectangle *,
-                                   XRectangle *);
+extern bool x_intersect_rectangles (XRectangle *, XRectangle *, XRectangle *);
 #endif	/* HAVE_WINDOW_SYSTEM */
 
 extern void note_mouse_highlight (struct frame *, int, int);
 extern void x_clear_window_mouse_face (struct window *);
 extern void cancel_mouse_face (struct frame *);
-extern int clear_mouse_face (Mouse_HLInfo *);
+extern bool clear_mouse_face (Mouse_HLInfo *);
 extern bool cursor_in_mouse_face_p (struct window *w);
 extern void tty_draw_row_with_mouse_face (struct window *, struct glyph_row *,
 					  int, int, enum draw_glyphs_face);
-extern void display_tty_menu_item (const char *, int, int, int, int, int);
+extern void display_tty_menu_item (const char *, int, int, int, int, bool);
 
 /* Flags passed to try_window.  */
 #define TRY_WINDOW_CHECK_MARGINS	(1 << 0)

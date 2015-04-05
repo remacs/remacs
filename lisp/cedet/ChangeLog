@@ -1,3 +1,31 @@
+2015-02-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Spelling fixes
+	* semantic/doc.el (semantic-documentation-comment-preceding-tag):
+	Rename from semantic-documentation-comment-preceeding-tag.  All
+	uses changed.  Leave an obsolete alias behind.
+
+2015-02-16  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* semantic/db-el.el (semanticdb-elisp-sym->tag): Fix copy&paste error
+	(semanticdb-project-database => sym).  Avoid eieio--class-public-a
+	when possible.
+
+2015-02-04  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Use cl-generic instead of EIEIO's defgeneric/defmethod.
+	* **/*.el: Mechanically replace all calls to defmethod/defgeneric by
+	calls to cl-defmethod/cl-defgeneric.
+	* srecode/table.el:
+	* srecode/fields.el:
+	* srecode/dictionary.el:
+	* srecode/compile.el:
+	* semantic/debug.el:
+	* semantic/db-ref.el:
+	* ede/base.el:
+	* ede/auto.el:
+	* ede.el: Require `cl-generic'.
+
 2015-01-07  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	Don't use <class> as a variable and don't assume that <class>-list-p is

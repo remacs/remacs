@@ -1,3 +1,40 @@
+2015-03-25  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* TODO: Remove obsolete entries.
+
+2015-03-24  Daniel Colascione  <dancol@dancol.org>
+
+	* NEWS: Mention change to `process-running-child-p`.
+
+2015-03-23  Daiki Ueno  <ueno@gnu.org>
+
+	* NEWS: Mention `make-process'.
+
+2015-03-21  Titus von der Malsburg  <malsburg@posteo.de>
+
+	* NEWS: Mention `default-font-width', `window-font-height',
+	`window-font-width', and `window-max-chars-per-line'.
+
+2015-03-03  Kelvin White  <kwhite@gnu.org>
+
+	* NEWS.24: Add section to include ERC changes.
+
+2015-03-02  Daniel Colascione  <dancol@dancol.org>
+
+	* NEWS: Mention finalizers.
+
+2015-02-09  Gareth Rees  <gdr@garethrees.org>  (tiny change)
+
+	* NEWS.24: Fix typo (bug#19820)
+
+2015-02-08  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* NEWS: Document `comment-line'.
+
+2015-02-03  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* NEWS: Document package.el's improved dependency-handling.
+
 2015-01-29  Francesc Rocher  <francesc.rocher@gmail.com>
 
 	* images/splash.svg, images/splash.png:

@@ -374,8 +374,6 @@ otherwise for the first of `gfile' or `inotify' that is usable.])
  ],
  [with_file_notification=$with_features])
 
-OPTION_DEFAULT_OFF([xwidgets],[enable use of some gtk widgets in Emacs buffers])
-
 ## For the times when you want to build Emacs but don't have
 ## a suitable makeinfo, and can live without the manuals.
 dnl http://lists.gnu.org/archive/html/emacs-devel/2008-04/msg01844.html
@@ -399,17 +397,12 @@ AC_ARG_WITH(gameuser,dnl
 		An argument prefixed by ':' specifies a group instead.])])
 gameuser=
 gamegroup=
+# We don't test if we can actually chown/chgrp here, because configure
+# may run without root privileges.  lib-src/Makefile.in will handle
+# any errors due to missing user/group gracefully.
 case ${with_gameuser} in
   no) ;;
-  "" | yes)
-    AC_MSG_CHECKING([whether a 'games' user exists])
-    if id -u games >/dev/null 2>&1; then
-      AC_MSG_RESULT([yes])
-      gameuser=games
-    else
-      AC_MSG_RESULT([no])
-    fi
-    ;;
+  "" | yes) gamegroup=games ;;
   :*) gamegroup=`echo "${with_gameuser}" | sed -e "s/://"` ;;
   *) gameuser=${with_gameuser} ;;
 esac
@@ -430,6 +423,7 @@ AC_ARG_ENABLE(ns-self-contained,
    EN_NS_SELF_CONTAINED=$enableval,
    EN_NS_SELF_CONTAINED=yes)
 
+locallisppathset=no
 AC_ARG_ENABLE(locallisppath,
 [AS_HELP_STRING([--enable-locallisppath=PATH],
                 [directories Emacs should search for lisp files specific
@@ -437,7 +431,7 @@ AC_ARG_ENABLE(locallisppath,
 if test "${enableval}" = "no"; then
   locallisppath=
 elif test "${enableval}" != "yes"; then
-  locallisppath=${enableval}
+  locallisppath=${enableval} locallisppathset=yes
 fi)
 
 AC_ARG_ENABLE(checking,
@@ -618,6 +612,11 @@ case "${canonical}" in
 ##    fi
   ;;
 
+  ## Chromium Native Client
+  *-nacl )
+    opsys=nacl
+  ;;
+
   ## Cygwin ports
   *-*-cygwin )
     opsys=cygwin
@@ -786,6 +785,17 @@ AC_DEFUN([gl_CRYPTO_CHECK])
 # Avoid gnulib's tests for HAVE_WORKING_O_NOATIME and HAVE_WORKING_O_NOFOLLOW,
 # as we don't use them.
 AC_DEFUN([gl_FCNTL_O_FLAGS])
+# Avoid gnulib's test for pthread_sigmask.
+funcs=
+for func in $ac_func_list; do
+  test $func = pthread_sigmask || AS_VAR_APPEND([funcs], [" $func"])
+done
+ac_func_list=$funcs
+# Use the system putenv even if it lacks GNU features, as we don't need them,
+# and the gnulib replacement runs afoul of a FreeBSD 10.1 bug; see Bug#19874.
+AC_CHECK_FUNCS_ONCE([putenv])
+AC_DEFUN([gl_FUNC_PUTENV],
+  [test "$ac_cv_func_putenv" = yes || REPLACE_PUTENV=1])
 
 # Initialize gnulib right after choosing the compiler.
 dnl Amongst other things, this sets AR and ARFLAGS.
@@ -873,6 +883,7 @@ if test "$gl_gcc_warnings" != yes; then
      gl_WARN_ADD([-Wno-tautological-constant-out-of-range-compare])
      gl_WARN_ADD([-Wno-pointer-sign])
      gl_WARN_ADD([-Wno-string-plus-int])
+     gl_WARN_ADD([-Wno-unknown-attributes])
   fi
 else
   isystem='-isystem '
@@ -1258,7 +1269,7 @@ dnl The function dump-emacs will not be defined and temacs will do
 dnl (load "loadup") automatically unless told otherwise.
 test "x$CANNOT_DUMP" = "x" && CANNOT_DUMP=no
 case "$opsys" in
-  your-opsys-here) CANNOT_DUMP=yes ;;
+  nacl) CANNOT_DUMP=yes ;;
 esac
 
 if test "$CANNOT_DUMP" = "yes"; then
@@ -1878,6 +1889,7 @@ if test "${HAVE_NS}" = yes; then
      infodir="\${ns_appresdir}/info"
      mandir="\${ns_appresdir}/man"
      lispdir="\${ns_appresdir}/lisp"
+     test "$locallisppathset" = no && locallisppath=""
      INSTALL_ARCH_INDEP_EXTRA=
   fi
 
@@ -2098,7 +2110,7 @@ hybrid_malloc=
 
 case "$opsys" in
   ## darwin ld insists on the use of malloc routines in the System framework.
-  darwin|mingw32|sol2-10) system_malloc=yes ;;
+  darwin | mingw32 | nacl | sol2-10) system_malloc=yes ;;
   cygwin) hybrid_malloc=yes;;
 esac
 
@@ -2179,39 +2191,62 @@ AC_CHECK_LIB(Xbsd, main, LD_SWITCH_X_SITE="$LD_SWITCH_X_SITE -lXbsd")
 
 dnl Check for the POSIX thread library.
 LIB_PTHREAD=
-if test "$opsys" != "mingw32"; then
 AC_CHECK_HEADERS_ONCE(pthread.h)
-if test "$ac_cv_header_pthread_h"; then
-  dnl gmalloc.c uses pthread_atfork, which is not available on older-style
-  dnl hosts such as MirBSD 10, so test for pthread_atfork instead of merely
-  dnl testing for pthread_kill if Emacs uses gmalloc.c.
-  if test "$GMALLOC_OBJ" = gmalloc.o; then
-    emacs_pthread_function=pthread_atfork
-  else
-    emacs_pthread_function=pthread_kill
+if test "$ac_cv_header_pthread_h" && test "$opsys" != "mingw32"; then
+  AC_CACHE_CHECK([for pthread library],
+    [emacs_cv_pthread_lib],
+    [emacs_cv_pthread_lib=no
+     OLD_CPPFLAGS=$CPPFLAGS
+     OLD_LIBS=$LIBS
+     for emacs_pthread_lib in 'none needed' -lpthread; do
+       case $emacs_pthread_lib in
+	 -*) LIBS="$OLD_LIBS $emacs_pthread_lib";;
+       esac
+       AC_LINK_IFELSE(
+	 [AC_LANG_PROGRAM(
+	    [[#include <pthread.h>
+	      #include <signal.h>
+	      sigset_t old_mask, new_mask;
+	      void noop (void) {}]],
+	    [[pthread_t th = pthread_self ();
+	      int status = 0;
+	      status += pthread_create (&th, 0, 0, 0);
+	      status += pthread_sigmask (SIG_BLOCK, &new_mask, &old_mask);
+	      status += pthread_kill (th, 0);
+	      #if ! (defined SYSTEM_MALLOC || defined HYBRID_MALLOC \
+		     || defined DOUG_LEA_MALLOC)
+	      /* Test for pthread_atfork only if gmalloc uses it,
+		 as older-style hosts like MirBSD 10 lack it.  */
+	      status += pthread_atfork (noop, noop, noop);
+	      #endif
+	      return status;]])],
+	 [emacs_cv_pthread_lib=$emacs_pthread_lib])
+       LIBS=$OLD_LIBS
+       if test "$emacs_cv_pthread_lib" != no; then
+	 break
+       fi
+     done
+     CPPFLAGS=$OLD_CPPFLAGS])
+  if test "$emacs_cv_pthread_lib" != no; then
+    AC_DEFINE([HAVE_PTHREAD], 1, [Define to 1 if you have POSIX threads.])
+    case $emacs_cv_pthread_lib in
+      -*) LIB_PTHREAD=$emacs_cv_pthread_lib;;
+    esac
+    ac_cv_func_pthread_sigmask=yes
+    # Some systems optimize for single-threaded programs by default, and
+    # need special flags to disable these optimizations. For example, the
+    # definition of 'errno' in <errno.h>.
+    case $opsys in
+      hpux* | sol*)
+	AC_DEFINE([_REENTRANT], 1,
+	  [Define to 1 if your system requires this in multithreaded code.]);;
+      aix4-2)
+	AC_DEFINE([_THREAD_SAFE], 1,
+	  [Define to 1 if your system requires this in multithreaded code.]);;
+    esac
   fi
-  OLD_LIBS=$LIBS
-  AC_SEARCH_LIBS([$emacs_pthread_function], [pthread],
-    [AC_DEFINE([HAVE_PTHREAD], [1],
-       [Define to 1 if you have pthread (-lpthread).])
-     # Some systems optimize for single-threaded programs by default, and
-     # need special flags to disable these optimizations. For example, the
-     # definition of 'errno' in <errno.h>.
-     case $opsys in
-       sol*)
-         AC_DEFINE([_REENTRANT], 1,
-   	[Define to 1 if your system requires this in multithreaded code.]);;
-       aix4-2)
-         AC_DEFINE([_THREAD_SAFE], 1,
-   	[Define to 1 if your system requires this in multithreaded code.]);;
-     esac])
- if test "X$LIBS" != "X$OLD_LIBS"; then
-    eval LIB_PTHREAD=\$ac_cv_search_$emacs_pthread_function
-  fi
-  LIBS=$OLD_LIBS
 fi
 AC_SUBST([LIB_PTHREAD])
-fi
 
 dnl Check for need for bigtoc support on IBM AIX
 
@@ -2529,41 +2564,6 @@ if test "${HAVE_GTK}" = "yes"; then
  term_header=gtkutil.h
 fi
 
-
-HAVE_XWIDGETS=no
-HAVE_WEBKIT=no
-HAVE_GIR=no
-
-if test "${with_xwidgets}" != "no" && test "${USE_GTK_TOOLKIT}" = "GTK3"  && test "$window_system" != "none" ; then
-   echo "xwidgets enabled, checking webkit, and others"
-   HAVE_XWIDGETS=yes
-   AC_DEFINE(HAVE_XWIDGETS, 1, [Define to 1 if you have xwidgets support.])
-dnl xwidgets
-dnl - enable only if GTK3 is enabled, and we have a window system
-dnl - check for webkit and gobject introspection
-
-
-#webkit version for gtk3.
-  WEBKIT_REQUIRED=1.4.0
-  WEBKIT_MODULES="webkitgtk-3.0 >= $WEBKIT_REQUIRED"
-
-  if test "${with_gtk3}" = "yes"; then
-    PKG_CHECK_MODULES(WEBKIT, $WEBKIT_MODULES, HAVE_WEBKIT=yes, HAVE_WEBKIT=no)
-    if test $HAVE_WEBKIT = yes; then
-        AC_DEFINE(HAVE_WEBKIT_OSR, 1, [Define to 1 if you have webkit_osr support.])
-    fi
-  fi
-
-  GIR_REQUIRED=1.32.1
-  GIR_MODULES="gobject-introspection-1.0 >= $GIR_REQUIRED"
-  PKG_CHECK_MODULES(GIR, $GIR_MODULES, HAVE_GIR=yes, HAVE_GIR=no)
-  if test $HAVE_GIR = yes; then
-     AC_DEFINE(HAVE_GIR, 1, [Define to 1 if you have GIR support.])
-  fi
-
-
-fi
-
 CFLAGS=$OLD_CFLAGS
 LIBS=$OLD_LIBS
 
@@ -2699,6 +2699,11 @@ fi
 
 dnl MS Windows native file monitor is available for mingw32 only.
 case $with_file_notification,$opsys in
+  w32,cygwin)
+    AC_MSG_ERROR([`--with-file-notification=w32' was specified, but
+    this is only supported on MS-Windows native and MinGW32 builds.
+    Consider using gfile instead.])
+    ;;
   w32,* | yes,mingw32)
     AC_CHECK_HEADER(windows.h)
     if test "$ac_cv_header_windows_h" = yes ; then
@@ -3198,10 +3203,12 @@ if test "${opsys}" = "mingw32"; then
   AH_TEMPLATE(HAVE_JPEG, [Define to 1 if you have the jpeg library (-ljpeg).])dnl
   if test "${HAVE_JPEG}" = "yes"; then
     AC_DEFINE(HAVE_JPEG)
-    AC_EGREP_CPP([version= *(6[2-9]|[7-9][0-9])],
-        [#include <jpeglib.h>
-	 version=JPEG_LIB_VERSION
-],
+    AC_EGREP_CPP([version 6b or later],
+	[#include <jpeglib.h>
+	 #if JPEG_LIB_VERSION >= 62
+	 version 6b or later
+	 #endif
+	],
         [AC_DEFINE(HAVE_JPEG)],
         [AC_MSG_WARN([libjpeg found, but not version 6b or later])
         HAVE_JPEG=no])
@@ -3217,10 +3224,12 @@ elif test "${HAVE_X11}" = "yes" || test "${HAVE_W32}" = "yes"; then
   AH_TEMPLATE(HAVE_JPEG, [Define to 1 if you have the jpeg library (-ljpeg).])dnl
   if test "${HAVE_JPEG}" = "yes"; then
     AC_DEFINE(HAVE_JPEG)
-    AC_EGREP_CPP([version= *(6[2-9]|[7-9][0-9])],
+    AC_EGREP_CPP([version 6b or later],
 	[#include <jpeglib.h>
-	 version=JPEG_LIB_VERSION
-],
+	 #if JPEG_LIB_VERSION >= 62
+	 version 6b or later
+	 #endif
+	],
 	[AC_DEFINE(HAVE_JPEG)],
 	[AC_MSG_WARN([libjpeg found, but not version 6b or later])
 	HAVE_JPEG=no])
@@ -3533,7 +3542,7 @@ if test "${with_xml2}" != "no"; then
   ### I'm not sure what the version number should be, so I just guessed.
   EMACS_CHECK_MODULES([LIBXML2], [libxml-2.0 > 2.6.17])
   # Built-in libxml2 on OS X 10.8 lacks libxml-2.0.pc.
-  if test "${HAVE_LIBXML2}" != "yes" -a "$opsys" = "darwin"; then
+  if test "${HAVE_LIBXML2}" != "yes" && test "$opsys" = "darwin"; then
     SAVE_CPPFLAGS="$CPPFLAGS"
     CPPFLAGS="$CPPFLAGS -I$xcsdkdir/usr/include/libxml2"
     AC_CHECK_HEADER(libxml/HTMLparser.h,
@@ -3547,7 +3556,7 @@ if test "${with_xml2}" != "no"; then
   fi
   if test "${HAVE_LIBXML2}" = "yes"; then
     if test "${opsys}" != "mingw32"; then
-      AC_CHECK_LIB(xml2, htmlReadMemory, HAVE_LIBXML2=yes, HAVE_LIBXML2=no
+      AC_CHECK_LIB(xml2, htmlReadMemory, HAVE_LIBXML2=yes, HAVE_LIBXML2=no,
         [$LIBXML2_LIBS])
     else
       LIBXML2_LIBS=""
@@ -4183,7 +4192,7 @@ emacs_broken_SIGIO=no
 case $opsys in
   dnl SIGIO exists, but the feature doesn't work in the way Emacs needs.
   dnl See eg <http://article.gmane.org/gmane.os.openbsd.ports/46831>.
-  hpux* | irix6-5 | openbsd | sol2* | unixware )
+  hpux* | irix6-5 | nacl | openbsd | sol2* | unixware )
     emacs_broken_SIGIO=yes
     ;;
 
@@ -4345,7 +4354,7 @@ case $opsys in
     AC_DEFINE(FIRST_PTY_LETTER, ['p'])
     ;;
 
-  gnu-linux | gnu-kfreebsd | dragonfly | freebsd | netbsd )
+  gnu-linux | gnu-kfreebsd | dragonfly | freebsd | netbsd | nacl )
     dnl if HAVE_GRANTPT
     if test "x$ac_cv_func_grantpt" = xyes; then
       AC_DEFINE(UNIX98_PTYS, 1, [Define if the system has Unix98 PTYs.])
@@ -4550,10 +4559,10 @@ if test $emacs_cv_func_sigsetjmp = yes; then
 fi
 
 # We need all of these features to handle C stack overflows.
-if test "$ac_cv_header_sys_resource_h" = "yes" -a \
-	"$ac_cv_func_getrlimit" = "yes" -a \
-	"$emacs_cv_func_sigsetjmp" = "yes" -a \
-	"$emacs_cv_alternate_stack" = yes; then
+if test "$ac_cv_header_sys_resource_h" = "yes" &&
+   test "$ac_cv_func_getrlimit" = "yes" &&
+   test "$emacs_cv_func_sigsetjmp" = "yes" &&
+   test "$emacs_cv_alternate_stack" = yes; then
   AC_DEFINE([HAVE_STACK_OVERFLOW_HANDLING], 1,
     [Define to 1 if C stack overflow can be handled in some cases.])
 fi
@@ -4644,7 +4653,7 @@ esac
 
 AC_CACHE_CHECK([for usable FIONREAD], [emacs_cv_usable_FIONREAD],
   [case $opsys in
-     aix4-2)
+     aix4-2 | nacl)
        dnl BUILD 9008 - FIONREAD problem still exists in X-Windows.
        emacs_cv_usable_FIONREAD=no
        ;;
@@ -4843,7 +4852,7 @@ TOOLKIT_LIBW=
 case "$USE_X_TOOLKIT" in
   MOTIF) TOOLKIT_LIBW="$MOTIF_LIBW" ;;
   LUCID) TOOLKIT_LIBW="$LUCID_LIBW" ;;
-  none) test "x$HAVE_GTK" = "xyes" && TOOLKIT_LIBW="$GTK_LIBS -lXcomposite" ;;
+  none) test "x$HAVE_GTK" = "xyes" && TOOLKIT_LIBW="$GTK_LIBS" ;;
 esac
 AC_SUBST(TOOLKIT_LIBW)
 
@@ -5019,10 +5028,28 @@ case "$opsys" in
    esac
    ;;
 
-  openbsd) LD_SWITCH_SYSTEM_TEMACS='-nopie' ;;
-
   *) LD_SWITCH_SYSTEM_TEMACS= ;;
 esac
+
+# -nopie fixes a temacs segfault on Gentoo, OpenBSD, and other systems
+# with "hardened" GCC configurations for some reason (Bug#18784).
+# We don't know why -nopie works, but not segfaulting is better than
+# segfaulting.  Use -Werror when trying -nopie, otherwise clang keeps
+# warning that it does not understand -nopie.
+AC_CACHE_CHECK([whether $CC accepts -nopie],
+  [emacs_cv_prog_cc_nopie],
+  [emacs_save_CFLAGS=$CFLAGS
+   emacs_save_LDFLAGS=$LDFLAGS
+   CFLAGS="$CFLAGS -Werror"
+   LDFLAGS="$LDFLAGS -nopie"
+   AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
+     [emacs_cv_prog_cc_nopie=yes],
+     [emacs_cv_prog_cc_nopie=no])
+   CFLAGS=$emacs_save_CFLAGS
+   LDFLAGS=$emacs_save_LDFLAGS])
+if test "$emacs_cv_prog_cc_nopie" = yes; then
+  LD_SWITCH_SYSTEM_TEMACS="$LD_SWITCH_SYSTEM_TEMACS -nopie"
+fi
 
 if test x$ac_enable_profiling != x ; then
   case $opsys in
@@ -5164,10 +5191,6 @@ echo "  Does Emacs use -lxft?                                   ${HAVE_XFT}"
 echo "  Does Emacs directly use zlib?                           ${HAVE_ZLIB}"
 
 echo "  Does Emacs use toolkit scroll bars?                     ${USE_TOOLKIT_SCROLL_BARS}"
-
-echo "  Does Emacs support Xwidgets?                            ${HAVE_XWIDGETS}"
-echo "       Does xwidgets support webkit(requires gtk3)?       ${HAVE_WEBKIT}"
-echo "       Does xwidgets support gobject introspection?       ${HAVE_GIR}"
 echo
 
 if test -n "${EMACSDATA}"; then

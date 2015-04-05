@@ -196,6 +196,8 @@ textual parts.")
 	  (nnimap-article-ranges (gnus-compress-sequence articles))
 	  (nnimap-header-parameters))
 	 t)
+	(unless (process-live-p (get-buffer-process (current-buffer)))
+	  (error "Server closed connection"))
 	(nnimap-transform-headers)
 	(nnheader-remove-cr-followed-by-lf))
       (insert-buffer-substring
@@ -820,39 +822,40 @@ textual parts.")
 			group))
 	t))))
 
-(deffoo nnimap-request-scan-group (group &optional server info)
+(deffoo nnimap-request-group-scan (group &optional server info)
   (setq group (nnimap-decode-gnus-group group))
-  (let (marks high low)
-    (with-current-buffer (nnimap-buffer)
-      (erase-buffer)
-      (let ((group-sequence
-	     (nnimap-send-command "SELECT %S" (utf7-encode group t)))
-	    (flag-sequence
-	     (nnimap-send-command "UID FETCH 1:* FLAGS")))
-	(setf (nnimap-group nnimap-object) group)
-	(nnimap-wait-for-response flag-sequence)
-	(setq marks
-	      (nnimap-flags-to-marks
-	       (nnimap-parse-flags
-		(list (list group-sequence flag-sequence
-			    1 group "SELECT")))))
-	(when (and info
-		   marks)
-	  (nnimap-update-infos marks (list info))
-	  (nnimap-store-info info (gnus-active (gnus-info-group info))))
-	(goto-char (point-max))
-	(let ((uidnext (nth 5 (car marks))))
-	  (setq high (or (if uidnext
-			     (1- uidnext)
-			   (nth 3 (car marks)))
-			 0)
-		low (or (nth 4 (car marks)) uidnext 1)))))
-    (with-current-buffer nntp-server-buffer
-      (erase-buffer)
-      (insert
-       (format
-	"211 %d %d %d %S\n" (1+ (- high low)) low high group))
-      t)))
+  (when (nnimap-change-group nil server)
+    (let (marks high low)
+      (with-current-buffer (nnimap-buffer)
+	(erase-buffer)
+	(let ((group-sequence
+	       (nnimap-send-command "SELECT %S" (utf7-encode group t)))
+	      (flag-sequence
+	       (nnimap-send-command "UID FETCH 1:* FLAGS")))
+	  (setf (nnimap-group nnimap-object) group)
+	  (nnimap-wait-for-response flag-sequence)
+	  (setq marks
+		(nnimap-flags-to-marks
+		 (nnimap-parse-flags
+		  (list (list group-sequence flag-sequence
+			      1 group "SELECT")))))
+	  (when (and info
+		     marks)
+	    (nnimap-update-infos marks (list info))
+	    (nnimap-store-info info (gnus-active (gnus-info-group info))))
+	  (goto-char (point-max))
+	  (let ((uidnext (nth 5 (car marks))))
+	    (setq high (or (if uidnext
+			       (1- uidnext)
+			     (nth 3 (car marks)))
+			   0)
+		  low (or (nth 4 (car marks)) uidnext 1)))))
+      (with-current-buffer nntp-server-buffer
+	(erase-buffer)
+	(insert
+	 (format
+	  "211 %d %d %d %S\n" (1+ (- high low)) low high group))
+	t))))
 
 (deffoo nnimap-request-create-group (group &optional server args)
   (setq group (nnimap-decode-gnus-group group))
@@ -1259,7 +1262,12 @@ If LIMIT, first try to limit the search to the N last articles."
     (while (search-forward "* LIST " nil t)
       (let ((flags (read (current-buffer)))
 	    (separator (read (current-buffer)))
-	    (group (read (current-buffer))))
+	    (group (buffer-substring-no-properties
+		    (progn (skip-chars-forward " \"")
+			   (point))
+		    (progn (end-of-line)
+			   (skip-chars-backward " \"")
+			   (point)))))
 	(unless (member '%NoSelect flags)
 	  (push (utf7-decode (if (stringp group)
 				 group
@@ -2078,12 +2086,15 @@ Return the server's response to the SELECT or EXAMINE command."
 		    (ranges (cdr spec)))
 		(if (eq group 'junk)
 		    (setq junk-articles ranges)
-		  (push (list (nnimap-send-command
-			       "UID COPY %s %S"
-			       (nnimap-article-ranges ranges)
-			       (utf7-encode group t))
-			      ranges)
-			sequences))))
+		  ;; Don't copy if the message is already in its
+		  ;; target group.
+		  (unless (string= group nnimap-inbox)
+		   (push (list (nnimap-send-command
+				"UID COPY %s %S"
+				(nnimap-article-ranges ranges)
+				(utf7-encode group t))
+			       ranges)
+			 sequences)))))
 	    ;; Wait for the last COPY response...
 	    (when sequences
 	      (nnimap-wait-for-response (caar sequences))

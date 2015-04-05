@@ -100,8 +100,8 @@ struct lisp_time
 
 /* defined in editfns.c */
 extern Lisp_Object make_lisp_time (struct timespec);
-extern bool decode_time_components (Lisp_Object, Lisp_Object, Lisp_Object,
-				    Lisp_Object, struct lisp_time *, double *);
+extern int decode_time_components (Lisp_Object, Lisp_Object, Lisp_Object,
+				   Lisp_Object, struct lisp_time *, double *);
 extern struct timespec lisp_to_timespec (struct lisp_time);
 extern struct timespec lisp_time_argument (Lisp_Object);
 #endif
@@ -118,8 +118,6 @@ extern struct timespec lisp_time_argument (Lisp_Object);
 typedef char const *timezone_t;
 INLINE timezone_t tzalloc (char const *name) { return name; }
 INLINE void tzfree (timezone_t tz) { }
-/* Defined in editfns.c.  */
-extern time_t mktime_z (timezone_t, struct tm *);
 #endif
 
 INLINE_HEADER_END

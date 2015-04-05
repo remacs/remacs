@@ -36,6 +36,8 @@
 (require 'ert)
 (require 'cl-lib)
 
+(setq package-menu-async nil)
+
 (defvar package-test-user-dir nil
   "Directory to use for installing packages during testing.")
 
@@ -72,6 +74,24 @@
                        :version '(1 0)
                        :kind 'single)
   "Expected `package-desc' parsed from new-pkg-1.0.el.")
+
+(defvar simple-depend-desc-1
+  (package-desc-create :name 'simple-depend-1
+                       :version '(1 0)
+                       :summary "A single-file package with a dependency."
+                       :kind 'single
+                       :reqs '((simple-depend (1 0))
+                               (multi-file (0 1))))
+  "`package-desc' used for testing dependencies.")
+
+(defvar simple-depend-desc-2
+  (package-desc-create :name 'simple-depend-2
+                       :version '(1 0)
+                       :summary "A single-file package with a dependency."
+                       :kind 'single
+                       :reqs '((simple-depend-1 (1 0))
+                               (multi-file (0 1))))
+  "`package-desc' used for testing dependencies.")
 
 (defvar package-test-data-dir (expand-file-name "data/package" package-test-file-dir)
   "Base directory of package test files.")
@@ -306,7 +326,7 @@ Must called from within a `tar-mode' buffer."
 
         ;; New version should be available and old version should be installed
         (goto-char (point-min))
-        (should (re-search-forward "^\\s-+simple-single\\s-+1.4\\s-+new" nil t))
+        (should (re-search-forward "^\\s-+simple-single\\s-+1.4\\s-+available" nil t))
         (should (re-search-forward "^\\s-+simple-single\\s-+1.3\\s-+installed" nil t))
 
         (goto-char (point-min))
@@ -401,13 +421,17 @@ Must called from within a `tar-mode' buffer."
       ;; Check if the installed package status is updated.
       (let ((buf (package-list-packages)))
 	(package-menu-refresh)
-	(should (re-search-forward "^\\s-+signed-good\\s-+1\\.0\\s-+installed"
-				   nil t)))
+	(should (re-search-forward
+		 "^\\s-+signed-good\\s-+\\(\\S-+\\)\\s-+\\(\\S-+\\)\\s-"
+		 nil t))
+	(should (string-equal (match-string-no-properties 1) "1.0"))
+	(should (string-equal (match-string-no-properties 2) "installed")))
       ;; Check if the package description is updated.
       (with-fake-help-buffer
        (describe-package 'signed-good)
        (goto-char (point-min))
-       (should (search-forward "signed-good is an installed package." nil t))
+       (should (re-search-forward "signed-good is an? \\(\\S-+\\) package." nil t))
+       (should (string-equal (match-string-no-properties 1) "installed"))
        (should (search-forward
 		"Status: Installed in `~/signed-good-1.0/'."
 		nil t))))))
@@ -478,6 +502,61 @@ Must called from within a `tar-mode' buffer."
                (buffer-substring (point-min) (point-max)))))
       (should (equal archive-contents
                      (list 1 package-x-test--single-archive-entry-1-4))))))
+
+(ert-deftest package-test-get-deps ()
+  "Test `package--get-deps' with complex structures."
+  (let ((package-alist
+         (mapcar (lambda (p) (list (package-desc-name p) p))
+           (list simple-single-desc
+                 simple-depend-desc
+                 multi-file-desc
+                 new-pkg-desc
+                 simple-depend-desc-1
+                 simple-depend-desc-2))))
+    (should
+     (equal (package--get-deps 'simple-depend)
+            '(simple-single)))
+    (should
+     (equal (package--get-deps 'simple-depend 'indirect)
+            nil))
+    (should
+     (equal (package--get-deps 'simple-depend 'direct)
+            '(simple-single)))
+    (should
+     (equal (package--get-deps 'simple-depend-2)
+            '(simple-depend-1 multi-file simple-depend simple-single)))
+    (should
+     (equal (package--get-deps 'simple-depend-2 'indirect)
+            '(simple-depend multi-file simple-single)))
+    (should
+     (equal (package--get-deps 'simple-depend-2 'direct)
+            '(simple-depend-1 multi-file)))))
+
+(ert-deftest package-test-sort-by-dependence ()
+  "Test `package--sort-by-dependence' with complex structures."
+  (let ((package-alist
+         (mapcar (lambda (p) (list (package-desc-name p) p))
+           (list simple-single-desc
+                 simple-depend-desc
+                 multi-file-desc
+                 new-pkg-desc
+                 simple-depend-desc-1
+                 simple-depend-desc-2)))
+        (delete-list
+         (list simple-single-desc
+               simple-depend-desc
+               multi-file-desc
+               new-pkg-desc
+               simple-depend-desc-1
+               simple-depend-desc-2)))
+    (should
+     (equal (package--sort-by-dependence delete-list)
+            (list simple-depend-desc-2 simple-depend-desc-1 new-pkg-desc
+                  multi-file-desc simple-depend-desc simple-single-desc)))
+    (should
+     (equal (package--sort-by-dependence (reverse delete-list))
+            (list new-pkg-desc simple-depend-desc-2 simple-depend-desc-1
+                  multi-file-desc simple-depend-desc simple-single-desc)))))
 
 (provide 'package-test)
 

@@ -1160,9 +1160,9 @@ which it may alter in any way."
   'mail-decode-encoded-address-string
   "Function used to decode addresses with encoded words.")
 
-(defcustom gnus-extra-headers '(To Cc Keywords Gcc Newsgroups)
+(defcustom gnus-extra-headers '(To Cc Keywords Gcc Newsgroups X-GM-LABELS)
   "*Extra headers to parse."
-  :version "24.1"                       ; added Cc Keywords Gcc
+  :version "25.1"
   :group 'gnus-summary
   :type '(repeat symbol))
 
@@ -2424,6 +2424,7 @@ increase the score of each group you read."
 	      ["Lapsed" gnus-article-date-lapsed t]
 	      ["User-defined" gnus-article-date-user t])
 	     ("Display"
+	      ["Display HTML images" gnus-article-show-images t]
 	      ["Remove images" gnus-article-remove-images t]
 	      ["Toggle smiley" gnus-treat-smiley t]
 	      ["Show X-Face" gnus-article-display-x-face t]
@@ -5620,7 +5621,7 @@ If SELECT-ARTICLES, only select those articles from GROUP."
 	   (mm-decode-coding-string group charset)
 	   (mm-decode-coding-string (gnus-status-message group) charset))))
 
-    (unless (gnus-request-group group t)
+    (unless (gnus-request-group group t nil (gnus-get-info group))
       (when (derived-mode-p 'gnus-summary-mode)
 	(gnus-kill-buffer (current-buffer)))
       (error "Couldn't request group %s: %s"

@@ -395,7 +395,7 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
   Lisp_Object dummy, frame;
 
   specbind (Qminibuffer_default, defalt);
-  specbind (intern ("inhibit-read-only"), Qnil);
+  specbind (Qinhibit_read_only, Qnil);
 
   /* If Vminibuffer_completing_file_name is `lambda' on entry, it was t
      in previous recursive minibuffer, but was not set explicitly
@@ -459,7 +459,7 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
   if ((noninteractive
        /* In case we are running as a daemon, only do this before
 	  detaching from the terminal.  */
-       || (IS_DAEMON && (daemon_pipe[1] >= 0)))
+       || (IS_DAEMON && DAEMON_RUNNING))
       && NILP (Vexecuting_kbd_macro))
     {
       val = read_minibuf_noninteractive (map, initial, prompt,
@@ -1081,7 +1081,7 @@ A user option, or customizable variable, is one for which
   return Fintern (name, Qnil);
 }
 
-DEFUN ("read-buffer", Fread_buffer, Sread_buffer, 1, 3, 0,
+DEFUN ("read-buffer", Fread_buffer, Sread_buffer, 1, 4, 0,
        doc: /* Read the name of a buffer and return as a string.
 Prompt with PROMPT.
 Optional second arg DEF is value to return if user enters an empty line.
@@ -1093,8 +1093,11 @@ The argument PROMPT should be a string ending with a colon and a space.
 If `read-buffer-completion-ignore-case' is non-nil, completion ignores
 case while reading the buffer name.
 If `read-buffer-function' is non-nil, this works by calling it as a
-function, instead of the usual behavior.  */)
-  (Lisp_Object prompt, Lisp_Object def, Lisp_Object require_match)
+function, instead of the usual behavior.
+Optional arg PREDICATE if non-nil is a function limiting the buffers that can
+be considered.  */)
+  (Lisp_Object prompt, Lisp_Object def, Lisp_Object require_match,
+   Lisp_Object predicate)
 {
   Lisp_Object result;
   char *s;
@@ -1136,11 +1139,16 @@ function, instead of the usual behavior.  */)
 	}
 
       result = Fcompleting_read (prompt, intern ("internal-complete-buffer"),
-				 Qnil, require_match, Qnil,
+				 predicate, require_match, Qnil,
 				 Qbuffer_name_history, def, Qnil);
     }
   else
-    result = call3 (Vread_buffer_function, prompt, def, require_match);
+    result = (NILP (predicate)
+	      /* Partial backward compatibility for older read_buffer_functions
+		 which don't expect a `predicate' argument.  */
+	      ? call3 (Vread_buffer_function, prompt, def, require_match)
+	      : call4 (Vread_buffer_function, prompt, def, require_match,
+		       predicate));
   return unbind_to (count, result);
 }
 
@@ -2070,9 +2078,7 @@ with completion; they always discard text properties.  */);
 	       doc: /* Text properties that are added to minibuffer prompts.
 These are in addition to the basic `field' property, and stickiness
 properties.  */);
-  /* We use `intern' here instead of Qread_only to avoid
-     initialization-order problems.  */
-  Vminibuffer_prompt_properties = list2 (intern_c_string ("read-only"), Qt);
+  Vminibuffer_prompt_properties = list2 (Qread_only, Qt);
 
   DEFVAR_LISP ("read-hide-char", Vread_hide_char,
 	       doc: /* Whether to hide input characters in noninteractive mode.

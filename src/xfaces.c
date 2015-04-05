@@ -5141,12 +5141,10 @@ static bool
 realize_basic_faces (struct frame *f)
 {
   bool success_p = false;
-  ptrdiff_t count = SPECPDL_INDEX ();
 
   /* Block input here so that we won't be surprised by an X expose
      event, for instance, without having the faces set up.  */
   block_input ();
-  specbind (Qscalable_fonts_allowed, Qt);
 
   if (realize_default_face (f))
     {
@@ -5180,7 +5178,6 @@ realize_basic_faces (struct frame *f)
       success_p = true;
     }
 
-  unbind_to (count, Qnil);
   unblock_input ();
   return success_p;
 }
@@ -5703,7 +5700,7 @@ map_tty_color (struct frame *f, struct face *face,
   if (STRINGP (color)
       && SCHARS (color)
       && CONSP (Vtty_defined_color_alist)
-      && (def = assq_no_quit (color, call1 (Qtty_color_alist, frame)),
+      && (def = assoc_no_quit (color, call1 (Qtty_color_alist, frame)),
 	  CONSP (def)))
     {
       /* Associations in tty-defined-color-alist are of the form
@@ -6190,7 +6187,7 @@ where R,G,B are numbers between 0 and 255 and name is an arbitrary string.  */)
   abspath = Fexpand_file_name (filename, Qnil);
 
   block_input ();
-  fp = emacs_fopen (SSDATA (abspath), "rt");
+  fp = emacs_fopen (SSDATA (abspath), "r" FOPEN_TEXT);
   if (fp)
     {
       char buf[512];

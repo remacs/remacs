@@ -50,6 +50,7 @@
 (autoload 'ansi-color-apply-on-region "ansi-color")
 (autoload 'mm-url-insert-file-contents-external "mm-url")
 (autoload 'mm-extern-cache-contents "mm-extern")
+(autoload 'url-expand-file-name "url-expand")
 
 (defgroup gnus-article nil
   "Article display."
@@ -1139,7 +1140,7 @@ predicate.  See Info node `(gnus)Customizing Articles'."
   :type gnus-article-treat-custom)
 (put 'gnus-treat-highlight-signature 'highlight t)
 
-(defcustom gnus-treat-buttonize 100000
+(defcustom gnus-treat-buttonize '(and 100000 (typep "text/plain"))
   "Add buttons.
 Valid values are nil, t, `head', `first', `last', an integer or a
 predicate.  See Info node `(gnus)Customizing Articles'."
@@ -2794,9 +2795,9 @@ summary buffer."
 
 (defun gnus-article-browse-html-save-cid-content (cid handles directory)
   "Find CID content in HANDLES and save it in a file in DIRECTORY.
-Return file name."
+Return file name relative to the parent of DIRECTORY."
   (save-match-data
-    (let (file)
+    (let (file afile)
       (catch 'found
 	(dolist (handle handles)
 	  (cond
@@ -2809,16 +2810,16 @@ Return file name."
 			      cid handle directory))
 	      (throw 'found file)))
 	   ((equal (concat "<" cid ">") (mm-handle-id handle))
-	    (setq file
-		  (expand-file-name
-		   (or (mm-handle-filename handle)
-		       (concat
-			(make-temp-name "cid")
-			(car (rassoc (car (mm-handle-type handle))
-				     mailcap-mime-extensions))))
-		   directory))
-	    (mm-save-part-to-file handle file)
-	    (throw 'found file))))))))
+	    (setq file (or (mm-handle-filename handle)
+			   (concat
+			    (make-temp-name "cid")
+			    (car (rassoc (car (mm-handle-type handle))
+					 mailcap-mime-extensions))))
+		  afile (expand-file-name file directory))
+	    (mm-save-part-to-file handle afile)
+	    (throw 'found (concat (file-name-nondirectory
+				   (directory-file-name directory))
+				  "/" file)))))))))
 
 (defun gnus-article-browse-html-parts (list &optional header)
   "View all \"text/html\" parts from LIST.
@@ -2854,8 +2855,32 @@ message header will be added to the bodies of the \"text/html\" parts."
 	       (insert content)
 	       ;; resolve cid contents
 	       (let ((case-fold-search t)
-		     cid-file)
+		     st base regexp cid-file)
 		 (goto-char (point-min))
+		 (when (and (re-search-forward "<head[\t\n >]" nil t)
+			    (progn
+			      (setq st (match-end 0))
+			      (re-search-forward "</head[\t\n >]" nil t))
+			    (re-search-backward "<base\
+\\(?:[\t\n ]+[^\t\n >]+\\)*[\t\n ]+href=\"\\([^\"]+\\)\"[^>]*>" st t))
+		   (setq base (match-string 1))
+		   (replace-match "<!--\\&-->")
+		   (setq st (point))
+		   (dolist (tag '(("a" . "href") ("form" . "action")
+				  ("img" . "src")))
+		     (setq regexp (concat "<" (car tag)
+					  "\\(?:[\t\n ]+[^\t\n >]+\\)*[\t\n ]+"
+					  (cdr tag) "=\"\\([^\"]+\\)"))
+		     (while (re-search-forward regexp nil t)
+		       (insert (prog1
+				   (condition-case nil
+				       (save-match-data
+					 (url-expand-file-name (match-string 1)
+							       base))
+				     (error (match-string 1)))
+				 (delete-region (match-beginning 1)
+						(match-end 1)))))
+		     (goto-char st)))
 		 (while (re-search-forward "\
 <img[\t\n ]+\\(?:[^\t\n >]+[\t\n ]+\\)*src=\"\\(cid:\\([^\"]+\\)\\)\""
 					   nil t)
@@ -2870,16 +2895,7 @@ message header will be added to the bodies of the \"text/html\" parts."
 				(with-current-buffer gnus-article-buffer
 				  gnus-article-mime-handles)
 				cid-dir))
-		     (when (eq system-type 'cygwin)
-		       (setq cid-file
-			     (concat "/" (substring
-					  (with-output-to-string
-					    (call-process "cygpath" nil
-							  standard-output
-							  nil "-m" cid-file))
-					  0 -1))))
-		     (replace-match (concat "file://" cid-file)
-				    nil nil nil 1))))
+		     (replace-match cid-file nil nil nil 1))))
 	       (unless content (setq content (buffer-string))))
 	     (when (or charset header (not file))
 	       (setq tmp-file (mm-make-temp-file
@@ -5054,6 +5070,7 @@ and `gnus-mime-delete-part', and not provided at run-time normally."
     (let ((gnus-mime-buttonized-part-id current-id))
       (gnus-article-edit-done))
     (gnus-configure-windows 'article)
+    (sit-for 0)
     (when (and current-id (integerp gnus-auto-select-part))
       (gnus-article-jump-to-part
        (min (max (+ current-id gnus-auto-select-part) 1)
@@ -5349,7 +5366,10 @@ Compressed files like .gz and .bz2 are decompressed."
 							      'gnus-data))))
 	(setq b btn))
       (if (and (not arg) (mm-handle-undisplayer handle))
-	  (mm-remove-part handle)
+	  (progn
+	    (setq b (copy-marker b)
+		  btn (copy-marker btn))
+	    (mm-remove-part handle))
 	(cond
 	 ((not arg) nil)
 	 ((numberp arg)
@@ -5363,6 +5383,9 @@ Compressed files like .gz and .bz2 are decompressed."
 	  (forward-line 1))
 	(mm-display-inline handle))
       ;; Toggle the button appearance between `[button]...' and `[button]'.
+      (when (markerp btn)
+	(setq btn (prog1 (marker-position btn)
+		    (set-marker btn nil))))
       (goto-char btn)
       (let ((displayed-p (mm-handle-displayed-p handle)))
 	(gnus-insert-mime-button handle (get-text-property btn 'gnus-part)
@@ -5398,6 +5421,9 @@ Compressed files like .gz and .bz2 are decompressed."
 		   '((gnus-treat-highlight-headers
 		      gnus-article-highlight-headers))))
 	      (gnus-treat-article 'head)))))
+      (when (markerp b)
+	(setq b (prog1 (marker-position b)
+		  (set-marker b nil))))
       (goto-char b))))
 
 (defun gnus-mime-set-charset-parameters (handle charset)
@@ -5495,7 +5521,8 @@ If no internal viewer is available, use an external viewer."
         (gnus-mime-view-part-as-type
          nil (lambda (type) (mm-inlinable-p handle type)))
       (when handle
-	(gnus-bind-safe-url-regexp (mm-display-part handle))))))
+	(gnus-bind-safe-url-regexp
+	 (mm-display-part handle nil t))))))
 
 (defun gnus-mime-action-on-part (&optional action)
   "Do something with the MIME attachment at \(point\)."
@@ -5719,7 +5746,8 @@ all parts."
 		point (previous-single-property-change start 'gnus-data))
 	  (if (mm-handle-displayed-p handle)
 	      ;; This will remove the part.
-	      (setq retval (mm-display-part handle))
+	      (setq point (copy-marker point)
+		    retval (mm-display-part handle))
 	    (let ((part (or (and (mm-inlinable-p handle)
 				 (mm-inlined-p handle)
 				 t)
@@ -5750,6 +5778,9 @@ all parts."
 					    ,(point-max-marker)))))))
 		    (part
 		     (mm-display-inline handle))))))
+      (when (markerp point)
+	(setq point (prog1 (marker-position point)
+		      (set-marker point nil))))
       (goto-char point)
       ;; Toggle the button appearance between `[button]...' and `[button]'.
       (let ((displayed-p (mm-handle-displayed-p handle)))
@@ -6090,7 +6121,7 @@ If nil, don't show those extra buttons."
 	      (gnus-article-insert-newline)
 	    (if (prog1
 		    (= (skip-chars-backward "\n") -1)
-		  (forward-char 1))
+		  (unless (eobp) (forward-char 1)))
 		(gnus-article-insert-newline)
 	      (put-text-property (point) (point-max) 'gnus-undeletable t))
 	    (goto-char (point-max)))
@@ -6421,8 +6452,7 @@ in the body.  Use `gnus-header-face-alist' to highlight buttons."
 	      (dolist (button (nreverse buttons))
 		(setq st (point))
 		(insert " ")
-		(mm-handle-set-undisplayer
-		 (setq handle (copy-sequence (cdr button))) nil)
+		(mm-handle-set-undisplayer (setq handle (cdr button)) nil)
 		(gnus-insert-mime-button handle (car button))
 		(skip-chars-backward "\t\n ")
 		(delete-region (point) (point-max))
@@ -7186,6 +7216,8 @@ If given a prefix, show the hidden text instead."
 	  (set-buffer buf))))))
 
 (defun gnus-block-private-groups (group)
+  "Allows images in newsgroups to be shown, blocks images in all
+other groups."
   (if (or (gnus-news-group-p group)
 	  (gnus-member-of-valid 'global group))
       ;; Block nothing in news groups.

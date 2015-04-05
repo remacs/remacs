@@ -1,4 +1,4 @@
-;;; flyspell.el --- on-the-fly spell checker
+;;; flyspell.el --- On-the-fly spell checker  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1998, 2000-2015 Free Software Foundation, Inc.
 
@@ -39,6 +39,7 @@
 ;;; Code:
 
 (require 'ispell)
+(eval-when-compile (require 'cl-lib))
 
 ;;*---------------------------------------------------------------------*/
 ;;*    Group ...                                                        */
@@ -92,7 +93,7 @@ downcased before comparing with these exceptions."
   :version "21.1"
   :type 'boolean)
 
-(defcustom flyspell-duplicate-distance -1
+(defcustom flyspell-duplicate-distance 400000
   "The maximum distance for finding duplicates of unrecognized words.
 This applies to the feature that when a word is not found in the dictionary,
 if the same spelling occurs elsewhere in the buffer,
@@ -101,7 +102,7 @@ This variable specifies how far to search to find such a duplicate.
 -1 means no limit (search the whole buffer).
 0 means do not search for duplicate unrecognized spellings."
   :group 'flyspell
-  :version "21.1"
+  :version "24.5"			; -1 -> 400000
   :type '(choice (const :tag "no limit" -1)
 		 number))
 
@@ -303,8 +304,8 @@ Returns t to continue checking, nil otherwise.
 Flyspell mode sets this variable to whatever is the `flyspell-mode-predicate'
 property of the major mode name.")
 (make-variable-buffer-local 'flyspell-generic-check-word-predicate)
-(defvaralias 'flyspell-generic-check-word-p
-  'flyspell-generic-check-word-predicate)
+(define-obsolete-variable-alias 'flyspell-generic-check-word-p
+  'flyspell-generic-check-word-predicate "25.1")
 
 ;;*--- mail mode -------------------------------------------------------*/
 (put 'mail-mode 'flyspell-mode-predicate 'mail-mode-flyspell-verify)
@@ -312,21 +313,22 @@ property of the major mode name.")
 (defvar message-signature-separator)
 (defun mail-mode-flyspell-verify ()
   "Function used for `flyspell-generic-check-word-predicate' in Mail mode."
-  (let ((header-end (save-excursion
-		      (goto-char (point-min))
-		      (re-search-forward
-		       (concat "^"
-			       (regexp-quote mail-header-separator)
-			       "$")
-		       nil t)
-		      (point)))
-	(signature-begin
-         (if (not (boundp 'message-signature-separator))
-             (point-max)
-           (save-excursion
-             (goto-char (point-max))
-             (re-search-backward message-signature-separator nil t)
-             (point)))))
+  (let* ((header-end (save-excursion
+                       (goto-char (point-min))
+                       (re-search-forward
+                        (concat "^\\(?:"
+                                (regexp-quote mail-header-separator)
+                                "\\)?$")
+                        nil t)
+                       (point)))
+         (signature-begin
+          (if (not (boundp 'message-signature-separator))
+              (point-max)
+            (save-excursion
+              (goto-char (point-max))
+              (re-search-backward message-signature-separator
+                                  (max header-end (- (point) 4000)) t)
+              (point)))))
     (cond ((< (point) header-end)
 	   (and (save-excursion (beginning-of-line)
 				(looking-at "^Subject:"))
@@ -396,7 +398,7 @@ like <img alt=\"Some thing.\">."
   "Turn on `flyspell-mode' for comments and strings."
   (interactive)
   (setq flyspell-generic-check-word-predicate
-        'flyspell-generic-progmode-verify)
+        #'flyspell-generic-progmode-verify)
   (flyspell-mode 1)
   (run-hooks 'flyspell-prog-mode-hook))
 
@@ -791,7 +793,7 @@ before the current command."
 ;;*---------------------------------------------------------------------*/
 ;;*    flyspell-after-change-function ...                               */
 ;;*---------------------------------------------------------------------*/
-(defun flyspell-after-change-function (start stop len)
+(defun flyspell-after-change-function (start stop _len)
   "Save the current buffer and point for Flyspell's post-command hook."
   (push (cons start stop) flyspell-changes))
 
@@ -1010,17 +1012,33 @@ Mostly we check word delimiters."
 ;;*---------------------------------------------------------------------*/
 (defun flyspell-word-search-backward (word bound &optional ignore-case)
   (save-excursion
-    (let ((r '())
-	  (inhibit-point-motion-hooks t)
-	  p)
-      (while (and (not r) (setq p (search-backward word bound t)))
-	(let ((lw (flyspell-get-word)))
-	  (if (and (consp lw)
-		   (if ignore-case
-		       (string-equal (downcase (car lw)) (downcase word))
-		     (string-equal (car lw) word)))
-	      (setq r p)
-	    (goto-char p))))
+    (let* ((r '())
+	   (inhibit-point-motion-hooks t)
+	   (flyspell-not-casechars (flyspell-get-not-casechars))
+	   (bound (if (and bound
+			   (> bound (point-min)))
+		      (- bound 1)))
+	   (word-re (concat
+                     "\\(?:" flyspell-not-casechars "\\|\\`\\)"
+                     (regexp-quote word)
+                     flyspell-not-casechars))
+	   p)
+      (while
+	  (and (not r)
+               (setq p
+                     (and
+                      (re-search-backward word-re bound t)
+		      (if (bobp)
+			  (point)
+                        (forward-char)
+                        (point)))))
+        (let ((lw (flyspell-get-word)))
+          (if (and (consp lw)
+                   (if ignore-case
+                       (string-equal (downcase (car lw)) (downcase word))
+                     (string-equal (car lw) word)))
+              (setq r p)
+            (goto-char p))))
       r)))
 
 ;;*---------------------------------------------------------------------*/
@@ -1028,15 +1046,31 @@ Mostly we check word delimiters."
 ;;*---------------------------------------------------------------------*/
 (defun flyspell-word-search-forward (word bound)
   (save-excursion
-    (let ((r '())
-	  (inhibit-point-motion-hooks t)
-	  p)
-      (while (and (not r) (setq p (search-forward word bound t)))
-	(let ((lw (flyspell-get-word)))
-	  (if (and (consp lw) (string-equal (car lw) word))
-	      (setq r p)
-	    (goto-char (1+ p)))))
+    (let* ((r '())
+	   (inhibit-point-motion-hooks t)
+	   (flyspell-not-casechars (flyspell-get-not-casechars))
+	   (bound (if (and bound
+			   (< bound (point-max)))
+		      (+ bound 1)))
+	   (word-re (concat flyspell-not-casechars
+                            (regexp-quote word)
+                            "\\(?:" flyspell-not-casechars "\\|\\'\\)"))
+	   p)
+      (while
+	  (and (not r)
+               (setq p (and
+                        (re-search-forward word-re bound t)
+                        (if (eobp)
+                            (point)
+                          (backward-char)
+                          (point)))))
+        (let ((lw (flyspell-get-word)))
+          (if (and (consp lw) (string-equal (car lw) word))
+              (setq r p)
+            (goto-char (1+ p)))))
       r)))
+
+(defvar flyspell-word) ;Backward compatibility; some predicates made use of it!
 
 ;;*---------------------------------------------------------------------*/
 ;;*    flyspell-word ...                                                */
@@ -1420,9 +1454,9 @@ The buffer to mark them in is `flyspell-large-region-buffer'."
 			;; end of last validated match.
 			(setq buffer-scan-pos (point))))
 		  ;; Record if misspelling is not found and try new one
-		  (add-to-list 'words-not-found
-			       (concat " -> " word " - "
-				       (int-to-string wordpos)))
+		  (cl-pushnew (concat " -> " word " - "
+				       (int-to-string wordpos))
+                              words-not-found :test #'equal)
 		  (setq keep nil)))))))
       ;; we are done
       (if flyspell-issue-message-flag (message "Spell Checking completed.")))
@@ -1528,7 +1562,8 @@ The buffer to mark them in is `flyspell-large-region-buffer'."
       (let ((extended-char-mode (ispell-get-extended-character-mode)))
         (and extended-char-mode          ; ~ extended character mode
 	     (string-match "[^~]+$" extended-char-mode)
-	     (add-to-list 'args (concat "-T" (match-string 0 extended-char-mode)))))
+	     (cl-pushnew (concat "-T" (match-string 0 extended-char-mode))
+                         args :test #'equal)))
 
       ;; Add ispell-extra-args
       (setq args (append args ispell-extra-args))

@@ -96,6 +96,17 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
   :version "21.1"
   :group 'vc-cvs)
 
+(defcustom vc-cvs-annotate-switches nil
+  "String or list of strings specifying switches for cvs annotate under VC.
+If nil, use the value of `vc-annotate-switches'.  If t, use no
+switches."
+  :type '(choice (const :tag "Unspecified" nil)
+		 (const :tag "None" t)
+		 (string :tag "Argument String")
+		 (repeat :tag "Argument List" :value ("") string))
+  :version "25.1"
+  :group 'vc-cvs)
+
 (defcustom vc-cvs-header '("\$Id\$")
   "Header keywords to be inserted by `vc-insert-headers'."
   :version "24.1"     ; no longer consult the obsolete vc-header-alist
@@ -623,11 +634,12 @@ Remaining arguments are ignored."
 (defun vc-cvs-annotate-command (file buffer &optional revision)
   "Execute \"cvs annotate\" on FILE, inserting the contents in BUFFER.
 Optional arg REVISION is a revision to annotate from."
-  (vc-cvs-command buffer
-                  (if (vc-cvs-stay-local-p file)
-		      'async 0)
-                  file "annotate"
-                  (if revision (concat "-r" revision)))
+  (apply #'vc-cvs-command buffer
+	 (if (vc-cvs-stay-local-p file)
+	     'async 0)
+	 file "annotate"
+	 (append (vc-switches 'cvs 'annotate)
+		 (if revision (list (concat "-r" revision)))))
   ;; Strip the leading few lines.
   (let ((proc (get-buffer-process buffer)))
     (if proc
@@ -1076,7 +1088,7 @@ Query all files in DIR if files is nil."
     (if (and (not files) local (not (eq local 'only-file)))
 	(vc-cvs-dir-status-heuristic dir update-function)
       (if (not files) (setq files (vc-expand-dirs (list dir) 'CVS)))
-      (vc-cvs-command (current-buffer) 'async dir "-f" "status" files)
+      (vc-cvs-command (current-buffer) 'async files "-f" "status")
       ;; Alternative implementation: use the "update" command instead of
       ;; the "status" command.
       ;; (vc-cvs-command (current-buffer) 'async
