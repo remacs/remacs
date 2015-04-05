@@ -113,7 +113,6 @@
                                      process-environment))
           (package-user-dir package-test-user-dir)
           (package-archives `(("gnu" . ,package-test-data-dir)))
-          (old-yes-no-defn (symbol-function 'yes-or-no-p))
           (default-directory package-test-file-dir)
           abbreviated-home-dir
           package--initialized
@@ -128,25 +127,25 @@
      (unwind-protect
          (progn
            ,(if basedir `(cd ,basedir))
-           (setf (symbol-function 'yes-or-no-p) #'(lambda (&rest r) t))
            (unless (file-directory-p package-user-dir)
              (mkdir package-user-dir))
-           ,@(when install
-               `((package-initialize)
-                 (package-refresh-contents)
-                 (mapc 'package-install ,install)))
-           (with-temp-buffer
-             ,(if file
-                  `(insert-file-contents ,file))
-             ,@body))
+           (cl-letf (((symbol-function 'yes-or-no-p) (lambda (&rest r) t))
+                     ((symbol-function 'y-or-n-p)    (lambda (&rest r) t)))
+             ,@(when install
+                 `((package-initialize)
+                   (package-refresh-contents)
+                   (mapc 'package-install ,install)))
+             (with-temp-buffer
+               ,(if file
+                    `(insert-file-contents ,file))
+               ,@body)))
 
        (when (file-directory-p package-test-user-dir)
          (delete-directory package-test-user-dir t))
 
        (when (and (boundp 'package-test-archive-upload-base)
                   (file-directory-p package-test-archive-upload-base))
-         (delete-directory package-test-archive-upload-base t))
-       (setf (symbol-function 'yes-or-no-p) old-yes-no-defn))))
+         (delete-directory package-test-archive-upload-base t)))))
 
 (defmacro with-fake-help-buffer (&rest body)
   "Execute BODY in a temp buffer which is treated as the \"*Help*\" buffer."

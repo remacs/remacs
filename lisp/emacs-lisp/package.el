@@ -2697,6 +2697,31 @@ call will upgrade the package."
                (length upgrades)
                (if (= (length upgrades) 1) "" "s")))))
 
+(defun package-menu--prompt-transaction-p (ins del)
+  "Prompt the user about installing INS and deleting DEL.
+INS and DEL are lists of `package-desc'.  Either may be nil, but
+not both."
+  (y-or-n-p
+   (concat
+    (when ins
+      (let ((lins (length ins)))
+        (if (= lins 1)
+            (format "INSTALL package `%s'"
+              (package-desc-full-name (car ins)))
+          (format "INSTALL these %d packages (%s)"
+            lins
+            (mapconcat #'package-desc-full-name ins ", ")))))
+    (when (and del ins) " and ")
+    (when del
+      (let ((ldel (length del)))
+        (if (= ldel 1)
+            (format "DELETE package `%s'"
+              (package-desc-full-name (car del)))
+          (format "DELETE these %d packages (%s)"
+            ldel
+            (mapconcat #'package-desc-full-name del ", ")))))
+    "? ")))
+
 (defun package-menu-execute (&optional noquery)
   "Perform marked Package Menu actions.
 Packages marked for installation are downloaded and installed;
@@ -2718,43 +2743,21 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
                 ((eq cmd ?I)
                  (push pkg-desc install-list))))
         (forward-line)))
-    (when install-list
-      (if (or
-           noquery
-           (yes-or-no-p
-            (if (= (length install-list) 1)
-                (format "Install package `%s'? "
-                        (package-desc-full-name (car install-list)))
-              (format "Install these %d packages (%s)? "
-                      (length install-list)
-                      (mapconcat #'package-desc-full-name
-                                 install-list ", ")))))
-          (mapc (lambda (p)
-                  ;; Don't mark as selected if it's a new version of
-                  ;; an installed package.
-                  (package-install p (and (not (package-installed-p p))
-                                          (package-installed-p
-                                           (package-desc-name p)))))
-                install-list)))
-    ;; Delete packages, prompting if necessary.
-    (when delete-list
-      (if (or
-           noquery
-           (yes-or-no-p
-           (if (= (length delete-list) 1)
-               (format "Delete package `%s'? "
-                       (package-desc-full-name (car delete-list)))
-             (format "Delete these %d packages (%s)? "
-                     (length delete-list)
-                     (mapconcat #'package-desc-full-name
-                                delete-list ", ")))))
-          (dolist (elt (package--sort-by-dependence delete-list))
-            (condition-case-unless-debug err
-                (package-delete elt)
-              (error (message (cadr err)))))
-        (error "Aborted")))
-    (if (not (or delete-list install-list))
-        (message "No operations specified.")
+    (unless (or delete-list install-list)
+      (user-error "No operations specified"))
+    (when (or noquery
+              (package-menu--prompt-transaction-p install-list delete-list))
+      ;; Don't mark as selected if it's a new version of an installed
+      ;; package.
+      (mapc (lambda (p) (package-install p (and (not (package-installed-p p))
+                                           (package-installed-p
+                                            (package-desc-name p)))))
+            install-list)
+      ;; Delete packages.
+      (dolist (elt (package--sort-by-dependence delete-list))
+        (condition-case-unless-debug err
+            (package-delete elt)
+          (error (message (cadr err)))))
       (when package-selected-packages
         (let ((removable (package--removable-packages)))
           (when (and removable
@@ -2764,8 +2767,8 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
                               (mapconcat #'symbol-name removable ", "))))
             ;; We know these are removable, so we can use force instead of sorting them.
             (mapc (lambda (p) (package-delete (cadr (assq p package-alist)) 'force 'nosave))
-                  removable))))
-      (package-menu--generate t t))))
+                  removable)))))
+    (package-menu--generate t t)))
 
 (defun package-menu--version-predicate (A B)
   (let ((vA (or (aref (cadr A) 1)  '(0)))

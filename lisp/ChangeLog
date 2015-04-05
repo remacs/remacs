@@ -84,6 +84,9 @@
 	(package-install, package-install-from-buffer): Use it.
 	(package-download-transaction, package-install-from-archive): Add
 	ASYNC and CALLBACK arguments.
+	(package-menu--prompt-transaction-p): New function.
+	(package-menu-execute): Use it to prompt the user about operations
+	to be executed.
 
 2015-04-05  Pete Williamson  <petewil@chromium.org>  (tiny-change)
 
