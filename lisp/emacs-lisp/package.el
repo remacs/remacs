@@ -1658,43 +1658,56 @@ if all the in-between dependencies are also in PACKAGE-LIST."
   "Return the archive containing the package NAME."
   (cdr (assoc (package-desc-archive desc) package-archives)))
 
-(defun package-install-from-archive (pkg-desc)
-  "Download and install a tar package."
+(defun package-install-from-archive (pkg-desc &optional async callback)
+  "Download and install a tar package.
+If ASYNC is non-nil, perform the download asynchronously.
+If CALLBACK is non-nil, call it with no arguments once the
+operation is done."
   ;; This won't happen, unless the archive is doing something wrong.
   (when (eq (package-desc-kind pkg-desc) 'dir)
     (error "Can't install directory package from archive"))
   (let* ((location (package-archive-base pkg-desc))
          (file (concat (package-desc-full-name pkg-desc)
-                       (package-desc-suffix pkg-desc)))
-         (sig-file (concat file ".sig"))
-         good-signatures pkg-descs)
-    (package--with-work-buffer location file
-      (if (and package-check-signature
-               (not (member (package-desc-archive pkg-desc)
-                            package-unsigned-archives)))
-          (if (package--archive-file-exists-p location sig-file)
-              (setq good-signatures (package--check-signature location file))
-            (unless (eq package-check-signature 'allow-unsigned)
-              (error "Unsigned package: `%s'"
-                     (package-desc-name pkg-desc)))))
-      (package-unpack pkg-desc))
-    ;; Here the package has been installed successfully, mark it as
-    ;; signed if appropriate.
-    (when good-signatures
-      ;; Write out good signatures into NAME-VERSION.signed file.
-      (write-region (mapconcat #'epg-signature-to-string good-signatures "\n")
-                    nil
-                    (expand-file-name
-                     (concat (package-desc-full-name pkg-desc)
-                             ".signed")
-                     package-user-dir)
-                    nil 'silent)
-      ;; Update the old pkg-desc which will be shown on the description buffer.
-      (setf (package-desc-signed pkg-desc) t)
-      ;; Update the new (activated) pkg-desc as well.
-      (setq pkg-descs (cdr (assq (package-desc-name pkg-desc) package-alist)))
-      (if pkg-descs
-          (setf (package-desc-signed (car pkg-descs)) t)))))
+                       (package-desc-suffix pkg-desc))))
+    (package--with-work-buffer-async location file async
+      (if (or (not package-check-signature)
+              (member (package-desc-archive pkg-desc)
+                      package-unsigned-archives))
+          ;; If we don't care about the signature, unpack and we're
+          ;; done.
+          (progn (package-unpack pkg-desc)
+                 (funcall callback))
+        ;; If we care, check it and *then* write the file.
+        (let ((content (buffer-string)))
+          (package--check-signature
+           location file content async
+           ;; This function will be called after signature checking.
+           (lambda (&optional good-sigs)
+             (unless (or good-sigs (eq package-check-signature 'allow-unsigned))
+               ;; Even if the sig fails, this download is done, so
+               ;; remove it from the in-progress list.
+               (error "Unsigned package: `%s'"
+                 (package-desc-name pkg-desc)))
+             ;; Signature checked, unpack now.
+             (with-temp-buffer (insert content)
+                               (package-unpack pkg-desc))
+             ;; Here the package has been installed successfully, mark it as
+             ;; signed if appropriate.
+             (when good-sigs
+               ;; Write out good signatures into NAME-VERSION.signed file.
+               (write-region (mapconcat #'epg-signature-to-string good-sigs "\n")
+                             nil
+                             (expand-file-name
+                              (concat (package-desc-full-name pkg-desc) ".signed")
+                              package-user-dir)
+                             nil 'silent)
+               ;; Update the old pkg-desc which will be shown on the description buffer.
+               (setf (package-desc-signed pkg-desc) t)
+               ;; Update the new (activated) pkg-desc as well.
+               (when-let ((pkg-descs (cdr (assq (package-desc-name pkg-desc) package-alist))))
+                 (setf (package-desc-signed (car pkg-descs)) t)))
+             (when (functionp callback)
+               (funcall callback)))))))))
 
 (defun package-installed-p (package &optional min-version)
   "Return true if PACKAGE, of MIN-VERSION or newer, is installed.
@@ -1715,13 +1728,25 @@ If PACKAGE is a package-desc object, MIN-VERSION is ignored."
      ;; Also check built-in packages.
      (package-built-in-p package min-version))))
 
-(defun package-download-transaction (packages)
+(defun package-download-transaction (packages &optional async callback)
   "Download and install all the packages in PACKAGES.
 PACKAGES should be a list of package-desc.
+If ASYNC is non-nil, perform the downloads asynchronously.
+If CALLBACK is non-nil, call it with no arguments once the
+entire operation is done.
+
 This function assumes that all package requirements in
 PACKAGES are satisfied, i.e. that PACKAGES is computed
 using `package-compute-transaction'."
-  (mapc #'package-install-from-archive packages))
+  (cond
+   (packages (package-install-from-archive
+              (car packages)
+              async
+              (lambda ()
+                (package-download-transaction (cdr packages))
+                (when (functionp callback)
+                  (funcall callback)))))
+   (callback (funcall callback))))
 
 (defun package--ensure-init-file ()
   "Ensure that the user's init file calls `package-initialize'."

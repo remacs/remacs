@@ -82,6 +82,8 @@
 	* emacs-lisp/package.el: Add package-initialize to user-init-file.
 	(package--ensure-init-file): New function.
 	(package-install, package-install-from-buffer): Use it.
+	(package-download-transaction, package-install-from-archive): Add
+	ASYNC and CALLBACK arguments.
 
 2015-04-05  Pete Williamson  <petewil@chromium.org>  (tiny-change)
 
