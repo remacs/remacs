@@ -1723,6 +1723,30 @@ PACKAGES are satisfied, i.e. that PACKAGES is computed
 using `package-compute-transaction'."
   (mapc #'package-install-from-archive packages))
 
+(defun package--ensure-init-file ()
+  "Ensure that the user's init file calls `package-initialize'."
+  ;; Don't mess with the init-file from "emacs -Q".
+  (when user-init-file
+    (let ((buffer (find-buffer-visiting user-init-file)))
+      (with-current-buffer (or buffer (find-file-noselect user-init-file))
+        (save-excursion
+          (save-restriction
+            (widen)
+            (goto-char (point-min))
+            (unless (search-forward "(package-initialize)" nil 'noerror)
+              (goto-char (point-min))
+              (insert
+               ";; Added by Package.el.  This must come before configurations of\n"
+               ";; installed packages.  Don't delete this line.  If you don't want it,\n"
+               ";; just comment it out by adding a semicolon to the start of the line.\n"
+               "(package-initialize)\n")
+              (unless (looking-at-p "$")
+                (insert "\n"))
+              (let ((file-precious-flag t))
+                (save-buffer)))
+            (unless buffer
+              (kill-buffer (current-buffer)))))))))
+
 ;;;###autoload
 (defun package-install (pkg &optional dont-select)
   "Install the package PKG.
@@ -1751,6 +1775,7 @@ to install it but still mark it as selected."
                                   package-archive-contents))
                     nil t))
            nil)))
+  (package--ensure-init-file)
   (let ((name (if (package-desc-p pkg)
                   (package-desc-name pkg)
                 pkg)))
@@ -1794,6 +1819,7 @@ is derived from the main .el file in the directory.
 
 Downloads and installs required packages as needed."
   (interactive)
+  (package--ensure-init-file)
   (let* ((pkg-desc
           (cond
             ((derived-mode-p 'dired-mode)
