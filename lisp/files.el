@@ -1192,7 +1192,7 @@ containing it, until no links are left at any level.
 	    (setq dirfile (directory-file-name dir))
 	    ;; If these are equal, we have the (or a) root directory.
 	    (or (string= dir dirfile)
-		(and (memq system-type '(windows-nt ms-dos cygwin))
+		(and (memq system-type '(windows-nt ms-dos cygwin nacl))
 		     (eq (compare-strings dir 0 nil dirfile 0 nil t) t))
 		;; If this is the same dir we last got the truename for,
 		;; save time--don't recalculate.

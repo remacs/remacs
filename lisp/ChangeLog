@@ -1,3 +1,8 @@
+2015-04-05  Pete Williamson  <petewil@chromium.org>  (tiny-change)
+
+	Fix .emacs and .emacs.d/init file recursion problem for NaCl
+	* files.el (file-truename): Add NaCl to the exception list ms-dos uses.
+
 2015-04-04  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-mode.el (c-font-lock-init): Revert 2015-02-01 change
