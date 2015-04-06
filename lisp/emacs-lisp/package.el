@@ -2308,7 +2308,7 @@ will be deleted."
     map)
   "Local keymap for `package-menu-mode' buffers.")
 
-(defvar-local package-menu--new-package-list nil
+(defvar package-menu--new-package-list nil
   "List of newly-available packages since `list-packages' was last called.")
 
 (define-derived-mode package-menu-mode tabulated-list-mode "Package Menu"
@@ -2830,7 +2830,7 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
   (string< (or (package-desc-archive (car A)) "")
            (or (package-desc-archive (car B)) "")))
 
-(defvar-local package-menu--old-archive-contents nil
+(defvar package-menu--old-archive-contents nil
   "`package-archive-contents' before the latest refresh.")
 
 (defun package-menu--populate-new-package-list ()
