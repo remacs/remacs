@@ -84,8 +84,8 @@
     (setq range (cons range range)))
   range)
 
-(define-obsolete-function-alias rtree-normalise-range
-  rtree-normalize-range "25.1")
+(define-obsolete-function-alias 'rtree-normalise-range
+  'rtree-normalize-range "25.1")
 
 (defun rtree-make (range)
   "Make an rtree from RANGE."
