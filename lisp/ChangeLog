@@ -1,3 +1,17 @@
+2015-04-06  Alan Mackenzie  <acm@muc.de>
+
+	Fix miscellaneous glitches in cc-mode.el.  Fixes debbugs#20245.
+
+	* progmodes/cc-mode.el (c-common-init): bind
+	\(before\|after\)-change-functions to nil around invocations of
+	c-get-state-before-change-functions and
+	c-before-font-lock-functions to prevent recursive invocations.
+	(c-neutralize-syntax-in-and-mark-CPP): On c-beginning-of-macro,
+	check that point has actually moved back.
+	(c-fl-decl-start): Check whether c-beginning-of-decl-1 has
+	actually found a boundary (as contrasted with hitting a search
+	limit).
+
 2015-02-01  Alan Mackenzie  <acm@muc.de>
 
 	CC Mode: Stop Font Lock forcing fontification from BOL.  Fixes
