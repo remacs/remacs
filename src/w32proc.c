@@ -1613,24 +1613,25 @@ w32_executable_type (char * filename,
 #endif
           if (data_dir)
             {
-              /* Look for cygwin.dll in DLL import list. */
+              /* Look for Cygwin DLL in the DLL import list. */
               IMAGE_DATA_DIRECTORY import_dir =
                 data_dir[IMAGE_DIRECTORY_ENTRY_IMPORT];
-              IMAGE_IMPORT_DESCRIPTOR * imports;
-              IMAGE_SECTION_HEADER * section;
-
-              section = rva_to_section (import_dir.VirtualAddress, nt_header);
-              imports = RVA_TO_PTR (import_dir.VirtualAddress, section,
-                                    executable);
+              IMAGE_IMPORT_DESCRIPTOR * imports =
+		RVA_TO_PTR (import_dir.VirtualAddress,
+			    rva_to_section (import_dir.VirtualAddress,
+					    nt_header),
+			    executable);
 
               for ( ; imports->Name; imports++)
                 {
+		  IMAGE_SECTION_HEADER * section =
+		    rva_to_section (imports->Name, nt_header);
                   char * dllname = RVA_TO_PTR (imports->Name, section,
                                                executable);
 
-                  /* The exact name of the cygwin dll has changed with
-                     various releases, but hopefully this will be reasonably
-                     future proof.  */
+                  /* The exact name of the Cygwin DLL has changed with
+                     various releases, but hopefully this will be
+                     reasonably future-proof.  */
                   if (strncmp (dllname, "cygwin", 6) == 0)
                     {
                       *is_cygnus_app = TRUE;

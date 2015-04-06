@@ -1,3 +1,9 @@
+2015-04-06  Koichi Arakawa  <arakawa@pp.iij4u.or.jp>  (tiny change)
+
+	* w32proc.c (w32_executable_type): Look for the DLL name in the
+	correct section.  This avoids segfaults with some executables.
+	(Bug#20264)
+
 2015-04-04  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* xselect.c (x_reply_selection_request)
