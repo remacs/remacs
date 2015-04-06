@@ -1,3 +1,9 @@
+2015-04-06  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Spelling fix for 'hfy-optimizations'
+	* htmlfontify.el (hfy-optimizations): Rename from hfy-optimisations,
+	with an obsolete alias.  All uses changed.
+
 2015-04-06  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	python.el: Enhance docstring detection following PEP-257.

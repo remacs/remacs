@@ -756,6 +756,12 @@ integers.
 ** New function `set-binary-mode' allows to switch a standard stream
 of the Emacs process to binary I/O mode.
 
+** Miscellaneous name change
+
+For consistency with the usual Emacs spelling, the Lisp variable
+`hfy-optimisations' has been renamed to `hfy-optimizations'.
+The old name should still work, as an obsolescent alias.
+
 
 * Changes in Frames and Windows Code in Emacs 25.1
 
