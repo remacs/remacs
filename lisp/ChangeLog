@@ -12,10 +12,6 @@
 	* net/tramp.el (tramp-handle-unhandled-file-name-directory):
 	Return nil when required by the spec.  (Bug#20233)
 
-2015-04-01  Nicolas Petton  <nicolas@petton.fr>
-
-	* Version 24.5 released.
-
 2015-03-26  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/smie.el (smie-backward-sexp-command)
