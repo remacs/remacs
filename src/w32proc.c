@@ -806,7 +806,7 @@ alarm (int seconds)
    etc.
 
    Both these arrays reference each other: there's a member of
-   child_process structure that records the file corresponding
+   child_process structure that records the corresponding file
    descriptor, and there's a member of filedesc structure that holds a
    pointer to the corresponding child_process.
 
@@ -817,13 +817,13 @@ alarm (int seconds)
    thread" that will watch the output of the subprocess/stream and its
    status.  (If no vacant slot can be found, new_child returns a
    failure indication to its caller, and the higher-level Emacs
-   primitive will then fail with EMFILE or EAGAIN.)
+   primitive that called it will then fail with EMFILE or EAGAIN.)
 
    The reader thread started by new_child communicates with the main
    (a.k.a. "Lisp") thread via two event objects and a status, all of
    them recorded by the members of the child_process structure in
    child_procs[].  The event objects serve as semaphores between the
-   reader thread and the 'select' emulation in sys_select, as follows:
+   reader thread and the 'pselect' emulation in sys_select, as follows:
 
      . Initially, the reader thread is waiting for the char_consumed
        event to become signaled by sys_select, which is an indication
@@ -841,8 +841,8 @@ alarm (int seconds)
 
    When the subprocess exits or the network/serial stream is closed,
    the reader thread sets the status accordingly and exits.  It also
-   exits when the main thread sets the ststus to STATUS_READ_ERROR
-   and/or the char_avail and char_consumed event handles are NULL;
+   exits when the main thread sets the status to STATUS_READ_ERROR
+   and/or the char_avail and char_consumed event handles become NULL;
    this is how delete_child, called by Emacs when a subprocess or a
    stream is terminated, terminates the reader thread as part of
    deleting the child_process object.
@@ -863,8 +863,8 @@ alarm (int seconds)
 
    If file descriptor zero (stdin) doesn't have its bit set in the
    'rfds' argument to sys_select, the function always watches for
-   keyboard interrupts, to be able to return when the user presses
-   C-g.
+   keyboard interrupts, to be able to interrupt the wait and return
+   when the user presses C-g.
 
    Having collected the handles to watch, sys_select calls
    WaitForMultipleObjects to wait for any one of them to become
