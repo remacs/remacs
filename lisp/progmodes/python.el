@@ -482,19 +482,10 @@ The type returned can be `comment', `string' or `paren'."
   'python-info-ppss-comment-or-string-p
   #'python-syntax-comment-or-string-p "24.3")
 
-(defun python-docstring-at-p (pos)
-  "Check to see if there is a docstring at POS."
-  (save-excursion
-    (goto-char pos)
-    (if (looking-at-p "'''\\|\"\"\"")
-        (progn
-          (python-nav-backward-statement)
-          (looking-at "\\`\\|class \\|def "))
-      nil)))
-
 (defun python-font-lock-syntactic-face-function (state)
+  "Return syntactic face given STATE."
   (if (nth 3 state)
-      (if (python-docstring-at-p (nth 8 state))
+      (if (python-info-docstring-p state)
           font-lock-doc-face
         font-lock-string-face)
     font-lock-comment-face))
@@ -3587,17 +3578,12 @@ JUSTIFY should be used (if applicable) as in `fill-paragraph'."
             (`pep-257 (and multi-line-p (cons nil 2)))
             (`pep-257-nn (and multi-line-p (cons nil 1)))
             (`symmetric (and multi-line-p (cons 1 1)))))
-         (docstring-p (save-excursion
-                        ;; Consider docstrings those strings which
-                        ;; start on a line by themselves.
-                        (python-nav-beginning-of-statement)
-                        (and (= (point) str-start-pos))))
          (fill-paragraph-function))
     (save-restriction
       (narrow-to-region str-start-pos str-end-pos)
       (fill-paragraph justify))
     (save-excursion
-      (when (and docstring-p python-fill-docstring-style)
+      (when (and (python-info-docstring-p) python-fill-docstring-style)
         ;; Add the number of newlines indicated by the selected style
         ;; at the start of the docstring.
         (goto-char (+ str-start-pos num-quotes))
@@ -4423,23 +4409,40 @@ where the continued line ends."
       (when (looking-at (python-rx block-start))
         (point-marker)))))
 
+(defun python-info-assignment-statement-p (&optional current-line-only)
+  "Check if current line is an assignment.
+With argument CURRENT-LINE-ONLY is non-nil, don't follow any
+continuations, just check the if current line is an assignment."
+  (save-excursion
+    (let ((found nil))
+      (if current-line-only
+          (back-to-indentation)
+        (python-nav-beginning-of-statement))
+      (while (and
+              (re-search-forward (python-rx not-simple-operator
+                                            assignment-operator
+                                            (group not-simple-operator))
+                                 (line-end-position) t)
+              (not found))
+        (save-excursion
+          ;; The assignment operator should not be inside a string.
+          (backward-char (length (match-string-no-properties 1)))
+          (setq found (not (python-syntax-context-type)))))
+      (when found
+        (skip-syntax-forward " ")
+        (point-marker)))))
+
+;; TODO: rename to clarify this is only for the first continuation
+;; line or remove it and move its body to `python-indent-context'.
 (defun python-info-assignment-continuation-line-p ()
-  "Check if current line is a continuation of an assignment.
+  "Check if current line is the first continuation of an assignment.
 When current line is continuation of another with an assignment
 return the point of the first non-blank character after the
 operator."
   (save-excursion
     (when (python-info-continuation-line-p)
       (forward-line -1)
-      (back-to-indentation)
-      (when (and (not (looking-at (python-rx block-start)))
-                 (and (re-search-forward (python-rx not-simple-operator
-                                                    assignment-operator
-                                                    not-simple-operator)
-                                         (line-end-position) t)
-                      (not (python-syntax-context-type))))
-        (skip-syntax-forward "\s")
-        (point-marker)))))
+      (python-info-assignment-statement-p t))))
 
 (defun python-info-looking-at-beginning-of-defun (&optional syntax-ppss)
   "Check if point is at `beginning-of-defun' using SYNTAX-PPSS."
@@ -4463,6 +4466,45 @@ operator."
                 (group (* not-newline))
                 (* whitespace) line-end))
     (string-equal "" (match-string-no-properties 1))))
+
+(defun python-info-docstring-p (&optional syntax-ppss)
+  "Return non-nil if point is in a docstring.
+When optional argument SYNTAX-PPSS is given, use that instead of
+point's current `syntax-ppss'."
+  ;;; https://www.python.org/dev/peps/pep-0257/#what-is-a-docstring
+  (save-excursion
+    (when (and syntax-ppss (python-syntax-context 'string syntax-ppss))
+      (goto-char (nth 8 syntax-ppss)))
+    (python-nav-beginning-of-statement)
+    (let ((counter 1)
+          (indentation (current-indentation))
+          (backward-sexp-point)
+          (re (concat "[uU]?[rR]?"
+                      (python-rx string-delimiter))))
+      (when (and
+             (not (python-info-assignment-statement-p))
+             (looking-at-p re)
+             ;; Allow up to two consecutive docstrings only.
+             (>=
+              2
+              (progn
+                (while (save-excursion
+                         (python-nav-backward-sexp)
+                         (setq backward-sexp-point (point))
+                         (and (= indentation (current-indentation))
+                              (looking-at-p
+                               (concat "[uU]?[rR]?"
+                                       (python-rx string-delimiter)))))
+                  ;; Previous sexp was a string, restore point.
+                  (goto-char backward-sexp-point)
+                  (cl-incf counter))
+                counter)))
+        (python-util-forward-comment -1)
+        (python-nav-beginning-of-statement)
+        (cond ((bobp))
+              ((python-info-assignment-statement-p) t)
+              ((python-info-looking-at-beginning-of-defun))
+              (t nil))))))
 
 (defun python-info-encoding-from-cookie ()
   "Detect current buffer's encoding from its coding cookie.

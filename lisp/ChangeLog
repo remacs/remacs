@@ -1,3 +1,14 @@
+2015-04-06  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Enhance docstring detection following PEP-257.
+
+	* progmodes/python.el (python-docstring-at-p): Remove function.
+	(python-info-assignment-statement-p): New function.
+	(python-info-assignment-continuation-line-p): Use it.
+	(python-info-docstring-p): New function.
+	(python-font-lock-syntactic-face-function)
+	(python-fill-string): Use it.
+
 2015-04-05  Eli Zaretskii  <eliz@gnu.org>
 
 	* ses.el (ses-sym-rowcol): Move up, before the first use, to avoid
