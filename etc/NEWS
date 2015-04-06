@@ -223,6 +223,13 @@ Unicode standards.
 ** xterm-mouse-mode now supports mouse-tracking (if your xterm supports it).
 
 ** package.el
+*** Most functions which involve downloading information now take an
+ASYNC argument.  If it is non-nil, package.el performs the download(s)
+asynchronously.
+
+*** New variable `package-menu-async' controls whether the
+package-menu uses asynchronous downloads.
+
 *** `package-install-from-buffer' and `package-install-file' work on directories.
 This follows the same rules as installing from a .tar file, except the
 -pkg file is optional.
