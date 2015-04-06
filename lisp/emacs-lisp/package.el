@@ -2699,30 +2699,42 @@ call will upgrade the package."
                (length upgrades)
                (if (= (length upgrades) 1) "" "s")))))
 
-(defun package-menu--prompt-transaction-p (ins del)
-  "Prompt the user about installing INS and deleting DEL.
-INS and DEL are lists of `package-desc'.  Either may be nil, but
-not both."
-  (y-or-n-p
-   (concat
-    (when ins
-      (let ((lins (length ins)))
-        (if (= lins 1)
-            (format "INSTALL package `%s'"
-              (package-desc-full-name (car ins)))
-          (format "INSTALL these %d packages (%s)"
-            lins
-            (mapconcat #'package-desc-full-name ins ", ")))))
-    (when (and del ins) " and ")
-    (when del
-      (let ((ldel (length del)))
-        (if (= ldel 1)
-            (format "DELETE package `%s'"
-              (package-desc-full-name (car del)))
-          (format "DELETE these %d packages (%s)"
-            ldel
-            (mapconcat #'package-desc-full-name del ", ")))))
-    "? ")))
+(defun package-menu--list-to-prompt (packages)
+  "Return a string listing PACKAGES that's usable in a prompt.
+PACKAGES is a list of `package-desc' objects.
+Formats the returned string to be usable in a minibuffer
+prompt (see `package-menu--prompt-transaction-p')."
+  (cond
+   ;; None
+   ((not packages) "")
+   ;; More than 1
+   ((cdr packages)
+    (format "these %d packages (%s)"
+      (length packages)
+      (mapconcat #'package-desc-full-name packages ", ")))
+   ;; Exactly 1
+   (t (format "package `%s'"
+        (package-desc-full-name (car packages))))))
+
+(defun package-menu--prompt-transaction-p (install delete)
+  "Prompt the user about installing INSTALL and deleting DELETE.
+INSTALL and DELETE are lists of `package-desc'.  Either may be
+nil, but not both."
+  (let* ((upg (cl-intersection install delete :key #'package-desc-name))
+         (ins (cl-set-difference install upg :key #'package-desc-name))
+         (del (cl-set-difference delete upg :key #'package-desc-name)))
+    (y-or-n-p
+     (concat
+      (when upg "UPGRADE ")
+      (package-menu--list-to-prompt upg)
+      (when (and upg ins)
+        (if del "; " "; and "))
+      (when ins "INSTALL ")
+      (package-menu--list-to-prompt ins)
+      (when (and del (or ins upg)) "; and ")
+      (when del "DELETE ")
+      (package-menu--list-to-prompt del)
+      "? "))))
 
 (defun package-menu--perform-transaction (install-list delete-list &optional async)
   "Install packages in INSTALL-LIST and delete DELETE-LIST.

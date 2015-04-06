@@ -3,6 +3,9 @@
 	* emacs-lisp/package.el: Fix lack of "new" packages.
 	(package-menu--new-package-list)
 	(package-menu--old-archive-contents): No longer local.
+	(package-menu--list-to-prompt): New function.
+	(package-menu--prompt-transaction-p): Use "Upgrade" to make the
+	package-menu-execute prompt less verbose.
 
 2015-04-06  Paul Eggert  <eggert@cs.ucla.edu>
 
