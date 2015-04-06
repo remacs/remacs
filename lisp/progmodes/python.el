@@ -2962,25 +2962,25 @@ This function takes the list of setup code to send from the
 
 (defcustom python-shell-completion-setup-code
   "try:
-    import __builtin__
-except ImportError:
-    # Python 3
-    import builtins as __builtin__
-try:
-    import readline, rlcompleter
+    import readline
 except:
     def __PYTHON_EL_get_completions(text):
         return []
 else:
     def __PYTHON_EL_get_completions(text):
+        try:
+            import __builtin__
+        except ImportError:
+            # Python 3
+            import builtins as __builtin__
         builtins = dir(__builtin__)
         completions = []
+        is_ipython = ('__IPYTHON__' in builtins or
+                      '__IPYTHON__active' in builtins)
+        splits = text.split()
+        is_module = splits and splits[0] in ('from', 'import')
         try:
-            splits = text.split()
-            is_module = splits and splits[0] in ('from', 'import')
-            is_ipython = ('__IPYTHON__' in builtins or
-                          '__IPYTHON__active' in builtins)
-            if is_module:
+            if is_ipython and is_module:
                 from IPython.core.completerlib import module_completion
                 completions = module_completion(text.strip())
             elif is_ipython and '__IP' in builtins:
@@ -2988,13 +2988,20 @@ else:
             elif is_ipython and 'get_ipython' in builtins:
                 completions = get_ipython().Completer.all_completions(text)
             else:
+                # Try to reuse current completer.
+                completer = readline.get_completer()
+                if not completer:
+                    # importing rlcompleter sets the completer, use it as a
+                    # last resort to avoid breaking customizations.
+                    import rlcompleter
+                    completer = readline.get_completer()
                 i = 0
                 while True:
-                    res = readline.get_completer()(text, i)
-                    if not res:
+                    completion = completer(text, i)
+                    if not completion:
                         break
                     i += 1
-                    completions.append(res)
+                    completions.append(completion)
         except:
             pass
         return completions"

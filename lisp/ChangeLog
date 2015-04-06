@@ -1,3 +1,10 @@
+2015-04-06  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Do not break IPython magic completions.  (Bug#19736)
+
+	* progmodes/python.el (python-shell-completion-setup-code):
+	Cleaner setup; import rlcompleter as last resource.
+
 2015-04-06  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* emacs-lisp/package.el: Fix lack of "new" packages.
