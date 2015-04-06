@@ -1,3 +1,9 @@
+2015-04-06  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use American spelling for 'normalize'
+	* rtree.el (rtree-normalize-range): Rename from rtree-normalise-range.
+	All uses changed.  Add an alias for obsolete usages.
+
 2015-04-03  Katsumi Yamaoka  <yamaoka@jpl.org>
 
 	* gnus-art.el (gnus-article-browse-html-save-cid-content):
