@@ -4492,6 +4492,7 @@ point's current `syntax-ppss'."
                          (python-nav-backward-sexp)
                          (setq backward-sexp-point (point))
                          (and (= indentation (current-indentation))
+                              (not (bobp)) ; Prevent infloop.
                               (looking-at-p
                                (concat "[uU]?[rR]?"
                                        (python-rx string-delimiter)))))
