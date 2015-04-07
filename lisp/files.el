@@ -3931,17 +3931,19 @@ the old visited file has been renamed to the new name FILENAME."
 	   (make-local-variable 'backup-inhibited)
 	   (setq backup-inhibited t)))
     (let ((oauto buffer-auto-save-file-name))
-      ;; If auto-save was not already on, turn it on if appropriate.
-      (if (not buffer-auto-save-file-name)
-	  (and buffer-file-name auto-save-default
-	       (auto-save-mode t))
-	;; If auto save is on, start using a new name.
-	;; We deliberately don't rename or delete the old auto save
-	;; for the old visited file name.  This is because perhaps
-	;; the user wants to save the new state and then compare with the
-	;; previous state from the auto save file.
-	(setq buffer-auto-save-file-name
-	      (make-auto-save-file-name)))
+      (cond ((null filename)
+	     (setq buffer-auto-save-file-name nil))
+	    ((not buffer-auto-save-file-name)
+	     ;; If auto-save was not already on, turn it on if appropriate.
+	     (and buffer-file-name auto-save-default (auto-save-mode t)))
+	    (t
+	     ;; If auto save is on, start using a new name. We
+	     ;; deliberately don't rename or delete the old auto save
+	     ;; for the old visited file name.  This is because
+	     ;; perhaps the user wants to save the new state and then
+	     ;; compare with the previous state from the auto save
+	     ;; file.
+	     (setq buffer-auto-save-file-name (make-auto-save-file-name))))
       ;; Rename the old auto save file if any.
       (and oauto buffer-auto-save-file-name
 	   (file-exists-p oauto)
