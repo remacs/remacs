@@ -833,7 +833,7 @@ clean: $(clean_dirs:=_clean)
 	for dir in test/automated; do \
 	  [ ! -d $$dir ] || $(MAKE) -C $$dir clean; \
 	done
-	-rm -f etc/emacs.tmpdesktop etc/emacs.tmpappdata
+	-rm -f *.tmp etc/*.tmp*
 	-rm -rf info-dir.*
 
 ### `bootclean'
@@ -1086,6 +1086,44 @@ bootstrap: bootstrap-clean
 	cd $(srcdir) && ./autogen.sh
 	$(MAKE) MAKEFILE_NAME=force-Makefile force-Makefile
 	$(MAKE) all
+
+# The newest revision that should not appear in the generated ChangeLog.
+gen_origin = 9d56a21e6a696ad19ac65c4b405aeca44785884a
+# Convert git commit log to ChangeLog file.  make-dist uses this.
+.PHONY: ChangeLog change-history unchanged-history-files
+ChangeLog:
+	$(AM_V_GEN)distprefix=$(distprefix) srcprefix=$(srcdir)/ \
+	$(srcdir)/build-aux/gitlog-to-emacslog $(gen_origin)
+
+# The ChangeLog history files are called ChangeLog.1, ChangeLog.2, ...,
+# ChangeLog.$(CHANGELOG_HISTORY_INDEX_MAX).  $(CHANGELOG_N) stands for
+# the newest (highest-numbered) ChangeLog history file.
+CHANGELOG_HISTORY_INDEX_MAX = 1
+CHANGELOG_N = ChangeLog.$(CHANGELOG_HISTORY_INDEX_MAX)
+
+# Check that history-relevant files match what's in the repository.
+# Otherwise, 'make change-history' might mess up the ChangeLog history files.
+unchanged-history-files:
+	x=$$(git diff-files --name-only $(CHANGELOG_N) Makefile.in) && \
+	  test -z "$$x"
+
+# Copy newer commit messages to the start of the ChangeLog history file,
+# and consider them to be older.
+change-history: ChangeLog unchanged-history-files
+	(sed '/^Copyright/,$$d' <ChangeLog && cat $(CHANGELOG_N)) \
+	  >$(CHANGELOG_N).tmp
+	new_origin=$$(git log --pretty=format:%H HEAD^!) && \
+	sed 's/^\(gen_origin *= *\).*/\1'"$$new_origin/" \
+	  <Makefile.in >Makefile.in.tmp
+	mv $(CHANGELOG_N).tmp $(CHANGELOG_N)
+	mv Makefile.in.tmp Makefile.in
+	$(MAKE) $@-commit
+
+# If 'make change-history' fails because the newest ChangeLog history
+# file contains invalid text, fix the file by hand and then run
+# 'make change-history-commit'.
+change-history-commit:
+	git commit -m'; make $@' $(CHANGELOG_N) Makefile.in
 
 .PHONY: check-declare
 

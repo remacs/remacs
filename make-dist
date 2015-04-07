@@ -277,13 +277,20 @@ fi
 echo "Creating top directory: \`${tempdir}'"
 mkdir ${tempdir}
 
+if test -d .git; then
+  echo "Making top-level ChangeLog"
+  make distprefix=${tempdir}/ ChangeLog
+else
+  echo "No repository, so omitting top-level ChangeLog"
+fi
+
 ### We copy in the top-level files before creating the subdirectories in
 ### hopes that this will make the top-level files appear first in the
 ### tar file; this means that people can start reading the INSTALL and
 ### README while the rest of the tar file is still unpacking.  Whoopee.
 echo "Making links to top-level files"
 ln INSTALL README BUGS ${tempdir}
-ln ChangeLog Makefile.in autogen.sh configure configure.ac ${tempdir}
+ln ChangeLog.*[0-9] Makefile.in autogen.sh configure configure.ac ${tempdir}
 ln config.bat make-dist .dir-locals.el ${tempdir}
 ln aclocal.m4 ${tempdir}
 
@@ -333,7 +340,7 @@ done
 echo "Making links to \`leim' and its subdirectories"
 (cd leim
  ln makefile.w32-in ../${tempdir}/leim
- ln ChangeLog README ../${tempdir}/leim
+ ln ChangeLog.*[0-9] README ../${tempdir}/leim
  ln CXTERM-DIC/README CXTERM-DIC/*.tit ../${tempdir}/leim/CXTERM-DIC
  ln SKK-DIC/README SKK-DIC/SKK-JISYO.L ../${tempdir}/leim/SKK-DIC
  ln MISC-DIC/README MISC-DIC/*.* ../${tempdir}/leim/MISC-DIC
@@ -344,6 +351,7 @@ echo "Making links to \`leim' and its subdirectories"
 echo "Making links to \`build-aux'"
 (cd build-aux
  ln compile config.guess config.sub depcomp msys-to-w32 ../${tempdir}/build-aux
+ ln gitlog-to-changelog gitlog-to-emacslog ../${tempdir}/build-aux
  ln install-sh missing move-if-change ../${tempdir}/build-aux
  ln update-copyright update-subdirs ../${tempdir}/build-aux
  ln dir_top make-info-dir ../${tempdir}/build-aux)
@@ -360,7 +368,7 @@ echo "Making links to \`src'"
  ln [a-zA-Z]*.[chm] ../${tempdir}/src
  ln [a-zA-Z]*.in ../${tempdir}/src
  ln [a-zA-Z]*.mk ../${tempdir}/src
- ln README ChangeLog ChangeLog.*[0-9] ../${tempdir}/src
+ ln README ChangeLog.*[0-9] ../${tempdir}/src
  ln makefile.w32-in ../${tempdir}/src
  ln .gdbinit .dbxinit ../${tempdir}/src
  cd ../${tempdir}/src
@@ -382,7 +390,7 @@ echo "Making links to \`lib'"
 echo "Making links to \`lib-src'"
 (cd lib-src
  ln [a-zA-Z]*.[ch] ../${tempdir}/lib-src
- ln ChangeLog Makefile.in README ../${tempdir}/lib-src
+ ln ChangeLog.*[0-9] Makefile.in README ../${tempdir}/lib-src
  ln rcs2log ../${tempdir}/lib-src
  ln makefile.w32-in ../${tempdir}/lib-src
  ln update-game-score.exe.manifest ../${tempdir}/lib-src)
@@ -398,7 +406,7 @@ echo "Making links to \`nt'"
  ln nmake.defs gmake.defs subdirs.el [a-z]*.bat [a-z]*.[ch] ../${tempdir}/nt
  ln *.in gnulib.mk ../${tempdir}/nt
  ln mingw-cfg.site epaths.nt INSTALL.OLD ../${tempdir}/nt
- ln ChangeLog INSTALL README README.W32 makefile.w32-in ../${tempdir}/nt)
+ ln ChangeLog.*[0-9] INSTALL README README.W32 makefile.w32-in ../${tempdir}/nt)
 
 echo "Making links to \`nt/inc' and its subdirectories"
 for f in `find nt/inc -type f -name '[a-z]*.h'`; do
@@ -412,13 +420,13 @@ echo "Making links to \`nt/icons'"
 
 echo "Making links to \`msdos'"
 (cd msdos
- ln ChangeLog INSTALL README emacs.ico emacs.pif ../${tempdir}/msdos
+ ln ChangeLog.*[0-9] INSTALL README emacs.ico emacs.pif ../${tempdir}/msdos
  ln depfiles.bat inttypes.h ../${tempdir}/msdos
  ln mainmake.v2 sed*.inp ../${tempdir}/msdos)
 
 echo "Making links to \`nextstep'"
 (cd nextstep
- ln ChangeLog README INSTALL Makefile.in ../${tempdir}/nextstep)
+ ln ChangeLog.*[0-9] README INSTALL Makefile.in ../${tempdir}/nextstep)
 
 echo "Making links to \`nextstep/templates'"
 (cd nextstep/templates
@@ -439,12 +447,12 @@ echo "Making links to \`nextstep/GNUstep/Emacs.base/Resources'"
 echo "Making links to \`oldXMenu'"
 (cd oldXMenu
  ln *.[ch] *.in *.mk ../${tempdir}/oldXMenu
- ln README ChangeLog ../${tempdir}/oldXMenu)
+ ln README ChangeLog.*[0-9] ../${tempdir}/oldXMenu)
 
 echo "Making links to \`lwlib'"
 (cd lwlib
  ln *.[ch] *.in *.mk ../${tempdir}/lwlib
- ln README ChangeLog ../${tempdir}/lwlib)
+ ln README ChangeLog.*[0-9] ../${tempdir}/lwlib)
 
 ## It is important to distribute admin/ because it contains sources
 ## for generated lisp/international/uni-*.el files.
@@ -484,27 +492,29 @@ ln `find info -type f -print` ${tempdir}/info
 
 echo "Making links to \`doc/emacs'"
 (cd doc/emacs
- ln *.texi *.in makefile.w32-in ChangeLog* ../../${tempdir}/doc/emacs)
+ ln *.texi *.in makefile.w32-in ChangeLog.*[0-9] ../../${tempdir}/doc/emacs)
 
 echo "Making links to \`doc/misc'"
 (cd doc/misc
- ln *.texi *.tex *.in makefile.w32-in gnus-news.el ChangeLog* ../../${tempdir}/doc/misc)
+ ln *.texi *.tex *.in makefile.w32-in gnus-news.el ChangeLog.*[0-9] \
+    ../../${tempdir}/doc/misc)
 
 echo "Making links to \`doc/lispref'"
 (cd doc/lispref
- ln *.texi *.in makefile.w32-in README ChangeLog* ../../${tempdir}/doc/lispref
+ ln *.texi *.in makefile.w32-in README ChangeLog.*[0-9] \
+    ../../${tempdir}/doc/lispref
  ln spellfile ../../${tempdir}/doc/lispref
  ln two-volume.make two-volume-cross-refs.txt ../../${tempdir}/doc/lispref)
 
 echo "Making links to \`doc/lispintro'"
 (cd doc/lispintro
  ln *.texi *.in makefile.w32-in *.eps *.pdf ../../${tempdir}/doc/lispintro
- ln README ChangeLog* ../../${tempdir}/doc/lispintro
+ ln README ChangeLog.*[0-9] ../../${tempdir}/doc/lispintro
  cd ../../${tempdir}/doc/lispintro)
 
 echo "Making links to \`doc/man'"
 (cd doc/man
- ln ChangeLog* *.1 *.in ../../${tempdir}/doc/man
+ ln *.*[0-9] *.in ../../${tempdir}/doc/man
  cd ../../${tempdir}/doc/man
  rm -f emacs.1)
 

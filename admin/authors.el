@@ -27,6 +27,9 @@
 ;; Use M-x authors RET to create an *Authors* buffer that can used as
 ;; or merged with Emacs's AUTHORS file.
 
+;; FIXME: This needs to modernized in the light of current practice,
+;; which generates a single top-level ChangeLog file from commit logs.
+
 ;;; Code:
 
 (defvar authors-coding-system 'utf-8
@@ -76,7 +79,7 @@ files.")
     ("Gerd Möllmann" "Gerd Moellmann")
     ("Hallvard B. Furuseth" "Hallvard B Furuseth" "Hallvard Furuseth")
     ("Hrvoje Nikšić" "Hrvoje Niksic")
-    ;; lisp/org/ChangeLog 2010-11-11.
+    ;; lisp/org/ChangeLog.1 2010-11-11.
     (nil "aaa bbb")
     (nil "Code Extracted") ; lisp/newcomment.el's "Author:" header
     ("Jaeyoun Chung" "Jae-youn Chung" "Jae-you Chung" "Chung Jae-youn")
