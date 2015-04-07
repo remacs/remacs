@@ -1315,9 +1315,12 @@ If successful, set `package-archive-contents'."
 (defun package-initialize (&optional no-activate)
   "Load Emacs Lisp packages, and activate them.
 The variable `package-load-list' controls which packages to load.
-If optional arg NO-ACTIVATE is non-nil, don't activate packages."
+If optional arg NO-ACTIVATE is non-nil, don't activate packages.
+If `user-init-file' does not mention `(package-initialize)', add
+it to the file."
   (interactive)
   (setq package-alist nil)
+  (package--ensure-init-file)
   (package-load-all-descriptors)
   (package-read-all-archive-contents)
   (unless no-activate
@@ -1752,25 +1755,33 @@ using `package-compute-transaction'."
   "Ensure that the user's init file calls `package-initialize'."
   ;; Don't mess with the init-file from "emacs -Q".
   (when user-init-file
-    (let ((buffer (find-buffer-visiting user-init-file)))
-      (with-current-buffer (or buffer (find-file-noselect user-init-file))
-        (save-excursion
-          (save-restriction
-            (widen)
-            (goto-char (point-min))
-            (unless (search-forward "(package-initialize)" nil 'noerror)
+    (let* ((buffer (find-buffer-visiting user-init-file))
+           (contains-init
+            (if buffer
+                (with-current-buffer buffer
+                  (search-forward "(package-initialize)" nil 'noerror))
+              (with-temp-buffer
+                (insert-file-contents user-init-file)
+                (goto-char (point-min))
+                (search-forward "(package-initialize)" nil 'noerror)))))
+      (unless contains-init
+        (with-current-buffer (or buffer (find-file-noselect user-init-file))
+          (save-excursion
+            (save-restriction
+              (widen)
               (goto-char (point-min))
               (insert
                ";; Added by Package.el.  This must come before configurations of\n"
                ";; installed packages.  Don't delete this line.  If you don't want it,\n"
                ";; just comment it out by adding a semicolon to the start of the line.\n"
+               ";; You may delete these explanatory comments.\n"
                "(package-initialize)\n")
               (unless (looking-at-p "$")
                 (insert "\n"))
               (let ((file-precious-flag t))
-                (save-buffer)))
-            (unless buffer
-              (kill-buffer (current-buffer)))))))))
+                (save-buffer))
+              (unless buffer
+                (kill-buffer (current-buffer))))))))))
 
 ;;;###autoload
 (defun package-install (pkg &optional dont-select async callback)
@@ -1803,7 +1814,6 @@ to install it but still mark it as selected."
                                   package-archive-contents))
                     nil t))
            nil)))
-  (package--ensure-init-file)
   (let ((name (if (package-desc-p pkg)
                   (package-desc-name pkg)
                 pkg)))
@@ -1846,7 +1856,6 @@ is derived from the main .el file in the directory.
 
 Downloads and installs required packages as needed."
   (interactive)
-  (package--ensure-init-file)
   (let* ((pkg-desc
           (cond
             ((derived-mode-p 'dired-mode)
