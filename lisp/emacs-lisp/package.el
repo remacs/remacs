@@ -2325,10 +2325,7 @@ will be deleted."
 Letters do not insert themselves; instead, they are commands.
 \\<package-menu-mode-map>
 \\{package-menu-mode-map}"
-  (setq mode-line-buffer-identification
-        (list 'package--downloads-in-progress
-              (propertized-buffer-identification "[Loading...]")
-              mode-line-buffer-identification))
+  (setq mode-line-process '(package--downloads-in-progress ":Loading"))
   (setq tabulated-list-format
         `[("Package" 18 package-menu--name-predicate)
           ("Version" 13 nil)
