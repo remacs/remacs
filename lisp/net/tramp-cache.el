@@ -174,12 +174,12 @@ Returns VALUE."
     ;; Remove file properties of symlinks.
     (when (and (stringp truename)
 	       (not (string-equal file (directory-file-name truename))))
-      (tramp-flush-file-property key truename)))
-  ;; Unify localname.
-  (setq key (copy-sequence key))
-  (aset key 3 file)
-  (tramp-message key 8 "%s" file)
-  (remhash key tramp-cache-data))
+      (tramp-flush-file-property key truename))
+    ;; Unify localname.
+    (setq key (copy-sequence key))
+    (aset key 3 file)
+    (tramp-message key 8 "%s" file)
+    (remhash key tramp-cache-data)))
 
 ;;;###tramp-autoload
 (defun tramp-flush-directory-property (key directory)
