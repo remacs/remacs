@@ -654,6 +654,16 @@ not @samp{git status} -- use @code{eshell-visual-subcommands}; and for
 commands that are visual only when passed certain options, use
 @code{eshell-visual-options}.
 
+Caution: Some tools such as Git use the pager @samp{less} by default
+to paginate their output but call it with its @samp{-F} option.  This
+option causes @samp{less} to echo the output instead of paginating it
+if the output is less than one page long.  This causes undesirable
+behavior if, e.g., @samp{git diff}, is defined as a visual subcommand.
+It'll work if the output is big enough and fail if it is less than one
+page long.  If that occurs to you, search for configuration options
+for calling @samp{less} without the @samp{-F} option.  For Git, you
+can do that using @samp{git config --global core.pager 'less -+F'}.
+
 @section Redirection
 Redirection is mostly the same in Eshell as it is in other command
 shells.  The output redirection operators @code{>} and @code{>>} as
