@@ -673,10 +673,9 @@ the new child class."
       (let ((pslots (eieio--class-slots pcv))
             (pinit (eieio--class-initarg-tuples pcv)))
         (dotimes (i (length pslots))
-          (eieio--add-new-slot newc (cl--copy-slot-descriptor (aref pslots i))
-                               (car-safe (car pinit)) nil nil sn)
-          ;; Increment each value.
-          (setq pinit (cdr pinit))
+	  (let* ((sd (cl--copy-slot-descriptor (aref pslots i)))
+                 (init (car (rassq (cl--slot-descriptor-name sd) pinit))))
+	    (eieio--add-new-slot newc sd init nil nil sn))
           )) ;; while/let
       ;; Now duplicate all the class alloc slots.
       (let ((pcslots (eieio--class-class-slots pcv)))
