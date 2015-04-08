@@ -210,7 +210,7 @@ init_eval_once (void)
   specpdl = specpdl_ptr = pdlvec + 1;
   /* Don't forget to update docs (lispref node "Local Variables").  */
   max_specpdl_size = 1300; /* 1000 is not enough for CEDET's c-by.el.  */
-  max_lisp_eval_depth = 600;
+  max_lisp_eval_depth = 800;
 
   Vrun_hooks = Qnil;
 }
