@@ -429,7 +429,7 @@ by mistake.  One thing you can do is type @kbd{M-~}
 (@code{not-modified}), which clears out the indication that the buffer
 is modified.  If you do this, none of the save commands will believe
 that the buffer needs to be saved.  (@samp{~} is often used as a
-mathematical symbol for `not'; thus @kbd{M-~} is `not', metafied.)
+mathematical symbol for ``not''; thus @kbd{M-~} is ``not'', metafied.)
 Alternatively, you can cancel all the changes made since the file was
 visited or saved, by reading the text from the file again.  This is
 called @dfn{reverting}.  @xref{Reverting}.  (You could also undo all

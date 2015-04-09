@@ -146,7 +146,7 @@ Emacs.
 
 @menu
 * DEL Does Not Delete::   What to do if @key{DEL} doesn't delete.
-* Stuck Recursive::       `[...]' in mode line around the parentheses.
+* Stuck Recursive::       '[...]' in mode line around the parentheses.
 * Screen Garbled::        Garbage on the screen.
 * Text Garbled::          Garbage in the text.
 * Memory Full::           How to cope when you run out of memory.
@@ -1171,7 +1171,7 @@ feel that the purpose needs explaining, it probably does---but put the
 explanation in comments in the code.  It will be more useful there.
 
 Please look at the change log entries of recent commits to see what
-sorts of information to put in, and to learn the style that we use. Note that,
+sorts of information to put in, and to learn the style that we use.  Note that,
 unlike some other projects, we do require change logs for
 documentation, i.e., Texinfo files.
 @xref{Change Log},
@@ -1280,7 +1280,7 @@ See the Emacs project page
 It is important to write your patch based on the current working
 version.  If you start from an older version, your patch may be
 outdated (so that maintainers will have a hard time applying it), or
-changes in Emacs may have made your patch unnecessary. After you have
+changes in Emacs may have made your patch unnecessary.  After you have
 downloaded the repository source, you should read the file
 @file{INSTALL.REPO} for build instructions (they differ to some extent
 from a normal build).
