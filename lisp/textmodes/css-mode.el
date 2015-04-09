@@ -327,6 +327,10 @@
     (`(:elem . basic) css-indent-offset)
     (`(:elem . arg) 0)
     (`(:list-intro . ,(or `";" `"")) t) ;"" stands for BOB (bug#15467).
+    (`(:before . "{")
+     (when (smie-rule-hanging-p)
+       (smie-backward-sexp ";")
+       (smie-indent-virtual)))
     (`(:before . ,(or "{" "("))
      (if (smie-rule-hanging-p) (smie-rule-parent 0)))))
 
