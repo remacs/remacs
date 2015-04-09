@@ -844,7 +844,9 @@ keyword
        ;; Inside a string.
        ((let ((start (python-syntax-context 'string ppss)))
           (when start
-            (cons :inside-string start))))
+            (cons (if (python-info-docstring-p)
+                      :inside-docstring
+                    :inside-string) start))))
        ;; Inside a paren.
        ((let* ((start (python-syntax-context 'paren ppss))
                (starts-in-newline
@@ -989,6 +991,12 @@ possibilities can be narrowed to specific indentation points."
          ;; Copy previous indentation.
          (goto-char start)
          (current-indentation))
+        (`(:inside-docstring . ,start)
+         (let* ((line-indentation (current-indentation))
+                (base-indent (progn
+                               (goto-char start)
+                               (current-indentation))))
+           (max line-indentation base-indent)))
         (`(,(or :after-block-start
                 :after-backslash-first-line
                 :inside-paren-newline-start) . ,start)
@@ -1138,14 +1146,15 @@ Called from a program, START and END specify the region to indent."
                                  (not line-is-comment-p))
                             (python-info-current-line-empty-p)))))
                    ;; Don't mess with strings, unless it's the
-                   ;; enclosing set of quotes.
+                   ;; enclosing set of quotes or a docstring.
                    (or (not (python-syntax-context 'string))
                        (eq
                         (syntax-after
                          (+ (1- (point))
                             (current-indentation)
                             (python-syntax-count-quotes (char-after) (point))))
-                        (string-to-syntax "|")))
+                        (string-to-syntax "|"))
+                       (python-info-docstring-p))
                    ;; Skip if current line is a block start, a
                    ;; dedenter or block ender.
                    (save-excursion

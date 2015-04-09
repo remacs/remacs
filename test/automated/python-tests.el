@@ -1014,7 +1014,7 @@ lines
 def fn(a, b, c=True):
     '''docstring
     bunch
-    of
+        of
     lines
     '''
 "
@@ -1022,16 +1022,17 @@ def fn(a, b, c=True):
    (should (eq (car (python-indent-context)) :after-block-start))
    (should (= (python-indent-calculate-indentation) 4))
    (python-tests-look-at "bunch")
-   (should (eq (car (python-indent-context)) :inside-string))
+   (should (eq (car (python-indent-context)) :inside-docstring))
    (should (= (python-indent-calculate-indentation) 4))
    (python-tests-look-at "of")
-   (should (eq (car (python-indent-context)) :inside-string))
-   (should (= (python-indent-calculate-indentation) 4))
+   (should (eq (car (python-indent-context)) :inside-docstring))
+   ;; Any indentation deeper than the base-indent must remain unmodified.
+   (should (= (python-indent-calculate-indentation) 8))
    (python-tests-look-at "lines")
-   (should (eq (car (python-indent-context)) :inside-string))
+   (should (eq (car (python-indent-context)) :inside-docstring))
    (should (= (python-indent-calculate-indentation) 4))
    (python-tests-look-at "'''")
-   (should (eq (car (python-indent-context)) :inside-string))
+   (should (eq (car (python-indent-context)) :inside-docstring))
    (should (= (python-indent-calculate-indentation) 4))))
 
 (ert-deftest python-indent-inside-string-3 ()
@@ -1189,21 +1190,33 @@ def f():
                       expected)))))
 
 (ert-deftest python-indent-region-5 ()
-  "Test region indentation leaves strings untouched (start delimiter)."
+  "Test region indentation for docstrings."
   (let ((contents "
 def f():
 '''
 this is
-a multiline
+        a multiline
 string
+'''
+    x = \\
+        '''
+this is an arbitrarily
+    indented multiline
+ string
 '''
 ")
         (expected "
 def f():
     '''
-this is
-a multiline
-string
+    this is
+        a multiline
+    string
+    '''
+    x = \\
+        '''
+this is an arbitrarily
+    indented multiline
+ string
 '''
 "))
     (python-tests-with-temp-buffer
