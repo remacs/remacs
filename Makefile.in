@@ -1088,7 +1088,7 @@ bootstrap: bootstrap-clean
 	$(MAKE) all
 
 # The newest revision that should not appear in the generated ChangeLog.
-gen_origin = 9d56a21e6a696ad19ac65c4b405aeca44785884a
+gen_origin = 2cdbb8983dd49ce5c31c74b26f740bcb3e5a4c5d
 # Convert git commit log to ChangeLog file.  make-dist uses this.
 .PHONY: ChangeLog change-history unchanged-history-files
 ChangeLog:
