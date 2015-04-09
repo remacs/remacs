@@ -992,6 +992,9 @@ Rename relative filenames in the ChangeLog entry as FILES."
       (apply 'log-edit-changelog-insert-entries
 	     (append (car log-entry) (cdr log-entry)))
       (insert "\n"))
+    ;; No newline after the last entry.
+    (when log-entries
+      (delete-char -1))
     log-edit-author))
 
 (defun log-edit-toggle-header (header value)
