@@ -41,7 +41,7 @@
 (defconst css-pseudo-class-ids
   '("active" "checked" "disabled" "empty" "enabled" "first"
     "first-child" "first-of-type" "focus" "hover" "indeterminate" "lang"
-    "last-child" "last-of-type" "left" "link" "nth-child"
+    "last-child" "last-of-type" "left" "link" "not" "nth-child"
     "nth-last-child" "nth-last-of-type" "nth-of-type" "only-child"
     "only-of-type" "right" "root" "target" "visited")
   "Identifiers for pseudo-classes.")
