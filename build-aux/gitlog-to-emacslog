@@ -58,12 +58,15 @@ if test -s "${distprefix}ChangeLog.tmp"; then
   fi
 
   # Append a proper copyright notice.
-  sed "1d
-       s/\\(Copyright[ (C)]*\\)[0-9]*-[0-9]*/\\1$year_range/
-       s/^# //
-       /http:/q
-  " <Makefile.in >>"${distprefix}ChangeLog.tmp" || exit
+  sed -n '
+    1i\
+
+    /^;; Local Variables:/,${
+       s/\(Copyright[ (C)]*\)[0-9]*-[0-9]*/\1'"$year_range"'/
+       p
+    }
+  ' <ChangeLog.1 >>"${distprefix}ChangeLog.tmp" || exit
 fi
 
 # Install the generated ChangeLog.
-mv -f "${distprefix}ChangeLog.tmp" "${distprefix}ChangeLog"
+mv -i "${distprefix}ChangeLog.tmp" "${distprefix}ChangeLog"
