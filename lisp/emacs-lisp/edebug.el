@@ -1869,8 +1869,13 @@ expressions; a `progn' form will be returned enclosing these forms."
   ;; Like body but body is wrapped in edebug-enter form.
   ;; The body is assumed to be executing inside of the function context.
   ;; Not to be used otherwise.
-  (let ((edebug-inside-func t))
-    (list (edebug-wrap-def-body (edebug-forms cursor)))))
+  (let* ((edebug-inside-func t)
+         (forms (edebug-forms cursor)))
+    ;; If there's no form, there's nothing to wrap!
+    ;; This happens to handle bug#20281, tho maybe a better fix would be to
+    ;; improve the `defun' spec.
+    (when forms
+      (list (edebug-wrap-def-body forms)))))
 
 
 ;;;; Edebug Form Specs
