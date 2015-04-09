@@ -627,6 +627,9 @@ a typographically-correct documents.
 
 * Incompatible Lisp Changes in Emacs 25.1
 
+** Comint, term, and compile do not set the EMACS env var any more.
+Use the INSIDE_EMACS environment variable instead.
+
 ** `save-excursion' does not save&restore the mark any more.
 
 ** read-buffer-function can now be called with a 4th argument (`predicate').
