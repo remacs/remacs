@@ -1110,7 +1110,7 @@ unchanged-history-files:
 # Copy newer commit messages to the start of the ChangeLog history file,
 # and consider them to be older.
 change-history: ChangeLog unchanged-history-files
-	(sed '/^Copyright/,$$d' <ChangeLog && cat $(CHANGELOG_N)) \
+	(sed '/^;; Local Variables:/,$$d' <ChangeLog && cat $(CHANGELOG_N)) \
 	  >$(CHANGELOG_N).tmp
 	new_origin=$$(git log --pretty=format:%H HEAD^!) && \
 	sed 's/^\(gen_origin *= *\).*/\1'"$$new_origin/" \
