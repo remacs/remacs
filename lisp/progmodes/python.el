@@ -3040,8 +3040,12 @@ When a match is found, native completion is disabled."
   "Enable readline based native completion."
   :type 'boolean)
 
-(defcustom python-shell-completion-native-output-timeout 0.01
+(defcustom python-shell-completion-native-output-timeout 5.0
   "Time in seconds to wait for completion output before giving up."
+  :type 'float)
+
+(defcustom python-shell-completion-native-try-output-timeout 1.0
+  "Time in seconds to wait for *trying* native completion output."
   :type 'float)
 
 (defvar python-shell-completion-native-redirect-buffer
@@ -3057,7 +3061,9 @@ When a match is found, native completion is disabled."
 
 (defun python-shell-completion-native-try ()
   "Return non-nil if can trigger native completion."
-  (let ((python-shell-completion-native-enable t))
+  (let ((python-shell-completion-native-enable t)
+        (python-shell-completion-native-output-timeout
+         python-shell-completion-native-try-output-timeout))
     (python-shell-completion-native-get-completions
      (get-buffer-process (current-buffer))
      nil "int")))
@@ -3065,27 +3071,73 @@ When a match is found, native completion is disabled."
 (defun python-shell-completion-native-setup ()
   "Try to setup native completion, return non-nil on success."
   (let ((process (python-shell-get-process)))
-    (python-shell-send-string
-     (funcall
-      'mapconcat
-      #'identity
-      (list
-       "try:"
-       "    import readline, rlcompleter"
-       ;; Remove parens on callables as it breaks completion on
-       ;; arguments (e.g. str(Ari<tab>)).
-       "    class Completer(rlcompleter.Completer):"
-       "        def _callable_postfix(self, val, word):"
-       "            return word"
-       "    readline.set_completer(Completer().complete)"
-       "    if readline.__doc__ and 'libedit' in readline.__doc__:"
-       "        readline.parse_and_bind('bind ^I rl_complete')"
-       "    else:"
-       "        readline.parse_and_bind('tab: complete')"
-       "    print ('python.el: readline is available')"
-       "except:"
-       "    print ('python.el: readline not available')")
-      "\n")
+    (python-shell-send-string "
+def __PYTHON_EL_native_completion_setup():
+    try:
+        import readline
+        try:
+            import __builtin__
+        except ImportError:
+            # Python 3
+            import builtins as __builtin__
+        builtins = dir(__builtin__)
+        is_ipython = ('__IPYTHON__' in builtins or
+                      '__IPYTHON__active' in builtins)
+        class __PYTHON_EL_Completer:
+            PYTHON_EL_WRAPPED = True
+            def __init__(self, completer):
+                self.completer = completer
+                self.last_completion = None
+            def __call__(self, text, state):
+                if state == 0:
+                    # The first completion is always a dummy completion.  This
+                    # ensures proper output for sole completions and a current
+                    # input safeguard when no completions are available.
+                    self.last_completion = None
+                    completion = '0__dummy_completion__'
+                else:
+                    completion = self.completer(text, state - 1)
+                if not completion:
+                    if state == 1:
+                        # When no completions are available, two non-sharing
+                        # prefix strings are returned just to ensure output
+                        # while preventing changes to current input.
+                        completion = '1__dummy_completion__'
+                    elif self.last_completion != '~~~~__dummy_completion__':
+                        # This marks the end of output.
+                        completion = '~~~~__dummy_completion__'
+                elif completion.endswith('('):
+                    # Remove parens on callables as it breaks completion on
+                    # arguments (e.g. str(Ari<tab>)).
+                    completion = completion[:-1]
+                self.last_completion = completion
+                return completion
+        completer = readline.get_completer()
+        if not completer:
+            # Used as last resort to avoid breaking customizations.
+            import rlcompleter
+            completer = readline.get_completer()
+        if completer and not getattr(completer, 'PYTHON_EL_WRAPPED', False):
+            # Wrap the existing completer function only once.
+            new_completer = __PYTHON_EL_Completer(completer)
+            if not is_ipython:
+                readline.set_completer(new_completer)
+            else:
+                # IPython hacks readline such that `readline.set_completer`
+                # won't work.  This workaround injects the new completer
+                # function into the existing instance directly.
+                instance = getattr(completer, 'im_self', completer.__self__)
+                instance.rlcomplete = new_completer
+        if readline.__doc__ and 'libedit' in readline.__doc__:
+            readline.parse_and_bind('bind ^I rl_complete')
+        else:
+            readline.parse_and_bind('tab: complete')
+            # Require just one tab to send output.
+            readline.parse_and_bind('set show-all-if-ambiguous on')
+        print ('python.el: readline is available')
+    except IOError:
+        print ('python.el: readline not available')
+__PYTHON_EL_native_completion_setup()"
      process)
     (python-shell-accept-process-output process)
     (when (save-excursion
@@ -3163,9 +3215,8 @@ completion."
              (original-filter-fn (process-filter process))
              (redirect-buffer (get-buffer-create
                                python-shell-completion-native-redirect-buffer))
-             (separators (python-rx
-                          (or whitespace open-paren close-paren)))
-             (trigger "\t\t\t")
+             (separators (python-rx (or whitespace open-paren close-paren)))
+             (trigger "\t")
              (new-input (concat input trigger))
              (input-length
               (save-excursion
@@ -3187,7 +3238,8 @@ completion."
                     (comint-redirect-insert-matching-regexp nil)
                     ;; Feed it some regex that will never match.
                     (comint-redirect-finished-regexp "^\\'$")
-                    (comint-redirect-output-buffer redirect-buffer))
+                    (comint-redirect-output-buffer redirect-buffer)
+                    (current-time (float-time)))
                 ;; Compatibility with Emacs 24.x.  Comint changed and
                 ;; now `comint-redirect-filter' gets 3 args.  This
                 ;; checks which version of `comint-redirect-filter' is
@@ -3200,22 +3252,22 @@ completion."
                               #'comint-redirect-filter original-filter-fn))
                   (set-process-filter process #'comint-redirect-filter))
                 (process-send-string process input-to-send)
-                (accept-process-output
-                 process
-                 python-shell-completion-native-output-timeout)
-                ;; XXX: can't use `python-shell-accept-process-output'
-                ;; here because there are no guarantees on how output
-                ;; ends.  The workaround here is to call
-                ;; `accept-process-output' until we don't find anything
-                ;; else to accept.
-                (while (accept-process-output
-                        process
-                        python-shell-completion-native-output-timeout))
+                ;; Grab output until our dummy completion used as
+                ;; output end marker is found.  Output is accepted
+                ;; *very* quickly to keep the shell super-responsive.
+                (while (and (not (re-search-backward "~~~~__dummy_completion__" nil t))
+                            (< (- current-time (float-time))
+                               python-shell-completion-native-output-timeout))
+                  (accept-process-output process 0.01))
                 (cl-remove-duplicates
-                 (split-string
-                  (buffer-substring-no-properties
-                   (point-min) (point-max))
-                  separators t))))
+                 (cl-remove-if
+                  (lambda (c)
+                    (string-match "__dummy_completion__" c))
+                  (split-string
+                   (buffer-substring-no-properties
+                    (point-min) (point-max))
+                   separators t))
+                 :test #'string=)))
           (set-process-filter process original-filter-fn))))))
 
 (defun python-shell-completion-get-completions (process import input)
