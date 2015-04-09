@@ -148,6 +148,8 @@ The general format is as follows.
   a top-level ChangeLog file manually, and update it with 'C-x 4 a' as
   usual.  Do not register the ChangeLog file under git; instead, use
   'C-c C-a' to insert its contents into into your *vc-log* buffer.
+  Or if `log-edit-hook' includes `log-edit-insert-changelog' (which it
+  does by default), they will be filled in for you automatically.
 
 - Alternatively, you can use the vc-dwim command to maintain commit
   messages.  When you create a source directory, run the shell command
