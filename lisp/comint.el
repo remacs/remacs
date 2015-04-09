@@ -816,8 +816,6 @@ series of processes in the same Comint buffer.  The hook
 		    (format "COLUMNS=%d" (window-width)))
 	    (list "TERM=emacs"
 		  (format "TERMCAP=emacs:co#%d:tc=unknown:" (window-width))))
-	  (unless (getenv "EMACS")
-	    (list "EMACS=t"))
 	  (list (format "INSIDE_EMACS=%s,comint" emacs-version))
 	  process-environment))
 	(default-directory
