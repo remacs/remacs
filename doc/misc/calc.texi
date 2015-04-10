@@ -11098,12 +11098,12 @@ noon GMT@.)  Julian day numbering is largely used in astronomy.
 @cindex Unix time format
 The Unix operating system measures time as an integer number of
 seconds since midnight, Jan 1, 1970.  To convert a Calc date
-value into a Unix time stamp, first subtract 719164 (the code
+value into a Unix time stamp, first subtract 719163 (the code
 for @samp{<Jan 1, 1970>}), then multiply by 86400 (the number of
 seconds in a day) and press @kbd{R} to round to the nearest
 integer.  If you have a date form, you can simply subtract the
 day @samp{<Jan 1, 1970>} instead of unpacking and subtracting
-719164.  Likewise, divide by 86400 and add @samp{<Jan 1, 1970>}
+719163.  Likewise, divide by 86400 and add @samp{<Jan 1, 1970>}
 to convert from Unix time to a Calc date form.  (Note that
 Unix normally maintains the time in the GMT time zone; you may
 need to subtract five hours to get New York time, or eight hours
@@ -27860,13 +27860,19 @@ while typing @kbd{u c au/yr @key{RET}} produces
 
 If the units you request are inconsistent with the original units, the
 number will be converted into your units times whatever ``remainder''
-units are left over.  (This can be disabled; @pxref{Customizing Calc}.)
-For example, converting @samp{55 mph} into acres
-produces @samp{6.08e-3 acre / m s}.  (Recall that multiplication binds
-more strongly than division in Calc formulas, so the units here are
-acres per meter-second.)  Remainder units are expressed in terms of
+units are left over.  For example, converting @samp{55 mph} into acres
+produces @samp{6.08e-3 acre / (m s)}. Remainder units are expressed in terms of
 ``fundamental'' units like @samp{m} and @samp{s}, regardless of the
 input units.
+
+@kindex u n
+@pindex calc-convert-exact-units
+If you intend that your new units be consistent with the original
+units, the @kbd{u n} (@code{calc-convert-exact-units}) command will
+check the units before the conversion.  For example, to change
+@samp{mi/hr} to @samp{km/hr}, you could type @kbd{u c km @key{RET}},
+but @kbd{u n km @key{RET}} would signal an error.
+You would need to type @kbd{u n km/hr @key{RET}}.
 
 One special exception is that if you specify a single unit name, and
 a compatible unit appears somewhere in the units expression, then
@@ -35684,19 +35690,6 @@ as @samp{a/(b*c)}. If @code{calc-multiplication-has-precedence} is
 of @code{calc-multiplication-has-precedence} is @code{t}.
 @end defvar
 
-@defvar calc-ensure-consistent-units
-When converting units, the variable @code{calc-ensure-consistent-units}
-determines whether or not the target units need to be consistent with the
-original units.  If @code{calc-ensure-consistent-units} is @code{nil}, then
-the target units don't need to have the same dimensions as the original units;
-for example, converting @samp{100 ft/s} to @samp{m} will produce @samp{30.48 m/s}.
-If @code{calc-ensure-consistent-units} is non-@code{nil}, then the target units
-need to have the same dimensions as the original units; for example, converting
-@samp{100 ft/s} to @samp{m} will result in an error, since @samp{ft/s} and @samp{m}
-have different dimensions. The default value of @code{calc-ensure-consistent-units}
-is @code{nil}.
-@end defvar
-
 @defvar calc-context-sensitive-enter
 The commands @code{calc-enter} and @code{calc-pop} will typically
 duplicate the top of the stack.  If
@@ -36497,6 +36490,7 @@ keystrokes are not listed in this summary.
 @r{   defn@:      u d   @:unit, descr  @:        @:calc-define-unit@:}
 @r{       @:      u e   @:             @:        @:calc-explain-units@:}
 @r{       @:      u g   @:unit         @:        @:calc-get-unit-definition@:}
+@r{       @:      u n   @:units        @:    18  @:calc-convert-exact-units@:}
 @r{       @:      u p   @:             @:        @:calc-permanent-units@:}
 @r{      a@:      u r   @:             @:        @:calc-remove-units@:}
 @r{      a@:      u s   @:             @:        @:usimplify@:(a)}
