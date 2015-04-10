@@ -5799,10 +5799,9 @@ and redisplay normally--don't erase and redraw the frame.  */)
   this_scroll_margin
     = max (0, min (scroll_margin, w->total_lines / 4));
 
-  /* Handle centering on a graphical frame specially.  Such frames can
-     have variable-height lines and centering point on the basis of
-     line counts would lead to strange effects.  */
-  if (FRAME_WINDOW_P (XFRAME (w->frame)))
+  /* Don't use redisplay code for initial frames, as the necessary
+     data structures might not be set up yet then.  */
+  if (!FRAME_INITIAL_P (XFRAME (w->frame)))
     {
       if (center_p)
 	{
@@ -5824,9 +5823,11 @@ and redisplay normally--don't erase and redraw the frame.  */)
 	  ptrdiff_t nlines = min (PTRDIFF_MAX, -iarg);
 	  int extra_line_spacing;
 	  int h = window_box_height (w);
+	  int ht = window_internal_height (w);
 	  void *itdata = bidi_shelve_cache ();
 
-	  iarg = - max (-iarg, this_scroll_margin);
+	  nlines = clip_to_bounds (this_scroll_margin + 1, nlines,
+				   ht - this_scroll_margin);
 
 	  SET_TEXT_POS (pt, PT, PT_BYTE);
 	  start_display (&it, w, pt);
@@ -5890,13 +5891,33 @@ and redisplay normally--don't erase and redraw the frame.  */)
 	}
       else
 	{
-	  struct position pos;
+	  struct it it;
+	  struct text_pos pt;
+	  ptrdiff_t nlines = min (PTRDIFF_MAX, iarg);
+	  int ht = window_internal_height (w);
+	  void *itdata = bidi_shelve_cache ();
 
-	  iarg = max (iarg, this_scroll_margin);
+	  nlines = clip_to_bounds (this_scroll_margin, nlines,
+				   ht - this_scroll_margin - 1);
 
-	  pos = *vmotion (PT, PT_BYTE, -iarg, w);
-	  charpos = pos.bufpos;
-	  bytepos = pos.bytepos;
+	  SET_TEXT_POS (pt, PT, PT_BYTE);
+	  start_display (&it, w, pt);
+
+	  /* Move to the beginning of screen line containing PT.  */
+	  move_it_by_lines (&it, 0);
+
+	  /* Move back to find the point which is ARG screen lines above PT.  */
+	  if (nlines > 0)
+	    {
+	      it.current_y = 0;
+	      it.vpos = 0;
+	      move_it_by_lines (&it, -nlines);
+	    }
+
+	  charpos = IT_CHARPOS (it);
+	  bytepos = IT_BYTEPOS (it);
+
+	  bidi_unshelve_cache (itdata, 0);
 	}
     }
   else
