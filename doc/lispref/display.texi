@@ -2790,7 +2790,7 @@ then the new definition of the @code{mode-line} face inherits from the
 functions instead of setting @code{face-remapping-alist} directly, to
 avoid trampling on remappings applied elsewhere.  These functions are
 intended for buffer-local remappings, so they all make
-@code{face-remapping-alist} buffer-local as a side-effect. They manage
+@code{face-remapping-alist} buffer-local as a side-effect.  They manage
 @code{face-remapping-alist} entries of the form
 
 @example
@@ -2820,11 +2820,11 @@ pass this object as an argument to @code{face-remap-remove-relative}
 if you need to remove the remapping later.
 
 @example
-;; Remap the `escape-glyph' face into a combination
-;; of the `highlight' and `italic' faces:
+;; Remap the 'escape-glyph' face into a combination
+;; of the 'highlight' and 'italic' faces:
 (face-remap-add-relative 'escape-glyph 'highlight 'italic)
 
-;; Increase the size of the `default' face by 50%:
+;; Increase the size of the 'default' face by 50%:
 (face-remap-add-relative 'default :height 1.5)
 @end example
 @end defun
@@ -4557,7 +4557,7 @@ not affect the amount of raising or lowering, which is based on the
 faces used for the text.
 @end table
 
-@c We put all the `@code{(when ...)}' on one line to encourage
+@c We put all the '@code{(when ...)}' on one line to encourage
 @c makeinfo's end-of-sentence heuristics to DTRT.  Previously, the dot
 @c was at eol; the info file ended up w/ two spaces rendered after it.
   You can make any display specification conditional.  To do that,
@@ -5628,7 +5628,7 @@ so that it's easy to define special-purpose types of buttons for
 specific tasks.
 
 @defun define-button-type name &rest properties
-Define a `button type' called @var{name} (a symbol).
+Define a ``button type'' called @var{name} (a symbol).
 The remaining arguments
 form a sequence of @var{property value} pairs, specifying default
 property values for buttons with this type (a button's type may be set
@@ -5781,7 +5781,7 @@ Return @code{t} if button-type @var{type} is a subtype of @var{supertype}.
 These are commands and functions for locating and operating on
 buttons in an Emacs buffer.
 
-@code{push-button} is the command that a user uses to actually `push'
+@code{push-button} is the command that a user uses to actually ``push''
 a button, and is bound by default in the button itself to @key{RET}
 and to @key{mouse-2} using a local keymap in the button's overlay or
 text properties.  Commands that are useful outside the buttons itself,
@@ -6643,7 +6643,7 @@ Non-@acronym{ASCII}, non-printing characters @code{U+0080} to
 @samp{\230}).
 
 @item format-control
-Characters of Unicode General Category `Cf', such as @samp{U+200E}
+Characters of Unicode General Category ``Cf'', such as @samp{U+200E}
 (Left-to-Right Mark), but excluding characters that have graphic
 images, such as @samp{U+00AD} (Soft Hyphen).
 
@@ -6652,9 +6652,9 @@ Characters for there is no suitable font, or which cannot be encoded
 by the terminal's coding system.
 @end table
 
-@c FIXME: this can also be `acronym', but that's not currently
+@c FIXME: this can also be 'acronym', but that's not currently
 @c completely implemented; it applies only to the format-control
-@c group, and only works if the acronym is in `char-acronym-table'.
+@c group, and only works if the acronym is in 'char-acronym-table'.
 The @var{method} symbol should be one of @code{zero-width},
 @code{thin-space}, @code{empty-box}, or @code{hex-code}.  These have
 the same meanings as in @code{glyphless-char-display}, above.
