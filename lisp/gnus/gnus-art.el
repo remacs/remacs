@@ -255,12 +255,10 @@ This can also be a list of the above values."
   :group 'gnus-article-signature)
 
 (defcustom gnus-hidden-properties
-  (if (featurep 'xemacs)
-      ;; `intangible' is evil, but I keep it here in case it's useful.
-      '(invisible t intangible t)
-    ;; Emacs's command loop moves point out of invisible text anyway, so
-    ;; `intangible' is clearly not needed there.
-    '(invisible t))
+  ;; We use to have `intangible' here as well, but Emacs's command loop moves
+  ;; point out of invisible text anyway, so `intangible' is clearly not
+  ;; needed there.  And XEmacs doesn't handle `intangible' anyway.
+  '(invisible t)
   "Property list to use for hiding text."
   :type 'sexp
   :group 'gnus-article-hiding)
@@ -1772,19 +1770,12 @@ Initialized from `text-mode-syntax-table.")
   (re-search-forward (concat "^\\(" header "\\):") nil t))
 
 (defsubst gnus-article-hide-text (b e props)
-  "Set text PROPS on the B to E region, extending `intangible' 1 past B."
-  (gnus-add-text-properties-when 'article-type nil b e props)
-  (when (memq 'intangible props)
-    (put-text-property
-     (max (1- b) (point-min))
-     b 'intangible (cddr (memq 'intangible props)))))
+  "Set text PROPS on the B to E region."
+  (gnus-add-text-properties-when 'article-type nil b e props))
 
 (defsubst gnus-article-unhide-text (b e)
   "Remove hidden text properties from region between B and E."
-  (remove-text-properties b e gnus-hidden-properties)
-  (when (memq 'intangible gnus-hidden-properties)
-    (put-text-property (max (1- b) (point-min))
-		       b 'intangible nil)))
+  (remove-text-properties b e gnus-hidden-properties))
 
 (defun gnus-article-hide-text-type (b e type)
   "Hide text of TYPE between B and E."
@@ -1796,10 +1787,7 @@ Initialized from `text-mode-syntax-table.")
   "Unhide text of TYPE between B and E."
   (gnus-delete-wash-type type)
   (remove-text-properties
-   b e (cons 'article-type (cons type gnus-hidden-properties)))
-  (when (memq 'intangible gnus-hidden-properties)
-    (put-text-property (max (1- b) (point-min))
-		       b 'intangible nil)))
+   b e (cons 'article-type (cons type gnus-hidden-properties))))
 
 (defun gnus-article-delete-text-of-type (type)
   "Delete text of TYPE in the current buffer."
@@ -2329,7 +2317,7 @@ long lines if and only if arg is positive."
       (goto-char (point-max))
       (let ((start (point)))
 	(insert "X-Boundary: ")
-	(gnus-add-text-properties start (point) '(invisible t intangible t))
+	(gnus-add-text-properties start (point) gnus-hidden-properties)
        (insert (let (str (max (window-width)))
                  (if (featurep 'xemacs)
                      (setq max (1- max)))
