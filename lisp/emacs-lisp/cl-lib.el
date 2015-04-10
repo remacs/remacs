@@ -385,8 +385,8 @@ Signal an error if X is not a list."
       (null x)
     (signal 'wrong-type-argument (list 'listp x 'x))))
 
-(cl--defalias 'cl-third 'caddr "Return the third element of the list X.")
-(cl--defalias 'cl-fourth 'cadddr "Return the fourth element of the list X.")
+(cl--defalias 'cl-third 'cl-caddr "Return the third element of the list X.")
+(cl--defalias 'cl-fourth 'cl-cadddr "Return the fourth element of the list X.")
 
 (defsubst cl-fifth (x)
   "Return the fifth element of the list X."
@@ -418,158 +418,125 @@ Signal an error if X is not a list."
   (declare (gv-setter (lambda (store) `(setcar (nthcdr 9 ,x) ,store))))
   (nth 9 x))
 
-(defun caaar (x)
+(defun cl-caaar (x)
   "Return the `car' of the `car' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (car (car x))))
 
-(defun caadr (x)
+(defun cl-caadr (x)
   "Return the `car' of the `car' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (car (cdr x))))
 
-(defun cadar (x)
+(defun cl-cadar (x)
   "Return the `car' of the `cdr' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (cdr (car x))))
 
-(defun caddr (x)
+(defun cl-caddr (x)
   "Return the `car' of the `cdr' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (cdr (cdr x))))
 
-(defun cdaar (x)
+(defun cl-cdaar (x)
   "Return the `cdr' of the `car' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (car (car x))))
 
-(defun cdadr (x)
+(defun cl-cdadr (x)
   "Return the `cdr' of the `car' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (car (cdr x))))
 
-(defun cddar (x)
+(defun cl-cddar (x)
   "Return the `cdr' of the `cdr' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (cdr (car x))))
 
-(defun cdddr (x)
+(defun cl-cdddr (x)
   "Return the `cdr' of the `cdr' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (cdr (cdr x))))
 
-(defun caaaar (x)
+(defun cl-caaaar (x)
   "Return the `car' of the `car' of the `car' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (car (car (car x)))))
 
-(defun caaadr (x)
+(defun cl-caaadr (x)
   "Return the `car' of the `car' of the `car' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (car (car (cdr x)))))
 
-(defun caadar (x)
+(defun cl-caadar (x)
   "Return the `car' of the `car' of the `cdr' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (car (cdr (car x)))))
 
-(defun caaddr (x)
+(defun cl-caaddr (x)
   "Return the `car' of the `car' of the `cdr' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (car (cdr (cdr x)))))
 
-(defun cadaar (x)
+(defun cl-cadaar (x)
   "Return the `car' of the `cdr' of the `car' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (cdr (car (car x)))))
 
-(defun cadadr (x)
+(defun cl-cadadr (x)
   "Return the `car' of the `cdr' of the `car' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (cdr (car (cdr x)))))
 
-(defun caddar (x)
+(defun cl-caddar (x)
   "Return the `car' of the `cdr' of the `cdr' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (cdr (cdr (car x)))))
 
-(defun cadddr (x)
+(defun cl-cadddr (x)
   "Return the `car' of the `cdr' of the `cdr' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (cdr (cdr (cdr x)))))
 
-(defun cdaaar (x)
+(defun cl-cdaaar (x)
   "Return the `cdr' of the `car' of the `car' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (car (car (car x)))))
 
-(defun cdaadr (x)
+(defun cl-cdaadr (x)
   "Return the `cdr' of the `car' of the `car' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (car (car (cdr x)))))
 
-(defun cdadar (x)
+(defun cl-cdadar (x)
   "Return the `cdr' of the `car' of the `cdr' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (car (cdr (car x)))))
 
-(defun cdaddr (x)
+(defun cl-cdaddr (x)
   "Return the `cdr' of the `car' of the `cdr' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (car (cdr (cdr x)))))
 
-(defun cddaar (x)
+(defun cl-cddaar (x)
   "Return the `cdr' of the `cdr' of the `car' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (cdr (car (car x)))))
 
-(defun cddadr (x)
+(defun cl-cddadr (x)
   "Return the `cdr' of the `cdr' of the `car' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (cdr (car (cdr x)))))
 
-(defun cdddar (x)
+(defun cl-cdddar (x)
   "Return the `cdr' of the `cdr' of the `cdr' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (cdr (cdr (car x)))))
 
-(defun cddddr (x)
+(defun cl-cddddr (x)
   "Return the `cdr' of the `cdr' of the `cdr' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (cdr (cdr (cdr x)))))
-
-;; Generate aliases cl-cXXr for all the above defuns, and mark them obsolete.
-(eval-when-compile
-  (defun gen-cXXr--rawname (n bits)
-    "Generate and return a string like \"adad\" corresponding to N.
-BITS is the number of a's and d's.
-The \"corresponding\" means each bit of N is converted to an \"a\" (for zero)
-or a \"d\" (for one)."
-    (let ((name (make-string bits ?a))
-	  (mask (lsh 1 (1- bits)))
-	  (elt 0))
-      (while (< elt bits)
-	(if (/= (logand n mask) 0)
-	    (aset name elt ?d))
-	(setq elt (1+ elt)
-	      mask (lsh mask -1)))
-      name))
-
-  (defmacro gen-cXXr-all-cl-aliases (bits)
-    "Generate cl- aliases for all defuns `c[ad]+r' with BITS a's and d's.
-Also mark the aliases as obsolete."
-    `(progn
-       ,@(mapcar
-	  (lambda (n)
-	    (let* ((raw (gen-cXXr--rawname n bits))
-		   (old (intern (concat "cl-c" raw "r")))
-		   (new (intern (concat "c" raw "r"))))
-	      `(progn (defalias ',old ',new)
-		      (make-obsolete ',old ',new "25.1"))))
-	  (number-sequence 0 (1- (lsh 1 bits)))))))
-
-(gen-cXXr-all-cl-aliases 3)
-(gen-cXXr-all-cl-aliases 4)
 
 ;;(defun last* (x &optional n)
 ;;  "Returns the last link in the list LIST.

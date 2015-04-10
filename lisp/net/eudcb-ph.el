@@ -81,7 +81,7 @@ are returned"
   (eudc-ph-do-request "fields")
   (if full-records
       (eudc-ph-parse-query-result)
-    (mapcar 'caar (eudc-ph-parse-query-result))))
+    (mapcar #'caar (eudc-ph-parse-query-result))))
 
 (defun eudc-ph-parse-query-result (&optional fields)
   "Return a list of alists of key/values from in `eudc-ph-process-buffer'.

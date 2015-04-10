@@ -47,6 +47,8 @@
 
 (require 'wid-edit)
 
+(eval-when-compile (require 'cl-lib))
+
 (eval-and-compile
   (if (not (fboundp 'make-overlay))
       (require 'overlay)))
@@ -698,7 +700,7 @@ If ERROR is non-nil, report an error if there is none."
   (let ((result (eudc-query (list (cons 'name name)) '(email)))
 	email)
     (if (null (cdr result))
-	(setq email (cdaar result))
+	(setq email (cl-cdaar result))
       (error "Multiple match--use the query form"))
     (if error
 	(if email
@@ -716,7 +718,7 @@ If ERROR is non-nil, report an error if there is none."
   (let ((result (eudc-query (list (cons 'name name)) '(phone)))
 	phone)
     (if (null (cdr result))
-	(setq phone (cdaar result))
+	(setq phone (cl-cdaar result))
       (error "Multiple match--use the query form"))
     (if error
 	(if phone

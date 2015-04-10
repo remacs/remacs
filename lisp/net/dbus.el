@@ -869,7 +869,7 @@ association to the service from D-Bus."
 				;; Service.
 				(string-equal service (cadr e))
 				;; Non-empty object path.
-				(caddr e)
+				(nth 2 e)
 				(throw :found t)))))
 			 dbus-registered-objects-table)
 			nil))))
@@ -1474,7 +1474,7 @@ name of the property, and its value.  If there are no properties,
 		bus service path dbus-interface-properties
 		"GetAll" :timeout 500 interface)
 	       result)
-	(add-to-list 'result (cons (car dict) (caadr dict)) 'append)))))
+	(add-to-list 'result (cons (car dict) (cl-caadr dict)) 'append)))))
 
 (defun dbus-register-property
   (bus service path interface property access value
@@ -1672,7 +1672,7 @@ and \"org.freedesktop.DBus.Properties.GetAll\", which is slow."
 		(if (cadr entry2)
 		    ;; "sv".
 		    (dolist (entry3 (cadr entry2))
-		      (setcdr entry3 (caadr entry3)))
+		      (setcdr entry3 (cl-caadr entry3)))
 		  (setcdr entry2 nil)))))
 
 	;; Fallback: collect the information.  Slooow!
