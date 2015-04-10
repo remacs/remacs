@@ -38,6 +38,7 @@
   (if (featurep 'xemacs)
       (progn
 	(defalias 'semantic-buffer-local-value 'symbol-value-in-buffer)
+        ;; FIXME: Why not just (require 'overlay)?
 	(defalias 'semantic-overlay-live-p
 	  (lambda (o)
 	    (and (extent-live-p o)
@@ -113,12 +114,8 @@
       "Extract the window from EVENT."
       (car (car (cdr event))))
 
-    (if (> emacs-major-version 21)
-	(defalias 'semantic-buffer-local-value 'buffer-local-value)
+    (defalias 'semantic-buffer-local-value 'buffer-local-value)
 
-      (defun semantic-buffer-local-value (sym &optional buf)
-	"Get the value of SYM from buffer local variable in BUF."
-	(cdr (assoc sym (buffer-local-variables buf)))))
     )
 
 
@@ -306,7 +303,7 @@ error message.
 If `debug-on-error' is set, errors are not caught, so that you can
 debug them.
 Avoid using a large BODY since it is duplicated."
-  ;;(declare (debug t) (indent 1))
+  (declare (debug t) (indent 1))
   `(if debug-on-error
        ;;(let ((inhibit-quit nil)) ,@body)
        ;; Note to self: Doing the above screws up the wisent parser.
@@ -317,7 +314,6 @@ Avoid using a large BODY since it is duplicated."
         (message ,format (format "%S - %s" (current-buffer)
                                  (error-message-string err)))
         nil))))
-(put 'semantic-safe 'lisp-indent-function 1)
 
 ;;; Misc utilities
 ;;

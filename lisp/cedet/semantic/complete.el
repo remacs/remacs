@@ -1707,15 +1707,6 @@ Display mechanism using tooltip for a list of possible completions.")
 
 ;;; Compatibility
 ;;
-(eval-and-compile
-  (if (fboundp 'window-inside-edges)
-      ;; Emacs devel.
-      (defalias 'semantic-displayor-window-edges
-        'window-inside-edges)
-    ;; Emacs 21
-    (defalias 'semantic-displayor-window-edges
-      'window-edges)
-    ))
 
 (defun semantic-displayor-point-position ()
   "Return the location of POINT as positioned on the selected frame.
