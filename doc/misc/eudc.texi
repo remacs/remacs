@@ -4,6 +4,8 @@
 @settitle Emacs Unified Directory Client (EUDC) Manual
 @afourpaper
 @documentencoding UTF-8
+@syncodeindex fn cp
+@syncodeindex vr cp
 @c %**end of header
 
 @copying
@@ -61,8 +63,7 @@ modify this GNU manual.''
 * Usage::                       The various usage possibilities explained
 * Credits::                     Who's done what
 * GNU Free Documentation License:: The license for this documentation.
-* Command and Function Index::
-* Variables Index::
+* Index::
 @end menu
 
 
@@ -220,15 +221,15 @@ email composition buffers (@pxref{Inline Query Expansion})
 @section LDAP Configuration
 
 LDAP support is added by means of @file{ldap.el}, which is part of
-Emacs.  @file{ldap.el} needs an external command line utility named
-@file{ldapsearch}, available as part of OpenLDAP
+Emacs.  @file{ldap.el} needs an external program called
+@command{ldapsearch}, available as part of OpenLDAP
 (@url{http://www.openldap.org/}).  The configurations in this section
 were tested with OpenLDAP 2.4.23.
 
 The following examples use a base of
 @code{ou=people,dc=example,dc=com} and the host name
-@code{directory.example.com}, a server that supports LDAP-over-SSL
-(the @code{ldaps} protocol, with default port @code{636}) and which
+@code{ldaps.gnu.org}, a server that supports LDAP-over-SSL (the
+@code{ldaps} protocol, with default port @code{636}) and which
 requires authentication by the user @code{emacsuser} with password
 @code{s3cr3t}.
 
@@ -244,14 +245,21 @@ example, attempting to TAB-complete the following:
 To: * Smith
 @end example
 
+@noindent
 will return all LDAP entries with surnames that begin with
 @code{Smith}.  In every LDAP query it makes, EUDC implicitly appends
 the wildcard character to the end of the last word.
 
+@menu
+* Emacs-only Configuration::    Configure with @file{.emacs}
+* External Configuration::      Configure with @file{/etc/openldap/ldap.conf}
+@end menu
+
+@node Emacs-only Configuration
 @subsection Emacs-only Configuration
 
 Emacs can pass most required configuration options via the
-@file{ldapsearch} command-line.  One exception is certificate
+@command{ldapsearch} command-line.  One exception is certificate
 configuration for LDAP-over-SSL, which must be specified in
 @file{/etc/openldap/ldap.conf}.  On systems that provide such
 certificates as part of the @code{OpenLDAP} installation, this can be
@@ -269,14 +277,19 @@ LDAP:
   '(define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
 (customize-set-variable 'eudc-server-hotlist
                         '(("" . bbdb)
-                          ("ldaps://directory.example.com" . ldap)))
+                          ("ldaps://ldaps.gnu.org" . ldap)))
 (customize-set-variable 'ldap-host-parameters-alist
-                        '(("ldaps://directory.example.com"
+                        '(("ldaps://ldaps.gnu.org"
                            base "ou=people,dc=example,dc=com"
                            binddn "example\\emacsuser"
                            passwd ldap-password-read)))
 @end lisp
 
+@findex ldap-password-read
+@vindex passwd
+@vindex password-cache
+@vindex password-cache-expiry
+@findex password-reset
 Specifying the function @code{ldap-password-read} for @code{passwd}
 will cause Emacs to prompt interactively for the password.  The
 password will then be validated and cached, unless
@@ -285,6 +298,7 @@ password will then be validated and cached, unless
 password is cached.  If you want to clear the cache, call
 @code{password-reset}.
 
+@node External Configuration
 @subsection External Configuration
 
 Your system may already be configured for a default LDAP server.  For
@@ -292,17 +306,19 @@ example, @file{/etc/openldap/ldap.conf} might contain:
 
 @example
 BASE ou=people,dc=example,dc=com
-URI ldaps://directory.example.com
+URI ldaps://ldaps.gnu.org
 TLS_CACERTDIR /etc/openldap/certs
 @end example
 
-To authenticate, the @dfn{bind distinguished name (binddn)} is
-required, in this case, @code{example\emacsuser}, along with the
-password.  These can be specified in @file{~/.authinfo.gpg} with the
-following line:
+@cindex bind distinguished name
+@cindex binddn
+Authentication requires a password, and a @dfn{bind distinguished name
+(binddn)} representing the user, in this case,
+@code{example\emacsuser}.  These can be specified in
+@file{~/.authinfo.gpg} with the following line:
 
 @example
-machine ldaps://directory.example.com binddn example\emacsuser password s3cr3t
+machine ldaps://ldaps.gnu.org binddn example\emacsuser password s3cr3t
 @end example
 
 Then in the @file{.emacs} init file, these expressions suffice to
@@ -313,15 +329,15 @@ configure EUDC for LDAP:
   '(define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
 (customize-set-variable 'eudc-server-hotlist
                         '(("" . bbdb)
-                          ("ldaps://directory.example.com" . ldap)))
+                          ("ldaps://ldaps.gnu.org" . ldap)))
 (customize-set-variable 'ldap-host-parameters-alist
-                        '(("ldaps://directory.example.com"
+                        '(("ldaps://ldaps.gnu.org"
                            auth-source t)))
 @end lisp
 
 For this example where we only care about one server, the server name
 can be omitted in @file{~/.authinfo.gpg} and @file{.emacs}, in which
-case @file{ldapsearch} defaults to the host name in
+case @command{ldapsearch} defaults to the host name in
 @file{/etc/openldap/ldap.conf}.
 
 The @file{~/.authinfo.gpg} line becomes:
@@ -330,13 +346,16 @@ The @file{~/.authinfo.gpg} line becomes:
 binddn example\emacsuser password s3cr3t
 @end example
 
+@noindent
 and the @file{.emacs} expressions become:
 
 @lisp
 (eval-after-load "message"
   '(define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
-(customize-set-variable 'eudc-server-hotlist '(("" . bbdb) ("" . ldap)))
-(customize-set-variable 'ldap-host-parameters-alist '(("" auth-source t)))
+(customize-set-variable 'eudc-server-hotlist
+                        '(("" . bbdb) ("" . ldap)))
+(customize-set-variable 'ldap-host-parameters-alist
+                        '(("" auth-source t)))
 @end lisp
 
 @node Usage
@@ -1043,14 +1062,9 @@ in testing and proofreading the code and docs of @file{ph.el}.
 @appendix GNU Free Documentation License
 @include doclicense.texi
 
-@node Command and Function Index
-@unnumbered Command and Function Index
+@node Index
+@unnumbered Index
 
-@printindex fn
-
-@node Variables Index
-@unnumbered Variables Index
-
-@printindex vr
+@printindex cp
 
 @bye
