@@ -3111,8 +3111,6 @@ if test "${HAVE_X11}" = "yes"; then
     else
       AC_MSG_ERROR([cairo requested but not found.])
     fi
-    with_gif=no
-    with_tiff=no
 
     CFLAGS="$CFLAGS $CAIRO_CFLAGS"
     LIBS="$LIBS $CAIRO_LIBS"

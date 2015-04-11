@@ -7197,6 +7197,42 @@ tiff_load (struct frame *f, struct image *img)
       return 0;
     }
 
+#ifdef USE_CAIRO
+  {
+    cairo_surface_t *surface;
+    cairo_format_t format = CAIRO_FORMAT_ARGB32;
+    int stride = cairo_format_stride_for_width (format, width);
+    unsigned char *data = (unsigned char *) xmalloc (width*height*4);
+    uint32_t *dataptr = (uint32_t *) data;
+    int r, g, b, a;
+
+    for (y = 0; y < height; ++y)
+      {
+        uint32 *row = buf + (height - 1 - y) * width;
+        for (x = 0; x < width; ++x)
+          {
+            uint32 abgr = row[x];
+            int r = TIFFGetR (abgr);
+            int g = TIFFGetG (abgr);
+            int b = TIFFGetB (abgr);
+            int a = TIFFGetA (abgr);
+            *dataptr++ = (a << 24) | (r << 16) | (g << 8) | b;
+          }
+      }
+
+    surface = cairo_image_surface_create_for_data (data,
+                                                   format,
+                                                   width,
+                                                   height,
+                                                   stride);
+
+    img->width  = width;
+    img->height = height;
+    img->cr_data = surface;
+    img->cr_data2 = buf;
+    img->pixmap = 0;
+  }
+#else
   /* Initialize the color table.  */
   init_color_table ();
 
@@ -7231,8 +7267,10 @@ tiff_load (struct frame *f, struct image *img)
 
   /* Put ximg into the image.  */
   image_put_x_image (f, img, ximg, 0);
-  xfree (buf);
 
+#endif /* ! USE_CAIRO */
+
+  xfree (buf);
   return 1;
 }
 
@@ -7494,6 +7532,10 @@ gif_load (struct frame *f, struct image *img)
   EMACS_INT idx;
   int gif_err;
 
+#ifdef USE_CAIRO
+  unsigned char *data = 0;
+#endif
+
   if (NILP (specified_data))
     {
       file = x_find_image_file (specified_file);
@@ -7622,6 +7664,10 @@ gif_load (struct frame *f, struct image *img)
 	}
     }
 
+#ifdef USE_CAIRO
+  /* xzalloc so data is zero => transparent */
+  data = (unsigned char *) xzalloc (width * height * 4);
+#else
   /* Create the X image and pixmap.  */
   if (!image_create_x_image_and_pixmap (f, img, width, height, 0, &ximg, 0))
     {
@@ -7648,6 +7694,7 @@ gif_load (struct frame *f, struct image *img)
       for (x = img->corners[RIGHT_CORNER]; x < width; ++x)
 	XPutPixel (ximg, x, y, FRAME_BACKGROUND_PIXEL (f));
     }
+#endif
 
   /* Read the GIF image into the X image.   */
 
@@ -7702,11 +7749,13 @@ gif_load (struct frame *f, struct image *img)
       if (disposal == 0)
 	disposal = 1;
 
-      /* Allocate subimage colors.  */
-      memset (pixel_colors, 0, sizeof pixel_colors);
       gif_color_map = subimage->ImageDesc.ColorMap;
       if (!gif_color_map)
 	gif_color_map = gif->SColorMap;
+
+#ifndef USE_CAIRO
+      /* Allocate subimage colors.  */
+      memset (pixel_colors, 0, sizeof pixel_colors);
 
       if (gif_color_map)
 	for (i = 0; i < gif_color_map->ColorCount; ++i)
@@ -7722,6 +7771,7 @@ gif_load (struct frame *f, struct image *img)
 		pixel_colors[i] = lookup_rgb_color (f, r, g, b);
 	      }
 	  }
+#endif
 
       /* Apply the pixel values.  */
       if (GIFLIB_MAJOR < 5 && gif->SavedImages[j].ImageDesc.Interlace)
@@ -7739,20 +7789,47 @@ gif_load (struct frame *f, struct image *img)
 		{
 		  int c = raster[y * subimg_width + x];
 		  if (transparency_color_index != c || disposal != 1)
-		    XPutPixel (ximg, x + subimg_left, row + subimg_top,
-			       pixel_colors[c]);
+                    {
+#ifdef USE_CAIRO
+                      uint32_t *dataptr =
+                        ((uint32_t*)data + ((row + subimg_top) * subimg_width
+                                            + x + subimg_left));
+                      int r = gif_color_map->Colors[c].Red;
+                      int g = gif_color_map->Colors[c].Green;
+                      int b = gif_color_map->Colors[c].Blue;
+
+                      if (transparency_color_index != c)
+                        *dataptr = (0xff << 24) | (r << 16) | (g << 8) | b;
+#else
+                      XPutPixel (ximg, x + subimg_left, row + subimg_top,
+                                 pixel_colors[c]);
+#endif
+                    }
 		}
 	    }
 	}
       else
 	{
-	  for (y = 0; y < subimg_height; ++y)
+          for (y = 0; y < subimg_height; ++y)
 	    for (x = 0; x < subimg_width; ++x)
 	      {
 		int c = raster[y * subimg_width + x];
 		if (transparency_color_index != c || disposal != 1)
-		  XPutPixel (ximg, x + subimg_left, y + subimg_top,
-			     pixel_colors[c]);
+                  {
+#ifdef USE_CAIRO
+                    uint32_t *dataptr =
+                      ((uint32_t*)data + ((y + subimg_top) * subimg_width
+                                          + x + subimg_left));
+                    int r = gif_color_map->Colors[c].Red;
+                    int g = gif_color_map->Colors[c].Green;
+                    int b = gif_color_map->Colors[c].Blue;
+                    if (transparency_color_index != c)
+                      *dataptr = (0xff << 24) | (r << 16) | (g << 8) | b;
+#else
+                    XPutPixel (ximg, x + subimg_left, y + subimg_top,
+                               pixel_colors[c]);
+#endif
+                  }
 	      }
 	}
     }
@@ -7809,6 +7886,25 @@ gif_load (struct frame *f, struct image *img)
 #endif
     }
 
+#ifdef USE_CAIRO
+  {
+    cairo_surface_t *surface;
+    cairo_format_t format = CAIRO_FORMAT_ARGB32;
+    int stride = cairo_format_stride_for_width (format, width);
+
+    surface = cairo_image_surface_create_for_data (data,
+                                                   format,
+                                                   width,
+                                                   height,
+                                                   stride);
+
+    img->width  = width;
+    img->height = height;
+    img->cr_data = surface;
+    img->cr_data2 = data;
+    img->pixmap = 0;
+  }
+#else
   /* Maybe fill in the background field while we have ximg handy. */
   if (NILP (image_spec_value (img->spec, QCbackground, NULL)))
     /* Casting avoids a GCC warning.  */
@@ -7816,6 +7912,7 @@ gif_load (struct frame *f, struct image *img)
 
   /* Put ximg into the image.  */
   image_put_x_image (f, img, ximg, 0);
+#endif
 
   return 1;
 }

@@ -1,6 +1,8 @@
 2015-04-11  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* image.c (jpeg_load_body): Create cairo image surface if USE_CAIRO.
+	(tiff_load): Create cairo image surface if USE_CAIRO.
+	(gif_load): Ditto.
 
 2015-04-05  Jan Djärv  <jan.h.d@swipnet.se>
 

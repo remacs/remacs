@@ -1,6 +1,7 @@
 2015-04-11  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* configure.ac: Allow jpeg with cairo.
+	Allow tiff and gif with cairo.
 
 2015-04-05  Jan Djärv  <jan.h.d@swipnet.se>
 
