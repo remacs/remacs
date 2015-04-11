@@ -1483,8 +1483,8 @@ usage: (make-process &rest ARGS)  */)
   pset_plist (XPROCESS (proc), Qnil);
   pset_type (XPROCESS (proc), Qreal);
   pset_buffer (XPROCESS (proc), buffer);
-  pset_sentinel (XPROCESS (proc), Qinternal_default_process_sentinel);
-  pset_filter (XPROCESS (proc), Qinternal_default_process_filter);
+  pset_sentinel (XPROCESS (proc), Fplist_get (contact, QCsentinel));
+  pset_filter (XPROCESS (proc), Fplist_get (contact, QCfilter));
   pset_command (XPROCESS (proc), Fcopy_sequence (command));
 
   if (tem = Fplist_get (contact, QCnoquery), !NILP (tem))
