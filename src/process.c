@@ -1220,8 +1220,8 @@ list of keywords.  */)
   if (NILP (key) && SERIALCONN_P (process))
     return list2 (Fplist_get (contact, QCport),
 		  Fplist_get (contact, QCspeed));
-  /* FIXME: Return a meaningful value (e.g. the child ends of pipe),
-     if pipe process is useful for other purposes than receiving
+  /* FIXME: Return a meaningful value (e.g., the child end of the pipe)
+     if the pipe process is useful for purposes other than receiving
      stderr.  */
   if (NILP (key) && PIPECONN_P (process))
     return Qt;
@@ -1751,7 +1751,7 @@ static void
 create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
 {
   struct Lisp_Process *p = XPROCESS (process);
-  int inchannel, outchannel, errchannel = -1;
+  int inchannel, outchannel;
   pid_t pid;
   int vfork_errno;
   int forkin, forkout, forkerr = -1;
@@ -1798,7 +1798,6 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
 	  struct Lisp_Process *pp = XPROCESS (p->stderrproc);
 
 	  forkerr = pp->open_fd[SUBPROCESS_STDOUT];
-	  errchannel = pp->open_fd[READ_FROM_SUBPROCESS];
 
 	  /* Close unnecessary file descriptors.  */
 	  close_process_fd (&pp->open_fd[WRITE_TO_SUBPROCESS]);
@@ -2128,7 +2127,7 @@ usage:  (make-pipe-process &rest ARGS)  */)
   struct Lisp_Process *p;
   struct gcpro gcpro1;
   Lisp_Object name, buffer;
-  Lisp_Object tem, val;
+  Lisp_Object tem;
   ptrdiff_t specpdl_count;
   int inchannel, outchannel;
 
@@ -2203,7 +2202,7 @@ usage:  (make-pipe-process &rest ARGS)  */)
 
   {
     /* Setup coding systems for communicating with the network stream.  */
-    struct gcpro gcpro1;
+
     /* Qt denotes we have not yet called Ffind_operation_coding_system.  */
     Lisp_Object coding_systems = Qt;
     Lisp_Object val;
