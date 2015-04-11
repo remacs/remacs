@@ -29,11 +29,12 @@ fi
 
 # Use a UTF-8 locale if available, so that the UTF-8 check works.
 # Use U+00A2 CENT SIGN to test whether the locale works.
-cent_sign='¢'
-print_at_sign='{print substr("'$cent_sign'@", 2)}'
-at_sign=`$awk "$print_at_sign" 2>/dev/null`
+cent_sign_utf8_format='\302\242\n'
+cent_sign=`printf "$cent_sign_utf8_format"`
+print_at_sign='BEGIN {print substr("'$cent_sign'@", 2)}'
+at_sign=`$awk "$print_at_sign" </dev/null 2>/dev/null`
 if test "$at_sign" != @; then
-  at_sign=`LC_ALL=en_US.UTF-8 $awk "$print_at_sign" 2>/dev/null`
+  at_sign=`LC_ALL=en_US.UTF-8 $awk "$print_at_sign" </dev/null 2>/dev/null`
   if test "$at_sign" = @; then
     LC_ALL=en_US.UTF-8; export LC_ALL
   fi
