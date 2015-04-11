@@ -606,9 +606,13 @@ NOT-URGENT means it is ok to continue if the user says not to save."
 		     (not (equal vc-log-fileset fileset))))
 	    `((log-edit-listfun
                . (lambda ()
-                   ;; FIXME: Should expand the list for directories.
-                   ;; Is the above still relevant?  If so, it needs a
-                   ;; better explanation. -- dgutov
+                   ;; FIXME: When fileset includes directories, and
+                   ;; there are relevant ChangeLog files inside their
+                   ;; children, we don't find them.  Either handle it
+                   ;; in `log-edit-insert-changelog-entries' by
+                   ;; walking down the file trees, or somehow pass
+                   ;; `fileset-only-files' from `vc-next-action'
+                   ;; through to this function.
                    (let ((root (vc-root-dir)))
                      ;; Returns paths relative to the root, so that
                      ;; `log-edit-changelog-insert-entries'
