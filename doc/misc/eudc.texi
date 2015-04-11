@@ -416,7 +416,7 @@ may be specified by appending a colon and a number to the name of the
 server. You will not need this unless your server runs on a port other
 than the default (which depends on the protocol).
 If the directory server resides on your own computer (which is the case
-if you use the BBDB back end) then `localhost' is a reasonable value but
+if you use the BBDB back end) then @samp{localhost} is a reasonable value but
 it will be ignored anyway.
 @end defvar
 
@@ -829,11 +829,11 @@ trying to perform an inline query.  Possible values are:
 Only the current directory server is tried
 @item hotlist
 The servers in the hotlist are tried in order until one finds a match
-for the query or `eudc-max-servers-to-query' is reached
+for the query or @code{eudc-max-servers-to-query} is reached
 @item server-then-hotlist
 The current server then the servers in the hotlist are tried in the
 order they appear in the hotlist until one of them finds a match or
-`eudc-max-servers-to-query' is reached.  This is the default.
+@code{eudc-max-servers-to-query} is reached.  This is the default.
 @end table
 @end defvar
 

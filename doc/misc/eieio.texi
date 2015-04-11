@@ -233,7 +233,7 @@ first argument, and this one must be an @eieio{} type.
 @item Support for metaclasses
 There is just one default metaclass, @code{eieio-default-superclass},
 and you cannot define your own.  The @code{:metaclass} tag in
-@code{defclass} is ignored.  Also, functions like `find-class', which
+@code{defclass} is ignored.  Also, functions like @code{find-class}, which
 should return instances of the metaclass, behave differently in
 @eieio{} in that they return symbols or plain structures instead.
 

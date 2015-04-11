@@ -250,7 +250,7 @@ need to use a function that takes some other data type, you will need to
 call it in an Elisp expression (which can also be used with
 @ref{Expansion, expansions}).  As with other shells, you can
 escape special characters and spaces with the backslash (@code{\}) and
-the single (@code{''}) and double (@code{""}) quotes.
+apostrophes (@code{''}) and double quotes (@code{""}).
 
 @node Built-ins
 
@@ -1146,7 +1146,7 @@ auto-revert mode in that buffer at frequent intervals---and a
 
 @item Make @command{dgrep} load @code{dired}, mark everything, then invoke @code{dired-do-search}
 
-@item Write mesh.c
+@item Write @file{mesh.c}
 
 This would run Emacs with the appropriate arguments to invoke Eshell
 only.  That way, it could be listed as a login shell.
@@ -1155,7 +1155,8 @@ only.  That way, it could be listed as a login shell.
 
 @item Auto-detect when a command is visual, by checking @code{TERMCAP} usage
 
-@item The first keypress after @kbd{M-x watson} triggers `eshell-send-input'
+@item The first keypress after @kbd{M-x watson} triggers
+@code{eshell-send-input}
 
 @item Make @kbd{/} electric
 
