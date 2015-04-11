@@ -62,7 +62,13 @@ exec $awk -v at_sign="$at_sign" -v cent_sign="$cent_sign" '
     }
   }
 
-  /^#/ { next }
+  /^#/ {
+    # Ignore every line after a scissors line.
+    if (/^# *---* *(>[8%]|[8%]<) *---* *$/) { exit }
+
+    # Ignore comment lines.
+    next
+  }
 
   !/^.*$/ {
     print "Invalid character (not UTF-8) in commit message"
