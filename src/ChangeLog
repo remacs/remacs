@@ -1,3 +1,7 @@
+2015-04-11  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* image.c (jpeg_load_body): Create cairo image surface if USE_CAIRO.
+
 2015-04-05  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* image.c: #undef COLOR_TABLE_SUPPORT when USE_CAIRO.

@@ -6564,6 +6564,7 @@ jpeg_load_body (struct frame *f, struct image *img,
   XImagePtr ximg = NULL;
   unsigned long *colors;
   int width, height;
+  int i, ir, ig, ib;
 
   /* Open the JPEG file.  */
   specified_file = image_spec_value (img->spec, QCfile, NULL);
@@ -6668,8 +6669,6 @@ jpeg_load_body (struct frame *f, struct image *img,
      No more than 255 colors will be generated.  */
   USE_SAFE_ALLOCA;
   {
-    int i, ir, ig, ib;
-
     if (mgr->cinfo.out_color_components > 2)
       ir = 0, ig = 1, ib = 2;
     else if (mgr->cinfo.out_color_components > 1)
@@ -6677,6 +6676,7 @@ jpeg_load_body (struct frame *f, struct image *img,
     else
       ir = 0, ig = 0, ib = 0;
 
+#ifndef CAIRO
     /* Use the color table mechanism because it handles colors that
        cannot be allocated nicely.  Such colors will be replaced with
        a default color, and we don't have to care about which colors
@@ -6693,6 +6693,7 @@ jpeg_load_body (struct frame *f, struct image *img,
 	int b = mgr->cinfo.colormap[ib][i] << 8;
 	colors[i] = lookup_rgb_color (f, r, g, b);
       }
+#endif
 
 #ifdef COLOR_TABLE_SUPPORT
     /* Remember those colors actually allocated.  */
@@ -6705,12 +6706,49 @@ jpeg_load_body (struct frame *f, struct image *img,
   row_stride = width * mgr->cinfo.output_components;
   buffer = mgr->cinfo.mem->alloc_sarray ((j_common_ptr) &mgr->cinfo,
 					 JPOOL_IMAGE, row_stride, 1);
+#ifdef USE_CAIRO
+  {
+    cairo_surface_t *surface;
+    cairo_format_t format = CAIRO_FORMAT_ARGB32;
+    int stride = cairo_format_stride_for_width (format, width);
+    unsigned char *data = (unsigned char *) xmalloc (width*height*4);
+    uint32_t *dataptr = (uint32_t *) data;
+    int r, g, b;
+
+    for (y = 0; y < height; ++y)
+      {
+        jpeg_read_scanlines (&mgr->cinfo, buffer, 1);
+
+        for (x = 0; x < width; ++x)
+          {
+            i = buffer[0][x];
+            r = mgr->cinfo.colormap[ir][i];
+            g = mgr->cinfo.colormap[ig][i];
+            b = mgr->cinfo.colormap[ib][i];
+            *dataptr++ = (0xff << 24) | (r << 16) | (g << 8) | b;
+          }
+      }
+
+    surface = cairo_image_surface_create_for_data (data,
+                                                   format,
+                                                   width,
+                                                   height,
+                                                   stride);
+
+    img->width  = width;
+    img->height = height;
+    img->cr_data = surface;
+    img->cr_data2 = data;
+    img->pixmap = 0;
+  }
+#else
   for (y = 0; y < height; ++y)
     {
       jpeg_read_scanlines (&mgr->cinfo, buffer, 1);
       for (x = 0; x < mgr->cinfo.output_width; ++x)
 	XPutPixel (ximg, x, y, colors[buffer[0][x]]);
     }
+#endif
 
   /* Clean up.  */
   jpeg_finish_decompress (&mgr->cinfo);
@@ -6718,6 +6756,7 @@ jpeg_load_body (struct frame *f, struct image *img,
   if (fp)
     fclose (fp);
 
+#ifndef CAIRO
   /* Maybe fill in the background field while we have ximg handy. */
   if (NILP (image_spec_value (img->spec, QCbackground, NULL)))
     /* Casting avoids a GCC warning.  */
@@ -6725,6 +6764,7 @@ jpeg_load_body (struct frame *f, struct image *img,
 
   /* Put ximg into the image.  */
   image_put_x_image (f, img, ximg, 0);
+#endif
   SAFE_FREE ();
   return 1;
 }
