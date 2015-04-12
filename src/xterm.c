@@ -329,7 +329,7 @@ record_event (char *locus, int type)
 
 #endif
 
-static void x_prepare_for_xlibdraw (struct frame *);
+static void x_free_cr_resources (struct frame *);
 static void x_set_clip_rectangles (struct frame *, GC, XRectangle *, int);
 static void x_reset_clip_rectangles (struct frame *, GC);
 static void x_fill_rectangle (struct frame *, GC, int, int, int, int);
@@ -574,7 +574,7 @@ x_cr_draw_frame (cairo_t *cr, struct frame *f)
   width = FRAME_PIXEL_WIDTH (f);
   height = FRAME_PIXEL_HEIGHT (f);
 
-  x_prepare_for_xlibdraw (f);
+  x_free_cr_resources (f);
   FRAME_CR_CONTEXT (f) = cr;
   x_clear_area (f, 0, 0, width, height);
   expose_frame (f, 0, 0, width, height);
@@ -662,7 +662,7 @@ x_cr_export_frames (Lisp_Object frames, cairo_surface_type_t surface_type)
       QUIT;
 
       block_input ();
-      x_prepare_for_xlibdraw (f);
+      x_free_cr_resources (f);
       FRAME_CR_CONTEXT (f) = cr;
       x_clear_area (f, 0, 0, width, height);
       expose_frame (f, 0, 0, width, height);
@@ -702,7 +702,7 @@ x_cr_export_frames (Lisp_Object frames, cairo_surface_type_t surface_type)
 #endif	/* USE_CAIRO */
 
 static void
-x_prepare_for_xlibdraw (struct frame *f)
+x_free_cr_resources (struct frame *f)
 {
 #ifdef USE_CAIRO
   if (f == NULL)
@@ -710,7 +710,7 @@ x_prepare_for_xlibdraw (struct frame *f)
       Lisp_Object rest, frame;
       FOR_EACH_FRAME (rest, frame)
 	if (FRAME_X_P (XFRAME (frame)))
-	  x_prepare_for_xlibdraw (XFRAME (frame));
+	  x_free_cr_resources (XFRAME (frame));
     }
   else
     {
@@ -3664,7 +3664,7 @@ x_draw_glyph_string (struct glyph_string *s)
 static void
 x_shift_glyphs_for_insert (struct frame *f, int x, int y, int width, int height, int shift_by)
 {
-  x_prepare_for_xlibdraw (f);
+  x_free_cr_resources (f);
   XCopyArea (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f), FRAME_X_WINDOW (f),
 	     f->output_data.x->normal_gc,
 	     x, y, width, height,
@@ -11035,7 +11035,7 @@ x_free_frame_resources (struct frame *f)
 	free_frame_xic (f);
 #endif
 
-      x_prepare_for_xlibdraw (f);
+      x_free_cr_resources (f);
 #ifdef USE_X_TOOLKIT
       if (f->output_data.x->widget)
 	{

@@ -1,6 +1,10 @@
 2015-04-12  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* xterm.c (x_draw_image_glyph_string): Added missing USE_CAIRO.
+	(x_free_cr_resources): Renamed from x_prepare_for_xlibdraw.
+	(x_cr_draw_frame, x_cr_export_frames, x_shift_glyphs_for_insert)
+	(x_free_frame_resources): Rename x_prepare_for_xlibdraw to
+	x_free_cr_resources.
 
 	* image.c (get_spec_bg_or_alpha_as_argb)
 	(create_cairo_image_surface): New functions when USE_CAIRO.
