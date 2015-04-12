@@ -78,17 +78,22 @@
        ("`" pcase-QPAT)
        ("guard" form)
        ("let" pcase-UPAT form)
-       ("pred"
-        &or lambda-expr
-        ;; Punt on macros/special forms.
-        (functionp &rest form)
-        sexp)
+       ("pred" pcase-FUN)
+       ("app" pcase-FUN pcase-UPAT)
        sexp))
 
 (def-edebug-spec
   pcase-QPAT
   (&or ("," pcase-UPAT)
        (pcase-QPAT . pcase-QPAT)
+       (vector &rest pcase-QPAT)
+       sexp))
+
+(def-edebug-spec
+  pcase-FUN
+  (&or lambda-expr
+       ;; Punt on macros/special forms.
+       (functionp &rest form)
        sexp))
 
 ;;;###autoload
