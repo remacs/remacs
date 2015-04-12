@@ -40,8 +40,15 @@ or by sticking with Emacs 24.4.
 If gnustep-config is not available, the old heuristics are used.
 
 ---
-** The configure option `--with-pkg-config-prog' has been removed.
+** The configure option '--with-pkg-config-prog' has been removed.
 Use './configure PKG_CONFIG=/full/name/of/pkg-config' if you need to.
+
+---
+** The configure option '--with-mmdf' has been removed.
+It was no longer useful, as it relied on libraries that are no longer
+supported, and its presence led to confusion during configuration.
+This affects only the 'movemail' utility; Emacs itself can still
+process MMDF-format files as before.
 
 ** The configure option '--enable-silent-rules' is now the default,
 and silent rules are now quieter.  To get the old behavior where

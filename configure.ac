@@ -269,11 +269,6 @@ if test "$with_hesiod" != no; then
   AC_DEFINE(HESIOD, 1, [Define to support using a Hesiod database to find the POP server.])
 fi
 
-OPTION_DEFAULT_OFF([mmdf],[support MMDF mailboxes])
-if test "$with_mmdf" != no; then
-   AC_DEFINE(MAIL_USE_MMDF, 1, [Define to support MMDF mailboxes in movemail.])
-fi
-
 OPTION_DEFAULT_OFF([mail-unlink],[unlink, rather than empty, mail spool after reading])
 if test "$with_mail_unlink" != no; then
    AC_DEFINE(MAIL_UNLINK_SPOOL, 1, [Define to unlink, rather than empty, mail spool after reading.])
