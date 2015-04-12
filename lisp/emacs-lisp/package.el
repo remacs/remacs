@@ -1199,6 +1199,8 @@ version higher than the one being used.  To check for package
 
 (defun package--build-compatibility-table ()
   "Build `package--compatibility-table' with `package--mapc'."
+  ;; Initialize the list of built-ins.
+  (require 'finder-inf nil t)
   ;; Build compat table.
   (setq package--compatibility-table (make-hash-table :test 'eq))
   (package--mapc #'package--add-to-compatibility-table))
