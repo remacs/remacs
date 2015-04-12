@@ -1343,6 +1343,16 @@ it to the file."
 (declare-function epg-configuration "epg-config" ())
 (declare-function epg-import-keys-from-file "epg" (context keys))
 
+(defvar package--silence nil)
+
+(defun package--message (format &rest args)
+  "Like `message', except sometimes don't print to minibuffer.
+If the variable `package--silence' is non-nil, the message is not
+displayed on the minibuffer."
+  (apply #'message format args)
+  (when package--silence
+    (message nil)))
+
 ;;;###autoload
 (defun package-import-keyring (&optional file)
   "Import keys from FILE."
@@ -1353,9 +1363,9 @@ it to the file."
     (with-file-modes 448
       (make-directory homedir t))
     (setf (epg-context-home-directory context) homedir)
-    (message "Importing %s..." (file-name-nondirectory file))
+    (package--message "Importing %s..." (file-name-nondirectory file))
     (epg-import-keys-from-file context file)
-    (message "Importing %s...done" (file-name-nondirectory file))))
+    (package--message "Importing %s...done" (file-name-nondirectory file))))
 
 (defvar package--post-download-archives-hook nil
   "Hook run after the archive contents are downloaded.
@@ -1447,14 +1457,15 @@ downloads in the background."
   (unless (file-exists-p package-user-dir)
     (make-directory package-user-dir t))
   (let ((default-keyring (expand-file-name "package-keyring.gpg"
-                                           data-directory)))
+                                           data-directory))
+        (package--silence async))
     (when (and package-check-signature (file-exists-p default-keyring))
       (condition-case-unless-debug error
           (progn
             (epg-check-configuration (epg-configuration))
             (package-import-keyring default-keyring))
-        (error (message "Cannot import default keyring: %S" (cdr error))))))
-  (package--download-and-read-archives async))
+        (error (message "Cannot import default keyring: %S" (cdr error)))))
+    (package--download-and-read-archives async)))
 
 
 ;;; Dependency Management
@@ -1496,7 +1507,7 @@ SEEN is used internally to detect infinite recursion."
             ;; we re-add it (along with its dependencies) at an earlier place
             ;; below (bug#16994).
             (if (memq already seen)     ;Avoid inf-loop on dependency cycles.
-                (message "Dependency cycle going through %S"
+                (package--message "Dependency cycle going through %S"
                          (package-desc-full-name already))
               (setq packages (delq already packages))
               (setq already nil))
@@ -1827,7 +1838,7 @@ to install it but still mark it as selected."
                                                (package-desc-reqs pkg)))
               (package-compute-transaction () (list (list pkg))))))
       (package-download-transaction transaction async callback)
-    (message "`%s' is already installed" (package-desc-full-name pkg))))
+    (package--message "`%s' is already installed" (package-desc-full-name pkg))))
 
 (defun package-strip-rcs-id (str)
   "Strip RCS version ID from the version string STR.
@@ -1970,7 +1981,7 @@ If NOSAVE is non-nil, the package is not removed from
              (delete pkg-desc pkgs)
              (unless (cdr pkgs)
                (setq package-alist (delq pkgs package-alist))))
-           (message "Package `%s' deleted." (package-desc-full-name pkg-desc))))))
+           (package--message "Package `%s' deleted." (package-desc-full-name pkg-desc))))))
 
 ;;;###autoload
 (defun package-reinstall (pkg)
@@ -2771,7 +2782,7 @@ asynchronously."
         (error (message (cadr err)))))
     (when package-selected-packages
       (when-let ((removable (package--removable-packages)))
-        (message "These %d packages are no longer needed, type `M-x package-autoremove' to remove them (%s)"
+        (package--message "These %d packages are no longer needed, type `M-x package-autoremove' to remove them (%s)"
           (length removable)
           (mapconcat #'symbol-name removable ", "))))
     (package-menu--post-refresh)))
@@ -2801,9 +2812,10 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
       (user-error "No operations specified"))
     (when (or noquery
               (package-menu--prompt-transaction-p install-list delete-list))
-      ;; This calls `package-menu--generate' after everything's done.
-      (package-menu--perform-transaction
-       install-list delete-list package-menu-async))))
+      (let ((package--silence package-menu-async))
+        ;; This calls `package-menu--generate' after everything's done.
+        (package-menu--perform-transaction
+         install-list delete-list package-menu-async)))))
 
 (defun package-menu--version-predicate (A B)
   (let ((vA (or (aref (cadr A) 1)  '(0)))
