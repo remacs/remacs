@@ -4783,7 +4783,9 @@ Before and after saving the buffer, this function runs
 	  ;; Support VC `implicit' locking.
 	  (vc-after-save)
 	  (run-hooks 'after-save-hook))
-      (or noninteractive (message "(No changes need to be saved)")))))
+      (or noninteractive
+          (not (called-interactively-p 'any))
+          (message "(No changes need to be saved)")))))
 
 ;; This does the "real job" of writing a buffer into its visited file
 ;; and making a backup file.  This is what is normally done
@@ -5024,7 +5026,8 @@ change the additional actions you can take on files."
       (or queried (> files-done 0) abbrevs-done
 	  (cond
 	   ((null autosaved-buffers)
-	    (message "(No files need saving)"))
+            (when (called-interactively-p 'any)
+              (message "(No files need saving)")))
 	   ((= (length autosaved-buffers) 1)
 	    (message "(Saved %s)" (car autosaved-buffers)))
 	   (t
