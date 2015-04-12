@@ -1799,7 +1799,7 @@ The value is non-nil if there were no errors, nil if errors."
             (progn
               (setq-default major-mode 'emacs-lisp-mode)
               ;; Arg of t means don't alter enable-local-variables.
-              (normal-mode t))
+              (delay-mode-hooks (normal-mode t)))
           (setq-default major-mode dmm))
         ;; There may be a file local variable setting (bug#10419).
         (setq buffer-read-only nil
