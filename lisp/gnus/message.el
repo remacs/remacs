@@ -3092,8 +3092,8 @@ M-RET    `message-newline-and-reformat' (break the line and reformat)."
   ;; `electric-pair-mode', and C-M-* navigation by syntactically
   ;; excluding citations and other artifacts.
   ;;
-  (setq-local syntax-propertize-function 'message--syntax-propertize)
-  (setq-local parse-sexp-ignore-comments t))
+  (set (make-local-variable 'syntax-propertize-function) 'message--syntax-propertize)
+  (set (make-local-variable 'parse-sexp-ignore-comments) t))
 
 (defun message-setup-fill-variables ()
   "Setup message fill variables."
