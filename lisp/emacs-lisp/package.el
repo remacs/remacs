@@ -2943,13 +2943,14 @@ The list is displayed in a buffer named `*Packages*'."
   (add-hook 'package--post-download-archives-hook
             #'package-menu--post-refresh)
 
-  ;; Fetch the remote list of packages.
-  (unless no-fetch (package-menu-refresh))
-
   ;; Generate the Package Menu.
   (let ((buf (get-buffer-create "*Packages*")))
     (with-current-buffer buf
       (package-menu-mode)
+
+      ;; Fetch the remote list of packages.
+      (unless no-fetch (package-menu-refresh))
+
       (package-menu--generate nil t))
     ;; The package menu buffer has keybindings.  If the user types
     ;; `M-x list-packages', that suggests it should become current.
