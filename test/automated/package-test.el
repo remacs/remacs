@@ -103,6 +103,7 @@
 (cl-defmacro with-package-test ((&optional &key file
                                            basedir
                                            install
+                                           location
                                            update-news
                                            upload-base)
                                 &rest body)
@@ -112,7 +113,7 @@
           (process-environment (cons (format "HOME=%s" package-test-user-dir)
                                      process-environment))
           (package-user-dir package-test-user-dir)
-          (package-archives `(("gnu" . ,package-test-data-dir)))
+          (package-archives `(("gnu" . ,(or ,location package-test-data-dir))))
           (default-directory package-test-file-dir)
           abbreviated-home-dir
           package--initialized
@@ -335,6 +336,33 @@ Must called from within a `tar-mode' buffer."
         (package-menu-execute)
         (package-menu-refresh)
         (should (package-installed-p 'simple-single '(1 4)))))))
+
+(ert-deftest package-test-update-archives-async ()
+  "Test updating package archives asynchronously."
+  (skip-unless (executable-find "python2"))
+  (with-package-test (:basedir
+                      package-test-data-dir
+                      :location "http://0.0.0.0:8000/")
+    (let* ((package-menu-async t)
+           (process (start-process
+                     "package-server" "package-server-buffer"
+                     (executable-find "python2")
+                     (expand-file-name "package-test-server.py"))))
+      (unwind-protect
+          (progn
+            (list-packages)
+            (should package--downloads-in-progress)
+            (should mode-line-process)
+            (should-not (string= (format-mode-line mode-line-process) ""))
+            (should-not
+             (with-timeout (10 'timeout)
+               (while package--downloads-in-progress
+                 (accept-process-output nil 1))
+               nil))
+            (goto-char (point-min))
+            (should
+             (search-forward-regexp "^ +simple-single" nil t)))
+        (kill-process process)))))
 
 (ert-deftest package-test-describe-package ()
   "Test displaying help for a package."
