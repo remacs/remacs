@@ -2951,7 +2951,9 @@ The list is displayed in a buffer named `*Packages*'."
       ;; Fetch the remote list of packages.
       (unless no-fetch (package-menu-refresh))
 
-      (package-menu--generate nil t))
+      ;; If we're not async, this would be redundant.
+      (when package-menu-async
+        (package-menu--generate nil t)))
     ;; The package menu buffer has keybindings.  If the user types
     ;; `M-x list-packages', that suggests it should become current.
     (switch-to-buffer buf)))
