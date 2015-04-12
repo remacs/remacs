@@ -3167,6 +3167,7 @@ x_draw_image_glyph_string (struct glyph_string *s)
     }
 
   /* Draw the foreground.  */
+#ifdef USE_CAIRO
   if (s->img->cr_data)
     {
       cairo_t *cr = x_begin_cr_clip (s->f, s->gc);
@@ -3182,7 +3183,9 @@ x_draw_image_glyph_string (struct glyph_string *s)
       cairo_fill (cr);
       x_end_cr_clip (s->f);
     }
-  else if (pixmap != None)
+  else
+#endif
+    if (pixmap != None)
     {
       x_draw_image_foreground_1 (s, pixmap);
       x_set_glyph_string_clipping (s);
