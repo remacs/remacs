@@ -1778,7 +1778,9 @@ using `package-compute-transaction'."
                 (goto-char (point-min))
                 (search-forward "(package-initialize)" nil 'noerror)))))
       (unless contains-init
-        (with-current-buffer (or buffer (find-file-noselect user-init-file))
+        (with-current-buffer (or buffer
+                                 (let ((delay-mode-hooks t))
+                                   (find-file-noselect user-init-file)))
           (save-excursion
             (save-restriction
               (widen)
