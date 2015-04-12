@@ -2780,15 +2780,15 @@ nil, but not both."
          (del (cl-set-difference delete upg :key #'package-desc-name)))
     (y-or-n-p
      (concat
-      (when upg "UPGRADE ")
-      (package-menu--list-to-prompt upg)
-      (when (and upg ins)
-        (if del "; " "; and "))
-      (when ins "INSTALL ")
-      (package-menu--list-to-prompt ins)
-      (when (and del (or ins upg)) "; and ")
-      (when del "DELETE ")
+      (when del "Delete ")
       (package-menu--list-to-prompt del)
+      (when (and del ins)
+        (if upg "; " "; and "))
+      (when ins "Install ")
+      (package-menu--list-to-prompt ins)
+      (when (and upg (or ins del)) "; and ")
+      (when upg "Upgrade ")
+      (package-menu--list-to-prompt upg)
       "? "))))
 
 (defun package-menu--perform-transaction (install-list delete-list &optional async)
