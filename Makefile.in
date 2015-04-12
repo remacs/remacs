@@ -1087,10 +1087,13 @@ bootstrap: bootstrap-clean
 	$(MAKE) MAKEFILE_NAME=force-Makefile force-Makefile
 	$(MAKE) all
 
+.PHONY: ChangeLog change-history change-history-commit
+.PHONY: master-branch-is-current no-ChangeLog unchanged-history-files
+
 # The newest revision that should not appear in the generated ChangeLog.
 gen_origin = 3311ace9c54a50b83a838e2eb7fa9565176e0c4f
+
 # Convert git commit log to ChangeLog file.  make-dist uses this.
-.PHONY: ChangeLog change-history unchanged-history-files
 ChangeLog:
 	$(AM_V_GEN)distprefix=$(distprefix) srcprefix=$(srcdir)/ \
 	$(srcdir)/build-aux/gitlog-to-emacslog $(gen_origin)
