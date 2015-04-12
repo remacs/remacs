@@ -353,7 +353,6 @@ Must called from within a `tar-mode' buffer."
             (list-packages)
             (should package--downloads-in-progress)
             (should mode-line-process)
-            (should-not (string= (format-mode-line mode-line-process) ""))
             (should-not
              (with-timeout (10 'timeout)
                (while package--downloads-in-progress
