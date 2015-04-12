@@ -2639,10 +2639,31 @@ If optional arg BUTTON is non-nil, describe its associated package."
           (tabulated-list-put-tag "D" t)
         (forward-line 1)))))
 
+(defvar package--quick-help-keys
+  '(("install," "delete," "unmark," ("execute" . 1))
+    ("next," "previous")
+    ("refresh-contents," "g-redisplay," "filter," "help")))
+
+(defun package--prettify-quick-help-key (desc)
+  "Prettify DESC to be displayed as a help menu."
+  (if (listp desc)
+      (if (listp (cdr desc))
+          (mapconcat #'package--prettify-quick-help-key desc "   ")
+        (let ((place (cdr desc))
+              (out (car desc)))
+          ;; (setq out (propertize out 'face 'paradox-comment-face))
+          (add-text-properties place (1+ place)
+                               '(face (bold font-lock-function-name-face))
+                               out)
+          out))
+    (package--prettify-quick-help-key (cons desc 0))))
+
 (defun package-menu-quick-help ()
-  "Show short key binding help for package-menu-mode."
+  "Show short key binding help for `package-menu-mode'.
+The full list of keys can be viewed with \\[describe-mode]."
   (interactive)
-  (message "n-ext, i-nstall, d-elete, u-nmark, x-ecute, r-efresh, h-elp"))
+  (message (mapconcat #'package--prettify-quick-help-key
+                      package--quick-help-keys "\n")))
 
 (define-obsolete-function-alias
   'package-menu-view-commentary 'package-menu-describe-package "24.1")
