@@ -1725,6 +1725,17 @@ expressions; a `progn' form will be returned enclosing these forms."
 	   (t
 	    (error "Bad spec: %s" specs)))))
 
+       ((eq 'vector spec)
+	(if (vectorp form)
+	    ;; Special case: match a vector with the specs.
+	    (let ((result (edebug-match-sublist
+			   (edebug-new-cursor
+			    form (cdr (edebug-top-offset cursor)))
+			   (cdr specs))))
+	      (edebug-move-cursor cursor)
+	      (list (apply 'vector result)))
+	  (edebug-no-match cursor "Expected" specs)))
+
        ((listp form)
 	(prog1
 	    (list (edebug-match-sublist
@@ -1733,15 +1744,6 @@ expressions; a `progn' form will be returned enclosing these forms."
 		   (edebug-new-cursor form (cdr (edebug-top-offset cursor)))
 		   specs))
 	  (edebug-move-cursor cursor)))
-
-       ((and (eq 'vector spec) (vectorp form))
-	;; Special case: match a vector with the specs.
-	(let ((result (edebug-match-sublist
-		       (edebug-new-cursor
-			form (cdr (edebug-top-offset cursor)))
-		       (cdr specs))))
-	  (edebug-move-cursor cursor)
-	  (list (apply 'vector result))))
 
        (t (edebug-no-match cursor "Expected" specs)))
       )))
