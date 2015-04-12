@@ -866,6 +866,8 @@ untar into a directory named DIR; otherwise, signal an error."
   (let* ((auto-name (format "%s-autoloads.el" name))
          ;;(ignore-name (concat name "-pkg.el"))
          (generated-autoload-file (expand-file-name auto-name pkg-dir))
+         ;; Silence `autoload-generate-file-autoloads'.
+         (noninteractive package--silence)
          (backup-inhibited t)
          (version-control 'never))
     (package-autoload-ensure-default-file generated-autoload-file)
@@ -1573,15 +1575,20 @@ Used to populate `package-selected-packages'."
              unless (memq name dep-list)
              collect name)))
 
+(defun package--save-selected-packages (value)
+  "Set and save `package-selected-packages' to VALUE."
+  (let ((save-silently package--silence))
+    (customize-save-variable
+     'package-selected-packages
+     (setq package-selected-packages value))))
+
 (defun package--user-selected-p (pkg)
   "Return non-nil if PKG is a package was installed by the user.
 PKG is a package name.
 This looks into `package-selected-packages', populating it first
 if it is still empty."
   (unless (consp package-selected-packages)
-    (customize-save-variable
-     'package-selected-packages
-     (setq package-selected-packages (package--find-non-dependencies))))
+    (package--save-selected-packages (package--find-non-dependencies)))
   (memq pkg package-selected-packages))
 
 (defun package--get-deps (pkg &optional only)
@@ -1691,7 +1698,8 @@ operation is done."
                       package-unsigned-archives))
           ;; If we don't care about the signature, unpack and we're
           ;; done.
-          (progn (package-unpack pkg-desc)
+          (progn (let ((save-silently async))
+                   (package-unpack pkg-desc))
                  (funcall callback))
         ;; If we care, check it and *then* write the file.
         (let ((content (buffer-string)))
@@ -1706,7 +1714,8 @@ operation is done."
                  (package-desc-name pkg-desc)))
              ;; Signature checked, unpack now.
              (with-temp-buffer (insert content)
-                               (package-unpack pkg-desc))
+                               (let ((save-silently async))
+                                 (package-unpack pkg-desc)))
              ;; Here the package has been installed successfully, mark it as
              ;; signed if appropriate.
              (when good-sigs
@@ -1833,8 +1842,8 @@ to install it but still mark it as selected."
                   (package-desc-name pkg)
                 pkg)))
     (unless (or dont-select (package--user-selected-p name))
-      (customize-save-variable 'package-selected-packages
-                               (cons name package-selected-packages))))
+      (package--save-selected-packages
+       (cons name package-selected-packages))))
   (if-let ((transaction
             (if (package-desc-p pkg)
                 (unless (package-installed-p pkg)
@@ -1891,8 +1900,8 @@ Downloads and installs required packages as needed."
     ;; Install the package itself.
     (package-unpack pkg-desc)
     (unless (package--user-selected-p name)
-      (customize-save-variable 'package-selected-packages
-                               (cons name package-selected-packages)))
+      (package--save-selected-packages
+       (cons name package-selected-packages)))
     pkg-desc))
 
 ;;;###autoload
@@ -1959,8 +1968,7 @@ If NOSAVE is non-nil, the package is not removed from
                ;; Don't deselect if this is an older version of an
                ;; upgraded package.
                (package--newest-p pkg-desc))
-      (customize-save-variable
-       'package-selected-packages (remove name package-selected-packages)))
+      (package--save-selected-packages (remove name package-selected-packages)))
     (cond ((not (string-prefix-p (file-name-as-directory
                                   (expand-file-name package-user-dir))
                                  (expand-file-name dir)))
@@ -2802,15 +2810,17 @@ asynchronously."
          (lambda () (package-menu--perform-transaction rest delete-list async))))
     ;; Once there are no more packages to install, proceed to
     ;; deletion.
-    (dolist (elt (package--sort-by-dependence delete-list))
-      (condition-case-unless-debug err
-          (package-delete elt)
-        (error (message (cadr err)))))
-    (when package-selected-packages
-      (when-let ((removable (package--removable-packages)))
-        (package--message "These %d packages are no longer needed, type `M-x package-autoremove' to remove them (%s)"
-          (length removable)
-          (mapconcat #'symbol-name removable ", "))))
+    (let ((package--silence async))
+      (dolist (elt (package--sort-by-dependence delete-list))
+        (condition-case-unless-debug err
+            (package-delete elt)
+          (error (message (cadr err)))))
+      (when package-selected-packages
+        (when-let ((removable (package--removable-packages)))
+          (package--message "These %d packages are no longer needed, type `M-x package-autoremove' to remove them (%s)"
+                            (length removable)
+                            (mapconcat #'symbol-name removable ", ")))))
+    (message "Transaction done")
     (package-menu--post-refresh)))
 
 (defun package-menu-execute (&optional noquery)
@@ -2838,10 +2848,10 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
       (user-error "No operations specified"))
     (when (or noquery
               (package-menu--prompt-transaction-p install-list delete-list))
-      (let ((package--silence package-menu-async))
-        ;; This calls `package-menu--generate' after everything's done.
-        (package-menu--perform-transaction
-         install-list delete-list package-menu-async)))))
+      (message "Transaction started")
+      ;; This calls `package-menu--generate' after everything's done.
+      (package-menu--perform-transaction
+       install-list delete-list package-menu-async))))
 
 (defun package-menu--version-predicate (A B)
   (let ((vA (or (aref (cadr A) 1)  '(0)))
