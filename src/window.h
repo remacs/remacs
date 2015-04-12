@@ -256,7 +256,7 @@ struct window
 
     /* Scaling factor for the glyph_matrix size calculation in this window.
        Used if window contains many small images or uses proportional fonts,
-       as the normal  may yield a matrix which is too small.  */
+       as the normal may yield a matrix which is too small.  */
     int nrows_scale_factor, ncols_scale_factor;
 
     /* Intended cursor position.   This is a position within the
@@ -323,7 +323,7 @@ struct window
     /* True if this window is a minibuffer window.  */
     bool_bf mini : 1;
 
-    /* Meaningful only if contents is a window, non-zero if this
+    /* Meaningful only if contents is a window, true if this
        internal window is used in horizontal combination.  */
     bool_bf horizontal : 1;
 
@@ -921,7 +921,7 @@ wset_next_buffers (struct window *w, Lisp_Object val)
    : 0)
 
 #define WINDOW_MODE_LINE_LINES(W)	\
-  (!! WINDOW_WANTS_MODELINE_P (W))
+  WINDOW_WANTS_MODELINE_P (W)
 
 /* Height in pixels, and in lines, of the header line.
    Zero if W doesn't have a header line.  */
@@ -931,7 +931,7 @@ wset_next_buffers (struct window *w, Lisp_Object val)
    : 0)
 
 #define WINDOW_HEADER_LINE_LINES(W)	\
-  (!! WINDOW_WANTS_HEADER_LINE_P (W))
+  WINDOW_WANTS_HEADER_LINE_P (W)
 
 /* Pixel height of window W without mode line, bottom scroll bar and
    bottom divider.  */
@@ -1015,7 +1015,7 @@ extern int window_relative_x_coord (struct window *, enum window_part, int);
 
 void run_window_configuration_change_hook (struct frame *f);
 
-/* Make WINDOW display BUFFER.  RUN_HOOKS_P non-zero means it's allowed
+/* Make WINDOW display BUFFER.  RUN_HOOKS_P means it's allowed
    to run hooks.  See make_frame for a case where it's not allowed.  */
 
 void set_window_buffer (Lisp_Object window, Lisp_Object buffer,
@@ -1067,7 +1067,7 @@ extern void redisplay_other_windows (void);
 
 struct glyph *get_phys_cursor_glyph (struct window *w);
 
-/* Value is non-zero if WINDOW is a valid window.  */
+/* True if WINDOW is a valid window.  */
 #define WINDOW_VALID_P(WINDOW)					\
   (WINDOWP (WINDOW) && !NILP (XWINDOW (WINDOW)->contents))	\
 
@@ -1076,7 +1076,7 @@ struct glyph *get_phys_cursor_glyph (struct window *w);
 #define CHECK_VALID_WINDOW(WINDOW)				\
   CHECK_TYPE (WINDOW_VALID_P (WINDOW), Qwindow_valid_p, WINDOW)
 
-/* Value is non-zero if WINDOW is a live window.  */
+/* True if WINDOW is a live window.  */
 #define WINDOW_LIVE_P(WINDOW)					\
   (WINDOWP (WINDOW) && BUFFERP (XWINDOW (WINDOW)->contents))
 
