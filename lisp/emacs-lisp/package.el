@@ -2589,8 +2589,9 @@ This fetches the contents of each archive specified in
   (interactive)
   (unless (derived-mode-p 'package-menu-mode)
     (user-error "The current buffer is not a Package Menu"))
-  (package-refresh-contents)
-  (package-menu--generate t t))
+  (setq package-menu--old-archive-contents package-archive-contents)
+  (setq package-menu--new-package-list nil)
+  (package-refresh-contents package-menu-async))
 
 (defun package-menu-describe-package (&optional button)
   "Describe the current package.
@@ -2942,11 +2943,8 @@ The list is displayed in a buffer named `*Packages*'."
   (add-hook 'package--post-download-archives-hook
             #'package-menu--post-refresh)
 
-  (unless no-fetch
-    (setq package-menu--old-archive-contents package-archive-contents)
-    (setq package-menu--new-package-list nil)
-    ;; Fetch the remote list of packages.
-    (package-refresh-contents package-menu-async))
+  ;; Fetch the remote list of packages.
+  (unless no-fetch (package-menu-refresh))
 
   ;; Generate the Package Menu.
   (let ((buf (get-buffer-create "*Packages*")))
