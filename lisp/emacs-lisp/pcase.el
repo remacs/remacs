@@ -263,6 +263,7 @@ of the form (UPAT EXP)."
             (push (list (car binding) tmpvar) matches)))))
       `(let ,(nreverse bindings) (pcase-let* ,matches ,@body)))))
 
+;;;###autoload
 (defmacro pcase-dolist (spec &rest body)
   (declare (indent 1) (debug ((pcase-UPAT form) body)))
   (if (pcase--trivial-upat-p (car spec))
