@@ -40,7 +40,6 @@ The relevant features are:
   reportBackground -- if supported, Xterm reports its background color
   setSelection     -- if supported, Xterm saves yanked text to the X selection"
   :version "24.1"
-  :group 'xterm
   :type '(choice (const :tag "No" nil)
                  (const :tag "Check" check)
                  ;; NOTE: If you add entries here, make sure to update
@@ -62,7 +61,6 @@ using the OSC 52 sequence.
 If you select a region larger than this size, it won't be copied to your system
 clipboard.  Since clipboard data is base 64 encoded, the actual number of
 string bytes that can be copied is 3/4 of this value."
-  :group 'xterm
   :type 'integer)
 
 (defconst xterm-paste-ending-sequence "\e[201~"
@@ -748,10 +746,11 @@ We run the first FUNCTION whose STRING matches the input events."
 
 (defun terminal-init-xterm-activate-set-selection ()
   "Terminal initialization for `gui-set-selection'."
-  ;; All text terminals are represented by the nil GUI type.  We need
-  ;; to detect XTerm again in `xterm--set-selection' using the
-  ;; terminal parameters.
-  (gui-method-define gui-set-selection nil #'xterm--set-selection))
+  (set-terminal-parameter nil 'xterm--set-selection t))
+
+;; FIXME: This defines the gui method for all terminals, even tho it only
+;; supports a subset of them.
+(gui-method-define gui-set-selection nil #'xterm--set-selection)
 
 (defun xterm--set-selection (type data)
   "Copy DATA to the X selection using the OSC 52 escape sequence.
@@ -773,12 +772,11 @@ on a bare terminal emulators as well as inside the screen
 program.  When inside the screen program, this function also
 chops long DCS sequences into multiple smaller ones to avoid
 hitting screen's max DCS length."
-  (let* ((init-function (terminal-parameter nil 'terminal-initted))
-         (xterm (eq init-function 'terminal-init-xterm))
-         (screen (eq init-function 'terminal-init-screen)))
+  (let* ((screen (eq (terminal-parameter nil 'terminal-initted)
+                     'terminal-init-screen)))
     ;; Only do something if the current terminal is actually an XTerm
     ;; or screen.
-    (when (or xterm screen)
+    (when (terminal-parameter nil 'xterm--set-selection)
       (let* ((bytes (encode-coding-string data 'utf-8-unix))
              (base-64 (if screen
                           (replace-regexp-in-string
@@ -786,7 +784,7 @@ hitting screen's max DCS length."
                            (base64-encode-string bytes)
                            :fixedcase :literal)
                         (base64-encode-string bytes :no-line-break)))
-             (length (string-bytes base-64)))
+             (length (length base-64)))
         (if (> length xterm-max-cut-length)
             (progn
               (warn "Selection too long to send to terminal: %d bytes" length)
@@ -795,10 +793,10 @@ hitting screen's max DCS length."
            (concat
             (when screen "\eP")
             "\e]52;"
-            (cond
-             ((eq type 'PRIMARY) "p")
-             ((eq type 'CLIPBOARD) "c")
-             (t (error "Invalid type %S" type)))
+            (pcase type
+              ('PRIMARY "p")
+              ('CLIPBOARD "c")
+              (_ (error "Invalid selection type: %S" type)))
             ";"
             base-64
             "\a"
