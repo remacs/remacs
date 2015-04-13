@@ -1167,7 +1167,7 @@ articles in the topic and its subtopics."
       (remove-hook 'gnus-check-bogus-groups-hook 'gnus-topic-clean-alist)
       (setq gnus-group-prepare-function 'gnus-group-prepare-flat)
       (setq gnus-group-sort-alist-function 'gnus-group-sort-flat))
-    (when (called-interactively-p 'any)
+    (when (gmm-called-interactively-p 'any)
       (gnus-group-list-groups))))
 
 (defun gnus-topic-select-group (&optional all)
