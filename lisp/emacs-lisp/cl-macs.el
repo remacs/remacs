@@ -2726,12 +2726,16 @@ non-nil value, that slot cannot be set via `setf'.
 		 constrs))
     (while constrs
       (let* ((name (caar constrs))
-	     (args (cadr (pop constrs)))
+             (rest (cdr (pop constrs)))
+             (args (car rest))
+             (doc  (cadr rest))
 	     (anames (cl--arglist-args args))
 	     (make (cl-mapcar (function (lambda (s d) (if (memq s anames) s d)))
 			    slots defaults)))
 	(push `(cl-defsubst ,name
                    (&cl-defs (nil ,@descs) ,@args)
+                 ,@(if (stringp doc) (list doc)
+                     (if (stringp docstring) (list docstring)))
                  ,@(if (cl--safe-expr-p `(progn ,@(mapcar #'cl-second descs)))
                        '((declare (side-effect-free t))))
                  (,(or type #'vector) ,@make))
