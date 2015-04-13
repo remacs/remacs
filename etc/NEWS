@@ -201,6 +201,9 @@ font, and (iii) the specified window.
 
 * Editing Changes in Emacs 25.1
 
+** Successive single-char deletions are collapsed in the undo-log just like
+successive char insertions.
+
 ** Unicode names entered via C-x 8 RET now use substring completion by default.
 
 ** New minor mode global-eldoc-mode is enabled by default.
