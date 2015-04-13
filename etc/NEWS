@@ -271,13 +271,19 @@ the old behavior -- *shell* buffer displays in current window -- use
 
 
 ** EIEIO
++++
 *** The `:protection' slot option is not obeyed any more.
++++
 *** The `newname' argument to constructors is optional&deprecated.
 If you need your objects to be named, do it by inheriting from `eieio-named'.
++++
 *** The <class>-list-p and <class>-child-p functions are declared obsolete.
++++
 *** The <class> variables are declared obsolete.
++++
 *** The <initarg> variables are declared obsolete.
 *** defgeneric and defmethod are declared obsolete.
++++
 *** `constructor' is now an obsolete alias for `make-instance'.
 
 ** ido
