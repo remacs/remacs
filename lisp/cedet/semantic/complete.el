@@ -2217,6 +2217,7 @@ use `semantic-complete-analyze-inline' to complete."
   ;; input.
   (when (save-window-excursion
 	  (save-excursion
+            ;; FIXME: Use `while-no-input'?
 	    (and (not (semantic-exit-on-input 'csi
 			(semantic-fetch-tags)
 			(semantic-throw-on-input 'csi)
