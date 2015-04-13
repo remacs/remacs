@@ -1781,7 +1781,9 @@ using `package-compute-transaction'."
            (contains-init
             (if buffer
                 (with-current-buffer buffer
-                  (search-forward "(package-initialize)" nil 'noerror))
+                  (save-excursion
+                    (goto-char (point-min))
+                    (search-forward "(package-initialize)" nil 'noerror)))
               (with-temp-buffer
                 (insert-file-contents user-init-file)
                 (goto-char (point-min))
