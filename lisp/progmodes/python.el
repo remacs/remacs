@@ -1580,11 +1580,13 @@ forward only one sexp, else move backwards."
        (while (and (funcall search-fn paren-regexp nil t)
                    (python-syntax-context 'paren)))))))
 
-(defun python-nav--forward-sexp (&optional dir safe)
+(defun python-nav--forward-sexp (&optional dir safe skip-parens-p)
   "Move to forward sexp.
 With positive optional argument DIR direction move forward, else
 backwards.  When optional argument SAFE is non-nil do not throw
-errors when at end of sexp, skip it instead."
+errors when at end of sexp, skip it instead.  With optional
+argument SKIP-PARENS-P force sexp motion to ignore parenthised
+expressions when looking at them in either direction."
   (setq dir (or dir 1))
   (unless (= dir 0)
     (let* ((forward-p (if (> dir 0)
@@ -1596,11 +1598,13 @@ errors when at end of sexp, skip it instead."
         ;; Inside of a string, get out of it.
         (let ((forward-sexp-function))
           (forward-sexp dir)))
-       ((or (eq context-type 'paren)
-            (and forward-p (looking-at (python-rx open-paren)))
-            (and (not forward-p)
-                 (eq (syntax-class (syntax-after (1- (point))))
-                     (car (string-to-syntax ")")))))
+       ((and (not skip-parens-p)
+             (or (eq context-type 'paren)
+                 (if forward-p
+                     (eq (syntax-class (syntax-after (point)))
+                         (car (string-to-syntax "(")))
+                   (eq (syntax-class (syntax-after (1- (point))))
+                       (car (string-to-syntax ")"))))))
         ;; Inside a paren or looking at it, lisp knows what to do.
         (if safe
             (python-nav--lisp-forward-sexp-safe dir)
@@ -1636,7 +1640,7 @@ errors when at end of sexp, skip it instead."
               (cond ((and (not (eobp))
                           (python-info-current-line-empty-p))
                      (python-util-forward-comment dir)
-                     (python-nav--forward-sexp dir))
+                     (python-nav--forward-sexp dir safe skip-parens-p))
                     ((eq context 'block-start)
                      (python-nav-end-of-block))
                     ((eq context 'statement-start)
@@ -1656,7 +1660,7 @@ errors when at end of sexp, skip it instead."
             (cond ((and (not (bobp))
                         (python-info-current-line-empty-p))
                    (python-util-forward-comment dir)
-                   (python-nav--forward-sexp dir))
+                   (python-nav--forward-sexp dir safe skip-parens-p))
                   ((eq context 'block-end)
                    (python-nav-beginning-of-block))
                   ((eq context 'statement-end)
@@ -1674,47 +1678,69 @@ errors when at end of sexp, skip it instead."
                    (python-nav-beginning-of-statement))
                   (t (goto-char next-sexp-pos))))))))))
 
-(defun python-nav-forward-sexp (&optional arg)
+(defun python-nav-forward-sexp (&optional arg safe skip-parens-p)
   "Move forward across expressions.
 With ARG, do it that many times.  Negative arg -N means move
-backward N times."
+backward N times.  When optional argument SAFE is non-nil do not
+throw errors when at end of sexp, skip it instead.  With optional
+argument SKIP-PARENS-P force sexp motion to ignore parenthised
+expressions when looking at them in either direction (forced to t
+in interactive calls)."
   (interactive "^p")
   (or arg (setq arg 1))
+  ;; Do not follow parens on interactive calls.  This hack to detect
+  ;; if the function was called interactively copes with the way
+  ;; `forward-sexp' works by calling `forward-sexp-function', losing
+  ;; interactive detection by checking `current-prefix-arg'.  The
+  ;; reason to make this distinction is that lisp functions like
+  ;; `blink-matching-open' get confused causing issues like the one in
+  ;; Bug#16191.  With this approach the user gets a simmetric behavior
+  ;; when working interactively while called functions expecting
+  ;; paren-based sexp motion work just fine.
+  (or
+   skip-parens-p
+   (setq skip-parens-p
+         (memq real-this-command
+               (list
+                #'forward-sexp #'backward-sexp
+                #'python-nav-forward-sexp #'python-nav-backward-sexp
+                #'python-nav-forward-sexp-safe #'python-nav-backward-sexp))))
   (while (> arg 0)
-    (python-nav--forward-sexp 1)
+    (python-nav--forward-sexp 1 safe skip-parens-p)
     (setq arg (1- arg)))
   (while (< arg 0)
-    (python-nav--forward-sexp -1)
+    (python-nav--forward-sexp -1 safe skip-parens-p)
     (setq arg (1+ arg))))
 
-(defun python-nav-backward-sexp (&optional arg)
+(defun python-nav-backward-sexp (&optional arg safe skip-parens-p)
   "Move backward across expressions.
 With ARG, do it that many times.  Negative arg -N means move
-forward N times."
+forward N times.  When optional argument SAFE is non-nil do not
+throw errors when at end of sexp, skip it instead.  With optional
+argument SKIP-PARENS-P force sexp motion to ignore parenthised
+expressions when looking at them in either direction (forced to t
+in interactive calls)."
   (interactive "^p")
   (or arg (setq arg 1))
-  (python-nav-forward-sexp (- arg)))
+  (python-nav-forward-sexp (- arg) safe skip-parens-p))
 
-(defun python-nav-forward-sexp-safe (&optional arg)
+(defun python-nav-forward-sexp-safe (&optional arg skip-parens-p)
   "Move forward safely across expressions.
 With ARG, do it that many times.  Negative arg -N means move
-backward N times."
+backward N times.  With optional argument SKIP-PARENS-P force
+sexp motion to ignore parenthised expressions when looking at
+them in either direction (forced to t in interactive calls)."
   (interactive "^p")
-  (or arg (setq arg 1))
-  (while (> arg 0)
-    (python-nav--forward-sexp 1 t)
-    (setq arg (1- arg)))
-  (while (< arg 0)
-    (python-nav--forward-sexp -1 t)
-    (setq arg (1+ arg))))
+  (python-nav-forward-sexp arg t skip-parens-p))
 
-(defun python-nav-backward-sexp-safe (&optional arg)
+(defun python-nav-backward-sexp-safe (&optional arg skip-parens-p)
   "Move backward safely across expressions.
 With ARG, do it that many times.  Negative arg -N means move
-forward N times."
+forward N times.  With optional argument SKIP-PARENS-P force sexp
+motion to ignore parenthised expressions when looking at them in
+either direction (forced to t in interactive calls)."
   (interactive "^p")
-  (or arg (setq arg 1))
-  (python-nav-forward-sexp-safe (- arg)))
+  (python-nav-backward-sexp arg t skip-parens-p))
 
 (defun python-nav--up-list (&optional dir)
   "Internal implementation of `python-nav-up-list'.

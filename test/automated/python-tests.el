@@ -1998,19 +1998,36 @@ c()
    (should (save-excursion
              (beginning-of-line)
              (looking-at "c()")))
-   ;; Movement next to a paren should do what lisp does and
-   ;; unfortunately It can't change, because otherwise
-   ;; `blink-matching-open' breaks.
+   ;; The default behavior when next to a paren should do what lisp
+   ;; does and, otherwise `blink-matching-open' breaks.
    (python-nav-forward-sexp -1)
    (should (looking-at "()"))
    (should (save-excursion
              (beginning-of-line)
              (looking-at "c()")))
-   (python-nav-forward-sexp -1)
+   (end-of-line)
+   ;; Skipping parens should jump to `bolp'
+   (python-nav-forward-sexp -1 nil t)
    (should (looking-at "c()"))
+   (forward-line -1)
+   (end-of-line)
+   ;; b()
+   (python-nav-forward-sexp -1)
+   (should (looking-at "()"))
    (python-nav-forward-sexp -1)
    (should (looking-at "b()"))
+   (end-of-line)
+   (python-nav-forward-sexp -1 nil t)
+   (should (looking-at "b()"))
+   (forward-line -1)
+   (end-of-line)
+   ;; a()
    (python-nav-forward-sexp -1)
+   (should (looking-at "()"))
+   (python-nav-forward-sexp -1)
+   (should (looking-at "a()"))
+   (end-of-line)
+   (python-nav-forward-sexp -1 nil t)
    (should (looking-at "a()"))))
 
 (ert-deftest python-nav-forward-sexp-2 ()
