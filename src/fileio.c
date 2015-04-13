@@ -4165,7 +4165,7 @@ by calling `format-decode', which see.  */)
       Vdeactivate_mark = old_Vdeactivate_mark;
     }
   else
-    Vdeactivate_mark = Qt;
+    Fset (Qdeactivate_mark, Qt);
 
   emacs_close (fd);
   clear_unwind_protect (fd_index);
