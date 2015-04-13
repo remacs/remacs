@@ -379,7 +379,6 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 	     ;; options property set at end
 	     (read-buffer-function minibuffer
 				   (choice (const nil)
-					   (function-item iswitchb-read-buffer)
 					   function))
 	     ;; msdos.c
 	     (dos-unsupported-char-glyph display integer)
@@ -654,7 +653,6 @@ since it could result in memory overflow and make Emacs crash."
 		((eq prop :tag)
 		 (put symbol 'custom-tag propval))))))))
 
-(custom-add-to-group 'iswitchb 'read-buffer-function 'custom-variable)
 (custom-add-to-group 'font-lock 'open-paren-in-column-0-is-defun-start
 		     'custom-variable)
 

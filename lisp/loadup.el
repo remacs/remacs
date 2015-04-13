@@ -103,7 +103,6 @@
 (load "bindings")
 ;; This sets temporary-file-directory, used by eg
 ;; auto-save-file-name-transforms in files.el.
-(load "cus-start")
 (load "window")  ; Needed here for `replace-buffer-in-windows'.
 (setq load-source-file-function 'load-with-code-conversion)
 (load "files")
@@ -144,6 +143,7 @@
   ;; In case loaddefs hasn't been generated yet.
   (file-error (load "ldefs-boot.el")))
 
+(load "cus-start")                    ;After loaddefs to autoload pcase-dolist.
 (load "emacs-lisp/nadvice")
 (load "emacs-lisp/cl-preloaded")
 (load "minibuffer")            ;After loaddefs, for define-minor-mode.
