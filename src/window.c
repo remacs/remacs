@@ -6527,11 +6527,17 @@ delete_all_child_windows (Lisp_Object window)
 static ptrdiff_t
 count_windows (struct window *window)
 {
-  return get_leaf_windows (window, NULL, 0);
+  ptrdiff_t count = 1;
+  if (!NILP (window->next))
+    count += count_windows (XWINDOW (window->next));
+  if (WINDOWP (window->contents))
+    count += count_windows (XWINDOW (window->contents));
+  return count;
 }
 
-/* If vector FLAT is non-null, fill it with leaf windows under W,
-   starting at index I.  Value is last index + 1.  */
+
+/* Fill vector FLAT with leaf windows under W, starting at index I.
+   Value is last index + 1.  */
 static ptrdiff_t
 get_leaf_windows (struct window *w, struct window **flat, ptrdiff_t i)
 {
@@ -6540,11 +6546,7 @@ get_leaf_windows (struct window *w, struct window **flat, ptrdiff_t i)
       if (WINDOWP (w->contents))
 	i = get_leaf_windows (XWINDOW (w->contents), flat, i);
       else
-	{
-	  if (flat)
-	    flat[i] = w;
-	  i++;
-	}
+	flat[i++] = w;
 
       w = NILP (w->next) ? 0 : XWINDOW (w->next);
     }
