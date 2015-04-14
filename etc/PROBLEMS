@@ -2099,6 +2099,21 @@ has some code to enlarge the width of the bounding box.  Apparently,
 this display feature needs more changes to get it 100% right.  A
 workaround is to disable ClearType.
 
+** Cursor is displayed as a thin vertical bar and cannot be changed
+
+This is known to happen if the Windows Magnifier is turned on before
+the Emacs session starts.  The Magnifier affects the cursor shape and
+prevents any changes to it by setting the 'cursor-type' variable or
+frame parameter.
+
+The solution is to log off and on again, and then start the Emacs
+session only after turning the Magnifier off.
+
+To turn the Windows Magnifier off, click "Start->All Programs", or
+"All Apps", depending on your Windows version, then select
+"Accessibility" and click "Magnifier".  In the Magnifier Settings
+dialog that opens, click "Exit".
+
 ** Problems with mouse-tracking and focus management
 
 There are problems with display if mouse-tracking is enabled and the
