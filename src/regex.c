@@ -318,7 +318,7 @@ enum syntaxcode { Swhitespace = 0, Sword = 1, Ssymbol = 2 };
 
 # define ISPRINT(c) (SINGLE_BYTE_CHAR_P (c)				\
 		    ? (c) >= ' ' && !((c) >= 0177 && (c) <= 0237)	\
-		    : 1)
+		     : printablep (c))
 
 # define ISALNUM(c) (IS_REAL_ASCII (c)			\
 		    ? (((c) >= 'a' && (c) <= 'z')	\
@@ -1865,7 +1865,8 @@ struct range_table_work_area
 #define RANGE_TABLE_WORK_ELT(work_area, i) ((work_area).table[i])
 
 /* Bits used to implement the multibyte-part of the various character classes
-   such as [:alnum:] in a charset's range table.  */
+   such as [:alnum:] in a charset's range table.  The code currently assumes
+   that only the low 16 bits are used.  */
 #define BIT_WORD	0x1
 #define BIT_LOWER	0x2
 #define BIT_PUNCT	0x4
@@ -1874,6 +1875,7 @@ struct range_table_work_area
 #define BIT_MULTIBYTE	0x20
 #define BIT_ALPHA	0x40
 #define BIT_ALNUM	0x80
+#define BIT_PRINT	0x100
 
 
 /* Set the bit for character C in a list.  */
@@ -2072,7 +2074,7 @@ re_wctype_to_bit (re_wctype_t cc)
 {
   switch (cc)
     {
-    case RECC_NONASCII: case RECC_PRINT: case RECC_GRAPH:
+    case RECC_NONASCII: case RECC_GRAPH:
     case RECC_MULTIBYTE: return BIT_MULTIBYTE;
     case RECC_ALPHA: return BIT_ALPHA;
     case RECC_ALNUM: return BIT_ALNUM;
@@ -2081,6 +2083,7 @@ re_wctype_to_bit (re_wctype_t cc)
     case RECC_UPPER: return BIT_UPPER;
     case RECC_PUNCT: return BIT_PUNCT;
     case RECC_SPACE: return BIT_SPACE;
+    case RECC_PRINT: return BIT_PRINT;
     case RECC_ASCII: case RECC_DIGIT: case RECC_XDIGIT: case RECC_CNTRL:
     case RECC_BLANK: case RECC_UNIBYTE: case RECC_ERROR: return 0;
     default:

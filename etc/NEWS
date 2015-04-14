@@ -628,6 +628,14 @@ notifications, if Emacs is compiled with file notification support.
 ---
 *** gulp.el
 
++++
+** The character class [:print:] in regular expressions
+no longer matches any multibyte character.  Instead, Emacs now
+consults the Unicode character properties to determine which
+characters are printable.  In particular, surrogates and unassigned
+codepoints are now rejected by this class.  If you want the old
+behavior, use [:multibyte:] instead.
+
 
 * New Modes and Packages in Emacs 25.1
 

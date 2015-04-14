@@ -569,8 +569,11 @@ This matches any multibyte character (@pxref{Text Representations}).
 @item [:nonascii:]
 This matches any non-@acronym{ASCII} character.
 @item [:print:]
-This matches printing characters---everything except @acronym{ASCII} control
-characters and the delete character.
+This matches printing characters---everything except @acronym{ASCII}
+and non-@acronym{ASCII} control characters (including the delete
+character), surrogates, and codepoints unassigned by Unicode, as
+indicated by the Unicode @samp{general-category} property
+(@pxref{Character Properties}).
 @item [:punct:]
 This matches any punctuation character.  (At present, for multibyte
 characters, it matches anything that has non-word syntax.)

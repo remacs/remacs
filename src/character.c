@@ -1022,6 +1022,22 @@ decimalnump (int c)
   return gen_cat == UNICODE_CATEGORY_Nd;
 }
 
+/* Return 'true' if C is a printable character as defined by its
+   Unicode properties.  */
+bool
+printablep (int c)
+{
+  Lisp_Object category = CHAR_TABLE_REF (Vunicode_category_table, c);
+  if (! INTEGERP (category))
+    return false;
+  EMACS_INT gen_cat = XINT (category);
+
+  /* See UTS #18.  */
+  return (!(gen_cat == UNICODE_CATEGORY_Cc /* control */
+	    || gen_cat == UNICODE_CATEGORY_Cs /* surrogate */
+	    || gen_cat == UNICODE_CATEGORY_Cn)); /* unassigned */
+}
+
 void
 syms_of_character (void)
 {

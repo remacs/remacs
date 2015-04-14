@@ -969,16 +969,16 @@ CHAR
      space, and DEL.
 
 `printing', `print'
-     matches printing characters--everything except ASCII control chars
-     and DEL.
+     matches printing characters--everything except ASCII and non-ASCII
+     control characters, surrogates, and codepoints unassigned by Unicode.
 
 `alphanumeric', `alnum'
-     matches letters and digits.  (But at present, for multibyte characters,
-     it matches anything that has word syntax.)
+     matches alphabetic characters and digits.  (For multibyte characters,
+     it matches according to Unicode character properties.)
 
 `letter', `alphabetic', `alpha'
-     matches letters.  (But at present, for multibyte characters,
-     it matches anything that has word syntax.)
+     matches alphabetic characters.  (For multibyte characters,
+     it matches according to Unicode character properties.)
 
 `ascii'
      matches ASCII (unibyte) characters.
