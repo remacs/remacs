@@ -1782,6 +1782,7 @@ using `package-compute-transaction'."
             (if buffer
                 (with-current-buffer buffer
                   (save-excursion
+                    (widen)
                     (goto-char (point-min))
                     (search-forward "(package-initialize)" nil 'noerror)))
               (with-temp-buffer
