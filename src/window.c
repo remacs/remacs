@@ -45,8 +45,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "msdos.h"
 #endif
 
-static int count_windows (struct window *);
-static int get_leaf_windows (struct window *, struct window **, int);
+static ptrdiff_t count_windows (struct window *);
+static ptrdiff_t get_leaf_windows (struct window *, struct window **,
+				   ptrdiff_t);
 static void window_scroll_pixel_based (Lisp_Object, int, bool, bool);
 static void window_scroll_line_based (Lisp_Object, int, bool, bool);
 static void foreach_window (struct frame *,
@@ -93,7 +94,7 @@ Lisp_Object minibuf_window;
 Lisp_Object minibuf_selected_window;
 
 /* Incremented for each window created.  */
-static int sequence_number;
+static EMACS_INT sequence_number;
 
 /* Used by the function window_scroll_pixel_based.  */
 static int window_scroll_pixel_based_preserve_x;
@@ -451,7 +452,7 @@ selected windows appears and to which many commands apply.  */)
   return selected_window;
 }
 
-int window_select_count;
+EMACS_INT window_select_count;
 
 /* If select_window is called with inhibit_point_swap true it will
    not store point of the old selected window's buffer back into that
@@ -4275,7 +4276,7 @@ resize_frame_windows (struct frame *f, int size, bool horflag, bool pixelwise)
 DEFUN ("split-window-internal", Fsplit_window_internal, Ssplit_window_internal, 4, 4, 0,
        doc: /* Split window OLD.
 Second argument PIXEL-SIZE specifies the number of pixels of the
-new window.  In any case TOTAL-SIZE must be a positive integer.
+new window.  It must be a positive integer.
 
 Third argument SIDE nil (or `below') specifies that the new window shall
 be located below WINDOW.  SIDE `above' means the new window shall be
@@ -4315,7 +4316,7 @@ set correctly.  See the code of `split-window' for how this is done.  */)
   f = XFRAME (frame);
 
   CHECK_NUMBER (pixel_size);
-  int total_size
+  EMACS_INT total_size
     = XINT (pixel_size) / (horflag
 			   ? FRAME_COLUMN_WIDTH (f)
 			   : FRAME_LINE_HEIGHT (f));
@@ -4452,7 +4453,7 @@ set correctly.  See the code of `split-window' for how this is done.  */)
   /* Iso-coordinates and sizes are assigned by window_resize_apply,
      get them ready here.  */
   wset_new_pixel (n, pixel_size);
-  int sum = 0;
+  EMACS_INT sum = 0;
   c = XWINDOW (p->contents);
   while (c)
     {
@@ -6204,14 +6205,12 @@ the return value is nil.  Otherwise the value is t.  */)
     {
       Lisp_Object window;
       Lisp_Object dead_windows = Qnil;
-      register Lisp_Object tem, par, pers;
-      register struct window *w;
-      register struct saved_window *p;
+      Lisp_Object tem, par, pers;
+      struct window *w;
+      struct saved_window *p;
       struct window *root_window;
       struct window **leaf_windows;
-      int n_leaf_windows;
-      ptrdiff_t k;
-      int i, n;
+      ptrdiff_t i, k, n_leaf_windows;
 
       /* Don't do this within the main loop below: This may call Lisp
 	 code and is thus potentially unsafe while input is blocked.  */
@@ -6256,7 +6255,7 @@ the return value is nil.  Otherwise the value is t.  */)
 	 really like to do is to free only those matrices not reused
 	 below.  */
       root_window = XWINDOW (FRAME_ROOT_WINDOW (f));
-      int nwindows = count_windows (root_window);
+      ptrdiff_t nwindows = count_windows (root_window);
       SAFE_NALLOCA (leaf_windows, 1, nwindows);
       n_leaf_windows = get_leaf_windows (root_window, leaf_windows, 0);
 
@@ -6430,13 +6429,9 @@ the return value is nil.  Otherwise the value is t.  */)
 	Fredirect_frame_focus (frame, data->focus_frame);
 
       /* Now, free glyph matrices in windows that were not reused.  */
-      for (i = n = 0; i < n_leaf_windows; ++i)
-	{
-	  if (NILP (leaf_windows[i]->contents))
-	    free_window_matrices (leaf_windows[i]);
-	  else if (EQ (leaf_windows[i]->contents, new_current_buffer))
-	    ++n;
-	}
+      for (i = 0; i < n_leaf_windows; i++)
+	if (NILP (leaf_windows[i]->contents))
+	  free_window_matrices (leaf_windows[i]);
 
       /* Allow x_set_window_size again and apply frame size changes if
 	 needed.  */
@@ -6529,29 +6524,27 @@ delete_all_child_windows (Lisp_Object window)
   Vwindow_list = Qnil;
 }
 
-static int
-count_windows (register struct window *window)
+static ptrdiff_t
+count_windows (struct window *window)
 {
-  register int count = 1;
-  if (!NILP (window->next))
-    count += count_windows (XWINDOW (window->next));
-  if (WINDOWP (window->contents))
-    count += count_windows (XWINDOW (window->contents));
-  return count;
+  return get_leaf_windows (window, NULL, 0);
 }
 
-
-/* Fill vector FLAT with leaf windows under W, starting at index I.
-   Value is last index + 1.  */
-static int
-get_leaf_windows (struct window *w, struct window **flat, int i)
+/* If vector FLAT is non-null, fill it with leaf windows under W,
+   starting at index I.  Value is last index + 1.  */
+static ptrdiff_t
+get_leaf_windows (struct window *w, struct window **flat, ptrdiff_t i)
 {
   while (w)
     {
       if (WINDOWP (w->contents))
 	i = get_leaf_windows (XWINDOW (w->contents), flat, i);
       else
-	flat[i++] = w;
+	{
+	  if (flat)
+	    flat[i] = w;
+	  i++;
+	}
 
       w = NILP (w->next) ? 0 : XWINDOW (w->next);
     }
@@ -6598,12 +6591,12 @@ get_phys_cursor_glyph (struct window *w)
 }
 
 
-static int
-save_window_save (Lisp_Object window, struct Lisp_Vector *vector, int i)
+static ptrdiff_t
+save_window_save (Lisp_Object window, struct Lisp_Vector *vector, ptrdiff_t i)
 {
-  register struct saved_window *p;
-  register struct window *w;
-  register Lisp_Object tem, pers, par;
+  struct saved_window *p;
+  struct window *w;
+  Lisp_Object tem, pers, par;
 
   for (; !NILP (window); window = w->next)
     {
@@ -6741,10 +6734,9 @@ redirection (see `redirect-frame-focus').  The variable
 saved by this function.  */)
   (Lisp_Object frame)
 {
-  register Lisp_Object tem;
-  register int n_windows;
-  register struct save_window_data *data;
-  register int i;
+  Lisp_Object tem;
+  ptrdiff_t i, n_windows;
+  struct save_window_data *data;
   struct frame *f = decode_live_frame (frame);
 
   n_windows = count_windows (XWINDOW (FRAME_ROOT_WINDOW (f)));
@@ -6794,17 +6786,22 @@ apply_window_adjustment (struct window *w)
 			    Marginal Areas
  ***********************************************************************/
 
+static int
+extract_dimension (Lisp_Object dimension)
+{
+  if (NILP (dimension))
+    return -1;
+  CHECK_RANGED_INTEGER (dimension, 0, INT_MAX);
+  return XINT (dimension);
+}
+
 static struct window *
 set_window_margins (struct window *w, Lisp_Object left_width,
 		    Lisp_Object right_width)
 {
-  int left, right;
   int unit = WINDOW_FRAME_COLUMN_WIDTH (w);
-
-  left = (NILP (left_width) ? 0
-	  : (CHECK_NATNUM (left_width), XINT (left_width)));
-  right = (NILP (right_width) ? 0
-	   : (CHECK_NATNUM (right_width), XINT (right_width)));
+  int left = NILP (left_width) ? 0 : extract_dimension (left_width);
+  int right = NILP (right_width) ? 0 : extract_dimension (right_width);
 
   if (w->left_margin_cols != left || w->right_margin_cols != right)
     {
@@ -6873,13 +6870,9 @@ static struct window *
 set_window_fringes (struct window *w, Lisp_Object left_width,
 		    Lisp_Object right_width, Lisp_Object outside_margins)
 {
-  int left, right;
   bool outside = !NILP (outside_margins);
-
-  left = (NILP (left_width) ? -1
-	  : (CHECK_NATNUM (left_width), XINT (left_width)));
-  right = (NILP (right_width) ? -1
-	   : (CHECK_NATNUM (right_width), XINT (right_width)));
+  int left = extract_dimension (left_width);
+  int right = extract_dimension (right_width);
 
   /* Do nothing on a tty or if nothing to actually change.  */
   if (FRAME_WINDOW_P (WINDOW_XFRAME (w))
@@ -6959,7 +6952,7 @@ set_window_scroll_bars (struct window *w, Lisp_Object width,
 			Lisp_Object vertical_type, Lisp_Object height,
 			Lisp_Object horizontal_type)
 {
-  int iwidth = (NILP (width) ? -1 : (CHECK_NATNUM (width), XINT (width)));
+  int iwidth = extract_dimension (width);
   bool changed = false;
 
   if (iwidth == 0)
@@ -6989,7 +6982,7 @@ set_window_scroll_bars (struct window *w, Lisp_Object width,
 
 #if USE_HORIZONTAL_SCROLL_BARS
   {
-    int iheight = (NILP (height) ? -1 : (CHECK_NATNUM (height), XINT (height)));
+    int iheight = extract_dimension (height);
 
     if (MINI_WINDOW_P (w) || iheight == 0)
       horizontal_type = Qnil;

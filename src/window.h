@@ -195,10 +195,10 @@ struct window
     Lisp_Object next_buffers;
 
     /* Number saying how recently window was selected.  */
-    int use_time;
+    EMACS_INT use_time;
 
     /* Unique number of window assigned when it was created.  */
-    int sequence_number;
+    EMACS_INT sequence_number;
 
     /* The upper left corner pixel coordinates of this window, as
        integers relative to upper left corner of frame = 0, 0.  */
@@ -990,7 +990,7 @@ extern Lisp_Object selected_window;
    recently used window.  Its only users are Fselect_window,
    init_window_once, and make_frame.  */
 
-extern int window_select_count;
+extern EMACS_INT window_select_count;
 
 /* The minibuffer window of the selected frame.
    Note that you cannot test for minibufferness of an arbitrary window
