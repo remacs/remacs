@@ -1627,8 +1627,11 @@ It is a string, such as \"PGP\". If nil, ask user."
 
 (defvar idna-program)
 
-(defcustom gnus-use-idna (and (condition-case nil (require 'idna) (file-error))
-			      (mm-coding-system-p 'utf-8)
+(defcustom gnus-use-idna (and (mm-coding-system-p 'utf-8)
+			      (condition-case nil
+				  (require 'idna)
+				(file-error)
+				(invalid-operation))
 			      idna-program
 			      (executable-find idna-program))
   "Whether IDNA decoding of headers is used when viewing messages.

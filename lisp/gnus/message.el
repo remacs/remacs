@@ -1763,7 +1763,10 @@ no, only reply back to the author."
 	       (let (mucs-ignore-version-incompatibilities)
 		 (require 'un-define))
 	     (error)))
-       (condition-case nil (require 'idna) (file-error))
+       (condition-case nil
+	   (require 'idna)
+	 (file-error)
+	 (invalid-operation))
        idna-program
        (executable-find idna-program)
        (string= (idna-to-ascii "räksmörgås") "xn--rksmrgs-5wao1o")

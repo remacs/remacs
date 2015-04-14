@@ -9870,9 +9870,11 @@ invalid IDNA string (`xn--bar' is invalid).
 You must have GNU Libidn (URL `http://www.gnu.org/software/libidn/')
 installed for this command to work."
   (interactive "P")
-  (if (not (and (condition-case nil (require 'idna)
-		  (file-error))
-		(mm-coding-system-p 'utf-8)
+  (if (not (and (mm-coding-system-p 'utf-8)
+		(condition-case nil
+		    (require 'idna)
+		  (file-error)
+		  (invalid-operation))
 		(symbol-value 'idna-program)
 		(executable-find (symbol-value 'idna-program))))
       (gnus-message
