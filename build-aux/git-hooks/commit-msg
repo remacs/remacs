@@ -36,8 +36,11 @@ at_sign=`$awk "$print_at_sign" </dev/null 2>/dev/null`
 if test "$at_sign" != @; then
   at_sign=`LC_ALL=en_US.UTF-8 $awk "$print_at_sign" </dev/null 2>/dev/null`
   if test "$at_sign" = @; then
-    LC_ALL=en_US.UTF-8; export LC_ALL
+    LC_ALL=en_US.UTF-8
+  else
+    LC_ALL=C
   fi
+  export LC_ALL
 fi
 
 # Check the log entry.
@@ -45,10 +48,13 @@ exec $awk -v at_sign="$at_sign" -v cent_sign="$cent_sign" '
   BEGIN {
     # These regular expressions assume traditional Unix unibyte behavior.
     # They are needed for old or broken versions of awk, e.g.,
-    # mawk 1.3.3 (1996), or gawk on MSYS (2015).
+    # mawk 1.3.3 (1996), or gawk on MSYS (2015), and/or for systems that
+    # cannot use UTF-8 as the codeset for the locale.
     space = "[ \f\n\r\t\v]"
     non_space = "[^ \f\n\r\t\v]"
-    non_print = "[\1-\37\177]"
+    # The non_print below rejects control characters and surrogates
+    # UTF-8 for: 0x01-0x1f 0x7f   0x80-0x9f  0xd800-0xdbff  0xdc00-0xdfff
+    non_print = "[\1-\37\177]|\302[\200-\237]|\355[\240-\277][\200-\277]"
 
     # Prefer POSIX regular expressions if available, as they do a
     # better job of checking.  Similarly, prefer POSIX negated
