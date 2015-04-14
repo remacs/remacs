@@ -1625,7 +1625,7 @@ if it is a string, only list groups matching REGEXP."
           (unless (bound-and-true-p cursor-sensor-mode)
             (cursor-sensor-mode 1))
           (gnus-put-text-property beg end 'cursor-sensor-functions
-                                  #'gnus-tool-bar-update))
+                                  '(gnus-tool-bar-update)))
       (gnus-put-text-property beg end 'point-entered
                               #'gnus-tool-bar-update)
       (gnus-put-text-property beg end 'point-left
