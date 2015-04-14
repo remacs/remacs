@@ -61,10 +61,7 @@ static void EmacsFrameResize (Widget widget);
 static XtGeometryResult EmacsFrameQueryGeometry (Widget widget, XtWidgetGeometry *request, XtWidgetGeometry *result);
 
 
-#undef XtOffset
-#define XtOffset(p_type,field) \
-	((Cardinal) (((char *) (&(((p_type)0)->field))) - ((char *)0)))
-#define offset(field) XtOffset (EmacsFrame, emacs_frame.field)
+#define offset(field) offsetof (EmacsFrameRec, emacs_frame.field)
 
 static XtResource resources[] = {
   {XtNgeometry, XtCGeometry, XtRString, sizeof (String),
