@@ -87,10 +87,9 @@ The general format is as follows.
   ending with a period (except the summary line should not end in a
   period).
 
-  It is tempting to relax this rule for commit messages, since they
-  are somewhat transient.  However, they are preserved indefinitely,
-  and have a reasonable chance of being read in the future, so it's
-  better that they have good presentation.
+  They are preserved indefinitely, and have a reasonable chance of
+  being read in the future, so it's better that they have good
+  presentation.
 
 - Use the present tense; describe "what the change does", not "what
   the change did".
