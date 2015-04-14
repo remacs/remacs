@@ -198,7 +198,7 @@ Return nil if that option doesn't exist."
 
 (define-obsolete-function-alias 'object-p 'eieio-object-p "25.1")
 
-(defsubst class-abstract-p (class)
+(defun class-abstract-p (class)
   "Return non-nil if CLASS is abstract.
 Abstract classes cannot be instantiated."
   (eieio--class-option (eieio--class-v class) :abstract))
