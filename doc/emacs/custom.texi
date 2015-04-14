@@ -2440,9 +2440,7 @@ You can also simply disregard the errors that occur if the
 function is not defined.
 
 @example
-(condition case ()
-    (set-face-background 'region "grey75")
-  (error nil))
+(ignore-errors (set-face-background 'region "grey75"))
 @end example
 
 A @code{setq} on a variable which does not exist is generally
