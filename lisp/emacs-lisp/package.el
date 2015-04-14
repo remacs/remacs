@@ -1782,9 +1782,10 @@ using `package-compute-transaction'."
             (if buffer
                 (with-current-buffer buffer
                   (save-excursion
-                    (widen)
-                    (goto-char (point-min))
-                    (search-forward "(package-initialize)" nil 'noerror)))
+                    (save-restriction
+                      (widen)
+                      (goto-char (point-min))
+                      (search-forward "(package-initialize)" nil 'noerror))))
               (with-temp-buffer
                 (insert-file-contents user-init-file)
                 (goto-char (point-min))
