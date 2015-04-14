@@ -196,7 +196,7 @@ Here's an example of using @code{shell-quote-argument} to construct
 a shell command:
 
 @example
-(concat "diff -c "
+(concat "diff -u "
         (shell-quote-argument oldfile)
         " "
         (shell-quote-argument newfile))
