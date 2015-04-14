@@ -27,8 +27,8 @@ advanced information.
 
 Alternately, see admin/notes/git-workflow.
 
-If committing changes written by someone else, make the ChangeLog
-entry in their name, not yours. git distinguishes between the author
+If committing changes written by someone else, make the commit in
+their name, not yours.  git distinguishes between the author
 and the committer; use the --author option on the commit command to
 specify the actual author; the committer defaults to you.
 
