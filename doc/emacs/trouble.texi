@@ -743,7 +743,7 @@ unmodified Emacs.  But if you've made modifications and you don't tell
 us, you are sending us on a wild goose chase.)
 
 Be precise about these changes.  A description in English is not
-enough---send a context diff for them.
+enough---send a unified context diff for them.
 
 Adding files of your own, or porting to another machine, is a
 modification of the source.
@@ -1131,13 +1131,12 @@ is important.
 @item
 The patch itself.
 
-Use @samp{diff -c} to make your diffs.  Diffs without context are hard
+Use @samp{diff -u} to make your diffs.  Diffs without context are hard
 to install reliably.  More than that, they are hard to study; we must
-always study a patch to decide whether we want to install it.  Unidiff
-format is better than contextless diffs, but not as easy to read as
-@samp{-c} format.
+always study a patch to decide whether we want to install it.  Context
+format is better than contextless diffs, but we prefer we unified format.
 
-If you have GNU diff, use @samp{diff -c -F'^[_a-zA-Z0-9$]+ *('} when
+If you have GNU diff, use @samp{diff -u -F'^[_a-zA-Z0-9$]\+ *('} when
 making diffs of C code.  This shows the name of the function that each
 change occurs in.
 
