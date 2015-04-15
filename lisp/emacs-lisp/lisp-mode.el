@@ -181,22 +181,23 @@
             nil)))
     res))
 
-(defun lisp--el-non-funcall-position-p (&optional pos)
+(defun lisp--el-non-funcall-position-p (pos)
   "Heuristically determine whether POS is an evaluated position."
-  (setf pos (or pos (point)))
   (save-match-data
     (save-excursion
       (ignore-errors
         (goto-char pos)
         (or (eql (char-before) ?\')
-            (let ((parent
-                   (progn
-                     (up-list -1)
-                     (cond
+            (let* ((ppss (syntax-ppss))
+                   (paren-posns (nth 9 ppss))
+                   (parent
+                    (when paren-posns
+                      (goto-char (car (last paren-posns))) ;(up-list -1)
+                      (cond
                        ((ignore-errors
                           (and (eql (char-after) ?\()
-                               (progn
-                                 (up-list -1)
+                               (when (cdr paren-posns)
+                                 (goto-char (car (last paren-posns 2)))
                                  (looking-at "(\\_<let\\*?\\_>"))))
                         (goto-char (match-end 0))
                         'let)
