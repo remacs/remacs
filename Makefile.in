@@ -684,6 +684,7 @@ install-man:
 	thisdir=`/bin/pwd`; \
 	cd ${mansrcdir}; \
 	for page in *.1; do \
+	  test "$$page" = ChangeLog.1 && continue; \
 	  dest=`echo "$${page}" | sed -e 's/\.1$$//' -e '$(TRANSFORM)'`.1; \
 	  (cd "$${thisdir}"; \
 	   ${INSTALL_DATA} ${mansrcdir}/$${page} "$(DESTDIR)${man1dir}/$${dest}"); \
