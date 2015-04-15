@@ -873,14 +873,8 @@ When called interactively, prompt for REGEXP."
 	  (setq state (list 'middle))))
       (with-current-buffer "*gnus-uu-body*"
 	(goto-char (setq beg (point-max)))
-	(save-excursion
+	(with-current-buffer buffer
 	  (save-restriction
-            ;; FIXME: We save excursion and restriction in "*gnus-uu-body*",
-            ;; only to immediately move to another buffer?  And we narrow in
-            ;; that buffer without save-restriction?  And we finish the
-            ;; save-restriction with a call to `widen'?  How can that
-            ;; make sense?
-	    (set-buffer buffer)
 	    (let ((inhibit-read-only t))
 	      (set-text-properties (point-min) (point-max) nil)
 	      ;; These two are necessary for XEmacs 19.12 fascism.
@@ -915,8 +909,7 @@ When called interactively, prompt for REGEXP."
 				 (match-beginning 0)
 				 (or (and (re-search-forward "^[^ \t]" nil t)
 					  (1- (point)))
-				     (progn (forward-line 1) (point)))))))))
-	    (widen)))
+				     (progn (forward-line 1) (point)))))))))))
 	(if (and message-forward-as-mime gnus-uu-digest-buffer)
 	  (if message-forward-show-mml
 	      (progn
