@@ -230,6 +230,9 @@ Blank lines separate paragraphs.  Semicolons start comments.
   (defvar xref-find-function)
   (defvar xref-identifier-completion-table-function)
   (lisp-mode-variables nil nil 'elisp)
+  (add-hook 'after-load-functions #'elisp--font-lock-flush-elisp-buffers)
+  (setq-local electric-pair-text-pairs
+              (cons '(?\` . ?\') electric-pair-text-pairs))
   (setq imenu-case-fold-search nil)
   (add-function :before-until (local 'eldoc-documentation-function)
                 #'elisp-eldoc-documentation-function)
@@ -238,6 +241,24 @@ Blank lines separate paragraphs.  Semicolons start comments.
               #'elisp--xref-identifier-completion-table)
   (add-hook 'completion-at-point-functions
             #'elisp-completion-at-point nil 'local))
+
+;; Font-locking support.
+
+(defun elisp--font-lock-flush-elisp-buffers (&optional file)
+  ;; FIXME: Aren't we only ever called from after-load-functions?
+  ;; Don't flush during load unless called from after-load-functions.
+  ;; In that case, FILE is non-nil.  It's somehow strange that
+  ;; load-in-progress is t when an after-load-function is called since
+  ;; that should run *after* the load...
+  (when (or (not load-in-progress) file)
+    ;; FIXME: If the loaded file did not define any macros, there shouldn't
+    ;; be any need to font-lock-flush all the Elisp buffers.
+    (dolist (buf (buffer-list))
+      (with-current-buffer buf
+	(when (derived-mode-p 'emacs-lisp-mode)
+          ;; So as to take into account new macros that may have been defined
+          ;; by the just-loaded file.
+	  (font-lock-flush))))))
 
 ;;; Completion at point for Elisp
 

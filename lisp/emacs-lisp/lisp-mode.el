@@ -218,6 +218,7 @@
                          (< (point) pos))))))))))
 
 (defun lisp--el-match-keyword (limit)
+  ;; FIXME: Move to elisp-mode.el.
   (catch 'found
     (while (re-search-forward "(\\(\\(?:\\sw\\|\\s_\\)+\\)\\_>" limit t)
       (let ((sym (intern-soft (match-string 1))))
@@ -227,17 +228,6 @@
                        (not (lisp--el-non-funcall-position-p
                              (match-beginning 0)))))
 	  (throw 'found t))))))
-
-(defun lisp--el-font-lock-flush-elisp-buffers (&optional file)
-  ;; Don't flush during load unless called from after-load-functions.
-  ;; In that case, FILE is non-nil.  It's somehow strange that
-  ;; load-in-progress is t when an after-load-function is called since
-  ;; that should run *after* the load...
-  (when (or (not load-in-progress) file)
-    (dolist (buf (buffer-list))
-      (with-current-buffer buf
-	(when (derived-mode-p 'emacs-lisp-mode)
-	  (font-lock-flush))))))
 
 (pcase-let
     ((`(,vdefs ,tdefs
@@ -583,10 +573,6 @@ font-lock keywords will not be case sensitive."
 	  (font-lock-syntactic-face-function
 	   . lisp-font-lock-syntactic-face-function)))
   (setq-local prettify-symbols-alist lisp--prettify-symbols-alist)
-  (when elisp
-    (add-hook 'after-load-functions #'lisp--el-font-lock-flush-elisp-buffers)
-    (setq-local electric-pair-text-pairs
-                (cons '(?\` . ?\') electric-pair-text-pairs)))
   (setq-local electric-pair-skip-whitespace 'chomp)
   (setq-local electric-pair-open-newline-between-pairs nil))
 
