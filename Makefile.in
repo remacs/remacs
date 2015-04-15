@@ -1101,7 +1101,7 @@ ChangeLog:
 # The ChangeLog history files are called ChangeLog.1, ChangeLog.2, ...,
 # ChangeLog.$(CHANGELOG_HISTORY_INDEX_MAX).  $(CHANGELOG_N) stands for
 # the newest (highest-numbered) ChangeLog history file.
-CHANGELOG_HISTORY_INDEX_MAX = 1
+CHANGELOG_HISTORY_INDEX_MAX = 2
 CHANGELOG_N = ChangeLog.$(CHANGELOG_HISTORY_INDEX_MAX)
 
 # Check that we are in a good state for changing history.
