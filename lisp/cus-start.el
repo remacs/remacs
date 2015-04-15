@@ -632,7 +632,11 @@ since it could result in memory overflow and make Emacs crash."
 	  (put symbol 'custom-set (cadr prop)))
       ;; Note this is the _only_ initialize property we handle.
       (if (eq (cadr (memq :initialize rest)) 'custom-initialize-delay)
-	  (push symbol custom-delayed-init-variables))
+          ;; These vars are defined early and should hence be initialized
+          ;; early, even if this file happens to be loaded late.  so add them
+          ;; to the end of custom-delayed-init-variables.  Otherwise,
+          ;; auto-save-file-name-transforms will appear in M-x customize-rogue.
+	  (add-to-list 'custom-delayed-init-variables symbol 'append))
       ;; If this is NOT while dumping Emacs, set up the rest of the
       ;; customization info.  This is the stuff that is not needed
       ;; until someone does M-x customize etc.
