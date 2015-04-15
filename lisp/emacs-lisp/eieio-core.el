@@ -89,21 +89,8 @@ Currently under control of this var:
 (cl-defstruct (eieio--class
                (:constructor nil)
                (:constructor eieio--class-make (name &aux (tag 'defclass)))
-               (:type vector)
+               (:include cl--class)
                (:copier nil))
-  ;; We use an untagged cl-struct, with our own hand-made tag as first field
-  ;; (containing the symbol `defclass').  It would be better to use a normal
-  ;; cl-struct with its normal tag (e.g. so that cl-defstruct can define the
-  ;; predicate for us), but that breaks compatibility with .elc files compiled
-  ;; against older versions of EIEIO.
-  tag
-  ;; Fields we could inherit from cl--class (if we used a tagged cl-struct):
-  (name nil :type symbol)               ;The type name.
-  (docstring nil :type string)
-  (parents nil :type (or eieio--class (list-of eieio--class)))
-  (slots nil :type (vector cl-slot-descriptor))
-  (index-table nil :type hash-table)
-  ;; Fields specific to EIEIO classes:
   children
   initarg-tuples                  ;; initarg tuples list
   (class-slots nil :type eieio--slot)
@@ -151,12 +138,6 @@ Currently under control of this var:
       ;; Keep the symbol if class-v is nil, for better error messages.
       (or (eieio--class-v class) class)
     class))
-
-(defsubst eieio--class-p (class)
-  "Return non-nil if CLASS is a valid class object."
-  (condition-case nil
-      (eq (aref class 0) 'defclass)
-    (error nil)))
 
 (defun class-p (class)
   "Return non-nil if CLASS is a valid class vector.
