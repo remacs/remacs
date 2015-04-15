@@ -314,7 +314,7 @@ enum syntaxcode { Swhitespace = 0, Sword = 1, Ssymbol = 2 };
 
 # define ISGRAPH(c) (SINGLE_BYTE_CHAR_P (c)				\
 		    ? (c) > ' ' && !((c) >= 0177 && (c) <= 0237)	\
-		    : 1)
+		     : graphicp (c))
 
 # define ISPRINT(c) (SINGLE_BYTE_CHAR_P (c)				\
 		    ? (c) >= ' ' && !((c) >= 0177 && (c) <= 0237)	\
@@ -1875,7 +1875,8 @@ struct range_table_work_area
 #define BIT_MULTIBYTE	0x20
 #define BIT_ALPHA	0x40
 #define BIT_ALNUM	0x80
-#define BIT_PRINT	0x100
+#define BIT_GRAPH	0x100
+#define BIT_PRINT	0x200
 
 
 /* Set the bit for character C in a list.  */
@@ -2074,7 +2075,7 @@ re_wctype_to_bit (re_wctype_t cc)
 {
   switch (cc)
     {
-    case RECC_NONASCII: case RECC_GRAPH:
+    case RECC_NONASCII:
     case RECC_MULTIBYTE: return BIT_MULTIBYTE;
     case RECC_ALPHA: return BIT_ALPHA;
     case RECC_ALNUM: return BIT_ALNUM;
@@ -2083,6 +2084,7 @@ re_wctype_to_bit (re_wctype_t cc)
     case RECC_UPPER: return BIT_UPPER;
     case RECC_PUNCT: return BIT_PUNCT;
     case RECC_SPACE: return BIT_SPACE;
+    case RECC_GRAPH: return BIT_GRAPH;
     case RECC_PRINT: return BIT_PRINT;
     case RECC_ASCII: case RECC_DIGIT: case RECC_XDIGIT: case RECC_CNTRL:
     case RECC_BLANK: case RECC_UNIBYTE: case RECC_ERROR: return 0;
@@ -5522,7 +5524,9 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 		    | (class_bits & BIT_UPPER && ISUPPER (c))
 		    | (class_bits & BIT_WORD  && ISWORD  (c))
 		    | (class_bits & BIT_ALPHA && ISALPHA (c))
-		    | (class_bits & BIT_ALNUM && ISALNUM (c)))
+		    | (class_bits & BIT_ALNUM && ISALNUM (c))
+		    | (class_bits & BIT_GRAPH && ISGRAPH (c))
+		    | (class_bits & BIT_PRINT && ISPRINT (c)))
 		  not = !not;
 		else
 		  CHARSET_LOOKUP_RANGE_TABLE_RAW (not, c, range_table, count);

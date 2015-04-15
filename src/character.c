@@ -1022,6 +1022,14 @@ decimalnump (int c)
   return gen_cat == UNICODE_CATEGORY_Nd;
 }
 
+/* Return 'true' if C is a graphic character as defined by its
+   Unicode properties.  */
+bool
+graphicp (int c)
+{
+  return c == ' ' || printablep (c);
+}
+
 /* Return 'true' if C is a printable character as defined by its
    Unicode properties.  */
 bool
