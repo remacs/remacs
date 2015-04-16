@@ -931,7 +931,7 @@ in a cleaner way with command remapping, like this:
 	    (nconc (nreverse skipped) newdef)))
       ;; Look past a symbol that names a keymap.
       (setq inner-def
-	    (or (indirect-function defn t) defn))
+	    (or (indirect-function defn) defn))
       ;; For nested keymaps, we use `inner-def' rather than `defn' so as to
       ;; avoid autoloading a keymap.  This is mostly done to preserve the
       ;; original non-autoloading behavior of pre-map-keymap times.
@@ -1974,14 +1974,13 @@ process."
 
 ;; compatibility
 
-(make-obsolete
- 'process-kill-without-query
- "use `process-query-on-exit-flag' or `set-process-query-on-exit-flag'."
- "22.1")
 (defun process-kill-without-query (process &optional _flag)
   "Say no query needed if PROCESS is running when Emacs is exited.
 Optional second argument if non-nil says to require a query.
 Value is t if a query was formerly required."
+  (declare (obsolete
+            "use `process-query-on-exit-flag' or `set-process-query-on-exit-flag'."
+            "22.1"))
   (let ((old (process-query-on-exit-flag process)))
     (set-process-query-on-exit-flag process nil)
     old))
@@ -2758,12 +2757,12 @@ Otherwise, return nil."
 (defun special-form-p (object)
   "Non-nil if and only if OBJECT is a special form."
   (if (and (symbolp object) (fboundp object))
-      (setq object (indirect-function object t)))
+      (setq object (indirect-function object)))
   (and (subrp object) (eq (cdr (subr-arity object)) 'unevalled)))
 
 (defun macrop (object)
   "Non-nil if and only if OBJECT is a macro."
-  (let ((def (indirect-function object t)))
+  (let ((def (indirect-function object)))
     (when (consp def)
       (or (eq 'macro (car def))
           (and (autoloadp def) (memq (nth 4 def) '(macro t)))))))
@@ -3506,6 +3505,8 @@ LIMIT.
 
 As a general recommendation, try to avoid using `looking-back'
 wherever possible, since it is slow."
+  (declare
+   (advertised-calling-convention (regexp limit &optional greedy) "25.1"))
   (let ((start (point))
 	(pos
 	 (save-excursion

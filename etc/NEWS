@@ -709,6 +709,8 @@ behavior, set `diff-switches' to `-c'.
 
 ** New hook `pre-redisplay-functions', a bit easier to use than pre-redisplay-function.
 
+** The second arg of `looking-back' should always be provided explicitly.
+
 ** Obsolete text properties `intangible', `point-entered', and `point-left'.
 Replaced by properties `cursor-intangible' and `cursor-sensor-functions',
 implemented by the new `cursor-intangible-mode' and
