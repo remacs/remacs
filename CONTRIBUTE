@@ -34,9 +34,10 @@ specify the actual author; the committer defaults to you.
 
 ** Commit messages
 
-Typically, a patch creates ChangeLog entries by putting them into its
-commit message, not by changing a ChangeLog file.  Here is an example
-commit message (indented):
+When a release is prepared, the commit messages are used to generate
+the ChangeLog file.  So a typical patch does not touch any of the
+ChangeLog files in the repository, but contains the ChangeLog entries
+in its message.  Here is an example commit message (indented):
 
 	Deactivate shifted region
 
@@ -127,15 +128,16 @@ The general format is as follows.
   "2014-01-16T05:43:35Z!esr@thyrsus.com". Often, "my previous commit"
   will suffice.
 
-- There is no need to make separate ChangeLog entries for files such
-  as NEWS, MAINTAINERS, and FOR-RELEASE, or to indicate regeneration
-  of files such as 'configure'.  "There is no need" means you don't
-  have to, but you can if you want to.
+- There is no need to mention files such as NEWS, MAINTAINERS, and
+  FOR-RELEASE, or to indicate regeneration of files such as
+  'configure', in the ChangeLog entry.  "There is no need" means you
+  don't have to, but you can if you want to.
 
 - If a commit message's first line starts with "; ", the message is
-  ignored when generating ChangeLog history files via 'make changelog'
+  ignored when generating ChangeLog history files via 'make ChangeLog'
   or via 'make change-history'.  You can use "; " for minor commits
-  that do not need separate ChangeLog entries.
+  that do not need separate ChangeLog entries, as well as commits that
+  only modify files that don't need these entries at all.
 
 ** Generating ChangeLog entries
 
