@@ -313,7 +313,7 @@ enum syntaxcode { Swhitespace = 0, Sword = 1, Ssymbol = 2 };
 /* The rest must handle multibyte characters.  */
 
 # define ISGRAPH(c) (SINGLE_BYTE_CHAR_P (c)				\
-		    ? (c) > ' ' && !((c) >= 0177 && (c) <= 0237)	\
+		     ? (c) > ' ' && !((c) >= 0177 && (c) <= 0240)	\
 		     : graphicp (c))
 
 # define ISPRINT(c) (SINGLE_BYTE_CHAR_P (c)				\
