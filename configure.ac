@@ -3186,7 +3186,6 @@ fi
 AC_SUBST(LIBXPM)
 
 ### Use -ljpeg if available, unless `--with-jpeg=no'.
-### mingw32 doesn't use -ljpeg, since it loads the library dynamically.
 HAVE_JPEG=no
 LIBJPEG=
 if test "${with_jpeg}" != "no"; then
@@ -3222,7 +3221,11 @@ if test "${with_jpeg}" != "no"; then
     HAVE_JPEG=yes
     AC_DEFINE([HAVE_JPEG], 1,
       [Define to 1 if you have the jpeg library (typically -ljpeg).])
-    test "$emacs_cv_jpeglib" != yes && LIBJPEG=$emacs_cv_jpeglib
+    ### mingw32 doesn't use -ljpeg, since it loads the library
+    ### dynamically when needed, and doesn't want a run-time
+    ### dependency on the jpeglib DLL.
+    test "$emacs_cv_jpeglib" != yes && test "${opsys}" != "mingw32" \
+    && LIBJPEG=$emacs_cv_jpeglib
   fi
 fi
 AC_SUBST(LIBJPEG)
