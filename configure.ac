@@ -5021,18 +5021,19 @@ esac
 # -nopie fixes a temacs segfault on Gentoo, OpenBSD, and other systems
 # with "hardened" GCC configurations for some reason (Bug#18784).
 # We don't know why -nopie works, but not segfaulting is better than
-# segfaulting.  Use -Werror when trying -nopie, otherwise clang keeps
-# warning that it does not understand -nopie.
+# segfaulting.  Use ac_c_werror_flag=yes when trying -nopie, otherwise
+# clang keeps warning that it does not understand -nopie, and pre-4.6
+# GCC has a similar problem (Bug#20338).
 AC_CACHE_CHECK([whether $CC accepts -nopie],
   [emacs_cv_prog_cc_nopie],
-  [emacs_save_CFLAGS=$CFLAGS
+  [emacs_save_c_werror_flag=$ac_c_werror_flag
    emacs_save_LDFLAGS=$LDFLAGS
-   CFLAGS="$CFLAGS -Werror"
+   ac_c_werror_flag=yes
    LDFLAGS="$LDFLAGS -nopie"
    AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
      [emacs_cv_prog_cc_nopie=yes],
      [emacs_cv_prog_cc_nopie=no])
-   CFLAGS=$emacs_save_CFLAGS
+   ac_c_werror_flag=$emacs_save_c_werror_flag
    LDFLAGS=$emacs_save_LDFLAGS])
 if test "$emacs_cv_prog_cc_nopie" = yes; then
   LD_SWITCH_SYSTEM_TEMACS="$LD_SWITCH_SYSTEM_TEMACS -nopie"
