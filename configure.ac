@@ -3189,48 +3189,40 @@ AC_SUBST(LIBXPM)
 ### mingw32 doesn't use -ljpeg, since it loads the library dynamically.
 HAVE_JPEG=no
 LIBJPEG=
-if test "${opsys}" = "mingw32"; then
-  if test "${with_jpeg}" != "no"; then
-    dnl Checking for jpeglib.h can lose because of a redefinition of
-    dnl HAVE_STDLIB_H.
-    AC_CHECK_HEADER(jerror.h, HAVE_JPEG=yes, HAVE_JPEG=no)
-  fi
-  AH_TEMPLATE(HAVE_JPEG, [Define to 1 if you have the jpeg library (-ljpeg).])dnl
-  if test "${HAVE_JPEG}" = "yes"; then
-    AC_DEFINE(HAVE_JPEG)
-    AC_EGREP_CPP([version 6b or later],
-	[#include <jpeglib.h>
-	 #if JPEG_LIB_VERSION >= 62
-	 version 6b or later
-	 #endif
-	],
-        [AC_DEFINE(HAVE_JPEG)],
-        [AC_MSG_WARN([libjpeg found, but not version 6b or later])
-        HAVE_JPEG=no])
-  fi
-elif test "${HAVE_X11}" = "yes" || test "${HAVE_W32}" = "yes"; then
-  if test "${with_jpeg}" != "no"; then
-    dnl Checking for jpeglib.h can lose because of a redefinition of
-    dnl  HAVE_STDLIB_H.
-    AC_CHECK_HEADER(jerror.h,
-      [AC_CHECK_LIB(jpeg, jpeg_destroy_compress, HAVE_JPEG=yes)])
-  fi
-
-  AH_TEMPLATE(HAVE_JPEG, [Define to 1 if you have the jpeg library (-ljpeg).])dnl
-  if test "${HAVE_JPEG}" = "yes"; then
-    AC_DEFINE(HAVE_JPEG)
-    AC_EGREP_CPP([version 6b or later],
-	[#include <jpeglib.h>
-	 #if JPEG_LIB_VERSION >= 62
-	 version 6b or later
-	 #endif
-	],
-	[AC_DEFINE(HAVE_JPEG)],
-	[AC_MSG_WARN([libjpeg found, but not version 6b or later])
-	HAVE_JPEG=no])
-  fi
-  if test "${HAVE_JPEG}" = "yes"; then
-    LIBJPEG=-ljpeg
+if test "${with_jpeg}" != "no"; then
+  AC_CACHE_CHECK([for jpeglib 6b or later],
+    [emacs_cv_jpeglib],
+    [OLD_LIBS=$LIBS
+     for emacs_cv_jpeglib in yes -ljpeg no; do
+       case $emacs_cv_jpeglib in
+	 yes) ;;
+         no) break;;
+	 *) LIBS="$LIBS $emacs_cv_jpeglib";;
+       esac
+       AC_LINK_IFELSE(
+	 [AC_LANG_PROGRAM(
+	    [[#undef HAVE_STDLIB_H /* Avoid config.h/jpeglib.h collision.  */
+	      #include <stdio.h> /* jpeglib.h needs FILE and size_t.  */
+	      #include <jpeglib.h>
+	      #include <jerror.h>
+	      char verify[JPEG_LIB_VERSION < 62 ? -1 : 1];
+	      struct jpeg_decompress_struct cinfo;
+	    ]],
+	    [[
+	      jpeg_create_decompress (&cinfo);
+	      WARNMS (&cinfo, JWRN_JPEG_EOF);
+	      jpeg_destroy_decompress (&cinfo);
+	    ]])],
+	 [emacs_link_ok=yes],
+	 [emacs_link_ok=no])
+       LIBS=$OLD_LIBS
+       test $emacs_link_ok = yes && break
+     done])
+  if test "$emacs_cv_jpeglib" != no; then
+    HAVE_JPEG=yes
+    AC_DEFINE([HAVE_JPEG], 1,
+      [Define to 1 if you have the jpeg library (typically -ljpeg).])
+    test "$emacs_cv_jpeglib" != yes && LIBJPEG=$emacs_cv_jpeglib
   fi
 fi
 AC_SUBST(LIBJPEG)
