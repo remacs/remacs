@@ -599,9 +599,13 @@ It can be quoted, or be inside a quoted form."
                             (find-function-library sym)))
                        (setq sym (car fun-lib))
                        (cdr fun-lib))))
-           (`defvar (when (boundp sym)
-                      (or (symbol-file sym 'defvar)
-                          (help-C-file-name sym 'var))))
+           (`defvar (and (boundp sym)
+                         ;; Don't show minor modes twice.
+                         ;; TODO: If TYPE ever becomes dependent on the
+                         ;; context, move this check outside.
+                         (not (fboundp sym))
+                         (or (symbol-file sym 'defvar)
+                             (help-C-file-name sym 'var))))
            (`feature (when (featurep sym)
                        (ignore-errors
                          (find-library-name (symbol-name sym)))))
