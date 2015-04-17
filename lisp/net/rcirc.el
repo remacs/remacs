@@ -2167,6 +2167,7 @@ activity.  Only run if the buffer is not visible and
        ,interactive-form
        (let ((process (or process (rcirc-buffer-process)))
 	     (target (or target rcirc-target)))
+         (ignore target)        ; mark `target' variable as ignorable
 	 ,@body))))
 
 (defun-rcirc-command msg (message)
