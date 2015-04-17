@@ -606,9 +606,13 @@ It can be quoted, or be inside a quoted form."
                          (not (fboundp sym))
                          (or (symbol-file sym 'defvar)
                              (help-C-file-name sym 'var))))
-           (`feature (when (featurep sym)
-                       (ignore-errors
-                         (find-library-name (symbol-name sym)))))
+           (`feature (and (featurep sym)
+                          ;; Skip when a function with the same name
+                          ;; is defined, because it's probably in the
+                          ;; same file.
+                          (not (fboundp sym))
+                          (ignore-errors
+                            (find-library-name (symbol-name sym)))))
            (`defface (when (facep sym)
                        (symbol-file sym 'defface))))))
     (when file
