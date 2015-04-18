@@ -194,7 +194,7 @@ TYPE can be one of the following symbols: list or hash-table."
   (pcase type
     (`list (map-pairs map))
     (`hash-table (map--into-hash-table map))
-    (t (error "Not a map type name: %s" type))))
+    (t (error "Not a map type name: %S" type))))
 
 (defmacro map--dispatch (spec &rest args)
   "Evaluate one of the provided forms depending on the type of MAP.
