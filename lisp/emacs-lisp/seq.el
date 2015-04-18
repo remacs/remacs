@@ -221,7 +221,7 @@ TYPE must be one of following symbols: vector, string or list.
     (`vector (apply #'vconcat seqs))
     (`string (apply #'concat seqs))
     (`list (apply #'append (append seqs '(nil))))
-    (t (error "Not a sequence type name: %s" type))))
+    (t (error "Not a sequence type name: %S" type))))
 
 (defun seq-mapcat (function seq &optional type)
   "Concatenate the result of applying FUNCTION to each element of SEQ.
@@ -295,7 +295,7 @@ TYPE can be one of the following symbols: vector, string or list."
     (`vector (vconcat seq))
     (`string (concat seq))
     (`list (append seq nil))
-    (t (error "Not a sequence type name: %s" type))))
+    (t (error "Not a sequence type name: %S" type))))
 
 (defun seq--drop-list (list n)
   "Return a list from LIST without its first N elements.
