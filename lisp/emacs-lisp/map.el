@@ -86,11 +86,11 @@ Map can be a nested map composed of alists, hash-tables and arrays."
 
 (defun map-keys (map)
   "Return the list of keys in MAP."
-  (map-apply (lambda (key value) key) map))
+  (map-apply (lambda (key _) key) map))
 
 (defun map-values (map)
   "Return the list of values in MAP."
-  (map-apply (lambda (key value) value) map))
+  (map-apply (lambda (_ value) value) map))
 
 (defun map-pairs (map)
   "Return the elements of MAP as key/value association lists."
@@ -121,13 +121,13 @@ FUNCTION is called with two arguments, the key and the value."
 
 (defun map-keys-apply (function map)
   "Return the result of applying FUNCTION to each key of MAP."
-  (map-apply (lambda (key val)
+  (map-apply (lambda (key _)
                (funcall function key))
              map))
 
 (defun map-values-apply (function map)
   "Return the result of applying FUNCTION to each value of MAP."
-  (map-apply (lambda (key val)
+  (map-apply (lambda (_ val)
                (funcall function val))
              map))
 
