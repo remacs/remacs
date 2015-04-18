@@ -226,9 +226,30 @@ Emacs.  @file{ldap.el} needs an external program called
 (@url{http://www.openldap.org/}).  The configurations in this section
 were tested with OpenLDAP 2.4.23.
 
+Most servers use LDAP-over-SSL these days; the examples here reflect
+that.  The other possibilities are:
+
+@vindex ldap-host-parameters-alist
+@vindex ldap-ldapsearch-args
+@itemize @bullet
+
+@item
+Servers that do not require authentication or that do not encrypt
+authentication traffic.
+
+Include @code{auth simple} in @code{ldap-host-parameters-alist}, which
+causes the @code{-x} option to be passed to @command{ldapsearch}.
+
+@item
+Servers that require SASL authentication.
+
+Pass any required extra options to @command{ldapsearch} using
+@code{ldap-ldapsearch-args}.
+@end itemize
+
 The following examples use a base of
 @code{ou=people,dc=example,dc=com} and the host name
-@code{ldaps.gnu.org}, a server that supports LDAP-over-SSL (the
+@code{ldap.gnu.org}, a server that supports LDAP-over-SSL (the
 @code{ldaps} protocol, with default port @code{636}) and which
 requires authentication by the user @code{emacsuser} with password
 @code{s3cr3t}.
@@ -272,14 +293,18 @@ TLS_CACERTDIR /etc/openldap/certs
 In @file{.emacs}, these expressions suffice to configure EUDC for
 LDAP:
 
+@vindex message-mode-map
+@findex eudc-expand-inline
+@vindex eudc-server-hotlist
+@vindex ldap-host-parameters-alist
 @lisp
 (eval-after-load "message"
   '(define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
 (customize-set-variable 'eudc-server-hotlist
                         '(("" . bbdb)
-                          ("ldaps://ldaps.gnu.org" . ldap)))
+                          ("ldaps://ldap.gnu.org" . ldap)))
 (customize-set-variable 'ldap-host-parameters-alist
-                        '(("ldaps://ldaps.gnu.org"
+                        '(("ldaps://ldap.gnu.org"
                            base "ou=people,dc=example,dc=com"
                            binddn "example\\emacsuser"
                            passwd ldap-password-read)))
@@ -306,7 +331,7 @@ example, @file{/etc/openldap/ldap.conf} might contain:
 
 @example
 BASE ou=people,dc=example,dc=com
-URI ldaps://ldaps.gnu.org
+URI ldaps://ldap.gnu.org
 TLS_CACERTDIR /etc/openldap/certs
 @end example
 
@@ -318,20 +343,24 @@ Authentication requires a password, and a @dfn{bind distinguished name
 @file{~/.authinfo.gpg} with the following line:
 
 @example
-machine ldaps://ldaps.gnu.org binddn example\emacsuser password s3cr3t
+machine ldaps://ldap.gnu.org binddn example\emacsuser password s3cr3t
 @end example
 
 Then in the @file{.emacs} init file, these expressions suffice to
 configure EUDC for LDAP:
 
+@vindex message-mode-map
+@findex eudc-expand-inline
+@vindex eudc-server-hotlist
+@vindex ldap-host-parameters-alist
 @lisp
 (eval-after-load "message"
   '(define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
 (customize-set-variable 'eudc-server-hotlist
                         '(("" . bbdb)
-                          ("ldaps://ldaps.gnu.org" . ldap)))
+                          ("ldaps://ldap.gnu.org" . ldap)))
 (customize-set-variable 'ldap-host-parameters-alist
-                        '(("ldaps://ldaps.gnu.org"
+                        '(("ldaps://ldap.gnu.org"
                            auth-source t)))
 @end lisp
 
@@ -349,6 +378,10 @@ binddn example\emacsuser password s3cr3t
 @noindent
 and the @file{.emacs} expressions become:
 
+@vindex message-mode-map
+@findex eudc-expand-inline
+@vindex eudc-server-hotlist
+@vindex ldap-host-parameters-alist
 @lisp
 (eval-after-load "message"
   '(define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
