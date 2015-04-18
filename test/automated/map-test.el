@@ -318,7 +318,8 @@
     (assert (equal (map-values (map-into (map-into ht 'list) 'hash-table))
                    (map-values ht)))
     (assert (null (map-into nil 'list)))
-    (assert (map-empty-p (map-into nil 'hash-table)))))
+    (assert (map-empty-p (map-into nil 'hash-table)))
+    (should-error (map-into [1 2 3] 'string))))
 
 (provide 'map-tests)
 ;;; map-tests.el ends here

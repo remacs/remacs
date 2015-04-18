@@ -193,7 +193,8 @@ MAP can be a list, hash-table or array."
 TYPE can be one of the following symbols: list or hash-table."
   (pcase type
     (`list (map-pairs map))
-    (`hash-table (map--into-hash-table map))))
+    (`hash-table (map--into-hash-table map))
+    (t (error "Not a map type name: %s" type))))
 
 (defmacro map--dispatch (spec &rest args)
   "Evaluate one of the provided forms depending on the type of MAP.
