@@ -1,6 +1,6 @@
 2015-04-18  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Prefer "Bug#1234" in commit messages
+	Prefer "Bug#1234" in commit messages (Bug#20325)
 	* .dir-locals.el (log-edit-mode): Don't rewrite Bug#,
 	as this isn't useful for Git.
 	* CONTRIBUTE: Suggest "Bug#1234" instead of "Fixes: debbugs:1234".
@@ -8,26 +8,26 @@
 2015-04-18  Glenn Morris  <rgm@gnu.org>
 
 	* lisp/files.el (auto-mode-alist): Use conf mode for gitconfig, hgrc.
-	Fixes: debbugs:19506
+	(Bug#19506)
 
 2015-04-18  Tom Willemse  <tom@ryuslash.org>  (tiny change)
 
 	* lisp/elec-pair.el (electric-pair-post-self-insert-function): Do not use `chomp' as a function.
-	Fixes: debbugs:19505
+	(Bug#19505)
 
 2015-04-18  Glenn Morris  <rgm@gnu.org>
 
 	* lisp/net/browse-url.el (browse-url, browse-url-at-point): Doc fixes.
 
 	* doc/emacs/misc.texi (Sorting): Small edit.
-	Fixes: debbugs:19896
+	(Bug#19896)
 
 	* admin/admin.el (make-manuals): Add emacs-xtra in pdf and ps.
 
 2015-04-18  Simen Heggestøyl  <simenheg@gmail.com>
 
 	css-mode.el: Support multi-line comment filling
-	Fixes: debbugs:20256
+	(Bug#20256)
 	* lisp/textmodes/css-mode.el (css-fill-paragraph): Support multi-line
 	comment filling.
 	(css-adaptive-fill): New function.
@@ -44,7 +44,7 @@
 	* lisp/leim/quail/cyrillic.el (bulgarian-phonetic, bulgarian-bds):
 	Replace U+042C with U+045D, as the former character is not used in
 	the modern Bulgarian language.
-	Fixes: Bug#20350
+	(Bug#20350)
 
 2015-04-17  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
@@ -80,7 +80,7 @@
 2015-04-17  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* lisp/indent.el (indent-region): Don't deactivate the mark
-	Fixes: debbugs:20357
+	(Bug#20357)
 
 2015-04-17  Sam Steingold  <sds@gnu.org>
 
