@@ -55,7 +55,7 @@
 	(HAVE_PTHREAD, LIB_PTHREAD): Port better to FreeBSD,
 	by also checking for pthread_create, pthread_self, pthread_sigmask.
 	Tighten the test for pthread_atfork while we're at it.
-	Fixes: bug#20136
+	(Bug#20136)
 
 	Merge from gnulib
 	This incorporates:
@@ -76,7 +76,7 @@
 	Don't require GNU putenv
 	* configure.ac: Use system putenv even if it lacks GNU features, as
 	we don't need them.  This works around a bug in FreeBSD 10.1 getenv.
-	Fixes: bug#19874
+	(Bug#19874)
 
 2015-02-25  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -170,7 +170,7 @@
 	If gnustep-config works, use 'gnustep-config --objc-flags' and
 	'gnustep-config --gui-libs' to compute GNUstep configuration
 	variables, instead of attempting to infer them individually.
-	Fixes: bug#19507
+	(Bug#19507)
 
 2015-01-21  Ulrich Müller  <ulm@gentoo.org>
 
@@ -198,7 +198,7 @@
 	* INSTALL: Document this.
 	* configure.ac: Add AM_SILENT_RULES([yes]).
 	(AM_DEFAULT_VERBOSITY): Remove now-unnecessary initialization.
-	Fixes: bug#19501
+	(Bug#19501)
 
 2015-01-06  Paul Eggert  <eggert@cs.ucla.edu>
 

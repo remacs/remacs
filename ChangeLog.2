@@ -16,7 +16,7 @@
 
 	Pre-4.6 GCC succeeds with unknown option
 	* configure.ac (emacs_cv_prog_cc_nopie): Port to pre-4.6 GCC.
-	Fixes: bug#20338
+	(Bug#20338)
 
 2015-04-15  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -46,7 +46,7 @@
 	both jpeglib.h and jerror.h features.  Remove special case for
 	mingw32, which should no longer be needed (and if it were needed,
 	should now be addressable by hotwiring emacs_cv_jpeglib).
-	Fixes: bug#20332
+	(Bug#20332)
 
 2015-04-15  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -100,7 +100,7 @@
 2015-04-15  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* src/lread.c (intern_1): Make sure we'd find the symbol we add
-	Fixes: debbugs:20334
+	(Bug#20334)
 	* src/xfaces.c (resolve_face_name): Don't use `intern' with Lisp_Strings.
 
 2015-04-15  Glenn Morris  <rgm@gnu.org>
@@ -169,7 +169,7 @@
 	Describe problems with cursor caused by Windows Magnifier
 	* etc/PROBLEMS: Describe the problem with cursor shape on
 	MS-Windows due to Windows Magnifier.
-	Fixes: Bug#20271
+	(Bug#20271)
 
 	Make [:print:] support non-ASCII characters correctly
 	* src/regex.c (ISPRINT): Call 'printablep' for multibyte characters.
@@ -254,7 +254,7 @@
 2015-04-13  Dmitry Gutov  <dgutov@yandex.ru>
 
 	Change diff-switches default to `-u'
-	Fixes: debbugs:20290
+	(Bug#20290)
 	* doc/emacs/files.texi (Comparing Files): Document the new default
 	value of `diff-switches'.
 	* doc/emacs/trouble.texi (Sending Patches): Document the preference
@@ -276,7 +276,7 @@
 2015-04-13  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* lisp/loadup.el ("cus-start"): Load it after loaddefs.el
-	Fixes: debbugs:20321
+	(Bug#20321)
 	* lisp/cus-start.el (read-buffer-function): Don't advertize
 	iswitchb-read-buffer any more.
 	(iswitchb): Don't tweak this obsolete group any more.
@@ -432,7 +432,7 @@
 	Use completion-separator-chars rather than local key binding.
 
 	* src/*.c: Set deactivate_mark buffer-locally
-	Fixes: debbugs:20260
+	(Bug#20260)
 	* src/insdel.c (prepare_to_modify_buffer_1):
 	* src/fileio.c (Finsert_file_contents): Set deactivate_mark
 	buffer-locally.
@@ -440,7 +440,7 @@
 2015-04-12  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	python.el: Keep symmetry on sexp navigation with parens
-	Fixes: debbugs:19954
+	(Bug#19954)
 	* lisp/progmodes/python.el
 	(python-nav--forward-sexp): Add argument skip-parens-p.
 	(python-nav-forward-sexp, python-nav-backward-sexp)
@@ -466,7 +466,7 @@
 	* configure.ac (MAIL_USE_MMDF): Remove.
 	* etc/NEWS: Document this.
 	* lib-src/movemail.c: Assume MAIL_USE_MMDF is not defined.
-	Fixes: bug#20308
+	(Bug#20308)
 
 	* doc/man/ChangeLog.01: Rename from doc/man/ChangeLog.1.
 	That way, 'make install' won't think it's a man page.
@@ -675,7 +675,7 @@
 	* src/gnutls.c (syms_of_gnutls) <libgnutls-version>: New DEFSYM.
 	* lisp/term/w32-win.el (dynamic-library-alist): Determine which
 	GnuTLS DLL to load according to value of libgnutls-version.
-	Fixes: bug#20294
+	(Bug#20294)
 
 2015-04-11  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -863,7 +863,7 @@
 2015-04-09  Simen Heggestøyl  <simenheg@gmail.com>
 
 	css-mode.el: Add "not" pseudo-class
-	Fixes: debbugs:20267
+	(Bug#20267)
 	* lisp/textmodes/css-mode.el (css-pseudo-class-ids): Add "not" to
 	list of CSS pseudo-classes.
 
@@ -904,12 +904,12 @@
 2015-04-09  Boruch Baum  <boruch_baum@gmx.com>  (tiny change)
 
 	* lisp/bookmark.el (bookmark-bmenu-goto-bookmark): Don't inf-loop.
-	Fixes: debbugs:20212
+	(Bug#20212)
 
 2015-04-09  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	Stop messing with the EMACS env var
-	Fixes: debbugs:20202
+	(Bug#20202)
 	* lisp/net/tramp-sh.el (tramp-remote-process-environment):
 	* lisp/comint.el (comint-exec-1):
 	* lisp/term.el (term-exec-1): Don't set EMACS envvar.
@@ -917,14 +917,14 @@
 	INSIDE_EMACS's format in line with other users.
 
 	css-mode.el (css-smie-rules): Fix indentation after complex selectors
-	Fixes: debbugs:20282
+	(Bug#20282)
 	* lisp/textmodes/css-mode.el (css-smie-rules): Don't get confused by
 	inner structure of selectors.
 
 2015-04-08  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	python.el: Indent docstring lines to base-indent
-	Fixes: debbugs:19595
+	(Bug#19595)
 	Thanks to immerrr <immerrr@gmail.com> for reporting and providing
 	an initial patch.
 	* lisp/progmodes/python.el
@@ -935,7 +935,7 @@
 	(python-indent-inside-string-2): Fix tests.
 
 	python.el: Increase native completion robustness
-	Fixes: debbugs:19755
+	(Bug#19755)
 	Thanks to Carlos Pita <carlosjosepita@gmail.com> for reporting
 	this and providing useful ideas.
 	* lisp/progmodes/python.el
@@ -952,7 +952,7 @@
 2015-04-08  Samer Masterson  <samer@samertm.com>
 
 	* lisp/eshell: Make backslash a no-op in front of normal chars
-	Fixes: debbugs:8531
+	(Bug#8531)
 	* lisp/eshell/esh-arg.el (eshell-parse-argument-hook): Update comment.
 	(eshell-parse-backslash): Return escaped character after backslash
 	if it is special.  Otherwise, if the backslash is not in a quoted
@@ -969,7 +969,7 @@
 
 	* lisp/vc/diff-mode.el (diff-hunk-file-names): Don't require a TAB
 	after the file name.
-	Fixes: debbugs:20276
+	(Bug#20276)
 
 2015-04-08  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -1006,7 +1006,7 @@
 2015-04-08  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	(eieio-copy-parents-into-subclass): Fix inheritance of initargs
-	Fixes: debbugs:20270
+	(Bug#20270)
 	* lisp/emacs-lisp/eieio-core.el (eieio-copy-parents-into-subclass):
 	Fix inheritance of initargs.
 
@@ -1023,7 +1023,7 @@
 2015-04-08  Eli Zaretskii  <eliz@gnu.org>
 
 	* src/eval.c (init_eval_once): Bump max_lisp_eval_depth to 800
-	Fixes: bug#17517
+	(Bug#17517)
 
 2015-04-08  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -1043,7 +1043,7 @@
 2015-04-07  Dmitry Gutov  <dgutov@yandex.ru>
 
 	ffap: Support environment variable expansion in file names
-	Fixes: debbugs:19839
+	(Bug#19839)
 	* lisp/ffap.el (ffap-string-at-point-mode-alist): Support
 	environment variable expansion in file names.
 
@@ -1053,7 +1053,7 @@
 
 2015-04-07  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	Fixes: debbugs:20257
+	(Bug#20257)
 	* lisp/files.el (set-visited-file-name): Clear auto-save if nil.
 
 2015-04-07  Ivan Shmakov  <ivan@siamics.net>
@@ -1069,7 +1069,7 @@
 	Add doc strings for some Isearch state vars
 	* lisp/misearch.el (multi-isearch-buffer-list)
 	(multi-isearch-file-list): Add doc strings.
-	Fixes: bug#20232
+	(Bug#20232)
 
 2015-04-07  Alan Mackenzie  <acm@muc.de>
 
@@ -1110,7 +1110,7 @@
 	.git directory.  Distribute the new ChangeLog history files
 	instead of scattered ChangeLog files.  Distribute the new files
 	gitlog-to-changelog and gitlog-to-emacslog.
-	Fixes: bug#19113
+	(Bug#19113)
 
 	Rename ChangeLogs for gitlog-to-changelog
 	This patch was implemented via the following shell commands:
@@ -1146,4 +1146,3 @@ See ChangeLog.1 for earlier changes.
 ;; Local Variables:
 ;; coding: utf-8
 ;; End:
-

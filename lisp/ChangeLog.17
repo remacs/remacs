@@ -502,7 +502,7 @@
 
 2015-03-20  Alan Mackenzie  <acm@muc.de>
 
-	Fix debbugs#20146
+	Fix Bug#20146
 
 	* font-lock.el (font-lock-extend-jit-lock-region-after-change):
 	Return the calculated values, as per spec.
@@ -693,7 +693,7 @@
 
 2015-03-16  Alan Mackenzie  <acm@muc.de>
 
-	Edebug: Allow "S" to work during trace mode.  Fixes debbugs #20074.
+	Edebug: Allow "S" to work during trace mode.  Fixes Bug#20074.
 	Also display the overlay arrow in go and go-nonstop modes.
 
 	* emacs-lisp/edebug.el (edebug--display-1): Move the
