@@ -2119,13 +2119,14 @@ to @code{sort-numeric-base}, but numbers beginning with @samp{0x} or
 
 @item M-x sort-columns
 Like @kbd{M-x sort-fields} except that the text within each line
-used for comparison comes from a fixed range of columns.  See below
-for an explanation.
+used for comparison comes from a fixed range of columns.  With a
+prefix argument, sort in reverse order.  See below for more details
+on this command.
 
 @findex reverse-region
 @item M-x reverse-region
 Reverse the order of the lines in the region.  This is useful for
-sorting into descending order by fields or columns, since those sort
+sorting into descending order by fields, since those sort
 commands do not have a feature for doing that.
 @end table
 
