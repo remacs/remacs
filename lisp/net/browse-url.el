@@ -761,10 +761,13 @@ narrowed."
 ;;;###autoload
 (defun browse-url (url &rest args)
   "Ask a WWW browser to load URL.
-Prompt for a URL, defaulting to the URL at or before point.  Variable
-`browse-url-browser-function' says which browser to use.
+Prompt for a URL, defaulting to the URL at or before point.
+The variable `browse-url-browser-function' says which browser to use.
 If the URL is a mailto: URL, consult `browse-url-mailto-function'
-first, if that exists."
+first, if that exists.
+
+Passes any ARGS to the browser function.
+The default is to pass `browse-url-new-window-flag'."
   (interactive (browse-url-interactive-arg "URL: "))
   (unless (called-interactively-p 'interactive)
     (setq args (or args (list browse-url-new-window-flag))))
@@ -800,7 +803,9 @@ first, if that exists."
 ;;;###autoload
 (defun browse-url-at-point (&optional arg)
   "Ask a WWW browser to load the URL at or before point.
-Variable `browse-url-browser-function' says which browser to use."
+Variable `browse-url-browser-function' says which browser to use.
+Optional prefix argument ARG non-nil inverts the value of the option
+`browse-url-new-window-flag'."
   (interactive "P")
   (let ((url (browse-url-url-at-point)))
     (if url
