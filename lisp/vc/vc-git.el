@@ -800,7 +800,9 @@ This prompts for a branch to merge from."
              (vc-git-conflicted-files buffer-file-name)
              (save-excursion
                (goto-char (point-min))
-               (re-search-forward "^<<<<<<< " nil 'noerror)))
+               (and (re-search-forward "^>>>>>>> " nil 'noerror)
+                    ;; Stashes are tricky (bug#20292).
+                    (not (looking-at "Stashed changes")))))
     (vc-file-setprop buffer-file-name 'vc-state 'conflict)
     (smerge-start-session)
     (add-hook 'after-save-hook 'vc-git-resolve-when-done nil 'local)
