@@ -298,6 +298,12 @@ with no arguments, prints the current paths in this variable.
 Define an alias (@pxref{Aliases}).  This does not add it to the aliases
 file.
 
+@item clear
+@cmindex clear
+Scrolls the contents of the eshell window out of sight, leaving a blank window.
+If provided with an optional non-nil argument, the scrollback contents are
+cleared instead.
+
 @item date
 @cmindex date
 Similar to, but slightly different from, the GNU Coreutils
