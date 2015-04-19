@@ -609,6 +609,7 @@ command line's password prompt.
 
 ** Eshell
 
++++
 *** The new built-in command `clear' can scroll window contents out of sight.
 If provided with an optional non-nil argument, the scrollback contents will be cleared.
 
