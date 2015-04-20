@@ -356,6 +356,8 @@ lost after dumping")))
 lost after dumping")))
 
 (setq current-load-list nil)
+;; Avoid storing references to build directory in the binary.
+(setq custom-current-group-alist nil)
 
 ;; We keep the load-history data in PURE space.
 ;; Make sure that the spine of the list is not in pure space because it can
