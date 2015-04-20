@@ -63,6 +63,8 @@
 			    (expand-file-name "textmodes" dir)
 			    (expand-file-name "vc" dir)))))
 
+(setq exec-path nil)
+
 (if (eq t purify-flag)
     ;; Hash consing saved around 11% of pure space in my tests.
     (setq purify-flag (make-hash-table :test 'equal :size 70000)))
