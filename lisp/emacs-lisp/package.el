@@ -2535,12 +2535,14 @@ Built-in packages are converted with `package--from-builtin'."
   "Test if package DESC has any of the given KEYWORDS.
 When none are given, the package matches."
   (if keywords
-      (let* ((desc-keywords (and desc (package-desc--keywords desc)))
-             found)
-        (dolist (k keywords)
-          (when (and (not found)
-                     (member k desc-keywords))
-            (setq found t)))
+      (let ((desc-keywords (and desc (package-desc--keywords desc)))
+            found)
+        (while (and (not found) keywords)
+          (let ((k (pop keywords)))
+            (setq found
+                  (or (string= k (concat "arc:" (package-desc-archive desc)))
+                      (string= k (concat "status:" (package-desc-status desc)))
+                      (member k desc-keywords)))))
         found)
     t))
 

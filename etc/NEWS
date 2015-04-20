@@ -238,6 +238,11 @@ in the surrounding GUI (using the OSC-52 escape sequence).
 ** xterm-mouse-mode now supports mouse-tracking (if your xterm supports it).
 
 ** package.el
+
+*** When filtering the package menu, keywords starting with "arc:" or
+"status:" represent package archive or status, respectively, instead
+of actual keywords.
+
 *** Most functions which involve downloading information now take an
 ASYNC argument.  If it is non-nil, package.el performs the download(s)
 asynchronously.
