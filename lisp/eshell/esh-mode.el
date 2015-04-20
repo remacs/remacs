@@ -873,7 +873,7 @@ When run interactively, widen the buffer first."
 
 (defun eshell/clear (&optional scrollback)
   "Scroll contents of eshell window out of sight, leaving a blank window.
-If SCROLLBACK is non-nil, clear the scollback contents."
+If SCROLLBACK is non-nil, clear the scrollback contents."
   (interactive)
   (if scrollback
       (eshell/clear-scrollback)

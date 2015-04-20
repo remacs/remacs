@@ -1,4 +1,4 @@
-;;; message-mode-tests.el --- Tests for message-mdoe  -*- lexical-binding: t; -*-
+;;; message-mode-tests.el --- Tests for message-mode  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2015  Free Software Foundation, Inc.
 

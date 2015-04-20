@@ -1585,7 +1585,7 @@ forward only one sexp, else move backwards."
 With positive optional argument DIR direction move forward, else
 backwards.  When optional argument SAFE is non-nil do not throw
 errors when at end of sexp, skip it instead.  With optional
-argument SKIP-PARENS-P force sexp motion to ignore parenthised
+argument SKIP-PARENS-P force sexp motion to ignore parenthesized
 expressions when looking at them in either direction."
   (setq dir (or dir 1))
   (unless (= dir 0)
@@ -1683,7 +1683,7 @@ expressions when looking at them in either direction."
 With ARG, do it that many times.  Negative arg -N means move
 backward N times.  When optional argument SAFE is non-nil do not
 throw errors when at end of sexp, skip it instead.  With optional
-argument SKIP-PARENS-P force sexp motion to ignore parenthised
+argument SKIP-PARENS-P force sexp motion to ignore parenthesized
 expressions when looking at them in either direction (forced to t
 in interactive calls)."
   (interactive "^p")
@@ -1694,7 +1694,7 @@ in interactive calls)."
   ;; interactive detection by checking `current-prefix-arg'.  The
   ;; reason to make this distinction is that lisp functions like
   ;; `blink-matching-open' get confused causing issues like the one in
-  ;; Bug#16191.  With this approach the user gets a simmetric behavior
+  ;; Bug#16191.  With this approach the user gets a symmetric behavior
   ;; when working interactively while called functions expecting
   ;; paren-based sexp motion work just fine.
   (or
@@ -1717,7 +1717,7 @@ in interactive calls)."
 With ARG, do it that many times.  Negative arg -N means move
 forward N times.  When optional argument SAFE is non-nil do not
 throw errors when at end of sexp, skip it instead.  With optional
-argument SKIP-PARENS-P force sexp motion to ignore parenthised
+argument SKIP-PARENS-P force sexp motion to ignore parenthesized
 expressions when looking at them in either direction (forced to t
 in interactive calls)."
   (interactive "^p")
@@ -1728,7 +1728,7 @@ in interactive calls)."
   "Move forward safely across expressions.
 With ARG, do it that many times.  Negative arg -N means move
 backward N times.  With optional argument SKIP-PARENS-P force
-sexp motion to ignore parenthised expressions when looking at
+sexp motion to ignore parenthesized expressions when looking at
 them in either direction (forced to t in interactive calls)."
   (interactive "^p")
   (python-nav-forward-sexp arg t skip-parens-p))
@@ -1737,7 +1737,7 @@ them in either direction (forced to t in interactive calls)."
   "Move backward safely across expressions.
 With ARG, do it that many times.  Negative arg -N means move
 forward N times.  With optional argument SKIP-PARENS-P force sexp
-motion to ignore parenthised expressions when looking at them in
+motion to ignore parenthesized expressions when looking at them in
 either direction (forced to t in interactive calls)."
   (interactive "^p")
   (python-nav-backward-sexp arg t skip-parens-p))
