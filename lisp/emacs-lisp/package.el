@@ -2296,6 +2296,7 @@ will be deleted."
     (define-key map "x" 'package-menu-execute)
     (define-key map "h" 'package-menu-quick-help)
     (define-key map "?" 'package-menu-describe-package)
+    (define-key map "(" #'package-menu-hide-obsolete)
     (define-key map [menu-bar package-menu] (cons "Package" menu-map))
     (define-key menu-map [mq]
       '(menu-item "Quit" quit-window
@@ -2446,14 +2447,29 @@ of these dependencies, similar to the list returned by
       (let* ((ins (cadr (assq name package-alist)))
              (ins-v (if ins (package-desc-version ins))))
         (cond
-         ((or (null ins) (version-list-< ins-v version))
+         ;; Installed obsolete packages are handled in the `dir'
+         ;; clause above.  Here we handle available obsolete, which
+         ;; are displayed depending on `package-menu--hide-obsolete'.
+         ((and ins (version-list-<= version ins-v)) "avail-obso")
+         (t
           (if (memq name package-menu--new-package-list)
-              "new" "available"))
-         ((version-list-< version ins-v) "obsolete")
-         ((version-list-= version ins-v)
-          (if (not signed) "unsigned"
-            (if (package--user-selected-p name)
-                "installed" "dependency")))))))))
+              "new" "available"))))))))
+
+(defvar package-menu--hide-obsolete t
+  "Whether avaiable obsolete packages should be hidden.
+Can be toggled with \\<package-menu-mode-map> \\[package-menu-hide-obsolete].
+Installed obsolete packages are always displayed.")
+
+(defun package-menu-hide-obsolete ()
+  "Toggle visibility of obsolete available packages."
+  (interactive)
+  (unless (derived-mode-p 'package-menu-mode)
+    (user-error "The current buffer is not a Package Menu"))
+  (setq package-menu--hide-obsolete
+        (not package-menu--hide-obsolete))
+  (message "%s available-obsolete packages" (if package-menu--hide-obsolete
+                                                "Hiding" "Displaying"))
+  (revert-buffer nil 'no-confirm))
 
 (defun package-menu--refresh (&optional packages keywords)
   "Re-populate the `tabulated-list-entries'.
@@ -2485,9 +2501,10 @@ KEYWORDS should be nil or a list of keywords."
       (setq name (car elt))
       (when (or (eq packages t) (memq name packages))
         (dolist (pkg (cdr elt))
-          ;; Hide obsolete packages.
-          (when (and (not (package-installed-p (package-desc-name pkg)
-                                               (package-desc-version pkg)))
+          ;; Hide available obsolete packages.
+          (when (and (not (and package-menu--hide-obsolete
+                               (package-installed-p (package-desc-name pkg)
+                                                    (package-desc-version pkg))))
                      (package--has-keyword-p pkg keywords))
             (package--push pkg (package-desc-status pkg) info-list)))))
 
@@ -2580,6 +2597,7 @@ Return (PKG-DESC [NAME VERSION STATUS DOC])."
          (face (pcase status
                  (`"built-in"  'font-lock-builtin-face)
                  (`"available" 'default)
+                 (`"avail-obso" 'font-lock-comment-face)
                  (`"new"       'bold)
                  (`"held"      'font-lock-constant-face)
                  (`"disabled"  'font-lock-warning-face)
@@ -2637,7 +2655,7 @@ If optional arg BUTTON is non-nil, describe its associated package."
 (defun package-menu-mark-install (&optional _num)
   "Mark a package for installation and move to the next line."
   (interactive "p")
-  (if (member (package-menu-get-status) '("available" "new" "dependency"))
+  (if (member (package-menu-get-status) '("available" "avail-obso" "new" "dependency"))
       (tabulated-list-put-tag "I" t)
     (forward-line)))
 
@@ -2665,7 +2683,7 @@ If optional arg BUTTON is non-nil, describe its associated package."
 (defvar package--quick-help-keys
   '(("install," "delete," "unmark," ("execute" . 1))
     ("next," "previous")
-    ("refresh-contents," "g-redisplay," "filter," "help")))
+    ("refresh-contents," "g-redisplay," "filter," "(-toggle-obsolete" "help")))
 
 (defun package--prettify-quick-help-key (desc)
   "Prettify DESC to be displayed as a help menu."
@@ -2879,8 +2897,11 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
            (package-menu--name-predicate A B))
           ((string= sA "new") t)
           ((string= sB "new") nil)
-          ((string= sA "available") t)
-          ((string= sB "available") nil)
+          ((string-prefix-p "avail" sA)
+           (if (string-prefix-p "avail" sB)
+               (package-menu--name-predicate A B)
+             t))
+          ((string-prefix-p "avail" sB) nil)
           ((string= sA "installed") t)
           ((string= sB "installed") nil)
           ((string= sA "dependency") t)
@@ -2950,6 +2971,7 @@ after `package-menu--perform-transaction'."
 This includes refreshing archive contents as well as installing
 packages."
   :type 'boolean
+  :version "25.1"
   :group 'package)
 
 ;;;###autoload
