@@ -65,7 +65,7 @@ if test -s "${distprefix}ChangeLog.tmp"; then
        s/\(Copyright[ (C)]*\)[0-9]*-[0-9]*/\1'"$year_range"'/
        p
     }
-  ' <ChangeLog.1 >>"${distprefix}ChangeLog.tmp" || exit
+  ' <ChangeLog.2 >>"${distprefix}ChangeLog.tmp" || exit
 fi
 
 # Install the generated ChangeLog.
