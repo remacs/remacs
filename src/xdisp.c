@@ -10053,8 +10053,8 @@ message3 (Lisp_Object m)
       message_dolog (buffer, nbytes, true, multibyte);
       SAFE_FREE ();
     }
-  message3_nolog (m);
-
+  if (! inhibit_message)
+    message3_nolog (m);
   UNGCPRO;
 }
 
@@ -30429,6 +30429,11 @@ syms_of_xdisp (void)
   DEFSYM (Qinhibit_redisplay, "inhibit-redisplay");
 
   DEFSYM (Qredisplay_internal, "redisplay_internal (C function)");
+
+  DEFVAR_BOOL("inhibit-message", inhibit_message,
+              doc:  /* Non-nil means calls to `message' are not displayed.
+They are still logged to the *Messages* buffer.  */);
+  inhibit_message = 0;
 
   message_dolog_marker1 = Fmake_marker ();
   staticpro (&message_dolog_marker1);
