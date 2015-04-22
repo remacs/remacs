@@ -4708,7 +4708,7 @@ to do the job of saving; if they do not, then the buffer is saved in
 the visited file in the usual way.
 Before and after saving the buffer, this function runs
 `before-save-hook' and `after-save-hook', respectively."
-  (interactive)
+  (interactive '(called-interactively))
   (save-current-buffer
     ;; In an indirect buffer, save its base buffer instead.
     (if (buffer-base-buffer)
