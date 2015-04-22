@@ -5474,10 +5474,15 @@ element is BUFFER."
   (cond
    ((eq type 'reuse)
     (if (eq (window-buffer window) buffer)
-	;; WINDOW shows BUFFER already.
-	(when (consp (window-parameter window 'quit-restore))
-	  ;; If WINDOW has a quit-restore parameter, reset its car.
-	  (setcar (window-parameter window 'quit-restore) 'same))
+	;; WINDOW shows BUFFER already.  Update WINDOW's quit-restore
+	;; parameter, if any.
+	(let ((quit-restore (window-parameter window 'quit-restore)))
+	  (when (consp quit-restore)
+	    (setcar quit-restore 'same)
+	    ;; The selected-window might have changed in
+	    ;; between (Bug#20353).
+	    (unless (memq (selected-window) '(window (nth 2 quit-restore)))
+	      (setcar (cddr quit-restore) (selected-window)))))
       ;; WINDOW shows another buffer.
       (with-current-buffer (window-buffer window)
 	(set-window-parameter
