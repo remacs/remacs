@@ -2811,20 +2811,21 @@ if it's an autoloaded macro."
   "Process text properties between START and END, inserted for a `yank'.
 Perform the handling specified by `yank-handled-properties', then
 remove properties specified by `yank-excluded-properties'."
-  (let ((inhibit-read-only t))
-    (dolist (handler yank-handled-properties)
-      (let ((prop (car handler))
-	    (fun  (cdr handler))
-	    (run-start start))
-	(while (< run-start end)
-	  (let ((value (get-text-property run-start prop))
-		(run-end (next-single-property-change
-			  run-start prop nil end)))
-	    (funcall fun value run-start run-end)
-	    (setq run-start run-end)))))
-    (if (eq yank-excluded-properties t)
-	(set-text-properties start end nil)
-      (remove-list-of-text-properties start end yank-excluded-properties))))
+  (with-silent-modifications
+    (let ((inhibit-read-only t))
+      (dolist (handler yank-handled-properties)
+	(let ((prop (car handler))
+	      (fun  (cdr handler))
+	      (run-start start))
+	  (while (< run-start end)
+	    (let ((value (get-text-property run-start prop))
+		  (run-end (next-single-property-change
+			    run-start prop nil end)))
+	      (funcall fun value run-start run-end)
+	      (setq run-start run-end)))))
+      (if (eq yank-excluded-properties t)
+	  (set-text-properties start end nil)
+	(remove-list-of-text-properties start end yank-excluded-properties)))))
 
 (defvar yank-undo-function)
 
