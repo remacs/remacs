@@ -225,6 +225,30 @@ a package can run arbitrary code."
   :group 'package
   :version "24.1")
 
+(defcustom package-menu-hide-low-priority 'archive
+  "If non-nil, hide low priority packages from the packages menu.
+A package is considered low priority if there's another version
+of it available such that:
+    (a) the archive of the other package is higher priority than
+    this one, as per `package-archive-priorities';
+  or
+    (b) they both have the same archive priority but the other
+    package has a higher version number.
+
+This variable has three possible values:
+    nil: no packages are hidden;
+    archive: only criteria (a) is used;
+    t: both criteria are used.
+
+This variable has no effect if `package-menu--hide-obsolete' is
+nil, so it can be toggled with \\<package-menu-mode-map> \\[package-menu-hide-obsolete]."
+  :type '(choice (const :tag "Don't hide anything" nil)
+                 (const :tag "Hide per package-archive-priorities"
+                        archive)
+                 (const :tag "Hide per archive and version number" t))
+  :group 'package
+  :version "25.1")
+
 (defcustom package-archive-priorities nil
   "An alist of priorities for packages.
 
@@ -235,7 +259,9 @@ number from the archive with the highest priority is
 selected. When higher versions are available from archives with
 lower priorities, the user has to select those manually.
 
-Archives not in this list have the priority 0."
+Archives not in this list have the priority 0.
+
+See also `package-menu-hide-low-priority'."
   :type '(alist :key-type (string :tag "Archive name")
                 :value-type (integer :tag "Priority (default is 0)"))
   :risky t
@@ -466,6 +492,10 @@ This is, approximately, the inverse of `version-to-list'.
     (if (eq (car-safe keywords) 'quote)
         (nth 1 keywords)
       keywords)))
+
+(defun package-desc-priority (p)
+  "Return the priority of the archive of package-desc object P."
+  (package-archive-priority (package-desc-archive p)))
 
 ;; Package descriptor format used in finder-inf.el and package--builtins.
 (cl-defstruct (package--bi-desc
@@ -2471,6 +2501,32 @@ Installed obsolete packages are always displayed.")
                                                 "Hiding" "Displaying"))
   (revert-buffer nil 'no-confirm))
 
+(defun package--remove-hidden (pkg-list)
+  "Filter PKG-LIST according to `package-archive-priorities'.
+PKG-LIST must be a list of package-desc objects sorted by
+decreasing version number.
+Return a list of packages tied for the highest priority according
+to their archives."
+  (when pkg-list
+    ;; The first is a variable toggled with
+    ;; `package-menu-hide-obsolete', the second is a static user
+    ;; option that defines *what* we hide.
+    (if (and package-menu--hide-obsolete
+             package-menu-hide-low-priority)
+        (let ((max-priority (package-desc-priority (car pkg-list)))
+              (out (list (pop pkg-list))))
+          (dolist (p pkg-list (nreverse out))
+            (let ((priority (package-desc-priority p)))
+              (cond
+               ((> priority max-priority)
+                (setq max-priority priority)
+                (setq out (list p)))
+               ;; This assumes pkg-list is sorted by version number.
+               ((and (= priority max-priority)
+                     (eq package-menu-hide-low-priority 'archive))
+                (push p out))))))
+      pkg-list)))
+
 (defun package-menu--refresh (&optional packages keywords)
   "Re-populate the `tabulated-list-entries'.
 PACKAGES should be nil or t, which means to display all known packages.
@@ -2500,7 +2556,7 @@ KEYWORDS should be nil or a list of keywords."
     (dolist (elt package-archive-contents)
       (setq name (car elt))
       (when (or (eq packages t) (memq name packages))
-        (dolist (pkg (cdr elt))
+        (dolist (pkg (package--remove-hidden (cdr elt)))
           ;; Hide available obsolete packages.
           (when (and (not (and package-menu--hide-obsolete
                                (package-installed-p (package-desc-name pkg)
@@ -2731,8 +2787,7 @@ defaults to 0."
 This allows for easy comparison of package versions from
 different archives if archive priorities are meant to be taken in
 consideration."
-  (cons (package-archive-priority
-         (package-desc-archive pkg-desc))
+  (cons (package-desc-priority pkg-desc)
         (package-desc-version pkg-desc)))
 
 (defun package-menu--find-upgrades ()
