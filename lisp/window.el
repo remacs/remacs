@@ -5481,7 +5481,8 @@ element is BUFFER."
 	    (setcar quit-restore 'same)
 	    ;; The selected-window might have changed in
 	    ;; between (Bug#20353).
-	    (unless (memq (selected-window) '(window (nth 2 quit-restore)))
+	    (unless (or (eq window (selected-window))
+                        (eq window (nth 2 quit-restore)))
 	      (setcar (cddr quit-restore) (selected-window)))))
       ;; WINDOW shows another buffer.
       (with-current-buffer (window-buffer window)
