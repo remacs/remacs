@@ -50,12 +50,12 @@ Evaluate BODY with VAR bound to each element of SEQ, in turn.
 
 \(fn (VAR SEQ) BODY...)"
   (declare (indent 1) (debug ((symbolp form &optional form) body)))
-  (let ((is-list (make-symbol "is-list"))
+  (let ((length (make-symbol "length"))
         (seq (make-symbol "seq"))
         (index (make-symbol "index")))
     `(let* ((,seq ,(cadr spec))
             (,length (if (listp ,seq) nil (seq-length ,seq)))
-            (,index (if ,is-list ,seq 0)))
+            (,index (if ,length 0 ,seq)))
        (while (if ,length
                   (< ,index ,length)
                 (consp ,index))
