@@ -206,7 +206,7 @@ ARGS should have the form [TYPE FORM]...
 The following keyword types are meaningful: `:list',
 `:hash-table' and `array'.
 
-An error is thrown if MAP is neither a list, hash-table or array.
+An error is thrown if MAP is neither a list, hash-table nor array.
 
 Return RESULT if non-nil or the result of evaluation of the
 form.
