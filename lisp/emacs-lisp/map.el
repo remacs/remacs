@@ -48,11 +48,11 @@
   "Perform a lookup in MAP of KEY and return its associated value.
 If KEY is not found, return DEFAULT which defaults to nil.
 
-If MAP is a list, `assoc' is used to lookup KEY."
+If MAP is a list, `equal' is used to lookup KEY."
   (map--dispatch map
     :list (or (cdr (assoc key map)) default)
     :hash-table (gethash key map default)
-    :array (or (ignore-errors (elt map key)) default)))
+    :array (map--elt-array map key default)))
 
 (defmacro map-put (map key value)
   "In MAP, associate KEY with VALUE and return MAP.
@@ -251,6 +251,15 @@ form.
                     (funcall function index elt)
                   (setq index (1+ index))))
               map)))
+
+(defun map--elt-array (map key &optional default)
+  "Return the element of the arary MAP at the index KEY, or DEFAULT if nil."
+  (let ((len (seq-length map)))
+    (or (and (>= key 0)
+             (<= key len)
+             (seq-elt map key))
+        default)))
+
 
 (defun map--delete-alist (map key)
   "Return MAP with KEY removed."

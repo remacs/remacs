@@ -59,6 +59,7 @@ Evaluate BODY for each created map.
     (assert (= 3 (map-elt map 0)))
     (assert (= 4 (map-elt map 1)))
     (assert (= 5 (map-elt map 2)))
+    (assert (null (map-elt map -1)))
     (assert (null (map-elt map 4)))))
 
 (ert-deftest test-map-elt-default ()
