@@ -34,6 +34,7 @@ test -d ${srcprefix}.git || {
 
 # Use Gnulib's packaged ChangeLog generator.
 ${srcprefix}build-aux/gitlog-to-changelog --ignore-matching='^; ' \
+  --format='%B' \
   "$gen_origin.." >"${distprefix}ChangeLog.tmp" || exit
 
 if test -s "${distprefix}ChangeLog.tmp"; then
