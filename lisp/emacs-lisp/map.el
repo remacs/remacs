@@ -56,7 +56,8 @@ If MAP is a list, `equal' is used to lookup KEY."
 
 (defmacro map-put (map key value)
   "In MAP, associate KEY with VALUE and return MAP.
-If KEY is already present in MAP, replace its value with VALUE."
+If KEY is already present in MAP, replace the associated value
+with VALUE."
   (declare (debug t))
   `(progn
      (map--dispatch (m ,map m)
