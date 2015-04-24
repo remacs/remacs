@@ -73,7 +73,7 @@ If MAP is an array, store nil at the index KEY."
      (map--dispatch (m ,map m)
        :list (setq ,map (map--delete-alist m ,key))
        :hash-table (remhash ,key m)
-       :array (aset m ,key nil))))
+       :array (map--delete-array m ,key))))
 
 (defun map-nested-elt (map keys &optional default)
   "Travserse MAP using KEYS and return the looked up value or DEFAULT if nil.
@@ -261,12 +261,19 @@ form.
              (seq-elt map key))
         default)))
 
-
 (defun map--delete-alist (map key)
   "Return MAP with KEY removed."
   (seq-remove (lambda (pair)
                 (equal key (car pair)))
               map))
+
+(defun map--delete-array (map key)
+  "Set nil in the array MAP at the index KEY if present and return MAP."
+  (let ((len (seq-length map)))
+    (and (>= key 0)
+         (<= key len)
+         (aset m key nil)))
+  map)
 
 (defun map--into-hash-table (map)
   "Convert MAP into a hash-table."

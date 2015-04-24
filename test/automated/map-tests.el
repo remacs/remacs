@@ -96,7 +96,10 @@ Evaluate BODY for each created map.
 (ert-deftest test-map-delete ()
   (with-maps-do map
     (map-delete map 1)
-    (assert (null (map-elt map 1)))))
+    (assert (null (map-elt map 1))))
+  (with-maps-do map
+    (map-delete map -2)
+    (assert (null (map-elt map -2)))))
 
 (ert-deftest test-map-delete-return-value ()
   (let ((ht (make-hash-table)))
