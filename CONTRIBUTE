@@ -76,8 +76,9 @@ messages:
   file first line (starting with the asterisk).  Then there is no
   individual files section.
 
-- If the commit has authors other than yourself, the commit message
-  should contain a separate line like the following:
+- If the commit has more than one author, the commit message should
+  contain a separate line to mention the other authors, like the
+  following:
 
 	Co-authored-by: Joe Schmoe <j.schmoe@example.org>
 
