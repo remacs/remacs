@@ -246,6 +246,17 @@ by default at least in Debian, for security reasons).
 
 ** package.el
 
+*** If a package is available on multiple archives and one has higher
+priority (as per `package-archive-priorities') only that one is
+listed. This can be configured with `package-menu-hide-low-priority'.
+
+*** `package-menu-hide-obsolete' now toggles the hiding of packages.
+This includes the above-mentioned low-priority packages, as well as
+available packages whose version is lower than the currently installed
+version (which were previously impossible to display).
+This allows users to downgrade a package if a lower version is
+available.
+
 *** When filtering the package menu, keywords starting with "arc:" or
 "status:" represent package archive or status, respectively, instead
 of actual keywords.
