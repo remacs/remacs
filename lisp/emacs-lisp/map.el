@@ -254,7 +254,7 @@ form.
               map)))
 
 (defun map--elt-list (map key &optional default)
-  "Return the element of the list MAP at the index KEY.
+  "Lookup, in the list MAP, the value associated with KEY and return it.
 If KEY is not found, return DEFAULT which defaults to nil."
   (let ((pair (assoc key map)))
     (if pair
