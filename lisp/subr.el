@@ -3731,7 +3731,8 @@ REP is either a string used as the NEWTEXT arg of `replace-match' or a
 function.  If it is a function, it is called with the actual text of each
 match, and its value is used as the replacement text.  When REP is called,
 the match data are the result of matching REGEXP against a substring
-of STRING.
+of STRING, the same substring that is the actual text of the match which
+is passed to REP as its argument.
 
 To replace only the first match (if any), make REGEXP match up to \\'
 and replace a sub-expression, e.g.
