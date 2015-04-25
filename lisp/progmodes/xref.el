@@ -562,8 +562,8 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
     (cond ((or current-prefix-arg (not id))
            (completing-read prompt
                             (funcall xref-identifier-completion-table-function)
-                            nil t id
-                            'xref--read-identifier-history))
+                            nil t nil
+                            'xref--read-identifier-history id))
           (t id))))
 
 
