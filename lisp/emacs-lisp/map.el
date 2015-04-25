@@ -95,9 +95,7 @@ Map can be a nested map composed of alists, hash-tables and arrays."
 
 (defun map-pairs (map)
   "Return the elements of MAP as key/value association lists."
-  (map-apply (lambda (key value)
-               (cons key value))
-             map))
+  (map-apply #'cons map))
 
 (defun map-length (map)
   "Return the length of MAP."
