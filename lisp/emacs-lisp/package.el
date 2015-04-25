@@ -2486,7 +2486,7 @@ of these dependencies, similar to the list returned by
               "new" "available"))))))))
 
 (defvar package-menu--hide-obsolete t
-  "Whether avaiable obsolete packages should be hidden.
+  "Whether available obsolete packages should be hidden.
 Can be toggled with \\<package-menu-mode-map> \\[package-menu-hide-obsolete].
 Installed obsolete packages are always displayed.")
 

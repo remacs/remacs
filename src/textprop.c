@@ -737,7 +737,7 @@ DEFUN ("previous-char-property-change", Fprevious_char_property_change,
 Scans characters backward in the current buffer from POSITION till it
 finds a change in some text property, or the beginning or end of an
 overlay, and returns the position of that.
-If none is found, and LIMIT is nil or imitted, the function
+If none is found, and LIMIT is nil or omitted, the function
 returns (point-min).
 
 If the optional second argument LIMIT is non-nil, the function doesn't
