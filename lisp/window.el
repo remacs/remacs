@@ -7625,7 +7625,8 @@ Return non-nil if the window was shrunk, nil otherwise."
 
 (defvar recenter-last-op nil
   "Indicates the last recenter operation performed.
-Possible values: `top', `middle', `bottom', integer or float numbers.")
+Possible values: `top', `middle', `bottom', integer or float numbers.
+It can also be nil, which means the first value in `recenter-positions'.")
 
 (defcustom recenter-positions '(middle top bottom)
   "Cycling order for `recenter-top-bottom'.
