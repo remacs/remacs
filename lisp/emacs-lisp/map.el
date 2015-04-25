@@ -258,7 +258,7 @@ form.
 If KEY is not found, return DEFAULT which defaults to nil."
   (let ((pair (assoc key map)))
     (if pair
-        (cdr (assoc key map))
+        (cdr pair)
       default)))
 
 (defun map--elt-array (map key &optional default)
