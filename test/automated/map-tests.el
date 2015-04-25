@@ -66,6 +66,12 @@ Evaluate BODY for each created map.
   (with-maps-do map
     (assert (= 5 (map-elt map 7 5)))))
 
+(ert-deftest test-map-elt-with-nil-value ()
+  (assert (null (map-elt '((a . 1)
+                           (b))
+                         'b
+                         '2))))
+
 (ert-deftest test-map-put ()
   (with-maps-do map
     (map-put map 2 'hello)

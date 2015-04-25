@@ -50,7 +50,7 @@ If KEY is not found, return DEFAULT which defaults to nil.
 
 If MAP is a list, `equal' is used to lookup KEY."
   (map--dispatch map
-    :list (or (cdr (assoc key map)) default)
+    :list (map--elt-list map key default)
     :hash-table (gethash key map default)
     :array (map--elt-array map key default)))
 
@@ -253,8 +253,17 @@ form.
                   (setq index (1+ index))))
               map)))
 
+(defun map--elt-list (map key &optional default)
+  "Return the element of the list MAP at the index KEY.
+If KEY is not found, return DEFAULT which defaults to nil."
+  (let ((pair (assoc key map)))
+    (if pair
+        (cdr (assoc key map))
+      default)))
+
 (defun map--elt-array (map key &optional default)
-  "Return the element of the arary MAP at the index KEY, or DEFAULT if nil."
+  "Return the element of the array MAP at the index KEY.
+If KEY is not found, return DEFAULT which defaults to nil."
   (let ((len (seq-length map)))
     (or (and (>= key 0)
              (<= key len)
