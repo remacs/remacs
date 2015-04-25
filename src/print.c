@@ -794,9 +794,12 @@ safe_debug_print (Lisp_Object arg)
   if (valid > 0)
     debug_print (arg);
   else
-    fprintf (stderr, "#<%s_LISP_OBJECT 0x%08"pI"x>\r\n",
-	     !valid ? "INVALID" : "SOME",
-	     XLI (arg));
+    {
+      EMACS_UINT n = XLI (arg);
+      fprintf (stderr, "#<%s_LISP_OBJECT 0x%08"pI"x>\r\n",
+	       !valid ? "INVALID" : "SOME",
+	       n);
+    }
 }
 
 
@@ -1422,7 +1425,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 		     print single-byte non-ASCII string chars
 		     using octal escapes.  */
 		  char outbuf[5];
-		  int len = sprintf (outbuf, "\\%03o", c);
+		  int len = sprintf (outbuf, "\\%03o", c + 0u);
 		  strout (outbuf, len, len, printcharfun);
 		  need_nonhex = false;
 		}
@@ -1431,7 +1434,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 		{
 		  /* When requested, print multibyte chars using hex escapes.  */
 		  char outbuf[sizeof "\\x" + INT_STRLEN_BOUND (c)];
-		  int len = sprintf (outbuf, "\\x%04x", c);
+		  int len = sprintf (outbuf, "\\x%04x", c + 0u);
 		  strout (outbuf, len, len, printcharfun);
 		  need_nonhex = true;
 		}
@@ -2094,11 +2097,11 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	   Probably should just emacs_abort ().  */
 	print_c_string ("#<EMACS BUG: INVALID DATATYPE ", printcharfun);
 	if (MISCP (obj))
-	  len = sprintf (buf, "(MISC 0x%04x)", (int) XMISCTYPE (obj));
+	  len = sprintf (buf, "(MISC 0x%04x)", (unsigned) XMISCTYPE (obj));
 	else if (VECTORLIKEP (obj))
-	  len = sprintf (buf, "(PVEC 0x%08"pD"x)", ASIZE (obj));
+	  len = sprintf (buf, "(PVEC 0x%08zx)", (size_t) ASIZE (obj));
 	else
-	  len = sprintf (buf, "(0x%02x)", (int) XTYPE (obj));
+	  len = sprintf (buf, "(0x%02x)", (unsigned) XTYPE (obj));
 	strout (buf, len, len, printcharfun);
 	print_c_string ((" Save your buffers immediately"
 			 " and please report this bug>"),

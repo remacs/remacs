@@ -6971,7 +6971,7 @@ get_next_display_element (struct it *it)
 		if (CHAR_BYTE8_P (c))
 		  /* Display \200 instead of \17777600.  */
 		  c = CHAR_TO_BYTE8 (c);
-		len = sprintf (str, "%03o", c);
+		len = sprintf (str, "%03o", c + 0u);
 
 		XSETINT (it->ctl_chars[0], escape_glyph);
 		for (i = 0; i < len; i++)
@@ -26233,7 +26233,7 @@ produce_glyphless_glyph (struct it *it, bool for_no_font, Lisp_Object acronym)
       else
 	{
 	  eassert (it->glyphless_method == GLYPHLESS_DISPLAY_HEX_CODE);
-	  sprintf (buf, "%0*X", it->c < 0x10000 ? 4 : 6, it->c);
+	  sprintf (buf, "%0*X", it->c < 0x10000 ? 4 : 6, it->c + 0u);
 	  str = buf;
 	}
       for (len = 0; str[len] && ASCII_CHAR_P (str[len]) && len < 6; len++)
