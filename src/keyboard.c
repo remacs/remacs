@@ -2192,7 +2192,7 @@ read_event_from_main_queue (struct timespec *end_time,
   save_getcjmp (save_jump);
   restore_getcjmp (local_getcjmp);
   if (!end_time)
-	timer_start_idle ();
+    timer_start_idle ();
   c = kbd_buffer_get_event (&kb, used_mouse_menu, end_time);
   restore_getcjmp (save_jump);
 
@@ -11492,6 +11492,7 @@ for that character after that prefix key.  */);
 	       doc: /* Form to evaluate when Emacs starts up.
 Useful to set before you dump a modified Emacs.  */);
   Vtop_level = Qnil;
+  XSYMBOL (Qtop_level)->declared_special = false;
 
   DEFVAR_KBOARD ("keyboard-translate-table", Vkeyboard_translate_table,
                  doc: /* Translate table for local keyboard input, or nil.

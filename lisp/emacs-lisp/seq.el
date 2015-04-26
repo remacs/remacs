@@ -4,7 +4,7 @@
 
 ;; Author: Nicolas Petton <nicolas@petton.fr>
 ;; Keywords: sequences
-;; Version: 1.3
+;; Version: 1.4
 ;; Package: seq
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -44,31 +44,28 @@
 
 (defmacro seq-doseq (spec &rest body)
   "Loop over a sequence.
-Similar to `dolist' but can be applied lists, strings and vectors.
+Similar to `dolist' but can be applied to lists, strings, and vectors.
 
 Evaluate BODY with VAR bound to each element of SEQ, in turn.
-Then evaluate RESULT to get return value, default nil.
 
-\(fn (VAR SEQ [RESULT]) BODY...)"
+\(fn (VAR SEQ) BODY...)"
   (declare (indent 1) (debug ((symbolp form &optional form) body)))
-  (let ((is-list (make-symbol "is-list"))
+  (let ((length (make-symbol "length"))
         (seq (make-symbol "seq"))
         (index (make-symbol "index")))
     `(let* ((,seq ,(cadr spec))
-            (,is-list (listp ,seq))
-            (,index (if ,is-list ,seq 0)))
-       (while (if ,is-list
-                  (consp ,index)
-                (< ,index (seq-length ,seq)))
-         (let ((,(car spec) (if ,is-list
-                                (car ,index)
-                              (seq-elt ,seq ,index))))
-           ,@body
-           (setq ,index (if ,is-list
-                            (cdr ,index)
-                          (+ ,index 1)))))
-       ,@(if (cddr spec)
-             `((setq ,(car spec) nil) ,@(cddr spec))))))
+            (,length (if (listp ,seq) nil (seq-length ,seq)))
+            (,index (if ,length 0 ,seq)))
+       (while (if ,length
+                  (< ,index ,length)
+                (consp ,index))
+         (let ((,(car spec) (if ,length
+                                (prog1 (seq-elt ,seq ,index)
+                                  (setq ,index (+ ,index 1)))
+                              (pop ,index))))
+           ,@body))
+       ;; FIXME: Do we really want to support this?
+       ,@(cddr spec))))
 
 (defun seq-drop (seq n)
   "Return a subsequence of SEQ without its first N elements.
@@ -221,7 +218,7 @@ TYPE must be one of following symbols: vector, string or list.
     (`vector (apply #'vconcat seqs))
     (`string (apply #'concat seqs))
     (`list (apply #'append (append seqs '(nil))))
-    (t (error "Not a sequence type name: %s" type))))
+    (t (error "Not a sequence type name: %S" type))))
 
 (defun seq-mapcat (function seq &optional type)
   "Concatenate the result of applying FUNCTION to each element of SEQ.
@@ -239,6 +236,26 @@ negative integer or 0, nil is returned."
         (push (seq-take seq n) result)
         (setq seq (seq-drop seq n)))
       (nreverse result))))
+
+(defun seq-intersection (seq1 seq2 &optional testfn)
+  "Return a list of the elements that appear in both SEQ1 and SEQ2.
+Equality is defined by TESTFN if non-nil or by `equal' if nil."
+  (seq-reduce (lambda (acc elt)
+                (if (seq-contains-p seq2 elt testfn)
+                    (cons elt acc)
+                  acc))
+              (seq-reverse seq1)
+              '()))
+
+(defun seq-difference (seq1 seq2 &optional testfn)
+  "Return a list of th elements that appear in SEQ1 but not in SEQ2.
+Equality is defined by TESTFN if non-nil or by `equal' if nil."
+  (seq-reduce (lambda (acc elt)
+                (if (not (seq-contains-p seq2 elt testfn))
+                    (cons elt acc)
+                  acc))
+              (seq-reverse seq1)
+              '()))
 
 (defun seq-group-by (function seq)
   "Apply FUNCTION to each element of SEQ.
@@ -275,7 +292,7 @@ TYPE can be one of the following symbols: vector, string or list."
     (`vector (vconcat seq))
     (`string (concat seq))
     (`list (append seq nil))
-    (t (error "Not a sequence type name: %s" type))))
+    (t (error "Not a sequence type name: %S" type))))
 
 (defun seq--drop-list (list n)
   "Return a list from LIST without its first N elements.
@@ -318,12 +335,22 @@ This is an optimization for lists in `seq-take-while'."
       (setq n (+ 1 n)))
     n))
 
+(defun seq--activate-font-lock-keywords ()
+  "Activate font-lock keywords for some symbols defined in seq."
+  (font-lock-add-keywords 'emacs-lisp-mode
+                          '("\\<seq-doseq\\>")))
+
 (defalias 'seq-copy #'copy-sequence)
 (defalias 'seq-elt #'elt)
 (defalias 'seq-length #'length)
 (defalias 'seq-do #'mapc)
 (defalias 'seq-each #'seq-do)
 (defalias 'seq-map #'mapcar)
+
+(unless (fboundp 'elisp--font-lock-flush-elisp-buffers)
+  ;; In Emacs≥25, (via elisp--font-lock-flush-elisp-buffers and a few others)
+  ;; we automatically highlight macros.
+  (add-to-list 'emacs-lisp-mode-hook #'seq--activate-font-lock-keywords))
 
 (provide 'seq)
 ;;; seq.el ends here

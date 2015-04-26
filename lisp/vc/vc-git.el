@@ -771,6 +771,9 @@ This prompts for a branch to merge from."
           (vc-git--run-command-string directory "status" "--porcelain" "--"))
          (lines (when status (split-string status "\n" 'omit-nulls)))
          files)
+    ;; TODO: Look into reimplementing `vc-git-state', as well as
+    ;; `vc-git-dir-status-files', based on this output, thus making the
+    ;; extra process call in `vc-git-find-file-hook' unnecessary.
     (dolist (line lines files)
       (when (string-match "\\([ MADRCU?!][ MADRCU?!]\\) \\(.+\\)\\(?: -> \\(.+\\)\\)?"
                           line)
@@ -786,7 +789,12 @@ This prompts for a branch to merge from."
   (save-excursion
     (goto-char (point-min))
     (unless (re-search-forward "^<<<<<<< " nil t)
-      (vc-git-command nil 0 buffer-file-name "add")
+      (if (file-exists-p (expand-file-name ".git/MERGE_HEAD"
+                                           (vc-git-root buffer-file-name)))
+          ;; Doing a merge.
+          (vc-git-command nil 0 buffer-file-name "add")
+        ;; Doing something else.  Likely applying a stash (bug#20292).
+        (vc-git-command nil 0 buffer-file-name "reset"))
       ;; Remove the hook so that it is not called multiple times.
       (remove-hook 'after-save-hook 'vc-git-resolve-when-done t))))
 

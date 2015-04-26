@@ -1331,7 +1331,9 @@ inserts \" characters."
           (goto-char saved)
           (insert (if (> saved (mark)) tex-close-quote tex-open-quote)))
       (if (or (memq (char-syntax (preceding-char)) '(?\( ?> ?\s))
-              (memq (preceding-char) '(?~)))
+              (memq (preceding-char) '(?~ ?')))
+          ;; We're in an "opening" context
+          ;;
           (if electric-pair-mode
               (if (looking-at (regexp-quote tex-close-quote))
                   (forward-char (length tex-close-quote))
@@ -1339,6 +1341,8 @@ inserts \" characters."
                 (insert tex-close-quote)
                 (backward-char (length tex-close-quote)))
             (insert tex-open-quote))
+        ;; We're in a "closing" context.
+        ;;
         (if (looking-at (regexp-quote tex-close-quote))
             (forward-char (length tex-close-quote))
           (insert tex-close-quote))))))
@@ -1761,13 +1765,13 @@ Mark is left at original location."
        ;; A better way to handle this, \( .. \) etc, is probably to
        ;; temporarily change the syntax of the \ in \( to punctuation.
        ((and latex-handle-escaped-parens
-	     (looking-back "\\\\[])}]"))
+	     (looking-back "\\\\[])}]" (- (point) 2)))
 	(signal 'scan-error
 		(list "Containing expression ends prematurely"
 		      (- (point) 2) (prog1 (point)
 				      (goto-char pos)))))
        ((and latex-handle-escaped-parens
-	     (looking-back "\\\\\\([({[]\\)"))
+	     (looking-back "\\\\\\([({[]\\)" (- (point) 2)))
 	(tex-next-unmatched-eparen (match-string 1)))
        (t (goto-char newpos))))))
 

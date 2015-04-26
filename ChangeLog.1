@@ -3,6 +3,12 @@
 	* configure.ac: Allow jpeg with cairo.
 	Allow tiff and gif with cairo.
 
+2015-04-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib
+	* lib/stddef.in.h: Update from gnulib, incorporating:
+	2015-04-02 stddef: port to pre-C11 GCC on x86
+
 2015-04-05  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* configure.ac: Allow rsvg with cairo.  Move back HAVE_RSVG.
@@ -11,6 +17,16 @@
 
 	* configure.ac (HAVE_RSVG): Move after cairo.
 	(USE_CAIRO): Disable rsvg, don't disable Xpm.
+
+2015-04-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port 'configure' to clang 3.5
+	* configure.ac: Add -Wno-unknown-attributes if clang;
+	otherwise clang 3.5.0 (Fedora 21 x86-64) complains
+	"/usr/include/glib-2.0/glib/gmem.h: ... warning: unknown attribute
+	'__alloc_size__' ignored".  Use -Werror when checking for -nopie;
+	otherwise clang warns about -nopie instead of failing, and then
+	later it warns everytime the build uses -nopie.
 
 2015-04-03  Ulrich Müller  <ulm@gentoo.org>
 
@@ -53,7 +69,7 @@
 	(HAVE_PTHREAD, LIB_PTHREAD): Port better to FreeBSD,
 	by also checking for pthread_create, pthread_self, pthread_sigmask.
 	Tighten the test for pthread_atfork while we're at it.
-	Fixes: bug#20136
+	(Bug#20136)
 
 	Merge from gnulib
 	This incorporates:
@@ -74,7 +90,7 @@
 	Don't require GNU putenv
 	* configure.ac: Use system putenv even if it lacks GNU features, as
 	we don't need them.  This works around a bug in FreeBSD 10.1 getenv.
-	Fixes: bug#19874
+	(Bug#19874)
 
 2015-02-25  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -175,7 +191,7 @@
 	If gnustep-config works, use 'gnustep-config --objc-flags' and
 	'gnustep-config --gui-libs' to compute GNUstep configuration
 	variables, instead of attempting to infer them individually.
-	Fixes: bug#19507
+	(Bug#19507)
 
 2015-01-21  Ulrich Müller  <ulm@gentoo.org>
 
@@ -203,7 +219,7 @@
 	* INSTALL: Document this.
 	* configure.ac: Add AM_SILENT_RULES([yes]).
 	(AM_DEFAULT_VERBOSITY): Remove now-unnecessary initialization.
-	Fixes: bug#19501
+	(Bug#19501)
 
 2015-01-06  Paul Eggert  <eggert@cs.ucla.edu>
 

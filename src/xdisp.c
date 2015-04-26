@@ -6971,7 +6971,7 @@ get_next_display_element (struct it *it)
 		if (CHAR_BYTE8_P (c))
 		  /* Display \200 instead of \17777600.  */
 		  c = CHAR_TO_BYTE8 (c);
-		len = sprintf (str, "%03o", c);
+		len = sprintf (str, "%03o", c + 0u);
 
 		XSETINT (it->ctl_chars[0], escape_glyph);
 		for (i = 0; i < len; i++)
@@ -10053,8 +10053,8 @@ message3 (Lisp_Object m)
       message_dolog (buffer, nbytes, true, multibyte);
       SAFE_FREE ();
     }
-  message3_nolog (m);
-
+  if (! inhibit_message)
+    message3_nolog (m);
   UNGCPRO;
 }
 
@@ -26233,7 +26233,7 @@ produce_glyphless_glyph (struct it *it, bool for_no_font, Lisp_Object acronym)
       else
 	{
 	  eassert (it->glyphless_method == GLYPHLESS_DISPLAY_HEX_CODE);
-	  sprintf (buf, "%0*X", it->c < 0x10000 ? 4 : 6, it->c);
+	  sprintf (buf, "%0*X", it->c < 0x10000 ? 4 : 6, it->c + 0u);
 	  str = buf;
 	}
       for (len = 0; str[len] && ASCII_CHAR_P (str[len]) && len < 6; len++)
@@ -30429,6 +30429,11 @@ syms_of_xdisp (void)
   DEFSYM (Qinhibit_redisplay, "inhibit-redisplay");
 
   DEFSYM (Qredisplay_internal, "redisplay_internal (C function)");
+
+  DEFVAR_BOOL("inhibit-message", inhibit_message,
+              doc:  /* Non-nil means calls to `message' are not displayed.
+They are still logged to the *Messages* buffer.  */);
+  inhibit_message = 0;
 
   message_dolog_marker1 = Fmake_marker ();
   staticpro (&message_dolog_marker1);

@@ -3024,7 +3024,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 
 		ch = read_escape (readcharfun, 1);
 
-		/* CH is -1 if \ newline has just been seen.  */
+		/* CH is -1 if \ newline or \ space has just been seen.  */
 		if (ch == -1)
 		  {
 		    if (p == read_buffer)
@@ -3778,8 +3778,11 @@ intern_1 (const char *str, ptrdiff_t len)
   Lisp_Object obarray = check_obarray (Vobarray);
   Lisp_Object tem = oblookup (obarray, str, len, len);
 
-  return SYMBOLP (tem) ? tem : intern_driver (make_string (str, len),
-					      obarray, tem);
+  return (SYMBOLP (tem) ? tem
+	  /* The above `oblookup' was done on the basis of nchars==nbytes, so
+	     the string has to be unibyte.  */
+	  : intern_driver (make_unibyte_string (str, len),
+			   obarray, tem));
 }
 
 Lisp_Object

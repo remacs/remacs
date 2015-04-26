@@ -54,20 +54,22 @@ The functions will receive the function name as argument.")
 				(and fn (symbol-name fn))))
      (list (if (equal val "")
 	       fn (intern val)))))
-  (if (null function)
-      (message "You didn't specify a function")
-    (help-setup-xref (list #'describe-function function)
-		     (called-interactively-p 'interactive))
-    (save-excursion
-      (with-help-window (help-buffer)
-	(prin1 function)
-	;; Use " is " instead of a colon so that
-	;; it is easier to get out the function name using forward-sexp.
-	(princ " is ")
-	(describe-function-1 function)
-	(with-current-buffer standard-output
-	  ;; Return the text we displayed.
-	  (buffer-string))))))
+  (or (and function (symbolp function))
+      (user-error "You didn't specify a function symbol"))
+  (or (fboundp function)
+      (user-error "Symbol's function definition is void: %s" function))
+  (help-setup-xref (list #'describe-function function)
+                   (called-interactively-p 'interactive))
+  (save-excursion
+    (with-help-window (help-buffer)
+      (prin1 function)
+      ;; Use " is " instead of a colon so that
+      ;; it is easier to get out the function name using forward-sexp.
+      (princ " is ")
+      (describe-function-1 function)
+      (with-current-buffer standard-output
+        ;; Return the text we displayed.
+        (buffer-string)))))
 
 
 ;; Could be this, if we make symbol-file do the work below.
@@ -329,7 +331,7 @@ suitable file is found, return nil."
 
       (with-current-buffer standard-output
         (fill-region-as-paragraph pt2 (point))
-        (unless (looking-back "\n\n")
+        (unless (looking-back "\n\n" (- (point) 2))
           (terpri))))))
 
 (defun help-fns--compiler-macro (function)
@@ -479,7 +481,8 @@ FILE is the file where FUNCTION was probably defined."
 	      function))
 	 ;; Get the real definition.
 	 (def (if (symbolp real-function)
-		  (symbol-function real-function)
+		  (or (symbol-function real-function)
+		      (signal 'void-function (list real-function)))
 		real-function))
 	 (aliased (or (symbolp def)
 		      ;; Advised & aliased function.

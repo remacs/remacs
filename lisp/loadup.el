@@ -63,6 +63,10 @@
 			    (expand-file-name "textmodes" dir)
 			    (expand-file-name "vc" dir)))))
 
+;; Prevent build-time PATH getting stored in the binary.
+;; Mainly cosmetic, but helpful for Guix.  (Bug#20330)
+(setq exec-path nil)
+
 (if (eq t purify-flag)
     ;; Hash consing saved around 11% of pure space in my tests.
     (setq purify-flag (make-hash-table :test 'equal :size 70000)))
@@ -101,9 +105,6 @@
 (load "env")
 (load "format")
 (load "bindings")
-;; This sets temporary-file-directory, used by eg
-;; auto-save-file-name-transforms in files.el.
-(load "cus-start")
 (load "window")  ; Needed here for `replace-buffer-in-windows'.
 (setq load-source-file-function 'load-with-code-conversion)
 (load "files")
@@ -284,6 +285,7 @@
 (load "uniquify")
 (load "electric")
 (load "emacs-lisp/eldoc")
+(load "cus-start") ;Late to reduce customize-rogue (needs loaddefs.el anyway)
 (if (not (eq system-type 'ms-dos)) (load "tooltip"))
 
 ;; This file doesn't exist when building a development version of Emacs
@@ -354,6 +356,8 @@ lost after dumping")))
 lost after dumping")))
 
 (setq current-load-list nil)
+;; Avoid storing references to build directory in the binary.
+(setq custom-current-group-alist nil)
 
 ;; We keep the load-history data in PURE space.
 ;; Make sure that the spine of the list is not in pure space because it can

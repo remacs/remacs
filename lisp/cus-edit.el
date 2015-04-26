@@ -3115,7 +3115,7 @@ face attributes (as specified by a `default' defface entry)."
 		    widget
 		    (widget-get widget :default-face-attributes)))
 	 entry)
-    (unless (looking-back "^ *")
+    (unless (looking-back "^ *" (line-beginning-position))
       (insert ?\n))
     (insert-char ?\s (widget-get widget :extra-offset))
     (if (or alist defaults show-all)
@@ -4377,7 +4377,8 @@ if only the first line of the docstring is shown."))
 
 (defun custom-file (&optional no-error)
   "Return the file name for saving customizations."
-  (if (null user-init-file)
+  (if (or (null user-init-file)
+          (and (null custom-file) init-file-had-error))
       ;; Started with -q, i.e. the file containing Custom settings
       ;; hasn't been read.  Saving settings there won't make much
       ;; sense.
@@ -4406,7 +4407,9 @@ if only the first line of the docstring is shown."))
 	 old-buffer-name)
 
     (with-current-buffer (let ((find-file-visit-truename t))
-			   (or old-buffer (find-file-noselect filename)))
+			   (or old-buffer
+                               (let ((delay-mode-hooks t))
+                                 (find-file-noselect filename))))
       ;; We'll save using file-precious-flag, so avoid destroying
       ;; symlinks.  (If we're not already visiting the buffer, this is
       ;; handled by find-file-visit-truename, above.)
@@ -4415,7 +4418,7 @@ if only the first line of the docstring is shown."))
 	(set-visited-file-name (file-chase-links filename)))
 
       (unless (eq major-mode 'emacs-lisp-mode)
-	(emacs-lisp-mode))
+        (delay-mode-hooks (emacs-lisp-mode)))
       (let ((inhibit-read-only t)
 	    (print-length nil)
 	    (print-level nil))
