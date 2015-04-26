@@ -2127,7 +2127,7 @@ Value is the size of the newly read mail after conversion."
 Call with point at the end of the message."
   (unless (bolp)
     (insert "\n"))
-  (unless (looking-back "\n\n" (- (point 2)))
+  (unless (looking-back "\n\n" (- (point) 2))
     (insert "\n")))
 
 (defun rmail-add-mbox-headers ()
