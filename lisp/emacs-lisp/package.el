@@ -185,7 +185,6 @@ and before `after-init-hook'.  Activation is not done if
 Even if the value is nil, you can type \\[package-initialize] to
 activate the package system at any time."
   :type 'boolean
-  :group 'package
   :version "24.1")
 
 (defcustom package-load-list '(all)
@@ -203,7 +202,6 @@ If VERSION is a string, only that version is ever loaded.
 If VERSION is nil, the package is not loaded (it is \"disabled\")."
   :type '(repeat symbol)
   :risky t
-  :group 'package
   :version "24.1")
 
 (defcustom package-archives '(("gnu" . "http://elpa.gnu.org/packages/"))
@@ -222,7 +220,6 @@ a package can run arbitrary code."
   :type '(alist :key-type (string :tag "Archive name")
                 :value-type (string :tag "URL or directory name"))
   :risky t
-  :group 'package
   :version "24.1")
 
 (defcustom package-menu-hide-low-priority 'archive
@@ -246,7 +243,6 @@ nil, so it can be toggled with \\<package-menu-mode-map> \\[package-menu-hide-ob
                  (const :tag "Hide per package-archive-priorities"
                         archive)
                  (const :tag "Hide per archive and version number" t))
-  :group 'package
   :version "25.1")
 
 (defcustom package-archive-priorities nil
@@ -265,7 +261,6 @@ See also `package-menu-hide-low-priority'."
   :type '(alist :key-type (string :tag "Archive name")
                 :value-type (integer :tag "Priority (default is 0)"))
   :risky t
-  :group 'package
   :version "25.1")
 
 (defcustom package-pinned-packages nil
@@ -289,7 +284,6 @@ the package will be unavailable."
   ;; via an entry (PACKAGE . NON-EXISTING).  Which could be an issue
   ;; if PACKAGE has a known vulnerability that is fixed in newer versions.
   :risky t
-  :group 'package
   :version "24.4")
 
 (defcustom package-user-dir (locate-user-emacs-file "elpa")
@@ -299,7 +293,6 @@ Apart from this directory, Emacs also looks for system-wide
 packages in `package-directory-list'."
   :type 'directory
   :risky t
-  :group 'package
   :version "24.1")
 
 (defcustom package-directory-list
@@ -317,7 +310,6 @@ These directories contain packages intended for system-wide; in
 contrast, `package-user-dir' contains packages for personal use."
   :type '(repeat directory)
   :risky t
-  :group 'package
   :version "24.1")
 
 (defvar epg-gpg-program)
@@ -335,14 +327,12 @@ contents of the archive."
                  (const allow-unsigned :tag "Allow unsigned")
                  (const t :tag "Check always"))
   :risky t
-  :group 'package
   :version "24.4")
 
 (defcustom package-unsigned-archives nil
   "List of archives where we do not check for package signatures."
   :type '(repeat (string :tag "Archive name"))
   :risky t
-  :group 'package
   :version "24.4")
 
 (defcustom package-selected-packages nil
@@ -356,8 +346,14 @@ by running `package-user-selected-packages-install'.
 To check if a package is contained in this list here, use
 `package--user-selected-p', as it may populate the variable with
 a sane initial value."
-  :group 'package
   :type '(repeat symbol))
+
+(defcustom package-menu-async t
+  "If non-nil, package-menu will use async operations when possible.
+This includes refreshing archive contents as well as installing
+packages."
+  :type 'boolean
+  :version "25.1")
 
 
 ;;; `package-desc' object definition
@@ -892,6 +888,8 @@ untar into a directory named DIR; otherwise, signal an error."
 (defvar generated-autoload-file)
 (defvar version-control)
 
+(defvar package--silence nil)
+
 (defun package-generate-autoloads (name pkg-dir)
   (let* ((auto-name (format "%s-autoloads.el" name))
          ;;(ignore-name (concat name "-pkg.el"))
@@ -1377,8 +1375,6 @@ it to the file."
                   (config &optional minimum-version))
 (declare-function epg-configuration "epg-config" ())
 (declare-function epg-import-keys-from-file "epg" (context keys))
-
-(defvar package--silence nil)
 
 (defun package--message (format &rest args)
   "Like `message', except sometimes don't print to minibuffer.
@@ -2672,6 +2668,9 @@ Return (PKG-DESC [NAME VERSION STATUS DOC])."
             ,(propertize (package-desc-summary pkg-desc)
                          'font-lock-face face)])))
 
+(defvar package-menu--old-archive-contents nil
+  "`package-archive-contents' before the latest refresh.")
+
 (defun package-menu-refresh ()
   "Download the Emacs Lisp package archive.
 This fetches the contents of each archive specified in
@@ -2982,9 +2981,6 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
   (string< (or (package-desc-archive (car A)) "")
            (or (package-desc-archive (car B)) "")))
 
-(defvar package-menu--old-archive-contents nil
-  "`package-archive-contents' before the latest refresh.")
-
 (defun package-menu--populate-new-package-list ()
   "Decide which packages are new in `package-archives-contents'.
 Store this list in `package-menu--new-package-list'."
@@ -3014,14 +3010,6 @@ after `package-menu--perform-transaction'."
       (with-current-buffer buf
         (revert-buffer nil 'noconfirm))))
   (package-menu--find-and-notify-upgrades))
-
-(defcustom package-menu-async t
-  "If non-nil, package-menu will use async operations when possible.
-This includes refreshing archive contents as well as installing
-packages."
-  :type 'boolean
-  :version "25.1"
-  :group 'package)
 
 ;;;###autoload
 (defun list-packages (&optional no-fetch)
