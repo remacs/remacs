@@ -1085,6 +1085,13 @@ image_ascent (struct image *img, struct face *face, struct glyph_slice *slice)
 
 #ifdef USE_CAIRO
 static uint32_t
+xcolor_to_argb32 (XColor xc)
+{
+  return (0xff << 24) | ((xc.red / 256) << 16)
+      | ((xc.green / 256) << 8) | (xc.blue / 256);
+}
+
+static uint32_t
 get_spec_bg_or_alpha_as_argb (struct image *img,
                               struct frame *f)
 {
@@ -1096,8 +1103,8 @@ get_spec_bg_or_alpha_as_argb (struct image *img,
                                    FRAME_X_COLORMAP (f),
                                    SSDATA (bg),
                                    &xbgcolor))
-    bgcolor = (0xff << 24) | ((xbgcolor.red / 256) << 16)
-      | ((xbgcolor.green / 256) << 8) | (xbgcolor.blue / 256);
+    bgcolor = xcolor_to_argb32 (xbgcolor);
+
   return bgcolor;
 }
 
@@ -5239,12 +5246,17 @@ pbm_load (struct frame *f, struct image *img)
   bool raw_p;
   int x, y;
   int width, height, max_color_idx = 0;
-  XImagePtr ximg;
   Lisp_Object file, specified_file;
   enum {PBM_MONO, PBM_GRAY, PBM_COLOR} type;
   unsigned char *contents = NULL;
   unsigned char *end, *p;
   ptrdiff_t size;
+#ifdef USE_CAIRO
+  unsigned char *data = 0;
+  uint32_t *dataptr;
+#else
+  XImagePtr ximg;
+#endif
 
   specified_file = image_spec_value (img->spec, QCfile, NULL);
 
@@ -5326,6 +5338,11 @@ pbm_load (struct frame *f, struct image *img)
   width = pbm_scan_number (&p, end);
   height = pbm_scan_number (&p, end);
 
+#ifdef USE_CAIRO
+  data = (unsigned char *) xmalloc (width * height * 4);
+  dataptr = (uint32_t *) data;
+#endif
+
   if (type != PBM_MONO)
     {
       max_color_idx = pbm_scan_number (&p, end);
@@ -5342,8 +5359,10 @@ pbm_load (struct frame *f, struct image *img)
       goto error;
     }
 
+#ifndef USE_CAIRO
   if (!image_create_x_image_and_pixmap (f, img, width, height, 0, &ximg, 0))
     goto error;
+#endif
 
   /* Initialize the color hash table.  */
   init_color_table ();
@@ -5354,12 +5373,34 @@ pbm_load (struct frame *f, struct image *img)
       struct image_keyword fmt[PBM_LAST];
       unsigned long fg = FRAME_FOREGROUND_PIXEL (f);
       unsigned long bg = FRAME_BACKGROUND_PIXEL (f);
-
+#ifdef USE_CAIRO
+      XColor xfg, xbg;
+      int fga32, bga32;
+#endif
       /* Parse the image specification.  */
       memcpy (fmt, pbm_format, sizeof fmt);
       parse_image_spec (img->spec, fmt, PBM_LAST, Qpbm);
 
       /* Get foreground and background colors, maybe allocate colors.  */
+#ifdef USE_CAIRO
+      if (! fmt[PBM_FOREGROUND].count
+          || ! STRINGP (fmt[PBM_FOREGROUND].value)
+          || ! x_defined_color (f, SSDATA (fmt[PBM_FOREGROUND].value), &xfg, 0))
+        {
+          xfg.pixel = fg;
+          x_query_color (f, &xfg);
+        }
+      fga32 = xcolor_to_argb32 (xfg);
+
+      if (! fmt[PBM_BACKGROUND].count
+          || ! STRINGP (fmt[PBM_BACKGROUND].value)
+          || ! x_defined_color (f, SSDATA (fmt[PBM_BACKGROUND].value), &xbg, 0))
+	{
+          xbg.pixel = bg;
+          x_query_color (f, &xbg);
+	}
+      bga32 = xcolor_to_argb32 (xbg);
+#else
       if (fmt[PBM_FOREGROUND].count
 	  && STRINGP (fmt[PBM_FOREGROUND].value))
 	fg = x_alloc_image_color (f, img, fmt[PBM_FOREGROUND].value, fg);
@@ -5370,6 +5411,7 @@ pbm_load (struct frame *f, struct image *img)
 	  img->background = bg;
 	  img->background_valid = 1;
 	}
+#endif
 
       for (y = 0; y < height; ++y)
 	for (x = 0; x < width; ++x)
@@ -5380,7 +5422,11 @@ pbm_load (struct frame *f, struct image *img)
 		  {
 		    if (p >= end)
 		      {
+#ifdef USE_CAIRO
+                        xfree (data);
+#else
 			x_destroy_x_image (ximg);
+#endif
 			x_clear_image (f, img);
 			image_error ("Invalid image size in image `%s'",
 				     img->spec, Qnil);
@@ -5394,7 +5440,11 @@ pbm_load (struct frame *f, struct image *img)
 	    else
 	      g = pbm_scan_number (&p, end);
 
+#ifdef USE_CAIRO
+            *dataptr++ = g ? fga32 : bga32;
+#else
 	    XPutPixel (ximg, x, y, g ? fg : bg);
+#endif
 	  }
     }
   else
@@ -5407,7 +5457,11 @@ pbm_load (struct frame *f, struct image *img)
 
       if (raw_p && p + expected_size > end)
 	{
+#ifdef USE_CAIRO
+          xfree (data);
+#else
 	  x_destroy_x_image (ximg);
+#endif
 	  x_clear_image (f, img);
 	  image_error ("Invalid image size in image `%s'",
 		       img->spec, Qnil);
@@ -5448,18 +5502,29 @@ pbm_load (struct frame *f, struct image *img)
 
 	    if (r < 0 || g < 0 || b < 0)
 	      {
+#ifdef USE_CAIRO
+                xfree (data);
+#else
 		x_destroy_x_image (ximg);
+#endif
 		image_error ("Invalid pixel value in image `%s'",
 			     img->spec, Qnil);
 		goto error;
 	      }
 
+#ifdef USE_CAIRO
+	    r = (double) r * 255 / max_color_idx;
+	    g = (double) g * 255 / max_color_idx;
+	    b = (double) b * 255 / max_color_idx;
+            *dataptr++ = (0xff << 24) | (r << 16) | (g << 8) | b;
+#else
 	    /* RGB values are now in the range 0..max_color_idx.
 	       Scale this to the range 0..0xffff supported by X.  */
 	    r = (double) r * 65535 / max_color_idx;
 	    g = (double) g * 65535 / max_color_idx;
 	    b = (double) b * 65535 / max_color_idx;
 	    XPutPixel (ximg, x, y, lookup_rgb_color (f, r, g, b));
+#endif
 	  }
     }
 
@@ -5475,12 +5540,16 @@ pbm_load (struct frame *f, struct image *img)
 
   /* Maybe fill in the background field while we have ximg handy.  */
 
+#ifdef USE_CAIRO
+  create_cairo_image_surface (img, data, width, height);
+#else
   if (NILP (image_spec_value (img->spec, QCbackground, NULL)))
     /* Casting avoids a GCC warning.  */
     IMAGE_BACKGROUND (img, f, (XImagePtr_or_DC)ximg);
 
   /* Put ximg into the image.  */
   image_put_x_image (f, img, ximg, 0);
+#endif
 
   /* X and W32 versions did it here, MAC version above.  ++kfs
      img->width = width;
@@ -5804,7 +5873,6 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
   Lisp_Object specified_data;
   int x, y;
   ptrdiff_t i;
-  XImagePtr ximg, mask_img = NULL;
   png_struct *png_ptr;
   png_info *info_ptr = NULL, *end_info = NULL;
   FILE *fp = NULL;
@@ -5821,6 +5889,8 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
 #ifdef USE_CAIRO
   unsigned char *data = 0;
   uint32_t *dataptr;
+#else
+  XImagePtr ximg, mask_img = NULL;
 #endif
 
   /* Find out what file to load.  */
@@ -6578,10 +6648,12 @@ jpeg_load_body (struct frame *f, struct image *img,
   FILE * IF_LINT (volatile) fp = NULL;
   JSAMPARRAY buffer;
   int row_stride, x, y;
-  XImagePtr ximg = NULL;
   unsigned long *colors;
   int width, height;
   int i, ir, ig, ib;
+#ifndef USE_CAIRO
+  XImagePtr ximg = NULL;
+#endif
 
   /* Open the JPEG file.  */
   specified_file = image_spec_value (img->spec, QCfile, NULL);
@@ -6640,8 +6712,9 @@ jpeg_load_body (struct frame *f, struct image *img,
       jpeg_destroy_decompress (&mgr->cinfo);
 
       /* If we already have an XImage, free that.  */
+#ifndef USE_CAIRO
       x_destroy_x_image (ximg);
-
+#endif
       /* Free pixmap and colors.  */
       x_clear_image (f, img);
       return 0;
@@ -6672,12 +6745,14 @@ jpeg_load_body (struct frame *f, struct image *img,
       sys_longjmp (mgr->setjmp_buffer, 1);
     }
 
+#ifndef USE_CAIRO
   /* Create X image and pixmap.  */
   if (!image_create_x_image_and_pixmap (f, img, width, height, 0, &ximg, 0))
     {
       mgr->failure_code = MY_JPEG_CANNOT_CREATE_X;
       sys_longjmp (mgr->setjmp_buffer, 1);
     }
+#endif
 
   /* Allocate colors.  When color quantization is used,
      mgr->cinfo.actual_number_of_colors has been set with the number of
@@ -6760,7 +6835,7 @@ jpeg_load_body (struct frame *f, struct image *img,
   if (fp)
     fclose (fp);
 
-#ifndef CAIRO
+#ifndef USE_CAIRO
   /* Maybe fill in the background field while we have ximg handy. */
   if (NILP (image_spec_value (img->spec, QCbackground, NULL)))
     /* Casting avoids a GCC warning.  */
@@ -7511,7 +7586,6 @@ gif_load (struct frame *f, struct image *img)
 {
   Lisp_Object file;
   int rc, width, height, x, y, i, j;
-  XImagePtr ximg;
   ColorMapObject *gif_color_map;
   unsigned long pixel_colors[256];
   GifFileType *gif;
@@ -7525,6 +7599,8 @@ gif_load (struct frame *f, struct image *img)
 
 #ifdef USE_CAIRO
   unsigned char *data = 0;
+#else
+  XImagePtr ximg;
 #endif
 
   if (NILP (specified_data))
