@@ -277,12 +277,12 @@ See `defclass' for more information."
   (setq eieio-hook nil)
 
   (let* ((oldc (let ((c (eieio--class-v cname))) (if (eieio--class-p c) c)))
-	 (newc (if (and oldc (not (eieio--class-default-object-cache oldc)))
-                   ;; The oldc class is a stub setup by eieio-defclass-autoload.
-                   ;; Reuse it instead of creating a new one, so that existing
-                   ;; references stay valid.
-                   oldc
-                 (eieio--class-make cname)))
+	 (newc (or oldc
+                   ;; Reuse `oldc' instead of creating a new one, so that
+                   ;; existing references stay valid.  E.g. when
+                   ;; reloading the file that does the `defclass', we don't
+                   ;; want to create a new class object.
+                   (eieio--class-make cname)))
 	 (groups nil) ;; list of groups id'd from slots
 	 (clearparent nil))
 
