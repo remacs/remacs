@@ -237,6 +237,9 @@ Unicode standards.
 
 
 * Changes in Specialized Modes and Packages in Emacs 25.1
+
+** The `save-place' variable is replaced by a `save-place-mode'.
+
 ** Midnight-mode
 *** `midnight-mode' is a proper minor mode.
 *** clean-buffer-*-regexps can now specify buffers via predicate functions.
