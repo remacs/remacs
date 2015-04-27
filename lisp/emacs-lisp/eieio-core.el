@@ -88,7 +88,7 @@ Currently under control of this var:
 
 (cl-defstruct (eieio--class
                (:constructor nil)
-               (:constructor eieio--class-make (name &aux (tag 'defclass)))
+               (:constructor eieio--class-make (name))
                (:include cl--class)
                (:copier nil))
   children
@@ -292,7 +292,13 @@ See `defclass' for more information."
     ;; method table breakage, particularly when the users is only
     ;; byte compiling an EIEIO file.
     (if oldc
-	(setf (eieio--class-children newc) (eieio--class-children oldc))
+        (progn
+          (cl-assert (eq newc oldc))
+          ;; Reset the fields.
+          (setf (eieio--class-parents newc) nil)
+          (setf (eieio--class-slots newc) nil)
+          (setf (eieio--class-initarg-tuples newc) nil)
+          (setf (eieio--class-class-slots newc) nil))
       ;; If the old class did not exist, but did exist in the autoload map,
       ;; then adopt those children.  This is like the above, but deals with
       ;; autoloads nicely.
