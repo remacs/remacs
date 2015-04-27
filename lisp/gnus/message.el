@@ -4020,7 +4020,7 @@ See `message-citation-line-format'."
     (unless from
       (setq from (mail-header-from message-reply-headers)))
     (let* ((data (condition-case ()
-		     (funcall (if (boundp gnus-extract-address-components)
+		     (funcall (if (boundp 'gnus-extract-address-components)
 				  gnus-extract-address-components
 				'mail-extract-address-components)
 			      from)
