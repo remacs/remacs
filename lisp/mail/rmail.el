@@ -3830,7 +3830,8 @@ use \\[mail-yank-original] to yank the original message into it."
 ;;;	  (setq cc resent-cc)))
     ;; Add `Re: ' to subject if not there already.
     (and (stringp subject)
-	 (setq subject
+	 (setq subject (rfc2047-decode-string subject)
+	       subject
 	       (concat rmail-reply-prefix
 		       (if (let ((case-fold-search t))
 			     (string-match rmail-reply-regexp subject))
