@@ -3997,8 +3997,6 @@ This function uses `mail-citation-hook' if that is non-nil."
   "Cite function in the standard Message manner."
   (message-cite-original-1 nil))
 
-(defvar gnus-extract-address-components)
-
 (autoload 'format-spec "format-spec")
 (autoload 'gnus-date-get-time "gnus-util")
 
