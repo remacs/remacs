@@ -237,6 +237,10 @@ Unicode standards.
 
 
 * Changes in Specialized Modes and Packages in Emacs 25.1
+** Midnight-mode
+*** `midnight-mode' is a proper minor mode.
+*** clean-buffer-*-regexps can now specify buffers via predicate functions.
+
 ** In xterms, killing text now also sets the CLIPBOARD/PRIMARY selection
 in the surrounding GUI (using the OSC-52 escape sequence).  This only works
 if your xterm supports it and enables the `allowWindowOps' options (disabled
