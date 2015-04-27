@@ -1135,7 +1135,8 @@ arguments see `package--with-work-buffer'."
                              (signal (cdar status) (cddr status)))
                          (goto-char (point-min))
                          (unless (search-forward "\n\n" nil 'noerror)
-                           (error "Invalid url response"))
+                           (error "Invalid url response in buffer %s"
+                             (current-buffer)))
                          (delete-region (point-min) (point))
                          ,@body)
                        (kill-buffer (current-buffer)))
@@ -1949,7 +1950,7 @@ The file can either be a tar file or an Emacs Lisp file."
     (package-install-from-buffer)))
 
 ;;;###autoload
-(defun package-install-user-selected-packages ()
+(defun package-install-selected-packages ()
   "Ensure packages in `package-selected-packages' are installed.
 If some packages are not installed propose to install them."
   (interactive)
