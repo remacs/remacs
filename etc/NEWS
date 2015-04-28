@@ -633,6 +633,9 @@ to avoid interfering with the kill ring.
 *** Custom variable `eudc-inline-expansion-format' defaults to
 "Firstname Surname <mail-address>".
 
+*** Custom variable `eudc-options-file' defaults to
+"~/.emacs.d/eudc-options".
+
 *** New custom variable `ldap-ldapsearch-password-prompt-regexp' to
 allow overriding the regular expression that recognizes the ldapsearch
 command line's password prompt.
