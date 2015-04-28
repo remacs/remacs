@@ -2499,29 +2499,43 @@ Installed obsolete packages are always displayed.")
 
 (defun package--remove-hidden (pkg-list)
   "Filter PKG-LIST according to `package-archive-priorities'.
-PKG-LIST must be a list of package-desc objects sorted by
-decreasing version number.
+PKG-LIST must be a list of package-desc objects, all with the
+same name, sorted by decreasing `package-desc-priority-version'.
 Return a list of packages tied for the highest priority according
 to their archives."
   (when pkg-list
-    ;; The first is a variable toggled with
-    ;; `package-menu-hide-obsolete', the second is a static user
-    ;; option that defines *what* we hide.
-    (if (and package-menu--hide-obsolete
-             package-menu-hide-low-priority)
-        (let ((max-priority (package-desc-priority (car pkg-list)))
-              (out (list (pop pkg-list))))
-          (dolist (p pkg-list (nreverse out))
-            (let ((priority (package-desc-priority p)))
-              (cond
-               ((> priority max-priority)
-                (setq max-priority priority)
-                (setq out (list p)))
-               ;; This assumes pkg-list is sorted by version number.
-               ((and (= priority max-priority)
-                     (eq package-menu-hide-low-priority 'archive))
-                (push p out))))))
-      pkg-list)))
+    ;; Variable toggled with `package-menu-hide-obsolete'.
+    (if (not package-menu--hide-obsolete)
+        pkg-list
+      (let ((installed (cadr (assq (package-desc-name (car pkg-list))
+                                   package-alist))))
+        (when installed
+          (setq pkg-list
+                (let ((ins-version (package-desc-version installed)))
+                  (cl-remove-if (lambda (p) (version-list-< (package-desc-version p)
+                                                       ins-version))
+                                pkg-list))))
+        (let ((filtered-by-priority
+               (cond
+                ((not package-menu-hide-low-priority)
+                 pkg-list)
+                ((eq package-menu-hide-low-priority 'archive)
+                 (let* ((max-priority most-negative-fixnum)
+                        (out))
+                   (while pkg-list
+                     (let ((p (pop pkg-list)))
+                       (if (>= (package-desc-priority p) max-priority)
+                           (push p out)
+                         (setq pkg-list nil))))
+                   (nreverse out)))
+                (pkg-list
+                 (list (car pkg-list))))))
+          (if (not installed)
+              filtered-by-priority
+            (let ((ins-version (package-desc-version installed)))
+              (cl-remove-if (lambda (p) (version-list-= (package-desc-version p)
+                                                   ins-version))
+                            filtered-by-priority))))))))
 
 (defun package-menu--refresh (&optional packages keywords)
   "Re-populate the `tabulated-list-entries'.
@@ -2550,15 +2564,12 @@ KEYWORDS should be nil or a list of keywords."
 
     ;; Available and disabled packages:
     (dolist (elt package-archive-contents)
-      (setq name (car elt))
-      (when (or (eq packages t) (memq name packages))
-        (dolist (pkg (package--remove-hidden (cdr elt)))
-          ;; Hide available obsolete packages.
-          (when (and (not (and package-menu--hide-obsolete
-                               (package-installed-p (package-desc-name pkg)
-                                                    (package-desc-version pkg))))
-                     (package--has-keyword-p pkg keywords))
-            (package--push pkg (package-desc-status pkg) info-list)))))
+      (let ((name (car elt)))
+        (when (or (eq packages t) (memq name packages))
+          ;; Hide available-obsolete or low-priority packages.
+          (dolist (pkg (package--remove-hidden (cdr elt)))
+            (when (package--has-keyword-p pkg keywords)
+              (package--push pkg (package-desc-status pkg) info-list))))))
 
     ;; Print the result.
     (setq tabulated-list-entries
