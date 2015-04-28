@@ -340,13 +340,30 @@ Emacs will list the message in the summary."
   "Return t, if for message number MSG, regexp REGEXP matches in the header."
   (rmail-apply-in-message msg 'rmail-message-regexp-p-1 msg regexp))
 
+(defun rmail--decode-and-apply (function &rest args)
+  "Make an RFC2047-decoded copy of current buffer, apply FUNCTION with ARGS."
+  (let ((buff (current-buffer)))
+    (with-temp-buffer
+      (insert-buffer-substring buff)
+      (goto-char (point-min))
+      ;; FIXME?  In rmail-show-message-1, decoding depends on
+      ;; rmail-enable-mime being non-nil (?).
+      (rfc2047-decode-region (point-min)
+			     (save-excursion
+			       (progn
+				 (search-forward "\n\n" nil 'move)
+				 (point))))
+      (apply function args))))
+
 (defun rmail-message-regexp-p-1 (msg regexp)
   ;; Search functions can expect to start from the beginning.
   (narrow-to-region (point) (save-excursion (search-forward "\n\n") (point)))
   (if (and rmail-enable-mime
 	   rmail-search-mime-header-function)
       (funcall rmail-search-mime-header-function msg regexp (point))
-    (re-search-forward regexp nil t)))
+    ;; We need to search the full headers, but probably want to decode
+    ;; them so they match the ones people see displayed.  (Bug#19088)
+    (rmail--decode-and-apply 're-search-forward regexp nil t)))
 
 ;;;###autoload
 (defun rmail-summary-by-topic (subject &optional whole-message)
@@ -370,7 +387,9 @@ SUBJECT is a string of regexps separated by commas."
 
 (defun rmail-message-subject-p (msg subject &optional whole-message)
   (if whole-message
-      (rmail-apply-in-message msg 're-search-forward subject nil t)
+      ;; SUBJECT and rmail-simplified-subject are 2047 decoded.
+      (rmail-apply-in-message msg 'rmail--decode-and-apply
+			      're-search-forward subject nil t)
     (string-match subject (rmail-simplified-subject msg))))
 
 ;;;###autoload
