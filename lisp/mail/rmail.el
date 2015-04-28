@@ -2942,7 +2942,8 @@ buffer to the end of the headers."
 			      (1+ (match-beginning 0))
 			    (point-max))))
 	      (if (and (looking-at ignored-headers)
-		       (not (looking-at rmail-nonignored-headers)))
+		       (not (and rmail-nonignored-headers
+				 (looking-at rmail-nonignored-headers))))
 		  (goto-char lim)
 		(append-to-buffer rmail-view-buffer (point) lim)
 		(goto-char lim))))
