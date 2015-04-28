@@ -1813,6 +1813,7 @@ using `package-compute-transaction'."
                       (widen)
                       (goto-char (point-min))
                       (search-forward "(package-initialize)" nil 'noerror))))
+              ;; Don't visit the file if we don't have to.
               (with-temp-buffer
                 (insert-file-contents user-init-file)
                 (goto-char (point-min))
@@ -1825,7 +1826,11 @@ using `package-compute-transaction'."
             (save-restriction
               (widen)
               (goto-char (point-min))
+              (while (and (looking-at-p "[[:blank:]]*\\(;\\|$\\)")
+                          (not (eobp)))
+                (forward-line 1))
               (insert
+               "\n"
                ";; Added by Package.el.  This must come before configurations of\n"
                ";; installed packages.  Don't delete this line.  If you don't want it,\n"
                ";; just comment it out by adding a semicolon to the start of the line.\n"
