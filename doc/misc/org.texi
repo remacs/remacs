@@ -1,4 +1,4 @@
-\input texinfo
+\input texinfo  @c -*- coding: utf-8 -*-
 @c %**start of header
 @setfilename ../../info/org.info
 @settitle The Org Manual
