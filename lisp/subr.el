@@ -1733,7 +1733,7 @@ this instead of `run-hooks' when running their FOO-mode-hook."
 (defmacro delay-mode-hooks (&rest body)
   "Execute BODY, but delay any `run-mode-hooks'.
 These hooks will be executed by the first following call to
-`run-mode-hooks' that occurs outside any `delayed-mode-hooks' form.
+`run-mode-hooks' that occurs outside any `delay-mode-hooks' form.
 Only affects hooks run in the current buffer."
   (declare (debug t) (indent 0))
   `(progn
