@@ -393,7 +393,7 @@ go to that message and type \\[rmail-toggle-header] twice."
   "Regexp to match Header fields that Rmail should display.
 If nil, display all header fields except those matched by
 `rmail-ignored-headers'."
-  :type '(choice regexp (const :tag "All"))
+  :type '(choice regexp (const :tag "All" nil))
   :group 'rmail-headers)
 
 ;;;###autoload
@@ -407,7 +407,7 @@ If nil, display all header fields except those matched by
 (defcustom rmail-highlighted-headers (purecopy "^From:\\|^Subject:")
   "Regexp to match Header fields that Rmail should normally highlight.
 A value of nil means don't highlight.  Uses the face `rmail-highlight'."
-  :type 'regexp
+  :type '(choice regexp (const :tag "None" nil))
   :group 'rmail-headers)
 
 (defface rmail-highlight
