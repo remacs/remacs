@@ -150,7 +150,11 @@ FUNCTION is called with two arguments, the key and the value."
       (arrayp map)))
 
 (defun map-empty-p (map)
-  (null (map-keys map)))
+  "Return non-nil is MAP is empty."
+  (map--dispatch map
+    :list (null map)
+    :array (seq-empty-p map)
+    :hash-table (zerop (hash-table-count map))))
 
 (defun map-contains-key-p (map key &optional testfn)
   "Return non-nil if MAP contain the key KEY, nil otherwise.
