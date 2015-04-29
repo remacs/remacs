@@ -2073,6 +2073,11 @@ for \\[find-tag] (which see)."
 ;; we hit the limit rarely.
 (defconst etags--xref-limit 1000)
 
+(defvar etags-xref-find-definitions-tag-order '(tag-exact-match-p
+                                                tag-implicit-name-match-p
+                                                tag-symbol-match-p)
+  "Tag order used in `etags-xref-find' to look for definitions.")
+
 ;;;###autoload
 (defun etags-xref-find (action id)
   (pcase action
@@ -2094,7 +2099,7 @@ for \\[find-tag] (which see)."
       (while (visit-tags-table-buffer (not first-time))
         (setq first-time nil)
         (dolist (order-fun (cond (regexp? find-tag-regexp-tag-order)
-                                 (t find-tag-tag-order)))
+                                 (t etags-xref-find-definitions-tag-order)))
           (goto-char (point-min))
           (while (and (funcall search-fun pattern nil t)
                       (< (hash-table-count marks) etags--xref-limit))
