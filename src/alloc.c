@@ -4496,7 +4496,7 @@ live_buffer_p (struct mem_node *m, void *p)
      must not have been killed.  */
   return (m->type == MEM_TYPE_BUFFER
 	  && p == m->start
-	  && !NILP (((struct buffer *) p)->INTERNAL_FIELD (name)));
+	  && !NILP (((struct buffer *) p)->name_));
 }
 
 #endif /* GC_MARK_STACK || defined GC_MALLOC_CHECK */
