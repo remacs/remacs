@@ -986,9 +986,8 @@ Each function's symbol gets added to `byte-compile-noruntime-functions'."
   "Like `message', except sometimes don't print to minibuffer.
 If the variable `byte-compile--interactive' is nil, the message
 is not displayed on the minibuffer."
-  (apply #'message format args)
-  (unless byte-compile--interactive
-    (message nil)))
+  (let ((inhibit-message (not byte-compile--interactive)))
+    (apply #'message format args)))
 
 ;; Log something that isn't a warning.
 (defun byte-compile-log-1 (string)
