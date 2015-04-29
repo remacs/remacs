@@ -1,4 +1,4 @@
-;;; rmailsum.el --- make summary buffers for the mail reader
+;;; rmailsum.el --- make summary buffers for the mail reader  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1985, 1993-1996, 2000-2015 Free Software Foundation, Inc.
 
@@ -262,7 +262,7 @@ Setting this option to nil might speed up the generation of summaries."
 ;; Regenerate the contents of the summary
 ;; using the same selection criterion as last time.
 ;; M-x revert-buffer in a summary buffer calls this function.
-(defun rmail-update-summary (&rest ignore)
+(defun rmail-update-summary (&rest _)
   (apply (car rmail-summary-redo) (cdr rmail-summary-redo)))
 
 ;;;###autoload
@@ -674,7 +674,7 @@ LINES is the number of lines in the message (if we should display that)
   (goto-char (point-min))
   (let ((line (rmail-header-summary))
 	(labels (rmail-get-summary-labels))
-	pos status prefix basic-start basic-end linecount-string)
+        status prefix basic-start basic-end linecount-string)
 
     (setq linecount-string
 	  (cond
@@ -746,7 +746,7 @@ the message being processed."
 				 ;; Get all the lines of the From field
 				 ;; so that we get a whole comment if there is one,
 				 ;; so that mail-strip-quoted-names can discard it.
-				 (let ((opoint (point)))
+				 (progn
 				   (while (progn (forward-line 1)
 						 (looking-at "[ \t]")))
 				   ;; Back up over newline, then trailing spaces or tabs
@@ -928,8 +928,8 @@ A prefix argument serves as a repeat count;
 a negative argument means to delete and move backward."
   (interactive "p")
   (unless (numberp count) (setq count 1))
-  (let (end del-msg
-	    (backward (< count 0)))
+  (let (del-msg
+        (backward (< count 0)))
     (while (and (/= count 0)
 		;; Don't waste time if we are at the beginning
 		;; and trying to go backward.
@@ -1048,7 +1048,7 @@ Optional prefix ARG means undelete ARG previous messages."
 	  (forward-line 1))
 	(setq n (1- n)))
     (rmail-summary-goto-msg 1)
-    (dotimes (i rmail-total-messages)
+    (dotimes (_ rmail-total-messages)
       (rmail-summary-goto-msg)
       (let (del-msg)
 	(when (rmail-summary-deleted-p)
