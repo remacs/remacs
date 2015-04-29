@@ -76,7 +76,7 @@ If MAP is an array, store nil at the index KEY."
        :array (map--delete-array m ,key))))
 
 (defun map-nested-elt (map keys &optional default)
-  "Travserse MAP using KEYS and return the looked up value or DEFAULT if nil.
+  "Traverse MAP using KEYS and return the looked up value or DEFAULT if nil.
 Map can be a nested map composed of alists, hash-tables and arrays."
   (or (seq-reduce (lambda (acc key)
                     (when (map-p acc)
@@ -109,7 +109,7 @@ Map can be a nested map composed of alists, hash-tables and arrays."
     :array (seq-copy map)))
 
 (defun map-apply (function map)
-  "Return the result of applying FUNCTION to each element of MAP.
+  "Apply FUNCTION to each element of MAP and return the result as a list.
 FUNCTION is called with two arguments, the key and the value."
   (funcall (map--dispatch map
              :list #'map--apply-alist
@@ -131,7 +131,7 @@ FUNCTION is called with two arguments, the key and the value."
              map))
 
 (defun map-filter (pred map)
-  "Return an alist of the key/val pairs of which (PRED key val) is non-nil in MAP."
+  "Return an alist of the key/val pairs for which (PRED key val) is non-nil in MAP."
   (delq nil (map-apply (lambda (key val)
                          (if (funcall pred key val)
                              (cons key val)
@@ -139,7 +139,7 @@ FUNCTION is called with two arguments, the key and the value."
                        map)))
 
 (defun map-remove (pred map)
-  "Return an alist of the key/val pairs of which (PRED key val) is nil in MAP."
+  "Return an alist of the key/val pairs for which (PRED key val) is nil in MAP."
   (map-filter (lambda (key val) (not (funcall pred key val)))
               map))
 
@@ -150,18 +150,15 @@ FUNCTION is called with two arguments, the key and the value."
       (arrayp map)))
 
 (defun map-empty-p (map)
-  "Return non-nil is MAP is empty.
-MAP can be a list, hash-table or array."
   (null (map-keys map)))
 
 (defun map-contains-key-p (map key &optional testfn)
   "Return non-nil if MAP contain the key KEY, nil otherwise.
-Equality is defined by TESTFN if non-nil or by `equal' if nil.
-MAP can be a list, hash-table or array."
+Equality is defined by TESTFN if non-nil or by `equal' if nil."
   (seq-contains-p (map-keys map) key testfn))
 
 (defun map-some-p (pred map)
-  "Return any key/value pair for which (PRED key val) is non-nil is MAP."
+  "Return a key/value pair for which (PRED key val) is non-nil in MAP."
   (catch 'map--break
     (map-apply (lambda (key value)
                  (when (funcall pred key value)
