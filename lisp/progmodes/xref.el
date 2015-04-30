@@ -444,7 +444,22 @@ Used for temporary buffers.")
 
 (define-derived-mode xref--xref-buffer-mode special-mode "XREF"
   "Mode for displaying cross-references."
-  (setq buffer-read-only t))
+  (setq buffer-read-only t)
+  (setq next-error-function #'xref--next-error-function)
+  (setq next-error-last-buffer (current-buffer)))
+
+(defun xref--next-error-function (n reset?)
+  (when reset?
+    (goto-char (point-min)))
+  (let ((backward (< n 0))
+        (n (abs n))
+        (loc nil))
+    (dotimes (_ n)
+      (setq loc (xref--search-property 'xref-location backward)))
+    (cond (loc
+           (xref--pop-to-location loc))
+          (t
+           (error "No %s xref" (if backward "previous" "next"))))))
 
 (defun xref-quit (&optional kill)
   "Bury temporarily displayed buffers, then quit the current window.
