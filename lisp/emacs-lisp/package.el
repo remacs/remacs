@@ -2458,8 +2458,6 @@ of these dependencies, similar to the list returned by
          ((version-list-= version hv) "held")
          ((version-list-< version hv) "obsolete")
          (t "disabled"))))
-     ((package-built-in-p name version) "obsolete")
-     ((package--incompatible-p pkg-desc) "incompat")
      (dir                               ;One of the installed packages.
       (cond
        ((not (file-exists-p (package-desc-dir pkg-desc))) "deleted")
@@ -2468,6 +2466,7 @@ of these dependencies, similar to the list returned by
           (if (package--user-selected-p name)
               "installed" "dependency")))
        (t "obsolete")))
+     ((package--incompatible-p pkg-desc) "incompat")
      (t
       (let* ((ins (cadr (assq name package-alist)))
              (ins-v (if ins (package-desc-version ins))))
@@ -2542,24 +2541,25 @@ PACKAGES should be nil or t, which means to display all known packages.
 KEYWORDS should be nil or a list of keywords."
   ;; Construct list of (PKG-DESC . STATUS).
   (unless packages (setq packages t))
-  (let (info-list name)
+  (let (info-list)
     ;; Installed packages:
     (dolist (elt package-alist)
-      (setq name (car elt))
-      (when (or (eq packages t) (memq name packages))
-        (dolist (pkg (cdr elt))
-          (when (package--has-keyword-p pkg keywords)
-            (package--push pkg (package-desc-status pkg) info-list)))))
+      (let ((name (car elt)))
+        (when (or (eq packages t) (memq name packages))
+          (dolist (pkg (cdr elt))
+            (when (package--has-keyword-p pkg keywords)
+              (push pkg info-list))))))
 
     ;; Built-in packages:
     (dolist (elt package--builtins)
-      (setq name (car elt))
-      (when (and (not (eq name 'emacs)) ; Hide the `emacs' package.
-                 (package--has-keyword-p (package--from-builtin elt) keywords)
-                 (or package-list-unversioned
-                     (package--bi-desc-version (cdr elt)))
-                 (or (eq packages t) (memq name packages)))
-        (package--push (package--from-builtin elt) "built-in" info-list)))
+      (let ((pkg  (package--from-builtin elt))
+            (name (car elt)))
+        (when (not (eq name 'emacs)) ; Hide the `emacs' package.
+          (when (and (package--has-keyword-p pkg keywords)
+                     (or package-list-unversioned
+                         (package--bi-desc-version (cdr elt)))
+                     (or (eq packages t) (memq name packages)))
+            (push pkg info-list)))))
 
     ;; Available and disabled packages:
     (dolist (elt package-archive-contents)
@@ -2568,11 +2568,11 @@ KEYWORDS should be nil or a list of keywords."
           ;; Hide available-obsolete or low-priority packages.
           (dolist (pkg (package--remove-hidden (cdr elt)))
             (when (package--has-keyword-p pkg keywords)
-              (package--push pkg (package-desc-status pkg) info-list))))))
+              (push pkg info-list))))))
 
     ;; Print the result.
     (setq tabulated-list-entries
-          (mapcar #'package-menu--print-info info-list))))
+          (mapcar #'package-menu--print-info-simple info-list))))
 
 (defun package-all-keywords ()
   "Collect all package keywords"
@@ -2654,8 +2654,15 @@ shown."
   "Return a package entry suitable for `tabulated-list-entries'.
 PKG has the form (PKG-DESC . STATUS).
 Return (PKG-DESC [NAME VERSION STATUS DOC])."
-  (let* ((pkg-desc (car pkg))
-         (status  (cdr pkg))
+  (package-menu--print-info-simple (car pkg)))
+(make-obsolete 'package-menu--print-info
+               'package-menu--print-info-simple "25.1")
+
+(defun package-menu--print-info-simple (pkg)
+  "Return a package entry suitable for `tabulated-list-entries'.
+PKG is a package-desc object.
+Return (PKG-DESC [NAME VERSION STATUS DOC])."
+  (let* ((status  (package-desc-status pkg))
          (face (pcase status
                  (`"built-in"  'font-lock-builtin-face)
                  (`"available" 'default)
@@ -2668,21 +2675,20 @@ Return (PKG-DESC [NAME VERSION STATUS DOC])."
                  (`"unsigned"  'font-lock-warning-face)
                  (`"incompat"  'font-lock-comment-face)
                  (_            'font-lock-warning-face)))) ; obsolete.
-    (list pkg-desc
-          `[,(list (symbol-name (package-desc-name pkg-desc))
-                   'face 'link
-                   'follow-link t
-                   'package-desc pkg-desc
-                   'action 'package-menu-describe-package)
+    (list pkg
+          `[(,(symbol-name (package-desc-name pkg))
+             face link
+             follow-link t
+             package-desc ,pkg
+             action package-menu-describe-package)
             ,(propertize (package-version-join
-                          (package-desc-version pkg-desc))
+                          (package-desc-version pkg))
                          'font-lock-face face)
             ,(propertize status 'font-lock-face face)
             ,@(if (cdr package-archives)
-                  (list (propertize (or (package-desc-archive pkg-desc) "")
+                  (list (propertize (or (package-desc-archive pkg) "")
                                     'font-lock-face face)))
-            ,(propertize (package-desc-summary pkg-desc)
-                         'font-lock-face face)])))
+            ,(package-desc-summary pkg)])))
 
 (defvar package-menu--old-archive-contents nil
   "`package-archive-contents' before the latest refresh.")
