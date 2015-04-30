@@ -1380,10 +1380,9 @@ it to the file."
 (defun package--message (format &rest args)
   "Like `message', except sometimes don't print to minibuffer.
 If the variable `package--silence' is non-nil, the message is not
-displayed on the minibuffer."
-  (apply #'message format args)
-  (when package--silence
-    (message nil)))
+displayed on the echo area."
+  (let ((inhibit-message package--silence))
+    (apply #'message format args)))
 
 ;;;###autoload
 (defun package-import-keyring (&optional file)
