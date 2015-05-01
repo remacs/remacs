@@ -4,7 +4,7 @@
 
 ;; Author: Nicolas Petton <nicolas@petton.fr>
 ;; Keywords: sequences
-;; Version: 1.5
+;; Version: 1.6
 ;; Package: seq
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -40,6 +40,10 @@
 ;;
 ;; All functions are tested in test/automated/seq-tests.el
 
+;;; TODO:
+
+;; - Add support for &rest in the argument list of seq-let
+
 ;;; Code:
 
 (defmacro seq-doseq (spec &rest body)
@@ -64,6 +68,14 @@ Evaluate BODY with VAR bound to each element of SEQ, in turn.
                                   (setq ,index (+ ,index 1)))
                               (pop ,index))))
            ,@body)))))
+
+(defmacro seq-let (args seq &rest body)
+  "Bind the variables in ARGS to the elements of SEQ then evaluate BODY."
+  (declare (indent 2) (debug t))
+  (let ((seq-var (make-symbol "seq")))
+    `(let* ((,seq-var ,seq)
+           ,@(seq--make-bindings args seq-var))
+       ,@body)))
 
 (defun seq-drop (seq n)
   "Return a subsequence of SEQ without its first N elements.
@@ -336,7 +348,30 @@ This is an optimization for lists in `seq-take-while'."
 (defun seq--activate-font-lock-keywords ()
   "Activate font-lock keywords for some symbols defined in seq."
   (font-lock-add-keywords 'emacs-lisp-mode
-                          '("\\<seq-doseq\\>")))
+                          '("\\<seq-doseq\\>" "\\<seq-let\\>")))
+
+(defun seq--make-bindings (args seq &optional initial-bindings)
+  "Return an alist of the bindings the variables in ARGS to the elements of SEQ.
+if INITIAL-BINDINGS is non-nil, append new bindings to it, and
+return INITIAL-BINDINGS."
+  (let ((index 0))
+    (seq-doseq (name args)
+      (if (sequencep name)
+          (setq initial-bindings (seq--make-bindings
+                                  (seq--elt-safe args index)
+                                  `(seq--elt-safe ,seq ,index)
+                                  initial-bindings))
+        (push `(,name (seq--elt-safe ,seq ,index)) initial-bindings))
+      (setq index (1+ index)))
+    initial-bindings))
+
+(defun seq--elt-safe (seq n)
+  "Return element of SEQ at the index N.
+If no element is found, return nil."
+  (when (or (listp seq)
+            (and (sequencep seq)
+                 (> (seq-length seq) n)))
+    (seq-elt seq n)))
 
 (defalias 'seq-copy #'copy-sequence)
 (defalias 'seq-elt #'elt)

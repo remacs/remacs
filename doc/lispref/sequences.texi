@@ -797,6 +797,33 @@ vector or string (@pxref{Iteration} for more information about the
 @code{dolist} macro).  This is primarily useful for side-effects.
 @end defmac
 
+@defmac seq-let arguments sequense body@dots{}
+@cindex sequence destructuring
+  This macro binds the variables in defined in the sequence
+@var{arguments} to the elements of the sequence @var{sequence}.
+@var{arguments} can itself include sequences allowing for nested
+destructuring.
+
+@example
+@group
+(seq-let [first second] [1 2 3 4]
+  (list first second))
+@result{} (1 2)
+@end group
+@group
+(seq-let (_ a _ b) '(1 2 3 4)
+  (list a b))
+@result{} (2 4)
+@end group
+@group
+(seq-let [a [b [c]]] [1 [2 [3]]]
+  (list a b c))
+@result{} (1 2 3)
+@end group
+@end example
+@end defmac
+
+
 @node Arrays
 @section Arrays
 @cindex array
