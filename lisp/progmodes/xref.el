@@ -689,15 +689,12 @@ tools are used, and when."
          (semantic-symref-tool 'detect)
          (res (semantic-symref-find-references-by-name name 'subdirs))
          (hits (and res (oref res :hit-lines)))
-         (orig-buffers (buffer-list))
-         xrefs)
+         (orig-buffers (buffer-list)))
     (unwind-protect
-        (setq xrefs
-              (mapcar (lambda (hit) (xref--collect-reference hit name))
-                      hits))
+        (delq nil
+              (mapcar (lambda (hit) (xref--collect-reference hit name)) hits))
       (mapc #'kill-buffer
-            (cl-set-difference (buffer-list) orig-buffers)))
-    (delq nil xrefs)))
+            (cl-set-difference (buffer-list) orig-buffers)))))
 
 (defun xref--collect-reference (hit name)
   (pcase-let* ((`(,line . ,file) hit)
