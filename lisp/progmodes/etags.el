@@ -2082,6 +2082,10 @@ for \\[find-tag] (which see)."
 (defun etags-xref-find (action id)
   (pcase action
     (`definitions (etags--xref-find-definitions id))
+    (`references (mapcan
+                  (lambda (file)
+                    (xref-collect-references id (file-name-directory file)))
+                  tags-table-list))
     (`apropos (etags--xref-find-definitions id t))))
 
 (defun etags--xref-find-definitions (pattern &optional regexp?)
