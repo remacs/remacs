@@ -817,6 +817,9 @@ name.  The variable `system-name' is now obsolete.
 +++
 ** Function `write-region' no longer outputs "Wrote FILE" in batch mode.
 
+** If `pwd' is called with a prefix argument, insert the current default
+directory at point.
+
 ---
 ** New utilities in subr-x.el:
 *** New macros `if-let' and `when-let' allow defining bindings and to
