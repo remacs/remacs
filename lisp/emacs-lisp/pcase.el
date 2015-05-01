@@ -164,6 +164,9 @@ Currently, the following patterns are provided this way:"
 (defun pcase--make-docstring ()
   (let* ((main (documentation (symbol-function 'pcase) 'raw))
          (ud (help-split-fundoc main 'pcase)))
+    ;; So that eg emacs -Q -l cl-lib --eval "(documentation 'pcase)" works,
+    ;; where cl-lib is anything using pcase-defmacro.
+    (require 'help-fns)
     (with-temp-buffer
       (insert (or (cdr ud) main))
       (mapatoms
