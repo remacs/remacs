@@ -717,8 +717,6 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
 
 ;;;; Pasteboard support.
 
-(define-obsolete-function-alias 'ns-get-cut-buffer-internal
-  'ns-get-selection-internal "24.1")
 (define-obsolete-function-alias 'ns-store-cut-buffer-internal
   'gui-set-selection "24.1")
 
