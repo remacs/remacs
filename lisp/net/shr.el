@@ -178,7 +178,7 @@ cid: URL as the argument.")
 
 ;; Public functions and commands.
 (declare-function libxml-parse-html-region "xml.c"
-		  (start end &optional base-url))
+		  (start end &optional base-url discard-comments))
 
 (defun shr-render-buffer (buffer)
   "Display the HTML rendering of the current buffer."

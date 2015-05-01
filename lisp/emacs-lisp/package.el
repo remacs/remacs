@@ -956,7 +956,7 @@ is wrapped around any parts requiring it."
               deps))))
 
 (declare-function lm-header "lisp-mnt" (header))
-(declare-function lm-homepage "lisp-mnt" ())
+(declare-function lm-homepage "lisp-mnt" (&optional file))
 
 (defun package-buffer-info ()
   "Return a `package-desc' describing the package in the current buffer.
