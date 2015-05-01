@@ -930,6 +930,15 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
 (gui-method-define window-system-initialization ns
                    #'ns-initialize-window-system)
 
+(declare-function ns-own-selection-internal "nsselect.m" (selection value))
+(declare-function ns-disown-selection-internal "nsselect.m" (selection))
+(declare-function ns-selection-owner-p "nsselect.m"
+                  (&optional selection terminal))
+(declare-function ns-selection-exists-p "nsselect.m"
+                  (&optional selection terminal))
+(declare-function ns-get-selection "nsselect.m"
+                  (selection-symbol target-type &optional time-stamp terminal))
+
 (gui-method-define gui-set-selection ns
                    (lambda (selection value)
                      (if value (ns-own-selection-internal selection value)

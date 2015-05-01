@@ -284,6 +284,8 @@ TYPE is a string giving the nature of the error.  Warning is displayed in
                              type)
                      nil check-declare-warning-buffer)))
 
+(declare-function compilation-forget-errors "compile" ())
+
 (defun check-declare-files (&rest files)
   "Check veracity of all `declare-function' statements in FILES.
 Return a list of any errors found."
