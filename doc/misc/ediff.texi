@@ -10,7 +10,7 @@
 @setfilename ../../info/ediff.info
 
 @settitle Ediff User's Manual
-@documentencoding UTF-8
+@include docstyle.texi
 @synindex vr cp
 @synindex fn cp
 @synindex pg cp

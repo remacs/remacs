@@ -1,0 +1,4 @@
+@c Emacs documentation style settings
+@documentencoding UTF-8
+@codequotebacktick on
+@codequoteundirected on

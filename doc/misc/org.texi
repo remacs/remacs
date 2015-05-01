@@ -2,6 +2,7 @@
 @c %**start of header
 @setfilename ../../info/org.info
 @settitle The Org Manual
+@include docstyle.texi
 
 @set VERSION 8.2.9
 
@@ -11,7 +12,6 @@
 @set MAINTAINER Carsten Dominik
 @set MAINTAINEREMAIL @email{carsten at orgmode dot org}
 @set MAINTAINERCONTACT @uref{mailto:carsten at orgmode dot org,contact the maintainer}
-@documentencoding UTF-8
 @c %**end of header
 @finalout
 

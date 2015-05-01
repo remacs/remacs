@@ -4,11 +4,10 @@
 
 @setfilename ../../info/gnus.info
 @settitle Gnus Manual
+@include docstyle.texi
 @syncodeindex fn cp
 @syncodeindex vr cp
 @syncodeindex pg cp
-
-@documentencoding UTF-8
 
 @copying
 Copyright @copyright{} 1995--2015 Free Software Foundation, Inc.
