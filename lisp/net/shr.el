@@ -57,7 +57,7 @@ fit these criteria."
   :group 'shr
   :type '(choice (const nil) regexp))
 
-(defcustom shr-use-fonts nil
+(defcustom shr-use-fonts t
   "If non-nil, use proportional fonts for text."
   :version "25.1"
   :group 'shr
