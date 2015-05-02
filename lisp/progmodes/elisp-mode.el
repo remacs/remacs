@@ -650,7 +650,7 @@ It can be quoted, or be inside a quoted form."
       (if (string-prefix-p (car ref) (cadr ref))
           (setcdr ref (cddr ref))
         (setq ref (cdr ref))))
-    (mapcan
+    (cl-mapcan
      (lambda (dir)
        (and (file-exists-p dir)
             (xref-collect-references symbol dir)))
