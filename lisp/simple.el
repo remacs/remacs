@@ -6992,8 +6992,9 @@ The function should return non-nil if the two tokens do not match.")
                     (buffer-substring blinkpos (1+ blinkpos))))
                   ;; There is nothing to show except the char itself.
                   (t (buffer-substring blinkpos (1+ blinkpos))))))
-            (message "Matches %s"
-                     (substring-no-properties open-paren-line-string)))))))))
+            (minibuffer-message
+             "Matches %s"
+             (substring-no-properties open-paren-line-string)))))))))
 
 (defvar blink-paren-function 'blink-matching-open
   "Function called, if non-nil, whenever a close parenthesis is inserted.

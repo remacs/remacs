@@ -587,6 +587,8 @@ It can be quoted, or be inside a quoted form."
       (let ((sym (intern-soft id)))
         (when sym
           (elisp--xref-find-definitions sym))))
+    (`references
+     (elisp--xref-find-references id))
     (`apropos
      (elisp--xref-find-apropos id))))
 
@@ -634,6 +636,25 @@ It can be quoted, or be inside a quoted form."
                         loc)
              lst))))
       lst)))
+
+(defun elisp--xref-find-references (symbol)
+  (let* ((dirs (sort
+                (mapcar
+                 (lambda (dir)
+                   (file-name-as-directory (expand-file-name dir)))
+                 (cons package-user-dir load-path))
+                #'string<))
+         (ref dirs))
+    ;; Delete subdirectories from the list.
+    (while (cdr ref)
+      (if (string-prefix-p (car ref) (cadr ref))
+          (setcdr ref (cddr ref))
+        (setq ref (cdr ref))))
+    (cl-mapcan
+     (lambda (dir)
+       (and (file-exists-p dir)
+            (xref-collect-references symbol dir)))
+     dirs)))
 
 (defun elisp--xref-find-apropos (regexp)
   (apply #'nconc

@@ -674,6 +674,49 @@ and just use etags."
     (setq-local xref-identifier-completion-table-function
                 (cdr xref-etags-mode--saved))))
 
+(declare-function semantic-symref-find-references-by-name "semantic/symref")
+(declare-function semantic-find-file-noselect "semantic/fw")
+
+(defun xref-collect-references (name dir)
+  "Collect mentions of NAME inside DIR.
+Uses the Semantic Symbol Reference API, see
+`semantic-symref-find-references-by-name' for details on which
+tools are used, and when."
+  (require 'semantic/symref)
+  (defvar semantic-symref-tool)
+  (cl-assert (directory-name-p dir))
+  (let* ((default-directory dir)
+         (semantic-symref-tool 'detect)
+         (res (semantic-symref-find-references-by-name name 'subdirs))
+         (hits (and res (oref res :hit-lines)))
+         (orig-buffers (buffer-list)))
+    (unwind-protect
+        (delq nil
+              (mapcar (lambda (hit) (xref--collect-reference hit name)) hits))
+      (mapc #'kill-buffer
+            (cl-set-difference (buffer-list) orig-buffers)))))
+
+(defun xref--collect-reference (hit name)
+  (pcase-let* ((`(,line . ,file) hit)
+               (buf (or (find-buffer-visiting file)
+                        (semantic-find-file-noselect file))))
+    (with-current-buffer buf
+      (save-excursion
+        (goto-char (point-min))
+        (forward-line (1- line))
+        (when (re-search-forward (format "\\_<%s\\_>"
+                                         (regexp-quote name))
+                                 (line-end-position) t)
+          (goto-char (match-beginning 0))
+          (xref-make (format
+                      "%d: %s"
+                      line
+                      (buffer-substring
+                       (line-beginning-position)
+                       (line-end-position)))
+                     (xref-make-file-location file line
+                                              (current-column))))))))
+
 
 (provide 'xref)
 

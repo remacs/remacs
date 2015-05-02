@@ -344,6 +344,7 @@ This is an optimization for lists in `seq-take-while'."
 (defalias 'seq-do #'mapc)
 (defalias 'seq-each #'seq-do)
 (defalias 'seq-map #'mapcar)
+(defalias 'seq-p #'sequencep)
 
 (unless (fboundp 'elisp--font-lock-flush-elisp-buffers)
   ;; In Emacs≥25, (via elisp--font-lock-flush-elisp-buffers and a few others)

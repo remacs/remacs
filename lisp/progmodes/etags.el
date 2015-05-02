@@ -2082,6 +2082,15 @@ for \\[find-tag] (which see)."
 (defun etags-xref-find (action id)
   (pcase action
     (`definitions (etags--xref-find-definitions id))
+    (`references
+     (let ((dirs (if tags-table-list
+                     (mapcar #'file-name-directory tags-table-list)
+                   ;; If no tags files are loaded, prompt for the dir.
+                   (list (read-directory-name "In directory: " nil nil t)))))
+       (cl-mapcan
+        (lambda (dir)
+          (xref-collect-references id dir))
+        dirs)))
     (`apropos (etags--xref-find-definitions id t))))
 
 (defun etags--xref-find-definitions (pattern &optional regexp?)
