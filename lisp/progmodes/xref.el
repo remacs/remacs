@@ -510,21 +510,20 @@ XREF-ALIST is of the form ((GROUP . (XREF ...)) ...).  Where
 GROUP is a string for decoration purposes and XREF is an
 `xref--xref' object."
   (cl-loop for ((group . xrefs) . more1) on xref-alist do
-           (xref--insert-propertized '(face bold) group "\n")
+           (xref--insert-propertized '(face compilation-info) group "\n")
            (cl-loop for (xref . more2) on xrefs do
                     (insert "  ")
                     (with-slots (description location) xref
                       (xref--insert-propertized
                        (list 'xref-location location
-                             'face 'font-lock-keyword-face
+                             ;; 'face 'font-lock-keyword-face
                              'mouse-face 'highlight
                              'keymap xref--button-map
                              'help-echo
                              (concat "mouse-2: display in another window, "
                                      "RET or mouse-1: follow reference"))
                        description))
-                    (when (or more1 more2)
-                      (insert "\n")))))
+                    (insert "\n"))))
 
 (defun xref--analyze (xrefs)
   "Find common filenames in XREFS.
