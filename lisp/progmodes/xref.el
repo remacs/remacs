@@ -509,6 +509,7 @@ meantime are preserved."
 XREF-ALIST is of the form ((GROUP . (XREF ...)) ...).  Where
 GROUP is a string for decoration purposes and XREF is an
 `xref--xref' object."
+  (require 'compile) ;; For the compilation-info face.
   (cl-loop for ((group . xrefs) . more1) on xref-alist do
            (xref--insert-propertized '(face compilation-info) group "\n")
            (cl-loop for (xref . more2) on xrefs do
