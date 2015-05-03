@@ -475,11 +475,12 @@ It can be quoted, or be inside a quoted form."
 		      (point)))
 		(scan-error pos))))
            ;; t if in function position.
-           (funpos (eq (char-before beg) ?\()))
+           (funpos (eq (char-before beg) ?\())
+           (quoted (elisp--form-quoted-p beg)))
       (when (and end (or (not (nth 8 (syntax-ppss)))
                          (eq (char-before beg) ?`)))
         (let ((table-etc
-               (if (not funpos)
+               (if (or (not funpos) quoted)
                    ;; FIXME: We could look at the first element of the list and
                    ;; use it to provide a more specific completion table in some
                    ;; cases.  E.g. filter out keywords that are not understood by
@@ -491,7 +492,7 @@ It can be quoted, or be inside a quoted form."
                            :company-doc-buffer #'elisp--company-doc-buffer
                            :company-docsig #'elisp--company-doc-string
                            :company-location #'elisp--company-location))
-                    ((elisp--form-quoted-p beg)
+                    (quoted
                      (list nil obarray
                            ;; Don't include all symbols (bug#16646).
                            :predicate (lambda (sym)
