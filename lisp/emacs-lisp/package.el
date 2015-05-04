@@ -888,14 +888,12 @@ untar into a directory named DIR; otherwise, signal an error."
 (defvar generated-autoload-file)
 (defvar version-control)
 
-(defvar package--silence nil)
-
 (defun package-generate-autoloads (name pkg-dir)
   (let* ((auto-name (format "%s-autoloads.el" name))
          ;;(ignore-name (concat name "-pkg.el"))
          (generated-autoload-file (expand-file-name auto-name pkg-dir))
          ;; Silence `autoload-generate-file-autoloads'.
-         (noninteractive package--silence)
+         (noninteractive inhibit-message)
          (backup-inhibited t)
          (version-control 'never))
     (package-autoload-ensure-default-file generated-autoload-file)
@@ -915,10 +913,13 @@ untar into a directory named DIR; otherwise, signal an error."
   )
 
 ;;;; Compilation
+(defvar warning-minimum-level)
 (defun package--compile (pkg-desc)
   "Byte-compile installed package PKG-DESC."
-  (package-activate-1 pkg-desc)
-  (byte-recompile-directory (package-desc-dir pkg-desc) 0 t))
+  (let ((warning-minimum-level :error)
+        (save-silently inhibit-message))
+    (package-activate-1 pkg-desc)
+    (byte-recompile-directory (package-desc-dir pkg-desc) 0 t)))
 
 ;;;; Inferring package from current buffer
 (defun package-read-from-string (str)
@@ -1377,13 +1378,6 @@ it to the file."
 (declare-function epg-configuration "epg-config" ())
 (declare-function epg-import-keys-from-file "epg" (context keys))
 
-(defun package--message (format &rest args)
-  "Like `message', except sometimes don't print to minibuffer.
-If the variable `package--silence' is non-nil, the message is not
-displayed on the echo area."
-  (let ((inhibit-message package--silence))
-    (apply #'message format args)))
-
 ;;;###autoload
 (defun package-import-keyring (&optional file)
   "Import keys from FILE."
@@ -1394,9 +1388,9 @@ displayed on the echo area."
     (with-file-modes 448
       (make-directory homedir t))
     (setf (epg-context-home-directory context) homedir)
-    (package--message "Importing %s..." (file-name-nondirectory file))
+    (message "Importing %s..." (file-name-nondirectory file))
     (epg-import-keys-from-file context file)
-    (package--message "Importing %s...done" (file-name-nondirectory file))))
+    (message "Importing %s...done" (file-name-nondirectory file))))
 
 (defvar package--post-download-archives-hook nil
   "Hook run after the archive contents are downloaded.
@@ -1488,14 +1482,14 @@ downloads in the background."
     (make-directory package-user-dir t))
   (let ((default-keyring (expand-file-name "package-keyring.gpg"
                                            data-directory))
-        (package--silence async))
+        (inhibit-message async))
     (when (and package-check-signature (file-exists-p default-keyring))
       (condition-case-unless-debug error
           (progn
             (epg-check-configuration (epg-configuration))
             (package-import-keyring default-keyring))
-        (error (message "Cannot import default keyring: %S" (cdr error)))))
-    (package--download-and-read-archives async)))
+        (error (message "Cannot import default keyring: %S" (cdr error))))))
+  (package--download-and-read-archives async))
 
 
 ;;; Dependency Management
@@ -1537,7 +1531,7 @@ SEEN is used internally to detect infinite recursion."
             ;; we re-add it (along with its dependencies) at an earlier place
             ;; below (bug#16994).
             (if (memq already seen)     ;Avoid inf-loop on dependency cycles.
-                (package--message "Dependency cycle going through %S"
+                (message "Dependency cycle going through %S"
                          (package-desc-full-name already))
               (setq packages (delq already packages))
               (setq already nil))
@@ -1603,7 +1597,7 @@ Used to populate `package-selected-packages'."
 
 (defun package--save-selected-packages (value)
   "Set and save `package-selected-packages' to VALUE."
-  (let ((save-silently package--silence))
+  (let ((save-silently inhibit-message))
     (customize-save-variable
      'package-selected-packages
      (setq package-selected-packages value))))
@@ -1724,7 +1718,8 @@ operation is done."
                       package-unsigned-archives))
           ;; If we don't care about the signature, unpack and we're
           ;; done.
-          (progn (let ((save-silently async))
+          (progn (let ((save-silently    async)
+                       (inhibit-message  async))
                    (package-unpack pkg-desc))
                  (funcall callback))
         ;; If we care, check it and *then* write the file.
@@ -1740,7 +1735,8 @@ operation is done."
                  (package-desc-name pkg-desc)))
              ;; Signature checked, unpack now.
              (with-temp-buffer (insert content)
-                               (let ((save-silently async))
+                               (let ((save-silently    async)
+                                     (inhibit-message  async))
                                  (package-unpack pkg-desc)))
              ;; Here the package has been installed successfully, mark it as
              ;; signed if appropriate.
@@ -1886,7 +1882,8 @@ to install it but still mark it as selected."
                                                (package-desc-reqs pkg)))
               (package-compute-transaction () (list (list pkg))))))
       (package-download-transaction transaction async callback)
-    (package--message "`%s' is already installed" (package-desc-full-name pkg))))
+    (message "`%s' is already installed" (package-desc-full-name pkg))
+    (funcall callback)))
 
 (defun package-strip-rcs-id (str)
   "Strip RCS version ID from the version string STR.
@@ -2028,7 +2025,7 @@ If NOSAVE is non-nil, the package is not removed from
              (delete pkg-desc pkgs)
              (unless (cdr pkgs)
                (setq package-alist (delq pkgs package-alist))))
-           (package--message "Package `%s' deleted." (package-desc-full-name pkg-desc))))))
+           (message "Package `%s' deleted." (package-desc-full-name pkg-desc))))))
 
 ;;;###autoload
 (defun package-reinstall (pkg)
@@ -2908,19 +2905,19 @@ asynchronously."
         (package-install
          pkg dont-mark async
          (lambda () (package-menu--perform-transaction rest delete-list async))))
-    ;; Once there are no more packages to install, proceed to
-    ;; deletion.
-    (let ((package--silence async))
+    (let ((inhibit-message async))
+      ;; Once there are no more packages to install, proceed to
+      ;; deletion.
       (dolist (elt (package--sort-by-dependence delete-list))
         (condition-case-unless-debug err
             (package-delete elt)
-          (error (message (cadr err)))))
-      (when package-selected-packages
-        (when-let ((removable (package--removable-packages)))
-          (package--message "These %d packages are no longer needed, type `M-x package-autoremove' to remove them (%s)"
-                            (length removable)
-                            (mapconcat #'symbol-name removable ", ")))))
+          (error (message (cadr err))))))
     (message "Transaction done")
+    (when package-selected-packages
+      (when-let ((removable (package--removable-packages)))
+        (message "These %d packages are no longer needed, type `M-x package-autoremove' to remove them (%s)"
+          (length removable)
+          (mapconcat #'symbol-name removable ", "))))
     (package-menu--post-refresh)))
 
 (defun package-menu-execute (&optional noquery)
