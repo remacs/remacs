@@ -4873,7 +4873,7 @@ store it in a Lisp variable.  Example:
 (defun save-mark-and-excursion--save ()
   (cons
    (let ((mark (mark-marker)))
-     (and mark (marker-position mark) (copy-marker mark)))
+     (and (marker-position mark) (copy-marker mark)))
    mark-active))
 
 (defun save-mark-and-excursion--restore (saved-mark-info)
@@ -4883,17 +4883,18 @@ store it in a Lisp variable.  Example:
         (saved-mark-active (cdr saved-mark-info)))
     ;; Mark marker
     (if (null saved-mark)
-        (set-marker (mark-marker nil))
+        (set-marker (mark-marker) nil)
       (setf nmark (marker-position saved-mark))
       (set-marker (mark-marker) nmark)
       (set-marker saved-mark nil))
     ;; Mark active
     (let ((cur-mark-active mark-active))
-      (setf mark-active saved-mark-active)
+      (setq mark-active saved-mark-active)
       ;; If mark is active now, and either was not active or was at a
       ;; different place, run the activate hook.
       (if saved-mark-active
-          (unless (eq omark nmark)
+          (when (or (not cur-mark-active)
+                    (not (eq omark nmark)))
             (run-hooks 'activate-mark-hook))
         ;; If mark has ceased to be active, run deactivate hook.
         (when cur-mark-active
