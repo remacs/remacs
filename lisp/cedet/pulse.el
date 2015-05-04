@@ -133,7 +133,8 @@ Return t if there is more drift to do, nil if completed."
     (let* ((frame (color-values (face-background 'default)))
 	   (start (color-values (face-background
 				 (get 'pulse-highlight-face
-				      :startface))))
+				      :startface)
+                                 nil t)))
 	   (frac  (list (/ (- (nth 0 frame) (nth 0 start)) pulse-iterations)
 			(/ (- (nth 1 frame) (nth 1 start)) pulse-iterations)
 			(/ (- (nth 2 frame) (nth 2 start)) pulse-iterations)))
@@ -154,7 +155,7 @@ Return t if there is more drift to do, nil if completed."
   "Reset the pulse highlighting FACE."
   (set-face-background 'pulse-highlight-face
 		       (if face
-			   (face-background face)
+			   (face-background face nil t)
 			 (face-background 'pulse-highlight-start-face)
 			 ))
   (put 'pulse-highlight-face :startface (or face
@@ -238,6 +239,7 @@ Optional argument FACE specifies the face to do the highlighting."
                  (point))))
       (pulse-momentary-highlight-region start end face))))
 
+;;;###autoload
 (defun pulse-momentary-highlight-region (start end &optional face)
   "Highlight between START and END, unhighlighting before next command.
 Optional argument FACE specifies the face to do the highlighting."

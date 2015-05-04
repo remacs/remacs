@@ -313,7 +313,15 @@ or when the command has been called with the prefix argument."
 
 (defun xref--maybe-pulse ()
   (when xref-pulse-on-jump
-    (pulse-momentary-highlight-one-line (point))))
+    (let (beg end)
+      (save-excursion
+        (back-to-indentation)
+        (if (eolp)
+            (setq beg (line-beginning-position)
+                  end (1+ (point)))
+          (setq beg (point)
+                end (line-end-position))))
+      (pulse-momentary-highlight-region beg end 'next-error))))
 
 ;; etags.el needs this
 (defun xref-clear-marker-stack ()
