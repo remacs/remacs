@@ -544,12 +544,13 @@ It can be quoted, or be inside a quoted form."
                                         (< (point) beg)))))
                         (list t obarray
                               :predicate (lambda (sym) (get sym 'error-conditions))))
-                       ((and ?\(
-                             (guard (save-excursion
-                                      (goto-char (1- beg))
-                                      (up-list -1)
-                                      (forward-symbol -1)
-                                      (looking-at "\\_<let\\*?\\_>"))))
+                       ((or `let `let*
+                            (and ?\(
+                                 (guard (save-excursion
+                                          (goto-char (1- beg))
+                                          (up-list -1)
+                                          (forward-symbol -1)
+                                          (looking-at "\\_<let\\*?\\_>")))))
                         (list t obarray
                               :predicate #'boundp
                               :company-doc-buffer #'elisp--company-doc-buffer
