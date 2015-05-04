@@ -285,6 +285,11 @@ or when the command has been called with the prefix argument."
                  (const :tag "auto" nil))
   :version "25.1")
 
+(defcustom xref-pulse-on-jump t
+  "When non-nil, momentarily highlight jump locations."
+  :type 'boolean
+  :version "25.1")
+
 (defvar xref--marker-ring (make-ring xref-marker-ring-length)
   "Ring of markers to implement the marker stack.")
 
@@ -303,7 +308,12 @@ or when the command has been called with the prefix argument."
       (switch-to-buffer (or (marker-buffer marker)
                             (error "The marked buffer has been deleted")))
       (goto-char (marker-position marker))
-      (set-marker marker nil nil))))
+      (set-marker marker nil nil)
+      (xref--maybe-pulse))))
+
+(defun xref--maybe-pulse ()
+  (when xref-pulse-on-jump
+    (pulse-momentary-highlight-one-line (point))))
 
 ;; etags.el needs this
 (defun xref-clear-marker-stack ()
@@ -338,7 +348,8 @@ WINDOW controls how the buffer is displayed:
   (cl-ecase window
     ((nil)  (switch-to-buffer (current-buffer)))
     (window (pop-to-buffer (current-buffer) t))
-    (frame  (let ((pop-up-frames t)) (pop-to-buffer (current-buffer) t)))))
+    (frame  (let ((pop-up-frames t)) (pop-to-buffer (current-buffer) t))))
+  (xref--maybe-pulse))
 
 
 ;;; XREF buffer (part of the UI)
@@ -374,6 +385,7 @@ Used for temporary buffers.")
   (with-selected-window (display-buffer (current-buffer) other-window)
     (goto-char pos)
     (recenter recenter-arg)
+    (xref--maybe-pulse)
     (let ((buf (current-buffer))
           (win (selected-window)))
       (with-current-buffer xref-buf
@@ -415,7 +427,9 @@ Used for temporary buffers.")
   (xref-show-location-at-point))
 
 (defun xref--location-at-point ()
-  (get-text-property (point) 'xref-location))
+  (save-excursion
+    (back-to-indentation)
+    (get-text-property (point) 'xref-location)))
 
 (defvar-local xref--window nil
   "ACTION argument to call `display-buffer' with.")
@@ -423,7 +437,6 @@ Used for temporary buffers.")
 (defun xref-goto-xref ()
   "Jump to the xref on the current line and bury the xref buffer."
   (interactive)
-  (back-to-indentation)
   (let ((loc (or (xref--location-at-point)
                  (user-error "No reference at point")))
         (window xref--window))

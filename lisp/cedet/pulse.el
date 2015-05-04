@@ -224,6 +224,7 @@ Optional argument FACE specifies the face to do the highlighting."
   ;; Remove this hook.
   (remove-hook 'pre-command-hook 'pulse-momentary-unhighlight))
 
+;;;###autoload
 (defun pulse-momentary-highlight-one-line (point &optional face)
   "Highlight the line around POINT, unhighlighting before next command.
 Optional argument FACE specifies the face to do the highlighting."
