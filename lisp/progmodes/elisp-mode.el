@@ -625,7 +625,10 @@ It can be quoted, or be inside a quoted form."
 
 (defun elisp--xref-find-definitions (symbol)
   (save-excursion
-    (let (lst)
+    (let ((fmt "(%s %s)")
+          lst)
+      (put-text-property 1 3 'face 'font-lock-keyword-face fmt)
+      (put-text-property 4 6 'face 'font-lock-function-name-face fmt)
       (dolist (type '(feature defface defvar defun))
         (let ((loc
                (condition-case err
@@ -634,7 +637,7 @@ It can be quoted, or be inside a quoted form."
                   (xref-make-bogus-location (error-message-string err))))))
           (when loc
             (push
-             (xref-make (format "(%s %s)" type symbol)
+             (xref-make (format fmt type symbol)
                         loc)
              lst))))
       lst)))
