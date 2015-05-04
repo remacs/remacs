@@ -86,13 +86,11 @@ to give to the program."
           (let ((chars (append line nil)))
             (when (= 32 (nth 0 chars))
               (let ((path (substring line 1)))
-                (when (file-accessible-directory-p path)
-                  (when (if (memq system-type '(windows-nt))
-                            (/= ?/ (nth 1 chars))
-                          (= ?/ (nth 1 chars)))
-                    (add-to-list 'inc-path
-                                 (expand-file-name (substring line 1))
-                                 t)))))))))
+                (when (and (file-accessible-directory-p path)
+                           (file-name-absolute-p path))
+                  (add-to-list 'inc-path
+                               (expand-file-name path)
+                               t))))))))
     inc-path))
 
 

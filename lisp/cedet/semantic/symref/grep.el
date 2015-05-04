@@ -105,17 +105,26 @@ GREPPATTERN is the pattern used by grep."
   ;; We have grep-compute-defaults.  Let's use it.
   (grep-compute-defaults)
   (let* ((grep-expand-keywords semantic-symref-grep-expand-keywords)
-	 (cmd (grep-expand-template grep-find-template
-				    greppattern
-				    filepattern
-				    rootdir)))
+	 (cmd (grep-expand-template
+               (if (memq system-type '(windows-nt ms-dos))
+                   ;; grep-find uses '--color=always' on MS-Windows
+                   ;; because it wants the colorized output, to show
+                   ;; it to the user.  By contrast, here we don't show
+                   ;; the output, and the SGR escapes get in the way
+                   ;; of parsing the output.
+                   (replace-regexp-in-string "--color=always" ""
+                                             grep-find-template t t)
+                 grep-find-template)
+               greppattern
+               filepattern
+               rootdir)))
     ;; For some reason, my default has no <D> in it.
     (when (string-match "find \\(\\.\\)" cmd)
       (setq cmd (replace-match rootdir t t cmd 1)))
     ;;(message "New command: %s" cmd)
     cmd))
 
-(defcustom semantic-symref-grep-shell "sh"
+(defcustom semantic-symref-grep-shell shell-file-name
   "The shell command to use for executing find/grep.
 This shell should support pipe redirect syntax."
   :group 'semantic
@@ -140,7 +149,8 @@ This shell should support pipe redirect syntax."
 	 (greppat (cond ((eq (oref tool :searchtype) 'regexp)
 			 (oref tool searchfor))
 			(t
-			 (concat "'\\<" (oref tool searchfor) "\\>'"))))
+			 (shell-quote-argument
+                          (concat "\\<" (oref tool searchfor) "\\>")))))
 	 ;; Misc
 	 (b (get-buffer-create "*Semantic SymRef*"))
 	 (ans nil)
@@ -158,10 +168,12 @@ This shell should support pipe redirect syntax."
 	  (let ((cmd (concat "find " default-directory " -type f " filepattern " -print0 "
 			     "| xargs -0 grep -H " grepflags "-e " greppat)))
 	    ;;(message "Old command: %s" cmd)
-	    (call-process semantic-symref-grep-shell nil b nil "-c" cmd)
+	    (call-process semantic-symref-grep-shell nil b nil
+                          shell-command-switch cmd)
 	    )
 	(let ((cmd (semantic-symref-grep-use-template rootdir filepattern grepflags greppat)))
-	  (call-process semantic-symref-grep-shell nil b nil "-c" cmd))
+	  (call-process semantic-symref-grep-shell nil b nil
+                        shell-command-switch cmd))
 	))
     (setq ans (semantic-symref-parse-tool-output tool b))
     ;; Return the answer
