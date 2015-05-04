@@ -4870,6 +4870,44 @@ store it in a Lisp variable.  Example:
     (setq mark-active nil)
     (set-marker (mark-marker) nil)))
 
+(defun save-mark-and-excursion--save ()
+  (cons
+   (let ((mark (mark-marker)))
+     (and mark (marker-position mark) (copy-marker mark)))
+   mark-active))
+
+(defun save-mark-and-excursion--restore (saved-mark-info)
+  (let ((saved-mark (car saved-mark-info))
+        (omark (marker-position (mark-marker)))
+        (nmark nil)
+        (saved-mark-active (cdr saved-mark-info)))
+    ;; Mark marker
+    (if (null saved-mark)
+        (set-marker (mark-marker nil))
+      (setf nmark (marker-position saved-mark))
+      (set-marker (mark-marker) nmark)
+      (set-marker saved-mark nil))
+    ;; Mark active
+    (let ((cur-mark-active mark-active))
+      (setf mark-active saved-mark-active)
+      ;; If mark is active now, and either was not active or was at a
+      ;; different place, run the activate hook.
+      (if saved-mark-active
+          (unless (eq omark nmark)
+            (run-hooks 'activate-mark-hook))
+        ;; If mark has ceased to be active, run deactivate hook.
+        (when cur-mark-active
+          (run-hooks 'deactivate-mark-hook))))))
+
+(defmacro save-mark-and-excursion (&rest body)
+  "Like `save-excursion', but also save and restore the mark state.
+This macro does what `save-excursion' did before Emacs 25.1."
+  (let ((saved-marker-sym (make-symbol "saved-marker")))
+    `(let ((,saved-marker-sym (save-mark-and-excursion--save)))
+       (unwind-protect
+            (save-excursion ,@body)
+         (save-mark-and-excursion--restore ,saved-marker-sym)))))
+
 (defcustom use-empty-active-region nil
   "Whether \"region-aware\" commands should act on empty regions.
 If nil, region-aware commands treat empty regions as inactive.
