@@ -2143,6 +2143,10 @@ for \\[find-tag] (which see)."
         (etags-goto-tag-location tag-info)
         (point-marker)))))
 
+(cl-defmethod xref-location-line ((l xref-etags-location))
+  (with-slots (tag-info) l
+    (nth 1 tag-info)))
+
 
 (provide 'etags)
 

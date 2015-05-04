@@ -73,13 +73,17 @@
   "Return a string used to group a set of locations.
 This is typically the filename.")
 
+(cl-defgeneric xref-location-line (_location)
+  "Return the line number corresponding to the location."
+  nil)
+
 ;;;; Commonly needed location classes are defined here:
 
 ;; FIXME: might be useful to have an optional "hint" i.e. a string to
 ;; search for in case the line number is sightly out of date.
 (defclass xref-file-location (xref-location)
   ((file :type string :initarg :file)
-   (line :type fixnum :initarg :line)
+   (line :type fixnum :initarg :line :reader xref-location-line)
    (column :type fixnum :initarg :column))
   :documentation "A file location is a file/line/column triple.
 Line numbers start from 1 and columns from 0.")
@@ -435,9 +439,10 @@ Used for temporary buffers.")
   (xref-show-location-at-point))
 
 (defun xref--location-at-point ()
-  (save-excursion
-    (back-to-indentation)
-    (get-text-property (point) 'xref-location)))
+  (let ((pos (next-single-char-property-change (line-beginning-position)
+                                               'xref-location
+                                               nil (line-end-position))))
+    (and pos (get-text-property pos 'xref-location))))
 
 (defvar-local xref--window nil
   "ACTION argument to call `display-buffer' with.")
@@ -531,11 +536,24 @@ XREF-ALIST is of the form ((GROUP . (XREF ...)) ...).  Where
 GROUP is a string for decoration purposes and XREF is an
 `xref--xref' object."
   (require 'compile) ;; For the compilation-info face.
-  (cl-loop for ((group . xrefs) . more1) on xref-alist do
+  (cl-loop for ((group . xrefs) . more1) on xref-alist
+           for max-line-width =
+           (cl-loop for xref in xrefs
+                    maximize (let ((line (xref-location-line
+                                          (oref xref :location))))
+                               (length (and line (format "%d" line)))))
+           for line-format = (and max-line-width
+                                  (format "%%%dd: " max-line-width))
+           do
            (xref--insert-propertized '(face compilation-info) group "\n")
            (cl-loop for (xref . more2) on xrefs do
-                    (insert "  ")
                     (with-slots (description location) xref
+                      (let ((line (xref-location-line location)))
+                        (if line
+                            (xref--insert-propertized
+                             '(face compilation-line-number)
+                             (format line-format line))
+                          (insert "  ")))
                       (xref--insert-propertized
                        (list 'xref-location location
                              ;; 'face 'font-lock-keyword-face
@@ -729,12 +747,9 @@ tools are used, and when."
                                          (regexp-quote name))
                                  (line-end-position) t)
           (goto-char (match-beginning 0))
-          (xref-make (format
-                      "%d: %s"
-                      line
-                      (buffer-substring
-                       (line-beginning-position)
-                       (line-end-position)))
+          (xref-make (buffer-substring
+                      (line-beginning-position)
+                      (line-end-position))
                      (xref-make-file-location file line
                                               (current-column))))))))
 
