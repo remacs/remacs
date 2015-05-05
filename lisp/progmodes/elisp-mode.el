@@ -628,12 +628,15 @@ It can be quoted, or be inside a quoted form."
         (setq file (substring file 0 -1)))
       (xref-make-elisp-location sym type file))))
 
+(defvar elisp--xref-format
+  (let ((str "(%s %s)"))
+    (put-text-property 1 3 'face 'font-lock-keyword-face str)
+    (put-text-property 4 6 'face 'font-lock-function-name-face str)
+    str))
+
 (defun elisp--xref-find-definitions (symbol)
   (save-excursion
-    (let ((fmt "(%s %s)")
-          lst)
-      (put-text-property 1 3 'face 'font-lock-keyword-face fmt)
-      (put-text-property 4 6 'face 'font-lock-function-name-face fmt)
+    (let (lst)
       (dolist (type '(feature defface defvar defun))
         (let ((loc
                (condition-case err
@@ -642,7 +645,7 @@ It can be quoted, or be inside a quoted form."
                   (xref-make-bogus-location (error-message-string err))))))
           (when loc
             (push
-             (xref-make (format fmt type symbol)
+             (xref-make (format elisp--xref-format type symbol)
                         loc)
              lst))))
       lst)))
