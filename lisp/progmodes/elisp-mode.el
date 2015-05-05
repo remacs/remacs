@@ -604,12 +604,16 @@ It can be quoted, or be inside a quoted form."
                        (setq sym (car fun-lib))
                        (cdr fun-lib))))
            (`defvar (and (boundp sym)
-                         ;; Don't show minor modes twice.
-                         ;; TODO: If TYPE ever becomes dependent on the
-                         ;; context, move this check outside.
-                         (not (fboundp sym))
-                         (or (symbol-file sym 'defvar)
-                             (help-C-file-name sym 'var))))
+                         (let ((el-file (symbol-file sym 'defvar)))
+                           (if el-file
+                               (and
+                                ;; Don't show minor modes twice.
+                                ;; TODO: If TYPE ever becomes dependent on the
+                                ;; context, move this check outside.
+                                (not (and (fboundp sym)
+                                          (memq sym minor-mode-list)))
+                                el-file)
+                             (help-C-file-name sym 'var)))))
            (`feature (and (featurep sym)
                           ;; Skip when a function with the same name
                           ;; is defined, because it's probably in the

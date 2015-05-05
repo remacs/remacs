@@ -22,6 +22,9 @@
 ;;; Code:
 
 (require 'ert)
+(require 'xref)
+
+;;; Completion
 
 (defun elisp--test-completions ()
   (let ((data (elisp-completion-at-point)))
@@ -100,6 +103,27 @@
     (let ((comps (elisp--test-completions)))
       (should (member "backup-buffer" comps))
       (should-not (member "backup-inhibited" comps)))))
+
+;;; Navigation
+
+(ert-deftest elisp-xref-finds-both-function-and-variable ()
+  ;; "system-name" is both: a variable and a function
+  (let ((defs (elisp-xref-find 'definitions "system-name")))
+    (should (= (length defs) 2))
+    (should (string= (xref--xref-description (nth 0 defs))
+                     "(defun system-name)"))
+    (should (string= (xref--xref-description (nth 1 defs))
+                     "(defvar system-name)")))
+  ;; It's a minor mode, but the variable is defined in buffer.c
+  (let ((defs (elisp-xref-find 'definitions "abbrev-mode")))
+    (should (= (length defs) 2))))
+
+(ert-deftest elisp-xref-finds-only-function-for-minor-mode ()
+  ;; Both variable and function are defined in the same place.
+  (let ((defs (elisp-xref-find 'definitions "visible-mode")))
+    (should (= (length defs) 1))
+    (should (string= (xref--xref-description (nth 0 defs))
+                     "(defun visible-mode)"))))
 
 (provide 'elisp-mode-tests)
 ;;; elisp-mode-tests.el ends here
