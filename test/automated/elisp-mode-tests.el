@@ -84,7 +84,7 @@
       (should (member "bar" comps))
       (should (member "baz" comps)))))
 
-(ert-deftest completest-variables-in-let-bindings ()
+(ert-deftest elisp-completest-variables-in-let-bindings ()
   (dolist (text '("(let (ba" "(let* ((ba"))
     (with-temp-buffer
       (emacs-lisp-mode)
@@ -92,6 +92,14 @@
       (let ((comps (elisp--test-completions)))
         (should (member "backup-inhibited" comps))
         (should-not (member "backup-buffer" comps))))))
+
+(ert-deftest elisp-completes-functions-after-let-bindings ()
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (insert "(let ((bar 1) (baz 2)) (ba")
+    (let ((comps (elisp--test-completions)))
+      (should (member "backup-buffer" comps))
+      (should-not (member "backup-inhibited" comps)))))
 
 (provide 'elisp-mode-tests)
 ;;; elisp-mode-tests.el ends here
