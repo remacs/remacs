@@ -413,7 +413,7 @@ but their relative order is also preserved:
          (9 . "aaa") (9 . "zzz") (9 . "ppp") (9 . "fff")]
 @end group
 @end example
-                
+
 @xref{Sorting}, for more functions that perform sorting.
 See @code{documentation} in @ref{Accessing Documentation}, for a
 useful example of @code{sort}.
@@ -804,6 +804,10 @@ vector or string (@pxref{Iteration} for more information about the
 @var{arguments} can itself include sequences allowing for nested
 destructuring.
 
+The @var{arguments} sequence can also include the `&rest' marker
+followed by a variable name to be bound to the rest of
+@code{sequence}.
+
 @example
 @group
 (seq-let [first second] [1 2 3 4]
@@ -820,6 +824,11 @@ destructuring.
   (list a b c))
 @result{} (1 2 3)
 @end group
+@group
+(seq-let [a b &rest others] [1 2 3 4]
+  others)
+@end group
+@result{} [3 4]
 @end example
 @end defmac
 
