@@ -1659,12 +1659,6 @@ Select the buffer containing the tag's definition, and move point there."
     )
   "Association of syntax elements, and the corresponding help.")
 
-(declare-function eldoc-function-argstring "eldoc")
-(declare-function eldoc-docstring-format-sym-doc "eldoc")
-(declare-function eldoc-last-data-store "eldoc")
-(declare-function eldoc-get-fnsym-args-string "eldoc")
-(declare-function eldoc-get-var-docstring "eldoc")
-
 (defvar semantic-grammar-eldoc-last-data (cons nil nil))
 
 (defun semantic-grammar-eldoc-get-macro-docstring (macro expander)
