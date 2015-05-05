@@ -351,7 +351,7 @@ This is an optimization for lists in `seq-take-while'."
                           '("\\<seq-doseq\\>" "\\<seq-let\\>")))
 
 (defun seq--make-bindings (args seq &optional initial-bindings)
-  "Return an alist of the bindings the variables in ARGS to the elements of SEQ.
+  "Return an alist of bindings of the variables in ARGS to the elements of SEQ.
 if INITIAL-BINDINGS is non-nil, append new bindings to it, and
 return INITIAL-BINDINGS."
   (let ((index 0))
