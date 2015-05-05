@@ -439,10 +439,9 @@ Used for temporary buffers.")
   (xref-show-location-at-point))
 
 (defun xref--location-at-point ()
-  (let ((pos (next-single-char-property-change (line-beginning-position)
-                                               'xref-location
-                                               nil (line-end-position))))
-    (and pos (get-text-property pos 'xref-location))))
+  (save-excursion
+    (back-to-indentation)
+    (get-text-property (point) 'xref-location)))
 
 (defvar-local xref--window nil
   "ACTION argument to call `display-buffer' with.")
@@ -548,21 +547,21 @@ GROUP is a string for decoration purposes and XREF is an
            (xref--insert-propertized '(face compilation-info) group "\n")
            (cl-loop for (xref . more2) on xrefs do
                     (with-slots (description location) xref
-                      (let ((line (xref-location-line location)))
-                        (if line
-                            (xref--insert-propertized
-                             '(face compilation-line-number)
-                             (format line-format line))
-                          (insert "  ")))
-                      (xref--insert-propertized
-                       (list 'xref-location location
-                             ;; 'face 'font-lock-keyword-face
-                             'mouse-face 'highlight
-                             'keymap xref--button-map
-                             'help-echo
-                             (concat "mouse-2: display in another window, "
-                                     "RET or mouse-1: follow reference"))
-                       description))
+                      (let* ((line (xref-location-line location))
+                             (prefix
+                              (if line
+                                  (propertize (format line-format line)
+                                              'face 'compilation-line-number)
+                                "  ")))
+                        (xref--insert-propertized
+                         (list 'xref-location location
+                               ;; 'face 'font-lock-keyword-face
+                               'mouse-face 'highlight
+                               'keymap xref--button-map
+                               'help-echo
+                               (concat "mouse-2: display in another window, "
+                                       "RET or mouse-1: follow reference"))
+                         prefix description)))
                     (insert "\n"))))
 
 (defun xref--analyze (xrefs)
