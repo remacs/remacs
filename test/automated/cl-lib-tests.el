@@ -444,7 +444,7 @@
     (should (eq nums (cl-adjoin 2 nums :test-not myfn-p))) ; 1 matches
     (should (eq nums (cl-adjoin 3 nums :test-not myfn-p))) ; 1 and 2 matches
 
-    ;; according to CLTL2 passing both :test and :test-not should signal error
+    ;; according to CLtL2 passing both :test and :test-not should signal error
     ;;(should-error (cl-adjoin 3 nums :test 'myfn-p :test-not myfn-p))
 
     ;; own :key fn

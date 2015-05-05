@@ -299,9 +299,9 @@ Optional argument IGNORE is an extraneous parameter."
              (props (cl--slot-descriptor-props slot))
              (cust (alist-get :custom props)))
 	;;
-	;; Shouldn't i be incremented unconditionnaly ? Or
+	;; Shouldn't I be incremented unconditionally?  Or
 	;; better shouldn't we simply mapc on the slots vector
-	;; avoiding use of this integer variable ? PLN Sat May
+	;; avoiding use of this integer variable?  PLN Sat May
 	;; 2 07:35:45 2015
 	;;
 	(setq i (+ i 1))
