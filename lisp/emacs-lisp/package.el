@@ -1079,7 +1079,7 @@ The return result is a `package-desc'."
 (declare-function epg-verify-string "epg" (context signature
                                                    &optional signed-text))
 (declare-function epg-context-result-for "epg" (context name))
-(declare-function epg-signature-status "epg" (signature))
+(declare-function epg-signature-status "epg" (signature) t)
 (declare-function epg-signature-to-string "epg" (signature))
 
 (defun package--display-verify-error (context sig-file)
