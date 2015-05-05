@@ -534,7 +534,7 @@ meantime are preserved."
 XREF-ALIST is of the form ((GROUP . (XREF ...)) ...).  Where
 GROUP is a string for decoration purposes and XREF is an
 `xref--xref' object."
-  (require 'compile) ;; For the compilation-info face.
+  (require 'compile) ; For the compilation faces.
   (cl-loop for ((group . xrefs) . more1) on xref-alist
            for max-line-width =
            (cl-loop for xref in xrefs
