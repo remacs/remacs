@@ -42,7 +42,8 @@
 
 ;;; TODO:
 
-;; - Add support for &rest in the argument list of seq-let
+;; - Add a pcase macro named using `pcase-defmacro' that `seq-let'
+;; - could wrap.
 
 ;;; Code:
 
@@ -350,20 +351,28 @@ This is an optimization for lists in `seq-take-while'."
   (font-lock-add-keywords 'emacs-lisp-mode
                           '("\\<seq-doseq\\>" "\\<seq-let\\>")))
 
-(defun seq--make-bindings (args seq &optional initial-bindings)
-  "Return an alist of bindings of the variables in ARGS to the elements of SEQ.
-if INITIAL-BINDINGS is non-nil, append new bindings to it, and
-return INITIAL-BINDINGS."
-  (let ((index 0))
+(defun seq--make-bindings (args seq &optional bindings)
+  "Return a list of bindings of the variables in ARGS to the elements of SEQ.
+if BINDINGS is non-nil, append new bindings to it, and
+return BINDINGS."
+  (let ((index 0)
+        (rest-bound nil))
     (seq-doseq (name args)
-      (if (sequencep name)
-          (setq initial-bindings (seq--make-bindings
-                                  (seq--elt-safe args index)
-                                  `(seq--elt-safe ,seq ,index)
-                                  initial-bindings))
-        (push `(,name (seq--elt-safe ,seq ,index)) initial-bindings))
+      (unless rest-bound
+        (pcase name
+          ((pred seq-p)
+           (setq bindings (seq--make-bindings (seq--elt-safe args index)
+                                              `(seq--elt-safe ,seq ,index)
+                                              bindings)))
+          (`&rest
+           (progn (push `(,(seq--elt-safe args (1+ index))
+                          (seq-drop ,seq ,index))
+                        bindings)
+                  (setq rest-bound t)))
+          (t
+           (push `(,name (seq--elt-safe ,seq ,index)) bindings))))
       (setq index (1+ index)))
-    initial-bindings))
+    bindings))
 
 (defun seq--elt-safe (seq n)
   "Return element of SEQ at the index N.
