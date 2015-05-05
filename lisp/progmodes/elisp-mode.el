@@ -581,6 +581,7 @@ It can be quoted, or be inside a quoted form."
 (declare-function xref-make-elisp-location "xref" (symbol type file))
 (declare-function xref-make-bogus-location "xref" (message))
 (declare-function xref-make "xref" (description location))
+(declare-function xref-collect-references "xref" (name dir))
 
 (defun elisp-xref-find (action id)
   (require 'find-func)
