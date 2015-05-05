@@ -223,6 +223,7 @@ Optional argument IGNORE is an extraneous parameter."
     ;; Loop over all the slots, creating child widgets.
     (dotimes (i (length slots))
       (let* ((slot (aref slots i))
+             (sname (eieio-slot-descriptor-name slot))
              (props (cl--slot-descriptor-props slot)))
         ;; Output this slot if it has a customize flag associated with it.
         (when (and (alist-get :custom props)
@@ -261,13 +262,13 @@ Optional argument IGNORE is an extraneous parameter."
                                              (or
                                               (eieio--class-slot-initarg
                                                (eieio--object-class obj)
-                                               (car slots))
-                                              (car slots)))))
+					       sname)
+					      sname))))
                                      (capitalize
                                       (if (string-match "^:" s)
                                           (substring s (match-end 0))
                                         s)))))
-                              :value (slot-value obj (car slots))
+                              :value (slot-value obj sname)
                               :doc  (or (alist-get :documentation props)
                                         "Slot not Documented.")
                               :eieio-custom-visibility 'visible
