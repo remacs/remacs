@@ -804,7 +804,7 @@ vector or string (@pxref{Iteration} for more information about the
 @var{arguments} can itself include sequences allowing for nested
 destructuring.
 
-The @var{arguments} sequence can also include the `&rest' marker
+The @var{arguments} sequence can also include the @code{&rest} marker
 followed by a variable name to be bound to the rest of
 @code{sequence}.
 
