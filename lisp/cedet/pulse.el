@@ -162,31 +162,21 @@ Return t if there is more drift to do, nil if completed."
 					    'pulse-highlight-start-face))
   (put 'pulse-highlight-face :iteration 0))
 
-(defun pulse (&optional face)
-  "Pulse the colors on our highlight face.
-If optional FACE is provided, reset the face to FACE color,
-instead of `pulse-highlight-start-face'.
-Be sure to call `pulse-reset-face' after calling pulse."
-  (unwind-protect
-      (progn
-	(pulse-reset-face face)
-	(while (and (pulse-lighten-highlight)
-		    (sit-for pulse-delay))
-	  nil))))
-
 ;;; Convenience Functions
 ;;
 (defvar pulse-momentary-overlay nil
   "The current pulsing overlay.")
 
-(defvar pulse-momentary-stop-time nil
-  "The current stop time.")
+(defvar pulse-momentary-timer nil
+  "The current pulsing timer.")
 
 (defun pulse-momentary-highlight-overlay (o &optional face)
   "Pulse the overlay O, unhighlighting before next command.
 Optional argument FACE specifies the face to do the highlighting."
+  ;; We don't support simultaneous highlightings.
+  (pulse-momentary-unhighlight)
   (overlay-put o 'original-face (overlay-get o 'face))
-  (add-to-list 'pulse-momentary-overlay o)
+  (setq pulse-momentary-overlay o)
   (if (eq pulse-flag 'never)
       nil
     (if (or (not pulse-flag) (not (pulse-available-p)))
@@ -201,42 +191,34 @@ Optional argument FACE specifies the face to do the highlighting."
       ;; Thus above we put our face on the overlay, but pulse
       ;; with a reference face needed for the color.
       (pulse-reset-face face)
-      (setq pulse-momentary-stop-time (time-add (current-time)
-                                                (* pulse-delay
-                                                   pulse-iterations)))
-      (let ((timer (run-with-timer 0 pulse-delay #'ignore)))
-        (timer-set-function timer #'pulse-tick
-                            (list
-                             timer))))))
+      (setq pulse-momentary-timer
+            (run-with-timer 0 pulse-delay #'pulse-tick
+                            (time-add (current-time)
+                                      (* pulse-delay pulse-iterations)))))))
 
-(defun pulse-tick (timer)
-  (if (time-less-p (current-time) pulse-momentary-stop-time)
+(defun pulse-tick (stop-time)
+  (if (time-less-p (current-time) stop-time)
       (pulse-lighten-highlight)
-    (pulse-momentary-unhighlight)
-    (cancel-timer timer)))
+    (pulse-momentary-unhighlight)))
 
 (defun pulse-momentary-unhighlight ()
   "Unhighlight a line recently highlighted."
-  ;; If someone passes in an overlay, then pulse-momentary-overlay
-  ;; will still be nil, and won't need modifying.
   (when pulse-momentary-overlay
     ;; clear the starting face
-    (mapc
-     (lambda (ol)
-       (overlay-put ol 'face (overlay-get ol 'original-face))
-       (overlay-put ol 'original-face nil)
-       ;; Clear the overlay if it needs deleting.
-       (when (overlay-get ol 'pulse-delete) (delete-overlay ol)))
-     pulse-momentary-overlay)
+    (let ((ol pulse-momentary-overlay))
+      (overlay-put ol 'face (overlay-get ol 'original-face))
+      (overlay-put ol 'original-face nil)
+      ;; Clear the overlay if it needs deleting.
+      (when (overlay-get ol 'pulse-delete) (delete-overlay ol)))
 
     ;; Clear the variable.
-    (setq pulse-momentary-overlay nil))
+    (setq pulse-momentary-overlay nil)
 
-  ;; Reset the pulsing face.
-  (pulse-reset-face)
+    ;; Reset the pulsing face.
+    (pulse-reset-face)
 
-  ;; Signal the timer to cancel.
-  (setq pulse-momentary-stop-time (current-time))
+    ;; Cancel the timer.
+    (cancel-timer pulse-momentary-timer))
 
   ;; Remove this hook.
   (remove-hook 'pre-command-hook 'pulse-momentary-unhighlight))
