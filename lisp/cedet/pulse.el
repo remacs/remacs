@@ -215,9 +215,10 @@ Optional argument FACE specifies the face to do the highlighting."
     (setq pulse-momentary-overlay nil)
 
     ;; Reset the pulsing face.
-    (pulse-reset-face)
+    (pulse-reset-face))
 
-    ;; Cancel the timer.
+  ;; Cancel the timer.
+  (when pulse-momentary-timer
     (cancel-timer pulse-momentary-timer))
 
   ;; Remove this hook.
