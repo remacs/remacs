@@ -417,11 +417,19 @@ If N is omitted or nil, remove the last element."
 Store the result in LIST and return it.  LIST must be a proper list.
 Of several `equal' occurrences of an element in LIST, the first
 one is kept."
-  (let ((tail list))
-    (while tail
-      (setcdr tail (delete (car tail) (cdr tail)))
-      (setq tail (cdr tail))))
-  list)
+  (if (> (length list) 100)
+      (let ((hash (make-hash-table :test #'equal))
+            res)
+        (dolist (elt list)
+          (unless (gethash elt hash)
+            (puthash elt elt hash)
+            (push elt res)))
+        (nreverse res))
+    (let ((tail list))
+      (while tail
+        (setcdr tail (delete (car tail) (cdr tail)))
+        (setq tail (cdr tail))))
+    list))
 
 ;; See http://lists.gnu.org/archive/html/emacs-devel/2013-05/msg00204.html
 (defun delete-consecutive-dups (list &optional circular)
