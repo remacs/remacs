@@ -87,6 +87,9 @@ Optional argument MODE specifies the `major-mode' to test."
 	   (error "Customize `semantic-symref-filepattern-alist' for %s" major-mode))
 	  )))
 
+(defvar grepflags)
+(defvar greppattern)
+
 (defvar semantic-symref-grep-expand-keywords
   (condition-case nil
       (let* ((kw (copy-alist grep-expand-keywords))
@@ -98,7 +101,7 @@ Optional argument MODE specifies the `major-mode' to test."
     (error nil))
   "Grep expand keywords used when expanding templates for symref.")
 
-(defun semantic-symref-grep-use-template (rootdir filepattern grepflags greppattern)
+(defun semantic-symref-grep-use-template (rootdir filepattern flags pattern)
   "Use the grep template expand feature to create a grep command.
 ROOTDIR is the root location to run the `find' from.
 FILEPATTERN is a string representing find flags for searching file patterns.
@@ -106,7 +109,9 @@ GREPFLAGS are flags passed to grep, such as -n or -l.
 GREPPATTERN is the pattern used by grep."
   ;; We have grep-compute-defaults.  Let's use it.
   (grep-compute-defaults)
-  (let* ((grep-expand-keywords semantic-symref-grep-expand-keywords)
+  (let* ((grepflags flags)
+         (greppattern pattern)
+         (grep-expand-keywords semantic-symref-grep-expand-keywords)
 	 (cmd (grep-expand-template
                (if (memq system-type '(windows-nt ms-dos))
                    ;; grep-find uses '--color=always' on MS-Windows
@@ -141,7 +146,6 @@ This shell should support pipe redirect syntax."
     )
   ;; Find the root of the project, and do a find-grep...
   (let* (;; Find the file patterns to use.
-	 (pat (cdr (assoc major-mode semantic-symref-filepattern-alist)))
 	 (rootdir (semantic-symref-calculate-rootdir))
 	 (filepattern (semantic-symref-derive-find-filepatterns))
 	 ;; Grep based flags.
