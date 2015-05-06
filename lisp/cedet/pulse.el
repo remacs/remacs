@@ -121,7 +121,7 @@ http://www.emacswiki.org/cgi-bin/wiki/hexrgb.el"
   :group 'pulse
   :type 'number)
 (defcustom pulse-delay .03
-  "Delay between face lightening iterations, as used by `sit-for'."
+  "Delay between face lightening iterations."
   :group 'pulse
   :type 'number)
 
@@ -179,6 +179,9 @@ Be sure to call `pulse-reset-face' after calling pulse."
 (defvar pulse-momentary-overlay nil
   "The current pulsing overlay.")
 
+(defvar pulse-momentary-stop-time nil
+  "The current stop time.")
+
 (defun pulse-momentary-highlight-overlay (o &optional face)
   "Pulse the overlay O, unhighlighting before next command.
 Optional argument FACE specifies the face to do the highlighting."
@@ -192,15 +195,25 @@ Optional argument FACE specifies the face to do the highlighting."
 	  (overlay-put o 'face (or face 'pulse-highlight-start-face))
 	  (add-hook 'pre-command-hook
 		    'pulse-momentary-unhighlight))
-      ;; pulse it.
-      (unwind-protect
-	  (progn
-	    (overlay-put o 'face 'pulse-highlight-face)
-	    ;; The pulse function puts FACE onto 'pulse-highlight-face.
-	    ;; Thus above we put our face on the overlay, but pulse
-	    ;; with a reference face needed for the color.
-	    (pulse face))
-	(pulse-momentary-unhighlight)))))
+      ;; Pulse it.
+      (overlay-put o 'face 'pulse-highlight-face)
+      ;; The pulse function puts FACE onto 'pulse-highlight-face.
+      ;; Thus above we put our face on the overlay, but pulse
+      ;; with a reference face needed for the color.
+      (pulse-reset-face face)
+      (setq pulse-momentary-stop-time (time-add (current-time)
+                                                (* pulse-delay
+                                                   pulse-iterations)))
+      (let ((timer (run-with-timer 0 pulse-delay #'ignore)))
+        (timer-set-function timer #'pulse-tick
+                            (list
+                             timer))))))
+
+(defun pulse-tick (timer)
+  (if (time-less-p (current-time) pulse-momentary-stop-time)
+      (pulse-lighten-highlight)
+    (pulse-momentary-unhighlight)
+    (cancel-timer timer)))
 
 (defun pulse-momentary-unhighlight ()
   "Unhighlight a line recently highlighted."
@@ -221,6 +234,9 @@ Optional argument FACE specifies the face to do the highlighting."
 
   ;; Reset the pulsing face.
   (pulse-reset-face)
+
+  ;; Signal the timer to cancel.
+  (setq pulse-momentary-stop-time (current-time))
 
   ;; Remove this hook.
   (remove-hook 'pre-command-hook 'pulse-momentary-unhighlight))
