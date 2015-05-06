@@ -46,9 +46,11 @@ and those hits returned.")
   '((c-mode "*.[ch]")
     (c++-mode "*.[chCH]" "*.[ch]pp" "*.cc" "*.hh")
     (html-mode "*.s?html" "*.php")
+    (ruby-mode "*.r[bu]" "*.rake" "*.gemspec" "*.erb" "*.haml"
+               "Rakefile" "Thorfile" "Capfile" "Guardfile" "Vagrantfile")
     )
-  "List of major modes and file extension pattern regexp.
-See find -regex man page for format.")
+  "List of major modes and file extension pattern.
+See find -name man page for format.")
 
 (defun semantic-symref-derive-find-filepatterns (&optional mode)
   "Derive a list of file patterns for the current buffer.
