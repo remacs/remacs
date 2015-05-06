@@ -5762,7 +5762,7 @@ garbage_collect_1 (void *end)
      after GC.  It's important to scan finalizers at this stage so
      that we can be sure that unmarked finalizers are really
      unreachable except for references from their associated functions
-     and from other finalizers. */
+     and from other finalizers.  */
 
   queue_doomed_finalizers (&doomed_finalizers, &finalizers);
   mark_finalizer_list (&doomed_finalizers);
