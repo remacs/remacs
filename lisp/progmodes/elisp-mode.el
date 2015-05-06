@@ -650,11 +650,14 @@ It can be quoted, or be inside a quoted form."
              lst))))
       lst)))
 
+(defvar package-user-dir)
+
 (defun elisp--xref-find-references (symbol)
   (let* ((dirs (sort
                 (mapcar
                  (lambda (dir)
                    (file-name-as-directory (expand-file-name dir)))
+                 ;; FIXME: Why add package-user-dir?
                  (cons package-user-dir load-path))
                 #'string<))
          (ref dirs))
@@ -1174,13 +1177,13 @@ which see."
     (cond ((null current-fnsym)
 	   nil)
 	  ((eq current-symbol (car current-fnsym))
-	   (or (apply #'elisp--get-fnsym-args-string current-fnsym)
-	       (elisp--get-var-docstring current-symbol)))
+	   (or (apply #'elisp-get-fnsym-args-string current-fnsym)
+	       (elisp-get-var-docstring current-symbol)))
 	  (t
-	   (or (elisp--get-var-docstring current-symbol)
-	       (apply #'elisp--get-fnsym-args-string current-fnsym))))))
+	   (or (elisp-get-var-docstring current-symbol)
+	       (apply #'elisp-get-fnsym-args-string current-fnsym))))))
 
-(defun elisp--get-fnsym-args-string (sym &optional index)
+(defun elisp-get-fnsym-args-string (sym &optional index prefix)
   "Return a string containing the parameter list of the function SYM.
 If SYM is a subr and no arglist is obtainable from the docstring
 or elsewhere, return a 1-line docstring."
@@ -1204,16 +1207,22 @@ or elsewhere, return a 1-line docstring."
 		     (car doc))
 		    (t (help-function-arglist sym)))))
              ;; Stringify, and store before highlighting, downcasing, etc.
-             ;; FIXME should truncate before storing.
-	     (elisp--last-data-store sym (elisp--function-argstring args)
+	     (elisp--last-data-store sym (elisp-function-argstring args)
                                     'function))))))
     ;; Highlight, truncate.
     (if argstring
-	(elisp--highlight-function-argument sym argstring index))))
+	(elisp--highlight-function-argument
+         sym argstring index
+         (or prefix
+             (concat (propertize (symbol-name sym) 'face
+                                 (if (functionp sym)
+                                     'font-lock-function-name-face
+                                   'font-lock-keyword-face))
+                     ": "))))))
 
-(defun elisp--highlight-function-argument (sym args index)
+(defun elisp--highlight-function-argument (sym args index prefix)
   "Highlight argument INDEX in ARGS list for function SYM.
-In the absence of INDEX, just call `elisp--docstring-format-sym-doc'."
+In the absence of INDEX, just call `eldoc-docstring-format-sym-doc'."
   ;; FIXME: This should probably work on the list representation of `args'
   ;; rather than its string representation.
   ;; FIXME: This function is much too long, we need to split it up!
@@ -1298,9 +1307,9 @@ In the absence of INDEX, just call `elisp--docstring-format-sym-doc'."
                     ((string= argument "&allow-other-keys")) ; Skip.
                     ;; Back to index 0 in ARG1 ARG2 ARG2 ARG3 etc...
                     ;; like in `setq'.
-		    ((or (and (string-match-p "\\.\\.\\.$" argument)
+		    ((or (and (string-match-p "\\.\\.\\.\\'" argument)
                               (string= argument (car (last args-lst))))
-                         (and (string-match-p "\\.\\.\\.$"
+                         (and (string-match-p "\\.\\.\\.\\'"
                                               (substring args 1 (1- (length args))))
                               (= (length (remove "..." args-lst)) 2)
                               (> index 1) (eq (logand index 1) 1)))
@@ -1315,14 +1324,12 @@ In the absence of INDEX, just call `elisp--docstring-format-sym-doc'."
       (when start
 	(setq doc (copy-sequence args))
 	(add-text-properties start end (list 'face argument-face) doc))
-      (setq doc (elisp--docstring-format-sym-doc
-		 sym doc (if (functionp sym) 'font-lock-function-name-face
-                           'font-lock-keyword-face)))
+      (setq doc (eldoc-docstring-format-sym-doc prefix doc))
       doc)))
 
 ;; Return a string containing a brief (one-line) documentation string for
 ;; the variable.
-(defun elisp--get-var-docstring (sym)
+(defun elisp-get-var-docstring (sym)
   (cond ((not sym) nil)
         ((and (eq sym (aref elisp--eldoc-last-data 0))
               (eq 'variable (aref elisp--eldoc-last-data 2)))
@@ -1330,7 +1337,7 @@ In the absence of INDEX, just call `elisp--docstring-format-sym-doc'."
         (t
          (let ((doc (documentation-property sym 'variable-documentation t)))
            (when doc
-             (let ((doc (elisp--docstring-format-sym-doc
+             (let ((doc (eldoc-docstring-format-sym-doc
                          sym (elisp--docstring-first-line doc)
                          'font-lock-variable-name-face)))
                (elisp--last-data-store sym doc 'variable)))))))
@@ -1354,36 +1361,6 @@ In the absence of INDEX, just call `elisp--docstring-format-sym-doc'."
                    (substring doc start (match-beginning 0)))
                   ((zerop start) doc)
                   (t (substring doc start))))))))
-
-(defvar eldoc-echo-area-use-multiline-p)
-
-;; If the entire line cannot fit in the echo area, the symbol name may be
-;; truncated or eliminated entirely from the output to make room for the
-;; description.
-(defun elisp--docstring-format-sym-doc (sym doc face)
-  (save-match-data
-    (let* ((name (symbol-name sym))
-           (ea-multi eldoc-echo-area-use-multiline-p)
-           ;; Subtract 1 from window width since emacs will not write
-           ;; any chars to the last column, or in later versions, will
-           ;; cause a wraparound and resize of the echo area.
-           (ea-width (1- (window-width (minibuffer-window))))
-           (strip (- (+ (length name) (length ": ") (length doc)) ea-width)))
-      (cond ((or (<= strip 0)
-                 (eq ea-multi t)
-                 (and ea-multi (> (length doc) ea-width)))
-             (format "%s: %s" (propertize name 'face face) doc))
-            ((> (length doc) ea-width)
-             (substring (format "%s" doc) 0 ea-width))
-            ((>= strip (length name))
-             (format "%s" doc))
-            (t
-             ;; Show the end of the partial symbol name, rather
-             ;; than the beginning, since the former is more likely
-             ;; to be unique given package namespace conventions.
-             (setq name (substring name strip))
-             (format "%s: %s" (propertize name 'face face) doc))))))
-
 
 ;; Return a list of current function name and argument index.
 (defun elisp--fnsym-in-current-sexp ()
@@ -1428,7 +1405,7 @@ In the absence of INDEX, just call `elisp--docstring-format-sym-doc'."
          (memq (char-syntax c) '(?w ?_))
          (intern-soft (current-word)))))
 
-(defun elisp--function-argstring (arglist)
+(defun elisp-function-argstring (arglist)
   "Return ARGLIST as a string enclosed by ().
 ARGLIST is either a string, or a list of strings or symbols."
   (let ((str (cond ((stringp arglist) arglist)
