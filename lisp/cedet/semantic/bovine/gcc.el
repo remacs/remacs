@@ -164,8 +164,9 @@ It should also include other symbols GCC was compiled with.")
          (host (or (cdr (assoc 'target fields))
                    (cdr (assoc '--target fields))
                    (cdr (assoc '--host fields))))
-         (prefix (cdr (assoc '--prefix fields)))
+         ;; (prefix (cdr (assoc '--prefix fields)))
          ;; gcc output supplied paths
+         ;; FIXME: Where are `c-include-path' and `c++-include-path' used?
          (c-include-path (semantic-gcc-get-include-paths "c"))
          (c++-include-path (semantic-gcc-get-include-paths "c++"))
 	 (gcc-exe (locate-file "gcc" exec-path exec-suffixes 'executable))
