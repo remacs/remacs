@@ -1088,7 +1088,7 @@ bootstrap: bootstrap-clean
 	$(MAKE) MAKEFILE_NAME=force-Makefile force-Makefile
 	$(MAKE) all
 
-.PHONY: ChangeLog change-history change-history-commit
+.PHONY: ChangeLog change-history change-history-commit change-history-nocommit
 .PHONY: master-branch-is-current no-ChangeLog unchanged-history-files
 
 # The newest revision that should not appear in the generated ChangeLog.
@@ -1116,8 +1116,8 @@ unchanged-history-files:
 
 # Copy newer commit messages to the start of the ChangeLog history file,
 # and consider them to be older.
-change-history: no-ChangeLog master-branch-is-current unchanged-history-files \
-  ChangeLog
+change-history-nocommit: no-ChangeLog master-branch-is-current \
+  unchanged-history-files ChangeLog
 	(sed '/^;; [L]ocal Variables:/,$$d' <ChangeLog && cat $(CHANGELOG_N)) \
 	  >$(CHANGELOG_N).tmp
 	new_origin=$$(git log --pretty=format:%H HEAD^!) && \
@@ -1125,6 +1125,8 @@ change-history: no-ChangeLog master-branch-is-current unchanged-history-files \
 	  <Makefile.in >Makefile.in.tmp
 	mv $(CHANGELOG_N).tmp $(CHANGELOG_N)
 	mv Makefile.in.tmp Makefile.in
+
+change-history: change-history-nocommit
 	$(MAKE) $@-commit
 
 # If 'make change-history' fails because the newest ChangeLog history
