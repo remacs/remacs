@@ -424,12 +424,12 @@ one is kept."
           (unless (gethash elt hash)
             (puthash elt elt hash)
             (push elt res)))
-        (nreverse res))
+        (setcdr list (cdr (nreverse res))))
     (let ((tail list))
       (while tail
         (setcdr tail (delete (car tail) (cdr tail)))
-        (setq tail (cdr tail))))
-    list))
+        (setq tail (cdr tail)))))
+  list)
 
 ;; See http://lists.gnu.org/archive/html/emacs-devel/2013-05/msg00204.html
 (defun delete-consecutive-dups (list &optional circular)
