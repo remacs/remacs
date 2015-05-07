@@ -22,7 +22,10 @@
 LC_ALL=C
 export LC_ALL
 
-gen_origin=${1?}
+# The newest revision that should not appear in the generated ChangeLog.
+gen_origin=2c1b8604946efbcd8ec5dd6c6dda7541ce4fc3c0
+test -n "$1" && test "$1" != "." && gen_origin=$1
+
 output=$2
 test -n "$output" || output=ChangeLog
 

@@ -1091,10 +1091,8 @@ bootstrap: bootstrap-clean
 .PHONY: ChangeLog change-history change-history-commit change-history-nocommit
 .PHONY: master-branch-is-current unchanged-history-files
 
-# The newest revision that should not appear in the generated ChangeLog.
-gen_origin = 2c1b8604946efbcd8ec5dd6c6dda7541ce4fc3c0
-
 CHANGELOG =
+emacslog = $(srcdir)/build-aux/gitlog-to-emacslog
 
 # Convert git commit log to ChangeLog file.  make-dist uses this.
 # I guess this is PHONY because it generates in distprefix (which is
@@ -1103,7 +1101,7 @@ CHANGELOG =
 ChangeLog:
 	@[ -n "${CHANGELOG}" ] || test ! -f ChangeLog
 	$(AM_V_GEN)distprefix=$(distprefix) srcprefix=$(srcdir)/ \
-	$(srcdir)/build-aux/gitlog-to-emacslog $(gen_origin) $(CHANGELOG)
+	$(emacslog) . $(CHANGELOG)
 
 # The ChangeLog history files are called ChangeLog.1, ChangeLog.2, ...,
 # ChangeLog.$(CHANGELOG_HISTORY_INDEX_MAX).  $(CHANGELOG_N) stands for
@@ -1115,7 +1113,7 @@ CHANGELOG_N = ChangeLog.$(CHANGELOG_HISTORY_INDEX_MAX)
 master-branch-is-current:
 	git branch | grep -q '^\* master$$'
 unchanged-history-files:
-	x=$$(git diff-files --name-only $(CHANGELOG_N) Makefile.in) && \
+	x=$$(git diff-files --name-only $(CHANGELOG_N) $(emacslog)) && \
 	  test -z "$$x"
 
 # Copy newer commit messages to the start of the ChangeLog history file,
@@ -1126,10 +1124,10 @@ change-history-nocommit: master-branch-is-current unchanged-history-files
 	  >$(CHANGELOG_N).tmp
 	rm ChangeLog.tmp
 	new_origin=$$(git log --pretty=format:%H HEAD^!) && \
-	sed 's/^\(gen_origin *= *\).*/\1'"$$new_origin/" \
-	  <Makefile.in >Makefile.in.tmp
+	sed 's/^\(gen_origin=\).*/\1'"$$new_origin/" \
+	  < $(emacslog) > $(emacslog).tmp
 	mv $(CHANGELOG_N).tmp $(CHANGELOG_N)
-	mv Makefile.in.tmp Makefile.in
+	mv $(emacslog).tmp $(emacslog)
 
 change-history: change-history-nocommit
 	$(MAKE) $@-commit
