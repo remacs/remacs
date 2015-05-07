@@ -1089,15 +1089,21 @@ bootstrap: bootstrap-clean
 	$(MAKE) all
 
 .PHONY: ChangeLog change-history change-history-commit change-history-nocommit
-.PHONY: master-branch-is-current no-ChangeLog unchanged-history-files
+.PHONY: master-branch-is-current unchanged-history-files
 
 # The newest revision that should not appear in the generated ChangeLog.
 gen_origin = 2c1b8604946efbcd8ec5dd6c6dda7541ce4fc3c0
 
+CHANGELOG =
+
 # Convert git commit log to ChangeLog file.  make-dist uses this.
+# I guess this is PHONY because it generates in distprefix (which is
+# non-nil when called from make-dist)?
+# FIXME: test -f does not respect distprefix.
 ChangeLog:
+	@[ -n "${CHANGELOG}" ] || test ! -f ChangeLog
 	$(AM_V_GEN)distprefix=$(distprefix) srcprefix=$(srcdir)/ \
-	$(srcdir)/build-aux/gitlog-to-emacslog $(gen_origin)
+	$(srcdir)/build-aux/gitlog-to-emacslog $(gen_origin) $(CHANGELOG)
 
 # The ChangeLog history files are called ChangeLog.1, ChangeLog.2, ...,
 # ChangeLog.$(CHANGELOG_HISTORY_INDEX_MAX).  $(CHANGELOG_N) stands for
@@ -1106,8 +1112,6 @@ CHANGELOG_HISTORY_INDEX_MAX = 2
 CHANGELOG_N = ChangeLog.$(CHANGELOG_HISTORY_INDEX_MAX)
 
 # Check that we are in a good state for changing history.
-no-ChangeLog:
-	test ! -f ChangeLog
 master-branch-is-current:
 	git branch | grep -q '^\* master$$'
 unchanged-history-files:
@@ -1116,10 +1120,11 @@ unchanged-history-files:
 
 # Copy newer commit messages to the start of the ChangeLog history file,
 # and consider them to be older.
-change-history-nocommit: no-ChangeLog master-branch-is-current \
-  unchanged-history-files ChangeLog
-	(sed '/^;; [L]ocal Variables:/,$$d' <ChangeLog && cat $(CHANGELOG_N)) \
+change-history-nocommit: master-branch-is-current unchanged-history-files
+	$(MAKE) ChangeLog CHANGELOG=ChangeLog.tmp
+	(sed '/^;; [L]ocal Variables:/,$$d' <ChangeLog.tmp && cat $(CHANGELOG_N)) \
 	  >$(CHANGELOG_N).tmp
+	rm ChangeLog.tmp
 	new_origin=$$(git log --pretty=format:%H HEAD^!) && \
 	sed 's/^\(gen_origin *= *\).*/\1'"$$new_origin/" \
 	  <Makefile.in >Makefile.in.tmp
