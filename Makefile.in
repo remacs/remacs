@@ -1136,7 +1136,7 @@ change-history: change-history-nocommit
 # file contains invalid text, fix the file by hand and then run
 # 'make change-history-commit'.
 change-history-commit:
-	git commit -m'; make $@' $(CHANGELOG_N) Makefile.in
+	git commit -m'; make $@' $(CHANGELOG_N) $(emacslog)
 
 .PHONY: check-declare
 
