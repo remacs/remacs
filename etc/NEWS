@@ -563,6 +563,11 @@ allows to customize this.
 *** Two new faces `compare-windows-removed' and `compare-windows-added'
 replace the obsolete face `compare-windows'.
 
+---
+*** `log-edit-insert-changelog' converts "(tiny change)" to
+"Copyright-paperwork-exempt: yes".  Set `log-edit-rewrite-tiny-change'
+nil to disable this.
+
 ** VHDL mode supports VHDL'08.
 
 ** Calculator: decimal display mode uses "," groups, so it's more
