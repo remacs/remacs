@@ -86,7 +86,8 @@ if test -s "${distprefix}ChangeLog.tmp"; then
   sed -n '
     1i\
 
-    /^;; Local Variables:/,${
+    /^See ChangeLog.1 for earlier/,${
+       s/ChangeLog\.1/ChangeLog.2/
        s/\(Copyright[ (C)]*\)[0-9]*-[0-9]*/\1'"$year_range"'/
        p
     }
