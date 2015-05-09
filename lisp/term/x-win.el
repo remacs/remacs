@@ -72,6 +72,7 @@
 (if (not (fboundp 'x-create-frame))
     (error "%s: Loading x-win.el but not compiled for X" (invocation-name)))
 
+(require 'term/common-win)
 (require 'frame)
 (require 'mouse)
 (require 'scroll-bar)
