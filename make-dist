@@ -279,7 +279,7 @@ mkdir ${tempdir}
 
 if test -d .git; then
   echo "Making top-level ChangeLog"
-  make distprefix=${tempdir}/ ChangeLog
+  make ChangeLog CHANGELOG=${tempdir}/ChangeLog
 else
   echo "No repository, so omitting top-level ChangeLog"
 fi
