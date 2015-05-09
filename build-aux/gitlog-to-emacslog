@@ -39,19 +39,25 @@ while [ $# -gt 0 ]; do
   shift
 done
 
+if [ ! -f ChangeLog.$nmax ]; then
+    echo "Can't find ChangeLog.$nmax" >&2
+    echo "Must be run from the top source directory" >&2
+    exit 1
+fi
+
 if [ -f "$output" ]; then
-    [ ! "$force" ] && echo "$output exists" && exit 1
+    [ ! "$force" ] && echo "$output exists" >&2 && exit 1
     rm -f "$output" || exit 1
 fi
 
 # If this is not a Git repository, just generate an empty ChangeLog.
-test -d ${srcprefix}.git || {
+test -d .git || {
   >"$output"
   exit
 }
 
 # Use Gnulib's packaged ChangeLog generator.
-${srcprefix}build-aux/gitlog-to-changelog --ignore-matching='^; ' \
+./build-aux/gitlog-to-changelog --ignore-matching='^; ' \
   --format='%B' \
   "$gen_origin.." >"ChangeLog.tmp" || exit
 
