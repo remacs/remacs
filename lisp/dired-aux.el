@@ -413,6 +413,8 @@ into the minibuffer."
       ;; Now the original list FILES has been put back as it was.
       (nconc past pending))))
 
+(defvar lpr-printer-switch)
+
 ;;;###autoload
 (defun dired-do-print (&optional arg)
   "Print the marked (or next ARG) files.
