@@ -1091,17 +1091,15 @@ bootstrap: bootstrap-clean
 .PHONY: ChangeLog change-history change-history-commit change-history-nocommit
 .PHONY: master-branch-is-current unchanged-history-files
 
-CHANGELOG =
+CHANGELOG = ChangeLog
 emacslog = $(srcdir)/build-aux/gitlog-to-emacslog
 
 # Convert git commit log to ChangeLog file.  make-dist uses this.
 # I guess this is PHONY because it generates in distprefix (which is
 # non-nil when called from make-dist)?
-# FIXME: test -f does not respect distprefix.
 ChangeLog:
-	@[ -n "${CHANGELOG}" ] || test ! -f ChangeLog
 	$(AM_V_GEN)distprefix=$(distprefix) srcprefix=$(srcdir)/ \
-	$(emacslog) . $(CHANGELOG)
+	$(emacslog) -o $(CHANGELOG)
 
 # The ChangeLog history files are called ChangeLog.1, ChangeLog.2, ...,
 # ChangeLog.$(CHANGELOG_HISTORY_INDEX_MAX).  $(CHANGELOG_N) stands for
@@ -1119,6 +1117,7 @@ unchanged-history-files:
 # Copy newer commit messages to the start of the ChangeLog history file,
 # and consider them to be older.
 change-history-nocommit: master-branch-is-current unchanged-history-files
+	-rm -f ChangeLog.tmp
 	$(MAKE) ChangeLog CHANGELOG=ChangeLog.tmp
 	(sed '/^;; [L]ocal Variables:/,$$d' <ChangeLog.tmp && cat $(CHANGELOG_N)) \
 	  >$(CHANGELOG_N).tmp

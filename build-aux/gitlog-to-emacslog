@@ -24,15 +24,26 @@ export LC_ALL
 
 # The newest revision that should not appear in the generated ChangeLog.
 gen_origin=2c1b8604946efbcd8ec5dd6c6dda7541ce4fc3c0
-test -n "$1" && test "$1" != "." && gen_origin=$1
+force=
+output=ChangeLog
 
-output=$2
-test -n "$output" || output=ChangeLog
+while [ $# -gt 0 ]; do
+  case "$1" in
+      -g|--gen-origin) gen_origin="$2" ; shift ;;
+      -f|--force) force=1 ;;
+      -o|--output) output="$2" ; shift ;;
+      *) echo "Unrecognized argument: $1" >&2; exit 1 ;;
+  esac
+  shift
+done
+
+if [ -f "${distprefix}$output" ]; then
+    [ ! "$force" ] && echo "${distprefix}$output exists" && exit 1
+    rm -f "${distprefix}$output" || exit 1
+fi
 
 # If this is not a Git repository, just generate an empty ChangeLog.
 test -d ${srcprefix}.git || {
-  # Remove any old ChangeLog, in case it is a vc-dwim symlink.
-  rm -f "${distprefix}$output" || exit
   >"${distprefix}$output"
   exit
 }
