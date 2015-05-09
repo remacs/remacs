@@ -421,6 +421,7 @@ into the minibuffer."
 Uses the shell command coming from variables `lpr-command' and
 `lpr-switches' as default."
   (interactive "P")
+  (require 'lpr)
   (let* ((file-list (dired-get-marked-files t arg))
 	 (lpr-switches
 	  (if (and (stringp printer-name)
