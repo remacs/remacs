@@ -158,7 +158,11 @@ This shell should support pipe redirect syntax."
                    (cond ((eq (oref tool :searchtype) 'regexp)
                           (oref tool searchfor))
                          (t
-                          (concat "\\<" (oref tool searchfor) "\\>")))))
+                          ;; Can't use the word boundaries: Grep
+                          ;; doesn't always agrees with the language
+                          ;; syntax on those.
+                          (format "\\(^\\|\\W\\)%s\\(\\W\\|$\\)"
+                                  (oref tool searchfor))))))
 	 ;; Misc
 	 (b (get-buffer-create "*Semantic SymRef*"))
 	 (ans nil)
