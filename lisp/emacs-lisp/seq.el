@@ -4,7 +4,7 @@
 
 ;; Author: Nicolas Petton <nicolas@petton.fr>
 ;; Keywords: sequences
-;; Version: 1.6
+;; Version: 1.7
 ;; Package: seq
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -40,11 +40,6 @@
 ;;
 ;; All functions are tested in test/automated/seq-tests.el
 
-;;; TODO:
-
-;; - Add a pcase macro named using `pcase-defmacro' that `seq-let'
-;; - could wrap.
-
 ;;; Code:
 
 (defmacro seq-doseq (spec &rest body)
@@ -70,13 +65,32 @@ Evaluate BODY with VAR bound to each element of SEQ, in turn.
                               (pop ,index))))
            ,@body)))))
 
-(defmacro seq-let (args seq &rest body)
-  "Bind the variables in ARGS to the elements of SEQ then evaluate BODY."
-  (declare (indent 2) (debug t))
-  (let ((seq-var (make-symbol "seq")))
-    `(let* ((,seq-var ,seq)
-           ,@(seq--make-bindings args seq-var))
-       ,@body)))
+(if (fboundp 'pcase-defmacro)
+    ;; Implementation of `seq-let' based on a `pcase'
+    ;; pattern. Requires Emacs>=25.1.
+    (progn
+      (pcase-defmacro seq (bindings)
+        `(and ,@(seq--make-pcase-bindings bindings)))
+
+      (defmacro seq-let (args seq &rest body)
+        "Bind the variables in ARGS to the elements of SEQ then evaluate BODY.
+
+ARGS can also include the `&rest' marker followed by a variable
+name to be bound to the rest of SEQ."
+        (declare (indent 2) (debug t))
+        `(pcase-let (((seq ,args) ,seq)) ,@body)))
+
+  ;; Implementation of `seq-let' compatible with Emacs<25.1.
+  (defmacro seq-let (args seq &rest body)
+    "Bind the variables in ARGS to the elements of SEQ then evaluate BODY.
+
+ARGS can also include the `&rest' marker followed by a variable
+name to be bound to the rest of SEQ."
+    (declare (indent 2) (debug t))
+    (let ((seq-var (make-symbol "seq")))
+      `(let* ((,seq-var ,seq)
+              ,@(seq--make-bindings args seq-var))
+         ,@body))))
 
 (defun seq-drop (seq n)
   "Return a subsequence of SEQ without its first N elements.
@@ -346,19 +360,43 @@ This is an optimization for lists in `seq-take-while'."
       (setq n (+ 1 n)))
     n))
 
-(defun seq--activate-font-lock-keywords ()
-  "Activate font-lock keywords for some symbols defined in seq."
-  (font-lock-add-keywords 'emacs-lisp-mode
-                          '("\\<seq-doseq\\>" "\\<seq-let\\>")))
-
-(defun seq--make-bindings (args seq &optional bindings)
-  "Return a list of bindings of the variables in ARGS to the elements of SEQ.
-if BINDINGS is non-nil, append new bindings to it, and
-return BINDINGS."
+(defun seq--make-pcase-bindings (args &optional bindings nested-indexes)
+  "Return a list of bindings of the variables in ARGS to the elements of a sequence.
+if BINDINGS is non-nil, append new bindings to it, and return
+BINDINGS."
   (let ((index 0)
-        (rest-bound nil))
+        (rest-marker nil))
     (seq-doseq (name args)
-      (unless rest-bound
+      (unless rest-marker
+        (pcase name
+          ((pred seq-p)
+           (setq bindings (seq--make-pcase-bindings (seq--elt-safe args index)
+                                                    bindings
+                                                    (cons index nested-indexes))))
+          (`&rest
+           (progn (push `(app (seq--reverse-args #'seq-drop ,index)
+                              ,(seq--elt-safe args (1+ index)))
+                        bindings)
+                  (setq rest-marker t)))
+          (t
+           (push `(app (seq--reverse-args #'seq--nested-elt
+                                          (reverse (cons ,index ',nested-indexes)))
+                       ,name)
+                 bindings))))
+      (setq index (1+ index)))
+    bindings))
+
+
+;; Helper function for the Backward-compatible version of `seq-let'
+;; for Emacs<25.1.
+(defun seq--make-bindings (args seq &optional bindings)
+  "Return a list of bindings of the variables in ARGS to the elements of a sequence.
+if BINDINGS is non-nil, append new bindings to it, and return
+BINDINGS."
+  (let ((index 0)
+        (rest-marker nil))
+    (seq-doseq (name args)
+      (unless rest-marker
         (pcase name
           ((pred seq-p)
            (setq bindings (seq--make-bindings (seq--elt-safe args index)
@@ -368,11 +406,12 @@ return BINDINGS."
            (progn (push `(,(seq--elt-safe args (1+ index))
                           (seq-drop ,seq ,index))
                         bindings)
-                  (setq rest-bound t)))
+                  (setq rest-marker t)))
           (t
            (push `(,name (seq--elt-safe ,seq ,index)) bindings))))
       (setq index (1+ index)))
     bindings))
+
 
 (defun seq--elt-safe (seq n)
   "Return element of SEQ at the index N.
@@ -381,6 +420,25 @@ If no element is found, return nil."
             (and (sequencep seq)
                  (> (seq-length seq) n)))
     (seq-elt seq n)))
+
+(defun seq--nested-elt (seq indexes &optional default)
+  "Traverse SEQ using INDEXES and return the looked up element or DEFAULT if nil.
+SEQ can be a nested sequence composed of lists, vectors and strings."
+  (or (seq-reduce (lambda (acc index)
+                    (when (seq-p acc)
+                      (seq--elt-safe acc index)))
+                  indexes
+                  seq)
+      default))
+
+(defun seq--reverse-args (fn &rest args)
+  "Call FN with ARGS reversed."
+  (apply fn (reverse args)))
+
+(defun seq--activate-font-lock-keywords ()
+  "Activate font-lock keywords for some symbols defined in seq."
+  (font-lock-add-keywords 'emacs-lisp-mode
+                          '("\\<seq-doseq\\>" "\\<seq-let\\>")))
 
 (defalias 'seq-copy #'copy-sequence)
 (defalias 'seq-elt #'elt)
