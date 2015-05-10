@@ -1117,12 +1117,12 @@ unchanged-history-files:
 change-history-nocommit: master-branch-is-current unchanged-history-files
 	-rm -f ChangeLog.tmp
 	$(MAKE) ChangeLog CHANGELOG=ChangeLog.tmp
-	(sed '/^;; [L]ocal Variables:/,$$d' <ChangeLog.tmp && cat $(CHANGELOG_N)) \
+	(sed '/^See ChangeLog.[0-9]* for earlier/,$$d' <ChangeLog.tmp && cat $(CHANGELOG_N)) \
 	  >$(CHANGELOG_N).tmp
 	rm ChangeLog.tmp
 	new_origin=$$(git log --pretty=format:%H HEAD^!) && \
 	sed 's/^\(gen_origin=\).*/\1'"$$new_origin/" \
-	  < $(emacslog) > $(emacslog).tmp
+	  < $(emacslog) > $(emacslog).tmp && chmod +x $(emacslog).tmp
 	mv $(CHANGELOG_N).tmp $(CHANGELOG_N)
 	mv $(emacslog).tmp $(emacslog)
 
