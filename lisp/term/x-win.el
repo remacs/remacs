@@ -1323,6 +1323,17 @@ This returns an error if any Emacs frames are X frames."
   (x-apply-session-resources)
   (setq x-initialized t))
 
+(declare-function x-own-selection-internal "xselect.c"
+		  (selection value &optional frame))
+(declare-function x-disown-selection-internal "xselect.c"
+		  (selection &optional time-object terminal))
+(declare-function x-selection-owner-p "xselect.c"
+		  (&optional selection terminal))
+(declare-function x-selection-exists-p "xselect.c"
+		  (&optional selection terminal))
+(declare-function x-get-selection-internal "xselect.c"
+		  (selection-symbol target-type &optional time-stamp terminal))
+
 (add-to-list 'display-format-alist '("\\`[^:]*:[0-9]+\\(\\.[0-9]+\\)?\\'" . x))
 (gui-method-define handle-args-function x #'x-handle-args)
 (gui-method-define frame-creation-function x #'x-create-frame-with-faces)
