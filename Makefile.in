@@ -1092,7 +1092,7 @@ bootstrap: bootstrap-clean
 .PHONY: master-branch-is-current unchanged-history-files
 
 CHANGELOG = ChangeLog
-emacslog = $(srcdir)/build-aux/gitlog-to-emacslog
+emacslog = build-aux/gitlog-to-emacslog
 # The ChangeLog history files are called ChangeLog.1, ChangeLog.2, ...,
 # ChangeLog.$(CHANGELOG_HISTORY_INDEX_MAX).  $(CHANGELOG_N) stands for
 # the newest (highest-numbered) ChangeLog history file.
@@ -1103,7 +1103,7 @@ CHANGELOG_N = ChangeLog.$(CHANGELOG_HISTORY_INDEX_MAX)
 # I guess this is PHONY so it always updates?
 ChangeLog:
 	$(AM_V_GEN)cd $(srcdir) && \
-	  $(emacslog) -o $(CHANGELOG) -n $(CHANGELOG_HISTORY_INDEX_MAX)
+	  ./$(emacslog) -o $(CHANGELOG) -n $(CHANGELOG_HISTORY_INDEX_MAX)
 
 # Check that we are in a good state for changing history.
 master-branch-is-current:
