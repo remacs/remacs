@@ -213,6 +213,9 @@ successive char insertions.
 
 ** Unicode names entered via C-x 8 RET now use substring completion by default.
 
+** C-x 8 now has shorthands for these chars: ‐ ‑ ‒ – — ― ‘ ’ “ ” † ‡ • ′ ″
+€ № ← → ↔ − ≈ ≠ ≤ ≥.  As before, you can type C-x 8 C-h to list shorthands.
+
 ** New minor mode global-eldoc-mode is enabled by default.
 
 ** Emacs now supports "bracketed paste mode" when running on a terminal
