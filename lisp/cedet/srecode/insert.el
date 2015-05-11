@@ -35,7 +35,6 @@
 (require 'srecode/args)
 (require 'srecode/filters)
 
-(defvar srecode-template-inserter-point)
 (declare-function srecode-overlaid-activate "srecode/fields")
 (declare-function srecode-template-inserted-region "srecode/fields")
 
@@ -145,7 +144,7 @@ has set everything up already."
 	       )
       (set-buffer standard-output)
       (setq end-mark (point-marker))
-      (goto-char  (oref srecode-template-inserter-point point)))
+      (goto-char  (oref-default 'srecode-template-inserter-point point)))
     (oset-default 'srecode-template-inserter-point point eieio-unbound)
 
     ;; Return the end-mark.
