@@ -69,8 +69,13 @@ Evaluate BODY with VAR bound to each element of SEQ, in turn.
     ;; Implementation of `seq-let' based on a `pcase'
     ;; pattern. Requires Emacs>=25.1.
     (progn
-      (pcase-defmacro seq (bindings)
-        `(and ,@(seq--make-pcase-bindings bindings)))
+      (pcase-defmacro seq (&rest args)
+        "pcase pattern matching sequence elements.
+Matches if the object is a sequence (list, string or vector), and
+binds each element of ARGS to the corresponding element of the
+sequence."
+        `(and (pred seq-p)
+              ,@(seq--make-pcase-bindings args)))
 
       (defmacro seq-let (args seq &rest body)
         "Bind the variables in ARGS to the elements of SEQ then evaluate BODY.
@@ -78,7 +83,8 @@ Evaluate BODY with VAR bound to each element of SEQ, in turn.
 ARGS can also include the `&rest' marker followed by a variable
 name to be bound to the rest of SEQ."
         (declare (indent 2) (debug t))
-        `(pcase-let (((seq ,args) ,seq)) ,@body)))
+        `(pcase-let ((,(seq--make-pcase-patterns args) ,seq))
+           ,@body)))
 
   ;; Implementation of `seq-let' compatible with Emacs<25.1.
   (defmacro seq-let (args seq &rest body)
@@ -360,32 +366,32 @@ This is an optimization for lists in `seq-take-while'."
       (setq n (+ 1 n)))
     n))
 
-(defun seq--make-pcase-bindings (args &optional bindings nested-indexes)
-  "Return a list of bindings of the variables in ARGS to the elements of a sequence.
-if BINDINGS is non-nil, append new bindings to it, and return
-BINDINGS."
-  (let ((index 0)
+(defun seq--make-pcase-bindings (args)
+  "Return a list of bindings of the variables in ARGS to the elements of a sequence."
+  (let ((bindings '())
+        (index 0)
         (rest-marker nil))
     (seq-doseq (name args)
       (unless rest-marker
         (pcase name
-          ((pred seq-p)
-           (setq bindings (seq--make-pcase-bindings (seq--elt-safe args index)
-                                                    bindings
-                                                    (cons index nested-indexes))))
           (`&rest
-           (progn (push `(app (seq--reverse-args #'seq-drop ,index)
+           (progn (push `(app (pcase--flip seq-drop ,index)
                               ,(seq--elt-safe args (1+ index)))
                         bindings)
                   (setq rest-marker t)))
           (t
-           (push `(app (seq--reverse-args #'seq--nested-elt
-                                          (reverse (cons ,index ',nested-indexes)))
-                       ,name)
-                 bindings))))
+           (push `(app (pcase--flip seq--elt-safe ,index) ,name) bindings))))
       (setq index (1+ index)))
     bindings))
 
+(defun seq--make-pcase-patterns (args)
+  "Return a list of `(seq ...)' pcase patterns from the argument list ARGS."
+  (cons 'seq
+        (seq-map (lambda (elt)
+                   (if (seq-p elt)
+                       (seq--make-pcase-patterns elt)
+                     elt))
+                 args)))
 
 ;; Helper function for the Backward-compatible version of `seq-let'
 ;; for Emacs<25.1.
@@ -412,7 +418,6 @@ BINDINGS."
       (setq index (1+ index)))
     bindings))
 
-
 (defun seq--elt-safe (seq n)
   "Return element of SEQ at the index N.
 If no element is found, return nil."
@@ -420,20 +425,6 @@ If no element is found, return nil."
             (and (sequencep seq)
                  (> (seq-length seq) n)))
     (seq-elt seq n)))
-
-(defun seq--nested-elt (seq indexes &optional default)
-  "Traverse SEQ using INDEXES and return the looked up element or DEFAULT if nil.
-SEQ can be a nested sequence composed of lists, vectors and strings."
-  (or (seq-reduce (lambda (acc index)
-                    (when (seq-p acc)
-                      (seq--elt-safe acc index)))
-                  indexes
-                  seq)
-      default))
-
-(defun seq--reverse-args (fn &rest args)
-  "Call FN with ARGS reversed."
-  (apply fn (reverse args)))
 
 (defun seq--activate-font-lock-keywords ()
   "Activate font-lock keywords for some symbols defined in seq."
