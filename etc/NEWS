@@ -553,6 +553,9 @@ and comments.
 
 ** VC and related modes
 
+*** Basic push support, via `vc-push', bound to `C-x v P'.
+Implemented for Bzr, Git, Hg.
+
 *** The new command vc-region-history shows the log+diff of the active region.
 
 *** New option `vc-annotate-background-mode' controls whether
