@@ -869,13 +869,18 @@ xg_clear_under_internal_border (struct frame *f)
 }
 
 static int
-xg_get_gdk_scale()
+xg_get_gdk_scale (void)
 {
-  const char *sscale = getenv("GDK_SCALE");
-  int scale = 1;
+  const char *sscale = getenv ("GDK_SCALE");
 
-  if (sscale) sscanf(sscale, "%d", &scale);
-  return scale;
+  if (sscale)
+    {
+      long scale = atol (sscale);
+      if (0 < scale)
+	return min (scale, INT_MAX);
+    }
+
+  return 1;
 }
 
 /* Function to handle resize of our frame.  As we have a Gtk+ tool bar
@@ -928,10 +933,9 @@ xg_frame_set_char_size (struct frame *f, int width, int height)
   int pixelheight = FRAME_TEXT_TO_PIXEL_HEIGHT (f, height);
   Lisp_Object fullscreen = get_frame_param (f, Qfullscreen);
   gint gwidth, gheight;
-  int totalheight = pixelheight + FRAME_TOOLBAR_HEIGHT (f)
-    + FRAME_MENUBAR_HEIGHT (f);
+  int totalheight
+    = pixelheight + FRAME_TOOLBAR_HEIGHT (f) + FRAME_MENUBAR_HEIGHT (f);
   int totalwidth = pixelwidth + FRAME_TOOLBAR_WIDTH (f);
-  int scale = xg_get_gdk_scale ();
 
   if (FRAME_PIXEL_HEIGHT (f) == 0)
     return;
@@ -942,8 +946,9 @@ xg_frame_set_char_size (struct frame *f, int width, int height)
   /* Do this before resize, as we don't know yet if we will be resized.  */
   xg_clear_under_internal_border (f);
 
-  if (FRAME_VISIBLE_P (f) && scale > 1)
+  if (FRAME_VISIBLE_P (f))
     {
+      int scale = xg_get_gdk_scale ();
       totalheight /= scale;
       totalwidth /= scale;
     }
@@ -1438,13 +1443,10 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
       hint_flags |= GDK_HINT_USER_POS;
     }
 
-  if (scale > 1)
-    {
-      size_hints.base_width /= scale;
-      size_hints.base_height /= scale;
-      size_hints.width_inc /= scale;
-      size_hints.height_inc /= scale;
-    }
+  size_hints.base_width /= scale;
+  size_hints.base_height /= scale;
+  size_hints.width_inc /= scale;
+  size_hints.height_inc /= scale;
 
   if (hint_flags != f->output_data.x->hint_flags
       || memcmp (&size_hints,
@@ -3767,22 +3769,18 @@ xg_update_scrollbar_pos (struct frame *f,
                          int width,
                          int height)
 {
-
   GtkWidget *wscroll = xg_get_widget_from_map (scrollbar_id);
-  int scale = xg_get_gdk_scale ();
-
-  if (scale > 1)
-    {
-      top /= scale;
-      left /= scale;
-      height /= scale;
-    }
-
   if (wscroll)
     {
       GtkWidget *wfixed = f->output_data.x->edit_widget;
       GtkWidget *wparent = gtk_widget_get_parent (wscroll);
       gint msl;
+      int scale = xg_get_gdk_scale ();
+
+      top /= scale;
+      left /= scale;
+      height /= scale;
+      left -= (scale - 1) * ((width / scale) >> 1);
 
       /* Clear out old position.  */
       int oldx = -1, oldy = -1, oldw, oldh;
@@ -3794,12 +3792,6 @@ xg_update_scrollbar_pos (struct frame *f,
         }
 
       /* Move and resize to new values.  */
-      if (scale > 1)
-        {
-          int adj = (scale-1)*(width/scale/2);
-          left -= adj;
-        }
-
       gtk_fixed_move (GTK_FIXED (wfixed), wparent, left, top);
       gtk_widget_style_get (wscroll, "min-slider-length", &msl, NULL);
       if (msl > height)
@@ -3821,11 +3813,8 @@ xg_update_scrollbar_pos (struct frame *f,
           /* Clear under old scroll bar position.  This must be done after
              the gtk_widget_queue_draw and gdk_window_process_all_updates
              above.  */
-          if (scale > 1)
-            {
-              oldw += (scale-1)*oldw;
-              oldx -= (scale-1)*oldw;
-            }
+	  oldw += (scale - 1) * oldw;
+	  oldx -= (scale - 1) * oldw;
           x_clear_area (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f),
                         oldx, oldy, oldw, oldh);
         }
