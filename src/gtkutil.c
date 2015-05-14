@@ -868,6 +868,16 @@ xg_clear_under_internal_border (struct frame *f)
     }
 }
 
+static int
+xg_get_gdk_scale()
+{
+  const char *sscale = getenv("GDK_SCALE");
+  int scale = 1;
+
+  if (sscale) sscanf(sscale, "%d", &scale);
+  return scale;
+}
+
 /* Function to handle resize of our frame.  As we have a Gtk+ tool bar
    and a Gtk+ menu bar, we get resize events for the edit part of the
    frame only.  We let Gtk+ deal with the Gtk+ parts.
@@ -918,6 +928,10 @@ xg_frame_set_char_size (struct frame *f, int width, int height)
   int pixelheight = FRAME_TEXT_TO_PIXEL_HEIGHT (f, height);
   Lisp_Object fullscreen = get_frame_param (f, Qfullscreen);
   gint gwidth, gheight;
+  int totalheight = pixelheight + FRAME_TOOLBAR_HEIGHT (f)
+    + FRAME_MENUBAR_HEIGHT (f);
+  int totalwidth = pixelwidth + FRAME_TOOLBAR_WIDTH (f);
+  int scale = xg_get_gdk_scale ();
 
   if (FRAME_PIXEL_HEIGHT (f) == 0)
     return;
@@ -927,6 +941,12 @@ xg_frame_set_char_size (struct frame *f, int width, int height)
 
   /* Do this before resize, as we don't know yet if we will be resized.  */
   xg_clear_under_internal_border (f);
+
+  if (FRAME_VISIBLE_P (f) && scale > 1)
+    {
+      totalheight /= scale;
+      totalwidth /= scale;
+    }
 
   /* Resize the top level widget so rows and columns remain constant.
 
@@ -942,38 +962,33 @@ xg_frame_set_char_size (struct frame *f, int width, int height)
       frame_size_history_add
 	(f, Qxg_frame_set_char_size_1, width, height,
 	 list2 (make_number (gheight),
-		make_number (pixelheight + FRAME_TOOLBAR_HEIGHT (f)
-			     + FRAME_MENUBAR_HEIGHT (f))));
+		make_number (totalheight)));
 
       gtk_window_resize (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
 			 gwidth,
-			 pixelheight + FRAME_TOOLBAR_HEIGHT (f)
-			 + FRAME_MENUBAR_HEIGHT (f));
+			 totalheight);
     }
   else if (EQ (fullscreen, Qfullheight) && height == FRAME_TEXT_HEIGHT (f))
     {
       frame_size_history_add
 	(f, Qxg_frame_set_char_size_2, width, height,
 	 list2 (make_number (gwidth),
-		make_number (pixelwidth + FRAME_TOOLBAR_WIDTH (f))));
+		make_number (totalwidth)));
 
       gtk_window_resize (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
-			 pixelwidth + FRAME_TOOLBAR_WIDTH (f),
+			 totalwidth,
 			 gheight);
     }
-
   else
     {
       frame_size_history_add
 	(f, Qxg_frame_set_char_size_3, width, height,
-	 list2 (make_number (pixelwidth + FRAME_TOOLBAR_WIDTH (f)),
-		make_number (pixelheight + FRAME_TOOLBAR_HEIGHT (f)
-			     + FRAME_MENUBAR_HEIGHT (f))));
+	 list2 (make_number (totalwidth),
+		make_number (totalheight)));
 
       gtk_window_resize (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
-			 pixelwidth + FRAME_TOOLBAR_WIDTH (f),
-			 pixelheight + FRAME_TOOLBAR_HEIGHT (f)
-			 + FRAME_MENUBAR_HEIGHT (f));
+			 totalwidth,
+			 totalheight);
       fullscreen = Qnil;
     }
 
@@ -1355,6 +1370,7 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
   int min_rows = 0, min_cols = 0;
   int win_gravity = f->win_gravity;
   Lisp_Object fs_state, frame;
+  int scale = xg_get_gdk_scale ();
 
   /* Don't set size hints during initialization; that apparently leads
      to a race condition.  See the thread at
@@ -1432,6 +1448,14 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
     {
       hint_flags &= ~GDK_HINT_POS;
       hint_flags |= GDK_HINT_USER_POS;
+    }
+
+  if (scale > 1)
+    {
+      size_hints.base_width /= scale;
+      size_hints.base_height /= scale;
+      size_hints.width_inc /= scale;
+      size_hints.height_inc /= scale;
     }
 
   if (hint_flags != f->output_data.x->hint_flags
@@ -3549,14 +3573,14 @@ update_theme_scrollbar_height (void)
 int
 xg_get_default_scrollbar_width (void)
 {
-  return scroll_bar_width_for_theme;
+  return scroll_bar_width_for_theme * xg_get_gdk_scale ();
 }
 
 int
 xg_get_default_scrollbar_height (void)
 {
   /* Apparently there's no default height for themes.  */
-  return scroll_bar_width_for_theme;
+  return scroll_bar_width_for_theme * xg_get_gdk_scale ();
 }
 
 /* Return the scrollbar id for X Window WID on display DPY.
@@ -3757,6 +3781,14 @@ xg_update_scrollbar_pos (struct frame *f,
 {
 
   GtkWidget *wscroll = xg_get_widget_from_map (scrollbar_id);
+  int scale = xg_get_gdk_scale ();
+
+  if (scale > 1)
+    {
+      top /= scale;
+      left /= scale;
+      height /= scale;
+    }
 
   if (wscroll)
     {
@@ -3774,6 +3806,12 @@ xg_update_scrollbar_pos (struct frame *f,
         }
 
       /* Move and resize to new values.  */
+      if (scale > 1)
+        {
+          int adj = (scale-1)*(width/scale/2);
+          left -= adj;
+        }
+
       gtk_fixed_move (GTK_FIXED (wfixed), wparent, left, top);
       gtk_widget_style_get (wscroll, "min-slider-length", &msl, NULL);
       if (msl > height)
@@ -3791,11 +3829,18 @@ xg_update_scrollbar_pos (struct frame *f,
       gtk_widget_queue_draw (wfixed);
       gdk_window_process_all_updates ();
       if (oldx != -1 && oldw > 0 && oldh > 0)
-	/* Clear under old scroll bar position.  This must be done after
-	   the gtk_widget_queue_draw and gdk_window_process_all_updates
-	   above.  */
-	x_clear_area (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f),
-		      oldx, oldy, oldw, oldh);
+        {
+          /* Clear under old scroll bar position.  This must be done after
+             the gtk_widget_queue_draw and gdk_window_process_all_updates
+             above.  */
+          if (scale > 1)
+            {
+              oldw += (scale-1)*oldw;
+              oldx -= (scale-1)*oldw;
+            }
+          x_clear_area (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f),
+                        oldx, oldy, oldw, oldh);
+        }
 
       /* GTK does not redraw until the main loop is entered again, but
          if there are no X events pending we will not enter it.  So we sync
