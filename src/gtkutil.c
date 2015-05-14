@@ -1140,18 +1140,6 @@ delete_cb (GtkWidget *widget,
            GdkEvent  *event,
            gpointer user_data)
 {
-#ifdef HAVE_GTK3
-  /* The event doesn't arrive in the normal event loop.  Send event
-     here.  */
-  struct frame *f = user_data;
-  struct input_event ie;
-
-  EVENT_INIT (ie);
-  ie.kind = DELETE_WINDOW_EVENT;
-  XSETFRAME (ie.frame_or_window, f);
-  kbd_buffer_store_event (&ie);
-#endif
-
   return TRUE;
 }
 
