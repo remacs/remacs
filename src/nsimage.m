@@ -211,7 +211,6 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
 - initFromXBM: (unsigned char *)bits width: (int)w height: (int)h
            fg: (unsigned long)fg bg: (unsigned long)bg
 {
-  int bpr = (w + 7) / 8;
   unsigned char *planes[5];
 
   [self initWithSize: NSMakeSize (w, h)];

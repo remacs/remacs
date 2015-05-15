@@ -1538,7 +1538,7 @@ ns_get_color (const char *name, NSColor **col)
 {
   NSColor *new = nil;
   static char hex[20];
-  int scaling;
+  int scaling = 0;
   float r = -1.0, g, b;
   NSString *nsname = [NSString stringWithUTF8String: name];
 
@@ -2465,6 +2465,7 @@ ns_draw_window_cursor (struct window *w, struct glyph_row *glyph_row,
 
   switch (cursor_type)
     {
+    case DEFAULT_CURSOR:
     case NO_CURSOR:
       break;
     case FILLED_BOX_CURSOR:
@@ -3963,7 +3964,6 @@ ns_set_horizontal_scroll_bar (struct window *window,
   EmacsScroller *bar;
   int top, height, left, width;
   int window_x, window_width;
-  int pixel_width = WINDOW_PIXEL_WIDTH (window);
   BOOL update_p = YES;
 
   /* optimization; display engine sends WAY too many of these.. */
@@ -4321,6 +4321,7 @@ ns_create_terminal (struct ns_display_info *dpyinfo)
   terminal->menu_show_hook = ns_menu_show;
   terminal->popup_dialog_hook = ns_popup_dialog;
   terminal->set_vertical_scroll_bar_hook = ns_set_vertical_scroll_bar;
+  terminal->set_horizontal_scroll_bar_hook = ns_set_horizontal_scroll_bar;
   terminal->condemn_scroll_bars_hook = ns_condemn_scroll_bars;
   terminal->redeem_scroll_bar_hook = ns_redeem_scroll_bar;
   terminal->judge_scroll_bars_hook = ns_judge_scroll_bars;
@@ -4605,7 +4606,7 @@ ns_term_shutdown (int sig)
 
 - (id)init
 {
-  if (self = [super init])
+  if ((self = [super init]))
     {
 #ifdef NS_IMPL_COCOA
       self->isFirst = YES;
@@ -5272,9 +5273,6 @@ not_in_argv (NSString *arg)
   int code;
   unsigned fnKeysym = 0;
   static NSMutableArray *nsEvArray;
-#ifdef NS_IMPL_GNUSTEP
-  static BOOL firstTime = YES;
-#endif
   int left_is_none;
   unsigned int flags = [theEvent modifierFlags];
 
@@ -5503,18 +5501,6 @@ not_in_argv (NSString *arg)
     }
 
 
-#ifdef NS_IMPL_GNUSTEP
-  /* if we get here we should send the key for input manager processing */
-  /* Disable warning, there is nothing a user can do about it anyway, and
-     it does not seem to matter.  */
-#if 0
-  if (firstTime && [[NSInputManager currentInputManager]
-                     wantsToDelayTextChangeNotifications] == NO)
-    fprintf (stderr,
-          "Emacs: WARNING: TextInput mgr wants marked text to be permanent!\n");
-#endif
-  firstTime = NO;
-#endif
   if (NS_KEYLOG && !processingCompose)
     fprintf (stderr, "keyDown: Begin compose sequence.\n");
 
@@ -7202,7 +7188,6 @@ if (cols > 0 && rows > 0)
      one screen, we want to constrain.  Other times not.  */
   NSArray *screens = [NSScreen screens];
   NSUInteger nr_screens = [screens count], nr_eff_screens = 0, i;
-  struct frame *f = ((EmacsView *)[self delegate])->emacsframe;
   NSTRACE (constrainFrameRect);
   NSTRACE_RECT ("input", frameRect);
 

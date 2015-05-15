@@ -1075,7 +1075,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
   Lisp_Object name;
   int minibuffer_only = 0;
   long window_prompting = 0;
-  int width, height;
   ptrdiff_t count = specpdl_ptr - specpdl;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   Lisp_Object display;
@@ -1475,10 +1474,9 @@ Optional arg DIR_ONLY_P, if non-nil, means choose only directories.  */)
    Lisp_Object init, Lisp_Object dir_only_p)
 {
   static id fileDelegate = nil;
-  BOOL ret;
   BOOL isSave = NILP (mustmatch) && NILP (dir_only_p);
   id panel;
-  Lisp_Object fname;
+  Lisp_Object fname = Qnil;
 
   NSString *promptS = NILP (prompt) || !STRINGP (prompt) ? nil :
     [NSString stringWithUTF8String: SSDATA (prompt)];
@@ -1558,20 +1556,17 @@ Optional arg DIR_ONLY_P, if non-nil, means choose only directories.  */)
   while (ns_fd_data.panel != nil)
     [NSApp run];
 
-  ret = (ns_fd_data.ret == MODAL_OK_RESPONSE);
-
-  if (ret)
+  if (ns_fd_data.ret == MODAL_OK_RESPONSE)
     {
       NSString *str = ns_filename_from_panel (panel);
       if (! str) str = ns_directory_from_panel (panel);
-      if (! str) ret = NO;
-      else fname = build_string ([str UTF8String]);
+      if (str) fname = build_string ([str UTF8String]);
     }
 
   [[FRAME_NS_VIEW (SELECTED_FRAME ()) window] makeKeyWindow];
   unblock_input ();
 
-  return ret ? fname : Qnil;
+  return fname;
 }
 
 const char *

@@ -1418,7 +1418,7 @@ Lisp_Object
 ns_popup_dialog (struct frame *f, Lisp_Object header, Lisp_Object contents)
 {
   id dialog;
-  Lisp_Object window, tem, title;
+  Lisp_Object tem, title;
   NSPoint p;
   BOOL isQ;
   NSAutoreleasePool *pool;
