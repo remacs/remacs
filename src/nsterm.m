@@ -2317,7 +2317,7 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
           for (i = 0; i < len; i++)
             cbits[i] = ~(bits[i] & 0xff);
           img = [[EmacsImage alloc] initFromXBM: cbits width: 8 height: p->h
-                                           flip: NO];
+                                             fg: 0 bg: 0];
           bimgs[p->which - 1] = img;
           xfree (cbits);
         }
