@@ -1077,7 +1077,8 @@ of `ispell-dictionary-base-alist' elements."
 	     ;; Try xx.dat first, strip out variant, country code, etc,
 	     ;; then try xx_YY.dat (without stripping country code).
 	     (dolist (tmp-regexp (list "^[[:alpha:]]+"
-				       "^[[:alpha:]_]+"))
+				       "^[[:alpha:]_]+"
+                                       "^[[:alpha:]]+-\\(alt\\|old\\)"))
 	       (let ((fullpath
 		      (concat tmp-path "/"
 			      (and (string-match tmp-regexp dict-name)
