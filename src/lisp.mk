@@ -34,10 +34,6 @@
 ## that does not have an explicit .el extension, but beware of any
 ## no-byte-compile ones.
 
-## Confusingly, international/cp51932 and international/eucjp-ms are
-## unconditionally loaded from language/japanese, instead of being
-## loaded directly from loadup.el; FIXME.
-
 ## Note that this list should not include lisp files which might not
 ## be present, like site-load.el and site-init.el; this makefile
 ## expects them all to be either present or buildable.
@@ -96,9 +92,9 @@ lisp = \
 	$(lispsource)/language/romanian.elc \
 	$(lispsource)/language/greek.elc \
 	$(lispsource)/language/hebrew.elc \
-	$(lispsource)/language/japanese.elc \
 	$(lispsource)/international/cp51932.el \
 	$(lispsource)/international/eucjp-ms.el \
+	$(lispsource)/language/japanese.elc \
 	$(lispsource)/language/korean.elc \
 	$(lispsource)/language/lao.elc \
 	$(lispsource)/language/tai-viet.elc \

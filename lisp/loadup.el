@@ -178,6 +178,8 @@
 (load "language/romanian")
 (load "language/greek")
 (load "language/hebrew")
+(load "international/cp51932")
+(load "international/eucjp-ms")
 (load "language/japanese")
 (load "language/korean")
 (load "language/lao")
