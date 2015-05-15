@@ -1796,9 +1796,14 @@ using `package-compute-transaction'."
    (callback (funcall callback))))
 
 (defun package--ensure-init-file ()
-  "Ensure that the user's init file calls `package-initialize'."
+  "Ensure that the user's init file has `package-initialize'.
+`package-initialize' doesn't have to be called, as long as it is
+present somewhere in the file, even as a comment.  If it is not,
+add a call to it along with some explanatory comments."
   ;; Don't mess with the init-file from "emacs -Q".
-  (when user-init-file
+  (when (and (stringp user-init-file)
+             (file-readable-p user-init-file)
+             (file-writable-p user-init-file))
     (let* ((buffer (find-buffer-visiting user-init-file))
            (contains-init
             (if buffer
