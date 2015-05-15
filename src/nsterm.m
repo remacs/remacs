@@ -2093,6 +2093,18 @@ ns_clear_frame_area (struct frame *f, int x, int y, int width, int height)
   return;
 }
 
+static void
+ns_copy_bits (struct frame *f, NSRect src, NSRect dest)
+{
+  if (FRAME_NS_VIEW (f))
+    {
+      ns_focus (f, &dest, 1);
+      [FRAME_NS_VIEW (f) scrollRect: src
+                                 by: NSMakeSize (dest.origin.x - src.origin.x,
+                                                 dest.origin.y - src.origin.y)];
+      ns_unfocus (f);
+    }
+}
 
 static void
 ns_scroll_run (struct window *w, struct run *run)
@@ -2145,11 +2157,8 @@ ns_scroll_run (struct window *w, struct run *run)
   {
     NSRect srcRect = NSMakeRect (x, from_y, width, height);
     NSRect dstRect = NSMakeRect (x, to_y, width, height);
-    NSPoint dstOrigin = NSMakePoint (x, to_y);
 
-    ns_focus (f, &dstRect, 1);
-    NSCopyBits (0, srcRect , dstOrigin);
-    ns_unfocus (f);
+    ns_copy_bits (f, srcRect , dstRect);
   }
 
   unblock_input ();
@@ -2205,13 +2214,10 @@ ns_shift_glyphs_for_insert (struct frame *f,
 {
   NSRect srcRect = NSMakeRect (x, y, width, height);
   NSRect dstRect = NSMakeRect (x+shift_by, y, width, height);
-  NSPoint dstOrigin = dstRect.origin;
 
   NSTRACE (ns_shift_glyphs_for_insert);
 
-  ns_focus (f, &dstRect, 1);
-  NSCopyBits (0, srcRect, dstOrigin);
-  ns_unfocus (f);
+  ns_copy_bits (f, srcRect, dstRect);
 }
 
 
@@ -4886,21 +4892,43 @@ ns_term_shutdown (int sig)
   EV_TRAILER ((id)nil);
 }
 
+static bool
+runAlertPanel(NSString *title,
+              NSString *msgFormat,
+              NSString *defaultButton,
+              NSString *alternateButton)
+{
+#if !defined (NS_IMPL_COCOA) || \
+  MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_9
+  return NSRunAlertPanel(title, msgFormat, defaultButton, alternateButton, nil)
+    == NSAlertDefaultReturn;
+#else
+  NSAlert *alert = [[NSAlert alloc] init];
+  [alert setAlertStyle: NSCriticalAlertStyle];
+  [alert setMessageText: msgFormat];
+  [alert addButtonWithTitle: defaultButton];
+  [alert addButtonWithTitle: alternateButton];
+  NSInteger ret = [alert runModal];
+  [alert release];
+  return ret == NSAlertFirstButtonReturn;
+#endif
+}
+
 
 - (NSApplicationTerminateReply)applicationShouldTerminate: (id)sender
 {
-  int ret;
+  bool ret;
 
   if (NILP (ns_confirm_quit)) //   || ns_shutdown_properly  --> TO DO
     return NSTerminateNow;
 
-    ret = NSRunAlertPanel(ns_app_name,
-                          @"Exit requested.  Would you like to Save Buffers and Exit, or Cancel the request?",
-                          @"Save Buffers and Exit", @"Cancel", nil);
+    ret = runAlertPanel(ns_app_name,
+                        @"Exit requested.  Would you like to Save Buffers and Exit, or Cancel the request?",
+                        @"Save Buffers and Exit", @"Cancel");
 
-    if (ret == NSAlertDefaultReturn)
+    if (ret)
         return NSTerminateNow;
-    else if (ret == NSAlertAlternateReturn)
+    else
         return NSTerminateCancel;
     return NSTerminateNow;  /* just in case */
 }
@@ -6251,8 +6279,10 @@ if (cols > 0 && rows > 0)
 
   [win setAcceptsMouseMovedEvents: YES];
   [win setDelegate: self];
+#if !defined (NS_IMPL_COCOA) || \
+  MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_9
   [win useOptimizedDrawing: YES];
-
+#endif
   sz.width = frame_resize_pixelwise ? 1 : FRAME_COLUMN_WIDTH (f);
   sz.height = frame_resize_pixelwise ? 1 : FRAME_LINE_HEIGHT (f);
   [win setResizeIncrements: sz];
@@ -6313,8 +6343,10 @@ if (cols > 0 && rows > 0)
   if ([col alphaComponent] != (EmacsCGFloat) 1.0)
     [win setOpaque: NO];
 
+#if !defined (NS_IMPL_COCOA) || \
+  MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_9
   [self allocateGState];
-
+#endif
   [NSApp registerServicesMenuSendTypes: ns_send_types
                            returnTypes: nil];
 
@@ -6369,7 +6401,7 @@ if (cols > 0 && rows > 0)
       }
   else if (next_maximized == FULLSCREEN_HEIGHT
       || (next_maximized == -1
-          && abs (defaultFrame.size.height - result.size.height)
+          && abs ((int)(defaultFrame.size.height - result.size.height))
           > FRAME_LINE_HEIGHT (emacsframe)))
     {
       /* first click */
@@ -6392,7 +6424,7 @@ if (cols > 0 && rows > 0)
     }
   else if (next_maximized == FULLSCREEN_MAXIMIZED
            || (next_maximized == -1
-               && abs (defaultFrame.size.width - result.size.width)
+               && abs ((int)(defaultFrame.size.width - result.size.width))
                > FRAME_COLUMN_WIDTH (emacsframe)))
     {
       result = defaultFrame;  /* second click */
@@ -6639,7 +6671,10 @@ if (cols > 0 && rows > 0)
       [fw setTitle:[w title]];
       [fw setDelegate:self];
       [fw setAcceptsMouseMovedEvents: YES];
+#if !defined (NS_IMPL_COCOA) || \
+  MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_9
       [fw useOptimizedDrawing: YES];
+#endif
       [fw setResizeIncrements: sz];
       [fw setBackgroundColor: col];
       if ([col alphaComponent] != (EmacsCGFloat) 1.0)
@@ -6882,7 +6917,7 @@ if (cols > 0 && rows > 0)
 /* NSDraggingDestination protocol methods.  Actually this is not really a
    protocol, but a category of Object.  O well...  */
 
--(NSUInteger) draggingEntered: (id <NSDraggingInfo>) sender
+-(NSDragOperation) draggingEntered: (id <NSDraggingInfo>) sender
 {
   NSTRACE (draggingEntered);
   return NSDragOperationGeneric;
@@ -7263,7 +7298,15 @@ if (cols > 0 && rows > 0)
 {
   /* TODO: if we want to allow variable widths, this is the place to do it,
            however neither GNUstep nor Cocoa support it very well */
-  return [NSScroller scrollerWidth];
+  CGFloat r;
+#if !defined (NS_IMPL_COCOA) || \
+  MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
+  r = [NSScroller scrollerWidth];
+#else
+  r = [NSScroller scrollerWidthForControlSize: NSRegularControlSize
+                                scrollerStyle: NSScrollerStyleLegacy];
+#endif
+  return r;
 }
 
 
