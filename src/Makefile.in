@@ -420,6 +420,8 @@ ALLOBJS = $(FIRSTFILE_OBJ) $(VMLIMIT_OBJ) $(obj) $(otherobj)
 
 include $(srcdir)/lisp.mk
 
+lisp = $(addprefix ${lispsource}/,${shortlisp})
+
 ## Construct full set of libraries to be linked.
 LIBES = $(LIBS) $(W32_LIBS) $(LIBS_GNUSTEP) $(LIBX_BASE) $(LIBIMAGE) \
    $(LIBX_OTHER) $(LIBSOUND) \
@@ -463,12 +465,9 @@ else
 endif
 
 ## We run make-docfile twice because the command line may get too long
-## on some systems.  The sed command operating on lisp.mk also reduces
-## the length of the command line.  Unfortunately, no-one has any idea
+## on some systems.  Unfortunately, no-one has any idea
 ## exactly how long the maximum safe command line length is on all the
-## various systems that Emacs supports.  Obviously, the length depends
-## on what your value of $srcdir is.  If the length restriction goes
-## away, lisp.mk can be merged back into this file.
+## various systems that Emacs supports.
 ##
 ## $(SOME_MACHINE_OBJECTS) comes before $(obj) because some files may
 ## or may not be included in $(obj), but they are always included in
@@ -482,8 +481,7 @@ $(etc)/DOC: $(libsrc)/make-docfile$(EXEEXT) $(obj) $(lisp)
 	$(AM_V_at)$(libsrc)/make-docfile -d $(srcdir) \
 	  $(SOME_MACHINE_OBJECTS) $(obj) > $(etc)/DOC
 	$(AM_V_at)$(libsrc)/make-docfile -a $(etc)/DOC -d $(lispsource) \
-	  `sed -n -e 's| \\\\||' -e 's|^[ 	]*$$(lispsource)/||p' \
-	     $(srcdir)/lisp.mk`
+	  $(shortlisp)
 
 $(libsrc)/make-docfile$(EXEEXT):
 	$(MAKE) -C $(libsrc) make-docfile$(EXEEXT)

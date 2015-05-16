@@ -29,7 +29,7 @@
 ;; If you add/remove Lisp files to be loaded here, consider the
 ;; following issues:
 
-;; i) Any file loaded on any platform should appear in $lisp in src/lisp.mk.
+;; i) Any file loaded on any platform should appear in src/lisp.mk.
 ;; Use the .el or .elc version as appropriate.
 
 ;; This ensures both that the Lisp files are compiled (if necessary)
