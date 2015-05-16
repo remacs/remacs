@@ -810,14 +810,12 @@ This prompts for a branch to merge from."
     (goto-char (point-min))
     (unless (re-search-forward "^<<<<<<< " nil t)
       (vc-git-command nil 0 buffer-file-name "add")
-      (when (and
-             (eq vc-git-resolve-conflicts 'unstage-maybe)
-             ;; Not doing a merge.  Likely applying a stash
-             ;; (bug#20292).
-             (not
-              (file-exists-p (expand-file-name ".git/MERGE_HEAD"
-                                               (vc-git-root buffer-file-name))))
-             (not (vc-git-conflicted-files (vc-git-root buffer-file-name))))
+      (unless (or
+               (not (eq vc-git-resolve-conflicts 'unstage-maybe))
+               ;; Doing a merge, so bug#20292 doesn't apply.
+               (file-exists-p (expand-file-name ".git/MERGE_HEAD"
+                                                (vc-git-root buffer-file-name)))
+               (vc-git-conflicted-files (vc-git-root buffer-file-name)))
         (vc-git-command nil 0 nil "reset"))
       ;; Remove the hook so that it is not called multiple times.
       (remove-hook 'after-save-hook 'vc-git-resolve-when-done t))))
