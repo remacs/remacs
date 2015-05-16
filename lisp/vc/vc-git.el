@@ -1054,17 +1054,19 @@ or BRANCH^ (where \"^\" can be repeated)."
 
 (defun vc-git-annotate-command (file buf &optional rev)
   (let ((name (file-relative-name file)))
-    (apply #'vc-git-command buf 'async nil "blame" "--date=iso"
+    (apply #'vc-git-command buf 'async nil "blame" "--date=short"
 	   (append (vc-switches 'git 'annotate)
 		   (list rev "--" name)))))
 
 (declare-function vc-annotate-convert-time "vc-annotate" (&optional time))
 
 (defun vc-git-annotate-time ()
-  (and (re-search-forward "[0-9a-f]+[^()]+(.* \\([0-9]+\\)-\\([0-9]+\\)-\\([0-9]+\\) \\([0-9]+\\):\\([0-9]+\\):\\([0-9]+\\) \\([-+0-9]+\\) +[0-9]+) " nil t)
+  (and (re-search-forward "^[0-9a-f]+[^()]+(.*?\\([0-9]+\\)-\\([0-9]+\\)-\\([0-9]+\\) \\(:?\\([0-9]+\\):\\([0-9]+\\):\\([0-9]+\\) \\([-+0-9]+\\)\\)? *[0-9]+) " nil t)
        (vc-annotate-convert-time
         (apply #'encode-time (mapcar (lambda (match)
-                                       (string-to-number (match-string match)))
+                                       (if (match-beginning match)
+                                           (string-to-number (match-string match))
+                                         0))
                                      '(6 5 4 3 2 1 7))))))
 
 (defun vc-git-annotate-extract-revision-at-line ()
