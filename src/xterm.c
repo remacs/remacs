@@ -7059,17 +7059,18 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 
       f = any;
 
-#if ! defined (USE_GTK)
       /* If mouse-highlight is an integer, input clears out
 	 mouse highlighting.  */
       if (!hlinfo->mouse_face_hidden && INTEGERP (Vmouse_highlight)
+#if ! defined (USE_GTK)
 	  && (f == 0
-	      || !EQ (f->tool_bar_window, hlinfo->mouse_face_window)))
+	      || !EQ (f->tool_bar_window, hlinfo->mouse_face_window))
+#endif
+	  )
         {
           clear_mouse_face (hlinfo);
           hlinfo->mouse_face_hidden = true;
         }
-#endif
 
 #if defined USE_MOTIF && defined USE_TOOLKIT_SCROLL_BARS
       if (f == 0)
