@@ -117,8 +117,7 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
 		 (const :tag "None" t)
 		 (string :tag "Argument String")
 		 (repeat :tag "Argument List" :value ("") string))
-  :version "23.1"
-  :group 'vc-git)
+  :version "23.1")
 
 (defcustom vc-git-annotate-switches nil
   "String or list of strings specifying switches for Git blame under VC.
@@ -127,8 +126,7 @@ If nil, use the value of `vc-annotate-switches'.  If t, use no switches."
 		 (const :tag "None" t)
 		 (string :tag "Argument String")
 		 (repeat :tag "Argument List" :value ("") string))
-  :version "25.1"
-  :group 'vc-git)
+  :version "25.1")
 
 (defcustom vc-git-resolve-conflicts t
   "When non-nil, mark conflicted file as resolved upon saving.
@@ -140,14 +138,12 @@ the staging area."
                  (const :tag "Resolve" t)
                  (const :tag "Resolve and maybe unstage all files"
                         unstage-maybe))
-  :version "25.1"
-  :group 'vc-git)
+  :version "25.1")
 
 (defcustom vc-git-program "git"
   "Name of the Git executable (excluding any arguments)."
   :version "24.1"
-  :type 'string
-  :group 'vc-git)
+  :type 'string)
 
 (defcustom vc-git-root-log-format
   '("%d%h..: %an %ad %s"
@@ -167,7 +163,6 @@ format string (which is passed to \"git log\" via the argument
 matching the resulting Git log output, and KEYWORDS is a list of
 `font-lock-keywords' for highlighting the Log View buffer."
   :type '(list string string (repeat sexp))
-  :group 'vc-git
   :version "24.1")
 
 (defvar vc-git-commits-coding-system 'utf-8
