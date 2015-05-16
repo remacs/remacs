@@ -130,6 +130,19 @@ If nil, use the value of `vc-annotate-switches'.  If t, use no switches."
   :version "25.1"
   :group 'vc-git)
 
+(defcustom vc-git-resolve-conflicts t
+  "When non-nil, mark conflicted file as resolved upon saving.
+That is performed after all conflict markers in it have been
+removed.  If the value is `unstage-maybe', and no merge is in
+progress, then after the last conflict is resolved, also clear
+the staging area."
+  :type '(choice (const :tag "Don't resolve" nil)
+                 (const :tag "Resolve" t)
+                 (const :tag "Resolve and maybe unstage all files"
+                        unstage-maybe))
+  :version "25.1"
+  :group 'vc-git)
+
 (defcustom vc-git-program "git"
   "Name of the Git executable (excluding any arguments)."
   :version "24.1"
@@ -801,12 +814,16 @@ This prompts for a branch to merge from."
   (save-excursion
     (goto-char (point-min))
     (unless (re-search-forward "^<<<<<<< " nil t)
-      (if (file-exists-p (expand-file-name ".git/MERGE_HEAD"
-                                           (vc-git-root buffer-file-name)))
-          ;; Doing a merge.
-          (vc-git-command nil 0 buffer-file-name "add")
-        ;; Doing something else.  Likely applying a stash (bug#20292).
-        (vc-git-command nil 0 buffer-file-name "reset"))
+      (vc-git-command nil 0 buffer-file-name "add")
+      (when (and
+             (eq vc-git-resolve-conflicts 'unstage-maybe)
+             ;; Not doing a merge.  Likely applying a stash
+             ;; (bug#20292).
+             (not
+              (file-exists-p (expand-file-name ".git/MERGE_HEAD"
+                                               (vc-git-root buffer-file-name))))
+             (not (vc-git-conflicted-files (vc-git-root buffer-file-name))))
+        (vc-git-command nil 0 nil "reset"))
       ;; Remove the hook so that it is not called multiple times.
       (remove-hook 'after-save-hook 'vc-git-resolve-when-done t))))
 
@@ -823,7 +840,8 @@ This prompts for a branch to merge from."
                (re-search-forward "^<<<<<<< " nil 'noerror)))
     (vc-file-setprop buffer-file-name 'vc-state 'conflict)
     (smerge-start-session)
-    (add-hook 'after-save-hook 'vc-git-resolve-when-done nil 'local)
+    (when vc-git-resolve-conflicts
+      (add-hook 'after-save-hook 'vc-git-resolve-when-done nil 'local))
     (message "There are unresolved conflicts in this file")))
 
 ;;; HISTORY FUNCTIONS
