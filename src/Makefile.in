@@ -323,10 +323,15 @@ am__v_at_0 = @
 am__v_at_1 =
 
 DEPDIR=deps
-## -MMD -MF $(DEPDIR)/$*.d if AUTO_DEPEND; else empty.
-DEPFLAGS=@DEPFLAGS@
-## ${MKDIR_P} ${DEPDIR} (if AUTO_DEPEND); else ':'.
-MKDEPDIR=@MKDEPDIR@
+AUTO_DEPEND = @AUTO_DEPEND@
+
+ifeq ($(AUTO_DEPEND),yes)
+DEPFLAGS = -MMD -MF ${DEPDIR}/$*.d -MP
+MKDEPDIR = ${MKDIR_P} ${DEPDIR}
+else
+DEPFLAGS =
+MKDEPDIR = :
+endif
 
 ## DO NOT use -R.  There is a special hack described in lastfile.c
 ## which is used instead.  Some initialized data areas are modified
@@ -413,9 +418,7 @@ otherobj= $(TERMCAP_OBJ) $(PRE_ALLOC_OBJ) $(GMALLOC_OBJ) $(RALLOC_OBJ) \
 FIRSTFILE_OBJ=@FIRSTFILE_OBJ@
 ALLOBJS = $(FIRSTFILE_OBJ) $(VMLIMIT_OBJ) $(obj) $(otherobj)
 
-## Configure inserts the file lisp.mk at this point, defining $lisp.
-@lisp_frag@
-
+include $(srcdir)/lisp.mk
 
 ## Construct full set of libraries to be linked.
 LIBES = $(LIBS) $(W32_LIBS) $(LIBS_GNUSTEP) $(LIBX_BASE) $(LIBIMAGE) \
@@ -667,8 +670,10 @@ endif
 	@: Compile some files earlier to speed up further compilation.
 	$(MAKE) -C ../lisp compile-first EMACS="$(bootstrap_exe)"
 
-## Insert either autodeps.mk (if AUTO_DEPEND), else deps.mk.
-@deps_frag@
-
+ifeq ($(AUTO_DEPEND),yes)
+-include $(ALLOBJS:%.o=${DEPDIR}/%.d)
+else
+include $(srcdir)/deps.mk
+endif
 
 ### Makefile.in ends here

@@ -396,6 +396,7 @@ typedef float EmacsCGFloat;
 - condemn;
 - reprieve;
 - (bool)judge;
++ (CGFloat)scrollerWidth;
 @end
 
 
