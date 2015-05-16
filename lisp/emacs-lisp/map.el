@@ -48,7 +48,9 @@
   "Perform a lookup in MAP of KEY and return its associated value.
 If KEY is not found, return DEFAULT which defaults to nil.
 
-If MAP is a list, `equal' is used to lookup KEY."
+If MAP is a list, `equal' is used to lookup KEY.
+
+MAP can be a list, hash-table or array."
   (map--dispatch map
     :list (map--elt-list map key default)
     :hash-table (gethash key map default)
@@ -57,7 +59,9 @@ If MAP is a list, `equal' is used to lookup KEY."
 (defmacro map-put (map key value)
   "In MAP, associate KEY with VALUE and return MAP.
 If KEY is already present in MAP, replace the associated value
-with VALUE."
+with VALUE.
+
+MAP can be a list, hash-table or array."
   (declare (debug t))
   `(progn
      (map--dispatch (m ,map m)
@@ -67,7 +71,9 @@ with VALUE."
 
 (defmacro map-delete (map key)
   "In MAP, delete the key KEY if present and return MAP.
-If MAP is an array, store nil at the index KEY."
+If MAP is an array, store nil at the index KEY.
+
+MAP can be a list, hash-table or array."
   (declare (debug t))
   `(progn
      (map--dispatch (m ,map m)
@@ -77,6 +83,7 @@ If MAP is an array, store nil at the index KEY."
 
 (defun map-nested-elt (map keys &optional default)
   "Traverse MAP using KEYS and return the looked up value or DEFAULT if nil.
+
 Map can be a nested map composed of alists, hash-tables and arrays."
   (or (seq-reduce (lambda (acc key)
                     (when (map-p acc)
@@ -86,23 +93,33 @@ Map can be a nested map composed of alists, hash-tables and arrays."
       default))
 
 (defun map-keys (map)
-  "Return the list of keys in MAP."
+  "Return the list of keys in MAP.
+
+MAP can be a list, hash-table or array."
   (map-apply (lambda (key _) key) map))
 
 (defun map-values (map)
-  "Return the list of values in MAP."
+  "Return the list of values in MAP.
+
+MAP can be a list, hash-table or array."
   (map-apply (lambda (_ value) value) map))
 
 (defun map-pairs (map)
-  "Return the elements of MAP as key/value association lists."
+  "Return the elements of MAP as key/value association lists.
+
+MAP can be a list, hash-table or array."
   (map-apply #'cons map))
 
 (defun map-length (map)
-  "Return the length of MAP."
+  "Return the length of MAP.
+
+MAP can be a list, hash-table or array."
   (length (map-keys map)))
 
 (defun map-copy (map)
-  "Return a copy of MAP."
+  "Return a copy of MAP.
+
+MAP can be a list, hash-table or array."
   (map--dispatch map
     :list (seq-copy map)
     :hash-table (copy-hash-table map)
@@ -110,7 +127,9 @@ Map can be a nested map composed of alists, hash-tables and arrays."
 
 (defun map-apply (function map)
   "Apply FUNCTION to each element of MAP and return the result as a list.
-FUNCTION is called with two arguments, the key and the value."
+FUNCTION is called with two arguments, the key and the value.
+
+MAP can be a list, hash-table or array."
   (funcall (map--dispatch map
              :list #'map--apply-alist
              :hash-table #'map--apply-hash-table
@@ -119,19 +138,25 @@ FUNCTION is called with two arguments, the key and the value."
            map))
 
 (defun map-keys-apply (function map)
-  "Return the result of applying FUNCTION to each key of MAP."
+  "Return the result of applying FUNCTION to each key of MAP.
+
+MAP can be a list, hash-table or array."
   (map-apply (lambda (key _)
                (funcall function key))
              map))
 
 (defun map-values-apply (function map)
-  "Return the result of applying FUNCTION to each value of MAP."
+  "Return the result of applying FUNCTION to each value of MAP.
+
+MAP can be a list, hash-table or array."
   (map-apply (lambda (_ val)
                (funcall function val))
              map))
 
 (defun map-filter (pred map)
-  "Return an alist of the key/val pairs for which (PRED key val) is non-nil in MAP."
+  "Return an alist of the key/val pairs for which (PRED key val) is non-nil in MAP.
+
+MAP can be a list, hash-table or array."
   (delq nil (map-apply (lambda (key val)
                          (if (funcall pred key val)
                              (cons key val)
@@ -139,7 +164,9 @@ FUNCTION is called with two arguments, the key and the value."
                        map)))
 
 (defun map-remove (pred map)
-  "Return an alist of the key/val pairs for which (PRED key val) is nil in MAP."
+  "Return an alist of the key/val pairs for which (PRED key val) is nil in MAP.
+
+MAP can be a list, hash-table or array."
   (map-filter (lambda (key val) (not (funcall pred key val)))
               map))
 
@@ -150,7 +177,9 @@ FUNCTION is called with two arguments, the key and the value."
       (arrayp map)))
 
 (defun map-empty-p (map)
-  "Return non-nil is MAP is empty."
+  "Return non-nil is MAP is empty.
+
+MAP can be a list, hash-table or array."
   (map--dispatch map
     :list (null map)
     :array (seq-empty-p map)
@@ -158,11 +187,15 @@ FUNCTION is called with two arguments, the key and the value."
 
 (defun map-contains-key-p (map key &optional testfn)
   "Return non-nil if MAP contain the key KEY, nil otherwise.
-Equality is defined by TESTFN if non-nil or by `equal' if nil."
+Equality is defined by TESTFN if non-nil or by `equal' if nil.
+
+MAP can be a list, hash-table or array."
   (seq-contains-p (map-keys map) key testfn))
 
 (defun map-some-p (pred map)
-  "Return a key/value pair for which (PRED key val) is non-nil in MAP."
+  "Return a key/value pair for which (PRED key val) is non-nil in MAP.
+
+MAP can be a list, hash-table or array."
   (catch 'map--break
     (map-apply (lambda (key value)
                  (when (funcall pred key value)
@@ -171,7 +204,9 @@ Equality is defined by TESTFN if non-nil or by `equal' if nil."
     nil))
 
 (defun map-every-p (pred map)
-  "Return non-nil if (PRED key val) is non-nil for all elements of the map MAP."
+  "Return non-nil if (PRED key val) is non-nil for all elements of the map MAP.
+
+MAP can be a list, hash-table or array."
   (catch 'map--break
     (map-apply (lambda (key value)
                  (or (funcall pred key value)
@@ -180,7 +215,9 @@ Equality is defined by TESTFN if non-nil or by `equal' if nil."
     t))
 
 (defun map-merge (type &rest maps)
-  "Merge into a map of type TYPE all the key/value pairs in the maps MAPS."
+  "Merge into a map of type TYPE all the key/value pairs in the maps MAPS.
+
+MAP can be a list, hash-table or array."
   (let (result)
     (while maps
       (map-apply (lambda (key value)
@@ -190,7 +227,9 @@ Equality is defined by TESTFN if non-nil or by `equal' if nil."
 
 (defun map-into (map type)
   "Convert the map MAP into a map of type TYPE.
-TYPE can be one of the following symbols: list or hash-table."
+
+TYPE can be one of the following symbols: list or hash-table.
+MAP can be a list, hash-table or array."
   (pcase type
     (`list (map-pairs map))
     (`hash-table (map--into-hash-table map))
