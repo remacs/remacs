@@ -175,7 +175,6 @@ List of factors, used to expand/compress the time scale.  See `vc-annotate'."
     (define-key m "p" 'vc-annotate-prev-revision)
     (define-key m "w" 'vc-annotate-working-revision)
     (define-key m "v" 'vc-annotate-toggle-annotation-visibility)
-    (define-key m "v" 'vc-annotate-toggle-annotation-visibility)
     (define-key m "\C-m" 'vc-annotate-goto-line)
     m)
   "Local keymap used for VC-Annotate mode.")
@@ -605,7 +604,10 @@ the file in question, search for the log entry required and move point."
   (interactive)
   (when (eq 'file (vc-call-backend vc-annotate-backend 'revision-granularity))
     (error "The %s backend does not support changeset diffs" vc-annotate-backend))
-  (vc-annotate-show-diff-revision-at-line-internal nil))
+  ;; Make sure `diff-goto-source' will be able to find all files.
+  (let ((default-directory (vc-call-backend vc-annotate-backend
+                                            'root default-directory)))
+    (vc-annotate-show-diff-revision-at-line-internal nil)))
 
 (defun vc-annotate-warp-revision (revspec &optional file)
   "Annotate the revision described by REVSPEC.
