@@ -418,8 +418,36 @@ otherobj= $(TERMCAP_OBJ) $(PRE_ALLOC_OBJ) $(GMALLOC_OBJ) $(RALLOC_OBJ) \
 FIRSTFILE_OBJ=@FIRSTFILE_OBJ@
 ALLOBJS = $(FIRSTFILE_OBJ) $(VMLIMIT_OBJ) $(obj) $(otherobj)
 
-include $(srcdir)/lisp.mk
+## This is the list of all Lisp files that might be loaded into the
+## dumped Emacs.  Some of them are not loaded on all platforms, but
+## the DOC file on every platform uses them (because the DOC file is
+## supposed to be platform-independent).
+## Note that this list should not include lisp files which might not
+## be present, like site-load.el and site-init.el; this makefile
+## expects them all to be either present or buildable.
+##
+## To generate this list from loadup.el, we can either:
+## 1) Extract everything matching (load "..."), in which case
+## we need to add charprop.el by hand; or
+## 2) Extract everything matching (load "...", in which case
+## we need to remove leim-list, site-init, and site-load by hand.
+## There's not much to choose between these two approaches,
+## but the second one seems like it could be more future-proof.
+shortlisp =
+lisp.mk: $(lispsource)/loadup.el
+	@rm -f $@
+	${AM_V_GEN}( echo "shortlisp = \\"; \
+	sed -n 's/^[ \t]*(load "\([^"]*\)".*/\1/p' $< | \
+	  sed -e 's/$$/.elc \\/' -e 's/\.el\.elc/.el/'; \
+	echo "" ) > $@
 
+-include lisp.mk
+shortlisp_filter = leim/leim-list.el site-load.elc site-init.elc
+shortlisp := $(filter-out ${shortlisp_filter},${shortlisp})
+## Place loaddefs.el first, so it gets generated first, since it is on
+## the critical path (relevant in parallel compilations).
+## We don't really need to sort, but may as well use it to remove duplicates.
+shortlisp := loaddefs.el loadup.el $(sort ${shortlisp})
 lisp = $(addprefix ${lispsource}/,${shortlisp})
 
 ## Construct full set of libraries to be linked.
@@ -454,7 +482,7 @@ $(srcdir)/macuvs.h $(lispsource)/international/charprop.el: \
 ## since not all pieces are used on all platforms.  But DOC depends
 ## on all of $lisp, and emacs depends on DOC, so it is ok to use $lisp here.
 emacs$(EXEEXT): temacs$(EXEEXT) \
-                $(etc)/DOC $(lisp) $(leimdir)/leim-list.el \
+                lisp.mk $(etc)/DOC $(lisp) $(leimdir)/leim-list.el \
                 $(lispsource)/international/charprop.el
 ifeq ($(CANNOT_DUMP),yes)
 	ln -f temacs$(EXEEXT) $@
@@ -475,7 +503,7 @@ endif
 ## for the first time, this prevents any variation between configurations
 ## in the contents of the DOC file.
 ##
-$(etc)/DOC: $(libsrc)/make-docfile$(EXEEXT) $(obj) $(lisp)
+$(etc)/DOC: lisp.mk $(libsrc)/make-docfile$(EXEEXT) $(obj) $(lisp)
 	$(AM_V_GEN)$(MKDIR_P) $(etc)
 	-$(AM_V_at)rm -f $(etc)/DOC
 	$(AM_V_at)$(libsrc)/make-docfile -d $(srcdir) \
@@ -581,7 +609,7 @@ bootstrap-clean: clean
 	fi
 
 distclean: bootstrap-clean
-	rm -f Makefile
+	rm -f Makefile lisp.mk
 
 maintainer-clean: distclean
 	rm -f TAGS
