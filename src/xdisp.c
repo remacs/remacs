@@ -13359,6 +13359,13 @@ redisplay_internal (void)
 	  if (f->fonts_changed)
 	    {
 	      adjust_frame_glyphs (f);
+	      /* Disable all redisplay optimizations for this frame.
+		 This is because adjust_frame_glyphs resets the
+		 enabled_p flag for all glyph rows of all windows, so
+		 many optimizations will fail anyway, and some might
+		 fail to test that flag and do bogus things as
+		 result.  */
+	      SET_FRAME_GARBAGED (f);
 	      f->fonts_changed = false;
 	    }
 	  /* If cursor type has been changed on the frame
@@ -13753,6 +13760,10 @@ redisplay_internal (void)
 		  if (f->fonts_changed)
 		    {
 		      adjust_frame_glyphs (f);
+		      /* Disable all redisplay optimizations for this
+			 frame.  For the reasons, see the comment near
+			 the previous call to adjust_frame_glyphs above.  */
+		      SET_FRAME_GARBAGED (f);
 		      f->fonts_changed = false;
 		      goto retry_frame;
 		    }

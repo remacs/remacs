@@ -263,7 +263,7 @@ static int x_dispatch_event (XEvent *, Display *);
 #endif
 /* Don't declare this _Noreturn because we want no
    interference with debugging failing X calls.  */
-static void x_connection_closed (Display *, const char *);
+static void x_connection_closed (Display *, const char *, bool);
 static void x_wm_set_window_state (struct frame *, int);
 static void x_wm_set_icon_pixmap (struct frame *, ptrdiff_t);
 static void x_initialize (void);
@@ -3664,7 +3664,9 @@ x_draw_glyph_string (struct glyph_string *s)
 static void
 x_shift_glyphs_for_insert (struct frame *f, int x, int y, int width, int height, int shift_by)
 {
-  x_free_cr_resources (f);
+/* Never called on a GUI frame, see
+   http://lists.gnu.org/archive/html/emacs-devel/2015-05/msg00456.html
+*/
   XCopyArea (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f), FRAME_X_WINDOW (f),
 	     f->output_data.x->normal_gc,
 	     x, y, width, height,
@@ -9249,7 +9251,7 @@ static char *error_msg;
    the text of an error message that lead to the connection loss.  */
 
 static void
-x_connection_closed (Display *dpy, const char *error_message)
+x_connection_closed (Display *dpy, const char *error_message, bool ioerror)
 {
   struct x_display_info *dpyinfo = x_display_info_for_display (dpy);
   Lisp_Object frame, tail;
@@ -9268,6 +9270,7 @@ x_connection_closed (Display *dpy, const char *error_message)
       dpyinfo->reference_count++;
       dpyinfo->terminal->reference_count++;
     }
+  if (ioerror) dpyinfo->display = 0;
 
   /* First delete frames whose mini-buffers are on frames
      that are on the dead display.  */
@@ -9405,7 +9408,7 @@ x_error_quitter (Display *display, XErrorEvent *event)
   XGetErrorText (display, event->error_code, buf, sizeof (buf));
   sprintf (buf1, "X protocol error: %s on protocol request %d",
 	   buf, event->request_code);
-  x_connection_closed (display, buf1);
+  x_connection_closed (display, buf1, false);
 }
 
 
@@ -9420,7 +9423,7 @@ x_io_error_quitter (Display *display)
 
   snprintf (buf, sizeof buf, "Connection lost to X server `%s'",
 	    DisplayString (display));
-  x_connection_closed (display, buf);
+  x_connection_closed (display, buf, true);
   return 0;
 }
 
@@ -12251,7 +12254,7 @@ static struct redisplay_interface x_redisplay_interface =
     x_draw_window_cursor,
     x_draw_vertical_window_border,
     x_draw_window_divider,
-    x_shift_glyphs_for_insert,
+    x_shift_glyphs_for_insert, /* Never called, se comment in function.  */
     x_show_hourglass,
     x_hide_hourglass
   };

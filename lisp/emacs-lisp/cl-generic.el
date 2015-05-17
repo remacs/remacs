@@ -54,6 +54,15 @@
 ;; - The standard method combination supports ":extra STRING" qualifiers
 ;;   which simply allows adding more methods for the same
 ;;   specializers&qualifiers.
+;; - Methods can dispatch on the context.  For that, a method needs to specify
+;;   context arguments, introduced by `&context' (which need to come right
+;;   after the mandatory arguments and before anything like
+;;   &optional/&rest/&key).  Each context argument is given as (EXP SPECIALIZER)
+;;   which means that EXP is taken as an expression which computes some context
+;;   and this value is then used to dispatch.
+;;   E.g. (foo &context (major-mode (eql c-mode))) is an arglist specifying
+;;   that this method will only be applicable when `major-mode' has value
+;;   `c-mode'.
 
 ;; Efficiency considerations: overall, I've made an effort to make this fairly
 ;; efficient for the expected case (e.g. no constant redefinition of methods).
@@ -222,17 +231,12 @@ BODY, if present, is used as the body of a default method.
        ,@(mapcar (lambda (method) `(cl-defmethod ,name ,@method))
                  (nreverse methods)))))
 
-(defun cl--generic-mandatory-args (args)
-  (let ((res ()))
-    (while (not (memq (car args) '(nil &rest &optional &key)))
-      (push (pop args) res))
-    (nreverse res)))
-
 ;;;###autoload
 (defun cl-generic-define (name args options)
-  (let ((generic (cl-generic-ensure-function name))
-        (mandatory (cl--generic-mandatory-args args))
-        (apo (assq :argument-precedence-order options)))
+  (pcase-let* ((generic (cl-generic-ensure-function name))
+               (`(,spec-args . ,_) (cl--generic-split-args args))
+               (mandatory (mapcar #'car spec-args))
+               (apo (assq :argument-precedence-order options)))
     (setf (cl--generic-dispatches generic) nil)
     (when apo
       (dolist (arg (cdr apo))
@@ -259,52 +263,70 @@ This macro can only be used within the lexical scope of a cl-generic method."
       (and (memq sexp vars) (not (memq sexp res)) (push sexp res))
       res))
 
-  (defun cl--generic-lambda (args body)
-    "Make the lambda expression for a method with ARGS and BODY."
+  (defun cl--generic-split-args (args)
+    "Return (SPEC-ARGS . PLAIN-ARGS)."
     (let ((plain-args ())
           (specializers nil)
           (mandatory t))
       (dolist (arg args)
         (push (pcase arg
                 ((or '&optional '&rest '&key) (setq mandatory nil) arg)
-                ((and `(,name . ,type) (guard mandatory))
+                ('&context
+                 (unless mandatory
+                   (error "&context not immediately after mandatory args"))
+                 (setq mandatory 'context) nil)
+                ((let 'nil mandatory) arg)
+                ((let 'context mandatory)
+                 (unless (consp arg)
+                   (error "Invalid &context arg: %S" arg))
+                 (push `((&context . ,(car arg)) . ,(cadr arg)) specializers)
+                 nil)
+                (`(,name . ,type)
                  (push (cons name (car type)) specializers)
                  name)
-                (_ arg))
+                (_
+                 (push (cons arg t) specializers)
+                 arg))
               plain-args))
-      (setq plain-args (nreverse plain-args))
-      (let ((fun `(cl-function (lambda ,plain-args ,@body)))
-            (macroenv (cons `(cl-generic-current-method-specializers
-                              . ,(lambda () specializers))
-                            macroexpand-all-environment)))
-        (require 'cl-lib)        ;Needed to expand `cl-flet' and `cl-function'.
-        ;; First macroexpand away the cl-function stuff (e.g. &key and
-        ;; destructuring args, `declare' and whatnot).
-        (pcase (macroexpand fun macroenv)
-          (`#'(lambda ,args . ,body)
-           (let* ((parsed-body (macroexp-parse-body body))
-                  (cnm (make-symbol "cl--cnm"))
-                  (nmp (make-symbol "cl--nmp"))
-                  (nbody (macroexpand-all
-                          `(cl-flet ((cl-call-next-method ,cnm)
-                                     (cl-next-method-p ,nmp))
-                             ,@(cdr parsed-body))
-                          macroenv))
-                  ;; FIXME: Rather than `grep' after the fact, the
-                  ;; macroexpansion should directly set some flag when cnm
-                  ;; is used.
-                  ;; FIXME: Also, optimize the case where call-next-method is
-                  ;; only called with explicit arguments.
-                  (uses-cnm (cl--generic-fgrep (list cnm nmp) nbody)))
-             (cons (not (not uses-cnm))
-                   `#'(lambda (,@(if uses-cnm (list cnm)) ,@args)
-                        ,@(car parsed-body)
-                        ,(if (not (memq nmp uses-cnm))
-                             nbody
-                           `(let ((,nmp (lambda ()
-                                          (cl--generic-isnot-nnm-p ,cnm))))
-                              ,nbody))))))
-          (f (error "Unexpected macroexpansion result: %S" f)))))))
+      (cons (nreverse specializers)
+            (nreverse (delq nil plain-args)))))
+
+  (defun cl--generic-lambda (args body)
+    "Make the lambda expression for a method with ARGS and BODY."
+    (pcase-let* ((`(,spec-args . ,plain-args)
+                  (cl--generic-split-args args))
+                 (fun `(cl-function (lambda ,plain-args ,@body)))
+                 (macroenv (cons `(cl-generic-current-method-specializers
+                                   . ,(lambda () spec-args))
+                                 macroexpand-all-environment)))
+      (require 'cl-lib)        ;Needed to expand `cl-flet' and `cl-function'.
+      ;; First macroexpand away the cl-function stuff (e.g. &key and
+      ;; destructuring args, `declare' and whatnot).
+      (pcase (macroexpand fun macroenv)
+        (`#'(lambda ,args . ,body)
+         (let* ((parsed-body (macroexp-parse-body body))
+                (cnm (make-symbol "cl--cnm"))
+                (nmp (make-symbol "cl--nmp"))
+                (nbody (macroexpand-all
+                        `(cl-flet ((cl-call-next-method ,cnm)
+                                   (cl-next-method-p ,nmp))
+                           ,@(cdr parsed-body))
+                        macroenv))
+                ;; FIXME: Rather than `grep' after the fact, the
+                ;; macroexpansion should directly set some flag when cnm
+                ;; is used.
+                ;; FIXME: Also, optimize the case where call-next-method is
+                ;; only called with explicit arguments.
+                (uses-cnm (cl--generic-fgrep (list cnm nmp) nbody)))
+           (cons (not (not uses-cnm))
+                 `#'(lambda (,@(if uses-cnm (list cnm)) ,@args)
+                      ,@(car parsed-body)
+                      ,(if (not (memq nmp uses-cnm))
+                           nbody
+                         `(let ((,nmp (lambda ()
+                                        (cl--generic-isnot-nnm-p ,cnm))))
+                            ,nbody))))))
+        (f (error "Unexpected macroexpansion result: %S" f))))))
 
 
 ;;;###autoload
@@ -375,21 +397,26 @@ which case this method will be invoked when the argument is `eql' to VAL.
 
 ;;;###autoload
 (defun cl-generic-define-method (name qualifiers args uses-cnm function)
-  (let* ((generic (cl-generic-ensure-function name))
-         (mandatory (cl--generic-mandatory-args args))
-         (specializers
-          (mapcar (lambda (arg) (if (consp arg) (cadr arg) t)) mandatory))
-         (method (cl--generic-make-method
-                  specializers qualifiers uses-cnm function))
-         (mt (cl--generic-method-table generic))
-         (me (cl--generic-member-method specializers qualifiers mt))
-         (dispatches (cl--generic-dispatches generic))
-         (i 0))
-    (dolist (specializer specializers)
-      (let* ((generalizers (cl-generic-generalizers specializer))
-             (x (assq i dispatches)))
+  (pcase-let*
+      ((generic (cl-generic-ensure-function name))
+       (`(,spec-args . ,_) (cl--generic-split-args args))
+       (specializers (mapcar (lambda (spec-arg)
+                               (if (eq '&context (car-safe (car spec-arg)))
+                                   spec-arg (cdr spec-arg)))
+                             spec-args))
+       (method (cl--generic-make-method
+                specializers qualifiers uses-cnm function))
+       (mt (cl--generic-method-table generic))
+       (me (cl--generic-member-method specializers qualifiers mt))
+       (dispatches (cl--generic-dispatches generic))
+       (i 0))
+    (dolist (spec-arg spec-args)
+      (let* ((key (if (eq '&context (car-safe (car spec-arg)))
+                      (car spec-arg) i))
+             (generalizers (cl-generic-generalizers (cdr spec-arg)))
+             (x (assoc key dispatches)))
         (unless x
-          (setq x (cons i (cl-generic-generalizers t)))
+          (setq x (cons key (cl-generic-generalizers t)))
           (setf (cl--generic-dispatches generic)
                 (setq dispatches (cons x dispatches))))
         (dolist (generalizer generalizers)
@@ -411,7 +438,16 @@ which case this method will be invoked when the argument is `eql' to VAL.
           ;; the generic function.
           current-load-list)
       ;; For aliases, cl--generic-name gives us the actual name.
-      (defalias (cl--generic-name generic) gfun))))
+      (funcall
+       (if purify-flag
+           ;; BEWARE!  Don't purify this function definition, since that leads
+           ;; to memory corruption if the hash-tables it holds are modified
+           ;; (the GC doesn't trace those pointers).
+           #'fset
+         ;; But do use `defalias' in the normal case, so that it interacts
+         ;; properly with nadvice, e.g. for tracing/debug-on-entry.
+         #'defalias)
+       (cl--generic-name generic) gfun))))
 
 (defmacro cl--generic-with-memoization (place &rest code)
   (declare (indent 1) (debug t))
@@ -427,6 +463,7 @@ which case this method will be invoked when the argument is `eql' to VAL.
 (defun cl--generic-get-dispatcher (dispatch)
   (cl--generic-with-memoization
       (gethash dispatch cl--generic-dispatchers)
+    ;; (message "cl--generic-get-dispatcher (%S)" dispatch)
     (let* ((dispatch-arg (car dispatch))
            (generalizers (cdr dispatch))
            (lexical-binding t)
@@ -437,13 +474,14 @@ which case this method will be invoked when the argument is `eql' to VAL.
                                'arg))
                     generalizers))
            (typescodes
-            (mapcar (lambda (generalizer)
-                      `(funcall ',(cl--generic-generalizer-specializers-function
-                                   generalizer)
-                                ,(funcall (cl--generic-generalizer-tagcode-function
-                                           generalizer)
-                                          'arg)))
-                    generalizers))
+            (mapcar
+             (lambda (generalizer)
+               `(funcall ',(cl--generic-generalizer-specializers-function
+                            generalizer)
+                         ,(funcall (cl--generic-generalizer-tagcode-function
+                                    generalizer)
+                                   'arg)))
+             generalizers))
            (tag-exp
             ;; Minor optimization: since this tag-exp is
             ;; only used to lookup the method-cache, it
@@ -452,23 +490,30 @@ which case this method will be invoked when the argument is `eql' to VAL.
             `(or ,@(if (macroexp-const-p (car (last tagcodes)))
                        (butlast tagcodes)
                      tagcodes)))
-           (extraargs ()))
-      (dotimes (_ dispatch-arg)
-        (push (make-symbol "arg") extraargs))
+           (fixedargs '(arg))
+           (dispatch-idx dispatch-arg)
+           (bindings nil))
+      (when (eq '&context (car-safe dispatch-arg))
+        (setq bindings `((arg ,(cdr dispatch-arg))))
+        (setq fixedargs nil)
+        (setq dispatch-idx 0))
+      (dotimes (i dispatch-idx)
+        (push (make-symbol (format "arg%d" (- dispatch-idx i 1))) fixedargs))
       ;; FIXME: For generic functions with a single method (or with 2 methods,
       ;; one of which always matches), using a tagcode + hash-table is
       ;; overkill: better just use a `cl-typep' test.
       (byte-compile
        `(lambda (generic dispatches-left methods)
           (let ((method-cache (make-hash-table :test #'eql)))
-            (lambda (,@extraargs arg &rest args)
-              (apply (cl--generic-with-memoization
-                         (gethash ,tag-exp method-cache)
-                       (cl--generic-cache-miss
-                        generic ',dispatch-arg dispatches-left methods
-                        ,(if (cdr typescodes)
-                             `(append ,@typescodes) (car typescodes))))
-                     ,@extraargs arg args))))))))
+            (lambda (,@fixedargs &rest args)
+              (let ,bindings
+                (apply (cl--generic-with-memoization
+                        (gethash ,tag-exp method-cache)
+                        (cl--generic-cache-miss
+                         generic ',dispatch-arg dispatches-left methods
+                         ,(if (cdr typescodes)
+                              `(append ,@typescodes) (car typescodes))))
+                       ,@fixedargs args)))))))))
 
 (defun cl--generic-make-function (generic)
   (cl--generic-make-next-function generic
@@ -593,8 +638,11 @@ FUN is the function that should be called when METHOD calls
                                dispatch-arg dispatches-left methods-left types)
   (let ((methods '()))
     (dolist (method methods-left)
-      (let* ((specializer (or (nth dispatch-arg
-                                   (cl--generic-method-specializers method))
+      (let* ((specializer (or (if (integerp dispatch-arg)
+                                  (nth dispatch-arg
+                                       (cl--generic-method-specializers method))
+                                (cdr (assoc dispatch-arg
+                                            (cl--generic-method-specializers method))))
                               t))
              (m (member specializer types)))
         (when m
@@ -656,6 +704,25 @@ methods.")
   "Support for the catch-all `t' specializer."
   (if (eq specializer t) (list cl--generic-t-generalizer)
     (error "Unknown specializer %S" specializer)))
+
+(defmacro cl--generic-prefill-dispatchers (arg-or-context specializer)
+  (unless (integerp arg-or-context)
+    (setq arg-or-context `(&context . ,arg-or-context)))
+  (unless (fboundp 'cl--generic-get-dispatcher)
+    (require 'cl-generic))
+  (let ((fun (cl--generic-get-dispatcher
+              `(,arg-or-context ,@(cl-generic-generalizers specializer)
+                                ,cl--generic-t-generalizer))))
+    ;; Recompute dispatch at run-time, since the generalizers may be slightly
+    ;; different (e.g. byte-compiled rather than interpreted).
+    ;; FIXME: There is a risk that the run-time generalizer is not equivalent
+    ;; to the compile-time one, in which case `fun' may not be correct
+    ;; any more!
+    `(let ((dispatch `(,',arg-or-context
+                       ,@(cl-generic-generalizers ',specializer)
+                       ,cl--generic-t-generalizer)))
+       ;; (message "Prefilling for %S with \n%S" dispatch ',fun)
+       (puthash dispatch ',fun cl--generic-dispatchers))))
 
 (cl-defmethod cl-generic-combine-methods (generic methods)
   "Standard support for :after, :before, :around, and `:extra NAME' qualifiers."
@@ -840,6 +907,8 @@ Can only be used from within the lexical body of a primary or around method."
         (gethash (cadr specializer) cl--generic-head-used) specializer)
     (list cl--generic-head-generalizer)))
 
+(cl--generic-prefill-dispatchers 0 (head eql))
+
 ;;; Support for (eql <val>) specializers.
 
 (defvar cl--generic-eql-used (make-hash-table :test #'eql))
@@ -853,6 +922,9 @@ Can only be used from within the lexical body of a primary or around method."
   "Support for the `(eql VAL)' specializers."
   (puthash (cadr specializer) specializer cl--generic-eql-used)
   (list cl--generic-eql-generalizer))
+
+(cl--generic-prefill-dispatchers 0 (eql nil))
+(cl--generic-prefill-dispatchers window-system (eql nil))
 
 ;;; Support for cl-defstructs specializers.
 
@@ -910,6 +982,8 @@ Can only be used from within the lexical body of a primary or around method."
             (list cl--generic-struct-generalizer))))
    (cl-call-next-method)))
 
+(cl--generic-prefill-dispatchers 0 cl--generic-generalizer)
+
 ;;; Dispatch on "system types".
 
 (defconst cl--generic-typeof-types
@@ -948,39 +1022,7 @@ Can only be used from within the lexical body of a primary or around method."
           (list cl--generic-typeof-generalizer)))
    (cl-call-next-method)))
 
-;;; Just for kicks: dispatch on major-mode
-;;
-;; Here's how you'd use it:
-;;   (cl-defmethod foo ((x (major-mode text-mode)) y z) ...)
-;; And then
-;;     (foo 'major-mode toto titi)
-;;
-;; FIXME: Better would be to do that via dispatch on an "implicit argument".
-;; E.g. (cl-defmethod foo (y z &context (major-mode text-mode)) ...)
-
-;; (defvar cl--generic-major-modes (make-hash-table :test #'eq))
-;;
-;; (add-function :before-until cl-generic-generalizer-function
-;;               #'cl--generic-major-mode-tagcode)
-;; (defun cl--generic-major-mode-tagcode (type name)
-;;   (if (eq 'major-mode (car-safe type))
-;;       `(50 . (if (eq ,name 'major-mode)
-;;                  (cl--generic-with-memoization
-;;                      (gethash major-mode cl--generic-major-modes)
-;;                    `(cl--generic-major-mode . ,major-mode))))))
-;;
-;; (add-function :before-until cl-generic-tag-types-function
-;;               #'cl--generic-major-mode-types)
-;; (defun cl--generic-major-mode-types (tag)
-;;   (when (eq (car-safe tag) 'cl--generic-major-mode)
-;;     (if (eq tag 'fundamental-mode) '(fundamental-mode t)
-;;       (let ((types `((major-mode ,(cdr tag)))))
-;;         (while (get (car types) 'derived-mode-parent)
-;;           (push (list 'major-mode (get (car types) 'derived-mode-parent))
-;;                 types))
-;;         (unless (eq 'fundamental-mode (car types))
-;;           (push '(major-mode fundamental-mode) types))
-;;         (nreverse types)))))
+(cl--generic-prefill-dispatchers 0 integer)
 
 ;; Local variables:
 ;; generated-autoload-file: "cl-loaddefs.el"

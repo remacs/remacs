@@ -269,7 +269,7 @@ DATA is displayed to the user and should state the reason for skipping."
 (defun ert--special-operator-p (thing)
   "Return non-nil if THING is a symbol naming a special operator."
   (and (symbolp thing)
-       (let ((definition (indirect-function thing t)))
+       (let ((definition (indirect-function thing)))
          (and (subrp definition)
               (eql (cdr (subr-arity definition)) 'unevalled)))))
 
@@ -2537,7 +2537,7 @@ To be used in the ERT results buffer."
 (add-to-list 'minor-mode-alist '(ert--current-run-stats
                                  (:eval
                                   (ert--tests-running-mode-line-indicator))))
-(add-to-list 'emacs-lisp-mode-hook 'ert--activate-font-lock-keywords)
+(add-hook 'emacs-lisp-mode-hook #'ert--activate-font-lock-keywords)
 
 (defun ert--unload-function ()
   "Unload function to undo the side-effects of loading ert.el."
@@ -2548,7 +2548,7 @@ To be used in the ERT results buffer."
   nil)
 
 (defvar ert-unload-hook '())
-(add-hook 'ert-unload-hook 'ert--unload-function)
+(add-hook 'ert-unload-hook #'ert--unload-function)
 
 
 (provide 'ert)

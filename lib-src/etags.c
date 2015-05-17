@@ -68,8 +68,8 @@ University of California, as described above. */
  * 1994 Line-by-line regexp tags by Tom Tromey.
  * 2001 Nested classes by Francesco Potortì (concept by Mykola Dzyuba).
  * 2002 #line directives by Francesco Potortì.
- *
- * Francesco Potortì <pot@gnu.org> has maintained and improved it since 1993.
+ * Francesco Potortì maintained and improved it for many years
+   starting in 1993.
  */
 
 /*
@@ -2862,7 +2862,10 @@ consider_token (char *str, int len, int c, int *c_extp,
      case st_none:
        if (constantypedefs
 	   && structdef == snone
-	   && structtype == st_C_enum && bracelev > structbracelev)
+	   && structtype == st_C_enum && bracelev > structbracelev
+	   /* Don't tag tokens in expressions that assign values to enum
+	      constants.  */
+	   && fvdef != vignore)
 	 return true;		/* enum constant */
        switch (fvdef)
 	 {
@@ -3176,7 +3179,19 @@ C_entries (int c_ext, FILE *inf)
 		      cpptoken = false;
 		  }
 	      if (cpptoken)
-		definedef = dsharpseen;
+		{
+		  definedef = dsharpseen;
+		  /* This is needed for tagging enum values: when there are
+		     preprocessor conditionals inside the enum, we need to
+		     reset the value of fvdef so that the next enum value is
+		     tagged even though the one before it did not end in a
+		     comma.  */
+		  if (fvdef == vignore && instruct && parlev == 0)
+		    {
+		      if (strneq (cp, "#if", 3) || strneq (cp, "#el", 3))
+			fvdef = fvnone;
+		    }
+		}
 	    } /* if (definedef == dnone) */
 	  continue;
 	case '[':
@@ -3507,7 +3522,10 @@ C_entries (int c_ext, FILE *inf)
 	    case fstartlist:
 	    case finlist:
 	    case fignore:
+	      break;
 	    case vignore:
+	      if (instruct && parlev == 0)
+		fvdef = fvnone;
 	      break;
 	    case fdefunname:
 	      fvdef = fignore;

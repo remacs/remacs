@@ -1698,7 +1698,7 @@ Usually, the input method inserts the intermediate key sequence,
 or candidate translations corresponding to the sequence,
 at point in the current buffer.
 But, if this flag is non-nil, it displays them in echo area instead."
-  :type 'hook
+  :type 'boolean
   :group 'mule)
 
 (defvar input-method-exit-on-invalid-key nil
@@ -2707,6 +2707,14 @@ See also `locale-charset-language-names', `locale-language-names',
 		 (equal (getenv "TERM_PROGRAM" frame) "Apple_Terminal"))
 	(set-terminal-coding-system 'utf-8)
 	(set-keyboard-coding-system 'utf-8)))
+
+    ;; If curved quotes don't work, display straight ASCII approximations.
+    (unless frame
+      (dolist (char-repl '((?‘ . [?\']) (?’ . [?\']) (?“ . [?\"]) (?” . [?\"])))
+        (when (not (char-displayable-p (car char-repl)))
+          (or standard-display-table
+              (setq standard-display-table (make-display-table)))
+          (aset standard-display-table (car char-repl) (cdr char-repl)))))
 
     ;; Default to A4 paper if we're not in a C, POSIX or US locale.
     ;; (See comments in Flocale_info.)

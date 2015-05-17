@@ -908,6 +908,10 @@ even in case of abnormal exit (throw or error).
 If you only want to save the current buffer but not point,
 then just use `save-current-buffer', or even `with-current-buffer'.
 
+Before Emacs 25.1, `save-excursion' used to save the mark state.
+To save the marker state as well as the point and buffer, use
+`save-mark-and-excursion'.
+
 usage: (save-excursion &rest BODY)  */)
   (Lisp_Object args)
 {
@@ -4386,9 +4390,6 @@ usage: (format STRING &rest OBJECTS)  */)
     nchars = multibyte_chars_in_text ((unsigned char *) buf, p - buf);
   val = make_specified_string (buf, nchars, p - buf, multibyte);
 
-  /* If we allocated BUF with malloc, free it too.  */
-  SAFE_FREE ();
-
   /* If the format string has text properties, or any of the string
      arguments has text properties, set up text properties of the
      result string.  */
@@ -4493,6 +4494,9 @@ usage: (format STRING &rest OBJECTS)  */)
 
       UNGCPRO;
     }
+
+  /* If we allocated BUF or INFO with malloc, free it too.  */
+  SAFE_FREE ();
 
   return val;
 }

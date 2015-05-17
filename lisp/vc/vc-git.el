@@ -117,8 +117,7 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
 		 (const :tag "None" t)
 		 (string :tag "Argument String")
 		 (repeat :tag "Argument List" :value ("") string))
-  :version "23.1"
-  :group 'vc-git)
+  :version "23.1")
 
 (defcustom vc-git-annotate-switches nil
   "String or list of strings specifying switches for Git blame under VC.
@@ -127,14 +126,24 @@ If nil, use the value of `vc-annotate-switches'.  If t, use no switches."
 		 (const :tag "None" t)
 		 (string :tag "Argument String")
 		 (repeat :tag "Argument List" :value ("") string))
-  :version "25.1"
-  :group 'vc-git)
+  :version "25.1")
+
+(defcustom vc-git-resolve-conflicts t
+  "When non-nil, mark conflicted file as resolved upon saving.
+That is performed after all conflict markers in it have been
+removed.  If the value is `unstage-maybe', and no merge is in
+progress, then after the last conflict is resolved, also clear
+the staging area."
+  :type '(choice (const :tag "Don't resolve" nil)
+                 (const :tag "Resolve" t)
+                 (const :tag "Resolve and maybe unstage all files"
+                        unstage-maybe))
+  :version "25.1")
 
 (defcustom vc-git-program "git"
   "Name of the Git executable (excluding any arguments)."
   :version "24.1"
-  :type 'string
-  :group 'vc-git)
+  :type 'string)
 
 (defcustom vc-git-root-log-format
   '("%d%h..: %an %ad %s"
@@ -154,7 +163,6 @@ format string (which is passed to \"git log\" via the argument
 matching the resulting Git log output, and KEYWORDS is a list of
 `font-lock-keywords' for highlighting the Log View buffer."
   :type '(list string string (repeat sexp))
-  :group 'vc-git
   :version "24.1")
 
 (defvar vc-git-commits-coding-system 'utf-8
@@ -721,21 +729,21 @@ It is based on `log-edit-mode', and has Git-specific extensions.")
 ;; To be called via vc-pull from vc.el, which requires vc-dispatcher.
 (declare-function vc-compilation-mode "vc-dispatcher" (backend))
 
-(defun vc-git-pull (prompt)
-  "Pull changes into the current Git branch.
-Normally, this runs \"git pull\".  If PROMPT is non-nil, prompt
-for the Git command to run."
+(defun vc-git--pushpull (command prompt)
+  "Run COMMAND (a string; either push or pull) on the current Git branch.
+If PROMPT is non-nil, prompt for the Git command to run."
   (let* ((root (vc-git-root default-directory))
 	 (buffer (format "*vc-git : %s*" (expand-file-name root)))
-	 (command "pull")
 	 (git-program vc-git-program)
 	 args)
     ;; If necessary, prompt for the exact command.
+    ;; TODO if pushing, prompt if no default push location - cf bzr.
     (when prompt
       (setq args (split-string
-		  (read-shell-command "Git pull command: "
-                                      (format "%s pull" git-program)
-				      'vc-git-history)
+		  (read-shell-command
+                   (format "Git %s command: " command)
+                   (format "%s %s" git-program command)
+                   'vc-git-history)
 		  " " t))
       (setq git-program (car  args)
 	    command     (cadr args)
@@ -744,6 +752,18 @@ for the Git command to run."
     (apply 'vc-do-async-command buffer root git-program command args)
     (with-current-buffer buffer (vc-run-delayed (vc-compilation-mode 'git)))
     (vc-set-async-update buffer)))
+
+(defun vc-git-pull (prompt)
+  "Pull changes into the current Git branch.
+Normally, this runs \"git pull\".  If PROMPT is non-nil, prompt
+for the Git command to run."
+  (vc-git--pushpull "pull" prompt))
+
+(defun vc-git-push (prompt)
+  "Push changes from the current Git branch.
+Normally, this runs \"git push\".  If PROMPT is non-nil, prompt
+for the Git command to run."
+  (vc-git--pushpull "push" prompt))
 
 (defun vc-git-merge-branch ()
   "Merge changes into the current Git branch.
@@ -789,12 +809,14 @@ This prompts for a branch to merge from."
   (save-excursion
     (goto-char (point-min))
     (unless (re-search-forward "^<<<<<<< " nil t)
-      (if (file-exists-p (expand-file-name ".git/MERGE_HEAD"
-                                           (vc-git-root buffer-file-name)))
-          ;; Doing a merge.
-          (vc-git-command nil 0 buffer-file-name "add")
-        ;; Doing something else.  Likely applying a stash (bug#20292).
-        (vc-git-command nil 0 buffer-file-name "reset"))
+      (vc-git-command nil 0 buffer-file-name "add")
+      (unless (or
+               (not (eq vc-git-resolve-conflicts 'unstage-maybe))
+               ;; Doing a merge, so bug#20292 doesn't apply.
+               (file-exists-p (expand-file-name ".git/MERGE_HEAD"
+                                                (vc-git-root buffer-file-name)))
+               (vc-git-conflicted-files (vc-git-root buffer-file-name)))
+        (vc-git-command nil 0 nil "reset"))
       ;; Remove the hook so that it is not called multiple times.
       (remove-hook 'after-save-hook 'vc-git-resolve-when-done t))))
 
@@ -811,7 +833,8 @@ This prompts for a branch to merge from."
                (re-search-forward "^<<<<<<< " nil 'noerror)))
     (vc-file-setprop buffer-file-name 'vc-state 'conflict)
     (smerge-start-session)
-    (add-hook 'after-save-hook 'vc-git-resolve-when-done nil 'local)
+    (when vc-git-resolve-conflicts
+      (add-hook 'after-save-hook 'vc-git-resolve-when-done nil 'local))
     (message "There are unresolved conflicts in this file")))
 
 ;;; HISTORY FUNCTIONS
@@ -1031,17 +1054,19 @@ or BRANCH^ (where \"^\" can be repeated)."
 
 (defun vc-git-annotate-command (file buf &optional rev)
   (let ((name (file-relative-name file)))
-    (apply #'vc-git-command buf 'async nil "blame" "--date=iso"
+    (apply #'vc-git-command buf 'async nil "blame" "--date=short"
 	   (append (vc-switches 'git 'annotate)
 		   (list rev "--" name)))))
 
-(declare-function vc-annotate-convert-time "vc-annotate" (time))
+(declare-function vc-annotate-convert-time "vc-annotate" (&optional time))
 
 (defun vc-git-annotate-time ()
-  (and (re-search-forward "[0-9a-f]+[^()]+(.* \\([0-9]+\\)-\\([0-9]+\\)-\\([0-9]+\\) \\([0-9]+\\):\\([0-9]+\\):\\([0-9]+\\) \\([-+0-9]+\\) +[0-9]+) " nil t)
+  (and (re-search-forward "^[0-9a-f]+[^()]+(.*?\\([0-9]+\\)-\\([0-9]+\\)-\\([0-9]+\\) \\(:?\\([0-9]+\\):\\([0-9]+\\):\\([0-9]+\\) \\([-+0-9]+\\)\\)? *[0-9]+) " nil t)
        (vc-annotate-convert-time
         (apply #'encode-time (mapcar (lambda (match)
-                                       (string-to-number (match-string match)))
+                                       (if (match-beginning match)
+                                           (string-to-number (match-string match))
+                                         0))
                                      '(6 5 4 3 2 1 7))))))
 
 (defun vc-git-annotate-extract-revision-at-line ()

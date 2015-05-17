@@ -1075,7 +1075,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
   Lisp_Object name;
   int minibuffer_only = 0;
   long window_prompting = 0;
-  int width, height;
   ptrdiff_t count = specpdl_ptr - specpdl;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   Lisp_Object display;
@@ -1455,6 +1454,15 @@ ns_run_file_dialog (void)
   ns_fd_data.panel = nil;
 }
 
+#ifdef NS_IMPL_COCOA
+#if MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_9
+#define MODAL_OK_RESPONSE NSModalResponseOK
+#endif
+#endif
+#ifndef MODAL_OK_RESPONSE
+#define MODAL_OK_RESPONSE NSOKButton
+#endif
+
 DEFUN ("ns-read-file-name", Fns_read_file_name, Sns_read_file_name, 1, 5, 0,
        doc: /* Use a graphical panel to read a file name, using prompt PROMPT.
 Optional arg DIR, if non-nil, supplies a default directory.
@@ -1466,10 +1474,9 @@ Optional arg DIR_ONLY_P, if non-nil, means choose only directories.  */)
    Lisp_Object init, Lisp_Object dir_only_p)
 {
   static id fileDelegate = nil;
-  BOOL ret;
   BOOL isSave = NILP (mustmatch) && NILP (dir_only_p);
   id panel;
-  Lisp_Object fname;
+  Lisp_Object fname = Qnil;
 
   NSString *promptS = NILP (prompt) || !STRINGP (prompt) ? nil :
     [NSString stringWithUTF8String: SSDATA (prompt)];
@@ -1549,20 +1556,17 @@ Optional arg DIR_ONLY_P, if non-nil, means choose only directories.  */)
   while (ns_fd_data.panel != nil)
     [NSApp run];
 
-  ret = (ns_fd_data.ret == NSOKButton);
-
-  if (ret)
+  if (ns_fd_data.ret == MODAL_OK_RESPONSE)
     {
       NSString *str = ns_filename_from_panel (panel);
       if (! str) str = ns_directory_from_panel (panel);
-      if (! str) ret = NO;
-      else fname = build_string ([str UTF8String]);
+      if (str) fname = build_string ([str UTF8String]);
     }
 
   [[FRAME_NS_VIEW (SELECTED_FRAME ()) window] makeKeyWindow];
   unblock_input ();
 
-  return ret ? fname : Qnil;
+  return fname;
 }
 
 const char *
@@ -2677,7 +2681,16 @@ compute_tip_xy (struct frame *f,
       pt.y = dpyinfo->last_mouse_motion_y;
       /* Convert to screen coordinates */
       pt = [view convertPoint: pt toView: nil];
+#if !defined (NS_IMPL_COCOA) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
       pt = [[view window] convertBaseToScreen: pt];
+#else
+      {
+        NSRect r = NSMakeRect (pt.x, pt.y, 0, 0);
+        r = [[view window] convertRectToScreen: r];
+        pt.x = r.origin.x;
+        pt.y = r.origin.y;
+      }
+#endif
     }
   else
     {

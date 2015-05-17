@@ -149,7 +149,8 @@ Turning on Paragraph-Indent minor mode runs the normal hook
 (defalias 'indented-text-mode 'text-mode)
 
 ;; This can be made a no-op once all modes that use text-mode-hook
-;; are "derived" from text-mode.
+;; are "derived" from text-mode.  (As of 2015/04, and probably well before,
+;; the only one I can find that doesn't so derive is rmail-edit-mode.)
 (defun text-mode-hook-identify ()
   "Mark that this mode has run `text-mode-hook'.
 This is how `toggle-text-mode-auto-fill' knows which buffers to operate on."

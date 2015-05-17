@@ -1575,8 +1575,10 @@ SPEC is a predicate specifier that contains stuff like `or', `and',
 
 
 (declare-function iswitchb-read-buffer "iswitchb"
-		  (prompt &optional default require-match start matches-set))
+		  (prompt &optional default require-match
+			  _predicate start matches-set))
 (defvar iswitchb-temp-buflist)
+(defvar iswitchb-mode)
 
 (defun gnus-iswitchb-completing-read (prompt collection &optional require-match
                                             initial-input history def)

@@ -4,7 +4,7 @@
 
 ;; Author: Nicolas Petton <nicolas@petton.fr>
 ;; Keywords: sequences
-;; Version: 1.4
+;; Version: 1.7
 ;; Package: seq
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -63,9 +63,40 @@ Evaluate BODY with VAR bound to each element of SEQ, in turn.
                                 (prog1 (seq-elt ,seq ,index)
                                   (setq ,index (+ ,index 1)))
                               (pop ,index))))
-           ,@body))
-       ;; FIXME: Do we really want to support this?
-       ,@(cddr spec))))
+           ,@body)))))
+
+(if (fboundp 'pcase-defmacro)
+    ;; Implementation of `seq-let' based on a `pcase'
+    ;; pattern. Requires Emacs>=25.1.
+    (progn
+      (pcase-defmacro seq (&rest args)
+        "pcase pattern matching sequence elements.
+Matches if the object is a sequence (list, string or vector), and
+binds each element of ARGS to the corresponding element of the
+sequence."
+        `(and (pred seq-p)
+              ,@(seq--make-pcase-bindings args)))
+
+      (defmacro seq-let (args seq &rest body)
+        "Bind the variables in ARGS to the elements of SEQ then evaluate BODY.
+
+ARGS can also include the `&rest' marker followed by a variable
+name to be bound to the rest of SEQ."
+        (declare (indent 2) (debug t))
+        `(pcase-let ((,(seq--make-pcase-patterns args) ,seq))
+           ,@body)))
+
+  ;; Implementation of `seq-let' compatible with Emacs<25.1.
+  (defmacro seq-let (args seq &rest body)
+    "Bind the variables in ARGS to the elements of SEQ then evaluate BODY.
+
+ARGS can also include the `&rest' marker followed by a variable
+name to be bound to the rest of SEQ."
+    (declare (indent 2) (debug t))
+    (let ((seq-var (make-symbol "seq")))
+      `(let* ((,seq-var ,seq)
+              ,@(seq--make-bindings args seq-var))
+         ,@body))))
 
 (defun seq-drop (seq n)
   "Return a subsequence of SEQ without its first N elements.
@@ -335,10 +366,70 @@ This is an optimization for lists in `seq-take-while'."
       (setq n (+ 1 n)))
     n))
 
+(defun seq--make-pcase-bindings (args)
+  "Return a list of bindings of the variables in ARGS to the elements of a sequence."
+  (let ((bindings '())
+        (index 0)
+        (rest-marker nil))
+    (seq-doseq (name args)
+      (unless rest-marker
+        (pcase name
+          (`&rest
+           (progn (push `(app (pcase--flip seq-drop ,index)
+                              ,(seq--elt-safe args (1+ index)))
+                        bindings)
+                  (setq rest-marker t)))
+          (t
+           (push `(app (pcase--flip seq--elt-safe ,index) ,name) bindings))))
+      (setq index (1+ index)))
+    bindings))
+
+(defun seq--make-pcase-patterns (args)
+  "Return a list of `(seq ...)' pcase patterns from the argument list ARGS."
+  (cons 'seq
+        (seq-map (lambda (elt)
+                   (if (seq-p elt)
+                       (seq--make-pcase-patterns elt)
+                     elt))
+                 args)))
+
+;; Helper function for the Backward-compatible version of `seq-let'
+;; for Emacs<25.1.
+(defun seq--make-bindings (args seq &optional bindings)
+  "Return a list of bindings of the variables in ARGS to the elements of a sequence.
+if BINDINGS is non-nil, append new bindings to it, and return
+BINDINGS."
+  (let ((index 0)
+        (rest-marker nil))
+    (seq-doseq (name args)
+      (unless rest-marker
+        (pcase name
+          ((pred seq-p)
+           (setq bindings (seq--make-bindings (seq--elt-safe args index)
+                                              `(seq--elt-safe ,seq ,index)
+                                              bindings)))
+          (`&rest
+           (progn (push `(,(seq--elt-safe args (1+ index))
+                          (seq-drop ,seq ,index))
+                        bindings)
+                  (setq rest-marker t)))
+          (t
+           (push `(,name (seq--elt-safe ,seq ,index)) bindings))))
+      (setq index (1+ index)))
+    bindings))
+
+(defun seq--elt-safe (seq n)
+  "Return element of SEQ at the index N.
+If no element is found, return nil."
+  (when (or (listp seq)
+            (and (sequencep seq)
+                 (> (seq-length seq) n)))
+    (seq-elt seq n)))
+
 (defun seq--activate-font-lock-keywords ()
   "Activate font-lock keywords for some symbols defined in seq."
   (font-lock-add-keywords 'emacs-lisp-mode
-                          '("\\<seq-doseq\\>")))
+                          '("\\<seq-doseq\\>" "\\<seq-let\\>")))
 
 (defalias 'seq-copy #'copy-sequence)
 (defalias 'seq-elt #'elt)
@@ -346,11 +437,12 @@ This is an optimization for lists in `seq-take-while'."
 (defalias 'seq-do #'mapc)
 (defalias 'seq-each #'seq-do)
 (defalias 'seq-map #'mapcar)
+(defalias 'seq-p #'sequencep)
 
 (unless (fboundp 'elisp--font-lock-flush-elisp-buffers)
   ;; In Emacs≥25, (via elisp--font-lock-flush-elisp-buffers and a few others)
   ;; we automatically highlight macros.
-  (add-to-list 'emacs-lisp-mode-hook #'seq--activate-font-lock-keywords))
+  (add-hook 'emacs-lisp-mode-hook #'seq--activate-font-lock-keywords))
 
 (provide 'seq)
 ;;; seq.el ends here
