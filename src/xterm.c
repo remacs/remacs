@@ -2896,6 +2896,9 @@ x_draw_glyph_string (struct glyph_string *s)
 static void
 x_shift_glyphs_for_insert (struct frame *f, int x, int y, int width, int height, int shift_by)
 {
+/* Never called on a GUI frame, see
+   http://lists.gnu.org/archive/html/emacs-devel/2015-05/msg00456.html
+*/
   XCopyArea (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f), FRAME_X_WINDOW (f),
 	     f->output_data.x->normal_gc,
 	     x, y, width, height,
@@ -11449,7 +11452,7 @@ static struct redisplay_interface x_redisplay_interface =
     x_draw_window_cursor,
     x_draw_vertical_window_border,
     x_draw_window_divider,
-    x_shift_glyphs_for_insert,
+    x_shift_glyphs_for_insert, /* Never called, se comment in function.  */
     x_show_hourglass,
     x_hide_hourglass
   };
