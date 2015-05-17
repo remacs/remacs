@@ -1076,7 +1076,7 @@ of `ispell-dictionary-base-alist' elements."
 				    ispell-aspell-data-dir ))
 	     ;; Try xx.dat first, strip out variant, country code, etc,
 	     ;; then try xx_YY.dat (without stripping country code),
-             ;; then try xx-alt.dat, for deu-alt etc.
+	     ;; then try xx-alt.dat, for de-alt etc.
 	     (dolist (tmp-regexp (list "^[[:alpha:]]+"
 				       "^[[:alpha:]_]+"
                                        "^[[:alpha:]]+-\\(alt\\|old\\)"))

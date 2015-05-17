@@ -11452,7 +11452,7 @@ static struct redisplay_interface x_redisplay_interface =
     x_draw_window_cursor,
     x_draw_vertical_window_border,
     x_draw_window_divider,
-    x_shift_glyphs_for_insert, /* Never called, se comment in function.  */
+    x_shift_glyphs_for_insert, /* Never called; see comment in function.  */
     x_show_hourglass,
     x_hide_hourglass
   };
