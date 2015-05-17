@@ -681,6 +681,14 @@ buffers from eshell more convenient.  Custom variable
 `eshell-buffer-shorthand', which has been broken for a while, has been
 removed.
 
+*** By default, eshell "visual" program buffers (created by
+`eshell-visual-commands' and similar custom vars) are no longer killed
+when their processes die.  This fixes issues with short-lived commands
+and makes visual programs more useful in general.  For example, if
+"git log" is a visual command, it will always show the visual command
+buffer, even if the "git log" process dies.  For the old behavior,
+make the new option `eshell-destroy-buffer-when-process-dies' non-nil.
+
 ** Browse-url
 
 *** Support for the Conkeror web browser.
