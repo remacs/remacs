@@ -2613,9 +2613,12 @@ function called to create the messages."
 		     (count-lines (point-min) (or point (point-min))))
 		    ": " msg)))
     (with-current-buffer (get-buffer checkdoc-diagnostic-buffer)
-      (goto-char (point-max))
-      (let ((inhibit-read-only t))
-        (apply #'insert text)))))
+      (let ((inhibit-read-only t)
+            (pt (point-max)))
+        (goto-char pt)
+        (apply #'insert text)
+        (when noninteractive
+          (warn (buffer-substring pt (point-max))))))))
 
 (defun checkdoc-show-diagnostics ()
   "Display the checkdoc diagnostic buffer in a temporary window."
