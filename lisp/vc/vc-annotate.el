@@ -582,17 +582,15 @@ the file in question, search for the log entry required and move point."
 	(setq prev-rev
 	      (vc-call-backend vc-annotate-backend 'previous-revision
                                (if filediff fname nil) rev))
-	(if (not prev-rev)
-	    (message "Cannot diff from any revision prior to %s" rev)
-          (vc-diff-internal
-           t
-           ;; The value passed here should follow what
-           ;; `vc-deduce-fileset' returns.
-           (list vc-annotate-backend
-                 (if filediff
-                     (list fname)
-                   nil))
-           prev-rev rev))))))
+	(vc-diff-internal
+         t
+         ;; The value passed here should follow what
+         ;; `vc-deduce-fileset' returns.
+         (list vc-annotate-backend
+               (if filediff
+                   (list fname)
+                 nil))
+         prev-rev rev)))))
 
 (defun vc-annotate-show-diff-revision-at-line ()
   "Visit the diff of the revision at line from its previous revision."
