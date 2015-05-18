@@ -25,7 +25,7 @@ PROLSRC=$(addprefix ./prol-src/,ordsets.prolog natded.prolog)
 PYTSRC=$(addprefix ./pyt-src/,server.py)
 TEXSRC=$(addprefix ./tex-src/,testenv.tex gzip.texi texinfo.tex nonewline.tex)
 YSRC=$(addprefix ./y-src/,parse.y parse.c atest.y cccp.c cccp.y)
-SRCS=Makefile ${ADASRC} ${ASRC} ${CSRC} ${CPSRC} ${ELSRC} ${ERLSRC} ${FSRC}\
+SRCS=${ADASRC} ${ASRC} ${CSRC} ${CPSRC} ${ELSRC} ${ERLSRC} ${FSRC}\
      ${FORTHSRC} ${HTMLSRC} ${JAVASRC} ${LUASRC} ${MAKESRC} ${OBJCSRC}\
      ${OBJCPPSRC} ${PASSRC} ${PHPSRC} ${PERLSRC} ${PSSRC} ${PROLSRC} ${PYTSRC}\
      ${TEXSRC} ${YSRC}
@@ -44,13 +44,31 @@ ARGS=- < srclist
 
 infiles = $(filter-out ${NONSRCS},${SRCS}) srclist regexfile
 
+# This test requires a UTF-8 locale.  Use the current locale if it is UTF-8,
+# else $(UTF8_LOCALE) if it works, else skip this test.
+UTF8_LOCALE = en_US.utf8
+UTF8_ENCODING = yes
+ifneq ($(shell locale -k charmap), charmap="UTF-8")
+  ifeq ($(shell LC_ALL=$(UTF8_LOCALE) locale -k charmap), charmap="UTF-8")
+    export LC_ALL = $(UTF8_LOCALE)
+  else
+    UTF8_ENCODING = no
+  endif
+endif
+
+.PHONY: check ediff_1 ediff_2 ediff_3 ediff_4 ediff_5 cdiff ETAGS CTAGS
+
 check:
+  ifeq ($(UTF8_ENCODING), yes)
 	@$(MAKE) OPTIONS='--no-members' ediff_1
 	@$(MAKE) OPTIONS='--declarations --no-members' ediff_2
 	@$(MAKE) OPTIONS='--members' ediff_3
 	@$(MAKE) OPTIONS='--regex=@regexfile --no-members' ediff_4
 	@$(MAKE) OPTIONS='nonexistent --members --declarations --regex=@regexfile' ediff_5
 	@$(MAKE) cdiff
+  else
+	: 'No locale with UTF-8 found; skipping check'
+  endif
 
 ediff%: ETAGS.good% ETAGS ${infiles}
 	diff -u --suppress-common-lines --width=80 ETAGS.good$* ETAGS
@@ -58,10 +76,10 @@ ediff%: ETAGS.good% ETAGS ${infiles}
 cdiff: CTAGS.good CTAGS ${infiles}
 	diff -u --suppress-common-lines --width=80 CTAGS.good CTAGS
 
-ETAGS: FRC ${infiles}
+ETAGS: ${infiles}
 	${RUN} ${ETAGS_PROG} ${OPTIONS} -o $@ ${ARGS}
 
-CTAGS: FRC ${infiles}
+CTAGS: ${infiles}
 	${RUN} ${CTAGS_PROG} -o $@ --regex=@regexfile ${ARGS}
 
 srclist: Makefile
@@ -70,10 +88,6 @@ srclist: Makefile
 
 regexfile: Makefile
 	@echo '	-- This is for GNU Emacs source files' > regexfile
-	@echo '${REGEX}' >> regexfile
-	@echo '{c}${REGEX}\\1/m' >> regexfile
+	@printf '%s\n' '${REGEX}' >> regexfile
+	@printf '%s\n' '{c}${REGEX}\\1/m' >> regexfile
 	@echo "regexfile remade"
-
-.PRECIOUS: ETAGS.good CTAGS.good
-
-FRC:;
