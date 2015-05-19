@@ -1983,7 +1983,7 @@ system."
 
 (defvar c-lang-const-expansion nil)
 
-;; Ugly hack to pull in the definition of `cc-bytecomp-compiling-or-loading`
+;; Ugly hack to pull in the definition of `cc-bytecomp-compiling-or-loading'
 ;; from cc-bytecomp to make it available at loadtime.  This is the same
 ;; mechanism used in cc-mode.el for `c-populate-syntax-table'.
 (defalias 'cc-bytecomp-compiling-or-loading

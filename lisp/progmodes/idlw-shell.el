@@ -229,7 +229,7 @@ to set this option to nil."
 
 (defcustom idlwave-shell-file-name-chars "~/A-Za-z0-9+:_.$#%={}\\- "
   "The characters allowed in file names, as a string.
-Used for file name completion.  Must not contain `'', `,' and `\"'
+Used for file name completion.  Must not contain ‘'’, ‘,’ and ‘\"’
 because these are used as separators by IDL."
   :group 'idlwave-shell-general-setup
   :type 'string)

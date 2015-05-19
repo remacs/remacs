@@ -1452,7 +1452,7 @@ changed by an edit command."
 (defcustom org-remove-highlights-with-change t
   "Non-nil means any change to the buffer will remove temporary highlights.
 Such highlights are created by `org-occur' and `org-clock-display'.
-When nil, `C-c C-c needs to be used to get rid of the highlights.
+When nil, `C-c C-c' needs to be used to get rid of the highlights.
 The highlights created by `org-preview-latex-fragment' always need
 `C-c C-c' to be removed."
   :group 'org-sparse-trees
@@ -12077,7 +12077,7 @@ This is a list of abbreviation keys and values.  The value gets inserted
 if you type `<' followed by the key and then press the completion key,
 usually `M-TAB'.  %file will be replaced by a file name after prompting
 for the file using completion.  The cursor will be placed at the position
-of the `?` in the template.
+of the `?' in the template.
 There are two templates for each key, the first uses the original Org syntax,
 the second uses Emacs Muse-like syntax tags.  These Muse-like tags become
 the default when the /org-mtags.el/ module has been loaded.  See also the

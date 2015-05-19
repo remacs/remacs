@@ -704,7 +704,7 @@ of values.  Callers can retrieve each value using `iter-next'."
 
 (defun iter-next (iterator &optional yield-result)
   "Extract a value from an iterator.
-YIELD-RESULT becomes the return value of `iter-yield` in the
+YIELD-RESULT becomes the return value of `iter-yield' in the
 context of the generator.
 
 This routine raises the `iter-end-of-sequence' condition if the

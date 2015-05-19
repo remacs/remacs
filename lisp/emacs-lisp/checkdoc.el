@@ -2405,7 +2405,7 @@ Argument END is the maximum bounds to search in."
 According to the documentation for the function `error', the error list
 should not end with a period, and should start with a capital letter.
 The function `y-or-n-p' has similar constraints.
-Argument TYPE specifies the type of question, such as `error or `y-or-n-p."
+Argument TYPE specifies the type of question, such as `error' or `y-or-n-p'."
   ;; If type is nil, then attempt to derive it.
   (if (not type)
       (save-excursion

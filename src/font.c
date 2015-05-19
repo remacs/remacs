@@ -3822,17 +3822,17 @@ They are the same as face attributes of the same name.  See
 
 `:foundry'
 
-VALUE must be a string or a symbol specifying the font foundry, e.g. ``misc''.
+VALUE must be a string or a symbol specifying the font foundry, e.g. `misc'.
 
 `:adstyle'
 
 VALUE must be a string or a symbol specifying the additional
-typographic style information of a font, e.g. ``sans''.
+typographic style information of a font, e.g. `sans'.
 
 `:registry'
 
 VALUE must be a string or a symbol specifying the charset registry and
-encoding of a font, e.g. ``iso8859-1''.
+encoding of a font, e.g. `iso8859-1'.
 
 `:size'
 
