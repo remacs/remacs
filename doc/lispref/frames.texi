@@ -659,6 +659,16 @@ Some window managers ignore program-specified positions.  If you want to
 be sure the position you specify is not ignored, specify a
 non-@code{nil} value for the @code{user-position} parameter as well.
 
+If the window manager refuses to align a frame at the left or top screen
+edge, combining position notation and @code{user-position} as in
+
+@example
+(modify-frame-parameters
+  '((user-position . t) (left . (+ -4))))
+@end example
+
+may help to override that.
+
 @vindex top, a frame parameter
 @item top
 The screen position of the top (or bottom) edge, in pixels, with respect
