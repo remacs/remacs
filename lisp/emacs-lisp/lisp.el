@@ -746,9 +746,10 @@ The context determines which symbols are considered.  If the
 symbol starts just after an open-parenthesis, only symbols with
 function definitions are considered.  Otherwise, all symbols with
 function definitions, values or properties are considered."
-  (declare (obsolete completion-at-point "24.4"))
+  (declare (obsolete completion-at-point "24.4")
+           (advertised-calling-convention () "25.1"))
   (interactive)
-  (let* ((data (lisp-completion-at-point))
+  (let* ((data (elisp-completion-at-point))
          (plist (nthcdr 3 data)))
     (if (null data)
         (minibuffer-message "Nothing to complete")
