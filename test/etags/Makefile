@@ -44,31 +44,24 @@ ARGS=- < srclist
 
 infiles = $(filter-out ${NONSRCS},${SRCS}) srclist regexfile
 
-# This test requires a UTF-8 locale.  Use the current locale if it is UTF-8,
-# else $(UTF8_LOCALE) if it works, else skip this test.
-UTF8_LOCALE = en_US.utf8
-UTF8_ENCODING = yes
+# Although this test uses UTF-8 data, some platforms lack UTF-8 locales.
+# If the current locale isn't known to use UTF-8, fall back on the C locale.
+# Although the C locale in theory is not safe for UTF-8 data, in practice
+# it should be good enough.
 ifneq ($(shell locale -k charmap), charmap="UTF-8")
-  ifeq ($(shell LC_ALL=$(UTF8_LOCALE) locale -k charmap), charmap="UTF-8")
-    export LC_ALL = $(UTF8_LOCALE)
-  else
-    UTF8_ENCODING = no
-  endif
+  export LC_ALL = C
 endif
 
-.PHONY: check ediff_1 ediff_2 ediff_3 ediff_4 ediff_5 cdiff ETAGS CTAGS
+.PHONY: check cdiff ETAGS CTAGS
+# Can't make ediff_1 through ediff_5 .PHONY, as they're implicit.
 
 check:
-  ifeq ($(UTF8_ENCODING), yes)
 	@$(MAKE) OPTIONS='--no-members' ediff_1
 	@$(MAKE) OPTIONS='--declarations --no-members' ediff_2
 	@$(MAKE) OPTIONS='--members' ediff_3
 	@$(MAKE) OPTIONS='--regex=@regexfile --no-members' ediff_4
 	@$(MAKE) OPTIONS='nonexistent --members --declarations --regex=@regexfile' ediff_5
 	@$(MAKE) cdiff
-  else
-	: 'No locale with UTF-8 found; skipping check'
-  endif
 
 ediff%: ETAGS.good% ETAGS ${infiles}
 	diff -u --suppress-common-lines --width=80 ETAGS.good$* ETAGS
