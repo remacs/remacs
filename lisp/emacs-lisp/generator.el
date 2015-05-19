@@ -90,7 +90,7 @@
   ;; Change this function to use `cl-gensym' if you want the generated
   ;; code to be easier to read and debug.
   ;; (cl-gensym (apply #'format fmt args))
-  `(make-symbol ,fmt))
+  `(progn (ignore ,@args) (make-symbol ,fmt)))
 
 (defvar cps--dynamic-wrappers '(identity)
   "List of transformer functions to apply to atomic forms we
@@ -308,14 +308,14 @@ don't yield.")
                           collect (if (symbolp binding)
                                       (list binding nil)
                                     binding)))
-             (temps (cl-loop for (var value-form) in bindings
+             (temps (cl-loop for (var _value-form) in bindings
                        collect (cps--add-binding var))))
         (cps--transform-1
          `(let* ,(append
-                  (cl-loop for (var value-form) in bindings
+                  (cl-loop for (_var value-form) in bindings
                      for temp in temps
                      collect (list temp value-form))
-                  (cl-loop for (var binding) in bindings
+                  (cl-loop for (var _binding) in bindings
                      for temp in temps
                      collect (list var temp)))
             ,@body)
