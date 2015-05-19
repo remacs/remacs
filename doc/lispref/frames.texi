@@ -664,7 +664,7 @@ edge, combining position notation and @code{user-position} as in
 
 @example
 (modify-frame-parameters
-  '((user-position . t) (left . (+ -4))))
+  nil '((user-position . t) (left . (+ -4))))
 @end example
 
 may help to override that.
