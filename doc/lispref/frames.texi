@@ -1624,7 +1624,8 @@ tooltip, it first runs the hook @code{delete-frame-functions} (each
 function gets one argument, @var{frame}).  By default, @var{frame} is
 the selected frame.
 
-A frame cannot be deleted if its minibuffer is used by other frames.
+A frame cannot be deleted as long as its minibuffer serves as surrogate
+minibuffer for another frame (@pxref{Minibuffers and Frames}).
 Normally, you cannot delete a frame if all other frames are invisible,
 but if @var{force} is non-@code{nil}, then you are allowed to do so.
 @end deffn
@@ -1700,12 +1701,18 @@ you can get it with @code{minibuffer-window} (@pxref{Definition of
 minibuffer-window}).
 
 @cindex frame without a minibuffer
-However, you can also create a frame with no minibuffer.  Such a frame
-must use the minibuffer window of some other frame.  When you create the
-frame, you can explicitly specify the minibuffer window to use (in some
-other frame).  If you don't, then the minibuffer is found in the frame
-which is the value of the variable @code{default-minibuffer-frame}.  Its
-value should be a frame that does have a minibuffer.
+@cindex surrogate minibuffer frame
+However, you can also create a frame without a minibuffer.  Such a frame
+must use the minibuffer window of some other frame.  That other frame
+will serve as @dfn{surrogate minibuffer frame} for this frame and cannot
+be deleted via @code{delete-frame} (@pxref{Deleting Frames}) as long as
+this frame is live.
+
+When you create the frame, you can explicitly specify the minibuffer
+window to use (in some other frame).  If you don't, then the minibuffer
+is found in the frame which is the value of the variable
+@code{default-minibuffer-frame}.  Its value should be a frame that does
+have a minibuffer.
 
 If you use a minibuffer-only frame, you might want that frame to raise
 when you enter the minibuffer.  If so, set the variable

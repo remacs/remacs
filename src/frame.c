@@ -1823,9 +1823,10 @@ DEFUN ("delete-frame", Fdelete_frame, Sdelete_frame, 0, 2, "",
        doc: /* Delete FRAME, permanently eliminating it from use.
 FRAME defaults to the selected frame.
 
-A frame may not be deleted if its minibuffer is used by other frames.
-Normally, you may not delete a frame if all other frames are invisible,
-but if the second optional argument FORCE is non-nil, you may do so.
+A frame may not be deleted if its minibuffer serves as surrogate
+minibuffer for another frame.  Normally, you may not delete a frame if
+all other frames are invisible, but if the second optional argument
+FORCE is non-nil, you may do so.
 
 This function runs `delete-frame-functions' before actually
 deleting the frame, unless the frame is a tooltip.
