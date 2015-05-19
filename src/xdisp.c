@@ -4899,6 +4899,20 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
     {
       start_pos = *position;
       *position = display_prop_end (it, object, start_pos);
+      /* If the display property comes from an overlay, don't consider
+	 any potential stop_charpos values before the end of that
+	 overlay.  Since display_prop_end will happily find another
+	 'display' property coming from some other overlay or text
+	 property on buffer positions before this overlay's end, we
+	 need to ignore them, or else we risk displaying this
+	 overlay's display string/image twice.  */
+      if (!NILP (overlay))
+	{
+	  ptrdiff_t ovendpos = OVERLAY_POSITION (OVERLAY_END (overlay));
+
+	  if (ovendpos > CHARPOS (*position))
+	    SET_TEXT_POS (*position, ovendpos, CHAR_TO_BYTE (ovendpos));
+	}
     }
   value = Qnil;
 
