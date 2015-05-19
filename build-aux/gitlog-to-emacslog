@@ -58,7 +58,7 @@ test -d .git || {
 
 # Use Gnulib's packaged ChangeLog generator.
 ./build-aux/gitlog-to-changelog --ignore-matching='^; ' \
-  --format='%B' \
+  --ignore-line='^; ' --format='%B' \
   "$gen_origin.." >"ChangeLog.tmp" || exit
 
 if test -s "ChangeLog.tmp"; then
