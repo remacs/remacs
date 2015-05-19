@@ -1,7 +1,7 @@
 ADASRC=$(addprefix ./ada-src/,etags-test-for.ada 2ataspri.adb 2ataspri.ads waroquiers.ada)
 ASRC=$(addprefix ./a-src/,empty.zz empty.zz.gz)
 CSRC=$(addprefix ./c-src/,abbrev.c .//c.c torture.c getopt.h etags.c\
- exit.c exit.strange_suffix sysdep.h tab.c dostorture.c\
+ exit.c exit.strange_suffix sysdep.h tab.c\
  emacs/src/gmalloc.c emacs/src/regex.h emacs/src/keyboard.c emacs/src/lisp.h\
  machsyscalls.c machsyscalls.h fail.c a/b/b.c) ../etags/c-src/h.h
 CPSRC=$(addprefix ./cp-src/,c.C burton.cpp burton.cpp\
@@ -43,14 +43,6 @@ OPTIONS=--members --declarations --regex=@regexfile
 ARGS=- < srclist
 
 infiles = $(filter-out ${NONSRCS},${SRCS}) srclist regexfile
-
-# Although this test uses UTF-8 data, some platforms lack UTF-8 locales.
-# If the current locale isn't known to use UTF-8, fall back on the C locale.
-# Although the C locale in theory is not safe for UTF-8 data, in practice
-# it should be good enough.
-ifneq ($(shell locale -k charmap), charmap="UTF-8")
-  export LC_ALL = C
-endif
 
 .PHONY: check cdiff ETAGS CTAGS
 # Can't make ediff_1 through ediff_5 .PHONY, as they're implicit.
