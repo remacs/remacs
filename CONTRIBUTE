@@ -96,7 +96,7 @@ messages:
 - Commit messages should not contain the "Signed-off-by:" lines that
   are used in some other projects.
 
-- Any lines of the the commit message that start with "; " are omitted
+- Any lines of the commit message that start with "; " are omitted
   from the generated ChangeLog.
 
 - Explaining the rationale for a design choice is best done in comments
