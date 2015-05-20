@@ -2173,7 +2173,14 @@ will be deleted."
              (insert "'"))
            (if signed
                (insert ".")
-             (insert " (unsigned).")))
+             (insert " (unsigned)."))
+           (when (and (package-desc-p desc)
+                      (not required-by)
+                      (package-installed-p desc))
+             (insert " ")
+             (package-make-button "Delete"
+                                  'action #'package-delete-button-action
+                                  'package-desc desc)))
           (incompatible-reason
            (insert (propertize "Incompatible" 'face font-lock-warning-face)
                    " because it depends on ")
@@ -2314,6 +2321,14 @@ will be deleted."
     (when (y-or-n-p (format "Install package `%s'? "
                             (package-desc-full-name pkg-desc)))
       (package-install pkg-desc nil)
+      (revert-buffer nil t)
+      (goto-char (point-min)))))
+
+(defun package-delete-button-action (button)
+  (let ((pkg-desc (button-get button 'package-desc)))
+    (when (y-or-n-p (format "Delete package `%s'? "
+                      (package-desc-full-name pkg-desc)))
+      (package-delete pkg-desc)
       (revert-buffer nil t)
       (goto-char (point-min)))))
 
