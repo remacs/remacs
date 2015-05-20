@@ -350,8 +350,9 @@ a sane initial value."
 
 (defcustom package-menu-async t
   "If non-nil, package-menu will use async operations when possible.
-This includes refreshing archive contents as well as installing
-packages."
+Currently, only the refreshing of archive contents supports
+asynchronous operations.  Package transactions are still done
+synchronously."
   :type 'boolean
   :version "25.1")
 
@@ -1712,31 +1713,26 @@ if all the in-between dependencies are also in PACKAGE-LIST."
   "Return the archive containing the package NAME."
   (cdr (assoc (package-desc-archive desc) package-archives)))
 
-(defun package-install-from-archive (pkg-desc &optional async callback)
-  "Download and install a tar package.
-If ASYNC is non-nil, perform the download asynchronously.
-If CALLBACK is non-nil, call it with no arguments once the
-operation is done."
+(defun package-install-from-archive (pkg-desc)
+  "Download and install a tar package."
   ;; This won't happen, unless the archive is doing something wrong.
   (when (eq (package-desc-kind pkg-desc) 'dir)
     (error "Can't install directory package from archive"))
   (let* ((location (package-archive-base pkg-desc))
          (file (concat (package-desc-full-name pkg-desc)
                        (package-desc-suffix pkg-desc))))
-    (package--with-work-buffer-async location file async
+    (package--with-work-buffer location file
       (if (or (not package-check-signature)
               (member (package-desc-archive pkg-desc)
                       package-unsigned-archives))
           ;; If we don't care about the signature, unpack and we're
           ;; done.
-          (progn (let ((save-silently    async)
-                       (inhibit-message  async))
-                   (package-unpack pkg-desc))
-                 (funcall callback))
+          (let ((save-silently t))
+            (package-unpack pkg-desc))
         ;; If we care, check it and *then* write the file.
         (let ((content (buffer-string)))
           (package--check-signature
-           location file content async
+           location file content nil
            ;; This function will be called after signature checking.
            (lambda (&optional good-sigs)
              (unless (or good-sigs (eq package-check-signature 'allow-unsigned))
@@ -1746,8 +1742,7 @@ operation is done."
                  (package-desc-name pkg-desc)))
              ;; Signature checked, unpack now.
              (with-temp-buffer (insert content)
-                               (let ((save-silently    async)
-                                     (inhibit-message  async))
+                               (let ((save-silently t))
                                  (package-unpack pkg-desc)))
              ;; Here the package has been installed successfully, mark it as
              ;; signed if appropriate.
@@ -1763,9 +1758,7 @@ operation is done."
                (setf (package-desc-signed pkg-desc) t)
                ;; Update the new (activated) pkg-desc as well.
                (when-let ((pkg-descs (cdr (assq (package-desc-name pkg-desc) package-alist))))
-                 (setf (package-desc-signed (car pkg-descs)) t)))
-             (when (functionp callback)
-               (funcall callback)))))))))
+                 (setf (package-desc-signed (car pkg-descs)) t))))))))))
 
 (defun package-installed-p (package &optional min-version)
   "Return true if PACKAGE, of MIN-VERSION or newer, is installed.
@@ -1786,25 +1779,13 @@ If PACKAGE is a package-desc object, MIN-VERSION is ignored."
      ;; Also check built-in packages.
      (package-built-in-p package min-version))))
 
-(defun package-download-transaction (packages &optional async callback)
+(defun package-download-transaction (packages)
   "Download and install all the packages in PACKAGES.
 PACKAGES should be a list of package-desc.
-If ASYNC is non-nil, perform the downloads asynchronously.
-If CALLBACK is non-nil, call it with no arguments once the
-entire operation is done.
-
 This function assumes that all package requirements in
 PACKAGES are satisfied, i.e. that PACKAGES is computed
 using `package-compute-transaction'."
-  (cond
-   (packages (package-install-from-archive
-              (car packages)
-              async
-              (lambda ()
-                (package-download-transaction (cdr packages))
-                (when (functionp callback)
-                  (funcall callback)))))
-   (callback (funcall callback))))
+  (mapc #'package-install-from-archive packages))
 
 (defun package--ensure-init-file ()
   "Ensure that the user's init file has `package-initialize'.
@@ -1857,16 +1838,13 @@ add a call to it along with some explanatory comments."
   (setq package--init-file-ensured t))
 
 ;;;###autoload
-(defun package-install (pkg &optional dont-select async callback)
+(defun package-install (pkg &optional dont-select)
   "Install the package PKG.
 PKG can be a package-desc or the package name of one the available packages
 in an archive in `package-archives'.  Interactively, prompt for its name.
 
 If called interactively or if DONT-SELECT nil, add PKG to
 `package-selected-packages'.
-If ASYNC is non-nil, perform the downloads asynchronously.
-If CALLBACK is non-nil, call it with no arguments once the
-entire operation is done.
 
 If PKG is a package-desc and it is already installed, don't try
 to install it but still mark it as selected."
@@ -1899,9 +1877,8 @@ to install it but still mark it as selected."
                   (package-compute-transaction (list pkg)
                                                (package-desc-reqs pkg)))
               (package-compute-transaction () (list (list pkg))))))
-      (package-download-transaction transaction async callback)
-    (message "`%s' is already installed" (package-desc-full-name pkg))
-    (funcall callback)))
+      (package-download-transaction transaction)
+    (message "`%s' is already installed" (package-desc-full-name pkg))))
 
 (defun package-strip-rcs-id (str)
   "Strip RCS version ID from the version string STR.
@@ -2938,30 +2915,23 @@ nil, but not both."
       (package-menu--list-to-prompt upg)
       "? "))))
 
-(defun package-menu--perform-transaction (install-list delete-list &optional async)
-  "Install packages in INSTALL-LIST and delete DELETE-LIST.
-If ASYNC is non-nil, perform the installation downloads
-asynchronously."
-  ;; While there are packages to install, call `package-install' on
-  ;; the next one and defer deletion to the callback function.
+(defun package-menu--perform-transaction (install-list delete-list)
+  "Install packages in INSTALL-LIST and delete DELETE-LIST."
   (if install-list
-      (let* ((pkg (car install-list))
-             (rest (cdr install-list))
-             ;; Don't mark as selected if it's a new version of an
-             ;; installed package.
-             (dont-mark (and (not (package-installed-p pkg))
-                             (package-installed-p
-                              (package-desc-name pkg)))))
+      (dolist (pkg install-list)
         (package-install
-         pkg dont-mark async
-         (lambda () (package-menu--perform-transaction rest delete-list async))))
-    (let ((inhibit-message async))
-      ;; Once there are no more packages to install, proceed to
-      ;; deletion.
-      (dolist (elt (package--sort-by-dependence delete-list))
-        (condition-case-unless-debug err
-            (package-delete elt)
-          (error (message (cadr err))))))
+         ;; Don't mark as selected if it's a new version of an
+         ;; installed package.
+         pkg (and (not (package-installed-p pkg))
+                  (package-installed-p
+                   (package-desc-name pkg)))))
+    ;; Once there are no more packages to install, proceed to
+    ;; deletion.
+    (dolist (elt (package--sort-by-dependence delete-list))
+      (condition-case-unless-debug err
+          (let ((inhibit-message t))
+            (package-delete elt))
+        (error (message (cadr err)))))
     (message "Transaction done")
     (when package-selected-packages
       (when-let ((removable (package--removable-packages)))
@@ -2997,8 +2967,7 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
               (package-menu--prompt-transaction-p install-list delete-list))
       (message "Transaction started")
       ;; This calls `package-menu--generate' after everything's done.
-      (package-menu--perform-transaction
-       install-list delete-list package-menu-async))))
+      (package-menu--perform-transaction install-list delete-list))))
 
 (defun package-menu--version-predicate (A B)
   (let ((vA (or (aref (cadr A) 1)  '(0)))
