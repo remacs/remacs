@@ -1646,21 +1646,25 @@ These are packages which are neither contained in
              unless (memq p needed)
              collect p)))
 
-(defun package--used-elsewhere-p (pkg-desc &optional pkg-list)
+(defun package--used-elsewhere-p (pkg-desc &optional pkg-list all)
   "Non-nil if PKG-DESC is a dependency of a package in PKG-LIST.
 Return the first package found in PKG-LIST of which PKG is a
-dependency.
+dependency.  If ALL is non-nil, return all such packages instead.
 
 When not specified, PKG-LIST defaults to `package-alist'
 with PKG-DESC entry removed."
   (unless (string= (package-desc-status pkg-desc) "obsolete")
-    (let ((pkg (package-desc-name pkg-desc)))
-      (cl-loop with alist = (or pkg-list
-                                (remove (assq pkg package-alist)
-                                        package-alist))
-               for p in alist thereis
-               (and (memq pkg (mapcar #'car (package-desc-reqs (cadr p))))
-                    (car p))))))
+    (let* ((pkg (package-desc-name pkg-desc))
+           (alist (or pkg-list
+                      (remove (assq pkg package-alist)
+                              package-alist))))
+      (if all
+          (cl-loop for p in alist
+                   if (assq pkg (package-desc-reqs (cadr p)))
+                   collect (cadr p))
+        (cl-loop for p in alist thereis
+                 (and (assq pkg (package-desc-reqs (cadr p)))
+                      (cadr p)))))))
 
 (defun package--sort-deps-in-alist (package only)
   "Return a list of dependencies for PACKAGE sorted by dependency.
@@ -2027,7 +2031,7 @@ If NOSAVE is non-nil, the package is not removed from
            ;; Don't delete packages used as dependency elsewhere.
            (error "Package `%s' is used by `%s' as dependency, not deleting"
                   (package-desc-full-name pkg-desc)
-                  pkg-used-elsewhere-by))
+                  (package-desc-name pkg-used-elsewhere-by)))
           (t
            (delete-directory dir t t)
            ;; Remove NAME-VERSION.signed file.
@@ -2127,6 +2131,7 @@ will be deleted."
          (name (if desc (package-desc-name desc) pkg))
          (pkg-dir (if desc (package-desc-dir desc)))
          (reqs (if desc (package-desc-reqs desc)))
+         (required-by (if desc (package--used-elsewhere-p desc nil 'all)))
          (version (if desc (package-desc-version desc)))
          (archive (if desc (package-desc-archive desc)))
          (extras (and desc (package-desc-extras desc)))
@@ -2211,6 +2216,19 @@ will be deleted."
                   (t (insert ", ")))
             (help-insert-xref-button text 'help-package name)
             (insert reason)))
+        (insert "\n")))
+    (when required-by
+      (insert (propertize "Required by" 'font-lock-face 'bold) ": ")
+      (let ((first t))
+        (dolist (pkg required-by)
+          (let ((text (package-desc-full-name pkg)))
+            (cond (first (setq first nil))
+                  ((>= (+ 2 (current-column) (length text))
+                       (window-width))
+                   (insert ",\n               "))
+                  (t (insert ", ")))
+            (help-insert-xref-button text 'help-package
+                                     (package-desc-name pkg))))
         (insert "\n")))
     (insert "    " (propertize "Summary" 'font-lock-face 'bold)
             ": " (if desc (package-desc-summary desc)) "\n")
