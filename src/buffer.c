@@ -1467,15 +1467,15 @@ DEFUN ("other-buffer", Fother_buffer, Sother_buffer, 0, 3, 0,
 Buffers not visible in windows are preferred to visible buffers, unless
 optional second argument VISIBLE-OK is non-nil.  Ignore the argument
 BUFFER unless it denotes a live buffer.  If the optional third argument
-FRAME is non-nil, use that frame's buffer list instead of the selected
-frame's buffer list.
+FRAME specifies a live frame, then use that frame's buffer list instead
+of the selected frame's buffer list.
 
 The buffer is found by scanning the selected or specified frame's buffer
 list first, followed by the list of all buffers.  If no other buffer
 exists, return the buffer `*scratch*' (creating it if necessary).  */)
   (Lisp_Object buffer, Lisp_Object visible_ok, Lisp_Object frame)
 {
-  struct frame *f = decode_any_frame (frame);
+  struct frame *f = decode_live_frame (frame);
   Lisp_Object tail = f->buffer_list, pred = f->buffer_predicate;
   Lisp_Object buf, notsogood = Qnil;
 
