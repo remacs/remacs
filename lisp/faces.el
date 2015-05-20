@@ -892,7 +892,7 @@ where COLOR is a string or `foreground-color', and STYLE is either
 foreground color.  :style may be omitted, which means to use a line.
 
 FRAME nil or not specified means change face on all frames.
-Use `set-face-attribute' to “unspecify” underlining."
+Use `set-face-attribute' to \"unspecify\" underlining."
   (interactive (read-face-and-attribute :underline))
   (set-face-attribute face frame :underline underline))
 
@@ -905,7 +905,7 @@ Use `set-face-attribute' to “unspecify” underlining."
 INVERSE-VIDEO-P non-nil means FACE displays explicitly in inverse video.
 INVERSE-VIDEO-P nil means FACE explicitly is not in inverse video.
 FRAME nil or not specified means change face on all frames.
-Use `set-face-attribute' to “unspecify” the inverse video attribute."
+Use `set-face-attribute' to \"unspecify\" the inverse video attribute."
   (interactive
    (let ((list (read-face-and-attribute :inverse-video)))
      (list (car list) (if (cadr list) t))))

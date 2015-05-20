@@ -300,8 +300,8 @@ are fit for gateways must have `tramp-default-port' at least.
 
 Notes:
 
-When using `su' or `sudo' the phrase “open connection to a remote
-host” sounds strange, but it is used nevertheless, for consistency.
+When using `su' or `sudo' the phrase \"open connection to a remote
+host\" sounds strange, but it is used nevertheless, for consistency.
 No connection is opened to a remote host, but `su' or `sudo' is
 started on the local host.  You should specify a remote host
 `localhost' or the name of the local host.  Another host name is

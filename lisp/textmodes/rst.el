@@ -1512,8 +1512,8 @@ PFXARG (alternate behavior).
 
 This function is a bit of a swiss knife.  It is meant to adjust
 the adornments of a section title in reStructuredText.  It tries
-to deal with all the possible cases gracefully and to do “the
-right thing” in all cases.
+to deal with all the possible cases gracefully and to do \"the
+right thing\" in all cases.
 
 See the documentations of `rst-adjust-adornment-work' and
 `rst-promote-region' for full details.
