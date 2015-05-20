@@ -165,7 +165,7 @@ buffers to allow certain parts of the text to be writable.
 ** A new function `directory-files-recursively' returns all matching
 files (recursively) under a directory.
 
-** The new `directory-name-p' can be used to check whether a file
+** The new function `directory-name-p' can be used to check whether a file
 name (as returned from, for instance, `file-name-all-completions' is
 a directory file name.  It returns non-nil if the last character in
 the name is a forward slash.
@@ -585,8 +585,8 @@ nil to disable this.
 fitting for use in money calculations; factorial works with
 non-integer inputs.
 
-** HideIfDef mode now support full C/C++ expressions, argumented macro expansions
-, interactive macro evaluation and automatic scanning of #defined symbols.
+** HideIfDef mode now support full C/C++ expressions, argumented macro expansions,
+interactive macro evaluation and automatic scanning of #defined symbols.
 
 *** New custom variable `hide-ifdef-header-regexp' to define C/C++ header file
 name patterns. Default case-insensitive .h, .hh, .hpp and .hxx.
@@ -755,7 +755,7 @@ If you want the old behavior of calling the function in the buffer
 from which the minibuffer was entered, call it with the new argument
 `switch-buffer'.
 
-** window-configurations no longer record the buffers's marks.
+** window-configurations no longer record the buffers' marks.
 
 ** inhibit-modification-hooks now also inhibits lock-file checks, as well as
 active region handling.
@@ -959,6 +959,11 @@ fullwidth frames, the behavior may depend on the toolkit used.
 ** New function `window-preserve-size' allows to preserve the size of
 windows without "fixing" it.  It's supported by `fit-window-to-buffer',
 `temp-buffer-resize-mode' and `display-buffer'.
+
++++
+** New option `switch-to-buffer-in-dedicated-window' allows to customize
+how `switch-to-buffer' proceeds interactively when the selected window
+is strongly dedicated to its buffer.
 
 ** Tearoff menus and detachable toolbars for Gtk+ has been removed.
 Those features have been deprecated in Gtk+ for a long time.
