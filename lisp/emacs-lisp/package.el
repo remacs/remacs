@@ -2943,12 +2943,9 @@ objects removed."
                 (format status-format (cl-incf i)))
           (force-mode-line-update)
           (redisplay 'force)
-          (package-install
-           ;; Don't mark as selected if it's a new version of an
-           ;; installed package.
-           pkg (and (not (package-installed-p pkg))
-                    (package-installed-p
-                     (package-desc-name pkg))))))
+          ;; Don't mark as selected, `package-menu-execute' already
+          ;; does that.
+          (package-install pkg 'dont-select)))
     ;; Once there are no more packages to install, proceed to
     ;; deletion.
     (let ((package-menu--transaction-status ":Deleting"))
@@ -2995,6 +2992,10 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
                        (when .upgrade (format "Upgrad__ %s" (length .upgrade)))
                        "]")))
           (message (replace-regexp-in-string "__" "ing" message-template) "started")
+          ;; Packages being upgraded are not marked as selected.
+          (package--save-selected-packages
+           (remove-dups (append (mapcar #'package-desc-name .install)
+                                package-selected-packages)))
           (package-menu--perform-transaction install-list delete-list)
           (when package-selected-packages
             (if-let ((removable (package--removable-packages)))
