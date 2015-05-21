@@ -8162,7 +8162,7 @@ demand _EXTRA in the keyword list."
 			       class
 			       (idlwave-routines)) 'do-link))))))
 
-    ;; If the class is `t', combine all keywords of all methods NAME
+    ;; If the class is t, combine all keywords of all methods NAME
     (when (eq class t)
       (mapc (lambda (entry)
 	      (and

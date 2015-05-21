@@ -1615,8 +1615,8 @@ function,command,variable,option or symbol." ms1))))))
 	    (or
 	     ;; * The documentation string for a variable that is a
 	     ;;   yes-or-no flag should start with words such as Non-nil
-	     ;;   means..., to make it clear that all non-`nil' values are
-	     ;;   equivalent and indicate explicitly what `nil' and non-`nil'
+	     ;;   means..., to make it clear that all non-nil values are
+	     ;;   equivalent and indicate explicitly what nil and non-nil
 	     ;;   mean.
 	     ;; * If a user option variable records a true-or-false
 	     ;;   condition, give it a name that ends in `-flag'.

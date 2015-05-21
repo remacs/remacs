@@ -4311,7 +4311,7 @@ one.  If non-nil, reset `quit-restore' parameter to nil.
 Optional second argument BURY-OR-KILL tells how to proceed with
 the buffer of WINDOW.  The following values are handled:
 
-`nil' means to not handle the buffer in a particular way.  This
+nil means to not handle the buffer in a particular way.  This
   means that if WINDOW is not deleted by this function, invoking
   `switch-to-prev-buffer' will usually show the buffer again.
 
@@ -8107,7 +8107,7 @@ This function is responsible for combining the sizes of the
 displayed windows and returning a cons (WIDTH . HEIGHT)
 describing the width and height with which Emacs will call
 `set-process-window-size' for that process.  If the function
-returns `nil', Emacs does not call `set-process-window-size'.
+returns nil, Emacs does not call `set-process-window-size'.
 
 This function is called with the process buffer as the current
 buffer and with two arguments: the process and a list of windows

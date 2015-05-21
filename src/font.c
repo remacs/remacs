@@ -3866,7 +3866,7 @@ required OpenType features.
   GSUB: List of OpenType GSUB feature tag symbols, or nil if none required.
   GPOS: List of OpenType GPOS feature tag symbols, or nil if none required.
 
-GSUB and GPOS may contain `nil' element.  In such a case, the font
+GSUB and GPOS may contain nil elements.  In such a case, the font
 must not have any of the remaining elements.
 
 For instance, if the VALUE is `(thai nil nil (mark))', the font must
@@ -5011,7 +5011,7 @@ build_style_table (const struct table_entry *entry, int nelement)
 static Lisp_Object Vfont_log_deferred;
 
 /* Prepend the font-related logging data in Vfont_log if it is not
-   `t'.  ACTION describes a kind of font-related action (e.g. listing,
+   t.  ACTION describes a kind of font-related action (e.g. listing,
    opening), ARG is the argument for the action, and RESULT is the
    result of the action.  */
 void

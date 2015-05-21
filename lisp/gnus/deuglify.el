@@ -78,7 +78,7 @@
 ;; `gnus-outlook-deuglify-unwrap-stop-chars'.  Setting this to ".?!"
 ;; inhibits unwrapping if the cited line ends with a full stop,
 ;; question mark or exclamation mark.  Note that this variable
-;; defaults to `nil', triggering a few false positives but generally
+;; defaults to nil, triggering a few false positives but generally
 ;; giving you better results.
 ;;
 ;; Unwrapping works on every level of citation.  Thus you will be able

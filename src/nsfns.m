@@ -749,7 +749,7 @@ ns_implicitly_set_icon_type (struct frame *f)
        chain = XCDR (chain))
     {
       elt = XCAR (chain);
-      /* special case: 't' means go by file type */
+      /* special case: t means go by file type */
       if (SYMBOLP (elt) && EQ (elt, Qt) && SSDATA (f->name)[0] == '/')
         {
           NSString *str
@@ -2836,13 +2836,13 @@ elements (all size values are in pixels).
 
 - `title-bar-height' is the height of the title bar of FRAME.
 
-- `menu-bar-external' if `t' means the menu bar is external (not
+- `menu-bar-external' if t means the menu bar is external (not
   included in the inner edges of FRAME).
 
 - `menu-bar-size' is a cons of the width and height of the menu bar of
   FRAME.
 
-- `tool-bar-external' if `t' means the tool bar is external (not
+- `tool-bar-external' if t means the tool bar is external (not
   included in the inner edges of FRAME).
 
 - `tool-bar-side' tells tells on which side the tool bar on FRAME is and

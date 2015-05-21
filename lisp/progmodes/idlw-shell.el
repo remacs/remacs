@@ -2638,7 +2638,7 @@ If ENABLE is non-nil, enable them instead."
 (defun idlwave-shell-break-in ()
   "Look for a module name near point and set a break point for it.
 The command looks for an identifier near point and sets a breakpoint
-for the first line of the corresponding module.  If MODULE is `t', set
+for the first line of the corresponding module.  If MODULE is t, set
 in the current routine."
   (interactive)
   (let* ((module (idlwave-fix-module-if-obj_new (idlwave-what-module)))

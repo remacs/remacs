@@ -6106,7 +6106,7 @@ An entry of the form POSITION indicates that point was at the buffer
 location given by the integer.  Undoing an entry of this form places
 point at POSITION.
 
-Entries with value `nil' mark undo boundaries.  The undo command treats
+Entries with value nil mark undo boundaries.  The undo command treats
 the changes between two undo boundaries as a single step to be undone.
 
 If the value of the variable is t, undo information is not recorded.  */);

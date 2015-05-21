@@ -5152,7 +5152,7 @@ a non-nil value in your init file.  */);
 If this option is nil, setting font, menu bar, tool bar, internal
 borders, fringes or scroll bars of a specific frame may resize the frame
 in order to preserve the number of columns or lines it displays.  If
-this option is `t', no such resizing is done.  Note that the size of
+this option is t, no such resizing is done.  Note that the size of
 fullscreen and maximized frames, the height of fullheight frames and the
 width of fullwidth frames never change implicitly.
 
@@ -5168,14 +5168,14 @@ Changing any of the parameters `scroll-bar-width', `scroll-bar-height',
 window.  This means, for example, that removing vertical scroll bars on
 a frame containing several side by side windows will shrink the frame
 width by the width of one scroll bar provided this option is nil and
-keep it unchanged if this option is either `t' or a list containing
+keep it unchanged if this option is either t or a list containing
 `vertical-scroll-bars'.
 
 The default value is '(tool-bar-lines) on Lucid, Motif and Windows
 \(which means that adding/removing a tool bar does not change the frame
 height), nil on all other window systems including GTK+ (which means
 that changing any of the parameters listed above may change the size of
-the frame), and `t' otherwise (which means the frame size never changes
+the frame), and t otherwise (which means the frame size never changes
 implicitly when there's no window system support).
 
 Note that when a frame is not large enough to accommodate a change of
