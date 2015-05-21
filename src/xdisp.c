@@ -29159,6 +29159,7 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
     }
 
   /* Change the mouse face according to what is under X/Y.  */
+  bool mouse_face_shown = false;
   if (STRINGP (string))
     {
       mouse_face = Fget_text_property (pos, Qmouse_face, string);
@@ -29281,13 +29282,18 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 								glyph->face_id,
 								true);
 	  show_mouse_face (hlinfo, DRAW_MOUSE_FACE);
+	  mouse_face_shown = true;
 
 	  if (NILP (pointer))
 	    pointer = Qhand;
 	}
-      else if ((area == ON_MODE_LINE) || (area == ON_HEADER_LINE))
-	clear_mouse_face (hlinfo);
     }
+
+  /* If mouse-face doesn't need to be shown, clear any existing
+     mouse-face.  */
+  if ((area == ON_MODE_LINE || area == ON_HEADER_LINE) && !mouse_face_shown)
+    clear_mouse_face (hlinfo);
+
 #ifdef HAVE_WINDOW_SYSTEM
   if (FRAME_WINDOW_P (f))
     define_frame_cursor1 (f, cursor, pointer);
