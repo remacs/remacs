@@ -2895,25 +2895,36 @@ prompt (see `package-menu--prompt-transaction-p')."
    (t (format "package `%s'"
         (package-desc-full-name (car packages))))))
 
-(defun package-menu--prompt-transaction-p (install delete)
-  "Prompt the user about installing INSTALL and deleting DELETE.
-INSTALL and DELETE are lists of `package-desc'.  Either may be
-nil, but not both."
+(defun package-menu--prompt-transaction-p (delete install upgrade)
+  "Prompt the user about DELETE, INSTALL, and UPGRADE.
+DELETE, INSTALL, and UPGRADE are lists of `package-desc' objects.
+Either may be nil, but not all."
+  (y-or-n-p
+   (concat
+    (when delete "Delete ")
+    (package-menu--list-to-prompt delete)
+    (when (and delete install)
+      (if upgrade "; " "; and "))
+    (when install "Install ")
+    (package-menu--list-to-prompt install)
+    (when (and upgrade (or install delete)) "; and ")
+    (when upgrade "Upgrade ")
+    (package-menu--list-to-prompt upgrade)
+    "? ")))
+
+(defun package-menu--partition-transaction (install delete)
+  "Return an alist describing an INSTALL DELETE transaction.
+Alist contains three entries, upgrade, delete, and install, each
+with a list of package names.
+
+The upgrade entry contains any `package-desc' objects in INSTALL
+whose name coincides with an object in DELETE.  The delete and
+the install entries are the same as DELETE and INSTALL with such
+objects removed."
   (let* ((upg (cl-intersection install delete :key #'package-desc-name))
          (ins (cl-set-difference install upg :key #'package-desc-name))
          (del (cl-set-difference delete upg :key #'package-desc-name)))
-    (y-or-n-p
-     (concat
-      (when del "Delete ")
-      (package-menu--list-to-prompt del)
-      (when (and del ins)
-        (if upg "; " "; and "))
-      (when ins "Install ")
-      (package-menu--list-to-prompt ins)
-      (when (and upg (or ins del)) "; and ")
-      (when upg "Upgrade ")
-      (package-menu--list-to-prompt upg)
-      "? "))))
+    `((delete . ,del) (install . ,ins) (upgrade . ,upg))))
 
 (defun package-menu--perform-transaction (install-list delete-list)
   "Install packages in INSTALL-LIST and delete DELETE-LIST."
@@ -2931,14 +2942,7 @@ nil, but not both."
       (condition-case-unless-debug err
           (let ((inhibit-message t))
             (package-delete elt))
-        (error (message (cadr err)))))
-    (message "Transaction done")
-    (when package-selected-packages
-      (when-let ((removable (package--removable-packages)))
-        (message "These %d packages are no longer needed, type `M-x package-autoremove' to remove them (%s)"
-          (length removable)
-          (mapconcat #'symbol-name removable ", "))))
-    (package-menu--post-refresh)))
+        (error (message (cadr err)))))))
 
 (defun package-menu-execute (&optional noquery)
   "Perform marked Package Menu actions.
@@ -2963,11 +2967,28 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
         (forward-line)))
     (unless (or delete-list install-list)
       (user-error "No operations specified"))
-    (when (or noquery
-              (package-menu--prompt-transaction-p install-list delete-list))
-      (message "Transaction started")
-      ;; This calls `package-menu--generate' after everything's done.
-      (package-menu--perform-transaction install-list delete-list))))
+    (let-alist (package-menu--partition-transaction install-list delete-list)
+      (when (or noquery
+                (package-menu--prompt-transaction-p .delete .install .upgrade))
+        (let ((message-template
+               (concat "Package menu: Operation %s ["
+                       (when .delete  (format "Delet__ %s" (length .delete)))
+                       (when (and .delete .install) "; ")
+                       (when .install (format "Install__ %s" (length .install)))
+                       (when (and .upgrade (or .install .delete)) "; ")
+                       (when .upgrade (format "Upgrad__ %s" (length .upgrade)))
+                       "]")))
+          (message (replace-regexp-in-string "__" "ing" message-template) "started")
+          (package-menu--perform-transaction install-list delete-list)
+          (when package-selected-packages
+            (if-let ((removable (package--removable-packages)))
+                (message "Package menu: Operation finished.  %d packages %s"
+                  (length removable)
+                  "are no longer needed, type `M-x package-autoremove' to remove them")
+              (message (replace-regexp-in-string "__" "ed" message-template)
+                "finished"))))
+        ;; This calls `package-menu--generate'.
+        (package-menu--post-refresh)))))
 
 (defun package-menu--version-predicate (A B)
   (let ((vA (or (aref (cadr A) 1)  '(0)))
