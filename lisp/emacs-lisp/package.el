@@ -2993,9 +2993,10 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
                        "]")))
           (message (replace-regexp-in-string "__" "ing" message-template) "started")
           ;; Packages being upgraded are not marked as selected.
-          (package--save-selected-packages
-           (remove-dups (append (mapcar #'package-desc-name .install)
-                                package-selected-packages)))
+          (when .install
+            (dolist (p .install)
+              (cl-pushnew (package-desc-name p) package-selected-packages))
+            (package--save-selected-packages package-selected-packages))
           (package-menu--perform-transaction install-list delete-list)
           (when package-selected-packages
             (if-let ((removable (package--removable-packages)))
