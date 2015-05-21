@@ -2400,12 +2400,17 @@ will be deleted."
 (defvar package-menu--new-package-list nil
   "List of newly-available packages since `list-packages' was last called.")
 
+(defvar package-menu--transaction-status nil
+  "Mode-line status of ongoing package transaction.")
+
 (define-derived-mode package-menu-mode tabulated-list-mode "Package Menu"
   "Major mode for browsing a list of packages.
 Letters do not insert themselves; instead, they are commands.
 \\<package-menu-mode-map>
 \\{package-menu-mode-map}"
-  (setq mode-line-process '(package--downloads-in-progress ":Loading"))
+  (setq mode-line-process '((package--downloads-in-progress ":Loading")
+                            (package-menu--transaction-status
+                             package-menu--transaction-status)))
   (setq tabulated-list-format
         `[("Package" 18 package-menu--name-predicate)
           ("Version" 13 nil)
@@ -2929,20 +2934,31 @@ objects removed."
 (defun package-menu--perform-transaction (install-list delete-list)
   "Install packages in INSTALL-LIST and delete DELETE-LIST."
   (if install-list
-      (dolist (pkg install-list)
-        (package-install
-         ;; Don't mark as selected if it's a new version of an
-         ;; installed package.
-         pkg (and (not (package-installed-p pkg))
-                  (package-installed-p
-                   (package-desc-name pkg)))))
+      (let ((status-format (format ":Installing %%d/%d"
+                             (length install-list)))
+            (i 0)
+            (package-menu--transaction-status))
+        (dolist (pkg install-list)
+          (setq package-menu--transaction-status
+                (format status-format (cl-incf i)))
+          (force-mode-line-update)
+          (redisplay 'force)
+          (package-install
+           ;; Don't mark as selected if it's a new version of an
+           ;; installed package.
+           pkg (and (not (package-installed-p pkg))
+                    (package-installed-p
+                     (package-desc-name pkg))))))
     ;; Once there are no more packages to install, proceed to
     ;; deletion.
-    (dolist (elt (package--sort-by-dependence delete-list))
-      (condition-case-unless-debug err
-          (let ((inhibit-message t))
-            (package-delete elt))
-        (error (message (cadr err)))))))
+    (let ((package-menu--transaction-status ":Deleting"))
+      (force-mode-line-update)
+      (redisplay 'force)
+      (dolist (elt (package--sort-by-dependence delete-list))
+        (condition-case-unless-debug err
+            (let ((inhibit-message t))
+              (package-delete elt))
+          (error (message (cadr err))))))))
 
 (defun package-menu-execute (&optional noquery)
   "Perform marked Package Menu actions.
