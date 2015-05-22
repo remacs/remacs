@@ -113,7 +113,6 @@ CHARSETS := $(addprefix ${charsetdir}/,${CHARSETS})
 LOCAL = MIK.map PTCP154.map stdenc.map symbol.map CP720.map CP858.map \
   JISX213A.map CP932-2BYTE.map JISC6226.map \
   CNS-2.map CNS-3.map CNS-4.map CNS-5.map CNS-6.map CNS-7.map \
-  ALTERNATIVNYJ.map GB180304.map \
   ${MULE}
 LOCAL := $(addprefix ${charsetdir}/,${LOCAL})
 
@@ -121,7 +120,7 @@ LOCAL := $(addprefix ${charsetdir}/,${LOCAL})
 .PHONY: all local
 
 all: ${CHARSETS} ${TRANS_TABLE}
-local: ${LOCAL} ${TRANS_TABLE}
+local: ${LOCAL} ${lispintdir}/cp51932.el
 
 ## Rules for each charset.
 
