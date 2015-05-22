@@ -341,7 +341,7 @@ This variable is fed automatically by Emacs when installing a new package.
 This variable is used by `package-autoremove' to decide
 which packages are no longer needed.
 You can use it to (re)install packages on other machines
-by running `package-user-selected-packages-install'.
+by running `package-install-selected-packages'.
 
 To check if a package is contained in this list here, use
 `package--user-selected-p', as it may populate the variable with
