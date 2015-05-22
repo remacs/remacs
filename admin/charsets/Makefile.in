@@ -141,7 +141,7 @@ define map_template
  $(notdir ${1}): ${1}
 endef
 
-$(foreach mfile,${CHARSETS},$(eval $(call map_template,$(mfile))))
+$(foreach mfile,${CHARSETS} ${TRANS_TABLE},$(eval $(call map_template,$(mfile))))
 
 ${charsetdir}/VSCII.map: ${GLIBC_CHARMAPS}/TCVN5712-1.gz ${mapconv} ${compact}
 	${AM_V_GEN}${run_mapconv} $< '/^<.*[ 	]\/x[0-9a-f].[ 	]/' GLIBC-1 ${compact} > $@
