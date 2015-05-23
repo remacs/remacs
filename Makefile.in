@@ -909,11 +909,12 @@ maintainer-clean: bootstrap-clean $(maintainer_clean_dirs:=_maintainer-clean)
 ### it deletes backup and autosave files too.
 ### Note that we abuse this in some subdirectories (eg leim),
 ### to delete some generated files that are slow to rebuild.
-$(foreach dir,$(SUBDIR),$(eval $(call submake_template,$(dir),extraclean)))
+extraclean_dirs = ${NTDIR} lib-src src leim \
+  admin/charsets admin/grammars admin/unidata
 
-## FIXME this is busted because most of these do not have extraclean rules.
-## Also it is missing things that do have such rules.
-extraclean: $(SUBDIR:=_extraclean)
+$(foreach dir,$(extraclean_dirs),$(eval $(call submake_template,$(dir),extraclean)))
+
+extraclean: $(extraclean_dirs:=_extraclean)
 	${top_maintainer_clean}
 	-rm -f config-tmp-*
 	-rm -f *~ \#*
