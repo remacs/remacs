@@ -1750,12 +1750,6 @@
 
 2015-02-11  Martin Rudalics  <rudalics@gmx.at>
 
-2015-02-11  Jan Djärv  <jan.h.d@swipnet.se>
-
-	* version.el (emacs-version): Add cairo version.
-
-2015-02-11  Martin Rudalics  <rudalics@gmx.at>
-
 	* frame.el (toggle-frame-maximized, toggle-frame-fullscreen):
 	Rename frame parameter `maximized' to `fullscreen-restore'.
 	Restore fullwidth/-height after fullboth state.  Update doc-strings.
