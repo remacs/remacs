@@ -214,34 +214,16 @@ enum xembed_message
     XEMBED_ACTIVATE_ACCELERATOR   = 14
   };
 
+static void x_free_cr_resources (struct frame *);
 static bool x_alloc_nearest_color_1 (Display *, Colormap, XColor *);
-static void x_set_window_size_1 (struct frame *, bool, int, int);
 static void x_raise_frame (struct frame *);
 static void x_lower_frame (struct frame *);
-static const XColor *x_color_cells (Display *, int *);
 static int x_io_error_quitter (Display *);
 static struct terminal *x_create_terminal (struct x_display_info *);
-static void x_update_end (struct frame *);
-static void XTframe_up_to_date (struct frame *);
-static void x_clear_area1 (Display *, Window, int, int, int, int, int);
-static void x_clear_frame (struct frame *);
-static _Noreturn void x_ins_del_lines (struct frame *, int, int);
-static void frame_highlight (struct frame *);
-static void frame_unhighlight (struct frame *);
-static void x_new_focus_frame (struct x_display_info *, struct frame *);
-static void  x_focus_changed (int, int, struct x_display_info *,
-                              struct frame *, struct input_event *);
-static void XTframe_rehighlight (struct frame *);
 static void x_frame_rehighlight (struct x_display_info *);
-static void x_draw_hollow_cursor (struct window *, struct glyph_row *);
-static void x_draw_bar_cursor (struct window *, struct glyph_row *, int,
-                               enum text_cursor_kinds);
 
 static void x_clip_to_row (struct window *, struct glyph_row *,
 			   enum glyph_row_area, GC);
-static void x_flush (struct frame *f);
-static void x_update_begin (struct frame *);
-static void x_update_window_begin (struct window *);
 static struct scroll_bar *x_window_to_scroll_bar (Display *, Window, int);
 static void x_scroll_bar_report_motion (struct frame **, Lisp_Object *,
                                         enum scroll_bar_part *,
@@ -261,9 +243,6 @@ static int handle_one_xevent (struct x_display_info *,
 #if ! (defined USE_X_TOOLKIT || defined USE_MOTIF)
 static int x_dispatch_event (XEvent *, Display *);
 #endif
-/* Don't declare this _Noreturn because we want no
-   interference with debugging failing X calls.  */
-static void x_connection_closed (Display *, const char *, bool);
 static void x_wm_set_window_state (struct frame *, int);
 static void x_wm_set_icon_pixmap (struct frame *, ptrdiff_t);
 static void x_initialize (void);
@@ -329,21 +308,7 @@ record_event (char *locus, int type)
 
 #endif
 
-static void x_free_cr_resources (struct frame *);
-static void x_set_clip_rectangles (struct frame *, GC, XRectangle *, int);
-static void x_reset_clip_rectangles (struct frame *, GC);
-static void x_fill_rectangle (struct frame *, GC, int, int, int, int);
-static void x_draw_rectangle (struct frame *, GC, int, int, int, int);
-static void x_fill_trapezoid_for_relief (struct frame *, GC, int, int,
-					 int, int, int);
-static void x_clear_window (struct frame *);
-
 #ifdef USE_CAIRO
-static struct x_gc_ext_data *x_gc_get_ext_data (struct frame *, GC, int);
-static void x_extension_initialize (struct x_display_info *);
-static cairo_status_t x_cr_accumulate_data (void *,
-                                            const unsigned char *,
-                                            unsigned int);
 
 #define FRAME_CR_CONTEXT(f)	((f)->output_data.x->cr_context)
 #define FRAME_CR_SURFACE(f)	((f)->output_data.x->cr_surface)

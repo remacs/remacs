@@ -70,19 +70,6 @@ enum metrics_status
 #define METRICS_SET_STATUS(metrics, status) \
   ((metrics)->ascent = 0, (metrics)->descent = (status))
 
-/* Prototypes for helper function.  */
-static int ftcrfont_glyph_extents (struct font *, unsigned,
-				       struct font_metrics *);
-
-/* Prototypes for font-driver methods.  */
-static Lisp_Object ftcrfont_list (struct frame*, Lisp_Object);
-static Lisp_Object ftcrfont_match (struct frame*, Lisp_Object);
-static Lisp_Object ftcrfont_open (struct frame*, Lisp_Object, int);
-static void ftcrfont_close (struct font *);
-static void ftcrfont_text_extents (struct font *, unsigned *, int,
-                                   struct font_metrics *);
-static int ftcrfont_draw (struct glyph_string *, int, int, int, int, bool);
-
 struct font_driver ftcrfont_driver;
 
 static int
