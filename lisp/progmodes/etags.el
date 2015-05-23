@@ -2075,7 +2075,8 @@ for \\[find-tag] (which see)."
 (defconst etags--xref-limit 1000)
 
 (defvar etags-xref-find-definitions-tag-order '(tag-exact-match-p
-                                                tag-implicit-name-match-p)
+                                                tag-implicit-name-match-p
+                                                tag-symbol-match-p)
   "Tag order used in `etags-xref-find' to look for definitions.")
 
 ;;;###autoload
