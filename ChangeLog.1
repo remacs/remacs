@@ -1,8 +1,22 @@
+2015-04-11  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* configure.ac: Allow jpeg with cairo.
+	Allow tiff and gif with cairo.
+
 2015-04-07  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Merge from gnulib
 	* lib/stddef.in.h: Update from gnulib, incorporating:
 	2015-04-02 stddef: port to pre-C11 GCC on x86
+
+2015-04-05  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* configure.ac: Allow rsvg with cairo.  Move back HAVE_RSVG.
+
+2015-04-03  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* configure.ac (HAVE_RSVG): Move after cairo.
+	(USE_CAIRO): Disable rsvg, don't disable Xpm.
 
 2015-04-03  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -107,6 +121,13 @@
 
 	* configure.ac: Set locallisppath to empty for NS self contained,
 	unless --enable-loadllisppath was given (Bug#19850).
+
+2015-02-11  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* configure.ac (with-cairo): New option.
+	(USE_CAIRO): Default to yes for Gtk+ 3.  Add code to test for cairo,
+	set CAIRO_CFLAGS, CAIRO_LIBS.  Add ftcrfonto to FONT_OBJ if cairo.
+	Output "Does Emacs use cairo?".
 
 2015-02-09  Paul Eggert  <eggert@cs.ucla.edu>
 
