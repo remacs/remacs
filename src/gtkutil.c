@@ -3824,8 +3824,7 @@ xg_update_scrollbar_pos (struct frame *f,
              above.  */
 	  oldw += (scale - 1) * oldw;
 	  oldx -= (scale - 1) * oldw;
-          x_clear_area (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f),
-                        oldx, oldy, oldw, oldh);
+          x_clear_area (f, oldx, oldy, oldw, oldh);
         }
 
       /* GTK does not redraw until the main loop is entered again, but

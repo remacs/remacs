@@ -8326,7 +8326,9 @@ handle_one_xevent (struct x_display_info *dpyinfo,
         {
           xg_frame_resized (f, event->xconfigure.width,
                             event->xconfigure.height);
+#ifdef USE_CAIRO
           x_cr_destroy_surface (f);
+#endif
           f = 0;
         }
 #endif
