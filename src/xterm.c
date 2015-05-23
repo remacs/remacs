@@ -6401,7 +6401,7 @@ x_scroll_bar_set_handle (struct scroll_bar *bar, int start, int end,
       x_clear_area1 (FRAME_X_DISPLAY (f), w,
 		    VERTICAL_SCROLL_BAR_LEFT_BORDER,
 		    VERTICAL_SCROLL_BAR_TOP_BORDER,
-		    inside_width, start);
+		    inside_width, start, False);
 
     /* Change to proper foreground color if one is specified.  */
     if (f->output_data.x->scroll_bar_foreground_pixel != -1)
@@ -6426,7 +6426,7 @@ x_scroll_bar_set_handle (struct scroll_bar *bar, int start, int end,
       x_clear_area1 (FRAME_X_DISPLAY (f), w,
 		    VERTICAL_SCROLL_BAR_LEFT_BORDER,
 		    VERTICAL_SCROLL_BAR_TOP_BORDER + end,
-		    inside_width, inside_height - end);
+		    inside_width, inside_height - end, False);
   }
 
   unblock_input ();
@@ -6660,8 +6660,7 @@ XTset_horizontal_scroll_bar (struct window *w, int portion, int whole, int posit
 	int area_height = WINDOW_CONFIG_SCROLL_BAR_HEIGHT (w);
 	int rest = area_height - height;
 	if (rest > 0 && width > 0)
-	  x_clear_area (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f),
-			left, top, width, rest);
+	  x_clear_area (f, left, top, width, rest);
       }
 
       /* Move/size the scroll bar window.  */
