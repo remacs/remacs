@@ -422,6 +422,9 @@ otherobj= $(TERMCAP_OBJ) $(PRE_ALLOC_OBJ) $(GMALLOC_OBJ) $(RALLOC_OBJ) \
 FIRSTFILE_OBJ=@FIRSTFILE_OBJ@
 ALLOBJS = $(FIRSTFILE_OBJ) $(VMLIMIT_OBJ) $(obj) $(otherobj)
 
+all: emacs$(EXEEXT) $(OTHER_FILES)
+.PHONY: all
+
 ## This is the list of all Lisp files that might be loaded into the
 ## dumped Emacs.  Some of them are not loaded on all platforms, but
 ## the DOC file on every platform uses them (because the DOC file is
@@ -465,9 +468,6 @@ LIBES = $(LIBS) $(W32_LIBS) $(LIBS_GNUSTEP) $(LIBX_BASE) $(LIBIMAGE) \
    $(FREETYPE_LIBS) $(FONTCONFIG_LIBS) $(LIBOTF_LIBS) $(M17N_FLT_LIBS) \
    $(LIBGNUTLS_LIBS) $(LIB_PTHREAD) \
    $(GFILENOTIFY_LIBS) $(LIB_MATH) $(LIBZ)
-
-all: emacs$(EXEEXT) $(OTHER_FILES)
-.PHONY: all
 
 $(leimdir)/leim-list.el: bootstrap-emacs$(EXEEXT)
 	$(MAKE) -C ../leim leim-list.el EMACS="$(bootstrap_exe)"
