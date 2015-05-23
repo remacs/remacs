@@ -2560,12 +2560,12 @@ f-src/entry.strange_suffix,172
      & intensity1(577,12231
        character*(*) function foo(579,12307
 
-f-src/entry.strange,171
-      LOGICAL FUNCTION PRTPKG 2,2
-       ENTRY  SETPRT 193,3793
-       ENTRY  MSGSEL 394,8405
-     & intensity1(576,12158
-       character*(*) function foo(578,12234
+f-src/entry.strange,172
+      LOGICAL FUNCTION PRTPKG 3,75
+       ENTRY  SETPRT 194,3866
+       ENTRY  MSGSEL 395,8478
+     & intensity1(577,12231
+       character*(*) function foo(579,12307
 
 forth-src/test-forth.fth,408
 : a-forth-word 20,301
