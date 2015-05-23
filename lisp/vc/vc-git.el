@@ -960,13 +960,12 @@ or BRANCH^ (where \"^\" can be repeated)."
 
 (defun vc-git-expanded-log-entry (revision)
   (with-temp-buffer
-    (apply 'vc-git-command t nil nil (list "log" revision "-1"))
+    (apply 'vc-git-command t nil nil (list "log" revision "-1" "--"))
     (goto-char (point-min))
     (unless (eobp)
       ;; Indent the expanded log entry.
       (indent-region (point-min) (point-max) 2)
       (buffer-string))))
-
 
 (defun vc-git-region-history (file buffer lfrom lto)
   (vc-git-command buffer 'async nil "log" "-p" ;"--follow" ;FIXME: not supported?
@@ -1019,12 +1018,18 @@ or BRANCH^ (where \"^\" can be repeated)."
 
 (defun vc-git-diff (files &optional rev1 rev2 buffer async)
   "Get a difference report using Git between two revisions of FILES."
-  (let (process-file-side-effects)
+  (let (process-file-side-effects
+        (command "diff-tree"))
+    (if rev2
+        ;; Diffing against the empty tree.
+        (unless rev1 (setq rev1 "4b825dc642cb6eb9a060e54bf8d69288fbee4904"))
+      (setq command "diff-index")
+      (unless rev1 (setq rev1 "HEAD")))
     (if vc-git-diff-switches
         (apply #'vc-git-command (or buffer "*vc-diff*")
 	       (if async 'async 1)
 	       files
-               (if (and rev1 rev2) "diff-tree" "diff-index")
+               command
                "--exit-code"
                (append (vc-switches 'git 'diff)
                        (list "-p" (or rev1 "HEAD") rev2 "--")))
@@ -1033,7 +1038,7 @@ or BRANCH^ (where \"^\" can be repeated)."
                       (concat "diff "
                               (mapconcat 'identity
                                          (vc-switches nil 'diff) " "))
-                      (or rev1 "HEAD") rev2 "--"))))
+                      rev1 rev2 "--"))))
 
 (defun vc-git-revision-table (_files)
   ;; What about `files'?!?  --Stef
@@ -1061,7 +1066,7 @@ or BRANCH^ (where \"^\" can be repeated)."
 (declare-function vc-annotate-convert-time "vc-annotate" (&optional time))
 
 (defun vc-git-annotate-time ()
-  (and (re-search-forward "^[0-9a-f]+[^()]+(.*?\\([0-9]+\\)-\\([0-9]+\\)-\\([0-9]+\\) \\(:?\\([0-9]+\\):\\([0-9]+\\):\\([0-9]+\\) \\([-+0-9]+\\)\\)? *[0-9]+) " nil t)
+  (and (re-search-forward "^[0-9a-f^]+[^()]+(.*?\\([0-9]+\\)-\\([0-9]+\\)-\\([0-9]+\\) \\(:?\\([0-9]+\\):\\([0-9]+\\):\\([0-9]+\\) \\([-+0-9]+\\)\\)? *[0-9]+) " nil t)
        (vc-annotate-convert-time
         (apply #'encode-time (mapcar (lambda (match)
                                        (if (match-beginning match)
@@ -1072,7 +1077,7 @@ or BRANCH^ (where \"^\" can be repeated)."
 (defun vc-git-annotate-extract-revision-at-line ()
   (save-excursion
     (beginning-of-line)
-    (when (looking-at "\\([0-9a-f^][0-9a-f]+\\) \\(\\([^(]+\\) \\)?")
+    (when (looking-at "\\^?\\([0-9a-f]+\\) \\(\\([^(]+\\) \\)?")
       (let ((revision (match-string-no-properties 1)))
 	(if (match-beginning 2)
 	    (let ((fname (match-string-no-properties 3)))

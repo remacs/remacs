@@ -3304,12 +3304,21 @@ fontset, whose short name is @samp{fontset-default}.
 @var{character} may be a script name.  In that case, use
 @var{font-spec} for all character in the charsets.
 
+@var{font-spec} may be a font-spec object created by the function
+@code{font-spec} (@pxref{Low-Level Font}).
+
 @var{font-spec} may be a cons; @code{(@var{family} . @var{registry})},
 where @var{family} is a family name of a font (possibly including a
 foundry name at the head), @var{registry} is a registry name of a font
 (possibly including an encoding name at the tail).
 
 @var{font-spec} may be a font name string.
+
+@var{font-spec} may be @code{nil}, which explicitly specifies that
+there's no font for the specified @var{character}.  This is useful,
+for example, to avoid expensive system-wide search for fonts for
+characters that have no glyphs, like those from the Unicode Private
+Use Area (PUA).
 
 The optional argument @var{add}, if non-@code{nil}, specifies how to
 add @var{font-spec} to the font specifications previously set.  If it
@@ -6614,7 +6623,8 @@ Display a box containing the Unicode codepoint of the character, in
 hexadecimal notation.
 
 @item an @acronym{ASCII} string
-Display a box containing that string.
+Display a box containing that string.  The string should contain at
+most 6 @acronym{ASCII} characters.
 
 @item a cons cell @code{(@var{graphical} . @var{text})}
 Display with @var{graphical} on graphical displays, and with
@@ -6625,7 +6635,8 @@ must be one of the display methods described above.
 @noindent
 The @code{thin-space}, @code{empty-box}, @code{hex-code}, and
 @acronym{ASCII} string display methods are drawn with the
-@code{glyphless-char} face.
+@code{glyphless-char} face.  On text terminals, a box is emulated by
+square brackets, @samp{[]}.
 
 The char-table has one extra slot, which determines how to display any
 character that cannot be displayed with any available font, or cannot

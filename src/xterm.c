@@ -7847,17 +7847,18 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 
       f = any;
 
-#if ! defined (USE_GTK)
       /* If mouse-highlight is an integer, input clears out
 	 mouse highlighting.  */
       if (!hlinfo->mouse_face_hidden && INTEGERP (Vmouse_highlight)
+#if ! defined (USE_GTK)
 	  && (f == 0
-	      || !EQ (f->tool_bar_window, hlinfo->mouse_face_window)))
+	      || !EQ (f->tool_bar_window, hlinfo->mouse_face_window))
+#endif
+	  )
         {
           clear_mouse_face (hlinfo);
           hlinfo->mouse_face_hidden = true;
         }
-#endif
 
 #if defined USE_MOTIF && defined USE_TOOLKIT_SCROLL_BARS
       if (f == 0)
@@ -12256,7 +12257,7 @@ static struct redisplay_interface x_redisplay_interface =
     x_draw_window_cursor,
     x_draw_vertical_window_border,
     x_draw_window_divider,
-    x_shift_glyphs_for_insert, /* Never called, se comment in function.  */
+    x_shift_glyphs_for_insert, /* Never called; see comment in function.  */
     x_show_hourglass,
     x_hide_hourglass
   };

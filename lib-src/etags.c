@@ -116,6 +116,7 @@ char pot_etags_version[] = "@(#) pot revision number is 17.38.1.4";
 # undef HAVE_NTGUI
 # undef  DOS_NT
 # define DOS_NT
+# define O_CLOEXEC O_NOINHERIT
 #endif /* WINDOWSNT */
 
 #include <unistd.h>
@@ -125,6 +126,7 @@ char pot_etags_version[] = "@(#) pot revision number is 17.38.1.4";
 #include <sysstdio.h>
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <binary-io.h>
@@ -336,6 +338,7 @@ static char *absolute_filename (char *, char *);
 static char *absolute_dirname (char *, char *);
 static bool filename_is_absolute (char *f);
 static void canonicalize_filename (char *);
+static char *etags_mktmp (void);
 static void linebuffer_init (linebuffer *);
 static void linebuffer_setlen (linebuffer *, int);
 static void *xmalloc (size_t);
@@ -1437,7 +1440,7 @@ process_file_name (char *file, language *lang)
   fdesc *fdp;
   compressor *compr;
   char *compressed_name, *uncompressed_name;
-  char *ext, *real_name;
+  char *ext, *real_name, *tmp_name;
   int retval;
 
   canonicalize_filename (file);
@@ -1522,9 +1525,20 @@ process_file_name (char *file, language *lang)
     }
   if (real_name == compressed_name)
     {
-      char *cmd = concat (compr->command, " ", real_name);
-      inf = popen (cmd, "r" FOPEN_BINARY);
-      free (cmd);
+      tmp_name = etags_mktmp ();
+      if (!tmp_name)
+	inf = NULL;
+      else
+	{
+	  char *cmd1 = concat (compr->command, " ", real_name);
+	  char *cmd = concat (cmd1, " > ", tmp_name);
+	  free (cmd1);
+	  if (system (cmd) == -1)
+	    inf = NULL;
+	  else
+	    inf = fopen (tmp_name, "r" FOPEN_BINARY);
+	  free (cmd);
+	}
     }
   else
     inf = fopen (real_name, "r" FOPEN_BINARY);
@@ -1536,10 +1550,12 @@ process_file_name (char *file, language *lang)
 
   process_file (inf, uncompressed_name, lang);
 
+  retval = fclose (inf);
   if (real_name == compressed_name)
-    retval = pclose (inf);
-  else
-    retval = fclose (inf);
+    {
+      remove (tmp_name);
+      free (tmp_name);
+    }
   if (retval < 0)
     pfatal (file);
 
@@ -1707,9 +1723,6 @@ find_entries (FILE *inf)
 	}
     }
 
-  /* We rewind here, even if inf may be a pipe.  We fail if the
-     length of the first line is longer than the pipe block size,
-     which is unlikely. */
   rewind (inf);
 
   /* Else try to guess the language given the case insensitive file name. */
@@ -1734,8 +1747,6 @@ find_entries (FILE *inf)
       if (old_last_node == last_node)
 	/* No Fortran entries found.  Try C. */
 	{
-	  /* We do not tag if rewind fails.
-	     Only the file name will be recorded in the tags file. */
 	  rewind (inf);
 	  curfdp->lang = get_language_from_langname (cplusplus ? "c++" : "c");
 	  find_entries (inf);
@@ -5015,8 +5026,6 @@ TEX_mode (FILE *inf)
       TEX_opgrp = '<';
       TEX_clgrp = '>';
     }
-  /* If the input file is compressed, inf is a pipe, and rewind may fail.
-     No attempt is made to correct the situation. */
   rewind (inf);
 }
 
@@ -6344,6 +6353,51 @@ etags_getcwd (void)
   return path;
 }
 
+/* Return a newly allocated string containing a name of a temporary file.  */
+static char *
+etags_mktmp (void)
+{
+  const char *tmpdir = getenv ("TMPDIR");
+  const char *slash = "/";
+
+#if MSDOS || defined (DOS_NT)
+  if (!tmpdir)
+    tmpdir = getenv ("TEMP");
+  if (!tmpdir)
+    tmpdir = getenv ("TMP");
+  if (!tmpdir)
+    tmpdir = ".";
+  if (tmpdir[strlen (tmpdir) - 1] == '/'
+      || tmpdir[strlen (tmpdir) - 1] == '\\')
+    slash = "";
+#else
+  if (!tmpdir)
+    tmpdir = "/tmp";
+  if (tmpdir[strlen (tmpdir) - 1] == '/')
+    slash = "";
+#endif
+
+  char *templt = concat (tmpdir, slash, "etXXXXXX");
+  int fd = mkostemp (templt, O_CLOEXEC);
+  if (fd < 0)
+    {
+      free (templt);
+      templt = NULL;
+    }
+  else
+    close (fd);
+
+#if defined (DOS_NT)
+  /* The file name will be used in shell redirection, so it needs to have
+     DOS-style backslashes, or else the Windows shell will barf.  */
+  char *p;
+  for (p = templt; *p; p++)
+    if (*p == '/')
+      *p = '\\';
+#endif
+  return templt;
+}
+
 /* Return a newly allocated string containing the file name of FILE
    relative to the absolute directory DIR (which should end with a slash). */
 static char *
@@ -6484,7 +6538,6 @@ static void
 canonicalize_filename (register char *fn)
 {
   register char* cp;
-  char sep = '/';
 
 #ifdef DOS_NT
   /* Canonicalize drive letter case.  */
@@ -6492,19 +6545,33 @@ canonicalize_filename (register char *fn)
   if (fn[0] != '\0' && fn[1] == ':' && ISUPPER (fn[0]))
     fn[0] = lowcase (fn[0]);
 
-  sep = '\\';
-#endif
-
-  /* Collapse multiple separators into a single slash. */
+  /* Collapse multiple forward- and back-slashes into a single forward
+     slash. */
   for (cp = fn; *cp != '\0'; cp++, fn++)
-    if (*cp == sep)
+    if (*cp == '/' || *cp == '\\')
       {
 	*fn = '/';
-	while (cp[1] == sep)
+	while (cp[1] == '/' || cp[1] == '\\')
 	  cp++;
       }
     else
       *fn = *cp;
+
+#else  /* !DOS_NT */
+
+  /* Collapse multiple slashes into a single slash. */
+  for (cp = fn; *cp != '\0'; cp++, fn++)
+    if (*cp == '/')
+      {
+	*fn = '/';
+	while (cp[1] == '/')
+	  cp++;
+      }
+    else
+      *fn = *cp;
+
+#endif	/* !DOS_NT */
+
   *fn = '\0';
 }
 
