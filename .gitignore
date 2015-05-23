@@ -116,6 +116,8 @@ lisp/leim/quail/tsang-b5.el
 lisp/leim/quail/tsang-cns.el
 lisp/subdirs.el
 
+etc/charsets/*.map
+
 # Dependencies.
 .deps/
 deps/
@@ -189,12 +191,13 @@ src/emacs-[0-9]*
 src/temacs
 
 # Character-set info.
-admin/charsets/*.el
-admin/charsets/*.map
+admin/charsets/charsets.stamp
 admin/charsets/jisx2131-filter
 admin/unidata/unidata.txt
 lisp/international/charprop.el
 lisp/international/uni-*.el
+lisp/international/cp51932.el
+lisp/international/eucjp-ms.el
 
 # Documentation.
 *.aux

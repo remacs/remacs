@@ -480,6 +480,14 @@ $(srcdir)/macuvs.h $(lispsource)/international/charprop.el: \
   bootstrap-emacs$(EXEEXT) FORCE
 	$(MAKE) -C ../admin/unidata all EMACS="../$(bootstrap_exe)"
 
+lispintdir = ${lispsource}/international
+${lispintdir}/cp51932.el ${lispintdir}/eucjp-ms.el: FORCE
+	${MAKE} -C ../admin/charsets $(notdir $@)
+
+charsets = ${top_srcdir}/admin/charsets/charsets.stamp
+${charsets}: FORCE
+	${MAKE} -C ../admin/charsets all
+
 ## The dumped Emacs is as functional and more efficient than
 ## bootstrap-emacs, so we replace the latter with the former.
 ## Strictly speaking, emacs does not depend directly on all of $lisp,
@@ -487,7 +495,7 @@ $(srcdir)/macuvs.h $(lispsource)/international/charprop.el: \
 ## on all of $lisp, and emacs depends on DOC, so it is ok to use $lisp here.
 emacs$(EXEEXT): temacs$(EXEEXT) \
                 lisp.mk $(etc)/DOC $(lisp) $(leimdir)/leim-list.el \
-                $(lispsource)/international/charprop.el
+                $(lispsource)/international/charprop.el ${charsets}
 ifeq ($(CANNOT_DUMP),yes)
 	ln -f temacs$(EXEEXT) $@
 else
@@ -549,7 +557,7 @@ $(lib)/libgnu.a: $(config_h)
 ## This goes on to affect various things, and the emacs binary fails
 ## to start if Vinstallation_directory has the wrong value.
 temacs$(EXEEXT): $(LIBXMENU) $(ALLOBJS) \
-	         $(lib)/libgnu.a $(EMACSRES)
+	         $(lib)/libgnu.a $(EMACSRES) ${charsets}
 	$(AM_V_CCLD)$(CC) $(ALL_CFLAGS) $(TEMACS_LDFLAGS) $(LDFLAGS) \
 	  -o temacs $(ALLOBJS) $(lib)/libgnu.a $(W32_RES_LINK) $(LIBES)
 	$(MKDIR_P) $(etc)

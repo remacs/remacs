@@ -47,7 +47,7 @@ AWK=${AWK:-awk}
 
 case "$3" in
     GLIBC*)
-	FILE="$BASE in localedate/charmaps of glibc";
+	FILE="$BASE in localedata/charmaps of glibc";
 	SOURCE="";;
     CZYBORRA)
 	BASE="$BASE.gz";

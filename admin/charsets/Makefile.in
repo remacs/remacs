@@ -106,7 +106,10 @@ CHARSETS := $(addprefix ${charsetdir}/,${CHARSETS})
 
 .PHONY: all
 
-all: ${CHARSETS} ${TRANS_TABLE}
+all: ${srcdir}/charsets.stamp
+
+${srcdir}/charsets.stamp: ${CHARSETS} ${TRANS_TABLE}
+	${AM_V_GEN}echo timestamp > $@
 
 ## Rules for each charset.
 
@@ -315,4 +318,4 @@ maintainer-clean: distclean
 
 ## Do not remove these files, even in a bootstrap.  They rarely change.
 extraclean:
-	rm -f ${CHARSETS} ${TRANS_TABLE}
+	rm -f ${CHARSETS} ${TRANS_TABLE} ${srcdir}/charsets.stamp
