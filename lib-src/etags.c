@@ -127,8 +127,6 @@ char pot_etags_version[] = "@(#) pot revision number is 17.38.1.4";
 #include <sysstdio.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <binary-io.h>
 #include <c-ctype.h>
 #include <c-strcase.h>
@@ -355,7 +353,7 @@ static void just_read_file (FILE *);
 
 static language *get_language_from_langname (const char *);
 static void readline (linebuffer *, FILE *);
-static long readline_internal (linebuffer *, FILE *);
+static long readline_internal (linebuffer *, FILE *, char const *);
 static bool nocase_tail (const char *);
 static void get_tag (char *, char **);
 
@@ -407,6 +405,7 @@ static ptrdiff_t whatlen_max;	/* maximum length of any 'what' member */
 
 static fdesc *fdhead;		/* head of file description list */
 static fdesc *curfdp;		/* current file description */
+static char *infilename;	/* current input file name */
 static int lineno;		/* line number of current line */
 static long charno;		/* current character number */
 static long linecharno;		/* charno of start of current line */
@@ -1247,7 +1246,7 @@ main (int argc, char **argv)
 		  if (parsing_stdin)
 		    fatal ("cannot parse standard input AND read file names from it",
 			   (char *)NULL);
-		  while (readline_internal (&filename_lb, stdin) > 0)
+		  while (readline_internal (&filename_lb, stdin, "-") > 0)
 		    process_file_name (filename_lb.buffer, lang);
 		}
 	      else
@@ -1470,7 +1469,6 @@ get_language_from_filename (char *file, int case_sensitive)
 static void
 process_file_name (char *file, language *lang)
 {
-  struct stat stat_buf;
   FILE *inf;
   fdesc *fdp;
   compressor *compr;
@@ -1487,13 +1485,13 @@ process_file_name (char *file, language *lang)
   compr = get_compressor_from_suffix (file, &ext);
   if (compr)
     {
-      real_name = compressed_name = savestr (file);
+      compressed_name = file;
       uncompressed_name = savenstr (file, ext - file);
     }
   else
     {
       compressed_name = NULL;
-      real_name = uncompressed_name = savestr (file);
+      uncompressed_name = file;
     }
 
   /* If the canonicalized uncompressed name
@@ -1505,83 +1503,91 @@ process_file_name (char *file, language *lang)
 	goto cleanup;
     }
 
-  if (stat (real_name, &stat_buf) != 0)
+  inf = fopen (file, "r" FOPEN_BINARY);
+  if (inf)
+    real_name = file;
+  else
     {
-      /* Reset real_name and try with a different name. */
-      real_name = NULL;
-      if (compressed_name != NULL) /* try with the given suffix */
+      int file_errno = errno;
+      if (compressed_name)
 	{
-	  if (stat (uncompressed_name, &stat_buf) == 0)
+	  /* Try with the given suffix.  */
+	  inf = fopen (uncompressed_name, "r" FOPEN_BINARY);
+	  if (inf)
 	    real_name = uncompressed_name;
 	}
-      else			/* try all possible suffixes */
+      else
 	{
+	  /* Try all possible suffixes.  */
 	  for (compr = compressors; compr->suffix != NULL; compr++)
 	    {
 	      compressed_name = concat (file, ".", compr->suffix);
-	      if (stat (compressed_name, &stat_buf) != 0)
-		{
-		  if (MSDOS)
-		    {
-		      char *suf = compressed_name + strlen (file);
-		      size_t suflen = strlen (compr->suffix) + 1;
-		      for ( ; suf[1]; suf++, suflen--)
-			{
-			  memmove (suf, suf + 1, suflen);
-			  if (stat (compressed_name, &stat_buf) == 0)
-			    {
-			      real_name = compressed_name;
-			      break;
-			    }
-			}
-		      if (real_name != NULL)
-			break;
-		    } /* MSDOS */
-		  free (compressed_name);
-		  compressed_name = NULL;
-		}
-	      else
+	      inf = fopen (compressed_name, "r" FOPEN_BINARY);
+	      if (inf)
 		{
 		  real_name = compressed_name;
 		  break;
 		}
+	      if (MSDOS)
+		{
+		  char *suf = compressed_name + strlen (file);
+		  size_t suflen = strlen (compr->suffix) + 1;
+		  for ( ; suf[1]; suf++, suflen--)
+		    {
+		      memmove (suf, suf + 1, suflen);
+		      inf = fopen (compressed_name, "r" FOPEN_BINARY);
+		      if (inf)
+			{
+			  real_name = compressed_name;
+			  break;
+			}
+		    }
+		  if (inf)
+		    break;
+		}
+	      free (compressed_name);
+	      compressed_name = NULL;
 	    }
 	}
-      if (real_name == NULL)
+      if (! inf)
 	{
+	  errno = file_errno;
 	  perror (file);
 	  goto cleanup;
 	}
-    } /* try with a different name */
-
-  if (!S_ISREG (stat_buf.st_mode))
-    {
-      error ("skipping %s: it is not a regular file.", real_name);
-      goto cleanup;
     }
+
   if (real_name == compressed_name)
     {
+      fclose (inf);
       tmp_name = etags_mktmp ();
       if (!tmp_name)
 	inf = NULL;
       else
 	{
-	  char *cmd1 = concat (compr->command, " ", real_name);
-	  char *cmd = concat (cmd1, " > ", tmp_name);
+	  char *cmd1 = concat (compr->command, " '", real_name);
+	  char *cmd = concat (cmd1, "' > ", tmp_name);
 	  free (cmd1);
+	  int tmp_errno;
 	  if (system (cmd) == -1)
-	    inf = NULL;
+	    {
+	      inf = NULL;
+	      tmp_errno = EINVAL;
+	    }
 	  else
-	    inf = fopen (tmp_name, "r" FOPEN_BINARY);
+	    {
+	      inf = fopen (tmp_name, "r" FOPEN_BINARY);
+	      tmp_errno = errno;
+	    }
 	  free (cmd);
+	  errno = tmp_errno;
 	}
-    }
-  else
-    inf = fopen (real_name, "r" FOPEN_BINARY);
-  if (inf == NULL)
-    {
-      perror (real_name);
-      goto cleanup;
+
+      if (!inf)
+	{
+	  perror (real_name);
+	  goto cleanup;
+	}
     }
 
   process_file (inf, uncompressed_name, lang);
@@ -1596,8 +1602,10 @@ process_file_name (char *file, language *lang)
     pfatal (file);
 
  cleanup:
-  free (compressed_name);
-  free (uncompressed_name);
+  if (compressed_name != file)
+    free (compressed_name);
+  if (uncompressed_name != file)
+    free (uncompressed_name);
   last_node = NULL;
   curfdp = NULL;
   return;
@@ -1609,6 +1617,7 @@ process_file (FILE *fh, char *fn, language *lang)
   static const fdesc emptyfdesc;
   fdesc *fdp;
 
+  infilename = fn;
   /* Create a new input file description entry. */
   fdp = xnew (1, fdesc);
   *fdp = emptyfdesc;
@@ -1672,6 +1681,13 @@ process_file (FILE *fh, char *fn, language *lang)
     }
 }
 
+static void
+reset_input (FILE *inf)
+{
+  if (fseek (inf, 0, SEEK_SET) != 0)
+    perror (infilename);
+}
+
 /*
  * This routine opens the specified file and calls the function
  * which finds the function and type definitions.
@@ -1702,7 +1718,7 @@ find_entries (FILE *inf)
 
   /* Else look for sharp-bang as the first two characters. */
   if (parser == NULL
-      && readline_internal (&lb, inf) > 0
+      && readline_internal (&lb, inf, infilename) > 0
       && lb.len >= 2
       && lb.buffer[0] == '#'
       && lb.buffer[1] == '!')
@@ -1731,7 +1747,7 @@ find_entries (FILE *inf)
 	}
     }
 
-  rewind (inf);
+  reset_input (inf);
 
   /* Else try to guess the language given the case insensitive file name. */
   if (parser == NULL)
@@ -1755,7 +1771,7 @@ find_entries (FILE *inf)
       if (old_last_node == last_node)
 	/* No Fortran entries found.  Try C. */
 	{
-	  rewind (inf);
+	  reset_input (inf);
 	  curfdp->lang = get_language_from_langname (cplusplus ? "c++" : "c");
 	  find_entries (inf);
 	}
@@ -2965,7 +2981,7 @@ do {									\
 
 #define CNL()								\
 do {									\
-  CNL_SAVE_DEFINEDEF();							\
+  CNL_SAVE_DEFINEDEF ();						\
   if (savetoken.valid)							\
     {									\
       token = savetoken;						\
@@ -2992,6 +3008,12 @@ make_C_tag (bool isfun)
     }
 
   token.valid = false;
+}
+
+static bool
+perhaps_more_input (FILE *inf)
+{
+  return !feof (inf) && !ferror (inf);
 }
 
 
@@ -3051,7 +3073,7 @@ C_entries (int c_ext, FILE *inf)
     { qualifier = "::"; qlen = 2; }
 
 
-  while (!feof (inf))
+  while (perhaps_more_input (inf))
     {
       c = *lp++;
       if (c == '\\')
@@ -3892,13 +3914,10 @@ Yacc_entries (FILE *inf)
 
 /* Useful macros. */
 #define LOOP_ON_INPUT_LINES(file_pointer, line_buffer, char_pointer)	\
-  for (;			/* loop initialization */		\
-       !feof (file_pointer)	/* loop test */				\
-       &&			/* instructions at start of loop */	\
-	  (readline (&line_buffer, file_pointer),			\
-           char_pointer = line_buffer.buffer,				\
-	   true);							\
-      )
+  while (perhaps_more_input (file_pointer)				\
+	 && (readline (&(line_buffer), file_pointer),			\
+	     (char_pointer) = (line_buffer).buffer,			\
+	     true))							\
 
 #define LOOKING_AT(cp, kw)  /* kw is the keyword, a literal string */	\
   ((assert ("" kw), true)   /* syntax error if not a literal string */	\
@@ -3919,7 +3938,7 @@ Yacc_entries (FILE *inf)
 static void
 just_read_file (FILE *inf)
 {
-  while (!feof (inf))
+  while (perhaps_more_input (inf))
     readline (&lb, inf);
 }
 
@@ -4074,7 +4093,7 @@ Ada_getit (FILE *inf, const char *name_qualifier)
   char *name;
   char c;
 
-  while (!feof (inf))
+  while (perhaps_more_input (inf))
     {
       dbp = skip_spaces (dbp);
       if (*dbp == '\0'
@@ -4576,7 +4595,7 @@ Pascal_functions (FILE *inf)
   verify_tag = false;		/* check if "extern" is ahead        */
 
 
-  while (!feof (inf))		/* long main loop to get next char */
+  while (perhaps_more_input (inf)) /* long main loop to get next char */
     {
       c = *dbp++;
       if (c == '\0')		/* if end of line */
@@ -5033,7 +5052,7 @@ TEX_mode (FILE *inf)
       TEX_opgrp = '<';
       TEX_clgrp = '>';
     }
-  rewind (inf);
+  reset_input (inf);
 }
 
 /* Read environment and prepend it to the default string.
@@ -5279,7 +5298,7 @@ prolog_skip_comment (linebuffer *plb, FILE *inf)
 	  return;
       readline (plb, inf);
     }
-  while (!feof (inf));
+  while (perhaps_more_input (inf));
 }
 
 /*
@@ -5629,10 +5648,11 @@ analyze_regex (char *regex_arg)
 	if (regexfp == NULL)
 	  pfatal (regexfile);
 	linebuffer_init (&regexbuf);
-	while (readline_internal (&regexbuf, regexfp) > 0)
+	while (readline_internal (&regexbuf, regexfp, regexfile) > 0)
 	  analyze_regex (regexbuf.buffer);
 	free (regexbuf.buffer);
-	fclose (regexfp);
+	if (fclose (regexfp) != 0)
+	  pfatal (regexfile);
       }
       break;
 
@@ -5972,11 +5992,11 @@ get_tag (register char *bp, char **namepp)
  * appended to `filebuf'.
  */
 static long
-readline_internal (linebuffer *lbp, register FILE *stream)
+readline_internal (linebuffer *lbp, FILE *stream, char const *filename)
 {
   char *buffer = lbp->buffer;
-  register char *p = lbp->buffer;
-  register char *pend;
+  char *p = lbp->buffer;
+  char *pend;
   int chars_deleted;
 
   pend = p + lbp->size;		/* Separate to avoid 386/IX compiler bug.  */
@@ -5995,6 +6015,8 @@ readline_internal (linebuffer *lbp, register FILE *stream)
 	}
       if (c == EOF)
 	{
+	  if (ferror (stream))
+	    perror (filename);
 	  *p = '\0';
 	  chars_deleted = 0;
 	  break;
@@ -6055,7 +6077,7 @@ readline (linebuffer *lbp, FILE *stream)
   long result;
 
   linecharno = charno;		/* update global char number of line start */
-  result = readline_internal (lbp, stream); /* read line */
+  result = readline_internal (lbp, stream, infilename); /* read line */
   lineno += 1;			/* increment global line number */
   charno += result;		/* increment global char number */
 
@@ -6386,13 +6408,13 @@ etags_mktmp (void)
 
   char *templt = concat (tmpdir, slash, "etXXXXXX");
   int fd = mkostemp (templt, O_CLOEXEC);
-  if (fd < 0)
+  if (fd < 0 || close (fd) != 0)
     {
+      int temp_errno = errno;
       free (templt);
+      errno = temp_errno;
       templt = NULL;
     }
-  else
-    close (fd);
 
 #if defined (DOS_NT)
   /* The file name will be used in shell redirection, so it needs to have
@@ -6402,6 +6424,7 @@ etags_mktmp (void)
     if (*p == '/')
       *p = '\\';
 #endif
+
   return templt;
 }
 
