@@ -1484,15 +1484,16 @@ process_file_name (char *file, language *lang)
       error ("skipping inclusion of %s in self.", file);
       return;
     }
-  if ((compr = get_compressor_from_suffix (file, &ext)) == NULL)
-    {
-      compressed_name = NULL;
-      real_name = uncompressed_name = savestr (file);
-    }
-  else
+  compr = get_compressor_from_suffix (file, &ext);
+  if (compr)
     {
       real_name = compressed_name = savestr (file);
       uncompressed_name = savenstr (file, ext - file);
+    }
+  else
+    {
+      compressed_name = NULL;
+      real_name = uncompressed_name = savestr (file);
     }
 
   /* If the canonicalized uncompressed name
@@ -4299,8 +4300,8 @@ Perl_functions (FILE *inf)
 	    cp++;
 	  if (cp == sp)
 	    continue;		/* nothing found */
-	  if ((pos = strchr (sp, ':')) != NULL
-	      && pos < cp && pos[1] == ':')
+	  pos = strchr (sp, ':');
+	  if (pos && pos < cp && pos[1] == ':')
 	    /* The name is already qualified. */
 	    make_tag (sp, cp - sp, true,
 		      lb.buffer, cp - lb.buffer + 1, lineno, linecharno);
@@ -5051,8 +5052,8 @@ TEX_decode_env (const char *evarname, const char *defenv)
     env = concat (env, defenv, "");
 
   /* Allocate a token table */
-  for (len = 1, p = env; p;)
-    if ((p = strchr (p, ':')) && *++p != '\0')
+  for (len = 1, p = env; (p = strchr (p, ':')); )
+    if (*++p)
       len++;
   TEX_toktab = xnew (len, linebuffer);
 
