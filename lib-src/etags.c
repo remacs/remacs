@@ -4951,12 +4951,7 @@ static const char *TEX_defenv = "\
 :part:appendix:entry:index:def\
 :newcommand:renewcommand:newenvironment:renewenvironment";
 
-static void TEX_mode (FILE *);
 static void TEX_decode_env (const char *, const char *);
-
-static char TEX_esc = '\\';
-static char TEX_opgrp = '{';
-static char TEX_clgrp = '}';
 
 /*
  * TeX/LaTeX scanning loop.
@@ -4967,8 +4962,8 @@ TeX_commands (FILE *inf)
   char *cp;
   linebuffer *key;
 
-  /* Select either \ or ! as escape character.  */
-  TEX_mode (inf);
+  char TEX_esc = '\0';
+  char TEX_opgrp, TEX_clgrp;
 
   /* Initialize token table once from environment. */
   if (TEX_toktab == NULL)
@@ -4980,9 +4975,33 @@ TeX_commands (FILE *inf)
       for (;;)
 	{
 	  /* Look for a TEX escape. */
-	  while (*cp++ != TEX_esc)
-	    if (cp[-1] == '\0' || cp[-1] == '%')
-	      goto tex_next_line;
+	  while (true)
+	    {
+	      char c = *cp++;
+	      if (c == '\0' || c == '%')
+		goto tex_next_line;
+
+	      /* Select either \ or ! as escape character, whichever comes
+		 first outside a comment.  */
+	      if (!TEX_esc)
+		switch (c)
+		  {
+		  case '\\':
+		    TEX_esc = c;
+		    TEX_opgrp = '{';
+		    TEX_clgrp = '}';
+		    break;
+
+		  case '!':
+		    TEX_esc = c;
+		    TEX_opgrp = '<';
+		    TEX_clgrp = '>';
+		    break;
+		  }
+
+	      if (c == TEX_esc)
+		break;
+	    }
 
 	  for (key = TEX_toktab; key->buffer != NULL; key++)
 	    if (strneq (cp, key->buffer, key->len))
@@ -5018,41 +5037,6 @@ TeX_commands (FILE *inf)
     tex_next_line:
       ;
     }
-}
-
-#define TEX_LESC '\\'
-#define TEX_SESC '!'
-
-/* Figure out whether TeX's escapechar is '\\' or '!' and set grouping
-   chars accordingly. */
-static void
-TEX_mode (FILE *inf)
-{
-  int c;
-
-  while ((c = getc (inf)) != EOF)
-    {
-      /* Skip to next line if we hit the TeX comment char. */
-      if (c == '%')
-	while (c != '\n' && c != EOF)
-	  c = getc (inf);
-      else if (c == TEX_LESC || c == TEX_SESC )
-	break;
-    }
-
-  if (c == TEX_LESC)
-    {
-      TEX_esc = TEX_LESC;
-      TEX_opgrp = '{';
-      TEX_clgrp = '}';
-    }
-  else
-    {
-      TEX_esc = TEX_SESC;
-      TEX_opgrp = '<';
-      TEX_clgrp = '>';
-    }
-  reset_input (inf);
 }
 
 /* Read environment and prepend it to the default string.
