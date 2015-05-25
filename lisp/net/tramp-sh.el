@@ -2122,15 +2122,16 @@ FILENAME is the source file, NEWNAME the target file.
 KEEP-DATE is non-nil if NEWNAME should have the same timestamp as FILENAME."
   ;; We must disable multibyte, because binary data shall not be
   ;; converted.  We don't want the target file to be compressed, so we
-  ;; let-bind `jka-compr-inhibit' to t.
-  ;; We remove `tramp-file-name-handler' from
+  ;; let-bind `jka-compr-inhibit' to t.  `epa-file-handler' shall not
+  ;; be called either.  We remove `tramp-file-name-handler' from
   ;; `inhibit-file-name-handlers'; otherwise the file name handler for
   ;; `insert-file-contents' might be deactivated in some corner cases.
   (let ((coding-system-for-read 'binary)
 	(coding-system-for-write 'binary)
 	(jka-compr-inhibit t)
 	(inhibit-file-name-handlers
-	 (remq 'tramp-file-name-handler inhibit-file-name-handlers)))
+	 (cons epa-file-handler
+	       . (remq 'tramp-file-name-handler inhibit-file-name-handlers))))
     (with-temp-file newname
       (set-buffer-multibyte nil)
       (insert-file-contents-literally filename)))
@@ -3205,7 +3206,8 @@ the result will be a local, non-Tramp, file name."
 	 (if (fboundp 'find-buffer-file-type)
 	     (symbol-function 'find-buffer-file-type)
 	   nil))
-	(inhibit-file-name-handlers '(jka-compr-handler image-file-handler))
+	(inhibit-file-name-handlers
+	 '(epa-file-handler image-file-handler jka-compr-handler))
 	(inhibit-file-name-operation 'insert-file-contents))
     (unwind-protect
 	(progn
