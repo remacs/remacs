@@ -2129,9 +2129,10 @@ KEEP-DATE is non-nil if NEWNAME should have the same timestamp as FILENAME."
   (let ((coding-system-for-read 'binary)
 	(coding-system-for-write 'binary)
 	(jka-compr-inhibit t)
+	(inhibit-file-name-operation 'write-region)
 	(inhibit-file-name-handlers
-	 (cons epa-file-handler
-               (remq 'tramp-file-name-handler inhibit-file-name-handlers))))
+	 (cons 'epa-file-handler
+	       (remq 'tramp-file-name-handler inhibit-file-name-handlers))))
     (with-temp-file newname
       (set-buffer-multibyte nil)
       (insert-file-contents-literally filename)))
@@ -3754,9 +3755,11 @@ Only send the definition if it has not already been done."
 	 (tramp-get-connection-process vec) "scripts" (cons name scripts))))))
 
 (defun tramp-set-auto-save ()
-  (when (and ;; ange-ftp has its own auto-save mechanism
+  (when (and ;; ange-ftp has its own auto-save mechanism.
 	     (eq (tramp-find-foreign-file-name-handler (buffer-file-name))
 		 'tramp-sh-file-name-handler)
+             ;; epa has its own auto-save mechanism.
+             (not epa-file-inhibit-auto-save)
              auto-save-default)
     (auto-save-mode 1)))
 (add-hook 'find-file-hooks 'tramp-set-auto-save t)
