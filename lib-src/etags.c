@@ -441,6 +441,7 @@ static bool cxref_style;	/* -x: create cxref style output */
 static bool cplusplus;		/* .[hc] means C++, not C (undocumented) */
 static bool ignoreindent;	/* -I: ignore indentation in C */
 static int packages_only;	/* --packages-only: in Ada, only tag packages*/
+static int class_qualify;	/* -Q: produce class-qualified tags in C++/Java */
 
 /* STDIN is defined in LynxOS system headers */
 #ifdef STDIN
@@ -468,6 +469,7 @@ static struct option longopts[] =
   { "members",            no_argument,       &members,           1     },
   { "no-members",         no_argument,       &members,           0     },
   { "output",             required_argument, NULL,               'o'   },
+  { "class-qualify",      no_argument,       &class_qualify,     'Q'   },
   { "regex",              required_argument, NULL,               'r'   },
   { "no-regex",           no_argument,       NULL,               'R'   },
   { "ignore-case-regex",  required_argument, NULL,               'c'   },
@@ -933,6 +935,12 @@ Relative ones are stored relative to the output file's directory.\n");
 	Do not create tag entries for members of structures\n\
 	in some languages.");
 
+  puts ("-Q, --class-qualify\n\
+        Qualify tag names with their class name in C++, ObjC, and Java.\n\
+        This produces tag names of the form \"class::member\" for C++,\n\
+        \"class(category)\" for Objective C, and \"class.member\" for Java.\n\
+        For Objective C, this also produces class methods qualified with\n\
+        their arguments, as in \"foo:bar:baz:more\".");
   puts ("-r REGEXP, --regex=REGEXP or --regex=@regexfile\n\
         Make a tag for each line matching a regular expression pattern\n\
 	in the following files.  {LANGUAGE}REGEXP uses REGEXP for LANGUAGE\n\
@@ -1050,7 +1058,7 @@ main (int argc, char **argv)
 
   /* When the optstring begins with a '-' getopt_long does not rearrange the
      non-options arguments to be at the end, but leaves them alone. */
-  optstring = concat ("-ac:Cf:Il:o:r:RSVhH",
+  optstring = concat ("-ac:Cf:Il:o:Qr:RSVhH",
 		      (CTAGS) ? "BxdtTuvw" : "Di:",
 		      "");
 
@@ -1138,6 +1146,9 @@ main (int argc, char **argv)
       case 'h':
       case 'H':
 	help_asked = true;
+	break;
+      case 'Q':
+	class_qualify = 1;
 	break;
 
 	/* Etags options */
@@ -2852,12 +2863,15 @@ consider_token (char *str, int len, int c, int *c_extp,
      case omethodparm:
        if (parlev == 0)
 	 {
-	   int oldlen = token_name.len;
-	   fvdef = fvnone;
 	   objdef = omethodtag;
-	   linebuffer_setlen (&token_name, oldlen + len);
-	   memcpy (token_name.buffer + oldlen, str, len);
-	   token_name.buffer[oldlen + len] = '\0';
+	   if (class_qualify)
+	     {
+	       int oldlen = token_name.len;
+	       fvdef = fvnone;
+	       linebuffer_setlen (&token_name, oldlen + len);
+	       memcpy (token_name.buffer + oldlen, str, len);
+	       token_name.buffer[oldlen + len] = '\0';
+	     }
 	   return true;
 	 }
        return false;
@@ -3307,21 +3321,42 @@ C_entries (int c_ext, FILE *inf)
 			      && nestlev > 0 && definedef == dnone)
 			    /* in struct body */
 			    {
-			      int len;
-                              write_classname (&token_name, qualifier);
-			      len = token_name.len;
-			      linebuffer_setlen (&token_name, len+qlen+toklen);
-			      sprintf (token_name.buffer + len, "%s%.*s",
-				       qualifier, toklen, newlb.buffer + tokoff);
+			      if (class_qualify)
+				{
+				  int len;
+				  write_classname (&token_name, qualifier);
+				  len = token_name.len;
+				  linebuffer_setlen (&token_name,
+						     len + qlen + toklen);
+				  sprintf (token_name.buffer + len, "%s%.*s",
+					   qualifier, toklen,
+					   newlb.buffer + tokoff);
+				}
+			      else
+				{
+				  linebuffer_setlen (&token_name, toklen);
+				  sprintf (token_name.buffer, "%.*s",
+					   toklen, newlb.buffer + tokoff);
+				}
 			      token.named = true;
 			    }
 			  else if (objdef == ocatseen)
 			    /* Objective C category */
 			    {
-			      int len = strlen (objtag) + 2 + toklen;
-			      linebuffer_setlen (&token_name, len);
-			      sprintf (token_name.buffer, "%s(%.*s)",
-				       objtag, toklen, newlb.buffer + tokoff);
+			      if (class_qualify)
+				{
+				  int len = strlen (objtag) + 2 + toklen;
+				  linebuffer_setlen (&token_name, len);
+				  sprintf (token_name.buffer, "%s(%.*s)",
+					   objtag, toklen,
+					   newlb.buffer + tokoff);
+				}
+			      else
+				{
+				  linebuffer_setlen (&token_name, toklen);
+				  sprintf (token_name.buffer, "%.*s",
+					   newlb.buffer + tokoff);
+				}
 			      token.named = true;
 			    }
 			  else if (objdef == omethodtag
@@ -3479,9 +3514,12 @@ C_entries (int c_ext, FILE *inf)
 	    case omethodtag:
 	    case omethodparm:
 	      objdef = omethodcolon;
-	      int toklen = token_name.len;
-	      linebuffer_setlen (&token_name, toklen + 1);
-	      strcpy (token_name.buffer + toklen, ":");
+	      if (class_qualify)
+		{
+		  int toklen = token_name.len;
+		  linebuffer_setlen (&token_name, toklen + 1);
+		  strcpy (token_name.buffer + toklen, ":");
+		}
 	      break;
 	    }
 	  if (structdef == stagseen)
@@ -3716,6 +3754,28 @@ C_entries (int c_ext, FILE *inf)
 	  switch (fvdef)
 	    {
 	    case flistseen:
+	      if (cplpl && !class_qualify)
+		{
+		  /* Remove class and namespace qualifiers from the token,
+		     leaving only the method/member name.  */
+		  char *cc, *uqname = token_name.buffer;
+		  char *tok_end = token_name.buffer + token_name.len;
+
+		  for (cc = token_name.buffer; cc < tok_end; cc++)
+		    {
+		      if (*cc == ':' && cc[1] == ':')
+			{
+			  uqname = cc + 2;
+			  cc++;
+			}
+		    }
+		  if (uqname > token_name.buffer)
+		    {
+		      int uqlen = strlen (uqname);
+		      linebuffer_setlen (&token_name, uqlen);
+		      memmove (token_name.buffer, uqname, uqlen + 1);
+		    }
+		}
 	      make_C_tag (true);    /* a function */
 	      /* FALLTHRU */
 	    case fignore:
