@@ -992,6 +992,9 @@ of Windows starting with Windows 9X.
 +++
 ** Emacs running on MS-Windows now supports the daemon mode.
 
+** The byte counts in etags-generated TAGS files are now the same on
+MS-Windows as they are on other platforms.
+
 ** OS X 10.5 or older is no longer supported.
 
 ** OS X on PowerPC is no longer supported.

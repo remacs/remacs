@@ -1355,9 +1355,16 @@ hits the start of file."
 	    pat (concat (if (eq selective-display t)
 			    "\\(^\\|\^m\\)" "^")
 			(regexp-quote (car tag-info))))
-      ;; The character position in the tags table is 0-origin.
+      ;; The character position in the tags table is 0-origin and counts CRs.
       ;; Convert it to a 1-origin Emacs character position.
-      (if startpos (setq startpos (1+ startpos)))
+      (when startpos
+        (setq startpos (1+ startpos))
+        (when (and line
+                   (eq 1 (coding-system-eol-type buffer-file-coding-system)))
+          ;; Act as if CRs were elided from all preceding lines.
+          ;; Although this doesn't always give exactly the correct position,
+          ;; it does typically improve the guess.
+          (setq startpos (- startpos (1- line)))))
       ;; If no char pos was given, try the given line number.
       (or startpos
 	  (if line
