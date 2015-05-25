@@ -271,6 +271,10 @@ in the surrounding GUI (using the OSC-52 escape sequence).  This only works
 if your xterm supports it and enables the `allowWindowOps' options (disabled
 by default at least in Debian, for security reasons).
 
+Similarly, you can yank the CLIPBOARD/PRIMARY selection (using the OSC-52
+escape sequence) if your xterm has the feature enabled but for that you
+additionally need to add `getSelection' to `xterm-extra-capabilities'.
+
 ** xterm-mouse-mode now supports mouse-tracking (if your xterm supports it).
 
 ** package.el
