@@ -2131,7 +2131,7 @@ KEEP-DATE is non-nil if NEWNAME should have the same timestamp as FILENAME."
 	(jka-compr-inhibit t)
 	(inhibit-file-name-handlers
 	 (cons epa-file-handler
-	       . (remq 'tramp-file-name-handler inhibit-file-name-handlers))))
+               (remq 'tramp-file-name-handler inhibit-file-name-handlers))))
     (with-temp-file newname
       (set-buffer-multibyte nil)
       (insert-file-contents-literally filename)))
