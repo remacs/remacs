@@ -1565,8 +1565,13 @@ process_file_name (char *file, language *lang)
 	inf = NULL;
       else
 	{
+#if MSDOS || defined (DOS_NT)
+	  char *cmd1 = concat (compr->command, " \"", real_name);
+	  char *cmd = concat (cmd1, "\" > ", tmp_name);
+#else
 	  char *cmd1 = concat (compr->command, " '", real_name);
 	  char *cmd = concat (cmd1, "' > ", tmp_name);
+#endif
 	  free (cmd1);
 	  int tmp_errno;
 	  if (system (cmd) == -1)
