@@ -2934,11 +2934,11 @@ objc-src/Subprocess.h,98
 #define BUFFERSIZE 43,1267
 @interface Subprocess:Subprocess45,1292
 
-objc-src/Subprocess.m,477
+objc-src/Subprocess.m,476
 #define	PTY_TEMPLATE 20,494
 #define	PTY_LENGTH 21,528
 static void showError(23,551
-@interface Subprocess(Private)32,737
+@interface Subprocess(Private)32,737
 - childDidExit39,851
 - fdHandler:fdHandler67,1589
 showError 98,2360

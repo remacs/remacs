@@ -3355,7 +3355,7 @@ C_entries (int c_ext, FILE *inf)
 				{
 				  linebuffer_setlen (&token_name, toklen);
 				  sprintf (token_name.buffer, "%.*s",
-					   newlb.buffer + tokoff);
+					   toklen, newlb.buffer + tokoff);
 				}
 			      token.named = true;
 			    }

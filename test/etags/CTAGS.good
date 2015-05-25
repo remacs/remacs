@@ -1,4 +1,3 @@
-	objc-src/Subprocess.m	/^@interface Subprocess(Private)$/
 #a-defer-word	forth-src/test-forth.fth	/^defer #a-defer-word$/
 #some-storage	forth-src/test-forth.fth	/^2000 buffer: #some-storage$/
 $	make-src/Makefile	/^	@-$(MAKE) OPTIONS='--no-members' ${LATEST}ediff$/
@@ -1061,6 +1060,7 @@ Pkg1_Proc2/p	ada-src/waroquiers.ada	/^  procedure Pkg1_Proc2 (I : Integer);$/
 Pkg1_Proc2/p	ada-src/waroquiers.ada	/^  procedure Pkg1_Proc2 (I : Integer) is$/
 PostControls	pyt-src/server.py	/^    def PostControls(self):$/
 Pre_Call_State/t	ada-src/2ataspri.ads	/^   type Pre_Call_State is new System.Address;$/
+Private	objc-src/Subprocess.m	/^@interface Subprocess(Private)$/
 Private_T/b	ada-src/etags-test-for.ada	/^    task body Private_T is$/
 Private_T/b	ada-src/waroquiers.ada	/^    task body Private_T is$/
 Private_T/k	ada-src/etags-test-for.ada	/^    task Private_T;$/
