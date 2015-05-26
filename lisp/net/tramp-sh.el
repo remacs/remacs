@@ -3754,19 +3754,6 @@ Only send the definition if it has not already been done."
 	(tramp-set-connection-property
 	 (tramp-get-connection-process vec) "scripts" (cons name scripts))))))
 
-(defun tramp-set-auto-save ()
-  (when (and ;; ange-ftp has its own auto-save mechanism.
-	     (eq (tramp-find-foreign-file-name-handler (buffer-file-name))
-		 'tramp-sh-file-name-handler)
-             ;; epa has its own auto-save mechanism.
-             (not epa-file-inhibit-auto-save)
-             auto-save-default)
-    (auto-save-mode 1)))
-(add-hook 'find-file-hooks 'tramp-set-auto-save t)
-(add-hook 'tramp-unload-hook
-	  (lambda ()
-	    (remove-hook 'find-file-hooks 'tramp-set-auto-save)))
-
 (defun tramp-run-test (switch filename)
   "Run `test' on the remote system, given a SWITCH and a FILENAME.
 Returns the exit code of the `test' program."
