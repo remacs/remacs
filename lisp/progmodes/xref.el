@@ -283,13 +283,25 @@ backward."
   :type 'integer
   :version "25.1")
 
-(defcustom xref-prompt-for-identifier nil
-  "When non-nil, always prompt for the identifier name.
+(defcustom xref-prompt-for-identifier '(not xref-find-definitions
+                                            xref-find-definitions-other-window
+                                            xref-find-definitions-other-frame)
+  "When t, always prompt for the identifier name.
 
-Otherwise, only prompt when there's no value at point we can use,
-or when the command has been called with the prefix argument."
+When nil, prompt only when there's no value at point we can use,
+or when the command has been called with the prefix argument.
+
+Otherwise, it's a list of xref commands which will prompt
+anyway (the value at point, if any, will be used as the default).
+
+If the list starts with `not', the meaning of the rest of the
+elements is negated."
   :type '(choice (const :tag "always" t)
-                 (const :tag "auto" nil))
+                 (const :tag "auto" nil)
+                 (set :menu-tag "command specific" :tag "commands"
+		      :value (not)
+		      (const :tag "Except" not)
+		      (repeat :inline t (symbol :tag "command"))))
   :version "25.1")
 
 (defcustom xref-pulse-on-jump t
@@ -621,10 +633,18 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
                `((window . ,window)
                  (temporary-buffers . ,tb)))))))
 
+(defun xref--prompt-p (command)
+  (or (eq xref-prompt-for-identifier t)
+      (if (eq (car xref-prompt-for-identifier) 'not)
+          (not (memq command (cdr xref-prompt-for-identifier)))
+        (memq command xref-prompt-for-identifier))))
+
 (defun xref--read-identifier (prompt)
   "Return the identifier at point or read it from the minibuffer."
   (let ((id (funcall xref-identifier-at-point-function)))
-    (cond ((or current-prefix-arg xref-prompt-for-identifier (not id))
+    (cond ((or current-prefix-arg
+               (not id)
+               (xref--prompt-p this-command))
            (completing-read prompt
                             (funcall xref-identifier-completion-table-function)
                             nil nil nil
@@ -667,6 +687,7 @@ With prefix argument, prompt for the identifier."
 ;;;###autoload
 (defun xref-find-regexp (regexp)
   "Find all matches for REGEXP."
+  ;; FIXME: Prompt for directory.
   (interactive (list (xref--read-identifier "Find regexp: ")))
   (xref--show-xrefs regexp 'matches regexp nil))
 
@@ -736,6 +757,9 @@ details on which tools are used, and when."
   (cl-assert (directory-name-p dir))
   (when (null kind)
     (setq input (regexp-quote input)))
+  ;; FIXME: When regexp, search in all files, except
+  ;; `grep-find-ignored-directories' and `grep-find-ignored-files',
+  ;; like `rgrep' does.
   (let* ((default-directory dir)
          (semantic-symref-tool 'detect)
          (res (if (eq kind 'symbol)
