@@ -3378,10 +3378,10 @@ Give an empty topic name to go to the Index node itself."
 	    (re-search-forward (format
                                 "[a-zA-Z]+: [a-zA-Z0-9_ *&]+ %s\\( \\|$\\)"
                                 (regexp-quote name)) nil t)
-	    (search-forward (format "`%s'" name) nil t)
+	    (search-forward (format "[`‘]%s['’]" name) nil t)
 	    (and (string-match "\\`.*\\( (.*)\\)\\'" name)
 		 (search-forward
-		  (format "`%s'" (substring name 0 (match-beginning 1)))
+		  (format "[`‘]%s['’]" (substring name 0 (match-beginning 1)))
 		  nil t))
 	    (search-forward name nil t)
 	    ;; Try again without the " <1>" makeinfo can append
@@ -3894,7 +3894,7 @@ If FORK is non-nil, it is passed to `Info-goto-node'."
   (let (node)
     (cond
      ((setq node (Info-get-token (point) "[hf]t?tps?://"
-				 "\\([hf]t?tps?://[^ \t\n\"`({<>})']+\\)"))
+				 "\\([hf]t?tps?://[^ \t\n\"`‘({<>})’']+\\)"))
       (browse-url node)
       (setq node t))
      ((setq node (Info-get-token (point) "\\*note[ \n\t]+"
@@ -4979,7 +4979,7 @@ first line or header line, and for breadcrumb links.")
       ;; Fontify http and ftp references
       (goto-char (point-min))
       (when not-fontified-p
-        (while (re-search-forward "\\(https?\\|ftp\\)://[^ \t\n\"`({<>})']+"
+        (while (re-search-forward "\\(https?\\|ftp\\)://[^ \t\n\"`‘({<>})’']+"
                                   nil t)
           (add-text-properties (match-beginning 0) (match-end 0)
                                '(font-lock-face info-xref
