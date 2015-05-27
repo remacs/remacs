@@ -4040,8 +4040,6 @@ this file, if that variable is non-nil."
       (prog1
        (tramp-run-real-handler 'make-auto-save-file-name nil)
        (ad-activate 'make-auto-save-file-name)))))
-	  (tramp-run-real-handler 'make-auto-save-file-name nil)
-	(ad-activate 'make-auto-save-file-name)))))
 
 (unless (tramp-exists-file-name-handler 'make-auto-save-file-name)
   (defadvice make-auto-save-file-name
