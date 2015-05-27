@@ -520,15 +520,20 @@ alternatives to currently visited manuals.
 ---
 ** ntlm.el has support for NTLM2.
 
----
-** The Rmail commands d, C-d and u now handle repeat counts to delete or
+** Rmail
+
+*** The Rmail commands d, C-d and u take optional repeat counts to delete or
 undelete multiple messages.
 
-** Rmail can now render HTML mail messages if your Emacs was built with
+*** Rmail can now render HTML mail messages if your Emacs was built with
 libxml2 or if you have the Lynx browser installed.  By default, Rmail
 will display the HTML version of a mail message that has both HTML and
 plain text parts, if display of HTML email is possible; customize the
 `rmail-mime-prefer-html' option to `nil' if you don't want that.
+
++++
+*** In the commands that make summaries by subject, recipients, or senders,
+you can no longer use commas to separate regular expressions.
 
 ** SES now supports local printer functions; see `ses-define-local-printer'.
 
@@ -874,9 +879,6 @@ have side effects.
 permissions set to temporary values (e.g., for creating private files).
 
 ** You can access the slots of structures using `cl-struct-slot-value'.
-
-** Functions `rmail-delete-forward' and `rmail-delete-backward' take an
-optional repeat-count argument.
 
 ** Function `sort' can deal with vectors.
 
