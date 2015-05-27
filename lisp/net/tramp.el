@@ -147,9 +147,11 @@ policy for local files."
 
 (defcustom tramp-auto-save-directory nil
   "Put auto-save files in this directory, if set.
-The idea is to use a local directory so that auto-saving is faster."
+The idea is to use a local directory so that auto-saving is faster.
+This setting has precedence over `auto-save-file-name-transforms'."
   :group 'tramp
-  :type '(choice (const nil) string))
+  :type '(choice (const :tag "Use default" nil)
+		 (directory :tag "Auto save directory name")))
 
 (defcustom tramp-encoding-shell
   (if (memq system-type '(windows-nt))
@@ -4006,35 +4008,28 @@ Return the local name of the temporary file."
 
 (defun tramp-handle-make-auto-save-file-name ()
   "Like `make-auto-save-file-name' for Tramp files.
-Returns a file name in `tramp-auto-save-directory' for autosaving this file."
-  (let ((tramp-auto-save-directory tramp-auto-save-directory)
+Returns a file name in `tramp-auto-save-directory' for autosaving
+this file, if that variable is non-nil."
+  ;; Create directory.
+  (unless (or (null tramp-auto-save-directory)
+	      (file-exists-p tramp-auto-save-directory))
+    (make-directory tramp-auto-save-directory t))
+
+  (let ((auto-save-file-name-transforms
+	 (if (null tramp-auto-save-directory) auto-save-file-name-transforms))
 	(buffer-file-name
-	 (tramp-subst-strs-in-string
-	  '(("_" . "|")
-	    ("/" . "_a")
-	    (":" . "_b")
-	    ("|" . "__")
-	    ("[" . "_l")
-	    ("]" . "_r"))
-	  (buffer-file-name))))
-    ;; File name must be unique.  This is ensured with Emacs 22 (see
-    ;; UNIQUIFY element of `auto-save-file-name-transforms'); but for
-    ;; all other cases we must do it ourselves.
-    (when (boundp 'auto-save-file-name-transforms)
-      (mapc
-       (lambda (x)
-	 (when (and (string-match (car x) buffer-file-name)
-		    (not (car (cddr x))))
-	   (setq tramp-auto-save-directory
-		 (or tramp-auto-save-directory
-		     (tramp-compat-temporary-file-directory)))))
-       (symbol-value 'auto-save-file-name-transforms)))
-    ;; Create directory.
-    (when tramp-auto-save-directory
-      (setq buffer-file-name
-	    (expand-file-name buffer-file-name tramp-auto-save-directory))
-      (unless (file-exists-p tramp-auto-save-directory)
-	(make-directory tramp-auto-save-directory t)))
+	 (if (null tramp-auto-save-directory)
+	     buffer-file-name
+	   (expand-file-name
+	    (tramp-subst-strs-in-string
+	     '(("_" . "|")
+	       ("/" . "_a")
+	       (":" . "_b")
+	       ("|" . "__")
+	       ("[" . "_l")
+	       ("]" . "_r"))
+	     (buffer-file-name))
+	    tramp-auto-save-directory))))
     ;; Run plain `make-auto-save-file-name'.  There might be an advice when
     ;; it is not a magic file name operation (since Emacs 22).
     ;; We must deactivate it temporarily.
@@ -4045,6 +4040,8 @@ Returns a file name in `tramp-auto-save-directory' for autosaving this file."
       (prog1
        (tramp-run-real-handler 'make-auto-save-file-name nil)
        (ad-activate 'make-auto-save-file-name)))))
+	  (tramp-run-real-handler 'make-auto-save-file-name nil)
+	(ad-activate 'make-auto-save-file-name)))))
 
 (unless (tramp-exists-file-name-handler 'make-auto-save-file-name)
   (defadvice make-auto-save-file-name
