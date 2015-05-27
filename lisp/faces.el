@@ -1937,8 +1937,9 @@ Return nil if there is no face."
              (dolist (face faceprop)
                (if (facep face)
                    (push face faces))))))
-    (setq faces (delete-dups (nreverse faces)))
-    (if multiple faces (car faces))))
+    (if multiple
+        (delete-dups (nreverse faces))
+      (car (last faces)))))
 
 (defun foreground-color-at-point ()
   "Return the foreground color of the character after point."
