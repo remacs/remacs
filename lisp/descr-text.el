@@ -618,7 +618,14 @@ relevant to POS."
                                    'help-args '(,current-input-method))
 				 "input method")
 			 (list
-			  "type \"C-x 8 RET HEX-CODEPOINT\" or \"C-x 8 RET NAME\"")))))
+                          (let ((name
+                                 (or (get-char-code-property char 'name)
+                                     (get-char-code-property char 'old-name))))
+                            (if name
+                                (format
+                                 "type \"C-x 8 RET %x\" or \"C-x 8 RET %s\""
+                                 char name)
+                              (format "type \"C-x 8 RET %x\"" char))))))))
               ("buffer code"
                ,(if multibyte-p
                     (encoded-string-description
