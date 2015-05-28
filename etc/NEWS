@@ -226,6 +226,8 @@ successive char insertions.
 ** C-x 8 now has shorthands for these chars: ‐ ‑ ‒ – — ― ‘ ’ “ ” † ‡ • ′ ″
 € № ← → ↔ − ≈ ≠ ≤ ≥.  As before, you can type C-x 8 C-h to list shorthands.
 
+** New minor mode electric-quote-mode for quoting ‘like this’ and “like this”.
+
 ** New minor mode global-eldoc-mode is enabled by default.
 
 ** Emacs now supports "bracketed paste mode" when running on a terminal

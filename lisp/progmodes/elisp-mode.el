@@ -232,6 +232,7 @@ Blank lines separate paragraphs.  Semicolons start comments.
   (add-hook 'after-load-functions #'elisp--font-lock-flush-elisp-buffers)
   (setq-local electric-pair-text-pairs
               (append '((?\` . ?\') (?‘ . ?’)) electric-pair-text-pairs))
+  (setq-local electric-quote-string t)
   (setq imenu-case-fold-search nil)
   (add-function :before-until (local 'eldoc-documentation-function)
                 #'elisp-eldoc-documentation-function)
