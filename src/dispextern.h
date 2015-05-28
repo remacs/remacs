@@ -1526,6 +1526,12 @@ struct glyph_string
       + (FRAME_LINE_HEIGHT ((F)) > FONT_HEIGHT ((FONT)))) / 2	\
    - (FONT_DESCENT (FRAME_FONT (F)) - FRAME_BASELINE_OFFSET (F)))
 
+/* A heuristic test for fonts that claim they need a preposterously
+   large vertical space.  The heuristics is in the factor of 3.  We
+   ignore the ascent and descent values reported by such fonts, and
+   instead go by the values reported for individual glyphs.  */
+#define FONT_TOO_HIGH(ft)  ((ft)->ascent + (ft)->descent > 3*(ft)->pixel_size)
+
 
 /***********************************************************************
 				Faces

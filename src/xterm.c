@@ -1724,6 +1724,11 @@ x_draw_glyph_string_background (struct glyph_string *s, bool force_p)
 	  s->background_filled_p = true;
 	}
       else if (FONT_HEIGHT (s->font) < s->height - 2 * box_line_width
+	       /* When xdisp.c ignores FONT_HEIGHT, we cannot trust
+		  font dimensions, since the actual glyphs might be
+		  much smaller.  So in that case we always clear the
+		  rectangle with background color.  */
+	       || FONT_TOO_HIGH (s->font)
 	       || s->font_not_found_p
 	       || s->extends_to_end_of_line_p
 	       || force_p)

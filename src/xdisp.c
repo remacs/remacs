@@ -25296,12 +25296,6 @@ draw_glyphs (struct window *w, int x, struct glyph_row *row,
       }							\
   }
 
-/* A heuristic test for fonts that claim they need a preposterously
-   large vertical space.  The heuristics is in the factor of 3.  We
-   ignore the ascent and descent values reported by such fonts, and
-   instead go by the values reported for individual glyphs.  */
-#define FONT_TOO_HIGH(ft)  ((ft)->ascent + (ft)->descent > 3*(ft)->pixel_size)
-
 /* Store one glyph for IT->char_to_display in IT->glyph_row.
    Called from x_produce_glyphs when IT->glyph_row is non-null.  */
 
@@ -26230,8 +26224,28 @@ produce_glyphless_glyph (struct it *it, bool for_no_font, Lisp_Object acronym)
      ASCII face.  */
   face = FACE_FROM_ID (it->f, it->face_id)->ascii_face;
   font = face->font ? face->font : FRAME_FONT (it->f);
-  it->ascent = FONT_BASE (font) + font->baseline_offset;
-  it->descent = FONT_DESCENT (font) - font->baseline_offset;
+  it->ascent = FONT_BASE (font);
+  it->descent = FONT_DESCENT (font);
+  /* Attempt to fix box height for fonts that claim preposterously
+     large height.  */
+  if (FONT_TOO_HIGH (font))
+    {
+      XChar2b char2b;
+
+      /* Get metrics of a reasonably sized ASCII character.  */
+      if (get_char_glyph_code ('{', font, &char2b))
+	{
+	  struct font_metrics *pcm = get_per_char_metric (font, &char2b);
+
+	  if (!(pcm->width == 0 && pcm->rbearing == 0 && pcm->lbearing == 0))
+	    {
+	      it->ascent = pcm->ascent;
+	      it->descent = pcm->descent;
+	    }
+	}
+    }
+  it->ascent += font->baseline_offset;
+  it->descent -= font->baseline_offset;
   base_height = it->ascent + it->descent;
   base_width = font->average_width;
 
