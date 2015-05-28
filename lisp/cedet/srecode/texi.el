@@ -253,7 +253,7 @@ that class.
  [ stuff ]  => @code{[ stuff ]}
  Key        => @kbd{Key}     (key is C\\-h, M\\-h, SPC, RET, TAB and the like)
  ...        => @dots{}"
-  (while (string-match "`\\([-a-zA-Z0-9<>.]+\\)'" string)
+  (while (string-match "[`‘]\\([-a-zA-Z0-9<>.]+\\)['’]" string)
     (let* ((vs (substring string (match-beginning 1) (match-end 1)))
 	   (v (intern-soft vs)))
       (setq string

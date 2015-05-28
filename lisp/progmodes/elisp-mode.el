@@ -231,7 +231,7 @@ Blank lines separate paragraphs.  Semicolons start comments.
   (lisp-mode-variables nil nil 'elisp)
   (add-hook 'after-load-functions #'elisp--font-lock-flush-elisp-buffers)
   (setq-local electric-pair-text-pairs
-              (cons '(?\` . ?\') electric-pair-text-pairs))
+              (append '((?\` . ?\') (?‘ . ?’)) electric-pair-text-pairs))
   (setq imenu-case-fold-search nil)
   (add-function :before-until (local 'eldoc-documentation-function)
                 #'elisp-eldoc-documentation-function)
@@ -394,7 +394,7 @@ It can be quoted, or be inside a quoted form."
                ((or (eq (char-after) ?\[)
                     (progn
                       (skip-chars-backward " ")
-                      (memq (char-before) '(?' ?`))))
+                      (memq (char-before) '(?' ?` ?‘))))
                 (setq res t))
                ((eq (char-before) ?,)
                 (setq nesting nil))))
@@ -459,7 +459,7 @@ It can be quoted, or be inside a quoted form."
 	   (beg (condition-case nil
 		    (save-excursion
 		      (backward-sexp 1)
-		      (skip-syntax-forward "'")
+		      (skip-chars-forward "`',‘")
 		      (point))
 		  (scan-error pos)))
 	   (end
@@ -470,7 +470,7 @@ It can be quoted, or be inside a quoted form."
 		  (save-excursion
 		    (goto-char beg)
 		    (forward-sexp 1)
-                    (skip-chars-backward "'")
+                    (skip-chars-backward "'’")
 		    (when (>= (point) pos)
 		      (point)))
 		(scan-error pos))))
@@ -478,7 +478,7 @@ It can be quoted, or be inside a quoted form."
            (funpos (eq (char-before beg) ?\())
            (quoted (elisp--form-quoted-p beg)))
       (when (and end (or (not (nth 8 (syntax-ppss)))
-                         (eq (char-before beg) ?`)))
+                         (memq (char-before beg) '(?` ?‘))))
         (let ((table-etc
                (if (or (not funpos) quoted)
                    ;; FIXME: We could look at the first element of the list and
@@ -901,15 +901,17 @@ If CHAR is not a character, return nil."
 (defun elisp--preceding-sexp ()
   "Return sexp before the point."
   (let ((opoint (point))
-	ignore-quotes
+	(left-quote ?‘)
 	expr)
     (save-excursion
       (with-syntax-table emacs-lisp-mode-syntax-table
-	;; If this sexp appears to be enclosed in `...'
+	;; If this sexp appears to be enclosed in `...' or ‘...’
 	;; then ignore the surrounding quotes.
-	(setq ignore-quotes
-	      (or (eq (following-char) ?\')
-		  (eq (preceding-char) ?\')))
+	(cond ((eq (preceding-char) ?’)
+	       (progn (forward-char -1) (setq opoint (point))))
+	      ((or (eq (following-char) ?\')
+		   (eq (preceding-char) ?\'))
+	       (setq left-quote ?\`)))
 	(forward-sexp -1)
 	;; If we were after `?\e' (or similar case),
 	;; use the whole thing, not just the `e'.
@@ -933,7 +935,7 @@ If CHAR is not a character, return nil."
 	      (forward-sexp -1))))
 
 	(save-restriction
-	  (if (and ignore-quotes (eq (following-char) ?`))
+	  (if (eq (following-char) left-quote)
               ;; vladimir@cs.ualberta.ca 30-Jul-1997: Skip ` in `variable' so
               ;; that the value is returned, not the name.
 	      (forward-char))

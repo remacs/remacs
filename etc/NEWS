@@ -908,6 +908,12 @@ directory at point.
 *** New macros `thread-first' and `thread-last' allow threading a form
     as the first or last argument of subsequent forms.
 
+** Documentation strings now support quoting with curved single quotes
+‘like-this’ in addition to the old style with grave accent and
+apostrophe `like-this'.  The new style looks better on today's displays.
+When an old-style string is copied to a help buffer it is converted to
+the new style.
+
 +++
 ** Time-related changes:
 

@@ -161,8 +161,8 @@ otherwise."
       ;; Buttons
       (when (and button (not (widgetp wid-button)))
 	(newline)
-	(insert "Here is a `" (format "%S" button-type)
-		"' button labeled `" button-label "'.\n\n"))
+	(insert "Here is a ‘" (format "%S" button-type)
+		"’ button labeled ‘" button-label "’.\n\n"))
       ;; Overlays
       (when overlays
 	(newline)
@@ -738,7 +738,7 @@ relevant to POS."
                       (when face
                         (insert (propertize " " 'display '(space :align-to 5))
                                 "face: ")
-                        (insert (concat "`" (symbol-name face) "'"))
+                        (insert (concat "‘" (symbol-name face) "’"))
                         (insert "\n")))))
               (insert "these terminal codes:\n")
               (dotimes (i (length disp-vector))
