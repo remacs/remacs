@@ -70,6 +70,14 @@ so if you want to use it, you can always take a copy from an older Emacs.
 
 * Startup Changes in Emacs 25.1
 
++++
+** When Emacs is given a file as a command line argument and
+`initial-buffer-choice' is non-nil, display both the file and
+`initial-buffer-choice'.  When Emacs is given more than one file and
+`initial-buffer-choice' is non-nil, show `initial-buffer-choice'
+and *Buffer List*.  This makes Emacs convenient to use from the
+command line when `initial-buffer-choice' is non-nil.
+
 
 * Changes in Emacs 25.1
 
