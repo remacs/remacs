@@ -900,9 +900,11 @@ Can be overridden by the value of `font-lock-maximum-decoration'.")
   ;; type :: word
   ;; type, stuff :: word
   ;; type, bind(c) :: word
+  ;; type, extends(stuff) :: word
   ;; NOT "type ("
   "\\_<\\(type\\)\\_>\\(?:\\(?:[^()\n]*\\|\
-.*,[ \t]*bind[ \t]*([ \t]*c[ \t]*)[ \t]*\\)::\\)?[ \t]*\\(\\(?:\\sw\\|\\s_\\)+\\)"
+.*,[ \t]*\\(?:bind\\|extends\\)[ \t]*(.*)[ \t]*\\)::\\)?\
+[ \t]*\\(\\(?:\\sw\\|\\s_\\)+\\)"
   "Regexp matching the definition of a derived type.")
 
 (defconst f90-typeis-re
@@ -1450,7 +1452,7 @@ if all else fails."
     (not (or (looking-at "end")
              (looking-at "\\(do\\|if\\|else\\(if\\|where\\)?\
 \\|select[ \t]*\\(case\\|type\\)\\|case\\|where\\|forall\\|\
-block\\|critical\\)\\_>")
+block\\|critical\\|enum\\)\\_>")
              (looking-at "\\(program\\|\\(?:sub\\)?module\\|\
 \\(?:abstract[ \t]*\\)?interface\\|block[ \t]*data\\)\\_>")
              (looking-at "\\(contains\\|\\(?:\\sw\\|\\s_\\)+[ \t]*:\\)")
