@@ -298,9 +298,7 @@ RECIPIENTS is a regular expression."
   (rmail-new-summary
    (concat "recipients " recipients)
    (list 'rmail-summary-by-recipients recipients primary-only)
-   'rmail-message-recipients-p
-   (replace-regexp-in-string "\\`[ \t]*\\(.*?\\)[ \t]*\\'" "\\1" recipients)
-   primary-only))
+   'rmail-message-recipients-p recipients primary-only))
 
 (defun rmail-message-recipients-p (msg recipients &optional primary-only)
   (rmail-apply-in-message msg 'rmail-message-recipients-p-1
@@ -379,9 +377,7 @@ SUBJECT is a regular expression."
   (rmail-new-summary
    (concat "about " subject)
    (list 'rmail-summary-by-topic subject whole-message)
-   'rmail-message-subject-p
-   (replace-regexp-in-string "\\`[ \t]*\\(.*?\\)[ \t]*\\'" "\\1" subject)
-   whole-message))
+   'rmail-message-subject-p subject whole-message))
 
 (defun rmail-message-subject-p (msg subject &optional whole-message)
   (if whole-message
@@ -397,9 +393,7 @@ SENDERS is a regular expression."
   (interactive "sSenders to summarize by: ")
   (rmail-new-summary
    (concat "senders " senders)
-   (list 'rmail-summary-by-senders senders)
-   'rmail-message-senders-p
-   (replace-regexp-in-string "\\`[ \t]*\\(.*?\\)[ \t]*\\'" "\\1" senders)))
+   (list 'rmail-summary-by-senders senders) 'rmail-message-senders-p senders))
 
 (defun rmail-message-senders-p (msg senders)
   (string-match senders (or (rmail-get-header "From" msg) "")))
