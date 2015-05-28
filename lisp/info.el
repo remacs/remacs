@@ -3406,7 +3406,7 @@ MATCHES is a list of index matches found by `Info-index'.")
 (defun Info-virtual-index-find-node (filename nodename &optional _no-going-back)
   "Index-specific implementation of `Info-find-node-2'."
   ;; Generate Index-like menu of matches
-  (if (string-match "^\\*Index for `\\(.+\\)'\\*$" nodename)
+  (if (string-match "^\\*Index for ‘\\(.+\\)’\\*$" nodename)
       ;; Generate Index-like menu of matches
       (let* ((topic (match-string 1 nodename))
 	     (matches (cdr (assoc (cons (or filename Info-current-file) topic)
@@ -3415,7 +3415,7 @@ MATCHES is a list of index matches found by `Info-index'.")
 			(or filename Info-current-file) nodename))
 	(insert "Info Virtual Index\n")
 	(insert "******************\n\n")
-	(insert "Index entries that match `" topic "':\n\n")
+	(insert "Index entries that match ‘" topic "’:\n\n")
 	(insert "\0\b[index\0\b]\n")
 	(if (null matches)
 	    (insert "No matches found.\n")
@@ -3434,13 +3434,13 @@ MATCHES is a list of index matches found by `Info-index'.")
       (insert "Info Virtual Index\n")
       (insert "******************\n\n")
       (insert "This is a list of search results produced by\n"
-	      "`Info-virtual-index' for the current manual.\n\n")
+	      "‘Info-virtual-index’ for the current manual.\n\n")
       (insert "* Menu:\n\n")
       (dolist (nodeinfo nodes)
 	(when (equal (car (nth 0 nodeinfo)) (or filename Info-current-file))
 	  (insert
 	   (format "* %-20s %s.\n"
-		   (format "*Index for `%s'*::" (cdr (nth 0 nodeinfo)))
+		   (format "*Index for ‘%s’*::" (cdr (nth 0 nodeinfo)))
 		   (cdr (nth 0 nodeinfo)))))))))
 
 (defun Info-virtual-index (topic)
@@ -3475,7 +3475,7 @@ search results."
 	(setq Info-history-list ohist-list)
 	(Info-goto-node orignode)
 	(message "")))
-    (Info-find-node Info-current-file (format "*Index for `%s'*" topic))))
+    (Info-find-node Info-current-file (format "*Index for ‘%s’*" topic))))
 
 (add-to-list 'Info-virtual-files
 	     '("\\`\\*Apropos\\*\\'"
@@ -3515,7 +3515,7 @@ MATCHES is a list of index matches found by `Info-apropos-matches'.")
 			Info-apropos-file nodename))
 	(insert "Apropos Index\n")
 	(insert "*************\n\n")
-	(insert "This is a list of search results produced by `info-apropos'.\n\n")
+	(insert "This is a list of search results produced by ‘info-apropos’.\n\n")
 	(insert "* Menu:\n\n")
 	(dolist (nodeinfo nodes)
 	  (insert (format "* %-20s %s.\n"
@@ -3529,7 +3529,7 @@ MATCHES is a list of index matches found by `Info-apropos-matches'.")
 			Info-apropos-file nodename))
 	(insert "Apropos Index\n")
 	(insert "*************\n\n")
-	(insert "Index entries that match `" (nth 1 nodeinfo) "':\n\n")
+	(insert "Index entries that match ‘" (nth 1 nodeinfo) "’:\n\n")
 	(insert "\0\b[index\0\b]\n")
 	(if (eq matches t)
 	    (insert "No matches found.\n")
@@ -3614,7 +3614,7 @@ Build a menu of the possible matches."
 	(setq nodes (cdr nodes)))
       (if nodes
 	  (Info-find-node Info-apropos-file (car (car nodes)))
-	(setq nodename (format "Index for `%s'" string))
+	(setq nodename (format "Index for ‘%s’" string))
 	(push (list nodename string (Info-apropos-matches string))
 	      Info-apropos-nodes)
 	(Info-find-node Info-apropos-file nodename)))))
