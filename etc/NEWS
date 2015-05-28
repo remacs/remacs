@@ -805,6 +805,12 @@ when signaling a file error.  For example, it now reports "Permission
 denied" instead of "permission denied".  The old behavior was problematic
 in languages like German where downcasing rules depend on grammar.
 
+** (substitute-command-keys "`foo'") now returns "‘foo’".
+That is, it replaces grave accents by left single quotation marks, and
+apostrophes that match grave accents by right single quotation marks.
+As before, isolated apostrophes and characters preceded by \= are
+output as-is.
+
 +++
 ** The character classes [:alpha:] and [:alnum:] in regular expressions
 now match multibyte characters using Unicode character properties.

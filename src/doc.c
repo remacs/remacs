@@ -693,15 +693,21 @@ summary).
 
 Each substring of the form \\=\\<MAPVAR> specifies the use of MAPVAR
 as the keymap for future \\=\\[COMMAND] substrings.
-\\=\\= quotes the following character and is discarded;
-thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ into the output.
+
+Each \\=` is replaced by ‘.  Each ' preceded by \\=` and without
+intervening ' is replaced by ’.
+
+\\=\\= quotes the following character and is discarded; thus,
+\\=\\=\\=\\= puts \\=\\= into the output, \\=\\=\\=\\[ puts \\=\\[ into the output, and
+\\=\\=\\=` puts \\=` into the output.
 
 Return the original STRING if no substitutions are made.
 Otherwise, return a new string.  */)
   (Lisp_Object string)
 {
   char *buf;
-  bool changed = 0;
+  bool changed = false;
+  bool in_quote = false;
   unsigned char *strp;
   char *bufp;
   ptrdiff_t idx;
@@ -734,6 +740,12 @@ Otherwise, return a new string.  */)
   keymap = Voverriding_local_map;
 
   bsize = SBYTES (string);
+
+  /* Add some room for expansion due to quote replacement.  */
+  enum { EXTRA_ROOM = 20 };
+  if (bsize <= STRING_BYTES_BOUND - EXTRA_ROOM)
+    bsize += EXTRA_ROOM;
+
   bufp = buf = xmalloc (bsize);
 
   strp = SDATA (string);
@@ -743,7 +755,7 @@ Otherwise, return a new string.  */)
 	{
 	  /* \= quotes the next character;
 	     thus, to put in \[ without its special meaning, use \=\[.  */
-	  changed = 1;
+	  changed = true;
 	  strp += 2;
 	  if (multibyte)
 	    {
@@ -766,7 +778,6 @@ Otherwise, return a new string.  */)
 	  ptrdiff_t start_idx;
 	  bool follow_remap = 1;
 
-	  changed = 1;
 	  strp += 2;		/* skip \[ */
 	  start = strp;
 	  start_idx = start - SDATA (string);
@@ -833,7 +844,6 @@ Otherwise, return a new string.  */)
 	  Lisp_Object earlier_maps;
 	  ptrdiff_t count = SPECPDL_INDEX ();
 
-	  changed = 1;
 	  strp += 2;		/* skip \{ or \< */
 	  start = strp;
 	  start_idx = start - SDATA (string);
@@ -903,6 +913,7 @@ Otherwise, return a new string.  */)
 	  length = SCHARS (tem);
 	  length_byte = SBYTES (tem);
 	subst:
+	  changed = true;
 	  {
 	    ptrdiff_t offset = bufp - buf;
 	    if (STRING_BYTES_BOUND - length_byte < bsize)
@@ -915,6 +926,22 @@ Otherwise, return a new string.  */)
 	    /* Check STRING again in case gc relocated it.  */
 	    strp = SDATA (string) + idx;
 	  }
+	}
+      else if (strp[0] == '`')
+	{
+	  in_quote = true;
+	  start = (unsigned char *) "\xE2\x80\x98"; /* ‘ */
+	subst_quote:
+	  length = 1;
+	  length_byte = 3;
+	  idx = strp - SDATA (string) + 1;
+	  goto subst;
+	}
+      else if (strp[0] == '\'' && in_quote)
+	{
+	  in_quote = false;
+	  start = (unsigned char *) "\xE2\x80\x99"; /* ’ */
+	  goto subst_quote;
 	}
       else if (! multibyte)		/* just copy other chars */
 	*bufp++ = *strp++, nchars++;
