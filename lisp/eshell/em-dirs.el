@@ -300,7 +300,7 @@ Thus, this does not include the current directory.")
 		 eshell-user-names)))))))
 
 (defun eshell/pwd (&rest args)
-  "Change output from `pwd` to be cleaner."
+  "Change output from ‘pwd’ to be cleaner."
   (let* ((path default-directory)
 	 (len (length path)))
     (if (and (> len 1)

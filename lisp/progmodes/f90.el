@@ -1115,7 +1115,7 @@ For fixed format code, use `fortran-mode'.
  indented line.
 \\[f90-indent-subprogram] indents the current subprogram.
 
-Type `? or `\\[help-command] to display a list of built-in\
+Type \\=`? or \\=`\\[help-command] to display a list of built-in\
  abbrevs for F90 keywords.
 
 Key definitions:
@@ -2269,7 +2269,7 @@ Leave point at the end of line."
 ;; Abbrevs and keywords.
 
 (defun f90-abbrev-start ()
-  "Typing `\\[help-command] or `? lists all the F90 abbrevs.
+  "Typing \\=`\\[help-command] or \\=`? lists all the F90 abbrevs.
 Any other key combination is executed normally."
   (interactive "*")
   (self-insert-command 1)

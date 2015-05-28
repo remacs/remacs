@@ -55,7 +55,7 @@ FROM with TO when it appears in a directory name.  This replacement is
 done when setting up the default directory of a newly visited file.
 
 FROM is matched against directory names anchored at the first
-character, so it should start with a \"\\\\`\", or, if directory
+character, so it should start with a \"\\\\\\=`\", or, if directory
 names cannot have embedded newlines, with a \"^\".
 
 FROM and TO should be equivalent names, which refer to the
