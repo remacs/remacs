@@ -943,7 +943,7 @@ convert the search string to a regexp used by regexp search functions."
 
 
 ;; Some high level utilities.  Others below.
-(defvar isearch--current-buffer)
+(defvar isearch--current-buffer nil)
 
 (defun isearch-update ()
   "This is called after every isearch command to update the display.
