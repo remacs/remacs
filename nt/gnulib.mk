@@ -66,7 +66,8 @@ HAVE_INCLUDE_NEXT = (__GNUC__ || 60000000 <= __DECC_VER)
 
 ## begin gnulib module acl-permissions
 
-libgnu_a_SOURCES += acl-errno-valid.c acl-internal.c
+libgnu_a_SOURCES += acl-errno-valid.c acl-internal.c \
+  get-permissions.c
 
 EXTRA_DIST += acl-internal.h acl.h acl_entries.c
 
@@ -530,6 +531,12 @@ EXTRA_DIST += putenv.c
 EXTRA_libgnu_a_SOURCES += putenv.c
 
 ## end   gnulib module putenv
+
+## begin gnulib module qcopy-acl
+
+libgnu_a_SOURCES += qcopy-acl.c
+
+## end   gnulib module qcopy-acl
 
 ## begin gnulib module readlink
 
