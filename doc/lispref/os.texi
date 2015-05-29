@@ -201,10 +201,11 @@ If the @file{*scratch*} buffer exists and is empty, it inserts
 If @code{initial-buffer-choice} is a string, it visits the file (or
 directory) with that name.  If it is a function, it calls the function
 with no arguments and selects the buffer that it returns.  If one file
-is given as a command line argument, the file is opened alongside
-@code{initial-buffer-choice}.  If more than one file is given, the
-@file{*Buffer List*} buffer is shown alongside
-@code{initial-buffer-choice}.
+is given as a command line argument, that file is visited and its
+buffer displayed alongside @code{initial-buffer-choice}.  If more than
+one file is given, all of the files are visited and the @file{*Buffer
+List*} buffer is displayed alongside @code{initial-buffer-choice}.
+
 @ignore
 @c I do not think this should be mentioned.  AFAICS it is just a dodge
 @c around inhibit-startup-screen not being settable on a site-wide basis.
