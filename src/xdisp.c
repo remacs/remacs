@@ -833,6 +833,7 @@ static void x_draw_bottom_divider (struct window *w);
 static void notice_overwritten_cursor (struct window *,
                                        enum glyph_row_area,
                                        int, int, int, int);
+static int  normal_char_height (struct font *);
 static void append_stretch_glyph (struct it *, Lisp_Object,
                                   int, int, int);
 
@@ -23928,9 +23929,13 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 
 #ifdef HAVE_WINDOW_SYSTEM
       if (EQ (prop, Qheight))
-	return OK_PIXELS (font ? FONT_HEIGHT (font) : FRAME_LINE_HEIGHT (it->f));
+	return OK_PIXELS (font
+			  ? normal_char_height (font)
+			  : FRAME_LINE_HEIGHT (it->f));
       if (EQ (prop, Qwidth))
-	return OK_PIXELS (font ? FONT_WIDTH (font) : FRAME_COLUMN_WIDTH (it->f));
+	return OK_PIXELS (font
+			  ? FONT_WIDTH (font)
+			  : FRAME_COLUMN_WIDTH (it->f));
 #else
       if (EQ (prop, Qheight) || EQ (prop, Qwidth))
 	return OK_PIXELS (1);
@@ -24562,6 +24567,34 @@ get_per_char_metric (struct font *font, XChar2b *char2b)
     return NULL;
   font->driver->text_extents (font, &code, 1, &metrics);
   return &metrics;
+}
+
+/* A subroutine that computes a reasonable "normal character height"
+   for fonts that claim preposterously large vertical dimensions, but
+   whose glyphs are actually reasonably sized.  */
+static int
+normal_char_height (struct font *font)
+{
+  int default_height = FONT_HEIGHT (font);
+
+  /* If the font claims too large height, use the metrics of the SPC
+     character instead.  Note that this could still fail to produce a
+     better value if the font or the font driver don't support the
+     functionality required by get_per_char_metric.  */
+  if (FONT_TOO_HIGH (font))
+    {
+      XChar2b char2b;
+
+      /* Get metrics of the SPC character.  */
+      if (get_char_glyph_code (' ', font, &char2b))
+	{
+	  struct font_metrics *pcm = get_per_char_metric (font, &char2b);
+
+	  if (!(pcm->width == 0 && pcm->rbearing == 0 && pcm->lbearing == 0))
+	    default_height = pcm->ascent + pcm->descent;
+	}
+    }
+  return default_height;
 }
 
 /* EXPORT for RIF:
@@ -25863,6 +25896,8 @@ produce_stretch_glyph (struct it *it)
   /* Compute height.  */
   if (FRAME_WINDOW_P (it->f))
     {
+      int default_height = normal_char_height (font);
+
       if ((prop = Fplist_get (plist, QCheight), !NILP (prop))
 	  && calc_pixel_width_or_height (&tem, it, prop, font, false, 0))
 	{
@@ -25871,9 +25906,9 @@ produce_stretch_glyph (struct it *it)
 	}
       else if (prop = Fplist_get (plist, QCrelative_height),
 	       NUMVAL (prop) > 0)
-	height = FONT_HEIGHT (font) * NUMVAL (prop);
+	height = default_height * NUMVAL (prop);
       else
-	height = FONT_HEIGHT (font);
+	height = default_height;
 
       if (height <= 0 && (height < 0 || !zero_height_ok_p))
 	height = 1;
