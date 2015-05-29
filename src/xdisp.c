@@ -24597,6 +24597,33 @@ normal_char_height (struct font *font)
   return default_height;
 }
 
+/* A subroutine that computes "normal" values of ascent and descent
+   for fonts that claim preposterously large values, but whose glyphs
+   actually have reasonable dimensions.  */
+static void
+normal_char_ascent_descent (struct font *font, int *ascent, int *descent)
+{
+  *ascent = FONT_BASE (font);
+  *descent = FONT_DESCENT (font);
+
+  if (FONT_TOO_HIGH (font))
+    {
+      XChar2b char2b;
+
+      /* Get metrics of a reasonably sized ASCII character.  */
+      if (get_char_glyph_code ('{', font, &char2b))
+	{
+	  struct font_metrics *pcm = get_per_char_metric (font, &char2b);
+
+	  if (!(pcm->width == 0 && pcm->rbearing == 0 && pcm->lbearing == 0))
+	    {
+	      *ascent = pcm->ascent;
+	      *descent = pcm->descent;
+	    }
+	}
+    }
+}
+
 /* EXPORT for RIF:
    Set *LEFT and *RIGHT to the left and right overhang of GLYPH on
    frame F.  Overhangs of glyphs other than type CHAR_GLYPH are
@@ -26132,8 +26159,7 @@ calc_line_height_property (struct it *it, Lisp_Object val, struct font *font,
 	boff = VCENTER_BASELINE_OFFSET (font, it->f) - boff;
     }
 
-  ascent = FONT_BASE (font) + boff;
-  descent = FONT_DESCENT (font) - boff;
+  normal_char_ascent_descent (font, &ascent, &descent);
 
   if (override)
     {
@@ -26259,26 +26285,7 @@ produce_glyphless_glyph (struct it *it, bool for_no_font, Lisp_Object acronym)
      ASCII face.  */
   face = FACE_FROM_ID (it->f, it->face_id)->ascii_face;
   font = face->font ? face->font : FRAME_FONT (it->f);
-  it->ascent = FONT_BASE (font);
-  it->descent = FONT_DESCENT (font);
-  /* Attempt to fix box height for fonts that claim preposterously
-     large height.  */
-  if (FONT_TOO_HIGH (font))
-    {
-      XChar2b char2b;
-
-      /* Get metrics of a reasonably sized ASCII character.  */
-      if (get_char_glyph_code ('{', font, &char2b))
-	{
-	  struct font_metrics *pcm = get_per_char_metric (font, &char2b);
-
-	  if (!(pcm->width == 0 && pcm->rbearing == 0 && pcm->lbearing == 0))
-	    {
-	      it->ascent = pcm->ascent;
-	      it->descent = pcm->descent;
-	    }
-	}
-    }
+  normal_char_ascent_descent (font, &it->ascent, &it->descent);
   it->ascent += font->baseline_offset;
   it->descent -= font->baseline_offset;
   base_height = it->ascent + it->descent;
