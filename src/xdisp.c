@@ -1762,7 +1762,7 @@ estimate_mode_line_height (struct frame *f, enum face_id face_id)
 	  if (face)
 	    {
 	      if (face->font)
-		height = FONT_HEIGHT (face->font);
+		height = normal_char_height (face->font);
 	      if (face->box_line_width > 0)
 		height += 2 * face->box_line_width;
 	    }
@@ -4889,7 +4889,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	    {
 	      struct face *face = FACE_FROM_ID (it->f, it->face_id);
 	      it->voffset = - (XFLOATINT (value)
-			       * (FONT_HEIGHT (face->font)));
+			       * (normal_char_height (face->font)));
 	    }
 #endif /* HAVE_WINDOW_SYSTEM */
 	}
