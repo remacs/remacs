@@ -587,9 +587,10 @@ updates `package-alist'."
   (dolist (dir (cons package-user-dir package-directory-list))
     (when (file-directory-p dir)
       (dolist (subdir (directory-files dir))
-        (let ((pkg-dir (expand-file-name subdir dir)))
-          (when (file-directory-p pkg-dir)
-            (package-load-descriptor pkg-dir)))))))
+        (unless (equal subdir "..")
+          (let ((pkg-dir (expand-file-name subdir dir)))
+            (when (file-directory-p pkg-dir)
+              (package-load-descriptor pkg-dir))))))))
 
 (defun define-package (_name-string _version-string
                                     &optional _docstring _requirements
