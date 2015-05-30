@@ -1,7 +1,7 @@
 ADASRC=$(addprefix ./ada-src/,etags-test-for.ada 2ataspri.adb 2ataspri.ads waroquiers.ada)
 ASRC=$(addprefix ./a-src/,empty.zz empty.zz.gz)
 CSRC=$(addprefix ./c-src/,abbrev.c .//c.c torture.c getopt.h etags.c\
- exit.c exit.strange_suffix sysdep.h tab.c\
+ exit.c exit.strange_suffix sysdep.h tab.c dostorture.c\
  emacs/src/gmalloc.c emacs/src/regex.h emacs/src/keyboard.c emacs/src/lisp.h\
  machsyscalls.c machsyscalls.h fail.c a/b/b.c) ../etags/c-src/h.h
 CPSRC=$(addprefix ./cp-src/,c.C burton.cpp burton.cpp\
