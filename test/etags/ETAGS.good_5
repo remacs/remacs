@@ -2925,6 +2925,14 @@ typedef int should_see_this_one_enclosed_in_extern_C;149,3156
 typedef int (*should_see_this_function_pointer)should_see_this_function_pointer153,3229
 typedef int should_see_this_array_type[should_see_this_array_type156,3311
 
+cp-src/x.cc,102
+class XX1,0
+     int foo(4,19
+     void bar(5,35
+XX::foo(foo9,60
+XX::bar(bar15,95
+main(21,126
+
 cp-src/burton.cpp,124
 ::dummy::dummy test::dummy1(dummy11,0
 ::dummy::dummy test::dummy2(dummy26,64

@@ -240,14 +240,31 @@ int pp1(74,1317
 pp287,1419
 pp3(100,1518
 
-c-src/getopt.h,147
+c-src/getopt.h,666
 #define _GETOPT_H 19,801
+extern char *optarg;optarg31,1109
+extern int optind;45,1617
+extern int opterr;50,1743
 struct option73,2797
+  const char *name;name76,2826
+  char *name;name78,2852
+  int has_arg;82,3009
+  int *flag;flag83,3024
+  int val;84,3037
 #define	no_argument	89,3124
 #define required_argument	90,3147
 #define optional_argument	91,3175
+extern int getopt 98,3440
+extern int getopt 100,3544
+extern int getopt_long 102,3599
+extern int getopt_long_only 104,3731
+extern int _getopt_internal 109,3942
+extern int getopt 114,4140
+extern int getopt_long 115,4162
+extern int getopt_long_only 116,4189
+extern int _getopt_internal 118,4222
 
-c-src/etags.c,10045
+c-src/etags.c,14175
 char pot_etags_version[pot_etags_version81,3470
 #  undef DEBUG84,3552
 #  define DEBUG 85,3567
@@ -288,21 +305,100 @@ char pot_etags_version[pot_etags_version81,3470
 #define xnew(179,6015
 #define xrnew(180,6083
 typedef void Lang_function 182,6164
+  const char *suffix;suffix186,6219
+  const char *command;command187,6294
 } compressor;188,6365
+  const char *name;name192,6397
+  const char *help;help193,6449
+  Lang_function *function;function194,6508
+  const char **suffixes;suffixes195,6556
+  const char **filenames;filenames196,6633
+  const char **interpreters;interpreters197,6702
+  bool metasource;198,6771
 } language;199,6835
 typedef struct fdesc201,6848
+  struct fdesc *next;next203,6871
+  char *infname;infname204,6920
+  char *infabsname;infabsname205,6973
+  char *infabsdir;infabsdir206,7038
+  char *taggedfname;taggedfname207,7091
+  language *lang;lang208,7149
+  char *prop;prop209,7191
+  bool usecharno;210,7249
+  bool written;211,7311
 } fdesc;212,7366
 typedef struct node_st214,7376
+  struct node_st *left,left216,7428
+  struct node_st *left, *right;right216,7428
+  fdesc *fdp;fdp217,7486
+  char *name;name218,7548
+  char *regex;regex219,7580
+  bool valid;220,7617
+  bool is_func;221,7670
+  bool been_warned;222,7733
+  int lno;223,7801
+  long cno;224,7842
 } node;225,7894
+  long size;236,8208
+  int len;237,8221
+  char *buffer;buffer238,8232
 } linebuffer;239,8248
     at_language,245,8344
     at_regexp,246,8393
     at_filename,247,8437
     at_stdin,248,8473
     at_end	249,8516
+  } arg_type;250,8557
+  language *lang;lang251,8593
+  char *what;what252,8656
 } argument;253,8698
 typedef struct regexp256,8758
+  struct regexp *p_next;p_next258,8782
+  language *lang;lang259,8837
+  char *pattern;pattern260,8897
+  char *name;name261,8940
+  struct re_pattern_buffer *pat;pat262,8971
+  struct re_registers regs;263,9031
+  bool error_signaled;264,9078
+  bool force_explicit_name;265,9141
+  bool ignore_case;266,9206
+  bool multi_line;267,9259
 } regexp;268,9325
+static void Ada_funcs 274,9428
+static void Asm_labels 275,9460
+static void C_entries 276,9493
+static void default_C_entries 277,9536
+static void plain_C_entries 278,9576
+static void Cjava_entries 279,9614
+static void Cobol_paragraphs 280,9650
+static void Cplusplus_entries 281,9689
+static void Cstar_entries 282,9729
+static void Erlang_functions 283,9765
+static void Forth_words 284,9804
+static void Fortran_functions 285,9838
+static void HTML_labels 286,9878
+static void Lisp_functions 287,9912
+static void Lua_functions 288,9949
+static void Makefile_targets 289,9985
+static void Pascal_functions 290,10024
+static void Perl_functions 291,10063
+static void PHP_functions 292,10100
+static void PS_functions 293,10136
+static void Prolog_functions 294,10171
+static void Python_functions 295,10210
+static void Scheme_functions 296,10249
+static void TeX_commands 297,10288
+static void Texinfo_nodes 298,10323
+static void Yacc_entries 299,10359
+static void just_read_file 300,10394
+static language *get_language_from_langname get_language_from_langname302,10432
+static void readline 303,10492
+static long readline_internal 304,10537
+static bool nocase_tail 305,10591
+static void get_tag 306,10631
+static void analyze_regex 308,10671
+static void free_regexps 309,10707
+static void regex_tag_multiline 310,10740
 static void error 311,10780
 # undef STDIN408,15073
 #define STDIN 411,15095
@@ -384,6 +480,7 @@ free_tree 1917,62744
 free_fdesc 1935,63029
 add_node 1955,63472
 invalidate_nodes 2035,65537
+static int total_size_of_entries 2067,66150
 static int number_len 2068,66193
 total_size_of_entries 2087,66694
 put_entries 2107,67154
@@ -412,6 +509,9 @@ enum sym_type2204,69312
   st_C_struct, st_C_extern, st_C_enum, st_C_define,2213,69495
   st_C_struct, st_C_extern, st_C_enum, st_C_define, st_C_typedef2213,69495
 struct C_stab_entry 2271,71278
+struct C_stab_entry { const char *name;name2271,71278
+struct C_stab_entry { const char *name; int c_ext;2271,71278
+struct C_stab_entry { const char *name; int c_ext; enum sym_type type;2271,71278
 hash 2275,71409
 in_word_set 2321,72937
       TOTAL_KEYWORDS 2325,73018
@@ -465,14 +565,32 @@ static const char *objtag objtag2453,76809
   oignore	2483,77755
 } objdef;2484,77787
 static struct tok2491,77944
+  char *line;line2493,77964
+  int offset;2494,78014
+  int length;2495,78067
+  bool valid;2502,78352
+  bool named;2505,78487
+  int lineno;2506,78528
+  long linepos;2507,78576
 } token;2508,78626
+static void pushclass_above 2514,78784
+static void popclass_above 2515,78832
+static void write_classname 2516,78866
+  char **cname;cname2519,78950
+  int *bracelev;bracelev2520,78993
+  int nl;2521,79042
+  int size;2522,79096
 } cstack;2523,79136
 #define nestlev	2525,79264
 #define instruct	2527,79369
 pushclass_above 2531,79489
 popclass_above 2550,79948
 write_classname 2564,80162
+static bool consider_token 2592,80761
+static void make_C_tag 2593,80833
 consider_token 2613,81341
+  long linepos;2922,88499
+  linebuffer lb;2923,88515
 } lbs[lbs2924,88532
 #define current_lb_is_new 2926,88543
 #define switch_line_buffers(2927,88588
@@ -497,6 +615,8 @@ Yacc_entries 3868,110642
 #define LOOKING_AT(3884,111056
 #define LOOKING_AT_NOCASE(3891,111461
 just_read_file 3901,111861
+static void F_takeprec 3910,111965
+static void F_getit 3911,111996
 F_takeprec 3914,112039
 F_getit 3937,112366
 Fortran_functions 3961,112840
@@ -509,6 +629,7 @@ PHP_functions 4387,122684
 Cobol_paragraphs 4466,124471
 Makefile_targets 4494,125029
 Pascal_functions 4529,125950
+static void L_getit 4706,130277
 L_getit 4709,130318
 Lisp_functions 4725,130664
 Lua_functions 4785,131850
@@ -517,6 +638,8 @@ Forth_words 4841,133053
 Scheme_functions 4877,134092
 static linebuffer *TEX_toktab TEX_toktab4908,134781
 static const char *TEX_defenv TEX_defenv4912,134974
+static void TEX_mode 4917,135172
+static void TEX_decode_env 4918,135203
 static char TEX_esc 4920,135261
 static char TEX_opgrp 4921,135289
 static char TEX_clgrp 4922,135318
@@ -527,14 +650,23 @@ TEX_mode 4992,136804
 TEX_decode_env 5026,137509
 Texinfo_nodes 5071,138554
 HTML_labels 5094,139013
+static size_t prolog_pr 5214,142192
+static void prolog_skip_comment 5215,142234
+static size_t prolog_atom 5216,142290
 Prolog_functions 5219,142347
 prolog_skip_comment 5255,143128
 prolog_pr 5281,143736
 prolog_atom 5319,144628
+static int erlang_func 5374,145540
+static void erlang_attribute 5375,145581
+static int erlang_atom 5376,145620
 Erlang_functions 5379,145666
 erlang_func 5438,146965
 erlang_attribute 5476,147642
 erlang_atom 5496,148061
+static char *scan_separators scan_separators5520,148487
+static void add_regex 5521,148526
+static char *substitute substitute5522,148570
 scan_separators 5534,149080
 analyze_regex 5586,150460
 add_regex 5654,152050
@@ -567,11 +699,15 @@ linebuffer_setlen 6524,173887
 xmalloc 6536,174148
 xrealloc 6545,174314
 
-c-src/exit.c,47
+c-src/exit.c,99
+    size_t n;28,961
+    void EXFUN((*fn[fn29,975
   } __libc_atexit;30,1011
 DEFUN(exit,38,1252
 
-c-src/exit.strange_suffix,47
+c-src/exit.strange_suffix,99
+    size_t n;28,961
+    void EXFUN((*fn[fn29,975
   } __libc_atexit;30,1011
 DEFUN(exit,38,1252
 
@@ -616,9 +752,10 @@ int pp1(74,1389
 pp287,1504
 pp3(100,1616
 
-c-src/emacs/src/gmalloc.c,3539
+c-src/emacs/src/gmalloc.c,7311
 #define USE_PTHREAD25,1002
 #undef get_current_dir_name33,1126
+extern void emacs_abort 47,1305
 #undef malloc64,2110
 #undef realloc65,2124
 #undef calloc66,2139
@@ -628,6 +765,10 @@ c-src/emacs/src/gmalloc.c,3539
 #define calloc 70,2213
 #define aligned_alloc 71,2236
 #define free 72,2273
+extern void *bss_sbrk bss_sbrk76,2335
+extern int bss_sbrk_did_unexec;77,2375
+extern char bss_sbrk_buffer[bss_sbrk_buffer78,2407
+extern void *bss_sbrk_buffer_end;bss_sbrk_buffer_end79,2438
 #define DUMPED 80,2472
 #define ALLOCATED_BEFORE_DUMPING(81,2507
 extern void *malloc malloc94,2718
@@ -637,11 +778,46 @@ extern void *malloc malloc94,2718
 #define BLOCKIFY(127,4052
 #define HEAP	131,4215
 #define FINAL_FREE_BLOCKS	135,4391
+	int type;145,4676
+		size_t nfree;150,4720
+		size_t first;151,4777
+	      } frag;152,4834
+	    ptrdiff_t size;156,5055
+	  } info;157,5076
+      } busy;158,5087
+	size_t size;163,5215
+	size_t next;164,5272
+	size_t prev;165,5321
+      } free;166,5374
   } malloc_info;167,5388
+extern char *_heapbase;_heapbase170,5449
+extern malloc_info *_heapinfo;_heapinfo173,5541
 #define BLOCK(176,5620
 #define ADDRESS(177,5682
+extern size_t _heapindex;180,5797
+extern size_t _heaplimit;183,5866
 struct list186,5939
+    struct list *next;next188,5955
+    struct list *prev;prev189,5978
+extern struct list _fraghead[_fraghead193,6056
 struct alignlist196,6153
+    struct alignlist *next;next198,6174
+    void *aligned;aligned199,6202
+    void *exact;exact200,6270
+extern struct alignlist *_aligned_blocks;_aligned_blocks202,6334
+extern size_t _chunks_used;205,6401
+extern size_t _bytes_used;206,6429
+extern size_t _chunks_free;207,6456
+extern size_t _bytes_free;208,6484
+extern void *_malloc_internal _malloc_internal213,6673
+extern void *_realloc_internal _realloc_internal214,6713
+extern void _free_internal 215,6762
+extern void *_malloc_internal_nolock _malloc_internal_nolock216,6799
+extern void *_realloc_internal_nolock _realloc_internal_nolock217,6846
+extern void _free_internal_nolock 218,6902
+extern pthread_mutex_t _malloc_mutex,221,6966
+extern pthread_mutex_t _malloc_mutex, _aligned_blocks_mutex;221,6966
+extern int _malloc_thread_enabled_p;222,7027
 #define LOCK(223,7064
 #define UNLOCK(228,7195
 #define LOCK_ALIGNED_BLOCKS(233,7329
@@ -650,13 +826,37 @@ struct alignlist196,6153
 #define UNLOCK(245,7664
 #define LOCK_ALIGNED_BLOCKS(246,7681
 #define UNLOCK_ALIGNED_BLOCKS(247,7711
+extern void *malloc_find_object_address malloc_find_object_address252,7865
+extern void *(*__morecore)__morecore256,8021
+extern void *__default_morecore __default_morecore259,8105
+extern void (*__after_morecore_hook)__after_morecore_hook263,8269
+extern size_t __malloc_extra_blocks;267,8442
+extern int __malloc_initialized;270,8552
+extern int __malloc_initialize 272,8646
+extern void (*__malloc_initialize_hook)__malloc_initialize_hook275,8723
+extern void (*__free_hook)__free_hook276,8771
+extern void *(*__malloc_hook)__malloc_hook277,8811
+extern void *(*__realloc_hook)__realloc_hook278,8856
+extern void *(*__memalign_hook)__memalign_hook279,8913
 enum mcheck_status283,9092
     MCHECK_DISABLED 285,9115
     MCHECK_OK,286,9187
     MCHECK_FREE,287,9226
     MCHECK_HEAD,288,9270
     MCHECK_TAIL	289,9334
+extern int mcheck 296,9701
+extern enum mcheck_status mprobe 301,9952
+extern void mtrace 304,10055
+extern void muntrace 305,10082
 struct mstats308,10153
+    size_t bytes_total;310,10171
+    size_t chunks_used;311,10225
+    size_t bytes_used;312,10285
+    size_t chunks_free;313,10351
+    size_t bytes_free;314,10406
+extern struct mstats mstats 318,10518
+extern void memory_warnings 321,10625
+void *(*__malloc_hook)__malloc_hook352,11743
 char *_heapbase;_heapbase355,11829
 malloc_info *_heapinfo;_heapinfo358,11927
 static size_t heapsize;361,11983
@@ -669,6 +869,8 @@ size_t _chunks_free;375,12270
 size_t _bytes_free;376,12291
 int __malloc_initialized;379,12340
 size_t __malloc_extra_blocks;381,12367
+void (*__malloc_initialize_hook)__malloc_initialize_hook383,12398
+void (*__after_morecore_hook)__after_morecore_hook384,12439
 static int state_protected_p;400,12912
 static size_t last_state_size;401,12942
 static malloc_info *last_heapinfo;last_heapinfo402,12973
@@ -692,24 +894,33 @@ morecore_nolock 609,18066
 _malloc_internal_nolock 722,21584
 _malloc_internal 920,28102
 malloc 932,28247
+extern void *_malloc _malloc956,29033
+extern void _free 957,29064
+extern void *_realloc _realloc958,29092
 _malloc 961,29140
 _free 967,29196
 _realloc 973,29240
+void (*__free_hook)__free_hook1001,30259
 struct alignlist *_aligned_blocks _aligned_blocks1004,30345
 _free_internal_nolock 1009,30474
 _free_internal 1255,38476
 free 1265,38603
 weak_alias 1277,38799
 #define min(1306,39813
+void *(*__realloc_hook)__realloc_hook1310,39898
 _realloc_internal_nolock 1319,40309
 _realloc_internal 1435,43563
 realloc 1447,43726
 calloc 1478,44894
 #define	__sbrk	1513,46042
+extern void *__sbrk __sbrk1518,46247
 __default_morecore 1525,46511
+void *(*__memalign_hook)__memalign_hook1554,47456
 aligned_alloc 1557,47522
 memalign 1647,49704
 posix_memalign 1656,49909
+extern void *valloc valloc1695,51140
+extern int getpagesize 1700,51278
 static size_t pagesize;1703,51317
 valloc 1706,51349
 #undef malloc1715,51490
@@ -717,18 +928,31 @@ valloc 1706,51349
 #undef calloc1717,51519
 #undef aligned_alloc1718,51533
 #undef free1719,51554
+extern void *malloc malloc1722,51609
+extern void *realloc realloc1723,51644
+extern void *calloc calloc1724,51691
+extern void free 1725,51740
+extern void *aligned_alloc aligned_alloc1727,51796
+extern int posix_memalign 1729,51890
 hybrid_malloc 1736,52083
 hybrid_calloc 1744,52188
 hybrid_free 1752,52319
 hybrid_aligned_alloc 1765,52626
 hybrid_realloc 1780,52984
+char *gget_current_dir_name gget_current_dir_name1808,53753
 hybrid_get_current_dir_name 1811,53797
+static void (*old_free_hook)old_free_hook1846,54921
+static void *(*old_malloc_hook)old_malloc_hook1847,54963
+static void *(*old_realloc_hook)old_realloc_hook1848,55010
+static void (*abortfunc)abortfunc1851,55124
 #define MAGICWORD	1854,55206
 #define MAGICFREE	1855,55261
 #define MAGICBYTE	1856,55316
 #define MALLOCFLOOD	1857,55348
 #define FREEFLOOD	1858,55382
 struct hdr1860,55415
+    size_t size;1862,55430
+    size_t magic;1863,55484
 checkhdr 1867,55581
 freehook 1891,56022
 mallochook 1927,56804
@@ -738,7 +962,7 @@ static int mcheck_used 2012,58586
 mcheck 2015,58619
 mprobe 2035,59138
 
-c-src/emacs/src/regex.h,3761
+c-src/emacs/src/regex.h,5300
 #define _REGEX_H 21,836
 typedef unsigned long reg_syntax_t;43,1577
 #define RE_BACKSLASH_ESCAPE_IN_LISTS 47,1749
@@ -765,6 +989,9 @@ typedef unsigned long reg_syntax_t;43,1577
 #define RE_SHY_GROUPS 150,6360
 #define RE_NO_NEWLINE_ANCHOR 153,6468
 #define RE_DEBUG 161,6884
+extern reg_syntax_t re_syntax_options;167,7170
+extern Lisp_Object re_match_object;172,7344
+extern size_t re_max_failures;176,7454
 #define RE_SYNTAX_EMACS	183,7684
 #define RE_SYNTAX_AWK	186,7780
 #define RE_SYNTAX_GNU_AWK	193,8084
@@ -809,19 +1036,55 @@ typedef unsigned long reg_syntax_t;43,1577
 } reg_errcode_t;323,12911
 # define RE_TRANSLATE_TYPE 332,13273
 struct re_pattern_buffer335,13315
+  unsigned char *buffer;buffer341,13538
+  size_t allocated;344,13614
+  size_t used;347,13686
+  reg_syntax_t syntax;350,13769
+  char *fastmap;fastmap355,13975
+  RE_TRANSLATE_TYPE translate;361,14241
+  size_t re_nsub;364,14329
+  unsigned can_be_null 370,14624
 #define REGS_UNALLOCATED 376,14889
 #define REGS_REALLOCATE 377,14916
 #define REGS_FIXED 378,14942
+  unsigned regs_allocated 379,14963
+  unsigned fastmap_accurate 383,15136
+  unsigned no_sub 387,15267
+  unsigned not_bol 391,15398
+  unsigned not_eol 394,15475
+  unsigned used_syntax 398,15655
+  unsigned multibyte 403,15805
+  unsigned target_multibyte 407,15941
+  int charset_unibyte;410,16032
 typedef struct re_pattern_buffer regex_t;416,16098
 typedef ssize_t regoff_t;423,16492
 struct re_registers428,16652
+  unsigned num_regs;430,16674
+  regoff_t *start;start431,16695
+  regoff_t *end;end432,16714
 # define RE_NREGS 440,16942
+  regoff_t rm_so;449,17159
+  regoff_t rm_eo;450,17239
 } regmatch_t;451,17317
+extern reg_syntax_t re_set_syntax 457,17512
+extern const char *re_compile_pattern re_compile_pattern462,17776
+extern int re_compile_fastmap 469,18058
+extern regoff_t re_search 477,18466
+extern regoff_t re_search_2 485,18781
+extern regoff_t re_match 495,19177
+extern regoff_t re_match_2 501,19407
+extern void re_set_registers 520,20197
+extern char *re_comp re_comp528,20469
+extern int re_exec 529,20506
 #  define _Restrict_ 540,20886
 #  define _Restrict_ 542,20979
 #  define _Restrict_544,21018
 #  define _Restrict_arr_ 555,21418
 #  define _Restrict_arr_557,21461
+extern reg_errcode_t regcomp 562,21530
+extern reg_errcode_t regexec 566,21656
+extern size_t regerror 571,21850
+extern void regfree 574,21956
 #  define CHAR_CLASS_MAX_LENGTH 593,22470
 #  define CHAR_CLASS_MAX_LENGTH 597,22648
 typedef wctype_t re_wctype_t;599,22692
@@ -850,9 +1113,12 @@ typedef enum { RECC_ERROR 609,22953
 	       RECC_ASCII,617,23227
 	       RECC_ASCII, RECC_UNIBYTE617,23227
 } re_wctype_t;618,23260
+extern char re_iswctype 620,23276
+extern re_wctype_t re_wctype 621,23329
 typedef int re_wchar_t;623,23387
+extern void re_set_whitespace_regexp 625,23412
 
-c-src/emacs/src/keyboard.c,20957
+c-src/emacs/src/keyboard.c,23269
 volatile int interrupt_input_blocked;76,1808
 volatile bool pending_signals;80,1944
 #define KBD_BUFFER_SIZE 82,1976
@@ -899,6 +1165,10 @@ static bool input_was_pending;287,10022
 static struct input_event kbd_buffer[kbd_buffer291,10107
 static struct input_event *kbd_fetch_ptr;kbd_fetch_ptr297,10386
 static struct input_event * volatile kbd_store_ptr;302,10601
+static void recursive_edit_unwind 313,11088
+static Lisp_Object command_loop 314,11144
+static void echo_now 316,11185
+static ptrdiff_t echo_length 317,11214
 unsigned timers_run;320,11296
 struct timespec *input_available_clear_time;input_available_clear_time324,11408
 bool interrupt_input;328,11573
@@ -908,6 +1178,33 @@ static struct timespec timer_last_idleness_start_time;340,11916
 #define READABLE_EVENTS_DO_TIMERS_NOW	346,12046
 #define READABLE_EVENTS_FILTER_EVENTS	347,12094
 #define READABLE_EVENTS_IGNORE_SQUEEZABLES	348,12142
+static void (*keyboard_init_hook)keyboard_init_hook351,12264
+static bool get_input_pending 353,12307
+static bool readable_events 354,12344
+static Lisp_Object read_char_x_menu_prompt 355,12379
+static Lisp_Object read_char_minibuf_menu_prompt 357,12502
+static Lisp_Object make_lispy_event 358,12571
+static Lisp_Object make_lispy_movement 359,12631
+static Lisp_Object modify_event_symbol 363,12840
+static Lisp_Object make_lispy_switch_frame 366,13050
+static Lisp_Object make_lispy_focus_in 367,13108
+static Lisp_Object make_lispy_focus_out 369,13188
+static bool help_char_p 371,13275
+static void save_getcjmp 372,13314
+static void restore_getcjmp 373,13354
+static Lisp_Object apply_modifiers 374,13397
+static void clear_event 375,13452
+static void restore_kboard_configuration 376,13500
+static void deliver_input_available_signal 378,13568
+static void handle_interrupt 380,13631
+static _Noreturn void quit_throw_to_read_char 381,13668
+static void process_special_events 382,13722
+static void timer_start_idle 383,13765
+static void timer_stop_idle 384,13802
+static void timer_resume_idle 385,13838
+static void deliver_user_signal 386,13876
+static char *find_user_signal_name find_user_signal_name387,13915
+static void store_user_signal_events 388,13957
 kset_echo_string 392,14088
 kset_kbd_queue 397,14184
 kset_keyboard_translate_table 402,14276
@@ -934,6 +1231,8 @@ any_kboard_state 817,26013
 single_kboard_state 838,26665
 not_single_kboard_state 848,26803
 struct kboard_stack858,27065
+  KBOARD *kboard;kboard860,27087
+  struct kboard_stack *next;next861,27105
 static struct kboard_stack *kboard_stack;kboard_stack864,27138
 push_kboard 867,27186
 pop_kboard 879,27375
@@ -943,6 +1242,8 @@ restore_kboard_configuration 952,29621
 cmd_error 970,30077
 cmd_error_internal 1024,31510
 DEFUN ("command-error-default-function", Fcommand_error_default_function,command-error-default-function1043,32030
+static Lisp_Object command_loop_2 1086,33637
+static Lisp_Object top_level_1 1087,33686
 command_loop 1094,33916
 command_loop_2 1134,35135
 top_level_2 1146,35339
@@ -955,6 +1256,8 @@ tracking_off 1216,37281
 DEFUN ("internal--track-mouse", Ftrack_mouse,track-mouse1234,37816
 bool ignore_mouse_drag_p;1256,38392
 some_mouse_moved 1259,38441
+static int read_key_sequence 1282,38799
+static void adjust_point_for_property 1284,38917
 Lisp_Object last_undo_boundary;1287,39032
 command_loop_1 1294,39273
 read_menu_command 1649,50889
@@ -974,6 +1277,8 @@ set_poll_suppress_count 2009,61759
 bind_polling_period 2029,62141
 make_ctrl_char 2048,62492
 show_help_echo 2113,64455
+static Lisp_Object kbd_buffer_get_event 2152,65484
+static void record_char 2154,65596
 static Lisp_Object help_form_saved_window_configs;2156,65638
 read_char_help_form_unwind 2158,65701
 #define STOP_POLLING	2166,65959
@@ -1084,12 +1389,17 @@ totally_unblock_input 7209,215445
 handle_input_available_signal 7217,215529
 deliver_input_available_signal 7226,215700
 struct user_signal_info7235,215865
+  int sig;7238,215915
+  char *name;name7241,215956
+  int npending;7244,216007
+  struct user_signal_info *next;next7246,216024
 static struct user_signal_info *user_signals user_signals7250,216090
 add_user_signal 7253,216149
 handle_user_signal 7275,216598
 deliver_user_signal 7316,217558
 find_user_signal_name 7322,217659
 store_user_signal_events 7334,217841
+static void menu_bar_item 7362,218341
 static Lisp_Object menu_bar_one_keymap_changed_items;7363,218416
 static Lisp_Object menu_bar_items_vector;7368,218630
 static int menu_bar_items_index;7369,218672
@@ -1105,6 +1415,10 @@ parse_menu_item 7686,228341
 static Lisp_Object tool_bar_items_vector;7965,236336
 static Lisp_Object tool_bar_item_properties;7970,236510
 static int ntool_bar_items;7974,236606
+static void init_tool_bar_items 7978,236664
+static void process_tool_bar_item 7979,236711
+static bool parse_tool_bar_item 7981,236801
+static void append_tool_bar_item 7982,236861
 tool_bar_items 7990,237083
 process_tool_bar_item 8075,239892
 #define PROP(8112,240969
@@ -1119,6 +1433,10 @@ read_char_minibuf_menu_prompt 8503,252445
 follow_key 8726,258553
 active_maps 8733,258695
 typedef struct keyremap8742,259021
+  Lisp_Object parent;8745,259107
+  Lisp_Object map;8748,259224
+  int start,8753,259446
+  int start, end;8753,259446
 } keyremap;8754,259464
 access_keymap_keyremap 8764,259808
 keyremap_step 8811,261450
@@ -1166,6 +1484,8 @@ wipe_kboard 10909,329637
 delete_kboard 10917,329751
 init_keyboard 10942,330281
 struct event_head11021,332696
+  short var;11023,332716
+  short kind;11024,332729
 static const struct event_head head_table[head_table11027,332747
 syms_of_keyboard 11045,333577
   DEFVAR_LISP ("internal--top-level-message"11058,333972
@@ -1311,7 +1631,7 @@ mark_kboards 11916,370434
   DEFVAR_LISP ("selection-inhibit-update-commands",\111815,366013
   DEFVAR_LISP ("debug-on-event",\111825,366554
 
-c-src/emacs/src/lisp.h,20567
+c-src/emacs/src/lisp.h,39173
 #define EMACS_LISP_H22,800
 #define DECLARE_GDB_SYM(47,1421
 # define DEFINE_GDB_SYMBOL_BEGIN(49,1508
@@ -1347,6 +1667,7 @@ enum { BITS_PER_BITS_WORD 125,4223
 typedef unsigned char bits_word;127,4290
 # define BITS_WORD_MAX 128,4323
 enum { BITS_PER_BITS_WORD 129,4386
+verify 131,4450
     BITS_PER_CHAR 136,4570
     BITS_PER_SHORT 137,4605
     BITS_PER_LONG 138,4657
@@ -1365,6 +1686,8 @@ typedef EMACS_UINT uprintmax_t;154,5227
 # define pD 171,5779
 # define eassert(200,7062
 # define eassume(201,7140
+extern _Noreturn void die 204,7206
+extern bool suppress_checking EXTERNALLY_VISIBLE;206,7268
 # define eassert(208,7319
 # define eassume(212,7450
 enum Lisp_Bits239,8519
@@ -1469,6 +1792,7 @@ enum Lisp_Fwd_Type502,18543
     Lisp_Fwd_Obj,506,18670
     Lisp_Fwd_Buffer_Obj,507,18729
     Lisp_Fwd_Kboard_Obj	508,18800
+typedef struct { EMACS_INT i;567,21781
 typedef struct { EMACS_INT i; } Lisp_Object;567,21781
 #define LISP_INITIALLY(569,21827
 #undef CHECK_LISP_OBJECT_TYPE571,21858
@@ -1479,6 +1803,42 @@ typedef EMACS_INT Lisp_Object;577,22064
 enum CHECK_LISP_OBJECT_TYPE 579,22125
 enum CHECK_LISP_OBJECT_TYPE { CHECK_LISP_OBJECT_TYPE 579,22125
 #define LISP_INITIALLY_ZERO 582,22226
+INLINE bool BOOL_VECTOR_P 588,22350
+INLINE bool BUFFER_OBJFWDP 589,22391
+INLINE bool BUFFERP 590,22438
+INLINE bool CHAR_TABLE_P 591,22473
+INLINE Lisp_Object CHAR_TABLE_REF_ASCII 592,22513
+INLINE bool 593,22579
+INLINE bool 594,22614
+INLINE bool functionp 595,22650
+INLINE bool 596,22687
+INLINE bool 597,22725
+INLINE bool 598,22762
+INLINE bool 599,22797
+INLINE bool OVERLAYP 600,22831
+INLINE bool PROCESSP 601,22867
+INLINE bool PSEUDOVECTORP 602,22903
+INLINE bool SAVE_VALUEP 603,22949
+INLINE bool FINALIZERP 604,22988
+INLINE void set_sub_char_table_contents 605,23026
+INLINE bool STRINGP 607,23116
+INLINE bool SUB_CHAR_TABLE_P 608,23151
+INLINE bool SUBRP 609,23195
+INLINE bool 610,23228
+INLINE bool 611,23265
+INLINE bool WINDOWP 612,23306
+INLINE bool TERMINALP 613,23341
+INLINE struct Lisp_Save_Value *XSAVE_VALUE XSAVE_VALUE614,23378
+INLINE struct Lisp_Finalizer *XFINALIZER XFINALIZER615,23436
+INLINE struct Lisp_Symbol *(XSYMBOL)616,23492
+INLINE void 617,23544
+extern Lisp_Object char_table_ref 620,23616
+extern void char_table_set 621,23670
+extern _Noreturn Lisp_Object wrong_type_argument 624,23757
+extern _Noreturn void wrong_choice 625,23834
+extern bool might_dump;628,23925
+extern bool initialized;631,24061
+extern double extract_float 634,24117
 enum symbol_interned639,24199
   SYMBOL_UNINTERNED 641,24222
   SYMBOL_INTERNED 642,24247
@@ -1489,7 +1849,16 @@ enum symbol_redirect646,24315
   SYMBOL_LOCALIZED 650,24386
   SYMBOL_FORWARDED 651,24410
 struct Lisp_Symbol654,24437
+  bool_bf gcmarkbit 656,24458
   ENUM_BF 663,24793
+    Lisp_Object value;687,25631
+    struct Lisp_Symbol *alias;alias688,25654
+    struct Lisp_Buffer_Local_Value *blv;blv689,25685
+    union Lisp_Fwd *fwd;fwd690,25726
+  } val;691,25751
+  Lisp_Object function;694,25823
+  Lisp_Object plist;697,25885
+  struct Lisp_Symbol *next;next700,25974
 #define EXFUN(707,26252
 #define DEFUN_ARGS_MANY	712,26446
 #define DEFUN_ARGS_UNEVALLED	713,26498
@@ -1588,6 +1957,8 @@ XINTPTR 1128,39581
 make_pointer_integer 1134,39661
 LISP_MACRO_DEFUN_VOID 1143,39826
 typedef struct interval *INTERVAL;INTERVAL1149,39987
+      Lisp_Object cdr;1159,40162
+      struct Lisp_Cons *chain;chain1162,40236
 xcar_addr 1174,40760
 xcdr_addr 1179,40837
 LISP_MACRO_DEFUN 1185,40931
@@ -1605,13 +1976,20 @@ SSDATA 1291,43908
 SREF 1297,44037
 SSET 1302,44128
 SCHARS 1307,44242
+extern ptrdiff_t string_bytes 1313,44337
 STRING_BYTES 1316,44415
 SBYTES 1326,44595
 STRING_SET_CHARS 1331,44681
 struct vectorlike_header1343,45232
+    ptrdiff_t size;1364,46383
 struct Lisp_Vector1369,46482
+    struct vectorlike_header header;1371,46505
+    Lisp_Object contents[contents1372,46542
     ALIGNOF_STRUCT_LISP_VECTOR1378,46681
 struct Lisp_Bool_Vector1384,46864
+    struct vectorlike_header header;1388,47012
+    EMACS_INT size;1390,47086
+    bits_word data[data1395,47319
 bool_vector_size 1399,47385
 bool_vector_data 1407,47523
 bool_vector_uchar_data 1413,47617
@@ -1639,16 +2017,47 @@ enum CHARTAB_SIZE_BITS1565,52489
     CHARTAB_SIZE_BITS_1 1568,52545
     CHARTAB_SIZE_BITS_2 1569,52574
     CHARTAB_SIZE_BITS_3 1570,52603
+extern const int chartab_size[chartab_size1573,52637
 struct Lisp_Char_Table1575,52672
+    struct vectorlike_header header;1581,52928
+    Lisp_Object defalt;1585,53078
+    Lisp_Object parent;1590,53280
+    Lisp_Object purpose;1594,53398
+    Lisp_Object ascii;1598,53564
+    Lisp_Object contents[contents1600,53588
+    Lisp_Object extras[extras1603,53699
 struct Lisp_Sub_Char_Table1606,53752
+    struct vectorlike_header header;1610,53918
+    int depth;1618,54341
+    int min_char;1621,54417
+    Lisp_Object contents[contents1624,54492
 CHAR_TABLE_REF_ASCII 1628,54566
 CHAR_TABLE_REF 1648,55113
 CHAR_TABLE_SET 1658,55402
 struct Lisp_Subr1670,55786
+    struct vectorlike_header header;1672,55807
+      Lisp_Object (*a0)a01674,55856
+      Lisp_Object (*a1)a11675,55888
+      Lisp_Object (*a2)a21676,55927
+      Lisp_Object (*a3)a31677,55979
+      Lisp_Object (*a4)a41678,56044
+      Lisp_Object (*a5)a51679,56122
+      Lisp_Object (*a6)a61680,56213
+      Lisp_Object (*a7)a71681,56317
+      Lisp_Object (*a8)a81682,56434
+      Lisp_Object (*aUNEVALLED)aUNEVALLED1683,56564
+      Lisp_Object (*aMANY)aMANY1684,56616
+    } function;1685,56671
+    short min_args,1686,56687
+    short min_args, max_args;1686,56687
+    const char *symbol_name;symbol_name1687,56717
+    const char *intspec;intspec1688,56746
+    const char *doc;doc1689,56771
 enum char_table_specials1692,56798
     CHAR_TABLE_STANDARD_SLOTS 1697,56993
     SUB_CHAR_TABLE_OFFSET 1701,57214
 CHAR_TABLE_EXTRA_SLOTS 1707,57377
+verify 1714,57596
 LISP_MACRO_DEFUN 1723,57921
 SYMBOL_BLV 1732,58181
 SYMBOL_FWD 1738,58316
@@ -1661,7 +2070,24 @@ SYMBOL_INTERNED_IN_INITIAL_OBARRAY_P 1783,59299
 #define DEFSYM(1796,59809
 LISP_MACRO_DEFUN DEFSYM1792,59630
 struct hash_table_test1805,60062
+  Lisp_Object name;1808,60139
+  Lisp_Object user_hash_function;1811,60206
+  Lisp_Object user_cmp_function;1814,60297
+  bool (*cmpfn)cmpfn1817,60372
+  EMACS_UINT (*hashfn)hashfn1820,60486
 struct Lisp_Hash_Table1823,60555
+  struct vectorlike_header header;1826,60649
+  Lisp_Object weak;1830,60783
+  Lisp_Object rehash_size;1835,61007
+  Lisp_Object rehash_threshold;1839,61129
+  Lisp_Object hash;1843,61260
+  Lisp_Object next;1848,61490
+  Lisp_Object next_free;1851,61560
+  Lisp_Object index;1856,61771
+  ptrdiff_t count;1863,62041
+  Lisp_Object key_and_value;1868,62240
+  struct hash_table_test test;1871,62314
+  struct Lisp_Hash_Table *next_weak;next_weak1875,62457
 XHASH_TABLE 1880,62531
 #define XSET_HASH_TABLE(1885,62602
 HASH_TABLE_P 1889,62703
@@ -1705,6 +2131,11 @@ enum Lisp_Save_Type2064,68072
 typedef void (*voidfuncptr)voidfuncptr2108,69836
 struct Lisp_Save_Value2110,69873
     ENUM_BF 2112,69900
+      void *pointer;pointer2125,70555
+      voidfuncptr funcpointer;2126,70576
+      ptrdiff_t integer;2127,70607
+      Lisp_Object object;2128,70632
+    } data[data2129,70658
 save_type 2134,70752
 XSAVE_POINTER 2143,70982
 set_save_pointer 2149,71144
@@ -1713,9 +2144,19 @@ XSAVE_INTEGER 2164,71546
 set_save_integer 2170,71708
 XSAVE_OBJECT 2179,71929
 struct Lisp_Finalizer2186,72106
+    struct Lisp_Misc_Any base;2188,72132
+    struct Lisp_Finalizer *prev;prev2191,72220
+    struct Lisp_Finalizer *next;next2192,72253
+    Lisp_Object function;2197,72490
 struct Lisp_Free2201,72581
     ENUM_BF 2203,72602
 union Lisp_Misc2212,72882
+    struct Lisp_Misc_Any u_any;2214,72902
+    struct Lisp_Free u_free;2215,72973
+    struct Lisp_Marker u_marker;2216,73002
+    struct Lisp_Overlay u_overlay;2217,73035
+    struct Lisp_Save_Value u_save_value;2218,73070
+    struct Lisp_Finalizer u_finalizer;2219,73111
 XMISC 2223,73181
 XMISCANY 2229,73270
 XMISCTYPE 2236,73379
@@ -1724,15 +2165,41 @@ XOVERLAY 2249,73582
 XSAVE_VALUE 2256,73703
 XFINALIZER 2263,73832
 struct Lisp_Intfwd2274,74117
+    enum Lisp_Fwd_Type type;2276,74140
+    EMACS_INT *intvar;intvar2277,74190
 struct Lisp_Boolfwd2284,74411
+    enum Lisp_Fwd_Type type;2286,74435
+    bool *boolvar;boolvar2287,74486
 struct Lisp_Objfwd2294,74702
+    enum Lisp_Fwd_Type type;2296,74725
+    Lisp_Object *objvar;objvar2297,74775
 struct Lisp_Buffer_Objfwd2302,74934
+    enum Lisp_Fwd_Type type;2304,74964
+    int offset;2305,75021
+    Lisp_Object predicate;2307,75113
 struct Lisp_Buffer_Local_Value2334,76470
+    bool_bf local_if_set 2338,76615
+    bool_bf frame_local 2341,76797
+    bool_bf found 2344,76939
+    union Lisp_Fwd *fwd;fwd2346,77041
+    Lisp_Object where;2348,77184
+    Lisp_Object defcell;2351,77310
+    Lisp_Object valcell;2357,77614
 struct Lisp_Kboard_Objfwd2362,77729
+    enum Lisp_Fwd_Type type;2364,77759
+    int offset;2365,77816
 union Lisp_Fwd2368,77838
+    struct Lisp_Intfwd u_intfwd;2370,77857
+    struct Lisp_Boolfwd u_boolfwd;2371,77890
+    struct Lisp_Objfwd u_objfwd;2372,77925
+    struct Lisp_Buffer_Objfwd u_buffer_objfwd;2373,77958
+    struct Lisp_Kboard_Objfwd u_kboard_objfwd;2374,78005
 XFWDTYPE 2378,78084
 XBUFFER_OBJFWD 2384,78180
 struct Lisp_Float2391,78316
+      double data;2395,78354
+      struct Lisp_Float *chain;chain2396,78373
+    } u;2397,78405
 XFLOAT_DATA 2401,78434
     IEEE_FLOATING_POINT2415,78943
 #define _UCHAR_T2423,79266
@@ -1802,11 +2269,17 @@ CHECK_NUMBER_CDR 2768,86788
 #define DEFUN(2803,88383
 #define DEFUN(2812,88851
 FUNCTIONP 2822,89206
+extern void defsubr 2829,89358
 enum maxargs2831,89401
     MANY 2833,89418
     UNEVALLED 2834,89433
 #define CALLMANY(2838,89536
 #define CALLN(2844,89889
+extern void defvar_lisp 2846,89959
+extern void defvar_lisp_nopro 2847,90036
+extern void defvar_bool 2848,90119
+extern void defvar_int 2849,90190
+extern void defvar_kboard 2850,90264
 #define DEFVAR_LISP(2869,91094
 #define DEFVAR_LISP_NOPRO(2874,91266
 #define DEFVAR_BOOL(2879,91448
@@ -1843,10 +2316,39 @@ enum handlertype 3021,96407
 enum handlertype { CATCHER,3021,96407
 enum handlertype { CATCHER, CONDITION_CASE 3021,96407
 struct handler3023,96454
+  enum handlertype type;3025,96471
+  Lisp_Object tag_or_ch;3026,96496
+  Lisp_Object val;3027,96521
+  struct handler *next;next3028,96540
+  struct handler *nextfree;nextfree3029,96564
+  Lisp_Object *bytecode_top;bytecode_top3036,96922
+  int bytecode_dest;3037,96951
+  struct gcpro *gcpro;gcpro3042,97188
+  sys_jmp_buf jmp;3044,97218
+  EMACS_INT lisp_eval_depth;3045,97237
+  ptrdiff_t pdlcount;3046,97266
+  int poll_suppress_count;3047,97288
+  int interrupt_input_blocked;3048,97315
+  struct byte_stack *byte_stack;byte_stack3049,97346
 #define PUSH_HANDLER(3053,97443
+extern Lisp_Object memory_signal_data;3075,98149
+extern char *stack_bottom;stack_bottom3079,98282
+extern void process_pending_signals 3097,99099
+extern bool volatile pending_signals;3098,99143
+extern void process_quit_flag 3100,99182
 #define QUIT	3101,99220
 #define QUITP 3112,99470
+extern Lisp_Object Vascii_downcase_table;3114,99531
+extern Lisp_Object Vascii_canon_table;3115,99573
+extern struct gcpro *gcprolist;gcprolist3130,100280
 struct gcpro3132,100313
+  struct gcpro *next;next3134,100328
+  volatile Lisp_Object *var;var3137,100397
+  ptrdiff_t nvars;3140,100479
+  const char *name;name3144,100564
+  int lineno;3147,100620
+  int idx;3150,100681
+  int level;3153,100717
 #define GC_USE_GCPROS_AS_BEFORE	3171,101294
 #define GC_MAKE_GCPROS_NOOPS	3172,101329
 #define GC_MARK_STACK_CHECK_GCPROS	3173,101361
@@ -1869,6 +2371,7 @@ struct gcpro3132,100313
 #define GCPRO6(3238,103958
 #define GCPRO7(3247,104428
 #define UNGCPRO 3257,104968
+extern int gcpro_level;3261,105037
 #define GCPRO1(3263,105062
 #define GCPRO2(3269,105296
 #define GCPRO3(3278,105714
@@ -1878,6 +2381,7 @@ struct gcpro3132,100313
 #define GCPRO7(3334,108790
 #define UNGCPRO	3353,109913
 #define RETURN_UNGCPRO(3363,110180
+void staticpro 3375,110453
 vcopy 3384,110654
 set_hash_key_slot 3393,110929
 set_hash_value_slot 3399,111068
@@ -1893,6 +2397,8 @@ set_char_table_purpose 3467,112464
 set_char_table_extras 3475,112633
 set_char_table_contents 3482,112842
 set_sub_char_table_contents 3489,113037
+extern Lisp_Object indirect_function 3495,113196
+extern Lisp_Object find_symbol_value 3496,113248
 enum Arith_Comparison 3497,113300
   ARITH_EQUAL,3498,113324
   ARITH_NOTEQUAL,3499,113339
@@ -1900,41 +2406,281 @@ enum Arith_Comparison 3497,113300
   ARITH_GRTR,3501,113371
   ARITH_LESS_OR_EQUAL,3502,113385
   ARITH_GRTR_OR_EQUAL3503,113408
+extern Lisp_Object arithcompare 3505,113433
 #define INTEGER_TO_CONS(3511,113759
 #define CONS_TO_INTEGER(3529,114622
+extern intmax_t cons_to_signed 3533,114837
+extern uintmax_t cons_to_unsigned 3534,114903
+extern struct Lisp_Symbol *indirect_variable indirect_variable3536,114964
+extern _Noreturn void args_out_of_range 3537,115033
+extern _Noreturn void args_out_of_range_3 3538,115101
+extern Lisp_Object do_symval_forwarding 3540,115192
+extern void set_internal 3541,115252
+extern void syms_of_data 3542,115324
+extern void swap_in_global_binding 3543,115357
+extern void syms_of_cmds 3546,115441
+extern void keys_of_cmds 3547,115474
+extern Lisp_Object detect_coding_system 3550,115536
+extern void init_coding 3552,115689
+extern void init_coding_once 3553,115721
+extern void syms_of_coding 3554,115758
+extern ptrdiff_t chars_in_text 3557,115825
+extern ptrdiff_t multibyte_chars_in_text 3558,115892
+extern void syms_of_character 3559,115969
+extern void init_charset 3562,116037
+extern void init_charset_once 3563,116070
+extern void syms_of_charset 3564,116108
+extern void init_syntax_once 3569,116228
+extern void syms_of_syntax 3570,116265
 enum { NEXT_ALMOST_PRIME_LIMIT 3573,116326
 extern EMACS_INT next_almost_prime 3574,116365
 enum constype 3739,123817
 enum constype {CONSTYPE_HEAP,CONSTYPE_HEAP3739,123817
 enum constype {CONSTYPE_HEAP, CONSTYPE_PURE}CONSTYPE_PURE3739,123817
+extern Lisp_Object listn 3740,123863
 list2i 3745,124007
 list3i 3751,124116
 list4i 3757,124255
+extern Lisp_Object make_uninit_bool_vector 3763,124407
+extern Lisp_Object bool_vector_fill 3764,124463
+extern _Noreturn void string_overflow 3765,124527
+extern Lisp_Object make_string 3766,124573
 extern Lisp_Object make_formatted_string 3767,124631
+extern Lisp_Object make_multibyte_string 3779,124985
+extern Lisp_Object make_event_array 3780,125064
+extern Lisp_Object make_uninit_string 3781,125128
+extern Lisp_Object make_uninit_multibyte_string 3782,125179
+extern Lisp_Object make_string_from_bytes 3783,125251
+extern Lisp_Object make_specified_string 3784,125331
+extern Lisp_Object make_pure_string 3786,125423
+extern Lisp_Object make_pure_c_string 3787,125503
 build_pure_c_string 3792,125659
 build_string 3801,125864
+extern Lisp_Object pure_cons 3806,125942
+extern void make_byte_code 3807,125999
+extern struct Lisp_Vector *allocate_vector allocate_vector3808,126050
 make_uninit_vector 3820,126435
 make_uninit_sub_char_table 3833,126654
+extern struct Lisp_Vector *allocate_pseudovector allocate_pseudovector3844,126963
 #define ALLOCATE_PSEUDOVECTOR(3850,127198
 #define ALLOCATE_ZEROED_PSEUDOVECTOR(3858,127534
+extern bool gc_in_progress;3863,127735
+extern bool abort_on_gc;3864,127763
+extern Lisp_Object make_float 3865,127788
+extern void display_malloc_warning 3866,127828
+extern ptrdiff_t inhibit_garbage_collection 3867,127871
+extern Lisp_Object make_save_int_int_int 3868,127923
+extern Lisp_Object make_save_obj_obj_obj_obj 3869,127999
+extern Lisp_Object make_save_ptr 3871,128109
+extern Lisp_Object make_save_ptr_int 3872,128152
+extern Lisp_Object make_save_ptr_ptr 3873,128210
+extern Lisp_Object make_save_funcptr_ptr_obj 3874,128265
+extern Lisp_Object make_save_memory 3876,128361
+extern void free_save_value 3877,128425
+extern Lisp_Object build_overlay 3878,128468
+extern void free_marker 3879,128542
+extern void free_cons 3880,128581
+extern void init_alloc_once 3881,128625
+extern void init_alloc 3882,128661
+extern void syms_of_alloc 3883,128692
+extern struct buffer * allocate_buffer 3884,128726
+extern int valid_lisp_object_p 3885,128773
+extern int relocatable_string_data_p 3886,128819
+extern void check_cons_list 3888,128898
 INLINE void 3890,128940
 extern void *r_alloc r_alloc3895,129061
 #define FLOAT_TO_STRING_BUFSIZE 3927,130524
+extern int openp 3957,131673
+extern Lisp_Object string_to_number 3959,131783
+extern void map_obarray 3960,131846
+extern void dir_warning 3962,131960
+extern void init_obarray 3963,132013
+extern void init_lread 3964,132046
+extern void syms_of_lread 3965,132077
 intern 3968,132131
 intern_c_string 3974,132219
+extern EMACS_INT lisp_eval_depth;3980,132332
+extern Lisp_Object Vautoload_queue;3981,132366
+extern Lisp_Object Vrun_hooks;3982,132402
+extern Lisp_Object Vsignaling_function;3983,132433
+extern Lisp_Object inhibit_lisp_code;3984,132473
+extern struct handler *handlerlist;handlerlist3985,132511
+extern void run_hook 3994,132753
+extern void run_hook_with_args_2 3995,132789
+extern Lisp_Object run_hook_with_args 3996,132863
+extern _Noreturn void xsignal 3999,133022
+extern _Noreturn void xsignal0 4000,133080
+extern _Noreturn void xsignal1 4001,133126
+extern _Noreturn void xsignal2 4002,133185
+extern _Noreturn void xsignal3 4003,133257
+extern _Noreturn void signal_error 4005,133346
+extern Lisp_Object eval_sub 4006,133410
+extern Lisp_Object apply1 4007,133458
+extern Lisp_Object call0 4008,133512
+extern Lisp_Object call1 4009,133552
+extern Lisp_Object call2 4010,133605
+extern Lisp_Object call3 4011,133671
+extern Lisp_Object call4 4012,133750
+extern Lisp_Object call5 4013,133842
+extern Lisp_Object call6 4014,133947
+extern Lisp_Object call7 4015,134065
+extern Lisp_Object internal_catch 4016,134196
+extern Lisp_Object internal_lisp_condition_case 4017,134289
+extern Lisp_Object internal_condition_case 4018,134378
+extern Lisp_Object internal_condition_case_1 4019,134491
+extern Lisp_Object internal_condition_case_2 4020,134626
+extern Lisp_Object internal_condition_case_n4021,134787
+extern void specbind 4024,134983
+extern void record_unwind_protect 4025,135032
+extern void record_unwind_protect_ptr 4026,135105
+extern void record_unwind_protect_int 4027,135172
+extern void record_unwind_protect_void 4028,135233
+extern void record_unwind_protect_nothing 4029,135291
+extern void clear_unwind_protect 4030,135341
+extern void set_unwind_protect 4031,135387
+extern void set_unwind_protect_ptr 4032,135468
+extern Lisp_Object unbind_to 4033,135543
 extern _Noreturn void error 4034,135598
 fast_string_match_ignore_case 4136,140086
+extern ptrdiff_t fast_c_string_match_ignore_case 4141,140236
+extern ptrdiff_t fast_looking_at 4143,140333
+extern ptrdiff_t find_newline 4145,140472
+extern ptrdiff_t scan_newline 4147,140601
+extern ptrdiff_t scan_newline_from_point 4149,140704
+extern ptrdiff_t find_newline_no_quit 4150,140784
+extern ptrdiff_t find_before_next_newline 4152,140881
+extern void syms_of_search 4154,140979
+extern void clear_regexp_cache 4155,141014
+extern Lisp_Object Vminibuffer_list;4159,141084
+extern Lisp_Object last_minibuf_string;4160,141121
+extern Lisp_Object get_minibuffer 4161,141161
+extern void init_minibuf_once 4162,141208
+extern void syms_of_minibuf 4163,141246
+extern void syms_of_callint 4167,141313
+extern void syms_of_casefiddle 4171,141383
+extern void keys_of_casefiddle 4172,141422
+extern void init_casetab_once 4176,141492
+extern void syms_of_casetab 4177,141530
+extern Lisp_Object echo_message_buffer;4181,141598
+extern struct kboard *echo_kboard;echo_kboard4182,141638
+extern void cancel_echoing 4183,141673
+extern Lisp_Object last_undo_boundary;4184,141708
+extern bool input_pending;4185,141747
+extern sigjmp_buf return_to_command_loop;4187,141810
+extern Lisp_Object menu_bar_items 4189,141859
+extern Lisp_Object tool_bar_items 4190,141908
+extern void discard_mouse_events 4191,141964
+void handle_input_available_signal 4193,142025
+extern Lisp_Object pending_funcalls;4195,142074
+extern bool detect_input_pending 4196,142111
+extern bool detect_input_pending_ignore_squeezables 4197,142152
+extern bool detect_input_pending_run_timers 4198,142212
+extern void safe_run_hooks 4199,142264
+extern void cmd_error_internal 4200,142306
+extern Lisp_Object command_loop_1 4201,142366
+extern Lisp_Object read_menu_command 4202,142408
+extern Lisp_Object recursive_edit_1 4203,142453
+extern void record_auto_save 4204,142497
+extern void force_auto_save_soon 4205,142534
+extern void init_keyboard 4206,142575
+extern void syms_of_keyboard 4207,142609
+extern void keys_of_keyboard 4208,142646
+extern ptrdiff_t current_column 4211,142712
+extern void invalidate_current_column 4212,142752
+extern bool indented_beyond_p 4213,142798
+extern void syms_of_indent 4214,142863
+extern void store_frame_param 4217,142926
+extern void store_in_alist 4218,143000
+extern Lisp_Object do_switch_frame 4219,143070
+extern Lisp_Object get_frame_param 4220,143143
+extern void frames_discard_buffer 4221,143209
+extern void syms_of_frame 4222,143258
+extern char **initial_argv;initial_argv4225,143320
+extern int initial_argc;4226,143348
+extern bool display_arg;4228,143423
+extern Lisp_Object decode_env_path 4230,143455
+extern Lisp_Object empty_unibyte_string,4231,143526
+extern Lisp_Object empty_unibyte_string, empty_multibyte_string;4231,143526
+extern _Noreturn void terminate_due_to_signal 4232,143591
+extern Lisp_Object Vlibrary_cache;4234,143666
+void fixup_locale 4237,143727
+void synchronize_system_messages_locale 4238,143753
+void synchronize_system_time_locale 4239,143801
 INLINE void fixup_locale 4241,143851
 INLINE void synchronize_system_messages_locale 4242,143886
 INLINE void synchronize_system_time_locale 4243,143943
+extern void shut_down_emacs 4245,144003
+extern bool noninteractive;4248,144129
+extern bool no_site_lisp;4251,144221
+extern int daemon_pipe[daemon_pipe4256,144389
 #define IS_DAEMON 4257,144416
 #define DAEMON_RUNNING 4258,144456
+extern void *w32_daemon_event;w32_daemon_event4260,144524
 #define IS_DAEMON 4261,144555
 #define DAEMON_RUNNING 4262,144600
+extern bool fatal_error_in_progress;4266,144721
+extern bool inhibit_window_system;4269,144827
+extern bool running_asynch_code;4271,144920
+extern void kill_buffer_processes 4274,144983
+extern int wait_reading_process_output 4275,145032
 # define WAIT_READING_MAX 4281,145419
 # define WAIT_READING_MAX 4283,145491
+extern void add_timer_wait_descriptor 4286,145555
+extern void add_keyboard_wait_descriptor 4288,145607
+extern void delete_keyboard_wait_descriptor 4289,145655
+extern void add_gpm_wait_descriptor 4291,145722
+extern void delete_gpm_wait_descriptor 4292,145765
+extern void init_process_emacs 4294,145818
+extern void syms_of_process 4295,145857
+extern void setup_process_coding_systems 4296,145893
+extern int child_setup 4302,146013
+extern void init_callproc_1 4303,146081
+extern void init_callproc 4304,146117
+extern void set_initial_environment 4305,146151
+extern void syms_of_callproc 4306,146195
+extern Lisp_Object read_doc_string 4309,146258
+extern Lisp_Object get_doc_string 4310,146308
+extern void syms_of_doc 4311,146369
+extern int read_bytecode_char 4312,146401
+extern void syms_of_bytecode 4315,146470
+extern struct byte_stack *byte_stack_list;byte_stack_list4316,146507
+extern void mark_byte_stack 4318,146570
+extern void unmark_byte_stack 4320,146613
+extern Lisp_Object exec_byte_code 4321,146651
+extern void init_macros 4325,146801
+extern void syms_of_macros 4326,146833
+extern void truncate_undo_list 4329,146895
+extern void record_insert 4330,146945
+extern void record_delete 4331,146995
+extern void record_first_change 4332,147053
+extern void record_change 4333,147093
+extern void record_property_change 4334,147143
+extern void syms_of_undo 4337,147285
+extern void report_interval_modification 4340,147349
+extern void syms_of_menu 4343,147445
+extern void syms_of_xmenu 4346,147506
+extern char *get_current_dir_name get_current_dir_name4356,147708
+extern void stuff_char 4358,147757
+extern void init_foreground_group 4359,147790
+extern void sys_subshell 4360,147832
+extern void sys_suspend 4361,147865
+extern void discard_tty_input 4362,147897
+extern void init_sys_modes 4363,147935
+extern void reset_sys_modes 4364,147991
+extern void init_all_sys_modes 4365,148048
+extern void reset_all_sys_modes 4366,148087
+extern void child_setup_tty 4367,148127
+extern void setup_pty 4368,148162
+extern int set_window_size 4369,148191
+extern EMACS_INT get_random 4370,148235
+extern void seed_random 4371,148271
+extern void init_random 4372,148316
+extern void emacs_backtrace 4373,148348
 extern _Noreturn void emacs_abort 4374,148383
+extern void xputenv 4527,152697
+extern char *egetenv_internal egetenv_internal4529,152734
 egetenv 4532,152806
+extern void init_system_name 4539,153009
 #define eabs(4545,153302
 #define make_fixnum_or_float(4550,153435
 enum MAX_ALLOCA 4556,153686
@@ -1953,7 +2699,15 @@ extern void *record_xmalloc record_xmalloc4558,153731
 enum { defined_GC_CHECK_STRING_BYTES 4663,157082
 enum { defined_GC_CHECK_STRING_BYTES 4665,157135
 union Aligned_Cons4670,157269
+  struct Lisp_Cons s;4672,157290
+  double d;4673,157312
+  double d; intmax_t i;4673,157312
+  double d; intmax_t i; void *p;p4673,157312
 union Aligned_String4676,157349
+  struct Lisp_String s;4678,157372
+  double d;4679,157396
+  double d; intmax_t i;4679,157396
+  double d; intmax_t i; void *p;p4679,157396
     USE_STACK_CONS 4689,157704
     USE_STACK_STRING 4691,157810
 #define STACK_CONS(4699,158147
@@ -1963,6 +2717,7 @@ union Aligned_String4676,157349
 #define AUTO_LIST2(4712,158786
 #define AUTO_LIST3(4716,158941
 #define AUTO_LIST4(4720,159116
+extern const char *verify_ascii verify_ascii4730,159453
 # define verify_ascii(4732,159507
 #define AUTO_STRING(4740,159815
 #define FOR_EACH_TAIL(4752,160279
@@ -1980,36 +2735,58 @@ SYSCALL (mach_thread_self,18,377
 SYSCALL (mach_task_self,23,441
 SYSCALL (mach_host_self,28,503
 
-c-src/h.h,1850
+c-src/fail.c,30
+void (*prt_call(prt_call1,0
+
+c-src/h.h,2506
    ELEM_I/ELEM_I3,15
 } Fails_t;5,85
 typedef void Lang_function 6,96
+void Asm_labels 7,127
 typedef struct tpcmd8,147
 #define ggg 10,170
+  } arg;13,198
 tpcmd;15,209
 typedef struct foobar2_ 16,216
+    fu   int (*funcptr)funcptr17,242
+    long foo;18,279
+    char bar;19,293
 } foobar2;20,307
     DEVICE_SWP,23,333
     DEVICE_LAST24,349
 } bsp_DevId;25,365
   struct constant_args 27,394
+    unsigned int burst;28,419
+  } constant;29,443
 } args;30,457
 typedef int *regset;regset31,465
 typedef int INT;32,486
 typedef union abc33,503
+  int def;35,523
 } ghi1;36,534
 typedef union abc 37,542
+  int def;38,562
 } ghi2;39,573
 typedef struct a 40,581
 } b;41,600
 #define c(42,605
 typedef struct an_extern_linkage *an_extern_linkage_ptr;an_extern_linkage_ptr43,619
 typedef struct an_extern_linkage 44,676
+		kind;46,733
+		is_explicit;49,812
+  a_byte_boolean is_curly_brace_form;54,1009
 } an_extern_linkage;56,1054
 typedef struct pollfd   pfdset[pfdset57,1075
 typedef union rtunion_def58,1119
+    int rtint;60,1149
+    char *rtstr;rtstr61,1164
+    struct rtx_def *rtx;rtx62,1181
   } womboid 63,1206
 typedef union rtunion_def64,1220
+  int rtint;68,1250
+  char *rtstr;rtstr69,1263
+  struct rtx_def *rtxp;rtxp70,1278
+  struct rtx_def rtxnp;71,1302
 womboid75,1330
 enum {dog,dog81,1416
 enum {dog, cat}cat81,1416
@@ -2030,10 +2807,13 @@ typedef int X,100,1910
 typedef int X, Y,100,1910
 typedef int X, Y, Z;100,1910
 typedef mio mao;101,1931
+extern void ab(102,1948
 typedef struct a 103,1966
 typedef struct a { } b;103,1966
 typedef struct b104,1990
 } c;106,2009
+int	(*oldhup)oldhup107,2014
+request (*oldhup)oldhup108,2031
 int extvar;109,2053
 #define tag1110,2065
 #define aaaaaa 111,2078
@@ -2043,25 +2823,39 @@ int extvar;109,2053
 #define exit_critical_to_previous	117,2199
 #define UNDEFINED118,2259
 struct re_pattern_buffer 119,2277
+struct re_pattern_buffer { unsigned char *buffer;buffer119,2277
 
-cp-src/c.C,2094
+cp-src/c.C,3629
 template <typename ipc3dIslandHierarchy,1,0
 template <typename ipc3dIslandHierarchy, typename ipc3dChannelType,1,0
 template <typename ipc3dIslandHierarchy, typename ipc3dChannelType, unsigned numOfChannels,1,0
 template <typename ipc3dIslandHierarchy, typename ipc3dChannelType, unsigned numOfChannels, typename ipc3dLinkControl,1,0
 class CMultiChannelCSC19_3D2,151
-        void execute(11,493
+        ipc3dLinkControlSetup setup;CMultiChannelCSC19_3D::setup5,190
+        ipc3dCSC19<CMultiChannelCSC19_3D::ipc3dCSC196,227
+        ipc3dCSC19<ipc3dIslandHierarchy,ipcMultiChannel<ipc3dChannelType,numOfChannels>,ipcMultiChannel<ipc3dChannelType,numOfChannels>,ipc3dLinkControl> mcCSC;CMultiChannelCSC19_3D::mcCSC6,227
+        advTimer cscInitTime;CMultiChannelCSC19_3D::cscInitTime7,388
+        advTimer cscSegmentationTime;CMultiChannelCSC19_3D::cscSegmentationTime8,418
+        advTimer outputTime;CMultiChannelCSC19_3D::outputTime9,456
+        void execute(CMultiChannelCSC19_3D::execute11,493
+static void my_function1(24,984
 int main 25,1026
 double base 26,1088
+operator += operator +=29,1174
+class TestRecord;31,1233
 typedef struct s1 32,1251
+   int counter;s1::counter33,1271
 } t1;34,1287
 struct s2 35,1293
+   int counter;s2::counter36,1305
 typedef struct s2 t2;38,1324
 class A 39,1346
-  enum { rosso,40,1356
-  enum { rosso, giallo,40,1356
-  enum { rosso, giallo, verde 40,1356
-const A& A::operator+(operator+43,1431
+  enum { rosso,A::rosso40,1356
+  enum { rosso, giallo,A::giallo40,1356
+  enum { rosso, giallo, verde A::verde40,1356
+  enum { rosso, giallo, verde } colori;A::colori40,1356
+  const A& operator+(A::operator+41,1396
+const A& A::operator+(43,1431
 void operator+(44,1467
 void operator -(operator -45,1495
 void operator int(operator int46,1524
@@ -2070,75 +2864,94 @@ int f(49,1571
 int A<int>::f(f50,1590
 A<float,B<int> > A<B<float>,int>::f(f51,1618
 template <class C, int n> class AT 52,1668
+template <class C, int n> class AT { C t[AT::t52,1668
 class AU 53,1716
+class AU { T x;AU::x53,1716
 class B<B54,1735
-class B<int> { void f(54,1735
+class B<int> { void f(B::f54,1735
 const A::B::T& abt 55,1766
 class A 56,1792
-class A { class B 56,1792
+class A { class B A::B56,1792
+class A { class B { int f(A::B::f56,1792
 class A 57,1827
-  A operator+(59,1861
+  int get_data(A::get_data58,1837
+  A operator+(A::operator+59,1861
 is_muldiv_operation(61,1888
 domain foo 68,1956
-     void f(69,1969
-void A::A(A72,1990
+     void f(foo::f69,1969
+void A::A(72,1990
 struct A 73,2005
+struct A { A(A::A73,2005
 struct B 74,2023
-void B::B(B75,2042
-void BE_Node::BE_Node(BE_Node76,2057
+struct B { B(B::B74,2023
+void B::B(75,2042
+void BE_Node::BE_Node(76,2057
 class BE_Node 77,2084
 struct foo 79,2103
+  int x;foo::x80,2116
 class test 86,2157
-  int f(87,2170
-  int ff(89,2232
-  int g(90,2255
+  int f(test::f87,2170
+  int ff(test::ff89,2232
+  int g(test::g90,2255
 class	AST_Root 92,2279
+class	AST_Root;96,2328
 AST_ConcreteType::AST_ConcreteType(99,2394
 AST_Array::AST_Array(107,2533
-     void f(115,2734
+     void f(::f115,2734
 struct A 117,2754
-A::~A(~A120,2778
+    ~A(A::~A118,2765
+A::~A(120,2778
 struct B 122,2790
-    ~B(123,2801
-enum {dog,dog126,2818
-enum {dog, cat}cat126,2818
+    ~B(B::~B123,2801
+enum {dog,::dog126,2818
+enum {dog, cat}::cat126,2818
 enum {dog, cat} animals;126,2818
+struct {int teats;::teats127,2843
 struct {int teats;} cow;127,2843
 class Boo 129,2869
-    enum {dog,dog130,2881
-    enum {dog, cat}cat130,2881
-    foo(133,2955
-    Boo(137,2996
+    enum {dog,Boo::dog130,2881
+    enum {dog, cat}Boo::cat130,2881
+    enum {dog, cat} animals;Boo::animals130,2881
+    struct {int treats;Boo::treats131,2910
+    struct {int treats;} cow;Boo::cow131,2910
+    int i,Boo::i132,2940
+    int i,a,Boo::a132,2940
+    int i,a,b;Boo::b132,2940
+    foo(Boo::foo133,2955
+    Boo(Boo::Boo137,2996
+    Boo(Boo::Boo138,3053
 Boo::Boo(141,3071
 typedef int should_see_this_one_enclosed_in_extern_C;149,3156
 typedef int (*should_see_this_function_pointer)should_see_this_function_pointer153,3229
 typedef int should_see_this_array_type[should_see_this_array_type156,3311
 
-cp-src/x.cc,63
+cp-src/x.cc,110
 class XX1,0
-XX::foo(foo9,60
-XX::bar(bar15,95
+     int foo(XX::foo4,19
+     void bar(XX::bar5,35
+XX::foo(9,60
+XX::bar(15,95
 main(21,126
 
-cp-src/burton.cpp,124
-::dummy::dummy test::dummy1(dummy11,0
-::dummy::dummy test::dummy2(dummy26,64
-::dummy::dummy test::dummy3(dummy311,143
+cp-src/burton.cpp,103
+::dummy::dummy test::dummy1(1,0
+::dummy::dummy test::dummy2(6,64
+::dummy::dummy test::dummy3(11,143
 
-cp-src/functions.cpp,778
-void Date::setDate setDate5,148
-void Date::plus plus32,939
-void Date::minus minus42,1229
-void Date::shift shift52,1407
-Date & Date::operator = operator =62,1628
-Date & Date::operator += operator +=69,1789
-Date & Date::operator -= operator -=78,1939
-Date & Date::operator ++ operator ++87,2080
-Date & Date::operator -- operator --96,2216
-int Date::operator - operator -104,2331
-int Date::operator < operator <112,2483
-int Date::operator > operator >116,2557
-int Date::operator == operator ==120,2631
+cp-src/functions.cpp,807
+void Date::setDate 5,148
+void Date::plus 32,939
+void Date::minus 42,1229
+void Date::shift 52,1407
+Date & Date::operator = Date::operator =62,1628
+Date & Date::operator += Date::operator +=69,1789
+Date & Date::operator -= Date::operator -=78,1939
+Date & Date::operator ++ Date::operator ++87,2080
+Date & Date::operator -- Date::operator --96,2216
+int Date::operator - Date::operator -104,2331
+int Date::operator < Date::operator <112,2483
+int Date::operator > Date::operator >116,2557
+int Date::operator == Date::operator ==120,2631
 ostream& operator << operator <<124,2707
 istream& operator >> operator >>133,2943
 bool isLeap 159,3543
@@ -2149,39 +2962,75 @@ void Debug 201,4523
 int WorkingDays(211,4867
 Date StartDay(226,5129
 
-cp-src/MDiagArray2.h,482
+cp-src/MDiagArray2.h,1538
 #define octave_MDiagArray2_h 29,870
 #undef LTGT35,967
 #define LTGT39,1031
 #define LTGT 42,1051
+class MDiagArray2;45,1087
+operator += operator +=48,1145
+operator -= operator -=51,1242
+operator * operator *54,1339
+operator / operator /57,1428
+operator * operator *60,1517
+operator + operator +63,1605
+operator - operator -66,1707
+product 69,1808
+operator - operator -72,1907
 class MDiagArray2 78,2022
-  MDiagArray2 82,2077
-  MDiagArray2 86,2154
-  MDiagArray2 87,2198
-  MDiagArray2 88,2254
-  MDiagArray2 89,2329
-  MDiagArray2 90,2387
-  MDiagArray2 91,2450
-  ~MDiagArray2 93,2515
-  MDiagArray2<T>& operator = operator =95,2542
-  operator MArray2<T> operator MArray2<T>101,2667
+  MDiagArray2 MDiagArray2::MDiagArray282,2077
+  MDiagArray2 MDiagArray2::MDiagArray286,2154
+  MDiagArray2 MDiagArray2::MDiagArray287,2198
+  MDiagArray2 MDiagArray2::MDiagArray288,2254
+  MDiagArray2 MDiagArray2::MDiagArray289,2329
+  MDiagArray2 MDiagArray2::MDiagArray290,2387
+  MDiagArray2 MDiagArray2::MDiagArray291,2450
+  ~MDiagArray2 MDiagArray2::~MDiagArray293,2515
+  MDiagArray2<T>& operator = MDiagArray2::operator =95,2542
+      DiagArray2<T>::operator = MDiagArray2::operator =97,2603
+  operator MArray2<T> MDiagArray2::operator MArray2<T>101,2667
+  operator += MDiagArray2::operator +=116,2966
+  operator -= MDiagArray2::operator -=119,3057
+  friend MDiagArray2<T> operator * MDiagArray2::operator *123,3174
+  friend MDiagArray2<T> operator / MDiagArray2::operator /124,3253
+  friend MDiagArray2<T> operator * MDiagArray2::operator *128,3384
+  operator + MDiagArray2::operator +133,3544
+  operator - MDiagArray2::operator -136,3640
+  friend MDiagArray2<T> operator - MDiagArray2::operator -141,3803
 #undef LTGT144,3874
 #define INSTANTIATE_MDIAGARRAY_FRIENDS(146,3887
 
-cp-src/Range.h,275
+cp-src/Range.h,1136
 #define octave_Range_h 24,765
+class istream;30,840
+class ostream;31,855
+class Matrix;32,870
 Range35,891
-  Range 39,909
-  Range 42,995
-  Range 46,1130
-  Range 50,1248
-  double base 54,1376
-  double limit 55,1425
-  double inc 56,1475
-  int nelem 57,1523
-  void set_base 68,1728
-  void set_limit 69,1774
-  void set_inc 70,1821
+  Range Range::Range39,909
+  Range Range::Range42,995
+  Range Range::Range46,1130
+  Range Range::Range50,1248
+  double base Range::base54,1376
+  double limit Range::limit55,1425
+  double inc Range::inc56,1475
+  int nelem Range::nelem57,1523
+  bool all_elements_are_ints Range::all_elements_are_ints59,1571
+  Matrix matrix_value Range::matrix_value61,1615
+  double min Range::min63,1652
+  double max Range::max64,1679
+  void sort Range::sort66,1707
+  void set_base Range::set_base68,1728
+  void set_limit Range::set_limit69,1774
+  void set_inc Range::set_inc70,1821
+  friend ostream& operator << Range::operator <<72,1867
+  friend istream& operator >> Range::operator >>73,1928
+  void print_range Range::print_range75,1984
+  double rng_base;Range::rng_base79,2023
+  double rng_limit;Range::rng_limit80,2042
+  double rng_inc;Range::rng_inc81,2062
+  int rng_nelem;Range::rng_nelem83,2081
+  int nelem_internal Range::nelem_internal85,2099
+extern Range operator - operator -88,2138
 
 cp-src/screen.cpp,228
 unsigned char cursor_x,15,548
@@ -2193,96 +3042,130 @@ void cursor_position(32,836
 void clear_screen(41,997
 void write_xyc(55,1247
 
-cp-src/screen.hpp,414
+cp-src/screen.hpp,791
 #define __COLORS9,401
 enum COLORS 11,419
-    BLACK,12,433
-    BLUE,13,471
-    GREEN,14,481
-    CYAN,15,492
-    RED,16,502
-    MAGENTA,17,511
-    BROWN,18,524
-    LIGHTGRAY,19,535
-    DARKGRAY,20,550
-    LIGHTBLUE,21,589
-    LIGHTGREEN,22,604
-    LIGHTCYAN,23,620
-    LIGHTRED,24,635
-    LIGHTMAGENTA,25,649
-    YELLOW,26,667
-    WHITE27,679
+    BLACK,COLORS::BLACK12,433
+    BLUE,COLORS::BLUE13,471
+    GREEN,COLORS::GREEN14,481
+    CYAN,COLORS::CYAN15,492
+    RED,COLORS::RED16,502
+    MAGENTA,COLORS::MAGENTA17,511
+    BROWN,COLORS::BROWN18,524
+    LIGHTGRAY,COLORS::LIGHTGRAY19,535
+    DARKGRAY,COLORS::DARKGRAY20,550
+    LIGHTBLUE,COLORS::LIGHTBLUE21,589
+    LIGHTGREEN,COLORS::LIGHTGREEN22,604
+    LIGHTCYAN,COLORS::LIGHTCYAN23,620
+    LIGHTRED,COLORS::LIGHTRED24,635
+    LIGHTMAGENTA,COLORS::LIGHTMAGENTA25,649
+    YELLOW,COLORS::YELLOW26,667
+    WHITECOLORS::WHITE27,679
 #define SCREEN_FP(31,700
 #define SCREEN_START 33,795
+void goto_xy(35,835
+void hide_cursor(36,883
+void cursor_position(37,907
+void clear_screen(38,935
+void write_xyc(39,960
 
-cp-src/conway.cpp,288
+cp-src/conway.cpp,270
 #define max(12,357
 #define min(13,393
 const int num_rows 15,430
 const int num_columns 16,470
 class site *field_of_play[field_of_play18,499
-int site::total_surrounding(total_surrounding20,550
+int site::total_surrounding(20,550
 void display(37,958
 void glider(50,1239
 void traffic_light(59,1478
 void main(67,1633
 
-cp-src/conway.hpp,164
+cp-src/conway.hpp,483
 class site:site5,235
-    site(10,344
-    char read(12,410
-    void set(13,444
-    void clear(14,478
-    void compute_next_state(15,514
-    void step(22,717
+    char x,site::x7,269
+    char x, y,site::y7,269
+    char x, y, alive,site::alive7,269
+    char x, y, alive, next_alive;site::next_alive7,269
+    int total_surrounding(site::total_surrounding8,303
+    site(site::site10,344
+    ~site(site::~site11,397
+    char read(site::read12,410
+    void set(site::set13,444
+    void clear(site::clear14,478
+    void compute_next_state(site::compute_next_state15,514
+    void step(site::step22,717
 
-cp-src/clheir.cpp,359
+cp-src/clheir.cpp,307
 const int max_num_generic_objects 9,298
 generic_object * object_registry[object_registry10,340
 void init_registry(12,400
 void step_everybody(19,527
-void discrete_location::clear_neighbors(clear_neighbors31,852
-generic_object::generic_object(generic_object36,981
-generic_object::~generic_object(~generic_object48,1255
-void agent::move(move53,1353
+void discrete_location::clear_neighbors(31,852
+generic_object::generic_object(36,981
+generic_object::~generic_object(48,1255
+void agent::move(53,1353
 
-cp-src/clheir.hpp,423
+cp-src/clheir.hpp,1600
+extern void init_registry(10,452
+extern void step_everybody(11,485
 class generic_object13,520
-    virtual void compute_next_state(21,842
-    virtual void step(22,888
+    int where_in_registry;generic_object::where_in_registry15,547
+    generic_object(generic_object::generic_object17,582
+    ~generic_object(generic_object::~generic_object19,724
+    virtual void compute_next_state(generic_object::compute_next_state21,842
+    virtual void step(generic_object::step22,888
 const int max_num_directions 31,1219
 class location:location33,1289
-    location(43,1642
+    location(location::location43,1642
+    ~location(location::~location44,1661
 class irregular_location:irregular_location47,1686
-    irregular_location(51,1762
+    double x,irregular_location::x49,1734
+    double x, y,irregular_location::y49,1734
+    double x, y, z;irregular_location::z49,1734
+    irregular_location(irregular_location::irregular_location51,1762
+    ~irregular_location(irregular_location::~irregular_location53,1854
 class discrete_location:discrete_location56,1889
-    discrete_location(62,2044
-    void assign_neighbor(66,2184
+    int x,discrete_location::x58,1936
+    int x, y,discrete_location::y58,1936
+    int x, y, z;discrete_location::z58,1936
+    class location *neighbors[discrete_location::neighbors59,1953
+    void clear_neighbors(discrete_location::clear_neighbors60,2004
+    discrete_location(discrete_location::discrete_location62,2044
+    ~discrete_location(discrete_location::~discrete_location65,2154
+    void assign_neighbor(discrete_location::assign_neighbor66,2184
 class agent:agent75,2508
+    location *where;agent::where77,2549
+    agent(agent::agent79,2578
+    ~agent(agent::~agent80,2591
+    void move(agent::move81,2605
 
-cp-src/fail.C,294
+cp-src/fail.C,438
 struct A 7,263
-	   struct B 8,274
-		   struct C 9,289
-			   C(11,318
-			   operator int(operator int12,342
-		   typedef C T;14,389
-	   typedef B T2;16,414
+	   struct B A::B8,274
+		   struct C A::B::C9,289
+			   int x;A::B::C::x10,305
+			   C(A::B::C::C11,318
+			   operator int(A::B::C::operator int12,342
+		   typedef C T;A::B::T14,389
+	   typedef B T2;A::T216,414
+class String;20,437
 class A 23,453
-	class B 24,463
-		class C 25,474
-		int f(26,488
-int A::B::f(f31,521
+	class B A::B24,463
+		class C A::B::C25,474
+		int f(A::B::f26,488
+int A::B::f(31,521
 main(37,571
 	class D 41,622
-		D(43,659
+		D(D::D43,659
+		int x;D::x44,694
 
 el-src/TAGTEST.EL,148
 (foo::defmumble bletch 1,0
 (defalias 'pending-delete-mode pending-delete-mode5,102
 (defalias (quote explicitly-quoted-pending-delete-mode)8,175
 
-el-src/emacs/lisp/progmodes/etags.el,5069
+el-src/emacs/lisp/progmodes/etags.el,5188
 (defvar tags-file-name 34,1034
 (defgroup etags 43,1498
 (defcustom tags-case-fold-search 47,1566
@@ -2346,6 +3229,9 @@ el-src/emacs/lisp/progmodes/etags.el,5069
 (defvar last-tag 837,33367
 (defun find-tag-interactive 840,33426
 (defvar find-tag-history 852,33841
+(defvar etags-case-fold-search)855,33906
+(defvar etags-syntax-table)856,33938
+(defvar local-find-tag-hook)857,33966
 (defun find-tag-noselect 860,34011
 (defun find-tag 932,37125
 (defun find-tag-other-window 959,38341
@@ -2500,7 +3386,7 @@ function MoveLayerBottom 223,5079
 function MoveLayerBefore 236,5457
 function MoveLayerAfter 258,6090
 
-make-src/Makefile,1133
+make-src/Makefile,1156
 LATEST=1,0
 NONSRCS=35,1578
 CPPFLAGS=49,2191
@@ -2525,6 +3411,7 @@ ${CHECKOBJS}: CFLAGS=88,3806
 	@$(106,4250
 	@$(110,4374
 	@$(114,4500
+	@for i in $(140,5315
 	@for i in $(SRCS); do echo $$i;140,5315
 	$(160,6053
 	$(163,6114
@@ -2549,22 +3436,23 @@ objc-src/Subprocess.h,98
 #define BUFFERSIZE 43,1267
 @interface Subprocess:Subprocess45,1292
 
-objc-src/Subprocess.m,446
+objc-src/Subprocess.m,505
 #define	PTY_TEMPLATE 20,494
 #define	PTY_LENGTH 21,528
-@interface Subprocess(Private)32,737
+static void showError(23,551
+@interface Subprocess(Private)Subprocess(Private)32,737
 - childDidExit39,851
-- fdHandler:fdHandler67,1589
+- fdHandler:67,1589
 showError 98,2360
 fdHandler 112,2785
 getptys 119,2907
-- init:init183,4815
-    andStdErr:init197,5147
-- send:(const char *)string withNewline:send300,7436
-- send:send308,7599
+- init:183,4815
+    andStdErr:init:withDelegate:andPtySupport:andStdErr:197,5147
+- send:(const char *)string withNewline:send:withNewline:300,7436
+- send:308,7599
 - terminateInput314,7689
-- terminate:terminate321,7810
-- setDelegate:setDelegate332,7961
+- terminate:321,7810
+- setDelegate:332,7961
 - delegate338,8031
 
 objc-src/PackInsp.h,109
@@ -2572,7 +3460,7 @@ objc-src/PackInsp.h,109
 #define TYPESTOSTAT	37,1120
 @interface PackageInspector:PackageInspector39,1172
 
-objc-src/PackInsp.m,1322
+objc-src/PackInsp.m,1360
 static const char RCSid[RCSid30,1032
 #define VERSION	34,1116
 #   define DEBUG 37,1155
@@ -2589,46 +3477,46 @@ static const char RCSid[RCSid30,1032
 #define LOCALIZE(61,2585
 #define LOCALIZE_ARCH(62,2668
 +newnew67,2802
--showInfo:showInfo93,3417
--revert:revert107,3737
--ok:ok136,4297
+-showInfo:showInfo:93,3417
+-revert:revert:107,3737
+-ok:ok:136,4297
 -loadload143,4424
 #define LOOKUP(156,4826
 #undef LOOKUP176,5694
--loadKeyValuesFrom:(const char *)type inTable:loadKeyValuesFrom186,5852
--loadContentsOf:(const char *)type inTable:loadContentsOf238,7079
+-loadKeyValuesFrom:(const char *)type inTable:loadKeyValuesFrom:inTable:186,5852
+-loadContentsOf:(const char *)type inTable:loadContentsOf:inTable:238,7079
 -loadImageloadImage257,7552
 #define STAT_EQ(275,7940
 -(BOOL)shouldLoad280,8116
 -toggleDescriptiontoggleDescription301,8626
--(const char *)getPath:(char *)buf forType:getPath317,8899
+-(const char *)getPath:(char *)buf forType:getPath:forType:317,8899
 -setRevertButtonTitlesetRevertButtonTitle333,9320
--(const char *)formatSize:(const char *)size inBuf:formatSize344,9525
+-(const char *)formatSize:(const char *)size inBuf:formatSize:inBuf:344,9525
 #define WORKING	368,10045
 -(void)getArchs370,10100
--(void)addArchs:addArchs385,10520
--subprocess:(Subprocess *)sender output:subprocess428,11351
--subprocessDone:subprocessDone436,11484
+-(void)addArchs:385,10520
+-subprocess:(Subprocess *)sender output:subprocess:output:428,11351
+-subprocessDone:subprocessDone:436,11484
 static void openInWorkspace(446,11634
--open:open464,12063
+-open:open:464,12063
 
 objcpp-src/SimpleCalc.H,41
 @interface SimpleCalc:SimpleCalc14,400
 
-objcpp-src/SimpleCalc.M,445
+objcpp-src/SimpleCalc.M,300
 - init52,1747
-- appendToDisplay:appendToDisplay60,1933
-- registerAction:registerAction70,2210
-- decimalKey:decimalKey77,2348
-- numberKeys:numberKeys91,2661
-- equalsKey:equalsKey112,3192
-- operationKeys:operationKeys131,3680
-- clearKey:clearKey153,4301
-- clearAllKey:clearAllKey160,4410
-- appDidInit:appDidInit168,4591
-- windowWillClose:windowWillClose178,4882
-- infoPanel:infoPanel186,5132
-- helpPanel:helpPanel198,5482
+- appendToDisplay:60,1933
+- registerAction:70,2210
+- decimalKey:77,2348
+- numberKeys:91,2661
+- equalsKey:112,3192
+- operationKeys:131,3680
+- clearKey:153,4301
+- clearAllKey:160,4410
+- appDidInit:168,4591
+- windowWillClose:178,4882
+- infoPanel:186,5132
+- helpPanel:198,5482
 
 pas-src/common.pas,1875
 procedure InitializeStringPackage;26,527
@@ -2686,7 +3574,7 @@ function NmStrToErrStr;1497,42305
 function ErrStrToNmStr;1509,42557
 function GetTextRef;1529,43112
 
-php-src/lce_functions.php,2152
+php-src/lce_functions.php,2864
   define("LCE_FUNCTIONS"LCE_FUNCTIONS4,38
   define("LCE_UNKNOWN"LCE_UNKNOWN9,145
   define("LCE_WS"LCE_WS11,194
@@ -2703,14 +3591,36 @@ php-src/lce_functions.php,2152
       function validate(31,683
       function checkQuotation(59,1384
   class CommentAD 70,1639
+      var $prefix;72,1674
       function CommentAD(73,1693
       function validate(83,1944
   class POEntry 105,2410
+      var $msgid;107,2454
+      var $msgstr;108,2472
+      var $user_comment;109,2491
+      var $sys_comment;110,2516
+      var $unk_comment;111,2540
+      var $msgid_lc 113,2565
+      var $msgstr_lc 114,2590
+      var $user_comment_lc 115,2616
+      var $sys_comment_lc 116,2648
+      var $unk_comment_lc 117,2679
       function POEntry(119,2711
       function lineCount(135,3255
       function serializeToVars(141,3365
       function write(151,3800
   class POReader 163,4178
+      var $msgid;165,4223
+      var $msgstr;166,4241
+      var $user_comment;167,4260
+      var $sys_comment;168,4285
+      var $unk_comment;169,4309
+      var $state;170,4333
+      var $ignore_ws;171,4351
+      var $po_entries;172,4373
+      var $poe_num;173,4396
+      var $filename;174,4416
+      var $domain;175,4437
       function gettext(177,4457
       function parseFromVars(189,4705
       function serializeToVars(215,5331
@@ -2728,6 +3638,7 @@ php-src/lce_functions.php,2152
       function classifyLine(432,10301
   function getTextDomains(471,11094
   class PORManager 498,11756
+      var	$por_a;500,11803
       function PORManager(502,11822
       function addPOReader(507,11896
       function &getPOReader(getPOReader512,11992
@@ -2746,9 +3657,13 @@ php-src/lce_functions.php,2152
       function lce(670,15855
   function lce_geteditcode(676,15898
 
-php-src/ptest.php,46
+php-src/ptest.php,135
 define("TEST"TEST1,0
 test 4,26
+	var $member;8,71
+	var $memassign=9,85
+	var $memassign_space 10,110
+	var $test12,176
 foo(16,200
 
 perl-src/htlmify-cystic,1443
@@ -3867,15 +4782,26 @@ void bar(5,69
 int foobar(6,94
 interface_locate(9,131
 
-c.c,1663
+c.c,2136
+void (*fa)fa131,
+void 132,
 my_printf 135,
 void fatala 138,
+void fatalb 139,
 max 141,
 struct bar 143,
+  char z;144,
+  struct foo f;145,
 __attribute__ ((always_inline)) max 147,
+extern int old_var 149,
 struct foo150,
+  char a;152,
+  int x[x153,
 char stack[stack155,
 struct S 156,
+struct S { short f[f156,
+  int *__ip;__ip159,
+  union wait *__up;__up160,
 } wait_status_ptr_t 161,
 Some_Class  A 162,
 typedef T1 T3 163,
@@ -3887,12 +4813,23 @@ char *__attribute__((aligned(8))) *f;f168,
 int i 169,
 extern void foobar 170,
 typedef struct cacheLRUEntry_s172,
+  U16 next;174,
+  U16 prev;175,
 __attribute__ ((packed)) cacheLRUEntry_t;177,
 struct foo 178,
+  int x;179,
+  char a,180,
+  char a, b,180,
+  char a, b, c,180,
+  char a, b, c, d;180,
      f1 183,
 void f2 184,
+__attribute__((noreturn)) void d0 185,
+  __attribute__((format(printf, 1, 2))) d1 186,
+  d2 187,
 int x 188,
 struct foo 189,
+struct foo { int x[x189,
 short array[array190,
 int f193,
 DEAFUN 196,
@@ -3943,16 +4880,23 @@ c-src/a/b/b.c,18
 ../c/c.web,20
 #define questo 34,
 
-y-src/parse.y,738
+y-src/parse.y,1061
 #define obstack_chunk_alloc 46,1111
 #define obstack_chunk_free 47,1149
+int yylex 57,1317
+void yyerror 59,1347
+void yyerror 61,1376
 VOIDSTAR parse_hash;63,1400
+extern VOIDSTAR hash_find(64,1421
 unsigned char fnin[fnin67,1519
 #define YYSTYPE 71,1617
 typedef struct node *YYSTYPE;YYSTYPE72,1648
 YYSTYPE parse_return;73,1678
+YYSTYPE make_list 75,1716
+YYSTYPE make_list 77,1760
 char *instr;instr80,1790
 int parse_error 81,1803
+extern struct obstack tmp_mem;82,1824
 line:line86,1862
 exp:exp94,1975
 exp_list:exp_list262,5642
@@ -3962,6 +4906,9 @@ cell:cell278,5888
 yyerror FUN1(285,5935
 make_list FUN2(292,6015
 #define ERROR 303,6215
+extern struct node *yylval;yylval305,6233
+unsigned char parse_cell_or_range 308,6278
+unsigned char parse_cell_or_range 310,6342
 yylex FUN0(314,6392
 parse_cell_or_range FUN2(586,11758
 #define CK_ABS_R(670,13200
@@ -3996,16 +4943,23 @@ y-src/parse.c,520
 # define	L_NE	26,492
 # define	L_GE	27,510
 
-parse.y,1181
+parse.y,1464
 #define obstack_chunk_alloc 46,
 #define obstack_chunk_free 47,
+int yylex 57,
+void yyerror 59,
+void yyerror 61,
 VOIDSTAR parse_hash;63,
+extern VOIDSTAR hash_find(64,
 unsigned char fnin[fnin67,
 #define YYSTYPE 71,
 typedef struct node *YYSTYPE;YYSTYPE72,
 YYSTYPE parse_return;73,
+YYSTYPE make_list 75,
+YYSTYPE make_list 77,
 char *instr;instr80,
 int parse_error 81,
+extern struct obstack tmp_mem;82,
 #define YYSTYPE 85,
 # define YYDEBUG 88,
 #define	YYFINAL	93,
@@ -4029,6 +4983,9 @@ static const short yycheck[yycheck330,
 yyerror FUN1(285,
 make_list FUN2(292,
 #define ERROR 303,
+extern struct node *yylval;yylval305,
+unsigned char parse_cell_or_range 308,
+unsigned char parse_cell_or_range 310,
 yylex FUN0(314,
 parse_cell_or_range FUN2(586,
 #define CK_ABS_R(670,
@@ -4038,7 +4995,7 @@ parse_cell_or_range FUN2(586,
 #define MAYBEREL(688,
 str_to_col FUN1(846,
 
-/usr/share/bison/bison.simple,2110
+/usr/share/bison/bison.simple,2238
 # define YYSTD(40,
 # define YYSTD(42,
 #  define YYSTACK_ALLOC 50,
@@ -4052,6 +5009,9 @@ str_to_col FUN1(846,
 #  define YYSTACK_ALLOC 78,
 #  define YYSTACK_FREE 79,
 union yyalloc83,
+  short yyss;85,
+  YYSTYPE yyvs;86,
+  YYLTYPE yyls;88,
 # define YYSTACK_GAP_MAX 93,
 #  define YYSTACK_BYTES(98,
 #  define YYSTACK_BYTES(102,
@@ -4098,6 +5058,8 @@ yystpcpy 322,
 #  define YYPARSE_PARAM_DECL 355,
 # define YYPARSE_PARAM_ARG358,
 # define YYPARSE_PARAM_DECL359,
+int yyparse 365,
+int yyparse 367,
 #define YY_DECL_NON_LSP_VARIABLES	374,
 # define YY_DECL_VARIABLES	385,
 # define YY_DECL_VARIABLES	391,
@@ -4118,6 +5080,7 @@ yyparse 403,
   yystate 875,
   yyn 895,
   yyn 903,
+  YYDPRINTF 917,
   *++yyvsp yyvsp919,
   *++yylsp yylsp921,
   yystate 924,
@@ -4126,6 +5089,7 @@ yyparse 403,
   goto yyreturn;933,
   yyresult 939,
   goto yyreturn;940,
+  yyerror 946,
   yyresult 947,
 
 y-src/atest.y,9
@@ -4147,23 +5111,47 @@ y-src/cccp.c,303
 # define	RSH	17,310
 # define	UNARY	18,327
 
-cccp.y,1579
+cccp.y,2532
 typedef unsigned char U_CHAR;38,
 struct arglist 41,
+  struct arglist *next;next42,
+  U_CHAR *name;name43,
+  int length;44,
+  int argno;45,
 #define NULL 51,
 #define GENERIC_PTR 56,
 #define GENERIC_PTR 58,
 #define NULL_PTR 63,
+int yylex 66,
+void yyerror 67,
 int expression_value;68,
 static jmp_buf parse_return_error;70,
 static int keyword_parsing 73,
+extern unsigned char is_idstart[is_idstart76,
+extern unsigned char is_idstart[], is_idchar[is_idchar76,
+extern unsigned char is_idstart[], is_idchar[], is_hor_space[is_hor_space76,
+extern char *xmalloc xmalloc78,
+extern int pedantic;81,
+extern int traditional;84,
 #define CHAR_TYPE_SIZE 87,
 #define INT_TYPE_SIZE 91,
 #define LONG_TYPE_SIZE 95,
 #define WCHAR_TYPE_SIZE 99,
 #define possible_sum_sign(104,
+static void integer_overflow 106,
+static long left_shift 107,
+static long right_shift 108,
   struct constant 113,
+  struct constant {long value;113,
+  struct constant {long value; int unsignedp;113,
+  struct constant {long value; int unsignedp;} integer;113,
   struct name 114,
+  struct name {U_CHAR *address;address114,
+  struct name {U_CHAR *address; int length;114,
+  struct name {U_CHAR *address; int length;} name;114,
+  struct arglist *keywords;keywords115,
+  int voidval;116,
+  char *sval;sval117,
 } yystype;118,
 # define YYSTYPE 119,
 # define YYDEBUG 122,
@@ -4188,6 +5176,8 @@ static const short yycheck[yycheck301,
 static char *lexptr;lexptr332,
 parse_number 341,
 struct token 437,
+  char *operator;operator438,
+  int token;439,
 static struct token tokentab2[tokentab2442,
 yylex 459,
 parse_escape 740,
@@ -4196,6 +5186,7 @@ integer_overflow 844,
 left_shift 851,
 right_shift 873,
 parse_c_expression 893,
+extern int yydebug;919,
 main 923,
 unsigned char is_idchar[is_idchar948,
 unsigned char is_idstart[is_idstart950,
@@ -4205,7 +5196,7 @@ error 988,
 warning 993,
 lookup 999,
 
-/usr/share/bison/bison.simple,2110
+/usr/share/bison/bison.simple,2238
 # define YYSTD(40,
 # define YYSTD(42,
 #  define YYSTACK_ALLOC 50,
@@ -4219,6 +5210,9 @@ lookup 999,
 #  define YYSTACK_ALLOC 78,
 #  define YYSTACK_FREE 79,
 union yyalloc83,
+  short yyss;85,
+  YYSTYPE yyvs;86,
+  YYLTYPE yyls;88,
 # define YYSTACK_GAP_MAX 93,
 #  define YYSTACK_BYTES(98,
 #  define YYSTACK_BYTES(102,
@@ -4265,6 +5259,8 @@ yystpcpy 322,
 #  define YYPARSE_PARAM_DECL 355,
 # define YYPARSE_PARAM_ARG358,
 # define YYPARSE_PARAM_DECL359,
+int yyparse 365,
+int yyparse 367,
 #define YY_DECL_NON_LSP_VARIABLES	374,
 # define YY_DECL_VARIABLES	385,
 # define YY_DECL_VARIABLES	391,
@@ -4285,6 +5281,7 @@ yyparse 403,
   yystate 875,
   yyn 895,
   yyn 903,
+  YYDPRINTF 917,
   *++yyvsp yyvsp919,
   *++yylsp yylsp921,
   yystate 924,
@@ -4293,25 +5290,50 @@ yyparse 403,
   goto yyreturn;933,
   yyresult 939,
   goto yyreturn;940,
+  yyerror 946,
   yyresult 947,
 
-y-src/cccp.y,1107
+y-src/cccp.y,2171
 typedef unsigned char U_CHAR;38,1201
 struct arglist 41,1301
+  struct arglist *next;next42,1318
+  U_CHAR *name;name43,1342
+  int length;44,1358
+  int argno;45,1372
 #define NULL 51,1468
 #define GENERIC_PTR 56,1578
 #define GENERIC_PTR 58,1611
 #define NULL_PTR 63,1670
+int yylex 66,1712
+void yyerror 67,1726
 int expression_value;68,1743
 static jmp_buf parse_return_error;70,1766
 static int keyword_parsing 73,1865
+extern unsigned char is_idstart[is_idstart76,1944
+extern unsigned char is_idstart[], is_idchar[is_idchar76,1944
+extern unsigned char is_idstart[], is_idchar[], is_hor_space[is_hor_space76,1944
+extern char *xmalloc xmalloc78,2009
+extern int pedantic;81,2062
+extern int traditional;84,2114
 #define CHAR_TYPE_SIZE 87,2162
 #define INT_TYPE_SIZE 91,2229
 #define LONG_TYPE_SIZE 95,2296
 #define WCHAR_TYPE_SIZE 99,2365
 #define possible_sum_sign(104,2556
+static void integer_overflow 106,2632
+static long left_shift 107,2665
+static long right_shift 108,2692
   struct constant 112,2733
+  struct constant {long value;112,2733
+  struct constant {long value; int unsignedp;112,2733
+  struct constant {long value; int unsignedp;} integer;112,2733
   struct name 113,2789
+  struct name {U_CHAR *address;address113,2789
+  struct name {U_CHAR *address; int length;113,2789
+  struct name {U_CHAR *address; int length;} name;113,2789
+  struct arglist *keywords;keywords114,2840
+  int voidval;115,2868
+  char *sval;sval116,2883
 start 143,3226
 exp1	148,3330
 exp	156,3505
@@ -4320,6 +5342,8 @@ keywords 306,7835
 static char *lexptr;lexptr332,8579
 parse_number 341,8842
 struct token 437,11038
+  char *operator;operator438,11053
+  int token;439,11071
 static struct token tokentab2[tokentab2442,11088
 yylex 459,11367
 parse_escape 740,17718
@@ -4328,6 +5352,7 @@ integer_overflow 844,19690
 left_shift 851,19804
 right_shift 873,20194
 parse_c_expression 893,20732
+extern int yydebug;919,21416
 main 923,21483
 unsigned char is_idchar[is_idchar948,21901
 unsigned char is_idstart[is_idstart950,21996
@@ -4340,7 +5365,5 @@ lookup 999,23033
 tex-src/nonewline.tex,0
 
 php-src/sendmail.php,0
-
-c-src/fail.c,0
 
 a-src/empty.zz,0
