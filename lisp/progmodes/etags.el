@@ -204,7 +204,7 @@ nil means it has not yet been computed;
 use function `tags-table-files' to do so.")
 
 (defvar tags-completion-table nil
-  "Obarray of tag names defined in current tags table.")
+  "List of tag names defined in current tags table.")
 
 (defvar tags-included-tables nil
   "List of tags tables included by the current tags table.")
@@ -759,23 +759,19 @@ tags table and its (recursively) included tags tables."
   (or tags-completion-table
       ;; No cached value for this buffer.
       (condition-case ()
-	  (let (current-table combined-table)
+	  (let (tables cont)
 	    (message "Making tags completion table for %s..." buffer-file-name)
 	    (save-excursion
 	      ;; Iterate over the current list of tags tables.
-	      (while (visit-tags-table-buffer (and combined-table t))
+	      (while (visit-tags-table-buffer cont)
 		;; Find possible completions in this table.
-		(setq current-table (funcall tags-completion-table-function))
-		;; Merge this buffer's completions into the combined table.
-		(if combined-table
-		    (mapatoms
-		     (lambda (sym) (intern (symbol-name sym) combined-table))
-		     current-table)
-		  (setq combined-table current-table))))
+                (push (funcall tags-completion-table-function) tables)
+                (setq cont t)))
 	    (message "Making tags completion table for %s...done"
 		     buffer-file-name)
 	    ;; Cache the result in a buffer-local variable.
-	    (setq tags-completion-table combined-table))
+	    (setq tags-completion-table
+                  (nreverse (delete-dups (apply #'nconc tables)))))
 	(quit (message "Tags completion table construction aborted.")
 	      (setq tags-completion-table nil)))))
 
@@ -1256,7 +1252,7 @@ buffer-local values of tags table format variables."
 
 
 (defun etags-tags-completion-table () ; Doc string?
-  (let ((table (make-vector 511 0))
+  (let (table
 	(progress-reporter
 	 (make-progress-reporter
 	  (format "Making tags completion table for %s..." buffer-file-name)
@@ -1276,7 +1272,7 @@ buffer-local values of tags table format variables."
 \\([-a-zA-Z0-9_+*$?:]+\\)[^-a-zA-Z0-9_+*$?:\177]*\\)\177\
 \\(\\([^\n\001]+\\)\001\\)?\\([0-9]+\\)?,\\([0-9]+\\)?\n"
 	      nil t)
-	(intern	(prog1 (if (match-beginning 5)
+	(push	(prog1 (if (match-beginning 5)
 			   ;; There is an explicit tag name.
 			   (buffer-substring (match-beginning 5) (match-end 5))
 			 ;; No explicit tag name.  Best guess.
