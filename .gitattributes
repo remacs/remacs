@@ -26,6 +26,9 @@ leim/MISC-DIC/cangjie-table.cns -whitespace
 leim/MISC-DIC/pinyin.map -whitespace
 lib-src/update-game-score.exe.manifest -whitespace
 nt/nmake.defs -whitespace
+test/etags/c-src/dostorture.c -whitespace
+test/etags/cp-src/c.C -whitespace
+test/etags/html-src/algrthms.html -whitespace
 
 # The upstream maintainer does not want to remove trailing whitespace.
 doc/misc/texinfo.tex -whitespace=blank-at-eol
@@ -40,4 +43,4 @@ doc/misc/texinfo.tex -whitespace=blank-at-eol
 *.png binary
 *.sig binary
 *.tiff binary
-test/automated/data/decompress/foo-gzipped binary
+etc/e/eterm-color binary
