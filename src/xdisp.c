@@ -24079,6 +24079,17 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
   return false;
 }
 
+void
+get_font_ascent_descent (struct font *font, int *ascent, int *descent)
+{
+#ifdef HAVE_WINDOW_SYSTEM
+  normal_char_ascent_descent (font, -1, ascent, descent);
+#else
+  *ascent = 1;
+  *descent = 0;
+#endif
+}
+
 
 /***********************************************************************
 			     Glyph Display
@@ -26818,9 +26829,10 @@ x_produce_glyphs (struct it *it)
 	  boff = font->baseline_offset;
 	  if (font->vertical_centering)
 	    boff = VCENTER_BASELINE_OFFSET (font, it->f) - boff;
-	  font_ascent = FONT_BASE (font) + boff;
-	  font_descent = FONT_DESCENT (font) - boff;
-	  font_height = FONT_HEIGHT (font);
+	  normal_char_ascent_descent (font, -1, &font_ascent, &font_descent);
+	  font_ascent +=  boff;
+	  font_descent -= boff;
+	  font_height = font_ascent + font_descent;
 
 	  cmp->font = font;
 

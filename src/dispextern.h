@@ -3246,6 +3246,8 @@ extern ptrdiff_t compute_display_string_end (ptrdiff_t,
 extern void produce_stretch_glyph (struct it *);
 extern int merge_glyphless_glyph_face (struct it *);
 
+extern void get_font_ascent_descent (struct font *, int *, int *);
+
 #ifdef HAVE_WINDOW_SYSTEM
 
 #ifdef GLYPH_DEBUG
