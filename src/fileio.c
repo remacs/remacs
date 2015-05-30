@@ -1811,8 +1811,8 @@ barf_or_query_if_file_exists (Lisp_Object absname, bool known_to_exist,
 	xsignal2 (Qfile_already_exists,
 		  build_string ("File already exists"), absname);
       GCPRO1 (absname);
-      tem = format2 ("File %s already exists; %s anyway? ",
-		     absname, build_string (querystring));
+      AUTO_STRING (format, "File %s already exists; %s anyway? ");
+      tem = CALLN (Fformat, format, absname, build_string (querystring));
       if (quick)
 	tem = call1 (intern ("y-or-n-p"), tem);
       else

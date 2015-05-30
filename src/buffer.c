@@ -1666,8 +1666,8 @@ cleaning up all windows currently displaying the buffer to be killed. */)
 	&& BUF_MODIFF (b) > BUF_SAVE_MODIFF (b))
       {
         GCPRO1 (buffer);
-        tem = do_yes_or_no_p (format2 ("Buffer %s modified; kill anyway? ",
-				       BVAR (b, name), make_number (0)));
+	AUTO_STRING (format, "Buffer %s modified; kill anyway? ");
+	tem = do_yes_or_no_p (CALLN (Fformat, format, BVAR (b, name)));
 	UNGCPRO;
 	if (NILP (tem))
 	  return unbind_to (count, Qnil);
