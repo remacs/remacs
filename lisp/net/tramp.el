@@ -1433,7 +1433,12 @@ ARGUMENTS to actually emit the message (if applicable)."
        (format
 	";; %sEmacs: %s Tramp: %s -*- mode: outline; -*-"
 	(if (featurep 'sxemacs) "SX" (if (featurep 'xemacs) "X" "GNU "))
-	emacs-version tramp-version)))
+	emacs-version tramp-version))
+      (when (>= tramp-verbose 10)
+	(insert
+	 (format
+	  "\n;; Location: %s Git: %s"
+	  (locate-library "tramp") (tramp-repository-get-version)))))
     (unless (bolp)
       (insert "\n"))
     ;; Timestamp.
