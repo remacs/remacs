@@ -10223,7 +10223,11 @@ message_with_string (const char *m, Lisp_Object string, bool log)
 
 
 /* Dump an informative message to the minibuf.  If M is 0, clear out
-   any existing message, and let the mini-buffer text show through.  */
+   any existing message, and let the mini-buffer text show through.
+
+   The message must be safe ASCII only.  If strings may contain escape
+   sequences or non-ASCII characters, convert them to Lisp strings and
+   use Fmessage.  */
 
 static void ATTRIBUTE_FORMAT_PRINTF (1, 0)
 vmessage (const char *m, va_list ap)
@@ -10289,24 +10293,6 @@ message (const char *m, ...)
   vmessage (m, ap);
   va_end (ap);
 }
-
-
-#if false
-/* The non-logging version of message.  */
-
-void
-message_nolog (const char *m, ...)
-{
-  Lisp_Object old_log_max;
-  va_list ap;
-  va_start (ap, m);
-  old_log_max = Vmessage_log_max;
-  Vmessage_log_max = Qnil;
-  vmessage (m, ap);
-  Vmessage_log_max = old_log_max;
-  va_end (ap);
-}
-#endif
 
 
 /* Display the current message in the current mini-buffer.  This is

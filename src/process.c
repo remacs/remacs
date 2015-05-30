@@ -3292,8 +3292,7 @@ usage: (make-network-process &rest ARGS)  */)
     {
       if (!NILP (host))
 	{
-	  message (":family local ignores the :host \"%s\" property",
-		   SDATA (host));
+	  message (":family local ignores the :host property");
 	  contact = Fplist_put (contact, QChost, Qnil);
 	  host = Qnil;
 	}

@@ -516,8 +516,13 @@ store_function_docstring (Lisp_Object obj, ptrdiff_t offset)
       if ((ASIZE (fun) & PSEUDOVECTOR_SIZE_MASK) > COMPILED_DOC_STRING)
 	ASET (fun, COMPILED_DOC_STRING, make_number (offset));
       else
-	message ("No docstring slot for %s",
-		 SYMBOLP (obj) ? SSDATA (SYMBOL_NAME (obj)) : "<anonymous>");
+	{
+	  AUTO_STRING (format, "No docstring slot for %s");
+	  CALLN (Fmessage, format,
+		 (SYMBOLP (obj)
+		  ? SYMBOL_NAME (obj)
+		  : build_string ("<anonymous>")));
+	}
     }
 }
 

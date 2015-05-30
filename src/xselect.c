@@ -2208,8 +2208,7 @@ x_clipboard_manager_save_all (void)
       local_frame = XCAR (XCDR (XCDR (XCDR (local_selection))));
       if (FRAME_LIVE_P (XFRAME (local_frame)))
 	{
-	  AUTO_STRING (saving, "Saving clipboard to X clipboard manager...");
-	  Fmessage (1, &saving);
+	  message ("Saving clipboard to X clipboard manager...");
 	  internal_condition_case_1 (x_clipboard_manager_save, local_frame,
 				     Qt, x_clipboard_manager_error_2);
 	}

@@ -1647,8 +1647,10 @@ The function `default-value' gets the default value and `set-default' sets it.  
 	Lisp_Object symbol;
 	XSETSYMBOL (symbol, sym); /* In case `variable' is aliased.  */
 	if (let_shadows_global_binding_p (symbol))
-	  message ("Making %s buffer-local while let-bound!",
-		   SDATA (SYMBOL_NAME (variable)));
+	  {
+	    AUTO_STRING (format, "Making %s buffer-local while let-bound!");
+	    CALLN (Fmessage, format, SYMBOL_NAME (variable));
+	  }
       }
     }
 
@@ -1730,9 +1732,11 @@ Instead, use `add-hook' and specify t for the LOCAL argument.  */)
 	Lisp_Object symbol;
 	XSETSYMBOL (symbol, sym); /* In case `variable' is aliased.  */
 	if (let_shadows_global_binding_p (symbol))
-	  message ("Making %s local to %s while let-bound!",
-		   SDATA (SYMBOL_NAME (variable)),
-		   SDATA (BVAR (current_buffer, name)));
+	  {
+	    AUTO_STRING (format, "Making %s local to %s while let-bound!");
+	    CALLN (Fmessage, format, SYMBOL_NAME (variable),
+		   BVAR (current_buffer, name));
+	  }
       }
     }
 
@@ -1742,8 +1746,11 @@ Instead, use `add-hook' and specify t for the LOCAL argument.  */)
   if (NILP (tem))
     {
       if (let_shadows_buffer_binding_p (sym))
-	message ("Making %s buffer-local while locally let-bound!",
-		 SDATA (SYMBOL_NAME (variable)));
+	{
+	  AUTO_STRING (format,
+		       "Making %s buffer-local while locally let-bound!");
+	  CALLN (Fmessage, format, SYMBOL_NAME (variable));
+	}
 
       /* Swap out any local binding for some other buffer, and make
 	 sure the current value is permanently recorded, if it's the
@@ -1908,8 +1915,10 @@ frame-local bindings).  */)
     Lisp_Object symbol;
     XSETSYMBOL (symbol, sym); /* In case `variable' is aliased.  */
     if (let_shadows_global_binding_p (symbol))
-      message ("Making %s frame-local while let-bound!",
-	       SDATA (SYMBOL_NAME (variable)));
+      {
+	AUTO_STRING (format, "Making %s frame-local while let-bound!");
+	CALLN (Fmessage, format, SYMBOL_NAME (variable));
+      }
   }
   return variable;
 }
