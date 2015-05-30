@@ -833,7 +833,9 @@ static void x_draw_bottom_divider (struct window *w);
 static void notice_overwritten_cursor (struct window *,
                                        enum glyph_row_area,
                                        int, int, int, int);
-static int  normal_char_height (struct font *);
+static int  normal_char_height (struct font *, int);
+static void normal_char_ascent_descent (struct font *, int, int *, int *);
+
 static void append_stretch_glyph (struct it *, Lisp_Object,
                                   int, int, int);
 
@@ -1762,7 +1764,7 @@ estimate_mode_line_height (struct frame *f, enum face_id face_id)
 	  if (face)
 	    {
 	      if (face->font)
-		height = normal_char_height (face->font);
+		height = normal_char_height (face->font, -1);
 	      if (face->box_line_width > 0)
 		height += 2 * face->box_line_width;
 	    }
@@ -4889,7 +4891,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	    {
 	      struct face *face = FACE_FROM_ID (it->f, it->face_id);
 	      it->voffset = - (XFLOATINT (value)
-			       * (normal_char_height (face->font)));
+			       * (normal_char_height (face->font, -1)));
 	    }
 #endif /* HAVE_WINDOW_SYSTEM */
 	}
@@ -19212,10 +19214,22 @@ append_space_for_newline (struct it *it, bool default_face_p)
 
 	  PRODUCE_GLYPHS (it);
 
-	  /* Make sure this space glyph has the right ascent value, or
-	     else hollow cursor at end of line will look funny.  */
+	  /* Make sure this space glyph has the right ascent and
+	     descent values, or else cursor at end of line will look
+	     funny.  */
 	  g = it->glyph_row->glyphs[TEXT_AREA] + n;
-	  g->ascent = it->glyph_row->ascent;
+	  struct font *font = face->font ? face->font : FRAME_FONT (it->f);
+	  if (n == 0 || it->glyph_row->height < font->pixel_size)
+	    {
+	      normal_char_ascent_descent (font, -1, &it->ascent, &it->descent);
+	      it->max_ascent = it->ascent;
+	      it->max_descent = it->descent;
+	      /* Make sure compute_line_metrics recomputes the row height.  */
+	      it->glyph_row->height = 0;
+	    }
+
+	  g->ascent = it->max_ascent;
+	  g->descent = it->max_descent;
 
 	  it->override_ascent = -1;
 	  it->constrain_row_ascent_descent_p = false;
@@ -23930,7 +23944,7 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 #ifdef HAVE_WINDOW_SYSTEM
       if (EQ (prop, Qheight))
 	return OK_PIXELS (font
-			  ? normal_char_height (font)
+			  ? normal_char_height (font, -1)
 			  : FRAME_LINE_HEIGHT (it->f));
       if (EQ (prop, Qwidth))
 	return OK_PIXELS (font
@@ -24569,39 +24583,14 @@ get_per_char_metric (struct font *font, XChar2b *char2b)
   return &metrics;
 }
 
-/* A subroutine that computes a reasonable "normal character height"
-   for fonts that claim preposterously large vertical dimensions, but
-   whose glyphs are actually reasonably sized.  */
-static int
-normal_char_height (struct font *font)
-{
-  int default_height = FONT_HEIGHT (font);
-
-  /* If the font claims too large height, use the metrics of the SPC
-     character instead.  Note that this could still fail to produce a
-     better value if the font or the font driver don't support the
-     functionality required by get_per_char_metric.  */
-  if (FONT_TOO_HIGH (font))
-    {
-      XChar2b char2b;
-
-      /* Get metrics of the SPC character.  */
-      if (get_char_glyph_code (' ', font, &char2b))
-	{
-	  struct font_metrics *pcm = get_per_char_metric (font, &char2b);
-
-	  if (!(pcm->width == 0 && pcm->rbearing == 0 && pcm->lbearing == 0))
-	    default_height = pcm->ascent + pcm->descent;
-	}
-    }
-  return default_height;
-}
-
-/* A subroutine that computes "normal" values of ascent and descent
-   for fonts that claim preposterously large values, but whose glyphs
-   actually have reasonable dimensions.  */
+/* A subroutine that computes "normal" values of ASCENT and DESCENT
+   for FONT.  Values are taken from font-global ones, except for fonts
+   that claim preposterously large values, but whose glyphs actually
+   have reasonable dimensions.  C is the character to use for metrics
+   if the font-global values are too large; if C is negative, the
+   function selects a default character.  */
 static void
-normal_char_ascent_descent (struct font *font, int *ascent, int *descent)
+normal_char_ascent_descent (struct font *font, int c, int *ascent, int *descent)
 {
   *ascent = FONT_BASE (font);
   *descent = FONT_DESCENT (font);
@@ -24610,18 +24599,37 @@ normal_char_ascent_descent (struct font *font, int *ascent, int *descent)
     {
       XChar2b char2b;
 
-      /* Get metrics of a reasonably sized ASCII character.  */
-      if (get_char_glyph_code ('{', font, &char2b))
+      /* Get metrics of C, defaulting to a reasonably sized ASCII
+	 character.  */
+      if (get_char_glyph_code (c >= 0 ? c : '{', font, &char2b))
 	{
 	  struct font_metrics *pcm = get_per_char_metric (font, &char2b);
 
 	  if (!(pcm->width == 0 && pcm->rbearing == 0 && pcm->lbearing == 0))
 	    {
-	      *ascent = pcm->ascent;
-	      *descent = pcm->descent;
+	      /* We add 1 pixel to character dimensions as heuristics
+		 that produces nicer display, e.g. when the face has
+		 the box attribute.  */
+	      *ascent = pcm->ascent + 1;
+	      *descent = pcm->descent + 1;
 	    }
 	}
     }
+}
+
+/* A subroutine that computes a reasonable "normal character height"
+   for fonts that claim preposterously large vertical dimensions, but
+   whose glyphs are actually reasonably sized.  C is the charcater
+   whose metrics to use for those fonts, or -1 for default
+   character.  */
+static int
+normal_char_height (struct font *font, int c)
+{
+  int ascent, descent;
+
+  normal_char_ascent_descent (font, c, &ascent, &descent);
+
+  return ascent + descent;
 }
 
 /* EXPORT for RIF:
@@ -25923,7 +25931,7 @@ produce_stretch_glyph (struct it *it)
   /* Compute height.  */
   if (FRAME_WINDOW_P (it->f))
     {
-      int default_height = normal_char_height (font);
+      int default_height = normal_char_height (font, ' ');
 
       if ((prop = Fplist_get (plist, QCheight), !NILP (prop))
 	  && calc_pixel_width_or_height (&tem, it, prop, font, false, 0))
@@ -26159,7 +26167,7 @@ calc_line_height_property (struct it *it, Lisp_Object val, struct font *font,
 	boff = VCENTER_BASELINE_OFFSET (font, it->f) - boff;
     }
 
-  normal_char_ascent_descent (font, &ascent, &descent);
+  normal_char_ascent_descent (font, -1, &ascent, &descent);
 
   if (override)
     {
@@ -26285,7 +26293,7 @@ produce_glyphless_glyph (struct it *it, bool for_no_font, Lisp_Object acronym)
      ASCII face.  */
   face = FACE_FROM_ID (it->f, it->face_id)->ascii_face;
   font = face->font ? face->font : FRAME_FONT (it->f);
-  normal_char_ascent_descent (font, &it->ascent, &it->descent);
+  normal_char_ascent_descent (font, -1, &it->ascent, &it->descent);
   it->ascent += font->baseline_offset;
   it->descent -= font->baseline_offset;
   base_height = it->ascent + it->descent;
