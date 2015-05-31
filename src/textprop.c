@@ -2377,12 +2377,8 @@ inherits it if NONSTICKINESS is nil.  The `front-sticky' and
 
   /* Common attributes one might give text.  */
 
-  DEFSYM (Qforeground, "foreground");
-  DEFSYM (Qbackground, "background");
   DEFSYM (Qfont, "font");
   DEFSYM (Qface, "face");
-  DEFSYM (Qstipple, "stipple");
-  DEFSYM (Qunderline, "underline");
   DEFSYM (Qread_only, "read-only");
   DEFSYM (Qinvisible, "invisible");
   DEFSYM (Qintangible, "intangible");
@@ -2395,8 +2391,6 @@ inherits it if NONSTICKINESS is nil.  The `front-sticky' and
 
   /* Properties that text might use to specify certain actions.  */
 
-  DEFSYM (Qmouse_left, "mouse-left");
-  DEFSYM (Qmouse_entered, "mouse-entered");
   DEFSYM (Qpoint_left, "point-left");
   DEFSYM (Qpoint_entered, "point-entered");
 

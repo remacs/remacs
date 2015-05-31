@@ -7329,7 +7329,6 @@ syms_of_window (void)
   DEFSYM (Qwindow_size, "window-size");
   DEFSYM (Qtemp_buffer_show_hook, "temp-buffer-show-hook");
   DEFSYM (Qabove, "above");
-  DEFSYM (Qbelow, "below");
   DEFSYM (Qclone_of, "clone-of");
   DEFSYM (Qfloor, "floor");
   DEFSYM (Qceiling, "ceiling");

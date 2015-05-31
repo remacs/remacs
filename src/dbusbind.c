@@ -1718,11 +1718,7 @@ init_dbusbind (void)
 void
 syms_of_dbusbind (void)
 {
-
-  DEFSYM (Qdbus__init_bus, "dbus--init-bus");
   defsubr (&Sdbus__init_bus);
-
-  DEFSYM (Qdbus_get_unique_name, "dbus-get-unique-name");
   defsubr (&Sdbus_get_unique_name);
 
   DEFSYM (Qdbus_message_internal, "dbus-message-internal");

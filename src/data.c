@@ -3451,7 +3451,6 @@ syms_of_data (void)
   DEFSYM (Qlistp, "listp");
   DEFSYM (Qconsp, "consp");
   DEFSYM (Qsymbolp, "symbolp");
-  DEFSYM (Qkeywordp, "keywordp");
   DEFSYM (Qintegerp, "integerp");
   DEFSYM (Qnatnump, "natnump");
   DEFSYM (Qwholenump, "wholenump");
@@ -3465,7 +3464,6 @@ syms_of_data (void)
   DEFSYM (Qmarkerp, "markerp");
   DEFSYM (Qbuffer_or_string_p, "buffer-or-string-p");
   DEFSYM (Qinteger_or_marker_p, "integer-or-marker-p");
-  DEFSYM (Qboundp, "boundp");
   DEFSYM (Qfboundp, "fboundp");
 
   DEFSYM (Qfloatp, "floatp");
@@ -3480,10 +3478,6 @@ syms_of_data (void)
   DEFSYM (Qmany, "many");
 
   DEFSYM (Qcdr, "cdr");
-
-  /* Handle automatic advice activation.  */
-  DEFSYM (Qad_advice_info, "ad-advice-info");
-  DEFSYM (Qad_activate_internal, "ad-activate-internal");
 
   error_tail = pure_cons (Qerror, Qnil);
 
@@ -3570,7 +3564,6 @@ syms_of_data (void)
   DEFSYM (Qchar_table, "char-table");
   DEFSYM (Qbool_vector, "bool-vector");
   DEFSYM (Qhash_table, "hash-table");
-  DEFSYM (Qmisc, "misc");
 
   DEFSYM (Qdefun, "defun");
 

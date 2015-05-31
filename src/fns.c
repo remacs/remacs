@@ -5073,8 +5073,6 @@ syms_of_fns (void)
   defsubr (&Sdefine_hash_table_test);
 
   DEFSYM (Qstring_lessp, "string-lessp");
-  DEFSYM (Qstring_collate_lessp, "string-collate-lessp");
-  DEFSYM (Qstring_collate_equalp, "string-collate-equalp");
   DEFSYM (Qprovide, "provide");
   DEFSYM (Qrequire, "require");
   DEFSYM (Qyes_or_no_p_history, "yes-or-no-p-history");

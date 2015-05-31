@@ -30536,9 +30536,7 @@ They are still logged to the *Messages* buffer.  */);
   DEFSYM (Qcircle, "circle");
   DEFSYM (Qpoly, "poly");
 
-  /* The symbol `inhibit-menubar-update' and its DEFVAR_BOOL variable.  */
   DEFSYM (Qinhibit_menubar_update, "inhibit-menubar-update");
-  DEFSYM (Qmessage_truncate_lines, "message-truncate-lines");
 
   DEFSYM (Qgrow_only, "grow-only");
   DEFSYM (Qinhibit_eval_during_redisplay, "inhibit-eval-during-redisplay");

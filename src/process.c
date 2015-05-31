@@ -7574,7 +7574,6 @@ syms_of_process (void)
   DEFSYM (QClog, ":log");
   DEFSYM (QCnoquery, ":noquery");
   DEFSYM (QCstop, ":stop");
-  DEFSYM (QCoptions, ":options");
   DEFSYM (QCplist, ":plist");
   DEFSYM (QCcommand, ":command");
   DEFSYM (QCconnection_type, ":connection-type");
