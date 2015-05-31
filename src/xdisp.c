@@ -26763,6 +26763,22 @@ x_produce_glyphs (struct it *it)
 	      it->nglyphs = 1;
 	    }
 	}
+
+      if (FONT_TOO_HIGH (font))
+	{
+	  int font_ascent, font_descent;
+
+	  /* For very large fonts, where we ignore the declared font
+	     dimensions, and go by per-character metrics instead,
+	     don't let the row ascent and descent values (and the row
+	     height computed from them) be smaller than the "normal"
+	     character metrics.  This avoids unpleasant effects
+	     whereby lines on display would change their heigh
+	     depending on which characters are shown.  */
+	  normal_char_ascent_descent (font, -1, &font_ascent, &font_descent);
+	  it->max_ascent = max (it->max_ascent, font_ascent);
+	  it->max_descent = max (it->max_descent, font_descent);
+	}
     }
   else if (it->what == IT_COMPOSITION && it->cmp_it.ch < 0)
     {
