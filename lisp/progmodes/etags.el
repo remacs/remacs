@@ -1628,7 +1628,8 @@ Point should be just after a string that matches TAG."
   ;; Look at the comment of the make_tag function in lib-src/etags.c for
   ;; a textual description of the four rules.
   (and (string-match "^[^ \t()=,;]+$" tag) ;rule #1
-       (looking-at "[ \t()=,;]?\177")	;rules #2 and #4
+       ;; Rules #2 and #4, and a check that there's no explicit name.
+       (looking-at "[ \t()=,;]?\177\\(?:[0-9]+\\)?,\\(?:[0-9]+\\)?$")
        (save-excursion
 	 (backward-char (1+ (length tag)))
 	 (looking-at "[\n \t()=,;]"))))	;rule #3
