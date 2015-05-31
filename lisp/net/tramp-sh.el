@@ -67,7 +67,7 @@ files conditionalize this setup based on the TERM environment variable."
   :type 'string)
 
 ;;;###tramp-autoload
-(defcustom tramp-histfile-override t
+(defcustom tramp-histfile-override ".tramp_history"
   "When invoking a shell, override the HISTFILE with this value.
 When setting to a string, it redirects the shell history to that
 file.  Be careful when setting to \"/dev/null\"; this might
