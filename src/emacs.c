@@ -2434,7 +2434,10 @@ hpux, irix, usg-unix-v) indicates some sort of Unix system.  */);
   DEFVAR_LISP ("system-configuration-features", Vsystem_configuration_features,
 	       doc: /* String listing some of the main features this Emacs was compiled with.
 An element of the form \"FOO\" generally means that HAVE_FOO was
-defined during the build.  */);
+defined during the build.
+
+This is mainly intended for diagnostic purposes in bug reports.
+Don't rely on it for testing whether a feature you want to use is available.  */);
   Vsystem_configuration_features = build_string (EMACS_CONFIG_FEATURES);
 
   DEFVAR_BOOL ("noninteractive", noninteractive1,
