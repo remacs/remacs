@@ -1164,7 +1164,9 @@ current language environment.
 to use when encoding and decoding system strings such as system error
 messages and @code{format-time-string} formats and time stamps.  That
 coding system is also used for decoding non-@acronym{ASCII} keyboard
-input on the X Window System.  You should choose a coding system that is compatible
+input on the X Window System and for encoding text sent to the
+standard output and error streams when in batch mode.  You should
+choose a coding system that is compatible
 with the underlying system's text representation, which is normally
 specified by one of the environment variables @env{LC_ALL},
 @env{LC_CTYPE}, and @env{LANG}.  (The first one, in the order
