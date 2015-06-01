@@ -1459,12 +1459,14 @@ be non-negative integers."
 		  (tramp-shell-quote-argument localname))))))
 
       ;; We handle also the local part, because there doesn't exist
-      ;; `set-file-uid-gid'.  On W32 "chown" might not work.
-      (let ((uid (or (and (natnump uid) uid) (tramp-get-local-uid 'integer)))
-	    (gid (or (and (natnump gid) gid) (tramp-get-local-gid 'integer))))
-	(tramp-call-process
-	 nil "chown" nil nil nil
-         (format "%d:%d" uid gid) (tramp-shell-quote-argument filename))))))
+      ;; `set-file-uid-gid'.  On W32 "chown" might not work.  We add a
+      ;; timeout for this.
+      (with-timeout (5 nil)
+	(let ((uid (or (and (natnump uid) uid) (tramp-get-local-uid 'integer)))
+	      (gid (or (and (natnump gid) gid) (tramp-get-local-gid 'integer))))
+	  (tramp-call-process
+	   nil "chown" nil nil nil
+	   (format "%d:%d" uid gid) (tramp-shell-quote-argument filename)))))))
 
 (defun tramp-remote-selinux-p (vec)
   "Check, whether SELINUX is enabled on the remote host."

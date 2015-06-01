@@ -40,15 +40,17 @@
 
 (defun tramp-repository-get-version ()
   "Try to return as a string the repository revision of the Tramp sources."
-  (let ((dir (funcall 'locate-dominating-file (locate-library "tramp") ".git")))
-    (when dir
-      (with-temp-buffer
-	(let ((default-directory (file-name-as-directory dir)))
-	  (and (zerop
-		(ignore-errors
-		  (call-process "git" nil '(t nil) nil "rev-parse" "HEAD")))
-	       (not (zerop (buffer-size)))
-	       (replace-regexp-in-string "\n" "" (buffer-string))))))))
+  (unless (featurep 'xemacs)
+    (let ((dir
+	   (funcall 'locate-dominating-file (locate-library "tramp") ".git")))
+      (when dir
+	(with-temp-buffer
+	  (let ((default-directory (file-name-as-directory dir)))
+	    (and (zerop
+		  (ignore-errors
+		    (call-process "git" nil '(t nil) nil "rev-parse" "HEAD")))
+		 (not (zerop (buffer-size)))
+		 (replace-regexp-in-string "\n" "" (buffer-string)))))))))
 
 ;; Check for (X)Emacs version.
 (let ((x (if (or (>= emacs-major-version 22)

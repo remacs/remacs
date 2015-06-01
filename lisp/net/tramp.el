@@ -1530,6 +1530,12 @@ applicable)."
 	    (let ((tramp-verbose 0))
 	      (setq vec-or-proc
 		    (tramp-get-connection-property vec-or-proc "vector" nil))))
+	  ;; Append connection buffer for error messages.
+	  (when (= level 1)
+	    (let ((tramp-verbose 0))
+	      (with-current-buffer (tramp-get-connection-buffer vec-or-proc)
+		(setq fmt-string (concat fmt-string "\n%s")
+		      arguments (append arguments (list (buffer-string)))))))
 	  ;; Do it.
 	  (when (vectorp vec-or-proc)
 	    (apply 'tramp-debug-message
@@ -4020,8 +4026,11 @@ this file, if that variable is non-nil."
 	      (file-exists-p tramp-auto-save-directory))
     (make-directory tramp-auto-save-directory t))
 
-  (let ((auto-save-file-name-transforms
-	 (if (null tramp-auto-save-directory) auto-save-file-name-transforms))
+  (let ((system-type 'not-windows)
+	(auto-save-file-name-transforms
+	 (if (and (null tramp-auto-save-directory)
+		  (boundp 'auto-save-file-name-transforms))
+	     (symbol-value 'auto-save-file-name-transforms)))
 	(buffer-file-name
 	 (if (null tramp-auto-save-directory)
 	     buffer-file-name
