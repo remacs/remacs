@@ -143,38 +143,13 @@ actual location is not known.")
 
 (cl-defmethod xref-location-group ((_ xref-bogus-location)) "(No location)")
 
-;; This should be in elisp-mode.el, but it's preloaded, and we can't
-;; preload defclass and defmethod (at least, not yet).
-(defclass xref-elisp-location (xref-location)
-  ((symbol :type symbol :initarg :symbol)
-   (type   :type symbol :initarg :type)
-   (file   :type string :initarg :file
-           :reader xref-location-group))
-  :documentation "Location of an Emacs Lisp symbol definition.")
-
-(defun xref-make-elisp-location (symbol type file)
-  (make-instance 'xref-elisp-location :symbol symbol :type type :file file))
-
-(cl-defmethod xref-location-marker ((l xref-elisp-location))
-  (with-slots (symbol type file) l
-    (let ((buffer-point
-           (pcase type
-             (`defun (find-function-search-for-symbol symbol nil file))
-             ((or `defvar `defface)
-              (find-function-search-for-symbol symbol type file))
-             (`feature
-              (cons (find-file-noselect file) 1)))))
-      (with-current-buffer (car buffer-point)
-        (goto-char (or (cdr buffer-point) (point-min)))
-        (point-marker)))))
-
 
 ;;; Cross-reference
 
 (defclass xref--xref ()
   ((description :type string :initarg :description
                 :reader xref--xref-description)
-   (location :type xref-location :initarg :location
+   (location :initarg :location
              :reader xref--xref-location))
   :comment "An xref is used to display and locate constructs like
 variables or functions.")

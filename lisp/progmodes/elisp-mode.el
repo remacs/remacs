@@ -579,7 +579,6 @@ It can be quoted, or be inside a quoted form."
 
 ;;; Xref backend
 
-(declare-function xref-make-elisp-location "xref" (symbol type file))
 (declare-function xref-make-bogus-location "xref" (message))
 (declare-function xref-make "xref" (description location))
 (declare-function xref-collect-matches "xref" (input dir &optional kind))
@@ -696,6 +695,24 @@ It can be quoted, or be inside a quoted form."
 
 (defun elisp--xref-identifier-completion-table ()
   elisp--xref-identifier-completion-table)
+
+(cl-defstruct (xref-elisp-location
+               (:constructor xref-make-elisp-location (symbol type file)))
+  "Location of an Emacs Lisp symbol definition."
+  symbol type file)
+
+(cl-defmethod xref-location-marker ((l xref-elisp-location))
+  (pcase-let (((cl-struct xref-elisp-location symbol type file) l))
+    (let ((buffer-point
+           (pcase type
+             (`defun (find-function-search-for-symbol symbol nil file))
+             ((or `defvar `defface)
+              (find-function-search-for-symbol symbol type file))
+             (`feature
+              (cons (find-file-noselect file) 1)))))
+      (with-current-buffer (car buffer-point)
+        (goto-char (or (cdr buffer-point) (point-min)))
+        (point-marker)))))
 
 ;;; Elisp Interaction mode
 
