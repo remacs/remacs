@@ -4519,7 +4519,8 @@ select_visual (struct x_display_info *dpyinfo)
       if (class == -1
 	  || !XMatchVisualInfo (dpy, XScreenNumberOfScreen (screen),
 				dpyinfo->n_planes, class, &vinfo))
-	fatal ("Invalid visual specification `%s'", SDATA (value));
+	fatal ("Invalid visual specification '%s'",
+	       SSDATA (ENCODE_SYSTEM (value)));
 
       dpyinfo->visual = vinfo.visual;
     }

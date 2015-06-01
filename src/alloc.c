@@ -4775,7 +4775,7 @@ mark_memory (void *start, void *end)
        Lisp_Object obj = build_string ("test");
        struct Lisp_String *s = XSTRING (obj);
        Fgarbage_collect ();
-       fprintf (stderr, "test `%s'\n", s->data);
+       fprintf (stderr, "test '%s'\n", s->data);
        return Qnil;
      }
 

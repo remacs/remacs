@@ -5285,7 +5285,7 @@ init_buffer (int initialized)
   pwd = get_current_dir_name ();
 
   if (!pwd)
-    fatal ("`get_current_dir_name' failed: %s\n", strerror (errno));
+    fatal ("get_current_dir_name: %s\n", strerror (errno));
 
   /* Maybe this should really use some standard subroutine
      whose definition is filename syntax dependent.  */
@@ -5295,7 +5295,7 @@ init_buffer (int initialized)
       /* Grow buffer to add directory separator and '\0'.  */
       pwd = realloc (pwd, len + 2);
       if (!pwd)
-	fatal ("`get_current_dir_name' failed: %s\n", strerror (errno));
+	fatal ("get_current_dir_name: %s\n", strerror (errno));
       pwd[len] = DIRECTORY_SEP;
       pwd[len + 1] = '\0';
       len++;

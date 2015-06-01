@@ -2091,7 +2091,7 @@ cvt_string_to_pixel (Display *dpy, XrmValue *args, Cardinal *nargs,
       params[0] = color_name;
       XtAppWarningMsg (XtDisplayToApplicationContext (dpy),
 		       "badValue", "cvt_string_to_pixel",
-		       "XtToolkitError", "Invalid color `%s'",
+		       "XtToolkitError", "Invalid color '%s'",
 		       params, &nparams);
       return False;
     }
@@ -9388,7 +9388,7 @@ x_io_error_quitter (Display *display)
 {
   char buf[256];
 
-  snprintf (buf, sizeof buf, "Connection lost to X server `%s'",
+  snprintf (buf, sizeof buf, "Connection lost to X server '%s'",
 	    DisplayString (display));
   x_connection_closed (display, buf, true);
   return 0;

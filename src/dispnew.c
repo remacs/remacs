@@ -6036,10 +6036,10 @@ init_display (void)
     {
 #ifdef HAVE_WINDOW_SYSTEM
       if (! inhibit_window_system)
-	fprintf (stderr, "Please set the environment variable DISPLAY or TERM (see `tset').\n");
+	fprintf (stderr, "Please set the environment variable DISPLAY or TERM (see 'tset').\n");
       else
 #endif /* HAVE_WINDOW_SYSTEM */
-	fprintf (stderr, "Please set the environment variable TERM; see `tset'.\n");
+	fprintf (stderr, "Please set the environment variable TERM; see 'tset'.\n");
       exit (1);
     }
 

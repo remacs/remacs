@@ -776,12 +776,12 @@ main (int argc, char **argv)
 	  tem2 = Fsymbol_value (intern_c_string ("emacs-copyright"));
 	  if (!STRINGP (tem))
 	    {
-	      fprintf (stderr, "Invalid value of `emacs-version'\n");
+	      fprintf (stderr, "Invalid value of 'emacs-version'\n");
 	      exit (1);
 	    }
 	  if (!STRINGP (tem2))
 	    {
-	      fprintf (stderr, "Invalid value of `emacs-copyright'\n");
+	      fprintf (stderr, "Invalid value of 'emacs-copyright'\n");
 	      exit (1);
 	    }
 	  else
@@ -1796,7 +1796,7 @@ sort_args (int argc, char **argv)
 		options[from] = standard_args[i].nargs;
 		priority[from] = standard_args[i].priority;
 		if (from + standard_args[i].nargs >= argc)
-		  fatal ("Option `%s' requires an argument\n", argv[from]);
+		  fatal ("Option '%s' requires an argument\n", argv[from]);
 		from += standard_args[i].nargs;
 		goto done;
 	      }
@@ -1833,7 +1833,7 @@ sort_args (int argc, char **argv)
 		  if (equals != 0)
 		    options[from] = 0;
 		  if (from + options[from] >= argc)
-		    fatal ("Option `%s' requires an argument\n", argv[from]);
+		    fatal ("Option '%s' requires an argument\n", argv[from]);
 		  from += options[from];
 		}
 	      /* FIXME When match < 0, shouldn't there be some error,
