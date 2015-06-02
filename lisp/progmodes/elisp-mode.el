@@ -591,9 +591,9 @@ It can be quoted, or be inside a quoted form."
         (when sym
           (elisp--xref-find-definitions sym))))
     (`references
-     (elisp--xref-find-matches id 'symbol))
+     (elisp--xref-find-matches id #'xref-collect-references))
     (`matches
-     (elisp--xref-find-matches id 'regexp))
+     (elisp--xref-find-matches id #'xref-collect-matches))
     (`apropos
      (elisp--xref-find-apropos id))))
 
@@ -654,7 +654,7 @@ It can be quoted, or be inside a quoted form."
 
 (defvar package-user-dir)
 
-(defun elisp--xref-find-matches (symbol kind)
+(defun elisp--xref-find-matches (symbol fun)
   (let* ((dirs (sort
                 (mapcar
                  (lambda (dir)
@@ -673,7 +673,7 @@ It can be quoted, or be inside a quoted form."
     (cl-mapcan
      (lambda (dir)
        (and (file-exists-p dir)
-            (xref-collect-matches symbol dir kind)))
+            (funcall fun symbol dir)))
      dirs)))
 
 (defun elisp--xref-find-apropos (regexp)
