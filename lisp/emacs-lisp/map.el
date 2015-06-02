@@ -44,6 +44,24 @@
 
 (require 'seq)
 
+(pcase-defmacro map (&rest args)
+  "pcase pattern matching map elements.
+Matches if the object is a map (list, hash-table or array), and
+binds values from ARGS to the corresponding element of the map.
+
+ARGS can be an alist of key/binding pairs of a list of keys."
+  `(and (pred map-p)
+        ,@(map--make-pcase-bindings args)))
+
+(defmacro map-let (args map &rest body)
+  "Bind the variables in ARGS to the elements of MAP then evaluate BODY.
+
+ARGS can be an alist of key/binding pairs or a list of keys.  MAP
+can be a list, hash-table or array."
+  (declare (indent 2) (debug t))
+  `(pcase-let ((,(map--make-pcase-patterns args) ,map))
+     ,@body))
+
 (defun map-elt (map key &optional default)
   "Perform a lookup in MAP of KEY and return its associated value.
 If KEY is not found, return DEFAULT which defaults to nil.
@@ -330,6 +348,23 @@ If KEY is not found, return DEFAULT which defaults to nil."
                  (map-put ht key value))
                map)
     ht))
+
+(defun map--make-pcase-bindings (args)
+  "Return a list of pcase bindings from ARGS to the elements of a map."
+  (seq-map (lambda (elt)
+             (if (consp elt)
+                 `(app (pcase--flip map-elt ',(car elt)) ,(cdr elt))
+               `(app (pcase--flip map-elt ',elt) ,elt)))
+           args))
+
+(defun map--make-pcase-patterns (args)
+  "Return a list of `(map ...)' pcase patterns built from ARGS."
+  (cons 'map
+        (seq-map (lambda (elt)
+                   (if (and (consp elt) (eq 'map (car elt)))
+                       (map--make-pcase-patterns elt)
+                     elt))
+                 args)))
 
 (provide 'map)
 ;;; map.el ends here

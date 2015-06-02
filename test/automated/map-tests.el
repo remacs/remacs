@@ -317,5 +317,17 @@ Evaluate BODY for each created map.
     (assert (map-empty-p (map-into nil 'hash-table)))
     (should-error (map-into [1 2 3] 'string))))
 
+(ert-deftest test-map-let ()
+  (map-let (foo bar baz) '((foo . 1) (bar . 2))
+    (assert (= foo 1))
+    (assert (= bar 2))
+    (assert (null baz)))
+  (map-let ((foo . a)
+            (bar . b)
+            (baz . c)) '((foo . 1) (bar . 2))
+    (assert (= a 1))
+    (assert (= b 2))
+    (assert (null c))))
+
 (provide 'map-tests)
 ;;; map-tests.el ends here
