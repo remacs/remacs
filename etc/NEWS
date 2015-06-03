@@ -30,6 +30,7 @@ otherwise leave it unmarked.
 ** Building Emacs now requires GNU make, version 3.81 or later.
 
 ** New configure option --with-cairo.
+Maybe add text based on http://lists.gnu.org/archive/html/emacs-devel/2015-05/msg00689.html
 
 ** By default, Emacs no longer works on IRIX.  We expect that Emacs
 users are not affected by this, as SGI stopped supporting IRIX in
