@@ -85,21 +85,18 @@ being the result.")
 (defun file-notify--test-remote-enabled ()
   "Whether remote file notification is enabled."
   (unless (consp file-notify--test-remote-enabled-checked)
-    (unwind-protect
-        (ignore-errors
-          (and
-           (file-remote-p file-notify-test-remote-temporary-file-directory)
-           (file-directory-p file-notify-test-remote-temporary-file-directory)
-           (file-writable-p file-notify-test-remote-temporary-file-directory)
-           (setq file-notify--test-desc
-                 (file-notify-add-watch
-                  file-notify-test-remote-temporary-file-directory
-                  '(change) 'ignore))))
-      ;; Unwind forms.
-      (setq file-notify--test-remote-enabled-checked
-            (cons t file-notify--test-desc))
-      (when file-notify--test-desc
-        (file-notify-rm-watch file-notify--test-desc))))
+    (let (desc)
+      (ignore-errors
+        (and
+         (file-remote-p file-notify-test-remote-temporary-file-directory)
+         (file-directory-p file-notify-test-remote-temporary-file-directory)
+         (file-writable-p file-notify-test-remote-temporary-file-directory)
+         (setq desc
+               (file-notify-add-watch
+                file-notify-test-remote-temporary-file-directory
+                '(change) 'ignore))))
+      (setq file-notify--test-remote-enabled-checked (cons t desc))
+      (when desc (file-notify-rm-watch desc))))
   ;; Return result.
   (cdr file-notify--test-remote-enabled-checked))
 
@@ -108,21 +105,17 @@ being the result.")
   (declare (indent 1))
   `(ert-deftest ,(intern (concat (symbol-name test) "-remote")) ()
      ,docstring
-     (condition-case err
-         (let* ((temporary-file-directory
-                 file-notify-test-remote-temporary-file-directory)
-                (ert-test (ert-get-test ',test)))
-           (skip-unless (file-notify--test-remote-enabled))
-           (tramp-cleanup-connection
-            (tramp-dissect-file-name temporary-file-directory)
-            nil 'keep-password)
-           (funcall (ert-test-body ert-test)))
-         ((error quit) (ert-fail err)))))
+     (let* ((temporary-file-directory
+	     file-notify-test-remote-temporary-file-directory)
+	    (ert-test (ert-get-test ',test)))
+       (skip-unless (file-notify--test-remote-enabled))
+       (tramp-cleanup-connection
+	(tramp-dissect-file-name temporary-file-directory) nil 'keep-password)
+       (funcall (ert-test-body ert-test)))))
 
 (ert-deftest file-notify-test00-availability ()
   "Test availability of `file-notify'."
   (skip-unless (file-notify--test-local-enabled))
-  ;; Check, that different valid parameters are accepted.
   (should
    (setq file-notify--test-desc
          (file-notify-add-watch temporary-file-directory '(change) 'ignore)))
