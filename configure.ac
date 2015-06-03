@@ -2408,7 +2408,6 @@ if test "${opsys}" != "mingw32"; then
        AC_DEFINE(HAVE_GTK3, 1, [Define to 1 if using GTK 3 or later.])
        GTK_OBJ=emacsgtkfixed.o
        gtk_term_header=gtkutil.h
-       USE_CAIRO=yes
        USE_GTK_TOOLKIT="GTK3"
        if test "x$ac_enable_gtk_deprecation_warnings" = x; then
 	 AC_DEFINE([GDK_DISABLE_DEPRECATION_WARNINGS], [1],
