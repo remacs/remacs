@@ -105,15 +105,19 @@ being the result.")
 
 (defmacro file-notify--deftest-remote (test docstring)
   "Define ert `TEST-remote' for remote files."
+  (declare (indent 1))
   `(ert-deftest ,(intern (concat (symbol-name test) "-remote")) ()
      ,docstring
-     (let* ((temporary-file-directory
-	     file-notify-test-remote-temporary-file-directory)
-	    (ert-test (ert-get-test ',test)))
-       (skip-unless (file-notify--test-remote-enabled))
-       (tramp-cleanup-connection
-	(tramp-dissect-file-name temporary-file-directory) nil 'keep-password)
-       (funcall (ert-test-body ert-test)))))
+     (condition-case err
+         (let* ((temporary-file-directory
+                 file-notify-test-remote-temporary-file-directory)
+                (ert-test (ert-get-test ',test)))
+           (skip-unless (file-notify--test-remote-enabled))
+           (tramp-cleanup-connection
+            (tramp-dissect-file-name temporary-file-directory)
+            nil 'keep-password)
+           (funcall (ert-test-body ert-test)))
+         ((error quit) (ert-fail err)))))
 
 (ert-deftest file-notify-test00-availability ()
   "Test availability of `file-notify'."
