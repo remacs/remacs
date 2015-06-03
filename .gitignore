@@ -233,7 +233,9 @@ lisp/international/uni-*.el
 *.vr
 *.vrs
 doc/*/*.html
+doc/*/*/*.html
 doc/*/*.ps
+doc/*/*/*.ps
 doc/emacs/emacsver.texi
 doc/man/emacs.1
 doc/misc/cc-mode.ss
