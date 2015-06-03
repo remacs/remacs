@@ -757,11 +757,6 @@ tools are used, and when."
          (buf (get-buffer-create " *xref-grep*"))
          (grep-re (caar grep-regexp-alist))
          hits)
-    ;; http://debbugs.gnu.org/20719
-    ;; We want to pass the exact directory to `find', because then
-    ;; `grep' output features absolute file names.
-    (when (string-match "find \\(\\.\\)" command)
-      (setq command (replace-match (shell-quote-argument dir) t t command 1)))
     (with-current-buffer buf
       (erase-buffer)
       (when (eq (call-process-shell-command command nil t) 0)

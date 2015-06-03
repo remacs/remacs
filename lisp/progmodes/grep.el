@@ -633,17 +633,17 @@ This function is called from `compilation-filter-hook'."
 				(format "%s " null-device)
 			      "")))
 		  (cond ((eq grep-find-use-xargs 'gnu)
-			 (format "%s . <X> -type f <F> -print0 | \"%s\" -0 %s"
+			 (format "%s <D> <X> -type f <F> -print0 | \"%s\" -0 %s"
 				 find-program xargs-program gcmd))
 			((eq grep-find-use-xargs 'exec)
-			 (format "%s . <X> -type f <F> -exec %s {} %s%s"
+			 (format "%s <D> <X> -type f <F> -exec %s {} %s%s"
 				 find-program gcmd null
 				 (shell-quote-argument ";")))
 			((eq grep-find-use-xargs 'exec-plus)
-			 (format "%s . <X> -type f <F> -exec %s %s{} +"
+			 (format "%s <D> <X> -type f <F> -exec %s %s{} +"
 				 find-program gcmd null))
 			(t
-			 (format "%s . <X> -type f <F> -print | \"%s\" %s"
+			 (format "%s <D> <X> -type f <F> -print | \"%s\" %s"
 				 find-program xargs-program gcmd))))))))
 
     ;; Save defaults for this host.
@@ -792,7 +792,7 @@ easily repeat a find command."
 
 (defconst grep-expand-keywords
   '(("<C>" . (and cf (isearch-no-upper-case-p regexp t) "-i"))
-    ("<D>" . dir)
+    ("<D>" . (or dir "."))
     ("<F>" . files)
     ("<N>" . null-device)
     ("<X>" . excl)
@@ -992,7 +992,7 @@ to specify a command to run."
 				   grep-find-command)))
 	    (compilation-start regexp 'grep-mode))
       (setq dir (file-name-as-directory (expand-file-name dir)))
-      (let ((command (rgrep-default-command regexp files dir)))
+      (let ((command (rgrep-default-command regexp files nil)))
 	(when command
 	  (if confirm
 	      (setq command
