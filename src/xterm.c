@@ -6409,7 +6409,7 @@ x_scroll_bar_set_handle (struct scroll_bar *bar, int start, int end,
 		      f->output_data.x->scroll_bar_foreground_pixel);
 
     /* Draw the handle itself.  */
-    x_fill_rectangle (f, gc,
+    XFillRectangle (FRAME_X_DISPLAY (f), w, gc,
 		    /* x, y, width, height */
 		    VERTICAL_SCROLL_BAR_LEFT_BORDER,
 		    VERTICAL_SCROLL_BAR_TOP_BORDER + start,
@@ -6884,7 +6884,7 @@ x_scroll_bar_expose (struct scroll_bar *bar, const XEvent *event)
  		    f->output_data.x->scroll_bar_foreground_pixel);
 
   /* Draw a one-pixel border just inside the edges of the scroll bar.  */
-  x_draw_rectangle (f, gc,
+  XDrawRectangle (FRAME_X_DISPLAY (f), w, gc,
 		  /* x, y, width, height */
 		  0, 0, bar->width - 1, bar->height - 1);
 
