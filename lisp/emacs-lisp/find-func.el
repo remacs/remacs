@@ -189,12 +189,15 @@ defined in C.")
 (declare-function ad-get-advice-info "advice" (function))
 
 (defun find-function-advised-original (func)
-  "Return the original function symbol of an advised function FUNC.
-If FUNC is not the symbol of an advised function, just returns FUNC."
+  "Return the original function definition of an advised function FUNC.
+If FUNC is not a symbol, return it.  Else, if it's not advised,
+return the symbol's function definition."
   (or (and (symbolp func)
-	   (featurep 'advice)
-	   (let ((ofunc (cdr (assq 'origname (ad-get-advice-info func)))))
-	     (and (fboundp ofunc) ofunc)))
+           (featurep 'nadvice)
+           (let ((ofunc (advice--symbol-function func)))
+             (if (advice--p ofunc)
+                 (advice--cd*r ofunc)
+               ofunc)))
       func))
 
 (defun find-function-C-source (fun-or-var file type)
@@ -331,7 +334,7 @@ signal an error.
 If VERBOSE is non-nil, and FUNCTION is an alias, display a
 message about the whole chain of aliases."
   (let ((def (if (symbolp function)
-                 (symbol-function (find-function-advised-original function))))
+                 (find-function-advised-original function)))
         aliases)
     ;; FIXME for completeness, it might be nice to print something like:
     ;; foo (which is advised), which is an alias for bar (which is advised).
@@ -344,8 +347,8 @@ message about the whole chain of aliases."
                                             (symbol-name def)))
                           (format "`%s' is an alias for `%s'"
                                   function (symbol-name def)))))
-      (setq function (symbol-function (find-function-advised-original function))
-            def (symbol-function (find-function-advised-original function))))
+      (setq function (find-function-advised-original function)
+            def (find-function-advised-original function)))
     (if aliases
         (message "%s" aliases))
     (cons function
