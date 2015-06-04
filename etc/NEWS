@@ -870,7 +870,7 @@ evaluated (and should return a string) when the closure is built.
 
 ** define-inline provides a new way to define inlinable functions.
 
-** New function macroexpand-1 to perform a single step of macroexpansion.
+** New function `macroexpand-1' to perform a single step of macroexpansion.
 
 ** Some "x-*" were obsoleted:
 *** x-select-text is renamed gui-select-text.
@@ -879,6 +879,9 @@ evaluated (and should return a string) when the closure is built.
 *** x-get-clipboard and x-clipboard-yank are marked obsolete.
 *** x-get-selection-value is renamed to gui-get-primary-selection.
 *** x-set-selection is renamed to gui-set-selection
+
+** New function `string-greaterp', which return the opposite result of
+`string-lessp'.
 
 ** New function `alist-get', which is also a valid place (aka lvalue).
 
