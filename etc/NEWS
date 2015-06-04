@@ -487,6 +487,11 @@ The seq library adds sequence manipulation functions and macros that
 complement basic functions provided by subr.el. All functions are
 prefixed with `seq-' and work on lists, strings and vectors.
 
+** map
+*** New map library:
+The map library provides map-manipulation functions that work on alists,
+hash-table and arrays.  All functions are prefixed with "map-".
+
 ** Calendar and diary
 
 +++
