@@ -49,7 +49,8 @@
 Matches if the object is a map (list, hash-table or array), and
 binds values from ARGS to the corresponding element of the map.
 
-ARGS can be an alist of key/binding pairs of a list of keys."
+ARGS can be a list elements of the form (KEY . PAT) or elements
+of the form SYMBOL, which stands for (SYMBOL . SYMBOL)."
   `(and (pred map-p)
         ,@(map--make-pcase-bindings args)))
 
