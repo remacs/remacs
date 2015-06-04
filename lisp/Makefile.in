@@ -476,10 +476,11 @@ maintainer-clean: distclean bootstrap-clean
 check-declare:
 	$(emacs) -l check-declare --eval '(check-declare-directory "$(lisp)")'
 
+## This finds a lot of duplicates between foo.el and obsolete/foo.el.
 check-defun-dups:
 	sed -n -e '/^(defun /s/\(.\)(.*/\1/p' \
-	        $$(find . -name '*.el' -print | grep -v 'loaddefs\.el') \
-	    | sort | uniq -d
+	  $$(find . -name '*.el' -print | \
+	  grep -Ev '(loaddefs|ldefs-boot)\.el') | sort | uniq -d
 
 # Dependencies
 
