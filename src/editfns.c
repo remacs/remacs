@@ -2318,7 +2318,18 @@ set_time_zone_rule (const char *tzstring)
       tzval[tzeqlen] = 0;
     }
 
-  if (new_tzvalbuf)
+  if (new_tzvalbuf
+#ifdef WINDOWSNT
+      /* MS-Windows implementation of 'putenv' copies the argument
+	 string into a block it allocates, so modifying tzval string
+	 does not change the environment.  OTOH, the other threads run
+	 by Emacs on MS-Windows never call 'xputenv' or 'putenv' or
+	 'unsetenv', so the original cause for the dicey in-place
+	 modification technique doesn't exist there in the first
+	 place.  */
+      || 1
+#endif
+      )
     {
       /* Although this is not thread-safe, in practice this runs only
 	 on startup when there is only one thread.  */
