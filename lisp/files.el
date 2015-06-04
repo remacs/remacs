@@ -4844,9 +4844,9 @@ Before and after saving the buffer, this function runs
                    (file-exists-p buffer-file-name)
                    (> (file-nlinks buffer-file-name) 1)
                    (or dir-writable
-                       (error (concat (format
-                                       "Directory %s write-protected; " dir)
-                                      "cannot break hardlink when saving")))))
+                       (error (concat "Directory %s write-protected; "
+                                      "cannot break hardlink when saving")
+                              dir))))
 	  ;; Write temp name, then rename it.
 	  ;; This requires write access to the containing dir,
 	  ;; which is why we don't try it if we don't have that access.
