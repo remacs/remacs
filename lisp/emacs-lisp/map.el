@@ -63,6 +63,37 @@ can be a list, hash-table or array."
   `(pcase-let ((,(map--make-pcase-patterns args) ,map))
      ,@body))
 
+(defmacro map--dispatch (spec &rest args)
+  "Evaluate one of the provided forms depending on the type of MAP.
+
+SPEC can be a map or a list of the form (VAR MAP [RESULT]).
+ARGS should have the form [TYPE FORM]...
+
+The following keyword types are meaningful: `:list',
+`:hash-table' and `array'.
+
+An error is thrown if MAP is neither a list, hash-table nor array.
+
+Return RESULT if non-nil or the result of evaluation of the
+form.
+
+\(fn (VAR MAP [RESULT]) &rest ARGS)"
+  (declare (debug t) (indent 1))
+  (unless (listp spec)
+    (setq spec `(,spec ,spec)))
+  (let ((map-var (car spec))
+        (result-var (make-symbol "result")))
+    `(let ((,map-var ,(cadr spec))
+           ,result-var)
+       (setq ,result-var
+             (cond ((listp ,map-var) ,(plist-get args :list))
+                   ((hash-table-p ,map-var) ,(plist-get args :hash-table))
+                   ((arrayp ,map-var) ,(plist-get args :array))
+                   (t (error "Unsupported map: %s" ,map-var))))
+       ,@(when (cddr spec)
+          `((setq ,result-var ,@(cddr spec))))
+       ,result-var)))
+
 (defun map-elt (map key &optional default)
   "Perform a lookup in MAP of KEY and return its associated value.
 If KEY is not found, return DEFAULT which defaults to nil.
@@ -254,37 +285,6 @@ MAP can be a list, hash-table or array."
     (`hash-table (map--into-hash-table map))
     (t (error "Not a map type name: %S" type))))
 
-(defmacro map--dispatch (spec &rest args)
-  "Evaluate one of the provided forms depending on the type of MAP.
-
-SPEC can be a map or a list of the form (VAR MAP [RESULT]).
-ARGS should have the form [TYPE FORM]...
-
-The following keyword types are meaningful: `:list',
-`:hash-table' and `array'.
-
-An error is thrown if MAP is neither a list, hash-table nor array.
-
-Return RESULT if non-nil or the result of evaluation of the
-form.
-
-\(fn (VAR MAP [RESULT]) &rest ARGS)"
-  (declare (debug t) (indent 1))
-  (unless (listp spec)
-    (setq spec `(,spec ,spec)))
-  (let ((map-var (car spec))
-        (result-var (make-symbol "result")))
-    `(let ((,map-var ,(cadr spec))
-           ,result-var)
-       (setq ,result-var
-             (cond ((listp ,map-var) ,(plist-get args :list))
-                   ((hash-table-p ,map-var) ,(plist-get args :hash-table))
-                   ((arrayp ,map-var) ,(plist-get args :array))
-                   (t (error "Unsupported map: %s" ,map-var))))
-       ,@(when (cddr spec)
-          `((setq ,result-var ,@(cddr spec))))
-       ,result-var)))
-
 (defun map--apply-alist (function map)
   "Private function used to apply FUNCTION over MAP, MAP being an alist."
   (seq-map (lambda (pair)
@@ -338,7 +338,7 @@ If KEY is not found, return DEFAULT which defaults to nil."
   (let ((len (seq-length map)))
     (and (>= key 0)
          (<= key len)
-         (aset m key nil)))
+         (aset map key nil)))
   map)
 
 (defun map--into-hash-table (map)
