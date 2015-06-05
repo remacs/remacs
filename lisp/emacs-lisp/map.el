@@ -64,13 +64,13 @@ can be a list, hash-table or array."
      ,@body))
 
 (defmacro map--dispatch (spec &rest args)
-  "Evaluate one of the provided forms depending on the type of MAP.
+  "Evaluate one of the forms specified by ARGS based on the type of MAP.
 
 SPEC can be a map or a list of the form (VAR MAP [RESULT]).
 ARGS should have the form [TYPE FORM]...
 
 The following keyword types are meaningful: `:list',
-`:hash-table' and `array'.
+`:hash-table' and `:array'.
 
 An error is thrown if MAP is neither a list, hash-table nor array.
 
