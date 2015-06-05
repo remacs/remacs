@@ -1179,7 +1179,7 @@ ftfont_open2 (struct frame *f,
   bool scalable;
   int spacing;
   int i;
-  int upEM;
+  double upEM;
 
   val = assq_no_quit (QCfont_entity, AREF (entity, FONT_EXTRA_INDEX));
   if (! CONSP (val))
@@ -1235,9 +1235,9 @@ ftfont_open2 (struct frame *f,
 	      && XINT (AREF (entity, FONT_AVGWIDTH_INDEX)) == 0);
   if (scalable)
     {
-      font->ascent = ft_face->ascender * size / upEM;
-      font->descent = - ft_face->descender * size / upEM;
-      font->height = ft_face->height * size / upEM;
+      font->ascent = ft_face->ascender * size / upEM + 0.5;
+      font->descent = - ft_face->descender * size / upEM + 0.5;
+      font->height = ft_face->height * size / upEM + 0.5;
     }
   else
     {
@@ -1255,7 +1255,7 @@ ftfont_open2 (struct frame *f,
 #endif	/* FC_DUAL */
       )
     font->min_width = font->average_width = font->space_width
-      = (scalable ? ft_face->max_advance_width * size / upEM
+      = (scalable ? ft_face->max_advance_width * size / upEM + 0.5
 	 : ft_face->size->metrics.max_advance >> 6);
   else
     {
@@ -1285,8 +1285,10 @@ ftfont_open2 (struct frame *f,
   font->vertical_centering = 0;
   if (scalable)
     {
-      font->underline_position = -ft_face->underline_position * size / upEM;
-      font->underline_thickness = ft_face->underline_thickness * size / upEM;
+      font->underline_position = (-ft_face->underline_position * size / upEM
+				  + 0.5);
+      font->underline_thickness = (ft_face->underline_thickness * size / upEM
+				   + 0.5);
     }
   else
     {
