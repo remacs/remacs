@@ -91,7 +91,7 @@ form.
                    ((arrayp ,map-var) ,(plist-get args :array))
                    (t (error "Unsupported map: %s" ,map-var))))
        ,@(when (cddr spec)
-          `((setq ,result-var ,@(cddr spec))))
+           `((setq ,result-var ,@(cddr spec))))
        ,result-var)))
 
 (defun map-elt (map key &optional default)
@@ -309,12 +309,12 @@ MAP can be a list, hash-table or array."
 
 (defun map--apply-array (function map)
   "Private function used to apply FUNCTION over MAP, MAP being an array."
-   (let ((index 0))
-     (seq-map (lambda (elt)
-                (prog1
-                    (funcall function index elt)
-                  (setq index (1+ index))))
-              map)))
+  (let ((index 0))
+    (seq-map (lambda (elt)
+               (prog1
+                   (funcall function index elt)
+                 (setq index (1+ index))))
+             map)))
 
 (defun map--elt-list (map key &optional default)
   "Lookup, in the list MAP, the value associated with KEY and return it.
