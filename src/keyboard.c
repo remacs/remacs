@@ -1618,6 +1618,7 @@ command_loop_1 (void)
     finalize:
 
       if (current_buffer == prev_buffer
+	  && XBUFFER (XWINDOW (selected_window)->contents) == current_buffer
 	  && last_point_position != PT
 	  && NILP (Vdisable_point_adjustment)
 	  && NILP (Vglobal_disable_point_adjustment))
