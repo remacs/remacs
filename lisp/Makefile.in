@@ -150,7 +150,6 @@ PHONY_EXTRAS =
 custom-deps:
 	$(AM_V_at)$(MAKE) PHONY_EXTRAS=$(lisp)/cus-load.el $(lisp)/cus-load.el
 $(lisp)/cus-load.el:
-	@echo Directories: ${SUBDIRS_ALMOST}
 	$(AM_V_GEN)$(emacs) -l cus-dep \
 	  --eval '(setq generated-custom-dependencies-file (unmsys--file-name "$(srcdir)/cus-load.el"))' \
 	  -f custom-make-dependencies ${SUBDIRS_ALMOST}
@@ -159,7 +158,6 @@ finder-data:
 	$(AM_V_at)$(MAKE) PHONY_EXTRAS=$(lisp)/finder-inf.el \
 	  $(lisp)/finder-inf.el
 $(lisp)/finder-inf.el:
-	@echo Directories: ${SUBDIRS_FINDER}
 	$(AM_V_GEN)$(emacs) -l finder \
 	  --eval '(setq generated-finder-keywords-file (unmsys--file-name "$(srcdir)/finder-inf.el"))' \
 	  -f finder-compile-keywords-make-dist ${SUBDIRS_FINDER}
