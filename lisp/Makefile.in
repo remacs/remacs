@@ -115,36 +115,16 @@ unexport EMACSDATA EMACSDOC EMACSPATH
 # Prevent any setting of EMACSLOADPATH in user environment causing problems.
 emacs = EMACSLOADPATH= '$(EMACS)' $(EMACSOPT)
 
-# Common command to find subdirectories
-setwins=for file in `find . -type d -print`; do \
-	   case $$file in */.* ) ;; \
-		*) wins="$$wins$${wins:+ }$$file" ;; \
-	   esac; \
-	done
-
-# Find all subdirectories except `obsolete' and `term'.
-setwins_almost=for file in `find ${srcdir} -type d -print`; do \
-	   case $$file in ${srcdir}*/obsolete | ${srcdir}*/term ) ;; \
-	     *) wins="$$wins$${wins:+ }$$file" ;; \
-	   esac; \
-        done
-
-# Find all subdirectories except `obsolete', `term', and `leim' (and subdirs).
-# We don't want the leim files listed as packages, especially
-# since many share basenames with files in language/.
-setwins_finder=for file in `find ${srcdir} -type d -print`; do \
-	   case $$file in ${srcdir}*/obsolete | ${srcdir}*/term | ${srcdir}*/leim* ) ;; \
-	     *) wins="$$wins$${wins:+ }$$file" ;; \
-	   esac; \
-        done
-
-# Find all subdirectories in which we might want to create subdirs.el.
-setwins_for_subdirs=for file in `find ${srcdir} -type d -print`; do \
-	   case $$file in \
-	     ${srcdir}*/cedet* | ${srcdir}*/leim* ) ;; \
-	     *) wins="$$wins$${wins:+ }$$file" ;; \
-	   esac; \
-        done
+SUBDIRS_REL = $(sort $(shell cd ${srcdir} && find . -type d -print))
+SUBDIRS_ABS = $(sort $(shell find ${srcdir} -type d -print))
+## All subdirectories except 'obsolete' and 'term'.
+SUBDIRS_ALMOST = $(filter-out ${srcdir}/obsolete ${srcdir}/term,${SUBDIRS_ABS})
+## All subdirectories except 'obsolete', 'term', and 'leim' (and subdirs).
+## We don't want the leim files listed as packages, especially
+## since many share basenames with files in language/.
+SUBDIRS_FINDER = $(filter-out ${srcdir}/leim%,${SUBDIRS_ALMOST})
+## All subdirectories in which we might want to create subdirs.el.
+SUBDIRS_SUBDIRS = $(filter-out ${srcdir}/cedet% ${srcdir}/leim%,${SUBDIRS_ABS})
 
 # cus-load and finder-inf are not explicitly requested by anything, so
 # we add them here to make sure they get built.
@@ -170,21 +150,19 @@ PHONY_EXTRAS =
 custom-deps:
 	$(AM_V_at)$(MAKE) PHONY_EXTRAS=$(lisp)/cus-load.el $(lisp)/cus-load.el
 $(lisp)/cus-load.el:
-	$(AM_V_GEN)$(setwins_almost); \
-	echo Directories: $$wins; \
-	$(emacs) -l cus-dep \
+	@echo Directories: ${SUBDIRS_ALMOST}
+	$(AM_V_GEN)$(emacs) -l cus-dep \
 	  --eval '(setq generated-custom-dependencies-file (unmsys--file-name "$(srcdir)/cus-load.el"))' \
-	  -f custom-make-dependencies $$wins
+	  -f custom-make-dependencies ${SUBDIRS_ALMOST}
 
 finder-data:
 	$(AM_V_at)$(MAKE) PHONY_EXTRAS=$(lisp)/finder-inf.el \
 	  $(lisp)/finder-inf.el
 $(lisp)/finder-inf.el:
-	$(AM_V_GEN)$(setwins_finder); \
-	echo Directories: $$wins; \
-	$(emacs) -l finder \
+	@echo Directories: ${SUBDIRS_FINDER}
+	$(AM_V_GEN)$(emacs) -l finder \
 	  --eval '(setq generated-finder-keywords-file (unmsys--file-name "$(srcdir)/finder-inf.el"))' \
-	  -f finder-compile-keywords-make-dist $$wins
+	  -f finder-compile-keywords-make-dist ${SUBDIRS_FINDER}
 
 # Use expand-file-name rather than $abs_scrdir so that Emacs does not
 # get confused when it compares file-names for equality.
@@ -194,21 +172,19 @@ $(lisp)/finder-inf.el:
 # and make this depend on leim.
 autoloads .PHONY: $(lisp)/loaddefs.el
 $(lisp)/loaddefs.el: $(LOADDEFS)
-	$(AM_V_GEN)$(setwins_almost); \
-	echo Directories: $$wins; \
-	$(emacs) -l autoload \
+	@echo Directories: ${SUBDIRS_ALMOST}
+	$(AM_V_GEN)$(emacs) -l autoload \
 	    --eval '(setq autoload-ensure-writable t)' \
 	    --eval '(setq autoload-builtin-package-versions t)' \
 	    --eval '(setq generated-autoload-file (expand-file-name (unmsys--file-name "$@")))' \
-	    -f batch-update-autoloads $$wins
+	    -f batch-update-autoloads ${SUBDIRS_ALMOST}
 
 # This is required by the bootstrap-emacs target in ../src/Makefile, so
 # we know that if we have an emacs executable, we also have a subdirs.el.
 $(lisp)/subdirs.el:
 	$(AM_V_GEN)$(MAKE) update-subdirs
 update-subdirs:
-	$(AM_V_at)$(setwins_for_subdirs); \
-	for file in $$wins; do \
+	$(AM_V_at)for file in ${SUBDIRS_SUBDIRS}; do \
 	   $(srcdir)/../build-aux/update-subdirs $$file; \
 	done;
 
@@ -307,8 +283,8 @@ compile-targets: $(TARGETS)
 # Compile all the Elisp files that need it.  Beware: it approximates
 # `no-byte-compile', so watch out for false-positives!
 compile-main: leim semantic compile-clean
-	@(cd $(lisp) && $(setwins); \
-	els=`echo "$$wins " | sed -e 's|/\./|/|g' -e 's|/\. | |g' -e 's| |/*.el |g'`; \
+	@(cd $(lisp) && \
+	els=`echo "${SUBDIRS_REL} " | sed -e 's|/\./|/|g' -e 's|/\. | |g' -e 's| |/*.el |g'`; \
 	for el in $$els; do \
 	  test -f $$el || continue; \
 	  test ! -f $${el}c && GREP_OPTIONS= grep '^;.*no-byte-compile: t' $$el > /dev/null && continue; \
@@ -321,8 +297,8 @@ compile-main: leim semantic compile-clean
 .PHONY: compile-clean
 # Erase left-over .elc files that do not have a corresponding .el file.
 compile-clean:
-	@cd $(lisp) && $(setwins); \
-	elcs=`echo "$$wins " | sed -e 's|/\./|/|g' -e 's|/\. | |g' -e 's| |/*.elc |g'`; \
+	@cd $(lisp) && \
+	elcs=`echo "${SUBDIRS_REL} " | sed -e 's|/\./|/|g' -e 's|/\. | |g' -e 's| |/*.elc |g'`; \
 	for el in `echo $$elcs | sed -e 's/\.elc/\.el/g'`; do \
 	  if test -f "$$el" || test ! -f "$${el}c"; then :; else \
 	    echo rm "$${el}c"; \
