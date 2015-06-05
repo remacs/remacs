@@ -7668,7 +7668,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
             }
           else
 	    {
-#if defined (USE_GTK) && ! defined (HAVE_GTK3) && ! defined (USE_CAIRO)
+#ifdef USE_GTK
 	      /* This seems to be needed for GTK 2.6 and later, see
 		 http://debbugs.gnu.org/cgi/bugreport.cgi?bug=15398.  */
 	      x_clear_area (f,
