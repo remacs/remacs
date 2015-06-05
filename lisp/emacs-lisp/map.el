@@ -360,7 +360,7 @@ If KEY is not found, return DEFAULT which defaults to nil."
   "Return a list of pcase bindings from ARGS to the elements of a map."
   (seq-map (lambda (elt)
              (if (consp elt)
-                 `(app (pcase--flip map-elt ',(car elt)) ,(cdr elt))
+                 `(app (pcase--flip map-elt ,(car elt)) ,(cadr elt))
                `(app (pcase--flip map-elt ',elt) ,elt)))
            args))
 
