@@ -113,11 +113,14 @@ with VALUE.
 
 MAP can be a list, hash-table or array."
   (declare (debug t))
-  `(progn
-     (map--dispatch (m ,map m)
-       :list (setq ,map (cons (cons ,key ,value) m))
-       :hash-table (puthash ,key ,value m)
-       :array (aset m ,key ,value))))
+  (let ((symbol (symbolp map)))
+    `(progn
+       (map--dispatch (m ,map m)
+         :list (if ,symbol
+                   (setq ,map (cons (cons ,key ,value) m))
+                 (error "Literal lists are not allowed, %s must be a symbol" ',map))
+         :hash-table (puthash ,key ,value m)
+         :array (aset m ,key ,value)))))
 
 (defmacro map-delete (map key)
   "In MAP, delete the key KEY if present and return MAP.
@@ -125,11 +128,14 @@ If MAP is an array, store nil at the index KEY.
 
 MAP can be a list, hash-table or array."
   (declare (debug t))
-  `(progn
-     (map--dispatch (m ,map m)
-       :list (setq ,map (map--delete-alist m ,key))
-       :hash-table (remhash ,key m)
-       :array (map--delete-array m ,key))))
+  (let ((symbol (symbolp map)))
+    `(progn
+       (map--dispatch (m ,map m)
+         :list (if ,symbol
+                   (setq ,map (map--delete-alist m ,key))
+                 (error "Literal lists are not allowed, %s must be a symbol" ',map))
+         :hash-table (remhash ,key m)
+         :array (map--delete-array m ,key)))))
 
 (defun map-nested-elt (map keys &optional default)
   "Traverse MAP using KEYS and return the looked up value or DEFAULT if nil.
