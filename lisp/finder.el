@@ -193,7 +193,7 @@ from; the default is `load-path'."
 	summary keywords package version entry desc)
     (dolist (d (or dirs load-path))
       (when (file-exists-p (directory-file-name d))
-	(message "Directory %s" d)
+	(message "Scanning %s for finder" d)
 	(setq package-override
 	      (intern-soft
 	       (cdr-safe
