@@ -57,8 +57,8 @@
 
 (defconst calendar-bahai-month-name-array
   ["Bahá" "Jalál" "Jamál" "‘Aẓamat" "Núr" "Raḥmat" "Kalimát" "Kamál"
-   "Asmá’" "‘Izzat" "Mas̲h̲íyyat" "‘Ilm" "Qudrat" "Qawl" "Masá’il"
-   "S̲h̲araf" "Sulṭán" "Mulk" "‘Alá’"]
+   "Asmá’" "‘Izzat" "Mashíyyat" "‘Ilm" "Qudrat" "Qawl" "Masá’il"
+   "Sharaf" "Sulṭán" "Mulk" "‘Alá’"]
   "Array of the month names in the Bahá'í calendar.")
 
 (defconst calendar-bahai-epoch (calendar-absolute-from-gregorian '(3 21 1844))
