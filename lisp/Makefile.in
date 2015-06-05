@@ -120,16 +120,18 @@ unexport EMACSDATA EMACSDOC EMACSPATH
 # Prevent any setting of EMACSLOADPATH in user environment causing problems.
 emacs = EMACSLOADPATH= '$(EMACS)' $(EMACSOPT)
 
-SUBDIRS_REL = $(sort $(shell cd ${srcdir} && find . -type d -print))
-SUBDIRS_ABS = $(sort $(shell find ${srcdir} -type d -print))
+## Subdirectories, relative to builddir.
+SUBDIRS = $(sort $(shell find ${srcdir} -type d -print))
+## Subdirectories, relative to srcdir.
+SUBDIRS_REL = $(patsubst ${srcdir}%,.%,${SUBDIRS})
 ## All subdirectories except 'obsolete' and 'term'.
-SUBDIRS_ALMOST = $(filter-out ${srcdir}/obsolete ${srcdir}/term,${SUBDIRS_ABS})
+SUBDIRS_ALMOST = $(filter-out ${srcdir}/obsolete ${srcdir}/term,${SUBDIRS})
 ## All subdirectories except 'obsolete', 'term', and 'leim' (and subdirs).
 ## We don't want the leim files listed as packages, especially
 ## since many share basenames with files in language/.
 SUBDIRS_FINDER = $(filter-out ${srcdir}/leim%,${SUBDIRS_ALMOST})
 ## All subdirectories in which we might want to create subdirs.el.
-SUBDIRS_SUBDIRS = $(filter-out ${srcdir}/cedet% ${srcdir}/leim%,${SUBDIRS_ABS})
+SUBDIRS_SUBDIRS = $(filter-out ${srcdir}/cedet% ${srcdir}/leim%,${SUBDIRS})
 
 # cus-load and finder-inf are not explicitly requested by anything, so
 # we add them here to make sure they get built.
