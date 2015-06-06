@@ -1077,6 +1077,9 @@ file name to `*.gz', and sets `grep-highlight-matches' to `always'."
 	   (grep-find-template nil)
 	   (grep-find-command nil)
 	   (grep-host-defaults-alist nil)
+	   ;; Set `grep-highlight-matches' to `always'
+	   ;; since `zgrep' puts filters in the grep output.
+	   (grep-highlight-matches 'always)
 	   ;; Use for `grep-read-files'
 	   (grep-files-aliases '(("all" . "* .*")
 				 ("gz"  . "*.gz"))))
@@ -1094,10 +1097,7 @@ file name to `*.gz', and sets `grep-highlight-matches' to `always'."
 					    nil default-directory t))
 		  (confirm (equal current-prefix-arg '(4))))
 	     (list regexp files dir confirm grep-find-template)))))))
-  ;; Set `grep-highlight-matches' to `always'
-  ;; since `zgrep' puts filters in the grep output.
-  (let ((grep-find-template template)
-        (grep-highlight-matches 'always))
+  (let ((grep-find-template template))
     (rgrep regexp files dir confirm)))
 
 ;;;###autoload
