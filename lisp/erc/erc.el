@@ -4185,7 +4185,7 @@ See also `erc-display-error-notice'."
                                    ;; server's setting if we haven't
                                    ;; established a connection yet
                                    (- 9 (length erc-nick-uniquifier))))
-				erc-nick-uniqifier)))
+				erc-nick-uniquifier)))
       (erc-cmd-NICK newnick)
       (erc-display-error-notice
        nil

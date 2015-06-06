@@ -2519,6 +2519,9 @@ is returned.  Thus, for instance, if charset \"ISO8859-2\",
 ;; too, for setting things such as calendar holidays, ps-print paper
 ;; size, spelling dictionary.
 
+(declare-function w32-get-console-codepage "w32proc.c" ())
+(declare-function w32-get-console-output-codepage "w32proc.c" ())
+
 (defun locale-translate (locale)
   "Expand LOCALE according to `locale-translation-file-name', if possible.
 For example, translate \"swedish\" into \"sv_SE.ISO8859-1\"."

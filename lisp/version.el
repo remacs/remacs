@@ -47,6 +47,7 @@ This variable first existed in version 19.23.")
 (defvar motif-version-string)
 (defvar gtk-version-string)
 (defvar ns-version-string)
+(defvar cairo-version-string)
 
 (defun emacs-version (&optional here)
   "Return string describing the version of Emacs that is running.
