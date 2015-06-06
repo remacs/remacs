@@ -1687,6 +1687,8 @@ adjust_point_for_property (ptrdiff_t last_pt, bool modified)
   bool check_composition = ! modified, check_display = 1, check_invisible = 1;
   ptrdiff_t orig_pt = PT;
 
+  eassert (XBUFFER (XWINDOW (selected_window)->contents) == current_buffer);
+
   /* FIXME: cycling is probably not necessary because these properties
      can't be usefully combined anyway.  */
   while (check_composition || check_display || check_invisible)
