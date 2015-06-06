@@ -180,6 +180,7 @@ The bounds of THING are determined by `bounds-of-thing-at-point'."
 (defun in-string-p ()
   "Return non-nil if point is in a string.
 \[This is an internal function.]"
+  (declare (obsolete "use (nth 3 (syntax-ppss)) instead." "25.1"))
   (let ((orig (point)))
     (save-excursion
       (beginning-of-defun)
@@ -190,7 +191,7 @@ The bounds of THING are determined by `bounds-of-thing-at-point'."
 \[This is an internal function.]"
   (let ((char-syntax (syntax-after (point))))
     (if (or (eq char-syntax ?\))
-	    (and (eq char-syntax ?\") (in-string-p)))
+	    (and (eq char-syntax ?\") (nth 3 (syntax-ppss))))
 	(forward-char 1)
       (forward-sexp 1))))
 
@@ -201,7 +202,7 @@ The bounds of THING are determined by `bounds-of-thing-at-point'."
 \[This is an internal function.]"
   (let ((char-syntax (char-syntax (char-before))))
     (if (or (eq char-syntax ?\()
-	    (and (eq char-syntax ?\") (in-string-p)))
+	    (and (eq char-syntax ?\") (nth 3 (syntax-ppss))))
 	(forward-char -1)
       (forward-sexp -1))))
 
