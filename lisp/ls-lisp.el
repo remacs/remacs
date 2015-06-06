@@ -237,13 +237,13 @@ to fail to line up, e.g. if month names are not all of the same length."
   :type 'boolean
   :group 'ls-lisp)
 
-(defvar ls-lisp-uid-d-fmt "-%d"
+(defvar ls-lisp-uid-d-fmt " %d"
   "Format to display integer UIDs.")
-(defvar ls-lisp-uid-s-fmt "-%s"
+(defvar ls-lisp-uid-s-fmt " %s"
   "Format to display user names.")
-(defvar ls-lisp-gid-d-fmt "-%d"
+(defvar ls-lisp-gid-d-fmt " %d"
   "Format to display integer GIDs.")
-(defvar ls-lisp-gid-s-fmt "-%s"
+(defvar ls-lisp-gid-s-fmt " %s"
   "Format to display user group names.")
 (defvar ls-lisp-filesize-d-fmt "%d"
   "Format to display integer file sizes.")
