@@ -2908,7 +2908,12 @@ font_open_entity (struct frame *f, Lisp_Object entity, int pixel_size)
 	       : font->average_width ? font->average_width
 	       : font->space_width ? font->space_width
 	       : 1);
-  height = (font->height ? font->height : 1);
+
+  int font_ascent, font_descent;
+  get_font_ascent_descent (font, &font_ascent, &font_descent);
+  height = font_ascent + font_descent;
+  if (height <= 0)
+    height = 1;
 #ifdef HAVE_WINDOW_SYSTEM
   FRAME_DISPLAY_INFO (f)->n_fonts++;
   if (FRAME_DISPLAY_INFO (f)->n_fonts == 1)
