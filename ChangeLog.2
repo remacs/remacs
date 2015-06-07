@@ -1,3 +1,695 @@
+2015-06-06  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib
+	This incorporates:
+	2015-06-06 acl-permissions: pacify -Wsuggest-attribute=const
+	2015-06-05 stdio: Don't redefine gets when using C++
+	2015-06-05 acl-permissions: port to AIX, C89 HP-UX
+	2015-06-02 file-has-acl: fix build on Mac OS X 10
+	2015-06-01 gnulib-tool: concatenate lib_SOURCES to a single line
+	2015-06-01 pthread_sigmask: discount system version if a simple macro
+	2015-05-31 readlinkat: avoid OS X 10.10 trailing slash bug
+	* doc/misc/texinfo.tex, lib/acl-internal.h, lib/get-permissions.c:
+	* lib/readlinkat.c, lib/set-permissions.c, lib/stdio.in.h:
+	* m4/acl.m4, m4/pthread_sigmask.m4, m4/readlinkat.m4: Copy from gnulib.
+	* lib/gnulib.mk: Regenerate.
+
+2015-06-06  Juri Linkov  <juri@linkov.net>
+
+	* lisp/progmodes/grep.el (zrgrep): Let-bind grep-highlight-matches
+	before calling grep-compute-defaults because now it affects the
+	command lines computed in grep-compute-defaults. (Bug#20728)
+
+2015-06-06  Glenn Morris  <rgm@gnu.org>
+
+	Address some compilation warnings.
+	* lisp/international/mule-cmds.el (w32-get-console-codepage)
+	(w32-get-console-output-codepage):
+	* lisp/progmodes/elisp-mode.el (xref-collect-references):
+	* lisp/version.el (cairo-version-string): Declare.
+	* lisp/erc/erc.el (erc-nickname-in-use): Fix typo.
+
+2015-06-06  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix display when a font claims large values of ascent and descent
+	This fixes bug#20628.
+	* src/xdisp.c (get_phys_cursor_geometry): Correct the Y
+	coordinate of a hollow cursor glyph when the original glyph's
+	ascent is too small.
+	(get_font_ascent_descent, normal_char_ascent_descent)
+	(normal_char_height): New functions.
+	(handle_single_display_spec, append_space_for_newline)
+	(calc_pixel_width_or_height, produce_stretch_glyph)
+	(calc_line_height_property): Use normal_char_ascent_descent and
+	normal_char_height.
+	(x_produce_glyphs): When font-global values of ascent and descent
+	are too large, use per-character glyph metrics instead, if
+	possible.  But don't allow the glyph row's ascent and descent
+	values become smaller than the values from the metrics of the
+	font's "normal" character.
+	* src/xftfont.c (xftfont_draw):
+	* src/w32font.c (w32font_draw): Correct the values of ascent and
+	descent used to draw glyphless characters' hex code in a box.
+	* src/xterm.c (x_draw_glyph_string_background):
+	* src/xdisp.c (x_produce_glyphs):
+	* src/w32term.c (x_draw_glyph_string_background):
+	* src/nsterm.m (ns_maybe_dumpglyphs_background): Use FONT_TOO_HIGH
+	to detect fonts whose global ascent and descent values are too
+	large to be used in layout decision, and redraw the background
+	when that happens.
+	* src/dispextern.h (FONT_TOO_HIGH): New macro.
+	(get_font_ascent_descent): Add prototype.
+	* src/xterm.c (x_new_font):
+	* src/w32term.c (x_new_font):
+	* src/nsterm.m (x_new_font):
+	* src/font.c (font_open_entity):
+	* src/composite.c (composition_gstring_width): Use
+	get_font_ascent_descent to obtain reasonable values for ascent and
+	descent of a font.
+
+2015-06-06  Nicolas Richard  <youngfrog@members.fsf.org>
+
+	Add assertion in adjust_point_for_property
+	* src/keyboard.c (adjust_point_for_property): Add eassert for
+	current buffer being shown in selected window.
+
+2015-06-06  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Replace uses of in-string-p; make it obsolete
+	* lisp/thingatpt.el (in-string-p): Declare obsolete (bug#20732).
+	(end-of-sexp, beginning-of-sexp): Use syntax-ppss instead.
+
+2015-06-06  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix Dired display of an explicit list of files by ls-lisp.el
+	* lisp/ls-lisp.el (ls-lisp-uid-d-fmt, ls-lisp-uid-s-fmt)
+	(ls-lisp-gid-d-fmt, ls-lisp-gid-s-fmt): Make the initial values be
+	correct for when displaying individual files separately, not as
+	part of listing a directory, in which case these values are not
+	recomputed by 'ls-lisp-insert-directory', but used verbatim.
+
+	* lisp/dired.el (dired): Doc fix.  (Bug#20739)
+
+2015-06-06  Nicolas Richard  <youngfrog@members.fsf.org>
+
+	Do not adjust point in a non-selected window
+	* src/keyboard.c (command_loop_1): Do not adjust point when
+	current buffer is not shown in selected window (Bug#20590).
+
+	* etc/DEBUG: Mention 'maybe_call_debugger'
+
+2015-06-05  Nicolas Petton  <nicolas@petton.fr>
+
+	Fix a unit test for map.el
+	* test/automated/map-tests.el (test-map-let): Fix the test to work
+	with the new syntax of `map-let'.
+
+	* lisp/emacs-lisp/map.el (map-let): Better docstring.
+
+	Better syntax for the map pcase pattern
+	* lisp/emacs-lisp/map.el: Improves the map pcase pattern to take
+	bindings of the form (KEY PAT) or SYMBOL. KEY is not quoted.
+
+	* lisp/emacs-lisp/map.el (map--dispatch): Better docstring.
+
+	Fix a byte-compiler error in map-put and map-delete
+	* lisp/emacs-lisp/map.el (map-put, map-delete): Ensure that `setq' is
+	called with a symbol.
+
+2015-06-05  Glenn Morris  <rgm@gnu.org>
+
+	* admin/gitmerge.el (gitmerge-commit-message):
+	Revert to including "skipped" messages in ChangeLog once again.
+
+2015-06-05  Tassilo Horn  <tsdh@gnu.org>
+
+	Use string> instead of equiv lambda with string<
+	* lisp/help.el (view-emacs-news): Use string> instead of equivalent
+	lambda with string<.
+
+2015-06-05  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/emacs-lisp/map.el (map--dispatch): Move before use.
+	(map--delete-array): Fix typo.
+
+	* test/automated/map-tests.el: Replace "assert" with "should".
+
+	* lisp/Makefile.in (SUBDIRS): Rename from SUBDIRS_ABS.
+	(SUBDIRS_REL): Derive from SUBDIRS.
+
+	Tweak some build messages.
+	* lisp/Makefile.in ($(lisp)/loaddefs.el):
+	* lisp/cus-dep.el (custom-make-dependencies):
+	* lisp/finder.el (finder-compile-keywords): Say what we are doing.
+	* lisp/international/titdic-cnv.el (batch-titdic-convert):
+	Don't say how to compile.
+
+2015-06-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Omit U+0332 COMBINING LOW LINE in previous change
+	It turns out that it does not work on Ubuntu 15.04.
+
+	Fix transliteration of Bahá'í months
+	* lisp/calendar/cal-bahai.el (calendar-bahai-month-name-array):
+	Improve quality of Latin transliteration of Bahá'í month names.
+
+	Fix curved quotes in a few places
+	* lisp/calc/calc-misc.el (calc-help): Fix quoting.
+	The strings in question are not doc strings, so this partially
+	undoes the recent change that assumed they were doc strings.
+	* lisp/cedet/srecode/srt-mode.el (srecode-macro-help):
+	* lisp/info.el (Info-finder-find-node):
+	Use curved quotes.
+	* lisp/emacs-lisp/derived.el (derived-mode-make-docstring):
+	Also allow curved quotes in doc strings.
+
+2015-06-04  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/Makefile.in (AM_V_at): Add missing definition.
+
+	* lisp/Makefile.in: Quieten output a bit.
+	($(lisp)/cus-load.el, $(lisp)/finder-inf.el):
+	Don't echo directories, since the commands we invoke print them.
+
+	* lisp/Makefile.in: Replace shell fragments in variables with $(shell).
+	(SUBDIRS_REL, SUBDIRS_ABS, SUBDIRS_ALMOST, SUBDIRS_FINDER)
+	(SUBDIRS_SUBDIRS): New variables.
+	(setwins, setwins_almost, setwins_finder, setwins_for_subdirs):
+	Remove.
+	($(lisp)/cus-load.el, $(lisp)/finder-inf.el, $(lisp)/loaddefs.el)
+	(update-subdirs, compile-main, compile-clean):
+	Replace "setwins" usage with new "SUBDIRS" variables.
+
+	* lisp/vc/compare-w.el (compare-windows-get-window-function):
+	Fix :version tag.
+
+2015-06-04  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
+
+	* src/ftfont.c (ftfont_open2): Round divisions by upEM.
+
+	Undo removal of x_clear_area call on expose for GTK3 or cairo.
+	* src/xterm.c (handle_one_xevent) [HAVE_GTK3 || USE_CAIRO]: Clear
+	exposed area.  (Bug#20677)
+
+2015-06-04  Glenn Morris  <rgm@gnu.org>
+
+	* doc/lispref/hash.texi (Creating Hash): Remove obsolete makehash.
+
+	* lisp/Makefile.in (check-defun-dups): Also skip ldefs-boot.
+
+	* lisp/leim/quail/lrt.el (quail-lrt-update-translation):
+	Rename from quail-lao-update-translation, since lao.el defines that.
+
+2015-06-04  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Handle new-style advice in find-funct
+	* lisp/emacs-lisp/find-func.el (find-function-advised-original):
+	Handle new-style advice.  Return the symbol's function definition.
+	(Bug#20718)
+	(find-function-library): Update accordingly.
+
+2015-06-04  Nicolas Petton  <nicolas@petton.fr>
+
+	Merge branch 'map'
+
+	* lisp/emacs-lisp/map.el: Better docstring for the map pcase macro.
+
+	Add new function string-greaterp
+	* lisp/subr.el (string-greaterp): New function.  Also aliased to
+	`string>'.
+	* test/automated/subr-tests.el (string-comparison-test): Add unit
+	tests for `string>'and `string<'.
+	* src/fns.c (string-lessp): Better docstring.
+
+2015-06-04  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix timezone-related functions on MS-Windows
+	* src/editfns.c (set_time_zone_rule) [WINDOWSNT]: Always call
+	'xputenv', even if no reallocation of tzvalbuf was necessary.
+	This fixes a bug in timezone-related functions on MS-Windows.
+	Reported by Fabrice Popineau <fabrice.popineau@gmail.com>.
+
+2015-06-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Don't pass raw directory name to 'error'
+	* lisp/files.el (basic-save-buffer-2): Avoid format error if
+	a directory name contains a string like "%s".
+
+2015-06-03  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Override 'grep --color=always'
+	* lisp/progmodes/xref.el (xref-collect-matches):
+	Override --color=always in grep-find-template.
+
+2015-06-03  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix error introduced recently in file-notify-tests.el
+	* test/automated/file-notify-tests.el
+	(file-notify--test-remote-enabled): Do not use `file-notify--test-desc'.
+	(file-notify--deftest-remote): Revert previous patch, not
+	necessary anymore.
+
+2015-06-03  Wolfgang Jenkner  <wjenkner@inode.at>
+
+	* src/indent.c (Fvertical_motion): Amend motion by 0 lines.
+	Starting from a display string after a newline, point went to the
+	previous line.  Also, fix an inadvertent use of a buffer position
+	with FETCH_BYTE.  (Bug#20701)
+
+2015-06-03  Michael Albinus  <michael.albinus@gmx.de>
+
+	Instrument file-notify-test.el in order to catch hydra error.
+	* test/automated/file-notify-tests.el (file-notify--deftest-remote):
+	Wrap body by `ignore-case', in order to trap non-local errors.
+
+2015-06-03  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
+
+	Undo previous changes in non-toolkit scroll bar drawing.
+	* src/xterm.c (x_scroll_bar_set_handle, x_scroll_bar_expose)
+	[!USE_TOOLKIT_SCROLL_BARS]: Draw into scroll bar window.  (Bug#20668)
+
+2015-06-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* .gitignore: Also ignore doc/*/*/*.html and .ps.
+
+	Support quotes 'like this' in info files
+	This is possible when 'makeinfo --disable-encoding' is used
+	in Texinfo 5.
+	* lisp/calc/calc-help.el (calc-describe-thing):
+	* lisp/gnus/gnus-art.el (gnus-button-alist):
+	* lisp/info.el (Info-find-index-name):
+	* lisp/vc/ediff-help.el (ediff-help-for-quick-help):
+	Also support quotes 'like this'.
+	* lisp/calc/calc-help.el (calc-describe-thing): Simplify.
+	* lisp/finder.el (finder-font-lock-keywords): Remove var that
+	hasn't been used in years, instead of bothering to fix its quoting.
+
+2015-06-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* .gitignore: Remove !test/etags/html-src/*.html.
+	It's no longer needed, since *.html was removed.  Sort.
+
+2015-06-02  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Restore <D> instead of '.' in grep-find-template
+	* lisp/cedet/semantic/symref/grep.el
+	(semantic-symref-grep-use-template): Update a comment.
+	* lisp/progmodes/grep.el (grep-compute-defaults): Restore <D>
+	instead of '.' in grep-find-template (bug#20719).
+	(rgrep): Pass nil as the directory to rgrep-default-command.
+	* lisp/progmodes/grep.el (grep-expand-keywords): Use '.' as the
+	default value for DIR.
+	* lisp/progmodes/xref.el (xref-collect-matches): Drop the
+	workaround.
+
+2015-06-02  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac (emacs_config_features): Add X toolkit and scroll-bars.
+
+	* configure.ac (emacs_config_features): Add Cairo.
+
+	* configure.ac [HAVE_GTK3]: Remove USE_CAIRO that gets reset later.
+
+2015-06-02  Michael Albinus  <michael.albinus@gmx.de>
+
+	Ensure, that autorevert works for remote files in file-notify-tests.el
+	* test/automated/file-notify-tests.el (file-notify--test-desc):
+	New defvar.
+	(file-notify--test-remote-enabled)
+	(file-notify-test00-availability, file-notify-test01-add-watch)
+	(file-notify-test02-events): Use it.
+	(file-notify--test-event-test): Check proper descriptor.
+	(file-notify-test03-autorevert): Ensure, that
+	`visited-file-modtime' has changed.
+	(Bug#20392)
+
+2015-06-02  Nicolas Petton  <nicolas@petton.fr>
+
+	Add a pcase pattern for maps and `map-let' based on it
+	* lisp/emacs-lisp/map.el (map-let): New macro.
+	(map--make-pcase-bindings, map--make-pcase-patterns): New functions.
+	* test/automated/map-tests.el: New test for `map-let'.
+
+2015-06-02  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Reuse rgrep mechanics in xref-find-regexp
+	* lisp/progmodes/grep.el (rgrep-default-command):
+	Extract from `rgrep'.
+	* lisp/progmodes/xref.el (xref-collect-references): Split from
+	`xref-collect-matches'.  Only handle the case of symbol search.
+	(xref-collect-matches): Instead of Semantic Symref, use
+	`rgrep-default-command', to take advantage of its directory and
+	file ignore settings.
+	(xref--collect-match): Remove the last argument, leaving the
+	regexp construction up to the caller.
+	* lisp/progmodes/elisp-mode.el (elisp--xref-find-matches):
+	Change to take the xref-collect- function to use as an argument.
+	(elisp-xref-find): Update accordingly.
+	* lisp/progmodes/etags.el (etags--xref-find-matches)
+	(etags-xref-find): Same.
+
+	Move xref-elisp-location to elisp-mode.el
+	* lisp/progmodes/xref.el (xref-elisp-location)
+	(xref-make-elisp-location, xref-location-marker): Remove here.
+	(xref--xref): Don't limit the type of the location slot.
+	* lisp/progmodes/elisp-mode.el (xref-elisp-location):
+	Define as a cl-struct here.
+	(xref-location-marker): Move here.
+
+2015-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor tweaks for .gitignore
+	* .gitignore: Don't ignore versioned *.html and *.ps files.  Don't
+	ignore admin/notes/tags that might be ignored as TAGS on
+	case-insensitive filesystems.  (Bug#20710)
+
+2015-06-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Generate curved quotes in ert doc
+	* lisp/emacs-lisp/ert.el (ert--print-test-for-ewoc)
+	(ert-results-mode-menu)
+	(ert-results-pop-to-backtrace-for-test-at-point)
+	(ert-results-pop-to-messages-for-test-at-point)
+	(ert-results-pop-to-should-forms-for-test-at-point)
+	(ert-describe-test):
+	Quote ‘like this’, not `like this', when generating doc strings
+	and the like.
+	* test/automated/ert-x-tests.el (ert-test-describe-test):
+	Allow quoting ‘like this’.
+
+2015-06-02  Nicolas Richard  <youngfrog@members.fsf.org>
+
+	Add test for previous commit
+	* test/automated/replace-tests.el: New file.
+	(query-replace--split-string-tests): Add test for previous commit.
+
+	Avoid confusion in query-replace history when replacing NUL chars
+	* lisp/replace.el (query-replace--split-string): New function.
+	(query-replace-read-from): Rely on the 'separator' property
+	instead of searching for the NUL character (Bug#20690).
+
+2015-06-02  Glenn Morris  <rgm@gnu.org>
+
+	Merge from origin/emacs-24
+	8b5f2f4 * doc/emacs/emacs.texi: Update the ISBN of the Emacs manual.
+
+	* admin/gitmerge.el (gitmerge-commit-message):
+	Exclude "skipped" messages from ChangeLog.
+
+2015-06-01  Michael Albinus  <michael.albinus@gmx.de>
+
+	Sync with Tramp repository
+	* lisp/net/tramp.el (tramp-message): Dump connection buffer error
+	messages.
+	(tramp-handle-make-auto-save-file-name): When calling
+	`make-auto-save-file-name' internally, make sure it uses Unix-like
+	behavior, not Windows-like behavior.
+	* lisp/net/tramp-sh.el (tramp-set-file-uid-gid): Add a timeout for
+	the local case, because "chown" might fail on w32.
+	* lisp/net/trampver.el (tramp-repository-get-version): Don't run
+	for XEmacs.
+
+2015-06-01  Eli Zaretskii  <eliz@gnu.org>
+
+	MS-Windows followup for batch stdout/stderr output changes
+	* lisp/international/mule-cmds.el (set-locale-environment): In
+	batch mode, use console codepages for keyboard and terminal
+	encoding.  (Bug#20545)
+
+	Update .gitattributes for DOS EOL files
+	* .gitattributes: Use "whitespace=cr-at-eol" for files with DOS
+	CRLF end-of-line format.
+
+	NS equivalents of xterm.c and w32term.c changes
+	* src/nsterm.m (ns_maybe_dumpglyphs_background): Force redraw of
+	glyph string background also when the font in use claims
+	preposterously large global height value.  Helps to remove
+	artifacts left from previous displays when glyphless characters
+	are displayed as hex code in a box.
+	(x_new_font): Call get_font_ascent_descent to obtain a reasonable
+	value for FRAME_LINE_HEIGHT, even when a font claims very large
+	value for its height.
+
+2015-06-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Avoid grave accent quoting in stderr diagnostics
+	A few Emacs diagnostics go directly to stderr, and so can't easily
+	contain curved quotes (as non-UTF-8 locales might mishandle them).
+	Instead of bothering to add support for this rarity, reword the
+	diagnostics so that they don't use grave accent to quote.
+	* src/alloc.c (mark_memory): Fix comment.
+	* src/buffer.c (init_buffer):
+	* src/dispnew.c (init_display):
+	* src/emacs.c (main, sort_args):
+	* src/lread.c (dir_warning):
+	* src/term.c (init_tty):
+	* src/unexmacosx.c (unexec):
+	* src/xfns.c (select_visual):
+	* src/xterm.c (cvt_string_to_pixel, x_io_error_quitter):
+	Reword stderr diagnostics to avoid quoting `like this'.
+	* src/unexmacosx.c: Include errno.h.
+	* src/xfns.c (select_visual): Encode value for locale.
+
+2015-05-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Treat batch stdout/stderr like standard display
+	Calls like (print FOO) could generate improperly encoded or
+	hard-to-read output if FOO contains characters outside the system
+	locale.  Fix this by treating batch stdout and stderr like
+	interactive standard display, when it comes to transliterating and
+	encoding characters (Bug#20545).
+	* doc/emacs/mule.texi (Communication Coding):
+	* doc/lispref/display.texi (Active Display Table):
+	* doc/lispref/nonascii.texi (Locales):
+	* etc/NEWS:
+	* src/coding.c (syms_of_coding):
+	* src/dispnew.c (syms_of_display):
+	Document this.
+	* src/print.c: Include disptab.h.
+	(printchar_to_stream): New function, with much of the guts of the
+	old Fexternal_debugging_output, except this one also uses the
+	standard display table.
+	(printchar, strout, Fexternal_debugging_output): Use it.
+
+2015-05-31  Glenn Morris  <rgm@gnu.org>
+
+	* src/emacs.c (syms_of_emacs) <system-configuration-features>: Doc fix.
+
+2015-05-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Remove unused DEFSYMs
+	Remove DEFSYMs that aren't used at the C level.  Also:
+	* src/decompress.c (Qzlib_dll):
+	* src/font.c (Qunicode_sip):
+	* src/frame.c (Qtip_frame):
+	* src/ftfont.c (Qserif):
+	* src/gnutls.c (Qgnutls_dll):
+	* src/xml.c (Qlibxml2_dll):
+	Move from here ...
+	* src/w32fns.c (syms_of_w32fns): ... to here,
+	as these are used only on MS-Windows.
+
+2015-05-31  Eli Zaretskii  <eliz@gnu.org>
+
+	Attempt to fix crashes due to accesses beyond glyph matrix end
+	* src/xdisp.c (x_produce_glyphs): When it->ascent and it->descent
+	are determined from per-character metrics, don't let the
+	max_ascent and max_descent become smaller than values returned by
+	normal_char_ascent_descent, to avoid unpleasant dynamic resizing
+	of screen line heights when text changes.
+	* src/xterm.c (x_new_font)
+	* src/w32term.c (x_new_font): Call get_font_ascent_descent to
+	obtain a reasonable value for FRAME_LINE_HEIGHT, even when a font
+	claims very large value for its height.
+	* src/font.c (font_open_entity): Call get_font_ascent_descent to
+	obtain a reasonable value for FRAME_SMALLEST_FONT_HEIGHT, even
+	when a font claims very large value for its height.
+
+2015-05-31  Michael Albinus  <michael.albinus@gmx.de>
+
+	Use another default value for tramp-histfile-override
+	* lisp/net/tramp-sh.el (tramp-histfile-override):
+	Use ".tramp_history" as default.
+	Fixes: debbugs:#20446
+
+2015-05-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix display of composite characters with large fonts
+	* src/xdisp.c (x_produce_glyphs): Call normal_char_ascent_descent
+	for reasonable values of font ascent and descent.
+	(get_font_ascent_descent): New function.
+	* src/composite.c (composition_gstring_width): Call
+	get_font_ascent_descent for reasonable values of font ascent and
+	descent.
+	* dispextern.h: Add prototype for get_font_ascent_descent.
+
+	Fix display of cursor at end of empty lines
+	* src/xdisp.c (normal_char_ascent_descent): Accept additional
+	argument: the character to use for metrics in case the font
+	declares too large ascent and descent values.  Add 1 pixel to
+	ascent and descent values.
+	(normal_char_height): Accept additional argument: the character to
+	use for metrics in case the font declares too large height value.
+	Call normal_char_ascent_descent instead of doing calculations for
+	a different default character.
+	(estimate_mode_line_height, handle_single_display_spec)
+	(calc_pixel_width_or_height, produce_stretch_glyph)
+	(calc_line_height_property, produce_glyphless_glyph): All callers
+	changed.
+	(append_space_for_newline): Make sure the space glyph produced at
+	end of line has correct ascent and descent values, and the glyph
+	row has correct height, even when it's empty.
+
+2015-05-29  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix 2 more calculations of line height
+	* src/xdisp.c (estimate_mode_line_height, handle_single_display_spec):
+	Use normal_char_height.
+
+	Fix line dimensions from line-height property
+	* src/xdisp.c (normal_char_ascent_descent): New function,
+	extracted from produce_glyphless_glyph.
+	(calc_line_height_property, produce_glyphless_glyph): Use it to
+	compute reasonable estimates of ascent and descent for large
+	fonts.
+
+	Fix display of stretch glyphs with large fonts
+	* src/xdisp.c (normal_char_height): New function.
+	(calc_pixel_width_or_height, produce_stretch_glyph): Use it to
+	compute more reasonable estimation of a "normal character height"
+	when the font claims preposterously large height values.
+
+2015-05-29  Nicolas Petton  <nicolas@petton.fr>
+
+	* doc/emacs/emacs.texi: Update the ISBN of the Emacs manual.
+
+2015-05-28  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix display of glyphless characters with problematic fonts
+	* src/w32term.c (x_draw_glyph_string_background): Force redraw of
+	glyph string background also when the font in use claims
+	preposterously large global height value.  Helps to remove
+	artifacts left from previous displays when glyphless characters
+	are displayed as hex code in a box.
+	* src/xterm.c (x_draw_glyph_string_background): Force redraw of
+	glyph string background also when the font in use claims
+	preposterously large global height value.  Helps to remove
+	artifacts left from previous displays when glyphless characters
+	are displayed as hex code in a box.
+	* src/w32font.c (w32font_draw): Fix background drawing for
+	glyphless characters that display as acronyms or hex codes in a
+	box.
+	* src/xftfont.c (xftfont_draw): Fix background drawing for
+	glyphless characters that display as acronyms or hex codes in a
+	box.
+	* src/xdisp.c (produce_glyphless_glyph): Compute reasonable values
+	for it->ascent and it->descent when the font claims preposterously
+	large global values.
+	(FONT_TOO_HIGH): Move from here...
+	* src/dispextern.h (FONT_TOO_HIGH): ...to here.
+
+2015-05-27  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid very high screen lines with some fonts
+	* src/xdisp.c (get_phys_cursor_geometry): Adjust the height of the
+	cursor to avoid weird-looking hollow cursor with fonts that have
+	large ascent values for some glyphs.  This avoids having the
+	hollow cursor start too low.
+	(append_space_for_newline): Adjust the ascent value of the newline
+	glyph, so that the hollow cursor at end of line displays
+	correctly.
+	(FONT_TOO_HIGH): New macro.
+	(x_produce_glyphs): Use it to detect fonts that claim a
+	preposterously large height, in which case we use per-glyph ascent
+	and descent values.  (Bug#20628)
+
+2015-05-16  Nicolas Petton  <nicolas@petton.fr>
+
+	* etc/NEWS: Add an entry about map.el
+
+	Improve the docstring of functions in map.el
+	Since a map is not a data structure but a concept, adding information
+	about the possible types of maps can be useful information.
+	* lisp/emacs-lisp/map.el: Add documentation about the type of MAP to
+	each public function.
+
+2015-04-29  Nicolas Petton  <nicolas@petton.fr>
+
+	Faster implementation of map-empty-p
+	* lisp/emacs-lisp/map.el (map-empty-p): Faster implementation using
+	specific tests depending on the type of the map.
+
+	* lisp/emacs-lisp/map.el: Better docstrings.
+
+2015-04-25  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/map.el (map-pairs): Dump redundant lambda
+
+2015-04-25  Nicolas Petton  <nicolas@petton.fr>
+
+	* lisp/emacs-lisp/map.el (map--elt-list): Better docstring.
+
+	* lisp/emacs-lisp/map.el (map--elt-list): Minor refactoring.
+
+	Fix a false negative in `map-elt' with alists and values being nil
+	* lisp/emacs-lisp/map.el (map-elt): If map is an alist and key is
+	found but its associated value is nil, do not return the default
+	value.
+	* test/automated/map-tests.el: Add a regression test.
+
+2015-04-24  Nicolas Petton  <nicolas@petton.fr>
+
+	* lisp/emacs-lisp/map.el (map--dispatch): Improve the docstring.
+
+	Do not signal an error when trying to delete a key from an array
+	* lisp/emacs-lisp/map.el (map-delete): When map is an array, check if
+	the key is present to avoid signaling an error.
+	* test/automated/map-tests.el: Add a test for deleting non-existing
+	keys from maps.
+
+	* lisp/emacs-lisp/map.el: Better docstring.
+
+	Minor improvement in map-elt.
+	* lisp/emacs-lisp/map.el (map-elt): Do not use `ignore-errors' when
+	doing a lookup in arrays, but check the boundaries of the array
+	instead.
+	* test/automated/map-tests.el: Adds a test for `map-elt' with arrays
+	and a negative integer as key.
+
+2015-04-21  Nicolas Petton  <nicolas@petton.fr>
+
+	* test/automated/map-tests.el: Refactoring of test methods.
+
+	* test/automated/map-tests.el: Renamed from map-test.el.
+
+2015-04-18  Nicolas Petton  <nicolas@petton.fr>
+
+	* lisp/emacs-lisp/map.el (map-into): Better error message.
+
+	* lisp/emacs-lisp/map.el: Removes byte-compilation warnings.
+
+	Throw an error when converting a map into an unknown map type
+	* lisp/emacs-lisp/map.el (map-into): Throw an error if type is not valid.
+	* test/automated/map-test.el: Add a regression test.
+
+	New library map.el similar to seq.el but for mapping data structures.
+	* test/automated/map-test.el: New file.
+	* lisp/emacs-lisp/map.el: New file.
+
+2015-04-11  Ulrich Müller  <ulm@gentoo.org>
+
+	Bump Emacs version to 24.5.50.
+
+2015-04-06  Nicolas Petton  <nicolas@petton.fr>
+
+	* lisp/ChangeLog: Remove a duplicate
+
+2015-04-05  Nicolas Petton  <nicolas@petton.fr>
+
+	lisp/ldefs-boot.el: Update for the 24.5 release
+
+	Update the 24.5 release date in all ChangeLog files
+
 2015-05-30  Dmitry Gutov  <dgutov@yandex.ru>
 
 	Make sure there's no explicit tag name

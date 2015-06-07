@@ -23,7 +23,7 @@ LC_ALL=C
 export LC_ALL
 
 # The newest revision that should not appear in the generated ChangeLog.
-gen_origin=0700eb152da4c57419a391161107b48d81abdeb2
+gen_origin=325bf192ae281046834884b12705d6c522871b24
 force=
 output=ChangeLog
 nmax=2
