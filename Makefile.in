@@ -1116,19 +1116,21 @@ unchanged-history-files:
 	x=$$(git diff-files --name-only $(CHANGELOG_N) $(emacslog)) && \
 	  test -z "$$x"
 
+# Regular expression that matches the newest commit covered by a ChangeLog.
+new_commit_regexp = ^commit [0123456789abcdef]* (inclusive)
+
 # Copy newer commit messages to the start of the ChangeLog history file,
 # and consider them to be older.
 change-history-nocommit: master-branch-is-current unchanged-history-files
 	-rm -f ChangeLog.tmp
 	$(MAKE) ChangeLog CHANGELOG=ChangeLog.tmp
-	(sed '/^See ChangeLog.[0-9]* for earlier/,$$d' <ChangeLog.tmp && cat $(CHANGELOG_N)) \
-	  >$(CHANGELOG_N).tmp
+	sed '/^This file records repository revisions/,$$d' \
+	  ChangeLog.tmp >$(CHANGELOG_N).tmp
+	new_commit_line=`grep '$(new_commit_regexp)' ChangeLog.tmp` && \
+	sed 's/$(new_commit_regexp).*/'"$$new_commit_line/" \
+	  $(CHANGELOG_N) >>$(CHANGELOG_N).tmp
 	rm ChangeLog.tmp
-	new_origin=$$(git log --pretty=format:%H HEAD^!) && \
-	sed 's/^\(gen_origin=\).*/\1'"$$new_origin/" \
-	  < $(emacslog) > $(emacslog).tmp && chmod +x $(emacslog).tmp
 	mv $(CHANGELOG_N).tmp $(CHANGELOG_N)
-	mv $(emacslog).tmp $(emacslog)
 
 change-history: change-history-nocommit
 	$(MAKE) $@-commit
