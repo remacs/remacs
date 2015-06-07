@@ -310,7 +310,10 @@ int _getpid (void);
    elsewhere, but we don't use lib/time.h where the structure is
    defined.  */
 /* MinGW64 defines 'struct timespec' and _TIMESPEC_DEFINED in sys/types.h.  */
-#ifndef _TIMESPEC_DEFINED
+/* Mingw.org's MinGW runtime versions 3.22 and upward define 'struct
+   timespec' and __struct_timespec_defined in parts/time.h, which is
+   included by time.h.  */
+#if !defined (_TIMESPEC_DEFINED) && !defined (__struct_timespec_defined)
 struct timespec
 {
   time_t	tv_sec;		/* seconds */
