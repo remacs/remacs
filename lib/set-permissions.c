@@ -699,7 +699,7 @@ set_acls (struct permission_context *ctx, const char *name, int desc,
       if (desc != -1)
 	ret = fchacl (desc, &ctx->u.a, ctx->u.a.acl_len);
       else
-	ret = chacl (name, &ctx->u.a, ctx->u.a.acl_len);
+	ret = chacl ((char *) name, &ctx->u.a, ctx->u.a.acl_len);
       if (ret < 0)
 	{
 	  if (errno == ENOSYS && from_mode)

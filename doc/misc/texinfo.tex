@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2015-05-26.15}
+\def\texinfoversion{2015-06-01.15}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -304,6 +304,7 @@
 % Avoid "undefined control sequence" errors.
 \def\lastchapterdefs{}
 \def\lastsectiondefs{}
+\def\lastsection{}
 \def\prevchapterdefs{}
 \def\prevsectiondefs{}
 \def\lastcolordefs{}
@@ -7607,7 +7608,7 @@ end
 \long\def\nillm@{\nil@}%
 
 % This macro is expanded during the Texinfo macro expansion, not during its
-% definition.  It gets all the arguments values and assigns them to macros
+% definition.  It gets all the arguments' values and assigns them to macros
 % macarg.ARGNAME
 %
 % #1 is the macro name
