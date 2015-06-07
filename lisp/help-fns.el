@@ -381,7 +381,10 @@ suitable file is found, return nil."
                         (vectorp real-def))
                     (format "\nMacro: %s" (format-kbd-macro real-def)))
                    (t "[Missing arglist.  Please make a bug report.]")))
-             (high (help-highlight-arguments use doc)))
+             (high (help-highlight-arguments
+                    ;; Quote any quotes in the function name (bug#20759).
+                    (replace-regexp-in-string "\\(\\)[`']" "\\=" use t t 1)
+                    doc)))
         (let ((fill-begin (point)))
           (insert (car high) "\n")
           (fill-region fill-begin (point)))
