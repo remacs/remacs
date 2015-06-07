@@ -5272,8 +5272,8 @@ See `font-weight-table' for the format of the vector. */);
   DEFVAR_LISP ("font-log", Vfont_log, doc: /*
 A list that logs font-related actions and results, for debugging.
 The default value is t, which means to suppress logging.
-If the environment variable EMACS_FONT_LOG is set at startup,
-this defaults to nil.  */);
+Set it to nil to enable logging.  If the environment variable
+EMACS_FONT_LOG is set at startup, it defaults to nil.  */);
   Vfont_log = Qnil;
 
 #ifdef HAVE_WINDOW_SYSTEM
