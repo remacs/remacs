@@ -181,6 +181,7 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 			       (repeat (directory :format "%v")))
 	     ;; coding.c
 	     (inhibit-eol-conversion mule boolean)
+	     (enable-character-translation mule boolean)
 	     (eol-mnemonic-undecided mule string)
 	     ;; startup.el fiddles with the values.  IMO, would be
 	     ;; simpler to just use #ifdefs in coding.c.
