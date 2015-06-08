@@ -19200,6 +19200,7 @@ append_space_for_newline (struct it *it, bool default_face_p)
 
 	  PRODUCE_GLYPHS (it);
 
+#ifdef HAVE_WINDOW_SYSTEM
 	  /* Make sure this space glyph has the right ascent and
 	     descent values, or else cursor at end of line will look
 	     funny.  */
@@ -19216,6 +19217,7 @@ append_space_for_newline (struct it *it, bool default_face_p)
 
 	  g->ascent = it->max_ascent;
 	  g->descent = it->max_descent;
+#endif
 
 	  it->override_ascent = -1;
 	  it->constrain_row_ascent_descent_p = false;
