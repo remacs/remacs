@@ -1979,12 +1979,31 @@ If some packages are not installed propose to install them."
   "Delete package PKG-DESC.
 
 Argument PKG-DESC is a full description of package as vector.
+Interactively, prompt the user for the package name and version.
+
 When package is used elsewhere as dependency of another package,
 refuse deleting it and return an error.
-If FORCE is non-nil package will be deleted even if it is used
-elsewhere.
+If prefix argument FORCE is non-nil, package will be deleted even
+if it is used elsewhere.
 If NOSAVE is non-nil, the package is not removed from
 `package-selected-packages'."
+  (interactive
+   (progn
+     ;; Initialize the package system to get the list of package
+     ;; symbols for completion.
+     (unless package--initialized
+       (package-initialize t))
+     (let* ((package-table
+             (mapcar
+              (lambda (p) (cons (package-desc-full-name p) p))
+              (delq nil
+                    (mapcar (lambda (p) (unless (package-built-in-p p) p))
+                            (apply #'append (mapcar #'cdr package-alist))))))
+            (package-name (completing-read "Delete package: "
+                                           (mapcar #'car package-table)
+                                           nil t)))
+       (list (cdr (assoc package-name package-table))
+             current-prefix-arg nil))))
   (let ((dir (package-desc-dir pkg-desc))
         (name (package-desc-name pkg-desc))
         pkg-used-elsewhere-by)
