@@ -460,7 +460,7 @@ It can be quoted, or be inside a quoted form."
 	   (beg (condition-case nil
 		    (save-excursion
 		      (backward-sexp 1)
-		      (skip-chars-forward "`',‘")
+		      (skip-chars-forward "`',‘#")
 		      (point))
 		  (scan-error pos)))
 	   (end

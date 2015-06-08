@@ -78,6 +78,15 @@
         (should (member "backup-buffer" comps))
         (should-not (member "backup-inhibited" comps))))))
 
+(ert-deftest elisp-completes-functions-after-hash-quote ()
+  (ert-deftest elisp-completes-functions-after-let-bindings ()
+    (with-temp-buffer
+      (emacs-lisp-mode)
+      (insert "#'ba")
+      (let ((comps (elisp--test-completions)))
+        (should (member "backup-buffer" comps))
+        (should-not (member "backup-inhibited" comps))))))
+
 (ert-deftest elisp-completes-local-variables ()
   (with-temp-buffer
     (emacs-lisp-mode)
