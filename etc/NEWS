@@ -84,6 +84,11 @@ command line when `initial-buffer-choice' is non-nil.
 
 * Changes in Emacs 25.1
 
+** New command `checkdoc-package-keywords' checks if the
+current package keywords are recognized. Set the new option
+`checkdoc-package-keywords-flag' to non-nil to make
+`checkdoc-current-buffer' call this function automatically.
+
 ** New function `checkdoc-file' checks for style errors.
 It's meant for use together with `compile':
 emacs -batch --eval "(checkdoc-file \"subr.el\")"
