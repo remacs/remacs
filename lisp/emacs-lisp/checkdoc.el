@@ -871,6 +871,13 @@ otherwise stop after the first error."
 	(message "Checking buffer for style...Done."))))
 
 ;;;###autoload
+(defun checkdoc-file (file)
+  "Check FILE for document, comment, error style, and rogue spaces."
+  (with-current-buffer (find-file-noselect file)
+    (let ((checkdoc-diagnostic-buffer "*warn*"))
+      (checkdoc-current-buffer t))))
+
+;;;###autoload
 (defun checkdoc-start (&optional take-notes)
   "Start scanning the current buffer for documentation string style errors.
 Only documentation strings are checked.
@@ -2611,16 +2618,16 @@ function called to create the messages."
   "Store POINT and MSG as errors in the checkdoc diagnostic buffer."
   (setq checkdoc-pending-errors t)
   (let ((text (list "\n" (checkdoc-buffer-label) ":"
-		    (int-to-string
-		     (count-lines (point-min) (or point (point-min))))
-		    ": " msg)))
-    (with-current-buffer (get-buffer checkdoc-diagnostic-buffer)
-      (let ((inhibit-read-only t)
-            (pt (point-max)))
-        (goto-char pt)
-        (apply #'insert text)
-        (when noninteractive
-          (warn (buffer-substring pt (point-max))))))))
+                    (int-to-string
+                     (count-lines (point-min) (or point (point-min))))
+                    ": " msg)))
+    (if (string= checkdoc-diagnostic-buffer "*warn*")
+        (warn (apply #'concat text))
+      (with-current-buffer (get-buffer checkdoc-diagnostic-buffer)
+          (let ((inhibit-read-only t)
+                (pt (point-max)))
+            (goto-char pt)
+            (apply #'insert text))))))
 
 (defun checkdoc-show-diagnostics ()
   "Display the checkdoc diagnostic buffer in a temporary window."
