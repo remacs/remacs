@@ -892,18 +892,46 @@ face_for_char (struct frame *f, struct face *face, int c,
   if (ASCII_CHAR_P (c) || CHAR_BYTE8_P (c))
     return face->ascii_face->id;
 
-#ifdef HAVE_NS
-  if (face->font)
+  if (c > 0 && EQ (CHAR_TABLE_REF (Vchar_script_table, c), Qsymbol))
     {
-      /* Fonts often have characters in other scripts, like symbol, even if they
-         don't match script: symbol.  So check if the character is present
-         in the current face first.  Only enable for NS for now, but should
-         perhaps be general?  */
+      /* Fonts often have characters for punctuation and other
+         symbols, even if they don't match the 'symbol' script.  So
+         check if the character is present in the current ASCII face
+         first, and if so, use the same font as used by that face.
+         This avoids unnecessarily switching to another font when the
+         frame's default font will do.  We only do this for symbols so
+         that users could still setup fontsets to force Emacs to use
+         specific fonts for characters from other scripts, because
+         choice of fonts is frequently affected by cultural
+         preferences and font features, not by font coverage.
+         However, these considerations are unlikely to be relevant to
+         punctuation and other symbols, since the latter generally
+         aren't specific to any culture, and don't require
+         sophisticated OTF features.  */
       Lisp_Object font_object;
-      XSETFONT (font_object, face->font);
-      if (font_has_char (f, font_object, c)) return face->id;
-    }
+
+      if (face->ascii_face->font)
+	{
+	  XSETFONT (font_object, face->ascii_face->font);
+	  if (font_has_char (f, font_object, c))
+	    return face->ascii_face->id;
+	}
+
+#if 0
+      /* Try the current face.  Disabled because it can cause
+	 counter-intuitive results, whereby the font used for some
+	 character depends on the characters that precede it on
+	 display.  See the discussion of bug #15138.  Note that the
+	 original bug reported in #15138 was in a situation where face
+	 == face->ascii_face, so the above code solves that situation
+	 without risking the undesirable consequences.  */
+      if (face->font)
+	{
+	  XSETFONT (font_object, face->font);
+	  if (font_has_char (f, font_object, c)) return face->id;
+	}
 #endif
+    }
 
   fontset = FONTSET_FROM_ID (face->fontset);
   eassert (!BASE_FONTSET_P (fontset));
