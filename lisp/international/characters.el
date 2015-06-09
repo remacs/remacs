@@ -1172,6 +1172,8 @@ Setup char-width-table appropriate for non-CJK language environment."
 ;;
 ;; The Unicode blocks actually extend past some of these ranges with
 ;; undefined codepoints.
+;;
+;; Last update: http://www.unicode.org/Public/8.0.0/ucd/Blocks-8.0.0d3.txt
 (let ((script-list nil))
   (dolist
       (elt
@@ -1181,7 +1183,7 @@ Setup char-width-table appropriate for non-CJK language environment."
 	 (#x02B0 #x036F latin)		; Spacing Modifiers and Diacriticals
 	 (#x0370 #x03E1 greek)
 	 (#x03E2 #x03EF coptic)
-	 (#x03F0 #x03F3 greek)
+	 (#x03F0 #x03FF greek)
 	 (#x0400 #x052F cyrillic)
 	 (#x0530 #x058F armenian)
 	 (#x0590 #x05FF hebrew)
@@ -1225,7 +1227,7 @@ Setup char-width-table appropriate for non-CJK language environment."
 	 (#x1950 #x197F tai-le)
 	 (#x1980 #x19DF tai-lue)	; New Tai Lue
 	 (#x19E0 #x19FF khmer)		; Khmer Symbols
-	 (#x1A00 #x1A00 buginese)
+	 (#x1A00 #x1A1F buginese)
 	 (#x1A20 #x1AAF tai-tham)
 	 (#x1AB0 #x1AFF latin)		; Combining Diacritical Marks Extended
 	 (#x1B00 #x1B7F balinese)
@@ -1259,7 +1261,7 @@ Setup char-width-table appropriate for non-CJK language environment."
 	 (#x31A0 #x31BF bopomofo)	; Bopomofo Extended
 	 (#x31C0 #x31EF cjk-misc)	; CJK Strokes
 	 (#x31F0 #x31FF kana)		; Katakana Phonetic Extensions
-	 (#x3200 #x9FAF han)
+	 (#x3200 #x9FFF han)
 	 (#xA000 #xA4CF yi)
 	 (#xA4D0 #xA4FF lisu)
 	 (#xA500 #xA63F vai)
@@ -1282,6 +1284,7 @@ Setup char-width-table appropriate for non-CJK language environment."
 	 (#xAAE0 #xAAFF meetei-mayek)	; Meetei Mayek Extensions
 	 (#xAB00 #xAB2F ethiopic)	; Ethiopic Extended-A
 	 (#xAB30 #xAB6F latin)		; Latin Extended-E
+         (#xAB70 #xABBF cherokee)       ; Cherokee Supplement
 	 (#xABC0 #xABFF meetei-mayek)
 	 (#xAC00 #xD7FF hangul)
 	 (#xF900 #xFAFF han)
@@ -1289,12 +1292,14 @@ Setup char-width-table appropriate for non-CJK language environment."
 	 (#xFB13 #xFB17 armenian)	; Armenian ligatures
 	 (#xFB1D #xFB4F hebrew)	        ; Alphabetic Presentation Forms
 	 (#xFB50 #xFDFF arabic)		; Arabic Presentation Forms-A
+         (#xFE10 #xFE1F vertical-form)
 	 (#xFE20 #xFE2F latin)		; Combining Half Marks
 	 (#xFE30 #xFE4F han)
+         (#xFE50 #xFE6F symbol)         ; Small Form Variants
 	 (#xFE70 #xFEFF arabic)		; Arabic Presentation Forms-B
 	 (#xFF00 #xFF5F cjk-misc)
 	 (#xFF61 #xFF9F kana)
-	 (#xFFE0 #xFFE6 cjk-misc)
+	 (#xFFE0 #xFFEF cjk-misc)
 	 (#x10000 #x100FF linear-b)
 	 (#x10100 #x1013F aegean-number)
 	 (#x10140 #x1018F ancient-greek-number)
@@ -1313,11 +1318,12 @@ Setup char-width-table appropriate for non-CJK language environment."
 	 (#x10480 #x104AF osmanya)
 	 (#x10500 #x1052F elbasan)
 	 (#x10530 #x1056F caucasian-albanian)
-	 (#x10600 #x106BF linear-a)
+	 (#x10600 #x1077F linear-a)
 	 (#x10800 #x1083F cypriot-syllabary)
 	 (#x10840 #x1085F aramaic)
 	 (#x10860 #x1087F palmyrene)
 	 (#x10880 #x108AF nabataean)
+         (#x108E0 #x108FF hatran)
 	 (#x10900 #x1091F phoenician)
 	 (#x10920 #x1093F lydian)
 	 (#x10980 #x109FF meroitic)
@@ -1330,6 +1336,7 @@ Setup char-width-table appropriate for non-CJK language environment."
 	 (#x10B60 #x10B7F inscriptional-pahlavi)
 	 (#x10B80 #x10BAF psalter-pahlavi)
 	 (#x10C00 #x10C4F old-turkic)
+         (#x10C80 #x10CFF old-hungarian)
 	 (#x10E60 #x10E7F rumi-number)
 	 (#x11000 #x1107F brahmi)
 	 (#x11080 #x110CF kaithi)
@@ -1339,17 +1346,21 @@ Setup char-width-table appropriate for non-CJK language environment."
 	 (#x11180 #x111DF sharada)
 	 (#x111E0 #x111FF sinhala-archaic-number)
 	 (#x11200 #x1124F khojki)
+         (#x11280 #x112AF multani)
 	 (#x112B0 #x112FF khudawadi)
 	 (#x11300 #x1137F grantha)
 	 (#x11480 #x114DF tirhuta)
 	 (#x11580 #x115FF siddham)
 	 (#x11600 #x1165F modi)
 	 (#x11680 #x116CF takri)
+         (#x11700 #x1173F ahom)
 	 (#x118A0 #x118FF warang-citi)
 	 (#x11AC0 #x11AFF pau-cin-hau)
 	 (#x12000 #x123FF cuneiform)
 	 (#x12400 #x1247F cuneiform-numbers-and-punctuation)
+         (#x12400 #x1254F cuneiform)    ; Early Dynastic Cuneiform
 	 (#x13000 #x1342F egyptian)
+         (#x14400 #x1457F anatolian)
 	 (#x16800 #x16A3F bamum)
 	 (#x16A40 #x16A6F mro)
 	 (#x16AD0 #x16AFF bassa-vah)
@@ -1363,6 +1374,7 @@ Setup char-width-table appropriate for non-CJK language environment."
 	 (#x1D300 #x1D35F tai-xuan-jing-symbol)
 	 (#x1D360 #x1D37F counting-rod-numeral)
 	 (#x1D400 #x1D7FF mathematical)
+         (#x1D800 #x1DAAF sutton-sign-writing)
 	 (#x1E800 #x1E8DF mende-kikakui)
 	 (#x1EE00 #x1EEFF arabic)	; Arabic Mathematical Alphabetic Symbols
 	 (#x1F000 #x1F02F mahjong-tile)
@@ -1370,8 +1382,8 @@ Setup char-width-table appropriate for non-CJK language environment."
 	 (#x1F0A0 #x1F0FF playing-cards)
 	 (#x1F100 #x1F1FF symbol)	; Enclosed Alphanumeric Supplement
 	 (#x1F200 #x1F2FF han)		; Enclosed Ideographic Supplement
-	 (#x1F300 #x1F8FF symbol)
-	 (#x20000 #x2B81F han)
+	 (#x1F300 #x1F9FF symbol)
+	 (#x20000 #x2CEAF han)
 	 (#x2F800 #x2FFFF han)))
     (set-char-table-range char-script-table
 			  (cons (car elt) (nth 1 elt)) (nth 2 elt))
