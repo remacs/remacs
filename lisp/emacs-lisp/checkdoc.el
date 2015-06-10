@@ -1,4 +1,4 @@
-;;; checkdoc.el --- check documentation strings for style requirements
+;;; checkdoc.el --- check documentation strings for style requirements  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1997-1998, 2001-2015 Free Software Foundation, Inc.
 
@@ -2659,6 +2659,8 @@ function called to create the messages."
     (goto-char (point-min))
     (when (re-search-forward "^;; Keywords: \\(.*\\)$" nil t)
       (split-string (match-string-no-properties 1) ", " t))))
+
+(defvar finder-known-keywords)
 
 ;;;###autoload
 (defun checkdoc-package-keywords ()
