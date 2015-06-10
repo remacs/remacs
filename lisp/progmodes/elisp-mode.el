@@ -29,6 +29,7 @@
 ;;; Code:
 
 (require 'lisp-mode)
+(eval-when-compile (require 'cl-lib))
 
 (define-abbrev-table 'emacs-lisp-mode-abbrev-table ()
   "Abbrev table for Emacs Lisp mode.
