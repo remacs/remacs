@@ -2654,7 +2654,6 @@ function called to create the messages."
 
 (defun checkdoc-get-keywords ()
   "Return a list of package keywords for the current file."
-  (require 'finder)
   (save-excursion
     (goto-char (point-min))
     (when (re-search-forward "^;; Keywords: \\(.*\\)$" nil t)
@@ -2666,6 +2665,7 @@ function called to create the messages."
 (defun checkdoc-package-keywords ()
   "Find package keywords that aren't in `finder-known-keywords'."
   (interactive)
+  (require 'finder)
   (let ((unrecognized-keys
          (cl-remove-if
           (lambda (x) (assoc (intern-soft x) finder-known-keywords))
