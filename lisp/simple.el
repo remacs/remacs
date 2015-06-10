@@ -353,27 +353,6 @@ Other major modes are defined by comparison with this one."
   (kill-all-local-variables)
   (run-mode-hooks))
 
-;; Special major modes to view specially formatted data rather than files.
-
-(defvar special-mode-map
-  (let ((map (make-sparse-keymap)))
-    (suppress-keymap map)
-    (define-key map "q" 'quit-window)
-    (define-key map " " 'scroll-up-command)
-    (define-key map [?\S-\ ] 'scroll-down-command)
-    (define-key map "\C-?" 'scroll-down-command)
-    (define-key map "?" 'describe-mode)
-    (define-key map "h" 'describe-mode)
-    (define-key map ">" 'end-of-buffer)
-    (define-key map "<" 'beginning-of-buffer)
-    (define-key map "g" 'revert-buffer)
-    map))
-
-(put 'special-mode 'mode-class 'special)
-(define-derived-mode special-mode nil "Special"
-  "Parent major mode from which special major modes should inherit."
-  (setq buffer-read-only t))
-
 ;; Making and deleting lines.
 
 (defvar self-insert-uses-region-functions nil
@@ -1448,7 +1427,7 @@ this command arranges for all errors to enter the debugger."
       ;; Bind debug-on-error to something unique so that we can
       ;; detect when evalled code changes it.
       (let ((debug-on-error old-value))
-	(push (eval exp lexical-binding) values)
+	(push (eval (macroexpand-all exp) lexical-binding) values)
 	(setq new-value debug-on-error))
       ;; If evalled code has changed the value of debug-on-error,
       ;; propagate that change to the global binding.
