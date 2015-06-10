@@ -1194,7 +1194,7 @@ return negative results."
   (let ((year (calendar-extract-year date))
         offset-years)
     (cond ((zerop year)
-           (error "There was no year zero"))
+           (user-error "There was no year zero"))
           ((> year 0)
            (setq offset-years (1- year))
            (+ (calendar-day-number date) ; days this year
@@ -1379,7 +1379,7 @@ Optional integers MON and YR are used instead of today's date."
   ;; stands, almost all other calendar functions (eg holidays) would
   ;; at best have unpredictable results for such dates.
   (if (< (+ month (* 12 (1- year))) 2)
-      (error "Months before January, 1 AD cannot be displayed"))
+      (user-error "Months before January, 1 AD cannot be displayed"))
   (setq displayed-month month
         displayed-year year)
   (erase-buffer)
