@@ -109,6 +109,8 @@ Note that the like of `more' doesn't work too well under Emacs \\[shell]."
   :type 'string
   :group 'executable)
 
+(make-obsolete-variable 'executable-self-display nil "25.1" 'set)
+
 
 (defvar executable-font-lock-keywords
   '(("\\`#!.*/\\([^ \t\n]+\\)" 1 font-lock-keyword-face t))
@@ -251,10 +253,10 @@ executable."
 
 
 
-;;;###autoload
 (defun executable-self-display ()
   "Turn a text file into a self-displaying Un*x command.
 The magic number of such a command displays all lines but itself."
+  (declare (obsolete nil "25.1"))
   (interactive)
   (if (eq this-command 'executable-self-display)
       (setq this-command 'executable-set-magic))
