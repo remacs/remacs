@@ -2374,7 +2374,7 @@ With optional argument ALL, change the default for all present
 and future F90 buffers.  F90 mode normally treats backslash as an
 escape character."
   (or (derived-mode-p 'f90-mode)
-      (error "This function should only be used in F90 buffers"))
+      (user-error "This function should only be used in F90 buffers"))
   (when (equal (char-syntax ?\\ ) ?\\ )
     (or all (set-syntax-table (copy-syntax-table (syntax-table))))
     (modify-syntax-entry ?\\ ".")))
