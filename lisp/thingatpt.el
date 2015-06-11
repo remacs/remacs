@@ -1,4 +1,4 @@
-;;; thingatpt.el --- get the `thing' at point
+;;; thingatpt.el --- get the `thing' at point  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1991-1998, 2000-2015 Free Software Foundation, Inc.
 
@@ -177,17 +177,13 @@ The bounds of THING are determined by `bounds-of-thing-at-point'."
 
 ;;  Sexps
 
-(defun thing-at-point--in-string-p ()
+(defun in-string-p ()
   "Return non-nil if point is in a string."
   (declare (obsolete "use (nth 3 (syntax-ppss)) instead." "25.1"))
   (let ((orig (point)))
     (save-excursion
       (beginning-of-defun)
       (nth 3 (parse-partial-sexp (point) orig)))))
-
-(define-obsolete-function-alias 'in-string-p
-  'thing-at-point--in-string-p "25.1"
-  "This is an internal thingatpt function and should not be used.")
 
 (defun thing-at-point--end-of-sexp ()
   "Move point to the end of the current sexp."
