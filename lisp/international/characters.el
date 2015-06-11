@@ -1358,7 +1358,7 @@ Setup char-width-table appropriate for non-CJK language environment."
 	 (#x11AC0 #x11AFF pau-cin-hau)
 	 (#x12000 #x123FF cuneiform)
 	 (#x12400 #x1247F cuneiform-numbers-and-punctuation)
-         (#x12400 #x1254F cuneiform)    ; Early Dynastic Cuneiform
+	 (#x12480 #x1254F cuneiform)	; Early Dynastic Cuneiform
 	 (#x13000 #x1342F egyptian)
          (#x14400 #x1457F anatolian)
 	 (#x16800 #x16A3F bamum)
