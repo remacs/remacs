@@ -489,22 +489,6 @@
 	* src/w32fns.c (syms_of_w32fns): ... to here,
 	as these are used only on MS-Windows.
 
-2015-05-31  Eli Zaretskii  <eliz@gnu.org>
-
-	Attempt to fix crashes due to accesses beyond glyph matrix end
-	* src/xdisp.c (x_produce_glyphs): When it->ascent and it->descent
-	are determined from per-character metrics, don't let the
-	max_ascent and max_descent become smaller than values returned by
-	normal_char_ascent_descent, to avoid unpleasant dynamic resizing
-	of screen line heights when text changes.
-	* src/xterm.c (x_new_font)
-	* src/w32term.c (x_new_font): Call get_font_ascent_descent to
-	obtain a reasonable value for FRAME_LINE_HEIGHT, even when a font
-	claims very large value for its height.
-	* src/font.c (font_open_entity): Call get_font_ascent_descent to
-	obtain a reasonable value for FRAME_SMALLEST_FONT_HEIGHT, even
-	when a font claims very large value for its height.
-
 2015-05-31  Michael Albinus  <michael.albinus@gmx.de>
 
 	Use another default value for tramp-histfile-override
@@ -512,96 +496,9 @@
 	Use ".tramp_history" as default.
 	Fixes: debbugs:#20446
 
-2015-05-30  Eli Zaretskii  <eliz@gnu.org>
-
-	Fix display of composite characters with large fonts
-	* src/xdisp.c (x_produce_glyphs): Call normal_char_ascent_descent
-	for reasonable values of font ascent and descent.
-	(get_font_ascent_descent): New function.
-	* src/composite.c (composition_gstring_width): Call
-	get_font_ascent_descent for reasonable values of font ascent and
-	descent.
-	* dispextern.h: Add prototype for get_font_ascent_descent.
-
-	Fix display of cursor at end of empty lines
-	* src/xdisp.c (normal_char_ascent_descent): Accept additional
-	argument: the character to use for metrics in case the font
-	declares too large ascent and descent values.  Add 1 pixel to
-	ascent and descent values.
-	(normal_char_height): Accept additional argument: the character to
-	use for metrics in case the font declares too large height value.
-	Call normal_char_ascent_descent instead of doing calculations for
-	a different default character.
-	(estimate_mode_line_height, handle_single_display_spec)
-	(calc_pixel_width_or_height, produce_stretch_glyph)
-	(calc_line_height_property, produce_glyphless_glyph): All callers
-	changed.
-	(append_space_for_newline): Make sure the space glyph produced at
-	end of line has correct ascent and descent values, and the glyph
-	row has correct height, even when it's empty.
-
-2015-05-29  Eli Zaretskii  <eliz@gnu.org>
-
-	Fix 2 more calculations of line height
-	* src/xdisp.c (estimate_mode_line_height, handle_single_display_spec):
-	Use normal_char_height.
-
-	Fix line dimensions from line-height property
-	* src/xdisp.c (normal_char_ascent_descent): New function,
-	extracted from produce_glyphless_glyph.
-	(calc_line_height_property, produce_glyphless_glyph): Use it to
-	compute reasonable estimates of ascent and descent for large
-	fonts.
-
-	Fix display of stretch glyphs with large fonts
-	* src/xdisp.c (normal_char_height): New function.
-	(calc_pixel_width_or_height, produce_stretch_glyph): Use it to
-	compute more reasonable estimation of a "normal character height"
-	when the font claims preposterously large height values.
-
 2015-05-29  Nicolas Petton  <nicolas@petton.fr>
 
 	* doc/emacs/emacs.texi: Update the ISBN of the Emacs manual.
-
-2015-05-28  Eli Zaretskii  <eliz@gnu.org>
-
-	Fix display of glyphless characters with problematic fonts
-	* src/w32term.c (x_draw_glyph_string_background): Force redraw of
-	glyph string background also when the font in use claims
-	preposterously large global height value.  Helps to remove
-	artifacts left from previous displays when glyphless characters
-	are displayed as hex code in a box.
-	* src/xterm.c (x_draw_glyph_string_background): Force redraw of
-	glyph string background also when the font in use claims
-	preposterously large global height value.  Helps to remove
-	artifacts left from previous displays when glyphless characters
-	are displayed as hex code in a box.
-	* src/w32font.c (w32font_draw): Fix background drawing for
-	glyphless characters that display as acronyms or hex codes in a
-	box.
-	* src/xftfont.c (xftfont_draw): Fix background drawing for
-	glyphless characters that display as acronyms or hex codes in a
-	box.
-	* src/xdisp.c (produce_glyphless_glyph): Compute reasonable values
-	for it->ascent and it->descent when the font claims preposterously
-	large global values.
-	(FONT_TOO_HIGH): Move from here...
-	* src/dispextern.h (FONT_TOO_HIGH): ...to here.
-
-2015-05-27  Eli Zaretskii  <eliz@gnu.org>
-
-	Avoid very high screen lines with some fonts
-	* src/xdisp.c (get_phys_cursor_geometry): Adjust the height of the
-	cursor to avoid weird-looking hollow cursor with fonts that have
-	large ascent values for some glyphs.  This avoids having the
-	hollow cursor start too low.
-	(append_space_for_newline): Adjust the ascent value of the newline
-	glyph, so that the hollow cursor at end of line displays
-	correctly.
-	(FONT_TOO_HIGH): New macro.
-	(x_produce_glyphs): Use it to detect fonts that claim a
-	preposterously large height, in which case we use per-glyph ascent
-	and descent values.  (Bug#20628)
 
 2015-05-16  Nicolas Petton  <nicolas@petton.fr>
 
