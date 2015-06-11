@@ -74,7 +74,10 @@ test -d .git || {
 }
 
 # Use Gnulib's packaged ChangeLog generator.
-./build-aux/gitlog-to-changelog --ignore-matching='^; ' \
+# Maybe we should skip all "Merge branch 'master'" messages.
+# See eg the cairo-related ones.
+./build-aux/gitlog-to-changelog \
+    --ignore-matching="^; |^Merge branch 'master' of git\.(savannah|sv)\.gnu\.org:/srv/git/emacs$" \
   --ignore-line='^; ' --format='%B' \
   "$gen_origin..$new_origin" >"ChangeLog.tmp" || exit
 
