@@ -658,22 +658,24 @@ allocate_pty (char pty_name[PTY_NAME_SIZE])
 
 	if (fd >= 0)
 	  {
-#ifdef PTY_OPEN
-	    /* Set FD's close-on-exec flag.  This is needed even if
-	       PT_OPEN calls posix_openpt with O_CLOEXEC, since POSIX
-	       doesn't require support for that combination.
-	       Multithreaded platforms where posix_openpt ignores
-	       O_CLOEXEC (or where PTY_OPEN doesn't call posix_openpt)
-	       have a race condition between the PTY_OPEN and here.  */
-	    fcntl (fd, F_SETFD, FD_CLOEXEC);
-#endif
-	    /* Check to make certain that both sides are available
-	       this avoids a nasty yet stupid bug in rlogins.  */
 #ifdef PTY_TTY_NAME_SPRINTF
 	    PTY_TTY_NAME_SPRINTF
 #else
 	    sprintf (pty_name, "/dev/tty%c%x", c, i);
 #endif /* no PTY_TTY_NAME_SPRINTF */
+
+	    /* Set FD's close-on-exec flag.  This is needed even if
+	       PT_OPEN calls posix_openpt with O_CLOEXEC, since POSIX
+	       doesn't require support for that combination.
+	       Do this after PTY_TTY_NAME_SPRINTF, which on some platforms
+	       doesn't work if the close-on-exec flag is set (Bug#20555).
+	       Multithreaded platforms where posix_openpt ignores
+	       O_CLOEXEC (or where PTY_OPEN doesn't call posix_openpt)
+	       have a race condition between the PTY_OPEN and here.  */
+	    fcntl (fd, F_SETFD, FD_CLOEXEC);
+
+	    /* Check to make certain that both sides are available.
+	       This avoids a nasty yet stupid bug in rlogins.  */
 	    if (faccessat (AT_FDCWD, pty_name, R_OK | W_OK, AT_EACCESS) != 0)
 	      {
 		emacs_close (fd);
