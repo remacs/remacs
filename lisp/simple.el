@@ -4017,7 +4017,7 @@ some text between BEG and END, but we're killing the region."
   ;; calling `kill-append'.
   (interactive (list (mark) (point) 'region))
   (unless (and beg end)
-    (error "The mark is not set now, so there is no region"))
+    (user-error "The mark is not set now, so there is no region"))
   (condition-case nil
       (let ((string (if region
                         (funcall region-extract-function 'delete)
