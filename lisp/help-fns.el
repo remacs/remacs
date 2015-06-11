@@ -353,7 +353,7 @@ suitable file is found, return nil."
               (help-xref-button 1 'help-function-cmacro function lib)))))
       (insert ".\n"))))
 
-(defun help-fns--signature (function doc real-def real-function)
+(defun help-fns--signature (function doc real-def real-function raw)
   "Insert usage at point and return docstring.  With highlighting."
   (if (keymapp function)
       doc                       ; If definition is a keymap, skip arglist note.
@@ -365,7 +365,7 @@ suitable file is found, return nil."
       (let* ((use (cond
                    ((and usage (not (listp advertised))) (car usage))
                    ((listp arglist)
-                    (format "%S" (help-make-usage function arglist)))
+                    (help--make-usage-docstring function arglist))
                    ((stringp arglist) arglist)
                    ;; Maybe the arglist is in the docstring of a symbol
                    ;; this one is aliased to.
@@ -379,16 +379,20 @@ suitable file is found, return nil."
                     (car usage))
                    ((or (stringp real-def)
                         (vectorp real-def))
-                    (format "\nMacro: %s" (format-kbd-macro real-def)))
+                    (format "\nMacro: %s"
+                            (help--docstring-quote
+                             (format-kbd-macro real-def))))
                    (t "[Missing arglist.  Please make a bug report.]")))
-             (high (help-highlight-arguments
-                    ;; Quote any quotes in the function name (bug#20759).
-                    (replace-regexp-in-string "\\(\\)[`']" "\\=" use t t 1)
-                    doc)))
-        (let ((fill-begin (point)))
-          (insert (car high) "\n")
-          (fill-region fill-begin (point)))
-        (cdr high)))))
+             (high (if raw
+                       (cons use doc)
+                     (help-highlight-arguments (substitute-command-keys use)
+                                               (substitute-command-keys doc)))))
+        (let ((fill-begin (point))
+              (high-usage (car high))
+              (high-doc (cdr high)))
+          (insert high-usage "\n")
+          (fill-region fill-begin (point))
+          high-doc)))))
 
 (defun help-fns--parent-mode (function)
   ;; If this is a derived mode, link to the parent.
@@ -579,23 +583,22 @@ FILE is the file where FUNCTION was probably defined."
 				  (point)))
       (terpri)(terpri)
 
-      (let* ((doc-raw (documentation function t))
-	     ;; If the function is autoloaded, and its docstring has
-	     ;; key substitution constructs, load the library.
-	     (doc (progn
-		    (and (autoloadp real-def) doc-raw
-			 help-enable-auto-load
-			 (string-match "\\([^\\]=\\|[^=]\\|\\`\\)\\\\[[{<]"
-				       doc-raw)
-			 (autoload-do-load real-def))
-		    (substitute-command-keys doc-raw))))
+      (let ((doc-raw (documentation function t)))
+
+	;; If the function is autoloaded, and its docstring has
+	;; key substitution constructs, load the library.
+	(and (autoloadp real-def) doc-raw
+	     help-enable-auto-load
+	     (string-match "\\([^\\]=\\|[^=]\\|\\`\\)\\\\[[{<]" doc-raw)
+	     (autoload-do-load real-def))
 
         (help-fns--key-bindings function)
         (with-current-buffer standard-output
-          (setq doc (help-fns--signature function doc sig-key real-function))
-	  (run-hook-with-args 'help-fns-describe-function-functions function)
-          (insert "\n"
-                  (or doc "Not documented.")))))))
+	  (let ((doc (help-fns--signature function doc-raw sig-key
+                                          real-function nil)))
+	    (run-hook-with-args 'help-fns-describe-function-functions function)
+	    (insert "\n"
+		    (or doc "Not documented."))))))))
 
 ;; Add defaults to `help-fns-describe-function-functions'.
 (add-hook 'help-fns-describe-function-functions #'help-fns--obsolete)

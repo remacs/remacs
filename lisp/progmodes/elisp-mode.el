@@ -1436,7 +1436,7 @@ In the absence of INDEX, just call `eldoc-docstring-format-sym-doc'."
 ARGLIST is either a string, or a list of strings or symbols."
   (let ((str (cond ((stringp arglist) arglist)
                    ((not (listp arglist)) nil)
-                   (t (format "%S" (help-make-usage 'toto arglist))))))
+                   (t (help--make-usage-docstring 'toto arglist)))))
     (if (and str (string-match "\\`([^ )]+ ?" str))
         (replace-match "(" t t str)
       str)))

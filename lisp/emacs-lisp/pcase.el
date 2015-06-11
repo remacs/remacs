@@ -163,7 +163,7 @@ Currently, the following patterns are provided this way:"
         expansion))))
 
 (declare-function help-fns--signature "help-fns"
-                  (function doc real-def real-function))
+                  (function doc real-def real-function raw))
 
 ;; FIXME: Obviously, this will collide with nadvice's use of
 ;; function-documentation if we happen to advise `pcase'.
@@ -183,7 +183,7 @@ Currently, the following patterns are provided this way:"
              (insert "\n\n-- ")
              (let* ((doc (documentation me 'raw)))
                (setq doc (help-fns--signature symbol doc me
-                                              (indirect-function me)))
+                                              (indirect-function me) t))
                (insert "\n" (or doc "Not documented.")))))))
       (let ((combined-doc (buffer-string)))
         (if ud (help-add-fundoc-usage combined-doc (car ud)) combined-doc)))))
@@ -870,7 +870,7 @@ QPAT can take the following forms:
   (QPAT1 . QPAT2)       matches if QPAT1 matches the car and QPAT2 the cdr.
   [QPAT1 QPAT2..QPATn]  matches a vector of length n and QPAT1..QPATn match
                            its 0..(n-1)th elements, respectively.
-  ,PAT                 matches if the pattern PAT matches.
+  ,PAT                  matches if the pattern PAT matches.
   STRING                matches if the object is `equal' to STRING.
   ATOM                  matches if the object is `eq' to ATOM."
   (declare (debug (pcase-QPAT)))

@@ -114,7 +114,7 @@ Each element has the form (WHERE BYTECODE STACK) where:
            (usage (help-split-fundoc origdoc function)))
       (setq usage (if (null usage)
                       (let ((arglist (help-function-arglist flist)))
-                        (format "%S" (help-make-usage function arglist)))
+                        (help--make-usage-docstring function arglist))
                     (setq origdoc (cdr usage)) (car usage)))
       (help-add-fundoc-usage (concat docstring origdoc) usage))))
 
