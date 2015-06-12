@@ -1983,7 +1983,7 @@ format is the same as above.  */)
 		  for (j = 0; j < ASIZE (val); j++)
 		    {
 		      elt = AREF (val, j);
-		      if (FONT_OBJECT_P (RFONT_DEF_OBJECT (elt)))
+		      if (!NILP (elt) && FONT_OBJECT_P (RFONT_DEF_OBJECT (elt)))
 			{
 			  Lisp_Object font_object = RFONT_DEF_OBJECT (elt);
 			  Lisp_Object slot, name;
