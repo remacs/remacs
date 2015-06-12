@@ -581,7 +581,7 @@ It is the default value of the variable `top-level'."
         (set (make-local-variable 'window-point-insertion-type) t)
         ;; Give *Messages* the same default-directory as *scratch*,
         ;; just to keep things predictable.
-	(setq default-directory dir)))
+	(setq default-directory (or dir (expand-file-name "~/")))))
     ;; `user-full-name' is now known; reset its standard-value here.
     (put 'user-full-name 'standard-value
 	 (list (default-value 'user-full-name)))
