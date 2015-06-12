@@ -590,12 +590,12 @@ It is the default value of the variable `top-level'."
       (and (stringp pwd)
 	   ;; Use FOO/., so that if FOO is a symlink, file-attributes
 	   ;; describes the directory linked to, not FOO itself.
-	   (or (equal (file-attributes
+	   (or (and default-directory
+		    (equal (file-attributes
 		       (concat (file-name-as-directory pwd) "."))
-		      (if default-directory
-			  (file-attributes
-			   (concat (file-name-as-directory default-directory)
-				   "."))))
+		      (file-attributes
+		       (concat (file-name-as-directory default-directory)
+			       "."))))
 	       (setq process-environment
 		     (delete (concat "PWD=" pwd)
 			     process-environment)))))
