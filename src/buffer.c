@@ -5286,7 +5286,8 @@ init_buffer (int initialized)
 
   if (!pwd)
     {
-      fprintf (stderr, "Error getting directory: %s", emacs_strerror (errno));
+      fprintf (stderr, "Error getting directory: %s\n",
+               emacs_strerror (errno));
       bset_directory (current_buffer, Qnil);
     }
   else
