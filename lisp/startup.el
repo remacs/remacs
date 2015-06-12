@@ -612,11 +612,7 @@ It is the default value of the variable `top-level'."
 			charset-map-path))))
     (if default-directory
 	(setq default-directory (abbreviate-file-name default-directory))
-      ;; FIXME this does not get shown.
-      ;; If after (command-line), it is shown, but if command-line
-      ;; changed the buffer (eg found a file), it applies to that
-      ;; buffer, not *scratch*.
-      (display-warning 'initialization "Error setting default-directory"))
+      (delay-warning 'initialization "Error setting default-directory"))
     (let ((old-face-font-rescale-alist face-font-rescale-alist))
       (unwind-protect
 	  (command-line)
