@@ -736,7 +736,7 @@
 	       (#x1F800 . #x1F8FF)))	;; Supplemental Arrows-C
       (set-fontset-font "fontset-default" symbol-subgroup "Symbola")))
   ;; Box Drawing and Block Elements
-  (when (find-font (font-spec "FreeMono"))
+  (when (find-font (font-spec :name "FreeMono"))
     (set-fontset-font "fontset-default" '(#x2500 . #x259F) "FreeMono"))
 
   ;; Append CJK fonts for characters other than han, kana, cjk-misc.
