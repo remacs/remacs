@@ -696,8 +696,6 @@
   ;; Special setup for various symbols and some rarely used characters
   ;; covered well by Symbola.
   (dolist (symbol-subgroup '((#x0250 . #x02AF)   ;; IPA Extensions
-                             (#x0370 . #x03FF)   ;; Greek and Coptic
-                             (#x0500 . #x052F)   ;; Cyrillic Supplement
                              (#x2000 . #x206F)   ;; General Punctuation
                              (#x2070 . #x209F)   ;; Superscripts and Subscripts
                              (#x20A0 . #x20CF)   ;; Currency Symbols
