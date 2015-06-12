@@ -1845,35 +1845,29 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
 
 #ifndef WINDOWSNT
   /* vfork, and prevent local vars from being clobbered by the vfork.  */
-  {
-    Lisp_Object volatile current_dir_volatile = current_dir;
-    Lisp_Object volatile lisp_pty_name_volatile = lisp_pty_name;
-    char **volatile new_argv_volatile = new_argv;
-    int volatile forkin_volatile = forkin;
-    int volatile forkout_volatile = forkout;
-    int volatile forkerr_volatile = forkerr;
-    struct Lisp_Process *p_volatile = p;
+  Lisp_Object volatile current_dir_volatile = current_dir;
+  Lisp_Object volatile lisp_pty_name_volatile = lisp_pty_name;
+  char **volatile new_argv_volatile = new_argv;
+  int volatile forkin_volatile = forkin;
+  int volatile forkout_volatile = forkout;
+  int volatile forkerr_volatile = forkerr;
+  struct Lisp_Process *p_volatile = p;
 
-    pid = vfork ();
+  pid = vfork ();
 
-    current_dir = current_dir_volatile;
-    lisp_pty_name = lisp_pty_name_volatile;
-    new_argv = new_argv_volatile;
-    forkin = forkin_volatile;
-    forkout = forkout_volatile;
-    forkerr = forkerr_volatile;
-    p = p_volatile;
+  current_dir = current_dir_volatile;
+  lisp_pty_name = lisp_pty_name_volatile;
+  new_argv = new_argv_volatile;
+  forkin = forkin_volatile;
+  forkout = forkout_volatile;
+  forkerr = forkerr_volatile;
+  p = p_volatile;
 
-    pty_flag = p->pty_flag;
-  }
+  pty_flag = p->pty_flag;
 
   if (pid == 0)
 #endif /* not WINDOWSNT */
     {
-      int xforkin = forkin;
-      int xforkout = forkout;
-      int xforkerr = forkerr;
-
       /* Make the pty be the controlling terminal of the process.  */
 #ifdef HAVE_PTYS
       /* First, disconnect its current controlling terminal.  */
@@ -1881,30 +1875,30 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
 	 process_set_signal to fail on SGI when using a pipe.  */
       setsid ();
       /* Make the pty's terminal the controlling terminal.  */
-      if (pty_flag && xforkin >= 0)
+      if (pty_flag && forkin >= 0)
 	{
 #ifdef TIOCSCTTY
 	  /* We ignore the return value
 	     because faith@cs.unc.edu says that is necessary on Linux.  */
-	  ioctl (xforkin, TIOCSCTTY, 0);
+	  ioctl (forkin, TIOCSCTTY, 0);
 #endif
 	}
 #if defined (LDISC1)
-      if (pty_flag && xforkin >= 0)
+      if (pty_flag && forkin >= 0)
 	{
 	  struct termios t;
-	  tcgetattr (xforkin, &t);
+	  tcgetattr (forkin, &t);
 	  t.c_lflag = LDISC1;
-	  if (tcsetattr (xforkin, TCSANOW, &t) < 0)
+	  if (tcsetattr (forkin, TCSANOW, &t) < 0)
 	    emacs_perror ("create_process/tcsetattr LDISC1");
 	}
 #else
 #if defined (NTTYDISC) && defined (TIOCSETD)
-      if (pty_flag && xforkin >= 0)
+      if (pty_flag && forkin >= 0)
 	{
 	  /* Use new line discipline.  */
 	  int ldisc = NTTYDISC;
-	  ioctl (xforkin, TIOCSETD, &ldisc);
+	  ioctl (forkin, TIOCSETD, &ldisc);
 	}
 #endif
 #endif
@@ -1937,11 +1931,11 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
 
 	  /* I wonder if emacs_close (emacs_open (SSDATA (lisp_pty_name), ...))
 	     would work?  */
-	  if (xforkin >= 0)
-	    emacs_close (xforkin);
-	  xforkout = xforkin = emacs_open (SSDATA (lisp_pty_name), O_RDWR, 0);
+	  if (forkin >= 0)
+	    emacs_close (forkin);
+	  forkout = forkin = emacs_open (SSDATA (lisp_pty_name), O_RDWR, 0);
 
-	  if (xforkin < 0)
+	  if (forkin < 0)
 	    {
 	      emacs_perror (SSDATA (lisp_pty_name));
 	      _exit (EXIT_CANCELED);
@@ -1971,14 +1965,14 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
       unblock_child_signal (&oldset);
 
       if (pty_flag)
-	child_setup_tty (xforkout);
+	child_setup_tty (forkout);
 
-      if (xforkerr < 0)
-	xforkerr = xforkout;
+      if (forkerr < 0)
+	forkerr = forkout;
 #ifdef WINDOWSNT
-      pid = child_setup (xforkin, xforkout, xforkerr, new_argv, 1, current_dir);
+      pid = child_setup (forkin, forkout, forkerr, new_argv, 1, current_dir);
 #else  /* not WINDOWSNT */
-      child_setup (xforkin, xforkout, xforkerr, new_argv, 1, current_dir);
+      child_setup (forkin, forkout, forkerr, new_argv, 1, current_dir);
 #endif /* not WINDOWSNT */
     }
 
