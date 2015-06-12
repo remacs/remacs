@@ -592,9 +592,10 @@ It is the default value of the variable `top-level'."
 	   ;; describes the directory linked to, not FOO itself.
 	   (or (equal (file-attributes
 		       (concat (file-name-as-directory pwd) "."))
-		      (file-attributes
-		       (concat (file-name-as-directory default-directory)
-			       ".")))
+		      (if default-directory
+			  (file-attributes
+			   (concat (file-name-as-directory default-directory)
+				   "."))))
 	       (setq process-environment
 		     (delete (concat "PWD=" pwd)
 			     process-environment)))))
@@ -609,12 +610,19 @@ It is the default value of the variable `top-level'."
 		(mapcar (lambda (dir)
 			  (decode-coding-string dir coding t))
 			charset-map-path))))
-    (setq default-directory (abbreviate-file-name default-directory))
+    (if default-directory
+	(setq default-directory (abbreviate-file-name default-directory))
+      ;; FIXME this does not get shown.
+      ;; If after (command-line), it is shown, but if command-line
+      ;; changed the buffer (eg found a file), it applies to that
+      ;; buffer, not *scratch*.
+      (display-warning 'initialization "Error setting default-directory"))
     (let ((old-face-font-rescale-alist face-font-rescale-alist))
       (unwind-protect
 	  (command-line)
 	;; Do this again, in case .emacs defined more abbreviations.
-	(setq default-directory (abbreviate-file-name default-directory))
+	(if default-directory
+	    (setq default-directory (abbreviate-file-name default-directory)))
 	;; Specify the file for recording all the auto save files of this session.
 	;; This is used by recover-session.
 	(or auto-save-list-file-name
@@ -2193,19 +2201,26 @@ A fancy display is used on graphic displays, normal otherwise."
                ;; to zero when `process-file-arg' returns.
                (process-file-arg
                 (lambda (name)
-                  (let* ((file (expand-file-name
+		  ;; If a relative filename was specified and
+		  ;; command-line-default-directory is nil,
+		  ;; silently drop that argument.
+		  ;; This can only happen if PWD is deleted.
+		  ;; The warning about setting default-directory will
+		  ;; clue you in.
+		  (when (and (or dir (file-name-absolute-p name))
+		    (let* ((file (expand-file-name
                                 (command-line-normalize-file-name name)
                                 dir))
-                         (buf (find-file-noselect file)))
-                    (setq displayable-buffers (cons buf displayable-buffers))
-                    (with-current-buffer buf
-                      (unless (zerop line)
-                        (goto-char (point-min))
-                        (forward-line (1- line)))
-                      (setq line 0)
-                      (unless (< column 1)
-                        (move-to-column (1- column)))
-                      (setq column 0))))))
+			   (buf (find-file-noselect file)))
+		      (setq displayable-buffers (cons buf displayable-buffers))
+		      (with-current-buffer buf
+			(unless (zerop line)
+			  (goto-char (point-min))
+			  (forward-line (1- line)))
+			(setq line 0)
+			(unless (< column 1)
+			  (move-to-column (1- column)))
+			(setq column 0))))))))
 
           ;; Add the long X options to longopts.
           (dolist (tem command-line-x-option-alist)

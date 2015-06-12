@@ -2572,7 +2572,7 @@ and `read-file-name-function'."
 (defun read-file-name-default (prompt &optional dir default-filename mustmatch initial predicate)
   "Default method for reading file names.
 See `read-file-name' for the meaning of the arguments."
-  (unless dir (setq dir default-directory))
+  (unless dir (setq dir (or default-directory "~/")))
   (unless (file-name-absolute-p dir) (setq dir (expand-file-name dir)))
   (unless default-filename
     (setq default-filename (if initial (expand-file-name initial dir)
