@@ -383,9 +383,13 @@ suitable file is found, return nil."
                             (help--docstring-quote
                              (format-kbd-macro real-def))))
                    (t "[Missing arglist.  Please make a bug report.]")))
+             ;; Insert "`X", not "(\` X)", when documenting `X.
+             (use1 (replace-regexp-in-string
+                    "\\`(\\\\=\\\\\\\\=` \\([^\n ]*\\))\\'"
+                    "\\\\=`\\1" use t))
              (high (if raw
-                       (cons use doc)
-                     (help-highlight-arguments (substitute-command-keys use)
+                       (cons use1 doc)
+                     (help-highlight-arguments (substitute-command-keys use1)
                                                (substitute-command-keys doc)))))
         (let ((fill-begin (point))
               (high-usage (car high))

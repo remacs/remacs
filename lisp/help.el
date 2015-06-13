@@ -1368,21 +1368,17 @@ DEF is the function whose usage we're looking for in DOCSTRING."
   ;; In cases where `function' has been fset to a subr we can't search for
   ;; function's name in the doc string so we use `fn' as the anonymous
   ;; function name instead.
-  (when (and docstring
-	     (string-match "\n\n(fn\\(\\( +\\([^\n ]+\\( .*\\)?\\)?\\)?)\\)\\'"
-			   docstring))
+  (when (and docstring (string-match "\n\n(fn\\(\\( .*\\)?)\\)\\'" docstring))
     (let ((doc (unless (zerop (match-beginning 0))
-                 (substring docstring 0 (match-beginning 0)))))
-      (cons (if (and (eq def '\`) (match-beginning 3) (not (match-beginning 4)))
-                (concat "\\=`" (match-string 3 docstring))
-              (let ((usage-tail (match-string 1 docstring)))
-                (format "(%s%s"
-                        ;; Replace `fn' with the actual function name.
-                        (if (symbolp def)
-                            (help--docstring-quote (format "%S" def))
-                          'anonymous)
-                        usage-tail)))
-            doc))))
+		 (substring docstring 0 (match-beginning 0))))
+	  (usage-tail (match-string 1 docstring)))
+      (cons (format "(%s%s"
+		    ;; Replace `fn' with the actual function name.
+		    (if (symbolp def)
+			(help--docstring-quote (format "%S" def))
+		      'anonymous)
+		    usage-tail)
+	    doc))))
 
 (defun help-add-fundoc-usage (docstring arglist)
   "Add the usage info to DOCSTRING.
@@ -1470,9 +1466,7 @@ the same names as used in the original source code, when possible."
 (define-obsolete-function-alias 'help-make-usage 'help--make-usage "25.1")
 
 (defun help--make-usage-docstring (fn arglist)
-  (help--docstring-quote
-   (let ((print-quoted (eq fn '\`)))
-     (format "%S" (help--make-usage fn arglist)))))
+  (help--docstring-quote (format "%S" (help--make-usage fn arglist))))
 
 
 (provide 'help)
