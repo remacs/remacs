@@ -2193,16 +2193,13 @@ A fancy display is used on graphic displays, normal otherwise."
                ;; to zero when `process-file-arg' returns.
                (process-file-arg
                 (lambda (name)
-		  ;; If a relative filename was specified and
-		  ;; command-line-default-directory is nil,
-		  ;; silently drop that argument.
 		  ;; This can only happen if PWD is deleted.
-		  ;; The warning about setting default-directory will
-		  ;; clue you in.
-		  (when (and (or dir (file-name-absolute-p name))
+		  (if (not (or dir (file-name-absolute-p name)))
+		      (message "Ignoring relative file name (%s) due to \
+nil default-directory" name)
 		    (let* ((file (expand-file-name
-                                (command-line-normalize-file-name name)
-                                dir))
+				  (command-line-normalize-file-name name)
+				  dir))
 			   (buf (find-file-noselect file)))
 		      (setq displayable-buffers (cons buf displayable-buffers))
 		      (with-current-buffer buf
@@ -2212,7 +2209,7 @@ A fancy display is used on graphic displays, normal otherwise."
 			(setq line 0)
 			(unless (< column 1)
 			  (move-to-column (1- column)))
-			(setq column 0))))))))
+			(setq column 0)))))))
 
           ;; Add the long X options to longopts.
           (dolist (tem command-line-x-option-alist)
