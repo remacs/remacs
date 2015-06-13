@@ -612,7 +612,7 @@ It is the default value of the variable `top-level'."
 			charset-map-path))))
     (if default-directory
 	(setq default-directory (abbreviate-file-name default-directory))
-      (delay-warning 'initialization "Error setting default-directory"))
+      (display-warning 'initialization "Error setting default-directory"))
     (let ((old-face-font-rescale-alist face-font-rescale-alist))
       (unwind-protect
 	  (command-line)
@@ -1167,25 +1167,18 @@ please check its value")
 		(funcall inner)
 		(setq init-file-had-error nil))
 	    (error
-	     ;; Postpone displaying the warning until all hooks
-	     ;; in `after-init-hook' like `desktop-read' will finalize
-	     ;; possible changes in the window configuration.
-	     (add-hook
-	      'after-init-hook
-	      (lambda ()
-		(display-warning
-		 'initialization
-		 (format "An error occurred while loading `%s':\n\n%s%s%s\n\n\
+	     (display-warning
+	      'initialization
+	      (format "An error occurred while loading `%s':\n\n%s%s%s\n\n\
 To ensure normal operation, you should investigate and remove the
 cause of the error in your initialization file.  Start Emacs with
 the `--debug-init' option to view a complete error backtrace."
-			 user-init-file
-			 (get (car error) 'error-message)
-			 (if (cdr error) ": " "")
-			 (mapconcat (lambda (s) (prin1-to-string s t))
-				    (cdr error) ", "))
-		 :warning))
-	      t)
+		      user-init-file
+		      (get (car error) 'error-message)
+		      (if (cdr error) ": " "")
+		      (mapconcat (lambda (s) (prin1-to-string s t))
+				 (cdr error) ", "))
+	      :warning)
 	     (setq init-file-had-error t))))
 
       (if (and deactivate-mark transient-mark-mode)
@@ -1268,7 +1261,10 @@ the `--debug-init' option to view a complete error backtrace."
        (package-initialize))
 
   (setq after-init-time (current-time))
-  (run-hooks 'after-init-hook)
+  ;; Display any accumulated warnings after all functions in
+  ;; `after-init-hook' like `desktop-read' have finalized possible
+  ;; changes in the window configuration.
+  (run-hooks 'after-init-hook 'delayed-warnings-hook)
 
   ;; If *scratch* exists and init file didn't change its mode, initialize it.
   (if (get-buffer "*scratch*")
