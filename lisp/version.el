@@ -100,7 +100,7 @@ or if we could not determine the revision.")
 (define-obsolete-function-alias 'emacs-bzr-get-version
                                 'emacs-repository-get-version "24.4")
 
-(defun emacs-repository-get-version (&optional dir external)
+(defun emacs-repository-get-version (&optional dir _unused)
   "Try to return as a string the repository revision of the Emacs sources.
 The format of the returned string is dependent on the VCS in use.
 Value is nil if the sources do not seem to be under version
@@ -108,21 +108,35 @@ control, or if we could not determine the revision.  Note that
 this reports on the current state of the sources, which may not
 correspond to the running Emacs.
 
-Optional argument DIR is a directory to use instead of
-`source-directory'.  Optional argument EXTERNAL is ignored and is
-retained for compatibility."
+Optional argument DIR is a directory to use instead of `source-directory'."
   (or dir (setq dir source-directory))
-  (cond ((file-directory-p (expand-file-name ".git" dir))
-	 (message "Waiting for git...")
-	 (with-temp-buffer
-	   (let ((default-directory (file-name-as-directory dir)))
-	     (and (eq 0
-		      (condition-case nil
-			  (call-process "git" nil '(t nil) nil "rev-parse"
-					"HEAD")
-			(error nil)))
-		  (not (zerop (buffer-size)))
-		  (replace-regexp-in-string "\n" "" (buffer-string))))))))
+  (let ((file (expand-file-name ".git/HEAD" dir)))
+    (or (if (file-readable-p file)
+	    (with-temp-buffer
+	      (insert-file-contents file)
+	      (cond ((looking-at "[0-9a-fA-F]\\{40\\}")
+		     (match-string 0))
+		    ((looking-at "ref: \\(.*\\)")
+		     (when (file-readable-p
+			    (setq file
+				  (expand-file-name (format ".git/%s"
+							    (match-string 1))
+						    dir)))
+		       (erase-buffer)
+		       (insert-file-contents file)
+		       (if (looking-at "[0-9a-fA-F]\\{40\\}")
+			   (match-string 0)))))))
+	(when (file-accessible-directory-p (expand-file-name ".git" dir))
+	  (message "Waiting for git...")
+	  (with-temp-buffer
+	    (let ((default-directory (file-name-as-directory dir)))
+	      (and (eq 0
+		       (condition-case nil
+			   (call-process "git" nil '(t nil) nil "rev-parse"
+					 "HEAD")
+			 (error nil)))
+		   (not (zerop (buffer-size)))
+		   (replace-regexp-in-string "\n" "" (buffer-string)))))))))
 
 ;; We put version info into the executable in the form that `ident' uses.
 (purecopy (concat "\n$Id: " (subst-char-in-string ?\n ?\s (emacs-version))
