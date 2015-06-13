@@ -733,9 +733,10 @@
              (#x1F700 . #x1F77F)	;; Alchemical Symbols
              (#x1F780 . #x1F7FF)	;; Geometric Shapes Extended
              (#x1F800 . #x1F8FF)))	;; Supplemental Arrows-C
-    (set-fontset-font "fontset-default" symbol-subgroup "Symbola"))
+    (set-fontset-font "fontset-default" symbol-subgroup "Symbola" nil 'prepend))
   ;; Box Drawing and Block Elements
-  (set-fontset-font "fontset-default" '(#x2500 . #x259F) "FreeMono")
+  (set-fontset-font "fontset-default" '(#x2500 . #x259F)
+                    "FreeMono" nil 'prepend)
 
   ;; Append CJK fonts for characters other than han, kana, cjk-misc.
   ;; Append fonts for scripts whose name is also a charset name.
