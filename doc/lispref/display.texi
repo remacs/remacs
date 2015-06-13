@@ -3419,6 +3419,15 @@ The charset registry and encoding of the font, such as
 @item :script
 The script that the font must support (a symbol).
 
+@item :lang
+The language that the font should support.  The value should be a
+symbol whose name is a two-letter ISO-639 language name.  On X, the
+value is matched against the ``Additional Style'' field of the XLFD
+name of a font, if it is non-empty.  On MS-Windows, fonts matching the
+spec are required to support codepages needed for the language.
+Currently, only a small set of CJK languages is supported with this
+property: @samp{ja}, @samp{ko}, and @samp{zh}.
+
 @item :otf
 @cindex OpenType font
 The font must be an OpenType font that supports these OpenType

@@ -3857,8 +3857,10 @@ listed in the variable `script-representative-chars'.
 
 `:lang'
 
-VALUE must be a symbol of two-letter ISO-639 language names,
-e.g. `ja'.
+VALUE must be a symbol whose name is a two-letter ISO-639 language
+name, e.g. `ja'.  The value is matched against the "Additional Style"
+field of the XLFD spec of a font, if it's non-empty, on X, and
+against the codepages supported by the font on w32.
 
 `:otf'
 

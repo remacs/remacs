@@ -703,7 +703,10 @@ The font width---normally @samp{normal}, @samp{condensed},
 other values.
 @item style
 An optional additional style name.  Usually it is empty---most XLFDs
-have two hyphens in a row at this point.
+have two hyphens in a row at this point.  The style name can also
+specify a two-letter ISO-639 language name, like @samp{ja} or
+@samp{ko}; some fonts that support CJK scripts have that spelled out
+in the style name part.
 @item pixels
 The font height, in pixels.
 @item height
