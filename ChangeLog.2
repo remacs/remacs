@@ -1,3 +1,366 @@
+2015-06-13  Glenn Morris  <rgm@gnu.org>
+
+	Tweaks for getting repository version; a bit more like it was for bzr.
+	* lisp/version.el (emacs-repository-version-git)
+	(emacs-repository--version-git-1): New functions,
+	split from emacs-repository-get-version.
+	(emacs-repository-get-version): Make the second argument meaningful.
+
+	* lisp/startup.el (command-line-1): Inform if skipping relative
+	file names due to deleted PWD.
+
+	* src/xsmfns.c (x_session_initialize): Avoid libSM crash
+	when starup directory is missing.  (Bug#18851)
+	(errno.h): Include it.
+
+2015-06-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Better fix for documenting `X as "`X"
+	Fix suggested by Stefan Monnier.
+	* lisp/help-fns.el (help-fns--signature):
+	Insert "`X", not "(\` X)", when documenting `X (Bug#20759).
+	* lisp/help.el (help-split-fundoc, help--make-usage-docstring):
+	Don't treat `X specially, as help-fns--signature now handles this.
+
+2015-06-13  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve the default fontset when Symbola is not installed
+	* lisp/international/fontset.el (setup-default-fontset): Only
+	prepend Symbola and FreeMono font specs for symbols and
+	punctuation; do not replace the default spec for them.  This
+	should have better results when Symbola/FreeMono are not
+	installed.  (Bug#20727)
+
+	Improve documentation of ':lang' in font specs
+	* src/font.c (Ffont_spec): Doc fix: elaborate on the values and
+	use of the ':lang' property of the font spec.
+	* doc/emacs/frames.texi (Fonts): Document the language names that
+	can be in the STYLE part of XLFD.
+	* doc/lispref/display.texi (Low-Level Font): Document the ':lang'
+	property.
+
+	* nt/README: Don't advertise the (obsolescent) w32 FAQ.
+
+	* nt/README.W32: Don't advertise the (obsolescent) w32 FAQ.
+
+	Revert last change in fontset.el
+	* lisp/international/fontset.el (setup-default-fontset): Revert
+	the change "Configure Symbola font only if installed", since font
+	search is evidently not yet set up when this function is called.
+	(Bug#20727)
+
+2015-06-12  Glenn Morris  <rgm@gnu.org>
+
+	Ensure early startup warnings are visible at the end.  (Bug#20792)
+	* lisp/emacs-lisp/warnings.el (display-warning):
+	If startup isn't complete, delay the warning.
+	* lisp/startup.el (normal-top-level, command-line):
+	Let display-warning automatically handle the needed delays.
+	Run delayed-warnings-hook.
+
+	* lisp/version.el (emacs-repository-get-version):
+	Avoid calling external executable if possible.  (Bug#20799)
+
+2015-06-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Document `X as "`X", not as "(` X)"
+	* lisp/help.el (help-split-fundoc, help--make-usage-docstring):
+	Document (backquote FOO) as "`FOO", not as "(` FOO)" (Bug#20759).
+
+	* src/print.c (print_object): Minor simplification.
+
+2015-06-12  Glenn Morris  <rgm@gnu.org>
+
+	* src/buffer.c (init_buffer): Add final newline to message.
+
+2015-06-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Configure Symbola font only if installed
+	* lisp/international/fontset.el (setup-default-fontset):
+	Don't specify the Symbola font if it's not installed.
+	Likewise for FreeMono.  (Bug#20727)
+
+2015-06-12  Eli Zaretskii  <eliz@gnu.org>
+
+	Configure Symbola font only for symbols and punctuation
+	* lisp/international/fontset.el (setup-default-fontset): Leave
+	only symbols and punctuation in the fontset setup for Symbola
+	font; remove "Greek and Coptic" and "Cyrillic Supplement".
+	(Bug#20798)
+
+2015-06-12  Andreas Schwab  <schwab@linux-m68k.org>
+
+	Fix crash in fontset-info
+	* src/fontset.c (Ffontset_info): Check that the RFONT-DEF elt is
+	non-nil.
+
+2015-06-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port to Solaris 10 sparc + Sun C 5.13
+	* configure.ac (SETUP_SLAVE_PTY) [sol2* | unixware]:
+	Adjust to process.c change.
+	* src/process.c (create_process): Declare volatile variables at
+	top level of this function, so that they're less likely to be
+	reused later in the function in the code executed by the vforked
+	child.  Do not declare locals used only in the vforked child, as
+	they might share memory with locals still live in the parent.
+	Instead, use the same variables in the child as in the parent.
+	This works around a subtle bug that causes a garbage collector
+	crash when Emacs is built with Sun C 5.13 sparc on Solaris 10.
+
+2015-06-12  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/startup.el (normal-top-level): Don't let *Messages* get
+	a nil default-directory.
+
+2015-06-11  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/startup.el (normal-top-level): Use delay-warning.  (Bug#20792)
+
+	Some progress towards starting with PWD deleted.  (Bug#18851)
+	* src/buffer.c (init_buffer): Handle get_current_dir_name failures.
+	* lisp/startup.el (normal-top-level, command-line-1):
+	* lisp/minibuffer.el (read-file-name-default):
+	Handle default-directory being nil.
+
+2015-06-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix "not a tty" bug on Solaris 10
+	* configure.ac (PTY_OPEN): Define to plain 'open'
+	on SVR4-derived hosts, so that the O_CLOEXEC flag isn't set.
+	* src/process.c (allocate_pty): Set the O_CLOEXEC flag after
+	calling PTY_TTY_NAME_SPRINTF, for the benefit of SVR4-derived
+	hosts that call grantpt which does its work via a setuid subcommand
+	(Bug#19191, Bug#19927, Bug#20555, Bug#20686).
+	Also, set O_CLOEXEC even if PTY_OPEN is not defined, since it
+	seems relevant in that case too.
+
+2015-06-11  Juri Linkov  <juri@linkov.net>
+
+	* lisp/bindings.el (debug-ignored-errors): Add mark-inactive.
+	* lisp/simple.el (kill-region): Replace 'error' with 'user-error'.
+	(Bug#20785)
+
+2015-06-11  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/international/characters.el (char-script-table): Fix typo.
+
+2015-06-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix quoting of help for functions with odd names
+	While investigating Bug#20759, I discovered other quoting problems:
+	C-h f mishandled characters like backslash and quote in function names.
+	This fix changes the behavior so that 'C-h f pcase RET' now
+	generates "... (\` QPAT) ..." instead of "... (` QPAT) ...",
+	because '(format "%S" '(` FOO))' returns "(\\` FOO)".  A comment
+	in src/lread.c's read1 function says that the backslash will be
+	needed starting in Emacs 25, which implies that 'format' is
+	correct and the old pcase documention was wrong to omit the backslash.
+	* lisp/emacs-lisp/nadvice.el (advice--make-docstring):
+	* lisp/help-fns.el (help-fns--signature):
+	* lisp/help.el (help-add-fundoc-usage):
+	* lisp/progmodes/elisp-mode.el (elisp-function-argstring):
+	Use help--make-usage-docstring rather than formatting
+	help-make-usage.
+	* lisp/emacs-lisp/pcase.el (pcase--make-docstring):
+	Return raw docstring.
+	* lisp/help-fns.el (help-fns--signature): New arg RAW, to return
+	raw docstring.  Take more care to distinguish raw from cooked dstrings.
+	(describe-function-1): Let help-fns--signature substitute
+	command keys.
+	* lisp/help.el (help--docstring-quote): New function.
+	(help-split-fundoc): Use it, to quote funny characters more
+	systematically.
+	(help--make-usage): Rename from help-make-usage, since this
+	should be private.  Leave an obsolete alias for the old name.
+	(help--make-usage-docstring): New function.
+	* test/automated/help-fns.el (help-fns-test-funny-names): New test.
+
+2015-06-11  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/thingatpt.el (in-string-p): Revert last change,
+	since in-string-p is not used in thingatpt.el but only from outside.
+	Also, use lexical binding.
+
+2015-06-11  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/let-alist.el (let-alist--deep-dot-search): Fix cons
+	* test/automated/let-alist.el (let-alist-cons): Test it.
+
+2015-06-11  Nicolas Richard  <theonewiththeevillook@yahoo.fr>
+
+	* src/syntax.c (Fbackward_prefix_chars): Reword docstring
+
+2015-06-10  Glenn Morris  <rgm@gnu.org>
+
+	* build-aux/gitlog-to-emacslog: Also ignore pointless merge commits.
+
+	Improve generated ChangeLog for gitmerge.el commits.  (Bug#20717)
+	* build-aux/gitlog-to-changelog: Handle gitmerge.el skipped commits.
+	* admin/gitmerge.el (gitmerge-commit-message):
+	Exclude "skipped" messages from ChangeLog once again.
+
+	Slight namespace cleanup for thingatpt.el.
+	* lisp/thingatpt.el (thing-at-point--in-string-p)
+	(thing-at-point--end-of-sexp, thing-at-point--beginning-of-sexp)
+	(thing-at-point--read-from-whole-string): Rename from
+	old versions without "thing-at-point--" prefix.
+	Keep old versions as obsolete aliases.  Update all uses.
+
+	* lisp/emacs-lisp/checkdoc.el (checkdoc-get-keywords):
+	Move requiring of finder from here...
+	(checkdoc-package-keywords): ... to here.
+
+	Use 'user-error' in a few calendar files.
+	* lisp/calendar/appt.el (appt-add):
+	* lisp/calendar/calendar.el (calendar-absolute-from-gregorian)
+	(calendar-generate):
+	* lisp/calendar/diary-lib.el (diary-mail-entries, diary-cyclic):
+	Replace 'error' with 'user-error'.
+
+	* lisp/progmodes/f90.el (f90-backslash-not-special): Use user-error.
+
+	* lisp/files-x.el (add-file-local-variable):
+	Special-case 'lexical-binding'.  (Bug#20641)
+
+	* lisp/progmodes/executable.el (executable-self-display): Obsolete.
+	No longer autoload.
+	* doc/misc/autotype.texi (Executables):
+	Undocument executable-self-display.
+
+	* lisp/progmodes/executable.el (executable-self-display):
+	Use non-obsolete tail syntax.  (Bug#20779)
+	(executable-self-display): Doc update.
+
+2015-06-10  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/emacs-lisp/checkdoc.el: Use lexical-binding
+	(finder-known-keywords): Silence byte-compiler.
+
+2015-06-09  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/simple.el (eval-expression): Macroexpand before evaluating (bug#20730)
+
+	* lisp/progmodes/sh-script.el: Better handle nested quotes
+	(sh-here-doc-open-re): Don't mis-match the <<< operator (bug#20683).
+	(sh-font-lock-quoted-subshell): Make sure double quotes within single
+	quotes don't mistakenly end prematurely the surrounding string.
+
+	* lisp/progmodes/elisp-mode.el: Require cl-lib for cl-defstruct.
+
+2015-06-09  Glenn Morris  <rgm@gnu.org>
+
+	* test/automated/Makefile.in (ELFILES): Sort.
+
+	* Makefile.in (SUBDIR_MAKEFILES):
+	* lwlib/Makefile.in (WARN_CFLAGS):
+	Use built-in Make functions rather than echo+sed.
+
+2015-06-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Update char-script-table
+	* lisp/international/characters.el (char-script-table): Update
+	from Unicode 8.0 Draft.
+
+	Improve font selection for punctuation and other symbols
+	* src/fontset.c (face_for_char): If the character's script is
+	'symbol', and the font used for ASCII face has a glyph for it, use
+	the font for the ASCII face instead of searching the fontsets.
+	This comes instead of NS-specific code that used the current
+	face's font instead, which is now disabled due to undesirable
+	consequences.  (Bug#20727)
+
+2015-06-08  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Skip past `#' to find BEG
+	* lisp/progmodes/elisp-mode.el (elisp-completion-at-point): Skip
+	past `#' to find BEG (bug#20771).
+	* test/automated/elisp-mode-tests.el
+	(elisp-completes-functions-after-hash-quote): New test.
+
+2015-06-08  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix compilation warning/error in --without-x builds
+	* src/xdisp.c (append_space_for_newline): Condition GUI-specific
+	code on HAVE_WINDOW_SYSTEM.
+
+	Improve the default fontset wrt symbols
+	* lisp/international/fontset.el (setup-default-fontset): Better
+	setup of fontset-default for symbols: use Symbola and FreeMono.
+	(Bug#20727)
+
+2015-06-08  Oleh Krehel  <ohwoeowho@gmail.com>
+
+	Add new command checkdoc-package-keywords
+	* lisp/emacs-lisp/checkdoc.el (checkdoc-package-keywords-flag): New
+	  defcustom.
+	(checkdoc-list-of-strings-p): Add doc.
+	(checkdoc-current-buffer): When `checkdoc-package-keywords-flag' is
+	non-nil, call `checkdoc-package-keywords'.
+	(checkdoc-get-keywords): New defun.
+	(checkdoc-package-keywords): New command. Warns if the current file
+	has package.el-style keywords that aren't in `finder-known-keywords'.
+	* etc/NEWS: Add entry.
+
+2015-06-08  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid crashes when key-binding is called from a timer
+	* src/keymap.c (Fkey_binding): Don't segfault if called with an
+	empty vector as KEY.  (Bug#20705)
+
+	Fix a thinko in arc-mode.el
+	* lisp/arc-mode.el (archive-zip-summarize): Fix last change in the
+	non-Zip64 case.  (Bug#20769)
+
+2015-06-08  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/package.el (package-delete): Make interactive
+
+2015-06-08  Oleh Krehel  <ohwoeowho@gmail.com>
+
+	checkdoc.el (checkdoc-file): New function
+	* lisp/emacs-lisp/checkdoc.el (checkdoc-error): When
+	  `checkdoc-diagnostic-buffer' is set to "*warn*", print the warning
+	  to the standard output.
+	(bug#20754)
+
+2015-06-07  Glenn Morris  <rgm@gnu.org>
+
+	* admin/update_autogen (changelog_files): Remove gitlog-to-emacslog.
+
+	* src/font.c (syms_of_font) <font-log>: Doc fix.
+
+	Remove the obsolete leading "*" from some C doc strings.
+	* src/coding.c (syms_of_coding):
+	* src/font.c (syms_of_font): Remove leading "*" from docs.
+	* lisp/cus-start.el (enable-character-translation): Add it.
+
+2015-06-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Move gen_origin from program to data
+	That way, 'make change-history' needs to change only ChangeLog.2,
+	instead of having to change two files.
+	* ChangeLog.2: Add commit info for range that this file covers.
+	* Makefile.in (new_commit_regexp): New macro.
+	(change-history-nocommit): Simplify, by putting what used to be
+	the gen_origin value into the data (ChangeLog.2) rather than
+	into the program (gitlog-to-emacslog).
+	* build-aux/gitlog-to-emacslog (gen_origin): Calculate from
+	the input file (e.g., ChangeLog.2) rather than by having a
+	constant in the program.  Substitute it into the output.
+
+2015-06-07  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Escape any quotes in the function name
+	* lisp/help-fns.el (help-fns--signature): Quote any quotes in the
+	function name (bug#20759).
+
+2015-06-07  Eli Zaretskii  <eliz@gnu.org>
+
+	Adapt 'struct timespec' to next release of MinGW runtime
+	* nt/inc/ms-w32.h (struct timespec): Don't declare if
+	__struct_timespec_defined is defined.
+
 2015-06-06  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Merge from gnulib
@@ -5570,7 +5933,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit 325bf192ae281046834884b12705d6c522871b24 (inclusive).
+commit 86076e65524933f7d1c9812cec292fdc7d5dc60c (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
