@@ -693,23 +693,44 @@
      (cons (car math-subgroup) (nth 1 math-subgroup))
      (font-spec :registry "iso10646-1" :script (nth 2 math-subgroup))))
 
-  ;; Special setup for various symbols and some rarely used characters
-  ;; covered well by Symbola.
+  ;; Special setup for various symbols and punctuation characters
+  ;; covered well by Symbola, excluding those covered well by popular
+  ;; Unicode fonts.  We exclude the latter because users don't like us
+  ;; invading on their font setups where they have good support from
+  ;; other fonts.
   (dolist (symbol-subgroup
-           '((#x0250 . #x02AF)	;; IPA Extensions
-             (#x2000 . #x206F)	;; General Punctuation
+           '((#x2000 . #x2012)	;; General Punctuation
+             (#x2015 . #x2017)
+             #x201F
+             (#x2023 . #x202F)
+             (#x2031 . #x2038)
+             (#x203B . #x206F)
              (#x2070 . #x209F)	;; Superscripts and Subscripts
-             (#x20A0 . #x20CF)	;; Currency Symbols
-             (#x2100 . #x214F)	;; Letterlike Symbols
-             (#x2150 . #x218F)	;; Number Forms
-             (#x2190 . #x21FF)	;; Arrows
-             (#x2200 . #x22FF)	;; Mathematical Operators
-             (#x2300 . #x23FF)	;; Miscellaneous Technical
+             (#x20A0 . #x20AB)	;; Currency Symbols
+             (#x20AD . #x20CF)
+             (#x2100 . #x2121)	;; Letterlike Symbols
+             (#x2123 . #x214F)
+             (#x2150 . #x215A)	;; Number Forms
+             (#x215F . #x218F)
+             (#x2194 . #x21FF)	;; Arrows
+             (#x2200 . #x2211)	;; Mathematical Operators
+             (#x2213 . #x2247)
+             (#x2249 . #x225F)
+             (#x2261 . #x2263)
+             (#x2266 . #x22FF)
+             (#x2300 . #x2301)	;; Miscellaneous Technical
+             (#x2303 . #x230F)
+             (#x2311 . #x231F)
+             (#x2322 . #x23FF)
              (#x2400 . #x243F)	;; Control Pictures
              (#x2440 . #x245F)	;; Optical Char Recognition
              (#x2460 . #x24FF)	;; Enclosed Alphanumerics
              (#x25A0 . #x25FF)	;; Geometric Shapes
-             (#x2600 . #x26FF)	;; Miscellaneous Symbols
+             (#x2600 . #x265F)	;; Miscellaneous Symbols
+             (#x2661 . #x2662)
+             #x2664
+             (#x2667 . #x2669)
+             (#x266C . #x26FF)
              (#x2700 . #x27bF)	;; Dingbats
              (#x27C0 . #x27EF)	;; Misc Mathematical Symbols-A
              (#x27F0 . #x27FF)	;; Supplemental Arrows-A
@@ -737,6 +758,31 @@
   ;; Box Drawing and Block Elements
   (set-fontset-font "fontset-default" '(#x2500 . #x259F)
                     "FreeMono" nil 'prepend)
+
+  ;; Since standard-fontset-spec on X uses fixed-medium font, which
+  ;; gets mapped to a iso8859-1 variant, we would like to prefer its
+  ;; iso10646-1 variant for symbols, where the coverage is known to be
+  ;; good.
+  (dolist (symbol-subgroup
+			 '((#x2000 . #x206F)   ;; General Punctuation
+			   (#x2070 . #x209F)   ;; Superscripts and Subscripts
+			   (#x20A0 . #x20CF)   ;; Currency Symbols
+			   (#x2150 . #x218F)   ;; Number Forms
+			   (#x2190 . #x21FF)   ;; Arrows
+			   (#x2200 . #x22FF)   ;; Mathematical Operators
+			   (#x2300 . #x23FF)   ;; Miscellaneous Technical
+			   (#x2400 . #x243F)   ;; Control Pictures
+			   (#x2440 . #x245F)   ;; Optical Char Recognition
+			   (#x2460 . #x24FF)   ;; Enclosed Alphanumerics
+                           (#x2500 . #x257F)   ;; Box Drawing
+                           (#x2580 . #x259F)   ;; Block Elements
+			   (#x25A0 . #x25FF)   ;; Geometric Shapes
+			   (#x2600 . #x2689)   ;; Miscellaneous Symbols
+			   (#x2700 . #x27bF)   ;; Dingbats
+			   (#x27F5 . #x27FF))) ;; Supplemental Arrows-A
+    (set-fontset-font "fontset-default" symbol-subgroup
+                      "-*-fixed-medium-*-*-*-*-*-*-*-*-*-iso10646-1"
+                      nil 'prepend))
 
   ;; Append CJK fonts for characters other than han, kana, cjk-misc.
   ;; Append fonts for scripts whose name is also a charset name.
