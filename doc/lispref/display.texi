@@ -3284,7 +3284,7 @@ field.
 
 @defun set-fontset-font name character font-spec &optional frame add
 This function modifies the existing fontset @var{name} to use the font
-matching with @var{font-spec} for the character @var{character}.
+matching with @var{font-spec} for the specified @var{character}.
 
 If @var{name} is @code{nil}, this function modifies the fontset of the
 selected frame or that of @var{frame} if @var{frame} is not
@@ -3293,10 +3293,10 @@ selected frame or that of @var{frame} if @var{frame} is not
 If @var{name} is @code{t}, this function modifies the default
 fontset, whose short name is @samp{fontset-default}.
 
-@var{character} may be a cons; @code{(@var{from} . @var{to})}, where
-@var{from} and @var{to} are character codepoints.  In that case, use
-@var{font-spec} for all characters in the range @var{from} and @var{to}
-(inclusive).
+In addition to specifying a single codepoint, @var{character} may be a
+cons @code{(@var{from} . @var{to})}, where @var{from} and @var{to} are
+character codepoints.  In that case, use @var{font-spec} for all the
+characters in the range @var{from} and @var{to} (inclusive).
 
 @var{character} may be a charset.  In that case, use
 @var{font-spec} for all character in the charsets.

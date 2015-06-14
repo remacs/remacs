@@ -1411,9 +1411,11 @@ Modify fontset NAME to use FONT-SPEC for TARGET characters.
 NAME is a fontset name string, nil for the fontset of FRAME, or t for
 the default fontset.
 
-TARGET may be a cons; (FROM . TO), where FROM and TO are characters.
-In that case, use FONT-SPEC for all characters in the range FROM and
-TO (inclusive).
+TARGET may be a single character to use FONT-SPEC for.
+
+Target may be a cons (FROM . TO), where FROM and TO are characters.
+In that case, use FONT-SPEC for all characters in the range FROM
+and TO (inclusive).
 
 TARGET may be a script name symbol.  In that case, use FONT-SPEC for
 all characters that belong to the script.
