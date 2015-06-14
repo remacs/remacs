@@ -106,10 +106,11 @@ or if we could not determine the revision.")
   (with-temp-buffer
     (let ((default-directory (file-name-as-directory dir)))
       (and (eq 0
-	       (ignore-errors
+	       (with-demoted-errors "Error running git rev-parse: %S"
 		 (call-process "git" nil '(t nil) nil "rev-parse" "HEAD")))
-	   (not (zerop (buffer-size)))
-	   (replace-regexp-in-string "\n" "" (buffer-string))))))
+	   (progn (goto-char (point-min))
+		  (looking-at "[0-9a-fA-F]\\{40\\}"))
+	   (match-string 0)))))
 
 (defun emacs-repository--version-git-1 (file)
   "Internal subroutine of `emacs-repository-get-version'."
