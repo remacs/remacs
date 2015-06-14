@@ -347,7 +347,7 @@ changing `tabulated-list-sort-key'."
              (setq entry-id nil
                    saved-pt (point)))
         ;; If the buffer this empty, simply print each elt.
-        (if (eobp)
+        (if (or (not update) (eobp))
             (apply tabulated-list-printer elt)
           (while (let ((local-id (tabulated-list-get-id)))
                    ;; If we find id, then nothing to update.
