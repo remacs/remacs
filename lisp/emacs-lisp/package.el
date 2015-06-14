@@ -1119,9 +1119,11 @@ buffer is killed afterwards.  Return the last value in BODY."
   "Run BODY in a buffer containing the contents of FILE at LOCATION.
 If ASYNC is non-nil, and if it is possible, run BODY
 asynchronously.  If an error is encountered and ASYNC is a
-function, call it with no arguments (instead of executing BODY),
-otherwise propagate the error.  For description of the other
-arguments see `package--with-work-buffer'."
+function, call it with no arguments (instead of executing BODY).
+The error is propagated either way.
+
+For a description of the other arguments see
+`package--with-work-buffer'."
   (declare (indent 3) (debug t))
   (macroexp-let2* macroexp-copyable-p
       ((async-1 async)
@@ -1130,21 +1132,26 @@ arguments see `package--with-work-buffer'."
     `(if (or (not ,async-1)
              (not (string-match-p "\\`https?:" ,location-1)))
          (package--with-work-buffer ,location-1 ,file-1 ,@body)
-       (url-retrieve (concat ,location-1 ,file-1)
-                     (lambda (status)
-                       (if (eq (car status) :error)
-                           (if (functionp ,async-1)
-                               (funcall ,async-1)
-                             (signal (cdar status) (cddr status)))
-                         (goto-char (point-min))
-                         (unless (search-forward "\n\n" nil 'noerror)
-                           (error "Invalid url response in buffer %s"
-                             (current-buffer)))
-                         (delete-region (point-min) (point))
-                         ,@body)
-                       (kill-buffer (current-buffer)))
-                     nil
-                     'silent))))
+       ;; This `condition-case' is to catch connection errors.
+       (condition-case error-signal
+           (url-retrieve (concat ,location-1 ,file-1)
+                         (lambda (status)
+                           (if (eq (car status) :error)
+                               (progn (if (functionp ,async-1)
+                                          (funcall ,async-1))
+                                      (signal (cdar status) (cddr status)))
+                             (goto-char (point-min))
+                             (unless (search-forward "\n\n" nil 'noerror)
+                               (error "Invalid url response in buffer %s"
+                                 (current-buffer)))
+                             (delete-region (point-min) (point))
+                             ,@body)
+                           (kill-buffer (current-buffer)))
+                         nil
+                         'silent)
+         (error (when (functionp ,async-1)
+                  (funcall ,async-1))
+           (signal (car error-signal) (cdr error-signal)))))))
 
 (defun package--check-signature-content (content string &optional sig-file)
   "Check signature CONTENT against STRING.
