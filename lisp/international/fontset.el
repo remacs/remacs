@@ -706,8 +706,7 @@
              (#x2031 . #x2038)
              (#x203B . #x206F)
              (#x2070 . #x209F)	;; Superscripts and Subscripts
-             (#x20A0 . #x20AB)	;; Currency Symbols
-             (#x20AD . #x20CF)
+             (#x20B6 . #x20CF)	;; Currency Symbols
              (#x2100 . #x2121)	;; Letterlike Symbols
              (#x2123 . #x214F)
              (#x2150 . #x215A)	;; Number Forms
