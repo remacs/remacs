@@ -1009,7 +1009,7 @@ REGEXP is a regular expression matching nodes or references.  Its first
 group should match `Node:' or `Ref:'.
 CASE-FOLD t means search for a case-insensitive match.
 If a match was found, value is a list (FOUND-ANCHOR POS MODE), where
-FOUND-ANCHOR is non-nil if a `Ref:' was matched, POS is the position
+FOUND-ANCHOR is non-nil if a `Ref:' was matched, POS is the file position
 where the match was found, and MODE is `major-mode' of the buffer in
 which the match was found."
   (let ((case-fold-search case-fold))
@@ -1020,7 +1020,7 @@ which the match was found."
       (beginning-of-line)
       (when (re-search-forward regexp nil t)
 	(list (string-equal "Ref:" (match-string 1))
-	      (+ (point-min) (read (current-buffer)))
+              (read (current-buffer))
 	      major-mode)))))
 
 (defun Info-find-in-tag-table (marker regexp &optional strict-case)
@@ -1029,7 +1029,7 @@ MARKER specifies the buffer and position to start searching at.
 REGEXP is a regular expression matching nodes or references.  Its first
 group should match `Node:' or `Ref:'.
 If a match was found, value is a list (FOUND-ANCHOR POS MODE), where
-FOUND-ANCHOR is non-nil if a `Ref:' was matched, POS is the position
+FOUND-ANCHOR is non-nil if a `Ref:' was matched, POS is the file position
 where the match was found, and MODE is `major-mode' of the buffer in
 which the match was found.
 This function tries to find a case-sensitive match first, then a
@@ -1187,15 +1187,18 @@ is non-nil)."
 
 		  (when found
 		    ;; FOUND is (ANCHOR POS MODE).
-		    (setq guesspos (nth 1 found))
+		    (let ((filepos (nth 1 found))) ;File position in bytes.
 
-		    ;; If this is an indirect file, determine which
-		    ;; file really holds this node and read it in.
-		    (unless (eq (nth 2 found) 'Info-mode)
-		      ;; Note that the current buffer must be the
-		      ;; *info* buffer on entry to
-		      ;; Info-read-subfile.  Thus the hackery above.
-		      (setq guesspos (Info-read-subfile guesspos)))
+                      ;; If this is an indirect file, determine which
+                      ;; file really holds this node and read it in.
+                      (unless (eq (nth 2 found) 'Info-mode)
+                        ;; Note that the current buffer must be the
+                        ;; *info* buffer on entry to
+                        ;; Info-read-subfile.  Thus the hackery above.
+                        (setq filepos (Info-read-subfile filepos)))
+
+                      (setq guesspos
+                            (filepos-to-bufferpos filepos 'approximate)))
 
 		    ;; Handle anchor
 		    (when (nth 0 found)
@@ -1203,8 +1206,7 @@ is non-nil)."
 		      (throw 'foo t)))))
 
 	      ;; Else we may have a node, which we search for:
-	      (goto-char (max (point-min)
-			      (- (byte-to-position guesspos) 1000)))
+	      (goto-char (max (point-min) (- guesspos 1000)))
 
 	      ;; Now search from our advised position (or from beg of
 	      ;; buffer) to find the actual node.  First, check
@@ -1506,7 +1508,7 @@ is non-nil)."
 ;; Note that on entry to this function the current-buffer must be the
 ;; *info* buffer; not the info tags buffer.
 (defun Info-read-subfile (nodepos)
-  ;; NODEPOS is either a position (in the Info file as a whole,
+  ;; NODEPOS is either a position in bytes (in the Info file as a whole,
   ;; not relative to a subfile) or the name of a subfile.
   (let (lastfilepos
 	lastfilename)
@@ -1523,7 +1525,7 @@ is non-nil)."
 			thisfilepos thisfilename)
 		    (search-forward ": ")
 		    (setq thisfilename  (buffer-substring beg (- (point) 2)))
-		    (setq thisfilepos (+ (point-min) (read (current-buffer))))
+		    (setq thisfilepos (read (current-buffer)))
 		    ;; read in version 19 stops at the end of number.
 		    ;; Advance to the next line.
 		    (forward-line 1)
@@ -1554,7 +1556,7 @@ is non-nil)."
     ;; Don't add the length of the skipped summary segment to
     ;; the value returned to `Info-find-node-2'.  (Bug#14125)
     (if (numberp nodepos)
-	(+ (- nodepos lastfilepos) (point-min)))))
+	(- nodepos lastfilepos))))
 
 (defun Info-unescape-quotes (value)
   "Unescape double quotes and backslashes in VALUE."
@@ -2013,10 +2015,9 @@ If DIRECTION is `backward', search in the reverse direction."
 		        (re-search-backward "\\(^.*\\): [0-9]+$")
 		      (re-search-forward "\\(^.*\\): [0-9]+$"))
 		    (goto-char (+ (match-end 1) 2))
-		    (setq list (cons (cons (+ (point-min)
-					      (read (current-buffer)))
-					   (match-string-no-properties 1))
-				     list))
+		    (push (cons (read (current-buffer))
+                                (match-string-no-properties 1))
+                          list)
 		    (goto-char (if backward
                                    (1- (match-beginning 0))
                                  (1+ (match-end 0)))))

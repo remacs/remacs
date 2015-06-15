@@ -1,4 +1,4 @@
-;;; mule-util.el --- utility functions for multilingual environment (mule)
+;;; mule-util.el --- utility functions for multilingual environment (mule)  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1997-1998, 2000-2015 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
@@ -30,8 +30,7 @@
 
 ;;; Code:
 
-;;; String manipulations while paying attention to multibyte
-;;; characters.
+;;; String manipulations while paying attention to multibyte characters.
 
 ;;;###autoload
 (defsubst string-to-list (string)
@@ -49,7 +48,6 @@
   (if (integerp obj)
       (aset string idx obj)
     (let ((len1 (length obj))
-	  (len2 (length string))
 	  (i 0))
       (while (< i len1)
 	(aset string (+ idx i) (aref obj i))
@@ -90,7 +88,6 @@ defaults to `truncate-string-ellipsis'."
     (setq ellipsis truncate-string-ellipsis))
   (let ((str-len (length str))
 	(str-width (string-width str))
-	(ellipsis-len (if ellipsis (length ellipsis) 0))
 	(ellipsis-width (if ellipsis (string-width ellipsis) 0))
 	(idx 0)
 	(column 0)
@@ -129,8 +126,8 @@ defaults to `truncate-string-ellipsis'."
 	      tail-padding ellipsis))))
 
 
-;;; Nested alist handler.  Nested alist is alist whose elements are
-;;; also nested alist.
+;;; Nested alist handler.
+;; Nested alist is alist whose elements are also nested alist.
 
 ;;;###autoload
 (defsubst nested-alist-p (obj)
@@ -313,6 +310,42 @@ per-character basis, this may not be accurate."
 				  (throw 'tag3 charset)))
 			  charset-list)
 		    nil)))))))))
+
+;;;###autoload
+(defun filepos-to-bufferpos (byte &optional quality coding-system)
+  "Try to return the buffer position corresponding to a particular file position.
+The file position is given as a (0-based) BYTE count.
+The function presumes the file is encoded with CODING-SYSTEM, which defaults
+to `buffer-file-coding-system'.
+QUALITY can be:
+  `approximate', in which case we may cut some corners to avoid
+    excessive work.
+  nil, in which case we may return nil rather than an approximation."
+  ;; `exact', in which case we may end up re-(en|de)coding a large
+  ;;   part of the file.
+  (unless coding-system (setq coding-system buffer-file-coding-system))
+  (let ((eol (coding-system-eol-type coding-system))
+        (type (coding-system-type coding-system))
+        (pm (save-restriction (widen) (point-min))))
+    (pcase type
+      (`utf-8
+       (when (coding-system-get coding-system :bom)
+         (setq byte (max 0 (- byte 3))))
+       (let (pos lines (eol-offset 0))
+         (while
+             (progn
+               (setq pos (byte-to-position (+ pm byte (- eol-offset))))
+               (setq lines (1- (line-number-at-pos pos)))
+               (not (= lines eol-offset)))
+           (setq eol-offset (+ eol-offset lines)))
+         pos))
+      ;; FIXME: What if it's a 2-byte charset?  Are there such beasts?
+      (`charset (+ pm byte))
+      (_
+       (pcase quality
+         (`approximate (+ pm (byte-to-position byte)))
+         ;; (`exact ...)
+         )))))
 
 (provide 'mule-util)
 
