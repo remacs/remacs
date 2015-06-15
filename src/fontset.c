@@ -66,16 +66,15 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    A fontset object is implemented by a char-table whose default value
    and parent are always nil.
 
-   An element of a base fontset is a vector of FONT-DEFs which itself
-   is a vector [ FONT-SPEC ENCODING REPERTORY ].
+   An element of a base fontset is a vector of FONT-DEFs which themselves
+   are vectors of the form [ FONT-SPEC ENCODING REPERTORY ].
 
    An element of a realized fontset is nil, t, 0, or a vector of this
    form:
 
-	[ CHARSET-ORDERED-LIST-TICK PREFERRED-RFONT-DEF
-	  RFONT-DEF0 RFONT-DEF1 ... ]
+	[ PREFERRED-RFONT-DEF RFONT-DEF0 RFONT-DEF1 ... ]
 
-   RFONT-DEFn (i.e. Realized FONT-DEF) has this form:
+   Each RFONT-DEFn (i.e. Realized FONT-DEF) has this form:
 
 	[ FACE-ID FONT-DEF FONT-OBJECT SORTING-SCORE ]
 
@@ -370,14 +369,12 @@ fontset_compare_rfontdef (const void *val1, const void *val2)
 	  - RFONT_DEF_SCORE (*(Lisp_Object *) val2));
 }
 
-/* Update FONT-GROUP which has this form:
-	[ CHARSET-ORDERED-LIST-TICK PREFERRED-RFONT-DEF
-	  RFONT-DEF0 RFONT-DEF1 ... ]
+/* Update a cons cell which has this form:
+	(CHARSET-ORDERED-LIST-TICK . FONT-GROUP)
+   where FONT-GROUP is of the form
+	[ PREFERRED-RFONT-DEF RFONT-DEF0 RFONT-DEF1 ... ]
    Reorder RFONT-DEFs according to the current language, and update
-   CHARSET-ORDERED-LIST-TICK.
-
-   If PREFERRED_FAMILY is not nil, that family has the higher priority
-   if the encoding charsets or languages in font-specs are the same.  */
+   CHARSET-ORDERED-LIST-TICK.  */
 
 static void
 reorder_font_vector (Lisp_Object font_group, struct font *font)
