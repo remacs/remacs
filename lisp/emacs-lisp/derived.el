@@ -332,7 +332,8 @@ which more-or-less shadow%s %s's corresponding table%s."
 		      (concat
 		       "\n\nIn addition to any hooks its parent mode "
 		       (if (string-match (format "[`‘]%s['’]"
-                                                 (regexp-quote parent))
+                                                 (regexp-quote
+						  (symbol-name parent)))
 					 docstring)
                            nil
 			 (format "`%s' " parent))
