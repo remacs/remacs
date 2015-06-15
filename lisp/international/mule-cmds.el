@@ -2603,7 +2603,18 @@ See also `locale-charset-language-names', `locale-language-names',
 	(setq system-time-locale locale))
 
       (if (string-match "^[a-z][a-z]" locale)
-	  (setq current-iso639-language (intern (match-string 0 locale)))))
+          ;; The value of 'current-iso639-language' is matched against
+          ;; the ':lang' property of font-spec objects when selecting
+          ;; and prioritizing available fonts for displaying
+          ;; characters; see fontset.c.
+	  (setq current-iso639-language
+                ;; The call to 'downcase' is for w32, where the
+                ;; MS-Windows locale names are in caps, as in "ENU",
+                ;; the equivalent of the Posix "en_US".  Since the
+                ;; match mentioned above uses memq, and ':lang'
+                ;; properties have lower-case values, the letter-case
+                ;; must match exactly.
+                (intern (downcase (match-string 0 locale))))))
 
     (setq woman-locale
           (or system-messages-locale
