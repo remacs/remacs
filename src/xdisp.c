@@ -24618,7 +24618,7 @@ normal_char_ascent_descent (struct font *font, int c, int *ascent, int *descent)
 
 /* A subroutine that computes a reasonable "normal character height"
    for fonts that claim preposterously large vertical dimensions, but
-   whose glyphs are actually reasonably sized.  C is the charcater
+   whose glyphs are actually reasonably sized.  C is the character
    whose metrics to use for those fonts, or -1 for default
    character.  */
 static int
@@ -26761,7 +26761,7 @@ x_produce_glyphs (struct it *it)
 	     don't let the row ascent and descent values (and the row
 	     height computed from them) be smaller than the "normal"
 	     character metrics.  This avoids unpleasant effects
-	     whereby lines on display would change their heigh
+	     whereby lines on display would change their height
 	     depending on which characters are shown.  */
 	  normal_char_ascent_descent (font, -1, &font_ascent, &font_descent);
 	  it->max_ascent = max (it->max_ascent, font_ascent);

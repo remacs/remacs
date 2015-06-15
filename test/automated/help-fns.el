@@ -37,7 +37,7 @@
 (defun abc\\\[universal-argument\]b\`c\'d\\e\"f (x)
   "A function with a funny name.
 
-\(fn XYYZZY)"
+\(fn XYZZY)"
   x)
 
 (defun defgh\\\[universal-argument\]b\`c\'d\\e\"f (x)
@@ -50,7 +50,7 @@
   (with-current-buffer "*Help*"
     (goto-char (point-min))
     (should (search-forward
-             "(abc\\\\\\[universal-argument\\]b\\`c\\'d\\\\e\\\"f XYYZZY)")))
+             "(abc\\\\\\[universal-argument\\]b\\`c\\'d\\\\e\\\"f XYZZY)")))
   (describe-function 'defgh\\\[universal-argument\]b\`c\'d\\e\"f)
   (with-current-buffer "*Help*"
     (goto-char (point-min))

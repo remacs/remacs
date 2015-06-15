@@ -743,7 +743,7 @@
              (#xFE10 . #xFE1F)	;; Vertical Forms
              (#x10100 . #x1013F)	;; Aegean Numbers
              (#x102E0 . #x102FF)	;; Coptic Epact Numbers
-             (#x1D000 . #x1D0FF)	;; Byzanthine Musical Symbols
+             (#x1D000 . #x1D0FF)	;; Byzantine Musical Symbols
              (#x1D200 . #x1D24F)	;; Ancient Greek Musical Notation
              (#x1F0A0 . #x1F0FF)	;; Playing Cards
              (#x1F100 . #x1F1FF)	;; Enclosed Alphanumeric Suppl
