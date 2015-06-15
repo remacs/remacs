@@ -49,8 +49,11 @@
 Matches if the object is a map (list, hash-table or array), and
 binds values from ARGS to their corresponding elements of the map.
 
-ARGS can be a list elements of the form (KEY PAT) or elements
-of the form SYMBOL, which stands for ('SYMBOL SYMBOL)."
+ARGS can be a list elements of the form (KEY PAT), in which case
+KEY in an unquoted form.
+
+ARGS can also be a list of symbols, which stands for ('SYMBOL
+SYMBOL)."
   `(and (pred map-p)
         ,@(map--make-pcase-bindings args)))
 
@@ -61,7 +64,7 @@ KEYS can be a list of symbols, in which case each element will be
 bound to the looked up value in MAP.
 
 KEYS can also be a list of (KEY VARNAME) pairs, in which case
-KEY is not quoted.
+KEY is an unquoted form.
 
 MAP can be a list, hash-table or array."
   (declare (indent 2) (debug t))
