@@ -218,7 +218,7 @@ MAP can be a list, hash-table or array."
              map))
 
 (defun map-filter (pred map)
-  "Return an alist of the key/val pairs for which (PRED key val) is non-nil in MAP.
+  "Return an alist of key/val pairs for which (PRED key val) is non-nil in MAP.
 
 MAP can be a list, hash-table or array."
   (delq nil (map-apply (lambda (key val)
@@ -297,7 +297,7 @@ MAP can be a list, hash-table or array."
   (pcase type
     (`list (map-pairs map))
     (`hash-table (map--into-hash-table map))
-    (t (error "Not a map type name: %S" type))))
+    (_ (error "Not a map type name: %S" type))))
 
 (defun map--apply-alist (function map)
   "Private function used to apply FUNCTION over MAP, MAP being an alist."
