@@ -70,9 +70,7 @@ Lisp_Object Fx_open_connection (Lisp_Object, Lisp_Object, Lisp_Object);
 static Lisp_Object as_script, *as_result;
 static int as_status;
 
-#ifdef GLYPH_DEBUG
 static ptrdiff_t image_cache_refcount;
-#endif
 
 
 /* ==========================================================================
@@ -1005,6 +1003,17 @@ unwind_create_frame (Lisp_Object frame)
       struct ns_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
 #endif
 
+      /* If the frame's image cache refcount is still the same as our
+	 private shadow variable, it means we are unwinding a frame
+	 for which we didn't yet call init_frame_faces, where the
+	 refcount is incremented.  Therefore, we increment it here, so
+	 that free_frame_faces, called in x_free_frame_resources
+	 below, will not mistakenly decrement the counter that was not
+	 incremented yet to account for this new frame.  */
+      if (FRAME_IMAGE_CACHE (f) != NULL
+	  && FRAME_IMAGE_CACHE (f)->refcount == image_cache_refcount)
+	FRAME_IMAGE_CACHE (f)->refcount++;
+
       x_free_frame_resources (f);
       free_glyphs (f);
 
@@ -1241,10 +1250,8 @@ This function is an internal primitive--use `make-frame' instead.  */)
   x_default_parameter (f, parms, Qright_fringe, Qnil,
 		       "rightFringe", "RightFringe", RES_TYPE_NUMBER);
 
-#ifdef GLYPH_DEBUG
   image_cache_refcount =
     FRAME_IMAGE_CACHE (f) ? FRAME_IMAGE_CACHE (f)->refcount : 0;
-#endif
 
   init_frame_faces (f);
 
