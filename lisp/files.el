@@ -1640,7 +1640,9 @@ killed."
   (unless (run-hook-with-args-until-failure 'kill-buffer-query-functions)
     (user-error "Aborted"))
   (and (buffer-modified-p) buffer-file-name
-       (not (yes-or-no-p "Kill and replace the buffer without saving it? "))
+       (not (yes-or-no-p
+             (format "Kill and replace buffer `%s' without saving it? "
+                     (buffer-name))))
        (user-error "Aborted"))
   (let ((obuf (current-buffer))
 	(ofile buffer-file-name)
