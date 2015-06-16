@@ -311,6 +311,25 @@ per-character basis, this may not be accurate."
 			  charset-list)
 		    nil)))))))))
 
+(defun filepos-to-bufferpos--dos (byte f)
+  (let ((eol-offset 0)
+        ;; Make sure we terminate, even if BYTE falls right in the middle
+        ;; of a CRLF or some other weird corner case.
+        (omin 0) (omax most-positive-fixnum)
+        pos lines)
+    (while
+        (progn
+          (setq pos (funcall f (- byte eol-offset)))
+          ;; Adjust POS for DOS EOL format.
+          (setq lines (1- (line-number-at-pos pos)))
+          (and (not (= lines eol-offset)) (> omax omin)))
+      (if (> lines eol-offset)
+          (setq omax (min (1- omax) lines)
+                eol-offset omax)
+        (setq omin (max (1+ omin) lines)
+              eol-offset omin)))
+    pos))
+
 ;;;###autoload
 (defun filepos-to-bufferpos (byte &optional quality coding-system)
   "Try to return the buffer position corresponding to a particular file position.
@@ -320,9 +339,9 @@ to `buffer-file-coding-system'.
 QUALITY can be:
   `approximate', in which case we may cut some corners to avoid
     excessive work.
+  `exact', in which case we may end up re-(en/de)coding a large
+    part of the file/buffer.
   nil, in which case we may return nil rather than an approximation."
-  ;; `exact', in which case we may end up re-(en|de)coding a large
-  ;;   part of the file.
   (unless coding-system (setq coding-system buffer-file-coding-system))
   (let ((eol (coding-system-eol-type coding-system))
         (type (coding-system-type coding-system))
@@ -331,23 +350,36 @@ QUALITY can be:
       (`utf-8
        (when (coding-system-get coding-system :bom)
          (setq byte (max 0 (- byte 3))))
-       (let (pos lines (eol-offset 0))
-         (while
-             (progn
-               (setq pos (byte-to-position (+ pm byte (- eol-offset))))
-	       ;; Adjust POS for DOS EOL format.
-	       (when (= eol 1)
-		 (setq lines (1- (line-number-at-pos pos)))
-		 (not (= lines eol-offset))))
-           (setq eol-offset lines))
-         pos))
+       (if (= eol 1)
+           (filepos-to-bufferpos--dos (+ pm byte) #'byte-to-position)
+         (byte-to-position (+ pm byte))))
       ;; FIXME: What if it's a 2-byte charset?  Are there such beasts?
-      (`charset (+ pm byte))
+      (`charset
+       (if (= eol 1)
+           (filepos-to-bufferpos--dos (+ pm byte) #'identity)
+         (+ pm byte)))
       (_
        (pcase quality
-         (`approximate (+ pm (byte-to-position byte)))
-         ;; (`exact ...)
-         )))))
+         (`approximate (byte-to-position (+ pm byte)))
+         (`exact
+          ;; Rather than assume that the file exists and still holds the right
+          ;; data, we reconstruct it based on the buffer's content.
+          (let ((buf (current-buffer)))
+            (with-temp-buffer
+              (set-buffer-multibyte nil)
+              (let ((tmp-buf (current-buffer)))
+                (with-current-buffer buf
+                  (save-restriction
+                    (widen)
+                    ;; Since encoding should always return more bytes than
+                    ;; there were chars, encoding all chars up to (+ byte pm)
+                    ;; guarantees the encoded result has at least `byte' bytes.
+                    (encode-coding-region pm (min (point-max) (+ pm byte))
+                                          coding-system tmp-buf)))
+                (+ pm (length
+                       (decode-coding-region (point-min)
+                                             (min (point-max) (+ pm byte))
+                                             coding-system t))))))))))))
 
 (provide 'mule-util)
 
