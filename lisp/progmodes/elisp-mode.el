@@ -716,6 +716,9 @@ It can be quoted, or be inside a quoted form."
         (goto-char (or (cdr buffer-point) (point-min)))
         (point-marker)))))
 
+(cl-defmethod xref-location-group ((l xref-elisp-location))
+  (xref-elisp-location-file l))
+
 ;;; Elisp Interaction mode
 
 (defvar lisp-interaction-mode-map
