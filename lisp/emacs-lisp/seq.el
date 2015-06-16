@@ -249,7 +249,7 @@ TYPE must be one of following symbols: vector, string or list.
     (`vector (apply #'vconcat seqs))
     (`string (apply #'concat seqs))
     (`list (apply #'append (append seqs '(nil))))
-    (t (error "Not a sequence type name: %S" type))))
+    (_ (error "Not a sequence type name: %S" type))))
 
 (defun seq-mapcat (function seq &optional type)
   "Concatenate the result of applying FUNCTION to each element of SEQ.
@@ -323,7 +323,7 @@ TYPE can be one of the following symbols: vector, string or list."
     (`vector (vconcat seq))
     (`string (concat seq))
     (`list (append seq nil))
-    (t (error "Not a sequence type name: %S" type))))
+    (_ (error "Not a sequence type name: %S" type))))
 
 (defun seq--drop-list (list n)
   "Return a list from LIST without its first N elements.
@@ -379,7 +379,7 @@ This is an optimization for lists in `seq-take-while'."
                               ,(seq--elt-safe args (1+ index)))
                         bindings)
                   (setq rest-marker t)))
-          (t
+          (_
            (push `(app (pcase--flip seq--elt-safe ,index) ,name) bindings))))
       (setq index (1+ index)))
     bindings))
@@ -413,7 +413,7 @@ BINDINGS."
                           (seq-drop ,seq ,index))
                         bindings)
                   (setq rest-marker t)))
-          (t
+          (_
            (push `(,name (seq--elt-safe ,seq ,index)) bindings))))
       (setq index (1+ index)))
     bindings))
