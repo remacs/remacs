@@ -335,9 +335,11 @@ QUALITY can be:
          (while
              (progn
                (setq pos (byte-to-position (+ pm byte (- eol-offset))))
-               (setq lines (1- (line-number-at-pos pos)))
-               (not (= lines eol-offset)))
-           (setq eol-offset (+ eol-offset lines)))
+	       ;; Adjust POS for DOS EOL format.
+	       (when (= eol 1)
+		 (setq lines (1- (line-number-at-pos pos)))
+		 (not (= lines eol-offset))))
+           (setq eol-offset lines))
          pos))
       ;; FIXME: What if it's a 2-byte charset?  Are there such beasts?
       (`charset (+ pm byte))
