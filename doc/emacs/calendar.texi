@@ -966,16 +966,15 @@ preceding entry are ignored.  Here's an example:
 
 @example
 12/22/2015  Twentieth wedding anniversary!
-&1/1.       Happy New Year!
 10/22       Ruth's birthday.
 * 21, *:    Payday
 Tuesday--weekly meeting with grad students at 10am
          Supowit, Shen, Bitner, and Kapoor to attend.
 1/13/89     Friday the thirteenth!!
-&thu 4pm    squash game with Lloyd.
+thu 4pm     squash game with Lloyd.
 mar 16      Dad's birthday
 April 15, 2016 Income tax due.
-&* 15       time cards due.
+* 15        time cards due.
 @end example
 
 @noindent
@@ -1010,16 +1009,6 @@ continuation lines appear.  This style of entry looks neater when you
 display just a single day's entries, but can cause confusion if you ask
 for more than one day's entries.
 
-@vindex diary-nonmarking-symbol
-  You can inhibit the marking of certain diary entries in the calendar
-window; to do this, insert the string that
-@code{diary-nonmarking-symbol} specifies (default @samp{&}) at the
-beginning of the entry, before the date.  This
-has no effect on display of the entry in the diary window; it only
-affects marks on dates in the calendar window.  Nonmarking entries are
-especially useful for generic entries that would otherwise mark many
-different dates.
-
 @node Displaying the Diary
 @subsection Displaying the Diary
 
@@ -1050,9 +1039,9 @@ Mail yourself email reminders about upcoming diary entries.
 @kindex d @r{(Calendar mode)}
 @findex diary-view-entries
 @vindex calendar-view-diary-initially-flag
-  Displaying the diary entries with @kbd{d} shows in a separate window
+  Displaying the diary entries with @kbd{d} shows in a separate buffer
 the diary entries for the selected date in the calendar.  The mode line
-of the new window shows the date of the diary entries.  Holidays are
+of the new buffer shows the date of the diary entries.  Holidays are
 shown either in the buffer or in the mode line, depending on the display
 method you choose
 @iftex
@@ -1091,6 +1080,15 @@ marking off and erase the current marks, type @kbd{u}, which also
 turns off holiday marks (@pxref{Holidays}).  If the variable
 @code{calendar-mark-diary-entries-flag} is non-@code{nil}, creating or
 updating the calendar marks diary dates automatically.
+
+@vindex diary-nonmarking-symbol
+  To prevent an individual diary entry from being marked in the
+calendar, insert the string that @code{diary-nonmarking-symbol}
+specifies (the default is @samp{&}) at the beginning of the entry,
+before the date.  This has no effect on display of the entry in the
+diary buffer; it only affects marks on dates in the calendar.
+Nonmarking entries can be useful for generic entries that would
+otherwise mark many different dates.
 
 @kindex s @r{(Calendar mode)}
 @findex diary-show-all-entries
