@@ -925,8 +925,9 @@ events for today, for the immediate future, or for any specified
 date.
 
   The name of the diary file is specified by the variable
-@code{diary-file}; @file{~/diary} is the default.  Here's an example
-showing what that file looks like:
+@code{diary-file}.  The default is @file{~/.emacs.d/diary}, though for
+compatibility with older versions Emacs will use @file{~/diary} if it
+exists.  Here's an example showing what the file looks like:
 
 @example
 12/22/2012  Twentieth wedding anniversary!!
@@ -1068,11 +1069,10 @@ diary-mail-entries}.  A prefix argument specifies how many days
 @vindex diary-file
   Your @dfn{diary file} is a file that records events associated with
 particular dates.  The name of the diary file is specified by the
-variable @code{diary-file}; @file{~/diary} is the default.  The
-@code{calendar} utility program supports a subset of the format allowed
-by the Emacs diary facilities, so you can use that utility to view the
-diary file, with reasonable results aside from the entries it cannot
-understand.
+variable @code{diary-file}.  The @code{calendar} utility program
+supports a subset of the format allowed by the Emacs diary facilities,
+so you can use that utility to view the diary file, with reasonable
+results aside from the entries it cannot understand.
 
   Each entry in the diary file describes one event and consists of one
 or more lines.  An entry always begins with a date specification at the

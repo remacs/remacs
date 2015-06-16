@@ -504,6 +504,9 @@ hash-table and arrays.  All functions are prefixed with "map-".
 ** Calendar and diary
 
 +++
+*** The default `diary-file' is now located in .emacs.d.
+
++++
 *** New commands to insert diary entries with Chinese dates:
 `diary-chinese-insert-anniversary-entry' `diary-chinese-insert-entry'
 `diary-chinese-insert-monthly-entry', `diary-chinese-insert-yearly-entry'.

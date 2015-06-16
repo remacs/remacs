@@ -566,7 +566,7 @@ See also `calendar-intermonth-header'."
                         'font-lock-face 'font-lock-function-name-face)))
   :version "23.1")
 
-(defcustom diary-file "~/diary"
+(defcustom diary-file (locate-user-emacs-file "diary" "diary")
   "Name of the file in which one's personal diary of dates is kept.
 
 The file's entries are lines beginning with any of the forms
@@ -653,6 +653,7 @@ documentation of these hooks for details.
 
 Diary files can contain directives to include the contents of other files; for
 details, see the documentation for the variable `diary-list-entries-hook'."
+  :version "25.1"                  ; ~/diary -> locate-user-emacs-file
   :type 'file
   :group 'diary)
 
