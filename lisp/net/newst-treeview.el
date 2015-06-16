@@ -219,7 +219,7 @@ their id stays constant."
     ;;(message "%s/%s %s/%s" (widget-get node1 :tag) (widget-get node2 :tag)
     ;;       (or id1 -1) (or id2 -1))
     (or (newsticker--treeview-ids-eq id1 id2)
-        (string= (widget-get node1 :tag) (widget-get node2 :tag)))))
+        (string= (widget-get node1 :nt-feed) (widget-get node2 :nt-feed)))))
 
 (defun newsticker--treeview-do-get-node-of-feed (feed-name startnode)
    "Recursively search node for feed FEED-NAME starting from STARTNODE."
