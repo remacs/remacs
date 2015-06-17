@@ -488,6 +488,12 @@ charsets = ${top_srcdir}/admin/charsets/charsets.stamp
 ${charsets}: FORCE
 	${MAKE} -C ../admin/charsets all
 
+charscript = ${lispintdir}/charscript.el
+${charscript}: FORCE
+	$(MAKE) -C ../admin/unidata $(notdir $@)
+
+${lispintdir}/characters.elc: ${charscript:.el=.elc}
+
 ## The dumped Emacs is as functional and more efficient than
 ## bootstrap-emacs, so we replace the latter with the former.
 ## Strictly speaking, emacs does not depend directly on all of $lisp,
@@ -557,7 +563,7 @@ $(lib)/libgnu.a: $(config_h)
 ## This goes on to affect various things, and the emacs binary fails
 ## to start if Vinstallation_directory has the wrong value.
 temacs$(EXEEXT): $(LIBXMENU) $(ALLOBJS) \
-	         $(lib)/libgnu.a $(EMACSRES) ${charsets}
+	         $(lib)/libgnu.a $(EMACSRES) ${charsets} ${charscript}
 	$(AM_V_CCLD)$(CC) $(ALL_CFLAGS) $(TEMACS_LDFLAGS) $(LDFLAGS) \
 	  -o temacs $(ALLOBJS) $(lib)/libgnu.a $(W32_RES_LINK) $(LIBES)
 	$(MKDIR_P) $(etc)

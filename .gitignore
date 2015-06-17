@@ -195,6 +195,7 @@ admin/charsets/jisx2131-filter
 admin/unidata/unidata.txt
 etc/charsets/*.map
 lisp/international/charprop.el
+lisp/international/charscript.el
 lisp/international/cp51932.el
 lisp/international/eucjp-ms.el
 lisp/international/uni-*.el
