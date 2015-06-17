@@ -1297,8 +1297,9 @@ Setup char-width-table appropriate for non-CJK language environment."
 	 (#xFE30 #xFE4F han)
          (#xFE50 #xFE6F symbol)         ; Small Form Variants
 	 (#xFE70 #xFEFF arabic)		; Arabic Presentation Forms-B
-	 (#xFF00 #xFF5F cjk-misc)
+	 (#xFF00 #xFF60 cjk-misc)
 	 (#xFF61 #xFF9F kana)
+	 (#xFFA0 #xFFDF hangul)
 	 (#xFFE0 #xFFEF cjk-misc)
 	 (#x10000 #x100FF linear-b)
 	 (#x10100 #x1013F aegean-number)
@@ -1383,8 +1384,9 @@ Setup char-width-table appropriate for non-CJK language environment."
 	 (#x1F100 #x1F1FF symbol)	; Enclosed Alphanumeric Supplement
 	 (#x1F200 #x1F2FF han)		; Enclosed Ideographic Supplement
 	 (#x1F300 #x1F9FF symbol)
-	 (#x20000 #x2CEAF han)
-	 (#x2F800 #x2FFFF han)))
+	 (#x20000 #x2A6DF han)
+	 (#x2A700 #x2CEAF han)
+	 (#x2F800 #x2FA1F han)))
     (set-char-table-range char-script-table
 			  (cons (car elt) (nth 1 elt)) (nth 2 elt))
     (or (memq (nth 2 elt) script-list)
