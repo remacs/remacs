@@ -786,6 +786,10 @@ a typographically-correct documents.
 
 * Incompatible Lisp Changes in Emacs 25.1
 
+** `:global' minor mode use `setq-default' rather than `setq'.
+This means that you can't use `make-local-variable' and expect them to
+"magically" become buffer-local.
+
 ** `inhibit-point-motion-hooks' now defaults to t and is obsolete.
 
 ** The optional `predicate' argument of `lisp-complete-symbol' no longer
