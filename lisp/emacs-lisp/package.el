@@ -1873,6 +1873,7 @@ to install it but still mark it as selected."
                                   package-archive-contents))
                     nil t))
            nil)))
+  (add-hook 'post-command-hook #'package-menu--post-refresh)
   (let ((name (if (package-desc-p pkg)
                   (package-desc-name pkg)
                 pkg)))
@@ -2037,6 +2038,7 @@ If NOSAVE is non-nil, the package is not removed from
                   (package-desc-full-name pkg-desc)
                   (package-desc-name pkg-used-elsewhere-by)))
           (t
+           (add-hook 'post-command-hook #'package-menu--post-refresh)
            (delete-directory dir t t)
            ;; Remove NAME-VERSION.signed file.
            (let ((signed-file (concat dir ".signed")))
@@ -3059,9 +3061,7 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
                   (length removable)
                   "are no longer needed, type `M-x package-autoremove' to remove them")
               (message (replace-regexp-in-string "__" "ed" message-template)
-                "finished"))))
-        ;; This calls `package-menu--generate'.
-        (package-menu--post-refresh)))))
+                "finished"))))))))
 
 (defun package-menu--version-predicate (A B)
   (let ((vA (or (aref (cadr A) 1)  '(0)))
@@ -3135,15 +3135,30 @@ Store this list in `package-menu--new-package-list'."
       (if (= (length upgrades) 1) "it" "them"))))
 
 (defun package-menu--post-refresh ()
-  "Check for new packages, revert the *Packages* buffer, and check for upgrades.
-This function is called after `package-refresh-contents' and
-after `package-menu--perform-transaction'."
-  (package-menu--populate-new-package-list)
+  "If there's a *Packages* buffer, revert it and check for new packages and upgrades.
+Do nothing if there's no *Packages* buffer.
+
+This function is called after `package-refresh-contents' and it
+is added to `post-command-hook' by any function which alters the
+package database (`package-install' and `package-delete').  When
+run, it removes itself from `post-command-hook'."
+  (remove-hook 'post-command-hook #'package-menu--post-refresh)
   (let ((buf (get-buffer "*Packages*")))
     (when (buffer-live-p buf)
       (with-current-buffer buf
+        (package-menu--populate-new-package-list)
         (run-hooks 'tabulated-list-revert-hook)
-        (tabulated-list-print 'remember 'update)
+        (tabulated-list-print 'remember 'update)))))
+
+(defun package-menu--mark-or-notify-upgrades ()
+  "If there's a *Packages* buffer, check for upgrades and possibly mark them.
+Do nothing if there's no *Packages* buffer.  If there are
+upgrades, mark them if `package-menu--mark-upgrades-pending' is
+non-nil, otherwise just notify the user that there are upgrades.
+This function is called after `package-refresh-contents'."
+  (let ((buf (get-buffer "*Packages*")))
+    (when (buffer-live-p buf)
+      (with-current-buffer buf
         (if package-menu--mark-upgrades-pending
             (package-menu--mark-upgrades-1)
           (package-menu--find-and-notify-upgrades))))))
@@ -3162,6 +3177,8 @@ The list is displayed in a buffer named `*Packages*'."
   ;; Integrate the package-menu with updating the archives.
   (add-hook 'package--post-download-archives-hook
             #'package-menu--post-refresh)
+  (add-hook 'package--post-download-archives-hook
+            #'package-menu--mark-or-notify-upgrades 'append)
 
   ;; Generate the Package Menu.
   (let ((buf (get-buffer-create "*Packages*")))
