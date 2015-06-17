@@ -1136,10 +1136,10 @@ For a description of the other arguments see
        (condition-case error-signal
            (url-retrieve (concat ,location-1 ,file-1)
                          (lambda (status)
-                           (if (eq (car status) :error)
+                           (if-let ((er (plist-get status :error)))
                                (progn (if (functionp ,async-1)
                                           (funcall ,async-1))
-                                      (signal (cdar status) (cddr status)))
+                                      (signal (car er) (cdr er)))
                              (goto-char (point-min))
                              (unless (search-forward "\n\n" nil 'noerror)
                                (error "Invalid url response in buffer %s"
