@@ -1308,7 +1308,7 @@ Setup char-width-table appropriate for non-CJK language environment."
 	 (#x10280 #x1029F lycian)
 	 (#x102A0 #x102DF carian)
 	 (#x102E0 #x102FF coptic)	; Coptic Epact Numbers
-	 (#x10300 #x1032F olt-italic)
+	 (#x10300 #x1032F old-italic)
 	 (#x10330 #x1034F gothic)
 	 (#x10350 #x1037F old-permic)
 	 (#x10380 #x1039F ugaritic)
@@ -1360,7 +1360,7 @@ Setup char-width-table appropriate for non-CJK language environment."
 	 (#x12400 #x1247F cuneiform-numbers-and-punctuation)
 	 (#x12480 #x1254F cuneiform)	; Early Dynastic Cuneiform
 	 (#x13000 #x1342F egyptian)
-         (#x14400 #x1457F anatolian)
+	 (#x14400 #x1467F anatolian)
 	 (#x16800 #x16A3F bamum)
 	 (#x16A40 #x16A6F mro)
 	 (#x16AD0 #x16AFF bassa-vah)

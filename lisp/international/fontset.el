@@ -198,7 +198,7 @@
 	(phaistos-disc #x101D0)
 	(lycian #x10280)
 	(carian #x102A0)
-	(olt-italic #x10300)
+	(old-italic #x10300)
 	(ugaritic #x10380)
 	(old-permic #x10350)
 	(old-persian #x103A0)
@@ -633,7 +633,7 @@
 		    phaistos-disc
 		    lycian
 		    carian
-		    olt-italic
+		    old-italic
 		    ugaritic
 		    old-persian
 		    deseret
