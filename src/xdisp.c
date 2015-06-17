@@ -15094,11 +15094,13 @@ try_scrolling (Lisp_Object window, bool just_this_one_p,
 	    RESTORE_IT (&it, &it, it1data);
 	    move_it_by_lines (&it, 1);
 	    SAVE_IT (it1, it, it1data);
-	  } while (line_bottom_y (&it1) - start_y < amount_to_scroll);
+	  } while (IT_CHARPOS (it) < ZV
+		   && line_bottom_y (&it1) - start_y < amount_to_scroll);
+	  bidi_unshelve_cache (it1data, true);
 	}
 
       /* If STARTP is unchanged, move it down another screen line.  */
-      if (CHARPOS (it.current.pos) == CHARPOS (startp))
+      if (IT_CHARPOS (it) == CHARPOS (startp))
 	move_it_by_lines (&it, 1);
       startp = it.current.pos;
     }
