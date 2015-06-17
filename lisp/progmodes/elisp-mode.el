@@ -582,7 +582,7 @@ It can be quoted, or be inside a quoted form."
 
 (declare-function xref-make-bogus-location "xref" (message))
 (declare-function xref-make "xref" (description location))
-(declare-function xref-collect-matches "xref" (input dir &optional kind))
+(declare-function xref-collect-matches "xref" (symbol dir))
 (declare-function xref-collect-references "xref" (symbol dir))
 
 (defun elisp-xref-find (action id)

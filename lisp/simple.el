@@ -3521,7 +3521,7 @@ support pty association, if PROGRAM is nil."
 (defvar tabulated-list-sort-key)
 (declare-function tabulated-list-init-header  "tabulated-list" ())
 (declare-function tabulated-list-print "tabulated-list"
-                  (&optional remember-pos))
+                  (&optional remember-pos update))
 
 (defvar process-menu-query-only nil)
 
