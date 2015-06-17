@@ -1896,10 +1896,8 @@ Otherwise return nil."
   (when str
     (when (string-match "\\`[ \t]*[$]Revision:[ \t]+" str)
       (setq str (substring str (match-end 0))))
-    (condition-case nil
-        (if (version-to-list str)
-            str)
-      (error nil))))
+    (ignore-errors
+      (if (version-to-list str) str))))
 
 (declare-function lm-homepage "lisp-mnt" (&optional file))
 
@@ -2998,9 +2996,11 @@ objects removed."
       (redisplay 'force)
       (dolist (elt (package--sort-by-dependence delete-list))
         (condition-case-unless-debug err
-            (let ((inhibit-message t))
+            (let ((inhibit-message package-menu-async))
               (package-delete elt nil 'nosave))
-          (error (message (cadr err))))))))
+          (error (message "Error trying to delete `%s': %S"
+                   (package-desc-full-name elt)
+                   err)))))))
 
 (defun package--update-selected-packages (add remove)
   "Update the `package-selected-packages' list according to ADD and REMOVE.
