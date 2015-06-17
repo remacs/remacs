@@ -774,9 +774,9 @@ Otherwise, it defers to REST which is a list of branches of the form
        ((memq upat '(t _))
         (let ((code (pcase--u1 matches code vars rest)))
           (if (eq upat '_) code
-            (message "%s"
-             "Pattern t is deprecated.  Use `_' instead")
-             code)))
+            (macroexp--warn-and-return
+             "Pattern t is deprecated.  Use `_' instead"
+             code))))
        ((eq upat 'pcase--dontcare) :pcase--dontcare)
        ((memq (car-safe upat) '(guard pred))
         (if (eq (car upat) 'pred) (pcase--mark-used sym))
