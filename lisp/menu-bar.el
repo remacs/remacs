@@ -2258,7 +2258,7 @@ If nil, the current mouse position is used."
     ;; Event.
     ((pred eventp)
      (popup-menu-normalize-position (event-end position)))
-    (t position)))
+    (_ position)))
 
 (defcustom tty-menu-open-use-tmm nil
   "If non-nil, \\[menu-bar-open] on a TTY will invoke `tmm-menubar'.

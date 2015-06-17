@@ -1417,7 +1417,7 @@ extra args."
                      (`(lambda ,args . ,_) args)
                      (`(closure ,_ ,args . ,_) args)
                      ((pred byte-code-function-p) (aref old 0))
-                     (t '(&rest def)))))
+                     (_ '(&rest def)))))
             (sig2 (byte-compile-arglist-signature arglist)))
         (unless (byte-compile-arglist-signatures-congruent-p sig1 sig2)
           (byte-compile-set-symbol-position name)

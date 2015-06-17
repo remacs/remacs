@@ -284,7 +284,7 @@ Assumes the caller has bound `macroexpand-all-environment'."
                      (macroexp--expand-all newform)))
                (macroexp--expand-all newform))))))
 
-      (t form))))
+      (_ form))))
 
 ;;;###autoload
 (defun macroexpand-all (form &optional environment)
