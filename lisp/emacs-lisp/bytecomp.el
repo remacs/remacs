@@ -4416,7 +4416,7 @@ binding slots have been popped."
       ;; which is to call back byte-compile-file-form and then return nil.
       ;; Except that we can't just call byte-compile-file-form since it would
       ;; call us right back.
-      (t (byte-compile-keep-pending form)))))
+      (_ (byte-compile-keep-pending form)))))
 
 (byte-defop-compiler-1 with-no-warnings byte-compile-no-warnings)
 (defun byte-compile-no-warnings (form)
