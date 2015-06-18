@@ -932,7 +932,8 @@ Otherwise, return a new string.  */)
 	    strp = SDATA (string) + idx;
 	  }
 	}
-      else if (strp[0] == '`')
+      else if ((Vhelp_quote_translation == Qprefer_unicode)
+               && (strp[0] == '`'))
 	{
 	  in_quote = true;
 	  start = (unsigned char *) "\xE2\x80\x98"; /* ‘ */
@@ -942,12 +943,27 @@ Otherwise, return a new string.  */)
 	  idx = strp - SDATA (string) + 1;
 	  goto subst;
 	}
-      else if (strp[0] == '\'' && in_quote)
+      else if ((Vhelp_quote_translation == Qprefer_unicode)
+               && (strp[0] == '\'' && in_quote))
 	{
 	  in_quote = false;
 	  start = (unsigned char *) "\xE2\x80\x99"; /* ’ */
 	  goto subst_quote;
 	}
+
+      else if ((Vhelp_quote_translation == Qtraditional)
+               && (strp[0] == 0xE2)
+               && (strp[1] == 0x80)
+               && ((strp[2] == 0x98)      /* curly opening quote */
+                   || (strp[2] == 0x99))) /* curly closing quote */
+        {
+          start = (strp[2] == 0x98) ? "`" : "'";
+          length = 1;
+          length_byte = 1;
+          idx = strp - SDATA (string) + 3;
+          goto subst;
+        }
+
       else if (! multibyte)		/* just copy other chars */
 	*bufp++ = *strp++, nchars++;
       else
@@ -977,6 +993,8 @@ void
 syms_of_doc (void)
 {
   DEFSYM (Qfunction_documentation, "function-documentation");
+  DEFSYM (Qtraditional, "traditional");
+  DEFSYM (Qprefer_unicode, "prefer-unicode");
 
   DEFVAR_LISP ("internal-doc-file-name", Vdoc_file_name,
 	       doc: /* Name of file containing documentation strings of built-in symbols.  */);
@@ -985,6 +1003,18 @@ syms_of_doc (void)
   DEFVAR_LISP ("build-files", Vbuild_files,
                doc: /* A list of files used to build this Emacs binary.  */);
   Vbuild_files = Qnil;
+
+  DEFVAR_LISP ("help-quote-translation", Vhelp_quote_translation,
+               doc: /* How to translate quotes for display in *Help*.
+If the value is nil (default), no translation is done.
+If it's the symbol `traditional', any occurrences of the curly quotes
+are translated to their ASCII "equivalents", GRAVE and APOSTROPHE.
+If it's the symbol `prefer-unicode', any matched pairs of GRAVE and
+APOSTROPHE will get translated into the "equivalent" curly quotes.
+
+Note that any translation done is done in a fresh copy of the doc
+string, and doesn't overwrite the original characters. */);
+  Vhelp_quote_translation = Qnil;
 
   defsubr (&Sdocumentation);
   defsubr (&Sdocumentation_property);

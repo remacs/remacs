@@ -220,7 +220,14 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 	     (visible-bell display boolean)
 	     (no-redraw-on-reenter display boolean)
 
-	     ;; dosfns.c
+	     ;; doc.c
+             (help-quote-translation help
+                                     (choice
+                                      (const :tag "No translation" nil)
+                                      (const :tag "Translate curly single quotes to ASCII" traditional)
+                                      (const :tag "Translate ASCII single quotes to curly" prefer-unicode)))
+
+             ;; dosfns.c
 	     (dos-display-scancodes display boolean)
 	     (dos-hyper-key keyboard integer)
 	     (dos-super-key keyboard integer)
