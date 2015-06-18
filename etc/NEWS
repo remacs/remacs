@@ -771,6 +771,12 @@ use [:multibyte:] instead.
 
 * New Modes and Packages in Emacs 25.1
 
+** pinentry.el allows GnuPG passphrase to be prompted through the
+minibuffer instead of a graphical dialog, depending on whether the gpg
+command is called from Emacs (i.e., INSIDE_EMACS environment variable
+is set).  This feature requires newer versions of GnuPG (2.1.5 or
+later) and Pinentry (0.9.5 or later).
+
 ** cl-generic.el provides CLOS-style multiple-dispatch generic functions.
 
 ** scss-mode (a minor variant of css-mode)
