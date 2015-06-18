@@ -3138,6 +3138,12 @@ This function is an internal primitive--use `make-frame' instead.  */)
   register_font_driver (&xfont_driver, f);
 #endif	/* not USE_CAIRO */
 
+  image_cache_refcount =
+    FRAME_IMAGE_CACHE (f) ? FRAME_IMAGE_CACHE (f)->refcount : 0;
+#ifdef GLYPH_DEBUG
+  dpyinfo_refcount = dpyinfo->reference_count;
+#endif /* GLYPH_DEBUG */
+
   x_default_parameter (f, parms, Qfont_backend, Qnil,
 		       "fontBackend", "FontBackend", RES_TYPE_STRING);
 
@@ -3215,12 +3221,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
   x_default_scroll_bar_color_parameter (f, parms, Qscroll_bar_background,
 					"scrollBarBackground",
 					"ScrollBarBackground", false);
-
-  image_cache_refcount =
-    FRAME_IMAGE_CACHE (f) ? FRAME_IMAGE_CACHE (f)->refcount : 0;
-#ifdef GLYPH_DEBUG
-  dpyinfo_refcount = dpyinfo->reference_count;
-#endif /* GLYPH_DEBUG */
 
   /* Init faces before x_default_parameter is called for the
      scroll-bar-width parameter because otherwise we end up in
@@ -5145,6 +5145,12 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
 #endif	/* HAVE_FREETYPE */
 #endif	/* not USE_CAIRO */
 
+  image_cache_refcount =
+    FRAME_IMAGE_CACHE (f) ? FRAME_IMAGE_CACHE (f)->refcount : 0;
+#ifdef GLYPH_DEBUG
+  dpyinfo_refcount = dpyinfo->reference_count;
+#endif /* GLYPH_DEBUG */
+
   x_default_parameter (f, parms, Qfont_backend, Qnil,
 		       "fontBackend", "FontBackend", RES_TYPE_STRING);
 
@@ -5188,12 +5194,6 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
 		       "cursorColor", "Foreground", RES_TYPE_STRING);
   x_default_parameter (f, parms, Qborder_color, build_string ("black"),
 		       "borderColor", "BorderColor", RES_TYPE_STRING);
-
-  image_cache_refcount =
-    FRAME_IMAGE_CACHE (f) ? FRAME_IMAGE_CACHE (f)->refcount : 0;
-#ifdef GLYPH_DEBUG
-  dpyinfo_refcount = dpyinfo->reference_count;
-#endif /* GLYPH_DEBUG */
 
   /* Init faces before x_default_parameter is called for the
      scroll-bar-width parameter because otherwise we end up in

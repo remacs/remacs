@@ -1196,6 +1196,11 @@ This function is an internal primitive--use `make-frame' instead.  */)
     register_font_driver (&nsfont_driver, f);
 #endif
 
+  image_cache_refcount =
+    FRAME_IMAGE_CACHE (f) ? FRAME_IMAGE_CACHE (f)->refcount : 0;
+
+  init_frame_faces (f);
+
   x_default_parameter (f, parms, Qfont_backend, Qnil,
 			"fontBackend", "FontBackend", RES_TYPE_STRING);
 
@@ -1249,11 +1254,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
 		       "leftFringe", "LeftFringe", RES_TYPE_NUMBER);
   x_default_parameter (f, parms, Qright_fringe, Qnil,
 		       "rightFringe", "RightFringe", RES_TYPE_NUMBER);
-
-  image_cache_refcount =
-    FRAME_IMAGE_CACHE (f) ? FRAME_IMAGE_CACHE (f)->refcount : 0;
-
-  init_frame_faces (f);
 
   /* Read comment about this code in corresponding place in xfns.c.  */
   adjust_frame_size (f, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
