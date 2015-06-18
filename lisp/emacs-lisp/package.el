@@ -1120,7 +1120,8 @@ buffer is killed afterwards.  Return the last value in BODY."
 If ASYNC is non-nil, and if it is possible, run BODY
 asynchronously.  If an error is encountered and ASYNC is a
 function, call it with no arguments (instead of executing BODY).
-The error is propagated either way.
+If it returns non-nil, or if it wasn't a function, propagate the
+error.
 
 For a description of the other arguments see
 `package--with-work-buffer'."
@@ -1137,9 +1138,11 @@ For a description of the other arguments see
            (url-retrieve (concat ,location-1 ,file-1)
                          (lambda (status)
                            (if-let ((er (plist-get status :error)))
-                               (progn (if (functionp ,async-1)
-                                          (funcall ,async-1))
-                                      (signal (car er) (cdr er)))
+                               (when (if (functionp ,async-1)
+                                         (funcall ,async-1)
+                                       t)
+                                 (message "Error contacting: %s" (concat ,location-1 ,file-1))
+                                 (signal (car er) (cdr er)))
                              (goto-char (point-min))
                              (unless (search-forward "\n\n" nil 'noerror)
                                (error "Invalid url response in buffer %s"
@@ -1151,6 +1154,7 @@ For a description of the other arguments see
                          'silent)
          (error (when (functionp ,async-1)
                   (funcall ,async-1))
+           (message "Error contacting: %s" (concat ,location-1 ,file-1))
            (signal (car error-signal) (cdr error-signal)))))))
 
 (defun package--check-signature-content (content string &optional sig-file)
@@ -1464,7 +1468,11 @@ similar to an entry in `package-alist'.  Save the cached copy to
              (when good-sigs
                (write-region (mapconcat #'epg-signature-to-string good-sigs "\n")
                              nil (concat local-file ".signed") nil 'silent))
-             (package--update-downloads-in-progress archive))))))))
+             (package--update-downloads-in-progress archive)
+             ;; If we got this far, either everything worked or we don't mind
+             ;; not signing, so tell `package--with-work-buffer-async' to not
+             ;; propagate errors.
+             nil)))))))
 
 (defun package--download-and-read-archives (&optional async)
   "Download descriptions of all `package-archives' and read them.
@@ -1481,7 +1489,8 @@ perform the downloads asynchronously."
          archive "archive-contents"
          ;; Called if the async download fails
          (when async
-           (lambda () (package--update-downloads-in-progress archive))))
+           ;; The t at the end means to propagate connection errors.
+           (lambda () (package--update-downloads-in-progress archive) t)))
       (error (message "Failed to download `%s' archive."
                (car archive))))))
 
