@@ -932,7 +932,7 @@ Otherwise, return a new string.  */)
 	    strp = SDATA (string) + idx;
 	  }
 	}
-      else if ((Vhelp_quote_translation == Qprefer_unicode)
+      else if (EQ (Vhelp_quote_translation, Qprefer_unicode)
                && (strp[0] == '`'))
 	{
 	  in_quote = true;
@@ -943,7 +943,7 @@ Otherwise, return a new string.  */)
 	  idx = strp - SDATA (string) + 1;
 	  goto subst;
 	}
-      else if ((Vhelp_quote_translation == Qprefer_unicode)
+      else if (EQ (Vhelp_quote_translation, Qprefer_unicode)
                && (strp[0] == '\'' && in_quote))
 	{
 	  in_quote = false;
@@ -951,7 +951,7 @@ Otherwise, return a new string.  */)
 	  goto subst_quote;
 	}
 
-      else if ((Vhelp_quote_translation == Qtraditional)
+      else if (EQ (Vhelp_quote_translation, Qtraditional)
                && (strp[0] == 0xE2)
                && (strp[1] == 0x80)
                && ((strp[2] == 0x98)      /* curly opening quote */
