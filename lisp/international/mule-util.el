@@ -320,6 +320,12 @@ per-character basis, this may not be accurate."
     (while
         (progn
           (setq pos (funcall f (- byte eol-offset)))
+          ;; Protect against accidental values of BYTE outside of the
+          ;; valid region.
+          (when (null pos)
+            (if (<= byte eol-offset)
+                (setq pos (point-min))
+              (setq pos (point-max))))
           ;; Adjust POS for DOS EOL format.
           (setq lines (1- (line-number-at-pos pos)))
           (and (not (= lines eol-offset)) (> omax omin)))
@@ -345,7 +351,25 @@ QUALITY can be:
   (unless coding-system (setq coding-system buffer-file-coding-system))
   (let ((eol (coding-system-eol-type coding-system))
         (type (coding-system-type coding-system))
+        (base (coding-system-base coding-system))
         (pm (save-restriction (widen) (point-min))))
+    (and (eq type 'utf-8-emacs)
+         (setq type 'utf-8))
+    (and (eq type 'utf-8)
+         ;; Any post-read/pre-write conversions mean it's not really UTF-8.
+         (not (null (coding-system-get coding-system :pos-read-conversion)))
+         (setq type 'not-utf-8))
+    (and (not (eq type 'utf-8))
+         (eq quality 'exact)
+         (setq type 'use-exact))
+    (and (memq type '(charset raw-text undecided))
+         ;; The following are all of type 'charset', but they are
+         ;; actually variable-width encodings.
+         (not (memq base '(chinese-gbk chinese-gb18030 euc-tw euc-jis-2004
+                                       korean-iso-8bit chinese-iso-8bit
+                                       japanese-iso-8bit chinese-big5-hkscs
+                                       japanese-cp932 korean-cp949)))
+         (setq type 'single-byte))
     (pcase type
       (`utf-8
        (when (coding-system-get coding-system :bom)
@@ -353,8 +377,16 @@ QUALITY can be:
        (if (= eol 1)
            (filepos-to-bufferpos--dos (+ pm byte) #'byte-to-position)
          (byte-to-position (+ pm byte))))
-      ;; FIXME: What if it's a 2-byte charset?  Are there such beasts?
-      (`charset
+      (`utf-16
+       ;; Account for BOM, which is always 2 bytes in UTF-16.
+       (setq byte (- byte 2))
+       ;; In approximate mode, assume all characters are within the
+       ;; BMP, i.e. take up 2 bytes.
+       (setq byte (/ byte 2))
+       (if (= eol 1)
+           (filepos-to-bufferpos--dos (+ pm byte) #'byte-to-position)
+         (byte-to-position (+ pm byte))))
+      (`single-byte
        (if (= eol 1)
            (filepos-to-bufferpos--dos (+ pm byte) #'identity)
          (+ pm byte)))
