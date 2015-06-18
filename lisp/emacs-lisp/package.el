@@ -2988,19 +2988,17 @@ objects removed."
           (redisplay 'force)
           ;; Don't mark as selected, `package-menu-execute' already
           ;; does that.
-          (package-install pkg 'dont-select)))
-    ;; Once there are no more packages to install, proceed to
-    ;; deletion.
-    (let ((package-menu--transaction-status ":Deleting"))
-      (force-mode-line-update)
-      (redisplay 'force)
-      (dolist (elt (package--sort-by-dependence delete-list))
-        (condition-case-unless-debug err
-            (let ((inhibit-message package-menu-async))
-              (package-delete elt nil 'nosave))
-          (error (message "Error trying to delete `%s': %S"
-                   (package-desc-full-name elt)
-                   err)))))))
+          (package-install pkg 'dont-select))))
+  (let ((package-menu--transaction-status ":Deleting"))
+    (force-mode-line-update)
+    (redisplay 'force)
+    (dolist (elt (package--sort-by-dependence delete-list))
+      (condition-case-unless-debug err
+          (let ((inhibit-message package-menu-async))
+            (package-delete elt nil 'nosave))
+        (error (message "Error trying to delete `%s': %S"
+                 (package-desc-full-name elt)
+                 err))))))
 
 (defun package--update-selected-packages (add remove)
   "Update the `package-selected-packages' list according to ADD and REMOVE.
