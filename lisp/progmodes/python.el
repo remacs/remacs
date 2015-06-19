@@ -734,7 +734,7 @@ work on `python-indent-calculate-indentation' instead."
   (interactive)
   (save-excursion
     (save-restriction
-      (widen)
+      (prog-widen)
       (goto-char (point-min))
       (let ((block-end))
         (while (and (not block-end)
@@ -833,7 +833,7 @@ keyword
  - Point is on a line starting a dedenter block.
  - START is the position where the dedenter block starts."
   (save-restriction
-    (widen)
+    (prog-widen)
     (let ((ppss (save-excursion
                   (beginning-of-line)
                   (syntax-ppss))))
@@ -958,18 +958,20 @@ keyword
        ((save-excursion
           (back-to-indentation)
           (skip-chars-backward " \t\n")
-          (python-nav-beginning-of-statement)
-          (cons
-           (cond ((python-info-current-line-comment-p)
-                  :after-comment)
-                 ((save-excursion
-                    (goto-char (line-end-position))
-                    (python-util-forward-comment -1)
-                    (python-nav-beginning-of-statement)
-                    (looking-at (python-rx block-ender)))
-                  :after-block-end)
-                 (t :after-line))
-           (point))))))))
+          (if (bobp)
+              (cons :no-indent 0)
+            (python-nav-beginning-of-statement)
+            (cons
+             (cond ((python-info-current-line-comment-p)
+                    :after-comment)
+                   ((save-excursion
+                      (goto-char (line-end-position))
+                      (python-util-forward-comment -1)
+                      (python-nav-beginning-of-statement)
+                      (looking-at (python-rx block-ender)))
+                    :after-block-end)
+                   (t :after-line))
+             (point)))))))))
 
 (defun python-indent--calculate-indentation ()
   "Internal implementation of `python-indent-calculate-indentation'.
@@ -978,10 +980,10 @@ current context or a list of integers.  The latter case is only
 happening for :at-dedenter-block-start context since the
 possibilities can be narrowed to specific indentation points."
   (save-restriction
-    (widen)
+    (prog-widen)
     (save-excursion
       (pcase (python-indent-context)
-        (`(:no-indent . ,_) 0)
+        (`(:no-indent . ,_) (prog-first-column)) ; usually 0
         (`(,(or :after-line
                 :after-comment
                 :inside-string
@@ -1019,7 +1021,7 @@ possibilities can be narrowed to specific indentation points."
          (let ((opening-block-start-points
                 (python-info-dedenter-opening-block-positions)))
            (if (not opening-block-start-points)
-               0  ; if not found default to first column
+               (prog-first-column) ; if not found default to first column
              (mapcar (lambda (pos)
                        (save-excursion
                          (goto-char pos)
@@ -1037,15 +1039,9 @@ integers.  Levels are returned in ascending order, and in the
 case INDENTATION is a list, this order is enforced."
   (if (listp indentation)
       (sort (copy-sequence indentation) #'<)
-    (let* ((remainder (% indentation python-indent-offset))
-           (steps (/ (- indentation remainder) python-indent-offset))
-           (levels (mapcar (lambda (step)
-                             (* python-indent-offset step))
-                           (number-sequence steps 0 -1))))
-      (reverse
-       (if (not (zerop remainder))
-           (cons indentation levels)
-         levels)))))
+    (nconc (number-sequence (prog-first-column) (1- indentation)
+                            python-indent-offset)
+           (list indentation))))
 
 (defun python-indent--previous-level (levels indentation)
   "Return previous level from LEVELS relative to INDENTATION."
@@ -1068,7 +1064,7 @@ minimum."
         (python-indent--previous-level levels (current-indentation))
       (if levels
           (apply #'max levels)
-        0))))
+        (prog-first-column)))))
 
 (defun python-indent-line (&optional previous)
   "Internal implementation of `python-indent-line-function'.
@@ -4230,7 +4226,7 @@ Optional argument INCLUDE-TYPE indicates to include the type of the defun.
 This function can be used as the value of `add-log-current-defun-function'
 since it returns nil if point is not inside a defun."
   (save-restriction
-    (widen)
+    (prog-widen)
     (save-excursion
       (end-of-line 1)
       (let ((names)
@@ -4413,7 +4409,7 @@ likely an invalid python file."
   (let ((point (python-info-dedenter-opening-block-position)))
     (when point
       (save-restriction
-        (widen)
+        (prog-widen)
         (message "Closes %s" (save-excursion
                                (goto-char point)
                                (buffer-substring
@@ -4434,7 +4430,7 @@ statement."
 With optional argument LINE-NUMBER, check that line instead."
   (save-excursion
     (save-restriction
-      (widen)
+      (prog-widen)
       (when line-number
         (python-util-goto-line line-number))
       (while (and (not (eobp))
@@ -4450,7 +4446,7 @@ With optional argument LINE-NUMBER, check that line instead."
 Optional argument LINE-NUMBER forces the line number to check against."
   (save-excursion
     (save-restriction
-      (widen)
+      (prog-widen)
       (when line-number
         (python-util-goto-line line-number))
       (when (python-info-line-ends-backslash-p)
@@ -4467,7 +4463,7 @@ When current line is continuation of another return the point
 where the continued line ends."
   (save-excursion
     (save-restriction
-      (widen)
+      (prog-widen)
       (let* ((context-type (progn
                              (back-to-indentation)
                              (python-syntax-context-type)))

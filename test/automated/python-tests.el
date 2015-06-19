@@ -267,10 +267,10 @@ foo = long_function_name(
    (should (eq (car (python-indent-context)) :no-indent))
    (should (= (python-indent-calculate-indentation) 0))
    (forward-line 1)
-   (should (eq (car (python-indent-context)) :after-line))
+   (should (eq (car (python-indent-context)) :no-indent))
    (should (= (python-indent-calculate-indentation) 0))
    (forward-line 1)
-   (should (eq (car (python-indent-context)) :after-line))
+   (should (eq (car (python-indent-context)) :no-indent))
    (should (= (python-indent-calculate-indentation) 0))))
 
 (ert-deftest python-indent-after-comment-1 ()
@@ -392,7 +392,7 @@ data = {
 }
 "
    (python-tests-look-at "data = {")
-   (should (eq (car (python-indent-context)) :after-line))
+   (should (eq (car (python-indent-context)) :no-indent))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at "'key':")
    (should (eq (car (python-indent-context)) :inside-paren-newline-start))
@@ -455,7 +455,7 @@ data = {'key': {
 }}
 "
    (python-tests-look-at "data = {")
-   (should (eq (car (python-indent-context)) :after-line))
+   (should (eq (car (python-indent-context)) :no-indent))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at "'objlist': [")
    (should (eq (car (python-indent-context)) :inside-paren-newline-start))
@@ -494,7 +494,7 @@ data = ('these',
         'tokens')
 "
    (python-tests-look-at "data = ('these',")
-   (should (eq (car (python-indent-context)) :after-line))
+   (should (eq (car (python-indent-context)) :no-indent))
    (should (= (python-indent-calculate-indentation) 0))
    (forward-line 1)
    (should (eq (car (python-indent-context)) :inside-paren))
@@ -514,7 +514,7 @@ data = [ [ 'these', 'are'],
          ['the', 'tokens' ] ]
 "
    (python-tests-look-at "data = [ [ 'these', 'are'],")
-   (should (eq (car (python-indent-context)) :after-line))
+   (should (eq (car (python-indent-context)) :no-indent))
    (should (= (python-indent-calculate-indentation) 0))
    (forward-line 1)
    (should (eq (car (python-indent-context)) :inside-paren))
@@ -530,7 +530,7 @@ while ((not some_condition) and
         with_some_arg)
 "
    (python-tests-look-at "while ((not some_condition) and")
-   (should (eq (car (python-indent-context)) :after-line))
+   (should (eq (car (python-indent-context)) :no-indent))
    (should (= (python-indent-calculate-indentation) 0))
    (forward-line 1)
    (should (eq (car (python-indent-context)) :inside-paren))
@@ -551,7 +551,7 @@ CHOICES = (('some', 'choice'),
            ('more', 'choices'))
 "
    (python-tests-look-at "CHOICES = (('some', 'choice'),")
-   (should (eq (car (python-indent-context)) :after-line))
+   (should (eq (car (python-indent-context)) :no-indent))
    (should (= (python-indent-calculate-indentation) 0))
    (forward-line 1)
    (should (eq (car (python-indent-context)) :inside-paren))
@@ -612,7 +612,7 @@ from foo.bar.baz import something, something_1 \\\\
     something_4, something_5
 "
    (python-tests-look-at "from foo.bar.baz import something, something_1")
-   (should (eq (car (python-indent-context)) :after-line))
+   (should (eq (car (python-indent-context)) :no-indent))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at "something_2 something_3,")
    (should (eq (car (python-indent-context)) :after-backslash-first-line))
@@ -639,7 +639,7 @@ objects = Thing.objects.all() \\\\
                        .values_list()
 "
    (python-tests-look-at "objects = Thing.objects.all()")
-   (should (eq (car (python-indent-context)) :after-line))
+   (should (eq (car (python-indent-context)) :no-indent))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at ".filter(")
    (should (eq (car (python-indent-context))
@@ -682,7 +682,7 @@ with open('/path/to/some/file/you/want/to/read') as file_1, \\\\
 "
    (python-tests-look-at
     "with open('/path/to/some/file/you/want/to/read') as file_1, \\\\")
-   (should (eq (car (python-indent-context)) :after-line))
+   (should (eq (car (python-indent-context)) :no-indent))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at
     "open('/path/to/some/file/being/written', 'w') as file_2")
@@ -703,7 +703,7 @@ super_awful_assignment = some_calculation() and \\\\
 "
    (python-tests-look-at
     "super_awful_assignment = some_calculation() and \\\\")
-   (should (eq (car (python-indent-context)) :after-line))
+   (should (eq (car (python-indent-context)) :no-indent))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at "another_calculation() and \\\\")
    (should (eq (car (python-indent-context))
@@ -992,7 +992,7 @@ lines
 '''
 "
    (python-tests-look-at "multiline = '''")
-   (should (eq (car (python-indent-context)) :after-line))
+   (should (eq (car (python-indent-context)) :no-indent))
    (should (= (python-indent-calculate-indentation) 0))
    (python-tests-look-at "bunch")
    (should (eq (car (python-indent-context)) :inside-string))
