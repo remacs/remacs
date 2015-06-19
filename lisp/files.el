@@ -5279,7 +5279,12 @@ Return nil if DIR is not an existing directory."
 	      dir  (file-truename dir))
 	(let ((ls1 (split-string file "/" t))
 	      (ls2 (split-string dir  "/" t))
-	      (root (if (string-match "\\`/" file) "/" ""))
+	      (root
+               (cond
+                ;; A UNC on Windows systems, or a "super-root" on Apollo.
+                ((string-match "\\`//" file) "//")
+                ((string-match "\\`/" file) "/")
+                (t "")))
 	      (mismatch nil))
 	  (while (and ls1 ls2 (not mismatch))
 	    (if (string-equal (car ls1) (car ls2))
