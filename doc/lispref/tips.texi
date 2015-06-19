@@ -671,9 +671,11 @@ Documentation strings can also use an older single-quoting convention,
 which quotes symbols with grave accent @t{`} and apostrophe
 @t{'}: @t{`like-this'} rather than @t{‘like-this’}.  This
 older convention was designed for now-obsolete displays in which grave
-accent and apostrophe were mirror images.  Documentation in this older
-convention is converted to the standard convention when it is copied
-into a help buffer.  @xref{Keys in Documentation}.
+accent and apostrophe were mirror images.
+
+Documentation using either convention is converted to the user's
+preferred format when it is copied into a help buffer.  @xref{Keys in
+Documentation}.
 
 @cindex hyperlinks in documentation strings
 Help mode automatically creates a hyperlink when a documentation string

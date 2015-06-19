@@ -2173,17 +2173,18 @@ will be deleted."
                                    "Installed"
                                  (capitalize status)) ;FIXME: Why comment-face?
                                'font-lock-face 'font-lock-comment-face))
-           (insert " in ‘")
+           (insert (substitute-command-keys " in ‘"))
            ;; Todo: Add button for uninstalling.
            (help-insert-xref-button (abbreviate-file-name
                                      (file-name-as-directory pkg-dir))
                                     'help-package-def pkg-dir)
            (if (and (package-built-in-p name)
                     (not (package-built-in-p name version)))
-               (insert "’,\n             shadowing a "
+               (insert (substitute-command-keys
+                        "’,\n             shadowing a ")
                        (propertize "built-in package"
                                    'font-lock-face 'font-lock-builtin-face))
-             (insert "’"))
+             (insert (substitute-command-keys "’")))
            (if signed
                (insert ".")
              (insert " (unsigned)."))

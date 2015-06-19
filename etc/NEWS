@@ -845,11 +845,16 @@ when signaling a file error.  For example, it now reports "Permission
 denied" instead of "permission denied".  The old behavior was problematic
 in languages like German where downcasing rules depend on grammar.
 
-** (substitute-command-keys "`foo'") now returns "‘foo’".
-That is, it replaces grave accents by left single quotation marks, and
-apostrophes that match grave accents by right single quotation marks.
-As before, isolated apostrophes and characters preceded by \= are
-output as-is.
+** substitute-command-keys now replaces quotes.
+That is, it replaces left single quotation marks (‘) by left quotes
+and right single quotation marks (’) by right quotes.  It also
+replaces grave accents by left quotes, and apostrophes that match
+grave accents by right quotes.  As before, isolated apostrophes and
+characters preceded by \= are output as-is.  Left and right quotes are
+determined by new custom variable ‘help-quote-translation’.  ?‘ means
+quote ‘like this’, ?' means quote 'like this', ?` means quote `like
+this', and nil (default) means quote ‘like this’ if displayable and
+'like this' otherwise.
 
 +++
 ** The character classes [:alpha:] and [:alnum:] in regular expressions
@@ -956,10 +961,10 @@ directory at point.
 ** Documentation strings now support quoting with curved single quotes
 ‘like-this’ in addition to the old style with grave accent and
 apostrophe `like-this'.  The new style looks better on today's displays.
-When an old-style string is copied to a help buffer it is converted to
-the new style.
-
-** New option `help-quote-translation'.
+In the new Electric Quote mode, you can enter curved single quotes
+into documentation by typing ` and '.  Outside Electric Quote mode,
+you can enter them by typing ‘C-x 8 [’ and ‘C-x 8 ]’, or (if your Alt
+key works) by typing ‘A-[’ and ‘A-]’.
 
 +++
 ** Time-related changes:

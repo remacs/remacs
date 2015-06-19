@@ -223,9 +223,10 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 	     ;; doc.c
 	     (help-quote-translation help
 				     (choice
-				      (const :tag "No translation" nil)
-				      (const :tag "Translate curly single quotes to ASCII" traditional)
-				      (const :tag "Translate ASCII single quotes to curly" prefer-unicode))
+				      (character :tag "Quote ‘like this’" :value ?‘)
+				      (character :tag "Quote 'like this'" :value ?\')
+				      (character :tag "Quote `like this'" :value ?\`)
+				      (const :tag "Quote ‘like this’ if displyable, 'like this' otherwise" nil))
 				     "25.1")
              ;; dosfns.c
 	     (dos-display-scancodes display boolean)
