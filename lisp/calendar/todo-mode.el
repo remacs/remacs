@@ -672,7 +672,7 @@ corresponding todo file, displaying the corresponding category."
 						      todo-filtered-items-mode))))
 			  (if (funcall todo-files-function)
 			      (todo-read-file-name "Choose a todo file to visit: "
-						    nil t)
+						   nil t)
 			    (user-error "There are no todo files")))
 			 ((and (eq major-mode 'todo-archive-mode)
 			       ;; Called noninteractively via todo-quit
@@ -732,7 +732,10 @@ corresponding todo file, displaying the corresponding category."
 	(when (or (member file todo-visited)
 		  (eq todo-show-first 'first))
 	  (unless (todo-check-file file) (throw 'end nil))
-	  (set-window-buffer (selected-window)
+          ;; If todo-show is called from the minibuffer, don't visit
+          ;; the todo file there.
+	  (set-window-buffer (if (minibufferp) (minibuffer-selected-window)
+			       (selected-window))
 			     (set-buffer (find-file-noselect file 'nowarn)))
 	  (if (equal (file-name-extension (buffer-file-name)) "toda")
 	      (unless (derived-mode-p 'todo-archive-mode) (todo-archive-mode))
