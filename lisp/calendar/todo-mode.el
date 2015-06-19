@@ -743,6 +743,11 @@ corresponding todo file, displaying the corresponding category."
 	    (setq todo-category-number (todo-category-number cat)))
 	  ;; If this is a new todo file, add its first category.
 	  (when (zerop (buffer-size))
+            ;; Don't confuse an erased buffer with a fresh buffer for
+            ;; adding a new todo file -- it might have been erased by
+            ;; mistake or due to a bug (e.g. Bug#20832).
+            (when (buffer-modified-p)
+              (error "Buffer is empty but modified, please report a bug"))
 	    (let (cat-added)
 	      (unwind-protect
 		  (setq todo-category-number
