@@ -355,7 +355,7 @@ QUALITY can be:
         (pm (save-restriction (widen) (point-min))))
     (and (eq type 'utf-8)
          ;; Any post-read/pre-write conversions mean it's not really UTF-8.
-         (not (null (coding-system-get coding-system :pos-read-conversion)))
+         (not (null (coding-system-get coding-system :post-read-conversion)))
          (setq type 'not-utf-8))
     (and (memq type '(charset raw-text undecided))
          ;; The following are all of type 'charset', but they are
@@ -365,12 +365,6 @@ QUALITY can be:
                                        japanese-iso-8bit chinese-big5-hkscs
                                        japanese-cp932 korean-cp949)))
          (setq type 'single-byte))
-    ;; Any encoding that's not single-byte and not UTF-8 must use the
-    ;; 'exact' path if QUALITY is 'exact', because we have no simple
-    ;; mappings for those cases.
-    (and (not (memq type '(utf-8 single-byte)))
-         (eq quality 'exact)
-         (setq type 'use-exact))
     (pcase type
       (`utf-8
        (when (coding-system-get coding-system :bom)
@@ -378,17 +372,21 @@ QUALITY can be:
        (if (= eol 1)
            (filepos-to-bufferpos--dos (+ pm byte) #'byte-to-position)
          (byte-to-position (+ pm byte))))
-      (`utf-16
+      (`single-byte
+       (if (= eol 1)
+           (filepos-to-bufferpos--dos (+ pm byte) #'identity)
+         (+ pm byte)))
+      ((and `utf-16
+            ;; FIXME: For utf-16, we could use the same approach as used for
+            ;; dos EOLs (counting the number of non-BMP chars instead of the
+            ;; number of lines).
+            (guard (not (eq quality 'exact))))
        ;; Account for BOM, which is always 2 bytes in UTF-16.
        (when (coding-system-get coding-system :bom)
-         (setq byte (- byte 2)))
+         (setq byte (max 0 (- byte 2))))
        ;; In approximate mode, assume all characters are within the
        ;; BMP, i.e. take up 2 bytes.
        (setq byte (/ byte 2))
-       (if (= eol 1)
-           (filepos-to-bufferpos--dos (+ pm byte) #'identity)
-         (byte-to-position (+ pm byte))))
-      (`single-byte
        (if (= eol 1)
            (filepos-to-bufferpos--dos (+ pm byte) #'identity)
          (+ pm byte)))
