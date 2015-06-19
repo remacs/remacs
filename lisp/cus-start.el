@@ -221,12 +221,12 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 	     (no-redraw-on-reenter display boolean)
 
 	     ;; doc.c
-             (help-quote-translation help
-                                     (choice
-                                      (const :tag "No translation" nil)
-                                      (const :tag "Translate curly single quotes to ASCII" traditional)
-                                      (const :tag "Translate ASCII single quotes to curly" prefer-unicode)))
-
+	     (help-quote-translation help
+				     (choice
+				      (const :tag "No translation" nil)
+				      (const :tag "Translate curly single quotes to ASCII" traditional)
+				      (const :tag "Translate ASCII single quotes to curly" prefer-unicode))
+				     "25.1")
              ;; dosfns.c
 	     (dos-display-scancodes display boolean)
 	     (dos-hyper-key keyboard integer)

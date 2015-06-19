@@ -959,6 +959,8 @@ apostrophe `like-this'.  The new style looks better on today's displays.
 When an old-style string is copied to a help buffer it is converted to
 the new style.
 
+** New option `help-quote-translation'.
+
 +++
 ** Time-related changes:
 
