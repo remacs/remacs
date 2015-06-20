@@ -1024,8 +1024,6 @@ void
 syms_of_doc (void)
 {
   DEFSYM (Qfunction_documentation, "function-documentation");
-  DEFSYM (Qtraditional, "traditional");
-  DEFSYM (Qprefer_unicode, "prefer-unicode");
 
   DEFVAR_LISP ("internal-doc-file-name", Vdoc_file_name,
 	       doc: /* Name of file containing documentation strings of built-in symbols.  */);
