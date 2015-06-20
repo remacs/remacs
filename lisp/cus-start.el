@@ -226,7 +226,7 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 				      (character :tag "Quote ‘like this’" :value ?‘)
 				      (character :tag "Quote 'like this'" :value ?\')
 				      (character :tag "Quote `like this'" :value ?\`)
-				      (const :tag "Quote ‘like this’ if displyable, 'like this' otherwise" nil))
+				      (const :tag "Quote ‘like this’ if displayable, 'like this' otherwise" nil))
 				     "25.1")
              ;; dosfns.c
 	     (dos-display-scancodes display boolean)
