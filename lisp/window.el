@@ -5375,6 +5375,8 @@ windows can get as small as `window-safe-min-height' and
 			root))))
       (delete-other-windows-internal window root)))
 
+  (set-window-dedicated-p window nil)
+
   (let* ((frame (window-frame window))
 	 (head (car state))
 	 ;; We check here (1) whether the total sizes of root window of
