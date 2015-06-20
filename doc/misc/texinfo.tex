@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2015-06-01.15}
+\def\texinfoversion{2015-06-14.15}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -3196,8 +3196,15 @@ end
 \def\Eogonek{{\ecfont \char"86}}\def\macrocharE{E}
 \def\eogonek{{\ecfont \char"A6}}\def\macrochare{e}
 %
-% Use the ec* fonts (cm-super in outline format) for non-CM glyphs.
-\def\ecfont{%
+% Use the European Computer Modern fonts (cm-super in outline format)
+% for non-CM glyphs.  That is ec* for regular text and tc* for the text
+% companion symbols (LaTeX TS1 encoding).  Both are part of the ec
+% package and follow the same conventions.
+% 
+\def\ecfont{\etcfont{e}}
+\def\tcfont{\etcfont{t}}
+%
+\def\etcfont#1{%
   % We can't distinguish serif/sans and italic/slanted, but this
   % is used for crude hacks anyway (like adding French and German
   % quotes to documents typeset with CM, where we lose kerning), so
@@ -3206,14 +3213,14 @@ end
   \edef\nominalsize{\csname\curfontsize nominalsize\endcsname}%
   \ifmonospace
     % typewriter:
-    \font\thisecfont = ectt\ecsize \space at \nominalsize
+    \font\thisecfont = #1ctt\ecsize \space at \nominalsize
   \else
     \ifx\curfontstyle\bfstylename
       % bold:
-      \font\thisecfont = ecb\ifusingit{i}{x}\ecsize \space at \nominalsize
+      \font\thisecfont = #1cb\ifusingit{i}{x}\ecsize \space at \nominalsize
     \else
       % regular:
-      \font\thisecfont = ec\ifusingit{ti}{rm}\ecsize \space at \nominalsize
+      \font\thisecfont = #1c\ifusingit{ti}{rm}\ecsize \space at \nominalsize
     \fi
   \fi
   \thisecfont
@@ -9021,17 +9028,17 @@ directory should work if nowhere else does.}
 \def\latonechardefs{%
   \gdef^^a0{\tie}
   \gdef^^a1{\exclamdown}
-  \gdef^^a2{\missingcharmsg{CENT SIGN}}
-  \gdef^^a3{{\pounds}}
-  \gdef^^a4{\missingcharmsg{CURRENCY SIGN}}
-  \gdef^^a5{\missingcharmsg{YEN SIGN}}
-  \gdef^^a6{\missingcharmsg{BROKEN BAR}}
+  \gdef^^a2{{\tcfont \char162}} % cent
+  \gdef^^a3{\pounds}
+  \gdef^^a4{{\tcfont \char164}} % currency
+  \gdef^^a5{{\tcfont \char165}} % yen
+  \gdef^^a6{{\tcfont \char166}} % broken bar
   \gdef^^a7{\S}
   \gdef^^a8{\"{}}
   \gdef^^a9{\copyright}
   \gdef^^aa{\ordf}
   \gdef^^ab{\guillemetleft}
-  \gdef^^ac{$\lnot$}
+  \gdef^^ac{\ensuremath\lnot}
   \gdef^^ad{\-}
   \gdef^^ae{\registeredsymbol}
   \gdef^^af{\={}}
@@ -9396,7 +9403,11 @@ directory should work if nowhere else does.}
 \def\utfeightchardefs{%
   \DeclareUnicodeCharacter{00A0}{\tie}
   \DeclareUnicodeCharacter{00A1}{\exclamdown}
+  \DeclareUnicodeCharacter{00A2}{{\tcfont \char162}}% 0242=cent
   \DeclareUnicodeCharacter{00A3}{\pounds}
+  \DeclareUnicodeCharacter{00A4}{{\tcfont \char164}}% 0244=currency
+  \DeclareUnicodeCharacter{00A5}{{\tcfont \char165}}% 0245=yen
+  \DeclareUnicodeCharacter{00A6}{{\tcfont \char166}}% 0246=brokenbar
   \DeclareUnicodeCharacter{00A7}{\S}
   \DeclareUnicodeCharacter{00A8}{\"{ }}
   \DeclareUnicodeCharacter{00A9}{\copyright}

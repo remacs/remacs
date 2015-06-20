@@ -774,7 +774,7 @@ set_permissions (struct permission_context *ctx, const char *name, int desc)
 
   early_chmod = false;
 # else
-  /* All other plaforms */
+  /* All other platforms */
   /* On Cygwin, it is necessary to call chmod before acl, because
      chmod can change the contents of the ACL (in ways that don't
      change the allowed accesses, but still visible).  */
