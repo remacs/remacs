@@ -223,10 +223,11 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 	     ;; doc.c
 	     (help-quote-translation help
 				     (choice
-				      (character :tag "Quote ‘like this’" :value ?‘)
+				      (character :tag "Quote with curved quotes"
+                                                 :value ?‘)
 				      (character :tag "Quote 'like this'" :value ?\')
 				      (character :tag "Quote `like this'" :value ?\`)
-				      (const :tag "Quote ‘like this’ if displayable, 'like this' otherwise" nil))
+				      (const :tag "Quote with curved quotes if displayable, 'like this' otherwise" nil))
 				     "25.1")
              ;; dosfns.c
 	     (dos-display-scancodes display boolean)
