@@ -82,25 +82,21 @@ The following keyword types are meaningful: `:list',
 
 An error is thrown if MAP is neither a list, hash-table nor array.
 
-Return RESULT if non-nil or the result of evaluation of the
-form.
+Return RESULT if non-nil or the result of evaluation of the form.
 
 \(fn (VAR MAP [RESULT]) &rest ARGS)"
   (declare (debug t) (indent 1))
   (unless (listp spec)
     (setq spec `(,spec ,spec)))
-  (let ((map-var (car spec))
-        (result-var (make-symbol "result")))
-    `(let ((,map-var ,(cadr spec))
-           ,result-var)
-       (setq ,result-var
-             (cond ((listp ,map-var) ,(plist-get args :list))
-                   ((hash-table-p ,map-var) ,(plist-get args :hash-table))
-                   ((arrayp ,map-var) ,(plist-get args :array))
-                   (t (error "Unsupported map: %s" ,map-var))))
-       ,@(when (cddr spec)
-           `((setq ,result-var ,@(cddr spec))))
-       ,result-var)))
+  (let ((map-var (car spec)))
+    `(let* ,(unless (eq map-var (cadr spec)) `((,map-var ,(cadr spec))))
+       (cond ((listp ,map-var) ,(plist-get args :list))
+             ((hash-table-p ,map-var) ,(plist-get args :hash-table))
+             ((arrayp ,map-var) ,(plist-get args :array))
+             (t (error "Unsupported map: %s" ,map-var)))
+       ,@(cddr spec))))
+
+(put 'map--raw-place 'gv-expander #'funcall)
 
 (defun map-elt (map key &optional default)
   "Perform a lookup in MAP of KEY and return its associated value.
@@ -109,26 +105,34 @@ If KEY is not found, return DEFAULT which defaults to nil.
 If MAP is a list, `eql' is used to lookup KEY.
 
 MAP can be a list, hash-table or array."
+  (declare
+   (gv-expander
+    (lambda (do)
+      (gv-letplace (mgetter msetter) map
+        (macroexp-let2* nil
+            ;; Eval them once and for all in the right order.
+            ((key key) (default default))
+          `(map--dispatch ,mgetter
+             :list ,(gv-get `(alist-get ,key (map--raw-place ,mgetter ,msetter)
+                                        ,default)
+                            do)
+             :hash-table ,(gv-get `(gethash ,key (map--raw-place ,mgetter ,msetter)
+                                            ,default))
+             :array ,(gv-get (aref (map--raw-place ,mgetter ,msetter) ,key)
+                             do)))))))
   (map--dispatch map
     :list (alist-get key map default)
     :hash-table (gethash key map default)
     :array (map--elt-array map key default)))
 
-(defmacro map-put (map key value)
+(defun map-put (map key value)
   "In MAP, associate KEY with VALUE and return MAP.
 If KEY is already present in MAP, replace the associated value
 with VALUE.
 
 MAP can be a list, hash-table or array."
-  (declare (debug t))
-  (let ((symbol (symbolp map)))
-    `(progn
-       (map--dispatch (m ,map m)
-         :list (if ,symbol
-                   (setq ,map (cons (cons ,key ,value) m))
-                 (error "Literal lists are not allowed, %s must be a symbol" ',map))
-         :hash-table (puthash ,key ,value m)
-         :array (aset m ,key ,value)))))
+  (setf (map-elt map key) value)
+  map)
 
 (defmacro map-delete (map key)
   "In MAP, delete the key KEY if present and return MAP.
