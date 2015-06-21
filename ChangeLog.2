@@ -1,3 +1,511 @@
+2015-06-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Improve port of settings UI to older displays
+	* lisp/cus-start.el (standard): Don't assume curved quotes are
+	easily distinguishable when users are tinkering with a setting
+	that affects how curved quotes are generated.
+
+	Fix quoting in electric-quote-mode doc string
+	* lisp/electric.el (electric-quote-mode): Fix quoting.
+	This is a fallout from the recent change introducing
+	‘help-quote-translation’.
+
+	Spelling fix
+
+	* doc/misc/texinfo.tex, lib/set-permissions.c: Merge from gnulib.
+
+	* src/doc.c (syms_of_doc): Remove unused symbols.
+
+2015-06-20  Martin Rudalics  <rudalics@gmx.at>
+
+	In ‘window-state-put’ undedicate target window.  (Bug#20848)
+	* lisp/window.el (window-state-put): Undedicate target window
+	before putting STATE into it.  (Bug#20848)
+
+2015-06-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from origin/emacs-24
+	a5e6f33 Fixes: debbugs:20832
+	b9f02cf Fixes: debbugs:20832
+
+2015-06-19  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix file-in-directory-p when the directory is UNC
+	* lisp/files.el (file-in-directory-p): Support files and
+	directories that begin with "//".  (Bug#20844)
+
+2015-06-19  Stephen Berman  <stephen.berman@gmx.net>
+
+	(Bug#20832)
+	* lisp/calendar/todo-mode.el (todo-show): Don't visit todo file
+	in the minibuffer.
+
+2015-06-19  Nicolas Richard  <youngfrog@members.fsf.org>
+
+	(Bug#20832)
+	* lisp/calendar/todo-mode.el (todo-show): Signal an error
+	if buffer for adding new todo file is empty but modified.
+
+2015-06-19  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	(filepos-to-bufferpos): Further tweaks to the utf-16 code
+	* lisp/international/mule-util.el (filepos-to-bufferpos):
+	Fix typo.  Move non-exact check to the utf-16 branch (the only one
+	affected).  Don't use byte-to-position for the utf-16 case.
+
+2015-06-19  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor fixes in filepos-to-bufferpos
+	* lisp/international/mule-util.el (filepos-to-bufferpos): Remove
+	test for utf-8-emacs.  Exempt single-byte encodings from the
+	'use-exact' path when QUALITY is 'exact'.  Test UTF-16 encodings
+	for BOM before subtracting 2 bytes.  Use 'identity' when adjusting
+	UTF-16 encoded files for CR-LF EOLs.
+
+2015-06-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Improve the optional translation of quotes
+	Fix several problems with the recently-added custom variable
+	help-quote-translation where the code would quote inconsistently
+	in help buffers.  Add support for quoting 'like this', which
+	is common in other GNU programs in ASCII environments.  Change
+	help-quote-translation to use more mnemonic values: values are now the
+	initial quoting char, e.g., (setq help-quote-translation ?`) gets the
+	traditional Emacs help-buffer quoting style `like this'.  Change the
+	default behavior of substitute-command-keys to match what's done in
+	set-locale-environment, i.e., quote ‘like this’ if displayable,
+	'like this' otherwise.
+	* doc/lispref/help.texi (Keys in Documentation): Document
+	new behavior of substitute-command-keys, and document
+	help-quote-translation.
+	* doc/lispref/tips.texi (Documentation Tips):
+	Mention the effect of help-quote-translation.
+	* etc/NEWS: Mention new behavior of substitute-command-keys,
+	and merge help-quote-translation news into it.
+	When talking about doc strings, mention new ways to type quotes.
+	* lisp/cedet/mode-local.el (overload-docstring-extension):
+	Revert my recent change to this function, which shouldn't be
+	needed as the result is a doc string.
+	* lisp/cedet/mode-local.el (mode-local-print-binding)
+	(mode-local-describe-bindings-2):
+	* lisp/cedet/srecode/srt-mode.el (srecode-macro-help):
+	* lisp/cus-theme.el (describe-theme-1):
+	* lisp/descr-text.el (describe-text-properties-1, describe-char):
+	* lisp/emacs-lisp/cl-generic.el (cl--generic-describe):
+	* lisp/emacs-lisp/eieio-opt.el (eieio-help-class)
+	(eieio-help-constructor):
+	* lisp/emacs-lisp/package.el (describe-package-1):
+	* lisp/faces.el (describe-face):
+	* lisp/help-fns.el (help-fns--key-bindings)
+	(help-fns--compiler-macro, help-fns--parent-mode)
+	(help-fns--obsolete, help-fns--interactive-only)
+	(describe-function-1, describe-variable):
+	* lisp/help.el (describe-mode):
+	Use substitute-command-keys to ensure a more-consistent quoting
+	style in help buffers.
+	* lisp/cus-start.el (standard):
+	Document new help-quote-translation behavior.
+	* lisp/emacs-lisp/lisp-mode.el (lisp-fdefs):
+	* lisp/help-mode.el (help-xref-symbol-regexp, help-xref-info-regexp)
+	(help-xref-url-regexp):
+	* lisp/international/mule-cmds.el (help-xref-mule-regexp-template):
+	* lisp/wid-edit.el (widget-documentation-link-regexp):
+	Also match 'foo', in case we're in a help buffer generated when
+	help-quote-translation is ?'.
+	* src/doc.c: Include disptab.h, for DISP_CHAR_VECTOR.
+	(LEFT_SINGLE_QUOTATION_MARK, uLSQM0, uLSQM1, uLSQM2, uRSQM0)
+	(uRSQM1, uRSQM2, LSQM, RSQM): New constants.
+	(Fsubstitute_command_keys): Document and implement new behavior.
+	(Vhelp_quote_translation): Document new behavior.
+
+2015-06-18  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/cus-start.el (help-quote-translation): Add :version.
+
+	* src/doc.c (Fsubstitute_command_keys): Make previous change compile.
+
+2015-06-18  Alan Mackenzie  <acm@muc.de>
+
+	Make translation of quotes to curly in doc strings optional.
+	src/doc.c (traditional, prefer-unicode): new symbols.
+	(help-quote-translation): new variable.
+	(Fsubstitute_command_keys): make translation of quotes dependent on
+	`help-quote-translation'; also translate curly quotes back to ASCII
+	ones.
+	lisp/cus-start.el (top-level): Add a customization entry for
+	`help-quote-translation'.
+
+2015-06-18  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/package.el: Don't always propagate async errors
+	(package--with-work-buffer-async): Only propagate the error if the
+	callback returns non-nil.
+	(package--download-one-archive): Return nil on the signature
+	checking callback if we accept unsigned.
+	(package--download-and-read-archives): Return non-nil on the
+	archive download callback.
+
+2015-06-18  Martin Rudalics  <rudalics@gmx.at>
+
+	Fix last fix"
+
+	Set image_cache_refcount before x_default_parameter calls.  (Bug#20802)
+	* src/nsfns.m (Fx_create_frame):
+	* src/xfns.c (Fx_create_frame, x_create_tip_frame): Move setting
+	image_cache_refcount before first x_default_parameter call.
+
+2015-06-18  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve and extend filepos-to-bufferpos
+	* lisp/international/mule-util.el (filepos-to-bufferpos--dos):
+	Don't barf if F returns nil for some argument.
+	(filepos-to-bufferpos): Expand to support UTF-16 and not assume
+	that every encoding of type 'charset' is single-byte.
+
+2015-06-18  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/package.el (package-menu--perform-transaction):
+	Properly delete packages.  (Bug#20836)
+
+2015-06-18  Eli Zaretskii  <eliz@gnu.org>
+
+	Update data files from just-released Unicode 8.0
+	* etc/NEWS: Update wording since Unicode 8.0 is no longer in draft
+	status.
+	* test/BidiCharacterTest.txt: Update from Unicode 8.0.
+	* admin/unidata/BidiMirroring.txt:
+	* admin/unidata/BidiBrackets.txt:
+	* admin/unidata/UnicodeData.txt: Update from Unicode 8.0.
+
+2015-06-18  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Document curved quotes a bit better
+	* doc/emacs/basic.texi (Inserting Text):
+	Mention C-x 8.  Change example to use curved quote rather
+	than infinity, as this lets us give more ways to do it.
+	* doc/emacs/mule.texi (International Chars): Mention C-x 8 shortcuts
+	and quotation marks.
+	* doc/emacs/text.texi (Quotation Marks):
+	* doc/lispref/tips.texi (Documentation Tips):
+	Add "curly quotes" and "curved quotes" to the index.
+	* doc/emacs/text.texi (Quotation Marks):
+	Give the C-x 8 shorthands for curved quotes.
+	Cross-reference to "Quotation Marks".
+
+2015-06-17  Daiki Ueno  <ueno@gnu.org>
+
+	Add pinentry.el for better GnuPG integration
+	* lisp/pinentry.el: New file.
+	* etc/NEWS: Add entry about pinentry.el.
+	* lisp/epg.el (epg--start): Set INSIDE_EMACS envvar.
+	(Bug#20550)
+
+2015-06-17  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/package.el: Slightly better error reporting.
+
+2015-06-17  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	(define-minor-mode): Use setq-default for :global minor modes
+	* lisp/emacs-lisp/easy-mmode.el (define-minor-mode):
+	Use setq-default for :global minor modes (bug#20712).
+
+2015-06-17  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid infloop in redisplay with tall images
+	* src/xdisp.c (try_scrolling): Prevent an infloop when scrolling
+	down near ZV.  (Bug#20808)
+	Call bidi_unshelve_cache to avoid memory leaks.  Use IT_CHARPOS
+	instead of CHARPOS.
+
+2015-06-17  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/package.el (package--with-work-buffer-async):
+	Fix error reporting.
+
+	* lisp/let-alist.el: move to lisp/emacs-lisp/let-alist.el
+
+	* lisp/emacs-lisp/package.el: Revert buffer after any operation
+	Call `package-menu--post-refresh' after any operation that changes
+	the package database (`package-install' and `package-delete').  To
+	avoid performance issues in large transactions, these functions
+	add `post-refresh' to `post-command-hook' instead of calling it
+	immediately.
+	(package-menu--mark-or-notify-upgrades): New function.
+	(list-packages): Add it to `package--post-download-archives-hook'.
+	(package-menu--post-refresh): Lose the upgrade-checking code, add
+	code to remove itself from `post-command-hook'.
+	(package-install, package-delete): Add it to `post-command-hook'.
+	(package-menu-execute): Don't call `package-menu--post-refresh'.
+
+2015-06-17  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	Add missing function xref-location-group for elisp-mode.
+	* lisp/progmodes/elisp-mode.el: Add missing function xref-location-group.
+
+2015-06-17  Wolfgang Jenkner  <wjenkner@inode.at>
+
+	* src/editfns.c (Fbyte_to_position): Fix bytepos not at char boundary.
+	The behavior now matches the description in the manual.  (Bug#20783)
+
+2015-06-17  Xue Fuqiao  <xfq.free@gmail.com>
+
+	Update tutorials/TUTORIAL.cn
+	* etc/tutorials/TUTORIAL.cn: Update; synchronize with TUTORIAL.
+
+2015-06-17  Glenn Morris  <rgm@gnu.org>
+
+	Generate char-script-table from Unicode source.  (Bug#20789)
+	* admin/unidata/Makefile.in (AWK): New, set by configure.
+	(all): Add charscript.el.
+	(blocks): New variable.
+	(charscript.el, ${unidir}/charscript.el): New targets.
+	(extraclean): Also remove generated charscript.el.
+	* admin/unidata/blocks.awk: New script.
+	* admin/unidata/Blocks.txt: New data file, from unicode.org.
+	* lisp/international/characters.el: Load charscript.
+	* src/Makefile.in (charscript): New variable.
+	(${charscript}): New target.
+	(${lispintdir}/characters.elc): Depend on charscript.elc.
+	(temacs$(EXEEXT)): Depend on charscript.
+
+	* lisp/international/characters.el (char-script-table): Tweak
+	some ranges to better match the source.  (Bug#20789#17)
+
+	Remove "no-byte-compile: t" from a few files.
+	* lisp/obsolete/bruce.el, lisp/obsolete/keyswap.el:
+	* lisp/obsolete/patcomp.el: No reason not to compile these.
+
+2015-06-16  Glenn Morris  <rgm@gnu.org>
+
+	Fix some typos in copied Unicode data.  (Bug#20789)
+	* lisp/international/characters.el (char-script-table):
+	* lisp/international/fontset.el (script-representative-chars)
+	(setup-default-fontset): Fix typos.
+
+	* lisp/emacs-lisp/check-declare.el (check-declare-warn):
+	Don't print filename twice (it's in the prefix now).
+
+	* lisp/emacs-lisp/pcase.el (pcase--u1): Revert earlier workaround.
+	No longer needed.
+
+	Address a compilation warning.
+	* lisp/emacs-lisp/bytecomp.el (byte-compile-file-form-defalias):
+	Replace 't' with '_' in pcase.
+
+	Address some check-declare warnings.
+	* lisp/simple.el (tabulated-list-print):
+	* lisp/progmodes/elisp-mode.el (xref-collect-matches):
+	* lisp/term/ns-win.el (ns-selection-owner-p, ns-selection-exists-p)
+	(ns-get-selection): Update declarations.
+
+	Address some compilation warnings.
+	* lisp/elec-pair.el (electric-pair-post-self-insert-function):
+	* lisp/vc/vc-git.el (vc-git-file-type-as-string):
+	Replace 't' with '_' in pcase.
+
+	Address some compilation warnings.
+	* lisp/face-remap.el (text-scale-adjust):
+	* lisp/menu-bar.el (popup-menu-normalize-position):
+	* lisp/emacs-lisp/byte-opt.el (byte-compile-inline-expand):
+	* lisp/emacs-lisp/bytecomp.el (byte-compile-arglist-warn):
+	* lisp/emacs-lisp/generator.el (cps--transform-1):
+	* lisp/emacs-lisp/macroexp.el (macroexp--expand-all):
+	* lisp/obsolete/vc-arch.el (vc-arch-mode-line-string):
+	* lisp/progmodes/octave.el (octave-goto-function-definition)
+	(octave-find-definition-default-filename):
+	Replace 't' with '_' in pcase.
+
+	* lisp/emacs-lisp/pcase.el (pcase--u1):
+	Paper-over today's bootstrap failure.
+
+2015-06-16  Nicolas Petton  <nicolas@petton.fr>
+
+	* lisp/emacs-lisp/seq.el: Fix a byte-compiler warnings related to pcase.
+
+	* lisp/emacs-lisp/map.el (map-into): Fix a byte-compiler warning.
+
+	Better confirmation message in `find-alternate-file' (Bug#20830)
+	* lisp/files.el (find-alternate-file'): Improve the confirmation
+	message to show the buffer name.
+
+	Better docstring for null. (Bug#20815)
+	* src/data.c (null): Improves the docstring, saying what null returns
+	when OBJECT is non-nil.
+
+2015-06-16  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/net/newst-treeview.el: Use lexical-binding.
+
+	(filepos-to-bufferpos): Add missing cases.  Make sure it terminates.
+	* lisp/international/mule-util.el (filepos-to-bufferpos--dos):
+	New auxiliary function, extracted from filepos-to-bufferpos.
+	Make sure it terminates.
+	(filepos-to-bufferpos): Use it to fix the latin-1-dos case.
+	Add support for the `exact' quality.
+
+2015-06-16  Cédric Chépied  <cedric.chepied@gmail.com>
+
+	Identify feeds in newsticker treeview with :nt-feed property
+	* lisp/net/newst-treeview.el:
+	(newsticker--treeview-nodes-eq): Use property :nt-feed instead of :tag.
+
+2015-06-16  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/emacs-lisp/pcase.el: Improve docs and error handling
+	(pcase--self-quoting-p): Floats aren't self-quoting.
+	(pcase): Tweak docstring.
+	(pcase--u1): Deprecate the t pattern.  Improve error detection for
+	the nil pattern.
+	(\`): Tweak docstring.  Signal an error for unrecognized cases.
+	(bug#20784)
+
+2015-06-16  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix infloop in filepos-to-bufferpos
+	* lisp/international/mule-util.el (filepos-to-bufferpos): Fix EOL
+	offset calculation, and make it conditional on the eol-type of the
+	file's encoding.  (Bug#20825)
+
+2015-06-16  Martin Rudalics  <rudalics@gmx.at>
+
+	Fix handling of image cache refcounts.  (Bug#20802)
+	This backports Eli Zaretskii's solution of this problem for W32
+	to X and NS.
+	* src/nsfns.m (image_cache_refcount): Define unconditionally.
+	(unwind_create_frame): If the image cache's reference count
+	hasn't been updated yet, do that now.
+	(Fx_create_frame): Set image_cache_refcount unconditionally.
+	* src/xfns.c (image_cache_refcount): Define unconditionally.
+	(unwind_create_frame): If the image cache's reference count
+	hasn't been updated yet, do that now.
+	(Fx_create_frame, x_create_tip_frame): Set image_cache_refcount
+	unconditionally.
+	* src/w32fns.c (image_cache_refcount): Make it a ptrdiff_t as on
+	X and NS.
+
+2015-06-16  Nils Ackermann  <nils@ackermath.info>
+
+	Improve reftex-label-regexps default value
+	* lisp/textmodes/reftex-vars.el (reftex-label-regexps): Make
+	keyvals label regexp more strict to better cope with unbalanced
+	brackets common in math documents.
+
+2015-06-16  Glenn Morris  <rgm@gnu.org>
+
+	* doc/emacs/calendar.texi (Format of Diary File):
+	Move "nonmarking" from here...
+	(Displaying the Diary): ... to here.
+
+	* doc/emacs/calendar.texi (Format of Diary File, Displaying the Diary):
+	Swap the order of these nodes.
+	* doc/emacs/emacs.texi: Update detailed menu for the above change.
+
+	* doc/emacs/calendar.texi (Specified Dates, Special Diary Entries):
+	Update date of examples.
+	(Diary, Format of Diary File): Move example from former to latter.
+	Reduce duplication.
+
+	No need for cp51932.el, eucjp-ms.el to not be compiled any more.
+	* admin/charsets/cp51932.awk, admin/charsets/eucjp-ms.awk:
+	Don't set no-byte-compile in the outputs.
+	* lisp/loadup.el: Don't specify uncompiled cp51932, eucjp-ms.
+
+2015-06-15  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/calendar/calendar.el (diary-file): Use locate-user-emacs-file.
+	* doc/emacs/calendar.texi (Diary, Format of Diary File):
+	Update for above diary-file change.
+	: * etc/NEWS: Mention this.
+
+	* lisp/macros.el (name-last-kbd-macro, kbd-macro-query)
+	(apply-macro-to-region-lines): Use user-error.
+
+	* lisp/textmodes/page-ext.el (add-new-page, pages-directory)
+	(pages-directory-for-addresses): Doc fixes.
+
+2015-06-15  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/info.el: Cleanup bytepos/charpos issues
+	* lisp/international/mule-util.el: Use lexical-binding.
+	(filepos-to-bufferpos): New function.
+	* lisp/info.el (Info-find-in-tag-table-1): Use 0-based file positions.
+	(Info-find-node-2): Use filepos-to-bufferpos (bug#20704).
+	(Info-read-subfile, Info-search): Use 0-based file positions.
+
+	* lisp/progmodes/perl-mode.el: Refine handling of /re/ and y/abc/def/
+	(perl--syntax-exp-intro-keywords): New var.
+	(perl--syntax-exp-intro-regexp, perl-syntax-propertize-function): Use it.
+	(bug#20800).
+
+2015-06-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix quoting when making derived mode docstring
+	* lisp/emacs-lisp/derived.el (derived-mode-make-docstring):
+	Nest regexp-quote inside format, not the reverse.
+	Problem reported by Artur Malabarba in:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-06/msg00206.html
+
+2015-06-15  Eli Zaretskii  <eliz@gnu.org>
+
+	;* src/fontset.c: Update obsolete commentary.
+
+	Fix current-iso639-language on MS-Windows
+	* lisp/international/mule-cmds.el (set-locale-environment):
+	Downcase the locale name before interning it.  This is so the
+	'current-iso639-language' on MS-Windows matches the ':lang'
+	property of font-spec objects.
+
+	Limit Symbola usage some more
+	* lisp/international/fontset.el (setup-default-fontset): Limit
+	Symbol coverage of Currency Symbols to u+20B6..u+20CF.
+	(Bug#20727)
+
+2015-06-15  Nicolas Petton  <nicolas@petton.fr>
+
+	* lisp/emacs-lisp/map.el (map-let): Better docstring.
+
+2015-06-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Spelling fixes
+
+2015-06-14  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/version.el (emacs-repository-version-git): Demote errors.
+	Check result is a hash.
+
+2015-06-14  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/package.el (package--with-work-buffer-async):
+	Catch errors that happen before going async.  (Bug#20809)
+
+2015-06-14  Eli Zaretskii  <eliz@gnu.org>
+
+	Another improvement of documentation of set-fontset-font
+	* doc/lispref/display.texi (Fontsets): Say explicitly that
+	CHARACTER can be a single codepoint.
+	* src/fontset.c (Fset_fontset_font): Doc fix.
+
+	Another improvement for symbol and punctuation characters
+	* lisp/international/fontset.el (setup-default-fontset): Exclude
+	from Symbola character ranges for symbols and punctuation covered
+	well by popular Unicode fonts.  Prefer fixed-misc Unicode font, if
+	installed and where its coverage of symbols and punctuation is
+	known to be good.  (Bug#20727)
+
+2015-06-14  Christoph Wedler  <christoph.wedler@sap.com>
+
+	Some generic support for multi-mode indentation.
+		* lisp/progmodes/prog-mode.el (prog-indentation-context): New
+		variable.
+		(prog-first-column, prog-widen): New convenience functions.
+
+2015-06-14  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/tabulated-list.el (tabulated-list-print):
+	Don't assume that `tabulated-list-printer' will leave point at the
+	end of the buffer.  (Bug#20810)
+
 2015-06-13  Glenn Morris  <rgm@gnu.org>
 
 	Tweaks for getting repository version; a bit more like it was for bzr.
@@ -5933,7 +6441,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit 86076e65524933f7d1c9812cec292fdc7d5dc60c (inclusive).
+commit bf32130d7debe3ee6dbd9974e50bb4a2a48047f4 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
