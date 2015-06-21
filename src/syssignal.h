@@ -36,7 +36,9 @@ extern void unblock_tty_out_signal (sigset_t const *);
 # define HAVE_ITIMERSPEC
 #endif
 
-#if (defined SIGPROF && !defined PROFILING \
+/* On Cygwin, setitimer does not support ITIMER_PROF, so we can't
+   support CPU profiling. */
+#if (defined SIGPROF && !defined PROFILING && !defined CYGWIN \
      && (defined HAVE_SETITIMER || defined HAVE_ITIMERSPEC))
 # define PROFILER_CPU_SUPPORT
 #endif
