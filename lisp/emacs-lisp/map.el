@@ -106,11 +106,11 @@ form.
   "Perform a lookup in MAP of KEY and return its associated value.
 If KEY is not found, return DEFAULT which defaults to nil.
 
-If MAP is a list, `equal' is used to lookup KEY.
+If MAP is a list, `eql' is used to lookup KEY.
 
 MAP can be a list, hash-table or array."
   (map--dispatch map
-    :list (map--elt-list map key default)
+    :list (alist-get key map default)
     :hash-table (gethash key map default)
     :array (map--elt-array map key default)))
 
@@ -323,14 +323,6 @@ MAP can be a list, hash-table or array."
                    (funcall function index elt)
                  (setq index (1+ index))))
              map)))
-
-(defun map--elt-list (map key &optional default)
-  "Lookup, in the list MAP, the value associated with KEY and return it.
-If KEY is not found, return DEFAULT which defaults to nil."
-  (let ((pair (assoc key map)))
-    (if pair
-        (cdr pair)
-      default)))
 
 (defun map--elt-array (map key &optional default)
   "Return the element of the array MAP at the index KEY.
