@@ -3318,7 +3318,7 @@ display the error buffer if there were any errors.  When called
 interactively, this is t."
   (interactive (let (string)
 		 (unless (mark)
-		   (error "The mark is not set now, so there is no region"))
+		   (user-error "The mark is not set now, so there is no region"))
 		 ;; Do this before calling region-beginning
 		 ;; and region-end, in case subprocess output
 		 ;; relocates them while we are in the minibuffer.
