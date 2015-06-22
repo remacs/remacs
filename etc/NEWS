@@ -316,7 +316,7 @@ always respect that.
 priority (as per `package-archive-priorities') only that one is
 listed. This can be configured with `package-menu-hide-low-priority'.
 
-*** `package-menu-hide-obsolete' now toggles the hiding of packages.
+*** `package-menu-toggle-hiding' now toggles the hiding of packages.
 This includes the above-mentioned low-priority packages, as well as
 available packages whose version is lower than the currently installed
 version (which were previously impossible to display).

@@ -237,8 +237,8 @@ This variable has three possible values:
     archive: only criteria (a) is used;
     t: both criteria are used.
 
-This variable has no effect if `package-menu--hide-obsolete' is
-nil, so it can be toggled with \\<package-menu-mode-map> \\[package-menu-hide-obsolete]."
+This variable has no effect if `package-menu--hide-packages' is
+nil, so it can be toggled with \\<package-menu-mode-map> \\[package-menu-toggle-hiding]."
   :type '(choice (const :tag "Don't hide anything" nil)
                  (const :tag "Hide per package-archive-priorities"
                         archive)
@@ -2379,7 +2379,7 @@ will be deleted."
     (define-key map "x" 'package-menu-execute)
     (define-key map "h" 'package-menu-quick-help)
     (define-key map "?" 'package-menu-describe-package)
-    (define-key map "(" #'package-menu-hide-obsolete)
+    (define-key map "(" #'package-menu-toggle-hiding)
     (define-key map [menu-bar package-menu] (cons "Package" menu-map))
     (define-key menu-map [mq]
       '(menu-item "Quit" quit-window
@@ -2538,26 +2538,26 @@ of these dependencies, similar to the list returned by
         (cond
          ;; Installed obsolete packages are handled in the `dir'
          ;; clause above.  Here we handle available obsolete, which
-         ;; are displayed depending on `package-menu--hide-obsolete'.
+         ;; are displayed depending on `package-menu--hide-packages'.
          ((and ins (version-list-<= version ins-v)) "avail-obso")
          (t
           (if (memq name package-menu--new-package-list)
               "new" "available"))))))))
 
-(defvar package-menu--hide-obsolete t
+(defvar package-menu--hide-packages t
   "Whether available obsolete packages should be hidden.
-Can be toggled with \\<package-menu-mode-map> \\[package-menu-hide-obsolete].
+Can be toggled with \\<package-menu-mode-map> \\[package-menu-toggle-hiding].
 Installed obsolete packages are always displayed.")
 
-(defun package-menu-hide-obsolete ()
+(defun package-menu-toggle-hiding ()
   "Toggle visibility of obsolete available packages."
   (interactive)
   (unless (derived-mode-p 'package-menu-mode)
     (user-error "The current buffer is not a Package Menu"))
-  (setq package-menu--hide-obsolete
-        (not package-menu--hide-obsolete))
   (message "%s available-obsolete packages" (if package-menu--hide-obsolete
                                                 "Hiding" "Displaying"))
+  (setq package-menu--hide-packages
+        (not package-menu--hide-packages))
   (revert-buffer nil 'no-confirm))
 
 (defun package--remove-hidden (pkg-list)
@@ -2567,8 +2567,8 @@ same name, sorted by decreasing `package-desc-priority-version'.
 Return a list of packages tied for the highest priority according
 to their archives."
   (when pkg-list
-    ;; Variable toggled with `package-menu-hide-obsolete'.
-    (if (not package-menu--hide-obsolete)
+    ;; Variable toggled with `package-menu-toggle-hiding'.
+    (if (not package-menu--hide-packages)
         pkg-list
       (let ((installed (cadr (assq (package-desc-name (car pkg-list))
                                    package-alist))))
