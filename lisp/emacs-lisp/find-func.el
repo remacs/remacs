@@ -550,11 +550,11 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
   (interactive (find-function-read 'defface))
   (find-function-do-it face 'defface 'switch-to-buffer))
 
-;;;###autoload
-(defun find-function-on-key (key)
+(defun find-function-on-key-do-it (key find-fn)
   "Find the function that KEY invokes.  KEY is a string.
-Set mark before moving, if the buffer already existed."
-  (interactive "kFind function on key: ")
+Set mark before moving, if the buffer already existed.
+
+FIND-FN is the function to call to navigate to the function."
   (let (defn)
     (save-excursion
       (let* ((event (and (eventp key) (aref key 0))) ; Null event OK below.
@@ -575,7 +575,28 @@ Set mark before moving, if the buffer already existed."
 	  (message "%s is unbound" key-desc)
 	(if (consp defn)
 	    (message "%s runs %s" key-desc (prin1-to-string defn))
-	  (find-function-other-window defn))))))
+	  (funcall find-fn defn))))))
+
+;;;###autoload
+(defun find-function-on-key (key)
+  "Find the function that KEY invokes.  KEY is a string.
+Set mark before moving, if the buffer already existed."
+  (interactive "kFind function on key: ")
+  (find-function-on-key-do-it key #'find-function))
+
+;;;###autoload
+(defun find-function-on-key-other-window (key)
+  "Find, in the other window, the function that KEY invokes.
+See `find-function-on-key'."
+  (interactive "kFind function on key: ")
+  (find-function-on-key-do-it key #'find-function-other-window))
+
+;;;###autoload
+(defun find-function-on-key-other-frame (key)
+  "Find, in the other frame, the function that KEY invokes.
+See `find-function-on-key'."
+  (interactive "kFind function on key: ")
+  (find-function-on-key-do-it key #'find-function-other-frame))
 
 ;;;###autoload
 (defun find-function-at-point ()
@@ -600,6 +621,8 @@ Set mark before moving, if the buffer already existed."
   (define-key ctl-x-4-map "F" 'find-function-other-window)
   (define-key ctl-x-5-map "F" 'find-function-other-frame)
   (define-key ctl-x-map "K" 'find-function-on-key)
+  (define-key ctl-x-4-map "K" 'find-function-on-key-other-window)
+  (define-key ctl-x-5-map "K" 'find-function-on-key-other-frame)
   (define-key ctl-x-map "V" 'find-variable)
   (define-key ctl-x-4-map "V" 'find-variable-other-window)
   (define-key ctl-x-5-map "V" 'find-variable-other-frame))
