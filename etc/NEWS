@@ -1089,6 +1089,10 @@ of Windows starting with Windows 9X.
 ** The byte counts in etags-generated TAGS files are now the same on
 MS-Windows as they are on other platforms.
 
+---
+** On OS X, configure creates a Cocoa ("Nextstep") build by default.
+Pass '--without-ns' to configure to create an X11 build, the old default.
+
 ** OS X 10.5 or older is no longer supported.
 
 ** OS X on PowerPC is no longer supported.

@@ -341,7 +341,9 @@ OPTION_DEFAULT_ON([m17n-flt],[don't use m17n-flt for text shaping])
 OPTION_DEFAULT_ON([toolkit-scroll-bars],[don't use Motif or Xaw3d scroll bars])
 OPTION_DEFAULT_ON([xaw3d],[don't use Xaw3d])
 OPTION_DEFAULT_ON([xim],[don't use X11 XIM])
-OPTION_DEFAULT_OFF([ns],[use NeXTstep (Cocoa or GNUstep) windowing system])
+AC_ARG_WITH([ns],[AS_HELP_STRING([--with-ns],
+[use Nextstep (OS X Cocoa or GNUstep) windowing system.
+On by default on Mac OS X.])],[],[with_ns=maybe])
 OPTION_DEFAULT_OFF([w32], [use native MS Windows GUI in a Cygwin build])
 
 OPTION_DEFAULT_ON([gpm],[don't use -lgpm for mouse support on a GNU/Linux console])
@@ -1746,6 +1748,7 @@ else
   fi
 fi
 
+test "${with_ns}" = maybe && test "${opsys}" != darwin && with_ns=no
 HAVE_NS=no
 NS_GNUSTEP_CONFIG=no
 NS_IMPL_COCOA=no
@@ -1816,8 +1819,9 @@ fail;
   CFLAGS="$CFLAGS $GNU_OBJC_CFLAGS"
 
   AC_CHECK_HEADER([AppKit/AppKit.h], [HAVE_NS=yes],
-		  [AC_MSG_ERROR(['--with-ns' was specified, but the include
-  files are missing or cannot be compiled.])])
+		  [AC_MSG_ERROR([The include files (AppKit/AppKit.h etc) that
+are required for a Nextstep build are missing or cannot be compiled.
+Either fix this, or re-configure with the option '--without-ns'.])])
 
   macfont_file=""
   if test "${NS_IMPL_COCOA}" = "yes"; then
@@ -2670,7 +2674,7 @@ NOTIFY_SUMMARY=no
 
 dnl FIXME?  Don't auto-detect on NS, but do allow someone to specify
 dnl a particular library.  This doesn't make much sense?
-if test "${with_ns}" = yes && test ${with_file_notification} = yes; then
+if test "${HAVE_ns}" = yes && test ${with_file_notification} = yes; then
   with_file_notification=no
 fi
 
