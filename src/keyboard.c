@@ -4372,9 +4372,6 @@ timer_resume_idle (void)
   timer_idleness_start_time = timer_last_idleness_start_time;
 }
 
-/* This is only for debugging.  */
-struct input_event last_timer_event EXTERNALLY_VISIBLE;
-
 /* List of elisp functions to call, delayed because they were generated in
    a context where Elisp could not be safely run (e.g. redisplay, signal,
    ...).  Each element has the form (FUN . ARGS).  */
