@@ -7358,10 +7358,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 		   const XEvent *event,
 		   int *finish, struct input_event *hold_quit)
 {
-  union {
-    struct input_event ie;
-    struct selection_input_event sie;
-  } inev;
+  union buffered_input_event inev;
   int count = 0;
   int do_help = 0;
   ptrdiff_t nbytes = 0;
@@ -7589,7 +7586,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
       {
         const XSelectionClearEvent *eventp = &event->xselectionclear;
 
-        inev.ie.kind = SELECTION_CLEAR_EVENT;
+        inev.sie.kind = SELECTION_CLEAR_EVENT;
         SELECTION_EVENT_DPYINFO (&inev.sie) = dpyinfo;
         SELECTION_EVENT_SELECTION (&inev.sie) = eventp->selection;
         SELECTION_EVENT_TIME (&inev.sie) = eventp->time;
@@ -7605,7 +7602,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
       {
 	const XSelectionRequestEvent *eventp = &event->xselectionrequest;
 
-	inev.ie.kind = SELECTION_REQUEST_EVENT;
+	inev.sie.kind = SELECTION_REQUEST_EVENT;
 	SELECTION_EVENT_DPYINFO (&inev.sie) = dpyinfo;
 	SELECTION_EVENT_REQUESTOR (&inev.sie) = eventp->requestor;
 	SELECTION_EVENT_SELECTION (&inev.sie) = eventp->selection;
@@ -8116,7 +8113,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 				? ASCII_KEYSTROKE_EVENT
 				: MULTIBYTE_CHAR_KEYSTROKE_EVENT);
 		inev.ie.code = ch;
-		kbd_buffer_store_event_hold (&inev.ie, hold_quit);
+		kbd_buffer_store_buffered_event (&inev, hold_quit);
 	      }
 
 	    count += nchars;
@@ -8533,7 +8530,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
  done:
   if (inev.ie.kind != NO_EVENT)
     {
-      kbd_buffer_store_event_hold (&inev.ie, hold_quit);
+      kbd_buffer_store_buffered_event (&inev, hold_quit);
       count++;
     }
 
