@@ -305,6 +305,7 @@ Must called from within a `tar-mode' buffer."
       (search-forward-regexp "^ +simple-single")
       (package-menu-mark-install)
       (package-menu-execute)
+      (run-hooks 'post-command-hook)
       (should (package-installed-p 'simple-single))
       (switch-to-buffer "*Packages*")
       (goto-char (point-min))
