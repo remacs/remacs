@@ -492,18 +492,17 @@ write_subdir=if [ -f "$${subdir}/subdirs.el" ]; \
 install-arch-dep: src install-arch-indep install-etcdoc install-$(NTDIR)
 	umask 022; ${MKDIR_P} "$(DESTDIR)${bindir}"
 	$(MAKE) -C lib-src install
-	if test "${ns_self_contained}" = "no"; then \
-	  ${INSTALL_PROGRAM} $(INSTALL_STRIP) src/emacs${EXEEXT} "$(DESTDIR)${bindir}/$(EMACSFULL)" || exit 1 ; \
-	  chmod 1755 "$(DESTDIR)${bindir}/$(EMACSFULL)" || true; \
-	  if test "x${NO_BIN_LINK}" = x; then \
-	    rm -f "$(DESTDIR)${bindir}/$(EMACS)" ; \
-	    cd "$(DESTDIR)${bindir}" && $(LN_S_FILEONLY) $(EMACSFULL) $(EMACS); \
-	  fi; \
-	else \
-	  subdir=${ns_appresdir}/site-lisp; \
-	  ${write_subdir} || exit 1; \
-	  rm -rf ${ns_appresdir}/share; \
-	fi
+ifeq (${ns_self_contained},no)
+	${INSTALL_PROGRAM} $(INSTALL_STRIP) src/emacs${EXEEXT} "$(DESTDIR)${bindir}/$(EMACSFULL)"
+	-chmod 1755 "$(DESTDIR)${bindir}/$(EMACSFULL)"
+ifndef NO_BIN_LINK
+	rm -f "$(DESTDIR)${bindir}/$(EMACS)"
+	cd "$(DESTDIR)${bindir}" && $(LN_S_FILEONLY) $(EMACSFULL) $(EMACS)
+endif
+else
+	subdir=${ns_appresdir}/site-lisp && ${write_subdir}
+	rm -rf ${ns_appresdir}/share
+endif
 
 ### Windows-specific install target for installing programs produced
 ### in nt/, and its Posix do-nothing shadow.
