@@ -3874,12 +3874,10 @@ before was current this also makes BUFFER the current buffer."
 (defcustom switch-to-visible-buffer t
   "If non-nil, allow switching to an already visible buffer.
 If this variable is non-nil, `switch-to-prev-buffer' and
-`switch-to-next-buffer' may switch to an already visible buffer
-provided the buffer was shown before in the window specified as
-argument to those functions.  If this variable is nil,
-`switch-to-prev-buffer' and `switch-to-next-buffer' always try to
-avoid switching to a buffer that is already visible in another
-window on the same frame."
+`switch-to-next-buffer' may switch to an already visible buffer.
+If this variable is nil, `switch-to-prev-buffer' and
+`switch-to-next-buffer' always try to avoid switching to a buffer
+that is already visible in another window on the same frame."
   :type 'boolean
   :version "24.1"
   :group 'windows)
@@ -3950,7 +3948,8 @@ to it."
                    (or (null pred) (funcall pred buffer))
 		   (not (eq (aref (buffer-name buffer) 0) ?\s))
 		   (or bury-or-kill (not (memq buffer next-buffers))))
-	  (if (get-buffer-window buffer frame)
+	  (if (and (not switch-to-visible-buffer)
+		   (get-buffer-window buffer frame))
 	      ;; Try to avoid showing a buffer visible in some other window.
 	      (unless visible
 		(setq visible buffer))
@@ -4052,7 +4051,8 @@ found."
                    (or (null pred) (funcall pred buffer))
 		   (not (eq (aref (buffer-name buffer) 0) ?\s))
 		   (not (assq buffer (window-prev-buffers window))))
-	  (if (get-buffer-window buffer frame)
+	  (if (and (not switch-to-visible-buffer)
+		   (get-buffer-window buffer frame))
 	      ;; Try to avoid showing a buffer visible in some other window.
 	      (setq visible buffer)
 	    (setq new-buffer buffer)
