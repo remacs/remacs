@@ -2686,7 +2686,7 @@ if `last-nonmenu-event' is nil, and `use-dialog-box' is non-nil.  */)
   CHECK_STRING (prompt);
 
   if ((NILP (last_nonmenu_event) || CONSP (last_nonmenu_event))
-      && use_dialog_box)
+      && use_dialog_box && ! NILP (last_input_event))
     {
       Lisp_Object pane, menu, obj;
       redisplay_preserve_echo_area (4);

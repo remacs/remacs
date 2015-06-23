@@ -2348,6 +2348,7 @@ is nil and `use-dialog-box' is non-nil."
 		  (t (setq temp-prompt (concat "Please answer y or n.  "
 					       prompt))))))))
      ((and (display-popup-menus-p)
+           last-input-event             ; not during startup
 	   (listp last-nonmenu-event)
 	   use-dialog-box)
       (setq prompt (funcall padded prompt t)
