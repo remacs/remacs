@@ -494,7 +494,7 @@ install-arch-dep: src install-arch-indep install-etcdoc install-$(NTDIR)
 	$(MAKE) -C lib-src install
 ifeq (${ns_self_contained},no)
 	${INSTALL_PROGRAM} $(INSTALL_STRIP) src/emacs${EXEEXT} "$(DESTDIR)${bindir}/$(EMACSFULL)"
-	-chmod 1755 "$(DESTDIR)${bindir}/$(EMACSFULL)"
+	-chmod 755 "$(DESTDIR)${bindir}/$(EMACSFULL)"
 ifndef NO_BIN_LINK
 	rm -f "$(DESTDIR)${bindir}/$(EMACS)"
 	cd "$(DESTDIR)${bindir}" && $(LN_S_FILEONLY) $(EMACSFULL) $(EMACS)
