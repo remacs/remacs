@@ -1,3 +1,290 @@
+2015-06-24  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* etc/NEWS: Fix mention to old function name
+
+	* lisp/character-fold.el: New file (Bug#20887)
+	(character-fold-to-regexp): New function.
+	* lisp/replace.el (replace-search): Check value of
+	`character-fold-search'.
+	* lisp/isearch.el: Move character-folding code to
+	character-fold.el
+	(isearch-toggle-character-fold): New command.
+	(isearch-mode-map): Bind it to "\M-sf".
+	(isearch-mode): Check value of `character-fold-search'.
+
+2015-06-24  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/subr.el (remove-from-invisibility-spec): Handle the t case
+	* lisp/subr.el (remove-from-invisibility-spec): Make sure `element'
+	is visible even if it's not yet in buffer-invisibility-spec (bug#20468).
+
+	* lisp/progmodes/xref.el: Avoid init-args in oref.
+	* lisp/progmodes/xref.el (xref-location-group, xref-location-marker)
+	(xref--insert-xrefs, xref-collect-references): Avoid init-args in oref.
+
+2015-06-24  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (install-arch-dep): Don't set sticky bit on the binary.
+
+2015-06-24  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/gnus/nnmaildir.el: Silence lexical warnings
+	* lisp/gnus/nnmaildir.el (nnmaildir--prepare): Use a more
+	functional style.
+	(nnmaildir--update-nov): Remove unused var `numdir'.
+	(nnmaildir-request-type, nnmaildir--scan, nnmaildir-request-newgroups)
+	(nnmaildir-request-group, nnmaildir-request-create-group)
+	(nnmaildir-request-post, nnmaildir-request-move-article)
+	(nnmaildir-request-accept-article, nnmaildir-active-number): Mark unused args.
+	(nnmaildir-get-new-mail, nnmaildir-group-alist)
+	(nnmaildir-active-file): Declare.
+	(nnmaildir-request-scan): Remove unused vars `group' and `grp-dir'.
+	(nnmaildir-request-update-info): Remove unused vars `dotfile', `num',
+	`mark', `end', `new-mark', and `mark-sym'.
+	(nnmaildir-retrieve-headers): Remove unused args `srv-dir', `dir',
+	`nlist2'.
+	(nnmaildir-request-expire-articles):
+	Remove unused vars `article', `stop' and `nlist2'.
+	(nnmaildir-request-set-mark): Remove unused vars `begin', `article' and
+	`end'.  Use nnmaildir--article when dyn-binding is needed.
+	Give the value directly in the `let' for `del-mark', `del-action',
+	`add-action', and `set-action'.  Don't use `add-to-list' on a local var.
+	(nnmaildir-close-server): Declare those local vars that need to be
+	dyn-bound.
+
+2015-06-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* src/keyboard.h (kbd_buffer_store_event_hold): Remove unused local.
+
+	Port selection info fix to clang
+	* src/keyboard.h (kbd_buffer_store_event_hold):
+	Don't assume C11 semantics for alignof (Bug#20756).
+
+	Fix bug that munged selection info
+	On some optimizing C compilers, copying a structure did not
+	copy the padding bytes between elements, and the type punning
+	between struct input_data and struct selection_input_data did
+	not work.  Change the C code to use a proper union type instead.
+	Problem reported by YAMAMOTO Mitsuharu (Bug#20756).
+	* src/keyboard.c (kbd_buffer, kbd_fetch_ptr, kbd_store_ptr)
+	(readable_events, discard_mouse_events, kbd_buffer_events_waiting)
+	(kbd_buffer_get_event, process_special_events, stuff_buffered_input)
+	(mark_kboards):
+	Use union buffered_input_event, not struct input_event.
+	(clear_event, deliver_input_available_signal, process_special_events):
+	Remove unnecessary forward decls.
+	(kbd_buffer_store_buffered_event): New function, mostly just the
+	old kbd_buffer_store_event_hold, except its argument is of type
+	union buffered_input_event, not struct input_event.
+	(kbd_buffer_unget_event): Define only if HAVE_X11, since it's
+	not needed otherwise.  Argument is now of type
+	struct selection_input_event *, not struct input_event *.
+	All callers changed.
+	(clear_event): Arg is now of type union buffered_input_event *,
+	not struct input_event *.  All callers changed.
+	* src/keyboard.h [HAVE_X11]: Include "xterm.h".
+	(union buffered_input_event): New type.
+	(kbd_buffer_store_event_hold): Now an inline function,
+	defined here.
+	* src/termhooks.h (EVENT_KIND_WIDTH): New constant.
+	(struct input_event): Use it.
+	* src/xselect.c (struct selection_event_queue):
+	Make elements be of type struct selection_input_event,
+	not struct input_event.
+	(selection_input_event_equal): New static function.
+	(x_queue_event): Use it.
+	(x_queue_event, x_decline_selection_request)
+	(x_selection_current_request, x_reply_selection_request)
+	(x_handle_selection_request, x_handle_selection_clear)
+	(x_handle_selection_event): Use struct selection_input_event,
+	not struct input_event.  All callers changed.
+	(x_convert_selection): Omit unused first arg.  All callers changed.
+	(Fx_disown_selection_internal): Omit unnecessary union.
+	* src/xterm.c (handle_one_xevent): Use new union buffered_input_event
+	rather than rolling our own equivalent.  Prefer sie.kind when
+	setting up that kind of structure.
+	Call kbd_buffer_store_buffered_event, not kbd_buffer_store_event_hold.
+	* src/xterm.h (struct selection_input_event: Use EVENT_KIND_WIDTH.
+	(SELECTION_EVENT_DISPLAY, SELECTION_EVENT_DPYINFO)
+	(SELECTION_EVENT_REQUESTOR, SELECTION_EVENT_SELECTION)
+	(SELECTION_EVENT_TARGET, SELECTION_EVENT_PROPERTY)
+	(SELECTION_EVENT_TIME, x_handle_selection_event):
+	Arg is now of type struct selection_input_event *)
+	not struct input_event *.  All callers changed.
+
+2015-06-23  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (install-arch-dep): Simplify with Make conditionals.
+
+2015-06-23  Artur Malabarba  <address@hidden>
+
+	* lisp/isearch.el: Fold many unicode characters to ASCII
+	(isearch-character-fold-search, isearch--character-fold-extras)
+	(isearch--character-fold-table): New variable.
+	(isearch--character-folded-regexp): New function.
+	(isearch-search-fun-default): Use them.
+	* lisp/replace.el (replace-character-fold): New variable.
+	(replace-search): Use it.
+	* etc/NEWS: Document it.
+
+2015-06-23  Glenn Morris  <rgm@gnu.org>
+
+	Check for an input event before showing a dialog box.  (Bug#20813)
+	* lisp/subr.el (y-or-n-p):
+	* src/fns.c (Fyes_or_no_p): Check last-input-event as well
+	as last-nonmenu-event.
+
+2015-06-23  Jürgen Hartmann  <juergen_hartman_@hotmail.com>  (tiny change)
+
+	Respect ‘switch-to-visible-buffer’ more rigidly.  (Bug#20861)
+	* lisp/window.el (switch-to-visible-buffer): Doc adjustment.
+	(switch-to-prev-buffer, switch-to-next-buffer): Respect
+	switch-to-visible-buffer independent of the windows history.
+
+2015-06-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* src/keyboard.c (last_timer_event): Remove unused var.
+
+2015-06-23  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* test/automated/package-test.el (package-test-update-listing):
+	Fix test.
+
+2015-06-23  Glenn Morris  <rgm@gnu.org>
+
+	Revert 2014-06-25 nextstep/Makefile change.
+	* nextstep/Makefile.in (${ns_appbindir}): Remove rule.
+	(${ns_appbindir}/Emacs, links): Create ns_appbindir in the rule,
+	not as an order-only prerequisite.
+
+	* configure.ac (--with-ns): Enable by default on OS X.
+
+2015-06-23  Leo Liu  <sdl.web@gmail.com>
+
+	Fix shell-for/backward-command to exclude spaces
+	* lisp/shell.el (shell-forward-command, shell-backward-command):
+	  Handle the 'move case from re-search-forward/backward.
+	  fixes debbugs:20873
+
+2015-06-22  Juri Linkov  <juri@linkov.net>
+
+	* lisp/replace.el (query-replace-read-from): Add separator to
+	the local binding of text-property-default-nonsticky.  (Bug#20690)
+
+	* lisp/simple.el (shell-command-on-region): Replace 'error' with 'user-error'.
+	(Bug#20785)
+
+2015-06-22  Ken Brown  <kbrown@cornell.edu>
+
+	Enable CPU profiling on Cygwin
+	* src/syssignal.h [CYGWIN] (PROFILER_CPU_SUPPORT): Revert previous
+	change that undefined this.
+	(SIGEV_SIGNAL): Ensure that this is defined as a macro.
+	* src/profiler.c [CYGWIN] (timer_getoverrun): Define as a macro on
+	  Cygwin.
+
+	Improve diagnostics of profiler-cpu-start
+	* src/profiler.c (setup_cpu_timer): Change return type to 'int';
+	return -1 if the sampling interval is invalid.
+	(Fprofiler_cpu_start): Improve error message if 'setup_cpu_timer'
+	fails.  (Bug#20843)
+
+2015-06-22  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/package.el: Exclude packages by name
+	(package-hidden-regexps): New variable.
+	(package-menu--refresh): Use it.
+	(package-menu-hide-package): New command.
+
+	* lisp/emacs-lisp/package.el: Rename hide-obsolete to toggle-hiding
+
+2015-06-22  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix debug-timer-check on systems without HAVE_TIMERFD
+	* src/atimer.c (Fdebug_timer_check) [!HAVE_TIMERFD]: Actively run
+	the expired timers, since wait_reading_process_output doesn't.
+	(debug_timer_callback): Enlarge the tolerance to 20 msec.
+
+	Fix RCS crashes in vc-test
+	* lisp/vc/vc-rcs.el (vc-rcs-register): Avoid crashes with some old
+	ports of 'ci' on MS-Windows by always passing the -t- switch.
+
+2015-06-22  Glenn Morris  <rgm@gnu.org>
+
+	* doc/emacs/package.texi (Packages):
+	* doc/emacs/trouble.texi (Known Problems): Remove faq cross-references.
+
+	* doc/misc/efaq-w32.texi (Downloading): Copyedits.  (Bug#20851)
+
+2015-06-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port tests to help-quote-translation
+	* test/automated/ert-x-tests.el (ert-test-describe-test):
+	* test/automated/package-test.el (package-test-describe-package)
+	(package-test-signed): Allow straight quotes, too.
+
+2015-06-22  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Make find-function-on-key use the current window
+	* lisp/emacs-lisp/find-func.el (find-function-on-key-do-it):
+	Extract from `find-function-on-key', add a second argument.
+	(find-function-on-key): Use it (bug#19679).
+	(find-function-on-key-other-window)
+	(find-function-on-key-other-frame): New commands.
+
+2015-06-21  Nicolas Petton  <nicolas@petton.fr>
+
+	Revert "Define `map-elt' as a generalized variable"
+	This reverts commit 8b6d82d3ca86f76ed964063b3941a7c6ab0bf1c6.
+
+2015-06-21  Ken Brown  <kbrown@cornell.edu>
+
+	Drop support for CPU profiling on Cygwin
+	* src/syssignal.h (PROFILER_CPU_SUPPORT): Don't define on Cygwin.
+	(Bug#20843)
+
+2015-06-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix some “nested” quoting confusion in doc strings
+	* lisp/emacs-lisp/advice.el (ad-map-arglists):
+	* lisp/kermit.el (kermit-clean-on):
+	* lisp/mh-e/mh-comp.el (mh-repl-group-formfile):
+	* src/keyboard.c (Frecursive_edit):
+	Use curved quotes when quoting text containing apostrophe,
+	so that the apostrophe isn't curved in the output.
+
+2015-06-21  Nicolas Petton  <nicolas@petton.fr>
+
+	Define `map-elt' as a generalized variable
+	* lisp/emacs-lisp/map.el (map-elt): Define a gv-expander.
+	* lisp/emacs-lisp/map.el (map--dispatch): Tighten the code.
+	* lisp/emacs-lisp/map.el (map-put): Redefine it as a function using a
+	`setf' with `map-elt'.
+	* test/automated/map-tests.el: Comment out `test-map-put-literal'.
+
+2015-06-21  Michael Albinus  <michael.albinus@gmx.de>
+
+	Improve error handling in tramp-adb.el
+	* lisp/net/tramp-adb.el (tramp-adb-handle-file-local-copy):
+	Improve error handling.
+
+2015-06-21  Nicolas Petton  <nicolas@petton.fr>
+
+	Reuse `alist-get' in map.el
+	* lisp/emacs-lisp/map.el (map-elt): Use `alist-get' to retrieve alist
+	elements.
+
+2015-06-21  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix bytecomp-tests--warnings when $TMPDIR has a long name
+	* test/automated/bytecomp-tests.el (bytecomp-tests--warnings):
+	Allow the warning to begin on the 3rd, not only 2nd line, which
+	happens if temporary-file-directory has a very long name.
+
+	Expect 2 icalendar tests to fail on MS-Windows
+	* test/automated/icalendar-tests.el (icalendar-import-with-timezone)
+	(icalendar-real-world): Make them expected failures on MS-Windows.
+
 2015-06-20  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Improve port of settings UI to older displays
@@ -6441,7 +6728,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit bf32130d7debe3ee6dbd9974e50bb4a2a48047f4 (inclusive).
+commit 0890cd833fa39d219cb333b08a4204539d1dae3f (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
