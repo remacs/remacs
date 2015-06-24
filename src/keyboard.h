@@ -458,7 +458,8 @@ kbd_buffer_store_event_hold (struct input_event *event,
 			     struct input_event *hold_quit)
 {
   union buffered_input_event *ev = (union buffered_input_event *) event;
-  verify (sizeof *event == sizeof *ev && alignof (*event) == alignof (*ev));
+  verify (alignof (struct input_event) == alignof (union buffered_input_event)
+	  && sizeof (struct input_event) == sizeof (union buffered_input_event));
   return kbd_buffer_store_buffered_event ((union buffered_input_event *) event,
 					  hold_quit);
 }
