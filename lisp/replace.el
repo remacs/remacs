@@ -2012,8 +2012,9 @@ It is called with three arguments, as if it were
   ;; outside of this function because then another I-search
   ;; used after `recursive-edit' might override them.
   (let* ((isearch-regexp regexp-flag)
-	 (isearch-word delimited-flag)
-         (isearch-character-fold-search replace-character-fold)
+	 (isearch-word (or delimited-flag
+                           (and replace-character-fold
+                                #'character-fold-to-regexp)))
 	 (isearch-lax-whitespace
 	  replace-lax-whitespace)
 	 (isearch-regexp-lax-whitespace
