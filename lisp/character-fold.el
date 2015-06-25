@@ -1,4 +1,4 @@
-;;; chracter-fold.el --- matching unicode characters to their ascii similars -*- lexical-binding: t; -*-
+;;; character-fold.el --- matching unicode characters to their ascii similars -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2015 Free Software Foundation, Inc.
 
@@ -106,4 +106,4 @@ match any number of times."
                 string))
     (regexp-quote string)))
 
-;;; chracter-fold.el ends here
+;;; character-fold.el ends here
