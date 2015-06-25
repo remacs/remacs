@@ -556,7 +556,7 @@ globals.h: gl-stamp; @true
 $(ALLOBJS): globals.h
 
 $(lib)/libgnu.a: $(config_h)
-	$(MAKE) -C $(lib) libgnu.a
+	$(MAKE) -C $(lib) all
 
 ## We have to create $(etc) here because init_cmdargs tests its
 ## existence when setting Vinstallation_directory (FIXME?).
