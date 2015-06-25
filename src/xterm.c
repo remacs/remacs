@@ -552,7 +552,7 @@ x_cr_accumulate_data (void *closure, const unsigned char *data,
 {
   Lisp_Object *acc = (Lisp_Object *) closure;
 
-  *acc = Fcons (make_unibyte_string (data, length), *acc);
+  *acc = Fcons (make_unibyte_string ((char const *) data, length), *acc);
 
   return CAIRO_STATUS_SUCCESS;
 }
