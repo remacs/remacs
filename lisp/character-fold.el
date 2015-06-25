@@ -36,7 +36,7 @@ some).")
     (let* ((equiv (make-char-table 'character-fold-table))
            (table (unicode-property-table-internal 'decomposition))
            (func (char-table-extra-slot table 1)))
-      ;; Ensure the table is populated
+      ;; Ensure the table is populated.
       (map-char-table
        (lambda (i v) (when (consp i) (funcall func (car i) v table)))
        table)
@@ -77,7 +77,9 @@ some).")
                    (aset equiv k
                          (if multiletter chars
                            (cons (apply #'string dec) chars)))))))))
-       (unicode-property-table-internal 'decomposition))
+       table)
+
+      ;; Add some manual entries.
       (dolist (it '((?\" "＂" "“" "”" "”" "„" "⹂" "〞" "‟" "‟" "❞" "❝" "❠" "“" "„" "〝" "〟" "🙷" "🙶" "🙸" "«" "»")
                     (?' "❟" "❛" "❜" "‘" "’" "‚" "‛" "‚" "󠀢" "❮" "❯" "‹" "›")
                     (?` "❛" "‘" "‛" "󠀢" "❮" "‹")
@@ -85,6 +87,8 @@ some).")
         (let ((idx (car it))
               (chars (cdr it)))
           (aset equiv idx (append chars (aref equiv idx)))))
+
+      ;; Convert the lists of characters we compiled into regexps.
       (map-char-table
        (lambda (i v) (let ((re (regexp-opt (cons (char-to-string i) v))))
                   (if (consp i)
