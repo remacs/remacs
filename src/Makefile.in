@@ -529,7 +529,7 @@ $(etc)/DOC: lisp.mk $(libsrc)/make-docfile$(EXEEXT) $(obj) $(lisp)
 	$(AM_V_at)$(libsrc)/make-docfile -a $(etc)/DOC -d $(lispsource) \
 	  $(shortlisp)
 
-$(libsrc)/make-docfile$(EXEEXT):
+$(libsrc)/make-docfile$(EXEEXT): $(lib)/libgnu.a
 	$(MAKE) -C $(libsrc) make-docfile$(EXEEXT)
 
 buildobj.h: Makefile
