@@ -122,7 +122,8 @@ Display the name and documentation of the command that @var{key} runs
 Display a description of your last 300 keystrokes
 (@code{view-lossage}).
 @item C-h m
-Display documentation of the current major mode (@code{describe-mode}).
+Display documentation of the current major mode and minor modes
+(@code{describe-mode}).
 @item C-h n
 Display news of recent Emacs changes (@code{view-emacs-news}).
 @item C-h p
