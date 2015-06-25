@@ -827,7 +827,7 @@ optional\\|rest\\|key\\|allow-other-keys\\|aux\\|whole\\|body\\|environment\
            (with-accessors . multiple-value-bind)
            (with-condition-restarts . multiple-value-bind)
 	   (with-compilation-unit (&lambda &body))
-           (with-output-to-string (4 2))
+           (with-output-to-string 0)
            (with-slots . multiple-value-bind)
            (with-standard-io-syntax (2)))))
   (dolist (el l)
