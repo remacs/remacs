@@ -278,10 +278,7 @@ error !;
 #endif
 
 #ifndef alignas
-# define alignas(alignment) /* empty */
-# if USE_LSB_TAG
-#  error "USE_LSB_TAG requires alignas"
-# endif
+# error "alignas not defined"
 #endif
 
 #ifdef HAVE_STRUCT_ATTRIBUTE_ALIGNED
@@ -731,9 +728,7 @@ struct Lisp_Symbol
 
 /* Yield an integer that contains a symbol tag along with OFFSET.
    OFFSET should be the offset in bytes from 'lispsym' to the symbol.  */
-#define TAG_SYMOFFSET(offset)				    \
-  TAG_PTR (Lisp_Symbol,					    \
-	   ((uintptr_t) (offset) >> (USE_LSB_TAG ? 0 : GCTYPEBITS)))
+#define TAG_SYMOFFSET(offset) TAG_PTR (Lisp_Symbol, offset)
 
 /* XLI_BUILTIN_LISPSYM (iQwhatever) is equivalent to
    XLI (builtin_lisp_symbol (Qwhatever)),
@@ -899,8 +894,6 @@ INLINE struct Lisp_Symbol *
 XSYMBOL (Lisp_Object a)
 {
   uintptr_t i = (uintptr_t) XUNTAG (a, Lisp_Symbol);
-  if (! USE_LSB_TAG)
-    i <<= GCTYPEBITS;
   void *p = (char *) lispsym + i;
   return p;
 }
