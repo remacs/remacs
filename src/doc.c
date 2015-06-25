@@ -761,8 +761,8 @@ Otherwise, return a new string.  */)
       Lisp_Object dv = DISP_CHAR_VECTOR (XCHAR_TABLE (Vstandard_display_table),
 					 LEFT_SINGLE_QUOTATION_MARK);
       if (VECTORP (dv) && ASIZE (dv) == 1
-	  && EQ (AREF (dv, 0), make_number ('\'')))
-	quote_translation = apostrophe;
+	  && EQ (AREF (dv, 0), make_number ('`')))
+	quote_translation = grave_accent;
     }
 
   multibyte = STRING_MULTIBYTE (string);
@@ -1040,7 +1040,7 @@ Quote \\=‘like this\\=’ if the value is ?\\=‘ (left single quotation mark)
 Quote 'like this' if the value is ?' (apostrophe).
 Quote \\=`like this' if the value is ?\\=` (grave accent).
 The default value is nil, which means quote with left single quotation mark
-if displayable, and with apostrophe otherwise.  */);
+if displayable, and with grave accent otherwise.  */);
   Vhelp_quote_translation = Qnil;
 
   defsubr (&Sdocumentation);

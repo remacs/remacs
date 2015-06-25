@@ -357,7 +357,7 @@ quotes.  If the value is @code{?'} (apostrophe), the style is @t{'like
 this'} with apostrophes.  If the value is @code{?`} (grave accent),
 the style is @t{`like this'} with grave accent and apostrophe.  The
 default value @code{nil} means to use curved single quotes if
-displayable and apostrophes otherwise.
+displayable, and grave accent and apostrophe otherwise.
 @end defvar
 
 @defun substitute-command-keys string

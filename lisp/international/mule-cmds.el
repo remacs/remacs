@@ -2731,9 +2731,9 @@ See also `locale-charset-language-names', `locale-language-names',
 	(set-terminal-coding-system 'utf-8)
 	(set-keyboard-coding-system 'utf-8)))
 
-    ;; If curved quotes don't work, display straight ASCII approximations.
+    ;; If curved quotes don't work, display ASCII approximations.
     (unless frame
-      (dolist (char-repl '((?‘ . [?\']) (?’ . [?\']) (?“ . [?\"]) (?” . [?\"])))
+      (dolist (char-repl '((?‘ . [?\`]) (?’ . [?\']) (?“ . [?\"]) (?” . [?\"])))
         (when (not (char-displayable-p (car char-repl)))
           (or standard-display-table
               (setq standard-display-table (make-display-table)))
