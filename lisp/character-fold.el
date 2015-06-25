@@ -33,7 +33,14 @@ some).")
 
 (defconst character-fold-table
   (eval-when-compile
-    (let ((equiv (make-char-table 'character-fold-table)))
+    (let* ((equiv (make-char-table 'character-fold-table))
+           (table (unicode-property-table-internal 'decomposition))
+           (func (char-table-extra-slot table 1)))
+      ;; Ensure the table is populated
+      (map-char-table
+       (lambda (i v) (when (consp i) (funcall func (car i) v table)))
+       table)
+
       ;; Compile a list of all complex characters that each simple
       ;; character should match.
       (map-char-table
