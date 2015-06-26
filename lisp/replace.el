@@ -2014,6 +2014,7 @@ It is called with three arguments, as if it were
   (let* ((isearch-regexp regexp-flag)
 	 (isearch-word (or delimited-flag
                            (and replace-character-fold
+                                (not regexp-flag)
                                 #'character-fold-to-regexp)))
 	 (isearch-lax-whitespace
 	  replace-lax-whitespace)
