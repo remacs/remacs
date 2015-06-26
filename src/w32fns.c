@@ -3974,11 +3974,17 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       if (LOWORD (lParam) == HTCLIENT)
 	{
 	  f = x_window_to_frame (dpyinfo, hwnd);
-	  if (f && f->output_data.w32->hourglass_p
-	      && !menubar_in_use && !current_popup_menu)
-	    SetCursor (f->output_data.w32->hourglass_cursor);
-	  else if (f)
-	    SetCursor (f->output_data.w32->current_cursor);
+	  if (f)
+	    {
+	      if (f->output_data.w32->hourglass_p
+		  && !menubar_in_use && !current_popup_menu)
+		SetCursor (f->output_data.w32->hourglass_cursor);
+	      else if (f->pointer_invisible)
+		SetCursor (NULL);
+	      else
+		SetCursor (f->output_data.w32->current_cursor);
+	    }
+
 	  return 0;
 	}
       goto dflt;
@@ -3991,7 +3997,12 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	  {
 	    f->output_data.w32->current_cursor = cursor;
 	    if (!f->output_data.w32->hourglass_p)
-	      SetCursor (cursor);
+	      {
+		if (f->pointer_invisible)
+		  SetCursor (NULL);
+		else
+		  SetCursor (cursor);
+	      }
 	  }
 	return 0;
       }

@@ -6590,7 +6590,10 @@ w32_hide_hourglass (struct frame *f)
   struct w32_output *w32 = FRAME_X_OUTPUT (f);
 
   w32->hourglass_p = 0;
-  SetCursor (w32->current_cursor);
+  if (f->pointer_invisible)
+    SetCursor (NULL);
+  else
+    SetCursor (w32->current_cursor);
 }
 
 /* FIXME: old code did that, but I don't know why.  Anyway,
@@ -6600,6 +6603,25 @@ void
 w32_arrow_cursor (void)
 {
   SetCursor (w32_load_cursor (IDC_ARROW));
+}
+
+static void
+w32_toggle_invisible_pointer (struct frame *f, bool invisible)
+{
+  block_input ();
+
+  if (f->pointer_invisible != invisible)
+    {
+      f->pointer_invisible = invisible;
+      SET_FRAME_GARBAGED (f);
+    }
+
+  if (invisible)
+    SetCursor (NULL);
+  else
+    SetCursor (f->output_data.w32->current_cursor);
+
+  unblock_input ();
 }
 
 /***********************************************************************
@@ -6741,6 +6763,7 @@ w32_create_terminal (struct w32_display_info *dpyinfo)
   terminal->ins_del_lines_hook = x_ins_del_lines;
   terminal->delete_glyphs_hook = x_delete_glyphs;
   terminal->ring_bell_hook = w32_ring_bell;
+  terminal->toggle_invisible_pointer_hook = w32_toggle_invisible_pointer;
   terminal->update_begin_hook = x_update_begin;
   terminal->update_end_hook = x_update_end;
   terminal->read_socket_hook = w32_read_socket;
