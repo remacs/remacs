@@ -359,8 +359,11 @@ view, describe, default.
 @end quotation
 
 @vindex apropos-do-all
-  If the variable @code{apropos-do-all} is non-@code{nil}, the apropos
-commands always behave as if they had been given a prefix argument.
+  If the variable @code{apropos-do-all} is non-@code{nil}, most
+apropos commands behave as if they had been given a prefix
+argument. There is one exception: @code{apropos-variable} without a
+prefix argument will always search for all variables, no matter what
+the value of @code{apropos-do-all} is.
 
 @vindex apropos-sort-by-scores
 @cindex apropos search results, order by score
