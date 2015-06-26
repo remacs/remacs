@@ -130,7 +130,7 @@ Customize or call the function `grep-apply-setting'."
 (defcustom grep-template nil
   "The default command to run for \\[lgrep].
 The following place holders should be present in the string:
- <C> - place to put -i if case insensitive grep.
+ <C> - place to put the options like -i and --color.
  <F> - file names and wildcards to search.
  <X> - file names and wildcards to exclude.
  <R> - the regular expression searched for.
@@ -177,7 +177,7 @@ The following place holders should be present in the string:
  <D> - base directory for find
  <X> - find options to restrict or expand the directory list
  <F> - find options to limit the files matched
- <C> - place to put -i if case insensitive grep
+ <C> - place to put the grep options like -i and --color
  <R> - the regular expression searched for.
 In interactive usage, the actual value of this variable is set up
 by `grep-compute-defaults'; to change the default value, use
@@ -572,20 +572,22 @@ This function is called from `compilation-filter-hook'."
     (unless (and grep-command grep-find-command
 		 grep-template grep-find-template)
       (let ((grep-options
-	     (concat (and grep-highlight-matches
-			  (grep-probe grep-program
-				      `(nil nil nil "--color" "x" ,null-device)
-				      nil 1)
-			  (if (eq grep-highlight-matches 'always)
-			      "--color=always " "--color "))
-		     (if grep-use-null-device "-n" "-nH")
+	     (concat (if grep-use-null-device "-n" "-nH")
 		     (if (grep-probe grep-program
 				     `(nil nil nil "-e" "foo" ,null-device)
 				     nil 1)
 			 " -e"))))
 	(unless grep-command
 	  (setq grep-command
-		(format "%s %s " grep-program grep-options)))
+		(format "%s %s %s " grep-program grep-options
+                        (or
+                         (and grep-highlight-matches
+                              (grep-probe grep-program
+                                          `(nil nil nil "--color" "x" ,null-device)
+                                          nil 1)
+                              (if (eq grep-highlight-matches 'always)
+                                  "--color=always" "--color"))
+                         ""))))
 	(unless grep-template
 	  (setq grep-template
 		(format "%s <X> <C> %s <R> <F>" grep-program grep-options)))
@@ -791,7 +793,7 @@ easily repeat a find command."
 ;; User-friendly interactive API.
 
 (defconst grep-expand-keywords
-  '(("<C>" . (and cf (isearch-no-upper-case-p regexp t) "-i"))
+  '(("<C>" . (mapconcat #'identity opts " "))
     ("<D>" . (or dir "."))
     ("<F>" . files)
     ("<N>" . null-device)
@@ -804,7 +806,16 @@ substitution string.  Note dynamic scoping of variables.")
 (defun grep-expand-template (template &optional regexp files dir excl)
   "Patch grep COMMAND string replacing <C>, <D>, <F>, <R>, and <X>."
   (let* ((command template)
-         (env `((cf . ,case-fold-search)
+         (env `((opts . ,(let (opts)
+                           (when (and case-fold-search
+                                      (isearch-no-upper-case-p regexp t))
+                             (push "-i" opts))
+                           (cond
+                            ((eq grep-highlight-matches 'always)
+                             (push "--color=always" opts))
+                            ((eq grep-highlight-matches 'auto)
+                             (push "--color" opts)))
+                           opts))
                 (excl . ,excl)
                 (dir . ,dir)
                 (files . ,files)
