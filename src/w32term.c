@@ -6613,13 +6613,9 @@ w32_toggle_invisible_pointer (struct frame *f, bool invisible)
   if (f->pointer_invisible != invisible)
     {
       f->pointer_invisible = invisible;
-      SET_FRAME_GARBAGED (f);
+      w32_define_cursor (FRAME_W32_WINDOW (f),
+			 f->output_data.w32->current_cursor);
     }
-
-  if (invisible)
-    SetCursor (NULL);
-  else
-    SetCursor (f->output_data.w32->current_cursor);
 
   unblock_input ();
 }
