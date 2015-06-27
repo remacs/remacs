@@ -287,6 +287,9 @@ standards.
 
 * Changes in Specialized Modes and Packages in Emacs 25.1
 
+** Prog mode has some support for multi-mode indentation.
+See `prog-indentation-context' and `prog-widen'.
+
 ** New `xterm-screen-extra-capabilities' config.
 
 ** The `save-place' variable is replaced by a `save-place-mode'.
