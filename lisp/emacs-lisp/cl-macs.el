@@ -161,7 +161,7 @@ whether X is known at compile time, macroexpand it completely in
 
 ;;; Symbols.
 
-(defvar cl--gensym-counter)
+(defvar cl--gensym-counter 0)
 ;;;###autoload
 (defun cl-gensym (&optional prefix)
   "Generate a new uninterned symbol.
