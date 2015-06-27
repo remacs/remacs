@@ -299,22 +299,21 @@ If so, return the true (non-nil) value returned by PREDICATE.
 ;;;###autoload
 (defun cl-gcd (&rest args)
   "Return the greatest common divisor of the arguments."
-  (let ((a (abs (or (pop args) 0))))
-    (while args
-      (let ((b (abs (pop args))))
-	(while (> b 0) (setq b (% a (setq a b))))))
-    a))
+  (let ((a (or (pop args) 0)))
+    (dolist (b args)
+      (while (/= b 0)
+        (setq b (% a (setq a b)))))
+    (abs a)))
 
 ;;;###autoload
 (defun cl-lcm (&rest args)
   "Return the least common multiple of the arguments."
   (if (memq 0 args)
       0
-    (let ((a (abs (or (pop args) 1))))
-      (while args
-	(let ((b (abs (pop args))))
-	  (setq a (* (/ a (cl-gcd a b)) b))))
-      a)))
+    (let ((a (or (pop args) 1)))
+      (dolist (b args)
+        (setq a (* (/ a (cl-gcd a b)) b)))
+      (abs a))))
 
 ;;;###autoload
 (defun cl-isqrt (x)
@@ -431,7 +430,7 @@ Optional second arg STATE is a random-state object."
   ;; Inspired by "ran3" from Numerical Recipes.  Additive congruential method.
   (let ((vec (aref state 3)))
     (if (integerp vec)
-	(let ((i 0) (j (- 1357335 (% (abs vec) 1357333))) (k 1))
+	(let ((i 0) (j (- 1357335 (abs (% vec 1357333)))) (k 1))
 	  (aset state 3 (setq vec (make-vector 55 nil)))
 	  (aset vec 0 j)
 	  (while (> (setq i (% (+ i 21) 55)) 0)
