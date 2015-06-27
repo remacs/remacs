@@ -1114,6 +1114,10 @@ Pass '--without-ns' to configure to create an X11 build, the old default.
 
 ** OS X on PowerPC is no longer supported.
 
+---
+** The new function 'w32-application-type' returns the type of an
+MS-Windows application given the name of its executable program file.
+
 
 ----------------------------------------------------------------------
 This file is part of GNU Emacs.
