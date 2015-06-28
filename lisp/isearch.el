@@ -863,6 +863,7 @@ convert the search string to a regexp used by regexp search functions."
   (setq isearch-forward forward
 	isearch-regexp regexp
 	isearch-word (or word (and character-fold-search
+                                   (not regexp)
                                    'character-fold-to-regexp))
 	isearch-op-fun op-fun
 	isearch-last-case-fold-search isearch-case-fold-search
