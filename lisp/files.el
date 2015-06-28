@@ -2612,7 +2612,7 @@ and `magic-mode-alist', which determines modes based on file contents.")
   "Alist mapping interpreter names to major modes.
 This is used for files whose first lines match `auto-mode-interpreter-regexp'.
 Each element looks like (REGEXP . MODE).
-If \\\\`REGEXP\\\\' matches the name (minus any directory part) of
+If REGEXP matches the entire name (minus any directory part) of
 the interpreter specified in the first line of a script, enable
 major mode MODE.
 
