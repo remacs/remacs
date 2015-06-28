@@ -1,3 +1,201 @@
+2015-06-28  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/isearch.el (isearch-mode): Don't char-fold regexps
+	(bug#20913)
+
+2015-06-27  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Bind grep-highlight-matches around the rgrep call
+	* lisp/progmodes/grep.el (zrgrep): Bind grep-highlight-matches
+	around the rgrep call (bug#20728).
+
+	Put "--color" before the other options in grep-command
+	* lisp/progmodes/grep.el (grep-compute-defaults): Put "--color"
+	before the other options in grep-command (bug#20912).
+
+	Add --color Grep option to the command dynamically
+	* lisp/progmodes/grep.el (grep-template, grep-find-template):
+	Update the description for <C>.  (Bug#20728)
+	(grep-compute-defaults): Don't add the --color option to
+	grep-options.  Only add it to grep-command.
+	(grep-expand-keywords): Expand the env value opts into <C>.
+	(grep-expand-template): Replace cf in the env with the opts list,
+	that can include -i and --color.
+	* lisp/progmodes/xref.el (xref-collect-matches): Do not remove
+	"--color=always" from the template, because we don't have to.
+
+2015-06-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	cl-extra fixes for most-negative-fixnum
+	* lisp/emacs-lisp/cl-extra.el (cl-gcd, cl-lcm, cl-random):
+	Don't mishandle an argument equal to most-negative-fixnum,
+	whose absolute value equals itself.
+	(cl-gcd, cl-lcm): Use dolist rather than doing it by hand.
+
+	Initialize cl--gensym-counter to 0
+	Previously it was initialized to a random value, which made it
+	harder to reproduce earlier Emacs runs.  The need for a random
+	value went away when Emacs introduced and used the #: syntax for
+	uninterned symbols (Bug#20862).
+	* doc/misc/cl.texi (Creating Symbols, Common Lisp Compatibility):
+	Document that cl--gensym-counter now starts with 0.
+	* lisp/emacs-lisp/cl-lib.el (cl--gensym-counter): Remove.
+	(cl--random-time): Move to near only remaining use.
+	* lisp/emacs-lisp/cl-macs.el (cl--gensym-counter): Initialize to 0.
+
+	Improve docstring for macroexp-let2
+	* lisp/emacs-lisp/macroexp.el (macroexp-let2):
+	Improve as per suggestion by RMS in:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-06/msg00621.html
+	Also, rename args to match new doc string.
+
+2015-06-27  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix VC test suite on MS-Windows
+	* lisp/vc/vc-svn.el (vc-svn-create-repo): Make sure the file: URL
+	always starts with 3 slashes after the colon.
+	* test/automated/vc-tests.el (vc-test--create-repo-function): Use
+	'w32-application-type' to invoke CVS on MS-Windows with properly
+	formatted CVSROOT directory name.
+
+	Add a new function w32-application-type
+	* src/w32proc.c (Fw32_application_type): New function.
+
+	Avoid error in TLS connections due to incorrect format
+	* src/gnutls.c (Fgnutls_boot): Use the %x conversion specifier in
+	the call to 'error', instead of the unsupported %u.  Reported by
+	lo2net <fangtao0901@gmail.com>.  (Bug#20908)
+
+2015-06-26  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/replace.el (replace-search): Fix regexp case (bug#20901)
+
+2015-06-26  Leo Liu  <sdl.web@gmail.com>
+
+	Fix indentation for with-output-to-string
+	* lisp/emacs-lisp/cl-indent.el: Fix indentation for
+	  `with-output-to-string' in elisp.
+	  Revert "lisp/emacs-lisp/cl-indent.el: Fix indent of with-output-to-string"
+	  This reverts commit 659199f2ca5f283fb246faa78a244e5ca25f53dd.
+
+2015-06-26  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor corrections in ELisp manual
+	* doc/lispref/nonascii.texi (Character Properties): Correct
+	inaccuracies in description of values of the Unicode properties.
+
+	Fix invisible mouse pointers on Windows.
+	* src/w32fns.c: Include windowsx.h.
+	(w32_wnd_proc): If the mouse moved and the mouse pointer is
+	invisible, make it visible again even when the main (Lisp)
+	thread is busy.
+	* src/w32term.c (w32_toggle_invisible_pointer): Rather then
+	garbaging the frame have the input thread call SetCursor.
+
+2015-06-26  Martin Rudalics  <rudalics@gmx.at>
+
+	Provide invisible mouse pointers on Windows.  (Bug#6105) (Bug#12922)
+	* src/w32fns.c (w32_wnd_proc): Handle f->pointer_invisible
+	for WM_SETCURSOR and WM_EMACS_SETCURSOR cases.
+	* src/w32term.c (w32_hide_hourglass): Handle
+	f->pointer_invisible.
+	(w32_toggle_invisible_pointer): New function.
+	(w32_create_terminal): Add w32_toggle_invisible_pointer as
+	toggle_invisible_pointer_hook for this terminal.
+
+2015-06-25  Xue Fuqiao  <xfq.free@gmail.com>
+
+	Doc fix for deletion commands
+	'delete-char' does not respect the value of 'delete-active-region'.
+	* doc/emacs/killing.texi (Deletion):
+	Fix documentation for some single-char deletion commands.
+
+	* doc/emacs/help.texi (Apropos):
+	Improve documentation of 'apropos-do-all'.
+
+	* doc/emacs/help.texi (Help Summary):
+	Improve documentation of 'describe-mode'.
+
+2015-06-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix submake dependency bug with .h files
+	* src/Makefile.in ($(libsrc)/make-docfile$(EXEEXT)):
+	Depend on $(lib)/libgnu.a, so that we build $(lib)/*/*.h
+	before the submake in $(libsrc) would spin off a subsubmake
+	for $(lib) in parallel with our submake for $(lib) (Bug#20894).
+
+2015-06-25  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/character-fold.el (character-fold-table): Reuse `table'
+
+2015-06-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Translate undisplayable ‘ to `
+	* doc/lispref/help.texi (Keys in Documentation):
+	* lisp/international/mule-cmds.el (set-locale-environment):
+	* lisp/term/w32console.el (terminal-init-w32console):
+	* src/doc.c (Fsubstitute_command_keys, Vhelp_quote_translation):
+	If ‘ is not displayable, transliterate it to `, not to '.  See:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-06/msg00542.html
+
+	Fix C99 incompatibilities in Cairo code
+	* src/image.c (xpm_load) [USE_CAIRO]:
+	* src/xterm.c (x_cr_accumulate_data) [USE_CAIRO]:
+	Fix pointer signedness problem.
+
+2015-06-25  Oleh Krehel  <ohwoeowho@gmail.com>
+
+	lisp/emacs-lisp/cl-indent.el: Fix indent of with-output-to-string
+	* lisp/emacs-lisp/cl-indent.el (common-lisp-indent-function):
+	  `with-output-to-string' should have the same indent as `progn'.
+	  This is in line with the declaration of `with-output-to-string'.
+
+2015-06-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Get ‘./configure; make -C src emacs’ to work
+	Without this fix, lib/fcntl.h isn't built in time (Bug#20894).
+	* lib-src/Makefile.in (../lib/libgnu.a):
+	* src/Makefile.in ($(lib)/libgnu.a): Build all, not libgnu.a.
+
+2015-06-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix GC bugs --with-wide-int and Qnil == 0
+	Use the same alignment for the !USE_LSB_TAG case as for the
+	more-typical USE_LSB_TAG case.  The attempt to support arbitrary
+	alignments with !USE_LSB_TAG had subtle bugs in garbage collection
+	once we changed the representation of symbols so that Qnil == 0.
+	Problem reported by Eli Zaretskii (Bug#20862).
+	* src/alloc.c (XMALLOC_HEADER_ALIGNMENT) [XMALLOC_OVERRUN_CHECK]:
+	* src/alloc.c (vector_alignment, union aligned_Lisp_Symbol)
+	(union aligned_Lisp_Misc, maybe_lisp_pointer, pure_alloc):
+	Use same alignment for !USE_LSB_TAG as for USE_LSB_TAG.
+	* src/alloc.c (POINTERS_MIGHT_HIDE_IN_OBJECTS): Remove.
+	This optimization in the !USE_LSB_TAG case is no longer valid when
+	symbols are represented via offsets.  Change the only use to
+	assume that pointers might hide in objects.
+	* src/lisp.h (alignas) [!USE_LSB_TAG]:
+	Require support in this case, too.
+	(TAG_SYMOFFSET, XSYMBOL) [!USE_LSB_TAG]: Do not shift the offset.
+	This is OK, because the !USE_LSB_TAG case now applies only when
+	Lisp_Object is wider than void *, so there's no longer any need
+	to shift the offset.  Not shifting the offset means that
+	symbol representations have the same alignment as pointers,
+	which the GC assumes.
+
+2015-06-24  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* doc/lispintro/emacs-lisp-intro.texi (Data types):
+	Improve documentation of 'substring'.
+
+2015-06-24  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/character-fold.el (character-fold-table): Fix table generation
+
+2015-06-24  Glenn Morris  <rgm@gnu.org>
+
+	* nextstep/Makefile.in (all): Make it the first target.
+	(../src/emacs${EXEEXT}): Add rule for making it.
+
 2015-06-24  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* etc/NEWS: Fix mention to old function name
@@ -6728,7 +6926,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit 0890cd833fa39d219cb333b08a4204539d1dae3f (inclusive).
+commit eac1271ae9dc6087be4383ded3f62ac3da030b54 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
