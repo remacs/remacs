@@ -1645,7 +1645,7 @@ w32_executable_type (char * filename,
 		    {
 		      /* This catches both MSYS 1.x and MSYS2
 			 executables (the DLL name is msys-1.0.dll and
-			 msys-2.0.dll, respectively).  There's doesn't
+			 msys-2.0.dll, respectively).  There doesn't
 			 seem to be a reason to distinguish between
 			 the two, for now.  */
 		      *is_msys_app = TRUE;
