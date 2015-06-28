@@ -579,7 +579,7 @@ This function is called from `compilation-filter-hook'."
 			 " -e"))))
 	(unless grep-command
 	  (setq grep-command
-		(format "%s %s %s " grep-program grep-options
+		(format "%s %s %s " grep-program
                         (or
                          (and grep-highlight-matches
                               (grep-probe grep-program
@@ -587,7 +587,8 @@ This function is called from `compilation-filter-hook'."
                                           nil 1)
                               (if (eq grep-highlight-matches 'always)
                                   "--color=always" "--color"))
-                         ""))))
+                         "")
+                         grep-options)))
 	(unless grep-template
 	  (setq grep-template
 		(format "%s <X> <C> %s <R> <F>" grep-program grep-options)))
