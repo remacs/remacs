@@ -3337,6 +3337,38 @@ font_load_for_lface (struct frame *f, Lisp_Object *attrs, Lisp_Object spec)
       /* No font is listed for SPEC, but each font-backend may have
 	 different criteria about "font matching".  So, try it.  */
       entity = font_matching_entity (f, attrs, spec);
+      /* Perhaps the user asked for a font "Foobar-123", and we
+	 interpreted "-123" as the size, whereas it really is part of
+	 the name.  So we reset the size to nil and the family name to
+	 the entire "Foobar-123" thing, and try again with that.  */
+      if (NILP (entity))
+	{
+	  name = Ffont_get (spec, QCuser_spec);
+	  if (STRINGP (name))
+	    {
+	      char *p = SDATA (name), *q = strrchr (p, '-');
+
+	      if (q != NULL && c_isdigit (q[1]))
+		{
+		  char *tail;
+		  double font_size = strtod (q + 1, &tail);
+
+		  if (font_size > 0 && tail != q + 1)
+		    {
+		      Lisp_Object lsize = Ffont_get (spec, QCsize);
+
+		      if ((FLOATP (lsize) && XFLOAT_DATA (lsize) == font_size)
+			  || (INTEGERP (lsize) && XINT (lsize) == font_size))
+			{
+			  ASET (spec, FONT_FAMILY_INDEX,
+				font_intern_prop (p, tail - p, 1));
+			  ASET (spec, FONT_SIZE_INDEX, Qnil);
+			  entity = font_matching_entity (f, attrs, spec);
+			}
+		    }
+		}
+	    }
+	}
       if (NILP (entity))
 	return Qnil;
     }
