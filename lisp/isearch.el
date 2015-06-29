@@ -1184,8 +1184,8 @@ nonincremental search instead via `isearch-edit-string'."
   (if (and search-nonincremental-instead
 	   (= 0 (length isearch-string)))
       (let ((isearch-nonincremental t))
-	(isearch-edit-string)))
-  (isearch-done)
+	(isearch-edit-string)) ;; this calls isearch-done as well
+    (isearch-done))
   (isearch-clean-overlays))
 
 (defun isearch-fail-pos (&optional msg)
