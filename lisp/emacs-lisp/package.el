@@ -2104,7 +2104,8 @@ will be deleted."
 (defun describe-package (package)
   "Display the full documentation of PACKAGE (a symbol)."
   (interactive
-   (let* ((guess (function-called-at-point)))
+   (let* ((guess (or (function-called-at-point)
+                     (symbol-at-point))))
      (require 'finder-inf nil t)
      ;; Load the package list if necessary (but don't activate them).
      (unless package--initialized
