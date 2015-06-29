@@ -2120,7 +2120,8 @@ will be deleted."
                                    (format "Describe package (default %s): "
                                            guess)
                                  "Describe package: ")
-                               packages nil t nil nil guess)))
+                               packages nil t nil nil (when guess
+                                                        (symbol-name guess)))))
          (list (intern val))))))
   (if (not (or (package-desc-p package) (and package (symbolp package))))
       (message "No package specified")
