@@ -782,6 +782,8 @@ notifications, if Emacs is compiled with file notification support.
 ---
 *** gulp.el
 
+*** landmark.el (moved to elpa.gnu.org)
+
 +++
 ** The character classes [:graph:] and [:print:] in regular expressions
 no longer match every multibyte character.  Instead, Emacs now

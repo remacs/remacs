@@ -25,6 +25,8 @@
 
 ;;; Commentary:
 
+;; *Note: This package has now moved to elpa.gnu.org.*
+
 ;; To try this, just type: M-x landmark-test-run
 
 ;; Landmark is a relatively non-participatory game in which a robot
