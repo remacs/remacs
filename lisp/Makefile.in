@@ -23,6 +23,7 @@ srcdir = @srcdir@
 top_srcdir = @top_srcdir@
 lisp = $(srcdir)
 VPATH = $(srcdir)
+EXEEXT = @EXEEXT@
 
 # Empty for all systems except MinGW, where xargs needs an explicit
 # limitation.
