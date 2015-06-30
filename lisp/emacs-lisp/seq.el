@@ -4,7 +4,7 @@
 
 ;; Author: Nicolas Petton <nicolas@petton.fr>
 ;; Keywords: sequences
-;; Version: 1.7
+;; Version: 1.8
 ;; Package: seq
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -324,6 +324,16 @@ TYPE can be one of the following symbols: vector, string or list."
     (`string (concat seq))
     (`list (append seq nil))
     (_ (error "Not a sequence type name: %S" type))))
+
+(defun seq-min (seq)
+  "Return the smallest element of SEQ.
+SEQ must be a sequence of numbers or markers."
+  (apply #'min (seq-into seq 'list)))
+
+(defun seq-max (seq)
+    "Return the largest element of SEQ.
+SEQ must be a sequence of numbers or markers."
+  (apply #'max (seq-into seq 'list)))
 
 (defun seq--drop-list (list n)
   "Return a list from LIST without its first N elements.
