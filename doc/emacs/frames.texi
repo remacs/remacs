@@ -443,7 +443,7 @@ error if there is only one frame.
 @item C-z
 @kindex C-z @r{(X windows)}
 @findex suspend-frame
-Minimize (or ``iconify) the selected Emacs frame
+Minimize (or ``iconify'') the selected Emacs frame
 (@code{suspend-frame}).  @xref{Exiting}.
 
 @item C-x 5 o
