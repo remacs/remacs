@@ -468,8 +468,10 @@ must be one of the symbols `header', `mode', or `vertical'."
 		  (setq dragged t)
 		  (adjust-window-trailing-edge window growth nil t))
 		(setq last-position position))))))
-      ;; Start tracking.
-      (setq track-mouse t)
+      ;; Start tracking.  The special value 'dragging' signals the
+      ;; display engine to freeze the mouse pointer shape for as long
+      ;; as we drag.
+      (setq track-mouse 'dragging)
       ;; Loop reading events and sampling the position of the mouse.
       (setq exitfun
 	    (set-transient-map

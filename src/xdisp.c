@@ -29105,7 +29105,7 @@ static void
 define_frame_cursor1 (struct frame *f, Cursor cursor, Lisp_Object pointer)
 {
   /* Do not change cursor shape while dragging mouse.  */
-  if (!NILP (do_mouse_tracking))
+  if (EQ (do_mouse_tracking, Qdragging))
     return;
 
   if (!NILP (pointer))
@@ -30726,6 +30726,8 @@ They are still logged to the *Messages* buffer.  */);
   DEFSYM (Qhand, "hand");
   DEFSYM (Qarrow, "arrow");
   /* also Qtext */
+
+  DEFSYM (Qdragging, "dragging");
 
   DEFSYM (Qinhibit_free_realized_faces, "inhibit-free-realized-faces");
 

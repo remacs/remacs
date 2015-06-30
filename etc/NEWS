@@ -815,6 +815,15 @@ This means that you can't use `make-local-variable' and expect them to
 
 ** `inhibit-point-motion-hooks' now defaults to t and is obsolete.
 
++++
+** `track-mouse' no longer freezes the shape of the mouse pointer.
+The `track-mouse' form no longer refrains from changing the shape of
+the mouse pointer for the entire time the body of that form is
+executed.  Lisp programs that use `track-mouse' for dragging across
+large portions of the Emacs display, and want to avoid changes in the
+pointer shape during dragging, should bind the variable `track-mouse'
+to the special value `dragging' in the body of the form.
+
 ** The optional `predicate' argument of `lisp-complete-symbol' no longer
 has any effect.  (This change was made in Emacs 24.4 but was not
 advertised at the time.)
