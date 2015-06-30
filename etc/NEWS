@@ -398,6 +398,9 @@ If you need your objects to be named, do it by inheriting from `eieio-named'.
 *** New command `ido-bury-buffer-at-head' bound to C-S-b
 Bury the buffer at the head of `ido-matches', analogous to how C-k
 kills the buffer at head.
+*** A prefix argument to `ido-restrict-to-matches' will reverse its
+meaning, and the list is restricted to those elements that do not
+match the current input.
 
 ** Minibuffer
 
