@@ -1500,7 +1500,7 @@ Use `isearch-exit' to quit without signaling."
   "Toggle word searching on or off."
   ;; The status stack is left unchanged.
   (interactive)
-  (setq isearch-word (not isearch-word))
+  (setq isearch-word (if (eq isearch-word t) nil t))
   (if isearch-word (setq isearch-regexp nil))
   (setq isearch-success t isearch-adjusted t)
   (isearch-update))
