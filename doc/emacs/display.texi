@@ -699,8 +699,9 @@ terminals.
 This face is used for the prompt strings displayed in the minibuffer.
 By default, Emacs automatically adds this face to the value of
 @code{minibuffer-prompt-properties}, which is a list of text
-properties used to display the prompt text.  (This variable takes
-effect when you enter the minibuffer.)
+properties (@pxref{Text Properties,,, elisp, the Emacs Lisp Reference
+Manual}) used to display the prompt text.  (This variable takes effect
+when you enter the minibuffer.)
 @item fringe
 @cindex @code{fringe} face
 The face for the fringes to the left and right of windows on graphic
@@ -1079,10 +1080,11 @@ end''.  If the line's direction is right-to-left (@pxref{Bidirectional
 Editing}), the meanings of the curving arrows in the fringes are
 swapped.
 
-  The fringes indicate line truncation with short horizontal arrows
-meaning ``there's more text on this line which is scrolled
-horizontally out of view''.  Clicking the mouse on one of the arrows
-scrolls the display horizontally in the direction of the arrow.
+  The fringes indicate line truncation (@pxref{Line Truncation}) with
+short horizontal arrows meaning ``there's more text on this line which
+is scrolled horizontally out of view''.  Clicking the mouse on one of
+the arrows scrolls the display horizontally in the direction of the
+arrow.
 
   The fringes can also indicate other things, such as buffer
 boundaries (@pxref{Displaying Boundaries}), and where a program you
