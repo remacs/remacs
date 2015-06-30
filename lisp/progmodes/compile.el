@@ -255,7 +255,7 @@ of[ \t]+\"?\\([a-zA-Z]?:?[^\":\n]+\\)\"?:" 3 2 nil (1))
      ;; can be composed of any non-newline char, but it also rules out some
      ;; valid but unlikely cases, such as a trailing space or a space
      ;; followed by a -, or a colon followed by a space.
-     ;; 
+     ;;
      ;; The "in \\|from " exception was added to handle messages from Ruby.
      ,(rx
        bol
@@ -1461,9 +1461,9 @@ Additionally, with universal prefix arg, compilation buffer will be in
 comint mode, i.e. interactive.
 
 To run more than one compilation at once, start one then rename
-the \`*compilation*' buffer to some other name with
+the `*compilation*' buffer to some other name with
 \\[rename-buffer].  Then _switch buffers_ and start the new compilation.
-It will create a new \`*compilation*' buffer.
+It will create a new `*compilation*' buffer.
 
 On most systems, termination of the main compilation process
 kills its subprocesses.

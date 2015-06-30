@@ -176,7 +176,7 @@ LABEL is a string to display as the label of that TIMEZONE's time."
 Each element has the form (TIMEZONE LABEL).
 TIMEZONE should be in a format supported by your system.  See the
 documentation of `zoneinfo-style-world-list' and
-\`legacy-style-world-list' for two widely used formats.  LABEL is
+`legacy-style-world-list' for two widely used formats.  LABEL is
 a string to display as the label of that TIMEZONE's time."
   :group 'display-time
   :type '(repeat (list string string))

@@ -5730,7 +5730,7 @@ The values of `right-to-left' and `left-to-right' override that.
 Any other value is treated as nil.
 
 This variable has no effect unless the buffer's value of
-\`bidi-display-reordering' is non-nil.  */);
+`bidi-display-reordering' is non-nil.  */);
 
  DEFVAR_PER_BUFFER ("truncate-lines", &BVAR (current_buffer, truncate_lines), Qnil,
 		     doc: /* Non-nil means do not display continuation lines.

@@ -411,7 +411,7 @@ otherwise, disable it.  If called from Lisp, enable the mode if
 ARG is omitted or nil.
 
 %s is enabled in all buffers where
-\`%s' would do it.
+`%s' would do it.
 See `%s' for more information on %s."
 		  pretty-name pretty-global-name
 		  pretty-name turn-on mode pretty-name)

@@ -1,4 +1,3 @@
-
 ;; erc.el --- An Emacs Internet Relay Chat client  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1997-2015 Free Software Foundation, Inc.
@@ -3260,7 +3259,7 @@ The lines are shown in a buffer named `*Occur*'.
 It serves as a menu to find any of the occurrences in this buffer.
 \\[describe-mode] in that buffer will explain how.
 
-If LINE contains upper case characters (excluding those preceded by `\'),
+If LINE contains upper case characters (excluding those preceded by ‘\\’),
 the matching is case-sensitive."
   (occur line)
   t)

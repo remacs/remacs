@@ -2283,7 +2283,7 @@ This function decides which method to use to access the menu
 depending on FRAME's terminal device.  On X displays, it calls
 `x-menu-bar-open'; on Windows, `w32-menu-bar-open'; otherwise it
 calls either `popup-menu' or `tmm-menubar' depending on whether
-\`tty-menu-open-use-tmm' is nil or not.
+`tty-menu-open-use-tmm' is nil or not.
 
 If FRAME is nil or not given, use the selected frame."
   (interactive)
