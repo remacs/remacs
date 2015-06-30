@@ -279,7 +279,7 @@ Equality is defined by TESTFN if non-nil or by `equal' if nil."
               '()))
 
 (defun seq-difference (seq1 seq2 &optional testfn)
-  "Return a list of th elements that appear in SEQ1 but not in SEQ2.
+  "Return a list of the elements that appear in SEQ1 but not in SEQ2.
 Equality is defined by TESTFN if non-nil or by `equal' if nil."
   (seq-reduce (lambda (acc elt)
                 (if (not (seq-contains-p seq2 elt testfn))
