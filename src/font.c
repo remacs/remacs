@@ -3346,7 +3346,7 @@ font_load_for_lface (struct frame *f, Lisp_Object *attrs, Lisp_Object spec)
 	  name = Ffont_get (spec, QCuser_spec);
 	  if (STRINGP (name))
 	    {
-	      char *p = SDATA (name), *q = strrchr (p, '-');
+	      char *p = SSDATA (name), *q = strrchr (p, '-');
 
 	      if (q != NULL && c_isdigit (q[1]))
 		{
