@@ -1576,29 +1576,33 @@ SEEN is used internally to detect infinite recursion."
           (while (and pkg-descs (not found))
             (let* ((pkg-desc (pop pkg-descs))
                    (version (package-desc-version pkg-desc))
-                   (disabled (package-disabled-p next-pkg version)))
+                   (disabled (package-disabled-p next-pkg version))
+                   found-something)
               (cond
                ((version-list-< version next-version)
-                (error
-                 "Need package `%s-%s', but only %s is available"
-                 next-pkg (package-version-join next-version)
-                 (package-version-join version)))
+                ;; pkg-descs is sorted by priority, not version, so
+                ;; don't error just yet.
+                (unless found-something
+                  (setq found-something (package-version-join version))))
                (disabled
                 (unless problem
                   (setq problem
                         (if (stringp disabled)
-                            (format "Package `%s' held at version %s, \
-but version %s required"
+                            (format "Package `%s' held at version %s, but version %s required"
                                     next-pkg disabled
                                     (package-version-join next-version))
                           (format "Required package '%s' is disabled"
                                   next-pkg)))))
                (t (setq found pkg-desc)))))
           (unless found
-            (if problem
-                (error "%s" problem)
-              (error "Package `%s-%s' is unavailable"
-                     next-pkg (package-version-join next-version))))
+            (cond
+             (problem (error "%s" problem))
+             (found-something
+              (error "Need package `%s-%s', but only %s is available"
+                     next-pkg (package-version-join next-version)
+                     found-something))
+             (t (error "Package `%s-%s' is unavailable"
+                       next-pkg (package-version-join next-version)))))
           (setq packages
                 (package-compute-transaction (cons found packages)
                                              (package-desc-reqs found)
