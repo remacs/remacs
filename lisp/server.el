@@ -1167,6 +1167,9 @@ The following commands are accepted by the client:
                  (let ((file (pop args-left)))
                    (if coding-system
                        (setq file (decode-coding-string file coding-system)))
+                   (when (and (eq system-type 'cygwin)
+                              (fboundp 'cygwin-convert-file-name-from-windows))
+                     (setq file (cygwin-convert-file-name-from-windows file)))
                    (setq file (expand-file-name file dir))
                    (push (cons file filepos) files)
                    (server-log (format "New file: %s %s"
