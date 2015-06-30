@@ -1620,12 +1620,14 @@ Used to populate `package-selected-packages'."
              unless (memq name dep-list)
              collect name)))
 
-(defun package--save-selected-packages (value)
+(defun package--save-selected-packages (&optional value)
   "Set and save `package-selected-packages' to VALUE."
-  (let ((save-silently inhibit-message))
-    (customize-save-variable
-     'package-selected-packages
-     (setq package-selected-packages value))))
+  (when value
+    (setq package-selected-packages value))
+  (if after-init-time
+      (let ((save-silently inhibit-message))
+        (customize-save-variable 'package-selected-packages package-selected-packages))
+    (add-hook 'after-init-hook #'package--save-selected-packages)))
 
 (defun package--user-selected-p (pkg)
   "Return non-nil if PKG is a package was installed by the user.
