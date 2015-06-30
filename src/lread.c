@@ -955,6 +955,21 @@ load_warn_old_style_backquotes (Lisp_Object file)
     }
 }
 
+static void
+load_warn_unescaped_character_literals (Lisp_Object file)
+{
+  if (NILP (Vlread_unescaped_character_literals)) return;
+  CHECK_CONS (Vlread_unescaped_character_literals);
+  AUTO_STRING (format,
+               "Loading `%s': unescaped character literals %s detected!");
+  AUTO_STRING (separator, ", ");
+  CALLN (Fmessage,
+         format, file,
+         Fmapconcat (Qstring,
+                     Fsort (Vlread_unescaped_character_literals, Qlss),
+                     separator));
+}
+
 DEFUN ("get-load-suffixes", Fget_load_suffixes, Sget_load_suffixes, 0, 0, 0,
        doc: /* Return the suffixes that `load' should try if a suffix is \
 required.
@@ -1201,6 +1216,11 @@ Return t if the file exists and loads successfully.  */)
   /* Check for the presence of old-style quotes and warn about them.  */
   specbind (Qold_style_backquotes, Qnil);
   record_unwind_protect (load_warn_old_style_backquotes, file);
+
+  /* Check for the presence of unescaped character literals and warn
+     about them. */
+  specbind (Qlread_unescaped_character_literals, Qnil);
+  record_unwind_protect (load_warn_unescaped_character_literals, file);
 
   int is_elc;
   if ((is_elc = suffix_p (found, ".elc")) != 0
@@ -3092,6 +3112,16 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	if (c == ' ' || c == '\t')
 	  return make_number (c);
 
+	if (c == '(' || c == ')' || c == '[' || c == ']'
+            || c == '"' || c == ';')
+	  {
+            CHECK_LIST (Vlread_unescaped_character_literals);
+            Lisp_Object char_obj = make_natnum (c);
+            if (NILP (Fmemq (char_obj, Vlread_unescaped_character_literals)))
+              Vlread_unescaped_character_literals =
+                Fcons (char_obj, Vlread_unescaped_character_literals);
+	  }
+
 	if (c == '\\')
 	  c = read_escape (readcharfun, 0);
 	modifiers = c & CHAR_MODIFIER_MASK;
@@ -4814,6 +4844,16 @@ variables, this must be set in the first line of a file.  */);
 	       doc: /* Set to non-nil when `read' encounters an old-style backquote.  */);
   Vold_style_backquotes = Qnil;
   DEFSYM (Qold_style_backquotes, "old-style-backquotes");
+
+  DEFVAR_LISP ("lread--unescaped-character-literals",
+               Vlread_unescaped_character_literals,
+               doc: /* List of deprecated unescaped character literals encountered by `read'.
+For internal use only.  */);
+  Vlread_unescaped_character_literals = Qnil;
+  DEFSYM (Qlread_unescaped_character_literals,
+          "lread--unescaped-character-literals");
+
+  DEFSYM (Qlss, "<");
 
   DEFVAR_BOOL ("load-prefer-newer", load_prefer_newer,
                doc: /* Non-nil means `load' prefers the newest version of a file.

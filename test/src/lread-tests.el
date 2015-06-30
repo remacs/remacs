@@ -116,4 +116,30 @@
   (should (equal '(#s(foo) #s(foo))
                  (read "(#1=#s(foo) #1#)"))))
 
+(defmacro lread-tests--with-temp-file (file-name-var &rest body)
+  (declare (indent 1))
+  (cl-check-type file-name-var symbol)
+  `(let ((,file-name-var (make-temp-file "emacs")))
+     (unwind-protect
+         (progn ,@body)
+       (delete-file ,file-name-var))))
+
+(defun lread-tests--last-message ()
+  (with-current-buffer "*Messages*"
+    (save-excursion
+      (goto-char (point-max))
+      (skip-chars-backward "\n")
+      (buffer-substring (line-beginning-position) (point)))))
+
+(ert-deftest lread-tests--unescaped-char-literals ()
+  "Check that loading warns about unescaped character
+literals (Bug#20852)."
+  (lread-tests--with-temp-file file-name
+    (write-region "?) ?( ?; ?\" ?[ ?]" nil file-name)
+    (should (equal (load file-name nil :nomessage :nosuffix) t))
+    (should (equal (lread-tests--last-message)
+                   (concat (format-message "Loading `%s': " file-name)
+                           "unescaped character literals "
+                           "\", (, ), ;, [, ] detected!")))))
+
 ;;; lread-tests.el ends here

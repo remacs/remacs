@@ -506,6 +506,29 @@ bytecompiled code, and their results compared.")
   (dolist (pat bytecomp-lexbind-tests)
     (should (bytecomp-lexbind-check-1 pat))))
 
+(defmacro bytecomp-tests--with-temp-file (file-name-var &rest body)
+  (declare (indent 1))
+  (cl-check-type file-name-var symbol)
+  `(let ((,file-name-var (make-temp-file "emacs")))
+     (unwind-protect
+         (progn ,@body)
+       (delete-file ,file-name-var))))
+
+(ert-deftest bytecomp-tests--unescaped-char-literals ()
+  "Check that byte compiling warns about unescaped character
+literals (Bug#20852)."
+  (should (boundp 'lread--unescaped-character-literals))
+  (bytecomp-tests--with-temp-file source
+    (write-region "(list ?) ?( ?; ?\" ?[ ?])" nil source)
+    (bytecomp-tests--with-temp-file destination
+      (let* ((byte-compile-dest-file-function (lambda (_) destination))
+            (byte-compile-error-on-warn t)
+            (byte-compile-debug t)
+            (err (should-error (byte-compile-file source))))
+        (should (equal (cdr err)
+                       (list (concat "unescaped character literals "
+                                     "\", (, ), ;, [, ] detected!"))))))))
+
 ;; Local Variables:
 ;; no-byte-compile: t
 ;; End:
