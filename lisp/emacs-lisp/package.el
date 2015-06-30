@@ -2596,9 +2596,11 @@ to their archives."
                         (out))
                    (while pkg-list
                      (let ((p (pop pkg-list)))
-                       (if (>= (package-desc-priority p) max-priority)
+                       (let ((priority (package-desc-priority p)))
+                         (if (< priority max-priority)
+                             (setq pkg-list nil)
                            (push p out)
-                         (setq pkg-list nil))))
+                           (setq max-priority priority)))))
                    (nreverse out)))
                 (pkg-list
                  (list (car pkg-list))))))
