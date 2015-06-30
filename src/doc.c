@@ -1,4 +1,4 @@
-/* Record indices of function doc strings stored in a file.
+/* Record indices of function doc strings stored in a file. -*- coding: utf-8 -*-
 
 Copyright (C) 1985-1986, 1993-1995, 1997-2015 Free Software Foundation,
 Inc.
