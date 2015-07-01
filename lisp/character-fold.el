@@ -1,4 +1,4 @@
-;;; character-fold.el --- matching unicode characters to their ascii similars -*- lexical-binding: t; -*-
+;;; character-fold.el --- match unicode to similar ASCII -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2015 Free Software Foundation, Inc.
 
@@ -26,7 +26,7 @@
 ;;;###autoload
 (defvar character-fold-search t
   "Non-nil if searches should fold similar characters.
-This means some characters will match entire groups of charactes.
+This means some characters will match entire groups of characters.
 For instance, \" will match all variants of double quotes, and
 the letter a will match all of its accented versions (and then
 some).")
@@ -49,7 +49,7 @@ some).")
            ;; Discard a possible formatting tag.
            (when (symbolp (car dec))
              (setq dec (cdr dec)))
-           ;; Skip trivial cases lika ?a decomposing to (?a).
+           ;; Skip trivial cases like ?a decomposing to (?a).
            (unless (or (and (eq i (car dec))
                             (not  (cdr dec))))
              (let ((d dec) k found multiletter)

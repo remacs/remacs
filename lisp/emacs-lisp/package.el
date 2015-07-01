@@ -2614,7 +2614,7 @@ to their archives."
 (defcustom package-hidden-regexps nil
   "List of regexps matching the name of packages to hide.
 If the name of a package matches any of these regexps it is
-omited from the package menu.  To toggle this, type \\[package-menu-toggle-hiding].
+omitted from the package menu.  To toggle this, type \\[package-menu-toggle-hiding].
 
 Values can be interactively added to this list by typing
 \\[package-menu-hide-package] on a package"

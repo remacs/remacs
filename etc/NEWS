@@ -87,7 +87,7 @@ command line when `initial-buffer-choice' is non-nil.
 ** `isearch' and `query-replace' now perform character folding in matches.
 This is analogous to case-folding, but applies between Unicode
 characters and their ASCII counterparts. This means many characters
-will match entire groups of charactes.
+will match entire groups of characters.
 
 For instance, the " will match all variants of unicode double quotes
 (like “ and ”), and the letter a will match all of its accented
