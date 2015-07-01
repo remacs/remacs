@@ -10795,7 +10795,11 @@ The return value is similar to a mouse click position:
 The `posn-' functions access elements of such lists.  */)
   (Lisp_Object x, Lisp_Object y, Lisp_Object frame_or_window, Lisp_Object whole)
 {
-  CHECK_NATNUM (x);
+  CHECK_NUMBER (x);
+  /* We allow X of -1, for the newline in a R2L line that overflowed
+     into the left fringe.  */
+  if (XINT (x) != -1)
+    CHECK_NATNUM (x);
   CHECK_NATNUM (y);
 
   if (NILP (frame_or_window))
@@ -10843,8 +10847,9 @@ The `posn-' functions access elements of such lists.  */)
       Lisp_Object x = XCAR (tem);
       Lisp_Object y = XCAR (XCDR (tem));
 
-      /* Point invisible due to hscrolling?  */
-      if (XINT (x) < 0)
+      /* Point invisible due to hscrolling?  X can be -1 when a
+	 newline in a R2L line overflows into the left fringe.  */
+      if (XINT (x) < -1)
 	return Qnil;
       tem = Fposn_at_x_y (x, y, window, Qnil);
     }
