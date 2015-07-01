@@ -753,7 +753,7 @@ is specified, `:italic' is ignored."
   (setq args (purecopy args))
   (let ((where (if (null frame) 0 frame))
 	(spec args)
-	family foundry)
+	family foundry orig-family orig-foundry)
     ;; If we set the new-frame defaults, this face is modified outside Custom.
     (if (memq where '(0 t))
 	(put (or (get face 'face-alias) face) 'face-modified t))
@@ -769,9 +769,16 @@ is specified, `:italic' is ignored."
     (when (or family foundry)
       (when (and (stringp family)
 		 (string-match "\\([^-]*\\)-\\([^-]*\\)" family))
+        (setq orig-foundry foundry
+              orig-family family)
 	(unless foundry
 	  (setq foundry (match-string 1 family)))
-	(setq family (match-string 2 family)))
+	(setq family (match-string 2 family))
+        ;; Reject bogus "families" that are all-digits -- those are some
+        ;; weird font names, like Foobar-12, that end in a number.
+        (when (string-match "\\`[0-9]*\\'" family)
+          (setq family orig-family)
+          (setq foundry orig-foundry)))
       (when (or (stringp family) (eq family 'unspecified))
 	(internal-set-lisp-face-attribute face :family (purecopy family)
 					  where))
