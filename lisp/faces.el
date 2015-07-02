@@ -2506,7 +2506,7 @@ is used for the inner part while the first pixel line/column is
 drawn with the `window-divider-first-pixel' face and the last
 pixel line/column with the `window-divider-last-pixel' face."
   :version "24.4"
-  :group 'frames
+  :group 'window-divider
   :group 'basic-faces)
 
 (defface window-divider-first-pixel
@@ -2517,7 +2517,7 @@ line/column is drawn with the foreground of this face.  If you do
 not want to accentuate the first pixel line/column, set this to
 the same as `window-divider' face."
   :version "24.4"
-  :group 'frames
+  :group 'window-divider
   :group 'basic-faces)
 
 (defface window-divider-last-pixel
@@ -2528,7 +2528,7 @@ line/column is drawn with the foreground of this face.  If you do
 not want to accentuate the last pixel line/column, set this to
 the same as `window-divider' face."
   :version "24.4"
-  :group 'frames
+  :group 'window-divider
   :group 'basic-faces)
 
 (defface minibuffer-prompt

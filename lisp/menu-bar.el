@@ -683,7 +683,7 @@ by \"Save Options\" in Custom buffers.")
     (dolist (elt '(scroll-bar-mode
 		   debug-on-quit debug-on-error
 		   ;; Somehow this works, when tool-bar and menu-bar don't.
-		   tooltip-mode
+		   tooltip-mode window-divider-mode
 		   save-place uniquify-buffer-name-style fringe-mode
 		   indicate-empty-lines indicate-buffer-boundaries
 		   case-fold-search font-use-system-font
@@ -710,6 +710,92 @@ by \"Save Options\" in Custom buffers.")
 ;;; Assemble all the top-level items of the "Options" menu
 
 ;; The "Show/Hide" submenu of menu "Options"
+
+(defun menu-bar-window-divider-customize ()
+  "Show customization buffer for `window-divider' group."
+  (interactive)
+  (customize-group 'window-divider))
+
+(defun menu-bar-bottom-and-right-window-divider ()
+  "Display dividers on the bottom and right of each window."
+  (interactive)
+  (customize-set-variable 'window-divider-mode t))
+
+(defun menu-bar-right-window-divider ()
+  "Display dividers only on the right of each window."
+  (interactive)
+  (customize-set-variable 'window-divider-mode 'right-only))
+
+(defun menu-bar-bottom-window-divider ()
+  "Display dividers only at the bottom of each window."
+  (interactive)
+  (customize-set-variable 'window-divider-mode 'bottom-only))
+
+(defun menu-bar-no-window-divider ()
+  "Do not display window dividers."
+  (interactive)
+  (customize-set-variable 'window-divider-mode nil))
+
+;; For the radio buttons below we check whether the respective dividers
+;; are displayed on the selected frame.  This is not fully congruent
+;; with `window-divder-mode' but makes the menu entries work also when
+;; dividers are displayed by manipulating frame parameters directly.
+(defvar menu-bar-showhide-window-divider-menu
+  (let ((menu (make-sparse-keymap "Window Divider")))
+    (bindings--define-key menu [customize]
+      '(menu-item "Customize" menu-bar-window-divider-customize
+                  :help "Customize window dividers"
+                  :visible (memq (window-system) '(x w32))))
+
+    (bindings--define-key menu [bottom-and-right]
+      '(menu-item "Bottom and Right"
+                  menu-bar-bottom-and-right-window-divider
+                  :help "Display window divider on the bottom and right of each window"
+                  :visible (memq (window-system) '(x w32))
+                  :button (:radio
+			   . (and (frame-window-divider-width-valid-p
+				   (cdr (assq 'bottom-divider-width
+					      (frame-parameters))))
+				  (frame-window-divider-width-valid-p
+				   (cdr (assq 'right-divider-width
+					      (frame-parameters))))))))
+    (bindings--define-key menu [right-only]
+      '(menu-item "Right Only"
+                  menu-bar-right-window-divider
+                  :help "Display window divider on the right of each window only"
+                  :visible (memq (window-system) '(x w32))
+                  :button (:radio
+			   . (and (not (frame-window-divider-width-valid-p
+					(cdr (assq 'bottom-divider-width
+						   (frame-parameters)))))
+				  (frame-window-divider-width-valid-p
+				   (cdr (assq 'right-divider-width
+						     (frame-parameters))))))))
+    (bindings--define-key menu [bottom-only]
+      '(menu-item "Bottom Only"
+                  menu-bar-bottom-window-divider
+                  :help "Display window divider on the bottom of each window only"
+                  :visible (memq (window-system) '(x w32))
+                  :button (:radio
+			   . (and (frame-window-divider-width-valid-p
+				   (cdr (assq 'bottom-divider-width
+					      (frame-parameters))))
+				  (not (frame-window-divider-width-valid-p
+					(cdr (assq 'right-divider-width
+						   (frame-parameters)))))))))
+    (bindings--define-key menu [no-divider]
+      '(menu-item "None"
+                  menu-bar-no-window-divider
+                  :help "Do not display window dividers"
+                  :visible (memq (window-system) '(x w32))
+                  :button (:radio
+			   . (and (not (frame-window-divider-width-valid-p
+					(cdr (assq 'bottom-divider-width
+						   (frame-parameters)))))
+				  (not (frame-window-divider-width-valid-p
+					(cdr (assq 'right-divider-width
+						   (frame-parameters)))))))))
+    menu))
 
 (defun menu-bar-showhide-fringe-ind-customize ()
   "Show customization buffer for `indicate-buffer-boundaries'."
@@ -1071,6 +1157,10 @@ mail status in mode line"))
                                   (frame-live-p (symbol-value 'speedbar-frame))
                                   (frame-visible-p
                                    (symbol-value 'speedbar-frame))))))
+
+    (bindings--define-key menu [showhide-window-divider]
+      `(menu-item "Window Divider" ,menu-bar-showhide-window-divider-menu
+                  :visible (memq (window-system) '(x w32))))
 
     (bindings--define-key menu [showhide-fringe]
       `(menu-item "Fringe" ,menu-bar-showhide-fringe-menu

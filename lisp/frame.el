@@ -1749,6 +1749,134 @@ left untouched.  FRAME nil or omitted means use the selected frame."
     'delete-frame-functions "22.1")
 
 
+;;; Window dividers.
+(defgroup window-divider nil
+  "Window dividers."
+  :version "25.1"
+  :group 'frames
+  :group 'windows)
+
+(defvar frame--window-divider-previous-mode nil
+  "Previous value of `window-divider-mode'.
+This is the value seen when `window-divider-mode' was switched
+off the last time.  It's reused when `window-divider-mode' is
+switched on again.")
+
+(defcustom window-divider-mode nil
+  "Specify whether to display window dividers and where.
+Possible values are nil (no dividers), `bottom-only' (dividers on
+the bottom of each window only), `right-only' (dividers on the
+right of each window only), and t (dividers on the bottom and on
+the right of each window)."
+  :type '(choice (const :tag "None (nil)" nil)
+		 (const :tag "Bottom only" bottom-only)
+		 (const :tag "Right only" right-only)
+		 (const :tag "Bottom and right" t))
+  :initialize 'custom-initialize-default
+  :set (lambda (_symbol value)
+         (frame--window-divider-mode-set-and-apply value))
+  :group 'window-divider
+  :version "25.1")
+
+(define-minor-mode window-divider-mode
+  "Display dividers between windows (Window Divider mode).
+With a prefix argument ARG, enable Window Divider mode if ARG is
+positive, and disable it otherwise.  If called from Lisp, enable
+the mode if ARG is omitted or nil.
+
+The option `window-divider-default-width' allows to customize the
+width of dividers displayed by this mode."
+  :group 'window-divider
+  :global t
+  :variable (window-divider-mode
+             . (lambda (value)
+                 (frame--window-divider-mode-set-and-apply
+                  (and value
+                       (or frame--window-divider-previous-mode
+                           (default-value 'window-divider-mode)
+                           'right-only))))))
+
+(defun frame-window-divider-width-valid-p (value)
+  "Return non-nil if VALUE is a positive number."
+  (and (numberp value) (> value 0)))
+
+(defcustom window-divider-default-bottom-width 6
+  "Default width of dividers on bottom of windows.
+The value must be a positive integer and takes effect when bottom
+dividers are displayed by `window-divider-mode'.
+
+To adjust bottom dividers for frames individually, use the frame
+parameter `bottom-divider-width'."
+  :type '(restricted-sexp
+          :tag "Default bottom divider width"
+          :match-alternatives (frame-window-divider-width-valid-p))
+  :group 'window-divider
+  :initialize 'custom-initialize-default
+  :set (lambda (symbol value)
+	 (set-default symbol value)
+	 (when window-divider-mode
+           (frame--window-divider-mode-apply)))
+  :version "25.1")
+
+(defcustom window-divider-default-right-width 6
+  "Default width of dividers on the right of windows.
+The value must be a positive integer and takes effect when right
+dividers are displayed by `window-divider-mode'.
+
+To adjust right dividers for frames individually, use the frame
+parameter `right-divider-width'."
+  :type '(restricted-sexp
+          :tag "Default right divider width"
+          :match-alternatives (frame-window-divider-width-valid-p))
+  :group 'window-divider
+  :initialize 'custom-initialize-default
+  :set (lambda (symbol value)
+	 (set-default symbol value)
+	 (when window-divider-mode
+	   (frame--window-divider-mode-apply)))
+  :version "25.1")
+
+(defun frame--window-divider-mode-apply ()
+  "Apply window divider widths."
+  (let ((bottom (if (memq window-divider-mode '(bottom-only t))
+                    window-divider-default-bottom-width
+                  0))
+        (right (if (memq window-divider-mode '(right-only t))
+                   window-divider-default-right-width
+                 0)))
+    (modify-all-frames-parameters
+     (list (cons 'bottom-divider-width bottom)
+           (cons 'right-divider-width right)))
+    (setq default-frame-alist
+          (assq-delete-all
+           'bottom-divider-width default-frame-alist))
+    (setq default-frame-alist
+          (assq-delete-all
+           'right-divider-width default-frame-alist))
+    (when (> bottom 0)
+      (setq default-frame-alist
+            (cons
+             (cons 'bottom-divider-width bottom)
+             default-frame-alist)))
+    (when (> right 0)
+      (setq default-frame-alist
+            (cons
+             (cons 'right-divider-width right)
+             default-frame-alist)))))
+
+(defun frame--window-divider-mode-set-and-apply (value)
+  "Set window divider mode to VALUE and apply widths."
+  (unless value
+    ;; Remember current mode.
+    (setq frame--window-divider-previous-mode window-divider-mode))
+  (set-default 'window-divider-mode value)
+  ;; Pacify customize rigmarole.
+  (put 'window-divider-mode 'customized-value
+       (if (memq value '(nil t))
+           (list value)
+         (list (list 'quote value))))
+  (frame--window-divider-mode-apply))
+
 ;; Blinking cursor
 
 (defgroup cursor nil
