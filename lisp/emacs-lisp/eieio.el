@@ -435,7 +435,7 @@ The CLOS function `class-direct-superclasses' is aliased to this function."
   "Return child classes to CLASS.
 The CLOS function `class-direct-subclasses' is aliased to this function."
   (cl-check-type class class)
-  (eieio--class-children (eieio--class-v class)))
+  (eieio--class-children (cl--find-class class)))
 (define-obsolete-function-alias
   'class-children #'eieio-class-children "24.4")
 
@@ -566,7 +566,7 @@ OBJECT can be an instance or a class."
   "Return the class that SYMBOL represents.
 If there is no class, nil is returned if ERRORP is nil.
 If ERRORP is non-nil, `wrong-argument-type' is signaled."
-  (let ((class (eieio--class-v symbol)))
+  (let ((class (cl--find-class symbol)))
     (cond
      ((eieio--class-p class) class)
      (errorp (signal 'wrong-type-argument (list 'class-p symbol))))))
@@ -672,7 +672,7 @@ Its slots are automatically adopted by classes with no specified parents.
 This class is not stored in the `parent' slot of a class vector."
   :abstract t)
 
-(setq eieio-default-superclass (eieio--class-v 'eieio-default-superclass))
+(setq eieio-default-superclass (cl--find-class 'eieio-default-superclass))
 
 (defalias 'standard-class 'eieio-default-superclass)
 
@@ -862,7 +862,7 @@ this object."
     (princ comment)
     (princ "\n"))
   (let* ((cl (eieio-object-class this))
-	 (cv (eieio--class-v cl)))
+	 (cv (cl--find-class cl)))
     ;; Now output readable lisp to recreate this object
     ;; It should look like this:
     ;; (<constructor> <name> <slot> <slot> ... )
@@ -978,7 +978,7 @@ Optional argument GROUP is the sub-group of slots to display.
 
 ;;;***
 
-;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "899e10c7883c4aac5cefcc223794e8f9")
+;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "b7995d9076e4dd4b9358b2aa66835619")
 ;;; Generated autoloads from eieio-opt.el
 
 (autoload 'eieio-browse "eieio-opt" "\

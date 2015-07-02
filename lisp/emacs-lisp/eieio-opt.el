@@ -60,7 +60,7 @@ Argument PREFIX is the character prefix to use.
 Argument CH-PREFIX is another character prefix to display."
   (cl-check-type this-root class)
   (let ((myname (symbol-name this-root))
-	(chl (eieio--class-children (eieio--class-v this-root)))
+	(chl (eieio--class-children (cl--find-class this-root)))
 	(fprefix (concat ch-prefix "  +--"))
 	(mprefix (concat ch-prefix "  |  "))
 	(lprefix (concat ch-prefix "     ")))
@@ -84,7 +84,7 @@ If CLASS is actually an object, then also display current values of that object.
   ;; Header line
   (prin1 class)
   (insert " is a"
-	  (if (eieio--class-option (eieio--class-v class) :abstract)
+	  (if (eieio--class-option (cl--find-class class) :abstract)
 	      "n abstract"
 	    "")
 	  " class")
@@ -162,7 +162,7 @@ If CLASS is actually an object, then also display current values of that object.
 (defun eieio-help-class-slots (class)
   "Print help description for the slots in CLASS.
 Outputs to the current buffer."
-  (let* ((cv (eieio--class-v class))
+  (let* ((cv (cl--find-class class))
          (slots (eieio--class-slots cv))
          (cslots (eieio--class-class-slots cv)))
     (insert (propertize "Instance Allocated Slots:\n\n"
@@ -181,7 +181,7 @@ If INSTANTIABLE-ONLY is non nil, only allow names of classes which
 are not abstract, otherwise allow all classes.
 Optional argument BUILDLIST is more list to attach and is used internally."
   (let* ((cc (or class 'eieio-default-superclass))
-	 (sublst (eieio--class-children (eieio--class-v cc))))
+	 (sublst (eieio--class-children (cl--find-class cc))))
     (unless (assoc (symbol-name cc) buildlist)
       (when (or (not instantiable-only) (not (class-abstract-p cc)))
         ;; FIXME: Completion tables don't need alists, and ede/generic.el needs
@@ -452,7 +452,7 @@ current expansion depth."
 (defun eieio-class-button (class depth)
   "Draw a speedbar button at the current point for CLASS at DEPTH."
   (cl-check-type class class)
-  (let ((subclasses (eieio--class-children (eieio--class-v class))))
+  (let ((subclasses (eieio--class-children (cl--find-class class))))
     (if subclasses
 	(speedbar-make-tag-line 'angle ?+
 				'eieio-sb-expand
@@ -477,7 +477,7 @@ Argument INDENT is the depth of indentation."
 	 (speedbar-with-writable
 	   (save-excursion
 	     (end-of-line) (forward-char 1)
-	     (let ((subclasses (eieio--class-children (eieio--class-v class))))
+	     (let ((subclasses (eieio--class-children (cl--find-class class))))
 	       (while subclasses
 		 (eieio-class-button (car subclasses) (1+ indent))
 		 (setq subclasses (cdr subclasses)))))))
