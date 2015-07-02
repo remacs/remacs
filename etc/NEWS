@@ -1090,6 +1090,11 @@ windows without "fixing" it.  It's supported by `fit-window-to-buffer',
 `temp-buffer-resize-mode' and `display-buffer'.
 
 +++
+** New minor mode `window-divider-mode' and options
+`window-divider-default-bottom-width' and
+`window-divider-default-right-width'.
+
++++
 ** New option `switch-to-buffer-in-dedicated-window' allows to customize
 how `switch-to-buffer' proceeds interactively when the selected window
 is strongly dedicated to its buffer.

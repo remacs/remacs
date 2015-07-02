@@ -1784,8 +1784,9 @@ With a prefix argument ARG, enable Window Divider mode if ARG is
 positive, and disable it otherwise.  If called from Lisp, enable
 the mode if ARG is omitted or nil.
 
-The option `window-divider-default-width' allows to customize the
-width of dividers displayed by this mode."
+The options `window-divider-default-bottom-width' and
+`window-divider-default-right-width' allow to customize the width
+of dividers displayed by this mode."
   :group 'window-divider
   :global t
   :variable (window-divider-mode
