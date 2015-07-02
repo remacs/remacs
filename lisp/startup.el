@@ -1018,12 +1018,11 @@ please check its value")
     (setq no-blinking-cursor t))
 
   ;; If curved quotes don't work, display ASCII approximations.
-  (unless noninteractive
-    (dolist (char-repl '((?‘ . [?\`]) (?’ . [?\']) (?“ . [?\"]) (?” . [?\"])))
-      (when (not (char-displayable-p (car char-repl)))
-        (or standard-display-table
-            (setq standard-display-table (make-display-table)))
-        (aset standard-display-table (car char-repl) (cdr char-repl)))))
+  (dolist (char-repl '((?‘ . [?\`]) (?’ . [?\']) (?“ . [?\"]) (?” . [?\"])))
+    (when (not (char-displayable-p (car char-repl)))
+      (or standard-display-table
+          (setq standard-display-table (make-display-table)))
+      (aset standard-display-table (car char-repl) (cdr char-repl))))
 
   ;; Re-evaluate predefined variables whose initial value depends on
   ;; the runtime context.
