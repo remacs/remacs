@@ -322,8 +322,9 @@ lines to other windows in the frame.
   You can also use @kbd{C-x +} (@code{balance-windows}) to even out the
 heights of all the windows in the selected frame.
 
-  Mouse clicks on the mode line provide another way to change window
-heights and to delete windows.  @xref{Mode Line Mouse}.
+  Mouse clicks on the mode line (@pxref{Mode Line Mouse}) or on window
+dividers (@pxref{Window Dividers}) provide another way to change window
+heights and to split or delete windows.
 
 @node Displaying Buffers
 @section Displaying a Buffer in a Window
