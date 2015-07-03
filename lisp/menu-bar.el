@@ -719,22 +719,25 @@ by \"Save Options\" in Custom buffers.")
 (defun menu-bar-bottom-and-right-window-divider ()
   "Display dividers on the bottom and right of each window."
   (interactive)
-  (customize-set-variable 'window-divider-mode t))
+  (customize-set-variable 'window-divider-default-places t)
+  (window-divider-mode 1))
 
 (defun menu-bar-right-window-divider ()
   "Display dividers only on the right of each window."
   (interactive)
-  (customize-set-variable 'window-divider-mode 'right-only))
+  (customize-set-variable 'window-divider-default-places 'right-only)
+  (window-divider-mode 1))
 
 (defun menu-bar-bottom-window-divider ()
   "Display dividers only at the bottom of each window."
   (interactive)
-  (customize-set-variable 'window-divider-mode 'bottom-only))
+  (customize-set-variable 'window-divider-default-places 'bottom-only)
+  (window-divider-mode 1))
 
 (defun menu-bar-no-window-divider ()
   "Do not display window dividers."
   (interactive)
-  (customize-set-variable 'window-divider-mode nil))
+  (window-divider-mode -1))
 
 ;; For the radio buttons below we check whether the respective dividers
 ;; are displayed on the selected frame.  This is not fully congruent
@@ -753,10 +756,10 @@ by \"Save Options\" in Custom buffers.")
                   :help "Display window divider on the bottom and right of each window"
                   :visible (memq (window-system) '(x w32))
                   :button (:radio
-			   . (and (frame-window-divider-width-valid-p
+			   . (and (window-divider-width-valid-p
 				   (cdr (assq 'bottom-divider-width
 					      (frame-parameters))))
-				  (frame-window-divider-width-valid-p
+				  (window-divider-width-valid-p
 				   (cdr (assq 'right-divider-width
 					      (frame-parameters))))))))
     (bindings--define-key menu [right-only]
@@ -765,10 +768,10 @@ by \"Save Options\" in Custom buffers.")
                   :help "Display window divider on the right of each window only"
                   :visible (memq (window-system) '(x w32))
                   :button (:radio
-			   . (and (not (frame-window-divider-width-valid-p
+			   . (and (not (window-divider-width-valid-p
 					(cdr (assq 'bottom-divider-width
 						   (frame-parameters)))))
-				  (frame-window-divider-width-valid-p
+				  (window-divider-width-valid-p
 				   (cdr (assq 'right-divider-width
 						     (frame-parameters))))))))
     (bindings--define-key menu [bottom-only]
@@ -777,10 +780,10 @@ by \"Save Options\" in Custom buffers.")
                   :help "Display window divider on the bottom of each window only"
                   :visible (memq (window-system) '(x w32))
                   :button (:radio
-			   . (and (frame-window-divider-width-valid-p
+			   . (and (window-divider-width-valid-p
 				   (cdr (assq 'bottom-divider-width
 					      (frame-parameters))))
-				  (not (frame-window-divider-width-valid-p
+				  (not (window-divider-width-valid-p
 					(cdr (assq 'right-divider-width
 						   (frame-parameters)))))))))
     (bindings--define-key menu [no-divider]
@@ -789,10 +792,10 @@ by \"Save Options\" in Custom buffers.")
                   :help "Do not display window dividers"
                   :visible (memq (window-system) '(x w32))
                   :button (:radio
-			   . (and (not (frame-window-divider-width-valid-p
+			   . (and (not (window-divider-width-valid-p
 					(cdr (assq 'bottom-divider-width
 						   (frame-parameters)))))
-				  (not (frame-window-divider-width-valid-p
+				  (not (window-divider-width-valid-p
 					(cdr (assq 'right-divider-width
 						   (frame-parameters)))))))))
     menu))

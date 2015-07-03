@@ -1011,13 +1011,16 @@ scroll bar height, change the @code{scroll-bar-height} frame parameter
 separate windows visually.  Window dividers are bars that can be dragged
 with the mouse, thus allowing to easily resize adjacent windows.
 
-@vindex window-divider-mode
-  To control the display of window dividers, customize the variable
-@code{window-divider-mode}.  Its value should be either
+@findex window-divider-mode
+  To toggle the display of window dividers, use the command @kbd{M-x
+window-divider-mode}.
+
+@vindex window-divider-default-places
+  To customize where dividers should appear, use the option
+@code{window-divider-default-places}.  Its value should be either
 @code{bottom-only} (to show dividers only on the bottom of windows),
-@code{right-only} (to show dividers only on the right of windows),
-@code{t} (to show them on the bottom and on the right) or @code{nil} (to
-disable window dividers).
+@code{right-only} (to show dividers only on the right of windows), or
+@code{t} (to show them on the bottom and on the right).
 
 @vindex window-divider-default-bottom-width
 @vindex window-divider-default-right-width
