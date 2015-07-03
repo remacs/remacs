@@ -511,8 +511,8 @@ the search string must exactly match a whole word.  In an incremental
 word search, the matching is more lax: while you are typing the search
 string, its first and last words need not match whole words.  This is
 so that the matching can proceed incrementally as you type.  This
-additional laxity does not apply to the lazy highlight, which always
-matches whole words.
+additional laxity does not apply to the lazy highlight
+(@pxref{Incremental Search}), which always matches whole words.
 
 @node Symbol Search
 @section Symbol Search
