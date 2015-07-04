@@ -4015,7 +4015,9 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	if (f && cursor)
 	  {
 	    f->output_data.w32->current_cursor = cursor;
-	    if (!f->output_data.w32->hourglass_p)
+	    /* Don't change the cursor while menu-bar menu is in use.  */
+	    if (!f->output_data.w32->menubar_active
+		&& !f->output_data.w32->hourglass_p)
 	      {
 		if (f->pointer_invisible)
 		  SetCursor (NULL);
