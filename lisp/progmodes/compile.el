@@ -2521,9 +2521,9 @@ displays at the top of the window; there is no arrow."
 			     (- 1 compilation-context-lines))
 			    (point)))
     ;; If there is no left fringe.
-    (if (equal (car (window-fringes)) 0)
-	(set-window-start w (save-excursion
-			      (goto-char mk)
+    (when (equal (car (window-fringes w)) 0)
+      (set-window-start w (save-excursion
+                            (goto-char mk)
 			    (beginning-of-line 1)
 			    (point)))))
     (set-window-point w mk))
