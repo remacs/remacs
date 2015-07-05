@@ -6714,7 +6714,8 @@ status_notify (struct Lisp_Process *deleting_process,
 		 && p != deleting_process)
 	    {
 	      int nread = read_process_output (proc, p->infd);
-	      if (got_some_input < nread)
+	      if ((!wait_proc || wait_proc == XPROCESS (proc))
+		  && got_some_input < nread)
 		got_some_input = nread;
 	      if (nread <= 0)
 		break;
