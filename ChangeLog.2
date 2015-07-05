@@ -1,3 +1,381 @@
+2015-07-05  Christoph Wedler  <christoph.wedler@sap.com>
+
+	Respect `prog-indentation-context' in python.el
+	* lisp/progmodes/python.el (python-indent-guess-indent-offset)
+	(python-indent-context, python-indent--calculate-indentation)
+	(python-info-current-defun)
+	(python-info-dedenter-opening-block-message)
+	(python-info-line-ends-backslash-p)
+	(python-info-beginning-of-backslash)
+	(python-info-continuation-line-p): Use `prog-widen'.
+	(python-indent--calculate-indentation)
+	(python-indent--calculate-levels)
+	(python-indent-calculate-indentation): Use `prog-first-column'.
+	(python-indent--calculate-levels): Simplify.
+	Ignore also initial empty lines for syntax calculation.
+	* lisp/progmodes/python.el (python-indent-context): Return
+	:no-indent for first non-empty line, not just in line 1.
+	* test/automated/python-tests.el (python-indent-base-case)
+	(python-indent-inside-paren-1, python-indent-inside-paren-2)
+	(python-indent-inside-paren-3, python-indent-inside-paren-4)
+	(python-indent-inside-paren-5, python-indent-inside-paren-6)
+	(python-indent-after-backslash-1)
+	(python-indent-after-backslash-2)
+	(python-indent-after-backslash-3)
+	(python-indent-after-backslash-4, python-indent-inside-string-1):
+	Expect :no-indent for first non-empty line.
+
+2015-07-04  Daniel Colascione  <dancol@dancol.org>
+
+	Factor isearch word description into new function
+	* lisp/isearch.el (isearch--describe-word-mode): New function.
+	(isearch-message-prefix, isearch-query-replace): Use it.
+
+2015-07-04  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix mouse pointer on w32 when a menu is active
+	* src/w32fns.c (w32_wnd_proc): Don't change the mouse pointer
+	shape while a menu is in use.  This started happening since we now
+	send WM_EMACS_SHOWCURSOR messages when the mouse moves.
+
+2015-07-04  Martin Rudalics  <rudalics@gmx.at>
+
+	Fix processing of alpha parameter for Windows tip frames  (Bug#17344)
+	* src/w32fns.c (x_create_tip_frame): Fix processing alpha
+	parameter.  (Bug#17344)
+
+	Have `compilation-set-window' use right window for getting fringes (Bug#20829)
+	* lisp/progmodes/compile.el (compilation-set-window): Take
+	`window-fringes' from argument window.  (Bug#20829)
+
+2015-07-03  Glenn Morris  <rgm@gnu.org>
+
+	Update eieio tests for recent eieio-core change.
+	* test/automated/eieio-test-persist.el (persist-test-save-and-compare):
+	* test/automated/eieio-tests.el
+	(eieio-test-32-slot-attribute-override-2):
+	Replace the deleted eieio--class-v with cl--find-class.
+
+2015-07-03  Martin Rudalics  <rudalics@gmx.at>
+
+	Fix some issues with `window-divider-mode'
+	* lisp/frame.el (window-divider-default-places): New option.
+	(window-divider-mode): Remove option.
+	(window-divider-mode): Make it a "regular" minor mode.
+	(window-divider-width-valid-p): Drop frame- prefix.
+	(window-divider-mode-apply): New argument ENABLE.  Drop frame-
+	prefix.  Handle `window-divider-default-places'.
+	(frame--window-divider-mode-set-and-apply): Remove.
+	(window-divider-default-bottom-width)
+	(window-divider-default-right-width): Drop :group entries.
+	* lisp/menu-bar.el (menu-bar-bottom-and-right-window-divider)
+	(menu-bar-right-window-divider, menu-bar-bottom-window-divider)
+	(menu-bar-no-window-divider): Set `window-divider-default-places'
+	and call `window-divider-mode'.
+	* doc/emacs/frames.texi (Window Dividers): Document
+	`window-divider-default-places'.
+
+2015-07-02  Xue Fuqiao  <xfq.free@gmail.com>
+
+	Add cross references in documentation
+	* doc/emacs/display.texi (Displaying Boundaries):
+	* doc/emacs/search.texi (Word Search): Add cross references.
+
+2015-07-02  Eli Zaretskii  <eliz@gnu.org>
+
+	;* src/bidi.c (bpa_stack_entry): Update commentary for Unicode 8.0.
+
+2015-07-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	-batch should not affect ‘’ -> `' display
+	* lisp/startup.el (command-line): Do the ‘’ -> `' check even if
+	-batch (Bug#20926).
+
+2015-07-02  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/emacs-lisp/eieio-core.el (eieio--class-v): Remove
+	* lisp/emacs-lisp/eieio-core.el, lisp/emacs-lisp/eieio.el,
+	  lisp/emacs-lisp/eieio-opt.el, lisp/emacs-lisp/eieio-compat.el:
+	Use cl--find-class instead.
+
+	* lisp/term/xterm.el (xterm--query): Fix paren typo (bug#20951).
+
+2015-07-02  Martin Rudalics  <rudalics@gmx.at>
+
+	Some further fixes in Change Window node.  (Bug#20183)
+	* doc/emacs/windows.texi (Change Window): Replace "rearranging"
+	by "resizing" in section title.  Add some concept indices.
+	Suggested by N. Jackson (Bug#20183).
+
+	Reference window dividers in Change Window section.
+	* doc/emacs/windows.texi (Change Window): Reference window
+	dividers.
+
+	Document new `window-divider-mode'.
+	* lisp/frame.el (window-divider-mode): Fix doc-string.
+	* doc/emacs/frames.texi (Window Dividers): New section.
+
+	Improve accessibility of window dividers.  (Bug#20183)
+	* lisp/faces.el (window-divider)
+	(window-divider-first-pixel, window-divider-last-pixel): Change
+	membership from `frames' to `window-divider' customization group.
+	* lisp/frame.el (window-divider): New customization group.
+	(window-divider-mode): New minor mode.
+	(window-divider-default-bottom-width)
+	(window-divider-default-right-width): New options.
+	(frame--window-divider-previous-mode): New variable.
+	(frame-window-divider-width-valid-p)
+	(frame--window-divider-mode-apply)
+	(frame--window-divider-mode-set-and-apply): New functions.
+	* lisp/menu-bar.el (menu-bar-options-save): Save
+	window-divider-mode settings.
+	(menu-bar-window-divider-customize)
+	(menu-bar-bottom-and-right-window-divider)
+	(menu-bar-right-window-divider, menu-bar-bottom-window-divider)
+	(menu-bar-no-window-divider): New functions.
+	(menu-bar-showhide-window-divider-menu): New variable.
+	(menu-bar-showhide-menu): Show/hide window divider menu.
+	* lisp/mouse.el (mouse-split-window-vertically)
+	(mouse-split-window-horizontally): Replace `error' by
+	`user-error'.  Bind `window-combination-resize' to nil.
+	(top-level): Add/reorder mouse key bindings on mode- and
+	vertical-line.
+
+2015-07-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Don't display ‘’ as `' under X in en_GB
+	The curved quote setup code invokes (char-displayable-p ?‘),
+	but this isn’t reliable until after the X frame replaces the
+	terminal frame (Bug#20926).
+	* lisp/international/mule-cmds.el (set-locale-environment):
+	Move curved quote setup code from here ...
+	* lisp/startup.el (command-line): ... to here, after creating
+	the X frame.
+
+2015-07-01  Nicolas Richard  <youngfrog@members.fsf.org>
+
+	* lisp/emacs-lisp/seq.el (seq-difference): Fix typo in docstring
+
+	Add argument to reverse the meaning of ido-restrict-to-matches
+	* lisp/ido.el (ido-restrict-to-matches): Add an optional argument
+	to reverse the meaning (Bug#15631).
+
+2015-07-01  Eli Zaretskii  <eliz@gnu.org>
+
+	Be more tolerant to fonts named "Foobar-12"
+	* src/frame.c (x_set_font): If font_spec_from_name returns nil,
+	don't barf; instead, request a new fontset to be generated.  This
+	avoids unnecessarily rejecting fonts named against XLFD rules.  See
+	http://lists.gnu.org/archive/html/help-emacs-windows/2015-06/msg00001.html,
+	for the description of the original problem.
+	* lisp/faces.el (set-face-attribute): Don't be fooled too easily
+	by a hyphen in a font's name.
+
+	Fix value of posn-at-pont in R2L lines
+	* src/keyboard.c (Fposn_at_x_y, Fposn_at_point): Allow X pixel
+	coordinate of -1, for a newline in a right-to-left line that
+	overflowed into the left fringe.
+
+2015-07-01  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	(cl--copy-slot-descriptor): Copy the `props' alist as well
+	* lisp/emacs-lisp/cl-preloaded.el (cl--copy-slot-descriptor-1):
+	Rename from cl--copy-slot-descriptor.
+	(cl--copy-slot-descriptor): New function.  Copy the alist (bug#20914).
+
+2015-06-30  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/term/xterm.el (xterm--query): Avoid generating garbage
+	(xterm-query-timeout): New var.
+	(xterm--query): Use it.  Fallback on async method if we timeout before
+	getting the first byte of the reply (bug#12354).
+
+2015-06-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Spelling fixes
+
+2015-06-30  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* doc/emacs/frames.texi (Frame Commands): Typo fix. (Bug#20946)
+
+2015-06-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	In strings, prefer plain ` and ' to \` and \'
+	* lisp/allout.el (allout-insert-listified):
+	* lisp/emacs-lisp/easy-mmode.el (define-globalized-minor-mode):
+	* lisp/ls-lisp.el (ls-lisp-UCA-like-collation)
+	(ls-lisp-string-lessp):
+	* lisp/menu-bar.el (menu-bar-open):
+	* lisp/obsolete/otodo-mode.el (todo-top-priorities):
+	* lisp/progmodes/compile.el (compile):
+	* lisp/progmodes/etags.el (tags-loop-scan):
+	* lisp/progmodes/make-mode.el (makefile-browser-insert-continuation):
+	* lisp/subr.el (posn-actual-col-row):
+	* lisp/term/pc-win.el (x-list-fonts):
+	* lisp/textmodes/texinfmt.el (texinfmt-version):
+	* lisp/textmodes/texnfo-upd.el (texinfo-master-menu):
+	* lisp/time.el (display-time-world-list):
+	* lisp/tmm.el (tmm-menubar):
+	* src/buffer.c (syms_of_buffer):
+	* src/fileio.c (syms_of_fileio):
+	Omit unnecessary and confusing backslash before quote.
+	* lisp/erc/erc.el (erc-cmd-LASTLOG):
+	* lisp/progmodes/flymake.el (flymake-fix-file-name):
+	* lisp/progmodes/vhdl-mode.el (vhdl-in-extended-identifier-p):
+	Fix string that was intended to escape a backslash and not a quote.
+
+2015-06-30  Glenn Morris  <rgm@gnu.org>
+
+	* leim/Makefile.in, lisp/Makefile.in: Add missing EXEEXT definition.
+
+	* lisp/Makefile.in (MH_E_SRC, TRAMP_SRC, CAL_SRC):
+	Replace hard-coded lists with wildcard + filter-out.
+
+	* configure.ac (system-configuration-features): Add X11, NS.
+
+	Improve reproducibility of generated loaddefs file.
+	* lisp/emacs-lisp/autoload.el (autoload-generate-file-autoloads):
+	Make the return value the modtime of the input file (if no autoloads).
+	(update-directory-autoloads): In the "no autoloads" section,
+	use "most recent modtime" rather than "current time".
+
+2015-06-30  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/package.el (package--remove-hidden): Fix logic
+	(Bug#20930)
+
+2015-06-30  Nicolas Petton  <nicolas@petton.fr>
+
+	* doc/lispref/sequences.texi: Add documentation for seq-min and seq-max.
+
+	Add seq-min and seq-max
+	Bump version number.
+	* lisp/emacs-lisp/seq.el (seq-min, seq-max): New functions.
+	* test/automated/seq-tests.el: Add tests for seq-min and seq-max.
+
+2015-06-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Make sure sleep-for always delays for as long as it's told
+	* src/dispnew.c (Fsleep_for): Call wait_reading_process_output in
+	a loop, to ensure we always wait exactly the required amount of
+	time.  (Bug#15990)
+
+2015-06-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix pointer signedness glitch
+	* src/font.c (font_load_for_lface): Use SSDATA, not SDATA.
+
+2015-06-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Don't block changes in mouse pointer inside 'track-mouse'
+	* etc/NEWS:
+	* doc/lispref/frames.texi (Mouse Tracking): Document the special
+	effect of setting 'track-mouse' to 'dragging'.
+	* lisp/textmodes/artist.el (artist-mouse-draw-continously):
+	* lisp/ruler-mode.el (ruler-mode-mouse-drag-any-column-iteration):
+	* lisp/mouse-drag.el (mouse-drag-throw):
+	* lisp/mouse.el (mouse-drag-line): Set 'track-mouse' to 'dragging'
+	to avoid changes in the shape of the mouse pointer.
+	* src/xdisp.c (define_frame_cursor1): Don't change the mouse
+	pointer shape when do_mouse_tracking has the value of 'dragging',
+	not just any non-nil value.  (Bug#20934)
+	(syms_of_xdisp): DEFSYM 'dragging'.
+
+2015-06-30  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/isearch.el (isearch-toggle-word): Fix toggle
+
+	* lisp/emacs-lisp/package.el (package-compute-transaction):
+	Don't assume version sorting.
+
+	* lisp/emacs-lisp/package.el (package--save-selected-packages):
+	Don't save before init time, to avoid overwriting configurations.
+	(Bug#20855)
+
+2015-06-30  Xue Fuqiao  <xfq.free@gmail.com>
+
+	Add cross references.
+	* doc/emacs/display.texi (Standard Faces, Fringes): Add cross
+	references.
+
+2015-06-29  Ted Zlatanov  <tzz@lifelogs.com>
+
+	cfengine.el: update for the upcoming CFEngine 3.7 release
+	Update for the upcoming CFEngine 3.7 release: support macros and
+	quoted context strings; reformat JSON; indent promise attributes 2
+	units by default; give function parameter descriptions in the eldoc
+	glue.
+	* cfengine.el: Update version and docs and fix name.  Autoload
+	`json-pretty-print'.  Support new features in 3.7.
+	(cfengine-parameters-indent): Set default promise attribute indent to
+	2 more than the promise itself.
+	(cfengine3-macro-regex): New variable to match the new macro syntax.
+	(cfengine3-font-lock-keywords): Use it to highlight macros.
+	(cfengine3-indent-line): Use it to indent macros to column 0.
+	(cfengine3-class-selector-regex): Update for the new quoted strings
+	format.
+	(cfengine3-reformat-json-string): New function to reformat a JSON
+	string using `json-pretty-print'.
+	(cfengine3-format-function-docstring): Use function parameter
+	description if it's provided by the cf-promises syntax dump.
+
+2015-06-29  Michael R. Mauger  <michael@mauger.com>
+
+	Cygwin emacsclient handles w32 file names
+
+2015-06-29  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* lisp/isearch.el (isearch-exit): Don't call isearch-done twice (bug#20925).
+
+2015-06-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* doc/lispref/text.texi (Sticky Properties): Improve wording.
+	(Bug#20924)
+
+	Allow font names that end in "-NN", where NN is a number
+	* src/font.c (font_load_for_lface): If the font-spec didn't match
+	any available fonts, try again without interpreting trailing "-NN"
+	as the font size.  For the description of the original problem, see
+	http://lists.gnu.org/archive/html/help-emacs-windows/2015-06/msg00001.html
+
+	.gdbinit followup to changes in !USE_LSB_TAG
+	* src/.gdbinit (xgetsym): Don't left-shift $ptr even under
+	!USE_LSB_TAG, as Emacs no longer does.
+
+2015-06-29  Wolfgang Jenkner  <wjenkner@inode.at>
+
+	* lisp/calc-store.el (calc-insert-permanent-variable): Heed case.
+	Otherwise `s p' of f and F will stomp on each other's value.  (Bug#20916)
+
+2015-06-29  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/tabulated-list.el (tabulated-list-print):
+	Don't block remember-pos if buffer isn't displayed.  (Bug#20921)
+
+2015-06-29  Nicolas Richard  <theonewiththeevillook@yahoo.fr>
+
+	* package.el (describe-package): Use symbol-at-point as additional guess
+
+	* package.el (describe-package): Convert the guess to a string
+
+2015-06-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	apropos-library quoting fix
+	* lisp/apropos.el (apropos-library): Quote library consistently
+	with the rest of the quoting used by apropos.
+
+	Clarify interpreter-mode-alist doc
+	* lisp/files.el (interpreter-mode-alist):
+	Reword to avoid confusing quoting that wasn't working anyway.
+
+2015-06-28  Michael Albinus  <michael.albinus@gmx.de>
+
+	Sync with Tramp 2.2.12
+	* doc/misc/trampver.texi:
+	* lisp/net/trampver.el: Update release number.
+	* test/automated/tramp-tests.el (tramp-test13-make-directory):
+	Fix cleanup.
+
 2015-06-28  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* lisp/isearch.el (isearch-mode): Don't char-fold regexps
@@ -6926,7 +7304,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit eac1271ae9dc6087be4383ded3f62ac3da030b54 (inclusive).
+commit 044d4cc0c0debd4648ec637d63bcd72d4253b1cb (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
