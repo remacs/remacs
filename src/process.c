@@ -4586,7 +4586,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
   int xerrno;
   Lisp_Object proc;
   struct timespec timeout, end_time;
-  int got_some_input = -1;
+  int got_some_output = -1;
   ptrdiff_t count = SPECPDL_INDEX ();
 
   FD_ZERO (&Available);
@@ -4634,7 +4634,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	break;
 
       /* After reading input, vacuum up any leftovers without waiting.  */
-      if (0 <= got_some_input)
+      if (0 <= got_some_output)
 	nsecs = -1;
 
       /* Compute time from now till when time limit is up.  */
@@ -4755,7 +4755,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	      /* It's okay for us to do this and then continue with
 		 the loop, since timeout has already been zeroed out.  */
 	      clear_waiting_for_input ();
-	      got_some_input = status_notify (NULL, wait_proc);
+	      got_some_output = status_notify (NULL, wait_proc);
 	      if (do_display) redisplay_preserve_echo_area (13);
 	    }
 	}
@@ -4791,8 +4791,8 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		    }
 		  else
 		    {
-		      if (got_some_input < nread)
-			got_some_input = nread;
+		      if (got_some_output < nread)
+			got_some_output = nread;
 		      if (nread == 0)
 			break;
 		      read_some_bytes = true;
@@ -5089,8 +5089,9 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		 buffered-ahead character if we have one.  */
 
 	      nread = read_process_output (proc, channel);
-	      if ((!wait_proc || wait_proc == XPROCESS (proc)) && got_some_input < nread)
-		got_some_input = nread;
+	      if ((!wait_proc || wait_proc == XPROCESS (proc))
+		  && got_some_output < nread)
+		got_some_output = nread;
 	      if (nread > 0)
 		{
 		  /* Since read_process_output can run a filter,
@@ -5250,7 +5251,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       QUIT;
     }
 
-  return got_some_input;
+  return got_some_output;
 }
 
 /* Given a list (FUNCTION ARGS...), apply FUNCTION to the ARGS.  */
@@ -6659,7 +6660,7 @@ status_notify (struct Lisp_Process *deleting_process,
   Lisp_Object proc;
   Lisp_Object tail, msg;
   struct gcpro gcpro1, gcpro2;
-  int got_some_input = -1;
+  int got_some_output = -1;
 
   tail = Qnil;
   msg = Qnil;
@@ -6693,8 +6694,8 @@ status_notify (struct Lisp_Process *deleting_process,
 	    {
 	      int nread = read_process_output (proc, p->infd);
 	      if ((!wait_proc || wait_proc == XPROCESS (proc))
-		  && got_some_input < nread)
-		got_some_input = nread;
+		  && got_some_output < nread)
+		got_some_output = nread;
 	      if (nread <= 0)
 		break;
 	    }
@@ -6729,7 +6730,7 @@ status_notify (struct Lisp_Process *deleting_process,
 
   update_mode_lines = 24;  /* In case buffers use %s in mode-line-format.  */
   UNGCPRO;
-  return got_some_input;
+  return got_some_output;
 }
 
 DEFUN ("internal-default-process-sentinel", Finternal_default_process_sentinel,
