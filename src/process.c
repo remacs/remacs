@@ -4586,6 +4586,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
   int xerrno;
   Lisp_Object proc;
   struct timespec timeout, end_time;
+  enum { MINIMUM = -1, TIMEOUT, INFINITY } wait;
   int got_some_output = -1;
   ptrdiff_t count = SPECPDL_INDEX ();
 
@@ -4601,21 +4602,19 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 			     waiting_for_user_input_p);
   waiting_for_user_input_p = read_kbd;
 
-  if (time_limit < 0)
-    {
-      time_limit = 0;
-      nsecs = -1;
-    }
-  else if (TYPE_MAXIMUM (time_t) < time_limit)
+  if (TYPE_MAXIMUM (time_t) < time_limit)
     time_limit = TYPE_MAXIMUM (time_t);
 
-  /* Since we may need to wait several times,
-     compute the absolute time to return at.  */
-  if (time_limit || nsecs > 0)
+  if (time_limit < 0 || nsecs < 0)
+    wait = MINIMUM;
+  else if (time_limit > 0 || nsecs > 0)
     {
-      timeout = make_timespec (time_limit, nsecs);
-      end_time = timespec_add (current_timespec (), timeout);
+      wait = TIMEOUT;
+      end_time = timespec_add (current_timespec (),
+                               make_timespec (time_limit, nsecs));
     }
+  else
+    wait = INFINITY;
 
   while (1)
     {
@@ -4635,19 +4634,11 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 
       /* After reading input, vacuum up any leftovers without waiting.  */
       if (0 <= got_some_output)
-	nsecs = -1;
+	wait = MINIMUM;
 
       /* Compute time from now till when time limit is up.  */
       /* Exit if already run out.  */
-      if (nsecs < 0)
-	{
-	  /* A negative timeout means
-	     gobble output available now
-	     but don't wait at all.  */
-
-	  timeout = make_timespec (0, 0);
-	}
-      else if (time_limit || nsecs > 0)
+      if (wait == TIMEOUT)
 	{
 	  struct timespec now = current_timespec ();
 	  if (timespec_cmp (end_time, now) <= 0)
@@ -4655,9 +4646,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  timeout = timespec_sub (end_time, now);
 	}
       else
-	{
-	  timeout = make_timespec (100000, 0);
-	}
+	timeout = make_timespec (wait < TIMEOUT ? 0 : 100000, 0);
 
       /* Normally we run timers here.
 	 But not if wait_for_cell; in those cases,
@@ -4698,24 +4687,20 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	      && requeued_events_pending_p ())
 	    break;
 
-	  /* A negative timeout means do not wait at all.  */
-	  if (nsecs >= 0)
-	    {
-	      if (timespec_valid_p (timer_delay))
-		{
-		  if (timespec_cmp (timer_delay, timeout) < 0)
-		    {
-		      timeout = timer_delay;
-		      timeout_reduced_for_timers = true;
-		    }
-		}
-	      else
-		{
-		  /* This is so a breakpoint can be put here.  */
-		  wait_reading_process_output_1 ();
-		}
-	    }
-	}
+          if (timespec_valid_p (timer_delay))
+            {
+              if (timespec_cmp (timer_delay, timeout) < 0)
+                {
+                  timeout = timer_delay;
+                  timeout_reduced_for_timers = true;
+                }
+            }
+          else
+            {
+              /* This is so a breakpoint can be put here.  */
+              wait_reading_process_output_1 ();
+            }
+        }
 
       /* Cause C-g and alarm signals to take immediate action,
 	 and cause input available signals to zero out timeout.
@@ -4964,7 +4949,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       /*  If we woke up due to SIGWINCH, actually change size now.  */
       do_pending_window_change (0);
 
-      if ((time_limit || nsecs) && nfds == 0 && ! timeout_reduced_for_timers)
+      if (wait < INFINITY && nfds == 0 && ! timeout_reduced_for_timers)
 	/* We waited the full specified time, so return now.  */
 	break;
       if (nfds < 0)
@@ -6954,21 +6939,21 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 {
   register int nfds;
   struct timespec end_time, timeout;
+  enum { MINIMUM = -1, TIMEOUT, INFINITY } wait;
 
-  if (time_limit < 0)
-    {
-      time_limit = 0;
-      nsecs = -1;
-    }
-  else if (TYPE_MAXIMUM (time_t) < time_limit)
+  if (TYPE_MAXIMUM (time_t) < time_limit)
     time_limit = TYPE_MAXIMUM (time_t);
 
-  /* What does time_limit really mean?  */
-  if (time_limit || nsecs > 0)
+  if (time_limit < 0 || nsecs < 0)
+    wait = MINIMUM;
+  else if (time_limit > 0 || nsecs > 0)
     {
-      timeout = make_timespec (time_limit, nsecs);
-      end_time = timespec_add (current_timespec (), timeout);
+      wait = TIMEOUT;
+      end_time = timespec_add (current_timespec (),
+                               make_timespec (time_limit, nsecs));
     }
+  else
+    wait = INFINITY;
 
   /* Turn off periodic alarms (in case they are in use)
      and then turn off any other atimers,
@@ -6994,15 +6979,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 
       /* Compute time from now till when time limit is up.  */
       /* Exit if already run out.  */
-      if (nsecs < 0)
-	{
-	  /* A negative timeout means
-	     gobble output available now
-	     but don't wait at all.  */
-
-	  timeout = make_timespec (0, 0);
-	}
-      else if (time_limit || nsecs > 0)
+      if (wait == TIMEOUT)
 	{
 	  struct timespec now = current_timespec ();
 	  if (timespec_cmp (end_time, now) <= 0)
@@ -7010,9 +6987,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  timeout = timespec_sub (end_time, now);
 	}
       else
-	{
-	  timeout = make_timespec (100000, 0);
-	}
+	timeout = make_timespec (wait < TIMEOUT ? 0 : 100000, 0);
 
       /* If our caller will not immediately handle keyboard events,
 	 run timer events directly.
@@ -7040,7 +7015,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	      && requeued_events_pending_p ())
 	    break;
 
-	  if (timespec_valid_p (timer_delay) && nsecs >= 0)
+	  if (timespec_valid_p (timer_delay))
 	    {
 	      if (timespec_cmp (timer_delay, timeout) < 0)
 		{
@@ -7084,7 +7059,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       /*  If we woke up due to SIGWINCH, actually change size now.  */
       do_pending_window_change (0);
 
-      if ((time_limit || nsecs) && nfds == 0 && ! timeout_reduced_for_timers)
+      if (wait < INFINITY && nfds == 0 && ! timeout_reduced_for_timers)
 	/* We waited the full specified time, so return now.  */
 	break;
 
