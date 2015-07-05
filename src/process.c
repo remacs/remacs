@@ -4868,9 +4868,9 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	     Vprocess_adaptive_read_buffering is nil.  */
 	  if (process_output_skip && check_delay > 0)
 	    {
-	      int nsecs = timeout.tv_nsec;
-	      if (timeout.tv_sec > 0 || nsecs > READ_OUTPUT_DELAY_MAX)
-		nsecs = READ_OUTPUT_DELAY_MAX;
+	      int adaptive_nsecs = timeout.tv_nsec;
+	      if (timeout.tv_sec > 0 || adaptive_nsecs > READ_OUTPUT_DELAY_MAX)
+		adaptive_nsecs = READ_OUTPUT_DELAY_MAX;
 	      for (channel = 0; check_delay > 0 && channel <= max_process_desc; channel++)
 		{
 		  proc = chan_process[channel];
@@ -4885,11 +4885,11 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 			continue;
 		      FD_CLR (channel, &Available);
 		      XPROCESS (proc)->read_output_skip = 0;
-		      if (XPROCESS (proc)->read_output_delay < nsecs)
-			nsecs = XPROCESS (proc)->read_output_delay;
+		      if (XPROCESS (proc)->read_output_delay < adaptive_nsecs)
+			adaptive_nsecs = XPROCESS (proc)->read_output_delay;
 		    }
 		}
-	      timeout = make_timespec (0, nsecs);
+	      timeout = make_timespec (0, adaptive_nsecs);
 	      process_output_skip = 0;
 	    }
 
