@@ -52,7 +52,9 @@ some).")
            ;; Skip trivial cases like ?a decomposing to (?a).
            (unless (or (and (eq i (car dec))
                             (not  (cdr dec))))
-             (let ((d dec) k found multiletter)
+             (let ((d dec)
+                   (fold-decomp t)
+                   k found)
                (while (and d (not found))
                  (setq k (pop d))
                  ;; Is k a number or letter, per unicode standard?
@@ -63,20 +65,30 @@ some).")
                    ;; because then we don't want the first letter to match
                    ;; the decomposition.
                    (dolist (k d)
-                     (when (memq (get-char-code-property k 'general-category)
-                                 '(Lu Ll Lt Lm Lo Nd Nl No))
-                       (setq multiletter t)))
+                     (when (and fold-decomp
+                                (memq (get-char-code-property k 'general-category)
+                                      '(Lu Ll Lt Lm Lo Nd Nl No)))
+                       (setq fold-decomp nil)))
                  ;; If there's no number or letter on the
                  ;; decomposition, take the first character in it.
                  (setq found (car-safe dec)))
+               ;; Finally, we only fold multi-char decomposition if at
+               ;; least one of the chars is non-spacing (combining).
+               (when fold-decomp
+                 (setq fold-decomp nil)
+                 (dolist (k dec)
+                   (when (and (not fold-decomp)
+                              (> (get-char-code-property k 'canonical-combining-class) 0))
+                     (setq fold-decomp t))))
                ;; Add i to the list of characters that k can
                ;; represent. Also possibly add its decomposition, so we can
                ;; match multi-char representations like (format "a%c" 769)
                (when (and found (not (eq i k)))
                  (let ((chars (cons (char-to-string i) (aref equiv k))))
                    (aset equiv k
-                         (if multiletter chars
-                           (cons (apply #'string dec) chars)))))))))
+                         (if fold-decomp
+                             (cons (apply #'string dec) chars)
+                           chars))))))))
        table)
 
       ;; Add some manual entries.
