@@ -224,11 +224,6 @@ static EMACS_INT update_tick;
 # define HAVE_SEQPACKET
 #endif
 
-#if !defined (ADAPTIVE_READ_BUFFERING) && !defined (NO_ADAPTIVE_READ_BUFFERING)
-#define ADAPTIVE_READ_BUFFERING
-#endif
-
-#ifdef ADAPTIVE_READ_BUFFERING
 #define READ_OUTPUT_DELAY_INCREMENT (TIMESPEC_RESOLUTION / 100)
 #define READ_OUTPUT_DELAY_MAX       (READ_OUTPUT_DELAY_INCREMENT * 5)
 #define READ_OUTPUT_DELAY_MAX_MAX   (READ_OUTPUT_DELAY_INCREMENT * 7)
@@ -241,10 +236,6 @@ static int process_output_delay_count;
 /* True if any process has non-nil read_output_skip.  */
 
 static bool process_output_skip;
-
-#else
-#define process_output_delay_count 0
-#endif
 
 static void create_process (Lisp_Object, char **, Lisp_Object);
 #ifdef USABLE_SIGIO
@@ -1517,11 +1508,9 @@ usage: (make-process &rest ARGS)  */)
   pset_gnutls_cred_type (XPROCESS (proc), Qnil);
 #endif
 
-#ifdef ADAPTIVE_READ_BUFFERING
   XPROCESS (proc)->adaptive_read_buffering
     = (NILP (Vprocess_adaptive_read_buffering) ? 0
        : EQ (Vprocess_adaptive_read_buffering, Qt) ? 1 : 2);
-#endif
 
   /* Make the process marker point into the process buffer (if any).  */
   if (BUFFERP (buffer))
@@ -2184,11 +2173,9 @@ usage:  (make-pipe-process &rest ARGS)  */)
       FD_SET (inchannel, &input_wait_mask);
       FD_SET (inchannel, &non_keyboard_wait_mask);
     }
-#ifdef ADAPTIVE_READ_BUFFERING
   p->adaptive_read_buffering
     = (NILP (Vprocess_adaptive_read_buffering) ? 0
        : EQ (Vprocess_adaptive_read_buffering, Qt) ? 1 : 2);
-#endif
 
   /* Make the process marker point into the process buffer (if any).  */
   if (BUFFERP (buffer))
@@ -4183,7 +4170,6 @@ deactivate_process (Lisp_Object proc)
   emacs_gnutls_deinit (proc);
 #endif /* HAVE_GNUTLS */
 
-#ifdef ADAPTIVE_READ_BUFFERING
   if (p->read_output_delay > 0)
     {
       if (--process_output_delay_count < 0)
@@ -4191,7 +4177,6 @@ deactivate_process (Lisp_Object proc)
       p->read_output_delay = 0;
       p->read_output_skip = 0;
     }
-#endif
 
   /* Beware SIGCHLD hereabouts.  */
 
@@ -4876,7 +4861,6 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       else
 	{
 
-#ifdef ADAPTIVE_READ_BUFFERING
 	  /* Set the timeout for adaptive read buffering if any
 	     process has non-zero read_output_skip and non-zero
 	     read_output_delay, and we are not reading output for a
@@ -4908,7 +4892,6 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	      timeout = make_timespec (0, nsecs);
 	      process_output_skip = 0;
 	    }
-#endif
 
 #if defined (HAVE_NS)
           nfds = ns_select
@@ -5345,7 +5328,6 @@ read_process_output (Lisp_Object proc, int channel)
 #endif
 	nbytes = emacs_read (channel, chars + carryover + buffered,
 			     readmax - buffered);
-#ifdef ADAPTIVE_READ_BUFFERING
       if (nbytes > 0 && p->adaptive_read_buffering)
 	{
 	  int delay = p->read_output_delay;
@@ -5371,7 +5353,6 @@ read_process_output (Lisp_Object proc, int channel)
 	      process_output_skip = 1;
 	    }
 	}
-#endif
       nbytes += buffered;
       nbytes += buffered && nbytes <= 0;
     }
@@ -5840,7 +5821,6 @@ send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
 #endif
 		written = emacs_write_sig (outfd, cur_buf, cur_len);
 	      rv = (written ? 0 : -1);
-#ifdef ADAPTIVE_READ_BUFFERING
 	      if (p->read_output_delay > 0
 		  && p->adaptive_read_buffering == 1)
 		{
@@ -5848,7 +5828,6 @@ send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
 		  process_output_delay_count--;
 		  p->read_output_skip = 0;
 		}
-#endif
 	    }
 
 	  if (rv < 0)
@@ -7470,10 +7449,8 @@ init_process_emacs (void)
   num_pending_connects = 0;
 #endif
 
-#ifdef ADAPTIVE_READ_BUFFERING
   process_output_delay_count = 0;
   process_output_skip = 0;
-#endif
 
   /* Don't do this, it caused infinite select loops.  The display
      method should call add_keyboard_wait_descriptor on stdin if it
@@ -7638,7 +7615,6 @@ then a pipe is used in any case.
 The value takes effect when `start-process' is called.  */);
   Vprocess_connection_type = Qt;
 
-#ifdef ADAPTIVE_READ_BUFFERING
   DEFVAR_LISP ("process-adaptive-read-buffering", Vprocess_adaptive_read_buffering,
 	       doc: /* If non-nil, improve receive buffering by delaying after short reads.
 On some systems, when Emacs reads the output from a subprocess, the output data
@@ -7650,7 +7626,6 @@ If the value is t, the delay is reset after each write to the process; any other
 non-nil value means that the delay is not reset on write.
 The variable takes effect when `start-process' is called.  */);
   Vprocess_adaptive_read_buffering = Qt;
-#endif
 
   defsubr (&Sprocessp);
   defsubr (&Sget_process);
