@@ -4873,8 +4873,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  no_avail = 1;
 	  FD_ZERO (&Available);
 	}
-
-      if (!no_avail)
+      else
 	{
 
 #ifdef ADAPTIVE_READ_BUFFERING
@@ -6965,9 +6964,7 @@ extern int sys_select (int, fd_set *, fd_set *, fd_set *,
    DO_DISPLAY means redisplay should be done to show subprocess
    output that arrives.
 
-   Return positive if we received input from WAIT_PROC (or from any
-   process if WAIT_PROC is null), zero if we attempted to receive
-   input but got none, and negative if we didn't even try.  */
+   Return -1 signifying we got no output and did not try.  */
 
 int
 wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
