@@ -127,10 +127,8 @@ rpl_acl_set_fd (int fd, acl_t acl)
 #   define acl_extended_file(name) (-1)
 #  endif
 
-/* Linux-specific */
-#  ifndef HAVE_ACL_FROM_MODE
-#   define HAVE_ACL_FROM_MODE false
-#   define acl_from_mode(mode) (NULL)
+#  if ! defined HAVE_ACL_FROM_MODE && ! defined HAVE_ACL_FROM_TEXT
+#   define acl_from_mode (NULL)
 #  endif
 
 /* Set to 0 if a file's mode is stored independently from the ACL.  */
