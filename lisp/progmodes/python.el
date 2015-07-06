@@ -2483,6 +2483,12 @@ With argument MSG show activation/deactivation message."
       (python-shell-font-lock-turn-off msg))
     python-shell-font-lock-enable))
 
+;; Used to hold user interactive overrides to
+;; `python-shell-interpreter' and `python-shell-interpreter-args' that
+;; will be made buffer-local by `inferior-python-mode':
+(defvar python-shell--interpreter)
+(defvar python-shell--interpreter-args)
+
 (define-derived-mode inferior-python-mode comint-mode "Inferior Python"
   "Major mode for Python inferior process.
 Runs a Python interpreter as a subprocess of Emacs, with Python
@@ -2508,15 +2514,16 @@ initialization of the interpreter via `python-shell-setup-codes'
 variable.
 
 \(Type \\[describe-mode] in the process buffer for a list of commands.)"
-  (let ((interpreter python-shell-interpreter)
-        (args python-shell-interpreter-args))
-    (when python-shell--parent-buffer
-      (python-util-clone-local-variables python-shell--parent-buffer))
-    ;; Users can override default values for these vars when calling
-    ;; `run-python'.  This ensures new values let-bound in
-    ;; `python-shell-make-comint' are locally set.
-    (set (make-local-variable 'python-shell-interpreter) interpreter)
-    (set (make-local-variable 'python-shell-interpreter-args) args))
+  (when python-shell--parent-buffer
+    (python-util-clone-local-variables python-shell--parent-buffer))
+  ;; Users can interactively override default values for
+  ;; `python-shell-interpreter' and `python-shell-interpreter-args'
+  ;; when calling `run-python'.  This ensures values let-bound in
+  ;; `python-shell-make-comint' are locally set if needed.
+  (set (make-local-variable 'python-shell-interpreter)
+       (or python-shell--interpreter python-shell-interpreter))
+  (set (make-local-variable 'python-shell-interpreter-args)
+       (or python-shell--interpreter-args python-shell-interpreter-args))
   (set (make-local-variable 'python-shell--prompt-calculated-input-regexp) nil)
   (set (make-local-variable 'python-shell--prompt-calculated-output-regexp) nil)
   (python-shell-prompt-set-calculated-regexps)
@@ -2566,13 +2573,13 @@ killed."
                               interpreter nil args))
                (python-shell--parent-buffer (current-buffer))
                (process (get-buffer-process buffer))
-               ;; As the user may have overridden default values for
-               ;; these vars on `run-python', let-binding them allows
-               ;; to have the new right values in all setup code
-               ;; that's is done in `inferior-python-mode', which is
-               ;; important, especially for prompt detection.
-               (python-shell-interpreter interpreter)
-               (python-shell-interpreter-args
+               ;; Users can override the interpreter and args
+               ;; interactively when calling `run-python', let-binding
+               ;; these allows to have the new right values in all
+               ;; setup code that is done in `inferior-python-mode',
+               ;; which is important, especially for prompt detection.
+               (python-shell--interpreter interpreter)
+               (python-shell--interpreter-args
                 (mapconcat #'identity args " ")))
           (with-current-buffer buffer
             (inferior-python-mode))
