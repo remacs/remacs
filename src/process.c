@@ -4585,7 +4585,8 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
   bool no_avail;
   int xerrno;
   Lisp_Object proc;
-  struct timespec timeout, end_time;
+  struct timespec timeout, end_time, timer_delay;
+  struct timespec got_output_end_time = invalid_timespec ();
   enum { MINIMUM = -1, TIMEOUT, INFINITY } wait;
   int got_some_output = -1;
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -4618,7 +4619,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 
   while (1)
     {
-      bool timeout_reduced_for_timers = false;
+      bool process_skipped = false;
 
       /* If calling from keyboard input, do not quit
 	 since we want to return C-g as an input character.
@@ -4631,10 +4632,6 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       /* Exit now if the cell we're waiting for became non-nil.  */
       if (! NILP (wait_for_cell) && ! NILP (XCAR (wait_for_cell)))
 	break;
-
-      /* After reading input, vacuum up any leftovers without waiting.  */
-      if (0 <= got_some_output)
-	wait = MINIMUM;
 
       /* Compute time from now till when time limit is up.  */
       /* Exit if already run out.  */
@@ -4655,8 +4652,6 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       if (NILP (wait_for_cell)
 	  && just_wait_proc >= 0)
 	{
-	  struct timespec timer_delay;
-
 	  do
 	    {
 	      unsigned old_timers_run = timers_run;
@@ -4687,19 +4682,9 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	      && requeued_events_pending_p ())
 	    break;
 
-          if (timespec_valid_p (timer_delay))
-            {
-              if (timespec_cmp (timer_delay, timeout) < 0)
-                {
-                  timeout = timer_delay;
-                  timeout_reduced_for_timers = true;
-                }
-            }
-          else
-            {
-              /* This is so a breakpoint can be put here.  */
+          /* This is so a breakpoint can be put here.  */
+          if (!timespec_valid_p (timer_delay))
               wait_reading_process_output_1 ();
-            }
         }
 
       /* Cause C-g and alarm signals to take immediate action,
@@ -4869,6 +4854,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		      if (!XPROCESS (proc)->read_output_skip)
 			continue;
 		      FD_CLR (channel, &Available);
+		      process_skipped = true;
 		      XPROCESS (proc)->read_output_skip = 0;
 		      if (XPROCESS (proc)->read_output_delay < adaptive_nsecs)
 			adaptive_nsecs = XPROCESS (proc)->read_output_delay;
@@ -4877,6 +4863,29 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	      timeout = make_timespec (0, adaptive_nsecs);
 	      process_output_skip = 0;
 	    }
+
+	  /* If we've got some output and haven't limited our timeout
+	     with adaptive read buffering, limit it. */
+	  if (got_some_output > 0 && !process_skipped
+	      && (timeout.tv_sec
+		  || timeout.tv_nsec > READ_OUTPUT_DELAY_INCREMENT))
+	    timeout = make_timespec (0, READ_OUTPUT_DELAY_INCREMENT);
+
+
+	  if (NILP (wait_for_cell) && just_wait_proc >= 0
+	      && timespec_valid_p (timer_delay)
+	      && timespec_cmp (timer_delay, timeout) < 0)
+	    {
+	      struct timespec timeout_abs = timespec_add (current_timespec (),
+							  timeout);
+	      if (!timespec_valid_p (got_output_end_time)
+		  || timespec_cmp (timeout_abs,
+				   got_output_end_time) < 0)
+		got_output_end_time = timeout_abs;
+	      timeout = timer_delay;
+	    }
+	  else
+	    got_output_end_time = invalid_timespec ();
 
 #if defined (HAVE_NS)
           nfds = ns_select
@@ -4949,9 +4958,17 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       /*  If we woke up due to SIGWINCH, actually change size now.  */
       do_pending_window_change (0);
 
-      if (wait < INFINITY && nfds == 0 && ! timeout_reduced_for_timers)
-	/* We waited the full specified time, so return now.  */
-	break;
+      if (nfds == 0)
+	{
+	  struct timespec now = current_timespec ();
+	  if ((timeout.tv_sec == 0 && timeout.tv_nsec == 0)
+	      || (wait == TIMEOUT && timespec_cmp (end_time, now) <= 0)
+	      || (!process_skipped && got_some_output > 0
+		  && (!timespec_valid_p (got_output_end_time)
+		      || timespec_cmp (got_output_end_time, now) <= 0)))
+	    break;
+	}
+
       if (nfds < 0)
 	{
 	  if (xerrno == EINTR)
@@ -5079,6 +5096,9 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		got_some_output = nread;
 	      if (nread > 0)
 		{
+		  /* Vacuum up any leftovers without waiting.  */
+		  if (wait_proc == XPROCESS (proc))
+		    wait = MINIMUM;
 		  /* Since read_process_output can run a filter,
 		     which can call accept-process-output,
 		     don't try to read from any other processes
