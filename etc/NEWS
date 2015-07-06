@@ -84,6 +84,8 @@ command line when `initial-buffer-choice' is non-nil.
 
 * Changes in Emacs 25.1
 
+** New doc command `describe-symbol'.  Works for functions, vars, faces, etc...
+
 ** `isearch' and `query-replace' now perform character folding in matches.
 This is analogous to case-folding, but applies between Unicode
 characters and their ASCII counterparts. This means many characters

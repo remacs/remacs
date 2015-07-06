@@ -95,7 +95,7 @@
     (define-key map "k" 'describe-key)
     (define-key map "l" 'view-lossage)
     (define-key map "m" 'describe-mode)
-    (define-key map "o" 'describe-function-or-variable)
+    (define-key map "o" 'describe-symbol)
     (define-key map "n" 'view-emacs-news)
     (define-key map "p" 'finder-by-keyword)
     (define-key map "P" 'describe-package)

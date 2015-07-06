@@ -148,7 +148,7 @@ The format is (FUNCTION ARGS...).")
 
 (define-button-type 'help-symbol
   :supertype 'help-xref
-  'help-function #'help-xref-interned
+  'help-function #'describe-symbol
   'help-echo (purecopy "mouse-2, RET: describe this symbol"))
 
 (define-button-type 'help-back
@@ -624,58 +624,7 @@ See `help-make-xrefs'."
 ;; Additional functions for (re-)creating types of help buffers.
 
 ;;;###autoload
-(defun help-xref-interned (symbol &optional buffer frame)
-  "Follow a hyperlink which appeared to be an arbitrary interned SYMBOL.
-Both variable, function and face documentation are extracted into a single
-help buffer. If SYMBOL is a variable, include buffer-local value for optional
-BUFFER or FRAME."
-  (with-current-buffer (help-buffer)
-    ;; Push the previous item on the stack before clobbering the output buffer.
-    (help-setup-xref nil nil)
-    (let ((facedoc (when (facep symbol)
-		     ;; Don't record the current entry in the stack.
-		     (setq help-xref-stack-item nil)
-		     (describe-face symbol)))
-	  (fdoc (when (fboundp symbol)
-		  ;; Don't record the current entry in the stack.
-		  (setq help-xref-stack-item nil)
-		  (describe-function symbol)))
-	  (sdoc (when (or (boundp symbol)
-			  (get symbol 'variable-documentation))
-		  ;; Don't record the current entry in the stack.
-		  (setq help-xref-stack-item nil)
-		  (describe-variable symbol buffer frame))))
-      (cond
-       (sdoc
-	;; We now have a help buffer on the variable.
-	;; Insert the function and face text before it.
-	(when (or fdoc facedoc)
-	  (goto-char (point-min))
-	  (let ((inhibit-read-only t))
-	    (when fdoc
-	      (insert fdoc "\n\n")
-	      (when facedoc
-		(insert (make-string 30 ?-) "\n\n" (symbol-name symbol)
-			" is also a " "face." "\n\n")))
-	    (when facedoc
-	      (insert facedoc "\n\n"))
-	    (insert (make-string 30 ?-) "\n\n" (symbol-name symbol)
-		    " is also a " "variable." "\n\n"))
-	  ;; Don't record the `describe-variable' item in the stack.
-	  (setq help-xref-stack-item nil)
-	  (help-setup-xref (list #'help-xref-interned symbol) nil)))
-       (fdoc
-	;; We now have a help buffer on the function.
-	;; Insert face text before it.
-	(when facedoc
-	  (goto-char (point-max))
-	  (let ((inhibit-read-only t))
-	    (insert "\n\n" (make-string 30 ?-) "\n\n" (symbol-name symbol)
-		    " is also a " "face." "\n\n" facedoc))
-	  ;; Don't record the `describe-function' item in the stack.
-	  (setq help-xref-stack-item nil)
-	  (help-setup-xref (list #'help-xref-interned symbol) nil))))
-      (goto-char (point-min)))))
+(define-obsolete-function-alias 'help-xref-interned 'describe-symbol "25.1")
 
 
 ;; Navigation/hyperlinking with xrefs
@@ -774,7 +723,7 @@ Show all docs for that symbol as either a variable, function or face."
     (when (or (boundp sym)
 	      (get sym 'variable-documentation)
 	      (fboundp sym) (facep sym))
-      (help-do-xref pos #'help-xref-interned (list sym)))))
+      (help-do-xref pos #'describe-symbol (list sym)))))
 
 (defun help-mode-revert-buffer (_ignore-auto noconfirm)
   (when (or noconfirm (yes-or-no-p "Revert help buffer? "))

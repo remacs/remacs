@@ -32,6 +32,8 @@
 
 ;;; Code:
 
+(require 'cl-lib)
+
 (defvar help-fns-describe-function-functions nil
   "List of functions to run in help buffer in `describe-function'.
 Those functions will be run after the header line and argument
@@ -968,13 +970,23 @@ file-local variable.\n")
 	      (buffer-string))))))))
 
 
+(defvar describe-symbol-backends
+  `((nil ,#'fboundp ,(lambda (s _b _f) (describe-function s)))
+    ("face" ,#'facep ,(lambda (s _b _f) (describe-face s)))
+    (nil
+     ,(lambda (symbol)
+        (or (and (boundp symbol) (not (keywordp symbol)))
+            (get symbol 'variable-documentation)))
+     ,#'describe-variable)))
+
+(defvar help-xref-stack-item)
+
 ;;;###autoload
-(defun describe-function-or-variable (symbol &optional buffer frame)
-  "Display the full documentation of the function or variable SYMBOL.
-If SYMBOL is a variable and has a buffer-local value in BUFFER or FRAME
-\(default to the current buffer and current frame), it is displayed along
-with the global value."
+(defun describe-symbol (symbol &optional buffer frame)
+  "Display the full documentation of SYMBOL.
+Will show the info of SYMBOL as a function, variable, and/or face."
   (interactive
+   ;; FIXME: also let the user enter a face name.
    (let* ((v-or-f (variable-at-point))
           (found (symbolp v-or-f))
           (v-or-f (if found v-or-f (function-called-at-point)))
@@ -983,21 +995,54 @@ with the global value."
           val)
      (setq val (completing-read (if found
 				    (format
-                                        "Describe function or variable (default %s): " v-or-f)
-				  "Describe function or variable: ")
+                                        "Describe symbol (default %s): " v-or-f)
+				  "Describe symbol: ")
 				obarray
 				(lambda (vv)
-				  (or (fboundp vv)
-				      (get vv 'variable-documentation)
-				      (and (boundp vv) (not (keywordp vv)))))
+                                  (cl-some (lambda (x) (funcall (nth 1 x) vv))
+                                           describe-symbol-backends))
 				t nil nil
 				(if found (symbol-name v-or-f))))
      (list (if (equal val "")
 	       v-or-f (intern val)))))
-  (if (not (symbolp symbol)) (message "You didn't specify a function or variable")
-    (unless (buffer-live-p buffer) (setq buffer (current-buffer)))
-    (unless (frame-live-p frame) (setq frame (selected-frame)))
-    (help-xref-interned symbol buffer frame)))
+  (if (not (symbolp symbol))
+      (user-error "You didn't specify a function or variable"))
+  (unless (buffer-live-p buffer) (setq buffer (current-buffer)))
+  (unless (frame-live-p frame) (setq frame (selected-frame)))
+  (with-current-buffer (help-buffer)
+    ;; Push the previous item on the stack before clobbering the output buffer.
+    (help-setup-xref nil nil)
+    (let* ((docs
+            (nreverse
+             (delq nil
+                   (mapcar (pcase-lambda (`(,name ,testfn ,descfn))
+                             (when (funcall testfn symbol)
+                               ;; Don't record the current entry in the stack.
+                               (setq help-xref-stack-item nil)
+                               (cons name
+                                     (funcall descfn symbol buffer frame))))
+                           describe-symbol-backends))))
+           (single (null (cdr docs))))
+      (while (cdr docs)
+        (goto-char (point-min))
+        (let ((inhibit-read-only t)
+              (name (caar docs))        ;Name of doc currently at BOB.
+              (doc (cdr (cadr docs))))  ;Doc to add at BOB.
+          (insert doc)
+          (delete-region (point) (progn (skip-chars-backward " \t\n") (point)))
+          (insert "\n\n"
+                  (eval-when-compile
+                    (propertize "\n" 'face '(:height 0.1 :inverse-video t)))
+                  "\n")
+          (when name
+            (insert (symbol-name symbol)
+                    " is also a " name "." "\n\n")))
+        (setq docs (cdr docs)))
+      (unless single
+        ;; Don't record the `describe-variable' item in the stack.
+        (setq help-xref-stack-item nil)
+        (help-setup-xref (list #'describe-symbol symbol) nil))
+      (goto-char (point-min)))))
 
 ;;;###autoload
 (defun describe-syntax (&optional buffer)
