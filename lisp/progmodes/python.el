@@ -3171,9 +3171,12 @@ def __PYTHON_EL_native_completion_setup():
             if not is_ipython:
                 readline.set_completer(new_completer)
             else:
-                # IPython hacks readline such that `readline.set_completer`
+                # Try both initializations to cope with all IPython versions.
+                # This works fine for IPython 3.x but not for earlier:
+                readline.set_completer(new_completer)
+                # IPython<3 hacks readline such that `readline.set_completer`
                 # won't work.  This workaround injects the new completer
-                # function into the existing instance directly.
+                # function into the existing instance directly:
                 instance = getattr(completer, 'im_self', completer.__self__)
                 instance.rlcomplete = new_completer
         if readline.__doc__ and 'libedit' in readline.__doc__:
@@ -3304,7 +3307,7 @@ completion."
                 ;; output end marker is found.  Output is accepted
                 ;; *very* quickly to keep the shell super-responsive.
                 (while (and (not (re-search-backward "~~~~__dummy_completion__" nil t))
-                            (< (- current-time (float-time))
+                            (< (- (float-time) current-time)
                                python-shell-completion-native-output-timeout))
                   (accept-process-output process 0.01))
                 (cl-remove-duplicates
