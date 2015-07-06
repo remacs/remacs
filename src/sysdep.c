@@ -1646,7 +1646,14 @@ handle_sigsegv (int sig, siginfo_t *siginfo, void *arg)
 
       if (!getrlimit (RLIMIT_STACK, &rlim))
 	{
+	  /* STACK_DANGER_ZONE has to be bigger than 16K on Cygwin, for
+	     reasons explained in
+	     https://www.cygwin.com/ml/cygwin/2015-06/msg00381.html.  */
+#ifdef CYGWIN
+	  enum { STACK_DANGER_ZONE = 32 * 1024 };
+#else
 	  enum { STACK_DANGER_ZONE = 16 * 1024 };
+#endif
 	  char *beg, *end, *addr;
 
 	  beg = stack_bottom;
