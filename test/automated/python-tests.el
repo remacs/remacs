@@ -1226,6 +1226,158 @@ this is an arbitrarily
                       expected)))))
 
 
+;;; Mark
+
+(ert-deftest python-mark-defun-1 ()
+  """Test `python-mark-defun' with point at defun symbol start."""
+  (python-tests-with-temp-buffer
+   "
+def foo(x):
+    return x
+
+class A:
+   pass
+
+class B:
+
+    def __init__(self):
+       self.b = 'b'
+
+    def fun(self):
+       return self.b
+
+class C:
+   '''docstring'''
+"
+   (let ((expected-mark-beginning-position
+          (progn
+            (python-tests-look-at "class A:")
+            (1- (point))))
+         (expected-mark-end-position-1
+          (save-excursion
+            (python-tests-look-at "pass")
+            (forward-line)
+            (point)))
+         (expected-mark-end-position-2
+          (save-excursion
+            (python-tests-look-at "return self.b")
+            (forward-line)
+            (point)))
+         (expected-mark-end-position-3
+          (save-excursion
+            (python-tests-look-at "'''docstring'''")
+            (forward-line)
+            (point))))
+     ;; Select class A only, with point at bol.
+     (python-mark-defun 1)
+     (should (= (point) expected-mark-beginning-position))
+     (should (= (marker-position (mark-marker))
+                expected-mark-end-position-1))
+     ;; expand to class B, start position should remain the same.
+     (python-mark-defun 1)
+     (should (= (point) expected-mark-beginning-position))
+     (should (= (marker-position (mark-marker))
+                expected-mark-end-position-2))
+     ;; expand to class C, start position should remain the same.
+     (python-mark-defun 1)
+     (should (= (point) expected-mark-beginning-position))
+     (should (= (marker-position (mark-marker))
+                expected-mark-end-position-3)))))
+
+(ert-deftest python-mark-defun-2 ()
+  """Test `python-mark-defun' with point at nested defun symbol start."""
+  (python-tests-with-temp-buffer
+   "
+def foo(x):
+    return x
+
+class A:
+   pass
+
+class B:
+
+    def __init__(self):
+       self.b = 'b'
+
+    def fun(self):
+       return self.b
+
+class C:
+   '''docstring'''
+"
+   (let ((expected-mark-beginning-position
+          (progn
+            (python-tests-look-at "def __init__(self):")
+            (1- (line-beginning-position))))
+         (expected-mark-end-position-1
+          (save-excursion
+            (python-tests-look-at "self.b = 'b'")
+            (forward-line)
+            (point)))
+         (expected-mark-end-position-2
+          (save-excursion
+            (python-tests-look-at "return self.b")
+            (forward-line)
+            (point)))
+         (expected-mark-end-position-3
+          (save-excursion
+            (python-tests-look-at "'''docstring'''")
+            (forward-line)
+            (point))))
+     ;; Select B.__init only, with point at its start.
+     (python-mark-defun 1)
+     (should (= (point) expected-mark-beginning-position))
+     (should (= (marker-position (mark-marker))
+                expected-mark-end-position-1))
+     ;; expand to B.fun, start position should remain the same.
+     (python-mark-defun 1)
+     (should (= (point) expected-mark-beginning-position))
+     (should (= (marker-position (mark-marker))
+                expected-mark-end-position-2))
+     ;; expand to class C, start position should remain the same.
+     (python-mark-defun 1)
+     (should (= (point) expected-mark-beginning-position))
+     (should (= (marker-position (mark-marker))
+                expected-mark-end-position-3)))))
+
+(ert-deftest python-mark-defun-3 ()
+  """Test `python-mark-defun' with point inside defun symbol."""
+  (python-tests-with-temp-buffer
+   "
+def foo(x):
+    return x
+
+class A:
+   pass
+
+class B:
+
+    def __init__(self):
+       self.b = 'b'
+
+    def fun(self):
+       return self.b
+
+class C:
+   '''docstring'''
+"
+   (let ((expected-mark-beginning-position
+          (progn
+            (python-tests-look-at "def fun(self):")
+            (python-tests-look-at "(self):")
+            (1- (line-beginning-position))))
+         (expected-mark-end-position
+          (save-excursion
+            (python-tests-look-at "return self.b")
+            (forward-line)
+            (point))))
+     ;; Should select B.fun, despite point is inside the defun symbol.
+     (python-mark-defun 1)
+     (should (= (point) expected-mark-beginning-position))
+     (should (= (marker-position (mark-marker))
+                expected-mark-end-position)))))
+
+
 ;;; Navigation
 
 (ert-deftest python-nav-beginning-of-defun-1 ()

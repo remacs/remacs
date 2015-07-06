@@ -284,6 +284,7 @@
     (define-key map [remap backward-sentence] 'python-nav-backward-block)
     (define-key map [remap forward-sentence] 'python-nav-forward-block)
     (define-key map [remap backward-up-list] 'python-nav-backward-up-list)
+    (define-key map [remap mark-defun] 'python-mark-defun)
     (define-key map "\C-c\C-j" 'imenu)
     ;; Indent specific
     (define-key map "\177" 'python-indent-dedent-line-backspace)
@@ -1249,6 +1250,21 @@ the line will be re-indented automatically if needed."
                        (line-number-at-pos current-pos))
               ;; Reindent region if this is a multiline statement
               (python-indent-region dedenter-pos current-pos)))))))))
+
+
+;;; Mark
+
+(defun python-mark-defun (&optional allow-extend)
+  "Put mark at end of this defun, point at beginning.
+The defun marked is the one that contains point or follows point.
+
+Interactively (or with ALLOW-EXTEND non-nil), if this command is
+repeated or (in Transient Mark mode) if the mark is active, it
+marks the next defun after the ones already marked."
+  (interactive "p")
+  (when (python-info-looking-at-beginning-of-defun)
+    (end-of-line 1))
+  (mark-defun allow-extend))
 
 
 ;;; Navigation
