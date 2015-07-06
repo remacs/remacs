@@ -360,7 +360,7 @@
 
 ;;; Python specialized rx
 
-(eval-when-compile
+(eval-and-compile
   (defconst python-rx-constituents
     `((block-start          . ,(rx symbol-start
                                    (or "def" "class" "if" "elif" "else" "try"
@@ -431,7 +431,7 @@ This variant of `rx' supports common Python named REGEXPS."
 
 ;;; Font-lock and syntax
 
-(eval-when-compile
+(eval-and-compile
   (defun python-syntax--context-compiler-macro (form type &optional syntax-ppss)
     (pcase type
       (`'comment
