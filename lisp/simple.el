@@ -7315,8 +7315,9 @@ If VARIABLE has been defined with `defcustom', then the type information
 in the definition is used to check that VALUE is valid.
 
 Note that this function is at heart equivalent to the basic `set' function.
-For a VARIABLE defined with `defcustom', it is not the same as using
-\\[customize-variable].
+For a variable defined with `defcustom', it does not pay attention to
+any :set property that the variable might have (if you want that, use
+\\[customize-set-variable] instead).
 
 With a prefix argument, set VARIABLE to VALUE buffer-locally."
   (interactive
