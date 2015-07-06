@@ -7314,6 +7314,10 @@ it were the arg to `interactive' (which see) to interactively read VALUE.
 If VARIABLE has been defined with `defcustom', then the type information
 in the definition is used to check that VALUE is valid.
 
+Note that this function is at heart equivalent to the basic `set' function.
+For a VARIABLE defined with `defcustom', it is not the same as using
+\\[customize-variable].
+
 With a prefix argument, set VARIABLE to VALUE buffer-locally."
   (interactive
    (let* ((default-var (variable-at-point))
