@@ -4960,12 +4960,18 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 
       if (nfds == 0)
 	{
+          /* Exit the main loop if we've passed the requested timeout,
+             or aren't skipping processes and got some output and
+             haven't lowered our timeout due to timers or SIGIO and
+             have waited a long amount of time due to repeated
+             timers.  */
 	  struct timespec now = current_timespec ();
-	  if ((timeout.tv_sec == 0 && timeout.tv_nsec == 0)
+          if (wait < TIMEOUT
 	      || (wait == TIMEOUT && timespec_cmp (end_time, now) <= 0)
 	      || (!process_skipped && got_some_output > 0
 		  && (!timespec_valid_p (got_output_end_time)
-		      || timespec_cmp (got_output_end_time, now) <= 0)))
+		      || timespec_cmp (got_output_end_time, now) <= 0)
+		  && (timeout.tv_sec > 0 || timeout.tv_nsec > 0)))
 	    break;
 	}
 
