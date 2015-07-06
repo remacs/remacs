@@ -180,6 +180,12 @@
 ;; shell so that relative imports work properly using the
 ;; `python-shell-package-enable' command.
 
+;; Shell remote support: remote Python shells are started with the
+;; correct environment for files opened remotely through tramp, also
+;; respecting dir-local variables provided `enable-remote-dir-locals'
+;; is non-nil.  The logic for this is transparently handled by the
+;; `python-shell-with-environment' macro.
+
 ;; Shell syntax highlighting: when enabled current input in shell is
 ;; highlighted.  The variable `python-shell-font-lock-enable' controls
 ;; activation of this feature globally when shells are started.
@@ -255,6 +261,7 @@
 (require 'cl-lib)
 (require 'comint)
 (require 'json)
+(require 'tramp-sh)
 
 ;; Avoid compiler warnings
 (defvar view-return-to-alist)
@@ -2001,6 +2008,77 @@ virtualenv."
   :type '(alist string)
   :group 'python)
 
+(defun python-shell-calculate-process-environment ()
+  "Calculate `process-environment' or `tramp-remote-process-environment'.
+Pre-appends `python-shell-process-environment', sets extra
+pythonpaths from `python-shell-extra-pythonpaths' and sets a few
+virtualenv related vars.  If `default-directory' points to a
+remote machine, the returned value is intended for
+`tramp-remote-process-environment'."
+  (let* ((remote-p (file-remote-p default-directory))
+         (process-environment (append
+                               python-shell-process-environment
+                               (if remote-p
+                                   tramp-remote-process-environment
+                                 process-environment) nil))
+         (virtualenv (if python-shell-virtualenv-root
+                         (directory-file-name python-shell-virtualenv-root)
+                       nil)))
+    (when python-shell-unbuffered
+      (setenv "PYTHONUNBUFFERED" "1"))
+    (when python-shell-extra-pythonpaths
+      (setenv "PYTHONPATH" (python-shell-calculate-pythonpath)))
+    (if (not virtualenv)
+        process-environment
+      (setenv "PYTHONHOME" nil)
+      (setenv "VIRTUAL_ENV" virtualenv))
+    process-environment))
+
+(defun python-shell-calculate-exec-path ()
+  "Calculate `exec-path' or `tramp-remote-path'.
+Pre-appends `python-shell-exec-path' and adds the binary
+directory for virtualenv if `python-shell-virtualenv-root' is
+set.  If `default-directory' points to a remote machine, the
+returned value is intended for `tramp-remote-path'."
+  (let ((path (append
+               ;; Use nil as the tail so that the list is a full copy,
+               ;; this is a paranoid safeguard for side-effects.
+               python-shell-exec-path
+               (if (file-remote-p default-directory)
+                   tramp-remote-path
+                 exec-path)
+               nil)))
+    (if (not python-shell-virtualenv-root)
+        path
+      (cons (expand-file-name "bin" python-shell-virtualenv-root)
+            path))))
+
+(defmacro python-shell-with-environment (&rest body)
+  "Modify shell environment during execution of BODY.
+Temporarily sets `process-environment' and `exec-path' during
+execution of body.  If `default-directory' points to a remote
+machine then modifies `tramp-remote-process-environment' and
+`tramp-remote-path' instead."
+  (declare (indent 0) (debug (body)))
+  (let ((remote-p (file-remote-p default-directory)))
+    `(let ((process-environment
+            (if ,remote-p
+                process-environment
+              (python-shell-calculate-process-environment)))
+           (tramp-remote-process-environment
+            (if ,remote-p
+                (python-shell-calculate-process-environment)
+              tramp-remote-process-environment))
+           (exec-path
+            (if ,remote-p
+                (python-shell-calculate-exec-path)
+              exec-path))
+           (tramp-remote-path
+            (if ,remote-p
+                (python-shell-calculate-exec-path)
+              tramp-remote-path)))
+       ,(macroexp-progn body))))
+
 (defvar python-shell--prompt-calculated-input-regexp nil
   "Calculated input prompt regexp for inferior python shell.
 Do not set this variable directly, instead use
@@ -2023,69 +2101,68 @@ shows a warning with instructions to avoid hangs and returns nil.
 When `python-shell-prompt-detect-enabled' is nil avoids any
 detection and just returns nil."
   (when python-shell-prompt-detect-enabled
-    (let* ((process-environment (python-shell-calculate-process-environment))
-           (exec-path (python-shell-calculate-exec-path))
-           (code (concat
-                  "import sys\n"
-                  "ps = [getattr(sys, 'ps%s' % i, '') for i in range(1,4)]\n"
-                  ;; JSON is built manually for compatibility
-                  "ps_json = '\\n[\"%s\", \"%s\", \"%s\"]\\n' % tuple(ps)\n"
-                  "print (ps_json)\n"
-                  "sys.exit(0)\n"))
-           (output
-            (with-temp-buffer
-              ;; TODO: improve error handling by using
-              ;; `condition-case' and displaying the error message to
-              ;; the user in the no-prompts warning.
-              (ignore-errors
-                (let ((code-file (python-shell--save-temp-file code)))
-                  ;; Use `process-file' as it is remote-host friendly.
-                  (process-file
-                   python-shell-interpreter
-                   code-file
-                   '(t nil)
-                   nil
-                   python-shell-interpreter-interactive-arg)
-                  ;; Try to cleanup
-                  (delete-file code-file)))
-              (buffer-string)))
-           (prompts
-            (catch 'prompts
-              (dolist (line (split-string output "\n" t))
-                (let ((res
-                       ;; Check if current line is a valid JSON array
-                       (and (string= (substring line 0 2) "[\"")
-                            (ignore-errors
-                              ;; Return prompts as a list, not vector
-                              (append (json-read-from-string line) nil)))))
-                  ;; The list must contain 3 strings, where the first
-                  ;; is the input prompt, the second is the block
-                  ;; prompt and the last one is the output prompt.  The
-                  ;; input prompt is the only one that can't be empty.
-                  (when (and (= (length res) 3)
-                             (cl-every #'stringp res)
-                             (not (string= (car res) "")))
-                    (throw 'prompts res))))
-              nil)))
-      (when (and (not prompts)
-                 python-shell-prompt-detect-failure-warning)
-        (lwarn
-         '(python python-shell-prompt-regexp)
-         :warning
-         (concat
-          "Python shell prompts cannot be detected.\n"
-          "If your emacs session hangs when starting python shells\n"
-          "recover with `keyboard-quit' and then try fixing the\n"
-          "interactive flag for your interpreter by adjusting the\n"
-          "`python-shell-interpreter-interactive-arg' or add regexps\n"
-          "matching shell prompts in the directory-local friendly vars:\n"
-          "  + `python-shell-prompt-regexp'\n"
-          "  + `python-shell-prompt-block-regexp'\n"
-          "  + `python-shell-prompt-output-regexp'\n"
-          "Or alternatively in:\n"
-          "  + `python-shell-prompt-input-regexps'\n"
-          "  + `python-shell-prompt-output-regexps'")))
-      prompts)))
+    (python-shell-with-environment
+      (let* ((code (concat
+                    "import sys\n"
+                    "ps = [getattr(sys, 'ps%s' % i, '') for i in range(1,4)]\n"
+                    ;; JSON is built manually for compatibility
+                    "ps_json = '\\n[\"%s\", \"%s\", \"%s\"]\\n' % tuple(ps)\n"
+                    "print (ps_json)\n"
+                    "sys.exit(0)\n"))
+             (output
+              (with-temp-buffer
+                ;; TODO: improve error handling by using
+                ;; `condition-case' and displaying the error message to
+                ;; the user in the no-prompts warning.
+                (ignore-errors
+                  (let ((code-file (python-shell--save-temp-file code)))
+                    ;; Use `process-file' as it is remote-host friendly.
+                    (process-file
+                     python-shell-interpreter
+                     code-file
+                     '(t nil)
+                     nil
+                     python-shell-interpreter-interactive-arg)
+                    ;; Try to cleanup
+                    (delete-file code-file)))
+                (buffer-string)))
+             (prompts
+              (catch 'prompts
+                (dolist (line (split-string output "\n" t))
+                  (let ((res
+                         ;; Check if current line is a valid JSON array
+                         (and (string= (substring line 0 2) "[\"")
+                              (ignore-errors
+                                ;; Return prompts as a list, not vector
+                                (append (json-read-from-string line) nil)))))
+                    ;; The list must contain 3 strings, where the first
+                    ;; is the input prompt, the second is the block
+                    ;; prompt and the last one is the output prompt.  The
+                    ;; input prompt is the only one that can't be empty.
+                    (when (and (= (length res) 3)
+                               (cl-every #'stringp res)
+                               (not (string= (car res) "")))
+                      (throw 'prompts res))))
+                nil)))
+        (when (and (not prompts)
+                   python-shell-prompt-detect-failure-warning)
+          (lwarn
+           '(python python-shell-prompt-regexp)
+           :warning
+           (concat
+            "Python shell prompts cannot be detected.\n"
+            "If your emacs session hangs when starting python shells\n"
+            "recover with `keyboard-quit' and then try fixing the\n"
+            "interactive flag for your interpreter by adjusting the\n"
+            "`python-shell-interpreter-interactive-arg' or add regexps\n"
+            "matching shell prompts in the directory-local friendly vars:\n"
+            "  + `python-shell-prompt-regexp'\n"
+            "  + `python-shell-prompt-block-regexp'\n"
+            "  + `python-shell-prompt-output-regexp'\n"
+            "Or alternatively in:\n"
+            "  + `python-shell-prompt-input-regexps'\n"
+            "  + `python-shell-prompt-output-regexps'")))
+        prompts))))
 
 (defun python-shell-prompt-validate-regexps ()
   "Validate all user provided regexps for prompts.
@@ -2181,14 +2258,12 @@ the `buffer-name'."
 
 (defun python-shell-calculate-command ()
   "Calculate the string used to execute the inferior Python process."
-  (let ((exec-path (python-shell-calculate-exec-path)))
+  (python-shell-with-environment
     ;; `exec-path' gets tweaked so that virtualenv's specific
     ;; `python-shell-interpreter' absolute path can be found by
     ;; `executable-find'.
     (format "%s %s"
-            ;; FIXME: Why executable-find?
-            (shell-quote-argument
-             (executable-find python-shell-interpreter))
+            (shell-quote-argument python-shell-interpreter)
             python-shell-interpreter-args)))
 
 (define-obsolete-function-alias
@@ -2204,38 +2279,6 @@ the `buffer-name'."
     (if pythonpath
         (concat extra path-separator pythonpath)
       extra)))
-
-(defun python-shell-calculate-process-environment ()
-  "Calculate process environment given `python-shell-virtualenv-root'."
-  (let ((process-environment (append
-                              python-shell-process-environment
-                              process-environment nil))
-        (virtualenv (if python-shell-virtualenv-root
-                        (directory-file-name python-shell-virtualenv-root)
-                      nil)))
-    (when python-shell-unbuffered
-      (setenv "PYTHONUNBUFFERED" "1"))
-    (when python-shell-extra-pythonpaths
-      (setenv "PYTHONPATH" (python-shell-calculate-pythonpath)))
-    (if (not virtualenv)
-        process-environment
-      (setenv "PYTHONHOME" nil)
-      (setenv "PATH" (format "%s/bin%s%s"
-                             virtualenv path-separator
-                             (or (getenv "PATH") "")))
-      (setenv "VIRTUAL_ENV" virtualenv))
-    process-environment))
-
-(defun python-shell-calculate-exec-path ()
-  "Calculate exec path given `python-shell-virtualenv-root'."
-  (let ((path (append
-               ;; Use nil as the tail so that the list is a full copy,
-               ;; this is a paranoid safeguard for side-effects.
-               python-shell-exec-path exec-path nil)))
-    (if (not python-shell-virtualenv-root)
-        path
-      (cons (expand-file-name "bin" python-shell-virtualenv-root)
-            path))))
 
 (defvar python-shell--package-depth 10)
 
@@ -2561,31 +2604,30 @@ convention for temporary/internal buffers, and also makes sure
 the user is not queried for confirmation when the process is
 killed."
   (save-excursion
-    (let* ((proc-buffer-name
-            (format (if (not internal) "*%s*" " *%s*") proc-name))
-           (process-environment (python-shell-calculate-process-environment))
-           (exec-path (python-shell-calculate-exec-path)))
-      (when (not (comint-check-proc proc-buffer-name))
-        (let* ((cmdlist (split-string-and-unquote cmd))
-               (interpreter (car cmdlist))
-               (args (cdr cmdlist))
-               (buffer (apply #'make-comint-in-buffer proc-name proc-buffer-name
-                              interpreter nil args))
-               (python-shell--parent-buffer (current-buffer))
-               (process (get-buffer-process buffer))
-               ;; Users can override the interpreter and args
-               ;; interactively when calling `run-python', let-binding
-               ;; these allows to have the new right values in all
-               ;; setup code that is done in `inferior-python-mode',
-               ;; which is important, especially for prompt detection.
-               (python-shell--interpreter interpreter)
-               (python-shell--interpreter-args
-                (mapconcat #'identity args " ")))
-          (with-current-buffer buffer
-            (inferior-python-mode))
-          (when show (display-buffer buffer))
-          (and internal (set-process-query-on-exit-flag process nil))))
-      proc-buffer-name)))
+    (python-shell-with-environment
+      (let* ((proc-buffer-name
+              (format (if (not internal) "*%s*" " *%s*") proc-name)))
+        (when (not (comint-check-proc proc-buffer-name))
+          (let* ((cmdlist (split-string-and-unquote cmd))
+                 (interpreter (car cmdlist))
+                 (args (cdr cmdlist))
+                 (buffer (apply #'make-comint-in-buffer proc-name proc-buffer-name
+                                interpreter nil args))
+                 (python-shell--parent-buffer (current-buffer))
+                 (process (get-buffer-process buffer))
+                 ;; Users can override the interpreter and args
+                 ;; interactively when calling `run-python', let-binding
+                 ;; these allows to have the new right values in all
+                 ;; setup code that is done in `inferior-python-mode',
+                 ;; which is important, especially for prompt detection.
+                 (python-shell--interpreter interpreter)
+                 (python-shell--interpreter-args
+                  (mapconcat #'identity args " ")))
+            (with-current-buffer buffer
+              (inferior-python-mode))
+            (when show (display-buffer buffer))
+            (and internal (set-process-query-on-exit-flag process nil))))
+        proc-buffer-name))))
 
 ;;;###autoload
 (defun run-python (&optional cmd dedicated show)
@@ -3984,8 +4026,7 @@ See `python-check-command' for the default."
                                     "")))))))
   (setq python-check-custom-command command)
   (save-some-buffers (not compilation-ask-about-save) nil)
-  (let ((process-environment (python-shell-calculate-process-environment))
-        (exec-path (python-shell-calculate-exec-path)))
+  (python-shell-with-environment
     (compilation-start command nil
                        (lambda (_modename)
                          (format python-check-buffer-name command)))))
