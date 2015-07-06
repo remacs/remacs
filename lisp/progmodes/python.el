@@ -2060,23 +2060,24 @@ execution of body.  If `default-directory' points to a remote
 machine then modifies `tramp-remote-process-environment' and
 `tramp-remote-path' instead."
   (declare (indent 0) (debug (body)))
-  (let ((remote-p (file-remote-p default-directory)))
-    `(let ((process-environment
-            (if ,remote-p
-                process-environment
-              (python-shell-calculate-process-environment)))
-           (tramp-remote-process-environment
-            (if ,remote-p
-                (python-shell-calculate-process-environment)
-              tramp-remote-process-environment))
-           (exec-path
-            (if ,remote-p
-                (python-shell-calculate-exec-path)
-              exec-path))
-           (tramp-remote-path
-            (if ,remote-p
-                (python-shell-calculate-exec-path)
-              tramp-remote-path)))
+  (let ((remote-p (make-symbol "remote-p")))
+    `(let* ((,remote-p (file-remote-p default-directory))
+            (process-environment
+             (if ,remote-p
+                 process-environment
+               (python-shell-calculate-process-environment)))
+            (tramp-remote-process-environment
+             (if ,remote-p
+                 (python-shell-calculate-process-environment)
+               tramp-remote-process-environment))
+            (exec-path
+             (if ,remote-p
+                 exec-path
+               (python-shell-calculate-exec-path)))
+            (tramp-remote-path
+             (if ,remote-p
+                 (python-shell-calculate-exec-path)
+               tramp-remote-path)))
        ,(macroexp-progn body))))
 
 (defvar python-shell--prompt-calculated-input-regexp nil

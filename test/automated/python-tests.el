@@ -27,6 +27,7 @@
 ;; Dependencies for testing:
 (require 'electric)
 (require 'hideshow)
+(require 'tramp-sh)
 
 
 (defmacro python-tests-with-temp-buffer (contents &rest body)
@@ -2463,17 +2464,12 @@ Using `python-shell-interpreter' and
 
 (ert-deftest python-shell-calculate-process-environment-3 ()
   "Test `python-shell-virtualenv-root' modification."
-  (let* ((original-path (or (getenv "PATH") ""))
-         (python-shell-virtualenv-root
+  (let* ((python-shell-virtualenv-root
           (directory-file-name user-emacs-directory))
          (process-environment
           (python-shell-calculate-process-environment)))
     (should (not (getenv "PYTHONHOME")))
-    (should (string= (getenv "VIRTUAL_ENV") python-shell-virtualenv-root))
-    (should (equal (getenv "PATH")
-                   (format "%s/bin%s%s"
-                           python-shell-virtualenv-root
-                           path-separator original-path)))))
+    (should (string= (getenv "VIRTUAL_ENV") python-shell-virtualenv-root))))
 
 (ert-deftest python-shell-calculate-process-environment-4 ()
   "Test `python-shell-unbuffered' modification."
@@ -2503,7 +2499,7 @@ Using `python-shell-interpreter' and
                      original-exec-path)))))
 
 (ert-deftest python-shell-calculate-exec-path-2 ()
-  "Test `python-shell-exec-path' modification."
+  "Test `python-shell-virtualenv-root' modification."
   (let* ((original-exec-path exec-path)
          (python-shell-virtualenv-root
           (directory-file-name (expand-file-name user-emacs-directory)))
@@ -2513,6 +2509,38 @@ Using `python-shell-interpreter' and
              (append (cons
                       (format "%s/bin" python-shell-virtualenv-root)
                       original-exec-path))))))
+
+(ert-deftest python-shell-with-environment-1 ()
+  "Test with local `default-directory'."
+  (let* ((original-exec-path exec-path)
+         (python-shell-virtualenv-root
+          (directory-file-name (expand-file-name user-emacs-directory))))
+    (python-shell-with-environment
+      (should (equal
+               exec-path
+               (append (cons
+                        (format "%s/bin" python-shell-virtualenv-root)
+                        original-exec-path))))
+      (should (not (getenv "PYTHONHOME")))
+      (should (string= (getenv "VIRTUAL_ENV") python-shell-virtualenv-root)))))
+
+(ert-deftest python-shell-with-environment-2 ()
+  "Test with remote `default-directory'."
+  (let* ((default-directory "/ssh::/example/dir/")
+         (original-exec-path tramp-remote-path)
+         (original-process-environment tramp-remote-process-environment)
+         (python-shell-virtualenv-root
+          (directory-file-name (expand-file-name user-emacs-directory))))
+    (python-shell-with-environment
+      (should (equal
+               tramp-remote-path
+               (append (cons
+                        (format "%s/bin" python-shell-virtualenv-root)
+                        original-exec-path))))
+      (let ((process-environment tramp-remote-process-environment))
+        (should (not (getenv "PYTHONHOME")))
+        (should (string= (getenv "VIRTUAL_ENV")
+                         python-shell-virtualenv-root))))))
 
 (ert-deftest python-shell-make-comint-1 ()
   "Check comint creation for global shell buffer."
