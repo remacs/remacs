@@ -898,12 +898,12 @@ Can be overridden by the value of `font-lock-maximum-decoration'.")
 (defconst f90-type-def-re
   ;; type word
   ;; type :: word
-  ;; type, stuff :: word
-  ;; type, bind(c) :: word
-  ;; type, extends(stuff) :: word
+  ;; type, attr-list :: word
+  ;;   where attr-list = attr [, attr ...]
+  ;;   and attr may include bind(c) or extends(thing)
   ;; NOT "type ("
   "\\_<\\(type\\)\\_>\\(?:\\(?:[^()\n]*\\|\
-.*,[ \t]*\\(?:bind\\|extends\\)[ \t]*(.*)[ \t]*\\)::\\)?\
+.*,[ \t]*\\(?:bind\\|extends\\)[ \t]*(.*).*\\)::\\)?\
 [ \t]*\\(\\(?:\\sw\\|\\s_\\)+\\)"
   "Regexp matching the definition of a derived type.")
 
