@@ -846,10 +846,13 @@ main (int argc, char **argv)
     }
 #endif /* HAVE_PERSONALITY_LINUX32 */
 
-#if defined (HAVE_SETRLIMIT) && defined (RLIMIT_STACK)
-  /* Extend the stack space available.
-     Don't do that if dumping, since some systems (e.g. DJGPP)
-     might define a smaller stack limit at that time.  */
+#if defined (HAVE_SETRLIMIT) && defined (RLIMIT_STACK) && !defined (CYGWIN)
+  /* Extend the stack space available.  Don't do that if dumping,
+     since some systems (e.g. DJGPP) might define a smaller stack
+     limit at that time.  And it's not needed on Cygwin, since emacs
+     is built with an 8MB stack.  Moreover, the setrlimit call can
+     cause problems on Cygwin
+     (https://www.cygwin.com/ml/cygwin/2015-07/msg00096.html).  */
   if (1
 #ifndef CANNOT_DUMP
       && (!noninteractive || initialized)
@@ -883,7 +886,7 @@ main (int argc, char **argv)
 
       setrlimit (RLIMIT_STACK, &rlim);
     }
-#endif /* HAVE_SETRLIMIT and RLIMIT_STACK */
+#endif /* HAVE_SETRLIMIT and RLIMIT_STACK and not CYGWIN */
 
   /* Record (approximately) where the stack begins.  */
   stack_bottom = &stack_bottom_variable;
