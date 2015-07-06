@@ -741,7 +741,7 @@ by \"Save Options\" in Custom buffers.")
 
 ;; For the radio buttons below we check whether the respective dividers
 ;; are displayed on the selected frame.  This is not fully congruent
-;; with `window-divder-mode' but makes the menu entries work also when
+;; with `window-divider-mode' but makes the menu entries work also when
 ;; dividers are displayed by manipulating frame parameters directly.
 (defvar menu-bar-showhide-window-divider-menu
   (let ((menu (make-sparse-keymap "Window Divider")))
