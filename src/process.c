@@ -4591,6 +4591,9 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
   int got_some_output = -1;
   ptrdiff_t count = SPECPDL_INDEX ();
 
+  /* Close to the current time if known, an invalid timespec otherwise.  */
+  struct timespec now = invalid_timespec ();
+
   FD_ZERO (&Available);
   FD_ZERO (&Writeok);
 
@@ -4611,8 +4614,8 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
   else if (time_limit > 0 || nsecs > 0)
     {
       wait = TIMEOUT;
-      end_time = timespec_add (current_timespec (),
-                               make_timespec (time_limit, nsecs));
+      now = current_timespec ();
+      end_time = timespec_add (now, make_timespec (time_limit, nsecs));
     }
   else
     wait = INFINITY;
@@ -4637,7 +4640,8 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       /* Exit if already run out.  */
       if (wait == TIMEOUT)
 	{
-	  struct timespec now = current_timespec ();
+	  if (!timespec_valid_p (now))
+	    now = current_timespec ();
 	  if (timespec_cmp (end_time, now) <= 0)
 	    break;
 	  timeout = timespec_sub (end_time, now);
@@ -4830,7 +4834,6 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	}
       else
 	{
-
 	  /* Set the timeout for adaptive read buffering if any
 	     process has non-zero read_output_skip and non-zero
 	     read_output_delay, and we are not reading output for a
@@ -4876,16 +4879,20 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	      && timespec_valid_p (timer_delay)
 	      && timespec_cmp (timer_delay, timeout) < 0)
 	    {
-	      struct timespec timeout_abs = timespec_add (current_timespec (),
-							  timeout);
+	      if (!timespec_valid_p (now))
+		now = current_timespec ();
+	      struct timespec timeout_abs = timespec_add (now, timeout);
 	      if (!timespec_valid_p (got_output_end_time)
-		  || timespec_cmp (timeout_abs,
-				   got_output_end_time) < 0)
+		  || timespec_cmp (timeout_abs, got_output_end_time) < 0)
 		got_output_end_time = timeout_abs;
 	      timeout = timer_delay;
 	    }
 	  else
 	    got_output_end_time = invalid_timespec ();
+
+	  /* NOW can become inaccurate if time can pass during pselect.  */
+	  if (timeout.tv_sec > 0 || timeout.tv_nsec > 0)
+	    now = invalid_timespec ();
 
 #if defined (HAVE_NS)
           nfds = ns_select
@@ -4965,14 +4972,21 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
              haven't lowered our timeout due to timers or SIGIO and
              have waited a long amount of time due to repeated
              timers.  */
-	  struct timespec now = current_timespec ();
-          if (wait < TIMEOUT
-	      || (wait == TIMEOUT && timespec_cmp (end_time, now) <= 0)
-	      || (!process_skipped && got_some_output > 0
-		  && (!timespec_valid_p (got_output_end_time)
-		      || timespec_cmp (got_output_end_time, now) <= 0)
-		  && (timeout.tv_sec > 0 || timeout.tv_nsec > 0)))
+	  if (wait < TIMEOUT)
 	    break;
+	  struct timespec cmp_time
+	    = (wait == TIMEOUT
+	       ? end_time
+	       : (!process_skipped && got_some_output > 0
+		  && (timeout.tv_sec > 0 || timeout.tv_nsec > 0))
+	       ? got_output_end_time
+	       : invalid_timespec ());
+	  if (timespec_valid_p (cmp_time))
+	    {
+	      now = current_timespec ();
+	      if (timespec_cmp (cmp_time, now) <= 0)
+		break;
+	    }
 	}
 
       if (nfds < 0)
