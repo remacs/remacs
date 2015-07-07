@@ -142,6 +142,10 @@ and reference them using the function `class-option'."
 	     (alloc   (plist-get soptions :allocation))
 	     (label   (plist-get soptions :label)))
 
+        ;; Update eieio--known-slot-names already in case we compile code which
+        ;; uses this before the class is loaded.
+        (cl-pushnew sname eieio--known-slot-names)
+
 	(if eieio-error-unsupported-class-tags
 	    (let ((tmp soptions))
 	      (while tmp
@@ -254,13 +258,12 @@ This method is obsolete."
               (if (not (stringp abs))
                   (setq abs (format "Class %s is abstract" name)))
               `(defun ,name (&rest _)
-                 ,(format "You cannot create a new object of type %S." name)
+                 ,(format "You cannot create a new object of type `%S'." name)
                  (error ,abs)))
 
           ;; Non-abstract classes need a constructor.
           `(defun ,name (&rest slots)
-             ,(format "Create a new object with name NAME of class type %S."
-                      name)
+             ,(format "Create a new object of class type `%S'." name)
              (declare (compiler-macro
                        (lambda (whole)
                          (if (not (stringp (car slots)))
@@ -941,6 +944,8 @@ of `eq'."
   (error "EIEIO: `change-class' is unimplemented"))
 
 ;; Hook ourselves into help system for describing classes and methods.
+;; FIXME: This is not actually needed any more since we can click on the
+;; hyperlink from the constructor's docstring to see the type definition.
 (add-hook 'help-fns-describe-function-functions 'eieio-help-constructor)
 
 ;;; Interfacing with edebug
@@ -978,7 +983,7 @@ Optional argument GROUP is the sub-group of slots to display.
 
 ;;;***
 
-;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "b7995d9076e4dd4b9358b2aa66835619")
+;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "cb1aba7670b6a4b9c6f968c0ad6dc130")
 ;;; Generated autoloads from eieio-opt.el
 
 (autoload 'eieio-browse "eieio-opt" "\
@@ -988,11 +993,7 @@ variable `eieio-default-superclass'.
 
 \(fn &optional ROOT-CLASS)" t nil)
 
-(autoload 'eieio-help-class "eieio-opt" "\
-Print help description for CLASS.
-If CLASS is actually an object, then also display current values of that object.
-
-\(fn CLASS)" nil nil)
+(define-obsolete-function-alias 'eieio-help-class 'cl--describe-class "25.1")
 
 (autoload 'eieio-help-constructor "eieio-opt" "\
 Describe CTR if it is a class constructor.

@@ -30,6 +30,7 @@
 ;;; Code:
 
 (require 'button)
+(require 'cl-lib)
 (eval-when-compile (require 'easymenu))
 
 (defvar help-mode-map
@@ -216,7 +217,8 @@ The format is (FUNCTION ARGS...).")
 			 (goto-char (point-min))
 			 (if (re-search-forward
 			      (format "^[ \t]*(\\(cl-\\)?define-compiler-macro[ \t]+%s"
-				      (regexp-quote (symbol-name fun))) nil t)
+				      (regexp-quote (symbol-name fun)))
+                              nil t)
 			     (forward-line 0)
 			   (message "Unable to find location in file")))
 		     (message "Unable to find file")))
@@ -385,6 +387,15 @@ it does not already exist."
        (error "Current buffer is not in Help mode"))
      (current-buffer))))
 
+(defvar describe-symbol-backends
+  `((nil ,#'fboundp ,(lambda (s _b _f) (describe-function s)))
+    ("face" ,#'facep ,(lambda (s _b _f) (describe-face s)))
+    (nil
+     ,(lambda (symbol)
+        (or (and (boundp symbol) (not (keywordp symbol)))
+            (get symbol 'variable-documentation)))
+     ,#'describe-variable)))
+
 ;;;###autoload
 (defun help-make-xrefs (&optional buffer)
   "Parse and hyperlink documentation cross-references in the given BUFFER.
@@ -487,28 +498,9 @@ that."
                             ;;       (pop-to-buffer (car location))
                             ;; 	(goto-char (cdr location))))
                             (help-xref-button 8 'help-function-def sym))
-                           ((and
-                             (facep sym)
-                             (save-match-data (looking-at "[ \t\n]+face\\W")))
-                            (help-xref-button 8 'help-face sym))
-                           ((and (or (boundp sym)
-                                     (get sym 'variable-documentation))
-                                 (fboundp sym))
-                            ;; We can't intuit whether to use the
-                            ;; variable or function doc -- supply both.
-                            (help-xref-button 8 'help-symbol sym))
-                           ((and
-                             (or (boundp sym)
-                                 (get sym 'variable-documentation))
-                             (or
-                              (documentation-property
-                               sym 'variable-documentation)
-                              (documentation-property
-                               (indirect-variable sym)
-                               'variable-documentation)))
-                            (help-xref-button 8 'help-variable sym))
-                           ((fboundp sym)
-                            (help-xref-button 8 'help-function sym)))))))
+                           ((cl-some (lambda (x) (funcall (nth 1 x) sym))
+                                     describe-symbol-backends)
+                            (help-xref-button 8 'help-symbol sym)))))))
                 ;; An obvious case of a key substitution:
                 (save-excursion
                   (while (re-search-forward

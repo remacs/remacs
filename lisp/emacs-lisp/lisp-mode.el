@@ -95,7 +95,7 @@
 			     (regexp-opt
 			      '("defun" "defmacro"
                                 ;; Elisp.
-                                "defun*" "defsubst"
+                                "defun*" "defsubst" "define-inline"
 				"define-advice" "defadvice" "define-skeleton"
 				"define-compilation-mode" "define-minor-mode"
 				"define-global-minor-mode"
@@ -230,7 +230,7 @@
 	  (throw 'found t))))))
 
 (let-when-compile
-    ((lisp-fdefs '("defmacro" "defsubst" "defun"))
+    ((lisp-fdefs '("defmacro" "defun"))
      (lisp-vdefs '("defvar"))
      (lisp-kw '("cond" "if" "while" "let" "let*" "progn" "prog1"
                 "prog2" "lambda" "unwind-protect" "condition-case"
@@ -240,7 +240,8 @@
      ;; Elisp constructs.  Now they are update dynamically
      ;; from obarray but they are also used for setting up
      ;; the keywords for Common Lisp.
-     (el-fdefs '("define-advice" "defadvice" "defalias"
+     (el-fdefs '("defsubst" "cl-defsubst" "define-inline"
+                 "define-advice" "defadvice" "defalias"
                  "define-derived-mode" "define-minor-mode"
                  "define-generic-mode" "define-global-minor-mode"
                  "define-globalized-minor-mode" "define-skeleton"

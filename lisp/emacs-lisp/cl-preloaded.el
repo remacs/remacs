@@ -147,6 +147,7 @@
               ok)
             (error "Included struct %S has changed since compilation of %S"
                    parent name))))
+    (add-to-list 'current-load-list `(define-type . ,name))
     (cl--struct-register-child parent-class tag)
     (unless (eq named t)
       (eval `(defconst ,tag ',class) t)

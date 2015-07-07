@@ -95,6 +95,7 @@
 ;; usually be simplified, or even completely skipped.
 
 (eval-when-compile (require 'cl-lib))
+(eval-when-compile (require 'cl-macs))  ;For cl--find-class.
 (eval-when-compile (require 'pcase))
 
 (cl-defstruct (cl--generic-generalizer
@@ -883,6 +884,55 @@ Can only be used from within the lexical body of a primary or around method."
                 (insert (substitute-command-keys "’.\n"))))
             (insert "\n" (or (nth 2 info) "Undocumented") "\n\n")))))))
 
+(defun cl--generic-specializers-apply-to-type-p (specializers type)
+  "Return non-nil if a method with SPECIALIZERS applies to TYPE."
+  (let ((applies nil))
+    (dolist (specializer specializers)
+      (if (memq (car-safe specializer) '(subclass eieio--static))
+          (setq specializer (nth 1 specializer)))
+      ;; Don't include the methods that are "too generic", such as those
+      ;; applying to `eieio-default-superclass'.
+      (and (not (memq specializer '(t eieio-default-superclass)))
+           (or (equal type specializer)
+               (when (symbolp specializer)
+                 (let ((sclass (cl--find-class specializer))
+                       (tclass (cl--find-class type)))
+                   (when (and sclass tclass)
+                     (member specializer (cl--generic-class-parents tclass))))))
+           (setq applies t)))
+    applies))
+
+(defun cl--generic-all-functions (&optional type)
+  "Return a list of all generic functions.
+Optional TYPE argument returns only those functions that contain
+methods for TYPE."
+  (let ((l nil))
+    (mapatoms
+     (lambda (symbol)
+       (let ((generic (and (fboundp symbol) (cl--generic symbol))))
+         (and generic
+	      (catch 'found
+		(if (null type) (throw 'found t))
+		(dolist (method (cl--generic-method-table generic))
+		  (if (cl--generic-specializers-apply-to-type-p
+		       (cl--generic-method-specializers method) type)
+		      (throw 'found t))))
+	      (push symbol l)))))
+    l))
+
+(defun cl--generic-method-documentation (function type)
+  "Return info for all methods of FUNCTION (a symbol) applicable to TYPE.
+The value returned is a list of elements of the form
+\(QUALIFIERS ARGS DOC)."
+  (let ((generic (cl--generic function))
+        (docs ()))
+    (when generic
+      (dolist (method (cl--generic-method-table generic))
+        (when (cl--generic-specializers-apply-to-type-p
+               (cl--generic-method-specializers method) type)
+          (push (cl--generic-method-info method) docs))))
+    docs))
+
 ;;; Support for (head <val>) specializers.
 
 ;; For both the `eql' and the `head' specializers, the dispatch
@@ -958,19 +1008,22 @@ Can only be used from within the lexical body of a primary or around method."
           (if (eq (symbol-function tag) :quick-object-witness-check)
               tag))))
 
+(defun cl--generic-class-parents (class)
+  (let ((parents ())
+        (classes (list class)))
+    ;; BFS precedence.  FIXME: Use a topological sort.
+    (while (let ((class (pop classes)))
+             (cl-pushnew (cl--class-name class) parents)
+             (setq classes
+                   (append classes
+                           (cl--class-parents class)))))
+    (nreverse parents)))
+
 (defun cl--generic-struct-specializers (tag)
   (and (symbolp tag) (boundp tag)
        (let ((class (symbol-value tag)))
          (when (cl-typep class 'cl-structure-class)
-           (let ((types ())
-                 (classes (list class)))
-             ;; BFS precedence.
-             (while (let ((class (pop classes)))
-                      (push (cl--class-name class) types)
-                      (setq classes
-                            (append classes
-                                    (cl--class-parents class)))))
-             (nreverse types))))))
+           (cl--generic-class-parents class)))))
 
 (defconst cl--generic-struct-generalizer
   (cl-generic-make-generalizer

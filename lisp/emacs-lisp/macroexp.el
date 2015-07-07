@@ -119,20 +119,28 @@ and also to avoid outputting the warning during normal execution."
   (member '(declare-function . byte-compile-macroexpand-declare-function)
           macroexpand-all-environment))
 
+(defvar macroexp--warned (make-hash-table :test #'equal :weakness 'key))
 
-(defun macroexp--warn-and-return (msg form)
+(defun macroexp--warn-and-return (msg form &optional compile-only)
   (let ((when-compiled (lambda () (byte-compile-log-warning msg t))))
     (cond
      ((null msg) form)
      ((macroexp--compiling-p)
-      `(progn
-         (macroexp--funcall-if-compiled ',when-compiled)
-         ,form))
+      (if (gethash form macroexp--warned)
+          ;; Already wrapped this exp with a warning: avoid inf-looping
+          ;; where we keep adding the same warning onto `form' because
+          ;; macroexpand-all gets right back to macroexpanding `form'.
+          form
+        (puthash form form macroexp--warned)
+        `(progn
+           (macroexp--funcall-if-compiled ',when-compiled)
+           ,form)))
      (t
-      (message "%s%s" (if (stringp load-file-name)
-                          (concat (file-relative-name load-file-name) ": ")
-                        "")
-               msg)
+      (unless compile-only
+        (message "%s%s" (if (stringp load-file-name)
+                            (concat (file-relative-name load-file-name) ": ")
+                          "")
+                 msg))
       form))))
 
 (defun macroexp--obsolete-warning (fun obsolescence-data type)
@@ -208,30 +216,30 @@ Assumes the caller has bound `macroexpand-all-environment'."
        (macroexp--cons
         'condition-case
         (macroexp--cons err
-                    (macroexp--cons (macroexp--expand-all body)
-                                (macroexp--all-clauses handlers 1)
-                                (cddr form))
-                    (cdr form))
+                        (macroexp--cons (macroexp--expand-all body)
+                                        (macroexp--all-clauses handlers 1)
+                                        (cddr form))
+                        (cdr form))
         form))
       (`(,(or `defvar `defconst) . ,_) (macroexp--all-forms form 2))
       (`(function ,(and f `(lambda . ,_)))
        (macroexp--cons 'function
-                   (macroexp--cons (macroexp--all-forms f 2)
-                               nil
-                               (cdr form))
-                   form))
+                       (macroexp--cons (macroexp--all-forms f 2)
+                                       nil
+                                       (cdr form))
+                       form))
       (`(,(or `function `quote) . ,_) form)
       (`(,(and fun (or `let `let*)) . ,(or `(,bindings . ,body) dontcare))
        (macroexp--cons fun
-                   (macroexp--cons (macroexp--all-clauses bindings 1)
-                               (macroexp--all-forms body)
-                               (cdr form))
-                   form))
+                       (macroexp--cons (macroexp--all-clauses bindings 1)
+                                       (macroexp--all-forms body)
+                                       (cdr form))
+                       form))
       (`(,(and fun `(lambda . ,_)) . ,args)
        ;; Embedded lambda in function position.
        (macroexp--cons (macroexp--all-forms fun 2)
-                   (macroexp--all-forms args)
-                   form))
+                       (macroexp--all-forms args)
+                       form))
       ;; The following few cases are for normal function calls that
       ;; are known to funcall one of their arguments.  The byte
       ;; compiler has traditionally handled these functions specially

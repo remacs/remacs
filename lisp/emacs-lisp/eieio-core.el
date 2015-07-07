@@ -261,6 +261,8 @@ It creates an autoload function for CNAME's constructor."
     (and (eieio-object-p obj)
          (object-of-class-p obj class))))
 
+(defvar eieio--known-slot-names nil)
+
 (defun eieio-defclass-internal (cname superclasses slots options)
   "Define CNAME as a new subclass of SUPERCLASSES.
 SLOTS are the slots residing in that class definition, and OPTIONS
@@ -473,7 +475,7 @@ See `defclass' for more information."
         (put cname 'variable-documentation docstring)))
 
     ;; Save the file location where this class is defined.
-    (add-to-list 'current-load-list `(eieio-defclass . ,cname))
+    (add-to-list 'current-load-list `(define-type . ,cname))
 
     ;; We have a list of custom groups.  Store them into the options.
     (let ((g (eieio--class-option-assoc options :custom-groups)))
@@ -603,47 +605,48 @@ if default value is nil."
                               :key #'cl--slot-descriptor-name)))
          (cold (car (cl-member a (eieio--class-class-slots newc)
                                :key #'cl--slot-descriptor-name))))
-  (condition-case nil
-      (if (sequencep d) (setq d (copy-sequence d)))
-    ;; This copy can fail on a cons cell with a non-cons in the cdr.  Let's
-    ;; skip it if it doesn't work.
-    (error nil))
-  ;; (if (sequencep type) (setq type (copy-sequence type)))
-  ;; (if (sequencep cust) (setq cust (copy-sequence cust)))
-  ;; (if (sequencep custg) (setq custg (copy-sequence custg)))
+    (cl-pushnew a eieio--known-slot-names)
+    (condition-case nil
+        (if (sequencep d) (setq d (copy-sequence d)))
+      ;; This copy can fail on a cons cell with a non-cons in the cdr.  Let's
+      ;; skip it if it doesn't work.
+      (error nil))
+    ;; (if (sequencep type) (setq type (copy-sequence type)))
+    ;; (if (sequencep cust) (setq cust (copy-sequence cust)))
+    ;; (if (sequencep custg) (setq custg (copy-sequence custg)))
 
-  ;; To prevent override information w/out specification of storage,
-  ;; we need to do this little hack.
-  (if cold (setq alloc :class))
+    ;; To prevent override information w/out specification of storage,
+    ;; we need to do this little hack.
+    (if cold (setq alloc :class))
 
-  (if (memq alloc '(nil :instance))
-      ;; In this case, we modify the INSTANCE version of a given slot.
-      (progn
-        ;; Only add this element if it is so-far unique
-        (if (not old)
-            (progn
-              (eieio--perform-slot-validation-for-default slot skipnil)
-              (push slot (eieio--class-slots newc))
-              )
-          ;; When defaultoverride is true, we are usually adding new local
-          ;; attributes which must override the default value of any slot
-          ;; passed in by one of the parent classes.
-          (when defaultoverride
-            (eieio--slot-override old slot skipnil)))
-        (when init
-          (cl-pushnew (cons init a) (eieio--class-initarg-tuples newc)
-                      :test #'equal)))
-
-    ;; CLASS ALLOCATED SLOTS
-    (if (not cold)
+    (if (memq alloc '(nil :instance))
+        ;; In this case, we modify the INSTANCE version of a given slot.
         (progn
-          (eieio--perform-slot-validation-for-default slot skipnil)
-          ;; Here we have found a :class version of a slot.  This
-          ;; requires a very different approach.
-          (push slot (eieio--class-class-slots newc)))
-      (when defaultoverride
-        ;; There is a match, and we must override the old value.
-        (eieio--slot-override cold slot skipnil))))))
+          ;; Only add this element if it is so-far unique
+          (if (not old)
+              (progn
+                (eieio--perform-slot-validation-for-default slot skipnil)
+                (push slot (eieio--class-slots newc))
+                )
+            ;; When defaultoverride is true, we are usually adding new local
+            ;; attributes which must override the default value of any slot
+            ;; passed in by one of the parent classes.
+            (when defaultoverride
+              (eieio--slot-override old slot skipnil)))
+          (when init
+            (cl-pushnew (cons init a) (eieio--class-initarg-tuples newc)
+                        :test #'equal)))
+
+      ;; CLASS ALLOCATED SLOTS
+      (if (not cold)
+          (progn
+            (eieio--perform-slot-validation-for-default slot skipnil)
+            ;; Here we have found a :class version of a slot.  This
+            ;; requires a very different approach.
+            (push slot (eieio--class-class-slots newc)))
+        (when defaultoverride
+          ;; There is a match, and we must override the old value.
+          (eieio--slot-override cold slot skipnil))))))
 
 (defun eieio-copy-parents-into-subclass (newc)
   "Copy into NEWC the slots of PARENTS.
@@ -720,9 +723,18 @@ Argument FN is the function calling this verifier."
 
 
 ;;; Get/Set slots in an object.
-;;
+
 (defun eieio-oref (obj slot)
   "Return the value in OBJ at SLOT in the object vector."
+  (declare (compiler-macro
+            (lambda (exp)
+              (ignore obj)
+              (pcase slot
+                ((and (or `',name (and name (pred keywordp)))
+                      (guard (not (memq name eieio--known-slot-names))))
+                 (macroexp--warn-and-return
+                  (format "Unknown slot `%S'" name) exp 'compile-only))
+                (_ exp)))))
   (cl-check-type slot symbol)
   (cl-check-type obj (or eieio-object class))
   (let* ((class (cond ((symbolp obj)

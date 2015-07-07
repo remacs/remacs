@@ -33,6 +33,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'help-mode)
 
 (defvar help-fns-describe-function-functions nil
   "List of functions to run in help buffer in `describe-function'.
@@ -970,15 +971,6 @@ file-local variable.\n")
 	      (buffer-string))))))))
 
 
-(defvar describe-symbol-backends
-  `((nil ,#'fboundp ,(lambda (s _b _f) (describe-function s)))
-    ("face" ,#'facep ,(lambda (s _b _f) (describe-face s)))
-    (nil
-     ,(lambda (symbol)
-        (or (and (boundp symbol) (not (keywordp symbol)))
-            (get symbol 'variable-documentation)))
-     ,#'describe-variable)))
-
 (defvar help-xref-stack-item)
 
 ;;;###autoload
@@ -986,23 +978,22 @@ file-local variable.\n")
   "Display the full documentation of SYMBOL.
 Will show the info of SYMBOL as a function, variable, and/or face."
   (interactive
-   ;; FIXME: also let the user enter a face name.
-   (let* ((v-or-f (variable-at-point))
-          (found (symbolp v-or-f))
+   (let* ((v-or-f (symbol-at-point))
+          (found (cl-some (lambda (x) (funcall (nth 1 x) v-or-f))
+                          describe-symbol-backends))
           (v-or-f (if found v-or-f (function-called-at-point)))
           (found (or found v-or-f))
           (enable-recursive-minibuffers t)
-          val)
-     (setq val (completing-read (if found
+          (val (completing-read (if found
 				    (format
-                                        "Describe symbol (default %s): " v-or-f)
+                                     "Describe symbol (default %s): " v-or-f)
 				  "Describe symbol: ")
 				obarray
 				(lambda (vv)
                                   (cl-some (lambda (x) (funcall (nth 1 x) vv))
                                            describe-symbol-backends))
 				t nil nil
-				(if found (symbol-name v-or-f))))
+				(if found (symbol-name v-or-f)))))
      (list (if (equal val "")
 	       v-or-f (intern val)))))
   (if (not (symbolp symbol))
