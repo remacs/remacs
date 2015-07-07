@@ -1572,12 +1572,12 @@ SEEN is used internally to detect infinite recursion."
         ;; blocked via `package-load-list'.
         (let ((pkg-descs (cdr (assq next-pkg package-archive-contents)))
               (found nil)
+              (found-something nil)
               (problem nil))
           (while (and pkg-descs (not found))
             (let* ((pkg-desc (pop pkg-descs))
                    (version (package-desc-version pkg-desc))
-                   (disabled (package-disabled-p next-pkg version))
-                   found-something)
+                   (disabled (package-disabled-p next-pkg version)))
               (cond
                ((version-list-< version next-version)
                 ;; pkg-descs is sorted by priority, not version, so
