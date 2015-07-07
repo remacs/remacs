@@ -2673,7 +2673,7 @@ compute_tip_xy (struct frame *f,
                 int *root_x,
                 int *root_y)
 {
-  Lisp_Object left, top;
+  Lisp_Object left, top, right, bottom;
   EmacsView *view = FRAME_NS_VIEW (f);
   struct ns_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
   NSPoint pt;
@@ -2681,8 +2681,11 @@ compute_tip_xy (struct frame *f,
   /* Start with user-specified or mouse position.  */
   left = Fcdr (Fassq (Qleft, parms));
   top = Fcdr (Fassq (Qtop, parms));
+  right = Fcdr (Fassq (Qright, parms));
+  bottom = Fcdr (Fassq (Qbottom, parms));
 
-  if (!INTEGERP (left) || !INTEGERP (top))
+  if ((!INTEGERP (left) && !INTEGERP (right))
+      || (!INTEGERP (top) && !INTEGERP (bottom)))
     {
       pt.x = dpyinfo->last_mouse_motion_x;
       pt.y = dpyinfo->last_mouse_motion_y;
@@ -2702,13 +2705,14 @@ compute_tip_xy (struct frame *f,
   else
     {
       /* Absolute coordinates.  */
-      pt.x = XINT (left);
-      pt.y = x_display_pixel_height (FRAME_DISPLAY_INFO (f)) - XINT (top)
-        - height;
+      pt.x = INTEGERP (left) ? XINT (left) : XINT (right);
+      pt.y = (x_display_pixel_height (FRAME_DISPLAY_INFO (f))
+	      - (INTEGERP (top) ? XINT (top) : XINT (bottom))
+	      - height);
     }
 
   /* Ensure in bounds.  (Note, screen origin = lower left.) */
-  if (INTEGERP (left))
+  if (INTEGERP (left) || INTEGERP (right))
     *root_x = pt.x;
   else if (pt.x + XINT (dx) <= 0)
     *root_x = 0; /* Can happen for negative dx */
@@ -2723,7 +2727,7 @@ compute_tip_xy (struct frame *f,
     /* Put it left justified on the screen -- it ought to fit that way.  */
     *root_x = 0;
 
-  if (INTEGERP (top))
+  if (INTEGERP (top) || INTEGERP (bottom))
     *root_y = pt.y;
   else if (pt.y - XINT (dy) - height >= 0)
     /* It fits below the pointer.  */
@@ -2753,12 +2757,18 @@ Automatically hide the tooltip after TIMEOUT seconds.  TIMEOUT nil
 means use the default timeout of 5 seconds.
 
 If the list of frame parameters PARMS contains a `left' parameter,
-the tooltip is displayed at that x-position.  Otherwise it is
-displayed at the mouse position, with offset DX added (default is 5 if
-DX isn't specified).  Likewise for the y-position; if a `top' frame
-parameter is specified, it determines the y-position of the tooltip
-window, otherwise it is displayed at the mouse position, with offset
-DY added (default is -10).
+display the tooltip at that x-position.  If the list of frame parameters
+PARMS contains no `left' but a `right' parameter, display the tooltip
+right-adjusted at that x-position. Otherwise display it at the
+x-position of the mouse, with offset DX added (default is 5 if DX isn't
+specified).
+
+Likewise for the y-position: If a `top' frame parameter is specified, it
+determines the position of the upper edge of the tooltip window.  If a
+`bottom' parameter but no `top' frame parameter is specified, it
+determines the position of the lower edge of the tooltip window.
+Otherwise display the tooltip window at the y-position of the mouse,
+with offset DY added (default is -10).
 
 A tooltip's maximum size is specified by `x-max-tooltip-size'.
 Text larger than the specified size is clipped.  */)

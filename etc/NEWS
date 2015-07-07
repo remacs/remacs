@@ -1093,8 +1093,8 @@ windows without "fixing" it.  It's supported by `fit-window-to-buffer',
 
 +++
 ** New minor mode `window-divider-mode' and options
-`window-divider-default-bottom-width' and
-`window-divider-default-right-width'.
+`window-divider-default-places', `window-divider-default-bottom-width'
+and `window-divider-default-right-width'.
 
 +++
 ** New option `switch-to-buffer-in-dedicated-window' allows to customize
