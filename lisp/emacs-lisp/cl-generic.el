@@ -162,18 +162,6 @@
       (defalias name (cl--generic-make-function generic)))
     generic))
 
-(defun cl--generic-setf-rewrite (name)
-  (let* ((setter (intern (format "cl-generic-setter--%s" name)))
-         (exp `(unless (eq ',setter (get ',name 'cl-generic-setter))
-                 ;; (when (get ',name 'gv-expander)
-                 ;;   (error "gv-expander conflicts with (setf %S)" ',name))
-                 (setf (get ',name 'cl-generic-setter) ',setter)
-                 (gv-define-setter ,name (val &rest args)
-                   (cons ',setter (cons val args))))))
-    ;; Make sure `setf' can be used right away, e.g. in the body of the method.
-    (eval exp t)
-    (cons setter exp)))
-
 ;;;###autoload
 (defmacro cl-defgeneric (name args &rest options-and-methods)
   "Create a generic function NAME.
@@ -211,12 +199,10 @@ BODY, if present, is used as the body of a default method.
     (when options-and-methods
       ;; Anything remaining is assumed to be a default method body.
       (push `(,args ,@options-and-methods) methods))
+    (when (eq 'setf (car-safe name))
+      (require 'gv)
+      (setq name (gv-setter (cadr name))))
     `(progn
-       ,(when (eq 'setf (car-safe name))
-          (pcase-let ((`(,setter . ,code) (cl--generic-setf-rewrite
-                                           (cadr name))))
-            (setq name setter)
-            code))
        ,@(mapcar (lambda (declaration)
                    (let ((f (cdr (assq (car declaration)
                                        defun-declarations-alist))))
@@ -365,18 +351,15 @@ which case this method will be invoked when the argument is `eql' to VAL.
              list                       ; arguments
              [ &optional stringp ]      ; documentation string
              def-body)))                ; part to be debugged
-  (let ((qualifiers nil)
-        (setfizer (if (eq 'setf (car-safe name))
-                      ;; Call it before we call cl--generic-lambda.
-                      (cl--generic-setf-rewrite (cadr name)))))
+  (let ((qualifiers nil))
     (while (not (listp args))
       (push args qualifiers)
       (setq args (pop body)))
+    (when (eq 'setf (car-safe name))
+      (require 'gv)
+      (setq name (gv-setter (cadr name))))
     (pcase-let* ((`(,uses-cnm . ,fun) (cl--generic-lambda args body)))
       `(progn
-         ,(when setfizer
-            (setq name (car setfizer))
-            (cdr setfizer))
          ,(and (get name 'byte-obsolete-info)
                (or (not (fboundp 'byte-compile-warning-enabled-p))
                    (byte-compile-warning-enabled-p 'obsolete))
@@ -689,7 +672,6 @@ The tags should be chosen according to the following rules:
   This is because the method-cache is only indexed with the first non-nil
   tag (by order of decreasing priority).")
 
-
 (cl-defgeneric cl-generic-combine-methods (generic methods)
   "Build the effective method made of METHODS.
 It should return a function that expects the same arguments as the methods, and
@@ -703,8 +685,7 @@ methods.")
 ;; Temporary definition to let the next defmethod succeed.
 (fset 'cl-generic-generalizers
       (lambda (_specializer) (list cl--generic-t-generalizer)))
-(fset 'cl-generic-combine-methods
-      #'cl--generic-standard-method-combination)
+(fset 'cl-generic-combine-methods #'cl--generic-standard-method-combination)
 
 (cl-defmethod cl-generic-generalizers (specializer)
   "Support for the catch-all t specializer."
