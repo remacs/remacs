@@ -59,6 +59,7 @@ WinMain (HINSTANCE hSelf, HINSTANCE hPrev, LPSTR cmdline, int nShow)
   char *new_cmdline;
   char *p;
   char modname[MAX_PATH];
+  static const char iconic_opt[] = "--iconic ";
 
   if (!ensure_unicows_dll ())
     goto error;
@@ -71,7 +72,10 @@ WinMain (HINSTANCE hSelf, HINSTANCE hPrev, LPSTR cmdline, int nShow)
     goto error;
   *p = 0;
 
-  new_cmdline = alloca (MAX_PATH + strlen (cmdline) + 3);
+  new_cmdline = alloca (MAX_PATH
+			+ strlen (cmdline)
+			+ (nShow == SW_SHOWMINNOACTIVE) * strlen (iconic_opt)
+			+ 3);
   /* Quote executable name in case of spaces in the path. */
   *new_cmdline = '"';
   strcpy (new_cmdline + 1, modname);
@@ -140,6 +144,11 @@ WinMain (HINSTANCE hSelf, HINSTANCE hPrev, LPSTR cmdline, int nShow)
       while (*++cmdline == ' ');
     }
 
+  /* If the desktop shortcut properties tell to invoke runemacs
+     minimized, or if they invoked runemacs via "start /min", pass
+     '--iconic' to Emacs, as that's what users will expect.  */
+  if (nShow == SW_SHOWMINNOACTIVE)
+    strcat (new_cmdline, iconic_opt);
   strcat (new_cmdline, cmdline);
 
   /* Set emacs_dir variable if runemacs was in "%emacs_dir%\bin".  */
