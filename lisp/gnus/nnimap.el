@@ -803,7 +803,7 @@ textual parts.")
 		     nil
 		   group)
 		 server))
-	articles active marks high low)
+	active)
     (with-current-buffer nntp-server-buffer
       (when result
 	(when (or (not dont-check)
