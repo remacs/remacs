@@ -1476,9 +1476,9 @@ unified format to context format.  When the mark is active, convert
 only the text within the region.
 
 @item C-c C-w
-@findex diff-refine-hunk
-Refine the current hunk so that it disregards changes in whitespace
-(@code{diff-refine-hunk}).
+@findex diff-ignore-whitespace-hunk
+Re-diff the current hunk, disregarding changes in whitespace
+(@code{diff-ignore-whitespace-hunk}).
 
 @item C-x 4 A
 @findex diff-add-change-log-entries-other-window
