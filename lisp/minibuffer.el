@@ -2045,7 +2045,7 @@ This respects the wrapper hook `completion-in-region-functions'."
 
 (defvar completion-at-point-functions '(tags-completion-at-point-function)
   "Special hook to find the completion table for the thing at point.
-Each function on this hook is called in turns without any argument and should
+Each function on this hook is called in turn without any argument and should
 return either nil to mean that it is not applicable at point,
 or a function of no argument to perform completion (discouraged),
 or a list of the form (START END COLLECTION . PROPS) where
