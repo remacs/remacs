@@ -767,7 +767,8 @@ tools are used, and when."
                 hits))))
     (unwind-protect
         (delq nil
-              (mapcar (lambda (hit) (xref--collect-match hit regexp)) hits))
+              (mapcar (lambda (hit) (xref--collect-match hit regexp))
+                      (nreverse hits)))
       (mapc #'kill-buffer
             (cl-set-difference (buffer-list) orig-buffers)))))
 
