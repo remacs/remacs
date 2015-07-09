@@ -423,6 +423,7 @@ textual parts.")
 	       :return-list t
 	       :shell-command nnimap-shell-program
 	       :capability-command "1 CAPABILITY\r\n"
+               :always-query-capabilities t
 	       :end-of-command "\r\n"
 	       :success " OK "
 	       :starttls-function
