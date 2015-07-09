@@ -361,7 +361,7 @@ the bounds of a possible ill-formed URI (one lacking a scheme)."
       (if found
 	  (cons (match-beginning 1) (match-end 1))))))
 
-(defun thing-at-point--bounds-of-well-formed-url (beg end _pt)
+(defun thing-at-point--bounds-of-well-formed-url (beg end pt)
   (save-excursion
     (goto-char beg)
     (let (url-beg paren-end regexp)
@@ -388,7 +388,11 @@ the bounds of a possible ill-formed URI (one lacking a scheme)."
 				 (scan-lists (1- url-beg) 1 0))))
 	     (not (blink-matching-check-mismatch (1- url-beg) paren-end))
 	     (setq end (1- paren-end)))
-	(cons url-beg end)))))
+	;; Ensure PT is actually within BOUNDARY. Check the following
+	;; example with point on the beginning of the line:
+	;;
+	;; 3,1406710489,http://gnu.org,0,"0"
+	(and (<= url-beg pt end) (cons url-beg end))))))
 
 (put 'url 'thing-at-point 'thing-at-point-url-at-point)
 
