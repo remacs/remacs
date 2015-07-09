@@ -798,6 +798,7 @@ tools are used, and when."
       (save-excursion
         (goto-char (point-min))
         (forward-line (1- line))
+        (syntax-propertize (line-end-position))
         (when (re-search-forward regexp (line-end-position) t)
           (goto-char (match-beginning 0))
           (xref-make (buffer-substring
