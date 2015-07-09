@@ -1988,8 +1988,8 @@ non-@code{nil}.  With @kbd{f} (@code{image-next-frame}) and @kbd{b}
 (@code{image-previous-frame}) you can step through the individual
 frames.  Both commands accept a numeric prefix to step through several
 frames at once.  You can go to a specific frame with @kbd{F}
-(@code{image-goto-frame}).  Typing @kbd{a +}
-(@code{image-increase-speed}) increases the speed of the animation,
+(@code{image-goto-frame}).  Frames are indexed from 1.  Typing @kbd{a
++} (@code{image-increase-speed}) increases the speed of the animation,
 @kbd{a -} (@code{image-decrease-speed}) decreases it, and @kbd{a r}
 (@code{image-reverse-speed}) reverses it.  The command @kbd{a 0}
 (@code{image-reset-speed}) resets the speed to the original value.
