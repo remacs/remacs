@@ -1745,7 +1745,8 @@ owner, are supported only for some of the archive formats.
 and repack archives.  However, you don't need these programs to look
 at the archive table of contents, only to extract or manipulate the
 subfiles in the archive.  Details of the program names and their
-options can be set in the @samp{Archive} Customize group.
+options can be set in the @samp{Archive} Customize group
+(@pxref{Customization Groups}).
 
 @node Remote Files
 @section Remote Files
@@ -1945,6 +1946,7 @@ opened files.  @kbd{M-x recentf-save-list} saves the current
 @code{recent-file-list} to a file, and @kbd{M-x recentf-edit-list}
 edits it.
 
+@c FIXME partial-completion-mode (complete.el) is obsolete.
   The @kbd{M-x ffap} command generalizes @code{find-file} with more
 powerful heuristic defaults (@pxref{FFAP}), often based on the text at
 point.  Partial Completion mode offers other features extending
