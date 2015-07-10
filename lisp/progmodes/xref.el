@@ -54,6 +54,7 @@
 (require 'eieio)
 (require 'ring)
 (require 'pcase)
+(require 'project)
 
 (defgroup xref nil "Cross-referencing commands"
   :group 'tools)
@@ -181,9 +182,6 @@ found, return nil.
 
  (apropos PATTERN): Find all symbols that match PATTERN.  PATTERN
 is a regexp.
-
- (matches REGEXP): Find all matches for REGEXP in the related
-files.  REGEXP is an Emacs regular expression.
 
 IDENTIFIER can be any string returned by
 `xref-identifier-at-point-function', or from the table returned
@@ -598,7 +596,7 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
          (tb (cl-set-difference (buffer-list) bl)))
     (cond
      ((null xrefs)
-      (user-error "No known %s for: %s" (symbol-name kind) input))
+      (user-error "No %s found for: %s" (symbol-name kind) input))
      ((not (cdr xrefs))
       (xref-push-marker-stack)
       (xref--pop-to-location (xref--xref-location (car xrefs)) window))
@@ -661,10 +659,25 @@ With prefix argument, prompt for the identifier."
 
 ;;;###autoload
 (defun xref-find-regexp (regexp)
-  "Find all matches for REGEXP."
+  "Find all matches for REGEXP.
+With \\[universal-argument] prefix, you can specify the directory
+to search in."
   ;; FIXME: Prompt for directory.
   (interactive (list (xref--read-identifier "Find regexp: ")))
-  (xref--show-xrefs regexp 'matches regexp nil))
+  (let* ((dirs (if current-prefix-arg
+                   (list (read-directory-name "In directory: "))
+                 (let ((proj (project-current)))
+                   (project--prune-directories
+                    (nconc
+                     (project-directories proj)
+                     (project-search-path proj))))))
+         (xref-find-function
+          (lambda (_kind regexp)
+            (cl-mapcan
+             (lambda (dir)
+               (xref-collect-matches regexp dir))
+             dirs))))
+    (xref--show-xrefs regexp 'matches regexp nil)))
 
 (declare-function apropos-parse-pattern "apropos" (pattern))
 
@@ -807,7 +820,6 @@ tools are used, and when."
                      (xref-make-file-location file line
                                               (current-column))))))))
 
-
 (provide 'xref)
 
 ;;; xref.el ends here
