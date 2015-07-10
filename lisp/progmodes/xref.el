@@ -772,12 +772,12 @@ tools are used, and when."
          hits)
     (with-current-buffer buf
       (erase-buffer)
-      (when (eq (call-process-shell-command command nil t) 0)
-        (goto-char (point-min))
-        (while (re-search-forward grep-re nil t)
-          (push (cons (string-to-number (match-string 2))
-                      (match-string 1))
-                hits))))
+      (call-process-shell-command command nil t)
+      (goto-char (point-min))
+      (while (re-search-forward grep-re nil t)
+        (push (cons (string-to-number (match-string 2))
+                    (match-string 1))
+              hits)))
     (unwind-protect
         (delq nil
               (mapcar (lambda (hit) (xref--collect-match hit regexp))
