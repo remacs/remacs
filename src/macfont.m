@@ -2198,7 +2198,7 @@ macfont_list (struct frame *f, Lisp_Object spec)
         }
       CFRelease (pat_desc);
       if (! descs)
-        goto err;
+        continue;
 
       descs_count = CFArrayGetCount (descs);
       if (descs_count == 0
