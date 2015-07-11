@@ -762,8 +762,10 @@ tools are used, and when."
   (require 'semantic/fw)
   (grep-compute-defaults)
   (defvar grep-find-template)
+  (defvar grep-highlight-matches)
   (let* ((grep-find-template (replace-regexp-in-string "-e " "-E "
                                                        grep-find-template t t))
+         (grep-highlight-matches nil)
          (command (rgrep-default-command (xref--regexp-to-extended regexp)
                                          "*.*" dir))
          (orig-buffers (buffer-list))
