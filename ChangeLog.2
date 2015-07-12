@@ -1,3 +1,392 @@
+2015-07-11  Eric Abrahamsen  <eric@ericabrahamsen.net>
+
+	gnus-registry.el: Correct function argument order
+	* lisp/gnus/gnus-registry.el (gnus-registry--set/remove-mark):
+	Reverse the order of function arguments.
+
+2015-07-11  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Bind grep-highlight-matches to nil
+	* lisp/progmodes/xref.el (xref-collect-matches):
+	Bind grep-highlight-matches to nil (bug#20728).
+
+2015-07-11  Nikolaus Rath  <Nikolaus@rath.org>
+
+	nnimap.el: Fix IMAP message size parsing
+	* lisp/gnus/nnimap.el (nnimap-transform-headers):
+	Don't assume that UID comes before RFC822.SIZE.
+
+2015-07-10  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/gnus/nnimap.el: Clean up "unused var" warnings
+	(auth-source-creation-prompts): Declare.
+	(nnimap-retrieve-headers, nnimap-status-message)
+	(nnimap-request-create-group, nnimap-request-delete-group)
+	(nnimap-close-group, nnimap-request-move-article)
+	(nnimap-request-accept-article, nnimap-request-newgroups)
+	(nnimap-request-post, nnimap-dummy-active-number)
+	(nnimap-save-mail-spec, nnimap-get-groups): Add _ to unused vars.
+	(nnimap-parse-flags): Remove unused var `p'.
+	(nnimap-retrieve-group-data-early): Remove unused var `groups'.
+	(nnimap-flags-to-marks): Remove unused var `totalp'.
+
+2015-07-10  Andy Moreton  <andrewjmoreton@gmail.com>  (tiny change)
+
+	* src/w32heap.c (DUMPED_HEAP_SIZE): Bump to 20MB.
+
+2015-07-10  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
+
+	* src/macfont.m (macfont_list): Ignore font families lacking font descriptors.
+
+2015-07-09  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Don't check the exit status, it can be misleading
+	* lisp/progmodes/xref.el (xref-collect-matches): Don't check the
+	exit status, it can be misleading.
+
+	Introduce a Project API
+	* lisp/progmodes/project.el: New file.
+	* lisp/cedet/ede.el: (project-try-ede): New function.
+	(project-root): New implementation.
+	* lisp/progmodes/elisp-mode.el (emacs-lisp-mode):
+	Set project-search-path-function.
+	(elisp--xref-find-references): Delegate some logic to
+	project-search-path.
+	(elisp-search-path): New function.
+	(elisp-xref-find): Don't implement `matches' anymore.
+	* lisp/progmodes/etags.el: Don't implement `matches'.
+	Delegate some logic to project-search-path.
+	(etags-search-path): New function.
+	* lisp/progmodes/xref.el (xref-find-function):
+	Remove `matches' from the API.
+	(xref-find-regexp): Move whatever common logic was in elisp and
+	etags implementations, and search the directories returned by
+	project-directories and project-search-path.
+
+2015-07-09  Nicolas Petton  <nicolas@petton.fr>
+
+	* test/automated/map-tests.el (test-map-delete-return-value): Uncomment test.
+
+	Add support for gv.el in map.el
+	* lisp/emacs-lisp/map.el (map-elt, map-delete): Declare a gv-expander.
+	* lisp/emacs-lisp/map.el (map-put): Refactor using `setf' and `map-elt'.
+	* test/automated/map-tests.el: Update tests to work with the new
+	implementations of map-elt and map-put.
+
+2015-07-09  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/emacs-lisp/debug.el (debug-help-follow): Use describe-symbol.
+
+2015-07-09  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Syntax-propertize until the end of the line first
+	* lisp/progmodes/xref.el (xref--collect-match): Syntax-propertize
+	until the end of the line first.
+
+2015-07-09  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* doc/emacs/files.texi (File Archives): Add a cross reference.
+
+2015-07-08  Nikolaus Rath  <Nikolaus@rath.org>
+
+	nnimap.el: Handle plain value for nnimap-stream
+	* lisp/gnus/nnimap.el (nnimap-open-connection-1): Always query
+	capabilities, so that a 'plain value for the `nnimap-stream' server
+	variable is handled correctly.
+	* doc/misc/gnus.texi (Customizing the IMAP Connection):
+	Document the 'plain option.
+
+2015-07-08  Leo Liu  <sdl.web@gmail.com>
+
+	Fix bug in thing-at-point--bounds-of-well-formed-url
+	* lisp/thingatpt.el (thing-at-point--bounds-of-well-formed-url): Make
+	  sure boundary contains current point.
+
+2015-07-08  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* lisp/progmodes/xref.el (xref-collect-matches): Use `nreverse' in the end.
+
+	Declare whitespace-line-column a safe file-local
+	* lisp/whitespace.el (whitespace-line-column): Declare to be a
+	safe file-local when the value is an integer.
+
+2015-07-08  Eric Abrahamsen  <eric@ericabrahamsen.net>
+
+	gnus-group.el: Check if group names are already strings
+	* lisp/gnus/gnus-group.el (gnus-group-group-name):
+	The group name may already be a string.
+	Specifically, in the group list reached from the *Server* buffer,
+	the 'gnus-group text property returns a string.  Everywhere else
+	it returns a symbol.
+
+	nnimap.el: Remove unused let variables
+	* lisp/gnus/nnimap.el (nnimap-request-group): Variables are not used.
+
+2015-07-08  Eli Zaretskii  <eliz@gnu.org>
+
+	Support "maximized" property of runemacs's shortcut
+	* nt/runemacs.c (WinMain): If runemacs is invoked "maximized", pass
+	the '--maximized' switch to Emacs.
+
+	Support "minimized" property of runemacs's shortcut
+	* nt/runemacs.c (WinMain): If runemacs is invoked "minimized",
+	pass the '--iconic' switch to Emacs.  (Bug#20991)
+
+2015-07-08  Xue Fuqiao  <xfq.free@gmail.com>
+
+	Doc fixes
+	* doc/emacs/files.texi (Diff Mode): Fix the description of `C-c
+	C-w' in Diff mode.
+	* doc/emacs/arevert-xtra.texi (Auto Reverting the Buffer Menu):
+	Add a cross reference.
+
+2015-07-08  Nicolas Richard  <youngfrog@members.fsf.org>
+
+	* lisp/obsolete/landmark.el: Add Obsolete-since header
+
+2015-07-07  Glenn Morris  <rgm@gnu.org>
+
+	* test/automated/ert-tests.el (ert-test-deftest):
+	Update for recent changes.
+
+2015-07-07  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	(gv-setter, gv-synthetic-place, gv-delay-error): New funs/macros
+	* lisp/emacs-lisp/gv.el (gv-setter): New function.
+	(gv-invalid-place): New error.
+	(gv-get): Use them.
+	(gv-synthetic-place, gv-delay-error): New places.
+	* lisp/emacs-lisp/cl-generic.el (cl--generic-setf-rewrite): Remove.
+	(cl-defgeneric, cl-defmethod): Use gv-setter.
+
+2015-07-07  Fabrice Popineau  <fabrice.popineau@gmail.com>
+
+	Make vc-tests work with MSYS svn program
+	* lisp/vc/vc-svn.el (vc-svn-create-repo): Fix the file:// URL when
+	svn is an MSYS program.
+
+2015-07-07  Ken Brown  <kbrown@cornell.edu>
+
+	Improve recent change to emacsclient on Cygwin
+	* lisp/server.el (server-process-filter): Remove redundant check
+	that 'cygwin-convert-file-name-from-windows' is defined as a
+	function on Cygwin.  Don't call that function unless its argument
+	starts with a drive letter.
+
+2015-07-07  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/package.el (package-compute-transaction): Bug fix
+	Fix void variable due to `found-something' being in the wrong `let'.
+
+2015-07-07  Nicolas Richard  <theonewiththeevillook@yahoo.fr>
+
+	* lisp/play/landmark.el: Move to lisp/obsolete/
+
+2015-07-07  Martin Rudalics  <rudalics@gmx.at>
+
+	Have `x-show-tip' handle `right' and `bottom' frame parameters.
+	* src/nsfns.m (compute_tip_xy, Fx_show_tip)
+	* src/w32fns.c (compute_tip_xy, Fx_show_tip)
+	* src/xfns.c (compute_tip_xy, Fx_show_tip): Allow aligning
+	tooltips also via `right' and `bottom' frame parameters.
+
+2015-07-07  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Add online-help support to describe types
+	* lisp/help-fns.el (describe-symbol-backends): Move to help-mode.el.
+	(describe-symbol): Improve the selection of default.
+	* lisp/help-mode.el: Require cl-lib.
+	(describe-symbol-backends): Move from help-fns.el.
+	(help-make-xrefs): Use it.
+	* lisp/emacs-lisp/cl-extra.el (describe-symbol-backends): Add entry
+	for types.
+	(cl--typedef-regexp): New const.
+	(find-function-regexp-alist): Add entry for types.
+	(cl-help-type, cl-type-definition): New buttons.
+	(cl-find-class): New function.
+	(cl-describe-type): New command.
+	(cl--describe-class, cl--describe-class-slot)
+	(cl--describe-class-slots): New functions, moved from eieio-opt.el.
+	* lisp/emacs-lisp/cl-generic.el (cl--generic-method-documentation)
+	(cl--generic-all-functions, cl--generic-specializers-apply-to-type-p):
+	New functions.  Moved from eieio-opt.el.
+	(cl--generic-class-parents): New function, extracted from
+	cl--generic-struct-specializers.
+	(cl--generic-struct-specializers): Use it.
+	* lisp/emacs-lisp/cl-macs.el (cl-defstruct): Use pcase-dolist.
+	Improve constructor's docstrings.
+	(cl-struct-unknown-slot): New error.
+	(cl-struct-slot-offset): Use it.
+	* lisp/emacs-lisp/cl-preloaded.el (cl-struct-define): Record the type
+	definition in current-load-list.
+	* lisp/emacs-lisp/eieio-core.el (eieio--known-slot-names): New var.
+	(eieio--add-new-slot): Set it.
+	(eieio-defclass-internal): Use new name for current-load-list.
+	(eieio-oref): Add compiler-macro to warn about unknown slots.
+	* lisp/emacs-lisp/eieio.el (defclass): Update eieio--known-slot-names
+	as compile-time as well.  Improve constructor docstrings.
+	* lisp/emacs-lisp/eieio-opt.el (eieio-help-class)
+	(eieio--help-print-slot, eieio-help-class-slots): Move to cl-extra.el.
+	(eieio-class-def): Remove button.
+	(eieio-help-constructor): Use new name for load-history element.
+	(eieio--specializers-apply-to-class-p, eieio-all-generic-functions)
+	(eieio-method-documentation): Move to cl-generic.el.
+	(eieio-display-method-list): Use new names.
+	* lisp/emacs-lisp/lisp-mode.el (lisp-imenu-generic-expression):
+	Add "define-linline".
+	(lisp-fdefs): Remove "defsubst".
+	(el-fdefs): Add "defsubst", "cl-defsubst", and "define-linline".
+	* lisp/emacs-lisp/macroexp.el (macroexp--warned): New var.
+	(macroexp--warn-and-return): Use it to avoid inf-loops.
+	Add `compile-only' argument.
+
+2015-07-06  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Fix local/remote shell environment setup
+	* lisp/progmodes/python.el (python-shell-with-environment): Fix
+	remote/local environment setup.
+	* test/automated/python-tests.el (python-shell-with-environment-1)
+	(python-shell-with-environment-2): New tests.
+
+2015-07-06  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/simple.el (set-variable): Tweak recent doc fix.
+
+2015-07-06  Ken Brown  <kbrown@cornell.edu>
+
+	* src/sysdep.c (handle_sigsegv) [CYGWIN]: Increase STACK_DANGER_ZONE
+
+2015-07-06  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/simple.el (set-variable): Use user-error for type mismatch.
+
+2015-07-06  Ken Brown  <kbrown@cornell.edu>
+
+	* src/emacs.c (main): Don't increase the stack size on Cygwin
+
+2015-07-06  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	(describe-symbol): Rewrite describe-function-or-variable
+	* lisp/help-fns.el (describe-symbol-backends): New var.
+	(help-xref-stack-item): Declare.
+	(describe-symbol): Rename from describe-function-or-variable.
+	Rewrite using describe-symbol-backends instead of help-xref-interned.
+	* lisp/help.el (help-map): Use it.
+	* lisp/help-mode.el (help-symbol, help-follow-symbol): Use it.
+	(help-xref-interned): Make it into an obsolete alias.
+
+	(eieio-persistent-save): Don't ignore `file' arg (bug#20972)
+	* lisp/emacs-lisp/eieio-base.el (eieio-persistent-save): Don't ignore
+	`file' arg.  Always use utf-8-emacs.  Use with-temp-buffer and cl-letf.
+
+2015-07-06  Wolfgang Jenkner  <wjenkner@inode.at>
+
+	Fix parsing glitches in dired-mark-sexp (bug#13575)
+	* lisp/dired-x.el (dired-x--string-to-number): New function.
+	(dired-mark-sexp): Use it.  Tweak dired-re-inode-size.  Fix usage
+	of directory-listing-before-filename-regexp.  Consider
+	forward-word harmful and replace it.  Add more verbiage in
+	comments and doc string.
+
+2015-07-06  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Respect process environment for remote shells
+	* lisp/progmodes/python.el
+	(python-shell-calculate-process-environment): Calculate
+	process-environment or tramp-remote-process-environment depending
+	whether current file is remote.
+	(python-shell-calculate-exec-path): Calculate exec-path or
+	tramp-remote-path depending whether current file is remote.
+	(python-shell-with-environment): New macro.
+	(python-shell-prompt-detect, python-shell-calculate-command)
+	(python-shell-make-comint, python-check): Use it.
+
+	python.el: Avoid making let-bound defvars buffer local  (Bug#18244)
+	* lisp/progmodes/python.el (python-shell--interpreter)
+	(python-shell--interpreter-args): New vars.
+	(inferior-python-mode, python-shell-make-comint): Use them.
+
+	python.el: Fixes for IPython 3.x  (Bug#20580)
+	* lisp/progmodes/python.el:
+	(python-shell-completion-native-setup): Fix IPython 3.x setup.
+	(python-shell-completion-native-get-completions): Fix timeout
+	logic.
+
+	python.el: Fix mark-defun behavior  (Bug#19665)
+	* lisp/progmodes/python.el: (python-mark-defun): New function.
+	* test/automated/python-tests.el (python-mark-defun-1)
+	(python-mark-defun-2, python-mark-defun-3): New tests.
+
+2015-07-05  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/progmodes/f90.el (f90-type-def-re): Handle attribute lists
+	such as "extends(parent), private".  (Bug#20969)
+	* test/automated/f90.el (f90-test-bug20969, f90-test-bug20969b):
+	New tests.
+
+2015-07-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Avoid duplicate calls to current_timespec
+	* src/process.c (wait_reading_process_output):
+	Cache current_timespec results as long as we're not waiting.
+
+2015-07-05  Ian Kelling  <ian@iankelling.org>
+
+	Avoid returning early reading process output due to SIGIO
+	* src/process.c (wait_reading_process_output): Extend the behavior of
+	not breaking due to not finding output when a timer has lowered the
+	timeout to include when SIGIO lowers the timeout.
+
+	Don't return as fast reading any process output
+	* src/process.c (wait_reading_process_output):
+	The patch for Bug#17647 returns too fast sometimes when reading
+	from any processes. Revert part of it, and limit the timeout more
+	sensibly (Bug#20978).
+
+	Refactor timeouts in wait_reading_process_output
+	* src/process.c (wait_reading_process_output):
+	Simplify timeouts with an enum.  Remove a redundant condition.
+	(Bug#20978)
+
+	Remove ADAPTIVE_READ_BUFFERING ifdef
+	* src/process.c (make-process, make-pipe-process, deactivate_process)
+	(wait_reading_process_output, read_process_output, send_process)
+	(init_process_emacs): ifdef ADAPTIVE_READ_BUFFERING was originally
+	added in case there was an operating system in which it was not
+	useful.  That was 11 years ago and it hasn't happened.  Make
+	development easier by not considering the effect of changes on a
+	theoretical OS where this is disabled (Bug#20978).
+
+2015-07-05  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/simple.el (set-variable): Doc fix.
+
+	* lisp/progmodes/fortran.el (fortran-line-length): Doc fix.
+
+2015-07-05  Ian Kelling  <ian@iankelling.org>
+
+	accept-process-output fix
+	This is a followon to the fix for Bug#17647 (Bug#20976).
+	* src/process.c (status_notify): Fix too high return in some cases.
+
+2015-07-05  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/character-fold.el (character-fold-table):
+	Only fold decompositions if at least one character is non-spacing.
+	(Bug#20975)
+
+2015-07-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib
+	This incorporates:
+	2015-07-04 file-has-acl, acl-permissions: fix HP-UX typos
+	2015-07-03 set-permissions.c: adjust acl_from_mode's cpp guard
+	2015-07-02 update-copyright: fix test failure with perl >= 5.22
+	2015-07-01 gnulib-common.m4: change the ARFLAGS default to 'cr'
+	2015-07-01 acl: fix definition of acl_from_mode on FreeBSD
+	* build-aux/update-copyright, doc/misc/texinfo.tex, lib/acl-internal.h:
+	* lib/set-permissions.c, m4/gnulib-common.m4: Copy from gnulib.
+
 2015-07-05  Christoph Wedler  <christoph.wedler@sap.com>
 
 	Respect `prog-indentation-context' in python.el
@@ -7304,7 +7693,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit 044d4cc0c0debd4648ec637d63bcd72d4253b1cb (inclusive).
+commit 168c80efdc3981ffbc6ee731e7681b0386eb1db2 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
