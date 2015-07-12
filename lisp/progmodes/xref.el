@@ -661,11 +661,15 @@ With prefix argument, prompt for the identifier."
 (defun xref-find-regexp (regexp)
   "Find all matches for REGEXP.
 With \\[universal-argument] prefix, you can specify the directory
-to search in."
+to search in, and the file name pattern to search for."
   (interactive (list (xref--read-identifier "Find regexp: ")))
   (let* ((proj (project-current))
+         (files (if current-prefix-arg
+                    (grep-read-files regexp)
+                  "*.*"))
          (dirs (if current-prefix-arg
-                   (list (read-directory-name "In directory: "))
+                   (list (read-directory-name "Base directory: "
+                                              nil default-directory t))
                  (project--prune-directories
                   (nconc
                    (project-directories proj)
@@ -674,7 +678,7 @@ to search in."
           (lambda (_kind regexp)
             (cl-mapcan
              (lambda (dir)
-               (xref-collect-matches regexp dir (project-ignores proj)))
+               (xref-collect-matches regexp files dir (project-ignores proj)))
              dirs))))
     (xref--show-xrefs regexp 'matches regexp nil)))
 
@@ -755,8 +759,10 @@ tools are used, and when."
       (mapc #'kill-buffer
             (cl-set-difference (buffer-list) orig-buffers)))))
 
-(defun xref-collect-matches (regexp dir ignores)
-  "Collect matches for REGEXP inside DIR using rgrep."
+(defun xref-collect-matches (regexp files dir ignores)
+  "Collect matches for REGEXP inside FILES in DIR.
+FILES is a string with glob patterns separated by spaces.
+IGNORES is a list of glob patterns."
   (cl-assert (directory-name-p dir))
   (require 'semantic/fw)
   (grep-compute-defaults)
@@ -766,7 +772,7 @@ tools are used, and when."
                                                        grep-find-template t t))
          (grep-highlight-matches nil)
          (command (xref--rgrep-command (xref--regexp-to-extended regexp)
-                                       "*.*" dir ignores))
+                                       files dir ignores))
          (orig-buffers (buffer-list))
          (buf (get-buffer-create " *xref-grep*"))
          (grep-re (caar grep-regexp-alist))
