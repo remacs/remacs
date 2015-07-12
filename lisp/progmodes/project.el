@@ -84,6 +84,19 @@ of any currently open related projects, if they're meant to be
 edited together.  The directory names should be absolute."
   (list (project-root project)))
 
+(cl-defgeneric project-ignores (_project)
+  "Return the list of glob patterns that match ignored files.
+To root an entry, start it with `./'.  To match directories only,
+end it with `/'."
+  (require 'grep)
+  (defvar grep-find-ignored-files)
+  (nconc
+   (mapcar
+    (lambda (dir)
+      (concat dir "/"))
+    vc-directory-exclusion-list)
+   grep-find-ignored-files))
+
 (defun project-try-vc (dir)
   (let* ((backend (ignore-errors (vc-responsible-backend dir)))
          (root (and backend (ignore-errors
@@ -92,6 +105,18 @@ edited together.  The directory names should be absolute."
 
 (cl-defmethod project-root ((project (head vc)))
   (cdr project))
+
+(cl-defmethod project-ignores ((project (head vc)))
+  (nconc
+   (cl-call-next-method)
+   (let* ((dir (cdr project))
+          (backend (vc-responsible-backend dir)))
+     (mapcar
+      (lambda (entry)
+        (if (string-match "\\`/" entry)
+            (replace-match "./" t t entry)
+          entry))
+      (vc-call-backend backend 'ignore-completion-table dir)))))
 
 (defun project-ask-user (dir)
   (cons 'user (read-directory-name "Project root: " dir nil t)))
