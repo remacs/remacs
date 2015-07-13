@@ -223,10 +223,11 @@ Visit file @var{filename} and select its buffer in another window
 Select a Dired buffer for directory @var{directory} in another window
 (@code{dired-other-window}).  @xref{Dired}.
 
-@findex mail-other-window
+@c Don't index @kbd{C-x 4 m} and @code{compose-mail-other-window}
+@c here, they are indexed in sending.texi, in the "Sending Mail" node.
 @item C-x 4 m
 Start composing a mail message, similar to @kbd{C-x m} (@pxref{Sending
-Mail}), but in another window (@code{mail-other-window}).
+Mail}), but in another window (@code{compose-mail-other-window}).
 
 @findex find-tag-other-window
 @item C-x 4 .
