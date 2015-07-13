@@ -618,7 +618,12 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
     (cond ((or current-prefix-arg
                (not id)
                (xref--prompt-p this-command))
-           (completing-read prompt
+           (completing-read (if id
+                                (format "%s (default %s): "
+                                        (substring prompt 0 (string-match
+                                                             "[ :]+\\'" prompt))
+                                        id)
+                              prompt)
                             (funcall xref-identifier-completion-table-function)
                             nil nil nil
                             'xref--read-identifier-history id))
@@ -706,6 +711,7 @@ The argument has the same meaning as in `apropos'."
 
 ;;;###autoload (define-key esc-map "." #'xref-find-definitions)
 ;;;###autoload (define-key esc-map "," #'xref-pop-marker-stack)
+;;;###autoload (define-key esc-map "?" #'xref-find-references)
 ;;;###autoload (define-key esc-map [?\C-.] #'xref-find-apropos)
 ;;;###autoload (define-key ctl-x-4-map "." #'xref-find-definitions-other-window)
 ;;;###autoload (define-key ctl-x-5-map "." #'xref-find-definitions-other-frame)
@@ -736,7 +742,8 @@ and just use etags."
 (declare-function semantic-symref-find-references-by-name "semantic/symref")
 (declare-function semantic-symref-find-text "semantic/symref")
 (declare-function semantic-find-file-noselect "semantic/fw")
-(declare-function rgrep-default-command "grep")
+(declare-function grep-read-files "grep")
+(declare-function grep-expand-template "grep")
 
 (defun xref-collect-references (symbol dir)
   "Collect references to SYMBOL inside DIR.
