@@ -520,7 +520,7 @@ the @var{n}-th column (@code{tabulated-list-sort}).
 @findex Buffer-menu-toggle-files-only
 @kindex T @r{(Buffer Menu)}
 Delete, or reinsert, lines for non-file buffers
-@code{Buffer-menu-toggle-files-only}).  This command toggles the
+(@code{Buffer-menu-toggle-files-only}).  This command toggles the
 inclusion of such buffers in the buffer list.
 @end table
 
