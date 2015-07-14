@@ -7255,8 +7255,6 @@ init_alloc_once (void)
 void
 init_alloc (void)
 {
-  gcprolist = 0;
-  byte_stack_list = 0;
 #if GC_MARK_STACK
 #if !defined GC_SAVE_REGISTERS_ON_STACK && !defined GC_SETJMP_WORKS
   setjmp_tested_p = longjmps_done = 0;

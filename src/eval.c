@@ -220,6 +220,8 @@ static struct handler handlerlist_sentinel;
 void
 init_eval (void)
 {
+  gcprolist = 0;
+  byte_stack_list = 0;
   specpdl_ptr = specpdl;
   { /* Put a dummy catcher at top-level so that handlerlist is never NULL.
        This is important since handlerlist->nextfree holds the freelist
