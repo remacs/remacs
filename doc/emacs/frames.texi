@@ -412,8 +412,8 @@ Select a Dired buffer for directory @var{directory} in another frame.
 This runs @code{dired-other-frame}.  @xref{Dired}.
 @item C-x 5 m
 Start composing a mail message in another frame.  This runs
-@code{mail-other-frame}.  It is the other-frame variant of @kbd{C-x m}.
-@xref{Sending Mail}.
+@code{compose-mail-other-frame}.  It is the other-frame variant of
+@kbd{C-x m}.  @xref{Sending Mail}.
 @item C-x 5 .
 Find a tag in the current tag table in another frame.  This runs
 @code{find-tag-other-frame}, the multiple-frame variant of @kbd{M-.}.
