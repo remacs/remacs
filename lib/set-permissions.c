@@ -530,7 +530,8 @@ set_acls (struct permission_context *ctx, const char *name, int desc,
 	      *acls_set = true;
 	      if (S_ISDIR(ctx->mode))
 		{
-		  if (! from_mode && ctx->default_acl)
+		  if (! from_mode && ctx->default_acl &&
+		      acl_default_nontrivial (ctx->default_acl))
 		    ret = acl_set_file (name, ACL_TYPE_DEFAULT,
 					ctx->default_acl);
 		  else
@@ -539,6 +540,15 @@ set_acls (struct permission_context *ctx, const char *name, int desc,
 	    }
 	}
     }
+
+# if HAVE_ACL_TYPE_NFS4  /* FreeBSD */
+
+  /* File systems either support POSIX ACLs (for example, ufs) or NFS4 ACLs
+     (for example, zfs). */
+
+  /* TODO: Implement setting ACLs once get_permissions() reads them. */
+
+# endif
 
 #  else /* HAVE_ACL_TYPE_EXTENDED */
   /* Mac OS X */

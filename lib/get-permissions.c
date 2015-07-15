@@ -60,6 +60,12 @@ get_permissions (const char *name, int desc, mode_t mode,
 	return -1;
     }
 
+# if HAVE_ACL_TYPE_NFS4  /* FreeBSD */
+
+  /* TODO (see set_permissions). */
+
+# endif
+
 #  else /* HAVE_ACL_TYPE_EXTENDED */
   /* Mac OS X */
 
