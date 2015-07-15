@@ -459,8 +459,8 @@ kbd_buffer_store_event_hold (struct input_event *event,
 {
   verify (alignof (struct input_event) == alignof (union buffered_input_event)
 	  && sizeof (struct input_event) == sizeof (union buffered_input_event));
-  return kbd_buffer_store_buffered_event ((union buffered_input_event *) event,
-					  hold_quit);
+  kbd_buffer_store_buffered_event ((union buffered_input_event *) event,
+				   hold_quit);
 }
 #ifdef HAVE_X11
 extern void kbd_buffer_unget_event (struct selection_input_event *);
