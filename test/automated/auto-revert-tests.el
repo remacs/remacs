@@ -173,8 +173,8 @@
              (null
               (string-match name (substring-no-properties (buffer-string)))))
 
-            ;; When the dired buffer is modified, it shall not be
-            ;; reverted.  This is questionable, see Bug#20943.
+            ;; Make dired buffer modified.  Check, that the buffer has
+            ;; been still reverted.
             (with-current-buffer (get-buffer-create "*Messages*")
               (narrow-to-region (point-max) (point-max)))
             (set-buffer-modified-p t)
@@ -189,7 +189,7 @@
                            (format "Reverting buffer `%s'." (buffer-name buf))
                            (buffer-string)))
                   (read-event nil nil 0.1))))
-            (should-not
+            (should
              (string-match name (substring-no-properties (buffer-string))))))
 
       ;; Exit.

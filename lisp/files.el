@@ -5424,6 +5424,7 @@ This function only handles buffers that are visiting files.
 Non-file buffers need a custom function"
   (and buffer-file-name
        (file-readable-p buffer-file-name)
+       (not (buffer-modified-p (current-buffer)))
        (not (verify-visited-file-modtime (current-buffer)))))
 
 (defvar buffer-stale-function #'buffer-stale--default-function
