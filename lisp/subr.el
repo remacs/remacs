@@ -426,8 +426,8 @@ one is kept."
             (let ((elt (car retail)))
               (if (gethash elt hash)
                   (setcdr tail (cdr retail))
-                (puthash elt t hash)))
-            (setq tail retail)))
+                (puthash elt t hash)
+                (setq tail retail)))))
       (let ((tail list))
         (while tail
           (setcdr tail (delete (car tail) (cdr tail)))
