@@ -200,6 +200,12 @@ backtrace_next (union specbinding *pdl)
   return pdl;
 }
 
+/* Return a pointer to somewhere near the top of the C stack.  */
+void *
+near_C_stack_top (void)
+{
+  return backtrace_args (backtrace_top ());
+}
 
 void
 init_eval_once (void)
