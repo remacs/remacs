@@ -1136,26 +1136,26 @@ For a description of the other arguments see
        ;; This `condition-case' is to catch connection errors.
        (condition-case error-signal
            (url-retrieve (concat ,location-1 ,file-1)
+                         ;; This is to catch execution errors.
                          (lambda (status)
-                           (if-let ((er (plist-get status :error)))
-                               (when (if (functionp ,async-1)
-                                         (funcall ,async-1)
-                                       t)
-                                 (message "Error contacting: %s" (concat ,location-1 ,file-1))
-                                 (signal (car er) (cdr er)))
-                             (goto-char (point-min))
-                             (unless (search-forward "\n\n" nil 'noerror)
-                               (error "Invalid url response in buffer %s"
-                                 (current-buffer)))
-                             (delete-region (point-min) (point))
-                             ,@body)
-                           (kill-buffer (current-buffer)))
+                           (condition-case error-signal
+                               (progn
+                                 (when-let ((er (plist-get status :error)))
+                                   (error "Error retrieving: %s %S" (concat ,location-1 ,file-1) er))
+                                 (goto-char (point-min))
+                                 (unless (search-forward "\n\n" nil 'noerror)
+                                   (error "Invalid url response in buffer %s"
+                                          (current-buffer)))
+                                 (delete-region (point-min) (point))
+                                 ,@body
+                                 (kill-buffer (current-buffer)))
+                             (error (when (if (functionp ,async-1) (funcall ,async-1) t)
+                                      (signal (car error-signal) (cdr error-signal))))))
                          nil
                          'silent)
-         (error (when (functionp ,async-1)
-                  (funcall ,async-1))
-           (message "Error contacting: %s" (concat ,location-1 ,file-1))
-           (signal (car error-signal) (cdr error-signal)))))))
+         (error (when (if (functionp ,async-1) (funcall ,async-1) t)
+                  (message "Error contacting: %s" (concat ,location-1 ,file-1))
+                  (signal (car error-signal) (cdr error-signal))))))))
 
 (defun package--check-signature-content (content string &optional sig-file)
   "Check signature CONTENT against STRING.
