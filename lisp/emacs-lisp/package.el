@@ -996,7 +996,9 @@ boundaries."
            (package--prepare-dependencies
             (package-read-from-string requires-str)))
        :kind 'single
-       :url homepage))))
+       :url homepage
+       :maintainer (lm-maintainer)
+       :authors (lm-authors)))))
 
 (defun package--read-pkg-desc (kind)
   "Read a `define-package' form in current buffer.

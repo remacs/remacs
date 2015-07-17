@@ -50,7 +50,9 @@
                        :version '(1 3)
                        :summary "A single-file package with no dependencies"
                        :kind 'single
-                       :extras '((:url . "http://doodles.au")))
+                       :extras '((:authors ("J. R. Hacker" . "jrh@example.com"))
+                                 (:maintainer "J. R. Hacker" . "jrh@example.com")
+                                 (:url . "http://doodles.au")))
   "Expected `package-desc' parsed from simple-single-1.3.el.")
 
 (defvar simple-depend-desc
@@ -58,7 +60,9 @@
                        :version '(1 0)
                        :summary "A single-file package with a dependency."
                        :kind 'single
-                       :reqs '((simple-single (1 3))))
+                       :reqs '((simple-single (1 3)))
+                       :extras '((:authors ("J. R. Hacker" . "jrh@example.com"))
+                                 (:maintainer "J. R. Hacker" . "jrh@example.com")))
   "Expected `package-desc' parsed from simple-depend-1.0.el.")
 
 (defvar multi-file-desc
@@ -216,6 +220,8 @@ Must called from within a `tar-mode' buffer."
                                  "(define-package \"simple-single\" \"1.3\" "
                                  "\"A single-file package "
                                  "with no dependencies\" 'nil "
+                                 ":authors '((\"J. R. Hacker\" . \"jrh@example.com\")) "
+                                 ":maintainer '(\"J. R. Hacker\" . \"jrh@example.com\") "
                                  ":url \"http://doodles.au\""
                                  ")\n"))))
       (should (file-exists-p autoloads-file))
@@ -480,7 +486,9 @@ Must called from within a `tar-mode' buffer."
         (package-make-ac-desc '(1 3) nil
                               "A single-file package with no dependencies"
                               'single
-                              '((:url . "http://doodles.au"))))
+                              '((:authors ("J. R. Hacker" . "jrh@example.com"))
+                                (:maintainer "J. R. Hacker" . "jrh@example.com")
+                                (:url . "http://doodles.au"))))
   "Expected contents of the archive entry from the \"simple-single\" package.")
 
 (defvar package-x-test--single-archive-entry-1-4
@@ -488,7 +496,8 @@ Must called from within a `tar-mode' buffer."
         (package-make-ac-desc '(1 4) nil
                               "A single-file package with no dependencies"
                               'single
-                              nil))
+                              '((:authors ("J. R. Hacker" . "jrh@example.com"))
+                                (:maintainer "J. R. Hacker" . "jrh@example.com"))))
   "Expected contents of the archive entry from the updated \"simple-single\" package.")
 
 (ert-deftest package-x-test-upload-buffer ()
