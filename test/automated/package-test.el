@@ -381,8 +381,9 @@ Must called from within a `tar-mode' buffer."
    (describe-package '5x5)
    (goto-char (point-min))
    (should (search-forward "5x5 is a built-in package." nil t))
-   (should (search-forward "Status: Built-in." nil t))
-   (should (search-forward "Summary: simple little puzzle game" nil t))
+   ;; Don't assume the descriptions are in any particular order.
+   (save-excursion (should (search-forward "Status: Built-in." nil t)))
+   (save-excursion (should (search-forward "Summary: simple little puzzle game" nil t)))
    (should (search-forward "The aim of 5x5" nil t)))
 
   ;; Installed
@@ -394,14 +395,11 @@ Must called from within a `tar-mode' buffer."
      (describe-package 'simple-single)
      (goto-char (point-min))
      (should (search-forward "simple-single is an installed package." nil t))
-     (should (re-search-forward
-              "Status: Installed in ['`‘]~/simple-single-1.3/['’] (unsigned)."
-              nil t))
-     (should (search-forward "Version: 1.3" nil t))
-     (should (search-forward "Summary: A single-file package with no dependencies"
-                             nil t))
-     (should (search-forward "Homepage: http://doodles.au" nil t))
-     (should (re-search-forward "Keywords: \\[?frobnicate\\]?" nil t))
+     (save-excursion (should (re-search-forward "Status: Installed in ['`‘]simple-single-1.3/['’] (unsigned)." nil t)))
+     (save-excursion (should (search-forward "Version: 1.3" nil t)))
+     (save-excursion (should (search-forward "Summary: A single-file package with no dependencies" nil t)))
+     (save-excursion (should (search-forward "Homepage: http://doodles.au" nil t)))
+     (save-excursion (should (re-search-forward "Keywords: \\[?frobnicate\\]?" nil t)))
      ;; No description, though. Because at this point we don't know
      ;; what archive the package originated from, and we don't have
      ;; its readme file saved.
