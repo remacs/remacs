@@ -21291,6 +21291,14 @@ Value is the new character position of point.  */)
       /* Setup the arena.  */
       SET_TEXT_POS (pt, PT, PT_BYTE);
       start_display (&it, w, pt);
+      /* When lines are truncated, we could be called with point
+	 outside of the windows edges, in which case move_it_*
+	 functions either prematurely stop at window's edge or jump to
+	 the next screen line, whereas we rely below on our ability to
+	 reach point, in order to start from its X coordinate.  So we
+	 need to disregard the window's horizontal extent in that case.  */
+      if (it.line_wrap == TRUNCATE)
+	it.last_visible_x = INFINITY;
 
       if (it.cmp_it.id < 0
 	  && it.method == GET_FROM_STRING
@@ -21382,6 +21390,8 @@ Value is the new character position of point.  */)
 	  if (pt_x > 0)
 	    {
 	      start_display (&it, w, pt);
+	      if (it.line_wrap == TRUNCATE)
+		it.last_visible_x = INFINITY;
 	      reseat_at_previous_visible_line_start (&it);
 	      it.current_x = it.current_y = it.hpos = 0;
 	      if (pt_vpos != 0)
@@ -21493,27 +21503,6 @@ Value is the new character position of point.  */)
 #endif
       if (it.current_x != target_x)
 	move_it_in_display_line_to (&it, ZV, target_x, MOVE_TO_POS | MOVE_TO_X);
-
-      /* When lines are truncated, the above loop will stop at the
-	 window edge.  But we want to get to the end of line, even if
-	 it is beyond the window edge; automatic hscroll will then
-	 scroll the window to show point as appropriate.  */
-      if (target_is_eol_p && it.line_wrap == TRUNCATE
-	  && get_next_display_element (&it))
-	{
-	  struct text_pos new_pos = it.current.pos;
-
-	  while (!ITERATOR_AT_END_OF_LINE_P (&it))
-	    {
-	      set_iterator_to_next (&it, false);
-	      if (it.method == GET_FROM_BUFFER)
-		new_pos = it.current.pos;
-	      if (!get_next_display_element (&it))
-		break;
-	    }
-
-	  it.current.pos = new_pos;
-	}
 
       /* If we ended up in a display string that covers point, move to
 	 buffer position to the right in the visual order.  */
