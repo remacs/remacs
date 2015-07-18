@@ -1115,6 +1115,10 @@ is non-nil)."
 		  Info-current-file-completions nil
 		  buffer-file-name nil)
 	    (erase-buffer)
+            ;; Erase any memory of the previous coding-system, so that
+            ;; info-insert-file-contents sets the buffer's encoding to
+            ;; what the Info file specifies.
+            (set-buffer-file-coding-system 'undecided t)
 	    (info-insert-file-contents filename nil)
 	    (setq default-directory (file-name-directory filename))
 	    (set-buffer-modified-p nil)
