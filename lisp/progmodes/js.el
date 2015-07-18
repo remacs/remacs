@@ -3528,7 +3528,7 @@ If one hasn't been set, or if it's stale, prompt for a new one."
 
   ;; for filling, pretend we're cc-mode
   (setq c-comment-prefix-regexp "//+\\|\\**"
-        c-paragraph-start "$"
+        c-paragraph-start "\\(@[[:alpha:]]+\\>\\|$\\)"
         c-paragraph-separate "$"
         c-block-comment-prefix "* "
         c-line-comment-starter "//"
