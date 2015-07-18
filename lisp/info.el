@@ -1217,6 +1217,18 @@ is non-nil)."
 		  (goto-char pos)
 		  (throw 'foo t)))
 
+              ;; If the Texinfo source had an @ifnottex block of text
+              ;; before the Top node, makeinfo 5.0 and 5.1 mistakenly
+              ;; omitted that block's size from the starting position
+              ;; of the 1st subfile, which makes GUESSPOS overshoot
+              ;; the correct position by the length of that text.  So
+              ;; we try again with a larger slop.
+              (goto-char (max (point-min) (- guesspos 10000)))
+	      (let ((pos (Info-find-node-in-buffer regexp strict-case)))
+		(when pos
+		  (goto-char pos)
+		  (throw 'foo t)))
+
               (when (string-match "\\([^.]+\\)\\." nodename)
                 (let (Info-point-loc)
                   (Info-find-node-2
@@ -1553,10 +1565,13 @@ is non-nil)."
     (if (looking-at "\^_")
 	(forward-char 1)
       (search-forward "\n\^_"))
-    ;; Don't add the length of the skipped summary segment to
-    ;; the value returned to `Info-find-node-2'.  (Bug#14125)
     (if (numberp nodepos)
-	(- nodepos lastfilepos))))
+        ;; Our caller ('Info-find-node-2') wants the (zero-based) byte
+        ;; offset corresponding to NODEPOS, from the beginning of the
+        ;; subfile.  This is especially important if NODEPOS is for an
+        ;; anchor reference, because for those the position is all we
+        ;; have.
+	(+ (- nodepos lastfilepos) (bufferpos-to-filepos (point) 'exact)))))
 
 (defun Info-unescape-quotes (value)
   "Unescape double quotes and backslashes in VALUE."

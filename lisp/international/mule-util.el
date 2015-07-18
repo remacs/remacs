@@ -412,6 +412,79 @@ QUALITY can be:
                        (decode-coding-region (point-min)
                                              (min (point-max) (+ pm byte))
                                              coding-system t))))))))))))
+;;;###autoload
+(defun bufferpos-to-filepos (position &optional quality coding-system)
+  "Try to return the file byte corresponding to a particular buffer POSITION.
+Value is the file position given as a (0-based) byte count.
+The function presumes the file is encoded with CODING-SYSTEM, which defaults
+to `buffer-file-coding-system'.
+QUALITY can be:
+  `approximate', in which case we may cut some corners to avoid
+    excessive work.
+  `exact', in which case we may end up re-(en/de)coding a large
+    part of the file/buffer.
+  nil, in which case we may return nil rather than an approximation."
+  (unless coding-system (setq coding-system buffer-file-coding-system))
+  (let* ((eol (coding-system-eol-type coding-system))
+         (lineno (if (= eol 1) (1- (line-number-at-pos position)) 0))
+         (type (coding-system-type coding-system))
+         (base (coding-system-base coding-system))
+         byte)
+    (and (eq type 'utf-8)
+         ;; Any post-read/pre-write conversions mean it's not really UTF-8.
+         (not (null (coding-system-get coding-system :post-read-conversion)))
+         (setq type 'not-utf-8))
+    (and (memq type '(charset raw-text undecided))
+         ;; The following are all of type 'charset', but they are
+         ;; actually variable-width encodings.
+         (not (memq base '(chinese-gbk chinese-gb18030 euc-tw euc-jis-2004
+                                       korean-iso-8bit chinese-iso-8bit
+                                       japanese-iso-8bit chinese-big5-hkscs
+                                       japanese-cp932 korean-cp949)))
+         (setq type 'single-byte))
+    (pcase type
+      (`utf-8
+       (setq byte (position-bytes position))
+       (when (null byte)
+         (if (<= position 0)
+             (setq byte 1)
+           (setq byte (position-bytes (point-max)))))
+       (setq byte (1- byte))
+       (+ byte
+          ;; Account for BOM, if any.
+          (if (coding-system-get coding-system :bom) 3 0)
+          ;; Account for CR in CRLF pairs.
+          lineno))
+      (`single-byte
+       (+ position -1 lineno))
+      ((and `utf-16
+            ;; FIXME: For utf-16, we could use the same approach as used for
+            ;; dos EOLs (counting the number of non-BMP chars instead of the
+            ;; number of lines).
+            (guard (not (eq quality 'exact))))
+       ;; In approximate mode, assume all characters are within the
+       ;; BMP, i.e. each one takes up 2 bytes.
+       (+ (* (1- position) 2)
+          ;; Account for BOM, if any.
+          (if (coding-system-get coding-system :bom) 2 0)
+          ;; Account for CR in CRLF pairs.
+          lineno))
+      (_
+       (pcase quality
+         (`approximate (+ (position-bytes position) -1 lineno))
+         (`exact
+          ;; Rather than assume that the file exists and still holds the right
+          ;; data, we reconstruct its relevant portion.
+          (let ((buf (current-buffer)))
+            (with-temp-buffer
+              (set-buffer-multibyte nil)
+              (let ((tmp-buf (current-buffer)))
+                (with-current-buffer buf
+                  (save-restriction
+                    (widen)
+                    (encode-coding-region (point-min) (min (point-max) position)
+                                          coding-system tmp-buf)))
+                (1- (point-max)))))))))))
 
 (provide 'mule-util)
 

@@ -911,7 +911,7 @@ be updated accordingly.
 
 * Lisp Changes in Emacs 25.1
 
-** New function `filepos-to-bufferpos'.
+** New functions `filepos-to-bufferpos' and `bufferpos-to-filepos'.
 
 ** The default value of `load-read-function' is now `read'.
 
