@@ -9428,7 +9428,7 @@ move_it_vertically_backward (struct it *it, int dy)
 	     treating terminal frames specially here.  */
 
 	  if (!FRAME_WINDOW_P (it->f))
-	    move_it_vertically (it, target_y - (it->current_y + line_height));
+	    move_it_vertically (it, target_y - it->current_y);
 	  else
 	    {
 	      do
