@@ -1390,6 +1390,10 @@ to the action header."
                  (when buffer-file-name
                    (shell-quote-argument buffer-file-name)))))
 
+  ;; For emacs < 25.1 where `eldoc-documentation-function' defaults to
+  ;; nil.
+  (or eldoc-documentation-function
+      (setq-local eldoc-documentation-function #'ignore))
   (add-function :before-until (local 'eldoc-documentation-function)
                 #'cfengine3-documentation-function)
 
