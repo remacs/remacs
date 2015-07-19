@@ -253,8 +253,7 @@ backward."
 
 (defcustom xref-marker-ring-length 16
   "Length of the xref marker ring."
-  :type 'integer
-  :version "25.1")
+  :type 'integer)
 
 (defcustom xref-prompt-for-identifier '(not xref-find-definitions
                                             xref-find-definitions-other-window
@@ -274,13 +273,16 @@ elements is negated."
                  (set :menu-tag "command specific" :tag "commands"
 		      :value (not)
 		      (const :tag "Except" not)
-		      (repeat :inline t (symbol :tag "command"))))
-  :version "25.1")
+		      (repeat :inline t (symbol :tag "command")))))
 
-(defcustom xref-pulse-on-jump t
-  "When non-nil, momentarily highlight jump locations."
-  :type 'boolean
-  :version "25.1")
+(defcustom xref-after-jump-hook '(recenter
+                                  xref-pulse-momentarily)
+  "Functions called after jumping to an xref."
+  :type 'hook)
+
+(defcustom xref-after-return-hook '(xref-pulse-momentarily)
+  "Functions called after returning to a pre-jump location."
+  :type 'hook)
 
 (defvar xref--marker-ring (make-ring xref-marker-ring-length)
   "Ring of markers to implement the marker stack.")
@@ -301,19 +303,18 @@ elements is negated."
                             (error "The marked buffer has been deleted")))
       (goto-char (marker-position marker))
       (set-marker marker nil nil)
-      (xref--maybe-pulse))))
+      (run-hooks 'xref-after-return-hook))))
 
-(defun xref--maybe-pulse ()
-  (when xref-pulse-on-jump
-    (let (beg end)
-      (save-excursion
-        (back-to-indentation)
-        (if (eolp)
-            (setq beg (line-beginning-position)
-                  end (1+ (point)))
-          (setq beg (point)
-                end (line-end-position))))
-      (pulse-momentary-highlight-region beg end 'next-error))))
+(defun xref-pulse-momentarily ()
+  (let (beg end)
+    (save-excursion
+      (back-to-indentation)
+      (if (eolp)
+          (setq beg (line-beginning-position)
+                end (1+ (point)))
+        (setq beg (point)
+              end (line-end-position))))
+    (pulse-momentary-highlight-region beg end 'next-error)))
 
 ;; etags.el needs this
 (defun xref-clear-marker-stack ()
@@ -349,7 +350,7 @@ WINDOW controls how the buffer is displayed:
     ((nil)  (switch-to-buffer (current-buffer)))
     (window (pop-to-buffer (current-buffer) t))
     (frame  (let ((pop-up-frames t)) (pop-to-buffer (current-buffer) t))))
-  (xref--maybe-pulse))
+  (run-hooks 'xref-after-jump-hook))
 
 
 ;;; XREF buffer (part of the UI)
@@ -380,12 +381,11 @@ Used for temporary buffers.")
     (when (and restore (not (eq (car restore) 'same)))
       (push (cons buf win) xref--display-history))))
 
-(defun xref--display-position (pos other-window recenter-arg xref-buf)
+(defun xref--display-position (pos other-window xref-buf)
   ;; Show the location, but don't hijack focus.
   (with-selected-window (display-buffer (current-buffer) other-window)
     (goto-char pos)
-    (recenter recenter-arg)
-    (xref--maybe-pulse)
+    (run-hooks 'xref-after-jump-hook)
     (let ((buf (current-buffer))
           (win (selected-window)))
       (with-current-buffer xref-buf
@@ -404,7 +404,7 @@ Used for temporary buffers.")
             (add-hook 'buffer-list-update-hook #'xref--mark-selected nil t)
             (with-current-buffer xref-buf
               (push buf xref--temporary-buffers))))
-        (xref--display-position (point) t 1 xref-buf))
+        (xref--display-position (point) t xref-buf))
     (user-error (message (error-message-string err)))))
 
 (defun xref-show-location-at-point ()
