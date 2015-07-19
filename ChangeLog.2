@@ -1,3 +1,251 @@
+2015-07-19  Bozhidar Batsov  <bozhidar@batsov.com>
+
+	Correct js-mode's lighter
+	* lisp/progmodes/js.el (js-mode): Correct the lighter.
+
+2015-07-19  Leo Liu  <sdl.web@gmail.com>
+
+	Fix a bug in cfengine3-mode
+	* progmodes/cfengine.el (cfengine3-mode): Handle nil
+	  eldoc-documentation-function.
+
+2015-07-18  Julien Danjou  <julien@danjou.info>
+
+	sieve-mode: support "body" test command
+	* lisp/gnus/sieve-mode.el (sieve-font-lock-keywords):
+	Add missing "body" test command.
+
+2015-07-18  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix info-apropos when the default encoding is Latin-N
+	* lisp/info.el (Info-find-node-2): Reset the buffer's encoding to
+	'undecided', so that it is set to the encoding of the Info file we
+	are about to insert.  Otherwise, 'info-apropos' will fail to find
+	some index nodes in some UTF-8 encoded files, if the buffer's
+	previous encoding is Latin-N or some such.
+
+2015-07-18  Ivan Andrus  <darthandrus@gmail.com>
+
+	* epg.el (epg--start): Check that gpgconf can be found before calling it.
+
+	Expose more file types to OS X that Emacs understands.
+	* Cocoa/Emacs.base/Contents/Info.plist: Add editor role for sty, dtx,
+	json, and org files.  Export UTIs for el, elc, and org files.
+
+2015-07-18  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix visual-order cursor movement when lines are truncated
+	* src/xdisp.c (Fmove_point_visually): When lines are truncated,
+	simulate display in a window of infinite width, to allow move_it_*
+	functions reach positions outside of normal window dimensions.
+	Remove code that tried to handle a subset of these situations by
+	manual iteration of buffer text.  (Bug#17777)
+
+	Fix following Info cross-references to anchors
+	* lisp/info.el (Info-read-subfile): Add to the returned value the
+	length of subfile preamble, after converting it to file's byte
+	offset, as expected by the caller.  Use bufferpos-to-filepos.
+	(Info-find-node-2): If searching for a node with a
+	1000-character slop fails, try again with a 10000-character slop,
+	to account for known bugs in Texinfo 5.0 and 5.1.  (Bug#21055)
+	* lisp/international/mule-util.el (bufferpos-to-filepos): New
+	function.
+	* etc/NEWS: Mention bufferpos-to-filepos.
+
+	Fix scrolling backwards on TTY frames under scroll-conservatively
+	* src/xdisp.c (move_it_vertically_backward): Fix off-by-one error
+	in moving backwards on TTY frames.  (Bug#21080)
+
+2015-07-17  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Consider a jsdoc tag to be a beginning of a paragraph as well
+	* lisp/progmodes/js.el (js-mode): Change c-paragraph-start to
+	consider a jsdoc tag to be a beginning of a paragraph as well.
+
+2015-07-17  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/package.el: Fix warnings
+
+	* lisp/emacs-lisp/package.el (package-buffer-info):
+	Add author and maintainers to `package-buffer-info'.
+
+	* lisp/emacs-lisp/package.el: Many small changes
+	Replace all instances of 'face with 'font-lock-face.
+	(describe-package-1): Improve some strings and move the summary up the
+	list.
+	(package-install-file): Update docstring.
+	(package-menu-hide-package): Bind to `H'.
+
+	* lisp/emacs-lisp/package.el (package--with-work-buffer-async):
+	Fix error handling.
+
+2015-07-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix hang with large yanks This should fix the bug fixed by Mike
+	Crowe's patch in:
+	https://lists.gnu.org/archive/html/emacs-devel/2015-07/msg00106.html
+	A problem in this area has been reported by several users; see
+	Bug#16737, Bug#17101, Bug#17026, Bug#17172, Bug#19320, Bug#20283.
+	This fix differs from Mike Crowe's patch in that it should avoid a
+	race condition that could lose SIGIO signals.  ignore_sigio dates
+	back to the 1980s when some platforms couldn't block signals, and
+	could only ignore them, which led to races when signals arrived
+	while being ignored.  We shouldn't have to worry about those old
+	platforms now.
+	* src/dispextern.h, src/sysdep.c (ignore_sigio): Remove.
+	* src/emacs.c (shut_down_emacs):
+	Don't call ignore_sigio; unrequest_sigio should suffice.
+	* src/keyboard.c (kbd_buffer_store_buffered_event):
+	Use unrequest_sigio, not ignore_sigio.
+	(kbd_buffer_get_event):
+	Call request_sigio when getting the ball rolling again.
+
+2015-07-17  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/obsolete/longlines.el (longlines-search-function):
+	Fallback on `isearch-search-fun-default'.
+
+2015-07-17  Tassilo Horn  <tsdh@gnu.org>
+
+	Support @-mentions
+	* rcirc.el (rcirc-completion-at-point): Support completion of
+	mentions/messages with @nick instead of just nick.
+
+2015-07-16  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix Bug#20943.
+	* lisp/autorevert.el (auto-revert-handler): Do not check for
+	`buffer-modified-p'.
+	* lisp/files.el (buffer-stale--default-function): Check for
+	`buffer-modified-p'.
+	* test/automated/auto-revert-tests.el
+	(auto-revert-test02-auto-revert-mode-dired): Adapt test.
+
+2015-07-16  Ari Roponen  <ari.roponen@gmail.com>
+
+	Fix delete-dups bug on long lists
+	* lisp/subr.el (delete-dups):
+	Don't mistakenly keep some dups when applied to long lists.
+
+2015-07-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Better heuristic for C stack overflow
+	Improve the heuristic for distinguishing stack overflows from
+	other SIGSEGV causes (Bug#21004).  Corinna Vinschen explained that
+	the getrlimit method wasn't portable to Cygwin; see:
+	https://www.cygwin.com/ml/cygwin/2015-07/msg00092.html
+	Corinna suggested pthread_getattr_np but this also has problems.
+	Instead, replace the low-level system stuff with a simple
+	heuristic based on known good stack addresses.
+	* src/eval.c, src/lisp.h (near_C_stack_top): New function.
+	* src/sysdep.c: Don't include <sys/resource.h>.
+	(stack_direction): Remove.  All uses removed.
+	(stack_overflow): New function.
+	(handle_sigsegv): Use it instead of incorrect getrlimit heuristic.
+	Make SEGV fatal in non-main threads.
+
+2015-07-16  Daiki Ueno  <ueno@gnu.org>
+
+	epg: Automatically start pinentry server
+	* epg-config.el (epg-gpgconf-program): New variable.
+	* epg.el (epg--start): Call `pinentry-start' if
+	allow-emacs-pinentry is set in ~/.gnupg/gpg-agent.conf.
+
+2015-07-15  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* lisp/gnus/nnimap.el: Fix my last bogus change
+	Reinstall Stefan Monnier's change that was made in
+	<83d824bc4041332f338ad7e5e830f443535aa300>.
+
+2015-07-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib
+	This incorporates:
+	2015-07-05 acl-permissions: Document FreeBSD ACL_TYPE_NFS4 acls
+	2015-07-05 acl-permissions: Fix on FreeBSD
+	2015-07-05 file-has-acl, acl-permissions: fix some more HP-UX typos
+	* lib/acl-internal.c, lib/acl-internal.h, lib/get-permissions.c:
+	* lib/set-permissions.c: Copy from gnulib.
+
+	Port to stricter C99
+	* src/keyboard.h (kbd_buffer_store_event_hold):
+	Don't return a void expression.
+
+2015-07-15  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* doc/emacs/frames.texi (Creating Frames): Fix the command `C-x 5 m' runs.
+
+2015-07-14  Michael Albinus  <michael.albinus@gmx.de>
+
+	New autorevert tests.
+	* test/automated/auto-revert-tests.el: New file.
+
+2015-07-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Clear gcprolist etc. after stack overflow
+	After stack overflow, command_loop calls init_eval, and this needs to
+	clear gcprolist and byte_stack_list (Bug#20996).
+	* src/alloc.c (init_alloc):
+	Move gcprolist and byte_stack_list initialization from here ...
+	* src/eval.c (init_eval): ... to here.
+
+2015-07-13  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* doc/emacs/windows.texi (Pop Up Window): Fix the description of `C-x 4 m'.
+
+2015-07-13  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
+
+	Avoid deprecated enums in mac-ct font backend driver
+	* src/macfont.m (mac_font_copy_default_descriptors_for_language)
+	(mac_ctfont_get_advance_width_for_glyph)
+	(mac_ctfont_get_bounding_rect_for_glyph): Avoid deprecated enums.
+
+	Cache font family in mac-ct font backend driver
+	* src/macfont.m (macfont_family_cache): New variable.
+	(syms_of_macfont): Initialize it.
+	(macfont_available_families_cache): New variable.
+	(macfont_invalidate_family_cache, macfont_get_family_cache_if_present)
+	(macfont_set_family_cache, macfont_invalidate_available_families_cache)
+	(macfont_handle_font_change_notification)
+	(macfont_init_font_change_handler)
+	(macfont_copy_available_families_cache): New functions.
+	(macfont_create_family_with_symbol): Use font family caches.
+	(macfont_list, macfont_list_family): Use
+	macfont_copy_available_families_cache instead of
+	mac_font_create_available_families.
+
+2015-07-12  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Show the default value in the prompt
+	* lisp/progmodes/xref.el: Add `M-?' binding for
+	xref-find-references.  Declare functions `grep-read-files' and
+	`grep-expand-template'.
+	(xref--read-identifier): Show the default value in the prompt.
+
+	When called with prefix argument, ask for file patterns to search as well
+	* lisp/progmodes/xref.el (xref-find-regexp): When called with
+	prefix argument, ask for file patterns to search as well.  When
+	prompting for the directory, require an existing one.
+	(xref-collect-matches): Add a new argument, FILES.  Use it in the
+	above function.
+
+	Add `project-ignores'
+	* lisp/progmodes/project.el (project-ignores): New generic
+	function, and an implementation for the	VC project type.
+	* lisp/progmodes/xref.el (xref--rgrep-command): Split, as a
+	variant of rgrep-default-command that handles a generic list of
+	ignores.
+	(xref-collect-matches): Use it, and pass through to it the value
+	of the newly added argument.
+	(xref-find-regexp): Handle ignored paths within the project.
+	Remove outdated comment.
+	* lisp/vc/vc.el (vc-default-ignore-completion-table):
+	Skip the comments and the empty lines.
+
+2015-07-12  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* doc/emacs/buffers.texi (Misc Buffer): Add a cross reference.
+
 2015-07-11  Eric Abrahamsen  <eric@ericabrahamsen.net>
 
 	gnus-registry.el: Correct function argument order
@@ -7693,7 +7941,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit 168c80efdc3981ffbc6ee731e7681b0386eb1db2 (inclusive).
+commit 83fbe89537889219aebe1a36df73ca70e30948af (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
