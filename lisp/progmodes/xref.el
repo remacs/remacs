@@ -147,19 +147,23 @@ actual location is not known.")
 
 ;;; Cross-reference
 
-(defclass xref--xref ()
+(defclass xref-item ()
   ((summary :type string :initarg :summary
-                :reader xref--xref-summary)
+            :reader xref-item-summary
+            :documentation "One line which will be displayed for
+this item in the output buffer.")
    (location :initarg :location
-             :reader xref--xref-location))
-  :comment "An xref is used to display and locate constructs like
-variables or functions.")
+             :reader xref-item-location
+             :documentation "An object describing how to navigate
+to the reference's target."))
+  :comment "An xref item describes a reference to a location
+somewhere.")
 
 (defun xref-make (summary location)
   "Create and return a new xref item.
 SUMMARY is a short string to describe the xref.
 LOCATION is an `xref-location'."
-  (make-instance 'xref--xref :summary summary :location location))
+  (make-instance 'xref-item :summary summary :location location))
 
 
 ;;; API
@@ -521,7 +525,7 @@ meantime are preserved."
   "Insert XREF-ALIST in the current-buffer.
 XREF-ALIST is of the form ((GROUP . (XREF ...)) ...).  Where
 GROUP is a string for decoration purposes and XREF is an
-`xref--xref' object."
+`xref-item' object."
   (require 'compile) ; For the compilation faces.
   (cl-loop for ((group . xrefs) . more1) on xref-alist
            for max-line-width =
@@ -557,7 +561,7 @@ GROUP is a string for decoration purposes and XREF is an
 Return an alist of the form ((FILENAME . (XREF ...)) ...)."
   (xref--alistify xrefs
                   (lambda (x)
-                    (xref-location-group (xref--xref-location x)))
+                    (xref-location-group (xref-item-location x)))
                   #'equal))
 
 (defun xref--show-xref-buffer (xrefs alist)
@@ -599,7 +603,7 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
       (user-error "No %s found for: %s" (symbol-name kind) input))
      ((not (cdr xrefs))
       (xref-push-marker-stack)
-      (xref--pop-to-location (xref--xref-location (car xrefs)) window))
+      (xref--pop-to-location (xref-item-location (car xrefs)) window))
      (t
       (xref-push-marker-stack)
       (funcall xref-show-xrefs-function xrefs
