@@ -148,18 +148,18 @@ actual location is not known.")
 ;;; Cross-reference
 
 (defclass xref--xref ()
-  ((description :type string :initarg :description
-                :reader xref--xref-description)
+  ((summary :type string :initarg :summary
+                :reader xref--xref-summary)
    (location :initarg :location
              :reader xref--xref-location))
   :comment "An xref is used to display and locate constructs like
 variables or functions.")
 
-(defun xref-make (description location)
-  "Create and return a new xref.
-DESCRIPTION is a short string to describe the xref.
+(defun xref-make (summary location)
+  "Create and return a new xref item.
+SUMMARY is a short string to describe the xref.
 LOCATION is an `xref-location'."
-  (make-instance 'xref--xref :description description :location location))
+  (make-instance 'xref--xref :summary summary :location location))
 
 
 ;;; API
@@ -534,7 +534,7 @@ GROUP is a string for decoration purposes and XREF is an
            do
            (xref--insert-propertized '(face compilation-info) group "\n")
            (cl-loop for (xref . more2) on xrefs do
-                    (with-slots (description location) xref
+                    (with-slots (summary location) xref
                       (let* ((line (xref-location-line location))
                              (prefix
                               (if line
@@ -549,7 +549,7 @@ GROUP is a string for decoration purposes and XREF is an
                                'help-echo
                                (concat "mouse-2: display in another window, "
                                        "RET or mouse-1: follow reference"))
-                         prefix description)))
+                         prefix summary)))
                     (insert "\n"))))
 
 (defun xref--analyze (xrefs)

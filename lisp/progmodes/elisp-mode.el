@@ -583,7 +583,7 @@ It can be quoted, or be inside a quoted form."
 ;;; Xref backend
 
 (declare-function xref-make-bogus-location "xref" (message))
-(declare-function xref-make "xref" (description location))
+(declare-function xref-make "xref" (summary location))
 (declare-function xref-collect-references "xref" (symbol dir))
 
 (defun elisp-xref-find (action id)
