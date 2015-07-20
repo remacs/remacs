@@ -508,7 +508,7 @@ Used for temporary buffers.")
         (n (abs n))
         (xref nil))
     (dotimes (_ n)
-      (setq  (xref--search-property 'xref-item backward)))
+      (setq xref (xref--search-property 'xref-item backward)))
     (cond (xref
            (xref--pop-to-location xref))
           (t
