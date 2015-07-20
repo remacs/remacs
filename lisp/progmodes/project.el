@@ -108,7 +108,6 @@ end it with `/'."
 
 (cl-defmethod project-ignores ((project (head vc)))
   (nconc
-   (cl-call-next-method)
    (let* ((dir (cdr project))
           (backend (vc-responsible-backend dir)))
      (mapcar
@@ -116,7 +115,8 @@ end it with `/'."
         (if (string-match "\\`/" entry)
             (replace-match "./" t t entry)
           entry))
-      (vc-call-backend backend 'ignore-completion-table dir)))))
+      (vc-call-backend backend 'ignore-completion-table dir)))
+   (cl-call-next-method)))
 
 (defun project-ask-user (dir)
   (cons 'user (read-directory-name "Project root: " dir nil t)))
