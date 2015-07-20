@@ -78,6 +78,10 @@ This is typically the filename.")
   "Return the line number corresponding to the location."
   nil)
 
+(cl-defgeneric xref-match-bounds (_item)
+  "Return a cons with columns of the beginning and end of the match."
+  nil)
+
 ;;;; Commonly needed location classes are defined here:
 
 ;; FIXME: might be useful to have an optional "hint" i.e. a string to
@@ -85,7 +89,7 @@ This is typically the filename.")
 (defclass xref-file-location (xref-location)
   ((file :type string :initarg :file)
    (line :type fixnum :initarg :line :reader xref-location-line)
-   (column :type fixnum :initarg :column))
+   (column :type fixnum :initarg :column :reader xref-file-location-column))
   :documentation "A file location is a file/line/column triple.
 Line numbers start from 1 and columns from 0.")
 
@@ -164,6 +168,29 @@ somewhere.")
 SUMMARY is a short string to describe the xref.
 LOCATION is an `xref-location'."
   (make-instance 'xref-item :summary summary :location location))
+
+(defclass xref-match-item ()
+  ((summary :type string :initarg :summary
+            :reader xref-item-summary)
+   (location :initarg :location
+             :type xref-file-location
+             :reader xref-item-location)
+   (end-column :initarg :end-column))
+  :comment "An xref item describes a reference to a location
+somewhere.")
+
+(cl-defmethod xref-match-bounds ((i xref-match-item))
+  (with-slots (end-column location) i
+    (cons (xref-file-location-column location)
+          end-column)))
+
+(defun xref-make-match (summary end-column location)
+  "Create and return a new xref match item.
+SUMMARY is a short string to describe the xref.
+END-COLUMN is the match end column number inside SUMMARY.
+LOCATION is an `xref-location'."
+  (make-instance 'xref-match-item :summary summary :location location
+                 :end-column end-column))
 
 
 ;;; API
@@ -309,15 +336,22 @@ elements is negated."
       (set-marker marker nil nil)
       (run-hooks 'xref-after-return-hook))))
 
+(defvar xref--current-item nil)
+
 (defun xref-pulse-momentarily ()
-  (let (beg end)
-    (save-excursion
-      (back-to-indentation)
-      (if (eolp)
-          (setq beg (line-beginning-position)
-                end (1+ (point)))
-        (setq beg (point)
-              end (line-end-position))))
+  (pcase-let ((`(,beg . ,end)
+               (save-excursion
+                 (or
+                  (let ((bounds (xref-match-bounds xref--current-item)))
+                    (when bounds
+                      (cons (progn (move-to-column (car bounds))
+                                   (point))
+                            (progn (move-to-column (cdr bounds))
+                                   (point)))))
+                  (back-to-indentation)
+                  (if (eolp)
+                      (cons (line-beginning-position) (1+ (point)))
+                    (cons (point) (line-end-position)))))))
     (pulse-momentary-highlight-region beg end 'next-error)))
 
 ;; etags.el needs this
@@ -343,18 +377,19 @@ elements is negated."
           (t (error "Location is outside accessible part of buffer")))
     (goto-char marker)))
 
-(defun xref--pop-to-location (location &optional window)
-  "Goto xref-location LOCATION and display the buffer.
+(defun xref--pop-to-location (item &optional window)
+  "Go to the location of ITEM and display the buffer.
 WINDOW controls how the buffer is displayed:
   nil      -- switch-to-buffer
   'window  -- pop-to-buffer (other window)
   'frame   -- pop-to-buffer (other frame)"
-  (xref--goto-location location)
+  (xref--goto-location (xref-item-location item))
   (cl-ecase window
     ((nil)  (switch-to-buffer (current-buffer)))
     (window (pop-to-buffer (current-buffer) t))
     (frame  (let ((pop-up-frames t)) (pop-to-buffer (current-buffer) t))))
-  (run-hooks 'xref-after-jump-hook))
+  (let ((xref--current-item item))
+    (run-hooks 'xref-after-jump-hook)))
 
 
 ;;; XREF buffer (part of the UI)
@@ -414,26 +449,27 @@ Used for temporary buffers.")
 (defun xref-show-location-at-point ()
   "Display the source of xref at point in the other window, if any."
   (interactive)
-  (let ((loc (xref--location-at-point)))
-    (when loc
-      (xref--show-location loc))))
+  (let* ((xref (xref--item-at-point))
+         (xref--current-item xref))
+    (when xref
+      (xref--show-location (xref-item-location xref)))))
 
 (defun xref-next-line ()
   "Move to the next xref and display its source in the other window."
   (interactive)
-  (xref--search-property 'xref-location)
+  (xref--search-property 'xref-item)
   (xref-show-location-at-point))
 
 (defun xref-prev-line ()
   "Move to the previous xref and display its source in the other window."
   (interactive)
-  (xref--search-property 'xref-location t)
+  (xref--search-property 'xref-item t)
   (xref-show-location-at-point))
 
-(defun xref--location-at-point ()
+(defun xref--item-at-point ()
   (save-excursion
     (back-to-indentation)
-    (get-text-property (point) 'xref-location)))
+    (get-text-property (point) 'xref-item)))
 
 (defvar-local xref--window nil
   "ACTION argument to call `display-buffer' with.")
@@ -441,11 +477,11 @@ Used for temporary buffers.")
 (defun xref-goto-xref ()
   "Jump to the xref on the current line and bury the xref buffer."
   (interactive)
-  (let ((loc (or (xref--location-at-point)
+  (let ((xref (or (xref--item-at-point)
                  (user-error "No reference at point")))
         (window xref--window))
     (xref-quit)
-    (xref--pop-to-location loc window)))
+    (xref--pop-to-location xref window)))
 
 (defvar xref--xref-buffer-mode-map
   (let ((map (make-sparse-keymap)))
@@ -470,11 +506,11 @@ Used for temporary buffers.")
     (goto-char (point-min)))
   (let ((backward (< n 0))
         (n (abs n))
-        (loc nil))
+        (xref nil))
     (dotimes (_ n)
-      (setq loc (xref--search-property 'xref-location backward)))
-    (cond (loc
-           (xref--pop-to-location loc))
+      (setq  (xref--search-property 'xref-item backward)))
+    (cond (xref
+           (xref--pop-to-location xref))
           (t
            (error "No %s xref" (if backward "previous" "next"))))))
 
@@ -518,7 +554,7 @@ meantime are preserved."
   (interactive "e")
   (mouse-set-point event)
   (forward-line 0)
-  (xref--search-property 'xref-location)
+  (xref--search-property 'xref-item)
   (xref-show-location-at-point))
 
 (defun xref--insert-xrefs (xref-alist)
@@ -546,7 +582,7 @@ GROUP is a string for decoration purposes and XREF is an
                                               'face 'compilation-line-number)
                                 "  ")))
                         (xref--insert-propertized
-                         (list 'xref-location location
+                         (list 'xref-item xref
                                ;; 'face 'font-lock-keyword-face
                                'mouse-face 'highlight
                                'keymap xref--button-map
@@ -603,7 +639,7 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
       (user-error "No %s found for: %s" (symbol-name kind) input))
      ((not (cdr xrefs))
       (xref-push-marker-stack)
-      (xref--pop-to-location (xref-item-location (car xrefs)) window))
+      (xref--pop-to-location (car xrefs) window))
      (t
       (xref-push-marker-stack)
       (funcall xref-show-xrefs-function xrefs
@@ -866,11 +902,14 @@ IGNORES is a list of glob patterns."
         (syntax-propertize (line-end-position))
         (when (re-search-forward regexp (line-end-position) t)
           (goto-char (match-beginning 0))
-          (xref-make (buffer-substring
-                      (line-beginning-position)
-                      (line-end-position))
-                     (xref-make-file-location file line
-                                              (current-column))))))))
+          (let ((loc (xref-make-file-location file line
+                                              (current-column))))
+            (goto-char (match-end 0))
+            (xref-make-match (buffer-substring
+                              (line-beginning-position)
+                              (line-end-position))
+                             (current-column)
+                             loc)))))))
 
 (provide 'xref)
 
