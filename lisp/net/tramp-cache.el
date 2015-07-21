@@ -66,7 +66,8 @@
 Every entry has the form (REGEXP PROPERTY VALUE).  The regexp
 matches remote file names.  It can be nil.  PROPERTY is a string,
 and VALUE the corresponding value.  They are used, if there is no
-matching entry for PROPERTY in `tramp-cache-data'."
+matching entry for PROPERTY in `tramp-cache-data'.  For more
+details see the info pages."
   :group 'tramp
   :version "24.4"
   :type '(repeat (list (choice :tag "File Name regexp" regexp (const nil))

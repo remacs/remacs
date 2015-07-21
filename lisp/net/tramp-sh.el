@@ -135,6 +135,7 @@ The string is used in `tramp-methods'.")
     (tramp-login-program        "rsh")
     (tramp-login-args           (("%h") ("-l" "%u")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-copy-program         "rcp")
     (tramp-copy-args            (("-p" "%k") ("-r")))
@@ -146,6 +147,7 @@ The string is used in `tramp-methods'.")
     (tramp-login-program        "remsh")
     (tramp-login-args           (("%h") ("-l" "%u")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-copy-program         "rcp")
     (tramp-copy-args            (("-p" "%k")))
@@ -158,6 +160,7 @@ The string is used in `tramp-methods'.")
 				 ("-e" "none") ("%h")))
     (tramp-async-args           (("-q")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-copy-program         "scp")
     (tramp-copy-args            (("-P" "%p") ("-p" "%k") ("-q") ("-r") ("%c")))
@@ -175,6 +178,7 @@ The string is used in `tramp-methods'.")
 				 ("-e" "none") ("-t" "-t") ("%h") ("/bin/sh")))
     (tramp-async-args           (("-q")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-copy-program         "scp")
     (tramp-copy-args            (("-P" "%p") ("-p" "%k")
@@ -193,6 +197,7 @@ The string is used in `tramp-methods'.")
 				 ("-e" "none") ("%h")))
     (tramp-async-args           (("-q")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-copy-program         "rsync")
     (tramp-copy-args            (("-t" "%k") ("-r")))
@@ -206,6 +211,7 @@ The string is used in `tramp-methods'.")
     (tramp-login-program        "rsh")
     (tramp-login-args           (("%h") ("-l" "%u")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))))
 ;;;###tramp-autoload
 (add-to-list 'tramp-methods
@@ -213,6 +219,7 @@ The string is used in `tramp-methods'.")
     (tramp-login-program        "remsh")
     (tramp-login-args           (("%h") ("-l" "%u")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))))
 ;;;###tramp-autoload
 (add-to-list 'tramp-methods
@@ -222,6 +229,7 @@ The string is used in `tramp-methods'.")
 				 ("-e" "none") ("%h")))
     (tramp-async-args           (("-q")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-gw-args              (("-o" "GlobalKnownHostsFile=/dev/null")
 				 ("-o" "UserKnownHostsFile=/dev/null")
@@ -235,6 +243,7 @@ The string is used in `tramp-methods'.")
 				 ("-e" "none") ("-t" "-t") ("%h") ("/bin/sh")))
     (tramp-async-args           (("-q")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-gw-args              (("-o" "GlobalKnownHostsFile=/dev/null")
 				 ("-o" "UserKnownHostsFile=/dev/null")
@@ -246,6 +255,7 @@ The string is used in `tramp-methods'.")
     (tramp-login-program        "telnet")
     (tramp-login-args           (("%h") ("%p") ("2>/dev/null")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-default-port         23)))
 ;;;###tramp-autoload
@@ -254,6 +264,7 @@ The string is used in `tramp-methods'.")
     (tramp-login-program        "telnet")
     (tramp-login-args           (("%h") ("%p") ("2>/dev/null")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-copy-program         "nc")
     ;; We use "-v" for better error tracking.
@@ -270,6 +281,7 @@ The string is used in `tramp-methods'.")
     (tramp-login-program        "su")
     (tramp-login-args           (("-") ("%u")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-connection-timeout   10)))
 ;;;###tramp-autoload
@@ -280,6 +292,7 @@ The string is used in `tramp-methods'.")
     ;; Local $SHELL could be a nasty one, like zsh or fish.  Let's override it.
     (tramp-login-env            (("SHELL") ("/bin/sh")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-connection-timeout   10)))
 ;;;###tramp-autoload
@@ -288,6 +301,7 @@ The string is used in `tramp-methods'.")
     (tramp-login-program        "ksu")
     (tramp-login-args           (("%u") ("-q")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-connection-timeout   10)))
 ;;;###tramp-autoload
@@ -296,6 +310,7 @@ The string is used in `tramp-methods'.")
     (tramp-login-program        "krlogin")
     (tramp-login-args           (("%h") ("-l" "%u") ("-x")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))))
 ;;;###tramp-autoload
 (add-to-list 'tramp-methods
@@ -310,6 +325,7 @@ The string is used in `tramp-methods'.")
 				    tramp-initial-end-of-output))
 				 ("/bin/sh") ("\"")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-default-port         22)))
 ;;;###tramp-autoload
@@ -323,6 +339,7 @@ The string is used in `tramp-methods'.")
 				    tramp-initial-end-of-output))
 				 ("/bin/sh") ("\"")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))))
 ;;;###tramp-autoload
 (add-to-list 'tramp-methods
@@ -336,6 +353,7 @@ The string is used in `tramp-methods'.")
 				    tramp-initial-end-of-output))
 				 ("/bin/sh") ("\"")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-copy-program         "pscp")
     (tramp-copy-args            (("-l" "%u") ("-P" "%p") ("-scp") ("-p" "%k")
@@ -355,6 +373,7 @@ The string is used in `tramp-methods'.")
 				    tramp-initial-end-of-output))
 				 ("/bin/sh") ("\"")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-copy-program         "pscp")
     (tramp-copy-args            (("-l" "%u") ("-P" "%p") ("-sftp") ("-p" "%k")
@@ -367,6 +386,7 @@ The string is used in `tramp-methods'.")
     (tramp-login-program        "fsh")
     (tramp-login-args           (("%h") ("-l" "%u") ("sh" "-i")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-i") ("-c"))
     (tramp-copy-program         "fcp")
     (tramp-copy-args            (("-p" "%k")))
@@ -1957,7 +1977,7 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
 	(t2 (tramp-tramp-file-p newname)))
     (with-parsed-tramp-file-name (if t1 dirname newname) nil
       (if (and (not copy-contents)
-	       (tramp-get-method-parameter method 'tramp-copy-recursive)
+	       (tramp-get-method-parameter v 'tramp-copy-recursive)
 	       ;; When DIRNAME and NEWNAME are remote, they must have
 	       ;; the same method.
 	       (or (null t1) (null t2)
@@ -2379,7 +2399,7 @@ The method used must be an out-of-band method."
 		       (tramp-get-connection-property v "login-as" nil)))
 
 	;; Check for listener port.
-	(when (tramp-get-method-parameter method 'tramp-remote-copy-args)
+	(when (tramp-get-method-parameter v 'tramp-remote-copy-args)
 	  (setq listener (number-to-string (+ 50000 (random 10000))))
 	  (while
 	      (zerop (tramp-call-process v "nc" nil nil nil "-z" host listener))
@@ -2396,10 +2416,9 @@ The method used must be an out-of-band method."
 	      spec (format-spec-make
 		    ?h host ?u user ?p port ?r listener ?c options
 		    ?k (if keep-date " " ""))
-	      copy-program (tramp-get-method-parameter
-			    method 'tramp-copy-program)
+	      copy-program (tramp-get-method-parameter v 'tramp-copy-program)
 	      copy-keep-date (tramp-get-method-parameter
-			      method 'tramp-copy-keep-date)
+			      v 'tramp-copy-keep-date)
 
 	      copy-args
 	      (delete
@@ -2408,9 +2427,7 @@ The method used must be an out-of-band method."
 	       ;; for the whole keep-date sublist.
 	       " "
 	       (dolist
-		   (x
-		    (tramp-get-method-parameter method 'tramp-copy-args)
-		    copy-args)
+		   (x (tramp-get-method-parameter v 'tramp-copy-args) copy-args)
 		 (setq copy-args
 		       (append
 			copy-args
@@ -2424,16 +2441,12 @@ The method used must be an out-of-band method."
 		(lambda (x)
 		  (setq x (mapcar (lambda (y) (format-spec y spec)) x))
 		  (unless (member "" x) (mapconcat 'identity x " ")))
-		(tramp-get-method-parameter method 'tramp-copy-env)))
+		(tramp-get-method-parameter v 'tramp-copy-env)))
 
 	      remote-copy-program
-	      (tramp-get-method-parameter method 'tramp-remote-copy-program))
+	      (tramp-get-method-parameter v 'tramp-remote-copy-program))
 
-	(dolist
-	    (x
-	     (or
-	      (tramp-get-connection-property v "remote-copy-args" nil)
-	      (tramp-get-method-parameter method 'tramp-remote-copy-args)))
+	(dolist (x (tramp-get-method-parameter v 'tramp-remote-copy-args))
 	  (setq remote-copy-args
 		(append
 		 remote-copy-args
@@ -3333,8 +3346,7 @@ the result will be a local, non-Tramp, file name."
 	      (if (and (not (stringp start))
 		       (= (or end (point-max)) (point-max))
 		       (= (or start (point-min)) (point-min))
-		       (tramp-get-method-parameter
-			method 'tramp-copy-keep-tmpfile))
+		       (tramp-get-method-parameter v 'tramp-copy-keep-tmpfile))
 		  (progn
 		    (setq tramp-temp-buffer-file-name tmpfile)
 		    (condition-case err
@@ -3952,12 +3964,7 @@ file exists and nonzero exit status otherwise."
 (defun tramp-find-shell (vec)
   "Opens a shell on the remote host which groks tilde expansion."
   (with-current-buffer (tramp-get-buffer vec)
-    (let ((default-shell
-	    (or
-	     (tramp-get-connection-property
-	      (tramp-get-connection-process vec) "remote-shell" nil)
-	     (tramp-get-method-parameter
-	      (tramp-file-name-method vec) 'tramp-remote-shell)))
+    (let ((default-shell (tramp-get-method-parameter vec 'tramp-remote-shell))
 	  shell)
       (setq shell
 	    (with-tramp-connection-property vec "remote-shell"
@@ -4016,11 +4023,7 @@ seconds.  If not, it produces an error message with the given ERROR-ARGS."
 Mainly sets the prompt and the echo correctly.  PROC is the shell
 process to set up.  VEC specifies the connection."
   (let ((tramp-end-of-output tramp-initial-end-of-output))
-    (tramp-open-shell
-     vec
-     (or (tramp-get-connection-property vec "remote-shell" nil)
-	 (tramp-get-method-parameter
-	  (tramp-file-name-method vec) 'tramp-remote-shell)))
+    (tramp-open-shell vec (tramp-get-method-parameter vec 'tramp-remote-shell))
 
     ;; Disable echo.
     (tramp-message vec 5 "Setting up remote shell environment")
@@ -4557,15 +4560,9 @@ Gateway hops are already opened."
     ;; Foreign and out-of-band methods are not supported for multi-hops.
     (when (cdr target-alist)
       (setq choices target-alist)
-      (while choices
-	(setq item (pop choices))
-	(when
-	    (or
-	     (not
-	      (tramp-get-method-parameter
-	       (tramp-file-name-method item) 'tramp-login-program))
-	     (tramp-get-method-parameter
-	      (tramp-file-name-method item) 'tramp-copy-program))
+      (while (setq item (pop choices))
+	(when (or (not (tramp-get-method-parameter item 'tramp-login-program))
+		  (tramp-get-method-parameter item 'tramp-copy-program))
 	  (tramp-error
 	   vec 'file-error
 	   "Method `%s' is not supported for multi-hops."
@@ -4582,8 +4579,7 @@ Gateway hops are already opened."
 	   ;; There are multi-hops.
 	   (cdr target-alist)
 	   ;; The host name is used for the remote shell command.
-	   (member
-	    '("%h") (tramp-get-method-parameter method 'tramp-login-args))
+	   (member '("%h") (tramp-get-method-parameter v 'tramp-login-args))
 	   ;; The host is local.  We cannot use `tramp-local-host-p'
 	   ;; here, because it opens a connection as well.
 	   (string-match tramp-local-host-regexp host))
@@ -4600,8 +4596,7 @@ Gateway hops are already opened."
   (cond
    ;; No options to be computed.
    ((or (null tramp-use-ssh-controlmaster-options)
-	(null (assoc "%c" (tramp-get-method-parameter
-			   (tramp-file-name-method vec) 'tramp-login-args))))
+	(null (assoc "%c" (tramp-get-method-parameter vec 'tramp-login-args))))
     "")
 
    ;; There is already a value to be used.
@@ -4764,22 +4759,18 @@ connection if a previous connection has died for some reason."
 			 (l-host (tramp-file-name-host hop))
 			 (l-port nil)
 			 (login-program
-			  (tramp-get-method-parameter
-			   l-method 'tramp-login-program))
+			  (tramp-get-method-parameter hop 'tramp-login-program))
 			 (login-args
-			  (tramp-get-method-parameter
-			   l-method 'tramp-login-args))
+			  (tramp-get-method-parameter hop 'tramp-login-args))
 			 (login-env
-			  (tramp-get-method-parameter
-			   l-method 'tramp-login-env))
+			  (tramp-get-method-parameter hop 'tramp-login-env))
 			 (async-args
-			  (tramp-get-method-parameter
-			   l-method 'tramp-async-args))
+			  (tramp-get-method-parameter hop 'tramp-async-args))
 			 (connection-timeout
 			  (tramp-get-method-parameter
-			   l-method 'tramp-connection-timeout))
+			   hop 'tramp-connection-timeout))
 			 (gw-args
-			  (tramp-get-method-parameter l-method 'tramp-gw-args))
+			  (tramp-get-method-parameter hop 'tramp-gw-args))
 			 (gw (let ((tramp-verbose 0))
 			       (tramp-get-file-property hop "" "gateway" nil)))
 			 (g-method (and gw (tramp-file-name-method gw)))
@@ -5121,12 +5112,13 @@ Return ATTR."
   (let ((method (tramp-file-name-method vec))
 	(user (tramp-file-name-user vec))
 	(host (tramp-file-name-real-host vec))
-	(localname (tramp-shell-quote-argument
-		    (tramp-file-name-localname vec))))
+	(localname (tramp-file-name-localname vec)))
     (when (string-match tramp-ipv6-regexp host)
       (setq host (format "[%s]" host)))
+    (unless (string-match "ftp$" method)
+      (setq localname (tramp-shell-quote-argument localname)))
     (cond
-     ((tramp-get-method-parameter method 'tramp-remote-copy-program)
+     ((tramp-get-method-parameter vec 'tramp-remote-copy-program)
       localname)
      ((not (zerop (length user)))
       (shell-quote-argument (format "%s@%s:%s" user host localname)))
@@ -5136,7 +5128,7 @@ Return ATTR."
   "Return t if this is an out-of-band method, nil otherwise."
   (and
    ;; It shall be an out-of-band method.
-   (tramp-get-method-parameter (tramp-file-name-method vec) 'tramp-copy-program)
+   (tramp-get-method-parameter vec 'tramp-copy-program)
    ;; There must be a size, otherwise the file doesn't exist.
    (numberp size)
    ;; Either the file size is large enough, or (in rare cases) there
@@ -5178,13 +5170,15 @@ Return ATTR."
 	      (tramp-send-command-and-read
 	       vec
 	       (format
-		"%s -l %s 'echo %s \\\"$PATH\\\"'"
-		(tramp-get-method-parameter
-		 (tramp-file-name-method vec) 'tramp-remote-shell)
+		"%s %s %s 'echo %s \\\"$PATH\\\"'"
+		(tramp-get-method-parameter vec 'tramp-remote-shell)
 		(mapconcat
 		 'identity
-		 (tramp-get-method-parameter
-		  (tramp-file-name-method vec) 'tramp-remote-shell-args)
+		 (tramp-get-method-parameter vec 'tramp-remote-shell-login)
+		 " ")
+		(mapconcat
+		 'identity
+		 (tramp-get-method-parameter vec 'tramp-remote-shell-args)
 		 " ")
 		(tramp-shell-quote-argument tramp-end-of-heredoc))
 	       nil (regexp-quote tramp-end-of-heredoc)))))
@@ -5636,8 +5630,6 @@ function cell is returned to be applied on a buffer."
 ;; * Don't use globbing for directories with many files, as this is
 ;;   likely to produce long command lines, and some shells choke on
 ;;   long command lines.
-;; * Make it work for different encodings, and for different file name
-;;   encodings, too.  (Daniel Pittman)
 ;; * Don't search for perl5 and perl.  Instead, only search for perl and
 ;;   then look if it's the right version (with `perl -v').
 ;; * When editing a remote CVS controlled file as a different user, VC
