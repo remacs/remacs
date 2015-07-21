@@ -522,8 +522,9 @@ of the piece of advice."
             (while
                 (progn
                   (funcall get-next-frame)
-                  (not (and (eq (nth 1 frame2) 'apply)
-                            (eq (nth 3 frame2) inneradvice)))))
+                  (and frame2
+                       (not (and (eq (nth 1 frame2) 'apply)
+                                 (eq (nth 3 frame2) inneradvice))))))
             (funcall get-next-frame)
             (funcall get-next-frame))))
       (- i origi 1))))
