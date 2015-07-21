@@ -472,7 +472,7 @@ Must called from within a `tar-mode' buffer."
        (should (re-search-forward "signed-good is an? \\(\\S-+\\) package." nil t))
        (should (string-equal (match-string-no-properties 1) "installed"))
        (should (re-search-forward
-		"Status: Installed in ['`‘]~/signed-good-1.0/['’]."
+		"Status: Installed in ['`‘]signed-good-1.0/['’]."
 		nil t))))))
 
 
