@@ -342,17 +342,21 @@ elements is negated."
   (pcase-let ((`(,beg . ,end)
                (save-excursion
                  (or
-                  (let ((bounds (xref-match-bounds xref--current-item)))
-                    (when bounds
-                      (cons (progn (move-to-column (car bounds))
-                                   (point))
-                            (progn (move-to-column (cdr bounds))
-                                   (point)))))
+                  (xref--match-buffer-bounds xref--current-item)
                   (back-to-indentation)
                   (if (eolp)
                       (cons (line-beginning-position) (1+ (point)))
                     (cons (point) (line-end-position)))))))
     (pulse-momentary-highlight-region beg end 'next-error)))
+
+(defun xref--match-buffer-bounds (item)
+  (save-excursion
+    (let ((bounds (xref-match-bounds item)))
+      (when bounds
+        (cons (progn (move-to-column (car bounds))
+                     (point))
+              (progn (move-to-column (cdr bounds))
+                     (point)))))))
 
 ;; etags.el needs this
 (defun xref-clear-marker-stack ()
@@ -483,11 +487,72 @@ Used for temporary buffers.")
     (xref-quit)
     (xref--pop-to-location xref window)))
 
+(defun xref-query-replace (from to)
+  "Perform interactive replacement in all current matches."
+  (interactive
+   (list (read-regexp "Query replace regexp in matches" ".*")
+         (read-regexp "Replace with: ")))
+  (let (pairs item)
+    (unwind-protect
+        (progn
+          (save-excursion
+            (goto-char (point-min))
+            ;; TODO: Check that none of the matches are out of date;
+            ;; offer to re-scan otherwise.  Note that saving the last
+            ;; modification tick won't work, as long as not all of the
+            ;; buffers are kept open.
+            (while (setq item (xref--search-property 'xref-item))
+              (when (xref-match-bounds item)
+                (save-excursion
+                  (xref--goto-location (xref-item-location item))
+                  (let ((bounds (xref--match-buffer-bounds item))
+                        (beg (make-marker))
+                        (end (make-marker)))
+                    (move-marker beg (car bounds))
+                    (move-marker end (cdr bounds))
+                    (push (cons beg end) pairs)))))
+            (setq pairs (nreverse pairs)))
+          (unless pairs (user-error "No suitable matches here"))
+          (xref--query-replace-1 from to pairs))
+      (dolist (pair pairs)
+        (move-marker (car pair) nil)
+        (move-marker (cdr pair) nil)))))
+
+(defun xref--query-replace-1 (from to pairs)
+  (let* ((query-replace-lazy-highlight nil)
+         current-pair current-buf
+         ;; Counteract the "do the next match now" hack in
+         ;; `perform-replace'.  And still, it'll report that those
+         ;; matches were "filtered out" at the end.
+         (isearch-filter-predicate
+          (lambda (beg end)
+            (and current-pair
+                 (eq (current-buffer) current-buf)
+                 (>= beg (car current-pair))
+                 (<= end (cdr current-pair)))))
+         (replace-re-search-function
+          (lambda (from &optional _bound noerror)
+            (let (found)
+              (while (and (not found) pairs)
+                (setq current-pair (pop pairs)
+                      current-buf  (marker-buffer (car current-pair)))
+                (pop-to-buffer current-buf)
+                (goto-char (car current-pair))
+                (when (re-search-forward from (cdr current-pair) noerror)
+                  (setq found t)))
+              found))))
+    ;; FIXME: Despite this being a multi-buffer replacement, `N'
+    ;; doesn't work, because we're not using
+    ;; `multi-query-replace-map', and it would expect the below
+    ;; function to be called once per buffer.
+    (perform-replace from to t t nil)))
+
 (defvar xref--xref-buffer-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map [remap quit-window] #'xref-quit)
     (define-key map (kbd "n") #'xref-next-line)
     (define-key map (kbd "p") #'xref-prev-line)
+    (define-key map (kbd "r") #'xref-query-replace)
     (define-key map (kbd "RET") #'xref-goto-xref)
     (define-key map (kbd "C-o") #'xref-show-location-at-point)
     ;; suggested by Johan Claesson "to further reduce finger movement":
@@ -900,6 +965,7 @@ IGNORES is a list of glob patterns."
         (goto-char (point-min))
         (forward-line (1- line))
         (syntax-propertize (line-end-position))
+        ;; TODO: Handle multiple matches per line.
         (when (re-search-forward regexp (line-end-position) t)
           (goto-char (match-beginning 0))
           (let ((loc (xref-make-file-location file line
