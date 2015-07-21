@@ -618,6 +618,9 @@ plist will contain a :peer element that has the output of
 
 *** New connection method "nc", which allows to access dumb busyboxes.
 
+*** Method-specific parameters can be overwritten now with variable
+`tramp-connection-properties'.
+
 ** SQL mode
 
 *** New user variable `sql-default-directory' enables remote
