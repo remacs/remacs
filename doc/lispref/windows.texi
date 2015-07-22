@@ -2547,6 +2547,21 @@ least that many columns.  If the value is @code{nil}, that means not
 to split this way.
 @end defopt
 
+@defopt even-window-sizes
+This variable, if non-nil, causes @code{display-buffer} to even window
+sizes whenever it reuses an existing window and that window is adjacent
+to the selected one.
+
+If its value is @code{width-only}, sizes are evened only if the reused
+window is on the left or right of the selected one and the selected
+window is wider than the reused one.  If its value is @code{height-only}
+sizes are evened only if the reused window is above or beneath the
+selected window and the selected window is higher than the reused one.
+Any other non-@code{nil} value means to even sizes in any of these cases
+provided the selected window is larger than the reused one in the sense
+of their combination.
+@end defopt
+
 @defopt pop-up-frames
 If the value of this variable is non-@code{nil}, that means
 @code{display-buffer} may display buffers by making new frames.  The
@@ -3690,7 +3705,7 @@ The coordinates are in the header line of @var{window}.
 The coordinates are in the divider separating @var{window} from a
 window on the right.
 
-@item right-divider
+@item bottom-divider
 The coordinates are in the divider separating @var{window} from a
 window beneath.
 

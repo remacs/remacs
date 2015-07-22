@@ -4358,11 +4358,18 @@ nil means to not handle the buffer in a particular way.  This
 	   (eq (nth 3 quit-restore) buffer))
       ;; Show another buffer stored in quit-restore parameter.
       (when (and (integerp (nth 3 quad))
-		 (/= (nth 3 quad) (window-total-height window)))
+		 (if (window-combined-p window)
+                     (/= (nth 3 quad) (window-total-height window))
+                   (/= (nth 3 quad) (window-total-width window))))
 	;; Try to resize WINDOW to its old height but don't signal an
 	;; error.
 	(condition-case nil
-	    (window-resize window (- (nth 3 quad) (window-total-height window)))
+	    (window-resize
+             window
+             (- (nth 3 quad) (if (window-combined-p window)
+                                 (window-total-height window)
+                               (window-total-width window)))
+             (window-combined-p window t))
 	  (error nil)))
       (set-window-dedicated-p window nil)
       ;; Restore WINDOW's previous buffer, start and point position.
@@ -5500,7 +5507,9 @@ element is BUFFER."
 		     ;; Preserve window-point-insertion-type (Bug#12588).
 		     (copy-marker
 		      (window-point window) window-point-insertion-type)
-		     (window-total-height window))
+		     (if (window-combined-p window)
+                         (window-total-height window)
+                       (window-total-width window)))
 	       (selected-window) buffer)))))
    ((eq type 'window)
     ;; WINDOW has been created on an existing frame.
@@ -6081,33 +6090,38 @@ represents a live window, nil otherwise."
                        ))
 	frame))))
 
-(defcustom even-window-heights t
-  "If non-nil `display-buffer' will try to even window heights.
+(defcustom even-window-sizes t
+  "If non-nil `display-buffer' will try to even window sizes.
 Otherwise `display-buffer' will leave the window configuration
-alone.  Heights are evened only when `display-buffer' chooses a
-window that appears above or below the selected window."
+alone.  Special values are `height-only' to even heights only and
+`width-only' to even widths only.  Any other value means to even
+any of them."
   :type 'boolean
   :group 'windows)
+(defvaralias 'even-window-heights 'even-window-sizes)
 
-(defun window--even-window-heights (window)
-  "Even heights of WINDOW and selected window.
-Do this only if these windows are vertically adjacent to each
-other, `even-window-heights' is non-nil, and the selected window
-is higher than WINDOW."
-  (when (and even-window-heights
-	     ;; Even iff WINDOW forms a vertical combination with the
-	     ;; selected window, and WINDOW's height exceeds that of the
-	     ;; selected window, see also bug#11880.
-	     (window-combined-p window)
-	     (= (window-child-count (window-parent window)) 2)
-	     (eq (window-parent) (window-parent window))
-	     (> (window-total-height) (window-total-height window)))
-    ;; Don't throw an error if we can't even window heights for
-    ;; whatever reason.
-    (condition-case nil
-	(enlarge-window
-	 (/ (- (window-total-height window) (window-total-height)) 2))
-      (error nil))))
+(defun window--even-window-sizes (window)
+  "Even sizes of WINDOW and selected window.
+Even only if these windows are the only children of their parent,
+`even-window-sizes' has the appropriate value and the selected
+window is larger than WINDOW."
+  (when (and (= (window-child-count (window-parent window)) 2)
+             (eq (window-parent) (window-parent window)))
+    (cond
+     ((and (not (memq even-window-sizes '(nil height-only)))
+           (window-combined-p window t)
+           (> (window-total-width) (window-total-width window)))
+      (condition-case nil
+          (enlarge-window
+           (/ (- (window-total-width window) (window-total-width)) 2) t)
+        (error nil)))
+     ((and (not (memq even-window-sizes '(nil width-only)))
+           (window-combined-p window)
+           (> (window-total-height) (window-total-height window)))
+      (condition-case nil
+          (enlarge-window
+           (/ (- (window-total-height window) (window-total-height)) 2))
+        (error nil))))))
 
 (defun window--display-buffer (buffer window type &optional alist dedicated)
   "Display BUFFER in WINDOW.
@@ -6767,7 +6781,7 @@ that frame."
 
       (prog1
 	  (window--display-buffer buffer window 'reuse alist)
-	(window--even-window-heights window)
+	(window--even-window-sizes window)
 	(unless (cdr (assq 'inhibit-switch-frame alist))
 	  (window--maybe-raise-frame (window-frame window)))))))
 

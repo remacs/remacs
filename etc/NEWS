@@ -1106,6 +1106,10 @@ and `window-divider-default-right-width'.
 how `switch-to-buffer' proceeds interactively when the selected window
 is strongly dedicated to its buffer.
 
++++
+** The option `even-window-heights' has been renamed to
+`even-window-sizes' and now handles window widths as well.
+
 ** Tearoff menus and detachable toolbars for Gtk+ has been removed.
 Those features have been deprecated in Gtk+ for a long time.
 

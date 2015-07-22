@@ -1163,8 +1163,8 @@ size of WINDOW."
 		       (and (window-combined-p window t)
 			    fit-window-to-buffer-horizontally)))
 	      (and (eq quit-cadr 'frame)
-		     fit-frame-to-buffer
-		     (eq window (frame-root-window window))))
+                   fit-frame-to-buffer
+                   (eq window (frame-root-window window))))
 	(fit-window-to-buffer window height nil width nil t))))
 
 ;;; Help windows.
