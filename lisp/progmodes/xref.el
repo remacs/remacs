@@ -773,6 +773,7 @@ With prefix argument, prompt for the identifier."
 With \\[universal-argument] prefix, you can specify the directory
 to search in, and the file name pattern to search for."
   (interactive (list (xref--read-identifier "Find regexp: ")))
+  (require 'grep)
   (let* ((proj (project-current))
          (files (if current-prefix-arg
                     (grep-read-files regexp)
