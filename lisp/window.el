@@ -6096,7 +6096,12 @@ Otherwise `display-buffer' will leave the window configuration
 alone.  Special values are `height-only' to even heights only and
 `width-only' to even widths only.  Any other value means to even
 any of them."
-  :type 'boolean
+  :type '(choice
+	  (const :tag "Never" nil)
+	  (const :tag "Side-by-side windows only" width-only)
+	  (const :tag "Windows above or below only" height-only)
+	  (const :tag "Always" t))
+  :version "25.1"
   :group 'windows)
 (defvaralias 'even-window-heights 'even-window-sizes)
 
