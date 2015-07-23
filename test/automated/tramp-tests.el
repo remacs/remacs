@@ -49,6 +49,7 @@
 (declare-function tramp-get-remote-stat "tramp-sh")
 (declare-function tramp-get-remote-perl "tramp-sh")
 (defvar tramp-copy-size-limit)
+(defvar tramp-persistency-file-name)
 (defvar tramp-remote-process-environment)
 
 ;; There is no default value on w32 systems, which could work out of the box.
@@ -70,7 +71,8 @@
 (setq password-cache-expiry nil
       tramp-verbose 0
       tramp-copy-size-limit nil
-      tramp-message-show-message nil)
+      tramp-message-show-message nil
+      tramp-persistency-file-name nil)
 
 ;; This shall happen on hydra only.
 (when (getenv "NIX_STORE")
@@ -1690,6 +1692,14 @@ This requires restrictions of file name syntax."
   (or (eq system-type 'windows-nt)
       (tramp-smb-file-name-p tramp-test-temporary-file-directory)))
 
+(defun tramp--test-hpux-p ()
+  "Check, whether the remote host runs HP-UX.
+Several special characters do not work properly there."
+  ;; We must refill the cache.
+  (with-parsed-tramp-file-name
+      (file-truename tramp-test-temporary-file-directory) nil
+    (string-match "^HP-UX" (tramp-get-connection-property v "uname" ""))))
+
 (defun tramp--test-check-files (&rest files)
   "Run a simple but comprehensive test over every file in FILES."
   ;; We must use `file-truename' for the temporary directory, because
@@ -1939,8 +1949,9 @@ Use the `ls' command."
 	(coding-system-for-write 'utf-8)
 	(file-name-coding-system 'utf-8))
     (tramp--test-check-files
-     "Γυρίστε το Γαλαξία με Ώτο Στοπ"
-     "أصبح بوسعك الآن تنزيل نسخة كاملة من موسوعة ويكيبيديا العربية لتصفحها بلا اتصال بالإنترنت"
+     (unless (tramp--test-hpux-p) "Γυρίστε το Γαλαξία με Ώτο Στοπ")
+     (unless (tramp--test-hpux-p)
+       "أصبح بوسعك الآن تنزيل نسخة كاملة من موسوعة ويكيبيديا العربية لتصفحها بلا اتصال بالإنترنت")
      "银河系漫游指南系列"
      "Автостопом по гала́ктике")))
 

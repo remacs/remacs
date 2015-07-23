@@ -4025,9 +4025,9 @@ process to set up.  VEC specifies the connection."
   (let ((tramp-end-of-output tramp-initial-end-of-output))
     (tramp-open-shell vec (tramp-get-method-parameter vec 'tramp-remote-shell))
 
-    ;; Disable echo.
+    ;; Disable tab and echo expansion.
     (tramp-message vec 5 "Setting up remote shell environment")
-    (tramp-send-command vec "stty -inlcr -echo kill '^U' erase '^H'" t)
+    (tramp-send-command vec "stty tab0 -inlcr -echo kill '^U' erase '^H'" t)
     ;; Check whether the echo has really been disabled.  Some
     ;; implementations, like busybox of embedded GNU/Linux, don't
     ;; support disabling.
