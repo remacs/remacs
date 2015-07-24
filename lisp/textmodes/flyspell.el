@@ -2087,8 +2087,6 @@ If EVENT is non-nil, it is the mouse event that invoked this operation;
 that controls where to put the menu.
 If OPOINT is non-nil, restore point there after adjusting it for replacement."
   (interactive)
-  (unless (mouse-position)
-    (error "Pop-up menus do not work on this terminal"))
   ;; use the correct dictionary
   (flyspell-accept-buffer-local-defs)
   (or opoint (setq opoint (point)))
@@ -2203,9 +2201,8 @@ If OPOINT is non-nil, restore point there after adjusting it for replacement."
 ;;*---------------------------------------------------------------------*/
 (defun flyspell-emacs-popup (event poss word)
   "The Emacs popup menu."
-  (unless window-system
-    (error "This command requires pop-up dialogs"))
-  (if (not event)
+  (if (and (not event)
+           (display-mouse-p))
       (let* ((mouse-pos  (mouse-position))
 	     (mouse-pos  (if (nth 1 mouse-pos)
 			     mouse-pos
