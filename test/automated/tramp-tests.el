@@ -1695,7 +1695,7 @@ This requires restrictions of file name syntax."
 (defun tramp--test-hpux-p ()
   "Check, whether the remote host runs HP-UX.
 Several special characters do not work properly there."
-  ;; We must refill the cache.
+  ;; We must refill the cache.  `file-truename' does it.
   (with-parsed-tramp-file-name
       (file-truename tramp-test-temporary-file-directory) nil
     (string-match "^HP-UX" (tramp-get-connection-property v "uname" ""))))
@@ -1894,14 +1894,12 @@ Use the `stat' command."
   (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
     (skip-unless (tramp-get-remote-stat v)))
 
-  (unwind-protect
-      (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
-	(tramp-set-connection-property v "perl" nil)
-	(tramp--test-special-characters))
-
-    ;; Reset suppressed properties.
-    (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
-      (tramp-set-connection-property v "perl" 'undef))))
+  (let ((tramp-connection-properties
+	 (append
+	  `((,(regexp-quote (file-remote-p tramp-test-temporary-file-directory))
+	     "perl" nil))
+	  tramp-connection-properties)))
+    (tramp--test-special-characters)))
 
 (ert-deftest tramp-test31-special-characters-with-perl ()
   "Check special characters in file names.
@@ -1914,14 +1912,12 @@ Use the `perl' command."
   (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
     (skip-unless (tramp-get-remote-perl v)))
 
-  (unwind-protect
-      (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
-	(tramp-set-connection-property v "stat" nil)
-	(tramp--test-special-characters))
-
-    ;; Reset suppressed properties.
-    (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
-      (tramp-set-connection-property v "stat" 'undef))))
+  (let ((tramp-connection-properties
+	 (append
+	  `((,(regexp-quote (file-remote-p tramp-test-temporary-file-directory))
+	     "stat" nil))
+	  tramp-connection-properties)))
+    (tramp--test-special-characters)))
 
 (ert-deftest tramp-test31-special-characters-with-ls ()
   "Check special characters in file names.
@@ -1932,16 +1928,14 @@ Use the `ls' command."
     (tramp-find-foreign-file-name-handler tramp-test-temporary-file-directory)
     'tramp-sh-file-name-handler))
 
-  (unwind-protect
-      (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
-	(tramp-set-connection-property v "stat" nil)
-	(tramp-set-connection-property v "perl" nil)
-	(tramp--test-special-characters))
-
-    ;; Reset suppressed properties.
-    (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
-      (tramp-set-connection-property v "stat" 'undef)
-      (tramp-set-connection-property v "perl" 'undef))))
+  (let ((tramp-connection-properties
+	 (append
+	  `((,(regexp-quote (file-remote-p tramp-test-temporary-file-directory))
+	     "perl" nil)
+	    (,(regexp-quote (file-remote-p tramp-test-temporary-file-directory))
+	     "stat" nil))
+	  tramp-connection-properties)))
+    (tramp--test-special-characters)))
 
 (defun tramp--test-utf8 ()
   "Perform the test in `tramp-test32-utf8*'."
@@ -1972,14 +1966,12 @@ Use the `stat' command."
   (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
     (skip-unless (tramp-get-remote-stat v)))
 
-  (unwind-protect
-      (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
-	(tramp-set-connection-property v "perl" nil)
-	(tramp--test-utf8))
-
-    ;; Reset suppressed properties.
-    (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
-      (tramp-set-connection-property v "perl" 'undef))))
+  (let ((tramp-connection-properties
+	 (append
+	  `((,(regexp-quote (file-remote-p tramp-test-temporary-file-directory))
+	     "perl" nil))
+	  tramp-connection-properties)))
+    (tramp--test-utf8)))
 
 (ert-deftest tramp-test32-utf8-with-perl ()
   "Check UTF8 encoding in file names and file contents.
@@ -1992,14 +1984,12 @@ Use the `perl' command."
   (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
     (skip-unless (tramp-get-remote-perl v)))
 
-  (unwind-protect
-      (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
-	(tramp-set-connection-property v "stat" nil)
-	(tramp--test-utf8))
-
-    ;; Reset suppressed properties.
-    (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
-      (tramp-set-connection-property v "stat" 'undef))))
+  (let ((tramp-connection-properties
+	 (append
+	  `((,(regexp-quote (file-remote-p tramp-test-temporary-file-directory))
+	     "stat" nil))
+	  tramp-connection-properties)))
+    (tramp--test-utf8)))
 
 (ert-deftest tramp-test32-utf8-with-ls ()
   "Check UTF8 encoding in file names and file contents.
@@ -2010,16 +2000,14 @@ Use the `ls' command."
     (tramp-find-foreign-file-name-handler tramp-test-temporary-file-directory)
     'tramp-sh-file-name-handler))
 
-  (unwind-protect
-      (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
-	(tramp-set-connection-property v "stat" nil)
-	(tramp-set-connection-property v "perl" nil)
-	(tramp--test-utf8))
-
-    ;; Reset suppressed properties.
-    (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
-      (tramp-set-connection-property v "stat" 'undef)
-      (tramp-set-connection-property v "perl" 'undef))))
+  (let ((tramp-connection-properties
+	 (append
+	  `((,(regexp-quote (file-remote-p tramp-test-temporary-file-directory))
+	     "perl" nil)
+	    (,(regexp-quote (file-remote-p tramp-test-temporary-file-directory))
+	     "stat" nil))
+	  tramp-connection-properties)))
+    (tramp--test-utf8)))
 
 ;; This test is inspired by Bug#16928.
 (ert-deftest tramp-test33-asynchronous-requests ()
