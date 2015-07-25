@@ -6935,7 +6935,8 @@ If optional parameter FRAME is not specified, use selected frame.  */)
 
   CHECK_NUMBER (command);
 
-  PostMessage (FRAME_W32_WINDOW (f), WM_SYSCOMMAND, XINT (command), 0);
+  if (FRAME_W32_P (f))
+    PostMessage (FRAME_W32_WINDOW (f), WM_SYSCOMMAND, XINT (command), 0);
 
   return Qnil;
 }
@@ -7522,6 +7523,9 @@ If FRAME is omitted or nil, the selected frame is used.  */)
   MENUBARINFO menu_bar;
   int width, height, single_height, wrapped_height;
 
+  if (FRAME_INITIAL_P (f))
+    return Qnil;
+
   block_input ();
 
   single_height = GetSystemMetrics (SM_CYMENU);
@@ -7552,6 +7556,9 @@ title bar and decorations.  */)
 {
   struct frame *f = decode_live_frame (frame);
   RECT rect;
+
+  if (FRAME_INITIAL_P (f))
+    return Qnil;
 
   block_input ();
 
@@ -7609,6 +7616,9 @@ elements (all size values are in pixels).
   int  border_width, border_height, title_height;
   int single_bar_height, wrapped_bar_height, menu_bar_height;
   Lisp_Object fullscreen = Fframe_parameter (frame, Qfullscreen);
+
+  if (FRAME_INITIAL_P (f))
+    return Qnil;
 
   block_input ();
 
