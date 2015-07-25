@@ -1827,11 +1827,12 @@ as returned by `ispell-parse-output'."
 ;;*    flyspell-check-previous-highlighted-word ...                     */
 ;;*---------------------------------------------------------------------*/
 (defun flyspell-check-previous-highlighted-word (&optional arg)
-  "Correct the closer misspelled word.
-This function scans a mis-spelled word before the cursor. If it finds one
-it proposes replacement for that word. With prefix arg, count that many
-misspelled words backwards."
-  (interactive)
+  "Correct the closest previous word that is highlighted as misspelled.
+This function scans for a word which starts before point that has been
+highlighted by Flyspell as misspelled.  If it finds one, it proposes
+a replacement for that word.  With prefix arg N, check the Nth word
+before point that's highlighted as misspelled."
+  (interactive "P")
   (let ((pos1 (point))
 	(pos  (point))
 	(arg  (if (or (not (numberp arg)) (< arg 1)) 1 arg))
@@ -1842,7 +1843,7 @@ misspelled words backwards."
 	    (setq pos1 pos)
 	    (if (> pos (point-min))
 		(progn
-		  (setq ovs (overlays-at (1- pos)))
+		  (setq ovs (overlays-at pos))
 		  (while (consp ovs)
 		    (setq ov (car ovs))
 		    (setq ovs (cdr ovs))
