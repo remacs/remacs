@@ -4223,7 +4223,8 @@ NUMBER-OF-STATIC-VARIABLES:"
 						    (1+ (point)))))))))
       (unless non-empty
 	(error "No tree buffers"))
-      (setf unread-command-events (listify-key-sequence "p"))
+      (setf unread-command-events
+            (nconc (listify-key-sequence "p") unread-command-events))
       (shrink-window-if-larger-than-buffer (selected-window))
       (setq buffer-read-only t))))
 

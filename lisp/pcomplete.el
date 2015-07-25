@@ -1112,7 +1112,7 @@ Typing SPC flushes the help buffer."
                     (scroll-up))))
               (message ""))
              (t
-              (setq unread-command-events (list event))
+              (push event unread-command-events)
               (throw 'done nil)))))
       (if (and pcomplete-last-window-config
                pcomplete-restore-window-delay)

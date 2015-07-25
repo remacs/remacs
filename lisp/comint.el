@@ -1051,7 +1051,7 @@ See also `comint-read-input-ring'."
       (let ((ch (read-event)))
 	(if (eq ch ?\s)
 	    (set-window-configuration conf)
-	  (setq unread-command-events (list ch)))))))
+	  (push ch unread-command-events))))))
 
 
 (defun comint-regexp-arg (prompt)
@@ -3365,7 +3365,8 @@ the completions."
 	    (set-window-configuration comint-dynamic-list-completions-config))
 	(if (eq first ?\s)
 	    (set-window-configuration comint-dynamic-list-completions-config)
-	  (setq unread-command-events (listify-key-sequence key)))))))
+	  (setq unread-command-events
+                (nconc (listify-key-sequence key) unread-command-events)))))))
 
 (defun comint-get-next-from-history ()
   "After fetching a line from input history, this fetches the following line.

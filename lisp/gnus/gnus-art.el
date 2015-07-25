@@ -6871,11 +6871,13 @@ KEY is a string or a vector."
       (with-current-buffer gnus-article-current-summary
 	(setq unread-command-events
 	      (if (featurep 'xemacs)
-		  (append key nil)
-		(mapcar (lambda (x) (if (and (integerp x) (>= x 128))
-					(list 'meta (- x 128))
-				      x))
-			key)))
+		  (append key unread-command-events)
+		(nconc
+		 (mapcar (lambda (x) (if (and (integerp x) (>= x 128))
+					 (list 'meta (- x 128))
+				       x))
+			 key)
+		 unread-command-events)))
 	(let ((cursor-in-echo-area t)
 	      gnus-pick-mode)
 	  (describe-key (read-key-sequence nil t))))
@@ -6893,11 +6895,13 @@ KEY is a string or a vector."
       (with-current-buffer gnus-article-current-summary
 	(setq unread-command-events
 	      (if (featurep 'xemacs)
-		  (append key nil)
-		(mapcar (lambda (x) (if (and (integerp x) (>= x 128))
-					(list 'meta (- x 128))
-				      x))
-			key)))
+		  (append key unread-command-events)
+		(nconc
+		 (mapcar (lambda (x) (if (and (integerp x) (>= x 128))
+					 (list 'meta (- x 128))
+				       x))
+			 key)
+		 unread-command-events)))
 	(let ((cursor-in-echo-area t)
 	      gnus-pick-mode)
 	  (describe-key-briefly (read-key-sequence nil t) insert)))

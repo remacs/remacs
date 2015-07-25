@@ -2539,7 +2539,8 @@ If MESSAGE is nil, instructions to type EXIT-CHAR are displayed there."
 	    (or (eq event exit-char)
 		(eq event (event-convert-list exit-char))
 		(setq unread-command-events
-                      (append (this-single-command-raw-keys))))))
+                      (append (this-single-command-raw-keys)
+                              unread-command-events)))))
       (delete-overlay ol))))
 
 

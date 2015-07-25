@@ -1042,11 +1042,11 @@ In regular expressions (including character classes):
   cperl-can-font-lock)
 
 (defun cperl-putback-char (c)		; Emacs 19
-  (set 'unread-command-events (list c))) ; Avoid undefined warning
+  (push c unread-command-events))       ; Avoid undefined warning
 
 (if (featurep 'xemacs)
     (defun cperl-putback-char (c)	; XEmacs >= 19.12
-      (setq unread-command-events (list (eval '(character-to-event c))))))
+      (push (eval '(character-to-event c)) unread-command-events)))
 
 (or (fboundp 'uncomment-region)
     (defun uncomment-region (beg end)

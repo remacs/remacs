@@ -50,8 +50,9 @@
 	    (buffer-substring (overlay-start quail-overlay)
 			      (overlay-end quail-overlay))
 	    unread-command-events
-	    (string-to-list
-	     (substring quail-current-key control-flag)))
+	    (append
+	     (substring quail-current-key control-flag)
+             unread-command-events))
     ;; Special treatment of "-d..." and "-y...".
     (if (string-match "^-[dy]" quail-current-key)
 	(setq quail-current-key (substring quail-current-key 1)))
@@ -381,8 +382,9 @@
 	    (buffer-substring (overlay-start quail-overlay)
 			      (overlay-end quail-overlay))
 	    unread-command-events
-	    (string-to-list
-	     (substring quail-current-key control-flag)))
+	    (append
+	     (substring quail-current-key control-flag)
+             unread-command-events))
     (let ((transcription (quail-tibkey-to-transcription quail-current-key)))
       (if (> (length transcription) 0)
 	  (let ((quail-current-key transcription))

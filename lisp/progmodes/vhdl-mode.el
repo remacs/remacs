@@ -8734,10 +8734,11 @@ is omitted or nil."
 		  (let ((next-input (read-char)))
 		    (if (= next-input ?-) ; four dashes
 			(vhdl-comment-display t)
-		      (setq unread-command-events ; pushback the char
-			    (list (vhdl-character-to-event next-input))))))
-	      (setq unread-command-events ; pushback the char
-		    (list (vhdl-character-to-event next-input)))
+		      (push (vhdl-character-to-event next-input)
+                                        ; pushback the char
+                            unread-command-events))))
+              (push (vhdl-character-to-event next-input) ; pushback the char
+                    unread-command-events)
 	      (vhdl-comment-insert)))))
     (self-insert-command count)))
 
@@ -10755,8 +10756,8 @@ If starting after end-comment-column, start a new line."
 	(setq code t))
       (unless code
 	(insert "--")) ; hardwire to 1 space or use vhdl-basic-offset?
-      (setq unread-command-events
-	    (list (vhdl-character-to-event next-input)))))) ; pushback the char
+      (push (vhdl-character-to-event next-input) ; pushback the char
+            unread-command-events))))
 
 (defun vhdl-comment-display (&optional line-exists)
   "Add 2 comment lines at the current indent, making a display comment."
@@ -11310,8 +11311,8 @@ but not if inside a comment or quote."
 	;; delete CR which is still in event queue
 	(if (fboundp 'enqueue-eval-event)
 	    (enqueue-eval-event 'delete-char -1)
-	  (setq unread-command-events	; push back a delete char
-		(list (vhdl-character-to-event ?\177))))))))
+	  (push (vhdl-character-to-event ?\177)	; push back a delete char
+                unread-command-events))))))
 
 (defun vhdl-template-alias-hook ()
   (vhdl-hooked-abbrev 'vhdl-template-alias))

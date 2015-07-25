@@ -3825,7 +3825,7 @@ with a list of packages that contain all specified keywords."
 		    (message (if flag "Type Space to see more"
 			       "Type Space to return to Info"))
 		    (if (not (eq ?\s (setq ch (read-event))))
-			(progn (setq unread-command-events (list ch)) nil)
+			(progn (push ch unread-command-events) nil)
 		      flag))
 	(scroll-up)))
     (bury-buffer "*Help*")))

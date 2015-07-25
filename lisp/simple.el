@@ -693,7 +693,8 @@ any other non-digit terminates the character code and is then used as input."))
       (cond ((null translated))
 	    ((not (integerp translated))
 	     (setq unread-command-events
-                   (listify-key-sequence (this-single-command-raw-keys))
+                   (nconc (listify-key-sequence (this-single-command-raw-keys))
+                          unread-command-events)
 		   done t))
 	    ((/= (logand translated ?\M-\^@) 0)
 	     ;; Turn a meta-character into a character with the 0200 bit set.
@@ -713,7 +714,8 @@ any other non-digit terminates the character code and is then used as input."))
 	     (setq done t))
 	    ((not first)
 	     (setq unread-command-events
-                   (listify-key-sequence (this-single-command-raw-keys))
+                   (nconc (listify-key-sequence (this-single-command-raw-keys))
+                          unread-command-events)
 		   done t))
 	    (t (setq code translated
 		     done t)))
