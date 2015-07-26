@@ -2877,17 +2877,23 @@ elements (all size values are in pixels).
   int inner_width = FRAME_PIXEL_WIDTH (f);
   int inner_height = FRAME_PIXEL_HEIGHT (f);
   Lisp_Object fullscreen = Fframe_parameter (frame, Qfullscreen);
-  int border = f->border_width;
-  int title = FRAME_NS_TITLEBAR_HEIGHT (f);
-  int outer_width = FRAME_PIXEL_WIDTH (f) + 2 * border;
-  int outer_height = FRAME_PIXEL_HEIGHT (f) + 2 * border;
-  int tool_bar_height = FRAME_TOOLBAR_HEIGHT (f);
-  int tool_bar_width = tool_bar_height > 0
-    ? outer_width - 2 * FRAME_INTERNAL_BORDER_WIDTH (f)
-    : 0;
+  int border, title, outer_width, outer_height;
+  int tool_bar_height, tool_bar_width;
   // Always 0 on NS.
   int menu_bar_height = 0;
   int menu_bar_width = 0;
+
+  if (FRAME_INITIAL_P (f) || !FRAME_NS_P (f))
+    return Qnil;
+
+  border = f->border_width;
+  title = FRAME_NS_TITLEBAR_HEIGHT (f);
+  outer_width = FRAME_PIXEL_WIDTH (f) + 2 * border;
+  outer_height = FRAME_PIXEL_HEIGHT (f) + 2 * border;
+  tool_bar_height = FRAME_TOOLBAR_HEIGHT (f);
+  tool_bar_width = tool_bar_height > 0
+    ? outer_width - 2 * FRAME_INTERNAL_BORDER_WIDTH (f)
+    : 0;
 
   return
     listn (CONSTYPE_HEAP, 10,
@@ -2916,7 +2922,6 @@ elements (all size values are in pixels).
 		  Fcons (make_number (inner_width),
 			 make_number (inner_height))));
 }
-
 
 /* ==========================================================================
 

@@ -7523,7 +7523,7 @@ If FRAME is omitted or nil, the selected frame is used.  */)
   MENUBARINFO menu_bar;
   int width, height, single_height, wrapped_height;
 
-  if (FRAME_INITIAL_P (f))
+  if (FRAME_INITIAL_P (f) || !FRAME_W32_P (f))
     return Qnil;
 
   block_input ();
@@ -7557,7 +7557,7 @@ title bar and decorations.  */)
   struct frame *f = decode_live_frame (frame);
   RECT rect;
 
-  if (FRAME_INITIAL_P (f))
+  if (FRAME_INITIAL_P (f) || !FRAME_W32_P (f))
     return Qnil;
 
   block_input ();
@@ -7617,7 +7617,7 @@ elements (all size values are in pixels).
   int single_bar_height, wrapped_bar_height, menu_bar_height;
   Lisp_Object fullscreen = Fframe_parameter (frame, Qfullscreen);
 
-  if (FRAME_INITIAL_P (f))
+  if (FRAME_INITIAL_P (f) || !FRAME_W32_P (f))
     return Qnil;
 
   block_input ();

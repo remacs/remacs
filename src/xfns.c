@@ -4359,6 +4359,9 @@ elements (all size values are in pixels).
   int left_off, right_off, top_off, bottom_off, outer_border;
   XWindowAttributes atts;
 
+  if (FRAME_INITIAL_P (f) || !FRAME_X_P (f))
+    return Qnil;
+
   block_input ();
 
   XGetWindowAttributes (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f), &atts);
