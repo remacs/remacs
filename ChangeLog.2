@@ -1,3 +1,232 @@
+2015-07-26  HOSOYA Kei  <hosoyakei.free@gmail.com>  (tiny change)
+
+	* etc/tutorials/TUTORIAL.ja: Improve translation.
+
+2015-07-25  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid crashes when w32 GUI functions are called in -batch
+	* src/w32fns.c (Fx_frame_geometry, Fw32_frame_rect)
+	(Fw32_frame_menu_bar_size, Fw32_send_sys_command): Don't call
+	FRAME_W32_WINDOW for initial frame.  (Bug#21132)
+
+	Fix flyspell-check-previous-highlighted-word
+	* lisp/textmodes/flyspell.el
+	(flyspell-check-previous-highlighted-word): Really accept a
+	numeric argument, as the doc string describes.  Fix an off-by-one
+	error in looking up overlays, so invocation with point immediately
+	after a word would check that word.  Clarify the doc string as
+	Suggested by N. Jackson <nljlistbox2@gmail.com>.  (Bug#21129)
+
+2015-07-24  Michael Albinus  <michael.albinus@gmx.de>
+
+	Minor cleanup in tramp-tests.el
+	* test/automated/tramp-tests.el (tramp-test31-*, tramp-test32-*):
+	Implement using the documented interface
+	`tramp-connection-properties', rather than with internal functions.
+
+2015-07-24  Harald Hanche-Olsen  <hanche@math.ntnu.no>  (tiny change)
+
+	Pass lambdas to `skeleton-read'
+	* lisp/skeleton.el (skeleton-read): Allow PROMPT to be a function.
+	* lisp/textmodes/sgml-mode.el (sgml-attributes, sgml-value): Pass
+	lambdas to `skeleton-read' (bug#20386).
+
+2015-07-24  Eli Zaretskii  <eliz@gnu.org>
+
+	* INSTALL (DETAILED BUILDING AND INSTALLATION): Mention --without-imagemagick.
+
+	Don't require GUI frames and mouse for Flyspell menus
+	* lisp/textmodes/flyspell.el (flyspell-correct-word-before-point)
+	(flyspell-emacs-popup): Require neither a GUI frame nor mouse
+	support, since pop-up menus work with text terminals and can be
+	controlled via the keyboard.
+
+	Improve documentation of Flyspell commands
+	* doc/emacs/fixit.texi (Spelling): Mention Flyspell commands that
+	can be invoked via the keyboard.  Mention those commands by name
+	and add them to the fn index.  (Bug#21125)
+
+2015-07-23  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix some Tramp problems with HP-UX
+	* lisp/net/tramp-sh.el (tramp-open-connection-setup-interactive-shell):
+	Add "tab0" to stty call.
+	* test/automated/tramp-tests.el (tramp-persistency-file-name):
+	Set to nil.
+	(tramp--test-hpux-p): New defun.
+	(tramp--test-utf8): Use it.
+
+2015-07-22  Glenn Morris  <rgm@gnu.org>
+
+	* build-aux/update-subdirs: Put "no-update-autoloads: t" in output.
+
+2015-07-22  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix point positioning in ffap-next-guess
+	* lisp/ffap.el (ffap-url-at-point): Set ffap-string-at-point-region,
+	as our callers expect.  This was clobbered as part of fixing
+	bug#5673.  (Bug#21107)
+	(ffap-gopher-at-point): Set ffap-string-at-point-region.
+
+2015-07-22  Martin Rudalics  <rudalics@gmx.at>
+
+	Fix customization type of `even-window-sizes'.
+	* lisp/window.el (even-window-sizes): Fix customization type.
+
+	2015-07-22  Martin Rudalics  <rudalics@gmx.at>
+	Optionally even widths of `display-buffer' windows.  (Bug#21100)
+	* lisp/window.el (quit-restore-window): Restore width if
+	requested.
+	(display-buffer-record-window): Record width when window is
+	reused and horizontally combined.
+	(even-window-sizes): New option to allow evening window widths.
+	(even-window-heights): Defalias to `even-window-sizes'.
+	(window--even-window-heights): Rename to
+	`window--even-window-sizes'.  Handle side-by-side windows.
+	(display-buffer-use-some-window): Call `window--even-window-sizes'
+	instead of `window--even-window-heights'.
+	* lisp/help.el (resize-temp-buffer-window): Fix indentation.
+	* doc/lispref/windows.texi (Choosing Window Options): Describe
+	`even-window-sizes'.
+	(Coordinates and Windows): Fix typo.
+
+2015-07-22  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	add file name to autoload error messages.
+	* lisp/emacs-lisp/autoload.el (autoload-save-buffers): add condition-case
+	  to add file name to error message.
+
+2015-07-22  Michael Albinus  <michael.albinus@gmx.de>
+
+	Use 0.0.0.1 as test host in Tramp
+	* lisp/net/tramp-sh.el (tramp-ssh-controlmaster-options):
+	Use 0.0.0.1 as test host.
+
+2015-07-21  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	(advice--called-interactively-skip): Fix inf-loop (bug#21083)
+	* lisp/emacs-lisp/nadvice.el (advice--called-interactively-skip):
+	Fix inf-loop (bug#21083).
+
+2015-07-21  Glenn Morris  <rgm@gnu.org>
+
+	* test/automated/package-test.el (package-test-signed):
+	Update for recent changes.
+
+	* test/automated/elisp-mode-tests.el
+	(elisp-xref-finds-both-function-and-variable)
+	(elisp-xref-finds-only-function-for-minor-mode):
+	Update for recent xref name changes.
+
+2015-07-21  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Make eldoc timer non-repeatable
+	* lisp/emacs-lisp/eldoc.el (eldoc-schedule-timer): Make the timer
+	non-repeatable.  Since it's on post-command hook, that just wasted
+	CPU cycles.
+
+2015-07-21  Michael Albinus  <michael.albinus@gmx.de>
+
+	Mention `tramp-connection-properties' in NEWS
+
+	Sync with Tramp repository
+	* doc/misc/tramp.texi (Configuration): Note, that Tramp must be
+	required prior changing its configuration.
+	(Connection caching, Predefined connection information)
+	(Remote shell setup): Fix typos.
+	(Predefined connection information): Describe, how to overwrite
+	parameters of `tramp-methods'.
+	(Remote programs, Remote processes, Traces and Profiles):
+	Simplify example.
+	(Remote programs): Remove superfluous comment.
+	* doc/misc/trampver.texi: Update release number.
+	* lisp/net/tramp-cache.el (tramp-connection-properties): Adapt docstring.
+	* lisp/net/tramp-gvfs.el (tramp-gvfs-do-copy-or-rename-file): New defun.
+	(tramp-gvfs-handle-copy-file, tramp-gvfs-handle-rename-file): Use it.
+	(tramp-gvfs-handle-make-directory): Reimplement PARENTS handling,
+	"gvfs-mkdir -p ..." does not work robust.
+	(tramp-gvfs-maybe-open-connection): Adapt `tramp-get-method-parameter' call.
+	* lisp/net/tramp-sh.el (tramp-methods):
+	Add `tramp-remote-shell-login' parameter where it fits.
+	(tramp-get-remote-path): Use it.
+	(tramp-make-copy-program-file-name): Fix quoting for "psftp" method.
+	(all): Adapt `tramp-get-method-parameter' calls.
+	* lisp/net/tramp.el (tramp-methods): Adapt docstring.
+	(tramp-get-method-parameter): Replace argument METHOD by VEC.
+	Check also for hits in `tramp-connection-properties'.  Adapt docstring.
+	(tramp-get-remote-tmpdir): Cache only the local name of tmpdir.
+	(all): Adapt `tramp-get-method-parameter' calls.
+	* lisp/net/trampver.el Update release number.
+	* test/automated/tramp-tests.el (tramp--instrument-test-case):
+	Add "^make-symbolic-link not supported$" to `debug-ignored-errors'.
+	(tramp-test13-make-directory, tramp--test-adb-p)
+	(tramp--test-smb-or-windows-nt-p): Simplify.
+	(tramp--test-ftp-p, tramp--test-gvfs-p): New defuns.
+	(tramp--test-special-characters): Fix docstring.  Add gvfs and ftp tests.
+	(tramp--test-utf8): Fix docstring.
+
+2015-07-20  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Add new xref-query-replace command
+	* lisp/progmodes/xref.el (xref--match-buffer-bounds): New
+	function, extracted from xref-pulse-momentarily.
+	(xref-query-replace): New command.
+	(xref--query-replace-1): New helper function.
+	(xref--xref-buffer-mode-map): Add `r' binding.
+
+2015-07-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Simplify icalendar decoding of Z dates
+	* lisp/calendar/icalendar.el (icalendar--decode-isodatetime):
+	Simplify calculation of time strings with trailing "Z".
+
+2015-07-19  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Do not corrupt grep-find-ignored-files
+	* lisp/progmodes/project.el (project-ignores): Change the order of
+	the arguments to nconc, in order not to corrupt grep-find-ignored-files.
+
+	Add xref-match-item, and use it
+	* lisp/progmodes/xref.el (xref-match-bounds): New generic function.
+	(xref-file-location): Add reader for the column slot.
+	(xref-match-item): New class.
+	(xref-match-bounds): A method implementation for it.
+	(xref-make-match): New constructor function.
+	(xref--current-item): New private variable.
+	(xref-pulse-momentarily): Use it.
+	(xref--pop-to-location): Change the first argument to an xref
+	item, instead of location, bind xref--current-item.
+	Update all callers.
+	(xref-next-line, xref-prev-line, xref--next-error-function)
+	(xref--mouse-2): Look for the property `xref-item',
+	instead of `xref-location'.
+	(xref--item-at-point): Likewise.  This function replaces
+	`xref-location-at-point'.  Update all callers.
+	(xref--insert-xrefs): Add the `xref-item' text property, instead
+	of `xref-location'.
+	(xref--collect-match): Use xref-make-match.
+
+	Rename xref--xref to xref-item
+	* lisp/progmodes/xref.el (xref-item): Rename from `xref--xref'.
+	Update all references.
+
+	Rename xref description slot to summary
+	* lisp/progmodes/xref.el (xref--xref): Rename the `description'
+	slot to `summary'.
+
+	vc-hg: Perform the print-log call asynchronously
+	* lisp/vc/vc-hg.el (vc-hg-print-log): Perform the call
+	asynchronously (bug#21067).
+
+	Add xref-after-jump-hook and xref-after-return-hook
+	* lisp/progmodes/xref.el (xref-after-jump-hook)
+	(xref-after-return-hook): New hooks.
+	(xref-pulse-on-jump): Remove, in favor of the above.
+	(xref-pulse-momentarily): Rename from xref--maybe-pulse.
+	(xref--pop-to-location, xref--display-position)
+	(xref-pop-marker-stack): Use the new hooks, as requested in
+	http://lists.gnu.org/archive/html/emacs-devel/2015-07/msg00213.html
+
 2015-07-19  Bozhidar Batsov  <bozhidar@batsov.com>
 
 	Correct js-mode's lighter
@@ -7941,7 +8170,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit 83fbe89537889219aebe1a36df73ca70e30948af (inclusive).
+commit 2cf501ce1b77e6e409871eef7b9d31a08e73cfc0 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
