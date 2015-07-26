@@ -4055,7 +4055,7 @@ extern _Noreturn void time_overflow (void);
 extern Lisp_Object make_buffer_string (ptrdiff_t, ptrdiff_t, bool);
 extern Lisp_Object make_buffer_string_both (ptrdiff_t, ptrdiff_t, ptrdiff_t,
 					    ptrdiff_t, bool);
-extern void init_editfns (void);
+extern void init_editfns (bool);
 extern void syms_of_editfns (void);
 
 /* Defined in buffer.c.  */

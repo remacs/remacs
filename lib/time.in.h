@@ -231,6 +231,25 @@ _GL_CXXALIAS_SYS (strptime, char *, (char const *restrict __buf,
 _GL_CXXALIASWARN (strptime);
 # endif
 
+# if defined _GNU_SOURCE && @GNULIB_TIME_RZ@ && ! @HAVE_TIMEZONE_T@
+typedef struct tm_zone *timezone_t;
+_GL_FUNCDECL_SYS (tzalloc, timezone_t, (char const *__name));
+_GL_CXXALIAS_SYS (tzalloc, timezone_t, (char const *__name));
+_GL_FUNCDECL_SYS (tzfree, void, (timezone_t __tz));
+_GL_CXXALIAS_SYS (tzfree, void, (timezone_t __tz));
+_GL_FUNCDECL_SYS (localtime_rz, struct tm *,
+                  (timezone_t __tz, time_t const *restrict __timer,
+                   struct tm *restrict __result) _GL_ARG_NONNULL ((2, 3)));
+_GL_CXXALIAS_SYS (localtime_rz, struct tm *,
+                  (timezone_t __tz, time_t const *restrict __timer,
+                   struct tm *restrict __result));
+_GL_FUNCDECL_SYS (mktime_z, time_t,
+                  (timezone_t __tz, struct tm *restrict __result)
+                  _GL_ARG_NONNULL ((2)));
+_GL_CXXALIAS_SYS (mktime_z, time_t,
+                  (timezone_t __tz, struct tm *restrict __result));
+# endif
+
 /* Convert TM to a time_t value, assuming UTC.  */
 # if @GNULIB_TIMEGM@
 #  if @REPLACE_TIMEGM@

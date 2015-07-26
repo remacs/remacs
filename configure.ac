@@ -4000,7 +4000,7 @@ AC_SUBST(KRB4LIB)
 
 AC_CHECK_HEADERS(valgrind/valgrind.h)
 
-AC_CHECK_FUNCS_ONCE(tzalloc tzset)
+AC_CHECK_FUNCS_ONCE(tzset)
 
 ok_so_far=yes
 AC_CHECK_FUNC(socket, , ok_so_far=no)

@@ -1552,7 +1552,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 
   /* This calls putenv and so must precede init_process_emacs.  Also,
      it sets Voperating_system_release, which init_process_emacs uses.  */
-  init_editfns ();
+  init_editfns (dumping);
 
   /* These two call putenv.  */
 #ifdef HAVE_DBUS
