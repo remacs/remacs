@@ -1315,6 +1315,10 @@ ftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 static void
 ftfont_close (struct font *font)
 {
+  /* FIXME: Although this function can be called while garbage-collecting,
+     the function assumes that Lisp data structures are properly-formed.
+     This invalid assumption can lead to core dumps (Bug#20890).  */
+
   struct ftfont_info *ftfont_info = (struct ftfont_info *) font;
   Lisp_Object val, cache;
 
