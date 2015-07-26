@@ -440,16 +440,16 @@ one is kept."
 First and last elements are considered consecutive if CIRCULAR is
 non-nil."
   (let ((tail list) last)
-    (while (consp tail)
+    (while (cdr tail)
       (if (equal (car tail) (cadr tail))
 	  (setcdr tail (cddr tail))
-	(setq last (car tail)
+	(setq last tail
 	      tail (cdr tail))))
     (if (and circular
-	     (cdr list)
-	     (equal last (car list)))
-	(nbutlast list)
-      list)))
+	     last
+	     (equal (car tail) (car list)))
+	(setcdr last nil)))
+  list)
 
 (defun number-sequence (from &optional to inc)
   "Return a sequence of numbers from FROM to TO (both inclusive) as a list.
