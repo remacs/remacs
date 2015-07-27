@@ -306,21 +306,6 @@ int _getpid (void);
 #include <time.h>
 #define tzname    _tzname
 
-/* 'struct timespec' is used by time-related functions in lib/ and
-   elsewhere, but we don't use lib/time.h where the structure is
-   defined.  */
-/* MinGW64 defines 'struct timespec' and _TIMESPEC_DEFINED in sys/types.h.  */
-/* Mingw.org's MinGW runtime versions 3.22 and upward define 'struct
-   timespec' and __struct_timespec_defined in parts/time.h, which is
-   included by time.h.  */
-#if !defined (_TIMESPEC_DEFINED) && !defined (__struct_timespec_defined)
-struct timespec
-{
-  time_t	tv_sec;		/* seconds */
-  long int	tv_nsec;	/* nanoseconds */
-};
-#endif
-
 /* Required for functions in lib/time_r.c, since we don't use lib/time.h.  */
 extern struct tm *gmtime_r (time_t const * restrict, struct tm * restrict);
 extern struct tm *localtime_r (time_t const * restrict, struct tm * restrict);
