@@ -5642,7 +5642,7 @@ png_image_p (Lisp_Object object)
 #endif /* HAVE_PNG || HAVE_NS || USE_CAIRO */
 
 
-#if defined HAVE_PNG && !defined HAVE_NS
+#if (defined HAVE_PNG && !defined HAVE_NS) || defined USE_CAIRO
 
 # ifdef WINDOWSNT
 /* PNG library details.  */
