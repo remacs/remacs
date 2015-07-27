@@ -32,34 +32,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "time-internal.h"
+
 #if !HAVE_TZSET
 static void tzset (void) { }
 #endif
-
-/* A time zone rule.  */
-struct tm_zone
-{
-  /* More abbreviations, should they be needed.  Their TZ_IS_SET
-     members are zero.  */
-  timezone_t next;
-
-  /* If nonzero, the rule represents the TZ environment variable set
-     to the first "abbreviation" (this may be the empty string).
-     Otherwise, it represents an unset TZ.  */
-  char tz_is_set;
-
-  /* A sequence of null-terminated strings packed next to each other.
-     The strings are followed by an extra null byte.  If TZ_IS_SET,
-     there must be at least one string and the first string (which is
-     actually a TZ environment value value) may be empty.  Otherwise
-     all strings must be nonempty.
-
-     Abbreviations are stored here because otherwise the values of
-     tm_zone and/or tzname would be dead after changing TZ and calling
-     tzset.  Abbreviations never move once allocated, and are live
-     until tzfree is called.  */
-  char abbrs[FLEXIBLE_ARRAY_MEMBER];
-};
 
 /* The approximate size to use for small allocation requests.  This is
    the largest "small" request for the GNU C library malloc.  */
@@ -124,39 +101,40 @@ tzalloc (char const *name)
   if (tz)
     {
       tz->next = NULL;
+#if HAVE_TZNAME && !HAVE_TM_ZONE
+      tz->tzname_copy[0] = tz->tzname_copy[1] = NULL;
+#endif
       tz->tz_is_set = !!name;
       extend_abbrs (tz->abbrs, name, name_size);
     }
   return tz;
 }
 
-#if HAVE_TZNAME
-/* If TZNAME_ADDRESS is nonnull, an assignment of a saved abbreviation.
-   TZNAME_ADDRESS should be either null, or &tzname[0], or &tzname[1].
-   *TZNAME_ADDRESS = TZNAME_VALUE should be done after revert_tz
-   (indirectly) calls tzset, so that revert_tz can overwrite tzset's
-   assignment to tzname.  Also, it should be done at the start of
-   the next localtime_tz or mktime_z, to undo the overwrite.  */
-static char **tzname_address;
-static char *tzname_value;
-#endif
-
-/* Save into TZ any nontrivial time zone abbreviation used by TM,
-   and update *TM (or prepare to update tzname) if they use the abbreviation.
-   Return true if successful, false (setting errno) otherwise.  */
+/* Save into TZ any nontrivial time zone abbreviation used by TM, and
+   update *TM (if HAVE_TM_ZONE) or *TZ (if !HAVE_TM_ZONE &&
+   HAVE_TZNAME) if they use the abbreviation.  Return true if
+   successful, false (setting errno) otherwise.  */
 static bool
 save_abbr (timezone_t tz, struct tm *tm)
 {
 #if HAVE_TM_ZONE || HAVE_TZNAME
   char const *zone = NULL;
-  char **tzname_zone = NULL;
   char *zone_copy = (char *) "";
+
+# if HAVE_TZNAME
+  int tzname_index = -1;
+# endif
+
 # if HAVE_TM_ZONE
   zone = tm->tm_zone;
 # endif
+
 # if HAVE_TZNAME
   if (! (zone && *zone) && 0 <= tm->tm_isdst)
-    zone = *(tzname_zone = &tzname[0 < tm->tm_isdst]);
+    {
+      tzname_index = tm->tm_isdst != 0;
+      zone = tzname[tzname_index];
+    }
 # endif
 
   /* No need to replace null zones, or zones within the struct tm.  */
@@ -196,14 +174,13 @@ save_abbr (timezone_t tz, struct tm *tm)
 
   /* Replace the zone name so that its lifetime matches that of TZ.  */
 # if HAVE_TM_ZONE
-  if (!tzname_zone)
-    tm->tm_zone = zone_copy;
-# endif
-# if HAVE_TZNAME
-  tzname_address = tzname_zone;
-  tzname_value = zone_copy;
+  tm->tm_zone = zone_copy;
+# else
+  if (0 <= tzname_index)
+    tz->tzname_copy[tzname_index] = zone_copy;
 # endif
 #endif
+
   return true;
 }
 
@@ -292,41 +269,16 @@ revert_tz (timezone_t tz)
       bool ok = change_env (tz);
       if (!ok)
         saved_errno = errno;
-#if HAVE_TZNAME
-      if (!ok)
-        tzname_address = NULL;
-      if (tzname_address)
-        {
-          char *old_value = *tzname_address;
-          *tzname_address = tzname_value;
-          tzname_value = old_value;
-        }
-#endif
       tzfree (tz);
       errno = saved_errno;
       return ok;
     }
 }
 
-/* Restore an old tzname setting that was temporarily munged by revert_tz.  */
-static void
-restore_tzname (void)
-{
-#if HAVE_TZNAME
-  if (tzname_address)
-    {
-      *tzname_address = tzname_value;
-      tzname_address = NULL;
-    }
-#endif
-}
-
 /* Use time zone TZ to compute localtime_r (T, TM).  */
 struct tm *
 localtime_rz (timezone_t tz, time_t const *t, struct tm *tm)
 {
-  restore_tzname ();
-
   if (!tz)
     return gmtime_r (t, tm);
   else
@@ -348,8 +300,6 @@ localtime_rz (timezone_t tz, time_t const *t, struct tm *tm)
 time_t
 mktime_z (timezone_t tz, struct tm *tm)
 {
-  restore_tzname ();
-
   if (!tz)
     return timegm (tm);
   else

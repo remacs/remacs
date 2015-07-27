@@ -1640,7 +1640,7 @@ EXTRA_libgnu_a_SOURCES += time_r.c
 ## begin gnulib module time_rz
 
 
-EXTRA_DIST += time_rz.c
+EXTRA_DIST += time-internal.h time_rz.c
 
 EXTRA_libgnu_a_SOURCES += time_rz.c
 

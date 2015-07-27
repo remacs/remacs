@@ -30,6 +30,7 @@
 # else
 #  include "strftime.h"
 # endif
+# include "time-internal.h"
 #endif
 
 #include <ctype.h>
@@ -440,6 +441,9 @@ strftime_case_ (bool upcase, STREAM_OR_CHAR_T *s,
 # define am_len STRLEN (a_month)
 # define ap_len STRLEN (ampm)
 #endif
+#if HAVE_TZNAME
+  char **tzname_vec = tzname;
+#endif
   const char *zone;
   size_t i = 0;
   STREAM_OR_CHAR_T *p = s;
@@ -475,6 +479,10 @@ strftime_case_ (bool upcase, STREAM_OR_CHAR_T *s,
     }
   else
     {
+# if !HAVE_TM_ZONE
+      /* Infer the zone name from *TZ instead of from TZNAME.  */
+      tzname_vec = tz->tzname_copy;
+# endif
       /* POSIX.1 requires that local time zone information be used as
          though strftime called tzset.  */
 # if HAVE_TZSET
@@ -483,7 +491,7 @@ strftime_case_ (bool upcase, STREAM_OR_CHAR_T *s,
     }
   /* The tzset() call might have changed the value.  */
   if (!(zone && *zone) && tp->tm_isdst >= 0)
-    zone = tzname[tp->tm_isdst != 0];
+    zone = tzname_vec[tp->tm_isdst != 0];
 #endif
   if (! zone)
     zone = "";

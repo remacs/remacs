@@ -22,13 +22,13 @@
 
 /* Don't get in the way of glibc when it includes time.h merely to
    declare a few standard symbols, rather than to declare all the
-   symbols.  Also, Solaris 8 <time.h> eventually includes itself
+   symbols.  (However, skip this for MinGW as it treats __need_time_t
+   incompatibly.)  Also, Solaris 8 <time.h> eventually includes itself
    recursively; if that is happening, just include the system <time.h>
-   without adding our own declarations.  MinGW system headers use
-   these symbols as well, but we don't want to exclude MinGW from the
-   'else' branch below.  */
-#if (((defined __need_time_t || defined __need_clock_t		\
-       || defined __need_timespec) && !defined __MINGW32__)	\
+   without adding our own declarations.  */
+#if (((defined __need_time_t || defined __need_clock_t \
+       || defined __need_timespec)                     \
+      && !defined __MINGW32__)                         \
      || defined _@GUARD_PREFIX@_TIME_H)
 
 # @INCLUDE_NEXT@ @NEXT_TIME_H@
