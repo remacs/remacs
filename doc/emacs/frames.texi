@@ -574,7 +574,7 @@ the following form:
 @end example
 
 @noindent
-Within this format, any of the elements in braces may be omitted.
+Within this format, any of the elements in brackets may be omitted.
 Here, @var{fontname} is the @dfn{family name} of the font, such as
 @samp{Monospace} or @samp{DejaVu Sans Mono}; @var{fontsize} is the
 @dfn{point size} of the font (one @dfn{printer's point} is about 1/72
