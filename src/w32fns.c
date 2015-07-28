@@ -7799,6 +7799,11 @@ The following %-sequences are provided:
 
 
 #ifdef WINDOWSNT
+typedef BOOL (WINAPI *GetDiskFreeSpaceExW_Proc)
+  (LPCWSTR, PULARGE_INTEGER, PULARGE_INTEGER, PULARGE_INTEGER);
+typedef BOOL (WINAPI *GetDiskFreeSpaceExA_Proc)
+  (LPCSTR, PULARGE_INTEGER, PULARGE_INTEGER, PULARGE_INTEGER);
+
 DEFUN ("file-system-info", Ffile_system_info, Sfile_system_info, 1, 1, 0,
        doc: /* Return storage information about the file system FILENAME is on.
 Value is a list of floats (TOTAL FREE AVAIL), where TOTAL is the total
@@ -7822,12 +7827,10 @@ If the underlying system call fails, value is nil.  */)
      added rather late on.  */
   {
     HMODULE hKernel = GetModuleHandle ("kernel32");
-    BOOL (WINAPI *pfn_GetDiskFreeSpaceExW)
-      (wchar_t *, PULARGE_INTEGER, PULARGE_INTEGER, PULARGE_INTEGER)
-      = GetProcAddress (hKernel, "GetDiskFreeSpaceExW");
-    BOOL (WINAPI *pfn_GetDiskFreeSpaceExA)
-      (char *, PULARGE_INTEGER, PULARGE_INTEGER, PULARGE_INTEGER)
-      = GetProcAddress (hKernel, "GetDiskFreeSpaceExA");
+    GetDiskFreeSpaceExW_Proc pfn_GetDiskFreeSpaceExW =
+      (GetDiskFreeSpaceExW_Proc) GetProcAddress (hKernel, "GetDiskFreeSpaceExW");
+    GetDiskFreeSpaceExA_Proc pfn_GetDiskFreeSpaceExA =
+      (GetDiskFreeSpaceExA_Proc) GetProcAddress (hKernel, "GetDiskFreeSpaceExA");
     bool have_pfn_GetDiskFreeSpaceEx =
       ((w32_unicode_filenames && pfn_GetDiskFreeSpaceExW)
        || (!w32_unicode_filenames && pfn_GetDiskFreeSpaceExA));

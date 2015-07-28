@@ -3327,16 +3327,16 @@ yield nil.  */)
   (Lisp_Object cp)
 {
   CHARSETINFO info;
-  DWORD dwcp;
+  DWORD_PTR dwcp;
 
   CHECK_NUMBER (cp);
 
   if (!IsValidCodePage (XINT (cp)))
     return Qnil;
 
-  /* Going through a temporary DWORD variable avoids compiler warning
+  /* Going through a temporary DWORD_PTR variable avoids compiler warning
      about cast to pointer from integer of different size, when
-     building --with-wide-int.  */
+     building --with-wide-int or building for 64bit.  */
   dwcp = XINT (cp);
   if (TranslateCharsetInfo ((DWORD *) dwcp, &info, TCI_SRCCODEPAGE))
     return make_number (info.ciCharset);
@@ -3499,6 +3499,9 @@ get_lcid (const char *locale_name)
 # define LINGUISTIC_IGNORECASE  0x00000010
 #endif
 
+typedef int (WINAPI *CompareStringW_Proc)
+  (LCID, DWORD, LPCWSTR, int, LPCWSTR, int);
+
 int
 w32_compare_strings (const char *s1, const char *s2, char *locname,
 		     int ignore_case)
@@ -3507,7 +3510,7 @@ w32_compare_strings (const char *s1, const char *s2, char *locname,
   wchar_t *string1_w, *string2_w;
   int val, needed;
   extern BOOL g_b_init_compare_string_w;
-  static int (WINAPI *pCompareStringW)(LCID, DWORD, LPCWSTR, int, LPCWSTR, int);
+  static CompareStringW_Proc pCompareStringW;
   DWORD flags = 0;
 
   USE_SAFE_ALLOCA;
@@ -3523,8 +3526,9 @@ w32_compare_strings (const char *s1, const char *s2, char *locname,
     {
       if (os_subtype == OS_9X)
 	{
-	  pCompareStringW = GetProcAddress (LoadLibrary ("Unicows.dll"),
-					    "CompareStringW");
+	  pCompareStringW =
+            (CompareStringW_Proc) GetProcAddress (LoadLibrary ("Unicows.dll"),
+                                                  "CompareStringW");
 	  if (!pCompareStringW)
 	    {
 	      errno = EINVAL;
