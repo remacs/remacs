@@ -8301,7 +8301,11 @@ encode_coding_object (struct coding_system *coding,
 	}
     }
   else
-    code_conversion_save (0, 0);
+    {
+      code_conversion_save (0, 0);
+      coding->src_pos = from;
+      coding->src_pos_byte = from_byte;
+    }
 
   if (BUFFERP (dst_object))
     {
