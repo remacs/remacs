@@ -30061,8 +30061,11 @@ expose_area (struct window *w, struct glyph_row *row, XRectangle *r,
       /* Find the last one.  */
       last = first;
       first_x = x;
-      while (last < end
-	     && x < r->x + r->width)
+      /* Use a signed int intermediate value to avoid catastrophic
+	 failures due to comparison between signed and unsigned, when
+	 x is negative (can happen for wide images that are hscrolled).  */
+      int r_end = r->x + r->width;
+      while (last < end && x < r_end)
 	{
 	  x += last->pixel_width;
 	  ++last;
@@ -30336,6 +30339,11 @@ expose_window (struct window *w, XRectangle *fr)
 	 check later if it is changed.  */
       bool phys_cursor_on_p = w->phys_cursor_on_p;
 
+      /* Use a signed int intermediate value to avoid catastrophic
+	 failures due to comparison between signed and unsigned, when
+	 y0 or y1 is negative (can happen for tall images).  */
+      int r_bottom = r.y + r.height;
+
       /* Update lines intersecting rectangle R.  */
       first_overlapping_row = last_overlapping_row = NULL;
       for (row = w->current_matrix->rows;
@@ -30345,10 +30353,10 @@ expose_window (struct window *w, XRectangle *fr)
 	  int y0 = row->y;
 	  int y1 = MATRIX_ROW_BOTTOM_Y (row);
 
-	  if ((y0 >= r.y && y0 < r.y + r.height)
-	      || (y1 > r.y && y1 < r.y + r.height)
+	  if ((y0 >= r.y && y0 < r_bottom)
+	      || (y1 > r.y && y1 < r_bottom)
 	      || (r.y >= y0 && r.y < y1)
-	      || (r.y + r.height > y0 && r.y + r.height < y1))
+	      || (r_bottom > y0 && r_bottom < y1))
 	    {
 	      /* A header line may be overlapping, but there is no need
 		 to fix overlapping areas for them.  KFS 2005-02-12 */
@@ -30385,7 +30393,7 @@ expose_window (struct window *w, XRectangle *fr)
       if (WINDOW_WANTS_MODELINE_P (w)
 	  && (row = MATRIX_MODE_LINE_ROW (w->current_matrix),
 	      row->enabled_p)
-	  && row->y < r.y + r.height)
+	  && row->y < r_bottom)
 	{
 	  if (expose_line (w, row, &r))
 	    mouse_face_overwritten_p = true;
