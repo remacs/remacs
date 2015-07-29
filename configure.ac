@@ -4557,9 +4557,7 @@ if test $emacs_cv_func_sigsetjmp = yes; then
 fi
 
 # We need all of these features to handle C stack overflows.
-if test "$ac_cv_header_sys_resource_h" = "yes" &&
-   test "$ac_cv_func_getrlimit" = "yes" &&
-   test "$emacs_cv_func_sigsetjmp" = "yes" &&
+if test "$emacs_cv_func_sigsetjmp" = "yes" &&
    test "$emacs_cv_alternate_stack" = yes; then
   AC_DEFINE([HAVE_STACK_OVERFLOW_HANDLING], 1,
     [Define to 1 if C stack overflow can be handled in some cases.])
