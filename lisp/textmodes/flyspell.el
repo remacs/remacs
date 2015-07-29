@@ -1119,7 +1119,8 @@ misspelling and skips redundant spell-checking step."
 		   (let* ((bound
 			   (- start
 			      (- end start)
-			      (- (skip-chars-backward " \t\n\f"))))
+			      (- (save-excursion
+                                   (skip-chars-backward " \t\n\f")))))
 			  (p (when (>= bound (point-min))
 			       (flyspell-word-search-backward word bound t))))
 		     (and p (/= p start)))))
