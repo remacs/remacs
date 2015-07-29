@@ -121,9 +121,10 @@ matching entries of `tramp-connection-properties'."
 (defun tramp-get-file-property (key file property default)
   "Get the PROPERTY of FILE from the cache context of KEY.
 Returns DEFAULT if not set."
-  ;; Unify localname.
+  ;; Unify localname.  Remove hop from vector.
   (setq key (copy-sequence key))
   (aset key 3 (tramp-run-real-handler 'directory-file-name (list file)))
+  (aset key 4 nil)
   (let* ((hash (tramp-get-hash-table key))
 	 (value (when (hash-table-p hash) (gethash property hash))))
     (if
@@ -153,9 +154,10 @@ Returns DEFAULT if not set."
 (defun tramp-set-file-property (key file property value)
   "Set the PROPERTY of FILE to VALUE, in the cache context of KEY.
 Returns VALUE."
-  ;; Unify localname.
+  ;; Unify localname.  Remove hop from vector.
   (setq key (copy-sequence key))
   (aset key 3 (tramp-run-real-handler 'directory-file-name (list file)))
+p  (aset key 4 nil)
   (let ((hash (tramp-get-hash-table key)))
     ;; We put the timestamp there.
     (puthash property (cons (current-time) value) hash)
@@ -176,9 +178,10 @@ Returns VALUE."
     (when (and (stringp truename)
 	       (not (string-equal file (directory-file-name truename))))
       (tramp-flush-file-property key truename))
-    ;; Unify localname.
+    ;; Unify localname.  Remove hop from vector.
     (setq key (copy-sequence key))
     (aset key 3 file)
+    (aset key 4 nil)
     (tramp-message key 8 "%s" file)
     (remhash key tramp-cache-data)))
 
@@ -240,11 +243,12 @@ This is suppressed for temporary buffers."
   "Get the named PROPERTY for the connection.
 KEY identifies the connection, it is either a process or a vector.
 If the value is not set for the connection, returns DEFAULT."
-  ;; Unify key by removing localname from vector.  Work with a copy in
-  ;; order to avoid side effects.
+  ;; Unify key by removing localname and hop from vector.  Work with a
+  ;; copy in order to avoid side effects.
   (when (vectorp key)
     (setq key (copy-sequence key))
-    (aset key 3 nil))
+    (aset key 3 nil)
+    (aset key 4 nil))
   (let* ((hash (tramp-get-hash-table key))
 	 (value (if (hash-table-p hash)
 		    (gethash property hash default)
@@ -257,11 +261,12 @@ If the value is not set for the connection, returns DEFAULT."
   "Set the named PROPERTY of a connection to VALUE.
 KEY identifies the connection, it is either a process or a vector.
 PROPERTY is set persistent when KEY is a vector."
-  ;; Unify key by removing localname from vector.  Work with a copy in
-  ;; order to avoid side effects.
+  ;; Unify key by removing localname and hop from vector.  Work with a
+  ;; copy in order to avoid side effects.
   (when (vectorp key)
     (setq key (copy-sequence key))
-    (aset key 3 nil))
+    (aset key 3 nil)
+    (aset key 4 nil))
   (let ((hash (tramp-get-hash-table key)))
     (puthash property value hash)
     (setq tramp-cache-data-changed t)
@@ -278,11 +283,12 @@ KEY identifies the connection, it is either a process or a vector."
 (defun tramp-flush-connection-property (key)
   "Remove all properties identified by KEY.
 KEY identifies the connection, it is either a process or a vector."
-  ;; Unify key by removing localname from vector.  Work with a copy in
-  ;; order to avoid side effects.
+  ;; Unify key by removing localname and hop from vector.  Work with a
+  ;; copy in order to avoid side effects.
   (when (vectorp key)
     (setq key (copy-sequence key))
-    (aset key 3 nil))
+    (aset key 3 nil)
+    (aset key 4 nil))
   (tramp-message
    key 7 "%s %s" key
    (let ((hash (gethash key tramp-cache-data))

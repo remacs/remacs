@@ -273,7 +273,7 @@ The string is used in `tramp-methods'.")
     ;; We use "-p" as required for newer busyboxes.  For older
     ;; busybox/nc versions, the value must be (("-l") ("%r")).  This
     ;; can be achieved by tweaking `tramp-connection-properties'.
-    (tramp-remote-copy-args     (("-l") ("-p" "%r")))
+    (tramp-remote-copy-args     (("-l") ("-p" "%r") ("2>/dev/null")))
     (tramp-default-port         23)))
 ;;;###tramp-autoload
 (add-to-list 'tramp-methods
@@ -2477,10 +2477,10 @@ The method used must be an out-of-band method."
 		 " "))
 	  (tramp-send-command v remote-copy-program)
 	  (with-timeout
-	      (1 (tramp-error
-		  v 'file-error
-		  "Listener process not running on remote host: `%s'"
-		  remote-copy-program))
+	      (60 (tramp-error
+		   v 'file-error
+		   "Listener process not running on remote host: `%s'"
+		   remote-copy-program))
 	    (tramp-send-command v (format "netstat -l | grep -q :%s" listener))
 	    (while (not (tramp-send-command-and-check v nil))
 	      (tramp-send-command
@@ -2911,10 +2911,15 @@ the result will be a local, non-Tramp, file name."
 		       (setq i (+ i 250))))
 		   (cdr args)))
 	   ;; Use a human-friendly prompt, for example for `shell'.
-	   (prompt (format "PS1=%s"
-			   (format "%s %s"
-				   (file-remote-p default-directory)
-				   tramp-initial-end-of-output)))
+	   ;; We discard hops, if existing, that's why we cannot use
+	   ;; `file-remote-p'.
+	   (prompt (format "PS1=%s %s"
+			   (tramp-make-tramp-file-name
+			    (tramp-file-name-method v)
+			    (tramp-file-name-user v)
+			    (tramp-file-name-host v)
+			    (tramp-file-name-localname v))
+			   tramp-initial-end-of-output))
 	   ;; We use as environment the difference to toplevel
 	   ;; `process-environment'.
 	   env

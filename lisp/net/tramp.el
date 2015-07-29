@@ -2927,7 +2927,8 @@ User is always nil."
      (tramp-file-name-user v)
      (tramp-file-name-host v)
      (tramp-run-real-handler
-      'file-name-as-directory (list (or (tramp-file-name-localname v) ""))))))
+      'file-name-as-directory (list (or (tramp-file-name-localname v) "")))
+     (tramp-file-name-hop v))))
 
 (defun tramp-handle-file-name-completion
   (filename directory &optional predicate)
@@ -2955,7 +2956,8 @@ User is always nil."
      (tramp-file-name-user v)
      (tramp-file-name-host v)
      (tramp-run-real-handler
-      'file-name-directory (list (or (tramp-file-name-localname v) ""))))))
+      'file-name-directory (list (or (tramp-file-name-localname v) "")))
+     (tramp-file-name-hop v))))
 
 (defun tramp-handle-file-name-nondirectory (file)
   "Like `file-name-nondirectory' but aware of Tramp files."
@@ -2992,7 +2994,8 @@ User is always nil."
 		((eq identification 'user) user)
 		((eq identification 'host) host)
 		((eq identification 'localname) localname)
-		(t (tramp-make-tramp-file-name method user host "")))))))))
+		((eq identification 'hop) hop)
+		(t (tramp-make-tramp-file-name method user host "" hop)))))))))
 
 (defun tramp-handle-file-symlink-p (filename)
   "Like `file-symlink-p' for Tramp files."
