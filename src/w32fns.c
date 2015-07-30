@@ -7090,6 +7090,8 @@ a ShowWindow flag:
 
   const char file_url_str[] = "file:///";
   const int file_url_len = sizeof (file_url_str) - 1;
+  int doclen;
+
   if (strncmp (SSDATA (document), file_url_str, file_url_len) == 0)
     {
       /* Passing "file:///" URLs to ShellExecute causes shlwapi.dll to
@@ -7144,16 +7146,21 @@ a ShowWindow flag:
   UNGCPRO;
 
   current_dir = ENCODE_FILE (current_dir);
+  /* Cannot use filename_to_utf16/ansi with DOCUMENT, since it could
+     be a URL that is not limited to MAX_PATH chararcters.  */
+  doclen = pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS,
+				 SSDATA (document), -1, NULL, 0);
+  doc_w = xmalloc (doclen * sizeof (wchar_t));
+  pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS,
+			SSDATA (document), -1, doc_w, doclen);
   if (use_unicode)
     {
-      wchar_t document_w[MAX_PATH], current_dir_w[MAX_PATH];
+      wchar_t current_dir_w[MAX_PATH];
       SHELLEXECUTEINFOW shexinfo_w;
 
-      /* Encode filename, current directory and parameters, and
-	 convert operation to UTF-16.  */
+      /* Encode the current directory and parameters, and convert
+	 operation to UTF-16.  */
       filename_to_utf16 (SSDATA (current_dir), current_dir_w);
-      filename_to_utf16 (SSDATA (document), document_w);
-      doc_w = document_w;
       if (STRINGP (parameters))
 	{
 	  int len;
@@ -7166,6 +7173,7 @@ a ShowWindow flag:
 	  params_w = alloca (len * sizeof (wchar_t));
 	  pMultiByteToWideChar (CP_ACP, MB_ERR_INVALID_CHARS,
 				SSDATA (parameters), -1, params_w, len);
+	  params_w[len - 1] = 0;
 	}
       if (STRINGP (operation))
 	{
@@ -7198,15 +7206,19 @@ a ShowWindow flag:
       shexinfo_w.nShow =
 	(INTEGERP (show_flag) ? XINT (show_flag) : SW_SHOWDEFAULT);
       success = ShellExecuteExW (&shexinfo_w);
+      xfree (doc_w);
     }
   else
     {
       char document_a[MAX_PATH], current_dir_a[MAX_PATH];
       SHELLEXECUTEINFOA shexinfo_a;
+      int codepage = codepage_for_filenames (NULL);
+      int ldoc_a = pWideCharToMultiByte (codepage, 0, doc_w, -1, NULL, 0,
+					 NULL, NULL);
 
+      doc_a = xmalloc (ldoc_a);
+      pWideCharToMultiByte (codepage, 0, doc_w, -1, doc_a, ldoc_a, NULL, NULL);
       filename_to_ansi (SSDATA (current_dir), current_dir_a);
-      filename_to_ansi (SSDATA (document), document_a);
-      doc_a = document_a;
       if (STRINGP (parameters))
 	{
 	  parameters = ENCODE_SYSTEM (parameters);
@@ -7229,6 +7241,8 @@ a ShowWindow flag:
       shexinfo_a.nShow =
 	(INTEGERP (show_flag) ? XINT (show_flag) : SW_SHOWDEFAULT);
       success = ShellExecuteExA (&shexinfo_a);
+      xfree (doc_w);
+      xfree (doc_a);
     }
 
   if (success)
