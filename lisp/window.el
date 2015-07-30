@@ -6489,19 +6489,17 @@ its documentation for additional customization information."
 ;;; `display-buffer' action functions:
 
 (defun display-buffer-use-some-frame (buffer alist)
-  "Display BUFFER in an existing frame other than the current frame.
-If successful, return the window used; otherwise return nil.
+  "Display BUFFER in an existing frame that meets a predicate
+(by default any frame other than the current frame).  If
+successful, return the window used; otherwise return nil.
 
 If ALIST has a non-nil `inhibit-switch-frame' entry, avoid
 raising the frame.
 
-If ALIST has a non-nil `pop-up-frame-parameters' entry, the
-corresponding value is an alist of frame parameters to give the
-new frame.
-
-If ALIST has a non-nil `frame-predicate' entry, the corresponding
-value is a function taking one argument (a frame), returning
-non-nil if the frame is a candidate."
+If ALIST has a non-nil `frame-predicate' entry, its value is a
+function taking one argument (a frame), returning non-nil if the
+frame is a candidate; this function replaces the default
+predicate."
   (let* ((predicate (or (cdr (assoc 'frame-predicate alist))
                         (lambda (frame)
                           (and

@@ -2301,6 +2301,23 @@ the function specified in @code{pop-up-frame-function}
 is added to the newly created frame's parameters.
 @end defun
 
+@defun display-buffer-use-some-frame buffer alist
+This function tries to ``display'' @var{buffer} by trying to find a
+frame that meets a predicate (by default any frame other than the
+current frame).
+
+If @var{alist} has a non-@code{nil} @code{`inhibit-switch-frame} entry,
+avoid raising the frame.
+
+If @var{alist} has a non-nil @code{frame-predicate} entry, its value is a
+function taking one argument (a frame), returning non-nil if the
+frame is a candidate; this function replaces the default predicate.
+
+If this function chooses a window on another frame, it makes that frame
+visible and, unless @var{alist} contains an @code{inhibit-switch-frame}
+entry (@pxref{Choosing Window Options}), raises that frame if necessary.
+@end defun
+
 @defun display-buffer-pop-up-window buffer alist
 This function tries to display @var{buffer} by splitting the largest
 or least recently-used window (typically one on the selected frame).

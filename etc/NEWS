@@ -84,6 +84,11 @@ command line when `initial-buffer-choice' is non-nil.
 
 * Changes in Emacs 25.1
 
+** New display-buffer action function display-buffer-use-some-frame
+This displays the buffer in an existing frame other than the current
+frame, and allows the caller to specify a frame predicate to exclude
+frames.
+
 ** New doc command `describe-symbol'.  Works for functions, vars, faces, etc...
 
 ** `isearch' and `query-replace' now perform character folding in matches.
