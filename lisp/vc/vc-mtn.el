@@ -207,7 +207,10 @@ switches."
 					  comment))))
 
 (defun vc-mtn-find-revision (file rev buffer)
-  (vc-mtn-command buffer 0 file "cat" "-r" rev))
+  ;; null rev means latest revision
+  (if rev
+      (vc-mtn-command buffer 0 file "cat" "-r" rev)
+    (vc-mtn-command buffer 0 file "cat")))
 
 ;; (defun vc-mtn-checkout (file &optional rev)
 ;;   )
