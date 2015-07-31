@@ -2858,7 +2858,7 @@ get_wm_chars (HWND aWnd, int *buf, int buflen, int ignore_ctrl, int ctrl,
 	     || msg.message == WM_UNICHAR))
     {
       /* We extract character payload, but in this call we handle only the
-	 characters which comes BEFORE the next keyup/keydown message.  */
+	 characters which come BEFORE the next keyup/keydown message.  */
       int dead;
 
       GetMessageW(&msg, aWnd, msg.message, msg.message);
@@ -2962,7 +2962,7 @@ deliver_wm_chars (int do_translate, HWND hwnd, UINT msg, UINT wParam,
      The "usual" message pump calls TranslateMessage() for EVERY event.
      Emacs calls TranslateMessage() very selectively (is it needed for doing
      some tricky stuff with Win95???  With newer Windows, selectiveness is,
-     most probably, not needed - and harms a lot).
+     most probably, not needed -- and harms a lot).
 
      So, with the usual message pump, the following call to TranslateMessage()
      is not needed (and is going to be VERY harmful).  With Emacs' message
@@ -3058,7 +3058,7 @@ deliver_wm_chars (int do_translate, HWND hwnd, UINT msg, UINT wParam,
 
 	 Moreover: "traditional" layouts do not define distinct modifier-masks
 	 for VK_LMENU and VK_RMENU (same for VK_L/RCONTROL).  Instead, they
-	 rely on the KLLF_ALTGR bit to make the behaviour of VK_LMENU and
+	 rely on the KLLF_ALTGR bit to make the behavior of VK_LMENU and
 	 VK_RMENU distinct.  As a corollary, for such layouts, the produced
 	 character is the same for AltGr-* (=rAlt-*) and Ctrl-Alt-* (in any
 	 combination of handedness).  For description of masks, see
@@ -3153,7 +3153,7 @@ deliver_wm_chars (int do_translate, HWND hwnd, UINT msg, UINT wParam,
 		      /* In "traditional" layouts, Alt without Ctrl does not
 			 change the delivered character.  This detects this
 			 situation; it is safe to report this as Alt-something
-			  - as opposed to delivering the reported character
+			  -- as opposed to delivering the reported character
 			  without modifiers.  */
 		      if (legacy_alt_meta
 			  && *b > 0x7f && ('A' <= wParam && wParam <= 'Z'))
@@ -3421,6 +3421,8 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       /* Synchronize modifiers with current keystroke.  */
       sync_modifiers ();
       record_keydown (wParam, lParam);
+      if (w32_use_fallback_wm_chars_method)
+	wParam = map_keypad_keys (wParam, (lParam & 0x1000000L) != 0);
 
       windows_translate = 0;
 
@@ -3530,7 +3532,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    wParam = VK_NUMLOCK;
 	  break;
 	default:
-	  if (w32_unicode_gui)
+	  if (w32_unicode_gui && !w32_use_fallback_wm_chars_method)
 	    {
 	      /* If this event generates characters or deadkeys, do
 		 not interpret it as a "raw combination of modifiers
@@ -3557,7 +3559,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		 However, the keypress feeders would most probably
 		 expect the "standard" message pump, when
-		 TranslateMessage() is called on EVERY KeyDown/Keyup
+		 TranslateMessage() is called on EVERY KeyDown/KeyUp
 		 event.  So they may feed us Down-Ctrl Down-FAKE
 		 Char-o and expect us to recognize it as Ctrl-o.
 		 Using 0 as the first argument would interfere with
@@ -3566,7 +3568,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 #endif
 	      /* Processing the generated WM_CHAR messages *WHILE* we
 		 handle KEYDOWN/UP event is the best choice, since
-		 withoug any fuss, we know all 3 of: scancode, virtual
+		 without any fuss, we know all 3 of: scancode, virtual
 		 keycode, and expansion.  (Additionally, one knows
 		 boundaries of expansion of different keypresses.)  */
 	      res = deliver_wm_chars (1, hwnd, msg, wParam, lParam, 1);
@@ -9146,6 +9148,15 @@ fontsets are automatically created.  */);
 Set this to nil to get the old behavior for repainting; this should
 only be necessary if the default setting causes problems.  */);
   w32_strict_painting = 1;
+
+  DEFVAR_BOOL ("w32-use-fallback-wm-chars-method"
+	       w32_use_fallback_wm_chars_method,
+	       doc: /* Non-nil means use old method of processing character keys.
+This is intended only for debugging of the new processing method.
+Default is nil.
+
+This variable has effect only on NT family of systems, not on Windows 9X.  */);
+  w32_use_fallback_wm_chars_method = 0;
 
 #if 0 /* TODO: Port to W32 */
   defsubr (&Sx_change_window_property);
