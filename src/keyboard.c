@@ -7481,18 +7481,19 @@ menu_bar_items (Lisp_Object old)
 	   properties may not work reliable, as they are only
 	   recognized when the menu-bar (or mode-line) is updated,
 	   which does not normally happen after every command.  */
-	Lisp_Object tem;
-	ptrdiff_t nminor;
-	nminor = current_minor_maps (NULL, &tmaps);
+	ptrdiff_t nminor = current_minor_maps (NULL, &tmaps);
 	SAFE_NALLOCA (maps, 1, nminor + 4);
 	nmaps = 0;
-	tem = KVAR (current_kboard, Voverriding_terminal_local_map);
+	Lisp_Object tem = KVAR (current_kboard, Voverriding_terminal_local_map);
 	if (!NILP (tem) && !NILP (Voverriding_local_map_menu_flag))
 	  maps[nmaps++] = tem;
 	if (tem = get_local_map (PT, current_buffer, Qkeymap), !NILP (tem))
 	  maps[nmaps++] = tem;
-	memcpy (maps + nmaps, tmaps, nminor * sizeof (maps[0]));
-	nmaps += nminor;
+	if (nminor != 0)
+	  {
+	    memcpy (maps + nmaps, tmaps, nminor * sizeof (maps[0]));
+	    nmaps += nminor;
+	  }
 	maps[nmaps++] = get_local_map (PT, current_buffer, Qlocal_map);
       }
     maps[nmaps++] = current_global_map;
@@ -8030,18 +8031,19 @@ tool_bar_items (Lisp_Object reuse, int *nitems)
 	 properties may not work reliable, as they are only
 	 recognized when the tool-bar (or mode-line) is updated,
 	 which does not normally happen after every command.  */
-      Lisp_Object tem;
-      ptrdiff_t nminor;
-      nminor = current_minor_maps (NULL, &tmaps);
+      ptrdiff_t nminor = current_minor_maps (NULL, &tmaps);
       SAFE_NALLOCA (maps, 1, nminor + 4);
       nmaps = 0;
-      tem = KVAR (current_kboard, Voverriding_terminal_local_map);
+      Lisp_Object tem = KVAR (current_kboard, Voverriding_terminal_local_map);
       if (!NILP (tem) && !NILP (Voverriding_local_map_menu_flag))
 	maps[nmaps++] = tem;
       if (tem = get_local_map (PT, current_buffer, Qkeymap), !NILP (tem))
 	maps[nmaps++] = tem;
-      memcpy (maps + nmaps, tmaps, nminor * sizeof (maps[0]));
-      nmaps += nminor;
+      if (nminor != 0)
+	{
+	  memcpy (maps + nmaps, tmaps, nminor * sizeof (maps[0]));
+	  nmaps += nminor;
+	}
       maps[nmaps++] = get_local_map (PT, current_buffer, Qlocal_map);
     }
 
