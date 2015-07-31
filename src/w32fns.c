@@ -9149,7 +9149,7 @@ Set this to nil to get the old behavior for repainting; this should
 only be necessary if the default setting causes problems.  */);
   w32_strict_painting = 1;
 
-  DEFVAR_BOOL ("w32-use-fallback-wm-chars-method"
+  DEFVAR_BOOL ("w32-use-fallback-wm-chars-method",
 	       w32_use_fallback_wm_chars_method,
 	       doc: /* Non-nil means use old method of processing character keys.
 This is intended only for debugging of the new processing method.
