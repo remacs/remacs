@@ -320,7 +320,7 @@ Errors out if the key exists already."
 	   (when (and (< 0 expected)
 		      (= 0 (mod count 1000)))
 	     (message "reindexing: %d of %d (%.2f%%)"
-		      count expected (/ (* 100 count) expected)))
+		      count expected (/ (* 100.0 count) expected)))
 	   (dolist (val (cdr-safe (assq tr v)))
 	     (let* ((value-keys (registry-lookup-secondary-value db tr val)))
 	       (push key value-keys)

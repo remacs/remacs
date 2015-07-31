@@ -747,7 +747,7 @@ buffer, otherwise searching starts at START-HERE."
       ;; Loop over docstrings.
       (while (checkdoc-next-docstring)
         (message "Searching for doc string spell error...%d%%"
-                 (/ (* 100 (point)) (point-max)))
+                 (floor (* 100.0 (point)) (point-max)))
         (if (looking-at "\"")
             (checkdoc-ispell-docstring-engine
              (save-excursion (forward-sexp 1) (point-marker)))))
@@ -767,7 +767,7 @@ buffer, otherwise searching starts at START-HERE."
       ;; Loop over message strings.
       (while (checkdoc-message-text-next-string (point-max))
         (message "Searching for message string spell error...%d%%"
-                 (/ (* 100 (point)) (point-max)))
+                 (floor (* 100.0 (point)) (point-max)))
         (if (looking-at "\"")
             (checkdoc-ispell-docstring-engine
              (save-excursion (forward-sexp 1) (point-marker)))))
@@ -791,7 +791,7 @@ perform the fix."
       (condition-case nil
 	  (while (and (not msg) (checkdoc-next-docstring))
 	    (message "Searching for doc string error...%d%%"
-		     (/ (* 100 (point)) (point-max)))
+		     (floor (* 100.0 (point)) (point-max)))
 	    (if (setq msg (checkdoc-this-string-valid))
 		(setq msg (cons msg (point)))))
 	;; Quit.. restore position,  Other errors, leave alone
@@ -813,7 +813,7 @@ assumes that the cursor is already positioned to perform the fix."
 		      (setq type
 			    (checkdoc-message-text-next-string (point-max))))
 	    (message "Searching for message string error...%d%%"
-		     (/ (* 100 (point)) (point-max)))
+		     (floor (* 100.0 (point)) (point-max)))
 	    (if (setq msg (checkdoc-message-text-engine type))
 		(setq msg (cons msg (point)))))
 	;; Quit.. restore position,  Other errors, leave alone

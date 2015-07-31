@@ -1100,7 +1100,7 @@ only the last one's marks are returned."
         (when (and (< 0 expected)
                    (= 0 (mod count 100)))
           (message "importing: %d of %d (%.2f%%)"
-                   count expected (/ (* 100 count) expected)))
+                   count expected (/ (* 100.0 count) expected)))
         (setq entry (car-safe old)
               old (cdr-safe old))
         (let* ((id (car-safe entry))

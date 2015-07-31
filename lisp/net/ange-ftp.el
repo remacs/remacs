@@ -1613,7 +1613,7 @@ good, skip, fatal, or unknown."
 			  -6)))
 	 (if (zerop ange-ftp-xfer-size)
 	     (ange-ftp-message "%s...%dk" ange-ftp-process-msg kbytes)
-	   (let ((percent (/ (* 100 kbytes) ange-ftp-xfer-size)))
+	   (let ((percent (floor (* 100.0 kbytes) ange-ftp-xfer-size)))
 	     ;; cut out the redisplay of identical %-age messages.
 	     (unless (eq percent ange-ftp-last-percent)
 	       (setq ange-ftp-last-percent percent)

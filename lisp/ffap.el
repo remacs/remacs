@@ -1568,7 +1568,7 @@ Applies `ffap-menu-text-plist' text properties at all matches."
 	    (add-text-properties (car ffap-string-at-point-region) (point)
 				 ffap-menu-text-plist)
 	    (message "Scanning...%2d%% <%s>"
-		     (/ (* 100 (- (point) (point-min))) range) item)))
+		     (floor (* 100.0 (- (point) (point-min))) range) item)))
       (or mod (restore-buffer-modified-p nil))))
   (message "Scanning...done")
   ;; Remove duplicates.

@@ -594,14 +594,9 @@ It lists the current state of `erc-dcc-list' in an easy to read manner."
                                             (get-buffer (plist-get elt :file))
                                           (+ (buffer-size) 0.0
                                              erc-dcc-byte-count))))
-                        (concat " ("
-                                (if (= byte-count 0)
-                                    "0"
-                                  (number-to-string
-                                   (truncate
-                                    (* 100
-                                       (/ byte-count (plist-get elt :size))))))
-                                "%)"))))
+                        (format " (%d%%)"
+                                (floor (* 100.0 byte-count)
+                                       (plist-get elt :size))))))
        ?f (or (and (plist-member elt :file) (plist-get elt :file)) "")))
     (erc-display-message
      nil 'notice 'active

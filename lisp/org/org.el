@@ -4346,7 +4346,8 @@ If TABLE-TYPE is non-nil, also check for table.el-type tables."
       (goto-char (point-min))
       (while (re-search-forward org-table-any-line-regexp nil t)
 	(unless quietly
-	  (message "Mapping tables: %d%%" (/ (* 100.0 (point)) (buffer-size))))
+	  (message "Mapping tables: %d%%"
+		   (floor (* 100.0 (point)) (buffer-size))))
 	(beginning-of-line 1)
 	(when (and (looking-at org-table-line-regexp)
 		   ;; Exclude tables in src/example/verbatim/clocktable blocks
@@ -12679,7 +12680,8 @@ statistics everywhere."
 	    	(outline-next-heading)))
 	    (setq new
 	    	  (if is-percent
-	    	      (format "[%d%%]" (/ (* 100 cnt-done) (max 1 cnt-all)))
+		      (format "[%d%%]" (floor (* 100.0 cnt-done)
+					      (max 1 cnt-all)))
 	    	    (format "[%d/%d]" cnt-done cnt-all))
 	    	  ndel (- (match-end 0) checkbox-beg))
 	    ;; handle overlays when updating cookie from column view

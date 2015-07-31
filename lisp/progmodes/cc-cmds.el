@@ -1809,7 +1809,7 @@ with a brace block."
   (c-save-buffer-state
       (beginning-of-defun-function end-of-defun-function
        where pos name-end case-fold-search)
- 
+
     (save-restriction
       (widen)
       (save-excursion
@@ -3412,7 +3412,7 @@ Otherwise reindent just the current line."
       (if (< c-progress-interval (- now lastsecs))
 	  (progn
 	    (message "Indenting region... (%d%% complete)"
-		     (/ (* 100 (- (point) start)) (- end start)))
+		     (floor (* 100.0 (- (point) start)) (- end start)))
 	    (aset c-progress-info 2 now)))
       )))
 

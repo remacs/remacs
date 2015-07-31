@@ -728,7 +728,7 @@ command whose response triggered the error."
                     (> number nntp-large-newsgroup)
                     (zerop (% received 20))
                     (nnheader-message 6 "NNTP: Receiving headers... %d%%"
-                                      (/ (* received 100) number)))
+                                      (floor (* received 100.0) number)))
                (nntp-accept-response))))
          (and (numberp nntp-large-newsgroup)
               (> number nntp-large-newsgroup)
@@ -965,7 +965,7 @@ command whose response triggered the error."
                   (> number nntp-large-newsgroup)
                   (zerop (% received 20))
                   (nnheader-message 6 "NNTP: Receiving articles... %d%%"
-                                    (/ (* received 100) number)))
+                                    (floor (* received 100.0) number)))
              (nntp-accept-response))))
        (and (numberp nntp-large-newsgroup)
             (> number nntp-large-newsgroup)

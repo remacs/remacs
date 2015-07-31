@@ -1255,10 +1255,7 @@ in *Help* buffer.  See also the command `describe-char'."
 	 (end (point-max))
          (pos (point))
 	 (total (buffer-size))
-	 (percent (if (> total 50000)
-		      ;; Avoid overflow from multiplying by 100!
-		      (/ (+ (/ total 200) (1- pos)) (max (/ total 100) 1))
-		    (/ (+ (/ total 2) (* 100 (1- pos))) (max total 1))))
+	 (percent (round (* 100.0 (1- pos)) (max 1 total)))
 	 (hscroll (if (= (window-hscroll) 0)
 		      ""
 		    (format " Hscroll=%d" (window-hscroll))))

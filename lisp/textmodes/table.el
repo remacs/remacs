@@ -1893,7 +1893,9 @@ all the table specific features."
 	    (while (and (re-search-forward border3 (point-max) t)
 			(not (and (input-pending-p)
 				  table-abort-recognition-when-input-pending)))
-	      (message "Recognizing tables...(%d%%)" (/ (* 100 (match-beginning 0)) (- (point-max) (point-min))))
+	      (message "Recognizing tables...(%d%%)"
+		       (floor (* 100.0 (match-beginning 0))
+			      (- (point-max) (point-min))))
 	      (let ((beg (match-beginning 0))
 		    end)
 		(if (re-search-forward non-border (point-max) t)

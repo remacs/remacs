@@ -658,7 +658,7 @@ If SECRET is non-nil, list secret keys instead of public keys."
 	(if (= current total)
 	    (message "%s...done" prompt)
 	  (message "%s...%d%%" prompt
-		   (floor (* (/ current (float total)) 100))))
+		   (floor (* 100.0 current) total)))
       (message "%s..." prompt))))
 
 (defun epa-read-file-name (input)

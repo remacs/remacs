@@ -234,7 +234,8 @@ A prefix arg suppresses display of that buffer."
       (cpp-progress-message "Parsing...")
       (while (re-search-forward cpp-parse-regexp nil t)
 	(cpp-progress-message "Parsing...%d%%"
-			  (/ (* 100 (- (point) (point-min))) (buffer-size)))
+			      (floor (* 100.0 (- (point) (point-min)))
+				     (buffer-size)))
 	(let ((match (buffer-substring (match-beginning 0) (match-end 0))))
 	  (cond ((or (string-equal match "'")
 		     (string-equal match "\""))

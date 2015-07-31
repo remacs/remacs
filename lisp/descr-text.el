@@ -542,9 +542,7 @@ relevant to POS."
                ,(let* ((beg      (point-min))
                        (end      (point-max))
                        (total    (buffer-size))
-                       (percent  (if (> total 50000) ; Avoid overflow multiplying by 100
-                                     (/ (+ (/ total 200) (1- pos))  (max (/ total 100) 1))
-                                   (/ (+ (/ total 2) (* 100 (1- pos)))  (max total 1))))
+                       (percent  (round (* 100.0 (1- pos)) (max total 1)))
                        (hscroll  (if (= (window-hscroll) 0)
                                      ""
                                    (format ", Hscroll: %d" (window-hscroll))))

@@ -7383,11 +7383,11 @@ only-lines."
 		(- (nth 1 (current-time)) (aref vhdl-progress-info 2))))
     (let ((delta (- (aref vhdl-progress-info 1)
                     (aref vhdl-progress-info 0))))
-      (if (= 0 delta)
-          (message (concat string "... (100%s)") "%")
-        (message (concat string "... (%2d%s)")
-                 (/ (* 100 (- pos (aref vhdl-progress-info 0)))
-                    delta) "%")))
+      (message "%s... (%2d%%)" string
+	       (if (= 0 delta)
+		   100
+                 (floor (* 100.0 (- pos (aref vhdl-progress-info 0)))
+                        delta))))
     (aset vhdl-progress-info 2 (nth 1 (current-time)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -13881,10 +13881,10 @@ hierarchy otherwise.")
       ;; do for all files
       (while file-list
 	(unless noninteractive
-	  (message "Scanning %s %s\"%s\"... (%2d%s)"
+	  (message "Scanning %s %s\"%s\"... (%2d%%)"
 		   (if is-directory "directory" "files")
 		   (or num-string "") name
-		   (/ (* 100 (- no-files (length file-list))) no-files) "%"))
+		   (floor (* 100.0 (- no-files (length file-list))) no-files)))
 	(let ((file-name (abbreviate-file-name (car file-list)))
 	      ent-list arch-list arch-ent-list conf-list
 	      pack-list pack-body-list inst-list inst-ent-list)
