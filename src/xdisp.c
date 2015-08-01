@@ -839,6 +839,9 @@ static void normal_char_ascent_descent (struct font *, int, int *, int *);
 static void append_stretch_glyph (struct it *, Lisp_Object,
                                   int, int, int);
 
+static Lisp_Object get_it_property (struct it *, Lisp_Object);
+static Lisp_Object calc_line_height_property (struct it *, Lisp_Object,
+					      struct font *, int, bool);
 
 #endif /* HAVE_WINDOW_SYSTEM */
 
@@ -19205,12 +19208,74 @@ append_space_for_newline (struct it *it, bool default_face_p)
 #ifdef HAVE_WINDOW_SYSTEM
 	  /* Make sure this space glyph has the right ascent and
 	     descent values, or else cursor at end of line will look
-	     funny.  */
+	     funny, and height of empty lines will be incorrect.  */
 	  g = it->glyph_row->glyphs[TEXT_AREA] + n;
 	  struct font *font = face->font ? face->font : FRAME_FONT (it->f);
 	  if (n == 0 || it->glyph_row->height < font->pixel_size)
 	    {
+	      Lisp_Object height, total_height;
+	      int extra_line_spacing = it->extra_line_spacing;
+	      int boff = font->baseline_offset;
+
+	      if (font->vertical_centering)
+		boff = VCENTER_BASELINE_OFFSET (font, it->f) - boff;
+
+	      it->object = saved_object; /* get_it_property needs this */
 	      normal_char_ascent_descent (font, -1, &it->ascent, &it->descent);
+	      /* Must do a subset of line height processing from
+		 x_produce_glyph for newline characters.  */
+	      height = get_it_property (it, Qline_height);
+	      if (CONSP (height)
+		  && CONSP (XCDR (height))
+		  && NILP (XCDR (XCDR (height))))
+		{
+		  total_height = XCAR (XCDR (height));
+		  height = XCAR (height);
+		}
+	      else
+		total_height = Qnil;
+	      height = calc_line_height_property (it, height, font, boff, true);
+
+	      if (it->override_ascent >= 0)
+		{
+		  it->ascent = it->override_ascent;
+		  it->descent = it->override_descent;
+		  boff = it->override_boff;
+		}
+	      if (EQ (height, Qt))
+		extra_line_spacing = 0;
+	      else
+		{
+		  Lisp_Object spacing;
+
+		  it->phys_ascent = it->ascent;
+		  it->phys_descent = it->descent;
+		  if (!NILP (height)
+		      && XINT (height) > it->ascent + it->descent)
+		    it->ascent = XINT (height) - it->descent;
+
+		  if (!NILP (total_height))
+		    spacing = calc_line_height_property (it, total_height, font,
+							 boff, false);
+		  else
+		    {
+		      spacing = get_it_property (it, Qline_spacing);
+		      spacing = calc_line_height_property (it, spacing, font,
+							   boff, false);
+		    }
+		  if (INTEGERP (spacing))
+		    {
+		      extra_line_spacing = XINT (spacing);
+		      if (!NILP (total_height))
+			extra_line_spacing -= (it->phys_ascent + it->phys_descent);
+		    }
+		}
+	      if (extra_line_spacing > 0)
+		{
+		  it->descent += extra_line_spacing;
+		  if (extra_line_spacing > it->max_extra_line_spacing)
+		    it->max_extra_line_spacing = extra_line_spacing;
+		}
 	      it->max_ascent = it->ascent;
 	      it->max_descent = it->descent;
 	      /* Make sure compute_line_metrics recomputes the row height.  */
