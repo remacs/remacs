@@ -791,7 +791,8 @@ to search in, and the file name pattern to search for."
           (lambda (_kind regexp)
             (cl-mapcan
              (lambda (dir)
-               (xref-collect-matches regexp files dir (project-ignores proj)))
+               (xref-collect-matches regexp files dir
+                                     (project-ignores proj dir)))
              dirs))))
     (xref--show-xrefs regexp 'matches regexp nil)))
 

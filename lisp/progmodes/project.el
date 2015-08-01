@@ -78,10 +78,12 @@ It should include the current project root, as well as the roots
 of any other currently open projects, if they're meant to be
 edited together.  The directory names should be absolute.")
 
-(cl-defgeneric project-ignores (_project)
-  "Return the list of glob patterns that match ignored files.
+(cl-defgeneric project-ignores (_project _dir)
+  "Return the list of glob patterns to ignore inside DIR.
+Patterns can match both regular files and directories.
 To root an entry, start it with `./'.  To match directories only,
-end it with `/'."
+end it with `/'.  DIR must be either one of `project-roots', or
+an element of `project-search-path'."
   (require 'grep)
   (defvar grep-find-ignored-files)
   (nconc
@@ -100,16 +102,18 @@ end it with `/'."
 (cl-defmethod project-roots ((project (head vc)))
   (list (cdr project)))
 
-(cl-defmethod project-ignores ((project (head vc)))
+(cl-defmethod project-ignores ((project (head vc)) dir)
   (nconc
-   (let* ((dir (cdr project))
-          (backend (vc-responsible-backend dir)))
-     (mapcar
-      (lambda (entry)
-        (if (string-match "\\`/" entry)
-            (replace-match "./" t t entry)
-          entry))
-      (vc-call-backend backend 'ignore-completion-table dir)))
+   (let* ((root (cdr project))
+          backend)
+     (when (file-equal-p dir root)
+       (setq backend (vc-responsible-backend root))
+       (mapcar
+        (lambda (entry)
+          (if (string-match "\\`/" entry)
+              (replace-match "./" t t entry)
+            entry))
+        (vc-call-backend backend 'ignore-completion-table root))))
    (cl-call-next-method)))
 
 (defun project-ask-user (dir)
