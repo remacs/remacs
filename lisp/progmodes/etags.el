@@ -1754,7 +1754,7 @@ if the file was newly read in, the value is the filename."
 	 (with-current-buffer buffer
 	   (revert-buffer t t)))
     (if (not (and new novisit))
-	(find-file next novisit)
+	(find-file next)
       ;; Like find-file, but avoids random warning messages.
       (switch-to-buffer (get-buffer-create " *next-file*"))
       (kill-all-local-variables)
