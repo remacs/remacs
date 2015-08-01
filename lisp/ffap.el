@@ -1134,7 +1134,7 @@ Sets the variable `ffap-string-at-point-region' to the bounds of URL, if any."
 					   (match-end 2))))
 		(set var val)
 		(forward-line 1)))
-            (setcdr ffap-string-at-point-region (point))
+            (setcdr ffap-string-at-point-region (list (point)))
 	    (if (and path (string-match "^ftp:.*@" path))
 		(concat "ftp://"
 			(substring path 4 (1- (match-end 0)))
