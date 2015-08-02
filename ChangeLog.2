@@ -1,3 +1,407 @@
+2015-08-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Substitute some customization etc. doc strings
+	These changes apply substitute-command-keys to some
+	doc strings that were going through untranslated
+	when creating customization or other widgets.
+	* lisp/cus-edit.el (custom-group-value-create):
+	* lisp/wid-edit.el (widget-default-create):
+	(widget-push-button-value-create):
+	Treat the widget tag as a doc string.
+	* lisp/emacs-lisp/cl-extra.el (cl--describe-class-slot):
+	Treat the :documentation value as a doc string.
+	* lisp/wid-edit.el (widget-choose):
+	Treat the choice names as doc strings.
+	(widget-default-create): Treat the :doc value as a doc string.
+	(widget-toggle-value-create): Treat the :on and :off values
+	as doc strings.
+	(widget-documentation-string-value-create):
+	Substitute the doc string.
+
+2015-08-01  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Add a second argument to project-ignores
+	* lisp/progmodes/project.el (project-ignores): Add a second
+	argument DIR.
+	* lisp/progmodes/project.el (project-ignores): Only include the VC
+	ignores if DIR is the VC root.
+	* lisp/progmodes/xref.el (xref-find-regexp): Update accordingly.
+
+2015-08-01  Eli Zaretskii  <eliz@gnu.org>
+
+	Prevent incorrect display when 'line-spacing' variable is set
+	* src/xdisp.c (try_window_id): Give up this optimization if the
+	buffer has its 'line-spacing' variable set non-nil.
+
+2015-08-01  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Don't pass NOVISIT to find-file
+	* lisp/progmodes/etags.el (next-file):
+	Don't pass NOVISIT to find-file (bug#21175).
+
+	Ignore buffer restriction for tags-loop-eval
+	* lisp/progmodes/etags.el (tags-loop-continue): Ignore buffer
+	restriction (bug#21167).
+
+2015-08-01  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a thinko in 'ffap-gopher-at-point'
+	* lisp/ffap.el (ffap-gopher-at-point): Fix last change.  (Bug#21168)
+
+	Honor 'line-spacing' for empty lines
+	* src/xdisp.c (append_space_for_newline): Honor 'line-height'
+	property and 'line-spacing' frame parameter or variable or
+	property for empty lines, by doing the same processing as in
+	x_produce_glyph for newline characters.  (Bug#21165)
+
+2015-08-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Simplify by assuming C99 integer division
+	* src/floatfns.c (ceiling2, floor2, truncate2):
+	Assume C99 (i.e., Fortran) semantics for integer division.
+	This simplifies the code.
+
+2015-07-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Don't overflow if computing approximate percentage
+	* lisp/align.el (align-region):
+	* lisp/cedet/semantic.el (semantic-repeat-parse-whole-stream):
+	* lisp/cedet/semantic/wisent.el (wisent-parse-region):
+	* lisp/cus-edit.el (custom-buffer-create-internal):
+	* lisp/emacs-lisp/checkdoc.el (checkdoc-interactive-ispell-loop)
+	(checkdoc-message-interactive-ispell-loop, checkdoc-next-error)
+	(checkdoc-next-message-error):
+	* lisp/emacs-lisp/eieio-opt.el (eieio-display-method-list):
+	* lisp/epa.el (epa-progress-callback-function):
+	* lisp/erc/erc-dcc.el (erc-dcc-do-LIST-command):
+	* lisp/ffap.el (ffap-menu-rescan):
+	* lisp/gnus/nnbabyl.el (nnbabyl-retrieve-headers):
+	* lisp/gnus/nndiary.el (nndiary-retrieve-headers):
+	* lisp/gnus/nneething.el (nneething-retrieve-headers):
+	* lisp/gnus/nnmbox.el (nnmbox-retrieve-headers):
+	* lisp/gnus/nnmh.el (nnmh-retrieve-headers):
+	* lisp/gnus/nnml.el (nnml-retrieve-headers):
+	* lisp/gnus/nnspool.el (nnspool-retrieve-headers):
+	* lisp/gnus/nntp.el (nntp-retrieve-headers)
+	(nntp-retrieve-articles):
+	* lisp/imenu.el (imenu--relative-position):
+	* lisp/international/ja-dic-cnv.el (skkdic-collect-okuri-nasi)
+	(skkdic-convert-okuri-nasi):
+	* lisp/net/ange-ftp.el (ange-ftp-process-handle-hash):
+	* lisp/nxml/rng-valid.el (rng-compute-mode-line-string):
+	* lisp/org/org-list.el (org-update-checkbox-count):
+	* lisp/org/org.el (org-table-map-tables)
+	(org-update-parent-todo-statistics):
+	* lisp/play/decipher.el (decipher-insert-frequency-counts)
+	(decipher-analyze-buffer):
+	* lisp/profiler.el (profiler-format-percent):
+	* lisp/progmodes/cc-cmds.el (c-progress-update):
+	* lisp/progmodes/cpp.el (cpp-highlight-buffer):
+	* lisp/progmodes/idlwave.el (idlwave-convert-xml-system-routine-info)
+	(idlwave-list-load-path-shadows):
+	* lisp/progmodes/opascal.el (opascal-step-progress):
+	* lisp/progmodes/vhdl-mode.el (vhdl-update-progress-info)
+	(vhdl-scan-directory-contents):
+	* lisp/textmodes/bibtex.el (bibtex-progress-message):
+	* lisp/textmodes/flyspell.el (flyspell-small-region)
+	(flyspell-external-point-words):
+	* lisp/textmodes/table.el (table-recognize):
+	Prefer (floor (* 100.0 NUMERATOR) DENOMINATOR) when calculating
+	progress-report percentages and the like.  This avoids problems
+	if (* 100 NUMERATOR) would overflow.
+	* lisp/gnus/gnus-registry.el (gnus-registry-import-eld):
+	* lisp/gnus/registry.el (registry-reindex):
+	Use (* 100.0 ...) rather than (* 100 ...) to avoid int overflow issues.
+	* lisp/descr-text.el (describe-char):
+	* lisp/org/org-colview.el (org-nofm-to-completion):
+	* lisp/ps-print.el (ps-plot):
+	* lisp/simple.el (what-cursor-position):
+	Prefer (round (* 100.0 NUMERATOR) DENOMINATOR) to a
+	more-complicated and less-accurate approximation.
+
+	Fix some int overflows in profiler.c
+	* src/profiler.c (make_log): Make args EMACS_INT, not int,
+	to avoid unwanted behavior on 'int' overflow.
+	(make_log, evict_lower_half, record_backtrace):
+	Use ptrdiff_t, not int, for object indexes.
+
+	Port to pedantic memcpy
+	* src/keyboard.c (menu_bar_items, tool_bar_items):
+	* src/xrdb.c (magic_db):
+	Port to pedantic memcpy implementations that reject memcpy (0, 0, 0).
+
+	Merge from gnulib
+	This incorporates:
+	2015-07-29 time_rz: port to pedantic memcpy
+	* lib/time_rz.c: Copy from gnulib.
+
+2015-07-31  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/tabulated-list.el (tabulated-list-print): Fix bug
+	When updating the very last entry, tabulated-list-print would
+	erase it and then try to look at the next one (which obviously
+	isn't there).
+
+2015-07-31  Eli Zaretskii  <eliz@gnu.org>
+
+	;* src/w32fns.c (syms_of_w32fns): Fix last commit.
+
+	Allow to use the old key processing code on MS-Windows
+	* src/w32fns.c (syms_of_w32fns) <w32-use-fallback-wm-chars-method>:
+	New variable.
+	(w32_wnd_proc): Use it to invoke the old code that processed
+	character keys, as fallback, when this variable is non-nil.  Fix
+	typos in comments.  (Bug#19994)
+
+2015-07-31  Ilya Zakharevich  <ilya@math.berkeley.edu>
+
+	Improve handling of Unicode keyboard input on MS-Windows
+	* src/w32fns.c (get_wm_chars, deliver_wm_chars): New functions.
+	(FPRINTF_WM_CHARS) [DEBUG_WM_CHARS]: New macro for debugging.
+	(w32_wnd_proc): Call deliver_wm_chars to process non-special keys
+	upon receiving WM_KEYDOWN or WM_SYSKEYDOWN messages.  If that is
+	successful, don't call TranslateMessage.  (Bug#19994)
+
+2015-07-30  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Fix default-directory in changeset diffs after vc-print-log
+	* lisp/vc/log-view.el (log-view-diff-common): Move the
+	revision-granularity check back into log-view-diff-changeset.
+	(log-view-diff-changeset): Bind default-directory to the current
+	VC root.
+
+	Rename project-directories to project-roots
+	* lisp/progmodes/project.el (project-search-path-function)
+	(project-search-path): Update the docstring.
+	(project-directories): Rename to `project-roots', update all
+	callers and implementations accordingly.
+	(project-root): Remove.
+	* lisp/progmodes/xref.el (xref-find-regexp): Use * instead of *.*
+	as the default file mask.
+
+2015-07-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Support long URLs in w32-shell-execute
+	* src/w32fns.c (Fw32_shell_execute): Don't use filename_to_utf16
+	and filename_to_ansi to convert the DOCUMENT argument, as it could
+	be a URL that is not limited to MAX_PATH characters.  Instead, use
+	MultiByteToWideChar directly, and allocate heap storage as
+	required to accommodate the converted string.  Likewise with
+	non-Unicode operation.  Ensure OPERATION is null-terminated, even
+	if it is longer than 32K bytes.  (Bug#21158)
+
+2015-07-30  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	vc-mtn-find-revision handle null rev.
+	* lisp/vc/vc-mtn.el (vc-mtn-find-revision): handle null rev
+
+2015-07-29  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	Add docs for display-buffer action display-buffer-use-some-frame
+	* lisp/window.el (display-buffer-use-some-frame): improve doc string
+	* doc/lispref/windows.texi (Display Action Functions): add
+	  display-buffer-use-some-frame
+	* etc/NEWS: mention display-buffer-use-some-frame
+
+	Add display-buffer action display-buffer-use-some-frame
+	* lisp/window.el (display-buffer-use-some-frame): new
+
+	Handle vc-mtn error more gently
+	* lisp/vc/vc-mtn.el (vc-mtn-mode-line-string): return "" when branch is nil
+
+2015-07-29  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix Tramp problems with multihops, and nc.
+	* lisp/net/tramp-cache.el (tramp-get-file-property)
+	(tramp-set-file-property, tramp-flush-file-property)
+	(tramp-get-connection-property, tramp-set-connection-property)
+	(tramp-flush-connection-property): Remove hop from vector.
+	* lisp/net/tramp-gw.el (tramp-gw-process-filter): Ignore errors.
+	* lisp/net/tramp-sh.el (tramp-methods) <nc>: Separate STDERR.
+	(tramp-do-copy-or-rename-file-out-of-band): Increase timeout of
+	netstat to 60".
+	(tramp-sh-handle-start-file-process): Do not show hops in prompt.
+	* lisp/net/tramp.el (tramp-handle-file-name-as-directory)
+	(tramp-handle-file-name-directory, tramp-handle-file-remote-p):
+	Keep hop in result.
+	* test/automated/tramp-tests.el (tramp-test02-file-name-dissect):
+	Add hop tests.
+
+2015-07-29  Eli Zaretskii  <eliz@gnu.org>
+
+	Resurrect highlighting of repeated words by Flyspell Mode
+	* lisp/textmodes/flyspell.el (flyspell-word): Leave some non-word
+	characters between point and the doublon candidate, so that
+	flyspell-word-search-backward finds it.  (Bug#21157)
+
+	Fix redisplay of large images on expose events
+	* src/xdisp.c (expose_window, expose_area): Avoid comparisons
+	between signed negative values and unsigned values.  This
+	prevented redisplay on expose events when the window showed a very
+	large image.
+
+2015-07-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Remove unnecessary stack overflow dependency
+	* configure.ac (HAVE_STACK_OVERFLOW_HANDLING):
+	Don't worry about $ac_cv_header_sys_resource_h and
+	$ac_cv_func_getrlimit, as they're no longer needed for this.
+	Problem reported by Eli Zaretskii in:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-07/msg00443.html
+
+2015-07-28  Andy Moreton  <andrewjmoreton@gmail.com>  (tiny change)
+
+	Pacify compilation -Wincompatible-pointer-types warnings
+	* src/w32proc.c (Fw32_get_codepage_charset): Avoid compilation
+	warning.
+	(CompareStringW_Proc): New typedef.
+	(w32_compare_strings): Use it, to pacify compiler warnings under
+	"-Wincompatible-pointer-types".
+	* src/w32fns.c (GetDiskFreeSpaceExW_Proc)
+	(GetDiskFreeSpaceExA_Proc): New typedefs.
+	(Ffile_system_info): Use them, to pacify compiler warnings under
+	"-Wincompatible-pointer-types".
+
+2015-07-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix subscript error in calculate_direct_scrolling
+	Use slightly-longer cost vectors.  Without this change,
+	calculate_direct_scrolling can have a subscript violation when
+	FRAME_LINES (frame) <= delta.
+	* src/scroll.c (calculate_scrolling, calculate_direct_scrolling)
+	(line_ins_del, do_line_insertion_deletion_costs):
+	Allocate and use slightly-larger cost vectors, ones based on
+	FRAME_TOTAL_LINES instead of FRAME_LINES.
+
+	Fix uninitalized value in encode_coding_object
+	* src/coding.c (encode_coding_object): Also initialize
+	coding->src_pos and coding->src_pos_byte when NILP (src_object).
+	This avoids later use of uninitialized storage.
+
+2015-07-27  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* doc/lispref/variables.texi (Variable Aliases): Typo fix.  (Bug#21141)
+
+2015-07-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib
+	This incorporates:
+	2015-07-27 time_rz: port better to MinGW
+	2015-07-27 time: port __need_time_t to MinGW
+	* lib/gnulib.mk, m4/gnulib-comp.m4: Regenerate.
+	* lib/strftime.c, lib/time.in.h, lib/time_rz.c: Copy from gnulib.
+	* lib/time-internal.h: New file, from gnulib.
+
+2015-07-27  Eli Zaretskii  <eliz@gnu.org>
+
+	Handle NULL pointers in w32heap.c allocation routines
+	* src/w32heap.c (FREEABLE_P): Consider a NULL pointer "not
+	freeable".
+	(realloc_after_dump, realloc_before_dump, free_before_dump):
+	Handle NULL pointers gracefully, as Emacs now seems to expect
+	that.
+
+	Fix Cairo build without PNG
+	* src/image.c: Define PNG function when USE_CAIRO is defined, even
+	if HAVE_PNG is not.  (Bug#21133)
+
+	MS-Windows follow-up for recent TZ-related changes
+	* nt/mingw-cfg.site (ac_cv_header_pthread_h)
+	(gl_cv_sys_struct_timespec_in_pthread_h): Force to "no", to avoid
+	picking up 'struct timespec' from pthread.h, if it is installed on
+	the user's system.  We want either the definitions from MinGW
+	system headers, if available, or the Gnulib replacements if not.
+	* nt/inc/ms-w32.h <struct timespec>: Don't define, as we now use
+	lib/time.h.
+	* lib/time.in.h: Don't let __need_* symbols affect what happens on
+	MinGW.  These symbols are defined by MinGW system headers, but we
+	don't want that to affect whether Gnulib portions of the header
+	are or aren't used.
+
+2015-07-26  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* src/ftfont.c (ftfont_close): Add comment re Bug#20890.
+
+	New optional ZONE arg for format-time-string etc.
+	This simplifies time conversions in other time zones.
+	It also prevents display-time-world tampering with TZ (Bug#21020).
+	* admin/admin.el (add-release-logs):
+	Use improved add-log-time-format API.
+	* admin/merge-gnulib (GNULIB_MODULES): Add time_rz, timegm.
+	(GNULIB_TOOL_FLAGS): Avoid flexmember, setenv, unsetenv.
+	* configure.ac (tzalloc): Remove test for this, since
+	Emacs no longer uses HAVE_TZALLOC directly.
+	* doc/lispref/os.texi (Time of Day, Time Conversion)
+	(Time Parsing):
+	* etc/NEWS: Document the new behavior.
+	Merge from gnulib, incorporating:
+	2015-07-25 strftime: fix newly-introduced bug on Solaris
+	2015-07-23 fprintftime, strftime: use timezone_t args
+	* lib/gnulib.mk, m4/gnulib-comp.m4: Regenerate.
+	* lib/strftime.c, lib/strftime.h, lib/time.in.h, m4/sys_time_h.m4:
+	* m4/time_h.m4:
+	Update from gnulib.
+	* lib/time_rz.c, lib/timegm.c, m4/time_rz.m4, m4/timegm.m4:
+	New files from gnulib.
+	* lisp/time-stamp.el (time-stamp-string):
+	* lisp/time.el (display-time-world-list)
+	(display-time-world-display):
+	Use new API, with time zone arg.
+	* lisp/time.el (display-time-world-display):
+	Fix race when current-time advances while we're running.
+	* lisp/vc/add-log.el (add-log-iso8601-time-zone)
+	(add-log-iso8601-time-string): Accept optional time zone arg.
+	* lisp/vc/add-log.el (add-change-log-entry):
+	* lisp/vc/log-edit.el (log-edit-changelog-ours-p): Use new arg.
+	* nt/gnulib.mk: Propagate lib/gnulib.mk changes here.
+	Add rules for the time module, since they're now needed
+	for tzalloc etc.
+	* src/conf_post.h (getenv_TZ, setenv_TZ): New macros.
+	(emacs_getenv_TZ, emacs_setenv_TZ): New decls.
+	* src/editfns.c: Include errno.h.
+	(set_time_zone_rule): Omit unnecessary forward decl.
+	(initial_tz): Remove, replacing with ...
+	(local_tz, wall_clock_tz, utc_tz): New static vars and constants.
+	(tzeqlen): New constant; prefer it to (sizeof "TZ=" - 1).
+	(emacs_localtime_rz, emacs_mktime_z, xtzalloc, xtzfree)
+	(tzlookup): New static functions.
+	(init_editfns): New arg DUMPING.  All uses changed.
+	(init_editfns): Omit most initialization if dumping, not if
+	!initialized.  Initialize wall_clock_tz and local_tz.
+	(emacs_nmemftime, format_time_string): Time zone argument can now
+	be any time zone, not just a boolean for UTC or local time.  All
+	callers changed.
+	(Fformat_time_string, Fencode_time, Fcurrent_time_string)
+	(Fcurrent_time_zone): New optional arg ZONE.
+	(Fdecode_time, Fset_time_zone_rule): ZONE arg can now also take
+	the same form as with the other new additions.
+	(decode_time_zone): Remove; no longer needed.
+	(tzvalbuf): Now file-scope.
+	(emacs_getenv_TZ, emacs_setenv_TZ): New functions.
+	(syms_of_editfns): Define Qwall.
+	* src/editfns.c (mktime_z) [!HAVE_TZALLOC]:
+	* src/systime.h (mktime_z, timezone_t, tzalloc, tzfree)
+	[!HAVE_TZALLOC]:
+	Remove; now supplied by gnulib.
+	* src/emacs.c (main):
+	* src/lisp.h (init_editfns): Adjust to init_editfns API change.
+
+2015-07-26  Shigeru Fukaya  <shigeru.fukaya@gmail.com>
+
+	Fix infinite loop in delete-consecutive-dups
+	* lisp/subr.el (delete-consecutive-dups): Work even if the last
+	element is nil (Bug#20588).  Avoid rescan of a circular list in
+	deletion of last element.
+
+2015-07-26  Martin Rudalics  <rudalics@gmx.at>
+
+	Have `x-frame-geometry' return nil for terminal and initial frames (Bug#21132)
+	* src/nsfns.m (Fx_frame_geometry):
+	* src/xfns.c (Fx_frame_geometry): Return nil for initial and
+	terminal frames.
+	* src/w32fns.c (Fw32_frame_menu_bar_size, Fw32_frame_rect)
+	(Fx_frame_geometry): Return nil for terminal frames
+
 2015-07-26  HOSOYA Kei  <hosoyakei.free@gmail.com>  (tiny change)
 
 	* etc/tutorials/TUTORIAL.ja: Improve translation.
@@ -8170,7 +8574,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit 2cf501ce1b77e6e409871eef7b9d31a08e73cfc0 (inclusive).
+commit bd3b426ebb7a60045839e97c9da9bfd249fab1f1 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
