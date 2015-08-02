@@ -490,7 +490,7 @@ textual parts.")
 			(funcall (nth 2 credentials)))
 		      ;; See if CAPABILITY is set as part of login
 		      ;; response.
-		      (dolist (response (cddr login-result))
+		      (dolist (response (cddr (nnimap-command "CAPABILITY")))
 			(when (string= "CAPABILITY" (upcase (car response)))
 			  (setf (nnimap-capabilities nnimap-object)
 				(mapcar #'upcase (cdr response))))))
