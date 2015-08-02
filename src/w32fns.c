@@ -2848,11 +2848,11 @@ get_wm_chars (HWND aWnd, int *buf, int buflen, int ignore_ctrl, int ctrl,
     *ctrl_cnt = 0;
   if (is_dead)
     *is_dead = -1;
-  eassert(w32_unicode_gui);
+  eassert (w32_unicode_gui);
   while (buflen
 	 /* Should be called only when w32_unicode_gui:  */
-	 && PeekMessageW(&msg, aWnd, WM_KEYFIRST, WM_KEYLAST,
-		      PM_NOREMOVE | PM_NOYIELD)
+	 && PeekMessageW (&msg, aWnd, WM_KEYFIRST, WM_KEYLAST,
+			  PM_NOREMOVE | PM_NOYIELD)
 	 && (msg.message == WM_CHAR || msg.message == WM_SYSCHAR
 	     || msg.message == WM_DEADCHAR || msg.message == WM_SYSDEADCHAR
 	     || msg.message == WM_UNICHAR))
@@ -2861,7 +2861,7 @@ get_wm_chars (HWND aWnd, int *buf, int buflen, int ignore_ctrl, int ctrl,
 	 characters which come BEFORE the next keyup/keydown message.  */
       int dead;
 
-      GetMessageW(&msg, aWnd, msg.message, msg.message);
+      GetMessageW (&msg, aWnd, msg.message, msg.message);
       dead = (msg.message == WM_DEADCHAR || msg.message == WM_SYSDEADCHAR);
       if (is_dead)
 	*is_dead = (dead ? msg.wParam : -1);
@@ -2920,7 +2920,7 @@ get_wm_chars (HWND aWnd, int *buf, int buflen, int ignore_ctrl, int ctrl,
 	  && ((vk >= VK_NUMPAD0 && vk <= VK_DIVIDE)
 	      || (exp && ((vk >= VK_PRIOR && vk <= VK_DOWN) ||
 		     vk == VK_INSERT || vk == VK_DELETE || vk == VK_CLEAR)))
-	  && strchr("0123456789/*-+.,", code_unit))
+	  && strchr ("0123456789/*-+.,", code_unit))
 	continue;
       *buf++ = code_unit;
       buflen--;
@@ -2974,7 +2974,7 @@ deliver_wm_chars (int do_translate, HWND hwnd, UINT msg, UINT wParam,
       windows_msg.time = GetMessageTime ();
       TranslateMessage (&windows_msg);
     }
-  count = get_wm_chars (hwnd, buf, sizeof(buf)/sizeof(*buf), 1,
+  count = get_wm_chars (hwnd, buf, sizeof (buf)/sizeof (*buf), 1,
 			/* The message may have been synthesized by
 			   who knows what; be conservative.  */
 			modifier_set (VK_LCONTROL)
@@ -3140,7 +3140,7 @@ deliver_wm_chars (int do_translate, HWND hwnd, UINT msg, UINT wParam,
 	  if (type_CtrlAlt)
 	    {
 	      /* Out of bound bitmap:  */
-	      SHORT r = VkKeyScanW( *b ), bitmap = 0x1FF;
+	      SHORT r = VkKeyScanW (*b), bitmap = 0x1FF;
 
 	      FPRINTF_WM_CHARS((stderr, "VkKeyScanW %#06x %#04x\n", (int)r,
 			       wParam));
@@ -3203,12 +3203,12 @@ deliver_wm_chars (int do_translate, HWND hwnd, UINT msg, UINT wParam,
 		 other cases, we ignore the delivered character.  */
 #define S_TYPES_TO_IGNORE_CHARACTER_PAYLOAD "aldb"
 #define S_TYPES_TO_REPORT_CHARACTER_PAYLOAD_WITH_MODIFIERS ""
-	      if (strchr(S_TYPES_TO_IGNORE_CHARACTER_PAYLOAD,
-			 type_CtrlAlt[hairy]))
+	      if (strchr (S_TYPES_TO_IGNORE_CHARACTER_PAYLOAD,
+			  type_CtrlAlt[hairy]))
 		return 0;
 	      /* If in neither list, report all the modifiers we see COMBINED
 		 WITH the reported character.  */
-	      if (strchr(S_TYPES_TO_REPORT_CHARACTER_PAYLOAD_WITH_MODIFIERS,
+	      if (strchr (S_TYPES_TO_REPORT_CHARACTER_PAYLOAD_WITH_MODIFIERS,
 			  type_CtrlAlt[hairy]))
 		strip_ExtraMods = 0;
 	    }
@@ -3572,7 +3572,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		 keycode, and expansion.  (Additionally, one knows
 		 boundaries of expansion of different keypresses.)  */
 	      res = deliver_wm_chars (1, hwnd, msg, wParam, lParam, 1);
-	      windows_translate = -( res != 0 );
+	      windows_translate = -(res != 0);
 	      if (res > 0) /* Bound to character(s) or a deadkey */
 		break;
 	      /* deliver_wm_chars may make some branches after this vestigal.  */
