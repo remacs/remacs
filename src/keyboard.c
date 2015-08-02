@@ -2139,7 +2139,7 @@ show_help_echo (Lisp_Object help, Lisp_Object window, Lisp_Object object,
   if (STRINGP (help) || NILP (help))
     {
       if (!NILP (Vshow_help_function))
-	call1 (Vshow_help_function, help);
+	call1 (Vshow_help_function, Fsubstitute_command_keys (help));
       help_echo_showing_p = STRINGP (help);
     }
 }
@@ -7720,7 +7720,8 @@ parse_menu_item (Lisp_Object item, int inmenubar)
       /* Maybe help string.  */
       if (CONSP (item) && STRINGP (XCAR (item)))
 	{
-	  ASET (item_properties, ITEM_PROPERTY_HELP, XCAR (item));
+	  ASET (item_properties, ITEM_PROPERTY_HELP,
+		Fsubstitute_command_keys (XCAR (item)));
 	  start = item;
 	  item = XCDR (item);
 	}
@@ -7781,7 +7782,12 @@ parse_menu_item (Lisp_Object item, int inmenubar)
 		    return 0;
 	 	}
 	      else if (EQ (tem, QChelp))
-		ASET (item_properties, ITEM_PROPERTY_HELP, XCAR (item));
+		{
+		  Lisp_Object help = XCAR (item);
+		  if (STRINGP (help))
+		    help = Fsubstitute_command_keys (help);
+		  ASET (item_properties, ITEM_PROPERTY_HELP, help);
+		}
 	      else if (EQ (tem, QCfilter))
 		filter = item;
 	      else if (EQ (tem, QCkey_sequence))

@@ -462,14 +462,12 @@ If ARG is non-nil, mark the key."
       (widget-create 'link
 		     :notify (lambda (&rest _ignore) (abort-recursive-edit))
 		     :help-echo
-		     (substitute-command-keys
-		      "Click here or \\[abort-recursive-edit] to cancel")
+		     "Click here or \\[abort-recursive-edit] to cancel"
 		     "Cancel")
       (widget-create 'link
 		     :notify (lambda (&rest _ignore) (exit-recursive-edit))
 		     :help-echo
-		     (substitute-command-keys
-		      "Click here or \\[exit-recursive-edit] to finish")
+		     "Click here or \\[exit-recursive-edit] to finish"
 		     "OK")
       (insert "\n\n")
       (epa--insert-keys keys)

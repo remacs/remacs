@@ -886,6 +886,7 @@ when signaling a file error.  For example, it now reports "Permission
 denied" instead of "permission denied".  The old behavior was problematic
 in languages like German where downcasing rules depend on grammar.
 
++++
 ** substitute-command-keys now replaces quotes.
 That is, it converts documentation strings' quoting style as per the
 value of the new custom variable ‘help-quote-translation’: ?‘ means
@@ -1008,6 +1009,7 @@ directory at point.
 *** New macros `thread-first' and `thread-last' allow threading a form
     as the first or last argument of subsequent forms.
 
++++
 ** Documentation strings now support quoting with curved single quotes
 ‘like-this’ in addition to the old style with grave accent and
 apostrophe `like-this'.  The new style looks better on today's displays.
@@ -1017,6 +1019,12 @@ you can enter them by typing ‘C-x 8 [’ and ‘C-x 8 ]’, or (if your Alt
 key works) by typing ‘A-[’ and ‘A-]’.  As described above under
 ‘help-quote-translation’, the user can specify how to display doc
 string quotes.
+
++++
+** show-help-function's arg is converted via substitute-command-keys
+before being passed to the function.  Help strings, help-echo
+properties, etc. can therefore contain command key escapes and
+quotation marks.
 
 +++
 ** Time-related changes:
