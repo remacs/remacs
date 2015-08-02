@@ -349,6 +349,7 @@ string in Emacs Lisp.
 
 @defvar help-quote-translation
 @cindex curved quotes
+@cindex curly quotes
 The value of this variable specifies the style
 @code{substitute-command-keys} uses when generating left and right
 quotes.  If the variable's value is @code{?‘} (U+2018 LEFT SINGLE
