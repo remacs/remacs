@@ -9442,6 +9442,8 @@ globals_of_w32fns (void)
   else
     w32_unicode_gui = 0;
 
+  after_deadkey = -1;
+
   /* MessageBox does not work without this when linked to comctl32.dll 6.0.  */
   InitCommonControls ();
 
