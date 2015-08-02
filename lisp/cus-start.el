@@ -221,14 +221,16 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 	     (no-redraw-on-reenter display boolean)
 
 	     ;; doc.c
-	     (help-quote-translation help
-				     (choice
-				      (character :tag "Quote with curved quotes"
-                                                 :value ?‘)
-				      (character :tag "Quote 'like this'" :value ?\')
-				      (character :tag "Quote `like this'" :value ?\`)
-				      (const :tag "Quote with curved quotes if displayable, 'like this' otherwise" nil))
-				     "25.1")
+	     (text-quoting-style
+              help
+              (choice
+               (const :tag "Quote with curved single quotes" curve)
+               (const :tag "Quote with straight apostrophes 'like this'"
+                      straight)
+               (const :tag "Quote with grave accent and apostrophe `like this'"
+                      grave)
+               (const :tag "Use curved quotes if displayable, grave accent and apostrophe otherwise" nil))
+              "25.1")
              ;; dosfns.c
 	     (dos-display-scancodes display boolean)
 	     (dos-hyper-key keyboard integer)

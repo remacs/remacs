@@ -889,14 +889,14 @@ in languages like German where downcasing rules depend on grammar.
 +++
 ** substitute-command-keys now replaces quotes.
 That is, it converts documentation strings' quoting style as per the
-value of the new custom variable ‘help-quote-translation’: ?‘ means
-use curved quotes (also known as curly quotes) ‘like this’, ?' means
-use apostrophes 'like this', ?` means use grave accent and apostrophe
-`like this', and nil (default) means use curved quotes if displayable
-and grave accent and apostrophe otherwise.  Doc strings in source code
-can use either curved quotes or grave accent and apostrophe.  As
-before, isolated apostrophes and characters preceded by \= are output
-as-is.
+value of the new custom variable ‘text-quoting-style’: ‘curve’ means
+use curved quotes (also known as curly quotes) ‘like this’, ‘straight’
+means use straight apostrophes 'like this', ‘grave’ means use grave
+accent and apostrophe `like this', and nil (default) means use curved
+quotes if displayable and grave accent and apostrophe otherwise.  Doc
+strings in source code can use either curved quotes or grave accent
+and apostrophe.  As before, isolated apostrophes and characters
+preceded by \= are output as-is.
 
 +++
 ** The character classes [:alpha:] and [:alnum:] in regular expressions
@@ -1017,8 +1017,8 @@ In the new Electric Quote mode, you can enter curved single quotes
 into documentation by typing ` and '.  Outside Electric Quote mode,
 you can enter them by typing ‘C-x 8 [’ and ‘C-x 8 ]’, or (if your Alt
 key works) by typing ‘A-[’ and ‘A-]’.  As described above under
-‘help-quote-translation’, the user can specify how to display doc
-string quotes.
+‘text-quoting-style’, the user can specify how to display doc string
+quotes.
 
 +++
 ** show-help-function's arg is converted via substitute-command-keys

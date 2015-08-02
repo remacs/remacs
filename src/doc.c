@@ -715,7 +715,7 @@ as the keymap for future \\=\\[COMMAND] substrings.
 Each \\=‘ and \\=’ are replaced by left and right quote.  Each \\=` is
 replaced by left quote, and each ' preceded by \\=` and without
 intervening ' is replaced by right quote.  Left and right quote
-characters are specified by ‘help-quote-translation’.
+characters are specified by ‘text-quoting-style’.
 
 \\=\\= quotes the following character and is discarded; thus,
 \\=\\=\\=\\= puts \\=\\= into the output, \\=\\=\\=\\[ puts \\=\\[ into the output, and
@@ -751,11 +751,11 @@ Otherwise, return a new string.  */)
   GCPRO4 (string, tem, keymap, name);
 
   enum { unicode, grave_accent, apostrophe } quote_translation = unicode;
-  if (EQ (Vhelp_quote_translation, make_number ('`')))
+  if (EQ (Vtext_quoting_style, Qgrave))
     quote_translation = grave_accent;
-  else if (EQ (Vhelp_quote_translation, make_number ('\'')))
+  else if (EQ (Vtext_quoting_style, Qstraight))
     quote_translation = apostrophe;
-  else if (NILP (Vhelp_quote_translation)
+  else if (NILP (Vtext_quoting_style)
 	   && DISP_TABLE_P (Vstandard_display_table))
     {
       Lisp_Object dv = DISP_CHAR_VECTOR (XCHAR_TABLE (Vstandard_display_table),
@@ -1024,6 +1024,8 @@ void
 syms_of_doc (void)
 {
   DEFSYM (Qfunction_documentation, "function-documentation");
+  DEFSYM (Qgrave, "grave");
+  DEFSYM (Qstraight, "straight");
 
   DEFVAR_LISP ("internal-doc-file-name", Vdoc_file_name,
 	       doc: /* Name of file containing documentation strings of built-in symbols.  */);
@@ -1033,15 +1035,14 @@ syms_of_doc (void)
                doc: /* A list of files used to build this Emacs binary.  */);
   Vbuild_files = Qnil;
 
-  DEFVAR_LISP ("help-quote-translation", Vhelp_quote_translation,
-               doc: /* Style to use for single quotes in help.
-The value is a left single quote character of some style.
-Quote \\=‘like this\\=’ if the value is ?\\=‘ (left single quotation mark).
-Quote 'like this' if the value is ?' (apostrophe).
-Quote \\=`like this' if the value is ?\\=` (grave accent).
-The default value is nil, which means quote with left single quotation mark
-if displayable, and with grave accent otherwise.  */);
-  Vhelp_quote_translation = Qnil;
+  DEFVAR_LISP ("text-quoting-style", Vtext_quoting_style,
+               doc: /* Style to use for single quotes when generating text.
+‘curve’ means quote with curved single quotes \\=‘like this\\=’.
+‘straight’ means quote with straight apostrophes 'like this'.
+‘grave’ means quote with grave accent and apostrophe \\=`like this'.
+The default value nil acts like ‘curve’ if curved single quotes are
+displayable, and like ‘grave’ otherwise.  */);
+  Vtext_quoting_style = Qnil;
 
   defsubr (&Sdocumentation);
   defsubr (&Sdocumentation_property);

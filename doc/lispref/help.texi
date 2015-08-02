@@ -347,18 +347,18 @@ and @samp{\=\=} puts @samp{\=} into the output.
 @strong{Please note:} Each @samp{\} must be doubled when written in a
 string in Emacs Lisp.
 
-@defvar help-quote-translation
+@defvar text-quoting-style
 @cindex curved quotes
 @cindex curly quotes
 The value of this variable specifies the style
 @code{substitute-command-keys} uses when generating left and right
-quotes.  If the variable's value is @code{?‘} (U+2018 LEFT SINGLE
-QUOTATION MARK), the style is @t{‘like this’} with curved single
-quotes.  If the value is @code{?'} (apostrophe), the style is @t{'like
-this'} with apostrophes.  If the value is @code{?`} (grave accent),
-the style is @t{`like this'} with grave accent and apostrophe.  The
-default value @code{nil} means to use curved single quotes if
-displayable, and grave accent and apostrophe otherwise.
+quotes.  If the variable's value is @code{curve}, the style is
+@t{‘like this’} with curved single quotes.  If the value is
+@code{straight}, the style is @t{'like this'} with straight
+apostrophes.  If the value is @code{grave}, the style is @t{`like
+this'} with grave accent and apostrophe.  The default value @code{nil}
+acts like @code{curve} if curved single quotes are displayable, and
+like @code{grave} otherwise.
 @end defvar
 
 @defun substitute-command-keys string
