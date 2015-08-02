@@ -831,7 +831,9 @@ including `cl-block' and `cl-eval-when'."
               (prin1-to-string
                (alist-get :printer (cl--slot-descriptor-props slot)))))
     (when (alist-get :documentation (cl--slot-descriptor-props slot))
-      (concat "\n  " (alist-get :documentation (cl--slot-descriptor-props slot))
+      (concat "\n  "
+              (substitute-command-keys
+               (alist-get :documentation (cl--slot-descriptor-props slot)))
               "\n")))
    "\n"))
 

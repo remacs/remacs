@@ -241,7 +241,7 @@ minibuffer."
 	     (while items
 	       (setq choice (pop items))
 	       (when (consp choice)
-                 (let* ((name (car choice))
+                 (let* ((name (substitute-command-keys (car choice)))
                         (function (cdr choice)))
                    (insert (format "%c = %s\n" next-digit name))
                    (define-key map (vector next-digit) function)
@@ -1503,7 +1503,8 @@ The value of the :type attribute should be an unconverted widget type."
 		  (insert-char ?\s (widget-get widget :indent))))
 	       ((eq escape ?t)
 		(let ((image (widget-get widget :tag-glyph))
-		      (tag (widget-get widget :tag)))
+		      (tag (substitute-command-keys
+			    (widget-get widget :tag))))
 		  (cond (image
 			 (widget-image-insert widget (or tag "image") image))
 			(tag
@@ -1515,7 +1516,7 @@ The value of the :type attribute should be an unconverted widget type."
 		(let ((doc (widget-get widget :doc)))
 		  (when doc
 		    (setq doc-begin (point))
-		    (insert doc)
+		    (insert (substitute-command-keys doc))
 		    (while (eq (preceding-char) ?\n)
 		      (delete-char -1))
 		    (insert ?\n)
@@ -1759,7 +1760,7 @@ If END is omitted, it defaults to the length of LIST."
 
 (defun widget-push-button-value-create (widget)
   "Insert text representing the `on' and `off' states."
-  (let* ((tag (or (widget-get widget :tag)
+  (let* ((tag (or (substitute-command-keys (widget-get widget :tag))
 		  (widget-get widget :value)))
 	 (tag-glyph (widget-get widget :tag-glyph))
 	 (text (concat widget-push-button-prefix
@@ -2167,7 +2168,8 @@ when he invoked the menu."
 (defun widget-toggle-value-create (widget)
   "Insert text representing the `on' and `off' states."
   (let* ((val (widget-value widget))
-	 (text (widget-get widget (if val :on :off)))
+	 (text (substitute-command-keys
+		(widget-get widget (if val :on :off))))
 	 (img (widget-image-find
 	       (widget-get widget (if val :on-glyph :off-glyph)))))
     (widget-image-insert widget (or text "")
@@ -2914,7 +2916,7 @@ link for that string."
 
 (defun widget-documentation-string-value-create (widget)
   ;; Insert documentation string.
-  (let ((doc (widget-value widget))
+  (let ((doc (substitute-command-keys (widget-value widget)))
 	(indent (widget-get widget :indent))
 	(shown (widget-get (widget-get widget :parent) :documentation-shown))
 	(start (point)))

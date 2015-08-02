@@ -3990,7 +3990,7 @@ If GROUPS-ONLY is non-nil, return only those members that are groups."
 	 ;; (indent (widget-get widget :indent))
 	 (prefix (widget-get widget :custom-prefix))
 	 (buttons (widget-get widget :buttons))
-	 (tag (widget-get widget :tag))
+	 (tag (substitute-command-keys (widget-get widget :tag)))
 	 (symbol (widget-value widget))
 	 (members (custom-group-members symbol
 					(and (eq custom-buffer-style 'tree)
