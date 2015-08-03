@@ -546,6 +546,11 @@ See `diary-chinese-list-entries' and `diary-chinese-mark-entries'.
 *** The option `calendar-mode-line-format' can now be nil,
 which means to do nothing special with the mode line in calendars.
 
++++
+*** New option `calendar-weekend-days'.
+The option customizes which day headers receive the
+`calendar-weekend-header' face.
+
 ---
 *** Many items obsolete since at least version 23.1 have been removed.
 The majority were function/variable/face aliases, too numerous to list here.
