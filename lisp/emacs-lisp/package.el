@@ -2382,8 +2382,7 @@ will be deleted."
 ;;;; Package menu mode.
 
 (defvar package-menu-mode-map
-  (let ((map (make-sparse-keymap))
-        (menu-map (make-sparse-keymap "Package")))
+  (let ((map (make-sparse-keymap)))
     (set-keymap-parent map tabulated-list-mode-map)
     (define-key map "\C-m" 'package-menu-describe-package)
     (define-key map "u" 'package-menu-mark-unmark)
@@ -2399,59 +2398,40 @@ will be deleted."
     (define-key map "H" #'package-menu-hide-package)
     (define-key map "?" 'package-menu-describe-package)
     (define-key map "(" #'package-menu-toggle-hiding)
-    (define-key map [menu-bar package-menu] (cons "Package" menu-map))
-    (define-key menu-map [mq]
-      '(menu-item "Quit" quit-window
-                  :help "Quit package selection"))
-    (define-key menu-map [s1] '("--"))
-    (define-key menu-map [mn]
-      '(menu-item "Next" next-line
-                  :help "Next Line"))
-    (define-key menu-map [mp]
-      '(menu-item "Previous" previous-line
-                  :help "Previous Line"))
-    (define-key menu-map [s2] '("--"))
-    (define-key menu-map [mu]
-      '(menu-item "Unmark" package-menu-mark-unmark
-                  :help "Clear any marks on a package and move to the next line"))
-    (define-key menu-map [munm]
-      '(menu-item "Unmark Backwards" package-menu-backup-unmark
-                  :help "Back up one line and clear any marks on that package"))
-    (define-key menu-map [md]
-      '(menu-item "Mark for Deletion" package-menu-mark-delete
-                  :help "Mark a package for deletion and move to the next line"))
-    (define-key menu-map [mi]
-      '(menu-item "Mark for Install" package-menu-mark-install
-                  :help "Mark a package for installation and move to the next line"))
-    (define-key menu-map [mupgrades]
-      '(menu-item "Mark Upgradable Packages" package-menu-mark-upgrades
-                  :help "Mark packages that have a newer version for upgrading"))
-    (define-key menu-map [s3] '("--"))
-    (define-key menu-map [mf]
-      '(menu-item "Filter Package List..." package-menu-filter
-                  :help "Filter package selection (q to go back)"))
-    (define-key menu-map [mg]
-      '(menu-item "Update Package List" revert-buffer
-                  :help "Update the list of packages"))
-    (define-key menu-map [mr]
-      '(menu-item "Refresh Package List" package-menu-refresh
-                  :help "Download the ELPA archive"))
-    (define-key menu-map [s4] '("--"))
-    (define-key menu-map [mt]
-      '(menu-item "Mark Obsolete Packages" package-menu-mark-obsolete-for-deletion
-                  :help "Mark all obsolete packages for deletion"))
-    (define-key menu-map [mx]
-      '(menu-item "Execute Actions" package-menu-execute
-                  :help "Perform all the marked actions"))
-    (define-key menu-map [s5] '("--"))
-    (define-key menu-map [mh]
-      '(menu-item "Help" package-menu-quick-help
-                  :help "Show short key binding help for package-menu-mode"))
-    (define-key menu-map [mc]
-      '(menu-item "Describe Package" package-menu-describe-package
-                  :help "Display information about this package"))
     map)
   "Local keymap for `package-menu-mode' buffers.")
+
+(easy-menu-define package-menu-mode-menu package-menu-mode-map
+  "Menu for `package-menu-mode'."
+  `("Package"
+    ["Describe Package" package-menu-describe-package :help "Display information about this package"]
+    ["Help" package-menu-quick-help :help "Show short key binding help for package-menu-mode"]
+    "--"
+    ["Refresh Package List" package-menu-refresh
+     :help "Redownload the ELPA archive"
+     :active (not package--downloads-in-progress)]
+    ["Redisplay buffer" revert-buffer :help "Update the buffer with current list of packages"]
+    ["Execute Marked Actions" package-menu-execute :help "Perform all the marked actions"]
+
+    "--"
+    ["Mark All Available Upgrades" package-menu-mark-upgrades
+     :help "Mark packages that have a newer version for upgrading"
+     :active (not package--downloads-in-progress)]
+    ["Mark All Obsolete for Deletion" package-menu-mark-obsolete-for-deletion :help "Mark all obsolete packages for deletion"]
+    ["Mark for Install" package-menu-mark-install :help "Mark a package for installation and move to the next line"]
+    ["Mark for Deletion" package-menu-mark-delete :help "Mark a package for deletion and move to the next line"]
+    ["Unmark" package-menu-mark-unmark :help "Clear any marks on a package and move to the next line"]
+
+    "--"
+    ["Filter Package List" package-menu-filter :help "Filter package selection (q to go back)"]
+    ["Hide by Regexp" package-menu-hide-package :help "Permanently hide all packages matching a regexp"]
+    ["Display Older Versions" package-menu-toggle-hiding
+     :style toggle :selected (not package-menu--hide-packages)
+     :help "Display package even if a newer version is already installed"]
+
+    "--"
+    ["Quit" quit-window :help "Quit package selection"]
+    ["Customize" (customize-group 'package)]))
 
 (defvar package-menu--new-package-list nil
   "List of newly-available packages since `list-packages' was last called.")
