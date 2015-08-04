@@ -1,8 +1,96 @@
-2015-08-02  Ingo Lohmar  <i.lohmar@gmail.com>
+2015-08-04  Daniel Colascione  <dancol@dancol.org>
 
-	Add option `calendar-weekend-days'
-	* lisp/calendar/calendar.el (calendar-generate-month): New
-	variable calendar-weekend-days to fontify day headers correctly.
+	Improve ansi-color filtering of unrecognized escape sequences
+	* lisp/ansi-color.el (ansi-color-drop-regexp): Recognize mode-setting
+	escape sequences.
+	(ansi-color-filter-apply): Filter out unrecognized escape sequences
+	(ansi-color-apply): Filter out unrecognized escape sequences
+
+2015-08-04  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/package.el (package-menu-mode-map): Convert menu
+	definitions to `easy-menu-define', improve a couple to account for
+	async, and add a couple of new commands.
+
+2015-08-03  Jürgen Hötzel  <juergen@archlinux.org>
+
+	* lisp/net/tramp-cache.el (tramp-set-file-property): Fix code typo.
+
+2015-08-03  Ingo Lohmar  <i.lohmar@gmail.com>
+
+	Add new 'calendar-weekend-days' option
+	Make the days receiving the 'calendar-weekend-header' face freely
+	customizable, as they differ by region/culture.
+	* doc/emacs/calendar.texi (Move to Beginning or End): Document the
+	new variable.
+	* lisp/calendar/calendar.el (calendar-generate-month): New variable
+	calendar-weekend-days to customize day header fontification.
+
+2015-08-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Redo text-quoting-style variable
+	Rename help-quote-translation to text-quoting-style,
+	and use symbols rather than characters as values.
+	This follows suggestions along these lines by Alan Mackenzie in:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-06/msg00343.html
+	and by Drew Adams in:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-08/msg00048.html
+	* doc/lispref/help.texi (Keys in Documentation)
+	* etc/NEWS:
+	* lisp/cus-start.el (standard):
+	* src/doc.c (Fsubstitute_command_keys, syms_of_doc):
+	Document and/or implement the new behavior instead of the old.
+	(syms_of_doc): New symbols 'grave' and 'straight'.
+
+2015-08-03  Nikolaus Rath  <Nikolaus@rath.org>
+
+	nnimap.el: Use IMAP MOVE extension if available
+	* lisp/gnus/nnimap.el (nnimap-request-move-article)
+	(nnimap-process-expiry-targets, nnimap-split-incoming-mail):
+	Use MOVE extension if available.
+
+	nnimap.el: Explicitly ask for server capabilities
+	* lisp/gnus/nnimap.el (nnimap-open-connection-1): Don't assume full
+	capabilities will be returned in the login-result.
+
+2015-08-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Treat help strings like other doc strings
+	* doc/lispref/text.texi (Special Properties), etc/NEWS: Document this.
+	* lisp/epa.el (epa--select-keys): Remove no-longer-needed calls to
+	substitute-command-keys.
+	* src/keyboard.c (show_help_echo, parse_menu_item): Call
+	substitute-command-keys on the help string before displaying it.
+
+	Also mention "curly quotes"
+	See Drew Adams's email in:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-08/msg00040.html
+	* doc/lispref/help.texi (Keys in Documentation):
+	Add index entry "curly quotes".
+	* etc/NEWS: Use the phrase "curly quotes" too.
+
+	ede-proj-target-makefile docstring tweaks
+	* lisp/cedet/ede/proj.el (ede-proj-target-makefile):
+	Consistently use "all:" to describe the all: target,
+	replacing three different and confusingly-quoted usages.
+
+2015-08-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Whitespace fixes
+	Whitespace fixes.
+
+2015-08-02  Evgeny Fraimovitch  <johnlen7@gmail.com>  (tiny change)
+
+	Don't abort emacsclientw when -a was specified
+	* lib-src/emacsclient.c (set_tcp_socket) [WINDOWSNT]: Don't error
+	out if we are in emacsclientw and -a was specified.
+
+2015-08-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix handling of 1st keystroke on MS-Windows
+	* src/w32fns.c (globals_of_w32fns): Initialize after_deadkey to -1.
+	This is needed to correctly handle the session's first keystroke,
+	if it has any modifiers.  (Bug#19994)
 
 2015-08-02  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -8580,7 +8668,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit bd3b426ebb7a60045839e97c9da9bfd249fab1f1 (inclusive).
+commit a57f8f3022d9ab8b31bbfee291a3d7340bd37c21 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
