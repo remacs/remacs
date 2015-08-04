@@ -183,7 +183,7 @@ backward or forward.
   By default, weeks begin on Sunday.  To make them begin on Monday
 instead, set the variable @code{calendar-week-start-day} to 1.  To
 change which day headers are highlighted as weekend days, set the
-variable @code{calendar-weekend-days}
+variable @code{calendar-weekend-days}.
 
 @node Specified Dates
 @subsection Specified Dates
