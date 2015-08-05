@@ -33,7 +33,7 @@
   :type 'boolean
   :group 'matching)
 
-(defcustom replace-character-fold t
+(defcustom replace-character-fold nil
   "Non-nil means `query-replace' should do character folding in matches.
 This means, for instance, that ' will match a large variety of
 unicode quotes."
