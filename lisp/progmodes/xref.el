@@ -65,8 +65,6 @@
 (defclass xref-location () ()
   :documentation "A location represents a position in a file or buffer.")
 
-;; If a backend decides to subclass xref-location it can provide
-;; methods for some of the following functions:
 (cl-defgeneric xref-location-marker (location)
   "Return the marker for LOCATION.")
 
@@ -372,14 +370,19 @@ elements is negated."
   (ring-empty-p xref--marker-ring))
 
 
+
+(defun xref--goto-char (pos)
+  (cond
+   ((and (<= (point-min) pos) (<= pos (point-max))))
+   (widen-automatically (widen))
+   (t (user-error "Position is outside accessible part of buffer")))
+  (goto-char pos))
+
 (defun xref--goto-location (location)
   "Set buffer and point according to xref-location LOCATION."
   (let ((marker (xref-location-marker location)))
     (set-buffer (marker-buffer marker))
-    (cond ((and (<= (point-min) marker) (<= marker (point-max))))
-          (widen-automatically (widen))
-          (t (error "Location is outside accessible part of buffer")))
-    (goto-char marker)))
+    (xref--goto-char marker)))
 
 (defun xref--pop-to-location (item &optional window)
   "Go to the location of ITEM and display the buffer.
@@ -387,11 +390,14 @@ WINDOW controls how the buffer is displayed:
   nil      -- switch-to-buffer
   'window  -- pop-to-buffer (other window)
   'frame   -- pop-to-buffer (other frame)"
-  (xref--goto-location (xref-item-location item))
-  (cl-ecase window
-    ((nil)  (switch-to-buffer (current-buffer)))
-    (window (pop-to-buffer (current-buffer) t))
-    (frame  (let ((pop-up-frames t)) (pop-to-buffer (current-buffer) t))))
+  (let* ((marker (save-excursion
+                   (xref-location-marker (xref-item-location item))))
+         (buf (marker-buffer marker)))
+    (cl-ecase window
+      ((nil)  (switch-to-buffer buf))
+      (window (pop-to-buffer buf t))
+      (frame  (let ((pop-up-frames t)) (pop-to-buffer buf t))))
+    (xref--goto-char marker))
   (let ((xref--current-item item))
     (run-hooks 'xref-after-jump-hook)))
 
@@ -427,7 +433,7 @@ Used for temporary buffers.")
 (defun xref--display-position (pos other-window xref-buf)
   ;; Show the location, but don't hijack focus.
   (with-selected-window (display-buffer (current-buffer) other-window)
-    (goto-char pos)
+    (xref--goto-char pos)
     (run-hooks 'xref-after-jump-hook)
     (let ((buf (current-buffer))
           (win (selected-window)))
@@ -437,17 +443,15 @@ Used for temporary buffers.")
 
 (defun xref--show-location (location)
   (condition-case err
-      (let ((xref-buf (current-buffer))
-            (bl (buffer-list))
-            (xref--inhibit-mark-current t))
-        (xref--goto-location location)
-        (let ((buf (current-buffer)))
+      (let ((bl (buffer-list))
+            (xref--inhibit-mark-current t)
+            (marker (xref-location-marker location)))
+        (let ((buf (marker-buffer marker)))
           (unless (memq buf bl)
             ;; Newly created.
             (add-hook 'buffer-list-update-hook #'xref--mark-selected nil t)
-            (with-current-buffer xref-buf
-              (push buf xref--temporary-buffers))))
-        (xref--display-position (point) t xref-buf))
+            (push buf xref--temporary-buffers)))
+        (xref--display-position (point) t (current-buffer)))
     (user-error (message (error-message-string err)))))
 
 (defun xref-show-location-at-point ()
@@ -504,6 +508,8 @@ Used for temporary buffers.")
             (while (setq item (xref--search-property 'xref-item))
               (when (xref-match-bounds item)
                 (save-excursion
+                  ;; FIXME: Get rid of xref--goto-location, by making
+                  ;; xref-match-bounds return markers already.
                   (xref--goto-location (xref-item-location item))
                   (let ((bounds (xref--match-buffer-bounds item))
                         (beg (make-marker))
@@ -849,7 +855,6 @@ and just use etags."
                 (cdr xref-etags-mode--saved))))
 
 (declare-function semantic-symref-find-references-by-name "semantic/symref")
-(declare-function semantic-symref-find-text "semantic/symref")
 (declare-function semantic-find-file-noselect "semantic/fw")
 (declare-function grep-read-files "grep")
 (declare-function grep-expand-template "grep")
