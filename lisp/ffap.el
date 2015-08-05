@@ -1020,7 +1020,9 @@ possibly a major-mode name, or one of the symbols
 Function `ffap-string-at-point' uses the data fields as follows:
 1. find a maximal string of CHARS around point,
 2. strip BEG chars before point from the beginning,
-3. strip END chars after point from the end.")
+3. strip END chars after point from the end.
+The arguments CHARS, BEG and END are handled as described in
+`skip-chars-forward'.")
 
 (defvar ffap-string-at-point nil
   ;; Added at suggestion of RHOGEE (for ff-paths), 7/24/95.
