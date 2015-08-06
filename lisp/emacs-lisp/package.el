@@ -2143,6 +2143,22 @@ will be deleted."
       (with-current-buffer standard-output
         (describe-package-1 package)))))
 
+(defface package-help-section-name-face
+  '((t :inherit (bold font-lock-function-name-face)))
+  "Face used on section names in package description buffers."
+  :version "25.1")
+
+(defun package--print-help-section (name &rest strings)
+  "Print \"NAME: \", right aligned to the 13th column.
+If more STRINGS are provided, insert them followed by a newline.
+Otherwise no newline is inserted."
+  (declare (indent 1))
+  (insert (make-string (max 0 (- 11 (string-width name))) ?\s)
+          (propertize (concat name ": ") 'font-lock-face 'package-help-section-name-face))
+  (when strings
+    (apply #'insert strings)
+    (insert "\n")))
+
 (declare-function lm-commentary "lisp-mnt" (&optional file))
 
 (defun describe-package-1 (pkg)
@@ -2178,16 +2194,16 @@ will be deleted."
     (princ status)
     (princ " package.\n\n")
 
-    (insert "     " (propertize "Status" 'font-lock-face 'bold) ": ")
+    (package--print-help-section "Status")
     (cond (built-in
            (insert (propertize (capitalize status)
-                               'font-lock-face 'font-lock-builtin-face)
+                               'font-lock-face 'package-status-builtin-face)
                    "."))
           (pkg-dir
            (insert (propertize (if (member status '("unsigned" "dependency"))
                                    "Installed"
                                  (capitalize status))
-                               'font-lock-face 'font-lock-builtin-face))
+                               'font-lock-face 'package-status-builtin-face))
            (insert (substitute-command-keys " in ‘"))
            (let ((dir (abbreviate-file-name
                        (file-name-as-directory
@@ -2200,7 +2216,7 @@ will be deleted."
                (insert (substitute-command-keys
                         "’,\n             shadowing a ")
                        (propertize "built-in package"
-                                   'font-lock-face 'font-lock-builtin-face))
+                                   'font-lock-face 'package-status-builtin-face))
              (insert (substitute-command-keys "’")))
            (if signed
                (insert ".")
@@ -2229,18 +2245,18 @@ will be deleted."
           (t (insert (capitalize status) ".")))
     (insert "\n")
     (unless (and pkg-dir (not archive)) ; Installed pkgs don't have archive.
-      (insert "    " (propertize "Archive" 'font-lock-face 'bold)
-              ": " (or archive "n/a") "\n"))
+      (package--print-help-section "Archive"
+        (or archive "n/a") "\n"))
     (and version
-         (insert "    "
-                 (propertize "Version" 'font-lock-face 'bold) ": "
-                 (package-version-join version) "\n"))
-    (insert "    " (propertize "Summary" 'font-lock-face 'bold)
-            ": " (if desc (package-desc-summary desc)) "\n")
+         (package--print-help-section "Version"
+           (package-version-join version)))
+    (when desc
+      (package--print-help-section "Summary"
+        (package-desc-summary desc)))
 
     (setq reqs (if desc (package-desc-reqs desc)))
     (when reqs
-      (insert "   " (propertize "Requires" 'font-lock-face 'bold) ": ")
+      (package--print-help-section "Requires")
       (let ((first t))
         (dolist (req reqs)
           (let* ((name (car req))
@@ -2259,7 +2275,7 @@ will be deleted."
             (insert reason)))
         (insert "\n")))
     (when required-by
-      (insert (propertize "Required by" 'font-lock-face 'bold) ": ")
+      (package--print-help-section "Required by")
       (let ((first t))
         (dolist (pkg required-by)
           (let ((text (package-desc-full-name pkg)))
@@ -2272,11 +2288,11 @@ will be deleted."
                                      (package-desc-name pkg))))
         (insert "\n")))
     (when homepage
-      (insert "   " (propertize "Homepage" 'font-lock-face 'bold) ": ")
+      (package--print-help-section "Homepage")
       (help-insert-xref-button homepage 'help-url homepage)
       (insert "\n"))
     (when keywords
-      (insert "   " (propertize "Keywords" 'font-lock-face 'bold) ": ")
+      (package--print-help-section "Keywords")
       (dolist (k keywords)
         (package-make-button
          k
@@ -2290,24 +2306,23 @@ will be deleted."
                                (if bi (list (package--from-builtin bi))))))
            (other-pkgs (delete desc all-pkgs)))
       (when other-pkgs
-        (insert "    " (propertize "Other versions" 'font-lock-face 'bold) ": "
-                (mapconcat
-                 (lambda (opkg)
-                   (let* ((ov (package-desc-version opkg))
-                          (dir (package-desc-dir opkg))
-                          (from (or (package-desc-archive opkg)
-                                    (if (stringp dir) "installed" dir))))
-                     (if (not ov) (format "%s" from)
-                       (format "%s (%s)"
-                               (make-text-button (package-version-join ov) nil
-                                                 'font-lock-face 'link
-                                                 'follow-link t
-                                                 'action
-                                                 (lambda (_button)
-                                                   (describe-package opkg)))
-                               from))))
-                 other-pkgs ", ")
-                ".\n")))
+        (package--print-help-section "Other versions"
+          (mapconcat (lambda (opkg)
+                       (let* ((ov (package-desc-version opkg))
+                              (dir (package-desc-dir opkg))
+                              (from (or (package-desc-archive opkg)
+                                        (if (stringp dir) "installed" dir))))
+                         (if (not ov) (format "%s" from)
+                           (format "%s (%s)"
+                                   (make-text-button (package-version-join ov) nil
+                                                     'font-lock-face 'link
+                                                     'follow-link t
+                                                     'action
+                                                     (lambda (_button)
+                                                       (describe-package opkg)))
+                                   from))))
+                     other-pkgs ", ")
+          ".")))
 
     (insert "\n")
 
@@ -2375,7 +2390,7 @@ will be deleted."
                                 :background "light grey"
                                 :foreground "black")
                        'link)))
-    (apply 'insert-text-button button-text 'font-lock-face button-face 'follow-link t
+    (apply 'insert-text-button button-text 'face button-face 'follow-link t
            props)))
 
 
