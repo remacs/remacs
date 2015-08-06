@@ -869,7 +869,7 @@ Optional RECURSING is for internal use, to limit recursion."
     ;; tell the allout-widgets-post-command-business to reestablish the hook:
     (setq allout-widgets-reenable-before-change-handler t)
     ;; and raise an error to prevent the edit (and disable the hook):
-    (error
+    (error "%s"
      (substitute-command-keys allout-structure-unruly-deletion-message)))))
 ;;;_    > allout-widgets-after-change-handler
 (defun allout-widgets-after-change-handler (_beg _end _prelength)
@@ -2287,7 +2287,7 @@ Deletes allowed only when `inhibit-read-only' is t."
    ((yes-or-no-p "Unruly edit of outline structure - allow? ")
     (setq allout-widgets-unset-inhibit-read-only (not inhibit-read-only)
           inhibit-read-only t))
-   (t (error
+   (t (error "%s"
        (substitute-command-keys allout-structure-unruly-deletion-message)))))
 ;;;_   > allout-item-icon-key-handler ()
 (defun allout-item-icon-key-handler ()

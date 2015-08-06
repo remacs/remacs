@@ -316,8 +316,8 @@ name of the code block."
 Do not query the user."
   (org-babel-check-confirm-evaluate info
     (not (when noeval
-	   (message (format "Evaluation of this%scode-block%sis disabled."
-			    code-block block-name))))))
+	   (message "Evaluation of this%scode-block%sis disabled."
+                    code-block block-name)))))
 
  ;; dynamically scoped for asynchronous export
 (defvar org-babel-confirm-evaluate-answer-no)
@@ -343,8 +343,8 @@ of potentially harmful code."
 		    (yes-or-no-p
 		     (format "Evaluate this%scode block%son your system? "
 			     code-block block-name)))
-	     (message (format "Evaluation of this%scode-block%sis aborted."
-			      code-block block-name)))))))
+	     (message "Evaluation of this%scode-block%sis aborted."
+                      code-block block-name))))))
 
 ;;;###autoload
 (defun org-babel-execute-safely-maybe ()

@@ -2846,7 +2846,7 @@ Return PDF file name or an error if it couldn't be produced."
 				(file-name-directory full-name)
 			      default-directory))
 	 errors)
-    (unless snippet (message (format "Processing LaTeX file %s..." texfile)))
+    (unless snippet (message "Processing LaTeX file %s..." texfile))
     (save-window-excursion
       (cond
        ;; A function is provided: Apply it.

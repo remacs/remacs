@@ -7533,7 +7533,7 @@ If search fails, other files are checked based on
 	(regexp "\\(module\\s-+\\w+\\s-*(\\)\\|\\(\\w+\\s-+\\w+\\s-*(\\)"))
     (with-output-to-temp-buffer "*Occur*"
       (save-excursion
-	(message (format "Searching for %s ..." regexp))
+	(message "Searching for %s ..." regexp)
 	;; Find next match, but give up if prev match was at end of buffer.
 	(while (and (not (= prevpos (point-max)))
 		    (verilog-re-search-forward regexp nil t))
