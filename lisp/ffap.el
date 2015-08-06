@@ -90,7 +90,6 @@
 
 
 ;;; Todo list:
-;; * use kpsewhich
 ;; * let "/dir/file#key" jump to key (tag or regexp) in /dir/file
 ;; * find file of symbol if TAGS is loaded (like above)
 ;; * break long menus into multiple panes (like imenu?)
@@ -894,6 +893,24 @@ URL, or nil.  If nil, search the alist for further matches.")
   "Path where `ffap-tex-mode' looks for TeX files.
 If t, `ffap-tex-init' will initialize this when needed.")
 
+(defvar ffap-latex-guess-rules '(("" . ".sty")
+                               ("" . ".cls")
+                               ("" . ".ltx")
+                               ("" . ".tex")
+                               ("" . "") ;; in some rare cases the
+                                         ;; extension is already in
+                                         ;; the buffer.
+                               ("beamertheme" . ".sty")
+                               ("beamercolortheme". ".sty")
+                               ("beamerfonttheme". ".sty")
+                               ("beamerinnertheme". ".sty")
+                               ("beameroutertheme". ".sty")
+                               ("" . ".ldf"))
+  "List of rules for guessing a filename.
+Each rule is a cons (PREFIX . SUFFIX) used for guessing a
+filename from the word at point by prepending PREFIX and
+appending SUFFIX.")
+
 (defun ffap-tex-init ()
   ;; Compute ffap-tex-path if it is now t.
   (and (eq t ffap-tex-path)
@@ -917,9 +934,56 @@ If t, `ffap-tex-init' will initialize this when needed.")
   (ffap-locate-file name '(".tex" "") ffap-tex-path))
 
 (defun ffap-latex-mode (name)
-  (ffap-tex-init)
-  ;; only rare need for ""
-  (ffap-locate-file name '(".cls" ".sty" ".tex" "") ffap-tex-path))
+  "`ffap' function suitable for latex buffers.
+This uses the program kpsewhich if available. In this case, the
+variable `ffap-latex-guess-rules' is used for building a filename
+out of NAME."
+  (cond ((file-exists-p name)
+         name)
+        ((not (executable-find "kpsewhich"))
+         (ffap-tex-init)
+         (ffap-locate-file name '(".cls" ".sty" ".tex" "") ffap-tex-path))
+        (t
+         (let ((curbuf (current-buffer))
+               (guess-rules ffap-latex-guess-rules)
+               (preferred-suffix-rules '(("input" . ".tex")
+                                         ("include" . ".tex")
+                                         ("usepackage" . ".sty")
+                                         ("RequirePackageWithOptions" . ".sty")
+                                         ("RequirePackage" . ".sty")
+                                         ("documentclass" . ".cls")
+                                         ("documentstyle" . ".cls")
+                                         ("LoadClass" . ".cls")
+                                         ("LoadClassWithOptions" . ".cls")
+                                         ("bibliography" . ".bib")
+                                         ("addbibresource" . ""))))
+           ;; We now add preferred suffix in front of suffixes.
+           (when
+               ;; The condition is essentially:
+               ;; (assoc (TeX-current-macro)
+               ;;        (mapcar 'car preferred-suffix-rules))
+               ;; but (TeX-current-macro) can take time, so we just
+               ;; check if one of the `car' in preferred-suffix-rules
+               ;; is found before point on the current line.  It
+               ;; should cover most cases.
+               (save-excursion
+                 (re-search-backward (regexp-opt
+                                      (mapcar 'car preferred-suffix-rules))
+                                     (point-at-bol)
+                                     t))
+             (push (cons "" (cdr (assoc (match-string 0) ; i.e. "(TeX-current-macro)"
+                                        preferred-suffix-rules)))
+                   guess-rules))
+           (setq kpsewhich-args (mapcar (lambda (rule)
+                                          (concat (car rule) name (cdr rule)))
+                                        guess-rules))
+           (with-temp-buffer
+             (let ((process-environment (buffer-local-value
+                                         'process-environment curbuf))
+                   (exec-path (buffer-local-value 'exec-path curbuf)))
+               (apply #'call-process "kpsewhich"  nil  t  nil kpsewhich-args))
+             (when (< (point-min) (point-max))
+               (buffer-substring (goto-char (point-min)) (point-at-eol))))))))
 
 (defun ffap-tex (name)
   (ffap-tex-init)
