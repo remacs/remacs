@@ -2741,27 +2741,97 @@ Return (PKG-DESC [NAME VERSION STATUS DOC])."
 (make-obsolete 'package-menu--print-info
                'package-menu--print-info-simple "25.1")
 
+
+;;; Package menu faces
+(defface package-name-face
+  '((t :inherit link))
+  "Face used on package names in the package menu."
+  :version "25.1")
+
+(defface package-description-face
+  '((t :inherit default))
+  "Face used on package description summaries in the package menu."
+  :version "25.1")
+
+(defface package-status-built-in-face
+  '((t :inherit font-lock-builtin-face))
+  "Face used on the status and version of built-in packages."
+  :version "25.1")
+
+(defface package-status-external-face
+  '((t :inherit package-status-builtin-face))
+  "Face used on the status and version of external packages."
+  :version "25.1")
+
+(defface package-status-available-face
+  '((t :inherit default))
+  "Face used on the status and version of available packages."
+  :version "25.1")
+
+(defface package-status-new-face
+  '((t :inherit (bold package-status-available-face)))
+  "Face used on the status and version of new packages."
+  :version "25.1")
+
+(defface package-status-held-face
+  '((t :inherit font-lock-constant-face))
+  "Face used on the status and version of held packages."
+  :version "25.1")
+
+(defface package-status-disabled-face
+  '((t :inherit font-lock-warning-face))
+  "Face used on the status and version of disabled packages."
+  :version "25.1")
+
+(defface package-status-installed-face
+  '((t :inherit font-lock-comment-face))
+  "Face used on the status and version of installed packages."
+  :version "25.1")
+
+(defface package-status-dependency-face
+  '((t :inherit package-status-installed-face))
+  "Face used on the status and version of dependency packages."
+  :version "25.1")
+
+(defface package-status-unsigned-face
+  '((t :inherit font-lock-warning-face))
+  "Face used on the status and version of unsigned packages."
+  :version "25.1")
+
+(defface package-status-incompat-face
+  '((t :inherit font-lock-comment-face))
+  "Face used on the status and version of incompat packages."
+  :version "25.1")
+
+(defface package-status-avail-obso-face
+  '((t :inherit package-status-incompat-face))
+  "Face used on the status and version of avail-obso packages."
+  :version "25.1")
+
+
+;;; Package menu printing
 (defun package-menu--print-info-simple (pkg)
   "Return a package entry suitable for `tabulated-list-entries'.
 PKG is a package-desc object.
 Return (PKG-DESC [NAME VERSION STATUS DOC])."
   (let* ((status  (package-desc-status pkg))
          (face (pcase status
-                 (`"built-in"  'font-lock-builtin-face)
-                 (`"external"  'font-lock-builtin-face)
-                 (`"available" 'default)
-                 (`"avail-obso" 'font-lock-comment-face)
-                 (`"new"       'bold)
-                 (`"held"      'font-lock-constant-face)
-                 (`"disabled"  'font-lock-warning-face)
-                 (`"installed" 'font-lock-comment-face)
-                 (`"dependency" 'font-lock-comment-face)
-                 (`"unsigned"  'font-lock-warning-face)
-                 (`"incompat"  'font-lock-comment-face)
+                 (`"built-in"  'package-status-built-in-face)
+                 (`"external"  'package-status-external-face)
+                 (`"available" 'package-status-available-face)
+                 (`"avail-obso" 'package-status-avail-obso-face)
+                 (`"new"       'package-status-new-face)
+                 (`"held"      'package-status-held-face)
+                 (`"disabled"  'package-status-disabled-face)
+                 (`"installed" 'package-status-installed-face)
+                 (`"dependency" 'package-status-dependency-face)
+                 (`"unsigned"  'package-status-unsigned-face)
+                 (`"incompat"  'package-status-incompat-face)
                  (_            'font-lock-warning-face)))) ; obsolete.
     (list pkg
           `[(,(symbol-name (package-desc-name pkg))
-             face link
+             face package-name-face
+             font-lock-face package-name-face
              follow-link t
              package-desc ,pkg
              action package-menu-describe-package)
@@ -2772,7 +2842,8 @@ Return (PKG-DESC [NAME VERSION STATUS DOC])."
             ,@(if (cdr package-archives)
                   (list (propertize (or (package-desc-archive pkg) "")
                                     'font-lock-face face)))
-            ,(package-desc-summary pkg)])))
+            ,(propertize (package-desc-summary pkg)
+                         'font-lock-face 'package-description-face)])))
 
 (defvar package-menu--old-archive-contents nil
   "`package-archive-contents' before the latest refresh.")
