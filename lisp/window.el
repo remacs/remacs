@@ -1,4 +1,4 @@
-;;; window.el --- GNU Emacs window commands aside from those written in C
+e;;; window.el --- GNU Emacs window commands aside from those written in C
 
 ;; Copyright (C) 1985, 1989, 1992-1994, 2000-2015 Free Software
 ;; Foundation, Inc.
@@ -6490,7 +6490,7 @@ its documentation for additional customization information."
 
 (defun display-buffer-use-some-frame (buffer alist)
   "Display BUFFER in an existing frame that meets a predicate
-(by default any frame other than the current frame).  If
+\(by default any frame other than the current frame).  If
 successful, return the window used; otherwise return nil.
 
 If ALIST has a non-nil `inhibit-switch-frame' entry, avoid
@@ -6499,8 +6499,12 @@ raising the frame.
 If ALIST has a non-nil `frame-predicate' entry, its value is a
 function taking one argument (a frame), returning non-nil if the
 frame is a candidate; this function replaces the default
-predicate."
-  (let* ((predicate (or (cdr (assoc 'frame-predicate alist))
+predicate.
+
+If ALIST has a non-nil `inhibit-same-window' entry, avoid using
+the currently selected window (only useful with a frame-predicate
+that allows the selected frame)."
+  (let* ((predicate (or (cdr (assq 'frame-predicate alist))
                         (lambda (frame)
                           (and
                            (not (eq frame (selected-frame)))
@@ -6510,7 +6514,7 @@ predicate."
                                   (frame-first-window frame)))))
                           )))
          (frame (car (filtered-frame-list predicate)))
-         (window (and frame (get-lru-window frame))))
+         (window (and frame (get-lru-window frame nil (cdr (assq 'inhibit-same-window alist))))))
     (when window
       (prog1
           (window--display-buffer

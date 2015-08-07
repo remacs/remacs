@@ -2306,16 +2306,18 @@ This function tries to ``display'' @var{buffer} by trying to find a
 frame that meets a predicate (by default any frame other than the
 current frame).
 
-If @var{alist} has a non-@code{nil} @code{`inhibit-switch-frame} entry,
-avoid raising the frame.
+If this function chooses a window on another frame, it makes that frame
+visible and, unless @var{alist} contains an @code{inhibit-switch-frame}
+entry (@pxref{Choosing Window Options}), raises that frame if necessary.
 
 If @var{alist} has a non-nil @code{frame-predicate} entry, its value is a
 function taking one argument (a frame), returning non-nil if the
 frame is a candidate; this function replaces the default predicate.
 
-If this function chooses a window on another frame, it makes that frame
-visible and, unless @var{alist} contains an @code{inhibit-switch-frame}
-entry (@pxref{Choosing Window Options}), raises that frame if necessary.
+If @var{alist} has a non-@code{nil} @code{inhibit-same-window} entry,
+the selected window is used; thus if the selected frame has a single
+window, it is not used.
+
 @end defun
 
 @defun display-buffer-pop-up-window buffer alist
