@@ -986,8 +986,9 @@ The value returned is a list of elements of the form
   `(and (vectorp ,name)
         (> (length ,name) 0)
         (let ((tag (aref ,name 0)))
-          (if (eq (symbol-function tag) :quick-object-witness-check)
-              tag))))
+          (and (symbolp tag)
+               (eq (symbol-function tag) :quick-object-witness-check)
+               tag))))
 
 (defun cl--generic-class-parents (class)
   (let ((parents ())
