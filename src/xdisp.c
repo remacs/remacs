@@ -4187,13 +4187,13 @@ handle_invisible_prop (struct it *it)
 
   if (STRINGP (it->string))
     {
-      Lisp_Object end_charpos, limit, charpos;
+      Lisp_Object end_charpos, limit;
 
       /* Get the value of the invisible text property at the
 	 current position.  Value will be nil if there is no such
 	 property.  */
-      charpos = make_number (IT_STRING_CHARPOS (*it));
-      prop = Fget_text_property (charpos, Qinvisible, it->string);
+      end_charpos = make_number (IT_STRING_CHARPOS (*it));
+      prop = Fget_text_property (end_charpos, Qinvisible, it->string);
       invis = TEXT_PROP_MEANS_INVISIBLE (prop);
 
       if (invis != 0 && IT_STRING_CHARPOS (*it) < it->end_charpos)
@@ -4211,8 +4211,12 @@ handle_invisible_prop (struct it *it)
 	  XSETINT (limit, len);
 	  do
 	    {
-	      end_charpos = Fnext_single_property_change (charpos, Qinvisible,
-							  it->string, limit);
+	      end_charpos
+		= Fnext_single_property_change (end_charpos, Qinvisible,
+						it->string, limit);
+	      /* Since LIMIT is always an integer, so should be the
+		 value returned by Fnext_single_property_change.  */
+	      eassert (INTEGERP (end_charpos));
 	      if (INTEGERP (end_charpos))
 		{
 		  endpos = XFASTINT (end_charpos);
@@ -4221,6 +4225,8 @@ handle_invisible_prop (struct it *it)
 		  if (invis == 2)
 		    display_ellipsis_p = true;
 		}
+	      else /* Should never happen; but if it does, exit the loop.  */
+		endpos = len;
 	    }
 	  while (invis != 0 && endpos < len);
 
@@ -4256,7 +4262,7 @@ handle_invisible_prop (struct it *it)
 		}
 	      else
 		{
-		  IT_STRING_CHARPOS (*it) = XFASTINT (end_charpos);
+		  IT_STRING_CHARPOS (*it) = endpos;
 		  compute_string_pos (&it->current.string_pos, old, it->string);
 		}
 	    }
