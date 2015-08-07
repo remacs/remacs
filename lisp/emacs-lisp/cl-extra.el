@@ -518,7 +518,9 @@ This sets the values of: `cl-most-positive-float', `cl-most-negative-float',
 (defun cl-subseq (seq start &optional end)
   "Return the subsequence of SEQ from START to END.
 If END is omitted, it defaults to the length of the sequence.
-If START or END is negative, it counts from the end."
+If START or END is negative, it counts from the end.
+Signal an error if START or END are outside of the sequence (i.e
+too large if positive or too small if negative)"
   (declare (gv-setter
             (lambda (new)
               (macroexp-let2 nil new new
