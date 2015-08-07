@@ -1,4 +1,4 @@
-e;;; window.el --- GNU Emacs window commands aside from those written in C
+;;; window.el --- GNU Emacs window commands aside from those written in C
 
 ;; Copyright (C) 1985, 1989, 1992-1994, 2000-2015 Free Software
 ;; Foundation, Inc.
@@ -6244,6 +6244,7 @@ The actual non-nil value of this variable will be copied to the
 	   (const display-buffer-at-bottom)
 	   (const display-buffer-in-previous-window)
 	   (const display-buffer-use-some-window)
+	   (const display-buffer-use-some-frame)
 	   (function :tag "Other function"))
   "Custom type for `display-buffer' action functions.")
 
@@ -6388,6 +6389,7 @@ Available action functions include:
  `display-buffer-pop-up-window'
  `display-buffer-in-previous-window'
  `display-buffer-use-some-window'
+ `display-buffer-use-some-frame'
 
 Recognized alist entries include:
 
