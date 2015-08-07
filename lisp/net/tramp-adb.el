@@ -497,12 +497,11 @@ Emacs dired can't find files."
 
 (defun tramp-adb-ls-output-name-less-p (a b)
   "Sort \"ls\" output by name, ascending."
-  (let (posa posb)
-    (string-match directory-listing-before-filename-regexp a)
-    (setq posa (match-end 0))
-    (string-match directory-listing-before-filename-regexp b)
-    (setq posb (match-end 0))
-    (string-lessp (substring a posa) (substring b posb))))
+  (if (string-match directory-listing-before-filename-regexp a)
+      (let ((posa (match-end 0)))
+	(if (string-match directory-listing-before-filename-regexp b)
+	    (let ((posb (match-end 0)))
+	      (string-lessp (substring a posa) (substring b posb)))))))
 
 (defun tramp-adb-handle-make-directory (dir &optional parents)
   "Like `make-directory' for Tramp files."
