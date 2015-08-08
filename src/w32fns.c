@@ -9239,17 +9239,70 @@ static DWORD except_code;
 static PVOID except_addr;
 
 #ifndef CYGWIN
+
+/* Stack overflow recovery.  */
+
+/* Re-establish the guard page at stack limit.  This is needed because
+   when a stack overflow is detected, Windows removes the guard bit
+   from the guard page, so if we don't re-establish that protection,
+   the next stack overflow will cause a crash.  */
+void
+w32_reset_stack_overflow_guard (void)
+{
+  /* MinGW headers don't declare this (should be in malloc.h).  */
+  _CRTIMP int __cdecl _resetstkoflw (void);
+
+  /* We ignore the return value.  If _resetstkoflw fails, the next
+     stack overflow will crash the program.  */
+  (void)_resetstkoflw ();
+}
+
+static void
+stack_overflow_handler (void)
+{
+  /* Hard GC error may lead to stack overflow caused by
+     too nested calls to mark_object.  No way to survive.  */
+  if (gc_in_progress)
+    terminate_due_to_signal (SIGSEGV, 40);
+#ifdef _WIN64
+  /* See ms-w32.h: MinGW64's longjmp crashes if invoked in this context.  */
+  __builtin_longjmp (return_to_command_loop, 1);
+#else
+  sys_longjmp (return_to_command_loop, 1);
+#endif
+}
+
 /* This handler records the exception code and the address where it
    was triggered so that this info could be included in the backtrace.
    Without that, the backtrace in some cases has no information
    whatsoever about the offending code, and looks as if the top-level
-   exception handler in the MinGW startup code di the one that
-   crashed.  */
+   exception handler in the MinGW startup code was the one that
+   crashed.  We also recover from stack overflow, by calling our stack
+   overflow handler that jumps back to top level.  */
 static LONG CALLBACK
 my_exception_handler (EXCEPTION_POINTERS * exception_data)
 {
   except_code = exception_data->ExceptionRecord->ExceptionCode;
   except_addr = exception_data->ExceptionRecord->ExceptionAddress;
+
+  /* If this is a stack overflow exception, attempt to recover.  */
+  if (exception_data->ExceptionRecord->ExceptionCode == EXCEPTION_STACK_OVERFLOW
+      && exception_data->ExceptionRecord->NumberParameters == 2
+      /* We can only longjmp to top level from the main thread.  */
+      && GetCurrentThreadId () == dwMainThreadId)
+    {
+      /* Call stack_overflow_handler ().  */
+#ifdef _WIN64
+      exception_data->ContextRecord->Rip = (DWORD_PTR) &stack_overflow_handler;
+#else
+      exception_data->ContextRecord->Eip = (DWORD_PTR) &stack_overflow_handler;
+#endif
+      /* Zero this out, so the stale address of the stack overflow
+	 exception we handled is not displayed in some future
+	 unrelated crash.  */
+      except_addr = 0;
+      return EXCEPTION_CONTINUE_EXECUTION;
+    }
 
   if (prev_exception_handler)
     return prev_exception_handler (exception_data);
@@ -9448,6 +9501,10 @@ globals_of_w32fns (void)
   InitCommonControls ();
 
   syms_of_w32uniscribe ();
+
+  /* Needed for recovery from C stack overflows in batch mode.  */
+  if (noninteractive)
+    dwMainThreadId = GetCurrentThreadId ();
 }
 
 #ifdef NTGUI_UNICODE

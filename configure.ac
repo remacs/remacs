@@ -4563,6 +4563,12 @@ if test "$emacs_cv_func_sigsetjmp" = "yes" &&
     [Define to 1 if C stack overflow can be handled in some cases.])
 fi
 
+# WINDOWSNT can handle C stack overflows even without the above features
+if test "${opsys}" = "mingw32"; then
+  AC_DEFINE([HAVE_STACK_OVERFLOW_HANDLING], 1,
+    [Define to 1 if C stack overflow can be handled in some cases.])
+fi
+
 case $opsys in
   sol2* | unixware )
     dnl TIOCGPGRP is broken in SysVr4, so we can't send signals to PTY

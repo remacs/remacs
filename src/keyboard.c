@@ -1092,7 +1092,11 @@ command_loop (void)
   /* At least on GNU/Linux, saving signal mask is important here.  */
   if (sigsetjmp (return_to_command_loop, 1) != 0)
     {
-      /* Comes here from handle_sigsegv, see sysdep.c.  */
+      /* Comes here from handle_sigsegv (see sysdep.c) and
+	 stack_overflow_handler (see w32fns.c).  */
+#ifdef WINDOWSNT
+      w32_reset_stack_overflow_guard ();
+#endif
       init_eval ();
       Vinternal__top_level_message = recover_top_level_message;
     }
