@@ -1,3 +1,47 @@
+2015-08-04  David Kastrup  <dak@gnu.org>
+
+	Do not overwrite preexisting contents of unread-command-events
+	* lisp/vc/emerge.el (emerge-show-file-name):
+	* lisp/progmodes/vhdl-mode.el (vhdl-electric-dash)
+	(vhdl-comment-insert, vhdl-hooked-abbrev):
+	* lisp/progmodes/octave.el (inferior-octave-dynamic-list-input-ring):
+	* lisp/progmodes/fortran.el (fortran-window-create-momentarily):
+	* lisp/progmodes/ebrowse.el (ebrowse-hack-electric-buffer-menu):
+	* lisp/progmodes/cperl-mode.el (cperl-putback-char):
+	* lisp/obsolete/vip.el (vip-escape-to-emacs)
+	(vip-prefix-arg-value, vip-prefix-arg-com):
+	* lisp/obsolete/terminal.el (te-escape-extended-command-unread):
+	* lisp/leim/quail/tibetan.el (quail-tibetan-update-translation)
+	(quail-tibkey-update-translation):
+	* lisp/leim/quail/lrt.el (quail-lrt-update-translation):
+	* lisp/leim/quail/lao.el (quail-lao-update-translation):
+	* lisp/leim/quail/japanese.el (quail-japanese-update-translation)
+	(quail-japanese-self-insert-and-switch-to-alpha):
+	* lisp/leim/quail/hangul.el (hangul2-input-method)
+	(hangul3-input-method, hangul390-input-method):
+	* lisp/language/hanja-util.el (hangul-to-hanja-char):
+	* lisp/international/robin.el (robin-input-method):
+	* lisp/international/quail.el (quail-start-translation)
+	(quail-start-conversion):
+	* lisp/gnus/gnus-art.el (gnus-article-describe-key)
+	(gnus-article-describe-key-briefly):
+	* lisp/eshell/em-hist.el (eshell-list-history):
+	* lisp/term.el (term-dynamic-list-input-ring)
+	(term-dynamic-list-completions):
+	* lisp/subr.el (momentary-string-display):
+	* lisp/simple.el (read-quoted-char):
+	* lisp/pcomplete.el (pcomplete-show-completions):
+	* lisp/kmacro.el (kmacro-repeat-on-last-key):
+	* lisp/info.el (Info-summary):
+	* lisp/ehelp.el (electric-help-command-loop):
+	* lisp/ebuff-menu.el (electric-buffer-list)
+	(Electric-buffer-menu-exit):
+	* lisp/double.el (double-translate-key):
+	* lisp/comint.el (comint-dynamic-list-input-ring)
+	(comint-dynamic-list-completions): Do not overwrite preexisting
+	contents of `unread-command-events' when putting new events into
+	it.
+
 2015-08-04  Daniel Colascione  <dancol@dancol.org>
 
 	Improve ansi-color filtering of unrecognized escape sequences
