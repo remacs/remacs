@@ -251,6 +251,41 @@ static unsigned char x_bits[] = {0xff, 0x81, 0xbd, 0xa5, 0xa5, 0xbd, 0x81, 0xff 
 	  (str "ABC"))
       (put-text-property 1 2 'invisible 'test-redisplay--ellipsis-invis str)
       (overlay-put ov 'display str)))
+  ;; Overlay string over invisible text and non-default face.
+  (insert "\n  Expected: ..." (propertize "ABC" 'face 'highlight) "XYZ")
+  (insert "\n    Result: ")
+  (insert (propertize "foo" 'invisible 'test-redisplay--ellipsis-invis))
+  (let ((ov (make-overlay (point) (point))))
+    (overlay-put ov 'invisible t)
+    (overlay-put ov 'window (selected-window))
+    (overlay-put ov 'after-string
+                 (propertize "ABC" 'face 'highlight)))
+  (insert "XYZ\n")
+  ;; Overlay strings with partial `invisibility' property and with a
+  ;; display property on the before-string.
+  (insert "\n  Expected: A...C")
+  (insert "\n    Result: ")
+  (let ((opoint (point)))
+    (insert "X\n")
+    (let ((ov  (make-overlay opoint (1+ opoint)))
+	  (str "ABC"))
+      (put-text-property 1 2 'invisible 'test-redisplay--ellipsis-invis str)
+      (overlay-put ov 'display str)))
+  (insert "\n  Expected: ..."
+          (propertize "DEF" 'display '(image :type xpm :file "close.xpm"))
+          (propertize "ABC" 'face 'highlight) "XYZ")
+  (insert "\n    Result: ")
+  (insert (propertize "foo" 'invisible 'test-redisplay--ellipsis-invis))
+  (let ((ov (make-overlay (point) (point))))
+    (overlay-put ov 'invisible t)
+    (overlay-put ov 'window (selected-window))
+    (overlay-put ov 'after-string
+                 (propertize "ABC" 'face 'highlight))
+    (overlay-put ov 'before-string
+                 (propertize "DEF"
+                             'display '(image :type xpm :file "close.xpm"))))
+  (insert "XYZ\n")
+
   ;; Overlay string with 2 adjacent and different invisible
   ;; properties.  This caused an infloop before Emacs 25.
   (insert "\n  Expected: ABC")
