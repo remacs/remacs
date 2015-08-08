@@ -263,14 +263,6 @@ static unsigned char x_bits[] = {0xff, 0x81, 0xbd, 0xa5, 0xa5, 0xbd, 0x81, 0xff 
   (insert "XYZ\n")
   ;; Overlay strings with partial `invisibility' property and with a
   ;; display property on the before-string.
-  (insert "\n  Expected: A...C")
-  (insert "\n    Result: ")
-  (let ((opoint (point)))
-    (insert "X\n")
-    (let ((ov  (make-overlay opoint (1+ opoint)))
-	  (str "ABC"))
-      (put-text-property 1 2 'invisible 'test-redisplay--ellipsis-invis str)
-      (overlay-put ov 'display str)))
   (insert "\n  Expected: ..."
           (propertize "DEF" 'display '(image :type xpm :file "close.xpm"))
           (propertize "ABC" 'face 'highlight) "XYZ")
