@@ -187,7 +187,12 @@ Evaluate BODY for each created sequence.
   (should-not   (seq-subseq '(1 2 3) 3))
   (should       (seq-subseq '(1 2 3) -3))
   (should-error (seq-subseq '(1 2 3) 1 4))
-  (should       (seq-subseq '(1 2 3) 1 3)))
+  (should       (seq-subseq '(1 2 3) 1 3))
+  (should-error (seq-subseq '() -1))
+  (should-error (seq-subseq [] -1))
+  (should-error (seq-subseq "" -1))
+  (should-not (seq-subseq '() 0))
+  (should-error(seq-subseq '() 0 -1)))
 
 (ert-deftest test-seq-concatenate ()
   (with-test-sequences (seq '(2 4 6))
