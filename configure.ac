@@ -4556,18 +4556,11 @@ if test $emacs_cv_func_sigsetjmp = yes; then
     [Define to 1 if sigsetjmp and siglongjmp work.])
 fi
 
-# We need all of these features to handle C stack overflows.
-if test "$emacs_cv_func_sigsetjmp" = "yes" &&
-   test "$emacs_cv_alternate_stack" = yes; then
-  AC_DEFINE([HAVE_STACK_OVERFLOW_HANDLING], 1,
-    [Define to 1 if C stack overflow can be handled in some cases.])
-fi
-
-# WINDOWSNT can handle C stack overflows even without the above features
-if test "${opsys}" = "mingw32"; then
-  AC_DEFINE([HAVE_STACK_OVERFLOW_HANDLING], 1,
-    [Define to 1 if C stack overflow can be handled in some cases.])
-fi
+case $emacs_cv_func_sigsetjmp,$emacs_cv_alternate_stack,$opsys in
+  yes,yes,* | *,*,mingw32)
+    AC_DEFINE([HAVE_STACK_OVERFLOW_HANDLING], 1,
+      [Define to 1 if C stack overflow can be handled in some cases.]);;
+esac
 
 case $opsys in
   sol2* | unixware )
