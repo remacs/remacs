@@ -695,6 +695,8 @@ enum
   };
 static unsigned char const LSQM[] = { uLSQM0, uLSQM1, uLSQM2 };
 static unsigned char const RSQM[] = { uRSQM0, uRSQM1, uRSQM2 };
+#define uLSQM "\xE2\x80\x98"
+#define uRSQM "\xE2\x80\x99"
 
 DEFUN ("substitute-command-keys", Fsubstitute_command_keys,
        Ssubstitute_command_keys, 1, 1, 0,
@@ -921,11 +923,14 @@ Otherwise, return a new string.  */)
 	  if (NILP (tem))
 	    {
 	      name = Fsymbol_name (name);
-	      insert_string ("\nUses keymap `");
+	      insert1 (Fsubstitute_command_keys
+		       (build_string ("\nUses keymap "uLSQM)));
 	      insert_from_string (name, 0, 0,
 				  SCHARS (name),
 				  SBYTES (name), 1);
-	      insert_string ("', which is not currently defined.\n");
+	      insert1 (Fsubstitute_command_keys
+		       (build_string
+			(uRSQM", which is not currently defined.\n")));
 	      if (start[-1] == '<') keymap = Qnil;
 	    }
 	  else if (start[-1] == '<')
