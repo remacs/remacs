@@ -275,19 +275,7 @@ suitable file is found, return nil."
 		    lib-name)
 		file-name))
 	     ;; The next three forms are from `find-source-lisp-file'.
-	     (elc-file (locate-file
-			(concat file-name
-				(if (string-match "\\.el\\'" file-name)
-				    "c"
-				  ".elc"))
-			load-path nil 'readable))
-	     (str (when elc-file
-		    (with-temp-buffer
-		      (insert-file-contents-literally elc-file nil 0 256)
-		      (buffer-string))))
-	     (src-file (and str
-			    (string-match ";;; from file \\(.*\\.el\\)" str)
-			    (match-string 1 str))))
+	     (src-file (locate-library file-name t nil 'readable)))
 	(and src-file (file-readable-p src-file) src-file))))))
 
 (defun help-fns--key-bindings (function)
