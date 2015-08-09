@@ -1,3 +1,207 @@
+2015-08-09  Ivan Kanis  <ivan@kanis.fr>
+
+	fix link to source code in help window
+	* lisp/help-fns.el (find-lisp-object-file-name): remove code that
+	will never work due to Glenn Morris change a6d63d9 on Apr 20 2013
+	'No longer include timestamp in header of .elc files'. Add code
+	that will return .el source file in load-path.
+
+2015-08-09  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* isearch.el (isearch-search-fun-default): (Bug#21164)
+	Respect `isearch-lax-whitespace' when searching through
+	`isearch-word'.
+
+2015-08-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* test/automated/ert-tests.el (ert-test-deftest): Add FIXME.
+
+	* org.el: Fix up some lexical scoping warnings, and use dolist
+	* lisp/org/org.el (org-set-regexps-and-options-for-tags, org-goto-map)
+	(org-set-regexps-and-options, org-assign-fast-keys)
+	(org-contextualize-keys, org-contextualize-validate-key)
+	(org-notes-order-reversed-p, org-local-logging, org-map-entries)
+	(org-find-olp, org-find-exact-heading-in-directory)
+	(org-cycle-agenda-files, org-release-buffers, org-fill-template)
+	(org-agenda-prepare-buffers, org-occur-in-agenda-files)
+	(org-replace-escapes): Use dolist.
+	(org-mode): Optimize away XEmacs-only code.
+	(org-refile-get-targets): Remove unused var `f'.
+	(org-fast-todo-selection): Remove unused var `e'.
+	(org-make-tags-matcher): Use dolist.  Remove unused var `term'.
+	(org-fast-tag-selection): Use dolist.  Remove unused var `e'.
+	(org-format-latex): Use dolist.  Remove unused var `e'.
+	(org-toggle-heading): Access vars lexically rather than dynamically.
+	(org-backward-sentence, org-forward-sentence, org-meta-return)
+	(org-kill-line): Mark arg as unused.
+	(org-submit-bug-report): Silence compiler warning.
+	(org-occur-in-agenda-files): Don't use add-to-list on local vars.
+	(org-get-cursor-date): Remove unused var `tm'.
+	(org-comment-or-uncomment-region): Use standard name `_'.
+	(reftex-docstruct-symbol, reftex-cite-format): Declare to
+	silence byte-compiler.
+	(org-reftex-citation): Add `org--' prefix to dynamically scoped
+	`rds' var.
+
+2015-08-08  Nicolas Petton  <nicolas@petton.fr>
+
+	Merge remote-tracking branch 'origin/fix/subsequence-error-with-negative-sequences'
+
+2015-08-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Electric quote if coding is undecided or no conv
+	* lisp/electric.el (electric--insertable-p): Also say that a
+	string is insertable if the buffer file coding system is undecided
+	or uses no conversion, as curved quotes will work in either case.
+
+	* configure.ac (HAVE_STACK_OVERFLOW_HANDLING): Simplify configuration.
+
+2015-08-08  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix overlay string display regressions introduced in Emacs 24.5
+	* src/xdisp.c (pop_it): Reset the flag to ignore overlays at this
+	buffer position, if we move the iterator to a new position as
+	result of jumping over text covered by a "replacing" display
+	property.
+	* test/redisplay-testsuite.el (test-redisplay-4): Add 2 new tests.
+
+	Support recovery from C stack overflow on MS-Windows
+	* src/w32fns.c (w32_reset_stack_overflow_guard)
+	(stack_overflow_handler): New functions for handling C stack
+	overflow exceptions.
+	(my_exception_handler): Handle EXCEPTION_STACK_OVERFLOW exceptions
+	specially, and zero out except_addr if we do.
+	(globals_of_w32fns): Initialize dwMainThreadId in non-interactive
+	mode.
+	* src/sysdep.c [HAVE_STACK_OVERFLOW_HANDLING]: Add !WINDOWSNT to
+	the condition, as HAVE_STACK_OVERFLOW_HANDLING is now defined for
+	the MinGW build, but the code guarded by that is for Posix hosts.
+	* src/keyboard.c (command_loop) [WINDOWSNT]: Call
+	w32_reset_stack_overflow_guard.
+	* nt/inc/ms-w32.h (sigjmp_buf): New typedef.
+	(sigsetjmp): New macro.
+	(w32_reset_stack_overflow_guard): Declare the prototype.
+	* configure.ac (HAVE_STACK_OVERFLOW_HANDLING): Set to 1 for MinGW.
+
+2015-08-07  Phillip Lord  <phillip.lord@newcastle.ac.uk>
+
+	Improve error signalling for seq-subseq.
+	The existing behaviour for seq-subseq is to error when indexes are too
+	large, but to silently ignore numbers which are too negative for lists.
+	String and vector handling errors in both cases. This has been
+	regularlised.
+	Error signalling behaviour has been explicitly added to the docstring of
+	seq-subseq, and also to cl-subseq which largely defers to
+	seq-subseq (and is therefore also impacted by this change).
+	Tests have been added for these exceptional cases, as well as one non
+	exceptional base case.
+
+2015-08-07  Jürgen Hötzel  <juergen@archlinux.org>
+
+	Improve error checking in tramp-adb.el
+	* lisp/net/tramp-adb.el (tramp-adb-ls-output-name-less-p):
+	Improve error checking.  "ls -l" on Android in Enforcing mode can
+	print "lstat './FILENAME failed: Permission denied".
+
+2015-08-07  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/emacs-lisp/cl-generic.el (cl--generic-struct-tag): Don't burp on
+	non-struct vectors.
+
+2015-08-07  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	lisp/window.el: fix typo, more `display-buffer-use-some-frame'
+	* lisp/window.el: fix typo that broke build
+	(display-buffer--action-function-custom-type): add
+	`display-buffer-use-some-frame'
+	(display-buffer): add `display-buffer-use-some-frame' to doc string
+
+	Add support for 'inhibit-same-window in 'display-buffer-use-some-frame'
+	* lisp/window.el (display-buffer-use-some-frame): Add support for
+	'inhibit-same-window in alist.
+	* doc/windows.texi (display-buffer-use-some-frame): Doc support for
+	'inhibit-same-window in alist.
+
+2015-08-07  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid infinite loop in display of invisible text in strings
+	* src/xdisp.c (handle_invisible_prop): If the next change of
+	invisibility spec does not mean the beginning of a visible text,
+	update the string position from which to start the search for the
+	next invisibility change.  This avoids an infinite loop when we
+	have more than one invisibility spec that are made inactive by
+	buffer-invisibility-spec.  Simplify code.  (Bug#21200)
+	* test/redisplay-testsuite.el (test-redisplay-4): Add a test case
+	for the situation that caused bug #21200.
+
+2015-08-06  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/package.el: Simplify describe-package-1
+	(package-help-section-name-face): New face.
+	(package--print-help-section): New function.
+	(describe-package-1): Refactor section printing.
+	(package-make-button): Use face instead of font-lock-face, which
+	doesn't work on buttons.
+
+	* lisp/emacs-lisp/package.el: Define custom faces
+	(package-name-face, package-description-face)
+	(package-status-built-in-face, package-status-external-face)
+	(package-status-available-face, package-status-new-face)
+	(package-status-held-face, package-status-disabled-face)
+	(package-status-installed-face, package-status-dependency-face)
+	(package-status-unsigned-face, package-status-incompat-face)
+	(package-status-avail-obso-face): New faces.
+	(package-menu--print-info-simple): Use them.
+
+2015-08-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix some confusion with ‘format’
+	* lisp/allout-widgets.el (allout-widgets-before-change-handler)
+	(allout-graphics-modification-handler):
+	Protect arbitrary string in a format context with "%s" format.
+	* lisp/avoid.el:
+	* lisp/cedet/semantic/bovine/scm.el: Fix comment.
+	* lisp/calendar/icalendar.el (icalendar--convert-sexp-to-ical):
+	* lisp/erc/erc-button.el (erc-button-beats-to-time):
+	* lisp/gnus/message.el (message-send-form-letter):
+	* lisp/org/ob-core.el (org-babel-check-evaluate)
+	(org-babel-confirm-evaluate):
+	* lisp/org/ob-fortran.el (org-babel-fortran-var-to-fortran):
+	* lisp/org/ox-latex.el (org-latex-compile):
+	* lisp/org/ox-man.el (org-man-compile):
+	* lisp/org/ox-odt.el (org-odt-template):
+	* lisp/org/ox-texinfo.el (org-texinfo-compile):
+	* lisp/progmodes/prolog.el (prolog-help-info)
+	(prolog-view-predspec):
+	* lisp/progmodes/ruby-mode.el (ruby-parse-partial):
+	* lisp/progmodes/verilog-mode.el (verilog-showscopes):
+	* lisp/textmodes/rst.el (rst-replace-lines):
+	Change (message (format ...)) to (message ...), and likewise
+	for ‘error’.  This lessens the probability of confusion when the
+	output of ‘format’ contains ‘%’.
+
+2015-08-05  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/replace.el (replace-character-fold): Default to nil
+
+	* lisp/character-fold.el: Fix lax whitespace
+	(character-fold-table): Don't make space match other whitespace chars.
+	(character-fold-to-regexp): Simplify lax behaviour.
+
+2015-08-05  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Preserve window point in xref-find-definitions-other-window
+	Fix the problem reported by Ingo Logmar in
+	http://lists.gnu.org/archive/html/emacs-devel/2015-08/msg00152.html
+	* lisp/progmodes/xref.el (xref--goto-char): Extract from
+	xref--goto-location.
+	(xref--pop-to-location): Use it. Replace xref--goto-location with
+	a direct xref-location-marker call.
+	(xref--show-location): Likewise.
+	(xref--display-position): Use xref--goto-char.
+
+	* lisp/progmodes/project.el: Add a paragraph to the front matter.
+
 2015-08-04  David Kastrup  <dak@gnu.org>
 
 	Do not overwrite preexisting contents of unread-command-events
@@ -8703,7 +8907,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit a57f8f3022d9ab8b31bbfee291a3d7340bd37c21 (inclusive).
+commit 9596accf506e66153d9a24828d530543edd8f4b8 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
