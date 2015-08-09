@@ -7686,8 +7686,7 @@ Called from `temp-buffer-show-hook'."
       (when completion-show-help
 	(goto-char (point-min))
 	(if (display-mouse-p)
-	    (insert (substitute-command-keys
-		     "Click on a completion to select it.\n")))
+	    (insert "Click on a completion to select it.\n"))
 	(insert (substitute-command-keys
 		 "In this buffer, type \\[choose-completion] to \
 select the completion near point.\n\n"))))))
