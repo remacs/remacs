@@ -2154,17 +2154,23 @@ synchronize_locale (int category, Lisp_Object *plocale, Lisp_Object desired_loca
 {
   if (! EQ (*plocale, desired_locale))
     {
+      *plocale = desired_locale;
 #ifdef WINDOWSNT
       /* Changing categories like LC_TIME usually requires to specify
 	 an encoding suitable for the new locale, but MS-Windows's
 	 'setlocale' will only switch the encoding when LC_ALL is
-	 specified.  So we ignore CATEGORY and use LC_ALL instead.  */
-      category = LC_ALL;
-#endif
-      *plocale = desired_locale;
+	 specified.  So we ignore CATEGORY, use LC_ALL instead, and
+	 then restore LC_NUMERIC to "C", so reading and printing
+	 numbers is unaffected.  */
+      setlocale (LC_ALL, (STRINGP (desired_locale)
+			  ? SSDATA (desired_locale)
+			  : ""));
+      fixup_locale ();
+#else  /* !WINDOWSNT */
       setlocale (category, (STRINGP (desired_locale)
 			    ? SSDATA (desired_locale)
 			    : ""));
+#endif	/* !WINDOWSNT */
     }
 }
 
