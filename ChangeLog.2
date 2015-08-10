@@ -86,15 +86,21 @@
 2015-08-07  Phillip Lord  <phillip.lord@newcastle.ac.uk>
 
 	Improve error signalling for seq-subseq.
-	The existing behaviour for seq-subseq is to error when indexes are too
-	large, but to silently ignore numbers which are too negative for lists.
-	String and vector handling errors in both cases. This has been
-	regularlised.
-	Error signalling behaviour has been explicitly added to the docstring of
-	seq-subseq, and also to cl-subseq which largely defers to
-	seq-subseq (and is therefore also impacted by this change).
-	Tests have been added for these exceptional cases, as well as one non
-	exceptional base case.
+
+	* lisp/seq.el (seq-subseq): The existing behaviour is to error
+	when indexes are too large, but to silently ignore numbers which
+	are too negative for lists.  String and vector handling errors in
+	both cases. This has been regularlised. Error signalling behaviour
+	has been explicitly added to the docstring.
+
+	* lisp/cl-extra.el (cl-subseq): Defers to (seq-subseq) and is
+	therefore also impacted by this change. The docstring has been
+	updated to reflect this.
+
+	* test/automated/seq-tests.el (test-seq-subseq): Tests have been
+	added for these exceptional cases, as well as one non exceptional
+	base case.
+
 
 2015-08-07  Jürgen Hötzel  <juergen@archlinux.org>
 
