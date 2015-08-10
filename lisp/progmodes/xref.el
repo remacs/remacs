@@ -934,12 +934,12 @@ IGNORES is a list of glob patterns."
     " -path "
     (mapconcat
      (lambda (ignore)
-       (when (string-match "\\(\\.\\)/" ignore)
-         (setq ignore (replace-match dir t t ignore 1)))
        (when (string-match-p "/\\'" ignore)
          (setq ignore (concat ignore "*")))
-       (unless (string-prefix-p "*" ignore)
-         (setq ignore (concat "*/" ignore)))
+       (if (string-match "\\`\\./" ignore)
+           (setq ignore (replace-match dir t t ignore))
+         (unless (string-prefix-p "*" ignore)
+           (setq ignore (concat "*/" ignore))))
        (shell-quote-argument ignore))
      ignores
      " -o -path ")
