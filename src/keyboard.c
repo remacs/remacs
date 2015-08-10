@@ -2387,7 +2387,7 @@ read_char (int commandflag, Lisp_Object map,
   Lisp_Object tem, save;
   volatile Lisp_Object previous_echo_area_message;
   volatile Lisp_Object also_record;
-  volatile bool reread;
+  volatile bool reread, recorded;
   struct gcpro gcpro1, gcpro2;
   bool volatile polling_stopped_here = 0;
   struct kboard *orig_kboard = current_kboard;
@@ -2404,6 +2404,8 @@ read_char (int commandflag, Lisp_Object map,
   GCPRO2 (c, previous_echo_area_message);
 
  retry:
+
+  recorded = false;
 
   if (CONSP (Vunread_post_input_method_events))
     {
@@ -2994,6 +2996,7 @@ read_char (int commandflag, Lisp_Object map,
   /* Store these characters into recent_keys, the dribble file if any,
      and the keyboard macro being defined, if any.  */
   record_char (c);
+  recorded = true;
   if (! NILP (also_record))
     record_char (also_record);
 
@@ -3128,6 +3131,14 @@ read_char (int commandflag, Lisp_Object map,
       c = XCAR (tem);
       Vunread_post_input_method_events
 	= nconc2 (XCDR (tem), Vunread_post_input_method_events);
+    }
+  /* When we consume events from the various unread-*-events lists, we
+     bypass the code that records input, so record these events now if
+     they were not recorded already.  */
+  if (!recorded)
+    {
+      record_char (c);
+      recorded = true;
     }
 
  reread_first:
