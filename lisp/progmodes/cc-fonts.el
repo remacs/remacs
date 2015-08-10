@@ -1140,6 +1140,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			     (looking-at "{"))
 			(c-safe (c-forward-sexp) t) ; over { .... }
 		      t)
+		    (< (point) limit)
 		    ;; FIXME: Should look for c-decl-end markers here;
 		    ;; we might go far into the following declarations
 		    ;; in e.g. ObjC mode (see e.g. methods-4.m).
