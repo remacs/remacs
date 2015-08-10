@@ -2160,9 +2160,12 @@ A fancy display is used on graphic displays, normal otherwise."
   ;; which includes files parsed from the command line arguments and
   ;; `initial-buffer-choice'.  All of the display logic happens at the
   ;; end of this `let'.  As files as processed from the command line
-  ;; arguments, their buffers are prepended to `displayable-buffers'
-  ;; but they are not displayed until command line parsing has
-  ;; finished.
+  ;; arguments, their buffers are prepended to `displayable-buffers'.
+  ;; In order for options like "--eval" to work with the "--file" arg,
+  ;; the file buffers are set as the current buffer as they are seen
+  ;; on the command line (so "emacs --batch --file a --file b
+  ;; --eval='(message "%s" (buffer-name))'" will print "b"), but this
+  ;; does not affect the final displayed state of the buffers.
   (let ((displayable-buffers nil))
     ;; This `let' processes the command line arguments.
     (let ((command-line-args-left args-left))
@@ -2193,10 +2196,11 @@ A fancy display is used on graphic displays, normal otherwise."
                                 command-switch-alist)))
                (line 0)
                (column 0)
-               ;; `process-file-arg' opens a file buffer for `name'
-               ;; without switching to the buffer, adds the buffer to
+               ;; `process-file-arg' opens a file buffer for `name',
+               ;; sets that buffer as the current buffer without
+               ;; displaying it, adds the buffer to
                ;; `displayable-buffers', and puts the point at
-               ;; `line':`column'. `line' and `column' are both reset
+               ;; `line':`column'.  `line' and `column' are both reset
                ;; to zero when `process-file-arg' returns.
                (process-file-arg
                 (lambda (name)
@@ -2209,14 +2213,19 @@ nil default-directory" name)
 				  dir))
 			   (buf (find-file-noselect file)))
 		      (setq displayable-buffers (cons buf displayable-buffers))
-		      (with-current-buffer buf
-			(unless (zerop line)
-			  (goto-char (point-min))
-			  (forward-line (1- line)))
-			(setq line 0)
-			(unless (< column 1)
-			  (move-to-column (1- column)))
-			(setq column 0)))))))
+                      ;; Set the file buffer to the current buffer so
+                      ;; that it will be used with "--eval" and
+                      ;; similar options.
+                      (set-buffer buf)
+                      ;; Put the point at `line':`column' in the file
+                      ;; buffer, and reset `line' and `column' to 0.
+                      (unless (zerop line)
+                        (goto-char (point-min))
+                        (forward-line (1- line)))
+                      (setq line 0)
+                      (unless (< column 1)
+                        (move-to-column (1- column)))
+                      (setq column 0))))))
 
           ;; Add the long X options to longopts.
           (dolist (tem command-line-x-option-alist)
