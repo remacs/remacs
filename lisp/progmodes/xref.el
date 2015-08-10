@@ -430,16 +430,17 @@ Used for temporary buffers.")
     (when (and restore (not (eq (car restore) 'same)))
       (push (cons buf win) xref--display-history))))
 
-(defun xref--display-position (pos other-window xref-buf)
+(defun xref--display-position (pos other-window buf)
   ;; Show the location, but don't hijack focus.
-  (with-selected-window (display-buffer (current-buffer) other-window)
-    (xref--goto-char pos)
-    (run-hooks 'xref-after-jump-hook)
-    (let ((buf (current-buffer))
-          (win (selected-window)))
-      (with-current-buffer xref-buf
-        (setq-local other-window-scroll-buffer buf)
-        (xref--save-to-history buf win)))))
+  (let ((xref-buf (current-buffer)))
+    (with-selected-window (display-buffer buf other-window)
+      (xref--goto-char pos)
+      (run-hooks 'xref-after-jump-hook)
+      (let ((buf (current-buffer))
+            (win (selected-window)))
+        (with-current-buffer xref-buf
+          (setq-local other-window-scroll-buffer buf)
+          (xref--save-to-history buf win))))))
 
 (defun xref--show-location (location)
   (condition-case err
@@ -450,8 +451,8 @@ Used for temporary buffers.")
           (unless (memq buf bl)
             ;; Newly created.
             (add-hook 'buffer-list-update-hook #'xref--mark-selected nil t)
-            (push buf xref--temporary-buffers)))
-        (xref--display-position (point) t (current-buffer)))
+            (push buf xref--temporary-buffers))
+          (xref--display-position marker t buf)))
     (user-error (message (error-message-string err)))))
 
 (defun xref-show-location-at-point ()
