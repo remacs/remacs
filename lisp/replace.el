@@ -2080,7 +2080,13 @@ see the documentation of `replace-match' to find out how to simulate
 `case-replace'.
 
 This function returns nil if and only if there were no matches to
-make, or the user didn't cancel the call."
+make, or the user didn't cancel the call.
+
+REPLACEMENTS is either a string, a list of strings, or a cons cell
+containing a function and its first argument.  The function is
+called to generate each replacement like this:
+  (funcall (car replacements) (cdr replacements) replace-count)
+It must return a string."
   (or map (setq map query-replace-map))
   (and query-flag minibuffer-auto-raise
        (raise-frame (window-frame (minibuffer-window))))
@@ -2136,11 +2142,6 @@ make, or the user didn't cancel the call."
     (when (eq (lookup-key map (vector last-input-event)) 'automatic-all)
       (setq query-flag nil multi-buffer t))
 
-    ;; REPLACEMENTS is either a string, a list of strings, or a cons cell
-    ;; containing a function and its first argument.  The function is
-    ;; called to generate each replacement like this:
-    ;;   (funcall (car replacements) (cdr replacements) replace-count)
-    ;; It must return a string.
     (cond
      ((stringp replacements)
       (setq next-replacement replacements
