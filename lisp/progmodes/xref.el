@@ -202,8 +202,10 @@ LOCATION is an `xref-location'."
 It can be called in several ways:
 
  (definitions IDENTIFIER): Find definitions of IDENTIFIER.  The
-result must be a list of xref objects.  If no definitions can be
-found, return nil.
+result must be a list of xref objects.  If IDENTIFIER contains
+sufficient information to determine a unique definition, returns
+only that definition. If there are multiple possible definitions,
+return all of them.  If no definitions can be found, return nil.
 
  (references IDENTIFIER): Find references of IDENTIFIER.  The
 result must be a list of xref objects.  If no references can be
@@ -751,7 +753,14 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 (defun xref-find-definitions (identifier)
   "Find the definition of the identifier at point.
 With prefix argument or when there's no identifier at point,
-prompt for it."
+prompt for it.
+
+If the backend has sufficient information to determine a unique
+definition for IDENTIFIER, it returns only that definition. If
+there are multiple possible definitions, it returns all of them.
+
+If the backend returns one definition, jump to it; otherwise,
+display the list in a buffer."
   (interactive (list (xref--read-identifier "Find definitions of: ")))
   (xref--find-definitions identifier nil))
 

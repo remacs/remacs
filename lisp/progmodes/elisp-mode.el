@@ -590,6 +590,10 @@ It can be quoted, or be inside a quoted form."
 
 (defun elisp-xref-find (action id)
   (require 'find-func)
+  ;; FIXME: use information in source near point to filter results:
+  ;; (dvc-log-edit ...) - exclude 'feature
+  ;; (require 'dvc-log-edit) - only 'feature
+  ;; Semantic may provide additional information
   (pcase action
     (`definitions
       (let ((sym (intern-soft id)))
@@ -606,7 +610,7 @@ It can be quoted, or be inside a quoted form."
     (put-text-property 4 6 'face 'font-lock-function-name-face str)
     str))
 
-(defconst elisp--xref-format-cl-defmethod
+(defconst elisp--xref-format-extra
   (let ((str "(%s %s %s)"))
     (put-text-property 1 3 'face 'font-lock-keyword-face str)
     (put-text-property 4 6 'face 'font-lock-function-name-face str)
@@ -675,7 +679,7 @@ otherwise build the summary from TYPE and SYMBOL."
 
     (when (fboundp symbol)
       (let ((file (find-lisp-object-file-name symbol (symbol-function symbol)))
-	    generic)
+	    generic doc)
 	(when file
 	  (cond
 	   ((eq file 'C-source)
@@ -684,11 +688,26 @@ otherwise build the summary from TYPE and SYMBOL."
             ;; Second call will return "src/*.c" in file; handled by 't' case below.
 	    (push (elisp--xref-make-xref nil symbol (help-C-file-name (symbol-function symbol) 'subr)) xrefs))
 
+           ((and (setq doc (documentation symbol t))
+                 ;; This doc string is defined in cl-macs.el cl-defstruct
+                 (string-match "Constructor for objects of type `\\(.*\\)'" doc))
+            ;; `symbol' is a name for the default constructor created by
+            ;; cl-defstruct, so return the location of the cl-defstruct.
+            (let* ((type-name (match-string 1 doc))
+                   (type-symbol (intern type-name))
+                   (file (find-lisp-object-file-name type-symbol 'define-type))
+                   (summary (format elisp--xref-format-extra
+                                    'cl-defstruct
+                                    (concat "(" type-name)
+                                    (concat "(:constructor " (symbol-name symbol) "))"))))
+              (push (elisp--xref-make-xref 'define-type type-symbol file summary) xrefs)
+              ))
+
 	   ((setq generic (cl--generic symbol))
 	    (dolist (method (cl--generic-method-table generic))
 	      (let* ((info (cl--generic-method-info method))
 		     (met-name (cons symbol (cl--generic-method-specializers method)))
-		     (descr (format elisp--xref-format-cl-defmethod 'cl-defmethod symbol (nth 1 info)))
+		     (descr (format elisp--xref-format-extra 'cl-defmethod symbol (nth 1 info)))
 		     (file (find-lisp-object-file-name met-name 'cl-defmethod)))
 		(when file
 		  (push (elisp--xref-make-xref 'cl-defmethod met-name file descr) xrefs))

@@ -176,28 +176,30 @@
       )))
 
 
-(defmacro xref-elisp-test (name computed-xrefs expected-xrefs)
+(defun xref-elisp-test-run (xrefs expecteds)
+  (while xrefs
+    (should (= (length xrefs) (length expecteds)))
+    (let ((xref (pop xrefs))
+          (expected (pop expecteds)))
+
+      (should (equal xref
+                     (or (when (consp expected) (car expected)) expected)))
+
+      (xref--goto-location (xref-item-location xref))
+      (should (looking-at (or (when (consp expected) (cdr expected))
+                              (xref-elisp-test-descr-to-target expected)))))
+    ))
+
+(defmacro xref-elisp-deftest (name computed-xrefs expected-xrefs)
   "Define an ert test for an xref-elisp feature.
 COMPUTED-XREFS and EXPECTED-XREFS are lists of xrefs, except if
 an element of EXPECTED-XREFS is a cons (XREF . TARGET), TARGET is
 matched to the found location; otherwise, match
 to (xref-elisp-test-descr-to-target xref)."
-  (declare (indent defun))
-  (declare (debug (symbolp "name")))
+  (declare (indent defun)
+           (debug (symbolp "name")))
   `(ert-deftest ,(intern (concat "xref-elisp-test-" (symbol-name name))) ()
-     (let ((xrefs ,computed-xrefs)
-           (expecteds ,expected-xrefs))
-       (while xrefs
-         (let ((xref (pop xrefs))
-               (expected (pop expecteds)))
-
-           (should (equal xref
-                          (or (when (consp expected) (car expected)) expected)))
-
-           (xref--goto-location (xref-item-location xref))
-           (should (looking-at (or (when (consp expected) (cdr expected))
-                                   (xref-elisp-test-descr-to-target expected)))))
-         ))
+     (xref-elisp-test-run ,computed-xrefs ,expected-xrefs)
      ))
 
 ;; When tests are run from the Makefile, 'default-directory' is $HOME,
@@ -212,7 +214,22 @@ to (xref-elisp-test-descr-to-target xref)."
 ;; FIXME: defalias-defun-c cmpl-prefix-entry-head
 ;; FIXME: defalias-defvar-el allout-mode-map
 
-(xref-elisp-test find-defs-defalias-defun-el
+(xref-elisp-deftest find-defs-constructor
+  (elisp--xref-find-definitions 'xref-make-elisp-location)
+  ;; 'xref-make-elisp-location' is just a name for the default
+  ;; constructor created by the cl-defstruct, so the location is the
+  ;; cl-defstruct location.
+  (list
+   (cons
+    (xref-make "(cl-defstruct (xref-elisp-location (:constructor xref-make-elisp-location)))"
+               (xref-make-elisp-location
+                'xref-elisp-location 'define-type
+                (expand-file-name "../../lisp/progmodes/elisp-mode.el" emacs-test-dir)))
+    ;; It's not worth adding another special case to `xref-elisp-test-descr-to-target' for this
+    "(cl-defstruct (xref-elisp-location")
+   ))
+
+(xref-elisp-deftest find-defs-defalias-defun-el
   (elisp--xref-find-definitions 'Buffer-menu-sort)
   (list
    (xref-make "(defalias Buffer-menu-sort)"
@@ -227,7 +244,7 @@ to (xref-elisp-test-descr-to-target xref)."
 
 ;; FIXME: defconst
 
-(xref-elisp-test find-defs-defgeneric-el
+(xref-elisp-deftest find-defs-defgeneric-el
   (elisp--xref-find-definitions 'xref-location-marker)
   (list
    (xref-make "(cl-defgeneric xref-location-marker)"
@@ -250,20 +267,14 @@ to (xref-elisp-test-descr-to-target xref)."
 	      (xref-make-elisp-location
 	       '(xref-location-marker xref-bogus-location) 'cl-defmethod
 	       (expand-file-name "../../lisp/progmodes/xref.el" emacs-test-dir)))
-   (xref-make "(cl-defmethod xref-location-marker ((l xref-etags-location)))"
-	      (xref-make-elisp-location
-	       '(xref-location-marker xref-etags-location) 'cl-defmethod
-	       (expand-file-name "../../lisp/progmodes/etags.el" emacs-test-dir)))
+   ;; etags is not loaded at test time
    ))
 
-;; FIXME: constructor xref-make-elisp-location; location is
-;; cl-defstruct location. use :constructor in description.
-
-(xref-elisp-test find-defs-defgeneric-eval
+(xref-elisp-deftest find-defs-defgeneric-eval
   (elisp--xref-find-definitions (eval '(cl-defgeneric stephe-leake-cl-defgeneric ())))
   nil)
 
-(xref-elisp-test find-defs-defun-el
+(xref-elisp-deftest find-defs-defun-el
   (elisp--xref-find-definitions 'xref-find-definitions)
   (list
    (xref-make "(defun xref-find-definitions)"
@@ -271,11 +282,11 @@ to (xref-elisp-test-descr-to-target xref)."
 	       'xref-find-definitions nil
 	       (expand-file-name "../../lisp/progmodes/xref.el" emacs-test-dir)))))
 
-(xref-elisp-test find-defs-defun-eval
+(xref-elisp-deftest find-defs-defun-eval
   (elisp--xref-find-definitions (eval '(defun stephe-leake-defun ())))
   nil)
 
-(xref-elisp-test find-defs-defun-c
+(xref-elisp-deftest find-defs-defun-c
   (elisp--xref-find-definitions 'buffer-live-p)
   (list
    (xref-make "(defun buffer-live-p)"
@@ -283,7 +294,7 @@ to (xref-elisp-test-descr-to-target xref)."
 
 ;; FIXME: deftype
 
-(xref-elisp-test find-defs-defun-c-defvar-c
+(xref-elisp-deftest find-defs-defun-c-defvar-c
   (elisp-xref-find 'definitions "system-name")
   (list
    (xref-make "(defvar system-name)"
@@ -292,7 +303,7 @@ to (xref-elisp-test-descr-to-target xref)."
               (xref-make-elisp-location 'system-name nil "src/editfns.c")))
   )
 
-(xref-elisp-test find-defs-defun-el-defvar-c
+(xref-elisp-deftest find-defs-defun-el-defvar-c
   (elisp-xref-find 'definitions "abbrev-mode")
   ;; It's a minor mode, but the variable is defined in buffer.c
   (list
@@ -310,42 +321,34 @@ to (xref-elisp-test-descr-to-target xref)."
 ;; compilation-minor-mode". There is no way to tell that from the
 ;; symbol.  find-function-regexp-alist uses find-function-regexp for
 ;; this, but that matches too many things for use in this test.
-(xref-elisp-test find-defs-defun-defvar-el
+(require 'compile) ;; not loaded by default at test time
+(xref-elisp-deftest find-defs-defun-defvar-el
   (elisp--xref-find-definitions 'compilation-minor-mode)
   (list
-   (cons
-    (xref-make "(defun compilation-minor-mode)"
-               (xref-make-elisp-location
-                'compilation-minor-mode nil
-                (expand-file-name "../../lisp/progmodes/compile.el" emacs-test-dir)))
-    "(define-minor-mode compilation-minor-mode")
    (cons
     (xref-make "(defvar compilation-minor-mode)"
 	      (xref-make-elisp-location
 	       'compilation-minor-mode 'defvar
 	       (expand-file-name "../../lisp/progmodes/compile.el" emacs-test-dir)))
     "(define-minor-mode compilation-minor-mode")
-   )
-  )
+   (cons
+    (xref-make "(defun compilation-minor-mode)"
+               (xref-make-elisp-location
+                'compilation-minor-mode nil
+                (expand-file-name "../../lisp/progmodes/compile.el" emacs-test-dir)))
+    "(define-minor-mode compilation-minor-mode")
+   ))
 
-(xref-elisp-test find-defs-defvar-el
+(xref-elisp-deftest find-defs-defvar-el
   (elisp--xref-find-definitions 'xref--marker-ring)
-  ;; This is a defconst, which creates an alias and a variable.
-  ;; FIXME: try not to show the alias in this case
   (list
    (xref-make "(defvar xref--marker-ring)"
 	      (xref-make-elisp-location
 	       'xref--marker-ring 'defvar
 	       (expand-file-name "../../lisp/progmodes/xref.el" emacs-test-dir)))
-   (cons
-    (xref-make "(defalias xref--marker-ring)"
-               (xref-make-elisp-location
-                'xref--marker-ring 'defalias
-                (expand-file-name "../../lisp/progmodes/xref.elc" emacs-test-dir)))
-    "(defvar xref--marker-ring")
     ))
 
-(xref-elisp-test find-defs-defvar-c
+(xref-elisp-deftest find-defs-defvar-c
   (elisp--xref-find-definitions 'default-directory)
   (list
    (cons
@@ -354,15 +357,13 @@ to (xref-elisp-test-descr-to-target xref)."
     ;; IMPROVEME: we might be able to compute this target
     "DEFVAR_PER_BUFFER (\"default-directory\"")))
 
-(xref-elisp-test find-defs-defvar-eval
+(xref-elisp-deftest find-defs-defvar-eval
   (elisp--xref-find-definitions (eval '(defvar stephe-leake-defvar nil)))
   nil)
 
-(xref-elisp-test find-defs-face-el
+(xref-elisp-deftest find-defs-face-el
   (elisp--xref-find-definitions 'font-lock-keyword-face)
   ;; 'font-lock-keyword-face is both a face and a var
-  ;; defface creates both a face and an alias
-  ;; FIXME: try to not show the alias in this case
   (list
    (xref-make "(defvar font-lock-keyword-face)"
 	      (xref-make-elisp-location
@@ -372,19 +373,13 @@ to (xref-elisp-test-descr-to-target xref)."
 	      (xref-make-elisp-location
 	       'font-lock-keyword-face 'defface
 	       (expand-file-name "../../lisp/font-lock.el" emacs-test-dir)))
-   (cons
-    (xref-make "(defalias font-lock-keyword-face)"
-	      (xref-make-elisp-location
-	       'font-lock-keyword-face 'defalias
-	       (expand-file-name "../../lisp/font-lock.elc" emacs-test-dir)))
-    "(defface font-lock-keyword-face")
    ))
 
-(xref-elisp-test find-defs-face-eval
+(xref-elisp-deftest find-defs-face-eval
   (elisp--xref-find-definitions (eval '(defface stephe-leake-defface nil "")))
   nil)
 
-(xref-elisp-test find-defs-feature-el
+(xref-elisp-deftest find-defs-feature-el
   (elisp--xref-find-definitions 'xref)
   (list
    (xref-make "(feature xref)"
@@ -392,7 +387,7 @@ to (xref-elisp-test-descr-to-target xref)."
 	       'xref 'feature
 	       (expand-file-name "../../lisp/progmodes/xref.el" emacs-test-dir)))))
 
-(xref-elisp-test find-defs-feature-eval
+(xref-elisp-deftest find-defs-feature-eval
   (elisp--xref-find-definitions (eval '(provide 'stephe-leake-feature)))
   nil)
 
