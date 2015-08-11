@@ -1313,13 +1313,13 @@ bidi_fetch_char (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t *disp_pos,
 	  /* `(space ...)' display specs are handled as paragraph
 	     separators for the purposes of the reordering; see UAX#9
 	     section 3 and clause HL1 in section 4.3 there.  */
-	  ch = 0x2029;
+	  ch = PARAGRAPH_SEPARATOR;
 	}
       else
 	{
 	  /* All other display specs are handled as the Unicode Object
 	     Replacement Character.  */
-	  ch = 0xFFFC;
+	  ch = OBJECT_REPLACEMENT_CHARACTER;
 	}
       disp_end_pos = compute_display_string_end (*disp_pos, string);
       if (disp_end_pos < 0)
@@ -2482,8 +2482,8 @@ typedef struct bpa_stack_entry {
 
 #define CANONICAL_EQU(c)					\
   ( ASCII_CHAR_P (c) ? c					\
-    : (c) == 0x2329 ? 0x3008					\
-    : (c) == 0x232a ? 0x3009					\
+    : (c) == LEFT_POINTING_ANGLE_BRACKET ? LEFT_ANGLE_BRACKET	\
+    : (c) == RIGHT_POINTING_ANGLE_BRACKET ? RIGHT_ANGLE_BRACKET	\
     : c )
 
 #ifdef ENABLE_CHECKING

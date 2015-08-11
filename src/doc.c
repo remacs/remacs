@@ -689,7 +689,6 @@ the same file name is found in the `doc-directory'.  */)
    "\xE2\x80\x98" and "\xE2\x80\x99", respectively.  */
 enum
   {
-    LEFT_SINGLE_QUOTATION_MARK = 0x2018,
     uLSQM0 = 0xE2, uLSQM1 = 0x80, uLSQM2 = 0x98,
     uRSQM0 = 0xE2, uRSQM1 = 0x80, uRSQM2 = 0x99,
   };

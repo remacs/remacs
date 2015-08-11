@@ -6890,9 +6890,10 @@ get_next_display_element (struct it *it)
 	     non-ASCII spaces and hyphens specially.  */
 	  if (! ASCII_CHAR_P (c) && ! NILP (Vnobreak_char_display))
 	    {
-	      if (c == 0xA0)
+	      if (c == NO_BREAK_SPACE)
 		nonascii_space_p = true;
-	      else if (c == 0xAD || c == 0x2010 || c == 0x2011)
+	      else if (c == SOFT_HYPHEN || c == HYPHEN
+		       || c == NON_BREAKING_HYPHEN)
 		nonascii_hyphen_p = true;
 	    }
 
