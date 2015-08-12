@@ -19229,7 +19229,7 @@ append_space_for_newline (struct it *it, bool default_face_p)
 	     funny, and height of empty lines will be incorrect.  */
 	  g = it->glyph_row->glyphs[TEXT_AREA] + n;
 	  struct font *font = face->font ? face->font : FRAME_FONT (it->f);
-	  if (n == 0 || it->glyph_row->height < font->pixel_size)
+	  if (n == 0)
 	    {
 	      Lisp_Object height, total_height;
 	      int extra_line_spacing = it->extra_line_spacing;
