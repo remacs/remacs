@@ -1958,19 +1958,18 @@ higher."
 	      (cdr-safe (or (assq c-buffer-is-cc-mode c-doc-comment-style)
 			    (assq 'other c-doc-comment-style)))
 	    c-doc-comment-style))
-	 (list (nconc (apply 'nconc
-			     (mapcar
-			      (lambda (doc-style)
-				(let ((sym (intern
-					    (concat (symbol-name doc-style)
-						    "-font-lock-keywords"))))
-				  (cond ((fboundp sym)
-					 (funcall sym))
-					((boundp sym)
-					 (append (eval sym) nil)))))
-			      (if (listp doc-keywords)
-				  doc-keywords
-				(list doc-keywords))))
+	 (list (nconc (c--mapcan
+		       (lambda (doc-style)
+			 (let ((sym (intern
+				     (concat (symbol-name doc-style)
+					     "-font-lock-keywords"))))
+			   (cond ((fboundp sym)
+				  (funcall sym))
+				 ((boundp sym)
+				  (append (eval sym) nil)))))
+		       (if (listp doc-keywords)
+			   doc-keywords
+			 (list doc-keywords)))
 		      base-list)))
 
     ;; Kludge: If `c-font-lock-complex-decl-prepare' is on the list we
