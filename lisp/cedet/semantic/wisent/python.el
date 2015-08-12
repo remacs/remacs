@@ -534,9 +534,6 @@ Shortens 'code' tags, but passes through for others."
 				      (code . "Code")))
    )
 
-;;;###autoload
-(add-hook 'python-mode-hook 'wisent-python-default-setup)
-
 ;; Make sure the newer python modes pull in the same python
 ;; mode overrides.
 (define-child-mode python-2-mode python-mode "Python 2 mode")
