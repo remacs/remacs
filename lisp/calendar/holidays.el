@@ -791,8 +791,16 @@ is non-nil)."
 ;; Prior call to calendar-julian-from-absolute will autoload cal-julian.
 (declare-function calendar-julian-to-absolute "cal-julian" (date))
 
-(defun holiday-greek-orthodox-easter ()
-  "Date of Easter according to the rule of the Council of Nicaea."
+(defun holiday-greek-orthodox-easter (&optional n string)
+  "Date of Nth day after Easter (named STRING), if visible in calendar window.
+It is calculated according to the rule of the Council of Nicaea.
+Negative values of N are interpreted as days before Easter.
+STRING is used purely for display purposes.  The return value has
+the form ((MONTH DAY YEAR) STRING), where the date is that of the
+Nth day before or after Easter.
+
+For backwards compatibility, if this function is called with no
+arguments, it returns the date of Pascha (Greek Orthodox Easter)."
   (let* ((m displayed-month)
          (y displayed-year)
          (julian-year (progn
@@ -808,11 +816,10 @@ is non-nil)."
          (paschal-moon      ; day after full moon on or after March 21
           (- (calendar-julian-to-absolute (list 4 19 julian-year))
              shifted-epact))
-         (nicaean-easter           ; Sunday following the Paschal moon
-          (calendar-gregorian-from-absolute
-           (calendar-dayname-on-or-before 0 (+ paschal-moon 7)))))
-    (if (calendar-date-is-visible-p nicaean-easter)
-        (list (list nicaean-easter "Pascha (Greek Orthodox Easter)")))))
+	 (abs-easter (calendar-dayname-on-or-before 0 (+ paschal-moon 7)))
+	 (greg (calendar-gregorian-from-absolute (+ abs-easter (or n 0)))))
+    (if (calendar-date-is-visible-p greg)
+	(list (list greg (or string "Pascha (Greek Orthodox Easter)"))))))
 
 (provide 'holidays)
 
