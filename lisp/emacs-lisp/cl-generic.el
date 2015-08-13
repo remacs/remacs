@@ -791,6 +791,8 @@ Can only be used from within the lexical body of a primary or around method."
 ;;; Add support for describe-function
 
 (defun cl--generic-search-method (met-name)
+  "For `find-function-regexp-alist'. Searches for a cl-defmethod.
+MET-NAME is a cons (SYMBOL . SPECIALIZERS)."
   (let ((base-re (concat "(\\(?:cl-\\)?defmethod[ \t]+"
                          (regexp-quote (format "%s" (car met-name)))
 			 "\\_>")))
@@ -806,11 +808,15 @@ Can only be used from within the lexical body of a primary or around method."
       nil t)
      (re-search-forward base-re nil t))))
 
+;; WORKAROUND: This can't be a defconst due to bug#21237.
+(defvar cl--generic-find-defgeneric-regexp "(\\(?:cl-\\)?defgeneric[ \t]+%s\\>")
 
 (with-eval-after-load 'find-func
   (defvar find-function-regexp-alist)
   (add-to-list 'find-function-regexp-alist
-               `(cl-defmethod . ,#'cl--generic-search-method)))
+               `(cl-defmethod . ,#'cl--generic-search-method))
+  (add-to-list 'find-function-regexp-alist
+               `(cl-defgeneric . cl--generic-find-defgeneric-regexp)))
 
 (defun cl--generic-method-info (method)
   (let* ((specializers (cl--generic-method-specializers method))

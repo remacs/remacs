@@ -177,8 +177,8 @@
 
 
 (defun xref-elisp-test-run (xrefs expecteds)
+  (should (= (length xrefs) (length expecteds)))
   (while xrefs
-    (should (= (length xrefs) (length expecteds)))
     (let ((xref (pop xrefs))
           (expected (pop expecteds)))
 
@@ -204,8 +204,9 @@ to (xref-elisp-test-descr-to-target xref)."
 
 ;; When tests are run from the Makefile, 'default-directory' is $HOME,
 ;; so we must provide this dir to expand-file-name in the expected
-;; results. The Makefile sets EMACS_TEST_DIRECTORY.
-(defconst emacs-test-dir (getenv "EMACS_TEST_DIRECTORY"))
+;; results. This also allows running these tests from other
+;; directories.
+(defconst emacs-test-dir (file-name-directory (or load-file-name (buffer-file-name))))
 
 ;; alphabetical by test name
 
@@ -244,12 +245,144 @@ to (xref-elisp-test-descr-to-target xref)."
 
 ;; FIXME: defconst
 
+;; FIXME: eieio defclass
+
+;; Possible ways of defining the default method implementation for a
+;; generic function. We declare these here, so we know we cover all
+;; cases, and we don't rely on other code not changing.
+;;
+;; When the generic and default method are declared in the same place,
+;; elisp--xref-find-definitions only returns one.
+
+(cl-defstruct (xref-elisp-root-type)
+  slot-1)
+
+(cl-defgeneric xref-elisp-generic-no-methods ()
+  "doc string no-methods"
+  ;; No default implementation, no methods, but fboundp is true for
+  ;; this symbol; it calls cl-no-applicable-method
+  )
+
+(cl-defmethod xref-elisp-generic-no-default ((this xref-elisp-root-type))
+  "doc string no-default xref-elisp-root-type"
+  "non-default for no-default")
+
+;; defgeneric after defmethod in file to ensure the fallback search
+;; method of just looking for the function name will fail.
+(cl-defgeneric xref-elisp-generic-no-default ()
+  "doc string no-default generic"
+  ;; No default implementation; this function calls the cl-generic
+  ;; dispatching code.
+  )
+
+(cl-defgeneric xref-elisp-generic-co-located-default ()
+  "doc string co-located-default generic"
+  "co-located default")
+
+(cl-defmethod xref-elisp-generic-co-located-default ((this xref-elisp-root-type))
+  "doc string co-located-default xref-elisp-root-type"
+  "non-default for co-located-default")
+
+(cl-defgeneric xref-elisp-generic-separate-default ()
+  "doc string separate-default generic"
+  ;; default implementation provided separately
+  )
+
+(cl-defmethod xref-elisp-generic-separate-default ()
+  "doc string separate-default default"
+  "separate default")
+
+(cl-defmethod xref-elisp-generic-separate-default ((this xref-elisp-root-type))
+  "doc string separate-default xref-elisp-root-type"
+  "non-default for separate-default")
+
+(cl-defmethod xref-elisp-generic-implicit-generic ()
+  "doc string implict-generic default"
+  "default for implicit generic")
+
+(cl-defmethod xref-elisp-generic-implicit-generic ((this xref-elisp-root-type))
+  "doc string implict-generic xref-elisp-root-type"
+  "non-default for implicit generic")
+
+
+(xref-elisp-deftest find-defs-defgeneric-no-methods
+  (elisp--xref-find-definitions 'xref-elisp-generic-no-methods)
+  (list
+   (xref-make "(cl-defgeneric xref-elisp-generic-no-methods)"
+	      (xref-make-elisp-location
+	       'xref-elisp-generic-no-methods 'cl-defgeneric
+	       (expand-file-name "elisp-mode-tests.el" emacs-test-dir)))
+   ))
+
+(xref-elisp-deftest find-defs-defgeneric-no-default
+  (elisp--xref-find-definitions 'xref-elisp-generic-no-default)
+  (list
+   (xref-make "(cl-defgeneric xref-elisp-generic-no-default)"
+	      (xref-make-elisp-location
+	       'xref-elisp-generic-no-default 'cl-defgeneric
+	       (expand-file-name "elisp-mode-tests.el" emacs-test-dir)))
+   (xref-make "(cl-defmethod xref-elisp-generic-no-default ((this xref-elisp-root-type)))"
+	      (xref-make-elisp-location
+	       '(xref-elisp-generic-no-default xref-elisp-root-type) 'cl-defmethod
+	       (expand-file-name "elisp-mode-tests.el" emacs-test-dir)))
+   ))
+
+(xref-elisp-deftest find-defs-defgeneric-co-located-default
+  (elisp--xref-find-definitions 'xref-elisp-generic-co-located-default)
+  (list
+   (xref-make "(cl-defgeneric xref-elisp-generic-co-located-default)"
+	      (xref-make-elisp-location
+	       'xref-elisp-generic-co-located-default 'cl-defgeneric
+	       (expand-file-name "elisp-mode-tests.el" emacs-test-dir)))
+   (xref-make "(cl-defmethod xref-elisp-generic-co-located-default ((this xref-elisp-root-type)))"
+	      (xref-make-elisp-location
+	       '(xref-elisp-generic-co-located-default xref-elisp-root-type) 'cl-defmethod
+	       (expand-file-name "elisp-mode-tests.el" emacs-test-dir)))
+   ))
+
+(xref-elisp-deftest find-defs-defgeneric-separate-default
+  (elisp--xref-find-definitions 'xref-elisp-generic-separate-default)
+  (list
+   (xref-make "(cl-defgeneric xref-elisp-generic-separate-default)"
+	      (xref-make-elisp-location
+	       'xref-elisp-generic-separate-default 'cl-defgeneric
+	       (expand-file-name "elisp-mode-tests.el" emacs-test-dir)))
+   (xref-make "(cl-defmethod xref-elisp-generic-separate-default ())"
+              (xref-make-elisp-location
+               '(xref-elisp-generic-separate-default) 'cl-defmethod
+               (expand-file-name "elisp-mode-tests.el" emacs-test-dir)))
+
+   (xref-make "(cl-defmethod xref-elisp-generic-separate-default ((this xref-elisp-root-type)))"
+	      (xref-make-elisp-location
+	       '(xref-elisp-generic-separate-default xref-elisp-root-type) 'cl-defmethod
+	       (expand-file-name "elisp-mode-tests.el" emacs-test-dir)))
+   ))
+
+(xref-elisp-deftest find-defs-defgeneric-implicit-generic
+  (elisp--xref-find-definitions 'xref-elisp-generic-implicit-generic)
+  (list
+   (xref-make "(cl-defmethod xref-elisp-generic-implicit-generic ())"
+	      (xref-make-elisp-location
+	       '(xref-elisp-generic-implicit-generic) 'cl-defmethod
+	       (expand-file-name "elisp-mode-tests.el" emacs-test-dir)))
+   (xref-make "(cl-defmethod xref-elisp-generic-implicit-generic ((this xref-elisp-root-type)))"
+	      (xref-make-elisp-location
+	       '(xref-elisp-generic-implicit-generic xref-elisp-root-type) 'cl-defmethod
+	       (expand-file-name "elisp-mode-tests.el" emacs-test-dir)))
+   ))
+
+;; Test that we handle more than one method
+
+;; When run from the Makefile, etags is not loaded at compile time,
+;; but it is by the time this test is run.  interactively; don't fail
+;; for that.
+(require 'etags)
 (xref-elisp-deftest find-defs-defgeneric-el
   (elisp--xref-find-definitions 'xref-location-marker)
   (list
    (xref-make "(cl-defgeneric xref-location-marker)"
 	      (xref-make-elisp-location
-	       'xref-location-marker nil
+	       'xref-location-marker 'cl-defgeneric
 	       (expand-file-name "../../lisp/progmodes/xref.el" emacs-test-dir)))
    (xref-make "(cl-defmethod xref-location-marker ((l xref-elisp-location)))"
 	      (xref-make-elisp-location
@@ -267,7 +400,10 @@ to (xref-elisp-test-descr-to-target xref)."
 	      (xref-make-elisp-location
 	       '(xref-location-marker xref-bogus-location) 'cl-defmethod
 	       (expand-file-name "../../lisp/progmodes/xref.el" emacs-test-dir)))
-   ;; etags is not loaded at test time
+   (xref-make "(cl-defmethod xref-location-marker ((l xref-etags-location)))"
+              (xref-make-elisp-location
+               '(xref-location-marker xref-etags-location) 'cl-defmethod
+               (expand-file-name "../../lisp/progmodes/etags.el" emacs-test-dir)))
    ))
 
 (xref-elisp-deftest find-defs-defgeneric-eval
@@ -318,19 +454,18 @@ to (xref-elisp-test-descr-to-target xref)."
   )
 
 ;; Source for both variable and defun is "(define-minor-mode
-;; compilation-minor-mode". There is no way to tell that from the
-;; symbol.  find-function-regexp-alist uses find-function-regexp for
-;; this, but that matches too many things for use in this test.
+;; compilation-minor-mode". There is no way to tell that directly from
+;; the symbol, but we can use (memq sym minor-mode-list) to detect
+;; that the symbol is a minor mode. See `elisp--xref-find-definitions'
+;; for more comments.
+;;
+;; IMPROVEME: return defvar instead of defun if source near starting
+;; point indicates the user is searching for a varible, not a
+;; function.
 (require 'compile) ;; not loaded by default at test time
 (xref-elisp-deftest find-defs-defun-defvar-el
   (elisp--xref-find-definitions 'compilation-minor-mode)
   (list
-   (cons
-    (xref-make "(defvar compilation-minor-mode)"
-	      (xref-make-elisp-location
-	       'compilation-minor-mode 'defvar
-	       (expand-file-name "../../lisp/progmodes/compile.el" emacs-test-dir)))
-    "(define-minor-mode compilation-minor-mode")
    (cons
     (xref-make "(defun compilation-minor-mode)"
                (xref-make-elisp-location
@@ -382,10 +517,13 @@ to (xref-elisp-test-descr-to-target xref)."
 (xref-elisp-deftest find-defs-feature-el
   (elisp--xref-find-definitions 'xref)
   (list
-   (xref-make "(feature xref)"
+   (cons
+    (xref-make "(feature xref)"
 	      (xref-make-elisp-location
 	       'xref 'feature
-	       (expand-file-name "../../lisp/progmodes/xref.el" emacs-test-dir)))))
+	       (expand-file-name "../../lisp/progmodes/xref.el" emacs-test-dir)))
+    ";;; Code:")
+   ))
 
 (xref-elisp-deftest find-defs-feature-eval
   (elisp--xref-find-definitions (eval '(provide 'stephe-leake-feature)))
