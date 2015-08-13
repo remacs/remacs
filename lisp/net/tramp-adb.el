@@ -394,41 +394,42 @@ pass to the OPERATION."
   "Like `directory-files-and-attributes' for Tramp files."
   (when (file-directory-p directory)
     (with-parsed-tramp-file-name (expand-file-name directory) nil
-      (with-tramp-file-property
-	  v localname (format "directory-files-attributes-%s-%s-%s-%s"
-			      full match id-format nosort)
-	(with-current-buffer (tramp-get-buffer v)
-	  (when (tramp-adb-send-command-and-check
-		 v (format "%s -a -l %s"
-			   (tramp-adb-get-ls-command v)
-			   (tramp-shell-quote-argument localname)))
-	    ;; We insert also filename/. and filename/.., because "ls" doesn't.
-	    (narrow-to-region (point) (point))
-	    (tramp-adb-send-command
-	     v (format "%s -d -a -l %s %s"
-		       (tramp-adb-get-ls-command v)
-		       (tramp-shell-quote-argument
-			(concat (file-name-as-directory localname) "."))
-		       (tramp-shell-quote-argument
-			(concat (file-name-as-directory localname) ".."))))
-	    (widen))
-	  (tramp-adb-sh-fix-ls-output)
-	  (let ((result (tramp-do-parse-file-attributes-with-ls
-			 v (or id-format 'integer))))
-	    (when full
-	      (setq result
-		    (mapcar
-		     (lambda (x)
-		       (cons (expand-file-name (car x) directory) (cdr x)))
-		     result)))
-	    (unless nosort
-	      (setq result
-		    (sort result (lambda (x y) (string< (car x) (car y))))))
-	    (delq nil
-		  (mapcar (lambda (x)
-			    (if (or (not match) (string-match match (car x)))
-				x))
-			  result))))))))
+      (copy-tree
+       (with-tramp-file-property
+	   v localname (format "directory-files-and-attributes-%s-%s-%s-%s"
+			       full match id-format nosort)
+	 (with-current-buffer (tramp-get-buffer v)
+	   (when (tramp-adb-send-command-and-check
+		  v (format "%s -a -l %s"
+			    (tramp-adb-get-ls-command v)
+			    (tramp-shell-quote-argument localname)))
+	     ;; We insert also filename/. and filename/.., because "ls" doesn't.
+	     (narrow-to-region (point) (point))
+	     (tramp-adb-send-command
+	      v (format "%s -d -a -l %s %s"
+			(tramp-adb-get-ls-command v)
+			(tramp-shell-quote-argument
+			 (concat (file-name-as-directory localname) "."))
+			(tramp-shell-quote-argument
+			 (concat (file-name-as-directory localname) ".."))))
+	     (widen))
+	   (tramp-adb-sh-fix-ls-output)
+	   (let ((result (tramp-do-parse-file-attributes-with-ls
+			  v (or id-format 'integer))))
+	     (when full
+	       (setq result
+		     (mapcar
+		      (lambda (x)
+			(cons (expand-file-name (car x) directory) (cdr x)))
+		      result)))
+	     (unless nosort
+	       (setq result
+		     (sort result (lambda (x y) (string< (car x) (car y))))))
+	     (delq nil
+		   (mapcar (lambda (x)
+			     (if (or (not match) (string-match match (car x)))
+				 x))
+			   result)))))))))
 
 (defun tramp-adb-get-ls-command (vec)
   (with-tramp-connection-property vec "ls"
