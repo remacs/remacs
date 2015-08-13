@@ -3667,7 +3667,8 @@ extern Lisp_Object sit_for (Lisp_Object, bool, int);
 /* Defined in xdisp.c.  */
 extern bool noninteractive_need_newline;
 extern Lisp_Object echo_area_buffer[2];
-extern void add_to_log (const char *, Lisp_Object, Lisp_Object);
+extern void add_to_log (char const *, ...);
+extern void vadd_to_log (char const *, va_list);
 extern void check_message_stack (void);
 extern void setup_echo_area_for_printing (bool);
 extern bool push_message (void);

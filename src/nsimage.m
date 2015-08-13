@@ -102,7 +102,7 @@ ns_load_image (struct frame *f, struct image *img,
 
   if (eImg == nil)
     {
-      add_to_log ("Unable to load image %s", img->spec, Qnil);
+      add_to_log ("Unable to load image %s", img->spec);
       return 0;
     }
 

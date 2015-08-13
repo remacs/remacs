@@ -629,16 +629,19 @@ valid_image_p (Lisp_Object object)
 }
 
 
-/* Log error message with format string FORMAT and argument ARG.
+/* Log error message with format string FORMAT and trailing arguments.
    Signaling an error, e.g. when an image cannot be loaded, is not a
    good idea because this would interrupt redisplay, and the error
    message display would lead to another redisplay.  This function
    therefore simply displays a message.  */
 
 static void
-image_error (const char *format, Lisp_Object arg1, Lisp_Object arg2)
+image_error (const char *format, ...)
 {
-  add_to_log (format, arg1, arg2);
+  va_list ap;
+  va_start (ap, format);
+  vadd_to_log (format, ap);
+  va_end (ap);
 }
 
 
@@ -1954,7 +1957,7 @@ x_create_x_image_and_pixmap (struct frame *f, int width, int height, int depth,
 			depth > 16 ? 32 : depth > 8 ? 16 : 8, 0);
   if (*ximg == NULL)
     {
-      image_error ("Unable to allocate X image", Qnil, Qnil);
+      image_error ("Unable to allocate X image");
       return 0;
     }
 
@@ -1976,7 +1979,7 @@ x_create_x_image_and_pixmap (struct frame *f, int width, int height, int depth,
     {
       x_destroy_x_image (*ximg);
       *ximg = NULL;
-      image_error ("Unable to create X pixmap", Qnil, Qnil);
+      image_error ("Unable to create X pixmap");
       return 0;
     }
 
@@ -1997,7 +2000,7 @@ x_create_x_image_and_pixmap (struct frame *f, int width, int height, int depth,
   if (depth != 1 && depth != 4 && depth != 8
       && depth != 16 && depth != 24 && depth != 32)
     {
-      image_error ("Invalid image bit depth specified", Qnil, Qnil);
+      image_error ("Invalid image bit depth specified");
       return 0;
     }
 
@@ -2055,7 +2058,7 @@ x_create_x_image_and_pixmap (struct frame *f, int width, int height, int depth,
       Lisp_Object errcode;
       /* All system errors are < 10000, so the following is safe.  */
       XSETINT (errcode, err);
-      image_error ("Unable to create bitmap, error code %d", errcode, Qnil);
+      image_error ("Unable to create bitmap, error code %d", errcode);
       x_destroy_x_image (*ximg);
       *ximg = NULL;
       return 0;
@@ -2070,7 +2073,7 @@ x_create_x_image_and_pixmap (struct frame *f, int width, int height, int depth,
   if (*pixmap == 0)
     {
       *ximg = NULL;
-      image_error ("Unable to allocate NSImage for XPM pixmap", Qnil, Qnil);
+      image_error ("Unable to allocate NSImage for XPM pixmap");
       return 0;
     }
   *ximg = *pixmap;
@@ -2791,7 +2794,7 @@ xbm_read_bitmap_data (struct frame *f, unsigned char *contents, unsigned char *e
   if (!check_image_size (f, *width, *height))
     {
       if (!inhibit_image_error)
-	image_error ("Invalid image size (see `max-image-size')", Qnil, Qnil);
+	image_error ("Invalid image size (see `max-image-size')");
       goto failure;
     }
   else if (data == NULL)
@@ -2936,13 +2939,13 @@ xbm_load_image (struct frame *f, struct image *img, unsigned char *contents,
       if (img->pixmap == NO_PIXMAP)
 	{
 	  x_clear_image (f, img);
-	  image_error ("Unable to create X pixmap for `%s'", img->spec, Qnil);
+	  image_error ("Unable to create X pixmap for `%s'", img->spec);
 	}
       else
 	success_p = 1;
     }
   else
-    image_error ("Error loading XBM image `%s'", img->spec, Qnil);
+    image_error ("Error loading XBM image `%s'", img->spec);
 
   return success_p;
 }
@@ -2983,14 +2986,14 @@ xbm_load (struct frame *f, struct image *img)
       file = x_find_image_file (file_name);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file `%s'", file_name, Qnil);
+	  image_error ("Cannot find image file `%s'", file_name);
 	  return 0;
 	}
 
       contents = slurp_file (SSDATA (file), &size);
       if (contents == NULL)
 	{
-	  image_error ("Error loading XBM image `%s'", img->spec, Qnil);
+	  image_error ("Error loading XBM image `%s'", img->spec);
 	  return 0;
 	}
 
@@ -3025,8 +3028,7 @@ xbm_load (struct frame *f, struct image *img)
 	  eassert (img->width > 0 && img->height > 0);
 	  if (!check_image_size (f, img->width, img->height))
 	    {
-	      image_error ("Invalid image size (see `max-image-size')",
-			   Qnil, Qnil);
+	      image_error ("Invalid image size (see `max-image-size')");
 	      return 0;
 	    }
 	}
@@ -3104,7 +3106,7 @@ xbm_load (struct frame *f, struct image *img)
 	  else
 	    {
 	      image_error ("Unable to create pixmap for XBM image `%s'",
-			   img->spec, Qnil);
+			   img->spec);
 	      x_clear_image (f, img);
 	    }
 
@@ -3626,7 +3628,7 @@ xpm_load (struct frame *f, struct image *img)
       Lisp_Object file = x_find_image_file (specified_file);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file `%s'", specified_file, Qnil);
+	  image_error ("Cannot find image file `%s'", specified_file);
 #ifdef ALLOC_XPM_COLORS
 	  xpm_free_color_cache ();
 #endif
@@ -3657,7 +3659,7 @@ xpm_load (struct frame *f, struct image *img)
       Lisp_Object buffer = image_spec_value (img->spec, QCdata, NULL);
       if (!STRINGP (buffer))
 	{
-	  image_error ("Invalid image data `%s'", buffer, Qnil);
+	  image_error ("Invalid image data `%s'", buffer);
 #ifdef ALLOC_XPM_COLORS
 	  xpm_free_color_cache ();
 #endif
@@ -3815,23 +3817,23 @@ xpm_load (struct frame *f, struct image *img)
       switch (rc)
 	{
 	case XpmOpenFailed:
-	  image_error ("Error opening XPM file (%s)", img->spec, Qnil);
+	  image_error ("Error opening XPM file (%s)", img->spec);
 	  break;
 
 	case XpmFileInvalid:
-	  image_error ("Invalid XPM file (%s)", img->spec, Qnil);
+	  image_error ("Invalid XPM file (%s)", img->spec);
 	  break;
 
 	case XpmNoMemory:
-	  image_error ("Out of memory (%s)", img->spec, Qnil);
+	  image_error ("Out of memory (%s)", img->spec);
 	  break;
 
 	case XpmColorFailed:
-	  image_error ("Color allocation error (%s)", img->spec, Qnil);
+	  image_error ("Color allocation error (%s)", img->spec);
 	  break;
 
 	default:
-	  image_error ("Unknown error (%s)", img->spec, Qnil);
+	  image_error ("Unknown error (%s)", img->spec);
 	  break;
 	}
     }
@@ -4101,7 +4103,7 @@ xpm_load_image (struct frame *f,
 
   if (!check_image_size (f, width, height))
     {
-      image_error ("Invalid image size (see `max-image-size')", Qnil, Qnil);
+      image_error ("Invalid image size (see `max-image-size')");
       goto failure;
     }
 
@@ -4112,7 +4114,7 @@ xpm_load_image (struct frame *f,
 #endif
       )
     {
-      image_error ("Image too large", Qnil, Qnil);
+      image_error ("Image too large");
       goto failure;
     }
 
@@ -4262,7 +4264,7 @@ xpm_load_image (struct frame *f,
   return 1;
 
  failure:
-  image_error ("Invalid XPM file (%s)", img->spec, Qnil);
+  image_error ("Invalid XPM file (%s)", img->spec);
   x_destroy_x_image (ximg);
   x_destroy_x_image (mask_img);
   x_clear_image (f, img);
@@ -4291,14 +4293,14 @@ xpm_load (struct frame *f,
       file = x_find_image_file (file_name);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file `%s'", file_name, Qnil);
+	  image_error ("Cannot find image file `%s'", file_name);
 	  return 0;
 	}
 
       contents = slurp_file (SSDATA (file), &size);
       if (contents == NULL)
 	{
-	  image_error ("Error loading XPM image `%s'", img->spec, Qnil);
+	  image_error ("Error loading XPM image `%s'", img->spec);
 	  return 0;
 	}
 
@@ -4312,7 +4314,7 @@ xpm_load (struct frame *f,
       data = image_spec_value (img->spec, QCdata, NULL);
       if (!STRINGP (data))
 	{
-	  image_error ("Invalid image data `%s'", data, Qnil);
+	  image_error ("Invalid image data `%s'", data);
 	  return 0;
 	}
       success_p = xpm_load_image (f, img, SDATA (data),
@@ -4734,7 +4736,7 @@ XPutPixel (XImagePtr ximg, int x, int y, COLORREF color)
 	*pixel = *pixel & ~(1 << x % 8);
     }
   else
-    image_error ("XPutPixel: palette image not supported", Qnil, Qnil);
+    image_error ("XPutPixel: palette image not supported");
 }
 
 #endif /* HAVE_NTGUI */
@@ -5266,14 +5268,14 @@ pbm_load (struct frame *f, struct image *img)
       file = x_find_image_file (specified_file);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file `%s'", specified_file, Qnil);
+	  image_error ("Cannot find image file `%s'", specified_file);
 	  return 0;
 	}
 
       contents = slurp_file (SSDATA (file), &size);
       if (contents == NULL)
 	{
-	  image_error ("Error reading `%s'", file, Qnil);
+	  image_error ("Error reading `%s'", file);
 	  return 0;
 	}
 
@@ -5286,7 +5288,7 @@ pbm_load (struct frame *f, struct image *img)
       data = image_spec_value (img->spec, QCdata, NULL);
       if (!STRINGP (data))
 	{
-	  image_error ("Invalid image data `%s'", data, Qnil);
+	  image_error ("Invalid image data `%s'", data);
 	  return 0;
 	}
       p = SDATA (data);
@@ -5296,7 +5298,7 @@ pbm_load (struct frame *f, struct image *img)
   /* Check magic number.  */
   if (end - p < 2 || *p++ != 'P')
     {
-      image_error ("Not a PBM image: `%s'", img->spec, Qnil);
+      image_error ("Not a PBM image: `%s'", img->spec);
     error:
       xfree (contents);
       img->pixmap = NO_PIXMAP;
@@ -5330,7 +5332,7 @@ pbm_load (struct frame *f, struct image *img)
       break;
 
     default:
-      image_error ("Not a PBM image: `%s'", img->spec, Qnil);
+      image_error ("Not a PBM image: `%s'", img->spec);
       goto error;
     }
 
@@ -5349,14 +5351,14 @@ pbm_load (struct frame *f, struct image *img)
       max_color_idx = pbm_scan_number (&p, end);
       if (max_color_idx > 65535 || max_color_idx < 0)
 	{
-	  image_error ("Unsupported maximum PBM color value", Qnil, Qnil);
+	  image_error ("Unsupported maximum PBM color value");
 	  goto error;
 	}
     }
 
   if (!check_image_size (f, width, height))
     {
-      image_error ("Invalid image size (see `max-image-size')", Qnil, Qnil);
+      image_error ("Invalid image size (see `max-image-size')");
       goto error;
     }
 
@@ -5430,7 +5432,7 @@ pbm_load (struct frame *f, struct image *img)
 #endif
 			x_clear_image (f, img);
 			image_error ("Invalid image size in image `%s'",
-				     img->spec, Qnil);
+				     img->spec);
 			goto error;
 		      }
 		    c = *p++;
@@ -5465,7 +5467,7 @@ pbm_load (struct frame *f, struct image *img)
 #endif
 	  x_clear_image (f, img);
 	  image_error ("Invalid image size in image `%s'",
-		       img->spec, Qnil);
+		       img->spec);
 	  goto error;
 	}
 
@@ -5509,7 +5511,7 @@ pbm_load (struct frame *f, struct image *img)
 		x_destroy_x_image (ximg);
 #endif
 		image_error ("Invalid pixel value in image `%s'",
-			     img->spec, Qnil);
+			     img->spec);
 		goto error;
 	      }
 
@@ -5800,7 +5802,7 @@ my_png_error (png_struct *png_ptr, const char *msg)
   eassert (png_ptr != NULL);
   /* Avoid compiler warning about deprecated direct access to
      png_ptr's fields in libpng versions 1.4.x.  */
-  image_error ("PNG error: %s", build_string (msg), Qnil);
+  image_error ("PNG error: %s", build_string (msg));
   PNG_LONGJMP (png_ptr);
 }
 
@@ -5809,7 +5811,7 @@ static void
 my_png_warning (png_struct *png_ptr, const char *msg)
 {
   eassert (png_ptr != NULL);
-  image_error ("PNG warning: %s", build_string (msg), Qnil);
+  image_error ("PNG warning: %s", build_string (msg));
 }
 
 /* Memory source for PNG decoding.  */
@@ -5904,7 +5906,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
       file = x_find_image_file (specified_file);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file `%s'", specified_file, Qnil);
+	  image_error ("Cannot find image file `%s'", specified_file);
 	  return 0;
 	}
 
@@ -5912,7 +5914,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
       fp = emacs_fopen (SSDATA (file), "rb");
       if (!fp)
 	{
-	  image_error ("Cannot open image file `%s'", file, Qnil);
+	  image_error ("Cannot open image file `%s'", file);
 	  return 0;
 	}
 
@@ -5921,7 +5923,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
 	  || png_sig_cmp (sig, 0, sizeof sig))
 	{
 	  fclose (fp);
-	  image_error ("Not a PNG file: `%s'", file, Qnil);
+	  image_error ("Not a PNG file: `%s'", file);
 	  return 0;
 	}
     }
@@ -5929,7 +5931,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
     {
       if (!STRINGP (specified_data))
 	{
-	  image_error ("Invalid image data `%s'", specified_data, Qnil);
+	  image_error ("Invalid image data `%s'", specified_data);
 	  return 0;
 	}
 
@@ -5942,7 +5944,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
       if (tbr.len < sizeof sig
 	  || png_sig_cmp (tbr.bytes, 0, sizeof sig))
 	{
-	  image_error ("Not a PNG image: `%s'", img->spec, Qnil);
+	  image_error ("Not a PNG image: `%s'", img->spec);
 	  return 0;
 	}
 
@@ -6010,7 +6012,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
   if (! (width <= INT_MAX && height <= INT_MAX
 	 && check_image_size (f, width, height)))
     {
-      image_error ("Invalid image size (see `max-image-size')", Qnil, Qnil);
+      image_error ("Invalid image size (see `max-image-size')");
       goto error;
     }
 
@@ -6668,20 +6670,20 @@ jpeg_load_body (struct frame *f, struct image *img,
       file = x_find_image_file (specified_file);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file `%s'", specified_file, Qnil);
+	  image_error ("Cannot find image file `%s'", specified_file);
 	  return 0;
 	}
 
       fp = emacs_fopen (SSDATA (file), "rb");
       if (fp == NULL)
 	{
-	  image_error ("Cannot open `%s'", file, Qnil);
+	  image_error ("Cannot open `%s'", file);
 	  return 0;
 	}
     }
   else if (!STRINGP (specified_data))
     {
-      image_error ("Invalid image data `%s'", specified_data, Qnil);
+      image_error ("Invalid image data `%s'", specified_data);
       return 0;
     }
 
@@ -6703,7 +6705,7 @@ jpeg_load_body (struct frame *f, struct image *img,
 	  }
 
 	case MY_JPEG_INVALID_IMAGE_SIZE:
-	  image_error ("Invalid image size (see `max-image-size')", Qnil, Qnil);
+	  image_error ("Invalid image size (see `max-image-size')");
 	  break;
 
 	case MY_JPEG_CANNOT_CREATE_X:
@@ -7183,7 +7185,7 @@ tiff_load (struct frame *f, struct image *img)
       file = x_find_image_file (specified_file);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file `%s'", specified_file, Qnil);
+	  image_error ("Cannot find image file `%s'", specified_file);
 	  return 0;
 	}
 # ifdef WINDOWSNT
@@ -7194,7 +7196,7 @@ tiff_load (struct frame *f, struct image *img)
       tiff = TIFFOpen (SSDATA (file), "r");
       if (tiff == NULL)
 	{
-	  image_error ("Cannot open `%s'", file, Qnil);
+	  image_error ("Cannot open `%s'", file);
 	  return 0;
 	}
     }
@@ -7202,7 +7204,7 @@ tiff_load (struct frame *f, struct image *img)
     {
       if (!STRINGP (specified_data))
 	{
-	  image_error ("Invalid image data `%s'", specified_data, Qnil);
+	  image_error ("Invalid image data `%s'", specified_data);
 	  return 0;
 	}
 
@@ -7222,7 +7224,7 @@ tiff_load (struct frame *f, struct image *img)
 
       if (!tiff)
 	{
-	  image_error ("Cannot open memory source for `%s'", img->spec, Qnil);
+	  image_error ("Cannot open memory source for `%s'", img->spec);
 	  return 0;
 	}
     }
@@ -7248,7 +7250,7 @@ tiff_load (struct frame *f, struct image *img)
 
   if (!check_image_size (f, width, height))
     {
-      image_error ("Invalid image size (see `max-image-size')", Qnil, Qnil);
+      image_error ("Invalid image size (see `max-image-size')");
       TIFFClose (tiff);
       return 0;
     }
@@ -7278,7 +7280,7 @@ tiff_load (struct frame *f, struct image *img)
   TIFFClose (tiff);
   if (!rc)
     {
-      image_error ("Error reading TIFF image `%s'", img->spec, Qnil);
+      image_error ("Error reading TIFF image `%s'", img->spec);
       xfree (buf);
       return 0;
     }
@@ -7615,7 +7617,7 @@ gif_load (struct frame *f, struct image *img)
       file = x_find_image_file (specified_file);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file `%s'", specified_file, Qnil);
+	  image_error ("Cannot find image file `%s'", specified_file);
 	  return 0;
 	}
 #ifdef WINDOWSNT
@@ -7627,7 +7629,7 @@ gif_load (struct frame *f, struct image *img)
       gif = DGifOpenFileName (SSDATA (file));
       if (gif == NULL)
 	{
-	  image_error ("Cannot open `%s'", file, Qnil);
+	  image_error ("Cannot open `%s'", file);
 	  return 0;
 	}
 #else
@@ -7644,7 +7646,7 @@ gif_load (struct frame *f, struct image *img)
     {
       if (!STRINGP (specified_data))
 	{
-	  image_error ("Invalid image data `%s'", specified_data, Qnil);
+	  image_error ("Invalid image data `%s'", specified_data);
 	  return 0;
 	}
 
@@ -7658,7 +7660,7 @@ gif_load (struct frame *f, struct image *img)
       gif = DGifOpen (&memsrc, gif_read_from_memory);
       if (!gif)
 	{
-	  image_error ("Cannot open memory source `%s'", img->spec, Qnil);
+	  image_error ("Cannot open memory source `%s'", img->spec);
 	  return 0;
 	}
 #else
@@ -7675,7 +7677,7 @@ gif_load (struct frame *f, struct image *img)
   /* Before reading entire contents, check the declared image size. */
   if (!check_image_size (f, gif->SWidth, gif->SHeight))
     {
-      image_error ("Invalid image size (see `max-image-size')", Qnil, Qnil);
+      image_error ("Invalid image size (see `max-image-size')");
       gif_close (gif, NULL);
       return 0;
     }
@@ -7684,7 +7686,7 @@ gif_load (struct frame *f, struct image *img)
   rc = DGifSlurp (gif);
   if (rc == GIF_ERROR || gif->ImageCount <= 0)
     {
-      image_error ("Error reading `%s'", img->spec, Qnil);
+      image_error ("Error reading `%s'", img->spec);
       gif_close (gif, NULL);
       return 0;
     }
@@ -7714,7 +7716,7 @@ gif_load (struct frame *f, struct image *img)
 
   if (!check_image_size (f, width, height))
     {
-      image_error ("Invalid image size (see `max-image-size')", Qnil, Qnil);
+      image_error ("Invalid image size (see `max-image-size')");
       gif_close (gif, NULL);
       return 0;
     }
@@ -7732,7 +7734,7 @@ gif_load (struct frame *f, struct image *img)
 	     && 0 <= subimg_top && subimg_top <= height - subimg_height
 	     && 0 <= subimg_left && subimg_left <= width - subimg_width))
 	{
-	  image_error ("Subimage does not fit in image", Qnil, Qnil);
+	  image_error ("Subimage does not fit in image");
 	  gif_close (gif, NULL);
 	  return 0;
 	}
@@ -7971,7 +7973,7 @@ gif_load (struct frame *f, struct image *img)
 	image_error ("Error closing `%s': %s",
 		     img->spec, build_string (error_text));
 #else
-      image_error ("Error closing `%s'", img->spec, Qnil);
+      image_error ("Error closing `%s'", img->spec);
 #endif
     }
 
@@ -8220,9 +8222,7 @@ imagemagick_error (MagickWand *wand)
   ExceptionType severity;
 
   description = MagickGetException (wand, &severity);
-  image_error ("ImageMagick error: %s",
-	       build_string (description),
-	       Qnil);
+  image_error ("ImageMagick error: %s", build_string (description));
   MagickRelinquishMemory (description);
 }
 
@@ -8383,8 +8383,7 @@ imagemagick_compute_animated_image (MagickWand *super_wand, int ino)
 	  DestroyMagickWand (composite_wand);
 	  DestroyMagickWand (sub_wand);
 	  cache->wand = NULL;
-	  image_error ("Imagemagick pixel iterator creation failed",
-		       Qnil, Qnil);
+	  image_error ("Imagemagick pixel iterator creation failed");
 	  return NULL;
 	}
 
@@ -8395,8 +8394,7 @@ imagemagick_compute_animated_image (MagickWand *super_wand, int ino)
 	  DestroyMagickWand (sub_wand);
 	  DestroyPixelIterator (source_iterator);
 	  cache->wand = NULL;
-	  image_error ("Imagemagick pixel iterator creation failed",
-		       Qnil, Qnil);
+	  image_error ("Imagemagick pixel iterator creation failed");
 	  return NULL;
 	}
 
@@ -8571,7 +8569,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
       status = MagickScaleImage (image_wand, desired_width, desired_height);
       if (status == MagickFalse)
 	{
-	  image_error ("Imagemagick scale failed", Qnil, Qnil);
+	  image_error ("Imagemagick scale failed");
 	  imagemagick_error (image_wand);
 	  goto imagemagick_error;
 	}
@@ -8621,7 +8619,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
       status = MagickRotateImage (image_wand, bg_wand, rotation);
       if (status == MagickFalse)
         {
-          image_error ("Imagemagick image rotate failed", Qnil, Qnil);
+          image_error ("Imagemagick image rotate failed");
 	  imagemagick_error (image_wand);
           goto imagemagick_error;
         }
@@ -8651,7 +8649,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
   if (! (image_width <= INT_MAX && image_height <= INT_MAX
 	 && check_image_size (f, image_width, image_height)))
     {
-      image_error ("Invalid image size (see `max-image-size')", Qnil, Qnil);
+      image_error ("Invalid image size (see `max-image-size')");
       goto imagemagick_error;
     }
 
@@ -8678,7 +8676,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
 #ifdef COLOR_TABLE_SUPPORT
 	  free_color_table ();
 #endif
-	  image_error ("Imagemagick X bitmap allocation failure", Qnil, Qnil);
+	  image_error ("Imagemagick X bitmap allocation failure");
 	  goto imagemagick_error;
 	}
 
@@ -8718,7 +8716,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
 #ifdef COLOR_TABLE_SUPPORT
 	  free_color_table ();
 #endif
-          image_error ("Imagemagick X bitmap allocation failure", Qnil, Qnil);
+          image_error ("Imagemagick X bitmap allocation failure");
           goto imagemagick_error;
         }
 
@@ -8734,8 +8732,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
 	  free_color_table ();
 #endif
 	  x_destroy_x_image (ximg);
-          image_error ("Imagemagick pixel iterator creation failed",
-                       Qnil, Qnil);
+          image_error ("Imagemagick pixel iterator creation failed");
           goto imagemagick_error;
         }
 
@@ -8787,7 +8784,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
 
   MagickWandTerminus ();
   /* TODO more cleanup.  */
-  image_error ("Error parsing IMAGEMAGICK image `%s'", img->spec, Qnil);
+  image_error ("Error parsing IMAGEMAGICK image `%s'", img->spec);
   return 0;
 }
 
@@ -8811,7 +8808,7 @@ imagemagick_load (struct frame *f, struct image *img)
       file = x_find_image_file (file_name);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file `%s'", file_name, Qnil);
+	  image_error ("Cannot find image file `%s'", file_name);
 	  return 0;
 	}
 #ifdef WINDOWSNT
@@ -8828,7 +8825,7 @@ imagemagick_load (struct frame *f, struct image *img)
       data = image_spec_value (img->spec, QCdata, NULL);
       if (!STRINGP (data))
 	{
-	  image_error ("Invalid image data `%s'", data, Qnil);
+	  image_error ("Invalid image data `%s'", data);
 	  return 0;
 	}
       success_p = imagemagick_load_image (f, img, SDATA (data),
@@ -9092,7 +9089,7 @@ svg_load (struct frame *f, struct image *img)
       file = x_find_image_file (file_name);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file `%s'", file_name, Qnil);
+	  image_error ("Cannot find image file `%s'", file_name);
 	  return 0;
 	}
 
@@ -9100,7 +9097,7 @@ svg_load (struct frame *f, struct image *img)
       contents = slurp_file (SSDATA (file), &size);
       if (contents == NULL)
 	{
-	  image_error ("Error loading SVG image `%s'", img->spec, Qnil);
+	  image_error ("Error loading SVG image `%s'", img->spec);
 	  return 0;
 	}
       /* If the file was slurped into memory properly, parse it.  */
@@ -9116,7 +9113,7 @@ svg_load (struct frame *f, struct image *img)
       data = image_spec_value (img->spec, QCdata, NULL);
       if (!STRINGP (data))
 	{
-	  image_error ("Invalid image data `%s'", data, Qnil);
+	  image_error ("Invalid image data `%s'", data);
 	  return 0;
 	}
       original_filename = BVAR (current_buffer, filename);
@@ -9183,7 +9180,7 @@ svg_load_image (struct frame *f,         /* Pointer to emacs frame structure.  *
   rsvg_handle_get_dimensions (rsvg_handle, &dimension_data);
   if (! check_image_size (f, dimension_data.width, dimension_data.height))
     {
-      image_error ("Invalid image size (see `max-image-size')", Qnil, Qnil);
+      image_error ("Invalid image size (see `max-image-size')");
       goto rsvg_error;
     }
 
@@ -9315,7 +9312,7 @@ svg_load_image (struct frame *f,         /* Pointer to emacs frame structure.  *
   g_object_unref (rsvg_handle);
   /* FIXME: Use error->message so the user knows what is the actual
      problem with the image.  */
-  image_error ("Error parsing SVG image `%s'", img->spec, Qnil);
+  image_error ("Error parsing SVG image `%s'", img->spec);
   g_error_free (err);
   return 0;
 }
@@ -9468,7 +9465,7 @@ gs_load (struct frame *f, struct image *img)
   if (! (in_width <= INT_MAX && in_height <= INT_MAX
 	 && check_image_size (f, in_width, in_height)))
     {
-      image_error ("Invalid image size (see `max-image-size')", Qnil, Qnil);
+      image_error ("Invalid image size (see `max-image-size')");
       return 0;
     }
   img->width = in_width;
@@ -9489,7 +9486,7 @@ gs_load (struct frame *f, struct image *img)
 
   if (!img->pixmap)
     {
-      image_error ("Unable to create pixmap for `%s'", img->spec, Qnil);
+      image_error ("Unable to create pixmap for `%s'", img->spec);
       return 0;
     }
 
@@ -9602,7 +9599,7 @@ x_kill_gs_process (Pixmap pixmap, struct frame *f)
 	}
       else
 	image_error ("Cannot get X image of `%s'; colors will not be freed",
-		     img->spec, Qnil);
+		     img->spec);
 
       unblock_input ();
     }

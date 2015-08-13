@@ -3765,7 +3765,7 @@ queue_doomed_finalizers (struct Lisp_Finalizer *dest,
 static Lisp_Object
 run_finalizer_handler (Lisp_Object args)
 {
-  add_to_log ("finalizer failed: %S", args, Qnil);
+  add_to_log ("finalizer failed: %S", args);
   return Qnil;
 }
 
