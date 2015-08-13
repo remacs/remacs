@@ -5353,7 +5353,8 @@ purecopy (Lisp_Object obj)
   else if (STRINGP (obj))
     {
       if (XSTRING (obj)->intervals)
-	message ("Dropping text-properties when making string pure");
+	message_with_string ("Dropping text-properties while making string `%s' pure",
+			     obj, true);
       obj = make_pure_string (SSDATA (obj), SCHARS (obj),
 			      SBYTES (obj),
 			      STRING_MULTIBYTE (obj));
