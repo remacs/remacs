@@ -78,6 +78,11 @@ enum
   OBJECT_REPLACEMENT_CHARACTER = 0xFFFC,
 };
 
+/* UTF-8 encodings.  Use \x escapes, so they are portable to pre-C11
+   compilers and can be concatenated with ordinary string literals.  */
+#define uLSQM "\xE2\x80\x98" /* U+2018 LEFT SINGLE QUOTATION MARK */
+#define uRSQM "\xE2\x80\x99" /* U+2019 RIGHT SINGLE QUOTATION MARK */
+
 /* Nonzero iff C is a character that corresponds to a raw 8-bit
    byte.  */
 #define CHAR_BYTE8_P(c) ((c) > MAX_5_BYTE_CHAR)

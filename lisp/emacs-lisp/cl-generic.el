@@ -864,11 +864,11 @@ MET-NAME is a cons (SYMBOL . SPECIALIZERS)."
                                    (cl--generic-method-specializers method)))
                    (file (find-lisp-object-file-name met-name 'cl-defmethod)))
               (when file
-                (insert (substitute-command-keys " in ‘"))
+                (insert (format " in ‘"))
                 (help-insert-xref-button (help-fns-short-filename file)
                                          'help-function-def met-name file
                                          'cl-defmethod)
-                (insert (substitute-command-keys "’.\n"))))
+                (insert (format "’.\n"))))
             (insert "\n" (or (nth 2 info) "Undocumented") "\n\n")))))))
 
 (defun cl--generic-specializers-apply-to-type-p (specializers type)

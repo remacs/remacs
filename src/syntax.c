@@ -1333,9 +1333,10 @@ DEFUN ("internal-describe-syntax-value", Finternal_describe_syntax_value,
     insert_string (" (nestable)");
 
   if (prefix)
-    insert1 (Fsubstitute_command_keys
-	     (build_string
-	      (",\n\t  is a prefix character for `backward-prefix-chars'")));
+    insert1 (CALLN (Fformat,
+		    (build_string
+		     (",\n\t  is a prefix character for "
+		      uLSQM"backward-prefix-chars"uRSQM))));
 
   return syntax;
 }

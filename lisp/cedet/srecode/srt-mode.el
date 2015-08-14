@@ -258,9 +258,9 @@ we can tell font lock about them.")
 	    (when (class-abstract-p C)
 	      (throw 'skip nil))
 
-	    (princ (substitute-command-keys "‘"))
+	    (princ (format "‘"))
 	    (princ name)
-	    (princ (substitute-command-keys "’"))
+	    (princ (format "’"))
 	    (when (slot-exists-p C 'key)
 	      (when key
 		(princ " - Character Key: ")

@@ -2204,7 +2204,7 @@ Otherwise no newline is inserted."
                                    "Installed"
                                  (capitalize status))
                                'font-lock-face 'package-status-builtin-face))
-           (insert (substitute-command-keys " in ‘"))
+           (insert (format " in ‘"))
            (let ((dir (abbreviate-file-name
                        (file-name-as-directory
                         (if (file-in-directory-p pkg-dir package-user-dir)
@@ -2213,11 +2213,10 @@ Otherwise no newline is inserted."
              (help-insert-xref-button dir 'help-package-def pkg-dir))
            (if (and (package-built-in-p name)
                     (not (package-built-in-p name version)))
-               (insert (substitute-command-keys
-                        "’,\n             shadowing a ")
+               (insert (format "’,\n             shadowing a ")
                        (propertize "built-in package"
                                    'font-lock-face 'package-status-builtin-face))
-             (insert (substitute-command-keys "’")))
+             (insert (format "’")))
            (if signed
                (insert ".")
              (insert " (unsigned)."))

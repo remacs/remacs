@@ -687,8 +687,6 @@ the same file name is found in the `doc-directory'.  */)
 /* Curved quotation marks.  */
 static unsigned char const LSQM[] = { uLSQM0, uLSQM1, uLSQM2 };
 static unsigned char const RSQM[] = { uRSQM0, uRSQM1, uRSQM2 };
-#define uLSQM "\xE2\x80\x98"
-#define uRSQM "\xE2\x80\x99"
 
 /* Return the current effective text quoting style.  */
 enum text_quoting_style
@@ -922,14 +920,13 @@ Otherwise, return a new string.  */)
 	  if (NILP (tem))
 	    {
 	      name = Fsymbol_name (name);
-	      insert1 (Fsubstitute_command_keys
-		       (build_string ("\nUses keymap "uLSQM)));
+	      insert1 (CALLN (Fformat, build_string ("\nUses keymap "uLSQM)));
 	      insert_from_string (name, 0, 0,
 				  SCHARS (name),
 				  SBYTES (name), 1);
-	      insert1 (Fsubstitute_command_keys
-		       (build_string
-			(uRSQM", which is not currently defined.\n")));
+	      insert1 (CALLN (Fformat,
+			      (build_string
+			       (uRSQM", which is not currently defined.\n"))));
 	      if (start[-1] == '<') keymap = Qnil;
 	    }
 	  else if (start[-1] == '<')

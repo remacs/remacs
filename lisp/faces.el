@@ -1435,12 +1435,10 @@ If FRAME is omitted or nil, use the selected frame."
 		  (when alias
 		    (setq face alias)
 		    (insert
-		     (format (substitute-command-keys
-                              "\n  %s is an alias for the face ‘%s’.\n%s")
+		     (format "\n  %s is an alias for the face ‘%s’.\n%s"
 			     f alias
 			     (if (setq obsolete (get f 'obsolete-face))
-				 (format (substitute-command-keys
-                                          "  This face is obsolete%s; use ‘%s’ instead.\n")
+				 (format "  This face is obsolete%s; use ‘%s’ instead.\n"
 					 (if (stringp obsolete)
 					     (format " since %s" obsolete)
 					   "")
@@ -1458,13 +1456,11 @@ If FRAME is omitted or nil, use the selected frame."
 		    (help-xref-button 1 'help-customize-face f)))
 		(setq file-name (find-lisp-object-file-name f 'defface))
 		(when file-name
-		  (princ (substitute-command-keys "Defined in ‘"))
-		  (princ (file-name-nondirectory file-name))
-		  (princ (substitute-command-keys "’"))
+		  (princ (format "Defined in ‘%s’"
+                                 (file-name-nondirectory file-name)))
 		  ;; Make a hyperlink to the library.
 		  (save-excursion
-		    (re-search-backward
-                     (substitute-command-keys "‘\\([^‘’]+\\)’") nil t)
+		    (re-search-backward (format "‘\\([^‘’]+\\)’") nil t)
 		    (help-xref-button 1 'help-face-def f file-name))
 		  (princ ".")
 		  (terpri)
