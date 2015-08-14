@@ -1407,6 +1407,7 @@ of."
 (defun tramp-sh-handle-set-file-modes (filename mode)
   "Like `set-file-modes' for Tramp files."
   (with-parsed-tramp-file-name filename nil
+    (tramp-flush-file-property v (file-name-directory localname))
     (tramp-flush-file-property v localname)
     ;; FIXME: extract the proper text from chmod's stderr.
     (tramp-barf-unless-okay
@@ -1421,6 +1422,7 @@ of."
   (if (tramp-tramp-file-p filename)
       (with-parsed-tramp-file-name filename nil
 	(when (tramp-get-remote-touch v)
+	  (tramp-flush-file-property v (file-name-directory localname))
 	  (tramp-flush-file-property v localname)
 	  (let ((time (if (or (null time) (equal time '(0 0)))
 			  (current-time)

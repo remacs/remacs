@@ -652,6 +652,7 @@ But handle the case, if the \"test\" command is not available."
 (defun tramp-adb-handle-set-file-modes (filename mode)
   "Like `set-file-modes' for Tramp files."
   (with-parsed-tramp-file-name filename nil
+    (tramp-flush-file-property v (file-name-directory localname))
     (tramp-flush-file-property v localname)
     (tramp-adb-send-command-and-check
      v (format "chmod %s %s" (tramp-compat-decimal-to-octal mode) localname))))
@@ -659,6 +660,7 @@ But handle the case, if the \"test\" command is not available."
 (defun tramp-adb-handle-set-file-times (filename &optional time)
   "Like `set-file-times' for Tramp files."
   (with-parsed-tramp-file-name filename nil
+    (tramp-flush-file-property v (file-name-directory localname))
     (tramp-flush-file-property v localname)
     (let ((time (if (or (null time) (equal time '(0 0)))
 		    (current-time)
