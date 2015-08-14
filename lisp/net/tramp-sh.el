@@ -1557,7 +1557,7 @@ be non-negative integers."
       (when (and (tramp-remote-acl-p v)
 		 (tramp-send-command-and-check
 		  v (format
-		     "getfacl -ac %s 2>/dev/null"
+		     "getfacl -ac %s"
 		     (tramp-shell-quote-argument localname))))
 	(with-current-buffer (tramp-get-connection-buffer v)
 	  (goto-char (point-max))
