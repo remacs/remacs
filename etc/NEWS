@@ -895,16 +895,25 @@ denied" instead of "permission denied".  The old behavior was problematic
 in languages like German where downcasing rules depend on grammar.
 
 +++
+** ‘format’ now replaces curved single quotes.
+That is, it replaces strings' curved single quotes (also known as
+curly quotes) as per the value of the new custom variable
+‘text-quoting-style’: ‘curve’ means replace curved quotes with
+themselves ‘like this’, ‘straight’ means use straight apostrophes
+'like this', ‘grave’ means use grave accent and apostrophe `like
+this', and nil (default) means use curved quotes if displayable and
+grave accent and apostrophe otherwise.  Because it now may be used
+in many contexts where it's a no-op, ‘format’ is no longer required to
+create a string, and may return its first argument if the argument
+already has the correct value.
+
++++
 ** substitute-command-keys now replaces quotes.
 That is, it converts documentation strings' quoting style as per the
-value of the new custom variable ‘text-quoting-style’: ‘curve’ means
-use curved quotes (also known as curly quotes) ‘like this’, ‘straight’
-means use straight apostrophes 'like this', ‘grave’ means use grave
-accent and apostrophe `like this', and nil (default) means use curved
-quotes if displayable and grave accent and apostrophe otherwise.  Doc
-strings in source code can use either curved quotes or grave accent
-and apostrophe.  As before, isolated apostrophes and characters
-preceded by \= are output as-is.
+value of ‘text-quoting-style’ as described above.  Doc strings in
+source code can use either curved quotes or grave accent and
+apostrophe.  As before, isolated apostrophes and characters preceded
+by \= are output as-is.
 
 +++
 ** The character classes [:alpha:] and [:alnum:] in regular expressions

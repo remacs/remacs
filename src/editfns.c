@@ -3800,8 +3800,9 @@ DEFUN ("format", Fformat, Sformat, 1, MANY, 0,
 The first argument is a format control string.
 The other arguments are substituted into it to make the result, a string.
 
-The format control string may contain %-sequences meaning to substitute
-the next available argument:
+The format control string may contain ordinary characters,
+%-sequences meaning to substitute the next available argument,
+and curved single quotation marks meaning to substitute quotes.
 
 %s means print a string argument.  Actually, prints any object, with `princ'.
 %d means print as number in decimal (%o octal, %x hex).
@@ -3846,6 +3847,12 @@ precision specifier says how many decimal places to show; if zero, the
 decimal point itself is omitted.  For %s and %S, the precision
 specifier truncates the string to the given width.
 
+\\=‘ and \\=’ means print left and right quotes as per
+‘text-quoting-style’.
+
+Return the first argument if it contains no format directives.
+Otherwise, return a new string.
+
 usage: (format STRING &rest OBJECTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
@@ -3858,6 +3865,7 @@ usage: (format STRING &rest OBJECTS)  */)
   ptrdiff_t buf_save_value_index IF_LINT (= 0);
   char *format, *end, *format_start;
   ptrdiff_t formatlen, nchars;
+  bool changed = false;
   /* True if the format is multibyte.  */
   bool multibyte_format = 0;
   /* True if the output should be a multibyte string,
@@ -3920,6 +3928,8 @@ usage: (format STRING &rest OBJECTS)  */)
   for (n = 1; !multibyte && n < nargs; n++)
     if (STRINGP (args[n]) && STRING_MULTIBYTE (args[n]))
       multibyte = 1;
+
+  enum text_quoting_style quoting_style = text_quoting_style ();
 
   /* If we start out planning a unibyte result,
      then discover it has to be multibyte, we jump back to retry.  */
@@ -4005,6 +4015,7 @@ usage: (format STRING &rest OBJECTS)  */)
 	  if (format == end)
 	    error ("Format string ends in middle of format specifier");
 
+	  changed = true;
 	  memset (&discarded[format0 - format_start], 1, format - format0);
 	  conversion = *format;
 	  if (conversion == '%')
@@ -4426,6 +4437,20 @@ usage: (format STRING &rest OBJECTS)  */)
 
 	      convbytes = format - src;
 	      memset (&discarded[src + 1 - format_start], 2, convbytes - 1);
+
+	      if (quoting_style != CURVE_QUOTING_STYLE && convbytes == 3
+		  && (unsigned char) src[0] == uLSQM0
+		  && (unsigned char) src[1] == uLSQM1
+		  && ((unsigned char) src[2] == uLSQM2
+		      || (unsigned char) src[2] == uRSQM2))
+		{
+		  convbytes = 1;
+		  str[0] = (((unsigned char) src[2] == uLSQM2
+			     && quoting_style == GRAVE_QUOTING_STYLE)
+			    ? '`' : '\'');
+		  src = (char *) str;
+		  changed = true;
+		}
 	    }
 	  else
 	    {
@@ -4437,6 +4462,7 @@ usage: (format STRING &rest OBJECTS)  */)
 		  int c = BYTE8_TO_CHAR (uc);
 		  convbytes = CHAR_STRING (c, str);
 		  src = (char *) str;
+		  changed = true;
 		}
 	    }
 
@@ -4484,113 +4510,119 @@ usage: (format STRING &rest OBJECTS)  */)
   if (bufsize < p - buf)
     emacs_abort ();
 
-  if (maybe_combine_byte)
-    nchars = multibyte_chars_in_text ((unsigned char *) buf, p - buf);
-  val = make_specified_string (buf, nchars, p - buf, multibyte);
-
-  /* If the format string has text properties, or any of the string
-     arguments has text properties, set up text properties of the
-     result string.  */
-
-  if (string_intervals (args[0]) || arg_intervals)
+  if (!changed)
+    val = args[0];
+  else
     {
-      Lisp_Object len, new_len, props;
-      struct gcpro gcpro1;
+      if (maybe_combine_byte)
+	nchars = multibyte_chars_in_text ((unsigned char *) buf, p - buf);
+      val = make_specified_string (buf, nchars, p - buf, multibyte);
 
-      /* Add text properties from the format string.  */
-      len = make_number (SCHARS (args[0]));
-      props = text_property_list (args[0], make_number (0), len, Qnil);
-      GCPRO1 (props);
+      /* If the format string has text properties, or any of the string
+	 arguments has text properties, set up text properties of the
+	 result string.  */
 
-      if (CONSP (props))
+      if (string_intervals (args[0]) || arg_intervals)
 	{
-	  ptrdiff_t bytepos = 0, position = 0, translated = 0;
-	  ptrdiff_t argn = 1;
-	  Lisp_Object list;
+	  Lisp_Object len, new_len, props;
+	  struct gcpro gcpro1;
 
-	  /* Adjust the bounds of each text property
-	     to the proper start and end in the output string.  */
+	  /* Add text properties from the format string.  */
+	  len = make_number (SCHARS (args[0]));
+	  props = text_property_list (args[0], make_number (0), len, Qnil);
+	  GCPRO1 (props);
 
-	  /* Put the positions in PROPS in increasing order, so that
-	     we can do (effectively) one scan through the position
-	     space of the format string.  */
-	  props = Fnreverse (props);
-
-	  /* BYTEPOS is the byte position in the format string,
-	     POSITION is the untranslated char position in it,
-	     TRANSLATED is the translated char position in BUF,
-	     and ARGN is the number of the next arg we will come to.  */
-	  for (list = props; CONSP (list); list = XCDR (list))
+	  if (CONSP (props))
 	    {
-	      Lisp_Object item;
-	      ptrdiff_t pos;
+	      ptrdiff_t bytepos = 0, position = 0, translated = 0;
+	      ptrdiff_t argn = 1;
+	      Lisp_Object list;
 
-	      item = XCAR (list);
+	      /* Adjust the bounds of each text property
+		 to the proper start and end in the output string.  */
 
-	      /* First adjust the property start position.  */
-	      pos = XINT (XCAR (item));
+	      /* Put the positions in PROPS in increasing order, so that
+		 we can do (effectively) one scan through the position
+		 space of the format string.  */
+	      props = Fnreverse (props);
 
-	      /* Advance BYTEPOS, POSITION, TRANSLATED and ARGN
-		 up to this position.  */
-	      for (; position < pos; bytepos++)
+	      /* BYTEPOS is the byte position in the format string,
+		 POSITION is the untranslated char position in it,
+		 TRANSLATED is the translated char position in BUF,
+		 and ARGN is the number of the next arg we will come to.  */
+	      for (list = props; CONSP (list); list = XCDR (list))
 		{
-		  if (! discarded[bytepos])
-		    position++, translated++;
-		  else if (discarded[bytepos] == 1)
+		  Lisp_Object item;
+		  ptrdiff_t pos;
+
+		  item = XCAR (list);
+
+		  /* First adjust the property start position.  */
+		  pos = XINT (XCAR (item));
+
+		  /* Advance BYTEPOS, POSITION, TRANSLATED and ARGN
+		     up to this position.  */
+		  for (; position < pos; bytepos++)
 		    {
-		      position++;
-		      if (translated == info[argn].start)
+		      if (! discarded[bytepos])
+			position++, translated++;
+		      else if (discarded[bytepos] == 1)
 			{
-			  translated += info[argn].end - info[argn].start;
-			  argn++;
+			  position++;
+			  if (translated == info[argn].start)
+			    {
+			      translated += info[argn].end - info[argn].start;
+			      argn++;
+			    }
 			}
 		    }
-		}
 
-	      XSETCAR (item, make_number (translated));
+		  XSETCAR (item, make_number (translated));
 
-	      /* Likewise adjust the property end position.  */
-	      pos = XINT (XCAR (XCDR (item)));
+		  /* Likewise adjust the property end position.  */
+		  pos = XINT (XCAR (XCDR (item)));
 
-	      for (; position < pos; bytepos++)
-		{
-		  if (! discarded[bytepos])
-		    position++, translated++;
-		  else if (discarded[bytepos] == 1)
+		  for (; position < pos; bytepos++)
 		    {
-		      position++;
-		      if (translated == info[argn].start)
+		      if (! discarded[bytepos])
+			position++, translated++;
+		      else if (discarded[bytepos] == 1)
 			{
-			  translated += info[argn].end - info[argn].start;
-			  argn++;
+			  position++;
+			  if (translated == info[argn].start)
+			    {
+			      translated += info[argn].end - info[argn].start;
+			      argn++;
+			    }
 			}
 		    }
+
+		  XSETCAR (XCDR (item), make_number (translated));
 		}
 
-	      XSETCAR (XCDR (item), make_number (translated));
+	      add_text_properties_from_list (val, props, make_number (0));
 	    }
 
-	  add_text_properties_from_list (val, props, make_number (0));
+	  /* Add text properties from arguments.  */
+	  if (arg_intervals)
+	    for (n = 1; n < nargs; ++n)
+	      if (info[n].intervals)
+		{
+		  len = make_number (SCHARS (args[n]));
+		  new_len = make_number (info[n].end - info[n].start);
+		  props = text_property_list (args[n], make_number (0),
+					      len, Qnil);
+		  props = extend_property_ranges (props, new_len);
+		  /* If successive arguments have properties, be sure that
+		     the value of `composition' property be the copy.  */
+		  if (n > 1 && info[n - 1].end)
+		    make_composition_value_copy (props);
+		  add_text_properties_from_list (val, props,
+						 make_number (info[n].start));
+		}
+
+	  UNGCPRO;
 	}
-
-      /* Add text properties from arguments.  */
-      if (arg_intervals)
-	for (n = 1; n < nargs; ++n)
-	  if (info[n].intervals)
-	    {
-	      len = make_number (SCHARS (args[n]));
-	      new_len = make_number (info[n].end - info[n].start);
-	      props = text_property_list (args[n], make_number (0), len, Qnil);
-	      props = extend_property_ranges (props, new_len);
-	      /* If successive arguments have properties, be sure that
-		 the value of `composition' property be the copy.  */
-	      if (n > 1 && info[n - 1].end)
-		make_composition_value_copy (props);
-	      add_text_properties_from_list (val, props,
-					     make_number (info[n].start));
-	    }
-
-      UNGCPRO;
     }
 
   /* If we allocated BUF or INFO with malloc, free it too.  */
