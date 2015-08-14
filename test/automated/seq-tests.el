@@ -54,6 +54,11 @@ Evaluate BODY for each created sequence.
   "Return t if INTEGER is odd."
   (not (test-sequences-evenp integer)))
 
+(ert-deftest test-setf-seq-elt ()
+  (with-test-sequences (seq '(1 2 3))
+    (setf (seq-elt seq 1) 4)
+    (should (= 4 (seq-elt seq 1)))))
+
 (ert-deftest test-seq-drop ()
   (with-test-sequences (seq '(1 2 3 4))
     (should (equal (seq-drop seq 0) seq))
@@ -192,7 +197,7 @@ Evaluate BODY for each created sequence.
   (should-error (seq-subseq [] -1))
   (should-error (seq-subseq "" -1))
   (should-not (seq-subseq '() 0))
-  (should-error(seq-subseq '() 0 -1)))
+  (should-error (seq-subseq '() 0 -1)))
 
 (ert-deftest test-seq-concatenate ()
   (with-test-sequences (seq '(2 4 6))

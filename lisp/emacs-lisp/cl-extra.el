@@ -38,7 +38,6 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'seq)
 
 ;;; Type coercion.
 
@@ -520,13 +519,32 @@ This sets the values of: `cl-most-positive-float', `cl-most-negative-float',
 If END is omitted, it defaults to the length of the sequence.
 If START or END is negative, it counts from the end.
 Signal an error if START or END are outside of the sequence (i.e
-too large if positive or too small if negative)"
+too large if positive or too small if negative)."
   (declare (gv-setter
             (lambda (new)
               (macroexp-let2 nil new new
 		`(progn (cl-replace ,seq ,new :start1 ,start :end1 ,end)
 			,new)))))
-  (seq-subseq seq start end))
+  (cond ((or (stringp seq) (vectorp seq)) (substring seq start end))
+        ((listp seq)
+         (let (len
+               (errtext (format "Bad bounding indices: %s, %s" start end)))
+           (and end (< end 0) (setq end (+ end (setq len (seq-length seq)))))
+           (if (< start 0) (setq start (+ start (or len (setq len (seq-length seq))))))
+           (unless (>= start 0)
+             (error "%s" errtext))
+           (when (> start 0)
+             (setq seq (nthcdr (1- start) seq))
+             (or seq (error "%s" errtext))
+             (setq seq (cdr seq)))
+           (if end
+               (let ((res nil))
+                 (while (and (>= (setq end (1- end)) start) seq)
+                   (push (pop seq) res))
+                 (or (= (1+ end) start) (error "%s" errtext))
+                 (nreverse res))
+             (seq-copy seq))))
+        (t (error "Unsupported sequence: %s" seq))))
 
 ;;;###autoload
 (defalias 'cl-concatenate #'seq-concatenate
