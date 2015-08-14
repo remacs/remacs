@@ -605,7 +605,7 @@ It can be quoted, or be inside a quoted form."
      (elisp--xref-find-apropos id))))
 
 ;; WORKAROUND: This is nominally a constant, but the text properities
-;; are not preserved thru dump if use defconst. See bug#21237
+;; are not preserved thru dump if use defconst.  See bug#21237.
 (defvar elisp--xref-format
   (let ((str "(%s %s)"))
     (put-text-property 1 3 'face 'font-lock-keyword-face str)
@@ -613,7 +613,7 @@ It can be quoted, or be inside a quoted form."
     str))
 
 ;; WORKAROUND: This is nominally a constant, but the text properities
-;; are not preserved thru dump if use defconst. See bug#21237
+;; are not preserved thru dump if use defconst.  See bug#21237.
 (defvar elisp--xref-format-extra
   (let ((str "(%s %s %s)"))
     (put-text-property 1 3 'face 'font-lock-keyword-face str)
