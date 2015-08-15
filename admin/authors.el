@@ -1154,7 +1154,7 @@ it is found in `authors-fixed-case'."
 	  (setq regexps (cdr regexps))))))
   (when author
     (setq author (replace-regexp-in-string "[ \t]*[(<].*$" "" author))
-    (setq author (replace-regexp-in-string "\`[ \t]+" "" author))
+    (setq author (replace-regexp-in-string "\\`[ \t]+" "" author))
     (setq author (replace-regexp-in-string "[ \t]+$" "" author))
     (setq author (replace-regexp-in-string "[ \t]+" " " author))
     (unless (string-match "[-, \t]" author)

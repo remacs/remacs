@@ -1213,7 +1213,7 @@ SPECIAL FEATURE: char argument can be used to specify shift amount(1-9)."
 (defun vi-backward-blank-delimited-word (count)
   "Backward COUNT blank-delimited words."
   (interactive "p")
-  (if (re-search-backward "[ \t\n\`][^ \t\n\`]+" nil t count)
+  (if (re-search-backward "[ \t\n`][^ \t\n`]+" nil t count)
       (if (not (bobp)) (forward-char 1))))
 
 (defun vi-forward-blank-delimited-word (count)
