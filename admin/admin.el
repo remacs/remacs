@@ -88,20 +88,11 @@ Root must be the root of an Emacs source tree."
 		       (rx (and "AC_INIT" (1+ (not (in ?,)))
                                 ?, (0+ space)
                                 (submatch (1+ (in "0-9."))))))
-  ;; No longer used, broken in multiple ways, updating version seems pointless.
-  (set-version-in-file root "nt/config.nt" version
-		       (rx (and bol "#" (0+ blank) "define" (1+ blank)
-				"VERSION" (1+ blank) "\""
-				(submatch (1+ (in "0-9."))))))
   ;; TODO: msdos could easily extract the version number from
   ;; configure.ac with sed, rather than duplicating the information.
   (set-version-in-file root "msdos/sed2v2.inp" version
 		       (rx (and bol "/^#undef " (1+ not-newline)
 				"define VERSION" (1+ space) "\""
-				(submatch (1+ (in "0-9."))))))
-  ;; No longer used, broken in multiple ways, updating version seems pointless.
-  (set-version-in-file root "nt/makefile.w32-in" version
-		       (rx (and "VERSION" (0+ space) "=" (0+ space)
 				(submatch (1+ (in "0-9."))))))
   ;; Major version only.
   (when (string-match "\\([0-9]\\{2,\\}\\)" version)
@@ -133,10 +124,6 @@ Root must be the root of an Emacs source tree."
   (set-version-in-file root "msdos/sed2v2.inp" copyright
 		       (rx (and bol "/^#undef " (1+ not-newline)
 				"define COPYRIGHT" (1+ space)
-				?\" (submatch (1+ (not (in ?\")))) ?\")))
-  (set-version-in-file root "nt/config.nt" copyright
-		       (rx (and bol "#" (0+ blank) "define" (1+ blank)
-				"COPYRIGHT" (1+ blank)
 				?\" (submatch (1+ (not (in ?\")))) ?\")))
   (set-version-in-file root "lib-src/rcs2log" copyright
         	       (rx (and "Copyright" (0+ space) ?= (0+ space)
