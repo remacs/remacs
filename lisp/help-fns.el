@@ -43,6 +43,11 @@ The functions will receive the function name as argument.")
 
 ;; Functions
 
+(defvar describe-function-orig-buffer nil
+  "Buffer that was current when 'describe-function' was invoked.
+Functions on 'help-fns-describe-function-functions' can use this
+to get buffer-local values.")
+
 ;;;###autoload
 (defun describe-function (function)
   "Display the full documentation of FUNCTION (a symbol)."
@@ -61,18 +66,35 @@ The functions will receive the function name as argument.")
       (user-error "You didn't specify a function symbol"))
   (or (fboundp function)
       (user-error "Symbol's function definition is void: %s" function))
-  (help-setup-xref (list #'describe-function function)
-                   (called-interactively-p 'interactive))
-  (save-excursion
-    (with-help-window (help-buffer)
-      (prin1 function)
-      ;; Use " is " instead of a colon so that
-      ;; it is easier to get out the function name using forward-sexp.
-      (princ " is ")
-      (describe-function-1 function)
-      (with-current-buffer standard-output
-        ;; Return the text we displayed.
-        (buffer-string)))))
+
+  ;; We save describe-function-orig-buffer on the help xref stack, so
+  ;; it is restored by the back/forward buttons.  'help-buffer'
+  ;; expects (current-buffer) to be a help buffer when processing
+  ;; those buttons, so we can't change the current buffer before
+  ;; calling that.
+  (let ((describe-function-orig-buffer
+         (or describe-function-orig-buffer
+             (current-buffer))))
+
+    (help-setup-xref
+     (list (lambda (function buffer)
+             (let ((describe-function-orig-buffer
+                    (if (buffer-live-p buffer) buffer)))
+               (describe-function function)))
+           function describe-function-orig-buffer)
+     (called-interactively-p 'interactive))
+
+    (save-excursion
+      (with-help-window (help-buffer)
+        (prin1 function)
+        ;; Use " is " instead of a colon so that
+        ;; it is easier to get out the function name using forward-sexp.
+        (princ " is ")
+        (describe-function-1 function)
+        (with-current-buffer standard-output
+          ;; Return the text we displayed.
+          (buffer-string))))
+    ))
 
 
 ;; Could be this, if we make symbol-file do the work below.
