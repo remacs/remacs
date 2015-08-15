@@ -1735,7 +1735,8 @@ internal representation within Emacs.
 charsets.  The list gives the names of charsets and additional
 information to identity each charset; for more details, see the
 @url{https://www.itscj.ipsj.or.jp/itscj_english/iso-ir/ISO-IR.pdf,
-International Register of Coded Character Sets} maintained by
+ISO International Register of Coded Character Sets to be Used with
+Escape Sequences (ISO-IR)} maintained by
 the @url{https://www.itscj.ipsj.or.jp/itscj_english/,
 Information Processing Society of Japan/Information Technology
 Standards Commission of Japan (IPSJ/ITSCJ)}.  In this list,
