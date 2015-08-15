@@ -1178,6 +1178,13 @@ qualified names by hand.
 * Changes in Emacs 25.1 on Non-Free Operating Systems
 
 ---
+** MS-Windows specific Emacs build scripts are no longer in the distribution
+This includes the makefile.w32-in files in various subdirectories, and
+the support files.  The file nt/configure.bat now just tells the user
+to use the procedure described in nt/INSTALL, by running the Posix
+`configure' script in the top-level directory.
+
+---
 ** Building Emacs for MS-Windows requires at least Windows XP
 or Windows Server 2003.  The built binaries still run on all versions
 of Windows starting with Windows 9X.
