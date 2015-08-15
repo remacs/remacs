@@ -35,7 +35,9 @@
 
 ;;; Remarks
 
-;; The ISO-IR registry is at http://www.itscj.ipsj.or.jp/ISO-IR/.
+;; The ISO-IR registry is maintained by the Information Processing
+;; Society of Japan/Information Technology Standards Commission of
+;; Japan (IPSJ/ITSCJ) at https://www.itscj.ipsj.or.jp/itscj_english/.
 ;; Standards docs equivalent to iso-2022 and iso-8859 are at
 ;; http://www.ecma.ch/.
 
