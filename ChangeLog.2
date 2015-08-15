@@ -5,8 +5,8 @@
 
 2015-08-14  Michael Albinus  <michael.albinus@gmx.de>
 
-	* tramp-sh.el (tramp-sh-handle-file-acl): Do not redirect stderr
-	to /dev/null, this is done in `tramp-send-command-and-check'.
+	* lisp/net/tramp-sh.el (tramp-sh-handle-file-acl): Do not redirect
+	stderr to /dev/null, this is done in `tramp-send-command-and-check'.
 
 2015-08-14  Jürgen Hötzel  <juergen@archlinux.org>
 
@@ -44,6 +44,13 @@
 
 	(uniquify-ask-about-buffer-names-p): Remove, unused (bug#21037)
 	* lisp/uniquify.el: Remove redundant `:group's.
+
+2015-08-13  Jürgen Hötzel  <juergen@archlinux.org>
+
+	* lisp/net/tramp-adb.el
+	(tramp-adb-handle-directory-files-and-attributes): Make a copy of
+	result to prevent modification of the tramp-cache by side effects.
+	Use the correct cache key.
 
 2015-08-13  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -233,6 +240,12 @@
 	* lisp/replace.el (perform-replace): Document `replacements'.
 	(perform-replace): Move the description of the format of `replacements' from
 	the body's comment to the docstring.
+
+2015-08-11  Jürgen Hötzel  <juergen@archlinux.org>
+
+	* lisp/net/tramp-adb.el (tramp-adb-prompt): Match leading escape
+	sequence.  Recent adb version send initial escape sequences, even
+	when terminal type is set to TERM=dumb.
 
 2015-08-10  Stephen Leake  <stephen_leake@stephe-leake.org>
 
@@ -454,7 +467,6 @@
 	* test/automated/seq-tests.el (test-seq-subseq): Tests have been
 	added for these exceptional cases, as well as one non exceptional
 	base case.
-
 
 2015-08-07  Jürgen Hötzel  <juergen@archlinux.org>
 
