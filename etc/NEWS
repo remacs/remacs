@@ -43,6 +43,10 @@ or by sticking with Emacs 24.4.
 If gnustep-config is not available, the old heuristics are used.
 
 ---
+** 'configure' now prefers inotify to gfile for file notification,
+unless gfile is explicitly requested via --with-file-notification='gfile'.
+
+---
 ** The configure option '--with-pkg-config-prog' has been removed.
 Use './configure PKG_CONFIG=/full/name/of/pkg-config' if you need to.
 
