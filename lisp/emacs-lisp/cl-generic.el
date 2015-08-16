@@ -192,7 +192,7 @@ BODY, if present, is used as the body of a default method.
          (when doc (error "Multiple doc strings for %S" name))
          (setq doc (cadr (pop options-and-methods))))
         (`declare
-         (when declarations (error "Multiple `declare' for %S" name))
+         (when declarations (error "Multiple ‘declare’ for %S" name))
          (setq declarations (pop options-and-methods)))
         (`:method (push (cdr (pop options-and-methods)) methods))
         (_ (push (pop options-and-methods) options))))
@@ -208,7 +208,7 @@ BODY, if present, is used as the body of a default method.
                                        defun-declarations-alist))))
                      (cond
                       (f (apply (car f) name args (cdr declaration)))
-                      (t (message "Warning: Unknown defun property `%S' in %S"
+                      (t (message "Warning: Unknown defun property ‘%S’ in %S"
                                   (car declaration) name)
                          nil))))
                  (cdr declarations))
@@ -1070,7 +1070,7 @@ The value returned is a list of elements of the form
    (and (assq type cl--generic-typeof-types)
         (progn
           (if (memq type '(vector array sequence))
-              (message "`%S' also matches CL structs and EIEIO classes" type))
+              (message "‘%S’ also matches CL structs and EIEIO classes" type))
           (list cl--generic-typeof-generalizer)))
    (cl-call-next-method)))
 

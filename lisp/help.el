@@ -1040,7 +1040,7 @@ is currently activated with completion."
   (let ((minor-mode (lookup-minor-mode-from-indicator indicator)))
     (if minor-mode
 	(describe-minor-mode-from-symbol minor-mode)
-      (error "Cannot find minor mode for `%s'" indicator))))
+      (error "Cannot find minor mode for ‘%s’" indicator))))
 
 (defun lookup-minor-mode-from-indicator (indicator)
   "Return a minor mode symbol from its indicator on the mode line."
