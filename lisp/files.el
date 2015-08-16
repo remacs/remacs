@@ -3554,7 +3554,8 @@ It is dangerous if either of these conditions are met:
             (since (nth 2 o)))
         (message "%s is obsolete%s; %s"
                  var (if since (format " (since %s)" since))
-                 (if (stringp instead) instead
+                 (if (stringp instead)
+                     (substitute-command-keys instead)
                    (format "use `%s' instead" instead)))))))
 
 (defun hack-one-local-variable (var val)
