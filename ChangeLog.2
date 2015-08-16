@@ -1,3 +1,155 @@
+2015-08-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	substitute-command-keys a few more doc strings
+	* lisp/allout.el (outlineify-sticky):
+	* lisp/files.el (hack-one-local-variable--obsolete):
+	* lisp/help-fns.el (help-fns--obsolete, describe-variable):
+	Use substitute-command-keys on some doc strings so that
+	they don't use hard-coded key bindings or quoting styles.
+
+	Fix quoting in Fformat calls
+	* src/image.c (xbm_read_bitmap_data, xbm_load_image, xbm_load)
+	(xpm_load, xpm_load_image, pbm_load, png_load_body)
+	(jpeg_load_body, tiff_load, gif_load, imagemagick_load_image)
+	(imagemagick_load, svg_load, svg_load_image, gs_load)
+	(x_kill_gs_process):
+	* src/lread.c (load_warn_old_style_backquotes):
+	* src/xfaces.c (load_pixmap):
+	* src/xselect.c (x_clipboard_manager_error_1):
+	Quote diagnostics according to user preference when calling
+	Fformat or its derivatives.
+
+2015-08-15  Glenn Morris  <rgm@gnu.org>
+
+	* admin/admin.el (set-version, set-copyright): Remove deleted files.
+
+2015-08-15  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	Allow describe-function helpers to access buffer-local values.
+	This will be used by cedet/mode-local.el `describe-mode-local-override'
+	on `help-fns-describe-function-functions' in upstream CEDET.
+	* lisp/help-fns.el (describe-function-orig-buffer): New, let-bound in
+	`describe-function'.
+	(describe-function): Bind it, save it on the help xref stack.
+
+	Handle pulse-background being nil
+	* lisp/cedet/pulse.el (pulse-lighten-highlight): Inherit
+	pulse-background, handle it being nil.
+
+2015-08-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix "\`" confusion in Lisp strings
+	* admin/authors.el (authors-canonical-author-name):
+	Fix typo by using "\\`" not "\`" in string RE.
+	* lisp/obsolete/complete.el (PC-complete-as-file-name):
+	* lisp/obsolete/vi.el (vi-backward-blank-delimited-word):
+	* lisp/progmodes/verilog-mode.el (verilog-mode-map):
+	Use plain "`", not the equivalent-but-confusing "\`", in strings.
+	* lisp/textmodes/texinfmt.el: Fix comment likewise.
+
+2015-08-15  Dani Moncayo  <dmoncayo@gmail.com>
+
+	Remove 'nt/zipdist.bat' (no longer used)
+	* nt/zipdist.bat: Remove - no longer used.
+
+2015-08-15  Michael Albinus  <michael.albinus@gmx.de>
+
+	* lisp/net/tramp-sh.el (tramp-remote-selinux-p): Use "selinuxenabled"
+	rather than "getenforce".
+	(tramp-sh-handle-set-file-selinux-context): Do not
+	cache SELinux context if not all context components are given.
+
+2015-08-15  Eli Zaretskii  <eliz@gnu.org>
+
+	Add doc strings to 2 help-mode.el functions
+	* lisp/help-mode.el (help-mode-setup, help-mode-finish): Add doc
+	strings.  (Bug#21263)
+
+	Remove files used by the old MS-Windows specific build procedure
+	* nt/configure.bat: Remove everything except the blurb about the
+	new build procedure.
+	* make-dist: Remove references to makefile.w32-in in various
+	directories, and to files in nt/ that were deleted.
+	* etc/NEWS: Mention the fact that the files were dropped.
+
+2015-08-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* doc/emacs/mule.texi (Charsets): Give fuller title for ISO-IR.
+	(Bug#21248)
+
+2015-08-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Default to inotify instead of gfile
+	* configure.ac (with_file_notification): Fix typo that
+	prevented suppression of file notification if HAVE_NS.
+	(NOTIFY_OBJ): Prefer inotify to gfile if both exist and
+	with_file_notification is 'yes' (Bug#21241).
+	* etc/NEWS: Mention this.
+
+	Fix broken URLs for ISO-IR
+	* doc/emacs/mule.texi (Charsets):
+	* lisp/international/mule-conf.el:
+	Fix broken URL (Bug#21248).
+
+	Low-level diagnostics now use ‘text-quoting-style’
+	* src/doprnt.c (doprnt):
+	Format ` and ' as per ‘text-quoting-style’.
+	* src/xdisp.c (vmessage, message): Mention that the format should
+	not contain ` or '.
+
+	Prefer ‘format’ to ‘substitute-command-keys’
+	* src/character.h (uLSQM, uRSQM): Move here ...
+	* src/doc.c (uLSQM, uRSQM): ... from here.
+	* src/doc.c (Fsubstitute_command_keys):
+	* src/syntax.c (Finternal_describe_syntax_value):
+	* lisp/cedet/mode-local.el (mode-local-print-binding)
+	(mode-local-describe-bindings-2):
+	* lisp/cedet/srecode/srt-mode.el (srecode-macro-help):
+	* lisp/cus-theme.el (describe-theme-1):
+	* lisp/descr-text.el (describe-text-properties-1, describe-char):
+	* lisp/emacs-lisp/cl-extra.el (cl--describe-class):
+	* lisp/emacs-lisp/cl-generic.el (cl--generic-describe):
+	* lisp/emacs-lisp/eieio-opt.el (eieio-help-constructor):
+	* lisp/emacs-lisp/package.el (describe-package-1):
+	* lisp/faces.el (describe-face):
+	* lisp/help-fns.el (help-fns--key-bindings)
+	(help-fns--compiler-macro, help-fns--parent-mode)
+	(help-fns--obsolete, help-fns--interactive-only)
+	(describe-function-1, describe-variable):
+	* lisp/help.el (describe-mode):
+	Prefer ‘format’ to ‘substitute-command-keys’ when either will do
+	to implement quoting style.  This generally makes the code simpler.
+
+	Extend ‘format’ to translate curved quotes
+	This is a followup to the recent doc string change, and deals with
+	diagnostics and the like.  This patch is more conservative than
+	the doc string change, in that the behavior of ‘format’ changes
+	only if its first arg contains curved quotes and the user prefers
+	straight or grave quotes.  (Come to think of it, perhaps we should
+	be similarly conservative with doc strings too, but that can wait.)
+	The upside of this conservatism is that existing usage is almost
+	surely unaffected.  The downside is that we'll eventually have to
+	change Emacs's format strings to use curved quotes in places where
+	the user might want curved quotes, but that's a simple and
+	mechanical translation that I'm willing to do later.  (Bug#21222)
+	* doc/lispref/help.texi (Keys in Documentation):
+	Move description of text-quoting-style from here ...
+	* doc/lispref/strings.texi (Formatting Strings):
+	... to here, and describe new behavior of ‘format’.
+	* etc/NEWS: Describe new behavior.
+	* lisp/calc/calc-help.el (calc-describe-thing):
+	* lisp/emacs-lisp/derived.el (derived-mode-make-docstring):
+	* lisp/info.el (Info-find-index-name):
+	Use ‘concat’ rather than ‘format’ to avoid misinterpretation
+	of recently-added curved quotes.
+	* src/doc.c (uLSQM0, uLSQM1, uLSQM2, uRSQM0, uRSQM1, uRSQM2):
+	Move from here ...
+	* src/lisp.h: ... to here.
+	* src/doc.c (text_quoting_style): New function.
+	(Fsubstitute_command_keys): Use it.
+	* src/editfns.c (Fformat): Implement new behavior.
+	* src/lisp.h (enum text_quoting_style): New enum.
+
 2015-08-14  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* src/keyboard.c: Use false/true instead of 0/1 for booleans
@@ -9279,7 +9431,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit e1e33f201698229ae30a29c7008c3f6a3635d71f (inclusive).
+commit f7ee23e587b01f179284b5554c67d579a2def676 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
