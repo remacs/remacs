@@ -2147,8 +2147,10 @@ x_clipboard_manager_save (Lisp_Object frame)
 static Lisp_Object
 x_clipboard_manager_error_1 (Lisp_Object err)
 {
-  AUTO_STRING (format, "X clipboard manager error: %s\n\
-If the problem persists, set `x-select-enable-clipboard-manager' to nil.");
+  Lisp_Object format
+    = build_string ("X clipboard manager error: %s\n"
+		    "If the problem persists, set "
+		    uLSQM"x-select-enable-clipboard-manager"uRSQM" to nil.");
   CALLN (Fmessage, format, CAR (CDR (err)));
   return Qnil;
 }
