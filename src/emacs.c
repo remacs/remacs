@@ -95,6 +95,10 @@ extern void moncontrol (int mode);
 #include <locale.h>
 #endif
 
+#if HAVE_WCHAR_H
+# include <wchar.h>
+#endif
+
 #ifdef HAVE_SETRLIMIT
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -343,6 +347,19 @@ setlocale (int cat, char const *locale)
   return 0;
 }
 #endif
+
+/* True if the current system locale uses UTF-8 encoding.  */
+static bool
+using_utf8 (void)
+{
+#ifdef HAVE_WCHAR_H
+  wchar_t wc;
+  mbstate_t mbs = { 0 };
+  return mbrtowc (&wc, "\xc4\x80", 2, &mbs) == 2 && wc == 0x100;
+#else
+  return false;
+#endif
+}
 
 
 /* Report a fatal error due to signal SIG, output a backtrace of at
@@ -924,6 +941,7 @@ main (int argc, char **argv)
      fixup_locale must wait until later, since it builds strings.  */
   if (do_initial_setlocale)
     setlocale (LC_ALL, "");
+  text_quoting_flag = using_utf8 ();
 
   inhibit_window_system = 0;
 

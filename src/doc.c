@@ -688,24 +688,31 @@ the same file name is found in the `doc-directory'.  */)
 static unsigned char const LSQM[] = { uLSQM0, uLSQM1, uLSQM2 };
 static unsigned char const RSQM[] = { uRSQM0, uRSQM1, uRSQM2 };
 
+static bool
+default_to_grave_quoting_style (void)
+{
+  if (!text_quoting_flag)
+    return true;
+  if (! DISP_TABLE_P (Vstandard_display_table))
+    return false;
+  Lisp_Object dv = DISP_CHAR_VECTOR (XCHAR_TABLE (Vstandard_display_table),
+				     LEFT_SINGLE_QUOTATION_MARK);
+  return (VECTORP (dv) && ASIZE (dv) == 1
+	  && EQ (AREF (dv, 0), make_number ('`')));
+}
+
 /* Return the current effective text quoting style.  */
 enum text_quoting_style
 text_quoting_style (void)
 {
-  if (EQ (Vtext_quoting_style, Qgrave))
+  if (NILP (Vtext_quoting_style)
+      ? default_to_grave_quoting_style ()
+      : EQ (Vtext_quoting_style, Qgrave))
     return GRAVE_QUOTING_STYLE;
   else if (EQ (Vtext_quoting_style, Qstraight))
     return STRAIGHT_QUOTING_STYLE;
-  else if (NILP (Vtext_quoting_style)
-	   && DISP_TABLE_P (Vstandard_display_table))
-    {
-      Lisp_Object dv = DISP_CHAR_VECTOR (XCHAR_TABLE (Vstandard_display_table),
-					 LEFT_SINGLE_QUOTATION_MARK);
-      if (VECTORP (dv) && ASIZE (dv) == 1
-	  && EQ (AREF (dv, 0), make_number ('`')))
-	return GRAVE_QUOTING_STYLE;
-    }
-  return CURVE_QUOTING_STYLE;
+  else
+    return CURVE_QUOTING_STYLE;
 }
 
 DEFUN ("substitute-command-keys", Fsubstitute_command_keys,
@@ -1044,6 +1051,10 @@ syms_of_doc (void)
 The default value nil acts like ‘curve’ if curved single quotes are
 displayable, and like ‘grave’ otherwise.  */);
   Vtext_quoting_style = Qnil;
+
+  DEFVAR_BOOL ("internal--text-quoting-flag", text_quoting_flag,
+	       doc: /* If nil, a nil ‘text-quoting-style’ is treated as ‘grave’.  */);
+  /* Initialized by ‘main’.  */
 
   defsubr (&Sdocumentation);
   defsubr (&Sdocumentation_property);

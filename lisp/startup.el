@@ -1023,6 +1023,7 @@ please check its value")
       (or standard-display-table
           (setq standard-display-table (make-display-table)))
       (aset standard-display-table (car char-repl) (cdr char-repl))))
+  (setq internal--text-quoting-flag t)
 
   ;; Re-evaluate predefined variables whose initial value depends on
   ;; the runtime context.
