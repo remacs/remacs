@@ -2941,7 +2941,11 @@ get_wm_chars (HWND aWnd, int *buf, int buflen, int ignore_ctrl, int ctrl,
    environments!) should  have different values.  Moreover, switching to a
    non-Emacs window with the same language environment, and using (dead)keys
    there would change the value stored in the kernel, but not this value.  */
-static int after_deadkey = 0;
+/* A layout may emit deadkey=0.  It looks like this would reset the state
+   of the kernel's finite automaton (equivalent to emiting 0-length string,
+   which is otherwise impossible in the dead-key map of a layout).
+   Be ready to treat the case when this delivers WM_(SYS)DEADCHAR. */
+static int after_deadkey = -1;
 
 int
 deliver_wm_chars (int do_translate, HWND hwnd, UINT msg, UINT wParam,
@@ -2951,7 +2955,7 @@ deliver_wm_chars (int do_translate, HWND hwnd, UINT msg, UINT wParam,
      points to a keypress.
      (However, the "old style" TranslateMessage() would deliver at most 16 of
      them.)  Be on a safe side, and prepare to treat many more.  */
-  int ctrl_cnt, buf[1024], count, is_dead, after_dead = (after_deadkey != -1);
+  int ctrl_cnt, buf[1024], count, is_dead, after_dead = (after_deadkey > 0);
 
   /* Since the keypress processing logic of Windows has a lot of state, it
      is important to call TranslateMessage() for every keyup/keydown, AND
