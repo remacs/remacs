@@ -7885,13 +7885,19 @@ which specify the range to operate on."
   (goto-char (prog1 (mark t)
 	       (set-marker (mark-marker) (point)))))
 
-(defalias 'message-make-overlay 'make-overlay)
-(defalias 'message-delete-overlay 'delete-overlay)
-(defalias 'message-overlay-put 'overlay-put)
-(defun message-kill-all-overlays ()
-  (if (featurep 'xemacs)
-      (map-extents (lambda (extent ignore) (delete-extent extent)))
-    (mapcar #'delete-overlay (overlays-in (point-min) (point-max)))))
+(if (featurep 'emacs)
+    (progn
+      (defalias 'message-delete-overlay 'delete-overlay)
+      (defun message-kill-all-overlays ()
+	(mapcar #'delete-overlay (overlays-in (point-min) (point-max))))
+      (defalias 'message-make-overlay 'make-overlay)
+      (defalias 'message-overlay-get 'overlay-get)
+      (defalias 'message-overlay-put 'overlay-put)
+      (defalias 'message-overlays-in 'overlays-in)
+      (defalias 'message-window-inside-pixel-edges 'window-inside-pixel-edges))
+  (defun message-kill-all-overlays ()
+    (map-extents (lambda (extent ignore) (delete-extent extent))))
+  (defalias 'message-window-inside-pixel-edges 'ignore))
 
 ;; Support for toolbar
 (defvar tool-bar-mode)
@@ -8559,12 +8565,12 @@ Used in `message-simplify-recipients'."
 (defun message-toggle-image-thumbnails ()
   "For any included image files, insert a thumbnail of that image."
   (interactive)
-  (let ((overlays (overlays-in (point-min) (point-max)))
+  (let ((overlays (message-overlays-in (point-min) (point-max)))
 	(displayed nil))
     (while overlays
       (let ((overlay (car overlays)))
-	(when (overlay-get overlay 'put-image)
-	  (delete-overlay overlay)
+	(when (message-overlay-get overlay 'put-image)
+	  (message-delete-overlay overlay)
 	  (setq displayed t)))
       (setq overlays (cdr overlays)))
     (unless displayed
@@ -8572,7 +8578,7 @@ Used in `message-simplify-recipients'."
 	(goto-char (point-min))
 	(while (re-search-forward "<img.*src=\"\\([^\"]+\\)" nil t)
 	  (let ((file (match-string 1))
-		(edges (window-inside-pixel-edges
+		(edges (message-window-inside-pixel-edges
 			(get-buffer-window (current-buffer)))))
 	    (put-image
 	     (create-image
