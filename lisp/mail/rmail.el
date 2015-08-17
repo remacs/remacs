@@ -4652,7 +4652,7 @@ Argument MIME is non-nil if this is a mime message."
 
       (when (and (null decrypts)
                  mime mime-disabled)
-        ;; Re-enable mime processinjg
+        ;; Re-enable mime processing.
 	(rmail-mime)
         ;; Find each Show button and show that part.
 	(while (search-forward " Show " nil t)
@@ -4672,7 +4672,7 @@ Argument MIME is non-nil if this is a mime message."
 
       (unless decrypts
 	(error "Nothing to decrypt")))))
- 
+
 
 ;;;;  Desktop support
 

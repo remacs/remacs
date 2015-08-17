@@ -117,7 +117,7 @@
 ;;; xref
 
 (defun xref-elisp-test-descr-to-target (xref)
-  "Return an appropiate `looking-at' match string for XREF."
+  "Return an appropriate `looking-at' match string for XREF."
   (let* ((loc (xref-item-location xref))
 	 (type (or (xref-elisp-location-type loc)
 		  'defun)))
@@ -176,11 +176,11 @@
       )))
 
 
-(defun xref-elisp-test-run (xrefs expecteds)
-  (should (= (length xrefs) (length expecteds)))
+(defun xref-elisp-test-run (xrefs expected-xrefs)
+  (should (= (length xrefs) (length expected-xrefs)))
   (while xrefs
     (let ((xref (pop xrefs))
-          (expected (pop expecteds)))
+          (expected (pop expected-xrefs)))
 
       (should (equal xref
                      (or (when (consp expected) (car expected)) expected)))
@@ -297,11 +297,11 @@ to (xref-elisp-test-descr-to-target xref)."
   "non-default for separate-default")
 
 (cl-defmethod xref-elisp-generic-implicit-generic ()
-  "doc string implict-generic default"
+  "doc string implicit-generic default"
   "default for implicit generic")
 
 (cl-defmethod xref-elisp-generic-implicit-generic ((this xref-elisp-root-type))
-  "doc string implict-generic xref-elisp-root-type"
+  "doc string implicit-generic xref-elisp-root-type"
   "non-default for implicit generic")
 
 
@@ -460,7 +460,7 @@ to (xref-elisp-test-descr-to-target xref)."
 ;; for more comments.
 ;;
 ;; IMPROVEME: return defvar instead of defun if source near starting
-;; point indicates the user is searching for a varible, not a
+;; point indicates the user is searching for a variable, not a
 ;; function.
 (require 'compile) ;; not loaded by default at test time
 (xref-elisp-deftest find-defs-defun-defvar-el
