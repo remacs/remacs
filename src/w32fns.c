@@ -3131,7 +3131,7 @@ deliver_wm_chars (int do_translate, HWND hwnd, UINT msg, UINT wParam,
 	    }
 	  else if (wmsg.dwModifiers & (alt_modifier | meta_modifier)
 		   || (console_modifiers
-		       & (RIGHT_WIN_PRESSED | RIGHT_WIN_PRESSED
+		       & (LEFT_WIN_PRESSED | RIGHT_WIN_PRESSED
 			  | APPS_PRESSED | SCROLLLOCK_ON)))
 	    {
 	      /* Pure Alt (or combination of Alt, Win, APPS, scrolllock.  */
