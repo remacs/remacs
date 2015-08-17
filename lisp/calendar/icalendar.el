@@ -1629,8 +1629,8 @@ enumeration, given as a time value, in same format as returned by
                                  (icalendar--convert-ordinary-to-ical
                                   nonmarker (format "%4d/%02d/%02d %s" y m d see))))
                              (;TODO:
-                              (error (format "Unsupported Sexp-entry: %s"
-                                             entry-main))))))
+                              (error "Unsupported Sexp-entry: %s"
+                                     entry-main)))))
                     (number-sequence
                      0 (- icalendar-export-sexp-enumeration-days 1))))))
         (t

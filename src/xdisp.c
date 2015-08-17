@@ -4187,13 +4187,13 @@ handle_invisible_prop (struct it *it)
 
   if (STRINGP (it->string))
     {
-      Lisp_Object end_charpos, limit, charpos;
+      Lisp_Object end_charpos, limit;
 
       /* Get the value of the invisible text property at the
 	 current position.  Value will be nil if there is no such
 	 property.  */
-      charpos = make_number (IT_STRING_CHARPOS (*it));
-      prop = Fget_text_property (charpos, Qinvisible, it->string);
+      end_charpos = make_number (IT_STRING_CHARPOS (*it));
+      prop = Fget_text_property (end_charpos, Qinvisible, it->string);
       invis = TEXT_PROP_MEANS_INVISIBLE (prop);
 
       if (invis != 0 && IT_STRING_CHARPOS (*it) < it->end_charpos)
@@ -4211,8 +4211,12 @@ handle_invisible_prop (struct it *it)
 	  XSETINT (limit, len);
 	  do
 	    {
-	      end_charpos = Fnext_single_property_change (charpos, Qinvisible,
-							  it->string, limit);
+	      end_charpos
+		= Fnext_single_property_change (end_charpos, Qinvisible,
+						it->string, limit);
+	      /* Since LIMIT is always an integer, so should be the
+		 value returned by Fnext_single_property_change.  */
+	      eassert (INTEGERP (end_charpos));
 	      if (INTEGERP (end_charpos))
 		{
 		  endpos = XFASTINT (end_charpos);
@@ -4221,6 +4225,8 @@ handle_invisible_prop (struct it *it)
 		  if (invis == 2)
 		    display_ellipsis_p = true;
 		}
+	      else /* Should never happen; but if it does, exit the loop.  */
+		endpos = len;
 	    }
 	  while (invis != 0 && endpos < len);
 
@@ -4256,7 +4262,7 @@ handle_invisible_prop (struct it *it)
 		}
 	      else
 		{
-		  IT_STRING_CHARPOS (*it) = XFASTINT (end_charpos);
+		  IT_STRING_CHARPOS (*it) = endpos;
 		  compute_string_pos (&it->current.string_pos, old, it->string);
 		}
 	    }
@@ -5966,6 +5972,7 @@ pop_it (struct it *it)
 {
   struct iterator_stack_entry *p;
   bool from_display_prop = it->from_disp_prop_p;
+  ptrdiff_t prev_pos = IT_CHARPOS (*it);
 
   eassert (it->sp > 0);
   --it->sp;
@@ -6054,6 +6061,11 @@ pop_it (struct it *it)
 		   && IT_STRING_BYTEPOS (*it) == it->bidi_it.bytepos)
 	       || (CONSP (it->object) && it->method == GET_FROM_STRETCH));
     }
+  /* If we move the iterator over text covered by a display property
+     to a new buffer position, any info about previously seen overlays
+     is no longer valid.  */
+  if (from_display_prop && it->sp == 0 && CHARPOS (it->position) != prev_pos)
+    it->ignore_overlay_strings_at_pos_p = false;
 }
 
 
@@ -6878,9 +6890,10 @@ get_next_display_element (struct it *it)
 	     non-ASCII spaces and hyphens specially.  */
 	  if (! ASCII_CHAR_P (c) && ! NILP (Vnobreak_char_display))
 	    {
-	      if (c == 0xA0)
+	      if (c == NO_BREAK_SPACE)
 		nonascii_space_p = true;
-	      else if (c == 0xAD || c == 0x2010 || c == 0x2011)
+	      else if (c == SOFT_HYPHEN || c == HYPHEN
+		       || c == NON_BREAKING_HYPHEN)
 		nonascii_hyphen_p = true;
 	    }
 
@@ -9784,27 +9797,50 @@ include the height of both, if present, in the return value.  */)
 			       Messages
  ***********************************************************************/
 
+/* Return the number of arguments the format string FORMAT needs.  */
 
-/* Add a message with format string FORMAT and arguments ARG1 and ARG2
+static ptrdiff_t
+format_nargs (char const *format)
+{
+  ptrdiff_t nargs = 0;
+  for (char const *p = format; (p = strchr (p, '%')); p++)
+    if (p[1] == '%')
+      p++;
+    else
+      nargs++;
+  return nargs;
+}
+
+/* Add a message with format string FORMAT and formatted arguments
    to *Messages*.  */
 
 void
-add_to_log (const char *format, Lisp_Object arg1, Lisp_Object arg2)
+add_to_log (const char *format, ...)
 {
-  Lisp_Object msg, fmt;
-  char *buffer;
-  ptrdiff_t len;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
+  va_list ap;
+  va_start (ap, format);
+  vadd_to_log (format, ap);
+  va_end (ap);
+}
+
+void
+vadd_to_log (char const *format, va_list ap)
+{
+  ptrdiff_t nargs = 1 + format_nargs (format);
+  Lisp_Object args[10];
+  eassert (nargs <= ARRAYELTS (args));
+  args[0] = build_string (format);
+  for (ptrdiff_t i = 1; i <= nargs; i++)
+    args[i] = va_arg (ap, Lisp_Object);
+  Lisp_Object msg = Qnil;
+  struct gcpro gcpro1, gcpro2;
+  GCPRO2 (args, msg);
+  gcpro1.nvars = nargs;
+  msg = Fformat (nargs, args);
+
+  ptrdiff_t len = SBYTES (msg) + 1;
   USE_SAFE_ALLOCA;
-
-  fmt = msg = Qnil;
-  GCPRO4 (fmt, msg, arg1, arg2);
-
-  fmt = build_string (format);
-  msg = CALLN (Fformat, fmt, arg1, arg2);
-
-  len = SBYTES (msg) + 1;
-  buffer = SAFE_ALLOCA (len);
+  char *buffer = SAFE_ALLOCA (len);
   memcpy (buffer, SDATA (msg), len);
 
   message_dolog (buffer, len - 1, true, false);
@@ -10239,9 +10275,9 @@ message_with_string (const char *m, Lisp_Object string, bool log)
 /* Dump an informative message to the minibuf.  If M is 0, clear out
    any existing message, and let the mini-buffer text show through.
 
-   The message must be safe ASCII only.  If strings may contain escape
-   sequences or non-ASCII characters, convert them to Lisp strings and
-   use Fmessage.  */
+   The message must be safe ASCII and the format must not contain ` or
+   '.  If your message and format do not fit into this category,
+   convert your arguments to Lisp objects and use Fmessage instead.  */
 
 static void ATTRIBUTE_FORMAT_PRINTF (1, 0)
 vmessage (const char *m, va_list ap)
@@ -19216,7 +19252,7 @@ append_space_for_newline (struct it *it, bool default_face_p)
 	     funny, and height of empty lines will be incorrect.  */
 	  g = it->glyph_row->glyphs[TEXT_AREA] + n;
 	  struct font *font = face->font ? face->font : FRAME_FONT (it->f);
-	  if (n == 0 || it->glyph_row->height < font->pixel_size)
+	  if (n == 0)
 	    {
 	      Lisp_Object height, total_height;
 	      int extra_line_spacing = it->extra_line_spacing;

@@ -8487,7 +8487,7 @@ Header and body are separated by `mail-header-separator'."
 	    (progn
 	      (setq sent (1+ sent))
 	      (message-send-and-exit))
-	  (message (format "Message to `%s' skipped." to))
+	  (message "Message to `%s' skipped." to)
 	  (setq skipped (1+ skipped)))
 	(when (buffer-live-p buff)
 	  (kill-buffer buff))))

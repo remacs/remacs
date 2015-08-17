@@ -537,8 +537,8 @@ and `apropos' for other symbols."
                      (- (car (current-time-zone)))))
          (hours (mod (floor seconds 3600) 24))
          (minutes (mod (round seconds 60) 60)))
-    (message (format "@%s is %d:%02d local time"
-                     beats hours minutes))))
+    (message "@%s is %d:%02d local time"
+             beats hours minutes)))
 
 (provide 'erc-button)
 
@@ -546,4 +546,3 @@ and `apropos' for other symbols."
 ;; Local Variables:
 ;; indent-tabs-mode: nil
 ;; End:
-

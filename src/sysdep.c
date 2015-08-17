@@ -1612,7 +1612,7 @@ handle_arith_signal (int sig)
   xsignal0 (Qarith_error);
 }
 
-#ifdef HAVE_STACK_OVERFLOW_HANDLING
+#if defined HAVE_STACK_OVERFLOW_HANDLING && !defined WINDOWSNT
 
 /* Alternate stack used by SIGSEGV handler below.  */
 
@@ -1708,7 +1708,7 @@ init_sigsegv (void)
   return sigaction (SIGSEGV, &sa, NULL) < 0 ? 0 : 1;
 }
 
-#else /* not HAVE_STACK_OVERFLOW_HANDLING */
+#else /* not HAVE_STACK_OVERFLOW_HANDLING or WINDOWSNT */
 
 static bool
 init_sigsegv (void)
@@ -1716,7 +1716,7 @@ init_sigsegv (void)
   return 0;
 }
 
-#endif /* HAVE_STACK_OVERFLOW_HANDLING */
+#endif /* HAVE_STACK_OVERFLOW_HANDLING && !WINDOWSNT */
 
 static void
 deliver_arith_signal (int sig)

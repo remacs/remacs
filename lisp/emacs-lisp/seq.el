@@ -221,12 +221,17 @@ TESTFN is used to compare elements, or `equal' if TESTFN is nil."
 (defun seq-subseq (seq start &optional end)
   "Return the subsequence of SEQ from START to END.
 If END is omitted, it defaults to the length of the sequence.
-If START or END is negative, it counts from the end."
+If START or END is negative, it counts from the end.
+
+Signal an error if START or END are outside of the sequence (i.e
+too large if positive or too small if negative)"
   (cond ((or (stringp seq) (vectorp seq)) (substring seq start end))
         ((listp seq)
          (let (len (errtext (format "Bad bounding indices: %s, %s" start end)))
            (and end (< end 0) (setq end (+ end (setq len (seq-length seq)))))
            (if (< start 0) (setq start (+ start (or len (setq len (seq-length seq))))))
+           (unless (>= start 0)
+             (error "%s" errtext))
            (when (> start 0)
              (setq seq (nthcdr (1- start) seq))
              (or seq (error "%s" errtext))

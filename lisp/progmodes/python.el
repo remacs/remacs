@@ -282,6 +282,18 @@
   :version "24.3"
   :link '(emacs-commentary-link "python"))
 
+
+;;; 24.x Compat
+
+
+(unless (fboundp 'prog-widen)
+  (defun prog-widen ()
+    (widen)))
+
+(unless (fboundp 'prog-first-column)
+  (defun prog-first-column ()
+    0))
+
 
 ;;; Bindings
 

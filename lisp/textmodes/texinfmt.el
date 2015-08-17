@@ -3127,7 +3127,7 @@ Default is to leave paragraph indentation as is."
 ;; (put '\` 'texinfo-format 'texinfo-format-grave-accent)
 ;; (defun texinfo-format-grave-accent ()
 ;;   (texinfo-discard-command)
-;;   (insert "\`"))
+;;   (insert "`"))
 ;;
 ;; @'              ==>    '         acute accent
 ;; (put '\' 'texinfo-format 'texinfo-format-acute-accent)

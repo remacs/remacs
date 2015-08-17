@@ -1655,7 +1655,7 @@ invoking, give a prefix argument to `execute-extended-command'."
 		       (not executing-kbd-macro)
 		       (where-is-internal function overriding-local-map t))))
     (unless (commandp function)
-      (error "`%s' is not a valid command name" command-name))
+      (error "‘%s’ is not a valid command name" command-name))
     (setq this-command function)
     ;; Normally `real-this-command' should never be changed, but here we really
     ;; want to pretend that M-x <cmd> RET is nothing more than a "key
@@ -1689,7 +1689,7 @@ invoking, give a prefix argument to `execute-extended-command'."
                            (symbol-name function) typed))))
         (when binding
           (with-temp-message
-              (format "You can run the command `%s' with %s"
+              (format "You can run the command ‘%s’ with %s"
                       function
                       (if (stringp binding)
                           (concat "M-x " binding " RET")
@@ -2796,7 +2796,7 @@ This variable only matters if `undo-ask-before-discard' is non-nil.")
 	;; but we don't want to ask the question again.
 	(setq undo-extra-outer-limit (+ size 50000))
 	(if (let (use-dialog-box track-mouse executing-kbd-macro )
-	      (yes-or-no-p (format "Buffer `%s' undo info is %d bytes long; discard it? "
+	      (yes-or-no-p (format "Buffer ‘%s’ undo info is %d bytes long; discard it? "
 				   (buffer-name) size)))
 	    (progn (setq buffer-undo-list nil)
 		   (setq undo-extra-outer-limit nil)
@@ -2804,7 +2804,7 @@ This variable only matters if `undo-ask-before-discard' is non-nil.")
 	  nil))
     (display-warning '(undo discard-info)
 		     (concat
-		      (format "Buffer `%s' undo info was %d bytes long.\n"
+		      (format "Buffer ‘%s’ undo info was %d bytes long.\n"
 			      (buffer-name) size)
 		      "The undo info was discarded because it exceeded \
 `undo-outer-limit'.
@@ -7271,8 +7271,8 @@ buffer buried."
 			    (format "\
 The default mail mode is now Message mode.
 You have the following Mail mode variable%s customized:
-\n  %s\n\nTo use Mail mode, set `mail-user-agent' to sendmail-user-agent.
-To disable this warning, set `compose-mail-user-agent-warnings' to nil."
+\n  %s\n\nTo use Mail mode, set ‘mail-user-agent’ to sendmail-user-agent.
+To disable this warning, set ‘compose-mail-user-agent-warnings’ to nil."
 				    (if (> (length warn-vars) 1) "s" "")
 				    (mapconcat 'symbol-name
 					       warn-vars " "))))))
@@ -7343,8 +7343,8 @@ With a prefix argument, set VARIABLE to VALUE buffer-locally."
 				(t "globally"))))
 	  (val (progn
                  (when obsolete
-                   (message (concat "`%S' is obsolete; "
-                                    (if (symbolp obsolete) "use `%S' instead" "%s"))
+                   (message (concat "‘%S’ is obsolete; "
+                                    (if (symbolp obsolete) "use ‘%S’ instead" "%s"))
                             var obsolete)
                    (sit-for 3))
                  (if prop
@@ -7368,7 +7368,7 @@ With a prefix argument, set VARIABLE to VALUE buffer-locally."
       (require 'cus-edit)
       (setq type (widget-convert type))
       (unless (widget-apply type :match value)
-	(user-error "Value `%S' does not match type %S of %S"
+	(user-error "Value ‘%S’ does not match type %S of %S"
 		    value (car type) variable))))
 
   (if make-local
@@ -7579,7 +7579,7 @@ back on `completion-list-insert-choice-function' when nil."
   ;; `base-position'.  It's difficult to make any use of `base-size',
   ;; so we just ignore it.
   (unless (consp base-position)
-    (message "Obsolete `base-size' passed to choose-completion-string")
+    (message "Obsolete ‘base-size’ passed to choose-completion-string")
     (setq base-position nil))
 
   (let* ((buffer (or buffer completion-reference-buffer))
@@ -7692,8 +7692,7 @@ Called from `temp-buffer-show-hook'."
       (when completion-show-help
 	(goto-char (point-min))
 	(if (display-mouse-p)
-	    (insert (substitute-command-keys
-		     "Click on a completion to select it.\n")))
+	    (insert "Click on a completion to select it.\n"))
 	(insert (substitute-command-keys
 		 "In this buffer, type \\[choose-completion] to \
 select the completion near point.\n\n"))))))
@@ -8305,7 +8304,7 @@ CUSTOMIZATIONS, if non-nil, should be composed of alternating
     `(progn
 
        (defcustom ,varalt-sym nil
-         ,(format "Alist of alternative implementations for the `%s' command.
+         ,(format "Alist of alternative implementations for the ‘%s’ command.
 
 Each entry must be a pair (ALTNAME . ALTFUN), where:
 ALTNAME - The name shown at user to describe the alternative implementation.
@@ -8318,28 +8317,28 @@ ALTFUN  - The function called to implement this alternative."
        (defvar ,varimp-sym nil "Internal use only.")
 
        (defun ,command (&optional arg)
-         ,(format "Run generic command `%s'.
+         ,(format "Run generic command ‘%s’.
 If used for the first time, or with interactive ARG, ask the user which
-implementation to use for `%s'.  The variable `%s'
+implementation to use for ‘%s’.  The variable ‘%s’
 contains the list of implementations currently supported for this command."
                   command-name command-name varalt-name)
          (interactive "P")
          (when (or arg (null ,varimp-sym))
            (let ((val (completing-read
-		       ,(format "Select implementation for command `%s': "
+		       ,(format "Select implementation for command ‘%s’: "
 				command-name)
 		       ,varalt-sym nil t)))
              (unless (string-equal val "")
 	       (when (null ,varimp-sym)
 		 (message
-		  "Use `C-u M-x %s RET' to select another implementation"
+		  "Use ‘C-u M-x %s RET’ to select another implementation"
 		  ,command-name)
 		 (sit-for 3))
 	       (customize-save-variable ',varimp-sym
 					(cdr (assoc-string val ,varalt-sym))))))
          (if ,varimp-sym
              (call-interactively ,varimp-sym)
-           (message ,(format "No implementation selected for command `%s'"
+           (message ,(format "No implementation selected for command ‘%s’"
                              command-name)))))))
 
 

@@ -4,7 +4,7 @@
 
 ;; Author: Ron Schnell <ronnie@driver-aces.com>
 ;; Created: 25 Jul 1992
-;; Version: 2.01
+;; Version: 2.02
 ;; Keywords: games
 
 ;; This file is part of GNU Emacs.

@@ -100,10 +100,34 @@ Please send improvements and fixes to the maintainer."
   :group 'find-function
   :version "22.1")
 
+(defcustom find-feature-regexp
+  (concat ";;; Code:")
+  "The regexp used by `xref-find-definitions' when searching for a feature definition.
+Note it must contain a `%s' at the place where `format'
+should insert the feature name."
+  ;; We search for ";;; Code" rather than (feature '%s) because the
+  ;; former is near the start of the code, and the latter is very
+  ;; uninteresting. If the regexp is not found, just goes to
+  ;; (point-min), which is acceptable in this case.
+  :type 'regexp
+  :group 'xref
+  :version "25.0")
+
+(defcustom find-alias-regexp
+  "(defalias +'%s"
+  "The regexp used by `xref-find-definitions' to search for an alias definition.
+Note it must contain a `%s' at the place where `format'
+should insert the feature name."
+  :type 'regexp
+  :group 'xref
+  :version "25.0")
+
 (defvar find-function-regexp-alist
   '((nil . find-function-regexp)
     (defvar . find-variable-regexp)
-    (defface . find-face-regexp))
+    (defface . find-face-regexp)
+    (feature . find-feature-regexp)
+    (defalias . find-alias-regexp))
   "Alist mapping definition types into regexp variables.
 Each regexp variable's value should actually be a format string
 to be used to substitute the desired symbol name into the regexp.

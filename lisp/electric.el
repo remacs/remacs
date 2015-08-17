@@ -428,8 +428,10 @@ The variable `electric-layout-rules' says when and how to insert newlines."
   :type 'boolean :safe 'booleanp :group 'electricity)
 
 (defun electric--insertable-p (string)
-  (not (unencodable-char-position nil nil buffer-file-coding-system
-                                  nil string)))
+  (or (not buffer-file-coding-system)
+      (eq (coding-system-base buffer-file-coding-system) 'undecided)
+      (not (unencodable-char-position nil nil buffer-file-coding-system
+                                      nil string))))
 
 (defun electric-quote-post-self-insert-function ()
   "Function that ‘electric-quote-mode’ adds to ‘post-self-insert-hook’.

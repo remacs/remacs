@@ -1,4 +1,4 @@
-;;; compile.el --- run compiler as inferior of Emacs, parse error messages
+;;; compile.el --- run compiler as inferior of Emacs, parse error messages  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1985-1987, 1993-1999, 2001-2015 Free Software
 ;; Foundation, Inc.
@@ -1109,7 +1109,9 @@ If SCREEN is non-nil, columns are screen columns, otherwise, they are
 just char-counts."
   (setq col (- col compilation-first-column))
   (if screen
-      (move-to-column (max col 0))
+      ;; Presumably, the compilation tool doesn't know about our current
+      ;; `tab-width' setting, so it probably assumed 8-wide TABs (bug#21038).
+      (let ((tab-width 8)) (move-to-column (max col 0)))
     (goto-char (min (+ (line-beginning-position) col) (line-end-position)))))
 
 (defun compilation-internal-error-properties (file line end-line col end-col type fmts)

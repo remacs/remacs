@@ -3667,7 +3667,8 @@ extern Lisp_Object sit_for (Lisp_Object, bool, int);
 /* Defined in xdisp.c.  */
 extern bool noninteractive_need_newline;
 extern Lisp_Object echo_area_buffer[2];
-extern void add_to_log (const char *, Lisp_Object, Lisp_Object);
+extern void add_to_log (char const *, ...);
+extern void vadd_to_log (char const *, va_list);
 extern void check_message_stack (void);
 extern void setup_echo_area_for_printing (bool);
 extern bool push_message (void);
@@ -4299,6 +4300,25 @@ extern void set_initial_environment (void);
 extern void syms_of_callproc (void);
 
 /* Defined in doc.c.  */
+enum
+  {
+    /* Named constants for the UTF-8 encodings of U+2018 LEFT SINGLE
+       QUOTATION MARK and U+2019 RIGHT SINGLE QUOTATION MARK.  */
+    uLSQM0 = 0xE2, uLSQM1 = 0x80, uLSQM2 = 0x98,
+    uRSQM0 = 0xE2, uRSQM1 = 0x80, uRSQM2 = 0x99
+  };
+enum text_quoting_style
+  {
+    /* Use curved single quotes ‘like this’.  */
+    CURVE_QUOTING_STYLE,
+
+    /* Use grave accent and apostrophe  `like this'.  */
+    GRAVE_QUOTING_STYLE,
+
+    /* Use apostrophes 'like this'.  */
+    STRAIGHT_QUOTING_STYLE
+  };
+extern enum text_quoting_style text_quoting_style (void);
 extern Lisp_Object read_doc_string (Lisp_Object);
 extern Lisp_Object get_doc_string (Lisp_Object, bool, bool);
 extern void syms_of_doc (void);

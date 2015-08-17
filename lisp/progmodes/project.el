@@ -22,6 +22,10 @@
 ;; This file contains generic infrastructure for dealing with
 ;; projects, and a number of public functions: finding the current
 ;; root, related project directories, search path, etc.
+;;
+;; The goal is to make it easy for Lisp programs to operate on the
+;; current project, without having to know which package handles
+;; detection of that project type, parsing its config files, etc.
 
 ;;; Code:
 
@@ -93,6 +97,21 @@ an element of `project-search-path'."
     vc-directory-exclusion-list)
    grep-find-ignored-files))
 
+(defgroup project-vc nil
+  "Project implementation using the VC package."
+  :group 'tools)
+
+(defcustom project-vc-search-path nil
+  "List ot directories to include in `project-search-path'.
+The file names can be absolute, or relative to the project root."
+  :type '(repeat file)
+  :safe 'listp)
+
+(defcustom project-vc-ignores nil
+  "List ot patterns to include in `project-ignores'."
+  :type '(repeat string)
+  :safe 'listp)
+
 (defun project-try-vc (dir)
   (let* ((backend (ignore-errors (vc-responsible-backend dir)))
          (root (and backend (ignore-errors
@@ -102,10 +121,18 @@ an element of `project-search-path'."
 (cl-defmethod project-roots ((project (head vc)))
   (list (cdr project)))
 
+(cl-defmethod project-search-path ((project (head vc)))
+  (append
+   (let ((root (cdr project)))
+     (mapcar
+      (lambda (dir) (expand-file-name dir root))
+      (project--value-in-dir 'project-vc-search-path root)))
+   (cl-call-next-method)))
+
 (cl-defmethod project-ignores ((project (head vc)) dir)
-  (nconc
-   (let* ((root (cdr project))
+  (let* ((root (cdr project))
           backend)
+    (append
      (when (file-equal-p dir root)
        (setq backend (vc-responsible-backend root))
        (mapcar
@@ -113,8 +140,9 @@ an element of `project-search-path'."
           (if (string-match "\\`/" entry)
               (replace-match "./" t t entry)
             entry))
-        (vc-call-backend backend 'ignore-completion-table root))))
-   (cl-call-next-method)))
+        (vc-call-backend backend 'ignore-completion-table root)))
+     (project--value-in-dir 'project-vc-ignores root)
+     (cl-call-next-method))))
 
 (defun project-ask-user (dir)
   (cons 'user (read-directory-name "Project root: " dir nil t)))
@@ -137,6 +165,12 @@ an element of `project-search-path'."
           (setcdr ref (cddr ref))
         (setq ref (cdr ref))))
     (cl-delete-if-not #'file-exists-p dirs)))
+
+(defun project--value-in-dir (var dir)
+  (with-temp-buffer
+    (setq default-directory dir)
+    (hack-dir-local-variables-non-file-buffer)
+    (symbol-value var)))
 
 (provide 'project)
 ;;; project.el ends here

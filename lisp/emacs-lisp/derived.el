@@ -331,9 +331,10 @@ which more-or-less shadow%s %s's corresponding table%s."
 			"\n\nThis mode "
 		      (concat
 		       "\n\nIn addition to any hooks its parent mode "
-		       (if (string-match (format "[`‘]%s['’]"
+		       (if (string-match (concat "[`%‘]"
                                                  (regexp-quote
-						  (symbol-name parent)))
+						  (symbol-name parent))
+                                                 "['%’]")
 					 docstring)
                            nil
 			 (format "`%s' " parent))

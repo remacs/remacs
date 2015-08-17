@@ -1407,6 +1407,7 @@ of."
 (defun tramp-sh-handle-set-file-modes (filename mode)
   "Like `set-file-modes' for Tramp files."
   (with-parsed-tramp-file-name filename nil
+    (tramp-flush-file-property v (file-name-directory localname))
     (tramp-flush-file-property v localname)
     ;; FIXME: extract the proper text from chmod's stderr.
     (tramp-barf-unless-okay
@@ -1421,6 +1422,7 @@ of."
   (if (tramp-tramp-file-p filename)
       (with-parsed-tramp-file-name filename nil
 	(when (tramp-get-remote-touch v)
+	  (tramp-flush-file-property v (file-name-directory localname))
 	  (tramp-flush-file-property v localname)
 	  (let ((time (if (or (null time) (equal time '(0 0)))
 			  (current-time)
@@ -1490,15 +1492,8 @@ be non-negative integers."
 
 (defun tramp-remote-selinux-p (vec)
   "Check, whether SELINUX is enabled on the remote host."
-  (with-tramp-connection-property
-      (tramp-get-connection-process vec) "selinux-p"
-    (let ((result (tramp-find-executable
-		   vec "getenforce" (tramp-get-remote-path vec) t t)))
-      (and result
-	   (string-equal
-	    (tramp-send-command-and-read
-	     vec (format "echo \\\"`%S`\\\"" result))
-	    "Enforcing")))))
+  (with-tramp-connection-property (tramp-get-connection-process vec) "selinux-p"
+    (tramp-send-command-and-check vec "selinuxenabled")))
 
 (defun tramp-sh-handle-file-selinux-context (filename)
   "Like `file-selinux-context' for Tramp files."
@@ -1524,24 +1519,25 @@ be non-negative integers."
 (defun tramp-sh-handle-set-file-selinux-context (filename context)
   "Like `set-file-selinux-context' for Tramp files."
   (with-parsed-tramp-file-name filename nil
-    (if (and (consp context)
-	     (tramp-remote-selinux-p v)
-	     (tramp-send-command-and-check
-	      v (format "chcon %s %s %s %s %s"
-			(if (stringp (nth 0 context))
-			    (format "--user=%s" (nth 0 context)) "")
-			(if (stringp (nth 1 context))
-			    (format "--role=%s" (nth 1 context)) "")
-			(if (stringp (nth 2 context))
-			    (format "--type=%s" (nth 2 context)) "")
-			(if (stringp (nth 3 context))
-			    (format "--range=%s" (nth 3 context)) "")
-			(tramp-shell-quote-argument localname))))
-	(progn
-	  (tramp-set-file-property v localname "file-selinux-context" context)
-	  t)
-      (tramp-set-file-property v localname "file-selinux-context" 'undef)
-      nil)))
+    (when (and (consp context)
+	       (tramp-remote-selinux-p v))
+      (let ((user (and (stringp (nth 0 context)) (nth 0 context)))
+	    (role (and (stringp (nth 1 context)) (nth 1 context)))
+	    (type (and (stringp (nth 2 context)) (nth 2 context)))
+	    (range (and (stringp (nth 3 context)) (nth 3 context))))
+	(when (tramp-send-command-and-check
+	       v (format "chcon %s %s %s %s %s"
+			 (if user (format "--user=%s" user) "")
+			 (if role (format "--role=%s" role) "")
+			 (if type (format "--type=%s" type) "")
+			 (if range (format "--range=%s" range) "")
+		       (tramp-shell-quote-argument localname)))
+	  (if (and user role type range)
+	      (tramp-set-file-property
+	       v localname "file-selinux-context" context)
+	    (tramp-set-file-property
+	     v localname "file-selinux-context" 'undef))
+	  t)))))
 
 (defun tramp-remote-acl-p (vec)
   "Check, whether ACL is enabled on the remote host."
@@ -1555,7 +1551,7 @@ be non-negative integers."
       (when (and (tramp-remote-acl-p v)
 		 (tramp-send-command-and-check
 		  v (format
-		     "getfacl -ac %s 2>/dev/null"
+		     "getfacl -ac %s"
 		     (tramp-shell-quote-argument localname))))
 	(with-current-buffer (tramp-get-connection-buffer v)
 	  (goto-char (point-max))

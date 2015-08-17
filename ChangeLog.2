@@ -1,3 +1,794 @@
+2015-08-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	substitute-command-keys a few more doc strings
+	* lisp/allout.el (outlineify-sticky):
+	* lisp/files.el (hack-one-local-variable--obsolete):
+	* lisp/help-fns.el (help-fns--obsolete, describe-variable):
+	Use substitute-command-keys on some doc strings so that
+	they don't use hard-coded key bindings or quoting styles.
+
+	Fix quoting in Fformat calls
+	* src/image.c (xbm_read_bitmap_data, xbm_load_image, xbm_load)
+	(xpm_load, xpm_load_image, pbm_load, png_load_body)
+	(jpeg_load_body, tiff_load, gif_load, imagemagick_load_image)
+	(imagemagick_load, svg_load, svg_load_image, gs_load)
+	(x_kill_gs_process):
+	* src/lread.c (load_warn_old_style_backquotes):
+	* src/xfaces.c (load_pixmap):
+	* src/xselect.c (x_clipboard_manager_error_1):
+	Quote diagnostics according to user preference when calling
+	Fformat or its derivatives.
+
+2015-08-15  Glenn Morris  <rgm@gnu.org>
+
+	* admin/admin.el (set-version, set-copyright): Remove deleted files.
+
+2015-08-15  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	Allow describe-function helpers to access buffer-local values.
+	This will be used by cedet/mode-local.el `describe-mode-local-override'
+	on `help-fns-describe-function-functions' in upstream CEDET.
+	* lisp/help-fns.el (describe-function-orig-buffer): New, let-bound in
+	`describe-function'.
+	(describe-function): Bind it, save it on the help xref stack.
+
+	Handle pulse-background being nil
+	* lisp/cedet/pulse.el (pulse-lighten-highlight): Inherit
+	pulse-background, handle it being nil.
+
+2015-08-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix "\`" confusion in Lisp strings
+	* admin/authors.el (authors-canonical-author-name):
+	Fix typo by using "\\`" not "\`" in string RE.
+	* lisp/obsolete/complete.el (PC-complete-as-file-name):
+	* lisp/obsolete/vi.el (vi-backward-blank-delimited-word):
+	* lisp/progmodes/verilog-mode.el (verilog-mode-map):
+	Use plain "`", not the equivalent-but-confusing "\`", in strings.
+	* lisp/textmodes/texinfmt.el: Fix comment likewise.
+
+2015-08-15  Dani Moncayo  <dmoncayo@gmail.com>
+
+	Remove 'nt/zipdist.bat' (no longer used)
+	* nt/zipdist.bat: Remove - no longer used.
+
+2015-08-15  Jürgen Hötzel  <juergen@archlinux.org>
+
+	* lisp/net/tramp-sh.el (tramp-remote-selinux-p): Use "selinuxenabled"
+	rather than "getenforce".
+	(tramp-sh-handle-set-file-selinux-context): Do not
+	cache SELinux context if not all context components are given.
+
+2015-08-15  Eli Zaretskii  <eliz@gnu.org>
+
+	Add doc strings to 2 help-mode.el functions
+	* lisp/help-mode.el (help-mode-setup, help-mode-finish): Add doc
+	strings.  (Bug#21263)
+
+	Remove files used by the old MS-Windows specific build procedure
+	* admin/unidata/makefile.w32-in:
+	* doc/emacs/makefile.w32-in:
+	* doc/lispintro/makefile.w32-in:
+	* doc/lispref/makefile.w32-in:
+	* doc/misc/makefile.w32-in:
+	* leim/makefile.w32-in:
+	* lib-src/makefile.w32-in:
+	* lib/makefile.w32-in:
+	* lisp/makefile.w32-in:
+	* nt/INSTALL.OLD:
+	* nt/config.nt:
+	* nt/emacs-src.tags:
+	* nt/envadd.bat:
+	* nt/gmake.defs:
+	* nt/makefile.w32-in:
+	* nt/multi-install-info.bat:
+	* nt/nmake.defs:
+	* nt/paths.h:
+	* src/makefile.w32-in: Files deleted.
+	* nt/configure.bat: Remove everything except the blurb about the
+	new build procedure.
+	* make-dist: Remove references to makefile.w32-in in various
+	directories, and to files in nt/ that were deleted.
+	* etc/NEWS: Mention the fact that the files were dropped.
+
+2015-08-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* doc/emacs/mule.texi (Charsets): Give fuller title for ISO-IR.
+	(Bug#21248)
+
+2015-08-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Default to inotify instead of gfile
+	* configure.ac (with_file_notification): Fix typo that
+	prevented suppression of file notification if HAVE_NS.
+	(NOTIFY_OBJ): Prefer inotify to gfile if both exist and
+	with_file_notification is 'yes' (Bug#21241).
+	* etc/NEWS: Mention this.
+
+	Fix broken URLs for ISO-IR
+	* doc/emacs/mule.texi (Charsets):
+	* lisp/international/mule-conf.el:
+	Fix broken URL (Bug#21248).
+
+	Low-level diagnostics now use ‘text-quoting-style’
+	* src/doprnt.c (doprnt):
+	Format ` and ' as per ‘text-quoting-style’.
+	* src/xdisp.c (vmessage, message): Mention that the format should
+	not contain ` or '.
+
+	Prefer ‘format’ to ‘substitute-command-keys’
+	* src/character.h (uLSQM, uRSQM): Move here ...
+	* src/doc.c (uLSQM, uRSQM): ... from here.
+	* src/doc.c (Fsubstitute_command_keys):
+	* src/syntax.c (Finternal_describe_syntax_value):
+	* lisp/cedet/mode-local.el (mode-local-print-binding)
+	(mode-local-describe-bindings-2):
+	* lisp/cedet/srecode/srt-mode.el (srecode-macro-help):
+	* lisp/cus-theme.el (describe-theme-1):
+	* lisp/descr-text.el (describe-text-properties-1, describe-char):
+	* lisp/emacs-lisp/cl-extra.el (cl--describe-class):
+	* lisp/emacs-lisp/cl-generic.el (cl--generic-describe):
+	* lisp/emacs-lisp/eieio-opt.el (eieio-help-constructor):
+	* lisp/emacs-lisp/package.el (describe-package-1):
+	* lisp/faces.el (describe-face):
+	* lisp/help-fns.el (help-fns--key-bindings)
+	(help-fns--compiler-macro, help-fns--parent-mode)
+	(help-fns--obsolete, help-fns--interactive-only)
+	(describe-function-1, describe-variable):
+	* lisp/help.el (describe-mode):
+	Prefer ‘format’ to ‘substitute-command-keys’ when either will do
+	to implement quoting style.  This generally makes the code simpler.
+
+	Extend ‘format’ to translate curved quotes
+	This is a followup to the recent doc string change, and deals with
+	diagnostics and the like.  This patch is more conservative than
+	the doc string change, in that the behavior of ‘format’ changes
+	only if its first arg contains curved quotes and the user prefers
+	straight or grave quotes.  (Come to think of it, perhaps we should
+	be similarly conservative with doc strings too, but that can wait.)
+	The upside of this conservatism is that existing usage is almost
+	surely unaffected.  The downside is that we'll eventually have to
+	change Emacs's format strings to use curved quotes in places where
+	the user might want curved quotes, but that's a simple and
+	mechanical translation that I'm willing to do later.  (Bug#21222)
+	* doc/lispref/help.texi (Keys in Documentation):
+	Move description of text-quoting-style from here ...
+	* doc/lispref/strings.texi (Formatting Strings):
+	... to here, and describe new behavior of ‘format’.
+	* etc/NEWS: Describe new behavior.
+	* lisp/calc/calc-help.el (calc-describe-thing):
+	* lisp/emacs-lisp/derived.el (derived-mode-make-docstring):
+	* lisp/info.el (Info-find-index-name):
+	Use ‘concat’ rather than ‘format’ to avoid misinterpretation
+	of recently-added curved quotes.
+	* src/doc.c (uLSQM0, uLSQM1, uLSQM2, uRSQM0, uRSQM1, uRSQM2):
+	Move from here ...
+	* src/lisp.h: ... to here.
+	* src/doc.c (text_quoting_style): New function.
+	(Fsubstitute_command_keys): Use it.
+	* src/editfns.c (Fformat): Implement new behavior.
+	* src/lisp.h (enum text_quoting_style): New enum.
+
+2015-08-14  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* src/keyboard.c: Use false/true instead of 0/1 for booleans
+	* src/keyboard.h (struct kboard): Mark kbd_queue_has_data as boolean.
+
+2015-08-14  Michael Albinus  <michael.albinus@gmx.de>
+
+	* lisp/net/tramp-sh.el (tramp-sh-handle-file-acl): Do not redirect
+	stderr to /dev/null, this is done in `tramp-send-command-and-check'.
+
+2015-08-14  Jürgen Hötzel  <juergen@archlinux.org>
+
+	Flush file properties in Tramp
+	* lisp/net/tramp-sh.el (tramp-sh-handle-set-file-modes)
+	(tramp-sh-handle-set-file-times):
+	* lisp/net/tramp-adb.el (tramp-adb-handle-set-file-modes)
+	(tramp-adb-handle-set-file-times): Flush the file properties of
+	the directory.
+
+2015-08-14  Ronnie Schnell  <ronnie@driver-aces.com>
+
+	* doc/emacs/misc.text (Amusements): Fixed typo.
+
+2015-08-14  Eli Zaretskii  <eliz@gnu.org>
+
+	Don't miss warnings about removing string text properties while dumping
+	* src/alloc.c (purecopy): Warn about removing a string's text
+	properties even when the same string was already pure-copied
+	earlier.
+	* lisp/progmodes/elisp-mode.el (elisp--xref-format)
+	(elisp--xref-format-extra): Fix the commentary.
+
+2015-08-13  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/progmodes/sh-script.el (sh-mode): Handle .cshrc (bug#21049)
+
+2015-08-13  Magnus Henoch  <magnus.henoch@gmail.com>
+
+	* lisp/progmodes/compile.el: Assume 8-wide TABs (bug#21038)
+	* lisp/progmodes/compile.el: Use lexical-binding.
+	(compilation-move-to-column): Assume 8-wide TABs (bug#21038).
+
+2015-08-13  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	(uniquify-ask-about-buffer-names-p): Remove, unused (bug#21037)
+	* lisp/uniquify.el: Remove redundant `:group's.
+
+2015-08-13  Jürgen Hötzel  <juergen@archlinux.org>
+
+	* lisp/net/tramp-adb.el
+	(tramp-adb-handle-directory-files-and-attributes): Make a copy of
+	result to prevent modification of the tramp-cache by side effects.
+	Use the correct cache key.
+
+2015-08-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Make add_to_log varargs
+	* src/alloc.c (run_finalizer_handler):
+	* src/charset.c (load_charset_map_from_vector):
+	* src/nsimage.m (ns_load_image):
+	* src/xfaces.c (load_pixmap, load_color2):
+	Simplify, now that add_to_log has a variable number of args.
+	* src/image.c (image_error): Take a variable number of args.
+	Callers simplified.
+	* src/lisp.h (add_to_log, vadd_to_log): Adjust to new APIs.
+	* src/xdisp.c (format_nargs, vadd_to_log): New functions.
+	(add_to_log): Make varargs, and reimplement in terms of vadd_to_log.
+	* src/xfaces.c (merge_face_ref): Fix typo that omitted color name.
+
+	Optional args for holiday-greek-orthodox-easter
+	* etc/NEWS: Document this.
+	* lisp/calendar/holidays.el (holiday-greek-orthodox-easter):
+	Add optional args N and STRING, mimicking the API and code of
+	‘holiday-easter-etc’.  From suggestion by Foivos S. Zakkak (Bug#21256).
+
+2015-08-13  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	xref-find-definitions: Exclude more generic function items.
+	* lisp/emacs-lisp/cl-generic.el (cl--generic-search-method): Add doc string.
+	(cl--generic-find-defgeneric-regexp): New.
+	(find-function-regexp-alist): Add it.
+	* lisp/emacs-lisp/find-func.el (find-feature-regexp): Move here from
+	elisp-mode.el, change to search for ";;; Code:"
+	(find-alias-regexp): Move here from elisp-mode.el, cleaned up.
+	(find-function-regexp-alist): Add them.
+	* lisp/progmodes/elisp-mode.el:
+	(elisp--xref-format, elisp--xref-format-extra): Change back to defvar due
+	to bug#21237.
+	(elisp--xref-find-definitions): Exclude co-located default methods for
+	generic functions. Also exclude implicitly declared defgeneric.
+	(elisp--xref-find-definitions): Handle C source properly. Exclude minor
+	mode variables defined by 'define-minor-mode'.
+	* test/automated/elisp-mode-tests.el: Declare generic functions, add
+	tests for them.
+	(xref-elisp-test-run): Fix bug.
+	(emacs-test-dir): Improve initial value.
+	(find-defs-defun-defvar-el): Don't expect defvar.
+	(find-defs-feature-el): Match change to find-feature-regexp.
+
+2015-08-13  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve warning about purecopy of strings with properties
+	* src/alloc.c (purecopy): Show the offending string with the
+	warning about removing its text properties.
+
+2015-08-12  Alan Mackenzie  <acm@muc.de>
+
+	Introduce new macros to cover Emacs's new names in cl-lib.el.
+	This also eliminates `mapcan' warnings in XEmacs.
+	progmodes/cc-defs.el (c--mapcan-status): new variable to characterise
+	[X]Emacs versions.
+	(top-level): Require either 'cl or 'cl-lib, depending on
+	c--mapcan-status.
+	Change this back to cc-external-require from an eval-when-compile
+	require.
+	(c--mapcan, c--set-difference, c--intersection, c--macroexpand-all)
+	(c--delete-duplicates): New macros which expand into either old or new
+	names.
+	(c-make-keywords-re, c-lang-defconst, c-lang-const) Use the new macros
+	rather than the old names.
+	progmodes/cc-engine.el (c-declare-lang-variables): Use c--mapcan rather
+	than mapcan.
+	progmodes/cc-fonts.el (c-compose-keywords-list): Use c--mapcan.
+	progmodes/cc-langs.el (top-level): Require either 'cl or 'cl-lib,
+	depending on c--mapcan-status.
+	(c-filter-ops, c-all-op-syntax-tokens, c-assignment-op-regexp)
+	(c-type-start-kwds, c-prefix-spec-kwds, c-specifier-key)
+	(c-not-decl-init-keywords, c-not-primitive-type-keywords)
+	(c-paren-any-kwds, c-<>-sexp-kwds, c-block-stmt-kwds, c-expr-kwds)
+	(c-decl-block-key, c-keywords, c-keywords-obarray)
+	(c-regular-keywords-regexp, c-primary-expr-regexp,
+	c-primary-expr-regexp)
+	(c-block-prefix-disallowed-chars, c-known-type-key,
+	c-nonlabel-token-key)
+	(c-make-init-lang-vars-fun): Use the new macros rather than the old
+	names.
+
+2015-08-12  Oleh Krehel  <ohwoeowho@gmail.com>
+
+	loadhist.el (read-feature): Conform to completing-read
+	* lisp/loadhist.el (read-feature): According to `completing-read'
+	  documentation, if collection is a list, then it must be a list of
+	  strings. And not a list of symbols like before.
+
+2015-08-12  David Kastrup  <dak@gnu.org>
+
+	Deal gracefully with up-events (Bug#19746)
+	* keyboard.c (apply_modifiers_uncached, parse_solitary_modifier)
+	(parse_modifiers_uncached): React gracefully to "up-" modifiers:
+	those may easily be injected by user-level Lisp code.
+	(read_key_sequence): Discard unbound up-events like unbound
+	down-events: they are even more likely only relevant for special
+	purposes.
+	While Emacs will not produce up-events on its own currently (those are
+	converted to drag or click events before being converted to
+	Lisp-readable structures), the input queue can be made to contain them
+	by synthesizing events to `unread-command-events'.  Emacs should deal
+	consistently with such events.
+
+2015-08-12  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix display of thin lines whose newline has line-height property of t
+	* src/xdisp.c (append_space_for_newline): Don't try to fix ascent
+	and descent values of non-empty glyph rows, since they could have
+	forced low values deliberately.  (Bug#21243)
+
+2015-08-12  Richard Stallman  <rms@gnu.org>
+
+	Offer to combine multiple To or CC fields.
+	* sendmail.el (mail-combine-fields): New function.
+	(mail-send): Call 'mail-combine-fields'.
+
+	Don't decrypt encrypted files.
+	* mail-utils.el (mail-file-babyl-p): Bind epa-inhibit to t.
+
+	Handle encrypted mbox files.
+	* rmailout.el (rmail-output-as-mbox): Decrypt and reencrypt the mbox
+	file if necessary.
+
+	Re-enable mime processing after decryption.  Add 'decrypt' keyword.
+	* rmail.el (rmail-epa-decrypt-1): New subroutine.
+	(rmail-epa-decrypt): rmail-epa-decrypt-1 broken out.
+	In a mime message, reenable Mime and show the parts that
+	were shown before.
+	Add keyword "decrypt" if anything decrypted.
+
+	epa-inhibit inhibits auto-recognition of .gpg files
+	* lisp/epa-file.el (epa-inhibit): New variable.
+	(epa-file-handler): Check epa-inhibit.
+
+2015-08-12  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* emacs-lisp/lisp-mnt.el (lm-header): save-excursion
+
+2015-08-11  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	Respect python.el imenu when semantic-mode is off
+	Fixes debbugs:21220
+	* lisp/cedet/semantic/wisent/python.el: Do not force
+	wisent-python-default-setup on python-mode-hook.
+
+2015-08-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Give names to Unicode code points in C code
+	* src/character.h (NO_BREAK_SPACE, SOFT_HYPHEN)
+	(ZERO_WIDTH_NON_JOINER, ZERO_WIDTH_JOINER, HYPHEN)
+	(NON_BREAKING_HYPHEN, LEFT_SINGLE_QUOTATION_MARK)
+	(RIGHT_SINGLE_QUOTATION_MARK, PARAGRAPH_SEPARATOR)
+	(LEFT_POINTING_ANGLE_BRACKET, RIGHT_POINTING_ANGLE_BRACKET)
+	(LEFT_ANGLE_BRACKET, RIGHT_ANGLE_BRACKET)
+	(OBJECT_REPLACEMENT_CHARACTER):
+	New named constants for Unicode code points.
+	* src/bidi.c (bidi_fetch_char, CANONICAL_EQU):
+	* src/composite.c (char_composable_p):
+	* src/lread.c (readevalloop, read1):
+	* src/xdisp.c (get_next_display_element):
+	Use them.
+	* src/doc.c (LEFT_SINGLE_QUOTATION_POINT):
+	Remove; now in character.h.
+
+2015-08-11  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	elisp--xref-find-definitions handle cl-defstuct default constructor
+	* lisp/progmodes/elisp-mode.el (elisp-xref-find): Add FIXME.
+	(elisp--xref-format-extra): Rename from elisp--xref-format-cl-defmethod.
+	(elisp--xref-find-definitions): Handle cl-defstuct default constructor.
+	* test/automated/elisp-mode-tests.el (xref-elisp-test-run): Split out
+	from xref-elisp-test for ease of debugging.
+	(xref-elisp-deftest): Rename from xref-elisp-test.
+	(find-defs-constructor): New test.
+	(find-defs-defgeneric-el): Match batch test config.
+	(compile): Required for find-defs compilation-minor-mode test.
+	(find-defs-defvar-el): Match code change.
+	(find-defs-face-el): Match code change.
+	* lisp/progmodes/xref.el (xref-find-function, xref-find-definitions):
+	Improve doc string.
+
+2015-08-11  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/replace.el (perform-replace): Document `replacements'.
+	(perform-replace): Move the description of the format of `replacements' from
+	the body's comment to the docstring.
+
+2015-08-11  Jürgen Hötzel  <juergen@archlinux.org>
+
+	* lisp/net/tramp-adb.el (tramp-adb-prompt): Match leading escape
+	sequence.  Recent adb version send initial escape sequences, even
+	when terminal type is set to TERM=dumb.
+
+2015-08-10  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	Rewrite elisp--xref-find-definitions to handle many more cases; add tests.
+	* lisp/progmodes/elisp-mode.el (elisp--xref-identifier-location): deleted
+	(elisp--xref-format-cl-defmethod): new
+	(find-feature-regexp): new
+	(find-alias-regexp): new
+	(elisp--xref-make-xref): new
+	(elisp--xref-find-definitions): Rewrite using the above, handle many more
+	cases. Always output all available definitions.
+	(xref-location-marker): No need for special cases.
+	* test/automated/elisp-mode-tests.el: Add more tests of
+	elisp--xref-find-definitions, improve current tests.
+
+2015-08-10  Phillip Lord  <phillip.lord@newcastle.ac.uk>
+
+	* ChangeLog.2: Formatting update.
+	Formatting for one change entry did not follow standard ChangeLog
+	conventions and has now been updated.
+
+2015-08-10  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix recording of events pushed onto unread-command-events
+	* src/keyboard.c (read_char): Make sure events read from
+	unread-command-events and unread-post-input-method-events are
+	always recorded by record_char.  Reported by David Kastrup
+	<dak@gnu.org>, see
+	http://lists.gnu.org/archive/html/emacs-devel/2015-08/msg00193.html.
+
+2015-08-10  Samer Masterson  <samer@samertm.com>
+
+	Set file buffer as current for "--file"
+	* lisp/startup.el (command-line-1): Set file buffer as current before
+	it is displayed so it can be used with options like
+	"--eval".  (Bug#21095)
+
+2015-08-10  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid setting LC_NUMERIC on MS-Windows to anything but "C"
+	* src/emacs.c (synchronize_locale) [WINDOWSNT]: Call fixup_locale
+	after setting LC_ALL to the desired locale, to avoid affecting how
+	numbers are read and printed.  (Bug#21223)
+
+2015-08-10  Alan Mackenzie  <acm@muc.de>
+
+	Fix "Invalid search bound (wrong side of point)" in fontification.
+	progmodes/cc-fonts.el (c-font-lock-declarators): After skipping an
+	initialization expression, check point is not beyond the fontification
+	limit.
+
+2015-08-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix DPI calculation when Xft/DPI is default
+	* src/xsettings.c (parse_settings): Don't use Xft/DPI default
+	value of -1, which evaluates to 2**32 - 1 (Bug#21152).
+	Remove unnecessary cast while we're in the neighborhood.
+
+2015-08-09  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Add project-vc-search-path and project-vc-ignores
+	* lisp/progmodes/project.el (project-vc): New group.
+	(project-vc-search-path, project-vc-ignores): New variables.
+	(project--value-in-dir): Utility function.
+	(project-search-path, project-ignores): Use them.
+	* lisp/progmodes/xref.el (xref--rgrep-command): Only replace `./'
+	at bos.  Don't add extra `/'.  Don't prepend with `*' if replaced.
+
+2015-08-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix some minor quoting issues with grave accent
+	* src/dispnew.c (add_window_display_history) [GLYPH_DEBUG]:
+	Remove redundant quotes.
+	* src/doc.c (uLSQM, uRSQM): New macros.
+	* src/doc.c (Fsubstitute_command_keys):
+	* src/syntax.c (Finternal_describe_syntax_value): Follow the user
+	preference for quotes rather than hardcoding the ‘grave’ style.
+	* src/regex.c (PUSH_FAILURE_POINT, POP_FAILURE_POINT)
+	(re_match_2_internal) [DEBUG]: In debugging output, quote C
+	strings with "...", not `...'.
+
+	ChangeLog.2 ignores remote-tracking merges
+	* build-aux/gitlog-to-emacslog: Ignore commit logs matching
+	"Merge remote-tracking branch '.*'" too.  See Eli Zaretskii in:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-08/msg00384.html
+
+2015-08-09  Nicolas Richard  <youngfrog@members.fsf.org>
+
+	Use kpsewhich in ffap-latex-mode, if available
+	* lisp/ffap.el (ffap-latex-guess-rules): New variable.
+	(ffap-latex-mode): Use kpsewhich if available.
+
+	ffap: disallow braces in filenames for tex modes
+	* lisp/ffap.el (ffap-string-at-point-mode-alist): Don't allow
+	braces in tex-related modes.
+
+	Remove useless backslashes from ffap-string-at-point-mode-alist
+	* lisp/ffap.el (ffap-string-at-point-mode-alist): Remove useless and
+	misleading backslashes from default value.
+
+	Augment docstring of ffap-string-at-point-mode-alist
+	* lisp/ffap.el (ffap-string-at-point-mode-alist): Describe how BEG
+	and END are handled.
+
+2015-08-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Remove no-op calls to substitute-command-keys
+	* lisp/org/org-src.el (org-edit-src-code)
+	(org-edit-fixed-width-region):
+	* lisp/simple.el (completion-setup-function):
+	Remove calls to substitute-command-keys that always just return
+	their argument.
+
+2015-08-09  Daiki Ueno  <ueno@gnu.org>
+
+	Utilize `quit-window' in epa.el
+	* epa.el (epa-exit-buffer-function): Set to `quit-window'.
+	(Bug#21210)
+
+2015-08-09  Ivan Kanis  <ivan@kanis.fr>
+
+	fix link to source code in help window
+	* lisp/help-fns.el (find-lisp-object-file-name): remove code that
+	will never work due to Glenn Morris change a6d63d9 on Apr 20 2013
+	'No longer include timestamp in header of .elc files'. Add code
+	that will return .el source file in load-path.
+
+2015-08-09  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* isearch.el (isearch-search-fun-default): (Bug#21164)
+	Respect `isearch-lax-whitespace' when searching through
+	`isearch-word'.
+
+2015-08-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* test/automated/ert-tests.el (ert-test-deftest): Add FIXME.
+
+	* org.el: Fix up some lexical scoping warnings, and use dolist
+	* lisp/org/org.el (org-set-regexps-and-options-for-tags, org-goto-map)
+	(org-set-regexps-and-options, org-assign-fast-keys)
+	(org-contextualize-keys, org-contextualize-validate-key)
+	(org-notes-order-reversed-p, org-local-logging, org-map-entries)
+	(org-find-olp, org-find-exact-heading-in-directory)
+	(org-cycle-agenda-files, org-release-buffers, org-fill-template)
+	(org-agenda-prepare-buffers, org-occur-in-agenda-files)
+	(org-replace-escapes): Use dolist.
+	(org-mode): Optimize away XEmacs-only code.
+	(org-refile-get-targets): Remove unused var `f'.
+	(org-fast-todo-selection): Remove unused var `e'.
+	(org-make-tags-matcher): Use dolist.  Remove unused var `term'.
+	(org-fast-tag-selection): Use dolist.  Remove unused var `e'.
+	(org-format-latex): Use dolist.  Remove unused var `e'.
+	(org-toggle-heading): Access vars lexically rather than dynamically.
+	(org-backward-sentence, org-forward-sentence, org-meta-return)
+	(org-kill-line): Mark arg as unused.
+	(org-submit-bug-report): Silence compiler warning.
+	(org-occur-in-agenda-files): Don't use add-to-list on local vars.
+	(org-get-cursor-date): Remove unused var `tm'.
+	(org-comment-or-uncomment-region): Use standard name `_'.
+	(reftex-docstruct-symbol, reftex-cite-format): Declare to
+	silence byte-compiler.
+	(org-reftex-citation): Add `org--' prefix to dynamically scoped
+	`rds' var.
+
+2015-08-08  Nicolas Petton  <nicolas@petton.fr>
+
+	Merge remote-tracking branch 'origin/fix/subsequence-error-with-negative-sequences'
+
+2015-08-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Electric quote if coding is undecided or no conv
+	* lisp/electric.el (electric--insertable-p): Also say that a
+	string is insertable if the buffer file coding system is undecided
+	or uses no conversion, as curved quotes will work in either case.
+
+	* configure.ac (HAVE_STACK_OVERFLOW_HANDLING): Simplify configuration.
+
+2015-08-08  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix overlay string display regressions introduced in Emacs 24.5
+	* src/xdisp.c (pop_it): Reset the flag to ignore overlays at this
+	buffer position, if we move the iterator to a new position as
+	result of jumping over text covered by a "replacing" display
+	property.
+	* test/redisplay-testsuite.el (test-redisplay-4): Add 2 new tests.
+
+	Support recovery from C stack overflow on MS-Windows
+	* src/w32fns.c (w32_reset_stack_overflow_guard)
+	(stack_overflow_handler): New functions for handling C stack
+	overflow exceptions.
+	(my_exception_handler): Handle EXCEPTION_STACK_OVERFLOW exceptions
+	specially, and zero out except_addr if we do.
+	(globals_of_w32fns): Initialize dwMainThreadId in non-interactive
+	mode.
+	* src/sysdep.c [HAVE_STACK_OVERFLOW_HANDLING]: Add !WINDOWSNT to
+	the condition, as HAVE_STACK_OVERFLOW_HANDLING is now defined for
+	the MinGW build, but the code guarded by that is for Posix hosts.
+	* src/keyboard.c (command_loop) [WINDOWSNT]: Call
+	w32_reset_stack_overflow_guard.
+	* nt/inc/ms-w32.h (sigjmp_buf): New typedef.
+	(sigsetjmp): New macro.
+	(w32_reset_stack_overflow_guard): Declare the prototype.
+	* configure.ac (HAVE_STACK_OVERFLOW_HANDLING): Set to 1 for MinGW.
+
+2015-08-07  Phillip Lord  <phillip.lord@newcastle.ac.uk>
+
+	Improve error signalling for seq-subseq.
+
+	* lisp/seq.el (seq-subseq): The existing behaviour is to error
+	when indexes are too large, but to silently ignore numbers which
+	are too negative for lists.  String and vector handling errors in
+	both cases. This has been regularlised. Error signalling behaviour
+	has been explicitly added to the docstring.
+
+	* lisp/cl-extra.el (cl-subseq): Defers to (seq-subseq) and is
+	therefore also impacted by this change. The docstring has been
+	updated to reflect this.
+
+	* test/automated/seq-tests.el (test-seq-subseq): Tests have been
+	added for these exceptional cases, as well as one non exceptional
+	base case.
+
+2015-08-07  Jürgen Hötzel  <juergen@archlinux.org>
+
+	Improve error checking in tramp-adb.el
+	* lisp/net/tramp-adb.el (tramp-adb-ls-output-name-less-p):
+	Improve error checking.  "ls -l" on Android in Enforcing mode can
+	print "lstat './FILENAME failed: Permission denied".
+
+2015-08-07  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/emacs-lisp/cl-generic.el (cl--generic-struct-tag): Don't burp on
+	non-struct vectors.
+
+2015-08-07  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	lisp/window.el: fix typo, more `display-buffer-use-some-frame'
+	* lisp/window.el: fix typo that broke build
+	(display-buffer--action-function-custom-type): add
+	`display-buffer-use-some-frame'
+	(display-buffer): add `display-buffer-use-some-frame' to doc string
+
+	Add support for 'inhibit-same-window in 'display-buffer-use-some-frame'
+	* lisp/window.el (display-buffer-use-some-frame): Add support for
+	'inhibit-same-window in alist.
+	* doc/windows.texi (display-buffer-use-some-frame): Doc support for
+	'inhibit-same-window in alist.
+
+2015-08-07  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid infinite loop in display of invisible text in strings
+	* src/xdisp.c (handle_invisible_prop): If the next change of
+	invisibility spec does not mean the beginning of a visible text,
+	update the string position from which to start the search for the
+	next invisibility change.  This avoids an infinite loop when we
+	have more than one invisibility spec that are made inactive by
+	buffer-invisibility-spec.  Simplify code.  (Bug#21200)
+	* test/redisplay-testsuite.el (test-redisplay-4): Add a test case
+	for the situation that caused bug #21200.
+
+2015-08-06  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/package.el: Simplify describe-package-1
+	(package-help-section-name-face): New face.
+	(package--print-help-section): New function.
+	(describe-package-1): Refactor section printing.
+	(package-make-button): Use face instead of font-lock-face, which
+	doesn't work on buttons.
+
+	* lisp/emacs-lisp/package.el: Define custom faces
+	(package-name-face, package-description-face)
+	(package-status-built-in-face, package-status-external-face)
+	(package-status-available-face, package-status-new-face)
+	(package-status-held-face, package-status-disabled-face)
+	(package-status-installed-face, package-status-dependency-face)
+	(package-status-unsigned-face, package-status-incompat-face)
+	(package-status-avail-obso-face): New faces.
+	(package-menu--print-info-simple): Use them.
+
+2015-08-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix some confusion with ‘format’
+	* lisp/allout-widgets.el (allout-widgets-before-change-handler)
+	(allout-graphics-modification-handler):
+	Protect arbitrary string in a format context with "%s" format.
+	* lisp/avoid.el:
+	* lisp/cedet/semantic/bovine/scm.el: Fix comment.
+	* lisp/calendar/icalendar.el (icalendar--convert-sexp-to-ical):
+	* lisp/erc/erc-button.el (erc-button-beats-to-time):
+	* lisp/gnus/message.el (message-send-form-letter):
+	* lisp/org/ob-core.el (org-babel-check-evaluate)
+	(org-babel-confirm-evaluate):
+	* lisp/org/ob-fortran.el (org-babel-fortran-var-to-fortran):
+	* lisp/org/ox-latex.el (org-latex-compile):
+	* lisp/org/ox-man.el (org-man-compile):
+	* lisp/org/ox-odt.el (org-odt-template):
+	* lisp/org/ox-texinfo.el (org-texinfo-compile):
+	* lisp/progmodes/prolog.el (prolog-help-info)
+	(prolog-view-predspec):
+	* lisp/progmodes/ruby-mode.el (ruby-parse-partial):
+	* lisp/progmodes/verilog-mode.el (verilog-showscopes):
+	* lisp/textmodes/rst.el (rst-replace-lines):
+	Change (message (format ...)) to (message ...), and likewise
+	for ‘error’.  This lessens the probability of confusion when the
+	output of ‘format’ contains ‘%’.
+
+2015-08-05  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/replace.el (replace-character-fold): Default to nil
+
+	* lisp/character-fold.el: Fix lax whitespace
+	(character-fold-table): Don't make space match other whitespace chars.
+	(character-fold-to-regexp): Simplify lax behaviour.
+
+2015-08-05  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Preserve window point in xref-find-definitions-other-window
+	Fix the problem reported by Ingo Logmar in
+	http://lists.gnu.org/archive/html/emacs-devel/2015-08/msg00152.html
+	* lisp/progmodes/xref.el (xref--goto-char): Extract from
+	xref--goto-location.
+	(xref--pop-to-location): Use it. Replace xref--goto-location with
+	a direct xref-location-marker call.
+	(xref--show-location): Likewise.
+	(xref--display-position): Use xref--goto-char.
+
+	* lisp/progmodes/project.el: Add a paragraph to the front matter.
+
+2015-08-04  David Kastrup  <dak@gnu.org>
+
+	Do not overwrite preexisting contents of unread-command-events
+	* lisp/vc/emerge.el (emerge-show-file-name):
+	* lisp/progmodes/vhdl-mode.el (vhdl-electric-dash)
+	(vhdl-comment-insert, vhdl-hooked-abbrev):
+	* lisp/progmodes/octave.el (inferior-octave-dynamic-list-input-ring):
+	* lisp/progmodes/fortran.el (fortran-window-create-momentarily):
+	* lisp/progmodes/ebrowse.el (ebrowse-hack-electric-buffer-menu):
+	* lisp/progmodes/cperl-mode.el (cperl-putback-char):
+	* lisp/obsolete/vip.el (vip-escape-to-emacs)
+	(vip-prefix-arg-value, vip-prefix-arg-com):
+	* lisp/obsolete/terminal.el (te-escape-extended-command-unread):
+	* lisp/leim/quail/tibetan.el (quail-tibetan-update-translation)
+	(quail-tibkey-update-translation):
+	* lisp/leim/quail/lrt.el (quail-lrt-update-translation):
+	* lisp/leim/quail/lao.el (quail-lao-update-translation):
+	* lisp/leim/quail/japanese.el (quail-japanese-update-translation)
+	(quail-japanese-self-insert-and-switch-to-alpha):
+	* lisp/leim/quail/hangul.el (hangul2-input-method)
+	(hangul3-input-method, hangul390-input-method):
+	* lisp/language/hanja-util.el (hangul-to-hanja-char):
+	* lisp/international/robin.el (robin-input-method):
+	* lisp/international/quail.el (quail-start-translation)
+	(quail-start-conversion):
+	* lisp/gnus/gnus-art.el (gnus-article-describe-key)
+	(gnus-article-describe-key-briefly):
+	* lisp/eshell/em-hist.el (eshell-list-history):
+	* lisp/term.el (term-dynamic-list-input-ring)
+	(term-dynamic-list-completions):
+	* lisp/subr.el (momentary-string-display):
+	* lisp/simple.el (read-quoted-char):
+	* lisp/pcomplete.el (pcomplete-show-completions):
+	* lisp/kmacro.el (kmacro-repeat-on-last-key):
+	* lisp/info.el (Info-summary):
+	* lisp/ehelp.el (electric-help-command-loop):
+	* lisp/ebuff-menu.el (electric-buffer-list)
+	(Electric-buffer-menu-exit):
+	* lisp/double.el (double-translate-key):
+	* lisp/comint.el (comint-dynamic-list-input-ring)
+	(comint-dynamic-list-completions): Do not overwrite preexisting
+	contents of `unread-command-events' when putting new events into
+	it.
+
 2015-08-04  Daniel Colascione  <dancol@dancol.org>
 
 	Improve ansi-color filtering of unrecognized escape sequences
@@ -77,7 +868,6 @@
 2015-08-02  Eli Zaretskii  <eliz@gnu.org>
 
 	Whitespace fixes
-	Whitespace fixes.
 
 2015-08-02  Evgeny Fraimovitch  <johnlen7@gmail.com>  (tiny change)
 
@@ -237,8 +1027,6 @@
 	isn't there).
 
 2015-07-31  Eli Zaretskii  <eliz@gnu.org>
-
-	;* src/w32fns.c (syms_of_w32fns): Fix last commit.
 
 	Allow to use the old key processing code on MS-Windows
 	* src/w32fns.c (syms_of_w32fns) <w32-use-fallback-wm-chars-method>:
@@ -1444,10 +2232,6 @@
 	Add cross references in documentation
 	* doc/emacs/display.texi (Displaying Boundaries):
 	* doc/emacs/search.texi (Word Search): Add cross references.
-
-2015-07-02  Eli Zaretskii  <eliz@gnu.org>
-
-	;* src/bidi.c (bpa_stack_entry): Update commentary for Unicode 8.0.
 
 2015-07-02  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -2674,8 +3458,6 @@
 	http://lists.gnu.org/archive/html/emacs-devel/2015-06/msg00206.html
 
 2015-06-15  Eli Zaretskii  <eliz@gnu.org>
-
-	;* src/fontset.c: Update obsolete commentary.
 
 	Fix current-iso639-language on MS-Windows
 	* lisp/international/mule-cmds.el (set-locale-environment):
@@ -8668,7 +9450,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit a57f8f3022d9ab8b31bbfee291a3d7340bd37c21 (inclusive).
+commit f7ee23e587b01f179284b5554c67d579a2def676 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:

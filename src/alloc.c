@@ -3765,7 +3765,7 @@ queue_doomed_finalizers (struct Lisp_Finalizer *dest,
 static Lisp_Object
 run_finalizer_handler (Lisp_Object args)
 {
-  add_to_log ("finalizer failed: %S", args, Qnil);
+  add_to_log ("finalizer failed: %S", args);
   return Qnil;
 }
 
@@ -5339,6 +5339,10 @@ purecopy (Lisp_Object obj)
   if (PURE_POINTER_P (XPNTR (obj)) || INTEGERP (obj) || SUBRP (obj))
     return obj;    /* Already pure.  */
 
+  if (STRINGP (obj) && XSTRING (obj)->intervals)
+    message_with_string ("Dropping text-properties while making string `%s' pure",
+			 obj, true);
+
   if (HASH_TABLE_P (Vpurify_flag)) /* Hash consing.  */
     {
       Lisp_Object tmp = Fgethash (obj, Vpurify_flag, Qnil);
@@ -5351,13 +5355,9 @@ purecopy (Lisp_Object obj)
   else if (FLOATP (obj))
     obj = make_pure_float (XFLOAT_DATA (obj));
   else if (STRINGP (obj))
-    {
-      if (XSTRING (obj)->intervals)
-	message ("Dropping text-properties when making string pure");
-      obj = make_pure_string (SSDATA (obj), SCHARS (obj),
-			      SBYTES (obj),
-			      STRING_MULTIBYTE (obj));
-    }
+    obj = make_pure_string (SSDATA (obj), SCHARS (obj),
+			    SBYTES (obj),
+			    STRING_MULTIBYTE (obj));
   else if (COMPILEDP (obj) || VECTORP (obj) || HASH_TABLE_P (obj))
     {
       struct Lisp_Vector *objp = XVECTOR (obj);

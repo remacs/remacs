@@ -2688,7 +2688,7 @@ character.  Keep dissociwords out of your documentation, if you want
 it to be well userenced and properbose.
 
 @findex dunnet
-  @kbd{M-x dunnet} runs an text-based adventure game.
+  @kbd{M-x dunnet} runs a text-based adventure game.
 
 @findex gomoku
 @cindex Go Moku
