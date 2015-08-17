@@ -7005,8 +7005,11 @@ The function should return non-nil if the two tokens do not match.")
                  (delete-overlay blink-matching--overlay)))))
        (t
         (save-excursion
-          (goto-char blinkpos)
-          (let ((open-paren-line-string
+          (let* ((orig-pos (prog1
+                               (point)
+                             (goto-char blinkpos)))
+
+                 (open-paren-line-string
                  ;; Show what precedes the open in its line, if anything.
                  (cond
                   ((save-excursion (skip-chars-backward " \t") (not (bolp)))
@@ -7034,6 +7037,9 @@ The function should return non-nil if the two tokens do not match.")
                     (buffer-substring blinkpos (1+ blinkpos))))
                   ;; There is nothing to show except the char itself.
                   (t (buffer-substring blinkpos (1+ blinkpos))))))
+            ;; Because minibuffer-message causes a full redisplay, go back
+            ;; to the original point before that happens.
+            (goto-char orig-pos)
             (minibuffer-message
              "Matches %s"
              (substring-no-properties open-paren-line-string)))))))))
