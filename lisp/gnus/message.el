@@ -8546,13 +8546,43 @@ Used in `message-simplify-recipients'."
 ;;; multipart/related and HTML support.
 
 (defun message-make-html-message-with-image-files (files)
+  "Make a message containing the current dired-marked image files."
   (interactive (list (dired-get-marked-files nil current-prefix-arg)))
   (message-mail)
   (message-goto-body)
   (insert "<#part type=text/html>\n\n")
   (dolist (file files)
     (insert (format "<img src=%S>\n\n" file)))
+  (message-toggle-image-thumbnails)
   (message-goto-to))
+
+(defun message-toggle-image-thumbnails ()
+  "For any included image files, insert a thumbnail of that image."
+  (interactive)
+  (let ((overlays (overlays-in (point-min) (point-max)))
+	(displayed nil))
+    (while overlays
+      (let ((overlay (car overlays)))
+	(when (overlay-get overlay 'put-image)
+	  (delete-overlay overlay)
+	  (setq displayed t)))
+      (setq overlays (cdr overlays)))
+    (unless displayed
+      (save-excursion
+	(goto-char (point-min))
+	(while (re-search-forward "<img.*src=\"\\([^\"]+\\)" nil t)
+	  (let ((file (match-string 1))
+		(edges (window-inside-pixel-edges
+			(get-buffer-window (current-buffer)))))
+	    (put-image
+	     (create-image
+	      file 'imagemagick nil
+	      :max-width (truncate
+			  (* 0.7 (- (nth 2 edges) (nth 0 edges))))
+	      :max-height (truncate
+			   (* 0.5 (- (nth 3 edges) (nth 1 edges)))))
+	     (match-beginning 0)
+	     " ")))))))
 
 (when (featurep 'xemacs)
   (require 'messagexmas)
