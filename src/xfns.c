@@ -4312,130 +4312,262 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
   return attributes_list;
 }
 
-DEFUN ("x-frame-geometry", Fx_frame_geometry, Sx_frame_geometry, 0, 1, 0,
-       doc: /* Return geometric attributes of frame FRAME.
-
-FRAME must be a live frame and defaults to the selected one.
-
-The return value is an association list containing the following
-elements (all size values are in pixels).
-
-- `frame-outer-size' is a cons of the outer width and height of FRAME.
-  The outer size include the title bar and the external borders as well
-  as any menu and/or tool bar of frame.
-
-- `border' is a cons of the horizontal and vertical width of FRAME's
-  external borders.
-
-- `title-bar-height' is the height of the title bar of FRAME.
-
-- `menu-bar-external' if t means the menu bar is external (not
-  included in the inner edges of FRAME).
-
-- `menu-bar-size' is a cons of the width and height of the menu bar of
-  FRAME.
-
-- `tool-bar-external' if t means the tool bar is external (not
-  included in the inner edges of FRAME).
-
-- `tool-bar-side' tells tells on which side the tool bar on FRAME is and
-  can be one of `left', `top', `right' or `bottom'.
-
-- `tool-bar-size' is a cons of the width and height of the tool bar of
-  FRAME.
-
-- `frame-inner-size' is a cons of the inner width and height of FRAME.
-  This excludes FRAME's title bar and external border as well as any
-  external menu and/or tool bar.  */)
-  (Lisp_Object frame)
+/* Return geometric attributes of FRAME.  According to the value of
+   ATTRIBUTES return the outer edges of FRAME (Qouter_edges), the native
+   edges of FRAME (Qnative_edges), or the inner edges of frame
+   (Qinner_edges).  Any other value means to return the geometry as
+   returned by Fx_frame_geometry.  */
+static Lisp_Object
+frame_geometry (Lisp_Object frame, Lisp_Object attribute)
 {
   struct frame *f = decode_live_frame (frame);
-  int inner_width = FRAME_PIXEL_WIDTH (f);
-  int inner_height = FRAME_PIXEL_HEIGHT (f);
-  int outer_width, outer_height, border, title;
-  Lisp_Object fullscreen = Fframe_parameter (frame, Qfullscreen);
-  int menu_bar_height, menu_bar_width, tool_bar_height, tool_bar_width;
-
-  int left_off, right_off, top_off, bottom_off, outer_border;
-  XWindowAttributes atts;
+  /**   XWindowAttributes atts; **/
+  Window rootw;
+  unsigned int ign, native_width, native_height;
+  int xy_ign, xptr, yptr;
+  int left_off, right_off, top_off, bottom_off;
+  int outer_left, outer_top, outer_right, outer_bottom;
+  int native_left, native_top, native_right, native_bottom;
+  int inner_left, inner_top, inner_right, inner_bottom;
+  int internal_border_width;
+  bool menu_bar_external = false, tool_bar_external = false;
+  int menu_bar_height = 0, menu_bar_width = 0;
+  int tool_bar_height = 0, tool_bar_width = 0;
 
   if (FRAME_INITIAL_P (f) || !FRAME_X_P (f))
     return Qnil;
 
   block_input ();
-
-  XGetWindowAttributes (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f), &atts);
-
+  XGetGeometry (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
+		&rootw, &xy_ign, &xy_ign, &native_width, &native_height,
+		&ign, &ign);
+  /**   XGetWindowAttributes (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f), &atts); **/
   x_real_pos_and_offsets (f, &left_off, &right_off, &top_off, &bottom_off,
-                          NULL, NULL, NULL, NULL, &outer_border);
-
-
+                          NULL, NULL, &xptr, &yptr, NULL);
   unblock_input ();
 
-  border = atts.border_width;
-  title = top_off;
+  /**   native_width = atts.width; **/
+  /**   native_height = atts.height; **/
 
-  outer_width = atts.width + 2 * border + right_off + left_off
-    + 2 * outer_border;
-  outer_height = atts.height + 2 * border + top_off + bottom_off
-    + 2 * outer_border;
+  outer_left = xptr;
+  outer_top = yptr;
+  outer_right = outer_left + left_off + native_width + right_off;
+  outer_bottom = outer_top + top_off + native_height + bottom_off;
 
-#if defined (USE_GTK)
-  {
-    bool tool_bar_left_right = (EQ (FRAME_TOOL_BAR_POSITION (f), Qleft)
-				|| EQ (FRAME_TOOL_BAR_POSITION (f), Qright));
+  native_left = outer_left + left_off;
+  native_top = outer_top + top_off;
+  native_right = native_left + native_width;
+  native_bottom = native_top + native_height;
 
-    tool_bar_width = (tool_bar_left_right
-		      ? FRAME_TOOLBAR_WIDTH (f)
-		      : FRAME_PIXEL_WIDTH (f));
-    tool_bar_height = (tool_bar_left_right
-		       ? FRAME_PIXEL_HEIGHT (f)
-		       : FRAME_TOOLBAR_HEIGHT (f));
-  }
-#else
-  tool_bar_height = FRAME_TOOL_BAR_HEIGHT (f);
-  tool_bar_width = tool_bar_height > 0 ? FRAME_PIXEL_WIDTH (f) : 0;
-#endif
+  internal_border_width = FRAME_INTERNAL_BORDER_WIDTH (f);
+  inner_left = native_left + internal_border_width;
+  inner_top = native_top + internal_border_width;
+  inner_right = native_right - internal_border_width;
+  inner_bottom = native_bottom - internal_border_width;
 
 #if defined (USE_X_TOOLKIT) || defined (USE_GTK)
+  menu_bar_external = true;
   menu_bar_height = FRAME_MENUBAR_HEIGHT (f);
+  native_top += menu_bar_height;
+  inner_top += menu_bar_height;
 #else
   menu_bar_height = FRAME_MENU_BAR_HEIGHT (f);
+  inner_top += menu_bar_height;
+#endif
+  menu_bar_width = menu_bar_height ? native_width : 0;
+
+#if defined (USE_GTK)
+  tool_bar_external = true;
+  if (EQ (FRAME_TOOL_BAR_POSITION (f), Qleft))
+    {
+      tool_bar_width = FRAME_TOOLBAR_WIDTH (f);
+      native_left += tool_bar_width;
+      inner_left += tool_bar_width;
+      tool_bar_height
+	= tool_bar_width ? native_height - menu_bar_height : 0;
+    }
+  else if (EQ (FRAME_TOOL_BAR_POSITION (f), Qtop))
+    {
+      tool_bar_height = FRAME_TOOLBAR_HEIGHT (f);
+      native_top += tool_bar_height;
+      inner_top += tool_bar_height;
+      tool_bar_width = tool_bar_height ? native_width : 0;
+    }
+  else if (EQ (FRAME_TOOL_BAR_POSITION (f), Qright))
+    {
+      tool_bar_width = FRAME_TOOLBAR_WIDTH (f);
+      native_right -= tool_bar_width;
+      inner_right -= tool_bar_width;
+      tool_bar_height
+	= tool_bar_width ? native_height - menu_bar_height : 0;
+    }
+  else
+    {
+      tool_bar_height = FRAME_TOOLBAR_HEIGHT (f);
+      native_bottom -= tool_bar_height;
+      inner_bottom -= tool_bar_height;
+      tool_bar_width = tool_bar_height ? native_width : 0;
+    }
+#else
+  tool_bar_height = FRAME_TOOL_BAR_HEIGHT (f);
+  tool_bar_width = tool_bar_height ? native_width : 0;
+  inner_top += tool_bar_height;
 #endif
 
-  menu_bar_width = menu_bar_height > 0 ? FRAME_PIXEL_WIDTH (f) : 0;
+  /* Construct list.  */
+  if (EQ (attribute, Qouter_edges))
+    return list4 (make_number (outer_left), make_number (outer_top),
+		  make_number (outer_right), make_number (outer_bottom));
+  else if (EQ (attribute, Qnative_edges))
+    return list4 (make_number (native_left), make_number (native_top),
+		  make_number (native_right), make_number (native_bottom));
+  else if (EQ (attribute, Qinner_edges))
+    return list4 (make_number (inner_left), make_number (inner_top),
+		  make_number (inner_right), make_number (inner_bottom));
+  else
+    return
+      listn (CONSTYPE_HEAP, 10,
+	     Fcons (Qouter_position,
+		    Fcons (make_number (outer_left),
+			   make_number (outer_top))),
+	     Fcons (Qouter_size,
+		    Fcons (make_number (outer_right - outer_left),
+			   make_number (outer_bottom - outer_top))),
+	     /* Approximate.  */
+	     Fcons (Qexternal_border_size,
+		    Fcons (make_number (right_off),
+			   make_number (bottom_off))),
+	     /* Approximate.  */
+	     Fcons (Qtitle_bar_size,
+		    Fcons (make_number (0),
+			   make_number (top_off - bottom_off))),
+	     Fcons (Qmenu_bar_external, menu_bar_external ? Qt : Qnil),
+	     Fcons (Qmenu_bar_size,
+		    Fcons (make_number (menu_bar_width),
+			   make_number (menu_bar_height))),
+	     Fcons (Qtool_bar_external, tool_bar_external ? Qt : Qnil),
+	     Fcons (Qtool_bar_position, FRAME_TOOL_BAR_POSITION (f)),
+	     Fcons (Qtool_bar_size,
+		    Fcons (make_number (tool_bar_width),
+			   make_number (tool_bar_height))),
+	     Fcons (Qinternal_border_width,
+		    make_number (internal_border_width)));
+}
 
-  if (!FRAME_EXTERNAL_MENU_BAR (f))
-    inner_height -= menu_bar_height;
-  if (!FRAME_EXTERNAL_TOOL_BAR (f))
-    inner_height -= tool_bar_height;
+DEFUN ("x-frame-geometry", Fx_frame_geometry, Sx_frame_geometry, 0, 1, 0,
+       doc: /* Return geometric attributes of FRAME.
+FRAME must be a live frame and defaults to the selected one.  The return
+value is an association list of the attributes listed below.  All height
+and width values are in pixels.
 
-  return
-    listn (CONSTYPE_HEAP, 10,
-	   Fcons (Qframe_position,
-		  Fcons (make_number (f->left_pos), make_number (f->top_pos))),
-	   Fcons (Qframe_outer_size,
-		  Fcons (make_number (outer_width), make_number (outer_height))),
-	   Fcons (Qexternal_border_size,
-		  ((EQ (fullscreen, Qfullboth) || EQ (fullscreen, Qfullscreen))
-		   ? Fcons (make_number (0), make_number (0))
-		   : Fcons (make_number (border), make_number (border)))),
- 	   Fcons (Qtitle_height,
-		  ((EQ (fullscreen, Qfullboth) || EQ (fullscreen, Qfullscreen))
-		   ? make_number (0)
-		   : make_number (title))),
-	   Fcons (Qmenu_bar_external, FRAME_EXTERNAL_MENU_BAR (f) ? Qt : Qnil),
-	   Fcons (Qmenu_bar_size,
-		  Fcons (make_number (menu_bar_width),
-			 make_number (menu_bar_height))),
-	   Fcons (Qtool_bar_external, FRAME_EXTERNAL_TOOL_BAR (f) ? Qt : Qnil),
-	   Fcons (Qtool_bar_position, FRAME_TOOL_BAR_POSITION (f)),
-	   Fcons (Qtool_bar_size,
-		  Fcons (make_number (tool_bar_width),
-			 make_number (tool_bar_height))),
-	   Fcons (Qframe_inner_size,
-		  Fcons (make_number (inner_width),
-			 make_number (inner_height))));
+`outer-position' is a cons of the outer left and top edges of FRAME
+  relative to the origin - the position (0, 0) - of FRAME's display.
+
+`outer-size' is a cons of the outer width and height of FRAME.  The
+  outer size includes the title bar and the external borders as well as
+  any menu and/or tool bar of frame.
+
+`external-border-size' is a cons of the horizontal and vertical width of
+  FRAME's external borders as supplied by the window manager.
+
+`title-bar-size' is a cons of the width and height of the title bar of
+  FRAME as supplied by the window manager.  If both of them are zero,
+  FRAME has no title bar.  If only the width is zero, Emacs was not
+  able to retrieve the width information.
+
+`menu-bar-external', if non-nil, means the menu bar is external (never
+  included in the inner edges of FRAME).
+
+`menu-bar-size' is a cons of the width and height of the menu bar of
+  FRAME.
+
+`tool-bar-external', if non-nil, means the tool bar is external (never
+  included in the inner edges of FRAME).
+
+`tool-bar-position' tells on which side the tool bar on FRAME is and can
+  be one of `left', `top', `right' or `bottom'.  If this is nil, FRAME
+  has no tool bar.
+
+`tool-bar-size' is a cons of the width and height of the tool bar of
+  FRAME.
+
+`internal-border-width' is the width of the internal border of
+  FRAME.  */)
+  (Lisp_Object frame)
+{
+  return frame_geometry (frame, Qnil);
+}
+
+DEFUN ("x-frame-edges", Fx_frame_edges, Sx_frame_edges, 0, 2, 0,
+       doc: /* Return edge coordinates of FRAME.
+FRAME must be a live frame and defaults to the selected one.  The return
+value is a list of the form (LEFT, TOP, RIGHT, BOTTOM).  All values are
+in pixels relative to the origin - the position (0, 0) - of FRAME's
+display.
+
+If optional argument TYPE is the symbol `outer-edges', return the outer
+edges of FRAME.  The outer edges comprise the decorations of the window
+manager (like the title bar or external borders) as well as any external
+menu or tool bar of FRAME.  If optional argument TYPE is the symbol
+`native-edges' or nil, return the native edges of FRAME.  The native
+edges exclude the decorations of the window manager and any external
+menu or tool bar of FRAME.  If TYPE is the symbol `inner-edges', return
+the inner edges of FRAME.  These edges exclude title bar, any borders,
+menu bar or tool bar of FRAME.  */)
+  (Lisp_Object frame, Lisp_Object type)
+{
+  return frame_geometry (frame, ((EQ (type, Qouter_edges)
+				  || EQ (type, Qinner_edges))
+				 ? type
+				 : Qnative_edges));
+}
+
+DEFUN ("x-mouse-absolute-pixel-position", Fx_mouse_absolute_pixel_position,
+       Sx_mouse_absolute_pixel_position, 0, 0, 0,
+       doc: /* Return absolute position of mouse cursor in pixels.
+The position is returned as a cons cell (X . Y) of the coordinates of
+the mouse cursor position in pixels relative to a position (0, 0) of the
+selected frame's display.  */)
+  (void)
+{
+  struct frame *f = SELECTED_FRAME ();
+  Window root, dummy_window;
+  int x, y, dummy;
+
+  if (FRAME_INITIAL_P (f) || !FRAME_X_P (f))
+    return Qnil;
+
+  block_input ();
+  XQueryPointer (FRAME_X_DISPLAY (f),
+                 DefaultRootWindow (FRAME_X_DISPLAY (f)),
+                 &root, &dummy_window, &x, &y, &dummy, &dummy,
+                 (unsigned int *) &dummy);
+  unblock_input ();
+
+  return Fcons (make_number (x), make_number (y));
+}
+
+DEFUN ("x-set-mouse-absolute-pixel-position", Fx_set_mouse_absolute_pixel_position,
+       Sx_set_mouse_absolute_pixel_position, 2, 2, 0,
+       doc: /* Move mouse pointer to absolute pixel position (X, Y).
+The coordinates X and Y are interpreted in pixels relative to a position
+(0, 0) of the selected frame's display.  */)
+  (Lisp_Object x, Lisp_Object y)
+  {
+  struct frame *f = SELECTED_FRAME ();
+
+  if (FRAME_INITIAL_P (f) || !FRAME_X_P (f))
+    return Qnil;
+
+  CHECK_TYPE_RANGED_INTEGER (int, x);
+  CHECK_TYPE_RANGED_INTEGER (int, y);
+
+  block_input ();
+  XWarpPointer (FRAME_X_DISPLAY (f), None, DefaultRootWindow (FRAME_X_DISPLAY (f)),
+		0, 0, 0, 0, XINT (x), XINT (y));
+  unblock_input ();
+
+  return Qnil;
 }
 
 /************************************************************************
@@ -6639,6 +6771,9 @@ When using Gtk+ tooltips, the tooltip face is not used.  */);
   defsubr (&Sx_display_save_under);
   defsubr (&Sx_display_monitor_attributes_list);
   defsubr (&Sx_frame_geometry);
+  defsubr (&Sx_frame_edges);
+  defsubr (&Sx_mouse_absolute_pixel_position);
+  defsubr (&Sx_set_mouse_absolute_pixel_position);
   defsubr (&Sx_wm_set_size_hint);
   defsubr (&Sx_create_frame);
   defsubr (&Sx_open_connection);

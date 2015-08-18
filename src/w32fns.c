@@ -138,6 +138,14 @@ struct MONITOR_INFO
     DWORD   dwFlags;
 };
 
+#define C_CHILDREN_TITLEBAR 5
+struct TITLEBAR_INFO
+{
+  DWORD cbSize;
+  RECT  rcTitleBar;
+  DWORD rgstate[C_CHILDREN_TITLEBAR+1];
+};
+
 #ifndef CCHDEVICENAME
 #define CCHDEVICENAME 32
 #endif
@@ -172,6 +180,8 @@ typedef BOOL CALLBACK (* MonitorEnum_Proc)
   (IN HMONITOR monitor, IN HDC hdc, IN RECT *rcMonitor, IN LPARAM dwData);
 typedef BOOL (WINAPI * EnumDisplayMonitors_Proc)
   (IN HDC hdc, IN RECT *rcClip, IN MonitorEnum_Proc fnEnum, IN LPARAM dwData);
+typedef BOOL (WINAPI * GetTitleBarInfo_Proc)
+  (IN HWND hwnd, OUT struct TITLEBAR_INFO* info);
 
 TrackMouseEvent_Proc track_mouse_event_fn = NULL;
 ImmGetCompositionString_Proc get_composition_string_fn = NULL;
@@ -182,6 +192,7 @@ MonitorFromPoint_Proc monitor_from_point_fn = NULL;
 GetMonitorInfo_Proc get_monitor_info_fn = NULL;
 MonitorFromWindow_Proc monitor_from_window_fn = NULL;
 EnumDisplayMonitors_Proc enum_display_monitors_fn = NULL;
+GetTitleBarInfo_Proc get_title_bar_info_fn = NULL;
 
 #ifdef NTGUI_UNICODE
 #define unicode_append_menu AppendMenuW
@@ -7986,183 +7997,247 @@ This is a direct interface to the Windows API FindWindow function.  */)
   return Qt;
 }
 
-DEFUN ("w32-frame-menu-bar-size", Fw32_frame_menu_bar_size, Sw32_frame_menu_bar_size, 0, 1, 0,
-       doc: /* Return sizes of menu bar on frame FRAME.
-The return value is a list of four elements: The current width and
-height of FRAME's menu bar in pixels, the height of one menu bar line in
-a wrapped menu bar in pixels, and the height of a single line menu bar
-in pixels.
-
-If FRAME is omitted or nil, the selected frame is used.  */)
-  (Lisp_Object frame)
-{
-  struct frame *f = decode_any_frame (frame);
-  MENUBARINFO menu_bar;
-  int width, height, single_height, wrapped_height;
-
-  if (FRAME_INITIAL_P (f) || !FRAME_W32_P (f))
-    return Qnil;
-
-  block_input ();
-
-  single_height = GetSystemMetrics (SM_CYMENU);
-  wrapped_height = GetSystemMetrics (SM_CYMENUSIZE);
-  menu_bar.cbSize = sizeof (menu_bar);
-  menu_bar.rcBar.right = menu_bar.rcBar.left = 0;
-  menu_bar.rcBar.top = menu_bar.rcBar.bottom = 0;
-  GetMenuBarInfo (FRAME_W32_WINDOW (f), 0xFFFFFFFD, 0, &menu_bar);
-  width = menu_bar.rcBar.right - menu_bar.rcBar.left;
-  height = menu_bar.rcBar.bottom - menu_bar.rcBar.top;
-
-  unblock_input ();
-
-  return list4 (make_number (width), make_number (height),
-		make_number (wrapped_height), make_number (single_height));
-}
-
-DEFUN ("w32-frame-rect", Fw32_frame_rect, Sw32_frame_rect, 0, 2, 0,
-       doc: /* Return boundary rectangle of FRAME in screen coordinates.
-FRAME must be a live frame and defaults to the selected one.
-
-The boundary rectangle is a list of four elements, specifying the left,
-top, right and bottom screen coordinates of FRAME including menu and
-title bar and decorations.  Optional argument CLIENT non-nil means to
-return the boundaries of the client rectangle which excludes menu and
-title bar and decorations.  */)
-  (Lisp_Object frame, Lisp_Object client)
-{
-  struct frame *f = decode_live_frame (frame);
-  RECT rect;
-
-  if (FRAME_INITIAL_P (f) || !FRAME_W32_P (f))
-    return Qnil;
-
-  block_input ();
-
-  if (!NILP (client))
-    GetClientRect (FRAME_W32_WINDOW (f), &rect);
-  else
-    GetWindowRect (FRAME_W32_WINDOW (f), &rect);
-
-  unblock_input ();
-
-  return list4 (make_number (rect.left), make_number (rect.top),
-		make_number (rect.right), make_number (rect.bottom));
-}
-
 DEFUN ("x-frame-geometry", Fx_frame_geometry, Sx_frame_geometry, 0, 1, 0,
-       doc: /* Return geometric attributes of frame FRAME.
-FRAME must be a live frame and defaults to the selected one.
+       doc: /* Return geometric attributes of FRAME.
+FRAME must be a live frame and defaults to the selected one.  The return
+value is an association list of the attributes listed below.  All height
+and width values are in pixels.
 
-The return value is an association list containing the following
-elements (all size values are in pixels).
+`outer-position' is a cons of the outer left and top edges of FRAME
+  relative to the origin - the position (0, 0) - of FRAME's display.
 
-- `frame-outer-size' is a cons of the outer width and height of FRAME.
-  The outer size includes the title bar and the external borders as well
-  as any menu and/or tool bar of frame.
+`outer-size' is a cons of the outer width and height of FRAME.  The
+  outer size includes the title bar and the external borders as well as
+  any menu and/or tool bar of frame.
 
-- `border' is a cons of the horizontal and vertical width of FRAME's
-  external borders.
+`external-border-size' is a cons of the horizontal and vertical width of
+  FRAME's external borders as supplied by the window manager.
 
-- `title-bar-height' is the height of the title bar of FRAME.
+`title-bar-size' is a cons of the width and height of the title bar of
+  FRAME as supplied by the window manager.  If both of them are zero,
+  FRAME has no title bar.  If only the width is zero, Emacs was not
+  able to retrieve the width information.
 
-- `menu-bar-external' if t means the menu bar is by default external
-  (not included in the inner size of FRAME).
+`menu-bar-external', if non-nil, means the menu bar is external (never
+  included in the inner edges of FRAME).
 
-- `menu-bar-size' is a cons of the width and height of the menu bar of
+`menu-bar-size' is a cons of the width and height of the menu bar of
   FRAME.
 
-- `tool-bar-external' if t means the tool bar is by default external
-  (not included in the inner size of FRAME).
+`tool-bar-external', if non-nil, means the tool bar is external (never
+  included in the inner edges of FRAME).
 
-- `tool-bar-side' tells tells on which side the tool bar on FRAME is by
-  default and can be one of `left', `top', `right' or `bottom'.
+`tool-bar-position' tells on which side the tool bar on FRAME is and can
+  be one of `left', `top', `right' or `bottom'.  If this is nil, FRAME
+  has no tool bar.
 
-- `tool-bar-size' is a cons of the width and height of the tool bar of
+`tool-bar-size' is a cons of the width and height of the tool bar of
   FRAME.
 
-- `frame-inner-size' is a cons of the inner width and height of FRAME.
-  This excludes FRAME's title bar and external border as well as any
-  external menu and/or tool bar.  */)
+`internal-border-width' is the width of the internal border of
+  FRAME.  */)
   (Lisp_Object frame)
 {
   struct frame *f = decode_live_frame (frame);
-  Lisp_Object geometry = Qnil;
-  RECT frame_outer_edges, frame_inner_edges;
+
   MENUBARINFO menu_bar;
-  int  border_width, border_height, title_height;
-  int single_bar_height, wrapped_bar_height, menu_bar_height;
-  Lisp_Object fullscreen = Fframe_parameter (frame, Qfullscreen);
+  WINDOWINFO window;
+  int left, top, right, bottom;
+  unsigned int external_border_width, external_border_height;
+  int title_bar_width = 0, title_bar_height = 0;
+  int single_menu_bar_height, wrapped_menu_bar_height, menu_bar_height;
+  int tool_bar_height = FRAME_TOOL_BAR_HEIGHT (f);
+  int internal_border_width = FRAME_INTERNAL_BORDER_WIDTH (f);
+  bool fullboth = EQ (get_frame_param (f, Qfullscreen), Qfullboth);
 
   if (FRAME_INITIAL_P (f) || !FRAME_W32_P (f))
     return Qnil;
 
   block_input ();
-
-  /* Outer frame rectangle, including outer borders and title bar. */
-  GetWindowRect (FRAME_W32_WINDOW (f), &frame_outer_edges);
-  /* Inner frame rectangle, excluding borders and title bar.  */
-  GetClientRect (FRAME_W32_WINDOW (f), &frame_inner_edges);
-  /* Outer border.  */
-  border_width = GetSystemMetrics (SM_CXFRAME);
-  border_height = GetSystemMetrics (SM_CYFRAME);
+  /* Outer rectangle and borders.  */
+  window.cbSize = sizeof (window);
+  GetWindowInfo (FRAME_W32_WINDOW (f), &window);
+  external_border_width = window.cxWindowBorders;
+  external_border_height = window.cyWindowBorders;
   /* Title bar.  */
-  title_height = GetSystemMetrics (SM_CYCAPTION);
+  if ((window.dwStyle & WS_CAPTION) == WS_CAPTION)
+    {
+      if (get_title_bar_info_fn)
+	{
+	  struct TITLEBAR_INFO title_bar;
+
+	  title_bar.cbSize = sizeof (title_bar);
+	  title_bar.rcTitleBar.left = title_bar.rcTitleBar.right = 0;
+	  title_bar.rcTitleBar.top = title_bar.rcTitleBar.bottom = 0;
+	  get_title_bar_info_fn (FRAME_W32_WINDOW (f), &title_bar);
+          title_bar_width
+	    = title_bar.rcTitleBar.right - title_bar.rcTitleBar.left;
+	  title_bar_height
+	    = title_bar.rcTitleBar.bottom - title_bar.rcTitleBar.top;
+	}
+      else
+	title_bar_height = GetSystemMetrics (SM_CYCAPTION);
+    }
   /* Menu bar.  */
   menu_bar.cbSize = sizeof (menu_bar);
   menu_bar.rcBar.right = menu_bar.rcBar.left = 0;
   menu_bar.rcBar.top = menu_bar.rcBar.bottom = 0;
   GetMenuBarInfo (FRAME_W32_WINDOW (f), 0xFFFFFFFD, 0, &menu_bar);
-  single_bar_height = GetSystemMetrics (SM_CYMENU);
-  wrapped_bar_height = GetSystemMetrics (SM_CYMENUSIZE);
+  single_menu_bar_height = GetSystemMetrics (SM_CYMENU);
+  wrapped_menu_bar_height = GetSystemMetrics (SM_CYMENUSIZE);
   unblock_input ();
 
+  left = window.rcWindow.left;
+  top = window.rcWindow.top;
+  right = window.rcWindow.right;
+  bottom = window.rcWindow.bottom;
+
+  /* Menu bar.  */
   menu_bar_height = menu_bar.rcBar.bottom - menu_bar.rcBar.top;
   /* Fix menu bar height reported by GetMenuBarInfo.  */
-  if (menu_bar_height > single_bar_height)
+  if (menu_bar_height > single_menu_bar_height)
     /* A wrapped menu bar.  */
-    menu_bar_height += single_bar_height - wrapped_bar_height;
+    menu_bar_height += single_menu_bar_height - wrapped_menu_bar_height;
   else if (menu_bar_height > 0)
     /* A single line menu bar.  */
-    menu_bar_height = single_bar_height;
+    menu_bar_height = single_menu_bar_height;
 
-  return
-    listn (CONSTYPE_HEAP, 10,
-	   Fcons (Qframe_position,
-		  Fcons (make_number (frame_outer_edges.left),
-			 make_number (frame_outer_edges.top))),
-	   Fcons (Qframe_outer_size,
-		  Fcons (make_number
-			 (frame_outer_edges.right - frame_outer_edges.left),
-			 make_number
-			 (frame_outer_edges.bottom - frame_outer_edges.top))),
+  return listn (CONSTYPE_HEAP, 10,
+		Fcons (Qouter_position,
+		       Fcons (make_number (left), make_number (top))),
+		Fcons (Qouter_size,
+		       Fcons (make_number (right - left),
+			      make_number (bottom - top))),
 	   Fcons (Qexternal_border_size,
-		  ((EQ (fullscreen, Qfullboth) || EQ (fullscreen, Qfullscreen))
-		   ? Fcons (make_number (0), make_number (0))
-		   : Fcons (make_number (border_width),
-			    make_number (border_height)))),
-	   Fcons (Qtitle_height,
-		  ((EQ (fullscreen, Qfullboth) || EQ (fullscreen, Qfullscreen))
-		   ? make_number (0)
-		   : make_number (title_height))),
+		       Fcons (make_number (external_border_width),
+			      make_number (external_border_height))),
+		Fcons (Qtitle_bar_size,
+		       Fcons (make_number (title_bar_width),
+			      make_number (title_bar_height))),
 	   Fcons (Qmenu_bar_external, Qt),
 	   Fcons (Qmenu_bar_size,
 		  Fcons (make_number
 			 (menu_bar.rcBar.right - menu_bar.rcBar.left),
 			 make_number (menu_bar_height))),
 	   Fcons (Qtool_bar_external, Qnil),
-	   Fcons (Qtool_bar_position, Qtop),
+		Fcons (Qtool_bar_position, tool_bar_height ? Qtop : Qnil),
 	   Fcons (Qtool_bar_size,
-		  Fcons (make_number (FRAME_TOOL_BAR_LINES (f)
-				      ? (FRAME_PIXEL_WIDTH (f)
-					 - 2 * FRAME_INTERNAL_BORDER_WIDTH (f))
+		       Fcons (make_number
+			      (tool_bar_height
+			       ? right - left - 2 * internal_border_width
 				      : 0),
-			 make_number (FRAME_TOOL_BAR_HEIGHT (f)))),
-	   Fcons (Qframe_inner_size,
-		  Fcons (make_number
-			 (frame_inner_edges.right - frame_inner_edges.left),
-			 make_number
-			 (frame_inner_edges.bottom - frame_inner_edges.top))));
+			      make_number (tool_bar_height))),
+		Fcons (Qinternal_border_width,
+		       make_number (internal_border_width)));
+}
+
+DEFUN ("x-frame-edges", Fx_frame_edges, Sx_frame_edges, 0, 2, 0,
+       doc: /* Return edge coordinates of FRAME.
+FRAME must be a live frame and defaults to the selected one.  The return
+value is a list of the form (LEFT, TOP, RIGHT, BOTTOM).  All values are
+in pixels relative to the origin - the position (0, 0) - of FRAME's
+display.
+
+If optional argument TYPE is the symbol `outer-edges', return the outer
+edges of FRAME.  The outer edges comprise the decorations of the window
+manager (like the title bar or external borders) as well as any external
+menu or tool bar of FRAME.  If optional argument TYPE is the symbol
+`native-edges' or nil, return the native edges of FRAME.  The native
+edges exclude the decorations of the window manager and any external
+menu or tool bar of FRAME.  If TYPE is the symbol `inner-edges', return
+the inner edges of FRAME.  These edges exclude title bar, any borders,
+menu bar or tool bar of FRAME.  */)
+  (Lisp_Object frame, Lisp_Object type)
+{
+  struct frame *f = decode_live_frame (frame);
+
+  if (FRAME_INITIAL_P (f) || !FRAME_W32_P (f))
+    return Qnil;
+
+  if (EQ (type, Qouter_edges))
+    {
+      RECT rectangle;
+
+      block_input ();
+      /* Outer frame rectangle, including outer borders and title bar. */
+      GetWindowRect (FRAME_W32_WINDOW (f), &rectangle);
+      unblock_input ();
+
+      return list4 (make_number (rectangle.left),
+		    make_number (rectangle.top),
+		    make_number (rectangle.right),
+		    make_number (rectangle.bottom));
+    }
+  else
+    {
+      RECT rectangle;
+      POINT pt;
+      int left, top, right, bottom;
+
+      block_input ();
+      /* Inner frame rectangle, excluding borders and title bar.  */
+      GetClientRect (FRAME_W32_WINDOW (f), &rectangle);
+      /* Get top-left corner of native rectangle in screen
+	 coordinates.  */
+      pt.x = 0;
+      pt.y = 0;
+      ClientToScreen (FRAME_W32_WINDOW (f), &pt);
+      unblock_input ();
+
+      left = pt.x;
+      top = pt.y;
+      right = left + rectangle.right;
+      bottom = top + rectangle.bottom;
+
+      if (EQ (type, Qinner_edges))
+	{
+	  int internal_border_width = FRAME_INTERNAL_BORDER_WIDTH (f);
+
+	  return list4 (make_number (left + internal_border_width),
+			make_number (top
+				     + FRAME_TOOL_BAR_HEIGHT (f)
+				     + internal_border_width),
+			make_number (right - internal_border_width),
+			make_number (bottom - internal_border_width));
+	}
+      else
+	return list4 (make_number (left), make_number (top),
+		      make_number (right), make_number (bottom));
+    }
+}
+
+DEFUN ("x-mouse-absolute-pixel-position", Fx_mouse_absolute_pixel_position,
+       Sx_mouse_absolute_pixel_position, 0, 0, 0,
+       doc: /* Return absolute position of mouse cursor in pixels.
+The position is returned as a cons cell (X . Y) of the coordinates of
+the mouse cursor position in pixels relative to a position (0, 0) of the
+selected frame's display.  */)
+  (void)
+{
+  POINT pt;
+
+  block_input ();
+  GetCursorPos (&pt);
+  unblock_input ();
+
+  return Fcons (make_number (pt.x), make_number (pt.y));
+}
+
+DEFUN ("x-set-mouse-absolute-pixel-position", Fx_set_mouse_absolute_pixel_position,
+       Sx_set_mouse_absolute_pixel_position, 2, 2, 0,
+       doc: /* Move mouse pointer to absolute pixel position (X, Y).
+The coordinates X and Y are interpreted in pixels relative to a position
+(0, 0) of the selected frame's display.  */)
+  (Lisp_Object x, Lisp_Object y)
+{
+  CHECK_TYPE_RANGED_INTEGER (int, x);
+  CHECK_TYPE_RANGED_INTEGER (int, y);
+
+  block_input ();
+  SetCursorPos (XINT (x), XINT (y));
+  unblock_input ();
+
+  return Qnil;
 }
 
 DEFUN ("w32-battery-status", Fw32_battery_status, Sw32_battery_status, 0, 0, 0,
@@ -9189,6 +9264,9 @@ This variable has effect only on NT family of systems, not on Windows 9X.  */);
   defsubr (&Sx_close_connection);
   defsubr (&Sx_display_list);
   defsubr (&Sx_frame_geometry);
+  defsubr (&Sx_frame_edges);
+  defsubr (&Sx_mouse_absolute_pixel_position);
+  defsubr (&Sx_set_mouse_absolute_pixel_position);
   defsubr (&Sx_synchronize);
 
   /* W32 specific functions */
@@ -9204,8 +9282,6 @@ This variable has effect only on NT family of systems, not on Windows 9X.  */);
   defsubr (&Sw32_reconstruct_hot_key);
   defsubr (&Sw32_toggle_lock_key);
   defsubr (&Sw32_window_exists_p);
-  defsubr (&Sw32_frame_rect);
-  defsubr (&Sw32_frame_menu_bar_size);
   defsubr (&Sw32_battery_status);
   defsubr (&Sw32__menu_bar_in_use);
 
@@ -9470,6 +9546,8 @@ globals_of_w32fns (void)
     GetProcAddress (user32_lib, "MonitorFromWindow");
   enum_display_monitors_fn = (EnumDisplayMonitors_Proc)
     GetProcAddress (user32_lib, "EnumDisplayMonitors");
+  get_title_bar_info_fn = (GetTitleBarInfo_Proc)
+    GetProcAddress (user32_lib, "GetTitleBarInfo");
 
   {
     HMODULE imm32_lib = GetModuleHandle ("imm32.dll");

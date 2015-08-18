@@ -2977,24 +2977,40 @@ font height.  */)
   return Qnil;
 }
 
-DEFUN ("set-frame-position", Fset_frame_position,
-       Sset_frame_position, 3, 3, 0,
-       doc: /* Sets position of FRAME in pixels to XOFFSET by YOFFSET.
-If FRAME is nil, the selected frame is used.  XOFFSET and YOFFSET are
-actually the position of the upper left corner of the frame.  Negative
-values for XOFFSET or YOFFSET are interpreted relative to the rightmost
-or bottommost possible position (that stays within the screen).  */)
-  (Lisp_Object frame, Lisp_Object xoffset, Lisp_Object yoffset)
+DEFUN ("frame-position", Fframe_position,
+       Sframe_position, 0, 1, 0,
+       doc: /* Return top left corner of FRAME in pixels.
+FRAME must be a live frame and defaults to the selected one.  The return
+value is a cons (x, y) of the coordinates of the top left corner of
+FRAME's outer frame, in pixels relative to an origin (0, 0) of FRAME's
+display.  */)
+     (Lisp_Object frame)
 {
   register struct frame *f = decode_live_frame (frame);
 
-  CHECK_TYPE_RANGED_INTEGER (int, xoffset);
-  CHECK_TYPE_RANGED_INTEGER (int, yoffset);
+  return Fcons (make_number (f->left_pos), make_number (f->top_pos));
+}
+
+DEFUN ("set-frame-position", Fset_frame_position,
+       Sset_frame_position, 3, 3, 0,
+       doc: /* Set position of FRAME to (X, Y).
+FRAME must be a live frame and defaults to the selected one.  X and Y,
+if positive, specify the coordinate of the left and top edge of FRAME's
+outer frame in pixels relative to an origin (0, 0) of FRAME's display.
+If any of X or Y is negative, it specifies the coordinates of the right
+or bottom edge of the outer frame of FRAME relative to the right or
+bottom edge of FRAME's display.  */)
+  (Lisp_Object frame, Lisp_Object x, Lisp_Object y)
+{
+  register struct frame *f = decode_live_frame (frame);
+
+  CHECK_TYPE_RANGED_INTEGER (int, x);
+  CHECK_TYPE_RANGED_INTEGER (int, y);
 
   /* I think this should be done with a hook.  */
 #ifdef HAVE_WINDOW_SYSTEM
   if (FRAME_WINDOW_P (f))
-    x_set_offset (f, XINT (xoffset), XINT (yoffset), 1);
+    x_set_offset (f, XINT (x), XINT (y), 1);
 #endif
 
   return Qt;
@@ -4890,15 +4906,17 @@ syms_of_frame (void)
   DEFSYM (Qframes, "frames");
   DEFSYM (Qsource, "source");
 
-  DEFSYM (Qframe_position, "frame-position");
-  DEFSYM (Qframe_outer_size, "frame-outer-size");
+  DEFSYM (Qouter_edges, "outer-edges");
+  DEFSYM (Qouter_position, "outer-position");
+  DEFSYM (Qouter_size, "outer-size");
+  DEFSYM (Qnative_edges, "native-edges");
+  DEFSYM (Qinner_edges, "inner-edges");
   DEFSYM (Qexternal_border_size, "external-border-size");
-  DEFSYM (Qtitle_height, "title-height");
+  DEFSYM (Qtitle_bar_size, "title-bar-size");
   DEFSYM (Qmenu_bar_external, "menu-bar-external");
   DEFSYM (Qmenu_bar_size, "menu-bar-size");
   DEFSYM (Qtool_bar_external, "tool-bar-external");
   DEFSYM (Qtool_bar_size, "tool-bar-size");
-  DEFSYM (Qframe_inner_size, "frame-inner-size");
   /* The following are used for frame_size_history.  */
   DEFSYM (Qadjust_frame_size_1, "adjust-frame-size-1");
   DEFSYM (Qadjust_frame_size_2, "adjust-frame-size-2");
@@ -5263,6 +5281,7 @@ in a more readable form.  */);
   defsubr (&Sset_frame_height);
   defsubr (&Sset_frame_width);
   defsubr (&Sset_frame_size);
+  defsubr (&Sframe_position);
   defsubr (&Sset_frame_position);
   defsubr (&Sframe_pointer_visible_p);
 
