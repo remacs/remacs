@@ -539,6 +539,8 @@ searching for what you have already entered.
   To find out how to input the character after point using the current
 input method, type @kbd{C-u C-x =}.  @xref{Position Info}.
 
+@c TODO: document complex-only/default/t of
+@c @code{input-method-verbose-flag}
 @vindex input-method-verbose-flag
 @vindex input-method-highlight-flag
   The variables @code{input-method-highlight-flag} and
