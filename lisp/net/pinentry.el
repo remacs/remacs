@@ -63,11 +63,6 @@
   :type 'integer
   :group 'pinentry)
 
-(defcustom pinentry-use-secrets nil
-  "If non-nil, use secrets.el to store passwords in login keyring."
-  :type 'boolean
-  :group 'pinentry)
-
 (defvar pinentry--server-process nil)
 (defvar pinentry--connection-process-list nil)
 
@@ -75,10 +70,6 @@
 (put 'pinentry-read-point 'permanent-local t)
 (defvar pinentry--read-point nil)
 (put 'pinentry--read-point 'permanent-local t)
-(defvar pinentry--allow-external-password-cache nil)
-(put 'pinentry--allow-external-password-cache 'permanent-local t)
-(defvar pinentry--key-info nil)
-(put 'pinentry--key-info 'permanent-local t)
 
 (defvar pinentry--prompt-buffer nil)
 
@@ -151,10 +142,6 @@ If local sockets are not supported, this is nil.")
            ;; SHORT-PROMPT.
            (concat prompt (substring short-prompt -2))
            query-args)))
-
-(defvar secrets-enabled)
-(declare-function secrets-search-items "secrets" (collection &rest attributes))
-(declare-function secrets-get-secret "secrets" (collection item))
 
 ;;;###autoload
 (defun pinentry-start ()
@@ -290,23 +277,6 @@ Assuan protocol."
 (defun pinentry--send-error (process error)
   (process-send-string process (format "ERR %d %s\n" (car error) (cdr error))))
 
-(defun pinentry--send-passphrase (process passphrase)
-  (let (escaped-passphrase encoded-passphrase)
-    (unwind-protect
-        (condition-case nil
-            (progn
-              (setq escaped-passphrase (pinentry--escape-string passphrase))
-              (setq encoded-passphrase (encode-coding-string escaped-passphrase
-                                                             'utf-8))
-              (pinentry--send-data process encoded-passphrase)
-              (process-send-string process "OK\n"))
-          (error
-           (pinentry--send-error process pinentry--error-cancelled)))
-      (if escaped-passphrase
-          (clear-string escaped-passphrase))
-      (if encoded-passphrase
-          (clear-string encoded-passphrase)))))
-
 (defun pinentry--process-filter (process input)
   (unless (buffer-live-p (process-buffer process))
     (let ((buffer (generate-new-buffer " *pinentry*")))
@@ -316,9 +286,7 @@ Assuan protocol."
             (set-buffer-multibyte nil))
         (make-local-variable 'pinentry--read-point)
         (setq pinentry--read-point (point-min))
-        (make-local-variable 'pinentry--labels)
-        (make-local-variable 'pinentry--allow-external-password-cache)
-        (make-local-variable 'pinentry--key-info))))
+        (make-local-variable 'pinentry--labels))))
   (with-current-buffer (process-buffer process)
     (save-excursion
       (goto-char (point-max))
@@ -343,79 +311,52 @@ Assuan protocol."
 		("NOP"
 		 (ignore-errors
 		   (process-send-string process "OK\n")))
-                ("OPTION"
-                 (if (and pinentry-use-secrets
-                          (require 'secrets)
-                          secrets-enabled
-                          (equal string "allow-external-password-cache"))
-                     (setq pinentry--allow-external-password-cache t))
-                 (ignore-errors
-		   (process-send-string process "OK\n")))
-                ("SETKEYINFO"
-                 (setq pinentry--key-info string)
-                 (ignore-errors
-		   (process-send-string process "OK\n")))
                 ("GETPIN"
-                 (let (passphrase-sent)
-                   (when (and pinentry--allow-external-password-cache
-                              pinentry--key-info)
-                     (let ((items
-                            (secrets-search-items "login"
-                                                  :keygrip pinentry--key-info)))
-                       (if items
-                           (let (passphrase)
-                             (unwind-protect
-                                 (progn
-                                   (setq passphrase (secrets-get-secret
-                                                     "login"
-                                                     (car items)))
-                                   (ignore-errors
-                                     (process-send-string
-                                      process
-                                      "S PASSWORD_FROM_CACHE\n")
-                                     (pinentry--send-passphrase
-                                      process passphrase)
-                                     (setq passphrase-sent t)))
-                               (if passphrase
-                                   (clear-string passphrase)))))))
-                   (unless passphrase-sent
-                     (let ((prompt
-                            (or (cdr (assq 'desc pinentry--labels))
-                                (cdr (assq 'prompt pinentry--labels))
-                                ""))
-                           (confirm
-                            (not (null (assq 'repeat pinentry--labels))))
-                           entry)
-                       (if (setq entry (assq 'error pinentry--labels))
-                           (setq prompt (concat "Error: "
-                                                (propertize
-                                                 (copy-sequence (cdr entry))
-                                                 'face 'error)
-                                                "\n"
-                                                prompt)))
-                       (if (setq entry (assq 'title pinentry--labels))
-                           (setq prompt (format "[%s] %s"
-                                                (cdr entry) prompt)))
-                       (let (passphrase)
-                         (unwind-protect
-                             (condition-case nil
-                                 (progn
-                                   (setq passphrase
-                                         (pinentry--prompt prompt "Password: "
-                                                           #'read-passwd
-                                                           confirm))
-                                   (ignore-errors
-                                     (pinentry--send-passphrase process
-                                                                passphrase)
-                                     (process-send-string process "OK\n")))
-                               (error
-                                (ignore-errors
-                                  (pinentry--send-error
-                                   process
-                                   pinentry--error-cancelled))))
-                           (if passphrase
-                               (clear-string passphrase))))
-                       (setq pinentry--labels nil)))))
+                 (let ((prompt
+                        (or (cdr (assq 'desc pinentry--labels))
+                            (cdr (assq 'prompt pinentry--labels))
+                            ""))
+		       (confirm (not (null (assq 'repeat pinentry--labels))))
+                       entry)
+                   (if (setq entry (assq 'error pinentry--labels))
+                       (setq prompt (concat "Error: "
+                                            (propertize
+                                             (copy-sequence (cdr entry))
+                                             'face 'error)
+                                            "\n"
+                                            prompt)))
+                   (if (setq entry (assq 'title pinentry--labels))
+                       (setq prompt (format "[%s] %s"
+                                            (cdr entry) prompt)))
+                   (let (passphrase escaped-passphrase encoded-passphrase)
+                     (unwind-protect
+                         (condition-case nil
+                             (progn
+                               (setq passphrase
+				     (pinentry--prompt prompt "Password: "
+                                                       #'read-passwd confirm))
+                               (setq escaped-passphrase
+                                     (pinentry--escape-string
+                                      passphrase))
+                               (setq encoded-passphrase (encode-coding-string
+                                                         escaped-passphrase
+                                                         'utf-8))
+			       (ignore-errors
+				 (pinentry--send-data
+				  process encoded-passphrase)
+				 (process-send-string process "OK\n")))
+                           (error
+			    (ignore-errors
+			      (pinentry--send-error
+			       process
+			       pinentry--error-cancelled))))
+                       (if passphrase
+                           (clear-string passphrase))
+                       (if escaped-passphrase
+                           (clear-string escaped-passphrase))
+                       (if encoded-passphrase
+                           (clear-string encoded-passphrase))))
+                   (setq pinentry--labels nil)))
                 ("CONFIRM"
                  (let ((prompt
                         (or (cdr (assq 'desc pinentry--labels))
