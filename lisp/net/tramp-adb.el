@@ -211,7 +211,7 @@ pass to the OPERATION."
 	 (lambda (elt)
 	   (setcar
 	    (cdr elt)
-	    (replace-regexp-in-string
+	    (tramp-compat-replace-regexp-in-string
 	     ":" tramp-prefix-port-format (car (cdr elt)))))
 	 result)
 	result))))
@@ -1032,7 +1032,7 @@ E.g. a host name \"192.168.1.1#5555\" returns \"192.168.1.1:5555\"
 	   (host (tramp-file-name-host vec))
 	   (port (tramp-file-name-port vec))
 	   (devices (mapcar 'cadr (tramp-adb-parse-device-names nil))))
-      (replace-regexp-in-string
+      (tramp-compat-replace-regexp-in-string
        tramp-prefix-port-format ":"
        (cond ((member host devices) host)
 	     ;; This is the case when the host is connected to the default port.
@@ -1048,7 +1048,7 @@ E.g. a host name \"192.168.1.1#5555\" returns \"192.168.1.1:5555\"
 		   (not (zerop (length host)))
 		   (not (tramp-adb-execute-adb-command
                          vec "connect"
-                         (replace-regexp-in-string
+                         (tramp-compat-replace-regexp-in-string
                           tramp-prefix-port-format ":" host))))
 	      ;; When new device connected, running other adb command (e.g.
 	      ;; adb shell) immediately will fail.  To get around this

@@ -1111,7 +1111,8 @@ If VEC is a vector, check first in connection properties.
 Afterwards, check in `tramp-methods'.  If the `tramp-methods'
 entry does not exist, return nil."
   (let ((hash-entry
-	 (replace-regexp-in-string "^tramp-" "" (symbol-name param))))
+	 (tramp-compat-replace-regexp-in-string
+	  "^tramp-" "" (symbol-name param))))
     (if (tramp-connection-property-p vec hash-entry)
 	;; We use the cached property.
 	(tramp-get-connection-property  vec hash-entry nil)
