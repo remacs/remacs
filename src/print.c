@@ -902,7 +902,7 @@ print_error_message (Lisp_Object data, Lisp_Object stream, const char *context,
       USE_SAFE_ALLOCA;
       char *name = SAFE_ALLOCA (cnamelen);
       memcpy (name, SDATA (cname), cnamelen);
-      message_dolog (name, cnamelen, 0, 0);
+      message_dolog (name, cnamelen, 0, STRING_MULTIBYTE (cname));
       message_dolog (": ", 2, 0, 0);
       SAFE_FREE ();
     }

@@ -9843,7 +9843,7 @@ vadd_to_log (char const *format, va_list ap)
   char *buffer = SAFE_ALLOCA (len);
   memcpy (buffer, SDATA (msg), len);
 
-  message_dolog (buffer, len - 1, true, false);
+  message_dolog (buffer, len - 1, true, STRING_MULTIBYTE (msg));
   SAFE_FREE ();
 
   UNGCPRO;
