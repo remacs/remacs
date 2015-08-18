@@ -6873,17 +6873,22 @@ If called from Lisp, enable the mode if ARG is omitted or nil."
 
 (defcustom blink-matching-paren t
   "Non-nil means show matching open-paren when close-paren is inserted.
-If t, highlight the paren.  If `jump', move cursor to its position."
+If t, highlight the paren.  If `jump', briefly move cursor to its
+position.  If `jump-offscreen', move cursor there even if the
+position is off screen.  With any other non-nil value, the
+off-screen position of the opening paren will be shown in the
+echo area."
   :type '(choice
           (const :tag "Disable" nil)
           (const :tag "Highlight" t)
-          (const :tag "Move cursor" jump))
+          (const :tag "Move cursor" jump)
+          (const :tag "Move cursor, even if off screen" jump-offscreen))
   :group 'paren-blinking)
 
 (defcustom blink-matching-paren-on-screen t
   "Non-nil means show matching open-paren when it is on screen.
 If nil, don't show it (but the open-paren can still be shown
-when it is off screen).
+in the echo area when it is off screen).
 
 This variable has no effect if `blink-matching-paren' is nil.
 \(In that case, the open-paren is never shown.)
@@ -6987,13 +6992,15 @@ The function should return non-nil if the two tokens do not match.")
               (minibuffer-message "No matching parenthesis found")
             (message "No matching parenthesis found"))))
        ((not blinkpos) nil)
-       ((pos-visible-in-window-p blinkpos)
+       ((or
+         (eq blink-matching-paren 'jump-offscreen)
+         (pos-visible-in-window-p blinkpos))
         ;; Matching open within window, temporarily move to or highlight
         ;; char after blinkpos but only if `blink-matching-paren-on-screen'
         ;; is non-nil.
         (and blink-matching-paren-on-screen
              (not show-paren-mode)
-             (if (eq blink-matching-paren 'jump)
+             (if (memq blink-matching-paren '(jump jump-offscreen))
                  (save-excursion
                    (goto-char blinkpos)
                    (sit-for blink-matching-delay))
