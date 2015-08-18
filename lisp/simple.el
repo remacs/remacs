@@ -7004,12 +7004,9 @@ The function should return non-nil if the two tokens do not match.")
                      (sit-for blink-matching-delay))
                  (delete-overlay blink-matching--overlay)))))
        (t
-        (save-excursion
-          (let* ((orig-pos (prog1
-                               (point)
-                             (goto-char blinkpos)))
-
-                 (open-paren-line-string
+        (let ((open-paren-line-string
+               (save-excursion
+                 (goto-char blinkpos)
                  ;; Show what precedes the open in its line, if anything.
                  (cond
                   ((save-excursion (skip-chars-backward " \t") (not (bolp)))
@@ -7036,13 +7033,10 @@ The function should return non-nil if the two tokens do not match.")
                     "..."
                     (buffer-substring blinkpos (1+ blinkpos))))
                   ;; There is nothing to show except the char itself.
-                  (t (buffer-substring blinkpos (1+ blinkpos))))))
-            ;; Because minibuffer-message causes a full redisplay, go back
-            ;; to the original point before that happens.
-            (goto-char orig-pos)
-            (minibuffer-message
-             "Matches %s"
-             (substring-no-properties open-paren-line-string)))))))))
+                  (t (buffer-substring blinkpos (1+ blinkpos)))))))
+          (minibuffer-message
+           "Matches %s"
+           (substring-no-properties open-paren-line-string))))))))
 
 (defvar blink-paren-function 'blink-matching-open
   "Function called, if non-nil, whenever a close parenthesis is inserted.
