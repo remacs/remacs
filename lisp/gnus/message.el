@@ -2005,6 +2005,22 @@ You must have the \"hashcash\" binary installed, see `hashcash-path'."
 (unless (fboundp 'mail-dont-reply-to)
   (defalias 'mail-dont-reply-to 'rmail-dont-reply-to))
 
+(eval-and-compile
+  (if (featurep 'emacs)
+      (progn
+	(defalias 'message-delete-overlay 'delete-overlay)
+	(defun message-kill-all-overlays ()
+	  (mapcar #'delete-overlay (overlays-in (point-min) (point-max))))
+	(defalias 'message-make-overlay 'make-overlay)
+	(defalias 'message-overlay-get 'overlay-get)
+	(defalias 'message-overlay-put 'overlay-put)
+	(defalias 'message-overlays-in 'overlays-in)
+	(defalias 'message-window-inside-pixel-edges
+	  'window-inside-pixel-edges))
+    (defun message-kill-all-overlays ()
+      (map-extents (lambda (extent ignore) (delete-extent extent))))
+    (defalias 'message-window-inside-pixel-edges 'ignore)))
+
 
 
 ;;;
@@ -7884,20 +7900,6 @@ which specify the range to operate on."
   "Exchange point and mark, but don't activate region if it was inactive."
   (goto-char (prog1 (mark t)
 	       (set-marker (mark-marker) (point)))))
-
-(if (featurep 'emacs)
-    (progn
-      (defalias 'message-delete-overlay 'delete-overlay)
-      (defun message-kill-all-overlays ()
-	(mapcar #'delete-overlay (overlays-in (point-min) (point-max))))
-      (defalias 'message-make-overlay 'make-overlay)
-      (defalias 'message-overlay-get 'overlay-get)
-      (defalias 'message-overlay-put 'overlay-put)
-      (defalias 'message-overlays-in 'overlays-in)
-      (defalias 'message-window-inside-pixel-edges 'window-inside-pixel-edges))
-  (defun message-kill-all-overlays ()
-    (map-extents (lambda (extent ignore) (delete-extent extent))))
-  (defalias 'message-window-inside-pixel-edges 'ignore))
 
 ;; Support for toolbar
 (defvar tool-bar-mode)
