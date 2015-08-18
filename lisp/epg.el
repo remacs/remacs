@@ -611,7 +611,9 @@ callback data (if any)."
 					"--list-options" "gpg-agent")
 			  0)
 		   (goto-char (point-min))
-		   (re-search-forward "^allow-emacs-pinentry:.*:1$" nil t))))
+		   (re-search-forward
+                    "^allow-emacs-pinentry:\\(?:.*:\\)\\{8\\}1"
+                    nil t))))
       (pinentry-start))
     (setq process-environment
 	  (cons (format "INSIDE_EMACS=%s,epg" emacs-version)
