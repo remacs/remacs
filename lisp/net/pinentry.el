@@ -50,6 +50,21 @@
 
 ;;; Code:
 
+(defgroup pinentry nil
+  "The Pinentry server"
+  :version "25.1"
+  :group 'external)
+
+(defcustom pinentry-popup-prompt-window t
+  "If non-nil, display status information from epa commands in another window."
+  :type 'boolean
+  :group 'pinentry)
+
+(defcustom pinentry-prompt-window-height 5
+  "Number of lines used to display status information."
+  :type 'integer
+  :group 'pinentry)
+
 (defvar pinentry--server-process nil)
 (defvar pinentry--connection-process-list nil)
 
@@ -57,6 +72,8 @@
 (put 'pinentry-read-point 'permanent-local t)
 (defvar pinentry--read-point nil)
 (put 'pinentry--read-point 'permanent-local t)
+
+(defvar pinentry--prompt-buffer nil)
 
 ;; We use the same location as `server-socket-dir', when local sockets
 ;; are supported.
@@ -81,6 +98,52 @@ If local sockets are not supported, this is nil.")
   (cons (pinentry--error-code 114) "not confirmed"))
 
 (autoload 'server-ensure-safe-dir "server")
+
+(defvar pinentry-prompt-mode-map
+  (let ((keymap (make-sparse-keymap)))
+    (define-key keymap "q" 'quit-window)
+    keymap))
+
+(define-derived-mode pinentry-prompt-mode special-mode "Pinentry"
+  "Major mode for `pinentry--prompt-buffer'."
+  (buffer-disable-undo)
+  (setq truncate-lines t
+	buffer-read-only t))
+
+(defun pinentry--prompt (prompt short-prompt query-function &rest query-args)
+  (if (and (string-match "\n" prompt)
+           pinentry-popup-prompt-window)
+      (save-window-excursion
+        (delete-other-windows)
+	(unless (and pinentry--prompt-buffer
+                     (buffer-live-p pinentry--prompt-buffer))
+	  (setq pinentry--prompt-buffer (generate-new-buffer "*Pinentry*")))
+	(if (get-buffer-window pinentry--prompt-buffer)
+	    (delete-window (get-buffer-window pinentry--prompt-buffer)))
+	(with-current-buffer pinentry--prompt-buffer
+	  (let ((inhibit-read-only t)
+		buffer-read-only)
+	    (erase-buffer)
+	    (insert prompt))
+	  (pinentry-prompt-mode)
+	  (goto-char (point-min)))
+	(if (> (window-height)
+	       pinentry-prompt-window-height)
+	    (set-window-buffer (split-window nil
+                                             (- (window-height)
+                                                pinentry-prompt-window-height))
+			       pinentry--prompt-buffer)
+	  (pop-to-buffer pinentry--prompt-buffer)
+	  (if (> (window-height) pinentry-prompt-window-height)
+	      (shrink-window (- (window-height)
+                                pinentry-prompt-window-height))))
+        (prog1 (apply query-function short-prompt query-args)
+          (quit-window)))
+    (apply query-function
+           ;; Append a suffix to the prompt, which can be derived from
+           ;; SHORT-PROMPT.
+           (concat prompt (substring short-prompt -2))
+           query-args)))
 
 ;;;###autoload
 (defun pinentry-start ()
@@ -267,16 +330,13 @@ Assuan protocol."
                    (if (setq entry (assq 'title pinentry--labels))
                        (setq prompt (format "[%s] %s"
                                             (cdr entry) prompt)))
-                   (if (string-match ":?[ \n]*\\'" prompt)
-                       (setq prompt (concat
-                                     (substring
-                                      prompt 0 (match-beginning 0)) ": ")))
                    (let (passphrase escaped-passphrase encoded-passphrase)
                      (unwind-protect
                          (condition-case nil
                              (progn
                                (setq passphrase
-				     (read-passwd prompt confirm))
+				     (pinentry--prompt prompt "Password: "
+                                                       #'read-passwd confirm))
                                (setq escaped-passphrase
                                      (pinentry--escape-string
                                       passphrase))
@@ -350,7 +410,7 @@ Assuan protocol."
                                        (substring
                                         prompt 0 (match-beginning 0)) " ")))
                      (if (condition-case nil
-                             (y-or-n-p prompt)
+                             (pinentry--prompt prompt "Confirm? " #'y-or-n-p)
                            (quit))
 			 (ignore-errors
 			   (process-send-string process "OK\n"))
