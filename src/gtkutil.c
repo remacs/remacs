@@ -382,10 +382,11 @@ xg_get_image_for_pixmap (struct frame *f,
   if (STRINGP (specified_file)
       && STRINGP (file = x_find_image_file (specified_file)))
     {
+      char *encoded_file = SSDATA (ENCODE_FILE (file));
       if (! old_widget)
-        old_widget = GTK_IMAGE (gtk_image_new_from_file (SSDATA (file)));
+        old_widget = GTK_IMAGE (gtk_image_new_from_file (encoded_file));
       else
-        gtk_image_set_from_file (old_widget, SSDATA (file));
+        gtk_image_set_from_file (old_widget, encoded_file);
 
       return GTK_WIDGET (old_widget);
     }

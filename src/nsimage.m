@@ -169,6 +169,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
   found = x_find_image_file (file);
   if (!STRINGP (found))
     return nil;
+  found = ENCODE_FILE (found);
 
   image = [[EmacsImage alloc] initByReferencingFile:
                      [NSString stringWithUTF8String: SSDATA (found)]];

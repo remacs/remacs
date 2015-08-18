@@ -2270,11 +2270,13 @@ image_unget_x_image (struct image *img, bool mask_p, XImagePtr ximg)
  ***********************************************************************/
 
 /* Find image file FILE.  Look in data-directory/images, then
-   x-bitmap-file-path.  Value is the encoded full name of the file
-   found, or nil if not found.  */
+   x-bitmap-file-path.  Value is the full name of the file
+   found, or nil if not found.  If PFD is nonnull store into *PFD a
+   readable file descriptor for the file, opened in binary mode.  If
+   PFD is null, do not open the file.  */
 
-Lisp_Object
-x_find_image_file (Lisp_Object file)
+static Lisp_Object
+x_find_image_fd (Lisp_Object file, int *pfd)
 {
   Lisp_Object file_found, search_path;
   int fd;
@@ -2286,29 +2288,35 @@ x_find_image_file (Lisp_Object file)
 		       Vx_bitmap_file_path);
 
   /* Try to find FILE in data-directory/images, then x-bitmap-file-path.  */
-  fd = openp (search_path, file, Qnil, &file_found, Qnil, false);
-
-  if (fd == -1)
-    file_found = Qnil;
-  else
-    {
-      file_found = ENCODE_FILE (file_found);
-      if (fd != -2)
-	emacs_close (fd);
-    }
-
+  fd = openp (search_path, file, Qnil, &file_found,
+	      pfd ? Qt : make_number (R_OK), false);
+  if (fd < 0)
+    return Qnil;
+  if (pfd)
+    *pfd = fd;
   return file_found;
 }
 
+/* Find image file FILE.  Look in data-directory/images, then
+   x-bitmap-file-path.  Value is the encoded full name of the file
+   found, or nil if not found.  */
+
+Lisp_Object
+x_find_image_file (Lisp_Object file)
+{
+  return x_find_image_fd (file, 0);
+}
 
 /* Read FILE into memory.  Value is a pointer to a buffer allocated
    with xmalloc holding FILE's contents.  Value is null if an error
-   occurred.  *SIZE is set to the size of the file.  */
+   occurred.  FD is a file descriptor open for reading FILE.  Set
+   *SIZE to the size of the file.  */
 
 static unsigned char *
-slurp_file (char *file, ptrdiff_t *size)
+slurp_file (int fd, ptrdiff_t *size)
 {
-  FILE *fp = emacs_fopen (file, "rb");
+  FILE *fp = fdopen (fd, "rb");
+
   unsigned char *buf = NULL;
   struct stat st;
 
@@ -2980,21 +2988,19 @@ xbm_load (struct frame *f, struct image *img)
   file_name = image_spec_value (img->spec, QCfile, NULL);
   if (STRINGP (file_name))
     {
-      Lisp_Object file;
-      unsigned char *contents;
-      ptrdiff_t size;
-
-      file = x_find_image_file (file_name);
+      int fd;
+      Lisp_Object file = x_find_image_fd (file_name, &fd);
       if (!STRINGP (file))
 	{
 	  image_error ("Cannot find image file "uLSQM"%s"uRSQM, file_name);
 	  return 0;
 	}
 
-      contents = slurp_file (SSDATA (file), &size);
+      ptrdiff_t size;
+      unsigned char *contents = slurp_file (fd, &size);
       if (contents == NULL)
 	{
-	  image_error ("Error loading XBM image "uLSQM"%s"uRSQM, img->spec);
+	  image_error ("Error loading XBM image "uLSQM"%s"uRSQM, file);
 	  return 0;
 	}
 
@@ -3640,6 +3646,7 @@ xpm_load (struct frame *f, struct image *img)
 	  return 0;
 	}
 
+      file = ENCODE_FILE (file);
 #ifdef HAVE_NTGUI
 #ifdef WINDOWSNT
       /* FILE is encoded in UTF-8, but image libraries on Windows
@@ -4290,21 +4297,19 @@ xpm_load (struct frame *f,
   file_name = image_spec_value (img->spec, QCfile, NULL);
   if (STRINGP (file_name))
     {
-      Lisp_Object file;
-      unsigned char *contents;
-      ptrdiff_t size;
-
-      file = x_find_image_file (file_name);
+      int fd;
+      Lisp_Object file = x_find_image_fd (file_name, &fd);
       if (!STRINGP (file))
 	{
 	  image_error ("Cannot find image file "uLSQM"%s"uRSQM, file_name);
 	  return 0;
 	}
 
-      contents = slurp_file (SSDATA (file), &size);
+      ptrdiff_t size;
+      unsigned char *contents = slurp_file (fd, &size);
       if (contents == NULL)
 	{
-	  image_error ("Error loading XPM image "uLSQM"%s"uRSQM, img->spec);
+	  image_error ("Error loading XPM image "uLSQM"%s"uRSQM, file);
 	  return 0;
 	}
 
@@ -5253,11 +5258,10 @@ pbm_load (struct frame *f, struct image *img)
   bool raw_p;
   int x, y;
   int width, height, max_color_idx = 0;
-  Lisp_Object file, specified_file;
+  Lisp_Object specified_file;
   enum {PBM_MONO, PBM_GRAY, PBM_COLOR} type;
   unsigned char *contents = NULL;
   unsigned char *end, *p;
-  ptrdiff_t size;
 #ifdef USE_CAIRO
   unsigned char *data = 0;
   uint32_t *dataptr;
@@ -5269,7 +5273,8 @@ pbm_load (struct frame *f, struct image *img)
 
   if (STRINGP (specified_file))
     {
-      file = x_find_image_file (specified_file);
+      int fd;
+      Lisp_Object file = x_find_image_fd (specified_file, &fd);
       if (!STRINGP (file))
 	{
 	  image_error ("Cannot find image file "uLSQM"%s"uRSQM,
@@ -5277,7 +5282,8 @@ pbm_load (struct frame *f, struct image *img)
 	  return 0;
 	}
 
-      contents = slurp_file (SSDATA (file), &size);
+      ptrdiff_t size;
+      contents = slurp_file (fd, &size);
       if (contents == NULL)
 	{
 	  image_error ("Error reading "uLSQM"%s"uRSQM, file);
@@ -5878,7 +5884,7 @@ struct png_load_context
 static bool
 png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
 {
-  Lisp_Object file, specified_file;
+  Lisp_Object specified_file;
   Lisp_Object specified_data;
   int x, y;
   ptrdiff_t i;
@@ -5909,7 +5915,8 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
 
   if (NILP (specified_data))
     {
-      file = x_find_image_file (specified_file);
+      int fd;
+      Lisp_Object file = x_find_image_fd (specified_file, &fd);
       if (!STRINGP (file))
 	{
 	  image_error ("Cannot find image file "uLSQM"%s"uRSQM,
@@ -5918,7 +5925,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
 	}
 
       /* Open the image file.  */
-      fp = emacs_fopen (SSDATA (file), "rb");
+      fp = fdopen (fd, "rb");
       if (!fp)
 	{
 	  image_error ("Cannot open image file "uLSQM"%s"uRSQM, file);
@@ -6654,7 +6661,7 @@ static bool
 jpeg_load_body (struct frame *f, struct image *img,
 		struct my_jpeg_error_mgr *mgr)
 {
-  Lisp_Object file, specified_file;
+  Lisp_Object specified_file;
   Lisp_Object specified_data;
   /* The 'volatile' silences a bogus diagnostic; see GCC bug 54561.  */
   FILE * IF_LINT (volatile) fp = NULL;
@@ -6674,7 +6681,8 @@ jpeg_load_body (struct frame *f, struct image *img,
 
   if (NILP (specified_data))
     {
-      file = x_find_image_file (specified_file);
+      int fd;
+      Lisp_Object file = x_find_image_fd (specified_file, &fd);
       if (!STRINGP (file))
 	{
 	  image_error ("Cannot find image file "uLSQM"%s"uRSQM,
@@ -6682,7 +6690,7 @@ jpeg_load_body (struct frame *f, struct image *img,
 	  return 0;
 	}
 
-      fp = emacs_fopen (SSDATA (file), "rb");
+      fp = fdopen (fd, "rb");
       if (fp == NULL)
 	{
 	  image_error ("Cannot open "uLSQM"%s"uRSQM, file);
@@ -7172,7 +7180,7 @@ tiff_warning_handler (const char *title, const char *format, va_list ap)
 static bool
 tiff_load (struct frame *f, struct image *img)
 {
-  Lisp_Object file, specified_file;
+  Lisp_Object specified_file;
   Lisp_Object specified_data;
   TIFF *tiff;
   int width, height, x, y, count;
@@ -7191,19 +7199,21 @@ tiff_load (struct frame *f, struct image *img)
   if (NILP (specified_data))
     {
       /* Read from a file */
-      file = x_find_image_file (specified_file);
+      Lisp_Object file = x_find_image_file (specified_file);
       if (!STRINGP (file))
 	{
 	  image_error ("Cannot find image file "uLSQM"%s"uRSQM,
 		       specified_file);
 	  return 0;
 	}
+
+      Lisp_Object encoded_file = ENCODE_FILE (file);
 # ifdef WINDOWSNT
-      file = ansi_encode_filename (file);
+      encoded_file = ansi_encode_filename (encoded_file);
 # endif
 
       /* Try to open the image file.  */
-      tiff = TIFFOpen (SSDATA (file), "r");
+      tiff = TIFFOpen (SSDATA (encoded_file), "r");
       if (tiff == NULL)
 	{
 	  image_error ("Cannot open "uLSQM"%s"uRSQM, file);
@@ -7605,7 +7615,6 @@ static const int interlace_increment[] = {8, 8, 4, 2};
 static bool
 gif_load (struct frame *f, struct image *img)
 {
-  Lisp_Object file;
   int rc, width, height, x, y, i, j;
   ColorMapObject *gif_color_map;
   unsigned long pixel_colors[256];
@@ -7626,27 +7635,29 @@ gif_load (struct frame *f, struct image *img)
 
   if (NILP (specified_data))
     {
-      file = x_find_image_file (specified_file);
+      Lisp_Object file = x_find_image_file (specified_file);
       if (!STRINGP (file))
 	{
 	  image_error ("Cannot find image file "uLSQM"%s"uRSQM,
 		       specified_file);
 	  return 0;
 	}
+
+      Lisp_Object encoded_file = ENCODE_FILE (file);
 #ifdef WINDOWSNT
-      file = ansi_encode_filename (file);
+      encoded_file = ansi_encode_filename (encoded_file);
 #endif
 
       /* Open the GIF file.  */
 #if GIFLIB_MAJOR < 5
-      gif = DGifOpenFileName (SSDATA (file));
+      gif = DGifOpenFileName (SSDATA (encoded_file));
       if (gif == NULL)
 	{
 	  image_error ("Cannot open "uLSQM"%s"uRSQM, file);
 	  return 0;
 	}
 #else
-      gif = DGifOpenFileName (SSDATA (file), &gif_err);
+      gif = DGifOpenFileName (SSDATA (encoded_file), &gif_err);
       if (gif == NULL)
 	{
 	  image_error ("Cannot open "uLSQM"%s"uRSQM": %s",
@@ -8818,14 +8829,13 @@ imagemagick_load (struct frame *f, struct image *img)
   file_name = image_spec_value (img->spec, QCfile, NULL);
   if (STRINGP (file_name))
     {
-      Lisp_Object file;
-
-      file = x_find_image_file (file_name);
+      Lisp_Object file = x_find_image_file (file_name);
       if (!STRINGP (file))
 	{
 	  image_error ("Cannot find image file "uLSQM"%s"uRSQM, file_name);
 	  return 0;
 	}
+      file = ENCODE_FILE (file);
 #ifdef WINDOWSNT
       file = ansi_encode_filename (file);
 #endif
@@ -9097,11 +9107,8 @@ svg_load (struct frame *f, struct image *img)
   file_name = image_spec_value (img->spec, QCfile, NULL);
   if (STRINGP (file_name))
     {
-      Lisp_Object file;
-      unsigned char *contents;
-      ptrdiff_t size;
-
-      file = x_find_image_file (file_name);
+      int fd;
+      Lisp_Object file = x_find_image_fd (file_name, &fd);
       if (!STRINGP (file))
 	{
 	  image_error ("Cannot find image file "uLSQM"%s"uRSQM, file_name);
@@ -9109,14 +9116,16 @@ svg_load (struct frame *f, struct image *img)
 	}
 
       /* Read the entire file into memory.  */
-      contents = slurp_file (SSDATA (file), &size);
+      ptrdiff_t size;
+      unsigned char *contents = slurp_file (fd, &size);
       if (contents == NULL)
 	{
-	  image_error ("Error loading SVG image "uLSQM"%s"uRSQM, img->spec);
+	  image_error ("Error loading SVG image "uLSQM"%s"uRSQM, file);
 	  return 0;
 	}
       /* If the file was slurped into memory properly, parse it.  */
-      success_p = svg_load_image (f, img, contents, size, SSDATA (file));
+      success_p = svg_load_image (f, img, contents, size,
+				  SSDATA (ENCODE_FILE (file)));
       xfree (contents);
     }
   /* Else its not a file, its a lisp object.  Load the image from a

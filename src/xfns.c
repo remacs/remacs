@@ -548,7 +548,7 @@ xg_set_icon (struct frame *f, Lisp_Object file)
     {
       GdkPixbuf *pixbuf;
       GError *err = NULL;
-      char *filename = SSDATA (found);
+      char *filename = SSDATA (ENCODE_FILE (found));
       block_input ();
 
       pixbuf = gdk_pixbuf_new_from_file (filename, &err);

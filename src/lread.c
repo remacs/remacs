@@ -1403,7 +1403,8 @@ directories, make sure the PREDICATE function returns `dir-ok' for them.  */)
    SUFFIXES is a list of strings containing possible suffixes.
    The empty suffix is automatically added if the list is empty.
 
-   PREDICATE non-nil means don't open the files,
+   PREDICATE t means the files are binary.
+   PREDICATE non-nil and non-t means don't open the files,
    just look for one that satisfies the predicate.  In this case,
    return 1 on success.  The predicate can be a lisp function or
    an integer to pass to `access' (in which case file-name-handlers
@@ -1418,7 +1419,7 @@ directories, make sure the PREDICATE function returns `dir-ok' for them.  */)
 
    If NEWER is true, try all SUFFIXes and return the result for the
    newest file that exists.  Does not apply to remote files,
-   or if PREDICATE is specified.  */
+   or if a non-nil and non-t PREDICATE is specified.  */
 
 int
 openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
@@ -1520,10 +1521,11 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 	  else
 	    string = make_string (fn, fnlen);
 	  handler = Ffind_file_name_handler (string, Qfile_exists_p);
-	  if ((!NILP (handler) || !NILP (predicate)) && !NATNUMP (predicate))
+	  if ((!NILP (handler) || (!NILP (predicate) && !EQ (predicate, Qt)))
+	      && !NATNUMP (predicate))
             {
 	      bool exists;
-	      if (NILP (predicate))
+	      if (NILP (predicate) || EQ (predicate, Qt))
 		exists = !NILP (Ffile_readable_p (string));
 	      else
 		{
@@ -1577,7 +1579,8 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 		}
 	      else
 		{
-		  fd = emacs_open (pfn, O_RDONLY, 0);
+		  int oflags = O_RDONLY + (NILP (predicate) ? 0 : O_BINARY);
+		  fd = emacs_open (pfn, oflags, 0);
 		  if (fd < 0)
 		    {
 		      if (errno != ENOENT)
