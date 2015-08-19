@@ -24,7 +24,7 @@
 
 
 ;;;###autoload
-(defvar character-fold-search t
+(defvar character-fold-search nil
   "Non-nil if searches should fold similar characters.
 This means some characters will match entire groups of characters.
 For instance, \" will match all variants of double quotes, and

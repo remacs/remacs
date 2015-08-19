@@ -2607,12 +2607,11 @@ Can be changed via `isearch-search-fun-function' for special needs."
       ;; Use lax versions to not fail at the end of the word while
       ;; the user adds and removes characters in the search string
       ;; (or when using nonincremental word isearch)
-      (let ((lax (or isearch-lax-whitespace
-                     (not (or isearch-nonincremental
-                              (null (car isearch-cmds))
-                              (eq (length isearch-string)
-                                  (length (isearch--state-string
-                                           (car isearch-cmds)))))))))
+      (let ((lax (not (or isearch-nonincremental
+			  (null (car isearch-cmds))
+			  (eq (length isearch-string)
+			      (length (isearch--state-string
+                                       (car isearch-cmds))))))))
 	(funcall
 	 (if isearch-forward #'re-search-forward #'re-search-backward)
 	 (if (functionp isearch-word)
