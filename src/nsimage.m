@@ -33,6 +33,7 @@ GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
 #include "dispextern.h"
 #include "nsterm.h"
 #include "frame.h"
+#include "coding.h"
 
 /* call tracing */
 #if 0
