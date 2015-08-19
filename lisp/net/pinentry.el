@@ -63,6 +63,8 @@
   :type 'integer
   :group 'pinentry)
 
+(defvar pinentry-debug nil)
+(defvar pinentry-debug-buffer nil)
 (defvar pinentry--server-process nil)
 (defvar pinentry--connection-process-list nil)
 
@@ -293,6 +295,13 @@ Assuan protocol."
         (setq pinentry--read-point (point-min))
         (make-local-variable 'pinentry--labels))))
   (with-current-buffer (process-buffer process)
+    (when pinentry-debug
+      (with-current-buffer
+          (or pinentry-debug-buffer
+              (setq pinentry-debug-buffer (generate-new-buffer
+                                           " *pinentry-debug*")))
+        (goto-char (point-max))
+        (insert input)))
     (save-excursion
       (goto-char (point-max))
       (insert input)
