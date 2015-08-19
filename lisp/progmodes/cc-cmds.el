@@ -2853,19 +2853,28 @@ sentence motion in or near comments and multiline strings."
 
 ;; set up electric character functions to work with pending-del,
 ;; (a.k.a. delsel) mode.  All symbols get the t value except
-;; the functions which delete, which gets 'supersede.
+;; the functions which delete, which gets 'supersede, and (from Emacs
+;; 25) `c-electric-brace' and `c-electric-paren' get special handling
+;; so as to work gracefully with `electric-pair-mode'.
 (mapc
  (function
   (lambda (sym)
     (put sym 'delete-selection t)	; for delsel (Emacs)
     (put sym 'pending-delete t)))	; for pending-del (XEmacs)
  '(c-electric-pound
-   c-electric-brace
    c-electric-slash
    c-electric-star
    c-electric-semi&comma
    c-electric-lt-gt
-   c-electric-colon
+   c-electric-colon))
+(mapc
+ (function
+  (lambda (sym)
+    (put sym 'delete-selection (if (fboundp 'delete-selection-uses-region-p)
+				   'delete-selection-uses-region-p
+				 t))
+    (put sym 'pending-delete t)))
+ '(c-electric-brace
    c-electric-paren))
 (put 'c-electric-delete    'delete-selection 'supersede) ; delsel
 (put 'c-electric-delete    'pending-delete   'supersede) ; pending-del
