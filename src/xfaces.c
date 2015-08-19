@@ -797,7 +797,7 @@ load_pixmap (struct frame *f, Lisp_Object name)
 
   if (bitmap_id < 0)
     {
-      add_to_log ("Invalid or undefined bitmap "uLSQM"%s"uRSQM, name);
+      add_to_log ("Invalid or undefined bitmap %qs", name);
       bitmap_id = 0;
     }
   else

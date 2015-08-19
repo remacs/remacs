@@ -9826,16 +9826,18 @@ add_to_log (const char *format, ...)
 void
 vadd_to_log (char const *format, va_list ap)
 {
-  ptrdiff_t nargs = 1 + format_nargs (format);
+  ptrdiff_t form_nargs = format_nargs (format);
+  ptrdiff_t nargs = 1 + form_nargs;
   Lisp_Object args[10];
   eassert (nargs <= ARRAYELTS (args));
-  args[0] = build_string (format);
+  AUTO_STRING (args0, format);
+  args[0] = args0;
   for (ptrdiff_t i = 1; i <= nargs; i++)
     args[i] = va_arg (ap, Lisp_Object);
   Lisp_Object msg = Qnil;
   struct gcpro gcpro1, gcpro2;
-  GCPRO2 (args, msg);
-  gcpro1.nvars = nargs;
+  GCPRO2 (args[1], msg);
+  gcpro1.nvars = form_nargs;
   msg = Fformat (nargs, args);
 
   ptrdiff_t len = SBYTES (msg) + 1;
