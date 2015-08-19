@@ -138,13 +138,18 @@ struct MONITOR_INFO
     DWORD   dwFlags;
 };
 
+#if _WIN32_WINDOWS >= 0x0410
+#define C_CHILDREN_TITLEBAR CCHILDREN_TITLEBAR
+typedef TITLEBARINFO TITLEBAR_INFO;
+#else
 #define C_CHILDREN_TITLEBAR 5
-struct TITLEBAR_INFO
+typedef struct
 {
   DWORD cbSize;
   RECT  rcTitleBar;
   DWORD rgstate[C_CHILDREN_TITLEBAR+1];
-};
+} TITLEBAR_INFO, *PTITLEBAR_INFO;
+#endif
 
 #ifndef CCHDEVICENAME
 #define CCHDEVICENAME 32
@@ -181,7 +186,7 @@ typedef BOOL CALLBACK (* MonitorEnum_Proc)
 typedef BOOL (WINAPI * EnumDisplayMonitors_Proc)
   (IN HDC hdc, IN RECT *rcClip, IN MonitorEnum_Proc fnEnum, IN LPARAM dwData);
 typedef BOOL (WINAPI * GetTitleBarInfo_Proc)
-  (IN HWND hwnd, OUT struct TITLEBAR_INFO* info);
+  (IN HWND hwnd, OUT TITLEBAR_INFO* info);
 
 TrackMouseEvent_Proc track_mouse_event_fn = NULL;
 ImmGetCompositionString_Proc get_composition_string_fn = NULL;
@@ -8064,7 +8069,7 @@ and width values are in pixels.
     {
       if (get_title_bar_info_fn)
 	{
-	  struct TITLEBAR_INFO title_bar;
+	  TITLEBAR_INFO title_bar;
 
 	  title_bar.cbSize = sizeof (title_bar);
 	  title_bar.rcTitleBar.left = title_bar.rcTitleBar.right = 0;
