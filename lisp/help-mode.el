@@ -300,7 +300,7 @@ Commands:
 
 ;;;###autoload
 (defun help-mode-finish ()
-  "Exit Help Mode in the current buffer."
+  "Finalize Help Mode setup in current buffer."
   (when (derived-mode-p 'help-mode)
     (setq buffer-read-only t)
     (help-make-xrefs (current-buffer))))
