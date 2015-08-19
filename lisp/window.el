@@ -3422,6 +3422,134 @@ WINDOW pixelwise."
    (- (window-min-delta window t nil nil nil nil window-resize-pixelwise))
    t nil window-resize-pixelwise))
 
+;;; Window edges
+(defun window-edges (&optional window body absolute pixelwise)
+  "Return a list of the edge distances of WINDOW.
+WINDOW must be a valid window and defaults to the selected one.
+The list returned has the form (LEFT TOP RIGHT BOTTOM).
+
+If the optional argument BODY is nil, this means to return the
+edges corresponding to the total size of WINDOW.  BODY non-nil
+means to return the edges of WINDOW's body (aka text area).  If
+BODY is non-nil, WINDOW must specify a live window.
+
+Optional argument ABSOLUTE nil means to return edges relative to
+the position of WINDOW's native frame.  ABSOLUTE non-nil means to
+return coordinates relative to the origin - the position (0, 0) -
+of FRAME's display.  On non-graphical systems this argument has
+no effect.
+
+Optional argument PIXELWISE nil means to return the coordinates
+in terms of the canonical character width and height of WINDOW's
+frame, rounded if necessary.  PIXELWISE non-nil means to return
+the coordinates in pixels where the values for RIGHT and BOTTOM
+are one more than the actual value of these edges.  Note that if
+ABSOLUTE is non-nil, PIXELWISE is implicily non-nil too."
+  (let* ((window (window-normalize-window window body))
+	 (frame (window-frame window))
+	 (border-width (frame-border-width frame))
+	 (char-width (frame-char-width frame))
+	 (char-height (frame-char-height frame))
+	 (left (if pixelwise
+		   (+ (window-pixel-left window) border-width)
+		 (+ (window-left-column window)
+		    (/ border-width char-width))))
+	 (left-body
+	  (when body
+	    (+ (window-pixel-left window) border-width
+	       (if (eq (car (window-current-scroll-bars window)) 'left)
+		   (window-scroll-bar-width window)
+		 0)
+	       (nth 0 (window-fringes window))
+	       (* (or (nth 0 (window-margins window)) 0) char-width))))
+	 (top (if pixelwise
+		  (+ (window-pixel-top window) border-width)
+		(+ (window-top-line window)
+		   (/ border-width char-height))))
+	 (top-body
+	  (when body
+	    (+ (window-pixel-top window) border-width
+	       (window-header-line-height window))))
+	 (right (+ left (if pixelwise
+			    (window-pixel-width window)
+			  (window-total-width window))))
+	 (right-body (and body (+ left-body (window-body-width window t))))
+	 (bottom (+ top (if pixelwise
+			    (window-pixel-height window)
+			  (window-total-height window))))
+	 (bottom-body (and body (+ top-body (window-body-height window t))))
+	 left-off right-off)
+    (if absolute
+	(let* ((native-edges (frame-edges frame 'native-edges))
+	       (left-off (nth 0 native-edges))
+	       (top-off (nth 1 native-edges)))
+	      (if body
+		  (list (+ left-body left-off) (+ top-body top-off)
+			(+ right-body left-off) (+ bottom-body top-off))
+		(list (+ left left-off) (+ top top-off)
+		      (+ right left-off) (+ bottom top-off))))
+      (if body
+	  (if pixelwise
+	      (list left-body top-body right-body bottom-body)
+	    (list (/ left-body char-width) (/ top-body char-height)
+		  ;; Round up.
+		  (/ (+ right-body char-width -1) char-width)
+		  (/ (+ bottom-body char-height -1) char-height)))
+	(list left top right bottom)))))
+
+(defun window-body-edges (&optional window)
+  "Return a list of the edge coordinates of WINDOW's body.
+The return value is that of `window-edges' called with argument
+BODY non-nil."
+  (window-edges window t))
+(defalias 'window-inside-edges 'window-body-edges)
+
+(defun window-pixel-edges (&optional window)
+  "Return a list of the edge pixel coordinates of WINDOW.
+The return value is that of `window-edges' called with argument
+PIXELWISE non-nil."
+  (window-edges window nil nil t))
+
+(defun window-body-pixel-edges (&optional window)
+  "Return a list of the edge pixel coordinates of WINDOW's body.
+The return value is that of `window-edges' called with arguments
+BODY and PIXELWISE non-nil."
+  (window-edges window t nil t))
+(defalias 'window-inside-pixel-edges 'window-body-pixel-edges)
+
+(defun window-absolute-pixel-edges (&optional window)
+  "Return a list of the edge pixel coordinates of WINDOW.
+The return value is that of `window-edges' called with argument
+ABSOLUTE non-nil."
+  (window-edges window nil t t))
+
+(defun window-absolute-body-pixel-edges (&optional window)
+  "Return a list of the edge pixel coordinates of WINDOW's text area.
+The return value is that of `window-edges' called with arguments
+BODY and ABSOLUTE non-nil."
+  (window-edges window t t t))
+(defalias 'window-inside-absolute-pixel-edges 'window-absolute-body-pixel-edges)
+
+(defun window-absolute-pixel-position (&optional position window)
+  "Return display coordinates of POSITION in WINDOW.
+If the buffer position POSITION is visible in window WINDOW,
+return the display coordinates of the upper/left corner of the
+glyph at POSITION.  The return value is a cons of the X- and
+Y-coordinates of that corner, relative to an origin at (0, 0) of
+WINDOW's display.  Return nil if POSITION is not visible in
+WINDOW.
+
+WINDOW must be a live window and defaults to the selected window.
+POSITION defaults to the value of `window-point' of WINDOW."
+  (let* ((window (window-normalize-window window t))
+	 (pos-in-window
+	  (pos-visible-in-window-p
+	   (or position (window-point window)) window t)))
+    (when pos-in-window
+      (let ((edges (window-absolute-body-pixel-edges window)))
+	(cons (+ (nth 0 edges) (nth 0 pos-in-window))
+	      (+ (nth 1 edges) (nth 1 pos-in-window)))))))
+
 (defun frame-root-window-p (window)
   "Return non-nil if WINDOW is the root window of its frame."
   (eq window (frame-root-window window)))

@@ -1312,6 +1312,24 @@ live frame and defaults to the selected one."
       (setq vertical default-frame-scroll-bars))
     (cons vertical (and horizontal 'bottom))))
 
+(defun frame-edges (&optional frame type)
+  "Return coordinates of FRAME's edges.
+FRAME must be a live frame and defaults to the selected one.  The
+list returned has the form (LEFT TOP RIGHT BOTTOM) where all
+values are in pixels relative to the origin - the position (0, 0)
+- of FRAME's display.  For terminal frames all values are
+relative to LEFT and TOP which are both zero.
+
+Optional argument TYPE specifies the type of the edges.  TYPE
+`outer-edges' means to return the outer edges of FRAME.  TYPE
+`native-edges' (or nil) means to return the native edges of
+FRAME.  TYPE `inner-edges' means to return the inner edges of
+FRAME."
+  (let ((frame (window-normalize-frame frame)))
+    (if (display-graphic-p (frame-parameter nil 'display))
+	(x-frame-edges frame (or type 'native-edges))
+      (list 0 0 (frame-width frame) (frame-height frame)))))
+
 (defun frame-monitor-attributes (&optional frame)
   "Return the attributes of the physical monitor dominating FRAME.
 If FRAME is omitted or nil, describe the currently selected frame.
