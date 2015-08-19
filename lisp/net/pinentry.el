@@ -108,9 +108,18 @@ If local sockets are not supported, this is nil.")
   (setq truncate-lines t
 	buffer-read-only t))
 
-(defun pinentry--prompt (prompt short-prompt query-function &rest query-args)
-  (if (and (string-match "\n" prompt)
-           pinentry-popup-prompt-window)
+(defun pinentry--prompt (labels query-function &rest query-args)
+  (let ((desc (cdr (assq 'desc labels)))
+        (error (cdr (assq 'error labels)))
+        (prompt (cdr (assq 'prompt labels))))
+    (when (string-match "[ \n]*\\'" prompt)
+      (setq prompt (concat
+                    (substring
+                     prompt 0 (match-beginning 0)) " ")))
+    (when error
+      (setq desc (concat "Error: " (propertize error 'face 'error)
+                         "\n" desc)))
+    (if (and desc pinentry-popup-prompt-window)
       (save-window-excursion
         (delete-other-windows)
 	(unless (and pinentry--prompt-buffer
@@ -122,7 +131,7 @@ If local sockets are not supported, this is nil.")
 	  (let ((inhibit-read-only t)
 		buffer-read-only)
 	    (erase-buffer)
-	    (insert prompt))
+	    (insert desc))
 	  (pinentry-prompt-mode)
 	  (goto-char (point-min)))
 	(if (> (window-height)
@@ -135,13 +144,9 @@ If local sockets are not supported, this is nil.")
 	  (if (> (window-height) pinentry-prompt-window-height)
 	      (shrink-window (- (window-height)
                                 pinentry-prompt-window-height))))
-        (prog1 (apply query-function short-prompt query-args)
+        (prog1 (apply query-function prompt query-args)
           (quit-window)))
-    (apply query-function
-           ;; Append a suffix to the prompt, which can be derived from
-           ;; SHORT-PROMPT.
-           (concat prompt (substring short-prompt -2))
-           query-args)))
+      (apply query-function (concat desc "\n" prompt) query-args))))
 
 ;;;###autoload
 (defun pinentry-start ()
@@ -312,29 +317,15 @@ Assuan protocol."
 		 (ignore-errors
 		   (process-send-string process "OK\n")))
                 ("GETPIN"
-                 (let ((prompt
-                        (or (cdr (assq 'desc pinentry--labels))
-                            (cdr (assq 'prompt pinentry--labels))
-                            ""))
-		       (confirm (not (null (assq 'repeat pinentry--labels))))
-                       entry)
-                   (if (setq entry (assq 'error pinentry--labels))
-                       (setq prompt (concat "Error: "
-                                            (propertize
-                                             (copy-sequence (cdr entry))
-                                             'face 'error)
-                                            "\n"
-                                            prompt)))
-                   (if (setq entry (assq 'title pinentry--labels))
-                       (setq prompt (format "[%s] %s"
-                                            (cdr entry) prompt)))
-                   (let (passphrase escaped-passphrase encoded-passphrase)
-                     (unwind-protect
-                         (condition-case nil
-                             (progn
-                               (setq passphrase
-				     (pinentry--prompt prompt "Password: "
-                                                       #'read-passwd confirm))
+                 (let ((confirm (not (null (assq 'repeat pinentry--labels))))
+                       passphrase escaped-passphrase encoded-passphrase)
+                   (unwind-protect
+                       (condition-case err
+                           (progn
+                             (setq passphrase
+                                   (pinentry--prompt
+                                    pinentry--labels
+                                    #'read-passwd confirm))
                                (setq escaped-passphrase
                                      (pinentry--escape-string
                                       passphrase))
@@ -345,7 +336,8 @@ Assuan protocol."
 				 (pinentry--send-data
 				  process encoded-passphrase)
 				 (process-send-string process "OK\n")))
-                           (error
+                         (error
+                          (message "GETPIN error %S" err)
 			    (ignore-errors
 			      (pinentry--send-error
 			       process
@@ -356,59 +348,55 @@ Assuan protocol."
                            (clear-string escaped-passphrase))
                        (if encoded-passphrase
                            (clear-string encoded-passphrase))))
-                   (setq pinentry--labels nil)))
+                   (setq pinentry--labels nil))
                 ("CONFIRM"
                  (let ((prompt
-                        (or (cdr (assq 'desc pinentry--labels))
-                            ""))
+                        (or (cdr (assq 'prompt pinentry--labels))
+                            "Confirm? "))
                        (buttons
-                        (pinentry--labels-to-shortcuts
-                         (list (cdr (assq 'ok pinentry--labels))
-                               (cdr (assq 'notok pinentry--labels))
-			       (cdr (assq 'cancel pinentry--labels)))))
+                        (delq nil
+                              (pinentry--labels-to-shortcuts
+                               (list (cdr (assq 'ok pinentry--labels))
+                                     (cdr (assq 'notok pinentry--labels))
+                                     (cdr (assq 'cancel pinentry--labels))))))
                        entry)
-                   (if (setq entry (assq 'error pinentry--labels))
-                       (setq prompt (concat "Error: "
-                                            (propertize
-                                             (copy-sequence (cdr entry))
-                                             'face 'error)
-                                            "\n"
-                                            prompt)))
-                   (if (setq entry (assq 'title pinentry--labels))
-                       (setq prompt (format "[%s] %s"
-                                            (cdr entry) prompt)))
-                   (if (remq nil buttons)
+                   (if buttons
                        (progn
                          (setq prompt
                                (concat prompt " ("
-                                       (mapconcat #'cdr (remq nil buttons)
+                                       (mapconcat #'cdr buttons
                                                   ", ")
                                        ") "))
+                         (if (setq entry (assq 'prompt pinentry--labels))
+                             (setcdr entry prompt)
+                           (setq pinentry--labels (cons (cons 'prompt prompt)
+                                                        pinentry--labels)))
                          (condition-case nil
-                             (let ((result (read-char prompt)))
+                             (let ((result (pinentry--prompt pinentry--labels
+                                                             #'read-char)))
                                (if (eq result (caar buttons))
-				   (ignore-errors
-				     (process-send-string process "OK\n"))
+                                   (ignore-errors
+                                     (process-send-string process "OK\n"))
                                  (if (eq result (car (nth 1 buttons)))
-				     (ignore-errors
-				       (pinentry--send-error
-					process
-					pinentry--error-not-confirmed))
-				   (ignore-errors
-				     (pinentry--send-error
-				      process
-				      pinentry--error-cancelled)))))
+                                     (ignore-errors
+                                       (pinentry--send-error
+                                        process
+                                        pinentry--error-not-confirmed))
+                                   (ignore-errors
+                                     (pinentry--send-error
+                                      process
+                                      pinentry--error-cancelled)))))
                            (error
-			    (ignore-errors
+                            (ignore-errors
 			      (pinentry--send-error
 			       process
 			       pinentry--error-cancelled)))))
-                     (if (string-match "[ \n]*\\'" prompt)
-                         (setq prompt (concat
-                                       (substring
-                                        prompt 0 (match-beginning 0)) " ")))
+                     (if (setq entry (assq 'prompt pinentry--labels))
+                         (setcdr entry prompt)
+                       (setq pinentry--labels (cons (cons 'prompt prompt)
+                                                    pinentry--labels)))
                      (if (condition-case nil
-                             (pinentry--prompt prompt "Confirm? " #'y-or-n-p)
+                             (pinentry--prompt pinentry--labels #'y-or-n-p)
                            (quit))
 			 (ignore-errors
 			   (process-send-string process "OK\n"))
