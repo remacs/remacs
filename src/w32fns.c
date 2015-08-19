@@ -9242,6 +9242,16 @@ Default is nil.
 This variable has effect only on NT family of systems, not on Windows 9X.  */);
   w32_use_fallback_wm_chars_method = 0;
 
+  DEFVAR_BOOL ("w32-disable-new-uniscribe-apis",
+	       w32_disable_new_uniscribe_apis,
+	       doc: /* Non-nil means don't use new Uniscribe APIs.
+The new APIs are used to access OTF features supported by fonts.
+This is intended only for debugging of the new Uniscribe-related code.
+Default is nil.
+
+This variable has effect only on Windows Vista and later.  */);
+  w32_disable_new_uniscribe_apis = 0;
+
 #if 0 /* TODO: Port to W32 */
   defsubr (&Sx_change_window_property);
   defsubr (&Sx_delete_window_property);
