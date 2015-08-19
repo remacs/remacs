@@ -3822,7 +3822,7 @@ specifiers, as follows:
 
   %<flags><width><precision>character
 
-where flags is [+ #-0]+, width is [0-9]+, and precision is .[0-9]+
+where flags is [+ #-0q]+, width is [0-9]+, and precision is .[0-9]+
 
 The + flag character inserts a + before any positive number, while a
 space inserts a space before any positive number; these flags only
@@ -3834,6 +3834,9 @@ The # flag means to use an alternate display form for %o, %x, %X, %e,
 \"0\"; for %x and %X, it prefixes the result with \"0x\" or \"0X\";
 for %e, %f, and %g, it causes a decimal point to be included even if
 the precision is zero.
+
+The q flag means to quote the printed representation as per
+‘text-quoting-style’.  E.g., "%qs" is equivalent to "‘%s’".
 
 The width specifier supplies a lower limit for the length of the
 printed representation.  The padding, if any, normally goes on the
@@ -3973,11 +3976,12 @@ usage: (format STRING &rest OBJECTS)  */)
 	     digits to print after the '.' for floats, or the max.
 	     number of chars to print from a string.  */
 
-	  bool minus_flag = 0;
-	  bool  plus_flag = 0;
-	  bool space_flag = 0;
-	  bool sharp_flag = 0;
-	  bool  zero_flag = 0;
+	  bool minus_flag = false;
+	  bool  plus_flag = false;
+	  bool space_flag = false;
+	  bool sharp_flag = false;
+	  bool  zero_flag = false;
+	  bool quote_flag = false;
 	  ptrdiff_t field_width;
 	  bool precision_given;
 	  uintmax_t precision = UINTMAX_MAX;
@@ -3988,11 +3992,12 @@ usage: (format STRING &rest OBJECTS)  */)
 	    {
 	      switch (*++format)
 		{
-		case '-': minus_flag = 1; continue;
-		case '+':  plus_flag = 1; continue;
-		case ' ': space_flag = 1; continue;
-		case '#': sharp_flag = 1; continue;
-		case '0':  zero_flag = 1; continue;
+		case '-': minus_flag = true; continue;
+		case '+':  plus_flag = true; continue;
+		case ' ': space_flag = true; continue;
+		case '#': sharp_flag = true; continue;
+		case '0':  zero_flag = true; continue;
+		case 'q': quote_flag = true; continue;
 		}
 	      break;
 	    }
@@ -4121,6 +4126,20 @@ usage: (format STRING &rest OBJECTS)  */)
 	      if (convbytes && multibyte && ! STRING_MULTIBYTE (args[n]))
 		convbytes = count_size_as_multibyte (SDATA (args[n]), nbytes);
 
+	      if (quote_flag)
+		{
+		  convbytes += 2;
+		  if (quoting_style == CURVE_QUOTING_STYLE)
+		    {
+		      if (!multibyte)
+			{
+			  multibyte = true;
+			  goto retry;
+			}
+		      convbytes += 4;
+		    }
+		}
+
 	      padding = width < field_width ? field_width - width : 0;
 
 	      if (max_bufsize - padding <= convbytes)
@@ -4128,6 +4147,27 @@ usage: (format STRING &rest OBJECTS)  */)
 	      convbytes += padding;
 	      if (convbytes <= buf + bufsize - p)
 		{
+
+		  if (quote_flag)
+		    {
+		      switch (quoting_style)
+			{
+			case CURVE_QUOTING_STYLE:
+			  memcpy (p, uLSQM, 3);
+			  p += 3;
+			  break;
+
+			case GRAVE_QUOTING_STYLE:
+			  *p++ = '`';
+			  break;
+
+			case STRAIGHT_QUOTING_STYLE:
+			  *p++ = '\'';
+			  break;
+			}
+		      nchars++;
+		    }
+
 		  if (! minus_flag)
 		    {
 		      memset (p, ' ', padding);
@@ -4155,6 +4195,22 @@ usage: (format STRING &rest OBJECTS)  */)
 		      memset (p, ' ', padding);
 		      p += padding;
 		      nchars += padding;
+		    }
+
+		  if (quote_flag)
+		    {
+		      switch (quoting_style)
+			{
+			case CURVE_QUOTING_STYLE:
+			  memcpy (p, uRSQM, 3);
+			  p += 3;
+			  break;
+
+			default:
+			  *p++ = '\'';
+			  break;
+			}
+		      nchars++;
 		    }
 
 		  /* If this argument has text properties, record where
