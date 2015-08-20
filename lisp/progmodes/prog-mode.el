@@ -133,26 +133,41 @@ Each element looks like (SYMBOL . CHARACTER), where the symbol
 matching SYMBOL (a string, not a regexp) will be shown as
 CHARACTER instead.")
 
+(defun prettify-symbols-default-compose-p (start end _match)
+  "Return true iff the symbol MATCH should be composed.
+The symbol starts at position START and ends at position END.
+This is default `prettify-symbols-compose-predicate' which is
+suitable for most programming languages such as C or Lisp."
+  ;; Check that the chars should really be composed into a symbol.
+  (let* ((syntaxes-beg (if (memq (char-syntax (char-after start)) '(?w ?_))
+                           '(?w ?_) '(?. ?\\)))
+         (syntaxes-end (if (memq (char-syntax (char-before end)) '(?w ?_))
+                           '(?w ?_) '(?. ?\\))))
+    (not (or (memq (char-syntax (or (char-before start) ?\s)) syntaxes-beg)
+             (memq (char-syntax (or (char-after end) ?\s)) syntaxes-end)
+             (nth 8 (syntax-ppss))))))
+
+(defvar-local prettify-symbols-compose-predicate
+  #'prettify-symbols-default-compose-p
+  "A predicate deciding if the currently matched symbol is to be composed.
+The matched symbol is the car of one entry in `prettify-symbols-alist'.
+The predicate receives the match's start and end position as well
+as the match-string as arguments.")
+
 (defun prettify-symbols--compose-symbol (alist)
   "Compose a sequence of characters into a symbol.
 Regexp match data 0 points to the chars."
   ;; Check that the chars should really be composed into a symbol.
-  (let* ((start (match-beginning 0))
-	 (end (match-end 0))
-	 (syntaxes-beg (if (memq (char-syntax (char-after start)) '(?w ?_))
-                           '(?w ?_) '(?. ?\\)))
-	 (syntaxes-end (if (memq (char-syntax (char-before end)) '(?w ?_))
-		       '(?w ?_) '(?. ?\\)))
-	 match)
-    (if (or (memq (char-syntax (or (char-before start) ?\s)) syntaxes-beg)
-	    (memq (char-syntax (or (char-after end) ?\s)) syntaxes-end)
-            ;; syntax-ppss could modify the match data (bug#14595)
-            (progn (setq match (match-string 0)) (nth 8 (syntax-ppss))))
-	;; No composition for you.  Let's actually remove any composition
-	;; we may have added earlier and which is now incorrect.
-	(remove-text-properties start end '(composition))
-      ;; That's a symbol alright, so add the composition.
-      (compose-region start end (cdr (assoc match alist)))))
+  (let ((start (match-beginning 0))
+        (end (match-end 0))
+        (match (match-string 0)))
+    (if (funcall prettify-symbols-compose-predicate start end match)
+        ;; That's a symbol alright, so add the composition.
+        (compose-region start end (cdr (assoc match alist)))
+      ;; No composition for you.  Let's actually remove any
+      ;; composition we may have added earlier and which is now
+      ;; incorrect.
+      (remove-text-properties start end '(composition))))
   ;; Return nil because we're not adding any face property.
   nil)
 
