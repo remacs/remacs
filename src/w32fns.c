@@ -8065,24 +8065,26 @@ and width values are in pixels.
   external_border_width = window.cxWindowBorders;
   external_border_height = window.cyWindowBorders;
   /* Title bar.  */
-  if ((window.dwStyle & WS_CAPTION) == WS_CAPTION)
+  if (get_title_bar_info_fn)
     {
-      if (get_title_bar_info_fn)
-	{
-	  TITLEBAR_INFO title_bar;
+      TITLEBAR_INFO title_bar;
 
-	  title_bar.cbSize = sizeof (title_bar);
-	  title_bar.rcTitleBar.left = title_bar.rcTitleBar.right = 0;
-	  title_bar.rcTitleBar.top = title_bar.rcTitleBar.bottom = 0;
-	  get_title_bar_info_fn (FRAME_W32_WINDOW (f), &title_bar);
-          title_bar_width
+      title_bar.cbSize = sizeof (title_bar);
+      title_bar.rcTitleBar.left = title_bar.rcTitleBar.right = 0;
+      title_bar.rcTitleBar.top = title_bar.rcTitleBar.bottom = 0;
+      for (int i = 0; i < 6; i++)
+	title_bar.rgstate[i] = 0;
+      if (get_title_bar_info_fn (FRAME_W32_WINDOW (f), &title_bar)
+	  && !(title_bar.rgstate[0] & 0x00008001))
+	{
+	  title_bar_width
 	    = title_bar.rcTitleBar.right - title_bar.rcTitleBar.left;
 	  title_bar_height
 	    = title_bar.rcTitleBar.bottom - title_bar.rcTitleBar.top;
 	}
-      else
-	title_bar_height = GetSystemMetrics (SM_CYCAPTION);
     }
+  else if ((window.dwStyle & WS_CAPTION) == WS_CAPTION)
+    title_bar_height = GetSystemMetrics (SM_CYCAPTION);
   /* Menu bar.  */
   menu_bar.cbSize = sizeof (menu_bar);
   menu_bar.rcBar.right = menu_bar.rcBar.left = 0;
