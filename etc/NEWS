@@ -1123,6 +1123,29 @@ Horizontal scroll bars are turned off by default.
     `scroll-bar-height'.
 
 +++
+** New functions `x-frame-geometry' and `frame-edges' give access to a
+frame's geometry.
+
++++
+** New functions `x-mouse-absolute-pixel-position' and
+`x-set-mouse-absolute-pixel-position' get/set screen coordinates of the
+mouse cursor.
+
++++
+** The function `window-edges' now accepts three additional arguments to
+retrieve body, absolute and pixel edges of the window.
+
++++
+** The functions `window-inside-edges', `window-inside-pixel-edges' and
+`window-inside-absolute-pixel-edges' have been renamed to respectively
+`window-body-edges', `window-body-pixel-edges' and
+`window-absolute-body-pixel-edges'.  The old names are kept as aliases.
+
++++
+** New function `window-absolute-pixel-position' to get the screen
+coordinates of a visible buffer position.
+
++++
 ** The height of a frame's menu and tool bar are no longer counted in the
 frame's text height.  This means that the text height stands only for
 the height of the frame's root window plus that of the echo area (if
