@@ -3706,9 +3706,9 @@ example:
 	(widget-value-set ',(widget-get widget :parent) color)
 	(let* ((buf (get-buffer "*Colors*"))
 	       (win (get-buffer-window buf 0)))
-	  (bury-buffer buf)
-	  (and win (> (length (window-list)) 1)
-	       (delete-window win)))
+	  (if win
+	      (quit-window nil win)
+	    (bury-buffer buf)))
 	(pop-to-buffer ,(current-buffer))))))
 
 (defun widget-color-sample-face-get (widget)
