@@ -1205,6 +1205,7 @@ Entering SliTeX mode runs the hook `text-mode-hook', then the hook
 
 (defvar tildify-space-string)
 (defvar tildify-foreach-region-function)
+(defvar tex--prettify-symbols-alist)
 
 (defun tex-common-initialization ()
   ;; Regexp isearch should accept newline and formfeed as whitespace.
@@ -1246,7 +1247,7 @@ Entering SliTeX mode runs the hook `text-mode-hook', then the hook
   (setq-local facemenu-remove-face-function t)
   (setq-local font-lock-defaults
 	      '((tex-font-lock-keywords tex-font-lock-keywords-1
-	         tex-font-lock-keywords-2 tex-font-lock-keywords-3)
+                                        tex-font-lock-keywords-2 tex-font-lock-keywords-3)
 		nil nil nil nil
 		;; Who ever uses that anyway ???
 		(font-lock-mark-block-function . mark-paragraph)
@@ -1254,6 +1255,8 @@ Entering SliTeX mode runs the hook `text-mode-hook', then the hook
 		 . tex-font-lock-syntactic-face-function)
 		(font-lock-unfontify-region-function
 		 . tex-font-lock-unfontify-region)))
+  (setq-local prettify-symbols-alist tex--prettify-symbols-alist)
+  (setq-local prettify-symbols-compose-predicate #'tex--prettify-symbols-compose-p)
   (setq-local syntax-propertize-function
 	      (syntax-propertize-rules latex-syntax-propertize-rules))
   ;; TABs in verbatim environments don't do what you think.
@@ -2945,7 +2948,7 @@ There might be text before point."
 
 ;;; Prettify Symbols Support
 
-(defvar tex-prettify-symbols-alist
+(defvar tex--prettify-symbols-alist
   '( ;; Lowercase Greek letters.
     ("\\alpha" . ?α)
     ("\\beta" . ?β)
@@ -3056,6 +3059,8 @@ There might be text before point."
     ("\\centerdot" . ?·)
     ("\\checkmark" . ?✓)
     ("\\chi" . ?χ)
+    ("\\cdot" . ?⋅)
+    ("\\cdots" . ?⋯)
     ("\\circ" . ?∘)
     ("\\circeq" . ?≗)
     ("\\circlearrowleft" . ?↺)
@@ -3397,6 +3402,17 @@ There might be text before point."
     ("\\textcircledP" . ?℗)
     ("\\textreferencemark" . ?※))
   "A `prettify-symbols-alist' usable for (La)TeX modes.")
+
+(defun tex--prettify-symbols-compose-p (start end _match)
+  (let* ((after-char (char-after end))
+         (after-syntax  (char-syntax after-char)))
+    (not (or
+          ;; Don't compose \alpha@foo.
+          (eq after-syntax ?_)
+          ;; The \alpha in \alpha2 may be composed but of course \alphax may not.
+          (and (eq after-syntax ?w)
+               (or (< after-char ?0)
+                   (> after-char ?9)))))))
 
 (run-hooks 'tex-mode-load-hook)
 
