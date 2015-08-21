@@ -1725,6 +1725,16 @@ function does not alter the list of most recently selected windows,
 nor the buffer list.
 @end defun
 
+@cindex window use time
+@cindex use time of window
+@defun window-use-time &optional window
+This functions returns the @dfn{use time} of window @var{window}.
+@var{window} must be a live window and defaults to the selected one.
+The window with the lowest use time is the least recently selected one.
+The window with the highest use time is the most recently selected one.
+@end defun
+
+
 @node Cyclic Window Ordering
 @section Cyclic Ordering of Windows
 @cindex cyclic ordering of windows
