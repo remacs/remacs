@@ -615,7 +615,7 @@ See `inferior-emacs-lisp-mode' for details."
       (with-current-buffer (get-buffer-create "*ielm*")
         (unless (zerop (buffer-size)) (setq old-point (point)))
         (inferior-emacs-lisp-mode)))
-    (switch-to-buffer "*ielm*")
+    (pop-to-buffer-same-window "*ielm*")
     (when old-point (push-mark old-point))))
 
 (provide 'ielm)
