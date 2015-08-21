@@ -3664,7 +3664,7 @@ Build a menu of the possible matches."
 (defun info--prettify-description (desc)
   (if (stringp desc)
       (with-temp-buffer
-	(insert desc)
+	(insert (substitute-command-keys desc))
 	(if (equal ?. (char-before))
 	    (delete-char -1))
 	(goto-char (point-min))
