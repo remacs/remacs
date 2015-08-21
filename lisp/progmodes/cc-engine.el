@@ -4616,7 +4616,7 @@ comment at the start of cc-engine.el for more info."
 (defun c-literal-type (range)
   "Convenience function that given the result of `c-literal-limits',
 returns nil or the type of literal that the range surrounds, one
-of the symbols 'c, 'c++ or 'string.  It's much faster than using
+of the symbols `c', `c++' or `string'.  It's much faster than using
 `c-in-literal' and is intended to be used when you need both the
 type of a literal and its limits.
 

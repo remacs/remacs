@@ -1665,7 +1665,7 @@ Display mechanism using tooltip for a list of possible completions.")
 	(when (>= (oref obj typing-count) 5)
 	  (oset obj mode 'standard)
 	  (setq mode 'standard)
-	  (message "Resetting inline-mode to 'standard'."))
+	  (message "Resetting inline-mode to ‘standard’."))
 	(when (and (> numcompl max-tags)
 		   (< (oref obj typing-count) 2))
 	  ;; Discretely hint at completion availability.

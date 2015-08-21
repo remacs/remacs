@@ -235,7 +235,7 @@ which apply for this feed only, overriding the value of
   'intern
   "Method for retrieving news from the web, either `intern' or `extern'.
 Default value `intern' uses Emacs' built-in asynchronous download
-capabilities ('url-retrieve').  If set to `extern' the external
+capabilities (`url-retrieve').  If set to `extern' the external
 program wget is used, see `newsticker-wget-name'."
   :type '(choice :tag "Method"
                  (const :tag "Intern" intern)
@@ -332,9 +332,9 @@ deleted at the next retrieval."
 This is an alist of the form (FEED-NAME PATTERN-LIST).  I.e. each
 element consists of a FEED-NAME a PATTERN-LIST.  Each element of
 the pattern-list has the form (AGE TITLE-OR-DESCRIPTION REGEXP).
-AGE must be one of the symbols 'old or 'immortal.
-TITLE-OR-DESCRIPTION must be on of the symbols 'title,
-'description, or 'all.  REGEXP is a regular expression, i.e. a
+AGE must be one of the symbols `old' or `immortal'.
+TITLE-OR-DESCRIPTION must be one of the symbols `title',
+`description', or `all'.  REGEXP is a regular expression, i.e., a
 string.
 
 This filter is checked after a new headline has been retrieved.

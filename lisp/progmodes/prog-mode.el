@@ -116,7 +116,7 @@ This function can be used instead of `widen' in any function used
 by the indentation engine to make it respect the value
 `prog-indentation-context'.
 
-This function (like 'widen') is useful inside a
+This function (like `widen') is useful inside a
 `save-restriction' to make the indentation correctly work when
 narrowing is in effect."
   (let ((chunk (cadr prog-indentation-context)))

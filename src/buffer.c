@@ -5540,12 +5540,12 @@ This is the same as (default-value 'indicate-buffer-boundaries).  */);
   DEFVAR_BUFFER_DEFAULTS ("default-fringe-indicator-alist",
 			  fringe_indicator_alist,
 			  doc: /* Default value of `fringe-indicator-alist' for buffers that don't override it.
-This is the same as (default-value 'fringe-indicator-alist').  */);
+This is the same as (default-value 'fringe-indicator-alist).  */);
 
   DEFVAR_BUFFER_DEFAULTS ("default-fringe-cursor-alist",
 			  fringe_cursor_alist,
 			  doc: /* Default value of `fringe-cursor-alist' for buffers that don't override it.
-This is the same as (default-value 'fringe-cursor-alist').  */);
+This is the same as (default-value 'fringe-cursor-alist).  */);
 
   DEFVAR_BUFFER_DEFAULTS ("default-scroll-up-aggressively",
 			  scroll_up_aggressively,

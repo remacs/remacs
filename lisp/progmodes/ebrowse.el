@@ -2015,7 +2015,7 @@ COLLAPSE non-nil means collapse the branch."
 (defun ebrowse-electric-list-looper (state condition)
   "Prevent cursor from moving beyond the buffer end.
 Don't let it move into the title lines.
-See 'Electric-command-loop' for a description of STATE and CONDITION."
+See `Electric-command-loop' for a description of STATE and CONDITION."
   (cond ((and condition
 	      (not (memq (car condition)
 			 '(buffer-read-only end-of-buffer

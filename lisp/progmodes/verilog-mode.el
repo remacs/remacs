@@ -346,10 +346,10 @@ wherever possible, since it is slow."
 
 (eval-when-compile
   (defun verilog-regexp-words (a)
-    "Call 'regexp-opt' with word delimiters for the words A."
+    "Call `regexp-opt' with word delimiters for the words A."
     (concat "\\<" (verilog-regexp-opt a t) "\\>")))
 (defun verilog-regexp-words (a)
-  "Call 'regexp-opt' with word delimiters for the words A."
+  "Call `regexp-opt' with word delimiters for the words A."
   ;; The FAQ references this function, so user LISP sometimes calls it
   (concat "\\<" (verilog-regexp-opt a t) "\\>"))
 
@@ -541,9 +541,9 @@ entry \"Fontify Buffer\").  XEmacs: turn off and on font locking."
 
 (defcustom verilog-auto-lineup 'declarations
   "Type of statements to lineup across multiple lines.
-If 'all' is selected, then all line ups described below are done.
+If `all' is selected, then all line ups described below are done.
 
-If 'declarations', then just declarations are lined up with any
+If `declarations', then just declarations are lined up with any
 preceding declarations, taking into account widths and the like,
 so or example the code:
 	reg [31:0] a;
@@ -552,7 +552,7 @@ would become
 	reg [31:0] a;
 	reg        b;
 
-If 'assignment', then assignments are lined up with any preceding
+If `assignment', then assignments are lined up with any preceding
 assignments, so for example the code
 	a_long_variable <= b + c;
 	d = e + f;
@@ -1054,7 +1054,7 @@ the MSB or LSB of a signal inside an AUTORESET.
 
 If nil, AUTORESET uses \"0\" as the constant.
 
-If 'unbased', AUTORESET used the unbased unsized literal \"'0\"
+If `unbased', AUTORESET used the unbased unsized literal \"'0\"
 as the constant. This setting is strongly recommended for
 SystemVerilog designs."
   :type 'boolean
@@ -1070,10 +1070,10 @@ SystemVerilog designs."
 
 (defcustom verilog-auto-arg-format 'packed
   "Formatting to use for AUTOARG signal names.
-If 'packed', then as many inputs and outputs that fit within
+If `packed', then as many inputs and outputs that fit within
 `fill-column' will be put onto one line.
 
-If 'single', then a single input or output will be put onto each
+If `single', then a single input or output will be put onto each
 line."
   :version "25.1"
   :type '(radio (const :tag "Line up Assignments and Declarations" packed)
@@ -1172,7 +1172,7 @@ was used for that port declaration.  This setting is suggested
 only for debugging use, as regular use may cause a large numbers
 of merge conflicts.
 
-If 'lhs', the comment will show the left hand side of the
+If `lhs', the comment will show the left hand side of the
 AUTO_TEMPLATE rule that is matched.  This is less precise than
 numbering (t) when multiple rules have the same pin name, but
 won't merge conflict."

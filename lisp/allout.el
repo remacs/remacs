@@ -1330,11 +1330,11 @@ cdr is the new value: '(some-var some-value)'.  The pairs can actually be
 triples, where the third element qualifies the disposition of the setting,
 as described further below.
 
-If the optional third element is the symbol 'extend, then the new value
+If the optional third element is the symbol `extend', then the new value
 created by `cons'ing the second element of the pair onto the front of the
 existing value.
 
-If the optional third element is the symbol 'append, then the new value is
+If the optional third element is the symbol `append', then the new value is
 extended from the existing one by `append'ing a list containing the second
 element of the pair onto the end of the existing value.
 
@@ -1838,7 +1838,7 @@ M-x outlineify-sticky       Activate outline mode for current buffer,
                             buffer with name derived from derived from that
                             of current buffer -- \"*BUFFERNAME exposed*\".
 \\[allout-flatten-exposed-to-buffer] `allout-flatten-exposed-to-buffer'
-                            Like above 'copy-exposed', but convert topic
+                            Like above `copy-exposed', but convert topic
                             prefixes to section.subsection... numeric
                             format.
 \\[customize-variable] allout-auto-activation

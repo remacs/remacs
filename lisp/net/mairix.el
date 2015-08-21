@@ -762,7 +762,7 @@ VALUES may contain values for editable fields from current article."
     (define-key map [(d)] 'mairix-select-delete)
     (define-key map [(s)] 'mairix-select-save)
     map)
-  "'mairix-searches-mode' keymap.")
+  "`mairix-searches-mode' keymap.")
 
 (defvar mairix-searches-mode-font-lock-keywords
   '(("^\\([0-9]+\\)"

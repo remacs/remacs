@@ -2326,7 +2326,7 @@ If the text between BEG and END is equal to a correction suggested by
 Ispell, after transposing two adjacent characters, correct the text,
 and return t.
 
-The third arg POSS is either the symbol 'doublon' or a list of
+The third arg POSS is either the symbol `doublon' or a list of
 possible corrections as returned by `ispell-parse-output'.
 
 This function is meant to be added to `flyspell-incorrect-hook'."
@@ -2356,7 +2356,7 @@ If the text between BEG and END is equal to a correction suggested by
 Ispell, after removing a pair of doubled characters, correct the text,
 and return t.
 
-The third arg POSS is either the symbol 'doublon' or a list of
+The third arg POSS is either the symbol `doublon' or a list of
 possible corrections as returned by `ispell-parse-output'.
 
 This function is meant to be added to `flyspell-incorrect-hook'."

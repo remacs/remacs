@@ -57,7 +57,7 @@
   :group 'cpp)
 
 (define-widget 'cpp-face 'lazy
-  "Either a face or the special symbol 'invisible'."
+  "Either a face or the special symbol `invisible'."
   :type '(choice (const invisible) (face)))
 
 (defcustom cpp-known-face 'invisible

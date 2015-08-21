@@ -5596,18 +5596,18 @@ windows can get as small as `window-safe-min-height' and
 (defun display-buffer-record-window (type window buffer)
   "Record information for window used by `display-buffer'.
 TYPE specifies the type of the calling operation and must be one
-of the symbols 'reuse (when WINDOW existed already and was
-reused for displaying BUFFER), 'window (when WINDOW was created
-on an already existing frame), or 'frame (when WINDOW was
+of the symbols `reuse' (when WINDOW existed already and was
+reused for displaying BUFFER), `window' (when WINDOW was created
+on an already existing frame), or `frame' (when WINDOW was
 created on a new frame).  WINDOW is the window used for or created
 by the `display-buffer' routines.  BUFFER is the buffer that
 shall be displayed.
 
 This function installs or updates the quit-restore parameter of
 WINDOW.  The quit-restore parameter is a list of four elements:
-The first element is one of the symbols 'window, 'frame, 'same or
-'other.  The second element is either one of the symbols 'window
-or 'frame or a list whose elements are the buffer previously
+The first element is one of the symbols `window', `frame', `same' or
+`other'.  The second element is either one of the symbols `window'
+or `frame' or a list whose elements are the buffer previously
 shown in the window, that buffer's window start and window point,
 and the window's height.  The third element is the window
 selected at the time the parameter was created.  The fourth

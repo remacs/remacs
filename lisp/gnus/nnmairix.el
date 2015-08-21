@@ -311,7 +311,7 @@ The default chooses the largest window in the current frame."
 The default of this variable is t.  If set to 'ask, the
 user will be asked if the flags should be propagated when the
 group is closed.  If set to nil, the user will have to manually
-call 'nnmairix-propagate-marks'."
+call `nnmairix-propagate-marks'."
   :version "23.1"
   :type '(choice (const :tag "always" t)
 		 (const :tag "ask" ask)

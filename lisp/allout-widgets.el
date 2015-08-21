@@ -2372,7 +2372,7 @@ The elements of LIST are not copied, just the list structure itself."
     (car list)))
 ;;;_  . allout-widgets-count-buttons-in-region (start end)
 (defun allout-widgets-count-buttons-in-region (start end)
-  "Debugging/diagnostic tool - count overlays with 'button' property in region."
+  "Debugging/diagnostic tool - count overlays with `button' property in region."
   (interactive "r")
   (setq start (or start (point-min))
         end (or end (point-max)))

@@ -444,11 +444,11 @@ Major differences between this mode and real vi :
 * Extensions
   - Some standard (or modified) Emacs commands were integrated, such as
     incremental search, query replace, transpose objects, and keyboard macros.
-  - In command state, ^X links to the 'ctl-x-map', and ESC can be linked to
+  - In command state, ^X links to the `ctl-x-map', and ESC can be linked to
     esc-map or set undefined.  These can give you the full power of Emacs.
   - See vi-com-map for those keys that are extensions to standard vi, e.g.
     `vi-name-last-change-or-macro', `vi-verify-spelling', `vi-locate-def',
-    `vi-mark-region', and 'vi-quote-words'.  Some of them are quite handy.
+    `vi-mark-region', and `vi-quote-words'.  Some of them are quite handy.
   - Use \\[vi-switch-mode] to switch among different modes quickly.
 
 Syntax table and abbrevs while in vi mode remain as they were in Emacs."

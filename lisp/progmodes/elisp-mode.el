@@ -624,7 +624,7 @@ It can be quoted, or be inside a quoted form."
 
 (defun elisp--xref-make-xref (type symbol file &optional summary)
   "Return an xref for TYPE SYMBOL in FILE.
-TYPE must be a type in 'find-function-regexp-alist' (use nil for
+TYPE must be a type in `find-function-regexp-alist' (use nil for
 'defun).  If SUMMARY is non-nil, use it for the summary;
 otherwise build the summary from TYPE and SYMBOL."
   (xref-make (or summary
