@@ -8002,7 +8002,7 @@ This is a direct interface to the Windows API FindWindow function.  */)
   return Qt;
 }
 
-DEFUN ("x-frame-geometry", Fx_frame_geometry, Sx_frame_geometry, 0, 1, 0,
+DEFUN ("w32-frame-geometry", Fw32_frame_geometry, Sw32_frame_geometry, 0, 1, 0,
        doc: /* Return geometric attributes of FRAME.
 FRAME must be a live frame and defaults to the selected one.  The return
 value is an association list of the attributes listed below.  All height
@@ -8138,7 +8138,7 @@ and width values are in pixels.
 		       make_number (internal_border_width)));
 }
 
-DEFUN ("x-frame-edges", Fx_frame_edges, Sx_frame_edges, 0, 2, 0,
+DEFUN ("w32-frame-edges", Fw32_frame_edges, Sw32_frame_edges, 0, 2, 0,
        doc: /* Return edge coordinates of FRAME.
 FRAME must be a live frame and defaults to the selected one.  The return
 value is a list of the form (LEFT, TOP, RIGHT, BOTTOM).  All values are
@@ -8213,8 +8213,8 @@ menu bar or tool bar of FRAME.  */)
     }
 }
 
-DEFUN ("x-mouse-absolute-pixel-position", Fx_mouse_absolute_pixel_position,
-       Sx_mouse_absolute_pixel_position, 0, 0, 0,
+DEFUN ("w32-mouse-absolute-pixel-position", Fw32_mouse_absolute_pixel_position,
+       Sw32_mouse_absolute_pixel_position, 0, 0, 0,
        doc: /* Return absolute position of mouse cursor in pixels.
 The position is returned as a cons cell (X . Y) of the coordinates of
 the mouse cursor position in pixels relative to a position (0, 0) of the
@@ -8230,8 +8230,8 @@ selected frame's display.  */)
   return Fcons (make_number (pt.x), make_number (pt.y));
 }
 
-DEFUN ("x-set-mouse-absolute-pixel-position", Fx_set_mouse_absolute_pixel_position,
-       Sx_set_mouse_absolute_pixel_position, 2, 2, 0,
+DEFUN ("w32-set-mouse-absolute-pixel-position", Fw32_set_mouse_absolute_pixel_position,
+       Sw32_set_mouse_absolute_pixel_position, 2, 2, 0,
        doc: /* Move mouse pointer to absolute pixel position (X, Y).
 The coordinates X and Y are interpreted in pixels relative to a position
 (0, 0) of the selected frame's display.  */)
@@ -9280,10 +9280,10 @@ This variable has effect only on Windows Vista and later.  */);
   defsubr (&Sx_open_connection);
   defsubr (&Sx_close_connection);
   defsubr (&Sx_display_list);
-  defsubr (&Sx_frame_geometry);
-  defsubr (&Sx_frame_edges);
-  defsubr (&Sx_mouse_absolute_pixel_position);
-  defsubr (&Sx_set_mouse_absolute_pixel_position);
+  defsubr (&Sw32_frame_geometry);
+  defsubr (&Sw32_frame_edges);
+  defsubr (&Sw32_mouse_absolute_pixel_position);
+  defsubr (&Sw32_set_mouse_absolute_pixel_position);
   defsubr (&Sx_synchronize);
 
   /* W32 specific functions */

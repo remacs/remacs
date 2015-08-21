@@ -2906,7 +2906,7 @@ frame_geometry (Lisp_Object frame, Lisp_Object attribute)
 		    make_number (internal_border_width)));
 }
 
-DEFUN ("x-frame-geometry", Fx_frame_geometry, Sx_frame_geometry, 0, 1, 0,
+DEFUN ("ns-frame-geometry", Fns_frame_geometry, Sns_frame_geometry, 0, 1, 0,
        doc: /* Return geometric attributes of FRAME.
 FRAME must be a live frame and defaults to the selected one.  The return
 value is an association list of the attributes listed below.  All height
@@ -2950,7 +2950,7 @@ and width values are in pixels.
   return frame_geometry (frame, Qnil);
 }
 
-DEFUN ("x-frame-edges", Fx_frame_edges, Sx_frame_edges, 0, 2, 0,
+DEFUN ("ns-frame-edges", Fns_frame_edges, Sns_frame_edges, 0, 2, 0,
        doc: /* Return edge coordinates of FRAME.
 FRAME must be a live frame and defaults to the selected one.  The return
 value is a list of the form (LEFT, TOP, RIGHT, BOTTOM).  All values are
@@ -3156,8 +3156,8 @@ be used as the image of the icon representing the frame.  */);
   defsubr (&Sx_display_pixel_width);
   defsubr (&Sx_display_pixel_height);
   defsubr (&Sns_display_monitor_attributes_list);
-  defsubr (&Sx_frame_geometry);
-  defsubr (&Sx_frame_edges);
+  defsubr (&Sns_frame_geometry);
+  defsubr (&Sns_frame_edges);
   defsubr (&Sx_display_mm_width);
   defsubr (&Sx_display_mm_height);
   defsubr (&Sx_display_screens);
