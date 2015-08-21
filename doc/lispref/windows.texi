@@ -1984,7 +1984,9 @@ to eliminate this discrepancy.
 This function returns a list of all windows currently displaying
 @var{buffer-or-name}.  @var{buffer-or-name} should be a buffer or the
 name of an existing buffer.  If omitted or @code{nil}, it defaults to
-the current buffer.
+the current buffer.  If the currently selected window displays
+@var{buffer-or-name}, it will be the first in the list returned by
+this function.
 
 The arguments @var{minibuf} and @var{all-frames} have the same
 meanings as in the function @code{next-window} (@pxref{Cyclic Window

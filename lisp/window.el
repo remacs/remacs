@@ -2299,8 +2299,8 @@ selected frame and no others."
 (defun get-buffer-window-list (&optional buffer-or-name minibuf all-frames)
   "Return list of all windows displaying BUFFER-OR-NAME, or nil if none.
 BUFFER-OR-NAME may be a buffer or the name of an existing buffer
-and defaults to the current buffer.  Windows are scanned starting
-with the selected window.
+and defaults to the current buffer.  If the selected window displays
+BUFFER-OR-NAME, it will be the first in the resulting list.
 
 MINIBUF t means include the minibuffer window even if the
 minibuffer is not active.  MINIBUF nil or omitted means include
