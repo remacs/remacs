@@ -1957,42 +1957,52 @@ Python shell.  See commentary for details."
   :safe 'booleanp)
 
 (defcustom python-shell-process-environment nil
-  "List of environment variables for Python shell.
-This variable follows the same rules as `process-environment'
-since it merges with it before the process creation routines are
-called.  When this variable is nil, the Python shell is run with
-the default `process-environment'."
+  "List of overridden environment variables for subprocesses to inherit.
+Each element should be a string of the form ENVVARNAME=VALUE.
+When this variable is non-nil, values are exported into the
+process environment before starting it.  Any variables already
+present in the current environment are superseded by variables
+set here."
   :type '(repeat string)
-  :group 'python
-  :safe 'listp)
+  :group 'python)
 
 (defcustom python-shell-extra-pythonpaths nil
   "List of extra pythonpaths for Python shell.
-The values of this variable are added to the existing value of
-PYTHONPATH in the `process-environment' variable."
+When this variable is non-nil, values added at the beginning of
+the PYTHONPATH before starting processes.  Any values present
+here that already exists in PYTHONPATH are moved to the beginning
+of the list so that they are prioritized when looking for
+modules."
   :type '(repeat string)
-  :group 'python
-  :safe 'listp)
+  :group 'python)
 
 (defcustom python-shell-exec-path nil
-  "List of path to search for binaries.
-This variable follows the same rules as `exec-path' since it
-merges with it before the process creation routines are called.
-When this variable is nil, the Python shell is run with the
-default `exec-path'."
+  "List of paths for searching executables.
+When this variable is non-nil, values added at the beginning of
+the PATH before starting processes.  Any values present here that
+already exists in PATH are moved to the beginning of the list so
+that they are prioritized when looking for executables."
   :type '(repeat string)
-  :group 'python
-  :safe 'listp)
+  :group 'python)
+
+(defcustom python-shell-remote-exec-path nil
+  "List of paths to be ensured remotely for searching executables.
+When this variable is non-nil, values are exported into remote
+hosts PATH before starting processes.  Values defined in
+`python-shell-exec-path' will take precedence to paths defined
+here.  Normally you wont use this variable directly unless you
+plan to ensure a particular set of paths to all Python shell
+executed through tramp connections."
+  :type '(repeat string)
+  :group 'python)
 
 (defcustom python-shell-virtualenv-root nil
   "Path to virtualenv root.
-This variable, when set to a string, makes the values stored in
-`python-shell-process-environment' and `python-shell-exec-path'
-to be modified properly so shells are started with the specified
+This variable, when set to a string, makes the environment to be
+modified such that shells are started within the specified
 virtualenv."
   :type '(choice (const nil) string)
-  :group 'python
-  :safe 'stringp)
+  :group 'python)
 
 (define-obsolete-variable-alias
   'python-shell-virtualenv-path 'python-shell-virtualenv-root "25.1")
@@ -2002,8 +2012,7 @@ virtualenv."
                                       python-eldoc-setup-code)
   "List of code run by `python-shell-send-setup-codes'."
   :type '(repeat symbol)
-  :group 'python
-  :safe 'listp)
+  :group 'python)
 
 (defcustom python-shell-compilation-regexp-alist
   `((,(rx line-start (1+ (any " \t")) "File \""
@@ -2020,22 +2029,37 @@ virtualenv."
   :type '(alist string)
   :group 'python)
 
+(defmacro python-shell--add-to-path-with-priority (pathvar paths)
+  "Modify PATHVAR and ensure PATHS are added only once at beginning."
+  `(dolist (path (reverse ,paths))
+     (cl-delete path ,pathvar :test #'string=)
+     (cl-pushnew path ,pathvar :test #'string=)))
+
+(defun python-shell-calculate-pythonpath ()
+  "Calculate the PYTHONPATH using `python-shell-extra-pythonpaths'."
+  (let ((pythonpath
+         (tramp-compat-split-string
+          (or (getenv "PYTHONPATH") "") path-separator)))
+    (python-shell--add-to-path-with-priority
+     pythonpath python-shell-extra-pythonpaths)
+    (mapconcat 'identity pythonpath path-separator)))
+
 (defun python-shell-calculate-process-environment ()
   "Calculate `process-environment' or `tramp-remote-process-environment'.
-Pre-appends `python-shell-process-environment', sets extra
+Prepends `python-shell-process-environment', sets extra
 pythonpaths from `python-shell-extra-pythonpaths' and sets a few
 virtualenv related vars.  If `default-directory' points to a
-remote machine, the returned value is intended for
+remote host, the returned value is intended for
 `tramp-remote-process-environment'."
   (let* ((remote-p (file-remote-p default-directory))
-         (process-environment (append
-                               python-shell-process-environment
-                               (if remote-p
-                                   tramp-remote-process-environment
-                                 process-environment) nil))
-         (virtualenv (if python-shell-virtualenv-root
-                         (directory-file-name python-shell-virtualenv-root)
-                       nil)))
+         (process-environment (if remote-p
+                                  tramp-remote-process-environment
+                                process-environment))
+         (virtualenv (when python-shell-virtualenv-root
+                       (directory-file-name python-shell-virtualenv-root))))
+    (dolist (env python-shell-process-environment)
+      (pcase-let ((`(,key ,value) (split-string env "=")))
+        (setenv key value)))
     (when python-shell-unbuffered
       (setenv "PYTHONUNBUFFERED" "1"))
     (when python-shell-extra-pythonpaths
@@ -2047,50 +2071,71 @@ remote machine, the returned value is intended for
     process-environment))
 
 (defun python-shell-calculate-exec-path ()
-  "Calculate `exec-path' or `tramp-remote-path'.
-Pre-appends `python-shell-exec-path' and adds the binary
-directory for virtualenv if `python-shell-virtualenv-root' is
-set.  If `default-directory' points to a remote machine, the
-returned value is intended for `tramp-remote-path'."
-  (let ((path (append
-               ;; Use nil as the tail so that the list is a full copy,
-               ;; this is a paranoid safeguard for side-effects.
-               python-shell-exec-path
-               (if (file-remote-p default-directory)
-                   tramp-remote-path
-                 exec-path)
-               nil)))
+  "Calculate `exec-path'.
+Prepends `python-shell-exec-path' and adds the binary directory
+for virtualenv if `python-shell-virtualenv-root' is set.  If
+`default-directory' points to a remote host, the returned value
+appends `python-shell-remote-exec-path' instead of `exec-path'."
+  (let ((new-path (copy-sequence
+                   (if (file-remote-p default-directory)
+                       python-shell-remote-exec-path
+                     exec-path))))
+    (python-shell--add-to-path-with-priority
+     new-path python-shell-exec-path)
     (if (not python-shell-virtualenv-root)
-        path
-      (cons (expand-file-name "bin" python-shell-virtualenv-root)
-            path))))
+        new-path
+      (python-shell--add-to-path-with-priority
+       new-path
+       (list (expand-file-name "bin" python-shell-virtualenv-root)))
+      new-path)))
+
+(defun python-shell-tramp-refresh-remote-path (vec paths)
+  "Update VEC's remote-path giving PATHS priority."
+  (let ((remote-path (tramp-get-connection-property vec "remote-path" nil)))
+    (when remote-path
+      (python-shell--add-to-path-with-priority remote-path paths)
+      (tramp-set-connection-property vec "remote-path" remote-path)
+      (tramp-set-remote-path vec))))
+
+(defvar python-shell--with-environment-wrapped nil)
 
 (defmacro python-shell-with-environment (&rest body)
   "Modify shell environment during execution of BODY.
 Temporarily sets `process-environment' and `exec-path' during
 execution of body.  If `default-directory' points to a remote
 machine then modifies `tramp-remote-process-environment' and
-`tramp-remote-path' instead."
+`python-shell-remote-exec-path' instead."
   (declare (indent 0) (debug (body)))
-  (let ((remote-p (make-symbol "remote-p")))
-    `(let* ((,remote-p (file-remote-p default-directory))
-            (process-environment
-             (if ,remote-p
-                 process-environment
-               (python-shell-calculate-process-environment)))
-            (tramp-remote-process-environment
-             (if ,remote-p
-                 (python-shell-calculate-process-environment)
-               tramp-remote-process-environment))
-            (exec-path
-             (if ,remote-p
-                 exec-path
-               (python-shell-calculate-exec-path)))
-            (tramp-remote-path
-             (if ,remote-p
-                 (python-shell-calculate-exec-path)
-               tramp-remote-path)))
-       ,(macroexp-progn body))))
+  (let ((vec (make-symbol "vec")))
+    `(progn
+       (if python-shell--with-environment-wrapped
+           ,(macroexp-progn body)
+         (let* ((,vec
+                 (when (file-remote-p default-directory)
+                   (ignore-errors
+                     (tramp-dissect-file-name default-directory 'noexpand))))
+                (process-environment
+                 (if ,vec
+                     process-environment
+                   (python-shell-calculate-process-environment)))
+                (exec-path
+                 (if ,vec
+                     exec-path
+                   (python-shell-calculate-exec-path)))
+                (tramp-remote-process-environment
+                 (if ,vec
+                     (python-shell-calculate-process-environment)
+                   tramp-remote-process-environment))
+                (python-shell--with-environment-wrapped t))
+           (when (tramp-get-connection-process ,vec)
+             ;; For already existing connections, modified env vars must
+             ;; be re-set again.  This is a normal thing to happen when
+             ;; remote dir-locals are read from remote and *then*
+             ;; processes should be started within the same connection
+             ;; with env vars calculated from them.
+             (python-shell-tramp-refresh-remote-path
+              ,vec (python-shell-calculate-exec-path)))
+           ,(macroexp-progn body))))))
 
 (defvar python-shell--prompt-calculated-input-regexp nil
   "Calculated input prompt regexp for inferior python shell.
@@ -2271,27 +2316,13 @@ the `buffer-name'."
 
 (defun python-shell-calculate-command ()
   "Calculate the string used to execute the inferior Python process."
-  (python-shell-with-environment
-    ;; `exec-path' gets tweaked so that virtualenv's specific
-    ;; `python-shell-interpreter' absolute path can be found by
-    ;; `executable-find'.
-    (format "%s %s"
-            (shell-quote-argument python-shell-interpreter)
-            python-shell-interpreter-args)))
+  (format "%s %s"
+          (shell-quote-argument python-shell-interpreter)
+          python-shell-interpreter-args))
 
 (define-obsolete-function-alias
   'python-shell-parse-command
   #'python-shell-calculate-command "25.1")
-
-(defun python-shell-calculate-pythonpath ()
-  "Calculate the PYTHONPATH using `python-shell-extra-pythonpaths'."
-  (let ((pythonpath (getenv "PYTHONPATH"))
-        (extra (mapconcat 'identity
-                          python-shell-extra-pythonpaths
-                          path-separator)))
-    (if pythonpath
-        (concat extra path-separator pythonpath)
-      extra)))
 
 (defvar python-shell--package-depth 10)
 
