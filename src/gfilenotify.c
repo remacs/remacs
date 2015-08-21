@@ -150,6 +150,7 @@ will be reported only in case of the `moved' event.  */)
   GFile *gfile;
   GFileMonitor *monitor;
   GFileMonitorFlags gflags = G_FILE_MONITOR_NONE;
+  GError *gerror = NULL;
 
   /* Check parameters.  */
   CHECK_STRING (file);
@@ -172,7 +173,14 @@ will be reported only in case of the `moved' event.  */)
     gflags |= G_FILE_MONITOR_SEND_MOVED;
 
   /* Enable watch.  */
-  monitor = g_file_monitor (gfile, gflags, NULL, NULL);
+  monitor = g_file_monitor (gfile, gflags, NULL, &gerror);
+  if (gerror)
+    {
+      char msg[1024];
+      strcpy (msg, gerror->message);
+      g_error_free (gerror);
+      xsignal1 (Qfile_notify_error, build_string (msg));
+    }
   if (! monitor)
     xsignal2 (Qfile_notify_error, build_string ("Cannot watch file"), file);
 
