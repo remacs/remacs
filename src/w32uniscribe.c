@@ -25,6 +25,15 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    of calling non-existent functions.  */
 #undef _WIN32_WINNT
 #define _WIN32_WINNT 0x500
+/* MinGW64 w32api headers by default define OPENTYPE_TAG typedef only
+   if _WIN32_WINNT >= 0x0600; defining UNISCRIBE_OPENTYPE as below
+   makes that typedef visible even for lower values of _WIN32_WINNT.
+   Mingw.org's w32api headers don't use UNISCRIBE_OPENTYPE at all, and
+   the OPENTYPE_TAG typedef is defined unconditionally there.  */
+#ifdef UNISCRIBE_OPENTYPE
+# undef UNISCRIBE_OPENTYPE
+#endif
+#define UNISCRIBE_OPENTYPE 0x0100
 #include <windows.h>
 #include <usp10.h>
 
