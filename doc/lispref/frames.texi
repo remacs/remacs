@@ -623,7 +623,7 @@ visible.
   For a frame on a graphical terminal the following function returns the
 sizes of the areas described above:
 
-@defun x-frame-geometry &optional frame
+@defun frame-geometry &optional frame
 This function returns geometric attributes of @var{frame}.  The return
 value is an association list of the attributes listed below.  All
 coordinate, height and width values are integers counting pixels.
@@ -2370,13 +2370,13 @@ The return value is not significant.
 On a graphical terminal the following two functions allow to retrieve
 and set the absolute position of the mouse cursor.
 
-@defun x-mouse-absolute-pixel-position
+@defun mouse-absolute-pixel-position
 This function returns a cons cell (@var{x} . @var{y}) of the coordinates
 of the mouse cursor position in pixels, relative to a position (0, 0) of
 the selected frame's display.
 @end defun
 
-@defun x-set-mouse-absolute-pixel-position x y
+@defun set-mouse-absolute-pixel-position x y
 This function moves the mouse cursor to the position (@var{x}, @var{y}).
 The coordinates @var{x} and @var{y} are interpreted in pixels relative
 to a position (0, 0) of the selected frame's display.

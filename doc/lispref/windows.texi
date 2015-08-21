@@ -3866,7 +3866,7 @@ relative to an origin at (0, 0) of the display of @var{window}'s frame.
 Calling @code{(window-absolute-body-pixel-edges window)} is equivalent
 to calling @code{(window-edges window t t t)}, see above.
 
-Combined with @code{x-set-mouse-absolute-pixel-position}, this function
+Combined with @code{set-mouse-absolute-pixel-position}, this function
 can be used to move the mouse pointer to an arbitrary buffer position
 visible in some window:
 
@@ -3907,7 +3907,7 @@ point in the selected window, it's sufficient to write:
 @example
 @group
 (let ((position (window-absolute-pixel-position)))
-  (x-set-mouse-absolute-pixel-position
+  (set-mouse-absolute-pixel-position
    (car position) (cdr position)))
 @end group
 @end example
