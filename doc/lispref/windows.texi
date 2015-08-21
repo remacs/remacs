@@ -1858,6 +1858,13 @@ the optional argument @var{not-selected} is non-@code{nil}, this
 function returns @code{nil} in that case.
 @end defun
 
+@cindex most recently used window
+@defun get-mru-window &optional all-frames dedicated not-selected
+This function is like @code{get-lru-window}, but it returns the ``most
+recently used'' window instead.  The meaning of the arguments is the
+same as described for @code{get-lru-window}.
+@end defun
+
 @cindex largest window
 @defun get-largest-window &optional all-frames dedicated not-selected
 This function returns the window with the largest area (height times
