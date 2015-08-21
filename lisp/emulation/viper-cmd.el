@@ -4782,10 +4782,10 @@ sensitive for VI-style look-and-feel."
 	  (setq repeated t))
 	(setq dont-change-unless t
 	      level-changed t)
-	(insert "
+	(insert (substitute-command-keys "
 Please specify your level of familiarity with the venomous VI PERil
 \(and the VI Plan for Emacs Rescue).
-You can change it at any time by typing `M-x viper-set-expert-level RET'
+You can change it at any time by typing `\\[viper-set-expert-level]'
 
  1 -- BEGINNER: Almost all Emacs features are suppressed.
        Feels almost like straight Vi.  File name completion and
@@ -4803,7 +4803,7 @@ You can change it at any time by typing `M-x viper-set-expert-level RET'
        viper-electric-mode, viper-want-ctl-h-help, viper-want-emacs-keys-in-vi,
        and viper-want-emacs-keys-in-insert.  Adjust these to your taste.
 
-Please, specify your level now: ")
+Please, specify your level now: "))
 
 	(setq viper-expert-level (- (viper-read-char-exclusive) ?0))
 	) ; end while

@@ -1808,7 +1808,8 @@ User will be queried, if no fileset name is provided."
                        (progn
       (add-to-list 'filesets-data (list name '(:files)))
       (message
-       "Fileset %s created.  Call `M-x filesets-save-config' to save."
+       (substitute-command-keys
+        "Fileset %s created.  Call `\\[filesets-save-config]' to save.")
        name)
       (car filesets-data))))))
     (if entry

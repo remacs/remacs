@@ -242,7 +242,7 @@ EPA/EPG set up, the file will be encrypted and decrypted
 automatically.  See Info node `(epa)Encrypting/decrypting gpg files'
 for details.
 
-It's best to customize this with `M-x customize-variable' because the choices
+It's best to customize this with `\\[customize-variable]' because the choices
 can get pretty complex."
   :group 'auth-source
   :version "24.1" ;; No Gnus

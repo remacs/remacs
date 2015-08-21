@@ -6598,7 +6598,9 @@ Added to `window-configuration-change-hook' in Todo mode."
 
 \\{todo-mode-map}"
   (if (called-interactively-p 'any)
-      (message "Type ‘M-x todo-show’ to enter Todo mode")
+      (message "%s"
+               (substitute-command-keys
+                "Type ‘\\[todo-show]’ to enter Todo mode"))
     (todo-modes-set-1)
     (todo-modes-set-2)
     (todo-modes-set-3)

@@ -624,8 +624,9 @@ To force-start a server, do \\[server-force-delete] and then
 	 (concat "Unable to start the Emacs server.\n"
 		 (format "There is an existing Emacs server, named %S.\n"
 			 server-name)
-		 "To start the server in this Emacs process, stop the existing
-server or call `M-x server-force-delete' to forcibly disconnect it.")
+		 (substitute-command-keys
+                  "To start the server in this Emacs process, stop the existing
+server or call `\\[server-force-delete]' to forcibly disconnect it."))
 	 :warning)
 	(setq leave-dead t))
       ;; If this Emacs already had a server, clear out associated status.

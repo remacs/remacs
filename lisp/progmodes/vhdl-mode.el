@@ -4421,7 +4421,7 @@ Usage:
     according to option `vhdl-argument-list-indent'.
 
       If option `vhdl-indent-tabs-mode' is nil, spaces are used instead of
-    tabs.  `M-x tabify' and `M-x untabify' allow to convert spaces to tabs
+    tabs.  `\\[tabify]' and `\\[untabify]' allow to convert spaces to tabs
     and vice versa.
 
       Syntax-based indentation can be very slow in large files.  Option
@@ -4732,7 +4732,7 @@ Usage:
     `vhdl-highlight-translate-off' is non-nil.
 
       For documentation and customization of the used colors see
-    customization group `vhdl-highlight-faces' (`M-x customize-group').  For
+    customization group `vhdl-highlight-faces' (`\\[customize-group]').  For
     highlighting of matching parenthesis, see customization group
     `paren-showing'.  Automatic buffer highlighting is turned on/off by
     option `global-font-lock-mode' (`font-lock-auto-fontify' in XEmacs).
@@ -4792,14 +4792,14 @@ Usage:
     sessions using the \"Save Options\" menu entry.
 
       Options and their detailed descriptions can also be accessed by using
-    the \"Customize\" menu entry or the command `M-x customize-option' (`M-x
-    customize-group' for groups).  Some customizations only take effect
+    the \"Customize\" menu entry or the command `\\[customize-option]'
+    (`\\[customize-group]' for groups).  Some customizations only take effect
     after some action (read the NOTE in the option documentation).
     Customization can also be done globally (i.e. site-wide, read the
     INSTALL file).
 
       Not all options are described in this documentation, so go and see
-    what other useful user options there are (`M-x vhdl-customize' or menu)!
+    what other useful user options there are (`\\[vhdl-customize]' or menu)!
 
 
   FILE EXTENSIONS:
@@ -4828,7 +4828,7 @@ Usage:
 Maintenance:
 ------------
 
-To submit a bug report, enter `M-x vhdl-submit-bug-report' within VHDL Mode.
+To submit a bug report, enter `\\[vhdl-submit-bug-report]' within VHDL Mode.
 Add a description of the problem and include a reproducible test case.
 
 Questions and enhancement requests can be sent to <reto@gnu.org>.

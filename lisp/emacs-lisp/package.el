@@ -3193,7 +3193,8 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
             (if-let ((removable (package--removable-packages)))
                 (message "Package menu: Operation finished.  %d packages %s"
                   (length removable)
-                  "are no longer needed, type `M-x package-autoremove' to remove them")
+                  (substitute-command-keys
+                   "are no longer needed, type `\\[package-autoremove]' to remove them"))
               (message (replace-regexp-in-string "__" "ed" message-template)
                 "finished"))))))))
 

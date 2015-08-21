@@ -3594,9 +3594,10 @@ connection buffer."
 	   (cond
 	    ((eq exit 'permission-denied) "Permission denied")
 	    ((eq exit 'process-died)
-	     (concat
-	      "Tramp failed to connect.  If this happens repeatedly, try\n"
-	      "    `M-x tramp-cleanup-this-connection'"))
+             (substitute-command-keys
+              (concat
+               "Tramp failed to connect.  If this happens repeatedly, try\n"
+               "    `\\[tramp-cleanup-this-connection]'")))
 	    ((eq exit 'timeout)
 	     (format
 	      "Timeout reached, see buffer `%s' for details"
