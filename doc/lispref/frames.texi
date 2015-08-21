@@ -744,7 +744,7 @@ frame fixed by adjusting the number of lines and columns.
 If the optional argument @var{frames} is @code{nil}, this applies the
 font to the selected frame only.  If @var{frames} is non-@code{nil}, it
 should be a list of frames to act upon, or @code{t} meaning all existing
-graphical frames.
+and all future graphical frames.
 @end deffn
 
 
