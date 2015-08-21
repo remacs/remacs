@@ -2,9 +2,10 @@
 
 ;; Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
-;; Author: Fabián E. Gallina <fabian@anue.biz>
+;; Author: Fabián E. Gallina <fgallina@gnu.org>
 ;; URL: https://github.com/fgallina/python.el
-;; Version: 0.24.5
+;; Version: 0.25.1
+;; Package-Requires: ((emacs "24.1") (cl-lib "1.0"))
 ;; Maintainer: emacs-devel@gnu.org
 ;; Created: Jul 2010
 ;; Keywords: languages
