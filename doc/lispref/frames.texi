@@ -590,12 +590,12 @@ inner frame.  Its edges are called the @dfn{inner edges} of the frame.
 The @dfn{inner width} and @dfn{inner height} specify the size of the
 rectangle.
 
-@cindex non-minibuffer frame
+@cindex minibuffer-less frame
 @cindex minibuffer-only frame
 As a rule, the inner frame is subdivided into the frame's root window
 (@pxref{Windows and Frames}) and the frame's minibuffer window
 (@pxref{Minibuffer Windows}).  There are two notable exceptions to this
-rule: A @dfn{non-minibuffer frame} contains a root window only and does
+rule: A @dfn{minibuffer-less frame} contains a root window only and does
 not contain a minibuffer window.  A @dfn{minibuffer-only frame} contains
 only a minibuffer window which also serves as that frame's root window.
 See @ref{Initial Parameters} for how to create such frame
