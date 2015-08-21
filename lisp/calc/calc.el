@@ -1474,7 +1474,7 @@ commands given here will actually operate on the *Calculator* stack."
 	  (and calc-display-trail
 	       (= (window-width) (frame-width))
 	       (calc-trail-display 1 t)))
-	(message "Welcome to the GNU Emacs Calculator!  Press `?' or `h' for help, `q' to quit")
+	(message "Welcome to the GNU Emacs Calculator!  Press ‘?’ or ‘h’ for help, ‘q’ to quit")
 	(run-hooks 'calc-start-hook)
 	(and (windowp full-display)
 	     (window-point full-display)
@@ -1622,7 +1622,7 @@ See calc-keypad for details."
 		    (stringp (nth 1 err))
 		    (string-match "max-specpdl-size\\|max-lisp-eval-depth"
 				  (nth 1 err)))
-	       (error "Computation got stuck or ran too long.  Type `M' to increase the limit")
+	       (error "Computation got stuck or ran too long.  Type ‘M’ to increase the limit")
 	     (setq calc-aborted-prefix nil)
 	     (signal (car err) (cdr err)))))
       (when calc-aborted-prefix
@@ -2303,7 +2303,7 @@ the United States."
                   (calc-delete-selection 1)
                 (calc-pop-stack nn))))))
     (if calc-context-sensitive-enter (calc-cursor-stack-index (1- num)))))
-    
+
 
 
 
@@ -3856,7 +3856,7 @@ Also looks for the equivalent TeX words, \\gets and \\evalto."
 (defun calc-user-invocation ()
   (interactive)
   (unless calc-invocation-macro
-    (error "Use `Z I' inside Calc to define a `C-x * Z' keyboard macro"))
+    (error "Use ‘Z I’ inside Calc to define a ‘C-x * Z’ keyboard macro"))
   (execute-kbd-macro calc-invocation-macro nil))
 
 ;;; User-programmability.
