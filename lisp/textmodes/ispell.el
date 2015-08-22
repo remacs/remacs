@@ -1195,44 +1195,81 @@ all uninitialized dicts using that affix file."
 
 (defun ispell-parse-hunspell-affix-file (dict-key)
   "Parse Hunspell affix file to extract parameters for DICT-KEY.
-Return a list in `ispell-dictionary-alist' format."
-  (let ((affix-file (cadr (assoc dict-key ispell-hunspell-dict-paths-alist))))
-    (unless affix-file
-      (error "ispell-phaf: No matching entry for %s.\n" dict-key))
-    (if (not (file-exists-p affix-file))
-	(error "ispell-phaf: File \"%s\" not found.\n" affix-file))
-    (let ((dict-name (file-name-sans-extension
-                      (file-name-nondirectory affix-file)))
-          otherchars-string otherchars-list)
-      (with-temp-buffer
-        (insert-file-contents affix-file)
-        (setq otherchars-string
-              (save-excursion
-                (goto-char (point-min))
-                (if (search-forward-regexp "^WORDCHARS +" nil t )
-                    (buffer-substring (point)
-                                      (progn (end-of-line) (point))))))
-        ;; Remove trailing whitespace and extra stuff.  Make list if
-        ;; non-nil.
-        (setq otherchars-list
-              (if otherchars-string
-                  (split-string
-                   (if (string-match " +.*$" otherchars-string)
-                       (replace-match "" nil nil otherchars-string)
-                     otherchars-string)
-                   "" t)))
+Return a list in `ispell-dictionary-alist' format.
 
-        ;; Fill dict entry
-        (list dict-key
-              "[[:alpha:]]"
-              "[^[:alpha:]]"
-              (if otherchars-list
-                  (regexp-opt otherchars-list)
-                "")
-              t                   ; many-otherchars-p: We can't tell, set to t.
-              (list "-d" dict-name)
-              nil              ; extended-char-mode: not supported by hunspell!
-              'utf-8)))))
+DICT_KEY can be in the \"DICT1,DICT2,DICT3\" format, to invoke Hunspell
+with a list of dictionaries.  The first dictionary in the list must have
+a corresponding .aff affix file; the rest are allowed to have no affix
+files, and will then use the affix file of the preceding dictionary that
+did."
+  (let ((dict-list (split-string dict-key "," t))
+        (first-p t)
+        (dict-arg "")
+        otherchars-list)
+    (dolist (dict-key dict-list)
+      (let ((affix-file
+             (cadr (assoc dict-key ispell-hunspell-dict-paths-alist))))
+        (unless affix-file
+          (error "ispell-phaf: No matching entry for %s in `ispell-hunspell-dict-paths-alist'.\n" dict-key))
+        (if (and first-p (not (file-exists-p affix-file)))
+            (error "ispell-phaf: File \"%s\" not found.\n" affix-file))
+        (and first-p (setq first-p nil))
+        (let ((dict-name (file-name-sans-extension
+                          (file-name-nondirectory affix-file)))
+              otherchars-string)
+          (with-temp-buffer
+            (insert-file-contents affix-file)
+            (setq otherchars-string
+                  (save-excursion
+                    (goto-char (point-min))
+                    (if (search-forward-regexp "^WORDCHARS +" nil t )
+                        (buffer-substring (point)
+                                          (progn (end-of-line) (point))))))
+            ;; Remove trailing whitespace and extra stuff.  Make list
+            ;; if non-nil.
+            (if otherchars-string
+                (let* ((otherchars-string
+                        ;; Remove trailing junk.
+                        (substring otherchars-string
+                                   0 (string-match " +" otherchars-string)))
+                       (chars-list (append otherchars-string nil)))
+                  (setq chars-list (delq ?\  chars-list))
+                  (dolist (ch chars-list)
+                    (add-to-list 'otherchars-list ch)))))
+          ;; Cons the argument for the -d switch.
+          (setq dict-arg (concat dict-arg
+                                 (if (> (length dict-arg) 0) ",")
+                                 dict-name)))))
+
+    ;; Fill dict entry
+    (list dict-key
+          "[[:alpha:]]"
+          "[^[:alpha:]]"
+          (if otherchars-list
+              (regexp-opt (mapcar 'char-to-string otherchars-list))
+            "")
+          t                   ; many-otherchars-p: We can't tell, set to t.
+          (list "-d" dict-arg)
+          nil              ; extended-char-mode: not supported by hunspell!
+          'utf-8)))
+
+(defun ispell-hunspell-add-multi-dic (dict)
+  "Add DICT of the form \"DICT1,DICT2,...\" to `ispell-dictionary-alist'.
+
+Invoke this command before you want to start Hunspell for the first time
+with a particular combination of dictionaries.  The first dictionary
+in the list must have an affix file where Hunspell affix files are kept."
+  (interactive "sMulti-dictionary combination: ")
+  ;; Make sure the first dictionary in the list is known to us.
+  (let ((first-dict (car (split-string dict "," t))))
+    (unless ispell-hunspell-dictionary-alist
+      (ispell-find-hunspell-dictionaries)
+      (setq ispell-dictionary-alist ispell-hunspell-dictionary-alist))
+    (or (assoc first-dict ispell-local-dictionary-alist)
+        (assoc first-dict ispell-dictionary-alist)
+        (error "Unknown dictionary: %s" first-dict)))
+  (add-to-list 'ispell-dictionary-alist (list dict '()))
+  (ispell-hunspell-fill-dictionary-entry dict))
 
 (defun ispell-find-hunspell-dictionaries ()
   "Look for installed Hunspell dictionaries.
