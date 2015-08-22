@@ -3347,7 +3347,7 @@ def __PYTHON_EL_native_completion_setup():
             readline.parse_and_bind('set show-all-if-ambiguous on')
 
         print ('python.el: readline is available')
-    except IOError:
+    except:
         print ('python.el: readline not available')
 
 __PYTHON_EL_native_completion_setup()"
