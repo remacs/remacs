@@ -2098,7 +2098,30 @@ appends `python-shell-remote-exec-path' instead of `exec-path'."
       (tramp-set-connection-property vec "remote-path" remote-path)
       (tramp-set-remote-path vec))))
 
-(defvar python-shell--with-environment-wrapped nil)
+(defun python-shell-tramp-refresh-process-environment (vec env)
+  "Update VEC's process environment with ENV."
+  ;; Stolen from `tramp-open-connection-setup-interactive-shell'.
+  (let ((env (append `(,(tramp-get-remote-locale vec))
+		     (copy-sequence env)))
+	unset vars item)
+    (while env
+      (setq item (tramp-compat-split-string (car env) "="))
+      (setcdr item (mapconcat 'identity (cdr item) "="))
+      (if (and (stringp (cdr item)) (not (string-equal (cdr item) "")))
+	  (push (format "%s %s" (car item) (cdr item)) vars)
+	(push (car item) unset))
+      (setq env (cdr env)))
+    (when vars
+      (tramp-send-command
+       vec
+       (format "while read var val; do export $var=$val; done <<'%s'\n%s\n%s"
+	       tramp-end-of-heredoc
+	       (mapconcat 'identity vars "\n")
+	       tramp-end-of-heredoc)
+       t))
+    (when unset
+      (tramp-send-command
+       vec (format "unset %s" (mapconcat 'identity unset " ")) t))))
 
 (defmacro python-shell-with-environment (&rest body)
   "Modify shell environment during execution of BODY.
@@ -2109,34 +2132,39 @@ machine then modifies `tramp-remote-process-environment' and
   (declare (indent 0) (debug (body)))
   (let ((vec (make-symbol "vec")))
     `(progn
-       (if python-shell--with-environment-wrapped
-           ,(macroexp-progn body)
-         (let* ((,vec
-                 (when (file-remote-p default-directory)
-                   (ignore-errors
-                     (tramp-dissect-file-name default-directory 'noexpand))))
-                (process-environment
-                 (if ,vec
-                     process-environment
-                   (python-shell-calculate-process-environment)))
-                (exec-path
-                 (if ,vec
-                     exec-path
-                   (python-shell-calculate-exec-path)))
-                (tramp-remote-process-environment
-                 (if ,vec
-                     (python-shell-calculate-process-environment)
-                   tramp-remote-process-environment))
-                (python-shell--with-environment-wrapped t))
-           (when (tramp-get-connection-process ,vec)
-             ;; For already existing connections, modified env vars must
-             ;; be re-set again.  This is a normal thing to happen when
-             ;; remote dir-locals are read from remote and *then*
-             ;; processes should be started within the same connection
-             ;; with env vars calculated from them.
-             (python-shell-tramp-refresh-remote-path
-              ,vec (python-shell-calculate-exec-path)))
-           ,(macroexp-progn body))))))
+       (let* ((,vec
+               (when (file-remote-p default-directory)
+                 (ignore-errors
+                   (tramp-dissect-file-name default-directory 'noexpand))))
+              (process-environment
+               (if ,vec
+                   process-environment
+                 (python-shell-calculate-process-environment)))
+              (exec-path
+               (if ,vec
+                   exec-path
+                 (python-shell-calculate-exec-path)))
+              (tramp-remote-process-environment
+               (if ,vec
+                   (python-shell-calculate-process-environment)
+                 tramp-remote-process-environment)))
+         (when (tramp-get-connection-process ,vec)
+           ;; For already existing connections, the new exec path must
+           ;; be re-set, otherwise it won't take effect.  One example
+           ;; of such case is when remote dir-locals are read and
+           ;; *then* subprocesses are triggered within the same
+           ;; connection.
+           (python-shell-tramp-refresh-remote-path
+            ,vec (python-shell-calculate-exec-path))
+           ;; The `tramp-remote-process-environment' variable is only
+           ;; effective when the started process is an interactive
+           ;; shell, otherwise (like in the case of processes started
+           ;; with `process-file') the environment is not changed.
+           ;; This makes environment modifications effective
+           ;; inconditionally.
+           (python-shell-tramp-refresh-process-environment
+            ,vec tramp-remote-process-environment))
+         ,(macroexp-progn body)))))
 
 (defvar python-shell--prompt-calculated-input-regexp nil
   "Calculated input prompt regexp for inferior python shell.

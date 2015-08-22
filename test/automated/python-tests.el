@@ -2606,9 +2606,10 @@ Using `python-shell-interpreter' and
     (python-shell-with-environment
       (should (equal (python-shell-calculate-exec-path)
                      '("/env/bin" "/path1" "/path2" "/remote1" "/remote2")))
-      (let ((process-environment tramp-remote-process-environment))
+      (let ((process-environment (python-shell-calculate-process-environment)))
         (should (not (getenv "PYTHONHOME")))
-        (should (string= (getenv "VIRTUAL_ENV") "/env"))))
+        (should (string= (getenv "VIRTUAL_ENV") "/env"))
+        (should (equal tramp-remote-process-environment process-environment))))
     (should (equal tramp-remote-process-environment original-process-environment))))
 
 (ert-deftest python-shell-with-environment-3 ()
