@@ -3160,7 +3160,7 @@ move it as far as possible in the desired direction."
   (let* ((frame (window-frame window))
 	 (minibuffer-window (minibuffer-window frame))
 	 (right window)
-	 left this-delta min-delta max-delta ignore)
+	 left first-left first-right this-delta min-delta max-delta ignore)
 
     (unless pixelwise
       (setq pixelwise t)
@@ -3188,6 +3188,7 @@ move it as far as possible in the desired direction."
      (t
       ;; Set LEFT to the first resizable window on the left.  This step is
       ;; needed to handle fixed-size windows.
+      (setq first-left left)
       (while (and left
 		  (or (window-size-fixed-p left horizontal)
 		      (and (< delta 0)
@@ -3200,8 +3201,10 @@ move it as far as possible in the desired direction."
 				(not (window-combined-p left horizontal))))
 		    (window-left left)))))
       (unless left
+	;; We have to resize a size-preserved window.  Start again with
+	;; the window initially on the left.
 	(setq ignore 'preserved)
-	(setq left window)
+	(setq left first-left)
 	(while (and left
 		    (or (window-size-fixed-p left horizontal 'preserved)
 			(<= (window-size left horizontal t)
@@ -3220,6 +3223,7 @@ move it as far as possible in the desired direction."
 
       ;; Set RIGHT to the first resizable window on the right.  This step
       ;; is needed to handle fixed-size windows.
+      (setq first-right right)
       (while (and right
 		  (or (window-size-fixed-p right horizontal)
 		      (and (> delta 0)
@@ -3232,12 +3236,14 @@ move it as far as possible in the desired direction."
 				(not (window-combined-p right horizontal))))
 		    (window-right right)))))
       (unless right
+	;; We have to resize a size-preserved window.  Start again with
+	;; the window initially on the right.
 	(setq ignore 'preserved)
-	(setq right (window-right window))
+	(setq right first-right)
 	(while (and right
 		    (or (window-size-fixed-p right horizontal 'preserved))
 		    (<= (window-size right horizontal t)
-			(window-min-size right horizontal nil t)))
+			(window-min-size right horizontal 'preserved t)))
 	  (setq right
 		(or (window-right right)
 		    (progn
