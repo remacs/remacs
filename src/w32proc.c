@@ -1815,7 +1815,17 @@ sys_spawnve (int mode, char *cmdname, char **argv, char **envp)
       if (egetenv ("CMDPROXY"))
 	strcpy (cmdname, egetenv ("CMDPROXY"));
       else
-	strcpy (lispstpcpy (cmdname, Vinvocation_directory), "cmdproxy.exe");
+	{
+	  char *q = lispstpcpy (cmdname, Vexec_directory);
+	  /* If we are run from the source tree, use cmdproxy.exe from
+	     the same source tree.  */
+	  for (p = q - 2; p > cmdname; p--)
+	    if (*p == '/')
+	      break;
+	  if (*p == '/' && xstrcasecmp (p, "/lib-src/") == 0)
+	    q = stpcpy (p, "/nt/");
+	  strcpy (q, "cmdproxy.exe");
+	}
 
       /* Can't use unixtodos_filename here, since that needs its file
 	 name argument encoded in UTF-8.  */
