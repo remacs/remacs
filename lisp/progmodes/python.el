@@ -2105,6 +2105,10 @@ appends `python-shell-remote-exec-path' instead of `exec-path'."
                        ;; Emacs<24.4 compat.
                        (list (tramp-get-remote-locale vec)))
 		     (copy-sequence env)))
+        (tramp-end-of-heredoc
+         (if (boundp 'tramp-end-of-heredoc)
+             tramp-end-of-heredoc
+           (md5 tramp-end-of-output)))
 	unset vars item)
     (while env
       (setq item (tramp-compat-split-string (car env) "="))
