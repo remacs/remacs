@@ -2497,8 +2497,8 @@ fallback definition for all modes, to break the cycle).")
 
 (cc-provide 'cc-defs)
 
-;;; Local Variables:
-;;; indent-tabs-mode: t
-;;; tab-width: 8
-;;; End:
+;; Local Variables:
+;; indent-tabs-mode: t
+;; tab-width: 8
+;; End:
 ;;; cc-defs.el ends here

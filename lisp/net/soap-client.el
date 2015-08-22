@@ -1818,9 +1818,9 @@ operations in a WSDL document."
 (provide 'soap-client)
 
 
-;;; Local Variables:
-;;; eval: (outline-minor-mode 1)
-;;; outline-regexp: ";;;;+"
-;;; End:
+;; Local Variables:
+;; eval: (outline-minor-mode 1)
+;; outline-regexp: ";;;;+"
+;; End:
 
 ;;; soap-client.el ends here

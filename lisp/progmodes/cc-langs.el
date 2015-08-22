@@ -3356,8 +3356,8 @@ evaluated and should not be quoted."
 
 (cc-provide 'cc-langs)
 
-;;; Local Variables:
-;;; indent-tabs-mode: t
-;;; tab-width: 8
-;;; End:
+;; Local Variables:
+;; indent-tabs-mode: t
+;; tab-width: 8
+;; End:
 ;;; cc-langs.el ends here

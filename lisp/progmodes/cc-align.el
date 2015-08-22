@@ -1345,8 +1345,8 @@ For other semicolon contexts, no determination is made."
 
 (cc-provide 'cc-align)
 
-;;; Local Variables:
-;;; indent-tabs-mode: t
-;;; tab-width: 8
-;;; End:
+;; Local Variables:
+;; indent-tabs-mode: t
+;; tab-width: 8
+;; End:
 ;;; cc-align.el ends here
