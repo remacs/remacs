@@ -492,7 +492,7 @@ window system by evaluating the following on startup to set this variable:
 (defcustom ispell-personal-dictionary nil
   "File name of your personal spelling dictionary, or nil.
 If nil, the default personal dictionary, (\"~/.ispell_DICTNAME\" for ispell or
-\"~/.aspell.LANG.pws\" for aspell) is used, where DICTNAME is the name of your
+\"~/.aspell.LANG.pws\" for Aspell) is used, where DICTNAME is the name of your
 default dictionary and LANG the two letter language code."
   :type '(choice file
 		 (const :tag "default" nil))
@@ -747,29 +747,29 @@ when the language uses non-ASCII characters.
 Note that with \"ispell\" as the speller, the CASECHARS and
 OTHERCHARS slots of the alist should contain the same character
 set as casechars and otherchars in the LANGUAGE.aff file \(e.g.,
-english.aff\).  aspell and hunspell don't have this limitation.")
+english.aff\).  Aspell and Hunspell don't have this limitation.")
 
 (defvar ispell-really-aspell nil
-  "Non-nil if we can use aspell extensions.")
+  "Non-nil if we can use Aspell extensions.")
 (defvar ispell-really-hunspell nil
-  "Non-nil if we can use hunspell extensions.")
+  "Non-nil if we can use Hunspell extensions.")
 (defvar ispell-encoding8-command nil
   "Command line option prefix to select encoding if supported, nil otherwise.
 If setting the encoding is supported by spellchecker and is selectable from
-the command line, this variable will contain \"--encoding=\" for aspell
-and \"-i \" for hunspell, so the appropriate mime charset can be selected.
-That will be set in `ispell-check-version' for hunspell >= 1.1.6 and
-aspell >= 0.60.
+the command line, this variable will contain \"--encoding=\" for Aspell
+and \"-i \" for Hunspell, so the appropriate mime charset can be selected.
+That will be set in `ispell-check-version' for Hunspell >= 1.1.6 and
+Aspell >= 0.60.
 
-For aspell, non-nil also means to try to automatically find its dictionaries.
+For Aspell, non-nil also means to try to automatically find its dictionaries.
 
-Earlier aspell versions do not consistently support charset encoding.  Handling
+Earlier Aspell versions do not consistently support charset encoding.  Handling
 this would require some extra guessing in `ispell-aspell-find-dictionary'.")
 
 (defvar ispell-aspell-supports-utf8 nil
-  "Non-nil if aspell has consistent command line UTF-8 support.  Obsolete.
+  "Non-nil if Aspell has consistent command line UTF-8 support.  Obsolete.
 ispell.el and flyspell.el will use for this purpose the more generic
-variable `ispell-encoding8-command' for both aspell and hunspell.  Is left
+variable `ispell-encoding8-command' for both Aspell and Hunspell.  Is left
 here just for backwards compatibility.")
 
 (make-obsolete-variable 'ispell-aspell-supports-utf8
@@ -944,7 +944,7 @@ Otherwise returns the library directory name, if that is defined."
 
 (defun ispell-create-debug-buffer (&optional append)
   "Create an ispell debug buffer for debugging output.
-Use APPEND to append the info to previous buffer if exists,
+If APPEND is non-nil, append the info to previous buffer if exists,
 otherwise is reset.  Returns name of ispell debug buffer.
 See `ispell-buffer-with-debug' for an example of use."
   (let ((ispell-debug-buffer (get-buffer-create "*ispell-debug*")))
@@ -956,7 +956,7 @@ See `ispell-buffer-with-debug' for an example of use."
     ispell-debug-buffer))
 
 (defsubst ispell-print-if-debug (format &rest args)
-  "Print message to `ispell-debug-buffer' buffer if enabled."
+  "Print message using FORMAT and ARGS to `ispell-debug-buffer' buffer if enabled."
   (if (boundp 'ispell-debug-buffer)
       (with-current-buffer ispell-debug-buffer
 	(goto-char (point-max))
@@ -1009,13 +1009,13 @@ and added as a submenu of the \"Edit\" menu.")
 ;; Make ispell.el work better with aspell.
 
 (defvar ispell-aspell-dictionary-alist nil
-  "An alist of parsed aspell dicts and associated parameters.
+  "An alist of parsed Aspell dicts and associated parameters.
 Internal use.")
 
 (defun ispell-find-aspell-dictionaries ()
   "Find Aspell's dictionaries, and record in `ispell-dictionary-alist'."
   (unless (and ispell-really-aspell ispell-encoding8-command)
-    (error "This function only works with aspell >= 0.60"))
+    (error "This function only works with Aspell >= 0.60"))
   (let* ((dictionaries
 	  (split-string
 	   (with-temp-buffer
@@ -1053,7 +1053,7 @@ Assumes that value contains no whitespace."
     (car (split-string (buffer-string)))))
 
 (defun ispell-aspell-find-dictionary (dict-name)
-  "For aspell dictionary DICT-NAME, return a list of parameters if an
+  "For Aspell dictionary DICT-NAME, return a list of parameters if an
 associated data file is found or nil otherwise.  List format is that
 of `ispell-dictionary-base-alist' elements."
 
@@ -1119,7 +1119,7 @@ of `ispell-dictionary-base-alist' elements."
 		'utf-8)))))
 
 (defun ispell-aspell-add-aliases (alist)
-  "Find aspell's dictionary aliases and add them to dictionary ALIST.
+  "Find Aspell's dictionary aliases and add them to dictionary ALIST.
 Return the new dictionary alist."
   (let ((aliases
          (file-expand-wildcards
@@ -1150,20 +1150,20 @@ Return the new dictionary alist."
 ;; Make ispell.el work better with hunspell.
 
 (defvar ispell-hunspell-dict-paths-alist nil
-  "Alist of parsed hunspell dicts and associated affix files.
+  "Alist of parsed Hunspell dicts and associated affix files.
 Will be used to parse corresponding .aff file and create associated
 parameters to be inserted into `ispell-hunspell-dictionary-alist'.
 Internal use.")
 
 (defvar ispell-hunspell-dictionary-alist nil
-  "Alist of parsed hunspell dicts and associated parameters.
+  "Alist of parsed Hunspell dicts and associated parameters.
 This alist will initially contain names of found dicts.  Associated
 parameters will be added when dict is used for the first time.
 Internal use.")
 
 (defun ispell-hunspell-fill-dictionary-entry (dict)
-  "Fill `ispell-dictionary-alist' uninitialized entries for `DICT' and aliases.
-Value will be extracted from hunspell affix file and used for
+  "Fill uninitialized entries in `ispell-dictionary-alist' for DICT and aliases.
+Value of those entries will be extracted from Hunspell affix file and used for
 all uninitialized dicts using that affix file."
   (if (cadr (assoc dict ispell-dictionary-alist))
       (message "ispell-hfde: Non void entry for %s. Skipping.\n" dict)
@@ -1178,13 +1178,13 @@ all uninitialized dicts using that affix file."
 	      (dict-equiv-value (cadr dict-equiv-alist-entry)))
 	  (if (or (member dict dict-equiv-alist-entry)
 		  (member dict-alias dict-equiv-alist-entry))
-	      (dolist ( tmp-dict (list dict-equiv-key dict-equiv-value))
+	      (dolist (tmp-dict (list dict-equiv-key dict-equiv-value))
 		(if (cadr (assoc tmp-dict ispell-dictionary-alist))
 		    (ispell-print-if-debug
-                     "ispell-hfde: %s already expanded. Skipping.\n" tmp-dict)
+                     "ispell-hfde: %s already expanded; skipping.\n" tmp-dict)
 		  (add-to-list 'use-for-dicts tmp-dict))))))
       (ispell-print-if-debug
-       "ispell-hfde: Filling %s entry. Use for %s.\n" dict use-for-dicts)
+       "ispell-hfde: Filling %s entry.  Use for %s.\n" dict use-for-dicts)
       ;; The final loop.
       (dolist (entry ispell-dictionary-alist)
 	(if (member (car entry) use-for-dicts)
@@ -1194,7 +1194,7 @@ all uninitialized dicts using that affix file."
       (setq ispell-dictionary-alist newlist))))
 
 (defun ispell-parse-hunspell-affix-file (dict-key)
-  "Parse hunspell affix file to extract parameters for `DICT-KEY'.
+  "Parse Hunspell affix file to extract parameters for DICT-KEY.
 Return a list in `ispell-dictionary-alist' format."
   (let ((affix-file (cadr (assoc dict-key ispell-hunspell-dict-paths-alist))))
     (unless affix-file
@@ -1235,11 +1235,11 @@ Return a list in `ispell-dictionary-alist' format."
               'utf-8)))))
 
 (defun ispell-find-hunspell-dictionaries ()
-  "Look for installed hunspell dictionaries.
+  "Look for installed Hunspell dictionaries.
 Will initialize `ispell-hunspell-dictionary-alist' and
 `ispell-hunspell-dictionary-alist' after values found
 and remove `ispell-dicts-name2locale-equivs-alist'
-entries if a specific dict was found."
+entries if a specific dictionary was found."
   (let ((hunspell-found-dicts
 	 (split-string
 	  (with-temp-buffer
@@ -1260,7 +1260,7 @@ entries if a specific dict was found."
 	(if (string-match "\\.aff$" dict)
 	    ;; Found default dictionary
 	    (if hunspell-default-dict
-		(error "ispell-fhd: Default dict already defined as %s. Not using %s.\n"
+		(error "ispell-fhd: Default dict already defined as %s.  Not using %s.\n"
 		       hunspell-default-dict dict)
 	      (setq affix-file dict)
 	      (setq hunspell-default-dict (list basename affix-file)))
@@ -1280,7 +1280,7 @@ entries if a specific dict was found."
       (dolist (dict ispell-dicts-name2locale-equivs-alist)
 	(if (assoc (car dict) ispell-hunspell-dict-paths-alist)
 	    (ispell-print-if-debug
-             "-- ispell-fhd: Excluding %s alias. Standalone dict found.\n"
+             "-- ispell-fhd: Excluding %s alias.  Standalone dict found.\n"
              (car dict))
 	  (add-to-list 'newlist dict)))
       (setq ispell-dicts-name2locale-equivs-alist newlist))
@@ -1401,7 +1401,7 @@ aspell is used along with Emacs).")
 			(setq ispell-args
 			      (nconc ispell-args (list "-d" dict-equiv)))
 		      (message
-		       "ispell-set-spellchecker-params: Missing hunspell equiv for \"%s\". Skipping."
+		       "ispell-set-spellchecker-params: Missing Hunspell equiv for \"%s\". Skipping."
 		       dict-name)
 		      (setq skip-dict t)))
 
@@ -1619,12 +1619,12 @@ The variable `ispell-library-directory' defines their location."
 
 (defvar ispell-current-dictionary nil
   "The name of the current dictionary, or nil for the default.
-This is passed to the ispell process using the `-d' switch and is
+This is passed to the Ispell process using the `-d' switch and is
 used as key in `ispell-local-dictionary-alist' and `ispell-dictionary-alist'.")
 
 (defvar ispell-current-personal-dictionary nil
   "The name of the current personal dictionary, or nil for the default.
-This is passed to the ispell process using the `-p' switch.")
+This is passed to the Ispella process using the `-p' switch.")
 
 (defun ispell-decode-string (str)
   "Decodes multibyte character strings.
@@ -1877,9 +1877,9 @@ You can set this variable in hooks in your init file -- eg:
 
 
 (defun ispell-accept-output (&optional timeout-secs timeout-msecs)
-  "Wait for output from ispell process, or TIMEOUT-SECS and TIMEOUT-MSECS.
+  "Wait for output from Ispell process, or TIMEOUT-SECS and TIMEOUT-MSECS.
 If asynchronous subprocesses are not supported, call function `ispell-filter'
-and pass it the output of the last ispell invocation."
+and pass it the output of the last Ispell invocation."
   (if ispell-async-processp
       (accept-process-output ispell-process timeout-secs timeout-msecs)
     (if (null ispell-process)
@@ -1896,8 +1896,8 @@ and pass it the output of the last ispell invocation."
 	    (erase-buffer)))))))
 
 (defun ispell-send-replacement (misspelled replacement)
-  "Notify aspell that MISSPELLED should be spelled REPLACEMENT.
-This allows it to improve the suggestion list based on actual misspellings."
+  "Notify Aspell that MISSPELLED should be spelled REPLACEMENT.
+This allows to improve the suggestion list based on actual misspellings."
   (and ispell-really-aspell
        (ispell-send-string (concat "$$ra " misspelled "," replacement "\n"))))
 
@@ -3702,7 +3702,7 @@ Returns the sum SHIFT due to changes in word replacements."
 ;;;###autoload
 (defun ispell-buffer-with-debug (&optional append)
   "`ispell-buffer' with some output sent to `ispell-debug-buffer' buffer.
-Use APPEND to append the info to previous buffer if exists."
+If APPEND is non-n il, append the info to previous buffer if exists."
   (interactive)
   (let ((ispell-debug-buffer (ispell-create-debug-buffer append)))
     (ispell-buffer)))
@@ -3739,8 +3739,8 @@ Use APPEND to append the info to previous buffer if exists."
 
 ;;;###autoload
 (defun ispell-complete-word (&optional interior-frag)
-  "Try to complete the word before or under point.
-If optional INTERIOR-FRAG is non-nil then the word may be a character
+  "Try to complete the word before or at point.
+If optional INTERIOR-FRAG is non-nil, then the word may be a character
 sequence inside of a word.
 
 Standard ispell choices are then available."
@@ -3846,7 +3846,7 @@ typing SPC or RET warns you if the previous word is incorrectly
 spelled.
 
 All the buffer-local variables and dictionaries are ignored.  To
-read them into the running ispell process, type \\[ispell-word]
+read them into the running Ispell process, type \\[ispell-word]
 SPC.
 
 For spell-checking \"on the fly\", not just after typing SPC or
