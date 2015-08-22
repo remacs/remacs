@@ -2101,7 +2101,9 @@ appends `python-shell-remote-exec-path' instead of `exec-path'."
 (defun python-shell-tramp-refresh-process-environment (vec env)
   "Update VEC's process environment with ENV."
   ;; Stolen from `tramp-open-connection-setup-interactive-shell'.
-  (let ((env (append `(,(tramp-get-remote-locale vec))
+  (let ((env (append (when (fboundp #'tramp-get-remote-locale)
+                       ;; Emacs<24.4 compat.
+                       (list (tramp-get-remote-locale vec)))
 		     (copy-sequence env)))
 	unset vars item)
     (while env
