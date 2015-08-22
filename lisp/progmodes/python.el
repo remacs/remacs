@@ -2008,9 +2008,7 @@ virtualenv."
 (define-obsolete-variable-alias
   'python-shell-virtualenv-path 'python-shell-virtualenv-root "25.1")
 
-(defcustom python-shell-setup-codes '(python-shell-completion-setup-code
-                                      python-ffap-setup-code
-                                      python-eldoc-setup-code)
+(defcustom python-shell-setup-codes nil
   "List of code run by `python-shell-send-setup-codes'."
   :type '(repeat symbol)
   :group 'python)
@@ -3118,18 +3116,18 @@ t when called interactively."
   "Send all setup code for shell.
 This function takes the list of setup code to send from the
 `python-shell-setup-codes' list."
-  (let ((process (python-shell-get-process))
-        (code (concat
-               (mapconcat
-                (lambda (elt)
-                  (cond ((stringp elt) elt)
-                        ((symbolp elt) (symbol-value elt))
-                        (t "")))
-                python-shell-setup-codes
-                "\n\n")
-               "\n\nprint ('python.el: sent setup code')")))
-    (python-shell-send-string code process)
-    (python-shell-accept-process-output process)))
+  (when python-shell-setup-codes
+    (let ((process (python-shell-get-process))
+          (code (concat
+                 (mapconcat
+                  (lambda (elt)
+                    (cond ((stringp elt) elt)
+                          ((symbolp elt) (symbol-value elt))
+                          (t "")))
+                  python-shell-setup-codes
+                  "\n\nprint ('python.el: sent setup code')"))))
+      (python-shell-send-string code process)
+      (python-shell-accept-process-output process))))
 
 (add-hook 'inferior-python-mode-hook
           #'python-shell-send-setup-code)
@@ -3187,7 +3185,7 @@ else:
   :group 'python)
 
 (defcustom python-shell-completion-string-code
-  "';'.join(__PYTHON_EL_get_completions('''%s'''))\n"
+  "';'.join(__PYTHON_EL_get_completions('''%s'''))"
   "Python code used to get a string of completions separated by semicolons.
 The string passed to the function is the current python name or
 the full statement in the case of imports."
@@ -3490,28 +3488,22 @@ completion."
             ;; Check whether a prompt matches a pdb string, an import
             ;; statement or just the standard prompt and use the
             ;; correct python-shell-completion-*-code string
-            (cond ((and (string-match
-                         (concat "^" python-shell-prompt-pdb-regexp) prompt))
-                   ;; Since there are no guarantees the user will remain
-                   ;; in the same context where completion code was sent
-                   ;; (e.g. user steps into a function), safeguard
-                   ;; resending completion setup continuously.
-                   (concat python-shell-completion-setup-code
-                           "\nprint (" python-shell-completion-string-code ")"))
-                  ((string-match
-                    python-shell--prompt-calculated-input-regexp prompt)
-                   python-shell-completion-string-code)
-                  (t nil)))
+            (when (string-match python-shell--prompt-calculated-input-regexp prompt)
+              ;; Since there are no guarantees the user will remain
+              ;; in the same context where completion code was sent
+              ;; (e.g. user steps into a function), safeguard
+              ;; resending completion setup continuously.
+              (concat python-shell-completion-setup-code
+                      "\nprint (" python-shell-completion-string-code ")")))
            (subject (or import input)))
-      (and completion-code
-           (> (length input) 0)
-           (let ((completions
-                  (python-util-strip-string
-                   (python-shell-send-string-no-output
-                    (format completion-code subject) process))))
-             (and (> (length completions) 2)
-                  (split-string completions
-                                "^'\\|^\"\\|;\\|'$\\|\"$" t)))))))
+      (when (and completion-code (> (length input) 0))
+        (let ((completions
+               (python-util-strip-string
+                (python-shell-send-string-no-output
+                 (format completion-code subject) process))))
+          (when (> (length completions) 2)
+            (split-string completions
+                          "^'\\|^\"\\|;\\|'$\\|\"$" t)))))))
 
 (defun python-shell-completion-at-point (&optional process)
   "Function for `completion-at-point-functions' in `inferior-python-mode'.
@@ -4055,13 +4047,22 @@ The skeleton will be bound to python-skeleton-NAME."
 ;;; FFAP
 
 (defcustom python-ffap-setup-code
-  "def __FFAP_get_module_path(module):
+  "
+def __FFAP_get_module_path(objstr):
     try:
-        import os
-        path = __import__(module).__file__
-        if path[-4:] == '.pyc' and os.path.exists(path[0:-1]):
-            path = path[:-1]
-        return path
+        import inspect
+        import os.path
+        # NameError exceptions are delayed until this point.
+        obj = eval(objstr)
+        module = inspect.getmodule(obj)
+        filename = module.__file__
+        ext = os.path.splitext(filename)[1]
+        if ext in ('.pyc', '.pyo'):
+            # Point to the source file.
+            filename = filename[:-1]
+        if os.path.exists(filename):
+            return filename
+        return ''
     except:
         return ''"
   "Python code to get a module path."
@@ -4069,7 +4070,7 @@ The skeleton will be bound to python-skeleton-NAME."
   :group 'python)
 
 (defcustom python-ffap-string-code
-  "__FFAP_get_module_path('''%s''')\n"
+  "__FFAP_get_module_path('''%s''')"
   "Python code used to get a string with the path of a module."
   :type 'string
   :group 'python)
@@ -4084,9 +4085,12 @@ The skeleton will be bound to python-skeleton-NAME."
         nil
       (let ((module-file
              (python-shell-send-string-no-output
-              (format python-ffap-string-code module) process)))
-        (when module-file
-          (substring-no-properties module-file 1 -1))))))
+              (concat
+               python-ffap-setup-code
+               "\nprint (" (format python-ffap-string-code module) ")")
+              process)))
+        (unless (zerop (length module-file))
+          (python-util-strip-string module-file))))))
 
 (defvar ffap-alist)
 
@@ -4172,13 +4176,13 @@ See `python-check-command' for the default."
             doc = doc.splitlines()[0]
     except:
         doc = ''
-    print (doc)"
+    return doc"
   "Python code to setup documentation retrieval."
   :type 'string
   :group 'python)
 
 (defcustom python-eldoc-string-code
-  "__PYDOC_get_help('''%s''')\n"
+  "__PYDOC_get_help('''%s''')"
   "Python code used to get a string with the documentation of an object."
   :type 'string
   :group 'python)
@@ -4204,15 +4208,20 @@ returns will be used.  If not FORCE-PROCESS is passed what
 `python-shell-get-process' returns is used."
   (let ((process (or force-process (python-shell-get-process))))
     (when process
-      (let ((input (or force-input
-                       (python-eldoc--get-symbol-at-point))))
-        (and input
-             ;; Prevent resizing the echo area when iPython is
-             ;; enabled.  Bug#18794.
-             (python-util-strip-string
-              (python-shell-send-string-no-output
-               (format python-eldoc-string-code input)
-               process)))))))
+      (let* ((input (or force-input
+                        (python-eldoc--get-symbol-at-point)))
+             (docstring
+              (when input
+                ;; Prevent resizing the echo area when iPython is
+                ;; enabled.  Bug#18794.
+                (python-util-strip-string
+                 (python-shell-send-string-no-output
+                  (concat
+                   python-eldoc-setup-code
+                   "\nprint(" (format python-eldoc-string-code input) ")")
+                  process)))))
+        (unless (zerop (length docstring))
+          docstring)))))
 
 (defun python-eldoc-function ()
   "`eldoc-documentation-function' for Python.
