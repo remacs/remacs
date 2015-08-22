@@ -114,10 +114,10 @@ and reference them using the function `class-option'."
 
   (cond ((and (stringp (car options-and-doc))
               (/= 1 (% (length options-and-doc) 2)))
-         (error "Too many arguments to `defclass'"))
+         (error "Too many arguments to ‘defclass’"))
         ((and (symbolp (car options-and-doc))
               (/= 0 (% (length options-and-doc) 2)))
-         (error "Too many arguments to `defclass'")))
+         (error "Too many arguments to ‘defclass’")))
 
   (if (stringp (car options-and-doc))
       (setq options-and-doc
@@ -941,7 +941,7 @@ this object."
   "Change the class of OBJ to type CLASS.
 This may create or delete slots, but does not affect the return value
 of `eq'."
-  (error "EIEIO: `change-class' is unimplemented"))
+  (error "EIEIO: ‘change-class’ is unimplemented"))
 
 ;; Hook ourselves into help system for describing classes and methods.
 ;; FIXME: This is not actually needed any more since we can click on the

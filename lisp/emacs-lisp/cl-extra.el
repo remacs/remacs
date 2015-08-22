@@ -416,7 +416,7 @@ as an integer unless JUNK-ALLOWED is non-nil."
 	(cond ((and junk-allowed (null sum)) sum)
 	      (junk-allowed (* sign sum))
 	      ((or (/= start end) (null sum))
-	       (error "Not an integer string: `%s'" string))
+	       (error "Not an integer string: ‘%s’" string))
 	      (t (* sign sum)))))))
 
 
