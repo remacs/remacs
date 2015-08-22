@@ -1727,11 +1727,15 @@ nor the buffer list.
 
 @cindex window use time
 @cindex use time of window
+@cindex window order by time of last use
 @defun window-use-time &optional window
-This functions returns the @dfn{use time} of window @var{window}.
+This functions returns the ``use time'' of window @var{window}.
 @var{window} must be a live window and defaults to the selected one.
-The window with the lowest use time is the least recently selected one.
-The window with the highest use time is the most recently selected one.
+The @dfn{use time} of a window is not really a time value, but it does
+increase monotonically with each window selection, so the window with
+the lowest ``use time'' is the least recently selected one, and the
+window with the highest ``use time'' is the most recently selected
+one.
 @end defun
 
 
