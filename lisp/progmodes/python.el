@@ -2200,6 +2200,8 @@ detection and just returns nil."
                     "ps_json = '\\n[\"%s\", \"%s\", \"%s\"]\\n' % tuple(ps)\n"
                     "print (ps_json)\n"
                     "sys.exit(0)\n"))
+             (interpreter python-shell-interpreter)
+             (interpreter-arg python-shell-interpreter-interactive-arg)
              (output
               (with-temp-buffer
                 ;; TODO: improve error handling by using
@@ -2209,11 +2211,11 @@ detection and just returns nil."
                   (let ((code-file (python-shell--save-temp-file code)))
                     ;; Use `process-file' as it is remote-host friendly.
                     (process-file
-                     python-shell-interpreter
+                     interpreter
                      code-file
                      '(t nil)
                      nil
-                     python-shell-interpreter-interactive-arg)
+                     interpreter-arg)
                     ;; Try to cleanup
                     (delete-file code-file)))
                 (buffer-string)))
