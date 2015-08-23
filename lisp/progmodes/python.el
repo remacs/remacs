@@ -2605,6 +2605,40 @@ With argument MSG show activation/deactivation message."
       (python-shell-font-lock-turn-off msg))
     python-shell-font-lock-enable))
 
+(defvar python-shell--first-prompt-received-output-buffer nil)
+(defvar python-shell--first-prompt-received nil)
+
+(defcustom python-shell-first-prompt-hook nil
+  "Hook run upon first (non-pdb) shell prompt detection.
+This is the place for shell setup functions that need to wait for
+output.  Since the first prompt is ensured, this helps the
+current process to not hang waiting for output by safeguarding
+interactive actions can be performed.  This is useful to safely
+attach setup code for long-running processes that eventually
+provide a shell."
+  :type 'hook
+  :group 'python)
+
+(defun python-shell-comint-watch-for-first-prompt-output-filter (output)
+  "Run `python-shell-first-prompt-hook' when first prompt is found in OUTPUT."
+  (when (not python-shell--first-prompt-received)
+    (set (make-local-variable 'python-shell--first-prompt-received-output-buffer)
+         (concat python-shell--first-prompt-received-output-buffer
+                 (ansi-color-filter-apply output)))
+    (when (python-shell-comint-end-of-output-p
+           python-shell--first-prompt-received-output-buffer)
+      (if (string-match-p
+           (concat python-shell-prompt-pdb-regexp (rx eos))
+           (or python-shell--first-prompt-received-output-buffer ""))
+          ;; Skip pdb prompts and reset the buffer.
+          (setq python-shell--first-prompt-received-output-buffer nil)
+        (set (make-local-variable 'python-shell--first-prompt-received) t)
+        (setq python-shell--first-prompt-received-output-buffer nil)
+        (with-current-buffer (current-buffer)
+          (let ((inhibit-quit nil))
+            (run-hooks 'python-shell-first-prompt-hook))))))
+  output)
+
 ;; Used to hold user interactive overrides to
 ;; `python-shell-interpreter' and `python-shell-interpreter-args' that
 ;; will be made buffer-local by `inferior-python-mode':
@@ -2654,6 +2688,7 @@ variable.
   (setq mode-line-process '(":%s"))
   (set (make-local-variable 'comint-output-filter-functions)
        '(ansi-color-process-output
+         python-shell-comint-watch-for-first-prompt-output-filter
          python-pdbtrack-comint-output-filter-function
          python-comint-postoutput-scroll-to-bottom))
   (set (make-local-variable 'compilation-error-regexp-alist)
@@ -2667,9 +2702,7 @@ variable.
   (make-local-variable 'python-shell-internal-last-output)
   (when python-shell-font-lock-enable
     (python-shell-font-lock-turn-on))
-  (compilation-shell-minor-mode 1)
-  (python-shell-accept-process-output
-   (get-buffer-process (current-buffer))))
+  (compilation-shell-minor-mode 1))
 
 (defun python-shell-make-comint (cmd proc-name &optional show internal)
   "Create a Python shell comint buffer.
@@ -3131,7 +3164,7 @@ This function takes the list of setup code to send from the
       (python-shell-send-string code process)
       (python-shell-accept-process-output process))))
 
-(add-hook 'inferior-python-mode-hook
+(add-hook 'python-shell-first-prompt-hook
           #'python-shell-send-setup-code)
 
 
@@ -3415,7 +3448,7 @@ With argument MSG show activation/deactivation message."
   "Like `python-shell-completion-native-turn-on-maybe' but force messages."
   (python-shell-completion-native-turn-on-maybe t))
 
-(add-hook 'inferior-python-mode-hook
+(add-hook 'python-shell-first-prompt-hook
           #'python-shell-completion-native-turn-on-maybe-with-msg)
 
 (defun python-shell-completion-native-toggle (&optional msg)
