@@ -1813,13 +1813,21 @@ sys_spawnve (int mode, char *cmdname, char **argv, char **envp)
 
       cmdname = alloca (MAX_PATH);
       if (egetenv ("CMDPROXY"))
-	strcpy (cmdname, egetenv ("CMDPROXY"));
+	{
+	  /* Implementation note: since process-environment, where
+	     'egetenv' looks, is encoded in the system codepage, we
+	     don't need to encode the cmdproxy file name if we get it
+	     from the environment.  */
+	  strcpy (cmdname, egetenv ("CMDPROXY"));
+	}
       else
 	{
-	  char *q = lispstpcpy (cmdname, Vexec_directory);
+	  char *q = lispstpcpy (cmdname,
+				/* exec-directory needs to be encoded.  */
+				ansi_encode_filename (Vexec_directory));
 	  /* If we are run from the source tree, use cmdproxy.exe from
 	     the same source tree.  */
-	  for (p = q - 2; p > cmdname; p--)
+	  for (p = q - 2; p > cmdname; p = CharPrevA (cmdname, p))
 	    if (*p == '/')
 	      break;
 	  if (*p == '/' && xstrcasecmp (p, "/lib-src/") == 0)
