@@ -1,3 +1,1031 @@
+2015-08-23  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* doc/emacs/modes.texi (Choosing Modes): Minor doc fix for
+	magic-fallback-mode-alist.
+
+2015-08-22  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: fallback completion, ffap and eldoc setup enhancements
+	Setup codes are now sent continuously so that the current frame is
+	always taken into account.  This allows working within debuggers
+	and always keeping a fresh version of setup codes that will return
+	proper results.
+	* lisp/progmodes/python.el (python-shell-setup-codes): Cleanup.
+	(python-shell-send-setup-code): Send code only when
+	python-shell-setup-codes is non-nil.
+	(python-shell-completion-string-code): Cleanup trailing newline.
+	(python-shell-completion-get-completions): Always use
+	python-shell-completion-setup-code.
+	(python-ffap-setup-code): Work with any object, not only modules.
+	(python-ffap-string-code): Cleanup trailing newline.
+	(python-ffap-module-path): Always use python-ffap-setup-code.
+	(python-eldoc-string-code): Cleanup trailing newline.
+	(python-eldoc--get-doc-at-point): Always use
+	python-eldoc-setup-code.  Return non-nil only if docstring is
+	found.
+
+	python.el: Increase native completion robustness.
+	* lisp/progmodes/python.el (python-shell-completion-native-setup):
+	Make completer print real candidates and just return dummy ones to
+	avoid input modification.
+	(python-shell-completion-native-get-completions): Set
+	comint-redirect-insert-matching-regexp to non-nil and make
+	comint-redirect-finished-regexp match the last dummy candidate.
+	Use python-shell-accept-process-output to wait for the full list
+	of candidates.
+
+2015-08-22  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix invocation of programs via cmdproxy.exe
+	* src/w32proc.c (sys_spawnve): Use exec-directory, not
+	invocation-directory, for finding cmdproxy.exe.  When Emacs is
+	run from the source tree, look for cmdproxy.exe in the same source
+	tree.  (Bug#21323)
+
+2015-08-22  Simen Heggestøyl  <simenheg@gmail.com>
+
+	Handle comments inside unquoted URIs in css-mode
+	* lisp/textmodes/css-mode.el (css--uri-re): New defconst.
+	(css-syntax-propertize-function): New defconst.
+	(css--font-lock-keywords): Handle parens around unquoted URIs.
+	(css-mode): Set `syntax-propertize-function'.
+
+2015-08-22  Eli Zaretskii  <eliz@gnu.org>
+
+	Support invocation of Hunspell with multiple dictionaries
+	* lisp/textmodes/ispell.el (ispell-parse-hunspell-affix-file): Support
+	lists of dictionaries of the form "DICT1,DICT2,...".
+	(ispell-hunspell-add-multi-dic): New command.  (Bug#20495)
+
+	Minor formatting changes in ispell.el
+	* lisp/textmodes/ispell.el (ispell-create-debug-buffer)
+	(ispell-print-if-debug, ispell-aspell-find-dictionary)
+	(ispell-aspell-add-aliases, ispell-hunspell-dict-paths-alist)
+	(ispell-hunspell-dictionary-alist)
+	(ispell-hunspell-fill-dictionary-entry)
+	(ispell-find-hunspell-dictionaries, ispell-send-replacement)
+	(ispell-buffer-with-debug, ispell-complete-word)
+	(ispell-current-dictionary, ispell-current-personal-dictionary)
+	(ispell-accept-output, ispell-minor-mode)
+	(ispell-personal-dictionary, ispell-dictionary-alist)
+	(ispell-really-aspell, ispell-really-hunspell)
+	(ispell-encoding8-command, ispell-aspell-supports-utf8)
+	(ispell-aspell-dictionary-alist, ispell-set-spellchecker-params):
+	Fix whitespace, inconsistent capitalization, and arguments in doc
+	strings.
+
+2015-08-22  Martin Rudalics  <rudalics@gmx.at>
+
+	In ‘adjust-window-trailing-edge’ fix bug with size-preserved windows.
+	* lisp/window.el (adjust-window-trailing-edge): Fix bug where this
+	function refused to resize a size-preserved window.
+
+2015-08-22  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of 'window-use-time'
+	* doc/lispref/windows.texi (Selecting Windows): Improve
+	documentation and indexing of 'window-use-time'.
+
+2015-08-21  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/progmodes/cc-*.el: Fix up commenting style
+	* lisp/progmodes/cc-vars.el, lisp/progmodes/cc-styles.el:
+	* lisp/progmodes/cc-mode.el, lisp/progmodes/cc-menus.el:
+	* lisp/progmodes/cc-langs.el, lisp/progmodes/cc-guess.el:
+	* lisp/progmodes/cc-fonts.el, lisp/progmodes/cc-engine.el:
+	* lisp/progmodes/cc-defs.el, lisp/progmodes/cc-cmds.el:
+	* lisp/progmodes/cc-bytecomp.el, lisp/progmodes/cc-awk.el:
+	* lisp/progmodes/cc-align.el, lisp/net/soap-client.el:
+	Fix up commenting style.
+
+2015-08-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	text-quoting-style in emacs-lisp diagnostics
+	* lisp/emacs-lisp/advice.el (ad-read-advised-function)
+	(ad-read-advice-class, ad-read-advice-name, ad-enable-advice)
+	(ad-disable-advice, ad-remove-advice, ad-set-argument)
+	(ad-set-arguments):
+	* lisp/emacs-lisp/byte-opt.el (byte-compile-inline-expand)
+	(byte-compile-unfold-lambda, byte-optimize-form-code-walker)
+	(byte-optimize-while, byte-optimize-apply):
+	* lisp/emacs-lisp/bytecomp.el (byte-compile-lapcode)
+	(byte-compile-log-file, byte-compile-format-warn)
+	(byte-compile-nogroup-warn, byte-compile-arglist-warn)
+	(byte-compile-cl-warn)
+	(byte-compile-warn-about-unresolved-functions)
+	(byte-compile-file, byte-compile-fix-header)
+	(byte-compile--declare-var, byte-compile-file-form-defmumble)
+	(byte-compile-form, byte-compile-normal-call)
+	(byte-compile-variable-ref, byte-compile-variable-set)
+	(byte-compile-subr-wrong-args, byte-compile-setq-default)
+	(byte-compile-negation-optimizer)
+	(byte-compile-condition-case--old)
+	(byte-compile-condition-case--new, byte-compile-save-excursion)
+	(byte-compile-defvar, byte-compile-autoload)
+	(byte-compile-lambda-form)
+	(byte-compile-make-variable-buffer-local, display-call-tree)
+	(batch-byte-compile):
+	* lisp/emacs-lisp/cconv.el (cconv-convert, cconv--analyze-use)
+	(cconv-analyze-form):
+	* lisp/emacs-lisp/chart.el (chart-space-usage):
+	* lisp/emacs-lisp/check-declare.el (check-declare-scan)
+	(check-declare-warn, check-declare-file)
+	(check-declare-directory):
+	* lisp/emacs-lisp/checkdoc.el (checkdoc-this-string-valid-engine)
+	(checkdoc-message-text-engine):
+	* lisp/emacs-lisp/cl-extra.el (cl-parse-integer):
+	* lisp/emacs-lisp/cl-macs.el (cl--parse-loop-clause, cl-tagbody)
+	(cl-symbol-macrolet):
+	* lisp/emacs-lisp/cl.el (cl-unload-function, flet):
+	* lisp/emacs-lisp/copyright.el (copyright)
+	(copyright-update-directory):
+	* lisp/emacs-lisp/edebug.el (edebug-read-list):
+	* lisp/emacs-lisp/eieio-base.el (eieio-persistent-read):
+	* lisp/emacs-lisp/eieio-core.el (eieio--slot-override)
+	(eieio-oref, eieio-oset-default):
+	* lisp/emacs-lisp/eieio-speedbar.el:
+	(eieio-speedbar-child-make-tag-lines)
+	(eieio-speedbar-child-description):
+	* lisp/emacs-lisp/eieio.el (defclass, change-class):
+	* lisp/emacs-lisp/elint.el (elint-file, elint-get-top-forms)
+	(elint-init-form, elint-check-defalias-form)
+	(elint-check-let-form):
+	* lisp/emacs-lisp/ert.el (ert-get-test):
+	* lisp/emacs-lisp/find-func.el (find-function-search-for-symbol)
+	(find-function-library):
+	* lisp/emacs-lisp/generator.el (iter-yield):
+	* lisp/emacs-lisp/gv.el (gv-define-simple-setter):
+	* lisp/emacs-lisp/lisp-mnt.el (lm-verify):
+	* lisp/emacs-lisp/package-x.el (package-upload-file):
+	* lisp/emacs-lisp/package.el (package-version-join)
+	(package-disabled-p, package-activate-1, package-activate)
+	(package--download-one-archive)
+	(package--download-and-read-archives)
+	(package-compute-transaction, package-install-from-archive)
+	(package-install, package-install-selected-packages)
+	(package-delete, package-autoremove)
+	(package-install-button-action, package-delete-button-action)
+	(package-menu-hide-package, package-menu--list-to-prompt)
+	(package-menu--perform-transaction)
+	(package-menu--find-and-notify-upgrades):
+	* lisp/emacs-lisp/pcase.el (pcase-exhaustive, pcase--u1):
+	* lisp/emacs-lisp/re-builder.el (reb-enter-subexp-mode):
+	* lisp/emacs-lisp/ring.el (ring-next, ring-previous):
+	* lisp/emacs-lisp/rx.el (rx-check, rx-anything):
+	* lisp/emacs-lisp/smie.el (smie-config-save):
+	* lisp/emacs-lisp/subr-x.el (internal--check-binding):
+	* lisp/emacs-lisp/testcover.el (testcover-1value):
+	Use curved quotes in diagnostic format strings.
+
+2015-08-21  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Ensure remote process-environment on non-interactive processes
+	* lisp/progmodes/python.el
+	(python-shell-tramp-refresh-process-environment): New function.
+	(python-shell-with-environment): Use it.
+	* test/automated/python-tests.el (python-shell-with-environment-2): Update.
+
+	python.el: Enhancements to process environment setup.
+	* lisp/progmodes/python.el (python-shell-process-environment)
+	(python-shell-extra-pythonpaths, python-shell-exec-path)
+	(python-shell-virtualenv-root): Update docstring.  Remove :safe.
+	(python-shell-setup-codes): Remove :safe.
+	(python-shell-remote-exec-path): New defcustom.
+	(python-shell--add-to-path-with-priority): New macro.
+	(python-shell-calculate-pythonpath): Give priority to
+	python-shell-extra-pythonpaths.  Update docstring.
+	(python-shell-calculate-process-environment): Give priority to
+	python-shell-process-environment.  Update docstring.
+	(python-shell-calculate-exec-path): Give priority to
+	python-shell-exec-path and calculated virtualenv bin directory.
+	Update docstring.
+	(python-shell-tramp-refresh-remote-path): New function.
+	(python-shell-with-environment): Use it when working remotely and
+	do not modify tramp-remote-path.  Allow nesting.
+	(python-shell-calculate-command): Remove useless
+	python-shell-with-environment call.
+	* test/automated/python-tests.el (python-shell-calculate-pythonpath-1)
+	(python-shell-calculate-pythonpath-2)
+	(python-shell-calculate-process-environment-6)
+	(python-shell-calculate-process-environment-7)
+	(python-shell-calculate-process-environment-8)
+	(python-shell-calculate-exec-path-3)
+	(python-shell-calculate-exec-path-4)
+	(python-shell-calculate-exec-path-5)
+	(python-shell-calculate-exec-path-6)
+	(python-shell-with-environment-3): New tests.
+	(python-shell-calculate-process-environment-2)
+	(python-shell-calculate-process-environment-3)
+	(python-shell-calculate-process-environment-4)
+	(python-shell-calculate-process-environment-5)
+	(python-shell-calculate-exec-path-1)
+	(python-shell-calculate-exec-path-2)
+	(python-shell-with-environment-1)
+	(python-shell-with-environment-2): Update and simplify.
+
+2015-08-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Avoid hard-coding "M-x command" in docstrings
+	* lisp/calendar/todo-mode.el (todo-mode):
+	* lisp/desktop.el (desktop-save-mode):
+	* lisp/edmacro.el (edit-kbd-macro):
+	* lisp/emacs-lisp/package.el (package-menu-execute):
+	* lisp/emulation/viper-cmd.el (viper-ask-level):
+	* lisp/emulation/viper-init.el (viper-expert-level):
+	* lisp/filesets.el (filesets-add-buffer):
+	* lisp/follow.el (follow-mode):
+	* lisp/gnus/auth-source.el (auth-sources):
+	* lisp/international/ogonek.el (ogonek-informacja)
+	(ogonek-information):
+	* lisp/net/tramp.el (tramp-process-actions):
+	* lisp/org/org-gnus.el (org-gnus-no-new-news):
+	* lisp/org/org.el (org-ellipsis):
+	* lisp/progmodes/python.el (python-shell-get-process-or-error):
+	* lisp/progmodes/vhdl-mode.el (vhdl-mode):
+	* lisp/server.el (server-start):
+	* lisp/type-break.el (type-break-noninteractive-query):
+	* lisp/userlock.el (ask-user-about-supersession-help):
+	* lisp/whitespace.el (whitespace-report-region):
+	Prefer (substitute-command-keys "`\\[foo-command]'")
+	to "`M-x foo-command'" in docstrings and the like.
+
+2015-08-21  Tassilo Horn  <tsdh@gnu.org>
+
+	Use add-function for prettify-symbols-compose-predicate
+	* lisp/textmodes/tex-mode.el (tex-common-initialization): Set
+	prettify-symbols-compose-predicate in terms of add-function.
+	* etc/NEWS: Mention prettify-symbols-compose-predicate and
+	prettify-symbols-mode support in tex-mode.
+
+2015-08-21  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/emacs-lisp/smie.el (smie-indent-current-column): New fun
+	(smie-indent-exps, smie-indent-keyword): Use it.
+	* test/indent/css-mode.css: Test alignment with leading comment.
+
+2015-08-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Respect text-quoting-style in (*Finder*) menus
+	* lisp/info.el (info--prettify-description):
+	Treat description as a docstring, so that it's requoted as
+	per text-quoting-style.
+
+2015-08-21  Martin Rudalics  <rudalics@gmx.at>
+
+	Document `window-use-time' in Elisp manual
+	* doc/lispref/windows.texi (Selecting Windows): Document `window-use-time'.
+
+2015-08-21  Eli Zaretskii  <eliz@gnu.org>
+
+	A better fix for bug#21303
+	* src/w32uniscribe.c (_WIN32_WINNT): Define to 0x0600.  This is a
+	cleaner fix for Bug#21260 than the previous change.
+
+2015-08-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Respect text-quoting-style in calc
+	In calc, tespect text-quoting-style preference in diagnostic
+	formats and fix a few similar problems in docstrings.
+	* lisp/calc/calc-aent.el (math-read-factor):
+	* lisp/calc/calc-embed.el (calc-do-embedded):
+	* lisp/calc/calc-ext.el (calc-user-function-list)
+	* lisp/calc/calc-graph.el (calc-graph-show-dumb):
+	* lisp/calc/calc-help.el (calc-describe-key)
+	(calc-describe-thing):
+	* lisp/calc/calc-lang.el (calc-c-language)
+	(math-parse-fortran-vector-end, math-parse-tex-sum)
+	(math-parse-eqn-matrix, math-parse-eqn-prime)
+	(calc-yacas-language, calc-maxima-language, calc-giac-language)
+	(math-read-big-rec, math-read-big-balance):
+	* lisp/calc/calc-mode.el (calc-auto-why, calc-save-modes)
+	(calc-auto-recompute):
+	* lisp/calc/calc-prog.el (calc-user-define-invocation)
+	(math-do-arg-check):
+	* lisp/calc/calc-store.el (calc-edit-variable):
+	* lisp/calc/calc-units.el (math-build-units-table-buffer):
+	* lisp/calc/calc-vec.el (math-read-brackets):
+	* lisp/calc/calc-yank.el (calc-edit-mode):
+	* lisp/calc/calc.el (calc, calc-do, calc-user-invocation):
+	Use curved quotes in diagnostic format strings.
+	* lisp/calc/calc-help.el (calc-describe-thing):
+	Format docstrings with substitute-command-keys.
+	* lisp/calc/calc-help.el (calc-j-prefix-help):
+	* lisp/calc/calc-misc.el (calc-help):
+	* lisp/calc/calc-ext.el (calc-shift-Z-prefix-help):
+	Escape a docstring "`".
+
+2015-08-21  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix documentation of 'menu-set-font' and 'set-frame-font'
+	* lisp/menu-bar.el (menu-set-font): Doc fix.  (Bug#21303)
+	* doc/lispref/frames.texi (Frame Font): Document that
+	set-frame-font with the last argument 't' will also make the font
+	the default for the future GUI frames.
+
+	Document '--create-frame' option to emacsclient
+	* doc/emacs/misc.texi (emacsclient Options): Document the
+	'--create-frame' option.  (Bug#21308)
+
+2015-08-21  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/progmodes/js.el (js-mode): Don't eagerly syntax propertize.
+
+2015-08-21  Eli Zaretskii  <eliz@gnu.org>
+
+	Document 'get-mru-window' in the ELisp manual
+	* doc/lispref/windows.texi (Cyclic Window Ordering): Document
+	'get-mru-window'.  (Bug#21306)
+
+	Clarify documentation of 'get-buffer-window-list'
+	* doc/lispref/windows.texi (Buffers and Windows): Mention that the
+	current window, if relevant, will be the first in the list
+	returned by 'get-buffer-window-list'.
+	* lisp/window.el (get-buffer-window-list): Doc fix.  (Bug#21305)
+
+2015-08-21  Vasilij Schneidermann  <v.schneidermann@gmail.com>
+
+	In `ielm' use `pop-to-buffer-same-window' instead of `switch-to-buffer'
+	* lisp/ielm.el (ielm): Use `pop-to-buffer-same-window' instead of
+	`switch-to-buffer'.
+
+2015-08-21  Kaushal  <kaushal.modi@gmail.com>  (tiny change)
+
+	In woman.el use `display-buffer' instead of `switch-to-buffer'
+	* lisp/woman.el (woman-really-find-file, WoMan-find-buffer): Use
+	`display-buffer' instead of `switch-to-buffer'.
+
+2015-08-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Follow user preference in calendar diagnostics
+	Respect text-quoting-style preference in diagnostic formats by
+	using curved quotes (which are translated as per text-quoting-style)
+	instead of grave accent and apostrophe (which are not).
+	* lisp/calendar/appt.el (appt-display-message):
+	* lisp/calendar/diary-lib.el (diary-check-diary-file)
+	(diary-mail-entries, diary-from-outlook):
+	* lisp/calendar/icalendar.el (icalendar-export-region)
+	(icalendar--convert-float-to-ical)
+	(icalendar--convert-date-to-ical)
+	(icalendar--convert-ical-to-diary)
+	(icalendar--convert-recurring-to-diary)
+	(icalendar--add-diary-entry):
+	* lisp/calendar/time-date.el (format-seconds):
+	* lisp/calendar/timeclock.el (timeclock-mode-line-display)
+	(timeclock-make-hours-explicit):
+	* lisp/calendar/todo-mode.el (todo-prefix, todo-delete-category)
+	(todo-item-mark, todo-check-format)
+	(todo-insert-item--next-param, todo-edit-item--next-key)
+	(todo-mode):
+	Use curved quotes in diagnostic format strings.
+	* lisp/calendar/icalendar.el (icalendar-import-format-sample):
+	* test/automated/icalendar-tests.el (icalendar--import-format-sample):
+	Just use straight quoting for simple test case.
+
+2015-08-21  Michael Albinus  <michael.albinus@gmx.de>
+
+	* src/gfilenotify.c (Fgfile_add_watch):
+	Handle errors from g_file_monitor.
+
+2015-08-21  Martin Rudalics  <rudalics@gmx.at>
+
+	In frames.texi use "minibuffer-less frame" instead of "non-minibuffer frame"
+	* doc/lispref/frames.texi (Frame Layout): Use "minibuffer-less
+	frame" instead of "non-minibuffer frame".
+
+	Fix frame geometry related text
+	* doc/lispref/frames.texi (Frame Layout): Rename
+	`x-frame-geometry' to `frame-geometry'.
+	* doc/lispref/frames.texi (Mouse Position):
+	* doc/lispref/windows.texi (Coordinates and Windows): Use
+	`set-mouse-absolute-pixel-position' instead of
+	`x-set-mouse-absolute-pixel-position'.
+
+	Sanitize frame geometry related functions
+	* src/nsfns.m (Fx_frame_geometry): Rename to Fns_frame_geometry.
+	(Fx_frame_edges): Rename to Fns_frame_edges.
+	* src/w32fns.c (Fx_frame_geometry): Rename to Fw32_frame_geometry.
+	(Fx_frame_edges): Rename to Fw32_frame_edges.
+	(Fx_mouse_absolute_pixel_position): Rename to
+	Fw32_mouse_absolute_pixel_position.
+	(Fx_set_mouse_absolute_pixel_position): Rename to
+	Fw32_set_mouse_absolute_pixel_position.
+	* lisp/frame.el (x-frame-geometry, w32-frame-geometry)
+	(ns-frame-geometry, x-frame-edges, w32-frame-edges)
+	(ns-frame-edges, w32-mouse-absolute-pixel-position)
+	(x-mouse-absolute-pixel-position)
+	(w32-set-mouse-absolute-pixel-position)
+	(x-set-mouse-absolute-pixel-position): Declare.
+	(frame-geometry, mouse-absolute-pixel-position)
+	(set-mouse-absolute-pixel-position): New functions.
+	(frame-edges): Rewrite in terms of x-/w32-/ns-frame-edges.
+
+2015-08-21  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix MinGW64 build broken by latest w32uniscribe.c changes
+	* src/w32uniscribe.c (UNISCRIBE_OPENTYPE): Define to 0x0100, for
+	MinGW64.  Reported by Andy Moreton <andrewjmoreton@gmail.com>.
+	(Bug#21260)
+
+2015-08-21  Tassilo Horn  <tsdh@gnu.org>
+
+	Add TeX defaults for prettify-symbol-mode
+	* lisp/textmodes/tex-mode.el (tex--prettify-symbols-alist): Rename
+	from tex-prettify-symbols-alist.
+	(tex--prettify-symbols-compose-p): New function.
+	(tex-common-initialization): Use them as prettify-symbols-alist
+	and prettify-symbols-compose-predicate.
+
+	Generalize prettify-symbols to arbitrary modes
+	* lisp/progmodes/prog-mode.el
+	(prettify-symbols-default-compose-p): New function.
+	(prettify-symbols-compose-predicate): New variable.
+	(prettify-symbols--compose-symbol): Use it.
+
+2015-08-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Don't quote symbols 'like-this' in docstrings etc.
+	* admin/unidata/uvs.el (uvs-insert-fields-as-bytes):
+	* lisp/allout-widgets.el (allout-widgets-count-buttons-in-region):
+	* lisp/allout.el (allout-add-resumptions, allout-mode):
+	* lisp/calculator.el (calculator-operators):
+	* lisp/cedet/data-debug.el (dd-propertize):
+	* lisp/cedet/ede/proj-prog.el (ede-proj-target-makefile-program):
+	* lisp/cedet/semantic/analyze/debug.el:
+	(semantic-analyzer-debug-global-miss-text):
+	* lisp/cedet/semantic/lex-spp.el:
+	(semantic-lex-spp-replace-or-symbol-or-keyword):
+	* lisp/cedet/semantic/symref.el:
+	(semantic-symref-cleanup-recent-buffers-fcn):
+	* lisp/cedet/semantic/tag.el (semantic-tag-class):
+	* lisp/cedet/srecode/el.el (srecode-semantic-handle-:el-custom):
+	* lisp/gnus/nnmairix.el (nnmairix-propagate-marks-upon-close):
+	* lisp/gnus/pop3.el (pop3-authentication-scheme):
+	* lisp/help-fns.el (describe-function-orig-buffer):
+	* lisp/imenu.el (imenu--history-list):
+	* lisp/mail/feedmail.el (feedmail-confirm-outgoing)
+	(feedmail-display-full-frame, feedmail-deduce-bcc-where)
+	(feedmail-queue-default-file-slug)
+	(feedmail-queue-buffer-file-name):
+	* lisp/net/mairix.el (mairix-searches-mode-map):
+	* lisp/net/newst-backend.el (newsticker-retrieval-method)
+	(newsticker-auto-mark-filter-list):
+	* lisp/obsolete/vi.el (vi-mode):
+	* lisp/progmodes/cc-engine.el (c-literal-type):
+	* lisp/progmodes/cpp.el (cpp-face):
+	* lisp/progmodes/ebrowse.el (ebrowse-electric-list-looper):
+	* lisp/progmodes/elisp-mode.el (elisp--xref-make-xref):
+	* lisp/progmodes/pascal.el (pascal-auto-lineup):
+	* lisp/progmodes/prog-mode.el (prog-widen):
+	* lisp/progmodes/verilog-mode.el (verilog-regexp-words)
+	(verilog-auto-lineup, verilog-auto-reset-widths)
+	(verilog-auto-arg-format, verilog-auto-inst-template-numbers):
+	* lisp/textmodes/flyspell.el (flyspell-maybe-correct-transposition)
+	(flyspell-maybe-correct-doubling):
+	* lisp/textmodes/table.el (table-justify, table-justify-cell)
+	(table-justify-row, table-justify-column, table-insert-sequence)
+	(table--justify-cell-contents):
+	* lisp/url/url-auth.el (url-get-authentication):
+	* lisp/window.el (display-buffer-record-window):
+	* lisp/xml.el (xml-parse-file, xml-parse-region):
+	* src/gfilenotify.c (Fgfile_add_watch):
+	Don't quote symbols with apostrophes in doc strings.
+	Use asymmetric quotes instead.
+	* lisp/cedet/semantic/complete.el (semantic-displayor-show-request):
+	Likewise for symbol in diagnostic.
+	* lisp/image.el (image-extension-data):
+	* lisp/register.el (frame-configuration-to-register):
+	* src/buffer.c (syms_of_buffer):
+	Remove bogus apostrophes after symbols.
+	* lisp/thumbs.el (thumbs-conversion-program):
+	Quote Lisp string values using double-quotes, not apostrophes.
+
+2015-08-20  Martin Rudalics  <rudalics@gmx.at>
+
+	Describe frame geometry and related functions in Elisp manual
+	* doc/lispref/display.texi (Size of Displayed Text, Line Height)
+	(Showing Images): Update references.
+	* doc/lispref/elisp.texi (Top): Update node listing.
+	* doc/lispref/frames.texi (Frame Geometry): New node.  Move
+	`Size and Position' section here.
+	(Size Parameters): Update references.
+	(Mouse Position): Update references and nomenclature.  Describe
+	new functions `x-mouse-absolute-pixel-position' and
+	`x-set-mouse-absolute-pixel-position'.
+	* doc/lispref/windows.texi (Window Sizes): Update references.
+	(Resizing Windows): Update references.  Move description of
+	`fit-frame-to-buffer' here.
+	(Coordinates and Windows): Update nomenclature and references.
+	Describe new arguments of `window-edges'.  Comment out
+	descriptions of `window-left-column', `window-top-line',
+	`window-pixel-left' and `window-pixel-top'.  Describe
+	`window-absolute-pixel-position'.
+
+2015-08-20  Alan Mackenzie  <acm@muc.de>
+
+	Handling of `c-parse-state'.  Fix low level bug.
+	progmodes/cc-engine.el (c-remove-stale-state-cache-backwards): Add
+	"CASE 3.5" to handle `cache-pos' being only slightly before `here'.
+
+2015-08-20  Andreas Politz  <politza@hochschule-trier.de>
+
+	In `widget-color--choose-action' quit *Color* window instead of deleting it
+	* lisp/wid-edit.el (widget-color--choose-action): Quit *Color*
+	window instead of deleting it.
+
+2015-08-20  Martin Rudalics  <rudalics@gmx.at>
+
+	In w32fns.c's Fx_frame_geometry rewrite check whether frame has a titlebar
+	* src/w32fns.c (Fx_frame_geometry): Use title_bar.rgstate[0] to
+	determine whether frame has a titlebar.
+	Suggested by Eli Zaretskii <eliz@gnu.org>
+
+2015-08-20  Tassilo Horn  <tsdh@gnu.org>
+
+	Add a prettify-symbols-alist for (La)TeX
+	* tex-mode.el (tex-prettify-symbols-alist): New variable holding
+	an alist suitable as prettify-symbols-alist in (La)TeX modes.
+
+2015-08-19  Alan Mackenzie  <acm@muc.de>
+
+	Make electric-pair-mode, delete-selection-mode and CC Mode cooperate.
+	Fixes debbugs#21275.
+	In Emacs >= 25, let electric-pair-mode take precedence over
+	delete-selection-mode.
+	delsel.el (delete-selection-uses-region-p): New function, previously a
+	lambda expression in a property value for `self-insert-command'.
+	(top-level) Set the `delete-selection' property of `self-insert-command'
+	to `delete-selection-uses-region-p'.
+	progmodes/cc-cmds.el (top-level): Give the `delete-selection' property
+	for c-electric-\(brace\|paren\) the value `delete-selection-uses-region-p'
+	when the latter function exists.
+
+2015-08-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix key binding quoting in tutorial *Help*
+	* lisp/tutorial.el (tutorial--describe-nonstandard-key):
+	When generating help for custom key bindings, use the user-preferred
+	quoting style rather than hardcoding the grave style.
+
+2015-08-19  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve and future-proof OTF fonts support in w32uniscribe.c
+	* src/w32uniscribe.c (uniscribe_otf_capability): Add commentary
+	about the expected results and why the new Uniscribe APIs are not
+	used in this function.
+	(ScriptGetFontScriptTags_Proc, ScriptGetFontLanguageTags_Proc)
+	(ScriptGetFontFeatureTags_Proc): New function typedefs.
+	(uniscribe_new_apis): New static variable.
+	(uniscribe_check_features): New function, implements OTF features
+	verification while correctly accounting for features in the list
+	after the nil member, if any.
+	(uniscribe_check_otf_1): New function, retrieves the features
+	supported by the font for the requested script and language using
+	the Uniscribe APIs available from Windows Vista onwards.
+	(uniscribe_check_otf): If the new Uniscribe APIs are available,
+	use them in preference to reading the font data directly.  Call
+	uniscribe_check_features to verify that the requested features are
+	supported, replacing the original incomplete code.
+	(syms_of_w32uniscribe): Initialize function pointers for the new
+	Uniscribe APIs.  (Bug#21260)
+	(otf_features): Scan the script, langsys, and feature arrays back
+	to front, so that the result we return has them in alphabetical
+	order, like ftfont.c does.
+	* src/w32fns.c (syms_of_w32fns) <w32-disable-new-uniscribe-apis>:
+	New variable for debugging w32uniscribe.c code.
+
+2015-08-19  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* isearch.el (isearch-search-fun-default): Revert a5bdb87
+	Remove usage of `isearch-lax-whitespace' inside the `iearch-word'
+	clause of `isearch-search-fun-default'. That lax variable does not
+	refer to lax-whitespacing.  Related to (bug#21777).
+	This reverts commit a5bdb872edb9f031fe041faf9a8c0be432e5f64c.
+	* character-fold.el (character-fold-search): Set to nil
+	Default to nil for now, until someone implements proper
+	lax-whitespacing with char-fold searching.
+
+2015-08-19  Martin Rudalics  <rudalics@gmx.at>
+
+	Fix doc-string of `help-mode-finish'.
+	* lisp/help-mode.el (help-mode-finish): Fix doc-string.
+
+	In nsimage.m include coding.h (Bug#21292)
+	* src/nsimage.m (top-level): Include coding.h (Bug#21292).
+
+	Move window edge functions to Elisp.
+	* src/window.c (Fwindow_edges, Fwindow_pixel_edges)
+	(Fwindow_absolute_pixel_edges, Fwindow_inside_edges)
+	(Fwindow_inside_pixel_edges, Fwindow_inside_absolute_pixel_edges):
+	Move to window.el.
+	(calc_absolute_offset): Remove.
+	* lisp/frame.el (frame-edges): New function.
+	* lisp/window.el (window-edges, window-pixel-edges)
+	(window-absolute-pixel-edges): Move here from window.c.
+	(window-body-edges, window-body-pixel-edges)
+	(window-absolute-body-pixel-edges): Move here from window.c and
+	rename "inside" to "body".  Keep old names as aliases.
+	(window-absolute-pixel-position): New function.
+
+2015-08-19  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	[Gnus]: Use overlay functions directly
+	* lisp/gnus/gnus-art.el (gnus-mime-inline-part, gnus-mm-display-part)
+	(gnus-insert-mime-button, gnus-mime-buttonize-attachments-in-header)
+	(gnus-article-highlight-signature, gnus-article-extend-url-button)
+	(gnus-article-add-button, gnus-insert-prev-page-button)
+	(gnus-insert-next-page-button, gnus-insert-mime-security-button):
+	* lisp/gnus/gnus-cite.el (gnus-cite-delete-overlays)
+	(gnus-cite-add-face):
+	* lisp/gnus/gnus-html.el (gnus-html-wash-tags):
+	* lisp/gnus/gnus-salt.el (gnus-tree-read-summary-keys)
+	(gnus-tree-recenter, gnus-highlight-selected-tree):
+	* lisp/gnus/gnus-sum.el (gnus-summary-show-all-threads)
+	(gnus-summary-show-thread, gnus-summary-hide-thread)
+	(gnus-highlight-selected-summary):
+	* lisp/gnus/gnus-util.el (gnus-put-overlay-excluding-newlines):
+	* lisp/gnus/message.el (message-fix-before-sending)
+	(message-toggle-image-thumbnails):
+	* lisp/gnus/mm-decode.el (mm-convert-shr-links):
+	* lisp/gnus/sieve.el (sieve-highlight, sieve-insert-scripts):
+	Use overlay functions directly instead of using gnus-overlay-*,
+	message-overlay-*, and sieve-overlay-*.
+	* lisp/gnus/gnus-sum.el (gnus-remove-overlays):
+	* lisp/gnus/gnus.el (gnus-make-overlay, gnus-copy-overlay)
+	(gnus-delete-overlay, gnus-overlay-get, gnus-overlay-put)
+	(gnus-move-overlay, gnus-overlay-buffer, gnus-overlay-start)
+	(gnus-overlay-end, gnus-overlays-at, gnus-overlays-in):
+	* lisp/gnus/message.el (message-delete-overlay, message-make-overlay)
+	(message-overlay-get, message-overlay-put, message-overlays-in):
+	* lisp/gnus/sieve.el (sieve-make-overlay, sieve-overlay-put)
+	(sieve-overlays-at):
+	Remove.
+
+2015-08-19  Martin Rudalics  <rudalics@gmx.at>
+
+	In w32fns.c condition TITLEBAR_INFO declaration on WINDOWS version.
+	* src/w32fns.c (TITLEBAR_INFO): Make it a typedef so MinGW64
+	builds can use the declaration from the system headers.
+	(GetTitleBarInfo_Proc, Fx_frame_geometry): Adapt to new
+	definition of TITLEBAR_INFO.
+	Suggested by Eli Zaretskii  <eliz@gnu.org>
+
+2015-08-19  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/gnus/nnmaildir.el (nnmaildir-flag-mark-mapping): Add "P".
+
+2015-08-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use new q ‘format’ flag when fixing quotes in C
+	* src/image.c (image_size_error): New function.  All uses of
+	image_error with "Invalid image size ..."  changed to use it.
+	* src/image.c (image_size_error, xbm_load_image, xbm_load)
+	(xpm_load, xpm_load_image, xpm_load, pbm_load, png_load_body)
+	(jpeg_load_body, tiff_load, gif_load, imagemagick_load_image)
+	(imagemagick_load, svg_load, svg_load_image, gs_load)
+	(x_kill_gs_process):
+	* src/lread.c (load_warn_old_style_backquotes):
+	* src/xfaces.c (load_pixmap):
+	* src/xselect.c (x_clipboard_manager_error_1):
+	Use %qs, not uLSQM and uRSQM.
+	* src/syntax.c (Finternal_describe_syntax_value):
+	Prefer Fsubstitute_command_keys to Fformat, as this lets
+	us use AUTO_STRING.
+	* src/xdisp.c (vadd_to_log): Use AUTO_STRING on the format argument,
+	as it's now guaranteed to be ASCII.
+	* src/xselect.c (x_clipboard_manager_error_2):
+	Avoid grave accent in low-level stderr diagnostic.
+
+2015-08-19  Paul Eggert  <eggert@Penguin.CS.UCLA.EDU>
+
+	New q flag for ‘format’
+	* doc/lispref/processes.texi (Sentinels):
+	Don't hardwire grave quoting style in example.
+	* doc/lispref/strings.texi (Formatting Strings):
+	* etc/NEWS:
+	Document new q flag.
+	* src/editfns.c (Fformat): Implement it.
+
+2015-08-18  Daiki Ueno  <ueno@gnu.org>
+
+	pinentry.el: Add debugging support
+	* lisp/net/pinentry.el (pinentry-debug): New variable.
+	(pinentry-debug-buffer): New variable.
+	(pinentry--process-filter): Send input to the debug buffer, if
+	`pinentry-debug' is set.
+
+	pinentry.el: Improve multiline prompt
+	* lisp/net/pinentry.el (pinentry--prompt): Simplify the interface.
+	(pinentry--process-filter): Use `pinentry--prompt' for CONFIRM
+	command.
+
+2015-08-18  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix multibyte confusion in diagnostics
+	* src/print.c (print_error_message):
+	Don't assume that the caller's name is unibyte.
+	* src/xdisp.c (vadd_to_log):
+	Don't assume that the formatted diagnostic is unibyte.
+
+	Fix file name encodings in diagnostics
+	Also, close some minor races when opening image files, by opening
+	them once instead of multiple times.
+	* src/gtkutil.c (xg_get_image_for_pixmap):
+	* src/image.c (xpm_load, tiff_load, gif_load, imagemagick_load)
+	(svg_load):
+	* src/nsimage.m (allocInitFromFile:):
+	* src/xfns.c (xg_set_icon):
+	Encode file name, since x_find_image_file no longer does that.
+	* src/image.c (x_find_image_fd): New function.
+	(x_find_image_file): Use it.  Do not encode resulting file name,
+	since callers sometimes need it decoded.
+	(slurp_file): File arg is now a fd, not a file name.
+	All callers changed.  This saves us having to open the file twice.
+	(xbm_load, xpm_load, pbm_load, png_load_body, jpeg_load_body)
+	(svg_load):
+	Use x_find_image_fd and fdopen to save a file-open.
+	Report file name that failed.
+	* src/lread.c (openp): If PREDICATE is t, open the file in binary mode.
+
+2015-08-18  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Allow blink-matching-paren to jump off screen
+	* doc/emacs/programs.texi (Matching): Mention the
+	`blink-matching-paren' value `jump-offscreen'.
+	* lisp/simple.el (blink-matching-paren): New possible value.
+	(blink-matching-paren-on-screen): Clarify the docstring.
+	(blink-matching-open): Handle `jump-offscreen' (bug#21286).
+
+	Refine the previous change
+	* lisp/simple.el (blink-matching-open): Use minibuffer-message
+	outside of save-excursion (bug#21286).
+
+2015-08-18  Martin Rudalics  <rudalics@gmx.at>
+
+	Rewrite and add frame geometry related functions.
+	* src/frame.c (Fframe_position): New function.
+	(Fset_frame_position): Rename parameters and rewrite doc-string.
+	(syms_of_frame): Remove Qframe_position, Qframe_outer_size,
+	Qtitle_height and Qframe_inner_size.  Add Qouter_edges,
+	Qouter_position, Qouter_size, Qnative_edges, Qinner_edges,
+	Qtitle_bar_size.
+	* src/nsfns.m (frame_geometry): New function.
+	(Fx_frame_geometry): Call frame_geometry.
+	(Fx_frame_edges): New function.
+	* src/w32fns.c (C_CHILDREN_TITLEBAR, TITLEBAR_INFO)
+	(GetTitleBarInfo_Proc): Define these so we can use the
+	GetTitleBarInfo API.
+	(Fw32_frame_menu_bar_size, Fw32_frame_rect): Remove.
+	(Fx_frame_geometry): Rewrite.
+	(Fx_frame_edges, Fx_mouse_absolute_pixel_position)
+	(Fx_set_mouse_absolute_pixel_position): New functions.
+	* src/xfns.c (frame_geometry): New function.
+	(Fx_frame_geometry): Call frame_geometry.
+	(Fx_frame_edges, Fx_mouse_absolute_pixel_position)
+	(Fx_set_mouse_absolute_pixel_position): New functions.
+
+2015-08-18  Michael Albinus  <michael.albinus@gmx.de>
+
+	Improve Tramp's compatibility
+	* lisp/net/tramp.el (tramp-get-method-parameter):
+	* lisp/net/tramp-adb.el (tramp-adb-parse-device-names)
+	(tramp-adb-get-device):
+	* lisp/net/trampver.el (tramp-repository-get-version):
+	Use `tramp-compat-replace-regexp-in-string'.
+
+2015-08-18  Pierre Téchoueyres  <Pierre.Techoueyres@gfi.fr>  (tiny change)
+
+	* lisp/net/tramp-cmds.el (tramp-reporter-dump-variable):
+	Encode/decode string.
+
+2015-08-18  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Clarify what happens to match data on failure
+	Problem reported by Ernesto Alfonso (Bug#21279).
+	* doc/lispref/searching.texi (Regexp Search, Simple Match Data):
+	Document more carefully what happens to match data after a failed
+	search.
+	* src/search.c (Fmatch_beginning, Fmatch_end): Document that
+	the return value is undefined if the last search failed.
+	(Fmatch_data): Simplify doc string line 1.
+
+2015-08-18  Daiki Ueno  <ueno@gnu.org>
+
+	Revert "pinentry.el: Support external passphrase cache"
+	This reverts commit e086e55a664ec27fbca7b3231c4b32cb78a89337.
+	pinentry.el shouldn't directly interact with the secrets service,
+	but ask the caller to cache the passphrase.
+
+2015-08-17  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* doc/emacs/sending.texi (Mail Misc): Fix two index entries for
+	Message mode hooks.
+
+2015-08-17  Daiki Ueno  <ueno@gnu.org>
+
+	epg.el: Make gpgconf output parsing future proof
+	* lisp/epg.el (epg--start): Count the number of fields in "gpgconf
+	--list-options" output.
+
+	pinentry.el: Support external passphrase cache
+	* lisp/net/pinentry.el (pinentry-use-secrets): New user option.
+	(pinentry--allow-external-password-cache): New local variable.
+	(pinentry--key-info): New local variable.
+	(secrets-enabled, secrets-search-items, secrets-get-secret):
+	Declare.
+	(pinentry--send-passphrase): New function, split from
+	`pinentry--process-filter'.
+	(pinentry--process-filter): Use secrets.el to retrieve passphrase
+	from login keyring.
+
+	pinentry.el: Popup window for multiline prompt
+	* lisp/net/pinentry.el (pinentry): New custom group.
+	(pinentry-popup-prompt-window): New user option.
+	(pinentry-prompt-window-height): New user option.
+	(pinentry--prompt-buffer): New variable.
+	(pinentry-prompt-mode-map): New variable.
+	(pinentry-prompt-mode): New function.
+	(pinentry--prompt): New function.
+	(pinentry--process-filter): Use `pinentry--prompt' instead of
+	`read-passwd' and `y-or-n-p'.
+
+2015-08-17  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	message.el: Silent the byte compiler
+	* lisp/gnus/message.el (message-overlay-put, message-make-overlay)
+	(message-kill-all-overlays, message-overlays-in, message-overlay-get)
+	(message-delete-overlay, message-window-inside-pixel-edges):
+	Declare before using.
+
+	* lisp/gnus/message.el (message-overlay-get, message-overlays-in)
+	(message-window-inside-pixel-edges): XEmacs compatible functions.
+
+2015-08-17  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* message.el (message-toggle-image-thumbnails): New command.
+
+2015-08-17  Noah Friedman  <friedman@splode.com>
+
+	(blink-matching-open): Restore point before calling minibuffer-message.
+
+2015-08-17  Ronnie Schnell  <ronnie@driver-aces.com>
+
+	Update version number in header (now matches help)
+
+2015-08-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Curved quotes in --batch diagnostics in non-UTF-8
+	When run with --batch, check that curved quotes are compatible with
+	the system locale before outputting them in diagnostics.
+	Problem reported by Eli Zaretskii in:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-08/msg00594.html
+	* lisp/startup.el (command-line): Set internal--text-quoting-flag
+	after the standard display table is initialized.
+	* src/doc.c (default_to_grave_quoting_style): New function.
+	(text_quoting_style): Use it.
+	(text_quoting_flag): New static var, visible to Lisp as
+	internal--text-quoting-flag.
+	* src/emacs.c: Include <wchar.h> if available.
+	(using_utf8): New function.
+	(main): Use it to initialize text_quoting_flag.
+	* src/regex.h (btowc) [WIDE_CHAR_SUPPORT && emacs]:
+	Don't define, as it's not needed and it clashes with wchar.h.
+
+2015-08-17  Glenn Morris  <rgm@gnu.org>
+
+	* doc/misc/tramp.texi (Configuration): Reword to avoid warning
+	from makeinfo about spurious "Note:" cross-reference, and for grammar.
+
+2015-08-17  Ilya Zakharevich  <ilya@math.berkeley.edu>
+
+	Minor change in variable initialization on MS-Windows
+	* src/w32fns.c <after_dead_key>: Initialize to -1.
+	(deliver_wm_chars): If after_deadkey is zero, don't set after_dead
+	non-zero.
+
+	Fix a bug with LWindow key remapping on MS-Windows
+	* src/w32fns.c (deliver_wm_chars): Fix a typo.  (Bug#21276)
+
+2015-08-17  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve fontset support for latest OTF script tags
+	* lisp/international/fontset.el (otf-script-alist): Add some
+	missing script tags.
+	(setup-default-fontset): Include settings for v2 versions of the
+	script tags used by some modern OTF/TTF fonts.
+
+2015-08-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Spelling fixes
+
+2015-08-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use curved quotes in core elisp diagnostics
+	In the core elisp files, use curved quotes in diagnostic formats,
+	so that they follow user preference as per ‘text-quoting-style’
+	rather than being hard-coded to quote `like this'.
+	* lisp/abbrev.el (expand-region-abbrevs):
+	* lisp/button.el (button-category-symbol, button-put)
+	(make-text-button):
+	* lisp/cus-start.el:
+	* lisp/custom.el (custom-add-dependencies, custom-check-theme)
+	(custom--sort-vars-1, load-theme):
+	* lisp/emacs-lisp/byte-run.el (defun, defsubst):
+	* lisp/emacs-lisp/cl-generic.el (cl-defgeneric)
+	(cl-generic-generalizers):
+	* lisp/emacs-lisp/macroexp.el (macroexp--obsolete-warning):
+	* lisp/emacs-lisp/map-ynp.el (map-y-or-n-p):
+	* lisp/emacs-lisp/nadvice.el (advice--make-docstring)
+	(advice--make, define-advice):
+	* lisp/emacs-lisp/tabulated-list.el (tabulated-list-put-tag):
+	* lisp/emacs-lisp/timer.el (timer-event-handler):
+	* lisp/env.el (setenv):
+	* lisp/facemenu.el (facemenu-add-new-face)
+	(facemenu-add-new-color):
+	* lisp/faces.el (face-documentation, read-face-name)
+	(face-read-string, read-face-font, face-spec-set-match-display)
+	(read-color, x-resolve-font-name):
+	* lisp/files.el (locate-user-emacs-file, find-alternate-file)
+	(set-auto-mode, hack-local-variables)
+	(hack-one-local-variable--obsolete)
+	(dir-locals-set-directory-class, write-file)
+	(basic-save-buffer, delete-directory, copy-directory)
+	(recover-session, recover-session-finish, insert-directory)
+	(file-modes-char-to-who, file-modes-symbolic-to-number)
+	(move-file-to-trash):
+	* lisp/font-lock.el (font-lock-fontify-buffer):
+	* lisp/format.el (format-write-file, format-find-file)
+	(format-insert-file):
+	* lisp/frame.el (get-device-terminal, select-frame-by-name):
+	* lisp/fringe.el (fringe--check-style):
+	* lisp/help.el (describe-minor-mode-from-indicator):
+	* lisp/image.el (image-type):
+	* lisp/international/fontset.el (x-must-resolve-font-name):
+	* lisp/international/mule-cmds.el (prefer-coding-system)
+	(select-safe-coding-system-interactively)
+	(select-safe-coding-system, activate-input-method)
+	(toggle-input-method, describe-current-input-method):
+	* lisp/international/mule-conf.el (code-offset):
+	* lisp/mouse.el (minor-mode-menu-from-indicator):
+	* lisp/replace.el (query-replace-read-from)
+	(occur-after-change-function, occur-1):
+	* lisp/scroll-bar.el (scroll-bar-columns):
+	* lisp/simple.el (execute-extended-command)
+	(undo-outer-limit-truncate, compose-mail, set-variable)
+	(choose-completion-string, define-alternatives):
+	* lisp/startup.el (site-run-file, tty-handle-args, )
+	(command-line, command-line-1):
+	* lisp/subr.el (noreturn, define-error, add-to-list)
+	(read-char-choice):
+	* lisp/term/common-win.el (x-handle-xrm-switch)
+	(x-handle-name-switch, x-handle-args):
+	* lisp/term/x-win.el (x-handle-parent-id, x-handle-smid):
+	Use curved quotes in diagnostics.
+	* lisp/international/mule.el (find-auto-coding):
+	Use " to quote in a diagnostic, to be consistent with the rest of
+	this file.
+
+	Convert lisp/term/x-win.el to UTF-8
+	* lisp/term/x-win.el: Convert to UTF-8.  This doesn't affect
+	runtime behavior, and the file is multilingual so compile-time
+	appearance shouldn't be an issue.
+	* admin/notes/unicode: Document this.
+
+2015-08-16  Wilson Snyder  <wsnyder@wsnyder.org>
+
+	Update verilog-mode.el to 2015-05-14-6232468-vpo-GNU.
+	    * losp/progmodes/verilog-mode.el: Fix some non-automated indent
+	    issues and comments, bug943.  (verilog-type-font-keywords): Cycle
+	    delay operators like ##1 and ##[0:$] are now highlighted in their
+	    entirety similarly to the # delay-control operator.  Likewise, the
+	    followed-by operators #-# and #=# are no longer partially
+	    highlighed.  (verilog-backward-syntactic-ws-quick,
+	    verilog-skip-backward-comments): Minor performance improvements to
+	    buffer traversal functions for reduced latency.  (verilog-calc-1,
+	    verilog-in-deferred-immediate-final-p): When the keyword 'final'
+	    follows 'assert/assume/cover', then it is part of a deferred
+	    immediate assertion item and should not be treated as a final
+	    construct for indentation.  Reported by Yuri Sugihara.
+	    (verilog-do-indent): Virtual task/function/class definition lines
+	    should not be considered as declarations.  Reported by Enzo Chi.
+	    (verilog-do-indent): Do not falsely indent to '=' of
+	    property/sequence operators on subsequent lines of a multi-line
+	    statement.  (verilog-assignment-operator-re): Fix '!==' operator
+	    and add support for '<->', ':/', '#-#', and '#=#' operators.
+	    (verilog-calculate-indent, verilog-label-be): Enable
+	    case-sensitive regular expression parsing when looking for
+	    keywords.  (verilog-calc-1): Detect 'pure virtual method'
+	    declarations which exist in abstract classes.  Reported by Enzo
+	    Chi and Kaushal Modi.  (verilog-backward-ws&directives): When
+	    moving back to the start of a line and the preceeding line ended
+	    with an escaped-newline, then jump up one line.  This properly
+	    consumes a multi-line pre-processor directive.  Reported by
+	    Kaushal Modi.  (verilog-dpi-import-export-re,
+	    verilog-extended-complete-re, verilog-calc-1): Teach verilog-mode
+	    to properly indent after a DPI import/export statement that
+	    resides outside of a module.  Reported by Kaushal Modi.
+	    (verilog-extended-complete-re): Update regexp to match both
+	    "DPI-C" and "DPI".  Reported by Kaushal Modi.
+
 2015-08-15  Paul Eggert  <eggert@cs.ucla.edu>
 
 	substitute-command-keys a few more doc strings
@@ -9441,7 +10469,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit f7ee23e587b01f179284b5554c67d579a2def676 (inclusive).
+commit a664f6a5d586e1f3fdbf31d0cf2fdaa6429a58fe (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
