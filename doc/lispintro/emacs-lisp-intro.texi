@@ -2909,7 +2909,7 @@ the following expression in the usual way:
 @end smallexample
 
 @noindent
-As I write this, the value of @code{point} is 65724.  The @code{point}
+As I write this, the value of point is 65724.  The @code{point}
 function is frequently used in some of the examples later in this
 book.
 
