@@ -948,7 +948,7 @@ the width specifier normally consists of spaces inserted on the left:
 If the width is too small, @code{format} does not truncate the
 object's printed representation.  Thus, you can use a width to specify
 a minimum spacing between columns with no risk of losing information.
-In the following three examples, @samp{%7s} specifies a minimum width
+In the following two examples, @samp{%7s} specifies a minimum width
 of 7.  In the first case, the string inserted in place of @samp{%7s}
 has only 3 letters, and needs 4 blank spaces as padding.  In the
 second case, the string @code{"specification"} is 13 letters wide but
@@ -995,8 +995,12 @@ specifier, if any, to be inserted on the right rather than the left.
 If both @samp{-} and @samp{0} are present, the @samp{0} flag is
 ignored.
 
+@cindex curved quotes
+@cindex curly quotes
   The flag @samp{q} quotes the printed representation as per the
-variable @samp{text-quoting-style} described below.
+variable @samp{text-quoting-style}.  @xref{Keys in Documentation}.
+Typically it uses curved single quotes @t{‘like this’} as in the
+following example.
 
 @example
 @group
