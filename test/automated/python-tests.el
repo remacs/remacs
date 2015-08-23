@@ -3276,6 +3276,61 @@ class Foo(models.Model):
 
 "))))
 
+(ert-deftest python-shell-buffer-substring-10 ()
+  "Check substring from partial block."
+  (python-tests-with-temp-buffer
+   "
+def foo():
+    print ('a')
+"
+   (should (string= (python-shell-buffer-substring
+                     (python-tests-look-at "print ('a')")
+                     (point-max))
+                    "if True:
+
+    print ('a')
+"))))
+
+(ert-deftest python-shell-buffer-substring-11 ()
+  "Check substring from partial block and point within indentation."
+  (python-tests-with-temp-buffer
+   "
+def foo():
+    print ('a')
+"
+   (should (string= (python-shell-buffer-substring
+                     (progn
+                       (python-tests-look-at "print ('a')")
+                       (backward-char 1)
+                       (point))
+                     (point-max))
+                    "if True:
+
+    print ('a')
+"))))
+
+(ert-deftest python-shell-buffer-substring-12 ()
+  "Check substring from partial block and point in whitespace."
+  (python-tests-with-temp-buffer
+   "
+def foo():
+
+        # Whitespace
+
+    print ('a')
+"
+   (should (string= (python-shell-buffer-substring
+                     (python-tests-look-at "# Whitespace")
+                     (point-max))
+                    "if True:
+
+
+        # Whitespace
+
+    print ('a')
+"))))
+
+
 
 ;;; Shell completion
 
