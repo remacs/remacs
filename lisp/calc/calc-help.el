@@ -365,7 +365,7 @@ C-w  Describe how there is no warranty for Calc."
     (let (Info-history)
       (Info-goto-node (buffer-substring (match-beginning 1) (match-end 1))))
     (let* ((string-target (or target thing))
-           (quoted (concat "['`‘]" (regexp-quote string-target) "['’]"))
+           (quoted (format "['`‘]%s['’]" (regexp-quote string-target)))
            (bracketed (format "\\[%s\\]\\|(%s)\\|\\<The[ \n]%s"
                               quoted quoted quoted)))
       (or (let ((case-fold-search nil))
