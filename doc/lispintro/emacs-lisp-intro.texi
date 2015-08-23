@@ -2840,10 +2840,10 @@ following more complex expression:
 @c noindent
 In this case, the first argument to @code{other-buffer} tells it which
 buffer to skip---the current one---and the second argument tells
-@code{other-buffer} it is OK to switch to a visible buffer.
-In regular use, @code{switch-to-buffer} takes you to an invisible
-window since you would most likely use @kbd{C-x o} (@code{other-window})
-to go to another visible buffer.}
+@code{other-buffer} it is OK to switch to a visible buffer.  In
+regular use, @code{switch-to-buffer} takes you to a buffer not visible
+in windows since you would most likely use @kbd{C-x o}
+(@code{other-window}) to go to another visible buffer.}
 
 In the programming examples in later sections of this document, you will
 see the function @code{set-buffer} more often than
