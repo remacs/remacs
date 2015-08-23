@@ -200,18 +200,11 @@ The result is a sequence of the same type as SEQ."
 TYPE must be one of following symbols: vector, string or list.
 
 \n(fn TYPE SEQUENCE...)"
-  ;; Since new seq types might be defined, we need to make sure that
-  ;; all seqs are actual sequences.
-  (let ((sequences (seq-map (lambda (s)
-                              (if (sequencep s)
-                                  s
-                                (seq-into s 'list)))
-                            seqs)))
-    (pcase type
-      (`vector (apply #'vconcat sequences))
-      (`string (apply #'concat sequences))
-      (`list (apply #'append (append sequences '(nil))))
-      (_ (error "Not a sequence type name: %S" type)))))
+  (pcase type
+    (`vector (apply #'vconcat seqs))
+    (`string (apply #'concat seqs))
+    (`list (apply #'append (append seqs '(nil))))
+    (_ (error "Not a sequence type name: %S" type))))
 
 (cl-defgeneric seq-into (seq type)
   "Convert the sequence SEQ into a sequence of type TYPE.
