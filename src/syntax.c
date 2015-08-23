@@ -1333,11 +1333,9 @@ DEFUN ("internal-describe-syntax-value", Finternal_describe_syntax_value,
     insert_string (" (nestable)");
 
   if (prefix)
-    {
-      AUTO_STRING (prefixdoc,
-		   ",\n\t  is a prefix character for `backward-prefix-chars'");
-      insert1 (Fsubstitute_command_keys (prefixdoc));
-    }
+    insert1 (Fsubstitute_command_keys
+	     (build_string
+	      (",\n\t  is a prefix character for `backward-prefix-chars'")));
 
   return syntax;
 }

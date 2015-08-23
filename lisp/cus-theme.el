@@ -492,10 +492,10 @@ It includes all faces in list FACES."
 			 '("" "c")))
 	doc)
     (when fn
-      (princ (format " in ‘"))
+      (princ (substitute-command-keys " in ‘"))
       (help-insert-xref-button (file-name-nondirectory fn)
 			       'help-theme-def fn)
-      (princ (format "’")))
+      (princ (substitute-command-keys "’")))
     (princ ".\n")
     (if (custom-theme-p theme)
 	(progn

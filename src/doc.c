@@ -927,13 +927,14 @@ Otherwise, return a new string.  */)
 	  if (NILP (tem))
 	    {
 	      name = Fsymbol_name (name);
-	      insert1 (CALLN (Fformat, build_string ("\nUses keymap "uLSQM)));
+	      insert1 (Fsubstitute_command_keys
+		       (build_string ("\nUses keymap "uLSQM)));
 	      insert_from_string (name, 0, 0,
 				  SCHARS (name),
 				  SBYTES (name), 1);
-	      insert1 (CALLN (Fformat,
-			      (build_string
-			       (uRSQM", which is not currently defined.\n"))));
+	      insert1 (Fsubstitute_command_keys
+		       (build_string
+			(uRSQM", which is not currently defined.\n")));
 	      if (start[-1] == '<') keymap = Qnil;
 	    }
 	  else if (start[-1] == '<')

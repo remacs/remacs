@@ -964,12 +964,14 @@ documentation for the major and minor modes of that buffer."
 	(let* ((mode major-mode)
 	       (file-name (find-lisp-object-file-name mode nil)))
 	  (when file-name
-	    (princ (format " defined in ‘%s’"
-                           (file-name-nondirectory file-name)))
+	    (princ (concat (substitute-command-keys " defined in ‘")
+                           (file-name-nondirectory file-name)
+                           (substitute-command-keys "’")))
 	    ;; Make a hyperlink to the library.
 	    (with-current-buffer standard-output
 	      (save-excursion
-		(re-search-backward (format "‘\\([^‘’]+\\)’") nil t)
+		(re-search-backward (substitute-command-keys "‘\\([^‘’]+\\)’")
+                                    nil t)
 		(help-xref-button 1 'help-function-def mode file-name)))))
 	(princ ":\n")
 	(princ (documentation major-mode)))))

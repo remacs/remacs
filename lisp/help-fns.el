@@ -319,7 +319,9 @@ suitable file is found, return nil."
             (when remapped
               (princ "Its keys are remapped to ")
               (princ (if (symbolp remapped)
-                         (format "‘%s’" remapped)
+			 (concat (substitute-command-keys "‘")
+				 (symbol-name remapped)
+				 (substitute-command-keys "’"))
 		       "an anonymous command"))
               (princ ".\n"))
 
@@ -353,16 +355,18 @@ suitable file is found, return nil."
       (insert "\nThis function has a compiler macro")
       (if (symbolp handler)
           (progn
-            (insert (format " ‘%s’" handler))
+            (insert (format (substitute-command-keys " ‘%s’") handler))
             (save-excursion
-              (re-search-backward (format "‘\\([^‘’]+\\)’") nil t)
+              (re-search-backward (substitute-command-keys "‘\\([^‘’]+\\)’")
+                                  nil t)
               (help-xref-button 1 'help-function handler)))
         ;; FIXME: Obsolete since 24.4.
         (let ((lib (get function 'compiler-macro-file)))
           (when (stringp lib)
-            (insert (format " in ‘%s’" lib))
+            (insert (format (substitute-command-keys " in ‘%s’") lib))
             (save-excursion
-              (re-search-backward (format "‘\\([^‘’]+\\)’") nil t)
+              (re-search-backward (substitute-command-keys "‘\\([^‘’]+\\)’")
+                                  nil t)
               (help-xref-button 1 'help-function-cmacro function lib)))))
       (insert ".\n"))))
 
@@ -417,13 +421,13 @@ suitable file is found, return nil."
                           (get function
                                'derived-mode-parent))))
     (when parent-mode
-      (insert (format "\nParent mode: ‘"))
+      (insert (substitute-command-keys "\nParent mode: ‘"))
       (let ((beg (point)))
         (insert (format "%s" parent-mode))
         (make-text-button beg (point)
                           'type 'help-function
                           'help-args (list parent-mode)))
-      (insert (format "’.\n")))))
+      (insert (substitute-command-keys "’.\n")))))
 
 (defun help-fns--obsolete (function)
   ;; Ignore lambda constructs, keyboard macros, etc.
@@ -438,9 +442,10 @@ suitable file is found, return nil."
 	      " is obsolete")
       (when (nth 2 obsolete)
         (insert (format " since %s" (nth 2 obsolete))))
-      (insert (cond ((stringp use)
-                     (concat ";\n" (substitute-command-keys use)))
-                    (use (format ";\nuse ‘%s’ instead." use))
+      (insert (cond ((stringp use) (concat ";\n" use))
+                    (use (format (substitute-command-keys
+                                  ";\nuse ‘%s’ instead.")
+                                 use))
                     (t "."))
               "\n"))))
 
@@ -476,7 +481,8 @@ FILE is the file where FUNCTION was probably defined."
                           (format ";\nin Lisp code %s" interactive-only))
                          ((and (symbolp 'interactive-only)
                                (not (eq interactive-only t)))
-                          (format ";\nin Lisp code use ‘%s’ instead."
+                          (format (substitute-command-keys
+                                   ";\nin Lisp code use ‘%s’ instead.")
                                   interactive-only))
                          (t "."))
                    "\n")))))
@@ -545,7 +551,8 @@ FILE is the file where FUNCTION was probably defined."
 		 ;; Aliases are Lisp functions, so we need to check
 		 ;; aliases before functions.
 		 (aliased
-		  (format "an alias for ‘%s’" real-def))
+		  (format (substitute-command-keys "an alias for ‘%s’")
+                          real-def))
 		 ((autoloadp def)
 		  (format "%s autoloaded %s"
 			  (if (commandp def) "an interactive" "an")
@@ -579,22 +586,24 @@ FILE is the file where FUNCTION was probably defined."
       (with-current-buffer standard-output
 	(save-excursion
 	  (save-match-data
-	    (when (re-search-backward (format "alias for ‘\\([^‘’]+\\)’")
+	    (when (re-search-backward (substitute-command-keys
+                                       "alias for ‘\\([^‘’]+\\)’")
                                       nil t)
 	      (help-xref-button 1 'help-function real-def)))))
 
       (when file-name
-	(princ (format " in ‘"))
+	(princ (substitute-command-keys " in ‘"))
 	;; We used to add .el to the file name,
 	;; but that's completely wrong when the user used load-file.
 	(princ (if (eq file-name 'C-source)
 		   "C source code"
 		 (help-fns-short-filename file-name)))
-	(princ (format "’"))
+	(princ (substitute-command-keys "’"))
 	;; Make a hyperlink to the library.
 	(with-current-buffer standard-output
 	  (save-excursion
-	    (re-search-backward (format "‘\\([^‘’]+\\)’") nil t)
+	    (re-search-backward (substitute-command-keys "‘\\([^‘’]+\\)’")
+                                nil t)
 	    (help-xref-button 1 'help-function-def function file-name))))
       (princ ".")
       (with-current-buffer (help-buffer)
@@ -727,14 +736,17 @@ it is displayed along with the global value."
 
 	      (if file-name
 		  (progn
-		    (princ (format " is a variable defined in ‘"))
+		    (princ (substitute-command-keys
+                            " is a variable defined in ‘"))
 		    (princ (if (eq file-name 'C-source)
 			       "C source code"
 			     (file-name-nondirectory file-name)))
-		    (princ (format "’.\n"))
+		    (princ (substitute-command-keys "’.\n"))
 		    (with-current-buffer standard-output
 		      (save-excursion
-			(re-search-backward (format "‘\\([^‘’]+\\)’") nil t)
+			(re-search-backward (substitute-command-keys
+                                             "‘\\([^‘’]+\\)’")
+                                            nil t)
 			(help-xref-button 1 'help-variable-def
 					  variable file-name)))
 		    (if valvoid
@@ -864,7 +876,8 @@ if it is given a local binding.\n")))
 	      ;; Mention if it's an alias.
               (unless (eq alias variable)
                 (setq extra-line t)
-                (princ (format "  This variable is an alias for ‘%s’.\n"
+                (princ (format (substitute-command-keys
+                                "  This variable is an alias for ‘%s’.\n")
                                alias)))
 
               (when obsolete
@@ -872,9 +885,9 @@ if it is given a local binding.\n")))
                 (princ "  This variable is obsolete")
                 (if (nth 2 obsolete)
                     (princ (format " since %s" (nth 2 obsolete))))
-		(princ (cond ((stringp use)
-                              (concat ";\n  " (substitute-command-keys use)))
-			     (use (format ";\n  use ‘%s’ instead."
+		(princ (cond ((stringp use) (concat ";\n  " use))
+			     (use (format (substitute-command-keys
+                                           ";\n  use ‘%s’ instead.")
                                           (car obsolete)))
 			     (t ".")))
                 (terpri))
@@ -905,7 +918,7 @@ if it is given a local binding.\n")))
                               ;; Otherwise, assume it was set directly.
                               (setq file (car file)
                                     dir-file nil)))
-			(princ (format
+			(princ (substitute-command-keys
                                 (if dir-file
                                     "by the file\n  ‘"
                                   "for the directory\n  ‘")))
@@ -913,7 +926,7 @@ if it is given a local binding.\n")))
 			  (insert-text-button
 			   file 'type 'help-dir-local-var-def
 			   'help-args (list variable file)))
-			(princ (format "’.\n"))))
+			(princ (substitute-command-keys "’.\n"))))
 		  (princ "  This variable's value is file-local.\n")))
 
 	      (when (memq variable ignored-local-variables)
@@ -937,7 +950,8 @@ file-local variable.\n")
 		(princ "if its value\n  satisfies the predicate ")
 		(princ (if (byte-code-function-p safe-var)
 			   "which is a byte-compiled expression.\n"
-			 (format "‘%s’.\n" safe-var))))
+			 (format (substitute-command-keys "‘%s’.\n")
+                                 safe-var))))
 
               (if extra-line (terpri))
 	      (princ "Documentation:\n")
