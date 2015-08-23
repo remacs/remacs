@@ -3138,50 +3138,56 @@ This function takes the list of setup code to send from the
 ;;; Shell completion
 
 (defcustom python-shell-completion-setup-code
-  "try:
-    import readline
-except:
-    def __PYTHON_EL_get_completions(text):
-        return []
-else:
-    def __PYTHON_EL_get_completions(text):
+  "
+def __PYTHON_EL_get_completions(text):
+    completions = []
+    completer = None
+
+    try:
+        import readline
+
         try:
             import __builtin__
         except ImportError:
             # Python 3
             import builtins as __builtin__
         builtins = dir(__builtin__)
-        completions = []
+
         is_ipython = ('__IPYTHON__' in builtins or
                       '__IPYTHON__active' in builtins)
         splits = text.split()
         is_module = splits and splits[0] in ('from', 'import')
-        try:
-            if is_ipython and is_module:
-                from IPython.core.completerlib import module_completion
-                completions = module_completion(text.strip())
-            elif is_ipython and '__IP' in builtins:
-                completions = __IP.complete(text)
-            elif is_ipython and 'get_ipython' in builtins:
-                completions = get_ipython().Completer.all_completions(text)
-            else:
-                # Try to reuse current completer.
+
+        if is_ipython and is_module:
+            from IPython.core.completerlib import module_completion
+            completions = module_completion(text.strip())
+        elif is_ipython and '__IP' in builtins:
+            completions = __IP.complete(text)
+        elif is_ipython and 'get_ipython' in builtins:
+            completions = get_ipython().Completer.all_completions(text)
+        else:
+            # Try to reuse current completer.
+            completer = readline.get_completer()
+            if not completer:
+                # importing rlcompleter sets the completer, use it as a
+                # last resort to avoid breaking customizations.
+                import rlcompleter
                 completer = readline.get_completer()
-                if not completer:
-                    # importing rlcompleter sets the completer, use it as a
-                    # last resort to avoid breaking customizations.
-                    import rlcompleter
-                    completer = readline.get_completer()
-                i = 0
-                while True:
-                    completion = completer(text, i)
-                    if not completion:
-                        break
-                    i += 1
-                    completions.append(completion)
-        except:
-            pass
-        return completions"
+            if getattr(completer, 'PYTHON_EL_WRAPPED', False):
+                completer.print_mode = False
+            i = 0
+            while True:
+                completion = completer(text, i)
+                if not completion:
+                    break
+                i += 1
+                completions.append(completion)
+    except:
+        pass
+    finally:
+        if getattr(completer, 'PYTHON_EL_WRAPPED', False):
+            completer.print_mode = True
+    return completions"
   "Code used to setup completion in inferior Python processes."
   :type 'string
   :group 'python)
@@ -3243,12 +3249,13 @@ When a match is found, native completion is disabled."
          python-shell-completion-native-try-output-timeout))
     (python-shell-completion-native-get-completions
      (get-buffer-process (current-buffer))
-     nil "int")))
+     nil "")))
 
 (defun python-shell-completion-native-setup ()
   "Try to setup native completion, return non-nil on success."
   (let ((process (python-shell-get-process)))
-    (python-shell-send-string "
+    (with-current-buffer (process-buffer process)
+      (python-shell-send-string "
 def __PYTHON_EL_native_completion_setup():
     try:
         import readline
@@ -3283,6 +3290,7 @@ def __PYTHON_EL_native_completion_setup():
             def __init__(self, completer):
                 self.completer = completer
                 self.last_completion = None
+                self.print_mode = True
 
             def __call__(self, text, state):
                 if state == 0:
@@ -3312,8 +3320,11 @@ def __PYTHON_EL_native_completion_setup():
                     # For every non-dummy completion, return a repeated dummy
                     # one and print the real candidate so it can be retrieved
                     # by comint output filters.
-                    print (completion)
-                    return '0__dummy_completion__'
+                    if self.print_mode:
+                        print (completion)
+                        return '0__dummy_completion__'
+                    else:
+                        return completion
                 else:
                     return completion
 
@@ -3346,17 +3357,18 @@ def __PYTHON_EL_native_completion_setup():
             # Require just one tab to send output.
             readline.parse_and_bind('set show-all-if-ambiguous on')
 
-        print ('python.el: readline is available')
+        print ('python.el: native completion setup loaded')
     except:
-        print ('python.el: readline not available')
+        print ('python.el: native completion setup failed')
 
-__PYTHON_EL_native_completion_setup()"
-     process)
-    (python-shell-accept-process-output process)
-    (when (save-excursion
-            (re-search-backward
-             (regexp-quote "python.el: readline is available") nil t 1))
-      (python-shell-completion-native-try))))
+__PYTHON_EL_native_completion_setup()" process)
+      (when (and
+             (python-shell-accept-process-output
+              process python-shell-completion-native-try-output-timeout)
+             (save-excursion
+               (re-search-backward
+                (regexp-quote "python.el: native completion setup loaded") nil t 1)))
+        (python-shell-completion-native-try)))))
 
 (defun python-shell-completion-native-turn-off (&optional msg)
   "Turn off shell native completions.
@@ -3421,91 +3433,75 @@ With argument MSG show activation/deactivation message."
 When IMPORT is non-nil takes precedence over INPUT for
 completion."
   (with-current-buffer (process-buffer process)
-    (when (and python-shell-completion-native-enable
-               (python-util-comint-last-prompt)
-               (>= (point) (cdr (python-util-comint-last-prompt))))
-      (let* ((input (or import input))
-             (original-filter-fn (process-filter process))
-             (redirect-buffer (get-buffer-create
-                               python-shell-completion-native-redirect-buffer))
-             (trigger "\t")
-             (new-input (concat input trigger))
-             (input-length
-              (save-excursion
-                (+ (- (point-max) (comint-bol)) (length new-input))))
-             (delete-line-command (make-string input-length ?\b))
-             (input-to-send (concat new-input delete-line-command)))
-        ;; Ensure restoring the process filter, even if the user quits
-        ;; or there's some other error.
-        (unwind-protect
-            (with-current-buffer redirect-buffer
-              ;; Cleanup the redirect buffer
-              (erase-buffer)
-              ;; Mimic `comint-redirect-send-command', unfortunately it
-              ;; can't be used here because it expects a newline in the
-              ;; command and that's exactly what we are trying to avoid.
-              (let ((comint-redirect-echo-input nil)
-                    (comint-redirect-completed nil)
-                    (comint-redirect-perform-sanity-check nil)
-                    (comint-redirect-insert-matching-regexp t)
-                    (comint-redirect-finished-regexp
-                     "1__dummy_completion__[[:space:]]*\n")
-                    (comint-redirect-output-buffer redirect-buffer))
-                ;; Compatibility with Emacs 24.x.  Comint changed and
-                ;; now `comint-redirect-filter' gets 3 args.  This
-                ;; checks which version of `comint-redirect-filter' is
-                ;; in use based on its args and uses `apply-partially'
-                ;; to make it up for the 3 args case.
-                (if (= (length
-                        (help-function-arglist 'comint-redirect-filter)) 3)
-                    (set-process-filter
-                     process (apply-partially
-                              #'comint-redirect-filter original-filter-fn))
-                  (set-process-filter process #'comint-redirect-filter))
-                (process-send-string process input-to-send)
-                ;; Grab output until our dummy completion used as
-                ;; output end marker is found.
-                (when (python-shell-accept-process-output
-                       process python-shell-completion-native-output-timeout
-                       comint-redirect-finished-regexp)
-                  (re-search-backward "0__dummy_completion__" nil t)
-                  (cl-remove-duplicates
-                   (split-string
-                    (buffer-substring-no-properties
-                     (line-beginning-position) (point-min))
-                    "[ \f\t\n\r\v()]+" t)
-                   :test #'string=))))
-          (set-process-filter process original-filter-fn))))))
+    (let* ((input (or import input))
+           (original-filter-fn (process-filter process))
+           (redirect-buffer (get-buffer-create
+                             python-shell-completion-native-redirect-buffer))
+           (trigger "\t")
+           (new-input (concat input trigger))
+           (input-length
+            (save-excursion
+              (+ (- (point-max) (comint-bol)) (length new-input))))
+           (delete-line-command (make-string input-length ?\b))
+           (input-to-send (concat new-input delete-line-command)))
+      ;; Ensure restoring the process filter, even if the user quits
+      ;; or there's some other error.
+      (unwind-protect
+          (with-current-buffer redirect-buffer
+            ;; Cleanup the redirect buffer
+            (erase-buffer)
+            ;; Mimic `comint-redirect-send-command', unfortunately it
+            ;; can't be used here because it expects a newline in the
+            ;; command and that's exactly what we are trying to avoid.
+            (let ((comint-redirect-echo-input nil)
+                  (comint-redirect-completed nil)
+                  (comint-redirect-perform-sanity-check nil)
+                  (comint-redirect-insert-matching-regexp t)
+                  (comint-redirect-finished-regexp
+                   "1__dummy_completion__[[:space:]]*\n")
+                  (comint-redirect-output-buffer redirect-buffer))
+              ;; Compatibility with Emacs 24.x.  Comint changed and
+              ;; now `comint-redirect-filter' gets 3 args.  This
+              ;; checks which version of `comint-redirect-filter' is
+              ;; in use based on its args and uses `apply-partially'
+              ;; to make it up for the 3 args case.
+              (if (= (length
+                      (help-function-arglist 'comint-redirect-filter)) 3)
+                  (set-process-filter
+                   process (apply-partially
+                            #'comint-redirect-filter original-filter-fn))
+                (set-process-filter process #'comint-redirect-filter))
+              (process-send-string process input-to-send)
+              ;; Grab output until our dummy completion used as
+              ;; output end marker is found.
+              (when (python-shell-accept-process-output
+                     process python-shell-completion-native-output-timeout
+                     comint-redirect-finished-regexp)
+                (re-search-backward "0__dummy_completion__" nil t)
+                (cl-remove-duplicates
+                 (split-string
+                  (buffer-substring-no-properties
+                   (line-beginning-position) (point-min))
+                  "[ \f\t\n\r\v()]+" t)
+                 :test #'string=))))
+        (set-process-filter process original-filter-fn)))))
 
 (defun python-shell-completion-get-completions (process import input)
   "Do completion at point using PROCESS for IMPORT or INPUT.
 When IMPORT is non-nil takes precedence over INPUT for
 completion."
+  (setq input (or import input))
   (with-current-buffer (process-buffer process)
-    (let* ((prompt
-            (let ((prompt-boundaries (python-util-comint-last-prompt)))
-              (buffer-substring-no-properties
-               (car prompt-boundaries) (cdr prompt-boundaries))))
-           (completion-code
-            ;; Check whether a prompt matches a pdb string, an import
-            ;; statement or just the standard prompt and use the
-            ;; correct python-shell-completion-*-code string
-            (when (string-match python-shell--prompt-calculated-input-regexp prompt)
-              ;; Since there are no guarantees the user will remain
-              ;; in the same context where completion code was sent
-              ;; (e.g. user steps into a function), safeguard
-              ;; resending completion setup continuously.
+    (let ((completions
+           (python-util-strip-string
+            (python-shell-send-string-no-output
+             (format
               (concat python-shell-completion-setup-code
-                      "\nprint (" python-shell-completion-string-code ")")))
-           (subject (or import input)))
-      (when (and completion-code (> (length input) 0))
-        (let ((completions
-               (python-util-strip-string
-                (python-shell-send-string-no-output
-                 (format completion-code subject) process))))
-          (when (> (length completions) 2)
-            (split-string completions
-                          "^'\\|^\"\\|;\\|'$\\|\"$" t)))))))
+                      "\nprint (" python-shell-completion-string-code ")")
+              input) process))))
+      (when (> (length completions) 2)
+        (split-string completions
+                      "^'\\|^\"\\|;\\|'$\\|\"$" t)))))
 
 (defun python-shell-completion-at-point (&optional process)
   "Function for `completion-at-point-functions' in `inferior-python-mode'.
@@ -3532,10 +3528,26 @@ using that one instead of current buffer's process."
               (forward-char (length (match-string-no-properties 0)))
               (point))))
          (end (point))
+         (prompt-boundaries (python-util-comint-last-prompt))
+         (prompt
+          (with-current-buffer (process-buffer process)
+            (when prompt-boundaries
+              (buffer-substring-no-properties
+               (car prompt-boundaries) (cdr prompt-boundaries)))))
          (completion-fn
-          (if python-shell-completion-native-enable
-              #'python-shell-completion-native-get-completions
-            #'python-shell-completion-get-completions)))
+          (with-current-buffer (process-buffer process)
+            (cond ((or (null prompt)
+                       (< (point) (cdr prompt-boundaries)))
+                   #'ignore)
+                  ((or (not python-shell-completion-native-enable)
+                       ;; Even if native completion is enabled, for
+                       ;; pdb interaction always use the fallback
+                       ;; mechanism since the completer is changed.
+                       ;; Also, since pdb interaction is single-line
+                       ;; based, this is enough.
+                       (string-match-p python-shell-prompt-pdb-regexp prompt))
+                   #'python-shell-completion-get-completions)
+                  (t #'python-shell-completion-native-get-completions)))))
     (list start end
           (completion-table-dynamic
            (apply-partially
