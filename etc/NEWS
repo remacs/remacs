@@ -271,7 +271,8 @@ successive char insertions.
 ** C-x 8 now has shorthands for these chars: ‐ ‑ ‒ – — ― ‘ ’ “ ” † ‡ • ′ ″
 € № ← → ↔ − ≈ ≠ ≤ ≥.  As before, you can type C-x 8 C-h to list shorthands.
 
-** New minor mode electric-quote-mode for quoting ‘like this’ and “like this”.
+** New minor mode electric-quote-mode for quoting ‘like this’ and “like this”
+as you type.
 
 ** New minor mode global-eldoc-mode is enabled by default.
 
@@ -910,8 +911,16 @@ denied" instead of "permission denied".  The old behavior was problematic
 in languages like German where downcasing rules depend on grammar.
 
 +++
+** New variable ‘text-quoting-style’ to control how Emacs translates quotes.
+Set it to ‘curve’ for curved single quotes ‘like this’, to ‘straight’
+for straight apostrophes 'like this', and to ‘grave’ for grave accent
+and apostrophe `like this'.  The default value nil acts like ‘curve’
+if curved single quotes are displayable, and like ‘grave’ otherwise.
+Quotes in info files are not translated.
+
++++
 ** substitute-command-keys now replaces quotes.
-That is, it converts documentation strings' quoting style as per the
+That is, it converts documentation strings’ quoting style as per the
 value of ‘text-quoting-style’.  Doc strings in source code can use
 either curved quotes or grave accent and apostrophe.  As before,
 isolated apostrophes and characters preceded by \= are output as-is.
