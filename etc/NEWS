@@ -910,12 +910,6 @@ denied" instead of "permission denied".  The old behavior was problematic
 in languages like German where downcasing rules depend on grammar.
 
 +++
-** New ‘format’ flag ‘q’
-The new ‘q’ flag causes ‘format’ to quote the output representation as
-per the value of ‘text quoting-style’.  E.g., (format "%qs failed"
-"foo") might return "‘foo’ failed".
-
-+++
 ** substitute-command-keys now replaces quotes.
 That is, it converts documentation strings' quoting style as per the
 value of ‘text-quoting-style’.  Doc strings in source code can use
@@ -1043,6 +1037,12 @@ you can enter them by typing ‘C-x 8 [’ and ‘C-x 8 ]’, or (if your Alt
 key works) by typing ‘A-[’ and ‘A-]’.  As described above under
 ‘text-quoting-style’, the user can specify how to display doc string
 quotes.
+
++++
+** New ‘format’ flag ‘q’
+The new ‘q’ flag causes ‘format’ to quote the output representation as
+per the value of ‘text-quoting-style’.  E.g., (format "%qs failed"
+"foo") might return "‘foo’ failed".
 
 +++
 ** show-help-function's arg is converted via substitute-command-keys
