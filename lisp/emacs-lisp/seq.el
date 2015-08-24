@@ -200,11 +200,7 @@ The result is a sequence of the same type as SEQ."
 TYPE must be one of following symbols: vector, string or list.
 
 \n(fn TYPE SEQUENCE...)"
-  (pcase type
-    (`vector (apply #'vconcat seqs))
-    (`string (apply #'concat seqs))
-    (`list (apply #'append (append seqs '(nil))))
-    (_ (error "Not a sequence type name: %S" type))))
+  (apply #'cl-concatenate type seqs))
 
 (cl-defgeneric seq-into (seq type)
   "Convert the sequence SEQ into a sequence of type TYPE.

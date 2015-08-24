@@ -529,8 +529,8 @@ too large if positive or too small if negative)."
         ((listp seq)
          (let (len
                (errtext (format "Bad bounding indices: %s, %s" start end)))
-           (and end (< end 0) (setq end (+ end (setq len (seq-length seq)))))
-           (if (< start 0) (setq start (+ start (or len (setq len (seq-length seq))))))
+           (and end (< end 0) (setq end (+ end (setq len (length seq)))))
+           (if (< start 0) (setq start (+ start (or len (setq len (length seq))))))
            (unless (>= start 0)
              (error "%s" errtext))
            (when (> start 0)
@@ -543,14 +543,18 @@ too large if positive or too small if negative)."
                    (push (pop seq) res))
                  (or (= (1+ end) start) (error "%s" errtext))
                  (nreverse res))
-             (seq-copy seq))))
+             (copy-sequence seq))))
         (t (error "Unsupported sequence: %s" seq))))
 
 ;;;###autoload
-(defalias 'cl-concatenate #'seq-concatenate
+(defun cl-concatenate (type &rest sequences)
   "Concatenate, into a sequence of type TYPE, the argument SEQUENCEs.
-\n(fn TYPE SEQUENCE...)")
-
+\n(fn TYPE SEQUENCE...)"
+  (pcase type
+    (`vector (apply #'vconcat sequences))
+    (`string (apply #'concat sequences))
+    (`list (apply #'append (append sequences '(nil))))
+    (_ (error "Not a sequence type name: %S" type))))
 
 ;;; List functions.
 
