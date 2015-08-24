@@ -375,7 +375,6 @@ Strings and Characters
 * Text Comparison::         Comparing characters or strings.
 * String Conversion::       Converting to and from characters and strings.
 * Formatting Strings::      @code{format}: Emacs's analogue of @code{printf}.
-* Text Restyling::          Text style conversion function.
 * Case Conversion::         Case conversion functions.
 * Case Tables::             Customizing case conversion.
 
