@@ -1027,7 +1027,7 @@ This must be bound to a mouse click."
   (interactive "e")
   (mouse-minibuffer-check click)
   (select-window (posn-window (event-start click)))
-  ;; We don't use save-excursion because that preserves the mark too.
+  ;; FIXME: Use save-excursion
   (let ((point-save (point)))
     (unwind-protect
 	(progn (mouse-set-point click)

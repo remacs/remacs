@@ -3227,6 +3227,7 @@ function, @code{multiply-by-seven}.  When you do this, a
 @smallexample
 @group
 multiply-by-seven is a Lisp function.
+
 (multiply-by-seven NUMBER)
 
 Multiply NUMBER by seven.
@@ -4152,8 +4153,8 @@ On the other hand, this function returns @code{nil} if the test is false.
 @section @code{save-excursion}
 @findex save-excursion
 @cindex Region, what it is
-@cindex Preserving point, mark, and buffer
-@cindex Point, mark, buffer preservation
+@cindex Preserving point and buffer
+@cindex Point and buffer preservation
 @findex point
 @findex mark
 
@@ -4202,7 +4203,7 @@ region}.  Numerous commands work on the region, including
 @code{center-region}, @code{count-lines-region}, @code{kill-region}, and
 @code{print-region}.
 
-The @code{save-excursion} special form saves the locations of point and
+The @code{save-excursion} special form saves the location of point and
 restores this position after the code within the body of the
 special form is evaluated by the Lisp interpreter.  Thus, if point were
 in the beginning of a piece of text and some code moved point to the end
@@ -4250,7 +4251,7 @@ one expression in the body, the value of the last one will be returned
 as the value of the @code{save-excursion} function.  The other
 expressions in the body are evaluated only for their side effects; and
 @code{save-excursion} itself is used only for its side effect (which
-is restoring the positions of point and mark).
+is restoring the position of point).
 
 @need 1250
 In more detail, the template for a @code{save-excursion} expression
