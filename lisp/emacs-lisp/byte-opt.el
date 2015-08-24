@@ -192,7 +192,7 @@
   ;; (if (aref byte-code-vector 0)
   ;;     (error "The old version of the disassembler is loaded.  Reload new-bytecomp as well"))
   (byte-compile-log-1
-   (apply 'format format
+   (apply #'format-message format
      (let (c a)
        (mapcar (lambda (arg)
 		  (if (not (consp arg))

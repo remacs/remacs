@@ -1714,7 +1714,7 @@ function,command,variable,option or symbol." ms1))))))
 				e t))
 			     (if (checkdoc-autofix-ask-replace
 				  (match-beginning 1) (match-end 1)
-				  (format
+				  (format-message
 				   "If this is the argument ‘%s’, it should appear as %s.  Fix? "
 				   (car args) (upcase (car args)))
 				  (upcase (car args)) t)
@@ -1740,7 +1740,7 @@ function,command,variable,option or symbol." ms1))))))
 			     (insert "."))
 			 nil)
 		     (checkdoc-create-error
-		      (format
+		      (format-message
 		       "Argument ‘%s’ should appear (as %s) in the doc string"
 		       (car args) (upcase (car args)))
 		      s (marker-position e)))
@@ -1824,16 +1824,16 @@ Replace with \"%s\"? " original replace)
 		    (setq found (intern-soft ms))
 		    (or (boundp found) (fboundp found)))
 	       (progn
-		 (setq msg (format "Add quotes around Lisp symbol ‘%s’? "
-				   ms))
+		 (setq msg (format-message
+                            "Add quotes around Lisp symbol ‘%s’? " ms))
 		 (if (checkdoc-autofix-ask-replace
 		      (match-beginning 1) (+ (match-beginning 1)
 					     (length ms))
 		      msg (concat "‘" ms "’") t)
 		     (setq msg nil)
 		   (setq msg
-			 (format "Lisp symbol ‘%s’ should appear in quotes"
-				 ms))))))
+			 (format-message
+                          "Lisp symbol ‘%s’ should appear in quotes" ms))))))
 	 (if msg
 	     (checkdoc-create-error msg (match-beginning 1)
 				    (+ (match-beginning 1)

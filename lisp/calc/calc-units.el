@@ -1622,7 +1622,7 @@ If COMP or STD is non-nil, put that in the units table instead."
               (while (eq (car (car (setq uptr (cdr uptr)))) 0)))
             (insert "\n\n")
             (insert
-             (format
+             (format-message
               (concat
                "(**) When in TeX or LaTeX display mode, the TeX specific unit\n"
                "names will not use the ‘tex’ prefix; the unit name for a\n"

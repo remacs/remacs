@@ -1107,7 +1107,7 @@ All HOST values should be in lower case.")
 (defun ange-ftp-message (fmt &rest args)
   "Display message in echo area, but indicate if truncated.
 Args are as in `message': a format string, plus arguments to be formatted."
-  (let ((msg (apply 'format fmt args))
+  (let ((msg (apply #'format-message fmt args))
 	(max (window-width (minibuffer-window))))
     (if noninteractive
 	msg

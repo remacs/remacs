@@ -797,7 +797,7 @@ This is called whenever you create a new face, and at other times."
 	    symbol (intern name)))
     (setq menu 'facemenu-face-menu)
     (setq docstring
-	  (purecopy (format "Select face ‘%s’ for subsequent insertion.
+	  (purecopy (format-message "Select face ‘%s’ for subsequent insertion.
 If the mark is active and there is no prefix argument,
 apply face ‘%s’ to the region instead.
 This command was defined by ‘facemenu-add-new-face’."

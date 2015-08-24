@@ -990,7 +990,7 @@ should not end with any sort of punctuation.
 
 @defun error format-string &rest args
 This function signals an error with an error message constructed by
-applying @code{format} (@pxref{Formatting Strings}) to
+applying @code{format-message} (@pxref{Formatting Strings}) to
 @var{format-string} and @var{args}.
 
 These examples show typical uses of @code{error}:
@@ -1009,7 +1009,7 @@ These examples show typical uses of @code{error}:
 
 @code{error} works by calling @code{signal} with two arguments: the
 error symbol @code{error}, and a list containing the string returned by
-@code{format}.
+@code{format-message}.
 
 @strong{Warning:} If you want to use your own string as an error message
 verbatim, don't just write @code{(error @var{string})}.  If @var{string}

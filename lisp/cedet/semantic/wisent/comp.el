@@ -230,11 +230,11 @@ Its name is defined in constant `wisent-log-buffer-name'."
 
 (defsubst wisent-log (&rest args)
   "Insert text into the log buffer.
-`format' is applied to ARGS and the result string is inserted into the
+`format-message' is applied to ARGS and the result string is inserted into the
 log buffer returned by the function `wisent-log-buffer'."
   (and wisent-new-log-flag (wisent-new-log))
   (with-current-buffer (wisent-log-buffer)
-    (insert (apply 'format args))))
+    (insert (apply #'format-message args))))
 
 (defconst wisent-log-file "wisent.output"
   "The log file.

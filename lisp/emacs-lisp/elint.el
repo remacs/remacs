@@ -249,9 +249,9 @@ This environment can be passed to `macroexpand'."
     (elint-set-mode-line t)
     (with-current-buffer elint-log-buffer
       (unless (string-equal default-directory dir)
-	(elint-log-message (format "\nLeaving directory ‘%s’"
-				   default-directory) t)
-	(elint-log-message (format "Entering directory ‘%s’" dir) t)
+	(elint-log-message (format-message "\nLeaving directory ‘%s’"
+                                           default-directory) t)
+	(elint-log-message (format-message "Entering directory ‘%s’" dir) t)
 	(setq default-directory dir))))
   (let ((str (format "Linting file %s" file)))
     (message "%s..." str)
@@ -982,7 +982,7 @@ Does basic handling of `featurep' tests."
 						    (line-beginning-position))))
 			       0)	; unknown position
 			     type
-			     (apply 'format string args))))
+			     (apply #'format-message string args))))
 
 (defun elint-error (string &rest args)
   "Report a linting error.

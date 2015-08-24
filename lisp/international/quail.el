@@ -1305,7 +1305,7 @@ The returned value is a Quail map specific to KEY."
 
 (define-error 'quail-error nil)
 (defun quail-error (&rest args)
-  (signal 'quail-error (apply 'format args)))
+  (signal 'quail-error (apply #'format-message args)))
 
 (defun quail-input-string-to-events (str)
   "Convert input string STR to a list of events.

@@ -367,10 +367,11 @@ message about the whole chain of aliases."
           (not verbose)
           (setq aliases (if aliases
                             (concat aliases
-                                    (format ", which is an alias for ‘%s’"
-                                            (symbol-name def)))
-                          (format "‘%s’ is an alias for ‘%s’"
-                                  function (symbol-name def)))))
+                                    (format-message
+                                     ", which is an alias for ‘%s’"
+                                     (symbol-name def)))
+                          (format-message "‘%s’ is an alias for ‘%s’"
+                                          function (symbol-name def)))))
       (setq function (find-function-advised-original function)
             def (find-function-advised-original function)))
     (if aliases

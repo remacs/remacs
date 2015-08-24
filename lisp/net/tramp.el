@@ -1504,7 +1504,7 @@ ARGUMENTS to actually emit the message (if applicable)."
 ;	    (1+ (count-lines (point-min) (cdr ffn)))))))
       (insert (format "%s " fn)))
     ;; The message.
-    (insert (apply 'format fmt-string arguments))))
+    (insert (apply #'format-message fmt-string arguments))))
 
 (defvar tramp-message-show-message t
   "Show Tramp message in the minibuffer.
@@ -1581,8 +1581,8 @@ signal identifier to be raised, remaining arguments passed to
        (error-message-string
 	(list signal
 	      (get signal 'error-message)
-	      (apply 'format fmt-string arguments)))))
-    (signal signal (list (apply 'format fmt-string arguments)))))
+	      (apply #'format-message fmt-string arguments)))))
+    (signal signal (list (apply #'format-message fmt-string arguments)))))
 
 (defsubst tramp-error-with-buffer
   (buf vec-or-proc signal fmt-string &rest arguments)
@@ -3599,8 +3599,8 @@ connection buffer."
                "Tramp failed to connect.  If this happens repeatedly, try\n"
                "    `\\[tramp-cleanup-this-connection]'")))
 	    ((eq exit 'timeout)
-	     (format
-	      "Timeout reached, see buffer `%s' for details"
+	     (format-message
+	      "Timeout reached, see buffer ‘%s’ for details"
 	      (tramp-get-connection-buffer vec)))
 	    (t "Login failed")))))
       (when (numberp pos)

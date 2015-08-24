@@ -3696,8 +3696,8 @@ usage: (message FORMAT-STRING &rest ARGS)  */)
     }
   else
     {
-      register Lisp_Object val;
-      val = Fformat (nargs, args);
+      args[0] = Finternal__text_restyle (args[0]);
+      Lisp_Object val = Fformat (nargs, args);
       message3 (val);
       return val;
     }
@@ -3722,6 +3722,7 @@ usage: (message-box FORMAT-STRING &rest ARGS)  */)
     }
   else
     {
+      args[0] = Finternal__text_restyle (args[0]);
       Lisp_Object val = Fformat (nargs, args);
       Lisp_Object pane, menu;
       struct gcpro gcpro1;

@@ -917,6 +917,12 @@ either curved quotes or grave accent and apostrophe.  As before,
 isolated apostrophes and characters preceded by \= are output as-is.
 
 +++
+** Message-issuing functions ‘error’, ‘message’, etc. now convert quotes.
+They use the new ‘format-message’ function instead of plain ‘format’,
+so that they now follow user preference as per ‘text-quoting-style’ if
+their format argument contains curved quotes.
+
++++
 ** The character classes [:alpha:] and [:alnum:] in regular expressions
 now match multibyte characters using Unicode character properties.
 If you want the old behavior where they matched any character with
@@ -1037,6 +1043,10 @@ you can enter them by typing ‘C-x 8 [’ and ‘C-x 8 ]’, or (if your Alt
 key works) by typing ‘A-[’ and ‘A-]’.  As described above under
 ‘text-quoting-style’, the user can specify how to display doc string
 quotes.
+
++++
+** New function ‘format-message’ is like ‘format’ and also converts
+curved quotes as per ‘text-quoting-style’.
 
 +++
 ** New ‘format’ flag ‘q’

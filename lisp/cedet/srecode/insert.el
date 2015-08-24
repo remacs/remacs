@@ -216,7 +216,7 @@ insertions."
     (data-debug-insert-thing dictionary "" "> ")
     ;; Show the error message.
     (insert (propertize "Error" 'face '(:weight bold)) "\n")
-    (insert (apply #'format format args))
+    (insert (apply #'format-message format args))
     (pop-to-buffer (current-buffer))))
 
 (defun srecode-insert-report-error (dictionary format &rest args)

@@ -801,7 +801,7 @@ they appear; it is called a @dfn{format string}.
 
   Formatting is often useful for computing messages to be displayed.  In
 fact, the functions @code{message} and @code{error} provide the same
-formatting feature described here; they differ from @code{format} only
+formatting feature described here; they differ from @code{format-message} only
 in how they use the result of formatting.
 
 @defun format string &rest objects
@@ -813,6 +813,12 @@ arguments @var{objects} are the computed values to be formatted.
 The characters in @var{string}, other than the format specifications,
 are copied directly into the output, including their text properties,
 if any.
+@end defun
+
+@defun format-message string &rest objects
+This function acts like @code{format}, except it also converts any
+curved quotes in @var{string} as per the value of
+@code{text-quoting-style}.  @xref{Keys in Documentation}.
 @end defun
 
 @cindex @samp{%} in format

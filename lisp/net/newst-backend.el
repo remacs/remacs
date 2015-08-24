@@ -846,10 +846,10 @@ Argument BUFFER is the buffer of the retrieval process."
                newsticker--cache
                name-symbol
                newsticker--error-headline
-               (format
+               (format-message
                 (concat "%s: Newsticker could not retrieve news from %s.\n"
-                        "Return status: `%s'\n"
-                        "Command was `%s'")
+                        "Return status: ‘%s’\n"
+                        "Command was ‘%s’")
                 (format-time-string "%A, %H:%M")
                 feed-name event command)
                ""

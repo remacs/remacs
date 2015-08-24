@@ -2508,7 +2508,8 @@ order to Calc's."
     (while (> count 0)
       (if (>= h len)
 	  (if what
-	      (math-read-big-error nil v (format "Unmatched ‘%s’" what))
+	      (math-read-big-error nil v (format-message
+                                          "Unmatched ‘%s’" what))
 	    (setq count 0))
 	(if (memq (aref line h) '(?\( ?\[))
 	    (setq count (1+ count))

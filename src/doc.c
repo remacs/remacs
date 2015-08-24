@@ -1028,6 +1028,67 @@ Otherwise, return a new string.  */)
   xfree (buf);
   RETURN_UNGCPRO (tem);
 }
+
+DEFUN ("internal--text-restyle", Finternal__text_restyle,
+       Sinternal__text_restyle, 1, 1, 0,
+       doc: /* Return STRING, possibly substituting quote characters.
+
+In the result, replace each curved single quote (\\=‘ and \\=’) by
+left and right quote characters as specified by ‘text-quoting-style’.
+
+Return the original STRING in the common case where no changes are needed.
+Otherwise, return a new string.  */)
+  (Lisp_Object string)
+{
+  bool changed = false;
+
+  CHECK_STRING (string);
+  if (! STRING_MULTIBYTE (string))
+    return string;
+
+  enum text_quoting_style quoting_style = text_quoting_style ();
+  if (quoting_style == CURVE_QUOTING_STYLE)
+    return string;
+
+  ptrdiff_t bsize = SBYTES (string);
+  unsigned char const *strp = SDATA (string);
+  unsigned char const *strlim = strp + bsize;
+  USE_SAFE_ALLOCA;
+  char *buf = SAFE_ALLOCA (bsize);
+  char *bufp = buf;
+  ptrdiff_t nchars = 0;
+
+  while (strp < strlim)
+    {
+      unsigned char const *cp = strp;
+      switch (STRING_CHAR_ADVANCE (strp))
+	{
+	case LEFT_SINGLE_QUOTATION_MARK:
+	  *bufp++ = quoting_style == GRAVE_QUOTING_STYLE ? '`': '\'';
+	  changed = true;
+	  break;
+
+	case RIGHT_SINGLE_QUOTATION_MARK:
+	  *bufp++ = '\'';
+	  changed = true;
+	  break;
+
+	default:
+	  do
+	    *bufp++ = *cp++;
+	  while (cp != strp);
+
+	  break;
+	}
+
+      nchars++;
+    }
+
+  Lisp_Object result
+    = changed ? make_string_from_bytes (buf, nchars, bufp - buf) : string;
+  SAFE_FREE ();
+  return result;
+}
 
 void
 syms_of_doc (void)
@@ -1061,4 +1122,5 @@ displayable, and like ‘grave’ otherwise.  */);
   defsubr (&Sdocumentation_property);
   defsubr (&Ssnarf_documentation);
   defsubr (&Ssubstitute_command_keys);
+  defsubr (&Sinternal__text_restyle);
 }

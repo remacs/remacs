@@ -288,6 +288,12 @@ This function accepts any number of arguments, but ignores them."
   (interactive)
   nil)
 
+(defun format-message (format-string &rest args)
+  "Format a string out of FORMAT-STRING and arguments.
+This is like ‘format’, except it also converts curved quotes in
+FORMAT-STRING as per ‘text-quoting-style’."
+  (apply #'format (internal--text-restyle format-string) args))
+
 ;; Signal a compile-error if the first arg is missing.
 (defun error (&rest args)
   "Signal an error, making error message by passing all args to `format'.
@@ -295,7 +301,7 @@ In Emacs, the convention is that error messages start with a capital
 letter but *do not* end with a period.  Please follow this convention
 for the sake of consistency."
   (declare (advertised-calling-convention (string &rest args) "23.1"))
-  (signal 'error (list (apply 'format args))))
+  (signal 'error (list (apply #'format-message args))))
 
 (defun user-error (format &rest args)
   "Signal a pilot error, making error message by passing all args to `format'.
@@ -305,7 +311,7 @@ for the sake of consistency.
 This is just like `error' except that `user-error's are expected to be the
 result of an incorrect manipulation on the part of the user, rather than the
 result of an actual problem."
-  (signal 'user-error (list (apply #'format format args))))
+  (signal 'user-error (list (apply #'format-message format args))))
 
 (defun define-error (name message &optional parent)
   "Define NAME as a new error signal.
@@ -1606,8 +1612,9 @@ can do the job."
           exp
         (let* ((sym (cadr list-var))
                (append (eval append))
-               (msg (format "‘add-to-list’ can't use lexical var ‘%s’; use ‘push’ or ‘cl-pushnew’"
-                            sym))
+               (msg (format-message
+                     "‘add-to-list’ can't use lexical var ‘%s’; use ‘push’ or ‘cl-pushnew’"
+                     sym))
                ;; Big ugly hack so we only output a warning during
                ;; byte-compilation, and so we can use
                ;; byte-compile-not-lexical-var-p to silence the warning

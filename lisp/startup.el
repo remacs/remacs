@@ -1177,7 +1177,8 @@ please check its value")
 	    (error
 	     (display-warning
 	      'initialization
-	      (format "An error occurred while loading ‘%s’:\n\n%s%s%s\n\n\
+	      (format-message "\
+An error occurred while loading ‘%s’:\n\n%s%s%s\n\n\
 To ensure normal operation, you should investigate and remove the
 cause of the error in your initialization file.  Start Emacs with
 the ‘--debug-init’ option to view a complete error backtrace."
@@ -1312,7 +1313,8 @@ the ‘--debug-init’ option to view a complete error backtrace."
 			 (expand-file-name user-emacs-directory))
 	   (setq warned t)
 	   (display-warning 'initialization
-			    (format "Your ‘load-path’ seems to contain
+			    (format-message "\
+Your ‘load-path’ seems to contain\n\
 your ‘.emacs.d’ directory: %s\n\
 This is likely to cause problems...\n\
 Consider using a subdirectory instead, e.g.: %s"

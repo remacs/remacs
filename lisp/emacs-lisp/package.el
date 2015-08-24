@@ -1592,11 +1592,12 @@ SEEN is used internally to detect infinite recursion."
                 (unless problem
                   (setq problem
                         (if (stringp disabled)
-                            (format "Package ‘%s’ held at version %s, but version %s required"
-                                    next-pkg disabled
-                                    (package-version-join next-version))
-                          (format "Required package ‘%s’ is disabled"
-                                  next-pkg)))))
+                            (format-message
+                             "Package ‘%s’ held at version %s, but version %s required"
+                             next-pkg disabled
+                             (package-version-join next-version))
+                          (format-message "Required package ‘%s’ is disabled"
+                                          next-pkg)))))
                (t (setq found pkg-desc)))))
           (unless found
             (cond
@@ -2365,16 +2366,16 @@ Otherwise no newline is inserted."
 
 (defun package-install-button-action (button)
   (let ((pkg-desc (button-get button 'package-desc)))
-    (when (y-or-n-p (format "Install package ‘%s’? "
-                            (package-desc-full-name pkg-desc)))
+    (when (y-or-n-p (format-message "Install package ‘%s’? "
+                                    (package-desc-full-name pkg-desc)))
       (package-install pkg-desc nil)
       (revert-buffer nil t)
       (goto-char (point-min)))))
 
 (defun package-delete-button-action (button)
   (let ((pkg-desc (button-get button 'package-desc)))
-    (when (y-or-n-p (format "Delete package ‘%s’? "
-                      (package-desc-full-name pkg-desc)))
+    (when (y-or-n-p (format-message "Delete package ‘%s’? "
+                                    (package-desc-full-name pkg-desc)))
       (package-delete pkg-desc)
       (revert-buffer nil t)
       (goto-char (point-min)))))
@@ -3077,8 +3078,8 @@ prompt (see `package-menu--prompt-transaction-p')."
       (length packages)
       (mapconcat #'package-desc-full-name packages ", ")))
    ;; Exactly 1
-   (t (format "package ‘%s’"
-        (package-desc-full-name (car packages))))))
+   (t (format-message "package ‘%s’"
+                      (package-desc-full-name (car packages))))))
 
 (defun package-menu--prompt-transaction-p (delete install upgrade)
   "Prompt the user about DELETE, INSTALL, and UPGRADE.

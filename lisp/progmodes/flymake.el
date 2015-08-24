@@ -200,7 +200,7 @@ ignored.  Otherwise, it is printed using `message'.
 TEXT is a format control string, and the remaining arguments ARGS
 are the string substitutions (see the function `format')."
   (if (<= level flymake-log-level)
-      (let* ((msg (apply 'format text args)))
+      (let* ((msg (apply #'format-message text args)))
 	(message "%s" msg))))
 
 (defun flymake-ins-after (list pos val)

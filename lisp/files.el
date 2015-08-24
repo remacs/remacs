@@ -1641,8 +1641,8 @@ killed."
     (user-error "Aborted"))
   (and (buffer-modified-p) buffer-file-name
        (not (yes-or-no-p
-             (format "Kill and replace buffer ‘%s’ without saving it? "
-                     (buffer-name))))
+             (format-message "Kill and replace buffer ‘%s’ without saving it? "
+                             (buffer-name))))
        (user-error "Aborted"))
   (let ((obuf (current-buffer))
 	(ofile buffer-file-name)
@@ -3419,9 +3419,10 @@ local variables, but directory-local variables may still be applied."
 				 (setq hack-local-variables--warned-lexical t)
 				 (display-warning
                                   :warning
-                                  (format "%s: ‘lexical-binding’ at end of file unreliable"
-                                          (file-name-nondirectory
-                                           (or buffer-file-name ""))))))
+                                  (format-message
+                                   "%s: ‘lexical-binding’ at end of file unreliable"
+                                   (file-name-nondirectory
+                                    (or buffer-file-name ""))))))
 			      (t
 			       (ignore-errors
 				 (push (cons (if (eq var 'eval)
@@ -3556,7 +3557,7 @@ It is dangerous if either of these conditions are met:
                  var (if since (format " (since %s)" since))
                  (if (stringp instead)
                      (substitute-command-keys instead)
-                   (format "use ‘%s’ instead" instead)))))))
+                   (format-message "use ‘%s’ instead" instead)))))))
 
 (defun hack-one-local-variable (var val)
   "Set local variable VAR with value VAL.
@@ -4028,7 +4029,8 @@ Interactively, confirmation is required unless you supply a prefix argument."
 	     (not (and (eq (framep-on-display) 'ns)
 		       (listp last-nonmenu-event)
 		       use-dialog-box))
-	     (or (y-or-n-p (format "File ‘%s’ exists; overwrite? " filename))
+	     (or (y-or-n-p (format-message
+                            "File ‘%s’ exists; overwrite? " filename))
 		 (user-error "Canceled")))
 	(set-visited-file-name filename (not confirm))))
   (set-buffer-modified-p t)
@@ -4733,8 +4735,9 @@ Before and after saving the buffer, this function runs
                         ;; Signal an error if the user specified the name of an
                         ;; existing directory.
                         (error "%s is a directory" filename)
-                      (unless (y-or-n-p (format "File ‘%s’ exists; overwrite? "
-                                                filename))
+                      (unless (y-or-n-p (format-message
+                                         "File ‘%s’ exists; overwrite? "
+                                         filename))
                         (error "Canceled"))))
                 (set-visited-file-name filename)))
 	  (or (verify-visited-file-modtime (current-buffer))
@@ -4774,7 +4777,8 @@ Before and after saving the buffer, this function runs
 			    (expand-file-name buffer-file-name))))
 		  (unless (file-exists-p dir)
 		    (if (y-or-n-p
-			 (format "Directory ‘%s’ does not exist; create? " dir))
+			 (format-message
+                          "Directory ‘%s’ does not exist; create? " dir))
 			(make-directory dir t)
 		      (error "Canceled")))
 		  (setq setmodes (basic-save-buffer-1))))
@@ -5217,8 +5221,8 @@ given.  With a prefix argument, TRASH is nil."
      (list dir
 	   (if (directory-files	dir nil directory-files-no-dot-files-regexp)
 	       (y-or-n-p
-		(format "Directory ‘%s’ is not empty, really %s? "
-			dir (if trashing "trash" "delete")))
+		(format-message "Directory ‘%s’ is not empty, really %s? "
+                                dir (if trashing "trash" "delete")))
 	     nil)
 	   (null current-prefix-arg))))
   ;; If default-directory is a remote directory, make sure we find its

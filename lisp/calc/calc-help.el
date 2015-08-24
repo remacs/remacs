@@ -239,7 +239,7 @@ C-w  Describe how there is no warranty for Calc."
 		      (setq prompts (substring prompts 0 (match-beginning 0))))
 		  (if (string-match "\\` +" prompts)
 		      (setq prompts (substring prompts (match-end 0))))
-		  (setq msg (format
+		  (setq msg (format-message
 			     "%s:  %s%s‘%s’%s%s %s%s"
 			     (if (string-match
 				  "\\`\\(calc-[-a-zA-Z0-9]+\\) *\\(.*\\)\\'"
@@ -400,8 +400,9 @@ C-w  Describe how there is no warranty for Calc."
     (princ "GNU Emacs Calculator.\n")
     (princ "  By Dave Gillespie.\n")
     (princ (format "  %s\n\n" emacs-copyright))
-    (princ (format "Type ‘h s’ for a more detailed summary.\n"))
-    (princ (format "Or type ‘h i’ to read the full Calc manual on-line.\n\n"))
+    (princ (format-message "Type ‘h s’ for a more detailed summary.\n"))
+    (princ (format-message
+            "Or type ‘h i’ to read the full Calc manual on-line.\n\n"))
     (princ "Basic keys:\n")
     (let* ((calc-full-help-flag t))
       (mapc (function (lambda (x) (princ (format
@@ -415,10 +416,10 @@ C-w  Describe how there is no warranty for Calc."
 			  (if (car msgs)
 			      (princ
 			       (if (eq (nth 2 msgs) ?v)
-                                   (format
+                                   (format-message
                                     "\n‘v’ or ‘V’ prefix (vector/matrix) keys: \n")
 				 (if (nth 2 msgs)
-				     (format
+				     (format-message
 				      "\n‘%c’ prefix (%s) keys:\n"
 				      (nth 2 msgs)
 				      (or (cdr (assq (nth 2 msgs)

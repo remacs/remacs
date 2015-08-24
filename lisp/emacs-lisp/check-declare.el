@@ -279,8 +279,8 @@ TYPE is a string giving the nature of the error.  Warning is displayed in
            entry))
         (warning-fill-prefix "    "))
     (display-warning 'check-declare
-                     (format "said ‘%s’ was defined in %s: %s"
-                             fn (file-name-nondirectory fnfile) type)
+                     (format-message "said ‘%s’ was defined in %s: %s"
+                                     fn (file-name-nondirectory fnfile) type)
                      nil check-declare-warning-buffer)))
 
 (declare-function compilation-forget-errors "compile" ())

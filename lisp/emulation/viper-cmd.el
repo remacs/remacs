@@ -3447,8 +3447,8 @@ controlled by the sign of prefix numeric value."
   (interactive)
   (setq viper-parse-sexp-ignore-comments
 	(not viper-parse-sexp-ignore-comments))
-  (princ (format
-	  "From now on, `%%' will %signore parentheses inside comment fields"
+  (princ (format-message
+	  "From now on, ‘%%’ will %signore parentheses inside comment fields"
 	  (if viper-parse-sexp-ignore-comments "" "NOT "))))
 
 
@@ -3986,8 +3986,8 @@ Null string will repeat previous search."
     (if (null buffer) (error "`%s': No such buffer" buffer-name))
     (if (or (not (buffer-modified-p buffer))
 	    (y-or-n-p
-	     (format
-	      "Buffer `%s' is modified, are you sure you want to kill it? "
+	     (format-message
+	      "Buffer ‘%s’ is modified, are you sure you want to kill it? "
 	      buffer-name)))
 	(kill-buffer buffer)
       (error "Buffer not killed"))))
@@ -4636,8 +4636,8 @@ One can use \\=`\\=` and '' to temporarily jump 1 step back."
 					  (substring text 0 (- pos s))
 					  reg (substring text (- pos s)))))
 		     (princ
-		      (format
-		       "Textmarker `%c' is in buffer `%s' at line %d.\n"
+		      (format-message
+		       "Textmarker ‘%c’ is in buffer ‘%s’ at line %d.\n"
 				     reg (buffer-name buf) line-no))
 		     (princ (format "Here is some text around %c:\n\n %s"
 				     reg text)))

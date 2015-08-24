@@ -3373,7 +3373,7 @@ Return the result of the last expression."
 (defalias 'edebug-prin1 'prin1)
 (defalias 'edebug-print 'print)
 (defalias 'edebug-prin1-to-string 'prin1-to-string)
-(defalias 'edebug-format 'format)
+(defalias 'edebug-format 'format-message)
 (defalias 'edebug-message 'message)
 
 (defun edebug-eval-expression (expr)

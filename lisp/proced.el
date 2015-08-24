@@ -1915,7 +1915,7 @@ and \f (formfeed) at the end."
       (let (buffer-read-only)
 	(cond ((stringp log)
 	       (insert (if args
-			   (apply 'format log args)
+			   (apply #'format-message log args)
 			 log)))
 	      ((bufferp log)
 	       (insert-buffer-substring log))

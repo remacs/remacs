@@ -511,6 +511,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
   for (i = 2; *tem; i++)
     {
       visargs[1] = make_string (tem + 1, strcspn (tem + 1, "\n"));
+      visargs[1] = Finternal__text_restyle (visargs[1]);
       if (strchr (SSDATA (visargs[1]), '%'))
 	callint_message = Fformat (i - 1, visargs + 1);
       else

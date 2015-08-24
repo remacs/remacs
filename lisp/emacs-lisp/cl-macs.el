@@ -2101,8 +2101,8 @@ by EXPANSION, and (setq NAME ...) will act like (setf EXPANSION ...).
                                           macroexpand-all-environment))))
               (if (or (null (cdar bindings)) (cl-cddar bindings))
                   (macroexp--warn-and-return
-                   (format "Malformed ‘cl-symbol-macrolet’ binding: %S"
-                           (car bindings))
+                   (format-message "Malformed ‘cl-symbol-macrolet’ binding: %S"
+                                   (car bindings))
                    expansion)
                 expansion)))
         (fset 'macroexpand previous-macroexpand))))))

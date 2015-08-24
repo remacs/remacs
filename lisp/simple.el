@@ -1689,11 +1689,11 @@ invoking, give a prefix argument to `execute-extended-command'."
                            (symbol-name function) typed))))
         (when binding
           (with-temp-message
-              (format "You can run the command ‘%s’ with %s"
-                      function
-                      (if (stringp binding)
-                          (concat "M-x " binding " RET")
-                        (key-description binding)))
+              (format-message "You can run the command ‘%s’ with %s"
+                              function
+                              (if (stringp binding)
+                                  (concat "M-x " binding " RET")
+                                (key-description binding)))
             (sit-for (if (numberp suggest-key-bindings)
                          suggest-key-bindings
                        2))))))))
@@ -2796,16 +2796,18 @@ This variable only matters if `undo-ask-before-discard' is non-nil.")
 	;; but we don't want to ask the question again.
 	(setq undo-extra-outer-limit (+ size 50000))
 	(if (let (use-dialog-box track-mouse executing-kbd-macro )
-	      (yes-or-no-p (format "Buffer ‘%s’ undo info is %d bytes long; discard it? "
-				   (buffer-name) size)))
+	      (yes-or-no-p (format-message
+                            "Buffer ‘%s’ undo info is %d bytes long; discard it? "
+                            (buffer-name) size)))
 	    (progn (setq buffer-undo-list nil)
 		   (setq undo-extra-outer-limit nil)
 		   t)
 	  nil))
     (display-warning '(undo discard-info)
 		     (concat
-		      (format "Buffer ‘%s’ undo info was %d bytes long.\n"
-			      (buffer-name) size)
+		      (format-message
+                       "Buffer ‘%s’ undo info was %d bytes long.\n"
+                       (buffer-name) size)
 		      "The undo info was discarded because it exceeded \
 `undo-outer-limit'.
 
@@ -8326,8 +8328,9 @@ contains the list of implementations currently supported for this command."
          (interactive "P")
          (when (or arg (null ,varimp-sym))
            (let ((val (completing-read
-		       ,(format "Select implementation for command ‘%s’: "
-				command-name)
+		       ,(format-message
+                         "Select implementation for command ‘%s’: "
+                         command-name)
 		       ,varalt-sym nil t)))
              (unless (string-equal val "")
 	       (when (null ,varimp-sym)
@@ -8339,8 +8342,9 @@ contains the list of implementations currently supported for this command."
 					(cdr (assoc-string val ,varalt-sym))))))
          (if ,varimp-sym
              (call-interactively ,varimp-sym)
-           (message ,(format "No implementation selected for command ‘%s’"
-                             command-name)))))))
+           (message "%s" ,(format-message
+                           "No implementation selected for command ‘%s’"
+                           command-name)))))))
 
 
 

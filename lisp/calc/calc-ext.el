@@ -1245,7 +1245,7 @@ calc-kill calc-kill-region calc-yank))))
 
 
 (defun calc-record-message (tag &rest args)
-  (let ((msg (apply 'format args)))
+  (let ((msg (apply #'format-message args)))
     (message "%s" msg)
     (calc-record msg tag))
   (calc-clear-command-flag 'clear-message))
@@ -1957,7 +1957,7 @@ calc-kill calc-kill-region calc-yank))))
 		  (desc
 		   (if (symbolp func)
 		       (if (= (logand kind 3) 0)
-			   (format "‘%c’ = %s" key name)
+			   (format-message "‘%c’ = %s" key name)
 			 (if pos
 			     (format "%s%c%s"
 				     (downcase (substring name 0 pos))

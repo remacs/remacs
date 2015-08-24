@@ -141,12 +141,13 @@ options:
               db))
             (insert "However, your customizations have "
                     (if cb
-                        (format "rebound it to the command ‘%s’" cb)
+                        (format-message "rebound it to the command ‘%s’" cb)
                       "unbound it"))
             (insert ".")
             (when mapsym
               (insert "  (For the more advanced user:"
-                      (format " This binding is in the keymap ‘%s’.)" mapsym)))
+                      (format-message
+                       " This binding is in the keymap ‘%s’.)" mapsym)))
             (if (string= where "")
                 (unless (keymapp db)
                   (insert "\n\nYou can use M-x "
@@ -158,7 +159,7 @@ options:
                           ""
                         "the key")
                       where
-                      (format " to get the function ‘%s’." db))))
+                      (format-message " to get the function ‘%s’." db))))
           (fill-region (point-min) (point)))))
       (help-print-return-message))))
 
@@ -450,7 +451,7 @@ where
 					       (lookup-key global-map
 							   [menu-bar]))))
 				 (stringp cwhere))
-			    (format "the ‘%s’ menu" cwhere)
+			    (format-message "the ‘%s’ menu" cwhere)
 			  "the menus"))))
 	    (setq where ""))
 	  (setq remark nil)

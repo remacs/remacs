@@ -350,8 +350,7 @@ string in Emacs Lisp.
 @defvar text-quoting-style
 @cindex curved quotes
 @cindex curly quotes
-The value of this variable specifies the style
-@code{substitute-command-keys} uses when generating left and right
+The value of this variable specifies the style used to generate text
 quotes.  If the variable's value is @code{curve}, the style is
 @t{‘like this’} with curved single quotes.  If the value is
 @code{straight}, the style is @t{'like this'} with straight

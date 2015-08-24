@@ -1006,7 +1006,7 @@ return t; if SYM is q or ESC, return nil."
 	   nil)     ; skip, and don't ask again
 	  (t        ; no previous answer - ask now
 	   (setq prompt
-		 (concat (apply 'format prompt args)
+		 (concat (apply #'format-message prompt args)
 			 (if help-form
 			     (format " [Type yn!q or %s] "
 				     (key-description (vector help-char)))

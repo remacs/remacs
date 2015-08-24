@@ -719,14 +719,14 @@ DEFAULT is the coding system to use by default in the query."
 	      (insert "No default coding systems to try for "
 		      (if (stringp from)
 			  (format "string \"%s\"." from)
-			(format "buffer ‘%s’." bufname)))
+			(format-message "buffer ‘%s’." bufname)))
 	    (insert
 	     "These default coding systems were tried to encode"
 	     (if (stringp from)
 		 (concat " \"" (if (> (length from) 10)
 				   (concat (substring from 0 10) "...\"")
 				 (concat from "\"")))
-	       (format " text\nin the buffer ‘%s’" bufname))
+	       (format-message " text\nin the buffer ‘%s’" bufname))
 	     ":\n")
 	    (let ((pos (point))
 		  (fill-prefix "  "))
@@ -881,7 +881,7 @@ for the current buffer/file by the %s.
 It is highly recommended to fix it before writing to a file."
 			 (car auto-cs)
 			 (if (eq (cdr auto-cs) :coding) ":coding tag"
-			   (format "variable ‘%s’" (cdr auto-cs))))
+			   (format-message "variable ‘%s’" (cdr auto-cs))))
 		 :warning)
 		(or (yes-or-no-p "Really proceed with writing? ")
 		    (error "Save aborted"))
@@ -1587,7 +1587,7 @@ which marks the variable `default-input-method' as set for Custom buffers."
 			  (called-interactively-p 'interactive))
 	 (with-output-to-temp-buffer (help-buffer)
 	   (let ((elt (assoc input-method input-method-alist)))
-	     (princ (format
+	     (princ (format-message
 		     "Input method: %s (‘%s’ in mode line) for %s\n  %s\n"
 		     input-method (nth 3 elt) (nth 1 elt) (nth 4 elt))))))))))
 

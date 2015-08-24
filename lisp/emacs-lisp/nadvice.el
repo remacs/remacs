@@ -95,7 +95,7 @@ Each element has the form (WHERE BYTECODE STACK) where:
                (propertize (format "%s advice: " where)
                            'face 'warning)
                (let ((fun (advice--car flist)))
-                 (if (symbolp fun) (format "‘%S’" fun)
+                 (if (symbolp fun) (format-message "‘%S’" fun)
                    (let* ((name (cdr (assq 'name (advice--props flist))))
                           (doc (documentation fun t))
                           (usage (help-split-fundoc doc function)))

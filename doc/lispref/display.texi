@@ -247,7 +247,7 @@ messages in the echo area.
 @defun message format-string &rest arguments
 This function displays a message in the echo area.
 @var{format-string} is a format string, and @var{arguments} are the
-objects for its format specifications, like in the @code{format}
+objects for its format specifications, like in the @code{format-message}
 function (@pxref{Formatting Strings}).  The resulting formatted string
 is displayed in the echo area; if it contains @code{face} text
 properties, it is displayed with the specified faces (@pxref{Faces}).
@@ -375,7 +375,7 @@ reporting very fast.
 When this progress reporter is subsequently used, it will display
 @var{message} in the echo area, followed by progress percentage.
 @var{message} is treated as a simple string.  If you need it to depend
-on a filename, for instance, use @code{format} before calling this
+on a filename, for instance, use @code{format-message} before calling this
 function.
 
 The arguments @var{min-value} and @var{max-value} should be numbers

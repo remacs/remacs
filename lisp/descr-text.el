@@ -161,11 +161,8 @@ otherwise."
       ;; Buttons
       (when (and button (not (widgetp wid-button)))
 	(newline)
-	(insert (substitute-command-keys "Here is a ‘")
-		(format "%S" button-type)
-		(substitute-command-keys "’ button labeled ‘")
-		button-label
-		(substitute-command-keys "’.\n\n")))
+	(insert (format-message "Here is a ‘%S’ button labeled ‘%s’.\n\n"
+                                button-type button-label)))
       ;; Overlays
       (when overlays
 	(newline)
@@ -739,9 +736,7 @@ relevant to POS."
                       (when face
                         (insert (propertize " " 'display '(space :align-to 5))
                                 "face: ")
-                        (insert (substitute-command-keys "‘")
-                                (symbol-name face)
-                                (substitute-command-keys "’\n"))))))
+                        (insert (format-message "‘%s’\n" face))))))
               (insert "these terminal codes:\n")
               (dotimes (i (length disp-vector))
                 (insert (car (aref disp-vector i))

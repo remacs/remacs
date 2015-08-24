@@ -217,7 +217,7 @@ defaults to 6600 and HOST defaults to localhost."
         (goto-char (point-max))
         (insert-before-markers          ;So it scrolls.
          (replace-regexp-in-string "\n" "\n	"
-                                   (apply 'format format args))
+                                   (apply #'format-message format args))
          "\n"))))
 
 (defun mpc--proc-filter (proc string)
@@ -1643,7 +1643,7 @@ Return non-nil if a selection was deactivated."
         (when (equal (sort (copy-sequence active) #'string-lessp)
                      (sort (copy-sequence selection) #'string-lessp))
           (setq active 'all)))
-      
+
       ;; FIXME: This `mpc-sort' takes a lot of time.  Maybe we should
       ;; be more clever and presume the buffer is mostly sorted already.
       (mpc-sort (if (listp active) active))

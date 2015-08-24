@@ -2305,11 +2305,12 @@ Ignore byte-compiler warnings you might see."
 
 (defun vhdl-warning-when-idle (&rest args)
   "Wait until idle, then print out warning STRING and beep."
-  (if noninteractive
-      (vhdl-warning (apply 'format args) t)
-    (unless vhdl-warnings
-      (vhdl-run-when-idle .1 nil 'vhdl-print-warnings))
-    (push (apply 'format args) vhdl-warnings)))
+  (let ((message (apply #'format-message args)))
+    (if noninteractive
+        (vhdl-warning message t)
+      (unless vhdl-warnings
+        (vhdl-run-when-idle .1 nil 'vhdl-print-warnings))
+      (push message vhdl-warnings))))
 
 (defun vhdl-warning (string &optional nobeep)
   "Print out warning STRING and beep."
