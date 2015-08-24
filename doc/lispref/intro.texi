@@ -480,7 +480,7 @@ running.  It is useful to include this string in bug reports.
 @smallexample
 @group
 (emacs-version)
-  @result{} "GNU Emacs 24.5.1 (x86_64-unknown-linux-gnu, GTK+ Version 3.16.4)
+  @result{} "GNU Emacs 24.5.1 (x86_64-unknown-linux-gnu, GTK+ Version 3.16)
              of 2015-06-01"
 @end group
 @end smallexample
