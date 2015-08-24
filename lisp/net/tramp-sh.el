@@ -873,6 +873,12 @@ Escape sequence %s is replaced with name of Perl binary.")
   "Perl program to use for decoding a file.
 Escape sequence %s is replaced with name of Perl binary.")
 
+(defconst tramp-stat-marker "/////"
+  "Marker in stat commands for file attributes.")
+
+(defconst tramp-stat-quoted-marker "\\/\\/\\/\\/\\/"
+  "Quoted marker in stat commands for file attributes.")
+
 (defconst tramp-vc-registered-read-file-names
   "echo \"(\"
 while read file; do
@@ -1304,19 +1310,25 @@ target of the symlink differ."
     (concat
      ;; On Opsware, pdksh (which is the true name of ksh there)
      ;; doesn't parse correctly the sequence "((".  Therefore, we add
-     ;; a space.  Apostrophes in the stat output are masked as "//",
-     ;; in order to make a proper shell escape of them in file names.
+     ;; a space.  Apostrophes in the stat output are masked as
+     ;; `tramp-stat-marker', in order to make a proper shell escape of
+     ;; them in file names.
      "( (%s %s || %s -h %s) && (%s -c "
-     "'((//%%N//) %%h %s %s %%Xe0 %%Ye0 %%Ze0 %%se0 //%%A// t %%ie0 -1)' "
-     "%s | sed -e 's/\"/\\\\\"/g' -e 's/\\/\\//\"/g') || echo nil)")
+     "'((%s%%N%s) %%h %s %s %%Xe0 %%Ye0 %%Ze0 %%se0 %s%%A%s t %%ie0 -1)' "
+     "%s | sed -e 's/\"/\\\\\"/g' -e 's/%s/\"/g') || echo nil)")
     (tramp-get-file-exists-command vec)
     (tramp-shell-quote-argument localname)
     (tramp-get-test-command vec)
     (tramp-shell-quote-argument localname)
     (tramp-get-remote-stat vec)
-    (if (eq id-format 'integer) "%ue0" "//%U//")
-    (if (eq id-format 'integer) "%ge0" "//%G//")
-    (tramp-shell-quote-argument localname))))
+    tramp-stat-marker tramp-stat-marker
+    (if (eq id-format 'integer)
+	"%ue0" (concat tramp-stat-marker "%U" tramp-stat-marker))
+    (if (eq id-format 'integer)
+	"%ge0" (concat tramp-stat-marker "%G" tramp-stat-marker))
+    tramp-stat-marker tramp-stat-marker
+    (tramp-shell-quote-argument localname)
+    tramp-stat-quoted-marker)))
 
 (defun tramp-sh-handle-set-visited-file-modtime (&optional time-list)
   "Like `set-visited-file-modtime' for Tramp files."
@@ -1747,12 +1759,12 @@ be non-negative integers."
      ;; We must care about file names with spaces, or starting with
      ;; "-"; this would confuse xargs.  "ls -aQ" might be a solution,
      ;; but it does not work on all remote systems.  Apostrophes in
-     ;; the stat output are masked as "//", in order to make a proper
-     ;; shell escape of them in file names.
+     ;; the stat output are masked as `tramp-stat-marker', in order to
+     ;; make a proper shell escape of them in file names.
      "cd %s && echo \"(\"; (%s %s -a | "
      "xargs %s -c "
-     "'(//%%n// (//%%N//) %%h %s %s %%Xe0 %%Ye0 %%Ze0 %%se0 //%%A// t %%ie0 -1)' "
-     "-- 2>/dev/null | sed -e 's/\"/\\\\\"/g' -e 's/\\/\\//\"/g'); echo \")\"")
+     "'(%s%%n%s (%s%%N%s) %%h %s %s %%Xe0 %%Ye0 %%Ze0 %%se0 %s%%A%s t %%ie0 -1)' "
+     "-- 2>/dev/null | sed -e 's/\"/\\\\\"/g' -e 's/%s/\"/g'); echo \")\"")
     (tramp-shell-quote-argument localname)
     (tramp-get-ls-command vec)
     ;; On systems which have no quoting style, file names with
@@ -1760,8 +1772,14 @@ be non-negative integers."
     (if (tramp-get-ls-command-with-quoting-style vec)
 	"--quoting-style=shell" "")
     (tramp-get-remote-stat vec)
-    (if (eq id-format 'integer) "%ue0" "//%U//")
-    (if (eq id-format 'integer) "%ge0" "//%G//"))))
+    tramp-stat-marker tramp-stat-marker
+    tramp-stat-marker tramp-stat-marker
+    (if (eq id-format 'integer)
+	"%ue0" (concat tramp-stat-marker "%U" tramp-stat-marker))
+    (if (eq id-format 'integer)
+	"%ge0" (concat tramp-stat-marker "%G" tramp-stat-marker))
+    tramp-stat-marker tramp-stat-marker
+    tramp-stat-quoted-marker)))
 
 ;; This function should return "foo/" for directories and "bar" for
 ;; files.
@@ -5023,10 +5041,18 @@ raises an error."
 Convert file mode bits to string and set virtual device number.
 Return ATTR."
   (when attr
-    ;; Remove color escape sequences from symlink.
+    ;; Convert symlink from `tramp-do-file-attributes-with-stat'.
+    (when (consp (car attr))
+      (if (and (stringp (caar attr))
+               (string-match ".+ -> .\\(.+\\)." (caar attr)))
+          (setcar attr (match-string 1 (caar attr)))
+        (setcar attr nil)))
+    ;; Remove color escape sequences and double slashes from symlink.
     (when (stringp (car attr))
       (while (string-match tramp-color-escape-sequence-regexp (car attr))
-	(setcar attr (replace-match "" nil nil (car attr)))))
+	(setcar attr (replace-match "" nil nil (car attr))))
+      (while (string-match "//" (car attr))
+	(setcar attr (replace-match "/" nil nil (car attr)))))
     ;; Convert uid and gid.  Use -1 as indication of unusable value.
     (when (and (numberp (nth 2 attr)) (< (nth 2 attr) 0))
       (setcar (nthcdr 2 attr) -1))
@@ -5067,12 +5093,6 @@ Return ATTR."
     ;; Convert directory indication bit.
     (when (string-match "^d" (nth 8 attr))
       (setcar attr t))
-    ;; Convert symlink from `tramp-do-file-attributes-with-stat'.
-    (when (consp (car attr))
-      (if (and (stringp (caar attr))
-               (string-match ".+ -> .\\(.+\\)." (caar attr)))
-          (setcar attr (match-string 1 (caar attr)))
-        (setcar attr nil)))
     ;; Set file's gid change bit.
     (setcar (nthcdr 9 attr)
             (if (numberp (nth 3 attr))
