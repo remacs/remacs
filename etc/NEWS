@@ -923,7 +923,7 @@ Quotes in info files are not translated.
 That is, it converts documentation strings’ quoting style as per the
 value of ‘text-quoting-style’.  Doc strings in source code can use
 either curved quotes or grave accent and apostrophe.  As before,
-isolated apostrophes and characters preceded by \= are output as-is.
+characters preceded by \= are output as-is.
 
 +++
 ** Message-issuing functions ‘error’, ‘message’, etc. now convert quotes.

@@ -731,10 +731,9 @@ summary).
 Each substring of the form \\=\\<MAPVAR> specifies the use of MAPVAR
 as the keymap for future \\=\\[COMMAND] substrings.
 
-Each \\=‘ and \\=’ are replaced by left and right quote.  Each \\=` is
-replaced by left quote, and each ' preceded by \\=` and without
-intervening ' is replaced by right quote.  Left and right quote
-characters are specified by ‘text-quoting-style’.
+Each \\=‘ and \\=` is replaced by left quote, and each \\=’ and \\='
+is replaced by right quote.  Left and right quote characters are
+specified by ‘text-quoting-style’.
 
 \\=\\= quotes the following character and is discarded; thus,
 \\=\\=\\=\\= puts \\=\\= into the output, \\=\\=\\=\\[ puts \\=\\[ into the output, and
@@ -746,7 +745,6 @@ Otherwise, return a new string.  */)
 {
   char *buf;
   bool changed = false;
-  bool in_quote = false;
   unsigned char *strp;
   char *bufp;
   ptrdiff_t idx;
@@ -971,11 +969,10 @@ Otherwise, return a new string.  */)
 	    strp = SDATA (string) + idx;
 	  }
 	}
-      else if (strp[0] == '`' && quoting_style == CURVE_QUOTING_STYLE)
+      else if ((strp[0] == '`' || strp[0] == '\'')
+	       && quoting_style == CURVE_QUOTING_STYLE)
 	{
-	  in_quote = true;
-	  start = LSQM;
-	subst_quote:
+	  start = strp[0] == '`' ? LSQM : RSQM;
 	  length = 1;
 	  length_byte = 3;
 	  idx = strp - SDATA (string) + 1;
@@ -987,12 +984,6 @@ Otherwise, return a new string.  */)
 	  strp++;
 	  nchars++;
 	  changed = true;
-	}
-      else if (strp[0] == '\'' && in_quote)
-	{
-	  in_quote = false;
-	  start = RSQM;
-	  goto subst_quote;
 	}
       else if (strp[0] == uLSQM0 && strp[1] == uLSQM1
 	       && (strp[2] == uLSQM2 || strp[2] == uRSQM2)
@@ -1108,8 +1099,8 @@ syms_of_doc (void)
   DEFVAR_LISP ("text-quoting-style", Vtext_quoting_style,
                doc: /* Style to use for single quotes when generating text.
 ‘curve’ means quote with curved single quotes \\=‘like this\\=’.
-‘straight’ means quote with straight apostrophes 'like this'.
-‘grave’ means quote with grave accent and apostrophe \\=`like this'.
+‘straight’ means quote with straight apostrophes \\='like this\\='.
+‘grave’ means quote with grave accent and apostrophe \\=`like this\\='.
 The default value nil acts like ‘curve’ if curved single quotes are
 displayable, and like ‘grave’ otherwise.  */);
   Vtext_quoting_style = Qnil;
