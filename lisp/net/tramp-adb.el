@@ -258,7 +258,7 @@ pass to the OPERATION."
       method user host
       (with-tramp-file-property v localname "file-truename"
 	(let ((result nil))			; result steps in reverse order
-	  (tramp-message v 4 "Finding true name for `%s'" filename)
+	  (tramp-message v 4 "Finding true name for ‘%s’" filename)
 	  (let* ((directory-sep-char ?/)
 		 (steps (tramp-compat-split-string localname "/"))
 		 (localnamedir (tramp-run-real-handler
@@ -290,9 +290,9 @@ pass to the OPERATION."
 						(list thisstep))
 					"/")))))
 	      (cond ((string= "." thisstep)
-		     (tramp-message v 5 "Ignoring step `.'"))
+		     (tramp-message v 5 "Ignoring step ‘.’"))
 		    ((string= ".." thisstep)
-		     (tramp-message v 5 "Processing step `..'")
+		     (tramp-message v 5 "Processing step ‘..’")
 		     (pop result))
 		    ((stringp symlink-target)
 		     ;; It's a symlink, follow it.
@@ -307,7 +307,7 @@ pass to the OPERATION."
 		       (unless (tramp-equal-remote filename symlink-target)
 			 (tramp-error
 			  v 'file-error
-			  "Symlink target `%s' on wrong host" symlink-target))
+			  "Symlink target ‘%s’ on wrong host" symlink-target))
 		       (setq symlink-target localname))
 		     (setq steps
 			   (append (tramp-compat-split-string
@@ -330,7 +330,7 @@ pass to the OPERATION."
 				  (not (string= (substring result -1) "/"))))
 	      (setq result (concat result "/"))))
 
-	  (tramp-message v 4 "True name of `%s' is `%s'" localname result)
+	  (tramp-message v 4 "True name of ‘%s’ is ‘%s’" localname result)
 	  result))))
 
    ;; Preserve trailing "/".
@@ -433,7 +433,7 @@ pass to the OPERATION."
 
 (defun tramp-adb-get-ls-command (vec)
   (with-tramp-connection-property vec "ls"
-    (tramp-message vec 5 "Finding a suitable `ls' command")
+    (tramp-message vec 5 "Finding a suitable ‘ls’ command")
     (if (tramp-adb-send-command-and-check vec "ls --color=never -al /dev/null")
 	;; On CyanogenMod based system BusyBox is used and "ls" output
 	;; coloring is enabled by default.  So we try to disable it
@@ -514,7 +514,7 @@ Emacs dired can't find files."
 	  (make-directory par parents))))
     (tramp-adb-barf-unless-okay
      v (format "mkdir %s" (tramp-shell-quote-argument localname))
-     "Couldn't make directory %s" dir)
+     "Couldn’t make directory %s" dir)
     (tramp-flush-file-property v (file-name-directory localname))
     (tramp-flush-directory-property v localname)))
 
@@ -528,7 +528,7 @@ Emacs dired can't find files."
      v (format "%s %s"
 	       (if recursive "rm -r" "rmdir")
 	       (tramp-shell-quote-argument localname))
-     "Couldn't delete %s" directory)))
+     "Couldn’t delete %s" directory)))
 
 (defun tramp-adb-handle-delete-file (filename &optional _trash)
   "Like `delete-file' for Tramp files."
@@ -538,7 +538,7 @@ Emacs dired can't find files."
     (tramp-flush-file-property v localname)
     (tramp-adb-barf-unless-okay
      v (format "rm %s" (tramp-shell-quote-argument localname))
-     "Couldn't delete %s" filename)))
+     "Couldn’t delete %s" filename)))
 
 (defun tramp-adb-handle-file-name-all-completions (filename directory)
   "Like `file-name-all-completions' for Tramp files."
@@ -571,7 +571,7 @@ Emacs dired can't find files."
     (unless (file-exists-p (file-truename filename))
       (tramp-error
        v 'file-error
-       "Cannot make local copy of non-existing file `%s'" filename))
+       "Cannot make local copy of non-existing file ‘%s’" filename))
     (let ((tmpfile (tramp-compat-make-temp-file filename)))
       (with-tramp-progress-reporter
 	  v 3 (format "Fetching %s to tmp file %s" filename tmpfile)
@@ -580,7 +580,7 @@ Emacs dired can't find files."
 		  (not (file-exists-p tmpfile)))
 	  (ignore-errors (delete-file tmpfile))
 	  (tramp-error
-	   v 'file-error "Cannot make local copy of file `%s'" filename))
+	   v 'file-error "Cannot make local copy of file ‘%s’" filename))
 	(set-file-modes
 	 tmpfile
 	 (logior (or (file-modes filename) 0)
@@ -635,10 +635,11 @@ But handle the case, if the \"test\" command is not available."
        'write-region
        (list start end tmpfile append 'no-message lockname confirm))
       (with-tramp-progress-reporter
-	  v 3 (format "Moving tmp file `%s' to `%s'" tmpfile filename)
+        v 3 (format-message
+             "Moving tmp file ‘%s’ to ‘%s’" tmpfile filename)
 	(unwind-protect
 	    (when (tramp-adb-execute-adb-command v "push" tmpfile localname)
-	      (tramp-error v 'file-error "Cannot write: `%s'" filename))
+	      (tramp-error v 'file-error "Cannot write: ‘%s’" filename))
 	  (delete-file tmpfile)))
 
       (when (or (eq visit t) (stringp visit))
@@ -647,7 +648,7 @@ But handle the case, if the \"test\" command is not available."
       (unless (equal curbuf (current-buffer))
 	(tramp-error
 	 v 'file-error
-	 "Buffer has changed from `%s' to `%s'" curbuf (current-buffer))))))
+	 "Buffer has changed from ‘%s’ to ‘%s’" curbuf (current-buffer))))))
 
 (defun tramp-adb-handle-set-file-modes (filename mode)
   "Like `set-file-modes' for Tramp files."
@@ -712,7 +713,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	    (tramp-flush-file-property v localname)
 	    (when (tramp-adb-execute-adb-command v "push" filename localname)
 	      (tramp-error
-	       v 'file-error "Cannot copy `%s' `%s'" filename newname))))))
+	       v 'file-error "Cannot copy ‘%s’ ‘%s’" filename newname))))))
 
     ;; KEEP-DATE handling.
     (when keep-date
@@ -1113,7 +1114,7 @@ the exit status is not equal 0, and t otherwise."
     (goto-char (point-max))
     (unless (re-search-backward "tramp_exit_status [0-9]+" nil t)
       (tramp-error
-       vec 'file-error "Couldn't find exit status of `%s'" command))
+       vec 'file-error "Couldn’t find exit status of ‘%s’" command))
     (skip-chars-forward "^ ")
     (prog1
 	(zerop (read (current-buffer)))
@@ -1130,7 +1131,7 @@ FMT and ARGS are passed to `error'."
   "Wait for output from remote command."
   (unless (buffer-live-p (process-buffer proc))
     (delete-process proc)
-    (tramp-error proc 'file-error "Process `%s' not available, try again" proc))
+    (tramp-error proc 'file-error "Process ‘%s’ not available, try again" proc))
   (with-current-buffer (process-buffer proc)
     (if (tramp-wait-for-regexp proc timeout tramp-adb-prompt)
 	(let (buffer-read-only)
@@ -1150,11 +1151,11 @@ FMT and ARGS are passed to `error'."
       (if timeout
 	  (tramp-error
 	   proc 'file-error
-	   "[[Remote adb prompt `%s' not found in %d secs]]"
+	   "[[Remote adb prompt ‘%s’ not found in %d secs]]"
 	   tramp-adb-prompt timeout)
 	(tramp-error
 	 proc 'file-error
-	 "[[Remote prompt `%s' not found]]" tramp-adb-prompt)))))
+	 "[[Remote prompt ‘%s’ not found]]" tramp-adb-prompt)))))
 
 (defun tramp-adb-maybe-open-connection (vec)
   "Maybe open a connection VEC.
@@ -1177,7 +1178,7 @@ connection if a previous connection has died for some reason."
     ;; use a connection property, because we have not checked yet
     ;; whether it is still the same device.
     (when (and user (not (tramp-get-file-property vec "" "su-command-p" t)))
-      (tramp-error vec 'file-error "Cannot switch to user `%s'" user))
+      (tramp-error vec 'file-error "Cannot switch to user ‘%s’" user))
 
     (unless
 	(and p (processp p) (memq (process-status p) '(run open)))
@@ -1223,7 +1224,7 @@ connection if a previous connection has died for some reason."
 			 (not (string-equal old-getprop new-getprop)))
 		(tramp-message
 		 vec 3
-		 "Connection reset, because remote host changed from `%s' to `%s'"
+		 "Connection reset, because remote host changed from ‘%s’ to ‘%s’"
 		 old-getprop new-getprop)
 		(tramp-cleanup-connection vec t)
 		(tramp-adb-maybe-open-connection vec)))
@@ -1235,7 +1236,7 @@ connection if a previous connection has died for some reason."
 		(delete-process p)
 		(tramp-set-file-property vec "" "su-command-p" nil)
 		(tramp-error
-		 vec 'file-error "Cannot switch to user `%s'" user)))
+		 vec 'file-error "Cannot switch to user ‘%s’" user)))
 
 	    ;; Set "remote-path" connection property.  This is needed
 	    ;; for eshell.

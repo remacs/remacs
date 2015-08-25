@@ -440,7 +440,7 @@ for all methods.  Resulting data are derived from connection history."
      (clrhash tramp-cache-data))
     (error
      ;; File is corrupted.
-     (message "Tramp persistency file '%s' is corrupted: %s"
+     (message "Tramp persistency file ‘%s’ is corrupted: %s"
 	      tramp-persistency-file-name (error-message-string err))
      (clrhash tramp-cache-data))))
 

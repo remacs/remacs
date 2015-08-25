@@ -494,7 +494,7 @@ Operations not mentioned here will be handled by the default Emacs primitives.")
 First arg specifies the OPERATION, second arg is a list of arguments to
 pass to the OPERATION."
   (unless tramp-gvfs-enabled
-    (tramp-user-error nil "Package `tramp-gvfs' not supported"))
+    (tramp-user-error nil "Package ‘tramp-gvfs’ not supported"))
   (let ((fn (assoc operation tramp-gvfs-file-name-handler-alist)))
     (if fn
 	(save-match-data (apply (cdr fn) args))
@@ -600,7 +600,7 @@ This function is invoked by `tramp-gvfs-handle-copy-file' and
 of `copy' and `rename'.  FILENAME and NEWNAME must be absolute
 file names."
   (unless (memq op '(copy rename))
-    (error "Unknown operation `%s', must be `copy' or `rename'" op))
+    (error "Unknown operation ‘%s’, must be ‘copy’ or ‘rename’" op))
 
     (let ((t1 (tramp-tramp-file-p filename))
 	  (t2 (tramp-tramp-file-p newname))
@@ -657,7 +657,7 @@ file names."
 		    (goto-char (point-min))
 		    (tramp-error-with-buffer
 		     nil v 'file-error
-		     "%s failed, see buffer `%s' for details."
+		     "%s failed, see buffer ‘%s’ for details."
 		     msg-operation (buffer-name)))
 
 		;; Some WebDAV server, like the one from QNAP, do not
@@ -724,7 +724,7 @@ file names."
       (with-current-buffer (tramp-get-connection-buffer v)
 	(goto-char (point-min))
 	(tramp-error-with-buffer
-	 nil v 'file-error "Couldn't delete %s" directory)))))
+	 nil v 'file-error "Couldn’t delete %s" directory)))))
 
 (defun tramp-gvfs-handle-delete-file (filename &optional trash)
   "Like `delete-file' for Tramp files."
@@ -739,7 +739,7 @@ file names."
       (with-current-buffer (tramp-get-connection-buffer v)
 	(goto-char (point-min))
 	(tramp-error-with-buffer
-	 nil v 'file-error "Couldn't delete %s" filename)))))
+	 nil v 'file-error "Couldn’t delete %s" filename)))))
 
 (defun tramp-gvfs-handle-expand-file-name (name &optional dir)
   "Like `expand-file-name' for Tramp files."
@@ -765,7 +765,7 @@ file names."
       (when (string-match "\\`\\(~[^/]*\\)\\(.*\\)\\'" localname)
 	(tramp-error
 	 v 'file-error
-	 "Cannot expand tilde in file `%s'" name))
+	 "Cannot expand tilde in file ‘%s’" name))
       (unless (tramp-run-real-handler 'file-name-absolute-p (list localname))
 	(setq localname (concat "/" localname)))
       ;; We do not pass "/..".
@@ -927,7 +927,7 @@ file names."
       (unless (file-exists-p filename)
 	(tramp-error
 	 v 'file-error
-	 "Cannot make local copy of non-existing file `%s'" filename))
+	 "Cannot make local copy of non-existing file ‘%s’" filename))
       (copy-file filename tmpfile t t)
       tmpfile)))
 
@@ -1013,7 +1013,7 @@ file names."
 	  (tramp-error
 	   v 'file-notify-error "gvfs-monitor-file failed to start")
 	(tramp-message
-	 v 6 "Run `%s', %S" (mapconcat 'identity (process-command p) " ") p)
+	 v 6 "Run ‘%s’, %S" (mapconcat 'identity (process-command p) " ") p)
 	(tramp-set-connection-property p "vector" v)
 	(tramp-compat-set-process-query-on-exit-flag p nil)
 	(set-process-filter p 'tramp-gvfs-file-gvfs-monitor-file-process-filter)
@@ -1094,7 +1094,7 @@ file names."
 	;; Just do it.
 	(unless (tramp-gvfs-send-command
 		 v "gvfs-mkdir" (tramp-gvfs-url-file-name dir))
-	  (tramp-error v 'file-error "Couldn't make directory %s" dir))))))
+	  (tramp-error v 'file-error "Couldn’t make directory %s" dir))))))
 
 (defun tramp-gvfs-handle-rename-file
   (filename newname &optional ok-if-already-exists)
@@ -1136,7 +1136,7 @@ file names."
 	(error
 	 (delete-file tmpfile)
 	 (tramp-error
-	  v 'file-error "Couldn't write region to `%s'" filename))))
+	  v 'file-error "Couldn’t write region to ‘%s’" filename))))
 
     (tramp-flush-file-property v (file-name-directory localname))
     (tramp-flush-file-property v localname)
@@ -1175,7 +1175,7 @@ file names."
 	 (url-hexify-string (file-truename filename)) nil nil t))))
     (when (tramp-tramp-file-p filename)
       (with-parsed-tramp-file-name filename nil
-	(tramp-message v 10 "remote file `%s' is URL `%s'" filename result)))
+	(tramp-message v 10 "remote file ‘%s’ is URL ‘%s’" filename result)))
     result))
 
 (defun tramp-gvfs-object-path (filename)
