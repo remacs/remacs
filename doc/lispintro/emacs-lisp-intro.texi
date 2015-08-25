@@ -1240,6 +1240,10 @@ command to do something.  (Usually, of course, it is the last of these
 three things that you really want!)
 
 @c use code for the single apostrophe, not samp.
+@findex quote
+@cindex @code{'} for quoting
+@cindex quoting using apostrophe
+@cindex apostrophe for quoting
 The single apostrophe, @code{'}, that I put in front of some of the
 example lists in preceding sections is called a @dfn{quote}; when it
 precedes a list, it tells Lisp to do nothing with the list, other than
