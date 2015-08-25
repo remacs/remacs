@@ -2165,7 +2165,7 @@ machine then modifies `tramp-remote-process-environment' and
            ;; shell, otherwise (like in the case of processes started
            ;; with `process-file') the environment is not changed.
            ;; This makes environment modifications effective
-           ;; inconditionally.
+           ;; unconditionally.
            (python-shell-tramp-refresh-process-environment
             ,vec tramp-remote-process-environment))
          ,(macroexp-progn body)))))

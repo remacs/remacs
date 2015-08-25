@@ -2965,7 +2965,7 @@ There might be text before point."
     ("\\mu" . ?μ)
     ("\\nu" . ?ν)
     ("\\xi" . ?ξ)
-    ;; There is no \omicron becase it looks like a latin o.
+    ;; There is no \omicron because it looks like a latin o.
     ("\\pi" . ?π)
     ("\\rho" . ?ρ)
     ("\\sigma" . ?σ)

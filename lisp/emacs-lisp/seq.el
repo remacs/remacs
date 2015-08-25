@@ -94,7 +94,7 @@ name to be bound to the rest of SEQ."
   (elt seq n))
 
 ;; Default gv setters for `seq-elt'.
-;; It can be a good idea for new sequence impelentations to provide a
+;; It can be a good idea for new sequence implementations to provide a
 ;; "gv-setter" for `seq-elt'.
 (cl-defmethod (setf seq-elt) (store (seq array) n)
   (aset seq n store))

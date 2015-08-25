@@ -3450,7 +3450,7 @@ in terms of the canonical character width and height of WINDOW's
 frame, rounded if necessary.  PIXELWISE non-nil means to return
 the coordinates in pixels where the values for RIGHT and BOTTOM
 are one more than the actual value of these edges.  Note that if
-ABSOLUTE is non-nil, PIXELWISE is implicily non-nil too."
+ABSOLUTE is non-nil, PIXELWISE is implicitly non-nil too."
   (let* ((window (window-normalize-window window body))
 	 (frame (window-frame window))
 	 (border-width (frame-border-width frame))

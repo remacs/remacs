@@ -1661,7 +1661,7 @@ used as key in `ispell-local-dictionary-alist' and `ispell-dictionary-alist'.")
 
 (defvar ispell-current-personal-dictionary nil
   "The name of the current personal dictionary, or nil for the default.
-This is passed to the Ispella process using the `-p' switch.")
+This is passed to the Ispell process using the `-p' switch.")
 
 (defun ispell-decode-string (str)
   "Decodes multibyte character strings.
