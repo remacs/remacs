@@ -267,9 +267,9 @@ For example, to add Bastille Day, celebrated in France on July 14, add
      (holiday-fixed 7 14 \"Bastille Day\")
 
 to the list.  To add Hurricane Supplication Day, celebrated in the Virgin
-Islands on the fourth Monday in August, add
+Islands on the fourth Monday in July, add
 
-     (holiday-float 8 1 4 \"Hurricane Supplication Day\")
+     (holiday-float 7 1 4 \"Hurricane Supplication Day\")
 
 to the list (the last Monday would be specified with `-1' instead of `4').
 To add the last day of Hanukkah to the list, use
