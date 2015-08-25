@@ -1977,7 +1977,7 @@ to case differences."
 (if (fboundp 'format-message)
     (defalias 'gnus-format-message 'format-message)
   ;; for Emacs < 25, and XEmacs, don't worry about quote translation.
-  (defalias 'gnus-format-message 'format-message))
+  (defalias 'gnus-format-message 'format))
 
 ;; Simple check: can be a macro but this way, although slow, it's really clear.
 ;; We don't use `bound-and-true-p' because it's not in XEmacs.
