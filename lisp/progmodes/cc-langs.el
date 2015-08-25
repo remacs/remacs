@@ -457,7 +457,7 @@ the new syntax, as accepted by `modify-syntax-entry'."
       (modify-syntax-entry (car mod) (cdr mod) table))
     table)
   "Syntax table built on the mode syntax table but additionally
-classifies symbol constituents like '_' and '$' as word constituents,
+classifies symbol constituents like `_' and `$' as word constituents,
 so that all identifiers are recognized as words.")
 
 (c-lang-defconst c-get-state-before-change-functions
@@ -578,8 +578,8 @@ EOL terminated statements."
 (c-lang-defvar c-has-bitfields (c-lang-const c-has-bitfields))
 
 (c-lang-defconst c-modified-constant
-  "Regexp that matches a \"modified\" constant literal such as \"L'a'\",
-a \"long character\".  In particular, this recognizes forms of constant
+  "Regexp that matches a “modified” constant literal such as \"L\\='a\\='\",
+a “long character”.  In particular, this recognizes forms of constant
 which `c-backward-sexp' needs to be called twice to move backwards over."
   t nil
   (c c++ objc) "L'\\([^\\'\t\f\n\r]\\|\\\\.\\)'")
@@ -2101,7 +2101,7 @@ one of `c-type-list-kwds', `c-ref-list-kwds',
   "Keywords introducing declarations that can contain a block which
 might be followed by variable declarations, e.g. like \"foo\" in
 \"class Foo { ... } foo;\".  So if there is a block in a declaration
-like that, it ends with the following ';' and not right away.
+like that, it ends with the following `;' and not right away.
 
 The keywords on list are assumed to also be present on one of the
 `*-decl-kwds' lists."
@@ -2344,7 +2344,7 @@ Keywords here should also be in `c-block-stmt-1-kwds'."
 
 (c-lang-defconst c-paren-stmt-kwds
   "Statement keywords followed by a parenthesis expression that
-nevertheless contains a list separated with ';' and not ','."
+nevertheless contains a list separated with `;' and not `,'."
   t    '("for")
   idl  nil)
 
@@ -2806,7 +2806,7 @@ the \"class Foo: public Bar\" part of:
 If parens can occur, the chars inside those aren't filtered with this
 list.
 
-'<' and '>' should be disallowed even if angle bracket arglists can
+`<' and `>' should be disallowed even if angle bracket arglists can
 occur.  That since the search function needs to stop at them anyway to
 ensure they are given paren syntax.
 

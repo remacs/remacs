@@ -1751,7 +1751,7 @@ A value of t means the main playlist.")
                      (completing-read "Rename playlist: "
                                       (mpc-cmd-list 'Playlist)
                                       nil 'require-match)))
-          (newname (read-string (format "Rename '%s' to: " oldname))))
+          (newname (read-string (format-message "Rename ‘%s’ to: " oldname))))
      (if (zerop (length newname))
          (error "Aborted")
        (list oldname newname))))

@@ -343,8 +343,8 @@ pattern-list is checked: The new headline will be marked as AGE
 if REGEXP matches the headline's TITLE-OR-DESCRIPTION.
 
 If, for example, `newsticker-auto-mark-filter-list' looks like
- \((slashdot ('old 'title \"^Forget me!$\") ('immortal 'title \"Read me\")
-  \('immortal 'all \"important\"))))
+ \((slashdot (\\='old \\='title \"^Forget me!$\") (\\='immortal \\='title \"Read me\")
+  \(\\='immortal \\='all \"important\"))))
 
 then all articles from slashdot are marked as old if they have
 the title \"Forget me!\".  All articles with a title containing

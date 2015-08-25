@@ -399,7 +399,7 @@ advertisements.  For example:
   "*Alist that says how to fontify certain phrases.
 Each item looks like this:
 
-  (\"_\\\\(\\\\w+\\\\)_\" 0 1 'underline)
+  (\"_\\\\(\\\\w+\\\\)_\" 0 1 \\='underline)
 
 The first element is a regular expression to be matched.  The second
 is a number that says what regular expression grouping used to find

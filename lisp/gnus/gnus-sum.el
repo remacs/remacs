@@ -8429,7 +8429,7 @@ articles that are younger than AGE days."
     (gnus-summary-position-point)))
 
 (defun gnus-summary-limit-to-extra (header regexp &optional not-matching)
-  "Limit the summary buffer to articles that match an 'extra' header."
+  "Limit the summary buffer to articles that match an `extra' header."
   (interactive
    (let ((header
 	  (intern

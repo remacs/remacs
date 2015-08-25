@@ -865,9 +865,9 @@ This command is not bound to a key by default, to avoid conflicts
 with language major mode bindings.  To bind it to C-c @ in all
 language major modes, you could use
 
-  (add-hook 'org-src-mode-hook
+  (add-hook \\='org-src-mode-hook
             (lambda () (define-key org-src-mode-map \"\\C-c@\"
-                    'org-src-do-key-sequence-at-code-block)))
+                    \\='org-src-do-key-sequence-at-code-block)))
 
 In that case, for example, C-c @ t issued in code edit buffers
 would tangle the current Org code block, C-c @ e would execute

@@ -238,7 +238,7 @@ and run Dired on those files.
 PATTERN is a shell wildcard (not an Emacs regexp) and need not be quoted.
 The default command run (after changing into DIR) is
 
-    find . -name 'PATTERN' -ls
+    find . -name \\='PATTERN\\=' -ls
 
 See `find-name-arg' to customize the arguments."
   (interactive

@@ -815,9 +815,9 @@ of all atomic regexps."
 
 (defun rx-greedy (form)
   "Parse and produce code from FORM.
-If FORM is '(minimal-match FORM1)', non-greedy versions of `*',
+If FORM is `(minimal-match FORM1)', non-greedy versions of `*',
 `+', and `?' operators will be used in FORM1.  If FORM is
-'(maximal-match FORM1)', greedy operators will be used."
+`(maximal-match FORM1)', greedy operators will be used."
   (rx-check form)
   (let ((rx-greedy-flag (eq (car form) 'maximal-match)))
     (rx-form (cadr form) rx-parent)))

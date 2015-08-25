@@ -952,7 +952,7 @@ Prompts for bug subject.  Leaves you in a mail buffer."
 				nil nil nil
 				"Please describe exactly what actions triggered the bug and the
 precise symptoms of the bug.  If possible, include a backtrace by
-doing 'M-x toggle-debug-on-error', then reproducing the bug.
+doing ‘\\[toggle-debug-on-error]’, then reproducing the bug.
 " )))
 ;;;###autoload
 (defalias 'calc-report-bug 'report-calc-bug)

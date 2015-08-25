@@ -1308,11 +1308,11 @@ news is to be fetched, the second is the address.
 For instance, if you want to get your news via \"flab.flab.edu\" using
 NNTP, you could say:
 
-\(setq gnus-select-method '(nntp \"flab.flab.edu\"))
+\(setq gnus-select-method \\='(nntp \"flab.flab.edu\"))
 
 If you want to use your local spool, say:
 
-\(setq gnus-select-method (list 'nnspool (system-name)))
+\(setq gnus-select-method (list \\='nnspool (system-name)))
 
 If you use this variable, you must set `gnus-nntp-server' to nil.
 
@@ -1397,7 +1397,7 @@ This is a list where each element is a complete select method (see
 If, for instance, you want to read your mail with the nnml back end,
 you could set this variable:
 
-\(setq gnus-secondary-select-methods '((nnml \"\")))"
+\(setq gnus-secondary-select-methods \\='((nnml \"\")))"
   :group 'gnus-server
   :type '(repeat gnus-select-method))
 

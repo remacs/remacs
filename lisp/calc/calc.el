@@ -989,11 +989,11 @@ Used by `calc-user-invocation'.")
 (defvar calc-last-kill nil
   "The last number killed in calc-mode.")
 (defvar calc-dollar-values nil
-  "Values to be used for '$'.")
+  "Values to be used for ‘$’.")
 (defvar calc-dollar-used nil
-  "The highest order of '$' that occurred.")
+  "The highest order of ‘$’ that occurred.")
 (defvar calc-hashes-used nil
-  "The highest order of '#' that occurred.")
+  "The highest order of ‘#’ that occurred.")
 (defvar calc-quick-prev-results nil
   "Previous results from Quick Calc.")
 (defvar calc-said-hello nil

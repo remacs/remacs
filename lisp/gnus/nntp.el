@@ -291,7 +291,7 @@ update their active files often, this can help.")
 (defvar nntp-async-process-list nil)
 
 (defvar nntp-authinfo-rejected nil
-"A custom error condition used to report 'Authentication Rejected' errors.
+"A custom error condition used to report `Authentication Rejected' errors.
 Condition handlers that match just this condition ensure that the nntp
 backend doesn't catch this error.")
 (put 'nntp-authinfo-rejected 'error-conditions '(error nntp-authinfo-rejected))

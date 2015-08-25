@@ -1354,7 +1354,7 @@ If you have `mail-send-hook' functions that should only be called for sending/
 queueing messages or only be called for the sending of queued messages, this is
 for you.  Add this function to `mail-send-hook' with something like this:
 
-	(add-hook 'mail-send-hook 'feedmail-mail-send-hook-splitter)
+	(add-hook \\='mail-send-hook \\='feedmail-mail-send-hook-splitter)
 
 Then add the functions you want called to either `feedmail-mail-send-hook-queued'
 or `feedmail-mail-send-hook', as appropriate.  The distinction is that
@@ -1551,7 +1551,7 @@ See feedmail-binmail-template documentation."
 					   "/bin/rmail %s" "/bin/mail %s"))
   "Command template for the subprocess which will get rid of the mail.
 It can result in any command understandable by /bin/sh.  Might not
-work at all in non-UNIX environments.  The single '%s', if present,
+work at all in non-UNIX environments.  The single `%s', if present,
 gets replaced by the space-separated, simplified list of addressees.
 Used in `feedmail-buffer-to-binmail' to form the shell command which
 will receive the contents of the prepped buffer as stdin.  The default
@@ -2053,7 +2053,7 @@ backup file names and the like)."
 		;; the handler for the condition-case
 		(error (setq messages-skipped (1+ messages-skipped))
 		       (ding t)
-		       (message "FQM: Trapped '%s', message left in queue." (car signal-stuff))
+		       (message "FQM: Trapped ‘%s’, message left in queue." (car signal-stuff))
 		       (sit-for 3)
 		       (message "FQM: Trap details: \"%s\""
 				(mapconcat 'identity (cdr signal-stuff) "\" \""))

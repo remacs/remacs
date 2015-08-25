@@ -261,7 +261,7 @@ If non-nil all sexp diary entries are enumerated for
 `icalendar-export-sexp-enumeration-days' days instead of
 translating into an icalendar equivalent.  This affects the
 following sexp diary entries: `diary-anniversary',
-`diary-cyclic', `diary-date', `diary-float',`diary-block'.  All
+`diary-cyclic', `diary-date', `diary-float', `diary-block'.  All
 other sexp entries are enumerated in any case."
   :version "25.1"
   :type 'boolean
@@ -482,7 +482,7 @@ children."
     result))
 
 (defun icalendar--split-value (value-string)
-  "Split VALUE-STRING at ';='."
+  "Split VALUE-STRING at ‘;=’."
   (let ((result '())
         param-name param-value)
     (when value-string

@@ -185,9 +185,9 @@ diary buffer to be displayed with diary entries from various
 included files, each day's entries sorted into lexicographic
 order, add the following to your init file:
 
-     (setq diary-display-function 'diary-fancy-display)
-     (add-hook 'diary-list-entries-hook 'diary-include-other-diary-files)
-     (add-hook 'diary-list-entries-hook 'diary-sort-entries t)
+     (setq diary-display-function \\='diary-fancy-display)
+     (add-hook \\='diary-list-entries-hook \\='diary-include-other-diary-files)
+     (add-hook \\='diary-list-entries-hook \\='diary-sort-entries t)
 
 Note how the sort function is placed last, so that it can sort
 the entries included from other files.

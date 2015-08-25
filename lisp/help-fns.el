@@ -45,7 +45,7 @@ The functions will receive the function name as argument.")
 
 (defvar describe-function-orig-buffer nil
   "Buffer that was current when `describe-function' was invoked.
-Functions on 'help-fns-describe-function-functions' can use this
+Functions on `help-fns-describe-function-functions' can use this
 to get buffer-local values.")
 
 ;;;###autoload

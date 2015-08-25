@@ -1419,7 +1419,7 @@ regexp short cuts work.  FP is the function defun information."
        (when (re-search-forward "^(" e t)
 	 (if (checkdoc-autofix-ask-replace (match-beginning 0)
 					   (match-end 0)
-					   "Escape this '('? "
+					   "Escape this ‘(’? "
 					   "\\(")
 	     nil
 	   (checkdoc-create-error

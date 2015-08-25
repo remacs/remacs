@@ -192,9 +192,9 @@ in `prettify-symbols-alist' (which see), which are locally defined
 by major modes supporting prettifying.  To add further customizations
 for a given major mode, you can modify `prettify-symbols-alist' thus:
 
-  (add-hook 'emacs-lisp-mode-hook
+  (add-hook \\='emacs-lisp-mode-hook
             (lambda ()
-              (push '(\"<=\" . ?≤) prettify-symbols-alist)))
+              (push \\='(\"<=\" . ?≤) prettify-symbols-alist)))
 
 You can enable this mode locally in desired buffers, or use
 `global-prettify-symbols-mode' to enable it for all modes that

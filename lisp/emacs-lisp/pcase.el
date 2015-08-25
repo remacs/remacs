@@ -115,8 +115,8 @@ Patterns can take the following forms:
   SYMBOL	matches anything and binds it to SYMBOL.
   (or PAT...)	matches if any of the patterns matches.
   (and PAT...)	matches if all the patterns match.
-  'VAL		matches if the object is `equal' to VAL
-  ATOM		is a shorthand for 'ATOM.
+  \\='VAL		matches if the object is `equal' to VAL
+  ATOM		is a shorthand for \\='ATOM.
 		   ATOM can be a keyword, an integer, or a string.
   (pred FUN)	matches if FUN applied to the object returns non-nil.
   (guard BOOLEXP)	matches if BOOLEXP evaluates to non-nil.

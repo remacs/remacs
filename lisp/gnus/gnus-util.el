@@ -1974,6 +1974,11 @@ to case differences."
 	       (string-equal (downcase str1) (downcase prefix))
 	     (string-equal str1 prefix))))))
 
+(if (fboundp 'format-message)
+    (defalias 'gnus-format-message 'format-message)
+  ;; for Emacs < 25, and XEmacs, don't worry about quote translation.
+  (defalias 'gnus-format-message 'format-message))
+
 ;; Simple check: can be a macro but this way, although slow, it's really clear.
 ;; We don't use `bound-and-true-p' because it's not in XEmacs.
 (defun gnus-bound-and-true-p (sym)

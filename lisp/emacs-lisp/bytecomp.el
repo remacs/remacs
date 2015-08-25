@@ -3825,11 +3825,11 @@ discarding."
   "Execute forms in BODY, potentially guarded by CONDITION.
 CONDITION is a variable whose value is a test in an `if' or `cond'.
 BODY is the code to compile in the first arm of the if or the body of
-the cond clause.  If CONDITION's value is of the form (fboundp 'foo)
-or (boundp 'foo), the relevant warnings from BODY about foo's
+the cond clause.  If CONDITION's value is of the form (fboundp \\='foo)
+or (boundp \\='foo), the relevant warnings from BODY about foo's
 being undefined (or obsolete) will be suppressed.
 
-If CONDITION's value is (not (featurep 'emacs)) or (featurep 'xemacs),
+If CONDITION's value is (not (featurep \\='emacs)) or (featurep \\='xemacs),
 that suppresses all warnings during execution of BODY."
   (declare (indent 1) (debug t))
   `(let* ((fbound-list (byte-compile-find-bound-condition

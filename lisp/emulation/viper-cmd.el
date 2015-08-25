@@ -3639,24 +3639,26 @@ the Emacs binding of `/'."
   (let (msg)
     (cond ((or (eq arg 1)
 	       (and (null arg)
-		    (y-or-n-p (format "Search style: '%s'.  Want '%s'? "
-				      (if viper-case-fold-search
-					  "case-insensitive" "case-sensitive")
-				      (if viper-case-fold-search
-					  "case-sensitive"
-					"case-insensitive")))))
+		    (y-or-n-p (format-message
+                               "Search style: ‘%s’.  Want ‘%s’? "
+                               (if viper-case-fold-search
+                                   "case-insensitive" "case-sensitive")
+                               (if viper-case-fold-search
+                                   "case-sensitive"
+                                 "case-insensitive")))))
 	   (setq viper-case-fold-search (null viper-case-fold-search))
 	   (if viper-case-fold-search
 	       (setq msg "Search becomes case-insensitive")
 	     (setq msg "Search becomes case-sensitive")))
 	  ((or (eq arg 2)
 	       (and (null arg)
-		    (y-or-n-p (format "Search style: '%s'.  Want '%s'? "
-				      (if viper-re-search
-					  "regexp-search" "vanilla-search")
-				      (if viper-re-search
-					  "vanilla-search"
-					"regexp-search")))))
+		    (y-or-n-p (format-message
+                               "Search style: ‘%s’.  Want ‘%s’? "
+                               (if viper-re-search
+                                   "regexp-search" "vanilla-search")
+                               (if viper-re-search
+                                   "vanilla-search"
+                                 "regexp-search")))))
 	   (setq viper-re-search (null viper-re-search))
 	   (if viper-re-search
 	       (setq msg "Search becomes regexp-style")
@@ -4400,7 +4402,7 @@ and regexp replace."
 ;; etc.
 (defun viper-cycle-through-mark-ring ()
   "Visit previous locations on the mark ring.
-One can use \\=`\\=` and '' to temporarily jump 1 step back."
+One can use \\=`\\=` and \\='\\=' to temporarily jump 1 step back."
   (let* ((sv-pt (point)))
        ;; if repeated `m,' command, pop the previously saved mark.
        ;; Prev saved mark is actually prev saved point.  It is used if the

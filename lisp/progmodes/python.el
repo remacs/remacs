@@ -4005,8 +4005,8 @@ The skeleton will be bound to python-skeleton-NAME."
   (declare (indent 2))
   (let* ((name (symbol-name name))
          (function-name (intern (concat "python-skeleton--" name)))
-         (msg (format
-               "Add '%s' clause? " name)))
+         (msg (format-message
+               "Add ‘%s’ clause? " name)))
     (when (not skel)
       (setq skel
             `(< ,(format "%s:" name) \n \n

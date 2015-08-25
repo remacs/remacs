@@ -149,7 +149,7 @@ regexp `dired-omit-files', nor files ending with extensions in
 To enable omitting in every Dired buffer, you can put this in
 your init file:
 
-  (add-hook 'dired-mode-hook (lambda () (dired-omit-mode)))
+  (add-hook \\='dired-mode-hook (lambda () (dired-omit-mode)))
 
 See Info node `(dired-x) Omitting Variables' for more information."
   :group 'dired-x

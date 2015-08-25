@@ -222,9 +222,9 @@ When SET is not nil, set it for VAL (use t for an empty list)."
 
 (defmethod registry-search ((db registry-db) &rest spec)
   "Search for SPEC across the registry-db THIS.
-For example calling with :member '(a 1 2) will match entry '((a 3 1)).
+For example calling with :member \\='(a 1 2) will match entry \\='((a 3 1)).
 Calling with :all t (any non-nil value) will match all.
-Calling with :regex '\(a \"h.llo\") will match entry '((a \"hullo\" \"bye\").
+Calling with :regex \\='\(a \"h.llo\") will match entry \\='((a \"hullo\" \"bye\").
 The test order is to check :all first, then :member, then :regex."
   (when db
     (let ((all (plist-get spec :all))

@@ -2892,7 +2892,7 @@ Also warn if X is a $N or $regionN symbol with N < 1 or N > M."
   "Parse BODY of semantic action.
 N is the maximum number of $N variables that can be referenced in
 BODY.  Warn on references out of permitted range.
-Optional argument FOUND is the accumulated list of '$N' references
+Optional argument FOUND is the accumulated list of $N references
 encountered so far.
 Return a cons (FOUND . XBODY), where FOUND is the list of $N
 references found in BODY, and XBODY is BODY expression with

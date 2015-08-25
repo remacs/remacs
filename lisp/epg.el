@@ -1614,7 +1614,7 @@ handle the case where SIGNATURE has multiple signature.
 
 To check the verification results, use `epg-context-result-for' as follows:
 
-\(epg-context-result-for context 'verify)
+\(epg-context-result-for context \\='verify)
 
 which will return a list of `epg-signature' object."
   (unwind-protect
@@ -1649,7 +1649,7 @@ handle the case where SIGNATURE has multiple signature.
 
 To check the verification results, use `epg-context-result-for' as follows:
 
-\(epg-context-result-for context 'verify)
+\(epg-context-result-for context \\='verify)
 
 which will return a list of `epg-signature' object."
   (let ((coding-system-for-write 'binary)

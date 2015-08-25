@@ -941,7 +941,7 @@ This hook is run during minibuffer setup if Ido is active.
 It is intended for use in customizing Ido for interoperation
 with other packages.  For instance:
 
-  (add-hook 'ido-minibuffer-setup-hook
+  (add-hook \\='ido-minibuffer-setup-hook
 	    (lambda () (setq-local max-mini-window-height 3)))
 
 will constrain Emacs to a maximum minibuffer height of 3 lines when

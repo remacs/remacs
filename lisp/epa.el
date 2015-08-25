@@ -841,10 +841,10 @@ should consider using the string based counterpart
 
 For example:
 
-\(let ((context (epg-make-context 'OpenPGP)))
+\(let ((context (epg-make-context \\='OpenPGP)))
   (decode-coding-string
     (epg-decrypt-string context (buffer-substring start end))
-    'utf-8))"
+    \\='utf-8))"
   (interactive "r")
   (save-excursion
     (let ((context (epg-make-context epa-protocol))
@@ -939,10 +939,10 @@ should consider using the string based counterpart
 
 For example:
 
-\(let ((context (epg-make-context 'OpenPGP)))
+\(let ((context (epg-make-context \\='OpenPGP)))
   (decode-coding-string
     (epg-verify-string context (buffer-substring start end))
-    'utf-8))"
+    \\='utf-8))"
   (declare (interactive-only t))
   (interactive "r")
   (let ((context (epg-make-context epa-protocol))
@@ -1028,10 +1028,10 @@ based counterpart `epg-sign-file' instead.
 
 For example:
 
-\(let ((context (epg-make-context 'OpenPGP)))
+\(let ((context (epg-make-context \\='OpenPGP)))
   (epg-sign-string
     context
-    (encode-coding-string (buffer-substring start end) 'utf-8)))"
+    (encode-coding-string (buffer-substring start end) \\='utf-8)))"
   (declare (interactive-only t))
   (interactive
    (let ((verbose current-prefix-arg))
@@ -1114,10 +1114,10 @@ file based counterpart `epg-encrypt-file' instead.
 
 For example:
 
-\(let ((context (epg-make-context 'OpenPGP)))
+\(let ((context (epg-make-context \\='OpenPGP)))
   (epg-encrypt-string
     context
-    (encode-coding-string (buffer-substring start end) 'utf-8)
+    (encode-coding-string (buffer-substring start end) \\='utf-8)
     nil))"
   (declare (interactive-only t))
   (interactive

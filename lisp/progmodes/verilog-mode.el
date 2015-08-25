@@ -4477,7 +4477,7 @@ More specifically, after a generate and before an endgenerate."
     (= nest 0) )) ; return nest
 
 (defun verilog-in-deferred-immediate-final-p ()
-  "Return true if inside an 'assert/assume/cover final' statement."
+  "Return true if inside an ‘assert/assume/cover final’ statement."
   (interactive)
   (and (looking-at "final")
        (verilog-looking-back "\\<\\(?:assert\\|assume\\|cover\\)\\>\\s-+" nil))
@@ -7221,7 +7221,7 @@ will be completed at runtime and should not be added to this list.")
 
 (defun verilog-func-completion (type)
   "Build regular expression for module/task/function names.
-TYPE is 'module, 'tf for task or function, or t if unknown."
+TYPE is ‘module’, ‘tf’ for task or function, or t if unknown."
   (if (string= verilog-str "")
       (setq verilog-str "[a-zA-Z_]"))
   (let ((verilog-str (concat (cond
@@ -7294,7 +7294,7 @@ must be a function to be called for every match to check if this should
 really be a match.  If VERILOG-FLAG is t, the function returns a list of
 all possible completions.  If VERILOG-FLAG is nil it returns a string,
 the longest possible completion, or t if VERILOG-STR is an exact match.
-If VERILOG-FLAG is 'lambda, the function returns t if VERILOG-STR is an
+If VERILOG-FLAG is ‘lambda’, the function returns t if VERILOG-STR is an
 exact match, nil otherwise."
   (save-excursion
     (let ((verilog-all nil))
@@ -7489,7 +7489,7 @@ VERILOG-PRED is non-nil, it must be a function to be called for every match
 to check if this should really be a match.  If VERILOG-FLAG is t, the
 function returns a list of all possible completions.  If it is nil it
 returns a string, the longest possible completion, or t if VERILOG-STR is
-an exact match.  If VERILOG-FLAG is 'lambda, the function returns t if
+an exact match.  If VERILOG-FLAG is ‘lambda’, the function returns t if
 VERILOG-STR is an exact match, nil otherwise."
   (save-excursion
     (let ((verilog-all nil)
@@ -8666,7 +8666,7 @@ Return an array of [outputs inouts inputs wire reg assign const]."
 
 (defun verilog-read-sub-decls-expr (submoddecls comment port expr)
   "For `verilog-read-sub-decls-line', parse a subexpression and add signals."
-  ;;(message "vrsde: '%s'" expr)
+  ;;(message "vrsde: ‘%s’" expr)
   ;; Replace special /*[....]*/ comments inserted by verilog-auto-inst-port
   (setq expr (verilog-string-replace-matches "/\\*\\(\\[[^*]+\\]\\)\\*/" "\\1" nil nil expr))
   ;; Remove front operators
@@ -8685,25 +8685,25 @@ Return an array of [outputs inouts inputs wire reg assign const]."
     (let (sig vec multidim)
       ;; Remove leading reduction operators, etc
       (setq expr (verilog-string-replace-matches "^\\s-*[---+~!|&]+\\s-*" "" nil nil expr))
-      ;;(message "vrsde-ptop: '%s'" expr)
+      ;;(message "vrsde-ptop: ‘%s’" expr)
       (cond  ; Find \signal. Final space is part of escaped signal name
        ((string-match "^\\s-*\\(\\\\[^ \t\n\f]+\\s-\\)" expr)
-	;;(message "vrsde-s: '%s'" (match-string 1 expr))
+	;;(message "vrsde-s: ‘%s’" (match-string 1 expr))
 	(setq sig (match-string 1 expr)
 	      expr (substring expr (match-end 0))))
        ;; Find signal
        ((string-match "^\\s-*\\([a-zA-Z_][a-zA-Z_0-9]*\\)" expr)
-	;;(message "vrsde-s: '%s'" (match-string 1 expr))
+	;;(message "vrsde-s: ‘%s’" (match-string 1 expr))
 	(setq sig (verilog-string-remove-spaces (match-string 1 expr))
 	      expr (substring expr (match-end 0)))))
       ;; Find [vector] or [multi][multi][multi][vector]
       (while (string-match "^\\s-*\\(\\[[^]]+\\]\\)" expr)
-	;;(message "vrsde-v: '%s'" (match-string 1 expr))
+	;;(message "vrsde-v: ‘%s’" (match-string 1 expr))
 	(when vec (setq multidim (cons vec multidim)))
 	(setq vec (match-string 1 expr)
 	      expr (substring expr (match-end 0))))
       ;; If found signal, and nothing unrecognized, add the signal
-      ;;(message "vrsde-rem: '%s'" expr)
+      ;;(message "vrsde-rem: ‘%s’" expr)
       (when (and sig (string-match "^\\s-*$" expr))
 	(verilog-read-sub-decls-sig submoddecls comment port sig vec multidim))))))
 
@@ -9285,8 +9285,8 @@ Parameters must be simple assignments to constants, or have their own
 \"parameter\" label rather than a list of parameters.  Thus:
 
     parameter X = 5, Y = 10;	// Ok
-    parameter X = {1'b1, 2'h2};	// Ok
-    parameter X = {1'b1, 2'h2}, Y = 10;	// Bad, make into 2 parameter lines
+    parameter X = {1\\='b1, 2\\='h2};	// Ok
+    parameter X = {1\\='b1, 2\\='h2}, Y = 10;	// Bad, make into 2 parameter lines
 
 Defines must be simple text substitutions, one on a line, starting
 at the beginning of the line.  Any ifdefs or multiline comments around the
@@ -10099,7 +10099,7 @@ if non-nil."
 
 ;; Combined
 (defun verilog-decls-get-signals (decls)
-  "Return all declared signals in DECLS, excluding 'assign' statements."
+  "Return all declared signals in DECLS, excluding ‘assign’ statements."
   (append
    (verilog-decls-get-outputs decls)
    (verilog-decls-get-inouts decls)
@@ -11484,14 +11484,14 @@ Lisp Templates:
   Lisp functions:
 
 	vl-name        Name portion of the input/output port.
-	vl-bits        Bus bits portion of the input/output port ('[2:0]').
-	vl-mbits       Multidimensional array bits for port ('[2:0][3:0]').
-	vl-width       Width of the input/output port ('3' for [2:0]).
+	vl-bits        Bus bits portion of the input/output port (‘[2:0]’).
+	vl-mbits       Multidimensional array bits for port (‘[2:0][3:0]’).
+	vl-width       Width of the input/output port (‘3’ for [2:0]).
                        May be a (...) expression if bits isn't a constant.
 	vl-dir         Direction of the pin input/output/inout/interface.
 	vl-modport     The modport, if an interface with a modport.
-	vl-cell-type   Module name/type of the cell ('InstModule').
-	vl-cell-name   Instance name of the cell ('instName').
+	vl-cell-type   Module name/type of the cell (‘InstModule’).
+	vl-cell-name   Instance name of the cell (‘instName’).
 
   Normal Lisp variables may be used in expressions.  See
   `verilog-read-defines' which can set vh-{definename} variables for use
@@ -13017,9 +13017,9 @@ An example of making a stub for another module:
 	/*AUTOINOUTMODULE(\"Foo\")*/
         /*AUTOTIEOFF*/
         // verilator lint_off UNUSED
-        wire _unused_ok = &{1'b0,
+        wire _unused_ok = &{1\\='b0,
                             /*AUTOUNUSED*/
-                            1'b0};
+                            1\\='b0};
         // verilator lint_on  UNUSED
     endmodule
 
@@ -13034,7 +13034,7 @@ Typing \\[verilog-auto] will make this into:
 
         /*AUTOTIEOFF*/
         // Beginning of autotieoff
-        wire [2:0] foo = 3'b0;
+        wire [2:0] foo = 3\\='b0;
         // End of automatics
         ...
     endmodule"
@@ -13159,7 +13159,7 @@ with \"unused\" in the signal name.
 
 To reduce simulation time, the _unused_ok signal should be forced to a
 constant to prevent wiggling.  The easiest thing to do is use a
-reduction-and with 1'b0 as shown.
+reduction-and with 1\\='b0 as shown.
 
 This way all unused signals are in one place, making it convenient to add
 your tool's specific pragmas around the assignment to disable any unused
@@ -13175,9 +13175,9 @@ An example of making a stub for another module:
 	/*AUTOINOUTMODULE(\"Examp\")*/
         /*AUTOTIEOFF*/
         // verilator lint_off UNUSED
-        wire _unused_ok = &{1'b0,
+        wire _unused_ok = &{1\\='b0,
                             /*AUTOUNUSED*/
-                            1'b0};
+                            1\\='b0};
         // verilator lint_on  UNUSED
     endmodule
 
@@ -13185,14 +13185,14 @@ Typing \\[verilog-auto] will make this into:
 
         ...
         // verilator lint_off UNUSED
-        wire _unused_ok = &{1'b0,
+        wire _unused_ok = &{1\\='b0,
                             /*AUTOUNUSED*/
 			    // Beginning of automatics
 			    unused_input_a,
 			    unused_input_b,
 			    unused_input_c,
 			    // End of automatics
-                            1'b0};
+                            1\\='b0};
         // verilator lint_on  UNUSED
     endmodule"
   (interactive)
@@ -13267,9 +13267,9 @@ An example:
 
 	//== State enumeration
 	parameter [2:0] // synopsys enum state_info
-			   SM_IDLE =  3'b000,
-			   SM_SEND =  3'b001,
-			   SM_WAIT1 = 3'b010;
+			   SM_IDLE =  3\\='b000,
+			   SM_SEND =  3\\='b001,
+			   SM_WAIT1 = 3\\='b010;
 	//== State variables
 	reg [2:0]  /* synopsys enum state_info */
 		   state_r;  /* synopsys state_vector state_r */
@@ -14177,7 +14177,7 @@ Files are checked based on `verilog-library-flags'."
 			     (match-string 1) (buffer-file-name))))
 	  (when warn
 	    (message
-	     "File '%s' isn't readable, use shift-mouse2 to paste in this field"
+	     "File ‘%s’ isn't readable, use shift-mouse2 to paste in this field"
 	     (match-string 1))))))))
 
 

@@ -671,8 +671,8 @@ position if that is less ('same is returned in this case).
 
 NOERROR turns off error logging to `c-parsing-error'.
 
-Normally only ';' and virtual semicolons are considered to delimit
-statements, but if COMMA-DELIM is non-nil then ',' is treated
+Normally only `;' and virtual semicolons are considered to delimit
+statements, but if COMMA-DELIM is non-nil then `,' is treated
 as a delimiter too.
 
 Note that this function might do hidden buffer changes.  See the

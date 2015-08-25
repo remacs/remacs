@@ -243,7 +243,7 @@ unused nnmairix groups on the back end using
 
 (defcustom nnmairix-mairix-update-options '("-F" "-Q")
   "Options when calling mairix for updating the database.
-The default is '-F' and '-Q' for making updates faster.  You
+The default is \"-F\" and \"-Q\" for making updates faster.  You
 should call mairix without these options from time to
 time (e.g. via cron job)."
   :version "23.1"
@@ -252,7 +252,7 @@ time (e.g. via cron job)."
 
 (defcustom nnmairix-mairix-search-options '("-Q")
   "Options when calling mairix for searching.
-The default is '-Q' for making searching faster."
+The default is \"-Q\" for making searching faster."
   :version "23.1"
   :type '(repeat string)
   :group 'nnmairix)
@@ -1943,7 +1943,7 @@ Fill in VALUES if based on an article."
     (kill-all-local-variables)
     (erase-buffer)
     (widget-insert "Specify your query for Mairix (check boxes for activating fields):\n\n")
-    (widget-insert "(Whitespaces will be converted to ',' (i.e. AND). Use '/' for OR.)\n\n")
+    (widget-insert "(Whitespaces will be converted to ‘,’ (i.e. AND). Use ‘/’ for OR.)\n\n")
 ;    (make-local-variable 'nnmairix-widgets)
     (setq nnmairix-widgets (nnmairix-widget-build-editable-fields values))
     (when (member 'flags nnmairix-widget-other)

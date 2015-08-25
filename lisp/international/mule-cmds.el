@@ -397,7 +397,7 @@ A coding system that requires automatic detection of text+encoding
 
 To prefer, for instance, utf-8, say the following:
 
-  \(prefer-coding-system 'utf-8)"
+  \(prefer-coding-system \\='utf-8)"
   (interactive "zPrefer coding system: ")
   (if (not (and coding-system (coding-system-p coding-system)))
       (error "Invalid coding system ‘%s’" coding-system))

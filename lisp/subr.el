@@ -4768,7 +4768,7 @@ Examples of version conversion:
 
 See documentation for `version-separator' and `version-regexp-alist'."
   (or (and (stringp ver) (> (length ver) 0))
-      (error "Invalid version string: '%s'" ver))
+      (error "Invalid version string: ‘%s’" ver))
   ;; Change .x.y to 0.x.y
   (if (and (>= (length ver) (length version-separator))
 	   (string-equal (substring ver 0 (length version-separator))
@@ -4800,9 +4800,9 @@ See documentation for `version-separator' and `version-regexp-alist'."
 		  ((string-match "^[-_+ ]?\\([a-zA-Z]\\)$" s)
 		   (push (- (aref (downcase (match-string 1 s)) 0) ?a -1)
 			 lst))
-		  (t (error "Invalid version syntax: '%s'" ver))))))
+		  (t (error "Invalid version syntax: ‘%s’" ver))))))
       (if (null lst)
-	  (error "Invalid version syntax: '%s'" ver)
+	  (error "Invalid version syntax: ‘%s’" ver)
 	(nreverse lst)))))
 
 

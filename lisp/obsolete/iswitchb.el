@@ -389,8 +389,8 @@ See documentation of `walk-windows' for useful values."
 
 This hook is run during minibuffer setup if `iswitchb' is active.
 For instance:
-\(add-hook 'iswitchb-minibuffer-setup-hook
-	  '\(lambda () (set (make-local-variable 'max-mini-window-height) 3)))
+\(add-hook \\='iswitchb-minibuffer-setup-hook
+	  \\='\(lambda () (set (make-local-variable \\='max-mini-window-height) 3)))
 will constrain the minibuffer to a maximum height of 3 lines when
 iswitchb is running."
   :type 'hook

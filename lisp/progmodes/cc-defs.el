@@ -1642,11 +1642,11 @@ surrounds the matched alternative, and the regexp will also not match
 a prefix of any identifier.  Adorned regexps cannot be appended.  The
 language variable `c-nonsymbol-key' is used to make the adornment.
 
-A value 'appendable for ADORN is like above, but all alternatives in
+A value `appendable' for ADORN is like above, but all alternatives in
 the list that end with a word constituent char will have \\> appended
 instead, so that the regexp remains appendable.  Note that this
 variant doesn't always guarantee that an identifier prefix isn't
-matched since the symbol constituent '_' is normally considered a
+matched since the symbol constituent `_' is normally considered a
 nonword token by \\>.
 
 The optional MODE specifies the language to get `c-nonsymbol-key' from
@@ -1920,30 +1920,30 @@ There are many flavors of Emacs out there, each with different
 features supporting those needed by CC Mode.  The following values
 might be present:
 
-'8-bit              8 bit syntax entry flags (XEmacs style).
-'1-bit              1 bit syntax entry flags (Emacs style).
-'argumentative-bod-function	    beginning-of-defun and end-of-defun pass
+`8-bit'             8 bit syntax entry flags (XEmacs style).
+`1-bit'             1 bit syntax entry flags (Emacs style).
+`argumentative-bod-function'    beginning-of-defun and end-of-defun pass
 		    ARG through to beginning/end-of-defun-function.
-'syntax-properties  It works to override the syntax for specific characters
-		    in the buffer with the 'syntax-table property.  It's
+`syntax-properties' It works to override the syntax for specific characters
+		    in the buffer with the `syntax-table' property.  It's
 		    always set - CC Mode no longer works in emacsen without
 		    this feature.
-'category-properties Syntax routines can add a level of indirection to text
-		    properties using the 'category property.
-'gen-comment-delim  Generic comment delimiters work
+`category-properties' Syntax routines can add a level of indirection to text
+		    properties using the `category' property.
+`gen-comment-delim' Generic comment delimiters work
 		    (i.e. the syntax class `!').
-'gen-string-delim   Generic string delimiters work
+`gen-string-delim'  Generic string delimiters work
 		    (i.e. the syntax class `|').
-'pps-extended-state `parse-partial-sexp' returns a list with at least 10
+`pps-extended-state' `parse-partial-sexp' returns a list with at least 10
 		    elements, i.e. it contains the position of the start of
 		    the last comment or string.  It's always set - CC Mode
                     no longer works in emacsen without this feature.
-'posix-char-classes The regexp engine understands POSIX character classes.
-'col-0-paren        It's possible to turn off the ad-hoc rule that a paren
+`posix-char-classes' The regexp engine understands POSIX character classes.
+`col-0-paren'       It's possible to turn off the ad-hoc rule that a paren
 		    in column zero is the start of a defun.
-'infodock           This is Infodock (based on XEmacs).
+`infodock'           This is Infodock (based on XEmacs).
 
-'8-bit and '1-bit are mutually exclusive.")
+`8-bit' and `1-bit' are mutually exclusive.")
 
 
 ;;; Some helper constants.

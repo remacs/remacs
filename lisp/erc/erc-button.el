@@ -511,7 +511,8 @@ Examples:
 
 (defun erc-nick-popup (nick)
   (let* ((completion-ignore-case t)
-         (action (completing-read (concat "What action to take on '" nick "'? ")
+         (action (completing-read (format-message
+                                   "What action to take on ‘%s’? " nick)
                                   erc-nick-popup-alist))
          (code (cdr (assoc action erc-nick-popup-alist))))
     (when code

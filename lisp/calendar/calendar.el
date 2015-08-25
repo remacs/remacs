@@ -360,7 +360,7 @@ See also `calendar-today-visible-hook'."
   "List of functions called whenever the cursor moves in the calendar.
 For example,
 
-  (add-hook 'calendar-move-hook (lambda () (diary-view-entries 1)))
+  (add-hook \\='calendar-move-hook (lambda () (diary-view-entries 1)))
 
 redisplays the diary for whatever date the cursor is moved to."
   :type 'hook

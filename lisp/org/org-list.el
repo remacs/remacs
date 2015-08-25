@@ -230,7 +230,7 @@ This variable needs to be set before org.el is loaded.  If you
 need to make a change while Emacs is running, use the customize
 interface or run the following code after updating it:
 
-  \(when (featurep 'org-element) (load \"org-element\" t t))"
+  \(when (featurep \\='org-element) (load \"org-element\" t t))"
   :group 'org-plain-lists
   :version "24.1"
   :type 'boolean

@@ -781,7 +781,7 @@ Filenames are relative to the `default-directory'."
     )
   "List of rules used by `recentf-arrange-by-rule' to build sub-menus.
 A rule is a pair (SUB-MENU-TITLE . MATCHER).  SUB-MENU-TITLE is the
-displayed title of the sub-menu where a '%d' `format' pattern is
+displayed title of the sub-menu where a `%d' `format' pattern is
 replaced by the number of items in the sub-menu.  MATCHER is a regexp
 or a list of regexps.  Items matching one of the regular expressions in
 MATCHER are added to the corresponding sub-menu.
@@ -798,7 +798,7 @@ may have been modified to match another rule."
   "Title of the `recentf-arrange-by-rule' sub-menu.
 This is for the menu where items that don't match any
 `recentf-arrange-rules' are displayed.  If nil these items are
-displayed in the main recent files menu.  A '%d' `format' pattern in
+displayed in the main recent files menu.  A `%d' `format' pattern in
 the title is replaced by the number of items in the sub-menu."
   :group 'recentf-filters
   :type '(choice (const  :tag "Main menu" nil)

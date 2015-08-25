@@ -541,7 +541,7 @@ The provided functions are:
       newsgroup), in brackets followed by the subject
 * `message-forward-subject-name-subject' Source of article (name of author
       or newsgroup), in brackets followed by the subject
-* `message-forward-subject-fwd' Subject of article with 'Fwd:' prepended
+* `message-forward-subject-fwd' Subject of article with `Fwd:' prepended
       to it."
   :group 'message-forwarding
   :link '(custom-manual "(message)Forwarding")
@@ -7210,7 +7210,7 @@ want to get rid of this query permanently."))
 
 (defun message-is-yours-p ()
   "Non-nil means current article is yours.
-If you have added 'cancel-messages to `message-shoot-gnksa-feet', all articles
+If you have added `cancel-messages' to `message-shoot-gnksa-feet', all articles
 are yours except those that have Cancel-Lock header not belonging to you.
 Instead of shooting GNKSA feet, you should modify `message-alternative-emails'
 regexp to match all of yours addresses."
@@ -8177,7 +8177,7 @@ The following arguments may contain lists of values."
 (defun message-flatten-list (list)
   "Return a new, flat list that contains all elements of LIST.
 
-\(message-flatten-list '(1 (2 3 (4 5 (6))) 7))
+\(message-flatten-list \\='(1 (2 3 (4 5 (6))) 7))
 => (1 2 3 4 5 6 7)"
   (cond ((consp list)
 	 (apply 'append (mapcar 'message-flatten-list list)))

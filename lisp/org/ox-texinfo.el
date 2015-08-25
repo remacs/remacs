@@ -217,7 +217,7 @@ order to reproduce the default set-up:
 	  text
 	  \(when tags
             \(format \"\\\\hfill{}\\\\textsc{%s}\"
-              \(mapconcat 'identity tags \":\"))))"
+              \(mapconcat \\='identity tags \":\"))))"
   :group 'org-export-texinfo
   :type 'function)
 
@@ -347,7 +347,7 @@ in order to mimic default behavior:
 	  title
 	  \(when tags
             \(format \":%s:\"
-                    \(mapconcat 'identity tags \":\")))))
+                    \(mapconcat \\='identity tags \":\")))))
     \(format (concat \"@center %s\n\n\"
 		    \"%s\"
                     \"\n\"))

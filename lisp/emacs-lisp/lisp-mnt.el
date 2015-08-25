@@ -552,11 +552,11 @@ copyright notice is allowed."
 	       ((not (lm-keywords-finder-p))
 		"‘Keywords:’ has no valid finder keywords (see ‘finder-known-keywords’)")
 	       ((not (lm-commentary-mark))
-		"Can't find a 'Commentary' section marker")
+		"Can't find a ‘Commentary’ section marker")
 	       ((not (lm-history-mark))
-		"Can't find a 'History' section marker")
+		"Can't find a ‘History’ section marker")
 	       ((not (lm-code-mark))
-		"Can't find a 'Code' section marker")
+		"Can't find a ‘Code’ section marker")
 	       ((progn
 		  (goto-char (point-max))
 		  (not

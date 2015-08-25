@@ -383,7 +383,7 @@ Returns the forms."
 			    tops))
 	      (end-of-file
 	       (goto-char elint-current-pos)
-	       (error "Missing ')' in top form: %s"
+	       (error "Missing ‘)’ in top form: %s"
 		      (buffer-substring elint-current-pos
 					(line-end-position))))))))
       (nreverse tops))))
