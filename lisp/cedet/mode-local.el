@@ -625,6 +625,30 @@ SYMBOL is a function that can be overridden."
       ;; LIST ALL LOADED OVERRIDES FOR SYMBOL HERE
       )))
 
+(defun describe-mode-local-overload (symbol)
+  "For `help-fns-describe-function-functions'; add overloads for SYMBOL."
+  (when (get symbol 'mode-local-overload)
+    (let ((default (or (intern-soft (format "%s-default" (symbol-name symbol)))
+		       symbol))
+	  (override (and
+		     (boundp 'describe-function-orig-buffer) ;; added in Emacs 25
+		     describe-function-orig-buffer
+		     (with-current-buffer describe-function-orig-buffer
+		       (fetch-overload symbol)))))
+      (insert (overload-docstring-extension symbol) "\n\n")
+      (insert (substitute-command-keys (format "default function: `%s'\n" default)))
+      (when (and (boundp 'describe-function-orig-buffer) ;; added in Emacs 25
+		 describe-function-orig-buffer)
+	(if override
+	    (insert (substitute-command-keys
+		     (format "\noverride in buffer '%s': `%s'\n"
+			     describe-function-orig-buffer override)))
+	  (insert (substitute-command-keys (format "\nno override in buffer '%s'\n"
+						   describe-function-orig-buffer)))))
+      )))
+
+(add-hook 'help-fns-describe-function-functions 'describe-mode-local-overload)
+
 ;; Help for mode-local bindings.
 (defun mode-local-print-binding (symbol)
   "Print the SYMBOL binding."
