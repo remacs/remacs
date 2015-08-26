@@ -236,8 +236,8 @@ this is the function `temp-directory'."
      ((let ((d (getenv "TMPDIR"))) (and d (file-directory-p d)))
       (file-name-as-directory (getenv "TMPDIR")))
      ((file-exists-p "c:/temp") (file-name-as-directory "c:/temp"))
-     (t (message (concat "Neither ‘temporary-file-directory’ nor "
-			 "‘temp-directory’ is defined -- using /tmp."))
+     (t (message (concat "Neither `temporary-file-directory' nor "
+			 "`temp-directory' is defined -- using /tmp."))
 	(file-name-as-directory "/tmp")))))
 
 ;; `make-temp-file' exists in Emacs only.  On XEmacs, we use our own
@@ -294,7 +294,7 @@ Not actually used.  Use `(format \"%o\" i)' instead?"
   (let ((x (or ostr "")))
     ;; `save-match' is in `tramp-mode-string-to-int' which calls this.
     (unless (string-match "\\`[0-7]*\\'" x)
-      (error "Non-octal junk in string ‘%s’" x))
+      (error "Non-octal junk in string `%s'" x))
     (string-to-number ostr 8)))
 
 ;; ID-FORMAT does not exist in XEmacs.
@@ -535,9 +535,9 @@ EOL-TYPE can be one of `dos', `unix', or `mac'."
 		((eq eol-type 'mac) 'cr)
 		(t
 		 (error
-                  "Unknown EOL-TYPE ‘%s’, must be ‘dos’, ‘unix’, or ‘mac’"
+                  "Unknown EOL-TYPE `%s', must be `dos', `unix', or `mac'"
                   eol-type)))))
-        (t (error "Can’t change EOL conversion -- is MULE missing?"))))
+        (t (error "Can't change EOL conversion -- is MULE missing?"))))
 
 ;; `replace-regexp-in-string' does not exist in XEmacs.
 ;; Implementation is taken from Emacs 24.
@@ -595,21 +595,11 @@ and replace a sub-expression, e.g.
 (unless (fboundp 'default-toplevel-value)
   (defalias 'default-toplevel-value 'symbol-value))
 
-;; ‘format-message’ is new in Emacs 25, and does not exist in XEmacs.
+;; `format-message' is new in Emacs 25, and does not exist in XEmacs.
 ;; The substitute implementation always uses grave quoting style, for
 ;; compatibility with older Emacs.
 (unless (fboundp 'format-message)
-  (defalias 'format-message
-    (lambda (format-string &rest args)
-      (let ((restyled-format-string
-             (let ((start (string-match "[‘’]" format-string)))
-               (if start
-                   (tramp-compat-replace-regexp-in-string
-                    "[‘’]"
-                    (lambda (match) (if (string-equal match "‘") "`" "'"))
-                    format-string t t nil start)
-                 format-string))))
-      (apply #'format restyled-format-string args)))))
+  (defalias 'format-message 'format))
 
 (add-hook 'tramp-unload-hook
 	  (lambda ()

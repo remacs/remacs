@@ -115,7 +115,7 @@ call, letting the SMB client use the default one."
      "Read from server failed, maybe it closed the connection"
      "Call timed out: server did not respond"
      "\\S-+: command not found"
-     "Server doesn’t support UNIX CIFS calls"
+     "Server doesn't support UNIX CIFS calls"
      ,(regexp-opt
        '(;; Samba.
 	 "ERRDOS"
@@ -374,7 +374,7 @@ pass to the OPERATION."
 	    (tramp-smb-get-localname v2)))
 	(tramp-error
 	 v2 'file-error
-	 "error with add-name-to-file, see buffer ‘%s’ for details"
+	 "error with add-name-to-file, see buffer `%s' for details"
 	 (buffer-name))))))
 
 (defun tramp-smb-action-with-tar (proc vec)
@@ -581,12 +581,12 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	    (tramp-flush-file-property v localname)
 	    (unless (tramp-smb-get-share v)
 	      (tramp-error
-	       v 'file-error "Target ‘%s’ must contain a share name" newname))
+	       v 'file-error "Target `%s' must contain a share name" newname))
 	    (unless (tramp-smb-send-command
 		     v (format "put \"%s\" \"%s\""
 			       filename (tramp-smb-get-localname v)))
 	      (tramp-error
-	       v 'file-error "Cannot copy ‘%s’ to ‘%s’" filename newname))))))
+	       v 'file-error "Cannot copy `%s' to `%s'" filename newname))))))
 
     ;; KEEP-DATE handling.
     (when keep-date
@@ -621,7 +621,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	  (goto-char (point-min))
 	  (search-forward-regexp tramp-smb-errors nil t)
 	  (tramp-error
-	   v 'file-error "%s ‘%s’" (match-string 0) directory))))))
+	   v 'file-error "%s `%s'" (match-string 0) directory))))))
 
 (defun tramp-smb-handle-delete-file (filename &optional _trash)
   "Like `delete-file' for Tramp files."
@@ -642,7 +642,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	  (goto-char (point-min))
 	  (search-forward-regexp tramp-smb-errors nil t)
 	  (tramp-error
-	   v 'file-error "%s ‘%s’" (match-string 0) filename))))))
+	   v 'file-error "%s `%s'" (match-string 0) filename))))))
 
 (defun tramp-smb-handle-directory-files
   (directory &optional full match nosort)
@@ -891,7 +891,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
     (unless (file-exists-p filename)
       (tramp-error
        v 'file-error
-       "Cannot make local copy of non-existing file ‘%s’" filename))
+       "Cannot make local copy of non-existing file `%s'" filename))
     (let ((tmpfile (tramp-compat-make-temp-file filename)))
       (with-tramp-progress-reporter
 	  v 3 (format "Fetching %s to tmp file %s" filename tmpfile)
@@ -901,7 +901,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	  ;; Oops, an error.  We shall cleanup.
 	  (delete-file tmpfile)
 	  (tramp-error
-	   v 'file-error "Cannot make local copy of file ‘%s’" filename)))
+	   v 'file-error "Cannot make local copy of file `%s'" filename)))
       tmpfile)))
 
 ;; This function should return "foo/" for directories and "bar" for
@@ -1055,7 +1055,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	(when (file-directory-p ldir)
 	  (make-directory-internal dir))
 	(unless (file-directory-p dir)
-	  (tramp-error v 'file-error "Couldn’t make directory %s" dir))))))
+	  (tramp-error v 'file-error "Couldn't make directory %s" dir))))))
 
 (defun tramp-smb-handle-make-directory-internal (directory)
   "Like `make-directory-internal' for Tramp files."
@@ -1079,7 +1079,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	  (tramp-flush-file-property v localname))
 	(unless (file-directory-p directory)
 	  (tramp-error
-	   v 'file-error "Couldn’t make directory %s" directory))))))
+	   v 'file-error "Couldn't make directory %s" directory))))))
 
 (defun tramp-smb-handle-make-symbolic-link
   (filename linkname &optional ok-if-already-exists)
@@ -1130,7 +1130,7 @@ target of the symlink differ."
 	    (tramp-smb-get-localname v2)))
 	(tramp-error
 	 v2 'file-error
-	 "error with make-symbolic-link, see buffer ‘%s’ for details"
+	 "error with make-symbolic-link, see buffer `%s' for details"
 	 (buffer-name))))))
 
 (defun tramp-smb-handle-process-file
@@ -1289,12 +1289,12 @@ target of the symlink differ."
 	    (tramp-flush-file-property v2 v2-localname)
 	    (unless (tramp-smb-get-share v2)
 	      (tramp-error
-	       v2 'file-error "Target ‘%s’ must contain a share name" newname))
+	       v2 'file-error "Target `%s' must contain a share name" newname))
 	    (unless (tramp-smb-send-command
 		     v2 (format "rename \"%s\" \"%s\""
 				(tramp-smb-get-localname v1)
 				(tramp-smb-get-localname v2)))
-	      (tramp-error v2 'file-error "Cannot rename ‘%s’" filename))))
+	      (tramp-error v2 'file-error "Cannot rename `%s'" filename))))
 
       ;; We must rename via copy.
       (tramp-compat-copy-file filename newname ok-if-already-exists t t t)
@@ -1371,7 +1371,7 @@ target of the symlink differ."
 		  (unless (re-search-backward "tramp_exit_status [0-9]+" nil t)
 		    (tramp-error
 		     v 'file-error
-		     "Couldn’t find exit status of ‘%s’" tramp-smb-acl-program))
+		     "Couldn't find exit status of `%s'" tramp-smb-acl-program))
 		  (skip-chars-forward "^ ")
 		  (when (zerop (read (current-buffer)))
 		    ;; Success.
@@ -1392,7 +1392,7 @@ target of the symlink differ."
 			 (tramp-smb-get-localname v)
 			 (tramp-compat-decimal-to-octal mode)))
 	(tramp-error
-	 v 'file-error "Error while changing file’s mode %s" filename)))))
+	 v 'file-error "Error while changing file's mode %s" filename)))))
 
 ;; We use BUFFER also as connection buffer during setup. Because of
 ;; this, its original contents must be saved, and restored once
@@ -1490,13 +1490,13 @@ errors for shares like \"C$/\", which are common in Microsoft Windows."
 	    (unless (tramp-smb-send-command
 		     v (format "put %s \"%s\""
 			       tmpfile (tramp-smb-get-localname v)))
-	      (tramp-error v 'file-error "Cannot write ‘%s’" filename))
+	      (tramp-error v 'file-error "Cannot write `%s'" filename))
 	  (delete-file tmpfile)))
 
       (unless (equal curbuf (current-buffer))
 	(tramp-error
 	 v 'file-error
-	 "Buffer has changed from ‘%s’ to ‘%s’" curbuf (current-buffer)))
+	 "Buffer has changed from `%s' to `%s'" curbuf (current-buffer)))
       (when (eq visit t)
 	(set-visited-file-modtime)))))
 
@@ -1563,7 +1563,7 @@ Result is a list of (LOCALNAME MODE SIZE MONTH DAY TIME YEAR)."
 	    ;; Loop the listing.
 	    (goto-char (point-min))
 	    (if (re-search-forward tramp-smb-errors nil t)
-		(tramp-error v 'file-error "%s ‘%s’" (match-string 0) directory)
+		(tramp-error v 'file-error "%s `%s'" (match-string 0) directory)
 	      (while (not (eobp))
 		(setq entry (tramp-smb-read-file-entry share))
 		(forward-line)

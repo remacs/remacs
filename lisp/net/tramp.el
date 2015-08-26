@@ -3094,7 +3094,7 @@ User is always nil."
 	       v 'file-error "File `%s' not found on remote host" filename)
 
 	    (with-tramp-progress-reporter
-		v 3 (format "Inserting `%s'" filename)
+		v 3 (format-message "Inserting `%s'" filename)
 	      (condition-case err
 		  (if (and (tramp-local-host-p v)
 			   (let (file-name-handler-alist)
@@ -3600,7 +3600,7 @@ connection buffer."
                "    `\\[tramp-cleanup-this-connection]'")))
 	    ((eq exit 'timeout)
 	     (format-message
-	      "Timeout reached, see buffer ‘%s’ for details"
+	      "Timeout reached, see buffer `%s' for details"
 	      (tramp-get-connection-buffer vec)))
 	    (t "Login failed")))))
       (when (numberp pos)

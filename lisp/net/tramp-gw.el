@@ -95,7 +95,7 @@
   "Delete auxiliary process when we are deleted."
   (unless (memq (process-status proc) '(run open))
     (tramp-message
-     tramp-gw-vector 4 "Deleting auxiliary process ‘%s’" tramp-gw-gw-proc)
+     tramp-gw-vector 4 "Deleting auxiliary process `%s'" tramp-gw-gw-proc)
     (let* ((tramp-verbose 0)
 	   (p (tramp-get-connection-property proc "process" nil)))
       (when (processp p) (delete-process p)))))
@@ -106,7 +106,7 @@
     ;; A new process has been spawned from `tramp-gw-aux-proc'.
     (tramp-message
      tramp-gw-vector 4
-     "Opening auxiliary process ‘%s’, speaking with process ‘%s’"
+     "Opening auxiliary process `%s', speaking with process `%s'"
      proc tramp-gw-gw-proc)
     (tramp-compat-set-process-query-on-exit-flag proc nil)
     ;; We don't want debug messages, because the corresponding debug
@@ -160,7 +160,7 @@ instead of the host name declared in TARGET-VEC."
       (set-process-sentinel tramp-gw-aux-proc 'tramp-gw-aux-proc-sentinel)
       (tramp-compat-set-process-query-on-exit-flag tramp-gw-aux-proc nil)
       (tramp-message
-       vec 4 "Opening auxiliary process ‘%s’, listening on port %d"
+       vec 4 "Opening auxiliary process `%s', listening on port %d"
        tramp-gw-aux-proc (process-contact tramp-gw-aux-proc :service))))
 
   (let* ((gw-method
@@ -206,7 +206,7 @@ instead of the host name declared in TARGET-VEC."
     (set-process-coding-system tramp-gw-gw-proc 'binary 'binary)
     (tramp-compat-set-process-query-on-exit-flag tramp-gw-gw-proc nil)
     (tramp-message
-     vec 4 "Opened %s process ‘%s’"
+     vec 4 "Opened %s process `%s'"
      (case gw-method ('tunnel "HTTP tunnel") ('socks "SOCKS"))
      tramp-gw-gw-proc)
 
