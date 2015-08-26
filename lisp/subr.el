@@ -288,12 +288,6 @@ This function accepts any number of arguments, but ignores them."
   (interactive)
   nil)
 
-(defun format-message (format-string &rest args)
-  "Format a string out of FORMAT-STRING and arguments.
-This is like ‘format’, except it also converts curved quotes in
-FORMAT-STRING as per ‘text-quoting-style’."
-  (apply #'format (internal--text-restyle format-string) args))
-
 ;; Signal a compile-error if the first arg is missing.
 (defun error (&rest args)
   "Signal an error, making error message by passing all args to `format'.

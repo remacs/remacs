@@ -947,7 +947,7 @@ load_warn_old_style_backquotes (Lisp_Object file)
 {
   if (!NILP (Vold_style_backquotes))
     {
-      AUTO_STRING (format, "Loading %qs: old-style backquotes detected!");
+      AUTO_STRING (format, "Loading `%s': old-style backquotes detected!");
       CALLN (Fmessage, format, file);
     }
 }

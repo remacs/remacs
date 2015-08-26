@@ -4300,13 +4300,6 @@ extern void set_initial_environment (void);
 extern void syms_of_callproc (void);
 
 /* Defined in doc.c.  */
-enum
-  {
-    /* Named constants for the UTF-8 encodings of U+2018 LEFT SINGLE
-       QUOTATION MARK and U+2019 RIGHT SINGLE QUOTATION MARK.  */
-    uLSQM0 = 0xE2, uLSQM1 = 0x80, uLSQM2 = 0x98,
-    uRSQM0 = 0xE2, uRSQM1 = 0x80, uRSQM2 = 0x99
-  };
 enum text_quoting_style
   {
     /* Use curved single quotes ‘like this’.  */

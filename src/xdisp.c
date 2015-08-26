@@ -9838,7 +9838,7 @@ vadd_to_log (char const *format, va_list ap)
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (args[1], msg);
   gcpro1.nvars = form_nargs;
-  msg = Fformat (nargs, args);
+  msg = Fformat_message (nargs, args);
 
   ptrdiff_t len = SBYTES (msg) + 1;
   USE_SAFE_ALLOCA;

@@ -647,7 +647,7 @@ image_error (const char *format, ...)
 static void
 image_size_error (void)
 {
-  image_error ("Invalid image size (see %qs)", "max-image-size");
+  image_error ("Invalid image size (see `%s')", "max-image-size");
 }
 
 
@@ -2952,13 +2952,13 @@ xbm_load_image (struct frame *f, struct image *img, unsigned char *contents,
       if (img->pixmap == NO_PIXMAP)
 	{
 	  x_clear_image (f, img);
-	  image_error ("Unable to create X pixmap for %qs", img->spec);
+	  image_error ("Unable to create X pixmap for `%s'", img->spec);
 	}
       else
 	success_p = 1;
     }
   else
-    image_error ("Error loading XBM image %qs", img->spec);
+    image_error ("Error loading XBM image `%s'", img->spec);
 
   return success_p;
 }
@@ -2996,7 +2996,7 @@ xbm_load (struct frame *f, struct image *img)
       Lisp_Object file = x_find_image_fd (file_name, &fd);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file %qs", file_name);
+	  image_error ("Cannot find image file `%s'", file_name);
 	  return 0;
 	}
 
@@ -3004,7 +3004,7 @@ xbm_load (struct frame *f, struct image *img)
       unsigned char *contents = slurp_file (fd, &size);
       if (contents == NULL)
 	{
-	  image_error ("Error loading XBM image %qs", file);
+	  image_error ("Error loading XBM image `%s'", file);
 	  return 0;
 	}
 
@@ -3116,7 +3116,7 @@ xbm_load (struct frame *f, struct image *img)
 	    success_p = 1;
 	  else
 	    {
-	      image_error ("Unable to create pixmap for XBM image %qs",
+	      image_error ("Unable to create pixmap for XBM image `%s'",
 			   img->spec);
 	      x_clear_image (f, img);
 	    }
@@ -3639,7 +3639,7 @@ xpm_load (struct frame *f, struct image *img)
       Lisp_Object file = x_find_image_file (specified_file);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file %qs", specified_file);
+	  image_error ("Cannot find image file `%s'", specified_file);
 #ifdef ALLOC_XPM_COLORS
 	  xpm_free_color_cache ();
 #endif
@@ -3671,7 +3671,7 @@ xpm_load (struct frame *f, struct image *img)
       Lisp_Object buffer = image_spec_value (img->spec, QCdata, NULL);
       if (!STRINGP (buffer))
 	{
-	  image_error ("Invalid image data %qs", buffer);
+	  image_error ("Invalid image data `%s'", buffer);
 #ifdef ALLOC_XPM_COLORS
 	  xpm_free_color_cache ();
 #endif
@@ -4302,7 +4302,7 @@ xpm_load (struct frame *f,
       Lisp_Object file = x_find_image_fd (file_name, &fd);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file %qs", file_name);
+	  image_error ("Cannot find image file `%s'", file_name);
 	  return 0;
 	}
 
@@ -4310,7 +4310,7 @@ xpm_load (struct frame *f,
       unsigned char *contents = slurp_file (fd, &size);
       if (contents == NULL)
 	{
-	  image_error ("Error loading XPM image %qs", file);
+	  image_error ("Error loading XPM image `%s'", file);
 	  return 0;
 	}
 
@@ -4324,7 +4324,7 @@ xpm_load (struct frame *f,
       data = image_spec_value (img->spec, QCdata, NULL);
       if (!STRINGP (data))
 	{
-	  image_error ("Invalid image data %qs", data);
+	  image_error ("Invalid image data `%s'", data);
 	  return 0;
 	}
       success_p = xpm_load_image (f, img, SDATA (data),
@@ -5278,7 +5278,7 @@ pbm_load (struct frame *f, struct image *img)
       Lisp_Object file = x_find_image_fd (specified_file, &fd);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file %qs", specified_file);
+	  image_error ("Cannot find image file `%s'", specified_file);
 	  return 0;
 	}
 
@@ -5286,7 +5286,7 @@ pbm_load (struct frame *f, struct image *img)
       contents = slurp_file (fd, &size);
       if (contents == NULL)
 	{
-	  image_error ("Error reading %qs", file);
+	  image_error ("Error reading `%s'", file);
 	  return 0;
 	}
 
@@ -5299,7 +5299,7 @@ pbm_load (struct frame *f, struct image *img)
       data = image_spec_value (img->spec, QCdata, NULL);
       if (!STRINGP (data))
 	{
-	  image_error ("Invalid image data %qs", data);
+	  image_error ("Invalid image data `%s'", data);
 	  return 0;
 	}
       p = SDATA (data);
@@ -5309,7 +5309,7 @@ pbm_load (struct frame *f, struct image *img)
   /* Check magic number.  */
   if (end - p < 2 || *p++ != 'P')
     {
-      image_error ("Not a PBM image: %qs", img->spec);
+      image_error ("Not a PBM image: `%s'", img->spec);
     error:
       xfree (contents);
       img->pixmap = NO_PIXMAP;
@@ -5343,7 +5343,7 @@ pbm_load (struct frame *f, struct image *img)
       break;
 
     default:
-      image_error ("Not a PBM image: %qs", img->spec);
+      image_error ("Not a PBM image: `%s'", img->spec);
       goto error;
     }
 
@@ -5442,7 +5442,7 @@ pbm_load (struct frame *f, struct image *img)
 			x_destroy_x_image (ximg);
 #endif
 			x_clear_image (f, img);
-			image_error ("Invalid image size in image %qs",
+			image_error ("Invalid image size in image `%s'",
 				     img->spec);
 			goto error;
 		      }
@@ -5477,7 +5477,7 @@ pbm_load (struct frame *f, struct image *img)
 	  x_destroy_x_image (ximg);
 #endif
 	  x_clear_image (f, img);
-	  image_error ("Invalid image size in image %qs", img->spec);
+	  image_error ("Invalid image size in image `%s'", img->spec);
 	  goto error;
 	}
 
@@ -5520,7 +5520,7 @@ pbm_load (struct frame *f, struct image *img)
 #else
 		x_destroy_x_image (ximg);
 #endif
-		image_error ("Invalid pixel value in image %qs", img->spec);
+		image_error ("Invalid pixel value in image `%s'", img->spec);
 		goto error;
 	      }
 
@@ -5916,7 +5916,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
       Lisp_Object file = x_find_image_fd (specified_file, &fd);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file %qs", specified_file);
+	  image_error ("Cannot find image file `%s'", specified_file);
 	  return 0;
 	}
 
@@ -5924,7 +5924,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
       fp = fdopen (fd, "rb");
       if (!fp)
 	{
-	  image_error ("Cannot open image file %qs", file);
+	  image_error ("Cannot open image file `%s'", file);
 	  return 0;
 	}
 
@@ -5933,7 +5933,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
 	  || png_sig_cmp (sig, 0, sizeof sig))
 	{
 	  fclose (fp);
-	  image_error ("Not a PNG file: %qs", file);
+	  image_error ("Not a PNG file: `%s'", file);
 	  return 0;
 	}
     }
@@ -5941,7 +5941,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
     {
       if (!STRINGP (specified_data))
 	{
-	  image_error ("Invalid image data %qs", specified_data);
+	  image_error ("Invalid image data `%s'", specified_data);
 	  return 0;
 	}
 
@@ -5954,7 +5954,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
       if (tbr.len < sizeof sig
 	  || png_sig_cmp (tbr.bytes, 0, sizeof sig))
 	{
-	  image_error ("Not a PNG image: %qs", img->spec);
+	  image_error ("Not a PNG image: `%s'", img->spec);
 	  return 0;
 	}
 
@@ -6681,20 +6681,20 @@ jpeg_load_body (struct frame *f, struct image *img,
       Lisp_Object file = x_find_image_fd (specified_file, &fd);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file %qs", specified_file);
+	  image_error ("Cannot find image file `%s'", specified_file);
 	  return 0;
 	}
 
       fp = fdopen (fd, "rb");
       if (fp == NULL)
 	{
-	  image_error ("Cannot open %qs", file);
+	  image_error ("Cannot open `%s'", file);
 	  return 0;
 	}
     }
   else if (!STRINGP (specified_data))
     {
-      image_error ("Invalid image data %qs", specified_data);
+      image_error ("Invalid image data `%s'", specified_data);
       return 0;
     }
 
@@ -6710,7 +6710,7 @@ jpeg_load_body (struct frame *f, struct image *img,
 	  {
 	    char buf[JMSG_LENGTH_MAX];
 	    mgr->cinfo.err->format_message ((j_common_ptr) &mgr->cinfo, buf);
-	    image_error ("Error reading JPEG image %qs: %s",
+	    image_error ("Error reading JPEG image `%s': %s",
 			 img->spec, build_string (buf));
 	    break;
 	  }
@@ -7196,7 +7196,7 @@ tiff_load (struct frame *f, struct image *img)
       Lisp_Object file = x_find_image_file (specified_file);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file %qs", specified_file);
+	  image_error ("Cannot find image file `%s'", specified_file);
 	  return 0;
 	}
 
@@ -7209,7 +7209,7 @@ tiff_load (struct frame *f, struct image *img)
       tiff = TIFFOpen (SSDATA (encoded_file), "r");
       if (tiff == NULL)
 	{
-	  image_error ("Cannot open %qs", file);
+	  image_error ("Cannot open `%s'", file);
 	  return 0;
 	}
     }
@@ -7217,7 +7217,7 @@ tiff_load (struct frame *f, struct image *img)
     {
       if (!STRINGP (specified_data))
 	{
-	  image_error ("Invalid image data %qs", specified_data);
+	  image_error ("Invalid image data `%s'", specified_data);
 	  return 0;
 	}
 
@@ -7237,7 +7237,7 @@ tiff_load (struct frame *f, struct image *img)
 
       if (!tiff)
 	{
-	  image_error ("Cannot open memory source for %qs", img->spec);
+	  image_error ("Cannot open memory source for `%s'", img->spec);
 	  return 0;
 	}
     }
@@ -7249,7 +7249,7 @@ tiff_load (struct frame *f, struct image *img)
       if (! (TYPE_MINIMUM (tdir_t) <= ino && ino <= TYPE_MAXIMUM (tdir_t)
 	     && TIFFSetDirectory (tiff, ino)))
 	{
-	  image_error ("Invalid image number %qs in image %qs",
+	  image_error ("Invalid image number `%s' in image `%s'",
 		       image, img->spec);
 	  TIFFClose (tiff);
 	  return 0;
@@ -7293,7 +7293,7 @@ tiff_load (struct frame *f, struct image *img)
   TIFFClose (tiff);
   if (!rc)
     {
-      image_error ("Error reading TIFF image %qs", img->spec);
+      image_error ("Error reading TIFF image `%s'", img->spec);
       xfree (buf);
       return 0;
     }
@@ -7629,7 +7629,7 @@ gif_load (struct frame *f, struct image *img)
       Lisp_Object file = x_find_image_file (specified_file);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file %qs", specified_file);
+	  image_error ("Cannot find image file `%s'", specified_file);
 	  return 0;
 	}
 
@@ -7643,14 +7643,14 @@ gif_load (struct frame *f, struct image *img)
       gif = DGifOpenFileName (SSDATA (encoded_file));
       if (gif == NULL)
 	{
-	  image_error ("Cannot open %qs", file);
+	  image_error ("Cannot open `%s'", file);
 	  return 0;
 	}
 #else
       gif = DGifOpenFileName (SSDATA (encoded_file), &gif_err);
       if (gif == NULL)
 	{
-	  image_error ("Cannot open %qs: %s",
+	  image_error ("Cannot open `%s': %s",
 		       file, build_string (GifErrorString (gif_err)));
 	  return 0;
 	}
@@ -7660,7 +7660,7 @@ gif_load (struct frame *f, struct image *img)
     {
       if (!STRINGP (specified_data))
 	{
-	  image_error ("Invalid image data %qs", specified_data);
+	  image_error ("Invalid image data `%s'", specified_data);
 	  return 0;
 	}
 
@@ -7674,14 +7674,14 @@ gif_load (struct frame *f, struct image *img)
       gif = DGifOpen (&memsrc, gif_read_from_memory);
       if (!gif)
 	{
-	  image_error ("Cannot open memory source %qs", img->spec);
+	  image_error ("Cannot open memory source `%s'", img->spec);
 	  return 0;
 	}
 #else
       gif = DGifOpen (&memsrc, gif_read_from_memory, &gif_err);
       if (!gif)
 	{
-	  image_error ("Cannot open memory source %qs: %s",
+	  image_error ("Cannot open memory source `%s': %s",
 		       img->spec, build_string (GifErrorString (gif_err)));
 	  return 0;
 	}
@@ -7700,7 +7700,7 @@ gif_load (struct frame *f, struct image *img)
   rc = DGifSlurp (gif);
   if (rc == GIF_ERROR || gif->ImageCount <= 0)
     {
-      image_error ("Error reading %qs", img->spec);
+      image_error ("Error reading `%s'", img->spec);
       gif_close (gif, NULL);
       return 0;
     }
@@ -7711,7 +7711,7 @@ gif_load (struct frame *f, struct image *img)
     idx = INTEGERP (image_number) ? XFASTINT (image_number) : 0;
     if (idx < 0 || idx >= gif->ImageCount)
       {
-	image_error ("Invalid image number %qs in image %qs",
+	image_error ("Invalid image number `%s' in image `%s'",
 		     image_number, img->spec);
 	gif_close (gif, NULL);
 	return 0;
@@ -7984,10 +7984,10 @@ gif_load (struct frame *f, struct image *img)
       char *error_text = GifErrorString (gif_err);
 
       if (error_text)
-	image_error ("Error closing %qs: %s",
+	image_error ("Error closing `%s': %s",
 		     img->spec, build_string (error_text));
 #else
-      image_error ("Error closing %qs", img->spec);
+      image_error ("Error closing `%s'", img->spec);
 #endif
     }
 
@@ -8528,7 +8528,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
 
   if (ino < 0 || ino >= MagickGetNumberImages (image_wand))
     {
-      image_error ("Invalid image number %qs in image %qs", image, img->spec);
+      image_error ("Invalid image number `%s' in image `%s'", image, img->spec);
       DestroyMagickWand (image_wand);
       return 0;
     }
@@ -8797,7 +8797,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
 
   MagickWandTerminus ();
   /* TODO more cleanup.  */
-  image_error ("Error parsing IMAGEMAGICK image %qs", img->spec);
+  image_error ("Error parsing IMAGEMAGICK image `%s'", img->spec);
   return 0;
 }
 
@@ -8819,7 +8819,7 @@ imagemagick_load (struct frame *f, struct image *img)
       Lisp_Object file = x_find_image_file (file_name);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file %qs", file_name);
+	  image_error ("Cannot find image file `%s'", file_name);
 	  return 0;
 	}
       file = ENCODE_FILE (file);
@@ -8837,7 +8837,7 @@ imagemagick_load (struct frame *f, struct image *img)
       data = image_spec_value (img->spec, QCdata, NULL);
       if (!STRINGP (data))
 	{
-	  image_error ("Invalid image data %qs", data);
+	  image_error ("Invalid image data `%s'", data);
 	  return 0;
 	}
       success_p = imagemagick_load_image (f, img, SDATA (data),
@@ -9098,7 +9098,7 @@ svg_load (struct frame *f, struct image *img)
       Lisp_Object file = x_find_image_fd (file_name, &fd);
       if (!STRINGP (file))
 	{
-	  image_error ("Cannot find image file %qs", file_name);
+	  image_error ("Cannot find image file `%s'", file_name);
 	  return 0;
 	}
 
@@ -9107,7 +9107,7 @@ svg_load (struct frame *f, struct image *img)
       unsigned char *contents = slurp_file (fd, &size);
       if (contents == NULL)
 	{
-	  image_error ("Error loading SVG image %qs", file);
+	  image_error ("Error loading SVG image `%s'", file);
 	  return 0;
 	}
       /* If the file was slurped into memory properly, parse it.  */
@@ -9124,7 +9124,7 @@ svg_load (struct frame *f, struct image *img)
       data = image_spec_value (img->spec, QCdata, NULL);
       if (!STRINGP (data))
 	{
-	  image_error ("Invalid image data %qs", data);
+	  image_error ("Invalid image data `%s'", data);
 	  return 0;
 	}
       original_filename = BVAR (current_buffer, filename);
@@ -9323,7 +9323,7 @@ svg_load_image (struct frame *f,         /* Pointer to emacs frame structure.  *
   g_object_unref (rsvg_handle);
   /* FIXME: Use error->message so the user knows what is the actual
      problem with the image.  */
-  image_error ("Error parsing SVG image %qs", img->spec);
+  image_error ("Error parsing SVG image `%s'", img->spec);
   g_error_free (err);
   return 0;
 }
@@ -9497,7 +9497,7 @@ gs_load (struct frame *f, struct image *img)
 
   if (!img->pixmap)
     {
-      image_error ("Unable to create pixmap for %qs" , img->spec);
+      image_error ("Unable to create pixmap for `%s'" , img->spec);
       return 0;
     }
 
@@ -9609,7 +9609,7 @@ x_kill_gs_process (Pixmap pixmap, struct frame *f)
 #endif
 	}
       else
-	image_error ("Cannot get X image of %qs; colors will not be freed",
+	image_error ("Cannot get X image of `%s'; colors will not be freed",
 		     img->spec);
 
       unblock_input ();

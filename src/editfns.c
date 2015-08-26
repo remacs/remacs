@@ -72,6 +72,7 @@ static Lisp_Object format_time_string (char const *, ptrdiff_t, struct timespec,
 static long int tm_gmtoff (struct tm *);
 static int tm_diff (struct tm *, struct tm *);
 static void update_buffer_properties (ptrdiff_t, ptrdiff_t);
+static Lisp_Object styled_format (ptrdiff_t, Lisp_Object *, bool);
 
 #ifndef HAVE_TM_GMTOFF
 # define HAVE_TM_GMTOFF false
@@ -3696,8 +3697,7 @@ usage: (message FORMAT-STRING &rest ARGS)  */)
     }
   else
     {
-      args[0] = Finternal__text_restyle (args[0]);
-      Lisp_Object val = Fformat (nargs, args);
+      Lisp_Object val = Fformat_message (nargs, args);
       message3 (val);
       return val;
     }
@@ -3722,8 +3722,7 @@ usage: (message-box FORMAT-STRING &rest ARGS)  */)
     }
   else
     {
-      args[0] = Finternal__text_restyle (args[0]);
-      Lisp_Object val = Fformat (nargs, args);
+      Lisp_Object val = Fformat_message (nargs, args);
       Lisp_Object pane, menu;
       struct gcpro gcpro1;
 
@@ -3822,7 +3821,7 @@ specifiers, as follows:
 
   %<flags><width><precision>character
 
-where flags is [+ #-0q]+, width is [0-9]+, and precision is .[0-9]+
+where flags is [+ #-0]+, width is [0-9]+, and precision is .[0-9]+
 
 The + flag character inserts a + before any positive number, while a
 space inserts a space before any positive number; these flags only
@@ -3834,9 +3833,6 @@ The # flag means to use an alternate display form for %o, %x, %X, %e,
 \"0\"; for %x and %X, it prefixes the result with \"0x\" or \"0X\";
 for %e, %f, and %g, it causes a decimal point to be included even if
 the precision is zero.
-
-The q flag means to quote the printed representation as per
-‘text-quoting-style’.  E.g., "%qs" is equivalent to "‘%s’".
 
 The width specifier supplies a lower limit for the length of the
 printed representation.  The padding, if any, normally goes on the
@@ -3852,6 +3848,31 @@ specifier truncates the string to the given width.
 
 usage: (format STRING &rest OBJECTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return styled_format (nargs, args, false);
+}
+
+DEFUN ("format-message", Fformat_message, Sformat_message, 1, MANY, 0,
+       doc: /* Format a string out of a format-string and arguments.
+The first argument is a format control string.
+The other arguments are substituted into it to make the result, a string.
+
+This acts like ‘format’, except it also replaces each left single
+quotation mark (\\=‘) and grave accent (\\=`) by a left quote, and each
+right single quotation mark (\\=’) and apostrophe (\\=') by a right quote.
+The left and right quote replacement characters are specified by
+‘text-quoting-style’.
+
+usage: (format-message STRING &rest OBJECTS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return styled_format (nargs, args, true);
+}
+
+/* Implement ‘format-message’ if MESSAGE is true, ‘format’ otherwise.  */
+
+static Lisp_Object
+styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 {
   ptrdiff_t n;		/* The number of the next arg to substitute.  */
   char initial_buffer[4000];
@@ -3917,7 +3938,8 @@ usage: (format STRING &rest OBJECTS)  */)
 
   /* Try to determine whether the result should be multibyte.
      This is not always right; sometimes the result needs to be multibyte
-     because of an object that we will pass through prin1,
+     because of an object that we will pass through prin1.
+     or because a grave accent or apostrophe is requoted,
      and in that case, we won't know it here.  */
   multibyte_format = STRING_MULTIBYTE (args[0]);
   multibyte = multibyte_format;
@@ -3925,7 +3947,7 @@ usage: (format STRING &rest OBJECTS)  */)
     if (STRINGP (args[n]) && STRING_MULTIBYTE (args[n]))
       multibyte = 1;
 
-  enum text_quoting_style quoting_style = text_quoting_style ();
+  int quoting_style = message ? text_quoting_style () : -1;
 
   /* If we start out planning a unibyte result,
      then discover it has to be multibyte, we jump back to retry.  */
@@ -3945,11 +3967,13 @@ usage: (format STRING &rest OBJECTS)  */)
       /* The values of N and FORMAT when the loop body is entered.  */
       ptrdiff_t n0 = n;
       char *format0 = format;
+      char const *convsrc = format;
+      unsigned char format_char = *format++;
 
       /* Bytes needed to represent the output of this conversion.  */
-      ptrdiff_t convbytes;
+      ptrdiff_t convbytes = 1;
 
-      if (*format == '%')
+      if (format_char == '%')
 	{
 	  /* General format specifications look like
 
@@ -3974,23 +3998,21 @@ usage: (format STRING &rest OBJECTS)  */)
 	  bool space_flag = false;
 	  bool sharp_flag = false;
 	  bool  zero_flag = false;
-	  bool quote_flag = false;
 	  ptrdiff_t field_width;
 	  bool precision_given;
 	  uintmax_t precision = UINTMAX_MAX;
 	  char *num_end;
 	  char conversion;
 
-	  while (1)
+	  for (; ; format++)
 	    {
-	      switch (*++format)
+	      switch (*format)
 		{
 		case '-': minus_flag = true; continue;
 		case '+':  plus_flag = true; continue;
 		case ' ': space_flag = true; continue;
 		case '#': sharp_flag = true; continue;
 		case '0':  zero_flag = true; continue;
-		case 'q': quote_flag = true; continue;
 		}
 	      break;
 	    }
@@ -4014,11 +4036,10 @@ usage: (format STRING &rest OBJECTS)  */)
 	    error ("Format string ends in middle of format specifier");
 
 	  memset (&discarded[format0 - format_start], 1, format - format0);
-	  conversion = *format;
+	  conversion = *format++;
 	  if (conversion == '%')
 	    goto copy_char;
 	  discarded[format - format_start] = 1;
-	  format++;
 
 	  ++n;
 	  if (! (n < nargs))
@@ -4118,20 +4139,6 @@ usage: (format STRING &rest OBJECTS)  */)
 	      if (convbytes && multibyte && ! STRING_MULTIBYTE (args[n]))
 		convbytes = count_size_as_multibyte (SDATA (args[n]), nbytes);
 
-	      if (quote_flag)
-		{
-		  convbytes += 2;
-		  if (quoting_style == CURVE_QUOTING_STYLE)
-		    {
-		      if (!multibyte)
-			{
-			  multibyte = true;
-			  goto retry;
-			}
-		      convbytes += 4;
-		    }
-		}
-
 	      padding = width < field_width ? field_width - width : 0;
 
 	      if (max_bufsize - padding <= convbytes)
@@ -4139,27 +4146,6 @@ usage: (format STRING &rest OBJECTS)  */)
 	      convbytes += padding;
 	      if (convbytes <= buf + bufsize - p)
 		{
-
-		  if (quote_flag)
-		    {
-		      switch (quoting_style)
-			{
-			case CURVE_QUOTING_STYLE:
-			  memcpy (p, uLSQM, 3);
-			  p += 3;
-			  break;
-
-			case GRAVE_QUOTING_STYLE:
-			  *p++ = '`';
-			  break;
-
-			case STRAIGHT_QUOTING_STYLE:
-			  *p++ = '\'';
-			  break;
-			}
-		      nchars++;
-		    }
-
 		  if (! minus_flag)
 		    {
 		      memset (p, ' ', padding);
@@ -4187,22 +4173,6 @@ usage: (format STRING &rest OBJECTS)  */)
 		      memset (p, ' ', padding);
 		      p += padding;
 		      nchars += padding;
-		    }
-
-		  if (quote_flag)
-		    {
-		      switch (quoting_style)
-			{
-			case CURVE_QUOTING_STYLE:
-			  memcpy (p, uRSQM, 3);
-			  p += 3;
-			  break;
-
-			default:
-			  *p++ = '\'';
-			  break;
-			}
-		      nchars++;
 		    }
 
 		  /* If this argument has text properties, record where
@@ -4464,44 +4434,72 @@ usage: (format STRING &rest OBJECTS)  */)
 	    }
 	}
       else
-      copy_char:
 	{
-	  /* Copy a single character from format to buf.  */
+	  /* Named constants for the UTF-8 encodings of U+2018 LEFT SINGLE
+	     QUOTATION MARK and U+2019 RIGHT SINGLE QUOTATION MARK.  */
+	  enum
+	  {
+	    uLSQM0 = 0xE2, uLSQM1 = 0x80, uLSQM2 = 0x98,
+	    /* uRSQM0 = 0xE2, uRSQM1 = 0x80, */ uRSQM2 = 0x99
+	  };
 
-	  char *src = format;
 	  unsigned char str[MAX_MULTIBYTE_LENGTH];
 
-	  if (multibyte_format)
+	  if ((format_char == '`' || format_char == '\'')
+	      && quoting_style == CURVE_QUOTING_STYLE)
 	    {
-	      /* Copy a whole multibyte character.  */
-	      if (p > buf
-		  && !ASCII_CHAR_P (*((unsigned char *) p - 1))
-		  && !CHAR_HEAD_P (*format))
-		maybe_combine_byte = 1;
-
-	      do
-		format++;
-	      while (! CHAR_HEAD_P (*format));
-
-	      convbytes = format - src;
-	      memset (&discarded[src + 1 - format_start], 2, convbytes - 1);
+	      if (! multibyte)
+		{
+		  multibyte = true;
+		  goto retry;
+		}
+	      convsrc = format_char == '`' ? uLSQM : uRSQM;
+	      convbytes = 3;
+	    }
+	  else if (format_char == '`' && quoting_style == STRAIGHT_QUOTING_STYLE)
+	    convsrc = "'";
+	  else if (format_char == uLSQM0 && CURVE_QUOTING_STYLE < quoting_style
+		   && multibyte_format
+		   && (unsigned char) format[0] == uLSQM1
+		   && ((unsigned char) format[1] == uLSQM2
+		       || (unsigned char) format[1] == uRSQM2))
+	    {
+	      convsrc = (((unsigned char) format[1] == uLSQM2
+			  && quoting_style == GRAVE_QUOTING_STYLE)
+			 ? "`" : "'");
+	      format += 2;
+	      memset (&discarded[format0 + 1 - format_start], 2, 2);
 	    }
 	  else
 	    {
-	      unsigned char uc = *format++;
-	      if (! multibyte || ASCII_CHAR_P (uc))
-		convbytes = 1;
-	      else
+	      /* Copy a single character from format to buf.  */
+	      if (multibyte_format)
 		{
-		  int c = BYTE8_TO_CHAR (uc);
+		  /* Copy a whole multibyte character.  */
+		  if (p > buf
+		      && !ASCII_CHAR_P (*((unsigned char *) p - 1))
+		      && !CHAR_HEAD_P (format_char))
+		    maybe_combine_byte = 1;
+
+		  while (! CHAR_HEAD_P (*format))
+		    format++;
+
+		  convbytes = format - format0;
+		  memset (&discarded[format0 + 1 - format_start], 2,
+			  convbytes - 1);
+		}
+	      else if (multibyte && !ASCII_CHAR_P (format_char))
+		{
+		  int c = BYTE8_TO_CHAR (format_char);
 		  convbytes = CHAR_STRING (c, str);
-		  src = (char *) str;
+		  convsrc = (char *) str;
 		}
 	    }
 
+	copy_char:
 	  if (convbytes <= buf + bufsize - p)
 	    {
-	      memcpy (p, src, convbytes);
+	      memcpy (p, convsrc, convbytes);
 	      p += convbytes;
 	      nchars++;
 	      continue;
@@ -5213,6 +5211,7 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Smessage_or_box);
   defsubr (&Scurrent_message);
   defsubr (&Sformat);
+  defsubr (&Sformat_message);
 
   defsubr (&Sinsert_buffer_substring);
   defsubr (&Scompare_buffer_substrings);

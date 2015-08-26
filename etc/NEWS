@@ -272,7 +272,7 @@ successive char insertions.
 € № ← → ↔ − ≈ ≠ ≤ ≥.  As before, you can type C-x 8 C-h to list shorthands.
 
 ** New minor mode electric-quote-mode for quoting ‘like this’ and “like this”
-as you type.
+as you type.  See also the new variable ‘text-quoting-style’.
 
 ** New minor mode global-eldoc-mode is enabled by default.
 
@@ -916,20 +916,21 @@ Set it to ‘curve’ for curved single quotes ‘like this’, to ‘straight�
 for straight apostrophes 'like this', and to ‘grave’ for grave accent
 and apostrophe `like this'.  The default value nil acts like ‘curve’
 if curved single quotes are displayable, and like ‘grave’ otherwise.
-Quotes in info files are not translated.
+The new variable affects display of diagnostics and help, but not of info.
 
 +++
 ** substitute-command-keys now replaces quotes.
 That is, it converts documentation strings’ quoting style as per the
 value of ‘text-quoting-style’.  Doc strings in source code can use
-either curved quotes or grave accent and apostrophe.  As before,
-characters preceded by \= are output as-is.
+either curved single quotes or grave accents and apostrophes.  As
+before, characters preceded by \= are output as-is.
 
 +++
 ** Message-issuing functions ‘error’, ‘message’, etc. now convert quotes.
 They use the new ‘format-message’ function instead of plain ‘format’,
-so that they now follow user preference as per ‘text-quoting-style’ if
-their format argument contains curved quotes.
+so that they now follow user preference as per ‘text-quoting-style’
+when processing curved single quotes, grave accents, and apostrophes
+in their format argument.
 
 +++
 ** The character classes [:alpha:] and [:alnum:] in regular expressions
@@ -1055,13 +1056,8 @@ quotes.
 
 +++
 ** New function ‘format-message’ is like ‘format’ and also converts
-curved quotes as per ‘text-quoting-style’.
-
-+++
-** New ‘format’ flag ‘q’
-The new ‘q’ flag causes ‘format’ to quote the output representation as
-per the value of ‘text-quoting-style’.  E.g., (format "%qs failed"
-"foo") might return "‘foo’ failed".
+curved single quotes, grave accents and apostrophes as per
+‘text-quoting-style’.
 
 +++
 ** show-help-function's arg is converted via substitute-command-keys

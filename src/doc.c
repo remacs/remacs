@@ -684,10 +684,7 @@ the same file name is found in the `doc-directory'.  */)
   return unbind_to (count, Qnil);
 }
 
-/* Curved quotation marks.  */
-static unsigned char const LSQM[] = { uLSQM0, uLSQM1, uLSQM2 };
-static unsigned char const RSQM[] = { uRSQM0, uRSQM1, uRSQM2 };
-
+/* Return true if text quoting style should default to quote `like this'.  */
 static bool
 default_to_grave_quoting_style (void)
 {
@@ -925,14 +922,13 @@ Otherwise, return a new string.  */)
 	  if (NILP (tem))
 	    {
 	      name = Fsymbol_name (name);
-	      insert1 (Fsubstitute_command_keys
-		       (build_string ("\nUses keymap "uLSQM)));
+	      AUTO_STRING (msg_prefix, "\nUses keymap `");
+	      insert1 (Fsubstitute_command_keys (msg_prefix));
 	      insert_from_string (name, 0, 0,
 				  SCHARS (name),
 				  SBYTES (name), 1);
-	      insert1 (Fsubstitute_command_keys
-		       (build_string
-			(uRSQM", which is not currently defined.\n")));
+	      AUTO_STRING (msg_suffix, "', which is not currently defined.\n");
+	      insert1 (Fsubstitute_command_keys (msg_suffix));
 	      if (start[-1] == '<') keymap = Qnil;
 	    }
 	  else if (start[-1] == '<')
@@ -972,9 +968,9 @@ Otherwise, return a new string.  */)
       else if ((strp[0] == '`' || strp[0] == '\'')
 	       && quoting_style == CURVE_QUOTING_STYLE)
 	{
-	  start = strp[0] == '`' ? LSQM : RSQM;
+	  start = (unsigned char const *) (strp[0] == '`' ? uLSQM : uRSQM);
 	  length = 1;
-	  length_byte = 3;
+	  length_byte = sizeof uLSQM - 1;
 	  idx = strp - SDATA (string) + 1;
 	  goto subst;
 	}
@@ -985,29 +981,28 @@ Otherwise, return a new string.  */)
 	  nchars++;
 	  changed = true;
 	}
-      else if (strp[0] == uLSQM0 && strp[1] == uLSQM1
-	       && (strp[2] == uLSQM2 || strp[2] == uRSQM2)
-	       && quoting_style != CURVE_QUOTING_STYLE)
-        {
-	  *bufp++ = (strp[2] == uLSQM2 && quoting_style == GRAVE_QUOTING_STYLE
-		     ? '`' : '\'');
-	  strp += 3;
-	  nchars++;
-	  changed = true;
-        }
-      else if (! multibyte)		/* just copy other chars */
+      else if (! multibyte)
 	*bufp++ = *strp++, nchars++;
       else
 	{
 	  int len;
-
-	  STRING_CHAR_AND_LENGTH (strp, len);
-	  if (len == 1)
-	    *bufp = *strp;
+	  int ch = STRING_CHAR_AND_LENGTH (strp, len);
+	  if ((ch == LEFT_SINGLE_QUOTATION_MARK
+	       || ch == RIGHT_SINGLE_QUOTATION_MARK)
+	      && quoting_style != CURVE_QUOTING_STYLE)
+	    {
+	      *bufp++ = ((ch == LEFT_SINGLE_QUOTATION_MARK
+			  && quoting_style == GRAVE_QUOTING_STYLE)
+			 ? '`' : '\'');
+	      strp += len;
+	      changed = true;
+	    }
 	  else
-	    memcpy (bufp, strp, len);
-	  strp += len;
-	  bufp += len;
+	    {
+	      do
+		*bufp++ = *strp++;
+	      while (--len != 0);
+	    }
 	  nchars++;
 	}
     }
@@ -1018,67 +1013,6 @@ Otherwise, return a new string.  */)
     tem = string;
   xfree (buf);
   RETURN_UNGCPRO (tem);
-}
-
-DEFUN ("internal--text-restyle", Finternal__text_restyle,
-       Sinternal__text_restyle, 1, 1, 0,
-       doc: /* Return STRING, possibly substituting quote characters.
-
-In the result, replace each curved single quote (\\=‘ and \\=’) by
-left and right quote characters as specified by ‘text-quoting-style’.
-
-Return the original STRING in the common case where no changes are needed.
-Otherwise, return a new string.  */)
-  (Lisp_Object string)
-{
-  bool changed = false;
-
-  CHECK_STRING (string);
-  if (! STRING_MULTIBYTE (string))
-    return string;
-
-  enum text_quoting_style quoting_style = text_quoting_style ();
-  if (quoting_style == CURVE_QUOTING_STYLE)
-    return string;
-
-  ptrdiff_t bsize = SBYTES (string);
-  unsigned char const *strp = SDATA (string);
-  unsigned char const *strlim = strp + bsize;
-  USE_SAFE_ALLOCA;
-  char *buf = SAFE_ALLOCA (bsize);
-  char *bufp = buf;
-  ptrdiff_t nchars = 0;
-
-  while (strp < strlim)
-    {
-      unsigned char const *cp = strp;
-      switch (STRING_CHAR_ADVANCE (strp))
-	{
-	case LEFT_SINGLE_QUOTATION_MARK:
-	  *bufp++ = quoting_style == GRAVE_QUOTING_STYLE ? '`': '\'';
-	  changed = true;
-	  break;
-
-	case RIGHT_SINGLE_QUOTATION_MARK:
-	  *bufp++ = '\'';
-	  changed = true;
-	  break;
-
-	default:
-	  do
-	    *bufp++ = *cp++;
-	  while (cp != strp);
-
-	  break;
-	}
-
-      nchars++;
-    }
-
-  Lisp_Object result
-    = changed ? make_string_from_bytes (buf, nchars, bufp - buf) : string;
-  SAFE_FREE ();
-  return result;
 }
 
 void
@@ -1113,5 +1047,4 @@ displayable, and like ‘grave’ otherwise.  */);
   defsubr (&Sdocumentation_property);
   defsubr (&Ssnarf_documentation);
   defsubr (&Ssubstitute_command_keys);
-  defsubr (&Sinternal__text_restyle);
 }
