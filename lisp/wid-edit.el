@@ -1676,7 +1676,7 @@ as the argument to `documentation-property'."
 		   (cond ((functionp doc-prop)
 			  (funcall doc-prop value))
 			 ((symbolp doc-prop)
-			  (documentation-property value doc-prop)))))))
+			  (documentation-property value doc-prop t)))))))
     (when (and (stringp doc) (> (length doc) 0))
       ;; Remove any redundant `*' in the beginning.
       (when (eq (aref doc 0) ?*)

@@ -633,7 +633,7 @@ if that fails, the doc string with `custom-guess-doc-alist'."
 	(setq found (nth 1 current)
 	      names nil)))
     (unless found
-      (let ((doc (documentation-property symbol 'variable-documentation))
+      (let ((doc (documentation-property symbol 'variable-documentation t))
 	    (docs custom-guess-doc-alist))
 	(when doc
 	  (while docs
@@ -2457,7 +2457,7 @@ If INITIAL-STRING is non-nil, use that rather than \"Parent groups:\"."
   "Return documentation of VARIABLE for use in Custom buffer.
 Normally just return the docstring.  But if VARIABLE automatically
 becomes buffer local when set, append a message to that effect."
-  (format "%s%s" (documentation-property variable 'variable-documentation)
+  (format "%s%s" (documentation-property variable 'variable-documentation t)
 	  (if (and (local-variable-if-set-p variable)
 		   (or (not (local-variable-p variable))
 		       (with-temp-buffer
@@ -3995,7 +3995,7 @@ If GROUPS-ONLY is non-nil, return only those members that are groups."
 	 (members (custom-group-members symbol
 					(and (eq custom-buffer-style 'tree)
 					     custom-browse-only-groups)))
-	 (doc (widget-docstring widget)))
+	 (doc (substitute-command-keys (widget-docstring widget))))
     (cond ((and (eq custom-buffer-style 'tree)
 		(eq state 'hidden)
 		(or members (custom-unloaded-widget-p widget)))

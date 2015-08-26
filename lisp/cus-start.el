@@ -224,11 +224,9 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 	     (text-quoting-style
               help
               (choice
-               (const :tag "Quote with curved single quotes" curve)
-               (const :tag "Quote with straight apostrophes 'like this'"
-                      straight)
-               (const :tag "Quote with grave accent and apostrophe `like this'"
-                      grave)
+               (const :tag "Quote with curved single quotes \\=‘like this\\=’" curve)
+               (const :tag "Quote with straight apostrophes \\='like this\\='" straight)
+               (const :tag "Quote with grave accent and apostrophe \\=`like this\\='" grave)
                (const :tag "Use curved quotes if displayable, grave accent and apostrophe otherwise" nil))
               "25.1")
              ;; dosfns.c
