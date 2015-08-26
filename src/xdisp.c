@@ -10124,6 +10124,25 @@ message3 (Lisp_Object m)
   UNGCPRO;
 }
 
+/* Log the message M to stderr.  Log an empty line if M is not a string.  */
+
+static void
+message_to_stderr (Lisp_Object m)
+{
+  if (noninteractive_need_newline)
+    {
+      noninteractive_need_newline = false;
+      fputc ('\n', stderr);
+    }
+  if (STRINGP (m))
+    {
+      Lisp_Object s = ENCODE_SYSTEM (m);
+      fwrite (SDATA (s), SBYTES (s), 1, stderr);
+    }
+  if (!cursor_in_echo_area)
+    fputc ('\n', stderr);
+  fflush (stderr);
+}
 
 /* The non-logging version of message3.
    This does not cancel echoing, because it is used for echoing.
@@ -10136,20 +10155,7 @@ message3_nolog (Lisp_Object m)
   struct frame *sf = SELECTED_FRAME ();
 
   if (FRAME_INITIAL_P (sf))
-    {
-      if (noninteractive_need_newline)
-	putc ('\n', stderr);
-      noninteractive_need_newline = false;
-      if (STRINGP (m))
-	{
-	  Lisp_Object s = ENCODE_SYSTEM (m);
-
-	  fwrite (SDATA (s), SBYTES (s), 1, stderr);
-	}
-      if (!cursor_in_echo_area)
-	fprintf (stderr, "\n");
-      fflush (stderr);
-    }
+    message_to_stderr (m);
   /* Error messages get reported properly by cmd_error, so this must be just an
      informative message; if the frame hasn't really been initialized yet, just
      toss it.  */
@@ -10216,24 +10222,12 @@ message_with_string (const char *m, Lisp_Object string, bool log)
 {
   CHECK_STRING (string);
 
+  bool need_message;
   if (noninteractive)
-    {
-      if (m)
-	{
-	  /* ENCODE_SYSTEM below can GC and/or relocate the
-	     Lisp data, so make sure we don't use it here.  */
-	  eassert (relocatable_string_data_p (m) != 1);
-
-	  if (noninteractive_need_newline)
-	    putc ('\n', stderr);
-	  noninteractive_need_newline = false;
-	  fprintf (stderr, m, SDATA (ENCODE_SYSTEM (string)));
-	  if (!cursor_in_echo_area)
-	    fprintf (stderr, "\n");
-	  fflush (stderr);
-	}
-    }
-  else if (INTERACTIVE)
+    need_message = !!m;
+  else if (!INTERACTIVE)
+    need_message = false;
+  else
     {
       /* The frame whose minibuffer we're going to display the message on.
 	 It may be larger than the selected frame, so we need
@@ -10249,27 +10243,32 @@ message_with_string (const char *m, Lisp_Object string, bool log)
       /* Error messages get reported properly by cmd_error, so this must be
 	 just an informative message; if the frame hasn't really been
 	 initialized yet, just toss it.  */
-      if (f->glyphs_initialized_p)
+      need_message = f->glyphs_initialized_p;
+    }
+
+  if (need_message)
+    {
+      AUTO_STRING (fmt, m);
+      struct gcpro gcpro1;
+      Lisp_Object msg = string;
+      GCPRO1 (msg);
+      msg = CALLN (Fformat_message, fmt, msg);
+
+      if (noninteractive)
+	message_to_stderr (msg);
+      else
 	{
-	  struct gcpro gcpro1, gcpro2;
-
-	  Lisp_Object fmt = build_string (m);
-	  Lisp_Object msg = string;
-	  GCPRO2 (fmt, msg);
-
-	  msg = CALLN (Fformat, fmt, msg);
-
 	  if (log)
 	    message3 (msg);
 	  else
 	    message3_nolog (msg);
 
-	  UNGCPRO;
-
 	  /* Print should start at the beginning of the message
 	     buffer next time.  */
 	  message_buf_print = false;
 	}
+
+      UNGCPRO;
     }
 }
 
