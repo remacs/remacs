@@ -940,7 +940,7 @@ print_error_message (Lisp_Object data, Lisp_Object stream, const char *context,
     if (!STRINGP (errmsg))
       write_string_1 ("peculiar error", stream);
     else if (SCHARS (errmsg))
-      Fprinc (errmsg, stream);
+      Fprinc (Fsubstitute_command_keys (errmsg), stream);
     else
       sep = NULL;
 
