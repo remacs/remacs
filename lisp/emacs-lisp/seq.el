@@ -48,6 +48,7 @@
 ;; - `seq-do'
 ;; - `seq-p'
 ;; - `seq-subseq'
+;; - `seq-into-sequence'
 ;; - `seq-copy'
 ;; - `seq-into'
 ;;
@@ -200,7 +201,17 @@ The result is a sequence of the same type as SEQ."
 TYPE must be one of following symbols: vector, string or list.
 
 \n(fn TYPE SEQUENCE...)"
-  (apply #'cl-concatenate type seqs))
+  (apply #'cl-concatenate type (seq-map #'seq-into-sequence seqs)))
+
+(cl-defgeneric seq-into-sequence (seq)
+  "Convert SEQ into a sequence.
+
+The default implementation is to signal an error if SEQ is not a
+sequence, specific functions should be implemented for new types
+of seq."
+  (unless (sequencep seq)
+    (error "Cannot convert %S into a sequence" seq))
+  seq)
 
 (cl-defgeneric seq-into (seq type)
   "Convert the sequence SEQ into a sequence of type TYPE.

@@ -312,5 +312,10 @@ Evaluate BODY for each created sequence.
     (should (= (seq-min seq) 0))
     (should (= (seq-max seq) 5))))
 
+(ert-deftest test-seq-into-sequence ()
+  (with-test-sequences (seq '(1 2 3))
+    (should (eq seq (seq-into-sequence seq)))
+    (should-error (seq-into-sequence 2))))
+
 (provide 'seq-tests)
 ;;; seq-tests.el ends here
