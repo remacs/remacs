@@ -149,17 +149,17 @@ converted to the compressed format."
 
 	    (insert
 	     (gnus-format-message
-	      "\nIn order to use version ‘%s’ of gnus, you will need to set\n"
+	      "\nIn order to use version `%s' of gnus, you will need to set\n"
 	      converting-to))
             (insert "gnus-agent-expire-days to an integer. If you still wish to set different\n")
             (insert "expiration days to individual groups, you must instead set the\n")
             (insert (gnus-format-message
-		     "‘agent-days-until-old’ group and/or topic parameter.\n"))
+		     "`agent-days-until-old' group and/or topic parameter.\n"))
             (insert "\n")
             (insert "If you would like, gnus can iterate over every group comparing its name to the\n")
             (insert "regular expressions that you currently have in gnus-agent-expire-days.  When\n")
             (insert (gnus-format-message
-		     "gnus finds a match, it will update that group's ‘agent-days-until-old’ group\n"))
+		     "gnus finds a match, it will update that group's `agent-days-until-old' group\n"))
             (insert "parameter to the value associated with the regular expression.\n")
             (insert "\n")
             (insert "Whether gnus assigns group parameters, or not, gnus will terminate with an\n")

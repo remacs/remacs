@@ -165,7 +165,7 @@ If CONFIRM is non-nil, the user will be asked for an NNTP server."
        gnus-batch-mode
        (gnus-y-or-n-p
 	(gnus-format-message
-	 "%s (%s) open error: ‘%s’.  Continue? "
+	 "%s (%s) open error: `%s'.  Continue? "
 	 (car gnus-select-method) (cadr gnus-select-method)
 	 (gnus-status-message gnus-select-method)))
        (gnus-error 1 "Couldn't open server on %s"

@@ -1097,7 +1097,7 @@ Note that the MAX parameter is used so we can exit the parse early."
           (if (equal item2 "machine")
               (progn
                 (gnus-error 1
-                 "%s: Unexpected ‘machine’ token at line %d"
+                 "%s: Unexpected `machine' token at line %d"
                  "auth-source-netrc-parse-entries"
                  (auth-source-current-line))
                 (forward-line 1))
