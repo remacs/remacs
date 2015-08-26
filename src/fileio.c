@@ -2681,7 +2681,11 @@ and the directory must allow you to open files in it.  In order to use a
 directory as a buffer's current directory, this predicate must return true.
 A directory name spec may be given instead; then the value is t
 if the directory so specified exists and really is a readable and
-searchable directory.  */)
+searchable directory.
+
+The result might be a false positive on MS-Windows in some rare cases,
+i.e., this function could return t for a directory that is not
+accessible by the current user.  */)
   (Lisp_Object filename)
 {
   Lisp_Object absname;
