@@ -1353,12 +1353,12 @@ otherwise."
   (interactive)
   (let ((file (dired-get-filename t)))
     (if dired-bind-vm
-	(if (y-or-n-p (concat "Visit `" file
-			      "' as a mail folder with VM?"))
+	(if (y-or-n-p (format-message
+		       "Visit ‘%s’ as a mail folder with VM?" file))
 	    (dired-vm))
       ;; Read mail folder using rmail.
-      (if (y-or-n-p (concat "Visit `" file
-			    "' as a mailbox with RMAIL?"))
+      (if (y-or-n-p (format-message
+		     "Visit ‘%s’ as a mailbox with RMAIL?" file))
 	  (dired-rmail)))))
 
 

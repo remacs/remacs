@@ -151,7 +151,8 @@ use in place of \"-ls\" as the final argument."
     (let ((find (get-buffer-process (current-buffer))))
       (when find
 	(if (or (not (eq (process-status find) 'run))
-		(yes-or-no-p "A `find' process is running; kill it? "))
+		(yes-or-no-p
+		 (format-message "A `find' process is running; kill it? ")))
 	    (condition-case nil
 		(progn
 		  (interrupt-process find)

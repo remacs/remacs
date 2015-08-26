@@ -1224,7 +1224,7 @@ use for the dialog.  It defaults to \"*`recentf-menu-title'*\"."
                        ", or type the corresponding digit key,"
                      "")
                    " to open it.\n"
-                   "Click on Cancel or type `q' to cancel.\n")
+                   (format-message "Click on Cancel or type ‘q’ to cancel.\n"))
     ;; Use a L&F that looks like the recentf menu.
     (tree-widget-set-theme "folder")
     (apply 'widget-create
@@ -1281,7 +1281,8 @@ Write data into the file specified by `recentf-save-file'."
       (with-temp-buffer
         (erase-buffer)
         (set-buffer-file-coding-system recentf-save-file-coding-system)
-        (insert (format recentf-save-file-header (current-time-string)))
+        (insert (format-message recentf-save-file-header
+				(current-time-string)))
         (recentf-dump-variable 'recentf-list recentf-max-saved-items)
         (recentf-dump-variable 'recentf-filter-changer-current)
         (insert "\n\n;; Local Variables:\n"

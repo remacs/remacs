@@ -799,7 +799,8 @@ relevant to POS."
                   (insert "\n  " (car elt) ":"
                           (propertize " " 'display '(space :align-to 4))
                           (or (cdr elt) "-- not encodable --"))))
-              (insert "\nSee the variable `reference-point-alist' for "
+              (insert (substitute-command-keys
+		       "\nSee the variable `reference-point-alist' for ")
                       "the meaning of the rule.\n")))
 
           (unless eight-bit-p
