@@ -533,10 +533,9 @@ EOL-TYPE can be one of `dos', `unix', or `mac'."
 	  (cond ((eq eol-type 'dos) 'crlf)
 		((eq eol-type 'unix) 'lf)
 		((eq eol-type 'mac) 'cr)
-		(t
-		 (error
-                  "Unknown EOL-TYPE `%s', must be `dos', `unix', or `mac'"
-                  eol-type)))))
+		(t (error
+		    "Unknown EOL-TYPE `%s', must be `dos', `unix', or `mac'"
+		    eol-type)))))
         (t (error "Can't change EOL conversion -- is MULE missing?"))))
 
 ;; `replace-regexp-in-string' does not exist in XEmacs.
@@ -596,8 +595,6 @@ and replace a sub-expression, e.g.
   (defalias 'default-toplevel-value 'symbol-value))
 
 ;; `format-message' is new in Emacs 25, and does not exist in XEmacs.
-;; The substitute implementation always uses grave quoting style, for
-;; compatibility with older Emacs.
 (unless (fboundp 'format-message)
   (defalias 'format-message 'format))
 
