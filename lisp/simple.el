@@ -3565,8 +3565,9 @@ Also, delete any process that is exited or signaled."
 		  (buf-label (if (buffer-live-p buf)
 				 `(,(buffer-name buf)
 				   face link
-				   help-echo ,(concat "Visit buffer `"
-						      (buffer-name buf) "'")
+				   help-echo ,(format-message
+					       "Visit buffer ‘%s’"
+					       (buffer-name buf))
 				   follow-link t
 				   process-buffer ,buf
 				   action process-menu-visit-buffer)

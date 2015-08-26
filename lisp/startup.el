@@ -1115,8 +1115,9 @@ please check its value")
 			      "~/.emacs")
 			     ((directory-files "~" nil "^_emacs\\(\\.elc?\\)?$")
 			      ;; Also support _emacs for compatibility, but warn about it.
-			      (push '(initialization
-				      "`_emacs' init file is deprecated, please use `.emacs'")
+			      (push `(initialization
+				      ,(format-message
+					"`_emacs' init file is deprecated, please use `.emacs'"))
 				    delayed-warnings-list)
 			      "~/_emacs")
 			     (t ;; But default to .emacs if _emacs does not exist.

@@ -1599,7 +1599,7 @@ This button will have a menu with all three reset operations."
 
 (defcustom custom-raised-buttons (not (equal (face-valid-attribute-values :box)
 					     '(("unspecified" . unspecified))))
-  "If non-nil, indicate active buttons in a `raised-button' style.
+  "If non-nil, indicate active buttons in a raised-button style.
 Otherwise use brackets."
   :type 'boolean
   :version "21.1"
@@ -1748,7 +1748,7 @@ Operate on all settings in this buffer:\n"))
 on a button to invoke its action.
 Invoke [+] to expand a group, and [-] to collapse an expanded group.\n"
 			 (if custom-raised-buttons
-			     "`Raised' text indicates"
+			     "Raised text indicates"
 			   "Square brackets indicate")))
 
 

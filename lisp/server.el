@@ -533,7 +533,8 @@ Creates the directory if necessary and makes sure:
 		  ((and w32 (zerop uid))	  ; on FAT32?
 		   (display-warning
 		    'server
-		    (format "Using `%s' to store Emacs-server authentication files.
+		    (format-message "\
+Using `%s' to store Emacs-server authentication files.
 Directories on FAT32 filesystems are NOT secure against tampering.
 See variable `server-auth-dir' for details."
 			    (file-name-as-directory dir))
