@@ -958,15 +958,12 @@ void
 save_excursion_restore (Lisp_Object info)
 {
   Lisp_Object tem, tem1;
-  struct gcpro gcpro1;
 
   tem = Fmarker_buffer (XSAVE_OBJECT (info, 0));
   /* If we're unwinding to top level, saved buffer may be deleted.  This
      means that all of its markers are unchained and so tem is nil.  */
   if (NILP (tem))
     goto out;
-
-  GCPRO1 (info);
 
   Fset_buffer (tem);
 
@@ -987,8 +984,6 @@ save_excursion_restore (Lisp_Object info)
 	   /* ...and it shows the current buffer.  */
 	   && XBUFFER (tem1) == current_buffer)))
     Fset_window_point (tem, make_number (PT));
-
-  UNGCPRO;
 
  out:
 
@@ -2482,11 +2477,6 @@ insert1 (Lisp_Object arg)
 }
 
 
-/* Callers passing one argument to Finsert need not gcpro the
-   argument "array", since the only element of the array will
-   not be used after calling insert or insert_from_string, so
-   we don't care if it gets trashed.  */
-
 DEFUN ("insert", Finsert, Sinsert, 0, MANY, 0,
        doc: /* Insert the arguments, either strings or characters, at point.
 Point and before-insertion markers move forward to end up
@@ -3191,10 +3181,7 @@ Both characters must have the same length of multi-byte form.  */)
 	    {
 	      Lisp_Object tem, string;
 
-	      struct gcpro gcpro1;
-
 	      tem = BVAR (current_buffer, undo_list);
-	      GCPRO1 (tem);
 
 	      /* Make a multibyte string containing this single character.  */
 	      string = make_multibyte_string ((char *) tostr, 1, len);
@@ -3213,8 +3200,6 @@ Both characters must have the same length of multi-byte form.  */)
 
 	      if (! NILP (noundo))
 		bset_undo_list (current_buffer, tem);
-
-	      UNGCPRO;
 	    }
 	  else
 	    {
@@ -3724,13 +3709,10 @@ usage: (message-box FORMAT-STRING &rest ARGS)  */)
     {
       Lisp_Object val = Fformat_message (nargs, args);
       Lisp_Object pane, menu;
-      struct gcpro gcpro1;
 
       pane = list1 (Fcons (build_string ("OK"), Qt));
-      GCPRO1 (pane);
       menu = Fcons (val, pane);
       Fx_popup_dialog (Qt, menu, Qt);
-      UNGCPRO;
       return val;
     }
 }
@@ -3772,7 +3754,6 @@ usage: (propertize STRING &rest PROPERTIES)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
   Lisp_Object properties, string;
-  struct gcpro gcpro1, gcpro2;
   ptrdiff_t i;
 
   /* Number of args must be odd.  */
@@ -3780,7 +3761,6 @@ usage: (propertize STRING &rest PROPERTIES)  */)
     error ("Wrong number of arguments");
 
   properties = string = Qnil;
-  GCPRO2 (properties, string);
 
   /* First argument must be a string.  */
   CHECK_STRING (args[0]);
@@ -3792,7 +3772,7 @@ usage: (propertize STRING &rest PROPERTIES)  */)
   Fadd_text_properties (make_number (0),
 			make_number (SCHARS (string)),
 			properties, string);
-  RETURN_UNGCPRO (string);
+  return string;
 }
 
 DEFUN ("format", Fformat, Sformat, 1, MANY, 0,
@@ -3913,9 +3893,6 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
     bool_bf converted_to_string : 1;
     bool_bf intervals : 1;
   } *info = 0;
-
-  /* It should not be necessary to GCPRO ARGS, because
-     the caller in the interpreter should take care of that.  */
 
   CHECK_STRING (args[0]);
   format_start = SSDATA (args[0]);
@@ -4552,12 +4529,10 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
   if (string_intervals (args[0]) || arg_intervals)
     {
       Lisp_Object len, new_len, props;
-      struct gcpro gcpro1;
 
       /* Add text properties from the format string.  */
       len = make_number (SCHARS (args[0]));
       props = text_property_list (args[0], make_number (0), len, Qnil);
-      GCPRO1 (props);
 
       if (CONSP (props))
 	{
@@ -4646,8 +4621,6 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	      add_text_properties_from_list (val, props,
 					     make_number (info[n].start));
 	    }
-
-      UNGCPRO;
     }
 
   /* If we allocated BUF or INFO with malloc, free it too.  */

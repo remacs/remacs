@@ -1025,7 +1025,6 @@ Return t if the file exists and loads successfully.  */)
   int fd;
   int fd_index;
   ptrdiff_t count = SPECPDL_INDEX ();
-  struct gcpro gcpro1, gcpro2, gcpro3;
   Lisp_Object found, efound, hist_file_name;
   /* True means we printed the ".el is newer" message.  */
   bool newer = 0;
@@ -1044,10 +1043,7 @@ Return t if the file exists and loads successfully.  */)
     if (!NILP (handler))
       return call5 (handler, Qload, file, noerror, nomessage, nosuffix); */
 
-  /* Do this after the handler to avoid
-     the need to gcpro noerror, nomessage and nosuffix.
-     (Below here, we care only whether they are nil or not.)
-     The presence of this call is the result of a historical accident:
+  /* The presence of this call is the result of a historical accident:
      it used to be in every file-operation and when it got removed
      everywhere, it accidentally stayed here.  Since then, enough people
      supposedly have things like (load "$PROJECT/foo.el") in their .emacs
@@ -1073,7 +1069,6 @@ Return t if the file exists and loads successfully.  */)
     {
       Lisp_Object suffixes;
       found = Qnil;
-      GCPRO2 (file, found);
 
       if (! NILP (must_suffix))
 	{
@@ -1101,7 +1096,6 @@ Return t if the file exists and loads successfully.  */)
 	}
 
       fd = openp (Vload_path, file, suffixes, &found, Qnil, load_prefer_newer);
-      UNGCPRO;
     }
 
   if (fd == -1)
@@ -1204,8 +1198,6 @@ Return t if the file exists and loads successfully.  */)
 	  struct stat s1, s2;
 	  int result;
 
-	  GCPRO3 (file, found, hist_file_name);
-
 	  if (version < 0
 	      && ! (version = safe_to_load_version (fd)))
 	    {
@@ -1250,7 +1242,6 @@ Return t if the file exists and loads successfully.  */)
                     }
                 }
             } /* !load_prefer_newer */
-	  UNGCPRO;
 	}
     }
   else
@@ -1271,8 +1262,6 @@ Return t if the file exists and loads successfully.  */)
 	  return unbind_to (count, val);
 	}
     }
-
-  GCPRO3 (file, found, hist_file_name);
 
   if (fd < 0)
     {
@@ -1338,8 +1327,6 @@ Return t if the file exists and loads successfully.  */)
   /* Run any eval-after-load forms for this file.  */
   if (!NILP (Ffboundp (Qdo_after_load_evaluation)))
     call1 (Qdo_after_load_evaluation, hist_file_name) ;
-
-  UNGCPRO;
 
   xfree (saved_doc_string);
   saved_doc_string = 0;
@@ -1430,7 +1417,6 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
   bool absolute;
   ptrdiff_t want_length;
   Lisp_Object filename;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5, gcpro6, gcpro7;
   Lisp_Object string, tail, encoded_fn, save_string;
   ptrdiff_t max_suffix_len = 0;
   int last_errno = ENOENT;
@@ -1451,7 +1437,6 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
     }
 
   string = filename = encoded_fn = save_string = Qnil;
-  GCPRO7 (str, string, save_string, filename, path, suffixes, encoded_fn);
 
   if (storeptr)
     *storeptr = Qnil;
@@ -1547,7 +1532,6 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
                   if (storeptr)
                     *storeptr = string;
 		  SAFE_FREE ();
-                  UNGCPRO;
                   return -2;
 		}
 	    }
@@ -1621,7 +1605,6 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
                       if (storeptr)
                         *storeptr = string;
 		      SAFE_FREE ();
-                      UNGCPRO;
                       return fd;
                     }
 		}
@@ -1632,7 +1615,6 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
                   if (storeptr)
                     *storeptr = save_string;
 		  SAFE_FREE ();
-                  UNGCPRO;
                   return save_fd;
                 }
 	    }
@@ -1642,7 +1624,6 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
     }
 
   SAFE_FREE ();
-  UNGCPRO;
   errno = last_errno;
   return -1;
 }
@@ -1746,14 +1727,11 @@ readevalloop_eager_expand_eval (Lisp_Object val, Lisp_Object macroexpand)
   val = call2 (macroexpand, val, Qnil);
   if (EQ (CAR_SAFE (val), Qprogn))
     {
-      struct gcpro gcpro1;
       Lisp_Object subforms = XCDR (val);
 
-      GCPRO1 (subforms);
       for (val = Qnil; CONSP (subforms); subforms = XCDR (subforms))
           val = readevalloop_eager_expand_eval (XCAR (subforms),
                                                 macroexpand);
-      UNGCPRO;
     }
   else
       val = eval_sub (call2 (macroexpand, val, Qt));
@@ -1775,10 +1753,9 @@ readevalloop (Lisp_Object readcharfun,
 	      Lisp_Object unibyte, Lisp_Object readfun,
 	      Lisp_Object start, Lisp_Object end)
 {
-  register int c;
-  register Lisp_Object val;
+  int c;
+  Lisp_Object val;
   ptrdiff_t count = SPECPDL_INDEX ();
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   struct buffer *b = 0;
   bool continue_reading_p;
   Lisp_Object lex_bound;
@@ -1813,7 +1790,7 @@ readevalloop (Lisp_Object readcharfun,
   if (! NILP (start) && !b)
     emacs_abort ();
 
-  specbind (Qstandard_input, readcharfun); /* GCPROs readcharfun.  */
+  specbind (Qstandard_input, readcharfun);
   specbind (Qcurrent_load_list, Qnil);
   record_unwind_protect_int (readevalloop_1, load_convert_to_unibyte);
   load_convert_to_unibyte = !NILP (unibyte);
@@ -1825,8 +1802,6 @@ readevalloop (Lisp_Object readcharfun,
   specbind (Qinternal_interpreter_environment,
 	    (NILP (lex_bound) || EQ (lex_bound, Qunbound)
 	     ? Qnil : list1 (Qt)));
-
-  GCPRO4 (sourcename, readfun, start, end);
 
   /* Try to ensure sourcename is a truename, except whilst preloading.  */
   if (NILP (Vpurify_flag)
@@ -1945,8 +1920,6 @@ readevalloop (Lisp_Object readcharfun,
 
   build_load_history (sourcename,
 		      stream || whole_buffer);
-
-  UNGCPRO;
 
   unbind_to (count, Qnil);
 }
@@ -2664,14 +2637,12 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
       if (c == '(')
 	{
 	  Lisp_Object tmp;
-	  struct gcpro gcpro1;
 	  int ch;
 
 	  /* Read the string itself.  */
 	  tmp = read1 (readcharfun, &ch, 0);
 	  if (ch != 0 || !STRINGP (tmp))
 	    invalid_syntax ("#");
-	  GCPRO1 (tmp);
 	  /* Read the intervals and their properties.  */
 	  while (1)
 	    {
@@ -2689,7 +2660,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		invalid_syntax ("Invalid string property list");
 	      Fset_text_properties (beg, end, plist, tmp);
 	    }
-	  UNGCPRO;
+
 	  return tmp;
 	}
 
@@ -3571,7 +3542,6 @@ read_list (bool flag, Lisp_Object readcharfun)
 {
   Lisp_Object val, tail;
   Lisp_Object elt, tem;
-  struct gcpro gcpro1, gcpro2;
   /* 0 is the normal case.
      1 means this list is a doc reference; replace it with the number 0.
      2 means this list is a doc reference; replace it with the doc string.  */
@@ -3586,9 +3556,7 @@ read_list (bool flag, Lisp_Object readcharfun)
   while (1)
     {
       int ch;
-      GCPRO2 (val, tail);
       elt = read1 (readcharfun, &ch, first_in_list);
-      UNGCPRO;
 
       first_in_list = 0;
 
@@ -3631,13 +3599,12 @@ read_list (bool flag, Lisp_Object readcharfun)
 	    return val;
 	  if (ch == '.')
 	    {
-	      GCPRO2 (val, tail);
 	      if (!NILP (tail))
 		XSETCDR (tail, read0 (readcharfun));
 	      else
 		val = read0 (readcharfun);
 	      read1 (readcharfun, &ch, 0);
-	      UNGCPRO;
+
 	      if (ch == ')')
 		{
 		  if (doc_reference == 1)

@@ -611,10 +611,10 @@ struct frame *
 make_frame (bool mini_p)
 {
   Lisp_Object frame;
-  register struct frame *f;
-  register struct window *rw, *mw;
-  register Lisp_Object root_window;
-  register Lisp_Object mini_window;
+  struct frame *f;
+  struct window *rw, *mw IF_LINT (= NULL);
+  Lisp_Object root_window;
+  Lisp_Object mini_window;
 
   f = allocate_frame ();
   XSETFRAME (frame, f);
@@ -735,10 +735,10 @@ make_frame (bool mini_p)
    default (the global minibuffer).  */
 
 struct frame *
-make_frame_without_minibuffer (register Lisp_Object mini_window, KBOARD *kb, Lisp_Object display)
+make_frame_without_minibuffer (Lisp_Object mini_window, KBOARD *kb,
+			       Lisp_Object display)
 {
-  register struct frame *f;
-  struct gcpro gcpro1;
+  struct frame *f;
 
   if (!NILP (mini_window))
     CHECK_LIVE_WINDOW (mini_window);
@@ -759,11 +759,9 @@ make_frame_without_minibuffer (register Lisp_Object mini_window, KBOARD *kb, Lis
           Lisp_Object frame_dummy;
 
           XSETFRAME (frame_dummy, f);
-          GCPRO1 (frame_dummy);
 	  /* If there's no minibuffer frame to use, create one.  */
 	  kset_default_minibuffer_frame
 	    (kb, call1 (intern ("make-initial-minibuffer-frame"), display));
-          UNGCPRO;
 	}
 
       mini_window
@@ -1855,7 +1853,6 @@ and returns whatever that function returns.  */)
   struct frame *f;
   Lisp_Object lispy_dummy;
   Lisp_Object x, y, retval;
-  struct gcpro gcpro1;
 
   f = SELECTED_FRAME ();
   x = y = Qnil;
@@ -1881,10 +1878,9 @@ and returns whatever that function returns.  */)
     }
   XSETFRAME (lispy_dummy, f);
   retval = Fcons (lispy_dummy, Fcons (x, y));
-  GCPRO1 (retval);
   if (!NILP (Vmouse_position_function))
     retval = call1 (Vmouse_position_function, retval);
-  RETURN_UNGCPRO (retval);
+  return retval;
 }
 
 DEFUN ("mouse-pixel-position", Fmouse_pixel_position,
@@ -1901,7 +1897,6 @@ and nil for X and Y.  */)
   struct frame *f;
   Lisp_Object lispy_dummy;
   Lisp_Object x, y, retval;
-  struct gcpro gcpro1;
 
   f = SELECTED_FRAME ();
   x = y = Qnil;
@@ -1919,10 +1914,9 @@ and nil for X and Y.  */)
 
   XSETFRAME (lispy_dummy, f);
   retval = Fcons (lispy_dummy, Fcons (x, y));
-  GCPRO1 (retval);
   if (!NILP (Vmouse_position_function))
     retval = call1 (Vmouse_position_function, retval);
-  RETURN_UNGCPRO (retval);
+  return retval;
 }
 
 #ifdef HAVE_WINDOW_SYSTEM
@@ -2510,13 +2504,11 @@ If FRAME is omitted or nil, return information on the currently selected frame. 
   Lisp_Object alist;
   struct frame *f = decode_any_frame (frame);
   int height, width;
-  struct gcpro gcpro1;
 
   if (!FRAME_LIVE_P (f))
     return Qnil;
 
   alist = Fcopy_alist (f->param_alist);
-  GCPRO1 (alist);
 
   if (!FRAME_WINDOW_P (f))
     {
@@ -2586,7 +2578,6 @@ If FRAME is omitted or nil, return information on the currently selected frame. 
       store_in_alist (&alist, Qmenu_bar_lines, lines);
     }
 
-  UNGCPRO;
   return alist;
 }
 
@@ -3135,8 +3126,6 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
   /* TAIL and ALIST are not used again below here.  */
   alist = tail = Qnil;
 
-  /* There is no need to gcpro LEFT, TOP, ICON_LEFT, or ICON_TOP,
-     because their values appear in VALUES and strings are not valid.  */
   top = left = Qunbound;
   icon_left = icon_top = Qunbound;
 

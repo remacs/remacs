@@ -1748,13 +1748,9 @@ sys_spawnve (int mode, char *cmdname, char **argv, char **envp)
      absolute.  So we double-check this here, just in case.  */
   if (faccessat (AT_FDCWD, cmdname, X_OK, AT_EACCESS) != 0)
     {
-      struct gcpro gcpro1;
-
       program = build_string (cmdname);
       full = Qnil;
-      GCPRO1 (program);
       openp (Vexec_path, program, Vexec_suffixes, &full, make_number (X_OK), 0);
-      UNGCPRO;
       if (NILP (full))
 	{
 	  errno = EINVAL;

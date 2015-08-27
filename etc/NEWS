@@ -39,6 +39,12 @@ should be able to work around the problem either by porting the Emacs
 undumping code to GCC under IRIX, or by configuring --with-wide-int,
 or by sticking with Emacs 24.4.
 
+** The Emacs garbage collector assumes GC_MARK_STACK == GC_MAKE_GCPROS_NOOPS.
+The GC_MAKE_GCPROS_NOOPS stack-marking variant has been the default
+since Emacs 24.4, and the other variants were undocumented and were
+obstacles to maintenance and development.  GC_MARK_STACK and its
+related symbols have been removed from the C internals.
+
 ** 'configure' now prefers gnustep-config when configuring GNUstep.
 If gnustep-config is not available, the old heuristics are used.
 

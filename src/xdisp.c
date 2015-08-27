@@ -3720,10 +3720,8 @@ handle_fontified_prop (struct it *it)
       else
 	{
 	  Lisp_Object fns, fn;
-	  struct gcpro gcpro1, gcpro2;
 
 	  fns = Qnil;
-	  GCPRO2 (val, fns);
 
 	  for (; CONSP (val); val = XCDR (val))
 	    {
@@ -3748,8 +3746,6 @@ handle_fontified_prop (struct it *it)
 	      else
 		safe_call1 (fn, pos);
 	    }
-
-	  UNGCPRO;
 	}
 
       unbind_to (count, Qnil);
@@ -4745,7 +4741,6 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
   if (!NILP (form) && !EQ (form, Qt))
     {
       ptrdiff_t count = SPECPDL_INDEX ();
-      struct gcpro gcpro1;
 
       /* Bind `object' to the object having the `display' property, a
 	 buffer or string.  Bind `position' to the position in the
@@ -4757,9 +4752,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
       specbind (Qobject, object);
       specbind (Qposition, make_number (CHARPOS (*position)));
       specbind (Qbuffer_position, make_number (bufpos));
-      GCPRO1 (form);
       form = safe_eval (form);
-      UNGCPRO;
       unbind_to (count, Qnil);
     }
 
@@ -9835,9 +9828,6 @@ vadd_to_log (char const *format, va_list ap)
   for (ptrdiff_t i = 1; i <= nargs; i++)
     args[i] = va_arg (ap, Lisp_Object);
   Lisp_Object msg = Qnil;
-  struct gcpro gcpro1, gcpro2;
-  GCPRO2 (args[1], msg);
-  gcpro1.nvars = form_nargs;
   msg = Fformat_message (nargs, args);
 
   ptrdiff_t len = SBYTES (msg) + 1;
@@ -9847,8 +9837,6 @@ vadd_to_log (char const *format, va_list ap)
 
   message_dolog (buffer, len - 1, true, STRING_MULTIBYTE (msg));
   SAFE_FREE ();
-
-  UNGCPRO;
 }
 
 
@@ -9887,7 +9875,6 @@ message_dolog (const char *m, ptrdiff_t nbytes, bool nlflag, bool multibyte)
       ptrdiff_t point_at_end = 0;
       ptrdiff_t zv_at_end = 0;
       Lisp_Object old_deactivate_mark;
-      struct gcpro gcpro1;
 
       old_deactivate_mark = Vdeactivate_mark;
       oldbuf = current_buffer;
@@ -9909,7 +9896,6 @@ message_dolog (const char *m, ptrdiff_t nbytes, bool nlflag, bool multibyte)
       set_marker_restricted_both (oldbegv, Qnil, BEGV, BEGV_BYTE);
       oldzv = message_dolog_marker3;
       set_marker_restricted_both (oldzv, Qnil, ZV, ZV_BYTE);
-      GCPRO1 (old_deactivate_mark);
 
       if (PT == Z)
 	point_at_end = 1;
@@ -10033,7 +10019,6 @@ message_dolog (const char *m, ptrdiff_t nbytes, bool nlflag, bool multibyte)
 	TEMP_SET_PT_BOTH (marker_position (oldpoint),
 			  marker_byte_position (oldpoint));
 
-      UNGCPRO;
       unchain_marker (XMARKER (oldpoint));
       unchain_marker (XMARKER (oldbegv));
       unchain_marker (XMARKER (oldzv));
@@ -10101,9 +10086,6 @@ message_log_check_duplicate (ptrdiff_t prev_bol_byte, ptrdiff_t this_bol_byte)
 void
 message3 (Lisp_Object m)
 {
-  struct gcpro gcpro1;
-
-  GCPRO1 (m);
   clear_message (true, true);
   cancel_echoing ();
 
@@ -10121,7 +10103,6 @@ message3 (Lisp_Object m)
     }
   if (! inhibit_message)
     message3_nolog (m);
-  UNGCPRO;
 }
 
 /* Log the message M to stderr.  Log an empty line if M is not a string.  */
@@ -10249,10 +10230,7 @@ message_with_string (const char *m, Lisp_Object string, bool log)
   if (need_message)
     {
       AUTO_STRING (fmt, m);
-      struct gcpro gcpro1;
-      Lisp_Object msg = string;
-      GCPRO1 (msg);
-      msg = CALLN (Fformat_message, fmt, msg);
+      Lisp_Object msg = CALLN (Fformat_message, fmt, string);
 
       if (noninteractive)
 	message_to_stderr (msg);
@@ -10267,8 +10245,6 @@ message_with_string (const char *m, Lisp_Object string, bool log)
 	     buffer next time.  */
 	  message_buf_print = false;
 	}
-
-      UNGCPRO;
     }
 }
 
@@ -11556,7 +11532,6 @@ prepare_menu_bars (void)
 {
   bool all_windows = windows_or_buffers_changed || update_mode_lines;
   bool some_windows = REDISPLAY_SOME_P ();
-  struct gcpro gcpro1, gcpro2;
   Lisp_Object tooltip_frame;
 
 #ifdef HAVE_WINDOW_SYSTEM
@@ -11659,7 +11634,6 @@ prepare_menu_bars (void)
 	      /* Clear flag first in case we get an error below.  */
 	      FRAME_WINDOW_SIZES_CHANGED (f) = false;
 	      functions = Vwindow_size_change_functions;
-	      GCPRO2 (tail, functions);
 
 	      while (CONSP (functions))
 		{
@@ -11667,15 +11641,12 @@ prepare_menu_bars (void)
 		    call1 (XCAR (functions), frame);
 		  functions = XCDR (functions);
 		}
-	      UNGCPRO;
 	    }
 
-	  GCPRO1 (tail);
 	  menu_bar_hooks_run = update_menu_bar (f, false, menu_bar_hooks_run);
 #ifdef HAVE_WINDOW_SYSTEM
 	  update_tool_bar (f, false);
 #endif
-	  UNGCPRO;
 	}
 
       unbind_to (count, Qnil);
@@ -11861,7 +11832,6 @@ update_tool_bar (struct frame *f, bool save_match_data)
 	  ptrdiff_t count = SPECPDL_INDEX ();
 	  Lisp_Object frame, new_tool_bar;
           int new_n_tool_bar;
-	  struct gcpro gcpro1;
 
 	  /* Set current_buffer to the buffer of the selected
 	     window of the frame, so that we get the right local
@@ -11878,8 +11848,6 @@ update_tool_bar (struct frame *f, bool save_match_data)
 	      specbind (Qoverriding_terminal_local_map, Qnil);
 	      specbind (Qoverriding_local_map, Qnil);
 	    }
-
-	  GCPRO1 (new_tool_bar);
 
 	  /* We must temporarily set the selected frame to this frame
 	     before calling tool_bar_items, because the calculation of
@@ -11912,8 +11880,6 @@ update_tool_bar (struct frame *f, bool save_match_data)
               unblock_input ();
             }
 
-	  UNGCPRO;
-
 	  unbind_to (count, Qnil);
 	  set_buffer_internal_1 (prev);
 	}
@@ -11930,11 +11896,9 @@ static void
 build_desired_tool_bar_string (struct frame *f)
 {
   int i, size, size_needed;
-  struct gcpro gcpro1, gcpro2;
   Lisp_Object image, plist;
 
   image = plist = Qnil;
-  GCPRO2 (image, plist);
 
   /* Prepare F->desired_tool_bar_string.  If we can reuse it, do so.
      Otherwise, make a new string.  */
@@ -11954,11 +11918,8 @@ build_desired_tool_bar_string (struct frame *f)
   else
     {
       AUTO_LIST4 (props, Qdisplay, Qnil, Qmenu_item, Qnil);
-      struct gcpro gcpro1;
-      GCPRO1 (props);
       Fremove_text_properties (make_number (0), make_number (size),
 			       props, f->desired_tool_bar_string);
-      UNGCPRO;
     }
 
   /* Put a `display' property on the string for the images to display,
@@ -12071,8 +12032,6 @@ build_desired_tool_bar_string (struct frame *f)
       image = Fcons (Qimage, plist);
       AUTO_LIST4 (props, Qdisplay, image, Qmenu_item,
 		  make_number (i * TOOL_BAR_ITEM_NSLOTS));
-      struct gcpro gcpro1;
-      GCPRO1 (props);
 
       /* Let the last image hide all remaining spaces in the tool bar
          string.  The string can be longer than needed when we reuse a
@@ -12083,11 +12042,8 @@ build_desired_tool_bar_string (struct frame *f)
 	end = i + 1;
       Fadd_text_properties (make_number (i), make_number (end),
 			    props, f->desired_tool_bar_string);
-      UNGCPRO;
 #undef PROP
     }
-
-  UNGCPRO;
 }
 
 

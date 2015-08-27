@@ -408,14 +408,11 @@ x_set_icon_name (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 static void
 ns_set_name_internal (struct frame *f, Lisp_Object name)
 {
-  struct gcpro gcpro1;
   Lisp_Object encoded_name, encoded_icon_name;
   NSString *str;
   NSView *view = FRAME_NS_VIEW (f);
 
-  GCPRO1 (name);
   encoded_name = ENCODE_UTF_8 (name);
-  UNGCPRO;
 
   str = [NSString stringWithUTF8String: SSDATA (encoded_name)];
 
@@ -534,7 +531,6 @@ ns_set_name_as_filename (struct frame *f)
   Lisp_Object buf = XWINDOW (f->selected_window)->contents;
   const char *title;
   NSAutoreleasePool *pool;
-  struct gcpro gcpro1;
   Lisp_Object encoded_name, encoded_filename;
   NSString *str;
   NSTRACE (ns_set_name_as_filename);
@@ -555,9 +551,7 @@ ns_set_name_as_filename (struct frame *f)
         name = build_string ([ns_app_name UTF8String]);
     }
 
-  GCPRO1 (name);
   encoded_name = ENCODE_UTF_8 (name);
-  UNGCPRO;
 
   view = FRAME_NS_VIEW (f);
 
@@ -582,9 +576,7 @@ ns_set_name_as_filename (struct frame *f)
 
       if (! NILP (filename))
         {
-          GCPRO1 (filename);
           encoded_filename = ENCODE_UTF_8 (filename);
-          UNGCPRO;
 
           fstr = [NSString stringWithUTF8String: SSDATA (encoded_filename)];
           if (fstr == nil) fstr = @"";
@@ -1085,7 +1077,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
   int minibuffer_only = 0;
   long window_prompting = 0;
   ptrdiff_t count = specpdl_ptr - specpdl;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   Lisp_Object display;
   struct ns_display_info *dpyinfo = NULL;
   Lisp_Object parent;
@@ -1127,7 +1118,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
   /* No need to protect DISPLAY because that's not used after passing
      it to make_frame_without_minibuffer.  */
   frame = Qnil;
-  GCPRO4 (parms, parent, name, frame);
   tem = x_get_arg (dpyinfo, parms, Qminibuffer, "minibuffer", "Minibuffer",
                   RES_TYPE_SYMBOL);
   if (EQ (tem, Qnone) || NILP (tem))
@@ -1367,8 +1357,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
   for (tem = parms; CONSP (tem); tem = XCDR (tem))
     if (CONSP (XCAR (tem)) && !NILP (XCAR (XCAR (tem))))
       fset_param_alist (f, Fcons (XCAR (tem), f->param_alist));
-
-  UNGCPRO;
 
   if (window_prompting & USPosition)
     x_set_offset (f, f->left_pos, f->top_pos, 1);
@@ -2775,15 +2763,12 @@ Text larger than the specified size is clipped.  */)
      (Lisp_Object string, Lisp_Object frame, Lisp_Object parms, Lisp_Object timeout, Lisp_Object dx, Lisp_Object dy)
 {
   int root_x, root_y;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   ptrdiff_t count = SPECPDL_INDEX ();
   struct frame *f;
   char *str;
   NSSize size;
 
   specbind (Qinhibit_redisplay, Qt);
-
-  GCPRO4 (string, parms, frame, timeout);
 
   CHECK_STRING (string);
   str = SSDATA (string);
@@ -2820,7 +2805,6 @@ Text larger than the specified size is clipped.  */)
   [ns_tooltip showAtX: root_x Y: root_y for: XINT (timeout)];
   unblock_input ();
 
-  UNGCPRO;
   return unbind_to (count, Qnil);
 }
 

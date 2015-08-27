@@ -1323,8 +1323,6 @@ x_set_scroll_bar_background (struct frame *f, Lisp_Object value, Lisp_Object old
 /* Encode Lisp string STRING as a text in a format appropriate for
    XICCC (X Inter Client Communication Conventions).
 
-   This can call Lisp code, so callers must GCPRO.
-
    If STRING contains only ASCII characters, do no conversion and
    return the string data of STRING.  Otherwise, encode the text by
    CODING_SYSTEM, and return a newly allocated memory area which
@@ -1386,13 +1384,10 @@ x_set_name_internal (struct frame *f, Lisp_Object name)
 	Lisp_Object coding_system;
 	Lisp_Object encoded_name;
 	Lisp_Object encoded_icon_name;
-	struct gcpro gcpro1;
 
 	/* As ENCODE_UTF_8 may cause GC and relocation of string data,
 	   we use it before x_encode_text that may return string data.  */
-	GCPRO1 (name);
 	encoded_name = ENCODE_UTF_8 (name);
-	UNGCPRO;
 
 	coding_system = Qcompound_text;
 	/* Note: Encoding strategy
@@ -2979,7 +2974,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
   bool minibuffer_only = false;
   long window_prompting = 0;
   ptrdiff_t count = SPECPDL_INDEX ();
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   Lisp_Object display;
   struct x_display_info *dpyinfo = NULL;
   Lisp_Object parent;
@@ -3018,11 +3012,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
   if (! NILP (parent))
     CHECK_NUMBER (parent);
 
-  /* make_frame_without_minibuffer can run Lisp code and garbage collect.  */
-  /* No need to protect DISPLAY because that's not used after passing
-     it to make_frame_without_minibuffer.  */
   frame = Qnil;
-  GCPRO4 (parms, parent, name, frame);
   tem = x_get_arg (dpyinfo, parms, Qminibuffer, "minibuffer", "Minibuffer",
 		   RES_TYPE_SYMBOL);
   if (EQ (tem, Qnone) || NILP (tem))
@@ -3069,7 +3059,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
      to get the color reference counts right, so initialize them!  */
   {
     Lisp_Object black;
-    struct gcpro gcpro1;
 
     /* Function x_decode_color can signal an error.  Make
        sure to initialize color slots so that we won't try
@@ -3082,7 +3071,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
     f->output_data.x->mouse_pixel = -1;
 
     black = build_string ("black");
-    GCPRO1 (black);
     FRAME_FOREGROUND_PIXEL (f)
       = x_decode_color (f, black, BLACK_PIX_DEFAULT (f));
     FRAME_BACKGROUND_PIXEL (f)
@@ -3095,7 +3083,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
       = x_decode_color (f, black, BLACK_PIX_DEFAULT (f));
     f->output_data.x->mouse_pixel
       = x_decode_color (f, black, BLACK_PIX_DEFAULT (f));
-    UNGCPRO;
   }
 
   /* Specify the parent under which to make this X window.  */
@@ -3396,8 +3383,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
   for (tem = parms; CONSP (tem); tem = XCDR (tem))
     if (CONSP (XCAR (tem)) && !NILP (XCAR (XCAR (tem))))
       fset_param_alist (f, Fcons (XCAR (tem), f->param_alist));
-
-  UNGCPRO;
 
   /* Make sure windows on this frame appear in calls to next-window
      and similar functions.  */
@@ -4959,9 +4944,6 @@ x_window_property_intern (struct frame *f,
   int actual_format;
   unsigned long actual_size, bytes_remaining;
   int rc;
-  struct gcpro gcpro1;
-
-  GCPRO1 (prop_value);
 
   rc = XGetWindowProperty (FRAME_X_DISPLAY (f), target_window,
 			   prop_atom, 0, 0, False, target_type,
@@ -5020,7 +5002,6 @@ x_window_property_intern (struct frame *f,
       if (tmp_data) XFree (tmp_data);
     }
 
-  UNGCPRO;
   return prop_value;
 }
 
@@ -5049,10 +5030,8 @@ no value of TYPE (always string in the MS Windows case).  */)
   Lisp_Object prop_value = Qnil;
   Atom target_type = XA_STRING;
   Window target_window = FRAME_X_WINDOW (f);
-  struct gcpro gcpro1;
   bool found;
 
-  GCPRO1 (prop_value);
   CHECK_STRING (prop);
 
   if (! NILP (source))
@@ -5095,7 +5074,6 @@ no value of TYPE (always string in the MS Windows case).  */)
 
 
   unblock_input ();
-  UNGCPRO;
   return prop_value;
 }
 
@@ -5157,7 +5135,6 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
   Lisp_Object name;
   int width, height;
   ptrdiff_t count = SPECPDL_INDEX ();
-  struct gcpro gcpro1, gcpro2, gcpro3;
   bool face_change_before = face_change;
   Lisp_Object buffer;
   struct buffer *old_buffer;
@@ -5175,7 +5152,6 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
     error ("Invalid frame name--not a string or nil");
 
   frame = Qnil;
-  GCPRO3 (parms, name, frame);
   f = make_frame (true);
   XSETFRAME (frame, f);
 
@@ -5223,7 +5199,6 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
      to get the color reference counts right, so initialize them!  */
   {
     Lisp_Object black;
-    struct gcpro gcpro1;
 
     /* Function x_decode_color can signal an error.  Make
        sure to initialize color slots so that we won't try
@@ -5236,7 +5211,6 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
     f->output_data.x->mouse_pixel = -1;
 
     black = build_string ("black");
-    GCPRO1 (black);
     FRAME_FOREGROUND_PIXEL (f)
       = x_decode_color (f, black, BLACK_PIX_DEFAULT (f));
     FRAME_BACKGROUND_PIXEL (f)
@@ -5249,7 +5223,6 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
       = x_decode_color (f, black, BLACK_PIX_DEFAULT (f));
     f->output_data.x->mouse_pixel
       = x_decode_color (f, black, BLACK_PIX_DEFAULT (f));
-    UNGCPRO;
   }
 
   /* Set the name; the functions to which we pass f expect the name to
@@ -5445,8 +5418,6 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
 
   f->no_split = true;
 
-  UNGCPRO;
-
   /* Now that the frame will be official, it counts as a reference to
      its display and terminal.  */
   FRAME_DISPLAY_INFO (f)->reference_count++;
@@ -5576,13 +5547,10 @@ Text larger than the specified size is clipped.  */)
   struct text_pos pos;
   int i, width, height;
   bool seen_reversed_p;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   int old_windows_or_buffers_changed = windows_or_buffers_changed;
   ptrdiff_t count = SPECPDL_INDEX ();
 
   specbind (Qinhibit_redisplay, Qt);
-
-  GCPRO4 (string, parms, frame, timeout);
 
   CHECK_STRING (string);
   if (SCHARS (string) == 0)
@@ -5839,7 +5807,6 @@ Text larger than the specified size is clipped.  */)
   tip_timer = call3 (intern ("run-at-time"), timeout, Qnil,
 		     intern ("x-hide-tip"));
 
-  UNGCPRO;
   return unbind_to (count, Qnil);
 }
 
@@ -5851,7 +5818,6 @@ Value is t if tooltip was open, nil otherwise.  */)
 {
   ptrdiff_t count;
   Lisp_Object deleted, frame, timer;
-  struct gcpro gcpro1, gcpro2;
 
   /* Return quickly if nothing to do.  */
   if (NILP (tip_timer) && NILP (tip_frame))
@@ -5859,7 +5825,6 @@ Value is t if tooltip was open, nil otherwise.  */)
 
   frame = tip_frame;
   timer = tip_timer;
-  GCPRO2 (frame, timer);
   tip_frame = tip_timer = deleted = Qnil;
 
   count = SPECPDL_INDEX ();
@@ -5904,7 +5869,6 @@ Value is t if tooltip was open, nil otherwise.  */)
 #endif /* USE_LUCID */
     }
 
-  UNGCPRO;
   return unbind_to (count, deleted);
 }
 
@@ -5994,11 +5958,8 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
   int ac = 0;
   XmString dir_xmstring, pattern_xmstring;
   ptrdiff_t count = SPECPDL_INDEX ();
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5, gcpro6;
 
   check_window_system (f);
-
-  GCPRO6 (prompt, dir, default_filename, mustmatch, only_dir_p, file);
 
   if (popup_activated ())
     error ("Trying to use a menu from within a menu-entry");
@@ -6124,7 +6085,6 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
     file = Qnil;
 
   unblock_input ();
-  UNGCPRO;
 
   /* Make "Cancel" equivalent to C-g.  */
   if (NILP (file))
@@ -6165,12 +6125,9 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
   Lisp_Object file = Qnil;
   Lisp_Object decoded_file;
   ptrdiff_t count = SPECPDL_INDEX ();
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5, gcpro6;
   char *cdef_file;
 
   check_window_system (f);
-
-  GCPRO6 (prompt, dir, default_filename, mustmatch, only_dir_p, file);
 
   if (popup_activated ())
     error ("Trying to use a menu from within a menu-entry");
@@ -6200,7 +6157,6 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
     }
 
   unblock_input ();
-  UNGCPRO;
 
   /* Make "Cancel" equivalent to C-g.  */
   if (NILP (file))
@@ -6227,7 +6183,6 @@ nil, it defaults to the selected frame. */)
   Lisp_Object font;
   Lisp_Object font_param;
   char *default_name = NULL;
-  struct gcpro gcpro1, gcpro2;
   ptrdiff_t count = SPECPDL_INDEX ();
 
   if (popup_activated ())
@@ -6238,8 +6193,6 @@ nil, it defaults to the selected frame. */)
   record_unwind_protect_void (clean_up_dialog);
 
   block_input ();
-
-  GCPRO2 (font_param, font);
 
   XSETFONT (font, FRAME_FONT (f));
   font_param = Ffont_get (font, QCname);

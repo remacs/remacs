@@ -2177,17 +2177,12 @@ merge_named_face (struct frame *f, Lisp_Object face_name, Lisp_Object *to,
 			      face_name, NAMED_MERGE_POINT_NORMAL,
 			      &named_merge_points))
     {
-      struct gcpro gcpro1;
       Lisp_Object from[LFACE_VECTOR_SIZE];
       bool ok = get_lface_attributes (f, face_name, from, false,
 				      named_merge_points);
 
       if (ok)
-	{
-	  GCPRO1 (named_merge_point.face_name);
-	  merge_face_vectors (f, from, to, named_merge_points);
-	  UNGCPRO;
-	}
+	merge_face_vectors (f, from, to, named_merge_points);
 
       return ok;
     }

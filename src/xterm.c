@@ -11759,13 +11759,6 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 	  {
 	    char *vendor = ServerVendor (dpy);
 
-	    /* Protect terminal from GC before removing it from the
-	       list of terminals.  */
-	    struct gcpro gcpro1;
-	    Lisp_Object gcpro_term;
-	    XSETTERMINAL (gcpro_term, terminal);
-	    GCPRO1 (gcpro_term);
-
 	    /* Temporarily hide the partially initialized terminal.  */
 	    terminal_list = terminal->next_terminal;
 	    unblock_input ();
@@ -11776,7 +11769,6 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 	    block_input ();
 	    terminal->next_terminal = terminal_list;
  	    terminal_list = terminal;
-	    UNGCPRO;
 	  }
 
 	/* Don't let the initial kboard remain current longer than necessary.

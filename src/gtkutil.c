@@ -1928,9 +1928,7 @@ xg_get_file_with_chooser (struct frame *f,
   if (default_filename)
     {
       Lisp_Object file;
-      struct gcpro gcpro1;
       char *utf8_filename;
-      GCPRO1 (file);
 
       file = build_string (default_filename);
 
@@ -1955,8 +1953,6 @@ xg_get_file_with_chooser (struct frame *f,
               gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (filewin), cp);
             }
         }
-
-      UNGCPRO;
     }
 
   *func = xg_get_file_name_from_chooser;
@@ -4459,8 +4455,6 @@ find_rtl_image (struct frame *f, Lisp_Object image, Lisp_Object rtl)
 {
   int i;
   Lisp_Object file, rtl_name;
-  struct gcpro gcpro1, gcpro2;
-  GCPRO2 (file, rtl_name);
 
   rtl_name = Ffile_name_nondirectory (rtl);
 

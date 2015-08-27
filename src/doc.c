@@ -407,10 +407,7 @@ string is passed through `substitute-command-keys'.  */)
       if (NILP (tem) && try_reload)
 	{
 	  /* The file is newer, we need to reset the pointers.  */
-	  struct gcpro gcpro1, gcpro2;
-	  GCPRO2 (function, raw);
 	  try_reload = reread_doc_file (Fcar_safe (doc));
-	  UNGCPRO;
 	  if (try_reload)
 	    {
 	      try_reload = 0;
@@ -452,10 +449,7 @@ aren't strings.  */)
       if (NILP (tem) && try_reload)
 	{
 	  /* The file is newer, we need to reset the pointers.  */
-	  struct gcpro gcpro1, gcpro2, gcpro3;
-	  GCPRO3 (symbol, prop, raw);
 	  try_reload = reread_doc_file (Fcar_safe (doc));
-	  UNGCPRO;
 	  if (try_reload)
 	    {
 	      try_reload = 0;
@@ -751,7 +745,6 @@ Otherwise, return a new string.  */)
   unsigned char const *start;
   ptrdiff_t length, length_byte;
   Lisp_Object name;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   bool multibyte;
   ptrdiff_t nchars;
 
@@ -762,7 +755,6 @@ Otherwise, return a new string.  */)
   tem = Qnil;
   keymap = Qnil;
   name = Qnil;
-  GCPRO4 (string, tem, keymap, name);
 
   enum text_quoting_style quoting_style = text_quoting_style ();
 
@@ -1012,7 +1004,7 @@ Otherwise, return a new string.  */)
   else
     tem = string;
   xfree (buf);
-  RETURN_UNGCPRO (tem);
+  return tem;
 }
 
 void

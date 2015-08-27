@@ -2633,7 +2633,6 @@ window_loop (enum window_loop type, Lisp_Object obj, bool mini,
   Lisp_Object window, windows, best_window, frame_arg;
   bool frame_best_window_flag = false;
   struct frame *f;
-  struct gcpro gcpro1;
 
   /* If we're only looping through windows on a particular frame,
      frame points to that frame.  If we're looping through windows
@@ -2667,7 +2666,6 @@ window_loop (enum window_loop type, Lisp_Object obj, bool mini,
     window = FRAME_SELECTED_WINDOW (SELECTED_FRAME ());
 
   windows = window_list_1 (window, mini ? Qt : Qnil, frame_arg);
-  GCPRO1 (windows);
   best_window = Qnil;
 
   for (; CONSP (windows); windows = XCDR (windows))
@@ -2695,7 +2693,7 @@ window_loop (enum window_loop type, Lisp_Object obj, bool mini,
 	      {
 		if (EQ (window, selected_window))
 		  /* Preferably return the selected window.  */
-		  RETURN_UNGCPRO (window);
+		  return window;
 		else if (EQ (XWINDOW (window)->frame, selected_frame)
 			 && !frame_best_window_flag)
 		  /* Prefer windows on the current frame (but don't
@@ -2761,7 +2759,6 @@ window_loop (enum window_loop type, Lisp_Object obj, bool mini,
 	  }
     }
 
-  UNGCPRO;
   return best_window;
 }
 

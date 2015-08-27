@@ -875,7 +875,6 @@ uniscribe_check_otf (LOGFONT *font, Lisp_Object otf_spec)
   HDC context;
   HFONT check_font, old_font;
   int i, retval = 0;
-  struct gcpro gcpro1;
 
   /* Check the spec is in the right format.  */
   if (!CONSP (otf_spec) || XINT (Flength (otf_spec)) < 3)
@@ -917,10 +916,6 @@ uniscribe_check_otf (LOGFONT *font, Lisp_Object otf_spec)
     script_tag = OTF_TAG (SNAME (script));
   if (!NILP (lang))
     lang_tag = OTF_TAG (SNAME (lang));
-
-  /* Everything else is contained within otf_spec so should get
-     marked along with it.  */
-  GCPRO1 (otf_spec);
 
   /* Scan GSUB and GPOS tables.  */
   for (i = 0; i < 2; i++)

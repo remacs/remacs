@@ -1896,14 +1896,11 @@ safe_run_hook_funcall (ptrdiff_t nargs, Lisp_Object *args)
 void
 safe_run_hooks (Lisp_Object hook)
 {
-  struct gcpro gcpro1;
   ptrdiff_t count = SPECPDL_INDEX ();
 
-  GCPRO1 (hook);
   specbind (Qinhibit_quit, Qt);
   run_hook_with_args (2, ((Lisp_Object []) {hook, hook}), safe_run_hook_funcall);
   unbind_to (count, Qnil);
-  UNGCPRO;
 }
 
 
@@ -2219,8 +2216,6 @@ read_event_from_main_queue (struct timespec *end_time,
       if (single_kboard)
         goto start;
       current_kboard = kb;
-      /* This is going to exit from read_char
-         so we had better get rid of this frame's stuff.  */
       return make_number (-2);
     }
 
@@ -2389,7 +2384,6 @@ read_char (int commandflag, Lisp_Object map,
   volatile Lisp_Object previous_echo_area_message;
   volatile Lisp_Object also_record;
   volatile bool reread, recorded;
-  struct gcpro gcpro1, gcpro2;
   bool volatile polling_stopped_here = false;
   struct kboard *orig_kboard = current_kboard;
 
@@ -2401,8 +2395,6 @@ read_char (int commandflag, Lisp_Object map,
 #endif
   c = Qnil;
   previous_echo_area_message = Qnil;
-
-  GCPRO2 (c, previous_echo_area_message);
 
  retry:
 
@@ -2663,9 +2655,6 @@ read_char (int commandflag, Lisp_Object map,
 	      XSETCDR (last, list1 (c));
 	    kb->kbd_queue_has_data = true;
 	    current_kboard = kb;
-	    /* This is going to exit from read_char
-	       so we had better get rid of this frame's stuff.  */
-	    UNGCPRO;
             return make_number (-2); /* wrong_kboard_jmpbuf */
 	  }
       }
@@ -2807,10 +2796,7 @@ read_char (int commandflag, Lisp_Object map,
      interpret the next key sequence using the wrong translation
      tables and function keymaps.  */
   if (NILP (c) && current_kboard != orig_kboard)
-    {
-      UNGCPRO;
-      return make_number (-2);  /* wrong_kboard_jmpbuf */
-    }
+    return make_number (-2);  /* wrong_kboard_jmpbuf */
 
   /* If this has become non-nil here, it has been set by a timer
      or sentinel or filter.  */
@@ -2861,9 +2847,6 @@ read_char (int commandflag, Lisp_Object map,
 	if (kb->kbd_queue_has_data)
 	  {
 	    current_kboard = kb;
-	    /* This is going to exit from read_char
-	       so we had better get rid of this frame's stuff.  */
-	    UNGCPRO;
             return make_number (-2); /* wrong_kboard_jmpbuf */
 	  }
     }
@@ -2883,12 +2866,7 @@ read_char (int commandflag, Lisp_Object map,
         }
 
       if (EQ (c, make_number (-2)))
-        {
-	  /* This is going to exit from read_char
-	     so we had better get rid of this frame's stuff.  */
-	  UNGCPRO;
-          return c;
-        }
+	return c;
   }
 
  non_reread:
@@ -3042,7 +3020,6 @@ read_char (int commandflag, Lisp_Object map,
       ptrdiff_t key_count;
       bool key_count_reset;
       ptrdiff_t command_key_start;
-      struct gcpro gcpro1;
       ptrdiff_t count = SPECPDL_INDEX ();
 
       /* Save the echo status.  */
@@ -3071,7 +3048,6 @@ read_char (int commandflag, Lisp_Object map,
 	keys = Fcopy_sequence (this_command_keys);
       else
 	keys = Qnil;
-      GCPRO1 (keys);
 
       /* Clear out this_command_keys.  */
       this_command_key_count = 0;
@@ -3117,8 +3093,6 @@ read_char (int commandflag, Lisp_Object map,
       current_kboard->echo_after_prompt = saved_echo_after_prompt;
       if (saved_immediate_echo)
 	echo_now ();
-
-      UNGCPRO;
 
       /* The input method can return no events.  */
       if (! CONSP (tem))
@@ -3230,7 +3204,7 @@ read_char (int commandflag, Lisp_Object map,
  exit:
   RESUME_POLLING;
   input_was_pending = input_pending;
-  RETURN_UNGCPRO (c);
+  return c;
 }
 
 /* Record a key that came from a mouse menu.
@@ -4431,12 +4405,10 @@ timer_check_2 (Lisp_Object timers, Lisp_Object idle_timers)
   struct timespec now;
   struct timespec idleness_now;
   Lisp_Object chosen_timer;
-  struct gcpro gcpro1;
 
   nexttime = invalid_timespec ();
 
   chosen_timer = Qnil;
-  GCPRO1 (chosen_timer);
 
   /* First run the code that was delayed.  */
   while (CONSP (pending_funcalls))
@@ -4561,14 +4533,12 @@ timer_check_2 (Lisp_Object timers, Lisp_Object idle_timers)
 	/* When we encounter a timer that is still waiting,
 	   return the amount of time to wait before it is ripe.  */
 	{
-	  UNGCPRO;
 	  return difference;
 	}
     }
 
   /* No timers are pending in the future.  */
   /* Return 0 if we generated an event, and -1 if not.  */
-  UNGCPRO;
   return nexttime;
 }
 
@@ -4587,7 +4557,6 @@ timer_check (void)
 {
   struct timespec nexttime;
   Lisp_Object timers, idle_timers;
-  struct gcpro gcpro1, gcpro2;
 
   Lisp_Object tem = Vinhibit_quit;
   Vinhibit_quit = Qt;
@@ -4606,15 +4575,12 @@ timer_check (void)
 
   Vinhibit_quit = tem;
 
-  GCPRO2 (timers, idle_timers);
-
   do
     {
       nexttime = timer_check_2 (timers, idle_timers);
     }
   while (nexttime.tv_sec == 0 && nexttime.tv_nsec == 0);
 
-  UNGCPRO;
   return nexttime;
 }
 
@@ -7596,7 +7562,6 @@ Lisp_Object item_properties;
 static void
 menu_bar_item (Lisp_Object key, Lisp_Object item, Lisp_Object dummy1, void *dummy2)
 {
-  struct gcpro gcpro1;
   int i;
   bool parsed;
   Lisp_Object tem;
@@ -7629,9 +7594,7 @@ menu_bar_item (Lisp_Object key, Lisp_Object item, Lisp_Object dummy1, void *dumm
   /* We add to menu_bar_one_keymap_changed_items before doing the
      parse_menu_item, so that if it turns out it wasn't a menu item,
      it still correctly hides any further menu item.  */
-  GCPRO1 (key);
   parsed = parse_menu_item (item, 1);
-  UNGCPRO;
   if (!parsed)
     return;
 
@@ -8108,11 +8071,6 @@ static void
 process_tool_bar_item (Lisp_Object key, Lisp_Object def, Lisp_Object data, void *args)
 {
   int i;
-  struct gcpro gcpro1, gcpro2;
-
-  /* Protect KEY and DEF from GC because parse_tool_bar_item may call
-     eval.  */
-  GCPRO2 (key, def);
 
   if (EQ (def, Qundefined))
     {
@@ -8137,8 +8095,6 @@ process_tool_bar_item (Lisp_Object key, Lisp_Object def, Lisp_Object data, void 
     /* Append a new tool bar item to tool_bar_items_vector.  Accept
        more than one definition for the same key.  */
     append_tool_bar_item ();
-
-  UNGCPRO;
 }
 
 /* Access slot with index IDX of vector tool_bar_item_properties.  */
@@ -8818,9 +8774,7 @@ access_keymap_keyremap (Lisp_Object map, Lisp_Object key, Lisp_Object prompt,
 
       next = call1 (next, prompt);
       /* If the function returned something invalid,
-	 barf--don't ignore it.
-	 (To ignore it safely, we would need to gcpro a bunch of
-	 other variables.)  */
+	 barf--don't ignore it.  */
       if (! (NILP (next) || VECTORP (next) || STRINGP (next)))
 	error ("Function %s returns invalid key sequence",
 	       SSDATA (SYMBOL_NAME (tem)));
@@ -9016,9 +8970,6 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
   /* List of events for which a fake prefix key has been generated.  */
   Lisp_Object fake_prefixed_keys = Qnil;
 
-  struct gcpro gcpro1;
-
-  GCPRO1 (fake_prefixed_keys);
   raw_keybuf_count = 0;
 
   last_nonmenu_event = Qnil;
@@ -9250,7 +9201,6 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	  if (EQ (key, Qt))
 	    {
 	      unbind_to (count, Qnil);
-	      UNGCPRO;
 	      return -1;
 	    }
 
@@ -9641,14 +9591,11 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	 Scan from indec.end until we find a bound suffix.  */
       while (indec.end < t)
 	{
-	  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 	  bool done;
 	  int diff;
 
-	  GCPRO4 (indec.map, fkey.map, keytran.map, delayed_switch_frame);
 	  done = keyremap_step (keybuf, bufsize, &indec, max (t, mock_input),
 				1, &diff, prompt);
-	  UNGCPRO;
 	  if (done)
 	    {
 	      mock_input = diff + max (t, mock_input);
@@ -9675,11 +9622,9 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	/* Continue scan from fkey.end until we find a bound suffix.  */
 	while (fkey.end < indec.start)
 	  {
-	    struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 	    bool done;
 	    int diff;
 
-	    GCPRO4 (indec.map, fkey.map, keytran.map, delayed_switch_frame);
 	    done = keyremap_step (keybuf, bufsize, &fkey,
 				  max (t, mock_input),
 				  /* If there's a binding (i.e.
@@ -9688,7 +9633,6 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 				  fkey.end + 1 == t
 				  && (test_undefined (current_binding)),
 				  &diff, prompt);
-	    UNGCPRO;
 	    if (done)
 	      {
 		mock_input = diff + max (t, mock_input);
@@ -9704,14 +9648,11 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	 Scan from keytran.end until we find a bound suffix.  */
       while (keytran.end < fkey.start)
 	{
-	  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 	  bool done;
 	  int diff;
 
-	  GCPRO4 (indec.map, fkey.map, keytran.map, delayed_switch_frame);
 	  done = keyremap_step (keybuf, bufsize, &keytran, max (t, mock_input),
 				1, &diff, prompt);
-	  UNGCPRO;
 	  if (done)
 	    {
 	      mock_input = diff + max (t, mock_input);
@@ -9853,7 +9794,6 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
       add_command_key (keybuf[t]);
     }
 
-  UNGCPRO;
   return t;
 }
 
@@ -9864,8 +9804,7 @@ read_key_sequence_vs (Lisp_Object prompt, Lisp_Object continue_echo,
 		      Lisp_Object cmd_loop, bool allow_string)
 {
   Lisp_Object keybuf[30];
-  register int i;
-  struct gcpro gcpro1;
+  int i;
   ptrdiff_t count = SPECPDL_INDEX ();
 
   if (!NILP (prompt))
@@ -9876,10 +9815,6 @@ read_key_sequence_vs (Lisp_Object prompt, Lisp_Object continue_echo,
 	    (NILP (cmd_loop) ? Qt : Qnil));
   specbind (Qinput_method_use_echo_area,
 	    (NILP (cmd_loop) ? Qt : Qnil));
-
-  memset (keybuf, 0, sizeof keybuf);
-  GCPRO1 (keybuf[0]);
-  gcpro1.nvars = ARRAYELTS (keybuf);
 
   if (NILP (continue_echo))
     {
@@ -9911,7 +9846,7 @@ read_key_sequence_vs (Lisp_Object prompt, Lisp_Object continue_echo,
       Vquit_flag = Qt;
       QUIT;
     }
-  UNGCPRO;
+
   return unbind_to (count,
 		    ((allow_string ? make_event_array : Fvector)
 		     (i, keybuf)));
@@ -10275,7 +10210,6 @@ On such systems, Emacs starts a subshell instead of suspending.  */)
   ptrdiff_t count = SPECPDL_INDEX ();
   int old_height, old_width;
   int width, height;
-  struct gcpro gcpro1;
 
   if (tty_list && tty_list->next)
     error ("There are other tty frames open; close them before suspending Emacs");
@@ -10285,7 +10219,6 @@ On such systems, Emacs starts a subshell instead of suspending.  */)
 
   run_hook (intern ("suspend-hook"));
 
-  GCPRO1 (stuffstring);
   get_tty_size (fileno (CURTTY ()->input), &old_width, &old_height);
   reset_all_sys_modes ();
   /* sys_suspend can get an error if it tries to fork a subshell
@@ -10309,7 +10242,6 @@ On such systems, Emacs starts a subshell instead of suspending.  */)
 
   run_hook (intern ("suspend-resume-hook"));
 
-  UNGCPRO;
   return Qnil;
 }
 
@@ -10531,16 +10463,12 @@ handle_interrupt (bool in_signal_handler)
       if (immediate_quit && NILP (Vinhibit_quit))
 	{
 	  struct gl_state_s saved;
-	  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
 	  immediate_quit = false;
 	  pthread_sigmask (SIG_SETMASK, &empty_mask, 0);
 	  saved = gl_state;
-	  GCPRO4 (saved.object, saved.global_code,
-		  saved.current_syntax_table, saved.old_prop);
 	  Fsignal (Qquit, Qnil);
 	  gl_state = saved;
-	  UNGCPRO;
 	}
       else
         { /* Else request quit when it's safe.  */

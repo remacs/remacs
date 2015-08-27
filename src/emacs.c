@@ -714,9 +714,7 @@ close_output_streams (void)
 int
 main (int argc, char **argv)
 {
-#if GC_MARK_STACK
   Lisp_Object dummy;
-#endif
   char stack_bottom_variable;
   bool do_initial_setlocale;
   bool dumping;
@@ -735,9 +733,7 @@ main (int argc, char **argv)
   /* If we use --chdir, this records the original directory.  */
   char *original_pwd = 0;
 
-#if GC_MARK_STACK
   stack_base = &dummy;
-#endif
 
 #ifndef CANNOT_DUMP
   might_dump = !initialized;
@@ -1932,16 +1928,12 @@ all of which are called before Emacs is actually killed.  */
        attributes: noreturn)
   (Lisp_Object arg)
 {
-  struct gcpro gcpro1;
   int exit_code;
-
-  GCPRO1 (arg);
 
   /* Fsignal calls emacs_abort () if it sees that waiting_for_input is
      set.  */
   waiting_for_input = 0;
   run_hook (Qkill_emacs_hook);
-  UNGCPRO;
 
 #ifdef HAVE_X_WINDOWS
   /* Transfer any clipboards we own to the clipboard manager.  */

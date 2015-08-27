@@ -4974,7 +4974,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
   bool minibuffer_only = false;
   long window_prompting = 0;
   ptrdiff_t count = SPECPDL_INDEX ();
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   Lisp_Object display;
   struct w32_display_info *dpyinfo = NULL;
   Lisp_Object parent;
@@ -5023,7 +5022,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
   /* No need to protect DISPLAY because that's not used after passing
      it to make_frame_without_minibuffer.  */
   frame = Qnil;
-  GCPRO4 (parameters, parent, name, frame);
   tem = x_get_arg (dpyinfo, parameters, Qminibuffer, "minibuffer", "Minibuffer",
 		   RES_TYPE_SYMBOL);
   if (EQ (tem, Qnone) || NILP (tem))
@@ -5284,8 +5282,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
   for (tem = parameters; CONSP (tem); tem = XCDR (tem))
     if (CONSP (XCAR (tem)) && !NILP (XCAR (XCAR (tem))))
       fset_param_alist (f, Fcons (XCAR (tem), f->param_alist));
-
-  UNGCPRO;
 
   /* Make sure windows on this frame appear in calls to next-window
      and similar functions.  */
@@ -5610,7 +5606,6 @@ w32_display_monitor_attributes_list (void)
   Lisp_Object monitor_list = Qnil, monitor_frames, rest, frame;
   int i, n_monitors;
   HMONITOR *monitors;
-  struct gcpro gcpro1, gcpro2, gcpro3;
 
   if (!(enum_display_monitors_fn && get_monitor_info_fn
 	&& monitor_from_window_fn))
@@ -5651,8 +5646,6 @@ w32_display_monitor_attributes_list (void)
 	    ASET (monitor_frames, i, Fcons (frame, AREF (monitor_frames, i)));
 	}
     }
-
-  GCPRO3 (attributes_list, primary_monitor_attributes, monitor_frames);
 
   for (i = 0; i < n_monitors; i++)
     {
@@ -5700,8 +5693,6 @@ w32_display_monitor_attributes_list (void)
 
   if (!NILP (primary_monitor_attributes))
     attributes_list = Fcons (primary_monitor_attributes, attributes_list);
-
-  UNGCPRO;
 
   xfree (monitors);
 
@@ -5889,11 +5880,8 @@ terminate Emacs if we can't open the connection.
      HOME directory, then in Emacs etc dir for a file called rgb.txt. */
   {
     Lisp_Object color_file;
-    struct gcpro gcpro1;
 
     color_file = build_string ("~/rgb.txt");
-
-    GCPRO1 (color_file);
 
     if (NILP (Ffile_readable_p (color_file)))
       color_file =
@@ -5901,8 +5889,6 @@ terminate Emacs if we can't open the connection.
 			   Fsymbol_value (intern ("data-directory")));
 
     Vw32_color_map = Fx_load_color_file (color_file);
-
-    UNGCPRO;
   }
   if (NILP (Vw32_color_map))
     Vw32_color_map = w32_default_color_map ();
@@ -6190,7 +6176,6 @@ x_create_tip_frame (struct w32_display_info *dpyinfo,
   long window_prompting = 0;
   int width, height;
   ptrdiff_t count = SPECPDL_INDEX ();
-  struct gcpro gcpro1, gcpro2, gcpro3;
   struct kboard *kb;
   bool face_change_before = face_change;
   Lisp_Object buffer;
@@ -6215,7 +6200,6 @@ x_create_tip_frame (struct w32_display_info *dpyinfo,
   Vx_resource_name = name;
 
   frame = Qnil;
-  GCPRO3 (parms, name, frame);
   /* Make a frame without minibuffer nor mode-line.  */
   f = make_frame (false);
   f->wants_modeline = 0;
@@ -6391,8 +6375,6 @@ x_create_tip_frame (struct w32_display_info *dpyinfo,
 
   f->no_split = true;
 
-  UNGCPRO;
-
   /* Now that the frame is official, it counts as a reference to
      its display.  */
   FRAME_DISPLAY_INFO (f)->reference_count++;
@@ -6551,13 +6533,10 @@ Text larger than the specified size is clipped.  */)
   struct text_pos pos;
   int i, width, height;
   bool seen_reversed_p;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   int old_windows_or_buffers_changed = windows_or_buffers_changed;
   ptrdiff_t count = SPECPDL_INDEX ();
 
   specbind (Qinhibit_redisplay, Qt);
-
-  GCPRO4 (string, parms, frame, timeout);
 
   CHECK_STRING (string);
   f = decode_window_system_frame (frame);
@@ -6840,7 +6819,6 @@ Text larger than the specified size is clipped.  */)
   tip_timer = call3 (intern ("run-at-time"), timeout, Qnil,
 		     intern ("x-hide-tip"));
 
-  UNGCPRO;
   return unbind_to (count, Qnil);
 }
 
@@ -6852,7 +6830,6 @@ Value is t if tooltip was open, nil otherwise.  */)
 {
   ptrdiff_t count;
   Lisp_Object deleted, frame, timer;
-  struct gcpro gcpro1, gcpro2;
 
   /* Return quickly if nothing to do.  */
   if (NILP (tip_timer) && NILP (tip_frame))
@@ -6860,7 +6837,6 @@ Value is t if tooltip was open, nil otherwise.  */)
 
   frame = tip_frame;
   timer = tip_timer;
-  GCPRO2 (frame, timer);
   tip_frame = tip_timer = deleted = Qnil;
 
   count = SPECPDL_INDEX ();
@@ -6876,7 +6852,6 @@ Value is t if tooltip was open, nil otherwise.  */)
       deleted = Qt;
     }
 
-  UNGCPRO;
   return unbind_to (count, deleted);
 }
 
@@ -7049,13 +7024,7 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
   char fname_ret[MAX_UTF8_PATH];
 #endif /* NTGUI_UNICODE */
 
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5, gcpro6;
-  GCPRO6 (prompt, dir, default_filename, mustmatch, only_dir_p, filename);
-
   {
-    struct gcpro gcpro1, gcpro2;
-    GCPRO2 (orig_dir, orig_prompt); /* There is no GCPRON, N>6.  */
-
     /* Note: under NTGUI_UNICODE, we do _NOT_ use ENCODE_FILE: the
        system file encoding expected by the platform APIs (e.g. Cygwin's
        POSIX implementation) may not be the same as the encoding expected
@@ -7284,15 +7253,13 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
 	Qfile_name_history,
 	default_filename,
 	Qnil);
-
-    UNGCPRO;
   }
 
   /* Make "Cancel" equivalent to C-g.  */
   if (NILP (filename))
     Fsignal (Qquit, Qnil);
 
-  RETURN_UNGCPRO (filename);
+  return filename;
 }
 
 
@@ -7498,7 +7465,6 @@ a ShowWindow flag:
   char *doc_a = NULL, *params_a = NULL, *ops_a = NULL;
   Lisp_Object absdoc, handler;
   BOOL success;
-  struct gcpro gcpro1;
 #endif
 
   CHECK_STRING (document);
@@ -7598,7 +7564,6 @@ a ShowWindow flag:
      absolute.  But DOCUMENT does not have to be a file, it can be a
      URL, for example.  So we make it absolute only if it is an
      existing file; if it is a file that does not exist, tough.  */
-  GCPRO1 (absdoc);
   absdoc = Fexpand_file_name (document, Qnil);
   /* Don't call file handlers for file-exists-p, since they might
      attempt to access the file, which could fail or produce undesired
@@ -7622,7 +7587,6 @@ a ShowWindow flag:
     }
   else
     document = ENCODE_FILE (document);
-  UNGCPRO;
 
   current_dir = ENCODE_FILE (current_dir);
   /* Cannot use filename_to_utf16/ansi with DOCUMENT, since it could
@@ -7768,21 +7732,16 @@ w32_parse_hot_key (Lisp_Object key)
   int vk_code;
   int lisp_modifiers;
   int w32_modifiers;
-  struct gcpro gcpro1;
 
   CHECK_VECTOR (key);
 
   if (ASIZE (key) != 1)
     return Qnil;
 
-  GCPRO1 (key);
-
   c = AREF (key, 0);
 
   if (CONSP (c) && lucid_event_type_list_p (c))
     c = Fevent_convert_list (c);
-
-  UNGCPRO;
 
   if (! INTEGERP (c) && ! SYMBOLP (c))
     error ("Key definition is invalid");
