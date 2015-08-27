@@ -539,7 +539,7 @@ decode_options (int argc, char **argv)
           break;
 
 	default:
-	  message (true, "Try `%s --help' for more information\n", progname);
+	  message (true, "Try '%s --help' for more information\n", progname);
 	  exit (EXIT_FAILURE);
 	  break;
 	}
@@ -1611,7 +1611,7 @@ main (int argc, char **argv)
   if ((argc - optind < 1) && !eval && current_frame)
     {
       message (true, "%s: file name or argument required\n"
-	       "Try `%s --help' for more information\n",
+	       "Try '%s --help' for more information\n",
 	       progname, progname);
       exit (EXIT_FAILURE);
     }
