@@ -1886,7 +1886,7 @@ splash screen in another window."
 				   auto-save-list-file-prefix)))
 	    t)
 	   (insert "\n\nIf an Emacs session crashed recently, "
-		   "type Meta-x recover-session RET\nto recover"
+		   "type M-x recover-session RET\nto recover"
 		   " the files you were editing.\n"))
 
       (use-local-map splash-screen-keymap)
@@ -2001,9 +2001,9 @@ To quit a partially entered command, type Control-g.\n")
     (insert (substitute-command-keys "   \\[tmm-menubar]")))
 
   ;; Many users seem to have problems with these.
-  (insert "
+  (insert (substitute-command-keys "
 \(`C-' means use the CTRL key.  `M-' means use the Meta (or Alt) key.
-If you have no Meta key, you may instead type ESC followed by the character.)")
+If you have no Meta key, you may instead type ESC followed by the character.)"))
 
   ;; Insert links to useful tasks
   (insert "\nUseful tasks:\n")
