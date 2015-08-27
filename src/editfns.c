@@ -4013,10 +4013,14 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	    error ("Format string ends in middle of format specifier");
 
 	  memset (&discarded[format0 - format_start], 1, format - format0);
-	  conversion = *format++;
+	  conversion = *format;
 	  if (conversion == '%')
-	    goto copy_char;
+	    {
+	      format++;
+	      goto copy_char;
+	    }
 	  discarded[format - format_start] = 1;
+	  format++;
 
 	  ++n;
 	  if (! (n < nargs))
