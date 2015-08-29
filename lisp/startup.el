@@ -1935,7 +1935,8 @@ To quit a partially entered command, type Control-g.\n")
   (insert-button "Visit New File"
 		 'action (lambda (_button) (call-interactively 'find-file))
 		 'follow-link t)
-  (insert "\t\tSpecify a new file's name, to edit the file\n")
+  (insert (substitute-command-keys
+	   "\t\tSpecify a new file's name, to edit the file\n"))
   (insert-button "Open Home Directory"
 		 'action (lambda (_button) (dired "~"))
 		 'follow-link t)
