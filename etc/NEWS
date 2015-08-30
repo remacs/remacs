@@ -116,8 +116,8 @@ For instance, the " will match all variants of unicode double quotes
 cousins, even those composed of multiple characters, as well as many
 other symbols like ℀, ℁, ⒜, and ⓐ.
 
-** New function `character-folded-regexp' can be used
-by searching commands to produce a a regexp matching anything that
+** New function `character-fold-to-regexp' can be used
+by searching commands to produce a regexp matching anything that
 character-folds into STRING.
 
 ** New command `checkdoc-package-keywords' checks if the

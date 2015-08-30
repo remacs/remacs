@@ -4938,6 +4938,8 @@ result of this, point is placed at the beginning of the buffer and mark
 is set at the end of the buffer.  The whole buffer is, therefore, the
 region.
 
+@c FIXME: the definition of append-to-buffer has been changed (in
+@c 2010-03-30).
 @node append-to-buffer
 @section The Definition of @code{append-to-buffer}
 @findex append-to-buffer
@@ -12920,6 +12922,7 @@ The next line of the @code{forward-paragraph} function begins a
 @code{let*} expression.  This is a different than @code{let}.  The
 symbol is @code{let*} not @code{let}.
 
+@findex let*
 The @code{let*} special form is like @code{let} except that Emacs sets
 each variable in sequence, one after another, and variables in the
 latter part of the varlist can make use of the values to which Emacs
