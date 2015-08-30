@@ -643,15 +643,14 @@ SYMBOL is a function that can be overridden."
 		     (with-current-buffer describe-function-orig-buffer
 		       (fetch-overload symbol)))))
       (insert (overload-docstring-extension symbol) "\n\n")
-      (insert (substitute-command-keys (format "default function: `%s'\n" default)))
+      (insert (format-message "default function: `%s'\n" default))
       (when (and (boundp 'describe-function-orig-buffer) ;; added in Emacs 25
 		 describe-function-orig-buffer)
 	(if override
-	    (insert (substitute-command-keys
-		     (format "\noverride in buffer '%s': `%s'\n"
-			     describe-function-orig-buffer override)))
-	  (insert (substitute-command-keys (format "\nno override in buffer '%s'\n"
-						   describe-function-orig-buffer)))))
+	    (insert (format-message "\noverride in buffer '%s': `%s'\n"
+				    describe-function-orig-buffer override))
+	  (insert (format-message "\nno override in buffer '%s'\n"
+				  describe-function-orig-buffer))))
       )))
 
 (add-hook 'help-fns-describe-function-functions 'describe-mode-local-overload)
