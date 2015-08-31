@@ -275,7 +275,7 @@ Fourth arg PORT is an integer specifying a port to connect to."
 			     (message "The certificate presented by `%s' is \
 NOT trusted." host))
 			(not (yes-or-no-p
-			      (format "The certificate presented by `%s' is \
+			      (format-message "The certificate presented by `%s' is \
 NOT trusted. Accept anyway? " host)))))
 		  (and tls-hostmismatch
 		       (save-excursion
