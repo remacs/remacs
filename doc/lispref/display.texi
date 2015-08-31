@@ -632,13 +632,13 @@ for logging the warning.  By default, it is @file{*Warnings*}.
 @end defun
 
 @defun lwarn type level message &rest args
-This function reports a warning using the value of @code{(format
+This function reports a warning using the value of @code{(format-message
 @var{message} @var{args}...)} as the message in the @file{*Warnings*}
 buffer.  In other respects it is equivalent to @code{display-warning}.
 @end defun
 
 @defun warn message &rest args
-This function reports a warning using the value of @code{(format
+This function reports a warning using the value of @code{(format-message
 @var{message} @var{args}...)} as the message, @code{(emacs)} as the
 type, and @code{:warning} as the severity level.  It exists for
 compatibility only; we recommend not using it, because you should
