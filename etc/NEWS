@@ -702,7 +702,7 @@ non-integer inputs.
 interactive macro evaluation and automatic scanning of #defined symbols.
 
 *** New custom variable `hide-ifdef-header-regexp' to define C/C++ header file
-name patterns. Default case-insensitive .h, .hh, .hpp and .hxx.
+name patterns.  Default case-insensitive .h, .hh, .hpp, .hxx, and .h++.
 *** New custom variable `hide-ifdef-expand-reinclusion-protection' to prevent
 reinclusion protected header files from being fully hidden.
 *** New custom variable `hide-ifdef-exclude-define-regexp' to define symbol
