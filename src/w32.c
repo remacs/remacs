@@ -3847,6 +3847,57 @@ faccessat (int dirfd, const char * path, int mode, int flags)
   return 0;
 }
 
+/* A special test for DIRNAME being a directory accessible by the
+   current user.  This is needed because the security permissions in
+   directory's ACLs are not visible in the Posix-style mode bits
+   returned by 'stat' and in attributes returned by GetFileAttributes.
+   So a directory would seem like it's readable by the current user,
+   but will in fact error out with EACCES when they actually try.  */
+int
+w32_accessible_directory_p (const char *dirname, ptrdiff_t dirlen)
+{
+  char pattern[MAX_UTF8_PATH];
+  bool last_slash = dirlen > 0 && IS_DIRECTORY_SEP (dirname[dirlen - 1]);
+  HANDLE dh;
+
+  strcpy (pattern, map_w32_filename (dirname, NULL));
+
+  /* Note: No need to resolve symlinks in FILENAME, because FindFirst
+     opens the directory that is the target of a symlink.  */
+  if (w32_unicode_filenames)
+    {
+      wchar_t pat_w[MAX_PATH + 2];
+      WIN32_FIND_DATAW dfd_w;
+
+      filename_to_utf16 (pattern, pat_w);
+      if (!last_slash)
+	wcscat (pat_w, L"\\");
+      wcscat (pat_w, L"*");
+      dh = FindFirstFileW (pat_w, &dfd_w);
+    }
+  else
+    {
+      char pat_a[MAX_PATH + 2];
+      WIN32_FIND_DATAA dfd_a;
+
+      filename_to_ansi (pattern, pat_a);
+      if (!last_slash)
+	strcpy (pat_a, "\\");
+      strcat (pat_a, "*");
+      /* In case DIRNAME cannot be expressed in characters from the
+	 current ANSI codepage.  */
+      if (_mbspbrk (pat_a, "?"))
+	dh = INVALID_HANDLE_VALUE;
+      else
+	dh = FindFirstFileA (pat_a, &dfd_a);
+    }
+
+  if (dh == INVALID_HANDLE_VALUE)
+    return 0;
+  FindClose (dh);
+  return 1;
+}
+
 /* A version of 'access' to be used locally with file names in
    locale-specific encoding.  Does not resolve symlinks and does not
    support file names on FAT12 and FAT16 volumes, but that's OK, since
