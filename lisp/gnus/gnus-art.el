@@ -2428,7 +2428,7 @@ long lines if and only if arg is positive."
 	      (unless (setq from (gnus-article-goto-header "from"))
 		(insert "From:")
 		(setq from (point))
-		(insert " [no `from' set]\n"))
+		(insert " [no 'from' set]\n"))
 	      (while faces
 		(when (setq png (gnus-convert-face-to-png (pop faces)))
 		  (setq image
@@ -2770,7 +2770,7 @@ summary buffer."
       (cond ((file-directory-p file)
 	     (when (or (not (eq how 'file))
 		       (gnus-y-or-n-p
-			(format
+			(gnus-format-message
 			 "Delete temporary HTML file(s) in directory `%s'? "
 			 (file-name-as-directory file))))
 	       (gnus-delete-directory file)))
