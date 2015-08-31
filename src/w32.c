@@ -3826,7 +3826,7 @@ faccessat (int dirfd, const char * path, int mode, int flags)
 		  errno = EACCES;
 		  return -1;
 		}
-	      break;
+	      goto check_attrs;
 	    }
 	  /* FALLTHROUGH */
 	case ERROR_FILE_NOT_FOUND:
@@ -3839,6 +3839,8 @@ faccessat (int dirfd, const char * path, int mode, int flags)
 	}
       return -1;
     }
+
+ check_attrs:
   if ((mode & X_OK) != 0
       && !(is_exec (path) || (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0))
     {
@@ -3870,6 +3872,23 @@ w32_accessible_directory_p (const char *dirname, ptrdiff_t dirlen)
   char pattern[MAX_UTF8_PATH];
   bool last_slash = dirlen > 0 && IS_DIRECTORY_SEP (dirname[dirlen - 1]);
   HANDLE dh;
+
+  /* Network volumes need a different reading method.  */
+  if (is_unc_volume (dirname))
+    {
+      void *read_result = NULL;
+      wchar_t fnw[MAX_PATH];
+      char fna[MAX_PATH];
+
+      dh = open_unc_volume (dirname);
+      if (dh != INVALID_HANDLE_VALUE)
+	{
+	  read_result = read_unc_volume (dh, fnw, fna, MAX_PATH);
+	  close_unc_volume (dh);
+	}
+      /* Treat empty volumes as accessible.  */
+      return read_result != NULL || GetLastError () == ERROR_NO_MORE_ITEMS;
+    }
 
   /* Note: map_w32_filename makes sure DIRNAME is not longer than
      MAX_UTF8_PATH.  */
