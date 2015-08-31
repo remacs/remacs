@@ -3399,30 +3399,41 @@ sys_readdir (DIR *dirp)
   /* If we aren't dir_finding, do a find-first, otherwise do a find-next. */
   else if (dir_find_handle == INVALID_HANDLE_VALUE)
     {
-      char filename[MAX_UTF8_PATH + 2];
+      char filename[MAX_UTF8_PATH];
       int ln;
+      bool last_slash = true;
 
+      /* Note: We don't need to worry about dir_pathname being longer
+	 than MAX_UTF8_PATH, as sys_opendir already took care of that
+	 when it called map_w32_filename: that function will put a "?"
+	 in its return value in that case, thus failing all the calls
+	 below.  */
       strcpy (filename, dir_pathname);
       ln = strlen (filename);
       if (!IS_DIRECTORY_SEP (filename[ln - 1]))
-	filename[ln++] = '\\';
-      strcpy (filename + ln, "*");
+	last_slash = false;
 
       /* Note: No need to resolve symlinks in FILENAME, because
 	 FindFirst opens the directory that is the target of a
 	 symlink.  */
       if (w32_unicode_filenames)
 	{
-	  wchar_t fnw[MAX_PATH];
+	  wchar_t fnw[MAX_PATH + 2];
 
 	  filename_to_utf16 (filename, fnw);
+	  if (!last_slash)
+	    wcscat (fnw, L"\\");
+	  wcscat (fnw, L"*");
 	  dir_find_handle = FindFirstFileW (fnw, &dir_find_data_w);
 	}
       else
 	{
-	  char fna[MAX_PATH];
+	  char fna[MAX_PATH + 2];
 
 	  filename_to_ansi (filename, fna);
+	  if (!last_slash)
+	    strcat (fna, "\\");
+	  strcat (fna, "*");
 	  /* If FILENAME is not representable by the current ANSI
 	     codepage, we don't want FindFirstFileA to interpret the
 	     '?' characters as a wildcard.  */
@@ -3860,6 +3871,8 @@ w32_accessible_directory_p (const char *dirname, ptrdiff_t dirlen)
   bool last_slash = dirlen > 0 && IS_DIRECTORY_SEP (dirname[dirlen - 1]);
   HANDLE dh;
 
+  /* Note: map_w32_filename makes sure DIRNAME is not longer than
+     MAX_UTF8_PATH.  */
   strcpy (pattern, map_w32_filename (dirname, NULL));
 
   /* Note: No need to resolve symlinks in FILENAME, because FindFirst
