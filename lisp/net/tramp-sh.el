@@ -288,10 +288,10 @@ The string is used in `tramp-methods'.")
 (add-to-list 'tramp-methods
   '("sudo"
     (tramp-login-program        "sudo")
-    ;; The password template must not be the last argument.
-    ;; Otherwise, it could be interpreted as password prompt if the
-    ;; remote host echoes the command.
-    (tramp-login-args           (("-p" "Password:") ("-u" "%u") ("-s") ("-H")))
+    ;; The password template must be masked.  Otherwise, it could be
+    ;; interpreted as password prompt if the remote host echoes the command.
+    (tramp-login-args           (("-u" "%u") ("-s") ("-H")
+				 ("-p" "P\"\"a\"\"s\"\"s\"\"w\"\"o\"\"r\"\"d\"\":")))
     ;; Local $SHELL could be a nasty one, like zsh or fish.  Let's override it.
     (tramp-login-env            (("SHELL") ("/bin/sh")))
     (tramp-remote-shell         "/bin/sh")
