@@ -803,6 +803,15 @@ to prepare for opening the first frame (e.g. open a connection to an X server)."
 (defvar server-name)
 (defvar server-process)
 
+(defun startup--setup-quote-display ()
+  "If curved quotes don't work, display ASCII approximations."
+  (dolist (char-repl '((?‘ . ?\`) (?’ . ?\') (?“ . ?\") (?” . ?\")))
+    (when (not (char-displayable-p (car char-repl)))
+      (unless standard-display-table
+        (setq standard-display-table (make-display-table)))
+      (aset standard-display-table (car char-repl)
+            (vector (make-glyph-code (cdr char-repl) 'shadow))))))
+
 (defun command-line ()
   "A subroutine of `normal-top-level'.
 Amongst another things, it parses the command-line arguments."
@@ -1017,13 +1026,7 @@ please check its value")
 				'("no" "off" "false" "0")))))
     (setq no-blinking-cursor t))
 
-  ;; If curved quotes don't work, display ASCII approximations.
-  (dolist (char-repl '((?‘ . ?\`) (?’ . ?\') (?“ . ?\") (?” . ?\")))
-    (when (not (char-displayable-p (car char-repl)))
-      (or standard-display-table
-          (setq standard-display-table (make-display-table)))
-      (aset standard-display-table (car char-repl)
-            (vector (make-glyph-code (cdr char-repl) 'shadow)))))
+  (startup--setup-quote-display)
   (setq internal--text-quoting-flag t)
 
   ;; Re-evaluate predefined variables whose initial value depends on
