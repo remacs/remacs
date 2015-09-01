@@ -433,7 +433,7 @@ This will be spliced into the custom type of
 
 
 (defcustom org-agenda-custom-commands
-  '(("n" "Agenda and all TODO's" ((agenda "") (alltodo ""))))
+  '(("n" "Agenda and all TODOs" ((agenda "") (alltodo ""))))
   "Custom commands for the agenda.
 These commands will be offered on the splash screen displayed by the
 agenda dispatcher \\[org-agenda].  Each entry is a list like this:
@@ -3815,7 +3815,7 @@ FILTER-ALIST is an alist of filters we need to apply when
 (defvar org-depend-tag-blocked)
 
 (defun org-agenda-dim-blocked-tasks (&optional invisible)
-  "Dim currently blocked TODO's in the agenda display.
+  "Dim currently blocked TODOs in the agenda display.
 When INVISIBLE is non-nil, hide currently blocked TODO instead of
 dimming them."
   (interactive "P")
@@ -4647,7 +4647,8 @@ in `org-agenda-text-search-extra-files'."
 	(add-text-properties pos (1- (point)) (list 'face 'org-warning))
 	(setq pos (point))
 	(unless org-agenda-multi
-	  (insert "Press `[', `]' to add/sub word, `{', `}' to add/sub regexp, `C-u r' to edit\n")
+	  (insert (substitute-command-keys
+		   "Press `[', `]' to add/sub word, `{', `}' to add/sub regexp, `C-u r' to edit\n"))
 	  (add-text-properties pos (1- (point))
 			       (list 'face 'org-agenda-structure))))
       (org-agenda-mark-header-line (point-min))
@@ -4741,7 +4742,7 @@ for a keyword.  A numeric prefix directly selects the Nth keyword in
 		 org-select-this-todo-keyword))
 	(setq pos (point))
 	(unless org-agenda-multi
-	  (insert "Available with `N r': (0)[ALL]")
+	  (insert (substitute-command-keys "Available with `N r': (0)[ALL]"))
 	  (let ((n 0) s)
 	    (mapc (lambda (x)
 		    (setq s (format "(%d)%s" (setq n (1+ n)) x))
@@ -4836,7 +4837,8 @@ The prefix arg TODO-ONLY limits the search to TODO entries."
 	(add-text-properties pos (1- (point)) (list 'face 'org-warning))
 	(setq pos (point))
 	(unless org-agenda-multi
-	  (insert "Press `C-u r' to search again with new search string\n"))
+	  (insert (substitute-command-keys
+		   "Press `C-u r' to search again with new search string\n")))
 	(add-text-properties pos (1- (point)) (list 'face 'org-agenda-structure)))
       (org-agenda-mark-header-line (point-min))
       (when rtnall

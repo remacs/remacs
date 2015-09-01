@@ -108,7 +108,7 @@ frames.
 
 ** `isearch' and `query-replace' now perform character folding in matches.
 This is analogous to case-folding, but applies between Unicode
-characters and their ASCII counterparts. This means many characters
+characters and their ASCII counterparts.  This means many characters
 will match entire groups of characters.
 
 For instance, the " will match all variants of unicode double quotes
@@ -116,12 +116,12 @@ For instance, the " will match all variants of unicode double quotes
 cousins, even those composed of multiple characters, as well as many
 other symbols like ℀, ℁, ⒜, and ⓐ.
 
-** New function `character-folded-regexp' can be used
-by searching commands to produce a a regexp matching anything that
+** New function `character-fold-to-regexp' can be used
+by searching commands to produce a regexp matching anything that
 character-folds into STRING.
 
 ** New command `checkdoc-package-keywords' checks if the
-current package keywords are recognized. Set the new option
+current package keywords are recognized.  Set the new option
 `checkdoc-package-keywords-flag' to non-nil to make
 `checkdoc-current-buffer' call this function automatically.
 
@@ -326,7 +326,7 @@ is suitable for most programming languages such as C or Lisp (but not
 
 ** ERC
 
-*** Hide message types by network or channel. `erc-hide-list' will
+*** Hide message types by network or channel.  `erc-hide-list' will
 hide all messages of the specified type, where `erc-network-hide-list'
 and `erc-channel-hide-list' will only hide the specified message types
 for the respective specified targets.
@@ -361,7 +361,7 @@ always respect that.
 
 *** If a package is available on multiple archives and one has higher
 priority (as per `package-archive-priorities') only that one is
-listed. This can be configured with `package-menu-hide-low-priority'.
+listed.  This can be configured with `package-menu-hide-low-priority'.
 
 *** `package-menu-toggle-hiding' now toggles the hiding of packages.
 This includes the above-mentioned low-priority packages, as well as
@@ -390,7 +390,7 @@ The FORCE argument to `package-delete' overrides this.
 
 *** New custom variable `package-selected-packages' tracks packages
 which were installed by the user (as opposed to installed as
-dependencies). This variable can also be manually customized.
+dependencies).  This variable can also be manually customized.
 
 *** New command `package-install-user-selected-packages' installs all
 packages from `package-selected-packages' which are currently missing.
@@ -543,7 +543,7 @@ appending FUN to `minibuffer-setup-hook'.
 ** seq
 *** New seq library:
 The seq library adds sequence manipulation functions and macros that
-complement basic functions provided by subr.el. All functions are
+complement basic functions provided by subr.el.  All functions are
 prefixed with `seq-' and work on lists, strings and vectors.
 
 ** map
@@ -702,11 +702,11 @@ non-integer inputs.
 interactive macro evaluation and automatic scanning of #defined symbols.
 
 *** New custom variable `hide-ifdef-header-regexp' to define C/C++ header file
-name patterns. Default case-insensitive .h, .hh, .hpp and .hxx.
+name patterns.  Default case-insensitive .h, .hh, .hpp, .hxx, and .h++.
 *** New custom variable `hide-ifdef-expand-reinclusion-protection' to prevent
 reinclusion protected header files from being fully hidden.
 *** New custom variable `hide-ifdef-exclude-define-regexp' to define symbol
-name patterns (e.x. all "FOR_DOXYGEN_ONLY_*") to be excluded.
+name patterns (e.g. all "FOR_DOXYGEN_ONLY_*") to be excluded.
 
 ** TeX mode
 

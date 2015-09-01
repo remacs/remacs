@@ -1054,7 +1054,7 @@ the MSB or LSB of a signal inside an AUTORESET.
 
 If nil, AUTORESET uses \"0\" as the constant.
 
-If `unbased', AUTORESET used the unbased unsized literal \"'0\"
+If `unbased', AUTORESET used the unbased unsized literal \"\\='0\"
 as the constant. This setting is strongly recommended for
 SystemVerilog designs."
   :type 'boolean

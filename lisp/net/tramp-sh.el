@@ -5114,18 +5114,10 @@ raises an error."
 Convert file mode bits to string and set virtual device number.
 Return ATTR."
   (when attr
-    ;; Convert symlink from `tramp-do-file-attributes-with-stat'.
-    (when (consp (car attr))
-      (if (and (stringp (caar attr))
-               (string-match ".+ -> .\\(.+\\)." (caar attr)))
-          (setcar attr (match-string 1 (caar attr)))
-        (setcar attr nil)))
-    ;; Remove color escape sequences and double slashes from symlink.
+    ;; Remove color escape sequences from symlink.
     (when (stringp (car attr))
       (while (string-match tramp-color-escape-sequence-regexp (car attr))
-	(setcar attr (replace-match "" nil nil (car attr))))
-      (while (string-match "//" (car attr))
-	(setcar attr (replace-match "/" nil nil (car attr)))))
+	(setcar attr (replace-match "" nil nil (car attr)))))
     ;; Convert uid and gid.  Use -1 as indication of unusable value.
     (when (and (numberp (nth 2 attr)) (< (nth 2 attr) 0))
       (setcar (nthcdr 2 attr) -1))
@@ -5166,6 +5158,12 @@ Return ATTR."
     ;; Convert directory indication bit.
     (when (string-match "^d" (nth 8 attr))
       (setcar attr t))
+    ;; Convert symlink from `tramp-do-file-attributes-with-stat'.
+    (when (consp (car attr))
+      (if (and (stringp (caar attr))
+               (string-match ".+ -> .\\(.+\\)." (caar attr)))
+          (setcar attr (match-string 1 (caar attr)))
+        (setcar attr nil)))
     ;; Set file's gid change bit.
     (setcar (nthcdr 9 attr)
             (if (numberp (nth 3 attr))
