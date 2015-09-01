@@ -174,6 +174,12 @@ Used by `tls-certificate-information'."
   :type 'string
   :group 'tls)
 
+(eval-and-compile
+  (if (fboundp 'format-message)
+      (defalias 'tls-format-message 'format-message)
+    ;; for Emacs < 25, and XEmacs, don't worry about quote translation.
+    (defalias 'tls-format-message 'format)))
+
 (defun tls-certificate-information (der)
   "Parse X.509 certificate in DER format into an assoc list."
   (let ((certificate (concat "-----BEGIN CERTIFICATE-----\n"
@@ -275,8 +281,8 @@ Fourth arg PORT is an integer specifying a port to connect to."
 			     (message "The certificate presented by `%s' is \
 NOT trusted." host))
 			(not (yes-or-no-p
-			      (format-message "The certificate presented by `%s' is \
-NOT trusted. Accept anyway? " host)))))
+			      (tls-format-message "\
+The certificate presented by `%s' is NOT trusted. Accept anyway? " host)))))
 		  (and tls-hostmismatch
 		       (save-excursion
 			 (goto-char (point-min))
