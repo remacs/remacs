@@ -1026,8 +1026,9 @@ please check its value")
 				'("no" "off" "false" "0")))))
     (setq no-blinking-cursor t))
 
-  (startup--setup-quote-display)
-  (setq internal--text-quoting-flag t)
+  (unless noninteractive
+    (startup--setup-quote-display)
+    (setq internal--text-quoting-flag t))
 
   ;; Re-evaluate predefined variables whose initial value depends on
   ;; the runtime context.
