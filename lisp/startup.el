@@ -1018,11 +1018,12 @@ please check its value")
     (setq no-blinking-cursor t))
 
   ;; If curved quotes don't work, display ASCII approximations.
-  (dolist (char-repl '((?‘ . [?\`]) (?’ . [?\']) (?“ . [?\"]) (?” . [?\"])))
+  (dolist (char-repl '((?‘ . ?\`) (?’ . ?\') (?“ . ?\") (?” . ?\")))
     (when (not (char-displayable-p (car char-repl)))
       (or standard-display-table
           (setq standard-display-table (make-display-table)))
-      (aset standard-display-table (car char-repl) (cdr char-repl))))
+      (aset standard-display-table (car char-repl)
+            (vector (make-glyph-code (cdr char-repl) 'shadow)))))
   (setq internal--text-quoting-flag t)
 
   ;; Re-evaluate predefined variables whose initial value depends on
