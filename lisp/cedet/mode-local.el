@@ -637,11 +637,10 @@ SYMBOL is a function that can be overridden."
   (when (get symbol 'mode-local-overload)
     (let ((default (or (intern-soft (format "%s-default" (symbol-name symbol)))
 		       symbol))
-	  (override (and
-		     (boundp 'describe-function-orig-buffer) ;; added in Emacs 25
-		     describe-function-orig-buffer
-		     (with-current-buffer describe-function-orig-buffer
-		       (fetch-overload symbol)))))
+	  (override (with-current-buffer describe-function-orig-buffer
+                      (fetch-overload symbol)))
+          modes)
+
       (insert (overload-docstring-extension symbol) "\n\n")
       (insert (format-message "default function: `%s'\n" default))
       (when (and (boundp 'describe-function-orig-buffer) ;; added in Emacs 25
@@ -651,6 +650,19 @@ SYMBOL is a function that can be overridden."
 				    describe-function-orig-buffer override))
 	  (insert (format-message "\nno override in buffer '%s'\n"
 				  describe-function-orig-buffer))))
+
+      (mapatoms
+       (lambda (sym) (when (get sym 'mode-local-symbol-table) (push sym modes)))
+       obarray)
+
+      (dolist (mode modes)
+	(let* ((major-mode mode)
+	       (override (fetch-overload symbol)))
+
+	  (when override
+	    (insert (format-message "\noverride in mode ‘%s’: ’%s’\n"
+				    major-mode override))
+            )))
       )))
 
 (add-hook 'help-fns-describe-function-functions 'describe-mode-local-overload)
