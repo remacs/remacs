@@ -1390,11 +1390,11 @@ settings will be marked as \"CHANGED outside of Customize\"."
 
 (defcustom initial-scratch-message (purecopy "\
 ;; This buffer is for notes you don't want to save, and for Lisp evaluation.
-;; If you want to create a file, visit that file with C-x C-f,
+;; If you want to create a file, visit that file with \\[find-file],
 ;; then enter the text in that file's own buffer.
 
 ")
-  "Initial message displayed in *scratch* buffer at startup.
+  "Initial documentation displayed in *scratch* buffer at startup.
 If this is nil, no message will be displayed."
   :type '(choice (text :tag "Message")
 		 (const :tag "none" nil))
@@ -2430,7 +2430,7 @@ nil default-directory" name)
 	 (get-buffer "*scratch*")
 	 (with-current-buffer "*scratch*"
 	   (when (zerop (buffer-size))
-	     (insert initial-scratch-message)
+	     (insert (substitute-command-keys initial-scratch-message))
 	     (set-buffer-modified-p nil))))
 
     ;; Prepend `initial-buffer-choice' to `displayable-buffers'.
