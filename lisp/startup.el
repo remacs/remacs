@@ -804,13 +804,18 @@ to prepare for opening the first frame (e.g. open a connection to an X server)."
 (defvar server-process)
 
 (defun startup--setup-quote-display ()
-  "If curved quotes don't work, display ASCII approximations."
-  (dolist (char-repl '((?‘ . ?\`) (?’ . ?\') (?“ . ?\") (?” . ?\")))
-    (when (not (char-displayable-p (car char-repl)))
-      (unless standard-display-table
-        (setq standard-display-table (make-display-table)))
-      (aset standard-display-table (car char-repl)
-            (vector (make-glyph-code (cdr char-repl) 'shadow))))))
+  "Display ASCII approximations on user request or if curved quotes don't work."
+  (when (memq text-quoting-style '(nil grave straight))
+    (dolist (char-repl '((?‘ . ?\`) (?’ . ?\') (?“ . ?\") (?” . ?\")))
+      (let ((char (car char-repl))
+            (repl (cdr char-repl)))
+        (when (or text-quoting-style (not (char-displayable-p char)))
+          (when (and (eq repl ?\`) (eq text-quoting-style 'straight))
+            (setq repl ?\'))
+          (unless standard-display-table
+            (setq standard-display-table (make-display-table)))
+          (aset standard-display-table char
+                (vector (make-glyph-code repl 'shadow))))))))
 
 (defun command-line ()
   "A subroutine of `normal-top-level'.
@@ -1233,6 +1238,11 @@ the ‘--debug-init’ option to view a complete error backtrace."
 	;; originally done before unibyte was set and is sensitive to
 	;; unibyte (display table, terminal coding system &c).
 	(set-language-environment current-language-environment)))
+
+    ;; Setup quote display again, if the init file sets
+    ;; text-quoting-style to a non-nil value.
+    (when (and (not noninteractive) text-quoting-style)
+      (startup--setup-quote-display))
 
     ;; Do this here in case the init file sets mail-host-address.
     (if (equal user-mail-address "")

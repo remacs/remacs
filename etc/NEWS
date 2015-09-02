@@ -1113,8 +1113,9 @@ integers.
 ** New function `set-binary-mode' allows to switch a standard stream
 of the Emacs process to binary I/O mode.
 
-** In locales that cannot display curved quotes, ASCII approximations
-are installed in standard-display-table.
+** ASCII approximations to curved quotes are put in standard-display-table
+if the locale cannot display curved quotes, or if text-quoting-style
+initially specifies a preference for ASCII.
 
 ** Standard output and error streams now transliterate characters via
 standard-display-table, and encode output using locale-coding-system.
