@@ -1936,7 +1936,7 @@ ftfont_drive_otf (MFLTFont *font,
 	    }
 #ifdef OTF_POSITIONING_TYPE_GET_FORMAT
 	  g->libotf_positioning_type
-	    = otfg->positioning_type & otf_positioning_type_components_mask;
+	    = otfg->positioning_type & OTF_positioning_type_components_mask;
 #endif
 	  for (i++, otfg++; (i < otf_gstring.used
 			     && otfg->f.index.from == otfg[-1].f.index.from);
@@ -1963,7 +1963,7 @@ ftfont_drive_otf (MFLTFont *font,
 		}
 #ifdef OTF_POSITIONING_TYPE_GET_FORMAT
 	      g->libotf_positioning_type
-		= otfg->positioning_type & otf_positioning_type_components_mask;
+		= otfg->positioning_type & OTF_positioning_type_components_mask;
 #endif
 	      out->used++;
 	    }
