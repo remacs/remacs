@@ -1934,6 +1934,10 @@ ftfont_drive_otf (MFLTFont *font,
 	      tag = PACK_OTF_TAG (tag);
 	      g->g.internal = (g->g.internal & ~0x1FFFFFFF) | tag;
 	    }
+#ifdef OTF_POSITIONING_TYPE_GET_FORMAT
+	  g->libotf_positioning_type
+	    = otfg->positioning_type & otf_positioning_type_components_mask;
+#endif
 	  for (i++, otfg++; (i < otf_gstring.used
 			     && otfg->f.index.from == otfg[-1].f.index.from);
 	       i++, otfg++)
@@ -1957,6 +1961,10 @@ ftfont_drive_otf (MFLTFont *font,
 		  tag = PACK_OTF_TAG (tag);
 		  g->g.internal = (g->g.internal & ~0x1FFFFFFF) | tag;
 		}
+#ifdef OTF_POSITIONING_TYPE_GET_FORMAT
+	      g->libotf_positioning_type
+		= otfg->positioning_type & otf_positioning_type_components_mask;
+#endif
 	      out->used++;
 	    }
 	}
