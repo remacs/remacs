@@ -288,7 +288,10 @@ The string is used in `tramp-methods'.")
 (add-to-list 'tramp-methods
   '("sudo"
     (tramp-login-program        "sudo")
-    (tramp-login-args           (("-u" "%u") ("-s") ("-H") ("-p" "Password:")))
+    ;; The password template must be masked.  Otherwise, it could be
+    ;; interpreted as password prompt if the remote host echoes the command.
+    (tramp-login-args           (("-u" "%u") ("-s") ("-H")
+				 ("-p" "P\"\"a\"\"s\"\"s\"\"w\"\"o\"\"r\"\"d\"\":")))
     ;; Local $SHELL could be a nasty one, like zsh or fish.  Let's override it.
     (tramp-login-env            (("SHELL") ("/bin/sh")))
     (tramp-remote-shell         "/bin/sh")
@@ -4316,6 +4319,7 @@ with the encoded or decoded results, respectively.")
     ;; However, I don't know whether all base64 versions do supports
     ;; this option.
     (b64 "base64" "base64 -d")
+    (b64 "openssl enc -base64" "openssl enc -d -base64")
     (b64 "mimencode -b" "mimencode -u -b")
     (b64 "mmencode -b" "mmencode -u -b")
     (b64 "recode data..base64" "recode base64..data")

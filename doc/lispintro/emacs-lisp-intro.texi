@@ -3691,26 +3691,26 @@ to the two variables @code{zebra} and @code{tiger}.  The body of the
 
 @smallexample
 @group
-(let ((zebra 'stripes)
-      (tiger 'fierce))
+(let ((zebra "stripes")
+      (tiger "fierce"))
   (message "One kind of animal has %s and another is %s."
            zebra tiger))
 @end group
 @end smallexample
 
-Here, the varlist is @code{((zebra 'stripes) (tiger 'fierce))}.
+Here, the varlist is @code{((zebra "stripes") (tiger "fierce"))}.
 
 The two variables are @code{zebra} and @code{tiger}.  Each variable is
 the first element of a two-element list and each value is the second
 element of its two-element list.  In the varlist, Emacs binds the
-variable @code{zebra} to the value @code{stripes}@footnote{According
+variable @code{zebra} to the value @code{"stripes"}@footnote{According
 to Jared Diamond in @cite{Guns, Germs, and Steel}, ``@dots{} zebras
 become impossibly dangerous as they grow older'' but the claim here is
 that they do not become fierce like a tiger.  (1997, W. W. Norton and
 Co., ISBN 0-393-03894-2, page 171)}, and binds the
-variable @code{tiger} to the value @code{fierce}.  In this example,
-both values are symbols preceded by a quote.  The values could just as
-well have been another list or a string.  The body of the @code{let}
+variable @code{tiger} to the value @code{"fierce"}.  In this example,
+both values are strings.  The values could just as well have been
+another list or a symbol.  The body of the @code{let}
 follows after the list holding the variables.  In this example, the
 body is a list that uses the @code{message} function to print a string
 in the echo area.
@@ -3855,17 +3855,17 @@ of time, we would not need to run the test!)
 For example, the value may be bound to an argument of a function
 definition.  In the following function definition, the character of the
 animal is a value that is passed to the function.  If the value bound to
-@code{characteristic} is @code{fierce}, then the message, @samp{It's a
+@code{characteristic} is @code{"fierce"}, then the message, @samp{It is a
 tiger!} will be printed; otherwise, @code{nil} will be returned.
 
 @smallexample
 @group
 (defun type-of-animal (characteristic)
   "Print message in echo area depending on CHARACTERISTIC.
-If the CHARACTERISTIC is the symbol ‘fierce’,
+If the CHARACTERISTIC is the string \"fierce\",
 then warn of a tiger."
-  (if (equal characteristic 'fierce)
-      (message "It’s a tiger!")))
+  (if (equal characteristic "fierce")
+      (message "It is a tiger!")))
 @end group
 @end smallexample
 
@@ -3877,18 +3877,18 @@ can evaluate the following two expressions to see the results:
 
 @smallexample
 @group
-(type-of-animal 'fierce)
+(type-of-animal "fierce")
 
-(type-of-animal 'zebra)
+(type-of-animal "striped")
 
 @end group
 @end smallexample
 
 @c Following sentences rewritten to prevent overfull hbox.
 @noindent
-When you evaluate @code{(type-of-animal 'fierce)}, you will see the
-following message printed in the echo area: @code{"It’s a tiger!"}; and
-when you evaluate @code{(type-of-animal 'zebra)} you will see @code{nil}
+When you evaluate @code{(type-of-animal "fierce")}, you will see the
+following message printed in the echo area: @code{"It is a tiger!"}; and
+when you evaluate @code{(type-of-animal "striped")} you will see @code{nil}
 printed in the echo area.
 
 @node type-of-animal in detail
@@ -3918,7 +3918,7 @@ The parts of the function that match this template look like this:
 @group
 (defun type-of-animal (characteristic)
   "Print message in echo area depending on CHARACTERISTIC.
-If the CHARACTERISTIC is the symbol ‘fierce’,
+If the CHARACTERISTIC is the string \"fierce\",
 then warn of a tiger."
   @var{body: the} @code{if} @var{expression})
 @end group
@@ -3947,8 +3947,8 @@ looks like this:
 
 @smallexample
 @group
-(if (equal characteristic 'fierce)
-    (message "It’s a tiger!")))
+(if (equal characteristic "fierce")
+    (message "It is a tiger!")))
 @end group
 @end smallexample
 
@@ -3956,26 +3956,26 @@ looks like this:
 Here, the true-or-false-test is the expression:
 
 @smallexample
-(equal characteristic 'fierce)
+(equal characteristic "fierce")
 @end smallexample
 
 @noindent
 In Lisp, @code{equal} is a function that determines whether its first
 argument is equal to its second argument.  The second argument is the
-quoted symbol @code{'fierce} and the first argument is the value of the
+string @code{"fierce"} and the first argument is the value of the
 symbol @code{characteristic}---in other words, the argument passed to
 this function.
 
 In the first exercise of @code{type-of-animal}, the argument
-@code{fierce} is passed to @code{type-of-animal}.  Since @code{fierce}
-is equal to @code{fierce}, the expression, @code{(equal characteristic
-'fierce)}, returns a value of true.  When this happens, the @code{if}
+@code{"fierce"} is passed to @code{type-of-animal}.  Since @code{"fierce"}
+is equal to @code{"fierce"}, the expression, @code{(equal characteristic
+"fierce")}, returns a value of true.  When this happens, the @code{if}
 evaluates the second argument or then-part of the @code{if}:
-@code{(message "It’s a tiger!")}.
+@code{(message "It is a tiger!")}.
 
 On the other hand, in the second exercise of @code{type-of-animal}, the
-argument @code{zebra} is passed to @code{type-of-animal}.  @code{zebra}
-is not equal to @code{fierce}, so the then-part is not evaluated and
+argument @code{"striped"} is passed to @code{type-of-animal}.  @code{"striped"}
+is not equal to @code{"fierce"}, so the then-part is not evaluated and
 @code{nil} is returned by the @code{if} expression.
 
 @node else
@@ -4034,33 +4034,33 @@ arguments to the function.
 @group
 (defun type-of-animal (characteristic)  ; @r{Second version.}
   "Print message in echo area depending on CHARACTERISTIC.
-If the CHARACTERISTIC is the symbol ‘fierce’,
-then warn of a tiger; else say it’s not fierce."
-  (if (equal characteristic 'fierce)
-      (message "It’s a tiger!")
-    (message "It’s not fierce!")))
+If the CHARACTERISTIC is the string \"fierce\",
+then warn of a tiger; else say it is not fierce."
+  (if (equal characteristic "fierce")
+      (message "It is a tiger!")
+    (message "It is not fierce!")))
 @end group
 @end smallexample
 @sp 1
 
 @smallexample
 @group
-(type-of-animal 'fierce)
+(type-of-animal "fierce")
 
-(type-of-animal 'zebra)
+(type-of-animal "striped")
 
 @end group
 @end smallexample
 
 @c Following sentence rewritten to prevent overfull hbox.
 @noindent
-When you evaluate @code{(type-of-animal 'fierce)}, you will see the
-following message printed in the echo area: @code{"It’s a tiger!"}; but
-when you evaluate @code{(type-of-animal 'zebra)}, you will see
-@code{"It’s not fierce!"}.
+When you evaluate @code{(type-of-animal "fierce")}, you will see the
+following message printed in the echo area: @code{"It is a tiger!"}; but
+when you evaluate @code{(type-of-animal "striped")}, you will see
+@code{"It is not fierce!"}.
 
-(Of course, if the @var{characteristic} were @code{ferocious}, the
-message @code{"It’s not fierce!"} would be printed; and it would be
+(Of course, if the @var{characteristic} were @code{"ferocious"}, the
+message @code{"It is not fierce!"} would be printed; and it would be
 misleading!  When you write code, you need to take into account the
 possibility that some such argument will be tested by the @code{if}
 and write your program accordingly.)
@@ -6348,7 +6348,7 @@ With arg N, put point N/10 of the way
 from the true beginning.
 @end group
 @group
-Don’t use this in Lisp programs!
+Don't use this in Lisp programs!
 \(goto-char (point-min)) is faster
 and does not set the mark."
   (interactive "P")
@@ -7604,8 +7604,8 @@ Here is the complete text of the version 22 implementation of the function:
 @smallexample
 @group
 (defun zap-to-char (arg char)
-  "Kill up to and including ARG’th occurrence of CHAR.
-Case is ignored if ‘case-fold-search’ is non-nil in the current buffer.
+  "Kill up to and including ARG'th occurrence of CHAR.
+Case is ignored if `case-fold-search' is non-nil in the current buffer.
 Goes backward if ARG is negative; error if CHAR not found."
   (interactive "p\ncZap to char: ")
   (if (char-table-p translation-table-for-input)
@@ -7619,6 +7619,19 @@ Goes backward if ARG is negative; error if CHAR not found."
 
 The documentation is thorough.  You do need to know the jargon meaning
 of the word ``kill''.
+
+@cindex curved quotes
+@cindex curly quotes
+The version 22 documentation string for @code{zap-to-char} uses ASCII
+grave accent and apostrophe to quote a symbol, so it appears as
+@t{`case-fold-search'}.  This quoting style was inspired by 1970s-era
+displays in which grave accent and apostrophe were often mirror images
+suitable for use as quotes.  On most modern displays this is no longer
+true, and when these two ASCII characters appear in documentation
+strings or diagnostic message formats, Emacs typically transliterates
+them to curved single quotes, so that the abovequoted symbol appears
+as @t{‘case-fold-search’}.  Source-code strings can also simply use
+curved quotes directly.
 
 @node zap-to-char interactive
 @subsection The @code{interactive} Expression
@@ -7863,7 +7876,7 @@ to make one entry in the kill ring.
 
 In Lisp code, optional third arg YANK-HANDLER, if non-nil,
 specifies the yank-handler text property to be set on the killed
-text.  See ‘insert-for-yank’."
+text.  See `insert-for-yank'."
   ;; Pass point first, then mark, because the order matters
   ;; when calling kill-append.
   (interactive (list (point) (mark)))
@@ -8291,9 +8304,9 @@ function:
 @smallexample
 @group
 (defun copy-region-as-kill (beg end)
-  "Save the region as if killed, but don’t kill it.
+  "Save the region as if killed, but don't kill it.
 In Transient Mark mode, deactivate the mark.
-If ‘interprogram-cut-function’ is non-nil, also save the text for a window
+If `interprogram-cut-function' is non-nil, also save the text for a window
 system cut and paste."
   (interactive "r")
 @end group
@@ -8573,28 +8586,16 @@ function which in turn uses the @code{setcar} function.
 @unnumberedsubsubsec The @code{kill-new} function
 @findex kill-new
 
-@c in GNU Emacs 22, additional documentation to kill-new:
-@ignore
-Optional third arguments YANK-HANDLER controls how the STRING is later
-inserted into a buffer; see `insert-for-yank' for details.
-When a yank handler is specified, STRING must be non-empty (the yank
-handler, if non-nil, is stored as a `yank-handler' text property on STRING).
-
-When the yank handler has a non-nil PARAM element, the original STRING
-argument is not used by `insert-for-yank'.  However, since Lisp code
-may access and use elements from the kill ring directly, the STRING
-argument should still be a \"useful\" string for such uses."
-@end ignore
 @need 1200
-The @code{kill-new} function looks like this:
+In version 22 the @code{kill-new} function looks like this:
 
 @smallexample
 @group
 (defun kill-new (string &optional replace yank-handler)
   "Make STRING the latest kill in the kill ring.
-Set ‘kill-ring-yank-pointer’ to point to it.
+Set `kill-ring-yank-pointer' to point to it.
 
-If `interprogram-cut-function’ is non-nil, apply it to STRING.
+If `interprogram-cut-function' is non-nil, apply it to STRING.
 Optional second argument REPLACE non-nil means that STRING will replace
 the front of the kill ring, rather than being added to the list.
 @dots{}"
@@ -10089,10 +10090,10 @@ With argument, rotate that many kills forward (or backward, if negative)."
 
 (defun current-kill (n &optional do-not-move)
   "Rotate the yanking point by N places, and then return that kill.
-If N is zero, ‘interprogram-paste-function’ is set, and calling it
+If N is zero, `interprogram-paste-function' is set, and calling it
 returns a string, then that string is added to the front of the
 kill ring and returned as the latest kill.
-If optional arg DO-NOT-MOVE is non-nil, then don’t actually move the
+If optional arg DO-NOT-MOVE is non-nil, then don't actually move the
 yanking point; just return the Nth kill forward."
   (let ((interprogram-paste (and (= n 0)
                                  interprogram-paste-function
@@ -12427,10 +12428,10 @@ Here is the code for @code{forward-sentence}:
 @smallexample
 @group
 (defun forward-sentence (&optional arg)
-  "Move forward to next ‘sentence-end’.  With argument, repeat.
-With negative argument, move backward repeatedly to ‘sentence-beginning’.
+  "Move forward to next end of sentence.  With argument, repeat.
+With negative argument, move backward repeatedly to start of sentence.
 
-The variable ‘sentence-end’ is a regular expression that matches ends of
+The variable `sentence-end' is a regular expression that matches ends of
 sentences.  Also, every paragraph boundary terminates sentences as well."
 @end group
 @group
@@ -17520,8 +17521,13 @@ Incidentally, @code{load-library} is an interactive interface to the
 @smallexample
 @group
 (defun load-library (library)
-  "Load the library named LIBRARY.
-This is an interface to the function ‘load’."
+  "Load the Emacs Lisp library named LIBRARY.
+This is an interface to the function `load'.  LIBRARY is searched
+for in `load-path', both with and without `load-suffixes' (as
+well as `load-file-rep-suffixes').
+
+See Info node `(emacs)Lisp Libraries' for more details.
+See `load-file' for a different interface to `load'."
   (interactive
    (list (completing-read "Load library: "
                           (apply-partially 'locate-file-completion-table
@@ -19005,13 +19011,21 @@ The @code{current-kill} function is used by @code{yank} and by
 @group
 (defun current-kill (n &optional do-not-move)
   "Rotate the yanking point by N places, and then return that kill.
-If N is zero, ‘interprogram-paste-function’ is set, and calling it
-returns a string, then that string is added to the front of the
-kill ring and returned as the latest kill.
+If N is zero and `interprogram-paste-function' is set to a
+function that returns a string or a list of strings, and if that
+function doesn't return nil, then that string (or list) is added
+to the front of the kill ring and the string (or first string in
+the list) is returned as the latest kill.
 @end group
 @group
-If optional arg DO-NOT-MOVE is non-nil, then don’t actually move the
-yanking point; just return the Nth kill forward."
+If N is not zero, and if `yank-pop-change-selection' is
+non-nil, use `interprogram-cut-function' to transfer the
+kill at the new yank point into the window system selection.
+@end group
+@group
+If optional arg DO-NOT-MOVE is non-nil, then don't actually
+move the yanking point; just return the Nth kill forward."
+
   (let ((interprogram-paste (and (= n 0)
                                  interprogram-paste-function
                                  (funcall interprogram-paste-function))))
@@ -19023,8 +19037,10 @@ yanking point; just return the Nth kill forward."
           ;; text to the kill ring, so Emacs doesn't try to own the
           ;; selection, with identical text.
           (let ((interprogram-cut-function nil))
-            (kill-new interprogram-paste))
-          interprogram-paste)
+            (if (listp interprogram-paste)
+              (mapc 'kill-new (nreverse interprogram-paste))
+              (kill-new interprogram-paste)))
+          (car kill-ring))
 @end group
 @group
       (or kill-ring (error "Kill ring is empty"))
@@ -19032,8 +19048,12 @@ yanking point; just return the Nth kill forward."
              (nthcdr (mod (- n (length kill-ring-yank-pointer))
                           (length kill-ring))
                      kill-ring)))
-        (or do-not-move
-            (setq kill-ring-yank-pointer ARGth-kill-element))
+        (unless do-not-move
+          (setq kill-ring-yank-pointer ARGth-kill-element)
+          (when (and yank-pop-change-selection
+                     (> n 0)
+                     interprogram-cut-function)
+            (funcall interprogram-cut-function (car ARGth-kill-element))))
         (car ARGth-kill-element)))))
 @end group
 @end smallexample
@@ -19344,15 +19364,15 @@ The code looks like this:
   "Reinsert (\"paste\") the last stretch of killed text.
 More precisely, reinsert the stretch of killed text most recently
 killed OR yanked.  Put point at end, and set mark at beginning.
-With just \\[universal-argument] as argument, same but put point at
-beginning (and mark at end).  With argument N, reinsert the Nth most
-recently killed stretch of killed text.
+With just \\[universal-argument] as argument, same but put point at beginning (and mark at end).
+With argument N, reinsert the Nth most recently killed stretch of killed
+text.
 
 When this command inserts killed text into the buffer, it honors
-‘yank-excluded-properties’ and ‘yank-handler’ as described in the
-doc string for ‘insert-for-yank-1’, which see.
+`yank-excluded-properties' and `yank-handler' as described in the
+doc string for `insert-for-yank-1', which see.
 
-See also the command \\[yank-pop]."
+See also the command `yank-pop' (\\[yank-pop])."
 @end group
 @group
   (interactive "*P")
@@ -19368,8 +19388,7 @@ See also the command \\[yank-pop]."
                                   ((eq arg '-) -2)
                                   (t (1- arg)))))
   (if (consp arg)
-      ;; This is like exchange-point-and-mark,
-      ;;     but doesn't activate the mark.
+      ;; This is like exchange-point-and-mark, but doesn't activate the mark.
       ;; It is cleaner to avoid activation, even though the command
       ;; loop would deactivate the mark because we inserted text.
       (goto-char (prog1 (mark t)

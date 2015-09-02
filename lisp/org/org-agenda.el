@@ -1990,8 +1990,8 @@ the lower-case version of all tags."
   "Alist of characters and custom functions for bulk actions.
 For example, this value makes those two functions available:
 
-  '((?R set-category)
-    (?C bulk-cut))
+  ((?R set-category)
+   (?C bulk-cut))
 
 With selected entries in an agenda buffer, `B R' will call
 the custom function `set-category' on the selected entries.
@@ -4937,13 +4937,13 @@ the `regexp' or `notregexp' element.
 `todo' and `nottodo' accept as an argument a list of todo
 keywords, which may include \"*\" to match any todo keyword.
 
-    (org-agenda-skip-entry-if 'todo '(\"TODO\" \"WAITING\"))
+    (org-agenda-skip-entry-if \\='todo \\='(\"TODO\" \"WAITING\"))
 
 would skip all entries with \"TODO\" or \"WAITING\" keywords.
 
 Instead of a list, a keyword class may be given.  For example:
 
-    (org-agenda-skip-entry-if 'nottodo 'done)
+    (org-agenda-skip-entry-if \\='nottodo \\='done)
 
 would skip entries that haven't been marked with any of \"DONE\"
 keywords.  Possible classes are: `todo', `done', `any'.
@@ -10005,10 +10005,10 @@ calling the function returns nil.  This function takes one
 argument: an entry from `org-agenda-get-day-entries'.
 
 FILTER can also be an alist with the car of each cell being
-either 'headline or 'category.  For example:
+either `headline' or `category'.  For example:
 
-  '((headline \"IMPORTANT\")
-    (category \"Work\"))
+  ((headline \"IMPORTANT\")
+   (category \"Work\"))
 
 will only add headlines containing IMPORTANT or headlines
 belonging to the \"Work\" category.

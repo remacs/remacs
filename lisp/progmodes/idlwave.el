@@ -1571,11 +1571,11 @@ Otherwise, if SELECT is non-nil then only an action is created.
 
 Some examples:
 No spaces before and 1 after a comma
-   (idlwave-action-and-binding \",\"  '(idlwave-surround 0 1))
+   (idlwave-action-and-binding \",\"  \\='(idlwave-surround 0 1))
 A minimum of 1 space before and after `=' (see `idlwave-expand-equal').
-   (idlwave-action-and-binding \"=\"  '(idlwave-expand-equal -1 -1))
+   (idlwave-action-and-binding \"=\"  \\='(idlwave-expand-equal -1 -1))
 Capitalize system variables - action only
-   (idlwave-action-and-binding idlwave-sysvar '(capitalize-word 1) t)"
+   (idlwave-action-and-binding idlwave-sysvar \\='(capitalize-word 1) t)"
   (if (not (equal select 'noaction))
       ;; Add action
       (let* ((table (if select 'idlwave-indent-action-table

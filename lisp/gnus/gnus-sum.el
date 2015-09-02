@@ -1656,7 +1656,7 @@ while still allowing them to affect operations done in other buffers.
 For example:
 
 \(setq gnus-newsgroup-variables
-     '(message-use-followup-to
+     \\='(message-use-followup-to
        (gnus-visible-headers .
 	 \"^From:\\\\|^Newsgroups:\\\\|^Subject:\\\\|^Date:\\\\|^To:\")))
 ")

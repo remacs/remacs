@@ -174,11 +174,10 @@ Used by `tls-certificate-information'."
   :type 'string
   :group 'tls)
 
-(eval-and-compile
-  (if (fboundp 'format-message)
-      (defalias 'tls-format-message 'format-message)
+(defalias 'tls-format-message
+  (if (fboundp 'format-message) 'format-message
     ;; for Emacs < 25, and XEmacs, don't worry about quote translation.
-    (defalias 'tls-format-message 'format)))
+    'format))
 
 (defun tls-certificate-information (der)
   "Parse X.509 certificate in DER format into an assoc list."
