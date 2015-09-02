@@ -1082,7 +1082,7 @@ As an example:
 Would expand to:
 
   (prog2
-      (defvar erc-server-311-functions 'erc-server-311
+      (defvar erc-server-311-functions \\='erc-server-311
         \"Some non-generic variable documentation.
 
   Hook called upon receiving a 311 server response.
