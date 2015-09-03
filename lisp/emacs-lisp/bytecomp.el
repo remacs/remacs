@@ -2585,7 +2585,9 @@ If FORM is a lambda or a macro, byte-compile it as a function."
                  (if (symbolp form) form "provided"))
         fun)
        (t
-        (when (symbolp form)
+        (when (or (symbolp form) (eq (car-safe fun) 'closure))
+          ;; `fun' is a function *value*, so try to recover its corresponding
+          ;; source code.
           (setq lexical-binding (eq (car fun) 'closure))
           (setq fun (byte-compile--reify-function fun)))
         ;; Expand macros.
