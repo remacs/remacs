@@ -538,12 +538,13 @@ and what they do:
  dollar-sign character.  Hash characters in other contexts will still
  follow whatever the syntax table says about the hash character.
 
- (\"\\\\('\\\\).\\\\('\\\\)\"
+ (\"\\\\(\\='\\\\).\\\\(\\='\\\\)\"
   (1 \"\\\"\")
   (2 \"\\\"\"))
 
- gives a pair single-quotes, which surround a single character, a SYNTAX of
- \"\\\"\" (meaning string quote syntax).  Single-quote characters in other
+ gives a pair of apostrophes, which surround a single character, a
+ SYNTAX of \"\\\"\" (meaning string quote syntax).  Apostrophes in other
+
  contexts will not be affected.
 
 This is normally set via `font-lock-defaults'.")

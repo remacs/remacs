@@ -2979,7 +2979,7 @@ This is a wrapper over `buffer-substring' that takes care of
 different transformations for the code sent to be evaluated in
 the python shell:
   1. When optional argument NOMAIN is non-nil everything under an
-     \"if __name__ == '__main__'\" block will be removed.
+     \"if __name__ == \\='__main__\\='\" block will be removed.
   2. When a subregion of the buffer is sent, it takes care of
      appending extra empty lines so tracebacks are correct.
   3. When the region sent is a substring of the current buffer, a

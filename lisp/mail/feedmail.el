@@ -566,7 +566,7 @@ but common in some proprietary systems."
   "If non-nil and the email has no Sender: header, use this value.
 May be nil, in which case nothing in particular is done with respect
 to Sender: lines.  By design, will not replace an existing Sender:
-line, but you can achieve that with a fiddle-plex 'replace action.
+line, but you can achieve that with a fiddle-plex replace action.
 NB: it makes no sense to use the value t since there is no sensible
 default for Sender:.
 
@@ -1745,7 +1745,7 @@ applied to a file after you've just read it from disk: for example, a
 feedmail FQM message file from a queue.  You could use something like
 this:
 
-\(setq auto-mode-alist \(cons \'\(\"\\\\.fqm$\" . feedmail-vm-mail-mode\) auto-mode-alist\)\)
+\(setq auto-mode-alist \(cons \\='\(\"\\\\.fqm$\" . feedmail-vm-mail-mode\) auto-mode-alist\)\)
 "
   (feedmail-say-debug ">in-> feedmail-vm-mail-mode")
   (let ((the-buf (current-buffer)))

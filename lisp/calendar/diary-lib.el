@@ -300,7 +300,7 @@ expressions that can involve the keywords `days' (a number), `date'
 
 (defcustom diary-abbreviated-year-flag t
   "Interpret a two-digit year DD in a diary entry as either 19DD or 20DD.
-This applies to the Gregorian, Hebrew, Islamic, and Bahá'í calendars.
+This applies to the Gregorian, Hebrew, Islamic, and Bahá’í calendars.
 When the current century is added to a two-digit year, if the result
 is more than 50 years in the future, the previous century is assumed.
 If the result is more than 50 years in the past, the next century is assumed.
@@ -1531,7 +1531,7 @@ passed to `calendar-mark-visible-date' as MARK."
         (calendar-mark-month m y month day year color)
         (calendar-increment-month m y 1)))))
 
-;; Bahai, Hebrew, Islamic.
+;; Bahá’í, Hebrew, Islamic.
 (defun calendar-mark-complex (month day year fromabs &optional color)
   "Mark dates in the calendar conforming to MONTH DAY YEAR of some system.
 The function FROMABS converts absolute dates to the appropriate date system.
@@ -1561,7 +1561,7 @@ Optional argument COLOR is passed to `calendar-mark-visible-date' as MARK."
            (calendar-mark-visible-date
             (calendar-gregorian-from-absolute date) color)))))
 
-;; Bahai, Islamic.
+;; Bahá’í, Islamic.
 (defun calendar-mark-1 (month day year fromabs toabs &optional color)
   "Mark dates in the calendar conforming to MONTH DAY YEAR of some system.
 The function FROMABS converts absolute dates to the appropriate date system.
@@ -1659,8 +1659,8 @@ on a weekend:
       &%%(let ((dayname (calendar-day-of-week date))
                (day (calendar-extract-day date)))
            (or
-             (and (= day 21) (memq dayname '(1 2 3 4 5)))
-             (and (memq day '(19 20)) (= dayname 5)))
+             (and (= day 21) (memq dayname \\='(1 2 3 4 5)))
+             (and (memq day \\='(19 20)) (= dayname 5)))
          ) UIUC pay checks deposited
 
 A number of built-in functions are available for this type of

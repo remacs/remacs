@@ -497,7 +497,7 @@ are prefix commands.  For the dispatcher to display useful information, you
 should provide a description for the prefix, like
 
  (setq org-agenda-custom-commands
-   '((\"h\" . \"HOME + Name tag searches\") ; describe prefix \"h\"
+   \\='((\"h\" . \"HOME + Name tag searches\") ; describe prefix \"h\"
      (\"hl\" tags \"+HOME+Lisa\")
      (\"hp\" tags \"+HOME+Peter\")
      (\"hk\" tags \"+HOME+Kim\")))"
@@ -1932,7 +1932,7 @@ list as second element:
 For example, to display a 16px horizontal space for Emacs
 category, you can use:
 
-  (\"Emacs\" '(space . (:width (16))))"
+  (\"Emacs\" \\='(space . (:width (16))))"
   :group 'org-agenda-line-format
   :version "24.1"
   :type '(alist :key-type (string :tag "Regexp matching category")
@@ -2538,7 +2538,7 @@ For example, if you have a custom agenda command \"p\" and you
 want this command to be accessible only from plain text files,
 use this:
 
-   '((\"p\" ((in-file . \"\\.txt\"))))
+   \\='((\"p\" ((in-file . \"\\.txt\"))))
 
 Here are the available contexts definitions:
 
@@ -2556,7 +2556,7 @@ accessible if there is at least one valid check.
 You can also bind a key to another agenda custom command
 depending on contextual rules.
 
-    '((\"p\" \"q\" ((in-file . \"\\.txt\"))))
+    \\='((\"p\" \"q\" ((in-file . \"\\.txt\"))))
 
 Here it means: in .txt files, use \"p\" as the key for the
 agenda command otherwise associated with \"q\".  (The command
@@ -9596,7 +9596,7 @@ This is a command that has to be installed in `calendar-mode-map'."
 	     "Hebrew:     " (calendar-hebrew-date-string date) " (until sunset)\n"
 	     "Islamic:    " (calendar-islamic-date-string date) " (until sunset)\n"
 	     "French:     " (calendar-french-date-string date) "\n"
-	     "Baha'i:     " (calendar-bahai-date-string date) " (until sunset)\n"
+	     "Bahá’í:     " (calendar-bahai-date-string date) " (until sunset)\n"
 	     "Mayan:      " (calendar-mayan-date-string date) "\n"
 	     "Coptic:     " (calendar-coptic-date-string date) "\n"
 	     "Ethiopic:   " (calendar-ethiopic-date-string date) "\n"

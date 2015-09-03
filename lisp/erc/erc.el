@@ -5203,7 +5203,7 @@ So far the following TYPE/L pairs are supported:
 
        Event                    TYPE                   L
 
-    nickname change            'nick                (NEW-NICK)"
+    nickname change            `nick'                (NEW-NICK)"
   (erc-log (format "user-change: type: %S  nlh: %S  l: %S" type nlh l))
   (cond
    ;; nickname change

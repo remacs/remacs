@@ -91,7 +91,7 @@ spaces.  You might want to install ls from GNU Coreutils, which does
 support this option.  Alternatively, you might want to use Emacs's
 own emulation of \"ls\", by using:
   (setq ls-lisp-use-insert-directory-program nil)
-  (require 'ls-lisp)
+  (require \\='ls-lisp)
 This is used by default on MS Windows, which does not have an \"ls\" program.
 Note that `ls-lisp' does not support as many options as GNU ls, though.
 For more details, see Info node `(emacs)ls in Lisp'."

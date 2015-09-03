@@ -50,7 +50,7 @@
 
 (require 'find-func)
 ;; For find-function-regexp-alist. It is tempting to replace this
-;; ‘require‘ by (defvar find-function-regexp-alist) and
+;; ‘require’ by (defvar find-function-regexp-alist) and
 ;; with-eval-after-load, but model-local.el is typically loaded when a
 ;; semantic autoload is invoked, and something in semantic loads
 ;; find-func.el before mode-local.el, so the eval-after-load is lost.

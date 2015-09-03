@@ -770,7 +770,7 @@ but still contains full information about each coding system."
 # MNEMONIC-LETTER -- CODING-SYSTEM-NAME
 #   DOC-STRING
 ")
-    (princ "\
+    (princ (substitute-command-keys "\
 #########################
 ## LIST OF CODING SYSTEMS
 ## Each line corresponds to one coding system
@@ -794,7 +794,7 @@ but still contains full information about each coding system."
 ##      0
 ##  POST-READ-CONVERSION, PRE-WRITE-CONVERSION = function name to be called
 ##
-"))
+")))
   (dolist (coding-system (sort-coding-systems (coding-system-list 'base-only)))
     (if (null arg)
 	(print-coding-system-briefly coding-system 'tightly)

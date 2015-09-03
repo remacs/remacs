@@ -86,7 +86,7 @@ or if your init file contains a line of this form:
  (setq inhibit-startup-echo-area-message \"YOUR-USER-NAME\")
 If your init file is byte-compiled, use the following form
 instead:
- (eval '(setq inhibit-startup-echo-area-message \"YOUR-USER-NAME\"))
+ (eval \\='(setq inhibit-startup-echo-area-message \"YOUR-USER-NAME\"))
 Thus, someone else using a copy of your init file will see the
 startup message unless he personally acts to inhibit it."
   :type '(choice (const :tag "Don't inhibit")

@@ -1657,7 +1657,7 @@ using the Emacs 22 command \"emacsclient\" as follows:
         origMode
         polltime 10
         headertime 0
-        command emacsclient --eval '(mh-inc-spool-mh-e)'
+        command emacsclient --eval \\='(mh-inc-spool-mh-e)\\='
 
 In XEmacs, the command \"gnuclient\" is used in a similar
 fashion."

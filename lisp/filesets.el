@@ -679,14 +679,14 @@ variables my-ps-viewer, my-pdf-viewer, my-dvi-viewer, my-pic-viewer.
 In order to view pdf or rtf files in an Emacs buffer, you could use these:
 
 
-      \(\"^.+\\\\.pdf\\\\'\" \"pdftotext\"
+      \(\"^.+\\\\.pdf\\\\\\='\" \"pdftotext\"
        \((:capture-output t)
 	\(:args (\"%S - | fmt -w \" window-width))
 	\(:ignore-on-read-text t)
 	\(:constraintp (lambda ()
 			\(and \(filesets-which-command-p \"pdftotext\")
 			     \(filesets-which-command-p \"fmt\"))))))
-      \(\"^.+\\\\.rtf\\\\'\" \"rtf2htm\"
+      \(\"^.+\\\\.rtf\\\\\\='\" \"rtf2htm\"
        \((:capture-output t)
 	\(:args (\"%S 2> /dev/null | w3m -dump -T text/html\"))
 	\(:ignore-on-read-text t)

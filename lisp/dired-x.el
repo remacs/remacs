@@ -687,8 +687,8 @@ to put saved Dired buffers automatically into Virtual Dired mode.
 
 Also useful for `auto-mode-alist' like this:
 
-  (add-to-list 'auto-mode-alist
-               '(\"[^/]\\\\.dired\\\\'\" . dired-virtual-mode))"
+  (add-to-list \\='auto-mode-alist
+               \\='(\"[^/]\\\\.dired\\\\\\='\" . dired-virtual-mode))"
   (interactive)
   (dired-virtual (dired-virtual-guess-dir)))
 

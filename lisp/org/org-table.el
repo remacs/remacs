@@ -545,8 +545,8 @@ slightly, to make sure a beginning of line in the first line is included.
 SEPARATOR specifies the field separator in the lines.  It can have the
 following values:
 
-'(4)     Use the comma as a field separator
-'(16)    Use a TAB as field separator
+(4)      Use the comma as a field separator
+(16)     Use a TAB as field separator
 integer  When a number, use that many spaces as field separator
 nil      When nil, the command tries to be smart and figure out the
          separator in the following way:

@@ -234,7 +234,7 @@ of it available such that:
 
 This variable has three possible values:
     nil: no packages are hidden;
-    archive: only criteria (a) is used;
+    `archive': only criteria (a) is used;
     t: both criteria are used.
 
 This variable has no effect if `package-menu--hide-packages' is

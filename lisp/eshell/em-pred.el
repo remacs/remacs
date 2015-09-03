@@ -172,18 +172,18 @@ PERMISSION BITS (for owner/group/world):
 
 OWNERSHIP:
   U               owned by effective uid
-  u(UID|'user')   owned by UID/user
-  g(GID|'group')  owned by GID/group
+  u(UID|\\='user\\=')   owned by UID/user
+  g(GID|\\='group\\=')  owned by GID/group
 
 FILE ATTRIBUTES:
   l[+-]N                 +/-/= N links
-  a[Mwhms][+-](N|'FILE') access time +/-/= N months/weeks/hours/mins/secs
+  a[Mwhms][+-](N|\\='FILE\\=') access time +/-/= N months/weeks/hours/mins/secs
 			 (days if unspecified) if FILE specified,
-			 use as comparison basis; so a+'file.c'
+			 use as comparison basis; so a+\\='file.c\\='
 			 shows files accessed before file.c was
 			 last accessed
-  m[Mwhms][+-](N|'FILE') modification time...
-  c[Mwhms][+-](N|'FILE') change time...
+  m[Mwhms][+-](N|\\='FILE\\=') modification time...
+  c[Mwhms][+-](N|\\='FILE\\=') change time...
   L[kmp][+-]N            file size +/-/= N Kb/Mb/blocks
 
 EXAMPLES:

@@ -4361,7 +4361,7 @@ Usage:
       ;;;  -->  \" := \"      [[  -->  [        --CR  -->  comment-out code
       ..   -->  \" => \"      ]   -->  )        ---   -->  horizontal line
       ,,   -->  \" <= \"      ]]  -->  ]        ----  -->  display comment
-      ==   -->  \" == \"      ''  -->  \\\"
+      ==   -->  \" == \"      \\='\\='  -->  \\\"
 
 
   WORD COMPLETION:
@@ -4808,7 +4808,7 @@ Usage:
     automatically recognized as VHDL source files.  To add an extension
     \".xxx\", add the following line to your Emacs start-up file (`.emacs'):
 
-      \(push '(\"\\\\.xxx\\\\'\" . vhdl-mode) auto-mode-alist)
+      \(push \\='(\"\\\\.xxx\\\\\\='\" . vhdl-mode) auto-mode-alist)
 
 
   HINTS:
