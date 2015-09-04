@@ -832,14 +832,6 @@ notifications, if Emacs is compiled with file notification support.
 
 *** landmark.el (moved to elpa.gnu.org)
 
-+++
-** The character classes [:graph:] and [:print:] in regular expressions
-no longer match every multibyte character.  Instead, Emacs now
-consults the Unicode character properties to determine which
-characters are graphic or printable.  In particular, surrogates and
-unassigned codepoints are now rejected.  If you want the old behavior,
-use [:multibyte:] instead.
-
 
 * New Modes and Packages in Emacs 25.1
 
@@ -953,6 +945,14 @@ in their format argument.
 now match multibyte characters using Unicode character properties.
 If you want the old behavior where they matched any character with
 word syntax, use `\sw' instead.
+
++++
+** The character classes [:graph:] and [:print:] in regular expressions
+no longer match every multibyte character.  Instead, Emacs now
+consults the Unicode character properties to determine which
+characters are graphic or printable.  In particular, surrogates and
+unassigned codepoints are now rejected.  If you want the old behavior,
+use [:multibyte:] instead.
 
 +++
 ** The `diff' command uses the unified format now.  To restore the old
