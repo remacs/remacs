@@ -13947,7 +13947,7 @@ What happens is this: the search is limited to the region, and fails
 as you expect because there are no word-constituent characters in the
 region.  Since it fails, we receive an error message.  But we do not
 want to receive an error message in this case; we want to receive the
-message that "The region does NOT have any words."
+message ``The region does NOT have any words.''
 
 The solution to this problem is to provide @code{re-search-forward}
 with a third argument of @code{t}, which causes the function to return

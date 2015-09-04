@@ -486,8 +486,8 @@ accent Unicode characters:
 
 The optional argument @var{locale}, a string, overrides the setting of
 your current locale identifier for collation.  The value is system
-dependent; a @var{locale} "en_US.UTF-8" is applicable on POSIX
-systems, while it would be, e.g., "enu_USA.1252" on MS-Windows
+dependent; a @var{locale} @code{"en_US.UTF-8"} is applicable on POSIX
+systems, while it would be, e.g., @code{"enu_USA.1252"} on MS-Windows
 systems.
 
 If @var{ignore-case} is non-@code{nil}, characters are converted to lower-case
@@ -495,7 +495,7 @@ before comparing them.
 
 To emulate Unicode-compliant collation on MS-Windows systems,
 bind @code{w32-collate-ignore-punctuation} to a non-@code{nil} value, since
-the codeset part of the locale cannot be "UTF-8" on MS-Windows.
+the codeset part of the locale cannot be @code{"UTF-8"} on MS-Windows.
 
 If your system does not support a locale environment, this function
 behaves like @code{string-equal}.
@@ -596,9 +596,9 @@ less significant for @ref{Sorting,,sorting}.
 
 The optional argument @var{locale}, a string, overrides the setting of
 your current locale identifier for collation.  The value is system
-dependent; a @var{locale} "en_US.UTF-8" is applicable on POSIX
-systems, while it would be, e.g., "enu_USA.1252" on MS-Windows
-systems.  The @var{locale} "POSIX" lets @code{string-collate-lessp}
+dependent; a @var{locale} @code{"en_US.UTF-8"} is applicable on POSIX
+systems, while it would be, e.g., @code{"enu_USA.1252"} on MS-Windows
+systems.  The @var{locale} @code{"POSIX"} lets @code{string-collate-lessp}
 behave like @code{string-lessp}:
 
 @example
@@ -614,7 +614,7 @@ before comparing them.
 
 To emulate Unicode-compliant collation on MS-Windows systems,
 bind @code{w32-collate-ignore-punctuation} to a non-@code{nil} value, since
-the codeset part of the locale cannot be "UTF-8" on MS-Windows.
+the codeset part of the locale cannot be @code{"UTF-8"} on MS-Windows.
 
 If your system does not support a locale environment, this function
 behaves like @code{string-lessp}.

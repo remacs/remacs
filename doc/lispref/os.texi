@@ -2480,7 +2480,7 @@ argument of another @code{notifications-notify} call.  For example:
 @end group
 
 @group
-A message window opens on the desktop.  Press "I agree"
+A message window opens on the desktop.  Press ``I agree''.
      @result{} Message 22, key "Confirm" pressed
         Message 22, closed due to "dismissed"
 @end group
