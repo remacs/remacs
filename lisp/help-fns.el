@@ -614,9 +614,9 @@ FILE is the file where FUNCTION was probably defined."
 	     (autoload-do-load real-def))
 
         (help-fns--key-bindings function)
-        (with-current-buffer standard-output
-	  (let ((doc (help-fns--signature function doc-raw sig-key
-                                          real-function nil)))
+        (let ((doc (help-fns--signature function doc-raw sig-key
+                                        real-function nil)))
+          (with-current-buffer standard-output
 	    (run-hook-with-args 'help-fns-describe-function-functions function)
 	    (insert "\n"
 		    (or doc "Not documented."))))))))
