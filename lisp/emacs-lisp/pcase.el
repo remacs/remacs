@@ -164,7 +164,7 @@ Currently, the following patterns are provided this way:"
         expansion))))
 
 (declare-function help-fns--signature "help-fns"
-                  (function doc real-def real-function raw))
+                  (function doc real-def real-function buffer))
 
 ;; FIXME: Obviously, this will collide with nadvice's use of
 ;; function-documentation if we happen to advise `pcase'.
@@ -184,7 +184,7 @@ Currently, the following patterns are provided this way:"
              (insert "\n\n-- ")
              (let* ((doc (documentation me 'raw)))
                (setq doc (help-fns--signature symbol doc me
-                                              (indirect-function me) t))
+                                              (indirect-function me) nil))
                (insert "\n" (or doc "Not documented.")))))))
       (let ((combined-doc (buffer-string)))
         (if ud (help-add-fundoc-usage combined-doc (car ud)) combined-doc)))))

@@ -368,7 +368,7 @@ suitable file is found, return nil."
               (help-xref-button 1 'help-function-cmacro function lib)))))
       (insert ".\n"))))
 
-(defun help-fns--signature (function doc real-def real-function raw)
+(defun help-fns--signature (function doc real-def real-function buffer)
   "Insert usage at point and return docstring.  With highlighting."
   (if (keymapp function)
       doc                       ; If definition is a keymap, skip arglist note.
@@ -402,10 +402,13 @@ suitable file is found, return nil."
              (use1 (replace-regexp-in-string
                     "\\`(\\\\=\\\\\\\\=` \\([^\n ]*\\))\\'"
                     "\\\\=`\\1" use t))
-             (high (if raw
-                       (cons use1 doc)
-                     (help-highlight-arguments (substitute-command-keys use1)
-                                               (substitute-command-keys doc)))))
+             (high (if buffer
+                       (let (subst-use1 subst-doc)
+                         (with-current-buffer buffer
+                           (setq subst-use1 (substitute-command-keys use1))
+                           (setq subst-doc (substitute-command-keys doc)))
+                         (help-highlight-arguments subst-use1 subst-doc))
+                     (cons use1 doc))))
         (let ((fill-begin (point))
               (high-usage (car high))
               (high-doc (cdr high)))
@@ -604,7 +607,8 @@ FILE is the file where FUNCTION was probably defined."
 				  (point)))
       (terpri)(terpri)
 
-      (let ((doc-raw (documentation function t)))
+      (let ((doc-raw (documentation function t))
+            (key-bindings-buffer (current-buffer)))
 
 	;; If the function is autoloaded, and its docstring has
 	;; key substitution constructs, load the library.
@@ -614,12 +618,12 @@ FILE is the file where FUNCTION was probably defined."
 	     (autoload-do-load real-def))
 
         (help-fns--key-bindings function)
-        (let ((doc (help-fns--signature function doc-raw sig-key
-                                        real-function nil)))
-          (with-current-buffer standard-output
-	    (run-hook-with-args 'help-fns-describe-function-functions function)
-	    (insert "\n"
-		    (or doc "Not documented."))))))))
+        (with-current-buffer standard-output
+          (let ((doc (help-fns--signature function doc-raw sig-key
+                                          real-function key-bindings-buffer)))
+            (run-hook-with-args 'help-fns-describe-function-functions function)
+            (insert "\n"
+                    (or doc "Not documented."))))))))
 
 ;; Add defaults to `help-fns-describe-function-functions'.
 (add-hook 'help-fns-describe-function-functions #'help-fns--obsolete)
