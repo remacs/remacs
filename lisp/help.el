@@ -1353,7 +1353,7 @@ the help window if the current value of the user option
 (defun help--docstring-quote (string)
   "Return a doc string that represents STRING.
 The result, when formatted by ‘substitute-command-keys’, should equal STRING."
-  (replace-regexp-in-string "['\\`]" "\\\\=\\&" string))
+  (replace-regexp-in-string "['\\`‘’]" "\\\\=\\&" string))
 
 ;; The following functions used to be in help-fns.el, which is not preloaded.
 ;; But for various reasons, they are more widely needed, so they were
