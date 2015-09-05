@@ -145,7 +145,7 @@ a symbol as a valid THING."
            (let ((bounds (bounds-of-thing-at-point thing)))
              (when bounds
                (buffer-substring (car bounds) (cdr bounds)))))))
-    (when (and text no-properties)
+    (when (and text no-properties (sequencep text))
       (set-text-properties 0 (length text) nil text))
     text))
 
