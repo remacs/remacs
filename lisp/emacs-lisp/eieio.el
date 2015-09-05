@@ -349,10 +349,10 @@ variable name of the same name as the slot."
 
 (pcase-defmacro eieio (&rest fields)
   "Pcase patterns to match EIEIO objects.
-Elements of FIELDS can be of the form (NAME UPAT) in which case the contents of
-field NAME is matched against UPAT, or they can be of the form NAME which
+Elements of FIELDS can be of the form (NAME PAT) in which case the contents of
+field NAME is matched against PAT, or they can be of the form NAME which
 is a shorthand for (NAME NAME)."
-  (declare (debug (&rest [&or (sexp pcase-UPAT) sexp])))
+  (declare (debug (&rest [&or (sexp pcase-PAT) sexp])))
   (let ((is (make-symbol "table")))
     ;; FIXME: This generates a horrendous mess of redundant let bindings.
     ;; `pcase' needs to be improved somehow to introduce let-bindings more

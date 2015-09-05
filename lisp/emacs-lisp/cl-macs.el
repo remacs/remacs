@@ -2777,10 +2777,10 @@ non-nil value, that slot cannot be set via `setf'.
 ;;;###autoload
 (pcase-defmacro cl-struct (type &rest fields)
   "Pcase patterns to match cl-structs.
-Elements of FIELDS can be of the form (NAME UPAT) in which case the contents of
-field NAME is matched against UPAT, or they can be of the form NAME which
+Elements of FIELDS can be of the form (NAME PAT) in which case the contents of
+field NAME is matched against PAT, or they can be of the form NAME which
 is a shorthand for (NAME NAME)."
-  (declare (debug (sexp &rest [&or (sexp pcase-UPAT) sexp])))
+  (declare (debug (sexp &rest [&or (sexp pcase-PAT) sexp])))
   `(and (pred (pcase--flip cl-typep ',type))
         ,@(mapcar
            (lambda (field)
