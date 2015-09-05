@@ -262,8 +262,9 @@ MAP can be a list, hash-table or array."
 MAP can be a list, hash-table or array."
   (catch 'map--break
     (map-apply (lambda (key value)
-                 (when (funcall pred key value)
-                   (throw 'map--break (cons key value))))
+                 (let ((result (funcall pred key value)))
+                   (when result
+                     (throw 'map--break result))))
                map)
     nil))
 
