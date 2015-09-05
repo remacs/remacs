@@ -261,11 +261,13 @@ If SEQ is empty, return INITIAL-VALUE and FUNCTION is not called."
     t))
 
 (cl-defgeneric seq-some (pred seq)
-  "Return any element for which (PRED element) is non-nil in SEQ, nil otherwise."
+  "Return non-nil if (PRED element) is non-nil for any element in SEQ, nil otherwise.
+If so, return the non-nil value returned by PRED."
   (catch 'seq--break
     (seq-doseq (elt seq)
-      (when (funcall pred elt)
-        (throw 'seq--break elt)))
+      (let ((result (funcall pred elt)))
+        (when result
+          (throw 'seq--break result))))
     nil))
 
 (cl-defgeneric seq-count (pred seq)
@@ -280,8 +282,8 @@ If SEQ is empty, return INITIAL-VALUE and FUNCTION is not called."
   "Return the first element in SEQ that equals to ELT.
 Equality is defined by TESTFN if non-nil or by `equal' if nil."
   (seq-some (lambda (e)
-                (funcall (or testfn #'equal) elt e))
-              seq))
+              (funcall (or testfn #'equal) elt e))
+            seq))
 
 (cl-defgeneric seq-uniq (seq &optional testfn)
   "Return a list of the elements of SEQ with duplicates removed.

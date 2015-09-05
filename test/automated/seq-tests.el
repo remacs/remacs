@@ -131,11 +131,12 @@ Evaluate BODY for each created sequence.
 
 (ert-deftest test-seq-some ()
   (with-test-sequences (seq '(4 3 2 1))
-    (should (= (seq-some #'test-sequences-evenp seq) 4))
-    (should (= (seq-some #'test-sequences-oddp seq) 3))
+    (should (seq-some #'test-sequences-evenp seq))
+    (should (seq-some #'test-sequences-oddp seq))
     (should-not (seq-some (lambda (elt) (> elt 10)) seq)))
   (with-test-sequences (seq '())
-    (should-not (seq-some #'test-sequences-oddp seq))))
+    (should-not (seq-some #'test-sequences-oddp seq)))
+  (should (seq-some #'null '(1 nil 2))))
 
 (ert-deftest test-seq-contains ()
   (with-test-sequences (seq '(3 4 5 6))

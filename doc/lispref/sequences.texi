@@ -558,17 +558,22 @@ calling @var{function}.
 @end defun
 
 @defun seq-some predicate sequence
-  This function returns the first member of sequence for which @var{predicate}
-returns non-@code{nil}.
+  This function returns non-@code{nil} if @var{predicate} returns
+non-@code{nil} for any element of @var{sequence}.  If so, the returned
+value is the value returned by @var{predicate}.
 
 @example
 @group
 (seq-some #'numberp ["abc" 1 nil])
-@result{} 1
+@result{} t
 @end group
 @group
 (seq-some #'numberp ["abc" "def"])
 @result{} nil
+@end group
+@group
+(seq-some #'null ["abc" 1 nil])
+@result{} t
 @end group
 @end example
 @end defun
