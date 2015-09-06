@@ -856,6 +856,13 @@ a typographically-correct documents.
 
 * Incompatible Lisp Changes in Emacs 25.1
 
++++
+** `package-initialize' now sets `package-enable-at-startup' to nil if
+called during startup.  Users who call this function in their init
+file and still expect it to be run after startup should set
+`package-enable-at-startup' to t after the call to
+`package-initialize'.
+
 ** `:global' minor mode use `setq-default' rather than `setq'.
 This means that you can't use `make-local-variable' and expect them to
 "magically" become buffer-local.

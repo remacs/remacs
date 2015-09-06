@@ -1372,13 +1372,18 @@ If successful, set `package-archive-contents'."
 The variable `package-load-list' controls which packages to load.
 If optional arg NO-ACTIVATE is non-nil, don't activate packages.
 If `user-init-file' does not mention `(package-initialize)', add
-it to the file."
+it to the file.
+If called as part of loading `user-init-file', set
+`package-enable-at-startup' to nil, to prevent accidentally
+loading packages twice."
   (interactive)
   (setq package-alist nil)
   (if (equal user-init-file load-file-name)
       ;; If `package-initialize' is being called as part of loading
       ;; the init file, it's obvious we don't need to ensure-init.
-      (setq package--init-file-ensured t)
+      (setq package--init-file-ensured t
+            ;; And likely we don't need to run it again after init.
+            package-enable-at-startup nil)
     (package--ensure-init-file))
   (package-load-all-descriptors)
   (package-read-all-archive-contents)
