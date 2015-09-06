@@ -1,3 +1,79 @@
+2015-09-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Spelling fix (Bug#21420)
+
+2015-09-05  Nicolas Petton  <nicolas@petton.fr>
+
+	Improve the semantic of map-some
+	Update map-some to return the returned by the predicate, similar to
+	seq-some.
+	* lisp/emacs-lisp/map.el (map-some): Update the function to return the
+	  return value of the predicate.
+	* test/automated/map-tests.el (test-map-some): Update the test to check
+	  for non-nil values only.
+
+	Rename map-contains-key-p and map-some-p
+	Remove the "-p" suffix from both function names.
+	* lisp/emacs-lisp/map.el (map-contains-key, map-some): Rename the functions.
+	* test/automated/map-tests.el (test-map-contains-key, test-map-some):
+	  Update both test functions.
+
+	Improve the semantic of seq-some
+	Update seq-some to return non-nil if the predicate returns non-nil for
+	any element of the seq, in which case the returned value is the one
+	returned by the predicate.
+	* lisp/emacs-lisp/seq.el (seq-some): Update the function and its
+	  docstring.
+	* test/automated/seq-tests.el (test-seq-some): Add a regression test.
+	* doc/lispref/sequences.texi (Sequence Functions): Update the
+	  documentation for seq-some.
+
+	Rename seq-some-p to seq-some and seq-contains-p to seq-contains
+	* lisp/emacs-lisp/seq.el (seq-some, seq-contains): Rename the functions
+	  without the "-p" prefix.
+	* test/automated/seq-tests.el (test-seq-some, test-seq-contains): Update
+	  the tests accordingly.
+	* doc/lispref/sequences.texi (Sequence Functions): Update the
+	  documentation for seq.el.
+
+2015-09-05  Paul Eggert  <eggert@Penguin.CS.UCLA.EDU>
+
+	text-quoting-style for usage of fn names with ‘’
+	* lisp/help.el (help--docstring-quote): Don’t assume
+	text-quoting-style is ‘curve’ when generating usage strings for
+	functions whose names contain curved quotes.
+
+2015-09-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix fix for describe-function keybinding confusion
+	This fixes a bug introduced by the previous patch.
+	* lisp/help-fns.el (help-fns--signature):
+	Last arg of help-fns--signature is now a buffer, or nil if a
+	raw signature is wanted.  All callers changed.
+	(describe-function-1): Use this to do the right thing with signatures.
+
+2015-09-05  Johan Bockgård  <bojohan@gnu.org>
+
+	* doc/lispref/frames.texi (Mouse Tracking): Fix typo.
+
+	Use PAT rather than UPAT in pcase macros
+	* lisp/emacs-lisp/cl-macs.el (cl-struct) <pcase-defmacro>:
+	* lisp/emacs-lisp/eieio.el (eieio) <pcase-defmacro>: Use PAT rather
+	  than UPAT.
+
+2015-09-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix describe-function keybinding confusion
+	* lisp/help-fns.el (describe-function-1): Compute signature
+	in the original buffer, not in standard-output, so that
+	substitute-command-keys uses the proper keybindings.
+	This fixes Bug#21412, introduced in commit
+	2015-06-11T10:23:46-0700!eggert@cs.ucla.edu.
+
+2015-09-05  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* doc/emacs/programs.texi (Program Modes): Remove an index entry.
+
 2015-09-05  Robert Pluim  <rpluim@gmail.com>  (tiny change)
 
 	Avoid read error messages from 'inotify'
@@ -11951,7 +12027,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit ac9da241986b747c1122ad5d097db42795eb9737 (inclusive).
+commit 88b9a8000da6cf2d4aede86e9eae4f00016d0d6b (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
