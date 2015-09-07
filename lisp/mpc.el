@@ -909,7 +909,8 @@ If PLAYLIST is t or nil or missing, use the main playlist."
 (defun mpc-file-local-copy (file)
   ;; Try to set mpc-mpd-music-directory.
   (when (and (null mpc-mpd-music-directory)
-             (string-match "\\`localhost" mpc-host))
+             (or (string-match "\\`localhost" mpc-host)
+                 (file-name-absolute-p mpc-host)))
     (let ((files `(,(let ((xdg (getenv "XDG_CONFIG_HOME")))
                       (concat (if (and xdg (file-name-absolute-p xdg))
                                   xdg "~/.config")
