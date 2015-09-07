@@ -639,6 +639,28 @@ specifying the minimum acceptable version."
         (require 'finder-inf nil t) ; For `package--builtins'.
         (assq package package--builtins))))))
 
+(defun package--autoloads-file-name (pkg-desc)
+  "Return the absolute name of the autoloads file, sans extension.
+PKG-DESC is a `package-desc' object."
+  (expand-file-name
+   (format "%s-autoloads" (package-desc-name pkg-desc))
+   (package-desc-dir pkg-desc)))
+
+(defun package--activate-autoloads-and-load-path (pkg-desc)
+  "Load the autoloads file and add package dir to `load-path'.
+PKG-DESC is a `package-desc' object."
+  (let* ((old-lp load-path)
+         (pkg-dir (package-desc-dir pkg-desc))
+         (pkg-dir-dir (file-name-as-directory pkg-dir)))
+    (with-demoted-errors "Error loading autoloads: %s"
+      (load (package--autoloads-file-name pkg-desc) nil t))
+    (when (and (eq old-lp load-path)
+               (not (or (member pkg-dir load-path)
+                        (member pkg-dir-dir load-path))))
+      ;; Old packages don't add themselves to the `load-path', so we have to
+      ;; do it ourselves.
+      (push pkg-dir load-path))))
+
 (defvar Info-directory-list)
 (declare-function info-initialize "info" ())
 
@@ -648,24 +670,14 @@ If RELOAD is non-nil, also `load' any files inside the package which
 correspond to previously loaded files (those returned by
 `package--list-loaded-files')."
   (let* ((name (package-desc-name pkg-desc))
-         (pkg-dir (package-desc-dir pkg-desc))
-         (pkg-dir-dir (file-name-as-directory pkg-dir)))
+         (pkg-dir (package-desc-dir pkg-desc)))
     (unless pkg-dir
       (error "Internal error: unable to find directory for ‘%s’"
              (package-desc-full-name pkg-desc)))
-    ;; Add to load path, add autoloads, and activate the package.
-    (let* ((old-lp load-path)
-           (autoloads-file (expand-file-name
-                            (format "%s-autoloads" name) pkg-dir))
-           (loaded-files-list (and reload (package--list-loaded-files pkg-dir))))
-      (with-demoted-errors "Error in package-activate-1: %s"
-        (load autoloads-file nil t))
-      (when (and (eq old-lp load-path)
-                 (not (or (member pkg-dir load-path)
-                          (member pkg-dir-dir load-path))))
-        ;; Old packages don't add themselves to the `load-path', so we have to
-        ;; do it ourselves.
-        (push pkg-dir load-path))
+    (let* ((loaded-files-list (when reload
+                                (package--list-loaded-files pkg-dir))))
+      ;; Add to load path, add autoloads, and activate the package.
+      (package--activate-autoloads-and-load-path pkg-desc)
       ;; Call `load' on all files in `pkg-dir' already present in
       ;; `load-history'.  This is done so that macros in these files are updated
       ;; to their new definitions.  If another package is being installed which
@@ -674,7 +686,8 @@ correspond to previously loaded files (those returned by
       (with-demoted-errors "Error in package-activate-1: %s"
         (mapc (lambda (feature) (load feature nil t))
               ;; Skip autoloads file since we already evaluated it above.
-              (remove (file-truename autoloads-file) loaded-files-list))))
+              (remove (file-truename (package--autoloads-file-name pkg-desc))
+                      loaded-files-list))))
     ;; Add info node.
     (when (file-exists-p (expand-file-name "dir" pkg-dir))
       ;; FIXME: not the friendliest, but simple.
@@ -919,8 +932,9 @@ untar into a directory named DIR; otherwise, signal an error."
 (defun package--compile (pkg-desc)
   "Byte-compile installed package PKG-DESC."
   (let ((warning-minimum-level :error)
-        (save-silently inhibit-message))
-    (package-activate-1 pkg-desc)
+        (save-silently inhibit-message)
+        (load-path load-path))
+    (package--activate-autoloads-and-load-path pkg-desc)
     (byte-recompile-directory (package-desc-dir pkg-desc) 0 t)))
 
 ;;;; Inferring package from current buffer
