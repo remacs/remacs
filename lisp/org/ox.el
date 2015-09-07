@@ -5553,7 +5553,7 @@ and `org-export-to-file' for more specialized functions."
                                       (kill-buffer proc-buffer))))
                            (org-export-add-to-stack proc-buffer nil p)
                            (ding)
-                           (message "Process ‘%s’ exited abnormally" p))
+                           (message "Process `%s' exited abnormally" p))
                        (unless org-export-async-debug
                          (delete-file ,,temp-file)))))))))))))
 

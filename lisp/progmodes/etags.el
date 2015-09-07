@@ -1459,7 +1459,7 @@ hits the start of file."
         (when (symbolp symbs)
           (if (boundp symbs)
 	      (setq symbs (symbol-value symbs))
-	    (insert (format-message "symbol ‘%s’ has no value\n" symbs))
+	    (insert (format-message "symbol `%s' has no value\n" symbs))
 	    (setq symbs nil)))
         (if (vectorp symbs)
 	    (mapatoms ins-symb symbs)

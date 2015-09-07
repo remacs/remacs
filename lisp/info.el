@@ -3460,7 +3460,7 @@ MATCHES is a list of index matches found by `Info-index'.")
 	(when (equal (car (nth 0 nodeinfo)) (or filename Info-current-file))
 	  (insert
 	   (format "* %-20s %s.\n"
-		   (format-message "*Index for ‘%s’*::" (cdr (nth 0 nodeinfo)))
+		   (format "*Index for ‘%s’*::" (cdr (nth 0 nodeinfo)))
 		   (cdr (nth 0 nodeinfo)))))))))
 
 (defun Info-virtual-index (topic)
@@ -3496,7 +3496,7 @@ search results."
 	(Info-goto-node orignode)
 	(message "")))
     (Info-find-node Info-current-file
-                    (format-message "*Index for ‘%s’*" topic))))
+                    (format "*Index for ‘%s’*" topic))))
 
 (add-to-list 'Info-virtual-files
 	     '("\\`\\*Apropos\\*\\'"
@@ -3635,7 +3635,7 @@ Build a menu of the possible matches."
 	(setq nodes (cdr nodes)))
       (if nodes
 	  (Info-find-node Info-apropos-file (car (car nodes)))
-	(setq nodename (format-message "Index for ‘%s’" string))
+	(setq nodename (format "Index for ‘%s’" string))
 	(push (list nodename string (Info-apropos-matches string))
 	      Info-apropos-nodes)
 	(Info-find-node Info-apropos-file nodename)))))

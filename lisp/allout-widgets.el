@@ -481,9 +481,9 @@ text in allout item bodies.")
 
 \(That space is used to convey selected cues indicating body qualities,
 including things like:
- - encryption ‘~’
- - numbering ‘#’
- - indirect reference ‘@’
+ - encryption `~'
+ - numbering `#'
+ - indirect reference `@'
  - distinctive bullets - see `allout-distinctive-bullets-string'.)")
 ;;;_    = allout-span-to-category
 (defvar allout-span-to-category

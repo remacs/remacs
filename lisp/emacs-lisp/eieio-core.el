@@ -547,7 +547,7 @@ If SKIPNIL is non-nil, then if default value is nil return t instead."
     (if (not (eq type t))
         (if (not (equal type tp))
             (error
-             "Child slot type ‘%s’ does not match inherited type ‘%s’ for ‘%s’"
+             "Child slot type `%s' does not match inherited type `%s' for `%s'"
              type tp a))
       (setf (cl--slot-descriptor-type new) tp))
     ;; If we have a repeat, only update the initarg...
@@ -567,7 +567,7 @@ If SKIPNIL is non-nil, then if default value is nil return t instead."
     (let ((super-prot (alist-get :protection oprops))
           (prot (alist-get :protection nprops)))
       (if (not (eq prot super-prot))
-          (error "Child slot protection ‘%s’ does not match inherited protection ‘%s’ for ‘%s’"
+          (error "Child slot protection `%s' does not match inherited protection `%s' for `%s'"
                  prot super-prot a)))
     ;; End original PLN
 
@@ -736,7 +736,7 @@ Argument FN is the function calling this verifier."
                 ((and (or `',name (and name (pred keywordp)))
                       (guard (not (memq name eieio--known-slot-names))))
                  (macroexp--warn-and-return
-                  (format-message "Unknown slot ‘%S’" name) exp 'compile-only))
+                  (format-message "Unknown slot `%S'" name) exp 'compile-only))
                 (_ exp)))))
   (cl-check-type slot symbol)
   (cl-check-type obj (or eieio-object class))

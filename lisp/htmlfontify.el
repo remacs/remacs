@@ -187,13 +187,13 @@ It takes only one argument, the filename."
   :type  '(string))
 
 (defcustom hfy-src-doc-link-style "text-decoration: underline;"
-  "String to add to the ‘<style> a’ variant of an htmlfontify CSS class."
+  "String to add to the `<style> a' variant of an htmlfontify CSS class."
   :group 'htmlfontify
   :tag   "src-doc-link-style"
   :type  '(string))
 
 (defcustom hfy-src-doc-link-unstyle " text-decoration: none;"
-  "Regex to remove from the ‘<style> a’ variant of an htmlfontify CSS class."
+  "Regex to remove from the `<style> a' variant of an htmlfontify CSS class."
   :group 'htmlfontify
   :tag   "src-doc-link-unstyle"
   :type  '(string))

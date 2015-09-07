@@ -456,13 +456,13 @@ This is, approximately, the inverse of `version-to-list'.
           (push (int-to-string num) str-list)
           (push "." str-list))
          ((< num -4)
-          (error "Invalid version list ‘%s’" vlist))
+          (error "Invalid version list `%s'" vlist))
          (t
           ;; pre, or beta, or alpha
           (cond ((equal "." (car str-list))
                  (pop str-list))
                 ((not (string-match "[0-9]+" (car str-list)))
-                 (error "Invalid version list ‘%s’" vlist)))
+                 (error "Invalid version list `%s'" vlist)))
           (push (cond ((= num -1) "pre")
                       ((= num -2) "beta")
                       ((= num -3) "alpha")
@@ -623,7 +623,7 @@ Return the max version (as a string) if the package is held at a lower version."
           ((stringp force)              ; held
            (unless (version-list-= version (version-to-list force))
              force))
-          (t (error "Invalid element in ‘package-load-list’")))))
+          (t (error "Invalid element in `package-load-list'")))))
 
 (defun package-built-in-p (package &optional min-version)
   "Return true if PACKAGE is built-in to Emacs.
@@ -672,7 +672,7 @@ correspond to previously loaded files (those returned by
   (let* ((name (package-desc-name pkg-desc))
          (pkg-dir (package-desc-dir pkg-desc)))
     (unless pkg-dir
-      (error "Internal error: unable to find directory for ‘%s’"
+      (error "Internal error: unable to find directory for `%s'"
              (package-desc-full-name pkg-desc)))
     (let* ((loaded-files-list (when reload
                                 (package--list-loaded-files pkg-dir))))
@@ -767,8 +767,8 @@ Newer versions are always activated, regardless of FORCE."
                        (unless (package-activate (car req))
                          (throw 'dep-failure req))))))
         (if fail
-            (warn "Unable to activate package ‘%s’.
-Required package ‘%s-%s’ is unavailable"
+            (warn "Unable to activate package `%s'.
+Required package `%s-%s' is unavailable"
                   package (car fail) (package-version-join (cadr fail)))
           ;; If all goes well, activate the package itself.
           (package-activate-1 pkg-vec force)))))))
@@ -1484,7 +1484,7 @@ similar to an entry in `package-alist'.  Save the cached copy to
                ;; Even if the sig fails, this download is done, so
                ;; remove it from the in-progress list.
                (package--update-downloads-in-progress archive)
-               (error "Unsigned archive ‘%s’" name))
+               (error "Unsigned archive `%s'" name))
              ;; Write out the archives file.
              (write-region content nil local-file nil 'silent)
              ;; Write out good signatures into archive-contents.signed file.
@@ -1514,7 +1514,7 @@ perform the downloads asynchronously."
          (when async
            ;; The t at the end means to propagate connection errors.
            (lambda () (package--update-downloads-in-progress archive) t)))
-      (error (message "Failed to download ‘%s’ archive."
+      (error (message "Failed to download `%s' archive."
                (car archive))))))
 
 ;;;###autoload
@@ -1583,7 +1583,7 @@ SEEN is used internally to detect infinite recursion."
                          (package-desc-full-name already))
               (setq packages (delq already packages))
               (setq already nil))
-          (error "Need package ‘%s-%s’, but only %s is being installed"
+          (error "Need package `%s-%s', but only %s is being installed"
                  next-pkg (package-version-join next-version)
                  (package-version-join (package-desc-version already)))))
       (cond
@@ -1612,20 +1612,20 @@ SEEN is used internally to detect infinite recursion."
                   (setq problem
                         (if (stringp disabled)
                             (format-message
-                             "Package ‘%s’ held at version %s, but version %s required"
+                             "Package `%s' held at version %s, but version %s required"
                              next-pkg disabled
                              (package-version-join next-version))
-                          (format-message "Required package ‘%s’ is disabled"
+                          (format-message "Required package `%s' is disabled"
                                           next-pkg)))))
                (t (setq found pkg-desc)))))
           (unless found
             (cond
              (problem (error "%s" problem))
              (found-something
-              (error "Need package ‘%s-%s’, but only %s is available"
+              (error "Need package `%s-%s', but only %s is available"
                      next-pkg (package-version-join next-version)
                      found-something))
-             (t (error "Package ‘%s-%s’ is unavailable"
+             (t (error "Package `%s-%s' is unavailable"
                        next-pkg (package-version-join next-version)))))
           (setq packages
                 (package-compute-transaction (cons found packages)
@@ -1785,7 +1785,7 @@ if all the in-between dependencies are also in PACKAGE-LIST."
              (unless (or good-sigs (eq package-check-signature 'allow-unsigned))
                ;; Even if the sig fails, this download is done, so
                ;; remove it from the in-progress list.
-               (error "Unsigned package: ‘%s’"
+               (error "Unsigned package: `%s'"
                  (package-desc-name pkg-desc)))
              ;; Signature checked, unpack now.
              (with-temp-buffer (insert content)
@@ -1926,7 +1926,7 @@ to install it but still mark it as selected."
                                                (package-desc-reqs pkg)))
               (package-compute-transaction () (list (list pkg))))))
       (package-download-transaction transaction)
-    (message "‘%s’ is already installed" (package-desc-full-name pkg))))
+    (message "`%s' is already installed" (package-desc-full-name pkg))))
 
 (defun package-strip-rcs-id (str)
   "Strip RCS version ID from the version string STR.
@@ -2001,7 +2001,7 @@ If some packages are not installed propose to install them."
   ;; using here, because the outcome is the same either way (nothing
   ;; gets installed).
   (if (not package-selected-packages)
-      (message "‘package-selected-packages’ is empty, nothing to install")
+      (message "`package-selected-packages' is empty, nothing to install")
     (cl-loop for p in package-selected-packages
              unless (package-installed-p p)
              collect p into lst
@@ -2066,13 +2066,13 @@ If NOSAVE is non-nil, the package is not removed from
                                   (expand-file-name package-user-dir))
                                  (expand-file-name dir)))
            ;; Don't delete "system" packages.
-           (error "Package ‘%s’ is a system package, not deleting"
+           (error "Package `%s' is a system package, not deleting"
                   (package-desc-full-name pkg-desc)))
           ((and (null force)
                 (setq pkg-used-elsewhere-by
                       (package--used-elsewhere-p pkg-desc)))
            ;; Don't delete packages used as dependency elsewhere.
-           (error "Package ‘%s’ is used by ‘%s’ as dependency, not deleting"
+           (error "Package `%s' is used by `%s' as dependency, not deleting"
                   (package-desc-full-name pkg-desc)
                   (package-desc-name pkg-used-elsewhere-by)))
           (t
@@ -2087,7 +2087,7 @@ If NOSAVE is non-nil, the package is not removed from
              (delete pkg-desc pkgs)
              (unless (cdr pkgs)
                (setq package-alist (delq pkgs package-alist))))
-           (message "Package ‘%s’ deleted." (package-desc-full-name pkg-desc))))))
+           (message "Package `%s' deleted." (package-desc-full-name pkg-desc))))))
 
 ;;;###autoload
 (defun package-reinstall (pkg)
@@ -2116,7 +2116,8 @@ will be deleted."
   ;; do absolutely nothing.
   (when (or package-selected-packages
             (yes-or-no-p
-             "‘package-selected-packages’ is empty! Really remove ALL packages? "))
+             (format-message
+              "`package-selected-packages' is empty! Really remove ALL packages? ")))
     (let ((removable (package--removable-packages)))
       (if removable
           (when (y-or-n-p
@@ -2224,7 +2225,7 @@ Otherwise no newline is inserted."
                                    "Installed"
                                  (capitalize status))
                                'font-lock-face 'package-status-builtin-face))
-           (insert (substitute-command-keys " in ‘"))
+           (insert (substitute-command-keys " in `"))
            (let ((dir (abbreviate-file-name
                        (file-name-as-directory
                         (if (file-in-directory-p pkg-dir package-user-dir)
@@ -2234,10 +2235,10 @@ Otherwise no newline is inserted."
            (if (and (package-built-in-p name)
                     (not (package-built-in-p name version)))
                (insert (substitute-command-keys
-                        "’,\n             shadowing a ")
+                        "',\n             shadowing a ")
                        (propertize "built-in package"
                                    'font-lock-face 'package-status-builtin-face))
-             (insert (substitute-command-keys "’")))
+             (insert (substitute-command-keys "'")))
            (if signed
                (insert ".")
              (insert " (unsigned)."))
@@ -2385,7 +2386,7 @@ Otherwise no newline is inserted."
 
 (defun package-install-button-action (button)
   (let ((pkg-desc (button-get button 'package-desc)))
-    (when (y-or-n-p (format-message "Install package ‘%s’? "
+    (when (y-or-n-p (format-message "Install package `%s'? "
                                     (package-desc-full-name pkg-desc)))
       (package-install pkg-desc nil)
       (revert-buffer nil t)
@@ -2393,7 +2394,7 @@ Otherwise no newline is inserted."
 
 (defun package-delete-button-action (button)
   (let ((pkg-desc (button-get button 'package-desc)))
-    (when (y-or-n-p (format-message "Delete package ‘%s’? "
+    (when (y-or-n-p (format-message "Delete package `%s'? "
                                     (package-desc-full-name pkg-desc)))
       (package-delete pkg-desc)
       (revert-buffer nil t)
@@ -2912,8 +2913,8 @@ If optional arg BUTTON is non-nil, describe its associated package."
            (cl-remove-if-not (lambda (e) (string-match re (symbol-name (car e))))
                              package-archive-contents)))
       (message (substitute-command-keys
-                (concat "Hiding %s packages, type ‘\\[package-menu-toggle-hiding]’"
-                        " to toggle or ‘\\[customize-variable] RET package-hidden-regexps’"
+                (concat "Hiding %s packages, type `\\[package-menu-toggle-hiding]'"
+                        " to toggle or `\\[customize-variable] RET package-hidden-regexps'"
                         " to customize it"))
         (length hidden)))))
 
@@ -3097,7 +3098,7 @@ prompt (see `package-menu--prompt-transaction-p')."
       (length packages)
       (mapconcat #'package-desc-full-name packages ", ")))
    ;; Exactly 1
-   (t (format-message "package ‘%s’"
+   (t (format-message "package `%s'"
                       (package-desc-full-name (car packages))))))
 
 (defun package-menu--prompt-transaction-p (delete install upgrade)
@@ -3153,7 +3154,7 @@ objects removed."
       (condition-case-unless-debug err
           (let ((inhibit-message package-menu-async))
             (package-delete elt nil 'nosave))
-        (error (message "Error trying to delete ‘%s’: %S"
+        (error (message "Error trying to delete `%s': %S"
                  (package-desc-full-name elt)
                  err))))))
 
@@ -3284,7 +3285,7 @@ Store this list in `package-menu--new-package-list'."
 (defun package-menu--find-and-notify-upgrades ()
   "Notify the user of upgradable packages."
   (when-let ((upgrades (package-menu--find-upgrades)))
-    (message "%d package%s can be upgraded; type ‘%s’ to mark %s for upgrading."
+    (message "%d package%s can be upgraded; type `%s' to mark %s for upgrading."
       (length upgrades)
       (if (= (length upgrades) 1) "" "s")
       (substitute-command-keys "\\[package-menu-mark-upgrades]")

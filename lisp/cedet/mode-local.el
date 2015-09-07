@@ -658,7 +658,7 @@ SYMBOL is a function that can be overridden."
 	       (override (fetch-overload symbol)))
 
 	  (when override
-	    (insert (format-message "\noverride in mode ‘%s’: ’%s’\n"
+	    (insert (format-message "\noverride in mode `%s': `%s'\n"
 				    major-mode override))
             )))
       )))
@@ -760,9 +760,9 @@ META-NAME is a cons (OVERLOADABLE-SYMBOL . MAJOR-MODE)."
 (defun mode-local-print-binding (symbol)
   "Print the SYMBOL binding."
   (let ((value (symbol-value symbol)))
-    (princ (format-message "\n     ‘%s’ value is\n       " symbol))
+    (princ (format-message "\n     `%s' value is\n       " symbol))
     (if (and value (symbolp value))
-        (princ (format-message "‘%s’" value))
+        (princ (format-message "`%s'" value))
       (let ((pt (point)))
         (pp value)
         (save-excursion
@@ -820,7 +820,7 @@ META-NAME is a cons (OVERLOADABLE-SYMBOL . MAJOR-MODE)."
       )
      ((symbolp buffer-or-mode)
       (setq mode buffer-or-mode)
-      (princ (format-message "‘%s’\n" buffer-or-mode))
+      (princ (format-message "`%s'\n" buffer-or-mode))
       )
      ((signal 'wrong-type-argument
               (list 'buffer-or-mode buffer-or-mode))))
@@ -830,7 +830,7 @@ META-NAME is a cons (OVERLOADABLE-SYMBOL . MAJOR-MODE)."
     (while mode
       (setq table (get mode 'mode-local-symbol-table))
       (when table
-        (princ (format-message "\n- From ‘%s’\n" mode))
+        (princ (format-message "\n- From `%s'\n" mode))
         (mode-local-print-bindings table))
       (setq mode (get-mode-local-parent mode)))))
 

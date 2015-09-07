@@ -1928,7 +1928,7 @@ idleness.  Here's an example:
 
 @example
 (defvar my-resume-timer nil
-  "Timer for ‘my-timer-function’ to reschedule itself, or nil.")
+  "Timer for `my-timer-function' to reschedule itself, or nil.")
 
 (defun my-timer-function ()
   ;; @r{If the user types a command while @code{my-resume-timer}}

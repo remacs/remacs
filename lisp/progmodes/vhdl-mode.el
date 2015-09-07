@@ -164,7 +164,7 @@
 '/' or is empty)."
   (let ((val (widget-value widget)))
     (unless (string-match "^\\(\\|.*/\\)$" val)
-      (widget-put widget :error "Invalid directory entry: must end with ‘/’")
+      (widget-put widget :error "Invalid directory entry: must end with `/'")
       widget)))
 
 ;; help string for user options
@@ -5714,7 +5714,7 @@ the offset is simply returned."
        (t nil)))))
 
 (defun vhdl-in-extended-identifier-p ()
-  "Determine if point is inside extended identifier (delimited by ‘\\’)."
+  "Determine if point is inside extended identifier (delimited by `\\')."
   (save-match-data
     (and (save-excursion (re-search-backward "\\\\" (vhdl-point 'bol) t))
 	 (save-excursion (re-search-forward "\\\\" (vhdl-point 'eol) t)))))
@@ -8743,7 +8743,7 @@ is omitted or nil."
 	      (vhdl-comment-insert)))))
     (self-insert-command count)))
 
-(defun vhdl-electric-open-bracket (count) "‘[’ --> ‘(’, ‘([’ --> ‘[’"
+(defun vhdl-electric-open-bracket (count) "`[' --> `(', `([' --> `['"
   (interactive "p")
   (if (and vhdl-stutter-mode (= count 1) (not (vhdl-in-literal)))
       (if (= (preceding-char) ?\()
@@ -8751,7 +8751,7 @@ is omitted or nil."
 	(insert-char ?\( 1))
     (self-insert-command count)))
 
-(defun vhdl-electric-close-bracket (count) "‘]’ --> ‘)’, ‘)]’ --> ‘]’"
+(defun vhdl-electric-close-bracket (count) "`]' --> `)', `)]' --> `]'"
   (interactive "p")
   (if (and vhdl-stutter-mode (= count 1) (not (vhdl-in-literal)))
       (progn
@@ -8769,7 +8769,7 @@ is omitted or nil."
 	(insert-char ?\' 1))
     (self-insert-command count)))
 
-(defun vhdl-electric-semicolon (count) "‘;;’ --> ‘ : ’, ‘: ;’ --> ‘ := ’"
+(defun vhdl-electric-semicolon (count) "`;;' --> ` : ', `: ;' --> ` := '"
   (interactive "p")
   (if (and vhdl-stutter-mode (= count 1) (not (vhdl-in-literal)))
       (cond ((= (preceding-char) vhdl-last-input-event)
@@ -8783,7 +8783,7 @@ is omitted or nil."
 	    (t (insert-char ?\; 1)))
     (self-insert-command count)))
 
-(defun vhdl-electric-comma (count) "‘,,’ --> ‘ <= ’"
+(defun vhdl-electric-comma (count) "`,,' --> ` <= '"
   (interactive "p")
   (if (and vhdl-stutter-mode (= count 1) (not (vhdl-in-literal)))
       (cond ((= (preceding-char) vhdl-last-input-event)
@@ -8793,7 +8793,7 @@ is omitted or nil."
 	    (t (insert-char ?\, 1)))
     (self-insert-command count)))
 
-(defun vhdl-electric-period (count) "‘..’ --> ‘ => ’"
+(defun vhdl-electric-period (count) "`..' --> ` => '"
   (interactive "p")
   (if (and vhdl-stutter-mode (= count 1) (not (vhdl-in-literal)))
       (cond ((= (preceding-char) vhdl-last-input-event)
@@ -8803,7 +8803,7 @@ is omitted or nil."
 	    (t (insert-char ?\. 1)))
     (self-insert-command count)))
 
-(defun vhdl-electric-equal (count) "‘==’ --> ‘ == ’"
+(defun vhdl-electric-equal (count) "`==' --> ` == '"
   (interactive "p")
   (if (and vhdl-stutter-mode (= count 1) (not (vhdl-in-literal)))
       (cond ((= (preceding-char) vhdl-last-input-event)

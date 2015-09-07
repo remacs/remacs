@@ -193,7 +193,7 @@ EXAMPLES:
   ***/*~f*(-/)  recursively (though not traversing symlinks),
 		find all directories (or symlinks referring to
 		directories) whose names do not begin with f.
-  e*(*Lk+50)    executables 50k or larger beginning with ‘e’")
+  e*(*Lk+50)    executables 50k or larger beginning with `e'")
 
 (defvar eshell-modifier-help-string
   "Eshell modifier quick reference:
@@ -318,7 +318,7 @@ resultant list of strings."
 		    (if (and func (functionp func))
 			(setq preds (eshell-add-pred-func func preds
 							  negate follow))
-		      (error "Invalid function predicate ‘%s’"
+		      (error "Invalid function predicate `%s'"
 			     (eshell-stringify func))))
 		(error "Invalid function predicate")))
 	     ((eq char ?^)
@@ -336,20 +336,20 @@ resultant list of strings."
 			      (cons `(lambda (lst)
 				       (mapcar (function ,func) lst))
 				    mods))
-		      (error "Invalid function modifier ‘%s’"
+		      (error "Invalid function modifier `%s'"
 			     (eshell-stringify func))))
 		(error "Invalid function modifier")))
 	     ((eq char ?:)
 	      (forward-char)
 	      (let ((mod (assq (char-after) eshell-modifier-alist)))
 		(if (not mod)
-		    (error "Unknown modifier character ‘%c’" (char-after))
+		    (error "Unknown modifier character `%c'" (char-after))
 		  (forward-char)
 		  (setq mods (cons (eval (cdr mod)) mods)))))
 	     (t
 	      (let ((pred (assq char eshell-predicate-alist)))
 		(if (not pred)
-		    (error "Unknown predicate character ‘%c’" char)
+		    (error "Unknown predicate character `%c'" char)
 		  (forward-char)
 		  (setq preds
 			(eshell-add-pred-func (eval (cdr pred)) preds

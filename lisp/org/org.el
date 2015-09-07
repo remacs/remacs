@@ -481,7 +481,7 @@ value of the variable, after updating it:
       \(dolist (backend val)
         \(cond
          \((not (load (format \"ox-%s\" backend) t t))
-          \(message \"Problems while trying to load export back-end ‘%s’\"
+          \(message \"Problems while trying to load export back-end \\=`%s\\='\"
                    backend))
          \((not (memq backend new-list)) (push backend new-list))))
       \(set-default \\='org-export-backends new-list)))
