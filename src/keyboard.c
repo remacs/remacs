@@ -8874,6 +8874,7 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	     of echoing, so that it serves as a prompt for the next
 	     character.  */
 	  kset_echo_prompt (current_kboard, prompt);
+	  current_kboard->immediate_echo = false;
 	  echo_now ();
 	}
       else if (cursor_in_echo_area
