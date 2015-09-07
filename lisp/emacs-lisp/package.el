@@ -1852,12 +1852,12 @@ add a call to it along with some explanatory comments."
                     (save-restriction
                       (widen)
                       (goto-char (point-min))
-                      (search-forward "(package-initialize)" nil 'noerror))))
+                      (re-search-forward "(package-initialize\\_>" nil 'noerror))))
               ;; Don't visit the file if we don't have to.
               (with-temp-buffer
                 (insert-file-contents user-init-file)
                 (goto-char (point-min))
-                (search-forward "(package-initialize)" nil 'noerror)))))
+                (re-search-forward "(package-initialize\\_>" nil 'noerror)))))
       (unless contains-init
         (with-current-buffer (or buffer
                                  (let ((delay-mode-hooks t))
