@@ -268,7 +268,10 @@ defaults to 6600 and HOST defaults to localhost."
                 (if (string-match "[^[:digit:]]" v)
                     (string-to-number v)
                   v)))))
-    (when (string-prefix-p "/" host)    ;FIXME: Use file-name-absolute-p?
+    (when (file-name-absolute-p host)
+      ;; Expand file name because `file-name-absolute-p'
+      ;; considers paths beginning with "~" as absolute
+      (setq host (expand-file-name host))
       (setq local t))
 
     (mpc--debug "Connecting to %s:%s..." host port)
