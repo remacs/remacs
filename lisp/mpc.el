@@ -910,7 +910,11 @@ If PLAYLIST is t or nil or missing, use the main playlist."
   ;; Try to set mpc-mpd-music-directory.
   (when (and (null mpc-mpd-music-directory)
              (string-match "\\`localhost" mpc-host))
-    (let ((files '("~/.mpdconf" "/etc/mpd.conf"))
+    (let ((files `(,(let ((xdg (getenv "XDG_CONFIG_HOME")))
+                      (concat (if (and xdg (file-name-absolute-p xdg))
+                                  xdg "~/.config")
+                              "/mpd/mpd.conf"))
+                   "~/.mpdconf" "~/.mpd/mpd.conf" "/etc/mpd.conf"))
           file)
       (while (and files (not file))
         (if (file-exists-p (car files)) (setq file (car files)))
