@@ -3,8 +3,9 @@
 ;; Copyright (C) 2001, 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Taro Kawagishi <tarok@transpulse.org>
-;; Keywords: NTLM, SASL
-;; Version: 1.00
+;; Maintainer: Thomas Fitzsimmons <fitzsim@fitzsim.org>
+;; Keywords: NTLM, SASL, comm
+;; Version: 2.00
 ;; Created: February 2001
 
 ;; This file is part of GNU Emacs.
