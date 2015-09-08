@@ -11120,8 +11120,7 @@ clear_garbaged_frames (void)
 
 
 /* Redisplay the echo area of the selected frame.  If UPDATE_FRAME_P, update
-   selected_frame.  Value is the affected frame if the mini-windows height has
-   been changed.  */
+   selected_frame.  */
 
 static void
 echo_area_display (bool update_frame_p)
