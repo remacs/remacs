@@ -52,7 +52,8 @@ Type 0 is the cons cell (HIGH . LOW), type 1 is the list (HIGH
 LOW), type 2 is the list (HIGH LOW MICRO), and type 3 is the
 list (HIGH LOW MICRO PICO)."
   (declare (indent 1)
-	   (debug ((&rest (symbolp symbolp symbolp &or [symbolp form] form))
+	   (debug ((&rest (symbolp symbolp symbolp
+                           &or [symbolp symbolp form] [symbolp form] form))
 		   body)))
   (if varlist
       (let* ((elt (pop varlist))
