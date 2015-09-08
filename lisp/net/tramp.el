@@ -3615,7 +3615,7 @@ This is needed in order to hide `last-coding-system-used', which is set
 for process communication also."
   (with-current-buffer (process-buffer proc)
     ;; FIXME: If there is a gateway process, we need communication
-    ;; between several processes.  Too complicate to implement, so we
+    ;; between several processes.  Too complicated to implement, so we
     ;; read output from all processes.
     (let ((p (if (tramp-get-connection-property proc "gateway" nil) nil proc))
 	  buffer-read-only last-coding-system-used)

@@ -439,7 +439,7 @@ This requotes when a quoting key is typed."
   (when (and electric-quote-mode
              (memq last-command-event '(?\' ?\`)))
     (let ((start
-           (if comment-start
+           (if (and comment-start comment-use-syntax)
                (when (or electric-quote-comment electric-quote-string)
                  (let ((syntax (syntax-ppss)))
                    (and (or (and electric-quote-comment (nth 4 syntax))
