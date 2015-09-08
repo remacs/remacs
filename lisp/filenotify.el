@@ -177,9 +177,9 @@ EVENT is the cadr of the event in `file-notify-handle-event'
                               (car file-notify--pending-event)))
                   ;; If the source is handled by another watch, we
                   ;; must fire the rename event there as well.
-                  (when (not (eq (file-notify--descriptor desc)
-                                 (file-notify--descriptor
-                                  (caar file-notify--pending-event))))
+                  (when (not (equal (file-notify--descriptor desc)
+                                    (file-notify--descriptor
+                                     (caar file-notify--pending-event))))
                     (setq pending-event
                           `((,(caar file-notify--pending-event)
                              renamed ,file ,file1)
