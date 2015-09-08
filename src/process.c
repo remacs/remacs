@@ -6694,10 +6694,12 @@ status_notify (struct Lisp_Process *deleting_process,
 	  p->update_tick = p->tick;
 	  /* Now output the message suitably.  */
 	  exec_sentinel (proc, msg);
+	  if (BUFFERP (p->buffer))
+	    /* In case it uses %s in mode-line-format.  */
+	    bset_update_mode_line (XBUFFER (p->buffer));
 	}
     } /* end for */
 
-  update_mode_lines = 24;  /* In case buffers use %s in mode-line-format.  */
   return got_some_output;
 }
 
