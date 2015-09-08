@@ -86,7 +86,7 @@ or if your init file contains a line of this form:
  (setq inhibit-startup-echo-area-message \"YOUR-USER-NAME\")
 If your init file is byte-compiled, use the following form
 instead:
- (eval '(setq inhibit-startup-echo-area-message \"YOUR-USER-NAME\"))
+ (eval \\='(setq inhibit-startup-echo-area-message \"YOUR-USER-NAME\"))
 Thus, someone else using a copy of your init file will see the
 startup message unless he personally acts to inhibit it."
   :type '(choice (const :tag "Don't inhibit")
@@ -360,7 +360,7 @@ this variable usefully is to set it while building and dumping Emacs."
   :group 'initialization
   :initialize #'custom-initialize-default
   :set (lambda (_variable _value)
-	  (error "Customizing ‘site-run-file’ does not work")))
+	  (error "Customizing `site-run-file' does not work")))
 
 (make-obsolete-variable 'system-name "use (system-name) instead" "25.1")
 
@@ -752,7 +752,7 @@ to prepare for opening the first frame (e.g. open a connection to an X server)."
 		(let ((elt (assoc completion tty-long-option-alist)))
 		  ;; Check for abbreviated long option.
 		  (or elt
-		      (error "Option ‘%s’ is ambiguous" argi))
+		      (error "Option `%s' is ambiguous" argi))
 		  (setq argi (cdr elt)))
 	      ;; Check for a short option.
 	      (setq argval nil
@@ -804,13 +804,18 @@ to prepare for opening the first frame (e.g. open a connection to an X server)."
 (defvar server-process)
 
 (defun startup--setup-quote-display ()
-  "If curved quotes don't work, display ASCII approximations."
-  (dolist (char-repl '((?‘ . ?\`) (?’ . ?\') (?“ . ?\") (?” . ?\")))
-    (when (not (char-displayable-p (car char-repl)))
-      (unless standard-display-table
-        (setq standard-display-table (make-display-table)))
-      (aset standard-display-table (car char-repl)
-            (vector (make-glyph-code (cdr char-repl) 'shadow))))))
+  "Display ASCII approximations on user request or if curved quotes don't work."
+  (when (memq text-quoting-style '(nil grave straight))
+    (dolist (char-repl '((?‘ . ?\`) (?’ . ?\') (?“ . ?\") (?” . ?\")))
+      (let ((char (car char-repl))
+            (repl (cdr char-repl)))
+        (when (or text-quoting-style (not (char-displayable-p char)))
+          (when (and (eq repl ?\`) (eq text-quoting-style 'straight))
+            (setq repl ?\'))
+          (unless standard-display-table
+            (setq standard-display-table (make-display-table)))
+          (aset standard-display-table char
+                (vector (make-glyph-code repl 'shadow))))))))
 
 (defun command-line ()
   "A subroutine of `normal-top-level'.
@@ -911,7 +916,7 @@ please check its value")
 		  ((stringp completion)
 		   (let ((elt (assoc completion longopts)))
 		     (unless elt
-		       (error "Option ‘%s’ is ambiguous" argi))
+		       (error "Option `%s' is ambiguous" argi))
 		     (setq argi (substring (car elt) 1))))
 		  (t
 		   (setq argval nil
@@ -954,7 +959,7 @@ please check its value")
           (setq done t)))
 	;; Was argval set but not used?
 	(and argval
-	     (error "Option ‘%s’ doesn't allow an argument" argi))))
+	     (error "Option `%s' doesn't allow an argument" argi))))
 
     ;; Re-attach the --display arg.
     (and display-arg (setq args (append display-arg args)))
@@ -973,7 +978,7 @@ please check its value")
 	       (not (featurep
 		     (intern
 		      (concat (symbol-name initial-window-system) "-win")))))
-	  (error "Unsupported window system ‘%s’" initial-window-system))
+	  (error "Unsupported window system `%s'" initial-window-system))
       ;; Process window-system specific command line parameters.
       (setq command-line-args
             (let ((window-system initial-window-system)) ;Hack attack!
@@ -1184,10 +1189,10 @@ please check its value")
 	     (display-warning
 	      'initialization
 	      (format-message "\
-An error occurred while loading ‘%s’:\n\n%s%s%s\n\n\
+An error occurred while loading `%s':\n\n%s%s%s\n\n\
 To ensure normal operation, you should investigate and remove the
 cause of the error in your initialization file.  Start Emacs with
-the ‘--debug-init’ option to view a complete error backtrace."
+the `--debug-init' option to view a complete error backtrace."
 		      user-init-file
 		      (get (car error) 'error-message)
 		      (if (cdr error) ": " "")
@@ -1233,6 +1238,11 @@ the ‘--debug-init’ option to view a complete error backtrace."
 	;; originally done before unibyte was set and is sensitive to
 	;; unibyte (display table, terminal coding system &c).
 	(set-language-environment current-language-environment)))
+
+    ;; Setup quote display again, if the init file sets
+    ;; text-quoting-style to a non-nil value.
+    (when (and (not noninteractive) text-quoting-style)
+      (startup--setup-quote-display))
 
     ;; Do this here in case the init file sets mail-host-address.
     (if (equal user-mail-address "")
@@ -1320,8 +1330,8 @@ the ‘--debug-init’ option to view a complete error backtrace."
 	   (setq warned t)
 	   (display-warning 'initialization
 			    (format-message "\
-Your ‘load-path’ seems to contain\n\
-your ‘.emacs.d’ directory: %s\n\
+Your `load-path' seems to contain\n\
+your `.emacs.d' directory: %s\n\
 This is likely to cause problems...\n\
 Consider using a subdirectory instead, e.g.: %s"
                                     dir (expand-file-name
@@ -1380,11 +1390,11 @@ settings will be marked as \"CHANGED outside of Customize\"."
 
 (defcustom initial-scratch-message (purecopy "\
 ;; This buffer is for notes you don't want to save, and for Lisp evaluation.
-;; If you want to create a file, visit that file with C-x C-f,
+;; If you want to create a file, visit that file with \\[find-file],
 ;; then enter the text in that file's own buffer.
 
 ")
-  "Initial message displayed in *scratch* buffer at startup.
+  "Initial documentation displayed in *scratch* buffer at startup.
 If this is nil, no message will be displayed."
   :type '(choice (text :tag "Message")
 		 (const :tag "none" nil))
@@ -2270,7 +2280,7 @@ nil default-directory" name)
                     (if (stringp completion)
                         (let ((elt (member completion longopts)))
                           (or elt
-                              (error "Option ‘%s’ is ambiguous" argi))
+                              (error "Option `%s' is ambiguous" argi))
                           (setq argi (substring (car elt) 1)))
                       (setq argval nil
                             argi orig-argi)))))
@@ -2340,7 +2350,7 @@ nil default-directory" name)
                      (setq inhibit-startup-screen t)
                      (setq tem (or argval (pop command-line-args-left)))
                      (or (stringp tem)
-                         (error "File name omitted from ‘-insert’ option"))
+                         (error "File name omitted from `-insert' option"))
                      (insert-file-contents (command-line-normalize-file-name tem)))
 
                     ((equal argi "-kill")
@@ -2375,7 +2385,7 @@ nil default-directory" name)
                      ;; An explicit option to specify visiting a file.
                      (setq tem (or argval (pop command-line-args-left)))
                      (unless (stringp tem)
-                       (error "File name omitted from ‘%s’ option" argi))
+                       (error "File name omitted from `%s' option" argi))
                      (funcall process-file-arg tem))
 
                     ;; These command lines now have no effect.
@@ -2396,7 +2406,7 @@ nil default-directory" name)
                        (unless did-hook
                          ;; Presume that the argument is a file name.
                          (if (string-match "\\`-" argi)
-                             (error "Unknown option ‘%s’" argi))
+                             (error "Unknown option `%s'" argi))
                          ;; FIXME: Why do we only inhibit the startup
                          ;; screen for -nw?
                          (unless initial-window-system
@@ -2420,7 +2430,7 @@ nil default-directory" name)
 	 (get-buffer "*scratch*")
 	 (with-current-buffer "*scratch*"
 	   (when (zerop (buffer-size))
-	     (insert initial-scratch-message)
+	     (insert (substitute-command-keys initial-scratch-message))
 	     (set-buffer-modified-p nil))))
 
     ;; Prepend `initial-buffer-choice' to `displayable-buffers'.

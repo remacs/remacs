@@ -6787,6 +6787,18 @@ merge_glyphless_glyph_face (struct it *it)
   return face_id;
 }
 
+/* Forget the `escape-glyph' and `glyphless-char' faces.  This should
+   be called before redisplaying windows, and when the frame's face
+   cache is freed.  */
+void
+forget_escape_and_glyphless_faces (void)
+{
+  last_escape_glyph_frame = NULL;
+  last_escape_glyph_face_id = (1 << FACE_ID_BITS);
+  last_glyphless_glyph_frame = NULL;
+  last_glyphless_glyph_face_id = (1 << FACE_ID_BITS);
+}
+
 /* Load IT's display element fields with information about the next
    display element from the current position of IT.  Value is false if
    end of buffer (or C string) is reached.  */
@@ -10673,6 +10685,11 @@ display_echo_area_1 (ptrdiff_t a1, Lisp_Object a2)
   Lisp_Object window;
   struct text_pos start;
 
+  /* We are about to enter redisplay without going through
+     redisplay_internal, so we need to forget these faces by hand
+     here.  */
+  forget_escape_and_glyphless_faces ();
+
   /* Do this before displaying, so that we have a large enough glyph
      matrix for the display.  If we can't get enough space for the
      whole text, display the last N lines.  That works by setting w->start.  */
@@ -13326,10 +13343,7 @@ redisplay_internal (void)
   sw = w;
 
   pending = false;
-  last_escape_glyph_frame = NULL;
-  last_escape_glyph_face_id = (1 << FACE_ID_BITS);
-  last_glyphless_glyph_frame = NULL;
-  last_glyphless_glyph_face_id = (1 << FACE_ID_BITS);
+  forget_escape_and_glyphless_faces ();
 
   /* If face_change, init_iterator will free all realized faces, which
      includes the faces referenced from current matrices.  So, we

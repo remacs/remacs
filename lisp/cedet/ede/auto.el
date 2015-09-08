@@ -239,9 +239,9 @@ type is required and the load function used.")
   "Add PROJAUTO, an EDE autoload definition to `ede-project-class-files'.
 Optional argument FLAG indicates how this autoload should be
 added.  Possible values are:
-  'generic - A generic project type.  Keep this at the very end.
-  'unique - A unique project type for a specific project.  Keep at the very
-            front of the list so more generic projects don't get priority."
+  `generic' - A generic project type.  Keep this at the very end.
+  `unique' - A unique project type for a specific project.  Keep at the very
+             front of the list so more generic projects don't get priority."
   ;; First, can we identify PROJAUTO as already in the list?  If so, replace.
   (let ((projlist ede-project-class-files)
 	(projname (oref projauto name)))
