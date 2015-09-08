@@ -546,6 +546,8 @@ Many aspects this mode can be customized using
   (setq comment-end-skip "[ \t\r\n]*-->")
   (make-local-variable 'comment-line-break-function)
   (setq comment-line-break-function 'nxml-newline-and-indent)
+  (make-local-variable 'comment-quote-nested-function)
+  (setq comment-quote-nested-function 'nxml-comment-quote-nested)
   (use-local-map nxml-mode-map)
   (save-excursion
     (save-restriction
@@ -1349,6 +1351,18 @@ of the inserted start-tag or nil if none was inserted."
 			      (+ start-tag-indent nxml-child-indent)
 			    start-tag-indent)))))
     inserted-start-tag-pos))
+
+(defun nxml-comment-quote-nested (cs ce unp)
+  "Quote nested comments in buffer.
+See `comment-quote-nested-function' for more information.")
+  (goto-char (point-min))
+  (save-match-data
+    (while (re-search-forward "-[\\]*-" nil t)
+      (goto-char (match-beginning 0))
+      (forward-char 1)
+      (if unp
+	  (delete-char 1)
+	(insert "\\")))))
 
 ;;; Indentation
 
