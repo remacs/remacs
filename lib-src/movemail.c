@@ -174,8 +174,6 @@ main (int argc, char **argv)
   int desc;
 #endif /* not MAIL_USE_SYSTEM_LOCK */
 
-  char *spool_name = 0;
-
 #ifdef MAIL_USE_POP
   bool pop_reverse_order = false;
 # define ARGSTR "pr"
@@ -246,6 +244,10 @@ main (int argc, char **argv)
 #ifndef DISABLE_DIRECT_ACCESS
 
   char *lockname = 0;
+
+#ifdef MAIL_USE_MAILLOCK
+  char *spool_name = 0;
+#endif
 
 #ifndef MAIL_USE_SYSTEM_LOCK
 #ifdef MAIL_USE_MAILLOCK
