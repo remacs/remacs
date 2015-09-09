@@ -417,13 +417,7 @@ If no element is found, return nil."
     (nreverse result)))
 
 (cl-defmethod seq-drop-while (pred (list list))
-  "Optimized implementation of `seq-drop-while' for lists"
-  (while (and list (funcall pred (car list)))
-    (setq list (cdr list)))
-  list)
-
-(cl-defmethod seq-drop-while (pred (list list))
-  "Optimized implementation of `seq-drop-while' for lists"
+  "Optimized implementation of `seq-drop-while' for lists."
   (while (and list (funcall pred (car list)))
     (setq list (cdr list)))
   list)
