@@ -31,6 +31,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef HAVE_LINUX_KD_H
 # include <errno.h>
 # include <linux/kd.h>
+# include <sys/ioctl.h>
 #endif
 
 /* Chain of all terminals currently in use.  */
