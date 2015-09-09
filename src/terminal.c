@@ -198,7 +198,7 @@ ins_del_lines (struct frame *f, int vpos, int n)
 }
 
 /* Return the terminal object specified by TERMINAL.  TERMINAL may
-”   be a terminal object, a frame, or nil for the terminal device of
+   be a terminal object, a frame, or nil for the terminal device of
    the current frame.  If TERMINAL is neither from the above or the
    resulting terminal object is deleted, return NULL.  */
 
