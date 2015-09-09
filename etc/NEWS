@@ -977,6 +977,9 @@ be updated accordingly.
 
 * Lisp Changes in Emacs 25.1
 
+** syntax-propertize is now automatically called on-demand during forward
+parsing functions like `forward-sexp'.
+
 ** New hooks prefix-command-echo-keystrokes-functions and
 prefix-command-preserve-state-hook, to allow the definition of prefix
 commands other than the predefined C-u.
