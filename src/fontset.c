@@ -1786,18 +1786,23 @@ update_auto_fontset_alist (Lisp_Object font_object, Lisp_Object fontset)
       }
 }
 
+/* Return a description of the font at POSITION in the current buffer.
+   If the 2nd optional arg CH is non-nil, it is a character to check
+   the font instead of the character at POSITION.
 
-/* Return a cons (FONT-OBJECT . GLYPH-CODE).
+   For a graphical display, return a cons (FONT-OBJECT . GLYPH-CODE).
    FONT-OBJECT is the font for the character at POSITION in the current
    buffer.  This is computed from all the text properties and overlays
    that apply to POSITION.  POSITION may be nil, in which case,
    FONT-SPEC is the font for displaying the character CH with the
-   default face.
+   default face.  GLYPH-CODE is the glyph code in the font to use for
+   the character.
 
-   GLYPH-CODE is the glyph code in the font to use for the character.
-
-   If the 2nd optional arg CH is non-nil, it is a character to check
-   the font instead of the character at POSITION.
+   For a text terminal, return a nonnegative integer glyph code for
+   the character, or a negative integer if the character is not
+   displayable.  Terminal glyph codes are system-dependent integers
+   that represent displayable characters: for example, on a Linux x86
+   console they represent VGA code points.
 
    It returns nil in the following cases:
 
@@ -1808,6 +1813,8 @@ update_auto_fontset_alist (Lisp_Object font_object, Lisp_Object fontset)
 
    (3) If POSITION is not nil, and the current buffer is not displayed
    in any window.
+
+   (4) For a text terminal, the terminal does not report glyph codes.
 
    In addition, the returned font name may not take into account of
    such redisplay engine hooks as what used in jit-lock-mode if
@@ -1860,7 +1867,7 @@ DEFUN ("internal-char-font", Finternal_char_font, Sinternal_char_font, 1, 2, 0,
   if (! CHAR_VALID_P (c))
     return Qnil;
   if (!FRAME_WINDOW_P (f))
-    return Qnil;
+    return terminal_glyph_code (FRAME_TERMINAL (f), c);
   /* We need the basic faces to be valid below, so recompute them if
      some code just happened to clear the face cache.  */
   if (FRAME_FACE_CACHE (f)->used == 0)

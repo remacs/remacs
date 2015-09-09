@@ -1781,7 +1781,7 @@ symbol) of @var{terminal}.  If @var{terminal} has no setting for
 @end defun
 
 @defun set-terminal-parameter terminal parameter value
-This function sets the parameter @var{parm} of @var{terminal} to the
+This function sets the parameter @var{parameter} of @var{terminal} to the
 specified @var{value}, and returns the previous value of that
 parameter.
 @end defun
