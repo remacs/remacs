@@ -246,8 +246,15 @@ SETUP_SYNTAX_TABLE (ptrdiff_t from, ptrdiff_t count)
   gl_state.object = Qnil;
   gl_state.offset = 0;
   if (parse_sexp_lookup_properties)
-    if (count > 0 || from > BEGV)
-      update_syntax_table (count > 0 ? from : from - 1, count, true, Qnil);
+    {
+      if (count > 0 || from > BEGV)
+	update_syntax_table (count > 0 ? from : from - 1, count, true, Qnil);
+      if (gl_state.e_property > parse_sexp_propertize_done)
+	{
+	  gl_state.e_property = parse_sexp_propertize_done;
+	  gl_state.e_property_truncated = true;
+	}
+    }
 }
 
 /* Same as above, but in OBJECT.  If OBJECT is nil, use current buffer.
@@ -480,11 +487,6 @@ parse_sexp_propertize (ptrdiff_t charpos)
     error ("parse-sexp-propertize-function did not move"
 	   " parse-sexp-propertize-done");
   SETUP_SYNTAX_TABLE (charpos, 1);
-  if (gl_state.e_property > parse_sexp_propertize_done)
-    {
-      gl_state.e_property = parse_sexp_propertize_done;
-      gl_state.e_property_truncated = true;
-    }
 }
 
 void
