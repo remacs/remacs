@@ -247,6 +247,8 @@ TIMEOUT is the maximum time to wait for, in seconds."
        (read-event nil nil 0.1))))
 
 (defmacro file-notify--test-with-events (n timeout assert-fn &rest body)
+  "Run BODY collecting N events and then run ASSERT-FN.
+Don't wait longer than TIMEOUT seconds for the events to be delivered."
   (declare (indent 3))
   (let ((outer (make-symbol "outer")))
     `(let ((,outer file-notify--test-events))
