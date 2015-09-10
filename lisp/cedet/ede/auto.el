@@ -155,9 +155,9 @@ into memory.")
 Specifying this matcher object will allow EDE to perform a complex
 check without loading the project.
 
-NOTE: If you use dirmatch, you may need to set :root-only to `nil'.
+NOTE: If you use dirmatch, you may need to set :root-only to nil.
 While it may be a root based project, all subdirs will happen to return
-true for the dirmatch, so for scanning purposes, set it to `nil'.")
+true for the dirmatch, so for scanning purposes, set it to nil.")
    (proj-root :initarg :proj-root
 	      :type function
 	      :documentation "A function symbol to call for the project root.
