@@ -242,7 +242,7 @@ TIMEOUT is the maximum time to wait for, in seconds."
 
     ;; Wait for events, and exit.
     (file-notify--wait-for-events 5 file-notify--test-results)
-    (should (equal (mapcar #'second file-notify--test-events)
+    (should (equal (mapcar #'cadr file-notify--test-events)
                    '(created changed deleted
                              created changed deleted
                              created changed renamed)))
