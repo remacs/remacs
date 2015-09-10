@@ -39,6 +39,9 @@
 (require 'filenotify)
 (require 'tramp)
 
+(declare-function tramp-get-remote-gvfs-monitor-dir "tramp-sh")
+(declare-function tramp-get-remote-inotifywait "tramp-sh")
+
 ;; There is no default value on w32 systems, which could work out of the box.
 (defconst file-notify-test-remote-temporary-file-directory
   (cond
@@ -136,6 +139,23 @@ being the result.")
 (ert-deftest file-notify-test00-availability ()
   "Test availability of `file-notify'."
   (skip-unless (file-notify--test-local-enabled))
+  ;; Report the native library which has been used.
+  (message
+   "%s library: `%s'"
+   (if (null (file-remote-p temporary-file-directory)) "Local" "Remote")
+   (if (null (file-remote-p temporary-file-directory))
+       file-notify--library
+     ;; FIXME: This is rude, using Tramp internal functions.  Maybe
+     ;; the upcoming `file-notify-available-p' could return the used
+     ;; native library.
+     (with-parsed-tramp-file-name temporary-file-directory nil
+         (cond
+          ;; gvfs-monitor-dir.
+          ((tramp-get-remote-gvfs-monitor-dir v) 'gfilenotify)
+          ;; inotifywait.
+          ((tramp-get-remote-inotifywait v) 'inotify)
+          ;; None.
+          (t (ert-fail "No remote library available"))))))
   (should
    (setq file-notify--test-desc
          (file-notify-add-watch temporary-file-directory '(change) 'ignore)))
