@@ -367,6 +367,16 @@ See inotify_rm_watch(2) for more information.
   return Qt;
 }
 
+DEFUN ("inotify-valid-p", Finotify_valid_p, Sinotify_valid_p, 1, 1, 0,
+       doc: /* "Check a watch specified by its WATCH-DESCRIPTOR.
+
+WATCH-DESCRIPTOR should be an object returned by `inotify-add-watch'.  */)
+     (Lisp_Object watch_descriptor)
+{
+  Lisp_Object watch_object = Fassoc (watch_descriptor, watch_list);
+  return NILP (watch_object) ? Qnil : Qt;
+}
+
 void
 syms_of_inotify (void)
 {
@@ -401,6 +411,7 @@ syms_of_inotify (void)
 
   defsubr (&Sinotify_add_watch);
   defsubr (&Sinotify_rm_watch);
+  defsubr (&Sinotify_valid_p);
 
   staticpro (&watch_list);
 
