@@ -2203,10 +2203,7 @@ whether or not it is currently displayed in some window.  */)
 	     and then reposition point at the requested X coordinate;
 	     if we don't, the cursor will be placed just after the
 	     string, which might not be the requested column.  */
-	  if (nlines > 0
-	      && it.method == GET_FROM_STRING
-	      && !it.string_from_display_prop_p
-	      && it.area == TEXT_AREA)
+	  if (nlines > 0 && it.area == TEXT_AREA)
 	    {
 	      while (it.method == GET_FROM_STRING
 		     && !it.string_from_display_prop_p
