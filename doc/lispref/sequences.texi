@@ -578,15 +578,14 @@ value is the value returned by @var{predicate}.
 @end example
 @end defun
 
-@defun seq-find predicate sequence &optional sentinel
+@defun seq-find predicate sequence &optional default
   This function returns the first element for which @var{predicate}
 returns non-@code{nil} in @var{sequence}.  If no element matches
-@var{predicate}, @var{sentinel} is returned if non-@code{nil},
-@code{nil} otherwise.
+@var{predicate}, @var{default} is returned.
 
 Note that this function has an ambiguity if the found element is
-@code{nil}, and if no @var{sentinel} is specified, as it cannot be
-known if an element was found or not.
+identical to @var{default}, as it cannot be known if an element was
+found or not.
 
 @example
 @group
