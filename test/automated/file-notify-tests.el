@@ -372,6 +372,65 @@ This test is skipped in batch mode."
   "Check autorevert via file notification for remote files.
 This test is skipped in batch mode.")
 
+(ert-deftest file-notify-test04-file-validity ()
+  "Check `file-notify-valid-p'."
+  (skip-unless (file-notify--test-local-enabled))
+  (unwind-protect
+      (progn
+        (setq file-notify--test-tmpfile (file-notify--test-make-temp-name))
+        (setq file-notify--test-desc (file-notify-add-watch
+                                      file-notify--test-tmpfile
+                                      '(change)
+                                      #'file-notify--test-event-handler))
+
+        (file-notify--test-with-events
+            3 3 (lambda (events)
+                  (should (equal '(created changed deleted)
+                                 (mapcar #'cadr events))))
+          (should (file-notify-valid-p file-notify--test-desc))
+          (write-region
+           "any text" nil file-notify--test-tmpfile nil 'no-message)
+          (should (file-notify-valid-p file-notify--test-desc))
+          (delete-file file-notify--test-tmpfile)
+          ;; TODO: Even after deletion, the descriptor stays valid.
+          ;; Is that intended?
+          (should (file-notify-valid-p file-notify--test-desc))))
+
+    ;; Exit.
+    (file-notify--test-cleanup)))
+
+(file-notify--deftest-remote file-notify-test04-file-validity
+  "Check `file-notify-valid-p' via file notification for remote
+files.")
+
+(ert-deftest file-notify-test05-dir-validity ()
+  "Check `file-notify-valid-p' for directories."
+  (skip-unless (file-notify--test-local-enabled))
+  (unwind-protect
+      (progn
+        (setq dir (file-name-as-directory
+                   (file-notify--test-make-temp-name)))
+        (make-directory dir)
+        (setq file-notify--test-desc (file-notify-add-watch
+                                      dir
+                                      '(change)
+                                      #'file-notify--test-event-handler))
+
+        (should (file-notify-valid-p file-notify--test-desc))
+        (delete-directory dir)
+        ;; TODO: Even after deletion, the descriptor stays valid.  Is
+        ;; that intended?
+        (should (file-notify-valid-p file-notify--test-desc)))
+
+    ;; FIXME: This signals an exception which indicates that
+    ;; file-notify--test-desc shouldn't really be valid anymore.
+    (ignore-errors
+      (file-notify-rm-watch file-notify--test-desc))))
+
+(file-notify--deftest-remote file-notify-test05-dir-validity
+  "Check `file-notify-valid-p' via file notification for remote
+directories.")
+
 (defun file-notify-test-all (&optional interactive)
   "Run all tests for \\[file-notify]."
   (interactive "p")
