@@ -175,37 +175,31 @@ The mail client is taken to be the handler of mailto URLs."
 			       (mailclient-encode-string-as-url subj))
 		     ""))))
 	      ;; body
-	      (concat
-	       (mailclient-url-delim) "body="
-	       (mailclient-encode-string-as-url
-		(if mailclient-place-body-on-clipboard-flag
-		    (progn
-		      (clipboard-kill-ring-save
-		       (+ 1 delimline) (point-max))
-		      (concat
-		       "*** E-Mail body has been placed on clipboard, "
-		       "please paste it here! ***"))
-		  ;; else
-		  (let ((body (buffer-substring (+ 1 delimline) (point-max))))
-		    (if (null character-coding)
-			body
-		      ;; mailto: requires UTF-8 and cannot deal with
-		      ;; Content-Transfer-Encoding or Content-Type.
-		      ;; FIXME: There is a lot of code duplication here
-		      ;; with rmail.el.
-		      (erase-buffer)
-		      (set-buffer-multibyte nil)
-		      (insert body)
-		      (cond
-		       ((string= character-coding "quoted-printable")
-			(mail-unquote-printable-region (point-min) (point-max)
-						       nil nil 'unibyte))
-		       ((string= character-coding "base64")
-			(base64-decode-region (point-min) (point-max)))
-		       (t (error "unsupported Content-Transfer-Encoding: %s"
-				 character-coding)))
-		      (decode-coding-region (point-min) (point-max)
-					    coding-system t)))))))))))))
+	      (mailclient-url-delim) "body="
+	      (progn
+		(delete-region (point-min) delimline)
+		(unless (null character-coding)
+		  ;; mailto: and clipboard need UTF-8 and cannot deal with
+		  ;; Content-Transfer-Encoding or Content-Type.
+		  ;; FIXME: There is code duplication here with rmail.el.
+		  (set-buffer-multibyte nil)
+		  (cond
+		   ((string= character-coding "base64")
+		    (base64-decode-region (point-min) (point-max)))
+		   ((string= character-coding "quoted-printable")
+		    (mail-unquote-printable-region (point-min) (point-max)
+						   nil nil t))
+		   (t (error "unsupported Content-Transfer-Encoding: %s"
+			     character-coding)))
+		  (decode-coding-region (point-min) (point-max) coding-system))
+		(mailclient-encode-string-as-url
+		 (if mailclient-place-body-on-clipboard-flag
+		     (progn
+		       (clipboard-kill-ring-save (point-min) (point-max))
+		       (concat
+			"*** E-Mail body has been placed on clipboard, "
+			"please paste it here! ***"))
+		   (buffer-string)))))))))))
 
 (provide 'mailclient)
 
