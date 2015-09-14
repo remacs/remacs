@@ -628,6 +628,29 @@ w32_get_watch_object (void *desc)
   return NILP (watch_list) ? Qnil : assoc_no_quit (descriptor, watch_list);
 }
 
+DEFUN ("w32notify-valid-p", Fw32notify_valid_p, Sw32notify_valid_p, 1, 1, 0,
+       doc: /* "Check a watch specified by its WATCH-DESCRIPTOR for validity.
+
+WATCH-DESCRIPTOR should be an object returned by `w32notify-add-watch'.
+
+A watch can become invalid if the directory it watches is deleted, or if
+the watcher thread exits abnormally for any other reason.  */)
+     (Lisp_Object watch_descriptor)
+{
+  Lisp_Object watch_object = Fassoc (watch_descriptor, watch_list);
+
+  if (!NILP (watch_object))
+    {
+      struct notification *dirwatch =
+	(struct notification *)XINTPTR (watch_descriptor);
+      if (w32_valid_pointer_p (dirwatch, sizeof(struct notification))
+	  && dirwatch->dir != NULL)
+	return Qt;
+    }
+
+  return Qnil;
+}
+
 void
 globals_of_w32notify (void)
 {
@@ -648,6 +671,7 @@ syms_of_w32notify (void)
 
   defsubr (&Sw32notify_add_watch);
   defsubr (&Sw32notify_rm_watch);
+  defsubr (&Sw32notify_valid_p);
 
   staticpro (&watch_list);
 

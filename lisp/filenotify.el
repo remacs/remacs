@@ -359,7 +359,6 @@ DESCRIPTOR should be an object returned by `file-notify-add-watch'."
 
 ;; Temporary declarations.
 (defalias 'gfile-valid-p 'identity)
-(defalias 'w32notify-valid-p 'identity)
 
 (defun file-notify-valid-p (descriptor)
   "Check a watch specified by its DESCRIPTOR.
