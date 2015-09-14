@@ -3306,7 +3306,7 @@ accomplish that conveniently."
 				       (cdr c-lang-variable-inits))))
 		   (while init
 		     (setq current-var (caar init))
-		     (set (caar init) (eval (cadar init)))
+		     (set (caar init) (eval (cadr (car init))))
 		     (setq init (cdr init)))))
 
 	     (error
@@ -3335,7 +3335,7 @@ accomplish that conveniently."
 
 	     (while init
 	       (setq current-var (caar init))
-	       (set (caar init) (eval (cadar init)))
+	       (set (caar init) (eval (cadr (car init))))
 	       (setq init (cdr init)))
 
 	   (error
