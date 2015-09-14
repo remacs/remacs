@@ -649,7 +649,8 @@ DEFUN ("w32notify-valid-p", Fw32notify_valid_p, Sw32notify_valid_p, 1, 1, 0,
 WATCH-DESCRIPTOR should be an object returned by `w32notify-add-watch'.
 
 A watch can become invalid if the directory it watches is deleted, or if
-the watcher thread exits abnormally for any other reason.  */)
+the watcher thread exits abnormally for any other reason.  Removing the
+watch by calling `w32notify-rm-watch' also makes it invalid.  */)
      (Lisp_Object watch_descriptor)
 {
   Lisp_Object watch_object = Fassoc (watch_descriptor, watch_list);
