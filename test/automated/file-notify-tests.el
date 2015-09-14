@@ -68,10 +68,14 @@
 
   (when (and file-notify--test-tmpfile
              (file-exists-p file-notify--test-tmpfile))
-    (delete-file file-notify--test-tmpfile))
+    (if (directory-name-p file-notify--test-tmpfile)
+        (delete-directory file-notify--test-tmpfile)
+      (delete-file file-notify--test-tmpfile)))
   (when (and file-notify--test-tmpfile1
              (file-exists-p file-notify--test-tmpfile1))
-    (delete-file file-notify--test-tmpfile1))
+    (if (directory-name-p file-notify--test-tmpfile1)
+        (delete-directory file-notify--test-tmpfile1)
+      (delete-file file-notify--test-tmpfile1)))
 
   (setq file-notify--test-tmpfile nil)
   (setq file-notify--test-tmpfile1 nil)
@@ -376,7 +380,8 @@ This test is skipped in batch mode.")
   "Check `file-notify-valid-p'."
   (skip-unless (file-notify--test-local-enabled))
   (unwind-protect
-      (progn
+      (let ((temporary-file-directory (make-temp-file
+                                       "file-notify-test-parent" t)))
         (setq file-notify--test-tmpfile (file-notify--test-make-temp-name))
         (setq file-notify--test-desc (file-notify-add-watch
                                       file-notify--test-tmpfile
@@ -391,13 +396,14 @@ This test is skipped in batch mode.")
           (write-region
            "any text" nil file-notify--test-tmpfile nil 'no-message)
           (should (file-notify-valid-p file-notify--test-desc))
-          (delete-file file-notify--test-tmpfile)
-          ;; TODO: Even after deletion, the descriptor stays valid.
-          ;; Is that intended?
-          (should (file-notify-valid-p file-notify--test-desc))))
+          (delete-directory temporary-file-directory t)
+          ;; After deleting the parent, the descriptor must not be
+          ;; valid anymore.
+          (should (not (file-notify-valid-p file-notify--test-desc)))))
 
     ;; Exit.
-    (file-notify--test-cleanup)))
+    (ignore-errors
+      (file-notify--test-cleanup))))
 
 (file-notify--deftest-remote file-notify-test04-file-validity
   "Check `file-notify-valid-p' via file notification for remote
@@ -407,25 +413,25 @@ files.")
   "Check `file-notify-valid-p' for directories."
   (skip-unless (file-notify--test-local-enabled))
   (unwind-protect
-      (progn
-        (setq dir (file-name-as-directory
-                   (file-notify--test-make-temp-name)))
-        (make-directory dir)
+      (let ((temporary-file-directory (make-temp-file
+                                       "file-notify-test-parent" t)))
+        (setq file-notify--test-tmpfile (file-name-as-directory
+                                         (file-notify--test-make-temp-name)))
+        (make-directory file-notify--test-tmpfile)
         (setq file-notify--test-desc (file-notify-add-watch
-                                      dir
+                                      file-notify--test-tmpfile
                                       '(change)
                                       #'file-notify--test-event-handler))
 
         (should (file-notify-valid-p file-notify--test-desc))
-        (delete-directory dir)
-        ;; TODO: Even after deletion, the descriptor stays valid.  Is
-        ;; that intended?
-        (should (file-notify-valid-p file-notify--test-desc)))
+        (delete-directory temporary-file-directory t)
+        ;; After deleting the parent, the descriptor must not be
+        ;; valid anymore.
+        (should (not (file-notify-valid-p file-notify--test-desc))))
 
-    ;; FIXME: This signals an exception which indicates that
-    ;; file-notify--test-desc shouldn't really be valid anymore.
+    ;; Exit.
     (ignore-errors
-      (file-notify-rm-watch file-notify--test-desc))))
+      (file-notify--test-cleanup))))
 
 (file-notify--deftest-remote file-notify-test05-dir-validity
   "Check `file-notify-valid-p' via file notification for remote
