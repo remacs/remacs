@@ -196,7 +196,7 @@ for editing IDL and WAVE CL.
 Bob Chassell wrote @file{texnfo-upd.el}, @file{texinfo.el}, and
 @file{makeinfo.el}, modes and utilities for working with Texinfo files;
 and @file{page-ext.el}, commands for extended page handling.  He also
-wrote the Emacs Lisp introduction.  @xref{,,,eintr, Introduction to
+wrote the Emacs Lisp introduction.  @xref{Top,,,eintr, Introduction to
 Programming in Emacs Lisp}.
 
 @item
