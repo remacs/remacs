@@ -29,6 +29,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "frame.h" /* Required for termhooks.h.  */
 #include "termhooks.h"
 
+#include <errno.h>
 #include <sys/inotify.h>
 #include <sys/ioctl.h>
 
@@ -115,6 +116,21 @@ inotifyevent_to_event (Lisp_Object watch_object, struct inotify_event const *ev)
                 XCDR (watch_object));
 }
 
+/* Like report_file_error, but reports a file-notify-error instead.  */
+static void
+report_inotify_error (const char *string, Lisp_Object name)
+{
+  Lisp_Object data = CONSP (name) || NILP (name) ? name : list1 (name);
+  synchronize_system_messages_locale ();
+  char *str = strerror (errno);
+  Lisp_Object errstring
+    = code_convert_string_norecord (build_unibyte_string (str),
+				    Vlocale_coding_system, 0);
+  Lisp_Object errdata = Fcons (errstring, data);
+
+  xsignal (Qfile_notify_error, Fcons (build_string (string), errdata));
+}
+
 /* This callback is called when the FD is available for read.  The inotify
    events are read from FD and converted into input_events.  */
 static void
@@ -129,17 +145,15 @@ inotify_callback (int fd, void *_)
 
   to_read = 0;
   if (ioctl (fd, FIONREAD, &to_read) == -1)
-    xsignal1
-      (Qfile_notify_error,
-       build_string ("Error while trying to retrieve file system events"));
+    report_inotify_error ("Error while trying to retrieve file system events",
+			  Qnil);
   buffer = xmalloc (to_read);
   n = read (fd, buffer, to_read);
   if (n < 0)
     {
       xfree (buffer);
-      xsignal1
-      (Qfile_notify_error,
-       build_string ("Error while trying to read file system events"));
+      report_inotify_error ("Error while trying to read file system events",
+			    Qnil);
     }
 
   EVENT_INIT (event);
@@ -215,7 +229,10 @@ symbol_to_inotifymask (Lisp_Object symb)
   else if (EQ (symb, Qt) || EQ (symb, Qall_events))
     return IN_ALL_EVENTS;
   else
-      xsignal2 (Qfile_notify_error, build_string ("Unknown aspect"), symb);
+    {
+      errno = EINVAL;
+      report_inotify_error ("Unknown aspect", symb);
+    }
 }
 
 static uint32_t
@@ -307,9 +324,7 @@ is managed internally and there is no corresponding inotify_init.  Use
     {
       inotifyfd = inotify_init1 (IN_NONBLOCK|IN_CLOEXEC);
       if (inotifyfd < 0)
-	xsignal1
-	  (Qfile_notify_error,
-	   build_string ("File watching feature (inotify) is not available"));
+	report_inotify_error ("File watching (inotify) is not available", Qnil);
       watch_list = Qnil;
       add_read_fd (inotifyfd, &inotify_callback, NULL);
     }
@@ -318,8 +333,7 @@ is managed internally and there is no corresponding inotify_init.  Use
   encoded_file_name = ENCODE_FILE (file_name);
   watchdesc = inotify_add_watch (inotifyfd, SSDATA (encoded_file_name), mask);
   if (watchdesc == -1)
-    xsignal2 (Qfile_notify_error,
-	      build_string ("Could not add watch for file"), file_name);
+    report_inotify_error ("Could not add watch for file", file_name);
 
   watch_descriptor = make_watch_descriptor (watchdesc);
 
@@ -348,8 +362,7 @@ See inotify_rm_watch(2) for more information.
   int wd = XINT (watch_descriptor);
 
   if (inotify_rm_watch (inotifyfd, wd) == -1)
-    xsignal2 (Qfile_notify_error,
-	      build_string ("Could not rm watch"), watch_descriptor);
+    report_inotify_error ("Could not rm watch", watch_descriptor);
 
   /* Remove watch descriptor from watch list.  */
   watch_object = Fassoc (watch_descriptor, watch_list);
