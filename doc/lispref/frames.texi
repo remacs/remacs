@@ -1277,18 +1277,19 @@ the @code{user-position} parameter (@pxref{Position Parameters,
 user-position}) does for the position parameters @code{top} and
 @code{left}.
 
-@cindex full-screen frames
+@cindex fullboth frames
+@cindex fullheight frames
+@cindex fullwidth frames
+@cindex maximized frames
 @vindex fullscreen, a frame parameter
 @item fullscreen
-Specify that width, height or both shall be maximized.  The value
-@code{fullwidth} specifies that width shall be as wide as possible.  The
-value @code{fullheight} specifies that height shall be as tall as
-possible.  The value @code{fullboth} specifies that both the width and
-the height shall be set to the size of the screen.  The value
-@code{maximized} specifies that the frame shall be maximized.
-
-The difference between @code{maximized} and @code{fullboth} is that a
-maximized frame usually keeps its title bar and the buttons for resizing
+This parameter specifies whether to maximize the frame’s width, height
+or both.  Its value can be @code{fullwidth}, @code{fullheight},
+@code{fullboth}, or @code{maximized}.  A @dfn{fullwidth} frame is as
+wide as possible, a @dfn{fulleight} frame is as tall as possible, and
+a @dfn{fullboth} frame is both as wide and as tall as possible.  A
+@dfn{maximized} frame is like a fullboth frame, except that it usually
+keeps its title bar and the buttons for resizing
 and closing the frame.  Also, maximized frames typically avoid hiding
 any task bar or panels displayed on the desktop.  A fullboth frame,
 on the other hand, usually omits the title bar and occupies the entire
