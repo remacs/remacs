@@ -117,7 +117,7 @@ inotifyevent_to_event (Lisp_Object watch_object, struct inotify_event const *ev)
 }
 
 /* Like report_file_error, but reports a file-notify-error instead.  */
-static void
+static _Noreturn void
 report_inotify_error (const char *string, Lisp_Object name)
 {
   Lisp_Object data = CONSP (name) || NILP (name) ? name : list1 (name);
