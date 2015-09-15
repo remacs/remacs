@@ -3272,7 +3272,7 @@ There might be text before point."
     ("\\prod" . ?∏)
     ("\\propto" . ?∝)
     ("\\qed" . ?∎)
-    ("\\quad" . ? )
+    ("\\quad" . ?␣)
     ("\\rangle" . 10217)            ; Literal ?⟩ breaks indentation.
     ("\\rbrace" . ?})
     ("\\rbrack" . ?\])
