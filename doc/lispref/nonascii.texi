@@ -483,7 +483,7 @@ Corresponds to the Unicode @code{Numeric_Value} property for
 characters whose @code{Numeric_Type} is @samp{Decimal}.  The value is
 an integer, or @code{nil} if the character has no decimal digit value.
 For unassigned codepoints, the value is @code{nil}, which means
-@acronym{NaN}, or ``not-a-number''.
+@acronym{NaN}, or not a number.
 
 @item digit-value
 Corresponds to the Unicode @code{Numeric_Value} property for
@@ -1956,7 +1956,7 @@ and @ref{Invoking the Input Method}.
 @section Locales
 @cindex locale
 
-  POSIX defines a concept of ``locales'' which control which language
+  In POSIX, locales control which language
 to use in language-related features.  These Emacs variables control
 how Emacs interacts with these features.
 

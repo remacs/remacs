@@ -725,7 +725,7 @@ another application without doing anything special to Emacs.
 @c have SIGTSTP?
 @cindex SIGTSTP
   Some operating systems (those without @code{SIGTSTP}, or MS-DOS) do
-not support suspension of jobs; on these systems, ``suspension''
+not support suspension of jobs; on these systems, suspension
 actually creates a new shell temporarily as a subprocess of Emacs.
 Then you would exit the shell to return to Emacs.
 
@@ -1013,9 +1013,9 @@ process-environment
 @end group
 @end smallexample
 
-If @code{process-environment} contains ``duplicate'' elements that
+If @code{process-environment} contains multiple elements that
 specify the same environment variable, the first of these elements
-specifies the variable, and the other ``duplicates'' are ignored.
+specifies the variable, and the others are ignored.
 @end defvar
 
 @defvar initial-environment
@@ -1167,7 +1167,7 @@ user-id or login name that isn't defined, it returns @code{nil}.
   The symbols @code{user-login-name}, @code{user-real-login-name} and
 @code{user-full-name} are variables as well as functions.  The functions
 return the same values that the variables hold.  These variables allow
-you to ``fake out'' Emacs by telling the functions what to return.  The
+you to fake out Emacs by telling the functions what to return.  The
 variables are also useful for constructing frame titles (@pxref{Frame
 Titles}).
 
@@ -1545,13 +1545,13 @@ because that is how @samp{%S} normally pads to two positions.
 
 The characters @samp{E} and @samp{O} act as modifiers when used between
 @samp{%} and one of the letters in the table above.  @samp{E} specifies
-using the current locale's ``alternative'' version of the date and time.
+using the current locale's alternative version of the date and time.
 In a Japanese locale, for example, @code{%Ex} might yield a date format
 based on the Japanese Emperors' reigns.  @samp{E} is allowed in
 @samp{%Ec}, @samp{%EC}, @samp{%Ex}, @samp{%EX}, @samp{%Ey}, and
 @samp{%EY}.
 
-@samp{O} means to use the current locale's ``alternative''
+@samp{O} means to use the current locale's alternative
 representation of numbers, instead of the ordinary decimal digits.  This
 is allowed with most letters, all the ones that output numbers.
 
@@ -1922,7 +1922,7 @@ This is a convenient way to test whether Emacs is idle.
 @end defun
 
   The main use of @code{current-idle-time} is when an idle timer
-function wants to ``take a break'' for a while.  It can set up another
+function wants to take a break for a while.  It can set up another
 idle timer to call the same function again, after a few seconds more
 idleness.  Here's an example:
 
@@ -2192,7 +2192,7 @@ To define system-specific X11 keysyms, set the variable
 This variable's value should be an alist with one element for each
 system-specific keysym.  Each element has the form @code{(@var{code}
 . @var{symbol})}, where @var{code} is the numeric keysym code (not
-including the ``vendor specific'' bit,
+including the vendor-specific bit,
 @ifnottex
 @minus{}2**28),
 @end ifnottex

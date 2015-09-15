@@ -306,7 +306,7 @@ e.g., @kbd{C-u 4 C-y} reinserts the fourth most recent kill.
   On graphical displays, @kbd{C-y} first checks if another application
 has placed any text in the system clipboard more recently than the
 last Emacs kill.  If so, it inserts the clipboard's text instead.
-Thus, Emacs effectively treats ``cut'' or ``copy'' clipboard
+Thus, Emacs effectively treats cut or copy clipboard
 operations performed in other applications like Emacs kills, except
 that they are not recorded in the kill ring.  @xref{Cut and Paste},
 for details.
@@ -358,34 +358,34 @@ So, to recover the text of the next-to-the-last kill, first use
 with the previous kill.  @kbd{M-y} is allowed only after a @kbd{C-y}
 or another @kbd{M-y}.
 
-  You can understand @kbd{M-y} in terms of a ``last yank'' pointer which
-points at an entry in the kill ring.  Each time you kill, the ``last
-yank'' pointer moves to the newly made entry at the front of the ring.
-@kbd{C-y} yanks the entry which the ``last yank'' pointer points to.
-@kbd{M-y} moves the ``last yank'' pointer to a different entry, and the
+  You can understand @kbd{M-y} in terms of a last-yank pointer which
+points at an entry in the kill ring.  Each time you kill, the last-yank
+pointer moves to the newly made entry at the front of the ring.
+@kbd{C-y} yanks the entry which the last-yank pointer points to.
+@kbd{M-y} moves the last-yank pointer to a different entry, and the
 text in the buffer changes to match.  Enough @kbd{M-y} commands can move
 the pointer to any entry in the ring, so you can get any entry into the
 buffer.  Eventually the pointer reaches the end of the ring; the next
 @kbd{M-y} loops back around to the first entry again.
 
-  @kbd{M-y} moves the ``last yank'' pointer around the ring, but it does
+  @kbd{M-y} moves the last-yank pointer around the ring, but it does
 not change the order of the entries in the ring, which always runs from
 the most recent kill at the front to the oldest one still remembered.
 
   @kbd{M-y} can take a numeric argument, which tells it how many entries
-to advance the ``last yank'' pointer by.  A negative argument moves the
+to advance the last-yank pointer by.  A negative argument moves the
 pointer toward the front of the ring; from the front of the ring, it
-moves ``around'' to the last entry and continues forward from there.
+moves around to the last entry and continues forward from there.
 
   Once the text you are looking for is brought into the buffer, you can
 stop doing @kbd{M-y} commands and it will stay there.  It's just a copy
 of the kill ring entry, so editing it in the buffer does not change
-what's in the ring.  As long as no new killing is done, the ``last
-yank'' pointer remains at the same place in the kill ring, so repeating
+what's in the ring.  As long as no new killing is done, the last-yank
+pointer remains at the same place in the kill ring, so repeating
 @kbd{C-y} will yank another copy of the same previous kill.
 
   When you call @kbd{C-y} with a numeric argument, that also sets the
-``last yank'' pointer to the entry that it yanks.
+last-yank pointer to the entry that it yanks.
 
 @node Appending Kills
 @subsection Appending Kills
@@ -445,7 +445,7 @@ be yanked back in one place.
 append to the text that @kbd{M-w} copied into the kill ring.
 
 @node Cut and Paste
-@section ``Cut and Paste'' Operations on Graphical Displays
+@section Cut and Paste Operations on Graphical Displays
 @cindex cut
 @cindex copy
 @cindex paste
@@ -476,7 +476,7 @@ different data type by customizing @code{x-select-request-type}.
 @cindex clipboard
 
   The @dfn{clipboard} is the facility that most graphical applications
-use for ``cutting and pasting''.  When the clipboard exists, the kill
+use for cutting and pasting.  When the clipboard exists, the kill
 and yank commands in Emacs make use of it.
 
   When you kill some text with a command such as @kbd{C-w}
@@ -493,7 +493,7 @@ losing the old clipboard data---at the risk of high memory consumption
 if that data turns out to be large.
 
   Yank commands, such as @kbd{C-y} (@code{yank}), also use the
-clipboard.  If another application ``owns'' the clipboard---i.e., if
+clipboard.  If another application owns the clipboard---i.e., if
 you cut or copied text there more recently than your last kill command
 in Emacs---then Emacs yanks from the clipboard instead of the kill
 ring.
@@ -512,7 +512,7 @@ change the variable @code{x-select-enable-clipboard} to @code{nil}.
 @vindex x-select-enable-clipboard-manager
   Many X desktop environments support a feature called the
 @dfn{clipboard manager}.  If you exit Emacs while it is the current
-``owner'' of the clipboard data, and there is a clipboard manager
+owner of the clipboard data, and there is a clipboard manager
 running, Emacs transfers the clipboard data to the clipboard manager
 so that it is not lost.  In some circumstances, this may cause a delay
 when exiting Emacs; if you wish to prevent Emacs from transferring
@@ -546,9 +546,9 @@ containing the last stretch of text selected in an X application
 (usually by dragging the mouse).  Typically, this text can be inserted
 into other X applications by @kbd{mouse-2} clicks.  The primary
 selection is separate from the clipboard.  Its contents are more
-``fragile''; they are overwritten each time you select text with the
-mouse, whereas the clipboard is only overwritten by explicit ``cut''
-or ``copy'' commands.
+fragile; they are overwritten each time you select text with the
+mouse, whereas the clipboard is only overwritten by explicit cut
+or copy commands.
 
   Under X, whenever the region is active (@pxref{Mark}), the text in
 the region is saved in the primary selection.  This applies regardless
@@ -727,9 +727,9 @@ rectangle, depending on the command that uses them.
 @table @kbd
 @item C-x r k
 Kill the text of the region-rectangle, saving its contents as the
-``last killed rectangle'' (@code{kill-rectangle}).
+last killed rectangle (@code{kill-rectangle}).
 @item C-x r M-w
-Save the text of the region-rectangle as the ``last killed rectangle''
+Save the text of the region-rectangle as the last killed rectangle
 (@code{copy-rectangle-as-kill}).
 @item C-x r d
 Delete the text of the region-rectangle (@code{delete-rectangle}).
@@ -776,7 +776,7 @@ region-rectangle is like erasing the specified text on each line of
 the rectangle; if there is any following text on the line, it moves
 backwards to fill the gap.
 
-  ``Killing'' a rectangle is not killing in the usual sense; the
+  Killing a rectangle is not killing in the usual sense; the
 rectangle is not stored in the kill ring, but in a special place that
 only records the most recent rectangle killed.  This is because
 yanking a rectangle is so different from yanking linear text that
@@ -786,8 +786,8 @@ for rectangles.
 @kindex C-x r M-w
 @findex copy-rectangle-as-kill
   @kbd{C-x r M-w} (@code{copy-rectangle-as-kill}) is the equivalent of
-@kbd{M-w} for rectangles: it records the rectangle as the ``last
-killed rectangle'', without deleting the text from the buffer.
+@kbd{M-w} for rectangles: it records the rectangle as the last
+killed rectangle, without deleting the text from the buffer.
 
 @kindex C-x r y
 @findex yank-rectangle

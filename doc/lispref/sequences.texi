@@ -342,7 +342,7 @@ order elements according to different criteria.
 The argument @var{predicate} must be a function that accepts two
 arguments.  It is called with two elements of @var{sequence}.  To get an
 increasing order sort, the @var{predicate} should return non-@code{nil} if the
-first element is ``less than'' the second, or @code{nil} if not.
+first element is less than the second, or @code{nil} if not.
 
 The comparison function @var{predicate} must give reliable results for
 any given pair of arguments, at least within a single call to
@@ -1490,7 +1490,7 @@ deletion, rotation, and modulo-indexed reference and traversal.  An
 efficient ring data structure is implemented by the @code{ring}
 package.  It provides the functions listed in this section.
 
-  Note that several ``rings'' in Emacs, like the kill ring and the
+  Note that several rings in Emacs, like the kill ring and the
 mark ring, are actually implemented as simple lists, @emph{not} using
 the @code{ring} package; thus the following functions won't work on
 them.
