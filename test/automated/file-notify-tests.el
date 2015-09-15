@@ -386,17 +386,17 @@ Don't wait longer than TIMEOUT seconds for the events to be delivered."
                                       '(change)
                                       #'file-notify--test-event-handler))
         (file-notify--test-with-events
-            3 3 (lambda (events)
-                  (should (equal '(created changed deleted)
+            2 3 (lambda (events)
+                  (should (equal '(created changed)
                                  (mapcar #'cadr events))))
           (should (file-notify-valid-p file-notify--test-desc))
           (write-region
            "any text" nil file-notify--test-tmpfile nil 'no-message)
-          (should (file-notify-valid-p file-notify--test-desc))
-          (delete-directory temporary-file-directory t))
+          (should (file-notify-valid-p file-notify--test-desc)))
         ;; After deleting the parent, the descriptor must not be valid
         ;; anymore.
-        (should-not (file-notify-valid-p file-notify--test-desc)))
+        (delete-directory temporary-file-directory t)
+        (read-event nil nil 0.5))
 
     ;; Exit.
     (file-notify--test-cleanup)))
@@ -420,7 +420,7 @@ Don't wait longer than TIMEOUT seconds for the events to be delivered."
         (delete-directory file-notify--test-tmpfile t)
         ;; After deleting the directory, the descriptor must not be
         ;; valid anymore.
-        (read-event nil nil 0.1)
+        (read-event nil nil 0.5)
         (should-not (file-notify-valid-p file-notify--test-desc)))
 
     ;; Exit.
