@@ -1286,7 +1286,7 @@ user-position}) does for the position parameters @code{top} and
 This parameter specifies whether to maximize the frame’s width, height
 or both.  Its value can be @code{fullwidth}, @code{fullheight},
 @code{fullboth}, or @code{maximized}.  A @dfn{fullwidth} frame is as
-wide as possible, a @dfn{fulleight} frame is as tall as possible, and
+wide as possible, a @dfn{fullheight} frame is as tall as possible, and
 a @dfn{fullboth} frame is both as wide and as tall as possible.  A
 @dfn{maximized} frame is like a fullboth frame, except that it usually
 keeps its title bar and the buttons for resizing

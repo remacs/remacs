@@ -14975,7 +14975,7 @@ The task is easy: use @code{find-file-noselect} and @code{set-buffer}.
 @section @code{lengths-list-file} in Detail
 
 The core of the @code{lengths-list-file} function is a @code{while}
-loop containing a function to move point forwar,d defun by defun, and
+loop containing a function to move point forward defun by defun, and
 a function to count the number of words and symbols in each defun.
 This core must be surrounded by functions that do various other tasks,
 including finding the file, and ensuring that point starts out at the
