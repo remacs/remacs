@@ -2421,13 +2421,11 @@ the file, which in some cases may cause a security hole.
   This section describes low-level subroutines for completing a file
 name.  For higher level functions, see @ref{Reading File Names}.
 
-@defun file-name-all-completions partial-filename directory &optional predicate
-This function returns a list of all possible completions for a file in
-directory @var{directory} whose name starts with
-@var{partial-filename} and for which @var{predicate} (called with the
-filename) returns non-nil. If @var{predicate} is nil (the default), it
-is ignored. The order of the completions is the order of the files in
-the directory, which is unpredictable and conveys no useful
+@defun file-name-all-completions partial-filename directory
+This function returns a list of all possible completions for a file
+whose name starts with @var{partial-filename} in directory
+@var{directory}.  The order of the completions is the order of the files
+in the directory, which is unpredictable and conveys no useful
 information.
 
 The argument @var{partial-filename} must be a file name containing no
