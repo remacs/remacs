@@ -361,8 +361,9 @@ static void analyze_regex (char *);
 static void free_regexps (void);
 static void regex_tag_multiline (void);
 static void error (const char *, ...) ATTRIBUTE_FORMAT_PRINTF (1, 2);
+static void verror (char const *, va_list) ATTRIBUTE_FORMAT_PRINTF (1, 0);
 static _Noreturn void suggest_asking_for_help (void);
-_Noreturn void fatal (const char *, const char *);
+static _Noreturn void fatal (char const *, ...) ATTRIBUTE_FORMAT_PRINTF (1, 2);
 static _Noreturn void pfatal (const char *);
 static void add_node (node *, node **);
 
@@ -1091,7 +1092,7 @@ main (int argc, char **argv)
 	++current_arg;
 	++file_count;
 	if (parsing_stdin)
-	  fatal ("cannot parse standard input more than once", (char *)NULL);
+	  fatal ("cannot parse standard input more than once");
 	parsing_stdin = true;
 	break;
 
@@ -1255,8 +1256,8 @@ main (int argc, char **argv)
 	      if (streq (this_file, "-"))
 		{
 		  if (parsing_stdin)
-		    fatal ("cannot parse standard input AND read file names from it",
-			   (char *)NULL);
+		    fatal ("cannot parse standard input "
+			   "AND read file names from it");
 		  while (readline_internal (&filename_lb, stdin, "-") > 0)
 		    process_file_name (filename_lb.buffer, lang);
 		}
@@ -1324,7 +1325,7 @@ main (int argc, char **argv)
 	  z = stpcpy (z, tagfile);
 	  strcpy (z, ";rm OTAGS");
 	  if (system (cmd) != EXIT_SUCCESS)
-	    fatal ("failed to execute shell command", (char *)NULL);
+	    fatal ("failed to execute shell command");
 	}
       free (cmd);
       append_to_tagfile = true;
@@ -6351,10 +6352,13 @@ skip_name (char *cp)
 }
 
 /* Print error message and exit.  */
-void
-fatal (const char *s1, const char *s2)
+static void
+fatal (char const *format, ...)
 {
-  error (s1, s2);
+  va_list ap;
+  va_start (ap, format);
+  verror (format, ap);
+  va_end (ap);
   exit (EXIT_FAILURE);
 }
 
@@ -6379,10 +6383,16 @@ error (const char *format, ...)
 {
   va_list ap;
   va_start (ap, format);
+  verror (format, ap);
+  va_end (ap);
+}
+
+static void
+verror (char const *format, va_list ap)
+{
   fprintf (stderr, "%s: ", progname);
   vfprintf (stderr, format, ap);
   fprintf (stderr, "\n");
-  va_end (ap);
 }
 
 /* Return a newly-allocated string whose contents
@@ -6673,7 +6683,7 @@ xmalloc (size_t size)
 {
   void *result = malloc (size);
   if (result == NULL)
-    fatal ("virtual memory exhausted", (char *)NULL);
+    fatal ("virtual memory exhausted");
   return result;
 }
 
@@ -6682,7 +6692,7 @@ xrealloc (void *ptr, size_t size)
 {
   void *result = realloc (ptr, size);
   if (result == NULL)
-    fatal ("virtual memory exhausted", (char *)NULL);
+    fatal ("virtual memory exhausted");
   return result;
 }
 
