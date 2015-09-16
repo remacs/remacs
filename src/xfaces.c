@@ -709,10 +709,10 @@ Optional THOROUGHLY non-nil means try to free unused fonts, too.  */)
 DEFUN ("bitmap-spec-p", Fbitmap_spec_p, Sbitmap_spec_p, 1, 1, 0,
        doc: /* Value is non-nil if OBJECT is a valid bitmap specification.
 A bitmap specification is either a string, a file name, or a list
-\(WIDTH HEIGHT DATA) where WIDTH is the pixel width of the bitmap,
+(WIDTH HEIGHT DATA) where WIDTH is the pixel width of the bitmap,
 HEIGHT is its height, and DATA is a string containing the bits of
 the pixmap.  Bits are stored row by row, each row occupies
-\(WIDTH + 7)/8 bytes.  */)
+(WIDTH + 7)/8 bytes.  */)
   (Lisp_Object object)
 {
   bool pixmap_p = false;
@@ -4631,8 +4631,8 @@ DEFUN ("face-attributes-as-vector", Fface_attributes_as_vector,
    that a face containing all the attributes in ATTRS, when merged with the
    default face for display, can be represented in a way that's
 
-    \(1) different in appearance than the default face, and
-    \(2) `close in spirit' to what the attributes specify, if not exact.  */
+    (1) different in appearance than the default face, and
+    (2) `close in spirit' to what the attributes specify, if not exact.  */
 
 static bool
 x_supports_face_attributes_p (struct frame *f,
@@ -4731,8 +4731,8 @@ x_supports_face_attributes_p (struct frame *f,
    that a face containing all the attributes in ATTRS, when merged
    with the default face for display, can be represented in a way that's
 
-    \(1) different in appearance than the default face, and
-    \(2) `close in spirit' to what the attributes specify, if not exact.
+    (1) different in appearance than the default face, and
+    (2) `close in spirit' to what the attributes specify, if not exact.
 
    Point (2) implies that a `:weight black' attribute will be satisfied
    by any terminal that can display bold, and a `:foreground "yellow"' as
@@ -4914,8 +4914,8 @@ The definition of `supported' is somewhat heuristic, but basically means
 that a face containing all the attributes in ATTRIBUTES, when merged
 with the default face for display, can be represented in a way that's
 
- \(1) different in appearance than the default face, and
- \(2) `close in spirit' to what the attributes specify, if not exact.
+ (1) different in appearance than the default face, and
+ (2) `close in spirit' to what the attributes specify, if not exact.
 
 Point (2) implies that a `:weight black' attribute will be satisfied by
 any display that can display bold, and a `:foreground \"yellow\"' as long
@@ -6521,7 +6521,7 @@ changing this variable for it to take effect.  */);
 Each element is a cons (FONT-PATTERN . RESCALE-RATIO), where
 FONT-PATTERN is a font-spec or a regular expression matching a font name, and
 RESCALE-RATIO is a floating point number to specify how much larger
-\(or smaller) font we should use.  For instance, if a face requests
+(or smaller) font we should use.  For instance, if a face requests
 a font of 10 point, we actually use a font of 10 * RESCALE-RATIO point.  */);
   Vface_font_rescale_alist = Qnil;
 

@@ -705,7 +705,7 @@ If SYMBOL has a local binding, then this form affects the local
 binding.  This is usually not what you want.  Thus, if you need to
 load a file defining variables, with this form or with `defconst' or
 `defcustom', you should always load that file _outside_ any bindings
-for these variables.  \(`defconst' and `defcustom' behave similarly in
+for these variables.  (`defconst' and `defcustom' behave similarly in
 this respect.)
 
 The optional argument DOCSTRING is a documentation string for the
@@ -1188,7 +1188,7 @@ suppresses the debugger).
 When a handler handles an error, control returns to the `condition-case'
 and it executes the handler's BODY...
 with VAR bound to (ERROR-SYMBOL . SIGNAL-DATA) from the error.
-\(If VAR is nil, the handler can't access that information.)
+(If VAR is nil, the handler can't access that information.)
 Then the value of the last BODY form is returned from the `condition-case'
 expression.
 
@@ -2366,7 +2366,7 @@ may be nil, a function, or a list of functions.  Call each
 function in order with arguments ARGS, stopping at the first
 one that returns nil, and return nil.  Otherwise (if all functions
 return non-nil, or if there are no functions to call), return non-nil
-\(do not rely on the precise return value in this case).
+(do not rely on the precise return value in this case).
 
 Do not use `make-local-variable' to make a hook variable buffer-local.
 Instead, use `add-hook' and specify t for the LOCAL argument.

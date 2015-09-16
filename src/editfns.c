@@ -3627,7 +3627,7 @@ save_restriction_restore (Lisp_Object data)
 DEFUN ("save-restriction", Fsave_restriction, Ssave_restriction, 0, UNEVALLED, 0,
        doc: /* Execute BODY, saving and restoring current buffer's restrictions.
 The buffer's restrictions make parts of the beginning and end invisible.
-\(They are set up with `narrow-to-region' and eliminated with `widen'.)
+(They are set up with `narrow-to-region' and eliminated with `widen'.)
 This special form, `save-restriction', saves the current buffer's restrictions
 when it is entered, and restores them when it is exited.
 So any `narrow-to-region' within BODY lasts only until the end of the form.

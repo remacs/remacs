@@ -21038,7 +21038,7 @@ window-specific overlays, which can affect the results.
 
 Strong directional characters `L', `R', and `AL' can have their
 intrinsic directionality overridden by directional override
-control characters RLO \(u+202e) and LRO \(u+202d).  See the
+control characters RLO (u+202e) and LRO (u+202d).  See the
 function `get-char-code-property' for a way to inquire about
 the `bidi-class' property of a character.  */)
   (Lisp_Object from, Lisp_Object to, Lisp_Object object)
@@ -30994,18 +30994,18 @@ This variable is not guaranteed to be accurate except while processing
 
   DEFVAR_LISP ("frame-title-format", Vframe_title_format,
     doc: /* Template for displaying the title bar of visible frames.
-\(Assuming the window manager supports this feature.)
+(Assuming the window manager supports this feature.)
 
 This variable has the same structure as `mode-line-format', except that
 the %c and %l constructs are ignored.  It is used only on frames for
-which no explicit name has been set \(see `modify-frame-parameters').  */);
+which no explicit name has been set (see `modify-frame-parameters').  */);
 
   DEFVAR_LISP ("icon-title-format", Vicon_title_format,
     doc: /* Template for displaying the title bar of an iconified frame.
-\(Assuming the window manager supports this feature.)
+(Assuming the window manager supports this feature.)
 This variable has the same structure as `mode-line-format' (which see),
 and is used only on frames for which no explicit name has been set
-\(see `modify-frame-parameters').  */);
+(see `modify-frame-parameters').  */);
   Vicon_title_format
     = Vframe_title_format
     = listn (CONSTYPE_PURE, 3,
@@ -31064,9 +31064,9 @@ A positive number means delay autoselection by that many seconds: a
 window is autoselected only after the mouse has remained in that
 window for the duration of the delay.
 A negative number has a similar effect, but causes windows to be
-autoselected only after the mouse has stopped moving.  \(Because of
+autoselected only after the mouse has stopped moving.  (Because of
 the way Emacs compares mouse events, you will occasionally wait twice
-that time before the window gets selected.\)
+that time before the window gets selected.)
 Any other value means to autoselect window instantaneously when the
 mouse pointer enters it.
 
