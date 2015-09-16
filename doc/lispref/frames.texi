@@ -500,7 +500,7 @@ Position}).
 @cindex external border
 The @dfn{external border} is part of the decorations supplied by the
 window manager.  It's typically used for resizing the frame with the
-mouse.  The external border is normally not shown on fullboth and
+mouse.  The external border is normally not shown on ``fullboth'' and
 maximized frames (@pxref{Size Parameters}) and doesn't exist for text
 terminal frames.
 
@@ -841,7 +841,7 @@ of its character size, however, may: be ignored, cause a rounding
 (GTK+), or be accepted (Lucid, Motif, MS-Windows).
 
 With some window managers you may have to set this to non-@code{nil} in
-order to make a frame appear truly maximized or fullscreen.
+order to make a frame appear truly maximized or full-screen.
 @end defopt
 
 @defun set-frame-size frame width height pixelwise
@@ -914,7 +914,7 @@ resize the frame's outer size, hence this will alter the number of
 displayed lines.
 
    Occasionally, such @dfn{implied frame resizing} may be unwanted, for
-example, when the frame is maximized or made fullscreen (where it's
+example, when the frame is maximized or made full-screen (where it's
 turned off by default).  In other cases you can disable implied resizing
 with the following option:
 
@@ -1288,34 +1288,34 @@ or both.  Its value can be @code{fullwidth}, @code{fullheight},
 @code{fullboth}, or @code{maximized}.  A @dfn{fullwidth} frame is as
 wide as possible, a @dfn{fullheight} frame is as tall as possible, and
 a @dfn{fullboth} frame is both as wide and as tall as possible.  A
-@dfn{maximized} frame is like a fullboth frame, except that it usually
+@dfn{maximized} frame is like a ``fullboth'' frame, except that it usually
 keeps its title bar and the buttons for resizing
 and closing the frame.  Also, maximized frames typically avoid hiding
-any task bar or panels displayed on the desktop.  A fullboth frame,
+any task bar or panels displayed on the desktop.  A ``fullboth'' frame,
 on the other hand, usually omits the title bar and occupies the entire
 available screen space.
 
-Fullheight and fullwidth frames are more similar to maximized
+Full-height and full-width frames are more similar to maximized
 frames in this regard.  However, these typically display an external
 border which might be absent with maximized frames.  Hence the heights
-of maximized and fullheight frames and the widths of maximized and
-fullwidth frames often differ by a few pixels.
+of maximized and full-height frames and the widths of maximized and
+full-width frames often differ by a few pixels.
 
 With some window managers you may have to customize the variable
 @code{frame-resize-pixelwise} (@pxref{Size and Position}) in order to
-make a frame truly appear maximized or fullscreen.  Moreover,
+make a frame truly appear maximized or full-screen.  Moreover,
 some window managers might not support smooth transition between the
-various fullscreen or maximization states.  Customizing the variable
+various full-screen or maximization states.  Customizing the variable
 @code{x-frame-normalize-before-maximize} can help to overcome that.
 
 @vindex fullscreen-restore, a frame parameter
 @item fullscreen-restore
 This parameter specifies the desired fullscreen state of the frame
 after invoking the @code{toggle-frame-fullscreen} command (@pxref{Frame
-Commands,,, emacs, The GNU Emacs Manual}) in the fullboth state.
+Commands,,, emacs, The GNU Emacs Manual}) in the ``fullboth'' state.
 Normally this parameter is installed automatically by that command when
 toggling the state to fullboth.  If, however, you start Emacs in the
-fullboth state, you have to specify the desired behavior in your initial
+``fullboth'' state, you have to specify the desired behavior in your initial
 file as, for example
 
 @example

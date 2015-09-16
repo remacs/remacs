@@ -2538,7 +2538,7 @@ Non-@code{nil} if non-blocking connect is supported.
 @item (:type datagram)
 Non-@code{nil} if datagrams are supported.
 @item (:family local)
-Non-@code{nil} if local (a.k.a.@: UNIX domain) sockets are supported.
+Non-@code{nil} if local (a.k.a.@: ``UNIX domain'') sockets are supported.
 @item (:family ipv6)
 Non-@code{nil} if IPv6 is supported.
 @item (:service t)
@@ -2837,8 +2837,8 @@ is automatically recognized as risky.
   A field's @dfn{type} describes the size (in bytes) of the object
 that the field represents and, in the case of multibyte fields, how
 the bytes are ordered within the field.  The two possible orderings
-are big endian (also known as network byte ordering) and
-little endian.  For instance, the number @code{#x23cd} (decimal
+are @dfn{big endian} (also known as ``network byte ordering'') and
+@dfn{little endian}.  For instance, the number @code{#x23cd} (decimal
 9165) in big endian would be the two bytes @code{#x23} @code{#xcd};
 and in little endian, @code{#xcd} @code{#x23}.  Here are the possible
 type values:

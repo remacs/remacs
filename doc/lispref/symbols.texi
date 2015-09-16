@@ -35,7 +35,7 @@ otherwise.
 @section Symbol Components
 @cindex symbol components
 
-  Each symbol has four components (or cells), each of which
+  Each symbol has four components (or ``cells''), each of which
 references another object:
 
 @table @asis

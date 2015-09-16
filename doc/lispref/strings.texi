@@ -343,7 +343,7 @@ three previous examples are rarely relevant:
 @end example
 
 Somewhat odd, but predictable, behavior can occur for certain
-non-greedy values of @var{separators} that can prefer empty
+``non-greedy'' values of @var{separators} that can prefer empty
 matches over non-empty matches.  Again, such values rarely occur in
 practice:
 

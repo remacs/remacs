@@ -538,10 +538,10 @@ not feel obliged to read this list before reporting a bug.
 @cindex bug criteria
 @cindex what constitutes an Emacs bug
 
-  If Emacs accesses an invalid memory location or exits with an
-operating system error message that indicates a problem in the program
-(as opposed to something like ``disk full''), then it is certainly a
-bug.
+  If Emacs accesses an invalid memory location (a.k.a.@:
+``segmentation fault'') or exits with an operating system error
+message that indicates a problem in the program (as opposed to
+something like ``disk full''), then it is certainly a bug.
 
   If the Emacs display does not correspond properly to the contents of
 the buffer, then it is a bug.  But you should check that features like
@@ -964,7 +964,7 @@ More detailed advice and other useful techniques for debugging Emacs
 are available in the file @file{etc/DEBUG} in the Emacs distribution.
 That file also includes instructions for investigating problems
 whereby Emacs stops responding (many people assume that Emacs is
-hung, whereas in fact it might be in an infinite loop).
+``hung'', whereas in fact it might be in an infinite loop).
 
 To find the file @file{etc/DEBUG} in your Emacs installation, use the
 directory name stored in the variable @code{data-directory}.

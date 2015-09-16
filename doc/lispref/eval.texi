@@ -146,7 +146,7 @@ contents unchanged.
      @result{} 123
 @end group
 @group
-(eval '123)        ; @r{Evaluated by hand---result is the same.}
+(eval '123)        ; @r{Evaluated "by hand"---result is the same.}
      @result{} 123
 @end group
 @group

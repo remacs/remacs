@@ -2071,7 +2071,7 @@ serves as an example of the features of Enriched mode.
 * Enriched Indentation::    Changing the left and right margins.
 * Enriched Justification::  Centering, setting text flush with the
                               left or right margin, etc.
-* Enriched Properties::     The special text properties submenu.
+* Enriched Properties::     The ``special text properties'' submenu.
 @end menu
 
 @node Enriched Mode

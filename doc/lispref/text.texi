@@ -3487,7 +3487,7 @@ are used for representing formatted text.  @xref{Filling}, and
 
 @table @code
 @item hard
-If a newline character has this property, it is a hard newline.
+If a newline character has this property, it is a ``hard'' newline.
 The fill commands do not alter hard newlines and do not move words
 across them.  However, this property takes effect only if the
 @code{use-hard-newlines} minor mode is enabled.  @xref{Hard and Soft

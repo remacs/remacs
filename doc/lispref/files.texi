@@ -1603,7 +1603,7 @@ file.  This works only on some operating systems, and only if you have
 the correct permissions to do so.
 
 If the optional argument @var{preserve-permissions} is non-@code{nil},
-this function copies the file modes (or permissions) of
+this function copies the file modes (or ``permissions'') of
 @var{oldname} to @var{newname}, as well as the Access Control List and
 SELinux context (if any).  @xref{Information about Files}.
 
@@ -2753,7 +2753,7 @@ no prefix argument is given, and @code{nil} otherwise.
 @end deffn
 
 @node Magic File Names
-@section Making Certain File Names Magic
+@section Making Certain File Names ``Magic''
 @cindex magic file names
 
   You can implement special handling for certain file names.  This is

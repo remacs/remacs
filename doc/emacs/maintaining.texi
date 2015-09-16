@@ -824,7 +824,7 @@ window.
 @kindex C-x v g
   Many version control systems allow you to view files @dfn{annotated}
 with per-line revision information, by typing @kbd{C-x v g}
-(@code{vc-annotate}).  This creates a new annotate buffer
+(@code{vc-annotate}).  This creates a new ``annotate'' buffer
 displaying the file's text, with each line colored to show
 how old it is.  Red text is new, blue is old, and intermediate colors
 indicate intermediate ages.  By default, the color is scaled over the
@@ -836,7 +836,7 @@ arguments using the minibuffer: the revision to display and annotate
 (instead of the current file contents), and the time span in days the
 color range should cover.
 
-  From the annotate buffer, these and other color scaling options are
+  From the ``annotate'' buffer, these and other color scaling options are
 available from the @samp{VC-Annotate} menu.  In this buffer, you can
 also use the following keys to browse the annotations of past revisions,
 view diffs, or view log entries:
@@ -901,11 +901,11 @@ Display the change history for the current repository
 (@code{vc-print-root-log}).
 
 @item C-x v I
-Display the changes that a pull operation will retrieve
+Display the changes that a ``pull'' operation will retrieve
 (@code{vc-log-incoming}).
 
 @item C-x v O
-Display the changes that will be sent by the next push operation
+Display the changes that will be sent by the next ``push'' operation
 (@code{vc-log-outgoing}).
 @end table
 
@@ -1355,13 +1355,13 @@ commit will be committed to that specific branch.
 @table @kbd
 @item C-x v +
 On a decentralized version control system, update the current branch
-by pulling in changes from another location.
+by ``pulling in'' changes from another location.
 
 On a centralized version control system, update the current VC
 fileset.
 
 @item C-x v P
-On a decentralized version control system, push changes from the
+On a decentralized version control system, ``push'' changes from the
 current branch to another location.  This concept does not exist
 for centralized version control systems.
 @end table

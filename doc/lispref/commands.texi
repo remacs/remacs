@@ -2621,7 +2621,7 @@ then continues to wait for a valid input character, or keyboard-quit.
 from @code{read-event}.
 
 @defvar extra-keyboard-modifiers
-This variable lets Lisp programs press the modifier keys on the
+This variable lets Lisp programs ``press'' the modifier keys on the
 keyboard.  The value is a character.  Only the modifiers of the
 character matter.  Each time the user types a keyboard key, it is
 altered as if those modifier keys were held down.  For instance, if

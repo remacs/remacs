@@ -991,7 +991,7 @@ environments in this way; only specialized programs like debuggers.)
 @cindex closures, example of using
   Lexical bindings have indefinite extent.  Even after a binding
 construct has finished executing, its lexical environment can be
-kept around in Lisp objects called @dfn{closures}.  A closure is
+``kept around'' in Lisp objects called @dfn{closures}.  A closure is
 created when you define a named or anonymous function with lexical
 binding enabled.  @xref{Closures}, for details.
 
@@ -1722,7 +1722,7 @@ values by files.  Any value specified for one of these variables is
 completely ignored.
 @end defvar
 
-  The @samp{Eval:} variable is also a potential loophole, so Emacs
+  The @samp{Eval:} ``variable'' is also a potential loophole, so Emacs
 normally asks for confirmation before handling it.
 
 @defopt enable-local-eval
@@ -1735,7 +1735,7 @@ the user what to do for each file.  The default value is @code{maybe}.
 
 @defopt safe-local-eval-forms
 This variable holds a list of expressions that are safe to
-evaluate when found in the @samp{Eval:} variable in a file
+evaluate when found in the @samp{Eval:} ``variable'' in a file
 local variables list.
 @end defopt
 

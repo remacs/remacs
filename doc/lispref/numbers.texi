@@ -224,7 +224,7 @@ distinguish them.
 @cindex NaN
   The @acronym{IEEE} floating-point standard supports positive
 infinity and negative infinity as floating-point values.  It also
-provides for a class of values called NaN or not a number;
+provides for a class of values called NaN, or ``not a number'';
 numerical functions return such values in cases where there is no
 correct answer.  For example, @code{(/ 0.0 0.0)} returns a NaN@.
 Although NaN values carry a sign, for practical purposes there is no other
@@ -1217,7 +1217,8 @@ fashion.  The numbers are not truly random, but they have certain
 properties that mimic a random series.  For example, all possible
 values occur equally often in a pseudo-random series.
 
-  Pseudo-random numbers are generated from a seed.  Starting from
+@cindex seed, for random number generation
+  Pseudo-random numbers are generated from a @dfn{seed value}.  Starting from
 any given seed, the @code{random} function always generates the same
 sequence of numbers.  By default, Emacs initializes the random seed at
 startup, in such a way that the sequence of values of @code{random}

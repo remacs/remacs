@@ -456,7 +456,7 @@ Autoloading can also be triggered by looking up the documentation of
 the function or macro (@pxref{Documentation Basics}).
 
   There are two ways to set up an autoloaded function: by calling
-@code{autoload}, and by writing a magic comment in the
+@code{autoload}, and by writing a ``magic'' comment in the
 source before the real definition.  @code{autoload} is the low-level
 primitive for autoloading; any Lisp program can call @code{autoload} at
 any time.  Magic comments are the most convenient way to make a function

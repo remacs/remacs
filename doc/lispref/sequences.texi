@@ -342,7 +342,7 @@ order elements according to different criteria.
 The argument @var{predicate} must be a function that accepts two
 arguments.  It is called with two elements of @var{sequence}.  To get an
 increasing order sort, the @var{predicate} should return non-@code{nil} if the
-first element is less than the second, or @code{nil} if not.
+first element is ``less'' than the second, or @code{nil} if not.
 
 The comparison function @var{predicate} must give reliable results for
 any given pair of arguments, at least within a single call to

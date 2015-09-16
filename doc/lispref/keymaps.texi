@@ -929,7 +929,7 @@ sequences entered using the menu bar, even if they do not affect the
 menu bar display.  So if a menu bar key sequence comes in, you should
 clear the variables before looking up and executing that key sequence.
 Modes that use the variables would typically do this anyway; normally
-they respond to events that they do not handle by unreading them and
+they respond to events that they do not handle by ``unreading'' them and
 exiting.
 @end defvar
 

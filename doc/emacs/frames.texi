@@ -197,7 +197,7 @@ deactivating the mark.  @xref{Shift Selection}.
 @vindex mouse-wheel-follow-mouse
 @vindex mouse-wheel-scroll-amount
 @vindex mouse-wheel-progressive-speed
-  Some mice have a wheel which can be used for scrolling.  Emacs
+  Some mice have a ``wheel'' which can be used for scrolling.  Emacs
 supports scrolling windows with the mouse wheel, by default, on most
 graphical displays.  To toggle this feature, use @kbd{M-x
 mouse-wheel-mode}.  The variables @code{mouse-wheel-follow-mouse} and
@@ -388,9 +388,9 @@ boundary to the left or right.
   The prefix key @kbd{C-x 5} is analogous to @kbd{C-x 4}.  Whereas
 each @kbd{C-x 4} command pops up a buffer in a different window in the
 selected frame (@pxref{Pop Up Window}), the @kbd{C-x 5} commands use a
-different frame.  If an existing visible or iconified (minimized)
+different frame.  If an existing visible or iconified (a.k.a.@: ``minimized'')
 frame already displays the requested buffer, that frame is raised and
-deiconified (un-minimized); otherwise, a new frame is created on
+deiconified (``un-minimized''); otherwise, a new frame is created on
 the current display terminal.
 
   The various @kbd{C-x 5} commands differ in how they find or create the
@@ -467,8 +467,8 @@ maximized, it fills the screen.
 @item <F11>
 @kindex <F11>
 @findex toggle-frame-fullscreen
-Toggle fullscreen mode for the current frame.  (The difference
-between fullscreen and maximized is normally that the former
+Toggle full-screen mode for the current frame.  (The difference
+between full-screen and maximized is normally that the former
 hides window manager decorations, giving slightly more screen space to
 Emacs itself.)
 @end table
@@ -476,7 +476,7 @@ Emacs itself.)
 @vindex frame-resize-pixelwise
   Note that with some window managers you may have to customize the
 variable @code{frame-resize-pixelwise} to a non-@code{nil} value in
-order to make a frame truly maximized or fullscreen.  This
+order to make a frame truly maximized or full-screen.  This
 variable, when set to a non-@code{nil} value, in general allows
 resizing frames at pixel resolution, rather than in integral multiples
 of lines and columns.

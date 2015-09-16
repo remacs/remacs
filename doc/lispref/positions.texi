@@ -409,7 +409,7 @@ mentioned here only for completeness.
 @deffn Command previous-line count
 @cindex goal column
 This function moves point up @var{count} lines (down if @var{count}
-is negative).  In moving, it attempts to keep point in the goal column
+is negative).  In moving, it attempts to keep point in the @dfn{goal column}
 (normally the same column that it was at the beginning of the move).
 
 If there is no character in the target line exactly under the current

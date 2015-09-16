@@ -1340,7 +1340,7 @@ based on the spell-checker's dictionary.  @xref{Spelling}.
 @section MixedCase Words
 @cindex camel case
 
-  Some programming styles make use of mixed-case (or CamelCase)
+  Some programming styles make use of mixed-case (or ``CamelCase'')
 symbols like @samp{unReadableSymbol}.  (In the GNU project, we recommend
 using underscores to separate words within an identifier, rather than
 using case distinctions.)  Emacs has various features to make it easier

@@ -164,18 +164,18 @@ Move up after insertion (@code{picture-movement-up}).
 Move down after insertion (@code{picture-movement-down}).
 @item C-c `
 @itemx C-c @key{Home}
-Move up and left (northwest) after insertion (@code{picture-movement-nw}).
+Move up and left (``northwest'') after insertion (@code{picture-movement-nw}).
 @item C-c '
 @itemx C-c @key{prior}
-Move up and right (northeast) after insertion
+Move up and right (``northeast'') after insertion
 (@code{picture-movement-ne}).
 @item C-c /
 @itemx C-c @key{End}
-Move down and left (southwest) after insertion
+Move down and left (``southwest'') after insertion
 @*(@code{picture-movement-sw}).
 @item C-c \
 @itemx C-c @key{next}
-Move down and right (southeast) after insertion
+Move down and right (``southeast'') after insertion
 @*(@code{picture-movement-se}).
 @end table
 
@@ -197,12 +197,12 @@ C-b} (@code{picture-motion-reverse}) moves in the opposite direction.
   Two kinds of tab-like action are provided in Picture mode.  Use
 @kbd{M-@key{TAB}} (@code{picture-tab-search}) for context-based tabbing.
 With no argument, it moves to a point underneath the next
-interesting character that follows whitespace in the previous
+``interesting'' character that follows whitespace in the previous
 nonblank line.  ``Next'' here means ``appearing at a horizontal position
 greater than the one point starts out at''.  With an argument, as in
 @kbd{C-u M-@key{TAB}}, this command moves to the next such interesting
 character in the current line.  @kbd{M-@key{TAB}} does not change the
-text; it only moves point.  Interesting characters are defined by
+text; it only moves point.  ``Interesting'' characters are defined by
 the variable @code{picture-tab-chars}, which should define a set of
 characters.  The syntax for this variable is like the syntax used inside
 of @samp{[@dots{}]} in a regular expression---but without the @samp{[}

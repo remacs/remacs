@@ -3702,8 +3702,8 @@ respectively.
 
   For the following functions, X and Y coordinates are reported in
 integer character units, i.e., numbers of lines and columns
-respectively.  On a graphical display, each line and column
-corresponds to the height and width of a default character specified by
+respectively.  On a graphical display, each ``line'' and ``column''
+corresponds to the height and width of the default character specified by
 the frame's default font (@pxref{Frame Font}).
 
 @defun window-edges &optional window body absolute pixelwise
@@ -3903,7 +3903,7 @@ visible in some window:
 @end group
 @end example
 
-On a graphical terminal this form warps the mouse cursor to the
+On a graphical terminal this form ``warps'' the mouse cursor to the
 upper left corner of the glyph at the selected window's point.  A
 position calculated this way can be also used to show a tooltip window
 there.

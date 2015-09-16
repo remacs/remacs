@@ -339,7 +339,7 @@ in response to a user command.  There are several different ways in
 which commands do this.
 
   Many commands, like @kbd{C-x C-f} (@code{find-file}), display the
-buffer by taking over the selected window, expecting that the
+buffer by ``taking over'' the selected window, expecting that the
 user's attention will be diverted to that buffer.  These commands
 usually work by calling @code{switch-to-buffer} internally
 (@pxref{Select Buffer}).

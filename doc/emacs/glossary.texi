@@ -100,7 +100,7 @@ A base buffer is a buffer whose text is shared by an indirect buffer
 Some human languages, such as English, are written from left to right.
 Others, such as Arabic, are written from right to left.  Emacs
 supports both of these forms, as well as any mixture of them---this
-is bidirectional text.  @xref{Bidirectional Editing}.
+is ``bidirectional text''.  @xref{Bidirectional Editing}.
 
 @item Bind
 To bind a key sequence means to give it a binding (q.v.).
@@ -396,7 +396,7 @@ Variables}.
 
 @item Dired
 Dired is the Emacs facility that displays the contents of a file
-directory and allows you to edit the directory, performing
+directory and allows you to ``edit the directory'', performing
 operations on the files in the directory.  @xref{Dired}.
 
 @item Disabled Command
@@ -580,7 +580,7 @@ For more information, see @uref{http://fsf.org/, the FSF website}.
 @item Fringe
 On a graphical display (q.v.), there's a narrow portion of the frame
 (q.v.@:) between the text area and the window's border.  These
-fringes are used to display symbols that provide information about
+``fringes'' are used to display symbols that provide information about
 the buffer text (@pxref{Fringes}).  Emacs displays the fringe using a
 special face (q.v.@:) called @code{fringe}.  @xref{Faces,fringe}.
 

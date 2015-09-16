@@ -310,7 +310,7 @@ vertical tab, formfeed, space, return, del, and escape as @samp{?\a},
 @samp{?\b}, @samp{?\t}, @samp{?\n}, @samp{?\v}, @samp{?\f},
 @samp{?\s}, @samp{?\r}, @samp{?\d}, and @samp{?\e}, respectively.
 (@samp{?\s} followed by a dash has a different meaning---it applies
-the super modifier to the following character.)  Thus,
+the Super modifier to the following character.)  Thus,
 
 @example
 ?\a @result{} 7                 ; @r{control-g, @kbd{C-g}}

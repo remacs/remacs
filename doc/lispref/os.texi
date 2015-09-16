@@ -1922,7 +1922,7 @@ This is a convenient way to test whether Emacs is idle.
 @end defun
 
   The main use of @code{current-idle-time} is when an idle timer
-function wants to take a break for a while.  It can set up another
+function wants to ``take a break'' for a while.  It can set up another
 idle timer to call the same function again, after a few seconds more
 idleness.  Here's an example:
 

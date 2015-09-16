@@ -638,7 +638,7 @@ Enriched Text
 * Enriched Indentation::    Changing the left and right margins.
 * Enriched Justification::  Centering, setting text flush with the
                               left or right margin, etc.
-* Enriched Properties::     The special text properties submenu.
+* Enriched Properties::     The ``Special text properties'' submenu.
 
 @c The automatic texinfo menu update inserts some duplicate items here
 @c (faces, colors, indentation, justification, properties), because

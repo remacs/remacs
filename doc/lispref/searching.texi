@@ -359,7 +359,7 @@ preceding expression either once or not at all.  For example,
 
 @item @samp{*?}, @samp{+?}, @samp{??}
 @cindex non-greedy repetition characters in regexp
-These are non-greedy variants of the operators @samp{*}, @samp{+}
+These are @dfn{non-greedy} variants of the operators @samp{*}, @samp{+}
 and @samp{?}.  Where those operators match the largest possible
 substring (consistent with matching the entire containing expression),
 the non-greedy variants match the smallest possible substring
@@ -1127,7 +1127,7 @@ avoids modifying the match data.
 @defun looking-at regexp
 This function determines whether the text in the current buffer directly
 following point matches the regular expression @var{regexp}.  ``Directly
-following'' means precisely that: the search is anchored and it can
+following'' means precisely that: the search is ``anchored'' and it can
 succeed only starting with the first character following point.  The
 result is @code{t} if so, @code{nil} otherwise.
 
@@ -1766,7 +1766,7 @@ to the functions that use this map.
 Prefix keys are not supported; each key binding must be for a
 single-event key sequence.  This is because the functions don't use
 @code{read-key-sequence} to get the input; instead, they read a single
-event and look it up by hand.
+event and look it up ``by hand''.
 @end itemize
 @end defvar
 

@@ -620,7 +620,7 @@ fetching later entries into the minibuffer.
 entries in the minibuffer history (e.g., if you haven't previously
 typed @kbd{M-p}), Emacs tries fetching from a list of default
 arguments: values that you are likely to enter.  You can think of this
-as moving through the future history.
+as moving through the ``future history''.
 
   If you edit the text inserted by the @kbd{M-p} or @kbd{M-n}
 minibuffer history commands, this does not change its entry in the

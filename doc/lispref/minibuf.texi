@@ -143,7 +143,7 @@ reads the text and returns the resulting Lisp object, unevaluated.
 The argument @var{default} specifies default values to make available
 through the history commands.  It should be a string, a list of
 strings, or @code{nil}.  The string or strings become the minibuffer's
-future history, available to the user with @kbd{M-n}.
+``future history'', available to the user with @kbd{M-n}.
 
 If @var{read} is non-@code{nil}, then @var{default} is also used
 as the input to @code{read}, if the user enters empty input.
@@ -194,8 +194,8 @@ in @code{read-from-minibuffer} it should be a string, a list of
 strings, or @code{nil}, which is equivalent to an empty string.  When
 @var{default} is a string, that string is the default value.  When it
 is a list of strings, the first string is the default value.  (All
-these strings are available to the user in the future minibuffer
-history.)
+these strings are available to the user in the ``future minibuffer
+history''.)
 
 This function works by calling the
 @code{read-from-minibuffer} function:
@@ -262,8 +262,8 @@ The last string or pattern used in query-replace commands.
 The function now has a list of regular expressions that it passes to
 @code{read-from-minibuffer} to obtain the user's input.  The first
 element of the list is the default result in case of empty input.  All
-elements of the list are available to the user as the future
-minibuffer history list (@pxref{Minibuffer History, future list,,
+elements of the list are available to the user as the ``future
+minibuffer history'' list (@pxref{Minibuffer History, future list,,
 emacs, The GNU Emacs Manual}).
 
 The optional argument @var{history}, if non-@code{nil}, is a symbol

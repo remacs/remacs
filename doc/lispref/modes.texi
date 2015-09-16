@@ -305,7 +305,7 @@ which documentation to print.
 
 @item
 The major mode command should set the variable @code{mode-name} to the
-pretty name of the mode, usually a string (but see @ref{Mode Line
+``pretty'' name of the mode, usually a string (but see @ref{Mode Line
 Data}, for other possible forms).  The name of the mode appears
 in the mode line.
 
@@ -901,7 +901,7 @@ such a major mode, please correct it to follow these conventions.
 
   When you defined a major mode using @code{define-derived-mode}, it
 automatically makes sure these conventions are followed.  If you
-define a major mode by hand, not using @code{define-derived-mode},
+define a major mode ``by hand'', not using @code{define-derived-mode},
 use the following functions to handle these conventions automatically.
 
 @defun run-mode-hooks &rest hookvars
@@ -1974,7 +1974,7 @@ This variable is used to identify @code{emacsclient} frames.
   The following three variables are used in @code{mode-line-modes}:
 
 @defvar mode-name
-This buffer-local variable holds the pretty name of the current
+This buffer-local variable holds the ``pretty'' name of the current
 buffer's major mode.  Each major mode should set this variable so that
 the mode name will appear in the mode line.  The value does not have
 to be a string, but can use any of the data types valid in a mode-line

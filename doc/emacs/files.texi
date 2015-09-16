@@ -340,7 +340,7 @@ that was visited in the buffer.
 * Customize Save::      Customizing the saving of files.
 * Interlocking::        How Emacs protects against simultaneous editing
                           of one file by two users.
-* Shadowing: File Shadowing.  Copying files to shadows automatically.
+* Shadowing: File Shadowing.  Copying files to ``shadows'' automatically.
 * Time Stamps::         Emacs can update time stamps on saved files.
 @end menu
 
@@ -941,7 +941,7 @@ buffers, type @kbd{M-x global-auto-revert-mode} to enable Global
 Auto-Revert mode.  These minor modes do not check or revert remote
 files, because that is usually too slow.
 
-  One use of Auto-Revert mode is to tail a file such as a system
+  One use of Auto-Revert mode is to ``tail'' a file such as a system
 log, so that changes made to that file by other programs are
 continuously displayed.  To do this, just move the point to the end of
 the buffer, and it will stay there as the file contents change.
@@ -1255,8 +1255,8 @@ this, it runs the program specified by
   The command @kbd{M-x delete-directory} prompts for a directory name
 using the minibuffer, and deletes the directory if it is empty.  If
 the directory is not empty, you will be asked whether you want to
-delete it recursively.  On systems that have a Trash (or Recycle
-Bin) feature, you can make this command move the specified directory
+delete it recursively.  On systems that have a ``Trash'' (or ``Recycle
+Bin'') feature, you can make this command move the specified directory
 to the Trash instead of deleting it outright, by changing the variable
 @code{delete-by-moving-to-trash} to @code{t}.  @xref{Misc File Ops},
 for more information about using the Trash.
