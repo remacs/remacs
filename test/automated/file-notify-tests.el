@@ -411,6 +411,9 @@ Don't wait longer than TIMEOUT seconds for the events to be delivered."
 (ert-deftest file-notify-test05-dir-validity ()
   "Check `file-notify-valid-p' for directories."
   (skip-unless (file-notify--test-local-enabled))
+  ;; The batch-mode operation of w32notify is fragile (there's no
+  ;; input threads to send the message to).
+  (skip-unless (not (and noninteractive (eq file-notify--library 'w32notify))))
   (unwind-protect
       (progn
         (setq file-notify--test-tmpfile (file-name-as-directory
