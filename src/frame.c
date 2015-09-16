@@ -634,7 +634,6 @@ make_frame (bool mini_p)
   f->garbaged = true;
   f->can_x_set_window_size = false;
   f->after_make_frame = false;
-  f->tool_bar_redisplayed_once = false;
   f->column_width = 1;  /* !FRAME_WINDOW_P value.  */
   f->line_height = 1;  /* !FRAME_WINDOW_P value.  */
 #ifdef HAVE_WINDOW_SYSTEM
@@ -3634,7 +3633,6 @@ x_set_font (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 #endif
   /* Recalculate toolbar height.  */
   f->n_tool_bar_rows = 0;
-  f->tool_bar_redisplayed_once = false;
 
   /* Ensure we redraw it.  */
   clear_current_matrices (f);

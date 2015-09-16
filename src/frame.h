@@ -335,10 +335,6 @@ struct frame
   /* Set to true after this frame was made by `make-frame'.  */
   bool_bf after_make_frame : 1;
 
-  /* True means tool bar has been redisplayed at least once in current
-     session.  */
-  bool_bf tool_bar_redisplayed_once : 1;
-
   /* Bitfield area ends here.  */
 
   /* Number of lines (rounded up) of tool bar.  REMOVE THIS  */

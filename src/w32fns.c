@@ -1763,10 +1763,8 @@ x_change_tool_bar_height (struct frame *f, int height)
   f->n_tool_bar_rows = 0;
 
   adjust_frame_size (f, -1, -1,
-		     ((!f->tool_bar_redisplayed_once
-		       && (NILP (fullscreen =
-				 get_frame_param (f, Qfullscreen))
-			   || EQ (fullscreen, Qfullwidth))) ? 1
+		     ((NILP (fullscreen = get_frame_param (f, Qfullscreen))
+		       || EQ (fullscreen, Qfullwidth)) ? 1
 		      : (old_height == 0 || height == 0) ? 2
 		      : 4),
 		     false, Qtool_bar_lines);

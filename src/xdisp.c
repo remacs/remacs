@@ -13735,18 +13735,6 @@ redisplay_internal (void)
 	    continue;
 
 	retry_frame:
-
-#if defined (HAVE_WINDOW_SYSTEM) && !defined (USE_GTK) && !defined (HAVE_NS)
-	  /* Redisplay internal tool bar if this is the first time so we
-	     can adjust the frame height right now, if necessary.  */
-	  if (!f->tool_bar_redisplayed_once)
-	    {
-	      if (redisplay_tool_bar (f))
-		adjust_frame_glyphs (f);
-	      f->tool_bar_redisplayed_once = true;
-	    }
-#endif
-
 	  if (FRAME_WINDOW_P (f) || FRAME_TERMCAP_P (f) || f == sf)
 	    {
 	      bool gcscrollbars
