@@ -377,6 +377,9 @@ Don't wait longer than TIMEOUT seconds for the events to be delivered."
 (ert-deftest file-notify-test04-file-validity ()
   "Check `file-notify-valid-p' for files."
   (skip-unless (file-notify--test-local-enabled))
+  ;; The batch-mode operation of w32notify is fragile (there's no
+  ;; input threads to send the message to).
+  (skip-unless (not (and noninteractive (eq file-notify--library 'w32notify))))
   (unwind-protect
       (let ((temporary-file-directory (make-temp-file
                                        "file-notify-test-parent" t)))
@@ -396,7 +399,8 @@ Don't wait longer than TIMEOUT seconds for the events to be delivered."
         ;; After deleting the parent, the descriptor must not be valid
         ;; anymore.
         (delete-directory temporary-file-directory t)
-        (read-event nil nil 0.5))
+        (read-event nil nil 0.5)
+        (should-not (file-notify-valid-p file-notify--test-desc)))
 
     ;; Exit.
     (file-notify--test-cleanup)))
