@@ -210,6 +210,22 @@ report_file_error (char const *string, Lisp_Object name)
   report_file_errno (string, name, errno);
 }
 
+/* Like report_file_error, but reports a file-notify-error instead.  */
+
+void
+report_file_notify_error (const char *string, Lisp_Object name)
+{
+  Lisp_Object data = CONSP (name) || NILP (name) ? name : list1 (name);
+  synchronize_system_messages_locale ();
+  char *str = strerror (errno);
+  Lisp_Object errstring
+    = code_convert_string_norecord (build_unibyte_string (str),
+				    Vlocale_coding_system, 0);
+  Lisp_Object errdata = Fcons (errstring, data);
+
+  xsignal (Qfile_notify_error, Fcons (build_string (string), errdata));
+}
+
 void
 close_file_unwind (int fd)
 {

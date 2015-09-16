@@ -116,21 +116,6 @@ inotifyevent_to_event (Lisp_Object watch_object, struct inotify_event const *ev)
                 XCDR (watch_object));
 }
 
-/* Like report_file_error, but reports a file-notify-error instead.  */
-static _Noreturn void
-report_inotify_error (const char *string, Lisp_Object name)
-{
-  Lisp_Object data = CONSP (name) || NILP (name) ? name : list1 (name);
-  synchronize_system_messages_locale ();
-  char *str = strerror (errno);
-  Lisp_Object errstring
-    = code_convert_string_norecord (build_unibyte_string (str),
-				    Vlocale_coding_system, 0);
-  Lisp_Object errdata = Fcons (errstring, data);
-
-  xsignal (Qfile_notify_error, Fcons (build_string (string), errdata));
-}
-
 /* This callback is called when the FD is available for read.  The inotify
    events are read from FD and converted into input_events.  */
 static void
@@ -145,15 +130,14 @@ inotify_callback (int fd, void *_)
 
   to_read = 0;
   if (ioctl (fd, FIONREAD, &to_read) == -1)
-    report_inotify_error ("Error while trying to retrieve file system events",
-			  Qnil);
+    report_file_notify_error ("Error while retrieving file system events",
+			      Qnil);
   buffer = xmalloc (to_read);
   n = read (fd, buffer, to_read);
   if (n < 0)
     {
       xfree (buffer);
-      report_inotify_error ("Error while trying to read file system events",
-			    Qnil);
+      report_file_notify_error ("Error while reading file system events", Qnil);
     }
 
   EVENT_INIT (event);
@@ -231,7 +215,7 @@ symbol_to_inotifymask (Lisp_Object symb)
   else
     {
       errno = EINVAL;
-      report_inotify_error ("Unknown aspect", symb);
+      report_file_notify_error ("Unknown aspect", symb);
     }
 }
 
@@ -324,7 +308,7 @@ is managed internally and there is no corresponding inotify_init.  Use
     {
       inotifyfd = inotify_init1 (IN_NONBLOCK|IN_CLOEXEC);
       if (inotifyfd < 0)
-	report_inotify_error ("File watching (inotify) is not available", Qnil);
+	report_file_notify_error ("File watching is not available", Qnil);
       watch_list = Qnil;
       add_read_fd (inotifyfd, &inotify_callback, NULL);
     }
@@ -333,7 +317,7 @@ is managed internally and there is no corresponding inotify_init.  Use
   encoded_file_name = ENCODE_FILE (file_name);
   watchdesc = inotify_add_watch (inotifyfd, SSDATA (encoded_file_name), mask);
   if (watchdesc == -1)
-    report_inotify_error ("Could not add watch for file", file_name);
+    report_file_notify_error ("Could not add watch for file", file_name);
 
   watch_descriptor = make_watch_descriptor (watchdesc);
 
@@ -362,7 +346,7 @@ See inotify_rm_watch(2) for more information.
   int wd = XINT (watch_descriptor);
 
   if (inotify_rm_watch (inotifyfd, wd) == -1)
-    report_inotify_error ("Could not rm watch", watch_descriptor);
+    report_file_notify_error ("Could not rm watch", watch_descriptor);
 
   /* Remove watch descriptor from watch list.  */
   watch_object = Fassoc (watch_descriptor, watch_list);
