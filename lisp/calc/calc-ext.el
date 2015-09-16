@@ -574,6 +574,7 @@
   (define-key calc-mode-map "uG" 'calc-vector-geometric-mean)
   (define-key calc-mode-map "uM" 'calc-vector-mean)
   (define-key calc-mode-map "uN" 'calc-vector-min)
+  (define-key calc-mode-map "uR" 'calc-vector-rms)
   (define-key calc-mode-map "uS" 'calc-vector-sdev)
   (define-key calc-mode-map "uU" 'calc-undo)
   (define-key calc-mode-map "uX" 'calc-vector-max)
@@ -932,7 +933,7 @@ calc-preserve-point calc-replace-selections calc-replace-sub-formula
 calc-roll-down-with-selections calc-roll-up-with-selections
 calc-sel-error)
 
- ("calc-stat" calc-vector-op calcFunc-agmean
+ ("calc-stat" calc-vector-op calcFunc-agmean calcFunc-rms
 calcFunc-vcorr calcFunc-vcount calcFunc-vcov calcFunc-vflat
 calcFunc-vgmean calcFunc-vhmean calcFunc-vmax calcFunc-vmean
 calcFunc-vmeane calcFunc-vmedian calcFunc-vmin calcFunc-vpcov
@@ -1147,8 +1148,8 @@ calc-vector-covariance calc-vector-geometric-mean
 calc-vector-harmonic-mean calc-vector-max calc-vector-mean
 calc-vector-mean-error calc-vector-median calc-vector-min
 calc-vector-pop-covariance calc-vector-pop-sdev
-calc-vector-pop-variance calc-vector-product calc-vector-sdev
-calc-vector-sum calc-vector-variance)
+calc-vector-pop-variance calc-vector-product calc-vector-rms
+calc-vector-sdev calc-vector-sum calc-vector-variance)
 
  ("calc-store" calc-assign calc-copy-special-constant
 calc-copy-variable calc-declare-variable
