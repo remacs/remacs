@@ -3272,6 +3272,7 @@ There might be text before point."
     ("\\prod" . ?∏)
     ("\\propto" . ?∝)
     ("\\qed" . ?∎)
+    ("\\qquad" . ?⧢)
     ("\\quad" . ?␣)
     ("\\rangle" . 10217)            ; Literal ?⟩ breaks indentation.
     ("\\rbrace" . ?})
@@ -3359,6 +3360,7 @@ There might be text before point."
     ("\\vDash" . ?⊨)
     ("\\varprime" . ?′)
     ("\\varpropto" . ?∝)
+    ("\\varrho" . ?ϱ)
     ;; ("\\varsigma" ?ς)		;FIXME: Looks reversed with the non\var.
     ("\\vartriangleleft" . ?⊲)
     ("\\vartriangleright" . ?⊳)
