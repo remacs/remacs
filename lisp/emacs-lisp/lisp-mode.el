@@ -224,7 +224,8 @@
   ;; FIXME: Move to elisp-mode.el.
   (catch 'found
     (while (re-search-forward
-            (eval-when-compile "(\\(" lisp-mode-symbol-regexp "\\)\\_>")
+            (eval-when-compile
+              (concat "(\\(" lisp-mode-symbol-regexp "\\)\\_>"))
             limit t)
       (let ((sym (intern-soft (match-string 1))))
 	(when (or (special-form-p sym)
