@@ -4295,6 +4295,9 @@ encode_invocation_designation (struct charset *charset,
 	  else
 	    ENCODE_LOCKING_SHIFT_3;
 	  break;
+
+	default:
+	  break;
 	}
     }
 
@@ -7291,6 +7294,8 @@ produce_annotation (struct coding_system *coding, ptrdiff_t pos)
 		break;
 	      case CODING_ANNOTATE_CHARSET_MASK:
 		produce_charset (coding, charbuf, pos);
+		break;
+	      default:
 		break;
 	      }
 	  charbuf += len;

@@ -4353,12 +4353,13 @@ INLINE ptrdiff_t
 lisp_word_count (ptrdiff_t nbytes)
 {
   if (-1 >> 1 == -1)
-    switch (word_size)
+    switch (word_size + 0)
       {
       case 2: return nbytes >> 1;
       case 4: return nbytes >> 2;
       case 8: return nbytes >> 3;
       case 16: return nbytes >> 4;
+      default: break;
       }
   return nbytes / word_size - (nbytes % word_size < 0);
 }

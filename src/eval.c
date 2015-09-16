@@ -596,6 +596,11 @@ The return value is BASE-VARIABLE.  */)
       error ("Cannot make an internal variable an alias");
     case SYMBOL_LOCALIZED:
       error ("Don't know how to make a localized variable an alias");
+    case SYMBOL_PLAINVAL:
+    case SYMBOL_VARALIAS:
+      break;
+    default:
+      emacs_abort ();
     }
 
   /* http://lists.gnu.org/archive/html/emacs-devel/2008-04/msg00834.html
@@ -640,6 +645,17 @@ default_toplevel_binding (Lisp_Object symbol)
 	  if (EQ (specpdl_symbol (pdl), symbol))
 	    binding = pdl;
 	  break;
+
+	case SPECPDL_UNWIND:
+	case SPECPDL_UNWIND_PTR:
+	case SPECPDL_UNWIND_INT:
+	case SPECPDL_UNWIND_VOID:
+	case SPECPDL_BACKTRACE:
+	case SPECPDL_LET_LOCAL:
+	  break;
+
+	default:
+	  emacs_abort ();
 	}
     }
   return binding;
@@ -3462,6 +3478,17 @@ NFRAMES and BASE specify the activation frame to use, as in `backtrace-frame'.  
 	      else
 		result = Fcons (Fcons (sym, val), result);
 	    }
+	    break;
+
+	  case SPECPDL_UNWIND:
+	  case SPECPDL_UNWIND_PTR:
+	  case SPECPDL_UNWIND_INT:
+	  case SPECPDL_UNWIND_VOID:
+	  case SPECPDL_BACKTRACE:
+	    break;
+
+	  default:
+	    emacs_abort ();
 	  }
       }
   }
@@ -3504,6 +3531,14 @@ mark_specpdl (void)
 	  mark_object (specpdl_symbol (pdl));
 	  mark_object (specpdl_old_value (pdl));
 	  break;
+
+	case SPECPDL_UNWIND_PTR:
+	case SPECPDL_UNWIND_INT:
+	case SPECPDL_UNWIND_VOID:
+	  break;
+
+	default:
+	  emacs_abort ();
 	}
     }
 }

@@ -2799,12 +2799,8 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 		      : c_code == Sstring_fence)
 		    break;
 
-		  switch (c_code)
-		    {
-		    case Scharquote:
-		    case Sescape:
-		      INC_BOTH (from, from_byte);
-		    }
+		  if (c_code == Scharquote || c_code == Sescape)
+		    INC_BOTH (from, from_byte);
 		  INC_BOTH (from, from_byte);
 		}
 	      INC_BOTH (from, from_byte);
@@ -3419,11 +3415,16 @@ do { prev_from = from;				\
 		  case Sstring_fence:
 		    if (!nofence) goto string_end;
 		    break;
+
 		  case Scharquote:
 		  case Sescape:
 		    INC_FROM;
 		  startquotedinstring:
 		    if (from >= end) goto endquoted;
+		    break;
+
+		  default:
+		    break;
 		  }
 		INC_FROM;
 	      }

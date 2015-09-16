@@ -1291,10 +1291,18 @@ window_relative_x_coord (struct window *w, enum window_part part, int x)
 	      + window_box_width (w, RIGHT_MARGIN_AREA)
 	      + ((WINDOW_HAS_FRINGES_OUTSIDE_MARGINS (w))
 		 ? WINDOW_RIGHT_FRINGE_WIDTH (w) : 0));
-    }
 
-  /* ON_SCROLL_BAR, ON_NOTHING, and ON_VERTICAL_BORDER:  */
-  return 0;
+    case ON_NOTHING:
+    case ON_VERTICAL_BORDER:
+    case ON_VERTICAL_SCROLL_BAR:
+    case ON_HORIZONTAL_SCROLL_BAR:
+    case ON_RIGHT_DIVIDER:
+    case ON_BOTTOM_DIVIDER:
+      return 0;
+
+    default:
+      emacs_abort ();
+    }
 }
 
 

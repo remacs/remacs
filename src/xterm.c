@@ -5407,6 +5407,8 @@ xg_scroll_callback (GtkRange     *range,
 	      ? scroll_bar_after_handle : scroll_bar_below_handle);
       bar->dragging = -1;
       break;
+    default:
+      break;
     }
 
   if (part != scroll_bar_nowhere)
@@ -10193,6 +10195,9 @@ x_check_fullscreen (struct frame *f)
         case FULLSCREEN_HEIGHT:
           lval = Qfullheight;
           height = x_display_pixel_height (dpyinfo);
+	  break;
+	default:
+	  emacs_abort ();
         }
 
       frame_size_history_add

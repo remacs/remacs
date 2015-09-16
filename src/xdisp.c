@@ -5895,6 +5895,13 @@ push_it (struct it *it, struct text_pos *position)
     case GET_FROM_STRETCH:
       p->u.stretch.object = it->object;
       break;
+    case GET_FROM_BUFFER:
+    case GET_FROM_DISPLAY_VECTOR:
+    case GET_FROM_STRING:
+    case GET_FROM_C_STRING:
+      break;
+    default:
+      emacs_abort ();
     }
   p->position = position ? *position : it->position;
   p->current = it->current;
@@ -6017,6 +6024,11 @@ pop_it (struct it *it)
 	  it->method = GET_FROM_BUFFER;
 	  it->object = it->w->contents;
 	}
+      break;
+    case GET_FROM_C_STRING:
+      break;
+    default:
+      emacs_abort ();
     }
   it->end_charpos = p->end_charpos;
   it->string_nchars = p->string_nchars;

@@ -1268,6 +1268,8 @@ main (int argc, char **argv)
           this_file = argbuffer[i].what;
           process_file (stdin, this_file, lang);
           break;
+	default:
+	  error ("internal error: arg_type");
 	}
     }
 
@@ -2754,6 +2756,9 @@ consider_token (char *str, int len, int c, int *c_extp,
 	 case st_C_struct:
 	 case st_C_enum:
 	   typdef = ttypeseen;
+	   break;
+	 default:
+	   break;
 	 }
        break;
      case ttypeseen:
@@ -2770,8 +2775,11 @@ consider_token (char *str, int len, int c, int *c_extp,
 	 case st_C_struct:
 	 case st_C_enum:
 	   return false;
+	 default:
+	   return true;
 	 }
-       return true;
+     default:
+       break;
      }
 
    switch (toktype)
@@ -2804,6 +2812,8 @@ consider_token (char *str, int len, int c, int *c_extp,
 	     fvdef = fvnone;
 	 }
        return false;
+     default:
+       break;
      }
 
    if (structdef == skeyseen)
@@ -2827,6 +2837,8 @@ consider_token (char *str, int len, int c, int *c_extp,
 	 case st_C_objimpl:
 	   objdef = oimplementation;
 	   return false;
+	 default:
+	   break;
 	 }
        break;
      case oimplementation:
@@ -2888,6 +2900,8 @@ consider_token (char *str, int len, int c, int *c_extp,
 	   objdef = onone;
 	 }
        return false;
+     default:
+       break;
      }
 
    /* A function, variable or enum constant? */
@@ -2943,6 +2957,8 @@ consider_token (char *str, int len, int c, int *c_extp,
 		   return false;
 		 }
 	       break;
+	     default:
+	       break;
 	     }
 	  /* FALLTHRU */
 	  case fvnameseen:
@@ -2959,8 +2975,12 @@ consider_token (char *str, int len, int c, int *c_extp,
 	  fvdef = fvnameseen;	/* function or variable */
 	  *is_func_or_var = true;
 	  return true;
+	 default:
+	   break;
 	}
       break;
+     default:
+       break;
     }
 
   return false;
@@ -3470,6 +3490,8 @@ C_entries (int c_ext, FILE *inf)
 			  fvdef = fignore;
 			}
 		      break;
+		    default:
+		      break;
 		    }
 		  if (structdef == stagseen && !cjava)
 		    {
@@ -3479,6 +3501,8 @@ C_entries (int c_ext, FILE *inf)
 		  break;
 		case dsharpseen:
 		  savetoken = token;
+		  break;
+		default:
 		  break;
 		}
 	      if (!yacc_rules || lp == newlb.buffer + 1)
@@ -3508,7 +3532,7 @@ C_entries (int c_ext, FILE *inf)
 	    break;
 	  switch (objdef)
 	    {
-	    case  otagseen:
+	    case otagseen:
 	      objdef = oignore;
 	      make_C_tag (true); /* an Objective C class */
 	      break;
@@ -3521,6 +3545,8 @@ C_entries (int c_ext, FILE *inf)
 		  linebuffer_setlen (&token_name, toklen + 1);
 		  strcpy (token_name.buffer + toklen, ":");
 		}
+	      break;
+	    default:
 	      break;
 	    }
 	  if (structdef == stagseen)
@@ -3599,6 +3625,8 @@ C_entries (int c_ext, FILE *inf)
 	      make_C_tag (true); /* an Objective C method */
 	      objdef = oinbody;
 	      break;
+	    default:
+	      break;
 	    }
 	  switch (fvdef)
 	    {
@@ -3672,6 +3700,8 @@ C_entries (int c_ext, FILE *inf)
 		  fvdef = fvnone;
 		}
 	      break;
+	    default:
+	      break;
 	    }
 	  break;
 	case '(':
@@ -3705,6 +3735,8 @@ C_entries (int c_ext, FILE *inf)
 	    case flistseen:
 	      fvdef = finlist;
 	      break;
+	    default:
+	      break;
 	    }
 	  parlev++;
 	  break;
@@ -3729,6 +3761,8 @@ C_entries (int c_ext, FILE *inf)
 		case fstartlist:
 		case finlist:
 		  fvdef = flistseen;
+		  break;
+		default:
 		  break;
 		}
 	      if (!instruct
@@ -3801,6 +3835,8 @@ C_entries (int c_ext, FILE *inf)
 		    bracelev = -1;
 		}
 	      break;
+	    default:
+	      break;
 	    }
 	  switch (structdef)
 	    {
@@ -3813,6 +3849,8 @@ C_entries (int c_ext, FILE *inf)
 	      pushclass_above (bracelev,token.line+token.offset, token.length);
 	      structdef = snone;
 	      make_C_tag (false);  /* a struct or enum */
+	      break;
+	    default:
 	      break;
 	    }
 	  bracelev += 1;

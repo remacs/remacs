@@ -226,8 +226,9 @@ for example, (type-of 1) returns `integer'.  */)
           return Qfloat;
         case Lisp_Misc_Finalizer:
           return Qfinalizer;
+	default:
+	  emacs_abort ();
 	}
-      emacs_abort ();
 
     case Lisp_Vectorlike:
       if (WINDOW_CONFIGURATIONP (object))
