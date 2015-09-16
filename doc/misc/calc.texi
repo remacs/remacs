@@ -20741,9 +20741,10 @@ $$ a_{i+1} = { a_i + b_i \over 2 } , \qquad b_{i+1} = \sqrt{a_i b_i} $$
 @kindex u R
 @cindex Root-mean-square
 @tindex rms
-Another commonly used mean, the RMS (root-mean-square), can be computed
-for a vector of numbers by using the @kbd{u R}
-(@code{calc-vector-rms}) [@code{rms}]command.
+The @kbd{u R} (@code{calc-vector-rms}) [@code{rms}]
+command computes the RMS (root-mean-square) of the data values.
+As its name suggests, this is the square root of the mean of the
+squares of the data values.
 
 @kindex u S
 @pindex calc-vector-sdev
