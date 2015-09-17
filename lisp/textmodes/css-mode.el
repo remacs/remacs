@@ -265,7 +265,7 @@
        "\\(?:\\(:" (regexp-opt (append css-pseudo-class-ids
                                        css-pseudo-element-ids) t)
        "\\|\\::" (regexp-opt css-pseudo-element-ids t) "\\)"
-       "\\(?:([^\)]+)\\)?"
+       "\\(?:([^)]+)\\)?"
        (if (not sassy)
            "[^:{}\n]*"
          (concat "[^:{}\n#]*\\(?:" scss--hash-re "[^:{}\n#]*\\)*"))

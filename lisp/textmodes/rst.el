@@ -442,7 +442,7 @@ in parentheses follows the development revision and the time stamp.")
     (opt-tag (:shy optsta-tag optnam-tag optarg-tag "?")) ; A complete option.
 
     ;; Footnotes and citations (`fnc')
-    (fncnam-prt "[^\]\n]") ; Part of a footnote or citation name.
+    (fncnam-prt "[^]\n]") ; Part of a footnote or citation name.
     (fncnam-tag fncnam-prt "+") ; A footnote or citation name.
     (fnc-tag "\\[" fncnam-tag "]") ; A complete footnote or citation tag.
     (fncdef-tag-2 (:grp exm-sta)
@@ -512,7 +512,7 @@ in parentheses follows the development revision and the time stamp.")
 				   ; colon tag.
 
     ;; Comments (`cmt')
-    (cmt-sta-1 (:grp exm-sta) "[^\[|_\n]"
+    (cmt-sta-1 (:grp exm-sta) "[^[|_\n]"
 	       (:alt "[^:\n]" (:seq ":" (:alt "[^:\n]" "$")))
 	       "*$") ; Start of a comment block; first group is explicit markup
 		     ; start.

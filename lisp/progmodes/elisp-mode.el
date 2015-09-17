@@ -1247,7 +1247,7 @@ If the current defun is actually a call to `defvar',
 then reset the variable using the initial value expression
 even if the variable already has some other value.
 \(Normally `defvar' does not change the variable's value
-if it already has a value.\)
+if it already has a value.)
 
 Return the result of evaluation."
   ;; FIXME: the print-length/level bindings should only be applied while

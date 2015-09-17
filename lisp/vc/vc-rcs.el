@@ -76,7 +76,7 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
   :version "21.1"
   :group 'vc-rcs)
 
-(defcustom vc-rcs-header '("\$Id\$")
+(defcustom vc-rcs-header '("$Id\ $")
   "Header keywords to be inserted by `vc-insert-headers'."
   :type '(repeat string)
   :version "24.1"     ; no longer consult the obsolete vc-header-alist
@@ -1118,12 +1118,12 @@ Returns: nil            if no headers were found
 (defun vc-release-greater-or-equal (r1 r2)
   "Compare release numbers, represented as strings.
 Release components are assumed cardinal numbers, not decimal fractions
-\(5.10 is a higher release than 5.9\).  Omitted fields are considered
-lower \(5.6.7 is earlier than 5.6.7.1\).  Comparison runs till the end
+\(5.10 is a higher release than 5.9).  Omitted fields are considered
+lower \(5.6.7 is earlier than 5.6.7.1).  Comparison runs till the end
 of the string is found, or a non-numeric component shows up \(5.6.7 is
 earlier than \"5.6.7 beta\", which is probably not what you want in
-some cases\).  This code is suitable for existing RCS release numbers.
-CVS releases are handled reasonably, too \(1.3 < 1.4* < 1.5\)."
+some cases).  This code is suitable for existing RCS release numbers.
+CVS releases are handled reasonably, too \(1.3 < 1.4* < 1.5)."
   (let (v1 v2 i1 i2)
     (catch 'done
       (or (and (string-match "^\\.?\\([0-9]+\\)" r1)

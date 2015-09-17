@@ -850,9 +850,9 @@ See `run-hooks'."
 
 (defcustom vc-static-header-alist
   '(("\\.c\\'" .
-     "\n#ifndef lint\nstatic char vcid[] = \"\%s\";\n#endif /* lint */\n"))
+     "\n#ifndef lint\nstatic char vcid[] = \"%s\";\n#endif /* lint */\n"))
   "Associate static header string templates with file types.
-A \%s in the template is replaced with the first string associated with
+A %s in the template is replaced with the first string associated with
 the file's version control type in `vc-BACKEND-header'."
   :type '(repeat (cons :format "%v"
 		       (regexp :tag "File Type")
@@ -2093,7 +2093,7 @@ changes from the current branch."
 (defun vc-tag-precondition (dir)
   "Scan the tree below DIR, looking for files not up-to-date.
 If any file is not up-to-date, return the name of the first such file.
-\(This means, neither tag creation nor retrieval is allowed.\)
+\(This means, neither tag creation nor retrieval is allowed.)
 If one or more of the files are currently visited, return `visited'.
 Otherwise, return nil."
   (let ((status nil))

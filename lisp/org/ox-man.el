@@ -206,8 +206,8 @@ in this list - but it does not hurt if it is present."
 It is used during export of src blocks by the listings and
 man packages.  For example,
 
-  \(setq org-man-custom-lang-environments
-     '\(\(python \"pythoncode\"\)\)\)
+  (setq org-man-custom-lang-environments
+     '((python \"pythoncode\")))
 
 would have the effect that if org encounters begin_src python
 during man export."

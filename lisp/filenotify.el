@@ -43,7 +43,7 @@ A key in this hash table is the descriptor as returned from
 `gfilenotify', `inotify', `w32notify' or a file name handler.
 The value in the hash table is a list
 
-  \(DIR (FILE . CALLBACK) (FILE . CALLBACK) ...)
+  (DIR (FILE . CALLBACK) (FILE . CALLBACK) ...)
 
 Several values for a given DIR happen only for `inotify', when
 different files from the same directory are watched.")
@@ -54,7 +54,7 @@ different files from the same directory are watched.")
   "Handle file system monitoring event.
 If EVENT is a filewatch event, call its callback.  It has the format
 
-  \(file-notify (DESCRIPTOR ACTIONS FILE [FILE1-OR-COOKIE]) CALLBACK)
+  (file-notify (DESCRIPTOR ACTIONS FILE [FILE1-OR-COOKIE]) CALLBACK)
 
 Otherwise, signal a `file-notify-error'."
   (interactive "e")

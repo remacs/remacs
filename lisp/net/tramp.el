@@ -110,9 +110,9 @@ Any level x includes messages for all levels 1 .. x-1.  The levels are
 Each element looks like (REGEXP . DIRECTORY), with the same meaning like
 in `backup-directory-alist'.  If a Tramp file is backed up, and DIRECTORY
 is a local file name, the backup directory is prepended with Tramp file
-name prefix \(method, user, host\) of file.
+name prefix \(method, user, host) of file.
 
-\(setq tramp-backup-directory-alist backup-directory-alist\)
+\(setq tramp-backup-directory-alist backup-directory-alist)
 
 gives the same backup policy for Tramp files on their hosts like the
 policy for local files."
@@ -129,9 +129,9 @@ policy for local files."
 It has the same meaning like `bkup-backup-directory-info' from package
 `backup-dir'.  If a Tramp file is backed up, and BACKUP-DIR is a local
 file name, the backup directory is prepended with Tramp file name prefix
-\(method, user, host\) of file.
+\(method, user, host) of file.
 
-\(setq tramp-bkup-backup-directory-info bkup-backup-directory-info\)
+\(setq tramp-bkup-backup-directory-info bkup-backup-directory-info)
 
 gives the same backup policy for Tramp files on their hosts like the
 policy for local files."
@@ -464,15 +464,15 @@ host runs a registered shell, it shall be added to this list, too."
   (concat
    "\\`"
    (regexp-opt
-    (list "localhost" "localhost6" (system-name) "127\.0\.0\.1" "::1") t)
+    (list "localhost" "localhost6" (system-name) "127.0.0.1" "::1") t)
    "\\'")
   "Host names which are regarded as local host.")
 
 (defvar tramp-completion-function-alist nil
   "Alist of methods for remote files.
-This is a list of entries of the form \(NAME PAIR1 PAIR2 ...\).
+This is a list of entries of the form \(NAME PAIR1 PAIR2 ...).
 Each NAME stands for a remote access method.  Each PAIR is of the form
-\(FUNCTION FILE\).  FUNCTION is responsible to extract user names and host
+\(FUNCTION FILE).  FUNCTION is responsible to extract user names and host
 names from FILE for completion.  The following predefined FUNCTIONs exists:
 
  * `tramp-parse-rhosts'      for \"~/.rhosts\" like files,
@@ -908,7 +908,7 @@ and is a bit too general, then some files might be considered Tramp
 files which are not really Tramp files.
 
 Please note that the entry in `file-name-handler-alist' is made when
-this file \(tramp.el\) is loaded.  This means that this variable must be set
+this file \(tramp.el) is loaded.  This means that this variable must be set
 before loading tramp.el.  Alternatively, `file-name-handler-alist' can be
 updated after changing this variable.
 
@@ -940,7 +940,7 @@ See `tramp-file-name-structure' for more explanations.")
 This regexp should match partial Tramp file names only.
 
 Please note that the entry in `file-name-handler-alist' is made when
-this file \(tramp.el\) is loaded.  This means that this variable must be set
+this file \(tramp.el) is loaded.  This means that this variable must be set
 before loading tramp.el.  Alternatively, `file-name-handler-alist' can be
 updated after changing this variable.
 
@@ -993,18 +993,18 @@ checked via the following code:
 
 In the Emacs normally running Tramp, evaluate the above code
 \(replace \"xxx\" and \"yyy\" by the remote user and host name,
-respectively\).  You can do this, for example, by pasting it into
+respectively).  You can do this, for example, by pasting it into
 the `*scratch*' buffer and then hitting C-j with the cursor after the
 last closing parenthesis.  Note that it works only if you have configured
-\"ssh\" to run without password query, see ssh-agent\(1\).
+\"ssh\" to run without password query, see ssh-agent(1).
 
 You will see the number of bytes sent successfully to the remote host.
 If that number exceeds 1000, you can stop the execution by hitting
 C-g, because your Emacs is likely clean.
 
 When it is necessary to set `tramp-chunksize', you might consider to
-use an out-of-the-band method \(like \"scp\"\) instead of an internal one
-\(like \"ssh\"\), because setting `tramp-chunksize' to non-nil decreases
+use an out-of-the-band method \(like \"scp\") instead of an internal one
+\(like \"ssh\"), because setting `tramp-chunksize' to non-nil decreases
 performance.
 
 If your Emacs is buggy, the code stops and gives you an indication

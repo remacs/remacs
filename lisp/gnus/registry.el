@@ -112,7 +112,7 @@
     :initform 0.1
     :type float
     :custom float
-    :documentation "Prune to \(:max-size * :prune-factor\) less
+    :documentation "Prune to (:max-size * :prune-factor) less
     than the :max-size limit.  Should be a float between 0 and 1.")
    (tracked :initarg :tracked
             :initform nil
@@ -331,7 +331,7 @@ Errors out if the key exists already."
   "Prunes the registry-db object DB.
 
 Attempts to prune the number of entries down to \(*
-:max-size :prune-factor\) less than the max-size limit, so
+:max-size :prune-factor) less than the max-size limit, so
 pruning doesn't need to happen on every save. Removes only
 entries without the :precious keys, so it may not be possible to
 reach the target limit.

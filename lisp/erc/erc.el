@@ -2973,7 +2973,7 @@ VERSION and so on.  It is called with ARGS."
 If FUNC contains a valid function or variable, help about that
 will be displayed.  If FUNC is empty, display an apropos about
 ERC commands.  Otherwise, do `apropos' in the ERC namespace
-\(\"erc-.*LINE\"\).
+\(\"erc-.*LINE\").
 
 Examples:
 To find out about erc and bbdb, do

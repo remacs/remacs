@@ -107,7 +107,7 @@ switches."
   :version "25.1"
   :group 'vc-cvs)
 
-(defcustom vc-cvs-header '("\$Id\$")
+(defcustom vc-cvs-header '("$Id\ $")
   "Header keywords to be inserted by `vc-insert-headers'."
   :version "24.1"     ; no longer consult the obsolete vc-header-alist
   :type '(repeat string)
@@ -932,7 +932,7 @@ state."
 	(when (and full
 		   (re-search-forward
 		    "\\(RCS Version\\|RCS Revision\\|Repository revision\\):\
-\[\t ]+\\([0-9.]+\\)"
+[\t ]+\\([0-9.]+\\)"
 		    nil t))
 	    (vc-file-setprop file 'vc-latest-revision (match-string 2)))
 	(vc-file-setprop

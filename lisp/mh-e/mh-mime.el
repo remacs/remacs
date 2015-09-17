@@ -1715,7 +1715,7 @@ buffer, while END defaults to the end of the buffer."
 (defun mh-minibuffer-read-type (filename &optional default)
   "Return the content type associated with the given FILENAME.
 If the \"file\" command exists and recognizes the given file,
-then its value is returned\; otherwise, the user is prompted for
+then its value is returned; otherwise, the user is prompted for
 a type (see `mailcap-mime-types').
 Optional argument DEFAULT is returned if a type isn't entered."
   (mailcap-parse-mimetypes)

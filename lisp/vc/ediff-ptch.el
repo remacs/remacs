@@ -90,14 +90,14 @@ See also `ediff-backup-specs'."
 	   ;; traditional `patch'
 	   (format "-b %s" ediff-backup-extension))))
   "Backup directives to pass to the patch program.
-Ediff requires that the old version of the file \(before applying the patch\)
+Ediff requires that the old version of the file \(before applying the patch)
 be saved in a file named `the-patch-file.extension'.  Usually `extension' is
 `.orig', but this can be changed by the user and may depend on the system.
 Therefore, Ediff needs to know the backup extension used by the patch program.
 
 Some versions of the patch program let you specify `-b backup-extension'.
 Other versions only permit `-b', which assumes the extension `.orig'
-\(in which case ediff-backup-extension MUST be also `.orig'\).  The latest
+\(in which case ediff-backup-extension MUST be also `.orig').  The latest
 versions of GNU patch require `-b -z backup-extension'.
 
 Note that both `ediff-backup-extension' and `ediff-backup-specs'

@@ -213,7 +213,7 @@ one of those elements share the same precedence level and associativity."
 (defun smie-bnf->prec2 (bnf &rest resolvers)
   "Convert the BNF grammar into a prec2 table.
 BNF is a list of nonterminal definitions of the form:
-  \(NONTERM RHS1 RHS2 ...)
+  (NONTERM RHS1 RHS2 ...)
 where each RHS is a (non-empty) list of terminals (aka tokens) or non-terminals.
 Not all grammars are accepted:
 - an RHS cannot be an empty list (this is not needed, since SMIE allows all

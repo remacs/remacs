@@ -2357,7 +2357,7 @@ This function is only available when `prolog-system' is set to `swi'."
 (defun prolog-atom-under-point ()
   "Return the atom under or left to the point."
   (save-excursion
-    (let ((nonatom_chars "[](){},\. \t\n")
+    (let ((nonatom_chars "[](){},. \t\n")
           start)
       (skip-chars-forward (concat "^" nonatom_chars))
       (skip-chars-backward nonatom_chars)
@@ -2826,10 +2826,10 @@ objects (relevant only if `prolog-system' is set to `sicstus')."
                   (eq prolog-system 'sicstus)
                   (prolog-in-object))
              (format
-              "^\\(%s\\|%s\\|[^\n\'\"%%]\\)*&[ \t]*\\(\\|%%.*\\)$\\|[ \t]*}"
+              "^\\(%s\\|%s\\|[^\n'\"%%]\\)*&[ \t]*\\(\\|%%.*\\)$\\|[ \t]*}"
               prolog-quoted-atom-regexp prolog-string-regexp)
            (format
-            "^\\(%s\\|%s\\|[^\n\'\"%%]\\)*\\.[ \t]*\\(\\|%%.*\\)$"
+            "^\\(%s\\|%s\\|[^\n'\"%%]\\)*\\.[ \t]*\\(\\|%%.*\\)$"
             prolog-quoted-atom-regexp prolog-string-regexp))
          nil t)
         (if (and (nth 8 (syntax-ppss))

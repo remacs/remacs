@@ -126,7 +126,7 @@ An example of this is \"Class.prototype = { method1: ...}\".")
 (defconst js--prototype-objextend-class-decl-re-2
   (concat "^\\s-*\\(?:var\\s-+\\)?"
           "\\(" js--dotted-name-re "\\)"
-          "\\s-*=\\s-*Object\\.extend\\s-*\("))
+          "\\s-*=\\s-*Object\\.extend\\s-*("))
 
 ;; var NewClass = Class.create({
 (defconst js--prototype-class-decl-re
@@ -639,7 +639,7 @@ enabled frameworks."
          (js--maybe-join
           "\\(?:var[ \t]+\\)?[a-zA-Z_$0-9.]+[ \t]*=[ \t]*\\(?:"
           "\\|"
-          "\\)[ \t]*\("
+          "\\)[ \t]*("
 
           (when (memq 'prototype js-enabled-frameworks)
                     "Class\\.create")
@@ -651,10 +651,10 @@ enabled frameworks."
             "[a-zA-Z_$0-9]+\\.extend\\(?:Final\\)?"))
 
          (when (memq 'dojo js-enabled-frameworks)
-           "dojo\\.declare[ \t]*\(")
+           "dojo\\.declare[ \t]*(")
 
          (when (memq 'mochikit js-enabled-frameworks)
-           "MochiKit\\.Base\\.update[ \t]*\(")
+           "MochiKit\\.Base\\.update[ \t]*(")
 
          ;; mumble.prototypeTHING
          (js--maybe-join
@@ -662,7 +662,7 @@ enabled frameworks."
 
           (when (memq 'javascript js-enabled-frameworks)
             '( ;; foo.prototype.bar = function(
-              "\\.[a-zA-Z_$0-9]+[ \t]*=[ \t]*function[ \t]*\("
+              "\\.[a-zA-Z_$0-9]+[ \t]*=[ \t]*function[ \t]*("
 
               ;; mumble.prototype = {
               "[ \t]*=[ \t]*{")))))

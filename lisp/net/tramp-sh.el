@@ -4313,7 +4313,7 @@ process to set up.  VEC specifies the connection."
   "List of local coding commands for inline transfer.
 Each item is a list that looks like this:
 
-\(FORMAT ENCODING DECODING\)
+\(FORMAT ENCODING DECODING)
 
 FORMAT is  symbol describing the encoding/decoding format.  It can be
 `b64' for base64 encoding, `uu' for uu encoding, or `pack' for simple packing.
@@ -4351,7 +4351,7 @@ with the encoded or decoded results, respectively.")
   "List of remote coding commands for inline transfer.
 Each item is a list that looks like this:
 
-\(FORMAT ENCODING DECODING [TEST]\)
+\(FORMAT ENCODING DECODING [TEST])
 
 FORMAT is a symbol describing the encoding/decoding format.  It can be
 `b64' for base64 encoding, `uu' for uu encoding, or `pack' for simple packing.
@@ -4524,7 +4524,7 @@ means discard it)."
   "List of compress and decompress commands for inline transfer.
 Each item is a list that looks like this:
 
-\(COMPRESS DECOMPRESS\)
+\(COMPRESS DECOMPRESS)
 
 COMPRESS or DECOMPRESS are strings with the respective commands.")
 
@@ -5535,7 +5535,7 @@ Return ATTR."
 	   (tramp-get-remote-id vec)
 	   (if (equal id-format 'integer) "" "n")
 	   (if (equal id-format 'integer)
-	       "" "| sed -e s/^/\\\"/ -e s/\$/\\\"/"))))
+	       "" "| sed -e s/^/\\\"/ -e s/\\$/\\\"/"))))
 
 (defun tramp-get-remote-uid-with-perl (vec id-format)
   (tramp-send-command-and-read
@@ -5586,7 +5586,7 @@ Return ATTR."
 	   (tramp-get-remote-id vec)
 	   (if (equal id-format 'integer) "" "n")
 	   (if (equal id-format 'integer)
-	       "" "| sed -e s/^/\\\"/ -e s/\$/\\\"/"))))
+	       "" "| sed -e s/^/\\\"/ -e s/\\$/\\\"/"))))
 
 (defun tramp-get-remote-gid-with-perl (vec id-format)
   (tramp-send-command-and-read

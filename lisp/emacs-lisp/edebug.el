@@ -3162,12 +3162,12 @@ Do this when stopped before the form or it will be too late.
 One side effect of using this command is that the next time the
 function or macro is called, Edebug will be called there as well."
   (interactive)
-  (if (not (looking-at "\("))
+  (if (not (looking-at "("))
       (error "You must be before a list form")
     (let ((func
 	   (save-excursion
 	     (down-list 1)
-	     (if (looking-at "\(")
+	     (if (looking-at "(")
 		 (edebug--form-data-name
 		  (edebug-get-form-data-entry (point)))
 	       (read (current-buffer))))))
@@ -3790,10 +3790,10 @@ Otherwise call `debug' normally."
       (if t (progn
 
       ;; Delete interspersed edebug internals.
-      (while (re-search-forward "^  \(?edebug" nil t)
+      (while (re-search-forward "^  (?edebug" nil t)
 	(beginning-of-line)
 	(cond
-	 ((looking-at "^  \(edebug-after")
+	 ((looking-at "^  (edebug-after")
 	  ;; Previous lines may contain code, so just delete this line.
 	  (setq last-ok-point (point))
 	  (forward-line 1)

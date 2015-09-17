@@ -86,7 +86,7 @@ command to gain use of `next-error'."
   "Make Info file from current buffer.
 
 Use the \\[next-error] command to move to the next error
-\(if there are errors\)."
+\(if there are errors)."
   t nil)
 
 (autoload 'kill-compilation

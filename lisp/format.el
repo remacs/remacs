@@ -619,7 +619,7 @@ the rest of the arguments are any PARAMETERs found in that region.
 Any annotations that are found by NEXT-FN but not defined by TRANSLATIONS
 are saved as values of the `unknown' text-property \(which is list-valued).
 The TRANSLATIONS list should usually contain an entry of the form
-    \(unknown \(nil format-annotate-value))
+    (unknown (nil format-annotate-value))
 to write these unknown annotations back into the file."
   (save-excursion
     (save-restriction
@@ -839,7 +839,7 @@ the first character in the buffer)."
       (setq l (cdr l)))))
 
 (defun format-annotate-value (old new)
-  "Return OLD and NEW as a \(CLOSE . OPEN) annotation pair.
+  "Return OLD and NEW as a (CLOSE . OPEN) annotation pair.
 Useful as a default function for TRANSLATIONS alist when the value of the text
 property is the name of the annotation that you want to use, as it is for the
 `unknown' text property."

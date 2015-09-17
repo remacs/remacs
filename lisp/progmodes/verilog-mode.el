@@ -2469,7 +2469,7 @@ find the errors."
    "\\(\\<begin\\>\\)\\|"		         ; 1
    "\\(\\<else\\>\\)\\|"		         ; 2
    "\\(\\<end\\>\\s-+\\<else\\>\\)\\|"	         ; 3
-   "\\(\\<always\\(?:_ff\\)?\\>\\(?:\[ \t\]*@\\)\\)\\|"    ; 4 (matches always or always_ff w/ @...)
+   "\\(\\<always\\(?:_ff\\)?\\>\\(?:[ \t]*@\\)\\)\\|"    ; 4 (matches always or always_ff w/ @...)
    "\\(\\<always\\(?:_comb\\|_latch\\)?\\>\\)\\|"  ; 5 (matches always, always_comb, always_latch w/o @...)
    "\\(\\<fork\\>\\)\\|"			 ; 7
    "\\(\\<if\\>\\)\\|"
@@ -3194,10 +3194,10 @@ See also `verilog-font-lock-extra-types'.")
                                                       'font-lock-preprocessor-face
                                                     'font-lock-type-face))
 		 ;; Fontify delays/numbers
-		 '("\\(@\\)\\|\\([ \t\n\f\r]#\\s-*\\(\\(\[0-9_.\]+\\('s?[hdxbo][0-9a-fA-F_xz]*\\)?\\)\\|\\(([^()]+)\\|\\sw+\\)\\)\\)"
+		 '("\\(@\\)\\|\\([ \t\n\f\r]#\\s-*\\(\\([0-9_.]+\\('s?[hdxbo][0-9a-fA-F_xz]*\\)?\\)\\|\\(([^()]+)\\|\\sw+\\)\\)\\)"
 		   0 font-lock-type-face append)
      ;; Fontify property/sequence cycle delays - these start with '##'
-     '("\\(##\\(\\sw+\\|\\[[^\]]+\\]\\)\\)"
+     '("\\(##\\(\\sw+\\|\\[[^]]+\\]\\)\\)"
        0 font-lock-type-face append)
 		 ;; Fontify instantiation names
 		 '("\\([A-Za-z][A-Za-z0-9_]*\\)\\s-*(" 1 font-lock-function-name-face)
@@ -3936,7 +3936,7 @@ With optional ARG, remove existing end of line comments."
 (defun electric-verilog-semi-with-comment ()
   "Insert `;' character, reindent the line and indent for comment."
   (interactive)
-  (insert "\;")
+  (insert ";")
   (save-excursion
     (beginning-of-line)
     (verilog-indent-line))
@@ -4072,7 +4072,7 @@ if it reaches the end of the buffer."
 The upper left corner is defined by point.  Indices begin with 0
 and extend to the MAX - 1.  If no prefix arg is given, the user
 is prompted for a value.  The indices are surrounded by square
-brackets \[].  For example, the following code with the point
+brackets [].  For example, the following code with the point
 located after the first 'a' gives:
 
     a = b                           a[  0] = b
@@ -5072,7 +5072,7 @@ Useful for creating tri's and other expanded fields."
     (if (verilog-within-string)
 	(re-search-forward "\"" nil t)
       (if (verilog-in-star-comment-p)
-	  (re-search-forward "\*/" nil t)
+	  (re-search-forward "\\*/" nil t)
 	(let ((bpt (- (point) 2)))
 	  (end-of-line)
 	  (delete-region bpt (point))))))
@@ -5184,7 +5184,7 @@ becomes:
                  (t
                   )))
                ((verilog-in-star-comment-p)
-                (re-search-backward "/\*")
+                (re-search-backward "/\\*")
                 (insert (format " // surefire lint_off_line %6s" code )))
                (t
                 (insert (format " // surefire lint_off_line %6s" code ))
@@ -6054,7 +6054,7 @@ Optional BOUND limits search."
 		(verilog-re-search-backward "//" nil 'move)
                 (skip-chars-backward "/"))
                ((nth 4 state)  ; in /* */ comment
-		(verilog-re-search-backward "/\*" nil 'move))))
+		(verilog-re-search-backward "/\\*" nil 'move))))
 	    (narrow-to-region bound (point))
 	    (while (/= here (point))
 	      (setq here (point))
@@ -6092,7 +6092,7 @@ Optional BOUND limits search."
 		(skip-chars-forward " \t\n\f")
 		)
                ((nth 4 state)  ; in /* */ comment
-		(verilog-re-search-forward "\*\/\\s-*" nil 'move))))
+		(verilog-re-search-forward "\\*/\\s-*" nil 'move))))
 	    (narrow-to-region (point) bound)
 	    (while (/= here (point))
 	      (setq here (point)
@@ -6673,7 +6673,7 @@ Do not count named blocks or case-statements."
 	       (save-excursion
 		 (forward-line -1)
 		 (skip-chars-forward " \t")
-		 (looking-at "\*")))
+		 (looking-at "\\*")))
 	  (insert "* ")))))
 
 (defun verilog-comment-indent (&optional _arg)
@@ -7078,7 +7078,7 @@ Region is defined by B and EDPOS."
 		(beginning-of-line)
 		(point-marker)
 	      (end-of-line))))
-      (if (re-search-backward " /\\* \[#-\]# \[a-zA-Z\]+ \[0-9\]+ ## \\*/" b t)
+      (if (re-search-backward " /\\* [#-]# [a-zA-Z]+ [0-9]+ ## \\*/" b t)
 	  (progn
 	    (replace-match " /* -#  ## */")
 	    (end-of-line))
@@ -8196,32 +8196,32 @@ Tieoff value uses `verilog-active-low-regexp' and
   (verilog-backward-open-paren)
   (let (done)
     (while (not done)
-      (verilog-re-search-backward-quick "\\()\\|\\b[a-zA-Z0-9`_\$]\\|\\]\\)" nil nil)  ; ] isn't word boundary
+      (verilog-re-search-backward-quick "\\()\\|\\b[a-zA-Z0-9`_$]\\|\\]\\)" nil nil)  ; ] isn't word boundary
       (cond ((looking-at ")")
              (verilog-backward-open-paren))
             (t (setq done t)))))
   (while (looking-at "\\]")
     (verilog-backward-open-bracket)
-    (verilog-re-search-backward-quick "\\(\\b[a-zA-Z0-9`_\$]\\|\\]\\)" nil nil))
+    (verilog-re-search-backward-quick "\\(\\b[a-zA-Z0-9`_$]\\|\\]\\)" nil nil))
   (skip-chars-backward "a-zA-Z0-9`_$"))
 
 (defun verilog-read-inst-module-matcher ()
   "Set match data 0 with module_name when point is inside instantiation."
   (verilog-read-inst-backward-name)
   ;; Skip over instantiation name
-  (verilog-re-search-backward-quick "\\(\\b[a-zA-Z0-9`_\$]\\|)\\)" nil nil)  ; ) isn't word boundary
+  (verilog-re-search-backward-quick "\\(\\b[a-zA-Z0-9`_$]\\|)\\)" nil nil)  ; ) isn't word boundary
   ;; Check for parameterized instantiations
   (when (looking-at ")")
     (verilog-backward-open-paren)
-    (verilog-re-search-backward-quick "\\b[a-zA-Z0-9`_\$]" nil nil))
+    (verilog-re-search-backward-quick "\\b[a-zA-Z0-9`_$]" nil nil))
   (skip-chars-backward "a-zA-Z0-9'_$")
   ;; #1 is legal syntax for gate primitives
   (when (save-excursion
 	  (verilog-backward-syntactic-ws-quick)
 	  (eq ?# (char-before)))
-    (verilog-re-search-backward-quick "\\b[a-zA-Z0-9`_\$]" nil nil)
+    (verilog-re-search-backward-quick "\\b[a-zA-Z0-9`_$]" nil nil)
     (skip-chars-backward "a-zA-Z0-9'_$"))
-  (looking-at "[a-zA-Z0-9`_\$]+")
+  (looking-at "[a-zA-Z0-9`_$]+")
   ;; Important: don't use match string, this must work with Emacs 19 font-lock on
   (buffer-substring-no-properties (match-beginning 0) (match-end 0))
   ;; Caller assumes match-beginning/match-end is still set
@@ -8236,7 +8236,7 @@ Tieoff value uses `verilog-active-low-regexp' and
   "Return instance_name when point is inside instantiation."
   (save-excursion
     (verilog-read-inst-backward-name)
-    (looking-at "[a-zA-Z0-9`_\$]+")
+    (looking-at "[a-zA-Z0-9`_$]+")
     ;; Important: don't use match string, this must work with Emacs 19 font-lock on
     (buffer-substring-no-properties (match-beginning 0) (match-end 0))))
 
@@ -8247,7 +8247,7 @@ Tieoff value uses `verilog-active-low-regexp' and
     ;; Due to "module x import y (" we must search for declaration begin
     (verilog-re-search-backward-quick verilog-defun-re nil nil)
     (goto-char (match-end 0))
-    (verilog-re-search-forward-quick "\\b[a-zA-Z0-9`_\$]+" nil nil)
+    (verilog-re-search-forward-quick "\\b[a-zA-Z0-9`_$]+" nil nil)
     ;; Important: don't use match string, this must work with Emacs 19 font-lock on
     (verilog-symbol-detick
      (buffer-substring-no-properties (match-beginning 0) (match-end 0)) t)))
@@ -8257,7 +8257,7 @@ Tieoff value uses `verilog-active-low-regexp' and
   (save-excursion
     (verilog-read-inst-backward-name)
     ;; Skip over instantiation name
-    (verilog-re-search-backward-quick "\\(\\b[a-zA-Z0-9`_\$]\\|)\\)" nil nil)  ; ) isn't word boundary
+    (verilog-re-search-backward-quick "\\(\\b[a-zA-Z0-9`_$]\\|)\\)" nil nil)  ; ) isn't word boundary
     ;; If there are parameterized instantiations
     (when (looking-at ")")
       (let ((end-pt (point))
@@ -8265,9 +8265,9 @@ Tieoff value uses `verilog-active-low-regexp' and
 	    param-name paren-beg-pt param-value)
 	(verilog-backward-open-paren)
 	(while (verilog-re-search-forward-quick "\\." end-pt t)
-	  (verilog-re-search-forward-quick "\\([a-zA-Z0-9`_\$]\\)" nil nil)
+	  (verilog-re-search-forward-quick "\\([a-zA-Z0-9`_$]\\)" nil nil)
 	  (skip-chars-backward "a-zA-Z0-9'_$")
-	  (looking-at "[a-zA-Z0-9`_\$]+")
+	  (looking-at "[a-zA-Z0-9`_$]+")
 	  (setq param-name (buffer-substring-no-properties
 			    (match-beginning 0) (match-end 0)))
 	  (verilog-re-search-forward-quick "(" nil nil)
@@ -10641,7 +10641,7 @@ Typing \\[verilog-inject-auto] will make this into:
   (save-excursion
     (goto-char (point-min))
     ;; It's hard to distinguish modules; we'll instead search for pins.
-    (while (verilog-re-search-forward-quick "\\.\\s *[a-zA-Z0-9`_\$]+\\s *(\\s *[a-zA-Z0-9`_\$]+\\s *)" nil t)
+    (while (verilog-re-search-forward-quick "\\.\\s *[a-zA-Z0-9`_$]+\\s *(\\s *[a-zA-Z0-9`_$]+\\s *)" nil t)
       (verilog-backward-open-paren)  ; Inst start
       (cond
        ((= (preceding-char) ?\#)  ; #(...) parameter section, not pin.  Skip.
@@ -10656,7 +10656,7 @@ Typing \\[verilog-inject-auto] will make this into:
 		(t
 		 ;; Delete identical interconnect
                  (let ((case-fold-search nil))  ; So we don't convert upper-to-lower, etc
-		   (while (verilog-re-search-forward-quick "\\.\\s *\\([a-zA-Z0-9`_\$]+\\)*\\s *(\\s *\\1\\s *)\\s *" end-pt t)
+		   (while (verilog-re-search-forward-quick "\\.\\s *\\([a-zA-Z0-9`_$]+\\)*\\s *(\\s *\\1\\s *)\\s *" end-pt t)
 		     (delete-region (match-beginning 0) (match-end 0))
                      (setq end-pt (- end-pt (- (match-end 0) (match-beginning 0))))  ; Keep it correct
 		     (while (or (looking-at "[ \t\n\f,]+")
@@ -11153,7 +11153,7 @@ If PAR-VALUES replace final strings with these parameter values."
 	  (for-star
 	   (indent-to (+ (if (< verilog-auto-inst-column 48) 24 16)
 			 verilog-auto-inst-column))
-	   (verilog-insert " // Implicit .\*\n")) ;For some reason the . or * must be escaped...
+	   (verilog-insert " // Implicit .*\n"))
 	  (t
 	   (insert "\n")))))
 ;;(verilog-auto-inst-port (list "foo" "[5:0]") 10 (list (list "foo" "a@\"(% (+ @ 1) 4)\"a")) "3")
@@ -11397,12 +11397,12 @@ Multiple Module Templates:
   instantiation name.
 
   If a regular expression is provided, the @ character will be replaced
-  with the first \(\) grouping that matches against the cell name.  Using a
-  regexp of \"\\([0-9]+\\)\" provides identical values for @ as when no
+  with the first () grouping that matches against the cell name.  Using a
+  regexp of `\\([0-9]+\\)' provides identical values for @ as when no
   regexp is provided.  If you use multiple layers of parenthesis,
-  \"test\\([^0-9]+\\)_\\([0-9]+\\)\" would replace @ with non-number
+  `test\\([^0-9]+\\)_\\([0-9]+\\)' would replace @ with non-number
   characters after test and before _, whereas
-  \"\\(test\\([a-z]+\\)_\\([0-9]+\\)\\)\" would replace @ with the entire
+  `\\(test\\([a-z]+\\)_\\([0-9]+\\)\\)' would replace @ with the entire
   match.
 
   For example:

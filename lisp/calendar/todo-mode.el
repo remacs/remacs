@@ -4892,7 +4892,7 @@ With nil or omitted CATEGORY, default to the current category."
 	(widen)
 	(goto-char (point-min))
 	(setq todo-categories
-	      (if (looking-at "\(\(\"")
+	      (if (looking-at "((\"")
 		  (read (buffer-substring-no-properties
 			 (line-beginning-position)
 			 (line-end-position)))

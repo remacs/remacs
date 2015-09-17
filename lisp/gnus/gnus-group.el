@@ -155,7 +155,7 @@ list."
 			 (function-item gnus-group-sort-by-rank)
 			 (function :tag "other" nil))))
 
-(defcustom gnus-group-line-format "%M\%S\%p\%P\%5y:%B%(%g%)\n"
+(defcustom gnus-group-line-format "%M\ %S\ %p\ %P\ %5y:%B%(%g%)\n"
   "*Format of group lines.
 It works along the same lines as a normal formatting string,
 with some simple extensions.
@@ -213,7 +213,7 @@ See Info node `(gnus)Formatting Variables'."
   :group 'gnus-group-visual
   :type 'string)
 
-(defcustom gnus-group-mode-line-format "Gnus: %%b {%M\%:%S}"
+(defcustom gnus-group-mode-line-format "Gnus: %%b {%M\ %:%S}"
   "*The format specification for the group mode line.
 It works along the same lines as a normal formatting string,
 with some simple extensions:
@@ -445,7 +445,7 @@ If non-nil, the value should be a string or an alist.  If it is a string,
 e.g. \"nnml:\", in which case `gnus-group-jump-to-group' offers \"Group:
 nnml:\" in the minibuffer prompt.
 
-If it is an alist, it must consist of \(NUMBER .  PROMPT\) pairs, for example:
+If it is an alist, it must consist of \(NUMBER .  PROMPT) pairs, for example:
 \((1 .  \"\") (2 .  \"nnfolder+archive:\")).  The element with number 0 is
 used when no prefix argument is given to `gnus-group-jump-to-group'."
   :version "22.1"
@@ -2174,7 +2174,7 @@ be permanent."
 	  (gnus-group-decoded-name group)))
     (let ((regexp "[][\C-@-\t\v-*,/:-@\\^`{-\C-?]*\
 \\(nn[a-z]+\\(?:\\+[^][\C-@-*,/:-@\\^`{-\C-?]+\\)?:\
-\[^][\C-@-*,./:-@\\^`{-\C-?]+\\(?:\\.[^][\C-@-*,./:-@\\^`{-\C-?]+\\)*\
+[^][\C-@-*,./:-@\\^`{-\C-?]+\\(?:\\.[^][\C-@-*,./:-@\\^`{-\C-?]+\\)*\
 \\|[^][\C-@-*,./:-@\\^`{-\C-?]+\\(?:\\.[^][\C-@-*,./:-@\\^`{-\C-?]+\\)+\\)")
 	  (start (point))
 	  (case-fold-search nil))

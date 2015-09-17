@@ -889,7 +889,7 @@ property `lisp-indent-function' (or the deprecated `lisp-indent-hook'),
 it specifies how to indent.  The property value can be:
 
 * `defun', meaning indent `defun'-style
-  \(this is also the case if there is no property and the function
+  (this is also the case if there is no property and the function
   has a name that begins with \"def\", and three or more arguments);
 
 * an integer N, meaning indent the first N arguments specially
