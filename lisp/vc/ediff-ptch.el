@@ -333,7 +333,7 @@ program."
 		      (ediff-with-current-buffer standard-output
 			(fundamental-mode))
 		      (princ
-		       (format "
+		       (format-message "
 The patch file contains a context diff for
 	%s
 	%s
@@ -342,7 +342,7 @@ to be patched on your system.  If you know the correct file name,
 please enter it now.
 
 If you don't know and still would like to apply patches to
-other files, enter /dev/null
+other files, enter `/dev/null'.
 "
 			       (substring (car proposed-file-names) 6)
 			       (substring (cdr proposed-file-names) 6))))

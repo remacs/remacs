@@ -135,7 +135,7 @@ options:
                            ;; then save this value in mapsym
                            (setq mapsym s)))))
             (insert
-             (format
+             (format-message
               "The default Emacs binding for the key %s is the command `%s'.  "
               (key-description key)
               db))
