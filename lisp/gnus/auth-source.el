@@ -362,7 +362,7 @@ If the value is not a list, symmetric encryption will be used."
   "Read one of CHOICES by `read-char-choice', or `read-char'.
 `dropdown-list' support is disabled because it doesn't work reliably.
 Only one of CHOICES will be returned.  The PROMPT is augmented
-with \"[a/b/c] \" if CHOICES is '\(?a ?b ?c\)."
+with \"[a/b/c] \" if CHOICES is \(?a ?b ?c)."
   (when choices
     (let* ((prompt-choices
             (apply 'concat (loop for c in choices

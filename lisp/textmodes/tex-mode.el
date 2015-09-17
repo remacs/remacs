@@ -1550,7 +1550,7 @@ Puts point on a blank line between them."
   "\\end{" str "}" > \n)
 
 (define-skeleton latex-insert-item
-  "Insert a \item macro."
+  "Insert an \\item macro."
   nil
   \n "\\item " >)
 

@@ -2435,7 +2435,7 @@ Valid input formats include:
      ;; URLs providing `group', `start' and `range':
      ((string-match
        ;; http://thread.gmane.org/gmane.emacs.devel/86326/focus=86525
-       "^http://thread\.gmane\.org/\\([^/]+\\)/\\([0-9]+\\)/focus=\\([0-9]+\\)$"
+       "^http://thread\\.gmane\\.org/\\([^/]+\\)/\\([0-9]+\\)/focus=\\([0-9]+\\)$"
        url)
       (setq group (match-string 1 url)
 	    start (string-to-number (match-string 2 url))
@@ -2446,15 +2446,15 @@ Valid input formats include:
      ;; URLs providing `group' and `start':
      ((or (string-match
 	   ;; http://article.gmane.org/gmane.comp.gnu.make.bugs/3584
-	   "^http://\\(?:thread\\|article\\|permalink\\)\.gmane\.org/\\([^/]+\\)/\\([0-9]+\\)"
+	   "^http://\\(?:thread\\|article\\|permalink\\)\\.gmane\\.org/\\([^/]+\\)/\\([0-9]+\\)"
 	   url)
 	  (string-match
 	   ;; Don't advertise these in the doc string yet:
-	   "^\\(?:nntp\\|news\\)://news\.gmane\.org/\\([^/]+\\)/\\([0-9]+\\)"
+	   "^\\(?:nntp\\|news\\)://news\\.gmane\\.org/\\([^/]+\\)/\\([0-9]+\\)"
 	   url)
 	  (string-match
 	   ;; http://news.gmane.org/group/gmane.emacs.gnus.general/thread=65099/force_load=t
-	   "^http://news\.gmane\.org/group/\\([^/]+\\)/thread=\\([0-9]+\\)"
+	   "^http://news\\.gmane\\.org/group/\\([^/]+\\)/thread=\\([0-9]+\\)"
 	   url))
       (setq group (match-string 1 url)
 	    start (string-to-number (match-string 2 url))))

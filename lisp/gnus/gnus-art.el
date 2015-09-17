@@ -7724,7 +7724,7 @@ Calls `describe-variable' or `describe-function'."
   "Call `locate-library' when pushing the corresponding URL button."
   (gnus-message 9 "url=`%s'" url)
   (let* ((lib (locate-library url))
-	 (file (gnus-replace-in-string (or lib "") "\.elc" ".el")))
+	 (file (gnus-replace-in-string (or lib "") "\\.elc" ".el")))
     (if (not lib)
 	(gnus-message 1 "Cannot locale library `%s'." url)
       (find-file-read-only file))))

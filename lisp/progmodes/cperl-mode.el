@@ -5043,7 +5043,7 @@ conditional/loop constructs."
 		  (goto-char top))
 	      (if (looking-at		; Try Plan C: continuation block
 		   (concat cperl-maybe-white-and-comment-rex
-			   "\\<\\(else\\|elsif\|continue\\)\\>"))
+			   "\\<\\(else\\|elsif\\|continue\\)\\>"))
 		  (progn
 		    (goto-char (match-end 0))
 		    (setq tmp-end (point-at-eol)))

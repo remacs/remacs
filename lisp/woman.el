@@ -2716,7 +2716,7 @@ If DELETE is non-nil then delete from point."
 
 (defsubst woman-unescape (macro)
   "Replace escape sequences in the body of MACRO.
-Replaces || by |, but | by \, where | denotes the internal escape."
+Replaces || by |, but | by \\, where | denotes the internal escape."
   (let (start)
     (while (setq start (string-match woman-unescape-regex macro start))
       (setq macro
@@ -2838,7 +2838,7 @@ special characters."
 (defun woman-strings (&optional to)
   "Process ?roff string requests and escape sequences up to buffer position TO.
 Strings are defined/updated by `.ds xx string' requests and
-interpolated by `\*x' and `\*(xx' escapes."
+interpolated by `\\*x' and `\\*(xx' escapes."
   ;; Add support for .as and .rm?
   (while
       ;; Find .ds requests and \* escapes:

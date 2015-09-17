@@ -426,7 +426,7 @@ Otherwise return the normal value."
       ;; Issue an error, if no match.
       (unless (eq 0 status)
 	(save-excursion
-	  (skip-chars-forward " \t\n\j")
+	  (skip-chars-forward " \t\n")
 	  (if (looking-at "ls:")
 	      (viper-forward-Word 1))
 	  (error "%s: %s"

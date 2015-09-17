@@ -932,7 +932,7 @@ Any match found replaces the text from BEGIN to END."
     (and (stringp file)
          (file-exists-p file)
          (or (and (not (mh-have-file-command))
-                  (not (null (string-match "\.vcf$" file))))
+                  (not (null (string-match "\\.vcf$" file))))
              (string-equal "text/x-vcard" (mh-file-mime-type file))))))
 
 ;;;###mh-autoload

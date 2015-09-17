@@ -777,7 +777,7 @@ is nil.  You can also allow them through local buffer variables."
 
 This variable allows to provide shortcuts for export snippets.
 
-For example, with a value of '\(\(\"h\" . \"html\"\)\), the
+For example, with a value of \((\"h\" . \"html\")), the
 HTML back-end will recognize the contents of \"@@h:<b>@@\" as
 HTML code while every other back-end will ignore it."
   :group 'org-export-general

@@ -268,7 +268,7 @@ Overrides local variable `indent-tabs-mode'."
     ;; ** Error: adder.vhd(190): Unknown identifier: ctl_numb
     ("ModelSim" "vcom" "-93 -work \\1" "make" "-f \\1"
      nil "vlib \\1; vmap \\2 \\1" "./" "work/" "Makefile" "modelsim"
-     ("^\\(ERROR\\|WARNING\\|\\*\\* Error\\|\\*\\* Warning\\)[^:]*:\\( *\[[0-9]+\]\\)? \\([^ \t\n]+\\)(\\([0-9]+\\)):" 3 4 nil) ("" 0)
+     ("^\\(ERROR\\|WARNING\\|\\*\\* Error\\|\\*\\* Warning\\)[^:]*:\\( *\\[[0-9]+]\\)? \\([^ \t\n]+\\)(\\([0-9]+\\)):" 3 4 nil) ("" 0)
      ("\\1/_primary.dat" "\\2/\\1.dat" "\\1/_primary.dat"
       "\\1/_primary.dat" "\\1/body.dat" downcase))
     ;; ProVHDL, Synopsys LEDA: provhdl -w work -f test.vhd
@@ -315,7 +315,7 @@ Overrides local variable `indent-tabs-mode'."
     ;;     ERROR[11]::File test.vhd Line 100: Use of undeclared identifier
     ("Speedwave" "analyze" "-libfile vsslib.ini -src" "make" "-f \\1"
      nil "mkdir \\1" "./" "work/" "Makefile" "speedwave"
-     ("^ *ERROR\[[0-9]+\]::File \\([^ \t\n]+\\) Line \\([0-9]+\\):" 1 2 nil) ("" 0)
+     ("^ *ERROR\\[[0-9]+]::File \\([^ \t\n]+\\) Line \\([0-9]+\\):" 1 2 nil) ("" 0)
      nil)
     ;; Synopsys, VHDL Analyzer (sim): vhdlan -nc test.vhd
     ;; **Error: vhdlan,703 test.vhd(22): OTHERS is not legal in this context.
@@ -364,7 +364,7 @@ Overrides local variable `indent-tabs-mode'."
     ;; ERROR:HDLParsers:164 - "test.vhd" Line 3. parse error
     ("Xilinx XST" "xflow" "" "make" "-f \\1"
      nil "mkdir \\1" "./" "work/" "Makefile" "xilinx"
-     ("^ERROR:HDLParsers:[0-9]+ - \"\\([^ \t\n]+\\)\" Line \\([0-9]+\\)\." 1 2 nil) ("" 0)
+     ("^ERROR:HDLParsers:[0-9]+ - \"\\([^ \t\n]+\\)\" Line \\([0-9]+\\)\\." 1 2 nil) ("" 0)
      nil)
     )
   "List of available VHDL compilers and their properties.
@@ -1678,8 +1678,8 @@ syntax (as regular expression) are highlighted in the corresponding color.
 
   Name         : string of words and spaces
   Regexp       : regular expression describing word syntax
-                 (e.g. \"\\\\=\<\\\w+_c\\\\=\>\" matches word with suffix \"_c\")
-                 expression must start with \"\\\\=\<\" and end with \"\\\\=\>\"
+                 (e.g., `\\=\\<\\w+_c\\>' matches word with suffix `_c')
+                 expression must start with `\\=\\<' and end with `\\>'
                  if only whole words should be matched (no substrings)
   Color (light): foreground color for light background
                  (matching color examples: Gold3, Grey50, LimeGreen, Tomato,
@@ -1690,14 +1690,14 @@ syntax (as regular expression) are highlighted in the corresponding color.
   In comments  : If non-nil, words are also highlighted inside comments
 
 Can be used for visual support of naming conventions, such as highlighting
-different kinds of signals (e.g. \"Clk50\", \"Rst_n\") or objects (e.g.
-\"Signal_s\", \"Variable_v\", \"Constant_c\") by distinguishing them using
+different kinds of signals (e.g. `Clk50', `Rst_n') or objects (e.g.
+`Signal_s', `Variable_v', `Constant_c') by distinguishing them using
 common substrings or name suffices.
 For each entry, a new face is generated with the specified colors and name
-\"vhdl-font-lock-\" + name + \"-face\".
+`vhdl-font-lock-' + name + `-face'.
 
 NOTE: Activate a changed regexp in a VHDL buffer by re-fontifying it (menu
-      entry \"Fontify Buffer\").  All other changes require restarting Emacs."
+      entry `Fontify Buffer').  All other changes require restarting Emacs."
   :type '(repeat (list :tag "Face" :indent 2
 		       (string :tag "Name         ")
 		       (regexp :tag "Regexp       " "\\w+_")

@@ -709,7 +709,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
         (if prefix
             (setq name
                   (cond
-                   ((string-match "^self\." name)
+                   ((string-match "^self\\." name)
                     (concat (substring prefix 0 -1) (substring name 4)))
                   (t (concat prefix name)))))
         (push (cons name pos) index-alist)

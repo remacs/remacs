@@ -360,7 +360,7 @@ file.  Since that is a plaintext file, this could be dangerous."
      :sqli-comint-func sql-comint-db2
      :prompt-regexp "^db2 => "
      :prompt-length 7
-     :prompt-cont-regexp "^db2 (cont\.) => "
+     :prompt-cont-regexp "^db2 (cont\\.) => "
      :input-filter sql-escape-newlines-filter)
 
     (informix
@@ -491,7 +491,7 @@ file.  Since that is a plaintext file, this could be dangerous."
      :completion-object sql-sqlite-completion-object
      :prompt-regexp "^sqlite> "
      :prompt-length 8
-     :prompt-cont-regexp "^   \.\.\.> "
+     :prompt-cont-regexp "^   \\.\\.\\.> "
      :terminator ";")
 
     (sybase

@@ -513,7 +513,7 @@ Optional args BEG and END specify a region of the buffer on which to operate."
 (defun format-delq-cons (cons list)
   "Remove the given CONS from LIST by side effect and return the new LIST.
 Since CONS could be the first element of LIST, write
-`\(setq foo \(format-delq-cons element foo))' to be sure of changing
+\(setq foo \(format-delq-cons element foo)) to be sure of changing
 the value of `foo'."
   (if (eq cons list)
       (cdr list)
@@ -827,7 +827,7 @@ in the region, it is treated as though it were DEFAULT."
 Insert each element of the given LIST of buffer annotations at its
 appropriate place.  Use second arg OFFSET if the annotations' locations are
 not relative to the beginning of the buffer: annotations will be inserted
-at their location-OFFSET+1 \(ie, the offset is treated as the position of
+at their location-OFFSET+1 \(i.e., the offset is treated as the position of
 the first character in the buffer)."
   (if (not offset)
       (setq offset 0)
