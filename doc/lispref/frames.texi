@@ -1576,6 +1576,19 @@ means use a standard modification of the usual cursor type (solid box
 becomes hollow box, and bar becomes a narrower bar).
 @end defopt
 
+@defopt x-stretch-cursor
+This variable controls the width of the block cursor displayed on
+extra-wide glyphs such as a tab or a stretch of white space.  By
+default, the block cursor is only as wide as the font's default
+character, and will not cover all of the width of the glyph under it
+if that glyph is extra-wide.  A non-@code{nil} value of this variable
+means draw the block cursor as wide as the glyph under it.  The
+default value is @code{nil}.
+
+This variable has no effect on text-mode frames, since the text-mode
+cursor is drawn by the terminal out of Emacs's control.
+@end defopt
+
 @defopt blink-cursor-alist
 This variable specifies how to blink the cursor.  Each element has the
 form @code{(@var{on-state} . @var{off-state})}.  Whenever the cursor
