@@ -1233,20 +1233,20 @@ This is an internal function, it shall not be used outside dbus.el.
 The following usages are expected:
 
 `dbus-call-method', `dbus-call-method-asynchronously':
-   (dbus-message-internal
+  (dbus-message-internal
     dbus-message-type-method-call BUS SERVICE PATH INTERFACE METHOD HANDLER
     &optional :timeout TIMEOUT &rest ARGS)
 
 `dbus-send-signal':
-   (dbus-message-internal
+  (dbus-message-internal
     dbus-message-type-signal BUS SERVICE PATH INTERFACE SIGNAL &rest ARGS)
 
 `dbus-method-return-internal':
-   (dbus-message-internal
+  (dbus-message-internal
     dbus-message-type-method-return BUS SERVICE SERIAL &rest ARGS)
 
 `dbus-method-error-internal':
-   (dbus-message-internal
+  (dbus-message-internal
     dbus-message-type-error BUS SERVICE SERIAL &rest ARGS)
 
 usage: (dbus-message-internal &rest REST)  */)
