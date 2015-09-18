@@ -1293,6 +1293,7 @@ calc-kill calc-kill-region calc-yank))))
   (define-key calc-help-map "?" 'calc-help-for-help)
   (define-key calc-help-map "\C-h" 'calc-help-for-help))
 
+(defvar calc-prefix-help-retry nil)
 (defvar calc-prefix-help-phase 0)
 (defun calc-do-prefix-help (msgs group key)
   (if calc-full-help-flag
@@ -1300,7 +1301,7 @@ calc-kill calc-kill-region calc-yank))))
     (if (cdr msgs)
 	(progn
 	  (setq calc-prefix-help-phase
-		(if (eq this-command last-command)
+		(if calc-prefix-help-retry
 		    (% (1+ calc-prefix-help-phase) (1+ (length msgs)))
 		  0))
 	  (let ((msg (nth calc-prefix-help-phase msgs)))
@@ -1321,7 +1322,13 @@ calc-kill calc-kill-region calc-yank))))
 	      (message "%s: %s: %c-" group (car msgs) key)
 	    (message "%s: (none)  %c-" group key))
 	(message "%s: %s" group (car msgs))))
-    (and key (calc-unread-command key))))
+    (let* ((chr (read-char))
+           (keys (if key (string key chr) (string chr)))
+           (bnd (local-key-binding keys)))
+      (setq calc-prefix-help-retry (= chr ??))
+      (if bnd
+          (call-interactively bnd)
+        (message (concat keys " is undefined"))))))
 
 ;;;; Commands.
 
