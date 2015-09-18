@@ -854,7 +854,6 @@ and the default level otherwise, use the value
 '((c-mode . 1) (c++-mode . 1)))
 @end example
 
-@vindex font-lock-beginning-of-syntax-function
 @cindex incorrect fontification
 @cindex parenthesis in column zero and fontification
 @cindex brace in column zero and fontification
@@ -866,19 +865,6 @@ always defines the beginning of a defun, and is thus always outside
 any string or comment.  Therefore, you should avoid placing an
 open-parenthesis or open-brace in the leftmost column, if it is inside
 a string or comment.  @xref{Left Margin Paren}, for details.
-
-@cindex slow display during scrolling
-  The variable @code{font-lock-beginning-of-syntax-function}, which is
-always buffer-local, specifies how Font Lock mode can find a position
-guaranteed to be outside any comment or string.  In modes which use
-the leftmost column parenthesis convention, the default value of the
-variable is @code{beginning-of-defun}---that tells Font Lock mode to
-use the convention.  If you set this variable to @code{nil}, Font Lock
-no longer relies on the convention.  This avoids incorrect results,
-but the price is that, in some cases, fontification for a changed text
-must rescan buffer text from the beginning of the buffer.  This can
-considerably slow down redisplay while scrolling, particularly if you
-are close to the end of a large buffer.
 
 @findex font-lock-add-keywords
   Font Lock highlighting patterns already exist for most modes, but

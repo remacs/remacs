@@ -2527,7 +2527,7 @@ If non-@code{nil}, the value should look like this:
 
 @example
 (@var{keywords} [@var{keywords-only} [@var{case-fold}
- [@var{syntax-alist} [@var{syntax-begin} @var{other-vars}@dots{}]]]])
+ [@var{syntax-alist} @var{other-vars}@dots{}]]])
 @end example
 
 The first element, @var{keywords}, indirectly specifies the value of
@@ -2558,11 +2558,6 @@ fontification; the resulting syntax table is stored in
 @code{font-lock-syntax-table}.  If @var{syntax-alist} is omitted or
 @code{nil}, syntactic fontification uses the syntax table returned by
 the @code{syntax-table} function.  @xref{Syntax Table Functions}.
-
-The fifth element, @var{syntax-begin}, specifies the value of
-@code{font-lock-beginning-of-syntax-function}.  We recommend setting
-this variable to @code{nil} and using @code{syntax-begin-function}
-instead.
 
 All the remaining elements (if any) are collectively called
 @var{other-vars}.  Each of these elements should have the form
@@ -3122,26 +3117,6 @@ comments and strings.  It is normally set by Font Lock mode based on the
 is @code{nil}, syntactic fontification uses the buffer's syntax table
 (the value returned by the function @code{syntax-table}; @pxref{Syntax
 Table Functions}).
-@end defvar
-
-@defvar font-lock-beginning-of-syntax-function
-If this variable is non-@code{nil}, it should be a function to move
-point back to a position that is syntactically at top level and
-outside of strings or comments.  The value is normally set through an
-@var{other-vars} element in @code{font-lock-defaults}.  If it is
-@code{nil}, Font Lock uses @code{syntax-begin-function} to move back
-outside of any comment, string, or sexp (@pxref{Position Parse}).
-
-This variable is semi-obsolete; we usually recommend setting
-@code{syntax-begin-function} instead.  One of its uses is to tune the
-behavior of syntactic fontification, e.g., to ensure that different
-kinds of strings or comments are highlighted differently.
-
-The specified function is called with no arguments.  It should leave
-point at the beginning of any enclosing syntactic block.  Typical values
-are @code{beginning-of-line} (used when the start of the line is known
-to be outside a syntactic block), or @code{beginning-of-defun} for
-programming modes, or @code{backward-paragraph} for textual modes.
 @end defvar
 
 @defvar font-lock-syntactic-face-function

@@ -43,8 +43,6 @@
 
 (eval-when-compile (require 'cl-lib))
 
-(defvar font-lock-beginning-of-syntax-function)
-
 ;;; Applying syntax-table properties where needed.
 
 (defvar syntax-propertize-function nil
@@ -503,11 +501,6 @@ running the hook."
 	      ;; - The function might be slow.
 	      ;; - If this function almost always finds a safe nearby spot,
 	      ;;   the cache won't be populated, so consulting it is cheap.
-	      (when (and (not syntax-begin-function)
-			 (boundp 'font-lock-beginning-of-syntax-function)
-			 font-lock-beginning-of-syntax-function)
-		(set (make-local-variable 'syntax-begin-function)
-		     font-lock-beginning-of-syntax-function))
 	      (when (and syntax-begin-function
 			 (progn (goto-char pos)
 				(funcall syntax-begin-function)
