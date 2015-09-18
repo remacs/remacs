@@ -841,7 +841,7 @@ first difference.")
     (verilog-xl-2
      "([WE][0-9A-Z]+)[ \t]+\\([^ \t\n,]+\\)[, \t]+\\(line[ \t]+\\)?\\([0-9]+\\):.*$" 1 3)
     (verilog-IES
-     ".*\\*[WE],[0-9A-Z]+\\(\\[[0-9A-Z_,]+]\\)? (\\([^ \t,]+\\),\\([0-9]+\\)" 2 3)
+     ".*\\*[WE],[0-9A-Z]+\\(\\[[0-9A-Z_,]+\\]\\)? (\\([^ \t,]+\\),\\([0-9]+\\)" 2 3)
     (verilog-surefire-1
      "[^\n]*\\[\\([^:]+\\):\\([0-9]+\\)\\]" 1 2)
     (verilog-surefire-2
@@ -885,8 +885,8 @@ See `compilation-error-regexp-alist-alist' for the formatting.  For XEmacs.")
     ("([WE][0-9A-Z]+)[ \t]+\\([^ \t\n,]+\\)[, \t]+\\(line[ \t]+\\)?\\([0-9]+\\):.*$" 1 bold t)
     ("([WE][0-9A-Z]+)[ \t]+\\([^ \t\n,]+\\)[, \t]+\\(line[ \t]+\\)?\\([0-9]+\\):.*$" 3 bold t)
     ;; verilog-IES (nc-verilog)
-    (".*\\*[WE],[0-9A-Z]+\\(\\[[0-9A-Z_,]+]\\)? (\\([^ \t,]+\\),\\([0-9]+\\)|" 2 bold t)
-    (".*\\*[WE],[0-9A-Z]+\\(\\[[0-9A-Z_,]+]\\)? (\\([^ \t,]+\\),\\([0-9]+\\)|" 3 bold t)
+    (".*\\*[WE],[0-9A-Z]+\\(\\[[0-9A-Z_,]+\\]\\)? (\\([^ \t,]+\\),\\([0-9]+\\)|" 2 bold t)
+    (".*\\*[WE],[0-9A-Z]+\\(\\[[0-9A-Z_,]+\\]\\)? (\\([^ \t,]+\\),\\([0-9]+\\)|" 3 bold t)
     ;; verilog-surefire-1
     ("[^\n]*\\[\\([^:]+\\):\\([0-9]+\\)\\]" 1 bold t)
     ("[^\n]*\\[\\([^:]+\\):\\([0-9]+\\)\\]" 2 bold t)
@@ -2303,7 +2303,7 @@ find the errors."
        ;; non blocking assignment operator
        "<="
        ;; comparison
-       "==" "!=" "===" "!==" "<=" ">=" "==\\?" "!=\\?" "<->"
+       "==" "!=" "===" "!==" "<=" ">=" "==?" "!=?" "<->"
        ;; event_trigger
        "->" "->>"
        ;; property_expr
@@ -9674,7 +9674,7 @@ If undefined, and WING-IT, return just SYMBOL without the tick, else nil."
     ;; something like a[b].  Sorry, it should be substituted into the parser
     (setq symbol
 	  (verilog-string-replace-matches
-	   "\\[[^0-9: \t]+]" "" nil nil
+	   "\\[[^0-9: \t]+\\]" "" nil nil
 	   (or (verilog-symbol-detick symbol nil)
 	       (if verilog-auto-sense-defines-constant
 		   "0"
@@ -11153,7 +11153,7 @@ If PAR-VALUES replace final strings with these parameter values."
 	  (for-star
 	   (indent-to (+ (if (< verilog-auto-inst-column 48) 24 16)
 			 verilog-auto-inst-column))
-	   (verilog-insert " // Implicit .*\n"))
+	   (verilog-insert " // Implicit .\*\n")) ;For some reason the . or * must be escaped...
 	  (t
 	   (insert "\n")))))
 ;;(verilog-auto-inst-port (list "foo" "[5:0]") 10 (list (list "foo" "a@\"(% (+ @ 1) 4)\"a")) "3")
