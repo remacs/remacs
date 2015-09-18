@@ -123,7 +123,7 @@
 ;;
 
 ;; This variable will always hold the version number of the mode
-(defconst verilog-mode-version "2015-08-16-ce03c7a-vpo-GNU"
+(defconst verilog-mode-version "2015-09-18-314cf1d-vpo-GNU"
   "Version of this Verilog mode.")
 (defconst verilog-mode-release-emacs t
   "If non-nil, this version of Verilog mode was released with Emacs itself.")
@@ -3442,7 +3442,7 @@ Use filename, if current buffer being edited shorten to just buffer name."
   (verilog-forward-sexp))
 
 (defun verilog-forward-sexp-function (arg)
-  "Move forward a sexp."
+  "Move forward ARG sexps."
   ;; Used by hs-minor-mode
   (if (< arg 0)
       (verilog-backward-sexp)
@@ -8129,7 +8129,8 @@ Tieoff value uses `verilog-active-low-regexp' and
 ;;
 
 (defun verilog-decls-princ (decls &optional header prefix)
-  "For debug, dump the `verilog-read-decls' structure DECLS."
+  "For debug, dump the `verilog-read-decls' structure DECLS.
+Use optional HEADER and PREFIX."
   (when decls
     (if header (princ header))
     (setq prefix (or prefix ""))
@@ -8173,7 +8174,7 @@ Tieoff value uses `verilog-active-low-regexp' and
 	(princ "\n")))))
 
 (defun verilog-modport-princ (modports &optional header prefix)
-  "For debug, dump internal MODPORT structures, with HEADER and PREFIX."
+  "For debug, dump internal MODPORTS structures, with HEADER and PREFIX."
   (when modports
     (if header (princ header))
     (while modports
@@ -9994,7 +9995,8 @@ and invalidating the cache."
 
 
 (defun verilog-modi-modport-lookup-one (modi name &optional ignore-error)
-  "Given a MODI, return the declarations related to the given modport NAME."
+  "Given a MODI, return the declarations related to the given modport NAME.
+Report errors unless optional IGNORE-ERROR."
   ;; Recursive routine - see below
   (let* ((realname (verilog-symbol-detick name t))
 	 (modport (assoc name (verilog-decls-get-modports (verilog-modi-get-decls modi)))))
