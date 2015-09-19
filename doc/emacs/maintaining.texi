@@ -584,7 +584,7 @@ another branch by giving its revision or branch ID (@pxref{Switching
 Branches}).  An empty argument (i.e., @kbd{C-u C-x v v @key{RET}})
 checks out the latest (head) revision on the current branch.
 
-This signals an error on a decentralized version control system.
+This is silently ignored on a decentralized version control system.
 Those systems do not let you specify your own revision IDs, nor do
 they use the concept of checking out individual files.
 @end itemize
