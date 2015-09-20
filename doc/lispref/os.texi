@@ -2692,6 +2692,17 @@ Removes an existing file watch specified by its @var{descriptor}.
 @code{file-notify-add-watch}.
 @end defun
 
+@defun file-notify-valid-p descriptor
+Checks a watch specified by its @var{descriptor} for validity.
+@var{descriptor} should be an object returned by
+@code{file-notify-add-watch}.
+
+A watch can become invalid if the file or directory it watches is
+deleted, or if the watcher thread exits abnormally for any other
+reason.  Removing the watch by calling @code{file-notify-rm-watch}
+also makes it invalid.
+@end defun
+
 @node Dynamic Libraries
 @section Dynamically Loaded Libraries
 @cindex dynamic libraries
