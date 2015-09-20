@@ -620,6 +620,11 @@ The type returned can be `comment', `string' or `paren'."
    ((python-rx string-delimiter)
     (0 (ignore (python-syntax-stringify))))))
 
+(defconst python--prettify-symbols-alist
+  '(("lambda"  . ?\u03bb)
+    ("and" . ?\u2227)
+    ("or" . ?\u2228)))
+
 (defsubst python-syntax-count-quotes (quote-char &optional point limit)
   "Count number of quotes around point (max is 3).
 QUOTE-CHAR is the quote char to count.  Optional argument POINT is
@@ -5103,6 +5108,9 @@ returned as is."
        #'(lambda ()
            "`outline-level' function for Python mode."
            (1+ (/ (current-indentation) python-indent-offset))))
+
+  (set (make-local-variable 'prettify-symbols-alist)
+       python--prettify-symbols-alist)
 
   (python-skeleton-add-menu-items)
 
