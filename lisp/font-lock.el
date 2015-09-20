@@ -1752,7 +1752,8 @@ If SYNTACTIC-KEYWORDS is non-nil, it means these keywords are used for
     (if (and (not syntactic-keywords)
 	     (let ((beg-function syntax-begin-function))
 	       (or (eq beg-function 'beginning-of-defun)
-		   (get beg-function 'font-lock-syntax-paren-check)))
+                   (if (symbolp beg-function)
+                       (get beg-function 'font-lock-syntax-paren-check))))
 	     (not beginning-of-defun-function))
 	;; Try to detect when a string or comment contains something that
 	;; looks like a defun and would thus confuse font-lock.
