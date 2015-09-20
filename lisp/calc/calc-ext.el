@@ -1327,9 +1327,8 @@ calc-kill calc-kill-region calc-yank))))
       (setq calc-prefix-help-retry (= chr ??))
       (if bnd
           (call-interactively bnd)
-        (if key
-            (message (concat (key-description (vector key chr))  " is undefined"))
-          (message (concat (key-description (vector chr))  " is undefined")))))))
+        (message "%s is undefined"
+                 (key-description (if key (vector key chr) (vector chr))))))))
 
 ;;;; Commands.
 

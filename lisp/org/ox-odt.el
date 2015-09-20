@@ -4089,8 +4089,8 @@ contextual information."
 					 nil standard-output nil (cdr cmd)))))
 		    (or (zerop exitcode)
 			(error (concat "Unable to create OpenDocument file."
-				       (format "  Zip failed with error (%s)"
-					       err-string)))))
+				       "  Zip failed with error (%s)")
+			       err-string)))
 		  cmds)))
 	     ;; Move the zip file from temporary work directory to
 	     ;; user-mandated location.

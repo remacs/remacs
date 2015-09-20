@@ -2007,7 +2007,8 @@ It will be properly highlighted even when the call omits parens.")
          (t
           (error (concat
                   "Internal error on `ruby-in-ppss-context-p': "
-                  "context name `" (symbol-name context) "' is unknown"))))
+                  "context name `%s' is unknown")
+                 context)))
         t)))
 
 (defvar ruby-font-lock-syntax-table

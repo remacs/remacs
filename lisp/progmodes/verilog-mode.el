@@ -5301,8 +5301,8 @@ Save the result unless optional NO-SAVE is t."
 		 (save-excursion
 		   (if (not (file-exists-p (buffer-file-name buf)))
 		       (error
-			(concat "File not found: " (buffer-file-name buf))))
-		   (message (concat "Processing " (buffer-file-name buf)))
+			"File not found: %s" (buffer-file-name buf)))
+		   (message "Processing %s" (buffer-file-name buf))
 		   (set-buffer buf)
 		   (funcall funref)
 		   (when (and (not no-save)
@@ -8074,9 +8074,9 @@ Duplicate signals are also removed.  For example A[2] and A[1] become A[2:1]."
 	     (when (and sv-busstring
 			(not (equal sv-busstring (verilog-sig-bits sig))))
                (when nil  ; Debugging
-		 (message (concat "Warning, can't merge into single bus "
-				  sv-name bus
-				  ", the AUTOs may be wrong")))
+		 (message (concat "Warning, can't merge into single bus %s%s"
+				  ", the AUTOs may be wrong")
+			  sv-name bus))
 	       (setq buswarn ", Couldn't Merge"))
 	     (if (verilog-sig-comment sig) (setq combo ", ..."))
 	     (setq sv-memory (or sv-memory (verilog-sig-memory sig))
@@ -9325,8 +9325,8 @@ warning message, you need to add to your init file:
 	(let ((fns (verilog-library-filenames filename (buffer-file-name))))
 	  (if fns
 	      (set-buffer (find-file-noselect (car fns)))
-	    (error (concat (verilog-point-text)
-			   ": Can't find verilog-read-defines file: " filename)))))
+	    (error "%s: Can't find verilog-read-defines file: %s"
+		   (verilog-point-text) filename))))
       (when recurse
 	(goto-char (point-min))
 	(while (re-search-forward "^\\s-*`include\\s-+\\([^ \t\n\f]+\\)" nil t)
@@ -9507,8 +9507,8 @@ Some macros and such are also found and included.  For dinotrace.el."
 	  line)
       (if fns
 	  (set-buffer (find-file-noselect (car fns)))
-	(error (concat (verilog-point-text)
-		       ": Can't find verilog-getopt-file -f file: " filename)))
+	(error "%s: Can't find verilog-getopt-file -f file: %s"
+	       (verilog-point-text) filename))
       (goto-char (point-min))
       (while (not (eobp))
 	(setq line (buffer-substring (point) (point-at-eol)))
@@ -9710,7 +9710,8 @@ Or, just the existing dirnames themselves if there are no wildcards."
   ;; Note this function is performance critical.
   ;; Do not call anything that requires disk access that cannot be cached.
   (interactive)
-  (unless dirnames (error "`verilog-library-directories' should include at least '.'"))
+  (unless dirnames
+    (error "`verilog-library-directories' should include at least `.'"))
   (setq dirnames (reverse dirnames))	; not nreverse
   (let ((dirlist nil)
 	pattern dirfile dirfiles dirname root filename rest basefile)
@@ -9889,17 +9890,18 @@ Return modi if successful, else print message unless IGNORE-ERROR is true."
 		 (if (not (setq mif (verilog-module-inside-filename-p realname (car filenames))))
 		     (setq filenames (cdr filenames))))
 	       ;; mif has correct form to become later elements of modi
-	       (cond (mif (setq modi mif))
-		     (t (setq modi nil)
-			(or ignore-error
-			    (error (concat (verilog-point-text)
-					   ": Can't locate " module " module definition"
-					   (if (not (equal module realname))
-					       (concat " (Expanded macro to " realname ")")
-					     "")
-					   "\n    Check the verilog-library-directories variable."
-					   "\n    I looked in (if not listed, doesn't exist):\n\t"
-					   (mapconcat 'concat orig-filenames "\n\t"))))))
+	       (setq modi mif)
+	       (or mif ignore-error
+		   (error
+		    (concat
+		     "%s: Can't locate %s module definition%s"
+		     "\n    Check the verilog-library-directories variable."
+		     "\n    I looked in (if not listed, doesn't exist):\n\t%s")
+		    (verilog-point-text) module
+		    (if (not (equal module realname))
+			(concat " (Expanded macro to " realname ")")
+		      "")
+		    (mapconcat 'concat orig-filenames "\n\t")))
 	       (when (eval-when-compile (fboundp 'make-hash-table))
 		 (unless verilog-modi-lookup-cache
 		   (setq verilog-modi-lookup-cache
@@ -10001,11 +10003,11 @@ Report errors unless optional IGNORE-ERROR."
   (let* ((realname (verilog-symbol-detick name t))
 	 (modport (assoc name (verilog-decls-get-modports (verilog-modi-get-decls modi)))))
     (or modport ignore-error
-	(error (concat (verilog-point-text)
-		       ": Can't locate " name " modport definition"
-		       (if (not (equal name realname))
-			   (concat " (Expanded macro to " realname ")")
-			 ""))))
+	(error "%s: Can't locate %s modport definition%s"
+               (verilog-point-text) name
+               (if (not (equal name realname))
+                   (concat " (Expanded macro to " realname ")")
+                 "")))
     (let* ((decls (verilog-modport-decls modport))
 	   (clks (verilog-modport-clockings modport)))
       ;; Now expand any clocking's

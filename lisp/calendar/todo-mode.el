@@ -5643,9 +5643,10 @@ have been removed."
     (when deleted
       (let ((pl (> (length deleted) 1))
 	    (names (mapconcat (lambda (f) (concat "\"" f "\"")) deleted ", ")))
-	(message (concat "File" (if pl "s" "") " " names " ha" (if pl "ve" "s")
+	(message (concat "File" (if pl "s" "") " %s ha" (if pl "ve" "s")
 			 " been deleted and removed from\n"
-			 "the list of category completion files")))
+			 "the list of category completion files")
+		 names))
       (todo-reevaluate-category-completions-files-defcustom)
       (custom-set-default 'todo-category-completions-files
 			  (symbol-value 'todo-category-completions-files))

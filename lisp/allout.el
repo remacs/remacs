@@ -5562,9 +5562,8 @@ Defaults:
 	  ;; Specified but not a buffer -- get it:
 	  (let ((got (get-buffer frombuf)))
 	    (if (not got)
-		(error (concat "allout-process-exposed: source buffer "
-			       frombuf
-			       " not found."))
+		(error "allout-process-exposed: source buffer %s not found."
+		       frombuf)
 	      (setq frombuf got))))
     ;; not specified -- default it:
     (setq frombuf (current-buffer)))
