@@ -57,11 +57,9 @@
 2015-09-18  Wilson Snyder  <wsnyder@wsnyder.org>
 
 	Fix checkdoc warnings.
-	    * lisp/progmodes/verilog-mode.el (verilog-forward-sexp-function)
-	    (verilog-decls-princ) (verilog-modport-princ)
-	    (verilog-modi-modport-lookup-one): Fix checkdoc warnings.
-
-	/svaha/wsnyder/d/log
+	* lisp/progmodes/verilog-mode.el (verilog-forward-sexp-function)
+	(verilog-decls-princ, verilog-modport-princ)
+	(verilog-modi-modport-lookup-one): Fix checkdoc warnings.
 
 2015-09-17  Jay Belanger  <jay.p.belanger@gmail.com>
 
@@ -329,9 +327,9 @@
 2015-09-16  Tassilo Horn  <tsdh@gnu.org>
 
 	Clarify reftex-extra-bindings docs.
-	* lisp/textmodes/reftex-vars.el (reftex-extra-bindings): Document that
-	the variable only has an effect at load-time.
-	* doc/misc/reftex.texi (Key Bindings): Ditto.
+	* lisp/textmodes/reftex-vars.el (reftex-extra-bindings):
+	* doc/misc/reftex.texi (Key Bindings): Document that the variable
+	only has an effect at load-time.
 
 2015-09-16  Daniel McClanahan  <danieldmcclanahan@gmail.com>  (tiny change)
 
@@ -424,7 +422,7 @@
 
 2015-09-15  Mark Oteiza  <mvoteiza@udel.edu>
 
-	lisp/custom.el (load-theme): Only compute hash when needed
+	lisp/custom.el (load-theme): Only compute hash when needed.
 
 2015-09-15  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -563,7 +561,7 @@
 
 2015-09-14  Michael Albinus  <michael.albinus@gmx.de>
 
-	Adaot file-notify-tests.el test cases
+	Adapt file-notify-tests.el test cases
 	* lisp/filenotify.el (file-notify-rm-watch): Ignore `file-notify-error'.
 	* src/inotify.c (Finotify_valid_p): Adapt docstring.
 	* test/automated/file-notify-tests.el ()
@@ -590,7 +588,7 @@
 
 2015-09-14  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* lisp/progmodes/cc-langs.el (c-make-init-lang-vars-fun): Use dolist
+	* lisp/progmodes/cc-langs.el (c-make-init-lang-vars-fun): Use dolist.
 
 2015-09-14  Alan Mackenzie  <acm@muc.de>
 
@@ -623,6 +621,12 @@
 2015-09-14  Tassilo Horn  <tsdh@gnu.org>
 
 	Fix tests for file-notify-valid-p.
+	* test/automated/file-notify-tests.el (file-notify--test-cleanup):
+	Use delete-directory to delete file-notify--test-tmpfile if it is
+	a directory.  Likewise for file-notify--test-tmpfile1.
+	(file-notify-test04-file-validity)
+	(file-notify-test05-dir-validity): Delete the parent directory of
+	the test.  Ignore errors when cleaning up after the test.
 
 2015-09-14  Eli Zaretskii  <eliz@gnu.org>
 
@@ -789,11 +793,9 @@
 
 2015-09-10  Mark Oteiza  <mvoteiza@udel.edu>
 
-	lisp/mpc.el (mpc--proc-connect): use file-name-absolute-p
-
-	lisp/mpc.el (mpc-file-local-copy): check for absolute path
-
-	lisp/mpc.el (mpc-file-local-copy): check more config locations
+	* lisp/mpc.el (mpc--proc-connect): Use file-name-absolute-p.
+	(mpc-file-local-copy): Check for absolute path.  Check more config
+	locations.
 
 2015-09-10  Eli Zaretskii  <eliz@gnu.org>
 
@@ -924,7 +926,8 @@
 
 2015-09-09  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* lisp/emacs-lisp/cl-generic.el (cl-generic-generalizers): Remove warning
+	* lisp/emacs-lisp/cl-generic.el (cl-generic-generalizers): Remove
+	warning.
 
 2015-09-09  Eli Zaretskii  <eliz@gnu.org>
 
@@ -987,12 +990,12 @@
 
 2015-09-08  Juri Linkov  <juri@linkov.net>
 
-	* lisp/info.el (Info-fontify-node): Don't stop at the non-title underline.
-	(Bug#21433)
+	* lisp/info.el (Info-fontify-node): Don't stop at the non-title
+	underline.  (Bug#21433)
 
 2015-09-08  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* lisp/calendar/time-date.el (with-decoded-time-value): Fix debug spec
+	* lisp/calendar/time-date.el (with-decoded-time-value): Fix debug spec.
 
 2015-09-08  Tassilo Horn  <tsdh@gnu.org>
 
@@ -1002,7 +1005,7 @@
 
 2015-09-08  Vasilij Schneidermann  <v.schneidermann@gmail.com>  (tiny change)
 
-	* lisp/play/tetris.el (tetris-move-down): New command (bug#21360)
+	* lisp/play/tetris.el (tetris-move-down): New command (bug#21360).
 	(tetris-mode-map): Use it.
 
 2015-09-08  Stefan Monnier  <monnier@iro.umontreal.ca>
@@ -1022,9 +1025,9 @@
 
 2015-09-07  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	(electric-quote-mode): Activate everywhere in message-mode
 	* lisp/electric.el (electric-quote-post-self-insert-function):
 	Don't use syntax-ppss if comment-use-syntax is nil (e.g. message-mode).
+	(electric-quote-mode): Activate everywhere in message-mode.
 
 2015-09-07  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -1328,7 +1331,7 @@
 
 2015-09-07  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* src/keyboard.c (read_key_sequence): Complete last fix (bug#21403)
+	* src/keyboard.c (read_key_sequence): Complete last fix (bug#21403).
 
 2015-09-07  Eli Zaretskii  <eliz@gnu.org>
 
@@ -1346,9 +1349,9 @@
 	situation, `package-initialize' now sets `package-enable-at-startup' to
 	nil to prevent that. The user can have the old behaviour by setting this
 	variable to t after the call to `package-initialize'.  (Bug#21423)
-	* doc/emacs/package.texi (Package Installation): Document it
-	* doc/lispref/package.texi (Packaging Basics): Document it
-	* etc/NEWS: Document it
+	* doc/emacs/package.texi (Package Installation): Document it.
+	* doc/lispref/package.texi (Packaging Basics): Document it.
+	* etc/NEWS: Document it.
 
 2015-09-06  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
@@ -1516,7 +1519,8 @@
 	reusing stale face IDs for 'escape-glyph' and 'glyphless-char'
 	faces, which could case a segfault if the frame's face cache was
 	freed since the last redisplay.  (Bug#21394)
-	* src/xfaces.c (free_realized_faces): Call forget_escape_and_glyphless_faces.
+	* src/xfaces.c (free_realized_faces): Call
+	forget_escape_and_glyphless_faces.
 	* src/dispextern.h (forget_escape_and_glyphless_faces): Add prototype.
 
 2015-09-04  Paul Eggert  <eggert@cs.ucla.edu>
@@ -1643,7 +1647,7 @@
 	Fix typo
 	* ftfont.c (ftfont_drive_otf): otf_positioning_type_components_mask -> OTF_positioning_type_components_mask.
 
-	fix previous change
+	Fix previous change
 	* ftfont.c (ftfont_drive_otf): Remember some bits of
 	OTF_Glyph->positioning_type in MFLTGlyphFT->libotf_positioning_type.
 
@@ -1719,7 +1723,7 @@
 
 2015-09-01  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Rework quoting in tutorial
+	Rework quoting in Emacs Lisp Introduction
 	* doc/lispintro/emacs-lisp-intro.texi (Sample let Expression)
 	(if in more detail, type-of-animal in detail, else): Rework the
 	early example to use " rather than ' so that we don’t burden
@@ -1837,7 +1841,7 @@
 
 	isearch: Document character folding mode.
 	* isearch.el (isearch-forward): Mention `isearch-toggle-character-fold'
-	in docstring.
+	in doc string.
 
 2015-08-31  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -2048,6 +2052,7 @@
 	Minor documentation and NEWS tweak
 	* doc/lispintro/emacs-lisp-intro.texi (fwd-para let): Add an index
 	entry.
+	* NEWS: Fix a typo in character-fold-to-regexp.
 
 2015-08-30  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -2086,7 +2091,7 @@
 	* lisp/progmodes/which-func.el (which-func-ff-hook): Look for new
 	imenu-unavailable error symbol instead of trying to match message
 	exactly.
-	* lisp/imenu.el (imenu-unavailable): New error
+	* lisp/imenu.el (imenu-unavailable): New error.
 	(imenu-unavailable-error): New function.
 
 2015-08-29  Eli Zaretskii  <eliz@gnu.org>
@@ -2364,7 +2369,7 @@
 
 2015-08-26  Michael Albinus  <michael.albinus@gmx.de>
 
-	* lisp/net/tramp-cache.el (top): Use `message' but `format-message'.
+	* lisp/net/tramp-cache.el (top): Use `message', not `format-message'.
 
 2015-08-26  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -2628,7 +2633,8 @@
 
 2015-08-24  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
 
-	* src/macfont.m (macfont_create_family_with_symbol): Accept localized names.
+	* src/macfont.m (macfont_create_family_with_symbol): Accept
+	localized names.
 
 2015-08-24  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -3160,7 +3166,8 @@
 	* lisp/progmodes/python.el
 	(python-shell-tramp-refresh-process-environment): New function.
 	(python-shell-with-environment): Use it.
-	* test/automated/python-tests.el (python-shell-with-environment-2): Update.
+	* test/automated/python-tests.el (python-shell-with-environment-2):
+	Update.
 
 	python.el: Enhancements to process environment setup.
 	* lisp/progmodes/python.el (python-shell-process-environment)
@@ -3250,7 +3257,8 @@
 2015-08-21  Martin Rudalics  <rudalics@gmx.at>
 
 	Document `window-use-time' in Elisp manual
-	* doc/lispref/windows.texi (Selecting Windows): Document `window-use-time'.
+	* doc/lispref/windows.texi (Selecting Windows): Document
+	`window-use-time'.
 
 2015-08-21  Eli Zaretskii  <eliz@gnu.org>
 
@@ -3533,8 +3541,8 @@
 	(top-level) Set the `delete-selection' property of `self-insert-command'
 	to `delete-selection-uses-region-p'.
 	progmodes/cc-cmds.el (top-level): Give the `delete-selection' property
-	for c-electric-\(brace\|paren\) the value `delete-selection-uses-region-p'
-	when the latter function exists.
+	for c-electric-\(brace\|paren\) the value
+	`delete-selection-uses-region-p' when the latter function exists.
 
 2015-08-19  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -3577,7 +3585,7 @@
 	clause of `isearch-search-fun-default'. That lax variable does not
 	refer to lax-whitespacing.  Related to (bug#21777).
 	This reverts commit a5bdb872edb9f031fe041faf9a8c0be432e5f64c.
-	* character-fold.el (character-fold-search): Set to nil
+	* character-fold.el (character-fold-search): Set to nil.
 	Default to nil for now, until someone implements proper
 	lax-whitespacing with char-fold searching.
 
@@ -3634,8 +3642,7 @@
 	* lisp/gnus/message.el (message-delete-overlay, message-make-overlay)
 	(message-overlay-get, message-overlay-put, message-overlays-in):
 	* lisp/gnus/sieve.el (sieve-make-overlay, sieve-overlay-put)
-	(sieve-overlays-at):
-	Remove.
+	(sieve-overlays-at): Remove.
 
 2015-08-19  Martin Rudalics  <rudalics@gmx.at>
 
@@ -3846,7 +3853,8 @@
 
 2015-08-17  Ronnie Schnell  <ronnie@driver-aces.com>
 
-	Update version number in header (now matches help)
+	* lisp/play/dunnet.el: Update version number in header (now
+	matches help).
 
 2015-08-17  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -3970,38 +3978,41 @@
 2015-08-16  Wilson Snyder  <wsnyder@wsnyder.org>
 
 	Update verilog-mode.el to 2015-05-14-6232468-vpo-GNU.
-	    * losp/progmodes/verilog-mode.el: Fix some non-automated indent
-	    issues and comments, bug943.  (verilog-type-font-keywords): Cycle
-	    delay operators like ##1 and ##[0:$] are now highlighted in their
-	    entirety similarly to the # delay-control operator.  Likewise, the
-	    followed-by operators #-# and #=# are no longer partially
-	    highlighed.  (verilog-backward-syntactic-ws-quick,
-	    verilog-skip-backward-comments): Minor performance improvements to
-	    buffer traversal functions for reduced latency.  (verilog-calc-1,
-	    verilog-in-deferred-immediate-final-p): When the keyword 'final'
-	    follows 'assert/assume/cover', then it is part of a deferred
-	    immediate assertion item and should not be treated as a final
-	    construct for indentation.  Reported by Yuri Sugihara.
-	    (verilog-do-indent): Virtual task/function/class definition lines
-	    should not be considered as declarations.  Reported by Enzo Chi.
-	    (verilog-do-indent): Do not falsely indent to '=' of
-	    property/sequence operators on subsequent lines of a multi-line
-	    statement.  (verilog-assignment-operator-re): Fix '!==' operator
-	    and add support for '<->', ':/', '#-#', and '#=#' operators.
-	    (verilog-calculate-indent, verilog-label-be): Enable
-	    case-sensitive regular expression parsing when looking for
-	    keywords.  (verilog-calc-1): Detect 'pure virtual method'
-	    declarations which exist in abstract classes.  Reported by Enzo
-	    Chi and Kaushal Modi.  (verilog-backward-ws&directives): When
-	    moving back to the start of a line and the preceeding line ended
-	    with an escaped-newline, then jump up one line.  This properly
-	    consumes a multi-line pre-processor directive.  Reported by
-	    Kaushal Modi.  (verilog-dpi-import-export-re,
-	    verilog-extended-complete-re, verilog-calc-1): Teach verilog-mode
-	    to properly indent after a DPI import/export statement that
-	    resides outside of a module.  Reported by Kaushal Modi.
-	    (verilog-extended-complete-re): Update regexp to match both
-	    "DPI-C" and "DPI".  Reported by Kaushal Modi.
+	* lisp/progmodes/verilog-mode.el: Fix some non-automated indent
+	issues and comments, bug#943.
+	(verilog-type-font-keywords): Cycle delay operators like ##1 and
+	##[0:$] are now highlighted in their entirety similarly to the #
+	delay-control operator.  Likewise, the followed-by operators #-#
+	and #=# are no longer partially highlighed.
+	(verilog-backward-syntactic-ws-quick)
+	(verilog-skip-backward-comments): Minor performance improvements
+	to buffer traversal functions for reduced latency.
+	(verilog-calc-1, verilog-in-deferred-immediate-final-p): When the
+	keyword 'final' follows 'assert/assume/cover', then it is part of
+	a deferred immediate assertion item and should not be treated as a
+	final construct for indentation.  Reported by Yuri Sugihara.
+	(verilog-do-indent): Virtual task/function/class definition lines
+	should not be considered as declarations.  Reported by Enzo Chi.
+	(verilog-do-indent): Do not falsely indent to '=' of
+	property/sequence operators on subsequent lines of a multi-line
+	statement.
+	(verilog-assignment-operator-re): Fix '!==' operator and add
+	support for '<->', ':/', '#-#', and '#=#' operators.
+	(verilog-calculate-indent, verilog-label-be): Enable
+	case-sensitive regular expression parsing when looking for
+	keywords.
+	(verilog-calc-1): Detect 'pure virtual method' declarations which
+	exist in abstract classes.  Reported by Enzo Chi and Kaushal Modi.
+	(verilog-backward-ws&directives): When moving back to the start of
+	a line and the preceeding line ended with an escaped-newline, then
+	jump up one line.  This properly consumes a multi-line
+	pre-processor directive.  Reported by Kaushal Modi.
+	(verilog-dpi-import-export-re, verilog-extended-complete-re)
+	(verilog-calc-1): Teach verilog-mode to properly indent after a
+	DPI import/export statement that resides outside of a module.
+	Reported by Kaushal Modi.
+	(verilog-extended-complete-re): Update regexp to match both
+	"DPI-C" and "DPI".  Reported by Kaushal Modi.
 
 2015-08-15  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -4055,7 +4066,7 @@
 2015-08-15  Dani Moncayo  <dmoncayo@gmail.com>
 
 	Remove 'nt/zipdist.bat' (no longer used)
-	* nt/zipdist.bat: Remove - no longer used.
+	* nt/zipdist.bat: Remove -- no longer used.
 
 2015-08-15  Jürgen Hötzel  <juergen@archlinux.org>
 
@@ -4176,7 +4187,7 @@
 
 2015-08-14  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* src/keyboard.c: Use false/true instead of 0/1 for booleans
+	* src/keyboard.c: Use false/true instead of 0/1 for booleans.
 	* src/keyboard.h (struct kboard): Mark kbd_queue_has_data as boolean.
 
 2015-08-14  Michael Albinus  <michael.albinus@gmx.de>
@@ -4304,10 +4315,9 @@
 	(c-not-decl-init-keywords, c-not-primitive-type-keywords)
 	(c-paren-any-kwds, c-<>-sexp-kwds, c-block-stmt-kwds, c-expr-kwds)
 	(c-decl-block-key, c-keywords, c-keywords-obarray)
-	(c-regular-keywords-regexp, c-primary-expr-regexp,
-	c-primary-expr-regexp)
-	(c-block-prefix-disallowed-chars, c-known-type-key,
-	c-nonlabel-token-key)
+	(c-regular-keywords-regexp, c-primary-expr-regexp)
+	(c-primary-expr-regexp, c-block-prefix-disallowed-chars)
+	(c-known-type-key, c-nonlabel-token-key)
 	(c-make-init-lang-vars-fun): Use the new macros rather than the old
 	names.
 
@@ -4315,8 +4325,8 @@
 
 	loadhist.el (read-feature): Conform to completing-read
 	* lisp/loadhist.el (read-feature): According to `completing-read'
-	  documentation, if collection is a list, then it must be a list of
-	  strings. And not a list of symbols like before.
+	documentation, if collection is a list, then it must be a list of
+	strings, not a list of symbols like before.
 
 2015-08-12  David Kastrup  <dak@gnu.org>
 
@@ -4366,7 +4376,7 @@
 
 2015-08-12  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* emacs-lisp/lisp-mnt.el (lm-header): save-excursion
+	* emacs-lisp/lisp-mnt.el (lm-header): Add save-excursion.
 
 2015-08-11  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
@@ -4414,8 +4424,8 @@
 2015-08-11  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* lisp/replace.el (perform-replace): Document `replacements'.
-	(perform-replace): Move the description of the format of `replacements' from
-	the body's comment to the docstring.
+	(perform-replace): Move the description of the format of `replacements'
+	from the body's comment to the doc string.
 
 2015-08-11  Jürgen Hötzel  <juergen@archlinux.org>
 
@@ -4426,13 +4436,13 @@
 2015-08-10  Stephen Leake  <stephen_leake@stephe-leake.org>
 
 	Rewrite elisp--xref-find-definitions to handle many more cases; add tests.
-	* lisp/progmodes/elisp-mode.el (elisp--xref-identifier-location): deleted
-	(elisp--xref-format-cl-defmethod): new
-	(find-feature-regexp): new
-	(find-alias-regexp): new
-	(elisp--xref-make-xref): new
-	(elisp--xref-find-definitions): Rewrite using the above, handle many more
-	cases. Always output all available definitions.
+	* lisp/progmodes/elisp-mode.el (elisp--xref-identifier-location):
+	Function deleted.
+	(elisp--xref-format-cl-defmethod): New defconst.
+	(find-feature-regexp, find-alias-regexp): New defcustoms.
+	(elisp--xref-make-xref): New function.
+	(elisp--xref-find-definitions): Rewrite using the above, handle many
+	more cases.  Always output all available definitions.
 	(xref-location-marker): No need for special cases.
 	* test/automated/elisp-mode-tests.el: Add more tests of
 	elisp--xref-find-definitions, improve current tests.
@@ -4450,8 +4460,8 @@
 
 	Set file buffer as current for "--file"
 	* lisp/startup.el (command-line-1): Set file buffer as current before
-	it is displayed so it can be used with options like
-	"--eval".  (Bug#21095)
+	it is displayed so it can be used with options like "--eval".
+	(Bug#21095)
 
 2015-08-10  Eli Zaretskii  <eliz@gnu.org>
 
@@ -4462,10 +4472,10 @@
 
 2015-08-10  Alan Mackenzie  <acm@muc.de>
 
-	Fix "Invalid search bound (wrong side of point)" in fontification.
-	progmodes/cc-fonts.el (c-font-lock-declarators): After skipping an
-	initialization expression, check point is not beyond the fontification
-	limit.
+	Fix "Invalid search bound (wrong side of point)" in fontification
+	* lisp/progmodes/cc-fonts.el (c-font-lock-declarators): After skipping
+	an initialization expression, check point is not beyond the
+	fontification limit.
 
 2015-08-09  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -4537,10 +4547,10 @@
 
 2015-08-09  Ivan Kanis  <ivan@kanis.fr>
 
-	fix link to source code in help window
-	* lisp/help-fns.el (find-lisp-object-file-name): remove code that
+	Fix link to source code in help window
+	* lisp/help-fns.el (find-lisp-object-file-name): Remove code that
 	will never work due to Glenn Morris change a6d63d9 on Apr 20 2013
-	'No longer include timestamp in header of .elc files'. Add code
+	'No longer include timestamp in header of .elc files'.  Add code
 	that will return .el source file in load-path.
 
 2015-08-09  Artur Malabarba  <bruce.connor.am@gmail.com>
@@ -4580,10 +4590,6 @@
 	(org-reftex-citation): Add `org--' prefix to dynamically scoped
 	`rds' var.
 
-2015-08-08  Nicolas Petton  <nicolas@petton.fr>
-
-	Merge remote-tracking branch 'origin/fix/subsequence-error-with-negative-sequences'
-
 2015-08-08  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Electric quote if coding is undecided or no conv
@@ -4622,17 +4628,16 @@
 
 2015-08-07  Phillip Lord  <phillip.lord@newcastle.ac.uk>
 
-	Improve error signalling for seq-subseq.
-
+	Improve error signalling for seq-subseq
 	* lisp/seq.el (seq-subseq): The existing behaviour is to error
 	when indexes are too large, but to silently ignore numbers which
 	are too negative for lists.  String and vector handling errors in
-	both cases. This has been regularlised. Error signalling behaviour
-	has been explicitly added to the docstring.
+	both cases.  This has been regularized.  Error signaling behavior
+	has been explicitly added to the doc string.
 
 	* lisp/cl-extra.el (cl-subseq): Defers to (seq-subseq) and is
-	therefore also impacted by this change. The docstring has been
-	updated to reflect this.
+	therefore also impacted by this change.  Update the doc string
+	to reflect this.
 
 	* test/automated/seq-tests.el (test-seq-subseq): Tests have been
 	added for these exceptional cases, as well as one non exceptional
@@ -4652,11 +4657,11 @@
 
 2015-08-07  Stephen Leake  <stephen_leake@stephe-leake.org>
 
-	lisp/window.el: fix typo, more `display-buffer-use-some-frame'
-	* lisp/window.el: fix typo that broke build
-	(display-buffer--action-function-custom-type): add
-	`display-buffer-use-some-frame'
-	(display-buffer): add `display-buffer-use-some-frame' to doc string
+	Fix typo in lisp/window.el, more `display-buffer-use-some-frame'
+	* lisp/window.el: Fix typo that broke build.
+	(display-buffer--action-function-custom-type): Add
+	`display-buffer-use-some-frame'.
+	(display-buffer): Add `display-buffer-use-some-frame' to doc string.
 
 	Add support for 'inhibit-same-window in 'display-buffer-use-some-frame'
 	* lisp/window.el (display-buffer-use-some-frame): Add support for
@@ -4724,11 +4729,11 @@
 
 2015-08-05  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/replace.el (replace-character-fold): Default to nil
+	* lisp/replace.el (replace-character-fold): Default to nil.
 
-	* lisp/character-fold.el: Fix lax whitespace
+	* lisp/character-fold.el: Fix lax whitespace.
 	(character-fold-table): Don't make space match other whitespace chars.
-	(character-fold-to-regexp): Simplify lax behaviour.
+	(character-fold-to-regexp): Simplify lax behavior.
 
 2015-08-05  Dmitry Gutov  <dgutov@yandex.ru>
 
@@ -4793,8 +4798,8 @@
 	Improve ansi-color filtering of unrecognized escape sequences
 	* lisp/ansi-color.el (ansi-color-drop-regexp): Recognize mode-setting
 	escape sequences.
-	(ansi-color-filter-apply): Filter out unrecognized escape sequences
-	(ansi-color-apply): Filter out unrecognized escape sequences
+	(ansi-color-filter-apply, ansi-color-apply): Filter out
+	unrecognized escape sequences.
 
 2015-08-04  Artur Malabarba  <bruce.connor.am@gmail.com>
 
@@ -4863,10 +4868,6 @@
 	* lisp/cedet/ede/proj.el (ede-proj-target-makefile):
 	Consistently use "all:" to describe the all: target,
 	replacing three different and confusingly-quoted usages.
-
-2015-08-02  Eli Zaretskii  <eliz@gnu.org>
-
-	Whitespace fixes
 
 2015-08-02  Evgeny Fraimovitch  <johnlen7@gmail.com>  (tiny change)
 
