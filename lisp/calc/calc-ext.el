@@ -1323,12 +1323,13 @@ calc-kill calc-kill-region calc-yank))))
 	    (message "%s: (none)  %c-" group key))
 	(message "%s: %s" group (car msgs))))
     (let* ((chr (read-char))
-           (keys (if key (string key chr) (string chr)))
-           (bnd (local-key-binding keys)))
+           (bnd (local-key-binding (if key (string key chr) (string chr)))))
       (setq calc-prefix-help-retry (= chr ??))
       (if bnd
           (call-interactively bnd)
-        (message (concat keys " is undefined"))))))
+        (if key
+            (message (concat (key-description (vector key chr))  " is undefined"))
+          (message (concat (key-description (vector chr))  " is undefined")))))))
 
 ;;;; Commands.
 
