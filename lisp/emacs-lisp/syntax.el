@@ -374,6 +374,7 @@ from each other, to avoid keeping too much useless info.")
   "Function to move back outside of any comment/string/paren.
 This function should move the cursor back to some syntactically safe
 point (where the PPSS is equivalent to nil).")
+(make-obsolete-variable 'syntax-begin-function nil "25.1")
 
 (defvar syntax-ppss-cache nil
   "List of (POS . PPSS) pairs, in decreasing POS order.")

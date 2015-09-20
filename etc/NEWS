@@ -867,7 +867,8 @@ a typographically-correct documents.
 
 * Incompatible Lisp Changes in Emacs 25.1
 
-** Removed font-lock-beginning-of-syntax-function and the SYNTAX-BEGIN
+** `syntax-begin-function' is declared obsolete.
+Removed font-lock-beginning-of-syntax-function and the SYNTAX-BEGIN
 slot in font-lock-defaults.
 
 +++
