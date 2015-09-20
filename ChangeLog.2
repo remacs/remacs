@@ -1,3 +1,460 @@
+2015-09-20  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of 'run-at-time'
+	* lisp/emacs-lisp/timer.el (run-at-time): Improve the doc string.
+	In particular, don't refer to 'diary-entry-time', because it is
+	unavailable until diary-lib is loaded.  Also, refer to
+	'timer-duration-words', not 'timer-duration', as the latter's doc
+	string says nothing about the accepted strings.
+
+2015-09-19  Jay Belanger  <jay.p.belanger@gmail.com>
+
+	* lisp/calc/calc-ext.el (calc-do-prefix-help): Tidy up error message.
+
+2015-09-19  Ken Manheimer  <ken.manheimer@gmail.com>
+
+	Repair pdbtrack	so it follows transition from one remote file to another.
+	* python.el (python-pdbtrack-set-tracked-buffer).
+
+2015-09-19  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/timer.el (run-at-time): Docstring formatting
+
+2015-09-19  Eli Zaretskii  <eliz@gnu.org>
+
+	Adapt vc-src to the old-new vc-checkin API
+	* lisp/vc/vc-src.el (vc-src-checkin): Accept and ignore an
+	additional optional parameter.
+
+2015-09-19  Simen Heggestøyl  <simenheg@gmail.com>
+
+	Add overflow module to CSS property list
+	* lisp/textmodes/css-mode.el (css-property-ids): Add properties from CSS
+	Overflow Module Level 3.
+
+2015-09-19  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix documentation of "C-u C-x v v"
+	* doc/emacs/maintaining.texi (Advanced C-x v v): Make the
+	documentation of "C-u C-x v v" match what the code does.
+
+	Resurrect the ability to specify a revision in vc-next-action
+	* lisp/vc/vc-bzr.el (vc-bzr-checkin):
+	* lisp/vc/vc-dav.el (vc-dav-checkin):
+	* lisp/vc/vc-git.el (vc-git-checkin):
+	* lisp/vc/vc-hg.el (vc-hg-checkin):
+	* lisp/vc/vc-mtn.el (vc-mtn-checkin): Accept and silently ignore
+	an additional optional argument, the revision to checkin.
+	* lisp/vc/vc-sccs.el (vc-sccs-checkin):
+	* lisp/vc/vc-cvs.el (vc-cvs-checkin):
+	* lisp/vc/vc-rcs.el (vc-rcs-checkin): Allow to optionally specify
+	a revision to checkin.
+	* lisp/vc/vc.el (vc-next-action): Allow to optionally specify the
+	revision when checking in files.
+	See http://lists.gnu.org/archive/html/emacs-devel/2015-09/msg00688.html
+	for the details.
+
+2015-09-18  Wilson Snyder  <wsnyder@wsnyder.org>
+
+	Fix checkdoc warnings.
+	    * lisp/progmodes/verilog-mode.el (verilog-forward-sexp-function)
+	    (verilog-decls-princ) (verilog-modport-princ)
+	    (verilog-modi-modport-lookup-one): Fix checkdoc warnings.
+
+	/svaha/wsnyder/d/log
+
+2015-09-17  Jay Belanger  <jay.p.belanger@gmail.com>
+
+	Fix the routine for help on Calc's prefixes.
+	* lisp/calc/calc-ext.el (calc-prefix-help-retry): New variable.
+	(calc-do-prefix-help): Use `read-char' to determine the next Calc
+	command.
+
+2015-09-17  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/font-lock.el (font-lock-beginning-of-syntax-function): Remove
+	(font-lock-fontify-block): Don't let-bind it.
+	(font-lock-compile-keywords): Don't use it.
+	(font-lock-set-defaults): Don't set it.  Allow the variable alist to
+	start one slot earlier, instead.
+	* lisp/emacs-lisp/syntax.el (font-lock-beginning-of-syntax-function):
+	Don't declare.
+	(syntax-ppss): Don't use it either.
+	* lisp/font-core.el (font-lock-defaults): Remove SYNTAX-BEGIN
+	from docstring.
+	* doc/emacs/display.texi (Font Lock): Don't mention
+	font-lock-beginning-of-syntax-function.
+	* doc/lispref/modes.texi (Font Lock Basics): Update description of
+	font-lock-defaults.
+	(Syntactic Font Lock): Remove font-lock-beginning-of-syntax-function.
+	* lisp/loadhist.el (unload-feature-special-hooks):
+	Remove font-lock-beginning-of-syntax-function.
+	* lisp/obsolete/lazy-lock.el (lazy-lock-fontify-region):
+	* lisp/emacs-lisp/lisp.el (beginning-of-defun-raw): Don't let-bind
+	font-lock-beginning-of-syntax-function.
+
+2015-09-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Backslash cleanup in Elisp source files
+	This patch should not change behavior.  It typically omits backslashes
+	where they are redundant (e.g., in the string literal "^\$").
+	In a few places, insert backslashes where they make regular
+	expressions clearer: e.g., replace "^\*" (equivalent to "^*") with
+	"^\\*", which has the same effect as a regular expression.
+	Also, use ‘\ %’ instead of ‘\%’ when avoiding confusion with SCCS IDs,
+	and similarly use ‘\ $’ instead of ‘\$’ when avoiding confusion with
+	RCS IDs, as that makes it clearer that the backslash is intended.
+
+	Some more minor backslash fixes
+	* test/automated/compile-tests.el (compile-tests--test-regexps-data):
+	* test/automated/info-xref.el (info-xref-test-write-file):
+	Double backslashes in strings.
+
+	Fix several backslash typos in Elisp strings
+	* lisp/calendar/todo-mode.el (todo-files, todo-rename-file)
+	(todo-find-filtered-items-file, todo-reset-nondiary-marker)
+	(todo-reset-done-string, todo-reset-comment-string)
+	(todo-reset-highlight-item):
+	* lisp/erc/erc-networks.el (erc-networks-alist):
+	* lisp/gnus/gnus-art.el (gnus-button-handle-library):
+	* lisp/gnus/gnus-group.el (gnus-read-ephemeral-gmane-group-url):
+	* lisp/gnus/nntp.el (nntp-via-shell-prompt)
+	(nntp-telnet-shell-prompt):
+	* lisp/gnus/spam-report.el (spam-report-gmane-regex):
+	* lisp/image-dired.el (image-dired-rotate-original):
+	(image-dired-get-exif-file-name):
+	* lisp/international/latin1-disp.el (latin1-display-ucs-per-lynx):
+	* lisp/mail/undigest.el (rmail-digest-parse-rfc1153strict):
+	* lisp/mh-e/mh-letter.el (mh-file-is-vcard-p):
+	* lisp/mh-e/mh-mime.el (mh-file-mime-type-substitutions):
+	* lisp/net/shr-color.el (shr-color->hexadecimal):
+	* lisp/org/org-bibtex.el (org-bibtex-fields):
+	* lisp/org/org-docview.el (org-docview-export):
+	* lisp/org/org-entities.el (org-entities):
+	* lisp/org/ox-icalendar.el (org-icalendar-cleanup-string):
+	* lisp/progmodes/cperl-mode.el (cperl-indent-exp):
+	* lisp/progmodes/ebnf2ps.el (ebnf-file-suffix-regexp)
+	(ebnf-style-database):
+	* lisp/progmodes/idlw-help.el (idlwave-do-context-help1):
+	* lisp/progmodes/ruby-mode.el (ruby-imenu-create-index-in-block):
+	* lisp/progmodes/sql.el (sql-product-alist):
+	* lisp/progmodes/verilog-mode.el (verilog-error-regexp-emacs-alist)
+	(verilog-error-font-lock-keywords)
+	(verilog-assignment-operator-re):
+	* lisp/progmodes/vhdl-mode.el (vhdl-compiler-alist):
+	* lisp/textmodes/reftex-parse.el (reftex-parse-from-file):
+	* lisp/vc/add-log.el (change-log-version-number-regexp-list):
+	Fix typo by replacing ‘\’ with ‘\\’ in a string literal.
+	For example, to get the regular expression ‘\.’ use the string
+	literal "\\.", not "\." (which is equivalent to ".").
+	* lisp/emulation/viper-util.el (viper-glob-unix-files):
+	Remove stray ‘\j’ from string.
+	* lisp/gnus/nntp.el (nntp-via-shell-prompt)
+	(nntp-telnet-shell-prompt):
+	Treat > like $ when matching a shell prompt.
+	* lisp/progmodes/make-mode.el (makefile-browse):
+	Properly quote a diagnostic.
+
+	Fix minor quoting problems in diagnostics
+	* lisp/tutorial.el (tutorial--describe-nonstandard-key):
+	* lisp/vc/ediff-ptch.el (ediff-fixup-patch-map):
+	Follow text-quoting-style in diagnostic, and quote a file name.
+
+2015-09-17  Eli Zaretskii  <eliz@gnu.org>
+
+	* doc/lispref/frames.texi (Cursor Parameters): Document 'x-stretch-cursor'.
+
+2015-09-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Omit unnecessary \ before paren in C docstrings
+	Although \( is needed in docstrings in Elisp code, it is not needed in
+	docstrings in C code, since C function definitiions do not start with
+	a parenthesis.  The backslashes made the docstrings a bit harder to
+	read and to format in columns.  Also, some C docstrings had ( in
+	column 1 and this did not appear to be causing any problems.  So,
+	simplify C docstrings by replacing \( with ( and \) with ).
+
+	A few more minor quoting fixes in a script and a text file
+
+	Minor quoting fixes in scripts and doc
+	Prefer straight quotes in random script files, as they are not converted.
+	Prefer grave quotes in a couple of places in the manual that were missed
+	earlier, as these quotes are converted.
+
+	Minor backslash fixes in manuals and scripts
+	* Makefile.in (install-arch-indep):
+	* admin/charsets/compact.awk:
+	* admin/charsets/gb180302.awk (gb_to_index):
+	* admin/charsets/gb180304.awk (gb_to_index):
+	Avoid undefined behavior in Awk regular expression backslashes.
+	* doc/misc/efaq.texi (Matching parentheses):
+	Omit unnecessary backslashes.
+	* doc/misc/gnus-faq.texi (FAQ 5-8):
+	Avoid undefined behavior in suggested sed backslash usage.
+
+	Add -Wswitch to --enable-gcc-warnings
+	Make --enable-gcc-warnings a bit pickier, by also using -Wswitch.
+	* configure.ac (WERROR_CFLAGS): Don’t add -Wno-switch.
+	* lib-src/etags.c (main, consider_token, C_entries):
+	* src/coding.c (encode_invocation_designation):
+	* src/data.c (Ftype_of):
+	* src/eval.c (Fdefvaralias, default_toplevel_binding)
+	(Fbacktrace__locals, mark_specpdl):
+	* src/lisp.h (record_xmalloc):
+	* src/syntax.c (scan_lists, scan_sexps_forward):
+	* src/window.c (window_relative_x_coord):
+	* src/xdisp.c (push_it, pop_it):
+	* src/xterm.c (xg_scroll_callback, x_check_fullscreen):
+	Error out or do nothing (as appropriate) if a switch statement
+	with an enum value does not cover all of the enum.
+	* src/dispextern.h (struct iterator_stack_entry.u.comp):
+	Remove unused member discovered by using -Wswitch.
+	* src/lisp.h (record_xmalloc): Add a ‘+ 0’ to pacify -Wswitch.
+	* src/vm-limit.c (check_memory_limits):
+	Simplify warning-diagnostic computation by using a table.
+
+	etags ‘fatal’ function is now printf-like
+	* lib-src/etags.c (fatal): Now printf-like.  All callers changed.
+	Also, now static; not clear why it needed to be extern.
+	(verror): New function, with most of the old contents of ‘error’.
+	(fatal, error): Use it.
+
+2015-09-16  Eli Zaretskii  <eliz@gnu.org>
+
+	More adaptations in file-notify-tests.el
+	* test/automated/file-notify-tests.el
+	(file-notify-test05-dir-validity): Skip for w32notify in
+	batch-mode.  (Bug#21432)
+
+2015-09-16  Michael Albinus  <michael.albinus@gmx.de>
+
+	Adapt test in file-notify-tests.el
+	* test/automated/file-notify-tests.el
+	(file-notify-test04-file-validity): Skip for w32notify in
+	batch-mode.  Add test lost last commit.
+
+2015-09-16  Dima Kogan  <dima@secretsauce.net>
+
+	winner no longer holds on to dead frames
+	* lisp/winner.el (winner-change-fun): Cull dead frames.
+	This prevents a potentially massive memory leak.  See:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-09/msg00619.html
+
+2015-09-16  Michael Albinus  <michael.albinus@gmx.de>
+
+	Use common report_file_notify_error function
+	* src/fileio.c (report_file_notify_error): New function.
+	* src/inotify.c (report_inotify_error): Remove function.
+	(inotify_callback, symbol_to_inotifymask, Finotify_add_watch)
+	(Finotify_rm_watch): Use report_file_notify_error.
+	* src/lisp.h (report_file_notify_error): Declare external function.
+	* src/w32notify.c (report_w32notify_error): Remove function.
+	(Fw32notify_add_watch, Fw32notify_rm_watch):
+	Use report_file_notify_error.
+
+2015-09-16  Jay Belanger  <jay.p.belanger@gmail.com>
+
+	Fix documentation.
+	* doc/misc/calc.texi (Single-Variable Statistics): Fix the wording of
+	the documentation of the root mean square.
+
+2015-09-16  Martin Rudalics  <rudalics@gmx.at>
+
+	Remove tool_bar_redisplayed_once and associated code.
+	* src/frame.h (tool_bar_redisplayed_once): Remove slot.
+	* src/frame.c (make_frame, x_set_font): Remove initialization of
+	f->tool_bar_redisplayed_once.
+	* src/w32fns.c (x_change_tool_bar_height):
+	* src/xfns.c (x_change_tool_bar_height): Don't check for
+	f->tool_bar_redisplayed_once.
+	* src/xdisp.c (redisplay_internal): Remove handling of
+	f->tool_bar_redisplayed_once.
+
+2015-09-16  Eli Zaretskii  <eliz@gnu.org>
+
+	Restore some of the quoting in the manuals
+	* doc/lispref/windows.texi (Coordinates and Windows)
+	(Coordinates and Windows):
+	* doc/lispref/variables.texi (Lexical Binding)
+	(File Local Variables):
+	* doc/lispref/text.texi (Format Properties):
+	* doc/lispref/symbols.texi (Symbol Components):
+	* doc/lispref/strings.texi (Creating Strings):
+	* doc/lispref/sequences.texi (Sequence Functions):
+	* doc/lispref/searching.texi (Regexp Special, Regexp Search)
+	(Search and Replace):
+	* doc/lispref/processes.texi (Bindat Spec):
+	* doc/lispref/os.texi (Idle Timers):
+	* doc/lispref/objects.texi (Basic Char Syntax):
+	* doc/lispref/numbers.texi (Float Basics, Random Numbers):
+	* doc/lispref/nonascii.texi (Character Properties):
+	* doc/lispref/modes.texi (Major Mode Conventions, Mode Hooks)
+	(Mode Line Variables):
+	* doc/lispref/minibuf.texi (Text from Minibuffer):
+	* doc/lispref/loading.texi (Autoload):
+	* doc/lispref/keymaps.texi (Controlling Active Maps):
+	* doc/lispref/frames.texi (Frame Layout, Size and Position)
+	(Size Parameters, Implied Frame Resizing):
+	* doc/lispref/files.texi (Changing Files, Magic File Names):
+	* doc/lispref/eval.texi (Self-Evaluating Forms):
+	* doc/lispref/display.texi (Progress, Abstract Display)
+	(Abstract Display Example, Bidirectional Display):
+	* doc/lispref/commands.texi (Event Mod):
+	* doc/emacs/windows.texi (Displaying Buffers):
+	* doc/emacs/trouble.texi (Bug Criteria, Checklist):
+	* doc/emacs/text.texi (Enriched Text):
+	* doc/emacs/programs.texi (MixedCase Words):
+	* doc/emacs/picture-xtra.texi (Insert in Picture)
+	(Tabs in Picture):
+	* doc/emacs/misc.texi (Emacs Server, Printing):
+	* doc/emacs/mini.texi (Minibuffer History):
+	* doc/emacs/maintaining.texi (Old Revisions, VC Change Log)
+	(Pulling / Pushing):
+	* doc/emacs/killing.texi (Yanking, Cut and Paste, Clipboard):
+	* doc/emacs/help.texi (Help, Help Echo):
+	* doc/emacs/glossary.texi (Glossary):
+	* doc/emacs/frames.texi (Mouse Commands, Creating Frames)
+	(Frame Commands):
+	* doc/emacs/files.texi (Reverting, Saving, Directories):
+	* doc/emacs/entering.texi (Exiting):
+	* doc/emacs/emacs.texi (Top):
+	* doc/emacs/cmdargs.texi (Window Size X, Icons X):
+	* doc/emacs/anti.texi (Antinews): Restore quoting of text where
+	appropriate or replace quoting with @dfn.
+	* doc/misc/ediff.texi (Window and Frame Configuration):
+	* doc/lispref/processes.texi (Network Feature Testing):
+	* doc/lispref/display.texi (Display Margins): Quote the phrase
+	after "a.k.a." where appropriate.
+
+2015-09-16  Tassilo Horn  <tsdh@gnu.org>
+
+	Clarify reftex-extra-bindings docs.
+	* lisp/textmodes/reftex-vars.el (reftex-extra-bindings): Document that
+	the variable only has an effect at load-time.
+	* doc/misc/reftex.texi (Key Bindings): Ditto.
+
+2015-09-16  Daniel McClanahan  <danieldmcclanahan@gmail.com>  (tiny change)
+
+	Fix search argument in ‘lisp--el-match-keyword’ (Bug#21492) (Bug#21493)
+	* lisp/emacs-lisp/lisp-mode.el (lisp--el-match-keyword): Fix
+	search argument.  (Bug#21492) (Bug#21493)
+
+2015-09-16  Tassilo Horn  <tsdh@gnu.org>
+
+	Add pretty symbols for \qquad and \varrho.
+	* lisp/textmodes/tex-mode.el (tex--prettify-symbols-alist): Add pretty
+	symbols for \qquad and \varrho.
+
+2015-09-15  Jay Belanger  <jay.p.belanger@gmail.com>
+
+	Add new functions for the root mean square of a (Calc) vector
+	* lisp/calc/calc-stats.el (calcFunc-rms, calc-vector-rms):
+	New functions.
+	* lisp/calc/calc-ext.el (calc-init-extensions): Add keybinding for
+	`calc-vector-rms', add autoloads for `calc-vector-rms' and
+	`calcFunc-rms'.
+	* lisp/calc/calc-map.el (calc-u-oper-keys):  Add entry for
+	`calcFunc-rms'.
+	* lisp/calc/calc-menu.el (calc-vectors-menu): Add entry for
+	`calc-vector-rms'.
+	* doc/misc/calc.texi (Single-Variable Statistics): Document the rms
+	command.
+
+2015-09-15  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	Add monotone EDE generic project
+	* lisp/cedet/ede/generic.el (ede-enable-generic-projects): Add monotone
+	generic project.
+
+	Revert premature commit
+	* doc/lispref/files.texi: Revert premature commit of change to
+	file-name-all-completions.
+
+	Fix a bug in elisp--xref-find-definitions related to cl-generic defaults
+	* lisp/progmodes/elisp-mode.el (elisp--xref-find-definitions): Fix bug
+	with cl-generic defaults.
+	(elisp--xref-find-references): Add doc string.
+	* test/automated/elisp-mode-tests.el (xref-elisp-generic-*): Improve
+	tests to find bug.
+
+	Fix bugs in eieio-oref-default related to class symbols
+	* lisp/emacs-lisp/eieio-core.el (class-p): Handle symbol properly.
+	(eieio-oref-default): Handle class properly.
+
+2015-09-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Quote “fullboth” when defining it
+	* doc/lispref/frames.texi (Size Parameters): Use @dfn for “fullboth”
+	and rewrite the containing paragraph, which was awkward.  (Bug#21472).
+
+2015-09-15  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor doc fix in emacs/ack.texi
+	* doc/emacs/ack.texi (Acknowledgments): Fix an xref missing the
+	first argument.
+
+2015-09-15  Michael Albinus  <michael.albinus@gmx.de>
+
+	Adapt tests in auto-revert-tests.el
+	* test/automated/auto-revert-tests.el (auto-revert--timeout):
+	Make it a defconst.
+	(auto-revert--wait-for-revert): New defun.
+	(auto-revert-test00-auto-revert-mode)
+	(auto-revert-test01-auto-revert-tail-mode)
+	(auto-revert-test02-auto-revert-mode-dired): Use it.
+
+2015-09-15  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/emacs-lisp/lisp-mode.el (lisp-mode-symbol-regexp): New const
+	Use it everywhere "\\(\\sw\\|\\s_\\|\\\\.\\)+" was used.
+	(cl-lib-fdefs): Add defgeneric.
+	(cl-kw): Add all elements of eieio-kw and cl-lib-kw.
+	(eieio-kw, cl-lib-kw, el-kw): Remove.
+
+2015-09-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Quote less in manuals
+	The manuals often used quotes ``...'' when it is better to use @dfn or
+	@code or capitalized words or no quoting at all.  For example, there is
+	no need for the `` and '' in “if a variable has one effect for
+	@code{nil} values and another effect for ``non-@code{nil}'' values”.
+	Reword the Emacs, Lisp intro, and Lisp reference manuals to eliminate
+	unnecessary quoting like this, and to use @dfn etc. instead when called
+	for (Bug#21472).
+
+2015-09-15  Mark Oteiza  <mvoteiza@udel.edu>
+
+	lisp/custom.el (load-theme): Only compute hash when needed
+
+2015-09-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Pacify --enable-gcc-warnings
+	* src/inotify.c (report_inotify_error): Declare it _Noreturn.
+
+2015-09-15  Michael Albinus  <michael.albinus@gmx.de>
+
+	Improve error reports in inotify.c
+	* src/inotify.c (report_inotify_error): New function.  Clone of
+	report_w32notify_error.
+	(inotify_callback, symbol_to_inotifymask, Finotify_add_watch)
+	(Finotify_rm_watch): Use it.
+
+2015-09-15  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix the file-notify tests for watch validation on w32
+	* test/automated/file-notify-tests.el
+	(file-notify-test04-file-validity): Move the directory deletion
+	out of the file-notify--test-with-events macro.
+	(file-notify-test04-file-validity)
+	(file-notify-test05-dir-validity): Enlarge the timeout of
+	read-event to 0.5, as 0.1 is borderline on w32.  (Bug#21432)
+
+2015-09-15  Tassilo Horn  <tsdh@gnu.org>
+
+	Use OPEN BOX instead of space for \quad.
+	* lisp/textmodes/tex-mode.el (tex--prettify-symbols-alist): Use OPEN BOX
+	character for \quad instead of a space.
+
 2015-09-15  Eli Zaretskii  <eliz@gnu.org>
 
 	Add missing *.pbm images
@@ -12989,7 +13446,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit 20b4625117b0303eaba1ef81085f0feb9062695a (inclusive).
+commit 00a65e3238a888fc92b0c2aab8cb5bda8bd99c29 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
