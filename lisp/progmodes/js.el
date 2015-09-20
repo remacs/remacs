@@ -1370,17 +1370,6 @@ LIMIT defaults to point."
              (looking-at "\"\\s-*,\\s-*\\[")
              (eq (match-end 0) (1+ list-begin)))))))
 
-(defun js--syntax-begin-function ()
-  (when (< js--cache-end (point))
-    (goto-char (max (point-min) js--cache-end)))
-
-  (let ((pitem))
-    (while (and (setq pitem (car (js--backward-pstate)))
-                (not (eq 0 (js--pitem-paren-depth pitem)))))
-
-    (when pitem
-      (goto-char (js--pitem-h-begin pitem )))))
-
 ;;; Font Lock
 (defun js--make-framework-matcher (framework &rest regexps)
   "Helper function for building `js--font-lock-keywords'.
@@ -3549,8 +3538,6 @@ If one hasn't been set, or if it's stale, prompt for a new one."
     (make-local-variable 'adaptive-fill-mode)
     (make-local-variable 'adaptive-fill-regexp)
     (c-setup-paragraph-variables))
-
-  (setq-local syntax-begin-function #'js--syntax-begin-function)
 
   ;; Important to fontify the whole buffer syntactically! If we don't,
   ;; then we might have regular expression literals that aren't marked
