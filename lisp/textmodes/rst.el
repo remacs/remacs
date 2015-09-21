@@ -4235,4 +4235,8 @@ column is used (fill-column vs. end of previous/next line)."
 
 (provide 'rst)
 
+;; Local Variables:
+;; coding: utf-8
+;; End:
+
 ;;; rst.el ends here
