@@ -1333,6 +1333,7 @@ x_set_window_size (struct frame *f,
   int tb = FRAME_EXTERNAL_TOOL_BAR (f);
   int pixelwidth, pixelheight;
   int rows, cols;
+  int orig_height = wr.size.height;
 
   NSTRACE (x_set_window_size);
 
@@ -1386,7 +1387,7 @@ x_set_window_size (struct frame *f,
  if (f->output_data.ns->zooming)
    f->output_data.ns->zooming = 0;
  else
-   wr.origin.y += FRAME_PIXEL_HEIGHT (f) - pixelheight;
+   wr.origin.y += orig_height - wr.size.height;
 
   [view setRows: rows andColumns: cols];
   [window setFrame: wr display: YES];
