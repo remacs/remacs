@@ -2081,7 +2081,7 @@ Argument BOUND is a buffer position limiting searching."
 (defun prolog-find-unmatched-paren ()
   "Return the column of the last unmatched left parenthesis."
   (save-excursion
-    (goto-char (or (car (nth 9 (syntax-ppss))) (point-min)))
+    (goto-char (or (nth 1 (syntax-ppss)) (point-min)))
     (current-column)))
 
 
