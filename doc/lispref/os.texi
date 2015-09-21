@@ -2565,7 +2565,7 @@ specification prior to @samp{"1.0"}.
 
 Several operating systems support watching of filesystems for changes
 of files.  If configured properly, Emacs links a respective library
-like @file{gfilenotify}, @file{inotify}, or  @file{w32notify}
+like @file{gfilenotify}, @file{inotify}, or @file{w32notify}
 statically.  These libraries enable watching of filesystems on the
 local machine.
 
@@ -2631,6 +2631,11 @@ any one of the following symbols:
 @item attribute-changed
 a @var{file} attribute was changed
 @end table
+
+Note that the @file{w32notify} library does not report
+@code{attribute-changed} events.  Even in case a file attribute has
+changed, like permissions or modification time, this library reports a
+@code{changed} event.
 
 @var{file} and @var{file1} are the name of the file(s) whose event is
 being reported.  For example:
