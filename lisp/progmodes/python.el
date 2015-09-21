@@ -621,9 +621,9 @@ The type returned can be `comment', `string' or `paren'."
     (0 (ignore (python-syntax-stringify))))))
 
 (defconst python--prettify-symbols-alist
-  '(("lambda"  . ?\u03bb)
-    ("and" . ?\u2227)
-    ("or" . ?\u2228)))
+  '(("lambda"  . ?λ)
+    ("and" . ?∧)
+    ("or" . ?∨)))
 
 (defsubst python-syntax-count-quotes (quote-char &optional point limit)
   "Count number of quotes around point (max is 3).
