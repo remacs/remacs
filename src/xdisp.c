@@ -4024,13 +4024,16 @@ face_before_or_after_it_pos (struct it *it, bool before_p)
 	      SAVE_IT (it_copy, *it, it_copy_data);
 	      IT_STRING_CHARPOS (it_copy) = 0;
 	      bidi_init_it (0, 0, FRAME_WINDOW_P (it_copy.f), &it_copy.bidi_it);
-	      while (IT_STRING_CHARPOS (it_copy) != IT_STRING_CHARPOS (*it))
+
+	      do
 		{
 		  charpos = IT_STRING_CHARPOS (it_copy);
 		  if (charpos >= SCHARS (it->string))
 		    break;
 		  bidi_move_to_visually_next (&it_copy.bidi_it);
 		}
+	      while (IT_STRING_CHARPOS (it_copy) != IT_STRING_CHARPOS (*it));
+
 	      RESTORE_IT (it, it, it_copy_data);
 	    }
 	  else
