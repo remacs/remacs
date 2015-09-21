@@ -285,7 +285,7 @@ Don't wait longer than TIMEOUT seconds for the events to be delivered."
             ;; w32notify does not distinguish between `changed' and
             ;; `attribute-changed'.
             (if (eq file-notify--library 'w32notify)
-                '(created changed changed changed deleted)
+                '(created changed changed deleted)
               '(created changed deleted))
           (write-region
            "any text" nil file-notify--test-tmpfile nil 'no-message)
@@ -327,7 +327,7 @@ Don't wait longer than TIMEOUT seconds for the events to be delivered."
         (should (equal (mapcar #'cadr file-notify--test-events)
                        (if (eq file-notify--library 'w32notify)
                            '(created changed deleted
-                                     created changed changed changed deleted
+                                     created changed changed deleted
                                      created changed renamed)
                          '(created changed deleted
                                    created changed deleted
