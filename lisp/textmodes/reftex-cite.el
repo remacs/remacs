@@ -210,7 +210,9 @@ Return list with entries."
     (setq first-re (car re-list)    ; We'll use the first re to find things,
           rest-re  (cdr re-list))   ; the others to narrow down.
     (if (string-match "\\`[ \t]*\\'" (or first-re ""))
-        (error "Empty regular expression"))
+        (user-error "Empty regular expression"))
+    (if (string-match first-re "")
+        (user-error "Regular expression matches the empty string."))
 
     (save-excursion
       (save-window-excursion
