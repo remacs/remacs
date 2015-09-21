@@ -925,12 +925,30 @@ This is really kludgy, and unneeded (i.e. obsolete) in Emacs>=24."
     (`(:after . ".") '(column . 0)) ;; To work around smie-closer-alist.
     ;; Allow indentation of if-then-else as:
     ;;    (   test
-    ;;     -> thenrule
-    ;;     ;  elserule
+    ;;    ->  thenrule
+    ;;    ;   elserule
     ;;    )
     (`(:before . ,(or `"->" `";"))
-     (and (smie-rule-bolp) (smie-rule-parent-p "(") (smie-rule-parent 1)))
-    (`(:after . ,(or `":-" `"->" `"-->")) prolog-indent-width)))
+     (and (smie-rule-bolp) (smie-rule-parent-p "(") (smie-rule-parent 0)))
+    (`(:after . ,(or `"->" `"*->"))
+     ;; We distinguish
+     ;;
+     ;;     (a ->
+     ;;          b;
+     ;;      c)
+     ;; and
+     ;;     (    a ->
+     ;;          b
+     ;;     ;    c)
+     ;;
+     ;; based on the space between the open paren and the "a".
+     (unless (and (smie-rule-parent-p "(")
+                  (save-excursion
+                    (smie-indent-forward-token)
+                    (smie-backward-sexp 'halfsexp)
+                    (not (eq ?\( (char-before)))))
+       prolog-indent-width))
+    (`(:after . ,(or `":-" `"-->")) prolog-indent-width)))
 
 
 ;;-------------------------------------------------------------------
@@ -1121,6 +1139,9 @@ Commands:
   (dolist (ar prolog-align-rules) (add-to-list 'align-rules-list ar))
   (add-hook 'post-self-insert-hook #'prolog-post-self-insert nil t)
   ;; `imenu' entry moved to the appropriate hook for consistency.
+  (when prolog-electric-dot-flag
+    (setq-local electric-indent-chars
+                (cons ?\. electric-indent-chars)))
 
   ;; Load SICStus debugger if suitable
   (if (and (eq prolog-system 'sicstus)
@@ -2078,6 +2099,7 @@ whitespace characters, parentheses, or then/else branches."
   (when prolog-electric-if-then-else-flag
     (save-excursion
       (let ((regexp (concat "(\\|" prolog-left-indent-regexp))
+            (pos (point))
             level)
         (beginning-of-line)
         (skip-chars-forward " \t")
@@ -2087,6 +2109,9 @@ whitespace characters, parentheses, or then/else branches."
         ;;             prolog-paren-indent))
 
         ;; work on all subsequent "->", "(", ";"
+        (and (looking-at regexp)
+             (= pos (match-end 0))
+             (indent-according-to-mode))
         (while (looking-at regexp)
           (goto-char (match-end 0))
           (setq level (+ (prolog-find-unmatched-paren) prolog-paren-indent))
