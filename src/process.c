@@ -5036,7 +5036,10 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		   && FD_ISSET (channel, &Available))
 		  || (d->condition & FOR_WRITE
 		      && FD_ISSET (channel, &write_mask))))
-            d->func (channel, d->data);
+	    {
+	      d->func (channel, d->data);
+	      FD_CLR (channel, &Available);
+	    }
 	}
 
       for (channel = 0; channel <= max_process_desc; channel++)
