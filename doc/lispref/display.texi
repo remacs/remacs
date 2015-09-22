@@ -4386,8 +4386,9 @@ width.  @var{width} can also be a @dfn{pixel width} specification
 @item :relative-width @var{factor}
 Specifies that the width of the stretch should be computed from the
 first character in the group of consecutive characters that have the
-same @code{display} property.  The space width is the width of that
-character, multiplied by @var{factor}.
+same @code{display} property.  The space width is the pixel width of
+that character, multiplied by @var{factor}.  This specification is
+only supported on graphic terminals.
 
 @item :align-to @var{hpos}
 Specifies that the space should be wide enough to reach @var{hpos}.
