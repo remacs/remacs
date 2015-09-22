@@ -29,6 +29,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "process.h"
 
 
+/* This is a list, elements are triples (DESCRIPTOR FILE CALLBACK)  */
 static Lisp_Object watch_list;
 
 /* This is the callback function for arriving signals from
@@ -93,10 +94,17 @@ dir_monitor_callback (GFileMonitor *monitor,
 				Fcons (symbol,
 				       Fcons (build_string (name),
 					      otail))),
-			 XCDR (watch_object));
+			 XCAR (XCDR (XCDR (watch_object))));
 
       /* Store it into the input event queue.  */
       kbd_buffer_store_event (&event);
+
+      /* Cancel monitor if file or directory is deleted.  */
+      if (((event_type == G_FILE_MONITOR_EVENT_DELETED) ||
+	   (event_type == G_FILE_MONITOR_EVENT_MOVED)) &&
+	  (strcmp (name, SSDATA (XCAR (XCDR (watch_object)))) == 0) &&
+	  (!g_file_monitor_is_cancelled (monitor)))
+	g_file_monitor_cancel (monitor);
     }
 
   /* Cleanup.  */
@@ -198,13 +206,13 @@ will be reported only in case of the `moved' event.  */)
 		    (GCallback) dir_monitor_callback, NULL);
 
   /* Store watch object in watch list.  */
-  watch_object = Fcons (watch_descriptor, callback);
+  watch_object = list3 (watch_descriptor, file, callback);
   watch_list = Fcons (watch_object, watch_list);
 
   return watch_descriptor;
 }
 
-DEFUN ("gfile-rm-watch", Fgfile_rm_watch, Sgfile_rm_watch, 1, 1, 0,
+DEFUN ("gfile-rm-watc", Fgfile_rm_watch, Sgfile_rm_watch, 1, 1, 0,
        doc: /* Remove an existing WATCH-DESCRIPTOR.
 
 WATCH-DESCRIPTOR should be an object returned by `gfile-add-watch'.  */)
@@ -218,17 +226,39 @@ WATCH-DESCRIPTOR should be an object returned by `gfile-add-watch'.  */)
 
   eassert (INTEGERP (watch_descriptor));
   GFileMonitor *monitor = XINTPTR (watch_descriptor);
-  if (!g_file_monitor_cancel (monitor))
-    xsignal2 (Qfile_notify_error, build_string ("Could not rm watch"),
-	      watch_descriptor);
+  if (!g_file_monitor_is_cancelled (monitor) &&
+      !g_file_monitor_cancel (monitor))
+      xsignal2 (Qfile_notify_error, build_string ("Could not rm watch"),
+		watch_descriptor);
 
-  /* Remove watch descriptor from watch list. */
+  /* Remove watch descriptor from watch list.  */
   watch_list = Fdelq (watch_object, watch_list);
 
   /* Cleanup.  */
   g_object_unref (monitor);
 
   return Qt;
+}
+
+DEFUN ("gfile-valid-p", Fgfile_valid_p, Sgfile_valid_p, 1, 1, 0,
+       doc: /* "Check a watch specified by its WATCH-DESCRIPTOR.
+
+WATCH-DESCRIPTOR should be an object returned by `gfile-add-watch'.
+
+A watch can become invalid if the file or directory it watches is
+deleted, or if the watcher thread exits abnormally for any other
+reason.  Removing the watch by calling `gfile-rm-watch' also makes it
+invalid.  */)
+     (Lisp_Object watch_descriptor)
+{
+  Lisp_Object watch_object = Fassoc (watch_descriptor, watch_list);
+  if (NILP (watch_object))
+    return Qnil;
+  else
+    {
+      GFileMonitor *monitor = XINTPTR (watch_descriptor);
+      return g_file_monitor_is_cancelled (monitor) ? Qnil : Qt;
+    }
 }
 
 
@@ -246,6 +276,7 @@ syms_of_gfilenotify (void)
 {
   defsubr (&Sgfile_add_watch);
   defsubr (&Sgfile_rm_watch);
+  defsubr (&Sgfile_valid_p);
 
   /* Filter objects.  */
   DEFSYM (Qwatch_mounts, "watch-mounts"); /* G_FILE_MONITOR_WATCH_MOUNTS  */

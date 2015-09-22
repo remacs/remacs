@@ -161,7 +161,7 @@ EVENT is the cadr of the event in `file-notify-handle-event'
 	       ((eq action 'attrib) 'attribute-changed)
 	       ((memq action '(create added)) 'created)
 	       ((memq action '(modify modified)) 'changed)
-	       ((memq action '(delete 'delete-self move-self removed)) 'deleted)
+	       ((memq action '(delete delete-self move-self removed)) 'deleted)
 	       ;; Make the event pending.
 	       ((memq action '(moved-from renamed-from))
 		(setq file-notify--pending-event
@@ -358,9 +358,6 @@ DESCRIPTOR should be an object returned by `file-notify-add-watch'."
                 ((eq file-notify--library 'w32notify) 'w32notify-rm-watch))
                desc))
           (file-notify-error nil))))))
-
-;; Temporary declarations.
-(defalias 'gfile-valid-p 'identity)
 
 (defun file-notify-valid-p (descriptor)
   "Check a watch specified by its DESCRIPTOR.
