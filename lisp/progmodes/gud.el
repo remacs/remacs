@@ -2856,10 +2856,9 @@ Obeying it means displaying in another window the specified file and line."
   (let ((insource (not (eq (current-buffer) gud-comint-buffer)))
 	(frame (or gud-last-frame gud-last-last-frame))
 	(buffer-file-name-localized
-	 (if (and (buffer-file-name) (file-remote-p (buffer-file-name)))
-	     (tramp-file-name-localname (tramp-dissect-file-name
-					 (buffer-file-name) t))
-	   (buffer-file-name)))
+         (and (buffer-file-name)
+              (or (file-remote-p (buffer-file-name) 'localname)
+                  (buffer-file-name))))
 	result)
     (while (and str
 		(let ((case-fold-search nil))
