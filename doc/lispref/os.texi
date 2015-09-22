@@ -2625,7 +2625,8 @@ any one of the following symbols:
 @item deleted
 @var{file} was deleted
 @item changed
-@var{file} has changed
+@var{file}'s contents has changed; with @file{w32notify} library,
+reports attribute changes as well
 @item renamed
 @var{file} has been renamed to @var{file1}
 @item attribute-changed
@@ -2633,8 +2634,8 @@ a @var{file} attribute was changed
 @end table
 
 Note that the @file{w32notify} library does not report
-@code{attribute-changed} events.  Even in case a file attribute has
-changed, like permissions or modification time, this library reports a
+@code{attribute-changed} events.  When some file's attribute, like
+permissions or modification time, has changed, this library reports a
 @code{changed} event.
 
 @var{file} and @var{file1} are the name of the file(s) whose event is
