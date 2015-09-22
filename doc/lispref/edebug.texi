@@ -281,6 +281,15 @@ can still stop the program by typing @kbd{S}, or any editing command.
 In general, the execution modes earlier in the above list run the
 program more slowly or stop sooner than the modes later in the list.
 
+When you enter a new Edebug level, Edebug will normally stop at the
+first instrumented function it encounters.  If you prefer to stop only
+at a break point, or not at all (for example, when gathering coverage
+data), change the value of @code{edebug-initial-mode} from its default
+@code{step} to @code{go} or @code{Go-nonstop}, or one of its other
+values (@pxref{Edebug Options}).  Note that you may reenter the same
+Edebug level several times if, for example, an instrumented function
+is called several times from one command.
+
 While executing or tracing, you can interrupt the execution by typing
 any Edebug command.  Edebug stops the program at the next stop point and
 then executes the command you typed.  For example, typing @kbd{t} during
@@ -299,13 +308,6 @@ of the keyboard macro.  This is not easy to fix.  Also, defining or
 executing a keyboard macro outside of Edebug does not affect commands
 inside Edebug.  This is usually an advantage.  See also the
 @code{edebug-continue-kbd-macro} option in @ref{Edebug Options}.
-
-When you enter a new Edebug level, the initial execution mode comes
-from the value of the variable @code{edebug-initial-mode}
-(@pxref{Edebug Options}).  By default, this specifies step mode.  Note
-that you may reenter the same Edebug level several times if, for
-example, an instrumented function is called several times from one
-command.
 
 @defopt edebug-sit-for-seconds
 This option specifies how many seconds to wait between execution steps
