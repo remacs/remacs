@@ -3,24 +3,23 @@
 %% bug#21526
 test1 :-
     (   a ->
-        b
+            (   a ->
+                b
+            ;   c
+            )
     ;   c
     ).
 
 test2 :-
     (    a
-    ->   b1,
+    ->   (   a,
+             b
+         ;   c
+         ),
          b2
     ;    c1,
          c2
     )
-
-test3 :-
-    (   a,
-        b
-    ;   c
-    ).
-
 
 %% Testing correct tokenizing.
 foo(X) :- 0'= = X.

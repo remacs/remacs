@@ -382,7 +382,7 @@ function should first call this function explicitly."
 	   (concat (unless (eq comment-use-syntax t)
                      ;; `syntax-ppss' will detect escaping.
                      "\\(\\(^\\|[^\\\n]\\)\\(\\\\\\\\\\)*\\)")
-                   "\\(\\s<+\\|"
+                   "\\(?:\\s<+\\|"
 		   (regexp-quote (comment-string-strip comment-start t t))
 		   ;; Let's not allow any \s- but only [ \t] since \n
 		   ;; might be both a comment-end marker and \s-.

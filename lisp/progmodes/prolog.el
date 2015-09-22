@@ -922,6 +922,11 @@ This is really kludgy, and unneeded (i.e. obsolete) in Emacs>=24."
 (defun prolog-smie-rules (kind token)
   (pcase (cons kind token)
     (`(:elem . basic) prolog-indent-width)
+    ;; The list of arguments can never be on a separate line!
+    (`(:list-intro . ,_) t)
+    ;; When we don't know how to indent an empty line, assume the most
+    ;; likely token will be ";".
+    (`(:elem . empty-line-token) ";")
     (`(:after . ".") '(column . 0)) ;; To work around smie-closer-alist.
     ;; Allow indentation of if-then-else as:
     ;;    (   test
@@ -1023,7 +1028,7 @@ VERSION is of the format (Major . Minor)"
   (setq-local comment-start "%")
   (setq-local comment-end "")
   (setq-local comment-add 1)
-  (setq-local comment-start-skip "\\(?:/\\*+ *\\|%%+ *\\)")
+  (setq-local comment-start-skip "\\(?:/\\*+ *\\|%+ *\\)")
   (setq-local parens-require-spaces nil)
   ;; Initialize Prolog system specific variables
   (dolist (var '(prolog-keywords prolog-types prolog-mode-specificators
