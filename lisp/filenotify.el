@@ -291,7 +291,7 @@ FILE is the name of the file whose event is being reported."
 
       ;; Determine respective flags.
       (if (eq file-notify--library 'gfilenotify)
-	  (setq l-flags '(watch-mounts send-moved))
+	  (setq l-flags (append '(watch-mounts send-moved) flags))
 	(when (memq 'change flags)
 	  (setq
 	   l-flags
@@ -330,7 +330,21 @@ DESCRIPTOR should be an object returned by `file-notify-add-watch'."
 	 handler registered)
 
     (when (stringp dir)
+      ;; Call low-level function.
       (setq handler (find-file-name-handler dir 'file-notify-rm-watch))
+      (condition-case nil
+          (if handler
+              ;; A file name handler could exist even if there is no
+              ;; local file notification support.
+              (funcall handler 'file-notify-rm-watch desc)
+
+            (funcall
+             (cond
+              ((eq file-notify--library 'gfilenotify) 'gfile-rm-watch)
+              ((eq file-notify--library 'inotify) 'inotify-rm-watch)
+              ((eq file-notify--library 'w32notify) 'w32notify-rm-watch))
+             desc))
+        (file-notify-error nil))
 
       ;; Modify `file-notify-descriptors'.
       (if (not file)
@@ -341,23 +355,7 @@ DESCRIPTOR should be an object returned by `file-notify-add-watch'."
 		(delete (assoc file (cdr registered)) (cdr registered)))
 	(if (null (cdr registered))
 	    (remhash desc file-notify-descriptors)
-	  (puthash desc registered file-notify-descriptors)))
-
-      ;; Call low-level function.
-      (when (null (cdr registered))
-        (condition-case nil
-            (if handler
-                ;; A file name handler could exist even if there is no local
-                ;; file notification support.
-                (funcall handler 'file-notify-rm-watch desc)
-
-              (funcall
-               (cond
-                ((eq file-notify--library 'gfilenotify) 'gfile-rm-watch)
-                ((eq file-notify--library 'inotify) 'inotify-rm-watch)
-                ((eq file-notify--library 'w32notify) 'w32notify-rm-watch))
-               desc))
-          (file-notify-error nil))))))
+	  (puthash desc registered file-notify-descriptors))))))
 
 (defun file-notify-valid-p (descriptor)
   "Check a watch specified by its DESCRIPTOR.
