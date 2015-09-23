@@ -264,22 +264,26 @@ Don't wait longer than TIMEOUT seconds for the events to be delivered."
   (skip-unless (file-notify--test-local-enabled))
   (unwind-protect
       (progn
+        ;; Check creation, change, and deletion.
         (setq file-notify--test-tmpfile (file-notify--test-make-temp-name)
               file-notify--test-tmpfile1 (file-notify--test-make-temp-name)
               file-notify--test-desc
               (file-notify-add-watch
                file-notify--test-tmpfile
                '(change) 'file-notify--test-event-handler))
-        (should file-notify--test-desc)
-
-        ;; Check creation, change, and deletion.
         (file-notify--test-with-events
             (file-notify--test-timeout) '(created changed deleted)
           (write-region
            "any text" nil file-notify--test-tmpfile nil 'no-message)
           (delete-file file-notify--test-tmpfile))
+        (file-notify-rm-watch file-notify--test-desc)
 
         ;; Check copy.
+        (setq file-notify--test-desc
+              (file-notify-add-watch
+               file-notify--test-tmpfile
+               '(change) 'file-notify--test-event-handler))
+        (should file-notify--test-desc)
         (file-notify--test-with-events
             (file-notify--test-timeout)
             ;; w32notify does not distinguish between `changed' and
@@ -296,8 +300,14 @@ Don't wait longer than TIMEOUT seconds for the events to be delivered."
           (set-file-times file-notify--test-tmpfile '(0 0))
           (delete-file file-notify--test-tmpfile)
           (delete-file file-notify--test-tmpfile1))
+        (file-notify-rm-watch file-notify--test-desc)
 
         ;; Check rename.
+        (setq file-notify--test-desc
+              (file-notify-add-watch
+               file-notify--test-tmpfile
+               '(change) 'file-notify--test-event-handler))
+        (should file-notify--test-desc)
         (file-notify--test-with-events
             (file-notify--test-timeout) '(created changed renamed)
           (write-region
@@ -305,10 +315,10 @@ Don't wait longer than TIMEOUT seconds for the events to be delivered."
           (rename-file file-notify--test-tmpfile file-notify--test-tmpfile1)
           ;; After the rename, we won't get events anymore.
           (delete-file file-notify--test-tmpfile1))
+        (file-notify-rm-watch file-notify--test-desc)
 
         ;; Check attribute change.  It doesn't work for w32notify.
         (unless (eq file-notify--library 'w32notify)
-          (file-notify-rm-watch file-notify--test-desc)
           (setq file-notify--test-desc
                 (file-notify-add-watch
                  file-notify--test-tmpfile
@@ -320,7 +330,8 @@ Don't wait longer than TIMEOUT seconds for the events to be delivered."
             (set-file-modes file-notify--test-tmpfile 000)
             (read-event nil nil 0.1) ; In order to distinguish the events.
             (set-file-times file-notify--test-tmpfile '(0 0))
-            (delete-file file-notify--test-tmpfile)))
+            (delete-file file-notify--test-tmpfile))
+          (file-notify-rm-watch file-notify--test-desc))
 
         ;; Check the global sequence again just to make sure that
         ;; `file-notify--test-events' has been set correctly.
