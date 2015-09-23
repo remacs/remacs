@@ -546,8 +546,7 @@ Many aspects this mode can be customized using
   (setq comment-end-skip "[ \t\r\n]*-->")
   (make-local-variable 'comment-line-break-function)
   (setq comment-line-break-function 'nxml-newline-and-indent)
-  (make-local-variable 'comment-quote-nested-function)
-  (setq comment-quote-nested-function 'nxml-comment-quote-nested)
+  (setq-local comment-quote-nested-function 'nxml-comment-quote-nested)
   (use-local-map nxml-mode-map)
   (save-excursion
     (save-restriction

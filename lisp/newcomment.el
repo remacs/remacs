@@ -418,7 +418,6 @@ If UNP is non-nil, unquote nested comment markers."
   (setq cs (comment-string-strip cs t t))
   (setq ce (comment-string-strip ce t t))
   (when (and comment-quote-nested
-	     comment-quote-nested-function
 	     (> (length ce) 0))
     (funcall comment-quote-nested-function cs ce unp)))
 
@@ -427,8 +426,8 @@ If UNP is non-nil, unquote nested comment markers."
 It expects to be called with the buffer narrowed to a single comment.
 It is used as a default for `comment-quote-nested-function'.
 
-The arguments CS and CE are regular expressions matching comment
-starting and ending delimiters respectively.
+The arguments CS and CE are strings matching comment starting and
+ending delimiters respectively.
 
 If UNP is non-nil, comments are unquoted instead.
 
