@@ -327,30 +327,31 @@ DESCRIPTOR should be an object returned by `file-notify-add-watch'."
   (let* ((desc (if (consp descriptor) (car descriptor) descriptor))
 	 (file (if (consp descriptor) (cdr descriptor)))
 	 (dir (car (gethash desc file-notify-descriptors)))
-	 handler registered)
+	 (handler (and (stringp dir)
+                       (find-file-name-handler dir 'file-notify-rm-watch)))
+         (registered (gethash desc file-notify-descriptors)))
 
     (when (stringp dir)
       ;; Call low-level function.
-      (setq handler (find-file-name-handler dir 'file-notify-rm-watch))
-      (condition-case nil
-          (if handler
-              ;; A file name handler could exist even if there is no
-              ;; local file notification support.
-              (funcall handler 'file-notify-rm-watch desc)
+      (when (null (cdr registered))
+        (condition-case nil
+            (if handler
+                ;; A file name handler could exist even if there is no local
+                ;; file notification support.
+                (funcall handler 'file-notify-rm-watch desc)
 
-            (funcall
-             (cond
-              ((eq file-notify--library 'gfilenotify) 'gfile-rm-watch)
-              ((eq file-notify--library 'inotify) 'inotify-rm-watch)
-              ((eq file-notify--library 'w32notify) 'w32notify-rm-watch))
-             desc))
-        (file-notify-error nil))
+              (funcall
+               (cond
+                ((eq file-notify--library 'gfilenotify) 'gfile-rm-watch)
+                ((eq file-notify--library 'inotify) 'inotify-rm-watch)
+                ((eq file-notify--library 'w32notify) 'w32notify-rm-watch))
+               desc))
+          (file-notify-error nil)))
 
       ;; Modify `file-notify-descriptors'.
       (if (not file)
 	  (remhash desc file-notify-descriptors)
 
-	(setq registered (gethash desc file-notify-descriptors))
 	(setcdr registered
 		(delete (assoc file (cdr registered)) (cdr registered)))
 	(if (null (cdr registered))
