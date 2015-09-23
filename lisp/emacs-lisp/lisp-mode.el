@@ -235,6 +235,19 @@
                              (match-beginning 0)))))
 	  (throw 'found t))))))
 
+(defmacro let-when-compile (bindings &rest body)
+  "Like `let', but allow for compile time optimization.
+Use BINDINGS as in regular `let', but in BODY each usage should
+be wrapped in `eval-when-compile'.
+This will generate compile-time constants from BINDINGS."
+  (declare (indent 1) (debug let))
+  (cl-progv (mapcar #'car bindings)
+      (mapcar (lambda (x) (eval (cadr x))) bindings)
+    (macroexpand-all
+     (macroexp-progn
+      body)
+     macroexpand-all-environment)))
+
 (let-when-compile
     ((lisp-fdefs '("defmacro" "defun"))
      (lisp-vdefs '("defvar"))
