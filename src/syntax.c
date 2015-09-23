@@ -499,6 +499,13 @@ parse_sexp_propertize (ptrdiff_t charpos)
       gl_state.e_property = syntax_propertize__done;
       gl_state.e_property_truncated = true;
     }
+  else if (gl_state.e_property_truncated)
+    { /* When moving backward, e_property might be set without resetting
+	 e_property_truncated, so the e_property_truncated flag may
+	 occasionally be left raised spuriously.  This should be rare.  */
+      gl_state.e_property_truncated = false;
+      update_syntax_table_forward (charpos, false, Qnil);
+    }
 }
 
 void
@@ -509,7 +516,6 @@ update_syntax_table_forward (ptrdiff_t charpos, bool init,
     {
       eassert (NILP (object));
       eassert (charpos >= gl_state.e_property);
-      eassert (charpos >= syntax_propertize__done);
       parse_sexp_propertize (charpos);
     }
   else
