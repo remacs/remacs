@@ -440,10 +440,7 @@ append2 (Lisp_Object list, Lisp_Object item)
    Utility to append to a list
    -------------------------------------------------------------------------- */
 {
-  Lisp_Object array[2];
-  array[0] = list;
-  array[1] = list1 (item);
-  return Fnconc (2, &array[0]);
+  return CALLN (Fnconc, list, list1 (item));
 }
 
 

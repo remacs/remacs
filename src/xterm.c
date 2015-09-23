@@ -575,7 +575,7 @@ x_cr_export_frames (Lisp_Object frames, cairo_surface_type_t surface_type)
   cairo_t *cr;
   int width, height;
   void (*surface_set_size_func) (cairo_surface_t *, double, double) = NULL;
-  Lisp_Object acc = Qnil, args[2];
+  Lisp_Object acc = Qnil;
   int count = SPECPDL_INDEX ();
 
   Fredisplay (Qt);
@@ -659,9 +659,7 @@ x_cr_export_frames (Lisp_Object frames, cairo_surface_type_t surface_type)
 #endif
   unbind_to (count, Qnil);
 
-  args[0] = intern ("concat");
-  args[1] = Fnreverse (acc);
-  return Fapply (2, args);
+  return CALLN (Fapply, intern ("concat"), Fnreverse (acc));
 }
 
 #endif	/* USE_CAIRO */
