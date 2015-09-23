@@ -25956,9 +25956,7 @@ produce_stretch_glyph (struct it *it)
       zero_width_ok_p = true;
       width = (int)tem;
     }
-#ifdef HAVE_WINDOW_SYSTEM
-  else if (FRAME_WINDOW_P (it->f)
-	   && (prop = Fplist_get (plist, QCrelative_width), NUMVAL (prop) > 0))
+  else if (prop = Fplist_get (plist, QCrelative_width), NUMVAL (prop) > 0)
     {
       /* Relative width `:relative-width FACTOR' specified and valid.
 	 Compute the width of the characters having the `glyph'
@@ -25978,10 +25976,9 @@ produce_stretch_glyph (struct it *it)
 
       it2.glyph_row = NULL;
       it2.what = IT_CHARACTER;
-      x_produce_glyphs (&it2);
+      PRODUCE_GLYPHS (&it2);
       width = NUMVAL (prop) * it2.pixel_width;
     }
-#endif	/* HAVE_WINDOW_SYSTEM */
   else if ((prop = Fplist_get (plist, QCalign_to), !NILP (prop))
 	   && calc_pixel_width_or_height (&tem, it, prop, font, true,
 					  &align_to))
