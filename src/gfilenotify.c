@@ -215,6 +215,10 @@ will be reported only in case of the `moved' event.  */)
 		file);
     }
 
+  /* The default rate limit is 800 msec.  We adapt this.  */
+  g_file_monitor_set_rate_limit (monitor, 100);
+
+  /* Subscribe to the "changed" signal.  */
   g_signal_connect (monitor, "changed",
 		    (GCallback) dir_monitor_callback, NULL);
 
