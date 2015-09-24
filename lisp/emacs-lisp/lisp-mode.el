@@ -28,6 +28,8 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'cl-lib))
+
 (defvar font-lock-comment-face)
 (defvar font-lock-doc-face)
 (defvar font-lock-keywords-case-fold-search)

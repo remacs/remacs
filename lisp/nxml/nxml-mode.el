@@ -1351,9 +1351,9 @@ of the inserted start-tag or nil if none was inserted."
 			    start-tag-indent)))))
     inserted-start-tag-pos))
 
-(defun nxml-comment-quote-nested (cs ce unp)
+(defun nxml-comment-quote-nested (_cs _ce unp)
   "Quote nested comments in buffer.
-See `comment-quote-nested-function' for more information.")
+See `comment-quote-nested-function' for more information."
   (goto-char (point-min))
   (save-match-data
     (while (re-search-forward "-[\\]*-" nil t)
