@@ -1,4 +1,4 @@
-\input texinfo                                      @c -*-texinfo-*-
+\input texinfo                       @c -*- mode: texinfo; coding: utf-8 -*-
 @comment %**start of header
 @setfilename ../../info/eintr.info
 @c setfilename emacs-lisp-intro.info

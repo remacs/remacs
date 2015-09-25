@@ -1283,7 +1283,7 @@ user-position}) does for the position parameters @code{top} and
 @cindex maximized frames
 @vindex fullscreen, a frame parameter
 @item fullscreen
-This parameter specifies whether to maximize the frame’s width, height
+This parameter specifies whether to maximize the frame's width, height
 or both.  Its value can be @code{fullwidth}, @code{fullheight},
 @code{fullboth}, or @code{maximized}.  A @dfn{fullwidth} frame is as
 wide as possible, a @dfn{fullheight} frame is as tall as possible, and
