@@ -460,6 +460,11 @@ typing RET.
 *** If `quick-calc' is called with a prefix argument, insert the
 result of the calculation into the current buffer.
 
++++
+** In Edebug, you can now set the initial mode with C-x C-a C-m.  With
+this you can tell Edebug not to stop at the start of the first
+instrumented function.
+
 ** ElDoc
 *** New minor mode `global-eldoc-mode'
 *** `eldoc-documentation-function' now defaults to `ignore'

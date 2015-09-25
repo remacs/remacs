@@ -285,10 +285,21 @@ When you enter a new Edebug level, Edebug will normally stop at the
 first instrumented function it encounters.  If you prefer to stop only
 at a break point, or not at all (for example, when gathering coverage
 data), change the value of @code{edebug-initial-mode} from its default
-@code{step} to @code{go} or @code{Go-nonstop}, or one of its other
-values (@pxref{Edebug Options}).  Note that you may reenter the same
-Edebug level several times if, for example, an instrumented function
-is called several times from one command.
+@code{step} to @code{go}, or @code{Go-nonstop}, or one of its other
+values (@pxref{Edebug Options}).  You can do this readily with
+@kbd{C-x C-a C-m} (@code{edebug-set-initial-mode}):
+
+@deffn Command edebug-set-initial-mode
+@kindex C-x C-a C-m
+This command, bound to @kbd{C-x C-a C-m}, sets
+@code{edebug-initial-mode}.  It prompts you for a key to indicate the
+mode.  You should enter one of the eight keys listed above, which sets
+the corresponding mode.
+@end deffn
+
+Note that you may reenter the same Edebug level several times if, for
+example, an instrumented function is called several times from one
+command.
 
 While executing or tracing, you can interrupt the execution by typing
 any Edebug command.  Edebug stops the program at the next stop point and
@@ -1565,7 +1576,8 @@ mode for Edebug when it is first activated.  Possible values are
 @code{step}, @code{next}, @code{go}, @code{Go-nonstop}, @code{trace},
 @code{Trace-fast}, @code{continue}, and @code{Continue-fast}.
 
-The default value is @code{step}.
+The default value is @code{step}.  This variable can be set
+interactively with @kbd{C-x C-a C-m} (@code{edebug-set-initial-mode}).
 @xref{Edebug Execution Modes}.
 @end defopt
 
