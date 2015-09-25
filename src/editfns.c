@@ -1,4 +1,4 @@
-/* Lisp functions pertaining to editing.
+/* Lisp functions pertaining to editing.                 -*- coding: utf-8 -*-
 
 Copyright (C) 1985-1987, 1989, 1993-2015 Free Software Foundation, Inc.
 

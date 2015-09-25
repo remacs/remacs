@@ -1,4 +1,4 @@
-/* NeXT/Open/GNUstep / MacOSX communication module.
+/* NeXT/Open/GNUstep / MacOSX communication module.      -*- coding: utf-8 -*-
 
 Copyright (C) 1989, 1993-1994, 2005-2006, 2008-2015 Free Software
 Foundation, Inc.
