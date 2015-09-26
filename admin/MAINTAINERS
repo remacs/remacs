@@ -76,6 +76,11 @@ Bastien Guerry
             lisp/org/*
 	    doc/misc/org.texi
 
+Artur Malabarba
+	lisp/emacs-lisp/package.el
+	lisp/emacs-lisp/let-alist.el
+	lisp/character-fold.el
+
 ==============================================================================
 2.
 ==============================================================================
@@ -137,6 +142,9 @@ Miles Bader
 	src/bytecode.c
 	src/editfns.c
 	lisp/textmodes/refill.el
+
+Artur Malabarba
+        lisp/isearch.el
 
 ==============================================================================
 3.
