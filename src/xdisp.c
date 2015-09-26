@@ -2661,10 +2661,18 @@ init_iterator (struct it *it, struct window *w,
      free realized faces now because they depend on face definitions
      that might have changed.  Don't free faces while there might be
      desired matrices pending which reference these faces.  */
-  if (face_change && !inhibit_free_realized_faces)
+  if (!inhibit_free_realized_faces)
     {
-      face_change = false;
-      free_all_realized_faces (Qnil);
+      if (face_change)
+	{
+	  face_change = false;
+	  free_all_realized_faces (Qnil);
+	}
+      else if (XFRAME (w->frame)->face_change)
+	{
+	  XFRAME (w->frame)->face_change = 0;
+	  free_all_realized_faces (w->frame);
+	}
     }
 
   /* Perhaps remap BASE_FACE_ID to a user-specified alternative.  */
@@ -13541,6 +13549,7 @@ redisplay_internal (void)
       && FRAME_VISIBLE_P (XFRAME (w->frame))
       && !FRAME_OBSCURED_P (XFRAME (w->frame))
       && !XFRAME (w->frame)->cursor_type_changed
+      && !XFRAME (w->frame)->face_change
       /* Make sure recorded data applies to current buffer, etc.  */
       && this_line_buffer == current_buffer
       && match_p
@@ -15887,6 +15896,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
       && REDISPLAY_SOME_P ()
       && !w->redisplay
       && !w->update_mode_line
+      && !f->face_change
       && !f->redisplay
       && !buffer->text->redisplay
       && BUF_PT (buffer) == w->last_point)

@@ -335,6 +335,9 @@ struct frame
   /* Set to true after this frame was made by `make-frame'.  */
   bool_bf after_make_frame : 1;
 
+  /* Non-zero if this frame's faces need to be recomputed.  */
+  bool_bf face_change : 1;
+
   /* Bitfield area ends here.  */
 
   /* Number of lines (rounded up) of tool bar.  REMOVE THIS  */

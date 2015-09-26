@@ -3539,7 +3539,8 @@ x_set_screen_gamma (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
 	    (f, bgcolor, Qnil);
     }
 
-  Fclear_face_cache (Qnil);
+  clear_face_cache (true);
+  windows_or_buffers_changed = 70;
 }
 
 
