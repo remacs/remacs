@@ -3419,10 +3419,7 @@ There might be text before point."
                (not (memq after-char
                           '(?0 ?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9 ?+ ?- ?' ?\"))))
           ;; Don't compose inside verbatim blocks.
-          (let* ((face (get-text-property end 'face))
-                 (faces (if (consp face) face (list face))))
-            (or (memq 'tex-verbatim faces)
-                (memq 'font-latex-verbatim-face faces)))))))
+	  (eq 2 (nth 7 (syntax-ppss)))))))
 
 (run-hooks 'tex-mode-load-hook)
 
