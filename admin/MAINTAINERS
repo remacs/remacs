@@ -104,6 +104,10 @@ Michael Albinus
 Simen Heggestøyl
 	lisp/textmodes/css-mode.el
 
+Nicolas Petton
+	lisp/emacs-lisp/map.el
+	lisp/emacs-lisp/seq.el
+
 ==============================================================================
 2.
 ==============================================================================
@@ -194,6 +198,10 @@ Michael Albinus
         test/automated/auto-revert-tests.el
 	test/automated/inotify-test.el
 	test/automated/vc-tests.el
+
+Nicolas Petton
+	lisp/emacs-lisp/subr-x.el
+	lisp/arc-mode.el
 
 ==============================================================================
 3.
@@ -329,7 +337,6 @@ lisp/emacs-lisp/lisp-mode.el
 lisp/emacs-lisp/lisp.el
 lisp/emacs-lisp/macroexp.el
 lisp/emacs-lisp/map-ynp.el
-lisp/emacs-lisp/map.el
 lisp/emacs-lisp/nadvice.el
 lisp/emacs-lisp/package-x.el
 lisp/emacs-lisp/pcase.el
@@ -339,10 +346,8 @@ lisp/emacs-lisp/regexp-opt.el
 lisp/emacs-lisp/regi.el
 lisp/emacs-lisp/ring.el
 lisp/emacs-lisp/rx.el
-lisp/emacs-lisp/seq.el
 lisp/emacs-lisp/shadow.el
 lisp/emacs-lisp/smie.el
-lisp/emacs-lisp/subr-x.el
 lisp/emacs-lisp/syntax.el
 lisp/emacs-lisp/tabulated-list.el
 lisp/emacs-lisp/tcover-ses.el
