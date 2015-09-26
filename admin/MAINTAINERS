@@ -101,6 +101,9 @@ Michael Albinus
 	    lisp/filenotify.el
 	    test/automated/file-notify-tests.el
 
+Simen Heggestøyl
+	lisp/textmodes/css-mode.el
+
 ==============================================================================
 2.
 ==============================================================================
@@ -637,7 +640,6 @@ lisp/textmodes/bib-mode.el
 lisp/textmodes/bibtex-style.el
 lisp/textmodes/bibtex.el
 lisp/textmodes/conf-mode.el
-lisp/textmodes/css-mode.el
 lisp/textmodes/dns-mode.el
 lisp/textmodes/enriched.el
 lisp/textmodes/fill.el
