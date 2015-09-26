@@ -81,6 +81,26 @@ Artur Malabarba
 	lisp/emacs-lisp/let-alist.el
 	lisp/character-fold.el
 
+Michael Albinus
+        Tramp
+            lisp/net/tramp*.el
+            lisp/url/url-tramp.el
+            doc/misc/tramp*.texi
+            test/automated/tramp-tests.el
+
+        D-Bus
+	    src/dbusbind.c
+	    lisp/net/dbus.el
+	    lisp/net/secrets.el
+            lisp/net/zeroconf.el
+	    doc/misc/dbus.texi
+            test/automated/dbus-tests.el
+
+        File Notifications
+	    src/gfilenotify.c
+	    lisp/filenotify.el
+	    test/automated/file-notify-tests.el
+
 ==============================================================================
 2.
 ==============================================================================
@@ -163,6 +183,14 @@ Paul Eggert
 	m4/*
 	make-dist
 	src/* (except for *.m, *w32*, bitmaps, files others want to maintain)
+
+Michael Albinus
+	src/inotify.c
+        lisp/autorevert.el
+	lisp/notifications.el
+        test/automated/auto-revert-tests.el
+	test/automated/inotify-test.el
+	test/automated/vc-tests.el
 
 ==============================================================================
 3.
@@ -449,7 +477,6 @@ lisp/msb.el
 lisp/mwheel.el
 lisp/net/*
 lisp/newcomment.el
-lisp/notifications.el
 lisp/novice.el
 lisp/nxml/*
 lisp/obsolete/*
