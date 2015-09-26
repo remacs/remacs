@@ -24,6 +24,8 @@ Eli Zaretskii
 	src/bidi.c
 	bidirectional editing support in xdisp.c and elsewhere
 	lisp/term/tty-colors.el
+	test/biditest.el
+	test/redisplay-testsuite.el
 
 	The MS-DOS (a.k.a. DJGPP) port:
 	    config.bat
@@ -85,7 +87,6 @@ Kelvin White
 
 Eli Zaretskii
     	doc/*
-	lispref/*
 
 	src/xfaces.c
 	src/xdisp.c
@@ -94,10 +95,16 @@ Eli Zaretskii
 	src/dispextern.h
 	src/frame.c
 	src/dired.c
+	src/fileio.c
 	src/unexw32.c
 	src/w32*.[ch]
 	src/window.c
+	src/indent.c
+	src/region-cache.[ch]
 	nt/*
+
+	lib-src/ntlib.[ch]
+	lib-src/etags.c
 
 	lisp/arc-mode.el
 	lisp/menu-bar.el
@@ -105,7 +112,15 @@ Eli Zaretskii
 	lisp/info.el
 	lisp/ls-lisp.el
 	lisp/startup.el
+	lisp/filenotify.el
 	lisp/w32*.el
+	lisp/term/w32*.el
+	lisp/progmodes/gdb-mi.el
+	lisp/textmodes/ispell.el
+	lisp/textmodes/flyspell.el
+	lisp/mail/rmail*.el
+
+	Mule
 
 	admin/unidata/*
 
