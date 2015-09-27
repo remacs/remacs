@@ -155,6 +155,9 @@ Eli Zaretskii
 	Mule
 
 	admin/unidata/*
+	admin/nt/dump.bat
+
+	test/etags/*
 
 Stefan Monnier
 	src/intervals.c
@@ -221,7 +224,6 @@ admin/diff-tar-files
 admin/find-gc.el
 admin/gitmerge.el
 admin/make-emacs
-admin/nt/dump.bat
 admin/quick-install-emacs
 admin/unidata/blocks.awk
 etc/edt-user.el
@@ -715,7 +717,6 @@ lisp/x-dnd.el
 lisp/xml.el
 lisp/xt-mouse.el
 lwlib/*
-nt/subdirs.el
 oldXMenu/*
 src/bitmaps/
 src/cygw32.c
@@ -729,5 +730,9 @@ src/nsselect.m
 src/nsterm.m
 test/automated/*
 test/cedet/*
-test/etags/*
 test/rmailmm.el
+
+
+;;; Local Variables:
+;;;   coding: utf-8
+;;; End:
