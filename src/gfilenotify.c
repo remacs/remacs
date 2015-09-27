@@ -195,6 +195,7 @@ will be reported only in case of the `moved' event.  */)
 
   /* Enable watch.  */
   monitor = g_file_monitor (gfile, gflags, NULL, &gerror);
+  g_object_unref (gfile);
   if (gerror)
     {
       char msg[1024];
