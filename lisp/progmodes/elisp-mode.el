@@ -632,16 +632,16 @@ otherwise build the summary from TYPE and SYMBOL."
 	     (xref-make-elisp-location symbol type file)))
 
 (defvar elisp-xref-find-def-functions nil
-  "List of functions to be run from ‘elisp--xref-find-definitions’ to add additional xrefs.
+  "List of functions to be run from `elisp--xref-find-definitions' to add additional xrefs.
 Called with one arg; the symbol whose definition is desired.
 Each function should return a list of xrefs, or nil; the first
 non-nil result supercedes the xrefs produced by
-‘elisp--xref-find-definitions’.")
+`elisp--xref-find-definitions'.")
 
 ;; FIXME: name should be singular; match xref-find-definition
 (defun elisp--xref-find-definitions (symbol)
   ;; The file name is not known when `symbol' is defined via interactive eval.
-  (let (xrefs temp)
+  (let (xrefs)
 
     (let ((temp elisp-xref-find-def-functions))
       (while (and (null xrefs)
@@ -720,10 +720,15 @@ non-nil result supercedes the xrefs produced by
               (dolist (method (cl--generic-method-table generic))
                 (let* ((info (cl--generic-method-info method));; qual-string combined-args doconly
                        (specializers (cl--generic-method-specializers method))
+                       (non-default nil)
                        (met-name (cons symbol specializers))
                        (file (find-lisp-object-file-name met-name 'cl-defmethod)))
+                  (dolist (item specializers)
+                    ;; default method has all 't' in specializers
+                    (setq non-default (or non-default (not (equal t item)))))
+
                   (when (and file
-                             (or specializers   ;; default method has null specializers
+                             (or non-default
                                  (nth 2 info))) ;; assuming only co-located default has null doc string
                     (if specializers
                         (let ((summary (format elisp--xref-format-extra 'cl-defmethod symbol (nth 1 info))))
@@ -800,6 +805,7 @@ non-nil result supercedes the xrefs produced by
 (declare-function project-current "project")
 
 (defun elisp--xref-find-references (symbol)
+  "Find all references to SYMBOL (a string) in the current project."
   (cl-mapcan
    (lambda (dir)
      (xref-collect-references symbol dir))
@@ -928,6 +934,7 @@ Semicolons start comments.
             (goto-char end)))))))
 
 (defun elisp-byte-code-syntax-propertize (start end)
+  (goto-char start)
   (elisp--byte-code-comment end (point))
   (funcall
    (syntax-propertize-rules
@@ -1240,7 +1247,7 @@ If the current defun is actually a call to `defvar',
 then reset the variable using the initial value expression
 even if the variable already has some other value.
 \(Normally `defvar' does not change the variable's value
-if it already has a value.\)
+if it already has a value.)
 
 Return the result of evaluation."
   ;; FIXME: the print-length/level bindings should only be applied while

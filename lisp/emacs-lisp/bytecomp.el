@@ -397,7 +397,7 @@ invoked interactively are excluded from this list."
   "Alist of functions and their call tree.
 Each element looks like
 
-  \(FUNCTION CALLERS CALLS\)
+  (FUNCTION CALLERS CALLS)
 
 where CALLERS is a list of functions that call FUNCTION, and CALLS
 is a list of functions for which calls were generated while compiling
@@ -1814,7 +1814,7 @@ The value is non-nil if there were no errors, nil if errors."
     ;; compile this file.
     (if (with-current-buffer input-buffer no-byte-compile)
 	(progn
-	  ;; (message "%s not compiled because of ‘no-byte-compile: %s’"
+	  ;; (message "%s not compiled because of `no-byte-compile: %s'"
 	  ;; 	   (byte-compile-abbreviate-file filename)
 	  ;; 	   (with-current-buffer input-buffer no-byte-compile))
 	  (when (file-exists-p target-file)
@@ -4196,7 +4196,7 @@ binding slots have been popped."
                       ;;              (consp (get condition
                       ;;                          'error-conditions)))))
                       ;; (byte-compile-warn
-                      ;;   "‘%s’ is not a known condition name
+                      ;;   "`%s' is not a known condition name
                       ;;   (in condition-case)"
                       ;;   condition))
                       )
@@ -4235,7 +4235,7 @@ binding slots have been popped."
           ;; for the argument to `signal', not to `condition-case'.
           ;;(unless (consp (get c 'error-conditions))
           ;;  (byte-compile-warn
-          ;;   "‘%s’ is not a known condition name (in condition-case)"
+          ;;   "`%s' is not a known condition name (in condition-case)"
           ;;   c))
           )
         (byte-compile-push-constant condition))
@@ -4529,11 +4529,11 @@ whose definitions have been compiled in this Emacs session, as well as
 all functions called by those functions.
 
 The call graph does not include macros, inline functions, or
-primitives that the byte-code interpreter knows about directly \(eq,
-cons, etc.\).
+primitives that the byte-code interpreter knows about directly
+\(`eq', `cons', etc.).
 
 The call tree also lists those functions which are not known to be called
-\(that is, to which no calls have been compiled\), and which cannot be
+\(that is, to which no calls have been compiled), and which cannot be
 invoked interactively."
   (interactive)
   (message "Generating call tree...")

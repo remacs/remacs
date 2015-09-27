@@ -1,4 +1,4 @@
-/* Fundamental definitions for GNU Emacs Lisp interpreter.
+/* Fundamental definitions for GNU Emacs Lisp interpreter. -*- coding: utf-8 -*-
 
 Copyright (C) 1985-1987, 1993-1995, 1997-2015 Free Software Foundation,
 Inc.
@@ -2736,7 +2736,7 @@ XFLOATINT (Lisp_Object n)
 INLINE void
 CHECK_NUMBER_OR_FLOAT (Lisp_Object x)
 {
-  CHECK_TYPE (FLOATP (x) || INTEGERP (x), Qnumberp, x);
+  CHECK_TYPE (NUMBERP (x), Qnumberp, x);
 }
 
 #define CHECK_NUMBER_OR_FLOAT_COERCE_MARKER(x)				\
@@ -2744,7 +2744,7 @@ CHECK_NUMBER_OR_FLOAT (Lisp_Object x)
     if (MARKERP (x))							\
       XSETFASTINT (x, marker_position (x));				\
     else								\
-      CHECK_TYPE (INTEGERP (x) || FLOATP (x), Qnumber_or_marker_p, x);	\
+      CHECK_TYPE (NUMBERP (x), Qnumber_or_marker_p, x);			\
   } while (false)
 
 /* Since we can't assign directly to the CAR or CDR fields of a cons
@@ -3840,6 +3840,7 @@ extern void fclose_unwind (void *);
 extern void restore_point_unwind (Lisp_Object);
 extern _Noreturn void report_file_errno (const char *, Lisp_Object, int);
 extern _Noreturn void report_file_error (const char *, Lisp_Object);
+extern _Noreturn void report_file_notify_error (const char *, Lisp_Object);
 extern bool internal_delete_file (Lisp_Object);
 extern Lisp_Object emacs_readlinkat (int, const char *);
 extern bool file_directory_p (const char *);
@@ -4352,12 +4353,13 @@ INLINE ptrdiff_t
 lisp_word_count (ptrdiff_t nbytes)
 {
   if (-1 >> 1 == -1)
-    switch (word_size)
+    switch (word_size + 0)
       {
       case 2: return nbytes >> 1;
       case 4: return nbytes >> 2;
       case 8: return nbytes >> 3;
       case 16: return nbytes >> 4;
+      default: break;
       }
   return nbytes / word_size - (nbytes % word_size < 0);
 }

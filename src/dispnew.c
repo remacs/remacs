@@ -3004,7 +3004,7 @@ redraw_frame (struct frame *f)
   clear_frame (f);
   clear_current_matrices (f);
   update_end (f);
-  windows_or_buffers_changed = 13;
+  fset_redisplay (f);
   /* Mark all windows as inaccurate, so that every window will have
      its redisplay done.  */
   mark_window_display_accurate (FRAME_ROOT_WINDOW (f), 0);
@@ -5665,7 +5665,7 @@ DEFUN ("sleep-for", Fsleep_for, Ssleep_for, 1, 2, 0,
 SECONDS may be a floating-point value, meaning that you can wait for a
 fraction of a second.  Optional second arg MILLISECONDS specifies an
 additional wait period, in milliseconds; this is for backwards compatibility.
-\(Not all operating systems support waiting for a fraction of a second.)  */)
+(Not all operating systems support waiting for a fraction of a second.)  */)
   (Lisp_Object seconds, Lisp_Object milliseconds)
 {
   double duration = extract_float (seconds);

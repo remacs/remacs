@@ -335,9 +335,8 @@ struct frame
   /* Set to true after this frame was made by `make-frame'.  */
   bool_bf after_make_frame : 1;
 
-  /* True means tool bar has been redisplayed at least once in current
-     session.  */
-  bool_bf tool_bar_redisplayed_once : 1;
+  /* Non-zero if this frame's faces need to be recomputed.  */
+  bool_bf face_change : 1;
 
   /* Bitfield area ends here.  */
 
@@ -618,7 +617,7 @@ fset_desired_tool_bar_string (struct frame *f, Lisp_Object val)
 }
 #endif /* HAVE_WINDOW_SYSTEM && !USE_GTK && !HAVE_NS */
 
-#define NUMVAL(X) ((INTEGERP (X) || FLOATP (X)) ? XFLOATINT (X) : -1)
+#define NUMVAL(X) (NUMBERP (X) ? XFLOATINT (X) : -1)
 
 INLINE double
 default_pixels_per_inch_x (void)

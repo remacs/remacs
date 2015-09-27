@@ -168,7 +168,8 @@
 ;;  "Switch to non-existing buffers only upon confirmation."
 ;;  (interactive "BSwitch to buffer: ")
 ;;  (if (or (get-buffer (ad-get-arg 0))
-;;          (y-or-n-p (format "‘%s’ does not exist, create? " (ad-get-arg 0))))
+;;          (y-or-n-p (format-message "`%s' does not exist, create? "
+;;                                    (ad-get-arg 0))))
 ;;      ad-do-it))
 ;;
 ;;(defadvice find-file (before existing-files-only activate)
@@ -3106,7 +3107,7 @@ deactivation, which might run hooks and get into other trouble."
   "Define a piece of advice for FUNCTION (a symbol).
 The syntax of `defadvice' is as follows:
 
-  \(defadvice FUNCTION (CLASS NAME [POSITION] [ARGLIST] FLAG...)
+  (defadvice FUNCTION (CLASS NAME [POSITION] [ARGLIST] FLAG...)
     [DOCSTRING] [INTERACTIVE-FORM]
     BODY...)
 

@@ -1069,8 +1069,11 @@ The value returned is a list of elements of the form
   (or
    (and (assq type cl--generic-typeof-types)
         (progn
-          (if (memq type '(vector array sequence))
-              (message "`%S' also matches CL structs and EIEIO classes" type))
+          ;; FIXME: While this wrinkle in the semantics can be occasionally
+          ;; problematic, this warning is more often annoying than helpful.
+          ;;(if (memq type '(vector array sequence))
+          ;;    (message "`%S' also matches CL structs and EIEIO classes"
+          ;;             type))
           (list cl--generic-typeof-generalizer)))
    (cl-call-next-method)))
 

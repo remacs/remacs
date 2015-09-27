@@ -114,7 +114,7 @@ the remaining command-line args are in the variable `command-line-args-left'.")
 
 (defvaralias 'argv 'command-line-args-left
   "List of command-line args not yet processed.
-This is a convenience alias, so that one can write \(pop argv\)
+This is a convenience alias, so that one can write \(pop argv)
 inside of --eval command line arguments in order to access
 following arguments.")
 (internal-make-var-non-special 'argv)
@@ -803,19 +803,61 @@ to prepare for opening the first frame (e.g. open a connection to an X server)."
 (defvar server-name)
 (defvar server-process)
 
-(defun startup--setup-quote-display ()
-  "Display ASCII approximations on user request or if curved quotes don't work."
-  (when (memq text-quoting-style '(nil grave straight))
-    (dolist (char-repl '((?‘ . ?\`) (?’ . ?\') (?“ . ?\") (?” . ?\")))
-      (let ((char (car char-repl))
-            (repl (cdr char-repl)))
-        (when (or text-quoting-style (not (char-displayable-p char)))
-          (when (and (eq repl ?\`) (eq text-quoting-style 'straight))
-            (setq repl ?\'))
-          (unless standard-display-table
-            (setq standard-display-table (make-display-table)))
-          (aset standard-display-table char
-                (vector (make-glyph-code repl 'shadow))))))))
+(defun startup--setup-quote-display (&optional style)
+  "If needed, display ASCII approximations to curved quotes.
+Do this by modifying `standard-display-table'.  Optional STYLE
+specifies the desired quoting style, as in `text-quoting-style'.
+If STYLE is nil, display appropriately for the terminal."
+  (let ((repls (let ((style-repls (assq style '((grave . "`'\"\"")
+                                                (straight . "''\"\"")))))
+                 (if style-repls (cdr style-repls) (make-vector 4 nil))))
+        glyph-count)
+    ;; REPLS is a sequence of the four replacements for "‘’“”", respectively.
+    ;; If STYLE is nil, infer REPLS from terminal characteristics.
+    (unless style
+      ;; On a terminal that supports glyph codes,
+      ;; GLYPH-COUNT[i] is the number of times that glyph code I
+      ;; represents either an ASCII character or one of the 4
+      ;; quote characters.  This assumes glyph codes are valid
+      ;; Elisp characters, which is a safe assumption in practice.
+      (when (integerp (internal-char-font nil (max-char)))
+        (setq glyph-count (make-char-table nil 0))
+        (dotimes (i 132)
+          (let ((glyph (internal-char-font
+                        nil (if (< i 128) i (aref "‘’“”" (- i 128))))))
+            (when (<= 0 glyph)
+              (aset glyph-count glyph (1+ (aref glyph-count glyph)))))))
+      (dotimes (i 2)
+        (let ((lq (aref "‘“" i)) (rq (aref "’”" i))
+              (lr (aref "`\"" i)) (rr (aref "'\"" i))
+              (i2 (* i 2)))
+          (unless (if glyph-count
+                      ;; On a terminal that supports glyph codes, use
+                      ;; ASCII replacements unless both quotes are displayable.
+                      ;; If not using ASCII replacements, highlight
+                      ;; quotes unless they are both unique among the
+                      ;; 128 + 4 characters of concern.
+                      (let ((lglyph (internal-char-font nil lq))
+                            (rglyph (internal-char-font nil rq)))
+                        (when (and (<= 0 lglyph) (<= 0 rglyph))
+                          (setq lr lq rr rq)
+                          (and (= 1 (aref glyph-count lglyph))
+                               (= 1 (aref glyph-count rglyph)))))
+                    ;; On a terminal that does not support glyph codes, use
+                    ;; ASCII replacements unless both quotes are displayable.
+                    (and (char-displayable-p lq)
+                         (char-displayable-p rq)))
+            (aset repls i2 lr)
+            (aset repls (1+ i2) rr)))))
+    (dotimes (i 4)
+      (let ((char (aref "‘’“”" i))
+            (repl (aref repls i)))
+        (if repl
+            (aset (or standard-display-table
+                      (setq standard-display-table (make-display-table)))
+                  char (vector (make-glyph-code repl 'escape-glyph)))
+          (when standard-display-table
+            (aset standard-display-table char nil)))))))
 
 (defun command-line ()
   "A subroutine of `normal-top-level'.
@@ -1238,11 +1280,6 @@ the `--debug-init' option to view a complete error backtrace."
 	;; originally done before unibyte was set and is sensitive to
 	;; unibyte (display table, terminal coding system &c).
 	(set-language-environment current-language-environment)))
-
-    ;; Setup quote display again, if the init file sets
-    ;; text-quoting-style to a non-nil value.
-    (when (and (not noninteractive) text-quoting-style)
-      (startup--setup-quote-display))
 
     ;; Do this here in case the init file sets mail-host-address.
     (if (equal user-mail-address "")
@@ -1933,7 +1970,7 @@ To quit a partially entered command, type Control-g.\n")
 		 'action (lambda (_button) (info-emacs-manual))
 		 'follow-link t)
   (insert "\tView the Emacs manual using Info\n")
-  (insert-button "\(Non)Warranty"
+  (insert-button "(Non)Warranty"
 		 'action (lambda (_button) (describe-no-warranty))
 		 'follow-link t)
   (insert "\t\tGNU Emacs comes with ABSOLUTELY NO WARRANTY\n")

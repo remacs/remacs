@@ -4038,6 +4038,8 @@ member."
       (let ((name (bindat-get-field local 'name))
             (value (bindat-get-field local 'value))
             (type (bindat-get-field local 'type)))
+        (when (not value)
+          (setq value "<complex data type>"))
         (if (or (not value)
                 (string-match "\\0x" value))
             (add-text-properties 0 (length name)

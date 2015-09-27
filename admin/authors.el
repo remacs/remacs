@@ -212,7 +212,7 @@ If REALNAME is nil, ignore that author.")
     "Michael McNamara"
     "Mike McEwan"
     "Nelson Jose dos Santos Ferreira"
-    "Peter von der Ahe"
+    "Peter von der Ahé"
     "Peter O'Gorman"
     "Piet van Oostrum"
     "Roland McGrath"

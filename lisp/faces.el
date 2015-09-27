@@ -433,7 +433,7 @@ completely specified)."
 (defun face-attribute-merged-with (attribute value faces &optional frame)
   "Merges ATTRIBUTE, initially VALUE, with faces from FACES until absolute.
 FACES may be either a single face or a list of faces.
-\[This is an internal function.]"
+[This is an internal function.]"
   (cond ((not (face-attribute-relative-p attribute value))
 	 value)
 	((null faces)
@@ -2691,10 +2691,12 @@ It is used for characters of no fonts too."
      :background "turquoise")		; looks OK on tty (becomes cyan)
     (((class color) (background dark))
      :background "steelblue3")		; looks OK on tty (becomes blue)
-    (((background dark))
+    (((background dark) (min-colors 4))
      :background "grey50")
+    (((background light) (min-colors 4))
+     :background "gray")
     (t
-     :background "gray"))
+     :inherit underline))
   "Face used for a matching paren."
   :group 'paren-showing-faces)
 

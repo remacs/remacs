@@ -620,6 +620,11 @@ The type returned can be `comment', `string' or `paren'."
    ((python-rx string-delimiter)
     (0 (ignore (python-syntax-stringify))))))
 
+(defconst python--prettify-symbols-alist
+  '(("lambda"  . ?λ)
+    ("and" . ?∧)
+    ("or" . ?∨)))
+
 (defsubst python-syntax-count-quotes (quote-char &optional point limit)
   "Count number of quotes around point (max is 3).
 QUOTE-CHAR is the quote char to count.  Optional argument POINT is
@@ -3635,12 +3640,18 @@ Never set this variable directly, use
   "Set the buffer for FILE-NAME as the tracked buffer.
 Internally it uses the `python-pdbtrack-tracked-buffer' variable.
 Returns the tracked buffer."
-  (let ((file-buffer (get-file-buffer
-                      (concat (file-remote-p default-directory)
-                              file-name))))
+  (let* ((file-name-prospect (concat (file-remote-p default-directory)
+                              file-name))
+         (file-buffer (get-file-buffer file-name-prospect)))
     (if file-buffer
         (setq python-pdbtrack-tracked-buffer file-buffer)
-      (setq file-buffer (find-file-noselect file-name))
+      (cond
+       ((file-exists-p file-name-prospect)
+        (setq file-buffer (find-file-noselect file-name-prospect)))
+       ((and (not (equal file-name file-name-prospect))
+             (file-exists-p file-name))
+        ;; Fallback to a locally available copy of the file.
+        (setq file-buffer (find-file-noselect file-name-prospect))))
       (when (not (member file-buffer python-pdbtrack-buffers-to-kill))
         (add-to-list 'python-pdbtrack-buffers-to-kill file-buffer)))
     file-buffer))
@@ -5097,6 +5108,9 @@ returned as is."
        #'(lambda ()
            "`outline-level' function for Python mode."
            (1+ (/ (current-indentation) python-indent-offset))))
+
+  (set (make-local-variable 'prettify-symbols-alist)
+       python--prettify-symbols-alist)
 
   (python-skeleton-add-menu-items)
 

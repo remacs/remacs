@@ -528,8 +528,8 @@ generate notifications correctly, though.  */)
       || (w32_major_version == 5 && w32_major_version < 1))
     {
       errno = ENOSYS;
-      report_file_error ("Watching filesystem events is not supported",
-			 Qnil);
+      report_file_notify_error ("Watching filesystem events is not supported",
+				Qnil);
     }
 
   /* filenotify.el always passes us a directory, either the parent
@@ -573,11 +573,11 @@ generate notifications correctly, though.  */)
 					      Vlocale_coding_system, 0);
 	  else
 	    lisp_errstr = build_string (errstr);
-	  report_file_error ("Cannot watch file",
-			     Fcons (lisp_errstr, Fcons (file, Qnil)));
+	  report_file_notify_error ("Cannot watch file",
+				    Fcons (lisp_errstr, Fcons (file, Qnil)));
 	}
       else
-	report_file_error ("Cannot watch file", Fcons (file, Qnil));
+	report_file_notify_error ("Cannot watch file", Fcons (file, Qnil));
     }
   /* Store watch object in watch list. */
   watch_descriptor = make_pointer_integer (dirwatch);
@@ -611,8 +611,8 @@ WATCH-DESCRIPTOR should be an object returned by `w32notify-add-watch'.  */)
     }
 
   if (status == -1)
-    report_file_error ("Invalid watch descriptor", Fcons (watch_descriptor,
-							  Qnil));
+    report_file_notify_error ("Invalid watch descriptor",
+			      Fcons (watch_descriptor, Qnil));
 
   return Qnil;
 }
@@ -626,6 +626,30 @@ w32_get_watch_object (void *desc)
      critical section, so we cannot possibly QUIT if watch_list is not
      in the right condition.  */
   return NILP (watch_list) ? Qnil : assoc_no_quit (descriptor, watch_list);
+}
+
+DEFUN ("w32notify-valid-p", Fw32notify_valid_p, Sw32notify_valid_p, 1, 1, 0,
+       doc: /* "Check a watch specified by its WATCH-DESCRIPTOR for validity.
+
+WATCH-DESCRIPTOR should be an object returned by `w32notify-add-watch'.
+
+A watch can become invalid if the directory it watches is deleted, or if
+the watcher thread exits abnormally for any other reason.  Removing the
+watch by calling `w32notify-rm-watch' also makes it invalid.  */)
+     (Lisp_Object watch_descriptor)
+{
+  Lisp_Object watch_object = Fassoc (watch_descriptor, watch_list);
+
+  if (!NILP (watch_object))
+    {
+      struct notification *dirwatch =
+	(struct notification *)XINTPTR (watch_descriptor);
+      if (w32_valid_pointer_p (dirwatch, sizeof(struct notification))
+	  && dirwatch->dir != NULL)
+	return Qt;
+    }
+
+  return Qnil;
 }
 
 void
@@ -648,6 +672,7 @@ syms_of_w32notify (void)
 
   defsubr (&Sw32notify_add_watch);
   defsubr (&Sw32notify_rm_watch);
+  defsubr (&Sw32notify_valid_p);
 
   staticpro (&watch_list);
 

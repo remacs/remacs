@@ -382,14 +382,6 @@ Defaults to the whole buffer.  END can be out of bounds."
    (save-excursion
      (unless start (setq start (point-min)))
      (setq end (if end (min end (point-max)) (point-max)))
-     ;; This did bind `font-lock-beginning-of-syntax-function' to
-     ;; nil at some point, for an unknown reason.  Don't do this; it
-     ;; can make highlighting slow due to expensive calls to
-     ;; `parse-partial-sexp' in function
-     ;; `font-lock-fontify-syntactically-region'.  Example: paging
-     ;; from the end of a buffer to its start, can do repeated
-     ;; `parse-partial-sexp' starting from `point-min', which can
-     ;; take a long time in a large buffer.
      (let ((orig-start start) next)
        (save-match-data
 	 ;; Fontify chunks beginning at START.  The end of a
@@ -583,11 +575,13 @@ non-nil in a repeated invocation of this function."
 		      'fontified nil))
 		   (setq pos (next-single-property-change
                               pos 'fontified)))))))))
-    (setq jit-lock-defer-buffers nil)
     ;; Force fontification of the visible parts.
-    (let ((jit-lock-defer-timer nil))
+    (let ((buffers jit-lock-defer-buffers)
+          (jit-lock-defer-timer nil))
+      (setq jit-lock-defer-buffers nil)
       ;; (message "Jit-Defer Now")
-      (sit-for 0)
+      (unless (redisplay)                       ;FIXME: Should we `force'?
+        (setq jit-lock-defer-buffers buffers))
       ;; (message "Jit-Defer Done")
       )))
 

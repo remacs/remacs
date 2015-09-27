@@ -768,7 +768,7 @@ static void push_it (struct it *, struct text_pos *);
 static void iterate_out_of_display_property (struct it *);
 static void pop_it (struct it *);
 static void redisplay_internal (void);
-static bool echo_area_display (bool);
+static void echo_area_display (bool);
 static void redisplay_windows (Lisp_Object);
 static void redisplay_window (Lisp_Object, bool);
 static Lisp_Object redisplay_window_error (Lisp_Object);
@@ -2661,10 +2661,18 @@ init_iterator (struct it *it, struct window *w,
      free realized faces now because they depend on face definitions
      that might have changed.  Don't free faces while there might be
      desired matrices pending which reference these faces.  */
-  if (face_change && !inhibit_free_realized_faces)
+  if (!inhibit_free_realized_faces)
     {
-      face_change = false;
-      free_all_realized_faces (Qnil);
+      if (face_change)
+	{
+	  face_change = false;
+	  free_all_realized_faces (Qnil);
+	}
+      else if (XFRAME (w->frame)->face_change)
+	{
+	  XFRAME (w->frame)->face_change = 0;
+	  free_all_realized_faces (w->frame);
+	}
     }
 
   /* Perhaps remap BASE_FACE_ID to a user-specified alternative.  */
@@ -4014,21 +4022,26 @@ face_before_or_after_it_pos (struct it *it, bool before_p)
 	      /* With bidi iteration, the character before the current
 		 in the visual order cannot be found by simple
 		 iteration, because "reverse" reordering is not
-		 supported.  Instead, we need to use the move_it_*
-		 family of functions.  */
+		 supported.  Instead, we need to start from the string
+		 beginning and go all the way to the current string
+		 position, remembering the previous position.  */
 	      /* Ignore face changes before the first visible
 		 character on this display line.  */
 	      if (it->current_x <= it->first_visible_x)
 		return it->face_id;
 	      SAVE_IT (it_copy, *it, it_copy_data);
-	      /* Implementation note: Since move_it_in_display_line
-		 works in the iterator geometry, and thinks the first
-		 character is always the leftmost, even in R2L lines,
-		 we don't need to distinguish between the R2L and L2R
-		 cases here.  */
-	      move_it_in_display_line (&it_copy, SCHARS (it_copy.string),
-				       it_copy.current_x - 1, MOVE_TO_X);
-	      charpos = IT_STRING_CHARPOS (it_copy);
+	      IT_STRING_CHARPOS (it_copy) = 0;
+	      bidi_init_it (0, 0, FRAME_WINDOW_P (it_copy.f), &it_copy.bidi_it);
+
+	      do
+		{
+		  charpos = IT_STRING_CHARPOS (it_copy);
+		  if (charpos >= SCHARS (it->string))
+		    break;
+		  bidi_move_to_visually_next (&it_copy.bidi_it);
+		}
+	      while (IT_STRING_CHARPOS (it_copy) != IT_STRING_CHARPOS (*it));
+
 	      RESTORE_IT (it, it, it_copy_data);
 	    }
 	  else
@@ -4108,11 +4121,15 @@ face_before_or_after_it_pos (struct it *it, bool before_p)
 	{
 	  if (before_p)
 	    {
+	      int current_x;
+
 	      /* With bidi iteration, the character before the current
 		 in the visual order cannot be found by simple
 		 iteration, because "reverse" reordering is not
 		 supported.  Instead, we need to use the move_it_*
-		 family of functions.  */
+		 family of functions, and move to the previous
+		 character starting from the beginning of the visual
+		 line.  */
 	      /* Ignore face changes before the first visible
 		 character on this display line.  */
 	      if (it->current_x <= it->first_visible_x)
@@ -4123,8 +4140,9 @@ face_before_or_after_it_pos (struct it *it, bool before_p)
 		 character is always the leftmost, even in R2L lines,
 		 we don't need to distinguish between the R2L and L2R
 		 cases here.  */
-	      move_it_in_display_line (&it_copy, ZV,
-				       it_copy.current_x - 1, MOVE_TO_X);
+	      current_x = it_copy.current_x;
+	      move_it_vertically_backward (&it_copy, 0);
+	      move_it_in_display_line (&it_copy, ZV, current_x - 1, MOVE_TO_X);
 	      pos = it_copy.current.pos;
 	      RESTORE_IT (it, it, it_copy_data);
 	    }
@@ -5895,6 +5913,13 @@ push_it (struct it *it, struct text_pos *position)
     case GET_FROM_STRETCH:
       p->u.stretch.object = it->object;
       break;
+    case GET_FROM_BUFFER:
+    case GET_FROM_DISPLAY_VECTOR:
+    case GET_FROM_STRING:
+    case GET_FROM_C_STRING:
+      break;
+    default:
+      emacs_abort ();
     }
   p->position = position ? *position : it->position;
   p->current = it->current;
@@ -6017,6 +6042,11 @@ pop_it (struct it *it)
 	  it->method = GET_FROM_BUFFER;
 	  it->object = it->w->contents;
 	}
+      break;
+    case GET_FROM_C_STRING:
+      break;
+    default:
+      emacs_abort ();
     }
   it->end_charpos = p->end_charpos;
   it->string_nchars = p->string_nchars;
@@ -11119,11 +11149,10 @@ clear_garbaged_frames (void)
 }
 
 
-/* Redisplay the echo area of the selected frame.  If UPDATE_FRAME_P,
-   update selected_frame.  Value is true if the mini-windows height
-   has been changed.  */
+/* Redisplay the echo area of the selected frame.  If UPDATE_FRAME_P, update
+   selected_frame.  */
 
-static bool
+static void
 echo_area_display (bool update_frame_p)
 {
   Lisp_Object mini_window;
@@ -11138,14 +11167,14 @@ echo_area_display (bool update_frame_p)
 
   /* Don't display if frame is invisible or not yet initialized.  */
   if (!FRAME_VISIBLE_P (f) || !f->glyphs_initialized_p)
-    return false;
+    return;
 
 #ifdef HAVE_WINDOW_SYSTEM
   /* When Emacs starts, selected_frame may be the initial terminal
      frame.  If we let this through, a message would be displayed on
      the terminal.  */
   if (FRAME_INITIAL_P (XFRAME (selected_frame)))
-    return false;
+    return;
 #endif /* HAVE_WINDOW_SYSTEM */
 
   /* Redraw garbaged frames.  */
@@ -11183,7 +11212,7 @@ echo_area_display (bool update_frame_p)
 		 pending input.  */
 	      ptrdiff_t count = SPECPDL_INDEX ();
 	      specbind (Qredisplay_dont_pause, Qt);
-	      windows_or_buffers_changed = 44;
+	      fset_redisplay (f);
 	      redisplay_internal ();
 	      unbind_to (count, Qnil);
 	    }
@@ -11219,7 +11248,16 @@ echo_area_display (bool update_frame_p)
   if (EQ (mini_window, selected_window))
     CHARPOS (this_line_start_pos) = 0;
 
-  return window_height_changed_p;
+  if (window_height_changed_p)
+    {
+      fset_redisplay (f);
+
+      /* If window configuration was changed, frames may have been
+	 marked garbaged.  Clear them or we will experience
+	 surprises wrt scrolling.
+	 FIXME: How/why/when?  */
+      clear_garbaged_frames ();
+    }
 }
 
 /* True if W's buffer was changed but not saved.  */
@@ -13445,7 +13483,7 @@ redisplay_internal (void)
 	     echo-area doesn't show through.  */
 	  && !MINI_WINDOW_P (XWINDOW (selected_window))))
     {
-      bool window_height_changed_p = echo_area_display (false);
+      echo_area_display (false);
 
       if (message_cleared_p)
 	update_miniwindow_p = true;
@@ -13458,16 +13496,6 @@ redisplay_internal (void)
 	 the echo area.  */
       if (!display_last_displayed_message_p)
 	message_cleared_p = false;
-
-      if (window_height_changed_p)
-	{
-	  windows_or_buffers_changed = 50;
-
-	  /* If window configuration was changed, frames may have been
-	     marked garbaged.  Clear them or we will experience
-	     surprises wrt scrolling.  */
-	  clear_garbaged_frames ();
-	}
     }
   else if (EQ (selected_window, minibuf_window)
 	   && (current_buffer->clip_changed || window_outdated (w))
@@ -13521,6 +13549,7 @@ redisplay_internal (void)
       && FRAME_VISIBLE_P (XFRAME (w->frame))
       && !FRAME_OBSCURED_P (XFRAME (w->frame))
       && !XFRAME (w->frame)->cursor_type_changed
+      && !XFRAME (w->frame)->face_change
       /* Make sure recorded data applies to current buffer, etc.  */
       && this_line_buffer == current_buffer
       && match_p
@@ -13737,18 +13766,6 @@ redisplay_internal (void)
 	    continue;
 
 	retry_frame:
-
-#if defined (HAVE_WINDOW_SYSTEM) && !defined (USE_GTK) && !defined (HAVE_NS)
-	  /* Redisplay internal tool bar if this is the first time so we
-	     can adjust the frame height right now, if necessary.  */
-	  if (!f->tool_bar_redisplayed_once)
-	    {
-	      if (redisplay_tool_bar (f))
-		adjust_frame_glyphs (f);
-	      f->tool_bar_redisplayed_once = true;
-	    }
-#endif
-
 	  if (FRAME_WINDOW_P (f) || FRAME_TERMCAP_P (f) || f == sf)
 	    {
 	      bool gcscrollbars
@@ -15879,6 +15896,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
       && REDISPLAY_SOME_P ()
       && !w->redisplay
       && !w->update_mode_line
+      && !f->face_change
       && !f->redisplay
       && !buffer->text->redisplay
       && BUF_PT (buffer) == w->last_point)
@@ -21040,7 +21058,7 @@ window-specific overlays, which can affect the results.
 
 Strong directional characters `L', `R', and `AL' can have their
 intrinsic directionality overridden by directional override
-control characters RLO \(u+202e) and LRO \(u+202d).  See the
+control characters RLO (u+202e) and LRO (u+202d).  See the
 function `get-char-code-property' for a way to inquire about
 the `bidi-class' property of a character.  */)
   (Lisp_Object from, Lisp_Object to, Lisp_Object object)
@@ -24065,7 +24083,7 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 	prop = Qnil;
     }
 
-  if (INTEGERP (prop) || FLOATP (prop))
+  if (NUMBERP (prop))
     {
       int base_unit = (width_p
 		       ? FRAME_COLUMN_WIDTH (it->f)
@@ -24117,7 +24135,7 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 	    car = Qnil;
 	}
 
-      if (INTEGERP (car) || FLOATP (car))
+      if (NUMBERP (car))
 	{
 	  double fact;
 	  pixels = XFLOATINT (car);
@@ -25948,9 +25966,7 @@ produce_stretch_glyph (struct it *it)
       zero_width_ok_p = true;
       width = (int)tem;
     }
-#ifdef HAVE_WINDOW_SYSTEM
-  else if (FRAME_WINDOW_P (it->f)
-	   && (prop = Fplist_get (plist, QCrelative_width), NUMVAL (prop) > 0))
+  else if (prop = Fplist_get (plist, QCrelative_width), NUMVAL (prop) > 0)
     {
       /* Relative width `:relative-width FACTOR' specified and valid.
 	 Compute the width of the characters having the `glyph'
@@ -25970,10 +25986,9 @@ produce_stretch_glyph (struct it *it)
 
       it2.glyph_row = NULL;
       it2.what = IT_CHARACTER;
-      x_produce_glyphs (&it2);
+      PRODUCE_GLYPHS (&it2);
       width = NUMVAL (prop) * it2.pixel_width;
     }
-#endif	/* HAVE_WINDOW_SYSTEM */
   else if ((prop = Fplist_get (plist, QCalign_to), !NILP (prop))
 	   && calc_pixel_width_or_height (&tem, it, prop, font, true,
 					  &align_to))
@@ -29064,7 +29079,7 @@ on_hot_spot_p (Lisp_Object hot_spot, int x, int y)
       Lisp_Object lr, lx0, ly0;
       if (CONSP (circ)
 	  && CONSP (XCAR (circ))
-	  && (lr = XCDR (circ), INTEGERP (lr) || FLOATP (lr))
+	  && (lr = XCDR (circ), NUMBERP (lr))
 	  && (lx0 = XCAR (XCAR (circ)), INTEGERP (lx0))
 	  && (ly0 = XCDR (XCAR (circ)), INTEGERP (ly0)))
 	{
@@ -30996,18 +31011,18 @@ This variable is not guaranteed to be accurate except while processing
 
   DEFVAR_LISP ("frame-title-format", Vframe_title_format,
     doc: /* Template for displaying the title bar of visible frames.
-\(Assuming the window manager supports this feature.)
+(Assuming the window manager supports this feature.)
 
 This variable has the same structure as `mode-line-format', except that
 the %c and %l constructs are ignored.  It is used only on frames for
-which no explicit name has been set \(see `modify-frame-parameters').  */);
+which no explicit name has been set (see `modify-frame-parameters').  */);
 
   DEFVAR_LISP ("icon-title-format", Vicon_title_format,
     doc: /* Template for displaying the title bar of an iconified frame.
-\(Assuming the window manager supports this feature.)
+(Assuming the window manager supports this feature.)
 This variable has the same structure as `mode-line-format' (which see),
 and is used only on frames for which no explicit name has been set
-\(see `modify-frame-parameters').  */);
+(see `modify-frame-parameters').  */);
   Vicon_title_format
     = Vframe_title_format
     = listn (CONSTYPE_PURE, 3,
@@ -31066,9 +31081,9 @@ A positive number means delay autoselection by that many seconds: a
 window is autoselected only after the mouse has remained in that
 window for the duration of the delay.
 A negative number has a similar effect, but causes windows to be
-autoselected only after the mouse has stopped moving.  \(Because of
+autoselected only after the mouse has stopped moving.  (Because of
 the way Emacs compares mouse events, you will occasionally wait twice
-that time before the window gets selected.\)
+that time before the window gets selected.)
 Any other value means to autoselect window instantaneously when the
 mouse pointer enters it.
 

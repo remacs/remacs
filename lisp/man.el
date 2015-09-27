@@ -311,7 +311,7 @@ This regular expression should start with a `^' character.")
   "Regular expression describing a reference to another manpage.")
 
 (defvar Man-apropos-regexp
-  (concat "\\\[\\(" Man-name-regexp "\\)\\\][ \t]*(\\(" Man-section-regexp "\\))")
+  (concat "\\[\\(" Man-name-regexp "\\)\\][ \t]*(\\(" Man-section-regexp "\\))")
   "Regular expression describing a reference to manpages in \"man -k output\".")
 
 (defvar Man-synopsis-regexp "SYNOPSIS"

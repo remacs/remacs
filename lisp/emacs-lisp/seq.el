@@ -270,6 +270,19 @@ If so, return the non-nil value returned by PRED."
           (throw 'seq--break result))))
     nil))
 
+(cl-defgeneric seq-find (pred seq &optional default)
+  "Return the first element for which (PRED element) is non-nil in SEQ.
+If no element is found, return DEFAULT.
+
+Note that `seq-find' has an ambiguity if the found element is
+identical to DEFAULT, as it cannot be known if an element was
+found or not."
+  (catch 'seq--break
+    (seq-doseq (elt seq)
+      (when (funcall pred elt)
+        (throw 'seq--break elt)))
+    default))
+
 (cl-defgeneric seq-count (pred seq)
   "Return the number of elements for which (PRED element) is non-nil in SEQ."
   (let ((count 0))
@@ -417,13 +430,7 @@ If no element is found, return nil."
     (nreverse result)))
 
 (cl-defmethod seq-drop-while (pred (list list))
-  "Optimized implementation of `seq-drop-while' for lists"
-  (while (and list (funcall pred (car list)))
-    (setq list (cdr list)))
-  list)
-
-(cl-defmethod seq-drop-while (pred (list list))
-  "Optimized implementation of `seq-drop-while' for lists"
+  "Optimized implementation of `seq-drop-while' for lists."
   (while (and list (funcall pred (car list)))
     (setq list (cdr list)))
   list)

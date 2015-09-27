@@ -1991,7 +1991,8 @@ symbol indicating in what context the hook is called."
 
 (defcustom reftex-extra-bindings nil
   "Non-nil means, make additional key bindings on startup.
-These extra bindings are located in the users `C-c letter' map."
+These extra bindings are located in the users `C-c letter' map.
+Note that this variable needs to be set before reftex is loaded."
   :group 'reftex-miscellaneous-configurations
   :type 'boolean)
 

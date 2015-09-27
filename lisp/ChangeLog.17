@@ -1,3 +1,8 @@
+2015-09-20  Ken Manheimer  <ken.manheimer@gmail.com>
+
+	* python.el (python-pdbtrack-set-tracked-buffer): Repair pdbtrack
+	so it follows transition from one remote file to another.
+
 2015-04-06  Alan Mackenzie  <acm@muc.de>
 
 	Fix miscellaneous glitches in cc-mode.el.  (Bug#20245)
