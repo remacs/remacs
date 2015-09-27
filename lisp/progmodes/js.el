@@ -1724,6 +1724,12 @@ This performs fontification according to `js--class-styles'."
            (js-syntax-propertize-regexp end))))))
    (point) end))
 
+(defconst js--prettify-symbols-alist
+  '(("=>" . ?⇒)
+    (">=" . ?≥)
+    ("<=" . ?≤))
+  "Alist of symbol prettifications for JavaScript.")
+
 ;;; Indentation
 
 (defconst js--possibly-braceless-keyword-re
@@ -3495,6 +3501,7 @@ If one hasn't been set, or if it's stale, prompt for a new one."
   (setq-local open-paren-in-column-0-is-defun-start nil)
   (setq-local font-lock-defaults (list js--font-lock-keywords))
   (setq-local syntax-propertize-function #'js-syntax-propertize)
+  (setq-local prettify-symbols-alist js--prettify-symbols-alist)
 
   (setq-local parse-sexp-ignore-comments t)
   (setq-local parse-sexp-lookup-properties t)
@@ -3563,5 +3570,9 @@ If one hasn't been set, or if it's stale, prompt for a new one."
   (add-to-list 'interpreter-mode-alist (cons (purecopy name) 'js-mode)))
 
 (provide 'js)
+
+;; Local Variables:
+;; coding: utf-8
+;; End:
 
 ;; js.el ends here
