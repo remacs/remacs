@@ -108,6 +108,20 @@ Nicolas Petton
 	lisp/emacs-lisp/map.el
 	lisp/emacs-lisp/seq.el
 
+The GNU AUCTeX maintainers
+	RefTeX
+	    lisp/textmodes/reftex-auc.el
+	    lisp/textmodes/reftex-cite.el
+	    lisp/textmodes/reftex-dcr.el
+	    lisp/textmodes/reftex-global.el
+	    lisp/textmodes/reftex-index.el
+	    lisp/textmodes/reftex-parse.el
+	    lisp/textmodes/reftex-ref.el
+	    lisp/textmodes/reftex-sel.el
+	    lisp/textmodes/reftex-toc.el
+	    lisp/textmodes/reftex-vars.el
+	    lisp/textmodes/reftex.el
+
 ==============================================================================
 2.
 ==============================================================================
@@ -209,6 +223,9 @@ Nicolas Petton
 Xue Fuqiao
 	doc/lispref/*
 
+Tassilo Horn
+	lisp/doc-view.el
+
 ==============================================================================
 3.
 ==============================================================================
@@ -276,7 +293,6 @@ lisp/dired.el
 lisp/dirtrack.el
 lisp/disp-table.el
 lisp/dnd.el
-lisp/doc-view.el
 lisp/dom.el
 lisp/double.el
 lisp/dynamic-setting.el
@@ -662,17 +678,6 @@ lisp/textmodes/picture.el
 lisp/textmodes/po.el
 lisp/textmodes/refbib.el
 lisp/textmodes/refer.el
-lisp/textmodes/reftex-auc.el
-lisp/textmodes/reftex-cite.el
-lisp/textmodes/reftex-dcr.el
-lisp/textmodes/reftex-global.el
-lisp/textmodes/reftex-index.el
-lisp/textmodes/reftex-parse.el
-lisp/textmodes/reftex-ref.el
-lisp/textmodes/reftex-sel.el
-lisp/textmodes/reftex-toc.el
-lisp/textmodes/reftex-vars.el
-lisp/textmodes/reftex.el
 lisp/textmodes/remember.el
 lisp/textmodes/rst.el
 lisp/textmodes/sgml-mode.el
