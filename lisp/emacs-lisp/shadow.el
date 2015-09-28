@@ -286,7 +286,3 @@ version unless you know what you are doing.\n")
 (provide 'shadow)
 
 ;;; shadow.el ends here
-
-;; Local Variables:
-;; coding: utf-8
-;; End:

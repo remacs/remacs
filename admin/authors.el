@@ -1,4 +1,4 @@
-;;; authors.el --- utility for maintaining Emacs's AUTHORS file -*-coding: utf-8 -*-
+;;; authors.el --- utility for maintaining Emacs's AUTHORS file
 
 ;; Copyright (C) 2000-2015 Free Software Foundation, Inc.
 

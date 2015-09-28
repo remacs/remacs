@@ -2050,8 +2050,4 @@ The preference is a float determined from `shr-prefer-media-type'."
 
 (provide 'shr)
 
-;; Local Variables:
-;; coding: utf-8
-;; End:
-
 ;;; shr.el ends here

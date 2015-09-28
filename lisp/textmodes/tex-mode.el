@@ -1,4 +1,4 @@
-;;; tex-mode.el --- TeX, LaTeX, and SliTeX mode commands -*- coding: utf-8 -*-
+;;; tex-mode.el --- TeX, LaTeX, and SliTeX mode commands
 
 ;; Copyright (C) 1985-1986, 1989, 1992, 1994-1999, 2001-2015 Free
 ;; Software Foundation, Inc.

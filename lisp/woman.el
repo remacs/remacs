@@ -4627,9 +4627,4 @@ logging the message."
 
 (provide 'woman)
 
-
-;; Local Variables:
-;; coding: utf-8
-;; End:
-
 ;;; woman.el ends here

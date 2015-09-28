@@ -1,4 +1,4 @@
-;;; man.el --- browse UNIX manual pages  -*- coding: utf-8 -*-
+;;; man.el --- browse UNIX manual pages
 
 ;; Copyright (C) 1993-1994, 1996-1997, 2001-2015 Free Software
 ;; Foundation, Inc.

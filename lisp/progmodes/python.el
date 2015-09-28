@@ -5123,7 +5123,6 @@ returned as is."
 (provide 'python)
 
 ;; Local Variables:
-;; coding: utf-8
 ;; indent-tabs-mode: nil
 ;; End:
 

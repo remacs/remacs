@@ -3571,8 +3571,4 @@ If one hasn't been set, or if it's stale, prompt for a new one."
 
 (provide 'js)
 
-;; Local Variables:
-;; coding: utf-8
-;; End:
-
 ;; js.el ends here

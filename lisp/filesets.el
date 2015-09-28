@@ -1,4 +1,4 @@
-;;; filesets.el --- handle group of files -*- coding: utf-8 -*-
+;;; filesets.el --- handle group of files
 
 ;; Copyright (C) 2002-2015 Free Software Foundation, Inc.
 

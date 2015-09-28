@@ -3507,8 +3507,4 @@ A key may contain additional specs for Inverse, Hyperbolic, and Inv+Hyp.")
 
 (provide 'calc-ext)
 
-;; Local variables:
-;; coding: utf-8
-;; End:
-
 ;;; calc-ext.el ends here

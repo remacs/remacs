@@ -2974,8 +2974,4 @@ defaults to one.
 
 (run-hooks 'ibuffer-load-hook)
 
-;; Local Variables:
-;; coding: utf-8
-;; End:
-
 ;;; ibuffer.el ends here
