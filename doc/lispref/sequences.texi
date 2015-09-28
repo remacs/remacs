@@ -558,9 +558,8 @@ calling @var{function}.
 @end defun
 
 @defun seq-some predicate sequence
-  This function returns non-@code{nil} if @var{predicate} returns
-non-@code{nil} for any element of @var{sequence}.  If so, the returned
-value is the value returned by @var{predicate}.
+  This function returns the first non-@code{nil} value returned by
+applying @var{predicate} to each element of @var{sequence} in turn.
 
 @example
 @group
@@ -574,6 +573,10 @@ value is the value returned by @var{predicate}.
 @group
 (seq-some #'null ["abc" 1 nil])
 @result{} t
+@end group
+@group
+(seq-some #'1+ [2 4 6])
+@result{} 3
 @end group
 @end example
 @end defun
