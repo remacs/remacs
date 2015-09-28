@@ -208,10 +208,10 @@ good idea to add a 'coding' cookie to the file to state its encoding.
 Please use the UTF-8 encoding unless it cannot do the job for some
 good reason.  As of Emacs 24.4, it is no longer necessary to have
 explicit 'coding' cookies in *.el files if they are encoded in UTF-8,
-but other files need them even if encoded in UTF-8.  And even for *.el
-files, having an explicit encoding specification facilitates correct
-display of non-ASCII characters when the file is visited in older
-Emacs versions.
+but other files need them even if encoded in UTF-8.  However, if
+an *.el file is intended for use with older Emacs versions (e.g. if
+it's also distributed via ELPA), having an explicit encoding
+specification is still a good idea.
 
 *** Useful files in the admin/ directory
 
