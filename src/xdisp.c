@@ -14018,6 +14018,7 @@ redisplay_internal (void)
   if (interrupt_input && interrupts_deferred)
     request_sigio ();
 
+  inhibit_free_realized_faces = false;
   unbind_to (count, Qnil);
   RESUME_POLLING;
 }
@@ -14060,6 +14061,7 @@ static void
 unwind_redisplay (void)
 {
   redisplaying_p = false;
+  inhibit_free_realized_faces = false;
 }
 
 
