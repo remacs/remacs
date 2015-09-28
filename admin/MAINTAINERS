@@ -108,7 +108,7 @@ Nicolas Petton
 	lisp/emacs-lisp/map.el
 	lisp/emacs-lisp/seq.el
 
-The GNU AUCTeX maintainers
+The GNU AUCTeX maintainers (auctex-devel@gnu.org)
 	RefTeX
 	    lisp/textmodes/reftex-auc.el
 	    lisp/textmodes/reftex-cite.el
