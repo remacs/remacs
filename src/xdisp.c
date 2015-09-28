@@ -13383,6 +13383,8 @@ redisplay_internal (void)
   pending = false;
   forget_escape_and_glyphless_faces ();
 
+  inhibit_free_realized_faces = false;
+
   /* If face_change, init_iterator will free all realized faces, which
      includes the faces referenced from current matrices.  So, we
      can't reuse current matrices in this case.  */
@@ -13870,6 +13872,10 @@ redisplay_internal (void)
       /* If fonts changed, display again.  */
       if (sf->fonts_changed)
 	goto retry;
+
+      /* Prevent freeing of realized faces, since desired matrices are
+	 pending that reference the faces we computed and cached.  */
+      inhibit_free_realized_faces = true;
 
       /* Prevent various kinds of signals during display update.
 	 stdio is not robust about handling signals,
