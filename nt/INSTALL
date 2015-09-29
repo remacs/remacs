@@ -75,6 +75,48 @@ build will run on Windows 9X and newer systems).
   If these short instructions somehow fail, read the rest of this
   file.
 
+* Installing Git for Windows
+
+  Skip this section if you already have Git installed and configured,
+  or if you are building from the release tarball, not from the
+  development repository.
+
+  Git for Windows is available from this download page:
+
+    https://github.com/git-for-windows/git/releases
+
+  That page offers both 32-bit and 64-bit installations; pick the one
+  suitable for your OS.  In general, we recommend to install a 64-bit
+  Git if you have a 64-bit Windows system; the 32-bit Git will run on
+  64-bit Windows just fine, but might run into memory problems where
+  the 64-bit Git won't.
+
+  During Git installation, be sure to select the "Checkout as-is,
+  commit as-is" option from the "Configure line ending conversions"
+  dialog.  Otherwise, Git will convert text files to DOS-style CRLF
+  end-of-line (EOL) format, which will cause subtle problems when
+  building Emacs, because MSYS tools (see below) used to build Emacs
+  use binary file I/O that preserves the CR characters that get in the
+  way of some text-processing tools, like 'makeinfo' and the commands
+  invoked by the autogen.sh script.
+
+  If you already have Git installed and configured with some other EOL
+  conversion option, you will need to reconfigure it, removing the
+  following variables from all of your .gitconfig files:
+
+    core.eol
+    core.safecrlf
+    core.autocrlf
+
+  If you cloned the Emacs directory before changing these config
+  variables, you will have to delete the repository and re-clone it
+  after the change.
+
+  The instructions for cloning the Emacs repository can be found on
+  the Emacs's Savannah project page:
+
+    https://savannah.gnu.org/projects/emacs
+
 * Installing MinGW and MSYS
 
   Make sure you carefully read the following two sections in their
@@ -143,7 +185,7 @@ build will run on Windows 9X and newer systems).
   optional libraries near the end of this document, before you start
   the build.  Also, consider installing additional MinGW packages that
   are required/recommended, especially if you are building from the
-  repository, as described in the next section.
+  development repository, as described in the next section.
 
 ** Installing MinGW and MSYS manually
 
@@ -187,7 +229,7 @@ build will run on Windows 9X and newer systems).
   been warned!
 
   Additional MinGW packages are required/recommended, especially if
-  you are building from the repository:
+  you are building from the development repository:
 
    . Texinfo (needed to produce the Info manuals when building from
      the repository, and for "make install")
