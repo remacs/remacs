@@ -2064,10 +2064,10 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
     (setq files (nreverse files))
     (goto-char (point-min))
     (let* ((format (format " %%s %%s  %%%ds %%5s  %%s" maxsize))
-           (sep (format format "--------" "-----" (make-string maxsize ?-)
+           (sep (format format "----------" "-----" (make-string maxsize ?-)
                         "-----" ""))
            (column (length sep)))
-      (insert (format format "  Date  " "Time " "Size " "Ratio" " Filename") "\n")
+      (insert (format format "   Date   " "Time " "Size" "Ratio" "Filename") "\n")
       (insert sep (make-string maxname ?-) "\n")
       (archive-summarize-files (mapcar (lambda (desc)
                                          (let ((text
