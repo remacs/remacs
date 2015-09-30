@@ -165,7 +165,7 @@ Regexp match data 0 points to the chars."
     (if (and (not (equal prettify-symbols--current-symbol-bounds (list start end)))
              (funcall prettify-symbols-compose-predicate start end match))
         ;; That's a symbol alright, so add the composition.
-        (progn
+        (with-silent-modifications
           (compose-region start end (cdr (assoc match alist)))
           (add-text-properties
            start end
@@ -193,7 +193,7 @@ Regexp match data 0 points to the chars."
   (if-let ((c (get-text-property (point) 'composition))
            (s (get-text-property (point) 'prettify-symbols-start))
            (e (get-text-property (point) 'prettify-symbols-end)))
-      (progn
+      (with-silent-modifications
         (setq prettify-symbols--current-symbol-bounds (list s e))
         (remove-text-properties s e '(composition)))
     (when (and prettify-symbols--current-symbol-bounds
@@ -236,7 +236,10 @@ support it."
       (when (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
         (font-lock-add-keywords nil prettify-symbols--keywords)
         (setq-local font-lock-extra-managed-props
-                    (cons 'composition font-lock-extra-managed-props))
+                    (append font-lock-extra-managed-props
+                            '(composition
+                              prettify-symbols-start
+                              prettify-symbols-end)))
         (when prettify-symbols-unprettify-at-point
           (add-hook 'post-command-hook
                     #'prettify-symbols--post-command-hook nil t))
