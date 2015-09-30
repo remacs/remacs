@@ -3179,7 +3179,7 @@ Locations that are partially obscured are not considered visible unless
 @var{partially} is non-@code{nil}.  The argument @var{position} defaults
 to the current position of point in @var{window}; @var{window}, to the
 selected window.  If @var{position} is @code{t}, that means to check the
-last visible position in @var{window}.
+first visible position of the last visible screen line in @var{window}.
 
 This function considers only vertical scrolling.  If @var{position} is
 out of view only because @var{window} has been scrolled horizontally,
