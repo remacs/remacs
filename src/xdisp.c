@@ -13336,6 +13336,9 @@ redisplay_internal (void)
   /* True means redisplay has to redisplay the miniwindow.  */
   bool update_miniwindow_p = false;
 
+  /* True means we need to redraw frames whose 'redisplay' bit is set.  */
+  bool consider_some_frames_p = false;
+
   TRACE ((stderr, "redisplay_internal %d\n", redisplaying_p));
 
   /* No redisplay if running in batch mode or frame is not yet fully
@@ -13555,6 +13558,7 @@ redisplay_internal (void)
       && !FRAME_OBSCURED_P (XFRAME (w->frame))
       && !XFRAME (w->frame)->cursor_type_changed
       && !XFRAME (w->frame)->face_change
+      && !XFRAME (w->frame)->redisplay
       /* Make sure recorded data applies to current buffer, etc.  */
       && this_line_buffer == current_buffer
       && match_p
@@ -13750,13 +13754,29 @@ redisplay_internal (void)
 #endif
 
   /* Build desired matrices, and update the display.  If
-     consider_all_windows_p, do it for all windows on all frames.
-     Otherwise do it for selected_window, only.  */
+     consider_all_windows_p, do it for all windows on all frames.  If
+     a frame's 'redisplay' flag is set, do it for all windows on each
+     such frame.  Otherwise do it for selected_window, only.  */
 
-  if (consider_all_windows_p)
+  if (!consider_all_windows_p)
     {
       FOR_EACH_FRAME (tail, frame)
-	XFRAME (frame)->updated_p = false;
+	{
+	  if (XFRAME (frame)->redisplay && XFRAME (frame) != sf)
+	    {
+	      consider_some_frames_p = true;
+	      break;
+	    }
+	}
+    }
+
+  if (consider_all_windows_p || consider_some_frames_p)
+    {
+      FOR_EACH_FRAME (tail, frame)
+	{
+	  if (XFRAME (frame)->redisplay || consider_all_windows_p)
+	    XFRAME (frame)->updated_p = false;
+	}
 
       propagate_buffer_redisplay ();
 
@@ -13768,6 +13788,9 @@ redisplay_internal (void)
 	     frames.  */
 	  if ((FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f))
 	      && !EQ (FRAME_TTY (f)->top_frame, frame))
+	    continue;
+
+	  if (!consider_all_windows_p && !f->redisplay)
 	    continue;
 
 	retry_frame:
@@ -15415,6 +15438,7 @@ try_cursor_movement (Lisp_Object window, struct text_pos startp,
       && !update_mode_lines
       && !windows_or_buffers_changed
       && !f->cursor_type_changed
+      && !f->redisplay
       && NILP (Vshow_trailing_whitespace)
       /* This code is not used for mini-buffer for the sake of the case
 	 of redisplaying to replace an echo area message; since in
@@ -17025,6 +17049,7 @@ try_window_reusing_current_matrix (struct window *w)
       /* Don't try to reuse the display if windows have been split
 	 or such.  */
       || windows_or_buffers_changed
+      || f->redisplay
       || f->cursor_type_changed)
     return false;
 
@@ -17802,7 +17827,7 @@ try_window_id (struct window *w)
     GIVE_UP (1);
 
   /* This flag is used to prevent redisplay optimizations.  */
-  if (windows_or_buffers_changed || f->cursor_type_changed)
+  if (windows_or_buffers_changed || f->cursor_type_changed || f->redisplay)
     GIVE_UP (2);
 
   /* This function's optimizations cannot be used if overlays have

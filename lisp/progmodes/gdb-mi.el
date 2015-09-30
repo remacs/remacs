@@ -2315,6 +2315,34 @@ the end of the current result or async record is reached."
 ; list ==>
 ;      "[]" | "[" value ( "," value )* "]" | "[" result ( "," result )* "]"
 
+;; The idea of the following function was suggested
+;; by Kenichi Handa <handa@gnu.org>.
+;;
+;; FIXME: This is fragile: it relies on the assumption that all the
+;; non-ASCII strings output by GDB, including names of the source
+;; files, values of string variables in the inferior, etc., are all
+;; encoded in the same encoding.  It also assumes that the \nnn
+;; sequences are not split between chunks of GDB process output due to
+;; buffering, and arrive together.  When/if GDB acquires the ability
+;; to not escape-protect non-ASCII characters in its MI output, this
+;; kludge should be removed.
+(defun gdb-mi-decode (string)
+  "Decode octal escapes in MI output STRING into multibyte text."
+  (let ((coding
+         (with-current-buffer
+             (gdb-get-buffer-create 'gdb-partial-output-buffer)
+           buffer-file-coding-system)))
+    (with-temp-buffer
+      (set-buffer-multibyte nil)
+      (insert (gdb-mi-quote string))
+      (goto-char (point-min))
+      ;; gdb-mi-quote quotes the octal escapes as well, which
+      ;; interferes with their interpretation by 'read' below.  Remove
+      ;; the extra backslashes to countermand that.
+      (while (re-search-forward "\\\\\\(\\\\[2-3][0-7][0-7]\\)" nil t)
+        (replace-match "\\1" nil nil))
+      (goto-char (point-min))
+      (decode-coding-string (read (current-buffer)) coding))))
 
 (defun gud-gdbmi-marker-filter (string)
   "Filter GDB/MI output."
