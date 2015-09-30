@@ -19836,7 +19836,8 @@ push_prefix_prop (struct it *it, Lisp_Object prop)
 
   eassert (it->method == GET_FROM_BUFFER
 	   || it->method == GET_FROM_DISPLAY_VECTOR
-	   || it->method == GET_FROM_STRING);
+	   || it->method == GET_FROM_STRING
+	   || it->method == GET_FROM_IMAGE);
 
   /* We need to save the current buffer/string position, so it will be
      restored by pop_it, because iterate_out_of_display_property
