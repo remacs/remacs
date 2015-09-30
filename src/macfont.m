@@ -3427,18 +3427,24 @@ mac_font_descriptor_supports_languages (CTFontDescriptorRef descriptor,
     result = false;
   else
     {
-      CFIndex desc_languages_count, i, languages_count;
+      CFRange range = CFRangeMake (0, CFArrayGetCount (desc_languages));
+      CFIndex i, languages_count = CFArrayGetCount (languages);
 
-      desc_languages_count = CFArrayGetCount (desc_languages);
-      languages_count = CFArrayGetCount (languages);
       for (i = 0; i < languages_count; i++)
-        if (!CFArrayContainsValue (desc_languages,
-                                   CFRangeMake (0, desc_languages_count),
-                                   CFArrayGetValueAtIndex (languages, i)))
-          {
-            result = false;
-            break;
-          }
+	{
+	  CFStringRef language = CFArrayGetValueAtIndex (languages, i);
+
+	  if (!CFArrayContainsValue (desc_languages, range, language)
+	      /* PingFang SC contains "zh" and "zh-Hant" as covered
+		 languages, but does not contain "zh-Hans".  */
+	      && !(CFEqual (language, CFSTR ("zh-Hans"))
+		   && CFArrayContainsValue (desc_languages, range,
+					    CFSTR ("zh"))))
+	    {
+	      result = false;
+	      break;
+	    }
+	}
       CFRelease (desc_languages);
     }
 
