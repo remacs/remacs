@@ -6609,7 +6609,6 @@ apply_window_adjustment (struct window *w)
   eassert (w);
   clear_glyph_matrix (w->current_matrix);
   w->window_end_valid = false;
-  windows_or_buffers_changed = 30;
   wset_redisplay (w);
   adjust_frame_glyphs (XFRAME (WINDOW_FRAME (w)));
 }
