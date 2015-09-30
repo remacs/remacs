@@ -218,6 +218,7 @@ Paul Eggert
 Michael Albinus
 	src/inotify.c
         lisp/autorevert.el
+	lisp/eshell/em-tramp.el
 	lisp/notifications.el
         test/automated/auto-revert-tests.el
 	test/automated/inotify-test.el
@@ -568,7 +569,6 @@ lisp/net/soap-inspect.el
 lisp/net/socks.el
 lisp/net/telnet.el
 lisp/net/tls.el
-lisp/net/trampver.el
 lisp/net/webjump.el
 lisp/newcomment.el
 lisp/novice.el
