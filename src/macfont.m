@@ -198,57 +198,53 @@ mac_screen_font_get_advance_width_for_glyph (ScreenFontRef font, CGGlyph glyph)
   return advancement.width;
 }
 
+#if !USE_CT_GLYPH_INFO
 static CGGlyph
 mac_font_get_glyph_for_cid (CTFontRef font, CTCharacterCollection collection,
                             CGFontIndex cid)
 {
-#if USE_CT_GLYPH_INFO
-  return mac_ctfont_get_glyph_for_cid ((CTFontRef) font, collection, cid);
-#else
-  {
-    CGGlyph result = kCGFontIndexInvalid;
-    NSFont *nsFont = (NSFont *) font;
-    unichar characters[] = {0xfffd};
-    NSString *string =
-      [NSString stringWithCharacters:characters
-                              length:ARRAYELTS (characters)];
-    NSGlyphInfo *glyphInfo =
-      [NSGlyphInfo glyphInfoWithCharacterIdentifier:cid
-                                         collection:collection
-                                         baseString:string];
-    NSDictionary *attributes =
-      [NSDictionary dictionaryWithObjectsAndKeys:nsFont,NSFontAttributeName,
-                    glyphInfo,NSGlyphInfoAttributeName,nil];
-    NSTextStorage *textStorage =
-      [[NSTextStorage alloc] initWithString:string
-                                 attributes:attributes];
-    NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
-    NSTextContainer *textContainer = [[NSTextContainer alloc] init];
-    NSFont *fontInTextStorage;
+  CGGlyph result = kCGFontIndexInvalid;
+  NSFont *nsFont = (NSFont *) font;
+  unichar characters[] = {0xfffd};
+  NSString *string =
+    [NSString stringWithCharacters:characters
+			    length:ARRAYELTS (characters)];
+  NSGlyphInfo *glyphInfo =
+    [NSGlyphInfo glyphInfoWithCharacterIdentifier:cid
+				       collection:collection
+				       baseString:string];
+  NSDictionary *attributes =
+    [NSDictionary dictionaryWithObjectsAndKeys:nsFont,NSFontAttributeName,
+		  glyphInfo,NSGlyphInfoAttributeName,nil];
+  NSTextStorage *textStorage =
+    [[NSTextStorage alloc] initWithString:string
+			       attributes:attributes];
+  NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
+  NSTextContainer *textContainer = [[NSTextContainer alloc] init];
+  NSFont *fontInTextStorage;
 
-    [layoutManager addTextContainer:textContainer];
-    [textContainer release];
-    [textStorage addLayoutManager:layoutManager];
-    [layoutManager release];
+  [layoutManager addTextContainer:textContainer];
+  [textContainer release];
+  [textStorage addLayoutManager:layoutManager];
+  [layoutManager release];
 
-    /* Force layout.  */
-    (void) [layoutManager glyphRangeForTextContainer:textContainer];
+  /* Force layout.  */
+  (void) [layoutManager glyphRangeForTextContainer:textContainer];
 
-    fontInTextStorage = [textStorage attribute:NSFontAttributeName atIndex:0
-                                effectiveRange:NULL];
-    if (fontInTextStorage == nsFont
-        || [[fontInTextStorage fontName] isEqualToString:[nsFont fontName]])
-      {
-        NSGlyph glyph = [layoutManager glyphAtIndex:0];
+  fontInTextStorage = [textStorage attribute:NSFontAttributeName atIndex:0
+			      effectiveRange:NULL];
+  if (fontInTextStorage == nsFont
+      || [[fontInTextStorage fontName] isEqualToString:[nsFont fontName]])
+    {
+      NSGlyph glyph = [layoutManager glyphAtIndex:0];
 
-        if (glyph < [nsFont numberOfGlyphs])
-          result = glyph;
-      }
+      if (glyph < [nsFont numberOfGlyphs])
+	result = glyph;
+    }
 
-    [textStorage release];
+  [textStorage release];
 
-    return result;
-  }
+  return result;
 }
 #endif
 
