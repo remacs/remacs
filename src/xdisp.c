@@ -13388,6 +13388,8 @@ redisplay_internal (void)
 
   inhibit_free_realized_faces = false;
 
+  consider_some_frames_p = false;
+
   /* If face_change, init_iterator will free all realized faces, which
      includes the faces referenced from current matrices.  So, we
      can't reuse current matrices in this case.  */
@@ -13762,7 +13764,9 @@ redisplay_internal (void)
     {
       FOR_EACH_FRAME (tail, frame)
 	{
-	  if (XFRAME (frame)->redisplay && XFRAME (frame) != sf)
+	  if (XFRAME (frame)->redisplay
+	      && XFRAME (frame) != sf
+	      && !FRAME_INITIAL_P (XFRAME (frame)))
 	    {
 	      consider_some_frames_p = true;
 	      break;
