@@ -619,6 +619,14 @@ build will run on Windows 9X and newer systems).
   is in the PATH or otherwise accessible and that the binaries are
   compatible (for example, that they were built with the same compiler).
 
+  To support XPM images (required for color tool-bar icons), you will
+  need the libXpm library.  Its DLL file is in binary distributions
+  for MS-Windows, available from http://ftp.gnu.org/gnu/emacs/windows/.
+  The header file xpm.h, required to build Emacs with XPM support, can
+  be found in libXpm-X.Y.X-w32-src.zip archives available from the
+  same place.  Make sure to copy xpm.h into the X11/ subdirectory of
+  your 'include' tree -- that's where Emacs sources expect it to be.
+
   For PNG images, we recommend to use versions 1.4.x and later of
   libpng, because previous versions had security issues.  You can find
   precompiled libraries and headers on the ezwinports site,
