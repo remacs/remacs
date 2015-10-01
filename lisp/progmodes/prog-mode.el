@@ -209,21 +209,23 @@ on the symbol."
                              (when (and (eq prettify-symbols-unprettify-at-point 'right-edge)
                                         (not (bobp)))
                                (get-text-property (1- (point)) prop))))))
-    (if-let ((c (get-prop-as-list 'composition))
-             (s (get-prop-as-list 'prettify-symbols-start))
-             (e (get-prop-as-list 'prettify-symbols-end))
-             (s (apply #'min s))
-             (e (apply #'max e)))
-        (with-silent-modifications
-          (setq prettify-symbols--current-symbol-bounds (list s e))
-          (remove-text-properties s e '(composition)))
-      (when (and prettify-symbols--current-symbol-bounds
-                 (or (< (point) (car prettify-symbols--current-symbol-bounds))
-                     (> (point) (cadr prettify-symbols--current-symbol-bounds))
-                     (and (not (eq prettify-symbols-unprettify-at-point 'right-edge))
-                          (= (point) (cadr prettify-symbols--current-symbol-bounds)))))
-        (apply #'font-lock-flush prettify-symbols--current-symbol-bounds)
-        (setq prettify-symbols--current-symbol-bounds nil)))))
+    ;; Re-apply prettification to the previous symbol.
+    (when (and prettify-symbols--current-symbol-bounds
+	       (or (< (point) (car prettify-symbols--current-symbol-bounds))
+		   (> (point) (cadr prettify-symbols--current-symbol-bounds))
+		   (and (not (eq prettify-symbols-unprettify-at-point 'right-edge))
+			(= (point) (cadr prettify-symbols--current-symbol-bounds)))))
+      (apply #'font-lock-flush prettify-symbols--current-symbol-bounds)
+      (setq prettify-symbols--current-symbol-bounds nil))
+    ;; Unprettify the current symbol.
+    (when-let ((c (get-prop-as-list 'composition))
+	       (s (get-prop-as-list 'prettify-symbols-start))
+	       (e (get-prop-as-list 'prettify-symbols-end))
+	       (s (apply #'min s))
+	       (e (apply #'max e)))
+      (with-silent-modifications
+	(setq prettify-symbols--current-symbol-bounds (list s e))
+	(remove-text-properties s e '(composition))))))
 
 ;;;###autoload
 (define-minor-mode prettify-symbols-mode
