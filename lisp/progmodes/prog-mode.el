@@ -189,7 +189,7 @@ Regexp match data 0 points to the chars."
 
 (defvar-local prettify-symbols--current-symbol-bounds nil)
 
-(defcustom prettify-symbols-unprettify-at-point t
+(defcustom prettify-symbols-unprettify-at-point nil
   "If non-nil, show the non-prettified version of a symbol when point is on it.
 If set to the symbol `right-edge', also unprettify if point
 is immediately after the symbol.  The prettification will be
