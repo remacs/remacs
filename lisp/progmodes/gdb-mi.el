@@ -2359,11 +2359,11 @@ file names include non-ASCII characters."
              buffer-file-coding-system))))
     (with-temp-buffer
       (set-buffer-multibyte nil)
-      (insert (gdb-mi-quote string))
+      (prin1 string (current-buffer))
       (goto-char (point-min))
-      ;; gdb-mi-quote quotes the octal escapes as well, which
-      ;; interferes with their interpretation by 'read' below.  Remove
-      ;; the extra backslashes to countermand that.
+      ;; prin1 quotes the octal escapes as well, which interferes with
+      ;; their interpretation by 'read' below.  Remove the extra
+      ;; backslashes to countermand that.
       (while (re-search-forward "\\\\\\(\\\\[2-3][0-7][0-7]\\)" nil t)
         (replace-match "\\1" nil nil))
       (goto-char (point-min))
