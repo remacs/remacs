@@ -15438,7 +15438,7 @@ try_cursor_movement (Lisp_Object window, struct text_pos startp,
       && !update_mode_lines
       && !windows_or_buffers_changed
       && !f->cursor_type_changed
-      && !f->redisplay
+      && !(f != SELECTED_FRAME () && f->redisplay)
       && NILP (Vshow_trailing_whitespace)
       /* This code is not used for mini-buffer for the sake of the case
 	 of redisplaying to replace an echo area message; since in
@@ -17049,7 +17049,7 @@ try_window_reusing_current_matrix (struct window *w)
       /* Don't try to reuse the display if windows have been split
 	 or such.  */
       || windows_or_buffers_changed
-      || f->redisplay
+      || (f != SELECTED_FRAME () && f->redisplay)
       || f->cursor_type_changed)
     return false;
 
@@ -17827,7 +17827,8 @@ try_window_id (struct window *w)
     GIVE_UP (1);
 
   /* This flag is used to prevent redisplay optimizations.  */
-  if (windows_or_buffers_changed || f->cursor_type_changed || f->redisplay)
+  if (windows_or_buffers_changed || f->cursor_type_changed
+      || (f != SELECTED_FRAME () && f->redisplay))
     GIVE_UP (2);
 
   /* This function's optimizations cannot be used if overlays have
