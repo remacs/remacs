@@ -381,7 +381,12 @@ build will run on Windows 9X and newer systems).
      Checking for automake (need at least version 1.11)...
      ok
      Your system has the required tools, running autoreconf...
+     Installing git hooks...
      You can now run `./configure'.
+
+  If the script fails because it cannot find Git, you will need to
+  arrange for the MSYS Bash's PATH to include the Git's 'bin'
+  sibdirectory, where there's the git.exe executable.
 
 * Configuring Emacs for MinGW:
 
