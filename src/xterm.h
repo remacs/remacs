@@ -1024,8 +1024,13 @@ XrmDatabase x_load_resources (Display *, const char *, const char *,
 
 /* Defined in xterm.c */
 
+typedef void (*x_special_error_handler)(Display *, XErrorEvent *, char *,
+					void *);
+
 extern bool x_text_icon (struct frame *, const char *);
 extern void x_catch_errors (Display *);
+extern void x_catch_errors_with_handler (Display *, x_special_error_handler,
+					 void *);
 extern void x_check_errors (Display *, const char *)
   ATTRIBUTE_FORMAT_PRINTF (2, 0);
 extern bool x_had_errors_p (Display *);

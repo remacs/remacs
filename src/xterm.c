@@ -9190,6 +9190,8 @@ x_text_icon (struct frame *f, const char *icon_name)
 struct x_error_message_stack {
   char string[X_ERROR_MESSAGE_SIZE];
   Display *dpy;
+  x_special_error_handler handler;
+  void *handler_data;
   struct x_error_message_stack *prev;
 };
 static struct x_error_message_stack *x_error_message;
@@ -9204,6 +9206,9 @@ x_error_catcher (Display *display, XErrorEvent *event)
   XGetErrorText (display, event->error_code,
 		 x_error_message->string,
 		 X_ERROR_MESSAGE_SIZE);
+  if (x_error_message->handler)
+    x_error_message->handler (display, event, x_error_message->string,
+			      x_error_message->handler_data);
 }
 
 /* Begin trapping X errors for display DPY.  Actually we trap X errors
@@ -9223,7 +9228,8 @@ x_error_catcher (Display *display, XErrorEvent *event)
    x_had_errors_p or x_check_errors.  */
 
 void
-x_catch_errors (Display *dpy)
+x_catch_errors_with_handler (Display *dpy, x_special_error_handler handler,
+			     void *handler_data)
 {
   struct x_error_message_stack *data = xmalloc (sizeof *data);
 
@@ -9232,8 +9238,16 @@ x_catch_errors (Display *dpy)
 
   data->dpy = dpy;
   data->string[0] = 0;
+  data->handler = handler;
+  data->handler_data = handler_data;
   data->prev = x_error_message;
   x_error_message = data;
+}
+
+void
+x_catch_errors (Display *dpy)
+{
+  x_catch_errors_with_handler (dpy, NULL, NULL);
 }
 
 /* Undo the last x_catch_errors call.
