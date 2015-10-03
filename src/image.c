@@ -4442,15 +4442,7 @@ lookup_rgb_color (struct frame *f, int r, int g, int b)
 	  r = color.red, g = color.green, b = color.blue;
 	}
 
-      /* Scale down RGB values to the visual's bits per RGB, and shift
-	 them to the right position in the pixel color.  Note that the
-	 original RGB values are 16-bit values, as usual in X.  */
-      pr = (r >> (16 - dpyinfo->red_bits))   << dpyinfo->red_offset;
-      pg = (g >> (16 - dpyinfo->green_bits)) << dpyinfo->green_offset;
-      pb = (b >> (16 - dpyinfo->blue_bits))  << dpyinfo->blue_offset;
-
-      /* Assemble the pixel color.  */
-      return pr | pg | pb;
+      return x_make_truecolor_pixel (dpyinfo, r, g, b);
     }
 
   for (p = ct_table[i]; p; p = p->next)
@@ -9542,7 +9534,6 @@ void
 x_kill_gs_process (Pixmap pixmap, struct frame *f)
 {
   struct image_cache *c = FRAME_IMAGE_CACHE (f);
-  int class;
   ptrdiff_t i;
   struct image *img;
 
@@ -9568,8 +9559,7 @@ x_kill_gs_process (Pixmap pixmap, struct frame *f)
   /* On displays with a mutable colormap, figure out the colors
      allocated for the image by looking at the pixels of an XImage for
      img->pixmap.  */
-  class = FRAME_X_VISUAL (f)->class;
-  if (class != StaticColor && class != StaticGray && class != TrueColor)
+  if (x_mutable_colormap (FRAME_X_VISUAL (f)))
     {
       XImagePtr ximg;
 

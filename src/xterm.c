@@ -2197,6 +2197,50 @@ x_query_colors (struct frame *f, XColor *colors, int ncolors)
 {
   struct x_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
 
+  if (dpyinfo->red_bits > 0)
+    {
+      /* For TrueColor displays, we can decompose the RGB value
+	 directly.  */
+      int i;
+      unsigned int rmult, gmult, bmult;
+      unsigned int rmask, gmask, bmask;
+
+      rmask = (1 << dpyinfo->red_bits) - 1;
+      gmask = (1 << dpyinfo->green_bits) - 1;
+      bmask = (1 << dpyinfo->blue_bits) - 1;
+      /* If we're widening, for example, 8 bits in the pixel value to
+	 16 bits for the separate-color representation, we want to
+	 extrapolate the lower bits based on those bits available --
+	 in other words, we'd like 0xff to become 0xffff instead of
+	 the 0xff00 we'd get by just zero-filling the lower bits.
+
+         We generate a 32-bit scaled-up value and shift it, in case
+         the bit count doesn't divide 16 evently (e.g., when dealing
+         with a 3-3-2 bit RGB display), to get more of the lower bits
+         correct.
+
+         Should we cache the multipliers in dpyinfo?  Maybe
+         special-case the 8-8-8 common case?  */
+      rmult = 0xffffffff / rmask;
+      gmult = 0xffffffff / gmask;
+      bmult = 0xffffffff / bmask;
+
+      for (i = 0; i < ncolors; ++i)
+	{
+	  unsigned int r, g, b;
+	  unsigned long pixel = colors[i].pixel;
+
+	  r = (pixel >> dpyinfo->red_offset) & rmask;
+	  g = (pixel >> dpyinfo->green_offset) & gmask;
+	  b = (pixel >> dpyinfo->blue_offset) & bmask;
+
+	  colors[i].red = (r * rmult) >> 16;
+	  colors[i].green = (g * gmult) >> 16;
+	  colors[i].blue = (b * bmult) >> 16;
+	}
+      return;
+    }
+
   if (dpyinfo->color_cells)
     {
       int i;
@@ -2207,9 +2251,10 @@ x_query_colors (struct frame *f, XColor *colors, int ncolors)
 	  eassert (dpyinfo->color_cells[pixel].pixel == pixel);
 	  colors[i] = dpyinfo->color_cells[pixel];
 	}
+      return;
     }
-  else
-    XQueryColors (FRAME_X_DISPLAY (f), FRAME_X_COLORMAP (f), colors, ncolors);
+
+  XQueryColors (FRAME_X_DISPLAY (f), FRAME_X_COLORMAP (f), colors, ncolors);
 }
 
 
@@ -2341,15 +2386,27 @@ x_alloc_nearest_color_1 (Display *dpy, Colormap cmap, XColor *color)
 }
 
 
-/* Allocate the color COLOR->pixel on frame F, colormap CMAP.  If an
-   exact match can't be allocated, try the nearest color available.
-   Value is true if successful.  Set *COLOR to the color
-   allocated.  */
+/* Allocate the color COLOR->pixel on frame F, colormap CMAP, after
+   gamma correction.  If an exact match can't be allocated, try the
+   nearest color available.  Value is true if successful.  Set *COLOR
+   to the color allocated.  */
 
 bool
 x_alloc_nearest_color (struct frame *f, Colormap cmap, XColor *color)
 {
+  struct x_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
+
   gamma_correct (f, color);
+
+  if (dpyinfo->red_bits > 0)
+    {
+      color->pixel = x_make_truecolor_pixel (dpyinfo,
+					     color->red,
+					     color->green,
+					     color->blue);
+      return true;
+    }
+
   return x_alloc_nearest_color_1 (FRAME_X_DISPLAY (f), cmap, color);
 }
 
@@ -2363,8 +2420,16 @@ x_copy_color (struct frame *f, unsigned long pixel)
 {
   XColor color;
 
+  /* If display has an immutable color map, freeing colors is not
+     necessary and some servers don't allow it.  Since we won't free a
+     color once we've allocated it, we don't need to re-allocate it to
+     maintain the server's reference count.  */
+  if (!x_mutable_colormap (FRAME_X_VISUAL (f)))
+    return pixel;
+
   color.pixel = pixel;
   block_input ();
+  /* The color could still be found in the color_cells array.  */
   x_query_color (f, &color);
   XAllocColor (FRAME_X_DISPLAY (f), FRAME_X_COLORMAP (f), &color);
   unblock_input ();

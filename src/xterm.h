@@ -1085,6 +1085,33 @@ x_display_set_last_user_time (struct x_display_info *dpyinfo, Time t)
   dpyinfo->last_user_time = t;
 }
 
+INLINE unsigned long
+x_make_truecolor_pixel (struct x_display_info *dpyinfo, int r, int g, int b)
+{
+  unsigned long pr, pg, pb;
+
+  /* Scale down RGB values to the visual's bits per RGB, and shift
+     them to the right position in the pixel color.  Note that the
+     original RGB values are 16-bit values, as usual in X.  */
+  pr = (r >> (16 - dpyinfo->red_bits))   << dpyinfo->red_offset;
+  pg = (g >> (16 - dpyinfo->green_bits)) << dpyinfo->green_offset;
+  pb = (b >> (16 - dpyinfo->blue_bits))  << dpyinfo->blue_offset;
+
+  /* Assemble the pixel color.  */
+  return pr | pg | pb;
+}
+
+/* If display has an immutable color map, freeing colors is not
+   necessary and some servers don't allow it, so we won't do it.  That
+   also allows us to make other optimizations relating to server-side
+   reference counts.  */
+INLINE bool
+x_mutable_colormap (Visual *visual)
+{
+  int class = visual->class;
+  return (class != StaticColor && class != StaticGray && class != TrueColor);
+}
+
 extern void x_set_sticky (struct frame *, Lisp_Object, Lisp_Object);
 extern bool x_wm_supports (struct frame *, Atom);
 extern void x_wait_for_event (struct frame *, int);
