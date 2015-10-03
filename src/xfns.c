@@ -454,7 +454,7 @@ x_defined_color (struct frame *f, const char *color_name,
   success_p = xg_check_special_colors (f, color_name, color);
 #endif
   if (!success_p)
-    success_p = XParseColor (dpy, cmap, color_name, color) != 0;
+    success_p = x_parse_color (f, color_name, color) != 0;
   if (success_p && alloc_p)
     success_p = x_alloc_nearest_color (f, cmap, color);
   unblock_input ();

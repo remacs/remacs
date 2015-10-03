@@ -153,6 +153,17 @@ struct x_gc_ext_data
 #endif
 
 
+struct color_name_cache_entry
+{
+  struct color_name_cache_entry *next;
+  XColor rgb;
+  char *name;
+};
+
+Status x_parse_color (struct frame *f, const char *color_name,
+		      XColor *color);
+
+
 /* For each X display, we have a structure that records
    information about it.  */
 
@@ -384,6 +395,9 @@ struct x_display_info
   XIMStyles *xim_styles;
   struct xim_inst_t *xim_callback_data;
 #endif
+
+  /* A cache mapping color names to RGB values.  */
+  struct color_name_cache_entry *color_names;
 
   /* If non-null, a cache of the colors in the color map.  Don't
      use this directly, call x_color_cells instead.  */

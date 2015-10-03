@@ -2223,6 +2223,52 @@ x_query_color (struct frame *f, XColor *color)
 }
 
 
+/* On frame F, translate the color name to RGB values.  Use cached
+   information, if possible.
+
+   Note that there is currently no way to clean old entries out of the
+   cache.  However, it is limited to names in the server's database,
+   and names we've actually looked up; list-colors-display is probably
+   the most color-intensive case we're likely to hit.  */
+
+Status x_parse_color (struct frame *f, const char *color_name,
+		      XColor *color)
+{
+  Display *dpy = FRAME_X_DISPLAY (f);
+  Colormap cmap = FRAME_X_COLORMAP (f);
+  Status status;
+  struct color_name_cache_entry *cache_entry;
+
+  if (color_name[0] == '#')
+    {
+      /* The hex form is parsed directly by XParseColor without
+	 talking to the X server.  No need for caching.  */
+      return XParseColor (dpy, cmap, color_name, color);
+    }
+
+  for (cache_entry = FRAME_DISPLAY_INFO (f)->color_names; cache_entry;
+       cache_entry = cache_entry->next)
+    {
+      if (!xstrcasecmp(cache_entry->name, color_name))
+	{
+	  *color = cache_entry->rgb;
+	  return 1;
+	}
+    }
+
+  if (XParseColor (dpy, cmap, color_name, color) == 0)
+    /* No caching of negative results, currently.  */
+    return 0;
+
+  cache_entry = xzalloc (sizeof *cache_entry);
+  cache_entry->rgb = *color;
+  cache_entry->name = xstrdup (color_name);
+  cache_entry->next = FRAME_DISPLAY_INFO (f)->color_names;
+  FRAME_DISPLAY_INFO (f)->color_names = cache_entry;
+  return 1;
+}
+
+
 /* Allocate the color COLOR->pixel on DISPLAY, colormap CMAP.  If an
    exact match can't be allocated, try the nearest color available.
    Value is true if successful.  Set *COLOR to the color
@@ -12119,6 +12165,7 @@ static void
 x_delete_display (struct x_display_info *dpyinfo)
 {
   struct terminal *t;
+  struct color_name_cache_entry *color_entry, *next_color_entry;
 
   /* Close all frames and delete the generic struct terminal for this
      X display.  */
@@ -12146,6 +12193,15 @@ x_delete_display (struct x_display_info *dpyinfo)
       for (tail = x_display_list; tail; tail = tail->next)
 	if (tail->next == dpyinfo)
 	  tail->next = tail->next->next;
+    }
+
+  for (color_entry = dpyinfo->color_names;
+       color_entry;
+       color_entry = next_color_entry)
+    {
+      next_color_entry = color_entry->next;
+      xfree (color_entry->name);
+      xfree (color_entry);
     }
 
   xfree (dpyinfo->x_id_name);

@@ -1108,10 +1108,7 @@ get_spec_bg_or_alpha_as_argb (struct image *img,
   XColor xbgcolor;
   Lisp_Object bg = image_spec_value (img->spec, QCbackground, NULL);
 
-  if (STRINGP (bg) && XParseColor (FRAME_X_DISPLAY (f),
-                                   FRAME_X_COLORMAP (f),
-                                   SSDATA (bg),
-                                   &xbgcolor))
+  if (STRINGP (bg) && x_parse_color (f, SSDATA (bg), &xbgcolor))
     bgcolor = xcolor_to_argb32 (xbgcolor);
 
   return bgcolor;
@@ -3241,7 +3238,10 @@ static struct xpm_cached_color *xpm_cache_color (struct frame *, char *,
 /* An entry in a hash table used to cache color definitions of named
    colors.  This cache is necessary to speed up XPM image loading in
    case we do color allocations ourselves.  Without it, we would need
-   a call to XParseColor per pixel in the image.  */
+   a call to XParseColor per pixel in the image.
+
+   FIXME Now that we're using x_parse_color and its cache, reevaluate
+   the need for this caching layer.  */
 
 struct xpm_cached_color
 {
@@ -3276,8 +3276,7 @@ xpm_init_color_cache (struct frame *f, XpmAttributes *attrs)
       XColor color;
 
       for (i = 0; i < attrs->numsymbols; ++i)
-	if (XParseColor (FRAME_X_DISPLAY (f), FRAME_X_COLORMAP (f),
-			 attrs->colorsymbols[i].value, &color))
+	if (x_parse_color (f, attrs->colorsymbols[i].value, &color))
 	  {
 	    color.pixel = lookup_rgb_color (f, color.red, color.green,
 					    color.blue);
@@ -3356,8 +3355,7 @@ xpm_lookup_color (struct frame *f, char *color_name, XColor *color)
 
   if (p != NULL)
     *color = p->color;
-  else if (XParseColor (FRAME_X_DISPLAY (f), FRAME_X_COLORMAP (f),
-			color_name, color))
+  else if (x_parse_color (f, color_name, color))
     {
       color->pixel = lookup_rgb_color (f, color->red, color->green,
 				       color->blue);
