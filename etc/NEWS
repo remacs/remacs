@@ -326,7 +326,7 @@ character.  `prettify-symbols-default-compose-p' is the default which
 is suitable for most programming languages such as C or Lisp (but not
 (La)TeX).
 
-*** Symbols are not prettified while point is inside them.
+*** Symbols can be unprettified while point is inside them.
 New variable `prettify-symbols-unprettify-at-point' configures this.
 
 ** New `xterm-screen-extra-capabilities' config.
