@@ -6004,7 +6004,8 @@ coding_inherit_eol_type (Lisp_Object coding_system, Lisp_Object parent)
 
   if (NILP (coding_system))
     coding_system = Qraw_text;
-  CHECK_CODING_SYSTEM (coding_system);
+  else
+    CHECK_CODING_SYSTEM (coding_system);
   spec = CODING_SYSTEM_SPEC (coding_system);
   eol_type = AREF (spec, 2);
   if (VECTORP (eol_type))
@@ -6051,6 +6052,7 @@ complement_process_encoding_system (Lisp_Object coding_system)
 	coding_system = CDR_SAFE (Vdefault_process_coding_system);
       else if (i == 2)
 	coding_system = preferred_coding_system ();
+      CHECK_CODING_SYSTEM (coding_system);
       spec = CODING_SYSTEM_SPEC (coding_system);
       if (NILP (spec))
 	continue;

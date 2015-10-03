@@ -3470,10 +3470,7 @@ by calling `format-decode', which see.  */)
       mtime = time_error_value (save_errno);
       st.st_size = -1;
       if (!NILP (Vcoding_system_for_read))
-	{
-	  CHECK_CODING_SYSTEM (Vcoding_system_for_read);
-	  Fset (Qbuffer_file_coding_system, Vcoding_system_for_read);
-	}
+	Fset (Qbuffer_file_coding_system, Vcoding_system_for_read);
       goto notfound;
     }
 
@@ -4529,7 +4526,6 @@ choose_write_coding_system (Lisp_Object start, Lisp_Object end, Lisp_Object file
   else if (!NILP (Vcoding_system_for_write))
     {
       val = Vcoding_system_for_write;
-      CHECK_CODING_SYSTEM (val);
       if (coding_system_require_warning
 	  && !NILP (Ffboundp (Vselect_safe_coding_system_function)))
 	/* Confirm that VAL can surely encode the current region.  */
@@ -4578,13 +4574,11 @@ choose_write_coding_system (Lisp_Object start, Lisp_Object end, Lisp_Object file
 	  using_default_coding = 1;
 	}
 
-      if (!NILP (val))
-	CHECK_CODING_SYSTEM (val);
-
       if (! NILP (val) && ! force_raw_text)
 	{
 	  Lisp_Object spec, attrs;
 
+	  CHECK_CODING_SYSTEM (val);
 	  CHECK_CODING_SYSTEM_GET_SPEC (val, spec);
 	  attrs = AREF (spec, 0);
 	  if (EQ (CODING_ATTR_TYPE (attrs), Qraw_text))
@@ -4593,12 +4587,9 @@ choose_write_coding_system (Lisp_Object start, Lisp_Object end, Lisp_Object file
 
       if (!force_raw_text
 	  && !NILP (Ffboundp (Vselect_safe_coding_system_function)))
-	{
-	  /* Confirm that VAL can surely encode the current region.  */
-	  val = call5 (Vselect_safe_coding_system_function,
-		       start, end, val, Qnil, filename);
-	  CHECK_CODING_SYSTEM (val);
-	}
+	/* Confirm that VAL can surely encode the current region.  */
+	val = call5 (Vselect_safe_coding_system_function,
+		     start, end, val, Qnil, filename);
 
       /* If the decided coding-system doesn't specify end-of-line
 	 format, we use that of
@@ -4608,10 +4599,7 @@ choose_write_coding_system (Lisp_Object start, Lisp_Object end, Lisp_Object file
 	  Lisp_Object dflt = BVAR (&buffer_defaults, buffer_file_coding_system);
 
 	  if (! NILP (dflt))
-	    {
-	      CHECK_CODING_SYSTEM (dflt);
-	      val = (coding_inherit_eol_type (val, dflt));
-	    }
+	    val = coding_inherit_eol_type (val, dflt);
 	}
 
       /* If we decide not to encode text, use `raw-text' or one of its
