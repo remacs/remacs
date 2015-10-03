@@ -314,6 +314,11 @@ standards.
 
 * Changes in Specialized Modes and Packages in Emacs 25.1
 
+** JSON
+---
+*** `json-pretty-print' and `json-pretty-print-buffer' now maintain
+the ordering of object keys by default.
+
 ** You can recompute the VC state of a file buffer with `M-x vc-refresh-state'
 ** Prog mode has some support for multi-mode indentation.
 See `prog-indentation-context' and `prog-widen'.
