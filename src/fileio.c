@@ -3470,7 +3470,10 @@ by calling `format-decode', which see.  */)
       mtime = time_error_value (save_errno);
       st.st_size = -1;
       if (!NILP (Vcoding_system_for_read))
-	Fset (Qbuffer_file_coding_system, Vcoding_system_for_read);
+	{
+	  CHECK_CODING_SYSTEM (Vcoding_system_for_read);
+	  Fset (Qbuffer_file_coding_system, Vcoding_system_for_read);
+	}
       goto notfound;
     }
 
@@ -4526,6 +4529,7 @@ choose_write_coding_system (Lisp_Object start, Lisp_Object end, Lisp_Object file
   else if (!NILP (Vcoding_system_for_write))
     {
       val = Vcoding_system_for_write;
+      CHECK_CODING_SYSTEM (val);
       if (coding_system_require_warning
 	  && !NILP (Ffboundp (Vselect_safe_coding_system_function)))
 	/* Confirm that VAL can surely encode the current region.  */
@@ -4573,6 +4577,9 @@ choose_write_coding_system (Lisp_Object start, Lisp_Object end, Lisp_Object file
 	  val = BVAR (current_buffer, buffer_file_coding_system);
 	  using_default_coding = 1;
 	}
+
+      if (!NILP (val))
+	CHECK_CODING_SYSTEM (val);
 
       if (! NILP (val) && ! force_raw_text)
 	{
