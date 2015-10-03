@@ -4593,17 +4593,26 @@ choose_write_coding_system (Lisp_Object start, Lisp_Object end, Lisp_Object file
 
       if (!force_raw_text
 	  && !NILP (Ffboundp (Vselect_safe_coding_system_function)))
-	/* Confirm that VAL can surely encode the current region.  */
-	val = call5 (Vselect_safe_coding_system_function,
-		     start, end, val, Qnil, filename);
+	{
+	  /* Confirm that VAL can surely encode the current region.  */
+	  val = call5 (Vselect_safe_coding_system_function,
+		       start, end, val, Qnil, filename);
+	  CHECK_CODING_SYSTEM (val);
+	}
 
       /* If the decided coding-system doesn't specify end-of-line
 	 format, we use that of
 	 `default-buffer-file-coding-system'.  */
-      if (! using_default_coding
-	  && ! NILP (BVAR (&buffer_defaults, buffer_file_coding_system)))
-	val = (coding_inherit_eol_type
-	       (val, BVAR (&buffer_defaults, buffer_file_coding_system)));
+      if (! using_default_coding)
+	{
+	  Lisp_Object dflt = BVAR (&buffer_defaults, buffer_file_coding_system);
+
+	  if (! NILP (dflt))
+	    {
+	      CHECK_CODING_SYSTEM (dflt);
+	      val = (coding_inherit_eol_type (val, dflt));
+	    }
+	}
 
       /* If we decide not to encode text, use `raw-text' or one of its
 	 subsidiaries.  */
