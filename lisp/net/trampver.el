@@ -42,7 +42,8 @@
   "Try to return as a string the repository revision of the Tramp sources."
   (unless (featurep 'xemacs)
     (let ((dir
-	   (funcall 'locate-dominating-file (locate-library "tramp") ".git")))
+	   (funcall
+	    (intern "locate-dominating-file") (locate-library "tramp") ".git")))
       (when dir
 	(with-temp-buffer
 	  (let ((default-directory (file-name-as-directory dir)))
@@ -50,7 +51,8 @@
 		  (ignore-errors
 		    (call-process "git" nil '(t nil) nil "rev-parse" "HEAD")))
 		 (not (zerop (buffer-size)))
-		 (tramp-compat-replace-regexp-in-string
+		 (funcall
+		  (intern "tramp-compat-replace-regexp-in-string")
 		  "\n" "" (buffer-string)))))))))
 
 ;; Check for (X)Emacs version.
