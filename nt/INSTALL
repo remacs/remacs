@@ -382,11 +382,11 @@ build will run on Windows 9X and newer systems).
      ok
      Your system has the required tools, running autoreconf...
      Installing git hooks...
-     You can now run `./configure'.
+     You can now run './configure'.
 
   If the script fails because it cannot find Git, you will need to
   arrange for the MSYS Bash's PATH to include the Git's 'bin'
-  sibdirectory, where there's the git.exe executable.
+  subdirectory, where there's the git.exe executable.
 
 * Configuring Emacs for MinGW:
 
@@ -466,7 +466,7 @@ build will run on Windows 9X and newer systems).
   successful, will eventually produce a summary of the configuration
   similar to this:
 
-     Configured for `i686-pc-mingw32'.
+     Configured for 'i686-pc-mingw32'.
 
        Where should the build process find the source code?    /path/to/emacs/sources
        What compiler should emacs be built with?               gcc  -std=gnu99 -O0 -g3
