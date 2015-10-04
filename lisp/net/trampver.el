@@ -38,12 +38,14 @@
 (defconst tramp-bug-report-address "tramp-devel@gnu.org"
   "Email address to send bug reports to.")
 
+;; `locate-dominating-file' does not exist in XEmacs. But it is not used here.
+(autoload 'locate-dominating-file "files")
+(autoload 'tramp-compat-replace-regexp-in-string "tramp-compat")
+
 (defun tramp-repository-get-version ()
   "Try to return as a string the repository revision of the Tramp sources."
   (unless (featurep 'xemacs)
-    (let ((dir
-	   (funcall
-	    (intern "locate-dominating-file") (locate-library "tramp") ".git")))
+    (let ((dir (locate-dominating-file (locate-library "tramp") ".git")))
       (when dir
 	(with-temp-buffer
 	  (let ((default-directory (file-name-as-directory dir)))
@@ -51,8 +53,7 @@
 		  (ignore-errors
 		    (call-process "git" nil '(t nil) nil "rev-parse" "HEAD")))
 		 (not (zerop (buffer-size)))
-		 (funcall
-		  (intern "tramp-compat-replace-regexp-in-string")
+		 (tramp-compat-replace-regexp-in-string
 		  "\n" "" (buffer-string)))))))))
 
 ;; Check for (X)Emacs version.
