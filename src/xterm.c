@@ -7541,9 +7541,6 @@ handle_one_xevent (struct x_display_info *dpyinfo,
                                        the only valid choice.  */
                                     RevertToParent,
                                     event->xclient.data.l[1]);
-                    /* This is needed to detect the error
-                       if there is an error.  */
-                    XSync (d, False);
                     x_uncatch_errors ();
                   }
                 /* Not certain about handling scroll bars here */
@@ -9930,7 +9927,6 @@ x_wm_supports (struct frame *f, Atom want_atom)
 
   /* Check if window exists. */
   XSelectInput (dpy, wmcheck_window, StructureNotifyMask);
-  x_sync (f);
   if (x_had_errors_p (dpy))
     {
       x_uncatch_errors ();

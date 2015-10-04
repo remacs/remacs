@@ -250,19 +250,15 @@ x_real_pos_and_offsets (struct frame *f,
 
   if (! had_errors)
     {
-      unsigned int ign;
+      unsigned int bw, ign;
       Window child, rootw;
 
       /* Get the real coordinates for the WM window upper left corner */
       XGetGeometry (FRAME_X_DISPLAY (f), win,
-                    &rootw, &real_x, &real_y, &ow, &oh, &ign, &ign);
+                    &rootw, &real_x, &real_y, &ow, &oh, &bw, &ign);
 
       if (outer_border)
-        {
-          XWindowAttributes atts;
-          XGetWindowAttributes (FRAME_X_DISPLAY (f), win, &atts);
-          *outer_border = atts.border_width;
-        }
+        *outer_border = bw;
 
       /* Translate real coordinates to coordinates relative to our
          window.  For our window, the upper left corner is 0, 0.
@@ -309,8 +305,7 @@ x_real_pos_and_offsets (struct frame *f,
       had_errors = x_had_errors_p (FRAME_X_DISPLAY (f));
     }
 
-
-  if (dpyinfo->root_window == f->output_data.x->parent_desc)
+  if (!had_errors && dpyinfo->root_window == f->output_data.x->parent_desc)
     {
       /* Try _NET_FRAME_EXTENTS if our parent is the root window.  */
       rc = XGetWindowProperty (dpy, win, dpyinfo->Xatom_net_frame_extents,
@@ -321,20 +316,16 @@ x_real_pos_and_offsets (struct frame *f,
       if (rc == Success && actual_type == target_type && !x_had_errors_p (dpy)
           && actual_size == 4 && actual_format == 32)
         {
-          unsigned int ign;
-          Window rootw;
           long *fe = (long *)tmp_data;
 
-          XGetGeometry (FRAME_X_DISPLAY (f), win,
-                        &rootw, &real_x, &real_y, &ign, &ign, &ign, &ign);
           outer_x = -fe[0];
           outer_y = -fe[2];
           real_x -= fe[0];
           real_y -= fe[2];
         }
-    }
 
-  if (tmp_data) XFree (tmp_data);
+      if (tmp_data) XFree (tmp_data);
+    }
 
   x_uncatch_errors ();
 
