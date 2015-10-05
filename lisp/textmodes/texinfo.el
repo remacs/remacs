@@ -1,4 +1,4 @@
-;;; texinfo.el --- major mode for editing Texinfo files -*- coding: utf-8 -*-
+;;; texinfo.el --- major mode for editing Texinfo files
 
 ;; Copyright (C) 1985, 1988-1993, 1996-1997, 2000-2015 Free Software
 ;; Foundation, Inc.

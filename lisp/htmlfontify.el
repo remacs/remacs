@@ -2433,8 +2433,4 @@ Use a fallback method for obtaining the rgb values for a color.
 
 (provide 'htmlfontify)
 
-;; Local Variables:
-;; coding: utf-8
-;; End:
-
 ;;; htmlfontify.el ends here

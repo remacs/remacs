@@ -6724,6 +6724,11 @@ if (cols > 0 && rows > 0)
 {
   if (fs_state != emacsframe->want_fullscreen)
     {
+      NSSize sz;
+      sz.width = frame_resize_pixelwise ? 1 : FRAME_COLUMN_WIDTH (emacsframe);
+      sz.height = frame_resize_pixelwise ? 1 : FRAME_LINE_HEIGHT (emacsframe);
+      [[self window] setResizeIncrements:sz];
+
       if (fs_state == FULLSCREEN_BOTH)
         {
           [self toggleFullScreen:self];

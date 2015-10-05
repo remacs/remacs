@@ -405,7 +405,3 @@ Optional arg DISPLAY non-nil means show messages in the echo area."
       (kill-buffer outbuf))))
 
 ;;; cmacexp.el ends here
-
-;; Local Variables:
-;; coding: utf-8
-;; End:

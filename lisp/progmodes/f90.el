@@ -2382,8 +2382,4 @@ escape character."
 
 (provide 'f90)
 
-;; Local Variables:
-;; coding: utf-8
-;; End:
-
 ;;; f90.el ends here

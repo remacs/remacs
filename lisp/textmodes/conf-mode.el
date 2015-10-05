@@ -1,4 +1,4 @@
-;;; conf-mode.el --- Simple major mode for editing conf/ini/properties files -*- coding: utf-8 -*-
+;;; conf-mode.el --- Simple major mode for editing conf/ini/properties files
 
 ;; Copyright (C) 2004-2015 Free Software Foundation, Inc.
 

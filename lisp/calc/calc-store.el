@@ -677,8 +677,4 @@
 
 (provide 'calc-store)
 
-;; Local variables:
-;; coding: utf-8
-;; End:
-
 ;;; calc-store.el ends here

@@ -2581,8 +2581,5 @@ It should be added buffer-locally to `write-file-functions'."
 
 (run-hooks 'whitespace-load-hook)
 
-;; Local Variables:
-;; coding: utf-8
-;; End:
 
 ;;; whitespace.el ends here

@@ -3348,6 +3348,7 @@ Without an argument, it saves customized diff argument, if available
     (setq wind (ediff-get-visible-buffer-window cloned-buff))
     (select-window wind)
     (delete-other-windows)
+    (or (mark) (push-mark))
     (ediff-activate-mark)
     (split-window-vertically)
     (ediff-select-lowest-window)
