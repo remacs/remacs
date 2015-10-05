@@ -5284,8 +5284,12 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
 		       "foreground", "Foreground", RES_TYPE_STRING);
   x_default_parameter (f, parms, Qbackground_color, build_string ("white"),
 		       "background", "Background", RES_TYPE_STRING);
+#if 0 /* This code currently doesn't work for tooltip frames; the
+         cursor being set doesn't seem to get used.  The call generates
+         a bit of traffic, so skip it for now.  */
   x_default_parameter (f, parms, Qmouse_color, build_string ("black"),
 		       "pointerColor", "Foreground", RES_TYPE_STRING);
+#endif
   x_default_parameter (f, parms, Qcursor_color, build_string ("black"),
 		       "cursorColor", "Foreground", RES_TYPE_STRING);
   x_default_parameter (f, parms, Qborder_color, build_string ("black"),
