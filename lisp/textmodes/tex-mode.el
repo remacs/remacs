@@ -3375,6 +3375,7 @@ There might be text before point."
     ("\\wr" . ?≀)
     ("\\Bbb{N}" . ?ℕ)			; AMS commands for blackboard bold
     ("\\Bbb{P}" . ?ℙ)			; Also sometimes \mathbb.
+    ("\\Bbb{Q}" . ?ℚ)
     ("\\Bbb{R}" . ?ℝ)
     ("\\Bbb{Z}" . ?ℤ)
     ("--" . ?–)
