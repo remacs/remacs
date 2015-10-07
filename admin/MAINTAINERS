@@ -11,9 +11,6 @@ keen interest in).  There's no need to list files where you are
 mentioned in the file's header.
 ==============================================================================
 
-Jason Rumney
-	W32
-
 Eli Zaretskii
 
 	src/bidi.c
@@ -48,17 +45,6 @@ Stefan Monnier
 	text filling
 	minibuffer completion
 	lisp/outline.el
-
-Miles Bader
-	src/xfaces.c
-	field-property related stuff
-	lisp/comint.el
-	lisp/shell.el
-	[other comint-related packages]
-	lisp/button.el
-	lisp/image-file.el
-	lisp/minibuf-eldef.el
-	lisp/rfn-eshadow.el
 
 Jay Belanger
         Calc
@@ -199,12 +185,6 @@ Stefan Monnier
 	lisp/progmodes/perl-mode.el
 	lisp/progmodes/tcl.el
 	lisp/emacs-lisp/easymenu.el
-
-Miles Bader
-	src/eval.c
-	src/bytecode.c
-	src/editfns.c
-	lisp/textmodes/refill.el
 
 Artur Malabarba
         lisp/isearch.el
