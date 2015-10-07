@@ -1030,6 +1030,7 @@ extern void x_check_errors (Display *, const char *)
   ATTRIBUTE_FORMAT_PRINTF (2, 0);
 extern bool x_had_errors_p (Display *);
 extern void x_uncatch_errors (void);
+extern void x_uncatch_errors_after_check (void);
 extern void x_clear_errors (Display *);
 extern void xembed_request_focus (struct frame *);
 extern void x_ewmh_activate_frame (struct frame *);

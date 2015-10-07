@@ -759,7 +759,7 @@ x_set_mouse_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 
   /* Check and report errors with the above calls.  */
   x_check_errors (dpy, "can't set cursor shape: %s");
-  x_uncatch_errors ();
+  x_uncatch_errors_after_check ();
 
   {
     XColor fore_color, back_color;

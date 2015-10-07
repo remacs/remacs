@@ -4992,7 +4992,7 @@ XTmouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 	if (x_had_errors_p (FRAME_X_DISPLAY (*fp)))
 	  f1 = 0;
 
-	x_uncatch_errors ();
+	x_uncatch_errors_after_check ();
 
 	/* If not, is it one of our scroll bars?  */
 	if (! f1)
@@ -9217,7 +9217,10 @@ x_error_catcher (Display *display, XErrorEvent *event)
    Calling x_check_errors signals an Emacs error if an X error has
    occurred since the last call to x_catch_errors or x_check_errors.
 
-   Calling x_uncatch_errors resumes the normal error handling.  */
+   Calling x_uncatch_errors resumes the normal error handling.
+   Calling x_uncatch_errors_after_check is similar, but skips an XSync
+   to the server, and should be used only immediately after
+   x_had_errors_p or x_check_errors.  */
 
 void
 x_catch_errors (Display *dpy)
@@ -9231,6 +9234,25 @@ x_catch_errors (Display *dpy)
   data->string[0] = 0;
   data->prev = x_error_message;
   x_error_message = data;
+}
+
+/* Undo the last x_catch_errors call.
+   DPY should be the display that was passed to x_catch_errors.
+
+   This version should be used only if the immediately preceding
+   X-protocol-related thing was x_check_errors or x_had_error_p, both
+   of which issue XSync calls, so we don't need to re-sync here.  */
+
+void
+x_uncatch_errors_after_check (void)
+{
+  struct x_error_message_stack *tmp;
+
+  block_input ();
+  tmp = x_error_message;
+  x_error_message = x_error_message->prev;
+  xfree (tmp);
+  unblock_input ();
 }
 
 /* Undo the last x_catch_errors call.
@@ -9928,7 +9950,7 @@ x_wm_supports (struct frame *f, Atom want_atom)
   XSelectInput (dpy, wmcheck_window, StructureNotifyMask);
   if (x_had_errors_p (dpy))
     {
-      x_uncatch_errors ();
+      x_uncatch_errors_after_check ();
       unblock_input ();
       return false;
     }
