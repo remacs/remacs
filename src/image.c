@@ -647,7 +647,8 @@ image_error (const char *format, ...)
 static void
 image_size_error (void)
 {
-  image_error ("Invalid image size (see `%s')", "max-image-size");
+  AUTO_STRING (max_image_size_name, "max-image-size");
+  image_error ("Invalid image size (see `%s')", max_image_size_name);
 }
 
 
