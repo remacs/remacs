@@ -2281,7 +2281,6 @@ Status x_parse_color (struct frame *f, const char *color_name,
 {
   Display *dpy = FRAME_X_DISPLAY (f);
   Colormap cmap = FRAME_X_COLORMAP (f);
-  Status status;
   struct color_name_cache_entry *cache_entry;
 
   if (color_name[0] == '#')

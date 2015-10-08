@@ -4431,8 +4431,6 @@ lookup_rgb_color (struct frame *f, int r, int g, int b)
   dpyinfo = FRAME_DISPLAY_INFO (f);
   if (dpyinfo->red_bits > 0)
     {
-      unsigned long pr, pg, pb;
-
       /* Apply gamma-correction like normal color allocation does.  */
       if (f->gamma)
 	{

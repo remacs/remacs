@@ -437,7 +437,6 @@ x_defined_color (struct frame *f, const char *color_name,
 		 XColor *color, bool alloc_p)
 {
   bool success_p = false;
-  Display *dpy = FRAME_X_DISPLAY (f);
   Colormap cmap = FRAME_X_COLORMAP (f);
 
   block_input ();
