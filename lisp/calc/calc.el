@@ -2315,7 +2315,7 @@ the United States."
         ((eq last-command-event ?#) (format "%d#" calc-number-radix))
         ((eq last-command-event ?_) "-")
         ((eq last-command-event ?@) "0@ ")
-        (t (char-to-string last-command-event)))))
+        (t (char-to-string last-command-event))))
 
 (defvar calc-buffer)
 (defvar calc-prev-char)
