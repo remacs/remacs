@@ -5319,12 +5319,8 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
 		       "foreground", "Foreground", RES_TYPE_STRING);
   x_default_parameter (f, parms, Qbackground_color, build_string ("white"),
 		       "background", "Background", RES_TYPE_STRING);
-#if 0 /* This code currently doesn't work for tooltip frames; the
-         cursor being set doesn't seem to get used.  The call generates
-         a bit of traffic, so skip it for now.  */
   x_default_parameter (f, parms, Qmouse_color, build_string ("black"),
 		       "pointerColor", "Foreground", RES_TYPE_STRING);
-#endif
   x_default_parameter (f, parms, Qcursor_color, build_string ("black"),
 		       "cursorColor", "Foreground", RES_TYPE_STRING);
   x_default_parameter (f, parms, Qborder_color, build_string ("black"),
@@ -5345,7 +5341,7 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
     Atom type = FRAME_DISPLAY_INFO (f)->Xatom_net_window_type_tooltip;
 
     block_input ();
-    mask = CWBackPixel | CWOverrideRedirect | CWEventMask;
+    mask = CWBackPixel | CWOverrideRedirect | CWEventMask | CWCursor;
     if (DoesSaveUnders (dpyinfo->screen))
       mask |= CWSaveUnder;
 
@@ -5355,6 +5351,9 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
     attrs.override_redirect = True;
     attrs.save_under = True;
     attrs.background_pixel = FRAME_BACKGROUND_PIXEL (f);
+    attrs.cursor =
+      f->output_data.x->current_cursor
+      = f->output_data.x->text_cursor;
     /* Arrange for getting MapNotify and UnmapNotify events.  */
     attrs.event_mask = StructureNotifyMask;
     tip_window
