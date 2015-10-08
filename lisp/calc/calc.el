@@ -2309,6 +2309,14 @@ the United States."
 
 
 ;;;; Reading a number using the minibuffer.
+(defun calc-digit-start-entry ()
+  (cond ((eq last-command-event ?e)
+         (if (> calc-number-radix 14) (format "%d.^" calc-number-radix) "1e"))
+        ((eq last-command-event ?#) (format "%d#" calc-number-radix))
+        ((eq last-command-event ?_) "-")
+        ((eq last-command-event ?@) "0@ ")
+        (t (char-to-string last-command-event)))))
+
 (defvar calc-buffer)
 (defvar calc-prev-char)
 (defvar calc-prev-prev-char)
@@ -2319,7 +2327,6 @@ the United States."
    (if (or calc-algebraic-mode
 	   (and (> calc-number-radix 14) (eq last-command-event ?e)))
        (calc-alg-digit-entry)
-     (calc-unread-command)
      (setq calc-aborted-prefix nil)
      (let* ((calc-digit-value nil)
 	    (calc-prev-char nil)
@@ -2337,7 +2344,8 @@ the United States."
 		     (unwind-protect
 			 (progn
 			   (define-key global-map "\e" nil)
-			   (read-from-minibuffer "Calc: " "" calc-digit-map))
+			   (read-from-minibuffer
+                            "Calc: " (calc-digit-start-entry) calc-digit-map))
 		       (define-key global-map "\e" old-esc))))))
        (or calc-digit-value (setq calc-digit-value (math-read-number buf)))
        (if (stringp calc-digit-value)
