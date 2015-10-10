@@ -7480,6 +7480,8 @@ handle_one_xevent (struct x_display_info *dpyinfo,
      says that a portable program can't use this, but Stephen Gildea assures
      me that letting the compiler initialize it to zeros will work okay.  */
   static XComposeStatus compose_status;
+  XEvent configureEvent;
+  XEvent next_event;
 
   USE_SAFE_ALLOCA;
 
@@ -8389,17 +8391,41 @@ handle_one_xevent (struct x_display_info *dpyinfo,
       }
 
     case ConfigureNotify:
-      f = x_top_window_to_frame (dpyinfo, event->xconfigure.window);
+      /* An opaque move can generate a stream of events as the window
+         is dragged around.  If the connection round trip time isn't
+         really short, they may come faster than we can respond to
+         them, given the multiple queries we can do to check window
+         manager state, translate coordinates, etc.
+
+         So if this ConfigureNotify is immediately followed by another
+         for the same window, use the info from the latest update, and
+         consider the events all handled.  */
+      /* Opaque resize may be trickier; ConfigureNotify events are
+         mixed with Expose events for multiple windows.  */
+      configureEvent = *event;
+      while (XPending (dpyinfo->display))
+        {
+          XNextEvent (dpyinfo->display, &next_event);
+          if (next_event.type != ConfigureNotify
+              || next_event.xconfigure.window != event->xconfigure.window)
+            {
+              XPutBackEvent (dpyinfo->display, &next_event);
+              break;
+            }
+          else
+	    configureEvent = next_event;
+        }
+      f = x_top_window_to_frame (dpyinfo, configureEvent.xconfigure.window);
 #ifdef USE_CAIRO
       if (f) x_cr_destroy_surface (f);
 #endif
 #ifdef USE_GTK
       if (!f
           && (f = any)
-          && event->xconfigure.window == FRAME_X_WINDOW (f))
+          && configureEvent.xconfigure.window == FRAME_X_WINDOW (f))
         {
-          xg_frame_resized (f, event->xconfigure.width,
-                            event->xconfigure.height);
+          xg_frame_resized (f, configureEvent.xconfigure.width,
+                            configureEvent.xconfigure.height);
 #ifdef USE_CAIRO
           x_cr_destroy_surface (f);
 #endif
@@ -8408,24 +8434,26 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 #endif
       if (f)
         {
-	  x_net_wm_state (f, event->xconfigure.window);
+	  x_net_wm_state (f, configureEvent.xconfigure.window);
 
 #ifdef USE_X_TOOLKIT
           /* Tip frames are pure X window, set size for them.  */
           if (! NILP (tip_frame) && XFRAME (tip_frame) == f)
             {
-              if (FRAME_PIXEL_HEIGHT (f) != event->xconfigure.height
-                  || FRAME_PIXEL_WIDTH (f) != event->xconfigure.width)
+              if (FRAME_PIXEL_HEIGHT (f) != configureEvent.xconfigure.height
+                  || FRAME_PIXEL_WIDTH (f) != configureEvent.xconfigure.width)
                 SET_FRAME_GARBAGED (f);
-              FRAME_PIXEL_HEIGHT (f) = event->xconfigure.height;
-              FRAME_PIXEL_WIDTH (f) = event->xconfigure.width;
+              FRAME_PIXEL_HEIGHT (f) = configureEvent.xconfigure.height;
+              FRAME_PIXEL_WIDTH (f) = configureEvent.xconfigure.width;
             }
 #endif
 
 #ifndef USE_X_TOOLKIT
 #ifndef USE_GTK
-          int width = FRAME_PIXEL_TO_TEXT_WIDTH (f, event->xconfigure.width);
-          int height = FRAME_PIXEL_TO_TEXT_HEIGHT (f, event->xconfigure.height);
+          int width =
+	    FRAME_PIXEL_TO_TEXT_WIDTH (f, configureEvent.xconfigure.width);
+          int height =
+	    FRAME_PIXEL_TO_TEXT_HEIGHT (f, configureEvent.xconfigure.height);
 
           /* In the toolkit version, change_frame_size
              is called by the code that handles resizing
@@ -8436,8 +8464,8 @@ handle_one_xevent (struct x_display_info *dpyinfo,
              to check the pixel dimensions as well.  */
           if (width != FRAME_TEXT_WIDTH (f)
               || height != FRAME_TEXT_HEIGHT (f)
-              || event->xconfigure.width != FRAME_PIXEL_WIDTH (f)
-              || event->xconfigure.height != FRAME_PIXEL_HEIGHT (f))
+              || configureEvent.xconfigure.width != FRAME_PIXEL_WIDTH (f)
+              || configureEvent.xconfigure.height != FRAME_PIXEL_HEIGHT (f))
             {
               change_frame_size (f, width, height, false, true, false, true);
 	      x_clear_under_internal_border (f);
