@@ -2215,7 +2215,7 @@ bool-vector.  IDX starts at 0.  */)
   CHECK_NUMBER (idx);
   idxval = XINT (idx);
   CHECK_ARRAY (array, Qarrayp);
-  CHECK_IMPURE (array, XVECTOR (array));
+  CHECK_IMPURE (array, XPNTR (array));
 
   if (VECTORP (array))
     {
