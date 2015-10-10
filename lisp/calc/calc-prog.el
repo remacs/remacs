@@ -1287,7 +1287,7 @@ Redefine the corresponding command."
   (setq rpt-count (if rpt-count (prefix-numeric-value rpt-count) 1000000))
   (let* ((count 0)
 	 (parts nil)
-	 (body (vector)   )
+	 (body (vector))
 	 (open last-command-event)
 	 (counter initial)
 	 ch)
@@ -1300,7 +1300,7 @@ Redefine the corresponding command."
       (if (eq ch ?Z)
 	  (progn
 	    (setq ch (read-event)
-		  body (vconcat body (vector ?Z ch)   ))
+		  body (vconcat body (vector ?Z ch)))
 	    (cond ((memq ch '(?\< ?\( ?\{))
 		   (setq count (1+ count)))
 		  ((memq ch '(?\> ?\) ?\}))
