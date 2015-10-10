@@ -70,16 +70,21 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define PURESIZE  (BASE_PURESIZE * PURESIZE_RATIO * PURESIZE_CHECKING_RATIO)
 #endif
 
-/* Signal an error if OBJ is pure.  */
-#define CHECK_IMPURE(obj) \
-  { if (PURE_P (obj))	  \
-      pure_write_error (obj); }
-
 extern _Noreturn void pure_write_error (Lisp_Object);
-
-/* Define PURE_P.  */
 
 extern EMACS_INT pure[];
 
-#define PURE_P(obj) \
-  ((uintptr_t) XPNTR (obj) - (uintptr_t) pure <= PURESIZE)
+/* True if PTR is pure.  */
+INLINE bool
+PURE_P (void *ptr)
+{
+  return (uintptr_t) (ptr) - (uintptr_t) pure <= PURESIZE;
+}
+
+/* Signal an error if OBJ is pure.  PTR is OBJ untagged.  */
+INLINE void
+CHECK_IMPURE (Lisp_Object obj, void *ptr)
+{
+  if (PURE_P (ptr))
+    pure_write_error (obj);
+}
