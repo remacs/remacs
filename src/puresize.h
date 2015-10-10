@@ -16,6 +16,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
+INLINE_HEADER_BEGIN
+
 /* Define PURESIZE, the number of bytes of pure Lisp code to leave space for.
 
    At one point, this was defined in config.h, meaning that changing
@@ -88,3 +90,5 @@ CHECK_IMPURE (Lisp_Object obj, void *ptr)
   if (PURE_P (ptr))
     pure_write_error (obj);
 }
+
+INLINE_HEADER_END
