@@ -2215,10 +2215,10 @@ bool-vector.  IDX starts at 0.  */)
   CHECK_NUMBER (idx);
   idxval = XINT (idx);
   CHECK_ARRAY (array, Qarrayp);
-  CHECK_IMPURE (array, XPNTR (array));
 
   if (VECTORP (array))
     {
+      CHECK_IMPURE (array, XVECTOR (array));
       if (idxval < 0 || idxval >= ASIZE (array))
 	args_out_of_range (array, idx);
       ASET (array, idxval, newelt);
@@ -2238,6 +2238,7 @@ bool-vector.  IDX starts at 0.  */)
     {
       int c;
 
+      CHECK_IMPURE (array, XSTRING (array));
       if (idxval < 0 || idxval >= SCHARS (array))
 	args_out_of_range (array, idx);
       CHECK_CHARACTER (newelt);
