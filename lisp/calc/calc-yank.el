@@ -195,7 +195,7 @@ alteration."
                        (concat radix-notation "\\&")
                        thing-raw))
                   thing-raw)))))
-      (if (eq (car-safe calc-last-kill) thing)
+      (if (eq (car-safe calc-last-kill) thing-raw)
           (cdr calc-last-kill)
         (if (stringp thing)
             (let ((val (math-read-exprs (calc-clean-newlines thing))))
