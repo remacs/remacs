@@ -1007,8 +1007,8 @@ Returns (parse-state) if line starts inside a string."
            ;; Skip over comments and labels following openbrace.
            (while (progn
                     (skip-chars-forward " \t\f\n")
-                    (cond ((looking-at ";?#")
-                           (forward-line 1) t)
+                    (cond ((looking-at ";?#\\|^=\\w+")
+                           (forward-comment 1) t)
                           ((looking-at "\\(\\w\\|\\s_\\)+:[^:]")
                            (setq colon-line-end (line-end-position))
                            (search-forward ":")))))
