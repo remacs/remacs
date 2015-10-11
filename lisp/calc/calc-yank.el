@@ -107,6 +107,46 @@
   (interactive "r")
   (calc-kill-region top bot t))
 
+(defun math-number-regexp (radix-num)
+  "Return a regexp which will match a Calc number base RADIX-NUM."
+  (let* ((digit-range
+          (cond
+           ;; radix 2 to 10
+           ((and (<= 2 radix-num)
+                 (>= 10 radix-num))
+            (concat "[0-"
+                    (number-to-string (1- radix-num))
+                    "]"))
+           ;; radix 11
+           ((= 11 radix-num) "[0-9aA]")
+           ;; radix 12+
+           (t
+            (concat "[0-9"
+                    "a-" (format "%c" (+ (- ?a 11) radix-num))
+                    "A-" (format "%c" (+ (- ?A 11) radix-num))
+                    "]"))))
+         (integer-regexp (concat digit-range "+"))
+         (decimal-regexp (concat digit-range "+\\." digit-range "*")))
+    (concat
+     " *\\("
+     ;; "e" notation
+     "[-_+]?" decimal-regexp "[eE][-+]?[0-9]+"
+     "\\|"
+     "[-_+]?" integer-regexp "[eE][-+]?[0-9]+"
+     "\\|"
+     ;; Integer+fractions
+     "[-_+]?" integer-regexp "*[:/]" integer-regexp "[:/]" integer-regexp
+     "\\|"
+     ;; Fractions
+     "[-_+]?" integer-regexp "[:/]" integer-regexp
+     "\\|"
+     ;; Decimal point
+     "[-_+]?" decimal-regexp
+     "\\|"
+     ;; Integers
+     "[-_+]?" integer-regexp
+     "\\) *\\(\n\\|\\'\\)")))
+
 ;; This function uses calc-last-kill if possible to get an exact result,
 ;; otherwise it just parses the yanked string.
 ;; Modified to use Emacs 19 extended concept of kill-ring. -- daveg 12/15/96
@@ -171,21 +211,7 @@ alteration."
                       (setq radix-notation
                             (concat (number-to-string radix-num) "#"))
                       (setq valid-num-regexp
-                            (cond
-                             ;; radix 2 to 10
-                             ((and (<= 2 radix-num)
-                                   (>= 10 radix-num))
-                              (concat "[0-"
-                                      (number-to-string (1- radix-num))
-                                      "]+"))
-                             ;; radix 11
-                             ((= 11 radix-num) "[0-9aA]+")
-                             ;; radix 12+
-                             (t
-                              (concat "[0-9"
-                                      "a-" (format "%c" (+ (- ?a 11) radix-num))
-                                      "A-" (format "%c" (+ (- ?A 11) radix-num))
-                                      "]+"))))
+                            (math-number-regexp radix-num))
                       ;; Ensure that the radix-notation is prefixed
                       ;; correctly even for multi-line yanks like below,
                       ;;   111
