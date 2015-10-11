@@ -1152,7 +1152,7 @@ FILE is the file from which we obtained this token."
   (let ((context (epg-make-context 'OpenPGP))
         (pp-escape-newlines nil)
         cipher)
-    (epg-context-set-armor context t)
+    (setf (epg-context-armor context) t)
     (epg-context-set-passphrase-callback
      context
      (cons #'auth-source-token-passphrase-callback-function
