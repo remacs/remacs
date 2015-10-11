@@ -401,7 +401,7 @@ gamegroup=
 case ${with_gameuser} in
   no) ;;
   "" | yes) gamegroup=games ;;
-  :*) gamegroup=`echo "${with_gameuser}" | sed -e "s/://"` ;;
+  :*) gamegroup=${with_gameuser#:} ;;
   *) gameuser=${with_gameuser} ;;
 esac
 
@@ -1702,15 +1702,17 @@ fi
 LD_SWITCH_X_SITE_RPATH=
 if test "${x_libraries}" != NONE; then
   if test -n "${x_libraries}"; then
-    LD_SWITCH_X_SITE=-L`echo ${x_libraries} | sed -e "s/:/ -L/g"`
-    LD_SWITCH_X_SITE_RPATH=-Wl,-rpath,`echo ${x_libraries} | sed -e "s/:/ -Wl,-rpath,/g"`
+    LD_SWITCH_X_SITE=-L`AS_ECHO(["$x_libraries"]) | sed -e 's/:/ -L/g'`
+    LD_SWITCH_X_SITE_RPATH=-Wl,-rpath,`
+      AS_ECHO(["$x_libraries"]) | sed -e 's/:/ -Wl,-rpath,/g'
+    `
   fi
   x_default_search_path=""
   x_search_path=${x_libraries}
   if test -z "${x_search_path}"; then
     x_search_path=/usr/lib
   fi
-  for x_library in `echo ${x_search_path}: | \
+  for x_library in `AS_ECHO(["$x_search_path:"]) | \
 		    sed -e "s/:/ /g" -e p -e "s:/lib[[^ /]]* :/share :g"`; do
     x_search_path="\
 ${x_library}/X11/%L/%T/%N%C%S:\
@@ -1729,15 +1731,15 @@ fi
 AC_SUBST(LD_SWITCH_X_SITE_RPATH)
 
 if test "${x_includes}" != NONE && test -n "${x_includes}"; then
-  C_SWITCH_X_SITE="$isystem"`echo ${x_includes} | sed -e "s/:/ $isystem/g"`
+  C_SWITCH_X_SITE=$isystem`AS_ECHO(["$x_includes"]) | sed -e "s/:/ $isystem/g"`
 fi
 
 if test x"${x_includes}" = x; then
   bitmapdir=/usr/include/X11/bitmaps
 else
   # accumulate include directories that have X11 bitmap subdirectories
-  bmd_acc="dummyval"
-  for bmd in `echo ${x_includes} | sed -e "s/:/ /g"`; do
+  bmd_acc=
+  for bmd in `AS_ECHO(["$x_includes"]) | sed -e 's/:/ /g'`; do
     if test -d "${bmd}/X11/bitmaps"; then
       bmd_acc="${bmd_acc}:${bmd}/X11/bitmaps"
     fi
@@ -1745,9 +1747,7 @@ else
       bmd_acc="${bmd_acc}:${bmd}/bitmaps"
     fi
   done
-  if test ${bmd_acc} != "dummyval"; then
-    bitmapdir=`echo ${bmd_acc} | sed -e "s/^dummyval://"`
-  fi
+  bitmapdir=${bmdacc#:}
 fi
 
 test "${with_ns}" = maybe && test "${opsys}" != darwin && with_ns=no
@@ -1777,11 +1777,23 @@ if test "${with_ns}" != no; then
   elif test -f $GNUSTEP_CONFIG_FILE; then
      NS_IMPL_GNUSTEP=yes
      dnl FIXME sourcing this several times in subshells seems inefficient.
-     GNUSTEP_SYSTEM_HEADERS="$(. $GNUSTEP_CONFIG_FILE; echo $GNUSTEP_SYSTEM_HEADERS)"
-     GNUSTEP_SYSTEM_LIBRARIES="$(. $GNUSTEP_CONFIG_FILE; echo $GNUSTEP_SYSTEM_LIBRARIES)"
+     GNUSTEP_SYSTEM_HEADERS=$(
+       . $GNUSTEP_CONFIG_FILE
+       AS_ECHO(["$GNUSTEP_SYSTEM_HEADERS"])
+     )
+     GNUSTEP_SYSTEM_LIBRARIES=$(
+       . $GNUSTEP_CONFIG_FILE
+       AS_ECHO(["$GNUSTEP_SYSTEM_LIBRARIES"])
+     )
      dnl I seemed to need these as well with GNUstep-startup 0.25.
-     GNUSTEP_LOCAL_HEADERS="$(. $GNUSTEP_CONFIG_FILE; echo $GNUSTEP_LOCAL_HEADERS)"
-     GNUSTEP_LOCAL_LIBRARIES="$(. $GNUSTEP_CONFIG_FILE; echo $GNUSTEP_LOCAL_LIBRARIES)"
+     GNUSTEP_LOCAL_HEADERS=$(
+       . $GNUSTEP_CONFIG_FILE
+       AS_ECHO(["$GNUSTEP_LOCAL_HEADERS"])
+     )
+     GNUSTEP_LOCAL_LIBRARIES=$(
+       . $GNUSTEP_CONFIG_FILE
+       AS_ECHO(["$GNUSTEP_LOCAL_LIBRARIES"])
+     )
      test "x${GNUSTEP_LOCAL_HEADERS}" != "x" && \
        GNUSTEP_LOCAL_HEADERS="-I${GNUSTEP_LOCAL_HEADERS}"
      test "x${GNUSTEP_LOCAL_LIBRARIES}" != "x" && \
@@ -2057,7 +2069,11 @@ if test "$window_system" = none && test "X$with_x" != "Xno"; then
    AC_CHECK_PROG(HAVE_XSERVER, X, true, false)
    if test "$HAVE_XSERVER" = true ||
       test -n "$DISPLAY" ||
-      test "`echo /usr/lib/libX11.*`" != "/usr/lib/libX11.*"; then
+      {
+        for emacs_libX11 in /usr/lib/libX11.*; do break; done
+        test "$emacs_libX11" != '/usr/lib/libX11.*'
+      }
+   then
         AC_MSG_ERROR([You seem to be running X, but no X development libraries
 were found.  You should install the relevant development files for X
 and for the toolkit you want, such as Gtk+ or Motif.  Also make
@@ -4718,11 +4734,13 @@ CPPFLAGS="$REAL_CPPFLAGS"
 LIBS="$REAL_LIBS"
 
 ## Hack to detect a buggy GCC version.
-if test "x$GCC" = xyes \
-   && test x"`$CC --version 2> /dev/null | grep 'gcc.* 4.5.0'`" != x \
-   && test x"`echo $CFLAGS | grep '\-O@<:@23@:>@'`" != x \
-   && test x"`echo $CFLAGS | grep '\-fno-optimize-sibling-calls'`" = x; then
-   AC_MSG_ERROR([GCC 4.5.0 has problems compiling Emacs; see etc/PROBLEMS'.])
+if test "$GCC" = yes && \
+   $CC --version 2> /dev/null | grep 'gcc.* 4.5.0' >/dev/null; then
+  case $CFLAGS in
+    *-fno-optimize-sibling-calls*) ;;
+    *-O@<:@23@:>@*)
+      AC_MSG_ERROR([GCC 4.5.0 has problems compiling Emacs; see etc/PROBLEMS.]);;
+  esac
 fi
 
 version=$PACKAGE_VERSION
@@ -4976,7 +4994,7 @@ LIBS=$SAVE_LIBS
 if test "${opsys}" = "mingw32"; then
   CPPFLAGS="$CPPFLAGS -DUSE_CRT_DLL=1 -I \${abs_top_srcdir}/nt/inc"
   # Remove unneeded switches from the value of CC that goes to Makefiles
-  CC=`echo $CC | sed -e "s,$GCC_TEST_OPTIONS,,"`
+  CC=`AS_ECHO(["$CC"]) | sed -e "s,$GCC_TEST_OPTIONS,,"`
 fi
 
 case "$opsys" in
@@ -5124,7 +5142,8 @@ else
   ACL_SUMMARY=no
 fi
 
-echo "
+emacs_standard_dirs='Standard dirs'
+AS_ECHO(["
 Configured for '${canonical}'.
 
   Where should the build process find the source code?    ${srcdir}
@@ -5133,18 +5152,9 @@ Configured for '${canonical}'.
   Should Emacs use a relocating allocator for buffers?    ${REL_ALLOC}
   Should Emacs use mmap(2) for buffer allocation?         $use_mmap_for_buffers
   What window system should Emacs use?                    ${window_system}
-  What toolkit should Emacs use?                          ${USE_X_TOOLKIT}"
-
-if test -n "${x_includes}"; then
-echo "  Where do we find X Windows header files?                ${x_includes}"
-else
-echo "  Where do we find X Windows header files?                Standard dirs"
-fi
-if test -n "${x_libraries}"; then
-echo "  Where do we find X Windows libraries?                   ${x_libraries}"
-else
-echo "  Where do we find X Windows libraries?                   Standard dirs"
-fi
+  What toolkit should Emacs use?                          ${USE_X_TOOLKIT}
+  Where do we find X Windows header files?                ${x_includes:-$emacs_standard_dirs}
+  Where do we find X Windows libraries?                   ${x_libraries:-$emacs_standard_dirs}"])
 
 optsep=
 emacs_config_features=
@@ -5174,57 +5184,53 @@ done
 AC_DEFINE_UNQUOTED(EMACS_CONFIG_FEATURES, "${emacs_config_features}",
   [Summary of some of the main features enabled by configure.])
 
-echo "  Does Emacs use -lXaw3d?                                 ${HAVE_XAW3D}"
-echo "  Does Emacs use -lXpm?                                   ${HAVE_XPM}"
-echo "  Does Emacs use -ljpeg?                                  ${HAVE_JPEG}"
-echo "  Does Emacs use -ltiff?                                  ${HAVE_TIFF}"
-echo "  Does Emacs use a gif library?                           ${HAVE_GIF} $LIBGIF"
-echo "  Does Emacs use a png library?                           ${HAVE_PNG} $LIBPNG"
-echo "  Does Emacs use -lrsvg-2?                                ${HAVE_RSVG}"
-echo "  Does Emacs use cairo?                                   ${USE_CAIRO}"
-echo "  Does Emacs use imagemagick?                             ${HAVE_IMAGEMAGICK}"
-
-echo "  Does Emacs support sound?                               ${HAVE_SOUND}"
-
-echo "  Does Emacs use -lgpm?                                   ${HAVE_GPM}"
-echo "  Does Emacs use -ldbus?                                  ${HAVE_DBUS}"
-echo "  Does Emacs use -lgconf?                                 ${HAVE_GCONF}"
-echo "  Does Emacs use GSettings?                               ${HAVE_GSETTINGS}"
-echo "  Does Emacs use a file notification library?             ${NOTIFY_SUMMARY}"
-echo "  Does Emacs use access control lists?                    ${ACL_SUMMARY}"
-echo "  Does Emacs use -lselinux?                               ${HAVE_LIBSELINUX}"
-echo "  Does Emacs use -lgnutls?                                ${HAVE_GNUTLS}"
-echo "  Does Emacs use -lxml2?                                  ${HAVE_LIBXML2}"
-
-echo "  Does Emacs use -lfreetype?                              ${HAVE_FREETYPE}"
-echo "  Does Emacs use -lm17n-flt?                              ${HAVE_M17N_FLT}"
-echo "  Does Emacs use -lotf?                                   ${HAVE_LIBOTF}"
-echo "  Does Emacs use -lxft?                                   ${HAVE_XFT}"
-echo "  Does Emacs directly use zlib?                           ${HAVE_ZLIB}"
-
-echo "  Does Emacs use toolkit scroll bars?                     ${USE_TOOLKIT_SCROLL_BARS}"
-echo
+AS_ECHO(["  Does Emacs use -lXaw3d?                                 ${HAVE_XAW3D}
+  Does Emacs use -lXpm?                                   ${HAVE_XPM}
+  Does Emacs use -ljpeg?                                  ${HAVE_JPEG}
+  Does Emacs use -ltiff?                                  ${HAVE_TIFF}
+  Does Emacs use a gif library?                           ${HAVE_GIF} $LIBGIF
+  Does Emacs use a png library?                           ${HAVE_PNG} $LIBPNG
+  Does Emacs use -lrsvg-2?                                ${HAVE_RSVG}
+  Does Emacs use cairo?                                   ${USE_CAIRO}
+  Does Emacs use imagemagick?                             ${HAVE_IMAGEMAGICK}
+  Does Emacs support sound?                               ${HAVE_SOUND}
+  Does Emacs use -lgpm?                                   ${HAVE_GPM}
+  Does Emacs use -ldbus?                                  ${HAVE_DBUS}
+  Does Emacs use -lgconf?                                 ${HAVE_GCONF}
+  Does Emacs use GSettings?                               ${HAVE_GSETTINGS}
+  Does Emacs use a file notification library?             ${NOTIFY_SUMMARY}
+  Does Emacs use access control lists?                    ${ACL_SUMMARY}
+  Does Emacs use -lselinux?                               ${HAVE_LIBSELINUX}
+  Does Emacs use -lgnutls?                                ${HAVE_GNUTLS}
+  Does Emacs use -lxml2?                                  ${HAVE_LIBXML2}
+  Does Emacs use -lfreetype?                              ${HAVE_FREETYPE}
+  Does Emacs use -lm17n-flt?                              ${HAVE_M17N_FLT}
+  Does Emacs use -lotf?                                   ${HAVE_LIBOTF}
+  Does Emacs use -lxft?                                   ${HAVE_XFT}
+  Does Emacs directly use zlib?                           ${HAVE_ZLIB}
+  Does Emacs use toolkit scroll bars?                     ${USE_TOOLKIT_SCROLL_BARS}
+"])
 
 if test -n "${EMACSDATA}"; then
-   echo "  Environment variable EMACSDATA set to:                  $EMACSDATA"
+   AS_ECHO(["  Environment variable EMACSDATA set to:                  $EMACSDATA"])
 fi
 if test -n "${EMACSDOC}"; then
-   echo "  Environment variable EMACSDOC set to:                   $EMACSDOC"
+   AS_ECHO(["  Environment variable EMACSDOC set to:                   $EMACSDOC"])
 fi
 
 echo
 
 if test "$HAVE_NS" = "yes"; then
    echo
-   echo "You must run \"${MAKE-make} install\" in order to test the built application.
+   AS_ECHO(["You must run \"${MAKE-make} install\" in order to test the built application.
 The installed application will go to nextstep/Emacs.app and can be
-run or moved from there."
+run or moved from there."])
    if test "$EN_NS_SELF_CONTAINED" = "yes"; then
       echo "The application will be fully self-contained."
     else
-      echo "The lisp resources for the application will be installed under ${prefix}.
+      AS_ECHO(["The lisp resources for the application will be installed under ${prefix}.
 You may need to run \"${MAKE-make} install\" with sudo.  The application will fail
-to run if these resources are not installed."
+to run if these resources are not installed."])
    fi
    echo
 fi
@@ -5238,10 +5244,12 @@ if test "${opsys}" = "cygwin"; then
 fi
 
 # Remove any trailing slashes in these variables.
-[test "${prefix}" != NONE &&
-  prefix=`echo "${prefix}" | sed 's,\([^/]\)/*$,\1,'`
-test "${exec_prefix}" != NONE &&
-  exec_prefix=`echo "${exec_prefix}" | sed 's,\([^/]\)/*$,\1,'`]
+case $prefix in
+  */) prefix=`AS_DIRNAME(["$prefix."])`;;
+esac
+case $exec_prefix in
+  */) exec_prefix=`AS_DIRNAME(["$exec_prefix."])`;;
+esac
 
 if test "$HAVE_NS" = "yes"; then
   if test "$NS_IMPL_GNUSTEP" = yes; then
@@ -5319,7 +5327,7 @@ dnl is not yet set, sigh.  Or we could use ../$srcdir/src/.gdbinit,
 dnl or a symlink?
 AC_CONFIG_COMMANDS([src/.gdbinit], [
 if test ! -f src/.gdbinit && test -f "$srcdir/src/.gdbinit"; then
-  echo "source $ac_abs_top_srcdir/src/.gdbinit" > src/.gdbinit
+  AS_ECHO(["source $ac_abs_top_srcdir/src/.gdbinit"]) > src/.gdbinit
 fi
 ])
 
