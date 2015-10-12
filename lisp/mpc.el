@@ -1263,7 +1263,7 @@ If PLAYLIST is t or nil or missing, use the main playlist."
   (let ((ol (make-overlay
              (line-beginning-position) (line-beginning-position 2))))
     (overlay-put ol 'mpc-select t)
-    (overlay-put ol 'face 'region)
+    (overlay-put ol 'face 'highlight)
     (overlay-put ol 'evaporate t)
     (push ol mpc-select)))
 
@@ -1562,7 +1562,7 @@ when constructing the set of constraints."
           (move-overlay mpc-tagbrowser-all-ol
                         (point) (line-beginning-position 2))
         (let ((ol (make-overlay (point) (line-beginning-position 2))))
-          (overlay-put ol 'face 'region)
+          (overlay-put ol 'face 'highlight)
           (overlay-put ol 'evaporate t)
           (setq-local mpc-tagbrowser-all-ol ol))))))
 
