@@ -2875,9 +2875,9 @@ The value is actually the tail of PLIST whose car is PROP.  */)
 {
   while (CONSP (plist) && !EQ (XCAR (plist), prop))
     {
-      QUIT;
       plist = XCDR (plist);
       plist = CDR (plist);
+      QUIT;
     }
   return plist;
 }
