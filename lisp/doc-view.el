@@ -1648,7 +1648,7 @@ If BACKWARD is non-nil, jump to the previous match."
                    ;; Microsoft Office formats (also handled by the odf
                    ;; conversion chain).
                    ("doc" odf) ("docx" odf) ("xls" odf) ("xlsx" odf)
-                   ("ppt" odf) ("pps" odf) ("pptx" odf))
+                   ("ppt" odf) ("pps" odf) ("pptx" odf) ("rtf" odf))
 		 t))))
 	(content-types
 	 (save-excursion
