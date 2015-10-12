@@ -1299,8 +1299,10 @@ x_set_background_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 void
 x_set_mouse_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 {
+#if 0
   Cursor cursor, nontext_cursor, mode_cursor, hand_cursor;
   int count;
+#endif
   int mask_color;
 
   if (!EQ (Qnil, arg))
@@ -1737,7 +1739,6 @@ x_change_tool_bar_height (struct frame *f, int height)
   int unit = FRAME_LINE_HEIGHT (f);
   int old_height = FRAME_TOOL_BAR_HEIGHT (f);
   int lines = (height + unit - 1) / unit;
-  int old_text_height = FRAME_TEXT_HEIGHT (f);
   Lisp_Object fullscreen;
 
   /* Make sure we redisplay all windows in this frame.  */
@@ -3004,7 +3005,7 @@ deliver_wm_chars (int do_translate, HWND hwnd, UINT msg, UINT wParam,
     {
       W32Msg wmsg;
       DWORD console_modifiers = construct_console_modifiers ();
-      int *b = buf, strip_Alt = 1, strip_ExtraMods = 1, hairy = 0;
+      int *b = buf, strip_ExtraMods = 1, hairy = 0;
       char *type_CtrlAlt = NULL;
 
       /*  XXXX In fact, there may be another case when we need to do the same:
@@ -7651,7 +7652,7 @@ a ShowWindow flag:
     }
   else
     {
-      char document_a[MAX_PATH], current_dir_a[MAX_PATH];
+      char current_dir_a[MAX_PATH];
       SHELLEXECUTEINFOA shexinfo_a;
       int codepage = codepage_for_filenames (NULL);
       int ldoc_a = pWideCharToMultiByte (codepage, 0, doc_w, -1, NULL, 0,
@@ -8010,7 +8011,6 @@ and width values are in pixels.
   int single_menu_bar_height, wrapped_menu_bar_height, menu_bar_height;
   int tool_bar_height = FRAME_TOOL_BAR_HEIGHT (f);
   int internal_border_width = FRAME_INTERNAL_BORDER_WIDTH (f);
-  bool fullboth = EQ (get_frame_param (f, Qfullscreen), Qfullboth);
 
   if (FRAME_INITIAL_P (f) || !FRAME_W32_P (f))
     return Qnil;

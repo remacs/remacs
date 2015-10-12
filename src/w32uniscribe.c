@@ -779,7 +779,6 @@ uniscribe_check_otf_1 (HDC context, Lisp_Object script, Lisp_Object lang,
   int max_tags = ARRAYELTS (tags);
   int ntags, i, ret = 0;
   HRESULT rslt;
-  Lisp_Object rest;
 
   *retval = 0;
 
