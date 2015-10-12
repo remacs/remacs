@@ -2179,7 +2179,7 @@ sys_select (int nfds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
 	    cp = fd_info[i].cp;
 	    if (FD_ISSET (i, &owfds)
 		&& cp
-		&& (fd_info[i].flags && FILE_CONNECT) == 0)
+		&& (fd_info[i].flags & FILE_CONNECT) == 0)
 	      {
 		DebPrint (("sys_select: fd %d is in wfds, but FILE_CONNECT is reset!\n", i));
 		cp = NULL;
