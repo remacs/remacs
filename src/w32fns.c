@@ -2917,7 +2917,7 @@ get_wm_chars (HWND aWnd, int *buf, int buflen, int ignore_ctrl, int ctrl,
 	  /* Non-character payload in a WM_CHAR
 	     (Ctrl-something pressed, see above).  Ignore, and report.  */
 	  if (ctrl_cnt)
-	    *ctrl_cnt++;
+	    (*ctrl_cnt)++;
 	  continue;
 	}
       /* Traditionally, Emacs would ignore the character payload of VK_NUMPAD*
