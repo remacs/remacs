@@ -44,7 +44,6 @@
 ;; - visual feedback for drag'n'drop
 ;; - display/set `repeat' and `random' state (and maybe also `crossfade').
 ;; - allow multiple *mpc* sessions in the same Emacs to control different mpds.
-;; - look for .folder.png (freedesktop) or folder.jpg (XP) as well.
 ;; - fetch album covers and lyrics from the web?
 ;; - improve MPC-Status: better volume control, add a way to show/hide the
 ;;   rest, plus add the buttons currently in the toolbar.
@@ -1009,8 +1008,12 @@ If PLAYLIST is t or nil or missing, use the main playlist."
                                                (substring time (match-end 0))
                                              time)))))
                     (`Cover
-                     (let* ((dir (file-name-directory (cdr (assq 'file info))))
-                            (cover (concat dir "cover.jpg"))
+                     (let* ((dir (file-name-directory
+                                  (mpc-file-local-copy (cdr (assq 'file info)))))
+                            (covers '(".folder.png" "cover.jpg" "folder.jpg"))
+                            (cover (cl-loop for file in (directory-files dir)
+                                            if (member (downcase file) covers)
+                                            return (concat dir file)))
                             (file (with-demoted-errors "MPC: %s"
                                     (mpc-file-local-copy cover)))
                             image)
