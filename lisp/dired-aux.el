@@ -888,56 +888,63 @@ Otherwise, the rule is a compression rule, and compression is done with gzip.")
 
 ;;;###autoload
 (defun dired-compress-file (file)
-  ;; Compress or uncompress FILE.
-  ;; Return the name of the compressed or uncompressed file.
-  ;; Return nil if no change in files.
+  "Compress or uncompress FILE.
+Return the name of the compressed or uncompressed file.
+Return nil if no change in files."
   (let ((handler (find-file-name-handler file 'dired-compress-file))
-	suffix newname
-	(suffixes dired-compress-file-suffixes))
+        suffix newname
+        (suffixes dired-compress-file-suffixes))
     ;; See if any suffix rule matches this file name.
     (while suffixes
       (let (case-fold-search)
-	(if (string-match (car (car suffixes)) file)
-	    (setq suffix (car suffixes) suffixes nil))
-	(setq suffixes (cdr suffixes))))
+        (if (string-match (car (car suffixes)) file)
+            (setq suffix (car suffixes) suffixes nil))
+        (setq suffixes (cdr suffixes))))
     ;; If so, compute desired new name.
     (if suffix
-	(setq newname (concat (substring file 0 (match-beginning 0))
-			      (nth 1 suffix))))
+        (setq newname (concat (substring file 0 (match-beginning 0))
+                              (nth 1 suffix))))
     (cond (handler
-	   (funcall handler 'dired-compress-file file))
-	  ((file-symlink-p file)
-	   nil)
-	  ((and suffix (nth 2 suffix))
-	   ;; We found an uncompression rule.
-	   (if (not (dired-check-process (concat "Uncompressing " file)
-					 (nth 2 suffix) file))
-	       newname))
-	  (t
-	   ;;; We don't recognize the file as compressed, so compress it.
-	   ;;; Try gzip; if we don't have that, use compress.
-	   (condition-case nil
-	       (let ((out-name (concat file ".gz")))
-		 (and (or (not (file-exists-p out-name))
-			  (y-or-n-p
-			   (format "File %s already exists.  Really compress? "
-				   out-name)))
-		      (not (dired-check-process (concat "Compressing " file)
-						"gzip" "-f" file))
-		      (or (file-exists-p out-name)
-			  (setq out-name (concat file ".z")))
-		      ;; Rename the compressed file to NEWNAME
-		      ;; if it hasn't got that name already.
-		      (if (and newname (not (equal newname out-name)))
-			  (progn
-			    (rename-file out-name newname t)
-			    newname)
-			out-name)))
-	     (file-error
-	      (if (not (dired-check-process (concat "Compressing " file)
-					    "compress" "-f" file))
-		  ;; Don't use NEWNAME with `compress'.
-		  (concat file ".Z"))))))))
+           (funcall handler 'dired-compress-file file))
+          ((file-symlink-p file)
+           nil)
+          ((and suffix (nth 2 suffix))
+           ;; We found an uncompression rule.
+           (if (not (dired-check-process (concat "Uncompressing " file)
+                                         (nth 2 suffix) file))
+               newname))
+          (t
+           ;; We don't recognize the file as compressed, so compress it.
+           ;; Try gzip; if we don't have that, use compress.
+           (condition-case nil
+               (let ((out-name (concat file (if (file-directory-p file)
+                                                ".tar.gz"
+                                              ".gz"))))
+                 (and (or (not (file-exists-p out-name))
+                          (y-or-n-p
+                           (format "File %s already exists.  Really compress? "
+                                   out-name)))
+                      (not
+                       (if (file-directory-p file)
+                           (let ((default-directory (file-name-directory file)))
+                             (dired-check-process (concat "Compressing " file)
+                                                  "tar" "-czf" out-name (file-name-nondirectory file)))
+                         (dired-check-process (concat "Compressing " file)
+                                              "gzip" "-f" file)))
+                      (or (file-exists-p out-name)
+                          (setq out-name (concat file ".z")))
+                      ;; Rename the compressed file to NEWNAME
+                      ;; if it hasn't got that name already.
+                      (if (and newname (not (equal newname out-name)))
+                          (progn
+                            (rename-file out-name newname t)
+                            newname)
+                        out-name)))
+             (file-error
+              (if (not (dired-check-process (concat "Compressing " file)
+                                            "compress" "-f" file))
+                  ;; Don't use NEWNAME with `compress'.
+                  (concat file ".Z"))))))))
 
 (defun dired-mark-confirm (op-symbol arg)
   ;; Request confirmation from the user that the operation described
