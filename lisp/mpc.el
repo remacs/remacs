@@ -1960,7 +1960,7 @@ This is used so that they can be compared with `eq', which is needed for
             ;; I punt on it and just use file-name sorting, which does the
             ;; right thing if your library is properly arranged.
             (dolist (song (if dontsort active
-                            (sort active
+                            (sort (copy-sequence active)
                                   (lambda (song1 song2)
                                     (let ((cmp (mpc-compare-strings
                                                 (cdr (assq 'file song1))
