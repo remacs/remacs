@@ -62,7 +62,8 @@
 (defvar file-notify--test-event nil)
 (defvar file-notify--test-events nil)
 (defun file-notify--test-timeout ()
-  (if (file-remote-p temporary-file-directory) 6 3))
+  "Timeout to wait for arriving events, in seconds."
+  (if (file-remote-p temporary-file-directory) 10 3))
 
 (defun file-notify--test-cleanup ()
   "Cleanup after a test."
