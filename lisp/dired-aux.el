@@ -864,7 +864,8 @@ command with a prefix argument (the value does not matter)."
       from-file)))
 
 (defvar dired-compress-file-suffixes
-  '(("\\.gz\\'" "" "gunzip")
+  '(("\\.tar\\.gz" "" "tar" "-zxvf")
+    ("\\.gz\\'" "" "gunzip")
     ("\\.tgz\\'" ".tar" "gunzip")
     ("\\.Z\\'" "" "uncompress")
     ;; For .z, try gunzip.  It might be an old gzip file,
@@ -878,13 +879,14 @@ command with a prefix argument (the value does not matter)."
     ("\\.tar\\'" ".tgz" nil))
   "Control changes in file name suffixes for compression and uncompression.
 Each element specifies one transformation rule, and has the form:
-  (REGEXP NEW-SUFFIX PROGRAM)
+  (REGEXP NEW-SUFFIX PROGRAM &rest ARGS)
 The rule applies when the old file name matches REGEXP.
 The new file name is computed by deleting the part that matches REGEXP
  (as well as anything after that), then adding NEW-SUFFIX in its place.
 If PROGRAM is non-nil, the rule is an uncompression rule,
 and uncompression is done by running PROGRAM.
-Otherwise, the rule is a compression rule, and compression is done with gzip.")
+Otherwise, the rule is a compression rule, and compression is done with gzip.
+ARGS are command switches passed to PROGRAM.")
 
 ;;;###autoload
 (defun dired-compress-file (file)
@@ -910,9 +912,11 @@ Return nil if no change in files."
            nil)
           ((and suffix (nth 2 suffix))
            ;; We found an uncompression rule.
-           (if (not (dired-check-process (concat "Uncompressing " file)
-                                         (nth 2 suffix) file))
-               newname))
+           (when (not (apply 'dired-check-process
+                             `(,(concat "Uncompressing " file)
+                               ,@(cddr suffix)
+                               ,file)))
+             newname))
           (t
            ;; We don't recognize the file as compressed, so compress it.
            ;; Try gzip; if we don't have that, use compress.
