@@ -1762,13 +1762,23 @@ x_change_tool_bar_height (struct frame *f, int height)
 
   /* Recalculate toolbar height.  */
   f->n_tool_bar_rows = 0;
+  if (old_height == 0
+      && (!f->after_make_frame
+	  || NILP (frame_inhibit_implied_resize)
+	  || (CONSP (frame_inhibit_implied_resize)
+	      && NILP (Fmemq (Qtool_bar_lines, frame_inhibit_implied_resize)))))
+    f->tool_bar_redisplayed = f->tool_bar_resized = false;
 
   adjust_frame_size (f, -1, -1,
-		     ((NILP (fullscreen = get_frame_param (f, Qfullscreen))
-		       || EQ (fullscreen, Qfullwidth)) ? 1
+		     ((!f->tool_bar_resized
+		       && (NILP (fullscreen =
+				 get_frame_param (f, Qfullscreen))
+			   || EQ (fullscreen, Qfullwidth))) ? 1
 		      : (old_height == 0 || height == 0) ? 2
 		      : 4),
 		     false, Qtool_bar_lines);
+
+  f->tool_bar_resized = f->tool_bar_redisplayed;
 
   /* adjust_frame_size might not have done anything, garbage frame
      here.  */
@@ -4368,97 +4378,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_WINDOWPOSCHANGING:
       /* Don't restrict the sizing of any kind of frames.  If the window
 	 manager doesn't, there's no reason to do it ourselves.  */
-#if 0
-	if (frame_resize_pixelwise || hwnd == tip_window)
-#endif
-	  return 0;
-
-#if 0
-      /* Don't restrict the sizing of fullscreened frames, allowing them to be
-	 flush with the sides of the screen.  */
-      f = x_window_to_frame (dpyinfo, hwnd);
-      if (f && FRAME_PREV_FSMODE (f) != FULLSCREEN_NONE)
-	return 0;
-
-      {
-	WINDOWPLACEMENT wp;
-	LPWINDOWPOS lppos = (WINDOWPOS *) lParam;
-
-	wp.length = sizeof (WINDOWPLACEMENT);
-	GetWindowPlacement (hwnd, &wp);
-
-	if (wp.showCmd != SW_SHOWMAXIMIZED && wp.showCmd != SW_SHOWMINIMIZED
-	    && (lppos->flags & SWP_NOSIZE) == 0)
-	  {
-	    RECT rect;
-	    int wdiff;
-	    int hdiff;
-	    DWORD font_width;
-	    DWORD line_height;
-	    DWORD internal_border;
-	    DWORD vscrollbar_extra;
-	    DWORD hscrollbar_extra;
-	    RECT wr;
-
-	    wp.length = sizeof (wp);
-	    GetWindowRect (hwnd, &wr);
-
-	    enter_crit ();
-
-	    font_width = GetWindowLong (hwnd, WND_FONTWIDTH_INDEX);
-	    line_height = GetWindowLong (hwnd, WND_LINEHEIGHT_INDEX);
-	    internal_border = GetWindowLong (hwnd, WND_BORDER_INDEX);
-	    vscrollbar_extra = GetWindowLong (hwnd, WND_VSCROLLBAR_INDEX);
-	    hscrollbar_extra = GetWindowLong (hwnd, WND_HSCROLLBAR_INDEX);
-
-	    leave_crit ();
-
-	    memset (&rect, 0, sizeof (rect));
-	    AdjustWindowRect (&rect, GetWindowLong (hwnd, GWL_STYLE),
-			      GetMenu (hwnd) != NULL);
-
-	    /* Force width and height of client area to be exact
-	       multiples of the character cell dimensions.  */
-	    wdiff = (lppos->cx - (rect.right - rect.left)
-		     - 2 * internal_border - vscrollbar_extra)
-	      % font_width;
-	    hdiff = (lppos->cy - (rect.bottom - rect.top)
-		     - 2 * internal_border - hscrollbar_extra)
-	      % line_height;
-
-	    if (wdiff || hdiff)
-	      {
-		/* For right/bottom sizing we can just fix the sizes.
-		   However for top/left sizing we will need to fix the X
-		   and Y positions as well.  */
-
-		int cx_mintrack = GetSystemMetrics (SM_CXMINTRACK);
-		int cy_mintrack = GetSystemMetrics (SM_CYMINTRACK);
-
-		lppos->cx = max (lppos->cx - wdiff, cx_mintrack);
-		lppos->cy = max (lppos->cy - hdiff, cy_mintrack);
-
-		if (wp.showCmd != SW_SHOWMAXIMIZED
-		    && (lppos->flags & SWP_NOMOVE) == 0)
-		  {
-		    if (lppos->x != wr.left || lppos->y != wr.top)
-		      {
-			lppos->x += wdiff;
-			lppos->y += hdiff;
-		      }
-		    else
-		      {
-			lppos->flags |= SWP_NOMOVE;
-		      }
-		  }
-
-		return 0;
-	      }
-	  }
-      }
-
-      goto dflt;
-#endif
+      return 0;
 
     case WM_GETMINMAXINFO:
       /* Hack to allow resizing the Emacs frame above the screen size.
@@ -4977,6 +4897,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
   struct w32_display_info *dpyinfo = NULL;
   Lisp_Object parent;
   struct kboard *kb;
+  int x_width = 0, x_height = 0;
 
   if (!FRAME_W32_P (SELECTED_FRAME ())
       && !FRAME_INITIAL_P (SELECTED_FRAME ()))
@@ -5199,7 +5120,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
 
   f->output_data.w32->current_cursor = f->output_data.w32->nontext_cursor;
 
-  window_prompting = x_figure_window_size (f, parameters, true);
+  window_prompting = x_figure_window_size (f, parameters, true, &x_width, &x_height);
 
   tem = x_get_arg (dpyinfo, parameters, Qunsplittable, 0, 0, RES_TYPE_BOOLEAN);
   f->no_split = minibuffer_only || EQ (tem, Qt);
@@ -5233,8 +5154,10 @@ This function is an internal primitive--use `make-frame' instead.  */)
   /* Allow x_set_window_size, now.  */
   f->can_x_set_window_size = true;
 
-  adjust_frame_size (f, FRAME_TEXT_WIDTH (f), FRAME_TEXT_HEIGHT (f), 0, true,
-		     Qx_create_frame_2);
+  if (x_width > 0)
+    SET_FRAME_WIDTH (f, x_width);
+  if (x_height > 0)
+    SET_FRAME_HEIGHT (f, x_height);
 
   /* Tell the server what size and position, etc, we want, and how
      badly we want them.  This should be done after we have the menu
@@ -5242,6 +5165,9 @@ This function is an internal primitive--use `make-frame' instead.  */)
   block_input ();
   x_wm_set_size_hint (f, window_prompting, false);
   unblock_input ();
+
+  adjust_frame_size (f, FRAME_TEXT_WIDTH (f), FRAME_TEXT_HEIGHT (f), 0, true,
+		     Qx_create_frame_2);
 
   /* Process fullscreen parameter here in the hope that normalizing a
      fullheight/fullwidth frame will produce the size set by the last
@@ -6179,6 +6105,7 @@ x_create_tip_frame (struct w32_display_info *dpyinfo,
   bool face_change_before = face_change;
   Lisp_Object buffer;
   struct buffer *old_buffer;
+  int x_width = 0, x_height = 0;
 
   /* Use this general default value to start with until we know if
      this frame has a specified name.  */
@@ -6309,7 +6236,7 @@ x_create_tip_frame (struct w32_display_info *dpyinfo,
   f->output_data.w32->dwStyle = WS_BORDER | WS_POPUP | WS_DISABLED;
   f->output_data.w32->parent_desc = FRAME_DISPLAY_INFO (f)->root_window;
 
-  window_prompting = x_figure_window_size (f, parms, false);
+  window_prompting = x_figure_window_size (f, parms, true, &x_width, &x_height);
 
   /* No fringes on tip frame.  */
   f->fringe_cols = 0;

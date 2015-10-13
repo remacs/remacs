@@ -335,6 +335,14 @@ struct frame
   /* Set to true after this frame was made by `make-frame'.  */
   bool_bf after_make_frame : 1;
 
+  /* Whether the tool bar height change should be taken into account.  */
+  bool_bf tool_bar_redisplayed : 1;
+  bool_bf tool_bar_resized : 1;
+
+  /* Inhibit implied resize before after_make_frame is set.  */
+  bool_bf inhibit_horizontal_resize : 1;
+  bool_bf inhibit_vertical_resize : 1;
+
   /* Non-zero if this frame's faces need to be recomputed.  */
   bool_bf face_change : 1;
 
@@ -1375,7 +1383,7 @@ extern void x_set_horizontal_scroll_bars (struct frame *, Lisp_Object, Lisp_Obje
 extern void x_set_scroll_bar_width (struct frame *, Lisp_Object, Lisp_Object);
 extern void x_set_scroll_bar_height (struct frame *, Lisp_Object, Lisp_Object);
 
-extern long x_figure_window_size (struct frame *, Lisp_Object, bool);
+extern long x_figure_window_size (struct frame *, Lisp_Object, bool, int *, int *);
 
 extern void x_set_alpha (struct frame *, Lisp_Object, Lisp_Object);
 
