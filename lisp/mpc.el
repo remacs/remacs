@@ -91,7 +91,9 @@
 ;; UI-commands       : mpc-
 ;; internal          : mpc--
 
-(eval-when-compile (require 'cl-lib))
+(eval-when-compile
+  (require 'cl-lib)
+  (require 'subr-x))
 
 (defgroup mpc ()
   "Client for the Music Player Daemon (mpd)."
@@ -1008,31 +1010,30 @@ If PLAYLIST is t or nil or missing, use the main playlist."
                                                (substring time (match-end 0))
                                              time)))))
                     (`Cover
-                     (let* ((dir (file-name-directory
-                                  (mpc-file-local-copy (cdr (assq 'file info)))))
-                            (covers '(".folder.png" "cover.jpg" "folder.jpg"))
-                            (cover (cl-loop for file in (directory-files dir)
-                                            if (member (downcase file) covers)
-                                            return (concat dir file)))
-                            (file (with-demoted-errors "MPC: %s"
-                                    (mpc-file-local-copy cover)))
-                            image)
-                       ;; (debug)
-                       (push `(equal ',dir (file-name-directory (cdr (assq 'file info)))) pred)
-                       (if (null file)
-                           ;; Make sure we return something on which we can
-                           ;; place the `mpc-pred' property, as
-                           ;; a negative-cache.  We could also use
-                           ;; a default cover.
-                           (progn (setq size nil) " ")
-                         (if (null size) (setq image (create-image file))
-                           (let ((tempfile (make-temp-file "mpc" nil ".jpg")))
-                             (call-process "convert" nil nil nil
-                                           "-scale" size file tempfile)
-                             (setq image (create-image tempfile))
-                             (mpc-tempfiles-add image tempfile)))
-                         (setq size nil)
-                         (propertize dir 'display image))))
+                     (if-let ((dir (file-name-directory
+                                    (mpc-file-local-copy (cdr (assq 'file info)))))
+                              (covers '(".folder.png" "cover.jpg" "folder.jpg"))
+                              (cover (cl-loop for file in (directory-files dir)
+                                              if (member (downcase file) covers)
+                                              return (concat dir file)))
+                              (file (with-demoted-errors "MPC: %s"
+                                      (mpc-file-local-copy cover))))
+                         (let (image)
+                           ;; (debug)
+                           (push `(equal ',dir (file-name-directory (cdr (assq 'file info)))) pred)
+                           (if (null size) (setq image (create-image file))
+                             (let ((tempfile (make-temp-file "mpc" nil ".jpg")))
+                               (call-process "convert" nil nil nil
+                                             "-scale" size file tempfile)
+                               (setq image (create-image tempfile))
+                               (mpc-tempfiles-add image tempfile)))
+                           (setq size nil)
+                           (propertize dir 'display image))
+                       ;; Make sure we return something on which we can
+                       ;; place the `mpc-pred' property, as
+                       ;; a negative-cache.  We could also use
+                       ;; a default cover.
+                       (progn (setq size nil) " ")))
                     (_ (let ((val (cdr (assq tag info))))
                          ;; For Streaming URLs, there's no other info
                          ;; than the URL in `file'.  Pretend it's in `Title'.
