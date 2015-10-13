@@ -8407,7 +8407,12 @@ handle_one_xevent (struct x_display_info *dpyinfo,
         {
           XNextEvent (dpyinfo->display, &next_event);
           if (next_event.type != ConfigureNotify
-              || next_event.xconfigure.window != event->xconfigure.window)
+              || next_event.xconfigure.window != event->xconfigure.window
+              /* Skipping events with different sizes can lead to a
+                 mispositioned mode line at initial window creation.
+                 Only drop window motion events for now.  */
+              || next_event.xconfigure.width != event->xconfigure.width
+              || next_event.xconfigure.height != event->xconfigure.height)
             {
               XPutBackEvent (dpyinfo->display, &next_event);
               break;
