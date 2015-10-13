@@ -1090,8 +1090,7 @@ If PLAYLIST is t or nil or missing, use the main playlist."
 ;;; The actual UI code ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defvar mpc-mode-map
-  (let ((map (make-keymap)))
-    (suppress-keymap map)
+  (let ((map (make-sparse-keymap)))
     ;; (define-key map "\e" 'mpc-stop)
     (define-key map "q" 'mpc-quit)
     (define-key map "\r" 'mpc-select)
@@ -1110,6 +1109,7 @@ If PLAYLIST is t or nil or missing, use the main playlist."
     ;; is applied elsewhere :-(
     ;; (define-key map [(double mouse-2)] 'mpc-play-at-point)
     (define-key map "p" 'mpc-pause)
+    (define-key map "g" nil)
     map))
 
 (easy-menu-define mpc-mode-menu mpc-mode-map
@@ -1158,10 +1158,9 @@ If PLAYLIST is t or nil or missing, use the main playlist."
      :help "Append to the playlist")
     map))
 
-(define-derived-mode mpc-mode fundamental-mode "MPC"
+(define-derived-mode mpc-mode special-mode "MPC"
   "Major mode for the features common to all buffers of MPC."
   (buffer-disable-undo)
-  (setq buffer-read-only t)
   (if (boundp 'tool-bar-map)            ; not if --without-x
       (setq-local tool-bar-map mpc-tool-bar-map))
   (setq-local truncate-lines t))
@@ -1883,7 +1882,6 @@ A value of t means the main playlist.")
 
 (defvar mpc-songs-mode-map
   (let ((map (make-sparse-keymap)))
-    (set-keymap-parent map mpc-mode-map)
     (define-key map [remap mpc-select] 'mpc-songs-jump-to)
     map))
 
