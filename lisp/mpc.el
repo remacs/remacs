@@ -1109,6 +1109,7 @@ If PLAYLIST is t or nil or missing, use the main playlist."
     ;; is applied elsewhere :-(
     ;; (define-key map [(double mouse-2)] 'mpc-play-at-point)
     (define-key map "p" 'mpc-pause)
+    (define-key map "s" 'mpc-toggle-play)
     (define-key map ">" 'mpc-next)
     (define-key map "<" 'mpc-prev)
     (define-key map "g" nil)
@@ -1117,6 +1118,7 @@ If PLAYLIST is t or nil or missing, use the main playlist."
 (easy-menu-define mpc-mode-menu mpc-mode-map
   "Menu for MPC.el."
   '("MPC.el"
+    ["Play/Pause" mpc-toggle-play]
     ["Next track" mpc-next]
     ["Previous track" mpc-prev]
     ["Add new browser" mpc-tagbrowser]
@@ -2349,6 +2351,16 @@ This is used so that they can be compared with `eq', which is needed for
   "Resume playing."
   (interactive)
   (mpc-cmd-pause "0"))
+
+(defun mpc-toggle-play ()
+  "Toggles between play and pause.
+If stopped, start playback."
+  (interactive)
+  (if (member (cdr (assq 'state (mpc-cmd-status))) '("stop"))
+      (mpc-cmd-play)
+    (if (member (cdr (assq 'state (mpc-cmd-status))) '("pause"))
+        (mpc-resume)
+      (mpc-pause))))
 
 (defun mpc-play ()
   "Start playing whatever is selected."
