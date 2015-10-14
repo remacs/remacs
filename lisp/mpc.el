@@ -1119,8 +1119,8 @@ If PLAYLIST is t or nil or missing, use the main playlist."
   "Menu for MPC.el."
   '("MPC.el"
     ["Play/Pause" mpc-toggle-play]
-    ["Next track" mpc-next]
-    ["Previous track" mpc-prev]
+    ["Next Track" mpc-next]
+    ["Previous Track" mpc-prev]
     ["Add new browser" mpc-tagbrowser]
     ["Update DB" mpc-update]
     ["Quit" mpc-quit]))
@@ -2354,7 +2354,7 @@ This is used so that they can be compared with `eq', which is needed for
   (mpc-cmd-pause "0"))
 
 (defun mpc-toggle-play ()
-  "Toggles between play and pause.
+  "Toggle between play and pause.
 If stopped, start playback."
   (interactive)
   (if (member (cdr (assq 'state (mpc-cmd-status))) '("stop"))
