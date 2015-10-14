@@ -71,13 +71,16 @@ Evaluate BODY with VAR bound to each element of SEQ, in turn.
              ,@body)
            ,(cadr spec)))
 
-(pcase-defmacro seq (&rest args)
+(pcase-defmacro seq (&rest patterns)
   "pcase pattern matching sequence elements.
+
 Matches if the object is a sequence (list, string or vector), and
-binds each element of ARGS to the corresponding element of the
-sequence."
+each PATTERN matches the corresponding element of the sequence.
+
+Supernumerary elements of the sequence are ignore if less
+PATTERNS are given, and the match does not fail."
   `(and (pred seq-p)
-        ,@(seq--make-pcase-bindings args)))
+        ,@(seq--make-pcase-bindings patterns)))
 
 (defmacro seq-let (args seq &rest body)
   "Bind the variables in ARGS to the elements of SEQ then evaluate BODY.
