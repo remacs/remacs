@@ -791,6 +791,10 @@ file names."
   (ignore-errors
     ;; Don't modify `last-coding-system-used' by accident.
     (let ((last-coding-system-used last-coding-system-used)
+	  (process-environment
+	   (append
+	    '("LANG=C.utf8" "LANGUAGE=C.utf8" "LC_ALL=C.utf8")
+	    process-environment))
 	  dirp res-symlink-target res-numlinks res-uid res-gid res-access
 	  res-mod res-change res-size res-filemodes res-inode res-device)
       (with-parsed-tramp-file-name filename nil
