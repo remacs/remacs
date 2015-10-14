@@ -1109,12 +1109,16 @@ If PLAYLIST is t or nil or missing, use the main playlist."
     ;; is applied elsewhere :-(
     ;; (define-key map [(double mouse-2)] 'mpc-play-at-point)
     (define-key map "p" 'mpc-pause)
+    (define-key map ">" 'mpc-next)
+    (define-key map "<" 'mpc-prev)
     (define-key map "g" nil)
     map))
 
 (easy-menu-define mpc-mode-menu mpc-mode-map
   "Menu for MPC.el."
   '("MPC.el"
+    ["Next track" mpc-next]
+    ["Previous track" mpc-prev]
     ["Add new browser" mpc-tagbrowser]
     ["Update DB" mpc-update]
     ["Quit" mpc-quit]))
