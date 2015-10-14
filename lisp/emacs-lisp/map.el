@@ -50,7 +50,7 @@
 Matches if the object is a map (list, hash-table or array), and
 each PATTERN matches the corresponding elements of the map.
 
-Supernumerary elements of the map are ignore if less ARGS are
+Supernumerary elements of the map are ignored if fewer ARGS are
 given, and the match does not fail.
 
 ARGS can be a list of the form (KEY PAT), in which case KEY in an

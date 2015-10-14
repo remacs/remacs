@@ -77,7 +77,7 @@ Evaluate BODY with VAR bound to each element of SEQ, in turn.
 Matches if the object is a sequence (list, string or vector), and
 each PATTERN matches the corresponding element of the sequence.
 
-Supernumerary elements of the sequence are ignore if less
+Supernumerary elements of the sequence are ignored if fewer
 PATTERNS are given, and the match does not fail."
   `(and (pred seq-p)
         ,@(seq--make-pcase-bindings patterns)))
