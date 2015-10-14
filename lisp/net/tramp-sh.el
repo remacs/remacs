@@ -2457,16 +2457,17 @@ The method used must be an out-of-band method."
 	(setq source (if t1
 			 (tramp-make-copy-program-file-name v)
 		       (shell-quote-argument filename))
-	      target (funcall
+          target (if t2
+                     (tramp-make-copy-program-file-name v)
+                   (shell-quote-argument
+                    (funcall
 		      (if (and (file-directory-p filename)
 			       (string-equal
 				(file-name-nondirectory filename)
 				(file-name-nondirectory newname)))
 			  'file-name-directory
 			'identity)
-		      (if t2
-			  (tramp-make-copy-program-file-name v)
-			(shell-quote-argument newname))))
+                     newname))))
 
 	;; Check for host and port number.  We cannot use
 	;; `tramp-file-name-port', because this returns also
