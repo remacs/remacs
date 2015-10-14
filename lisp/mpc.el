@@ -1830,7 +1830,8 @@ A value of t means the main playlist.")
         (mpc-volume-widget
          (string-to-number (cdr (assq 'volume mpc-status)))))
   (let ((status-buf (mpc-proc-buffer (mpc-proc) 'status)))
-    (when status-buf (with-current-buffer status-buf (force-mode-line-update)))))
+    (when (buffer-live-p status-buf)
+      (with-current-buffer status-buf (force-mode-line-update)))))
 
 (defvar mpc-volume-step 5)
 
