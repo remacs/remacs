@@ -2215,7 +2215,7 @@ x_query_colors (struct frame *f, XColor *colors, int ncolors)
 	 the 0xff00 we'd get by just zero-filling the lower bits.
 
          We generate a 32-bit scaled-up value and shift it, in case
-         the bit count doesn't divide 16 evently (e.g., when dealing
+         the bit count doesn't divide 16 evenly (e.g., when dealing
          with a 3-3-2 bit RGB display), to get more of the lower bits
          correct.
 
