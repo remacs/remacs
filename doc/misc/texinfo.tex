@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2015-09-20.17}
+\def\texinfoversion{2015-10-09.18}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -530,14 +530,13 @@
 %
 \def\finishparsearg#1 \ArgTerm{\expandafter\argtorun\expandafter{#1}}
 
+
+% \parseargdef - define a command taking an argument on the line
+%
 % \parseargdef\foo{...}
 %	is roughly equivalent to
 % \def\foo{\parsearg\Xfoo}
 % \def\Xfoo#1{...}
-%
-% Actually, I use \csname\string\foo\endcsname, ie. \\foo, as it is my
-% favourite TeX trick.  --kasal, 16nov03
-
 \def\parseargdef#1{%
   \expandafter \doparseargdef \csname\string#1\endcsname #1%
 }
@@ -1416,6 +1415,7 @@ output) for that.)}
       \normalturnoffactive
       \def\@{@}%
       \let\/=\empty
+      \let\xprocessmacroarg=\eatspaces % in case we are in a macro expansion
       \makevalueexpandable
       % do we want to go so far as to use \indexnofonts instead of just
       % special-casing \var here?
@@ -4864,11 +4864,17 @@ end
 \def\requireopenindexfile#1{%
 \ifnum\csname #1indfile\endcsname=0
   \expandafter\newwrite \csname#1indfile\endcsname
-  \immediate\openout\csname#1indfile\endcsname \jobname.#1 % Open the file
+  \edef\suffix{#1}%
+  % A .fls suffix would conflict with the file extension for the output
+  % of -recorder, so use .f1s instead.
+  \ifx\suffix\indexisfl\def\suffix{f1}\fi
+  % Open the file
+  \immediate\openout\csname#1indfile\endcsname \jobname.\suffix
   % Using \immediate here prevents an object entering into the current box,
   % which could confound checks such as those in \safewhatsit for preceding
   % skips.
 \fi}
+\def\indexisfl{fl}
 
 % Output \ as {\indexbackslash}, because \ is an escape character in
 % the index files.
@@ -5059,7 +5065,9 @@ end
   % as its first line, TeX doesn't complain about mismatched braces
   % (because it thinks @} is a control sequence).
   \catcode`\@ = 11
-  \openin 1 \jobname.#1s
+  % See comment in \requireopenindexfile.
+  \def\indexname{#1}\ifx\indexname\indexisfl\def\indexname{f1}\fi
+  \openin 1 \jobname.\indexname s
   \ifeof 1
     % \enddoublecolumns gets confused if there is no text in the index,
     % and it loses the chapter title and the aux file entries for the
@@ -5251,7 +5259,7 @@ end
     % cursed by a Unix daemon.
     \setbox\boxA = \hbox{#1}%
     \ifdim\wd\boxA = 0pt
-      \ %
+      \null\nobreak\hfill\ %
     \else
       %
       \null\nobreak\indexdotfill % Have leaders before the page number.
@@ -5558,7 +5566,8 @@ end
     \writetocentry{part}{#1}{}% but put it in the toc
     \headingsoff              % no headline or footline on the part page
     % This outputs a mark at the end of the page that clears \thischapter
-    % and \thissection, like is done in \startcontents.
+    % and \thissection, as is done in \startcontents.
+    \let\pchapsepmacro\relax
     \chapmacro{}{Yomitfromtoc}{}%
     \chapoddpage
   \endgroup
@@ -9339,7 +9348,8 @@ directory should work if nowhere else does.}
 % @documentencoding sets the definition of non-ASCII characters
 % according to the specified encoding.
 %
-\parseargdef\documentencoding{%
+\def\documentencoding{\parseargusing\filenamecatcodes\documentencodingzzz}
+\def\documentencodingzzz#1{%
   % Encoding being declared for the document.
   \def\declaredencoding{\csname #1.enc\endcsname}%
   %
@@ -10066,6 +10076,9 @@ directory should work if nowhere else does.}
 
   \DeclareUnicodeCharacter{02DB}{\ogonek{ }}
 
+  % Greek letters
+  \DeclareUnicodeCharacter{03C0}{\ensuremath\pi}
+
   \DeclareUnicodeCharacter{1E02}{\dotaccent{B}}
   \DeclareUnicodeCharacter{1E03}{\dotaccent{b}}
   \DeclareUnicodeCharacter{1E04}{\udotaccent{B}}
@@ -10193,6 +10206,7 @@ directory should work if nowhere else does.}
   \DeclareUnicodeCharacter{1EF8}{\~Y}
   \DeclareUnicodeCharacter{1EF9}{\~y}
 
+  % Punctuation
   \DeclareUnicodeCharacter{2013}{--}
   \DeclareUnicodeCharacter{2014}{---}
   \DeclareUnicodeCharacter{2018}{\quoteleft}
@@ -10204,18 +10218,34 @@ directory should work if nowhere else does.}
   \DeclareUnicodeCharacter{2020}{\ensuremath\dagger}
   \DeclareUnicodeCharacter{2021}{\ensuremath\ddagger}
   \DeclareUnicodeCharacter{2022}{\bullet}
+  \DeclareUnicodeCharacter{202F}{\thinspace}
   \DeclareUnicodeCharacter{2026}{\dots}
   \DeclareUnicodeCharacter{2039}{\guilsinglleft}
   \DeclareUnicodeCharacter{203A}{\guilsinglright}
+
   \DeclareUnicodeCharacter{20AC}{\euro}
 
   \DeclareUnicodeCharacter{2192}{\expansion}
   \DeclareUnicodeCharacter{21D2}{\result}
 
+  % Mathematical symbols
+  \DeclareUnicodeCharacter{2200}{\ensuremath\forall}
+  \DeclareUnicodeCharacter{2203}{\ensuremath\exists}
+  \DeclareUnicodeCharacter{2208}{\ensuremath\in}
   \DeclareUnicodeCharacter{2212}{\minus}
   \DeclareUnicodeCharacter{2217}{\point}
+  \DeclareUnicodeCharacter{221E}{\ensuremath\infty}
   \DeclareUnicodeCharacter{2225}{\ensuremath\parallel}
+  \DeclareUnicodeCharacter{2227}{\ensuremath\wedge}
+  \DeclareUnicodeCharacter{2229}{\ensuremath\cap}
   \DeclareUnicodeCharacter{2261}{\equiv}
+  \DeclareUnicodeCharacter{2264}{\ensuremath\leq}
+  \DeclareUnicodeCharacter{2265}{\ensuremath\geq}
+  \DeclareUnicodeCharacter{2282}{\ensuremath\subset}
+  \DeclareUnicodeCharacter{2287}{\ensuremath\supseteq}
+
+  \global\mathchardef\checkmark="1370 % actually the square root sign
+  \DeclareUnicodeCharacter{2713}{\ensuremath\checkmark}
 }% end of \utfeightchardefs
 
 % US-ASCII character definitions.
