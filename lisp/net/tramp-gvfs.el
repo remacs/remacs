@@ -47,7 +47,7 @@
 ;; discovered during development time, is given in respective
 ;; comments.
 
-;; The customer option `tramp-gvfs-methods' contains the list of
+;; The custom option `tramp-gvfs-methods' contains the list of
 ;; supported connection methods.  Per default, these are "dav",
 ;; "davs", "obex", "sftp" and "synce".  Note that with "obex" it might
 ;; be necessary to pair with the other bluetooth device, if it hasn't
@@ -81,7 +81,7 @@
 ;; "synce" method), or from the zeroconf daemon (for the "dav",
 ;; "davs", and "sftp" methods).  The zeroconf daemon is pre-configured
 ;; to discover services in the "local" domain.  If another domain
-;; shall be used for discovering services, the customer option
+;; shall be used for discovering services, the custom option
 ;; `tramp-gvfs-zeroconf-domain' can be set accordingly.
 
 ;; Restrictions:
