@@ -796,6 +796,22 @@ The songs are returned as alists."
   ;; (setq mpc-queue-back nil mpc-queue nil)
   )
 
+(defun mpc-cmd-consume (&optional arg)
+  "Set consume mode state."
+  (mpc-proc-cmd (list "consume" arg) #'mpc-status-refresh))
+
+(defun mpc-cmd-random (&optional arg)
+  "Set random (shuffle) mode state."
+  (mpc-proc-cmd (list "random" arg) #'mpc-status-refresh))
+
+(defun mpc-cmd-repeat (&optional arg)
+  "Set repeat mode state."
+  (mpc-proc-cmd (list "repeat" arg) #'mpc-status-refresh))
+
+(defun mpc-cmd-single (&optional arg)
+  "Set single mode state."
+  (mpc-proc-cmd (list "single" arg) #'mpc-status-refresh))
+
 (defun mpc-cmd-pause (&optional arg callback)
   "Pause or resume playback of the queue of songs."
   (let ((cb callback))
@@ -1121,6 +1137,16 @@ If PLAYLIST is t or nil or missing, use the main playlist."
     ["Play/Pause" mpc-toggle-play]
     ["Next Track" mpc-next]
     ["Previous Track" mpc-prev]
+    "--"
+    ["Repeat Playlist" mpc-repeat :style toggle
+     :selected (member '(repeat . "1") mpc-status)]
+    ["Shuffle Playlist" mpc-shuffle :style toggle
+     :selected (member '(random . "1") mpc-status)]
+    ["Repeat Single Track" mpc-single :style toggle
+     :selected (member '(single . "1") mpc-status)]
+    ["Consume Mode" mpc-consume :style toggle
+     :selected (member '(consume . "1") mpc-status)]
+    "--"
     ["Add new browser" mpc-tagbrowser]
     ["Update DB" mpc-update]
     ["Quit" mpc-quit]))
@@ -2335,6 +2361,30 @@ This is used so that they can be compared with `eq', which is needed for
     (mapc 'kill-buffer bufs)
     (mpc-status-stop)
     (if proc (delete-process proc))))
+
+(defun mpc-consume ()
+  "Toggle consume mode: removing played songs from the playlist."
+  (interactive)
+  (mpc-cmd-consume
+   (if (string= "0" (cdr (assq 'consume (mpc-cmd-status)))) "1" "0")))
+
+(defun mpc-repeat ()
+  "Toggle repeat mode."
+  (interactive)
+  (mpc-cmd-repeat
+   (if (string= "0" (cdr (assq 'repeat (mpc-cmd-status)))) "1" "0")))
+
+(defun mpc-single ()
+  "Toggle single mode."
+  (interactive)
+  (mpc-cmd-single
+   (if (string= "0" (cdr (assq 'single (mpc-cmd-status)))) "1" "0")))
+
+(defun mpc-shuffle ()
+  "Toggle shuffling of the playlist (random mode)."
+  (interactive)
+  (mpc-cmd-random
+   (if (string= "0" (cdr (assq 'random (mpc-cmd-status)))) "1" "0")))
 
 (defun mpc-stop ()
   "Stop playing the current queue of songs."
