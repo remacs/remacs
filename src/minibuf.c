@@ -1595,7 +1595,7 @@ PROMPT is a string to prompt with; normally it ends in a colon and a space.
 COLLECTION can be a list of strings, an alist, an obarray or a hash table.
 COLLECTION can also be a function to do the completion itself.
 PREDICATE limits completion to a subset of COLLECTION.
-See `try-completion' and `all-completions' for more details
+See Info node `(elisp)Basic Completion' for more details
  on completion, COLLECTION, and PREDICATE.
 
 REQUIRE-MATCH can take the following values:
