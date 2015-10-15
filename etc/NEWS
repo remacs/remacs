@@ -8,6 +8,7 @@ If possible, use M-x report-emacs-bug.
 
 This file is about changes in Emacs version 25.
 
+See file HISTORY for a list of GNU Emacs versions and release dates.
 See files NEWS.24, NEWS.23, NEWS.22, NEWS.21, NEWS.20, NEWS.19, NEWS.18,
 and NEWS.1-17 for changes in older Emacs versions.
 
