@@ -1134,17 +1134,17 @@ If PLAYLIST is t or nil or missing, use the main playlist."
 (easy-menu-define mpc-mode-menu mpc-mode-map
   "Menu for MPC.el."
   '("MPC.el"
-    ["Play/Pause" mpc-toggle-play]
-    ["Next Track" mpc-next]
-    ["Previous Track" mpc-prev]
+    ["Play/Pause" mpc-toggle-play]      ;FIXME: Add one of ⏯/▶/⏸ in there?
+    ["Next Track" mpc-next]             ;FIXME: Add ⇥ there?
+    ["Previous Track" mpc-prev]         ;FIXME: Add ⇤ there?
     "--"
-    ["Repeat Playlist" mpc-repeat :style toggle
+    ["Repeat Playlist" mpc-toggle-repeat :style toggle
      :selected (member '(repeat . "1") mpc-status)]
-    ["Shuffle Playlist" mpc-shuffle :style toggle
+    ["Shuffle Playlist" mpc-toggle-shuffle :style toggle
      :selected (member '(random . "1") mpc-status)]
-    ["Repeat Single Track" mpc-single :style toggle
+    ["Repeat Single Track" mpc-toggle-single :style toggle
      :selected (member '(single . "1") mpc-status)]
-    ["Consume Mode" mpc-consume :style toggle
+    ["Consume Mode" mpc-toggle-consume :style toggle
      :selected (member '(consume . "1") mpc-status)]
     "--"
     ["Add new browser" mpc-tagbrowser]
@@ -2362,25 +2362,25 @@ This is used so that they can be compared with `eq', which is needed for
     (mpc-status-stop)
     (if proc (delete-process proc))))
 
-(defun mpc-consume ()
+(defun mpc-toggle-consume ()
   "Toggle consume mode: removing played songs from the playlist."
   (interactive)
   (mpc-cmd-consume
    (if (string= "0" (cdr (assq 'consume (mpc-cmd-status)))) "1" "0")))
 
-(defun mpc-repeat ()
+(defun mpc-toggle-repeat ()
   "Toggle repeat mode."
   (interactive)
   (mpc-cmd-repeat
    (if (string= "0" (cdr (assq 'repeat (mpc-cmd-status)))) "1" "0")))
 
-(defun mpc-single ()
+(defun mpc-toggle-single ()
   "Toggle single mode."
   (interactive)
   (mpc-cmd-single
    (if (string= "0" (cdr (assq 'single (mpc-cmd-status)))) "1" "0")))
 
-(defun mpc-shuffle ()
+(defun mpc-toggle-shuffle ()
   "Toggle shuffling of the playlist (random mode)."
   (interactive)
   (mpc-cmd-random
