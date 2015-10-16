@@ -880,7 +880,7 @@ command with a prefix argument (the value does not matter)."
       from-file)))
 
 (defvar dired-compress-file-suffixes
-  '(("\\.tar\\.gz\\'" "" "tar -zxvf %i")
+  '(("\\.tar\\.gz\\'" "" "gzip -dc %i | tar -xv")
     ("\\.gz\\'" "" "gunzip")
     ("\\.tgz\\'" ".tar" "gunzip")
     ("\\.Z\\'" "" "uncompress")
@@ -893,7 +893,9 @@ command with a prefix argument (the value does not matter)."
     ("\\.xz\\'" "" "unxz")
     ("\\.zip\\'" "" "unzip -o -d %o %i")
     ;; This item controls naming for compression.
-    ("\\.tar\\'" ".tgz" nil))
+    ("\\.tar\\'" ".tgz" nil)
+    ;; This item controls the compression of directories
+    (":" ".tar.gz" "tar -c %i | gzip -c9 > %o"))
   "Control changes in file name suffixes for compression and uncompression.
 Each element specifies one transformation rule, and has the form:
   (REGEXP NEW-SUFFIX PROGRAM)
@@ -952,31 +954,36 @@ Return nil if no change in files."
            ;; We don't recognize the file as compressed, so compress it.
            ;; Try gzip; if we don't have that, use compress.
            (condition-case nil
-               (let ((out-name (concat file (if (file-directory-p file)
-                                                ".tar.gz"
-                                              ".gz"))))
-                 (and (or (not (file-exists-p out-name))
-                          (y-or-n-p
-                           (format "File %s already exists.  Really compress? "
-                                   out-name)))
-                      (not
-                       (if (file-directory-p file)
-                           (let ((default-directory (file-name-directory file)))
-                             (dired-check-process
-                              (concat "Compressing " file)
-                              "tar" "-czf"
-                              out-name (file-name-nondirectory file)))
+               (if (file-directory-p file)
+                   (progn
+                     (setq suffix (cdr (assoc ":" dired-compress-file-suffixes)))
+                     (when suffix
+                       (let ((out-name (concat file (car suffix)))
+                             (default-directory (file-name-directory file)))
+                         (dired-shell-command
+                          (replace-regexp-in-string
+                           "%o" out-name
+                           (replace-regexp-in-string
+                            "%i" (file-name-nondirectory file)
+                            (cadr suffix))))
+                         out-name)))
+                 (let ((out-name (concat file ".gz")))
+                   (and (or (not (file-exists-p out-name))
+                            (y-or-n-p
+                             (format "File %s already exists.  Really compress? "
+                                     out-name)))
+                        (not
                          (dired-check-process (concat "Compressing " file)
-                                              "gzip" "-f" file)))
-                      (or (file-exists-p out-name)
-                          (setq out-name (concat file ".z")))
-                      ;; Rename the compressed file to NEWNAME
-                      ;; if it hasn't got that name already.
-                      (if (and newname (not (equal newname out-name)))
-                          (progn
-                            (rename-file out-name newname t)
-                            newname)
-                        out-name)))
+                                              "gzip" "-f" file))
+                        (or (file-exists-p out-name)
+                            (setq out-name (concat file ".z")))
+                        ;; Rename the compressed file to NEWNAME
+                        ;; if it hasn't got that name already.
+                        (if (and newname (not (equal newname out-name)))
+                            (progn
+                              (rename-file out-name newname t)
+                              newname)
+                          out-name))))
              (file-error
               (if (not (dired-check-process (concat "Compressing " file)
                                             "compress" "-f" file))
