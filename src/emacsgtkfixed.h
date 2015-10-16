@@ -23,6 +23,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <gtk/gtk.h>
 
+struct frame;
+
 G_BEGIN_DECLS
 
 extern GtkWidget *emacs_fixed_new (struct frame *f);
