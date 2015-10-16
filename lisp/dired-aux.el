@@ -792,16 +792,15 @@ On error, pop up the log buffer."
   (let ((out-buffer " *dired-check-process output*"))
     (with-current-buffer (get-buffer-create out-buffer)
       (erase-buffer)
-      (setq res
-            (process-file
-             shell-file-name
-             nil
-             t
-             nil
-             shell-command-switch
-             cmd)))
-    (unless (zerop res)
-      (pop-to-buffer out-buffer))))
+      (let ((res (process-file
+                  shell-file-name
+                  nil
+                  t
+                  nil
+                  shell-command-switch
+                  cmd)))
+        (unless (zerop res)
+          (pop-to-buffer out-buffer))))))
 
 ;; Commands that delete or redisplay part of the dired buffer.
 
