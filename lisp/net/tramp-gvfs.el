@@ -813,7 +813,7 @@ file names."
 	      (goto-char (point-min))
 	      (setq res-symlink-target
 		    (if (re-search-forward
-			 "standard::symlink-target:\\s-+\\(\\S-+\\)" nil t)
+			 "standard::symlink-target:\\s-+\\(.*\\)$" nil t)
 			(match-string 1)))
 	      ;; ... number links
 	      (goto-char (point-min))
