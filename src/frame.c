@@ -3651,6 +3651,10 @@ x_set_font (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
   /* Attempt to hunt down bug#16028.  */
   SET_FRAME_GARBAGED (f);
 
+  /* This is important if we are called by some Lisp as part of
+     redisplaying the frame, see redisplay_internal.  */
+  f->fonts_changed = true;
+
   recompute_basic_faces (f);
 
   do_pending_window_change (0);
