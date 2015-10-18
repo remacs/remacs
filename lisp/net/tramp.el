@@ -4048,6 +4048,9 @@ Return the local name of the temporary file."
   "Like `make-auto-save-file-name' for Tramp files.
 Returns a file name in `tramp-auto-save-directory' for autosaving
 this file, if that variable is non-nil."
+  (when (stringp tramp-auto-save-directory)
+    (setq tramp-auto-save-directory
+	  (expand-file-name tramp-auto-save-directory)))
   ;; Create directory.
   (unless (or (null tramp-auto-save-directory)
 	      (file-exists-p tramp-auto-save-directory))

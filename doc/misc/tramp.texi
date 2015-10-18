@@ -429,6 +429,14 @@ Or follow the example session below:
 @end example
 
 @noindent
+If you reside behind a firewall, you could use
+
+@example
+] @strong{git config --global http.proxy http://user:pwd@@proxy.server.com:8080}
+] @strong{git clone http://git.savannah.gnu.org/r/tramp.git}
+@end example
+
+@noindent
 Tramp developers use instead
 
 @example
