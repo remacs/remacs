@@ -4414,8 +4414,6 @@ Only works for Bourne-like shells."
 
 ;;; TODO:
 
-;; * Rewrite `tramp-shell-quote-argument' to abstain from using
-;;   `shell-quote-argument'.
 ;; * In Emacs 21, `insert-directory' shows total number of bytes used
 ;;   by the files in that directory.  Add this here.
 ;; * Avoid screen blanking when hitting `g' in dired.  (Eli Tziperman)
