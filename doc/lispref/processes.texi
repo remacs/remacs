@@ -290,7 +290,7 @@ Here are the possibilities:
 Insert the output in that buffer, before point.  This includes both the
 standard output stream and the standard error stream of the process.
 
-@item a string
+@item a buffer name (a string)
 Insert the output in a buffer with that name, before point.
 
 @item @code{t}
