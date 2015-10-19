@@ -25,19 +25,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <unistd.h>
 
-#ifdef __x86_64__
 #ifdef ENABLE_CHECKING
 #define STATIC_HEAP_SIZE	(28 * 1024 * 1024)
 #else
 #define STATIC_HEAP_SIZE	(19 * 1024 * 1024)
 #endif
-#else  /* x86 */
-#ifdef ENABLE_CHECKING
-#define STATIC_HEAP_SIZE	(18 * 1024 * 1024)
-#else
-#define STATIC_HEAP_SIZE	(13 * 1024 * 1024)
-#endif
-#endif	/* x86 */
 
 int debug_sheap = 0;
 
