@@ -2292,7 +2292,19 @@ x_find_image_fd (Lisp_Object file, int *pfd)
   /* Try to find FILE in data-directory/images, then x-bitmap-file-path.  */
   fd = openp (search_path, file, Qnil, &file_found,
 	      pfd ? Qt : make_number (R_OK), false);
-  if (fd < 0)
+  if (fd >= 0 || fd == -2)
+    {
+      file_found = ENCODE_FILE (file_found);
+      if (fd == -2)
+	{
+	  /* The file exists locally, but has a file handler.  (This
+	     happens, e.g., under Auto Image File Mode.)  'openp'
+	     didn't open the file, so we should, because the caller
+	     expects that.  */
+	  fd = emacs_open (SSDATA (file_found), O_RDONLY | O_BINARY, 0);
+	}
+    }
+  else	/* fd < 0, but not -2 */
     return Qnil;
   if (pfd)
     *pfd = fd;
