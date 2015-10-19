@@ -1758,6 +1758,8 @@ time and must be in the format returned by @code{current-time}
 This function sets the Emacs-recognized extended file attributes for
 @code{filename}.  The second argument @var{attribute-alist} should be
 an alist of the same form returned by @code{file-extended-attributes}.
+The return value is @code{t} if the attributes are successfully set,
+otherwise it is @code{nil}.
 @xref{Extended Attributes}.
 @end defun
 
