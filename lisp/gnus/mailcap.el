@@ -160,7 +160,8 @@ This is a compatibility function for different Emacsen."
      ("pdf"
       (viewer . doc-view-mode)
       (type . "application/pdf")
-      (test . (eq window-system 'x)))
+      (test . (and (fboundp 'doc-view-mode)
+		   (eq window-system 'x))))
      ("pdf"
       (viewer . "gv -safer %s")
       (type . "application/pdf")
