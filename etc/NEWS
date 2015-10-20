@@ -1001,10 +1001,6 @@ behavior, set `diff-switches' to `-c'.
 
 ** `grep-template' and `grep-find-template' values don't include the
 --color argument anymore.  It's added at the <C> place holder position
-dynamically.
-
-** `grep-template' and `grep-find-template' values don't include the
---color argument anymore.  It's added at the <C> place holder position
 dynamically.  Any third-party code that changes these templates should
 be updated accordingly.
 
