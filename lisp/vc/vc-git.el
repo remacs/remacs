@@ -1362,11 +1362,15 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
 
 (defun vc-git-stash-apply-at-point ()
   (interactive)
-  (vc-git-stash-apply (format "stash@%s" (vc-git-stash-get-at-point (point)))))
+  (let (vc-dir-buffers) ; Small optimization.
+    (vc-git-stash-apply (format "stash@%s" (vc-git-stash-get-at-point (point)))))
+  (vc-dir-refresh))
 
 (defun vc-git-stash-pop-at-point ()
   (interactive)
-  (vc-git-stash-pop (format "stash@%s" (vc-git-stash-get-at-point (point)))))
+  (let (vc-dir-buffers) ; Likewise.
+    (vc-git-stash-pop (format "stash@%s" (vc-git-stash-get-at-point (point)))))
+  (vc-dir-refresh))
 
 (defun vc-git-stash-menu (e)
   (interactive "e")
