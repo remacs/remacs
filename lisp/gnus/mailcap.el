@@ -556,8 +556,11 @@ MAILCAPS if set; otherwise (on Unix) use the path from RFC 1524, plus
       results)))
 
 (defun mailcap-mailcap-entry-passes-test (info)
-  "Return non-nil if mailcap entry INFO passes its test clause.
-Also return non-nil if no test clause is present."
+  "Replace the test clause of INFO itself with a boolean for some cases.
+This function supports only `test -n $DISPLAY' and `test -z $DISPLAY',
+replaces them with t or nil.  As for others or if INFO has a interactive
+spec (needsterm, needsterminal, or needsx11) but DISPLAY is not set,
+the test clause will be unchanged."
   (let ((test (assq 'test info))	; The test clause
 	status)
     (setq status (and test (split-string (cdr test) " ")))
