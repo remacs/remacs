@@ -36,6 +36,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "composite.h"
 #include "fontset.h"
 #include "font.h"
+#include "termhooks.h"
 
 #ifdef HAVE_WINDOW_SYSTEM
 #include TERM_HEADER

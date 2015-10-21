@@ -32,9 +32,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "keyboard.h"
 #include "frame.h"
-#include "syssignal.h"
-#include "termhooks.h"  /* For FRAME_KBOARD reference in y-or-n-p.  */
-#include "font.h"
 #include "keymap.h"
 
 static void swap_in_symval_forwarding (struct Lisp_Symbol *,

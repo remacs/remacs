@@ -20,7 +20,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef EMACS_KEYBOARD_H
 #define EMACS_KEYBOARD_H
 
-#include "systime.h"		/* for struct timespec, Time */
 #include "coding.h"             /* for ENCODE_UTF_8 and ENCODE_SYSTEM */
 #include "termhooks.h"
 

@@ -26,7 +26,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <c-ctype.h>
 
 #include "lisp.h"
-#include "character.h"
 
 #ifdef HAVE_WINDOW_SYSTEM
 #include TERM_HEADER
@@ -34,7 +33,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "buffer.h"
 /* These help us bind and responding to switch-frame events.  */
-#include "commands.h"
 #include "keyboard.h"
 #include "frame.h"
 #include "blockinput.h"
@@ -42,7 +40,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "termhooks.h"
 #include "dispextern.h"
 #include "window.h"
-#include "font.h"
 #ifdef HAVE_WINDOW_SYSTEM
 #include "fontset.h"
 #endif

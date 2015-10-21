@@ -36,14 +36,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "lisp.h"
 #include "keyboard.h"
-#include "keymap.h"
 #include "frame.h"
+#include "systime.h"
 #include "termhooks.h"
 #include "window.h"
 #include "blockinput.h"
-#include "character.h"
 #include "buffer.h"
-#include "charset.h"
 #include "coding.h"
 #include "sysselect.h"
 
@@ -62,8 +60,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef makedev
 #include <sys/types.h>
 #endif
-
-#include "dispextern.h"
 
 #ifdef HAVE_X_WINDOWS
 /*  Defining HAVE_MULTILINGUAL_MENU would mean that the toolkit menu

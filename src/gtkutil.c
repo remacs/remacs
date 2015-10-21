@@ -26,20 +26,18 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <c-ctype.h>
 
 #include "lisp.h"
+#include "dispextern.h"
+#include "frame.h"
+#include "systime.h"
 #include "xterm.h"
 #include "blockinput.h"
-#include "syssignal.h"
 #include "window.h"
-#include "buffer.h"
 #include "gtkutil.h"
 #include "termhooks.h"
 #include "keyboard.h"
-#include "charset.h"
 #include "coding.h"
-#include "font.h"
 
 #include <gdk/gdkkeysyms.h>
-#include "xsettings.h"
 
 #ifdef HAVE_XFT
 #include <X11/Xft/Xft.h>

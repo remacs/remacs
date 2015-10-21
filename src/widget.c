@@ -29,17 +29,13 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    */
 
 #include <config.h>
+#include "widget.h"
+
 #include <stdio.h>
 
 #include "lisp.h"
 #include "xterm.h"
-
-#include "keyboard.h"
 #include "frame.h"
-#include "window.h"
-
-#include "dispextern.h"
-#include "blockinput.h"
 
 #include <X11/StringDefs.h>
 #include <X11/IntrinsicP.h>
@@ -49,10 +45,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <X11/Shell.h>
 #include <X11/ShellP.h>
 #include "../lwlib/lwlib.h"
-
-#include "character.h"
-#include "font.h"
-
 
 static void EmacsFrameInitialize (Widget request, Widget new, ArgList dum1, Cardinal *dum2);
 static void EmacsFrameDestroy (Widget widget);

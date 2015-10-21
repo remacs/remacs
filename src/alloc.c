@@ -32,9 +32,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 
 #include "lisp.h"
-#include "process.h"
+#include "dispextern.h"
 #include "intervals.h"
 #include "puresize.h"
+#include "systime.h"
 #include "character.h"
 #include "buffer.h"
 #include "window.h"

@@ -28,7 +28,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "lisp.h"
 #include "blockinput.h"
-#include "syssignal.h"
 
 /* This may include sys/types.h, and that somehow loses
    if this is not done before the other system files.  */
@@ -58,12 +57,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/stat.h>
-/* Caused redefinition of DBL_DIG on Netbsd; seems not to be needed.  */
-/* #include <sys/param.h>  */
-
-#include "charset.h"
 #include "character.h"
 #include "coding.h"
+#include "composite.h"
 #include "frame.h"
 #include "dispextern.h"
 #include "fontset.h"
@@ -71,17 +67,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "termopts.h"
 #include "termchar.h"
 #include "emacs-icon.h"
-#include "disptab.h"
 #include "buffer.h"
 #include "window.h"
 #include "keyboard.h"
-#include "intervals.h"
-#include "process.h"
 #include "atimer.h"
-#include "keymap.h"
 #include "font.h"
 #include "xsettings.h"
-#include "xgselect.h"
 #include "sysselect.h"
 #include "menu.h"
 

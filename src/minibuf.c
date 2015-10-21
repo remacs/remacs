@@ -25,17 +25,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <binary-io.h>
 
 #include "lisp.h"
-#include "commands.h"
 #include "character.h"
 #include "buffer.h"
-#include "dispextern.h"
 #include "keyboard.h"
 #include "frame.h"
 #include "window.h"
-#include "syntax.h"
-#include "intervals.h"
 #include "keymap.h"
-#include "termhooks.h"
 #include "systty.h"
 
 /* List of buffers for use as minibuffers.

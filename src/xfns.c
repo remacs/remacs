@@ -24,23 +24,15 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "lisp.h"
 #include "xterm.h"
-#include "menu.h"
 #include "frame.h"
 #include "window.h"
-#include "character.h"
 #include "buffer.h"
-#include "intervals.h"
 #include "dispextern.h"
 #include "keyboard.h"
 #include "blockinput.h"
-#include <epaths.h>
 #include "charset.h"
 #include "coding.h"
-#include "fontset.h"
-#include "systime.h"
 #include "termhooks.h"
-#include "atimer.h"
-#include "termchar.h"
 #include "font.h"
 
 #include <sys/types.h>

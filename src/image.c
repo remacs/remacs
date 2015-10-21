@@ -18,7 +18,9 @@ You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
-#include "sysstdio.h"
+
+#include <fcntl.h>
+#include <stdio.h>
 #include <unistd.h>
 
 /* Include this before including <setjmp.h> to work around bugs with
@@ -38,7 +40,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "blockinput.h"
 #include "systime.h"
 #include <epaths.h>
-#include "character.h"
 #include "coding.h"
 #include "termhooks.h"
 #include "font.h"

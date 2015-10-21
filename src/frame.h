@@ -16,14 +16,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
-/* Don't multiply include: dispextern.h includes macterm.h which
-   includes frame.h some emacs source includes both dispextern.h and
-   frame.h.  */
-
 #ifndef EMACS_FRAME_H
 #define EMACS_FRAME_H
 
-#include "dispextern.h"
 #include "termhooks.h"
 #include "window.h"
 

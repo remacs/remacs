@@ -44,19 +44,14 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif /* MSDOS */
 
 #include "commands.h"
-#include "character.h"
 #include "buffer.h"
-#include "ccl.h"
 #include "coding.h"
-#include "composite.h"
 #include <epaths.h>
 #include "process.h"
 #include "syssignal.h"
-#include "systty.h"
 #include "syswait.h"
 #include "blockinput.h"
 #include "frame.h"
-#include "termhooks.h"
 
 #ifdef MSDOS
 #include "msdos.h"
