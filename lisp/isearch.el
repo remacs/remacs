@@ -2621,7 +2621,9 @@ Can be changed via `isearch-search-fun-function' for special needs."
 			  (null (car isearch-cmds))
 			  (eq (length isearch-string)
 			      (length (isearch--state-string
-                                       (car isearch-cmds))))))))
+                                       (car isearch-cmds)))))))
+            (search-spaces-regexp (when isearch-lax-whitespace
+                                    search-whitespace-regexp)))
 	(funcall
 	 (if isearch-forward #'re-search-forward #'re-search-backward)
 	 (if (functionp isearch-regexp-function)
