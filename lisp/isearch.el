@@ -1725,6 +1725,13 @@ the beginning or the end of the string need not match a symbol boundary."
   (let ((search-spaces-regexp search-whitespace-regexp))
     (re-search-backward regexp bound noerror count)))
 
+(dolist (old '(re-search-forward-lax-whitespace search-backward-lax-whitespace
+               search-forward-lax-whitespace re-search-backward-lax-whitespace))
+  (make-obsolete old
+                 "instead, use (let ((search-spaces-regexp search-whitespace-regexp))
+               (re-search-... ...))"
+                 "25.1"))
+
 
 (defun isearch-query-replace (&optional arg regexp-flag)
   "Start `query-replace' with string to replace from last search string.
@@ -2609,40 +2616,34 @@ search for the first occurrence of STRING or its translation.")
 Can be changed via `isearch-search-fun-function' for special needs."
   (funcall (or isearch-search-fun-function 'isearch-search-fun-default)))
 
+(defun isearch--lax-regexp-function-p ()
+  "Non-nil if next regexp-function call should be lax."
+  (not (or isearch-nonincremental
+           (null (car isearch-cmds))
+           (eq (length isearch-string)
+               (length (isearch--state-string
+                        (car isearch-cmds)))))))
+
 (defun isearch-search-fun-default ()
   "Return default functions to use for the search."
-  (cond
-   (isearch-regexp-function
-    (lambda (string &optional bound noerror count)
-      ;; Use lax versions to not fail at the end of the word while
-      ;; the user adds and removes characters in the search string
-      ;; (or when using nonincremental word isearch)
-      (let ((lax (not (or isearch-nonincremental
-			  (null (car isearch-cmds))
-			  (eq (length isearch-string)
-			      (length (isearch--state-string
-                                       (car isearch-cmds)))))))
-            (search-spaces-regexp (when isearch-lax-whitespace
-                                    search-whitespace-regexp)))
-	(funcall
-	 (if isearch-forward #'re-search-forward #'re-search-backward)
-	 (if (functionp isearch-regexp-function)
-	     (funcall isearch-regexp-function string lax)
-	   (word-search-regexp string lax))
-	 bound noerror count))))
-   ((and isearch-regexp isearch-regexp-lax-whitespace
-	 search-whitespace-regexp)
-    (if isearch-forward
-	're-search-forward-lax-whitespace
-      're-search-backward-lax-whitespace))
-   (isearch-regexp
-    (if isearch-forward 're-search-forward 're-search-backward))
-   ((and isearch-lax-whitespace search-whitespace-regexp)
-    (if isearch-forward
-	'search-forward-lax-whitespace
-      'search-backward-lax-whitespace))
-   (t
-    (if isearch-forward 'search-forward 'search-backward))))
+  (lambda (string &optional bound noerror count)
+    ;; Use lax versions to not fail at the end of the word while
+    ;; the user adds and removes characters in the search string
+    ;; (or when using nonincremental word isearch)
+    (let ((search-spaces-regexp (when (cond
+                                       (isearch-regexp isearch-regexp-lax-whitespace)
+                                       (t isearch-lax-whitespace))
+                                  search-whitespace-regexp)))
+      (funcall
+       (if isearch-forward #'re-search-forward #'re-search-backward)
+       (cond (isearch-regexp-function
+              (let ((lax (isearch--lax-regexp-function-p)))
+                (if (functionp isearch-regexp-function)
+                    (funcall isearch-regexp-function string lax)
+                  (word-search-regexp string lax))))
+             (isearch-regexp string)
+             (t (regexp-quote string)))
+       bound noerror count))))
 
 (defun isearch-search-string (string bound noerror)
   "Search for the first occurrence of STRING or its translation.
