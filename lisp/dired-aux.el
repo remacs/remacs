@@ -788,19 +788,23 @@ Else returns nil for success."
 
 (defun dired-shell-command (cmd)
   "Run CMD, and check for output.
-On error, pop up the log buffer."
-  (let ((out-buffer " *dired-check-process output*"))
+On error, pop up the log buffer.
+Return the result of `process-file' - zero for success."
+  (let ((out-buffer " *dired-check-process output*")
+        (dir default-directory))
     (with-current-buffer (get-buffer-create out-buffer)
       (erase-buffer)
-      (let ((res (process-file
-                  shell-file-name
-                  nil
-                  t
-                  nil
-                  shell-command-switch
-                  cmd)))
+      (let* ((default-directory dir)
+             (res (process-file
+                   shell-file-name
+                   nil
+                   t
+                   nil
+                   shell-command-switch
+                   cmd)))
         (unless (zerop res)
-          (pop-to-buffer out-buffer))))))
+          (pop-to-buffer out-buffer))
+        res))))
 
 ;; Commands that delete or redisplay part of the dired buffer.
 
@@ -880,7 +884,11 @@ command with a prefix argument (the value does not matter)."
       from-file)))
 
 (defvar dired-compress-file-suffixes
-  '(("\\.tar\\.gz\\'" "" "gzip -dc %i | tar -xv")
+  '(
+    ;; "tar -zxf" isn't used because it's not available the on
+    ;; Solaris10 version of tar. Solaris10 becomes obsolete in 2021.
+    ;; Same thing on AIX 7.1.
+    ("\\.tar\\.gz\\'" "" "gzip -dc %i | tar -xv")
     ("\\.gz\\'" "" "gunzip")
     ("\\.tgz\\'" ".tar" "gunzip")
     ("\\.Z\\'" "" "uncompress")
@@ -910,6 +918,52 @@ output file.
 
 Otherwise, the rule is a compression rule, and compression is done with gzip.
 ARGS are command switches passed to PROGRAM.")
+
+(defvar dired-compress-files-alist
+  '(("\\.tar\\.gz\\'" . "tar -c %i | gzip -c9 > %o")
+    ("\\.zip\\'" . "zip %o -r --filesync %i"))
+  "Control the compression shell command for `dired-do-compress-to'.
+
+Each element is (REGEXP . CMD), where REGEXP is the name of the
+archive to which you want to compress, and CMD the the
+corresponding command.
+
+Within CMD, %i denotes the input file(s), and %o denotes the
+output file. %i path(s) are relative, while %o is absolute.")
+
+;;;###autoload
+(defun dired-do-compress-to ()
+  "Compress selected files and directories to an archive.
+You are prompted for the archive name.
+The archiving command is chosen based on the archive name extension and
+`dired-compress-files-alist'."
+  (interactive)
+  (let* ((in-files (dired-get-marked-files))
+         (out-file (read-file-name "Compress to: "))
+         (rule (cl-find-if
+                (lambda (x)
+                  (string-match (car x) out-file))
+                dired-compress-files-alist)))
+    (cond ((not rule)
+           (error
+            "No compression rule found for %s, see `dired-compress-files-alist'"
+            out-file))
+          ((and (file-exists-p out-file)
+                (not (y-or-n-p
+                      (format "%s exists, overwrite?"
+                              (abbreviate-file-name out-file)))))
+           (message "Compression aborted"))
+          (t
+           (when (zerop
+                  (dired-shell-command
+                   (replace-regexp-in-string
+                    "%o" out-file
+                    (replace-regexp-in-string
+                     "%i" (mapconcat #'file-name-nondirectory in-files " ")
+                     (cdr rule)))))
+             (message "Compressed %d file(s) to %s"
+                      (length in-files)
+                      (file-name-nondirectory out-file)))))))
 
 ;;;###autoload
 (defun dired-compress-file (file)

@@ -1466,6 +1466,7 @@ Do so according to the former subdir alist OLD-SUBDIR-ALIST."
     (define-key map "T" 'dired-do-touch)
     (define-key map "X" 'dired-do-shell-command)
     (define-key map "Z" 'dired-do-compress)
+    (define-key map "c" 'dired-do-compress-to)
     (define-key map "!" 'dired-do-shell-command)
     (define-key map "&" 'dired-do-async-shell-command)
     ;; Comparison commands
@@ -3896,7 +3897,7 @@ Ask means pop up a menu for the user to select one of copy, move or link."
 
 ;;; Start of automatically extracted autoloads.
 
-;;;### (autoloads nil "dired-aux" "dired-aux.el" "c4ed2cda4c70d4b38ab52ad03fa9dfda")
+;;;### (autoloads nil "dired-aux" "dired-aux.el" "b946c1770b736ddc39eeef00c39425e7")
 ;;; Generated autoloads from dired-aux.el
 
 (autoload 'dired-diff "dired-aux" "\
@@ -4087,6 +4088,14 @@ parent directory), go to its directory header line and use this
 command with a prefix argument (the value does not matter).
 
 \(fn &optional ARG FMT)" t nil)
+
+(autoload 'dired-do-compress-to "dired-aux" "\
+Compress selected files and directories to an archive.
+You are prompted for the archive name.
+The archiving command is chosen based on the archive name extension and
+`dired-compress-files-alist'.
+
+\(fn)" t nil)
 
 (autoload 'dired-compress-file "dired-aux" "\
 Compress or uncompress FILE.

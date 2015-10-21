@@ -275,6 +275,12 @@ header.
 ** `tabulated-list-print' takes a second optional argument, update,
 which specifies an alternative printing method which is faster when
 few or no entries have changed.
+** The command `dired-do-compress' bound to `Z' now can compress
+directories and decompress zip files.
+** New command `dired-do-compress-to' bound to `c' can be used to compress
+many marked files into a single named archive.  The compression
+command is determined from the new `dired-compress-files-alist'
+variable.
 
 
 * Editing Changes in Emacs 25.1
