@@ -20,10 +20,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <stdio.h>
-
 #include "lisp.h"
-
 #include <unistd.h>
+#include <stdlib.h>		/* for exit */
 
 #ifdef ENABLE_CHECKING
 #define STATIC_HEAP_SIZE	(28 * 1024 * 1024)
