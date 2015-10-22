@@ -180,7 +180,7 @@ and then pass it to a shell for execution.
 Precisely what this function does depends on your operating system.  The
 function is designed to work with the syntax of your system's standard
 shell; if you use an unusual shell, you will need to redefine this
-function.
+function.  @xref{Security Considerations}.
 
 @example
 ;; @r{This example shows the behavior on GNU and Unix systems.}

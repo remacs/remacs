@@ -2714,7 +2714,8 @@ Note: :data and :device are currently not supported on Windows."
   "Quote ARGUMENT for passing as argument to an inferior shell.
 
 This function is designed to work with the syntax of your system's
-standard shell, and might produce incorrect results with unusual shells."
+standard shell, and might produce incorrect results with unusual shells.
+See Info node `(elisp)Security Considerations'."
   (cond
    ((eq system-type 'ms-dos)
     ;; Quote using double quotes, but escape any existing quotes in
