@@ -885,7 +885,7 @@ command with a prefix argument (the value does not matter)."
 
 (defvar dired-compress-file-suffixes
   '(
-    ;; "tar -zxf" isn't used because it's not available the on
+    ;; "tar -zxf" isn't used because it's not available on the
     ;; Solaris10 version of tar. Solaris10 becomes obsolete in 2021.
     ;; Same thing on AIX 7.1.
     ("\\.tar\\.gz\\'" "" "gzip -dc %i | tar -xv")
