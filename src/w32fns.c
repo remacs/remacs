@@ -35,24 +35,14 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "w32term.h"
 #include "frame.h"
 #include "window.h"
-#include "character.h"
 #include "buffer.h"
-#include "intervals.h"
-#include "dispextern.h"
 #include "keyboard.h"
 #include "blockinput.h"
-#include "epaths.h"
-#include "charset.h"
 #include "coding.h"
-#include "ccl.h"
-#include "fontset.h"
-#include "systime.h"
-#include "termhooks.h"
 
 #include "w32common.h"
 
 #ifdef WINDOWSNT
-#include "w32heap.h"
 #include <mbstring.h>
 #endif /* WINDOWSNT */
 
@@ -61,8 +51,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #else
 #include "w32.h"
 #endif
-
-#include "bitmaps/gray.xbm"
 
 #include <commctrl.h>
 #include <commdlg.h>
@@ -74,9 +62,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <dlgs.h>
 #include <imm.h>
 #include <windowsx.h>
-
-#include "font.h"
-#include "w32font.h"
 
 #ifndef FOF_NO_CONNECTED_ELEMENTS
 #define FOF_NO_CONNECTED_ELEMENTS 0x2000
@@ -759,7 +744,7 @@ w32_color_map_lookup (const char *colorname)
 
       tem = XCAR (elt);
 
-      if (lstrcmpi (SDATA (tem), colorname) == 0)
+      if (lstrcmpi (SSDATA (tem), colorname) == 0)
 	{
 	  ret = Fcdr (elt);
 	  break;
@@ -802,7 +787,7 @@ add_system_logical_colors_to_map (Lisp_Object *system_colors)
       strcpy (full_name_buffer, SYSTEM_COLOR_PREFIX);
 
       while (RegEnumValueA (colors_key, index, name_buffer, &name_size,
-			    NULL, NULL, color_buffer, &color_size)
+			    NULL, NULL, (LPBYTE)color_buffer, &color_size)
 	     == ERROR_SUCCESS)
 	{
 	  int r, g, b;
@@ -1227,9 +1212,9 @@ x_decode_color (struct frame *f, Lisp_Object arg, int def)
 
   CHECK_STRING (arg);
 
-  if (strcmp (SDATA (arg), "black") == 0)
+  if (strcmp (SSDATA (arg), "black") == 0)
     return BLACK_PIX_DEFAULT (f);
-  else if (strcmp (SDATA (arg), "white") == 0)
+  else if (strcmp (SSDATA (arg), "white") == 0)
     return WHITE_PIX_DEFAULT (f);
 
   if ((FRAME_DISPLAY_INFO (f)->n_planes * FRAME_DISPLAY_INFO (f)->n_cbits) == 1)
@@ -1237,7 +1222,7 @@ x_decode_color (struct frame *f, Lisp_Object arg, int def)
 
   /* w32_defined_color is responsible for coping with failures
      by looking for a near-miss.  */
-  if (w32_defined_color (f, SDATA (arg), &cdef, true))
+  if (w32_defined_color (f, SSDATA (arg), &cdef, true))
     return cdef.pixel;
 
   /* defined_color failed; return an ultimate default.  */
@@ -1866,7 +1851,7 @@ x_set_name (struct frame *f, Lisp_Object name, bool explicit)
       /* Check for no change needed in this very common case
 	 before we do any consing.  */
       if (!strcmp (FRAME_DISPLAY_INFO (f)->w32_id_name,
-		   SDATA (f->name)))
+		   SSDATA (f->name)))
 	return;
       name = build_string (FRAME_DISPLAY_INFO (f)->w32_id_name);
     }
@@ -2955,7 +2940,7 @@ get_wm_chars (HWND aWnd, int *buf, int buflen, int ignore_ctrl, int ctrl,
 #ifdef DBG_WM_CHARS
 #  define FPRINTF_WM_CHARS(ARG)	fprintf ARG
 #else
-#  define FPRINTF_WM_CHARS(ARG)	0
+#  define FPRINTF_WM_CHARS(ARG)	(void)0
 #endif
 
 /* This is a heuristic only.  This is supposed to track the state of the
@@ -3142,25 +3127,25 @@ deliver_wm_chars (int do_translate, HWND hwnd, UINT msg, UINT wParam,
 	      && console_modifiers & (RIGHT_CTRL_PRESSED | LEFT_CTRL_PRESSED))
 	    {
 	      type_CtrlAlt = "bB";   /* generic bindable Ctrl-Alt- modifiers */
-	      if (console_modifiers & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)
+	      if ((console_modifiers & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED))
 		  == (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED))
 		 /* double-Ctrl:
 		    e.g. AltGr-rCtrl on some layouts (in this order!) */
 		type_CtrlAlt = "dD";
-	      else if (console_modifiers
-		       & (LEFT_CTRL_PRESSED | LEFT_ALT_PRESSED)
+	      else if ((console_modifiers
+			& (LEFT_CTRL_PRESSED | LEFT_ALT_PRESSED))
 		       == (LEFT_CTRL_PRESSED | LEFT_ALT_PRESSED))
 		type_CtrlAlt = "lL"; /* Ctrl-Alt- modifiers on the left */
 	      else if (!NILP (Vw32_recognize_altgr)
-		       && (console_modifiers
-			   & (RIGHT_ALT_PRESSED | LEFT_CTRL_PRESSED))
+		       && ((console_modifiers
+			    & (RIGHT_ALT_PRESSED | LEFT_CTRL_PRESSED)))
 			  == (RIGHT_ALT_PRESSED | LEFT_CTRL_PRESSED))
 		type_CtrlAlt = "gG"; /* modifiers as in AltGr */
 	    }
 	  else if (wmsg.dwModifiers & (alt_modifier | meta_modifier)
-		   || (console_modifiers
-		       & (LEFT_WIN_PRESSED | RIGHT_WIN_PRESSED
-			  | APPS_PRESSED | SCROLLLOCK_ON)))
+		   || ((console_modifiers
+			& (LEFT_WIN_PRESSED | RIGHT_WIN_PRESSED
+			   | APPS_PRESSED | SCROLLLOCK_ON))))
 	    {
 	      /* Pure Alt (or combination of Alt, Win, APPS, scrolllock.  */
 	      type_CtrlAlt = "aA";
@@ -4828,12 +4813,6 @@ do_unwind_create_frame (Lisp_Object frame)
 }
 
 static void
-unwind_create_frame_1 (Lisp_Object val)
-{
-  inhibit_lisp_code = val;
-}
-
-static void
 x_default_font_parameter (struct frame *f, Lisp_Object parms)
 {
   struct w32_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
@@ -5239,7 +5218,7 @@ DEFUN ("xw-color-defined-p", Fxw_color_defined_p, Sxw_color_defined_p, 1, 2, 0,
 
   CHECK_STRING (color);
 
-  if (w32_defined_color (f, SDATA (color), &foo, false))
+  if (w32_defined_color (f, SSDATA (color), &foo, false))
     return Qt;
   else
     return Qnil;
@@ -5254,7 +5233,7 @@ DEFUN ("xw-color-values", Fxw_color_values, Sxw_color_values, 1, 2, 0,
 
   CHECK_STRING (color);
 
-  if (w32_defined_color (f, SDATA (color), &foo, false))
+  if (w32_defined_color (f, SSDATA (color), &foo, false))
     return list3i ((GetRValue (foo.pixel) << 8) | GetRValue (foo.pixel),
 		   (GetGValue (foo.pixel) << 8) | GetGValue (foo.pixel),
 		   (GetBValue (foo.pixel) << 8) | GetBValue (foo.pixel));
@@ -5759,8 +5738,7 @@ x_display_info_for_name (Lisp_Object name)
 
   validate_x_resource_name ();
 
-  dpyinfo = w32_term_init (name, (unsigned char *)0,
-			   SSDATA (Vx_resource_name));
+  dpyinfo = w32_term_init (name, NULL, SSDATA (Vx_resource_name));
 
   if (dpyinfo == 0)
     error ("Cannot connect to server %s", SDATA (name));
@@ -5779,7 +5757,7 @@ terminate Emacs if we can't open the connection.
 (In the Nextstep version, the last two arguments are currently ignored.)  */)
   (Lisp_Object display, Lisp_Object xrm_string, Lisp_Object must_succeed)
 {
-  unsigned char *xrm_option;
+  char *xrm_option;
   struct w32_display_info *dpyinfo;
 
   CHECK_STRING (display);
@@ -5821,9 +5799,9 @@ terminate Emacs if we can't open the connection.
   add_system_logical_colors_to_map (&Vw32_color_map);
 
   if (! NILP (xrm_string))
-    xrm_option = SDATA (xrm_string);
+    xrm_option = SSDATA (xrm_string);
   else
-    xrm_option = (unsigned char *) 0;
+    xrm_option = NULL;
 
   /* Use this general default value to start with.  */
   /* First remove .exe suffix from invocation-name - it looks ugly. */
@@ -5841,8 +5819,7 @@ terminate Emacs if we can't open the connection.
 
   /* This is what opens the connection and sets x_current_display.
      This also initializes many symbols, such as those used for input.  */
-  dpyinfo = w32_term_init (display, xrm_option,
-			   SSDATA (Vx_resource_name));
+  dpyinfo = w32_term_init (display, xrm_option, SSDATA (Vx_resource_name));
 
   if (dpyinfo == 0)
     {
@@ -6097,7 +6074,6 @@ x_create_tip_frame (struct w32_display_info *dpyinfo,
   struct frame *f;
   Lisp_Object frame;
   Lisp_Object name;
-  long window_prompting = 0;
   int width, height;
   ptrdiff_t count = SPECPDL_INDEX ();
   struct kboard *kb;
@@ -6235,7 +6211,7 @@ x_create_tip_frame (struct w32_display_info *dpyinfo,
   f->output_data.w32->dwStyle = WS_BORDER | WS_POPUP | WS_DISABLED;
   f->output_data.w32->parent_desc = FRAME_DISPLAY_INFO (f)->root_window;
 
-  window_prompting = x_figure_window_size (f, parms, true, &x_width, &x_height);
+  x_figure_window_size (f, parms, true, &x_width, &x_height);
 
   /* No fringes on tip frame.  */
   f->fringe_cols = 0;
@@ -6997,9 +6973,9 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
 
     /* We modify these in-place, so make copies for safety.  */
     dir = Fcopy_sequence (dir);
-    unixtodos_filename (SDATA (dir));
+    unixtodos_filename (SSDATA (dir));
     filename = Fcopy_sequence (filename);
-    unixtodos_filename (SDATA (filename));
+    unixtodos_filename (SSDATA (filename));
     if (SBYTES (filename) >= MAX_UTF8_PATH)
       report_file_error ("filename too long", default_filename);
     if (w32_unicode_filenames)
@@ -7222,7 +7198,7 @@ DEFUN ("system-move-file-to-trash", Fsystem_move_file_to_trash,
 
       encoded_file = ENCODE_FILE (filename);
 
-      path = map_w32_filename (SDATA (encoded_file), NULL);
+      path = map_w32_filename (SSDATA (encoded_file), NULL);
 
       /* The Unicode version of SHFileOperation is not supported on
 	 Windows 9X. */
@@ -7261,7 +7237,8 @@ DEFUN ("system-move-file-to-trash", Fsystem_move_file_to_trash,
 	  /* If a file cannot be represented in ANSI codepage, don't
 	     let them inadvertently delete other files because some
 	     characters are interpreted as a wildcards.  */
-	  if (_mbspbrk (tmp_path_a, "?*"))
+	  if (_mbspbrk ((unsigned char *)tmp_path_a,
+			(const unsigned char *)"?*"))
 	    result = ERROR_FILE_NOT_FOUND;
 	  else
 	    {
@@ -7679,7 +7656,7 @@ w32_parse_hot_key (Lisp_Object key)
       c = Fcar (c);
       if (!SYMBOLP (c))
 	emacs_abort ();
-      vk_code = lookup_vk_code (SDATA (SYMBOL_NAME (c)));
+      vk_code = lookup_vk_code (SSDATA (SYMBOL_NAME (c)));
     }
   else if (INTEGERP (c))
     {
@@ -8282,7 +8259,7 @@ If the underlying system call fails, value is nil.  */)
     char rootname[MAX_UTF8_PATH];
     wchar_t rootname_w[MAX_PATH];
     char rootname_a[MAX_PATH];
-    char *name = SDATA (encoded);
+    char *name = SSDATA (encoded);
     BOOL result;
 
     /* find the root name of the volume if given */
@@ -8736,7 +8713,7 @@ w32_kbd_patch_key (KEY_EVENT_RECORD *event, int cpId)
 
 	  event->uChar.UnicodeChar = buf[isdead - 1];
 	  isdead = WideCharToMultiByte (cpId, 0, buf, isdead,
-					ansi_code, 4, NULL, NULL);
+					(LPSTR)ansi_code, 4, NULL, NULL);
 	}
       else
 	isdead = 0;

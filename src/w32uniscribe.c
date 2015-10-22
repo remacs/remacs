@@ -33,11 +33,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "w32term.h"
 #include "frame.h"
-#include "dispextern.h"
-#include "character.h"
-#include "charset.h"
 #include "composite.h"
-#include "fontset.h"
 #include "font.h"
 #include "w32font.h"
 

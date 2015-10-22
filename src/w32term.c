@@ -24,37 +24,27 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "blockinput.h"
 #include "w32term.h"
 
-#include "systty.h"
-#include "systime.h"
-
 #include <ctype.h>
 #include <errno.h>
 #include <sys/stat.h>
+#ifdef CYGWIN
+#include <fcntl.h>	/* for O_RDWR */
+#endif
 #include <imm.h>
 
-#include "charset.h"
-#include "character.h"
 #include "coding.h"
-#include "ccl.h"
 #include "frame.h"
-#include "dispextern.h"
 #include "fontset.h"
 #include "termhooks.h"
 #include "termopts.h"
 #include "termchar.h"
-#include "disptab.h"
 #include "buffer.h"
 #include "window.h"
 #include "keyboard.h"
-#include "intervals.h"
-#include "process.h"
-#include "atimer.h"
-#include "keymap.h"
-#include "menu.h"
+#include "menu.h"	/* for w32_menu_show */
 
 #ifdef WINDOWSNT
 #include "w32.h"	/* for filename_from_utf16, filename_from_ansi */
-#include "w32heap.h"
 #endif
 
 #ifndef WINDOWSNT
@@ -65,6 +55,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "font.h"
 #include "w32font.h"
+
+#if 0	/* TODO: stipple */
+#include "bitmaps/gray.xbm"
+#endif
 
 /* Fringe bitmaps.  */
 
@@ -4507,18 +4501,6 @@ x_scroll_bar_clear (struct frame *f)
 
         ReleaseDC (window, hdc);
       }
-}
-
-static void
-set_frame_param (struct frame *f, Lisp_Object prop, Lisp_Object val)
-{
-  register Lisp_Object old_alist_elt;
-
-  old_alist_elt = Fassq (prop, f->param_alist);
-  if (EQ (old_alist_elt, Qnil))
-    fset_param_alist (f, Fcons (Fcons (prop, val), f->param_alist));
-  else
-    Fsetcdr (old_alist_elt, val);
 }
 
 /* The main W32 event-reading loop - w32_read_socket.  */
