@@ -63,12 +63,11 @@
 (autoload 'plstore-save "plstore")
 (autoload 'plstore-get-file "plstore")
 
-(eval-and-compile
-  (autoload 'epg-make-context "epg")
-  (autoload 'epg-context-set-passphrase-callback "epg")
-  (autoload 'epg-decrypt-string "epg")
-  (autoload 'epg-encrypt-string "epg"))
 (eval-when-compile (require 'epg)) ;; setf-method for `epg-context-armor'
+(autoload 'epg-make-context "epg")
+(autoload 'epg-context-set-passphrase-callback "epg")
+(autoload 'epg-decrypt-string "epg")
+(autoload 'epg-encrypt-string "epg")
 
 (autoload 'help-mode "help-mode" nil t)
 
