@@ -1747,6 +1747,11 @@ cleaning up all windows currently displaying the buffer to be killed. */)
 
   kill_buffer_processes (buffer);
 
+  /* Killing a buffer might have global effects which require
+     redisplaying frames.  For example, if the buffer's name appears
+     in the frame title.  */
+  windows_or_buffers_changed = 11;
+
   /* Killing buffer processes may run sentinels which may have killed
      our buffer.  */
   if (!BUFFER_LIVE_P (b))
