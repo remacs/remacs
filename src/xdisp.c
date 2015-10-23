@@ -13925,7 +13925,11 @@ redisplay_internal (void)
 	 above caused some change (e.g., a change in faces) that requires
 	 considering the entire frame again.  */
       if (sf->fonts_changed || sf->redisplay)
-	goto retry;
+	{
+	  if (sf->redisplay)
+	    windows_or_buffers_changed = 50;
+	  goto retry;
+	}
 
       /* Prevent freeing of realized faces, since desired matrices are
 	 pending that reference the faces we computed and cached.  */
