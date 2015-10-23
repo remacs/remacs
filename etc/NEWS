@@ -582,6 +582,11 @@ prefixed with `seq-' and work on lists, strings and vectors.
 The map library provides map-manipulation functions that work on alists,
 hash-table and arrays.  All functions are prefixed with "map-".
 
+** thunk
+*** New thunk library:
+Thunk provides functions and macros to control the evaluation of
+forms.
+
 ** Calendar and diary
 
 +++
