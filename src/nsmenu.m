@@ -45,13 +45,6 @@ Carbon version by Yamamoto Mitsuharu. */
 #include <sys/types.h>
 #endif
 
-#if 0
-int menu_trace_num = 0;
-#define NSTRACE(x)        fprintf (stderr, "%s:%d: [%d] " #x "\n",        \
-                                __FILE__, __LINE__, ++menu_trace_num)
-#else
-#define NSTRACE(x)
-#endif
 
 #if 0
 /* Include lisp -> C common menu parsing code */
@@ -121,7 +114,7 @@ ns_update_menubar (struct frame *f, bool deep_p, EmacsMenu *submenu)
   long t;
 #endif
 
-  NSTRACE (ns_update_menubar);
+  NSTRACE ("ns_update_menubar");
 
   if (f != SELECTED_FRAME ())
       return;
@@ -801,6 +794,8 @@ ns_menu_show (struct frame *f, int x, int y, int menuflags,
   widget_value *wv, *first_wv = 0;
   bool keymaps = (menuflags & MENU_KEYMAPS);
 
+  NSTRACE ("ns_menu_show");
+
   block_input ();
 
   p.x = x; p.y = y;
@@ -1423,7 +1418,7 @@ ns_popup_dialog (struct frame *f, Lisp_Object header, Lisp_Object contents)
   BOOL isQ;
   NSAutoreleasePool *pool;
 
-  NSTRACE (x-popup-dialog);
+  NSTRACE ("ns_popup_dialog");
 
   isQ = NILP (header);
 
