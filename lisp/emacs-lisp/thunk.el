@@ -26,10 +26,21 @@
 
 ;;; Commentary:
 ;;
-;; Thunk provides functions and macros to control the evaluation of
-;; forms.  Use `thunk-delay' to delay the evaluation of a form, and
-;; `thunk-force' to evaluate it. Evaluation is cached, and only
-;; happens once.
+;; Thunk provides functions and macros to delay the evaluation of
+;; forms.
+;;
+;; Use `thunk-delay' to delay the evaluation of a form, and
+;; `thunk-force' to evaluate it. The result of the evaluation is
+;; cached, and only happens once.
+;;
+;; Here is an example of a form which evaluation is delayed:
+;;
+;;     (setq delayed (thunk-delay (message "this message is delayed")))
+;;
+;; `delayed' is not evaluated until `thunk-force' is called, like the
+;; following:
+;;
+;;    (thunk-force delayed)
 
 ;; Tests are located at test/automated/thunk-tests.el
 
