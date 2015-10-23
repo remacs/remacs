@@ -333,7 +333,9 @@ DESCRIPTOR should be an object returned by `file-notify-add-watch'."
 
     (when (stringp dir)
       ;; Call low-level function.
-      (when (null (cdr registered))
+      (when (or (not file)
+                (and (= (length (cdr registered)) 1)
+                     (assoc file (cdr registered))))
         (condition-case nil
             (if handler
                 ;; A file name handler could exist even if there is no local
