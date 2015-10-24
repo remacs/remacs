@@ -62,7 +62,7 @@ DdeCallback (UINT uType, UINT uFmt, HCONV hconv,
 }
 
 #define DdeCommand(str) 	\
-	DdeClientTransaction (str, strlen (str)+1, conversation, (HSZ)NULL, \
+	DdeClientTransaction ((LPBYTE)str, strlen (str)+1, conversation, (HSZ)NULL, \
 		              CF_TEXT, XTYP_EXECUTE, 30000, NULL)
 
 #define REG_ROOT "SOFTWARE\\GNU\\Emacs"
@@ -116,7 +116,7 @@ add_registry (const char *path)
      affect the general operation of other installations of Emacs, and we
      are blindly overwriting the Start Menu entries already.
   */
-  if (RegCreateKeyEx (HKEY_LOCAL_MACHINE, REG_APP_PATH, 0, "",
+  if (RegCreateKeyEx (HKEY_LOCAL_MACHINE, REG_APP_PATH, 0, NULL,
                       REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL,
                       &hrootkey, NULL) == ERROR_SUCCESS)
     {
