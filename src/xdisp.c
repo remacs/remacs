@@ -13931,7 +13931,15 @@ redisplay_internal (void)
       if (sf->fonts_changed || sf->redisplay)
 	{
 	  if (sf->redisplay)
-	    windows_or_buffers_changed = 50;
+	    {
+	      /* Set this to force a more thorough redisplay.
+		 Otherwise, we might immediately loop back to the
+		 above "else-if" clause (since all the conditions that
+		 led here might still be true), and we will then
+		 infloop, because the selected-frame's redisplay flag
+		 is not (and cannot be) reset.  */
+	      windows_or_buffers_changed = 50;
+	    }
 	  goto retry;
 	}
 
