@@ -186,17 +186,20 @@ add_registry (const char *path)
      have any resources.  */
 
   if (RegOpenKeyEx (HKEY_LOCAL_MACHINE, REG_ROOT, 0,
-		      KEY_WRITE, &hrootkey) != ERROR_SUCCESS
+		    KEY_WRITE | KEY_QUERY_VALUE, &hrootkey) != ERROR_SUCCESS
       && RegOpenKeyEx (HKEY_CURRENT_USER, REG_ROOT, 0,
-			 KEY_WRITE, &hrootkey) != ERROR_SUCCESS)
+		       KEY_WRITE | KEY_QUERY_VALUE, &hrootkey) != ERROR_SUCCESS)
     return;
 
   for (i = 0; i < (sizeof (env_vars) / sizeof (env_vars[0])); i++)
     {
       const char * value = env_vars[i].value ? env_vars[i].value : path;
 
-      RegSetValueEx (hrootkey, env_vars[i].name, 0, REG_EXPAND_SZ,
-		     value, lstrlen (value) + 1);
+      /* Replace only those settings that already exist.  */
+      if (RegQueryValueEx (hrootkey, env_vars[i].name, NULL,
+			   NULL, NULL, NULL) == ERROR_SUCCESS)
+	RegSetValueEx (hrootkey, env_vars[i].name, 0, REG_EXPAND_SZ,
+		       value, lstrlen (value) + 1);
     }
 
   RegCloseKey (hrootkey);
