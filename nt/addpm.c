@@ -104,12 +104,11 @@ env_vars[] =
 #endif
 };
 
-BOOL
+void
 add_registry (const char *path)
 {
   HKEY hrootkey = NULL;
   int i;
-  BOOL ok = TRUE;
   DWORD size;
 
   /* Record the location of Emacs to the App Paths key if we have
@@ -190,23 +189,17 @@ add_registry (const char *path)
 		      KEY_WRITE, &hrootkey) != ERROR_SUCCESS
       && RegOpenKeyEx (HKEY_CURRENT_USER, REG_ROOT, 0,
 			 KEY_WRITE, &hrootkey) != ERROR_SUCCESS)
-    {
-      return FALSE;
-    }
+    return;
 
   for (i = 0; i < (sizeof (env_vars) / sizeof (env_vars[0])); i++)
     {
       const char * value = env_vars[i].value ? env_vars[i].value : path;
 
-      if (RegSetValueEx (hrootkey, env_vars[i].name,
-			 0, REG_EXPAND_SZ,
-			 value, lstrlen (value) + 1) != ERROR_SUCCESS)
-	ok = FALSE;
+      RegSetValueEx (hrootkey, env_vars[i].name, 0, REG_EXPAND_SZ,
+		     value, lstrlen (value) + 1);
     }
 
   RegCloseKey (hrootkey);
-
-  return (ok);
 }
 
 int
