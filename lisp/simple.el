@@ -460,10 +460,9 @@ A non-nil INTERACTIVE argument means to run the `post-self-insert-hook'."
 
 (defun open-line (n)
   "Insert a newline and leave point before it.
-If there is a fill prefix and/or a `left-margin', insert them
-on the new line if the line would have been blank.
-With arg N, insert N newlines."
-  (interactive "*p")
+If there is a fill prefix and/or a `left-margin', insert them on
+the new line.  If the old line would have been blank, insert them
+on the old line as well.
   (let* ((do-fill-prefix (and fill-prefix (bolp)))
 	 (do-left-margin (and (bolp) (> (current-left-margin) 0)))
 	 (loc (point-marker))
@@ -478,6 +477,7 @@ With arg N, insert N newlines."
       (forward-line 1)
       (setq n (1- n)))
     (goto-char loc)
+    ;; Necessary in case a margin or prefix was inserted.
     (end-of-line)))
 
 (defun split-line (&optional arg)
