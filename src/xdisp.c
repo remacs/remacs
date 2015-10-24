@@ -453,7 +453,7 @@ static bool message_enable_multibyte;
 
    OTOH if it's non-zero we wil have to loop through all windows and then check
    the `redisplay' bit of the corresponding window, frame, and buffer, in order
-   to decide whether that window needs attention or not.  Not that we can't
+   to decide whether that window needs attention or not.  Note that we can't
    just look at the frame's redisplay bit to decide that the whole frame can be
    skipped, since even if the frame's redisplay bit is unset, some of its
    windows's redisplay bits may be set.
