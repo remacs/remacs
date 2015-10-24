@@ -220,6 +220,25 @@ It is nil if none yet.")
 Default value, nil, means edit the string instead."
   :type 'boolean)
 
+(defcustom search-default-regexp-mode nil
+  "Default mode to use when starting isearch.
+Value is nil, t, or a function.
+
+If nil, default to literal searches (note that `case-fold-search'
+and `isearch-lax-whitespace' may still be applied).\\<isearch-mode-map>
+If t, default to regexp searches (as if typing `\\[isearch-toggle-regexp]' during
+isearch).
+
+If a function, use that function as an `isearch-regexp-function'.
+Example functions are `word-search-regexp' \(`\\[isearch-toggle-word]'),
+`isearch-symbol-regexp' \(`\\[isearch-toggle-symbol]'), and
+`character-fold-to-regexp' \(`\\[isearch-toggle-character-fold]')."
+  ;; :type is set below by `isearch-specify-regexp-function'.
+  :type '(choice (const :tag "Literal search" nil)
+                 (const :tag "Regexp search" t)
+                 (function :tag "Other"))
+  :version "25.1")
+
 ;;; isearch highlight customization.
 
 (defcustom search-highlight t
@@ -827,7 +846,6 @@ See the command `isearch-forward-symbol' for more information."
 
 (autoload 'character-fold-to-regexp "character-fold")
 (put 'character-fold-to-regexp 'isearch-message-prefix "char-fold ")
-(defvar character-fold-search)
 
 (defun isearch-mode (forward &optional regexp op-fun recursive-edit regexp-function)
   "Start Isearch minor mode.
@@ -850,11 +868,13 @@ used to set the value of `isearch-regexp-function'."
 
   ;; Initialize global vars.
   (setq isearch-forward forward
-	isearch-regexp regexp
+	isearch-regexp (or regexp
+                           (and (not regexp-function)
+                                (eq search-default-regexp-mode t)))
 	isearch-regexp-function (or regexp-function
-                                    (and character-fold-search
+                                    (and (functionp search-default-regexp-mode)
                                          (not regexp)
-                                         'character-fold-to-regexp))
+                                         search-default-regexp-mode))
 	isearch-op-fun op-fun
 	isearch-last-case-fold-search isearch-case-fold-search
 	isearch-case-fold-search case-fold-search
