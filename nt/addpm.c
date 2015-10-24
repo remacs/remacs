@@ -66,11 +66,8 @@ DdeCallback (UINT uType, UINT uFmt, HCONV hconv,
 		              CF_TEXT, XTYP_EXECUTE, 30000, NULL)
 
 #define REG_ROOT "SOFTWARE\\GNU\\Emacs"
-#define REG_GTK "SOFTWARE\\GTK\\2.0"
 #define REG_APP_PATH \
   "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\emacs.exe"
-#define REG_RUNEMACS_PATH \
-  "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\runemacs.exe"
 
 static struct entry
 {
@@ -109,7 +106,6 @@ add_registry (const char *path)
 {
   HKEY hrootkey = NULL;
   int i;
-  DWORD size;
 
   /* Record the location of Emacs to the App Paths key if we have
      sufficient permissions to do so.  This helps Windows find emacs quickly
@@ -126,54 +122,12 @@ add_registry (const char *path)
     {
       int len;
       char *emacs_path;
-      HKEY gtk_key = NULL;
 
       len = strlen (path) + 15; /* \bin\emacs.exe + terminator.  */
       emacs_path = (char *) alloca (len);
       sprintf (emacs_path, "%s\\bin\\emacs.exe", path);
 
       RegSetValueEx (hrootkey, NULL, 0, REG_EXPAND_SZ, emacs_path, len);
-
-      /* Look for a GTK installation. If found, add it to the library search
-         path for Emacs so that the image libraries it provides are available
-         to Emacs regardless of whether it is in the path or not.  */
-      if (RegOpenKeyEx (HKEY_LOCAL_MACHINE, REG_GTK, 0,
-                        KEY_READ, &gtk_key) == ERROR_SUCCESS)
-        {
-          if (RegQueryValueEx (gtk_key, "DllPath", NULL, NULL,
-                               NULL, &size) == ERROR_SUCCESS)
-            {
-              char *gtk_path = (char *) alloca (size);
-              if (RegQueryValueEx (gtk_key, "DllPath", NULL, NULL,
-                                   gtk_path, &size) == ERROR_SUCCESS)
-                {
-                  /* Make sure the emacs bin directory continues to be searched
-                     first by including it as well.  */
-                  char *dll_paths;
-		  HKEY runemacs_key = NULL;
-                  len = strlen (path) + 5 + size;
-                  dll_paths = (char *) alloca (size + strlen (path) + 1);
-                  sprintf (dll_paths, "%s\\bin;%s", path, gtk_path);
-                  RegSetValueEx (hrootkey, "Path", 0, REG_EXPAND_SZ,
-				 dll_paths, len);
-
-		  /* Set the same path for runemacs.exe, as the Explorer shell
-		     looks this up, so the above does not take effect when
-		     emacs.exe is spawned from runemacs.exe.  */
-		  if (RegCreateKeyEx (HKEY_LOCAL_MACHINE, REG_RUNEMACS_PATH,
-				      0, "", REG_OPTION_NON_VOLATILE,
-				      KEY_WRITE, NULL, &runemacs_key, NULL)
-		      == ERROR_SUCCESS)
-		    {
-		      RegSetValueEx (runemacs_key, "Path", 0, REG_EXPAND_SZ,
-				     dll_paths, len);
-
-		      RegCloseKey (runemacs_key);
-		    }
-                }
-            }
-          RegCloseKey (gtk_key);
-        }
       RegCloseKey (hrootkey);
     }
 
