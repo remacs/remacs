@@ -1611,19 +1611,6 @@ compact_buffer (struct buffer *buffer)
     }
 }
 
-/* Set the global update_mode_lines variable non-zero if the buffer
-   was displayed in some window.  This is needed to catch the
-   attention of redisplay to changes that might require redisplay of
-   the frame title (which uses the same variables as mode lines) when
-   the buffer object cannot be used for recording that fact, e.g. if
-   the buffer is killed.  */
-static void
-set_update_modelines_for_buf (bool disp)
-{
-  if (disp)
-    update_mode_lines = 42;
-}
-
 DEFUN ("kill-buffer", Fkill_buffer, Skill_buffer, 0, 1, "bKill buffer: ",
        doc: /* Kill the buffer specified by BUFFER-OR-NAME.
 The argument may be a buffer or the name of an existing buffer.
@@ -1646,7 +1633,6 @@ cleaning up all windows currently displaying the buffer to be killed. */)
   struct buffer *b;
   Lisp_Object tem;
   struct Lisp_Marker *m;
-  bool buffer_was_displayed = false;
 
   if (NILP (buffer_or_name))
     buffer = Fcurrent_buffer ();
@@ -1660,8 +1646,6 @@ cleaning up all windows currently displaying the buffer to be killed. */)
   /* Avoid trouble for buffer already dead.  */
   if (!BUFFER_LIVE_P (b))
     return Qnil;
-
-  buffer_was_displayed = buffer_window_count (b);
 
   /* Run hooks with the buffer to be killed the current buffer.  */
   {
@@ -1689,10 +1673,7 @@ cleaning up all windows currently displaying the buffer to be killed. */)
 
     /* If the hooks have killed the buffer, exit now.  */
     if (!BUFFER_LIVE_P (b))
-      {
-	set_update_modelines_for_buf (buffer_was_displayed);
-	return unbind_to (count, Qt);
-      }
+      return unbind_to (count, Qt);
 
     /* Then run the hooks.  */
     run_hook (Qkill_buffer_hook);
@@ -1701,10 +1682,7 @@ cleaning up all windows currently displaying the buffer to be killed. */)
 
   /* If the hooks have killed the buffer, exit now.  */
   if (!BUFFER_LIVE_P (b))
-    {
-      set_update_modelines_for_buf (buffer_was_displayed);
-      return Qt;
-    }
+    return Qt;
 
   /* We have no more questions to ask.  Verify that it is valid
      to kill the buffer.  This must be done after the questions
@@ -1732,10 +1710,7 @@ cleaning up all windows currently displaying the buffer to be killed. */)
 
       /* Exit if we now have killed the base buffer (Bug#11665).  */
       if (!BUFFER_LIVE_P (b))
-	{
-	  set_update_modelines_for_buf (buffer_was_displayed);
-	  return Qt;
-	}
+	return Qt;
     }
 
   /* Run replace_buffer_in_windows before making another buffer current
@@ -1746,10 +1721,7 @@ cleaning up all windows currently displaying the buffer to be killed. */)
 
   /* Exit if replacing the buffer in windows has killed our buffer.  */
   if (!BUFFER_LIVE_P (b))
-    {
-      set_update_modelines_for_buf (buffer_was_displayed);
-      return Qt;
-    }
+    return Qt;
 
   /* Make this buffer not be current.  Exit if it is the sole visible
      buffer.  */
@@ -1778,10 +1750,7 @@ cleaning up all windows currently displaying the buffer to be killed. */)
   /* Killing buffer processes may run sentinels which may have killed
      our buffer.  */
   if (!BUFFER_LIVE_P (b))
-    {
-      set_update_modelines_for_buf (buffer_was_displayed);
-      return Qt;
-    }
+    return Qt;
 
   /* These may run Lisp code and into infinite loops (if someone
      insisted on circular lists) so allow quitting here.  */
@@ -1813,10 +1782,7 @@ cleaning up all windows currently displaying the buffer to be killed. */)
 
   /* Deleting an auto-save file could have killed our buffer.  */
   if (!BUFFER_LIVE_P (b))
-    {
-      set_update_modelines_for_buf (buffer_was_displayed);
-      return Qt;
-    }
+    return Qt;
 
   if (b->base_buffer)
     {
@@ -1915,7 +1881,6 @@ cleaning up all windows currently displaying the buffer to be killed. */)
   if (!NILP (Vrun_hooks))
     call1 (Vrun_hooks, Qbuffer_list_update_hook);
 
-  set_update_modelines_for_buf (buffer_was_displayed);
   return Qt;
 }
 

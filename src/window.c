@@ -3271,7 +3271,14 @@ set_window_buffer (Lisp_Object window, Lisp_Object buffer,
   /* Maybe we could move this into the `if' but it's not obviously safe and
      I doubt it's worth the trouble.  */
   wset_redisplay (w);
-  w->update_mode_line = true;
+  /* If this window is the selected window on its frame, set the
+     global variable update_mode_lines, so that x_consider_frame_title
+     will consider this frame's title for rtedisplay.  */
+  Lisp_Object fselected_window = XFRAME (WINDOW_FRAME (w))->selected_window;
+  if (WINDOWP (fselected_window) && XWINDOW (fselected_window) == w)
+    update_mode_lines = 42;
+  else
+    w->update_mode_line = true;
 
   /* We must select BUFFER to run the window-scroll-functions and to look up
      the buffer-local value of Vwindow_point_insertion_type.  */
