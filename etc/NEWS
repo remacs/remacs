@@ -279,14 +279,6 @@ header.
 ** `tabulated-list-print' takes a second optional argument, update,
 which specifies an alternative printing method which is faster when
 few or no entries have changed.
-** The command `dired-do-compress' bound to `Z' now can compress
-directories and decompress zip files.
-** New command `dired-do-compress-to' bound to `c' can be used to compress
-many marked files into a single named archive.  The compression
-command is determined from the new `dired-compress-files-alist'
-variable.
-
-+++
 
 
 * Editing Changes in Emacs 25.1
@@ -570,22 +562,6 @@ appending FUN to `minibuffer-setup-hook'.
 
 ** cl-lib
 *** New functions cl-fresh-line, cl-digit-char-p and cl-parse-integer.
-
-** seq
-*** New seq library:
-The seq library adds sequence manipulation functions and macros that
-complement basic functions provided by subr.el.  All functions are
-prefixed with `seq-' and work on lists, strings and vectors.
-
-** map
-*** New map library:
-The map library provides map-manipulation functions that work on alists,
-hash-table and arrays.  All functions are prefixed with "map-".
-
-** thunk
-*** New thunk library:
-Thunk provides functions and macros to control the evaluation of
-forms.
 
 ** Calendar and diary
 
@@ -872,6 +848,18 @@ notifications, if Emacs is compiled with file notification support.
 whether a file notification descriptor still corresponds to an
 activate watch.
 
+** Dired
+
++++
+*** The command `dired-do-compress' bound to `Z' now can compress
+directories and decompress zip files.
+
++++
+*** New command `dired-do-compress-to' bound to `c' can be used to
+compress many marked files into a single named archive.  The
+compression command is determined from the new
+`dired-compress-files-alist' variable.
+
 ** Obsolete packages
 
 ---
@@ -900,6 +888,18 @@ types the text.  Breaking line after a single-character words is
 forbidden by Czech and Polish typography (and may be discouraged in
 other languages), so `auto-tildify-mode' makes it easier to create
 a typographically-correct documents.
+
+** The `seq' library adds sequence manipulation functions and macros
+that complement basic functions provided by subr.el.  All functions
+are prefixed with `seq-' and work on lists, strings and vectors.
+
+** The `map' library provides map-manipulation functions that work on
+alists, hash-table and arrays.  All functions are prefixed with
+`map-'.
+
+** The `thunk' library provides functions and macros to control the
+evaluation of forms.
+
 
 * Incompatible Lisp Changes in Emacs 25.1
 
