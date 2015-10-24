@@ -138,7 +138,7 @@ add_registry (const char *path)
       /* Look for a GTK installation. If found, add it to the library search
          path for Emacs so that the image libraries it provides are available
          to Emacs regardless of whether it is in the path or not.  */
-      if (RegOpenKeyEx (HKEY_LOCAL_MACHINE, REG_GTK, REG_OPTION_NON_VOLATILE,
+      if (RegOpenKeyEx (HKEY_LOCAL_MACHINE, REG_GTK, 0,
                         KEY_READ, &gtk_key) == ERROR_SUCCESS)
         {
           if (RegQueryValueEx (gtk_key, "DllPath", NULL, NULL,
@@ -186,11 +186,9 @@ add_registry (const char *path)
   /* Check both the current user and the local machine to see if we
      have any resources.  */
 
-  if (RegOpenKeyEx (HKEY_LOCAL_MACHINE, REG_ROOT,
-		      REG_OPTION_NON_VOLATILE,
+  if (RegOpenKeyEx (HKEY_LOCAL_MACHINE, REG_ROOT, 0,
 		      KEY_WRITE, &hrootkey) != ERROR_SUCCESS
-      && RegOpenKeyEx (HKEY_CURRENT_USER, REG_ROOT,
-			 REG_OPTION_NON_VOLATILE,
+      && RegOpenKeyEx (HKEY_CURRENT_USER, REG_ROOT, 0,
 			 KEY_WRITE, &hrootkey) != ERROR_SUCCESS)
     {
       return FALSE;
