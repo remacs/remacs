@@ -72,23 +72,20 @@
 
 (defcustom search-exit-option t
   "Non-nil means random control characters terminate incremental search."
-  :type 'boolean
-  :group 'isearch)
+  :type 'boolean)
 
 (defcustom search-slow-window-lines 1
   "Number of lines in slow search display windows.
 These are the short windows used during incremental search on slow terminals.
 Negative means put the slow search window at the top (normally it's at bottom)
 and the value is minus the number of lines."
-  :type 'integer
-  :group 'isearch)
+  :type 'integer)
 
 (defcustom search-slow-speed 1200
   "Highest terminal speed at which to use \"slow\" style incremental search.
 This is the style where a one-line window is created to show the line
 that the search has reached."
-  :type 'integer
-  :group 'isearch)
+  :type 'integer)
 
 (defcustom search-upper-case 'not-yanks
   "If non-nil, upper case chars disable case fold searching.
@@ -99,15 +96,13 @@ If this value is `not-yanks', text yanked into the search string
 in Isearch mode is always downcased."
   :type '(choice (const :tag "off" nil)
 		 (const not-yanks)
-		 (other :tag "on" t))
-  :group 'isearch)
+		 (other :tag "on" t)))
 
 (defcustom search-nonincremental-instead t
   "If non-nil, do a nonincremental search instead of exiting immediately.
 Actually, `isearch-edit-string' is called to let you enter the search
 string, and RET terminates editing and does a nonincremental search."
-  :type 'boolean
-  :group 'isearch)
+  :type 'boolean)
 
 (defcustom search-whitespace-regexp (purecopy "\\s-+")
   "If non-nil, regular expression to match a sequence of whitespace chars.
@@ -127,7 +122,6 @@ In the Customization buffer, that is `[' followed by a space,
 a tab, a carriage return (control-M), a newline, and `]+'."
   :type '(choice (const :tag "Match Spaces Literally" nil)
 		 regexp)
-  :group 'isearch
   :version "24.3")
 
 (defcustom search-invisible 'open
@@ -147,8 +141,7 @@ See also `reveal-mode' if you want overlays to automatically be opened
 whenever point is in one of them."
   :type '(choice (const :tag "Match hidden text" t)
 		 (const :tag "Open overlays" open)
-		 (const :tag "Don't match hidden text" nil))
-  :group 'isearch)
+		 (const :tag "Don't match hidden text" nil)))
 
 (defcustom isearch-hide-immediately t
   "If non-nil, re-hide an invisible match right away.
@@ -156,15 +149,13 @@ This variable makes a difference when `search-invisible' is set to `open'.
 If nil then do not re-hide opened invisible text when the match moves.
 Whatever the value, all opened invisible text is hidden again after exiting
 the search."
-  :type 'boolean
-  :group 'isearch)
+  :type 'boolean)
 
 (defcustom isearch-resume-in-command-history nil
   "If non-nil, `isearch-resume' commands are added to the command history.
 This allows you to resume earlier Isearch sessions through the
 command history."
-  :type 'boolean
-  :group 'isearch)
+  :type 'boolean)
 
 (defvar isearch-mode-hook nil
   "Function(s) to call after starting up an incremental search.")
@@ -212,12 +203,10 @@ displayed in the search message.")
 
 (defcustom search-ring-max 16
   "Maximum length of search ring before oldest elements are thrown away."
-  :type 'integer
-  :group 'isearch)
+  :type 'integer)
 (defcustom regexp-search-ring-max 16
   "Maximum length of regexp search ring before oldest elements are thrown away."
-  :type 'integer
-  :group 'isearch)
+  :type 'integer)
 
 (defvar search-ring-yank-pointer nil
   "Index in `search-ring' of last string reused.
@@ -229,15 +218,13 @@ It is nil if none yet.")
 (defcustom search-ring-update nil
   "Non-nil if advancing or retreating in the search ring should cause search.
 Default value, nil, means edit the string instead."
-  :type 'boolean
-  :group 'isearch)
+  :type 'boolean)
 
 ;;; isearch highlight customization.
 
 (defcustom search-highlight t
   "Non-nil means incremental search highlights the current match."
-  :type 'boolean
-  :group 'isearch)
+  :type 'boolean)
 
 (defface isearch
   '((((class color) (min-colors 88) (background light))
@@ -269,8 +256,7 @@ Default value, nil, means edit the string instead."
      :foreground "grey")
     (t (:inverse-video t)))
   "Face for highlighting failed part in Isearch echo-area message."
-  :version "23.1"
-  :group 'isearch)
+  :version "23.1")
 
 (defcustom isearch-lazy-highlight t
   "Controls the lazy-highlighting during incremental search.
