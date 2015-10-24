@@ -473,6 +473,10 @@ int windows_or_buffers_changed;
    For any other value, redisplay all mode lines (the number used is then only
    used to track down the cause for this full-redisplay).
 
+   Since the frame title uses the same %-constructs as the mode line
+   (except %c and %l), if this variable is non-zero, we also consider
+   redisplaying the title of each frame, see x_consider_frame_title.
+
    The `redisplay' bits are the same as those used for
    windows_or_buffers_changed, and setting windows_or_buffers_changed also
    causes recomputation of the mode lines of all those windows.  IOW this
