@@ -16854,7 +16854,8 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 
  finish_menu_bars:
 
-  /* When we reach a frame's selected window, redo the frame's menu bar.  */
+  /* When we reach a frame's selected window, redo the frame's menu
+     bar and the frame's title.  */
   if (update_mode_line
       && EQ (FRAME_SELECTED_WINDOW (f), window))
     {
@@ -16889,6 +16890,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	    ignore_mouse_drag_p = true;
 #endif
         }
+      x_consider_frame_title (w->frame);
 #endif
     }
 
