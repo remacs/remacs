@@ -20,14 +20,13 @@
 
 2015-10-24  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/isearch.el: Make character-fold search the default again
+	* lisp/isearch.el: Make character-fold search the default again.
 
 2015-10-24  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/character-fold.el: Many improvements
-
+	* lisp/character-fold.el: Many improvements.
 	(character-fold-search-forward, character-fold-search-backward):
-	New command
+	New command.
 	(character-fold-to-regexp): Remove lax-whitespace hack.
 	(character-fold-search): Remove variable.  Only isearch and
 	query-replace use char-folding, and they both have their own
@@ -35,25 +34,20 @@
 
 2015-10-24  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/isearch.el: Generalize definition of regexp-function toggles
-
+	* lisp/isearch.el: Generalize definition of regexp-function toggles.
 	(isearch-specify-regexp-function): New macro for specifying
 	possible values of `isearch-regexp-function'.
-
 	(isearch-toggle-character-fold, isearch-toggle-symbol)
 	(isearch-toggle-word): Define with `isearch-specify-regexp-function'.
 
 2015-10-24  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/isearch.el (search-default-regexp-mode): New variable
-
+	* lisp/isearch.el (search-default-regexp-mode): New variable.
 	(isearch-mode): Use it.
 
 2015-10-24  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/isearch.el: Delete redundant :group entries
-
-	(search-exit-option, search-slow-window-lines)
+	* lisp/isearch.el (search-exit-option, search-slow-window-lines)
 	(search-slow-speed, search-upper-case)
 	(search-nonincremental-instead, search-whitespace-regexp)
 	(search-invisible, isearch-hide-immediately)
@@ -63,7 +57,7 @@
 
 2015-10-24  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/custom.el (custom-declare-variable): Shorten code a bit
+	* lisp/custom.el (custom-declare-variable): Shorten code a bit.
 
 2015-10-24  Juanma Barranquero  <lekktu@gmail.com>
 
@@ -87,7 +81,7 @@
 
 2015-10-24  Juanma Barranquero  <lekktu@gmail.com>
 
-	addpm.c: Replace existing entries, but do not create new ones
+	addpm.c: Replace existing registry entries, but do not create new ones
 
 	* nt/addpm.c (add_registry): If the Emacs registry key exists, replace
 	existing values from previous versions, but do not add new ones; the
@@ -187,8 +181,6 @@
 
 2015-10-24  Tassilo Horn  <tsdh@gnu.org>
 
-	Add support for tar.bz2 and tar.xz archives
-
 	* lisp/dired-aux.el (dired-compress-files-alist): Add support for
 	tar.bz2 and tar.xz archives.
 
@@ -209,15 +201,13 @@
 	Replace the old icon for Windows and Mac OSX
 
 	* nt/icons/emacs.ico:
-	* nextstep/Cocoa/Emacs.base/Contents/Resources/Emacs.icns: Use the new
-	icons.
+	* nextstep/Cocoa/Emacs.base/Contents/Resources/Emacs.icns:
+	Use the new icons.
 
 2015-10-23  Stephen Leake  <stephen_leake@stephe-leake.org>
 
-	`load-path' should contain only directory names
-
 	* lisp/emacs-lisp/package.el (package-autoload-ensure-default-file):
-	`load-path' should contain only directory names
+	`load-path' should contain only directory names.
 
 2015-10-23  Nicolas Petton  <nicolas@petton.fr>
 
@@ -261,15 +251,16 @@
 	* etc/images/icons/hicolor/32x32/apps/emacs23.png:
 	* etc/images/icons/hicolor/48x48/apps/emacs23.png:
 	* etc/images/icons/hicolor/scalable/apps/emacs23.svg:
-	* etc/images/icons/hicolor/scalable/mimetypes/emacs-document23.svg: Move
-	  the old logo files to emacs23.*.
+	* etc/images/icons/hicolor/scalable/mimetypes/emacs-document23.svg:
+	Move the old logo files to emacs23.*.
 	* etc/images/icons/hicolor/128x128/apps/emacs.png:
 	* etc/images/icons/hicolor/16x16/apps/emacs.png:
 	* etc/images/icons/hicolor/24x24/apps/emacs.png:
 	* etc/images/icons/hicolor/32x32/apps/emacs.png:
 	* etc/images/icons/hicolor/48x48/apps/emacs.png:
 	* etc/images/icons/hicolor/scalable/apps/emacs.svg:
-	* etc/images/icons/hicolor/scalable/mimetypes/emacs-document.svg: New files.
+	* etc/images/icons/hicolor/scalable/mimetypes/emacs-document.svg:
+	New files.
 	* etc/images/icons/README: Update the copyright information.
 
 2015-10-23  Eli Zaretskii  <eliz@gnu.org>
@@ -282,7 +273,7 @@
 
 2015-10-23  Anders Lindgren  <andlind@gmail.com>
 
-	NextSten maximization and NSTRACE rewrite.
+	NextSten maximization and NSTRACE rewrite
 
 	Full-height, full-width, and maximized windows now cover the
 	entire screen (except the menu bar), including the part where the
@@ -292,25 +283,23 @@
 	Made NonMaximized->FullWidth->FullHeight->NonMaximized restore the
 	original size.
 
-	* nsterm.m (ns_menu_bar_height): New function, return height of
+	* src/nsterm.m (ns_menu_bar_height): New function, return height of
 	the menu bar, or 0 when it's hidden.
-	* nsterm.m (constrain_frame_rect): New function for constraining a
-	frame.
-	* nsterm.m (ns_constrain_all_frames): Set frame size explicitly
-	rather than relying on the system doing it for us by writing back
-	the current frame size.
-	* nsterm.m (windowWillUseStandardFrame): Register non-maximized
-	width or height as new user size.  When entering full width or
-	height, the other size component is taken from the user size.
-	* nsterm.m (fullscreenState): New method for accessing the
-	fullscreen state.
-	* nsterm.m (constrainFrameRect): Restrict frame to be placed under
-	the menu bar, if present.  The old version, sometimes, restricted
-	the height of a frame to the screen, this version never does this.
-	* nsterm.m (zoom): Perform zoom by setting the frame to the full
-	size of the screen (minus the menu bar).  The default system
-	function, with the zoom animation, is no longer used, as the final
-	frame size doesn't cover the entire screen.
+	(constrain_frame_rect): New function for constraining a frame.
+	(ns_constrain_all_frames): Set frame size explicitly rather than
+	relying on the system doing it for us by writing back the current
+	frame size.
+	(windowWillUseStandardFrame): Register non-maximized width or
+	height as new user size.  When entering full width or height,
+	the other size component is taken from the user size.
+	(fullscreenState): New method for accessing the fullscreen state.
+	(constrainFrameRect): Restrict frame to be placed under the menu bar,
+	if present.  The old version, sometimes, restricted the height of a
+	frame to the screen, this version never does this.
+	(zoom): Perform zoom by setting the frame to the full size of the
+	screen (minus the menu bar).  The default system function, with the
+	zoom animation, is no longer used, as the final frame size doesn't
+	cover the entire screen.
 
 	Rework how to constrain resizing to the character grid.  The old
 	system used "resizeIncrements" in NSWindows.  However, once a frame
@@ -318,9 +307,9 @@
 	remained unaligned even after a resize.  In addition, it conflicted
 	when resizing a fullheight window.
 
-	* nsterm.m (windowWillResize): Restrict frame size to text grid,
+	* src/nsterm.m (windowWillResize): Restrict frame size to text grid,
 	unless when pixelwise frame resizing is enabled.
-	* nsterm.m (updateFrameSize, initFrameFromEmacs)
+	(updateFrameSize, initFrameFromEmacs)
 	(toggleFullScreen, handleFS): Don't set resizeIncrements.
 
 	Redesign the NS trace system.  The call structure is represented
@@ -328,31 +317,28 @@
 	printf-style arguments.  New macros for printing various
 	information.
 
-	* nsterm.h (NSTRACE_ENABLED): Macro to enable trace system.
-	* nsterm.h (NSTRACE, NSTRACE_WHEN, NSTRACE_UNLESS): Macros to
-	start a new block (typically a function), accept printf-style
-	arguments.
-	* nsterm.h (NSTRACE_MSG): Macro for extra information, accepts
+	* src/nsterm.h (NSTRACE_ENABLED): Macro to enable trace system.
+	(NSTRACE, NSTRACE_WHEN, NSTRACE_UNLESS): Macros to start a new
+	block (typically a function), accept printf-style arguments.
+	(NSTRACE_MSG): Macro for extra information, accepts
 	printf-style arguments.
-	* nsterm.h (NSTRACE_what): Macros for printing various types.
-	* nsterm.h (NSTRACE_FMT_what): Macro with printf format string
-	snippets.
-	* nsterm.h (NSTRACE_ARG_what): Macros for passing printf-style
-	arguments, corresponds to NSTRACE_FMT_what.
-	* nsterm.h (NSTRACE_RETURN): Macro to print return value, accept
+	(NSTRACE_what): Macros for printing various types.
+	(NSTRACE_FMT_what): Macro with printf format string snippets.
+	(NSTRACE_ARG_what): Macros for passing printf-style arguments,
+	corresponds to NSTRACE_FMT_what.
+	(NSTRACE_RETURN): Macro to print return value, accept
 	printf-style arguments.
-	* nsterm.h (NSTRACE_RETURN_what): Macros to print return value for
+	(NSTRACE_RETURN_what): Macros to print return value for
 	various types.
 
-	* nsterm.m: Remove old NSTRACE macro.
-	* nsterm.m (nstrace_num): Trace counter.
-	* nsterm.m (nstrace_depth): Current call depth.
-	* nsterm.m (nstrace_leave): NSTRACE support function, called when
-	the local variable "nstrace_enabled" goes out of scope using the
+	* nsterm.m: Remove old NSTRACE macro
+	* src/nsterm.m (nstrace_num): Trace counter.
+	(nstrace_depth): Current call depth.
+	(nstrace_leave): NSTRACE support function, called when the
+	local variable "nstrace_enabled" goes out of scope using the
 	"cleanup" extension.
-	* nsterm.m (ns_print_fullscreen_type_name): NSTRACE_FSTYPE support
-	function.
-	* nsterm.m (constrain_frame_rect, ns_constrain_all_frames)
+	(ns_print_fullscreen_type_name): NSTRACE_FSTYPE support function.
+	(constrain_frame_rect, ns_constrain_all_frames)
 	(ns_update_auto_hide_menu_bar, ns_update_begin)
 	(ns_update_window_begin, update_window_end, ns_update_end)
 	(ns_focus, ns_unfocus, ns_ring_bell, ns_frame_raise_lower)
@@ -394,17 +380,17 @@
 	(resetCursorRects, setPosition, EmacsScroller_mouseDown)
 	(EmacsScroller_mouseDragged, syms_of_nsterm): Use new trace system.
 
-	* nsfns.m: Remove old NSTRACE macro.
-	* nsfns.m (x_set_icon_name, ns_set_name, x_explicitly_set_name)
+	* nsfns.m: Remove old NSTRACE macro
+	* src/nsfns.m (x_set_icon_name, ns_set_name, x_explicitly_set_name)
 	(x_implicitly_set_name, x_set_title, ns_set_name_as_filename)
 	(ns_implicitly_set_icon_type, x_set_icon_type): Use new trace system.
 
-	* nsimage.m: Remove old NSTRACE macro.
-	* nsimage.m (ns_image_from_XBM, ns_image_for_XPM)
+	* nsimage.m: Remove old NSTRACE macro
+	* src/nsimage.m (ns_image_from_XBM, ns_image_for_XPM)
 	(ns_image_from_bitmap_file, ns_load_image): Use new trace system.
 
-	* nsmenu.m: Remove old NSTRACE macro.
-	* nsmenu.m (ns_update_menubar, ns_menu_show, ns_popup_dialog):
+	* nsmenu.m: Remove old NSTRACE macro
+	* src/nsmenu.m (ns_update_menubar, ns_menu_show, ns_popup_dialog):
 	Use new trace system.
 
 2015-10-22  Katsumi Yamaoka  <yamaoka@jpl.org>
@@ -480,8 +466,8 @@
 
 	Improve doc-view wrt. auto-revert-mode
 
-	* lisp/doc-view.el (doc-view-revert-buffer): Don't revert when file is
-	corrupted (bug#21729).
+	* lisp/doc-view.el (doc-view-revert-buffer): Don't revert when file
+	is corrupted (bug#21729).
 	(doc-view-mode): Set doc-view-revert-buffer as revert-buffer-function.
 
 2015-10-22  Oleh Krehel  <ohwoeowho@gmail.com>
@@ -500,10 +486,6 @@
 
 	* lisp/net/tramp-gvfs.el (tramp-gvfs-handle-file-attributes):
 	Just suppress LC_MESSAGES locale category settings.
-
-2015-10-21  Paul Eggert  <eggert@cs.ucla.edu>
-
-	Spelling fixes
 
 2015-10-21  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -532,8 +514,6 @@
 
 2015-10-21  Katsumi Yamaoka  <yamaoka@jpl.org>
 
-	Remove fboundp checks from mailcap-mime-data
-
 	* lisp/gnus/mailcap.el (mailcap-mime-data): Remove fboundp checks.
 	(mailcap-viewer-passes-test): Do it instead.  Thanks to Stefan Monnier.
 
@@ -554,27 +534,23 @@
 
 2015-10-21  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/isearch.el (isearch-search-fun-default): Simplify logic
-
+	* lisp/isearch.el (isearch-search-fun-default): Simplify logic.
 	(isearch--lax-regexp-function-p): New function.
 
 2015-10-21  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/isearch.el: Support lax-whitespace in regexp-function searches
-
+	* lisp/isearch.el: Support lax-whitespace in regexp-function searches.
 	(isearch-search-fun-default): Let-bind `search-spaces-regexp'
 	around `isearch-regexp-function'.
 
 2015-10-21  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/isearch.el: Rename word search to regexp-function search
-
+	* lisp/isearch.el: Rename word search to regexp-function search.
 	`isearch-word' went well beyond its original purpose, and the name
 	no longer makes sense.  It is now called
-	`isearch-regexp-function', and it's value should always be a
-	function that converts a string to a regexp (though setting it to
-	t is still supported for now).
-
+	`isearch-regexp-function', and its value should always be a function
+	that converts a string to a regexp (though setting it to t is still
+	supported for now).
 	(isearch-word): Make obsolete.
 	(isearch-regexp-function): New variable.
 	(isearch-mode, isearch-done, isearch--state, isearch--set-state)
@@ -591,18 +567,12 @@
 	(isearch--describe-regexp-mode): New function.
 	(isearch--describe-word-mode): Make obsolete.
 
-	* lisp/info.el (Info-isearch-search): Use the new var.
-
-	* lisp/replace.el (replace-search, replace-highlight): Use the new
-	var.
-
-	* lisp/obsolete/longlines.el (longlines-search-function): Use the
-	new var.
-
-	* lisp/hexl.el (hexl-isearch-search-function): Use the new var.
-
-	* lisp/cedet/semantic/senator.el (senator-isearch-search-fun): Use
-	the new var.
+	* lisp/info.el (Info-isearch-search):
+	* lisp/replace.el (replace-search, replace-highlight):
+	* lisp/obsolete/longlines.el (longlines-search-function):
+	* lisp/hexl.el (hexl-isearch-search-function):
+	* lisp/cedet/semantic/senator.el (senator-isearch-search-fun):
+	Use the new var.
 
 2015-10-21  Oleh Krehel  <ohwoeowho@gmail.com>
 
@@ -629,7 +599,7 @@
 
 2015-10-21  Katsumi Yamaoka  <yamaoka@jpl.org>
 
-	lisp/gnus/mailcap.el (mailcap-mailcap-entry-passes-test): Doc fix
+	* lisp/gnus/mailcap.el (mailcap-mailcap-entry-passes-test): Doc fix.
 
 2015-10-20  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -774,25 +744,23 @@
 
 2015-10-20  Dmitry Gutov  <dgutov@yandex.ru>
 
-	Call vc-dir-defresh after stash operations
+	Call vc-dir-refresh after stash operations
 
 	* lisp/vc/vc-git.el (vc-git-stash-apply-at-point)
-	(vc-git-stash-pop-at-point): Call vc-dir-defresh (bug#13960).
+	(vc-git-stash-pop-at-point): Call vc-dir-refresh (bug#13960).
 
 	* lisp/vc/vc-dir.el (vc-dir-resynch-file): Expand FNAME as well,
 	since it can be abbreviated (as returned by vc-find-root).
 
 2015-10-20  Dmitry Gutov  <dgutov@yandex.ru>
 
-	Don't declare vc-exec-after anymore
-
 	* lisp/vc/vc-svn.el:
 	* lisp/vc/vc-mtn.el:
 	* lisp/vc/vc-hg.el:
 	* lisp/vc/vc-cvs.el:
 	* lisp/vc/vc-git.el:
-	* lisp/vc/vc-bzr.el: Don't declare vc-exec-after anymore.  Its
-	usages have been replaced with vc-run-delayed.
+	* lisp/vc/vc-bzr.el: Don't declare vc-exec-after anymore.
+	Its usages have been replaced with vc-run-delayed.
 
 2015-10-20  Dima Kogan  <dima@secretsauce.net>
 
@@ -811,9 +779,8 @@
 	Update the way directories are compressed
 
 	* lisp/dired-aux.el (dired-compress-file-suffixes): Update the recipe
-	  for *.tar.gz decompression to use a pipe.
-	  Add an entry for the default directory compression (to *.tar.g).
-
+	for *.tar.gz decompression to use a pipe.
+	Add an entry for the default directory compression (to *.tar.g).
 	(dired-compress-file): Update.
 
 	See https://lists.gnu.org/archive/html/emacs-devel/2015-10/msg00949.html.
@@ -823,7 +790,7 @@
 	Unbreak `group' option for `mail-sources'
 
 	* nnml.el (nnml-retrieve-groups, nnml-request-scan):
-	* nnmail.el (nnmail-get-new-mail-per-group):
+	* nnmail.el (nnmail-get-new-mail-per-group)
 	(nnmail-get-new-mail-1): Unbreak `group' option for `mail-sources'.
 
 2015-10-19  Nicolas Petton  <nicolas@petton.fr>
