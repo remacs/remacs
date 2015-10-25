@@ -843,10 +843,15 @@ be added to the archive.
 ** Autorevert: dired buffers are also auto-reverted via file
 notifications, if Emacs is compiled with file notification support.
 
+** File Notifications
+
 +++
-** File Notifications: the new function `file-notify-valid-p' checks,
-whether a file notification descriptor still corresponds to an
-activate watch.
+*** The new event `stopped' signals, that a file notification watch is
+not active any longer.
+
++++
+*** The new function `file-notify-valid-p' checks, whether a file
+notification descriptor still corresponds to an activate watch.
 
 ** Dired
 
