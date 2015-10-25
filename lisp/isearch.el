@@ -220,7 +220,9 @@ It is nil if none yet.")
 Default value, nil, means edit the string instead."
   :type 'boolean)
 
-(defcustom search-default-regexp-mode nil
+(autoload 'character-fold-to-regexp "character-fold")
+
+(defcustom search-default-regexp-mode #'character-fold-to-regexp
   "Default mode to use when starting isearch.
 Value is nil, t, or a function.
 
@@ -841,8 +843,6 @@ See the command `isearch-forward-symbol' for more information."
 ;;(defvar isearch-commands '(isearch-forward isearch-backward
 ;;			     isearch-forward-regexp isearch-backward-regexp)
 ;;  "List of commands for which isearch-mode does not recursive-edit.")
-
-(autoload 'character-fold-to-regexp "character-fold")
 
 (defun isearch-mode (forward &optional regexp op-fun recursive-edit regexp-function)
   "Start Isearch minor mode.
