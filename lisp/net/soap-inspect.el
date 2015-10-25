@@ -4,10 +4,10 @@
 
 ;; Author: Alexandru Harsanyi <AlexHarsanyi@gmail.com>
 ;; Created: October 2010
-;; Version: 3.0.0
+;; Version: 3.0.1
 ;; Keywords: soap, web-services, comm, hypermedia
 ;; Package: soap-client
-;; Homepage: http://code.google.com/p/emacs-soap-client
+;; Homepage: https://github.com/alex-hhh/emacs-soap-client
 
 ;; This file is part of GNU Emacs.
 
