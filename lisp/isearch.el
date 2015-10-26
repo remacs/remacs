@@ -1783,7 +1783,6 @@ replacements from Isearch is `M-s w ... M-%'."
       isearch-string
       (concat "Query replace"
               (isearch--describe-regexp-mode (or delimited isearch-regexp-function) t)
-              (if isearch-regexp " regexp" "")
 	      (if backward " backward" "")
 	      (if (and transient-mark-mode mark-active) " in region" ""))
       isearch-regexp)
@@ -2533,12 +2532,19 @@ If there is no completion possible, say so and continue searching."
   "Make a string for describing REGEXP-FUNCTION.
 If SPACE-BEFORE is non-nil, put a space before, instead of after,
 the word mode."
+  (when (eq regexp-function t)
+    (setq regexp-function #'word-search-regexp))
   (let ((description
-         (cond ((and (symbolp regexp-function)
-                     (get regexp-function 'isearch-message-prefix))
-                (get regexp-function 'isearch-message-prefix))
-               (regexp-function "word ")
-               (t ""))))
+         ;; Don't use a description on the default search mode.
+         (cond ((equal regexp-function search-default-regexp-mode) "")
+               (regexp-function
+                (and (symbolp regexp-function)
+                     (or (get regexp-function 'isearch-message-prefix)
+                         "")))
+               (isearch-regexp "regexp ")
+               ;; We're in literal mode. If the default mode is not
+               ;; literal, then describe it.
+               ((functionp search-default-regexp-mode) "literal "))))
     (if space-before
         ;; Move space from the end to the beginning.
         (replace-regexp-in-string "\\(.*\\) \\'" " \\1" description)
@@ -2574,7 +2580,6 @@ the word mode."
                       isearch-filter-predicate)
                      prefix)
                    (isearch--describe-regexp-mode isearch-regexp-function)
-                   (if isearch-regexp "regexp " "")
 		   (cond
 		    (multi-isearch-file-list "multi-file ")
 		    (multi-isearch-buffer-list "multi-buffer ")
