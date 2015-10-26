@@ -61,9 +61,9 @@
 
 (defmacro seq-doseq (spec &rest body)
   "Loop over a sequence.
-Similar to `dolist' but can be applied to lists, strings, and vectors.
-
 Evaluate BODY with VAR bound to each element of SEQUENCE, in turn.
+
+Similar to `dolist' but can be applied to lists, strings, and vectors.
 
 \(fn (VAR SEQUENCE) BODY...)"
   (declare (indent 1) (debug ((symbolp form &optional form) body)))
@@ -72,18 +72,18 @@ Evaluate BODY with VAR bound to each element of SEQUENCE, in turn.
            ,(cadr spec)))
 
 (pcase-defmacro seq (&rest patterns)
-  "pcase pattern matching sequence elements.
+  "Build a `pcase' pattern that matches elements of SEQUENCE.
 
-Matches if the object is a sequence (list, string or vector), and
-each PATTERN matches the corresponding element of the sequence.
+The `pcase' pattern will match each element of PATTERNS against the
+corresponding element of SEQUENCE.
 
-Supernumerary elements of the sequence are ignored if fewer
-PATTERNS are given, and the match does not fail."
+Extra elements of the sequence are ignored if fewer PATTERNS are
+given, and the match does not fail."
   `(and (pred seq-p)
         ,@(seq--make-pcase-bindings patterns)))
 
 (defmacro seq-let (args sequence &rest body)
-  "Bind the variables in ARGS to the elements of SEQUENCE then evaluate BODY.
+  "Bind the variables in ARGS to the elements of SEQUENCE, then evaluate BODY.
 
 ARGS can also include the `&rest' marker followed by a variable
 name to be bound to the rest of SEQUENCE."
@@ -94,7 +94,7 @@ name to be bound to the rest of SEQUENCE."
 
 ;;; Basic seq functions that have to be implemented by new sequence types
 (cl-defgeneric seq-elt (sequence n)
-  "Return the element of SEQUENCE at index N."
+  "Return Nth element of SEQUENCE."
   (elt sequence n))
 
 ;; Default gv setters for `seq-elt'.
@@ -107,7 +107,7 @@ name to be bound to the rest of SEQUENCE."
   (setcar (nthcdr n sequence) store))
 
 (cl-defgeneric seq-length (sequence)
-  "Return the length of SEQUENCE."
+  "Return the number of elements of SEQUENCE."
   (length sequence))
 
 (cl-defgeneric seq-do (function sequence)
@@ -126,11 +126,13 @@ Return SEQUENCE."
   (copy-sequence sequence))
 
 (cl-defgeneric seq-subseq (sequence start &optional end)
-  "Return the subsequence of SEQUENCE from START to END.
-If END is omitted, it defaults to the length of the sequence.
-If START or END is negative, it counts from the end.
-Signal an error if START or END are outside of the sequence (i.e
-too large if positive or too small if negative)."
+  "Return the sequence of elements of SEQUENCE from START to END.
+END is inclusive.
+
+If END is omitted, it defaults to the length of the sequence.  If
+START or END is negative, it counts from the end.  Signal an
+error if START or END are outside of the sequence (i.e too large
+if positive or too small if negative)."
   (cl-subseq sequence start end))
 
 
@@ -147,7 +149,7 @@ too large if positive or too small if negative)."
   (mapcar function sequence))
 
 (cl-defgeneric seq-drop (sequence n)
-  "Return a subsequence of SEQUENCE without its first N elements.
+  "Remove the first N elements of SEQUENCE and return the result.
 The result is a sequence of the same type as SEQUENCE.
 
 If N is a negative integer or zero, SEQUENCE is returned."
@@ -157,7 +159,7 @@ If N is a negative integer or zero, SEQUENCE is returned."
       (seq-subseq sequence (min n length) length))))
 
 (cl-defgeneric seq-take (sequence n)
-  "Return a subsequence of SEQUENCE with its first N elements.
+  "Take the first N elements of SEQUENCE and return the result.
 The result is a sequence of the same type as SEQUENCE.
 
 If N is a negative integer or zero, an empty sequence is
@@ -165,13 +167,15 @@ returned."
   (seq-subseq sequence 0 (min (max n 0) (seq-length sequence))))
 
 (cl-defgeneric seq-drop-while (pred sequence)
-  "Return a sequence from the first element for which (PRED element) is nil in SEQUENCE.
-The result is a sequence of the same type as SEQUENCE."
+  "Remove the successive elements of SEQUENCE for which PRED returns non-nil.
+PRED is a function of one argument.  The result is a sequence of
+the same type as SEQUENCE."
   (seq-drop sequence (seq--count-successive pred sequence)))
 
 (cl-defgeneric seq-take-while (pred sequence)
-  "Return the successive elements for which (PRED element) is non-nil in SEQUENCE.
-The result is a sequence of the same type as SEQUENCE."
+  "Take the successive elements of SEQUENCE for which PRED returns non-nil.
+PRED is a function of one argument.  The result is a sequence of
+the same type as SEQUENCE."
   (seq-take sequence (seq--count-successive pred sequence)))
 
 (cl-defgeneric seq-empty-p (sequence)
@@ -179,7 +183,7 @@ The result is a sequence of the same type as SEQUENCE."
   (= 0 (seq-length sequence)))
 
 (cl-defgeneric seq-sort (pred sequence)
-  "Return a sorted sequence comparing using PRED the elements of SEQUENCE.
+  "Sort SEQUENCE using PRED as comparison function.
 The result is a sequence of the same type as SEQUENCE."
   (let ((result (seq-sort pred (append sequence nil))))
     (seq-into result (type-of sequence))))
@@ -188,7 +192,7 @@ The result is a sequence of the same type as SEQUENCE."
   (sort (seq-copy list) pred))
 
 (cl-defgeneric seq-reverse (sequence)
-  "Return the reversed shallow copy of SEQUENCE."
+  "Return a sequence with elements of SEQUENCE in reverse order."
   (let ((result '()))
     (seq-map (lambda (elt)
                (push elt result))
@@ -200,7 +204,7 @@ The result is a sequence of the same type as SEQUENCE."
   (reverse sequence))
 
 (cl-defgeneric seq-concatenate (type &rest sequences)
-  "Concatenate, into a sequence of type TYPE, the sequences SEQUENCES.
+  "Concatenate SEQUENCES into a single sequence of type TYPE.
 TYPE must be one of following symbols: vector, string or list.
 
 \n(fn TYPE SEQUENCE...)"
@@ -217,8 +221,9 @@ of sequence."
   sequence)
 
 (cl-defgeneric seq-into (sequence type)
-  "Convert SEQUENCE into a sequence of type TYPE.
-TYPE can be one of the following symbols: vector, string or list."
+  "Concatenate the elements of SEQUENCE into a sequence of type TYPE.
+TYPE can be one of the following symbols: vector, string or
+list."
   (pcase type
     (`vector (vconcat sequence))
     (`string (concat sequence))
