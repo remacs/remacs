@@ -222,7 +222,7 @@ Default value, nil, means edit the string instead."
 
 (autoload 'character-fold-to-regexp "character-fold")
 
-(defcustom search-default-regexp-mode #'character-fold-to-regexp
+(defcustom search-default-regexp-mode nil
   "Default mode to use when starting isearch.
 Value is nil, t, or a function.
 
