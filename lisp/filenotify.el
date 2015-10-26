@@ -48,32 +48,33 @@ The value in the hash table is a list
 Several values for a given DIR happen only for `inotify', when
 different files from the same directory are watched.")
 
-(defun file-notify--rm-descriptor (descriptor)
+(defun file-notify--rm-descriptor (descriptor &optional what)
   "Remove DESCRIPTOR from `file-notify-descriptors'.
 DESCRIPTOR should be an object returned by `file-notify-add-watch'.
-If it is registered in `file-notify-descriptors', a stopped event is sent."
+If it is registered in `file-notify-descriptors', a stopped event is sent.
+WHAT is a file or directory name to be removed, needed just for `inotify'."
   (let* ((desc (if (consp descriptor) (car descriptor) descriptor))
 	 (file (if (consp descriptor) (cdr descriptor)))
          (registered (gethash desc file-notify-descriptors))
 	 (dir (car registered)))
 
-    (when (consp registered)
+    (when (and (consp registered) (or (null what) (string-equal dir what)))
       ;; Send `stopped' event.
       (dolist (entry (cdr registered))
-        (funcall (cdr entry)
-                 `(,(file-notify--descriptor desc) stopped
-                   ,(or (and (stringp (car entry))
-                             (expand-file-name (car entry) dir))
-                        dir))))
+	(funcall (cdr entry)
+		 `(,(file-notify--descriptor desc) stopped
+		   ,(or (and (stringp (car entry))
+			     (expand-file-name (car entry) dir))
+			dir))))
 
       ;; Modify `file-notify-descriptors'.
       (if (not file)
-          (remhash desc file-notify-descriptors)
-        (setcdr registered
-                (delete (assoc file (cdr registered)) (cdr registered)))
-        (if (null (cdr registered))
-            (remhash desc file-notify-descriptors)
-          (puthash desc registered file-notify-descriptors))))))
+	  (remhash desc file-notify-descriptors)
+	(setcdr registered
+		(delete (assoc file (cdr registered)) (cdr registered)))
+	(if (null (cdr registered))
+	    (remhash desc file-notify-descriptors)
+	  (puthash desc registered file-notify-descriptors))))))
 
 ;; This function is used by `gfilenotify', `inotify' and `w32notify' events.
 ;;;###autoload
@@ -85,6 +86,7 @@ If EVENT is a filewatch event, call its callback.  It has the format
 
 Otherwise, signal a `file-notify-error'."
   (interactive "e")
+  ;;(message "file-notify-handle-event %S" event)
   (if (and (eq (car event) 'file-notify)
 	   (>= (length event) 3))
       (funcall (nth 2 event) (nth 1 event))
@@ -224,6 +226,7 @@ EVENT is the cadr of the event in `file-notify-handle-event'
           (setq pending-event nil))
 
         ;; Check for stopped.
+	;;(message "file-notify-callback %S %S" file registered)
         (setq
          stopped
          (or
@@ -232,7 +235,9 @@ EVENT is the cadr of the event in `file-notify-handle-event'
            (memq action '(deleted renamed))
            (= (length (cdr registered)) 1)
            (string-equal
-            (or (file-name-nondirectory file) "") (car (cadr registered))))))
+            (file-name-nondirectory file)
+	    (or (file-name-nondirectory (car registered))
+		(car (cadr registered)))))))
 
 	;; Apply callback.
 	(when (and action
@@ -257,7 +262,7 @@ EVENT is the cadr of the event in `file-notify-handle-event'
 
       ;; Modify `file-notify-descriptors'.
       (when stopped
-        (file-notify--rm-descriptor (file-notify--descriptor desc))))))
+        (file-notify--rm-descriptor (file-notify--descriptor desc) file)))))
 
 ;; `gfilenotify' and `w32notify' return a unique descriptor for every
 ;; `file-notify-add-watch', while `inotify' returns a unique
@@ -324,8 +329,8 @@ FILE is the name of the file whose event is being reported."
 	(setq desc (funcall
 		    handler 'file-notify-add-watch dir flags callback))
 
-      ;; Check, whether Emacs has been compiled with file
-      ;; notification support.
+      ;; Check, whether Emacs has been compiled with file notification
+      ;; support.
       (unless file-notify--library
 	(signal 'file-notify-error
 		'("No file notification package available")))
@@ -344,7 +349,8 @@ FILE is the name of the file whose event is being reported."
 	  (setq
 	   l-flags
 	   (cond
-	    ((eq file-notify--library 'inotify) '(create modify move delete))
+	    ((eq file-notify--library 'inotify)
+	     '(create delete delete-self modify move-self move))
 	    ((eq file-notify--library 'w32notify)
 	     '(file-name directory-name size last-write-time)))))
 	(when (memq 'attribute-change flags)
