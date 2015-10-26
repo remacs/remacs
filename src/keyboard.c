@@ -11385,13 +11385,9 @@ If an unhandled error happens in running this hook,
 the function in which the error occurred is unconditionally removed, since
 otherwise the error might happen repeatedly and make Emacs nonfunctional.
 
-It is usually a bad idea to use this hook for expensive processing.
-If unavoidable, `while-no-input' can be used avoid making Emacs
-unresponsive while the user types.  Furthermore, this hook is run
-before redisplay, so the effect of the executed command won't be
-displayed on the buffer until after the hook has finished (giving the
-impression that Emacs is hanging).  You can call `redisplay' inside
-`while-no-input' to avoid this.
+It is a bad idea to use this hook for expensive processing.  If
+unavoidable, wrap your code in `(while-no-input (redisplay) CODE)' to
+avoid making Emacs unresponsive while the user types.
 
 See also `pre-command-hook'.  */);
   Vpost_command_hook = Qnil;
