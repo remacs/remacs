@@ -459,8 +459,8 @@ Don't wait longer than TIMEOUT seconds for the events to be delivered."
 	    (should auto-revert-use-notify)
 	    (should auto-revert-notify-watch-descriptor)
 
-	    ;; Modify file.  We wait for a second, in order to
-	    ;; have another timestamp.
+	    ;; Modify file.  We wait for a second, in order to have
+	    ;; another timestamp.
             (with-current-buffer (get-buffer-create "*Messages*")
               (narrow-to-region (point-max) (point-max)))
 	    (sleep-for 1)
@@ -483,8 +483,8 @@ Don't wait longer than TIMEOUT seconds for the events to be delivered."
 	    (should-not auto-revert-use-notify)
 	    (should-not auto-revert-notify-watch-descriptor)
 
-	    ;; Modify file.  We wait for a second, in order to
-	    ;; have another timestamp.
+	    ;; Modify file.  We wait for two seconds, in order to have
+	    ;; another timestamp.  One second seems to be too short.
             (with-current-buffer (get-buffer-create "*Messages*")
               (narrow-to-region (point-max) (point-max)))
 	    (sleep-for 2)
