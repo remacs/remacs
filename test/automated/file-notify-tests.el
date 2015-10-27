@@ -461,6 +461,8 @@ Don't wait longer than TIMEOUT seconds for the events to be delivered."
 
 	    ;; Modify file.  We wait for a second, in order to
 	    ;; have another timestamp.
+            (with-current-buffer (get-buffer-create "*Messages*")
+              (narrow-to-region (point-max) (point-max)))
 	    (sleep-for 1)
             (write-region
              "another text" nil file-notify--test-tmpfile nil 'no-message)
@@ -472,9 +474,34 @@ Don't wait longer than TIMEOUT seconds for the events to be delivered."
 	       (string-match
                 (format-message "Reverting buffer `%s'." (buffer-name buf))
                 (buffer-string))))
-	    (should (string-match "another text" (buffer-string)))))
+	    (should (string-match "another text" (buffer-string)))
+
+            ;; Stop file notification.  Autorevert shall still work via polling.
+	    (file-notify-rm-watch auto-revert-notify-watch-descriptor)
+            (file-notify--wait-for-events
+             timeout (null auto-revert-use-notify))
+	    (should-not auto-revert-use-notify)
+	    (should-not auto-revert-notify-watch-descriptor)
+
+	    ;; Modify file.  We wait for a second, in order to
+	    ;; have another timestamp.
+            (with-current-buffer (get-buffer-create "*Messages*")
+              (narrow-to-region (point-max) (point-max)))
+	    (sleep-for 2)
+            (write-region
+             "foo bla" nil file-notify--test-tmpfile nil 'no-message)
+
+	    ;; Check, that the buffer has been reverted.
+	    (with-current-buffer (get-buffer-create "*Messages*")
+	      (file-notify--wait-for-events
+	       timeout
+	       (string-match
+                (format-message "Reverting buffer `%s'." (buffer-name buf))
+                (buffer-string))))
+	    (should (string-match "foo bla" (buffer-string)))))
 
       ;; Cleanup.
+      (with-current-buffer "*Messages*" (widen))
       (ignore-errors (kill-buffer buf))
       (file-notify--test-cleanup))))
 
