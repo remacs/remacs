@@ -264,7 +264,7 @@ highlighting the Log View buffer."
                                  "{if(parents, 'parents:     {parents}\n')}"
                                  "user:        {author}\n"
                                  "Date:        {date|date}\n"
-                                 "summary:     {desc}\n\n")
+                                 "summary:     {desc|tabindent}\n\n")
   "Mercurial log template for `vc-hg-print-log' long format.")
 
 (defun vc-hg-print-log (files buffer &optional shortlog start-revision limit)
@@ -305,6 +305,7 @@ If LIMIT is non-nil, show no more than this many entries."
        (if (eq vc-log-view-type 'short)
 	   (cadr vc-hg-root-log-format)
          "^changeset:[ \t]*\\([0-9]+\\):\\(.+\\)"))
+  (set (make-local-variable 'tab-width) 2)
   ;; Allow expanding short log entries
   (when (eq vc-log-view-type 'short)
     (setq truncate-lines t)
