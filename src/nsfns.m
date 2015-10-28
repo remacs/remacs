@@ -1298,6 +1298,8 @@ This function is an internal primitive--use `make-frame' instead.  */)
      = [NSCursor arrowCursor];
   f->output_data.ns->current_pointer = f->output_data.ns->text_cursor;
 
+  f->output_data.ns->in_animation = NO;
+
   [[EmacsView alloc] initFrameFromEmacs: f];
 
   x_icon (f, parms);

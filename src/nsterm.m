@@ -1501,7 +1501,7 @@ x_set_window_size (struct frame *f,
   if (view == nil)
     return;
 
-  NSTRACE_RECT ("input", wr);
+  NSTRACE_RECT ("current", wr);
 
 /*fprintf (stderr, "\tsetWindowSize: %d x %d, pixelwise %d, font size %d x %d\n", width, height, pixelwise, FRAME_COLUMN_WIDTH (f), FRAME_LINE_HEIGHT (f));*/
 
@@ -1563,7 +1563,6 @@ x_set_window_size (struct frame *f,
 	   make_number (FRAME_NS_TITLEBAR_HEIGHT (f)),
 	   make_number (FRAME_TOOLBAR_HEIGHT (f))));
 
-  [view setRows: rows andColumns: cols];
   NSTRACE_RECT ("setFrame", wr);
   [window setFrame: wr display: YES];
 
@@ -6171,6 +6170,8 @@ not_in_argv (NSString *arg)
   NSTRACE ("updateFrameSize");
   NSTRACE_SIZE ("Original size", NSMakeSize (oldw, oldh));
   NSTRACE_RECT ("Original frame", wr);
+  NSTRACE_MSG  ("Original columns: %d", cols);
+  NSTRACE_MSG  ("Original rows: %d", rows);
 
   if (! [self isFullscreen])
     {
@@ -6187,12 +6188,18 @@ not_in_argv (NSString *arg)
   if (wait_for_tool_bar)
     {
       if (FRAME_TOOLBAR_HEIGHT (emacsframe) == 0)
-        return;
+        {
+          NSTRACE_MSG ("Waiting for toolbar");
+          return;
+        }
       wait_for_tool_bar = NO;
     }
 
   neww = (int)wr.size.width - emacsframe->border_width;
   newh = (int)wr.size.height - extra;
+
+  NSTRACE_SIZE ("New size", NSMakeSize (neww, newh));
+  NSTRACE_MSG ("tool_bar_height: %d", emacsframe->tool_bar_height);
 
   cols = FRAME_PIXEL_WIDTH_TO_TEXT_COLS (emacsframe, neww);
   rows = FRAME_PIXEL_HEIGHT_TO_TEXT_LINES (emacsframe, newh);
@@ -6202,6 +6209,9 @@ not_in_argv (NSString *arg)
 
   if (rows < MINHEIGHT)
     rows = MINHEIGHT;
+
+  NSTRACE_MSG  ("New columns: %d", cols);
+  NSTRACE_MSG  ("New rows: %d", rows);
 
   if (oldr != rows || oldc != cols || neww != oldw || newh != oldh)
     {
@@ -6219,6 +6229,10 @@ not_in_argv (NSString *arg)
       NSTRACE_RECT ("setFrame", wr);
       [view setFrame: wr];
       [self windowDidMove:nil];   // Update top/left.
+    }
+  else
+    {
+      NSTRACE_MSG ("No change");
     }
 }
 
@@ -6327,6 +6341,12 @@ not_in_argv (NSString *arg)
 - (void)windowDidResize: (NSNotification *)notification
 {
   NSTRACE ("windowDidResize");
+
+  if (emacsframe->output_data.ns->in_animation)
+    {
+      NSTRACE_MSG ("Ignored (in animation)");
+      return;
+    }
 
   if (! [self fsIsNative])
     {
@@ -7425,6 +7445,7 @@ not_in_argv (NSString *arg)
 
 - (void) setRows: (int) r andColumns: (int) c
 {
+  NSTRACE ("[EmacsView setRows:%d andColumns:%d]", r, c);
   rows = r;
   cols = c;
 }

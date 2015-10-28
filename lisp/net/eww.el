@@ -1501,7 +1501,7 @@ If CHARSET is nil then use UTF-8."
       (setq start (point)
 	    title (plist-get bookmark :title))
       (when (> (length title) width)
-	(setq title (substring title 0 width)))
+	(setq title (truncate-string-to-width title width)))
       (insert (format format title (plist-get bookmark :url)) "\n")
       (put-text-property start (1+ start) 'eww-bookmark bookmark))
     (goto-char (point-min))))
