@@ -180,5 +180,27 @@
           (should (= x 2)))
       (remove-hook 'post-self-insert-hook inc))))
 
+
+;;; `delete-trailing-whitespace'
+(ert-deftest simple-delete-trailing-whitespace ()
+  "Test bug#21766: delete-whitespace sometimes deletes non-whitespace."
+  (defvar python-indent-guess-indent-offset)  ; to avoid a warning
+  (let ((python (featurep 'python))
+        (python-indent-guess-indent-offset nil)
+        (delete-trailing-lines t))
+    (unwind-protect
+        (with-temp-buffer
+          (python-mode)
+          (insert (concat "query = \"\"\"WITH filtered AS \n"
+                          "WHERE      \n"
+                          "\"\"\".format(fv_)\n"
+                          "\n"
+                          "\n"))
+          (delete-trailing-whitespace)
+          (should (equal (count-lines (point-min) (point-max)) 3)))
+      ;; Let's clean up if running interactive
+      (unless (or noninteractive python)
+        (unload-feature 'python)))))
+
 (provide 'simple-test)
 ;;; simple-test.el ends here
