@@ -2697,6 +2697,11 @@ watch library.  Otherwise, the actions @code{deleted} and
 (rename-file "/tmp/foo" "/tmp/bla")
      @result{} Event (35025468 renamed "/tmp/foo" "/tmp/bla")
 @end group
+
+@group
+(delete-file "/tmp/bla")
+     @result{} Event (35025468 deleted "/tmp/bla")
+@end group
 @end example
 @end defun
 
@@ -2718,15 +2723,15 @@ also makes it invalid.
 
 @example
 @group
-(setq desc (file-notify-add-watch
-             "/tmp/foo" '(change) 'my-notify-callback))
-     @result{} 35025468
+(make-directory "/tmp/foo")
+     @result{} nil
 @end group
 
 @group
-(write-region "foo" nil "/tmp/foo")
-     @result{} Event (35025468 created "/tmp/foo")
-        Event (35025468 changed "/tmp/foo")
+(setq desc
+      (file-notify-add-watch
+        "/tmp/foo" '(change) 'my-notify-callback))
+     @result{} 35025468
 @end group
 
 @group
@@ -2735,8 +2740,32 @@ also makes it invalid.
 @end group
 
 @group
-(delete-file "/tmp/foo")
-     @result{} Event (35025468 deleted "/tmp/foo")
+(write-region "bla" nil "/tmp/foo/bla")
+     @result{} Event (35025468 created "/tmp/foo/.#bla")
+        Event (35025468 created "/tmp/foo/bla")
+        Event (35025468 changed "/tmp/foo/bla")
+        Event (35025468 changed "/tmp/foo/.#bla")
+@end group
+
+@group
+;; Deleting a file in the directory doesn't invalidate the watch.
+(delete-file "/tmp/foo/bla")
+     @result{} Event (35025468 deleted "/tmp/foo/bla")
+@end group
+
+@group
+(write-region "bla" nil "/tmp/foo/bla")
+     @result{} Event (35025468 created "/tmp/foo/.#bla")
+        Event (35025468 created "/tmp/foo/bla")
+        Event (35025468 changed "/tmp/foo/bla")
+        Event (35025468 changed "/tmp/foo/.#bla")
+@end group
+
+@group
+;; Deleting the directory invalidates the watch.
+(delete-directory "/tmp/foo" 'recursive)
+     @result{} Event (35025468 deleted "/tmp/foo/bla")
+        Event (35025468 deleted "/tmp/foo")
         Event (35025468 stopped "/tmp/foo")
 @end group
 

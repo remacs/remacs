@@ -26,6 +26,7 @@
            (debug t))
   `(with-temp-buffer
      (emacs-lisp-mode)
+     (setq indent-tabs-mode nil)
      (insert "(a b")
      (save-excursion (insert " c d)"))
      ,@body
