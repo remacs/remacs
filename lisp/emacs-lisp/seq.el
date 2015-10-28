@@ -4,7 +4,7 @@
 
 ;; Author: Nicolas Petton <nicolas@petton.fr>
 ;; Keywords: sequences
-;; Version: 2.1
+;; Version: 2.2
 ;; Package: seq
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -147,6 +147,21 @@ if positive or too small if negative)."
 ;; faster implementation for sequences (sequencep)
 (cl-defmethod seq-map (function (sequence sequence))
   (mapcar function sequence))
+
+(cl-defgeneric seq-mapn (function sequence &rest sequences)
+  "Like `seq-map' but FUNCTION is mapped over all SEQUENCES.
+The arity of FUNCTION must match the number of SEQUENCES, and the
+mapping stops on the shortest sequence.
+Return a list of the results.
+
+\(fn FUNCTION SEQUENCES...)"
+  (let ((result nil)
+        (sequences (seq-map (lambda (s) (seq-into s 'list))
+                            (cons sequence sequences))))
+    (while (not (memq nil sequences))
+      (push (apply function (seq-map #'car sequences)) result)
+      (setq sequences (seq-map #'cdr sequences)))
+    (nreverse result)))
 
 (cl-defgeneric seq-drop (sequence n)
   "Remove the first N elements of SEQUENCE and return the result.
