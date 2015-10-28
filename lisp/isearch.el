@@ -1532,48 +1532,46 @@ The command then executes BODY and updates the isearch prompt."
   (setq isearch-regexp (not isearch-regexp))
   (if isearch-regexp (setq isearch-regexp-function nil)))
 
+(defun isearch--momentary-message (string)
+  "Print STRING at the end of the isearch prompt for 1 second"
+  (let ((message-log-max nil))
+    (message "%s%s [%s]"
+             (isearch-message-prefix nil isearch-nonincremental)
+             isearch-message
+             string))
+  (sit-for 1))
+
 (isearch-define-mode-toggle lax-whitespace " " nil
   "In ordinary search, toggles the value of the variable
 `isearch-lax-whitespace'.  In regexp search, toggles the
 value of the variable `isearch-regexp-lax-whitespace'."
-  (if isearch-regexp
-      (setq isearch-regexp-lax-whitespace (not isearch-regexp-lax-whitespace))
-    (setq isearch-lax-whitespace (not isearch-lax-whitespace)))
-  (let ((message-log-max nil))
-    (message "%s%s [%s]"
-	     (isearch-message-prefix nil isearch-nonincremental)
-	     isearch-message
-	     (if (if isearch-regexp
-		     isearch-regexp-lax-whitespace
-		   isearch-lax-whitespace)
-		 "match spaces loosely"
-	       "match spaces literally")))
-  (sit-for 1))
+  (isearch--momentary-message
+   (if (if isearch-regexp
+           (setq isearch-regexp-lax-whitespace (not isearch-regexp-lax-whitespace))
+         (setq isearch-lax-whitespace (not isearch-lax-whitespace)))
+       "match spaces loosely"
+     "match spaces literally")))
 
 (isearch-define-mode-toggle case-fold "c" nil
   "Toggles the value of the variable `isearch-case-fold-search'."
-  (setq isearch-case-fold-search
-	(if isearch-case-fold-search nil 'yes))
-  (let ((message-log-max nil))
-    (message "%s%s [case %ssensitive]"
-	     (isearch-message-prefix nil isearch-nonincremental)
-	     isearch-message
-	     (if isearch-case-fold-search "in" "")))
-  (sit-for 1))
+  (isearch--momentary-message
+   (if (setq isearch-case-fold-search
+             (if isearch-case-fold-search nil 'yes))
+       "case insensitive"
+     "case sensitive")))
 
 (isearch-define-mode-toggle invisible "i" nil
   "This determines whether to search inside invisible text or not.
 Toggles the variable `isearch-invisible' between values
 nil and a non-nil value of the option `search-invisible'
 \(or `open' if `search-invisible' is nil)."
-  (setq isearch-invisible
-        (if isearch-invisible nil (or search-invisible 'open)))
-  (let ((message-log-max nil))
-    (message "%s%s [match %svisible text]"
-             (isearch-message-prefix nil isearch-nonincremental)
-             isearch-message
-             (if isearch-invisible "in" "")))
-  (sit-for 1))
+  "match %svisible text"
+  (isearch--momentary-message
+   (if (setq isearch-invisible
+             (if isearch-invisible
+                 nil (or search-invisible 'open)))
+       "match invisible text"
+     "match visible text")))
 
 
 ;; Word search
