@@ -107,10 +107,32 @@
 Any character in STRING that has an entry in
 `character-fold-table' is replaced with that entry (which is a
 regexp) and other characters are `regexp-quote'd."
-  (apply #'concat
-         (mapcar (lambda (c) (or (aref character-fold-table c)
-                            (regexp-quote (string c))))
-                 string)))
+  (let* ((spaces 0)
+         (chars (mapcar #'identity string))
+         (out chars))
+    ;; When the user types a space, we want to match the table entry,
+    ;; but we also want the ?\s to be visible to `search-spaces-regexp'.
+    ;; See commit message for a longer description.
+    (while chars
+      (let ((c (car chars)))
+        (setcar chars
+                (cond
+                 ((eq c ?\s)
+                  (setq spaces (1+ spaces))
+                  nil)
+                 ((> spaces 0)
+                  (prog1 (format "\\(?:%s\\|%s\\)%s"
+                                 (make-string spaces ?\s)
+                                 (apply #'concat
+                                        (make-list spaces
+                                                   (or (aref character-fold-table ?\s) " ")))
+                                 (or (aref character-fold-table c)
+                                     (regexp-quote (string c))))
+                    (setq spaces 0)))
+                 (t (or (aref character-fold-table c)
+                        (regexp-quote (string c))))))
+        (setq chars (cdr chars))))
+    (apply #'concat out)))
 
 
 ;;; Commands provided for completeness.
