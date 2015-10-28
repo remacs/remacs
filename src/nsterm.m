@@ -844,6 +844,8 @@ ns_constrain_all_frames (void)
 
   NSTRACE ("ns_constrain_all_frames");
 
+  block_input ();
+
   FOR_EACH_FRAME (tail, frame)
     {
       struct frame *f = XFRAME (frame);
@@ -855,6 +857,8 @@ ns_constrain_all_frames (void)
                           display:NO];
         }
     }
+
+  unblock_input ();
 }
 
 
@@ -3635,7 +3639,7 @@ ns_send_appdefined (int value)
               recognize and take as a command to halt the event loop.
    -------------------------------------------------------------------------- */
 {
-  /*NSTRACE ("ns_send_appdefined"); */
+  NSTRACE ("ns_send_appdefined");
 
 #ifdef NS_IMPL_GNUSTEP
   // GNUstep needs postEvent to happen on the main thread.
@@ -4529,6 +4533,8 @@ ns_term_init (Lisp_Object display_name)
   if (ns_initialized) return x_display_list;
   ns_initialized = 1;
 
+  block_input ();
+
   NSTRACE ("ns_term_init");
 
   [outerpool release];
@@ -4768,6 +4774,8 @@ ns_term_init (Lisp_Object display_name)
 
   NSTRACE_MSG ("ns_term_init done");
 
+  unblock_input ();
+
   return dpyinfo;
 }
 
@@ -4803,6 +4811,8 @@ ns_term_shutdown (int sig)
 
 - (id)init
 {
+  NSTRACE ("[EmacsApp init]");
+
   if ((self = [super init]))
     {
 #ifdef NS_IMPL_COCOA
@@ -4819,6 +4829,8 @@ ns_term_shutdown (int sig)
 #ifdef NS_IMPL_COCOA
 - (void)run
 {
+  NSTRACE ("[EmacsApp run]");
+
 #ifndef NSAppKitVersionNumber10_9
 #define NSAppKitVersionNumber10_9 1265
 #endif
@@ -4855,6 +4867,8 @@ ns_term_shutdown (int sig)
 
 - (void)stop: (id)sender
 {
+  NSTRACE ("[EmacsApp stop]");
+
     shouldKeepRunning = NO;
     // Stop possible dialog also.  Noop if no dialog present.
     // The file dialog still leaks 7k - 10k on 10.9 though.
@@ -4864,6 +4878,8 @@ ns_term_shutdown (int sig)
 
 - (void)logNotification: (NSNotification *)notification
 {
+  NSTRACE ("[EmacsApp logNotification]");
+
   const char *name = [[notification name] UTF8String];
   if (!strstr (name, "Update") && !strstr (name, "NSMenu")
       && !strstr (name, "WindowNumber"))
@@ -4880,7 +4896,7 @@ ns_term_shutdown (int sig)
   int type = [theEvent type];
   NSWindow *window = [theEvent window];
 
-/*  NSTRACE ("sendEvent"); */
+  NSTRACE ("[EmacsApp sendEvent]");
 /*fprintf (stderr, "received event of type %d\t%d\n", type);*/
 
 #ifdef NS_IMPL_GNUSTEP
@@ -4987,6 +5003,8 @@ ns_term_shutdown (int sig)
 
 - (void)newFrame: (id)sender
 {
+  NSTRACE ("[EmacsApp newFrame]");
+
   struct frame *emacsframe = SELECTED_FRAME ();
   NSEvent *theEvent = [NSApp currentEvent];
 
@@ -5002,6 +5020,8 @@ ns_term_shutdown (int sig)
 /* Open a file (used by below, after going into queue read by ns_read_socket) */
 - (BOOL) openFile: (NSString *)fileName
 {
+  NSTRACE ("[EmacsApp openFile]");
+
   struct frame *emacsframe = SELECTED_FRAME ();
   NSEvent *theEvent = [NSApp currentEvent];
 
@@ -5030,7 +5050,8 @@ ns_term_shutdown (int sig)
      When application is loaded, terminate event loop in ns_term_init
    -------------------------------------------------------------------------- */
 {
-  NSTRACE ("applicationDidFinishLaunching");
+  NSTRACE ("[EmacsApp applicationDidFinishLaunching]");
+
 #ifdef NS_IMPL_GNUSTEP
   ((EmacsApp *)self)->applicationDidFinishLaunchingCalled = YES;
 #endif
@@ -5079,6 +5100,8 @@ ns_term_shutdown (int sig)
 
 - (void) terminate: (id)sender
 {
+  NSTRACE ("[EmacsApp terminate]");
+
   struct frame *emacsframe = SELECTED_FRAME ();
 
   if (!emacs_event)
@@ -5115,6 +5138,8 @@ runAlertPanel(NSString *title,
 
 - (NSApplicationTerminateReply)applicationShouldTerminate: (id)sender
 {
+  NSTRACE ("[EmacsApp applicationShouldTerminate]");
+
   bool ret;
 
   if (NILP (ns_confirm_quit)) //   || ns_shutdown_properly  --> TO DO
@@ -5194,11 +5219,13 @@ not_in_argv (NSString *arg)
 /* TODO: these may help w/IO switching btwn terminal and NSApp */
 - (void)applicationWillBecomeActive: (NSNotification *)notification
 {
+  NSTRACE ("[EmacsApp applicationWillBecomeActive]");
   //ns_app_active=YES;
 }
+
 - (void)applicationDidBecomeActive: (NSNotification *)notification
 {
-  NSTRACE ("applicationDidBecomeActive");
+  NSTRACE ("[EmacsApp applicationDidBecomeActive]");
 
 #ifdef NS_IMPL_GNUSTEP
   if (! applicationDidFinishLaunchingCalled)
@@ -5212,6 +5239,8 @@ not_in_argv (NSString *arg)
 }
 - (void)applicationDidResignActive: (NSNotification *)notification
 {
+  NSTRACE ("[EmacsApp applicationDidResignActive]");
+
   //ns_app_active=NO;
   ns_send_appdefined (-1);
 }
