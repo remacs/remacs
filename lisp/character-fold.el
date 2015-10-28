@@ -101,6 +101,13 @@
       equiv))
   "Used for folding characters of the same group during search.")
 
+(defun character-fold--make-space-string (n)
+  "Return a string that matches N spaces."
+  (format "\\(?:%s\\|%s\\)"
+          (make-string n ?\s)
+          (apply #'concat
+                 (make-list n (or (aref character-fold-table ?\s) " ")))))
+
 ;;;###autoload
 (defun character-fold-to-regexp (string &optional _lax)
   "Return a regexp matching anything that character-folds into STRING.
@@ -121,18 +128,16 @@ regexp) and other characters are `regexp-quote'd."
                   (setq spaces (1+ spaces))
                   nil)
                  ((> spaces 0)
-                  (prog1 (format "\\(?:%s\\|%s\\)%s"
-                                 (make-string spaces ?\s)
-                                 (apply #'concat
-                                        (make-list spaces
-                                                   (or (aref character-fold-table ?\s) " ")))
+                  (prog1 (concat (character-fold--make-space-string spaces)
                                  (or (aref character-fold-table c)
                                      (regexp-quote (string c))))
                     (setq spaces 0)))
                  (t (or (aref character-fold-table c)
                         (regexp-quote (string c))))))
         (setq chars (cdr chars))))
-    (apply #'concat out)))
+    (concat (apply #'concat out)
+            (when (> spaces 0)
+              (character-fold--make-space-string spaces)))))
 
 
 ;;; Commands provided for completeness.
