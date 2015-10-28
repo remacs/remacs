@@ -115,6 +115,8 @@ frames.
 
 ** New doc command `describe-symbol'.  Works for functions, vars, faces, etc...
 
+** New user option `search-default-regexp-mode' specifies the default mode for isearch
+
 ** `isearch' and `query-replace' now perform character folding in matches.
 This is analogous to case-folding, but applies between Unicode
 characters and their ASCII counterparts.  This means many characters
