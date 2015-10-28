@@ -57,8 +57,8 @@
              ,forced
            (unless ,forced
              (setf ,val (progn ,@body))
-             (setf ,forced t)))
-         ,val))))
+             (setf ,forced t))
+           ,val)))))
 
 (defun thunk-force (delayed)
   "Force the evaluation of DELAYED.
