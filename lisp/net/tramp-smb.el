@@ -649,7 +649,8 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
   (directory &optional full match nosort)
   "Like `directory-files' for Tramp files."
   (let ((result (mapcar 'directory-file-name
-			(file-name-all-completions "" directory))))
+			(file-name-all-completions "" directory)))
+	res)
     ;; Discriminate with regexp.
     (when match
       (setq result
@@ -664,7 +665,9 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	     result)))
     ;; Sort them if necessary.
     (unless nosort (setq result (sort result 'string-lessp)))
-    (delete-dups result)))
+    ;; Remove double entries.
+    (dolist (elt result res)
+      (add-to-list 'res elt 'append))))
 
 (defun tramp-smb-handle-expand-file-name (name &optional dir)
   "Like `expand-file-name' for Tramp files."
