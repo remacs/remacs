@@ -65,9 +65,12 @@ typedef float EmacsCGFloat;
 
    ========================================================================== */
 
-/* Uncomment the following line to enable trace. */
+/* Uncomment the following line to enable trace.
 
-/* #define NSTRACE_ENABLED 1 */
+   Hint: keep the trailing whitespace -- the version control system
+   will reject accidental commits. */
+
+/* #define NSTRACE_ENABLED 1          */
 
 
 /* Print a call tree containing all annotated functions.
@@ -913,6 +916,9 @@ struct ns_output
 
   /* Non-zero if we are zooming (maximizing) the frame.  */
   int zooming;
+
+  /* Non-zero if we are doing an animation, e.g. toggling the tool bar. */
+  int in_animation;
 };
 
 /* this dummy decl needed to support TTYs */
