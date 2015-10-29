@@ -609,8 +609,7 @@ buffer if the variable `delete-trailing-lines' is non-nil."
             (start (or start (point-min))))
         (goto-char start)
         (while (re-search-forward "\\s-$" end-marker t)
-          (save-match-data
-            (skip-syntax-backward "-" (line-beginning-position)))
+          (skip-syntax-backward "-" (line-beginning-position))
           ;; Don't delete formfeeds, even if they are considered whitespace.
           (if (looking-at-p ".*\f")
               (goto-char (match-end 0)))
