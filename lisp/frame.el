@@ -33,8 +33,12 @@ The window system startup file should add its frame creation
 function to this method, which should take an alist of parameters
 as its argument.")
 
-(cl-defmethod frame-creation-function (params
-                                       &context (window-system (eql nil)))
+(cl-generic-define-context-rewriter window-system (value)
+  ;; If `value' is a `consp', it's probably an old-style specializer,
+  ;; so just use it, and anyway `eql' isn't very useful on cons cells.
+  `(window-system ,(if (consp value) value `(eql ,value))))
+
+(cl-defmethod frame-creation-function (params &context (window-system nil))
   ;; It's tempting to get rid of tty-create-frame-with-faces and turn it into
   ;; this method (i.e. move this method to faces.el), but faces.el is loaded
   ;; much earlier from loadup.el (before cl-generic and even before

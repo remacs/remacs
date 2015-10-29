@@ -266,6 +266,15 @@ BODY, if present, is used as the body of a default method.
 This macro can only be used within the lexical scope of a cl-generic method."
   (error "cl-generic-current-method-specializers used outside of a method"))
 
+(defmacro cl-generic-define-context-rewriter (name args &rest body)
+  "Define a special kind of context named NAME.
+Whenever a context specializer of the form (NAME . ACTUALS) appears,
+the specializer used will be the one returned by BODY."
+  (declare (debug (&define name lambda-list def-body)) (indent defun))
+  `(eval-and-compile
+     (put ',name 'cl-generic--context-rewriter
+          (lambda ,args ,@body))))
+
 (eval-and-compile         ;Needed while compiling the cl-defmethod calls below!
   (defun cl--generic-fgrep (vars sexp)    ;Copied from pcase.el.
     "Check which of the symbols VARS appear in SEXP."
@@ -292,6 +301,11 @@ This macro can only be used within the lexical scope of a cl-generic method."
                 ((let 'context mandatory)
                  (unless (consp arg)
                    (error "Invalid &context arg: %S" arg))
+                 (let* ((name (car arg))
+                        (rewriter
+                         (and (symbolp name)
+                              (get name 'cl-generic--context-rewriter))))
+                   (if rewriter (setq arg (apply rewriter (cdr arg)))))
                  (push `((&context . ,(car arg)) . ,(cadr arg)) specializers)
                  nil)
                 (`(,name . ,type)
@@ -1105,6 +1119,37 @@ The value returned is a list of elements of the form
    (cl-call-next-method)))
 
 (cl--generic-prefill-dispatchers 0 integer)
+
+;;; Dispatch on major mode.
+
+;; Two parts:
+;; - first define a specializer (derived-mode <mode>) to match symbols
+;;   representing major modes, while obeying the major mode hierarchy.
+;; - then define a context-rewriter so you can write
+;;   "&context (major-mode c-mode)" rather than
+;;   "&context (major-mode (derived-mode c-mode))".
+
+(defun cl--generic-derived-specializers (mode &rest _)
+  ;; FIXME: Handle (derived-mode <mode1> ... <modeN>)
+  (let ((specializers ()))
+    (while mode
+      (push `(derived-mode ,mode) specializers)
+      (setq mode (get mode 'derived-mode-parent)))
+    (nreverse specializers)))
+
+(cl-generic-define-generalizer cl--generic-derived-generalizer
+  90 (lambda (name) `(and (symbolp ,name) (functionp ,name) ,name))
+  #'cl--generic-derived-specializers)
+
+(cl-defmethod cl-generic-generalizers ((_specializer (head derived-mode)))
+  "Support for the `(derived-mode MODE)' specializers."
+  (list cl--generic-derived-generalizer))
+
+(cl-generic-define-context-rewriter major-mode (mode &rest modes)
+  `(major-mode ,(if (consp mode)
+                    ;;E.g. could be (eql ...)
+                    (progn (cl-assert (null modes)) mode)
+                  `(derived-mode ,mode . ,modes))))
 
 ;; Local variables:
 ;; generated-autoload-file: "cl-loaddefs.el"
