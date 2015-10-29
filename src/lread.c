@@ -4480,9 +4480,11 @@ were read in.  */);
   DEFVAR_LISP ("load-path", Vload_path,
 	       doc: /* List of directories to search for files to load.
 Each element is a string (directory file name) or nil (meaning
-`default-directory').  Initialized during startup as described in Info
-node `(elisp)Library Search'.  Use `directory-file-name' when adding items
-to this path.  */);
+`default-directory').
+Initialized during startup as described in Info node `(elisp)Library Search'.
+Use `directory-file-name' when adding items to this path.  However, Lisp
+programs that process this list should tolerate directories both with
+and without trailing slashes.  */);
 
   DEFVAR_LISP ("load-suffixes", Vload_suffixes,
 	       doc: /* List of suffixes for (compiled or source) Emacs Lisp files.
