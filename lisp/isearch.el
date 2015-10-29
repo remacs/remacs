@@ -31,11 +31,7 @@
 ;; is completed.  It uses a recursive-edit to behave this way.
 
 ;; The key bindings active within isearch-mode are defined below in
-;; `isearch-mode-map' which is given bindings close to the default
-;; characters of the original isearch.el.  With `isearch-mode',
-;; however, you can bind multi-character keys and it should be easier
-;; to add new commands.  One bug though: keys with meta-prefix cannot
-;; be longer than two chars.  Also see minibuffer-local-isearch-map
+;; `isearch-mode-map'.  Also see minibuffer-local-isearch-map
 ;; for bindings active during `isearch-edit-string'.
 
 ;; isearch-mode should work even if you switch windows with the mouse,
