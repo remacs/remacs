@@ -623,7 +623,12 @@ FILE is the file where FUNCTION was probably defined."
                                           real-function key-bindings-buffer)))
             (run-hook-with-args 'help-fns-describe-function-functions function)
             (insert "\n"
-                    (or doc "Not documented."))))))))
+                    (or doc "Not documented."))
+            ;; Avoid asking the user annoyng questions if she decides
+            ;; to save the help buffer, when her locale's codeset
+            ;; isn't UTF-8.
+            (unless (memq text-quoting-style '(straight grave))
+              (set-buffer-file-coding-system 'utf-8))))))))
 
 ;; Add defaults to `help-fns-describe-function-functions'.
 (add-hook 'help-fns-describe-function-functions #'help-fns--obsolete)
