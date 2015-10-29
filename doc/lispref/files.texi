@@ -3082,7 +3082,7 @@ making connections when they don't exist.
 
 @defun unhandled-file-name-directory filename
 This function returns the name of a directory that is not magic.  It
-uses the directory part of @var{filename} if that is not magic.  For a
+turns @var{filename} into a directory name if that is not magic.  For a
 magic file name, it invokes the file name handler, which therefore
 decides what value to return.  If @var{filename} is not accessible
 from a local process, then the file name handler should indicate it by
