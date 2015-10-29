@@ -671,6 +671,10 @@ plist will contain a :peer element that has the output of
 ** Tramp
 
 +++
+*** New connection method "afp", which allows to access Mac OS X
+volumes via the Apple Filing Protocol.
+
++++
 *** New connection method "nc", which allows to access dumb busyboxes.
 
 +++

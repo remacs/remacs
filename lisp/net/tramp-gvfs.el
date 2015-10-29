@@ -110,11 +110,12 @@
   (require 'custom))
 
 ;;;###tramp-autoload
-(defcustom tramp-gvfs-methods '("dav" "davs" "obex" "sftp" "synce")
+(defcustom tramp-gvfs-methods '("afp" "dav" "davs" "obex" "sftp" "synce")
   "List of methods for remote files, accessed with GVFS."
   :group 'tramp
-  :version "23.2"
-  :type '(repeat (choice (const "dav")
+  :version "25.1"
+  :type '(repeat (choice (const "afp")
+			 (const "dav")
 			 (const "davs")
 			 (const "ftp")
 			 (const "obex")
@@ -231,7 +232,8 @@ It has been changed in GVFS 1.14.")
 ;;     ARRAY BYTE	    mount_prefix
 ;;     ARRAY
 ;;       STRUCT		    mount_spec_item
-;;         STRING	      key (server, share, type, user, host, port)
+;;         STRING	      key (type, user, domain, host, server,
+;;                                 share, volume, port, ssl)
 ;;         ARRAY BYTE	      value
 ;;   ARRAY BYTE           default_location	Since GVFS 1.5 only !!!
 
@@ -770,7 +772,7 @@ file names."
       (unless (tramp-run-real-handler 'file-name-absolute-p (list localname))
 	(setq localname (concat "/" localname)))
       ;; We do not pass "/..".
-      (if (string-equal "smb" method)
+      (if (string-match "^\\(afp\\|smb\\)$" method)
 	  (when (string-match "^/[^/]+\\(/\\.\\./?\\)" localname)
 	    (setq localname (replace-match "/" t t localname 1)))
 	(when (string-match "^/\\.\\./?" localname)
@@ -825,8 +827,9 @@ file names."
 			    (if (re-search-forward
 				 "unix::uid:\\s-+\\([0-9]+\\)" nil t)
 				(string-to-number (match-string 1)))
-			  (if (re-search-forward
-			       "owner::user:\\s-+\\(\\S-+\\)" nil t)
+			  (if (and
+			       (re-search-forward "owner::user:\\s-+" nil t)
+			       (re-search-forward "(\\S-+\\)" (point-at-eol) t))
 			      (match-string 1)))
 			(tramp-get-local-uid id-format)))
 	      (setq res-gid
@@ -834,8 +837,9 @@ file names."
 			    (if (re-search-forward
 				 "unix::gid:\\s-+\\([0-9]+\\)" nil t)
 				(string-to-number (match-string 1)))
-			  (if (re-search-forward
-			       "owner::group:\\s-+\\(\\S-+\\)" nil t)
+			  (if (and
+			       (re-search-forward "owner::group:\\s-+" nil t)
+			       (re-search-forward "(\\S-+\\)" (point-at-eol) t))
 			      (match-string 1)))
 			(tramp-get-local-gid id-format)))
 	      ;; ... last access, modification and change time
@@ -1346,12 +1350,14 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 		    (cadr (assoc "port" (cadr mount-spec)))))
 	     (ssl (tramp-gvfs-dbus-byte-array-to-string
 		   (cadr (assoc "ssl" (cadr mount-spec)))))
-	     (prefix (concat (tramp-gvfs-dbus-byte-array-to-string
-			      (car mount-spec))
-			     (tramp-gvfs-dbus-byte-array-to-string
-			      (cadr (assoc "share" (cadr mount-spec)))))))
-	(when (string-match "^smb" method)
-	  (setq method "smb"))
+	     (prefix (concat
+		      (tramp-gvfs-dbus-byte-array-to-string
+		       (car mount-spec))
+		      (tramp-gvfs-dbus-byte-array-to-string
+		       (or (cadr (assoc "share" (cadr mount-spec)))
+			   (cadr (assoc "volume" (cadr mount-spec))))))))
+	(when (string-match "^\\(afp\\|smb\\)" method)
+	  (setq method (match-string 1 method)))
 	(when (string-equal "obex" method)
 	  (setq host (tramp-bluez-device host)))
 	(when (and (string-equal "dav" method) (string-equal "true" ssl))
@@ -1428,12 +1434,15 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 		     (cadr (assoc "port" (cadr mount-spec)))))
 	      (ssl (tramp-gvfs-dbus-byte-array-to-string
 		    (cadr (assoc "ssl" (cadr mount-spec)))))
-	      (prefix (concat (tramp-gvfs-dbus-byte-array-to-string
-			       (car mount-spec))
-			      (tramp-gvfs-dbus-byte-array-to-string
-			       (cadr (assoc "share" (cadr mount-spec)))))))
-	 (when (string-match "^smb" method)
-	   (setq method "smb"))
+	      (prefix (concat
+		       (tramp-gvfs-dbus-byte-array-to-string
+			(car mount-spec))
+		       (tramp-gvfs-dbus-byte-array-to-string
+			(or
+			 (cadr (assoc "share" (cadr mount-spec)))
+			 (cadr (assoc "volume" (cadr mount-spec))))))))
+	 (when (string-match "^\\(afp\\|smb\\)" method)
+	   (setq method (match-string 1 method)))
 	 (when (string-equal "obex" method)
 	   (setq host (tramp-bluez-device host)))
 	 (when (and (string-equal "dav" method) (string-equal "true" ssl))
@@ -1473,16 +1482,16 @@ It was \"a(say)\", but has changed to \"a{sv})\"."
 	 (host (tramp-file-name-real-host vec))
 	 (port (tramp-file-name-port vec))
 	 (localname (tramp-file-name-localname vec))
-	 (ssl (if (string-match "^davs" method) "true" "false"))
+	 (share (when (string-match "^/?\\([^/]+\\)" localname)
+		  (match-string 1 localname)))
+	 (ssl (when (string-match "^davs" method) "true" "false"))
 	 (mount-spec
           `(:array
             ,@(cond
                ((string-equal "smb" method)
-                (string-match "^/?\\([^/]+\\)" localname)
                 (list (tramp-gvfs-mount-spec-entry "type" "smb-share")
                       (tramp-gvfs-mount-spec-entry "server" host)
-                      (tramp-gvfs-mount-spec-entry
-		       "share" (match-string 1 localname))))
+                      (tramp-gvfs-mount-spec-entry "share" share)))
                ((string-equal "obex" method)
                 (list (tramp-gvfs-mount-spec-entry "type" method)
                       (tramp-gvfs-mount-spec-entry
@@ -1491,6 +1500,10 @@ It was \"a(say)\", but has changed to \"a{sv})\"."
                 (list (tramp-gvfs-mount-spec-entry "type" "dav")
                       (tramp-gvfs-mount-spec-entry "host" host)
                       (tramp-gvfs-mount-spec-entry "ssl" ssl)))
+               ((string-equal "afp" method)
+                (list (tramp-gvfs-mount-spec-entry "type" "afp-volume")
+                      (tramp-gvfs-mount-spec-entry "host" host)
+                      (tramp-gvfs-mount-spec-entry "volume" share)))
                (t
                 (list (tramp-gvfs-mount-spec-entry "type" method)
                       (tramp-gvfs-mount-spec-entry "host" host))))
@@ -1545,6 +1558,10 @@ connection if a previous connection has died for some reason."
       (when (and (string-equal method "smb")
 		 (string-equal localname "/"))
 	(tramp-error vec 'file-error "Filename must contain a Windows share"))
+
+      (when (and (string-equal method "afp")
+		 (string-equal localname "/"))
+	(tramp-error vec 'file-error "Filename must contain an AFP volume"))
 
       (with-tramp-progress-reporter
 	  vec 3
@@ -1795,7 +1812,7 @@ They are retrieved from the hal daemon."
 
 ;;; TODO:
 
-;; * Host name completion via smb-server or smb-network.
+;; * Host name completion via afp-server, smb-server or smb-network.
 ;; * Check how two shares of the same SMB server can be mounted in
 ;;   parallel.
 ;; * Apply SDP on bluetooth devices, in order to filter out obex
