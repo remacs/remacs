@@ -3495,6 +3495,9 @@ OLD and NEW are both characters used to mark files."
   (interactive)
   (dired-unmark-all-files ?\r))
 
+;; Bound in dired-unmark-all-files
+(defvar dired-unmark-all-files-query)
+
 (defun dired-unmark-all-files (mark &optional arg)
   "Remove a specific mark (or any mark) from every file.
 After this command, type the mark character to remove,
@@ -3505,6 +3508,7 @@ Type \\[help-command] at that time for help."
   (save-excursion
     (let* ((count 0)
 	   (inhibit-read-only t) case-fold-search
+           dired-unmark-all-files-query
 	   (string (format "\n%c" mark))
 	   (help-form "\
 Type SPC or `y' to unmark one file, DEL or `n' to skip to next,
@@ -3516,7 +3520,8 @@ Type SPC or `y' to unmark one file, DEL or `n' to skip to next,
 	(if (or (not arg)
 		(let ((file (dired-get-filename t t)))
 		  (and file
-		       (dired-query 'query "Unmark file `%s'? "
+		       (dired-query 'dired-unmark-all-files-query
+				    "Unmark file `%s'? "
 				    file))))
 	    (progn (subst-char-in-region (1- (point)) (point)
 					 (preceding-char) ?\s)
