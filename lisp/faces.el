@@ -1965,12 +1965,13 @@ If ATTRIBUTE-UNNAMED is non-nil, it is a symbol to look for in
 unnamed faces (e.g, `foreground-color')."
   ;; `face-at-point' alone is not sufficient.  It only gets named faces.
   ;; Need also pick up any face properties that are not associated with named faces.
-  (let (found)
-    (dolist (face (or (get-char-property (point) 'read-face-name)
-                      ;; If `font-lock-mode' is on, `font-lock-face' takes precedence.
-                      (and font-lock-mode
-                           (get-char-property (point) 'font-lock-face))
-                      (get-char-property (point) 'face)))
+  (let ((faces (or (get-char-property (point) 'read-face-name)
+                   ;; If `font-lock-mode' is on, `font-lock-face' takes precedence.
+                   (and font-lock-mode
+                        (get-char-property (point) 'font-lock-face))
+                   (get-char-property (point) 'face)))
+        (found nil))
+    (dolist (face (if (listp faces) faces (list faces)))
       (cond (found)
             ((and face (symbolp face))
              (let ((value (face-attribute-specified-or
