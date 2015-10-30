@@ -905,8 +905,8 @@ With numeric arg N, put point N/10 of the way from the beginning.
 If the buffer is narrowed, this command uses the beginning of the
 accessible part of the buffer.
 
-If Transient Mark mode is disabled, leave mark at previous
-position, unless a \\[universal-argument] prefix is supplied."
+Push mark at previous position, unless either a \\[universal-argument] prefix
+is supplied, or Transient Mark mode is enabled and the mark is active."
   (declare (interactive-only "use `(goto-char (point-min))' instead."))
   (interactive "^P")
   (or (consp arg)
@@ -929,8 +929,8 @@ With numeric arg N, put point N/10 of the way from the end.
 If the buffer is narrowed, this command uses the end of the
 accessible part of the buffer.
 
-If Transient Mark mode is disabled, leave mark at previous
-position, unless a \\[universal-argument] prefix is supplied."
+Push mark at previous position, unless either a \\[universal-argument] prefix
+is supplied, or Transient Mark mode is enabled and the mark is active."
   (declare (interactive-only "use `(goto-char (point-max))' instead."))
   (interactive "^P")
   (or (consp arg) (region-active-p) (push-mark))
