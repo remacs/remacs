@@ -624,7 +624,7 @@ FILE is the file where FUNCTION was probably defined."
             (run-hook-with-args 'help-fns-describe-function-functions function)
             (insert "\n"
                     (or doc "Not documented."))
-            ;; Avoid asking the user annoyng questions if she decides
+            ;; Avoid asking the user annoying questions if she decides
             ;; to save the help buffer, when her locale's codeset
             ;; isn't UTF-8.
             (unless (memq text-quoting-style '(straight grave))
@@ -973,7 +973,7 @@ file-local variable.\n")
 		    (re-search-backward
 		     (concat "\\(" customize-label "\\)") nil t)
 		    (help-xref-button 1 'help-customize-variable variable))))
-	      ;; Note variable's version or package version
+	      ;; Note variable's version or package version.
 	      (let ((output (describe-variable-custom-version-info variable)))
 		(when output
 		  (terpri)
