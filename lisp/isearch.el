@@ -954,7 +954,7 @@ used to set the value of `isearch-regexp-function'."
   "This is called after every isearch command to update the display.
 The last thing it does is to run `isearch-update-post-hook'."
   (unless (eq (current-buffer) isearch--current-buffer)
-    (when isearch--current-buffer
+    (when (buffer-live-p isearch--current-buffer)
       (with-current-buffer isearch--current-buffer
         (setq cursor-sensor-inhibit (delq 'isearch cursor-sensor-inhibit))))
     (setq isearch--current-buffer (current-buffer))
