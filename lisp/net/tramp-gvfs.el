@@ -48,7 +48,7 @@
 ;; comments.
 
 ;; The custom option `tramp-gvfs-methods' contains the list of
-;; supported connection methods.  Per default, these are "dav",
+;; supported connection methods.  Per default, these are "afp", "dav",
 ;; "davs", "obex", "sftp" and "synce".  Note that with "obex" it might
 ;; be necessary to pair with the other bluetooth device, if it hasn't
 ;; been done already.  There might be also some few seconds delay in
@@ -78,7 +78,7 @@
 
 ;; For hostname completion, information is retrieved either from the
 ;; bluez daemon (for the "obex" method), the hal daemon (for the
-;; "synce" method), or from the zeroconf daemon (for the "dav",
+;; "synce" method), or from the zeroconf daemon (for the "afp", "dav",
 ;; "davs", and "sftp" methods).  The zeroconf daemon is pre-configured
 ;; to discover services in the "local" domain.  If another domain
 ;; shall be used for discovering services, the custom option
@@ -808,83 +808,72 @@ file names."
 	    (when (re-search-forward "attributes:" nil t)
 	      ;; ... directory or symlink
 	      (goto-char (point-min))
-	      (setq dirp (if (re-search-forward "type:\\s-+directory" nil t) t))
+	      (setq dirp (if (re-search-forward "type: directory" nil t) t))
 	      (goto-char (point-min))
 	      (setq res-symlink-target
 		    (if (re-search-forward
-			 "standard::symlink-target:\\s-+\\(.*\\)$" nil t)
+			 "standard::symlink-target: \\(.+\\)$" nil t)
 			(match-string 1)))
 	      ;; ... number links
 	      (goto-char (point-min))
 	      (setq res-numlinks
-		    (if (re-search-forward
-			 "unix::nlink:\\s-+\\([0-9]+\\)" nil t)
+		    (if (re-search-forward "unix::nlink: \\([0-9]+\\)" nil t)
 			(string-to-number (match-string 1)) 0))
 	      ;; ... uid and gid
 	      (goto-char (point-min))
 	      (setq res-uid
-		    (or (if (eq id-format 'integer)
-			    (if (re-search-forward
-				 "unix::uid:\\s-+\\([0-9]+\\)" nil t)
-				(string-to-number (match-string 1)))
-			  (if (and
-			       (re-search-forward "owner::user:\\s-+" nil t)
-			       (re-search-forward "(\\S-+\\)" (point-at-eol) t))
-			      (match-string 1)))
-			(tramp-get-local-uid id-format)))
+		    (if (eq id-format 'integer)
+			(if (re-search-forward "unix::uid: \\([0-9]+\\)" nil t)
+			    (string-to-number (match-string 1))
+			  -1)
+		      (if (re-search-forward "owner::user: \\(.+\\)$" nil t)
+			  (match-string 1)
+			"UNKNOWN")))
 	      (setq res-gid
-		    (or (if (eq id-format 'integer)
-			    (if (re-search-forward
-				 "unix::gid:\\s-+\\([0-9]+\\)" nil t)
-				(string-to-number (match-string 1)))
-			  (if (and
-			       (re-search-forward "owner::group:\\s-+" nil t)
-			       (re-search-forward "(\\S-+\\)" (point-at-eol) t))
-			      (match-string 1)))
-			(tramp-get-local-gid id-format)))
+		    (if (eq id-format 'integer)
+			(if (re-search-forward "unix::gid: \\([0-9]+\\)" nil t)
+			    (string-to-number (match-string 1))
+			  -1)
+		      (if (re-search-forward "owner::group: \\(.+\\)$" nil t)
+			  (match-string 1)
+			"UNKNOWN")))
 	      ;; ... last access, modification and change time
 	      (goto-char (point-min))
 	      (setq res-access
-		    (if (re-search-forward
-			 "time::access:\\s-+\\([0-9]+\\)" nil t)
+		    (if (re-search-forward "time::access: \\([0-9]+\\)" nil t)
 			(seconds-to-time (string-to-number (match-string 1)))
 		      '(0 0)))
 	      (goto-char (point-min))
 	      (setq res-mod
-		    (if (re-search-forward
-			 "time::modified:\\s-+\\([0-9]+\\)" nil t)
+		    (if (re-search-forward "time::modified: \\([0-9]+\\)" nil t)
 			(seconds-to-time (string-to-number (match-string 1)))
 		      '(0 0)))
 	      (goto-char (point-min))
 	      (setq res-change
-		    (if (re-search-forward
-			 "time::changed:\\s-+\\([0-9]+\\)" nil t)
+		    (if (re-search-forward "time::changed: \\([0-9]+\\)" nil t)
 			(seconds-to-time (string-to-number (match-string 1)))
 		      '(0 0)))
 	      ;; ... size
 	      (goto-char (point-min))
 	      (setq res-size
-		    (if (re-search-forward
-			 "standard::size:\\s-+\\([0-9]+\\)" nil t)
+		    (if (re-search-forward "standard::size: \\([0-9]+\\)" nil t)
 			(string-to-number (match-string 1)) 0))
 	      ;; ... file mode flags
 	      (goto-char (point-min))
 	      (setq res-filemodes
-		    (if (re-search-forward "unix::mode:\\s-+\\([0-9]+\\)" nil t)
+		    (if (re-search-forward "unix::mode: \\([0-9]+\\)" nil t)
 			(tramp-file-mode-from-int
 			 (string-to-number (match-string 1)))
 		      (if dirp "drwx------" "-rwx------")))
 	      ;; ... inode and device
 	      (goto-char (point-min))
 	      (setq res-inode
-		    (if (re-search-forward
-			 "unix::inode:\\s-+\\([0-9]+\\)" nil t)
+		    (if (re-search-forward "unix::inode: \\([0-9]+\\)" nil t)
 			(string-to-number (match-string 1))
 		      (tramp-get-inode v)))
 	      (goto-char (point-min))
 	      (setq res-device
-		    (if (re-search-forward
-			 "unix::device:\\s-+\\([0-9]+\\)" nil t)
+		    (if (re-search-forward "unix::device: \\([0-9]+\\)" nil t)
 			(string-to-number (match-string 1))
 		      (tramp-get-device v)))
 
@@ -1733,12 +1722,12 @@ be used."
 
 ;; D-Bus zeroconf functions.
 
-(defun tramp-zeroconf-parse-workstation-device-names (_ignore)
+(defun tramp-zeroconf-parse-service-device-names (service)
   "Return a list of (user host) tuples allowed to access."
   (mapcar
    (lambda (x)
      (list nil (zeroconf-service-host x)))
-   (zeroconf-list-services "_workstation._tcp")))
+   (zeroconf-list-services service)))
 
 (defun tramp-zeroconf-parse-webdav-device-names (_ignore)
   "Return a list of (user host) tuples allowed to access."
@@ -1758,16 +1747,20 @@ be used."
        (list user host)))
    (zeroconf-list-services "_webdav._tcp")))
 
-;; Add completion function for SFTP, DAV and DAVS methods.
+;; Add completion functions for AFP, DAV, DAVS, SFTP and SMB methods.
 (when (and tramp-gvfs-enabled
 	   (member zeroconf-service-avahi (dbus-list-known-names :system)))
   (zeroconf-init tramp-gvfs-zeroconf-domain)
   (tramp-set-completion-function
-   "sftp" '((tramp-zeroconf-parse-workstation-device-names "")))
+   "afp" '((tramp-zeroconf-parse-service-device-names "_afpovertcp._tcp")))
   (tramp-set-completion-function
    "dav" '((tramp-zeroconf-parse-webdav-device-names "")))
   (tramp-set-completion-function
-   "davs" '((tramp-zeroconf-parse-webdav-device-names ""))))
+   "davs" '((tramp-zeroconf-parse-webdav-device-names "")))
+  (tramp-set-completion-function
+   "sftp" '((tramp-zeroconf-parse-service-device-names "_workstation._tcp")))
+  (tramp-set-completion-function
+   "smb" '((tramp-zeroconf-parse-service-device-names "_smb._tcp"))))
 
 
 ;; D-Bus SYNCE functions.
