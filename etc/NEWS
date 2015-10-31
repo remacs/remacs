@@ -911,6 +911,9 @@ alists, hash-table and arrays.  All functions are prefixed with
 ** The `thunk' library provides functions and macros to control the
 evaluation of forms.
 
+** js-jsx-mode (a minor variant of js-mode) provides indentation
+support for JSX, an XML-like syntax extension to ECMAScript
+
 
 * Incompatible Lisp Changes in Emacs 25.1
 
