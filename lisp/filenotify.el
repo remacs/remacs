@@ -100,17 +100,19 @@ It is a form ((DESCRIPTOR ACTION FILE [FILE1-OR-COOKIE]) CALLBACK).")
 
 (defun file-notify--event-file-name (event)
   "Return file name of file notification event, or nil."
-  (expand-file-name
-   (or  (and (stringp (nth 2 event)) (nth 2 event)) "")
-   (car (gethash (car event) file-notify-descriptors))))
+  (directory-file-name
+   (expand-file-name
+    (or  (and (stringp (nth 2 event)) (nth 2 event)) "")
+    (car (gethash (car event) file-notify-descriptors)))))
 
 ;; Only `gfilenotify' could return two file names.
 (defun file-notify--event-file1-name (event)
   "Return second file name of file notification event, or nil.
 This is available in case a file has been moved."
   (and (stringp (nth 3 event))
-       (expand-file-name
-	(nth 3 event) (car (gethash (car event) file-notify-descriptors)))))
+       (directory-file-name
+        (expand-file-name
+         (nth 3 event) (car (gethash (car event) file-notify-descriptors))))))
 
 ;; Cookies are offered by `inotify' only.
 (defun file-notify--event-cookie (event)

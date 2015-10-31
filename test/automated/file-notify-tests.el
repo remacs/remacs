@@ -623,7 +623,7 @@ Don't wait longer than TIMEOUT seconds for the events to be delivered."
 
 ;; TODO:
 
-;; * It does not work yet for local gfilenotify and remote inotifywait.
+;; * It does not work yet for local gfilenotify.
 ;; * For w32notify, no stopped events arrive when a directory is removed.
 
 (provide 'file-notify-tests)
