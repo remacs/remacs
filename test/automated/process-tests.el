@@ -61,15 +61,15 @@
             ;; to force quoting.
             (setq batfile (make-temp-file "echo args" nil ".bat"))
             (with-temp-file batfile
-              (insert "@echo arg1 = %1, arg2 = %2\n"))
+              (insert "@echo arg1=%1, arg2=%2\n"))
             (with-temp-buffer
               (call-process batfile nil '(t t) t "x &y")
-              (should (string= (buffer-string) "arg1 = \"x &y\", arg2 = \n")))
+              (should (string= (buffer-string) "arg1=\"x &y\", arg2=\n")))
             (with-temp-buffer
               (call-process-shell-command
                (mapconcat #'shell-quote-argument (list batfile "x &y") " ")
                nil '(t t) t)
-              (should (string= (buffer-string) "arg1 = \"x &y\", arg2 = \n"))))
+              (should (string= (buffer-string) "arg1=\"x &y\", arg2=\n"))))
         (when batfile (delete-file batfile))))))
 
 (ert-deftest process-test-stderr-buffer ()
