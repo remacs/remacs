@@ -36,10 +36,11 @@ BODY is code to be executed within the temp buffer.  Point is
 always located at the beginning of buffer."
   (declare (indent 1) (debug t))
   `(with-temp-buffer
-     (python-mode)
-     (insert ,contents)
-     (goto-char (point-min))
-     ,@body))
+     (let ((python-indent-guess-indent-offset nil))
+       (python-mode)
+       (insert ,contents)
+       (goto-char (point-min))
+       ,@body)))
 
 (defmacro python-tests-with-temp-file (contents &rest body)
   "Create a `python-mode' enabled file with CONTENTS.
@@ -48,7 +49,8 @@ always located at the beginning of buffer."
   (declare (indent 1) (debug t))
   ;; temp-file never actually used for anything?
   `(let* ((temp-file (make-temp-file "python-tests" nil ".py"))
-          (buffer (find-file-noselect temp-file)))
+          (buffer (find-file-noselect temp-file))
+          (python-indent-guess-indent-offset nil))
      (unwind-protect
          (with-current-buffer buffer
            (python-mode)
