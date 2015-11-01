@@ -1765,14 +1765,18 @@ Example:
 	(setcdr v (delete (car v) (cdr v))))
       ;; Check for function and file or registry key.
       (unless (and (functionp (nth 0 (car v)))
-		   (if (string-match "^HKEY_CURRENT_USER" (nth 1 (car v)))
-		       ;; Windows registry.
-		       (and (memq system-type '(cygwin windows-nt))
-			    (zerop
-			     (tramp-call-process
-			      v "reg" nil nil nil "query" (nth 1 (car v)))))
-		     ;; Configuration file.
-		     (file-exists-p (nth 1 (car v)))))
+		   (cond
+		    ;; Windows registry.
+		    ((string-match "^HKEY_CURRENT_USER" (nth 1 (car v)))
+		     (and (memq system-type '(cygwin windows-nt))
+			  (zerop
+			   (tramp-call-process
+			    v "reg" nil nil nil "query" (nth 1 (car v))))))
+		    ;; Zeroconf service type.
+		    ((string-match
+		      "^_[[:alpha:]]+\\._[[:alpha:]]+$" (nth 1 (car v))))
+		    ;; Configuration file.
+		    (t (file-exists-p (nth 1 (car v))))))
 	(setq r (delete (car v) r)))
       (setq v (cdr v)))
 

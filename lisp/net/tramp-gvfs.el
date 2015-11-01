@@ -1722,14 +1722,7 @@ be used."
 
 ;; D-Bus zeroconf functions.
 
-(defun tramp-zeroconf-parse-service-device-names (service)
-  "Return a list of (user host) tuples allowed to access."
-  (mapcar
-   (lambda (x)
-     (list nil (zeroconf-service-host x)))
-   (zeroconf-list-services service)))
-
-(defun tramp-zeroconf-parse-webdav-device-names (_ignore)
+(defun tramp-zeroconf-parse-device-names (service)
   "Return a list of (user host) tuples allowed to access."
   (mapcar
    (lambda (x)
@@ -1745,22 +1738,64 @@ be used."
 	   (setq user (match-string 1 (car text))))
 	 (setq text (cdr text)))
        (list user host)))
-   (zeroconf-list-services "_webdav._tcp")))
+   (zeroconf-list-services service)))
+
+(defun tramp-gvfs-parse-device-names (service)
+  "Return a list of (user host) tuples allowed to access.
+This uses \"avahi-browse\" in case D-Bus is not enabled in Avahi."
+  (let ((result
+	 (split-string
+	  (shell-command-to-string (format "avahi-browse -trkp %s" service))
+	  "[\n\r]+" 'omit "^\\+;.*$")))
+    (tramp-compat-delete-dups
+     (mapcar
+      (lambda (x)
+	(let* ((list (split-string x ";"))
+	       (host (nth 6 list))
+	       (port (nth 8 list))
+	       (text (split-string (nth 9 list) "\" \"" 'omit "\""))
+	       user)
+;	  (when (and port (not (string-equal port "0")))
+;	    (setq host (format "%s%s%s" host tramp-prefix-port-regexp port)))
+	  ;; A user is marked in a TXT field like "u=guest".
+	  (while text
+	    (when (string-match "u=\\(.+\\)$" (car text))
+	      (setq user (match-string 1 (car text))))
+	    (setq text (cdr text)))
+	  (list user host)))
+      result))))
 
 ;; Add completion functions for AFP, DAV, DAVS, SFTP and SMB methods.
-(when (and tramp-gvfs-enabled
-	   (member zeroconf-service-avahi (dbus-list-known-names :system)))
+(when tramp-gvfs-enabled
   (zeroconf-init tramp-gvfs-zeroconf-domain)
-  (tramp-set-completion-function
-   "afp" '((tramp-zeroconf-parse-service-device-names "_afpovertcp._tcp")))
-  (tramp-set-completion-function
-   "dav" '((tramp-zeroconf-parse-webdav-device-names "")))
-  (tramp-set-completion-function
-   "davs" '((tramp-zeroconf-parse-webdav-device-names "")))
-  (tramp-set-completion-function
-   "sftp" '((tramp-zeroconf-parse-service-device-names "_workstation._tcp")))
-  (tramp-set-completion-function
-   "smb" '((tramp-zeroconf-parse-service-device-names "_smb._tcp"))))
+  (if (zeroconf-list-service-types)
+      (progn
+	(tramp-set-completion-function
+	 "afp" '((tramp-zeroconf-parse-device-names "_afpovertcp._tcp")))
+	(tramp-set-completion-function
+	 "dav" '((tramp-zeroconf-parse-device-names "_webdav._tcp")))
+	(tramp-set-completion-function
+	 "davs" '((tramp-zeroconf-parse-device-names "_webdav._tcp")))
+	(tramp-set-completion-function
+	 "sftp" '((tramp-zeroconf-parse-device-names "_ssh._tcp")
+		  (tramp-zeroconf-parse-device-names "_workstation._tcp")))
+	(when (member "smb" tramp-gvfs-methods)
+	  (tramp-set-completion-function
+	   "smb" '((tramp-zeroconf-parse-device-names "_smb._tcp")))))
+
+    (when (executable-find "avahi-browse")
+      (tramp-set-completion-function
+       "afp" '((tramp-gvfs-parse-device-names "_afpovertcp._tcp")))
+      (tramp-set-completion-function
+       "dav" '((tramp-gvfs-parse-device-names "_webdav._tcp")))
+      (tramp-set-completion-function
+       "davs" '((tramp-gvfs-parse-device-names "_webdav._tcp")))
+      (tramp-set-completion-function
+       "sftp" '((tramp-gvfs-parse-device-names "_ssh._tcp")
+		(tramp-gvfs-parse-device-names "_workstation._tcp")))
+      (when (member "smb" tramp-gvfs-methods)
+	(tramp-set-completion-function
+	 "smb" '((tramp-gvfs-parse-device-names "_smb._tcp")))))))
 
 
 ;; D-Bus SYNCE functions.
