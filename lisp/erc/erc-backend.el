@@ -1,10 +1,10 @@
 ;;; erc-backend.el --- Backend network communication for ERC
 
-;; Copyright (C) 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
 ;; Filename: erc-backend.el
 ;; Author: Lawrence Mitchell <wence@gmx.li>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Created: 2004-05-7
 ;; Keywords: IRC chat client internet
 
@@ -497,11 +497,12 @@ The current buffer is given by BUFFER."
                                                     erc-server-ping-handler)
                                               erc-server-ping-timer-alist)))))
 
-(defun erc-server-process-alive ()
-  "Return non-nil when `erc-server-process' is open or running."
-  (and erc-server-process
-       (processp erc-server-process)
-       (memq (process-status erc-server-process) '(run open))))
+(defun erc-server-process-alive (&optional buffer)
+  "Return non-nil when BUFFER has an `erc-server-process' open or running."
+  (with-current-buffer (or buffer (current-buffer))
+    (and erc-server-process
+         (processp erc-server-process)
+         (memq (process-status erc-server-process) '(run open)))))
 
 ;;;; Connecting to a server
 
@@ -651,7 +652,7 @@ EVENT is the message received from the closed connection process."
                          (run-at-time erc-server-reconnect-timeout nil
                                       #'erc-process-sentinel-2
                                       event buffer)
-                       (error (concat "`erc-server-reconnect-timeout`"
+                       (error (concat "`erc-server-reconnect-timeout'"
                                       " must be a number")))))))))))
 
 (defun erc-process-sentinel-1 (event buffer)
@@ -678,7 +679,7 @@ Conditionally try to reconnect and take appropriate action."
     (when (buffer-live-p buf)
       (with-current-buffer buf
         (erc-log (format
-                  "SENTINEL: proc: %S	 status: %S  event: %S (quitting: %S)"
+                  "SENTINEL: proc: %S    status: %S  event: %S (quitting: %S)"
                   cproc (process-status cproc) event erc-server-quitting))
         (if (string-match "^open" event)
             ;; newly opened connection (no wait)
@@ -1081,7 +1082,7 @@ As an example:
 Would expand to:
 
   (prog2
-      (defvar erc-server-311-functions 'erc-server-311
+      (defvar erc-server-311-functions \\='erc-server-311
         \"Some non-generic variable documentation.
 
   Hook called upon receiving a 311 server response.
@@ -1099,12 +1100,12 @@ Would expand to:
   add things to `erc-server-311-functions' instead.\"
         (do-stuff-with-whois proc parsed))
 
-    (puthash \"311\" 'erc-server-311-functions erc-server-responses)
-    (puthash \"WHOIS\" 'erc-server-WHOIS-functions erc-server-responses)
-    (puthash \"WI\" 'erc-server-WI-functions erc-server-responses)
+    (puthash \"311\" \\='erc-server-311-functions erc-server-responses)
+    (puthash \"WHOIS\" \\='erc-server-WHOIS-functions erc-server-responses)
+    (puthash \"WI\" \\='erc-server-WI-functions erc-server-responses)
 
-    (defalias 'erc-server-WHOIS 'erc-server-311)
-    (defvar erc-server-WHOIS-functions 'erc-server-311
+    (defalias \\='erc-server-WHOIS \\='erc-server-311)
+    (defvar erc-server-WHOIS-functions \\='erc-server-311
       \"Some non-generic variable documentation.
 
   Hook called upon receiving a WHOIS server response.
@@ -1115,8 +1116,8 @@ Would expand to:
 
   See also `erc-server-311'.\")
 
-    (defalias 'erc-server-WI 'erc-server-311)
-    (defvar erc-server-WI-functions 'erc-server-311
+    (defalias \\='erc-server-WI \\='erc-server-311)
+    (defvar erc-server-WI-functions \\='erc-server-311
       \"Some non-generic variable documentation.
 
   Hook called upon receiving a WI server response.
@@ -1135,7 +1136,8 @@ Would expand to:
                         aliases))
   (let* ((hook-name (intern (format "erc-server-%s-functions" name)))
          (fn-name (intern (format "erc-server-%s" name)))
-         (hook-doc (format "%sHook called upon receiving a %%s server response.
+         (hook-doc (format-message "\
+%sHook called upon receiving a %%s server response.
 Each function is called with two arguments, the process associated
 with the response and the parsed response.  If the function returns
 non-nil, stop processing the hook.  Otherwise, continue.
@@ -1145,7 +1147,8 @@ See also `%s'."
                                (concat extra-var-doc "\n\n")
                              "")
                            fn-name))
-         (fn-doc (format "%sHandler for a %s server response.
+         (fn-doc (format-message "\
+%sHandler for a %s server response.
 PROC is the server process which returned the response.
 PARSED is the actual response as an `erc-response' struct.
 If you want to add responses don't modify this function, but rather
@@ -1161,8 +1164,11 @@ add things to `%s' instead."
           (cl-loop for alias in aliases
                    collect (intern (format "erc-server-%s-functions" alias)))))
     `(prog2
-         ;; Normal hook variable.
-         (defvar ,hook-name ',fn-name ,(format hook-doc name))
+         ;; Normal hook variable.  The variable may already have a
+         ;; value at this point, so I default to nil, and (add-hook)
+         ;; unconditionally
+         (defvar ,hook-name nil ,(format hook-doc name))
+         (add-to-list ',hook-name ',fn-name)
          ;; Handler function
          (defun ,fn-name (proc parsed)
            ,fn-doc
@@ -1207,7 +1213,6 @@ add things to `%s' instead."
          parsed 'notice 'active
          'INVITE ?n nick ?u login ?h host ?c chnl)))))
 
-
 (define-erc-response-handler (JOIN)
   "Handle join messages."
   nil
@@ -1243,7 +1248,7 @@ add things to `%s' instead."
                        (erc-format-message
                         'JOIN ?n nick ?u login ?h host ?c chnl))))))
           (when buffer (set-buffer buffer))
-          (erc-update-channel-member chnl nick nick t nil nil host login)
+          (erc-update-channel-member chnl nick nick t nil nil nil nil nil host login)
           ;; on join, we want to stay in the new channel buffer
           ;;(set-buffer ob)
           (erc-display-message parsed nil buffer str))))))
@@ -1412,7 +1417,7 @@ add things to `%s' instead."
             ;; message.  We will accumulate private identities indefinitely
             ;; at this point.
             (erc-update-channel-member (if privp nick tgt) nick nick
-                                       privp nil nil host login nil nil t)
+                                       privp nil nil nil nil nil host login nil nil t)
             (let ((cdata (erc-get-channel-user nick)))
               (setq fnick (funcall erc-format-nick-function
                                    (car cdata) (cdr cdata))))))
@@ -1465,11 +1470,10 @@ add things to `%s' instead."
   "The channel topic has changed." nil
   (let* ((ch (car (erc-response.command-args parsed)))
          (topic (erc-trim-string (erc-response.contents parsed)))
-         (time (format-time-string erc-server-timestamp-format
-                                   (current-time))))
+         (time (format-time-string erc-server-timestamp-format)))
     (pcase-let ((`(,nick ,login ,host)
                  (erc-parse-user (erc-response.sender parsed))))
-      (erc-update-channel-member ch nick nick nil nil nil host login)
+      (erc-update-channel-member ch nick nick nil nil nil nil nil nil host login)
       (erc-update-channel-topic ch (format "%s\C-o (%s, %s)" topic nick time))
       (erc-display-message parsed 'notice (erc-get-buffer ch proc)
                            'TOPIC ?n nick ?u login ?h host
@@ -1537,7 +1541,7 @@ A server may send more than one 005 message."
     (while (erc-response.command-args parsed)
       (let ((section (pop (erc-response.command-args parsed))))
         ;; fill erc-server-parameters
-        (when (string-match "^\\([A-Z]+\\)\=\\(.*\\)$\\|^\\([A-Z]+\\)$"
+        (when (string-match "^\\([A-Z]+\\)=\\(.*\\)$\\|^\\([A-Z]+\\)$"
                             section)
           (add-to-list 'erc-server-parameters
                        `(,(or (match-string 1 section)
@@ -1799,8 +1803,7 @@ See `erc-display-server-message'." nil
       (when (string-match "\\(^[0-9]+ \\)\\(.*\\)$" full-name)
         (setq hopcount (match-string 1 full-name))
         (setq full-name (match-string 2 full-name)))
-      (erc-update-channel-member channel nick nick nil nil nil host
-                                 user full-name)
+      (erc-update-channel-member channel nick nick nil nil nil nil nil nil host user full-name)
       (erc-display-message parsed 'notice 'active 's352
                            ?c channel ?n nick ?a away-flag
                            ?u user ?h host ?f full-name))))

@@ -1,9 +1,9 @@
 ;;; compare-w.el --- compare text between windows for Emacs
 
-;; Copyright (C) 1986, 1989, 1993, 1997, 2001-2013 Free Software
+;; Copyright (C) 1986, 1989, 1993, 1997, 2001-2015 Free Software
 ;; Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: convenience files vc
 
 ;; This file is part of GNU Emacs.
@@ -29,6 +29,8 @@
 ;; whitespace differences, or case differences, or both.
 
 ;;; Code:
+
+(require 'diff-mode)                    ; For diff faces.
 
 (defgroup compare-windows nil
   "Compare text between windows."
@@ -86,7 +88,7 @@ regexp containing some field separator or a newline, depending on
 the nature of the difference units separator.  The variable can
 be made buffer-local.
 
-If the value of this variable is `nil' (option \"No sync\"), then
+If the value of this variable is nil (option \"No sync\"), then
 no synchronization is performed, and the function `ding' is called
 to beep or flash the screen when points are mismatched."
   :type '(choice function regexp (const :tag "No sync" nil))
@@ -128,11 +130,19 @@ out all highlighting later with the command `compare-windows-dehighlight'."
   :group 'compare-windows
   :version "22.1")
 
-(defface compare-windows
-  '((t :inherit lazy-highlight))
-  "Face for highlighting of compare-windows difference regions."
+(defface compare-windows-removed
+  '((t :inherit diff-removed))
+  "Face for highlighting of compare-windows removed regions."
   :group 'compare-windows
-  :version "22.1")
+  :version "25.1")
+
+(defface compare-windows-added
+  '((t :inherit diff-added))
+  "Face for highlighting of compare-windows added regions."
+  :group 'compare-windows
+  :version "25.1")
+
+(define-obsolete-face-alias 'compare-windows 'compare-windows-added "25.1")
 
 (defvar compare-windows-overlay1 nil)
 (defvar compare-windows-overlay2 nil)
@@ -140,9 +150,45 @@ out all highlighting later with the command `compare-windows-dehighlight'."
 (defvar compare-windows-overlays2 nil)
 (defvar compare-windows-sync-point nil)
 
+(defcustom compare-windows-get-window-function
+  'compare-windows-get-recent-window
+  "Function that provides the window to compare with."
+  :type '(choice
+	  (function-item :tag "Most recently used window"
+			 compare-windows-get-recent-window)
+	  (function-item :tag "Next window"
+			 compare-windows-get-next-window)
+	  (function :tag "Your function"))
+  :group 'compare-windows
+  :version "25.1")
+
+(defun compare-windows-get-recent-window ()
+  "Return the most recently used window.
+First try to get the most recently used window on a visible frame,
+then try to get a window on an iconified frame, and finally
+consider all existing frames."
+  (or (get-mru-window 'visible t t)
+      (get-mru-window 0 t t)
+      (get-mru-window t t t)
+      (error "No other window")))
+
+(defun compare-windows-get-next-window ()
+  "Return the window next in the cyclic ordering of windows.
+In the selected frame contains only one window, consider windows
+on all visible frames."
+  (let ((w2 (next-window)))
+    (if (eq w2 (selected-window))
+	(setq w2 (next-window (selected-window) nil 'visible)))
+    (if (eq w2 (selected-window))
+	(error "No other window"))
+    w2))
+
 ;;;###autoload
 (defun compare-windows (ignore-whitespace)
-  "Compare text in current window with text in next window.
+  "Compare text in current window with text in another window.
+The option `compare-windows-get-window-function' defines how
+to get another window.
+
 Compares the text starting at point in each window,
 moving over text in each one as far as they match.
 
@@ -179,11 +225,7 @@ on third call it again advances points to the next difference and so on."
                            'compare-windows-sync-regexp
                          compare-windows-sync)))
     (setq p1 (point) b1 (current-buffer))
-    (setq w2 (next-window))
-    (if (eq w2 (selected-window))
-	(setq w2 (next-window (selected-window) nil 'visible)))
-    (if (eq w2 (selected-window))
-	(error "No other window"))
+    (setq w2 (funcall compare-windows-get-window-function))
     (setq p2 (window-point w2)
 	  b2 (window-buffer w2))
     (setq opoint2 p2)
@@ -212,7 +254,7 @@ on third call it again advances points to the next difference and so on."
       ;; optionally skip over it.
       (and skip-func-1
 	   (save-excursion
-	     (let (p1a p2a w1 w2 result1 result2)
+	     (let (p1a p2a result1 result2)
 	       (setq result1 (funcall skip-func-1 opoint1))
 	       (setq p1a (point))
 	       (set-buffer b2)
@@ -255,12 +297,15 @@ on third call it again advances points to the next difference and so on."
             (recenter (car compare-windows-recenter))
             (with-selected-window w2 (recenter (cadr compare-windows-recenter))))
           ;; If points are still not synchronized, then ding
-          (when (and (= p1 opoint1) (= p2 opoint2))
-            ;; Display error message when current points in two windows
-            ;; are unmatched and next matching points can't be found.
-            (compare-windows-dehighlight)
-            (ding)
-            (message "No more matching points"))))))
+          (if (and (= p1 opoint1) (= p2 opoint2))
+	      (progn
+		;; Display error message when current points in two windows
+		;; are unmatched and next matching points can't be found.
+		(compare-windows-dehighlight)
+		(ding)
+		(message "No more matches with %s" b2))
+	    (message "Diff -%s,%s +%s,%s with %s" opoint2 p2 opoint1 p1 b2)))
+      (message "Match -%s,%s +%s,%s with %s" opoint2 p2 opoint1 p1 b2))))
 
 ;; Move forward over whatever might be called whitespace.
 ;; compare-windows-whitespace is a regexp that matches whitespace.
@@ -303,7 +348,7 @@ on third call it again advances points to the next difference and so on."
 (defun compare-windows-sync-default-function ()
   (if (not compare-windows-sync-point)
       (let* ((w1 (selected-window))
-             (w2 (next-window w1))
+             (w2 (funcall compare-windows-get-window-function))
              (b2 (window-buffer w2))
              (point-max2 (with-current-buffer b2 (point-max)))
              (op2 (window-point w2))
@@ -360,13 +405,13 @@ on third call it again advances points to the next difference and so on."
     (if compare-windows-overlay1
         (move-overlay compare-windows-overlay1 beg1 end1 b1)
       (setq compare-windows-overlay1 (make-overlay beg1 end1 b1))
-      (overlay-put compare-windows-overlay1 'face 'compare-windows)
+      (overlay-put compare-windows-overlay1 'face 'compare-windows-added)
       (overlay-put compare-windows-overlay1 'priority 1000))
     (overlay-put compare-windows-overlay1 'window w1)
     (if compare-windows-overlay2
         (move-overlay compare-windows-overlay2 beg2 end2 b2)
       (setq compare-windows-overlay2 (make-overlay beg2 end2 b2))
-      (overlay-put compare-windows-overlay2 'face 'compare-windows)
+      (overlay-put compare-windows-overlay2 'face 'compare-windows-removed)
       (overlay-put compare-windows-overlay2 'priority 1000))
     (overlay-put compare-windows-overlay2 'window w2)
     (if (not (eq compare-windows-highlight 'persistent))

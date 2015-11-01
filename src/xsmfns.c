@@ -1,7 +1,7 @@
 /* Session management module for systems which understand the X Session
    management protocol.
 
-Copyright (C) 2002-2013 Free Software Foundation, Inc.
+Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -28,11 +28,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <unistd.h>
 #include <sys/param.h>
+#include <errno.h>
 #include <stdio.h>
 
 #include "lisp.h"
-#include "systime.h"
-#include "sysselect.h"
 #include "frame.h"
 #include "termhooks.h"
 #include "xterm.h"
@@ -49,11 +48,11 @@ static struct input_event emacs_event;
 
 /* The descriptor that we use to check for data from the session manager.  */
 
-static int ice_fd;
+static int ice_fd = -1;
 
 /* A flag that says if we are in shutdown interactions or not.  */
 
-static int doing_interact;
+static bool doing_interact;
 
 /* The session manager object for the session manager connection.  */
 
@@ -123,9 +122,9 @@ x_session_check_input (int fd, void *data)
     kbd_buffer_store_event (&emacs_event);
 }
 
-/* Return non-zero if we have a connection to a session manager.  */
+/* Return true if we have a connection to a session manager.  */
 
-int
+bool
 x_session_have_connection (void)
 {
   return ice_fd != -1;
@@ -138,7 +137,7 @@ x_session_have_connection (void)
 static void
 smc_interact_CB (SmcConn smcConn, SmPointer clientData)
 {
-  doing_interact = True;
+  doing_interact = true;
   emacs_event.kind = SAVE_SESSION_EVENT;
   emacs_event.arg = Qnil;
 }
@@ -168,8 +167,12 @@ smc_save_yourself_CB (SmcConn smcConn,
   int val_idx = 0, vp_idx = 0;
   int props_idx = 0;
   int i;
-  char *cwd = get_current_dir_name ();
   char *smid_opt, *chdir_opt = NULL;
+  Lisp_Object user_login_name = Fuser_login_name (Qnil);
+
+  // Must have these.
+  if (! STRINGP (Vinvocation_name) || ! STRINGP (user_login_name))
+    return;
 
   /* How to start a new instance of Emacs.  */
   props[props_idx] = &prop_ptr[props_idx];
@@ -197,11 +200,11 @@ smc_save_yourself_CB (SmcConn smcConn,
   props[props_idx]->type = xstrdup (SmARRAY8);
   props[props_idx]->num_vals = 1;
   props[props_idx]->vals = &values[val_idx++];
-  props[props_idx]->vals[0].length = SBYTES (Vuser_login_name);
-  props[props_idx]->vals[0].value = SDATA (Vuser_login_name);
+  props[props_idx]->vals[0].length = SBYTES (user_login_name);
+  props[props_idx]->vals[0].value = SDATA (user_login_name);
   ++props_idx;
 
-
+  char *cwd = get_current_dir_name ();
   if (cwd)
     {
       props[props_idx] = &prop_ptr[props_idx];
@@ -230,8 +233,7 @@ smc_save_yourself_CB (SmcConn smcConn,
   props[props_idx]->vals[vp_idx++].value = emacs_program;
 
   smid_opt = xmalloc (strlen (SMID_OPT) + strlen (client_id) + 1);
-  strcpy (smid_opt, SMID_OPT);
-  strcat (smid_opt, client_id);
+  strcpy (stpcpy (smid_opt, SMID_OPT), client_id);
 
   props[props_idx]->vals[vp_idx].length = strlen (smid_opt);
   props[props_idx]->vals[vp_idx++].value = smid_opt;
@@ -242,8 +244,7 @@ smc_save_yourself_CB (SmcConn smcConn,
   if (cwd)
     {
       chdir_opt = xmalloc (strlen (CHDIR_OPT) + strlen (cwd) + 1);
-      strcpy (chdir_opt, CHDIR_OPT);
-      strcat (chdir_opt, cwd);
+      strcpy (stpcpy (chdir_opt, CHDIR_OPT), cwd);
 
       props[props_idx]->vals[vp_idx].length = strlen (chdir_opt);
       props[props_idx]->vals[vp_idx++].value = chdir_opt;
@@ -374,6 +375,7 @@ create_client_leader_window (struct x_display_info *dpyinfo, char *client_ID)
                            -1, -1, 1, 1,
                            CopyFromParent, CopyFromParent, CopyFromParent);
 
+  validate_x_resource_name ();
   class_hints.res_name = SSDATA (Vx_resource_name);
   class_hints.res_class = SSDATA (Vx_resource_class);
   XSetClassHint (dpyinfo->display, w, &class_hints);
@@ -395,31 +397,41 @@ x_session_initialize (struct x_display_info *dpyinfo)
 {
 #define SM_ERRORSTRING_LEN 512
   char errorstring[SM_ERRORSTRING_LEN];
-  char* previous_id = NULL;
+  char *previous_id = NULL;
   SmcCallbacks callbacks;
   ptrdiff_t name_len = 0;
 
+  /* libSM seems to crash if pwd is missing - see bug#18851.  */
+  if (! get_current_dir_name ())
+    {
+      fprintf (stderr, "Disabling session management due to pwd error: %s\n",
+               emacs_strerror (errno));
+      return;
+    }
+
   ice_fd = -1;
-  doing_interact = False;
+  doing_interact = false;
 
   /* Check if we where started by the session manager.  If so, we will
      have a previous id.  */
-  if (! EQ (Vx_session_previous_id, Qnil) && STRINGP (Vx_session_previous_id))
+  if (STRINGP (Vx_session_previous_id))
     previous_id = SSDATA (Vx_session_previous_id);
 
   /* Construct the path to the Emacs program.  */
-  if (! EQ (Vinvocation_directory, Qnil))
+  if (STRINGP (Vinvocation_directory))
     name_len += SBYTES (Vinvocation_directory);
-  name_len += SBYTES (Vinvocation_name);
+  if (STRINGP (Vinvocation_name))
+    name_len += SBYTES (Vinvocation_name);
 
   /* This malloc will not be freed, but it is only done once, and hopefully
      not very large   */
   emacs_program = xmalloc (name_len + 1);
-  emacs_program[0] = '\0';
+  char *z = emacs_program;
 
-  if (! EQ (Vinvocation_directory, Qnil))
-    strcpy (emacs_program, SSDATA (Vinvocation_directory));
-  strcat (emacs_program, SSDATA (Vinvocation_name));
+  if (STRINGP (Vinvocation_directory))
+    z = lispstpcpy (z, Vinvocation_directory);
+  if (STRINGP (Vinvocation_name))
+    lispstpcpy (z, Vinvocation_name);
 
   /* The SM protocol says all callbacks are mandatory, so set up all
      here and in the mask passed to SmcOpenConnection.  */
@@ -491,21 +503,19 @@ is told to abort the window system shutdown.
 Do not call this function yourself. */)
   (Lisp_Object event)
 {
-  int kill_emacs = CONSP (event) && CONSP (XCDR (event))
-    && EQ (Qt, XCAR (XCDR (event)));
+  bool kill_emacs = (CONSP (event) && CONSP (XCDR (event))
+		     && EQ (Qt, XCAR (XCDR (event))));
 
   /* Check doing_interact so that we don't do anything if someone called
      this at the wrong time. */
   if (doing_interact && ! kill_emacs)
     {
-      Bool cancel_shutdown = False;
-
-      cancel_shutdown = ! EQ (call0 (intern ("emacs-session-save")), Qnil);
+      bool cancel_shutdown = ! NILP (call0 (intern ("emacs-session-save")));
 
       SmcInteractDone (smc_conn, cancel_shutdown);
       SmcSaveYourselfDone (smc_conn, True);
 
-      doing_interact = False;
+      doing_interact = false;
     }
   else if (kill_emacs)
     {
@@ -513,7 +523,7 @@ Do not call this function yourself. */)
          prevent.  Fix this in next version.  */
       Fkill_emacs (Qnil);
 
-#if 0
+#if false
       /* This will not be reached, but we want kill-emacs-hook to be run.  */
       SmcCloseConnection (smc_conn, 0, 0);
       ice_connection_closed ();

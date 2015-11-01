@@ -1,5 +1,5 @@
 /* Interface to libxml2.
-   Copyright (C) 2010-2013 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -25,68 +25,73 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <libxml/HTMLparser.h>
 
 #include "lisp.h"
-#include "character.h"
 #include "buffer.h"
 
 
-static Lisp_Object Qlibxml2_dll;
-
 #ifdef WINDOWSNT
 
-#include <windows.h>
-#include "w32.h"
+# include <windows.h>
+# include "w32.h"
 
-/* Macro for defining functions that will be loaded from the libxml2 DLL.  */
-#define DEF_XML2_FN(rettype,func,args) static rettype (FAR CDECL *fn_##func)args
-
-/* Macro for loading libxml2 functions from the library.  */
-#define LOAD_XML2_FN(lib,func) {					\
-    fn_##func = (void *) GetProcAddress (lib, #func);			\
-    if (!fn_##func) goto bad_library;					\
-  }
-
-DEF_XML2_FN (htmlDocPtr, htmlReadMemory,
+DEF_DLL_FN (htmlDocPtr, htmlReadMemory,
 	     (const char *, int, const char *, const char *, int));
-DEF_XML2_FN (xmlDocPtr, xmlReadMemory,
+DEF_DLL_FN (xmlDocPtr, xmlReadMemory,
 	     (const char *, int, const char *, const char *, int));
-DEF_XML2_FN (xmlNodePtr, xmlDocGetRootElement, (xmlDocPtr));
-DEF_XML2_FN (void, xmlFreeDoc, (xmlDocPtr));
-DEF_XML2_FN (void, xmlCleanupParser, (void));
-DEF_XML2_FN (void, xmlCheckVersion, (int));
+DEF_DLL_FN (xmlNodePtr, xmlDocGetRootElement, (xmlDocPtr));
+DEF_DLL_FN (void, xmlFreeDoc, (xmlDocPtr));
+DEF_DLL_FN (void, xmlCleanupParser, (void));
+DEF_DLL_FN (void, xmlCheckVersion, (int));
 
-static int
+static bool
 libxml2_loaded_p (void)
 {
   Lisp_Object found = Fassq (Qlibxml2_dll, Vlibrary_cache);
 
-  if (CONSP (found))
-    return EQ (XCDR (found), Qt) ? 1 : 0;
-  return 0;
+  return CONSP (found) && EQ (XCDR (found), Qt);
+}
+
+# undef htmlReadMemory
+# undef xmlCheckVersion
+# undef xmlCleanupParser
+# undef xmlDocGetRootElement
+# undef xmlFreeDoc
+# undef xmlReadMemory
+
+# define htmlReadMemory fn_htmlReadMemory
+# define xmlCheckVersion fn_xmlCheckVersion
+# define xmlCleanupParser fn_xmlCleanupParser
+# define xmlDocGetRootElement fn_xmlDocGetRootElement
+# define xmlFreeDoc fn_xmlFreeDoc
+# define xmlReadMemory fn_xmlReadMemory
+
+static bool
+load_dll_functions (HMODULE library)
+{
+  LOAD_DLL_FN (library, htmlReadMemory);
+  LOAD_DLL_FN (library, xmlReadMemory);
+  LOAD_DLL_FN (library, xmlDocGetRootElement);
+  LOAD_DLL_FN (library, xmlFreeDoc);
+  LOAD_DLL_FN (library, xmlCleanupParser);
+  LOAD_DLL_FN (library, xmlCheckVersion);
+  return true;
 }
 
 #else  /* !WINDOWSNT */
 
-#define fn_htmlReadMemory       htmlReadMemory
-#define fn_xmlReadMemory        xmlReadMemory
-#define fn_xmlDocGetRootElement xmlDocGetRootElement
-#define fn_xmlFreeDoc           xmlFreeDoc
-#define fn_xmlCleanupParser     xmlCleanupParser
-#define fn_xmlCheckVersion      xmlCheckVersion
-
-static int
+static bool
 libxml2_loaded_p (void)
 {
-  return 1;
+  return true;
 }
 
 #endif	/* !WINDOWSNT */
 
-static int
+static bool
 init_libxml2_functions (void)
 {
 #ifdef WINDOWSNT
   if (libxml2_loaded_p ())
-    return 1;
+    return true;
   else
     {
       HMODULE library;
@@ -94,28 +99,22 @@ init_libxml2_functions (void)
       if (!(library = w32_delayed_load (Qlibxml2_dll)))
 	{
 	  message1 ("libxml2 library not found");
-	  return 0;
+	  return false;
 	}
 
-      /* LOAD_XML2_FN jumps to bad_library if it fails to find the
-	 named function.  */
-      LOAD_XML2_FN (library, htmlReadMemory);
-      LOAD_XML2_FN (library, xmlReadMemory);
-      LOAD_XML2_FN (library, xmlDocGetRootElement);
-      LOAD_XML2_FN (library, xmlFreeDoc);
-      LOAD_XML2_FN (library, xmlCleanupParser);
-      LOAD_XML2_FN (library, xmlCheckVersion);
+      if (! load_dll_functions (library))
+	goto bad_library;
 
       Vlibrary_cache = Fcons (Fcons (Qlibxml2_dll, Qt), Vlibrary_cache);
-      return 1;
+      return true;
     }
 
  bad_library:
   Vlibrary_cache = Fcons (Fcons (Qlibxml2_dll, Qnil), Vlibrary_cache);
 
-  return 0;
+  return false;
 #else  /* !WINDOWSNT */
-  return 1;
+  return true;
 #endif	/* !WINDOWSNT */
 }
 
@@ -175,14 +174,15 @@ make_dom (xmlNode *node)
 }
 
 static Lisp_Object
-parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, int htmlp)
+parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url,
+	      Lisp_Object discard_comments, bool htmlp)
 {
   xmlDoc *doc;
   Lisp_Object result = Qnil;
   const char *burl = "";
   ptrdiff_t istart, iend, istart_byte, iend_byte;
 
-  fn_xmlCheckVersion (LIBXML_VERSION);
+  xmlCheckVersion (LIBXML_VERSION);
 
   validate_region (&start, &end);
 
@@ -201,42 +201,44 @@ parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, int html
     }
 
   if (htmlp)
-    doc = fn_htmlReadMemory ((char *) BYTE_POS_ADDR (istart_byte),
-			     iend_byte - istart_byte, burl, "utf-8",
-			     HTML_PARSE_RECOVER|HTML_PARSE_NONET|
-			     HTML_PARSE_NOWARNING|HTML_PARSE_NOERROR|
-			     HTML_PARSE_NOBLANKS);
+    doc = htmlReadMemory ((char *) BYTE_POS_ADDR (istart_byte),
+			  iend_byte - istart_byte, burl, "utf-8",
+			  HTML_PARSE_RECOVER|HTML_PARSE_NONET|
+			  HTML_PARSE_NOWARNING|HTML_PARSE_NOERROR|
+			  HTML_PARSE_NOBLANKS);
   else
-    doc = fn_xmlReadMemory ((char *) BYTE_POS_ADDR (istart_byte),
-			    iend_byte - istart_byte, burl, "utf-8",
-			    XML_PARSE_NONET|XML_PARSE_NOWARNING|
-			    XML_PARSE_NOBLANKS |XML_PARSE_NOERROR);
+    doc = xmlReadMemory ((char *) BYTE_POS_ADDR (istart_byte),
+			 iend_byte - istart_byte, burl, "utf-8",
+			 XML_PARSE_NONET|XML_PARSE_NOWARNING|
+			 XML_PARSE_NOBLANKS |XML_PARSE_NOERROR);
 
   if (doc != NULL)
     {
-      /* If the document is just comments, then this should get us the
-	 nodes anyway. */
-      xmlNode *n = doc->children->next;
       Lisp_Object r = Qnil;
+      if (NILP(discard_comments))
+        {
+          /* If the document has toplevel comments, then this should
+             get us the nodes and the comments. */
+          xmlNode *n = doc->children;
 
-      while (n) {
-	if (!NILP (r))
-	  result = Fcons (r, result);
-	r = make_dom (n);
-	n = n->next;
-      }
+          while (n) {
+            if (!NILP (r))
+              result = Fcons (r, result);
+            r = make_dom (n);
+            n = n->next;
+          }
+        }
 
       if (NILP (result)) {
-	/* The document isn't just comments, so get the tree the
-	   proper way. */
-	xmlNode *node = fn_xmlDocGetRootElement (doc);
+	/* The document doesn't have toplevel comments or we discarded
+	   them.  Get the tree the proper way. */
+	xmlNode *node = xmlDocGetRootElement (doc);
 	if (node != NULL)
 	  result = make_dom (node);
       } else
-	result = Fcons (intern ("top"),
-			Fcons (Qnil, Fnreverse (Fcons (r, result))));
+	result = Fcons (Qtop, Fcons (Qnil, Fnreverse (Fcons (r, result))));
 
-      fn_xmlFreeDoc (doc);
+      xmlFreeDoc (doc);
     }
 
   return result;
@@ -246,30 +248,32 @@ void
 xml_cleanup_parser (void)
 {
   if (libxml2_loaded_p ())
-    fn_xmlCleanupParser ();
+    xmlCleanupParser ();
 }
 
 DEFUN ("libxml-parse-html-region", Flibxml_parse_html_region,
        Slibxml_parse_html_region,
-       2, 3, 0,
+       2, 4, 0,
        doc: /* Parse the region as an HTML document and return the parse tree.
-If BASE-URL is non-nil, it is used to expand relative URLs.  */)
-  (Lisp_Object start, Lisp_Object end, Lisp_Object base_url)
+If BASE-URL is non-nil, it is used to expand relative URLs.
+If DISCARD-COMMENTS is non-nil, all HTML comments are discarded. */)
+  (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, Lisp_Object discard_comments)
 {
   if (init_libxml2_functions ())
-    return parse_region (start, end, base_url, 1);
+    return parse_region (start, end, base_url, discard_comments, true);
   return Qnil;
 }
 
 DEFUN ("libxml-parse-xml-region", Flibxml_parse_xml_region,
        Slibxml_parse_xml_region,
-       2, 3, 0,
+       2, 4, 0,
        doc: /* Parse the region as an XML document and return the parse tree.
-If BASE-URL is non-nil, it is used to expand relative URLs.  */)
-  (Lisp_Object start, Lisp_Object end, Lisp_Object base_url)
+If BASE-URL is non-nil, it is used to expand relative URLs.
+If DISCARD-COMMENTS is non-nil, all HTML comments are discarded. */)
+  (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, Lisp_Object discard_comments)
 {
   if (init_libxml2_functions ())
-    return parse_region (start, end, base_url, 0);
+    return parse_region (start, end, base_url, discard_comments, false);
   return Qnil;
 }
 
@@ -282,8 +286,6 @@ syms_of_xml (void)
 {
   defsubr (&Slibxml_parse_html_region);
   defsubr (&Slibxml_parse_xml_region);
-
-  DEFSYM (Qlibxml2_dll, "libxml2");
 }
 
 #endif /* HAVE_LIBXML2 */

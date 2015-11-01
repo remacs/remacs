@@ -1,6 +1,19 @@
 ## -*- mode: octave; coding: utf-8 -*-
 0;				# Don't make this a function file
 function res = tcomp (fn)
+
+  global x y ...
+         z1 z2
+  persistent x y ...
+             z1 z2
+  global x y = 2 ...
+         z1 z2                  # FIXME
+
+  do
+    something
+  until x = ...
+        y
+
   %% res = tcomp (fn)
   %%     imports components and rearranges them.
 
@@ -10,11 +23,28 @@ function res = tcomp (fn)
 
   data = dlmread(fn, 3, 0);
 
+  enumeration
+    first (1)
+    second (2)
+  end
+
+  y = enumeration (x);          #Beware: "enumeration" can also be a function!
+  y = foo(enumeration (x),
+          2);          #Beware: "enumeration" can also be a function!
+
   x = data(:,2:end);
   y = 'hello';
   z = y';
 
+  ## Bug#14399.
+  vec = [...
+          one;...
+          two;...
+          three];
+
   cnty = repmat(x(:,1)(:), 10, 1);
+  x = ...
+  12
 
   pop = x(:,1:10)(:);
     ## Here and below, we test if the indentation aligns with a previous
@@ -1974,7 +2004,7 @@ function [out1, out2] = installed_packages (local_list, global_list)
   endif
 
   h1 = postpad (h1, max_name_length + 1, " ");
-  h2 = postpad (h2, max_version_length, " ");;
+  h2 = postpad (h2, max_version_length, " ");
 
   ## Print a header.
   header = sprintf("%s | %s | %s\n", h1, h2, h3);

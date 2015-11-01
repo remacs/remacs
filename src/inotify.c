@@ -1,6 +1,6 @@
 /* Inotify support for Emacs
 
-Copyright (C) 2012-2013 Free Software Foundation, Inc.
+Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -25,38 +25,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "coding.h"
 #include "process.h"
 #include "keyboard.h"
-#include "character.h"
-#include "frame.h" /* Required for termhooks.h.  */
 #include "termhooks.h"
 
-static Lisp_Object Qaccess;        /* IN_ACCESS */
-static Lisp_Object Qattrib;        /* IN_ATTRIB */
-static Lisp_Object Qclose_write;   /* IN_CLOSE_WRITE */
-static Lisp_Object Qclose_nowrite; /* IN_CLOSE_NOWRITE */
-static Lisp_Object Qcreate;        /* IN_CREATE */
-static Lisp_Object Qdelete;        /* IN_DELETE */
-static Lisp_Object Qdelete_self;   /* IN_DELETE_SELF */
-static Lisp_Object Qmodify;        /* IN_MODIFY */
-static Lisp_Object Qmove_self;     /* IN_MOVE_SELF */
-static Lisp_Object Qmoved_from;    /* IN_MOVED_FROM */
-static Lisp_Object Qmoved_to;      /* IN_MOVED_TO */
-static Lisp_Object Qopen;          /* IN_OPEN */
-
-static Lisp_Object Qall_events;    /* IN_ALL_EVENTS */
-static Lisp_Object Qmove;          /* IN_MOVE */
-static Lisp_Object Qclose;         /* IN_CLOSE */
-
-static Lisp_Object Qdont_follow;   /* IN_DONT_FOLLOW */
-static Lisp_Object Qexcl_unlink;   /* IN_EXCL_UNLINK */
-static Lisp_Object Qmask_add;      /* IN_MASK_ADD */
-static Lisp_Object Qoneshot;       /* IN_ONESHOT */
-static Lisp_Object Qonlydir;       /* IN_ONLYDIR */
-
-static Lisp_Object Qignored;       /* IN_IGNORED */
-static Lisp_Object Qisdir;         /* IN_ISDIR */
-static Lisp_Object Qq_overflow;    /* IN_Q_OVERFLOW */
-static Lisp_Object Qunmount;       /* IN_UNMOUNT */
-
+#include <errno.h>
 #include <sys/inotify.h>
 #include <sys/ioctl.h>
 
@@ -157,17 +128,14 @@ inotify_callback (int fd, void *_)
 
   to_read = 0;
   if (ioctl (fd, FIONREAD, &to_read) == -1)
-    xsignal1
-      (Qfile_notify_error,
-       build_string ("Error while trying to retrieve file system events"));
+    report_file_notify_error ("Error while retrieving file system events",
+			      Qnil);
   buffer = xmalloc (to_read);
   n = read (fd, buffer, to_read);
   if (n < 0)
     {
       xfree (buffer);
-      xsignal1
-      (Qfile_notify_error,
-       build_string ("Error while trying to read file system events"));
+      report_file_notify_error ("Error while reading file system events", Qnil);
     }
 
   EVENT_INIT (event);
@@ -243,7 +211,10 @@ symbol_to_inotifymask (Lisp_Object symb)
   else if (EQ (symb, Qt) || EQ (symb, Qall_events))
     return IN_ALL_EVENTS;
   else
-      xsignal2 (Qfile_notify_error, build_string ("Unknown aspect"), symb);
+    {
+      errno = EINVAL;
+      report_file_notify_error ("Unknown aspect", symb);
+    }
 }
 
 static uint32_t
@@ -335,9 +306,7 @@ is managed internally and there is no corresponding inotify_init.  Use
     {
       inotifyfd = inotify_init1 (IN_NONBLOCK|IN_CLOEXEC);
       if (inotifyfd < 0)
-	xsignal1
-	  (Qfile_notify_error,
-	   build_string ("File watching feature (inotify) is not available"));
+	report_file_notify_error ("File watching is not available", Qnil);
       watch_list = Qnil;
       add_read_fd (inotifyfd, &inotify_callback, NULL);
     }
@@ -346,17 +315,16 @@ is managed internally and there is no corresponding inotify_init.  Use
   encoded_file_name = ENCODE_FILE (file_name);
   watchdesc = inotify_add_watch (inotifyfd, SSDATA (encoded_file_name), mask);
   if (watchdesc == -1)
-    xsignal2 (Qfile_notify_error,
-	      build_string ("Could not add watch for file"), file_name);
+    report_file_notify_error ("Could not add watch for file", file_name);
 
   watch_descriptor = make_watch_descriptor (watchdesc);
 
-  /* Delete existing watch object. */
+  /* Delete existing watch object.  */
   watch_object = Fassoc (watch_descriptor, watch_list);
   if (!NILP (watch_object))
       watch_list = Fdelete (watch_object, watch_list);
 
-  /* Store watch object in watch list. */
+  /* Store watch object in watch list.  */
   watch_object = Fcons (watch_descriptor, callback);
   watch_list = Fcons (watch_object, watch_list);
 
@@ -376,15 +344,14 @@ See inotify_rm_watch(2) for more information.
   int wd = XINT (watch_descriptor);
 
   if (inotify_rm_watch (inotifyfd, wd) == -1)
-    xsignal2 (Qfile_notify_error,
-	      build_string ("Could not rm watch"), watch_descriptor);
+    report_file_notify_error ("Could not rm watch", watch_descriptor);
 
-  /* Remove watch descriptor from watch list. */
+  /* Remove watch descriptor from watch list.  */
   watch_object = Fassoc (watch_descriptor, watch_list);
   if (!NILP (watch_object))
     watch_list = Fdelete (watch_object, watch_list);
 
-  /* Cleanup if no more files are watched. */
+  /* Cleanup if no more files are watched.  */
   if (NILP (watch_list))
     {
       emacs_close (inotifyfd);
@@ -395,39 +362,56 @@ See inotify_rm_watch(2) for more information.
   return Qt;
 }
 
+DEFUN ("inotify-valid-p", Finotify_valid_p, Sinotify_valid_p, 1, 1, 0,
+       doc: /* "Check a watch specified by its WATCH-DESCRIPTOR.
+
+WATCH-DESCRIPTOR should be an object returned by `inotify-add-watch'.
+
+A watch can become invalid if the file or directory it watches is
+deleted, or if the watcher thread exits abnormally for any other
+reason.  Removing the watch by calling `inotify-rm-watch' also makes
+it invalid.  */)
+     (Lisp_Object watch_descriptor)
+{
+  Lisp_Object watch_object = Fassoc (watch_descriptor, watch_list);
+  return NILP (watch_object) ? Qnil : Qt;
+}
+
 void
 syms_of_inotify (void)
 {
-  DEFSYM (Qaccess, "access");
-  DEFSYM (Qattrib, "attrib");
-  DEFSYM (Qclose_write, "close-write");
+  DEFSYM (Qaccess, "access");		/* IN_ACCESS */
+  DEFSYM (Qattrib, "attrib");		/* IN_ATTRIB */
+  DEFSYM (Qclose_write, "close-write");	/* IN_CLOSE_WRITE */
   DEFSYM (Qclose_nowrite, "close-nowrite");
-  DEFSYM (Qcreate, "create");
-  DEFSYM (Qdelete, "delete");
-  DEFSYM (Qdelete_self, "delete-self");
-  DEFSYM (Qmodify, "modify");
-  DEFSYM (Qmove_self, "move-self");
-  DEFSYM (Qmoved_from, "moved-from");
-  DEFSYM (Qmoved_to, "moved-to");
-  DEFSYM (Qopen, "open");
+					/* IN_CLOSE_NOWRITE */
+  DEFSYM (Qcreate, "create");		/* IN_CREATE */
+  DEFSYM (Qdelete, "delete");		/* IN_DELETE */
+  DEFSYM (Qdelete_self, "delete-self");	/* IN_DELETE_SELF */
+  DEFSYM (Qmodify, "modify");		/* IN_MODIFY */
+  DEFSYM (Qmove_self, "move-self");	/* IN_MOVE_SELF */
+  DEFSYM (Qmoved_from, "moved-from");	/* IN_MOVED_FROM */
+  DEFSYM (Qmoved_to, "moved-to");	/* IN_MOVED_TO */
+  DEFSYM (Qopen, "open");		/* IN_OPEN */
 
-  DEFSYM (Qall_events, "all-events");
-  DEFSYM (Qmove, "move");
-  DEFSYM (Qclose, "close");
+  DEFSYM (Qall_events, "all-events");	/* IN_ALL_EVENTS */
+  DEFSYM (Qmove, "move");		/* IN_MOVE */
+  DEFSYM (Qclose, "close");		/* IN_CLOSE */
 
-  DEFSYM (Qdont_follow, "dont-follow");
-  DEFSYM (Qexcl_unlink, "excl-unlink");
-  DEFSYM (Qmask_add, "mask-add");
-  DEFSYM (Qoneshot, "oneshot");
-  DEFSYM (Qonlydir, "onlydir");
+  DEFSYM (Qdont_follow, "dont-follow");	/* IN_DONT_FOLLOW */
+  DEFSYM (Qexcl_unlink, "excl-unlink");	/* IN_EXCL_UNLINK */
+  DEFSYM (Qmask_add, "mask-add");	/* IN_MASK_ADD */
+  DEFSYM (Qoneshot, "oneshot");		/* IN_ONESHOT */
+  DEFSYM (Qonlydir, "onlydir");		/* IN_ONLYDIR */
 
-  DEFSYM (Qignored, "ignored");
-  DEFSYM (Qisdir, "isdir");
-  DEFSYM (Qq_overflow, "q-overflow");
-  DEFSYM (Qunmount, "unmount");
+  DEFSYM (Qignored, "ignored");		/* IN_IGNORED */
+  DEFSYM (Qisdir, "isdir");		/* IN_ISDIR */
+  DEFSYM (Qq_overflow, "q-overflow");	/* IN_Q_OVERFLOW */
+  DEFSYM (Qunmount, "unmount");		/* IN_UNMOUNT */
 
   defsubr (&Sinotify_add_watch);
   defsubr (&Sinotify_rm_watch);
+  defsubr (&Sinotify_valid_p);
 
   staticpro (&watch_list);
 

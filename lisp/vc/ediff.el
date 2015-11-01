@@ -1,6 +1,6 @@
 ;;; ediff.el --- a comprehensive visual interface to diff & patch
 
-;; Copyright (C) 1994-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-2015 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.stonybrook.edu>
 ;; Created: February 2, 1994
@@ -64,7 +64,7 @@
 ;; compressed files.  Details are given below.
 
 ;; Finally, Ediff supports directory-level comparison, merging and patching.
-;; See the on-line manual for details.
+;; See the Ediff manual for details.
 
 ;; This package builds upon the ideas borrowed from emerge.el and several
 ;; Ediff's functions are adaptations from emerge.el.  Much of the functionality
@@ -114,7 +114,7 @@
 
 ;; Compiler pacifier
 (eval-and-compile
-  (unless (fboundp 'declare-function) (defmacro declare-function (&rest  r))))
+  (unless (fboundp 'declare-function) (defmacro declare-function (&rest  _r))))
 
 (require 'ediff-util)
 ;; end pacifier
@@ -367,8 +367,10 @@ deleted."
 This command can be used instead of `revert-buffer'.  If there is
 nothing to revert then this command fails."
   (interactive)
-  (unless (or revert-buffer-function
-              revert-buffer-insert-file-contents-function
+  ;; This duplicates code from menu-bar.el.
+  (unless (or (not (eq revert-buffer-function 'revert-buffer--default))
+              (not (eq revert-buffer-insert-file-contents-function
+		       'revert-buffer-insert-file-contents--default-function))
               (and buffer-file-number
                    (or (buffer-modified-p)
                        (not (verify-visited-file-modtime
@@ -961,7 +963,7 @@ If WIND-B is nil, use window next to WIND-A."
 ;;;###autoload
 (defun ediff-regions-wordwise (buffer-A buffer-B &optional startup-hooks)
   "Run Ediff on a pair of regions in specified buffers.
-Regions \(i.e., point and mark\) can be set in advance or marked interactively.
+Regions (i.e., point and mark) can be set in advance or marked interactively.
 This function is effective only for relatively small regions, up to 200
 lines.  For large regions, use `ediff-regions-linewise'."
   (interactive
@@ -1001,7 +1003,7 @@ lines.  For large regions, use `ediff-regions-linewise'."
 ;;;###autoload
 (defun ediff-regions-linewise (buffer-A buffer-B &optional startup-hooks)
   "Run Ediff on a pair of regions in specified buffers.
-Regions \(i.e., point and mark\) can be set in advance or marked interactively.
+Regions (i.e., point and mark) can be set in advance or marked interactively.
 Each region is enlarged to contain full lines.
 This function is effective for large regions, over 100-200
 lines.  For small regions, use `ediff-regions-wordwise'."
@@ -1292,7 +1294,7 @@ buffer."
   (let (rev1 rev2)
     (setq rev1
 	  (read-string
-	   (format
+	   (format-message
 	    "Version 1 to merge (default %s's working version): "
 	    (if (stringp file)
 		(file-name-nondirectory file) "current buffer")))
@@ -1324,7 +1326,7 @@ buffer."
   (let (rev1 rev2 ancestor-rev)
     (setq rev1
 	  (read-string
-	   (format
+	   (format-message
 	    "Version 1 to merge (default %s's working version): "
 	    (if (stringp file)
 		(file-name-nondirectory file) "current buffer")))
@@ -1336,7 +1338,7 @@ buffer."
 		(file-name-nondirectory file) "current buffer")))
 	  ancestor-rev
 	  (read-string
-	   (format
+	   (format-message
 	    "Ancestor version (default %s's base revision): "
 	    (if (stringp file)
 		(file-name-nondirectory file) "current buffer"))))
@@ -1481,7 +1483,7 @@ When called interactively, displays the version."
     (format "Ediff %s of %s" ediff-version ediff-date)))
 
 ;; info is run first, and will autoload info.el.
-(declare-function Info-goto-node "info" (nodename &optional fork))
+(declare-function Info-goto-node "info" (nodename &optional fork strict-case))
 
 ;;;###autoload
 (defun ediff-documentation (&optional node)

@@ -1,5 +1,6 @@
+@c -*- coding: utf-8 -*-
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2013 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2015 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Text
@@ -33,7 +34,7 @@ publish them in many formats.
 @cindex mode, XML
 @cindex mode, nXML
 @findex nxml-mode
-  Emacs has other major modes for text which contains ``embedded''
+  Emacs has other major modes for text which contains embedded
 commands, such as @TeX{} and @LaTeX{} (@pxref{TeX Mode}); HTML and
 SGML (@pxref{HTML Mode}); XML
 @ifinfo
@@ -45,9 +46,8 @@ SGML (@pxref{HTML Mode}); XML
 and Groff and Nroff (@pxref{Nroff Mode}).
 
 @cindex ASCII art
-  If you need to edit pictures made out of text characters (commonly
-referred to as ``ASCII art''), use Picture mode, a special major mode
-for editing such pictures.
+  If you need to edit ASCII art pictures made out of text characters,
+use Picture mode, a special major mode for editing such pictures.
 @iftex
 @xref{Picture Mode,,, emacs-xtra, Specialized Emacs Features}.
 @end iftex
@@ -60,7 +60,7 @@ for editing such pictures.
 @cindex templates
 @cindex autotyping
 @cindex automatic typing
-  The ``automatic typing'' features may be useful when writing text.
+  The automatic typing features may be useful when writing text.
 @inforef{Top,The Autotype Manual,autotype}.
 @end ifinfo
 
@@ -69,6 +69,7 @@ for editing such pictures.
 * Sentences::           Moving over and killing sentences.
 * Paragraphs::          Moving over paragraphs.
 * Pages::               Moving over pages.
+* Quotation Marks::     Inserting quotation marks.
 * Filling::             Filling or justifying text.
 * Case::                Changing the case of text.
 * Text Mode::           The major modes for editing text files.
@@ -77,7 +78,7 @@ for editing such pictures.
 * TeX Mode::            Editing TeX and LaTeX files.
 * HTML Mode::           Editing HTML and SGML files.
 * Nroff Mode::          Editing input to the nroff formatter.
-* Enriched Text::       Editing text "enriched" with fonts, colors, etc.
+* Enriched Text::       Editing text enriched with fonts, colors, etc.
 * Text Based Tables::   Commands for editing text-based tables.
 * Two-Column::          Splitting text columns into separate windows.
 @end menu
@@ -116,7 +117,7 @@ cognate to @kbd{C-@@}, which is an alias for @kbd{C-@key{SPC}}.
 @findex backward-word
   The commands @kbd{M-f} (@code{forward-word}) and @kbd{M-b}
 (@code{backward-word}) move forward and backward over words.  These
-@key{Meta}-based key sequences are analogous to the key sequences
+@key{META}-based key sequences are analogous to the key sequences
 @kbd{C-f} and @kbd{C-b}, which move over single characters.  The
 analogy extends to numeric arguments, which serve as repeat counts.
 @kbd{M-f} with a negative argument moves backward, and @kbd{M-b} with
@@ -330,7 +331,7 @@ in Fundamental mode, @code{paragraph-start} is @w{@code{"\f\\|[
 @cindex formfeed character
   Within some text files, text is divided into @dfn{pages} delimited
 by the @dfn{formfeed character} (@acronym{ASCII} code 12, also denoted
-as @key{control-L}), which is displayed in Emacs as the escape
+as @samp{control-L}), which is displayed in Emacs as the escape
 sequence @samp{^L} (@pxref{Text Display}).  Traditionally, when such
 text files are printed to hardcopy, each formfeed character forces a
 page break.  Most Emacs commands treat it just like any other
@@ -403,6 +404,48 @@ value is a regular expression that matches the beginning of a line
 that separates pages (@pxref{Regexps}).  The normal value of this
 variable is @code{"^\f"}, which matches a formfeed character at the
 beginning of a line.
+
+@node Quotation Marks
+@section Quotation Marks
+@cindex Quotation marks
+@cindex Electric Quote mode
+@cindex mode, Electric Quote
+@cindex curly quotes
+@cindex curved quotes
+@findex electric-quote-mode
+  One common way to quote is the typewriter convention, which quotes
+using straight apostrophes @t{'like this'} or double-quotes @t{"like
+this"}.  Another common way is the curved quote convention, which uses
+left and right single or double quotation marks @t{‘like this’} or
+@t{“like this”}.  In text files, typewriter quotes are simple and
+portable; curved quotes are less ambiguous and typically look nicer.
+
+  Electric Quote mode makes it easier to type curved quotes.  As you
+type characters it optionally converts @t{`} to @t{‘}, @t{'} to @t{’},
+@t{``} to @t{“}, and @t{''} to @t{”}.  These conversions are
+suppressed in buffers whose coding systems cannot represent curved
+quote characters.
+
+@vindex electric-quote-paragraph
+@vindex electric-quote-comment
+@vindex electric-quote-string
+  You can customize the behavior of Electric Quote mode by customizing
+variables that control where it is active.  It is active in text
+paragraphs if @code{electric-quote-paragraph} is non-@code{nil}, in
+programming-language comments if @code{electric-quote-comment} is
+non-@code{nil}, and in programming-language strings if
+@code{electric-quote-string} is non-@code{nil}.  The default is
+@code{nil} for @code{electric-quote-string} and @code{t} for the other
+variables.
+
+  Electric Quote mode is disabled by default.  To toggle it, type
+@kbd{M-x electric-quote-mode}.  To toggle it in a single buffer, use
+@kbd{M-x electric-quote-local-mode}.  To suppress it for a single use,
+type @kbd{C-q `} or @kbd{C-q '} instead of @kbd{`} or @kbd{'}.  To
+insert a curved quote even when Electric Quote is disabled or
+inactive, you can type @kbd{C-x 8 [} for @t{‘}, @kbd{C-x 8 ]} for
+@t{’}, @kbd{C-x 8 @{} for @t{“}, and @kbd{C-x 8 @}} for @t{”}.
+@xref{Inserting Text}.
 
 @node Filling
 @section Filling Text
@@ -562,10 +605,11 @@ customize the abnormal hook variable @code{fill-nobreak-predicate}
 (@pxref{Hooks}).  Each function in this hook is called with no
 arguments, with point positioned where Emacs is considering breaking a
 line.  If a function returns a non-@code{nil} value, Emacs will not
-break the line there.  Two functions you can use are
+break the line there.  Functions you can use there include:
 @code{fill-single-word-nobreak-p} (don't break after the first word of
-a sentence or before the last) and @code{fill-french-nobreak-p} (don't
-break after @samp{(} or before @samp{)}, @samp{:} or @samp{?}).
+a sentence or before the last); @code{fill-single-char-nobreak-p}
+(don't break after a one-letter word); and @code{fill-french-nobreak-p}
+(don't break after @samp{(} or before @samp{)}, @samp{:} or @samp{?}).
 
 @node Fill Prefix
 @subsection The Fill Prefix
@@ -639,7 +683,7 @@ delimiter on each line.
 prefix for each paragraph automatically.  This command divides the
 region into paragraphs, treating every change in the amount of
 indentation as the start of a new paragraph, and fills each of these
-paragraphs.  Thus, all the lines in one ``paragraph'' have the same
+paragraphs.  Thus, all the lines in one paragraph have the same
 amount of indentation.  That indentation serves as the fill prefix for
 that paragraph.
 
@@ -1029,7 +1073,7 @@ revealing parts of the buffer, based on the outline structure.  These
 commands are not undoable; their effects are simply not recorded by
 the undo mechanism, so you can undo right past them (@pxref{Undo}).
 
-  Many of these commands act on the ``current'' heading line.  If
+  Many of these commands act on the current heading line.  If
 point is on a heading line, that is the current heading line; if point
 is on a body line, the current heading line is the nearest preceding
 header line.
@@ -1123,12 +1167,18 @@ though these are technically body lines).  @kbd{C-c C-a}
 numeric argument @var{n}, it hides everything except the top @var{n}
 levels of heading lines.
 
+@anchor{Outline Search}
 @findex reveal-mode
+@vindex search-invisible
   When incremental search finds text that is hidden by Outline mode,
 it makes that part of the buffer visible.  If you exit the search at
-that position, the text remains visible.  You can also automatically
-make text visible as you navigate in it by using Reveal mode (@kbd{M-x
-reveal-mode}), a buffer-local minor mode.
+that position, the text remains visible.  To toggle whether or not
+an active incremental search can match hidden text, type @kbd{M-s i}.
+To change the default for future searches, customize the option
+@code{search-invisible}.  (This option also affects how @code{query-replace}
+and related functions treat hidden text, @pxref{Query Replace}.)
+You can also automatically make text visible as you navigate in it by
+using Reveal mode (@kbd{M-x reveal-mode}), a buffer-local minor mode.
 
 @node Outline Views
 @subsection Viewing One Outline in Multiple Views
@@ -1155,7 +1205,7 @@ buffers.
 
 @cindex folding editing
   The Foldout package extends Outline mode and Outline minor mode with
-``folding'' commands.  The idea of folding is that you zoom in on a
+folding commands.  The idea of folding is that you zoom in on a
 nested portion of the outline, while hiding its relatives at higher
 levels.
 
@@ -1185,7 +1235,7 @@ show-subtree}), by specifying a zero argument: @kbd{M-0 C-c C-z}.
 
   While you're zoomed in, you can still use Outline mode's exposure and
 hiding functions without disturbing Foldout.  Also, since the buffer is
-narrowed, ``global'' editing actions will only affect text under the
+narrowed, global editing actions will only affect text under the
 zoomed-in heading.  This is useful for restricting changes to a
 particular chapter or section of your document.
 
@@ -1243,7 +1293,7 @@ quad click: exit all folds and hide text.
 @c FIXME not marked as a user variable
 @vindex foldout-mouse-modifiers
   You can specify different modifier keys (instead of
-@kbd{Control-Meta-}) by setting @code{foldout-mouse-modifiers}; but if
+@kbd{@key{Ctrl}-@key{META}-}) by setting @code{foldout-mouse-modifiers}; but if
 you have already loaded the @file{foldout.el} library, you must reload
 it in order for this to take effect.
 
@@ -1286,7 +1336,7 @@ executed.
 
 @kindex S-TAB @r{(Org Mode)}
 @findex org-shifttab
-  Typing @key{S-TAB} (@code{org-shifttab}) anywhere in an Org mode
+  Typing @kbd{S-@key{TAB}} (@code{org-shifttab}) anywhere in an Org mode
 buffer cycles the visibility of the entire outline structure, between
 (i) showing only top-level heading lines, (ii) showing all heading
 lines but no body lines, and (iii) showing everything.
@@ -1903,7 +1953,7 @@ characters themselves (@code{sgml-name-8bit-mode}).
 Run a shell command (which you must specify) to validate the current
 buffer as SGML (@code{sgml-validate}).
 
-@item C-c TAB
+@item C-c @key{TAB}
 @kindex C-c TAB @r{(SGML mode)}
 @findex sgml-tags-invisible
 Toggle the visibility of existing tags in the buffer.  This can be
@@ -1917,7 +1967,7 @@ used as a cheap preview (@code{sgml-tags-invisible}).
   The major mode for editing XML documents is called nXML mode.  This
 is a powerful major mode that can recognize many existing XML schema
 and use them to provide completion of XML elements via
-@kbd{M-@key{TAB}}, as well as ``on-the-fly'' XML
+@kbd{M-@key{TAB}}, as well as on-the-fly XML
 validation with error highlighting.  To enable nXML mode in an
 existing buffer, type @kbd{M-x nxml-mode}, or, equivalently, @kbd{M-x
 xml-mode}.  Emacs uses nXML mode for files which have the extension
@@ -1998,7 +2048,7 @@ number (the header level).
 @cindex text/enriched MIME format
 
   Enriched mode is a minor mode for editing formatted text files in a
-WYSIWYG (``what you see is what you get'') fashion.  When Enriched
+WYSIWYG (What You See Is What You Get) fashion.  When Enriched
 mode is enabled, you can apply various formatting properties to the
 text in the buffer, such as fonts and colors; upon saving the buffer,
 those properties are saved together with the text, using the MIME
@@ -2011,8 +2061,8 @@ highlighting (@pxref{Font Lock}).  Unlike Enriched mode, Font Lock
 mode assigns text properties automatically, based on the current
 buffer contents; those properties are not saved to disk.
 
-  The file @file{etc/enriched.doc} in the Emacs distribution serves as
-an example of the features of Enriched mode.
+  The file @file{enriched.txt} in Emacs's @code{data-directory}
+serves as an example of the features of Enriched mode.
 
 @menu
 * Enriched Mode::           Entering and exiting Enriched mode.
@@ -2022,7 +2072,7 @@ an example of the features of Enriched mode.
 * Enriched Indentation::    Changing the left and right margins.
 * Enriched Justification::  Centering, setting text flush with the
                               left or right margin, etc.
-* Enriched Properties::     The "special" text properties submenu.
+* Enriched Properties::     The ``special text properties'' submenu.
 @end menu
 
 @node Enriched Mode
@@ -2086,6 +2136,7 @@ newlines are used for filling.  The @key{RET} (@code{newline}) and
 commands, including Auto Fill (@pxref{Auto Fill}), insert only soft
 newlines and delete only soft newlines, leaving hard newlines alone.
 
+@c FIXME: I don't see 'unfilled' in that node.  --xfq
   Thus, when editing with Enriched mode, you should not use @key{RET}
 or @kbd{C-o} to break lines in the middle of filled paragraphs.  Use
 Auto Fill mode or explicit fill commands (@pxref{Fill Commands})
@@ -2097,11 +2148,12 @@ want to set the justification style to @code{unfilled}
 @node Editing Format Info
 @subsection Editing Format Information
 
-  The easiest way to alter properties is with the Text Properties
-menu.  You can get to this menu from the Edit menu in the menu bar
-(@pxref{Menu Bar}), or with @kbd{C-Mouse-2} (@pxref{Menu Mouse
-Clicks}).  Some of the commands in the Text Properties menu are listed
-below (you can also invoke them with @kbd{M-x}):
+  The easiest way to alter properties is with the @samp{Text
+Properties} menu.  You can get to this menu from the @samp{Edit} menu
+in the menu bar (@pxref{Menu Bar}), or with @kbd{C-Mouse-2}
+(@pxref{Menu Mouse Clicks}).  Some of the commands in the @samp{Text
+Properties} menu are listed below (you can also invoke them with
+@kbd{M-x}):
 
 @table @code
 @findex facemenu-remove-face-props
@@ -2294,13 +2346,13 @@ commands do nothing on text with this setting.  You can, however,
 still indent the left margin.
 @end table
 
-@c FIXME: We should explain the effect of these symbols.  --xfq
 @vindex default-justification
   You can also specify justification styles using the Justification
 submenu in the Text Properties menu.  The default justification style
 is specified by the per-buffer variable @code{default-justification}.
 Its value should be one of the symbols @code{left}, @code{right},
-@code{full}, @code{center}, or @code{none}.
+@code{full}, @code{center}, or @code{none}; their meanings correspond
+to the commands above.
 
 @node Enriched Properties
 @subsection Setting Other Text Properties
@@ -2780,8 +2832,8 @@ puts the text after the separator into the right-hand buffer, and
 deletes the separator.  Lines that don't have the column separator at
 the proper place remain unsplit; they stay in the left-hand buffer, and
 the right-hand buffer gets an empty line to correspond.  (This is the
-way to write a line that ``spans both columns while in two-column
-mode'': write it in the left-hand buffer, and put an empty line in the
+way to write a line that spans both columns while in two-column
+mode: write it in the left-hand buffer, and put an empty line in the
 right-hand buffer.)
 
 @kindex F2 RET

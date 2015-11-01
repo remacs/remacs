@@ -1,10 +1,10 @@
 ;;; mailabbrev.el --- abbrev-expansion of mail aliases
 
-;; Copyright (C) 1985-1987, 1992-1993, 1996-1997, 2000-2013 Free
+;; Copyright (C) 1985-1987, 1992-1993, 1996-1997, 2000-2015 Free
 ;; Software Foundation, Inc.
 
 ;; Author: Jamie Zawinski <jwz@lucid.com; now jwz@jwz.org>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Created: 19 Oct 90
 ;; Keywords: mail
 
@@ -603,7 +603,7 @@ In other respects, this behaves like `end-of-buffer', which see."
 (eval-after-load "sendmail"
   '(progn
      (define-key mail-mode-map "\C-c\C-a" 'mail-abbrev-insert-alias)
-     (define-key mail-mode-map "\e\t"	; like lisp-complete-symbol
+     (define-key mail-mode-map "\e\t"	; like completion-at-point
        'mail-abbrev-complete-alias)))
 
 ;;(define-key mail-mode-map "\C-n" 'mail-abbrev-next-line)

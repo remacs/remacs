@@ -1,6 +1,6 @@
 /* Header file: Caching facts about regions of the buffer, for optimization.
 
-Copyright (C) 1985-1986, 1993, 1995, 2001-2013 Free Software Foundation,
+Copyright (C) 1985-1986, 1993, 1995, 2001-2015 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -18,6 +18,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef EMACS_REGION_CACHE_H
+#define EMACS_REGION_CACHE_H
 
 /* This code was written by Jim Blandy <jimb@cs.oberlin.edu> to help
    GNU Emacs better support the gene editor written for the University
@@ -60,6 +62,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    this region has property P" vs. "I don't know if this region has
    property P or not."  */
 
+struct buffer;
 
 /* Allocate, initialize and return a new, empty region cache.  */
 struct region_cache *new_region_cache (void);
@@ -89,24 +92,21 @@ extern void invalidate_region_cache (struct buffer *BUF,
 /* The scanning functions.
 
    Basically, if you're scanning forward/backward from position POS,
-   and region_cache_forward/backward returns true, you can skip all
-   the text between POS and *NEXT.  And if the function returns false,
+   and region_cache_forward/backward returns nonzero, you can skip all
+   the text between POS and *NEXT.  And if the function returns zero,
    you should examine all the text from POS to *NEXT, and call
    know_region_cache depending on what you find there; this way, you
    might be able to avoid scanning it again.  */
 
-/* Return true if the text immediately after POS in BUF is known, for
-   the purposes of CACHE.  If NEXT is non-zero, set *NEXT to the nearest
+/* Return the value for the text immediately after POS in BUF if the value
+   is known, for the purposes of CACHE, and return zero otherwise.
+   If NEXT is non-zero, set *NEXT to the nearest
    position after POS where the knowledge changes.  */
-extern int region_cache_forward (struct buffer *BUF,
-                                 struct region_cache *CACHE,
-                                 ptrdiff_t POS,
-                                 ptrdiff_t *NEXT);
+extern int region_cache_forward (struct buffer *buf, struct region_cache *c,
+				 ptrdiff_t pos, ptrdiff_t *next);
 
-/* Return true if the text immediately before POS in BUF is known, for
-   the purposes of CACHE.  If NEXT is non-zero, set *NEXT to the nearest
-   position before POS where the knowledge changes.  */
-extern int region_cache_backward (struct buffer *BUF,
-                                  struct region_cache *CACHE,
-                                  ptrdiff_t POS,
-                                  ptrdiff_t *NEXT);
+/* Likewise, except before POS rather than after POS.  */
+extern int region_cache_backward (struct buffer *buf, struct region_cache *c,
+				  ptrdiff_t pos, ptrdiff_t *next);
+
+#endif /* EMACS_REGION_CACHE_H */

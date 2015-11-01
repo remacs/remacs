@@ -1,6 +1,6 @@
 ;;; tls.el --- TLS/SSL support via wrapper around GnuTLS
 
-;; Copyright (C) 1996-1999, 2002-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-1999, 2002-2015 Free Software Foundation, Inc.
 
 ;; Author: Simon Josefsson <simon@josefsson.org>
 ;; Keywords: comm, tls, gnutls, ssl
@@ -80,8 +80,7 @@ and `gnutls-cli' (version 2.0.1) output."
   "List of strings containing commands to start TLS stream to a host.
 Each entry in the list is tried until a connection is successful.
 %h is replaced with server hostname, %p with port to connect to.
-The program should read input on stdin and write output to
-stdout.
+The program should read input on stdin and write output to stdout.
 
 See `tls-checktrust' on how to check trusted root certs.
 
@@ -138,7 +137,7 @@ the external program knows about the root certificates you
 consider trustworthy, e.g.:
 
 \(setq tls-program
-      '(\"gnutls-cli --x509cafile /etc/ssl/certs/ca-certificates.crt -p %p %h\"
+      \\='(\"gnutls-cli --x509cafile /etc/ssl/certs/ca-certificates.crt -p %p %h\"
 	\"gnutls-cli --x509cafile /etc/ssl/certs/ca-certificates.crt -p %p %h --protocols ssl3\"
 	\"openssl s_client -connect %h:%p -CAfile /etc/ssl/certs/ca-certificates.crt -no_ssl2 -ign_eof\"))"
   :type '(choice (const :tag "Always" t)
@@ -168,12 +167,17 @@ this to nil if you want to ignore host name mismatches."
   :version "23.1" ;; No Gnus
   :group 'tls)
 
-(defcustom tls-certtool-program (executable-find "certtool")
-  "Name of  GnuTLS certtool.
+(defcustom tls-certtool-program "certtool"
+  "Name of GnuTLS certtool.
 Used by `tls-certificate-information'."
   :version "22.1"
   :type 'string
   :group 'tls)
+
+(defalias 'tls-format-message
+  (if (fboundp 'format-message) 'format-message
+    ;; for Emacs < 25, and XEmacs, don't worry about quote translation.
+    'format))
 
 (defun tls-certificate-information (der)
   "Parse X.509 certificate in DER format into an assoc list."
@@ -276,8 +280,8 @@ Fourth arg PORT is an integer specifying a port to connect to."
 			     (message "The certificate presented by `%s' is \
 NOT trusted." host))
 			(not (yes-or-no-p
-			      (format "The certificate presented by `%s' is \
-NOT trusted. Accept anyway? " host)))))
+			      (tls-format-message "\
+The certificate presented by `%s' is NOT trusted. Accept anyway? " host)))))
 		  (and tls-hostmismatch
 		       (save-excursion
 			 (goto-char (point-min))

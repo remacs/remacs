@@ -1,6 +1,6 @@
 ;;; smime.el --- S/MIME support library
 
-;; Copyright (C) 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
 ;; Author: Simon Josefsson <simon@josefsson.org>
 ;; Keywords: SMIME X.509 PEM OpenSSL
@@ -118,9 +118,6 @@
 
 ;;; Code:
 
-;; For Emacs <22.2 and XEmacs.
-(eval-and-compile
-  (unless (fboundp 'declare-function) (defmacro declare-function (&rest r))))
 (require 'dig)
 
 (if (locate-library "password-cache")
@@ -161,7 +158,7 @@ certificates to be sent with every message to each address."
 Directory should contain files (in PEM format) named to the X.509
 hash of the certificate.  This can be done using OpenSSL such as:
 
-$ ln -s ca.pem `openssl x509 -noout -hash -in ca.pem`.0
+$ ln -s ca.pem \\=`openssl x509 -noout -hash -in ca.pem\\=`.0
 
 where `ca.pem' is the file containing a PEM encoded X.509 CA
 certificate."

@@ -1,6 +1,6 @@
 ;;; crm.el --- read multiple strings with completion
 
-;; Copyright (C) 1985-1986, 1993-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1985-1986, 1993-2015 Free Software Foundation, Inc.
 
 ;; Author: Sen Nagata <sen@eccosys.com>
 ;; Keywords: completion, minibuffer, multiple elements
@@ -24,27 +24,7 @@
 
 ;; This code defines a function, `completing-read-multiple', which
 ;; provides the ability to read multiple strings in the minibuffer,
-;; with completion.
-
-;; By using this functionality, a user may specify multiple strings at
-;; a single prompt, optionally using completion.
-
-;; Multiple strings are specified by separating each of the strings
-;; with a prespecified separator regexp.  For example, if the
-;; separator regexp is ",", the strings 'alice', 'bob', and
-;; 'eve' would be specified as 'alice,bob,eve'.
-
-;; The default value for the separator regexp is the value of
-;; `crm-default-separator' (comma).  The separator regexp may be
-;; changed by modifying the value of `crm-separator'.
-
-;; Contiguous strings of non-separator-characters are referred to as
-;; 'elements'.  In the aforementioned example, the elements are:
-;; 'alice', 'bob', and 'eve'.
-
-;; Completion is available on a per-element basis.  For example, if
-;; the contents of the minibuffer are 'alice,bob,eve' and point is
-;; between 'l' and 'i', pressing TAB operates on the element 'alice'.
+;; with completion.  See that function's documentation for details.
 
 ;; For the moment, I have decided to not bind any special behavior to
 ;; the separator key.  In the future, the separator key might be used
@@ -96,14 +76,16 @@
 ;;   first revamped version
 
 ;;; Code:
+
+;; FIXME I don't see that this needs to exist as a separate variable.
+;; crm-separator should suffice.
 (defconst crm-default-separator "[ \t]*,[ \t]*"
-  "Default separator regexp for `completing-read-multiple'.")
+  "Default value of `crm-separator'.")
 
 (defvar crm-separator crm-default-separator
   "Separator regexp used for separating strings in `completing-read-multiple'.
 It should be a regexp that does not match the list of completion candidates.
-Modify this value to make `completing-read-multiple' use a separator other
-than `crm-default-separator'.")
+The default value is `crm-default-separator'.")
 
 (defvar crm-local-completion-map
   (let ((map (make-sparse-keymap)))
@@ -146,8 +128,8 @@ A value of nil specifies `try-completion'.  A value of t specifies
 `all-completions'.  A value of lambda specifies a test for an exact match.
 
 For more information on STRING, PREDICATE, and FLAG, see the Elisp
-Reference sections on 'Programmed Completion' and 'Basic Completion
-Functions'."
+Reference sections on “Programmed Completion” and “Basic Completion
+Functions”."
   (let ((beg 0))
     (while (string-match crm-separator string beg)
       (setq beg (match-end 0)))
@@ -157,33 +139,32 @@ Functions'."
                                    predicate
                                    flag)))
 
-(defun crm--select-current-element ()
+(defun crm--current-element ()
   "Parse the minibuffer to find the current element.
-Place an overlay on the element, with a `field' property, and return it."
-  (let* ((bob (minibuffer-prompt-end))
-         (start (save-excursion
+Return the element's boundaries as (START . END)."
+  (let ((bob (minibuffer-prompt-end)))
+    (cons (save-excursion
                   (if (re-search-backward crm-separator bob t)
                       (match-end 0)
-                    bob)))
-         (end (save-excursion
+              bob))
+          (save-excursion
                 (if (re-search-forward crm-separator nil t)
                     (match-beginning 0)
-                  (point-max))))
-         (ol (make-overlay start end nil nil t)))
-    (overlay-put ol 'field (make-symbol "crm"))
-    ol))
+              (point-max))))))
 
-(defmacro crm--completion-command (command)
-  "Make COMMAND a completion command for `completing-read-multiple'."
-  `(let ((ol (crm--select-current-element)))
-     (unwind-protect
-         ,command
-       (delete-overlay ol))))
+(defmacro crm--completion-command (beg end &rest body)
+  "Run BODY with BEG and END bound to the current element's boundaries."
+  (declare (indent 2) (debug (sexp sexp &rest body)))
+  `(let* ((crm--boundaries (crm--current-element))
+          (,beg (car crm--boundaries))
+          (,end (cdr crm--boundaries)))
+     ,@body))
 
 (defun crm-completion-help ()
   "Display a list of possible completions of the current minibuffer element."
   (interactive)
-  (crm--completion-command (minibuffer-completion-help))
+  (crm--completion-command beg end
+    (minibuffer-completion-help beg end))
   nil)
 
 (defun crm-complete ()
@@ -192,13 +173,18 @@ If no characters can be completed, display a list of possible completions.
 
 Return t if the current element is now a valid match; otherwise return nil."
   (interactive)
-  (crm--completion-command (minibuffer-complete)))
+  (crm--completion-command beg end
+    (completion-in-region beg end
+                          minibuffer-completion-table
+                          minibuffer-completion-predicate)))
 
 (defun crm-complete-word ()
   "Complete the current element at most a single word.
 Like `minibuffer-complete-word' but for `completing-read-multiple'."
   (interactive)
-  (crm--completion-command (minibuffer-complete-word)))
+  (crm--completion-command beg end
+    (completion-in-region--single-word
+     beg end minibuffer-completion-table minibuffer-completion-predicate)))
 
 (defun crm-complete-and-exit ()
   "If all of the minibuffer elements are valid completions then exit.
@@ -211,16 +197,14 @@ This function is modeled after `minibuffer-complete-and-exit'."
     (goto-char (minibuffer-prompt-end))
     (while
         (and doexit
-             (let ((ol (crm--select-current-element)))
-               (goto-char (overlay-end ol))
-               (unwind-protect
-                   (catch 'exit
-                     (minibuffer-complete-and-exit)
-                     ;; This did not throw `exit', so there was a problem.
-                     (setq doexit nil))
-                 (goto-char (overlay-end ol))
-                 (delete-overlay ol))
-               (not (eobp)))
+             (crm--completion-command beg end
+               (let ((end (copy-marker end t)))
+                 (goto-char end)
+                 (setq doexit nil)
+                 (completion-complete-and-exit beg end
+                                               (lambda () (setq doexit t)))
+                 (goto-char end)
+                 (not (eobp))))
              (looking-at crm-separator))
       ;; Skip to the next element.
       (goto-char (match-end 0)))
@@ -238,37 +222,29 @@ exiting the minibuffer."
     t))
 
 ;; superemulates behavior of completing_read in src/minibuf.c
+;; Use \\<crm-local-completion-map> so that help-enable-auto-load can
+;; do its thing.  Any keymap that is defined will do.
 ;;;###autoload
 (defun completing-read-multiple
   (prompt table &optional predicate require-match initial-input
 	  hist def inherit-input-method)
   "Read multiple strings in the minibuffer, with completion.
-By using this functionality, a user may specify multiple strings at a
-single prompt, optionally using completion.
+The arguments are the same as those of `completing-read'.
+\\<crm-local-completion-map>
+Input multiple strings by separating each one with a string that
+matches the regexp `crm-separator'.  For example, if the separator
+regexp is \",\", entering \"alice,bob,eve\" specifies the strings
+\"alice\", \"bob\", and \"eve\".
 
-Multiple strings are specified by separating each of the strings with
-a prespecified separator regexp.  For example, if the separator
-regexp is \",\", the strings 'alice', 'bob', and 'eve' would be
-specified as 'alice,bob,eve'.
-
-The default value for the separator regexp is the value of
-`crm-default-separator' (comma).  The separator regexp may be
-changed by modifying the value of `crm-separator'.
-
-Contiguous strings of non-separator-characters are referred to as
-'elements'.  In the aforementioned example, the elements are: 'alice',
-'bob', and 'eve'.
+We refer to contiguous strings of non-separator-characters as
+\"elements\".  In this example there are three elements.
 
 Completion is available on a per-element basis.  For example, if the
-contents of the minibuffer are 'alice,bob,eve' and point is between
-'l' and 'i', pressing TAB operates on the element 'alice'.
+contents of the minibuffer are \"alice,bob,eve\" and point is between
+\"l\" and \"i\", pressing \\[minibuffer-complete] operates on the element \"alice\".
 
-The return value of this function is a list of the read strings
-with empty strings removed.
-
-See the documentation for `completing-read' for details on the arguments:
-PROMPT, TABLE, PREDICATE, REQUIRE-MATCH, INITIAL-INPUT, HIST, DEF, and
-INHERIT-INPUT-METHOD."
+This function returns a list of the strings that were read,
+with empty strings removed."
   (unwind-protect
       (progn
 	(add-hook 'choose-completion-string-functions

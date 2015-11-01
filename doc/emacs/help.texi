@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2013 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2015 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Help
@@ -55,11 +55,12 @@ This displays the available Emacs packages based on keywords.
 @xref{Package Keywords}.
 @end table
 
-  @kbd{C-h} or @key{F1} means ``help'' in various other contexts as
+  @kbd{C-h} or @key{F1} mean ``help'' in various other contexts as
 well.  For instance, you can type them after a prefix key to view a
-list of the keys that can follow the prefix key.  (A few prefix keys
-don't support @kbd{C-h} in this way, because they define other
-meanings for it, but they all support @key{F1} for help.)
+list of the keys that can follow the prefix key.  (You can also use
+@kbd{?} in this context.  A few prefix keys don't support @kbd{C-h}
+or @kbd{?} in this way, because they define other meanings for those
+inputs, but they all support @key{F1}.)
 
 @menu
 * Help Summary::        Brief list of all Help commands.
@@ -71,7 +72,7 @@ meanings for it, but they all support @key{F1} for help.)
 * Language Help::       Help relating to international language support.
 * Misc Help::           Other help commands.
 * Help Files::          Commands to display auxiliary help files.
-* Help Echo::           Help on active text and tooltips ("balloon help").
+* Help Echo::           Help on active text and tooltips (``balloon help'').
 @end menu
 
 @iftex
@@ -121,14 +122,15 @@ Display the name and documentation of the command that @var{key} runs
 Display a description of your last 300 keystrokes
 (@code{view-lossage}).
 @item C-h m
-Display documentation of the current major mode (@code{describe-mode}).
+Display documentation of the current major mode and minor modes
+(@code{describe-mode}).
 @item C-h n
 Display news of recent Emacs changes (@code{view-emacs-news}).
 @item C-h p
 Find packages by topic keyword (@code{finder-by-keyword}).  This lists
 packages using a package menu buffer.  @xref{Packages}.
 @item C-h P @var{package} @key{RET}
-Display documentation about the package named @var{package}
+Display documentation about the specified package
 (@code{describe-package}).
 @item C-h r
 Display the Emacs manual in Info (@code{info-emacs-manual}).
@@ -357,8 +359,11 @@ view, describe, default.
 @end quotation
 
 @vindex apropos-do-all
-  If the variable @code{apropos-do-all} is non-@code{nil}, the apropos
-commands always behave as if they had been given a prefix argument.
+  If the variable @code{apropos-do-all} is non-@code{nil}, most
+apropos commands behave as if they had been given a prefix argument.
+There is one exception: @code{apropos-variable} without a prefix
+argument will always search for all variables, no matter what the
+value of @code{apropos-do-all} is.
 
 @vindex apropos-sort-by-scores
 @cindex apropos search results, order by score
@@ -376,8 +381,9 @@ alphabetical order, change the variable
 @section Help Mode Commands
 
   Help buffers provide the same commands as View mode (@pxref{View
-Mode}); for instance, @key{SPC} scrolls forward, and @key{DEL} scrolls
-backward.  A few special commands are also provided:
+Mode}); for instance, @key{SPC} scrolls forward, and @key{DEL} or
+@kbd{S-@key{SPC}} scrolls backward.  A few special commands are also
+provided:
 
 @table @kbd
 @item @key{RET}
@@ -456,7 +462,9 @@ buffer (@pxref{Package Menu}).
 @kindex C-h P
   @kbd{C-h P} (@code{describe-package}) prompts for the name of a
 package, and displays a help buffer describing the attributes of the
-package and the features that it implements.
+package and the features that it implements.  The buffer lists the
+keywords that relate to the package in the form of buttons.  Click on
+a button to see other packages related to that keyword.
 
 @node Language Help
 @section Help for International Language Support
@@ -486,8 +494,7 @@ currently in use.  @xref{Coding Systems}.
 @kindex C-h i
 @findex info
 @cindex Info
-@cindex manuals, on-line
-@cindex on-line manuals
+@cindex manuals, included
   @kbd{C-h i} (@code{info}) runs the Info program, which browses
 structured documentation files.  The entire Emacs manual is available
 within Info, along with many other manuals for the GNU system.  Type
@@ -549,11 +556,13 @@ Emacs Lisp Reference Manual}).
 
 @findex describe-prefix-bindings
   You can get a list of subcommands for a particular prefix key by
-typing @kbd{C-h} (@code{describe-prefix-bindings}) after the prefix
-key.  (There are a few prefix keys for which this does not
-work---those that provide their own bindings for @kbd{C-h}.  One of
-these is @key{ESC}, because @kbd{@key{ESC} C-h} is actually
-@kbd{C-M-h}, which marks a defun.)
+typing @kbd{C-h}, @kbd{?}, or @key{F1}
+(@code{describe-prefix-bindings}) after the prefix key.  (There are a
+few prefix keys for which not all of these keys work---those that
+provide their own bindings for that key.  One of these prefix keys
+is @key{ESC}, because @kbd{@key{ESC} C-h} is actually @kbd{C-M-h},
+which marks a defun.  However, @kbd{@key{ESC} @key{F1}} and
+@kbd{@key{ESC} ?} work fine.)
 
 @node Help Files
 @section Help Files
@@ -599,12 +608,13 @@ Display information about where to get external packages
 @item C-h C-f
 Display the Emacs frequently-answered-questions list (@code{view-emacs-FAQ}).
 @item C-h g
-Display information about the GNU Project (@code{describe-gnu-project}).
+Visit a @uref{http://www.gnu.org} page with information about the GNU
+Project (@code{describe-gnu-project}).
 @item C-h C-m
 Display information about ordering printed copies of Emacs manuals
 (@code{view-order-manuals}).
 @item C-h C-n
-Display the ``news'' file, which lists the new features in this
+Display the news, which lists the new features in this
 version of Emacs (@code{view-emacs-news}).
 @item C-h C-o
 Display how to order or download the latest version of
@@ -624,7 +634,8 @@ Emacs (@code{describe-no-warranty}).
 
 @cindex tooltips
 @cindex balloon help
-  In Emacs, stretches of ``active text'' (text that does something
+@cindex active text
+  In Emacs, stretches of @dfn{active text} (text that does something
 special in response to mouse clicks or @key{RET}) often have
 associated help text.  This includes hyperlinks in Emacs buffers, as
 well as parts of the mode line.  On graphical displays, as well as

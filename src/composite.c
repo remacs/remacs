@@ -1,5 +1,5 @@
 /* Composite sequence support.
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
      National Institute of Advanced Industrial Science and Technology (AIST)
      Registration Number H14PRO021
@@ -24,17 +24,14 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
-#define COMPOSITE_INLINE EXTERN_INLINE
-
 #include "lisp.h"
 #include "character.h"
+#include "composite.h"
 #include "buffer.h"
 #include "coding.h"
 #include "intervals.h"
-#include "window.h"
 #include "frame.h"
 #include "dispextern.h"
-#include "font.h"
 #include "termhooks.h"
 
 
@@ -136,8 +133,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 */
 
 
-Lisp_Object Qcomposition;
-
 /* Table of pointers to the structure `composition' indexed by
    COMPOSITION-ID.  This structure is for storing information about
    each composition except for COMPONENTS-VEC.  */
@@ -154,8 +149,6 @@ ptrdiff_t n_compositions;
    COMPOSITION-ID.  */
 Lisp_Object composition_hash_table;
 
-static Lisp_Object Qauto_composed;
-static Lisp_Object Qauto_composition_function;
 /* Maximum number of characters to look back for
    auto-compositions.  */
 #define MAX_AUTO_COMPOSITION_LOOKBACK 3
@@ -676,7 +669,6 @@ composition_gstring_put_cache (Lisp_Object gstring, ptrdiff_t len)
       len = j;
     }
 
-  lint_assume (len <= TYPE_MAXIMUM (ptrdiff_t) - 2);
   copy = Fmake_vector (make_number (len + 2), Qnil);
   LGSTRING_SET_HEADER (copy, Fcopy_sequence (header));
   for (i = 0; i < len; i++)
@@ -739,9 +731,11 @@ composition_gstring_width (Lisp_Object gstring, ptrdiff_t from, ptrdiff_t to,
       if (FONT_OBJECT_P (font_object))
 	{
 	  struct font *font = XFONT_OBJECT (font_object);
+	  int font_ascent, font_descent;
 
-	  metrics->ascent = font->ascent;
-	  metrics->descent = font->descent;
+	  get_font_ascent_descent (font, &font_ascent, &font_descent);
+	  metrics->ascent = font_ascent;
+	  metrics->descent = font_descent;
 	}
       else
 	{
@@ -783,35 +777,11 @@ static Lisp_Object gstring_work;
 static Lisp_Object gstring_work_headers;
 
 static Lisp_Object
-fill_gstring_header (Lisp_Object header, Lisp_Object start, Lisp_Object end,
-		     Lisp_Object font_object, Lisp_Object string)
+fill_gstring_header (Lisp_Object header, ptrdiff_t from, ptrdiff_t from_byte,
+		     ptrdiff_t to, Lisp_Object font_object, Lisp_Object string)
 {
-  ptrdiff_t from, to, from_byte;
-  ptrdiff_t len, i;
+  ptrdiff_t len = to - from, i;
 
-  if (NILP (string))
-    {
-      if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
-	error ("Attempt to shape unibyte text");
-      validate_region (&start, &end);
-      from = XFASTINT (start);
-      to = XFASTINT (end);
-      from_byte = CHAR_TO_BYTE (from);
-    }
-  else
-    {
-      CHECK_STRING (string);
-      if (! STRING_MULTIBYTE (string))
-	error ("Attempt to shape unibyte text");
-      /* The caller checks that START and END are nonnegative integers.  */
-      if (! (XINT (start) <= XINT (end) && XINT (end) <= SCHARS (string)))
-	args_out_of_range_3 (string, start, end);
-      from = XINT (start);
-      to = XINT (end);
-      from_byte = string_char_to_byte (string, from);
-    }
-
-  len = to - from;
   if (len == 0)
     error ("Attempt to shape zero-length text");
   if (VECTORP (header))
@@ -948,17 +918,18 @@ autocmp_chars (Lisp_Object rule, ptrdiff_t charpos, ptrdiff_t bytepos,
   return unbind_to (count, lgstring);
 }
 
-static Lisp_Object _work_val;
-
 /* 1 iff the character C is composable.  Characters of general
    category Z? or C? are not composable except for ZWNJ and ZWJ. */
 
-#define CHAR_COMPOSABLE_P(C)						\
-  ((C) > ' '								\
-   && ((C) == 0x200C || (C) == 0x200D					\
-       || (_work_val = CHAR_TABLE_REF (Vunicode_category_table, (C)),	\
-	   (INTEGERP (_work_val)					\
-	    && (XINT (_work_val) <= UNICODE_CATEGORY_So)))))
+static bool
+char_composable_p (int c)
+{
+  Lisp_Object val;
+  return (c > ' '
+	  && (c == ZERO_WIDTH_NON_JOINER || c == ZERO_WIDTH_JOINER
+	      || (val = CHAR_TABLE_REF (Vunicode_category_table, c),
+		  (INTEGERP (val) && (XINT (val) <= UNICODE_CATEGORY_So)))));
+}
 
 /* Update cmp_it->stop_pos to the next position after CHARPOS (and
    BYTEPOS) where character composition may happen.  If BYTEPOS is
@@ -1042,28 +1013,24 @@ composition_compute_stop_pos (struct composition_it *cmp_it, ptrdiff_t charpos, 
 	  val = CHAR_TABLE_REF (Vcomposition_function_table, c);
 	  if (! NILP (val))
 	    {
-	      Lisp_Object elt;
-	      int ridx;
-
-	      for (ridx = 0; CONSP (val); val = XCDR (val), ridx++)
+	      for (int ridx = 0; CONSP (val); val = XCDR (val), ridx++)
 		{
-		  elt = XCAR (val);
+		  Lisp_Object elt = XCAR (val);
 		  if (VECTORP (elt) && ASIZE (elt) == 3
 		      && NATNUMP (AREF (elt, 1))
 		      && charpos - 1 - XFASTINT (AREF (elt, 1)) >= start)
-		    break;
-		}
-	      if (CONSP (val))
-		{
-		  cmp_it->rule_idx = ridx;
-		  cmp_it->lookback = XFASTINT (AREF (elt, 1));
-		  cmp_it->stop_pos = charpos - 1 - cmp_it->lookback;
-		  cmp_it->ch = c;
-		  return;
+		    {
+		      cmp_it->rule_idx = ridx;
+		      cmp_it->lookback = XFASTINT (AREF (elt, 1));
+		      cmp_it->stop_pos = charpos - 1 - cmp_it->lookback;
+		      cmp_it->ch = c;
+		      return;
+		    }
 		}
 	    }
 	}
-      if (charpos == endpos)
+      if (charpos == endpos
+	  && !(STRINGP (string) && endpos == SCHARS (string)))
 	{
 	  /* We couldn't find a composition point before ENDPOS.  But,
 	     some character after ENDPOS may be composed with
@@ -1094,7 +1061,7 @@ composition_compute_stop_pos (struct composition_it *cmp_it, ptrdiff_t charpos, 
 	p = SDATA (string) + bytepos;
       c = STRING_CHAR_AND_LENGTH (p, len);
       limit = bytepos + len;
-      while (CHAR_COMPOSABLE_P (c))
+      while (char_composable_p (c))
 	{
 	  val = CHAR_TABLE_REF (Vcomposition_function_table, c);
 	  if (! NILP (val))
@@ -1171,7 +1138,7 @@ composition_compute_stop_pos (struct composition_it *cmp_it, ptrdiff_t charpos, 
       /* Skip all uncomposable characters.  */
       if (NILP (string))
 	{
-	  while (charpos - 1 > endpos && ! CHAR_COMPOSABLE_P (c))
+	  while (charpos - 1 > endpos && ! char_composable_p (c))
 	    {
 	      DEC_BOTH (charpos, bytepos);
 	      c = FETCH_MULTIBYTE_CHAR (bytepos);
@@ -1179,7 +1146,7 @@ composition_compute_stop_pos (struct composition_it *cmp_it, ptrdiff_t charpos, 
 	}
       else
 	{
-	  while (charpos - 1 > endpos && ! CHAR_COMPOSABLE_P (c))
+	  while (charpos - 1 > endpos && ! char_composable_p (c))
 	    {
 	      p--;
 	      while (! CHAR_HEAD_P (*p))
@@ -1194,7 +1161,7 @@ composition_compute_stop_pos (struct composition_it *cmp_it, ptrdiff_t charpos, 
 
 /* Check if the character at CHARPOS (and BYTEPOS) is composed
    (possibly with the following characters) on window W.  ENDPOS limits
-   characters to be composed.  FACE, in non-NULL, is a base face of
+   characters to be composed.  FACE, if non-NULL, is a base face of
    the character.  If STRING is not nil, it is a string containing the
    character to check, and CHARPOS and BYTEPOS are indices in the
    string.  In that case, FACE must not be NULL.
@@ -1415,7 +1382,7 @@ composition_update_it (struct composition_it *cmp_it, ptrdiff_t charpos, ptrdiff
       cmp_it->width = 0;
       for (i = cmp_it->nchars - 1; i >= 0; i--)
 	{
-	  c = XINT (LGSTRING_CHAR (gstring, i));
+	  c = XINT (LGSTRING_CHAR (gstring, from + i));
 	  cmp_it->nbytes += CHAR_BYTES (c);
 	  cmp_it->width += CHAR_WIDTH (c);
 	}
@@ -1513,7 +1480,7 @@ find_automatic_composition (ptrdiff_t pos, ptrdiff_t limit,
 		  |-B-|-C-|--D--|
 
      Here, it is known that characters after positions 1 and 9 can
-     never be composed (i.e. ! CHAR_COMPOSABLE_P (CH)), and
+     never be composed (i.e. ! char_composable_p (CH)), and
      composition A is an invalid one because it's partially covered by
      the valid composition C.  And to know whether a composition is
      valid or not, the only way is to start searching forward from a
@@ -1537,7 +1504,7 @@ find_automatic_composition (ptrdiff_t pos, ptrdiff_t limit,
   while (1)
     {
       c = STRING_CHAR (cur.p);
-      if (! CHAR_COMPOSABLE_P (c))
+      if (! char_composable_p (c))
 	{
 	  if (limit <= pos)	/* case (1)  */
 	    {
@@ -1546,7 +1513,7 @@ find_automatic_composition (ptrdiff_t pos, ptrdiff_t limit,
 		  return 0;
 		BACKWARD_CHAR (cur, stop);
 		c = STRING_CHAR (cur.p);
-	      } while (! CHAR_COMPOSABLE_P (c));
+	      } while (! char_composable_p (c));
 	      fore_check_limit = cur.pos + 1;
 	    }
 	  else			/* case (2) */
@@ -1562,7 +1529,7 @@ find_automatic_composition (ptrdiff_t pos, ptrdiff_t limit,
 	  prev = cur;
 	  BACKWARD_CHAR (cur, stop);
 	  c = STRING_CHAR (cur.p);
-	  if (! CHAR_COMPOSABLE_P (c))
+	  if (! char_composable_p (c))
 	    {
 	      cur = prev;
 	      break;
@@ -1710,7 +1677,10 @@ Otherwise (for terminal display), FONT-OBJECT must be a terminal ID, a
 frame, or nil for the selected frame's terminal device.
 
 If the optional 4th argument STRING is not nil, it is a string
-containing the target characters between indices FROM and TO.
+containing the target characters between indices FROM and TO,
+which are treated as in `substring'.  Otherwise FROM and TO are
+character positions in current buffer; they can be in either order,
+and can be integers or markers.
 
 A glyph-string is a vector containing information about how to display
 a specific character sequence.  The format is:
@@ -1742,14 +1712,12 @@ should be ignored.  */)
   (Lisp_Object from, Lisp_Object to, Lisp_Object font_object, Lisp_Object string)
 {
   Lisp_Object gstring, header;
-  ptrdiff_t frompos, topos;
+  ptrdiff_t frompos, frombyte, topos;
 
-  CHECK_NATNUM (from);
-  CHECK_NATNUM (to);
   if (! FONT_OBJECT_P (font_object))
     {
       struct coding_system *coding;
-      struct terminal *terminal = get_terminal (font_object, 1);
+      struct terminal *terminal = decode_live_terminal (font_object);
 
       coding = ((TERMINAL_TERMINAL_CODING (terminal)->common_flags
 		 & CODING_REQUIRE_ENCODING_MASK)
@@ -1757,13 +1725,30 @@ should be ignored.  */)
       font_object = CODING_ID_NAME (coding->id);
     }
 
-  header = fill_gstring_header (Qnil, from, to, font_object, string);
+  if (NILP (string))
+    {
+      if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
+	error ("Attempt to shape unibyte text");
+      validate_region (&from, &to);
+      frompos = XFASTINT (from);
+      topos = XFASTINT (to);
+      frombyte = CHAR_TO_BYTE (frompos);
+    }
+  else
+    {
+      CHECK_STRING (string);
+      validate_subarray (string, from, to, SCHARS (string), &frompos, &topos);
+      if (! STRING_MULTIBYTE (string))
+	error ("Attempt to shape unibyte text");
+      frombyte = string_char_to_byte (string, frompos);
+    }
+
+  header = fill_gstring_header (Qnil, frompos, frombyte,
+				topos, font_object, string);
   gstring = gstring_lookup_cache (header);
   if (! NILP (gstring))
     return gstring;
 
-  frompos = XINT (from);
-  topos = XINT (to);
   if (LGSTRING_GLYPH_LEN (gstring_work) < topos - frompos)
     gstring_work = Fmake_vector (make_number (topos - frompos + 2), Qnil);
   LGSTRING_SET_HEADER (gstring_work, header);
@@ -1799,21 +1784,18 @@ DEFUN ("compose-string-internal", Fcompose_string_internal,
        Scompose_string_internal, 3, 5, 0,
        doc: /* Internal use only.
 
-Compose text between indices START and END of STRING.
-Optional 4th and 5th arguments are COMPONENTS and MODIFICATION-FUNC
+Compose text between indices START and END of STRING, where
+START and END are treated as in `substring'.  Optional 4th
+and 5th arguments are COMPONENTS and MODIFICATION-FUNC
 for the composition.  See `compose-string' for more details.  */)
-  (Lisp_Object string, Lisp_Object start, Lisp_Object end, Lisp_Object components, Lisp_Object modification_func)
+  (Lisp_Object string, Lisp_Object start, Lisp_Object end,
+   Lisp_Object components, Lisp_Object modification_func)
 {
+  ptrdiff_t from, to;
+
   CHECK_STRING (string);
-  CHECK_NUMBER (start);
-  CHECK_NUMBER (end);
-
-  if (XINT (start) < 0 ||
-      XINT (start) > XINT (end)
-      || XINT (end) > SCHARS (string))
-    args_out_of_range (start, end);
-
-  compose_text (XINT (start), XINT (end), components, modification_func, string);
+  validate_subarray (string, start, end, SCHARS (string), &from, &to);
+  compose_text (from, to, components, modification_func, string);
   return string;
 }
 
@@ -1910,36 +1892,18 @@ syms_of_composite (void)
   DEFSYM (Qcomposition, "composition");
 
   /* Make a hash table for static composition.  */
-  {
-    Lisp_Object args[6];
-
-    args[0] = QCtest;
-    args[1] = Qequal;
-    args[2] = QCweakness;
-    /* We used to make the hash table weak so that unreferenced
-       compositions can be garbage-collected.  But, usually once
-       created compositions are repeatedly used in an Emacs session,
-       and thus it's not worth to save memory in such a way.  So, we
-       make the table not weak.  */
-    args[3] = Qnil;
-    args[4] = QCsize;
-    args[5] = make_number (311);
-    composition_hash_table = Fmake_hash_table (6, args);
-    staticpro (&composition_hash_table);
-  }
+  /* We used to make the hash table weak so that unreferenced
+     compositions can be garbage-collected.  But, usually once
+     created compositions are repeatedly used in an Emacs session,
+     and thus it's not worth to save memory in such a way.  So, we
+     make the table not weak.  */
+  Lisp_Object args[] = {QCtest, Qequal, QCsize, make_number (311)};
+  composition_hash_table = CALLMANY (Fmake_hash_table, args);
+  staticpro (&composition_hash_table);
 
   /* Make a hash table for glyph-string.  */
-  {
-    Lisp_Object args[6];
-    args[0] = QCtest;
-    args[1] = Qequal;
-    args[2] = QCweakness;
-    args[3] = Qnil;
-    args[4] = QCsize;
-    args[5] = make_number (311);
-    gstring_hash_table = Fmake_hash_table (6, args);
-    staticpro (&gstring_hash_table);
-  }
+  gstring_hash_table = CALLMANY (Fmake_hash_table, args);
+  staticpro (&gstring_hash_table);
 
   staticpro (&gstring_work_headers);
   gstring_work_headers = make_uninit_vector (8);
@@ -1967,7 +1931,6 @@ The default value is the function `compose-chars-after'.  */);
   Vcompose_chars_after_function = intern_c_string ("compose-chars-after");
 
   DEFSYM (Qauto_composed, "auto-composed");
-  DEFSYM (Qauto_composition_function, "auto-composition-function");
 
   DEFVAR_LISP ("auto-composition-mode", Vauto_composition_mode,
 	       doc: /* Non-nil if Auto-Composition mode is enabled.

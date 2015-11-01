@@ -1,9 +1,9 @@
 ;;; rng-valid.el --- real-time validation of XML using RELAX NG
 
-;; Copyright (C) 2003, 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2003, 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: James Clark
-;; Keywords: XML, RelaxNG
+;; Keywords: wp, hypermedia, languages, XML, RelaxNG
 
 ;; This file is part of GNU Emacs.
 
@@ -345,17 +345,11 @@ The schema is set like `rng-auto-set-schema'."
 
 (defun rng-compute-mode-line-string ()
   (cond (rng-validate-timer
-	 (concat " Validated:"
-		 (number-to-string
-		  ;; Use floor rather than round because we want
-		  ;; to show 99% rather than 100% for changes near
-		  ;; the end.
-		  (floor (if (eq (buffer-size) 0)
-			     0.0
-			   (/ (* (- rng-validate-up-to-date-end (point-min))
-                                 100.0)
-			      (- (point-max) (point-min))))))
-		 "%%"))
+	 (format " Validated:%d%%"
+		 (if (= 0 (buffer-size))
+		     0
+		   (floor (- rng-validate-up-to-date-end (point-min))
+			  (- (point-max) (point-min))))))
 	((> rng-error-count 0)
 	 (concat " "
 		 (propertize "Invalid"

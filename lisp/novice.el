@@ -1,9 +1,9 @@
 ;;; novice.el --- handling of disabled commands ("novice mode") for Emacs
 
-;; Copyright (C) 1985-1987, 1994, 2001-2013 Free Software Foundation,
+;; Copyright (C) 1985-1987, 1994, 2001-2015 Free Software Foundation,
 ;; Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal, help
 
 ;; This file is part of GNU Emacs.
@@ -65,7 +65,8 @@ If nil, the feature is disabled, i.e., all commands work normally.")
 	(if (stringp (get cmd 'disabled))
 	    (princ (get cmd 'disabled))
 	 (princ "It is disabled because new users often find it confusing.\n")
-	 (princ "Here's the first part of its description:\n\n")
+	 (princ (substitute-command-keys
+		 "Here's the first part of its description:\n\n"))
 	 ;; Keep only the first paragraph of the documentation.
           (with-current-buffer "*Disabled Command*" ;; standard-output
 	   (goto-char (point-max))
@@ -80,11 +81,11 @@ If nil, the feature is disabled, i.e., all commands work normally.")
 	     (goto-char (point-max))
 	     (indent-rigidly start (point) 3))))
        (princ "\n\nDo you want to use this command anyway?\n\n")
-       (princ "You can now type
+       (princ (substitute-command-keys "You can now type
 y   to try it and enable it (no questions if you use it again).
 n   to cancel--don't try the command, and it remains disabled.
 SPC to try the command just this once, but leave it disabled.
-!   to try it, and enable all disabled commands for this session only.")
+!   to try it, and enable all disabled commands for this session only."))
         ;; Redundant since with-output-to-temp-buffer will do it anyway.
         ;; (with-current-buffer standard-output
         ;;   (help-mode))

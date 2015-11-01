@@ -1,5 +1,5 @@
 /* Input event support for Emacs on the Microsoft Windows API.
-   Copyright (C) 1992-1993, 1995, 2001-2013 Free Software Foundation,
+   Copyright (C) 1992-1993, 1995, 2001-2015 Free Software Foundation,
    Inc.
 
 This file is part of GNU Emacs.
@@ -30,16 +30,15 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef MOUSE_MOVED
 #define MOUSE_MOVED   1
 #endif
+#ifndef MOUSE_HWHEELED
+#define MOUSE_HWHEELED 8
+#endif
 
 #include "lisp.h"
 #include "keyboard.h"
 #include "frame.h"
-#include "dispextern.h"
-#include "window.h"
 #include "blockinput.h"
-#include "termhooks.h"
-#include "termchar.h"
-#include "w32heap.h"
+#include "termchar.h"	/* for Mouse_HLInfo, tty_display_info */
 #include "w32term.h"
 #include "w32inevt.h"
 
@@ -408,7 +407,7 @@ w32_console_mouse_position (struct frame **f,
 
   *f = get_frame ();
   *bar_window = Qnil;
-  *part = 0;
+  *part = scroll_bar_above_handle;
   SELECTED_FRAME ()->mouse_moved = 0;
 
   XSETINT (*x, movement_pos.X);
@@ -438,16 +437,16 @@ mouse_moved_to (int x, int y)
      next - Leftmost+1
      next - Leftmost+2...
 
-   Assume emacs likes three button mice, so
+   For the 3 standard buttons, we have:
      Left == 0
      Middle == 1
      Right == 2
    Others increase from there.  */
 
-#define NUM_TRANSLATED_MOUSE_BUTTONS 3
+#define NUM_TRANSLATED_MOUSE_BUTTONS 5
 static int emacs_button_translation[NUM_TRANSLATED_MOUSE_BUTTONS] =
 {
-  0, 2, 1
+  0, 2, 1, 3, 4
 };
 
 static int
@@ -456,100 +455,127 @@ do_mouse_event (MOUSE_EVENT_RECORD *event,
 {
   static DWORD button_state = 0;
   static Lisp_Object last_mouse_window;
-  DWORD but_change, mask;
+  DWORD but_change, mask, flags = event->dwEventFlags;
   int i;
 
-  if (event->dwEventFlags == MOUSE_MOVED)
+  switch (flags)
     {
-      struct frame *f = SELECTED_FRAME ();
-      Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
-      int mx = event->dwMousePosition.X, my = event->dwMousePosition.Y;
-
-      mouse_moved_to (mx, my);
-
-      if (f->mouse_moved)
-	{
-	  if (hlinfo->mouse_face_hidden)
-	    {
-	      hlinfo->mouse_face_hidden = 0;
-	      clear_mouse_face (hlinfo);
-	    }
-
-	  /* Generate SELECT_WINDOW_EVENTs when needed.  */
-	  if (!NILP (Vmouse_autoselect_window))
-	    {
-	      Lisp_Object mouse_window = window_from_coordinates (f, mx, my,
-								  0, 0);
-	      /* A window will be selected only when it is not
-		 selected now, and the last mouse movement event was
-		 not in it.  A minibuffer window will be selected iff
-		 it is active.  */
-	      if (WINDOWP (mouse_window)
-		  && !EQ (mouse_window, last_mouse_window)
-		  && !EQ (mouse_window, selected_window))
-		{
-		  struct input_event event;
-
-		  EVENT_INIT (event);
-		  event.kind = SELECT_WINDOW_EVENT;
-		  event.frame_or_window = mouse_window;
-		  event.arg = Qnil;
-		  event.timestamp = movement_time;
-		  kbd_buffer_store_event (&event);
-		}
-	      last_mouse_window = mouse_window;
-	    }
-	  else
-	    last_mouse_window = Qnil;
-
-	  previous_help_echo_string = help_echo_string;
-	  help_echo_string = help_echo_object = help_echo_window = Qnil;
-	  help_echo_pos = -1;
-	  note_mouse_highlight (f, mx, my);
-	  /* If the contents of the global variable help_echo has
-	     changed (inside note_mouse_highlight), generate a HELP_EVENT.  */
-	  if (!NILP (help_echo_string) || !NILP (previous_help_echo_string))
-	    gen_help_event (help_echo_string, selected_frame, help_echo_window,
-			    help_echo_object, help_echo_pos);
-	}
-      return 0;
-    }
-
-  /* It looks like the console code sends us a mouse event with
-     dwButtonState == 0 when a window is activated.  Ignore this case.  */
-  if (event->dwButtonState == button_state)
-    return 0;
-
-  emacs_ev->kind = MOUSE_CLICK_EVENT;
-
-  /* Find out what button has changed state since the last button event.  */
-  but_change = button_state ^ event->dwButtonState;
-  mask = 1;
-  for (i = 0; mask; i++, mask <<= 1)
-    if (but_change & mask)
+    case MOUSE_MOVED:
       {
-        if (i < NUM_TRANSLATED_MOUSE_BUTTONS)
-          emacs_ev->code = emacs_button_translation[i];
-        else
-          emacs_ev->code = i;
-	break;
+	struct frame *f = get_frame ();
+	Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
+	int mx = event->dwMousePosition.X, my = event->dwMousePosition.Y;
+
+	mouse_moved_to (mx, my);
+
+	if (f->mouse_moved)
+	  {
+	    if (hlinfo->mouse_face_hidden)
+	      {
+		hlinfo->mouse_face_hidden = 0;
+		clear_mouse_face (hlinfo);
+	      }
+
+	    /* Generate SELECT_WINDOW_EVENTs when needed.  */
+	    if (!NILP (Vmouse_autoselect_window))
+	      {
+		Lisp_Object mouse_window = window_from_coordinates (f, mx, my,
+								    0, 0);
+		/* A window will be selected only when it is not
+		   selected now, and the last mouse movement event was
+		   not in it.  A minibuffer window will be selected iff
+		   it is active.  */
+		if (WINDOWP (mouse_window)
+		    && !EQ (mouse_window, last_mouse_window)
+		    && !EQ (mouse_window, selected_window))
+		  {
+		    struct input_event event;
+
+		    EVENT_INIT (event);
+		    event.kind = SELECT_WINDOW_EVENT;
+		    event.frame_or_window = mouse_window;
+		    event.arg = Qnil;
+		    event.timestamp = movement_time;
+		    kbd_buffer_store_event (&event);
+		  }
+		last_mouse_window = mouse_window;
+	      }
+	    else
+	      last_mouse_window = Qnil;
+
+	    previous_help_echo_string = help_echo_string;
+	    help_echo_string = help_echo_object = help_echo_window = Qnil;
+	    help_echo_pos = -1;
+	    note_mouse_highlight (f, mx, my);
+	    /* If the contents of the global variable help_echo has
+	       changed (inside note_mouse_highlight), generate a HELP_EVENT.  */
+	    if (!NILP (help_echo_string) || !NILP (previous_help_echo_string))
+	      gen_help_event (help_echo_string, selected_frame,
+			      help_echo_window, help_echo_object,
+			      help_echo_pos);
+	  }
+	/* We already called kbd_buffer_store_event, so indicate the
+	   the caller it shouldn't.  */
+	return 0;
       }
+    case MOUSE_WHEELED:
+    case MOUSE_HWHEELED:
+      {
+	struct frame *f = get_frame ();
+	int mx = event->dwMousePosition.X, my = event->dwMousePosition.Y;
+	bool down_p = (event->dwButtonState & 0x10000000) != 0;
 
-  button_state = event->dwButtonState;
-  emacs_ev->timestamp = GetTickCount ();
-  emacs_ev->modifiers = w32_kbd_mods_to_emacs (event->dwControlKeyState, 0) |
-    ((event->dwButtonState & mask) ? down_modifier : up_modifier);
+	emacs_ev->kind =
+	  flags == MOUSE_HWHEELED ? HORIZ_WHEEL_EVENT : WHEEL_EVENT;
+	emacs_ev->code = 0;
+	emacs_ev->modifiers = down_p ? down_modifier : up_modifier;
+	emacs_ev->modifiers |=
+	  w32_kbd_mods_to_emacs (event->dwControlKeyState, 0);
+	XSETINT (emacs_ev->x, mx);
+	XSETINT (emacs_ev->y, my);
+	XSETFRAME (emacs_ev->frame_or_window, f);
+	emacs_ev->arg = Qnil;
+	emacs_ev->timestamp = GetTickCount ();
+	return 1;
+      }
+    case DOUBLE_CLICK:
+    default:	/* mouse pressed or released */
+      /* It looks like the console code sends us a button-release
+	 mouse event with dwButtonState == 0 when a window is
+	 activated and when the mouse is first clicked.  Ignore this
+	 case.  */
+      if (event->dwButtonState == button_state)
+	return 0;
 
-  XSETFASTINT (emacs_ev->x, event->dwMousePosition.X);
-  XSETFASTINT (emacs_ev->y, event->dwMousePosition.Y);
-/* for Mule 2.2 (Based on Emacs 19.28 */
-#ifdef MULE
-  XSET (emacs_ev->frame_or_window, Lisp_Frame, get_frame ());
-#else
-  XSETFRAME (emacs_ev->frame_or_window, get_frame ());
-#endif
+      emacs_ev->kind = MOUSE_CLICK_EVENT;
 
-  return 1;
+      /* Find out what button has changed state since the last button
+	 event.  */
+      but_change = button_state ^ event->dwButtonState;
+      mask = 1;
+      for (i = 0; mask; i++, mask <<= 1)
+	if (but_change & mask)
+	  {
+	    if (i < NUM_TRANSLATED_MOUSE_BUTTONS)
+	      emacs_ev->code = emacs_button_translation[i];
+	    else
+	      emacs_ev->code = i;
+	    break;
+	  }
+
+      button_state = event->dwButtonState;
+      emacs_ev->modifiers =
+	w32_kbd_mods_to_emacs (event->dwControlKeyState, 0)
+	| ((event->dwButtonState & mask) ? down_modifier : up_modifier);
+
+      XSETFASTINT (emacs_ev->x, event->dwMousePosition.X);
+      XSETFASTINT (emacs_ev->y, event->dwMousePosition.Y);
+      XSETFRAME (emacs_ev->frame_or_window, get_frame ());
+      emacs_ev->arg = Qnil;
+      emacs_ev->timestamp = GetTickCount ();
+
+      return 1;
+    }
 }
 
 static void
@@ -557,7 +583,8 @@ resize_event (WINDOW_BUFFER_SIZE_RECORD *event)
 {
   struct frame *f = get_frame ();
 
-  change_frame_size (f, event->dwSize.Y, event->dwSize.X, 0, 1, 0);
+  change_frame_size (f, event->dwSize.X, event->dwSize.Y
+		     - FRAME_MENU_BAR_LINES (f), 0, 1, 0, 0);
   SET_FRAME_GARBAGED (f);
 }
 
@@ -572,13 +599,13 @@ maybe_generate_resize_event (void)
   /* It is okay to call this unconditionally, since it will do nothing
      if the size hasn't actually changed.  */
   change_frame_size (f,
-		     1 + info.srWindow.Bottom - info.srWindow.Top,
 		     1 + info.srWindow.Right - info.srWindow.Left,
-		     0, 0, 0);
+		     1 + info.srWindow.Bottom - info.srWindow.Top
+		     - FRAME_MENU_BAR_LINES (f), 0, 1, 0, 0);
 }
 
 #if HAVE_W32NOTIFY
-static int
+int
 handle_file_notifications (struct input_event *hold_quit)
 {
   BYTE *p = file_notifications;
@@ -600,7 +627,7 @@ handle_file_notifications (struct input_event *hold_quit)
   if (notification_buffer_in_use)
     {
       DWORD info_size = notifications_size;
-      Lisp_Object cs = intern ("utf-16le");
+      Lisp_Object cs = Qutf_16le;
       Lisp_Object obj = w32_get_watch_object (notifications_desc);
 
       /* notifications_size could be zero when the buffer of
@@ -626,11 +653,12 @@ handle_file_notifications (struct input_event *hold_quit)
 	      Lisp_Object action = lispy_file_action (fni->Action);
 
 	      inev.kind = FILE_NOTIFY_EVENT;
-	      inev.code = (ptrdiff_t)XINT (XIL ((EMACS_INT)notifications_desc));
 	      inev.timestamp = GetTickCount ();
 	      inev.modifiers = 0;
 	      inev.frame_or_window = callback;
 	      inev.arg = Fcons (action, fname);
+	      inev.arg = list3 (make_pointer_integer (notifications_desc),
+				action, fname);
 	      kbd_buffer_store_event_hold (&inev, hold_quit);
 
 	      if (!fni->NextEntryOffset)
@@ -646,7 +674,7 @@ handle_file_notifications (struct input_event *hold_quit)
   return nevents;
 }
 #else  /* !HAVE_W32NOTIFY */
-static int
+int
 handle_file_notifications (struct input_event *hold_quit)
 {
   return 0;
@@ -712,12 +740,17 @@ w32_console_read_socket (struct terminal *terminal,
       while (nev > 0)
         {
 	  struct input_event inev;
+	  /* Having a separate variable with this value makes
+	     debugging easier, as otherwise the compiler might
+	     rearrange the switch below in a way that makes it hard to
+	     track the event type.  */
+	  unsigned evtype = queue_ptr->EventType;
 
 	  EVENT_INIT (inev);
 	  inev.kind = NO_EVENT;
 	  inev.arg = Qnil;
 
-	  switch (queue_ptr->EventType)
+	  switch (evtype)
             {
             case KEY_EVENT:
 	      add = key_event (&queue_ptr->Event.KeyEvent, &inev, &isdead);

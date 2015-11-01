@@ -1,6 +1,6 @@
 /* Basic character support.
 
-Copyright (C) 2001-2013 Free Software Foundation, Inc.
+Copyright (C) 2001-2015 Free Software Foundation, Inc.
 Copyright (C) 1995, 1997, 1998, 2001 Electrotechnical Laboratory, JAPAN.
   Licensed to the Free Software Foundation.
 Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
@@ -29,8 +29,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 #endif
 
-#define CHARACTER_INLINE EXTERN_INLINE
-
 #include <stdio.h>
 
 #ifdef emacs
@@ -40,7 +38,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "character.h"
 #include "buffer.h"
-#include "charset.h"
 #include "composite.h"
 #include "disptab.h"
 
@@ -50,15 +47,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #endif /* emacs */
 
-Lisp_Object Qcharacterp;
-
-static Lisp_Object Qauto_fill_chars;
-
 /* Char-table of information about which character to unify to which
    Unicode character.  Mainly used by the macro MAYBE_UNIFY_CHAR.  */
 Lisp_Object Vchar_unify_table;
-
-static Lisp_Object Qchar_script_table;
 
 
 
@@ -235,45 +226,21 @@ translate_char (Lisp_Object table, int c)
   return c;
 }
 
-/* Convert ASCII or 8-bit character C to unibyte.  If C is none of
-   them, return (C & 0xFF).  */
-
-int
-multibyte_char_to_unibyte (int c)
-{
-  if (c < 0x80)
-    return c;
-  if (CHAR_BYTE8_P (c))
-    return CHAR_TO_BYTE8 (c);
-  return (c & 0xFF);
-}
-
-/* Like multibyte_char_to_unibyte, but return -1 if C is not supported
-   by charset_unibyte.  */
-
-int
-multibyte_char_to_unibyte_safe (int c)
-{
-  if (c < 0x80)
-    return c;
-  if (CHAR_BYTE8_P (c))
-    return CHAR_TO_BYTE8 (c);
-  return -1;
-}
-
 DEFUN ("characterp", Fcharacterp, Scharacterp, 1, 2, 0,
        doc: /* Return non-nil if OBJECT is a character.
 In Emacs Lisp, characters are represented by character codes, which
 are non-negative integers.  The function `max-char' returns the
 maximum character code.
-usage: (characterp OBJECT)  */)
+usage: (characterp OBJECT)  */
+       attributes: const)
   (Lisp_Object object, Lisp_Object ignore)
 {
   return (CHARACTERP (object) ? Qt : Qnil);
 }
 
 DEFUN ("max-char", Fmax_char, Smax_char, 0, 0, 0,
-       doc: /* Return the character of the maximum code.  */)
+       doc: /* Return the character of the maximum code.  */
+       attributes: const)
   (void)
 {
   return make_number (MAX_CHAR);
@@ -873,7 +840,7 @@ string_escape_byte8 (Lisp_Object string)
 	  {
 	    c = STRING_CHAR_ADVANCE (src);
 	    c = CHAR_TO_BYTE8 (c);
-	    dst += sprintf ((char *) dst, "\\%03o", c);
+	    dst += sprintf ((char *) dst, "\\%03o", c + 0u);
 	  }
 	else
 	  while (len--) *dst++ = *src++;
@@ -883,7 +850,7 @@ string_escape_byte8 (Lisp_Object string)
       {
 	c = *src++;
 	if (c >= 0x80)
-	  dst += sprintf ((char *) dst, "\\%03o", c);
+	  dst += sprintf ((char *) dst, "\\%03o", c + 0u);
 	else
 	  *dst++ = c;
       }
@@ -1016,6 +983,75 @@ character is not ASCII nor 8-bit character, an error is signaled.  */)
 
 #ifdef emacs
 
+/* Return true if C is an alphabetic character.  */
+bool
+alphabeticp (int c)
+{
+  Lisp_Object category = CHAR_TABLE_REF (Vunicode_category_table, c);
+  if (! INTEGERP (category))
+    return false;
+  EMACS_INT gen_cat = XINT (category);
+
+  /* See UTS #18.  There are additional characters that should be
+     here, those designated as Other_uppercase, Other_lowercase,
+     and Other_alphabetic; FIXME.  */
+  return (gen_cat == UNICODE_CATEGORY_Lu
+	  || gen_cat == UNICODE_CATEGORY_Ll
+	  || gen_cat == UNICODE_CATEGORY_Lt
+	  || gen_cat == UNICODE_CATEGORY_Lm
+	  || gen_cat == UNICODE_CATEGORY_Lo
+	  || gen_cat == UNICODE_CATEGORY_Mn
+	  || gen_cat == UNICODE_CATEGORY_Mc
+	  || gen_cat == UNICODE_CATEGORY_Me
+	  || gen_cat == UNICODE_CATEGORY_Nl);
+}
+
+/* Return true if C is a decimal-number character.  */
+bool
+decimalnump (int c)
+{
+  Lisp_Object category = CHAR_TABLE_REF (Vunicode_category_table, c);
+  if (! INTEGERP (category))
+    return false;
+  EMACS_INT gen_cat = XINT (category);
+
+  /* See UTS #18.  */
+  return gen_cat == UNICODE_CATEGORY_Nd;
+}
+
+/* Return true if C is a graphic character.  */
+bool
+graphicp (int c)
+{
+  Lisp_Object category = CHAR_TABLE_REF (Vunicode_category_table, c);
+  if (! INTEGERP (category))
+    return false;
+  EMACS_INT gen_cat = XINT (category);
+
+  /* See UTS #18.  */
+  return (!(gen_cat == UNICODE_CATEGORY_Zs /* space separator */
+	    || gen_cat == UNICODE_CATEGORY_Zl /* line separator */
+	    || gen_cat == UNICODE_CATEGORY_Zp /* paragraph separator */
+	    || gen_cat == UNICODE_CATEGORY_Cc /* control */
+	    || gen_cat == UNICODE_CATEGORY_Cs /* surrogate */
+	    || gen_cat == UNICODE_CATEGORY_Cn)); /* unassigned */
+}
+
+/* Return true if C is a printable character.  */
+bool
+printablep (int c)
+{
+  Lisp_Object category = CHAR_TABLE_REF (Vunicode_category_table, c);
+  if (! INTEGERP (category))
+    return false;
+  EMACS_INT gen_cat = XINT (category);
+
+  /* See UTS #18.  */
+  return (!(gen_cat == UNICODE_CATEGORY_Cc /* control */
+	    || gen_cat == UNICODE_CATEGORY_Cs /* surrogate */
+	    || gen_cat == UNICODE_CATEGORY_Cn)); /* unassigned */
+}
+
 void
 syms_of_character (void)
 {
@@ -1072,10 +1108,6 @@ A char-table for width (columns) of each character.  */);
 	       doc: /* Char table of script symbols.
 It has one extra slot whose value is a list of script symbols.  */);
 
-  /* Intern this now in case it isn't already done.
-     Setting this variable twice is harmless.
-     But don't staticpro it here--that is done in alloc.c.  */
-  Qchar_table_extra_slots = intern_c_string ("char-table-extra-slots");
   DEFSYM (Qchar_script_table, "char-script-table");
   Fput (Qchar_script_table, Qchar_table_extra_slots, make_number (1));
   Vchar_script_table = Fmake_char_table (Qchar_script_table, Qnil);

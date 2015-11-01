@@ -1,6 +1,6 @@
 ;;; thingatpt.el --- tests for thing-at-point.
 
-;; Copyright (C) 2013 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2015 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -26,7 +26,6 @@
     ("http://2.gnu.org" 6 url "http://2.gnu.org")
     ("http://3.gnu.org" 19 url "http://3.gnu.org")
     ("https://4.gnu.org" 1  url "https://4.gnu.org")
-    ("bzr://savannah.gnu.org" 1 url "bzr://savannah.gnu.org")
     ("A geo URI (geo:3.14159,-2.71828)." 12 url "geo:3.14159,-2.71828")
     ("Visit http://5.gnu.org now." 5 url nil)
     ("Visit http://6.gnu.org now." 7 url "http://6.gnu.org")

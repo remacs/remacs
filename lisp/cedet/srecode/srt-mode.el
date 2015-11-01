@@ -1,6 +1,6 @@
 ;;; srecode/srt-mode.el --- Major mode for writing screcode macros
 
-;; Copyright (C) 2005, 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2005, 2007-2015 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -188,6 +188,7 @@ we can tell font lock about them.")
 
 ;;;###autoload
 (define-derived-mode srecode-template-mode fundamental-mode "SRecode"
+  ;; FIXME: Shouldn't it derive from prog-mode?
   "Major-mode for writing SRecode macros."
   (set (make-local-variable 'comment-start) ";;")
   (set (make-local-variable 'comment-end) "")
@@ -232,7 +233,7 @@ we can tell font lock about them.")
   "Provide help for working with macros in a template."
   (interactive)
   (let* ((root 'srecode-template-inserter)
-	 (chl (eieio--class-children (class-v root)))
+	 (chl (eieio-class-children root))
 	 (ess (srecode-template-get-escape-start))
 	 (ees (srecode-template-get-escape-end))
 	 )
@@ -248,7 +249,7 @@ we can tell font lock about them.")
 	       (showexample t)
 	       )
 	  (setq chl (cdr chl))
-	  (setq chl (append (eieio--class-children (class-v C)) chl))
+	  (setq chl (append (eieio-class-children C) chl))
 
 	  (catch 'skip
 	    (when (eq C 'srecode-template-inserter-section-end)
@@ -257,9 +258,9 @@ we can tell font lock about them.")
 	    (when (class-abstract-p C)
 	      (throw 'skip nil))
 
-	    (princ "`")
+	    (princ (substitute-command-keys "`"))
 	    (princ name)
-	    (princ "'")
+	    (princ (substitute-command-keys "'"))
 	    (when (slot-exists-p C 'key)
 	      (when key
 		(princ " - Character Key: ")

@@ -1,6 +1,6 @@
-/* Lisp functions pertaining to editing.
+/* Lisp functions pertaining to editing.                 -*- coding: utf-8 -*-
 
-Copyright (C) 1985-1987, 1989, 1993-2013 Free Software Foundation, Inc.
+Copyright (C) 1985-1987, 1989, 1993-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -44,17 +44,19 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <sys/resource.h>
 #endif
 
+#include <errno.h>
 #include <float.h>
 #include <limits.h>
+
 #include <intprops.h>
 #include <strftime.h>
 #include <verify.h>
 
+#include "composite.h"
 #include "intervals.h"
 #include "character.h"
 #include "buffer.h"
 #include "coding.h"
-#include "frame.h"
 #include "window.h"
 #include "blockinput.h"
 
@@ -64,33 +66,132 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 extern Lisp_Object w32_get_internal_run_time (void);
 #endif
 
-static Lisp_Object format_time_string (char const *, ptrdiff_t, EMACS_TIME,
-				       bool, struct tm *);
+static struct lisp_time lisp_time_struct (Lisp_Object, int *);
+static Lisp_Object format_time_string (char const *, ptrdiff_t, struct timespec,
+				       Lisp_Object, struct tm *);
+static long int tm_gmtoff (struct tm *);
 static int tm_diff (struct tm *, struct tm *);
 static void update_buffer_properties (ptrdiff_t, ptrdiff_t);
+static Lisp_Object styled_format (ptrdiff_t, Lisp_Object *, bool);
 
-static Lisp_Object Qbuffer_access_fontify_functions;
+#ifndef HAVE_TM_GMTOFF
+# define HAVE_TM_GMTOFF false
+#endif
 
-/* Symbol for the text property used to mark fields.  */
+enum { tzeqlen = sizeof "TZ=" - 1 };
 
-Lisp_Object Qfield;
+/* Time zones equivalent to current local time, to wall clock time,
+   and to UTC, respectively.  */
+static timezone_t local_tz;
+static timezone_t wall_clock_tz;
+static timezone_t const utc_tz = 0;
 
-/* A special value for Qfield properties.  */
+/* A valid but unlikely setting for the TZ environment variable.
+   It is OK (though a bit slower) if the user chooses this value.  */
+static char dump_tz_string[] = "TZ=UtC0";
 
-static Lisp_Object Qboundary;
+/* The cached value of Vsystem_name.  This is used only to compare it
+   to Vsystem_name, so it need not be visible to the GC.  */
+static Lisp_Object cached_system_name;
 
-/* The startup value of the TZ environment variable so it can be
-   restored if the user calls set-time-zone-rule with a nil
-   argument.  If null, the TZ environment variable was unset.  */
-static char const *initial_tz;
+static void
+init_and_cache_system_name (void)
+{
+  init_system_name ();
+  cached_system_name = Vsystem_name;
+}
 
-/* True if the static variable tzvalbuf (defined in
-   set_time_zone_rule) is part of 'environ'.  */
-static bool tzvalbuf_in_environ;
+static struct tm *
+emacs_localtime_rz (timezone_t tz, time_t const *t, struct tm *tm)
+{
+  tm = localtime_rz (tz, t, tm);
+  if (!tm && errno == ENOMEM)
+    memory_full (SIZE_MAX);
+  return tm;
+}
 
+static time_t
+emacs_mktime_z (timezone_t tz, struct tm *tm)
+{
+  errno = 0;
+  time_t t = mktime_z (tz, tm);
+  if (t == (time_t) -1 && errno == ENOMEM)
+    memory_full (SIZE_MAX);
+  return t;
+}
+
+/* Allocate a timezone, signaling on failure.  */
+static timezone_t
+xtzalloc (char const *name)
+{
+  timezone_t tz = tzalloc (name);
+  if (!tz)
+    memory_full (SIZE_MAX);
+  return tz;
+}
+
+/* Free a timezone, except do not free the time zone for local time.
+   Freeing utc_tz is also a no-op.  */
+static void
+xtzfree (timezone_t tz)
+{
+  if (tz != local_tz)
+    tzfree (tz);
+}
+
+/* Convert the Lisp time zone rule ZONE to a timezone_t object.
+   The returned value either is 0, or is LOCAL_TZ, or is newly allocated.
+   If SETTZ, set Emacs local time to the time zone rule; otherwise,
+   the caller should eventually pass the returned value to xtzfree.  */
+static timezone_t
+tzlookup (Lisp_Object zone, bool settz)
+{
+  static char const tzbuf_format[] = "XXX%s%"pI"d:%02d:%02d";
+  char tzbuf[sizeof tzbuf_format + INT_STRLEN_BOUND (EMACS_INT)];
+  char const *zone_string;
+  timezone_t new_tz;
+
+  if (NILP (zone))
+    return local_tz;
+  else if (EQ (zone, Qt))
+    {
+      zone_string = "UTC0";
+      new_tz = utc_tz;
+    }
+  else
+    {
+      if (EQ (zone, Qwall))
+	zone_string = 0;
+      else if (STRINGP (zone))
+	zone_string = SSDATA (zone);
+      else if (INTEGERP (zone))
+	{
+	  EMACS_INT abszone = eabs (XINT (zone)), hour = abszone / (60 * 60);
+	  int min = (abszone / 60) % 60, sec = abszone % 60;
+	  sprintf (tzbuf, tzbuf_format, &"-"[XINT (zone) < 0], hour, min, sec);
+	  zone_string = tzbuf;
+	}
+      else
+	xsignal2 (Qerror, build_string ("Invalid time zone specification"),
+		  zone);
+      new_tz = xtzalloc (zone_string);
+    }
+
+  if (settz)
+    {
+      block_input ();
+      emacs_setenv_TZ (zone_string);
+      timezone_t old_tz = local_tz;
+      local_tz = new_tz;
+      tzfree (old_tz);
+      unblock_input ();
+    }
+
+  return new_tz;
+}
 
 void
-init_editfns (void)
+init_editfns (bool dumping)
 {
   const char *user_name;
   register char *p;
@@ -98,21 +199,46 @@ init_editfns (void)
   Lisp_Object tem;
 
   /* Set up system_name even when dumping.  */
-  init_system_name ();
+  init_and_cache_system_name ();
 
 #ifndef CANNOT_DUMP
-  /* Don't bother with this on initial start when just dumping out */
-  if (!initialized)
-    return;
-#endif /* not CANNOT_DUMP */
+  /* When just dumping out, set the time zone to a known unlikely value
+     and skip the rest of this function.  */
+  if (dumping)
+    {
+# ifdef HAVE_TZSET
+      xputenv (dump_tz_string);
+      tzset ();
+# endif
+      return;
+    }
+#endif
 
-  initial_tz = getenv ("TZ");
-  tzvalbuf_in_environ = 0;
+  char *tz = getenv ("TZ");
+
+#if !defined CANNOT_DUMP && defined HAVE_TZSET
+  /* If the execution TZ happens to be the same as the dump TZ,
+     change it to some other value and then change it back,
+     to force the underlying implementation to reload the TZ info.
+     This is needed on implementations that load TZ info from files,
+     since the TZ file contents may differ between dump and execution.  */
+  if (tz && strcmp (tz, &dump_tz_string[tzeqlen]) == 0)
+    {
+      ++*tz;
+      tzset ();
+      --*tz;
+    }
+#endif
+
+  /* Set the time zone rule now, so that the call to putenv is done
+     before multiple threads are active.  */
+  wall_clock_tz = xtzalloc (0);
+  tzlookup (tz ? build_string (tz) : Qwall, true);
 
   pw = getpwuid (getuid ());
 #ifdef MSDOS
   /* We let the real user name default to "root" because that's quite
-     accurate on MSDOG and because it lets Emacs find the init file.
+     accurate on MS-DOS and because it lets Emacs find the init file.
      (The DVX libraries override the Djgpp libraries here.)  */
   Vuser_real_login_name = build_string (pw ? pw->pw_name : "root");
 #else
@@ -233,26 +359,12 @@ Beginning of buffer is position (point-min), end is (point-max).
 The return value is POSITION.  */)
   (register Lisp_Object position)
 {
-  ptrdiff_t pos;
-
-  if (MARKERP (position)
-      && current_buffer == XMARKER (position)->buffer)
-    {
-      pos = marker_position (position);
-      if (pos < BEGV)
-	SET_PT_BOTH (BEGV, BEGV_BYTE);
-      else if (pos > ZV)
-	SET_PT_BOTH (ZV, ZV_BYTE);
-      else
-	SET_PT_BOTH (pos, marker_byte_position (position));
-
-      return position;
-    }
-
-  CHECK_NUMBER_COERCE_MARKER (position);
-
-  pos = clip_to_bounds (BEGV, XINT (position), ZV);
-  SET_PT (pos);
+  if (MARKERP (position))
+    set_point_from_marker (position);
+  else if (INTEGERP (position))
+    SET_PT (clip_to_bounds (BEGV, XINT (position), ZV));
+  else
+    wrong_type_argument (Qinteger_or_marker_p, position);
   return position;
 }
 
@@ -357,16 +469,15 @@ overlays_around (EMACS_INT pos, Lisp_Object *vec, ptrdiff_t len)
   return idx;
 }
 
-/* Return the value of property PROP, in OBJECT at POSITION.
-   It's the value of PROP that a char inserted at POSITION would get.
-   OBJECT is optional and defaults to the current buffer.
-   If OBJECT is a buffer, then overlay properties are considered as well as
-   text properties.
-   If OBJECT is a window, then that window's buffer is used, but
-   window-specific overlays are considered only if they are associated
-   with OBJECT. */
-Lisp_Object
-get_pos_property (Lisp_Object position, register Lisp_Object prop, Lisp_Object object)
+DEFUN ("get-pos-property", Fget_pos_property, Sget_pos_property, 2, 3, 0,
+       doc: /* Return the value of POSITION's property PROP, in OBJECT.
+Almost identical to `get-char-property' except for the following difference:
+Whereas `get-char-property' returns the property of the char at (i.e. right
+after) POSITION, this pays attention to properties's stickiness and overlays's
+advancement settings, in order to find the property of POSITION itself,
+i.e. the property that a char would inherit if it were inserted
+at POSITION.  */)
+  (Lisp_Object position, register Lisp_Object prop, Lisp_Object object)
 {
   CHECK_NUMBER_COERCE_MARKER (position);
 
@@ -391,13 +502,14 @@ get_pos_property (Lisp_Object position, register Lisp_Object prop, Lisp_Object o
       set_buffer_temp (XBUFFER (object));
 
       /* First try with room for 40 overlays.  */
-      noverlays = 40;
-      overlay_vec = alloca (noverlays * sizeof *overlay_vec);
+      Lisp_Object overlay_vecbuf[40];
+      noverlays = ARRAYELTS (overlay_vecbuf);
+      overlay_vec = overlay_vecbuf;
       noverlays = overlays_around (posn, overlay_vec, noverlays);
 
       /* If there are more than 40,
 	 make enough space for all, and try again.  */
-      if (noverlays > 40)
+      if (ARRAYELTS (overlay_vecbuf) < noverlays)
 	{
 	  SAFE_ALLOCA_LISP (overlay_vec, noverlays);
 	  noverlays = overlays_around (posn, overlay_vec, noverlays);
@@ -498,7 +610,7 @@ find_field (Lisp_Object pos, Lisp_Object merge_at_boundary,
      specially.  */
   if (NILP (merge_at_boundary))
     {
-      Lisp_Object field = get_pos_property (pos, Qfield, Qnil);
+      Lisp_Object field = Fget_pos_property (pos, Qfield, Qnil);
       if (!EQ (field, after_field))
 	at_field_end = 1;
       if (!EQ (field, before_field))
@@ -661,7 +773,7 @@ also considered to be `on the boundary'.
 
 If the optional argument ONLY-IN-LINE is non-nil and constraining
 NEW-POS would move it to a different line, NEW-POS is returned
-unconstrained.  This useful for commands that move by line, like
+unconstrained.  This is useful for commands that move by line, like
 \\[next-line] or \\[beginning-of-line], which should generally respect field boundaries
 only in the case where they can still move to the right line.
 
@@ -697,7 +809,7 @@ Field boundaries are not noticed if `inhibit-field-text-motion' is non-nil.  */)
       && (!NILP (Fget_char_property (new_pos, Qfield, Qnil))
           || !NILP (Fget_char_property (old_pos, Qfield, Qnil))
           /* To recognize field boundaries, we must also look at the
-             previous positions; we could use `get_pos_property'
+             previous positions; we could use `Fget_pos_property'
              instead, but in itself that would fail inside non-sticky
              fields (like comint prompts).  */
           || (XFASTINT (new_pos) > BEGV
@@ -708,10 +820,12 @@ Field boundaries are not noticed if `inhibit-field-text-motion' is non-nil.  */)
           /* Field boundaries are again a problem; but now we must
              decide the case exactly, so we need to call
              `get_pos_property' as well.  */
-          || (NILP (get_pos_property (old_pos, inhibit_capture_property, Qnil))
+          || (NILP (Fget_pos_property (old_pos, inhibit_capture_property, Qnil))
               && (XFASTINT (old_pos) <= BEGV
-                  || NILP (Fget_char_property (old_pos, inhibit_capture_property, Qnil))
-                  || NILP (Fget_char_property (prev_old, inhibit_capture_property, Qnil))))))
+                  || NILP (Fget_char_property
+			   (old_pos, inhibit_capture_property, Qnil))
+                  || NILP (Fget_char_property
+			   (prev_old, inhibit_capture_property, Qnil))))))
     /* It is possible that NEW_POS is not within the same field as
        OLD_POS; try to move NEW_POS so that it is.  */
     {
@@ -731,7 +845,7 @@ Field boundaries are not noticed if `inhibit-field-text-motion' is non-nil.  */)
 	  /* NEW_POS should be constrained, but only if either
 	     ONLY_IN_LINE is nil (in which case any constraint is OK),
 	     or NEW_POS and FIELD_BOUND are on the same line (in which
-	     case the constraint is OK even if ONLY_IN_LINE is non-nil). */
+	     case the constraint is OK even if ONLY_IN_LINE is non-nil).  */
 	  && (NILP (only_in_line)
 	      /* This is the ONLY_IN_LINE case, check that NEW_POS and
 		 FIELD_BOUND are on the same line by seeing whether
@@ -771,26 +885,17 @@ boundaries, bind `inhibit-field-text-motion' to t.
 This function does not move point.  */)
   (Lisp_Object n)
 {
-  ptrdiff_t orig, orig_byte, end;
-  ptrdiff_t count = SPECPDL_INDEX ();
-  specbind (Qinhibit_point_motion_hooks, Qt);
+  ptrdiff_t charpos, bytepos;
 
   if (NILP (n))
     XSETFASTINT (n, 1);
   else
     CHECK_NUMBER (n);
 
-  orig = PT;
-  orig_byte = PT_BYTE;
-  Fforward_line (make_number (XINT (n) - 1));
-  end = PT;
-
-  SET_PT_BOTH (orig, orig_byte);
-
-  unbind_to (count, Qnil);
+  scan_newline_from_point (XINT (n) - 1, &charpos, &bytepos);
 
   /* Return END constrained to the current input field.  */
-  return Fconstrain_to_field (make_number (end), make_number (orig),
+  return Fconstrain_to_field (make_number (charpos), make_number (PT),
 			      XINT (n) != 1 ? Qt : Qnil,
 			      Qt, Qnil);
 }
@@ -840,14 +945,11 @@ save_excursion_save (void)
 {
   return make_save_obj_obj_obj_obj
     (Fpoint_marker (),
-     /* Do not copy the mark if it points to nowhere.  */
-     (XMARKER (BVAR (current_buffer, mark))->buffer
-      ? Fcopy_marker (BVAR (current_buffer, mark), Qnil)
-      : Qnil),
+     Qnil,
      /* Selected window if current buffer is shown in it, nil otherwise.  */
      (EQ (XWINDOW (selected_window)->contents, Fcurrent_buffer ())
       ? selected_window : Qnil),
-     BVAR (current_buffer, mark_active));
+     Qnil);
 }
 
 /* Restore saved buffer before leaving `save-excursion' special form.  */
@@ -855,8 +957,7 @@ save_excursion_save (void)
 void
 save_excursion_restore (Lisp_Object info)
 {
-  Lisp_Object tem, tem1, omark, nmark;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  Lisp_Object tem, tem1;
 
   tem = Fmarker_buffer (XSAVE_OBJECT (info, 0));
   /* If we're unwinding to top level, saved buffer may be deleted.  This
@@ -864,49 +965,12 @@ save_excursion_restore (Lisp_Object info)
   if (NILP (tem))
     goto out;
 
-  omark = nmark = Qnil;
-  GCPRO3 (info, omark, nmark);
-
   Fset_buffer (tem);
 
   /* Point marker.  */
   tem = XSAVE_OBJECT (info, 0);
   Fgoto_char (tem);
   unchain_marker (XMARKER (tem));
-
-  /* Mark marker.  */
-  tem = XSAVE_OBJECT (info, 1);
-  omark = Fmarker_position (BVAR (current_buffer, mark));
-  if (NILP (tem))
-    unchain_marker (XMARKER (BVAR (current_buffer, mark)));
-  else
-    {
-      Fset_marker (BVAR (current_buffer, mark), tem, Fcurrent_buffer ());
-      nmark = Fmarker_position (tem);
-      unchain_marker (XMARKER (tem));
-    }
-
-  /* Mark active.  */
-  tem = XSAVE_OBJECT (info, 3);
-  tem1 = BVAR (current_buffer, mark_active);
-  bset_mark_active (current_buffer, tem);
-
-  /* If mark is active now, and either was not active
-     or was at a different place, run the activate hook.  */
-  if (! NILP (tem))
-    {
-      if (! EQ (omark, nmark))
-        {
-          tem = intern ("activate-mark-hook");
-          Frun_hooks (1, &tem);
-        }
-    }
-  /* If mark has ceased to be active, run deactivate hook.  */
-  else if (! NILP (tem1))
-    {
-      tem = intern ("deactivate-mark-hook");
-      Frun_hooks (1, &tem);
-    }
 
   /* If buffer was visible in a window, and a different window was
      selected, and the old selected window is still showing this
@@ -921,27 +985,23 @@ save_excursion_restore (Lisp_Object info)
 	   && XBUFFER (tem1) == current_buffer)))
     Fset_window_point (tem, make_number (PT));
 
-  UNGCPRO;
-
  out:
 
   free_misc (info);
 }
 
 DEFUN ("save-excursion", Fsave_excursion, Ssave_excursion, 0, UNEVALLED, 0,
-       doc: /* Save point, mark, and current buffer; execute BODY; restore those things.
+       doc: /* Save point, and current buffer; execute BODY; restore those things.
 Executes BODY just like `progn'.
-The values of point, mark and the current buffer are restored
+The values of point and the current buffer are restored
 even in case of abnormal exit (throw or error).
-The state of activation of the mark is also restored.
 
-This construct does not save `deactivate-mark', and therefore
-functions that change the buffer will still cause deactivation
-of the mark at the end of the command.  To prevent that, bind
-`deactivate-mark' with `let'.
-
-If you only want to save the current buffer but not point nor mark,
+If you only want to save the current buffer but not point,
 then just use `save-current-buffer', or even `with-current-buffer'.
+
+Before Emacs 25.1, `save-excursion' used to save the mark state.
+To save the marker state as well as the point and buffer, use
+`save-mark-and-excursion'.
 
 usage: (save-excursion &rest BODY)  */)
   (Lisp_Object args)
@@ -1056,10 +1116,20 @@ DEFUN ("byte-to-position", Fbyte_to_position, Sbyte_to_position, 1, 1, 0,
 If BYTEPOS is out of range, the value is nil.  */)
   (Lisp_Object bytepos)
 {
+  ptrdiff_t pos_byte;
+
   CHECK_NUMBER (bytepos);
-  if (XINT (bytepos) < BEG_BYTE || XINT (bytepos) > Z_BYTE)
+  pos_byte = XINT (bytepos);
+  if (pos_byte < BEG_BYTE || pos_byte > Z_BYTE)
     return Qnil;
-  return make_number (BYTE_TO_CHAR (XINT (bytepos)));
+  if (Z != Z_BYTE)
+    /* There are multibyte characters in the buffer.
+       The argument of BYTE_TO_CHAR must be a byte position at
+       a character boundary, so search for the start of the current
+       character.  */
+    while (!CHAR_HEAD_P (FETCH_BYTE (pos_byte)))
+      pos_byte--;
+  return make_number (BYTE_TO_CHAR (pos_byte));
 }
 
 DEFUN ("following-char", Ffollowing_char, Sfollowing_char, 0, 0, 0,
@@ -1226,8 +1296,8 @@ of the user with that uid, or nil if there is no such user.  */)
   /* Set up the user name info if we didn't do it before.
      (That can happen if Emacs is dumpable
      but you decide to run `temacs -l loadup' and not dump.  */
-  if (INTEGERP (Vuser_login_name))
-    init_editfns ();
+  if (NILP (Vuser_login_name))
+    init_editfns (false);
 
   if (NILP (uid))
     return Vuser_login_name;
@@ -1249,8 +1319,8 @@ This ignores the environment variables LOGNAME and USER, so it differs from
   /* Set up the user name info if we didn't do it before.
      (That can happen if Emacs is dumpable
      but you decide to run `temacs -l loadup' and not dump.  */
-  if (INTEGERP (Vuser_login_name))
-    init_editfns ();
+  if (NILP (Vuser_login_name))
+    init_editfns (false);
   return Vuser_real_login_name;
 }
 
@@ -1338,17 +1408,15 @@ name, or nil if there is no such user.  */)
   /* Substitute the login name for the &, upcasing the first character.  */
   if (q)
     {
-      register char *r;
-      Lisp_Object login;
-
-      login = Fuser_login_name (make_number (pw->pw_uid));
-      r = alloca (strlen (p) + SCHARS (login) + 1);
+      Lisp_Object login = Fuser_login_name (make_number (pw->pw_uid));
+      USE_SAFE_ALLOCA;
+      char *r = SAFE_ALLOCA (strlen (p) + SBYTES (login) + 1);
       memcpy (r, p, q - p);
-      r[q - p] = 0;
-      strcat (r, SSDATA (login));
+      char *s = lispstpcpy (&r[q - p], login);
       r[q - p] = upcase ((unsigned char) r[q - p]);
-      strcat (r, q + 1);
+      strcpy (s, q + 1);
       full = build_string (r);
+      SAFE_FREE ();
     }
 #endif /* AMPERSAND_FULL_NAME */
 
@@ -1359,6 +1427,8 @@ DEFUN ("system-name", Fsystem_name, Ssystem_name, 0, 0, 0,
        doc: /* Return the host name of the machine you are running on, as a string.  */)
   (void)
 {
+  if (EQ (Vsystem_name, cached_system_name))
+    init_and_cache_system_name ();
   return Vsystem_name;
 }
 
@@ -1386,30 +1456,49 @@ time_overflow (void)
   error ("Specified time is not representable");
 }
 
+static void
+invalid_time (void)
+{
+  error ("Invalid time specification");
+}
+
+/* Check a return value compatible with that of decode_time_components.  */
+static void
+check_time_validity (int validity)
+{
+  if (validity <= 0)
+    {
+      if (validity < 0)
+	time_overflow ();
+      else
+	invalid_time ();
+    }
+}
+
 /* Return the upper part of the time T (everything but the bottom 16 bits).  */
 static EMACS_INT
 hi_time (time_t t)
 {
-  time_t hi = t >> 16;
+  time_t hi = t >> LO_TIME_BITS;
 
   /* Check for overflow, helping the compiler for common cases where
      no runtime check is needed, and taking care not to convert
      negative numbers to unsigned before comparing them.  */
   if (! ((! TYPE_SIGNED (time_t)
-	  || MOST_NEGATIVE_FIXNUM <= TIME_T_MIN >> 16
+	  || MOST_NEGATIVE_FIXNUM <= TIME_T_MIN >> LO_TIME_BITS
 	  || MOST_NEGATIVE_FIXNUM <= hi)
-	 && (TIME_T_MAX >> 16 <= MOST_POSITIVE_FIXNUM
+	 && (TIME_T_MAX >> LO_TIME_BITS <= MOST_POSITIVE_FIXNUM
 	     || hi <= MOST_POSITIVE_FIXNUM)))
     time_overflow ();
 
   return hi;
 }
 
-/* Return the bottom 16 bits of the time T.  */
+/* Return the bottom bits of the time T.  */
 static int
 lo_time (time_t t)
 {
-  return t & ((1 << 16) - 1);
+  return t & ((1 << LO_TIME_BITS) - 1);
 }
 
 DEFUN ("current-time", Fcurrent_time, Scurrent_time, 0, 0, 0,
@@ -1420,8 +1509,98 @@ least significant 16 bits.  USEC and PSEC are the microsecond and
 picosecond counts.  */)
   (void)
 {
-  return make_lisp_time (current_emacs_time ());
+  return make_lisp_time (current_timespec ());
 }
+
+static struct lisp_time
+time_add (struct lisp_time ta, struct lisp_time tb)
+{
+  EMACS_INT hi = ta.hi + tb.hi;
+  int lo = ta.lo + tb.lo;
+  int us = ta.us + tb.us;
+  int ps = ta.ps + tb.ps;
+  us += (1000000 <= ps);
+  ps -= (1000000 <= ps) * 1000000;
+  lo += (1000000 <= us);
+  us -= (1000000 <= us) * 1000000;
+  hi += (1 << LO_TIME_BITS <= lo);
+  lo -= (1 << LO_TIME_BITS <= lo) << LO_TIME_BITS;
+  return (struct lisp_time) { hi, lo, us, ps };
+}
+
+static struct lisp_time
+time_subtract (struct lisp_time ta, struct lisp_time tb)
+{
+  EMACS_INT hi = ta.hi - tb.hi;
+  int lo = ta.lo - tb.lo;
+  int us = ta.us - tb.us;
+  int ps = ta.ps - tb.ps;
+  us -= (ps < 0);
+  ps += (ps < 0) * 1000000;
+  lo -= (us < 0);
+  us += (us < 0) * 1000000;
+  hi -= (lo < 0);
+  lo += (lo < 0) << LO_TIME_BITS;
+  return (struct lisp_time) { hi, lo, us, ps };
+}
+
+static Lisp_Object
+time_arith (Lisp_Object a, Lisp_Object b,
+	    struct lisp_time (*op) (struct lisp_time, struct lisp_time))
+{
+  int alen, blen;
+  struct lisp_time ta = lisp_time_struct (a, &alen);
+  struct lisp_time tb = lisp_time_struct (b, &blen);
+  struct lisp_time t = op (ta, tb);
+  if (! (MOST_NEGATIVE_FIXNUM <= t.hi && t.hi <= MOST_POSITIVE_FIXNUM))
+    time_overflow ();
+  Lisp_Object val = Qnil;
+
+  switch (max (alen, blen))
+    {
+    default:
+      val = Fcons (make_number (t.ps), val);
+      /* Fall through.  */
+    case 3:
+      val = Fcons (make_number (t.us), val);
+      /* Fall through.  */
+    case 2:
+      val = Fcons (make_number (t.lo), val);
+      val = Fcons (make_number (t.hi), val);
+      break;
+    }
+
+  return val;
+}
+
+DEFUN ("time-add", Ftime_add, Stime_add, 2, 2, 0,
+       doc: /* Return the sum of two time values A and B, as a time value.  */)
+  (Lisp_Object a, Lisp_Object b)
+{
+  return time_arith (a, b, time_add);
+}
+
+DEFUN ("time-subtract", Ftime_subtract, Stime_subtract, 2, 2, 0,
+       doc: /* Return the difference between two time values A and B, as a time value.  */)
+  (Lisp_Object a, Lisp_Object b)
+{
+  return time_arith (a, b, time_subtract);
+}
+
+DEFUN ("time-less-p", Ftime_less_p, Stime_less_p, 2, 2, 0,
+       doc: /* Return non-nil if time value T1 is earlier than time value T2.  */)
+  (Lisp_Object t1, Lisp_Object t2)
+{
+  int t1len, t2len;
+  struct lisp_time a = lisp_time_struct (t1, &t1len);
+  struct lisp_time b = lisp_time_struct (t2, &t2len);
+  return ((a.hi != b.hi ? a.hi < b.hi
+	   : a.lo != b.lo ? a.lo < b.lo
+	   : a.us != b.us ? a.us < b.us
+	   : a.ps < b.ps)
+	  ? Qt : Qnil);
+}
+
 
 DEFUN ("get-internal-run-time", Fget_internal_run_time, Sget_internal_run_time,
        0, 0, 0,
@@ -1450,7 +1629,7 @@ does the same thing as `current-time'.  */)
       usecs -= 1000000;
       secs++;
     }
-  return make_lisp_time (make_emacs_time (secs, usecs * 1000));
+  return make_lisp_time (make_timespec (secs, usecs * 1000));
 #else /* ! HAVE_GETRUSAGE  */
 #ifdef WINDOWSNT
   return w32_get_internal_run_time ();
@@ -1461,45 +1640,37 @@ does the same thing as `current-time'.  */)
 }
 
 
-/* Make a Lisp list that represents the time T with fraction TAIL.  */
-static Lisp_Object
-make_time_tail (time_t t, Lisp_Object tail)
-{
-  return Fcons (make_number (hi_time (t)),
-		Fcons (make_number (lo_time (t)), tail));
-}
-
-/* Make a Lisp list that represents the system time T.  */
-static Lisp_Object
-make_time (time_t t)
-{
-  return make_time_tail (t, Qnil);
-}
-
 /* Make a Lisp list that represents the Emacs time T.  T may be an
    invalid time, with a slightly negative tv_nsec value such as
    UNKNOWN_MODTIME_NSECS; in that case, the Lisp list contains a
    correspondingly negative picosecond count.  */
 Lisp_Object
-make_lisp_time (EMACS_TIME t)
+make_lisp_time (struct timespec t)
 {
-  int ns = EMACS_NSECS (t);
-  return make_time_tail (EMACS_SECS (t), list2i (ns / 1000, ns % 1000 * 1000));
+  time_t s = t.tv_sec;
+  int ns = t.tv_nsec;
+  return list4i (hi_time (s), lo_time (s), ns / 1000, ns % 1000 * 1000);
 }
 
 /* Decode a Lisp list SPECIFIED_TIME that represents a time.
    Set *PHIGH, *PLOW, *PUSEC, *PPSEC to its parts; do not check their values.
-   Return true if successful.  */
-static bool
+   Return 2, 3, or 4 to indicate the effective length of SPECIFIED_TIME
+   if successful, 0 if unsuccessful.  */
+static int
 disassemble_lisp_time (Lisp_Object specified_time, Lisp_Object *phigh,
 		       Lisp_Object *plow, Lisp_Object *pusec,
 		       Lisp_Object *ppsec)
 {
+  Lisp_Object high = make_number (0);
+  Lisp_Object low = specified_time;
+  Lisp_Object usec = make_number (0);
+  Lisp_Object psec = make_number (0);
+  int len = 4;
+
   if (CONSP (specified_time))
     {
-      Lisp_Object low = XCDR (specified_time);
-      Lisp_Object usec = make_number (0);
-      Lisp_Object psec = make_number (0);
+      high = XCAR (specified_time);
+      low = XCDR (specified_time);
       if (CONSP (low))
 	{
 	  Lisp_Object low_tail = XCDR (low);
@@ -1510,39 +1681,119 @@ disassemble_lisp_time (Lisp_Object specified_time, Lisp_Object *phigh,
 	      low_tail = XCDR (low_tail);
 	      if (CONSP (low_tail))
 		psec = XCAR (low_tail);
+	      else
+		len = 3;
 	    }
 	  else if (!NILP (low_tail))
-	    usec = low_tail;
+	    {
+	      usec = low_tail;
+	      len = 3;
+	    }
+	  else
+	    len = 2;
 	}
+      else
+	len = 2;
 
-      *phigh = XCAR (specified_time);
-      *plow = low;
-      *pusec = usec;
-      *ppsec = psec;
-      return 1;
+      /* When combining components, require LOW to be an integer,
+	 as otherwise it would be a pain to add up times.  */
+      if (! INTEGERP (low))
+	return 0;
     }
+  else if (INTEGERP (specified_time))
+    len = 2;
 
-  return 0;
+  *phigh = high;
+  *plow = low;
+  *pusec = usec;
+  *ppsec = psec;
+  return len;
+}
+
+/* Convert T into an Emacs time *RESULT, truncating toward minus infinity.
+   Return true if T is in range, false otherwise.  */
+static bool
+decode_float_time (double t, struct lisp_time *result)
+{
+  double lo_multiplier = 1 << LO_TIME_BITS;
+  double emacs_time_min = MOST_NEGATIVE_FIXNUM * lo_multiplier;
+  if (! (emacs_time_min <= t && t < -emacs_time_min))
+    return false;
+
+  double small_t = t / lo_multiplier;
+  EMACS_INT hi = small_t;
+  double t_sans_hi = t - hi * lo_multiplier;
+  int lo = t_sans_hi;
+  long double fracps = (t_sans_hi - lo) * 1e12L;
+#ifdef INT_FAST64_MAX
+  int_fast64_t ifracps = fracps;
+  int us = ifracps / 1000000;
+  int ps = ifracps % 1000000;
+#else
+  int us = fracps / 1e6L;
+  int ps = fracps - us * 1e6L;
+#endif
+  us -= (ps < 0);
+  ps += (ps < 0) * 1000000;
+  lo -= (us < 0);
+  us += (us < 0) * 1000000;
+  hi -= (lo < 0);
+  lo += (lo < 0) << LO_TIME_BITS;
+  result->hi = hi;
+  result->lo = lo;
+  result->us = us;
+  result->ps = ps;
+  return true;
 }
 
 /* From the time components HIGH, LOW, USEC and PSEC taken from a Lisp
    list, generate the corresponding time value.
+   If LOW is floating point, the other components should be zero.
 
-   If RESULT is not null, store into *RESULT the converted time;
-   this can fail if the converted time does not fit into EMACS_TIME.
+   If RESULT is not null, store into *RESULT the converted time.
    If *DRESULT is not null, store into *DRESULT the number of
    seconds since the start of the POSIX Epoch.
 
-   Return true if successful.  */
-bool
+   Return 1 if successful, 0 if the components are of the
+   wrong type, and -1 if the time is out of range.  */
+int
 decode_time_components (Lisp_Object high, Lisp_Object low, Lisp_Object usec,
 			Lisp_Object psec,
-			EMACS_TIME *result, double *dresult)
+			struct lisp_time *result, double *dresult)
 {
   EMACS_INT hi, lo, us, ps;
-  if (! (INTEGERP (high) && INTEGERP (low)
+  if (! (INTEGERP (high)
 	 && INTEGERP (usec) && INTEGERP (psec)))
     return 0;
+  if (! INTEGERP (low))
+    {
+      if (FLOATP (low))
+	{
+	  double t = XFLOAT_DATA (low);
+	  if (result && ! decode_float_time (t, result))
+	    return -1;
+	  if (dresult)
+	    *dresult = t;
+	  return 1;
+	}
+      else if (NILP (low))
+	{
+	  struct timespec now = current_timespec ();
+	  if (result)
+	    {
+	      result->hi = hi_time (now.tv_sec);
+	      result->lo = lo_time (now.tv_sec);
+	      result->us = now.tv_nsec / 1000;
+	      result->ps = now.tv_nsec % 1000 * 1000;
+	    }
+	  if (dresult)
+	    *dresult = now.tv_sec + now.tv_nsec / 1e9;
+	  return 1;
+	}
+      else
+	return 0;
+    }
+
   hi = XINT (high);
   lo = XINT (low);
   us = XINT (usec);
@@ -1552,74 +1803,92 @@ decode_time_components (Lisp_Object high, Lisp_Object low, Lisp_Object usec,
      each overflow into the next higher-order component.  */
   us += ps / 1000000 - (ps % 1000000 < 0);
   lo += us / 1000000 - (us % 1000000 < 0);
-  hi += lo >> 16;
+  hi += lo >> LO_TIME_BITS;
   ps = ps % 1000000 + 1000000 * (ps % 1000000 < 0);
   us = us % 1000000 + 1000000 * (us % 1000000 < 0);
-  lo &= (1 << 16) - 1;
+  lo &= (1 << LO_TIME_BITS) - 1;
 
   if (result)
     {
-      if ((TYPE_SIGNED (time_t) ? TIME_T_MIN >> 16 <= hi : 0 <= hi)
-	  && hi <= TIME_T_MAX >> 16)
-	{
-	  /* Return the greatest representable time that is not greater
-	     than the requested time.  */
-	  time_t sec = hi;
-	  *result = make_emacs_time ((sec << 16) + lo, us * 1000 + ps / 1000);
-	}
-      else
-	{
-	  /* Overflow in the highest-order component.  */
-	  return 0;
-	}
+      if (! (MOST_NEGATIVE_FIXNUM <= hi && hi <= MOST_POSITIVE_FIXNUM))
+	return -1;
+      result->hi = hi;
+      result->lo = lo;
+      result->us = us;
+      result->ps = ps;
     }
 
   if (dresult)
-    *dresult = (us * 1e6 + ps) / 1e12 + lo + hi * 65536.0;
+    {
+      double dhi = hi;
+      *dresult = (us * 1e6 + ps) / 1e12 + lo + dhi * (1 << LO_TIME_BITS);
+    }
 
   return 1;
 }
 
-/* Decode a Lisp list SPECIFIED_TIME that represents a time.
-   If SPECIFIED_TIME is nil, use the current time.
+struct timespec
+lisp_to_timespec (struct lisp_time t)
+{
+  if (! ((TYPE_SIGNED (time_t) ? TIME_T_MIN >> LO_TIME_BITS <= t.hi : 0 <= t.hi)
+	 && t.hi <= TIME_T_MAX >> LO_TIME_BITS))
+    return invalid_timespec ();
+  time_t s = (t.hi << LO_TIME_BITS) + t.lo;
+  int ns = t.us * 1000 + t.ps / 1000;
+  return make_timespec (s, ns);
+}
 
-   Round the time down to the nearest EMACS_TIME value.
-   Return seconds since the Epoch.
-   Signal an error if unsuccessful.  */
-EMACS_TIME
+/* Decode a Lisp list SPECIFIED_TIME that represents a time.
+   Store its effective length into *PLEN.
+   If SPECIFIED_TIME is nil, use the current time.
+   Signal an error if SPECIFIED_TIME does not represent a time.  */
+static struct lisp_time
+lisp_time_struct (Lisp_Object specified_time, int *plen)
+{
+  Lisp_Object high, low, usec, psec;
+  struct lisp_time t;
+  int len = disassemble_lisp_time (specified_time, &high, &low, &usec, &psec);
+  int val = len ? decode_time_components (high, low, usec, psec, &t, 0) : 0;
+  check_time_validity (val);
+  *plen = len;
+  return t;
+}
+
+/* Like lisp_time_struct, except return a struct timespec.
+   Discard any low-order digits.  */
+struct timespec
 lisp_time_argument (Lisp_Object specified_time)
 {
-  EMACS_TIME t;
-  if (NILP (specified_time))
-    t = current_emacs_time ();
-  else
-    {
-      Lisp_Object high, low, usec, psec;
-      if (! (disassemble_lisp_time (specified_time, &high, &low, &usec, &psec)
-	     && decode_time_components (high, low, usec, psec, &t, 0)))
-	error ("Invalid time specification");
-    }
+  int len;
+  struct lisp_time lt = lisp_time_struct (specified_time, &len);
+  struct timespec t = lisp_to_timespec (lt);
+  if (! timespec_valid_p (t))
+    time_overflow ();
   return t;
 }
 
 /* Like lisp_time_argument, except decode only the seconds part,
-   do not allow out-of-range time stamps, do not check the subseconds part,
-   and always round down.  */
+   and do not check the subseconds part.  */
 static time_t
 lisp_seconds_argument (Lisp_Object specified_time)
 {
-  if (NILP (specified_time))
-    return time (NULL);
-  else
+  Lisp_Object high, low, usec, psec;
+  struct lisp_time t;
+
+  int val = disassemble_lisp_time (specified_time, &high, &low, &usec, &psec);
+  if (val != 0)
     {
-      Lisp_Object high, low, usec, psec;
-      EMACS_TIME t;
-      if (! (disassemble_lisp_time (specified_time, &high, &low, &usec, &psec)
-	     && decode_time_components (high, low, make_number (0),
-					make_number (0), &t, 0)))
-	error ("Invalid time specification");
-      return EMACS_SECS (t);
+      val = decode_time_components (high, low, make_number (0),
+				    make_number (0), &t, 0);
+      if (0 < val
+	  && ! ((TYPE_SIGNED (time_t)
+		 ? TIME_T_MIN >> LO_TIME_BITS <= t.hi
+		 : 0 <= t.hi)
+		&& t.hi <= TIME_T_MAX >> LO_TIME_BITS))
+	val = -1;
     }
+  check_time_validity (val);
+  return (t.hi << LO_TIME_BITS) + t.lo;
 }
 
 DEFUN ("float-time", Ffloat_time, Sfloat_time, 0, 1, 0,
@@ -1637,24 +1906,16 @@ or (if you need time as a string) `format-time-string'.  */)
   (Lisp_Object specified_time)
 {
   double t;
-  if (NILP (specified_time))
-    {
-      EMACS_TIME now = current_emacs_time ();
-      t = EMACS_SECS (now) + EMACS_NSECS (now) / 1e9;
-    }
-  else
-    {
-      Lisp_Object high, low, usec, psec;
-      if (! (disassemble_lisp_time (specified_time, &high, &low, &usec, &psec)
-	     && decode_time_components (high, low, usec, psec, 0, &t)))
-	error ("Invalid time specification");
-    }
+  Lisp_Object high, low, usec, psec;
+  if (! (disassemble_lisp_time (specified_time, &high, &low, &usec, &psec)
+	 && decode_time_components (high, low, usec, psec, 0, &t)))
+    invalid_time ();
   return make_float (t);
 }
 
 /* Write information into buffer S of size MAXSIZE, according to the
    FORMAT of length FORMAT_LEN, using time information taken from *TP.
-   Default to Universal Time if UT, local time otherwise.
+   Use the time zone specified by TZ.
    Use NS as the number of nanoseconds in the %N directive.
    Return the number of bytes written, not including the terminating
    '\0'.  If S is NULL, nothing will be written anywhere; so to
@@ -1665,7 +1926,7 @@ or (if you need time as a string) `format-time-string'.  */)
    bytes in FORMAT and it does not support nanoseconds.  */
 static size_t
 emacs_nmemftime (char *s, size_t maxsize, const char *format,
-		 size_t format_len, const struct tm *tp, bool ut, int ns)
+		 size_t format_len, const struct tm *tp, timezone_t tz, int ns)
 {
   size_t total = 0;
 
@@ -1682,7 +1943,7 @@ emacs_nmemftime (char *s, size_t maxsize, const char *format,
       if (s)
 	s[0] = '\1';
 
-      result = nstrftime (s, maxsize, format, tp, ut, ns);
+      result = nstrftime (s, maxsize, format, tp, tz, ns);
 
       if (s)
 	{
@@ -1707,8 +1968,9 @@ DEFUN ("format-time-string", Fformat_time_string, Sformat_time_string, 1, 3, 0,
 TIME is specified as (HIGH LOW USEC PSEC), as returned by
 `current-time' or `file-attributes'.  The obsolete form (HIGH . LOW)
 is also still accepted.
-The third, optional, argument UNIVERSAL, if non-nil, means describe TIME
-as Universal Time; nil means describe TIME in the local time zone.
+The optional ZONE is omitted or nil for Emacs local time, t for
+Universal Time, `wall' for system wall clock time, or a string as in
+`set-time-zone-rule' for a time zone rule.
 The value is a copy of FORMAT-STRING, but with certain constructs replaced
 by text that describes the specified date and time in TIME:
 
@@ -1716,6 +1978,7 @@ by text that describes the specified date and time in TIME:
 %G is the year corresponding to the ISO week, %g within the century.
 %m is the numeric month.
 %b and %h are the locale's abbreviated month name, %B the full name.
+ (%h is not supported on MS-Windows.)
 %d is the day of the month, zero-padded, %e is blank-padded.
 %u is the numeric day of week from 1 (Monday) to 7, %w from 0 (Sunday) to 6.
 %a is the locale's abbreviated name of the day of week, %A the full name.
@@ -1735,6 +1998,7 @@ by text that describes the specified date and time in TIME:
 %c is the locale's date and time format.
 %x is the locale's "preferred" date format.
 %D is like "%m/%d/%y".
+%F is the ISO 8601 date format (like "%Y-%m-%d").
 
 %R is like "%H:%M", %T is like "%H:%M:%S", %r is like "%I:%M:%S %p".
 %X is the locale's "preferred" time format.
@@ -1753,74 +2017,75 @@ The modifiers are `E' and `O'.  For certain characters X,
 %EX is a locale's alternative version of %X;
 %OX is like %X, but uses the locale's number symbols.
 
-For example, to produce full ISO 8601 format, use "%Y-%m-%dT%T%z".
+For example, to produce full ISO 8601 format, use "%FT%T%z".
 
-usage: (format-time-string FORMAT-STRING &optional TIME UNIVERSAL)  */)
-  (Lisp_Object format_string, Lisp_Object timeval, Lisp_Object universal)
+usage: (format-time-string FORMAT-STRING &optional TIME ZONE)  */)
+  (Lisp_Object format_string, Lisp_Object timeval, Lisp_Object zone)
 {
-  EMACS_TIME t = lisp_time_argument (timeval);
+  struct timespec t = lisp_time_argument (timeval);
   struct tm tm;
 
   CHECK_STRING (format_string);
   format_string = code_convert_string_norecord (format_string,
 						Vlocale_coding_system, 1);
   return format_time_string (SSDATA (format_string), SBYTES (format_string),
-			     t, ! NILP (universal), &tm);
+			     t, zone, &tm);
 }
 
 static Lisp_Object
 format_time_string (char const *format, ptrdiff_t formatlen,
-		    EMACS_TIME t, bool ut, struct tm *tmp)
+		    struct timespec t, Lisp_Object zone, struct tm *tmp)
 {
   char buffer[4000];
   char *buf = buffer;
   ptrdiff_t size = sizeof buffer;
   size_t len;
   Lisp_Object bufstring;
-  int ns = EMACS_NSECS (t);
-  struct tm *tm;
+  int ns = t.tv_nsec;
   USE_SAFE_ALLOCA;
 
-  while (1)
+  timezone_t tz = tzlookup (zone, false);
+  tmp = emacs_localtime_rz (tz, &t.tv_sec, tmp);
+  if (! tmp)
     {
-      time_t *taddr = emacs_secs_addr (&t);
-      block_input ();
+      xtzfree (tz);
+      time_overflow ();
+    }
+  synchronize_system_time_locale ();
 
-      synchronize_system_time_locale ();
-
-      tm = ut ? gmtime (taddr) : localtime (taddr);
-      if (! tm)
-	{
-	  unblock_input ();
-	  time_overflow ();
-	}
-      *tmp = *tm;
-
+  while (true)
+    {
       buf[0] = '\1';
-      len = emacs_nmemftime (buf, size, format, formatlen, tm, ut, ns);
+      len = emacs_nmemftime (buf, size, format, formatlen, tmp, tz, ns);
       if ((0 < len && len < size) || (len == 0 && buf[0] == '\0'))
 	break;
 
       /* Buffer was too small, so make it bigger and try again.  */
-      len = emacs_nmemftime (NULL, SIZE_MAX, format, formatlen, tm, ut, ns);
-      unblock_input ();
+      len = emacs_nmemftime (NULL, SIZE_MAX, format, formatlen, tmp, tz, ns);
       if (STRING_BYTES_BOUND <= len)
-	string_overflow ();
+	{
+	  xtzfree (tz);
+	  string_overflow ();
+	}
       size = len + 1;
       buf = SAFE_ALLOCA (size);
     }
 
-  unblock_input ();
+  xtzfree (tz);
   bufstring = make_unibyte_string (buf, len);
   SAFE_FREE ();
   return code_convert_string_norecord (bufstring, Vlocale_coding_system, 0);
 }
 
-DEFUN ("decode-time", Fdecode_time, Sdecode_time, 0, 1, 0,
-       doc: /* Decode a time value as (SEC MINUTE HOUR DAY MONTH YEAR DOW DST ZONE).
+DEFUN ("decode-time", Fdecode_time, Sdecode_time, 0, 2, 0,
+       doc: /* Decode a time value as (SEC MINUTE HOUR DAY MONTH YEAR DOW DST UTCOFF).
 The optional SPECIFIED-TIME should be a list of (HIGH LOW . IGNORED),
 as from `current-time' and `file-attributes', or nil to use the
 current time.  The obsolete form (HIGH . LOW) is also still accepted.
+The optional ZONE is omitted or nil for Emacs local time, t for
+Universal Time, `wall' for system wall clock time, or a string as in
+`set-time-zone-rule' for a time zone rule.
+
 The list has the following nine members: SEC is an integer between 0
 and 60; SEC is 60 for a leap second, which only some operating systems
 support.  MINUTE is an integer between 0 and 59.  HOUR is an integer
@@ -1828,44 +2093,41 @@ between 0 and 23.  DAY is an integer between 1 and 31.  MONTH is an
 integer between 1 and 12.  YEAR is an integer indicating the
 four-digit year.  DOW is the day of week, an integer between 0 and 6,
 where 0 is Sunday.  DST is t if daylight saving time is in effect,
-otherwise nil.  ZONE is an integer indicating the number of seconds
-east of Greenwich.  (Note that Common Lisp has different meanings for
-DOW and ZONE.)  */)
-  (Lisp_Object specified_time)
+otherwise nil.  UTCOFF is an integer indicating the UTC offset in
+seconds, i.e., the number of seconds east of Greenwich.  (Note that
+Common Lisp has different meanings for DOW and UTCOFF.)
+
+usage: (decode-time &optional TIME ZONE)  */)
+  (Lisp_Object specified_time, Lisp_Object zone)
 {
   time_t time_spec = lisp_seconds_argument (specified_time);
-  struct tm save_tm;
-  struct tm *decoded_time;
-  Lisp_Object list_args[9];
+  struct tm local_tm, gmt_tm;
+  timezone_t tz = tzlookup (zone, false);
+  struct tm *tm = emacs_localtime_rz (tz, &time_spec, &local_tm);
+  xtzfree (tz);
 
-  block_input ();
-  decoded_time = localtime (&time_spec);
-  if (decoded_time)
-    save_tm = *decoded_time;
-  unblock_input ();
-  if (! (decoded_time
-	 && MOST_NEGATIVE_FIXNUM - TM_YEAR_BASE <= save_tm.tm_year
-	 && save_tm.tm_year <= MOST_POSITIVE_FIXNUM - TM_YEAR_BASE))
+  if (! (tm
+	 && MOST_NEGATIVE_FIXNUM - TM_YEAR_BASE <= local_tm.tm_year
+	 && local_tm.tm_year <= MOST_POSITIVE_FIXNUM - TM_YEAR_BASE))
     time_overflow ();
-  XSETFASTINT (list_args[0], save_tm.tm_sec);
-  XSETFASTINT (list_args[1], save_tm.tm_min);
-  XSETFASTINT (list_args[2], save_tm.tm_hour);
-  XSETFASTINT (list_args[3], save_tm.tm_mday);
-  XSETFASTINT (list_args[4], save_tm.tm_mon + 1);
-  /* On 64-bit machines an int is narrower than EMACS_INT, thus the
-     cast below avoids overflow in int arithmetics.  */
-  XSETINT (list_args[5], TM_YEAR_BASE + (EMACS_INT) save_tm.tm_year);
-  XSETFASTINT (list_args[6], save_tm.tm_wday);
-  list_args[7] = save_tm.tm_isdst ? Qt : Qnil;
 
-  block_input ();
-  decoded_time = gmtime (&time_spec);
-  if (decoded_time == 0)
-    list_args[8] = Qnil;
-  else
-    XSETINT (list_args[8], tm_diff (&save_tm, decoded_time));
-  unblock_input ();
-  return Flist (9, list_args);
+  /* Avoid overflow when INT_MAX < EMACS_INT_MAX.  */
+  EMACS_INT tm_year_base = TM_YEAR_BASE;
+
+  return CALLN (Flist,
+		make_number (local_tm.tm_sec),
+		make_number (local_tm.tm_min),
+		make_number (local_tm.tm_hour),
+		make_number (local_tm.tm_mday),
+		make_number (local_tm.tm_mon + 1),
+		make_number (local_tm.tm_year + tm_year_base),
+		make_number (local_tm.tm_wday),
+		local_tm.tm_isdst ? Qt : Qnil,
+		(HAVE_TM_GMTOFF
+		 ? make_number (tm_gmtoff (&local_tm))
+		 : gmtime_r (&time_spec, &gmt_tm)
+		 ? make_number (tm_diff (&local_tm, &gmt_tm))
+		 : Qnil));
 }
 
 /* Return OBJ - OFFSET, checking that OBJ is a valid fixnum and that
@@ -1885,15 +2147,16 @@ check_tm_member (Lisp_Object obj, int offset)
 DEFUN ("encode-time", Fencode_time, Sencode_time, 6, MANY, 0,
        doc: /* Convert SECOND, MINUTE, HOUR, DAY, MONTH, YEAR and ZONE to internal time.
 This is the reverse operation of `decode-time', which see.
-ZONE defaults to the current time zone rule.  This can
-be a string or t (as from `set-time-zone-rule'), or it can be a list
-\(as from `current-time-zone') or an integer (as from `decode-time')
+The optional ZONE is omitted or nil for Emacs local time, t for
+Universal Time, `wall' for system wall clock time, or a string as in
+`set-time-zone-rule' for a time zone rule.  It can also be a list (as
+from `current-time-zone') or an integer (as from `decode-time')
 applied without consideration for daylight saving time.
 
 You can pass more than 7 arguments; then the first six arguments
 are used as SECOND through YEAR, and the *last* argument is used as ZONE.
 The intervening arguments are ignored.
-This feature lets (apply 'encode-time (decode-time ...)) work.
+This feature lets (apply \\='encode-time (decode-time ...)) work.
 
 Out-of-range values for SECOND, MINUTE, HOUR, DAY, or MONTH are allowed;
 for example, a DAY of 0 means the day preceding the given month.
@@ -1920,67 +2183,18 @@ usage: (encode-time SECOND MINUTE HOUR DAY MONTH YEAR &optional ZONE)  */)
 
   if (CONSP (zone))
     zone = XCAR (zone);
-  if (NILP (zone))
-    {
-      block_input ();
-      value = mktime (&tm);
-      unblock_input ();
-    }
-  else
-    {
-      static char const tzbuf_format[] = "XXX%s%"pI"d:%02d:%02d";
-      char tzbuf[sizeof tzbuf_format + INT_STRLEN_BOUND (EMACS_INT)];
-      char *old_tzstring;
-      const char *tzstring;
-      USE_SAFE_ALLOCA;
-
-      if (EQ (zone, Qt))
-	tzstring = "UTC0";
-      else if (STRINGP (zone))
-	tzstring = SSDATA (zone);
-      else if (INTEGERP (zone))
-	{
-	  EMACS_INT abszone = eabs (XINT (zone));
-	  EMACS_INT zone_hr = abszone / (60*60);
-	  int zone_min = (abszone/60) % 60;
-	  int zone_sec = abszone % 60;
-	  sprintf (tzbuf, tzbuf_format, &"-"[XINT (zone) < 0],
-		   zone_hr, zone_min, zone_sec);
-	  tzstring = tzbuf;
-	}
-      else
-	error ("Invalid time zone specification");
-
-      old_tzstring = getenv ("TZ");
-      if (old_tzstring)
-	{
-	  char *buf = SAFE_ALLOCA (strlen (old_tzstring) + 1);
-	  old_tzstring = strcpy (buf, old_tzstring);
-	}
-
-      block_input ();
-
-      /* Set TZ before calling mktime; merely adjusting mktime's returned
-	 value doesn't suffice, since that would mishandle leap seconds.  */
-      set_time_zone_rule (tzstring);
-
-      value = mktime (&tm);
-
-      set_time_zone_rule (old_tzstring);
-#ifdef LOCALTIME_CACHE
-      tzset ();
-#endif
-      unblock_input ();
-      SAFE_FREE ();
-    }
+  timezone_t tz = tzlookup (zone, false);
+  value = emacs_mktime_z (tz, &tm);
+  xtzfree (tz);
 
   if (value == (time_t) -1)
     time_overflow ();
 
-  return make_time (value);
+  return list2i (hi_time (value), lo_time (value));
 }
 
-DEFUN ("current-time-string", Fcurrent_time_string, Scurrent_time_string, 0, 1, 0,
+DEFUN ("current-time-string", Fcurrent_time_string, Scurrent_time_string,
+       0, 2, 0,
        doc: /* Return the current local time, as a human-readable string.
 Programs can use this function to decode a time,
 since the number of columns in each field is fixed
@@ -1993,37 +2207,37 @@ If SPECIFIED-TIME is given, it is a time to format instead of the
 current time.  The argument should have the form (HIGH LOW . IGNORED).
 Thus, you can use times obtained from `current-time' and from
 `file-attributes'.  SPECIFIED-TIME can also have the form (HIGH . LOW),
-but this is considered obsolete.  */)
-  (Lisp_Object specified_time)
+but this is considered obsolete.
+
+The optional ZONE is omitted or nil for Emacs local time, t for
+Universal Time, `wall' for system wall clock time, or a string as in
+`set-time-zone-rule' for a time zone rule.  */)
+  (Lisp_Object specified_time, Lisp_Object zone)
 {
   time_t value = lisp_seconds_argument (specified_time);
-  struct tm *tm;
-  char buf[sizeof "Mon Apr 30 12:49:17 " + INT_STRLEN_BOUND (int) + 1];
-  int len IF_LINT (= 0);
+  timezone_t tz = tzlookup (zone, false);
 
   /* Convert to a string in ctime format, except without the trailing
      newline, and without the 4-digit year limit.  Don't use asctime
      or ctime, as they might dump core if the year is outside the
      range -999 .. 9999.  */
-  block_input ();
-  tm = localtime (&value);
-  if (tm)
-    {
-      static char const wday_name[][4] =
-	{ "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-      static char const mon_name[][4] =
-	{ "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-	  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-      printmax_t year_base = TM_YEAR_BASE;
-
-      len = sprintf (buf, "%s %s%3d %02d:%02d:%02d %"pMd,
-		     wday_name[tm->tm_wday], mon_name[tm->tm_mon], tm->tm_mday,
-		     tm->tm_hour, tm->tm_min, tm->tm_sec,
-		     tm->tm_year + year_base);
-    }
-  unblock_input ();
-  if (! tm)
+  struct tm tm;
+  struct tm *tmp = emacs_localtime_rz (tz, &value, &tm);
+  xtzfree (tz);
+  if (! tmp)
     time_overflow ();
+
+  static char const wday_name[][4] =
+    { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+  static char const mon_name[][4] =
+    { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+  printmax_t year_base = TM_YEAR_BASE;
+  char buf[sizeof "Mon Apr 30 12:49:17 " + INT_STRLEN_BOUND (int) + 1];
+  int len = sprintf (buf, "%s %s%3d %02d:%02d:%02d %"pMd,
+		     wday_name[tm.tm_wday], mon_name[tm.tm_mon], tm.tm_mday,
+		     tm.tm_hour, tm.tm_min, tm.tm_sec,
+		     tm.tm_year + year_base);
 
   return make_unibyte_string (buf, len);
 }
@@ -2051,7 +2265,18 @@ tm_diff (struct tm *a, struct tm *b)
 	  + (a->tm_sec - b->tm_sec));
 }
 
-DEFUN ("current-time-zone", Fcurrent_time_zone, Scurrent_time_zone, 0, 1, 0,
+/* Yield A's UTC offset, or an unspecified value if unknown.  */
+static long int
+tm_gmtoff (struct tm *a)
+{
+#if HAVE_TM_GMTOFF
+  return a->tm_gmtoff;
+#else
+  return 0;
+#endif
+}
+
+DEFUN ("current-time-zone", Fcurrent_time_zone, Scurrent_time_zone, 0, 2, 0,
        doc: /* Return the offset and name for the local time zone.
 This returns a list of the form (OFFSET NAME).
 OFFSET is an integer number of seconds ahead of UTC (east of Greenwich).
@@ -2062,39 +2287,40 @@ instead of using the current time.  The argument should have the form
 (HIGH LOW . IGNORED).  Thus, you can use times obtained from
 `current-time' and from `file-attributes'.  SPECIFIED-TIME can also
 have the form (HIGH . LOW), but this is considered obsolete.
+Optional second arg ZONE is omitted or nil for the local time zone, or
+a string as in `set-time-zone-rule'.
 
 Some operating systems cannot provide all this information to Emacs;
 in this case, `current-time-zone' returns a list containing nil for
 the data it can't find.  */)
-  (Lisp_Object specified_time)
+  (Lisp_Object specified_time, Lisp_Object zone)
 {
-  EMACS_TIME value;
-  int offset;
-  struct tm *t;
-  struct tm localtm;
+  struct timespec value;
+  struct tm local_tm, gmt_tm;
   Lisp_Object zone_offset, zone_name;
 
   zone_offset = Qnil;
-  value = make_emacs_time (lisp_seconds_argument (specified_time), 0);
-  zone_name = format_time_string ("%Z", sizeof "%Z" - 1, value, 0, &localtm);
-  block_input ();
-  t = gmtime (emacs_secs_addr (&value));
-  if (t)
-    offset = tm_diff (&localtm, t);
-  unblock_input ();
+  value = make_timespec (lisp_seconds_argument (specified_time), 0);
+  zone_name = format_time_string ("%Z", sizeof "%Z" - 1, value,
+				  zone, &local_tm);
 
-  if (t)
+  if (HAVE_TM_GMTOFF || gmtime_r (&value.tv_sec, &gmt_tm))
     {
+      long int offset = (HAVE_TM_GMTOFF
+			 ? tm_gmtoff (&local_tm)
+			 : tm_diff (&local_tm, &gmt_tm));
       zone_offset = make_number (offset);
       if (SCHARS (zone_name) == 0)
 	{
 	  /* No local time zone name is available; use "+-NNNN" instead.  */
-	  int m = offset / 60;
-	  int am = offset < 0 ? - m : m;
-	  char buf[sizeof "+00" + INT_STRLEN_BOUND (int)];
-	  zone_name = make_formatted_string (buf, "%c%02d%02d",
+	  long int m = offset / 60;
+	  long int am = offset < 0 ? - m : m;
+	  long int hour = am / 60;
+	  int min = am % 60;
+	  char buf[sizeof "+00" + INT_STRLEN_BOUND (long int)];
+	  zone_name = make_formatted_string (buf, "%c%02ld%02d",
 					     (offset < 0 ? '-' : '+'),
-					     am / 60, am % 60);
+					     hour, min);
 	}
     }
 
@@ -2102,122 +2328,100 @@ the data it can't find.  */)
 }
 
 DEFUN ("set-time-zone-rule", Fset_time_zone_rule, Sset_time_zone_rule, 1, 1, 0,
-       doc: /* Set the local time zone using TZ, a string specifying a time zone rule.
-If TZ is nil, use implementation-defined default time zone information.
-If TZ is t, use Universal Time.
+       doc: /* Set the Emacs local time zone using TZ, a string specifying a time zone rule.
+If TZ is nil or `wall', use system wall clock time.  If TZ is t, use
+Universal Time.  If TZ is an integer, treat it as in `encode-time'.
 
-Instead of calling this function, you typically want (setenv "TZ" TZ).
-That changes both the environment of the Emacs process and the
-variable `process-environment', whereas `set-time-zone-rule' affects
-only the former.  */)
+Instead of calling this function, you typically want something else.
+To temporarily use a different time zone rule for just one invocation
+of `decode-time', `encode-time', or `format-time-string', pass the
+function a ZONE argument.  To change local time consistently
+throughout Emacs, call (setenv "TZ" TZ): this changes both the
+environment of the Emacs process and the variable
+`process-environment', whereas `set-time-zone-rule' affects only the
+former.  */)
   (Lisp_Object tz)
 {
-  const char *tzstring;
-
-  if (! (NILP (tz) || EQ (tz, Qt)))
-    CHECK_STRING (tz);
-
-  if (NILP (tz))
-    tzstring = initial_tz;
-  else if (EQ (tz, Qt))
-    tzstring = "UTC0";
-  else
-    tzstring = SSDATA (tz);
-
-  block_input ();
-  set_time_zone_rule (tzstring);
-  unblock_input ();
-
+  tzlookup (NILP (tz) ? Qwall : tz, true);
   return Qnil;
 }
 
-/* Set the local time zone rule to TZSTRING.
+/* A buffer holding a string of the form "TZ=value", intended
+   to be part of the environment.  If TZ is supposed to be unset,
+   the buffer string is "tZ=".  */
+ static char *tzvalbuf;
 
-   This function is not thread-safe, partly because putenv, unsetenv
-   and tzset are not, and partly because of the static storage it
-   updates.  Other threads that invoke localtime etc. may be adversely
-   affected while this function is executing.  */
-
-void
-set_time_zone_rule (const char *tzstring)
+/* Get the local time zone rule.  */
+char *
+emacs_getenv_TZ (void)
 {
-  /* A buffer holding a string of the form "TZ=value", intended
-     to be part of the environment.  */
-  static char *tzvalbuf;
+  return tzvalbuf[0] == 'T' ? tzvalbuf + tzeqlen : 0;
+}
+
+/* Set the local time zone rule to TZSTRING, which can be null to
+   denote wall clock time.  Do not record the setting in LOCAL_TZ.
+
+   This function is not thread-safe, in theory because putenv is not,
+   but mostly because of the static storage it updates.  Other threads
+   that invoke localtime etc. may be adversely affected while this
+   function is executing.  */
+
+int
+emacs_setenv_TZ (const char *tzstring)
+{
   static ptrdiff_t tzvalbufsize;
+  ptrdiff_t tzstringlen = tzstring ? strlen (tzstring) : 0;
+  char *tzval = tzvalbuf;
+  bool new_tzvalbuf = tzvalbufsize <= tzeqlen + tzstringlen;
 
-  int tzeqlen = sizeof "TZ=" - 1;
-
-#ifdef LOCALTIME_CACHE
-  /* These two values are known to load tz files in buggy implementations,
-     i.e., Solaris 1 executables running under either Solaris 1 or Solaris 2.
-     Their values shouldn't matter in non-buggy implementations.
-     We don't use string literals for these strings,
-     since if a string in the environment is in readonly
-     storage, it runs afoul of bugs in SVR4 and Solaris 2.3.
-     See Sun bugs 1113095 and 1114114, ``Timezone routines
-     improperly modify environment''.  */
-
-  static char set_time_zone_rule_tz[][sizeof "TZ=GMT+0"]
-    = { "TZ=GMT+0", "TZ=GMT+1" };
-
-  /* In SunOS 4.1.3_U1 and 4.1.4, if TZ has a value like
-     "US/Pacific" that loads a tz file, then changes to a value like
-     "XXX0" that does not load a tz file, and then changes back to
-     its original value, the last change is (incorrectly) ignored.
-     Also, if TZ changes twice in succession to values that do
-     not load a tz file, tzset can dump core (see Sun bug#1225179).
-     The following code works around these bugs.  */
+  if (new_tzvalbuf)
+    {
+      /* Do not attempt to free the old tzvalbuf, since another thread
+	 may be using it.  In practice, the first allocation is large
+	 enough and memory does not leak.  */
+      tzval = xpalloc (NULL, &tzvalbufsize,
+		       tzeqlen + tzstringlen - tzvalbufsize + 1, -1, 1);
+      tzvalbuf = tzval;
+      tzval[1] = 'Z';
+      tzval[2] = '=';
+    }
 
   if (tzstring)
     {
-      /* Temporarily set TZ to a value that loads a tz file
-	 and that differs from tzstring.  */
-      bool eq0 = strcmp (tzstring, set_time_zone_rule_tz[0] + tzeqlen) == 0;
-      xputenv (set_time_zone_rule_tz[eq0]);
+      /* Modify TZVAL in place.  Although this is dicey in a
+	 multithreaded environment, we know of no portable alternative.
+	 Calling putenv or setenv could crash some other thread.  */
+      tzval[0] = 'T';
+      strcpy (tzval + tzeqlen, tzstring);
     }
   else
     {
-      /* The implied tzstring is unknown, so temporarily set TZ to
-	 two different values that each load a tz file.  */
-      xputenv (set_time_zone_rule_tz[0]);
-      tzset ();
-      xputenv (set_time_zone_rule_tz[1]);
+      /* Turn 'TZ=whatever' into an empty environment variable 'tZ='.
+	 Although this is also dicey, calling unsetenv here can crash Emacs.
+	 See Bug#8705.  */
+      tzval[0] = 't';
+      tzval[tzeqlen] = 0;
     }
-  tzset ();
-  tzvalbuf_in_environ = 0;
+
+  if (new_tzvalbuf
+#ifdef WINDOWSNT
+      /* MS-Windows implementation of 'putenv' copies the argument
+	 string into a block it allocates, so modifying tzval string
+	 does not change the environment.  OTOH, the other threads run
+	 by Emacs on MS-Windows never call 'xputenv' or 'putenv' or
+	 'unsetenv', so the original cause for the dicey in-place
+	 modification technique doesn't exist there in the first
+	 place.  */
+      || 1
 #endif
-
-  if (!tzstring)
+      )
     {
-      unsetenv ("TZ");
-      tzvalbuf_in_environ = 0;
-    }
-  else
-    {
-      ptrdiff_t tzstringlen = strlen (tzstring);
-
-      if (tzvalbufsize <= tzeqlen + tzstringlen)
-	{
-	  unsetenv ("TZ");
-	  tzvalbuf_in_environ = 0;
-	  tzvalbuf = xpalloc (tzvalbuf, &tzvalbufsize,
-			      tzeqlen + tzstringlen - tzvalbufsize + 1, -1, 1);
-	  memcpy (tzvalbuf, "TZ=", tzeqlen);
-	}
-
-      strcpy (tzvalbuf + tzeqlen, tzstring);
-
-      if (!tzvalbuf_in_environ)
-	{
-	  xputenv (tzvalbuf);
-	  tzvalbuf_in_environ = 1;
-	}
+      /* Although this is not thread-safe, in practice this runs only
+	 on startup when there is only one thread.  */
+      xputenv (tzval);
     }
 
-#ifdef LOCALTIME_CACHE
-  tzset ();
-#endif
+  return 0;
 }
 
 /* Insert NARGS Lisp objects in the array ARGS by calling INSERT_FUNC
@@ -2249,7 +2453,7 @@ general_insert_function (void (*insert_func)
 	    len = CHAR_STRING (c, str);
 	  else
 	    {
-	      str[0] = ASCII_CHAR_P (c) ? c : multibyte_char_to_unibyte (c);
+	      str[0] = CHAR_TO_BYTE8 (c);
 	      len = 1;
 	    }
 	  (*insert_func) ((char *) str, len);
@@ -2272,11 +2476,6 @@ insert1 (Lisp_Object arg)
   Finsert (1, &arg);
 }
 
-
-/* Callers passing one argument to Finsert need not gcpro the
-   argument "array", since the only element of the array will
-   not be used after calling insert or insert_from_string, so
-   we don't care if it gets trashed.  */
 
 DEFUN ("insert", Finsert, Sinsert, 0, MANY, 0,
        doc: /* Insert the arguments, either strings or characters, at point.
@@ -2500,15 +2699,34 @@ make_buffer_string_both (ptrdiff_t start, ptrdiff_t start_byte,
 			 ptrdiff_t end, ptrdiff_t end_byte, bool props)
 {
   Lisp_Object result, tem, tem1;
+  ptrdiff_t beg0, end0, beg1, end1, size;
 
-  if (start < GPT && GPT < end)
-    move_gap_both (start, start_byte);
+  if (start_byte < GPT_BYTE && GPT_BYTE < end_byte)
+    {
+      /* Two regions, before and after the gap.  */
+      beg0 = start_byte;
+      end0 = GPT_BYTE;
+      beg1 = GPT_BYTE + GAP_SIZE - BEG_BYTE;
+      end1 = end_byte + GAP_SIZE - BEG_BYTE;
+    }
+  else
+    {
+      /* The only region.  */
+      beg0 = start_byte;
+      end0 = end_byte;
+      beg1 = -1;
+      end1 = -1;
+    }
 
   if (! NILP (BVAR (current_buffer, enable_multibyte_characters)))
     result = make_uninit_multibyte_string (end - start, end_byte - start_byte);
   else
     result = make_uninit_string (end - start);
-  memcpy (SDATA (result), BYTE_POS_ADDR (start_byte), end_byte - start_byte);
+
+  size = end0 - beg0;
+  memcpy (SDATA (result), BYTE_POS_ADDR (beg0), size);
+  if (beg1 != -1)
+    memcpy (SDATA (result) + size, BEG_ADDR + beg1, end1 - beg1);
 
   /* If desired, update and copy the text properties.  */
   if (props)
@@ -2536,25 +2754,20 @@ update_buffer_properties (ptrdiff_t start, ptrdiff_t end)
      call them, specifying the range of the buffer being accessed.  */
   if (!NILP (Vbuffer_access_fontify_functions))
     {
-      Lisp_Object args[3];
-      Lisp_Object tem;
-
-      args[0] = Qbuffer_access_fontify_functions;
-      XSETINT (args[1], start);
-      XSETINT (args[2], end);
-
       /* But don't call them if we can tell that the work
 	 has already been done.  */
       if (!NILP (Vbuffer_access_fontified_property))
 	{
-	  tem = Ftext_property_any (args[1], args[2],
-				    Vbuffer_access_fontified_property,
-				    Qnil, Qnil);
-	  if (! NILP (tem))
-	    Frun_hook_with_args (3, args);
+	  Lisp_Object tem
+	    = Ftext_property_any (make_number (start), make_number (end),
+				  Vbuffer_access_fontified_property,
+				  Qnil, Qnil);
+	  if (NILP (tem))
+	    return;
 	}
-      else
-	Frun_hook_with_args (3, args);
+
+      CALLN (Frun_hook_with_args, Qbuffer_access_fontify_functions,
+	     make_number (start), make_number (end));
     }
 }
 
@@ -2608,7 +2821,15 @@ DEFUN ("insert-buffer-substring", Finsert_buffer_substring, Sinsert_buffer_subst
        doc: /* Insert before point a substring of the contents of BUFFER.
 BUFFER may be a buffer or a buffer name.
 Arguments START and END are character positions specifying the substring.
-They default to the values of (point-min) and (point-max) in BUFFER.  */)
+They default to the values of (point-min) and (point-max) in BUFFER.
+
+Point and before-insertion markers move forward to end up after the
+inserted text.
+Any other markers at the point of insertion remain before the text.
+
+If the current buffer is multibyte and BUFFER is unibyte, or vice
+versa, strings are converted from unibyte to multibyte or vice versa
+using `string-make-multibyte' or `string-make-unibyte', which see.  */)
   (Lisp_Object buffer, Lisp_Object start, Lisp_Object end)
 {
   register EMACS_INT b, e, temp;
@@ -2863,7 +3084,7 @@ Both characters must have the same length of multi-byte form.  */)
       len = CHAR_STRING (fromc, fromstr);
       if (CHAR_STRING (toc, tostr) != len)
 	error ("Characters in `subst-char-in-region' have different byte-lengths");
-      if (!ASCII_BYTE_P (*tostr))
+      if (!ASCII_CHAR_P (*tostr))
 	{
 	  /* If *TOSTR is in the range 0x80..0x9F and TOCHAR is not a
 	     complete multibyte character, it may be combined with the
@@ -2956,14 +3177,11 @@ Both characters must have the same length of multi-byte form.  */)
 		  : ((pos_byte_next < Z_BYTE
 		      && ! CHAR_HEAD_P (FETCH_BYTE (pos_byte_next)))
 		     || (pos_byte > BEG_BYTE
-			 && ! ASCII_BYTE_P (FETCH_BYTE (pos_byte - 1))))))
+			 && ! ASCII_CHAR_P (FETCH_BYTE (pos_byte - 1))))))
 	    {
 	      Lisp_Object tem, string;
 
-	      struct gcpro gcpro1;
-
 	      tem = BVAR (current_buffer, undo_list);
-	      GCPRO1 (tem);
 
 	      /* Make a multibyte string containing this single character.  */
 	      string = make_multibyte_string ((char *) tostr, 1, len);
@@ -2982,8 +3200,6 @@ Both characters must have the same length of multi-byte form.  */)
 
 	      if (! NILP (noundo))
 		bset_undo_list (current_buffer, tem);
-
-	      UNGCPRO;
 	    }
 	  else
 	    {
@@ -3022,8 +3238,12 @@ static Lisp_Object
 check_translation (ptrdiff_t pos, ptrdiff_t pos_byte, ptrdiff_t end,
 		   Lisp_Object val)
 {
-  int buf_size = 16, buf_used = 0;
-  int *buf = alloca (sizeof (int) * buf_size);
+  int initial_buf[16];
+  int *buf = initial_buf;
+  ptrdiff_t buf_size = ARRAYELTS (initial_buf);
+  int *bufalloc = 0;
+  ptrdiff_t buf_used = 0;
+  Lisp_Object result = Qnil;
 
   for (; CONSP (val); val = XCDR (val))
     {
@@ -3048,12 +3268,11 @@ check_translation (ptrdiff_t pos, ptrdiff_t pos_byte, ptrdiff_t end,
 
 		  if (buf_used == buf_size)
 		    {
-		      int *newbuf;
-
-		      buf_size += 16;
-		      newbuf = alloca (sizeof (int) * buf_size);
-		      memcpy (newbuf, buf, sizeof (int) * buf_used);
-		      buf = newbuf;
+		      bufalloc = xpalloc (bufalloc, &buf_size, 1, -1,
+					  sizeof *bufalloc);
+		      if (buf == initial_buf)
+			memcpy (bufalloc, buf, sizeof initial_buf);
+		      buf = bufalloc;
 		    }
 		  buf[buf_used++] = STRING_CHAR_AND_LENGTH (p, len1);
 		  pos_byte += len1;
@@ -3062,10 +3281,15 @@ check_translation (ptrdiff_t pos, ptrdiff_t pos_byte, ptrdiff_t end,
 		break;
 	    }
 	  if (i == len)
-	    return XCAR (val);
+	    {
+	      result = XCAR (val);
+	      break;
+	    }
 	}
     }
-  return Qnil;
+
+  xfree (bufalloc);
+  return result;
 }
 
 
@@ -3137,7 +3361,7 @@ It returns the number of characters changed.  */)
 	      else
 		{
 		  nc = tt[oc];
-		  if (! ASCII_BYTE_P (nc) && multibyte)
+		  if (! ASCII_CHAR_P (nc) && multibyte)
 		    {
 		      str_len = BYTE8_STRING (nc, buf);
 		      str = buf;
@@ -3403,7 +3627,7 @@ save_restriction_restore (Lisp_Object data)
 DEFUN ("save-restriction", Fsave_restriction, Ssave_restriction, 0, UNEVALLED, 0,
        doc: /* Execute BODY, saving and restoring current buffer's restrictions.
 The buffer's restrictions make parts of the beginning and end invisible.
-\(They are set up with `narrow-to-region' and eliminated with `widen'.)
+(They are set up with `narrow-to-region' and eliminated with `widen'.)
 This special form, `save-restriction', saves the current buffer's restrictions
 when it is entered, and restores them when it is exited.
 So any `narrow-to-region' within BODY lasts only until the end of the form.
@@ -3433,6 +3657,9 @@ The message also goes into the `*Messages*' buffer, if `message-log-max'
 is non-nil.  (In keyboard macros, that's all it does.)
 Return the message.
 
+In batch mode, the message is printed to the standard error stream,
+followed by a newline.
+
 The first argument is a format control string, and the rest are data
 to be formatted under control of the string.  See `format' for details.
 
@@ -3455,8 +3682,7 @@ usage: (message FORMAT-STRING &rest ARGS)  */)
     }
   else
     {
-      register Lisp_Object val;
-      val = Fformat (nargs, args);
+      Lisp_Object val = Fformat_message (nargs, args);
       message3 (val);
       return val;
     }
@@ -3481,24 +3707,12 @@ usage: (message-box FORMAT-STRING &rest ARGS)  */)
     }
   else
     {
-      Lisp_Object val = Fformat (nargs, args);
-#ifdef HAVE_MENUS
-      /* The MS-DOS frames support popup menus even though they are
-	 not FRAME_WINDOW_P.  */
-      if (FRAME_WINDOW_P (XFRAME (selected_frame))
-	  || FRAME_MSDOS_P (XFRAME (selected_frame)))
-      {
-	Lisp_Object pane, menu;
-	struct gcpro gcpro1;
-	pane = list1 (Fcons (build_string ("OK"), Qt));
-	GCPRO1 (pane);
-	menu = Fcons (val, pane);
-	Fx_popup_dialog (Qt, menu, Qt);
-	UNGCPRO;
-	return val;
-      }
-#endif /* HAVE_MENUS */
-      message3 (val);
+      Lisp_Object val = Fformat_message (nargs, args);
+      Lisp_Object pane, menu;
+
+      pane = list1 (Fcons (build_string ("OK"), Qt));
+      menu = Fcons (val, pane);
+      Fx_popup_dialog (Qt, menu, Qt);
       return val;
     }
 }
@@ -3517,11 +3731,9 @@ message; let the minibuffer contents show.
 usage: (message-or-box FORMAT-STRING &rest ARGS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-#ifdef HAVE_MENUS
   if ((NILP (last_nonmenu_event) || CONSP (last_nonmenu_event))
       && use_dialog_box)
     return Fmessage_box (nargs, args);
-#endif
   return Fmessage (nargs, args);
 }
 
@@ -3542,7 +3754,6 @@ usage: (propertize STRING &rest PROPERTIES)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
   Lisp_Object properties, string;
-  struct gcpro gcpro1, gcpro2;
   ptrdiff_t i;
 
   /* Number of args must be odd.  */
@@ -3550,7 +3761,6 @@ usage: (propertize STRING &rest PROPERTIES)  */)
     error ("Wrong number of arguments");
 
   properties = string = Qnil;
-  GCPRO2 (properties, string);
 
   /* First argument must be a string.  */
   CHECK_STRING (args[0]);
@@ -3562,7 +3772,7 @@ usage: (propertize STRING &rest PROPERTIES)  */)
   Fadd_text_properties (make_number (0),
 			make_number (SCHARS (string)),
 			properties, string);
-  RETURN_UNGCPRO (string);
+  return string;
 }
 
 DEFUN ("format", Fformat, Sformat, 1, MANY, 0,
@@ -3619,77 +3829,93 @@ specifier truncates the string to the given width.
 usage: (format STRING &rest OBJECTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  ptrdiff_t n;		/* The number of the next arg to substitute */
+  return styled_format (nargs, args, false);
+}
+
+DEFUN ("format-message", Fformat_message, Sformat_message, 1, MANY, 0,
+       doc: /* Format a string out of a format-string and arguments.
+The first argument is a format control string.
+The other arguments are substituted into it to make the result, a string.
+
+This acts like `format', except it also replaces each left single
+quotation mark (\\=‘) and grave accent (\\=`) by a left quote, and each
+right single quotation mark (\\=’) and apostrophe (\\=') by a right quote.
+The left and right quote replacement characters are specified by
+`text-quoting-style'.
+
+usage: (format-message STRING &rest OBJECTS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return styled_format (nargs, args, true);
+}
+
+/* Implement ‘format-message’ if MESSAGE is true, ‘format’ otherwise.  */
+
+static Lisp_Object
+styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
+{
+  ptrdiff_t n;		/* The number of the next arg to substitute.  */
   char initial_buffer[4000];
   char *buf = initial_buffer;
   ptrdiff_t bufsize = sizeof initial_buffer;
   ptrdiff_t max_bufsize = STRING_BYTES_BOUND + 1;
   char *p;
   ptrdiff_t buf_save_value_index IF_LINT (= 0);
-  char *format, *end, *format_start;
-  ptrdiff_t formatlen, nchars;
-  /* True if the format is multibyte.  */
-  bool multibyte_format = 0;
-  /* True if the output should be a multibyte string,
-     which is true if any of the inputs is one.  */
-  bool multibyte = 0;
+  char *format, *end;
+  ptrdiff_t nchars;
   /* When we make a multibyte string, we must pay attention to the
      byte combining problem, i.e., a byte may be combined with a
      multibyte character of the previous string.  This flag tells if we
      must consider such a situation or not.  */
   bool maybe_combine_byte;
-  Lisp_Object val;
-  bool arg_intervals = 0;
+  bool arg_intervals = false;
   USE_SAFE_ALLOCA;
-
-  /* discarded[I] is 1 if byte I of the format
-     string was not copied into the output.
-     It is 2 if byte I was not the first byte of its character.  */
-  char *discarded;
 
   /* Each element records, for one argument,
      the start and end bytepos in the output string,
      whether the argument has been converted to string (e.g., due to "%S"),
-     and whether the argument is a string with intervals.
-     info[0] is unused.  Unused elements have -1 for start.  */
+     and whether the argument is a string with intervals.  */
   struct info
   {
     ptrdiff_t start, end;
-    unsigned converted_to_string : 1;
-    unsigned intervals : 1;
-  } *info = 0;
-
-  /* It should not be necessary to GCPRO ARGS, because
-     the caller in the interpreter should take care of that.  */
+    bool_bf converted_to_string : 1;
+    bool_bf intervals : 1;
+  } *info;
 
   CHECK_STRING (args[0]);
-  format_start = SSDATA (args[0]);
-  formatlen = SBYTES (args[0]);
+  char *format_start = SSDATA (args[0]);
+  ptrdiff_t formatlen = SBYTES (args[0]);
 
   /* Allocate the info and discarded tables.  */
-  {
-    ptrdiff_t i;
-    if ((SIZE_MAX - formatlen) / sizeof (struct info) <= nargs)
-      memory_full (SIZE_MAX);
-    info = SAFE_ALLOCA ((nargs + 1) * sizeof *info + formatlen);
-    discarded = (char *) &info[nargs + 1];
-    for (i = 0; i < nargs + 1; i++)
-      {
-	info[i].start = -1;
-	info[i].intervals = info[i].converted_to_string = 0;
-      }
-    memset (discarded, 0, formatlen);
-  }
+  if ((SIZE_MAX - formatlen) / sizeof (struct info) <= nargs)
+    memory_full (SIZE_MAX);
+  size_t alloca_size = (nargs + 1) * sizeof *info + formatlen;
+  /* info[0] is unused.  Unused elements have -1 for start.  */
+  info = SAFE_ALLOCA (alloca_size);
+  memset (info, 0, alloca_size);
+  for (ptrdiff_t i = 0; i < nargs + 1; i++)
+    info[i].start = -1;
+  /* discarded[I] is 1 if byte I of the format
+     string was not copied into the output.
+     It is 2 if byte I was not the first byte of its character.  */
+  char *discarded = (char *) &info[nargs + 1];
 
   /* Try to determine whether the result should be multibyte.
      This is not always right; sometimes the result needs to be multibyte
-     because of an object that we will pass through prin1,
+     because of an object that we will pass through prin1.
+     or because a grave accent or apostrophe is requoted,
      and in that case, we won't know it here.  */
-  multibyte_format = STRING_MULTIBYTE (args[0]);
-  multibyte = multibyte_format;
-  for (n = 1; !multibyte && n < nargs; n++)
-    if (STRINGP (args[n]) && STRING_MULTIBYTE (args[n]))
-      multibyte = 1;
+
+  /* True if the format is multibyte.  */
+  bool multibyte_format = STRING_MULTIBYTE (args[0]);
+  /* True if the output should be a multibyte string,
+     which is true if any of the inputs is one.  */
+  bool multibyte = multibyte_format;
+  for (ptrdiff_t i = 1; !multibyte && i < nargs; i++)
+    if (STRINGP (args[i]) && STRING_MULTIBYTE (args[i]))
+      multibyte = true;
+
+  int quoting_style = message ? text_quoting_style () : -1;
 
   /* If we start out planning a unibyte result,
      then discover it has to be multibyte, we jump back to retry.  */
@@ -3702,18 +3928,20 @@ usage: (format STRING &rest OBJECTS)  */)
   /* Scan the format and store result in BUF.  */
   format = format_start;
   end = format + formatlen;
-  maybe_combine_byte = 0;
+  maybe_combine_byte = false;
 
   while (format != end)
     {
       /* The values of N and FORMAT when the loop body is entered.  */
       ptrdiff_t n0 = n;
       char *format0 = format;
+      char const *convsrc = format;
+      unsigned char format_char = *format++;
 
       /* Bytes needed to represent the output of this conversion.  */
-      ptrdiff_t convbytes;
+      ptrdiff_t convbytes = 1;
 
-      if (*format == '%')
+      if (format_char == '%')
 	{
 	  /* General format specifications look like
 
@@ -3733,26 +3961,21 @@ usage: (format STRING &rest OBJECTS)  */)
 	     digits to print after the '.' for floats, or the max.
 	     number of chars to print from a string.  */
 
-	  bool minus_flag = 0;
-	  bool  plus_flag = 0;
-	  bool space_flag = 0;
-	  bool sharp_flag = 0;
-	  bool  zero_flag = 0;
-	  ptrdiff_t field_width;
-	  bool precision_given;
-	  uintmax_t precision = UINTMAX_MAX;
-	  char *num_end;
-	  char conversion;
+	  bool minus_flag = false;
+	  bool  plus_flag = false;
+	  bool space_flag = false;
+	  bool sharp_flag = false;
+	  bool  zero_flag = false;
 
-	  while (1)
+	  for (; ; format++)
 	    {
-	      switch (*++format)
+	      switch (*format)
 		{
-		case '-': minus_flag = 1; continue;
-		case '+':  plus_flag = 1; continue;
-		case ' ': space_flag = 1; continue;
-		case '#': sharp_flag = 1; continue;
-		case '0':  zero_flag = 1; continue;
+		case '-': minus_flag = true; continue;
+		case '+':  plus_flag = true; continue;
+		case ' ': space_flag = true; continue;
+		case '#': sharp_flag = true; continue;
+		case '0':  zero_flag = true; continue;
 		}
 	      break;
 	    }
@@ -3761,26 +3984,26 @@ usage: (format STRING &rest OBJECTS)  */)
 	  space_flag &= ~ plus_flag;
 	  zero_flag &= ~ minus_flag;
 
-	  {
-	    uintmax_t w = strtoumax (format, &num_end, 10);
-	    if (max_bufsize <= w)
-	      string_overflow ();
-	    field_width = w;
-	  }
-	  precision_given = *num_end == '.';
-	  if (precision_given)
-	    precision = strtoumax (num_end + 1, &num_end, 10);
+	  char *num_end;
+	  uintmax_t raw_field_width = strtoumax (format, &num_end, 10);
+	  if (max_bufsize <= raw_field_width)
+	    string_overflow ();
+	  ptrdiff_t field_width = raw_field_width;
+
+	  bool precision_given = *num_end == '.';
+	  uintmax_t precision = (precision_given
+				 ? strtoumax (num_end + 1, &num_end, 10)
+				 : UINTMAX_MAX);
 	  format = num_end;
 
 	  if (format == end)
 	    error ("Format string ends in middle of format specifier");
 
-	  memset (&discarded[format0 - format_start], 1, format - format0);
-	  conversion = *format;
+	  char conversion = *format++;
+	  memset (&discarded[format0 - format_start], 1,
+		  format - format0 - (conversion == '%'));
 	  if (conversion == '%')
 	    goto copy_char;
-	  discarded[format - format_start] = 1;
-	  format++;
 
 	  ++n;
 	  if (! (n < nargs))
@@ -3798,10 +4021,10 @@ usage: (format STRING &rest OBJECTS)  */)
 		{
 		  Lisp_Object noescape = conversion == 'S' ? Qnil : Qt;
 		  args[n] = Fprin1_to_string (args[n], noescape);
-		  info[n].converted_to_string = 1;
+		  info[n].converted_to_string = true;
 		  if (STRING_MULTIBYTE (args[n]) && ! multibyte)
 		    {
-		      multibyte = 1;
+		      multibyte = true;
 		      goto retry;
 		    }
 		}
@@ -3819,16 +4042,16 @@ usage: (format STRING &rest OBJECTS)  */)
 		{
 		  if (!multibyte)
 		    {
-		      multibyte = 1;
+		      multibyte = true;
 		      goto retry;
 		    }
 		  args[n] = Fchar_to_string (args[n]);
-		  info[n].converted_to_string = 1;
+		  info[n].converted_to_string = true;
 		}
 
 	      if (info[n].converted_to_string)
 		conversion = 's';
-	      zero_flag = 0;
+	      zero_flag = false;
 	    }
 
 	  if (SYMBOLP (args[n]))
@@ -3836,7 +4059,7 @@ usage: (format STRING &rest OBJECTS)  */)
 	      args[n] = SYMBOL_NAME (args[n]);
 	      if (STRING_MULTIBYTE (args[n]) && ! multibyte)
 		{
-		  multibyte = 1;
+		  multibyte = true;
 		  goto retry;
 		}
 	    }
@@ -3844,9 +4067,6 @@ usage: (format STRING &rest OBJECTS)  */)
 	  if (conversion == 's')
 	    {
 	      /* handle case (precision[n] >= 0) */
-
-	      ptrdiff_t width, padding, nbytes;
-	      ptrdiff_t nchars_string;
 
 	      ptrdiff_t prec = -1;
 	      if (precision_given && precision <= TYPE_MAXIMUM (ptrdiff_t))
@@ -3858,6 +4078,8 @@ usage: (format STRING &rest OBJECTS)  */)
 		 lisp_string_width is the right thing, and will be
 		 done, but meanwhile we work with it. */
 
+	      ptrdiff_t width, nbytes;
+	      ptrdiff_t nchars_string;
 	      if (prec == 0)
 		width = nchars_string = nbytes = 0;
 	      else
@@ -3880,7 +4102,8 @@ usage: (format STRING &rest OBJECTS)  */)
 	      if (convbytes && multibyte && ! STRING_MULTIBYTE (args[n]))
 		convbytes = count_size_as_multibyte (SDATA (args[n]), nbytes);
 
-	      padding = width < field_width ? field_width - width : 0;
+	      ptrdiff_t padding
+		= width < field_width ? field_width - width : 0;
 
 	      if (max_bufsize - padding <= convbytes)
 		string_overflow ();
@@ -3896,10 +4119,10 @@ usage: (format STRING &rest OBJECTS)  */)
 
 		  if (p > buf
 		      && multibyte
-		      && !ASCII_BYTE_P (*((unsigned char *) p - 1))
+		      && !ASCII_CHAR_P (*((unsigned char *) p - 1))
 		      && STRING_MULTIBYTE (args[n])
 		      && !CHAR_HEAD_P (SREF (args[n], 0)))
-		    maybe_combine_byte = 1;
+		    maybe_combine_byte = true;
 
 		  p += copy_text (SDATA (args[n]), (unsigned char *) p,
 				  nbytes,
@@ -3919,7 +4142,7 @@ usage: (format STRING &rest OBJECTS)  */)
 		  /* If this argument has text properties, record where
 		     in the result string it appears.  */
 		  if (string_intervals (args[n]))
-		    info[n].intervals = arg_intervals = 1;
+		    info[n].intervals = arg_intervals = true;
 
 		  continue;
 		}
@@ -3931,7 +4154,7 @@ usage: (format STRING &rest OBJECTS)  */)
 		      || conversion == 'X'))
 	    error ("Invalid format operation %%%c",
 		   STRING_CHAR ((unsigned char *) format - 1));
-	  else if (! (INTEGERP (args[n]) || FLOATP (args[n])))
+	  else if (! NUMBERP (args[n]))
 	    error ("Format specifier doesn't match argument type");
 	  else
 	    {
@@ -3958,24 +4181,15 @@ usage: (format STRING &rest OBJECTS)  */)
 	      };
 	      verify (USEFUL_PRECISION_MAX > 0);
 
-	      int prec;
-	      ptrdiff_t padding, sprintf_bytes;
-	      uintmax_t excess_precision, numwidth;
-	      uintmax_t leading_zeros = 0, trailing_zeros = 0;
-
-	      char sprintf_buf[SPRINTF_BUFSIZE];
-
-	      /* Copy of conversion specification, modified somewhat.
-		 At most three flags F can be specified at once.  */
-	      char convspec[sizeof "%FFF.*d" + pMlen];
-
 	      /* Avoid undefined behavior in underlying sprintf.  */
 	      if (conversion == 'd' || conversion == 'i')
-		sharp_flag = 0;
+		sharp_flag = false;
 
 	      /* Create the copy of the conversion specification, with
 		 any width and precision removed, with ".*" inserted,
-		 and with pM inserted for integer formats.  */
+		 and with pM inserted for integer formats.
+		 At most three flags F can be specified at once.  */
+	      char convspec[sizeof "%FFF.*d" + pMlen];
 	      {
 		char *f = convspec;
 		*f++ = '%';
@@ -3998,7 +4212,7 @@ usage: (format STRING &rest OBJECTS)  */)
 		*f = '\0';
 	      }
 
-	      prec = -1;
+	      int prec = -1;
 	      if (precision_given)
 		prec = min (precision, USEFUL_PRECISION_MAX);
 
@@ -4013,6 +4227,8 @@ usage: (format STRING &rest OBJECTS)  */)
 		 careful about integer overflow, NaNs, infinities, and
 		 conversions; for example, the min and max macros are
 		 not suitable here.  */
+	      char sprintf_buf[SPRINTF_BUFSIZE];
+	      ptrdiff_t sprintf_bytes;
 	      if (conversion == 'e' || conversion == 'f' || conversion == 'g')
 		{
 		  double x = (INTEGERP (args[n])
@@ -4077,7 +4293,8 @@ usage: (format STRING &rest OBJECTS)  */)
 		 padding and excess precision.  Deal with excess precision
 		 first.  This happens only when the format specifies
 		 ridiculously large precision.  */
-	      excess_precision = precision - prec;
+	      uintmax_t excess_precision = precision - prec;
+	      uintmax_t leading_zeros = 0, trailing_zeros = 0;
 	      if (excess_precision)
 		{
 		  if (conversion == 'e' || conversion == 'f'
@@ -4104,8 +4321,9 @@ usage: (format STRING &rest OBJECTS)  */)
 
 	      /* Compute the total bytes needed for this item, including
 		 excess precision and padding.  */
-	      numwidth = sprintf_bytes + excess_precision;
-	      padding = numwidth < field_width ? field_width - numwidth : 0;
+	      uintmax_t numwidth = sprintf_bytes + excess_precision;
+	      ptrdiff_t padding
+		= numwidth < field_width ? field_width - numwidth : 0;
 	      if (max_bufsize - sprintf_bytes <= excess_precision
 		  || max_bufsize - padding <= numwidth)
 		string_overflow ();
@@ -4120,7 +4338,6 @@ usage: (format STRING &rest OBJECTS)  */)
 		  char src0 = src[0];
 		  int exponent_bytes = 0;
 		  bool signedp = src0 == '-' || src0 == '+' || src0 == ' ';
-		  int significand_bytes;
 		  if (zero_flag
 		      && ((src[signedp] >= '0' && src[signedp] <= '9')
 			  || (src[signedp] >= 'a' && src[signedp] <= 'f')
@@ -4150,7 +4367,8 @@ usage: (format STRING &rest OBJECTS)  */)
 		  p += signedp;
 		  memset (p, '0', leading_zeros);
 		  p += leading_zeros;
-		  significand_bytes = sprintf_bytes - signedp - exponent_bytes;
+		  int significand_bytes
+		    = sprintf_bytes - signedp - exponent_bytes;
 		  memcpy (p, src, significand_bytes);
                   p += significand_bytes;
 		  src += significand_bytes;
@@ -4175,44 +4393,72 @@ usage: (format STRING &rest OBJECTS)  */)
 	    }
 	}
       else
-      copy_char:
 	{
-	  /* Copy a single character from format to buf.  */
+	  /* Named constants for the UTF-8 encodings of U+2018 LEFT SINGLE
+	     QUOTATION MARK and U+2019 RIGHT SINGLE QUOTATION MARK.  */
+	  enum
+	  {
+	    uLSQM0 = 0xE2, uLSQM1 = 0x80, uLSQM2 = 0x98,
+	    /* uRSQM0 = 0xE2, uRSQM1 = 0x80, */ uRSQM2 = 0x99
+	  };
 
-	  char *src = format;
 	  unsigned char str[MAX_MULTIBYTE_LENGTH];
 
-	  if (multibyte_format)
+	  if ((format_char == '`' || format_char == '\'')
+	      && quoting_style == CURVE_QUOTING_STYLE)
 	    {
-	      /* Copy a whole multibyte character.  */
-	      if (p > buf
-		  && !ASCII_BYTE_P (*((unsigned char *) p - 1))
-		  && !CHAR_HEAD_P (*format))
-		maybe_combine_byte = 1;
-
-	      do
-		format++;
-	      while (! CHAR_HEAD_P (*format));
-
-	      convbytes = format - src;
-	      memset (&discarded[src + 1 - format_start], 2, convbytes - 1);
+	      if (! multibyte)
+		{
+		  multibyte = true;
+		  goto retry;
+		}
+	      convsrc = format_char == '`' ? uLSQM : uRSQM;
+	      convbytes = 3;
+	    }
+	  else if (format_char == '`' && quoting_style == STRAIGHT_QUOTING_STYLE)
+	    convsrc = "'";
+	  else if (format_char == uLSQM0 && CURVE_QUOTING_STYLE < quoting_style
+		   && multibyte_format
+		   && (unsigned char) format[0] == uLSQM1
+		   && ((unsigned char) format[1] == uLSQM2
+		       || (unsigned char) format[1] == uRSQM2))
+	    {
+	      convsrc = (((unsigned char) format[1] == uLSQM2
+			  && quoting_style == GRAVE_QUOTING_STYLE)
+			 ? "`" : "'");
+	      format += 2;
+	      memset (&discarded[format0 + 1 - format_start], 2, 2);
 	    }
 	  else
 	    {
-	      unsigned char uc = *format++;
-	      if (! multibyte || ASCII_BYTE_P (uc))
-		convbytes = 1;
-	      else
+	      /* Copy a single character from format to buf.  */
+	      if (multibyte_format)
 		{
-		  int c = BYTE8_TO_CHAR (uc);
+		  /* Copy a whole multibyte character.  */
+		  if (p > buf
+		      && !ASCII_CHAR_P (*((unsigned char *) p - 1))
+		      && !CHAR_HEAD_P (format_char))
+		    maybe_combine_byte = true;
+
+		  while (! CHAR_HEAD_P (*format))
+		    format++;
+
+		  convbytes = format - format0;
+		  memset (&discarded[format0 + 1 - format_start], 2,
+			  convbytes - 1);
+		}
+	      else if (multibyte && !ASCII_CHAR_P (format_char))
+		{
+		  int c = BYTE8_TO_CHAR (format_char);
 		  convbytes = CHAR_STRING (c, str);
-		  src = (char *) str;
+		  convsrc = (char *) str;
 		}
 	    }
 
+	copy_char:
 	  if (convbytes <= buf + bufsize - p)
 	    {
-	      memcpy (p, src, convbytes);
+	      memcpy (p, convsrc, convbytes);
 	      p += convbytes;
 	      nchars++;
 	      continue;
@@ -4222,31 +4468,28 @@ usage: (format STRING &rest OBJECTS)  */)
       /* There wasn't enough room to store this conversion or single
 	 character.  CONVBYTES says how much room is needed.  Allocate
 	 enough room (and then some) and do it again.  */
-      {
-	ptrdiff_t used = p - buf;
 
-	if (max_bufsize - used < convbytes)
-	  string_overflow ();
-	bufsize = used + convbytes;
-	bufsize = bufsize < max_bufsize / 2 ? bufsize * 2 : max_bufsize;
+      ptrdiff_t used = p - buf;
+      if (max_bufsize - used < convbytes)
+	string_overflow ();
+      bufsize = used + convbytes;
+      bufsize = bufsize < max_bufsize / 2 ? bufsize * 2 : max_bufsize;
 
-	if (buf == initial_buffer)
-	  {
-	    buf = xmalloc (bufsize);
-	    sa_must_free = 1;
-	    buf_save_value_index = SPECPDL_INDEX ();
-	    record_unwind_protect_ptr (xfree, buf);
-	    memcpy (buf, initial_buffer, used);
-	  }
-	else
-	  {
-	    buf = xrealloc (buf, bufsize);
-	    set_unwind_protect_ptr (buf_save_value_index, xfree, buf);
-	  }
+      if (buf == initial_buffer)
+	{
+	  buf = xmalloc (bufsize);
+	  sa_must_free = true;
+	  buf_save_value_index = SPECPDL_INDEX ();
+	  record_unwind_protect_ptr (xfree, buf);
+	  memcpy (buf, initial_buffer, used);
+	}
+      else
+	{
+	  buf = xrealloc (buf, bufsize);
+	  set_unwind_protect_ptr (buf_save_value_index, xfree, buf);
+	}
 
-	p = buf + used;
-      }
-
+      p = buf + used;
       format = format0;
       n = n0;
     }
@@ -4256,10 +4499,7 @@ usage: (format STRING &rest OBJECTS)  */)
 
   if (maybe_combine_byte)
     nchars = multibyte_chars_in_text ((unsigned char *) buf, p - buf);
-  val = make_specified_string (buf, nchars, p - buf, multibyte);
-
-  /* If we allocated BUF with malloc, free it too.  */
-  SAFE_FREE ();
+  Lisp_Object val = make_specified_string (buf, nchars, p - buf, multibyte);
 
   /* If the format string has text properties, or any of the string
      arguments has text properties, set up text properties of the
@@ -4267,19 +4507,14 @@ usage: (format STRING &rest OBJECTS)  */)
 
   if (string_intervals (args[0]) || arg_intervals)
     {
-      Lisp_Object len, new_len, props;
-      struct gcpro gcpro1;
-
       /* Add text properties from the format string.  */
-      len = make_number (SCHARS (args[0]));
-      props = text_property_list (args[0], make_number (0), len, Qnil);
-      GCPRO1 (props);
-
+      Lisp_Object len = make_number (SCHARS (args[0]));
+      Lisp_Object props = text_property_list (args[0], make_number (0),
+					      len, Qnil);
       if (CONSP (props))
 	{
 	  ptrdiff_t bytepos = 0, position = 0, translated = 0;
 	  ptrdiff_t argn = 1;
-	  Lisp_Object list;
 
 	  /* Adjust the bounds of each text property
 	     to the proper start and end in the output string.  */
@@ -4293,15 +4528,12 @@ usage: (format STRING &rest OBJECTS)  */)
 	     POSITION is the untranslated char position in it,
 	     TRANSLATED is the translated char position in BUF,
 	     and ARGN is the number of the next arg we will come to.  */
-	  for (list = props; CONSP (list); list = XCDR (list))
+	  for (Lisp_Object list = props; CONSP (list); list = XCDR (list))
 	    {
-	      Lisp_Object item;
-	      ptrdiff_t pos;
-
-	      item = XCAR (list);
+	      Lisp_Object item = XCAR (list);
 
 	      /* First adjust the property start position.  */
-	      pos = XINT (XCAR (item));
+	      ptrdiff_t pos = XINT (XCAR (item));
 
 	      /* Advance BYTEPOS, POSITION, TRANSLATED and ARGN
 		 up to this position.  */
@@ -4348,35 +4580,26 @@ usage: (format STRING &rest OBJECTS)  */)
 
       /* Add text properties from arguments.  */
       if (arg_intervals)
-	for (n = 1; n < nargs; ++n)
-	  if (info[n].intervals)
+	for (ptrdiff_t i = 1; i < nargs; i++)
+	  if (info[i].intervals)
 	    {
-	      len = make_number (SCHARS (args[n]));
-	      new_len = make_number (info[n].end - info[n].start);
-	      props = text_property_list (args[n], make_number (0), len, Qnil);
+	      len = make_number (SCHARS (args[i]));
+	      Lisp_Object new_len = make_number (info[i].end - info[i].start);
+	      props = text_property_list (args[i], make_number (0), len, Qnil);
 	      props = extend_property_ranges (props, new_len);
 	      /* If successive arguments have properties, be sure that
 		 the value of `composition' property be the copy.  */
-	      if (n > 1 && info[n - 1].end)
+	      if (1 < i && info[i - 1].end)
 		make_composition_value_copy (props);
 	      add_text_properties_from_list (val, props,
-					     make_number (info[n].start));
+					     make_number (info[i].start));
 	    }
-
-      UNGCPRO;
     }
 
-  return val;
-}
+  /* If we allocated BUF or INFO with malloc, free it too.  */
+  SAFE_FREE ();
 
-Lisp_Object
-format2 (const char *string1, Lisp_Object arg0, Lisp_Object arg1)
-{
-  Lisp_Object args[3];
-  args[0] = build_string (string1);
-  args[1] = arg0;
-  args[2] = arg1;
-  return Fformat (3, args);
+  return val;
 }
 
 DEFUN ("char-equal", Fchar_equal, Schar_equal, 2, 2, 0,
@@ -4397,17 +4620,22 @@ Case is ignored if `case-fold-search' is non-nil in the current buffer.  */)
     return Qnil;
 
   i1 = XFASTINT (c1);
-  if (NILP (BVAR (current_buffer, enable_multibyte_characters))
-      && ! ASCII_CHAR_P (i1))
-    {
-      MAKE_CHAR_MULTIBYTE (i1);
-    }
   i2 = XFASTINT (c2);
-  if (NILP (BVAR (current_buffer, enable_multibyte_characters))
-      && ! ASCII_CHAR_P (i2))
+
+  /* FIXME: It is possible to compare multibyte characters even when
+     the current buffer is unibyte.  Unfortunately this is ambiguous
+     for characters between 128 and 255, as they could be either
+     eight-bit raw bytes or Latin-1 characters.  Assume the former for
+     now.  See Bug#17011, and also see casefiddle.c's casify_object,
+     which has a similar problem.  */
+  if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
     {
-      MAKE_CHAR_MULTIBYTE (i2);
+      if (SINGLE_BYTE_CHAR_P (i1))
+	i1 = UNIBYTE_TO_CHAR (i1);
+      if (SINGLE_BYTE_CHAR_P (i2))
+	i2 = UNIBYTE_TO_CHAR (i2);
     }
+
   return (downcase (i1) == downcase (i2) ? Qt :  Qnil);
 }
 
@@ -4630,11 +4858,11 @@ Transposing beyond buffer boundaries is an error.  */)
       if (tmp_interval3)
 	set_text_properties_1 (startr1, endr2, Qnil, buf, tmp_interval3);
 
+      USE_SAFE_ALLOCA;
+
       /* First region smaller than second.  */
       if (len1_byte < len2_byte)
         {
-	  USE_SAFE_ALLOCA;
-
 	  temp = SAFE_ALLOCA (len2_byte);
 
 	  /* Don't precompute these addresses.  We have to compute them
@@ -4646,21 +4874,19 @@ Transposing beyond buffer boundaries is an error.  */)
           memcpy (temp, start2_addr, len2_byte);
           memcpy (start1_addr + len2_byte, start1_addr, len1_byte);
           memcpy (start1_addr, temp, len2_byte);
-	  SAFE_FREE ();
         }
       else
 	/* First region not smaller than second.  */
         {
-	  USE_SAFE_ALLOCA;
-
 	  temp = SAFE_ALLOCA (len1_byte);
 	  start1_addr = BYTE_POS_ADDR (start1_byte);
 	  start2_addr = BYTE_POS_ADDR (start2_byte);
           memcpy (temp, start1_addr, len1_byte);
           memcpy (start1_addr, start2_addr, len2_byte);
           memcpy (start1_addr + len2_byte, temp, len1_byte);
-	  SAFE_FREE ();
         }
+
+      SAFE_FREE ();
       graft_intervals_into_buffer (tmp_interval1, start1 + len2,
                                    len1, current_buffer, 0);
       graft_intervals_into_buffer (tmp_interval2, start1,
@@ -4797,6 +5023,7 @@ void
 syms_of_editfns (void)
 {
   DEFSYM (Qbuffer_access_fontify_functions, "buffer-access-fontify-functions");
+  DEFSYM (Qwall, "wall");
 
   DEFVAR_LISP ("inhibit-field-text-motion", Vinhibit_field_text_motion,
 	       doc: /* Non-nil means text motion commands don't notice fields.  */);
@@ -4815,8 +5042,7 @@ of the buffer being accessed.  */);
     /* Do this here, because init_buffer_once is too early--it won't work.  */
     Fset_buffer (Vprin1_to_string_buffer);
     /* Make sure buffer-access-fontify-functions is nil in this buffer.  */
-    Fset (Fmake_local_variable (intern_c_string ("buffer-access-fontify-functions")),
-	  Qnil);
+    Fset (Fmake_local_variable (Qbuffer_access_fontify_functions), Qnil);
     Fset_buffer (obuf);
   }
 
@@ -4829,12 +5055,14 @@ functions if all the text being accessed has this property.  */);
 
   DEFVAR_LISP ("system-name", Vsystem_name,
 	       doc: /* The host name of the machine Emacs is running on.  */);
+  Vsystem_name = cached_system_name = Qnil;
 
   DEFVAR_LISP ("user-full-name", Vuser_full_name,
 	       doc: /* The full name of the user logged in.  */);
 
   DEFVAR_LISP ("user-login-name", Vuser_login_name,
 	       doc: /* The user's name, taken from environment variables if possible.  */);
+  Vuser_login_name = Qnil;
 
   DEFVAR_LISP ("user-real-login-name", Vuser_real_login_name,
 	       doc: /* The user's name, based upon the real uid only.  */);
@@ -4851,6 +5079,7 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sbuffer_substring);
   defsubr (&Sbuffer_substring_no_properties);
   defsubr (&Sbuffer_string);
+  defsubr (&Sget_pos_property);
 
   defsubr (&Spoint_marker);
   defsubr (&Smark_marker);
@@ -4858,8 +5087,12 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sregion_beginning);
   defsubr (&Sregion_end);
 
+  /* Symbol for the text property used to mark fields.  */
   DEFSYM (Qfield, "field");
+
+  /* A special value for Qfield properties.  */
   DEFSYM (Qboundary, "boundary");
+
   defsubr (&Sfield_beginning);
   defsubr (&Sfield_end);
   defsubr (&Sfield_string);
@@ -4907,6 +5140,9 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Suser_full_name);
   defsubr (&Semacs_pid);
   defsubr (&Scurrent_time);
+  defsubr (&Stime_add);
+  defsubr (&Stime_subtract);
+  defsubr (&Stime_less_p);
   defsubr (&Sget_internal_run_time);
   defsubr (&Sformat_time_string);
   defsubr (&Sfloat_time);
@@ -4921,6 +5157,7 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Smessage_or_box);
   defsubr (&Scurrent_message);
   defsubr (&Sformat);
+  defsubr (&Sformat_message);
 
   defsubr (&Sinsert_buffer_substring);
   defsubr (&Scompare_buffer_substrings);

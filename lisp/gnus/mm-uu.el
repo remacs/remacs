@@ -1,6 +1,6 @@
 ;;; mm-uu.el --- Return uu stuff as mm handles
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 ;; Author: Shenghuo Zhu <zsh@cs.rochester.edu>
 ;; Keywords: postscript uudecode binhex shar forward gnatsweb pgp
@@ -118,7 +118,7 @@ This can be either \"inline\" or \"attachment\".")
      mm-uu-shar-extract)
     (forward
      ;; Thanks to Edward J. Sabol <sabol@alderaan.gsfc.nasa.gov> and
-     ;; Peter von der Ah\'e <pahe@daimi.au.dk>
+     ;; Peter von der Ahé <pahe@daimi.au.dk>
      "^-+ \\(Start of \\)?Forwarded message"
      "^-+ End \\(of \\)?forwarded message"
      mm-uu-forward-extract
@@ -523,7 +523,8 @@ apply the face `mm-uu-extract'."
 	(when (and mml2015-use (null (mml2015-clear-verify-function)))
 	  (mm-set-handle-multipart-parameter
 	   mm-security-handle 'gnus-details
-	   (format "Clear verification not supported by `%s'.\n" mml2015-use)))
+	   (gnus-format-message
+	    "Clear verification not supported by `%s'.\n" mml2015-use)))
 	(mml2015-extract-cleartext-signature))
       (list (mm-make-handle buf mm-uu-text-plain-type)))))
 
@@ -673,22 +674,34 @@ value of `mm-uu-text-plain-type'."
 		     (goto-char text-start)
 		     (re-search-forward "." start-point t)))
 	      (push
-	       (mm-make-handle (mm-uu-copy-to-buffer text-start start-point)
-			       mm-uu-text-plain-type)
+	       (mm-make-handle
+		(mm-uu-copy-to-buffer
+		 text-start
+		 ;; A start-separator is likely accompanied by
+		 ;; a leading newline.
+		 (if (and (eq (char-before start-point) ?\n)
+			  (eq (char-before (1- start-point)) ?\n))
+		     (1- start-point)
+		   start-point))
+		mm-uu-text-plain-type)
 	       result))
 	  (push
 	   (funcall (mm-uu-function-extract entry))
 	   result)
 	  (goto-char (setq text-start end-point))))
       (when result
-	(if (and (> (point-max) (1+ text-start))
-		 (save-excursion
-		   (goto-char text-start)
-		   (re-search-forward "." nil t)))
-	    (push
-	     (mm-make-handle (mm-uu-copy-to-buffer text-start (point-max))
-			     mm-uu-text-plain-type)
-	     result))
+	(goto-char text-start)
+	(when (re-search-forward "." nil t)
+	  (push (mm-make-handle
+		 (mm-uu-copy-to-buffer
+		  ;; An end-separator is likely accompanied by
+		  ;; a trailing newline.
+		  (if (eq (char-after text-start) ?\n)
+		      (1+ text-start)
+		    text-start)
+		  (point-max))
+		 mm-uu-text-plain-type)
+		result))
 	(setq result (cons "multipart/mixed" (nreverse result))))
       result)))
 
@@ -757,5 +770,9 @@ Assume text has been decoded if DECODED is non-nil."
 	     (mm-uu-dissect-text-parts elem decoded))))))
 
 (provide 'mm-uu)
+
+;; Local Variables:
+;; coding: utf-8
+;; End:
 
 ;;; mm-uu.el ends here

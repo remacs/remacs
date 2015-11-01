@@ -1,6 +1,6 @@
 ;;; cal-menu.el --- calendar functions for menu bar and popup menu support
 
-;; Copyright (C) 1994-1995, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-1995, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Edward M. Reingold <reingold@cs.uiuc.edu>
 ;;         Lara Rios <lrios@coewl.cen.uiuc.edu>
@@ -52,10 +52,15 @@
     ["Insert Anniversary" diary-insert-anniversary-entry]
     ["Insert Block" diary-insert-block-entry]
     ["Insert Cyclic" diary-insert-cyclic-entry]
-    ("Insert Bahá'í"
+    ("Insert Bahá’í"
      ["One time" diary-bahai-insert-entry]
      ["Monthly" diary-bahai-insert-monthly-entry]
      ["Yearly" diary-bahai-insert-yearly-entry])
+    ("Insert Chinese"
+     ["One time" diary-chinese-insert-entry]
+     ["Monthly" diary-chinese-insert-monthly-entry]
+     ["Yearly" diary-chinese-insert-yearly-entry]
+     ["Anniversary" diary-chinese-insert-anniversary-entry])
     ("Insert Islamic"
      ["One time" diary-islamic-insert-entry]
      ["Monthly" diary-islamic-insert-monthly-entry]
@@ -127,7 +132,7 @@
     ["Astronomical Date" calendar-astro-goto-day-number]
     ["Hebrew Date" calendar-hebrew-goto-date]
     ["Persian Date" calendar-persian-goto-date]
-    ["Bahá'í Date" calendar-bahai-goto-date]
+    ["Bahá’í Date" calendar-bahai-goto-date]
     ["Islamic Date" calendar-islamic-goto-date]
     ["Julian Date" calendar-julian-goto-date]
     ["Chinese Date" calendar-chinese-goto-date]
@@ -273,18 +278,6 @@ is non-nil."
     ["Show diary" diary-show-all-entries]
     ["Exit calendar" calendar-exit]))
 
-;; Undocumented and probably useless.
-(defvar cal-menu-load-hook nil
-  "Hook run on loading of the `cal-menu' package.")
-(make-obsolete-variable 'cal-menu-load-hook
-                        "it will be removed in future." "23.1")
-
-(run-hooks 'cal-menu-load-hook)
-
 (provide 'cal-menu)
-
-;; Local Variables:
-;; coding: utf-8
-;; End:
 
 ;;; cal-menu.el ends here

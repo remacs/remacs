@@ -1,6 +1,6 @@
 ;;; core-elisp-tests.el --- Testing some core Elisp rules
 
-;; Copyright (C) 2013 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2015 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords:
@@ -24,7 +24,7 @@
 
 ;;; Code:
 
-(ert-deftest core-elisp-tests ()
+(ert-deftest core-elisp-tests-1-defvar-in-let ()
   "Test some core Elisp rules."
   (with-temp-buffer
     ;; Check that when defvar is run within a let-binding, the toplevel default
@@ -35,6 +35,18 @@
                            (defcustom c-e-x 2 "doc" :group 'blah) c-e-x)
                          c-e-x)
                    '(1 2)))))
+
+(ert-deftest core-elisp-tests-2-window-configurations ()
+  "Test properties of window-configurations."
+  (let ((wc (current-window-configuration)))
+    (with-current-buffer (window-buffer (frame-selected-window))
+      (push-mark)
+      (activate-mark))
+    (set-window-configuration wc)
+    (should (or (not mark-active) (mark)))))
+
+(ert-deftest core-elisp-tests-3-backquote ()
+  (should (eq 3 (eval ``,,'(+ 1 2)))))
 
 (provide 'core-elisp-tests)
 ;;; core-elisp-tests.el ends here

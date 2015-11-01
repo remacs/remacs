@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1995, 1998-1999, 2001-2013 Free Software
+@c Copyright (C) 1990-1995, 1998-1999, 2001-2015 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Lists
@@ -41,7 +41,7 @@ pronounced ``could-er''.
   We say that ``the @sc{car} of this cons cell is'' whatever object
 its @sc{car} slot currently holds, and likewise for the @sc{cdr}.
 
-  A list is a series of cons cells ``chained together'', so that each
+  A list is a series of cons cells chained together, so that each
 cell refers to the next one.  There is one cons cell for each element
 of the list.  By convention, the @sc{car}s of the cons cells hold the
 elements of the list, and the @sc{cdr}s are used to chain the list
@@ -84,6 +84,8 @@ structure made out of cons cells as a @dfn{list structure}.
 
 @node List-related Predicates
 @section Predicates on Lists
+@cindex predicates for lists
+@cindex list predicates
 
   The following predicates test whether a Lisp object is an atom,
 whether it is a cons cell or is a list, or whether it is the
@@ -601,25 +603,6 @@ not a list, the sequence's elements do not become elements of the
 resulting list.  Instead, the sequence becomes the final @sc{cdr}, like
 any other non-list final argument.
 
-@defun reverse list
-This function creates a new list whose elements are the elements of
-@var{list}, but in reverse order.  The original argument @var{list} is
-@emph{not} altered.
-
-@example
-@group
-(setq x '(1 2 3 4))
-     @result{} (1 2 3 4)
-@end group
-@group
-(reverse x)
-     @result{} (4 3 2 1)
-x
-     @result{} (1 2 3 4)
-@end group
-@end example
-@end defun
-
 @defun copy-tree tree &optional vecp
 This function returns a copy of the tree @code{tree}.  If @var{tree} is a
 cons cell, this makes a new cons cell with the same @sc{car} and
@@ -646,8 +629,8 @@ If @var{separation} is 0 and @var{to} is neither @code{nil} nor
 numerically equal to @var{from}, @code{number-sequence} signals an
 error, since those arguments specify an infinite sequence.
 
-All arguments can be integers or floating point numbers.  However,
-floating point arguments can be tricky, because floating point
+All arguments are numbers.
+Floating-point arguments can be tricky, because floating-point
 arithmetic is inexact.  For instance, depending on the machine, it may
 quite well happen that @code{(number-sequence 0.4 0.6 0.2)} returns
 the one element list @code{(0.4)}, whereas
@@ -681,6 +664,8 @@ Some examples:
 
 @node List Variables
 @section Modifying List Variables
+@cindex modify a list
+@cindex list modification
 
   These functions, and one macro, provide convenient ways
 to modify a list which is stored in a variable.
@@ -814,7 +799,7 @@ foo                       ;; @r{@code{foo} was changed.}
 @cindex destructive list operations
 
   You can modify the @sc{car} and @sc{cdr} contents of a cons cell with the
-primitives @code{setcar} and @code{setcdr}.  We call these ``destructive''
+primitives @code{setcar} and @code{setcdr}.  These are destructive
 operations because they change existing list structure.
 
 @cindex CL note---@code{rplaca} vs @code{setcar}
@@ -837,6 +822,8 @@ new @sc{car} or @sc{cdr}.
 
 @node Setcar
 @subsection Altering List Elements with @code{setcar}
+@cindex replace list element
+@cindex list, replace element
 
   Changing the @sc{car} of a cons cell is done with @code{setcar}.  When
 used on a list, @code{setcar} replaces one element of a list with a
@@ -942,6 +929,7 @@ x2:              |
 
 @node Setcdr
 @subsection Altering the CDR of a List
+@cindex replace part of list
 
   The lowest-level primitive for modifying a @sc{cdr} is @code{setcdr}:
 
@@ -1044,11 +1032,12 @@ x1
 @node Rearrangement
 @subsection Functions that Rearrange Lists
 @cindex rearrangement of lists
+@cindex reordering, of elements in lists
 @cindex modification of lists
 
-  Here are some functions that rearrange lists ``destructively'' by
-modifying the @sc{cdr}s of their component cons cells.  We call these
-functions ``destructive'' because they chew up the original lists passed
+  Here are some functions that rearrange lists destructively by
+modifying the @sc{cdr}s of their component cons cells.  These functions
+are destructive because they chew up the original lists passed
 to them as arguments, relinking their cons cells to form a new list that
 is the returned value.
 
@@ -1140,126 +1129,6 @@ each time you run it!  Here is what happens:
      @result{} (lambda (x) (nconc (quote (foo 1 2 3 4) x)))
 @end group
 @end smallexample
-@end defun
-
-@defun nreverse list
-@cindex reversing a list
-  This function reverses the order of the elements of @var{list}.
-Unlike @code{reverse}, @code{nreverse} alters its argument by reversing
-the @sc{cdr}s in the cons cells forming the list.  The cons cell that
-used to be the last one in @var{list} becomes the first cons cell of the
-value.
-
-  For example:
-
-@example
-@group
-(setq x '(a b c))
-     @result{} (a b c)
-@end group
-@group
-x
-     @result{} (a b c)
-(nreverse x)
-     @result{} (c b a)
-@end group
-@group
-;; @r{The cons cell that was first is now last.}
-x
-     @result{} (a)
-@end group
-@end example
-
-  To avoid confusion, we usually store the result of @code{nreverse}
-back in the same variable which held the original list:
-
-@example
-(setq x (nreverse x))
-@end example
-
-  Here is the @code{nreverse} of our favorite example, @code{(a b c)},
-presented graphically:
-
-@smallexample
-@group
-@r{Original list head:}                       @r{Reversed list:}
- -------------        -------------        ------------
-| car  | cdr  |      | car  | cdr  |      | car | cdr  |
-|   a  |  nil |<--   |   b  |   o  |<--   |   c |   o  |
-|      |      |   |  |      |   |  |   |  |     |   |  |
- -------------    |   --------- | -    |   -------- | -
-                  |             |      |            |
-                   -------------        ------------
-@end group
-@end smallexample
-@end defun
-
-@defun sort list predicate
-@cindex stable sort
-@cindex sorting lists
-This function sorts @var{list} stably, though destructively, and
-returns the sorted list.  It compares elements using @var{predicate}.  A
-stable sort is one in which elements with equal sort keys maintain their
-relative order before and after the sort.  Stability is important when
-successive sorts are used to order elements according to different
-criteria.
-
-The argument @var{predicate} must be a function that accepts two
-arguments.  It is called with two elements of @var{list}.  To get an
-increasing order sort, the @var{predicate} should return non-@code{nil} if the
-first element is ``less than'' the second, or @code{nil} if not.
-
-The comparison function @var{predicate} must give reliable results for
-any given pair of arguments, at least within a single call to
-@code{sort}.  It must be @dfn{antisymmetric}; that is, if @var{a} is
-less than @var{b}, @var{b} must not be less than @var{a}.  It must be
-@dfn{transitive}---that is, if @var{a} is less than @var{b}, and @var{b}
-is less than @var{c}, then @var{a} must be less than @var{c}.  If you
-use a comparison function which does not meet these requirements, the
-result of @code{sort} is unpredictable.
-
-The destructive aspect of @code{sort} is that it rearranges the cons
-cells forming @var{list} by changing @sc{cdr}s.  A nondestructive sort
-function would create new cons cells to store the elements in their
-sorted order.  If you wish to make a sorted copy without destroying the
-original, copy it first with @code{copy-sequence} and then sort.
-
-Sorting does not change the @sc{car}s of the cons cells in @var{list};
-the cons cell that originally contained the element @code{a} in
-@var{list} still has @code{a} in its @sc{car} after sorting, but it now
-appears in a different position in the list due to the change of
-@sc{cdr}s.  For example:
-
-@example
-@group
-(setq nums '(1 3 2 6 5 4 0))
-     @result{} (1 3 2 6 5 4 0)
-@end group
-@group
-(sort nums '<)
-     @result{} (0 1 2 3 4 5 6)
-@end group
-@group
-nums
-     @result{} (1 2 3 4 5 6)
-@end group
-@end example
-
-@noindent
-@strong{Warning}: Note that the list in @code{nums} no longer contains
-0; this is the same cons cell that it was before, but it is no longer
-the first one in the list.  Don't assume a variable that formerly held
-the argument now holds the entire sorted list!  Instead, save the result
-of @code{sort} and use that.  Most often we store the result back into
-the variable that held the original list:
-
-@example
-(setq nums (sort nums '<))
-@end example
-
-@xref{Sorting}, for more functions that perform sorting.
-See @code{documentation} in @ref{Accessing Documentation}, for a
-useful example of @code{sort}.
 @end defun
 
 @node Sets And Lists
@@ -1404,7 +1273,7 @@ sample-list
 @defun memql object list
 The function @code{memql} tests to see whether @var{object} is a member
 of @var{list}, comparing members with @var{object} using @code{eql},
-so floating point elements are compared by value.
+so floating-point elements are compared by value.
 If @var{object} is a member, @code{memql} returns a list starting with
 its first occurrence in @var{list}.  Otherwise, it returns @code{nil}.
 
@@ -1653,7 +1522,7 @@ a @sc{cdr} @code{equal} to @var{value}.
 
 @code{rassoc} is like @code{assoc} except that it compares the @sc{cdr} of
 each @var{alist} association instead of the @sc{car}.  You can think of
-this as ``reverse @code{assoc}'', finding the key for a given value.
+this as reverse @code{assoc}, finding the key for a given value.
 @end defun
 
 @defun assq key alist
@@ -1694,7 +1563,7 @@ a @sc{cdr} @code{eq} to @var{value}.
 
 @code{rassq} is like @code{assq} except that it compares the @sc{cdr} of
 each @var{alist} association instead of the @sc{car}.  You can think of
-this as ``reverse @code{assq}'', finding the key for a given value.
+this as reverse @code{assq}, finding the key for a given value.
 
 For example:
 
@@ -1897,6 +1766,8 @@ and later discarded; this is not possible with a property list.
 
 @node Plist Access
 @subsection Property Lists Outside Symbols
+@cindex plist access
+@cindex accessing plist properties
 
   The following functions can be used to manipulate property lists.
 They all compare property names using @code{eq}.

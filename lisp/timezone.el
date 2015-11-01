@@ -1,6 +1,6 @@
 ;;; timezone.el --- time zone package for GNU Emacs
 
-;; Copyright (C) 1990-1993, 1996, 1999, 2001-2013 Free Software
+;; Copyright (C) 1990-1993, 1996, 1999, 2001-2015 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Masanobu Umeda
@@ -295,13 +295,9 @@ Gregorian date Sunday, December 31, 1 BC."
 	    ;; (timezone-absolute-from-gregorian 1 1 1970)
 	 (days (- date current-time-origin))
 	 (seconds-per-day (float 86400))
-	 (seconds (+ seconds (* days seconds-per-day)))
-	 (current-time-arithmetic-base (float 65536))
-	 (hi (floor (/ seconds current-time-arithmetic-base)))
-	 (hibase (* hi current-time-arithmetic-base))
-	 (lo (floor (- seconds hibase))))
-     (and (< (abs (- seconds (+ hibase lo))) 2) ;; Check for integer overflow.
-	  (cons hi lo))))
+	 (day-seconds (* days seconds-per-day)))
+    (condition-case nil (time-add day-seconds seconds)
+      (range-error))))
 
 (defun timezone-time-zone-from-absolute (date seconds)
   "Compute the local time zone for DATE at time SECONDS after midnight.

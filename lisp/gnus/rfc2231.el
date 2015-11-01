@@ -1,6 +1,6 @@
 ;;; rfc2231.el --- Functions for decoding rfc2231 headers
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; This file is part of GNU Emacs.
@@ -209,13 +209,14 @@ must never cause a Lisp error."
 (defun rfc2231-decode-encoded-string (string)
   "Decode an RFC2231-encoded string.
 These look like:
- \"us-ascii'en-us'This%20is%20%2A%2A%2Afun%2A%2A%2A\",
- \"us-ascii''This%20is%20%2A%2A%2Afun%2A%2A%2A\",
- \"'en-us'This%20is%20%2A%2A%2Afun%2A%2A%2A\",
- \"''This%20is%20%2A%2A%2Afun%2A%2A%2A\", or
+ \"us-ascii\\='en-us\\='This%20is%20%2A%2A%2Afun%2A%2A%2A\",
+ \"us-ascii\\='\\='This%20is%20%2A%2A%2Afun%2A%2A%2A\",
+ \"\\='en-us\\='This%20is%20%2A%2A%2Afun%2A%2A%2A\",
+ \"\\='\\='This%20is%20%2A%2A%2Afun%2A%2A%2A\", or
  \"This is ***fun***\"."
   (string-match "\\`\\(?:\\([^']+\\)?'\\([^']+\\)?'\\)?\\(.+\\)" string)
-  (let ((coding-system (mm-charset-to-coding-system (match-string 1 string)))
+  (let ((coding-system (mm-charset-to-coding-system
+			(match-string 1 string) nil t))
 	;;(language (match-string 2 string))
 	(value (match-string 3 string)))
     (mm-with-unibyte-buffer

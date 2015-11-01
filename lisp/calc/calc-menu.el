@@ -1,6 +1,6 @@
 ;;; calc-menu.el --- a menu for Calc
 
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 ;; Maintainer: Jay Belanger <jay.p.belanger@gmail.com>
 
@@ -863,6 +863,13 @@
               :keys "I u M"
               :active (>= (calc-stack-size) 1)
               :help "The average (arithmetic mean) of the data values as an error form"]
+              ["rms(1:)"
+               (progn
+                 (require 'calc-stat)
+                 (call-interactively 'calc-vector-rms))
+               :keys "u R"
+               :active (>= (calc-stack-size) 1)
+               :help "The root mean square of the data values"]
               ["sdev(1:)"
                (progn
                  (require 'calc-stat)
@@ -917,12 +924,13 @@
                    (call-interactively 'calc-vector-geometric-mean)))
                :keys "H u G"
                :active (>= (calc-stack-size) 1)]
-               ["RMS(1:)"
-                (progn (require 'calc-arith)
-                       (call-interactively 'calc-abs))
-                :keys "A"
-                :active (>= (calc-stack-size) 1)
-                :help "The root-mean-square, or quadratic mean"])
+               ;; ["RMS(1:)"
+               ;;  (progn (require 'calc-arith)
+               ;;         (call-interactively 'calc-abs))
+               ;;  :keys "A"
+               ;;  :active (>= (calc-stack-size) 1)
+               ;;  :help "The root-mean-square, or quadratic mean"]
+               )
         ["Abbreviate long vectors"
          (progn
            (require 'calc-mode)

@@ -1,13 +1,15 @@
 /* Basic character set support.
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-     2005, 2006, 2007, 2008, 2009, 2010, 2011
-     National Institute of Advanced Industrial Science and Technology (AIST)
-     Registration Number H14PRO021
 
-   Copyright (C) 2003, 2004
-     National Institute of Advanced Industrial Science and Technology (AIST)
-     Registration Number H13PRO009
+Copyright (C) 2001-2015 Free Software Foundation, Inc.
+
+Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
+  2005, 2006, 2007, 2008, 2009, 2010, 2011
+  National Institute of Advanced Industrial Science and Technology (AIST)
+  Registration Number H14PRO021
+
+Copyright (C) 2003, 2004
+  National Institute of Advanced Industrial Science and Technology (AIST)
+  Registration Number H13PRO009
 
 This file is part of GNU Emacs.
 
@@ -26,8 +28,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
-#define CHARSET_INLINE EXTERN_INLINE
-
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -38,7 +38,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "character.h"
 #include "charset.h"
 #include "coding.h"
-#include "disptab.h"
 #include "buffer.h"
 
 /*** GENERAL NOTES on CODED CHARACTER SETS (CHARSETS) ***
@@ -66,16 +65,7 @@ struct charset *charset_table;
 static ptrdiff_t charset_table_size;
 static int charset_table_used;
 
-Lisp_Object Qcharsetp;
-
-/* Special charset symbols.  */
-Lisp_Object Qascii;
-static Lisp_Object Qeight_bit;
-static Lisp_Object Qiso_8859_1;
-static Lisp_Object Qunicode;
-static Lisp_Object Qemacs;
-
-/* The corresponding charsets.  */
+/* Special charsets corresponding to symbols.  */
 int charset_ascii;
 int charset_eight_bit;
 static int charset_iso_8859_1;
@@ -88,9 +78,6 @@ int charset_jisx0208_1978;
 int charset_jisx0208;
 int charset_ksc5601;
 
-/* Value of charset attribute `charset-iso-plane'.  */
-static Lisp_Object Qgl, Qgr;
-
 /* Charset of unibyte characters.  */
 int charset_unibyte;
 
@@ -101,10 +88,9 @@ Lisp_Object Vcharset_ordered_list;
    charsets.  */
 Lisp_Object Vcharset_non_preferred_head;
 
-/* Incremented everytime we change Vcharset_ordered_list.  This is
-   unsigned short so that it fits in Lisp_Int and never matches
-   -1.  */
-unsigned short charset_ordered_list_tick;
+/* Incremented every time we change the priority of charsets.
+   Wraps around.  */
+EMACS_UINT charset_ordered_list_tick;
 
 /* List of iso-2022 charsets.  */
 Lisp_Object Viso_2022_charset_list;
@@ -389,12 +375,12 @@ load_charset_map (struct charset *charset, struct charset_map_entries *entries, 
 	{
 	  if (ascii_compatible_p)
 	    {
-	      if (! ASCII_BYTE_P (from_c))
+	      if (! ASCII_CHAR_P (from_c))
 		{
 		  if (from_c < nonascii_min_char)
 		    nonascii_min_char = from_c;
 		}
-	      else if (! ASCII_BYTE_P (to_c))
+	      else if (! ASCII_CHAR_P (to_c))
 		{
 		  nonascii_min_char = 0x80;
 		}
@@ -485,17 +471,15 @@ load_charset_map_from_file (struct charset *charset, Lisp_Object mapfile,
   unsigned max_code = CHARSET_MAX_CODE (charset);
   int fd;
   FILE *fp;
-  Lisp_Object suffixes;
   struct charset_map_entries *head, *entries;
   int n_entries;
-  ptrdiff_t count;
-
-  suffixes = list2 (build_string (".map"), build_string (".TXT"));
-
-  count = SPECPDL_INDEX ();
+  AUTO_STRING (map, ".map");
+  AUTO_STRING (txt, ".txt");
+  AUTO_LIST2 (suffixes, map, txt);
+  ptrdiff_t count = SPECPDL_INDEX ();
   record_unwind_protect_nothing ();
   specbind (Qfile_name_handler_alist, Qnil);
-  fd = openp (Vcharset_map_path, mapfile, suffixes, NULL, Qnil);
+  fd = openp (Vcharset_map_path, mapfile, suffixes, NULL, Qnil, false);
   fp = fd < 0 ? 0 : fdopen (fd, "r");
   if (!fp)
     {
@@ -570,7 +554,7 @@ load_charset_map_from_vector (struct charset *charset, Lisp_Object vec, int cont
 
   if (len % 2 == 1)
     {
-      add_to_log ("Failure in loading charset map: %V", vec, Qnil);
+      add_to_log ("Failure in loading charset map: %V", vec);
       return;
     }
 
@@ -667,12 +651,8 @@ map_charset_for_dump (void (*c_function) (Lisp_Object, Lisp_Object),
 {
   int from_idx = CODE_POINT_TO_INDEX (temp_charset_work->current, from);
   int to_idx = CODE_POINT_TO_INDEX (temp_charset_work->current, to);
-  Lisp_Object range;
+  Lisp_Object range = Fcons (Qnil, Qnil);
   int c, stop;
-  struct gcpro gcpro1;
-
-  range = Fcons (Qnil, Qnil);
-  GCPRO1 (range);
 
   c = temp_charset_work->min_char;
   stop = (temp_charset_work->max_char < 0x20000
@@ -715,7 +695,6 @@ map_charset_for_dump (void (*c_function) (Lisp_Object, Lisp_Object),
 	}
       c++;
     }
-  UNGCPRO;
 }
 
 void
@@ -1288,7 +1267,7 @@ define_charset_internal (Lisp_Object name,
 
   args[charset_arg_plist] =
     listn (CONSTYPE_HEAP, 14,
-	   intern_c_string (":name"),
+	   QCname,
 	   args[charset_arg_name],
 	   intern_c_string (":dimension"),
 	   args[charset_arg_dimension],
@@ -1298,7 +1277,7 @@ define_charset_internal (Lisp_Object name,
 	   args[charset_arg_iso_final],
 	   intern_c_string (":emacs-mule-id"),
 	   args[charset_arg_emacs_mule_id],
-	   intern_c_string (":ascii-compatible-p"),
+	   QCascii_compatible_p,
 	   args[charset_arg_ascii_compatible_p],
 	   intern_c_string (":code-offset"),
 	   args[charset_arg_code_offset]);
@@ -1400,6 +1379,32 @@ Optional third argument DEUNIFY, if non-nil, means to de-unify CHARSET.  */)
   return Qnil;
 }
 
+/* Check that DIMENSION, CHARS, and FINAL_CHAR specify a valid ISO charset.
+   Return true if it's a 96-character set, false if 94.  */
+
+static bool
+check_iso_charset_parameter (Lisp_Object dimension, Lisp_Object chars,
+			     Lisp_Object final_char)
+{
+  CHECK_NUMBER (dimension);
+  CHECK_NUMBER (chars);
+  CHECK_CHARACTER (final_char);
+
+  if (! (1 <= XINT (dimension) && XINT (dimension) <= 3))
+    error ("Invalid DIMENSION %"pI"d, it should be 1, 2, or 3",
+	   XINT (dimension));
+
+  bool chars_flag = XINT (chars) == 96;
+  if (! (chars_flag || XINT (chars) == 94))
+    error ("Invalid CHARS %"pI"d, it should be 94 or 96", XINT (chars));
+
+  int final_ch = XFASTINT (final_char);
+  if (! ('0' <= final_ch && final_ch <= '~'))
+    error ("Invalid FINAL-CHAR '%c', it should be '0'..'~'", final_ch);
+
+  return chars_flag;
+}
+
 DEFUN ("get-unused-iso-final-char", Fget_unused_iso_final_char,
        Sget_unused_iso_final_char, 2, 2, 0,
        doc: /*
@@ -1412,35 +1417,12 @@ If there's no unused final char for the specified kind of charset,
 return nil.  */)
   (Lisp_Object dimension, Lisp_Object chars)
 {
-  int final_char;
-
-  CHECK_NUMBER (dimension);
-  CHECK_NUMBER (chars);
-  if (XINT (dimension) != 1 && XINT (dimension) != 2 && XINT (dimension) != 3)
-    args_out_of_range_3 (dimension, make_number (1), make_number (3));
-  if (XINT (chars) != 94 && XINT (chars) != 96)
-    args_out_of_range_3 (chars, make_number (94), make_number (96));
-  for (final_char = '0'; final_char <= '?'; final_char++)
-    if (ISO_CHARSET_TABLE (XINT (dimension), XINT (chars), final_char) < 0)
-      break;
-  return (final_char <= '?' ? make_number (final_char) : Qnil);
-}
-
-static void
-check_iso_charset_parameter (Lisp_Object dimension, Lisp_Object chars, Lisp_Object final_char)
-{
-  CHECK_NATNUM (dimension);
-  CHECK_NATNUM (chars);
-  CHECK_CHARACTER (final_char);
-
-  if (XINT (dimension) > 3)
-    error ("Invalid DIMENSION %"pI"d, it should be 1, 2, or 3",
-	   XINT (dimension));
-  if (XINT (chars) != 94 && XINT (chars) != 96)
-    error ("Invalid CHARS %"pI"d, it should be 94 or 96", XINT (chars));
-  if (XINT (final_char) < '0' || XINT (final_char) > '~')
-    error ("Invalid FINAL-CHAR %c, it should be `0'..`~'",
-	   (int)XINT (final_char));
+  bool chars_flag = check_iso_charset_parameter (dimension, chars,
+						 make_number ('0'));
+  for (int final_char = '0'; final_char <= '?'; final_char++)
+    if (ISO_CHARSET_TABLE (XINT (dimension), chars_flag, final_char) < 0)
+      return make_number (final_char);
+  return Qnil;
 }
 
 
@@ -1454,12 +1436,10 @@ if CHARSET is designated instead.  */)
   (Lisp_Object dimension, Lisp_Object chars, Lisp_Object final_char, Lisp_Object charset)
 {
   int id;
-  bool chars_flag;
 
   CHECK_CHARSET_GET_ID (charset, id);
-  check_iso_charset_parameter (dimension, chars, final_char);
-  chars_flag = XINT (chars) == 96;
-  ISO_CHARSET_TABLE (XINT (dimension), chars_flag, XINT (final_char)) = id;
+  bool chars_flag = check_iso_charset_parameter (dimension, chars, final_char);
+  ISO_CHARSET_TABLE (XINT (dimension), chars_flag, XFASTINT (final_char)) = id;
   return Qnil;
 }
 
@@ -1522,7 +1502,7 @@ find_charsets_in_text (const unsigned char *ptr, ptrdiff_t nchars,
 
 	    if (!NILP (table))
 	      c = translate_char (table, c);
-	    if (ASCII_BYTE_P (c))
+	    if (ASCII_CHAR_P (c))
 	      ASET (charsets, charset_ascii, Qt);
 	    else
 	      ASET (charsets, charset_eight_bit, Qt);
@@ -1862,10 +1842,7 @@ DEFUN ("decode-char", Fdecode_char, Sdecode_char, 2, 3, 0,
        doc: /* Decode the pair of CHARSET and CODE-POINT into a character.
 Return nil if CODE-POINT is not valid in CHARSET.
 
-CODE-POINT may be a cons (HIGHER-16-BIT-VALUE . LOWER-16-BIT-VALUE).
-
-Optional argument RESTRICTION specifies a way to map the pair of CCS
-and CODE-POINT to a character.  Currently not supported and just ignored.  */)
+CODE-POINT may be a cons (HIGHER-16-BIT-VALUE . LOWER-16-BIT-VALUE).  */)
   (Lisp_Object charset, Lisp_Object code_point, Lisp_Object restriction)
 {
   int c, id;
@@ -1882,10 +1859,7 @@ and CODE-POINT to a character.  Currently not supported and just ignored.  */)
 
 DEFUN ("encode-char", Fencode_char, Sencode_char, 2, 3, 0,
        doc: /* Encode the character CH into a code-point of CHARSET.
-Return nil if CHARSET doesn't include CH.
-
-Optional argument RESTRICTION specifies a way to map CH to a
-code-point in CCS.  Currently not supported and just ignored.  */)
+Return nil if CHARSET doesn't include CH.  */)
   (Lisp_Object ch, Lisp_Object charset, Lisp_Object restriction)
 {
   int c, id;
@@ -2053,6 +2027,8 @@ CH in the charset.  */)
 
 DEFUN ("char-charset", Fchar_charset, Schar_charset, 1, 2, 0,
        doc: /* Return the charset of highest priority that contains CH.
+ASCII characters are an exception: for them, this function always
+returns `ascii'.
 If optional 2nd arg RESTRICTION is non-nil, it is a list of charsets
 from which to find the charset.  It may also be a coding system.  In
 that case, find the charset from what supported by that coding system.  */)
@@ -2117,13 +2093,9 @@ See the documentation of the function `charset-info' for the meanings of
 DIMENSION, CHARS, and FINAL-CHAR.  */)
   (Lisp_Object dimension, Lisp_Object chars, Lisp_Object final_char)
 {
-  int id;
-  bool chars_flag;
-
-  check_iso_charset_parameter (dimension, chars, final_char);
-  chars_flag = XFASTINT (chars) == 96;
-  id = ISO_CHARSET_TABLE (XFASTINT (dimension), chars_flag,
-			  XFASTINT (final_char));
+  bool chars_flag = check_iso_charset_parameter (dimension, chars, final_char);
+  int id = ISO_CHARSET_TABLE (XINT (dimension), chars_flag,
+			      XFASTINT (final_char));
   return (id >= 0 ? CHARSET_NAME (CHARSET_FROM_ID (id)) : Qnil);
 }
 
@@ -2173,7 +2145,7 @@ DEFUN ("set-charset-priority", Fset_charset_priority, Sset_charset_priority,
 usage: (set-charset-priority &rest charsets)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  Lisp_Object new_head, old_list, arglist[2];
+  Lisp_Object new_head, old_list;
   Lisp_Object list_2022, list_emacs_mule;
   ptrdiff_t i;
   int id;
@@ -2189,9 +2161,9 @@ usage: (set-charset-priority &rest charsets)  */)
 	  new_head = Fcons (make_number (id), new_head);
 	}
     }
-  arglist[0] = Fnreverse (new_head);
-  arglist[1] = Vcharset_non_preferred_head = old_list;
-  Vcharset_ordered_list = Fnconc (2, arglist);
+  Vcharset_non_preferred_head = old_list;
+  Vcharset_ordered_list = CALLN (Fnconc, Fnreverse (new_head), old_list);
+
   charset_ordered_list_tick++;
 
   charset_unibyte = -1;
@@ -2302,16 +2274,18 @@ init_charset (void)
 {
   Lisp_Object tempdir;
   tempdir = Fexpand_file_name (build_string ("charsets"), Vdata_directory);
-  if (! file_accessible_directory_p (SSDATA (tempdir)))
+  if (! file_accessible_directory_p (tempdir))
     {
       /* This used to be non-fatal (dir_warning), but it should not
          happen, and if it does sooner or later it will cause some
          obscure problem (eg bug#6401), so better abort.  */
       fprintf (stderr, "Error: charsets directory not found:\n\
 %s\n\
-Emacs will not function correctly without the character map files.\n\
+Emacs will not function correctly without the character map files.\n%s\
 Please check your installation!\n",
-                   SDATA (tempdir));
+               SDATA (tempdir),
+               egetenv("EMACSDATA") ? "The EMACSDATA environment \
+variable is set, maybe it has the wrong value?\n" : "");
       exit (1);
     }
 
@@ -2357,14 +2331,12 @@ syms_of_charset (void)
 {
   DEFSYM (Qcharsetp, "charsetp");
 
+  /* Special charset symbols.  */
   DEFSYM (Qascii, "ascii");
   DEFSYM (Qunicode, "unicode");
   DEFSYM (Qemacs, "emacs");
   DEFSYM (Qeight_bit, "eight-bit");
   DEFSYM (Qiso_8859_1, "iso-8859-1");
-
-  DEFSYM (Qgl, "gl");
-  DEFSYM (Qgr, "gr");
 
   staticpro (&Vcharset_ordered_list);
   Vcharset_ordered_list = Qnil;
@@ -2375,20 +2347,11 @@ syms_of_charset (void)
   staticpro (&Vemacs_mule_charset_list);
   Vemacs_mule_charset_list = Qnil;
 
-  /* Don't staticpro them here.  It's done in syms_of_fns.  */
-  QCtest = intern_c_string (":test");
-  Qeq = intern_c_string ("eq");
-
   staticpro (&Vcharset_hash_table);
-  {
-    Lisp_Object args[2];
-    args[0] = QCtest;
-    args[1] = Qeq;
-    Vcharset_hash_table = Fmake_hash_table (2, args);
-  }
+  Vcharset_hash_table = CALLN (Fmake_hash_table, QCtest, Qeq);
 
   charset_table = charset_table_init;
-  charset_table_size = sizeof charset_table_init / sizeof *charset_table_init;
+  charset_table_size = ARRAYELTS (charset_table_init);
   charset_table_used = 0;
 
   defsubr (&Scharsetp);
@@ -2434,19 +2397,19 @@ the value may be a list of mnemonics.  */);
   Vcurrent_iso639_language = Qnil;
 
   charset_ascii
-    = define_charset_internal (Qascii, 1, "\x00\x7F\x00\x00\x00\x00",
+    = define_charset_internal (Qascii, 1, "\x00\x7F\0\0\0\0\0",
 			       0, 127, 'B', -1, 0, 1, 0, 0);
   charset_iso_8859_1
-    = define_charset_internal (Qiso_8859_1, 1, "\x00\xFF\x00\x00\x00\x00",
+    = define_charset_internal (Qiso_8859_1, 1, "\x00\xFF\0\0\0\0\0",
 			       0, 255, -1, -1, -1, 1, 0, 0);
   charset_unicode
-    = define_charset_internal (Qunicode, 3, "\x00\xFF\x00\xFF\x00\x10",
+    = define_charset_internal (Qunicode, 3, "\x00\xFF\x00\xFF\x00\x10\0",
 			       0, MAX_UNICODE_CHAR, -1, 0, -1, 1, 0, 0);
   charset_emacs
-    = define_charset_internal (Qemacs, 3, "\x00\xFF\x00\xFF\x00\x3F",
+    = define_charset_internal (Qemacs, 3, "\x00\xFF\x00\xFF\x00\x3F\0",
 			       0, MAX_5_BYTE_CHAR, -1, 0, -1, 1, 1, 0);
   charset_eight_bit
-    = define_charset_internal (Qeight_bit, 1, "\x80\xFF\x00\x00\x00\x00",
+    = define_charset_internal (Qeight_bit, 1, "\x80\xFF\0\0\0\0\0",
 			       128, 255, -1, 0, -1, 0, 1,
 			       MAX_5_BYTE_CHAR + 1);
   charset_unibyte = charset_iso_8859_1;

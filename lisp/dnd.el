@@ -1,9 +1,9 @@
-;;; dnd.el --- drag and drop support.  -*- coding: utf-8 -*-
+;;; dnd.el --- drag and drop support
 
-;; Copyright (C) 2005-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
 ;; Author: Jan Djärv <jan.h.d@swipnet.se>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: window, drag, drop
 ;; Package: emacs
 
@@ -122,17 +122,18 @@ Return nil if URI is not a local file."
 
   ;; The hostname may be our hostname, in that case, convert to a local
   ;; file.  Otherwise return nil.  TODO:  How about an IP-address as hostname?
-  (let ((hostname (when (string-match "^file://\\([^/]*\\)" uri)
+  (let ((sysname (system-name)))
+    (let ((hostname (when (string-match "^file://\\([^/]*\\)" uri)
 		      (downcase (match-string 1 uri))))
-	(system-name-no-dot
-	 (downcase (if (string-match "^[^\\.]+" system-name)
-		       (match-string 0 system-name)
-		     system-name))))
-    (when (and hostname
-	     (or (string-equal "localhost" hostname)
-		 (string-equal (downcase system-name) hostname)
-		 (string-equal system-name-no-dot hostname)))
-	(concat "file://" (substring uri (+ 7 (length hostname)))))))
+	  (sysname-no-dot
+	   (downcase (if (string-match "^[^\\.]+" sysname)
+			 (match-string 0 sysname)
+		       sysname))))
+      (when (and hostname
+		 (or (string-equal "localhost" hostname)
+		     (string-equal (downcase sysname) hostname)
+		     (string-equal sysname-no-dot hostname)))
+	(concat "file://" (substring uri (+ 7 (length hostname))))))))
 
 (defsubst dnd-unescape-uri (uri)
   (replace-regexp-in-string
@@ -152,10 +153,13 @@ Return nil if URI is not a local file."
   (let ((f (cond ((string-match "^file:///" uri)	; XDND format.
 		  (substring uri (1- (match-end 0))))
 		 ((string-match "^file:" uri)		; Old KDE, Motif, Sun
-		  (substring uri (match-end 0))))))
-    (and f (setq f (decode-coding-string (dnd-unescape-uri f)
-                                         (or file-name-coding-system
-                                             default-file-name-coding-system))))
+		  (substring uri (match-end 0)))))
+	(coding (if (equal system-type 'windows-nt)
+		    ;; W32 pretends that file names are UTF-8 encoded.
+		    'utf-8
+		  (or file-name-coding-system
+		      default-file-name-coding-system))))
+    (and f (setq f (decode-coding-string (dnd-unescape-uri f) coding)))
     (when (and f must-exist (not (file-readable-p f)))
       (setq f nil))
     f))

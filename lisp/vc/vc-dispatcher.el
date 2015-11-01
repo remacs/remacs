@@ -1,6 +1,6 @@
 ;;; vc-dispatcher.el -- generic command-dispatcher facility.  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2008-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 ;; Author:     FSF (see below for full credits)
 ;; Maintainer: Eric S. Raymond <esr@thyrsus.com>
@@ -171,6 +171,12 @@ Another is that undo information is not kept."
   (let ((camefrom (current-buffer))
 	(olddir default-directory))
     (set-buffer (get-buffer-create buf))
+    (let ((oldproc (get-buffer-process (current-buffer))))
+      ;; If we wanted to wait for oldproc to finish before doing
+      ;; something, we'd have used vc-eval-after.
+      ;; Use `delete-process' rather than `kill-process' because we don't
+      ;; want any of its output to appear from now on.
+      (when oldproc (delete-process oldproc)))
     (kill-all-local-variables)
     (set (make-local-variable 'vc-parent-buffer) camefrom)
     (set (make-local-variable 'vc-parent-buffer-name)
@@ -198,11 +204,11 @@ Another is that undo information is not kept."
           ;; Normally, we want async code such as sentinels to not move point.
           (save-excursion
             (goto-char m)
-                ;; Each sentinel may move point and the next one should be run
-                ;; at that new point.  We could get the same result by having
-                ;; each sentinel read&set process-mark, but since `cmd' needs
-                ;; to work both for async and sync processes, this would be
-                ;; difficult to achieve.
+            ;; Each sentinel may move point and the next one should be run
+            ;; at that new point.  We could get the same result by having
+            ;; each sentinel read&set process-mark, but since `cmd' needs
+            ;; to work both for async and sync processes, this would be
+            ;; difficult to achieve.
             (vc-exec-after code)
             (move-marker m (point)))
           ;; But sometimes the sentinels really want to move point.
@@ -224,8 +230,7 @@ Another is that undo information is not kept."
   "Eval CODE when the current buffer's process is done.
 If the current buffer has no process, just evaluate CODE.
 Else, add CODE to the process' sentinel.
-CODE can be either a function of no arguments, or an expression
-to evaluate."
+CODE should be a function of no arguments."
   (let ((proc (get-buffer-process (current-buffer))))
     (cond
      ;; If there's no background process, just execute the code.
@@ -246,6 +251,10 @@ to evaluate."
         (add-function :after (process-sentinel proc) fun)))
      (t (error "Unexpected process state"))))
   nil)
+
+(defmacro vc-run-delayed (&rest body)
+  (declare (indent 0) (debug t))
+  `(vc-exec-after (lambda () ,@body)))
 
 (defvar vc-post-command-functions nil
   "Hook run at the end of `vc-do-command'.
@@ -299,12 +308,6 @@ case, and the process object in the asynchronous case."
 		  (eq buffer (current-buffer)))
 	(vc-setup-buffer buffer))
       ;; If there's some previous async process still running, just kill it.
-      (let ((oldproc (get-buffer-process (current-buffer))))
-        ;; If we wanted to wait for oldproc to finish before doing
-        ;; something, we'd have used vc-eval-after.
-        ;; Use `delete-process' rather than `kill-process' because we don't
-        ;; want any of its output to appear from now on.
-        (when oldproc (delete-process oldproc)))
       (let ((squeezed (remq nil flags))
 	    (inhibit-read-only t)
 	    (status 0))
@@ -328,8 +331,8 @@ case, and the process object in the asynchronous case."
 		(set-process-filter proc 'vc-process-filter)
 		(setq status proc)
 		(when vc-command-messages
-		  (vc-exec-after
-		   `(message "Running %s in background... done" ',full-command))))
+		  (vc-run-delayed
+		   (message "Running %s in background... done" full-command))))
 	    ;; Run synchronously
 	    (when vc-command-messages
 	      (message "Running %s in foreground..." full-command))
@@ -346,9 +349,9 @@ case, and the process object in the asynchronous case."
 		     (if (integerp status) (format "status %d" status) status)))
 	    (when vc-command-messages
 	      (message "Running %s...OK = %d" full-command status))))
-	(vc-exec-after
-	 `(run-hook-with-args 'vc-post-command-functions
-			      ',command ',file-or-list ',flags))
+	(vc-run-delayed
+	 (run-hook-with-args 'vc-post-command-functions
+                             command file-or-list flags))
 	status))))
 
 (defun vc-do-async-command (buffer root command &rest args)
@@ -395,6 +398,8 @@ Display the buffer in some window, but don't select it."
     (set (make-local-variable 'compilation-error-regexp-alist)
 	 error-regexp-alist)))
 
+(declare-function vc-dir-refresh "vc-dir" ())
+
 (defun vc-set-async-update (process-buffer)
   "Set a `vc-exec-after' action appropriate to the current buffer.
 This action will update the current buffer after the current
@@ -408,23 +413,23 @@ If the current buffer is a Dired buffer, revert it."
     (cond
      ((derived-mode-p 'vc-dir-mode)
       (with-current-buffer process-buffer
-	(vc-exec-after
-	 `(if (buffer-live-p ,buf)
-	      (with-current-buffer ,buf
-		(vc-dir-refresh))))))
+	(vc-run-delayed
+	 (if (buffer-live-p buf)
+             (with-current-buffer buf
+               (vc-dir-refresh))))))
      ((derived-mode-p 'dired-mode)
       (with-current-buffer process-buffer
-	(vc-exec-after
-	 `(and (buffer-live-p ,buf)
-	       (= (buffer-modified-tick ,buf) ,tick)
-	       (with-current-buffer ,buf
-		 (revert-buffer)))))))))
+	(vc-run-delayed
+	 (and (buffer-live-p buf)
+              (= (buffer-modified-tick buf) tick)
+              (with-current-buffer buf
+                (revert-buffer)))))))))
 
 ;; These functions are used to ensure that the view the user sees is up to date
 ;; even if the dispatcher client mode has messed with file contents (as in,
 ;; for example, VCS keyword expansion).
 
-(declare-function view-mode-exit "view" (&optional return-to-alist exit-action all-win))
+(declare-function view-mode-exit "view" (&optional exit-only exit-action all-win))
 
 (defun vc-position-context (posn)
   "Save a bit of the text around POSN in the current buffer.
@@ -538,7 +543,7 @@ editing!"
                   (if (file-writable-p file)
                       (and view-mode
                            (let ((view-old-buffer-read-only nil))
-                             (view-mode-exit)))
+                             (view-mode-exit t)))
                     (and (not view-mode)
                          (not (eq (get major-mode 'mode-class) 'special))
                          (view-mode-enter))))
@@ -586,17 +591,37 @@ NOT-URGENT means it is ok to continue if the user says not to save."
 
 ;; Set up key bindings for use while editing log messages
 
+(declare-function log-edit-empty-buffer-p "log-edit" ())
+
 (defun vc-log-edit (fileset mode backend)
   "Set up `log-edit' for use on FILE."
   (setq default-directory
 	(buffer-local-value 'default-directory vc-parent-buffer))
+  (require 'log-edit)
   (log-edit 'vc-finish-logentry
-	    nil
-	    `((log-edit-listfun . (lambda ()
-                                    ;; FIXME: Should expand the list
-                                    ;; for directories.
-                                    (mapcar 'file-relative-name
-                                            ',fileset)))
+	    ;; Setup a new log message if the log buffer is "empty",
+	    ;; or was previously used for a different set of files.
+	    (or (log-edit-empty-buffer-p)
+		(and (local-variable-p 'vc-log-fileset)
+		     (not (equal vc-log-fileset fileset))))
+	    `((log-edit-listfun
+               . (lambda ()
+                   ;; FIXME: When fileset includes directories, and
+                   ;; there are relevant ChangeLog files inside their
+                   ;; children, we don't find them.  Either handle it
+                   ;; in `log-edit-insert-changelog-entries' by
+                   ;; walking down the file trees, or somehow pass
+                   ;; `fileset-only-files' from `vc-next-action'
+                   ;; through to this function.
+                   (let ((root (vc-root-dir)))
+                     ;; Returns paths relative to the root, so that
+                     ;; `log-edit-changelog-insert-entries'
+                     ;; substitutes them in correctly later, even when
+                     ;; `vc-checkin' was called from a file buffer, or
+                     ;; a non-root VC-Dir buffer.
+                     (mapcar
+                      (lambda (file) (file-relative-name file root))
+                      ',fileset))))
 	      (log-edit-diff-function . vc-diff)
 	      (log-edit-vc-backend . ,backend)
 	      (vc-log-fileset . ,fileset))
@@ -690,7 +715,7 @@ the buffer contents as a comment."
     ;; Now make sure we see the expanded headers
     (when log-fileset
       (mapc
-       (lambda (file) (vc-resynch-buffer file vc-keep-workfiles t))
+       (lambda (file) (vc-resynch-buffer file t t))
        log-fileset))
     (when (vc-dispatcher-browsing)
       (vc-dir-move-to-goal-column))

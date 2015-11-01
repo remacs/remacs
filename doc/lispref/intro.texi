@@ -1,6 +1,6 @@
 @c -*-coding: utf-8-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1994, 2001-2013 Free Software Foundation, Inc.
+@c Copyright (C) 1990-1994, 2001-2015 Free Software Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 
 @node Introduction
@@ -9,7 +9,7 @@
   Most of the GNU Emacs text editor is written in the programming
 language called Emacs Lisp.  You can write new code in Emacs Lisp and
 install it as an extension to the editor.  However, Emacs Lisp is more
-than a mere ``extension language''; it is a full computer programming
+than a mere extension language; it is a full computer programming
 language in its own right.  You can use it as you would any other
 programming language.
 
@@ -148,8 +148,8 @@ manual.  You may want to skip this section and refer back to it later.
 printer'' refer to those routines in Lisp that convert textual
 representations of Lisp objects into actual Lisp objects, and vice
 versa.  @xref{Printed Representation}, for more details.  You, the
-person reading this manual, are thought of as ``the programmer'' and are
-addressed as ``you''.  ``The user'' is the person who uses Lisp
+person reading this manual, are thought of as the programmer and are
+addressed as ``you''.  The user is the person who uses Lisp
 programs, including those you write.
 
 @cindex typographic conventions
@@ -287,7 +287,7 @@ the echo area.
 @cindex buffer text notation
 
   Some examples describe modifications to the contents of a buffer, by
-showing the ``before'' and ``after'' versions of the text.  These
+showing the before and after versions of the text.  These
 examples show the contents of the buffer in question between two lines
 of dashes containing the buffer name.  In addition, @samp{@point{}}
 indicates the location of point.  (The symbol for point, of course, is
@@ -456,7 +456,7 @@ described using a format like that for functions, except that there
 are no arguments.
 
   Here is a description of the imaginary @code{electric-future-map}
-variable.@refill
+variable.
 
 @defvar electric-future-map
 The value of this variable is a full keymap used by Electric Command
@@ -480,8 +480,8 @@ running.  It is useful to include this string in bug reports.
 @smallexample
 @group
 (emacs-version)
-  @result{} "GNU Emacs 23.1 (i686-pc-linux-gnu, GTK+ Version 2.14.4)
-             of 2009-06-01 on cyd.mit.edu"
+  @result{} "GNU Emacs 24.5.1 (x86_64-unknown-linux-gnu, GTK+ Version 3.16)
+             of 2015-06-01"
 @end group
 @end smallexample
 
@@ -545,11 +545,11 @@ Eirik Fuller, Stephen Gildea, Bob Glickstein, Eric Hanchrow, Jesper
 Harder, George Hartzell, Nathan Hess, Masayuki Ida, Dan Jacobson, Jak
 Kirman, Bob Knighten, Frederick M. Korz, Joe Lammens, Glenn M. Lewis,
 K. Richard Magill, Brian Marick, Roland McGrath, Stefan Monnier, Skip
-Montanaro, John Gardiner Myers, Thomas A. Peterson, Francesco Potorti,
+Montanaro, John Gardiner Myers, Thomas A. Peterson, Francesco Potortì,
 Friedrich Pukelsheim, Arnold D. Robbins, Raul Rockwell, Jason Rumney,
 Per Starbäck, Shinichirou Sugou, Kimmo Suominen, Edward Tharp, Bill
 Trost, Rickard Westman, Jean White, Eduard Wiebe, Matthew Wilding,
 Carl Witty, Dale Worley, Rusty Wright, and David D. Zuhn.
 
   For a more complete list of contributors, please see the relevant
-ChangeLog file in the Emacs sources.
+change log entries in the Emacs source repository.

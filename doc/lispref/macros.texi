@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1995, 1998, 2001-2013 Free Software Foundation,
+@c Copyright (C) 1990-1995, 1998, 2001-2015 Free Software Foundation,
 @c Inc.
 @c See the file elisp.texi for copying conditions.
 @node Macros
@@ -54,6 +54,11 @@ be in a function.  The body of the macro uses this to construct the
 expansion, which is @code{(setq x (1+ x))}.  Once the macro definition
 returns this expansion, Lisp proceeds to evaluate it, thus incrementing
 @code{x}.
+
+@defun macrop object
+This predicate tests whether its argument is a macro, and returns
+@code{t} if so, @code{nil} otherwise.
+@end defun
 
 @node Expansion
 @section Expansion of a Macro Call
@@ -189,10 +194,12 @@ During Compile}).
 
 @node Defining Macros
 @section Defining Macros
+@cindex defining macros
+@cindex macro, how to define
 
   A Lisp macro object is a list whose @sc{car} is @code{macro}, and
-whose @sc{cdr} is a lambda expression.  Expansion of the macro works
-by applying the lambda expression (with @code{apply}) to the list of
+whose @sc{cdr} is a function.  Expansion of the macro works
+by applying the function (with @code{apply}) to the list of
 @emph{unevaluated} arguments from the macro call.
 
   It is possible to use an anonymous Lisp macro just like an anonymous
@@ -248,6 +255,7 @@ Form}.
 
 @node Problems with Macros
 @section Common Problems Using Macros
+@cindex macro caveats
 
   Macro expansion can have counterintuitive consequences.  This
 section describes some important consequences that can lead to
@@ -299,7 +307,7 @@ program is actually run.
   When defining a macro you must pay attention to the number of times
 the arguments will be evaluated when the expansion is executed.  The
 following macro (used to facilitate iteration) illustrates the
-problem.  This macro allows us to write a ``for'' loop construct.
+problem.  This macro allows us to write a for-loop construct.
 
 @findex for
 @example
@@ -337,7 +345,7 @@ For example, (for i from 1 to 10 do (print i))."
 
 @noindent
 The arguments @code{from}, @code{to}, and @code{do} in this macro are
-``syntactic sugar''; they are entirely ignored.  The idea is that you
+syntactic sugar; they are entirely ignored.  The idea is that you
 will write noise words (such as @code{from}, @code{to}, and @code{do})
 in those positions in the macro call.
 
@@ -560,7 +568,7 @@ If @code{initialize} is interpreted, a new list @code{(nil)} is
 constructed each time @code{initialize} is called.  Thus, no side effect
 survives between calls.  If @code{initialize} is compiled, then the
 macro @code{empty-object} is expanded during compilation, producing a
-single ``constant'' @code{(nil)} that is reused and altered each time
+single constant @code{(nil)} that is reused and altered each time
 @code{initialize} is called.
 
 One way to avoid pathological cases like this is to think of

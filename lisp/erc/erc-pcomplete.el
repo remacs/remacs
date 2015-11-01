@@ -1,9 +1,9 @@
 ;;; erc-pcomplete.el --- Provides programmable completion for ERC
 
-;; Copyright (C) 2002-2004, 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2004, 2006-2015 Free Software Foundation, Inc.
 
 ;; Author: Sacha Chua <sacha@free.net.ph>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: comm, convenience
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki.pl?ErcCompletion
 
@@ -33,7 +33,7 @@
 ;;
 ;; If you want nickname completions ordered such that the most recent
 ;; speakers are listed first, set
-;; `erc-pcomplete-order-nickname-completions' to `t'.
+;; `erc-pcomplete-order-nickname-completions' to t.
 ;;
 ;; See CREDITS for other contributors.
 ;;
@@ -80,13 +80,11 @@ for use on `completion-at-point-function'."
 
 (defun erc-pcomplete ()
   "Complete the nick before point."
+  (declare (obsolete completion-at-point "25.1"))
   (interactive)
   (when (> (point) (erc-beg-of-input-line))
-    (let ((last-command (if (eq last-command 'erc-complete-word)
-                            'pcomplete
-                          last-command)))
-      (call-interactively 'pcomplete))
-    t))
+    (let ((completion-at-point-functions '(erc-pcompletions-at-point)))
+      (completion-at-point))))
 
 ;;; Setup function
 
@@ -239,7 +237,7 @@ If optional argument IGNORE-SELF is non-nil, don't return the current nick."
   "Returns a list of all nicks on the current server."
   (let (nicks)
     (erc-with-server-buffer
-      (maphash (lambda (nick user)
+      (maphash (lambda (nick _user)
                  (setq nicks (cons (concat nick postfix) nicks)))
                erc-server-users))
       nicks))

@@ -1,6 +1,6 @@
 ;;; semantic/ctxt.el --- Context calculations for Semantic tools.
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: syntax
@@ -168,8 +168,7 @@ Uses the bovinator with the special top-symbol `bovine-inner-scope'
 to collect tags, such as local variables or prototypes."
   ;; This assumes a bovine parser.  Make sure we don't do
   ;; anything in that case.
-  (when (and semantic--parse-table (not (eq semantic--parse-table t))
-	     (not (semantic-parse-tree-unparseable-p)))
+  (when (and semantic--parse-table (not (eq semantic--parse-table t)))
     (let ((vars (semantic-get-cache-data 'get-local-variables)))
       (if vars
 	  (progn
@@ -363,7 +362,7 @@ This skips forward over symbols in a complex reference.
 For example, in the C statement:
   this.that().entry;
 
-If the cursor is on 'this', will move point to the ; after entry.")
+If the cursor is on `this', will move point to the ; after entry.")
 
 (defun semantic-ctxt-end-of-symbol-default (&optional point)
   "Move point to the end of the current symbol under POINT.

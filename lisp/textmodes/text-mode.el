@@ -1,9 +1,9 @@
 ;;; text-mode.el --- text mode, and its idiosyncratic commands
 
-;; Copyright (C) 1985, 1992, 1994, 2001-2013 Free Software Foundation,
+;; Copyright (C) 1985, 1992, 1994, 2001-2015 Free Software Foundation,
 ;; Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: wp
 ;; Package: emacs
 
@@ -29,7 +29,9 @@
 
 ;;; Code:
 
-(defcustom text-mode-hook nil
+;; Normally non-nil defaults for hooks are bad, but since this file is
+;; preloaded it's ok/better, and avoids this showing up in customize-rogue.
+(defcustom text-mode-hook '(text-mode-hook-identify)
   "Normal hook run when entering Text mode and many related modes."
   :type 'hook
   :options '(turn-on-auto-fill turn-on-flyspell)
@@ -45,12 +47,50 @@ Use (derived-mode-p 'text-mode) instead.")
     (modify-syntax-entry ?\\ ".   " st)
     ;; We add `p' so that M-c on 'hello' leads to 'Hello' rather than 'hello'.
     (modify-syntax-entry ?' "w p" st)
+    ;; UAX #29 says HEBREW PUNCTUATION GERESH behaves like a letter
+    ;; for the purposes of finding word boundaries.
+    (modify-syntax-entry #x5f3 "w   ") ; GERESH
+    ;; UAX #29 says HEBREW PUNCTUATION GERSHAYIM should not be a word
+    ;; boundary when surrounded by letters.  Our infrastructure for
+    ;; finding a word boundary doesn't support 3-character
+    ;; definitions, so for now simply make this a word-constituent
+    ;; character.  This leaves a problem of having GERSHAYIM at the
+    ;; beginning or end of a word, where it should be a boundary;
+    ;; FIXME.
+    (modify-syntax-entry #x5f4 "w   ") ; GERSHAYIM
+    ;; These all should not be a word boundary when between letters,
+    ;; according to UAX #29, so they again are prone to the same
+    ;; problem as GERSHAYIM; FIXME.
+    (modify-syntax-entry #xb7 "w   ")	; MIDDLE DOT
+    (modify-syntax-entry #x2027 "w   ")	; HYPHENATION POINT
+    (modify-syntax-entry #xff1a "w   ")	; FULLWIDTH COLON
     st)
   "Syntax table used while in `text-mode'.")
 
 (defvar text-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\e\t" 'ispell-complete-word)
+    (define-key map [menu-bar text]
+      (cons "Text" (make-sparse-keymap "Text")))
+    (bindings--define-key map [menu-bar text toggle-text-mode-auto-fill]
+      '(menu-item "Auto Fill" toggle-text-mode-auto-fill
+                  :button (:toggle . (memq 'turn-on-auto-fill text-mode-hook))
+                  :help "Automatically fill text while typing in text modes (Auto Fill mode)"))
+    (bindings--define-key map [menu-bar text paragraph-indent-minor-mode]
+      '(menu-item "Paragraph Indent" paragraph-indent-minor-mode
+                  :button (:toggle . (bound-and-true-p paragraph-indent-minor-mode))
+                  :help "Toggle paragraph indent minor mode"))
+    (bindings--define-key map [menu-bar text sep] menu-bar-separator)
+    (bindings--define-key map [menu-bar text center-region]
+      '(menu-item "Center Region" center-region
+                  :help "Center the marked region"
+                  :enable (region-active-p)))
+    (bindings--define-key map [menu-bar text center-paragraph]
+      '(menu-item "Center Paragraph" center-paragraph
+                  :help "Center the current paragraph"))
+    (bindings--define-key map [menu-bar text center-line]
+      '(menu-item "Center Line" center-line
+                  :help "Center the current line"))
     map)
   "Keymap for `text-mode'.
 Many other modes, such as `mail-mode', `outline-mode' and `indented-text-mode',
@@ -101,20 +141,20 @@ Turning on Paragraph-Indent minor mode runs the normal hook
                (concat ps-re paragraph-start)))))
   ;; Change the indentation function.
   (if paragraph-indent-minor-mode
-      (set (make-local-variable 'indent-line-function) 'indent-to-left-margin)
-    (if (eq indent-line-function 'indent-to-left-margin)
-        (set (make-local-variable 'indent-line-function) 'indent-region))))
+      (add-function :override (local 'indent-line-function)
+                    #'indent-to-left-margin)
+    (remove-function (local 'indent-line-function)
+                     #'indent-to-left-margin)))
 
 (defalias 'indented-text-mode 'text-mode)
 
 ;; This can be made a no-op once all modes that use text-mode-hook
-;; are "derived" from text-mode.
+;; are "derived" from text-mode.  (As of 2015/04, and probably well before,
+;; the only one I can find that doesn't so derive is rmail-edit-mode.)
 (defun text-mode-hook-identify ()
   "Mark that this mode has run `text-mode-hook'.
 This is how `toggle-text-mode-auto-fill' knows which buffers to operate on."
   (set (make-local-variable 'text-mode-variant) t))
-
-(add-hook 'text-mode-hook 'text-mode-hook-identify)
 
 (defun toggle-text-mode-auto-fill ()
   "Toggle whether to use Auto Fill in Text mode and related modes.

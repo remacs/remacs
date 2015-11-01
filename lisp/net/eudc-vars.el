@@ -1,9 +1,10 @@
-;;; eudc-vars.el --- Emacs Unified Directory Client -*- coding: utf-8 -*-
+;;; eudc-vars.el --- Emacs Unified Directory Client
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 ;; Author: Oscar Figueiredo <oscar@cpe.fr>
-;; Maintainer: Pavel Janík <Pavel@Janik.cz>
+;;         Pavel Janík <Pavel@Janik.cz>
+;; Maintainer: Thomas Fitzsimmons <fitzsim@fitzsim.org>
 ;; Keywords: comm
 ;; Package: eudc
 
@@ -41,13 +42,35 @@
   "The name or IP address of the directory server.
 A port number may be specified by appending a colon and a
 number to the name of the server.  Use `localhost' if the directory
-server resides on your computer (BBDB backend)."
-  :type  '(choice (string :tag "Server") (const :tag "None" nil))
-  :group 'eudc)
+server resides on your computer (BBDB backend).
+
+To specify multiple servers, customize eudc-server-hotlist
+instead."
+  :type  '(choice (string :tag "Server") (const :tag "None" nil)))
 
 ;; Known protocols (used in completion)
 ;; Not to be mistaken with `eudc-supported-protocols'
 (defvar eudc-known-protocols '(bbdb ph ldap))
+
+(defcustom eudc-server-hotlist nil
+  "Directory servers to query.
+This is an alist of the form (SERVER . PROTOCOL).  SERVER is the
+host name or URI of the server, PROTOCOL is a symbol representing
+the EUDC backend with which to access the server.
+
+The BBDB backend ignores SERVER; `localhost' can be used as a
+placeholder string."
+  :tag   "Directory Servers to Query"
+  :type  `(repeat (cons :tag "Directory Server"
+			(string :tag "Server Host Name or URI")
+			(choice :tag "Protocol"
+				:menu-tag "Protocol"
+				,@(mapcar (lambda (s)
+					    (list 'const
+						  ':tag (symbol-name s) s))
+					  eudc-known-protocols)
+				(const :tag "None" nil))))
+  :version "25.1")
 
 (defvar eudc-supported-protocols nil
   "Protocols currently supported by EUDC.
@@ -61,15 +84,13 @@ Supported protocols are specified by `eudc-supported-protocols'."
 		  ,@(mapcar (lambda (s)
 			      (list 'const ':tag (symbol-name s) s))
 			    eudc-known-protocols)
-		  (const :tag "None" nil))
-  :group 'eudc)
+		  (const :tag "None" nil)))
 
 
 (defcustom eudc-strict-return-matches t
   "Ignore or allow entries not containing all requested return attributes.
 If non-nil, such entries are ignored."
-  :type  'boolean
-  :group 'eudc)
+  :type  'boolean)
 
 (defcustom eudc-default-return-attributes nil
   "A list of default attributes to extract from directory entries.
@@ -82,8 +103,7 @@ server."
 		  (repeat :menu-tag "Attribute list"
 			  :tag "Attribute name"
 			  :value (nil)
-			  (symbol :tag "Attribute name")))
-  :group 'eudc)
+			  (symbol :tag "Attribute name"))))
 
 (defcustom eudc-multiple-match-handling-method 'select
   "What to do when multiple entries match an inline expansion query.
@@ -102,8 +122,7 @@ Possible values are:
 		  (const :menu-tag "Abort Operation"
 			 :tag "Abort Operation"  abort)
 		  (const :menu-tag "Default (Use First)"
-			 :tag "Default (Use First)" nil))
-  :group 'eudc)
+			 :tag "Default (Use First)" nil)))
 
 (defcustom eudc-duplicate-attribute-handling-method '((email . duplicate))
   "A method to handle entries containing duplicate attributes.
@@ -130,10 +149,10 @@ different values."
 				       (const :menu-tag "List" list)
 				       (const :menu-tag "First" first)
 				       (const :menu-tag "Concat" concat)
-				       (const :menu-tag "Duplicate" duplicate)))))
-  :group 'eudc)
+				       (const :menu-tag "Duplicate" duplicate))))))
 
-(defcustom eudc-inline-query-format '((name)
+(defcustom eudc-inline-query-format '((email)
+				      (firstname)
 				      (firstname name))
   "Format of an inline expansion query.
 This is a list of FORMATs.  A FORMAT is itself a list of one or more
@@ -160,14 +179,16 @@ must be set in a protocol/server-local fashion, see `eudc-server-set' and
 	     (const :menu-tag "Email Address" :tag "Email Address" email)
 	     (const :menu-tag "Phone" :tag "Phone" phone)
 	     (symbol :menu-tag "Other" :tag "Attribute name"))))
-  :group 'eudc)
+  :version "25.1")
 
-(defcustom eudc-expansion-overwrites-query t
+;; Default to nil so that the most common use of eudc-expand-inline,
+;; where replace is nil, does not affect the kill ring.
+(defcustom eudc-expansion-overwrites-query nil
   "If non-nil, expanding a query overwrites the query string."
   :type  'boolean
-  :group 'eudc)
+  :version "25.1")
 
-(defcustom eudc-inline-expansion-format '("%s" email)
+(defcustom eudc-inline-expansion-format '("%s %s <%s>" firstname name email)
   "A list specifying the format of the expansion of inline queries.
 This variable controls what `eudc-expand-inline' actually inserts in
 the buffer.  First element is a string passed to `format'.  Remaining
@@ -185,7 +206,7 @@ are passed as additional arguments to `format'."
 		    (const :menu-tag "Phone" :tag "Phone" phone)
 		    (symbol :menu-tag "Other")
 		    (symbol :tag "Attribute name"))))
-  :group 'eudc)
+  :version "25.1")
 
 (defcustom eudc-inline-expansion-servers 'server-then-hotlist
   "Which servers to contact for the expansion of inline queries.
@@ -198,8 +219,7 @@ Possible values are:
 		 :menu-tag "Servers"
 		 (const :menu-tag "Current server" current-server)
 		 (const :menu-tag "Servers in the hotlist" hotlist)
-		 (const :menu-tag "Current server then hotlist" server-then-hotlist))
-  :group 'eudc)
+		 (const :menu-tag "Current server then hotlist" server-then-hotlist)))
 
 (defcustom eudc-max-servers-to-query nil
   "Maximum number of servers to query for an inline expansion.
@@ -213,8 +233,7 @@ If nil, query all servers available from `eudc-inline-expansion-servers'."
 		 (const :menu-tag "3" 3)
 		 (const :menu-tag "4" 4)
 		 (const :menu-tag "5" 5)
-		 (integer :menu-tag "Set"))
-  :group 'eudc)
+		 (integer :menu-tag "Set")))
 
 (defcustom eudc-query-form-attributes '(name firstname email phone)
   "A list of attributes presented in the query form."
@@ -226,8 +245,7 @@ If nil, query all servers available from `eudc-inline-expansion-servers'."
 	    (const :menu-tag "Surname" :tag "Surname" name)
 	    (const :menu-tag "Email Address" :tag "Email Address" email)
 	    (const :menu-tag "Phone" :tag "Phone" phone)
-	    (symbol :menu-tag "Other" :tag "Attribute name")))
-  :group 'eudc)
+	    (symbol :menu-tag "Other" :tag "Attribute name"))))
 
 (defcustom eudc-user-attribute-names-alist '((url . "URL")
 					     (callsign . "HAM Call Sign")
@@ -257,15 +275,13 @@ at `_' characters and capitalizing the individual words."
   :tag   "User-defined Names of Directory Attributes"
   :type  '(repeat (cons :tag "Field"
 			(symbol :tag "Directory attribute")
-			(string :tag "User friendly name ")))
-  :group 'eudc)
+			(string :tag "User friendly name "))))
 
 (defcustom eudc-use-raw-directory-names nil
   "If non-nil, use attributes names as defined in the directory.
 Otherwise, directory query/response forms display the user attribute
 names defined in `eudc-user-attribute-names-alist'."
-  :type  'boolean
-  :group 'eudc)
+  :type  'boolean)
 
 (defcustom eudc-attribute-display-method-alist nil
   "An alist specifying methods to display attribute values.
@@ -277,8 +293,7 @@ attribute values for display."
   :tag "Attribute Decoding Functions"
   :type '(repeat (cons :tag "Attribute"
 		       (symbol :tag "Name")
-		       (symbol :tag "Display Function")))
-  :group 'eudc)
+		       (symbol :tag "Display Function"))))
 
 (defcustom eudc-external-viewers '(("ImageMagick" "display" "-")
 				   ("ShowAudio" "showaudio"))
@@ -295,18 +310,17 @@ arguments that should be passed to the program."
 		       (repeat
 			:tag "Arguments"
 			:inline t
-			(string :tag "Argument"))))
-  :group 'eudc)
+			(string :tag "Argument")))))
 
-(defcustom eudc-options-file "~/.eudc-options"
+(defcustom eudc-options-file
+  (locate-user-emacs-file "eudc-options" ".eudc-options")
   "A file where the `servers' hotlist is stored."
   :type '(file :Tag "File Name:")
-  :group 'eudc)
+  :version "25.1")
 
 (defcustom eudc-mode-hook nil
   "Normal hook run on entry to EUDC mode."
-  :type '(repeat (sexp :tag "Hook definition"))
-  :group 'eudc)
+  :type 'hook)
 
 ;;}}}
 
@@ -341,8 +355,7 @@ BBDB fields.  SPECs are sexps which are evaluated:
   :tag "BBDB to PH Field Name Mapping"
   :type '(repeat (cons :tag "Field Name"
 		       (symbol :tag "BBDB Field")
-		       (sexp :tag "Conversion Spec")))
-  :group 'eudc-ph)
+		       (sexp :tag "Conversion Spec"))))
 
 ;;}}}
 
@@ -376,8 +389,7 @@ BBDB fields.  SPECs are sexps which are evaluated:
   :tag "BBDB to LDAP Attribute Names Mapping"
   :type '(repeat (cons :tag "Field Name"
 		       (symbol :tag "BBDB Field")
-		       (sexp :tag "Conversion Spec")))
-  :group 'eudc-ldap)
+		       (sexp :tag "Conversion Spec"))))
 
 ;;}}}
 
@@ -391,14 +403,12 @@ BBDB fields.  SPECs are sexps which are evaluated:
   "If non-nil, BBDB address and phone locations are used as attribute names.
 This has no effect on queries (you can't search for a specific location)
 but influences the way records are displayed."
-  :type 'boolean
-  :group 'eudc-bbdb)
+  :type 'boolean)
 
 (defcustom eudc-bbdb-enable-substring-matches t
   "If non-nil, authorize substring match in the same way BBDB does.
 Otherwise records must match queries exactly."
-  :type 'boolean
-  :group 'eudc-bbdb)
+  :type 'boolean)
 
 ;;}}}
 

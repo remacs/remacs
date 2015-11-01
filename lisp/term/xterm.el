@@ -1,6 +1,6 @@
 ;;; xterm.el --- define function key sequences and standard colors for xterm  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1995, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1995, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: FSF
 ;; Keywords: terminals
@@ -29,6 +29,14 @@
   :version "24.1"
   :group 'terminals)
 
+(defconst xterm--extra-capabilities-type
+  ;; NOTE: If you add entries here, make sure to update
+  ;; `terminal-init-xterm' as well.
+  '(set (const :tag "modifyOtherKeys support" modifyOtherKeys)
+        (const :tag "report background" reportBackground)
+        (const :tag "get X selection" getSelection)
+        (const :tag "set X selection" setSelection)))
+
 (defcustom xterm-extra-capabilities 'check
   "Whether Xterm supports some additional, more modern, features.
 If nil, just assume that it does not.
@@ -37,30 +45,102 @@ If a list, assume that the listed features are supported, without checking.
 
 The relevant features are:
   modifyOtherKeys  -- if supported, more key bindings work (e.g., \"\\C-,\")
-  reportBackground -- if supported, Xterm reports its background color"
+  reportBackground -- if supported, Xterm reports its background color
+  getSelection     -- if supported, Xterm yanks text from the X selection
+  setSelection     -- if supported, Xterm saves killed text to the X selection"
   :version "24.1"
-  :group 'xterm
-  :type '(choice (const :tag "No" nil)
-                 (const :tag "Check" check)
-                 ;; NOTE: If you add entries here, make sure to update
-                 ;; `tocheck-capabilities' in `terminal-init-xterm' as well.
-                 (set (const :tag "modifyOtherKeys support" modifyOtherKeys)
-                      (const :tag "report background" reportBackground))))
+  :type `(choice (const :tag "Check" check)
+                 ,xterm--extra-capabilities-type))
 
-(defvar xterm-function-map
+(defcustom xterm-max-cut-length 100000
+  "Maximum number of bytes to cut into xterm using the OSC 52 sequence.
+
+The OSC 52 sequence requires a terminator byte.  Some terminals will ignore or
+mistreat a terminated sequence that is longer than a certain size, usually to
+protect users from runaway sequences.
+
+This variable allows you to tweak the maximum number of bytes that will be sent
+using the OSC 52 sequence.
+
+If you select a region larger than this size, it won't be copied to your system
+clipboard.  Since clipboard data is base 64 encoded, the actual number of
+string bytes that can be copied is 3/4 of this value."
+  :type 'integer)
+
+(defconst xterm-paste-ending-sequence "\e[201~"
+  "Characters send by the terminal to end a bracketed paste.")
+
+(defun xterm-paste ()
+  "Handle the start of a terminal paste operation."
+  (interactive)
+  (let* ((end-marker-length (length xterm-paste-ending-sequence))
+         (pasted-text (with-temp-buffer
+                        (set-buffer-multibyte nil)
+                        (while (not (search-backward
+                                     xterm-paste-ending-sequence
+                                     (- (point) end-marker-length) t))
+                          (let ((event (read-event
+                                        nil nil
+                                        ;; Use finite timeout to avoid
+                                        ;; glomming the event onto
+                                        ;; this-command-keys.
+                                        most-positive-fixnum)))
+                            (when (eql event ?\r)
+                              (setf event ?\n))
+                            (insert event)))
+                        (let ((last-coding-system-used))
+                          (decode-coding-region
+                           (point-min) (point)
+                           (keyboard-coding-system) t))))
+         (interprogram-paste-function (lambda () pasted-text)))
+    (yank)))
+
+(define-key global-map [xterm-paste] #'xterm-paste)
+
+(defvar xterm-rxvt-function-map
   (let ((map (make-sparse-keymap)))
+    (define-key map "\e[2~" [insert])
+    (define-key map "\e[3~" [delete])
+    (define-key map "\e[4~" [select])
+    (define-key map "\e[5~" [prior])
+    (define-key map "\e[6~" [next])
 
-    ;; xterm from X.org 6.8.2 uses these key definitions.
-    (define-key map "\eOP" [f1])
-    (define-key map "\eOQ" [f2])
-    (define-key map "\eOR" [f3])
-    (define-key map "\eOS" [f4])
     (define-key map "\e[15~" [f5])
     (define-key map "\e[17~" [f6])
     (define-key map "\e[18~" [f7])
     (define-key map "\e[19~" [f8])
     (define-key map "\e[20~" [f9])
     (define-key map "\e[21~" [f10])
+
+    (define-key map "\e[2;2~" [S-insert])
+
+    ;; Other versions of xterm might emit these.
+    (define-key map "\e[A" [up])
+    (define-key map "\e[B" [down])
+    (define-key map "\e[C" [right])
+    (define-key map "\e[D" [left])
+
+    (define-key map "\e[11~" [f1])
+    (define-key map "\e[12~" [f2])
+    (define-key map "\e[13~" [f3])
+    (define-key map "\e[14~" [f4])
+
+    ;; Recognize the start of a bracketed paste sequence.  The handler
+    ;; internally recognizes the end.
+    (define-key map "\e[200~" [xterm-paste])
+
+    map)
+  "Keymap of escape sequences, shared between xterm and rxvt support.")
+
+(defvar xterm-function-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map xterm-rxvt-function-map)
+
+    ;; xterm from X.org 6.8.2 uses these key definitions.
+    (define-key map "\eOP" [f1])
+    (define-key map "\eOQ" [f2])
+    (define-key map "\eOR" [f3])
+    (define-key map "\eOS" [f4])
     (define-key map "\e[23~" [f11])
     (define-key map "\e[24~" [f12])
 
@@ -189,12 +269,6 @@ The relevant features are:
     (define-key map "\e[1;3F" [M-end])
     (define-key map "\e[1;3H" [M-home])
 
-    (define-key map "\e[2~" [insert])
-    (define-key map "\e[3~" [delete])
-    (define-key map "\e[5~" [prior])
-    (define-key map "\e[6~" [next])
-
-    (define-key map "\e[2;2~" [S-insert])
     (define-key map "\e[3;2~" [S-delete])
     (define-key map "\e[5;2~" [S-prior])
     (define-key map "\e[6;2~" [S-next])
@@ -229,7 +303,6 @@ The relevant features are:
     (define-key map "\e[5;3~" [M-prior])
     (define-key map "\e[6;3~" [M-next])
 
-    (define-key map "\e[4~" [select])
     (define-key map "\e[29~" [print])
 
     (define-key map "\eOj" [kp-multiply])
@@ -247,6 +320,70 @@ The relevant features are:
     (define-key map "\eOw" [kp-7])
     (define-key map "\eOx" [kp-8])
     (define-key map "\eOy" [kp-9])
+
+    (define-key map "\eO2j" [S-kp-multiply])
+    (define-key map "\eO2k" [S-kp-add])
+    (define-key map "\eO2l" [S-kp-separator])
+    (define-key map "\eO2m" [S-kp-subtract])
+    (define-key map "\eO2o" [S-kp-divide])
+    (define-key map "\eO2p" [S-kp-0])
+    (define-key map "\eO2q" [S-kp-1])
+    (define-key map "\eO2r" [S-kp-2])
+    (define-key map "\eO2s" [S-kp-3])
+    (define-key map "\eO2t" [S-kp-4])
+    (define-key map "\eO2u" [S-kp-5])
+    (define-key map "\eO2v" [S-kp-6])
+    (define-key map "\eO2w" [S-kp-7])
+    (define-key map "\eO2x" [S-kp-8])
+    (define-key map "\eO2y" [S-kp-9])
+
+    (define-key map "\eO4j" [M-S-kp-multiply])
+    (define-key map "\eO4k" [M-S-kp-add])
+    (define-key map "\eO4l" [M-S-kp-separator])
+    (define-key map "\eO4m" [M-S-kp-subtract])
+    (define-key map "\eO4o" [M-S-kp-divide])
+    (define-key map "\eO4p" [M-S-kp-0])
+    (define-key map "\eO4q" [M-S-kp-1])
+    (define-key map "\eO4r" [M-S-kp-2])
+    (define-key map "\eO4s" [M-S-kp-3])
+    (define-key map "\eO4t" [M-S-kp-4])
+    (define-key map "\eO4u" [M-S-kp-5])
+    (define-key map "\eO4v" [M-S-kp-6])
+    (define-key map "\eO4w" [M-S-kp-7])
+    (define-key map "\eO4x" [M-S-kp-8])
+    (define-key map "\eO4y" [M-S-kp-9])
+
+    (define-key map "\eO6j" [C-S-kp-multiply])
+    (define-key map "\eO6k" [C-S-kp-add])
+    (define-key map "\eO6l" [C-S-kp-separator])
+    (define-key map "\eO6m" [C-S-kp-subtract])
+    (define-key map "\eO6o" [C-S-kp-divide])
+    (define-key map "\eO6p" [C-S-kp-0])
+    (define-key map "\eO6q" [C-S-kp-1])
+    (define-key map "\eO6r" [C-S-kp-2])
+    (define-key map "\eO6s" [C-S-kp-3])
+    (define-key map "\eO6t" [C-S-kp-4])
+    (define-key map "\eO6u" [C-S-kp-5])
+    (define-key map "\eO6v" [C-S-kp-6])
+    (define-key map "\eO6w" [C-S-kp-7])
+    (define-key map "\eO6x" [C-S-kp-8])
+    (define-key map "\eO6y" [C-S-kp-9])
+
+    (define-key map "\eO8j" [C-M-S-kp-multiply])
+    (define-key map "\eO8k" [C-M-S-kp-add])
+    (define-key map "\eO8l" [C-M-S-kp-separator])
+    (define-key map "\eO8m" [C-M-S-kp-subtract])
+    (define-key map "\eO8o" [C-M-S-kp-divide])
+    (define-key map "\eO8p" [C-M-S-kp-0])
+    (define-key map "\eO8q" [C-M-S-kp-1])
+    (define-key map "\eO8r" [C-M-S-kp-2])
+    (define-key map "\eO8s" [C-M-S-kp-3])
+    (define-key map "\eO8t" [C-M-S-kp-4])
+    (define-key map "\eO8u" [C-M-S-kp-5])
+    (define-key map "\eO8v" [C-M-S-kp-6])
+    (define-key map "\eO8w" [C-M-S-kp-7])
+    (define-key map "\eO8x" [C-M-S-kp-8])
+    (define-key map "\eO8y" [C-M-S-kp-9])
 
     ;; These keys are available in xterm starting from version 216
     ;; if the modifyOtherKeys resource is set to 1.
@@ -370,10 +507,6 @@ The relevant features are:
         (format "\e[%d;%du" (nth 1 bind) (nth 0 bind)) (nth 2 bind)))
 
     ;; Other versions of xterm might emit these.
-    (define-key map "\e[A" [up])
-    (define-key map "\e[B" [down])
-    (define-key map "\e[C" [right])
-    (define-key map "\e[D" [left])
     (define-key map "\e[1~" [home])
 
     (define-key map "\eO2A" [S-up])
@@ -390,10 +523,6 @@ The relevant features are:
     (define-key map "\eO5F" [C-end])
     (define-key map "\eO5H" [C-home])
 
-    (define-key map "\e[11~" [f1])
-    (define-key map "\e[12~" [f2])
-    (define-key map "\e[13~" [f3])
-    (define-key map "\e[14~" [f4])
     map)
   "Function key map overrides for xterm.")
 
@@ -463,8 +592,28 @@ The relevant features are:
     map)
   "Keymap of possible alternative meanings for some keys.")
 
-;; List of terminals for which modify-other-keys has been turned on.
-(defvar xterm-modify-other-keys-terminal-list nil)
+;; Set up colors, for those versions of xterm that support it.
+(defvar xterm-standard-colors
+  ;; The names in the comments taken from XTerm-col.ad in the xterm
+  ;; distribution, see ftp://dickey.his.com/xterm/.  RGB values are
+  ;; from rgb.txt.
+  '(("black"          0 (  0   0   0))	; black
+    ("red"            1 (205   0   0))	; red3
+    ("green"          2 (  0 205   0))	; green3
+    ("yellow"         3 (205 205   0))	; yellow3
+    ("blue"           4 (  0   0 238))	; blue2
+    ("magenta"        5 (205   0 205))	; magenta3
+    ("cyan"           6 (  0 205 205))	; cyan3
+    ("white"          7 (229 229 229))	; gray90
+    ("brightblack"    8 (127 127 127))	; gray50
+    ("brightred"      9 (255   0   0))	; red
+    ("brightgreen"   10 (  0 255   0))	; green
+    ("brightyellow"  11 (255 255   0))	; yellow
+    ("brightblue"    12 (92   92 255))	; rgb:5c/5c/ff
+    ("brightmagenta" 13 (255   0 255))	; magenta
+    ("brightcyan"    14 (  0 255 255))	; cyan
+    ("brightwhite"   15 (255 255 255)))	; white
+  "Names of 16 standard xterm/aixterm colors, their numbers, and RGB values.")
 
 (defun xterm--report-background-handler ()
   (let ((str "")
@@ -500,8 +649,22 @@ The relevant features are:
     ;; see if by using a longer timeout we get rid of most issues.
     (while (and (setq chr (read-event nil nil 2)) (not (equal chr ?c)))
       (setq str (concat str (string chr))))
-    (when (string-match "0;\\([0-9]+\\);0" str)
-      (let ((version (string-to-number (match-string 1 str))))
+    ;; Since xterm-280, the terminal type (NUMBER1) is now 41 instead of 0.
+    (when (string-match "\\([0-9]+\\);\\([0-9]+\\);0" str)
+      (let ((version (string-to-number (match-string 2 str))))
+        (when (and (> version 2000) (equal (match-string 1 str) "1"))
+          ;; Hack attack!  bug#16988: gnome-terminal reports "1;NNNN;0"
+          ;; with a large NNNN but is based on a rather old xterm code.
+          ;; Gnome terminal 3.6.1 reports 1;3406;0
+          ;; Gnome terminal 2.32.1 reports 1;2802;0
+          (setq version 200))
+        (when (equal (match-string 1 str) "83")
+          ;; `screen' (which returns 83;40003;0) seems to also lack support for
+          ;; some of these (bug#17607, bug#20356).
+          ;; Note: this code path should normally not be used any more
+          ;; since term/screen.el now binds xterm-extra-capabilities
+          ;; to a fixed value, rather than using the dynamic checking.
+          (setq version 200))
         ;; If version is 242 or higher, assume the xterm supports
         ;; reporting the background color (TODO: maybe earlier
         ;; versions do too...)
@@ -513,9 +676,23 @@ The relevant features are:
         ;; introduced) or higher, initialize the
         ;; modifyOtherKeys support.
         (when (>= version 216)
-          (terminal-init-xterm-modify-other-keys))))))
+          (xterm--init-modify-other-keys))
+        ;; In version 203 support for accessing the X selection was
+        ;; added.  Hterm reports itself as version 256 and supports it
+        ;; as well.  gnome-terminal doesn't and is excluded by this
+        ;; test.
+        (when (>= version 203)
+          ;; Most xterms seem to have it disabled by default, and if it's
+          ;; disabled, C-y will incur a timeout, so we only use it if the user
+          ;; explicitly requests it.
+          ;;(xterm--init-activate-get-selection)
+          (xterm--init-activate-set-selection))))))
 
-(defun xterm--query (query handlers)
+(defvar xterm-query-timeout 2
+  "Seconds to wait for an answer from the terminal.
+Can be nil to mean \"no timeout\".")
+
+(defun xterm--query (query handlers &optional no-async)
   "Send QUERY string to the terminal and watch for a response.
 HANDLERS is an alist with elements of the form (STRING . FUNCTION).
 We run the first FUNCTION whose STRING matches the input events."
@@ -523,35 +700,55 @@ We run the first FUNCTION whose STRING matches the input events."
   ;; rather annoying (bug#6758).  Maybe we could always use the asynchronous
   ;; approach, but it's less tested.
   ;; FIXME: Merge the two branches.
-  (if (input-pending-p)
-      (progn
-        (dolist (handler handlers)
-          (define-key input-decode-map (car handler)
-            (lambda (&optional _prompt)
-              ;; Unregister the handler, since we don't expect further answers.
-              (dolist (handler handlers)
-                (define-key input-decode-map (car handler) nil))
-              (funcall (cdr handler))
-              [])))
-        (send-string-to-terminal query))
-    ;; Pending input can be mistakenly returned by the calls to
-    ;; read-event below.  Discard it.
-    (send-string-to-terminal query)
-    (while handlers
-      (let ((handler (pop handlers))
-            (i 0))
-        (while (and (< i (length (car handler)))
-                    (let ((evt (read-event nil nil 2)))
-                      (or (eq evt (aref (car handler) i))
-                          (progn (if evt (push evt unread-command-events))
-                                 nil))))
-          (setq i (1+ i)))
-        (if (= i (length (car handler)))
-            (progn (setq handlers nil)
-                   (funcall (cdr handler)))
-          (while (> i 0)
-            (push (aref (car handler) (setq i (1- i)))
-                  unread-command-events)))))))
+  (let ((register
+         (lambda (handlers)
+           (dolist (handler handlers)
+             (define-key input-decode-map (car handler)
+               (lambda (&optional _prompt)
+                 ;; Unregister the handler, since we don't expect
+                 ;; further answers.
+                 (dolist (handler handlers)
+                   (define-key input-decode-map (car handler) nil))
+                 (funcall (cdr handler))
+                 []))))))
+    (if (and (or (null xterm-query-timeout) (input-pending-p))
+             (not no-async))
+        (progn
+          (funcall register handlers)
+          (send-string-to-terminal query))
+      ;; Pending input can be mistakenly returned by the calls to
+      ;; read-event below: discard it.
+      (discard-input)
+      (send-string-to-terminal query)
+      (while handlers
+        (let ((handler (pop handlers))
+              (i 0))
+          (while (and (< i (length (car handler)))
+                      (let ((evt (read-event nil nil xterm-query-timeout)))
+                        (if (and (null evt) (= i 0) (not no-async))
+                            ;; Timeout on the first event: fallback on async.
+                            (progn
+                              (funcall register (cons handler handlers))
+                              (setq handlers nil)
+                              nil)
+                          (or (eq evt (aref (car handler) i))
+                              (progn (if evt (push evt unread-command-events))
+                                     nil)))))
+            (setq i (1+ i)))
+          (if (= i (length (car handler)))
+              (progn (setq handlers nil)
+                     (funcall (cdr handler)))
+            (while (> i 0)
+              (push (aref (car handler) (setq i (1- i)))
+                    unread-command-events))))))))
+
+(defun xterm--push-map (map basemap)
+  ;; Use inheritance to let the main keymaps override those defaults.
+  ;; This way we don't override terminfo-derived settings or settings
+  ;; made in the init file.
+  (set-keymap-parent
+   basemap
+   (make-composed-keymap map (keymap-parent basemap))))
 
 (defun terminal-init-xterm ()
   "Terminal initialization function for xterm."
@@ -562,19 +759,10 @@ We run the first FUNCTION whose STRING matches the input events."
 	   (string-match "\\`rxvt" (getenv "COLORTERM" (selected-frame))))
       (tty-run-terminal-initialization (selected-frame) "rxvt")
 
-    (let ((map (copy-keymap xterm-alternatives-map)))
-      (set-keymap-parent map (keymap-parent local-function-key-map))
-      (set-keymap-parent local-function-key-map map))
+      (xterm--push-map xterm-alternatives-map local-function-key-map)
+      (xterm--push-map xterm-function-map     input-decode-map))
 
-    (let ((map (copy-keymap xterm-function-map)))
-
-      ;; Use inheritance to let the main keymap override those defaults.
-      ;; This way we don't override terminfo-derived settings or settings
-      ;; made in the init file.
-      (set-keymap-parent map (keymap-parent input-decode-map))
-      (set-keymap-parent input-decode-map map)))
-
-  (xterm-register-default-colors)
+  (xterm-register-default-colors xterm-standard-colors)
   (tty-set-up-initial-frame-faces)
 
   (if (eq xterm-extra-capabilities 'check)
@@ -592,61 +780,125 @@ We run the first FUNCTION whose STRING matches the input events."
                     '(("\e]11;" .  xterm--report-background-handler))))
 
     (when (memq 'modifyOtherKeys xterm-extra-capabilities)
-      (terminal-init-xterm-modify-other-keys)))
+      (xterm--init-modify-other-keys))
+
+    (when (memq 'getSelection xterm-extra-capabilities)
+      (xterm--init-activate-get-selection))
+    (when (memq 'setSelection xterm-extra-capabilities)
+      (xterm--init-activate-set-selection)))
+
+  ;; Unconditionally enable bracketed paste mode: terminals that don't
+  ;; support it just ignore the sequence.
+  (xterm--init-bracketed-paste-mode)
 
   (run-hooks 'terminal-init-xterm-hook))
 
-(defun terminal-init-xterm-modify-other-keys ()
+(defun xterm--init-modify-other-keys ()
   "Terminal initialization for xterm's modifyOtherKeys support."
-  ;; Make sure that the modifyOtherKeys state is restored when
-  ;; suspending, resuming and exiting.
-  (add-hook 'suspend-hook 'xterm-turn-off-modify-other-keys)
-  (add-hook 'suspend-resume-hook 'xterm-turn-on-modify-other-keys)
-  (add-hook 'kill-emacs-hook 'xterm-remove-modify-other-keys)
-  (add-hook 'delete-terminal-functions 'xterm-remove-modify-other-keys)
-  ;; Add the selected frame to the list of frames that
-  ;; need to deal with modify-other-keys.
-  (push (frame-terminal)
-      xterm-modify-other-keys-terminal-list)
-  (xterm-turn-on-modify-other-keys))
+  (send-string-to-terminal "\e[>4;1m")
+  (push "\e[>4m" (terminal-parameter nil 'tty-mode-reset-strings))
+  (push "\e[>4;1m" (terminal-parameter nil 'tty-mode-set-strings)))
 
-;; Set up colors, for those versions of xterm that support it.
-(defvar xterm-standard-colors
-  ;; The names in the comments taken from XTerm-col.ad in the xterm
-  ;; distribution, see ftp://dickey.his.com/xterm/.  RGB values are
-  ;; from rgb.txt.
-  '(("black"          0 (  0   0   0))	; black
-    ("red"            1 (205   0   0))	; red3
-    ("green"          2 (  0 205   0))	; green3
-    ("yellow"         3 (205 205   0))	; yellow3
-    ("blue"           4 (  0   0 238))	; blue2
-    ("magenta"        5 (205   0 205))	; magenta3
-    ("cyan"           6 (  0 205 205))	; cyan3
-    ("white"          7 (229 229 229))	; gray90
-    ("brightblack"    8 (127 127 127))	; gray50
-    ("brightred"      9 (255   0   0))	; red
-    ("brightgreen"   10 (  0 255   0))	; green
-    ("brightyellow"  11 (255 255   0))	; yellow
-    ("brightblue"    12 (92   92 255))	; rgb:5c/5c/ff
-    ("brightmagenta" 13 (255   0 255))	; magenta
-    ("brightcyan"    14 (  0 255 255))	; cyan
-    ("brightwhite"   15 (255 255 255)))	; white
-  "Names of 16 standard xterm/aixterm colors, their numbers, and RGB values.")
+(defun xterm--init-bracketed-paste-mode ()
+  "Terminal initialization for bracketed paste mode."
+  (send-string-to-terminal "\e[?2004h")
+  (push "\e[?2004l" (terminal-parameter nil 'tty-mode-reset-strings))
+  (push "\e[?2004h" (terminal-parameter nil 'tty-mode-set-strings)))
+
+(defun xterm--init-activate-get-selection ()
+  "Terminal initialization for `gui-get-selection'."
+  (set-terminal-parameter nil 'xterm--get-selection t))
+
+(defun xterm--init-activate-set-selection ()
+  "Terminal initialization for `gui-set-selection'."
+  (set-terminal-parameter nil 'xterm--set-selection t))
+
+(defun xterm--selection-char (type)
+  (pcase type
+    ('PRIMARY "p")
+    ('CLIPBOARD "c")
+    (_ (error "Invalid selection type: %S" type))))
+
+(cl-defmethod gui-backend-get-selection
+    (type data-type
+     &context (window-system nil)
+              ;; Only applies to terminals which have it enabled.
+              ((terminal-parameter nil 'xterm--get-selection) (eql t)))
+  (unless (eq data-type 'STRING)
+    (error "Unsupported data type %S" data-type))
+  (let* ((screen (eq (terminal-parameter nil 'terminal-initted)
+                     'terminal-init-screen))
+         (query (concat "\e]52;" (xterm--selection-char type) ";")))
+    (with-temp-buffer
+      (set-buffer-multibyte nil)
+      (xterm--query
+       (concat (when screen "\eP") query "?\a" (when screen "\e\\"))
+       (list (cons query (lambda ()
+                           (while (let ((char (read-char)))
+                                    (unless (eq char ?\a)
+                                      (insert char)
+                                      t))))))
+       'no-async)
+      (base64-decode-region (point-min) (point-max))
+      (decode-coding-region (point-min) (point-max) 'utf-8-unix t))))
+
+(cl-defmethod gui-backend-set-selection
+    (type data
+     &context (window-system nil)
+              ;; Only applies to terminals which have it enabled.
+              ((terminal-parameter nil 'xterm--set-selection) (eql t)))
+  "Copy DATA to the X selection using the OSC 52 escape sequence.
+
+TYPE specifies which selection to set; it must be either
+`PRIMARY' or `CLIPBOARD'.  DATA must be a string.
+
+This can be used as a `gui-set-selection' method for
+xterm-compatible terminal emulators.  Then your system clipboard
+will be updated whenever you copy a region of text in Emacs.
+
+If the resulting OSC 52 sequence would be longer than
+`xterm-max-cut-length', then the TEXT is not sent to the system
+clipboard.
+
+This function either sends a raw OSC 52 sequence or wraps the OSC
+52 in a Device Control String sequence.  This way, it will work
+on a bare terminal emulators as well as inside the screen
+program.  When inside the screen program, this function also
+chops long DCS sequences into multiple smaller ones to avoid
+hitting screen's max DCS length."
+  (let* ((screen (eq (terminal-parameter nil 'terminal-initted)
+                     'terminal-init-screen))
+         (bytes (encode-coding-string data 'utf-8-unix))
+         (base-64 (if screen
+                      (replace-regexp-in-string
+                       "\n" "\e\\\eP"
+                       (base64-encode-string bytes)
+                       :fixedcase :literal)
+                    (base64-encode-string bytes :no-line-break)))
+         (length (length base-64)))
+    (if (> length xterm-max-cut-length)
+        (progn
+          (warn "Selection too long to send to terminal: %d bytes" length)
+          (sit-for 2))
+      (send-string-to-terminal
+       (concat
+        (when screen "\eP")
+        "\e]52;" (xterm--selection-char type) ";" base-64 "\a"
+        (when screen "\e\\"))))))
 
 (defun xterm-rgb-convert-to-16bit (prim)
   "Convert an 8-bit primary color value PRIM to a corresponding 16-bit value."
   (logior prim (lsh prim 8)))
 
-(defun xterm-register-default-colors ()
+(defun xterm-register-default-colors (colors)
   "Register the default set of colors for xterm or compatible emulator.
 
 This function registers the number of colors returned by `display-color-cells'
-for the currently selected frame.  The first 16 colors are taken from
-`xterm-standard-colors', which see, while the rest are computed assuming
+for the currently selected frame.  The first (16) colors are taken from
+COLORS, which see, while the rest are computed assuming
 either the 88- or 256-color standard color scheme supported by latest
 versions of xterm."
-  (let* ((ncolors (display-color-cells (selected-frame)))
-	 (colors xterm-standard-colors)
+  (let* ((ncolors (display-color-cells))
 	 (color (car colors)))
     (if (> ncolors 0)
 	;; Clear the 8 default tty colors registered by startup.el
@@ -654,12 +906,12 @@ versions of xterm."
     ;; Only register as many colors as are supported by the display.
     (while (and (> ncolors 0) colors)
       (tty-color-define (car color) (cadr color)
-			(mapcar 'xterm-rgb-convert-to-16bit
+			(mapcar #'xterm-rgb-convert-to-16bit
 				(car (cddr color))))
       (setq colors (cdr colors)
 	    color (car colors)
 	    ncolors (1- ncolors)))
-    ;; We've exhausted the colors from `xterm-standard-colors'.  If there
+    ;; We've exhausted the colors from `colors'.  If there
     ;; are more colors to support, compute them now.
     (when (> ncolors 0)
       (cond
@@ -671,7 +923,7 @@ versions of xterm."
 	    ;; 88colres.pl in the xterm distribution.
 	    (tty-color-define (format "color-%d" (- 256 ncolors))
 			      (- 256 ncolors)
-			      (mapcar 'xterm-rgb-convert-to-16bit
+			      (mapcar #'xterm-rgb-convert-to-16bit
 				      (list (if (zerop r) 0 (+ (* r 40) 55))
 					    (if (zerop g) 0 (+ (* g 40) 55))
 					    (if (zerop b) 0 (+ (* b 40) 55)))))
@@ -698,7 +950,7 @@ versions of xterm."
 	  (while (> ncolors 8)
 	    (tty-color-define (format "color-%d" (- 88 ncolors))
 			      (- 88 ncolors)
-			      (mapcar 'xterm-rgb-convert-to-16bit
+			      (mapcar #'xterm-rgb-convert-to-16bit
 				      (list (nth r levels)
 					    (nth g levels)
 					    (nth b levels))))
@@ -726,29 +978,6 @@ versions of xterm."
     ;; right colors, so clear them.
     (clear-face-cache)))
 
-(defun xterm-turn-on-modify-other-keys ()
-  "Turn the modifyOtherKeys feature of xterm back on."
-  (let ((terminal (frame-terminal)))
-    (when (and (terminal-live-p terminal)
-	       (memq terminal xterm-modify-other-keys-terminal-list))
-      (send-string-to-terminal "\e[>4;1m" terminal))))
-
-(defun xterm-turn-off-modify-other-keys (&optional frame)
-  "Temporarily turn off the modifyOtherKeys feature of xterm."
-  (let ((terminal (when frame (frame-terminal frame))))
-    (when (and (terminal-live-p terminal)
-               (memq terminal xterm-modify-other-keys-terminal-list))
-      (send-string-to-terminal "\e[>4m" terminal))))
-
-(defun xterm-remove-modify-other-keys (&optional terminal)
-  "Turn off the modifyOtherKeys feature of xterm for good."
-  (setq terminal (or terminal (frame-terminal)))
-  (when (and (terminal-live-p terminal)
-	     (memq terminal xterm-modify-other-keys-terminal-list))
-    (setq xterm-modify-other-keys-terminal-list
-	  (delq terminal xterm-modify-other-keys-terminal-list))
-    (send-string-to-terminal "\e[>4m" terminal)))
-
 (defun xterm-maybe-set-dark-background-mode (redc greenc bluec)
   ;; Use the heuristic in `frame-set-background-mode' to decide if a
   ;; frame is dark.
@@ -756,6 +985,6 @@ versions of xterm."
     (set-terminal-parameter nil 'background-mode 'dark)
     t))
 
-(provide 'xterm)
-
+(provide 'xterm)                        ;Backward compatibility.
+(provide 'term/xterm)
 ;;; xterm.el ends here

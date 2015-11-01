@@ -1,6 +1,6 @@
 ;;; ediff-util.el --- the core commands and utilities of ediff
 
-;; Copyright (C) 1994-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-2015 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.stonybrook.edu>
 ;; Package: ediff
@@ -40,7 +40,7 @@
 (defvar ediff-after-quit-hook-internal nil)
 
 (eval-and-compile
-  (unless (fboundp 'declare-function) (defmacro declare-function (&rest  r))))
+  (unless (fboundp 'declare-function) (defmacro declare-function (&rest  _r))))
 
 ;; end pacifier
 
@@ -958,7 +958,7 @@ On a dumb terminal, switches between ASCII highlighting and no highlighting."
 	 (message "Auto-refining is OFF")
 	 (setq ediff-auto-refine 'off))
 	(t ;; nix 'em
-	 (ediff-set-fine-diff-properties ediff-current-difference 'default)
+	 (ediff-set-fine-diff-properties ediff-current-difference t)
 	 (message "Refinements are HIDDEN")
 	 (setq ediff-auto-refine 'nix))
 	))
@@ -1027,8 +1027,8 @@ of the current buffer."
 				 (file-writable-p file)))
 	     (toggle-ro-cmd (cond (ediff-toggle-read-only-function)
 				  ((ediff-file-checked-out-p file)
-				   'toggle-read-only)
-				  (file-writable 'toggle-read-only)
+				   'read-only-mode)
+				  (file-writable 'read-only-mode)
 				  (t (key-binding "\C-x\C-q")))))
 	;; If the file is checked in, make sure we don't make buffer modifiable
 	;; without warning the user.  The user can fool our checks by making the
@@ -1039,7 +1039,7 @@ of the current buffer."
 		 ;; non-interactively, in which case don't ask questions
 		 ctl-buf)
 	    (cond ((not buffer-read-only)
-		   (setq toggle-ro-cmd 'toggle-read-only))
+		   (setq toggle-ro-cmd 'read-only-mode))
 		  ((and (or (beep 1) t) ; always beep
 			(y-or-n-p
 			 (format
@@ -1054,13 +1054,13 @@ of the current buffer."
 		     (ediff-change-saved-variable
 		      'buffer-read-only nil buf-type)))
 		  (t
-		   (setq toggle-ro-cmd 'toggle-read-only)
+		   (setq toggle-ro-cmd 'read-only-mode)
 		   (beep 1) (beep 1)
 		   (message
 		    "Boy, this is risky! Don't modify this file...")
 		   (sit-for 3)))) ; let the user see the warning
 	(if (and toggle-ro-cmd
-		 (string-match "toggle-read-only" (symbol-name toggle-ro-cmd)))
+		 (string-match "read-only-mode" (symbol-name toggle-ro-cmd)))
 	    (save-excursion
 	      (save-window-excursion
 		(select-window (ediff-get-visible-buffer-window buf))
@@ -1500,7 +1500,7 @@ Used in ediff-windows/regions only."
     (select-window wind)))
 
 (defun ediff-scroll-vertically (&optional arg)
-  "Vertically scroll buffers A, B \(and C if appropriate\).
+  "Vertically scroll buffers A, B (and C if appropriate).
 With optional argument ARG, scroll ARG lines; otherwise scroll by nearly
 the one half of the height of window-A."
   (interactive "P")
@@ -1544,7 +1544,7 @@ the one half of the height of window-A."
 
 
 (defun ediff-scroll-horizontally (&optional arg)
-  "Horizontally scroll buffers A, B \(and C if appropriate\).
+  "Horizontally scroll buffers A, B (and C if appropriate).
 If an argument is given, that is how many columns are scrolled, else nearly
 the width of the A/B/C windows."
   (interactive "P")
@@ -1602,7 +1602,7 @@ the width of the A/B/C windows."
 ;;BEG, END show the region to be positioned.
 ;;JOB-NAME holds ediff-job-name.  The ediff-windows job positions regions
 ;;differently.
-(defun ediff-position-region (beg end pos job-name)
+(defun ediff-position-region (beg end pos _job-name)
   (if (> end (point-max))
       (setq end (point-max)))
   (if ediff-windows-job
@@ -1685,7 +1685,7 @@ the width of the A/B/C windows."
 			    'ediff-get-lines-to-region-start)
 			   ((eq op 'scroll-up)
 			    'ediff-get-lines-to-region-end)
-			   (t (lambda (a b c) 0))))
+			   (t (lambda (_a _b _c) 0))))
 	       (max-lines (max (funcall func 'A n ctl-buf)
 			       (funcall func 'B n ctl-buf)
 			       (if (ediff-buffer-live-p ediff-buffer-C)
@@ -1822,7 +1822,7 @@ If the prefix is negative, count differences from the end."
 
 (defun ediff-jump-to-difference-at-point (arg)
   "Go to difference closest to the point in buffer A, B, or C.
-The buffer depends on last command character \(a, b, or c\) that invoked this
+The buffer depends on last command character \(a, b, or c) that invoked this
 command.  For instance, if the command was `ga' then the point value in buffer
 A is used.
 With a prefix argument, synchronize all files around the current point position
@@ -1921,7 +1921,7 @@ in the specified buffer."
 ;;; Copying diffs.
 
 (defun ediff-diff-to-diff (arg &optional keys)
-  "Copy buffer-X'th difference region to buffer Y \(X,Y are A, B, or C\).
+  "Copy buffer-X'th difference region to buffer Y (X,Y are A, B, or C).
 If numerical prefix argument, copy the difference specified in the arg.
 Otherwise, copy the difference given by `ediff-current-difference'.
 This command assumes it is bound to a 2-character key sequence, `ab', `ba',
@@ -1986,7 +1986,7 @@ ARG is a prefix argument.  If nil, copy the current difference region."
 
 
 
-;; Copy diff N from FROM-BUF-TYPE \(given as A, B or C\) to TO-BUF-TYPE.
+;; Copy diff N from FROM-BUF-TYPE (given as A, B or C) to TO-BUF-TYPE.
 ;; If optional DO-NOT-SAVE is non-nil, do not save the old value of the
 ;; target diff.  This is used in merging, when constructing the merged
 ;; version.
@@ -2065,7 +2065,7 @@ ARG is a prefix argument.  If nil, copy the current difference region."
       (message "%s" messg))
     ))
 
-;; Save Nth diff of buffer BUF-TYPE \(A, B, or C\).
+;; Save Nth diff of buffer BUF-TYPE (A, B, or C).
 ;; That is to say, the Nth diff on the `ediff-killed-diffs-alist'.  REG
 ;; is the region to save.  It is redundant here, but is passed anyway, for
 ;; convenience.
@@ -2097,7 +2097,7 @@ ARG is a prefix argument.  If nil, copy the current difference region."
 
     (if this-buf-n-th-diff-saved
 	(if (yes-or-no-p
-	     (format
+	     (format-message
 	      "You've previously copied diff region %d to buffer %S.  Confirm? "
 	      (1+ n) buf-type))
 	    t
@@ -2318,6 +2318,7 @@ the number seen by the user."
 			      (narrow-to-region
 			       (ediff-get-diff-posn 'B 'beg n ctl-buf)
 			       (ediff-get-diff-posn 'B 'end n ctl-buf))
+			      (goto-char (point-min))
 			      (re-search-forward regex-B nil t))))
 	     (reg-C-match (if ediff-3way-comparison-job
 			      (ediff-with-current-buffer ediff-buffer-C
@@ -2325,6 +2326,7 @@ the number seen by the user."
 				  (narrow-to-region
 				   (ediff-get-diff-posn 'C 'beg n ctl-buf)
 				   (ediff-get-diff-posn 'C 'end n ctl-buf))
+                                  (goto-char (point-min))
 				  (re-search-forward regex-C nil t))))))
 	(not (eval (if ediff-3way-comparison-job
 		       (list ediff-focus-regexp-connective
@@ -2383,10 +2385,10 @@ the number seen by the user."
   "Finish an Ediff session and exit Ediff.
 Unselects the selected difference, if any, restores the read-only and modified
 flags of the compared file buffers, kills Ediff buffers for this session
-\(but not buffers A, B, C\).
+\(but not buffers A, B, C).
 
 If `ediff-keep-variants' is nil, the user will be asked whether the buffers
-containing the variants should be removed \(if they haven't been modified\).
+containing the variants should be removed \(if they haven't been modified).
 If it is t, they will be preserved unconditionally.  A prefix argument,
 temporarily reverses the meaning of this variable."
   (interactive "P")
@@ -2856,13 +2858,14 @@ Hit \\[ediff-recenter] to reset the windows afterward."
 	   (B-line (ediff-with-current-buffer ediff-buffer-B
 		     (1+ (count-lines (point-min) (point)))))
 	   C-line)
-      (princ (format "\Buffer A's point is on line %d\n" A-line))
-      (princ (format "Buffer B's point is on line %d\n" B-line))
+      (princ (format-message "Buffer A's point is on line %d\n" A-line))
+      (princ (format-message "Buffer B's point is on line %d\n" B-line))
       (if ediff-3way-job
 	  (progn
 	    (setq C-line (ediff-with-current-buffer ediff-buffer-C
 			   (1+ (count-lines (point-min) (point)))))
-	    (princ (format "Buffer C's point is on line %d\n" C-line)))))
+	    (princ (format-message
+		    "Buffer C's point is on line %d\n" C-line)))))
 
     (princ (format "\nCurrent difference number = %S\n"
 		   (cond ((< ediff-current-difference 0) 'start)
@@ -2888,7 +2891,7 @@ Hit \\[ediff-recenter] to reset the windows afterward."
 	   (princ
 	    "\nIgnoring regions that match")
 	   (princ
-	    (format
+	    (format-message
 	     "\n\t regexp `%s' in buffer A  %S\n\t regexp `%s' in buffer B\n"
 	     ediff-regexp-hide-A ediff-hide-regexp-connective
 	     ediff-regexp-hide-B)))
@@ -2897,15 +2900,16 @@ Hit \\[ediff-recenter] to reset the windows afterward."
 	   (princ
 	    "\nFocusing on regions that match")
 	   (princ
-	    (format
+	    (format-message
 	     "\n\t regexp `%s' in buffer A  %S\n\t regexp `%s' in buffer B\n"
 	     ediff-regexp-focus-A ediff-focus-regexp-connective
 	     ediff-regexp-focus-B)))
 	  (t (princ "\nSelective browsing via a user-defined method.\n")))
 
     (princ
-     (format "\nBugs/suggestions: type `%s' while in Ediff Control Panel."
-	     (substitute-command-keys "\\[ediff-submit-report]")))
+     (format-message
+      "\nBugs/suggestions: type `%s' while in Ediff Control Panel."
+      (substitute-command-keys "\\[ediff-submit-report]")))
     ) ; with output
   (if (frame-live-p ediff-control-frame)
       (ediff-reset-mouse ediff-control-frame))
@@ -2973,7 +2977,7 @@ Hit \\[ediff-recenter] to reset the windows afterward."
 	       ))
 
 	;; unhighlight fine diffs
-	(ediff-set-fine-diff-properties ediff-current-difference 'default)
+	(ediff-set-fine-diff-properties ediff-current-difference t)
 	(run-hooks 'ediff-unselect-hook))))
 
 
@@ -3023,8 +3027,6 @@ Hit \\[ediff-recenter] to reset the windows afterward."
 	(if (featurep 'xemacs)
 	    (ediff-move-overlay current-diff-overlay begin end-hilit)
 	  (ediff-move-overlay current-diff-overlay begin end-hilit buff))
-	(ediff-overlay-put current-diff-overlay 'priority
-			   (ediff-highest-priority begin end-hilit buff))
 	(ediff-overlay-put current-diff-overlay 'ediff-diff-num n)
 
 	;; unhighlight the background overlay for diff n so it won't
@@ -3310,7 +3312,7 @@ and `wd' saves the diff output.
 
 With prefix argument, `wd' saves plain diff output.
 Without an argument, it saves customized diff argument, if available
-\(and plain output, if customized output was not generated\)."
+\(and plain output, if customized output was not generated)."
   (interactive "P")
   (ediff-barf-if-not-control-buffer)
   (ediff-compute-custom-diffs-maybe)
@@ -3346,6 +3348,7 @@ Without an argument, it saves customized diff argument, if available
     (setq wind (ediff-get-visible-buffer-window cloned-buff))
     (select-window wind)
     (delete-other-windows)
+    (or (mark) (push-mark))
     (ediff-activate-mark)
     (split-window-vertically)
     (ediff-select-lowest-window)
@@ -3494,7 +3497,7 @@ Ediff Control Panel to restore highlighting."
 
     (if (ediff-valid-difference-p ediff-current-difference)
 	(progn
-	  (ediff-set-fine-diff-properties ediff-current-difference 'default)
+	  (ediff-set-fine-diff-properties ediff-current-difference t)
 	  (ediff-unhighlight-diff)))
     (ediff-paint-background-regions 'unhighlight)
 
@@ -3988,7 +3991,7 @@ and mail it to the address above.
 Please read this first:
 ----------------------
 
-Some ``bugs'' may actually be no bugs at all.  For instance, if you are
+Some \"bugs\" may actually be no bugs at all.  For instance, if you are
 reporting that certain difference regions are not matched as you think they
 should, this is most likely due to the way Unix diff program decides what
 constitutes a difference region.  Ediff is an Emacs interface to diff, and

@@ -1,6 +1,6 @@
 ;;; eieio-tests.el -- eieio tests routines
 
-;; Copyright (C) 1999-2003, 2005-2010, 2012-2013 Free Software
+;; Copyright (C) 1999-2003, 2005-2010, 2012-2015 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
@@ -21,7 +21,7 @@
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-;;  
+;;
 ;; Test the various features of EIEIO.
 
 (require 'ert)
@@ -29,7 +29,7 @@
 (require 'eieio-base)
 (require 'eieio-opt)
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 ;;; Code:
 ;; Set up some test classes
@@ -66,7 +66,7 @@
 	   :initform moose
 	   :type symbol
 	   :allocation :instance
-	   :documentation "Fisrt slot testing slot arguments."
+	   :documentation "First slot testing slot arguments."
 	   :custom symbol
 	   :label "Wild Animal"
 	   :group borg
@@ -158,7 +158,7 @@
 (ert-deftest eieio-test-02-abstract-class ()
   ;; Abstract classes cannot be instantiated, so this should throw an
   ;; error
-  (should-error (abstract-class "Test")))
+  (should-error (abstract-class)))
 
 (defgeneric generic1 () "First generic function")
 
@@ -166,7 +166,7 @@
   (defun anormalfunction () "A plain function for error testing." nil)
   (should-error
    (progn
-     (defgeneric anormalfunction () 
+     (defgeneric anormalfunction ()
        "Attempt to turn it into a generic.")))
 
   ;; Check that generic-p works
@@ -180,7 +180,7 @@
     "Method generic1 that can take a non-object."
     not-an-object)
 
-  (let ((ans-obj (generic1 (class-a "test")))
+  (let ((ans-obj (generic1 (class-a)))
 	(ans-num (generic1 666)))
     (should (eq ans-obj 'monkey))
     (should (eq ans-num 666))))
@@ -199,10 +199,10 @@ Argument C is the class bound to this static method."
 
 (ert-deftest eieio-test-04-static-method ()
   ;; Call static method on a class and see if it worked
-  (static-method-class-method static-method-class 'class)
-  (should (eq (oref static-method-class some-slot) 'class))
-  (static-method-class-method (static-method-class "test") 'object)
-  (should (eq (oref static-method-class some-slot) 'object)))
+  (static-method-class-method 'static-method-class 'class)
+  (should (eq (oref-default 'static-method-class some-slot) 'class))
+  (static-method-class-method (static-method-class) 'object)
+  (should (eq (oref-default 'static-method-class some-slot) 'object)))
 
 (ert-deftest eieio-test-05-static-method-2 ()
   (defclass static-method-class-2 (static-method-class)
@@ -215,10 +215,10 @@ Argument C is the class bound to this static method."
     (if (eieio-object-p c) (setq c (eieio-object-class c)))
     (oset-default c some-slot (intern (concat "moose-" (symbol-name value)))))
 
-  (static-method-class-method static-method-class-2 'class)
-  (should (eq (oref static-method-class-2 some-slot) 'moose-class))
-  (static-method-class-method (static-method-class-2 "test") 'object)
-  (should (eq (oref static-method-class-2 some-slot) 'moose-object)))
+  (static-method-class-method 'static-method-class-2 'class)
+  (should (eq (oref-default 'static-method-class-2 some-slot) 'moose-class))
+  (static-method-class-method (static-method-class-2) 'object)
+  (should (eq (oref-default 'static-method-class-2 some-slot) 'moose-object)))
 
 
 ;;; Perform method testing
@@ -231,14 +231,14 @@ Argument C is the class bound to this static method."
 (defvar eitest-b nil)
 (ert-deftest eieio-test-06-allocate-objects ()
    ;; allocate an object to use
-   (should (setq eitest-ab (class-ab "abby")))
-   (should (setq eitest-a (class-a "aye")))
-   (should (setq eitest-b (class-b "fooby"))))
+   (should (setq eitest-ab (class-ab)))
+   (should (setq eitest-a (class-a)))
+   (should (setq eitest-b (class-b))))
 
 (ert-deftest eieio-test-07-make-instance ()
   (should (make-instance 'class-ab))
   (should (make-instance 'class-a :water 'cho))
-  (should (make-instance 'class-b "a name")))
+  (should (make-instance 'class-b)))
 
 (defmethod class-cn ((a class-a))
   "Try calling `call-next-method' when there isn't one.
@@ -355,7 +355,7 @@ METHOD is the method that was attempting to be called."
     (call-next-method)
     (oset a test-tag 1))
 
-  (let ((ca (class-a "class act")))
+  (let ((ca (class-a)))
     (should-not (/=  (oref ca test-tag) 2))))
 
 
@@ -404,23 +404,23 @@ METHOD is the method that was attempting to be called."
    (t (call-next-method))))
 
 (ert-deftest eieio-test-17-virtual-slot ()
-  (setq eitest-vsca (virtual-slot-class "eitest-vsca" :base-value 1))
+  (setq eitest-vsca (virtual-slot-class :base-value 1))
   ;; Check slot values
-  (should (= (oref eitest-vsca :base-value) 1))
+  (should (= (oref eitest-vsca base-value) 1))
   (should (= (oref eitest-vsca :derived-value) 2))
 
-  (oset eitest-vsca :derived-value 3)
-  (should (= (oref eitest-vsca :base-value) 2))
+  (oset eitest-vsca derived-value 3)
+  (should (= (oref eitest-vsca base-value) 2))
   (should (= (oref eitest-vsca :derived-value) 3))
 
-  (oset eitest-vsca :base-value 3)
-  (should (= (oref eitest-vsca :base-value) 3))
+  (oset eitest-vsca base-value 3)
+  (should (= (oref eitest-vsca base-value) 3))
   (should (= (oref eitest-vsca :derived-value) 4))
 
   ;; should also be possible to initialize instance using virtual slot
 
-  (setq eitest-vscb (virtual-slot-class "eitest-vscb" :derived-value 5))
-  (should (= (oref eitest-vscb :base-value) 4))
+  (setq eitest-vscb (virtual-slot-class :derived-value 5))
+  (should (= (oref eitest-vscb base-value) 4))
   (should (= (oref eitest-vscb :derived-value) 5)))
 
 (ert-deftest eieio-test-18-slot-unbound ()
@@ -445,7 +445,7 @@ METHOD is the method that was attempting to be called."
   ;; After setting 'water to 'moose, make sure a new object has
   ;; the right stuff.
   (oset-default (eieio-object-class eitest-a) water 'penguin)
-  (should (eq (oref (class-a "foo") water) 'penguin))
+  (should (eq (oref (class-a) water) 'penguin))
 
   ;; Revert the above
   (defmethod slot-unbound ((a class-a) &rest foo)
@@ -459,12 +459,12 @@ METHOD is the method that was attempting to be called."
   ;; We should not be able to set a string here
   (should-error (oset eitest-ab water "a string, not a symbol") :type 'invalid-slot-type)
   (should-error (oset eitest-ab classslot "a string, not a symbol") :type 'invalid-slot-type)
-  (should-error (class-a "broken-type-a" :water "a string not a symbol") :type 'invalid-slot-type))
+  (should-error (class-a :water "a string not a symbol") :type 'invalid-slot-type))
 
 (ert-deftest eieio-test-20-class-allocated-slots ()
   ;; Test out class allocated slots
   (defvar eitest-aa nil)
-  (setq eitest-aa (class-a "another"))
+  (setq eitest-aa (class-a))
 
   ;; Make sure class slots do not track between objects
   (let ((newval 'moose))
@@ -474,12 +474,12 @@ METHOD is the method that was attempting to be called."
 
   ;; Slot should be bound
   (should (slot-boundp eitest-a 'classslot))
-  (should (slot-boundp class-a 'classslot))
+  (should (slot-boundp 'class-a 'classslot))
 
   (slot-makeunbound eitest-a 'classslot)
 
   (should-not (slot-boundp eitest-a 'classslot))
-  (should-not (slot-boundp class-a 'classslot)))
+  (should-not (slot-boundp 'class-a 'classslot)))
 
 
 (defvar eieio-test-permuting-value nil)
@@ -499,7 +499,7 @@ METHOD is the method that was attempting to be called."
 (ert-deftest eieio-test-21-eval-at-construction-time ()
   ;; initforms that need to be evalled at construction time.
   (setq eieio-test-permuting-value 2)
-  (setq eitest-pvinit (inittest "permuteme"))
+  (setq eitest-pvinit (inittest))
 
   (should (eq (oref eitest-pvinit staticval) 1))
   (should (eq (oref eitest-pvinit symval) 'eieio-test-permuting-value))
@@ -515,11 +515,11 @@ METHOD is the method that was attempting to be called."
     "Test class that will be a calculated value.")
 
   (defclass eitest-superior nil
-    ((sub :initform (eitest-subordinate "test")
+    ((sub :initform (eitest-subordinate)
 	  :type eitest-subordinate))
     "A class with an initform that creates a class.")
 
-  (should (setq eitest-tests (eitest-superior "test")))
+  (should (setq eitest-tests (eitest-superior)))
 
   (should-error
    (eval
@@ -530,44 +530,46 @@ METHOD is the method that was attempting to be called."
    :type 'invalid-slot-type))
 
 (ert-deftest eieio-test-23-inheritance-check ()
-  (should (child-of-class-p class-ab class-a))
-  (should (child-of-class-p class-ab class-b))
-  (should (object-of-class-p eitest-a class-a))
-  (should (object-of-class-p eitest-ab class-a))
-  (should (object-of-class-p eitest-ab class-b))
-  (should (object-of-class-p eitest-ab class-ab))
-  (should (eq (eieio-class-parents class-a) nil))
-  (should (equal (eieio-class-parents class-ab) '(class-a class-b)))
-  (should (same-class-p eitest-a class-a))
+  (should (child-of-class-p 'class-ab 'class-a))
+  (should (child-of-class-p 'class-ab 'class-b))
+  (should (object-of-class-p eitest-a 'class-a))
+  (should (object-of-class-p eitest-ab 'class-a))
+  (should (object-of-class-p eitest-ab 'class-b))
+  (should (object-of-class-p eitest-ab 'class-ab))
+  (should (eq (eieio-class-parents 'class-a) nil))
+  (should (equal (eieio-class-parents 'class-ab)
+                 (mapcar #'find-class '(class-a class-b))))
+  (should (same-class-p eitest-a 'class-a))
   (should (class-a-p eitest-a))
   (should (not (class-a-p eitest-ab)))
-  (should (class-a-child-p eitest-a))
-  (should (class-a-child-p eitest-ab))
+  (should (cl-typep eitest-a 'class-a))
+  (should (cl-typep eitest-ab 'class-a))
   (should (not (class-a-p "foo")))
-  (should (not (class-a-child-p "foo"))))
+  (should (not (cl-typep "foo" 'class-a))))
 
 (ert-deftest eieio-test-24-object-predicates ()
-  (let ((listooa (list (class-ab "ab") (class-a "a")))
-	(listoob (list (class-ab "ab") (class-b "b"))))
-    (should (class-a-list-p listooa))
-    (should (class-b-list-p listoob))
-    (should-not (class-b-list-p listooa))
-    (should-not (class-a-list-p listoob))))
+  (let ((listooa (list (class-ab) (class-a)))
+	(listoob (list (class-ab) (class-b))))
+    (should (cl-typep listooa '(list-of class-a)))
+    (should (cl-typep listoob '(list-of class-b)))
+    (should-not (cl-typep listooa '(list-of class-b)))
+    (should-not (cl-typep listoob '(list-of class-a)))))
 
 (defvar eitest-t1 nil)
 (ert-deftest eieio-test-25-slot-tests ()
-  (setq eitest-t1 (class-c "C1"))
+  (setq eitest-t1 (class-c))
   ;; Slot initialization
   (should (eq (oref eitest-t1 slot-1) 'moose))
-  (should (eq (oref eitest-t1 :moose) 'moose))
+  ;; Accessing via the initarg name is deprecated!
+  ;; (should (eq (oref eitest-t1 :moose) 'moose))
   ;; Don't pass reference of private slot
-  (should-error (oref eitest-t1 slot-2) :type 'invalid-slot-name)
+  ;;PRIVATE (should-error (oref eitest-t1 slot-2) :type 'invalid-slot-name)
   ;; Check private slot accessor
   (should (string= (get-slot-2 eitest-t1) "penguin"))
   ;; Pass string instead of symbol
-  (should-error (class-c "C2" :moose "not a symbol") :type 'invalid-slot-type)
+  (should-error (class-c :moose "not a symbol") :type 'invalid-slot-type)
   (should (eq (get-slot-3 eitest-t1) 'emu))
-  (should (eq (get-slot-3 class-c) 'emu))
+  (should (eq (get-slot-3 'class-c) 'emu))
   ;; Check setf
   (setf (get-slot-3 eitest-t1) 'setf-emu)
   (should (eq (get-slot-3 eitest-t1) 'setf-emu))
@@ -577,19 +579,20 @@ METHOD is the method that was attempting to be called."
 (defvar eitest-t2 nil)
 (ert-deftest eieio-test-26-default-inheritance ()
   ;; See previous test, nor for subclass
-  (setq eitest-t2 (class-subc "subc"))
+  (setq eitest-t2 (class-subc))
   (should (eq (oref eitest-t2 slot-1) 'moose))
-  (should (eq (oref eitest-t2 :moose) 'moose))
+  ;; Accessing via the initarg name is deprecated!
+  ;;(should (eq (oref eitest-t2 :moose) 'moose))
   (should (string= (get-slot-2 eitest-t2) "linux"))
-  (should-error (oref eitest-t2 slot-2) :type 'invalid-slot-name)
+  ;;PRIVATE (should-error (oref eitest-t2 slot-2) :type 'invalid-slot-name)
   (should (string= (get-slot-2 eitest-t2) "linux"))
-  (should-error (class-subc "C2" :moose "not a symbol") :type 'invalid-slot-type))
+  (should-error (class-subc :moose "not a symbol") :type 'invalid-slot-type))
 
 ;;(ert-deftest eieio-test-27-inherited-new-value ()
   ;;; HACK ALERT: The new value of a class slot is inherited by the
   ;; subclass!  This is probably a bug.  We should either share the slot
   ;; so sets on the baseclass change the subclass, or we should inherit
-  ;; the original value. 
+  ;; the original value.
 ;;  (should (eq (get-slot-3 eitest-t2) 'emu))
 ;;  (should (eq (get-slot-3 class-subc) 'emu))
 ;;  (setf (get-slot-3 eitest-t2) 'setf-emu)
@@ -604,7 +607,7 @@ METHOD is the method that was attempting to be called."
   "Try to access slot-2 from this class which doesn't have it.
 The object S2 passed in will be of class prot-1, which does have
 the slot.  This could be allowed, and currently is in EIEIO.
-Needed by the eieio persistant base class."
+Needed by the eieio persistent base class."
   (oref s2 slot-2))
 
 (defclass prot-1 (prot-0)
@@ -647,25 +650,28 @@ Do not override for `prot-2'."
 (defvar eitest-p1 nil)
 (defvar eitest-p2 nil)
 (ert-deftest eieio-test-28-slot-protection ()
-  (setq eitest-p1 (prot-1 ""))
-  (setq eitest-p2 (prot-2 ""))
+  (setq eitest-p1 (prot-1))
+  (setq eitest-p2 (prot-2))
   ;; Access public slots
   (oref eitest-p1 slot-1)
   (oref eitest-p2 slot-1)
-  ;; Accessing protected slot out of context must fail
-  (should-error (oref eitest-p1 slot-2) :type 'invalid-slot-name)
+  ;; Accessing protected slot out of context used to fail, but we dropped this
+  ;; feature, since it was underused and no one noticed that the check was
+  ;; incorrect (much too loose).
+  ;;PROTECTED (should-error (oref eitest-p1 slot-2) :type 'invalid-slot-name)
   ;; Access protected slot in method
   (prot1-slot-2 eitest-p1)
   ;; Protected slot in subclass method
   (prot1-slot-2 eitest-p2)
   ;; Protected slot from parent class method
   (prot0-slot-2 eitest-p1)
-  ;; Accessing private slot out of context must fail
-  (should-error (oref eitest-p1 slot-3) :type 'invalid-slot-name)
-  ;; Access private slot in ethod
+  ;; Accessing private slot out of context used to fail, but we dropped this
+  ;; feature, since it was not used.
+  ;;PRIVATE (should-error (oref eitest-p1 slot-3) :type 'invalid-slot-name)
+  ;; Access private slot in method
   (prot1-slot-3 eitest-p1)
   ;; Access private slot in subclass method must fail
-  (should-error (prot1-slot-3 eitest-p2) :type 'invalid-slot-name)
+  ;;PRIVATE (should-error (prot1-slot-3 eitest-p2) :type 'invalid-slot-name)
   ;; Access private slot by same class
   (prot1-slot-3-only eitest-p1)
   ;; Access private slot by subclass in sameclass method
@@ -713,7 +719,7 @@ Do not override for `prot-2'."
 Subclasses to override slot attributes.")
 
 (defclass slotattr-ok (slotattr-base)
-  ((initform :initform no-init)   
+  ((initform :initform no-init)
    (initarg :initarg :initblarg)
    (custom :custom string
 	   :label "One String"
@@ -727,12 +733,13 @@ Subclasses to override slot attributes.")
 
 (ert-deftest eieio-test-30-slot-attribute-override ()
   ;; Subclass should not override :protection slot attribute
-  (should-error
-	(eval
-	 '(defclass slotattr-fail (slotattr-base)
-	    ((protection :protection :public)
-	     )
-	    "This class should throw an error.")))
+  ;;PROTECTION is gone.
+  ;;(should-error
+  ;;       (eval
+  ;;        '(defclass slotattr-fail (slotattr-base)
+  ;;           ((protection :protection :public)
+  ;;            )
+  ;;           "This class should throw an error.")))
 
   ;; Subclass should not override :type slot attribute
   (should-error
@@ -743,7 +750,7 @@ Subclasses to override slot attributes.")
 	  "This class should throw an error.")))
 
   ;; Initform should override instance allocation
-  (let ((obj (slotattr-ok "moose")))
+  (let ((obj (slotattr-ok)))
     (should (eq (oref obj initform) 'no-init))))
 
 (defclass slotattr-class-base ()
@@ -767,7 +774,7 @@ Subclasses to override slot attributes.")
 Subclasses to override slot attributes.")
 
 (defclass slotattr-class-ok (slotattr-class-base)
-  ((initform :initform no-init)   
+  ((initform :initform no-init)
    (initarg :initarg :initblarg)
    (custom :custom string
 	   :label "One String"
@@ -780,53 +787,48 @@ Subclasses to override slot attributes.")
 
 (ert-deftest eieio-test-31-slot-attribute-override-class-allocation ()
   ;; Same as test-30, but with class allocation
-  (should-error
-      (eval
-       '(defclass slotattr-fail (slotattr-class-base)
-	  ((protection :protection :public)
-	   )
-	  "This class should throw an error.")))
+  ;;PROTECTION is gone.
+  ;;(should-error
+  ;;     (eval
+  ;;      '(defclass slotattr-fail (slotattr-class-base)
+  ;;         ((protection :protection :public)
+  ;;          )
+  ;;         "This class should throw an error.")))
   (should-error
       (eval
        '(defclass slotattr-fail (slotattr-class-base)
 	  ((type :type string)
 	   )
 	  "This class should throw an error.")))
-  (should (eq (oref-default slotattr-class-ok initform) 'no-init)))
+  (should (eq (oref-default 'slotattr-class-ok initform) 'no-init)))
 
 (ert-deftest eieio-test-32-slot-attribute-override-2 ()
-  (let* ((cv (class-v 'slotattr-ok))
-	 (docs   (eieio--class-public-doc cv))
-	 (names  (eieio--class-public-a cv))
-	 (cust   (eieio--class-public-custom cv))
-	 (label  (eieio--class-public-custom-label cv))
-	 (group  (eieio--class-public-custom-group cv))
-	 (types  (eieio--class-public-type cv))
-	 (args   (eieio--class-initarg-tuples cv))
-	 (i 0))
+  (let* ((cv (cl--find-class 'slotattr-ok))
+         (slots  (eieio--class-slots cv))
+	 (args   (eieio--class-initarg-tuples cv)))
     ;; :initarg should override for subclass
     (should (assoc :initblarg args))
 
-  (while (< i (length names))
-    (cond
-     ((eq (nth i names) 'custom)
-      ;; Custom slot attributes must override
-      (should (eq (nth i cust) 'string))
-      ;; Custom label slot attribute must override
-      (should (string= (nth i label) "One String"))
-      (let ((grp (nth i group)))
-	;; Custom group slot attribute must combine
-	(should (and (memq 'moose grp) (memq 'cow grp)))))
-     (t nil))
-
-    (setq i (1+ i)))))
+    (dotimes (i (length slots))
+      (let* ((slot (aref slots i))
+             (props (cl--slot-descriptor-props slot)))
+        (cond
+         ((eq (cl--slot-descriptor-name slot) 'custom)
+          ;; Custom slot attributes must override
+          (should (eq (alist-get :custom props) 'string))
+          ;; Custom label slot attribute must override
+          (should (string= (alist-get :label props) "One String"))
+          (let ((grp (alist-get :group props)))
+            ;; Custom group slot attribute must combine
+            (should (and (memq 'moose grp) (memq 'cow grp)))))
+         (t nil))))))
 
 (defvar eitest-CLONETEST1 nil)
 (defvar eitest-CLONETEST2 nil)
 
 (ert-deftest eieio-test-32-test-clone-boring-objects ()
   ;; A simple make instance with EIEIO extension
-  (should (setq eitest-CLONETEST1 (make-instance 'class-a "a")))
+  (should (setq eitest-CLONETEST1 (make-instance 'class-a)))
   (should (setq eitest-CLONETEST2 (clone eitest-CLONETEST1)))
 
   ;; CLOS form of make-instance
@@ -840,7 +842,7 @@ Subclasses to override slot attributes.")
 
 (ert-deftest eieio-test-33-instance-tracker ()
   (let (IT-list IT1)
-    (should (setq IT1 (IT "trackme")))
+    (should (setq IT1 (IT)))
     ;; The instance tracker must find this
     (should (eieio-instance-tracker-find 'die 'slot1 'IT-list))
     ;; Test deletion
@@ -852,8 +854,8 @@ Subclasses to override slot attributes.")
   "A Singleton test object.")
 
 (ert-deftest eieio-test-34-singletons ()
-  (let ((obj1 (SINGLE "Moose"))
-	(obj2 (SINGLE "Cow")))
+  (let ((obj1 (SINGLE))
+	(obj2 (SINGLE)))
     (should (eieio-object-p obj1))
     (should (eieio-object-p obj2))
     (should (eq obj1 obj2))
@@ -866,7 +868,7 @@ Subclasses to override slot attributes.")
 
 (ert-deftest eieio-test-35-named-object ()
   (let (N)
-    (should (setq N (NAMED "Foo")))
+    (should (setq N (NAMED :object-name "Foo")))
     (should (string= "Foo" (oref N object-name)))
     (should-error (oref N missing-slot) :type 'invalid-slot-name)
     (oset N object-name "NewName")
@@ -882,12 +884,21 @@ Subclasses to override slot attributes.")
   "Instantiable child")
 
 (ert-deftest eieio-test-36-build-class-alist ()
-  (should (= (length (eieio-build-class-alist opt-test1 nil)) 2))
-  (should (= (length (eieio-build-class-alist opt-test1 t)) 1)))
+  (should (= (length (eieio-build-class-alist 'opt-test1 nil)) 2))
+  (should (= (length (eieio-build-class-alist 'opt-test1 t)) 1)))
 
-(ert-deftest eieio-test-37-persistent-classes ()
-  (load-file "eieio-test-persist.el"))
+(defclass eieio--testing () ())
+
+(defmethod constructor :static ((_x eieio--testing) newname &rest _args)
+  (list newname 2))
+
+(ert-deftest eieio-test-37-obsolete-name-in-constructor ()
+  (should (equal (eieio--testing "toto") '("toto" 2))))
 
 (provide 'eieio-tests)
 
 ;;; eieio-tests.el ends here
+
+;; Local Variables:
+;; no-byte-compile: t
+;; End:

@@ -1,9 +1,9 @@
-;;; cus-edit.el --- tools for customizing Emacs and Lisp packages
+;;; cus-edit.el --- tools for customizing Emacs and Lisp packages -*- lexical-binding:t -*-
 ;;
-;; Copyright (C) 1996-1997, 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-1997, 1999-2015 Free Software Foundation, Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help, faces
 ;; Package: emacs
 
@@ -324,7 +324,7 @@
   :group 'emacs)
 
 (defgroup help nil
-  "Support for on-line help systems."
+  "Support for Emacs help systems."
   :group 'emacs)
 
 (defgroup multimedia nil
@@ -477,7 +477,7 @@
 (defun custom-split-regexp-maybe (regexp)
   "If REGEXP is a string, split it to a list at `\\|'.
 You can get the original back from the result with:
-  (mapconcat 'identity result \"\\|\")
+  (mapconcat \\='identity result \"\\|\")
 
 IF REGEXP is not a string, return it unchanged."
   (if (stringp regexp)
@@ -633,7 +633,7 @@ if that fails, the doc string with `custom-guess-doc-alist'."
 	(setq found (nth 1 current)
 	      names nil)))
     (unless found
-      (let ((doc (documentation-property symbol 'variable-documentation))
+      (let ((doc (documentation-property symbol 'variable-documentation t))
 	    (docs custom-guess-doc-alist))
 	(when doc
 	  (while docs
@@ -699,7 +699,7 @@ If `last', order groups after non-groups."
 
 (defun custom-sort-items (items sort-alphabetically order-groups)
   "Return a sorted copy of ITEMS.
-ITEMS should be a `custom-group' property.
+ITEMS should be a list of `custom-group' properties.
 If SORT-ALPHABETICALLY non-nil, sort alphabetically.
 If ORDER-GROUPS is `first' order groups before non-groups, if `last' order
 groups after non-groups, if nil do not order groups at all."
@@ -779,7 +779,8 @@ when the action is chosen.")
   "Call function FUN on all widgets in `custom-options'.
 If there is more than one widget, ask user for confirmation using
 the query string QUERY, using `y-or-n-p' if STRONG-QUERY is nil,
-and `yes-or-no-p' otherwise."
+and `yes-or-no-p' otherwise.  Return non-nil if the functionality
+has been executed, nil otherwise."
   (if (or (and (= 1 (length custom-options))
 	       (memq (widget-type (car custom-options))
 		     '(custom-variable custom-face)))
@@ -892,16 +893,16 @@ making them as if they had never been customized at all."
   ;; Bind these temporarily.
   (let ((custom-reset-standard-variables-list '(t))
 	(custom-reset-standard-faces-list '(t)))
-    (custom-command-apply
-     (lambda (widget)
-       (and (or (null (widget-get widget :custom-standard-value))
-		(widget-apply widget :custom-standard-value))
-	    (memq (widget-get widget :custom-state)
-		  '(modified set changed saved rogue))
-	    (widget-apply widget :custom-mark-to-reset-standard)))
-     "The settings will revert to their default values, in this
+    (if (custom-command-apply
+	 (lambda (widget)
+	   (and (or (null (widget-get widget :custom-standard-value))
+		    (widget-apply widget :custom-standard-value))
+		(memq (widget-get widget :custom-state)
+		      '(modified set changed saved rogue))
+		(widget-apply widget :custom-mark-to-reset-standard)))
+	 "The settings will revert to their default values, in this
 and future sessions.  Really erase customizations? " t)
-    (custom-reset-standard-save-and-update)))
+	(custom-reset-standard-save-and-update))))
 
 ;;; The Customize Commands
 
@@ -1057,8 +1058,8 @@ the resulting list value now.  Otherwise, add an entry to
       (let ((coding-system-for-read nil))
 	(customize-save-variable list-var (eval list-var)))
     (add-hook 'after-init-hook
-	      `(lambda ()
-		 (customize-push-and-save ',list-var ',elts)))))
+	      (lambda ()
+                (customize-push-and-save list-var elts)))))
 
 ;;;###autoload
 (defun customize ()
@@ -1188,8 +1189,8 @@ and `defface'.
 
 For example, the MH-E package updates this alist as follows:
 
-     (add-to-list 'customize-package-emacs-version-alist
-                  '(MH-E (\"6.0\" . \"22.1\") (\"6.1\" . \"22.1\")
+     (add-to-list \\='customize-package-emacs-version-alist
+                  \\='(MH-E (\"6.0\" . \"22.1\") (\"6.1\" . \"22.1\")
                          (\"7.0\" . \"22.1\") (\"7.1\" . \"22.1\")
                          (\"7.2\" . \"22.1\") (\"7.3\" . \"22.1\")
                          (\"7.4\" . \"22.1\") (\"8.0\" . \"22.1\")))
@@ -1355,12 +1356,10 @@ suggest to customize that face, if it's customizable."
                                      (or (face-at-point t t) "all faces") t)))
   (customize-face face t))
 
-(defalias 'customize-customized 'customize-unsaved)
-
-;;;###autoload
-(defun customize-unsaved ()
-  "Customize all options and faces set in this session but not saved."
-  (interactive)
+(defun custom-unsaved-options ()
+  "List of options and faces set in this session but not saved.
+Each entry is of the form (SYMBOL TYPE), where TYPE is one of the
+symbols `custom-face' or `custom-variable'."
   (let ((found nil))
     (mapatoms (lambda (symbol)
 		(and (or (get symbol 'customized-face)
@@ -1371,6 +1370,15 @@ suggest to customize that face, if it's customizable."
 			 (get symbol 'customized-variable-comment))
 		     (boundp symbol)
 		     (push (list symbol 'custom-variable) found))))
+    found))
+
+(defalias 'customize-customized 'customize-unsaved)
+
+;;;###autoload
+(defun customize-unsaved ()
+  "Customize all options and faces set in this session but not saved."
+  (interactive)
+  (let ((found (custom-unsaved-options)))
     (if (not found)
 	(error "No user options are set but unsaved")
       (custom-buffer-create (custom-sort-items found t nil)
@@ -1415,6 +1423,7 @@ suggest to customize that face, if it's customizable."
 			    "*Customize Saved*"))))
 
 (declare-function apropos-parse-pattern "apropos" (pattern))
+(defvar apropos-regexp)
 
 ;;;###autoload
 (defun customize-apropos (pattern &optional type)
@@ -1431,25 +1440,28 @@ If TYPE is `groups', include only groups."
   (require 'apropos)
   (unless (memq type '(nil options faces groups))
     (error "Invalid setting type %s" (symbol-name type)))
-  (apropos-parse-pattern pattern)
+  (apropos-parse-pattern pattern)    ;Sets apropos-regexp by side-effect: Yuck!
   (let (found)
     (mapatoms
-     `(lambda (symbol)
-	(when (string-match-p apropos-regexp (symbol-name symbol))
-	  ,(if (memq type '(nil groups))
-	       '(if (get symbol 'custom-group)
-		    (push (list symbol 'custom-group) found)))
-	  ,(if (memq type '(nil faces))
-	       '(if (custom-facep symbol)
-		    (push (list symbol 'custom-face) found)))
-	  ,(if (memq type '(nil options))
-	       `(if (and (boundp symbol)
-			 (eq (indirect-variable symbol) symbol)
-			 (or (get symbol 'saved-value)
-			     (custom-variable-p symbol)))
-		    (push (list symbol 'custom-variable) found))))))
+     (lambda (symbol)
+       (when (string-match-p apropos-regexp (symbol-name symbol))
+         (if (memq type '(nil groups))
+             (if (get symbol 'custom-group)
+                 (push (list symbol 'custom-group) found)))
+         (if (memq type '(nil faces))
+             (if (custom-facep symbol)
+                 (push (list symbol 'custom-face) found)))
+         (if (memq type '(nil options))
+             (if (and (boundp symbol)
+                      (eq (indirect-variable symbol) symbol)
+                      (or (get symbol 'saved-value)
+                          (custom-variable-p symbol)))
+                 (push (list symbol 'custom-variable) found))))))
     (unless found
-      (error "No customizable %s matching %s" (symbol-name type) pattern))
+      (error "No customizable %s matching %s" (if (not type)
+						  "group, face, or option"
+						(symbol-name type))
+	     pattern))
     (custom-buffer-create
      (custom-sort-items found t custom-buffer-order-groups)
      "*Customize Apropos*")))
@@ -1471,6 +1483,16 @@ If TYPE is `groups', include only groups."
   "Customize all loaded groups matching REGEXP."
   (interactive (list (apropos-read-pattern "groups")))
   (customize-apropos regexp 'groups))
+
+;;;###autoload
+(defun custom-prompt-customize-unsaved-options ()
+  "Prompt user to customize any unsaved customization options.
+Return non-nil if user chooses to customize, for use in
+`kill-emacs-query-functions'."
+  (not (and (custom-unsaved-options)
+	    (yes-or-no-p "Some customized options have not been saved; Examine? ")
+	    (customize-unsaved)
+	    t)))
 
 ;;; Buffer.
 
@@ -1526,7 +1548,8 @@ not for everybody."
 Optional NAME is the name of the buffer.
 OPTIONS should be an alist of the form ((SYMBOL WIDGET)...), where
 SYMBOL is a customization option, and WIDGET is a widget for editing
-that option."
+that option.
+DESCRIPTION is unused."
   (pop-to-buffer-same-window (custom-get-fresh-buffer (or name "*Customization*")))
   (custom-buffer-create-internal options description))
 
@@ -1576,7 +1599,7 @@ This button will have a menu with all three reset operations."
 
 (defcustom custom-raised-buttons (not (equal (face-valid-attribute-values :box)
 					     '(("unspecified" . unspecified))))
-  "If non-nil, indicate active buttons in a `raised-button' style.
+  "If non-nil, indicate active buttons in a raised-button style.
 Otherwise use brackets."
   :type 'boolean
   :version "21.1"
@@ -1621,8 +1644,8 @@ or a regular expression.")
 	      (widget-create
 	       'editable-field
 	       :size 40 :help-echo echo
-	       :action `(lambda (widget &optional event)
-			  (customize-apropos (split-string (widget-value widget)))))))
+	       :action (lambda (widget &optional _event)
+                         (customize-apropos (split-string (widget-value widget)))))))
 	(widget-insert " ")
 	(widget-create-child-and-convert
 	 search-widget 'push-button
@@ -1686,7 +1709,7 @@ Operate on all settings in this buffer:\n"))
 	    (mapcar (lambda (entry)
 		      (prog2
 			  (message "Creating customization items ...%2d%%"
-				   (/ (* 100.0 count) length))
+				   (floor (* 100.0 count) length))
 			  (widget-create (nth 1 entry)
 					 :tag (custom-unlispify-tag-name
 					       (nth 0 entry))
@@ -1725,7 +1748,7 @@ Operate on all settings in this buffer:\n"))
 on a button to invoke its action.
 Invoke [+] to expand a group, and [-] to collapse an expanded group.\n"
 			 (if custom-raised-buttons
-			     "`Raised' text indicates"
+			     "Raised text indicates"
 			   "Square brackets indicate")))
 
 
@@ -1930,7 +1953,7 @@ SAVED and set." "\
 something in this group has been set and saved.")
     (themed "o" custom-themed "\
 THEMED." "\
-visible group members are all at standard values.")
+visible group members are set by enabled themes.")
     (rogue "@" custom-rogue "\
 NO CUSTOMIZATION DATA; not intended to be customized." "\
 something in this group is not prepared for customization.")
@@ -1942,7 +1965,7 @@ Each entry is of the form (STATE MAGIC FACE ITEM-DESC [ GROUP-DESC ]), where
 
 STATE is one of the following symbols:
 
-`nil'
+nil
    For internal use, should never occur.
 `unknown'
    For internal use, should never occur.
@@ -1960,6 +1983,8 @@ STATE is one of the following symbols:
    This item is marked for saving.
 `rogue'
    This item has no customization information.
+`themed'
+   This item was set by an enabled Custom theme.
 `standard'
    This item is unchanged from the standard setting.
 
@@ -2432,7 +2457,7 @@ If INITIAL-STRING is non-nil, use that rather than \"Parent groups:\"."
   "Return documentation of VARIABLE for use in Custom buffer.
 Normally just return the docstring.  But if VARIABLE automatically
 becomes buffer local when set, append a message to that effect."
-  (format "%s%s" (documentation-property variable 'variable-documentation)
+  (format "%s%s" (documentation-property variable 'variable-documentation t)
 	  (if (and (local-variable-if-set-p variable)
 		   (or (not (local-variable-p variable))
 		       (with-temp-buffer
@@ -3090,7 +3115,7 @@ face attributes (as specified by a `default' defface entry)."
 		    widget
 		    (widget-get widget :default-face-attributes)))
 	 entry)
-    (unless (looking-back "^ *")
+    (unless (looking-back "^ *" (line-beginning-position))
       (insert ?\n))
     (insert-char ?\s (widget-get widget :extra-offset))
     (if (or alist defaults show-all)
@@ -3965,12 +3990,12 @@ If GROUPS-ONLY is non-nil, return only those members that are groups."
 	 ;; (indent (widget-get widget :indent))
 	 (prefix (widget-get widget :custom-prefix))
 	 (buttons (widget-get widget :buttons))
-	 (tag (widget-get widget :tag))
+	 (tag (substitute-command-keys (widget-get widget :tag)))
 	 (symbol (widget-value widget))
 	 (members (custom-group-members symbol
 					(and (eq custom-buffer-style 'tree)
 					     custom-browse-only-groups)))
-	 (doc (widget-docstring widget)))
+	 (doc (substitute-command-keys (widget-docstring widget))))
     (cond ((and (eq custom-buffer-style 'tree)
 		(eq state 'hidden)
 		(or members (custom-unloaded-widget-p widget)))
@@ -4352,7 +4377,8 @@ if only the first line of the docstring is shown."))
 
 (defun custom-file (&optional no-error)
   "Return the file name for saving customizations."
-  (if (null user-init-file)
+  (if (or (null user-init-file)
+          (and (null custom-file) init-file-had-error))
       ;; Started with -q, i.e. the file containing Custom settings
       ;; hasn't been read.  Saving settings there won't make much
       ;; sense.
@@ -4381,7 +4407,9 @@ if only the first line of the docstring is shown."))
 	 old-buffer-name)
 
     (with-current-buffer (let ((find-file-visit-truename t))
-			   (or old-buffer (find-file-noselect filename)))
+			   (or old-buffer
+                               (let ((delay-mode-hooks t))
+                                 (find-file-noselect filename))))
       ;; We'll save using file-precious-flag, so avoid destroying
       ;; symlinks.  (If we're not already visiting the buffer, this is
       ;; handled by find-file-visit-truename, above.)
@@ -4390,7 +4418,7 @@ if only the first line of the docstring is shown."))
 	(set-visited-file-name (file-chase-links filename)))
 
       (unless (eq major-mode 'emacs-lisp-mode)
-	(emacs-lisp-mode))
+        (delay-mode-hooks (emacs-lisp-mode)))
       (let ((inhibit-read-only t)
 	    (print-length nil)
 	    (print-level nil))

@@ -1,11 +1,11 @@
 ;;; shell.el --- specialized comint.el for running the shell -*- lexical-binding: t -*-
 
-;; Copyright (C) 1988, 1993-1997, 2000-2013 Free Software Foundation,
+;; Copyright (C) 1988, 1993-1997, 2000-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Olin Shivers <shivers@cs.cmu.edu>
 ;;	Simon Marshall <simon@gnu.org>
-;; Maintainer: FSF <emacs-devel@gnu.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: processes
 
 ;; This file is part of GNU Emacs.
@@ -83,8 +83,8 @@
 ;; tab     completion-at-point		Complete filename/command/history
 ;; m-?     comint-dynamic-list-filename-completions
 ;;					List completions in help buffer
-;; m-c-f   shell-forward-command	Forward a shell command
-;; m-c-b   shell-backward-command	Backward a shell command
+;; c-c c-f shell-forward-command	Forward a shell command
+;; c-c c-b shell-backward-command	Backward a shell command
 ;; 	   dirs				Resync the buffer's dir stack
 ;; 	   shell-dirtrack-mode		Turn dir tracking on/off
 ;;         comint-strip-ctrl-m		Remove trailing ^Ms from output
@@ -584,6 +584,8 @@ buffer."
       (setq shell-dirstack-query
 	    (cond ((string-equal shell "sh") "pwd")
 		  ((string-equal shell "ksh") "echo $PWD ~-")
+		  ;; Bypass any aliases.  TODO all shells could use this.
+		  ((string-equal shell "bash") "command dirs")
 		  (t "dirs")))
       ;; Bypass a bug in certain versions of bash.
       (when (string-equal shell "bash")
@@ -717,7 +719,7 @@ Otherwise, one argument `-i' is passed to the shell.
 
   ;; The buffer's window must be correctly set when we call comint (so
   ;; that comint sets the COLUMNS env var properly).
-  (pop-to-buffer-same-window buffer)
+  (pop-to-buffer buffer)
   (unless (comint-check-proc buffer)
     (let* ((prog (or explicit-shell-file-name
 		     (getenv "ESHELL") shell-file-name))
@@ -792,8 +794,11 @@ and `shell-pushd-dunique' control the behavior of the relevant command.
 Environment variables are expanded, see function `substitute-in-file-name'."
   (if shell-dirtrackp
       ;; We fail gracefully if we think the command will fail in the shell.
-      (condition-case nil
-	  (let ((start (progn (string-match
+;;;      (with-demoted-errors "Directory tracker failure: %s"
+      ;; This fails so often that it seems better to just ignore errors (?).
+      ;; Eg even: foo=/tmp; cd $foo is beyond us (bug#17159).
+      (ignore-errors
+        (let ((start (progn (string-match
 			       (concat "^" shell-command-separator-regexp)
 			       str) ; skip whitespace
 			      (match-end 0)))
@@ -825,8 +830,7 @@ Environment variables are expanded, see function `substitute-in-file-name'."
 	      (setq start (progn (string-match shell-command-separator-regexp
 					       str end)
 				 ;; skip again
-				 (match-end 0)))))
-	(error "Couldn't cd"))))
+				 (match-end 0))))))))
 
 (defun shell-unquote-argument (string)
   "Remove all kinds of shell quoting from STRING."
@@ -908,7 +912,7 @@ Environment variables are expanded, see function `substitute-in-file-name'."
 	   (cond ((> num (length shell-dirstack))
 		  (message "Directory stack not that deep."))
 		 ((= num 0)
-		  (error (message "Couldn't cd")))
+		  (error "Couldn't cd"))
 		 (shell-pushd-dextract
 		  (let ((dir (nth (1- num) shell-dirstack)))
 		    (shell-process-popd arg)
@@ -1015,12 +1019,11 @@ command again."
 			 ds))
 	  (setq i (match-end 0)))
 	(let ((ds (nreverse ds)))
-	  (condition-case nil
-	      (progn (shell-cd (car ds))
-		     (setq shell-dirstack (cdr ds)
-			   shell-last-dir (car shell-dirstack))
-		     (shell-dirstack-message))
-	    (error (message "Couldn't cd"))))))
+	  (with-demoted-errors "Couldn't cd: %s"
+	    (shell-cd (car ds))
+	    (setq shell-dirstack (cdr ds)
+		  shell-last-dir (car shell-dirstack))
+	    (shell-dirstack-message)))))
     (if started-at-pmark (goto-char (marker-position pmark)))))
 
 ;; For your typing convenience:
@@ -1089,10 +1092,12 @@ Copy Shell environment variable to Emacs: ")))
   "Move forward across ARG shell command(s).  Does not cross lines.
 See `shell-command-regexp'."
   (interactive "p")
-  (let ((limit (line-end-position)))
-    (if (re-search-forward (concat shell-command-regexp "\\([;&|][\t ]*\\)+")
-			   limit 'move arg)
-	(skip-syntax-backward " "))))
+  (let ((limit (line-end-position))
+	(pt (point)))
+    (re-search-forward (concat shell-command-regexp "\\([;&|][\t ]*\\)+")
+		       limit 'move arg)
+    (and (/= pt (point))
+	 (skip-syntax-backward " " pt))))
 
 
 (defun shell-backward-command (&optional arg)
@@ -1103,20 +1108,24 @@ See `shell-command-regexp'."
     (when (> limit (point))
       (setq limit (line-beginning-position)))
     (skip-syntax-backward " " limit)
-    (if (re-search-backward
-	 (format "[;&|]+[\t ]*\\(%s\\)" shell-command-regexp) limit 'move arg)
-	(progn (goto-char (match-beginning 1))
-	       (skip-chars-forward ";&|")))))
+    (let ((pt (point)))
+      (if (re-search-backward
+	   (format "[;&|]+[\t ]*\\(%s\\)" shell-command-regexp) limit 'move arg)
+	  (progn (goto-char (match-beginning 1))
+		 (skip-chars-forward ";&|")))
+      (and (/= pt (point))
+	   (skip-syntax-forward " " pt)))))
 
 (defun shell-dynamic-complete-command ()
   "Dynamically complete the command at point.
 This function is similar to `comint-dynamic-complete-filename', except that it
-searches `exec-path' (minus the trailing Emacs library path) for completion
+searches `exec-path' (minus trailing `exec-directory') for completion
 candidates.  Note that this may not be the same as the shell's idea of the
 path.
 
-Completion is dependent on the value of `shell-completion-execonly', plus
-those that effect file completion.
+Completion is dependent on the value of `shell-completion-execonly',
+`shell-completion-fignore', plus those that affect file completion.  See Info
+node `Shell Options'.
 
 Returns t if successful."
   (interactive)
@@ -1141,7 +1150,9 @@ Returns t if successful."
          (start (if (zerop (length filename)) (point) (match-beginning 0)))
          (end (if (zerop (length filename)) (point) (match-end 0)))
 	 (filenondir (file-name-nondirectory filename))
-	 (path-dirs (cdr (reverse exec-path))) ;FIXME: Why `cdr'?
+	 ; why cdr? see `shell-dynamic-complete-command'
+	 (path-dirs (append (cdr (reverse exec-path))
+	   (if (memq system-type '(windows-nt ms-dos)) '("."))))
 	 (cwd (file-name-as-directory (expand-file-name default-directory)))
 	 (ignored-extensions
 	  (and comint-completion-fignore

@@ -1,6 +1,6 @@
 ;; gnus-notifications.el -- Send notification on new message in Gnus
 
-;; Copyright (C) 2012-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
 ;; Author: Julien Danjou <julien@danjou.info>
 ;; Keywords: news
@@ -75,12 +75,19 @@ not get notifications."
   "Map notifications ids to messages.")
 
 (defun gnus-notifications-action (id key)
-  (when (string= key "read")
-    (let ((group-article (assoc id gnus-notifications-id-to-msg)))
-      (when group-article
-        (let ((group (cadr group-article))
-              (article (nth 2 group-article)))
-          (gnus-fetch-group group (list article)))))))
+  (let ((group-article (assoc id gnus-notifications-id-to-msg)))
+    (when group-article
+      (let ((group (cadr group-article))
+            (article (nth 2 group-article)))
+        (cond ((string= key "read")
+               (gnus-fetch-group group (list article))
+               (gnus-select-frame-set-input-focus (selected-frame)))
+              ((string= key "mark-read")
+               (gnus-update-read-articles
+                group
+                (delq article (gnus-list-of-unread-articles group)))
+               ;; gnus-group-refresh-group
+               (gnus-group-update-group group)))))))
 
 (defun gnus-notifications-notify (from subject photo-file)
   "Send a notification about a new mail.
@@ -90,17 +97,20 @@ Return a notification id if any, or t on success."
        'notifications-notify
        :title from
        :body subject
-       :actions '("read" "Read")
+       :actions '("read" "Read" "mark-read" "Mark As Read")
        :on-action 'gnus-notifications-action
-       :app-icon (or photo-file
-                     (gnus-funcall-no-warning
-                      'image-search-load-path "gnus/gnus.png"))
+       :app-icon (gnus-funcall-no-warning
+                  'image-search-load-path "gnus/gnus.png")
+       :image-path photo-file
        :app-name "Gnus"
        :category "email.arrived"
        :timeout gnus-notifications-timeout)
     (message "New message from %s: %s" from subject)
     ;; Don't return an id
     t))
+
+(declare-function gravatar-retrieve-synchronously "gravatar.el"
+		  (mail-address))
 
 (defun gnus-notifications-get-photo (mail-address)
   "Get photo for mail address."

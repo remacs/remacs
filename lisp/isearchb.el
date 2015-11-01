@@ -1,9 +1,9 @@
 ;;; isearchb --- a marriage between iswitchb and isearch
 
-;; Copyright (C) 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Created: 16 Apr 2004
 ;; Version: 1.5
 ;; Keywords: lisp
@@ -75,7 +75,9 @@
 ;;   killing iswitchb.el and then trying to switch back is broken
 ;;   make sure TAB isn't broken
 
-(require 'iswitchb)
+;;; Code:
+
+(require 'iswitchb)                     ;FIXME: Don't rely on iswitchb!
 
 (defgroup isearchb nil
   "Switch between buffers using a mechanism like isearch."
@@ -118,7 +120,7 @@ Its purpose is to pass different call arguments to
   (interactive)
   (let* ((prompt "iswitch ")
 	 (iswitchb-method 'samewindow)
-	 (buf (iswitchb-read-buffer prompt nil nil iswitchb-text t)))
+	 (buf (iswitchb-read-buffer prompt nil nil nil iswitchb-text t)))
     (if (eq iswitchb-exit 'findfile)
 	(call-interactively 'find-file)
       (when buf
@@ -139,7 +141,8 @@ Its purpose is to pass different call arguments to
   (if last-command-event
       (setq iswitchb-rescan t
 	    iswitchb-text (concat iswitchb-text
-				  (char-to-string last-command-event))))
+				  (char-to-string
+				   (event-basic-type last-command-event)))))
   (iswitchb-set-matches)
   (let* ((match (car iswitchb-matches))
 	 (buf (and match (get-buffer match))))

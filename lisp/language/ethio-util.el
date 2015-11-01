@@ -1,6 +1,6 @@
 ;;; ethio-util.el --- utilities for Ethiopic	-*- coding: utf-8-emacs; -*-
 
-;; Copyright (C) 1997-1998, 2002-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997-1998, 2002-2015 Free Software Foundation, Inc.
 ;; Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
 ;;   2006, 2007, 2008, 2009, 2010, 2011
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
@@ -129,9 +129,9 @@ isolated vowel.")
   "Degree of reduction in converting Ethiopic digits into Arabic digits.
 Should be 0, 1 or 2.
 For example, ({10}{9}{100}{80}{7}) is converted into:
-    `10`9`100`80`7  if `ethio-numeric-reduction' is 0,
-    `109100807	    if `ethio-numeric-reduction' is 1,
-    `10900807	    if `ethio-numeric-reduction' is 2.")
+    \\=`10\\=`9\\=`100\\=`80\\=`7  if `ethio-numeric-reduction' is 0,
+    \\=`109100807	    if `ethio-numeric-reduction' is 1,
+    \\=`10900807	    if `ethio-numeric-reduction' is 2.")
 
 (defvar ethio-java-save-lowercase nil
   "Non-nil means save Ethiopic characters in lowercase hex numbers to Java files.
@@ -2069,7 +2069,5 @@ mark."
 ;; not registered with the register-input-method function.
 
 (provide 'ethio-util)
-
-;;; ethio-util.el ends here
 
 ;;; ethio-util.el ends here

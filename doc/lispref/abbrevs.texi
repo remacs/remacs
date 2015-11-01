@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1994, 1999, 2001-2013 Free Software Foundation,
+@c Copyright (C) 1990-1994, 1999, 2001-2015 Free Software Foundation,
 @c Inc.
 @c See the file elisp.texi for copying conditions.
 @node Abbrevs
@@ -59,6 +59,7 @@ expanded in the buffer.  For the user-level commands for abbrevs, see
 
 @node Abbrev Tables
 @section Abbrev Tables
+@cindex abbrev tables
 
   This section describes how to create and manipulate abbrev tables.
 
@@ -126,13 +127,14 @@ to add these to @var{name} separately.)
 
 @node Defining Abbrevs
 @section Defining Abbrevs
+@cindex defining abbrevs
 
   @code{define-abbrev} is the low-level basic function for defining an
 abbrev in an abbrev table.
 
   When a major mode defines a system abbrev, it should call
 @code{define-abbrev} and specify @code{t} for the @code{:system}
-property.  Be aware that any saved non-``system'' abbrevs are restored
+property.  Be aware that any saved non-system abbrevs are restored
 at startup, i.e., before some major modes are loaded.  Therefore, major
 modes should not assume that their abbrev tables are empty when they
 are first loaded.
@@ -143,13 +145,13 @@ This function defines an abbrev named @var{name}, in
 with properties @var{props} (@pxref{Abbrev Properties}).  The return
 value is @var{name}.  The @code{:system} property in @var{props} is
 treated specially here: if it has the value @code{force}, then it will
-overwrite an existing definition even for a non-``system'' abbrev of
+overwrite an existing definition even for a non-system abbrev of
 the same name.
 
 @var{name} should be a string.  The argument @var{expansion} is
 normally the desired expansion (a string), or @code{nil} to undefine
 the abbrev.  If it is anything but a string or @code{nil}, then the
-abbreviation ``expands'' solely by running @var{hook}.
+abbreviation expands solely by running @var{hook}.
 
 The argument @var{hook} is a function or @code{nil}.  If @var{hook} is
 non-@code{nil}, then it is called with no arguments after the abbrev is
@@ -181,6 +183,7 @@ callers.
 
 @node Abbrev Files
 @section Saving Abbrevs in Files
+@cindex save abbrevs in files
 
   A file of saved abbrev definitions is actually a file of Lisp code.
 The abbrevs are saved in the form of a Lisp program to define the same
@@ -232,6 +235,9 @@ define the same abbrevs.  If @var{filename} is @code{nil} or omitted,
 
 @node Abbrev Expansion
 @section Looking Up and Expanding Abbreviations
+@cindex looking up abbrevs
+@cindex expanding abbrevs
+@cindex abbrevs, looking up and expanding
 
   Abbrevs are usually expanded by certain interactive commands,
 including @code{self-insert-command}.  This section describes the
@@ -257,13 +263,16 @@ as in @code{abbrev-symbol}.
 
 @deffn Command expand-abbrev
 This command expands the abbrev before point, if any.  If point does not
-follow an abbrev, this command does nothing.  The command returns the
-abbrev symbol if it did expansion, @code{nil} otherwise.
+follow an abbrev, this command does nothing.  To do the expansion, it
+calls the function that is the value of the @code{abbrev-expand-function}
+variable, with no arguments, and returns whatever that function does.
 
-If the abbrev symbol has a hook function that is a symbol whose
-@code{no-self-insert} property is non-@code{nil}, and if the hook
-function returns @code{nil} as its value, then @code{expand-abbrev}
-returns @code{nil} even though expansion did occur.
+The default expansion function returns the abbrev symbol if it did
+expansion, and @code{nil} otherwise.  If the abbrev symbol has a hook
+function that is a symbol whose @code{no-self-insert} property is
+non-@code{nil}, and if the hook function returns @code{nil} as its
+value, then the default expansion function returns @code{nil},
+even though expansion did occur.
 @end deffn
 
 @defun abbrev-insert abbrev &optional name start end
@@ -331,24 +340,21 @@ has already been unexpanded.  This contains information left by
 @code{expand-abbrev} for the sake of the @code{unexpand-abbrev} command.
 @end defvar
 
-@defvar abbrev-expand-functions
-This is a wrapper hook (@pxref{Running Hooks}) run around the
-@code{expand-abbrev} function.  Each function on this hook is called
-with a single argument: a function that performs the normal abbrev
-expansion.  The hook function can hence do anything it wants before
-and after performing the expansion.  It can also choose not to call
-its argument, thus overriding the default behavior; or it may even
-call it several times.  The function should return the abbrev symbol
-if expansion took place.
+@defvar abbrev-expand-function
+The value of this variable is a function that @code{expand-abbrev}
+will call with no arguments to do the expansion.  The function can do
+anything it wants before and after performing the expansion.
+It should return the abbrev symbol if expansion took place.
 @end defvar
 
   The following sample code shows a simple use of
-@code{abbrev-expand-functions}.  It assumes that @code{foo-mode} is a
+@code{abbrev-expand-function}.  It assumes that @code{foo-mode} is a
 mode for editing certain files in which lines that start with @samp{#}
 are comments.  You want to use Text mode abbrevs for those lines.  The
 regular local abbrev table, @code{foo-mode-abbrev-table} is
 appropriate for all other lines.  @xref{Standard Abbrev Tables}, for the
 definitions of @code{local-abbrev-table} and @code{text-mode-abbrev-table}.
+@xref{Advising Functions}, for details of @code{add-function}.
 
 @smallexample
 (defun foo-mode-abbrev-expand-function (expand)
@@ -361,13 +367,13 @@ definitions of @code{local-abbrev-table} and @code{text-mode-abbrev-table}.
 
 (add-hook 'foo-mode-hook
           #'(lambda ()
-              (add-hook 'abbrev-expand-functions
-                        'foo-mode-abbrev-expand-function
-                        nil t)))
+              (add-function :around (local 'abbrev-expand-function)
+                            #'foo-mode-abbrev-expand-function)))
 @end smallexample
 
 @node Standard Abbrev Tables
 @section Standard Abbrev Tables
+@cindex standard abbrev tables
 
   Here we list the variables that hold the abbrev tables for the
 preloaded major modes of Emacs.
@@ -410,6 +416,7 @@ Properties}.
 
 @node Abbrev Properties
 @section Abbrev Properties
+@cindex abbrev properties
 
 Abbrevs have properties, some of which influence the way they work.
 You can provide them as arguments to @code{define-abbrev}, and
@@ -450,6 +457,7 @@ modifies the capitalization of the expansion.
 
 @node Abbrev Table Properties
 @section Abbrev Table Properties
+@cindex abbrev table properties
 
 Like abbrevs, abbrev tables have properties, some of which influence
 the way they work.  You can provide them as arguments to

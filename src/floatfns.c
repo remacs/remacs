@@ -1,6 +1,6 @@
 /* Primitive operations on floating point for GNU Emacs Lisp interpreter.
 
-Copyright (C) 1988, 1993-1994, 1999, 2001-2013 Free Software Foundation,
+Copyright (C) 1988, 1993-1994, 1999, 2001-2015 Free Software Foundation,
 Inc.
 
 Author: Wolfgang Rupprecht
@@ -46,12 +46,13 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <math.h>
 
-#ifndef isfinite
-# define isfinite(x) ((x) - (x) == 0)
-#endif
-#ifndef isnan
-# define isnan(x) ((x) != (x))
-#endif
+/* 'isfinite' and 'isnan' cause build failures on Solaris 10 with the
+   bundled GCC in c99 mode.  Work around the bugs with simple
+   implementations that are good enough.  */
+#undef isfinite
+#define isfinite(x) ((x) - (x) == 0)
+#undef isnan
+#define isnan(x) ((x) != (x))
 
 /* Check that X is a floating point number.  */
 
@@ -141,7 +142,7 @@ DEFUN ("tan", Ftan, Stan, 1, 1, 0,
 }
 
 DEFUN ("isnan", Fisnan, Sisnan, 1, 1, 0,
-       doc: /* Return non nil iff argument X is a NaN.  */)
+       doc: /* Return non nil if argument X is a NaN.  */)
   (Lisp_Object x)
 {
   CHECK_FLOAT (x);
@@ -169,7 +170,7 @@ Cause an error if X1 or X2 is not a float.  */)
 DEFUN ("frexp", Ffrexp, Sfrexp, 1, 1, 0,
        doc: /* Get significand and exponent of a floating point number.
 Breaks the floating point number X into its binary significand SGNFCAND
-\(a floating point value between 0.5 (included) and 1.0 (excluded))
+(a floating point value between 0.5 (included) and 1.0 (excluded))
 and an integral exponent EXP for 2, such that:
 
   X = SGNFCAND * 2^EXP
@@ -184,14 +185,14 @@ If X is zero, both parts (SGNFCAND and EXP) are zero.  */)
   return Fcons (make_float (sgnfcand), make_number (exponent));
 }
 
-DEFUN ("ldexp", Fldexp, Sldexp, 1, 2, 0,
-       doc: /* Construct number X from significand SGNFCAND and exponent EXP.
-Returns the floating point value resulting from multiplying SGNFCAND
-(the significand) by 2 raised to the power of EXP (the exponent).   */)
+DEFUN ("ldexp", Fldexp, Sldexp, 2, 2, 0,
+       doc: /* Return X * 2**EXP, as a floating point number.
+EXP must be an integer.   */)
   (Lisp_Object sgnfcand, Lisp_Object exponent)
 {
   CHECK_NUMBER (exponent);
-  return make_float (ldexp (XFLOATINT (sgnfcand), XINT (exponent)));
+  int e = min (max (INT_MIN, XINT (exponent)), INT_MAX);
+  return make_float (ldexp (XFLOATINT (sgnfcand), e));
 }
 
 DEFUN ("exp", Fexp, Sexp, 1, 1, 0,
@@ -376,32 +377,22 @@ rounding_driver (Lisp_Object arg, Lisp_Object divisor,
   return arg;
 }
 
-/* With C's /, the result is implementation-defined if either operand
-   is negative, so take care with negative operands in the following
-   integer functions.  */
-
 static EMACS_INT
 ceiling2 (EMACS_INT i1, EMACS_INT i2)
 {
-  return (i2 < 0
-	  ? (i1 < 0  ?  ((-1 - i1) / -i2) + 1  :  - (i1 / -i2))
-	  : (i1 <= 0  ?  - (-i1 / i2)  :  ((i1 - 1) / i2) + 1));
+  return i1 / i2 + ((i1 % i2 != 0) & ((i1 < 0) == (i2 < 0)));
 }
 
 static EMACS_INT
 floor2 (EMACS_INT i1, EMACS_INT i2)
 {
-  return (i2 < 0
-	  ? (i1 <= 0  ?  -i1 / -i2  :  -1 - ((i1 - 1) / -i2))
-	  : (i1 < 0  ?  -1 - ((-1 - i1) / i2)  :  i1 / i2));
+  return i1 / i2 - ((i1 % i2 != 0) & ((i1 < 0) != (i2 < 0)));
 }
 
 static EMACS_INT
 truncate2 (EMACS_INT i1, EMACS_INT i2)
 {
-  return (i2 < 0
-	  ? (i1 < 0  ?  -i1 / -i2  :  - (i1 / -i2))
-	  : (i1 < 0  ?  - (-i1 / i2)  :  i1 / i2));
+  return i1 / i2;
 }
 
 static EMACS_INT
@@ -427,7 +418,9 @@ round2 (EMACS_INT i1, EMACS_INT i2)
 static double
 emacs_rint (double d)
 {
-  return floor (d + 0.5);
+  double d1 = d + 0.5;
+  double r = floor (d1);
+  return r - (r == d1 && fmod (r, 2) != 0);
 }
 #endif
 
@@ -461,7 +454,7 @@ With optional DIVISOR, return the nearest integer to ARG/DIVISOR.
 
 Rounding a value equidistant between two integers may choose the
 integer closer to zero, or it may prefer an even integer, depending on
-your machine.  For example, \(round 2.5\) can return 3 on some
+your machine.  For example, (round 2.5) can return 3 on some
 systems, but 2 on others.  */)
   (Lisp_Object arg, Lisp_Object divisor)
 {
@@ -498,7 +491,7 @@ fmod_float (Lisp_Object x, Lisp_Object y)
 
 DEFUN ("fceiling", Ffceiling, Sfceiling, 1, 1, 0,
        doc: /* Return the smallest integer no less than ARG, as a float.
-\(Round toward +inf.\)  */)
+(Round toward +inf.)  */)
   (Lisp_Object arg)
 {
   double d = extract_float (arg);
@@ -508,7 +501,7 @@ DEFUN ("fceiling", Ffceiling, Sfceiling, 1, 1, 0,
 
 DEFUN ("ffloor", Fffloor, Sffloor, 1, 1, 0,
        doc: /* Return the largest integer no greater than ARG, as a float.
-\(Round towards -inf.\)  */)
+(Round towards -inf.)  */)
   (Lisp_Object arg)
 {
   double d = extract_float (arg);

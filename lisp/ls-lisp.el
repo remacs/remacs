@@ -1,10 +1,10 @@
 ;;; ls-lisp.el --- emulate insert-directory completely in Emacs Lisp
 
-;; Copyright (C) 1992, 1994, 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1992, 1994, 2000-2015 Free Software Foundation, Inc.
 
 ;; Author: Sebastian Kremer <sk@thp.uni-koeln.de>
 ;; Modified by: Francis J. Wright <F.J.Wright@maths.qmw.ac.uk>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: unix, dired
 ;; Package: emacs
 
@@ -27,11 +27,9 @@
 
 ;; OVERVIEW ==========================================================
 
-;; This file redefines the function `insert-directory' to implement it
-;; directly from Emacs lisp, without running ls in a subprocess.  It
-;; is useful if you cannot afford to fork Emacs on a real memory UNIX,
-;; or other non-UNIX platforms if you don't have the ls
-;; program, or if you want a different format from what ls offers.
+;; This file advises the function `insert-directory' to implement it
+;; directly from Emacs lisp, without running ls in a subprocess.
+;; This is useful if you don't have ls installed (ie, on MS Windows).
 
 ;; This function can use regexps instead of shell wildcards.  If you
 ;; enter regexps remember to double each $ sign.  For example, to
@@ -115,6 +113,47 @@ update the dependent variables."
   :type 'boolean
   :group 'ls-lisp)
 
+(defcustom ls-lisp-use-string-collate
+  (cond ((memq ls-lisp-emulation '(MacOS UNIX)) nil)
+	(t t))		; GNU/Linux or MS-Windows emulate GNU ls
+  "Non-nil causes ls-lisp to sort files in locale-dependent collation order.
+
+A value of nil means use ordinary string comparison (see `compare-strings')
+for sorting files.  A non-nil value uses `string-collate-lessp' instead,
+which more closely emulates what GNU `ls' does.
+
+On GNU/Linux systems, if the locale's codeset specifies UTF-8, as
+in \"en_US.UTF-8\", the collation order follows the Unicode
+Collation Algorithm (UCA), which places together file names that
+differ only in punctuation characters.  On MS-Windows, customize
+the option `ls-lisp-UCA-like-collation' to a non-nil value to get
+similar behavior."
+  :version "25.1"
+  :set-after '(ls-lisp-emulation)
+  :type 'boolean
+  :group 'ls-lisp)
+
+(defcustom ls-lisp-UCA-like-collation t
+  "Non-nil means force ls-lisp use a collation order compatible with UCA.
+
+UCA is the Unicode Collation Algorithm.  GNU/Linux systems automatically
+follow it in their string-collation routines if the locale specifies
+UTF-8 as its codeset.  On MS-Windows, customize this option to a non-nil
+value to get similar behavior.
+
+When this option is non-nil, and `ls-lisp-use-string-collate' is also
+non-nil, the collation order produced on MS-Windows will ignore
+punctuation and symbol characters, which will, for example, place
+`.foo' near `foo'.  See the documentation of `string-collate-lessp'
+and `w32-collate-ignore-punctuation' for more details.
+
+This option is ignored on platforms other than MS-Windows; to
+control the collation ordering of the file names on those other
+systems, set your locale instead."
+  :version "25.1"
+  :type 'boolean
+  :group 'ls-lisp)
+
 (defcustom ls-lisp-dirs-first (eq ls-lisp-emulation 'MS-Windows)
   "Non-nil causes ls-lisp to sort directories first in any ordering.
 \(Or last if it is reversed.)  Follows Microsoft Windows Explorer."
@@ -183,7 +222,7 @@ current year.  The OLD-TIME-FORMAT is used for older files.  To use ISO
 8601 dates, you could set:
 
 \(setq ls-lisp-format-time-list
-       '(\"%Y-%m-%d %H:%M\"
+       \\='(\"%Y-%m-%d %H:%M\"
          \"%Y-%m-%d      \"))"
   :type '(list (string :tag "Early time format")
 	       (string :tag "Old time format"))
@@ -198,30 +237,24 @@ to fail to line up, e.g. if month names are not all of the same length."
   :type 'boolean
   :group 'ls-lisp)
 
-(defvar original-insert-directory nil
-  "This holds the original function definition of `insert-directory'.")
-
-(defvar ls-lisp-uid-d-fmt "-%d"
+(defvar ls-lisp-uid-d-fmt " %d"
   "Format to display integer UIDs.")
-(defvar ls-lisp-uid-s-fmt "-%s"
+(defvar ls-lisp-uid-s-fmt " %s"
   "Format to display user names.")
-(defvar ls-lisp-gid-d-fmt "-%d"
+(defvar ls-lisp-gid-d-fmt " %d"
   "Format to display integer GIDs.")
-(defvar ls-lisp-gid-s-fmt "-%s"
+(defvar ls-lisp-gid-s-fmt " %s"
   "Format to display user group names.")
 (defvar ls-lisp-filesize-d-fmt "%d"
   "Format to display integer file sizes.")
 (defvar ls-lisp-filesize-f-fmt "%.0f"
   "Format to display float file sizes.")
-
-;; Remember the original insert-directory function
-(or (featurep 'ls-lisp)  ; FJW: unless this file is being reloaded!
-    (setq original-insert-directory (symbol-function 'insert-directory)))
-
+(defvar ls-lisp-filesize-b-fmt "%.0f"
+  "Format to display file sizes in blocks (for the -s switch).")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun insert-directory (file switches &optional wildcard full-directory-p)
+(defun ls-lisp--insert-directory (orig-fun file switches &optional wildcard full-directory-p)
   "Insert directory listing for FILE, formatted according to SWITCHES.
 Leaves point after the inserted text.
 SWITCHES may be a string of options, or a list of strings.
@@ -231,21 +264,19 @@ switches do not contain `d', so that a full listing is expected.
 
 This version of the function comes from `ls-lisp.el'.
 If the value of `ls-lisp-use-insert-directory-program' is non-nil then
-it works exactly like the version from `files.el' and runs a directory
-listing program whose name is in the variable
-`insert-directory-program'; if also WILDCARD is non-nil then it runs
-the shell specified by `shell-file-name'.  If the value of
-`ls-lisp-use-insert-directory-program' is nil then it runs a Lisp
-emulation.
+this advice just delegates the work to ORIG-FUN (the normal `insert-directory'
+function from `files.el').
+But if the value of `ls-lisp-use-insert-directory-program' is nil
+then it runs a Lisp emulation.
 
 The Lisp emulation does not run any external programs or shells.  It
 supports ordinary shell wildcards if `ls-lisp-support-shell-wildcards'
 is non-nil; otherwise, it interprets wildcards as regular expressions
 to match file names.  It does not support all `ls' switches -- those
-that work are: A a B C c F G g h i n R r S s t U u X.  The l switch
+that work are: A a B C c F G g h i n R r S s t U u v X.  The l switch
 is assumed to be always present and cannot be turned off."
   (if ls-lisp-use-insert-directory-program
-      (funcall original-insert-directory
+      (funcall orig-fun
 	       file switches wildcard full-directory-p)
     ;; We need the directory in order to find the right handler.
     (let ((handler (find-file-name-handler (expand-file-name file)
@@ -305,6 +336,7 @@ is assumed to be always present and cannot be turned off."
 		(replace-match "total used in directory")
 		(end-of-line)
 		(insert " available " available)))))))))
+(advice-add 'insert-directory :around #'ls-lisp--insert-directory)
 
 (defun ls-lisp-insert-directory
   (file switches time-index wildcard-regexp full-directory-p)
@@ -367,17 +399,15 @@ not contain `d', so that a full listing is expected."
 	  (setq ls-lisp-gid-d-fmt (format " %%-%dd" max-gid-len))
 	  (setq ls-lisp-gid-s-fmt (format " %%-%ds" max-gid-len))
 	  (setq ls-lisp-filesize-d-fmt
-		(format " %%%dd"
-			(if (memq ?s switches)
-			    (length (format "%.0f"
-					    (fceiling (/ max-file-size 1024.0))))
-			  (length (format "%.0f" max-file-size)))))
+		(format " %%%dd" (length (format "%.0f" max-file-size))))
 	  (setq ls-lisp-filesize-f-fmt
-		(format " %%%d.0f"
-			(if (memq ?s switches)
+		(format " %%%d.0f" (length (format "%.0f" max-file-size))))
+	  (if (memq ?s switches)
+	      (setq ls-lisp-filesize-b-fmt
+		    (format "%%%d.0f "
 			    (length (format "%.0f"
-					    (fceiling (/ max-file-size 1024.0))))
-			  (length (format "%.0f" max-file-size)))))
+					    (fceiling
+					     (/ max-file-size 1024.0)))))))
 	  (setq files file-alist)
 	  (while files			; long (-l) format
 	    (setq elt (car files)
@@ -506,11 +536,81 @@ Responds to the window width as ls should but may not!"
     result))
 
 (defsubst ls-lisp-string-lessp (s1 s2)
-  "Return t if string S1 is less than string S2 in lexicographic order.
+  "Return t if string S1 should sort before string S2.
 Case is significant if `ls-lisp-ignore-case' is nil.
-Unibyte strings are converted to multibyte for comparison."
-  (let ((u (compare-strings s1 0 nil s2 0 nil ls-lisp-ignore-case)))
-    (and (numberp u) (< u 0))))
+Uses `string-collate-lessp' if `ls-lisp-use-string-collate' is non-nil,
+`compare-strings' otherwise.
+On GNU/Linux systems, if the locale specifies UTF-8 as the codeset,
+the sorting order will place together file names that differ only
+by punctuation characters, like `.emacs' and `emacs'.  To have a
+similar behavior on MS-Windows, customize `ls-lisp-UCA-like-collation'
+to a non-nil value."
+  (let ((w32-collate-ignore-punctuation ls-lisp-UCA-like-collation))
+    (if ls-lisp-use-string-collate
+	(string-collate-lessp s1 s2 nil ls-lisp-ignore-case)
+      (let ((u (compare-strings s1 0 nil s2 0 nil ls-lisp-ignore-case)))
+	(and (numberp u) (< u 0))))))
+
+(defun ls-lisp-version-lessp (s1 s2)
+  "Return t if versioned string S1 should sort before versioned string S2.
+
+Case is significant if `ls-lisp-ignore-case' is nil.
+This is the same as string-lessp (with the exception of case
+insensitivity), but sequences of digits are compared numerically,
+as a whole, in the same manner as the `strverscmp' function available
+in some standard C libraries does."
+  (let ((i1 0)
+	(i2 0)
+	(len1 (length s1))
+	(len2 (length s2))
+	(val 0)
+	ni1 ni2 e1 e2 found-2-numbers-p)
+    (while (and (< i1 len1) (< i2 len2) (zerop val))
+      (unless found-2-numbers-p
+	(setq ni1 (string-match "[0-9]+" s1 i1)
+	      e1 (match-end 0))
+	(setq ni2 (string-match "[0-9]+" s2 i2)
+	      e2 (match-end 0)))
+      (cond
+       ((and ni1 ni2)
+	(cond
+	 ((and (> ni1 i1) (> ni2 i2))
+	  ;; Compare non-numerical part as strings.
+	  (setq val (compare-strings s1 i1 ni1 s2 i2 ni2 ls-lisp-ignore-case)
+		i1 ni1
+		i2 ni2
+		found-2-numbers-p t))
+	 ((and (= ni1 i1) (= ni2 i2))
+	  (setq found-2-numbers-p nil)
+	  ;; Compare numerical parts as integral and/or fractional parts.
+	  (let* ((sub1 (substring s1 ni1 e1))
+		 (sub2 (substring s2 ni2 e2))
+		 ;; "Fraction" is a numerical sequence with leading zeros.
+		 (fr1 (string-match "\\`0+" sub1))
+		 (fr2 (string-match "\\`0+" sub2)))
+	    (cond
+	     ((and fr1 fr2)	; two fractions, the shortest wins
+	      (setq val (- val (- (length sub1) (length sub2)))))
+	     (fr1		; a fraction is always less than an integral
+	      (setq val (- ni1)))
+	     (fr2
+	      (setq val ni2)))
+	    (if (zerop val)	; fall back on numerical comparison
+		(setq val (- (string-to-number sub1)
+			     (string-to-number sub2))))
+	    (setq i1 e1
+		  i2 e2)))
+	 (t
+	  (setq val (compare-strings s1 i1 nil s2 i2 nil ls-lisp-ignore-case)
+		i1 len1
+		i2 len2))))
+       (t (setq val (compare-strings s1 i1 nil s2 i2 nil ls-lisp-ignore-case)
+		i1 len1
+		i2 len2)))
+      (and (eq val t) (setq val 0)))
+    (if (zerop val)
+	(setq val (- len1 len2)))
+    (< val 0)))
 
 (defun ls-lisp-handle-switches (file-alist switches)
   "Return new FILE-ALIST sorted according to SWITCHES.
@@ -538,6 +638,9 @@ SWITCHES is a list of characters.  Default sorting is alphabetic."
 				 (ls-lisp-string-lessp
 				  (ls-lisp-extension (car x))
 				  (ls-lisp-extension (car y)))))
+			      ((memq ?v switches)
+			       (lambda (x y) ; sorted by version number
+				 (ls-lisp-version-lessp (car x) (car y))))
 			      (t
 			       (lambda (x y) ; sorted alphabetically
 				 (ls-lisp-string-lessp (car x) (car y))))))))
@@ -566,7 +669,7 @@ SWITCHES is a list of characters.  Default sorting is alphabetic."
 		))))
   ;; Finally reverse file alist if necessary.
   ;; (eq below MUST compare `(not (memq ...))' to force comparison of
-  ;; `t' or `nil', rather than list tails!)
+  ;; t or nil, rather than list tails!)
   (if (eq (eq (not (memq ?U switches))	; unsorted order is reversed
 	      (not (memq ?r switches)))	; reversed sort order requested
 	  ls-lisp-dirs-first)		; already reversed
@@ -664,9 +767,20 @@ SWITCHES and TIME-INDEX give the full switch list and time data."
 				   (cdr inode))))
 		    (format " %18d " inode))))
 	    ;; nil is treated like "" in concat
-	    (if (memq ?s switches)	; size in K
-		(format ls-lisp-filesize-f-fmt
-			(fceiling (/ file-size 1024.0))))
+	    (if (memq ?s switches)	; size in K, rounded up
+		;; In GNU ls, -h affects the size in blocks, displayed
+		;; by -s, as well.
+		(if (memq ?h switches)
+		    (format "%6s "
+			    (file-size-human-readable
+			     ;; We use 1K as "block size", although
+			     ;; most Windows volumes use 4KB to 8KB
+			     ;; clusters, and exFAT will usually have
+			     ;; clusters of 32KB or even 128KB.  See
+			     ;; KB article 140365 for the details.
+			     (* 1024.0 (fceiling (/ file-size 1024.0)))))
+		  (format ls-lisp-filesize-b-fmt
+			  (fceiling (/ file-size 1024.0)))))
 	    drwxrwxrwx			; attribute string
 	    (if (memq 'links ls-lisp-verbosity)
 		(format "%3d" (nth 1 file-attr))) ; link count
@@ -748,7 +862,7 @@ All ls time options, namely c, t and u, are handled."
 		  ls-lisp-filesize-f-fmt
 		ls-lisp-filesize-d-fmt)
 	      file-size)
-    (format " %7s" (file-size-human-readable file-size))))
+    (format " %6s" (file-size-human-readable file-size))))
 
 (provide 'ls-lisp)
 

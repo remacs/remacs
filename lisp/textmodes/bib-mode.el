@@ -1,10 +1,10 @@
 ;;; bib-mode.el --- major mode for editing bib files
 
-;; Copyright (C) 1989, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1989, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Henry Kautz
 ;; (according to authors.el)
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: bib
 
 ;; This file is part of GNU Emacs.
@@ -82,8 +82,8 @@ A uthor		T itle		D ate  		J ournal
 V olume		N umber		P age		K eywords
 B in book or proceedings	E ditor		C ity & state
 I nstitution, school, or publisher
-R eport number or 'phd thesis' or 'masters thesis' or 'draft' or
-     'unnumbered' or 'unpublished'
+R eport number or `phd thesis' or `masters thesis' or `draft' or
+     `unnumbered' or `unpublished'
 W here can be found locally (login name, or ailib, etc.)
 X comments (not used in indexing)
 

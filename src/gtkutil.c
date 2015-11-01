@@ -1,6 +1,6 @@
 /* Functions for creating and updating GTK widgets.
 
-Copyright (C) 2003-2013 Free Software Foundation, Inc.
+Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -26,17 +26,18 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <c-ctype.h>
 
 #include "lisp.h"
+#include "dispextern.h"
+#include "frame.h"
+#include "systime.h"
 #include "xterm.h"
 #include "blockinput.h"
-#include "syssignal.h"
 #include "window.h"
 #include "gtkutil.h"
 #include "termhooks.h"
 #include "keyboard.h"
-#include "charset.h"
 #include "coding.h"
+
 #include <gdk/gdkkeysyms.h>
-#include "xsettings.h"
 
 #ifdef HAVE_XFT
 #include <X11/Xft/Xft.h>
@@ -46,12 +47,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <gtk/gtkx.h>
 #include "emacsgtkfixed.h"
 #endif
-
-#define FRAME_TOTAL_PIXEL_HEIGHT(f) \
-  (FRAME_PIXEL_HEIGHT (f) + FRAME_MENUBAR_HEIGHT (f) + FRAME_TOOLBAR_HEIGHT (f))
-
-#define FRAME_TOTAL_PIXEL_WIDTH(f) \
-  (FRAME_PIXEL_WIDTH (f) + FRAME_TOOLBAR_WIDTH (f))
 
 #ifndef HAVE_GTK_WIDGET_SET_HAS_WINDOW
 #define gtk_widget_set_has_window(w, b) \
@@ -76,6 +71,21 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define remove_submenu(w) gtk_menu_item_remove_submenu ((w))
 #endif
 
+#if ! GTK_CHECK_VERSION (2, 14, 0)
+#define gtk_adjustment_configure(adj, xvalue, xlower,            \
+                                 xupper, xstep_increment,        \
+                                 xpage_increment, xpagesize)     \
+  do {                                                           \
+    adj->lower = xlower;                                         \
+    adj->upper = xupper;                                         \
+    adj->page_size = xpagesize;                                  \
+    gtk_adjustment_set_value (adj, xvalue);                      \
+    adj->page_increment = xpage_increment;                       \
+    adj->step_increment = xstep_increment;                       \
+  } while (0)
+#endif /* < Gtk+ 2.14 */
+
+#ifdef HAVE_FREETYPE
 #if GTK_CHECK_VERSION (3, 2, 0)
 #define USE_NEW_GTK_FONT_CHOOSER 1
 #else
@@ -86,6 +96,17 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define GTK_FONT_CHOOSER(x) GTK_FONT_SELECTION_DIALOG (x)
 #define  gtk_font_chooser_set_font(x, y) \
   gtk_font_selection_dialog_set_font_name (x, y)
+#endif
+#endif /* HAVE_FREETYPE */
+
+#if GTK_CHECK_VERSION (3, 10, 0)
+#define XG_TEXT_CANCEL "Cancel"
+#define XG_TEXT_OK     "OK"
+#define XG_TEXT_OPEN   "Open"
+#else
+#define XG_TEXT_CANCEL GTK_STOCK_CANCEL
+#define XG_TEXT_OK     GTK_STOCK_OK
+#define XG_TEXT_OPEN   GTK_STOCK_OPEN
 #endif
 
 #ifndef HAVE_GTK3
@@ -110,6 +131,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define XG_BIN_CHILD(x) gtk_bin_get_child (GTK_BIN (x))
 
 static void update_theme_scrollbar_width (void);
+static void update_theme_scrollbar_height (void);
 
 #define TB_INFO_KEY "xg_frame_tb_info"
 struct xg_frame_tb_info
@@ -163,7 +185,9 @@ xg_display_open (char *display_name, Display **dpy)
 {
   GdkDisplay *gdpy;
 
+  unrequest_sigio ();  // See comment in x_display_ok, xterm.c.
   gdpy = gdk_display_open (display_name);
+  request_sigio ();
   if (!gdpy_def && gdpy)
     {
       gdpy_def = gdpy;
@@ -217,57 +241,6 @@ xg_display_close (Display *dpy)
 /***********************************************************************
                       Utility functions
  ***********************************************************************/
-/* The next two variables and functions are taken from lwlib.  */
-static widget_value *widget_value_free_list;
-static int malloc_cpt;
-
-/* Allocate a widget_value structure, either by taking one from the
-   widget_value_free_list or by malloc:ing a new one.
-
-   Return a pointer to the allocated structure.  */
-
-widget_value *
-malloc_widget_value (void)
-{
-  widget_value *wv;
-  if (widget_value_free_list)
-    {
-      wv = widget_value_free_list;
-      widget_value_free_list = wv->free_list;
-      wv->free_list = 0;
-    }
-  else
-    {
-      wv = xmalloc (sizeof *wv);
-      malloc_cpt++;
-    }
-  memset (wv, 0, sizeof (widget_value));
-  return wv;
-}
-
-/* This is analogous to free.  It frees only what was allocated
-   by malloc_widget_value, and no substructures.  */
-
-void
-free_widget_value (widget_value *wv)
-{
-  if (wv->free_list)
-    emacs_abort ();
-
-  if (malloc_cpt > 25)
-    {
-      /* When the number of already allocated cells is too big,
-	 We free it.  */
-      xfree (wv);
-      malloc_cpt--;
-    }
-  else
-    {
-      wv->free_list = widget_value_free_list;
-      widget_value_free_list = wv;
-    }
-}
-
 
 /* Create and return the cursor to be used for popup menus and
    scroll bars on display DPY.  */
@@ -407,10 +380,11 @@ xg_get_image_for_pixmap (struct frame *f,
   if (STRINGP (specified_file)
       && STRINGP (file = x_find_image_file (specified_file)))
     {
+      char *encoded_file = SSDATA (ENCODE_FILE (file));
       if (! old_widget)
-        old_widget = GTK_IMAGE (gtk_image_new_from_file (SSDATA (file)));
+        old_widget = GTK_IMAGE (gtk_image_new_from_file (encoded_file));
       else
-        gtk_image_set_from_file (old_widget, SSDATA (file));
+        gtk_image_set_from_file (old_widget, encoded_file);
 
       return GTK_WIDGET (old_widget);
     }
@@ -553,16 +527,16 @@ get_utf8_string (const char *str)
              && err->code == G_CONVERT_ERROR_ILLEGAL_SEQUENCE)
         {
           memcpy (up, p, bytes_written);
-          sprintf (up + bytes_written, "\\%03o", p[bytes_written]);
-          up += bytes_written+4;
-          p += bytes_written+1;
+          up += bytes_written;
+          up += sprintf (up, "\\%03o", p[bytes_written]);
+          p += bytes_written + 1;
           g_error_free (err);
           err = NULL;
         }
 
       if (cp)
         {
-          strcat (utf8_str, cp);
+          strcpy (up, cp);
           g_free (cp);
         }
       if (err)
@@ -596,17 +570,18 @@ xg_check_special_colors (struct frame *f,
     GtkStyleContext *gsty
       = gtk_widget_get_style_context (FRAME_GTK_OUTER_WIDGET (f));
     GdkRGBA col;
-    char buf[sizeof "rgbi://" + 3 * (DBL_MAX_10_EXP + sizeof "-1.000000" - 1)];
+    char buf[sizeof "rgb://rrrr/gggg/bbbb"];
     int state = GTK_STATE_FLAG_SELECTED|GTK_STATE_FLAG_FOCUSED;
     if (get_fg)
       gtk_style_context_get_color (gsty, state, &col);
     else
       gtk_style_context_get_background_color (gsty, state, &col);
 
-    sprintf (buf, "rgbi:%lf/%lf/%lf", col.red, col.green, col.blue);
-    success_p = (XParseColor (FRAME_X_DISPLAY (f), FRAME_X_COLORMAP (f),
-			      buf, color)
-		 != 0);
+    sprintf (buf, "rgb:%04x/%04x/%04x",
+             (unsigned) (col.red * 65535),
+             (unsigned) (col.green * 65535),
+             (unsigned) (col.blue * 65535));
+    success_p = x_parse_color (f, buf, color) != 0;
 #else
     GtkStyle *gsty = gtk_widget_get_style (FRAME_GTK_WIDGET (f));
     GdkColor *grgb = get_bg
@@ -864,36 +839,46 @@ xg_set_geometry (struct frame *f)
 /* Clear under internal border if any.  As we use a mix of Gtk+ and X calls
    and use a GtkFixed widget, this doesn't happen automatically.  */
 
-static void
+void
 xg_clear_under_internal_border (struct frame *f)
 {
   if (FRAME_INTERNAL_BORDER_WIDTH (f) > 0)
     {
+#ifndef USE_CAIRO
       GtkWidget *wfixed = f->output_data.x->edit_widget;
+
       gtk_widget_queue_draw (wfixed);
       gdk_window_process_all_updates ();
-      x_clear_area (FRAME_X_DISPLAY (f),
-                    FRAME_X_WINDOW (f),
-                    0, 0,
-                    FRAME_PIXEL_WIDTH (f),
-                    FRAME_INTERNAL_BORDER_WIDTH (f), 0);
-      x_clear_area (FRAME_X_DISPLAY (f),
-                    FRAME_X_WINDOW (f),
-                    0, 0,
-                    FRAME_INTERNAL_BORDER_WIDTH (f),
-                    FRAME_PIXEL_HEIGHT (f), 0);
-      x_clear_area (FRAME_X_DISPLAY (f),
-                    FRAME_X_WINDOW (f),
-                    0, FRAME_PIXEL_HEIGHT (f) - FRAME_INTERNAL_BORDER_WIDTH (f),
-                    FRAME_PIXEL_WIDTH (f),
-                    FRAME_INTERNAL_BORDER_WIDTH (f), 0);
-      x_clear_area (FRAME_X_DISPLAY (f),
-                    FRAME_X_WINDOW (f),
-                    FRAME_PIXEL_WIDTH (f) - FRAME_INTERNAL_BORDER_WIDTH (f),
-                    0,
-                    FRAME_INTERNAL_BORDER_WIDTH (f),
-                    FRAME_PIXEL_HEIGHT (f), 0);
+#endif
+      x_clear_area (f, 0, 0,
+		    FRAME_PIXEL_WIDTH (f), FRAME_INTERNAL_BORDER_WIDTH (f));
+
+      x_clear_area (f, 0, 0,
+		    FRAME_INTERNAL_BORDER_WIDTH (f), FRAME_PIXEL_HEIGHT (f));
+
+      x_clear_area (f, 0,
+		    FRAME_PIXEL_HEIGHT (f) - FRAME_INTERNAL_BORDER_WIDTH (f),
+		    FRAME_PIXEL_WIDTH (f), FRAME_INTERNAL_BORDER_WIDTH (f));
+
+      x_clear_area (f,
+		    FRAME_PIXEL_WIDTH (f) - FRAME_INTERNAL_BORDER_WIDTH (f),
+		    0, FRAME_INTERNAL_BORDER_WIDTH (f), FRAME_PIXEL_HEIGHT (f));
     }
+}
+
+static int
+xg_get_gdk_scale (void)
+{
+  const char *sscale = getenv ("GDK_SCALE");
+
+  if (sscale)
+    {
+      long scale = atol (sscale);
+      if (0 < scale)
+	return min (scale, INT_MAX);
+    }
+
+  return 1;
 }
 
 /* Function to handle resize of our frame.  As we have a Gtk+ tool bar
@@ -905,31 +890,30 @@ xg_clear_under_internal_border (struct frame *f)
 void
 xg_frame_resized (struct frame *f, int pixelwidth, int pixelheight)
 {
-  int rows, columns;
+  int width, height;
 
   if (pixelwidth == -1 && pixelheight == -1)
     {
       if (FRAME_GTK_WIDGET (f) && gtk_widget_get_mapped (FRAME_GTK_WIDGET (f)))
-          gdk_window_get_geometry (gtk_widget_get_window (FRAME_GTK_WIDGET (f)),
-                                   0, 0,
-                                   &pixelwidth, &pixelheight);
-      else return;
+	gdk_window_get_geometry (gtk_widget_get_window (FRAME_GTK_WIDGET (f)),
+				 0, 0, &pixelwidth, &pixelheight);
+      else
+	return;
     }
 
+  width = FRAME_PIXEL_TO_TEXT_WIDTH (f, pixelwidth);
+  height = FRAME_PIXEL_TO_TEXT_HEIGHT (f, pixelheight);
 
-  rows = FRAME_PIXEL_HEIGHT_TO_TEXT_LINES (f, pixelheight);
-  columns = FRAME_PIXEL_WIDTH_TO_TEXT_COLS (f, pixelwidth);
+  frame_size_history_add
+    (f, Qxg_frame_resized, width, height, Qnil);
 
-  if (columns != FRAME_COLS (f)
-      || rows != FRAME_LINES (f)
+  if (width != FRAME_TEXT_WIDTH (f)
+      || height != FRAME_TEXT_HEIGHT (f)
       || pixelwidth != FRAME_PIXEL_WIDTH (f)
       || pixelheight != FRAME_PIXEL_HEIGHT (f))
     {
-      FRAME_PIXEL_WIDTH (f) = pixelwidth;
-      FRAME_PIXEL_HEIGHT (f) = pixelheight;
-
       xg_clear_under_internal_border (f);
-      change_frame_size (f, rows, columns, 0, 1, 0);
+      change_frame_size (f, width, height, 0, 1, 0, 1);
       SET_FRAME_GARBAGED (f);
       cancel_mouse_face (f);
     }
@@ -939,39 +923,71 @@ xg_frame_resized (struct frame *f, int pixelwidth, int pixelheight)
    COLUMNS/ROWS is the size the edit area shall have after the resize.  */
 
 void
-xg_frame_set_char_size (struct frame *f, int cols, int rows)
+xg_frame_set_char_size (struct frame *f, int width, int height)
 {
-  int pixelheight = FRAME_TEXT_LINES_TO_PIXEL_HEIGHT (f, rows)
-    + FRAME_MENUBAR_HEIGHT (f) + FRAME_TOOLBAR_HEIGHT (f);
-  int pixelwidth;
+  int pixelwidth = FRAME_TEXT_TO_PIXEL_WIDTH (f, width);
+  int pixelheight = FRAME_TEXT_TO_PIXEL_HEIGHT (f, height);
+  Lisp_Object fullscreen = get_frame_param (f, Qfullscreen);
+  gint gwidth, gheight;
+  int totalheight
+    = pixelheight + FRAME_TOOLBAR_HEIGHT (f) + FRAME_MENUBAR_HEIGHT (f);
+  int totalwidth = pixelwidth + FRAME_TOOLBAR_WIDTH (f);
 
   if (FRAME_PIXEL_HEIGHT (f) == 0)
     return;
 
-  /* Take into account the size of the scroll bar.  Always use the
-     number of columns occupied by the scroll bar here otherwise we
-     might end up with a frame width that is not a multiple of the
-     frame's character width which is bad for vertically split
-     windows.  */
-  f->scroll_bar_actual_width
-    = FRAME_SCROLL_BAR_COLS (f) * FRAME_COLUMN_WIDTH (f);
-
-  compute_fringe_widths (f, 0);
-
-  /* FRAME_TEXT_COLS_TO_PIXEL_WIDTH uses scroll_bar_actual_width, so call it
-     after calculating that value.  */
-  pixelwidth = FRAME_TEXT_COLS_TO_PIXEL_WIDTH (f, cols)
-    + FRAME_TOOLBAR_WIDTH (f);
-
+  gtk_window_get_size (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
+		       &gwidth, &gheight);
 
   /* Do this before resize, as we don't know yet if we will be resized.  */
   xg_clear_under_internal_border (f);
 
-  /* Must resize our top level widget.  Font size may have changed,
-     but not rows/cols.  */
-  gtk_window_resize (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
-                     pixelwidth, pixelheight);
+  if (FRAME_VISIBLE_P (f))
+    {
+      int scale = xg_get_gdk_scale ();
+      totalheight /= scale;
+      totalwidth /= scale;
+    }
+
   x_wm_set_size_hint (f, 0, 0);
+
+  /* Resize the top level widget so rows and columns remain constant.
+
+     When the frame is fullheight and we only want to change the width
+     or it is fullwidth and we only want to change the height we should
+     be able to preserve the fullscreen property.  However, due to the
+     fact that we have to send a resize request anyway, the window
+     manager will abolish it.  At least the respective size should
+     remain unchanged but giving the frame back its normal size will
+     be broken ... */
+  if (EQ (fullscreen, Qfullwidth) && width == FRAME_TEXT_WIDTH (f))
+    {
+      frame_size_history_add
+	(f, Qxg_frame_set_char_size_1, width, height,
+	 list2 (make_number (gheight), make_number (totalheight)));
+
+      gtk_window_resize (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
+			 gwidth, totalheight);
+    }
+  else if (EQ (fullscreen, Qfullheight) && height == FRAME_TEXT_HEIGHT (f))
+    {
+      frame_size_history_add
+	(f, Qxg_frame_set_char_size_2, width, height,
+	 list2 (make_number (gwidth), make_number (totalwidth)));
+
+      gtk_window_resize (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
+			 totalwidth, gheight);
+    }
+  else
+    {
+      frame_size_history_add
+	(f, Qxg_frame_set_char_size_3, width, height,
+	 list2 (make_number (totalwidth), make_number (totalheight)));
+
+      gtk_window_resize (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
+			 totalwidth, totalheight);
+      fullscreen = Qnil;
+    }
 
   SET_FRAME_GARBAGED (f);
   cancel_mouse_face (f);
@@ -989,18 +1005,23 @@ xg_frame_set_char_size (struct frame *f, int cols, int rows)
       (void)gtk_events_pending ();
       gdk_flush ();
       x_wait_for_event (f, ConfigureNotify);
+
+      if (!NILP (fullscreen))
+	/* Try to restore fullscreen state.  */
+	{
+	  store_frame_param (f, Qfullscreen, fullscreen);
+	  x_set_fullscreen (f, fullscreen, fullscreen);
+	}
     }
   else
-    {
-      change_frame_size (f, rows, cols, 0, 1, 0);
-      FRAME_PIXEL_WIDTH (f) = pixelwidth;
-      FRAME_PIXEL_HEIGHT (f) = pixelheight;
-     }
+    adjust_frame_size (f, width, height, 5, 0, Qxg_frame_set_char_size);
+
 }
 
 /* Handle height/width changes (i.e. add/remove/move menu/toolbar).
    The policy is to keep the number of editable lines.  */
 
+#if 0
 static void
 xg_height_or_width_changed (struct frame *f)
 {
@@ -1010,6 +1031,7 @@ xg_height_or_width_changed (struct frame *f)
   f->output_data.x->hint_flags = 0;
   x_wm_set_size_hint (f, 0, 0);
 }
+#endif
 
 /* Convert an X Window WSESC on display DPY to its corresponding GtkWidget.
    Must be done like this, because GtkWidget:s can have "hidden"
@@ -1042,7 +1064,7 @@ xg_win_to_widget (Display *dpy, Window wdesc)
 /* Set the background of widget W to PIXEL.  */
 
 static void
-xg_set_widget_bg (struct frame *f, GtkWidget *w, long unsigned int pixel)
+xg_set_widget_bg (struct frame *f, GtkWidget *w, unsigned long pixel)
 {
 #ifdef HAVE_GTK3
   GdkRGBA bg;
@@ -1085,6 +1107,7 @@ style_changed_cb (GObject *go,
   kbd_buffer_store_event (&event);
 
   update_theme_scrollbar_width ();
+  update_theme_scrollbar_height ();
 
   /* If scroll bar width changed, we need set the new size on all frames
      on this display.  */
@@ -1099,7 +1122,8 @@ style_changed_cb (GObject *go,
               && FRAME_X_DISPLAY (f) == dpy)
             {
               x_set_scroll_bar_default_width (f);
-              xg_frame_set_char_size (f, FRAME_COLS (f), FRAME_LINES (f));
+              x_set_scroll_bar_default_height (f);
+              xg_frame_set_char_size (f, FRAME_TEXT_WIDTH (f), FRAME_TEXT_HEIGHT (f));
             }
         }
     }
@@ -1112,18 +1136,6 @@ delete_cb (GtkWidget *widget,
            GdkEvent  *event,
            gpointer user_data)
 {
-#ifdef HAVE_GTK3
-  /* The event doesn't arrive in the normal event loop.  Send event
-     here.  */
-  struct frame *f = user_data;
-  struct input_event ie;
-
-  EVENT_INIT (ie);
-  ie.kind = DELETE_WINDOW_EVENT;
-  XSETFRAME (ie.frame_or_window, f);
-  kbd_buffer_store_event (&ie);
-#endif
-
   return TRUE;
 }
 
@@ -1342,6 +1354,7 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
   int min_rows = 0, min_cols = 0;
   int win_gravity = f->win_gravity;
   Lisp_Object fs_state, frame;
+  int scale = xg_get_gdk_scale ();
 
   /* Don't set size hints during initialization; that apparently leads
      to a race condition.  See the thread at
@@ -1351,7 +1364,9 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
 
   XSETFRAME (frame, f);
   fs_state = Fframe_parameter (frame, Qfullscreen);
-  if (EQ (fs_state, Qmaximized) || EQ (fs_state, Qfullboth))
+  if ((EQ (fs_state, Qmaximized) || EQ (fs_state, Qfullboth)) &&
+      (x_wm_supports (f, FRAME_DISPLAY_INFO (f)->Xatom_net_wm_state) ||
+       x_wm_supports (f, FRAME_DISPLAY_INFO (f)->Xatom_net_wm_state_fullscreen)))
     {
       /* Don't set hints when maximized or fullscreen.  Apparently KWin and
          Gtk3 don't get along and the frame shrinks (!).
@@ -1372,24 +1387,24 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
   hint_flags = f->output_data.x->hint_flags;
 
   hint_flags |= GDK_HINT_RESIZE_INC | GDK_HINT_MIN_SIZE;
-  size_hints.width_inc = FRAME_COLUMN_WIDTH (f);
-  size_hints.height_inc = FRAME_LINE_HEIGHT (f);
+  size_hints.width_inc = frame_resize_pixelwise ? 1 : FRAME_COLUMN_WIDTH (f);
+  size_hints.height_inc = frame_resize_pixelwise ? 1 : FRAME_LINE_HEIGHT (f);
 
   hint_flags |= GDK_HINT_BASE_SIZE;
   /* Use one row/col here so base_height/width does not become zero.
-     Gtk+ and/or Unity on Ubuntu 12.04 can't handle it.  */
+     Gtk+ and/or Unity on Ubuntu 12.04 can't handle it.
+     Obviously this makes the row/col value displayed off by 1.  */
   base_width = FRAME_TEXT_COLS_TO_PIXEL_WIDTH (f, 1) + FRAME_TOOLBAR_WIDTH (f);
   base_height = FRAME_TEXT_LINES_TO_PIXEL_HEIGHT (f, 1)
     + FRAME_MENUBAR_HEIGHT (f) + FRAME_TOOLBAR_HEIGHT (f);
 
-  check_frame_size (f, &min_rows, &min_cols);
   if (min_cols > 0) --min_cols; /* We used one col in base_width = ... 1); */
   if (min_rows > 0) --min_rows; /* We used one row in base_height = ... 1); */
 
   size_hints.base_width = base_width;
   size_hints.base_height = base_height;
-  size_hints.min_width  = base_width + min_cols * size_hints.width_inc;
-  size_hints.min_height = base_height + min_rows * size_hints.height_inc;
+  size_hints.min_width  = base_width + min_cols * FRAME_COLUMN_WIDTH (f);
+  size_hints.min_height = base_height + min_rows * FRAME_LINE_HEIGHT (f);
 
   /* These currently have a one to one mapping with the X values, but I
      don't think we should rely on that.  */
@@ -1422,6 +1437,11 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
       hint_flags |= GDK_HINT_USER_POS;
     }
 
+  size_hints.base_width /= scale;
+  size_hints.base_height /= scale;
+  size_hints.width_inc /= scale;
+  size_hints.height_inc /= scale;
+
   if (hint_flags != f->output_data.x->hint_flags
       || memcmp (&size_hints,
 		 &f->output_data.x->size_hints,
@@ -1443,7 +1463,7 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
    BG is the pixel value to change to.  */
 
 void
-xg_set_background_color (struct frame *f, long unsigned int bg)
+xg_set_background_color (struct frame *f, unsigned long bg)
 {
   if (FRAME_GTK_WIDGET (f))
     {
@@ -1543,13 +1563,23 @@ create_dialog (widget_value *wv,
   int button_spacing = 10;
   GtkWidget *wdialog = gtk_dialog_new ();
   GtkDialog *wd = GTK_DIALOG (wdialog);
-  GtkBox *cur_box = GTK_BOX (gtk_dialog_get_action_area (wd));
   widget_value *item;
   GtkWidget *whbox_down;
 
   /* If the number of buttons is greater than 4, make two rows of buttons
      instead.  This looks better.  */
   bool make_two_rows = total_buttons > 4;
+
+#if GTK_CHECK_VERSION (3, 12, 0)
+  GtkBuilder *gbld = gtk_builder_new ();
+  GObject *go = gtk_buildable_get_internal_child (GTK_BUILDABLE (wd),
+                                                  gbld,
+                                                  "action_area");
+  GtkBox *cur_box = GTK_BOX (go);
+  g_object_unref (G_OBJECT (gbld));
+#else
+  GtkBox *cur_box = GTK_BOX (gtk_dialog_get_action_area (wd));
+#endif
 
   if (right_buttons == 0) right_buttons = total_buttons/2;
   left_buttons = total_buttons - right_buttons;
@@ -1596,8 +1626,12 @@ create_dialog (widget_value *wv,
           w = gtk_label_new (utf8_label);
           gtk_box_pack_start (wvbox, gtk_label_new (""), FALSE, FALSE, 0);
           gtk_box_pack_start (wvbox, w, TRUE, TRUE, 0);
+#if GTK_CHECK_VERSION (3, 14, 0)
+          gtk_widget_set_halign (w, GTK_ALIGN_START);
+          gtk_widget_set_valign (w, GTK_ALIGN_CENTER);
+#else
           gtk_misc_set_alignment (GTK_MISC (w), 0.1, 0.5);
-
+#endif
           /* Try to make dialog look better.  Must realize first so
              the widget can calculate the size it needs.  */
           gtk_widget_realize (w);
@@ -1605,6 +1639,7 @@ create_dialog (widget_value *wv,
           gtk_box_set_spacing (wvbox, req.height);
 	  if (item->value && strlen (item->value) > 0)
             button_spacing = 2*req.width/strlen (item->value);
+          if (button_spacing < 10) button_spacing = 10;
         }
       else
         {
@@ -1621,11 +1656,6 @@ create_dialog (widget_value *wv,
             {
               if (make_two_rows)
                 cur_box = GTK_BOX (whbox_down);
-              else
-                gtk_box_pack_start (cur_box,
-                                    gtk_label_new (""),
-                                    TRUE, TRUE,
-                                    button_spacing);
             }
         }
 
@@ -1683,15 +1713,15 @@ static gboolean
 xg_maybe_add_timer (gpointer data)
 {
   struct xg_dialog_data *dd = data;
-  EMACS_TIME next_time = timer_check ();
+  struct timespec next_time = timer_check ();
 
   dd->timerid = 0;
 
-  if (EMACS_TIME_VALID_P (next_time))
+  if (timespec_valid_p (next_time))
     {
-      time_t s = EMACS_SECS (next_time);
-      int per_ms = EMACS_TIME_RESOLUTION / 1000;
-      int ms = (EMACS_NSECS (next_time) + per_ms - 1) / per_ms;
+      time_t s = next_time.tv_sec;
+      int per_ms = TIMESPEC_RESOLUTION / 1000;
+      int ms = (next_time.tv_nsec + per_ms - 1) / per_ms;
       if (s <= ((guint) -1 - ms) / 1000)
 	dd->timerid = g_timeout_add (s * 1000 + ms, xg_maybe_add_timer, dd);
     }
@@ -1842,9 +1872,9 @@ xg_get_file_with_chooser (struct frame *f,
     action = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
 
   filewin = gtk_file_chooser_dialog_new (prompt, gwin, action,
-                                         GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+                                         XG_TEXT_CANCEL, GTK_RESPONSE_CANCEL,
                                          (mustmatch_p || only_dir_p ?
-                                          GTK_STOCK_OPEN : GTK_STOCK_OK),
+                                          XG_TEXT_OPEN : XG_TEXT_OK),
                                          GTK_RESPONSE_OK,
                                          NULL);
   gtk_file_chooser_set_local_only (GTK_FILE_CHOOSER (filewin), TRUE);
@@ -1867,12 +1897,12 @@ xg_get_file_with_chooser (struct frame *f,
 
   if (x_gtk_file_dialog_help_text)
     {
-      msgbuf[0] = '\0';
+      char *z = msgbuf;
       /* Gtk+ 2.10 has the file name text entry box integrated in the dialog.
          Show the C-l help text only for versions < 2.10.  */
       if (gtk_check_version (2, 10, 0) && action != GTK_FILE_CHOOSER_ACTION_SAVE)
-        strcat (msgbuf, "\nType C-l to display a file name text entry box.\n");
-      strcat (msgbuf, "\nIf you don't like this file selector, use the "
+        z = stpcpy (z, "\nType C-l to display a file name text entry box.\n");
+      strcpy (z, "\nIf you don't like this file selector, use the "
               "corresponding\nkey binding or customize "
               "use-file-dialog to turn it off.");
 
@@ -1888,9 +1918,7 @@ xg_get_file_with_chooser (struct frame *f,
   if (default_filename)
     {
       Lisp_Object file;
-      struct gcpro gcpro1;
       char *utf8_filename;
-      GCPRO1 (file);
 
       file = build_string (default_filename);
 
@@ -1915,8 +1943,6 @@ xg_get_file_with_chooser (struct frame *f,
               gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (filewin), cp);
             }
         }
-
-      UNGCPRO;
     }
 
   *func = xg_get_file_name_from_chooser;
@@ -2050,7 +2076,6 @@ xg_get_file_name (struct frame *f,
 
 
 static char *x_last_font_name;
-extern Lisp_Object Qxft;
 
 /* Pop up a GTK font selector and return the name of the font the user
    selects, as a C string.  The returned font name follows GTK's own
@@ -2101,32 +2126,26 @@ xg_get_font (struct frame *f, const char *default_name)
 
       if (desc)
 	{
-	  Lisp_Object args[10];
 	  const char *name   = pango_font_description_get_family (desc);
 	  gint        size   = pango_font_description_get_size (desc);
 	  PangoWeight weight = pango_font_description_get_weight (desc);
 	  PangoStyle  style  = pango_font_description_get_style (desc);
 
-	  args[0] = QCname;
-	  args[1] = build_string (name);
-
-	  args[2] = QCsize;
-	  args[3] = make_float (pango_units_to_double (size));
-
-	  args[4] = QCweight;
-	  args[5] = XG_WEIGHT_TO_SYMBOL (weight);
-
-	  args[6] = QCslant;
-	  args[7] = XG_STYLE_TO_SYMBOL (style);
-
-	  args[8] = QCtype;
-	  args[9] = Qxft;
-
-	  font = Ffont_spec (8, args);
+#ifdef USE_CAIRO
+#define FONT_TYPE_WANTED (Qftcr)
+#else
+#define FONT_TYPE_WANTED (Qxft)
+#endif
+	  font = CALLN (Ffont_spec,
+			QCname, build_string (name),
+			QCsize, make_float (pango_units_to_double (size)),
+			QCweight, XG_WEIGHT_TO_SYMBOL (weight),
+			QCslant, XG_STYLE_TO_SYMBOL (style),
+			QCtype,
+                        FONT_TYPE_WANTED);
 
 	  pango_font_description_free (desc);
-	  xfree (x_last_font_name);
-	  x_last_font_name = xstrdup (name);
+	  dupstring (&x_last_font_name, name);
 	}
 
 #else /* Use old font selector, which just returns the font name.  */
@@ -2353,9 +2372,15 @@ make_widget_for_menu_item (const char *utf8_label, const char *utf8_key)
   wlbl = gtk_label_new (utf8_label);
   wkey = gtk_label_new (utf8_key);
 
+#if GTK_CHECK_VERSION (3, 14, 0)
+  gtk_widget_set_halign (wlbl, GTK_ALIGN_START);
+  gtk_widget_set_valign (wlbl, GTK_ALIGN_CENTER);
+  gtk_widget_set_halign (wkey, GTK_ALIGN_START);
+  gtk_widget_set_valign (wkey, GTK_ALIGN_CENTER);
+#else
   gtk_misc_set_alignment (GTK_MISC (wlbl), 0.0, 0.5);
   gtk_misc_set_alignment (GTK_MISC (wkey), 0.0, 0.5);
-
+#endif
   gtk_box_pack_start (GTK_BOX (wbox), wlbl, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (wbox), wkey, FALSE, FALSE, 0);
 
@@ -2425,54 +2450,6 @@ make_menu_item (const char *utf8_label,
 
   return w;
 }
-
-#ifdef HAVE_GTK_TEAROFF_MENU_ITEM_NEW
-
-static int xg_detached_menus;
-
-/* Return true if there are detached menus.  */
-
-bool
-xg_have_tear_offs (void)
-{
-  return xg_detached_menus > 0;
-}
-
-/* Callback invoked when a detached menu window is removed.  Here we
-   decrease the xg_detached_menus count.
-   WIDGET is the top level window that is removed (the parent of the menu).
-   CLIENT_DATA is not used.  */
-
-static void
-tearoff_remove (GtkWidget *widget, gpointer client_data)
-{
-  if (xg_detached_menus > 0) --xg_detached_menus;
-}
-
-/* Callback invoked when a menu is detached.  It increases the
-   xg_detached_menus count.
-   WIDGET is the GtkTearoffMenuItem.
-   CLIENT_DATA is not used.  */
-
-static void
-tearoff_activate (GtkWidget *widget, gpointer client_data)
-{
-  GtkWidget *menu = gtk_widget_get_parent (widget);
-  if (gtk_menu_get_tearoff_state (GTK_MENU (menu)))
-    {
-      ++xg_detached_menus;
-      g_signal_connect (G_OBJECT (gtk_widget_get_toplevel (widget)),
-                        "destroy",
-                        G_CALLBACK (tearoff_remove), 0);
-    }
-}
-#else /* ! HAVE_GTK_TEAROFF_MENU_ITEM_NEW */
-bool
-xg_have_tear_offs (void)
-{
-  return false;
-}
-#endif /* ! HAVE_GTK_TEAROFF_MENU_ITEM_NEW */
 
 /* Create a menu item widget, and connect the callbacks.
    ITEM describes the menu item.
@@ -2544,8 +2521,6 @@ xg_create_one_menuitem (widget_value *item,
    HIGHLIGHT_CB is the callback to call when entering/leaving menu items.
    If POP_UP_P, create a popup menu.
    If MENU_BAR_P, create a menu bar.
-   If ADD_TEAROFF_P, add a tearoff menu item.  Ignored if MENU_BAR_P or
-   the Gtk+ version used does not have tearoffs.
    TOPMENU is the topmost GtkWidget that others shall be placed under.
    It may be NULL, in that case we create the appropriate widget
    (menu bar or menu item depending on POP_UP_P and MENU_BAR_P)
@@ -2567,7 +2542,6 @@ create_menus (widget_value *data,
               GCallback highlight_cb,
               bool pop_up_p,
               bool menu_bar_p,
-              bool add_tearoff_p,
               GtkWidget *topmenu,
               xg_menu_cb_data *cl_data,
               const char *name)
@@ -2618,17 +2592,6 @@ create_menus (widget_value *data,
                           "selection-done", deactivate_cb, 0);
     }
 
-#ifdef HAVE_GTK_TEAROFF_MENU_ITEM_NEW
-  if (! menu_bar_p && add_tearoff_p)
-    {
-      GtkWidget *tearoff = gtk_tearoff_menu_item_new ();
-      gtk_menu_shell_append (GTK_MENU_SHELL (wmenu), tearoff);
-
-      g_signal_connect (G_OBJECT (tearoff), "activate",
-                        G_CALLBACK (tearoff_activate), 0);
-    }
-#endif
-
   for (item = data; item; item = item->next)
     {
       GtkWidget *w;
@@ -2642,7 +2605,6 @@ create_menus (widget_value *data,
           group = NULL;
           utf8_label = get_utf8_string (item->name);
 
-          gtk_menu_set_title (GTK_MENU (wmenu), utf8_label);
           w = gtk_menu_item_new_with_label (utf8_label);
           gtk_widget_set_sensitive (w, FALSE);
           if (utf8_label) g_free (utf8_label);
@@ -2673,7 +2635,6 @@ create_menus (widget_value *data,
                                                  highlight_cb,
                                                  0,
                                                  0,
-                                                 add_tearoff_p,
                                                  0,
                                                  cl_data,
                                                  0);
@@ -2731,7 +2692,6 @@ xg_create_widget (const char *type, const char *name, struct frame *f,
                         highlight_cb,
                         pop_up_p,
                         menu_bar_p,
-                        menu_bar_p,
                         0,
                         0,
                         name);
@@ -2742,7 +2702,7 @@ xg_create_widget (const char *type, const char *name, struct frame *f,
         {
           /* Must realize so the GdkWindow inside the widget is created.  */
           gtk_widget_realize (w);
-          xg_set_cursor (w, FRAME_X_DISPLAY_INFO (f)->xg_cursor);
+          xg_set_cursor (w, FRAME_DISPLAY_INFO (f)->xg_cursor);
         }
     }
   else
@@ -2841,7 +2801,7 @@ xg_update_menubar (GtkWidget *menubar,
     {
       /* Item(s) added.  Add all new items in one call.  */
       create_menus (val, f, select_cb, deactivate_cb, highlight_cb,
-                    0, 1, 0, menubar, cl_data, 0);
+                    0, 1, menubar, cl_data, 0);
 
       /* All updated.  */
       val = 0;
@@ -2914,18 +2874,16 @@ xg_update_menubar (GtkWidget *menubar,
               is up to date when leaving the minibuffer.  */
           GtkLabel *wlabel = GTK_LABEL (XG_BIN_CHILD (witem));
           char *utf8_label = get_utf8_string (val->name);
-          GtkWidget *submenu = gtk_menu_item_get_submenu (witem);
 
+          /* GTK menu items don't notice when their labels have been
+             changed from underneath them, so we have to explicitly
+             use g_object_notify to tell listeners (e.g., a GMenuModel
+             bridge that might be loaded) that the item's label has
+             changed.  */
           gtk_label_set_text (wlabel, utf8_label);
-
-#ifdef HAVE_GTK_TEAROFF_MENU_ITEM_NEW
-          /* If this item has a submenu that has been detached, change
-             the title in the WM decorations also.  */
-          if (submenu && gtk_menu_get_tearoff_state (GTK_MENU (submenu)))
-            /* Set the title of the detached window.  */
-            gtk_menu_set_title (GTK_MENU (submenu), utf8_label);
+#if GTK_CHECK_VERSION (2, 16, 0)
+          g_object_notify (G_OBJECT (witem), "label");
 #endif
-
           if (utf8_label) g_free (utf8_label);
           iter = g_list_next (iter);
           val = val->next;
@@ -2952,7 +2910,8 @@ xg_update_menubar (GtkWidget *menubar,
           GtkWidget *submenu = create_menus (NULL, f,
                                              select_cb, deactivate_cb,
                                              highlight_cb,
-                                             0, 0, 0, 0, cl_data, 0);
+                                             0, 0, 0, cl_data, 0);
+
           gtk_widget_set_name (w, MENU_ITEM_NAME);
           gtk_menu_shell_insert (GTK_MENU_SHELL (menubar), w, pos);
           gtk_menu_item_set_submenu (GTK_MENU_ITEM (w), submenu);
@@ -3012,6 +2971,7 @@ xg_update_menu_item (widget_value *val,
   const char *old_label = 0;
   const char *old_key = 0;
   xg_menu_item_cb_data *cb_data;
+  bool label_changed = false;
 
   wchild = XG_BIN_CHILD (w);
   utf8_label = get_utf8_string (val->name);
@@ -3056,15 +3016,20 @@ xg_update_menu_item (widget_value *val,
         }
     }
 
-
   if (wkey) old_key = gtk_label_get_label (wkey);
   if (wlbl) old_label = gtk_label_get_label (wlbl);
 
   if (wkey && utf8_key && (! old_key || strcmp (utf8_key, old_key) != 0))
-    gtk_label_set_text (wkey, utf8_key);
+    {
+      label_changed = true;
+      gtk_label_set_text (wkey, utf8_key);
+    }
 
   if (! old_label || strcmp (utf8_label, old_label) != 0)
-    gtk_label_set_text (wlbl, utf8_label);
+    {
+      label_changed = true;
+      gtk_label_set_text (wlbl, utf8_label);
+    }
 
   if (utf8_key) g_free (utf8_key);
   if (utf8_label) g_free (utf8_label);
@@ -3096,6 +3061,11 @@ xg_update_menu_item (widget_value *val,
           cb_data->select_id = 0;
         }
     }
+
+#if GTK_CHECK_VERSION (2, 16, 0)
+  if (label_changed) /* See comment in xg_update_menubar.  */
+    g_object_notify (G_OBJECT (w), "label");
+#endif
 }
 
 /* Update the toggle menu item W so it corresponds to VAL.  */
@@ -3139,7 +3109,6 @@ xg_update_submenu (GtkWidget *submenu,
   GList *list = 0;
   GList *iter;
   widget_value *cur;
-  bool has_tearoff_p = 0;
   GList *first_radio = 0;
 
   if (submenu)
@@ -3150,17 +3119,6 @@ xg_update_submenu (GtkWidget *submenu,
        iter = g_list_next (iter), cur = cur->next)
   {
     GtkWidget *w = GTK_WIDGET (iter->data);
-
-#ifdef HAVE_GTK_TEAROFF_MENU_ITEM_NEW
-  /* Skip tearoff items, they have no counterpart in val.  */
-    if (GTK_IS_TEAROFF_MENU_ITEM (w))
-      {
-        has_tearoff_p = 1;
-        iter = g_list_next (iter);
-        if (iter) w = GTK_WIDGET (iter->data);
-        else break;
-      }
-#endif
 
     /* Remember first radio button in a group.  If we get a mismatch in
        a radio group we must rebuild the whole group so that the connections
@@ -3249,7 +3207,6 @@ xg_update_submenu (GtkWidget *submenu,
                              highlight_cb,
                              0,
                              0,
-                             ! has_tearoff_p,
                              submenu,
                              cl_data,
                              0);
@@ -3349,7 +3306,7 @@ menubar_map_cb (GtkWidget *w, gpointer user_data)
   if (FRAME_MENUBAR_HEIGHT (f) != req.height)
     {
       FRAME_MENUBAR_HEIGHT (f) = req.height;
-      xg_height_or_width_changed (f);
+      adjust_frame_size (f, -1, -1, 2, 0, Qmenu_bar_lines);
     }
 }
 
@@ -3378,15 +3335,10 @@ xg_update_frame_menubar (struct frame *f)
   gtk_widget_show_all (x->menubar_widget);
   gtk_widget_get_preferred_size (x->menubar_widget, NULL, &req);
 
-  /* If menu bar doesn't know its height yet, cheat a little so the frame
-     doesn't jump so much when resized later in menubar_map_cb.  */
-  if (req.height == 0)
-    req.height = 23;
-
   if (FRAME_MENUBAR_HEIGHT (f) != req.height)
     {
       FRAME_MENUBAR_HEIGHT (f) = req.height;
-      xg_height_or_width_changed (f);
+      adjust_frame_size (f, -1, -1, 2, 0, Qmenu_bar_lines);
     }
   unblock_input ();
 }
@@ -3408,13 +3360,13 @@ free_frame_menubar (struct frame *f)
           the container.  */
       x->menubar_widget = 0;
       FRAME_MENUBAR_HEIGHT (f) = 0;
-      xg_height_or_width_changed (f);
+      adjust_frame_size (f, -1, -1, 2, 0, Qmenu_bar_lines);
       unblock_input ();
     }
 }
 
 bool
-xg_event_is_for_menubar (struct frame *f, XEvent *event)
+xg_event_is_for_menubar (struct frame *f, const XEvent *event)
 {
   struct x_output *x = f->output_data.x;
   GList *iter;
@@ -3430,7 +3382,7 @@ xg_event_is_for_menubar (struct frame *f, XEvent *event)
   if (! (event->xbutton.x >= 0
          && event->xbutton.x < FRAME_PIXEL_WIDTH (f)
          && event->xbutton.y >= 0
-         && event->xbutton.y < f->output_data.x->menubar_height
+         && event->xbutton.y < FRAME_MENUBAR_HEIGHT (f)
          && event->xbutton.same_screen))
     return 0;
 
@@ -3475,9 +3427,9 @@ xg_event_is_for_menubar (struct frame *f, XEvent *event)
 
 bool xg_ignore_gtk_scrollbar;
 
-/* The width of the scroll bar for the current theme.  */
-
+/* Width and height of scroll bars for the current theme.  */
 static int scroll_bar_width_for_theme;
+static int scroll_bar_height_for_theme;
 
 /* Xlib's `Window' fits in 32 bits.  But we want to store pointers, and they
    may be larger than 32 bits.  Keep a mapping from integer index to widget
@@ -3576,14 +3528,45 @@ update_theme_scrollbar_width (void)
   gtk_widget_destroy (wscroll);
   g_object_unref (G_OBJECT (wscroll));
   w += 2*b;
+#ifndef HAVE_GTK3
   if (w < 16) w = 16;
+#endif
   scroll_bar_width_for_theme = w;
+}
+
+static void
+update_theme_scrollbar_height (void)
+{
+#ifdef HAVE_GTK3
+  GtkAdjustment *hadj;
+#else
+  GtkObject *hadj;
+#endif
+  GtkWidget *wscroll;
+  int w = 0, b = 0;
+
+  hadj = gtk_adjustment_new (YG_SB_MIN, YG_SB_MIN, YG_SB_MAX, 0.1, 0.1, 0.1);
+  wscroll = gtk_scrollbar_new (GTK_ORIENTATION_HORIZONTAL, GTK_ADJUSTMENT (hadj));
+  g_object_ref_sink (G_OBJECT (wscroll));
+  gtk_widget_style_get (wscroll, "slider-width", &w, "trough-border", &b, NULL);
+  gtk_widget_destroy (wscroll);
+  g_object_unref (G_OBJECT (wscroll));
+  w += 2*b;
+  if (w < 12) w = 12;
+  scroll_bar_height_for_theme = w;
 }
 
 int
 xg_get_default_scrollbar_width (void)
 {
-  return scroll_bar_width_for_theme;
+  return scroll_bar_width_for_theme * xg_get_gdk_scale ();
+}
+
+int
+xg_get_default_scrollbar_height (void)
+{
+  /* Apparently there's no default height for themes.  */
+  return scroll_bar_width_for_theme * xg_get_gdk_scale ();
 }
 
 /* Return the scrollbar id for X Window WID on display DPY.
@@ -3681,9 +3664,77 @@ xg_create_scroll_bar (struct frame *f,
 
 
   /* Set the cursor to an arrow.  */
-  xg_set_cursor (webox, FRAME_X_DISPLAY_INFO (f)->xg_cursor);
+  xg_set_cursor (webox, FRAME_DISPLAY_INFO (f)->xg_cursor);
 
   bar->x_window = scroll_id;
+  bar->horizontal = 0;
+}
+
+/* Create a horizontal scroll bar widget for frame F.  Store the scroll
+   bar in BAR.  SCROLL_CALLBACK is the callback to invoke when the value
+   of the bar changes.  END_CALLBACK is the callback to invoke when
+   scrolling ends.  SCROLL_BAR_NAME is the name we use for the scroll
+   bar.  Can be used to set resources for the widget.  */
+
+void
+xg_create_horizontal_scroll_bar (struct frame *f,
+				 struct scroll_bar *bar,
+				 GCallback scroll_callback,
+				 GCallback end_callback,
+				 const char *scroll_bar_name)
+{
+  GtkWidget *wscroll;
+  GtkWidget *webox;
+  intptr_t scroll_id;
+#ifdef HAVE_GTK3
+  GtkAdjustment *hadj;
+#else
+  GtkObject *hadj;
+#endif
+
+  /* Page, step increment values are not so important here, they
+     will be corrected in x_set_toolkit_scroll_bar_thumb. */
+  hadj = gtk_adjustment_new (YG_SB_MIN, YG_SB_MIN, YG_SB_MAX,
+                             0.1, 0.1, 0.1);
+
+  wscroll = gtk_scrollbar_new (GTK_ORIENTATION_HORIZONTAL, GTK_ADJUSTMENT (hadj));
+  webox = gtk_event_box_new ();
+  gtk_widget_set_name (wscroll, scroll_bar_name);
+#ifndef HAVE_GTK3
+  gtk_range_set_update_policy (GTK_RANGE (wscroll), GTK_UPDATE_CONTINUOUS);
+#endif
+  g_object_set_data (G_OBJECT (wscroll), XG_FRAME_DATA, (gpointer)f);
+
+  scroll_id = xg_store_widget_in_map (wscroll);
+
+  g_signal_connect (G_OBJECT (wscroll),
+                    "destroy",
+                    G_CALLBACK (xg_gtk_scroll_destroy),
+                    (gpointer) scroll_id);
+  g_signal_connect (G_OBJECT (wscroll),
+                    "change-value",
+                    scroll_callback,
+                    (gpointer) bar);
+  g_signal_connect (G_OBJECT (wscroll),
+                    "button-release-event",
+                    end_callback,
+                    (gpointer) bar);
+
+  /* The scroll bar widget does not draw on a window of its own.  Instead
+     it draws on the parent window, in this case the edit widget.  So
+     whenever the edit widget is cleared, the scroll bar needs to redraw
+     also, which causes flicker.  Put an event box between the edit widget
+     and the scroll bar, so the scroll bar instead draws itself on the
+     event box window.  */
+  gtk_fixed_put (GTK_FIXED (f->output_data.x->edit_widget), webox, -1, -1);
+  gtk_container_add (GTK_CONTAINER (webox), wscroll);
+
+
+  /* Set the cursor to an arrow.  */
+  xg_set_cursor (webox, FRAME_DISPLAY_INFO (f)->xg_cursor);
+
+  bar->x_window = scroll_id;
+  bar->horizontal = 1;
 }
 
 /* Remove the scroll bar represented by SCROLLBAR_ID from the frame F.  */
@@ -3714,14 +3765,18 @@ xg_update_scrollbar_pos (struct frame *f,
                          int width,
                          int height)
 {
-
   GtkWidget *wscroll = xg_get_widget_from_map (scrollbar_id);
-
   if (wscroll)
     {
       GtkWidget *wfixed = f->output_data.x->edit_widget;
       GtkWidget *wparent = gtk_widget_get_parent (wscroll);
       gint msl;
+      int scale = xg_get_gdk_scale ();
+
+      top /= scale;
+      left /= scale;
+      height /= scale;
+      left -= (scale - 1) * ((width / scale) >> 1);
 
       /* Clear out old position.  */
       int oldx = -1, oldy = -1, oldw, oldh;
@@ -3747,16 +3802,18 @@ xg_update_scrollbar_pos (struct frame *f,
           gtk_widget_show_all (wparent);
           gtk_widget_set_size_request (wscroll, width, height);
         }
+#ifndef USE_CAIRO
       gtk_widget_queue_draw (wfixed);
       gdk_window_process_all_updates ();
+#endif
       if (oldx != -1 && oldw > 0 && oldh > 0)
         {
           /* Clear under old scroll bar position.  This must be done after
              the gtk_widget_queue_draw and gdk_window_process_all_updates
              above.  */
-          x_clear_area (FRAME_X_DISPLAY (f),
-                        FRAME_X_WINDOW (f),
-                        oldx, oldy, oldw, oldh, 0);
+	  oldw += (scale - 1) * oldw;
+	  oldx -= (scale - 1) * oldw;
+          x_clear_area (f, oldx, oldy, oldw, oldh);
         }
 
       /* GTK does not redraw until the main loop is entered again, but
@@ -3768,6 +3825,73 @@ xg_update_scrollbar_pos (struct frame *f,
       cancel_mouse_face (f);
     }
 }
+
+
+/* Update the position of the horizontal scroll bar represented by SCROLLBAR_ID
+   in frame F.
+   TOP/LEFT are the new pixel positions where the bar shall appear.
+   WIDTH, HEIGHT is the size in pixels the bar shall have.  */
+
+void
+xg_update_horizontal_scrollbar_pos (struct frame *f,
+				    ptrdiff_t scrollbar_id,
+				    int top,
+				    int left,
+				    int width,
+				    int height)
+{
+
+  GtkWidget *wscroll = xg_get_widget_from_map (scrollbar_id);
+
+  if (wscroll)
+    {
+      GtkWidget *wfixed = f->output_data.x->edit_widget;
+      GtkWidget *wparent = gtk_widget_get_parent (wscroll);
+      gint msl;
+
+      /* Clear out old position.  */
+      int oldx = -1, oldy = -1, oldw, oldh;
+      if (gtk_widget_get_parent (wparent) == wfixed)
+        {
+          gtk_container_child_get (GTK_CONTAINER (wfixed), wparent,
+                                   "x", &oldx, "y", &oldy, NULL);
+          gtk_widget_get_size_request (wscroll, &oldw, &oldh);
+        }
+
+      /* Move and resize to new values.  */
+      gtk_fixed_move (GTK_FIXED (wfixed), wparent, left, top);
+      gtk_widget_style_get (wscroll, "min-slider-length", &msl, NULL);
+      if (msl > width)
+        {
+          /* No room.  Hide scroll bar as some themes output a warning if
+             the width is less than the min size.  */
+          gtk_widget_hide (wparent);
+          gtk_widget_hide (wscroll);
+        }
+      else
+        {
+          gtk_widget_show_all (wparent);
+          gtk_widget_set_size_request (wscroll, width, height);
+        }
+      gtk_widget_queue_draw (wfixed);
+      gdk_window_process_all_updates ();
+      if (oldx != -1 && oldw > 0 && oldh > 0)
+	/* Clear under old scroll bar position.  This must be done after
+	   the gtk_widget_queue_draw and gdk_window_process_all_updates
+	   above.  */
+	x_clear_area (f,
+		      oldx, oldy, oldw, oldh);
+
+      /* GTK does not redraw until the main loop is entered again, but
+         if there are no X events pending we will not enter it.  So we sync
+         here to get some events.  */
+
+      x_sync (f);
+      SET_FRAME_GARBAGED (f);
+      cancel_mouse_face (f);
+    }
+}
+
 
 /* Get the current value of the range, truncated to an integer.  */
 
@@ -3791,7 +3915,7 @@ xg_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar,
 
   struct frame *f = XFRAME (WINDOW_FRAME (XWINDOW (bar->window)));
 
-  if (wscroll && NILP (bar->dragging))
+  if (wscroll && bar->dragging == -1)
     {
       GtkAdjustment *adj;
       gdouble shown;
@@ -3863,13 +3987,46 @@ xg_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar,
     }
 }
 
+/* Set the thumb size and position of horizontal scroll bar BAR.  We are
+   currently displaying PORTION out of a whole WHOLE, and our position
+   POSITION.  */
+void
+xg_set_toolkit_horizontal_scroll_bar_thumb (struct scroll_bar *bar,
+					    int portion,
+					    int position,
+					    int whole)
+{
+  GtkWidget *wscroll = xg_get_widget_from_map (bar->x_window);
+
+  if (wscroll && bar->dragging == -1)
+    {
+      GtkAdjustment *adj;
+      int lower = 0;
+      int upper = max (whole - 1, 0);
+      int pagesize = min (upper, max (portion, 0));
+      int value = max (0, min (position, upper - pagesize));
+      /* These should be set to something more <portion, whole>
+	 related.  */
+      int page_increment = 4;
+      int step_increment = 1;
+
+      block_input ();
+      adj = gtk_range_get_adjustment (GTK_RANGE (wscroll));
+      gtk_adjustment_configure (adj, (gdouble) value, (gdouble) lower,
+				(gdouble) upper, (gdouble) step_increment,
+				(gdouble) page_increment, (gdouble) pagesize);
+      gtk_adjustment_changed (adj);
+      unblock_input ();
+    }
+}
+
 /* Return true if EVENT is for a scroll bar in frame F.
    When the same X window is used for several Gtk+ widgets, we cannot
    say for sure based on the X window alone if an event is for the
    frame.  This function does additional checks.  */
 
 bool
-xg_event_is_for_scrollbar (struct frame *f, XEvent *event)
+xg_event_is_for_scrollbar (struct frame *f, const XEvent *event)
 {
   bool retval = 0;
 
@@ -3899,6 +4056,108 @@ xg_event_is_for_scrollbar (struct frame *f, XEvent *event)
   return retval;
 }
 
+
+/***********************************************************************
+			       Printing
+ ***********************************************************************/
+#ifdef USE_CAIRO
+static GtkPrintSettings *print_settings = NULL;
+static GtkPageSetup *page_setup = NULL;
+
+void
+xg_page_setup_dialog (void)
+{
+  GtkPageSetup *new_page_setup = NULL;
+
+  if (print_settings == NULL)
+    print_settings = gtk_print_settings_new ();
+  new_page_setup = gtk_print_run_page_setup_dialog (NULL, page_setup,
+						    print_settings);
+  if (page_setup)
+    g_object_unref (page_setup);
+  page_setup = new_page_setup;
+}
+
+Lisp_Object
+xg_get_page_setup (void)
+{
+  Lisp_Object result, orientation_symbol;
+  GtkPageOrientation orientation;
+
+  if (page_setup == NULL)
+    page_setup = gtk_page_setup_new ();
+  result = list4 (Fcons (Qleft_margin,
+			 make_float (gtk_page_setup_get_left_margin (page_setup,
+								     GTK_UNIT_POINTS))),
+		  Fcons (Qright_margin,
+			 make_float (gtk_page_setup_get_right_margin (page_setup,
+								      GTK_UNIT_POINTS))),
+		  Fcons (Qtop_margin,
+			 make_float (gtk_page_setup_get_top_margin (page_setup,
+								    GTK_UNIT_POINTS))),
+		  Fcons (Qbottom_margin,
+			 make_float (gtk_page_setup_get_bottom_margin (page_setup,
+								       GTK_UNIT_POINTS))));
+  result = Fcons (Fcons (Qheight,
+			 make_float (gtk_page_setup_get_page_height (page_setup,
+								     GTK_UNIT_POINTS))),
+		  result);
+  result = Fcons (Fcons (Qwidth,
+			 make_float (gtk_page_setup_get_page_width (page_setup,
+								    GTK_UNIT_POINTS))),
+		  result);
+  orientation = gtk_page_setup_get_orientation (page_setup);
+  if (orientation == GTK_PAGE_ORIENTATION_PORTRAIT)
+    orientation_symbol = Qportrait;
+  else if (orientation == GTK_PAGE_ORIENTATION_LANDSCAPE)
+    orientation_symbol = Qlandscape;
+  else if (orientation == GTK_PAGE_ORIENTATION_REVERSE_PORTRAIT)
+    orientation_symbol = Qreverse_portrait;
+  else if (orientation == GTK_PAGE_ORIENTATION_REVERSE_LANDSCAPE)
+    orientation_symbol = Qreverse_landscape;
+  result = Fcons (Fcons (Qorientation, orientation_symbol), result);
+
+  return result;
+}
+
+static void
+draw_page (GtkPrintOperation *operation, GtkPrintContext *context,
+	   gint page_nr, gpointer user_data)
+{
+  Lisp_Object frames = *((Lisp_Object *) user_data);
+  struct frame *f = XFRAME (Fnth (make_number (page_nr), frames));
+  cairo_t *cr = gtk_print_context_get_cairo_context (context);
+
+  x_cr_draw_frame (cr, f);
+}
+
+void
+xg_print_frames_dialog (Lisp_Object frames)
+{
+  GtkPrintOperation *print;
+  GtkPrintOperationResult res;
+
+  print = gtk_print_operation_new ();
+  if (print_settings != NULL)
+    gtk_print_operation_set_print_settings (print, print_settings);
+  if (page_setup != NULL)
+    gtk_print_operation_set_default_page_setup (print, page_setup);
+  gtk_print_operation_set_n_pages (print, XINT (Flength (frames)));
+  g_signal_connect (print, "draw-page", G_CALLBACK (draw_page), &frames);
+  res = gtk_print_operation_run (print, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
+                                 NULL, NULL);
+  if (res == GTK_PRINT_OPERATION_RESULT_APPLY)
+    {
+      if (print_settings != NULL)
+        g_object_unref (print_settings);
+      print_settings =
+	g_object_ref (gtk_print_operation_get_print_settings (print));
+    }
+  g_object_unref (print);
+}
+
+#endif	/* USE_CAIRO */
+
 
 
 /***********************************************************************
@@ -3912,9 +4171,6 @@ xg_event_is_for_scrollbar (struct frame *f, XEvent *event)
 /* The key for storing the latest modifiers so the activate callback can
    get them.  */
 #define XG_TOOL_BAR_LAST_MODIFIER "emacs-tool-bar-modifier"
-
-/* The key for storing the button widget in its proxy menu item. */
-#define XG_TOOL_BAR_PROXY_BUTTON "emacs-tool-bar-proxy-button"
 
 /* The key for the data we put in the GtkImage widgets.  The data is
    the stock name used by Emacs.  We use this to see if we need to update
@@ -3980,47 +4236,12 @@ xg_tool_bar_callback (GtkWidget *w, gpointer client_data)
   /* Convert between the modifier bits GDK uses and the modifier bits
      Emacs uses.  This assumes GDK and X masks are the same, which they are when
      this is written.  */
-  event.modifiers = x_x_to_emacs_modifiers (FRAME_X_DISPLAY_INFO (f), mod);
+  event.modifiers = x_x_to_emacs_modifiers (FRAME_DISPLAY_INFO (f), mod);
   kbd_buffer_store_event (&event);
 
-   /* Return focus to the frame after we have clicked on a detached
-      tool bar button. */
-   Fx_focus_frame (frame);
-}
-
-/* Callback function invoked when a tool bar item is pressed in a detached
-   tool bar or the overflow drop down menu.
-   We just call xg_tool_bar_callback.
-   W is the menu item widget that got pressed,
-   CLIENT_DATA is an integer that is the index of the button in the
-   tool bar.  0 is the first button.  */
-
-static void
-xg_tool_bar_proxy_callback (GtkWidget *w, gpointer client_data)
-{
-  GtkWidget *wbutton = GTK_WIDGET (g_object_get_data (G_OBJECT (w),
-                                                      XG_TOOL_BAR_PROXY_BUTTON));
-  xg_tool_bar_callback (wbutton, client_data);
-}
-
-
-static gboolean
-xg_tool_bar_help_callback (GtkWidget *w,
-                           GdkEventCrossing *event,
-                           gpointer client_data);
-
-/* This callback is called when a help is to be shown for an item in
-   the detached tool bar when the detached tool bar it is not expanded.  */
-
-static gboolean
-xg_tool_bar_proxy_help_callback (GtkWidget *w,
-                                 GdkEventCrossing *event,
-                                 gpointer client_data)
-{
-  GtkWidget *wbutton = GTK_WIDGET (g_object_get_data (G_OBJECT (w),
-                                                      XG_TOOL_BAR_PROXY_BUTTON));
-
-  return xg_tool_bar_help_callback (wbutton, event, client_data);
+  /* Return focus to the frame after we have clicked on a detached
+     tool bar button. */
+  x_focus_frame (f);
 }
 
 static GtkWidget *
@@ -4035,187 +4256,6 @@ xg_get_tool_bar_widgets (GtkWidget *vb, GtkWidget **wimage)
   return GTK_IS_LABEL (c1) ? c1 : c2;
 }
 
-
-/* This callback is called when a tool item should create a proxy item,
-   such as for the overflow menu.  Also called when the tool bar is detached.
-   If we don't create a proxy menu item, the detached tool bar will be
-   blank.  */
-
-static gboolean
-xg_tool_bar_menu_proxy (GtkToolItem *toolitem, gpointer user_data)
-{
-  GtkButton *wbutton = GTK_BUTTON (XG_BIN_CHILD (XG_BIN_CHILD (toolitem)));
-  GtkWidget *vb = XG_BIN_CHILD (wbutton);
-  GtkWidget *c1;
-  GtkLabel *wlbl = GTK_LABEL (xg_get_tool_bar_widgets (vb, &c1));
-  GtkImage *wimage = GTK_IMAGE (c1);
-  GtkWidget *wmenuitem = gtk_image_menu_item_new_with_label
-    (wlbl ? gtk_label_get_text (wlbl) : "");
-  GtkWidget *wmenuimage;
-
-
-  if (gtk_button_get_use_stock (wbutton))
-    wmenuimage = gtk_image_new_from_stock (gtk_button_get_label (wbutton),
-                                           GTK_ICON_SIZE_MENU);
-  else
-    {
-      GtkSettings *settings = gtk_widget_get_settings (GTK_WIDGET (wbutton));
-      GtkImageType store_type = gtk_image_get_storage_type (wimage);
-
-      g_object_set (G_OBJECT (settings), "gtk-menu-images", TRUE, NULL);
-
-      if (store_type == GTK_IMAGE_STOCK)
-        {
-          gchar *stock_id;
-          gtk_image_get_stock (wimage, &stock_id, NULL);
-          wmenuimage = gtk_image_new_from_stock (stock_id, GTK_ICON_SIZE_MENU);
-        }
-      else if (store_type == GTK_IMAGE_ICON_SET)
-        {
-          GtkIconSet *icon_set;
-          gtk_image_get_icon_set (wimage, &icon_set, NULL);
-          wmenuimage = gtk_image_new_from_icon_set (icon_set,
-                                                    GTK_ICON_SIZE_MENU);
-        }
-      else if (store_type == GTK_IMAGE_PIXBUF)
-        {
-          gint width, height;
-
-          if (settings &&
-              gtk_icon_size_lookup_for_settings (settings, GTK_ICON_SIZE_MENU,
-                                                 &width, &height))
-            {
-              GdkPixbuf *src_pixbuf, *dest_pixbuf;
-
-              src_pixbuf = gtk_image_get_pixbuf (wimage);
-              dest_pixbuf = gdk_pixbuf_scale_simple (src_pixbuf, width, height,
-                                                     GDK_INTERP_BILINEAR);
-
-              wmenuimage = gtk_image_new_from_pixbuf (dest_pixbuf);
-            }
-          else
-            {
-              fprintf (stderr, "internal error: GTK_IMAGE_PIXBUF failed\n");
-              emacs_abort ();
-            }
-        }
-      else if (store_type == GTK_IMAGE_ICON_NAME)
-        {
-          const gchar *icon_name;
-          GtkIconSize icon_size;
-
-          gtk_image_get_icon_name (wimage, &icon_name, &icon_size);
-          wmenuimage = gtk_image_new_from_icon_name (icon_name,
-                                                     GTK_ICON_SIZE_MENU);
-        }
-      else
-        {
-          fprintf (stderr, "internal error: store_type is %d\n", store_type);
-          emacs_abort ();
-        }
-    }
-  if (wmenuimage)
-    gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (wmenuitem), wmenuimage);
-
-  g_signal_connect (G_OBJECT (wmenuitem),
-                    "activate",
-                    G_CALLBACK (xg_tool_bar_proxy_callback),
-                    user_data);
-
-
-  g_object_set_data (G_OBJECT (wmenuitem), XG_TOOL_BAR_PROXY_BUTTON,
-                     (gpointer) wbutton);
-  gtk_tool_item_set_proxy_menu_item (toolitem, "Emacs toolbar item", wmenuitem);
-  gtk_widget_set_sensitive (wmenuitem,
-                            gtk_widget_get_sensitive (GTK_WIDGET (wbutton)));
-
-  /* Use enter/leave notify to show help.  We use the events
-     rather than the GtkButton specific signals "enter" and
-     "leave", so we can have only one callback.  The event
-     will tell us what kind of event it is.  */
-  g_signal_connect (G_OBJECT (wmenuitem),
-                    "enter-notify-event",
-                    G_CALLBACK (xg_tool_bar_proxy_help_callback),
-                    user_data);
-  g_signal_connect (G_OBJECT (wmenuitem),
-                    "leave-notify-event",
-                    G_CALLBACK (xg_tool_bar_proxy_help_callback),
-                    user_data);
-
-  return TRUE;
-}
-
-/* This callback is called when a tool bar is detached.  We must set
-   the height of the tool bar to zero when this happens so frame sizes
-   are correctly calculated.
-   WBOX is the handle box widget that enables detach/attach of the tool bar.
-   W is the tool bar widget.
-   CLIENT_DATA is a pointer to the frame the tool bar belongs to.  */
-
-static void
-xg_tool_bar_detach_callback (GtkHandleBox *wbox,
-                             GtkWidget *w,
-                             gpointer client_data)
-{
-  struct frame *f = client_data;
-
-  g_object_set (G_OBJECT (w), "show-arrow", !x_gtk_whole_detached_tool_bar,
-		NULL);
-
-  if (f)
-    {
-      GtkRequisition req, req2;
-
-      gtk_widget_get_preferred_size (GTK_WIDGET (wbox), NULL, &req);
-      gtk_widget_get_preferred_size (w, NULL, &req2);
-      req.width -= req2.width;
-      req.height -= req2.height;
-      if (FRAME_TOOLBAR_TOP_HEIGHT (f) != 0)
-        FRAME_TOOLBAR_TOP_HEIGHT (f) = req.height;
-      else if (FRAME_TOOLBAR_BOTTOM_HEIGHT (f) != 0)
-        FRAME_TOOLBAR_BOTTOM_HEIGHT (f) = req.height;
-      else if (FRAME_TOOLBAR_RIGHT_WIDTH (f) != 0)
-        FRAME_TOOLBAR_RIGHT_WIDTH (f) = req.width;
-      else if (FRAME_TOOLBAR_LEFT_WIDTH (f) != 0)
-        FRAME_TOOLBAR_LEFT_WIDTH (f) = req.width;
-      xg_height_or_width_changed (f);
-    }
-}
-
-/* This callback is called when a tool bar is reattached.  We must set
-   the height of the tool bar when this happens so frame sizes
-   are correctly calculated.
-   WBOX is the handle box widget that enables detach/attach of the tool bar.
-   W is the tool bar widget.
-   CLIENT_DATA is a pointer to the frame the tool bar belongs to.  */
-
-static void
-xg_tool_bar_attach_callback (GtkHandleBox *wbox,
-                             GtkWidget *w,
-                             gpointer client_data)
-{
-  struct frame *f = client_data;
-  g_object_set (G_OBJECT (w), "show-arrow", TRUE, NULL);
-
-  if (f)
-    {
-      GtkRequisition req, req2;
-
-      gtk_widget_get_preferred_size (GTK_WIDGET (wbox), NULL, &req);
-      gtk_widget_get_preferred_size (w, NULL, &req2);
-      req.width += req2.width;
-      req.height += req2.height;
-      if (FRAME_TOOLBAR_TOP_HEIGHT (f) != 0)
-        FRAME_TOOLBAR_TOP_HEIGHT (f) = req.height;
-      else if (FRAME_TOOLBAR_BOTTOM_HEIGHT (f) != 0)
-        FRAME_TOOLBAR_BOTTOM_HEIGHT (f) = req.height;
-      else if (FRAME_TOOLBAR_RIGHT_WIDTH (f) != 0)
-        FRAME_TOOLBAR_RIGHT_WIDTH (f) = req.width;
-      else if (FRAME_TOOLBAR_LEFT_WIDTH (f) != 0)
-        FRAME_TOOLBAR_LEFT_WIDTH (f) = req.width;
-      xg_height_or_width_changed (f);
-    }
-}
 
 /* This callback is called when the mouse enters or leaves a tool bar item.
    It is used for displaying and hiding the help text.
@@ -4296,12 +4336,6 @@ xg_tool_bar_item_expose_callback (GtkWidget *w,
   gtk_toolbar_set_orientation (GTK_TOOLBAR (w), o)
 #endif
 
-#ifdef HAVE_GTK_HANDLE_BOX_NEW
-#define TOOLBAR_TOP_WIDGET(x) ((x)->handlebox_widget)
-#else
-#define TOOLBAR_TOP_WIDGET(x) ((x)->toolbar_widget)
-#endif
-
 /* Attach a tool bar to frame F.  */
 
 static void
@@ -4309,31 +4343,15 @@ xg_pack_tool_bar (struct frame *f, Lisp_Object pos)
 {
   struct x_output *x = f->output_data.x;
   bool into_hbox = EQ (pos, Qleft) || EQ (pos, Qright);
-  GtkWidget *top_widget = TOOLBAR_TOP_WIDGET (x);
+  GtkWidget *top_widget = x->toolbar_widget;
 
   toolbar_set_orientation (x->toolbar_widget,
                            into_hbox
                            ? GTK_ORIENTATION_VERTICAL
                            : GTK_ORIENTATION_HORIZONTAL);
-#ifdef HAVE_GTK_HANDLE_BOX_NEW
-  if (!x->handlebox_widget)
-    {
-      top_widget = x->handlebox_widget = gtk_handle_box_new ();
-      g_signal_connect (G_OBJECT (x->handlebox_widget), "child-detached",
-                        G_CALLBACK (xg_tool_bar_detach_callback), f);
-      g_signal_connect (G_OBJECT (x->handlebox_widget), "child-attached",
-                        G_CALLBACK (xg_tool_bar_attach_callback), f);
-      gtk_container_add (GTK_CONTAINER (x->handlebox_widget),
-                         x->toolbar_widget);
-    }
-#endif
 
   if (into_hbox)
     {
-#ifdef HAVE_GTK_HANDLE_BOX_NEW
-      gtk_handle_box_set_handle_position (GTK_HANDLE_BOX (x->handlebox_widget),
-                                          GTK_POS_TOP);
-#endif
       gtk_box_pack_start (GTK_BOX (x->hbox_widget), top_widget,
                           FALSE, FALSE, 0);
 
@@ -4346,10 +4364,6 @@ xg_pack_tool_bar (struct frame *f, Lisp_Object pos)
   else
     {
       bool vbox_pos = x->menubar_widget != 0;
-#ifdef HAVE_GTK_HANDLE_BOX_NEW
-      gtk_handle_box_set_handle_position (GTK_HANDLE_BOX (x->handlebox_widget),
-                                          GTK_POS_LEFT);
-#endif
       gtk_box_pack_start (GTK_BOX (x->vbox_widget), top_widget,
                           FALSE, FALSE, 0);
 
@@ -4373,8 +4387,12 @@ tb_size_cb (GtkWidget    *widget,
      allocated between widgets, it may get another.  So we must update
      size hints if tool bar size changes.  Seen on Fedora 18 at least.  */
   struct frame *f = user_data;
+
   if (xg_update_tool_bar_sizes (f))
-    x_wm_set_size_hint (f, 0, 0);
+    {
+      frame_size_history_add (f, Qtb_size_cb, 0, 0, Qnil);
+      adjust_frame_size (f, -1, -1, 5, 0, Qtool_bar_lines);
+    }
 }
 
 /* Create a tool bar for frame F.  */
@@ -4427,8 +4445,6 @@ find_rtl_image (struct frame *f, Lisp_Object image, Lisp_Object rtl)
 {
   int i;
   Lisp_Object file, rtl_name;
-  struct gcpro gcpro1, gcpro2;
-  GCPRO2 (file, rtl_name);
 
   rtl_name = Ffile_name_nondirectory (rtl);
 
@@ -4501,10 +4517,6 @@ xg_make_tool_item (struct frame *f,
     {
       intptr_t ii = i;
       gpointer gi = (gpointer) ii;
-
-      g_signal_connect (G_OBJECT (ti), "create-menu-proxy",
-                        G_CALLBACK (xg_tool_bar_menu_proxy),
-                        gi);
 
       g_signal_connect (G_OBJECT (wb), "clicked",
                         G_CALLBACK (xg_tool_bar_callback),
@@ -4619,7 +4631,7 @@ xg_update_tool_bar_sizes (struct frame *f)
   struct x_output *x = f->output_data.x;
   GtkRequisition req;
   int nl = 0, nr = 0, nt = 0, nb = 0;
-  GtkWidget *top_widget = TOOLBAR_TOP_WIDGET (x);
+  GtkWidget *top_widget = x->toolbar_widget;
 
   gtk_widget_get_preferred_size (GTK_WIDGET (top_widget), NULL, &req);
   if (x->toolbar_in_hbox)
@@ -4652,10 +4664,47 @@ xg_update_tool_bar_sizes (struct frame *f)
       FRAME_TOOLBAR_RIGHT_WIDTH (f) = nr;
       FRAME_TOOLBAR_TOP_HEIGHT (f) = nt;
       FRAME_TOOLBAR_BOTTOM_HEIGHT (f) = nb;
-      return 1;
+
+      return true;
+    }
+  else
+    return false;
+}
+
+static char *
+find_icon_from_name (char *name,
+                     GtkIconTheme *icon_theme,
+                     char **icon_name)
+{
+#if ! GTK_CHECK_VERSION (3, 10, 0)
+  GtkStockItem stock_item;
+#endif
+
+  if (name[0] == 'n' && name[1] == ':')
+    {
+      *icon_name = name + 2;
+      name = NULL;
+
+      if (! gtk_icon_theme_has_icon (icon_theme, *icon_name))
+        *icon_name = NULL;
     }
 
-  return 0;
+#if ! GTK_CHECK_VERSION (3, 10, 0)
+  else if (gtk_stock_lookup (name, &stock_item))
+    *icon_name = NULL;
+#endif
+  else if (gtk_icon_theme_has_icon (icon_theme, name))
+    {
+      *icon_name = name;
+      name = NULL;
+    }
+  else
+    {
+      name = NULL;
+      *icon_name = NULL;
+    }
+
+  return name;
 }
 
 
@@ -4673,6 +4722,9 @@ update_frame_tool_bar (struct frame *f)
   Lisp_Object style;
   bool text_image, horiz;
   struct xg_frame_tb_info *tbinfo;
+  GdkScreen *screen;
+  GtkIconTheme *icon_theme;
+
 
   if (! FRAME_GTK_WIDGET (f))
     return;
@@ -4707,6 +4759,8 @@ update_frame_tool_bar (struct frame *f)
   dir = gtk_widget_get_direction (GTK_WIDGET (wtoolbar));
 
   style = Ftool_bar_get_system_style ();
+  screen = gtk_widget_get_screen (GTK_WIDGET (wtoolbar));
+  icon_theme = gtk_icon_theme_get_for_screen (screen);
 
   /* Are we up to date? */
   tbinfo = g_object_get_data (G_OBJECT (FRAME_GTK_OUTER_WIDGET (f)),
@@ -4743,7 +4797,6 @@ update_frame_tool_bar (struct frame *f)
       struct image *img = NULL;
       Lisp_Object image;
       Lisp_Object stock = Qnil;
-      GtkStockItem stock_item;
       char *stock_name = NULL;
       char *icon_name = NULL;
       Lisp_Object rtl;
@@ -4797,31 +4850,27 @@ update_frame_tool_bar (struct frame *f)
       if (!NILP (specified_file) && !NILP (Ffboundp (Qx_gtk_map_stock)))
         stock = call1 (Qx_gtk_map_stock, specified_file);
 
-      if (STRINGP (stock))
+      if (CONSP (stock))
         {
-          stock_name = SSDATA (stock);
-          if (stock_name[0] == 'n' && stock_name[1] == ':')
-            {
-              GdkScreen *screen = gtk_widget_get_screen (GTK_WIDGET (wtoolbar));
-              GtkIconTheme *icon_theme = gtk_icon_theme_get_for_screen (screen);
-
-              icon_name = stock_name + 2;
-              stock_name = NULL;
-              stock = Qnil;
-
-              if (! gtk_icon_theme_has_icon (icon_theme, icon_name))
-                icon_name = NULL;
-              else
-                icon_size = gtk_toolbar_get_icon_size (wtoolbar);
-            }
-          else if (gtk_stock_lookup (SSDATA (stock), &stock_item))
-            icon_size = gtk_toolbar_get_icon_size (wtoolbar);
-          else
-            {
-              stock = Qnil;
-              stock_name = NULL;
-            }
+          Lisp_Object tem;
+          for (tem = stock; CONSP (tem); tem = XCDR (tem))
+            if (! NILP (tem) && STRINGP (XCAR (tem)))
+              {
+                stock_name = find_icon_from_name (SSDATA (XCAR (tem)),
+                                                  icon_theme,
+                                                  &icon_name);
+                if (stock_name || icon_name) break;
+              }
         }
+      else if (STRINGP (stock))
+        {
+          stock_name = find_icon_from_name (SSDATA (stock),
+                                            icon_theme,
+                                            &icon_name);
+        }
+
+      if (stock_name || icon_name)
+        icon_size = gtk_toolbar_get_icon_size (wtoolbar);
 
       if (stock_name == NULL && icon_name == NULL)
         {
@@ -4883,7 +4932,12 @@ update_frame_tool_bar (struct frame *f)
 	    w = NULL;
 	  else if (stock_name)
             {
+
+#if GTK_CHECK_VERSION (3, 10, 0)
+              w = gtk_image_new_from_icon_name (stock_name, icon_size);
+#else
               w = gtk_image_new_from_stock (stock_name, icon_size);
+#endif
               g_object_set_data_full (G_OBJECT (w), XG_TOOL_BAR_STOCK_NAME,
                                       (gpointer) xstrdup (stock_name),
                                       (GDestroyNotify) xfree);
@@ -4902,7 +4956,17 @@ update_frame_tool_bar (struct frame *f)
                                  (gpointer)img->pixmap);
             }
 
+#if GTK_CHECK_VERSION (3, 14, 0)
+          if (w)
+            {
+              gtk_widget_set_margin_start (w, hmargin);
+              gtk_widget_set_margin_end (w, hmargin);
+              gtk_widget_set_margin_top (w, vmargin);
+              gtk_widget_set_margin_bottom (w, vmargin);
+            }
+#else
 	  if (w) gtk_misc_set_padding (GTK_MISC (w), hmargin, vmargin);
+#endif
           ti = xg_make_tool_item (f, w, &wbutton, label, i, horiz, text_image);
           gtk_toolbar_insert (GTK_TOOLBAR (wtoolbar), ti, j);
         }
@@ -4924,10 +4988,27 @@ update_frame_tool_bar (struct frame *f)
   if (f->n_tool_bar_items != 0)
     {
       if (! x->toolbar_is_packed)
-        xg_pack_tool_bar (f, f->tool_bar_position);
-      gtk_widget_show_all (TOOLBAR_TOP_WIDGET (x));
+        xg_pack_tool_bar (f, FRAME_TOOL_BAR_POSITION (f));
+      gtk_widget_show_all (x->toolbar_widget);
       if (xg_update_tool_bar_sizes (f))
-        xg_height_or_width_changed (f);
+	{
+	  int inhibit
+	    = ((f->after_make_frame
+		&& !f->tool_bar_resized
+		&& (EQ (frame_inhibit_implied_resize, Qt)
+		    || (CONSP (frame_inhibit_implied_resize)
+			&& !NILP (Fmemq (Qtool_bar_lines,
+					 frame_inhibit_implied_resize))))
+		/* This will probably fail to DTRT in the
+		   fullheight/-width cases.  */
+		&& NILP (get_frame_param (f, Qfullscreen)))
+	       ? 0
+	       : 2);
+
+	  frame_size_history_add (f, Qupdate_frame_tool_bar, 0, 0, Qnil);
+	  adjust_frame_size (f, -1, -1, inhibit, 0, Qtool_bar_lines);
+	}
+      f->tool_bar_resized = f->tool_bar_redisplayed;
     }
 
   unblock_input ();
@@ -4944,11 +5025,9 @@ free_frame_tool_bar (struct frame *f)
   if (x->toolbar_widget)
     {
       struct xg_frame_tb_info *tbinfo;
-      GtkWidget *top_widget = TOOLBAR_TOP_WIDGET (x);
+      GtkWidget *top_widget = x->toolbar_widget;
 
       block_input ();
-      /* We may have created the toolbar_widget in xg_create_tool_bar, but
-         not the x->handlebox_widget which is created in xg_pack_tool_bar.  */
       if (x->toolbar_is_packed)
         {
           if (x->toolbar_in_hbox)
@@ -4962,7 +5041,7 @@ free_frame_tool_bar (struct frame *f)
         gtk_widget_destroy (x->toolbar_widget);
 
       x->toolbar_widget = 0;
-      TOOLBAR_TOP_WIDGET (x) = 0;
+      x->toolbar_widget = 0;
       x->toolbar_is_packed = false;
       FRAME_TOOLBAR_TOP_HEIGHT (f) = FRAME_TOOLBAR_BOTTOM_HEIGHT (f) = 0;
       FRAME_TOOLBAR_LEFT_WIDTH (f) = FRAME_TOOLBAR_RIGHT_WIDTH (f) = 0;
@@ -4977,7 +5056,8 @@ free_frame_tool_bar (struct frame *f)
                              NULL);
         }
 
-      xg_height_or_width_changed (f);
+      frame_size_history_add (f, Qfree_frame_tool_bar, 0, 0, Qnil);
+      adjust_frame_size (f, -1, -1, 2, 0, Qtool_bar_lines);
 
       unblock_input ();
     }
@@ -4987,7 +5067,7 @@ void
 xg_change_toolbar_position (struct frame *f, Lisp_Object pos)
 {
   struct x_output *x = f->output_data.x;
-  GtkWidget *top_widget = TOOLBAR_TOP_WIDGET (x);
+  GtkWidget *top_widget = x->toolbar_widget;
 
   if (! x->toolbar_widget || ! top_widget)
     return;
@@ -5006,8 +5086,13 @@ xg_change_toolbar_position (struct frame *f, Lisp_Object pos)
 
   xg_pack_tool_bar (f, pos);
   g_object_unref (top_widget);
+
   if (xg_update_tool_bar_sizes (f))
-    xg_height_or_width_changed (f);
+    {
+      frame_size_history_add (f, Qxg_change_toolbar_position, 0, 0, Qnil);
+      adjust_frame_size (f, -1, -1, 2, 0, Qtool_bar_lines);
+    }
+
 
   unblock_input ();
 }
@@ -5031,9 +5116,6 @@ xg_initialize (void)
 
   gdpy_def = NULL;
   xg_ignore_gtk_scrollbar = 0;
-#ifdef HAVE_GTK_TEAROFF_MENU_ITEM_NEW
-  xg_detached_menus = 0;
-#endif
   xg_menu_cb_list.prev = xg_menu_cb_list.next =
     xg_menu_item_cb_list.prev = xg_menu_item_cb_list.next = 0;
 
@@ -5044,10 +5126,10 @@ xg_initialize (void)
                                           (gdk_display_get_default ()));
   /* Remove F10 as a menu accelerator, it does not mix well with Emacs key
      bindings.  It doesn't seem to be any way to remove properties,
-     so we set it to VoidSymbol which in X means "no key".  */
+     so we set it to "" which in means "no key".  */
   gtk_settings_set_string_property (settings,
                                     "gtk-menu-bar-accel",
-                                    "VoidSymbol",
+                                    "",
                                     EMACS_CLASS);
 
   /* Make GTK text input widgets use Emacs style keybindings.  This is
@@ -5069,6 +5151,7 @@ xg_initialize (void)
   gtk_binding_entry_add_signal (binding_set, GDK_KEY_g, GDK_CONTROL_MASK,
                                 "cancel", 0);
   update_theme_scrollbar_width ();
+  update_theme_scrollbar_height ();
 
 #ifdef HAVE_FREETYPE
   x_last_font_name = NULL;

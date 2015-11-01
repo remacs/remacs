@@ -1,6 +1,6 @@
 ;; allout-widgets.el --- Visually highlight allout outline structure.
 
-;; Copyright (C) 2005-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
 ;; Author: Ken Manheimer <ken dot manheimer at gmail...>
 ;; Maintainer: Ken Manheimer <ken dot manheimer at gmail...>
@@ -90,7 +90,6 @@
 
 ;;;_ : USER CUSTOMIZATION VARIABLES and incidental functions:
 ;;;_  > defgroup allout-widgets
-;;;###autoload
 (defgroup allout-widgets nil
   "Allout extension that highlights outline structure graphically.
 
@@ -267,7 +266,7 @@ decreases as obsolete widgets are garbage collected."
 (defvar allout-widgets-tally nil
   "Hash-table of existing allout widgets, for debugging.
 
-Table is maintained iff `allout-widgets-maintain-tally' is non-nil.
+Table is maintained only if `allout-widgets-maintain-tally' is non-nil.
 
 The table contents will be out of sync if any widgets are created
 or deleted while this variable is nil.")
@@ -349,7 +348,7 @@ to `allout-body-modification-handler', and is always reset by
 images with lists containing the name of the icon directory (as
 found on the `load-path') and the icon name.
 
-Set this variable to `nil' to empty the cache, and have it replenish from the
+Set this variable to nil to empty the cache, and have it replenish from the
 filesystem.")
 ;;;_    = allout-widgets-unset-inhibit-read-only
 (defvar allout-widgets-unset-inhibit-read-only nil
@@ -385,9 +384,9 @@ The structure includes the guides lines, bullet, and bullet cue.")
 
 Entries on the list are lists whose first element is a symbol indicating
 the change type and subsequent elements are data specific to that change
-type.  Specifically:
+type.  For example:
 
- 'exposure `allout-exposure-from' `allout-exposure-to' `allout-exposure-flag'
+  (exposure ALLOUT-EXPOSURE-FROM ALLOUT-EXPOSURE-TO ALLOUT-EXPOSURE-FLAG)
 
 The changes are recorded in reverse order, with new values pushed
 onto the front.")
@@ -482,9 +481,9 @@ text in allout item bodies.")
 
 \(That space is used to convey selected cues indicating body qualities,
 including things like:
- - encryption '~'
- - numbering '#'
- - indirect reference '@'
+ - encryption `~'
+ - numbering `#'
+ - indirect reference `@'
  - distinctive bullets - see `allout-distinctive-bullets-string'.)")
 ;;;_    = allout-span-to-category
 (defvar allout-span-to-category
@@ -870,7 +869,7 @@ Optional RECURSING is for internal use, to limit recursion."
     ;; tell the allout-widgets-post-command-business to reestablish the hook:
     (setq allout-widgets-reenable-before-change-handler t)
     ;; and raise an error to prevent the edit (and disable the hook):
-    (error
+    (error "%s"
      (substitute-command-keys allout-structure-unruly-deletion-message)))))
 ;;;_    > allout-widgets-after-change-handler
 (defun allout-widgets-after-change-handler (_beg _end _prelength)
@@ -903,7 +902,7 @@ encompassing condition-case."
          (header
           (format "allout-widgets-last-hook-error stored, %s/%s %s %s"
                   this mode args
-                  (format-time-string "%e-%b-%Y %r" (current-time)))))
+                  (format-time-string "%e-%b-%Y %r"))))
     ;; post to *Messages* then immediately replace with more compact notice:
     (message "%s" (setq allout-widgets-last-hook-error
                         (format "%s:\n%s" header bt)))
@@ -1853,7 +1852,7 @@ In their absence, the current guide column flags are used.
 
 Optional PARENT-WIDGET is the widget for the item's parent item.
 
-Optional HAS-SUCCESSOR is true iff the item is followed by a sibling.
+Optional HAS-SUCCESSOR is true if the item is followed by a sibling.
 
 We also hide the header-prefix string.
 
@@ -2288,7 +2287,7 @@ Deletes allowed only when `inhibit-read-only' is t."
    ((yes-or-no-p "Unruly edit of outline structure - allow? ")
     (setq allout-widgets-unset-inhibit-read-only (not inhibit-read-only)
           inhibit-read-only t))
-   (t (error
+   (t (error "%s"
        (substitute-command-keys allout-structure-unruly-deletion-message)))))
 ;;;_   > allout-item-icon-key-handler ()
 (defun allout-item-icon-key-handler ()
@@ -2343,9 +2342,9 @@ We use a caching strategy, so the caller doesn't need to do so."
       got)))
 
 ;;;_ : Miscellaneous
-;;;_  > allout-elapsed-time-seconds (triple)
+;;;_  > allout-elapsed-time-seconds (time-value time-value)
 (defun allout-elapsed-time-seconds (end start)
-  "Return seconds between `current-time' style time START/END triples."
+  "Return seconds between START/END time values."
   (let ((elapsed (time-subtract end start)))
     (float-time elapsed)))
 ;;;_  > allout-frame-property (frame property)
@@ -2373,7 +2372,7 @@ The elements of LIST are not copied, just the list structure itself."
     (car list)))
 ;;;_  . allout-widgets-count-buttons-in-region (start end)
 (defun allout-widgets-count-buttons-in-region (start end)
-  "Debugging/diagnostic tool - count overlays with 'button' property in region."
+  "Debugging/diagnostic tool - count overlays with `button' property in region."
   (interactive "r")
   (setq start (or start (point-min))
         end (or end (point-max)))

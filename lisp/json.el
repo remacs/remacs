@@ -1,6 +1,6 @@
 ;;; json.el --- JavaScript Object Notation parser / generator
 
-;; Copyright (C) 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
 ;; Author: Edward O'Connor <ted@oconnor.cx>
 ;; Version: 1.4
@@ -52,19 +52,13 @@
 
 ;;; Code:
 
-
-;; Compatibility code
-
-(defalias 'json-encode-char0 'encode-char)
-(defalias 'json-decode-char0 'decode-char)
-
-
 ;; Parameters
 
 (defvar json-object-type 'alist
   "Type to convert JSON objects to.
 Must be one of `alist', `plist', or `hash-table'.  Consider let-binding
-this around your call to `json-read' instead of `setq'ing it.")
+this around your call to `json-read' instead of `setq'ing it.  Ordering
+is maintained for `alist' and `plist', but not for `hash-table'.")
 
 (defvar json-array-type 'vector
   "Type to convert JSON arrays to.
@@ -126,9 +120,10 @@ without indentation.")
   (mapconcat 'identity strings separator))
 
 (defun json-alist-p (list)
-  "Non-null if and only if LIST is an alist."
+  "Non-null if and only if LIST is an alist with simple keys."
   (while (consp list)
-    (setq list (if (consp (car list))
+    (setq list (if (and (consp (car list))
+                        (atom (caar list)))
                    (cdr list)
                  'not-alist)))
   (null list))
@@ -141,6 +136,17 @@ without indentation.")
                    (cddr list)
                  'not-plist)))
   (null list))
+
+(defun json--plist-reverse (plist)
+  "Return a copy of PLIST in reverse order.
+Unlike `reverse', this keeps the property-value pairs intact."
+  (let (res)
+    (while plist
+      (let ((prop (pop plist))
+            (val (pop plist)))
+        (push val res)
+        (push prop res)))
+    res))
 
 (defmacro json--with-indentation (body)
   `(let ((json--encoding-current-indentation
@@ -165,7 +171,7 @@ without indentation.")
   "Advance past the character at point, returning it."
   (let ((char (json-peek)))
     (if (eq char :json-eof)
-        (signal 'end-of-file nil)
+        (signal 'json-end-of-file nil)
       (json-advance)
       char)))
 
@@ -185,6 +191,8 @@ without indentation.")
 (define-error 'json-string-format "Bad string format" 'json-error)
 (define-error 'json-key-format "Bad JSON object key" 'json-error)
 (define-error 'json-object-format "Bad JSON object" 'json-error)
+(define-error 'json-end-of-file "End of file while parsing JSON"
+  '(end-of-file json-error))
 
 
 
@@ -262,7 +270,6 @@ representation will be parsed correctly."
 (defvar json-special-chars
   '((?\" . ?\")
     (?\\ . ?\\)
-    (?/ . ?/)
     (?b . ?\b)
     (?f . ?\f)
     (?n . ?\n)
@@ -284,14 +291,14 @@ representation will be parsed correctly."
      ((looking-at "[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]")
       (let ((hex (match-string 0)))
         (json-advance 4)
-        (json-decode-char0 'ucs (string-to-number hex 16))))
+        (string-to-number hex 16)))
      (t
       (signal 'json-string-escape (list (point)))))))
 
 (defun json-read-string ()
   "Read the JSON string at point."
   (unless (char-equal (json-peek) ?\")
-    (signal 'json-string-format (list "doesn't start with '\"'!")))
+    (signal 'json-string-format (list "doesn't start with `\"'!")))
   ;; Skip over the '"'
   (json-advance)
   (let ((characters '())
@@ -310,24 +317,29 @@ representation will be parsed correctly."
 
 ;; String encoding
 
-(defun json-encode-char (char)
-  "Encode CHAR as a JSON string."
-  (setq char (json-encode-char0 char 'ucs))
-  (let ((control-char (car (rassoc char json-special-chars))))
-    (cond
-     ;; Special JSON character (\n, \r, etc.).
-     (control-char
-      (format "\\%c" control-char))
-     ;; ASCIIish printable character.
-     ((and (> char 31) (< char 127))
-      (format "%c" char))
-     ;; Fallback: UCS code point in \uNNNN form.
-     (t
-      (format "\\u%04x" char)))))
-
 (defun json-encode-string (string)
   "Return a JSON representation of STRING."
-  (format "\"%s\"" (mapconcat 'json-encode-char string "")))
+  ;; Reimplement the meat of `replace-regexp-in-string', for
+  ;; performance (bug#20154).
+  (let ((l (length string))
+        (start 0)
+        res mb)
+    ;; Only escape quotation mark, backslash and the control
+    ;; characters U+0000 to U+001F (RFC 4627, ECMA-404).
+    (while (setq mb (string-match "[\"\\[:cntrl:]]" string start))
+      (let* ((c (aref string mb))
+             (special (rassq c json-special-chars)))
+        (push (substring string start mb) res)
+        (push (if special
+                  ;; Special JSON character (\n, \r, etc.).
+                  (string ?\\ (car special))
+                ;; Fallback: UCS code point in \uNNNN form.
+                (format "\\u%04x" c))
+              res)
+        (setq start (1+ mb))))
+    (push (substring string start l) res)
+    (push "\"" res)
+    (apply #'concat "\"" (nreverse res))))
 
 (defun json-encode-key (object)
   "Return a JSON representation of OBJECT.
@@ -346,7 +358,7 @@ Please see the documentation of `json-object-type'."
   (cond ((eq json-object-type 'hash-table)
          (make-hash-table :test 'equal))
         (t
-         (list))))
+         ())))
 
 (defun json-add-to-object (object key value)
   "Add a new KEY -> VALUE association to OBJECT.
@@ -400,7 +412,10 @@ Please see the documentation of `json-object-type' and `json-key-type'."
           (signal 'json-object-format (list "," (json-peek))))))
     ;; Skip over the "}"
     (json-advance)
-    elements))
+    (pcase json-object-type
+      (`alist (nreverse elements))
+      (`plist (json--plist-reverse elements))
+      (_ elements))))
 
 ;; Hash table encoding
 
@@ -553,7 +568,7 @@ Advances point just past JSON object."
           (if (functionp (car record))
               (apply (car record) (cdr record))
             (signal 'json-readtable-error record)))
-      (signal 'end-of-file nil))))
+      (signal 'json-end-of-file nil))))
 
 ;; Syntactic sugar for the reader
 
@@ -602,6 +617,8 @@ Advances point just past JSON object."
   (interactive "r")
   (atomic-change-group
     (let ((json-encoding-pretty-print t)
+          ;; Ensure that ordering is maintained
+          (json-object-type 'alist)
           (txt (delete-and-extract-region begin end)))
       (insert (json-encode (json-read-from-string txt))))))
 

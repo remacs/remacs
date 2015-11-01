@@ -1,6 +1,6 @@
 ;;; srecode/cpp.el --- C++ specific handlers for Semantic Recoder
 
-;; Copyright (C) 2007, 2009-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007, 2009-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 ;;         Jan Moringen <scymtym@users.sourceforge.net>
@@ -84,7 +84,7 @@ HEADER - Shown section if in a header file."
 ;;;###autoload
 (defun srecode-semantic-handle-:cpp (dict)
   "Add macros into the dictionary DICT based on the current c file.
-Calls `srecode-semantic-handle-:c.
+Calls `srecode-semantic-handle-:c'.
 Also adds the following:
  - nothing -"
   (srecode-semantic-handle-:c dict)

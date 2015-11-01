@@ -1,10 +1,10 @@
 ;;; ehelp.el --- bindings for electric-help mode -*- lexical-binding: t -*-
 
-;; Copyright (C) 1986, 1995, 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1986, 1995, 2000-2015 Free Software Foundation, Inc.
 
 ;; Author: Richard Mlynarik
 ;; (according to ack.texi and authors.el)
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help, extensions
 
 ;; This file is part of GNU Emacs.
@@ -25,7 +25,7 @@
 ;;; Commentary:
 
 ;; This package provides a pre-packaged `Electric Help Mode' for
-;; browsing on-line help screens.  There is one entry point,
+;; browsing Emacs help screens.  There is one entry point,
 ;; `with-electric-help'; all you have to give it is a no-argument
 ;; function that generates the actual text of the help into the current
 ;; buffer.
@@ -204,10 +204,10 @@ BUFFER is put back into its original major mode."
   (catch 'exit
     (if (pos-visible-in-window-p (point-max))
 	(progn (message "%s" (substitute-command-keys "<<< Press Space to bury the help buffer, Press \\[electric-help-retain] to retain it >>>"))
-	       (if (equal (setq unread-command-events (list (read-event)))
-			  '(?\s))
-		   (progn (setq unread-command-events nil)
-			  (throw 'exit t)))))
+               (let ((ev (read-event)))
+                 (if (equal ev ?\s)
+                     (throw 'exit t)
+                   (push ev unread-command-events)))))
     (let (up down both neither
 	  (standard (and (eq (key-binding " " nil t)
 			     'scroll-up)

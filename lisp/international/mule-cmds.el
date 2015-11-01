@@ -1,6 +1,6 @@
-;;; mule-cmds.el --- commands for multilingual environment -*-coding: utf-8 -*-
+;;; mule-cmds.el --- commands for multilingual environment  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1997-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997-2015 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
 ;;   2005, 2006, 2007, 2008, 2009, 2010, 2011
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
@@ -29,6 +29,8 @@
 ;;; Commentary:
 
 ;;; Code:
+
+(eval-when-compile (require 'cl-lib))
 
 (defvar dos-codepage)
 (autoload 'widget-value "wid-edit")
@@ -157,7 +159,7 @@
 ;; very frequently while editing multilingual text.  Now we can use
 ;; only two such keys: "\C-\\" and "\C-^", but the latter is not
 ;; convenient because it requires shifting on most keyboards.  An
-;; alternative is "\C-\]" which is now bound to `abort-recursive-edit'
+;; alternative is "\C-]" which is now bound to `abort-recursive-edit'
 ;; but it won't be used that frequently.
 (define-key global-map "\C-\\" 'toggle-input-method)
 
@@ -175,7 +177,7 @@
 		    "\\(charset\\)"
 		    "\\)\\s-+\\)?"
 		    ;; Note starting with word-syntax character:
-		    "`\\(\\sw\\(\\sw\\|\\s_\\)+\\)'")))
+		    "['`‘]\\(\\sw\\(\\sw\\|\\s_\\)+\\)['’]")))
 
 (defun coding-system-change-eol-conversion (coding-system eol-type)
   "Return a coding system which differs from CODING-SYSTEM in EOL conversion.
@@ -395,7 +397,7 @@ A coding system that requires automatic detection of text+encoding
 
 To prefer, for instance, utf-8, say the following:
 
-  \(prefer-coding-system 'utf-8)"
+  (prefer-coding-system \\='utf-8)"
   (interactive "zPrefer coding system: ")
   (if (not (and coding-system (coding-system-p coding-system)))
       (error "Invalid coding system `%s'" coding-system))
@@ -548,7 +550,7 @@ Emacs, but is unlikely to be what you really want now."
 				     (coding-system-charset-list cs)))
 		   (charsets charsets))
 	       (if (coding-system-get cs :ascii-compatible-p)
-		   (add-to-list 'cs-charsets 'ascii))
+		   (cl-pushnew 'ascii cs-charsets))
 	       (if (catch 'ok
 		     (when cs-charsets
 		       (while charsets
@@ -636,6 +638,36 @@ The meaning is the same as the argument ACCEPT-DEFAULT-P of the
 function `select-safe-coding-system' (which see).  This variable
 overrides that argument.")
 
+(defun sanitize-coding-system-list (codings)
+  "Return a list of coding systems presumably more user-friendly than CODINGS."
+  ;; Change each safe coding system to the corresponding
+  ;; mime-charset name if it is also a coding system.  Such a name
+  ;; is more friendly to users.
+  (setq codings
+        (mapcar (lambda (cs)
+                  (let ((mime-charset (coding-system-get cs 'mime-charset)))
+                    (if (and mime-charset (coding-system-p mime-charset)
+                             (coding-system-equal cs mime-charset))
+                        mime-charset cs)))
+                codings))
+
+  ;; Don't offer variations with locking shift, which you
+  ;; basically never want.
+  (let (l)
+    (dolist (elt codings (setq codings (nreverse l)))
+      (unless (or (eq 'coding-category-iso-7-else
+		      (coding-system-category elt))
+		  (eq 'coding-category-iso-8-else
+		      (coding-system-category elt)))
+	(push elt l))))
+
+  ;; Remove raw-text, emacs-mule and no-conversion unless nothing
+  ;; else is available.
+  (or (delq 'raw-text
+            (delq 'emacs-mule
+                  (delq 'no-conversion (copy-sequence codings))))
+      codings))
+
 (defun select-safe-coding-system-interactively (from to codings unsafe
 						&optional rejected default)
   "Select interactively a coding system for the region FROM ... TO.
@@ -667,35 +699,7 @@ DEFAULT is the coding system to use by default in the query."
 					 from to coding 11)))))
 		    unsafe)))
 
-  ;; Change each safe coding system to the corresponding
-  ;; mime-charset name if it is also a coding system.  Such a name
-  ;; is more friendly to users.
-  (let ((l codings)
-	mime-charset)
-    (while l
-      (setq mime-charset (coding-system-get (car l) :mime-charset))
-      (if (and mime-charset (coding-system-p mime-charset)
-	       (coding-system-equal (car l) mime-charset))
-	  (setcar l mime-charset))
-      (setq l (cdr l))))
-
-  ;; Don't offer variations with locking shift, which you
-  ;; basically never want.
-  (let (l)
-    (dolist (elt codings (setq codings (nreverse l)))
-      (unless (or (eq 'coding-category-iso-7-else
-		      (coding-system-category elt))
-		  (eq 'coding-category-iso-8-else
-		      (coding-system-category elt)))
-	(push elt l))))
-
-  ;; Remove raw-text, emacs-mule and no-conversion unless nothing
-  ;; else is available.
-  (setq codings
-	(or (delq 'raw-text
-		  (delq 'emacs-mule
-			(delq 'no-conversion codings)))
-	    '(raw-text emacs-mule no-conversion)))
+  (setq codings (sanitize-coding-system-list codings))
 
   (let ((window-configuration (current-window-configuration))
 	(bufname (buffer-name))
@@ -715,14 +719,14 @@ DEFAULT is the coding system to use by default in the query."
 	      (insert "No default coding systems to try for "
 		      (if (stringp from)
 			  (format "string \"%s\"." from)
-			(format "buffer `%s'." bufname)))
+			(format-message "buffer `%s'." bufname)))
 	    (insert
 	     "These default coding systems were tried to encode"
 	     (if (stringp from)
 		 (concat " \"" (if (> (length from) 10)
 				   (concat (substring from 0 10) "...\"")
 				 (concat from "\"")))
-	       (format " text\nin the buffer `%s'" bufname))
+	       (format-message " text\nin the buffer `%s'" bufname))
 	     ":\n")
 	    (let ((pos (point))
 		  (fill-prefix "  "))
@@ -740,7 +744,8 @@ e.g., for sending an email message.\n ")
 	    (when unsafe
 	      (insert (if rejected "The other coding systems"
 			"However, each of them")
-		      " encountered characters it couldn't encode:\n")
+		      (substitute-command-keys
+		       " encountered characters it couldn't encode:\n"))
 	      (dolist (coding unsafe)
 		(insert (format "  %s cannot encode these:" (car coding)))
 		(let ((i 0)
@@ -871,13 +876,13 @@ and TO is ignored."
 		  (setq auto-cs (car auto-cs))
 		(display-warning
 		 'mule
-		 (format "\
+		 (format-message "\
 Invalid coding system `%s' is specified
 for the current buffer/file by the %s.
 It is highly recommended to fix it before writing to a file."
 			 (car auto-cs)
 			 (if (eq (cdr auto-cs) :coding) ":coding tag"
-			   (format "variable `%s'" (cdr auto-cs))))
+			   (format-message "variable `%s'" (cdr auto-cs))))
 		 :warning)
 		(or (yes-or-no-p "Really proceed with writing? ")
 		    (error "Save aborted"))
@@ -972,13 +977,17 @@ It is highly recommended to fix it before writing to a file."
 
 	;; Classify the defaults into safe, rejected, and unsafe.
 	(dolist (elt default-coding-system)
-	  (if (or (eq (coding-system-type (car elt)) 'undecided)
-		  (memq (cdr elt) codings))
+	  (if (memq (cdr elt) codings)
+	      ;; This is safe.  Is it acceptable?
 	      (if (and (functionp accept-default-p)
 		       (not (funcall accept-default-p (cdr elt))))
+		  ;; No, not acceptable.
 		  (push (car elt) rejected)
+		;; Yes, acceptable.
 		(push (car elt) safe))
+	    ;; This is not safe.
 	    (push (car elt) unsafe)))
+	;; If there are safe ones, the first one is what we want.
 	(if safe
 	    (setq coding-system (car safe))))
 
@@ -1263,7 +1272,7 @@ This file contains a list of libraries of Emacs input methods (LEIM)
 in the format of Lisp expression for registering each input method.
 Emacs loads this file at startup time.")
 
-(defconst leim-list-header (format
+(defconst leim-list-header (format-message
 ";;; %s -- list of LEIM (Library of Emacs Input Method) -*-coding: utf-8;-*-
 ;;
 ;; This file is automatically generated.
@@ -1421,7 +1430,9 @@ The return value is a string."
 	 ;; buffer local.
 	 (input-method (completing-read prompt input-method-alist
 					nil t nil 'input-method-history
-					default)))
+					(if (and default (symbolp default))
+                                            (symbol-name default)
+                                          default))))
     (if (and input-method (symbolp input-method))
 	(setq input-method (symbol-name input-method)))
     (if (> (length input-method) 0)
@@ -1577,7 +1588,7 @@ which marks the variable `default-input-method' as set for Custom buffers."
 			  (called-interactively-p 'interactive))
 	 (with-output-to-temp-buffer (help-buffer)
 	   (let ((elt (assoc input-method input-method-alist)))
-	     (princ (format
+	     (princ (format-message
 		     "Input method: %s (`%s' in mode line) for %s\n  %s\n"
 		     input-method (nth 3 elt) (nth 1 elt) (nth 4 elt))))))))))
 
@@ -1688,7 +1699,7 @@ Usually, the input method inserts the intermediate key sequence,
 or candidate translations corresponding to the sequence,
 at point in the current buffer.
 But, if this flag is non-nil, it displays them in echo area instead."
-  :type 'hook
+  :type 'boolean
   :group 'mule)
 
 (defvar input-method-exit-on-invalid-key nil
@@ -2163,10 +2174,11 @@ See `set-language-info-alist' for use in programs."
 	      (search-backward (symbol-name (car l)))
 	      (help-xref-button 0 'help-coding-system (car l))
 	      (goto-char (point-max))
-	      (insert " (`"
+	      (insert (substitute-command-keys " (`")
 		      (coding-system-mnemonic (car l))
-		      "' in mode line):\n\t"
-		      (coding-system-doc-string (car l))
+		      (substitute-command-keys "' in mode line):\n\t")
+                      (substitute-command-keys
+                       (coding-system-doc-string (car l)))
 		      "\n")
 	      (let ((aliases (coding-system-aliases (car l))))
 		(when aliases
@@ -2401,12 +2413,12 @@ See `set-language-info-alist' for use in programs."
     ))
   "Alist of locale regexps vs the corresponding languages and coding systems.
 Each element has this form:
-  \(LOCALE-REGEXP LANG-ENV CODING-SYSTEM)
+  (LOCALE-REGEXP LANG-ENV CODING-SYSTEM)
 The first element whose LOCALE-REGEXP matches the start of a
 downcased locale specifies the LANG-ENV \(language environment)
 and CODING-SYSTEM corresponding to that locale.  If there is no
 appropriate language environment, the element may have this form:
-  \(LOCALE-REGEXP . LANG-ENV)
+  (LOCALE-REGEXP . LANG-ENV)
 In this case, LANG-ENV is one of generic language environments for an
 specific encoding such as \"Latin-1\" and \"UTF-8\".")
 
@@ -2508,6 +2520,9 @@ is returned.  Thus, for instance, if charset \"ISO8859-2\",
 ;; too, for setting things such as calendar holidays, ps-print paper
 ;; size, spelling dictionary.
 
+(declare-function w32-get-console-codepage "w32proc.c" ())
+(declare-function w32-get-console-output-codepage "w32proc.c" ())
+
 (defun locale-translate (locale)
   "Expand LOCALE according to `locale-translation-file-name', if possible.
 For example, translate \"swedish\" into \"sv_SE.ISO8859-1\"."
@@ -2589,7 +2604,18 @@ See also `locale-charset-language-names', `locale-language-names',
 	(setq system-time-locale locale))
 
       (if (string-match "^[a-z][a-z]" locale)
-	  (setq current-iso639-language (intern (match-string 0 locale)))))
+          ;; The value of 'current-iso639-language' is matched against
+          ;; the ':lang' property of font-spec objects when selecting
+          ;; and prioritizing available fonts for displaying
+          ;; characters; see fontset.c.
+	  (setq current-iso639-language
+                ;; The call to 'downcase' is for w32, where the
+                ;; MS-Windows locale names are in caps, as in "ENU",
+                ;; the equivalent of the Posix "en_US".  Since the
+                ;; match mentioned above uses memq, and ':lang'
+                ;; properties have lower-case values, the letter-case
+                ;; must match exactly.
+                (intern (downcase (match-string 0 locale))))))
 
     (setq woman-locale
           (or system-messages-locale
@@ -2677,14 +2703,22 @@ See also `locale-charset-language-names', `locale-language-names',
 
     ;; On Windows, override locale-coding-system,
     ;; default-file-name-coding-system, keyboard-coding-system,
-    ;; terminal-coding-system with system codepage.
+    ;; terminal-coding-system with the ANSI or console codepage.
     (when (and (eq system-type 'windows-nt)
                (boundp 'w32-ansi-code-page))
-      (let ((code-page-coding (intern (format "cp%d" w32-ansi-code-page))))
+      (let* ((code-page-coding
+              (intern (format "cp%d" (if noninteractive
+                                         (w32-get-console-codepage)
+                                       w32-ansi-code-page))))
+             (output-coding
+              (if noninteractive
+                  (intern (format "cp%d" (w32-get-console-output-codepage)))
+                code-page-coding)))
 	(when (coding-system-p code-page-coding)
+          (or output-coding (setq output-coding code-page-coding))
 	  (unless frame (setq locale-coding-system code-page-coding))
 	  (set-keyboard-coding-system code-page-coding frame)
-	  (set-terminal-coding-system code-page-coding frame)
+	  (set-terminal-coding-system output-coding frame)
 	  (setq default-file-name-coding-system code-page-coding))))
 
     (when (eq system-type 'darwin)
@@ -2766,11 +2800,7 @@ See also the documentation of `get-char-code-property' and
     (or (stringp table)
 	(error "Not a char-table nor a file name: %s" table)))
   (if (stringp table) (setq table (purecopy table)))
-  (let ((slot (assq name char-code-property-alist)))
-    (if slot
-	(setcdr slot table)
-      (setq char-code-property-alist
-	    (cons (cons name table) char-code-property-alist))))
+  (setf (alist-get name char-code-property-alist) table)
   (put name 'char-code-property-documentation (purecopy docstring)))
 
 (defvar char-code-property-table
@@ -2899,16 +2929,14 @@ on encoding."
 (defun ucs-names ()
   "Return alist of (CHAR-NAME . CHAR-CODE) pairs cached in `ucs-names'."
   (or ucs-names
-      (let ((bmp-ranges
+      (let ((ranges
 	     '((#x0000 . #x33FF)
 	       ;; (#x3400 . #x4DBF) CJK Ideographs Extension A
 	       (#x4DC0 . #x4DFF)
 	       ;; (#x4E00 . #x9FFF) CJK Unified Ideographs
 	       (#xA000 . #xD7FF)
 	       ;; (#xD800 . #xFAFF) Surrogate/Private
-	       (#xFB00 . #xFFFD)))
-	    (upper-ranges
-	     '((#x10000 . #x134FF)
+	       (#xFB00 . #x134FF)
 	       ;; (#x13500 . #x167FF) unused
 	       (#x16800 . #x16A3F)
 	       ;; (#x16A40 . #x1AFFF) unused
@@ -2918,24 +2946,32 @@ on encoding."
 	       ;; (#x20000 . #xDFFFF) CJK Ideograph Extension A, B, etc, unused
 	       (#xE0000 . #xE01FF)))
 	    (gc-cons-threshold 10000000)
-	    c end name names)
-        (dolist (range bmp-ranges)
-          (setq c (car range)
-                end (cdr range))
+	    names)
+	(dolist (range ranges)
+	  (let ((c (car range))
+		(end (cdr range)))
 	  (while (<= c end)
-	    (if (setq name (get-char-code-property c 'name))
-		(push (cons name c) names))
-	    (if (setq name (get-char-code-property c 'old-name))
-		(push (cons name c) names))
-	    (setq c (1+ c))))
-        (dolist (range upper-ranges)
-          (setq c (car range)
-                end (cdr range))
-	  (while (<= c end)
-	    (if (setq name (get-char-code-property c 'name))
-		(push (cons name c) names))
-	    (setq c (1+ c))))
-        (setq ucs-names names))))
+	      (let ((new-name (get-char-code-property c 'name))
+		    (old-name (get-char-code-property c 'old-name)))
+		;; In theory this code could end up pushing an "old-name" that
+		;; shadows a "new-name" but in practice every time an
+		;; `old-name' conflicts with a `new-name', the newer one has a
+		;; higher code, so it gets pushed later!
+		(if new-name (push (cons new-name c) names))
+		(if old-name (push (cons old-name c) names))
+		(setq c (1+ c))))))
+	;; Special case for "BELL" which is apparently the only char which
+	;; doesn't have a new name and whose old-name is shadowed by a newer
+	;; char with that name.
+	(setq ucs-names `(("BELL (BEL)" . 7) ,@names)))))
+
+(defun mule--ucs-names-annotation (name)
+  ;; FIXME: It would be much better to add this annotation before rather than
+  ;; after the char name, so the annotations are aligned.
+  ;; FIXME: The default behavior of displaying annotations in italics
+  ;; doesn't work well here.
+  (let ((char (assoc name ucs-names)))
+    (when char (format " (%c)" (cdr char)))))
 
 (defun read-char-by-name (prompt)
   "Read a character by its Unicode name or hex number string.
@@ -2960,7 +2996,9 @@ point or a number in hash notation, e.g. #o21430 for octal,
 	   prompt
 	   (lambda (string pred action)
 	     (if (eq action 'metadata)
-		 '(metadata (category . unicode-name))
+		 '(metadata
+		   (annotation-function . mule--ucs-names-annotation)
+		   (category . unicode-name))
 	       (complete-with-action action (ucs-names) string pred)))))
 	 (char
 	  (cond

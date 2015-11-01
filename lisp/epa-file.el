@@ -1,5 +1,5 @@
 ;;; epa-file.el --- the EasyPG Assistant, transparent file encryption -*- lexical-binding: t -*-
-;; Copyright (C) 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
 ;; Author: Daiki Ueno <ueno@unixuser.org>
 ;; Keywords: PGP, GnuPG
@@ -29,9 +29,11 @@
   "If non-nil, cache passphrase for symmetric encryption.
 
 For security reasons, this option is turned off by default and
-not recommended to use.  Instead, consider using public-key
-encryption with gpg-agent which does the same job in a safer
-way."
+not recommended to use.  Instead, consider using gpg-agent which
+does the same job in a safer way.  See Info node `(epa) Caching
+Passphrases' for more information.
+
+Note that this option has no effect if you use GnuPG 2.0."
   :type 'boolean
   :group 'epa-file)
 
@@ -80,12 +82,15 @@ encryption is used."
 		passphrase))))
     (epa-passphrase-callback-function context key-id file)))
 
+(defvar epa-inhibit nil
+  "Non-nil means don't try to decrypt .gpg files when operating on them.")
+
 ;;;###autoload
 (defun epa-file-handler (operation &rest args)
   (save-match-data
     (let ((op (get operation 'epa-file)))
-      (if op
-  	  (apply op args)
+      (if (and op (not epa-inhibit))
+          (apply op args)
   	(epa-file-run-real-handler operation args)))))
 
 (defun epa-file-run-real-handler (operation args)
@@ -103,9 +108,9 @@ encryption is used."
 	(insert (if enable-multibyte-characters
 		    (string-to-multibyte string)
 		  string))
-	  (decode-coding-inserted-region
-	   (point-min) (point-max)
-	   (substring file 0 (string-match epa-file-name-regexp file))
+	(decode-coding-inserted-region
+	 (point-min) (point-max)
+	 (substring file 0 (string-match epa-file-name-regexp file))
 	 visit beg end replace))
     (insert (epa-file--decode-coding-string string (or coding-system-for-read
 						       'undecided)))))
@@ -130,6 +135,7 @@ encryption is used."
 	    (error)))
 	 (local-file (or local-copy file))
 	 (context (epg-make-context))
+         (buf (current-buffer))
 	 string length entry)
     (if visit
 	(setq buffer-file-name file))
@@ -141,6 +147,7 @@ encryption is used."
      context
      (cons #'epa-progress-callback-function
 	   (format "Decrypting %s" file)))
+    (setf (epg-context-pinentry-mode context) epa-pinentry-mode)
     (unwind-protect
 	(progn
 	  (if replace
@@ -150,21 +157,30 @@ encryption is used."
 	    (error
 	     (if (setq entry (assoc file epa-file-passphrase-alist))
 		 (setcdr entry nil))
-	     ;; Hack to prevent find-file from opening empty buffer
-	     ;; when decryption failed (bug#6568).  See the place
-	     ;; where `find-file-not-found-functions' are called in
-	     ;; `find-file-noselect-1'.
+	     ;; If the decryption program can't be found,
+	     ;; signal that as a non-file error
+	     ;; so that find-file-noselect-1 won't handle it.
+	     ;; Borrowed from jka-compr.el.
+	     (if (and (eq (car error) 'file-error)
+		      (equal (cadr error) "Searching for program"))
+		 (error "Decryption program `%s' not found"
+			(nth 3 error)))
 	     (when (file-exists-p local-file)
-	       (make-local-variable 'epa-file-error)
-	       (setq epa-file-error error)
+	       ;; Hack to prevent find-file from opening empty buffer
+	       ;; when decryption failed (bug#6568).  See the place
+	       ;; where `find-file-not-found-functions' are called in
+	       ;; `find-file-noselect-1'.
+	       (setq-local epa-file-error error)
 	       (add-hook 'find-file-not-found-functions
 			 'epa-file--find-file-not-found-function
-			 nil t))
+			 nil t)
+	       (epa-display-error context))
 	     (signal 'file-error
 		     (cons "Opening input file" (cdr error)))))
-	  (make-local-variable 'epa-file-encrypt-to)
-	  (setq epa-file-encrypt-to
-		(mapcar #'car (epg-context-result-for context 'encrypted-to)))
+          (set-buffer buf) ;In case timer/filter changed/killed it (bug#16029)!
+	  (setq-local epa-file-encrypt-to
+                      (mapcar #'car (epg-context-result-for
+                                     context 'encrypted-to)))
 	  (if (or beg end)
 	      (setq string (substring string (or beg 0) end)))
 	  (save-excursion
@@ -208,7 +224,8 @@ encryption is used."
 	 (recipients
 	  (cond
 	   ((listp epa-file-encrypt-to) epa-file-encrypt-to)
-	   ((stringp epa-file-encrypt-to) (list epa-file-encrypt-to)))))
+	   ((stringp epa-file-encrypt-to) (list epa-file-encrypt-to))))
+	 buffer)
     (epg-context-set-passphrase-callback
      context
      (cons #'epa-file-passphrase-callback-function
@@ -217,7 +234,8 @@ encryption is used."
      context
      (cons #'epa-progress-callback-function
 	   (format "Encrypting %s" file)))
-    (epg-context-set-armor context epa-armor)
+    (setf (epg-context-armor context) epa-armor)
+    (setf (epg-context-pinentry-mode context) epa-pinentry-mode)
     (condition-case error
 	(setq string
 	      (epg-encrypt-string
@@ -227,8 +245,18 @@ encryption is used."
 		 (unless start
 		   (setq start (point-min)
 			 end (point-max)))
-		 (epa-file--encode-coding-string (buffer-substring start end)
-						 coding-system))
+		 (setq buffer (current-buffer))
+		 (with-temp-buffer
+		   (insert-buffer-substring buffer start end)
+		   ;; Translate the region according to
+		   ;; `buffer-file-format', as `write-region' would.
+		   ;; We can't simply do `write-region' (into a
+		   ;; temporary file) here, since it writes out
+		   ;; decrypted contents.
+		   (format-encode-buffer (with-current-buffer buffer
+					   buffer-file-format))
+		   (epa-file--encode-coding-string (buffer-string)
+						   coding-system)))
 	       (if (or (eq epa-file-select-keys t)
 		       (and (null epa-file-select-keys)
 			    (not (local-variable-p 'epa-file-encrypt-to
@@ -241,6 +269,7 @@ If no one is selected, symmetric encryption will be performed.  "
 		 (if epa-file-encrypt-to
 		     (epg-list-keys context recipients)))))
       (error
+       (epa-display-error context)
        (if (setq entry (assoc file epa-file-passphrase-alist))
 	   (setcdr entry nil))
        (signal 'file-error (cons "Opening output file" (cdr error)))))
@@ -266,14 +295,13 @@ If no one is selected, symmetric encryption will be performed.  "
 (defun epa-file-select-keys ()
   "Select recipients for encryption."
   (interactive)
-  (make-local-variable 'epa-file-encrypt-to)
-  (setq epa-file-encrypt-to
-	(mapcar
-	 (lambda (key)
-	   (epg-sub-key-id (car (epg-key-sub-key-list key))))
-	(epa-select-keys
-	 (epg-make-context)
-	 "Select recipients for encryption.
+  (setq-local epa-file-encrypt-to
+              (mapcar
+               (lambda (key)
+                 (epg-sub-key-id (car (epg-key-sub-key-list key))))
+               (epa-select-keys
+                (epg-make-context)
+                "Select recipients for encryption.
 If no one is selected, symmetric encryption will be performed.  "))))
 
 ;;;###autoload

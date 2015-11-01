@@ -1,6 +1,6 @@
 ;;; uudecode.el -- elisp native uudecode
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 ;; Author: Shenghuo Zhu <zsh@cs.rochester.edu>
 ;; Keywords: uudecode news
@@ -102,7 +102,7 @@ used is specified by `uudecode-decoder-program'."
 	(let ((cdir default-directory)
 	      (default-process-coding-system
 		(if (featurep 'xemacs)
-		    ;; In XEmacs, `nil' is not a valid coding system.
+		    ;; In XEmacs, nil is not a valid coding system.
 		    '(binary . binary)
 		  nil)))
 	  (unwind-protect

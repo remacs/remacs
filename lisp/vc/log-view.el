@@ -1,6 +1,6 @@
 ;;; log-view.el --- Major mode for browsing revision log histories -*- lexical-binding: t -*-
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: tools, vc
@@ -404,7 +404,9 @@ This calls `log-view-expanded-log-entry-function' to do the work."
 	      (unless (and pos (log-view-inside-comment-p pos))
 		(error "Broken markup in `log-view-toggle-entry-display'"))
 	      (delete-region pos
-			     (next-single-property-change pos 'log-view-comment))
+                             (or
+                              (next-single-property-change pos 'log-view-comment)
+                              (point-max)))
 	      (put-text-property beg (1+ beg) 'log-view-entry-expanded nil)
 	      (if (< opoint pos)
 		  (goto-char opoint)))
@@ -429,18 +431,31 @@ to the beginning of the ARGth following entry.
 This is Log View mode's default `beginning-of-defun-function'.
 It assumes that a log entry starts with a line matching
 `log-view-message-re'."
-  (if (or (null arg) (zerop arg))
-      (setq arg 1))
+  (when (null arg) (setf arg 1))
   (if (< arg 0)
-      (dotimes (_n (- arg))
-	(log-view-end-of-defun))
-    (catch 'beginning-of-buffer
-      (dotimes (_n arg)
-	(or (log-view-current-entry nil t)
-	    (throw 'beginning-of-buffer nil)))
-      (point))))
+      ;; In log view, the end of one defun is the beginning of the
+      ;; next, so punting to log-view-end-of-defun is safe in this
+      ;; context.
+      (log-view-end-of-defun (- arg))
+    (let ((found t))
+      (while (> arg 0)
+        (setf arg (1- arg))
+        (let ((cur-start (log-view-current-entry)))
+          (setf found
+                (cond ((null cur-start)
+                       (goto-char (point-min))
+                       nil)
+                      ((>= (car cur-start) (point))
+                       (unless (bobp)
+                         (forward-line -1)
+                         (setf arg (1+ arg)))
+                       nil)
+                      (t
+                       (goto-char (car cur-start))
+                       t)))))
+      found)))
 
-(defun log-view-end-of-defun ()
+(defun log-view-end-of-defun-1 ()
   "Move forward to the next Log View entry."
   (let ((looping t))
     (if (looking-at log-view-message-re)
@@ -453,9 +468,23 @@ It assumes that a log entry starts with a line matching
 	  (goto-char (match-beginning 0))))
        ;; Don't advance past the end buttons inserted by
        ;; `vc-print-log-setup-buttons'.
-       ((looking-back "Show 2X entries    Show unlimited entries")
+       ((looking-back "Show 2X entries    Show unlimited entries"
+                      (line-beginning-position))
 	(setq looping nil)
-	(forward-line -1))))))
+	(forward-line -1))
+       ;; There are no buttons if we've turned on unlimited entries.
+       ((eobp)
+        (setq looping nil))))))
+
+(defun log-view-end-of-defun (&optional arg)
+  "Move forward to the next Log View entry.
+Works like `end-of-defun'."
+  (when (null arg) (setf arg 1))
+  (if (< arg 0)
+      (log-view-beginning-of-defun (- arg))
+    (dotimes (_n arg)
+      (log-view-end-of-defun-1)
+      t)))
 
 (defvar cvs-minor-current-files)
 (defvar cvs-branch-prefix)
@@ -511,7 +540,8 @@ If called interactively, visit the version at point."
       (cond ((eq backend 'SVN)
 	     (forward-line -1)))
       (setq en (point))
-      (log-view-beginning-of-defun)
+      (or (log-view-current-entry nil t)
+          (throw 'beginning-of-buffer nil))
       (cond ((memq backend '(SCCS RCS CVS MCVS SVN))
 	     (forward-line 2))
 	    ((eq backend 'Hg)
@@ -577,13 +607,12 @@ considered file(s)."
   (interactive
    (list (if (use-region-p) (region-beginning) (point))
          (if (use-region-p) (region-end) (point))))
-  (log-view-diff-common beg end t))
+  (when (eq (vc-call-backend log-view-vc-backend 'revision-granularity) 'file)
+    (error "The %s backend does not support changeset diffs" log-view-vc-backend))
+  (let ((default-directory (vc-root-dir)))
+    (log-view-diff-common beg end t)))
 
 (defun log-view-diff-common (beg end &optional whole-changeset)
-  (when (and whole-changeset
-             (eq (vc-call-backend log-view-vc-backend 'revision-granularity)
-                 'file))
-    (error "The %s backend does not support changeset diffs" log-view-vc-backend))
   (let ((to (log-view-current-tag beg))
         (fr (log-view-current-tag end)))
     (when (string-equal fr to)

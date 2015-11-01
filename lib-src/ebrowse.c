@@ -1,6 +1,6 @@
 /* ebrowse.c --- parsing files for the ebrowse C++ browser
 
-Copyright (C) 1992-2013 Free Software Foundation, Inc.
+Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -32,27 +32,32 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define SEEK_END 2
 #endif
 
-/* Conditionalize function prototypes.  */
-
-/* Value is non-zero if strings X and Y compare equal.  */
-
-#define streq(X, Y) (*(X) == *(Y) && strcmp ((X) + 1, (Y) + 1) == 0)
-
 #include <min-max.h>
 
 /* Files are read in chunks of this number of bytes.  */
 
-#define READ_CHUNK_SIZE (100 * 1024)
+enum { READ_CHUNK_SIZE = 100 * 1024 };
 
-#if defined (__MSDOS__)
-#define FILENAME_EQ(X,Y)    (strcasecmp (X,Y) == 0)
+/* Value is true if strings X and Y compare equal.  */
+
+static bool
+streq (char const *x, char const *y)
+{
+  return strcmp (x, y) == 0;
+}
+
+static bool
+filename_eq (char const *x, char const *y)
+{
+#ifdef __MSDOS__
+  return strcasecmp (x, y) == 0;
+#elif defined WINDOWSNT
+  return stricmp (x, y) == 0;
 #else
-#if defined (WINDOWSNT)
-#define FILENAME_EQ(X,Y)    (stricmp (X,Y) == 0)
-#else
-#define FILENAME_EQ(X,Y)    (streq (X,Y))
+  return streq (x, y);
 #endif
-#endif
+}
+
 /* The default output file name.  */
 
 #define DEFAULT_OUTFILE "BROWSE"
@@ -217,10 +222,19 @@ enum visibility
 #define F_EXTERNC	256	/* Is declared extern "C".  */
 #define F_DEFINE	512	/* Is a #define.  */
 
-/* Two macros to set and test a bit in an int.  */
+/* Set and test a bit in an int.  */
 
-#define SET_FLAG(F, FLAG)	((F) |= (FLAG))
-#define HAS_FLAG(F, FLAG)	(((F) & (FLAG)) != 0)
+static void
+set_flag (int *f, int flag)
+{
+  *f |= flag;
+}
+
+static bool
+has_flag (int f, int flag)
+{
+  return (f & flag) != 0;
+}
 
 /* Structure describing a class member.  */
 
@@ -514,7 +528,7 @@ static char *
 xstrdup (char *s)
 {
   if (s)
-    s = strcpy (xmalloc (strlen (s) + 1), s);
+    return strcpy (xmalloc (strlen (s) + 1), s);
   return s;
 }
 
@@ -682,7 +696,7 @@ add_member_decl (struct sym *cls, char *name, char *regexp, int pos, unsigned in
     m = add_member (cls, name, var, sc, hash);
 
   /* Have we seen a new filename?  If so record that.  */
-  if (!cls->filename || !FILENAME_EQ (cls->filename, filename))
+  if (!cls->filename || !filename_eq (cls->filename, filename))
     m->filename = filename;
 
   m->regexp = regexp;
@@ -745,7 +759,7 @@ add_member_defn (struct sym *cls, char *name, char *regexp, int pos, unsigned in
   if (!cls->sfilename)
     cls->sfilename = filename;
 
-  if (!FILENAME_EQ (cls->sfilename, filename))
+  if (!filename_eq (cls->sfilename, filename))
     m->def_filename = filename;
 
   m->def_regexp = regexp;
@@ -830,7 +844,7 @@ add_global_decl (char *name, char *regexp, int pos, unsigned int hash, int var, 
   if (!found)
     {
       if (!global_symbols->filename
-	  || !FILENAME_EQ (global_symbols->filename, filename))
+	  || !filename_eq (global_symbols->filename, filename))
 	m->filename = filename;
 
       m->regexp = regexp;
@@ -931,11 +945,11 @@ mark_virtual (struct sym *r)
   for (p = r->subs; p; p = p->next)
     {
       for (m = r->fns; m; m = m->next)
-        if (HAS_FLAG (m->flags, F_VIRTUAL))
+        if (has_flag (m->flags, F_VIRTUAL))
           {
             for (m2 = p->sym->fns; m2; m2 = m2->next)
               if (m->param_hash == m2->param_hash && streq (m->name, m2->name))
-                SET_FLAG (m2->flags, F_VIRTUAL);
+                set_flag (&m2->flags, F_VIRTUAL);
           }
 
       mark_virtual (p->sym);
@@ -1150,19 +1164,19 @@ sym_scope_1 (struct sym *p)
   if (*scope_buffer)
     {
       ensure_scope_buffer_room (3);
-      strcat (scope_buffer, "::");
+      strcpy (scope_buffer + scope_buffer_len, "::");
       scope_buffer_len += 2;
     }
 
   len = strlen (p->name);
   ensure_scope_buffer_room (len + 1);
-  strcat (scope_buffer, p->name);
+  strcpy (scope_buffer + scope_buffer_len, p->name);
   scope_buffer_len += len;
 
-  if (HAS_FLAG (p->flags, F_TEMPLATE))
+  if (has_flag (p->flags, F_TEMPLATE))
     {
       ensure_scope_buffer_room (3);
-      strcat (scope_buffer, "<>");
+      strcpy (scope_buffer + scope_buffer_len, "<>");
       scope_buffer_len += 2;
     }
 
@@ -1241,7 +1255,7 @@ dump_sym (FILE *fp, struct sym *root)
     putstr (NULL, fp);
 
   /* Print flags.  */
-  fprintf (fp, "%u", root->flags);
+  fprintf (fp, "%d", root->flags);
   putstr (root->filename, fp);
   putstr (root->regexp, fp);
   fprintf (fp, "%u", (unsigned) root->pos);
@@ -2435,7 +2449,7 @@ parm_list (int *flags)
         {
           /* We can overload the same function on `const' */
           hash = (hash << 1) ^ CONST;
-          SET_FLAG (*flags, F_CONST);
+          set_flag (flags, F_CONST);
           MATCH ();
         }
 
@@ -2443,7 +2457,7 @@ parm_list (int *flags)
         {
           MATCH ();
           SKIP_MATCHING_IF ('(');
-          SET_FLAG (*flags, F_THROW);
+          set_flag (flags, F_THROW);
         }
 
       if (LOOKING_AT ('='))
@@ -2452,7 +2466,7 @@ parm_list (int *flags)
           if (LOOKING_AT (CINT) && yyival == 0)
             {
               MATCH ();
-              SET_FLAG (*flags, F_PURE);
+              set_flag (flags, F_PURE);
             }
         }
     }
@@ -2505,25 +2519,25 @@ member (struct sym *cls, int vis)
           /* A function or class may follow.  */
         case TEMPLATE:
           MATCH ();
-          SET_FLAG (flags, F_TEMPLATE);
+          set_flag (&flags, F_TEMPLATE);
           /* Skip over template argument list */
           SKIP_MATCHING_IF ('<');
           break;
 
         case EXPLICIT:
-          SET_FLAG (flags, F_EXPLICIT);
+          set_flag (&flags, F_EXPLICIT);
           goto typeseen;
 
         case MUTABLE:
-          SET_FLAG (flags, F_MUTABLE);
+          set_flag (&flags, F_MUTABLE);
           goto typeseen;
 
         case T_INLINE:
-          SET_FLAG (flags, F_INLINE);
+          set_flag (&flags, F_INLINE);
           goto typeseen;
 
         case VIRTUAL:
-          SET_FLAG (flags, F_VIRTUAL);
+          set_flag (&flags, F_VIRTUAL);
           goto typeseen;
 
         case '[':
@@ -2761,7 +2775,7 @@ parse_classname (void)
       if (LOOKING_AT ('<'))
         {
           skip_matching ();
-          SET_FLAG (last_class->flags, F_TEMPLATE);
+          set_flag (&last_class->flags, F_TEMPLATE);
         }
 
       if (!LOOKING_AT (DCOLON))
@@ -2797,24 +2811,25 @@ operator_name (int *sc)
       s = token_string (LA1);
       MATCH ();
 
-      len = strlen (s) + 10;
+      ptrdiff_t slen = strlen (s);
+      len = slen + 10;
       if (len > id_size)
 	{
 	  size_t new_size = max (len, 2 * id_size);
 	  id = (char *) xrealloc (id, new_size);
 	  id_size = new_size;
 	}
-      strcpy (id, s);
+      char *z = stpcpy (id, s);
 
       /* Vector new or delete?  */
       if (LOOKING_AT ('['))
 	{
-	  strcat (id, "[");
+	  z = stpcpy (z, "[");
 	  MATCH ();
 
 	  if (LOOKING_AT (']'))
 	    {
-	      strcat (id, "]");
+	      strcpy (z, "]");
 	      MATCH ();
 	    }
 	}
@@ -2830,7 +2845,7 @@ operator_name (int *sc)
 	  id = (char *) xrealloc (id, new_size);
 	  id_size = new_size;
 	}
-      strcpy (id, "operator");
+      char *z = stpcpy (id, "operator");
 
       /* Beware access declarations of the form "X::f;" Beware of
 	 `operator () ()'.  Yet another difficulty is found in
@@ -2842,14 +2857,16 @@ operator_name (int *sc)
 	  len += strlen (s) + 2;
 	  if (len > id_size)
 	    {
+	      ptrdiff_t idlen = z - id;
 	      size_t new_size = max (len, 2 * id_size);
 	      id = (char *) xrealloc (id, new_size);
 	      id_size = new_size;
+	      z = id + idlen;
 	    }
 
 	  if (*s != ')' && *s != ']')
-	    strcat (id, " ");
-          strcat (id, s);
+	    *z++ = ' ';
+          z = stpcpy (z, s);
           MATCH ();
 
 	  /* If this is a simple operator like `+', stop now.  */
@@ -3186,7 +3203,7 @@ declaration (int flags)
           break;
 
         case T_INLINE:
-          SET_FLAG (flags, F_INLINE);
+          set_flag (&flags, F_INLINE);
           MATCH ();
           break;
 
@@ -3332,14 +3349,14 @@ globals (int start_flags)
                   MATCH_IF ('}');
                 }
               else
-                SET_FLAG (flags, F_EXTERNC);
+                set_flag (&flags, F_EXTERNC);
             }
           break;
 
         case TEMPLATE:
           MATCH ();
           SKIP_MATCHING_IF ('<');
-          SET_FLAG (flags, F_TEMPLATE);
+          set_flag (&flags, F_TEMPLATE);
           break;
 
         case CLASS: case STRUCT: case UNION:
@@ -3462,9 +3479,9 @@ open_file (char *file)
 	  buffer = (char *) xrealloc (buffer, buffer_size);
 	}
 
-      strcpy (buffer, path->path);
-      strcat (buffer, "/");
-      strcat (buffer, file);
+      char *z = stpcpy (buffer, path->path);
+      *z++ = '/';
+      strcpy (z, file);
       fp = fopen (buffer, "r");
     }
 
@@ -3744,27 +3761,27 @@ main (int argc, char **argv)
 	  fp = fopen (out_filename, "r");
 	  if (fp == NULL)
 	    {
-	      yyerror ("file `%s' must exist for --append", out_filename);
+	      yyerror ("file '%s' must exist for --append", out_filename);
 	      exit (EXIT_FAILURE);
 	    }
 
 	  rc = fseek (fp, 0, SEEK_END);
 	  if (rc == -1)
 	    {
-	      yyerror ("error seeking in file `%s'", out_filename);
+	      yyerror ("error seeking in file '%s'", out_filename);
 	      exit (EXIT_FAILURE);
 	    }
 
 	  rc = ftell (fp);
 	  if (rc == -1)
 	    {
-	      yyerror ("error getting size of file `%s'", out_filename);
+	      yyerror ("error getting size of file '%s'", out_filename);
 	      exit (EXIT_FAILURE);
 	    }
 
 	  else if (rc == 0)
 	    {
-	      yyerror ("file `%s' is empty", out_filename);
+	      yyerror ("file '%s' is empty", out_filename);
 	      /* It may be ok to use an empty file for appending.
 		 exit (EXIT_FAILURE); */
 	    }
@@ -3775,7 +3792,7 @@ main (int argc, char **argv)
       yyout = fopen (out_filename, f_append ? "a" : "w");
       if (yyout == NULL)
 	{
-	  yyerror ("cannot open output file `%s'", out_filename);
+	  yyerror ("cannot open output file '%s'", out_filename);
 	  exit (EXIT_FAILURE);
 	}
     }
@@ -3803,7 +3820,7 @@ main (int argc, char **argv)
           FILE *fp = fopen (input_filenames[i], "r");
 
           if (fp == NULL)
-            yyerror ("cannot open input file `%s'", input_filenames[i]);
+            yyerror ("cannot open input file '%s'", input_filenames[i]);
           else
             {
 	      char *file;

@@ -1,6 +1,6 @@
 ;;; url-queue.el --- Fetching web pages in parallel
 
-;; Copyright (C) 2011-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: comm
@@ -69,7 +69,7 @@ The variable `url-queue-timeout' sets a timeout."
 				      :inhibit-cookiesp inhibit-cookies))))
   (url-queue-setup-runners))
 
-;; To ensure asynch behaviour, we start the required number of queue
+;; To ensure asynch behavior, we start the required number of queue
 ;; runners from `run-with-idle-timer'.  So we're basically going
 ;; through the queue in two ways: 1) synchronously when a program
 ;; calls `url-queue-retrieve' (which will then start the required
@@ -133,10 +133,11 @@ The variable `url-queue-timeout' sets a timeout."
 (defun url-queue-start-retrieve (job)
   (setf (url-queue-buffer job)
 	(ignore-errors
-	  (url-retrieve (url-queue-url job)
-			#'url-queue-callback-function (list job)
-			(url-queue-silentp job)
-			(url-queue-inhibit-cookiesp job)))))
+	  (let ((url-request-noninteractive t))
+	    (url-retrieve (url-queue-url job)
+			  #'url-queue-callback-function (list job)
+			  (url-queue-silentp job)
+			  (url-queue-inhibit-cookiesp job))))))
 
 (defun url-queue-prune-old-entries ()
   (let (dead-jobs)

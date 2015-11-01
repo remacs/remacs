@@ -1,7 +1,8 @@
 \input texinfo  @c -*-texinfo-*-
 @c %**start of header
-@setfilename ../../info/idlwave
+@setfilename ../../info/idlwave.info
 @settitle IDLWAVE User Manual
+@include docstyle.texi
 @synindex ky cp
 @syncodeindex vr cp
 @syncodeindex fn cp
@@ -22,13 +23,13 @@ Emacs, and interacting with an IDL shell run as a subprocess.
 This is edition @value{EDITION} of the IDLWAVE User Manual for IDLWAVE
 @value{VERSION}.
 
-Copyright @copyright{} 1999--2013 Free Software Foundation, Inc.
+Copyright @copyright{} 1999--2015 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
-Invariant Sections, with the Front-Cover texts being ``A GNU Manual'',
+Invariant Sections, with the Front-Cover Texts being ``A GNU Manual'',
 and with the Back-Cover Texts as in (a) below.  A copy of the license
 is included in the section entitled ``GNU Free Documentation License''.
 
@@ -128,7 +129,7 @@ Completion
 Actions
 
 * Block Boundary Check::        Is the END statement correct?
-* Padding Operators::           Enforcing space around `=' etc
+* Padding Operators::           Enforcing space around @samp{=} etc
 * Case Changes::                Enforcing upper case keywords
 
 The IDLWAVE Shell
@@ -238,24 +239,27 @@ Examining variables and expressions with a mouse click.
 And much, much more...
 @end itemize
 
+@c Dead links, 2014/06.
+@ignore
 @ifnottex
 @cindex Screenshots
 Here are a number of screenshots showing IDLWAVE in action:
 
 @itemize @bullet
 @item
-@uref{http://idlwave.org/screenshots/emacs_21_nav.gif,An IDLWAVE buffer}
+@uref{http://github.com/jdtsmith/idlwave/screenshots/emacs_21_nav.gif,An IDLWAVE buffer}
 @item
-@uref{http://idlwave.org/screenshots/emacs_21_keys.gif,A keyword being completed}
+@uref{http://github.com/jdtsmith/idlwave/screenshots/emacs_21_keys.gif,A keyword being completed}
 @item
-@uref{http://idlwave.org/screenshots/emacs_21_help.gif,Online help text.}
+@uref{http://github.com/jdtsmith/idlwave/screenshots/emacs_21_help.gif,Online help text.}
 @item
-@uref{http://idlwave.org/screenshots/emacs_21_ri.gif,Routine information displayed}
+@uref{http://github.com/jdtsmith/idlwave/screenshots/emacs_21_ri.gif,Routine information displayed}
 @item
-@uref{http://idlwave.org/screenshots/emacs_21_bp.gif,Debugging code
+@uref{http://github.com/jdtsmith/idlwave/screenshots/emacs_21_bp.gif,Debugging code
 stopped at a breakpoint}
 @end itemize
 @end ifnottex
+@end ignore
 
 IDLWAVE is the distant successor to the @file{idl.el} and
 @file{idl-shell.el} files written by Chris Chase.  The modes and files
@@ -497,7 +501,7 @@ plot_wday,1,1
 @noindent and press @key{RET}.  This fails with an error message telling
 you the @code{YT} keyword to plot is ambiguous.  What are the allowed
 keywords again?  Go back to the source window and put the cursor into
-the `plot' line and press @kbd{C-c ?}.  This shows the routine info
+the ``plot'' line and press @kbd{C-c ?}.  This shows the routine info
 window for the plot routine, which contains a list of keywords, along
 with the argument list.  Oh, we wanted @code{YTITLE}.  Fix that up.
 Recompile with @kbd{C-c C-d C-c}. Jump back into the shell with
@@ -590,7 +594,7 @@ slightly from the margin and use only 3 spaces as indentation between
 
 Restart Emacs, and re-indent the program we developed in the first part
 of this tutorial with @kbd{C-c h} and @kbd{C-M-\}.  You may want to keep
-these lines in @file{.emacs}, with values adjusted to your likings.  If
+these lines in @file{.emacs}, with values adjusted to your liking.  If
 you want to get more information about any of these variables, type,
 e.g., @kbd{C-h v idlwave-main-block-indent @key{RET}}.  To find which
 variables can be customized, look for items marked @samp{User Option:}
@@ -604,7 +608,7 @@ Group}. Here you'll be presented with all the various variables grouped
 into categories.  You can navigate the hierarchy (e.g., @samp{IDLWAVE
 Code Formatting->Idlwave Abbrev And Indent Action->Idlwave Expand
 Generic End} to turn on @code{END} expansion), read about the variables,
-change them, and `Save for Future Sessions'.  Few of these variables
+change them, and ``Save for Future Sessions''.  Few of these variables
 need customization, but you can exercise considerable control over
 IDLWAVE's functionality with them.
 
@@ -688,8 +692,8 @@ you want; directories with existing library catalogs will not be
 selected by default) and click on the @samp{Scan&Save} button.  Then
 go for a cup of coffee while IDLWAVE collects information for each and
 every IDL routine on your search path.  All this information is
-written to the file @file{.idlwave/idlusercat.el} in your home
-directory and will from now on automatically load whenever you use
+written to the file @file{~/.emacs.d/idlwave/idlusercat.el}
+and will from now on automatically load whenever you use
 IDLWAVE@.  You may find it necessary to rebuild the catalog on occasion
 as your local libraries change, or build a library catalog for those
 directories instead.  Invoke routine info (@kbd{C-c ?}) or completion
@@ -701,7 +705,7 @@ library:
     a=readf@key{M-@key{TAB}}
 @end example
 
-expands to `readfits('.  Then try
+expands to ``readfits(''.  Then try
 
 @example
     a=readfits(@key{C-c ?}
@@ -1006,7 +1010,7 @@ Non-@code{nil} means use last match on line for
 @cindex Highlighting of syntax
 @cindex Font lock
 
-Highlighting of keywords, comments, strings etc. can be accomplished
+Highlighting of keywords, comments, strings etc.@: can be accomplished
 with @code{font-lock}.  If you are using @code{global-font-lock-mode}
 (in Emacs), or have @code{font-lock} turned on in any other buffer in
 XEmacs, it should also automatically work in IDLWAVE buffers.  If you'd
@@ -1261,7 +1265,7 @@ directly with IDL, along with an XML-based catalog of routine
 information.  By default, IDLWAVE automatically attempts to convert this
 XML catalog into a format Emacs can more easily understand, and caches
 this information in your @code{idlwave_config_directory}
-(@file{~/.idlwave/}, by default).  It also re-scans the XML catalog if
+(@file{~/.emacs.d/idlwave/}, by default).  It also re-scans the XML catalog if
 it is newer than the current cached version.  You can force rescan with
 the menu entry @code{IDLWAVE->Routine Info->Rescan XML Help Catalog}.
 
@@ -1595,7 +1599,7 @@ completed keywords.
 
 @defopt idlwave-function-completion-adds-paren (@code{t})
 Non-@code{nil} means completion automatically adds @samp{(} after
-completed function.  A value of `2' means also add the closing
+completed function.  A value of 2 means also add the closing
 parenthesis and position the cursor between the two.
 @end defopt
 
@@ -1644,7 +1648,7 @@ of completed words.
 
 @defopt idlwave-completion-force-default-case (@code{nil})
 Non-@code{nil} means completion will always honor the settings in
-@code{idlwave-completion-case}.  When nil (the default), entirely lower
+@code{idlwave-completion-case}.  When @code{nil} (the default), entirely lower
 case strings will always be completed to lower case, no matter what the
 settings in @code{idlwave-completion-case}.
 @end defopt
@@ -2117,7 +2121,7 @@ settings are described below and set separately.
 
 @menu
 * Block Boundary Check::        Is the END statement correct?
-* Padding Operators::           Enforcing space around `=' etc
+* Padding Operators::           Enforcing space around @samp{=} etc
 * Case Changes::                Enforcing upper case keywords
 @end menu
 
@@ -2465,7 +2469,7 @@ Initial commands, separated by newlines, to send to IDL.
 Non-@code{nil} means preserve command history between sessions.
 @end defopt
 
-@defopt idlwave-shell-command-history-file (@file{~/.idlwave/.idlwhist})
+@defopt idlwave-shell-command-history-file (@file{~/.emacs.d/idlwave/.idlwhist})
 The file in which the command history of the idlwave shell is saved.
 Unless it's an absolute path, it goes in
 @code{idlwave-config-directory}.
@@ -2486,7 +2490,7 @@ The frame parameters for a dedicated idlwave-shell frame.
 @end defopt
 
 @defopt idlwave-shell-raise-frame (@code{t})
-Non-@code{nil} means `idlwave-shell' raises the frame showing the shell
+Non-@code{nil} means @code{idlwave-shell} raises the frame showing the shell
 window.
 @end defopt
 
@@ -3107,7 +3111,7 @@ window, but is useful for immediate stepping, etc.
 @kindex C-c C-d C-p
 Do you find yourself repeatedly typing, e.g., @code{print,n_elements(x)},
 and similar statements to remind yourself of the
-type/size/structure/value/etc. of variables and expressions in your code
+type/size/structure/value/etc.@: of variables and expressions in your code
 or at the command line?  IDLWAVE has a suite of special commands to
 automate these types of variable or expression examinations.  They work
 by sending statements to the shell formatted to include the indicated
@@ -3517,7 +3521,7 @@ information (e.g., Windows), a library path must be specified in
 to setup directories for user catalog scan (@pxref{User Catalog} for
 more on this variable).  Note that, before the shell is running, IDLWAVE
 can only know about the IDL search path by consulting the file pointed
-to by @code{idlwave-path-file} (@file{~/.idlwave/idlpath.el}, by
+to by @code{idlwave-path-file} (@file{~/.emacs.d/idlwave/idlpath.el}, by
 default).  If @code{idlwave-auto-write-path} is enabled (which is the
 default), the paths are written out whenever the IDLWAVE shell is
 started.
@@ -3539,7 +3543,7 @@ locating HTML help and the IDL Assistant for IDL v6.2 and later.  Under
 Unix/MacOSX, will be obtained from the Shell and recorded, if run.
 @end defopt
 
-@defopt idlwave-config-directory (@file{~/.idlwave})
+@defopt idlwave-config-directory (@file{~/.emacs.d/idlwave})
 Default path where IDLWAVE saves configuration information, a user
 catalog (if any), and a cached scan of the XML catalog (IDL v6.2 and
 later).
@@ -3628,7 +3632,7 @@ performance is a problem and/or the catalogs are not needed.
 
 The user catalog is the old routine catalog system.  It is produced
 within Emacs, and stored in a single file in the user's home directory
-(@file{.idlwave/idlusercat.el} by default).  Although library catalogs
+(@file{.emacs.d/idlwave/idlusercat.el} by default).  Although library catalogs
 are more flexible, there may be reasons to prefer a user catalog
 instead, including:
 
@@ -3796,31 +3800,25 @@ available, it is the preferred choice, and the default.  The variable
 whether this help browser is used.  If you use the IDL Assistant, the
 tips here are not relevant.
 
-Since IDLWAVE runs on a many different system types, a single browser
-configuration is not possible, but choices abound.  On many systems,
-the default browser configured in @code{browse-url-browser-function},
-and hence inherited by default by
-@code{idlwave-help-browser-function}, is Netscape.  Unfortunately, the
-HTML manuals decompiled from the original source contain formatting
-structures which Netscape 4.x does not handle well, though they are
-still readable.  A much better choice is Mozilla, or one of the
-Mozilla-derived browsers such as
-@uref{http://galeon.sourceforge.net/,Galeon} (GNU/Linux),
-@uref{http://www.mozilla.org/projects/camino/,Camino} (MacOSX), or
-@uref{http://www.mozilla.org/projects/firebird/,Firebird} (all
-platforms).  Newer versions of Emacs provide a browser-function choice
-@code{browse-url-gnome-moz} which uses the Gnome-configured browser.
+Since IDLWAVE runs on many different system types, a single browser
+configuration is not possible, but choices abound.  The default
+@code{idlwave-help-browser-function} inherits the browser configured
+in @code{browse-url-browser-function}.
 
 Note that the HTML files decompiled from the help sources contain
 specific references to the @samp{Symbol} font, which by default is not
 permitted in normal encodings (it's invalid, technically).  Though it
 only impacts a few symbols, you can trick Mozilla-based browsers into
 recognizing @samp{Symbol} by following the directions
+@c This page is 11 years old.  Is it still relevant?
 @uref{http://hutchinson.belmont.ma.us/tth/Xfonts.html, here}.  With
 this fix in place, HTML help pages look almost identical to their PDF
 equivalents (yet can be bookmarked, browsed as history, searched,
 etc.).
 
+@c Not updated in over a decade.
+@c Maybe you want to recommend eww these days.
+@ignore
 @noindent Individual platform recommendations:
 
 @itemize @bullet
@@ -3857,6 +3855,7 @@ following, to get consistent behavior with the @kbd{q} key:
 Note that you can open the file in an external browser from within
 @code{w3m} using @kbd{M}.
 @end itemize
+@end ignore
 
 @node Configuration Examples
 @appendix Configuration Examples
@@ -3944,7 +3943,7 @@ user is King!
       w3m-use-header-line nil
       w3m-use-toolbar nil)
 
-;; Close my help window or frame when w3m closes with `q'
+;; Close my help window or frame when w3m closes with 'q'.
 (defadvice w3m-close-window (after idlwave-close activate)
   (if (boundp 'idlwave-help-frame)
       (idlwave-help-quit)))
@@ -3970,11 +3969,11 @@ user is King!
     (idlwave-action-and-binding "," '(idlwave-surround nil 1))
     (idlwave-action-and-binding "&" '(idlwave-surround 1 1))
 
-    ;; Pad only after `->', remove any space before the arrow
+    ;; Pad only after '->', remove any space before the arrow
     (idlwave-action-and-binding "->"  '(idlwave-surround 0 -1 nil 2))
 
     ;; Set some personal bindings
-    ;; (In this case, makes `,' have the normal self-insert behavior.)
+    ;; (In this case, makes ',' have the normal self-insert behavior.)
     (local-set-key "," 'self-insert-command)
     (local-set-key [f5] 'idlwave-shell-break-here)
     (local-set-key [f6] 'idlwave-shell-clear-current-bp)

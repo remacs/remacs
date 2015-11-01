@@ -1,9 +1,9 @@
 ;;; add-log.el --- change log maintenance commands for Emacs
 
-;; Copyright (C) 1985-1986, 1988, 1993-1994, 1997-1998, 2000-2013 Free
+;; Copyright (C) 1985-1986, 1988, 1993-1994, 1997-1998, 2000-2015 Free
 ;; Software Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: vc tools
 
 ;; This file is part of GNU Emacs.
@@ -158,7 +158,7 @@ use the file's name relative to the directory of the change log file."
   :group 'change-log)
 
 (defcustom change-log-version-number-regexp-list
-  (let ((re "\\([0-9]+\.[0-9.]+\\)"))
+  (let ((re "\\([0-9]+\\.[0-9.]+\\)"))
     (list
      ;;  (defconst ad-version "2.15"
      (concat "^(def[^ \t\n]+[ \t]+[^ \t\n][ \t]\"" re)
@@ -481,9 +481,9 @@ try to visit the file for the change under `point' instead."
 		(apply 'change-log-goto-source-1
 		       (append change-log-find-head change-log-find-tail))
 	      (error
-	       (format "Cannot find more matches for tag `%s' in file `%s'"
-		       (car change-log-find-head)
-		       (nth 2 change-log-find-head)))))
+	       "Cannot find more matches for tag `%s' in file `%s'"
+	       (car change-log-find-head)
+	       (nth 2 change-log-find-head))))
     (save-excursion
       (let* ((at (point))
 	     (tag-at (change-log-search-tag-name))
@@ -515,9 +515,8 @@ try to visit the file for the change under `point' instead."
 	  (condition-case nil
 	      (setq change-log-find-tail
 		    (apply 'change-log-goto-source-1 change-log-find-head))
-	    (error
-	     (format "Cannot find matches for tag `%s' in file `%s'"
-		     tag file)))))))))
+	    (error "Cannot find matches for tag `%s' in file `%s'"
+		   tag file))))))))
 
 (defun change-log-next-error (&optional argp reset)
   "Move to the Nth (default 1) next match in a ChangeLog buffer.
@@ -581,8 +580,8 @@ If t, use universal time.")
 (put 'add-log-time-zone-rule 'safe-local-variable
      (lambda (x) (or (booleanp x) (stringp x))))
 
-(defun add-log-iso8601-time-zone (&optional time)
-  (let* ((utc-offset (or (car (current-time-zone time)) 0))
+(defun add-log-iso8601-time-zone (&optional time zone)
+  (let* ((utc-offset (or (car (current-time-zone time zone)) 0))
 	 (sign (if (< utc-offset 0) ?- ?+))
 	 (sec (abs utc-offset))
 	 (ss (% sec 60))
@@ -596,12 +595,11 @@ If t, use universal time.")
 
 (defvar add-log-iso8601-with-time-zone nil)
 
-(defun add-log-iso8601-time-string ()
-  (let ((time (format-time-string "%Y-%m-%d"
-                                  nil (eq t add-log-time-zone-rule))))
+(defun add-log-iso8601-time-string (&optional time zone)
+  (let ((date (format-time-string "%Y-%m-%d" time zone)))
     (if add-log-iso8601-with-time-zone
-        (concat time " " (add-log-iso8601-time-zone))
-      time)))
+        (concat date " " (add-log-iso8601-time-zone time zone))
+      date)))
 
 (defun change-log-name ()
   "Return (system-dependent) default name for a change log file."
@@ -686,7 +684,7 @@ nil, by matching `change-log-version-number-regexp-list'."
 
 Optional arg FILE-NAME specifies the file to use.
 If FILE-NAME is nil, use the value of `change-log-default-name'.
-If `change-log-default-name' is nil, behave as though it were 'ChangeLog'
+If `change-log-default-name' is nil, behave as though it were \"ChangeLog\"
 \(or whatever we use on this operating system).
 
 If `change-log-default-name' contains a leading directory component, then
@@ -848,14 +846,8 @@ non-nil, otherwise in local time."
       (let ((new-entries
              (mapcar (lambda (addr)
                        (concat
-                        (if (stringp add-log-time-zone-rule)
-                            (let ((tz (getenv "TZ")))
-                              (unwind-protect
-                                  (progn
-                                    (setenv "TZ" add-log-time-zone-rule)
-                                    (funcall add-log-time-format))
-                                (setenv "TZ" tz)))
-                          (funcall add-log-time-format))
+                        (funcall add-log-time-format
+                                 nil add-log-time-zone-rule)
                         "  " full-name
                         "  <" addr ">"))
                      (if (consp mailing-address)
@@ -1097,12 +1089,17 @@ file were isearch was started."
                                    (ignore-errors
                                      (version< (substring b (length name))
                                                (substring a (length name))))))))
-	 (files (if isearch-forward files (reverse files))))
-    (find-file-noselect
-     (if wrap
-	 (car files)
-       (cadr (member (file-name-nondirectory (buffer-file-name buffer))
-		     files))))))
+	 (files (if isearch-forward files (reverse files)))
+	 (file (if wrap
+		   (car files)
+		 (cadr (member (file-name-nondirectory (buffer-file-name buffer))
+			       files)))))
+    ;; If there are no files that match the default pattern ChangeLog.[0-9],
+    ;; return the current buffer to force isearch wrapping to its beginning.
+    ;; If file is nil, multi-isearch-search-fun will signal "end of multi".
+    (if (file-exists-p file)
+	(find-file-noselect file)
+      (current-buffer))))
 
 (defun change-log-fill-forward-paragraph (n)
   "Cut paragraphs so filling preserves open parentheses at beginning of lines."

@@ -1,6 +1,6 @@
-;;; conf-mode.el --- Simple major mode for editing conf/ini/properties files -*- coding: utf-8 -*-
+;;; conf-mode.el --- Simple major mode for editing conf/ini/properties files
 
-;; Copyright (C) 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
 ;; Author: Daniel Pfeiffer <occitan@esperanto.org>
 ;; Keywords: conf ini windows java
@@ -122,7 +122,7 @@ not align (only setting space according to `conf-assignment-space')."
     (define-key menu-map [c-s0] '("--"))
     (define-key menu-map [conf-quote-normal]
       '(menu-item "Set quote syntax normal" conf-quote-normal
-		  :help "Set the syntax of \' and \" to punctuation"))
+		  :help "Set the syntax of \\=' and \" to punctuation"))
     (define-key menu-map [conf-align-assignments]
       '(menu-item "Align assignments" conf-align-assignments
 		  :help "Align assignments"))
@@ -296,8 +296,8 @@ contents of the region.  Otherwise, operate on the whole buffer."
 
 
 (defun conf-quote-normal (arg)
-  "Set the syntax of ' and \" to punctuation.
-With prefix arg, only do it for ' if 1, or only for \" if 2.
+  "Set the syntax of \\=' and \" to punctuation.
+With prefix arg, only do it for \\=' if 1, or only for \" if 2.
 This only affects the current buffer.  Some conf files use quotes
 to delimit strings, while others allow quotes as simple parts of
 the assigned value.  In those files font locking will be wrong,
@@ -311,8 +311,7 @@ unbalanced, but hey...)"
     (when (or (not arg) (= (prefix-numeric-value arg) 2))
       (modify-syntax-entry ?\" "." table))
     (set-syntax-table table)
-    (when font-lock-mode
-      (font-lock-fontify-buffer))))
+    (font-lock-flush)))
 
 
 (defun conf-outline-level ()
@@ -435,7 +434,7 @@ For details see `conf-mode'.  Example:
 
 # Conf mode font-locks this right on Unix and with \\[conf-unix-mode]
 
-\[Desktop Entry]
+[Desktop Entry]
 	 Encoding=UTF-8
 	 Name=The GIMP
 	 Name[ca]=El GIMP
@@ -450,11 +449,11 @@ For details see `conf-mode'.  Example:
 
 ; Conf mode font-locks this right on Windows and with \\[conf-windows-mode]
 
-\[ExtShellFolderViews]
+[ExtShellFolderViews]
 Default={5984FFE0-28D4-11CF-AE66-08002B2E1262}
 {5984FFE0-28D4-11CF-AE66-08002B2E1262}={5984FFE0-28D4-11CF-AE66-08002B2E1262}
 
-\[{5984FFE0-28D4-11CF-AE66-08002B2E1262}]
+[{5984FFE0-28D4-11CF-AE66-08002B2E1262}]
 PersistMoniker=file://Folder.htt"
   (conf-mode-initialize ";"))
 

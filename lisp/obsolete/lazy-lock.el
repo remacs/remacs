@@ -1,9 +1,9 @@
 ;;; lazy-lock.el --- lazy demand-driven fontification for fast Font Lock mode
 
-;; Copyright (C) 1994-1998, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-1998, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Simon Marshall <simon@gnu.org>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: faces files
 ;; Version: 2.11
 ;; Obsolete-since: 22.1
@@ -466,7 +466,7 @@ See also `lazy-lock-stealth-load'."
 With arg, turn Lazy Lock mode on if and only if arg is positive.  Enable it
 automatically in your `~/.emacs' by:
 
- (setq font-lock-support-mode 'lazy-lock-mode)
+ (setq font-lock-support-mode \\='lazy-lock-mode)
 
 For a newer font-lock support mode with similar functionality, see
 `jit-lock-mode'.  Eventually, Lazy Lock mode will be deprecated in
@@ -892,8 +892,7 @@ verbosity is controlled via the variable `lazy-lock-stealth-verbose'."
       (save-excursion
 	(save-match-data
 	  (save-buffer-state
-	   ;; Ensure syntactic fontification is always correct.
-	   (font-lock-beginning-of-syntax-function next)
+	   (next)
 	   ;; Find successive unfontified regions between BEG and END.
 	   (condition-case data
 	       (do-while beg

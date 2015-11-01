@@ -1,9 +1,9 @@
 ;;; gdb-mi.el --- User Interface for running GDB  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Nick Roberts <nickrob@gnu.org>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: unix, tools
 
 ;; This file is part of GNU Emacs.
@@ -981,7 +981,8 @@ no input, and GDB is waiting for input."
 	       (eq gud-minor-mode 'gdbmi))
     (error "Not in a GDB-MI buffer"))
   (let ((proc (get-buffer-process gud-comint-buffer)))
-    (if (and (eobp) proc (process-live-p proc)
+    (if (and (eobp)
+             (process-live-p proc)
 	     (not gud-running)
 	     (= (point) (marker-position (process-mark proc))))
 	;; Sending an EOF does not work with GDB-MI; submit an
@@ -1016,11 +1017,15 @@ no input, and GDB is waiting for input."
 
 (declare-function tooltip-show "tooltip" (text &optional use-echo-area))
 
+(defconst gdb--string-regexp "\"\\(?:[^\\\"]\\|\\\\.\\)*\"")
+
 (defun gdb-tooltip-print (expr)
   (with-current-buffer (gdb-get-buffer 'gdb-partial-output-buffer)
     (goto-char (point-min))
     (cond
-     ((re-search-forward ".*value=\\(\".*\"\\)" nil t)
+     ((re-search-forward (concat ".*value=\\(" gdb--string-regexp
+                                 "\\)")
+                         nil t)
       (tooltip-show
        (concat expr " = " (read (match-string 1)))
        (or gud-tooltip-echo-area
@@ -1198,7 +1203,8 @@ With arg, enter name of variable to be watched in the minibuffer."
 
 (defun gdb-var-evaluate-expression-handler (varnum changed)
   (goto-char (point-min))
-  (re-search-forward ".*value=\\(\".*\"\\)" nil t)
+  (re-search-forward (concat ".*value=\\(" gdb--string-regexp "\\)")
+                     nil t)
   (let ((var (assoc varnum gdb-var-list)))
     (when var
       (if changed (setcar (nthcdr 5 var) 'changed))
@@ -1579,9 +1585,8 @@ this trigger is subscribed to `gdb-buf-publisher' and called with
     ;; read from the pty, and stops listening to it.  If the gdb
     ;; process is still running, remove the pty, make a new one, and
     ;; pass it to gdb.
-    (let ((gdb-proc (get-buffer-process gud-comint-buffer))
-	  (io-buffer (process-buffer proc)))
-      (when (and gdb-proc (process-live-p gdb-proc)
+    (let ((io-buffer (process-buffer proc)))
+      (when (and (process-live-p (get-buffer-process gud-comint-buffer))
 		 (buffer-live-p io-buffer))
 	;; `comint-exec' deletes the original process as a side effect.
 	(comint-exec io-buffer "gdb-inferior" nil nil nil)
@@ -1624,9 +1629,19 @@ this trigger is subscribed to `gdb-buf-publisher' and called with
   :syntax-table nil :abbrev-table nil
   (make-comint-in-buffer "gdb-inferior" (current-buffer) nil))
 
+(defcustom gdb-display-io-nopopup nil
+  "When non-nil, and the 'gdb-inferior-io buffer is buried, don't pop it up."
+  :type 'boolean
+  :group 'gdb
+  :version "25.1")
+
 (defun gdb-inferior-filter (proc string)
   (unless (string-equal string "")
-    (gdb-display-buffer (gdb-get-buffer-create 'gdb-inferior-io)))
+    (let (buf)
+      (unless (and gdb-display-io-nopopup
+                   (setq buf (gdb-get-buffer 'gdb-inferior-io))
+                   (null (get-buffer-window buf)))
+        (gdb-display-buffer (gdb-get-buffer-create 'gdb-inferior-io)))))
   (with-current-buffer (gdb-get-buffer-create 'gdb-inferior-io)
     (comint-output-filter proc string)))
 
@@ -1974,7 +1989,7 @@ OFFSET is the position in STR at which the comparison takes place."
       (string-equal match (substring str offset (+ offset match-length))))))
 
 (defun gdbmi-same-start (str offset match)
-  "Return non-nil iff STR and MATCH are equal up to the end of either strings.
+  "Return non-nil if STR and MATCH are equal up to the end of either strings.
 OFFSET is the position in STR at which the comparison takes place."
   (let* ((str-length (- (length str) offset))
 	 (match-length (length match))
@@ -1984,7 +1999,7 @@ OFFSET is the position in STR at which the comparison takes place."
 		    (substring match 0 compare-length)))))
 
 (defun gdbmi-is-number (character)
-  "Return non-nil iff CHARACTER is a numerical character between 0 and 9."
+  "Return non-nil if CHARACTER is a numerical character between 0 and 9."
   (and (>= character ?0)
        (<= character ?9)))
 
@@ -2050,7 +2065,7 @@ a GDB/MI reply message."
 (defun gdbmi-bnf-gdb-prompt ()
   "Implementation of the following GDB/MI output grammar rule:
   gdb-prompt ==>
-       '(gdb)' nl
+       `(gdb)' nl
 
   nl ==>
        CR | CR-LF"
@@ -2070,7 +2085,7 @@ a GDB/MI reply message."
   "Implementation of the following GDB/MI output grammar rule:
 
   result-record ==>
-       [ token ] '^' result-class ( ',' result )* nl
+       [ token ] `^' result-class ( `,' result )* nl
 
   token ==>
        any sequence of digits."
@@ -2095,16 +2110,16 @@ a GDB/MI reply message."
        exec-async-output | status-async-output | notify-async-output
 
   exec-async-output ==>
-       [ token ] '*' async-output
+       [ token ] `*' async-output
 
   status-async-output ==>
-       [ token ] '+' async-output
+       [ token ] `+' async-output
 
   notify-async-output ==>
-       [ token ] '=' async-output
+       [ token ] `=' async-output
 
   async-output ==>
-       async-class ( ',' result )* nl"
+       async-class ( `,' result )* nl"
 
   (gdbmi-bnf-result-and-async-record-impl))
 
@@ -2115,16 +2130,17 @@ a GDB/MI reply message."
        console-stream-output | target-stream-output | log-stream-output
 
   console-stream-output ==>
-       '~' c-string
+       `~' c-string
 
   target-stream-output ==>
-       '@' c-string
+       `@' c-string
 
   log-stream-output ==>
-       '&' c-string"
+       `&' c-string"
   (when (< gdbmi-bnf-offset (length gud-marker-acc))
     (if (and (member (aref gud-marker-acc gdbmi-bnf-offset) '(?~ ?@ ?&))
-             (string-match "\\([~@&]\\)\\(\".*?\"\\)\n" gud-marker-acc
+             (string-match (concat "\\([~@&]\\)\\(" gdb--string-regexp "\\)\n")
+                           gud-marker-acc
                            gdbmi-bnf-offset))
         (let ((prefix (match-string 1 gud-marker-acc))
               (c-string (match-string 2 gud-marker-acc)))
@@ -2179,10 +2195,10 @@ value when the message is complete.
 
 Implement the following GDB/MI output grammar rule:
   result-class ==>
-       'done' | 'running' | 'connected' | 'error' | 'exit'
+       `done' | `running' | `connected' | `error' | `exit'
 
   async-class ==>
-       'stopped' | others (where others will be added depending on the needs
+       `stopped' | others (where others will be added depending on the needs
                            --this is still in development).")
 
 (defun gdbmi-bnf-result-and-async-record-impl ()
@@ -2299,9 +2315,66 @@ the end of the current result or async record is reached."
 ; list ==>
 ;      "[]" | "[" value ( "," value )* "]" | "[" result ( "," result )* "]"
 
+(defcustom gdb-mi-decode-strings nil
+  "When non-nil, decode octal escapes in GDB output into non-ASCII text.
+
+If the value is a coding-system, use that coding-system to decode
+the bytes reconstructed from octal escapes.  Any other non-nil value
+means to decode using the coding-system set for the GDB process.
+
+Warning: setting this non-nil might mangle strings reported by GDB
+that have literal substrings which match the \\nnn octal escape
+patterns, where nnn is an octal number between 200 and 377.  So
+we only recommend to set this variable non-nil if the program you
+are debugging really reports non-ASCII text, or some of its source
+file names include non-ASCII characters."
+  :type '(choice
+          (const :tag "Don't decode" nil)
+          (const :tag "Decode using default coding-system" t)
+          (coding-system :tag "Decode using this coding-system"))
+  :group 'gdb
+  :version "25.1")
+
+;; The idea of the following function was suggested
+;; by Kenichi Handa <handa@gnu.org>.
+;;
+;; FIXME: This is fragile: it relies on the assumption that all the
+;; non-ASCII strings output by GDB, including names of the source
+;; files, values of string variables in the inferior, etc., are all
+;; encoded in the same encoding.  It also assumes that the \nnn
+;; sequences are not split between chunks of output of the GDB process
+;; due to buffering, and arrive together.  Finally, if some string
+;; included literal \nnn strings (as opposed to non-ASCII characters
+;; converted by by GDB/MI to octal escapes), this decoding will mangle
+;; those strings.  When/if GDB acquires the ability to not
+;; escape-protect non-ASCII characters in its MI output, this kludge
+;; should be removed.
+(defun gdb-mi-decode (string)
+  "Decode octal escapes in MI output STRING into multibyte text."
+  (let ((coding
+         (if (coding-system-p gdb-mi-decode-strings)
+             gdb-mi-decode-strings
+           (with-current-buffer
+               (gdb-get-buffer-create 'gdb-partial-output-buffer)
+             buffer-file-coding-system))))
+    (with-temp-buffer
+      (set-buffer-multibyte nil)
+      (prin1 string (current-buffer))
+      (goto-char (point-min))
+      ;; prin1 quotes the octal escapes as well, which interferes with
+      ;; their interpretation by 'read' below.  Remove the extra
+      ;; backslashes to countermand that.
+      (while (re-search-forward "\\\\\\(\\\\[2-3][0-7][0-7]\\)" nil t)
+        (replace-match "\\1" nil nil))
+      (goto-char (point-min))
+      (decode-coding-string (read (current-buffer)) coding))))
 
 (defun gud-gdbmi-marker-filter (string)
   "Filter GDB/MI output."
+
+  ;; If required, decode non-ASCII text encoded with octal escapes.
+  (or (null gdb-mi-decode-strings)
+      (setq string (gdb-mi-decode string)))
 
   ;; Record transactions if logging is enabled.
   (when gdb-enable-debug
@@ -2360,9 +2433,9 @@ Sets `gdb-thread-number' to new id."
   (let* ((result (gdb-json-string output-field))
          (thread-id (bindat-get-field result 'id)))
     (gdb-setq-thread-number thread-id)
-    ;; Typing `thread N` in GUD buffer makes GDB emit `^done` followed
-    ;; by `=thread-selected` notification. `^done` causes `gdb-update`
-    ;; as usually. Things happen to fast and second call (from
+    ;; Typing `thread N' in GUD buffer makes GDB emit `^done' followed
+    ;; by `=thread-selected' notification. `^done' causes `gdb-update'
+    ;; as usually. Things happen too fast and second call (from
     ;; gdb-thread-selected handler) gets cut off by our beloved
     ;; pending triggers.
     ;; Solution is `gdb-wait-for-pending' macro: it guarantees that its
@@ -2586,9 +2659,10 @@ incompatible with GDB/MI output syntax."
               (insert "]"))))))
     (goto-char (point-min))
     (insert "{")
-    (while (re-search-forward
-	    "\\([[:alnum:]-_]+\\)=\\({\\|\\[\\|\"\"\\|\".*?[^\\]\"\\)" nil t)
-      (replace-match "\"\\1\":\\2" nil nil))
+    (let ((re (concat "\\([[:alnum:]-_]+\\)=\\({\\|\\[\\|\"\"\\|"
+                      gdb--string-regexp "\\)")))
+      (while (re-search-forward re nil t)
+        (replace-match "\"\\1\":\\2" nil nil)))
     (goto-char (point-max))
     (insert "}")))
 
@@ -2812,8 +2886,12 @@ See `def-gdb-auto-update-handler'."
                             (or (bindat-get-field breakpoint 'disp) "")
                             (let ((flag (bindat-get-field breakpoint 'enabled)))
                               (if (string-equal flag "y")
-                                  (propertize "y" 'font-lock-face  font-lock-warning-face)
-                                (propertize "n" 'font-lock-face  font-lock-comment-face)))
+                                  (eval-when-compile
+                                    (propertize "y" 'font-lock-face
+                                                font-lock-warning-face))
+                                (eval-when-compile
+                                  (propertize "n" 'font-lock-face
+                                              font-lock-comment-face))))
                             (bindat-get-field breakpoint 'addr)
                             (or (bindat-get-field breakpoint 'times) "")
                             (if (and type (string-match ".*watchpoint" type))
@@ -2865,7 +2943,8 @@ See `def-gdb-auto-update-handler'."
 	      (gdb-put-breakpoint-icon (string-equal flag "y") bptno
 				       (string-to-number line)))))))))
 
-(defvar gdb-source-file-regexp "fullname=\"\\(.*?\\)\"")
+(defconst gdb-source-file-regexp
+  (concat "fullname=\\(" gdb--string-regexp "\\)"))
 
 (defun gdb-get-location (bptno line flag)
   "Find the directory containing the relevant source file.
@@ -2874,6 +2953,7 @@ Put in buffer and place breakpoint icon."
   (catch 'file-not-found
     (if (re-search-forward gdb-source-file-regexp nil t)
 	(delete (cons bptno "File not found") gdb-location-alist)
+      ;; FIXME: Why/how do we use (match-string 1) when the search failed?
       (push (cons bptno (match-string 1)) gdb-location-alist)
       (gdb-resync)
       (unless (assoc bptno gdb-location-alist)
@@ -3257,10 +3337,15 @@ line."
   gud-stop-subjob
   "Interrupt thread at current line.")
 
+;; Defined opaquely in M-x gdb via gud-def.
+(declare-function gud-cont "gdb-mi" (arg) t)
+
 (def-gdb-thread-buffer-gud-command
   gdb-continue-thread
   gud-cont
   "Continue thread at current line.")
+
+(declare-function gud-step "gdb-mi" (arg) t)
 
 (def-gdb-thread-buffer-gud-command
   gdb-step-thread
@@ -4010,6 +4095,8 @@ member."
       (let ((name (bindat-get-field local 'name))
             (value (bindat-get-field local 'value))
             (type (bindat-get-field local 'type)))
+        (when (not value)
+          (setq value "<complex data type>"))
         (if (or (not value)
                 (string-match "\\0x" value))
             (add-text-properties 0 (length name)
@@ -4209,7 +4296,7 @@ If buffers already exist for any of these files, `gud-minor-mode'
 is set in them."
   (goto-char (point-min))
   (while (re-search-forward gdb-source-file-regexp nil t)
-    (push (match-string 1) gdb-source-file-list))
+    (push (read (match-string 1)) gdb-source-file-list))
   (dolist (buffer (buffer-list))
     (with-current-buffer buffer
       (when (member buffer-file-name gdb-source-file-list)
@@ -4248,14 +4335,15 @@ overlay arrow in source buffer."
                 (setq gud-overlay-arrow-position (make-marker))
                 (set-marker gud-overlay-arrow-position position))))))))
 
-(defvar gdb-prompt-name-regexp "value=\"\\(.*?\\)\"")
+(defconst gdb-prompt-name-regexp
+  (concat "value=\\(" gdb--string-regexp "\\)"))
 
 (defun gdb-get-prompt ()
   "Find prompt for GDB session."
   (goto-char (point-min))
   (setq gdb-prompt-name nil)
   (re-search-forward gdb-prompt-name-regexp nil t)
-  (setq gdb-prompt-name (match-string 1))
+  (setq gdb-prompt-name (read (match-string 1)))
   ;; Insert first prompt.
   (setq gdb-filter-output (concat gdb-filter-output gdb-prompt-name)))
 
@@ -4536,7 +4624,7 @@ Kills the gdb buffers, and resets variables and the source buffers."
 buffers, if required."
   (goto-char (point-min))
   (if (re-search-forward gdb-source-file-regexp nil t)
-      (setq gdb-main-file (match-string 1)))
+      (setq gdb-main-file (read (match-string 1))))
   (if gdb-many-windows
       (gdb-setup-windows)
     (gdb-get-buffer-create 'gdb-breakpoints-buffer)

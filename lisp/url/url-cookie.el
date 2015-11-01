@@ -1,6 +1,6 @@
 ;;; url-cookie.el --- URL cookie support
 
-;; Copyright (C) 1996-1999, 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-1999, 2004-2015 Free Software Foundation, Inc.
 
 ;; Keywords: comm, data, processes, hypermedia
 
@@ -104,9 +104,10 @@ telling Microsoft that."
       (insert ";; Emacs-W3 HTTP cookies file\n"
 	      ";; Automatically generated file!!! DO NOT EDIT!!!\n\n"
 	      "(setq url-cookie-storage\n '")
-      (pp url-cookie-storage (current-buffer))
-      (insert ")\n(setq url-cookie-secure-storage\n '")
-      (pp url-cookie-secure-storage (current-buffer))
+      (let ((print-length nil) (print-level nil))
+	(pp url-cookie-storage (current-buffer))
+	(insert ")\n(setq url-cookie-secure-storage\n '")
+	(pp url-cookie-secure-storage (current-buffer)))
       (insert ")\n")
       (insert "\n;; Local Variables:\n"
               ";; version-control: never\n"
@@ -158,7 +159,9 @@ telling Microsoft that."
   "Return non-nil if COOKIE is expired."
   (let ((exp (url-cookie-expires cookie)))
     (and (> (length exp) 0)
-	 (> (float-time) (float-time (date-to-time exp))))))
+	 (condition-case ()
+	     (> (float-time) (float-time (date-to-time exp)))
+	   (error nil)))))
 
 (defun url-cookie-retrieve (host &optional localpart secure)
   "Retrieve all cookies for a specified HOST and LOCALPART."
@@ -261,7 +264,7 @@ telling Microsoft that."
     (and expires
 	 (string-match
 	  (concat "^[^,]+, +\\(..\\)-\\(...\\)-\\(..\\) +"
-		  "\\(..:..:..\\) +\\[*\\([^\]]+\\)\\]*$")
+		  "\\(..:..:..\\) +\\[*\\([^]]+\\)\\]*$")
 	  expires)
 	 (setq expires (concat (match-string 1 expires) " "
 			       (match-string 2 expires) " "
@@ -352,9 +355,9 @@ to run the `url-cookie-setup-save-timer' function manually."
 ;;; Mode for listing and editing cookies.
 
 (defun url-cookie-list ()
-  "List the URL cookies."
+  "Display a buffer listing the current URL cookies, if there are any.
+Use \\<url-cookie-mode-map>\\[url-cookie-delete] to remove cookies."
   (interactive)
-
   (when (and (null url-cookie-secure-storage)
 	     (null url-cookie-storage))
     (error "No cookies are defined"))

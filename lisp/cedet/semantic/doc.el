@@ -1,6 +1,6 @@
 ;;; semantic/doc.el --- Routines for documentation strings
 
-;; Copyright (C) 1999-2003, 2005, 2008-2013 Free Software Foundation,
+;; Copyright (C) 1999-2003, 2005, 2008-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
@@ -56,13 +56,12 @@ If nosnarf if 'lex, then only return the lex token."
 	  doctmp
 	  ;; Check just before the definition.
 	  (when (semantic-tag-with-position-p tag)
-	    (semantic-documentation-comment-preceeding-tag tag nosnarf))
+	    (semantic-documentation-comment-preceding-tag tag nosnarf))
 	  ;;  Let's look for comments either after the definition, but before code:
 	  ;; Not sure yet.  Fill in something clever later....
 	  nil))))))
 
-;; FIXME this is not how you spell "preceding".
-(defun semantic-documentation-comment-preceeding-tag (&optional tag nosnarf)
+(defun semantic-documentation-comment-preceding-tag (&optional tag nosnarf)
   "Find a comment preceding TAG.
 If TAG is nil.  use the tag under point.
 Searches the space between TAG and the preceding tag for a comment,
@@ -84,6 +83,10 @@ just the lexical token and not the string."
 	;; of a function.
 	(semantic-doc-snarf-comment-for-tag nosnarf)))
     ))
+(define-obsolete-function-alias
+  'semantic-documentation-comment-preceeding-tag
+  'semantic-documentation-comment-preceding-tag
+  "25.1")
 
 (defun semantic-doc-snarf-comment-for-tag (nosnarf)
   "Snarf up the comment at POINT for `semantic-documentation-for-tag'.
@@ -118,7 +121,8 @@ If NOSNARF is 'lex, then return the lex token."
 	    (setq ct (concat (substring ct 0 (match-beginning 0))
 			     (substring ct (match-end 0)))))
 	  ;; Remove comment delimiter at the end of the string.
-	  (when (string-match (concat (regexp-quote comment-end) "$") ct)
+	  (when (and comment-end (not (string= comment-end ""))
+		     (string-match (concat (regexp-quote comment-end) "$") ct))
 	    (setq ct (substring ct 0 (match-beginning 0)))))
 	;; Now return the text.
 	ct))))

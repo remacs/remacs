@@ -1,6 +1,6 @@
 /* timespec -- System time interface
 
-   Copyright (C) 2000, 2002, 2004-2005, 2007, 2009-2013 Free Software
+   Copyright (C) 2000, 2002, 2004-2005, 2007, 2009-2015 Free Software
    Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -21,10 +21,30 @@
 
 # include <time.h>
 
+#ifndef _GL_INLINE_HEADER_BEGIN
+ #error "Please include config.h first."
+#endif
 _GL_INLINE_HEADER_BEGIN
 #ifndef _GL_TIMESPEC_INLINE
 # define _GL_TIMESPEC_INLINE _GL_INLINE
 #endif
+
+/* Resolution of timespec time stamps (in units per second), and log
+   base 10 of the resolution.  */
+
+enum { TIMESPEC_RESOLUTION = 1000000000 };
+enum { LOG10_TIMESPEC_RESOLUTION = 9 };
+
+/* Return a timespec with seconds S and nanoseconds NS.  */
+
+_GL_TIMESPEC_INLINE struct timespec
+make_timespec (time_t s, long int ns)
+{
+  struct timespec r;
+  r.tv_sec = s;
+  r.tv_nsec = ns;
+  return r;
+}
 
 /* Return negative, zero, positive if A < B, A == B, A > B, respectively.
 
@@ -54,7 +74,7 @@ _GL_INLINE_HEADER_BEGIN
 
    The (int) cast avoids a gcc -Wconversion warning.  */
 
-_GL_TIMESPEC_INLINE int
+_GL_TIMESPEC_INLINE int _GL_ATTRIBUTE_PURE
 timespec_cmp (struct timespec a, struct timespec b)
 {
   return (a.tv_sec < b.tv_sec ? -1
@@ -64,7 +84,7 @@ timespec_cmp (struct timespec a, struct timespec b)
 
 /* Return -1, 0, 1, depending on the sign of A.  A.tv_nsec must be
    nonnegative.  */
-_GL_TIMESPEC_INLINE int
+_GL_TIMESPEC_INLINE int _GL_ATTRIBUTE_PURE
 timespec_sign (struct timespec a)
 {
   return a.tv_sec < 0 ? -1 : a.tv_sec || a.tv_nsec;

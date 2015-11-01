@@ -1,6 +1,6 @@
 ;;; pcmpl-gnu.el --- completions for GNU project tools -*- lexical-binding: t -*-
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Package: pcomplete
 
@@ -323,8 +323,8 @@
                 (let ((file (pcomplete-arg 1)))
                   (completion-table-dynamic
                    (lambda (_string)
-                     (pcmpl-gnu-with-file-buffer file
-                       (mapcar #'tar-header-name tar-parse-info)))))
+                     (pcmpl-gnu-with-file-buffer
+                      file (mapcar #'tar-header-name tar-parse-info)))))
 	      (pcomplete-entries))
 	    nil 'identity))))
 

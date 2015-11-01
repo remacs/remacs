@@ -1,6 +1,6 @@
 ;;; f90.el --- tests for progmodes/f90.el
 
-;; Copyright (C) 2011-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
 ;; Author: Glenn Morris <rgm@gnu.org>
 
@@ -172,5 +172,72 @@ end program prog")
     (forward-line 2)
     (f90-indent-subprogram)
     (should (= 0 (current-indentation)))))
+
+(ert-deftest f90-test-bug-19809 ()
+  "Test for http://debbugs.gnu.org/19809 ."
+  (with-temp-buffer
+    (f90-mode)
+    ;; The Fortran standard says that continued strings should have
+    ;; '&' at the start of continuation lines, but it seems gfortran
+    ;; allows them to be absent (albeit with a warning).
+    (insert "program prog
+  write (*,*), '&
+end program prog'
+end program prog")
+    (goto-char (point-min))
+    (f90-end-of-subprogram)
+    (should (= (point) (point-max)))))
+
+(ert-deftest f90-test-bug20680 ()
+  "Test for http://debbugs.gnu.org/20680 ."
+  (with-temp-buffer
+    (f90-mode)
+    (insert "module modname
+type, extends ( sometype ) :: type1
+integer :: part1
+end type type1
+end module modname")
+    (f90-indent-subprogram)
+    (forward-line -1)
+    (should (= 2 (current-indentation)))))
+
+(ert-deftest f90-test-bug20680b ()
+  "Test for http://debbugs.gnu.org/20680 ."
+  (with-temp-buffer
+    (f90-mode)
+    (insert "module modname
+enum, bind(c)
+enumerator :: e1 = 0
+end enum
+end module modname")
+    (f90-indent-subprogram)
+    (forward-line -1)
+    (should (= 2 (current-indentation)))))
+
+(ert-deftest f90-test-bug20969 ()
+  "Test for http://debbugs.gnu.org/20969 ."
+  (with-temp-buffer
+    (f90-mode)
+    (insert "module modname
+type, extends ( sometype ), private :: type1
+integer :: part1
+end type type1
+end module modname")
+    (f90-indent-subprogram)
+    (forward-line -1)
+    (should (= 2 (current-indentation)))))
+
+(ert-deftest f90-test-bug20969b ()
+  "Test for http://debbugs.gnu.org/20969 ."
+  (with-temp-buffer
+    (f90-mode)
+    (insert "module modname
+type, private, extends ( sometype ) :: type1
+integer :: part1
+end type type1
+end module modname")
+    (f90-indent-subprogram)
+    (forward-line -1)
+    (should (= 2 (current-indentation)))))
 
 ;;; f90.el ends here

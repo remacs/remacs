@@ -1,6 +1,6 @@
 ;;; ede/auto.el --- Autoload features for EDE
 
-;; Copyright (C) 2010-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -30,6 +30,7 @@
 ;;; Code:
 
 (require 'eieio)
+(require 'cl-generic)
 
 (declare-function ede-directory-safe-p "ede")
 (declare-function ede-add-project-to-global-list "ede")
@@ -47,8 +48,13 @@
 		   :initform nil
 		   :documentation
 		   "An index into the match-data of `configregex'.")
-   (configdatastash :initform nil
-		    :documentation
+   (subdir-only :initarg :subdir-only
+		:initform t
+		:documentation
+		"Non-nil means an exact match to the found directory is a non-match.
+This implies projects exist only in subdirectories of the configuration path.
+If `:subdir-only' is nil, then the directory from the configuration file is the project.")
+   (configdatastash :documentation
 		    "Save discovered match string.")
    )
   "Support complex matches for projects that live in named directories.
@@ -57,7 +63,7 @@ location is varied dependent on other complex criteria, this class
 can be used to define that match without loading the specific project
 into memory.")
 
-(defmethod ede-dirmatch-installed ((dirmatch ede-project-autoload-dirmatch))
+(cl-defmethod ede-dirmatch-installed ((dirmatch ede-project-autoload-dirmatch))
   "Return non-nil if the tool DIRMATCH might match is installed on the system."
   (let ((fc (oref dirmatch fromconfig)))
 
@@ -72,7 +78,7 @@ into memory.")
      (t (error "Unknown dirmatch type.")))))
 
 
-(defmethod ede-do-dirmatch ((dirmatch ede-project-autoload-dirmatch) file)
+(cl-defmethod ede-do-dirmatch ((dirmatch ede-project-autoload-dirmatch) file)
   "Does DIRMATCH match the filename FILE."
   (let ((fc (oref dirmatch fromconfig)))
 
@@ -80,8 +86,11 @@ into memory.")
      ;; If the thing to match is stored in a config file.
      ((stringp fc)
       (when (file-exists-p fc)
-	(let ((matchstring (oref dirmatch configdatastash)))
-	  (unless matchstring
+	(let ((matchstring
+	       (if (slot-boundp dirmatch 'configdatastash)
+		   (oref dirmatch configdatastash)
+		 nil)))
+	  (when (and (not matchstring) (not (slot-boundp dirmatch 'configdatastash)))
 	    (save-current-buffer
 	      (let* ((buff (get-file-buffer fc))
 		     (readbuff
@@ -94,10 +103,25 @@ into memory.")
 		    (setq matchstring
 			  (match-string (or (oref dirmatch configregexidx) 0)))))
 		(if (not buff) (kill-buffer readbuff))))
-	    ;; Save what we find in our cache.
-	    (oset dirmatch configdatastash matchstring))
+	    (when matchstring
+	      ;; If this dirmatch only finds subdirs of matchstring, then
+	      ;; force matchstring to be a directory.
+	      (when (oref dirmatch subdir-only)
+		(setq matchstring (file-name-as-directory matchstring)))
+	      ;; Convert matchstring to a regexp
+	      (setq matchstring (concat "^" (regexp-quote matchstring)))
+	      ;; Stash it for later.
+	      (oset dirmatch configdatastash matchstring))
+	    ;; Debug
+	    ;;(message "Stashing config data for dirmatch %S as %S" (eieio-object-name dirmatch) matchstring)
+	    )
+	  ;;(message "dirmatch %s against %s" matchstring (expand-file-name file))
 	  ;; Match against our discovered string
-	  (and matchstring (string-match (regexp-quote matchstring) file))
+	  (setq file (file-name-as-directory (expand-file-name file)))
+	  (and matchstring (string-match matchstring (expand-file-name file))
+	       (or (not (oref dirmatch subdir-only))
+		   (not (= (match-end 0) (length file))))
+	       )
 	  )))
 
      ;; Add new matches here
@@ -119,13 +143,21 @@ into memory.")
 	 :documentation "The lisp file belonging to this class.")
    (proj-file :initarg :proj-file
 	      :documentation "Name of a project file of this type.")
+   (root-only :initarg :root-only
+	      :initform t ;; Default - majority case.
+	      :documentation
+	      "Non-nil if project detection only finds proj-file @ project root.")
    (proj-root-dirmatch :initarg :proj-root-dirmatch
-		       :initform ""
-		       :type (or string ede-project-autoload-dirmatch)
+		       :initform nil
+		       :type (or null string ede-project-autoload-dirmatch)
 		       :documentation
 		       "To avoid loading a project, check if the directory matches this.
-For projects that use directory name matches, a function would load that project.
-Specifying this matcher will allow EDE to check without loading the project.")
+Specifying this matcher object will allow EDE to perform a complex
+check without loading the project.
+
+NOTE: If you use dirmatch, you may need to set :root-only to nil.
+While it may be a root based project, all subdirs will happen to return
+true for the dirmatch, so for scanning purposes, set it to nil.")
    (proj-root :initarg :proj-root
 	      :type function
 	      :documentation "A function symbol to call for the project root.
@@ -165,22 +197,22 @@ type is required and the load function used.")
 
 (defvar ede-project-class-files
   (list
-   (ede-project-autoload "edeproject-makefile"
-			 :name "Make" :file 'ede/proj
+   (ede-project-autoload :name "Make" :file 'ede/proj
 			 :proj-file "Project.ede"
+			 :root-only nil
 			 :load-type 'ede-proj-load
 			 :class-sym 'ede-proj-project
 			 :safe-p nil)
-   (ede-project-autoload "edeproject-automake"
-			 :name "Automake" :file 'ede/proj
+   (ede-project-autoload :name "Automake" :file 'ede/proj
 			 :proj-file "Project.ede"
+			 :root-only nil
 			 :initializers '(:makefile-type Makefile.am)
 			 :load-type 'ede-proj-load
 			 :class-sym 'ede-proj-project
 			 :safe-p nil)
-   (ede-project-autoload "automake"
-			 :name "automake" :file 'ede/project-am
+   (ede-project-autoload :name "automake" :file 'ede/project-am
 			 :proj-file "Makefile.am"
+			 :root-only nil
 			 :load-type 'project-am-load
 			 :class-sym 'project-am-makefile
 			 :new-p nil
@@ -190,17 +222,30 @@ type is required and the load function used.")
 
 (put 'ede-project-class-files 'risky-local-variable t)
 
+(defun ede-show-supported-projects ()
+  "Display all the project types registered with EDE."
+  (interactive)
+  (let ((b (get-buffer-create "*EDE Autodetect Projects*")))
+    (set-buffer b)
+    (setq buffer-read-only nil)
+    (erase-buffer)
+    (dolist (prj ede-project-class-files)
+      (insert (oref prj name))
+      (newline))
+    (display-buffer b)
+ ))
+
 (defun ede-add-project-autoload (projauto &optional flag)
   "Add PROJAUTO, an EDE autoload definition to `ede-project-class-files'.
 Optional argument FLAG indicates how this autoload should be
 added.  Possible values are:
-  'generic - A generic project type.  Keep this at the very end.
-  'unique - A unique project type for a specific project.  Keep at the very
-            front of the list so more generic projects don't get priority."
+  `generic' - A generic project type.  Keep this at the very end.
+  `unique' - A unique project type for a specific project.  Keep at the very
+             front of the list so more generic projects don't get priority."
   ;; First, can we identify PROJAUTO as already in the list?  If so, replace.
   (let ((projlist ede-project-class-files)
-	(projname (eieio-object-name-string projauto)))
-    (while (and projlist (not (string= (eieio-object-name-string (car projlist)) projname)))
+	(projname (oref projauto name)))
+    (while (and projlist (not (string= (oref (car projlist) name) projname)))
       (setq projlist (cdr projlist)))
 
     (if projlist
@@ -233,106 +278,62 @@ added.  Possible values are:
 	       ;; Splice into the list.
 	       (setcdr prev (cons projauto next))))))))
 
-;;; EDE project-autoload methods
+;;; Project Autoload Methods
 ;;
-(defmethod ede-project-root ((this ede-project-autoload))
-  "If a project knows its root, return it here.
-Allows for one-project-object-for-a-tree type systems."
-  nil)
 
-(defun ede-project-dirmatch-p (file dirmatch)
-  "Return non-nil if FILE matches DIRMATCH.
-DIRMATCH could be nil (no match), a string (regexp match),
-or an `ede-project-autoload-dirmatch' object."
-  ;; If dirmatch is a string, then we simply match it against
-  ;; the file we are testing.
-  (if (stringp dirmatch)
-      (string-match dirmatch file)
-    ;; if dirmatch is instead a dirmatch object, we test against
-    ;; that object instead.
-    (if (ede-project-autoload-dirmatch-p dirmatch)
-	(ede-do-dirmatch dirmatch file)
-      (error "Unknown project directory match type."))
-    ))
-
-(defmethod ede-project-root-directory ((this ede-project-autoload)
-				       &optional file)
-  "If a project knows its root, return it here.
-Allows for one-project-object-for-a-tree type systems.
-Optional FILE is the file to test.  If there is no FILE, use
-the current buffer."
-  (when (not file)
-    (setq file default-directory))
-  (when (slot-boundp this :proj-root)
-    (let ((dirmatch (oref this proj-root-dirmatch))
-	  (rootfcn (oref this proj-root))
-	  (callfcn t))
-      (when rootfcn
-	(if ;; If the dirmatch (an object) is not installed, then we
-	    ;; always skip doing a match.
-	    (and (ede-project-autoload-dirmatch-p dirmatch)
-		 (not (ede-dirmatch-installed dirmatch)))
-	    (setq callfcn nil)
-	  ;; Other types of dirmatch:
-	  (when (and
-		 ;; If the Emacs Lisp file handling this project hasn't
-		 ;; been loaded, we will use the quick dirmatch feature.
-		 (not (featurep (oref this file)))
-		 ;; If the dirmatch is an empty string, then we always
-		 ;; skip doing a match.
-		 (not (and (stringp dirmatch) (string= dirmatch "")))
-		 )
-	    ;; If this file DOES NOT match dirmatch, we set the callfcn
-	    ;; to nil, meaning don't load the ede support file for this
-	    ;; type of project.  If it does match, we will load the file
-	    ;; and use a more accurate programmatic match from there.
-	    (unless (ede-project-dirmatch-p file dirmatch)
-	      (setq callfcn nil))))
-	;; Call into the project support file for a match.
-	(when callfcn
-	  (condition-case nil
-	      (funcall rootfcn file)
-	    (error
-	     (funcall rootfcn))))
-	))))
-
-(defmethod ede-dir-to-projectfile ((this ede-project-autoload) dir)
-  "Return a full file name of project THIS found in DIR.
-Return nil if the project file does not exist."
+;; New method using detect.el
+(cl-defmethod ede-auto-detect-in-dir ((this ede-project-autoload) dir)
+  "Return non-nil if THIS project autoload is found in DIR."
   (let* ((d (file-name-as-directory dir))
-	 (root (ede-project-root-directory this d))
 	 (pf (oref this proj-file))
-	 (dm (oref this proj-root-dirmatch))
-	 (f (cond ((stringp pf)
-		   (expand-file-name pf (or root d)))
-		  ((and (symbolp pf) (fboundp pf))
-		   ;; If there is a symbol to call, lets make extra
-		   ;; sure we really can call it without loading in
-		   ;; other EDE projects.  This happens if the file is
-		   ;; already loaded, or if there is a dirmatch, but
-		   ;; root is empty.
-		   (when (and (featurep (oref this file))
-			      (or (not (stringp dm))
-				  (not (string= dm "")))
-			      root)
-		     (funcall pf (or root d))))))
-	 )
-    (when (and f (file-exists-p f))
-      f)))
+	 (f (when (stringp pf) (expand-file-name pf d))))
+    (if f
+	(and f (file-exists-p f))
+      (let ((dirmatch (oref this proj-root-dirmatch)))
+	(cond
+	 ((stringp dirmatch)
+	  nil) ; <- do something here - maybe obsolete the option?
+	 ((ede-project-autoload-dirmatch-p dirmatch)
+	  (if (and dirmatch (ede-dirmatch-installed dirmatch))
+	      (ede-do-dirmatch dirmatch dir)
+	    ;(message "Dirmatch %S not installed." dirmatch)
+	    )))))))
 
-(defmethod ede-auto-load-project ((this ede-project-autoload) dir)
+(cl-defmethod ede-auto-load-project ((this ede-project-autoload) dir)
   "Load in the project associated with THIS project autoload description.
 THIS project description should be valid for DIR, where the project will
-be loaded."
+be loaded.
+
+NOTE: Do not call this - it should only be called from `ede-load-project-file'."
   ;; Last line of defense: don't load unsafe projects.
-  (when (not (or (oref this :safe-p)
+  (when (not (or (oref this safe-p)
 		 (ede-directory-safe-p dir)))
     (error "Attempt to load an unsafe project (bug elsewhere in EDE)"))
   ;; Things are good - so load the project.
   (let ((o (funcall (oref this load-type) dir)))
     (when (not o)
       (error "Project type error: :load-type failed to create a project"))
-    (ede-add-project-to-global-list o)))
+    (ede-add-project-to-global-list o)
+    ;; @TODO - Add to hash over at `ede-inode-directory-hash'.
+    ))
+
+
+
+
+
+
+;;; -------- Old Methods
+;; See if we can do without them.
+
+;; @FIXME - delete from loaddefs to remove this.
+(cl-defmethod ede-project-root ((this ede-project-autoload))
+  "If a project knows its root, return it here.
+Allows for one-project-object-for-a-tree type systems."
+  nil)
+
+;; @FIXME - delete from loaddefs to remove this.
+(cl-defmethod ede-project-root-directory ((this ede-project-autoload) &optional file)
+  "" nil)
 
 (provide 'ede/auto)
 

@@ -1,6 +1,6 @@
 ;;; srecode/semantic.el --- Semantic specific extensions to SRecode.
 
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -55,7 +55,7 @@
   "Wrap up a collection of semantic tag information.
 This class will be used to derive dictionary values.")
 
-(defmethod srecode-compound-toString((cp srecode-semantic-tag)
+(cl-defmethod srecode-compound-toString((cp srecode-semantic-tag)
 				     function
 				     dictionary)
   "Convert the compound dictionary value CP to a string.

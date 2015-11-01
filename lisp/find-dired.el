@@ -1,11 +1,11 @@
 ;;; find-dired.el --- run a `find' command and dired the output
 
-;; Copyright (C) 1992, 1994-1995, 2000-2013 Free Software Foundation,
+;; Copyright (C) 1992, 1994-1995, 2000-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Roland McGrath <roland@gnu.org>,
 ;;	   Sebastian Kremer <sk@thp.uni-koeln.de>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: unix
 
 ;; This file is part of GNU Emacs.
@@ -30,7 +30,7 @@
 (require 'dired)
 
 (defgroup find-dired nil
-  "Run a `find' command and dired the output."
+  "Run a `find' command and Dired the output."
   :group 'dired
   :prefix "find-")
 
@@ -72,10 +72,10 @@ a file listing in the desired format.  LS-SWITCHES is a set of
 
 The two options must be set to compatible values.
 For example, to use human-readable file sizes with GNU ls:
-   \(\"-exec ls -ldh {} +\" . \"-ldh\")
+   (\"-exec ls -ldh {} +\" . \"-ldh\")
 
 To use GNU find's inbuilt \"-ls\" option to list files:
-   \(\"-ls\" . \"-dilsb\")
+   (\"-ls\" . \"-dilsb\")
 since GNU find's output has the same format as using GNU ls with
 the options \"-dilsb\"."
   :version "24.1"	       ; add tests for -ls and -exec + support
@@ -151,7 +151,8 @@ use in place of \"-ls\" as the final argument."
     (let ((find (get-buffer-process (current-buffer))))
       (when find
 	(if (or (not (eq (process-status find) 'run))
-		(yes-or-no-p "A `find' process is running; kill it? "))
+		(yes-or-no-p
+		 (format-message "A `find' process is running; kill it? ")))
 	    (condition-case nil
 		(progn
 		  (interrupt-process find)
@@ -234,11 +235,13 @@ use in place of \"-ls\" as the final argument."
 ;;;###autoload
 (defun find-name-dired (dir pattern)
   "Search DIR recursively for files matching the globbing pattern PATTERN,
-and run dired on those files.
+and run Dired on those files.
 PATTERN is a shell wildcard (not an Emacs regexp) and need not be quoted.
-The command run (after changing into DIR) is
+The default command run (after changing into DIR) is
 
-    find . -name 'PATTERN' -ls"
+    find . -name \\='PATTERN\\=' -ls
+
+See `find-name-arg' to customize the arguments."
   (interactive
    "DFind-name (directory): \nsFind-name (filename wildcard): ")
   (find-dired dir (concat find-name-arg " " (shell-quote-argument pattern))))
@@ -252,7 +255,7 @@ The command run (after changing into DIR) is
 (defalias 'lookfor-dired 'find-grep-dired)
 ;;;###autoload
 (defun find-grep-dired (dir regexp)
-  "Find files in DIR containing a regexp REGEXP and start Dired on output.
+  "Find files in DIR matching a regexp REGEXP and start Dired on output.
 The command run (after changing into DIR) is
 
   find . \\( -type f -exec `grep-program' `find-grep-options' \\

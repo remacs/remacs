@@ -1,7 +1,8 @@
 \input texinfo
 @c %**start of header
-@setfilename ../../info/erc
+@setfilename ../../info/erc.info
 @settitle ERC Manual
+@include docstyle.texi
 @syncodeindex fn cp
 @include emacsver.texi
 @c %**end of header
@@ -9,13 +10,13 @@
 @copying
 This manual is for ERC as distributed with Emacs @value{EMACSVER}.
 
-Copyright @copyright{} 2005--2013 Free Software Foundation, Inc.
+Copyright @copyright{} 2005--2015 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
-Invariant Sections, with the Front-Cover texts being ``A GNU Manual,''
+Invariant Sections, with the Front-Cover Texts being ``A GNU Manual,''
 and with the Back-Cover Texts as in (a) below.  A copy of the license
 is included in the section entitled ``GNU Free Documentation License''.
 
@@ -149,7 +150,7 @@ then a bunch of other messages that describe the current IRC server.
 
 @item Join the #emacs channel
 
-In that buffer, type ``/join SPC #emacs'' and hit @kbd{RET}.  Depending
+In that buffer, type ``/join @key{SPC} #emacs'' and hit @kbd{RET}.  Depending
 on how you've set up ERC, either a new buffer for ``#emacs'' will be
 displayed, or a new buffer called ``#emacs'' will be created in the
 background.  If the latter, switch to the ``#emacs'' buffer.  You will
@@ -265,54 +266,54 @@ This is a summary of keystrokes available in every ERC buffer.
 
 @table @kbd
 
-@item C-a or <home> (`erc-bol')
+@item C-a or <home> (@code{erc-bol})
 Go to beginning of line or end of prompt.
 
-@item RET (`erc-send-current-line')
+@item RET (@code{erc-send-current-line})
 Send the current line
 
-@item TAB (`erc-complete-word')
+@item TAB (@code{erc-complete-word})
 If at prompt, complete the current word.
 Otherwise, move to the next link or button.
 
-@item M-TAB (`ispell-complete-word')
+@item M-TAB (@code{ispell-complete-word})
 Complete the given word, using ispell.
 
-@item C-c C-a (`erc-bol')
+@item C-c C-a (@code{erc-bol})
 Go to beginning of line or end of prompt.
 
-@item C-c C-b (`erc-iswitchb')
-Use `iswitchb-read-buffer' to prompt for a ERC buffer to switch to.
+@item C-c C-b (@code{erc-iswitchb})
+Use @code{iswitchb-read-buffer} to prompt for a ERC buffer to switch to.
 
-@item C-c C-c (`erc-toggle-interpret-controls')
+@item C-c C-c (@code{erc-toggle-interpret-controls})
 Toggle interpretation of control sequences in messages.
 
-@item C-c C-d (`erc-input-action')
+@item C-c C-d (@code{erc-input-action})
 Interactively input a user action and send it to IRC.
 
-@item C-c C-e (`erc-toggle-ctcp-autoresponse')
+@item C-c C-e (@code{erc-toggle-ctcp-autoresponse})
 Toggle automatic CTCP replies (like VERSION and PING).
 
-@item C-c C-f (`erc-toggle-flood-control')
+@item C-c C-f (@code{erc-toggle-flood-control})
 Toggle use of flood control on sent messages.
 
-@item C-c TAB (`erc-invite-only-mode')
+@item C-c TAB (@code{erc-invite-only-mode})
 Turn on the invite only mode (+i) for the current channel.
 
-@item C-c C-j (`erc-join-channel')
+@item C-c C-j (@code{erc-join-channel})
 Join channel.  If point is at the beginning of a channel name, use that
 as default.
 
-@item C-c C-k (`erc-go-to-log-matches-buffer')
+@item C-c C-k (@code{erc-go-to-log-matches-buffer})
 Interactively open an erc-log-matches buffer
 
-@item C-c C-l (`erc-save-buffer-in-logs')
+@item C-c C-l (@code{erc-save-buffer-in-logs})
 Append buffer contents to the log file, if logging is enabled.
 
-@item C-c C-n (`erc-channel-names')
+@item C-c C-n (@code{erc-channel-names})
 Run "/names #channel" in the current channel.
 
-@item C-c C-o (`erc-get-channel-mode-from-keypress')
+@item C-c C-o (@code{erc-get-channel-mode-from-keypress})
 Read a key sequence and call the corresponding channel mode function.
 After doing @kbd{C-c C-o}, type in a channel mode letter.
 
@@ -320,22 +321,22 @@ After doing @kbd{C-c C-o}, type in a channel mode letter.
 @kbd{RET} lets you type more than one mode at a time.
 If @kbd{l} is pressed, @code{erc-set-channel-limit} gets called.
 If @kbd{k} is pressed, @code{erc-set-channel-key} gets called.
-Anything else will be sent to `erc-toggle-channel-mode'.
+Anything else will be sent to @code{erc-toggle-channel-mode}.
 
-@item C-c C-p (`erc-part-from-channel')
+@item C-c C-p (@code{erc-part-from-channel})
 Part from the current channel and prompt for a reason.
 
-@item C-c C-q (`erc-quit-server')
+@item C-c C-q (@code{erc-quit-server})
 Disconnect from current server after prompting for reason.
 
-@item C-c C-r (`erc-remove-text-properties-region')
+@item C-c C-r (@code{erc-remove-text-properties-region})
 Clears the region (start,end) in object from all colors, etc.
 
-@item C-c C-t (`erc-set-topic')
+@item C-c C-t (@code{erc-set-topic})
 Prompt for a topic for the current channel.
 
-@item C-c C-u (`erc-kill-input')
-Kill current input line using `erc-bol' followed by `kill-line'.
+@item C-c C-u (@code{erc-kill-input})
+Kill current input line using @code{erc-bol} followed by @code{kill-line}.
 
 @end table
 
@@ -587,6 +588,16 @@ In the latter case, if the first nick in the list is already in use,
 other nicks are tried in the list order.
 @end defopt
 
+@defopt erc-format-nick-function
+A function to format a nickname for message display
+
+You can set this to @code{erc-format-@@nick} to display user mode prefix
+@end defopt
+
+@example
+(setq erc-format-nick-function 'erc-format-@@nick)
+@end example
+
 @defopt erc-nick-uniquifier
 The string to append to the nick if it is already in use.
 @end defopt
@@ -656,13 +667,6 @@ your Emacs configuration file.  Everything after the @code{(require
 @lisp
 ;;; Sample ERC configuration
 
-;; Add the ERC directory to load path -- you don't need this if you are
-;; using the version of ERC that comes with Emacs
-(add-to-list 'load-path "~/elisp/erc")
-
-;; Load ERC
-(require 'erc)
-
 ;; Load authentication info from an external source.  Put sensitive
 ;; passwords and the like in here.
 (load "~/.emacs.d/.erc-auth")
@@ -711,6 +715,12 @@ stuff, to the current ERC buffer."
 ;; Join the #emacs and #erc channels whenever connecting to Freenode.
 (setq erc-autojoin-channels-alist '(("freenode.net" "#emacs" "#erc")))
 
+;; Rename server buffers to reflect the current network name instead
+;; of SERVER:PORT (e.g., "freenode" instead of "irc.freenode.net:6667").
+;; This is useful when using a bouncer like ZNC where you have multiple
+;; connections to the same server.
+(setq erc-rename-buffers t)
+
 ;; Interpret mIRC-style color commands in IRC chats
 (setq erc-interpret-mirc-color t)
 
@@ -743,12 +753,40 @@ If non, @code{nil}, this is a list of IRC message types to hide, e.g.:
 @end example
 @end defopt
 
+@defopt erc-network-hide-list
+If non, @code{nil}, this is a list of IRC networks and message types
+to hide, e.g.:
+
+@example
+(setq erc-network-hide-list (("freenode" "JOIN" "PART" "QUIT")
+("OFTC" "JOIN" "PART""))
+@end example
+@end defopt
+
+@defopt erc-channel-hide-list
+If non, @code{nil}, this is a list of IRC channels and message types
+to hide, e.g.:
+
+@example
+(setq erc-channel-hide-list (("#erc" "JOIN" "PART" "QUIT")
+("#emacs" "NICK"))
+@end example
+@end defopt
+
 @defopt erc-lurker-hide-list
 Like @code{erc-hide-list}, but only applies to messages sent by
 lurkers.  The function @code{erc-lurker-p} determines whether a given
 nickname is considered a lurker.
 @end defopt
 
+@defopt erc-rename-buffers
+If non, @code{nil}, this will rename server buffers to reflect the
+current network name instead of IP:PORT
+
+@example
+(setq erc-rename-buffers t)
+@end example
+@end defopt
 
 @node Getting Help and Reporting Bugs
 @chapter Getting Help and Reporting Bugs
@@ -762,7 +800,7 @@ or if you have bugs to report, there are several places you can go.
 
 @item
 @uref{http://www.emacswiki.org/cgi-bin/wiki/ERC} is the
-emacswiki.org page for ERC@.  Anyone may add tips, hints, etc. to it.
+emacswiki.org page for ERC@.  Anyone may add tips, hints, etc.@: to it.
 
 @item
 You can ask questions about using ERC on the Emacs mailing list,

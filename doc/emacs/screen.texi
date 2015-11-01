@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2001-2013 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2001-2015 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Screen
@@ -8,7 +8,7 @@
 @cindex frame
 
   On a graphical display, such as on GNU/Linux using the X Window
-System, Emacs occupies a ``graphical window''.  On a text terminal,
+System, Emacs occupies a graphical window.  On a text terminal,
 Emacs occupies the entire terminal screen.  We will use the term
 @dfn{frame} to mean a graphical window or terminal screen occupied by
 Emacs.  Emacs behaves very similarly on both kinds of frames.  It
@@ -27,7 +27,7 @@ information when Emacs asks for it.
 above the echo area, is called @dfn{the window}.  Henceforth in this
 manual, we will use the word ``window'' in this sense.  Graphical
 display systems commonly use the word ``window'' with a different
-meaning; but, as stated above, we refer to those ``graphical windows''
+meaning; but, as stated above, we refer to those graphical windows
 as ``frames''.
 
   An Emacs window is where the @dfn{buffer}---the text you are
@@ -123,7 +123,7 @@ beeping or by flashing the screen.
 you what the command has done, or to provide you with some specific
 information.  These @dfn{informative} messages, unlike error messages,
 are not accompanied with a beep or flash.  For example, @kbd{C-x =}
-(hold down @key{CTRL} and type @kbd{x}, then let go of @key{CTRL} and
+(hold down @key{Ctrl} and type @kbd{x}, then let go of @key{Ctrl} and
 type @kbd{=}) displays a message describing the character at point,
 its position in the buffer, and its current column in the window.
 Commands that take a long time often display messages ending in
@@ -206,11 +206,11 @@ terminal output.  Furthermore, if you are using an input method,
 string is displayed, that indicates a nontrivial end-of-line
 convention for encoding a file.  Usually, lines of text are separated
 by @dfn{newline characters} in a file, but two other conventions are
-sometimes used.  The MS-DOS convention uses a ``carriage-return''
-character followed by a ``linefeed'' character; when editing such
+sometimes used.  The MS-DOS convention uses a carriage-return
+character followed by a linefeed character; when editing such
 files, the colon changes to either a backslash (@samp{\}) or
 @samp{(DOS)}, depending on the operating system.  Another convention,
-employed by older Macintosh systems, uses a ``carriage-return''
+employed by older Macintosh systems, uses a carriage-return
 character instead of a newline; when editing such files, the colon
 changes to either a forward slash (@samp{/}) or @samp{(Mac)}.  On some
 systems, Emacs displays @samp{(Unix)} instead of the colon for files
@@ -219,7 +219,7 @@ that use newline as the line separator.
   The next element on the mode line is the string indicated by
 @var{ch}.  This shows two dashes (@samp{--}) if the buffer displayed
 in the window has the same contents as the corresponding file on the
-disk; i.e., if the buffer is ``unmodified''.  If the buffer is
+disk; i.e., if the buffer is unmodified.  If the buffer is
 modified, it shows two stars (@samp{**}).  For a read-only buffer, it
 shows @samp{%*} if the buffer is modified, and @samp{%%} otherwise.
 
@@ -285,15 +285,11 @@ performs various commands.  @xref{Mode Line Mouse}.
 can use to perform common operations.  There's no need to list them
 here, as you can more easily see them yourself.
 
-@kindex M-`
-@kindex F10
-@findex tmm-menubar
-@findex menu-bar-open
-  On a graphical display, you can use the mouse to choose a command
-from the menu bar.  An arrow on the right edge of a menu item means it
-leads to a subsidiary menu, or @dfn{submenu}.  A @samp{...} at the end
-of a menu item means that the command will prompt you for further
-input before it actually does anything.
+  On a display that supports a mouse, you can use the mouse to choose a
+command from the menu bar.  An arrow on the right edge of a menu item
+means it leads to a subsidiary menu, or @dfn{submenu}.  A @samp{...}
+at the end of a menu item means that the command will prompt you for
+further input before it actually does anything.
 
   Some of the commands in the menu bar have ordinary key bindings as
 well; if so, a key binding is shown in parentheses after the item
@@ -301,18 +297,28 @@ itself.  To view the full command name and documentation for a menu
 item, type @kbd{C-h k}, and then select the menu bar with the mouse in
 the usual way (@pxref{Key Help}).
 
+@kindex F10
+@findex menu-bar-open
+@cindex menu bar access using keyboard
   Instead of using the mouse, you can also invoke the first menu bar
 item by pressing @key{F10} (to run the command @code{menu-bar-open}).
 You can then navigate the menus with the arrow keys.  To activate a
 selected menu item, press @key{RET}; to cancel menu navigation, press
-@key{ESC}.
+@kbd{C-g} or @kbd{@key{ESC} @key{ESC} @key{ESC}}.
 
-  On a text terminal, you can use the menu bar by typing @kbd{M-`} or
-@key{F10} (these run the command @code{tmm-menubar}).  This lets you
-select a menu item with the keyboard.  A provisional choice appears in
-the echo area.  You can use the up and down arrow keys to move through
-the menu to different items, and then you can type @key{RET} to select
-the item.  Each menu item is also designated by a letter or digit
-(usually the initial of some word in the item's name).  This letter or
-digit is separated from the item name by @samp{==>}.  You can type the
-item's letter or digit to select the item.
+@kindex M-`
+@findex tmm-menubar
+@vindex tty-menu-open-use-tmm
+  On a text terminal, you can optionally access the menu-bar menus in
+the echo area.  To this end, customize the variable
+@code{tty-menu-open-use-tmm} to a non-@code{nil} value.  Then typing
+@key{F10} will run the command @code{tmm-menubar} instead of dropping
+down the menu.  (You can also type @kbd{M-`}, which always invokes
+@code{tmm-menubar}.)  @code{tmm-menubar} lets you select a menu item
+with the keyboard.  A provisional choice appears in the echo area.
+You can use the up and down arrow keys to move through the menu to
+different items, and then you can type @key{RET} to select the item.
+Each menu item is also designated by a letter or digit (usually the
+initial of some word in the item's name).  This letter or digit is
+separated from the item name by @samp{==>}.  You can type the item's
+letter or digit to select the item.

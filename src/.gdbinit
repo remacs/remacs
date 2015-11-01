@@ -1,4 +1,4 @@
-# Copyright (C) 1992-1998, 2000-2013 Free Software Foundation, Inc.
+# Copyright (C) 1992-1998, 2000-2015 Free Software Foundation, Inc.
 #
 # This file is part of GNU Emacs.
 #
@@ -49,7 +49,7 @@ define xgetptr
   else
     set $bugfix = $arg0
   end
-  set $ptr = ($bugfix & VALMASK) | DATA_SEG_BITS
+  set $ptr = $bugfix & VALMASK
 end
 
 define xgetint
@@ -67,7 +67,18 @@ define xgettype
   else
     set $bugfix = $arg0
   end
-  set $type = (enum Lisp_Type) (USE_LSB_TAG ? $bugfix & (1 << GCTYPEBITS) - 1 : $bugfix >> VALBITS)
+  set $type = (enum Lisp_Type) (USE_LSB_TAG ? $bugfix & (1 << GCTYPEBITS) - 1 : (EMACS_UINT) $bugfix >> VALBITS)
+end
+
+define xgetsym
+  xgetptr $arg0
+  set $ptr = ((struct Lisp_Symbol *) ((char *)lispsym + $ptr))
+end
+
+# Access the name of a symbol
+define xsymname
+  xgetsym $arg0
+  set $symname = $ptr->name
 end
 
 # Set up something to print out s-expressions.
@@ -468,18 +479,18 @@ define pgx
   end
   # GLYPHLESS_GLYPH
   if ($g.type == 2)
-    printf "GLYPHLESS["
+    printf "G-LESS["
     if ($g.u.glyphless.method == 0)
-      printf "THIN]"
+      printf "THIN;0x%x]", $g.u.glyphless.ch
     end
     if ($g.u.glyphless.method == 1)
-      printf "EMPTY]"
+      printf "EMPTY;0x%x]", $g.u.glyphless.ch
     end
     if ($g.u.glyphless.method == 2)
-      printf "ACRO]"
+      printf "ACRO;0x%x]", $g.u.glyphless.ch
     end
     if ($g.u.glyphless.method == 3)
-      printf "HEX]"
+      printf "HEX;0x%x]", $g.u.glyphless.ch
     end
   end
   # IMAGE_GLYPH
@@ -498,7 +509,7 @@ define pgx
     printf " pos=%d", $g.charpos
   end
   # For characters, print their resolved level and bidi type
-  if ($g.type == 0)
+  if ($g.type == 0 || $g.type == 2)
     printf " blev=%d,btyp=", $g.resolved_level
     pbiditype $g.bidi_type
   end
@@ -750,7 +761,7 @@ end
 
 define xsymbol
   set $sym = $
-  xgetptr $sym
+  xgetsym $sym
   print (struct Lisp_Symbol *) $ptr
   xprintsym $sym
   echo \n
@@ -820,15 +831,7 @@ define xwindow
   xgetptr $
   print (struct window *) $ptr
   set $window = (struct window *) $ptr
-  xgetint $window->total_cols
-  set $width=$int
-  xgetint $window->total_lines
-  set $height=$int
-  xgetint $window->left_col
-  set $left=$int
-  xgetint $window->top_line
-  set $top=$int
-  printf "%dx%d+%d+%d\n", $width, $height, $left, $top
+  printf "%dx%d+%d+%d\n", $window->total_cols, $window->total_lines, $window->left_col, $window->top_line
 end
 document xwindow
 Print $ as a window pointer, assuming it is an Emacs Lisp window value.
@@ -870,10 +873,8 @@ end
 define xsubchartable
   xgetptr $
   print (struct Lisp_Sub_Char_Table *) $ptr
-  xgetint $->depth
-  set $depth = $int
-  xgetint $->min_char
-  printf "Depth: %d, Min char: %d (0x%x)\n", $depth, $int, $int
+  set $subchartab = (struct Lisp_Sub_Char_Table *) $ptr
+  printf "Depth: %d, Min char: %d (0x%x)\n", $subchartab->depth, $subchartab->min_char, $subchartab->min_char
 end
 document xsubchartable
 Print the address of the sub-char-table $, its depth and min-char.
@@ -1072,13 +1073,18 @@ end
 
 define xprintstr
   set $data = (char *) $arg0->data
-  output ($arg0->size > 1000) ? 0 : ($data[0])@($arg0->size_byte < 0 ? $arg0->size & ~ARRAY_MARK_FLAG : $arg0->size_byte)
+  set $strsize = ($arg0->size_byte < 0) ? ($arg0->size & ~ARRAY_MARK_FLAG) : $arg0->size_byte
+  # GDB doesn't like zero repetition counts
+  if $strsize == 0
+    output ""
+  else
+    output ($arg0->size > 1000) ? 0 : ($data[0])@($strsize)
+  end
 end
 
 define xprintsym
-  xgetptr $arg0
-  set $sym = (struct Lisp_Symbol *) $ptr
-  xgetptr $sym->name
+  xsymname $arg0
+  xgetptr $symname
   set $sym_name = (struct Lisp_String *) $ptr
   xprintstr $sym_name
 end
@@ -1087,8 +1093,8 @@ document xprintsym
 end
 
 define xcoding
-  set $tmp = (struct Lisp_Hash_Table *) ((Vcoding_system_hash_table & VALMASK) | DATA_SEG_BITS)
-  set $tmp = (struct Lisp_Vector *) (($tmp->key_and_value & VALMASK) | DATA_SEG_BITS)
+  set $tmp = (struct Lisp_Hash_Table *) (Vcoding_system_hash_table & VALMASK)
+  set $tmp = (struct Lisp_Vector *) ($tmp->key_and_value & VALMASK)
   set $name = $tmp->contents[$arg0 * 2]
   print $name
   pr
@@ -1100,8 +1106,8 @@ document xcoding
 end
 
 define xcharset
-  set $tmp = (struct Lisp_Hash_Table *) ((Vcharset_hash_table & VALMASK) | DATA_SEG_BITS)
-  set $tmp = (struct Lisp_Vector *) (($tmp->key_and_value & VALMASK) | DATA_SEG_BITS)
+  set $tmp = (struct Lisp_Hash_Table *) (Vcharset_hash_table & VALMASK)
+  set $tmp = (struct Lisp_Vector *) ($tmp->key_and_value & VALMASK)
   p $tmp->contents[charset_table[$arg0].hash_index * 2]
   pr
 end
@@ -1184,8 +1190,13 @@ end
 
 define xprintbytestr
   set $data = (char *) $arg0->data
+  set $bstrsize = ($arg0->size_byte < 0) ? ($arg0->size & ~ARRAY_MARK_FLAG) : $arg0->size_byte
   printf "Bytecode: "
-  output/u ($arg0->size > 1000) ? 0 : ($data[0])@($arg0->size_byte < 0 ? $arg0->size & ~ARRAY_MARK_FLAG : $arg0->size_byte)
+  if $bstrsize > 0
+    output/u ($arg0->size > 1000) ? 0 : ($data[0])@($bvsize)
+  else
+    printf ""
+  end
 end
 document xprintbytestr
   Print a string of byte code.
@@ -1257,8 +1268,8 @@ tbreak init_sys_modes
 commands
   silent
   xgetptr globals.f_Vinitial_window_system
-  set $tem = (struct Lisp_Symbol *) $ptr
-  xgetptr $tem->name
+  xsymname $ptr
+  xgetptr $symname
   set $tem = (struct Lisp_String *) $ptr
   set $tem = (char *) $tem->data
   # If we are running in synchronous mode, we want a chance to look

@@ -1,5 +1,5 @@
 /* Header for charset handler.
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
      2005, 2006, 2007, 2008, 2009, 2010, 2011
      National Institute of Advanced Industrial Science and Technology (AIST)
@@ -28,11 +28,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define EMACS_CHARSET_H
 
 #include <verify.h>
+#include "lisp.h"
 
 INLINE_HEADER_BEGIN
-#ifndef CHARSET_INLINE
-# define CHARSET_INLINE INLINE
-#endif
 
 /* Index to arguments of Fdefine_charset_internal.  */
 
@@ -174,23 +172,23 @@ struct charset
   unsigned char *code_space_mask;
 
   /* True if there's no gap in code-points.  */
-  unsigned code_linear_p : 1;
+  bool_bf code_linear_p : 1;
 
   /* True if the charset is treated as 96 chars in ISO-2022
      as opposed to 94 chars.  */
-  unsigned iso_chars_96 : 1;
+  bool_bf iso_chars_96 : 1;
 
   /* True if the charset is compatible with ASCII.  */
-  unsigned ascii_compatible_p : 1;
+  bool_bf ascii_compatible_p : 1;
 
   /* True if the charset is supplementary.  */
-  unsigned supplementary_p : 1;
+  bool_bf supplementary_p : 1;
 
   /* True if all the code points are representable by Lisp_Int.  */
-  unsigned compact_codes_p : 1;
+  bool_bf compact_codes_p : 1;
 
   /* True if the charset is unified with Unicode.  */
-  unsigned unified_p : 1;
+  bool_bf unified_p : 1;
 
   /* ISO final byte of the charset: 48..127.  It may be -1 if the
      charset doesn't conform to ISO-2022.  */
@@ -211,7 +209,7 @@ struct charset
   unsigned min_code, max_code;
 
   /* Offset value used by macros CODE_POINT_TO_INDEX and
-      INDEX_TO_CODE_POINT. .  */
+      INDEX_TO_CODE_POINT.  */
   unsigned char_index_offset;
 
   /* Minimum and Maximum character codes of the charset.  If the
@@ -256,8 +254,7 @@ extern struct charset *charset_table;
 extern Lisp_Object Vcharset_ordered_list;
 extern Lisp_Object Vcharset_non_preferred_head;
 
-/* Incremented everytime we change the priority of charsets.  */
-extern unsigned short charset_ordered_list_tick;
+extern EMACS_UINT charset_ordered_list_tick;
 
 extern Lisp_Object Viso_2022_charset_list;
 extern Lisp_Object Vemacs_mule_charset_list;
@@ -331,7 +328,7 @@ extern int emacs_mule_charset[256];
 #define CHARSET_DEUNIFIER(charset)	\
   (CHARSET_ATTR_DEUNIFIER (CHARSET_ATTRIBUTES (charset)))
 
-CHARSET_INLINE void
+INLINE void
 set_charset_attr (struct charset *charset, enum charset_attr_index idx,
 		  Lisp_Object val)
 {
@@ -347,7 +344,7 @@ set_charset_attr (struct charset *charset, enum charset_attr_index idx,
   do {								\
     if (! SYMBOLP (x) || CHARSET_SYMBOL_HASH_INDEX (x) < 0)	\
       wrong_type_argument (Qcharsetp, (x));			\
-  } while (0)
+  } while (false)
 
 
 /* Check if X is a valid charset symbol.  If valid, set ID to the id
@@ -360,7 +357,7 @@ set_charset_attr (struct charset *charset, enum charset_attr_index idx,
       wrong_type_argument (Qcharsetp, (x));				\
     id = XINT (AREF (HASH_VALUE (XHASH_TABLE (Vcharset_hash_table), idx), \
 		     charset_id));					\
-  } while (0)
+  } while (false)
 
 
 /* Check if X is a valid charset symbol.  If valid, set ATTR to the
@@ -369,7 +366,7 @@ set_charset_attr (struct charset *charset, enum charset_attr_index idx,
   do {									\
     if (!SYMBOLP (x) || NILP (attr = CHARSET_SYMBOL_ATTRIBUTES (x)))	\
       wrong_type_argument (Qcharsetp, (x));				\
-  } while (0)
+  } while (false)
 
 
 #define CHECK_CHARSET_GET_CHARSET(x, charset)	\
@@ -377,7 +374,7 @@ set_charset_attr (struct charset *charset, enum charset_attr_index idx,
     int csid;					\
     CHECK_CHARSET_GET_ID (x, csid);		\
     charset = CHARSET_FROM_ID (csid);		\
-  } while (0)
+  } while (false)
 
 
 /* Lookup Vcharset_ordered_list and return the first charset that
@@ -386,7 +383,7 @@ set_charset_attr (struct charset *charset, enum charset_attr_index idx,
   ((c) < 0x80 ? CHARSET_FROM_ID (charset_ascii)	\
    : char_charset ((c), Qnil, NULL))
 
-#if 0
+#if false
 /* Char-table of charset-sets.  Each element is a bool vector indexed
    by a charset ID.  */
 extern Lisp_Object Vchar_charset_set;
@@ -406,7 +403,7 @@ extern Lisp_Object Vchar_charset_set;
    Try some optimization before calling decode_char.  */
 
 #define DECODE_CHAR(charset, code)					\
-  ((ASCII_BYTE_P (code) && (charset)->ascii_compatible_p)		\
+  ((ASCII_CHAR_P (code) && (charset)->ascii_compatible_p)		\
    ? (code)								\
    : ((code) < (charset)->min_code || (code) > (charset)->max_code)	\
    ? -1									\
@@ -455,7 +452,7 @@ extern Lisp_Object charset_work;
      : encode_char (charset, c))))
 
 
-/* Set to 1 when a charset map is loaded to warn that a buffer text
+/* Set to true when a charset map is loaded to warn that a buffer text
    and a string data may be relocated.  */
 extern bool charset_map_loaded;
 
@@ -492,7 +489,7 @@ extern int iso_charset_table[ISO_MAX_DIMENSION][ISO_MAX_CHARS][ISO_MAX_FINAL];
       (fast_map)[(c) >> 10] |= 1 << (((c) >> 7) & 7);		\
     else							\
       (fast_map)[((c) >> 15) + 62] |= 1 << (((c) >> 12) & 7);	\
-  } while (0)
+  } while (false)
 
 
 
@@ -523,9 +520,6 @@ extern int iso_charset_table[ISO_MAX_DIMENSION][ISO_MAX_CHARS][ISO_MAX_FINAL];
 
 
 
-extern Lisp_Object Qcharsetp;
-
-extern Lisp_Object Qascii;
 extern int charset_ascii, charset_eight_bit;
 extern int charset_unicode;
 extern int charset_jisx0201_roman;

@@ -1,6 +1,6 @@
 ;;; ede/cpp-root.el --- A simple way to wrap a C++ project with a single root
 
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -95,7 +95,7 @@
 ;; Where FILENAME is a file in the root directory of the project.
 ;; Where MYFCN is a symbol for a function.  See:
 ;;
-;; M-x describe-class RET ede-cpp-root-project RET
+;; M-x describe-function RET ede-cpp-root-project RET
 ;;
 ;; for documentation about the locate-fcn extension.
 ;;
@@ -116,11 +116,6 @@
 ;;   <write your code here, or return nil>
 ;;   )
 ;;
-;; (defun MY-ROOT-FCN ()
-;;   "Return the root directory for `default-directory'"
-;;   ;; You might be able to use `ede-cpp-root-project-root'.
-;;   )
-;;
 ;; (defun MY-LOAD (dir)
 ;;   "Load a project of type `cpp-root' for the directory DIR.
 ;; Return nil if there isn't one."
@@ -128,16 +123,14 @@
 ;;                                :locate-fcn 'MYFCN)
 ;;   )
 ;;
-;; (add-to-list 'ede-project-class-files
-;; 	     (ede-project-autoload "cpp-root"
+;; (ede-add-project-autoload
+;;  (ede-project-autoload "cpp-root"
 ;; 	      :name "CPP ROOT"
 ;; 	      :file 'ede/cpp-root
 ;; 	      :proj-file 'MY-FILE-FOR-DIR
-;;            :proj-root 'MY-ROOT-FCN
 ;; 	      :load-type 'MY-LOAD
 ;; 	      :class-sym 'ede-cpp-root-project
-;;	      :safe-p t)
-;; 	     t)
+;;	      :safe-p t))
 ;;
 ;;; TODO
 ;;
@@ -168,91 +161,13 @@
 
 ;;; PROJECT CACHE:
 ;;
-;; cpp-root projects are created in a .emacs or other config file, but
-;; there still needs to be a way for a particular file to be
-;; identified against it.  The cache is where we look to map a file
-;; against a project.
-;;
-;; Setting up a simple in-memory cache of active projects allows the
-;; user to re-load their configuration file several times without
-;; messing up the active project set.
+;; cpp-root projects are created in a .emacs or other config file.  We
+;; need to cache them so if the user re-loads a lisp file with the
+;; config in it, we can flush out the old one and replace it.
 ;;
 (defvar ede-cpp-root-project-list nil
   "List of projects created by option `ede-cpp-root-project'.")
 
-(defun ede-cpp-root-file-existing (dir)
-  "Find a cpp-root project in the list of cpp-root projects.
-DIR is the directory to search from."
-  (let ((projs ede-cpp-root-project-list)
-	(ans nil))
-    (while (and projs (not ans))
-      (let ((root (ede-project-root-directory (car projs))))
-	(when (string-match (concat "^" (regexp-quote root)) dir)
-	  (setq ans (car projs))))
-      (setq projs (cdr projs)))
-    ans))
-
-;;; PROJECT AUTOLOAD CONFIG
-;;
-;; Each project type registers itself into the project-class list.
-;; This way, each time a file is loaded, EDE can map that file to a
-;; project.  This project type checks files against the internal cache
-;; of projects created by the user.
-;;
-;; EDE asks two kinds of questions.  One is, does this DIR belong to a
-;; project.  If it does, it then asks, what is the ROOT directory to
-;; the project in DIR.  This is easy for cpp-root projects, but more
-;; complex for multiply nested projects.
-;;
-;; If EDE finds out that a project exists for DIR, it then loads that
-;; project.  The LOAD routine can either create a new project object
-;; (if it needs to load it off disk) or more likely can return an
-;; existing object for the discovered directory.  cpp-root always uses
-;; the second case.
-
-(defun ede-cpp-root-project-file-for-dir (&optional dir)
-  "Return a full file name to the project file stored in DIR."
-  (let ((proj (ede-cpp-root-file-existing dir)))
-    (when proj (oref proj :file))))
-
-(defvar ede-cpp-root-count 0
-  "Count number of hits to the cpp root thing.
-This is a debugging variable to test various optimizations in file
-lookup in the main EDE logic.")
-
-;;;###autoload
-(defun ede-cpp-root-project-root (&optional dir)
-  "Get the root directory for DIR."
-  (let ((projfile (ede-cpp-root-project-file-for-dir
-		   (or dir default-directory))))
-    (setq ede-cpp-root-count (1+ ede-cpp-root-count))
-    ;(debug)
-    (when projfile
-      (file-name-directory projfile))))
-
-(defun ede-cpp-root-load (dir &optional rootproj)
-  "Return a CPP root object if you created one.
-Return nil if there isn't one.
-Argument DIR is the directory it is created for.
-ROOTPROJ is nil, since there is only one project."
-  ;; Snoop through our master list.
-  (ede-cpp-root-file-existing dir))
-
-;;;###autoload
-(ede-add-project-autoload
- (ede-project-autoload "cpp-root"
-		       :name "CPP ROOT"
-		       :file 'ede/cpp-root
-		       :proj-file 'ede-cpp-root-project-file-for-dir
-		       :proj-root 'ede-cpp-root-project-root
-		       :load-type 'ede-cpp-root-load
-		       :class-sym 'ede-cpp-root-project
-		       :new-p nil
-		       :safe-p t)
- ;; When a user creates one of these, it should override any other project
- ;; type that might happen to be in this directory, so force this to the
- ;; very front.
- 'unique)
 
 ;;; CLASSES
 ;;
@@ -347,7 +262,7 @@ exist, it should return nil."
 		    :documentation
 		    "Compilation command that will be used for this project.
 It could be string or function that will accept proj argument and should return string.
-The string will be passed to 'compile' function that will be issued in root
+The string will be passed to `compile' function that will be issued in root
 directory of project."
 		    )
    )
@@ -361,17 +276,18 @@ Each directory needs a project file to control it.")
 ;; find previous copies of this project, and make sure that one of the
 ;; objects is deleted.
 
-(defmethod initialize-instance ((this ede-cpp-root-project)
+(cl-defmethod initialize-instance ((this ede-cpp-root-project)
 				&rest fields)
   "Make sure the :file is fully expanded."
   ;; Add ourselves to the master list
-  (call-next-method)
+  (cl-call-next-method)
   (let ((f (expand-file-name (oref this :file))))
     ;; Remove any previous entries from the main list.
     (let ((old (eieio-instance-tracker-find (file-name-directory f)
 					    :directory 'ede-cpp-root-project-list)))
       ;; This is safe, because :directory isn't filled in till later.
       (when (and old (not (eq old this)))
+	(ede-delete-project-from-global-list old)
 	(delete-instance old)))
     ;; Basic initialization.
     (when (or (not (file-exists-p f))
@@ -381,11 +297,13 @@ Each directory needs a project file to control it.")
     (oset this :file f)
     (oset this :directory (file-name-directory f))
     (ede-project-directory-remove-hash (file-name-directory f))
+    ;; NOTE: We must add to global list here because these classes are not
+    ;;       created via the typical loader, but instead via calls from a .emacs
+    ;;       file.
     (ede-add-project-to-global-list this)
+
     (unless (slot-boundp this 'targets)
       (oset this :targets nil))
-    ;; We need to add ourselves to the master list.
-    ;;(setq ede-projects (cons this ede-projects))
     ))
 
 ;;; SUBPROJ Management.
@@ -393,7 +311,7 @@ Each directory needs a project file to control it.")
 ;; This is a way to allow a subdirectory to point back to the root
 ;; project, simplifying authoring new single-point projects.
 
-(defmethod ede-find-subproject-for-directory ((proj ede-cpp-root-project)
+(cl-defmethod ede-find-subproject-for-directory ((proj ede-cpp-root-project)
 					      dir)
   "Return PROJ, for handling all subdirs below DIR."
   proj)
@@ -403,7 +321,7 @@ Each directory needs a project file to control it.")
 ;; Creating new targets on a per directory basis is a good way to keep
 ;; files organized.  See ede-emacs for an example with multiple file
 ;; types.
-(defmethod ede-find-target ((proj ede-cpp-root-project) buffer)
+(cl-defmethod ede-find-target ((proj ede-cpp-root-project) buffer)
   "Find an EDE target in PROJ for BUFFER.
 If one doesn't exist, create a new one for this directory."
   (let* ((targets (oref proj targets))
@@ -429,13 +347,13 @@ If one doesn't exist, create a new one for this directory."
 ;;
 ;; This tools also uses the ede-locate setup for augmented file name
 ;; lookup using external tools.
-(defmethod ede-expand-filename-impl ((proj ede-cpp-root-project) name)
+(cl-defmethod ede-expand-filename-impl ((proj ede-cpp-root-project) name)
   "Within this project PROJ, find the file NAME.
 This knows details about or source tree."
   ;; The slow part of the original is looping over subprojects.
   ;; This version has no subprojects, so this will handle some
   ;; basic cases.
-  (let ((ans (call-next-method)))
+  (let ((ans (cl-call-next-method)))
     (unless ans
       (let* ((lf (oref proj locate-fcn))
 	     (dir (file-name-directory (oref proj file))))
@@ -454,30 +372,30 @@ This knows details about or source tree."
 		      (setq ans tmp))
 		  (setq ip (cdr ip)) ))
 	    ;; Else, do the usual.
-	    (setq ans (call-next-method)))
+	    (setq ans (cl-call-next-method)))
 	  )))
     ;; TODO - does this call-next-method happen twice.  Is that bad??  Why is it here?
-    (or ans (call-next-method))))
+    (or ans (cl-call-next-method))))
 
-(defmethod ede-project-root ((this ede-cpp-root-project))
+(cl-defmethod ede-project-root ((this ede-cpp-root-project))
   "Return my root."
   this)
 
-(defmethod ede-project-root-directory ((this ede-cpp-root-project))
+(cl-defmethod ede-project-root-directory ((this ede-cpp-root-project))
   "Return my root."
-  (file-name-directory (oref this file)))
+  (oref this directory))
 
 ;;; C/CPP SPECIFIC CODE
 ;;
 ;; The following code is specific to setting up header files,
 ;; include lists, and Preprocessor symbol tables.
 
-(defmethod ede-cpp-root-header-file-p ((proj ede-cpp-root-project) name)
+(cl-defmethod ede-cpp-root-header-file-p ((proj ede-cpp-root-project) name)
   "Non nil if in PROJ the filename NAME is a header."
   (save-match-data
     (string-match (oref proj header-match-regexp) name)))
 
-(defmethod ede-cpp-root-translate-file ((proj ede-cpp-root-project) filename)
+(cl-defmethod ede-cpp-root-translate-file ((proj ede-cpp-root-project) filename)
   "For PROJ, translate a user specified FILENAME.
 This is for project include paths and spp source files."
   ;; Step one: Root of this project.
@@ -493,11 +411,11 @@ This is for project include paths and spp source files."
 
     filename))
 
-(defmethod ede-system-include-path ((this ede-cpp-root-project))
+(cl-defmethod ede-system-include-path ((this ede-cpp-root-project))
   "Get the system include path used by project THIS."
   (oref this system-include-path))
 
-(defmethod ede-preprocessor-map ((this ede-cpp-root-project))
+(cl-defmethod ede-preprocessor-map ((this ede-cpp-root-project))
   "Get the pre-processor map for project THIS."
   (require 'semantic/db)
   (let ((spp (oref this spp-table))
@@ -527,15 +445,15 @@ This is for project include paths and spp source files."
      (oref this spp-files))
     spp))
 
-(defmethod ede-system-include-path ((this ede-cpp-root-target))
+(cl-defmethod ede-system-include-path ((this ede-cpp-root-target))
   "Get the system include path used by target THIS."
   (ede-system-include-path (ede-target-parent this)))
 
-(defmethod ede-preprocessor-map ((this ede-cpp-root-target))
+(cl-defmethod ede-preprocessor-map ((this ede-cpp-root-target))
   "Get the pre-processor map for project THIS."
   (ede-preprocessor-map  (ede-target-parent this)))
 
-(defmethod project-compile-project ((proj ede-cpp-root-project) &optional command)
+(cl-defmethod project-compile-project ((proj ede-cpp-root-project) &optional command)
   "Compile the entire current project PROJ.
 Argument COMMAND is the command to use when compiling."
   ;; we need to be in the proj root dir for this to work
@@ -551,12 +469,16 @@ Argument COMMAND is the command to use when compiling."
 	(let ((default-directory (ede-project-root-directory proj)))
 	(compile cmd-str)))))
 
-(defmethod project-compile-target ((obj ede-cpp-root-target) &optional command)
+(cl-defmethod project-compile-target ((obj ede-cpp-root-target) &optional command)
   "Compile the current target OBJ.
 Argument COMMAND is the command to use for compiling the target."
   (when (oref obj :project)
     (project-compile-project (oref obj :project) command)))
 
+
+(cl-defmethod project-rescan ((this ede-cpp-root-project))
+  "Don't rescan this project from the sources."
+  (message "cpp-root has nothing to rescan."))
 
 ;;; Quick Hack
 (defun ede-create-lots-of-projects-under-dir (dir projfile &rest attributes)

@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 1999-2013 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 1999-2015 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Frames
@@ -7,7 +7,7 @@
 @cindex frames
 
   When Emacs is started on a graphical display, e.g., on the X Window
-System, it occupies a graphical system-level ``window''.  In this
+System, it occupies a graphical system-level display region.  In this
 manual, we call this a @dfn{frame}, reserving the word ``window'' for
 the part of the frame used for displaying a buffer.  A frame initially
 contains one window, but it can be subdivided into multiple windows
@@ -28,7 +28,7 @@ displays (@pxref{Exiting}).  To close just the selected frame, type
   This chapter describes Emacs features specific to graphical displays
 (particularly mouse commands), and features for managing multiple
 frames.  On text terminals, many of these features are unavailable.
-However, it is still possible to create multiple ``frames'' on text
+However, it is still possible to create multiple frames on text
 terminals; such frames are displayed one at a time, filling the entire
 terminal screen (@pxref{Non-Window Terminals}).  It is also possible
 to use the mouse on some text terminals (@pxref{Text-Only Mouse}, for
@@ -39,7 +39,7 @@ doing so on GNU and Unix systems; and
 @ifnottex
 @pxref{MS-DOS Mouse},
 @end ifnottex
-for doing so on MS-DOS).
+for doing so on MS-DOS).  Menus are supported on all text terminals.
 
 @menu
 * Mouse Commands::      Moving, cutting, and pasting, with the mouse.
@@ -54,6 +54,7 @@ for doing so on MS-DOS).
 * Multiple Displays::   How one Emacs instance can talk to several displays.
 * Frame Parameters::    Changing the colors and other modes of frames.
 * Scroll Bars::         How to enable and disable scroll bars; how to use them.
+* Window Dividers::     Window separators that can be dragged with the mouse.
 * Drag and Drop::       Using drag and drop to open files and insert text.
 * Menu Bars::           Enabling and disabling the menu bar.
 * Tool Bars::           Enabling and disabling the tool bar.
@@ -109,7 +110,7 @@ the window and sets the cursor position.
 
 @cindex mouse, dragging
 @findex mouse-set-region
-  Holding down @kbd{Mouse-1} and ``dragging'' the mouse over a stretch
+  Holding down @kbd{Mouse-1} and dragging the mouse over a stretch
 of text activates the region around that text
 (@code{mouse-set-region}), placing the mark where you started holding
 down the mouse button, and point where you release it (@pxref{Mark}).
@@ -136,7 +137,7 @@ the position where you clicked and inserts the contents of the primary
 selection (@code{mouse-yank-primary}).  @xref{Primary Selection}.
 This behavior is consistent with other X applications.  Alternatively,
 you can rebind @kbd{Mouse-2} to @code{mouse-yank-at-click}, which
-performs a yank at point.
+performs a yank at the position you click.
 
 @vindex mouse-yank-at-point
   If you change the variable @code{mouse-yank-at-point} to a
@@ -216,7 +217,7 @@ also copied to the kill ring.
 @item Double-Mouse-1
 Select the text around the word which you click on.
 
-Double-clicking on a character with ``symbol'' syntax (such as
+Double-clicking on a character with symbol syntax (such as
 underscore, in C mode) selects the symbol surrounding that character.
 Double-clicking on a character with open- or close-parenthesis syntax
 selects the parenthetical grouping which that character starts or
@@ -328,6 +329,7 @@ instead of running the @code{mouse-save-then-kill} command, rebind
 @kbd{Mouse-3} by adding the following line to your init file
 (@pxref{Init Rebinding}):
 
+@c FIXME: `mouse-popup-menubar-stuff' is obsolete since 23.1.
 @smallexample
 (global-set-key [mouse-3] 'mouse-popup-menubar-stuff)
 @end smallexample
@@ -376,6 +378,9 @@ position (@pxref{Split Window}).
 between two side-by-side mode lines, you can move the vertical
 boundary to the left or right.
 
+  Note that resizing windows is affected by the value of
+@code{window-resize-pixelwise}, see @ref{Split Window}.
+
 @node Creating Frames
 @section Creating Frames
 @cindex creating frames
@@ -384,7 +389,7 @@ boundary to the left or right.
   The prefix key @kbd{C-x 5} is analogous to @kbd{C-x 4}.  Whereas
 each @kbd{C-x 4} command pops up a buffer in a different window in the
 selected frame (@pxref{Pop Up Window}), the @kbd{C-x 5} commands use a
-different frame.  If an existing visible or iconified (``minimized'')
+different frame.  If an existing visible or iconified (a.k.a.@: ``minimized'')
 frame already displays the requested buffer, that frame is raised and
 deiconified (``un-minimized''); otherwise, a new frame is created on
 the current display terminal.
@@ -408,8 +413,8 @@ Select a Dired buffer for directory @var{directory} in another frame.
 This runs @code{dired-other-frame}.  @xref{Dired}.
 @item C-x 5 m
 Start composing a mail message in another frame.  This runs
-@code{mail-other-frame}.  It is the other-frame variant of @kbd{C-x m}.
-@xref{Sending Mail}.
+@code{compose-mail-other-frame}.  It is the other-frame variant of
+@kbd{C-x m}.  @xref{Sending Mail}.
 @item C-x 5 .
 Find a tag in the current tag table in another frame.  This runs
 @code{find-tag-other-frame}, the multiple-frame variant of @kbd{M-.}.
@@ -440,7 +445,7 @@ error if there is only one frame.
 @item C-z
 @kindex C-z @r{(X windows)}
 @findex suspend-frame
-Minimize (or ``iconify) the selected Emacs frame
+Minimize (or iconify) the selected Emacs frame
 (@code{suspend-frame}).  @xref{Exiting}.
 
 @item C-x 5 o
@@ -453,13 +458,35 @@ cycles through all the frames on your terminal.
 @kindex C-x 5 1
 @findex delete-other-frames
 Delete all frames on the current terminal, except the selected one.
+
+@item M-<F10>
+@kindex M-<F10>
+@findex toggle-frame-maximized
+Toggle the maximization state of the current frame.  When a frame is
+maximized, it fills the screen.
+
+@item <F11>
+@kindex <F11>
+@findex toggle-frame-fullscreen
+Toggle full-screen mode for the current frame.  (The difference
+between full-screen and maximized is normally that the former
+hides window manager decorations, giving slightly more screen space to
+Emacs itself.)
 @end table
+
+@vindex frame-resize-pixelwise
+  Note that with some window managers you may have to customize the
+variable @code{frame-resize-pixelwise} to a non-@code{nil} value in
+order to make a frame truly maximized or full-screen.  This
+variable, when set to a non-@code{nil} value, in general allows
+resizing frames at pixel resolution, rather than in integral multiples
+of lines and columns.
 
   The @kbd{C-x 5 0} (@code{delete-frame}) command deletes the selected
 frame.  However, it will refuse to delete the last frame in an Emacs
 session, to prevent you from losing the ability to interact with the
 Emacs session.  Note that when Emacs is run as a daemon (@pxref{Emacs
-Server}), there is always a ``virtual frame'' that remains after all
+Server}), there is always a virtual frame that remains after all
 the ordinary, interactive frames are deleted.  In this case, @kbd{C-x
 5 0} can delete the last interactive frame; you can use
 @command{emacsclient} to reconnect to the Emacs session.
@@ -484,13 +511,14 @@ the mouse cursor to the chosen frame.
 @cindex fonts
 
   By default, Emacs displays text on graphical displays using a
-12-point monospace font.  There are several different ways to specify
+10-point monospace font.  There are several different ways to specify
 a different font:
 
 @itemize
 @item
-Click on @samp{Set Default Font} in the @samp{Options} menu.  To save
-this for future sessions, click on @samp{Save Options} in the
+Click on @samp{Set Default Font} in the @samp{Options} menu.  This
+makes the selected font the default on all existing graphical frames.
+To save this for future sessions, click on @samp{Save Options} in the
 @samp{Options} menu.
 
 @item
@@ -502,6 +530,10 @@ Add a line to your init file, modifying the variable
 (add-to-list 'default-frame-alist
              '(font . "DejaVu Sans Mono-10"))
 @end example
+
+@noindent
+This makes the font the default on all graphical frames created after
+restarting Emacs with that init file.
 
 @cindex X defaults file
 @cindex X resources file
@@ -534,7 +566,7 @@ command can be helpful.  It describes the character at point, and
 names the font that it's rendered in.
 
 @cindex fontconfig
-  On X, there are four different ways to express a ``font name''.  The
+  On X, there are four different ways to express a font name.  The
 first is to use a @dfn{Fontconfig pattern}.  Fontconfig patterns have
 the following form:
 
@@ -543,7 +575,7 @@ the following form:
 @end example
 
 @noindent
-Within this format, any of the elements in braces may be omitted.
+Within this format, any of the elements in brackets may be omitted.
 Here, @var{fontname} is the @dfn{family name} of the font, such as
 @samp{Monospace} or @samp{DejaVu Sans Mono}; @var{fontsize} is the
 @dfn{point size} of the font (one @dfn{printer's point} is about 1/72
@@ -673,7 +705,10 @@ The font width---normally @samp{normal}, @samp{condensed},
 other values.
 @item style
 An optional additional style name.  Usually it is empty---most XLFDs
-have two hyphens in a row at this point.
+have two hyphens in a row at this point.  The style name can also
+specify a two-letter ISO-639 language name, like @samp{ja} or
+@samp{ko}; some fonts that support CJK scripts have that spelled out
+in the style name part.
 @item pixels
 The font height, in pixels.
 @item height
@@ -704,8 +739,8 @@ have.  Normally you should use @samp{iso8859} for @var{registry} and
 @samp{1} for @var{encoding}.
 @end table
 
-  The fourth and final method of specifying a font is to use a ``font
-nickname''.  Certain fonts have shorter nicknames, which you can use
+  The fourth and final method of specifying a font is to use a font
+nickname.  Certain fonts have shorter nicknames, which you can use
 instead of a normal font specification.  For instance, @samp{6x13} is
 equivalent to
 
@@ -792,8 +827,8 @@ When a file or directory is expanded, the @samp{[+]} changes to
 hiding its contents.
 
   You navigate through the speedbar using the keyboard, too.  Typing
-@kbd{RET} while point is on a line in the speedbar is equivalent to
-clicking the item on the current line, and @kbd{SPC} expands or
+@key{RET} while point is on a line in the speedbar is equivalent to
+clicking the item on the current line, and @key{SPC} expands or
 contracts the item.  @kbd{U} displays the parent directory of the
 current directory.  To copy, delete, or rename the file on the current
 line, type @kbd{C}, @kbd{D}, and @kbd{R} respectively.  To create a
@@ -881,10 +916,11 @@ those are drawn by the toolkit and not directly by Emacs.
 @section Scroll Bars
 @cindex Scroll Bar mode
 @cindex mode, Scroll Bar
+@cindex Vertical Scroll Bar
 
-  On graphical displays, there is a @dfn{scroll bar} on the side of
-each Emacs window.  Clicking @kbd{Mouse-1} on the scroll bar's up and
-down buttons scrolls the window by one line at a time.  Clicking
+  On graphical displays, there is a @dfn{vertical scroll bar} on the
+side of each Emacs window.  Clicking @kbd{Mouse-1} on the scroll bar's
+up and down buttons scrolls the window by one line at a time.  Clicking
 @kbd{Mouse-1} above or below the scroll bar's inner box scrolls the
 window by nearly the entire height of the window, like @kbd{M-v} and
 @kbd{C-v} respectively (@pxref{Moving Point}).  Dragging the inner box
@@ -898,27 +934,103 @@ in the scroll bar lets you drag the inner box up and down.
 
 @findex scroll-bar-mode
 @findex toggle-scroll-bar
-  To toggle the use of scroll bars, type @kbd{M-x scroll-bar-mode}.
-This command applies to all frames, including frames yet to be
-created.  To toggle scroll bars for just the selected frame, use the
-command @kbd{M-x toggle-scroll-bar}.
+  To toggle the use of vertical scroll bars, type @kbd{M-x
+scroll-bar-mode}.  This command applies to all frames, including frames
+yet to be created.  To toggle vertical scroll bars for just the selected
+frame, use the command @kbd{M-x toggle-scroll-bar}.
 
 @vindex scroll-bar-mode
-  To control the use of scroll bars at startup, customize the variable
-@code{scroll-bar-mode}.  Its value should be either @code{right} (put
-scroll bars on the right side of windows), @code{left} (put them on
-the left), or @code{nil} (disable scroll bars).  By default, Emacs
-puts scroll bars on the right if it was compiled with GTK+ support on
-the X Window System, and on MS-Windows or Mac OS; Emacs puts scroll
-bars on the left if compiled on the X Window System without GTK+
-support (following the old convention for X applications).
+  To control the use of vertical scroll bars at startup, customize the
+variable @code{scroll-bar-mode}.  Its value should be either
+@code{right} (put scroll bars on the right side of windows), @code{left}
+(put them on the left), or @code{nil} (disable vertical scroll bars).
+By default, Emacs puts scroll bars on the right if it was compiled with
+GTK+ support on the X Window System, and on MS-Windows or Mac OS; Emacs
+puts scroll bars on the left if compiled on the X Window System without
+GTK+ support (following the old convention for X applications).
 
 @vindex scroll-bar-width
-@cindex width of the scroll bar
+@cindex width of the vertical scroll bar
   You can also use the X resource @samp{verticalScrollBars} to enable
 or disable the scroll bars (@pxref{Resources}).  To control the scroll
 bar width, change the @code{scroll-bar-width} frame parameter
 (@pxref{Frame Parameters,,, elisp, The Emacs Lisp Reference Manual}).
+
+@vindex scroll-bar-adjust-thumb-portion
+@cindex overscrolling
+If you're using Emacs on X (with GTK+ or Motif), you can customize the
+variable @code{scroll-bar-adjust-thumb-portion} to control
+@dfn{overscrolling} of the scroll bar, i.e., dragging the thumb down even
+when the end of the buffer is visible.  If its value is
+non-@code{nil}, the scroll bar can be dragged downwards even if the
+end of the buffer is shown; if @code{nil}, the thumb will be at the
+bottom when the end of the buffer is shown.  You can not over-scroll
+when the entire buffer is visible.
+
+@cindex scroll-bar face
+  The visual appearance of the scroll bars is controlled by the
+@code{scroll-bar} face.
+
+@cindex Horizontal Scroll Bar
+@cindex Horizontal Scroll Bar mode
+  On graphical displays with toolkit support, Emacs may also supply a
+@dfn{horizontal scroll bar} on the bottom of each window.  Clicking
+@kbd{Mouse-1} on the that scroll bar's left and right buttons scrolls
+the window horizontally by one column at a time.  Clicking @kbd{Mouse-1}
+on the left or right of the scroll bar's inner box scrolls the window by
+four columns.  Dragging the inner box scrolls the window continuously.
+
+  Note that such horizontal scrolling can make the window's position of
+point disappear on the left or the right.  Typing a character to insert
+text or moving point with a keyboard command will usually bring it back
+into view.
+
+@findex horizontal-scroll-bar-mode
+  To toggle the use of horizontal scroll bars, type @kbd{M-x
+horizontal-scroll-bar-mode}.  This command applies to all frames,
+including frames yet to be created.  To toggle horizontal scroll bars
+for just the selected frame, use the command @kbd{M-x
+toggle-horizontal-scroll-bar}.
+
+@vindex horizontal-scroll-bar-mode
+  To control the use of horizontal scroll bars at startup, customize the
+variable @code{horizontal-scroll-bar-mode}.
+
+@vindex scroll-bar-height
+@cindex height of the horizontal scroll bar
+  You can also use the X resource @samp{horizontalScrollBars} to enable
+or disable horizontal scroll bars (@pxref{Resources}).  To control the
+scroll bar height, change the @code{scroll-bar-height} frame parameter
+(@pxref{Frame Parameters,,, elisp, The Emacs Lisp Reference Manual}).
+
+@node Window Dividers
+@section Window Dividers
+@cindex Window Divider mode
+@cindex mode, Window Divider
+
+  On graphical displays, you can use @dfn{window dividers} in order to
+separate windows visually.  Window dividers are bars that can be dragged
+with the mouse, thus allowing to easily resize adjacent windows.
+
+@findex window-divider-mode
+  To toggle the display of window dividers, use the command @kbd{M-x
+window-divider-mode}.
+
+@vindex window-divider-default-places
+  To customize where dividers should appear, use the option
+@code{window-divider-default-places}.  Its value should be either
+@code{bottom-only} (to show dividers only on the bottom of windows),
+@code{right-only} (to show dividers only on the right of windows), or
+@code{t} (to show them on the bottom and on the right).
+
+@vindex window-divider-default-bottom-width
+@vindex window-divider-default-right-width
+  To adjust the width of window dividers displayed by this mode
+customize the options @code{window-divider-default-bottom-width} and
+@code{window-divider-default-right-width}.
+
+   For more details about window dividers see @ref{Window Dividers,,
+Window Dividers, elisp, The Emacs Lisp Reference Manual}.
 
 @node Drag and Drop
 @section Drag and Drop
@@ -1027,8 +1139,8 @@ suppressed all dialog boxes with the variable @code{use-dialog-box}.
 @vindex x-gtk-file-dialog-help-text
 @cindex hidden files, in GTK+ file chooser
 @cindex help text, in GTK+ file chooser
-  When Emacs is compiled with GTK+ support, it uses the GTK+ ``file
-chooser'' dialog.  Emacs adds an additional toggle button to this
+  When Emacs is compiled with GTK+ support, it uses the GTK+ file
+chooser dialog.  Emacs adds an additional toggle button to this
 dialog, which you can use to enable or disable the display of hidden
 files (files starting with a dot) in that dialog.  If you want this
 toggle to be activated by default, change the variable

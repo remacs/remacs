@@ -1,9 +1,9 @@
-;;; time.el --- display time, load and mail indicator in mode line of Emacs -*-coding: utf-8 -*-
+;;; time.el --- display time, load and mail indicator in mode line of Emacs
 
-;; Copyright (C) 1985-1987, 1993-1994, 1996, 2000-2013 Free Software
+;; Copyright (C) 1985-1987, 1993-1994, 1996, 2000-2015 Free Software
 ;; Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 
 ;; This file is part of GNU Emacs.
 
@@ -160,15 +160,8 @@ LABEL is a string to display as the label of that TIMEZONE's time."
 (defcustom display-time-world-list
   ;; Determine if zoneinfo style timezones are supported by testing that
   ;; America/New York and Europe/London return different timezones.
-  (let ((old-tz (getenv "TZ"))
-	gmt nyt)
-    (unwind-protect
-	(progn
-	  (setenv "TZ" "America/New_York")
-	  (setq nyt (format-time-string "%z"))
-	  (setenv "TZ" "Europe/London")
-	  (setq gmt (format-time-string "%z")))
-      (setenv "TZ" old-tz))
+  (let ((nyt (format-time-string "%z" nil "America/New_York"))
+        (gmt (format-time-string "%z" nil "Europe/London")))
     (if (string-equal nyt gmt)
         legacy-style-world-list
       zoneinfo-style-world-list))
@@ -176,7 +169,7 @@ LABEL is a string to display as the label of that TIMEZONE's time."
 Each element has the form (TIMEZONE LABEL).
 TIMEZONE should be in a format supported by your system.  See the
 documentation of `zoneinfo-style-world-list' and
-\`legacy-style-world-list' for two widely used formats.  LABEL is
+`legacy-style-world-list' for two widely used formats.  LABEL is
 a string to display as the label of that TIMEZONE's time."
   :group 'display-time
   :type '(repeat (list string string))
@@ -471,7 +464,7 @@ update which can wait for the next redisplay."
     ;; This is inside the let binding, but we are not going to document
     ;; what variables are available.
     (run-hooks 'display-time-hook))
-  (force-mode-line-update))
+  (force-mode-line-update 'all))
 
 (defun display-time-file-nonempty-p (file)
   (let ((remote-file-name-inhibit-cache (- display-time-interval 5)))
@@ -523,21 +516,19 @@ See `display-time-world'."
   "Replace current buffer text with times in various zones, based on ALIST."
   (let ((inhibit-read-only t)
 	(buffer-undo-list t)
-	(old-tz (getenv "TZ"))
+	(now (current-time))
 	(max-width 0)
 	result fmt)
     (erase-buffer)
-    (unwind-protect
-	(dolist (zone alist)
-	  (let* ((label (cadr zone))
-		 (width (string-width label)))
-	    (setenv "TZ" (car zone))
-	    (push (cons label
-			(format-time-string display-time-world-time-format))
-		  result)
-	    (when (> width max-width)
-	      (setq max-width width))))
-      (setenv "TZ" old-tz))
+    (dolist (zone alist)
+      (let* ((label (cadr zone))
+	     (width (string-width label)))
+	(push (cons label
+		    (format-time-string display-time-world-time-format
+					now (car zone)))
+	      result)
+	(when (> width max-width)
+	  (setq max-width width))))
     (setq fmt (concat "%-" (int-to-string max-width) "s %s\n"))
     (dolist (timedata (nreverse result))
       (insert (format fmt (car timedata) (cdr timedata))))

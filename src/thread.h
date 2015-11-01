@@ -51,16 +51,11 @@ struct thread_state
      waiting on.  */
   Lisp_Object event_object;
 
-  /* m_gcprolist must be the first non-lisp field.  */
-  /* Recording what needs to be marked for gc.  */
-  struct gcpro *m_gcprolist;
-#define gcprolist (current_thread->m_gcprolist)
-
+  /* m_byte_stack_list must be the first non-lisp field.  */
   /* A list of currently active byte-code execution value stacks.
      Fbyte_code adds an entry to the head of this list before it starts
      processing byte-code, and it removed the entry again when it is
-     done.  Signalling an error truncates the list analoguous to
-     gcprolist.  */
+     done.  Signalling an error truncates the list.  */
   struct byte_stack *m_byte_stack_list;
 #define byte_stack_list (current_thread->m_byte_stack_list)
 
@@ -83,9 +78,8 @@ struct thread_state
   struct handler *m_handlerlist;
 #define handlerlist (current_thread->m_handlerlist)
 
-  /* Count levels of GCPRO to detect failure to UNGCPRO.  */
-  int m_gcpro_level;
-#define gcpro_level (current_thread->m_gcpro_level)
+  struct handler *m_handlerlist_sentinel;
+#define handlerlist_sentinel (current_thread->m_handlerlist_sentinel)
 
   /* Current number of specbindings allocated in specpdl.  */
   ptrdiff_t m_specpdl_size;
@@ -234,11 +228,11 @@ extern void init_threads_once (void);
 extern void init_threads (void);
 extern void syms_of_threads (void);
 
-typedef int select_func (int, SELECT_TYPE *, SELECT_TYPE *, SELECT_TYPE *,
-			 EMACS_TIME *, sigset_t *);
+typedef int select_func (int, fd_set *, fd_set *, fd_set *,
+			 struct timespec *, sigset_t *);
 
-int thread_select  (select_func *func, int max_fds, SELECT_TYPE *rfds,
-		    SELECT_TYPE *wfds, SELECT_TYPE *efds, EMACS_TIME *timeout,
+int thread_select  (select_func *func, int max_fds, fd_set *rfds,
+		    fd_set *wfds, fd_set *efds, struct timespec *timeout,
 		    sigset_t *sigmask);
 
 bool thread_check_current_buffer (struct buffer *);

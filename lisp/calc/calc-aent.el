@@ -1,6 +1,6 @@
 ;;; calc-aent.el --- algebraic entry functions for Calc
 
-;; Copyright (C) 1990-1993, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1990-1993, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Dave Gillespie <daveg@synaptics.com>
 ;; Maintainer: Jay Belanger <jay.p.belanger@gmail.com>
@@ -30,6 +30,7 @@
 (require 'calc-macs)
 
 ;; Declare functions which are defined elsewhere.
+(declare-function calc-digit-start-entry "calc" ())
 (declare-function calc-refresh-evaltos "calc-ext" (&optional which-var))
 (declare-function calc-execute-kbd-macro "calc-prog" (mac arg &rest prefix))
 (declare-function math-is-true "calc-ext" (expr))
@@ -52,7 +53,7 @@
   "The history list for quick-calc.")
 
 ;;;###autoload
-(defun calc-do-quick-calc ()
+(defun calc-do-quick-calc (&optional insert)
   (require 'calc-ext)
   (calc-check-defines)
   (if (eq major-mode 'calc-mode)
@@ -108,7 +109,8 @@
 		    (setq buf long))))
 	  (calc-handle-whys)
 	  (message "Result: %s" buf)))
-      (if (eq last-command-event 10)
+      (if (or insert
+              (eq last-command-event 10))
 	  (insert shortbuf)
         (kill-new shortbuf)))))
 
@@ -449,12 +451,7 @@ The value t means abort and give an error message.")
 ;;;###autoload
 (defun calc-alg-digit-entry ()
   (calc-alg-entry
-   (cond ((eq last-command-event ?e)
-	  (if (> calc-number-radix 14) (format "%d.^" calc-number-radix) "1e"))
-	 ((eq last-command-event ?#) (format "%d#" calc-number-radix))
-	 ((eq last-command-event ?_) "-")
-	 ((eq last-command-event ?@) "0@ ")
-	 (t (char-to-string last-command-event)))))
+   (calc-digit-start-entry)))
 
 ;; The variable calc-digit-value is initially declared in calc.el,
 ;; but can be set by calcDigit-algebraic and calcDigit-edit.
@@ -1056,7 +1053,7 @@ If the current Calc language does not use placeholders, return nil."
 (defun math-read-if (cond op)
   (let ((then (math-read-expr-level 0)))
     (or (equal math-expr-data ":")
-	(throw 'syntax "Expected ':'"))
+	(throw 'syntax "Expected `:'"))
     (math-read-token)
     (list 'calcFunc-if cond then (math-read-expr-level (nth 3 op)))))
 
@@ -1176,7 +1173,7 @@ If the current Calc language does not use placeholders, return nil."
                          (setq el (cdr el))))
 		     (if (equal math-expr-data "]")
 			 (math-read-token)
-		       (throw 'syntax "Expected ']'")))
+		       (throw 'syntax "Expected `]'")))
 		   val)))))
 	  ((eq math-exp-token 'dollar)
 	   (let ((abs (if (> math-expr-data 0) math-expr-data (- math-expr-data))))
@@ -1265,7 +1262,6 @@ If the current Calc language does not use placeholders, return nil."
 (provide 'calc-aent)
 
 ;; Local variables:
-;; coding: utf-8
 ;; generated-autoload-file: "calc-loaddefs.el"
 ;; End:
 

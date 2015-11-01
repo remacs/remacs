@@ -1,9 +1,8 @@
-;;; rmailsum.el --- make summary buffers for the mail reader
+;;; rmailsum.el --- make summary buffers for the mail reader  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1985, 1993-1996, 2000-2013 Free Software Foundation,
-;; Inc.
+;; Copyright (C) 1985, 1993-1996, 2000-2015 Free Software Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: mail
 ;; Package: rmail
 
@@ -263,7 +262,7 @@ Setting this option to nil might speed up the generation of summaries."
 ;; Regenerate the contents of the summary
 ;; using the same selection criterion as last time.
 ;; M-x revert-buffer in a summary buffer calls this function.
-(defun rmail-update-summary (&rest ignore)
+(defun rmail-update-summary (&rest _)
   (apply (car rmail-summary-redo) (cdr rmail-summary-redo)))
 
 ;;;###autoload
@@ -288,23 +287,18 @@ LABELS should be a string containing the desired labels, separated by commas."
 			     (mail-comma-list-regexp labels)
 			     "\\)\\(,\\|\\'\\)")))
 
-;; FIXME "a string of regexps separated by commas" makes no sense because:
-;;  i) it's pointless (you can just use \\|)
-;; ii) it's broken (you can't specify a literal comma)
-;; rmail-summary-by-topic and rmail-summary-by-senders have the same issue.
 ;;;###autoload
 (defun rmail-summary-by-recipients (recipients &optional primary-only)
   "Display a summary of all messages with the given RECIPIENTS.
 Normally checks the To, From and Cc fields of headers;
 but if PRIMARY-ONLY is non-nil (prefix arg given),
  only look in the To and From fields.
-RECIPIENTS is a string of regexps separated by commas."
+RECIPIENTS is a regular expression."
   (interactive "sRecipients to summarize by: \nP")
   (rmail-new-summary
    (concat "recipients " recipients)
    (list 'rmail-summary-by-recipients recipients primary-only)
-   'rmail-message-recipients-p
-   (mail-comma-list-regexp recipients) primary-only))
+   'rmail-message-recipients-p recipients primary-only))
 
 (defun rmail-message-recipients-p (msg recipients &optional primary-only)
   (rmail-apply-in-message msg 'rmail-message-recipients-p-1
@@ -341,20 +335,37 @@ Emacs will list the message in the summary."
   "Return t, if for message number MSG, regexp REGEXP matches in the header."
   (rmail-apply-in-message msg 'rmail-message-regexp-p-1 msg regexp))
 
+(defun rmail--decode-and-apply (function &rest args)
+  "Make an RFC2047-decoded copy of current buffer, apply FUNCTION with ARGS."
+  (let ((buff (current-buffer)))
+    (with-temp-buffer
+      (insert-buffer-substring buff)
+      (goto-char (point-min))
+      ;; FIXME?  In rmail-show-message-1, decoding depends on
+      ;; rmail-enable-mime being non-nil (?).
+      (rfc2047-decode-region (point-min)
+			     (save-excursion
+			       (progn
+				 (search-forward "\n\n" nil 'move)
+				 (point))))
+      (apply function args))))
+
 (defun rmail-message-regexp-p-1 (msg regexp)
   ;; Search functions can expect to start from the beginning.
   (narrow-to-region (point) (save-excursion (search-forward "\n\n") (point)))
   (if (and rmail-enable-mime
 	   rmail-search-mime-header-function)
       (funcall rmail-search-mime-header-function msg regexp (point))
-    (re-search-forward regexp nil t)))
+    ;; We need to search the full headers, but probably want to decode
+    ;; them so they match the ones people see displayed.  (Bug#19088)
+    (rmail--decode-and-apply 're-search-forward regexp nil t)))
 
 ;;;###autoload
 (defun rmail-summary-by-topic (subject &optional whole-message)
   "Display a summary of all messages with the given SUBJECT.
 Normally checks just the Subject field of headers; but with prefix
 argument WHOLE-MESSAGE is non-nil, looks in the whole message.
-SUBJECT is a string of regexps separated by commas."
+SUBJECT is a regular expression."
   (interactive
    ;; We quote the default subject, because if it contains regexp
    ;; special characters (eg "?"), it can fail to match itself.  (Bug#2333)
@@ -366,24 +377,23 @@ SUBJECT is a string of regexps separated by commas."
   (rmail-new-summary
    (concat "about " subject)
    (list 'rmail-summary-by-topic subject whole-message)
-   'rmail-message-subject-p
-   (mail-comma-list-regexp subject) whole-message))
+   'rmail-message-subject-p subject whole-message))
 
 (defun rmail-message-subject-p (msg subject &optional whole-message)
   (if whole-message
-      (rmail-apply-in-message msg 're-search-forward subject nil t)
+      ;; SUBJECT and rmail-simplified-subject are 2047 decoded.
+      (rmail-apply-in-message msg 'rmail--decode-and-apply
+			      're-search-forward subject nil t)
     (string-match subject (rmail-simplified-subject msg))))
 
 ;;;###autoload
 (defun rmail-summary-by-senders (senders)
   "Display a summary of all messages whose \"From\" field matches SENDERS.
-SENDERS is a string of regexps separated by commas."
+SENDERS is a regular expression."
   (interactive "sSenders to summarize by: ")
   (rmail-new-summary
    (concat "senders " senders)
-   (list 'rmail-summary-by-senders senders)
-   'rmail-message-senders-p
-   (mail-comma-list-regexp senders)))
+   (list 'rmail-summary-by-senders senders) 'rmail-message-senders-p senders))
 
 (defun rmail-message-senders-p (msg senders)
   (string-match senders (or (rmail-get-header "From" msg) "")))
@@ -408,7 +418,7 @@ If FUNCTION is nil, includes all messages."
   (unless rmail-buffer
     (error "No RMAIL buffer found"))
   (let (mesg was-in-summary sumbuf)
-    (if (eq major-mode 'rmail-summary-mode)
+    (if (derived-mode-p 'rmail-summary-mode)
 	(setq was-in-summary t))
     (with-current-buffer rmail-buffer
       (setq rmail-summary-buffer (rmail-new-summary-1 desc redo function args)
@@ -473,8 +483,8 @@ message."
 		(widen)
 		(goto-char (point-min))
 		(while (>= total msgnum)
-		  ;; Go back to the Rmail buffer so
-		  ;; so FUNCTION and rmail-get-summary can see its local vars.
+		  ;; Go back to the Rmail buffer so FUNCTION and
+		  ;; rmail-get-summary can see its local vars.
 		  (with-current-buffer main-buffer
 		    ;; First test whether to include this message.
 		    (if (or (null function)
@@ -656,7 +666,7 @@ LINES is the number of lines in the message (if we should display that)
   (goto-char (point-min))
   (let ((line (rmail-header-summary))
 	(labels (rmail-get-summary-labels))
-	pos status prefix basic-start basic-end linecount-string)
+        status prefix basic-start basic-end linecount-string)
 
     (setq linecount-string
 	  (cond
@@ -728,7 +738,7 @@ the message being processed."
 				 ;; Get all the lines of the From field
 				 ;; so that we get a whole comment if there is one,
 				 ;; so that mail-strip-quoted-names can discard it.
-				 (let ((opoint (point)))
+				 (progn
 				   (while (progn (forward-line 1)
 						 (looking-at "[ \t]")))
 				   ;; Back up over newline, then trailing spaces or tabs
@@ -791,7 +801,7 @@ the message being processed."
 		 (forward-line 1)
 		 (setq str (buffer-substring pos (1- (point))))
 		 (while (looking-at "[ \t]")
-		   (setq str (concat str " " 
+		   (setq str (concat str " "
 				     (buffer-substring (match-end 0)
 						       (line-end-position))))
 		   (forward-line 1))
@@ -804,7 +814,8 @@ the message being processed."
 
 (defun rmail-summary-next-all (&optional number)
   (interactive "p")
-  (forward-line (if number number 1))
+  (or number (setq number 1))
+  (forward-line number)
   ;; It doesn't look nice to move forward past the last message line.
   (and (eobp) (> number 0)
        (forward-line -1))
@@ -812,17 +823,14 @@ the message being processed."
 
 (defun rmail-summary-previous-all (&optional number)
   (interactive "p")
-  (forward-line (- (if number number 1)))
-  ;; It doesn't look nice to move forward past the last message line.
-  (and (eobp) (< number 0)
-       (forward-line -1))
-  (display-buffer rmail-buffer))
+  (rmail-summary-next-all (- (or number 1))))
 
 (defun rmail-summary-next-msg (&optional number)
   "Display next non-deleted msg from rmail file.
 With optional prefix argument NUMBER, moves forward this number of non-deleted
 messages, or backward if NUMBER is negative."
   (interactive "p")
+  (or number (setq number 1))
   (forward-line 0)
   (and (> number 0) (end-of-line))
   (let ((count (if (< number 0) (- number) number))
@@ -840,7 +848,7 @@ messages, or backward if NUMBER is negative."
 With optional prefix argument NUMBER, moves backward this number of
 non-deleted messages."
   (interactive "p")
-  (rmail-summary-next-msg (- (if number number 1))))
+  (rmail-summary-next-msg (- (or number 1))))
 
 (defun rmail-summary-next-labeled-message (n labels)
   "Show next message with LABELS.  Defaults to last labels used.
@@ -912,9 +920,12 @@ A prefix argument serves as a repeat count;
 a negative argument means to delete and move backward."
   (interactive "p")
   (unless (numberp count) (setq count 1))
-  (let (end del-msg
-	    (backward (< count 0)))
-    (while (/= count 0)
+  (let (del-msg
+        (backward (< count 0)))
+    (while (and (/= count 0)
+		;; Don't waste time if we are at the beginning
+		;; and trying to go backward.
+		(not (and backward (bobp))))
       (rmail-summary-goto-msg)
       (with-current-buffer rmail-buffer
 	(rmail-delete-message)
@@ -924,11 +935,13 @@ a negative argument means to delete and move backward."
 		  (save-excursion (beginning-of-line)
 				  (looking-at " *[0-9]+D")))
 	(forward-line (if backward -1 1)))
-      ;; It looks ugly to move to the empty line at end of buffer.
-      (and (eobp) (not backward)
-	   (forward-line -1))
       (setq count
-	    (if (> count 0) (1- count) (1+ count))))))
+	    (if (> count 0) (1- count) (1+ count)))
+      ;; It looks ugly to move to the empty line at end of buffer.
+      ;; And don't waste time after hitting the end.
+      (and (eobp) (not backward)
+	   (progn (setq count 0)
+		  (forward-line -1))))))
 
 (defun rmail-summary-delete-backward (&optional count)
   "Delete this message and move to previous nondeleted one.
@@ -939,8 +952,9 @@ a negative argument means to delete and move forward."
   (rmail-summary-delete-forward (- count)))
 
 (defun rmail-summary-mark-deleted (&optional n undel)
-  ;; Since third arg is t, this only alters the summary, not the Rmail buf.
-  (and n (rmail-summary-goto-msg n t t))
+  (and n (not (eq n (rmail-summary-msg-number)))
+       ;; Since third arg is t, this only alters summary, not the Rmail buf.
+       (rmail-summary-goto-msg n t t))
   (or (eobp)
       (not (overlay-get rmail-summary-overlay 'face))
       (let ((buffer-read-only nil))
@@ -951,9 +965,9 @@ a negative argument means to delete and move forward."
 		(progn (delete-char 1) (insert " ")))
 	  (delete-char 1)
 	  (insert "D"))
-	;; Register a new summary line.
+	;; Discard cached new summary line.
 	(with-current-buffer rmail-buffer
-	  (aset rmail-summary-vector (1- n) (rmail-create-summary-line n)))))
+	  (aset rmail-summary-vector (1- n) nil))))
   (beginning-of-line))
 
 (defun rmail-summary-update-line (n)
@@ -1002,7 +1016,7 @@ Optional prefix ARG means undelete ARG previous messages."
 		 (set-buffer rmail-buffer)
 	       (rmail-pop-to-buffer rmail-buffer))
 	     (and (rmail-message-deleted-p rmail-current-message)
-		  (rmail-undelete-previous-message))
+		  (rmail-undelete-previous-message 1))
 	     (if rmail-enable-mime
 		 (rmail-pop-to-buffer rmail-buffer))
 	     (rmail-pop-to-buffer rmail-summary-buffer))
@@ -1011,31 +1025,40 @@ Optional prefix ARG means undelete ARG previous messages."
 (defun rmail-summary-undelete-many (&optional n)
   "Undelete all deleted msgs, optional prefix arg N means undelete N prev msgs."
   (interactive "P")
-  (with-current-buffer rmail-buffer
-    (let* ((init-msg (if n rmail-current-message rmail-total-messages))
-	   (rmail-current-message init-msg)
-	   (n (or n rmail-total-messages))
-	   (msgs-undeled 0))
-      (while (and (> rmail-current-message 0)
-		  (< msgs-undeled n))
-	(if (rmail-message-deleted-p rmail-current-message)
-	    (progn (rmail-set-attribute rmail-deleted-attr-index nil)
-		   (setq msgs-undeled (1+ msgs-undeled))))
-	(setq rmail-current-message (1- rmail-current-message)))
-      (set-buffer rmail-summary-buffer)
-      (setq rmail-current-message init-msg msgs-undeled 0)
-      (while (and (> rmail-current-message 0)
-		  (< msgs-undeled n))
-	(if (rmail-summary-deleted-p rmail-current-message)
-	    (progn (rmail-summary-mark-undeleted rmail-current-message)
-		   (setq msgs-undeled (1+ msgs-undeled))))
-	(setq rmail-current-message (1- rmail-current-message))))
-    (rmail-summary-goto-msg)))
+  (if n
+      (while (and (> n 0) (not (eobp)))
+	(rmail-summary-goto-msg)
+	(let (del-msg)
+	  (when (rmail-summary-deleted-p)
+	    (with-current-buffer rmail-buffer
+	      (rmail-undelete-previous-message 1)
+	      (setq del-msg rmail-current-message))
+	    (rmail-summary-mark-undeleted del-msg)))
+	(while (and (not (eobp))
+		    (save-excursion (beginning-of-line)
+				    (looking-at " *[0-9]+ ")))
+	  (forward-line 1))
+	(setq n (1- n)))
+    (rmail-summary-goto-msg 1)
+    (dotimes (_ rmail-total-messages)
+      (rmail-summary-goto-msg)
+      (let (del-msg)
+	(when (rmail-summary-deleted-p)
+	  (with-current-buffer rmail-buffer
+	    (rmail-undelete-previous-message 1)
+	    (setq del-msg rmail-current-message))
+	  (rmail-summary-mark-undeleted del-msg)))
+      (if (not (eobp))
+	  (forward-line 1))))
+
+  ;; It looks ugly to move to the empty line at end of buffer.
+  (and (eobp)
+       (forward-line -1)))
 
 ;; Rmail Summary mode is suitable only for specially formatted data.
 (put 'rmail-summary-mode 'mode-class 'special)
 
-(defun rmail-summary-mode ()
+(define-derived-mode rmail-summary-mode special-mode "RMAIL Summary"
   "Rmail Summary Mode is invoked from Rmail Mode by using \\<rmail-mode-map>\\[rmail-summary].
 As commands are issued in the summary buffer, they are applied to the
 corresponding mail messages in the rmail buffer.
@@ -1058,10 +1081,6 @@ Commands for sorting the summary:
 \\[rmail-summary-sort-by-correspondent] Sort by correspondent.
 \\[rmail-summary-sort-by-lines] Sort by lines.
 \\[rmail-summary-sort-by-labels] Sort by labels."
-  (interactive)
-  (kill-all-local-variables)
-  (setq major-mode 'rmail-summary-mode)
-  (setq mode-name "RMAIL Summary")
   (setq truncate-lines t)
   (setq buffer-read-only t)
   (set-syntax-table text-mode-syntax-table)
@@ -1074,8 +1093,7 @@ Commands for sorting the summary:
   (make-local-variable 'revert-buffer-function)
   (make-local-variable 'font-lock-defaults)
   (setq font-lock-defaults '(rmail-summary-font-lock-keywords t))
-  (rmail-summary-enable)
-  (run-mode-hooks 'rmail-summary-mode-hook))
+  (rmail-summary-enable))
 
 ;; Summary features need to be disabled during edit mode.
 (defun rmail-summary-disable ()
@@ -1192,6 +1210,13 @@ Search, the `unseen' attribute is restored.")
   (interactive "@e")
   (goto-char (posn-point (event-end event)))
   (rmail-summary-goto-msg))
+
+(defun rmail-summary-msg-number ()
+  (save-excursion
+    (beginning-of-line)
+    (string-to-number
+     (buffer-substring (point)
+		       (min (point-max) (+ 6 (point)))))))
 
 (defun rmail-summary-goto-msg (&optional n nowarn skip-rmail)
   "Go to message N in the summary buffer and the Rmail buffer.

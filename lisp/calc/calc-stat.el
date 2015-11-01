@@ -1,6 +1,6 @@
 ;;; calc-stat.el --- statistical functions for Calc
 
-;; Copyright (C) 1990-1993, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1990-1993, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: David Gillespie <daveg@synaptics.com>
 ;; Maintainer: Jay Belanger <jay.p.belanger@gmail.com>
@@ -70,6 +70,11 @@
      (if (calc-is-inverse)
 	 (calc-vector-op "meae" 'calcFunc-vmeane arg)
        (calc-vector-op "mean" 'calcFunc-vmean arg)))))
+
+(defun calc-vector-rms (arg)
+  (interactive "P")
+  (calc-slow-wrapper
+   (calc-vector-op "rms" 'calcFunc-rms arg)))
 
 (defun calc-vector-mean-error (arg)
   (interactive "P")
@@ -317,6 +322,12 @@
 							 means sqrwts))
 			  suminvsqrwts))
 	    (math-div (calcFunc-reduce '(var add var-add) means) len)))))))
+
+(defun calcFunc-rms (a)
+  "Return the root-mean-square of the vector A."
+  (math-sqrt
+   (calcFunc-vmean
+    (calcFunc-map '(var abssqr var-abssqr) a))))
 
 (defun math-fix-int-intv (x)
   (if (math-floatp x)

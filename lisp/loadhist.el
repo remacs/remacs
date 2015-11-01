@@ -1,9 +1,9 @@
 ;;; loadhist.el --- lisp functions for working with feature groups
 
-;; Copyright (C) 1995, 1998, 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1995, 1998, 2000-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric S. Raymond <esr@snark.thyrsus.com>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal
 
 ;; This file is part of GNU Emacs.
@@ -101,14 +101,15 @@ A library name is equivalent to the file name that `load-library' would load."
   "Read feature name from the minibuffer, prompting with string PROMPT.
 If optional second arg LOADED-P is non-nil, the feature must be loaded
 from a file."
-  (intern
-   (completing-read prompt
-		    (cons nil features)
-		    (and loaded-p
-			 #'(lambda (f)
-			     (and f	; ignore nil
-				  (feature-file f))))
-		    loaded-p)))
+  (intern (completing-read
+           prompt
+           (mapcar #'symbol-name
+                   (if loaded-p
+                       (delq nil
+                             (mapcar
+                              (lambda (x) (and (feature-file x) x))
+                              features))
+                     features)))))
 
 (defvaralias 'loadhist-hook-functions 'unload-feature-special-hooks)
 (defvar unload-feature-special-hooks
@@ -122,7 +123,6 @@ from a file."
     delete-frame-functions disabled-command-function
     fill-nobreak-predicate find-directory-functions
     find-file-not-found-functions
-    font-lock-beginning-of-syntax-function
     font-lock-fontify-buffer-function
     font-lock-fontify-region-function
     font-lock-mark-block-function

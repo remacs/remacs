@@ -1,6 +1,6 @@
 ;;; texnfo-upd.el --- utilities for updating nodes and menus in Texinfo files
 
-;; Copyright (C) 1989-1992, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1989-1992, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Robert J. Chassell
 ;; Maintainer: bug-texinfo@gnu.org
@@ -694,8 +694,8 @@ section titles are often too short to explain a node well.
 
 MENU-LIST has form:
 
-    \(\(\"node-name1\" . \"description\"\)
-    \(\"node-name2\" . \"description\"\) ... \)
+    ((\"node-name1\" . \"description\")
+     (\"node-name2\" . \"description\") ... )
 
 However, the description field might be nil.
 
@@ -893,7 +893,7 @@ first update all existing menus in the buffer (incorporating
 descriptions from pre-existing menus) before it constructs the
 master menu.  If the argument is numeric (e.g., \"C-u 2\"),
 update all existing nodes as well, by calling
-\`texinfo-update-node' on the entire file.  Warning: do NOT
+`texinfo-update-node' on the entire file.  Warning: do NOT
 invoke with a numeric argument if your Texinfo file uses @node
 lines without the `Next', `Previous', `Up' pointers, as the
 result could be an invalid Texinfo file!
@@ -1002,9 +1002,9 @@ following menu and the title of the node preceding that menu.
 
 The master menu list has this form:
 
-    \(\(\(... \"entry-1-2\"  \"entry-1\"\) \"title-1\"\)
-      \(\(... \"entry-2-2\"  \"entry-2-1\"\) \"title-2\"\)
-      ...\)
+    (((... \"entry-1-2\"  \"entry-1\") \"title-1\")
+     ((... \"entry-2-2\"  \"entry-2-1\") \"title-2\")
+     ...)
 
 However, there does not need to be a title field."
 
@@ -1018,7 +1018,7 @@ However, there does not need to be a title field."
   "Format and insert the master menu in the current buffer."
   (goto-char (point-min))
   ;; Insert a master menu only after `Top' node and before next node
-  ;; \(or include file if there is no next node\).
+  ;; (or include file if there is no next node).
   (unless (re-search-forward "^@node [ \t]*top[ \t]*\\(,\\|$\\)" nil t)
     (error "This buffer needs a Top node"))
   (let ((first-chapter
@@ -1145,24 +1145,40 @@ For example, \"unnumberedsubsec\".  Return \"top\" for top node.
 Searches forward for a section.  Hence, point must be before the
 section whose type will be found.  Does not move point.  Signal an
 error if the node is not the top node and a section is not found."
-  (let ((case-fold-search t))
-    (save-excursion
-      (cond
-       ((re-search-forward "^@node [ \t]*top[ \t]*\\(,\\|$\\)"
-			   ;; Following search limit by cph but causes a bug
-			   ;;(line-end-position)
-			   nil
-			   t)
-	"top")
-       ((re-search-forward texinfo-section-types-regexp nil t)
-	(buffer-substring-no-properties
-	 (progn (beginning-of-line) ; copy its name
-		(1+ (point)))
-	 (progn (forward-word 1)
-		(point))))
-       (t
-	(error
-	 "texinfo-specific-section-type: Chapter or section not found"))))))
+  (let* ((case-fold-search t)
+	 ;; The Texinfo manual has a second Top node inside @verbatim
+	 ;; near the end, which dupes us into thinking we are at top
+	 ;; level, no matter where we are when invoked.  We don't
+	 ;; really grok @verbatim, so we cheat: only consider us to be
+	 ;; at top level if the position of the Top node we found is
+	 ;; before any other sectioning command.
+	 (top-pos (save-excursion
+		    (re-search-forward "^@node [ \t]*top[ \t]*\\(,\\|$\\)"
+				       ;; Following search limit causes a bug
+				       ;;(line-end-position)
+				       nil
+				       t)))
+	 (sec-pos (save-excursion
+		    (re-search-forward texinfo-section-types-regexp nil t)))
+	 sec-name)
+    (if sec-pos
+	(save-excursion
+	  (goto-char sec-pos)
+	  (setq sec-name (buffer-substring-no-properties
+			  (progn (beginning-of-line) ; copy its name
+				 (1+ (point)))
+			  (progn (forward-word 1)
+				 (point))))))
+    (cond
+     ((or sec-pos top-pos)
+      (if (and top-pos sec-pos)
+	  (if (< top-pos sec-pos)
+	      "top"
+	    sec-name)
+	(or sec-name "top")))
+     (t
+      (error
+       "texinfo-specific-section-type: Chapter or section not found")))))
 
 (defun texinfo-hierarchic-level ()
   "Return the general hierarchical level of the next node in a texinfo file.
@@ -1391,7 +1407,7 @@ level in the Texinfo file; when looking for the `Previous' pointer,
 the section found will be at the same or higher hierarchical level in
 the Texinfo file; when looking for the `Up' pointer, the section found
 will be at some level higher in the Texinfo file.  The fourth argument
-\(one of 'next, 'previous, or 'up\) specifies whether to find the
+\(one of `next', `previous', or `up') specifies whether to find the
 `Next', `Previous', or `Up' pointer."
   (let ((case-fold-search t))
     (cond ((eq direction 'next)
@@ -1834,8 +1850,8 @@ chapters."
 
 ;; The menu-list has the form:
 ;;
-;;     \(\(\"node-name1\" . \"title1\"\)
-;;       \(\"node-name2\" . \"title2\"\) ... \)
+;;     ((\"node-name1\" . \"title1\")
+;;      (\"node-name2\" . \"title2\") ... )
 ;;
 ;; However, there does not need to be a title field and this function
 ;; does not fill it; however a comment tells you how to do so.

@@ -1,10 +1,10 @@
 ;;; ebuff-menu.el --- electric-buffer-list mode
 
-;; Copyright (C) 1985-1986, 1994, 2001-2013 Free Software Foundation,
+;; Copyright (C) 1985-1986, 1994, 2001-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Richard Mlynarik <mly@ai.mit.edu>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: convenience
 
 ;; This file is part of GNU Emacs.
@@ -133,7 +133,7 @@ Run hooks in `electric-buffer-menu-mode-hook' on entry.
 	    (setq select
 		  (catch 'electric-buffer-menu-select
 		    (message "<<< Type SPC or RET to bury the buffer list >>>")
-		    (setq unread-command-events (list (read-event)))
+		    (push (read-event) unread-command-events)
 		    (let ((start-point (point))
 			  (first (progn (goto-char (point-min))
 					(unless Buffer-menu-use-header-line
@@ -210,7 +210,9 @@ See the documentation of `electric-buffer-list' for details."
 
 (defun Electric-buffer-menu-exit ()
   (interactive)
-  (setq unread-command-events (listify-key-sequence (this-command-keys)))
+  (setq unread-command-events
+        (nconc (listify-key-sequence (this-command-keys))
+               unread-command-events))
   ;; for robustness
   (condition-case ()
       (throw 'electric-buffer-menu-select nil)

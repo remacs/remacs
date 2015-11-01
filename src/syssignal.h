@@ -1,6 +1,6 @@
 /* syssignal.h - System-dependent definitions for signals.
 
-Copyright (C) 1993, 1999, 2001-2013 Free Software Foundation, Inc.
+Copyright (C) 1993, 1999, 2001-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -17,16 +17,28 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef EMACS_SYSSIGNAL_H
+#define EMACS_SYSSIGNAL_H
+
 #include <signal.h>
-#include <stdbool.h>
 
 extern void init_signals (bool);
+extern void block_child_signal (sigset_t *);
+extern void unblock_child_signal (sigset_t const *);
+extern void block_tty_out_signal (sigset_t *);
+extern void unblock_tty_out_signal (sigset_t const *);
 
 #ifdef HAVE_PTHREAD
 #include <pthread.h>
 /* If defined, asynchronous signals delivered to a non-main thread are
    forwarded to the main thread.  */
 #define FORWARD_SIGNAL_TO_MAIN_THREAD
+#endif
+
+/* On Cygwin as of 2015-06-22 SIGEV_SIGNAL is defined as an enum
+   constant but not as a macro. */
+#if defined CYGWIN && !defined SIGEV_SIGNAL
+#define SIGEV_SIGNAL SIGEV_SIGNAL
 #endif
 
 #if defined HAVE_TIMER_SETTIME && defined SIGEV_SIGNAL
@@ -63,3 +75,5 @@ char const *safe_strsignal (int) ATTRIBUTE_CONST;
 #endif
 
 void deliver_process_signal (int, signal_handler_t);
+
+#endif /* EMACS_SYSSIGNAL_H */

@@ -1,10 +1,10 @@
 ;;; vc-bzr.el --- VC backend for the bzr revision control system  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
 ;; Author: Dave Love <fx@gnu.org>
 ;; 	   Riccardo Murri <riccardo.murri@gmail.com>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: vc tools
 ;; Created: Sept 2006
 ;; Package: vc
@@ -34,7 +34,7 @@
 ;; ==========
 
 ;; When editing a symlink and *both* the symlink and its target
-;; are bzr-versioned, `vc-bzr` presently runs `bzr status` on the
+;; are bzr-versioned, `vc-bzr' presently runs `bzr status' on the
 ;; symlink, thereby not detecting whether the actual contents
 ;; (that is, the target contents) are changed.
 
@@ -47,6 +47,7 @@
 
 (eval-when-compile
   (require 'cl-lib)
+  (require 'vc-dispatcher)
   (require 'vc-dir))                    ; vc-dir-at-event
 
 ;; Clear up the cache to force vc-call to check again and discover
@@ -70,6 +71,16 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
                  (const :tag "None" t)
                  (string :tag "Argument String")
                  (repeat :tag "Argument List" :value ("") string))
+  :group 'vc-bzr)
+
+(defcustom vc-bzr-annotate-switches nil
+  "String or list of strings specifying switches for bzr annotate under VC.
+If nil, use the value of `vc-annotate-switches'.  If t, use no switches."
+  :type '(choice (const :tag "Unspecified" nil)
+		 (const :tag "None" t)
+		 (string :tag "Argument String")
+		 (repeat :tag "Argument List" :value ("") string))
+  :version "25.1"
   :group 'vc-bzr)
 
 (defcustom vc-bzr-log-switches nil
@@ -319,11 +330,45 @@ in the repository root directory of FILE."
     ("^Using saved parent location: \\(.+\\)" 1 nil nil 0))
   "Value of `compilation-error-regexp-alist' in *vc-bzr* buffers.")
 
-;; Follows vc-bzr-(async-)command, which uses vc-do-(async-)command
-;; from vc-dispatcher.
+;; To be called via vc-pull from vc.el, which requires vc-dispatcher.
 (declare-function vc-exec-after "vc-dispatcher" (code))
-;; Follows vc-exec-after.
 (declare-function vc-set-async-update "vc-dispatcher" (process-buffer))
+(declare-function vc-compilation-mode "vc-dispatcher" (backend))
+
+(defun vc-bzr--pushpull (command prompt)
+    "Run COMMAND (a string; either push or pull) on the current Bzr branch.
+If PROMPT is non-nil, prompt for the Bzr command to run."
+  (let* ((vc-bzr-program vc-bzr-program)
+	 (branch-conf (vc-bzr-branch-conf default-directory))
+	 ;; Check whether the branch is bound.
+	 (bound (assoc "bound" branch-conf))
+	 (bound (and bound (equal "true" (downcase (cdr bound)))))
+	 (has-loc (assoc (if (equal command "push")
+			     "push_location"
+			   "parent_location")
+			 branch-conf))
+	 args)
+    (when bound
+      (if (equal command "push")
+	  (user-error "Cannot push a bound branch")
+	(setq command "update")))
+    ;; If necessary, prompt for the exact command.
+    (when (or prompt (if (equal command "push")
+			 (not has-loc)
+		       (not (or bound has-loc))))
+      (setq args (split-string
+		  (read-shell-command
+		   (format "Bzr %s command: " command)
+		   (format "%s %s" vc-bzr-program command)
+		   'vc-bzr-history)
+		  " " t))
+      (setq vc-bzr-program (car  args)
+	    command        (cadr args)
+	    args           (cddr args)))
+    (require 'vc-dispatcher)
+    (let ((buf (apply 'vc-bzr-async-command command args)))
+      (with-current-buffer buf (vc-run-delayed (vc-compilation-mode 'bzr)))
+      (vc-set-async-update buf))))
 
 (defun vc-bzr-pull (prompt)
   "Pull changes into the current Bzr branch.
@@ -331,31 +376,13 @@ Normally, this runs \"bzr pull\".  However, if the branch is a
 bound branch, run \"bzr update\" instead.  If there is no default
 location from which to pull or update, or if PROMPT is non-nil,
 prompt for the Bzr command to run."
-  (let* ((vc-bzr-program vc-bzr-program)
-	 (branch-conf (vc-bzr-branch-conf default-directory))
-	 ;; Check whether the branch is bound.
-	 (bound (assoc "bound" branch-conf))
-	 (bound (and bound (equal "true" (downcase (cdr bound)))))
-	 ;; If we need to do a "bzr pull", check for a parent.  If it
-	 ;; does not exist, bzr will need a pull location.
-	 (has-parent (unless bound
-		       (assoc "parent_location" branch-conf)))
-	 (command (if bound "update" "pull"))
-	 args)
-    ;; If necessary, prompt for the exact command.
-    (when (or prompt (not (or bound has-parent)))
-      (setq args (split-string
-		  (read-shell-command
-		   "Bzr pull command: "
-		   (concat vc-bzr-program " " command)
-		   'vc-bzr-history)
-		  " " t))
-      (setq vc-bzr-program (car  args)
-	    command        (cadr args)
-	    args           (cddr args)))
-    (let ((buf (apply 'vc-bzr-async-command command args)))
-      (with-current-buffer buf (vc-exec-after '(vc-compilation-mode 'bzr)))
-      (vc-set-async-update buf))))
+  (vc-bzr--pushpull "pull" prompt))
+
+(defun vc-bzr-push (prompt)
+  "Push changes from the current Bzr branch.
+Normally, this runs \"bzr push\".  If there is no push location,
+or if PROMPT is non-nil, prompt for the Bzr command to run."
+  (vc-bzr--pushpull "push" prompt))
 
 (defun vc-bzr-merge-branch ()
   "Merge another Bzr branch into the current one.
@@ -385,7 +412,7 @@ default if it is available."
 	 (command        (cadr cmd))
 	 (args           (cddr cmd)))
     (let ((buf (apply 'vc-bzr-async-command command args)))
-      (with-current-buffer buf (vc-exec-after '(vc-compilation-mode 'bzr)))
+      (with-current-buffer buf (vc-run-delayed (vc-compilation-mode 'bzr)))
       (vc-set-async-update buf))))
 
 (defun vc-bzr-status (file)
@@ -492,12 +519,20 @@ in the branch repository (or whose status not be determined)."
     (add-hook 'after-save-hook 'vc-bzr-resolve-when-done nil t)
     (message "There are unresolved conflicts in this file")))
 
-(defun vc-bzr-workfile-unchanged-p (file)
-  (eq 'unchanged (car (vc-bzr-status file))))
+(defun vc-bzr-version-dirstate (dir)
+  "Try to return as a string the bzr revision ID of directory DIR.
+This uses the dirstate file's parent revision entry.
+Returns nil if unable to find this information."
+  (let ((file (expand-file-name ".bzr/checkout/dirstate" dir)))
+    (when (file-readable-p file)
+      (with-temp-buffer
+        (insert-file-contents file)
+        (and (looking-at "#bazaar dirstate flat format 3")
+             (forward-line 3)
+             (looking-at "[0-9]+\0\\([^\0\n]+\\)\0")
+             (match-string 1))))))
 
 (defun vc-bzr-working-revision (file)
-  ;; Together with the code in vc-state-heuristic, this makes it possible
-  ;; to get the initial VC state of a Bzr file even if Bzr is not installed.
   (let* ((rootdir (vc-bzr-root file))
          (branch-format-file (expand-file-name vc-bzr-admin-branch-format-file
                                                rootdir))
@@ -542,8 +577,8 @@ in the branch repository (or whose status not be determined)."
 			 ;; files exist.
 			 (and (file-exists-p branch-format-file)
 			      (file-exists-p lastrev-file)
-			      (equal (emacs-bzr-version-dirstate l-c-parent-dir)
-				     (emacs-bzr-version-dirstate rootdir))))))
+			      (equal (vc-bzr-version-dirstate l-c-parent-dir)
+				     (vc-bzr-version-dirstate rootdir))))))
 		 t)))
         (with-temp-buffer
           (insert-file-contents branch-format-file)
@@ -579,10 +614,6 @@ in the branch repository (or whose status not be determined)."
   "Create a new Bzr repository."
   (vc-bzr-command "init" nil 0 nil))
 
-(defun vc-bzr-init-revision (&optional _file)
-  "Always return nil, as Bzr cannot register explicit versions."
-  nil)
-
 (defun vc-bzr-previous-revision (_file rev)
   (if (string-match "\\`[0-9]+\\'" rev)
       (number-to-string (1- (string-to-number rev)))
@@ -593,11 +624,8 @@ in the branch repository (or whose status not be determined)."
       (number-to-string (1+ (string-to-number rev)))
     (error "Don't know how to compute the next revision of %s" rev)))
 
-(defun vc-bzr-register (files &optional rev _comment)
-  "Register FILES under bzr.
-Signal an error unless REV is nil.
-COMMENT is ignored."
-  (if rev (error "Can't register explicit revision with bzr"))
+(defun vc-bzr-register (files &optional _comment)
+  "Register FILES under bzr. COMMENT is ignored."
   (vc-bzr-command "add" nil 0 files))
 
 ;; Could run `bzr status' in the directory and see if it succeeds, but
@@ -606,18 +634,6 @@ COMMENT is ignored."
   "Return non-nil if FILE is (potentially) controlled by bzr.
 The criterion is that there is a `.bzr' directory in the same
 or a superior directory.")
-
-(defun vc-bzr-could-register (file)
-  "Return non-nil if FILE could be registered under bzr."
-  (and (vc-bzr-responsible-p file)      ; shortcut
-       (condition-case ()
-           (with-temp-buffer
-             (vc-bzr-command "add" t 0 file "--dry-run")
-             ;; The command succeeds with no output if file is
-             ;; registered (in bzr 0.8).
-             (goto-char (point-min))
-             (looking-at "added "))
-         (error))))
 
 (defun vc-bzr-unregister (file)
   "Unregister FILE from bzr."
@@ -633,10 +649,8 @@ or a superior directory.")
                                            "" (replace-regexp-in-string
                                                "\n[ \t]?" " " str)))))
 
-(defun vc-bzr-checkin (files rev comment)
-  "Check FILES in to bzr with log message COMMENT.
-REV non-nil gets an error."
-  (if rev (error "Can't check in a specific revision with bzr"))
+(defun vc-bzr-checkin (files comment &optional _rev)
+  "Check FILES in to bzr with log message COMMENT."
   (apply 'vc-bzr-command "commit" nil 0 files
          (cons "-m" (log-edit-extract-headers
                      `(("Author" . ,(vc-bzr--sanitize-header "--author"))
@@ -651,27 +665,12 @@ REV non-nil gets an error."
           (vc-bzr-command "cat" t 0 file "-r" rev)
         (vc-bzr-command "cat" t 0 file))))
 
-(defun vc-bzr-ignore (file &optional directory remove)
-  "Ignore FILE under Bazaar.
-If DIRECTORY is non-nil, the repository to use will be deduced by
-DIRECTORY; if REMOVE is non-nil, remove FILE from ignored files."
-  (if remove
-      (if directory
-	  (vc--remove-regexp file (vc-bzr-find-ignore-file directory))
-	(vc--remove-regexp file
-			   (vc-bzr-find-ignore-file default-directory)))
-    (vc-bzr-command "ignore" t 0 file)))
-
-(defun vc-bzr-ignore-completion-table (file)
-  "Return the list of ignored files."
-  (vc--read-lines (vc-bzr-find-ignore-file file)))
-
 (defun vc-bzr-find-ignore-file (file)
   "Return the root directory of the repository of FILE."
   (expand-file-name ".bzrignore"
 		    (vc-bzr-root file)))
 
-(defun vc-bzr-checkout (_file &optional _editable rev)
+(defun vc-bzr-checkout (_file &optional rev)
   (if rev (error "Operation not supported")
     ;; Else, there's nothing to do.
     nil))
@@ -736,7 +735,7 @@ If LIMIT is non-nil, show no more than this many entries."
   (with-current-buffer buffer
     (apply 'vc-bzr-command "log" buffer 'async files
 	   (append
-	    (when shortlog '("--line"))
+	    (if shortlog '("--line") '("--long"))
 	    ;; The extra complications here when start-revision and limit
 	    ;; are set are due to bzr log's --forward argument, which
 	    ;; could be enabled via an alias in bazaar.conf.
@@ -771,7 +770,7 @@ If LIMIT is non-nil, show no more than this many entries."
 (defun vc-bzr-expanded-log-entry (revision)
   (with-temp-buffer
     (apply 'vc-bzr-command "log" t nil nil
-	   (list (format "-r%s" revision)))
+	   (list "--long" (format "-r%s" revision)))
     (goto-char (point-min))
     (when (looking-at "^-+\n")
       ;; Indent the expanded log entry.
@@ -807,7 +806,7 @@ If LIMIT is non-nil, show no more than this many entries."
 
 (autoload 'vc-switches "vc")
 
-(defun vc-bzr-diff (files &optional rev1 rev2 buffer)
+(defun vc-bzr-diff (files &optional rev1 rev2 buffer async)
   "VC bzr backend for diff."
   (let* ((switches (vc-switches 'bzr 'diff))
          (args
@@ -823,7 +822,7 @@ If LIMIT is non-nil, show no more than this many entries."
                                 (or rev2 "")))))))
     ;; `bzr diff' exits with code 1 if diff is non-empty.
     (apply #'vc-bzr-command "diff" (or buffer "*vc-diff*")
-           (if vc-disable-async-diff 1 'async) files
+           (if async 1 'async) files
            args)))
 
 
@@ -853,7 +852,8 @@ If LIMIT is non-nil, show no more than this many entries."
 Each line is tagged with the revision number, which has a `help-echo'
 property containing author and date information."
   (apply #'vc-bzr-command "annotate" buffer 'async file "--long" "--all"
-         (if revision (list "-r" revision)))
+         (append (vc-switches 'bzr 'annotate)
+		 (if revision (list "-r" revision))))
   (let ((table (make-hash-table :test 'equal)))
     (set-process-filter
      (get-buffer-process buffer)
@@ -889,7 +889,7 @@ property containing author and date information."
                (move-marker (process-mark proc) (point))))
            (process-put proc :vc-left-over string)))))))
 
-(declare-function vc-annotate-convert-time "vc-annotate" (time))
+(declare-function vc-annotate-convert-time "vc-annotate" (&optional time))
 
 (defun vc-bzr-annotate-time ()
   (when (re-search-forward "^ *[0-9.]+ +.+? +|" nil t)
@@ -970,6 +970,12 @@ stream.  Standard error output is discarded."
 	(translated nil)
 	(result nil))
       (goto-char (point-min))
+      ;; Skip a warning message that can occur in some bzr installations.
+      ;; vc-bzr-dir-extra-headers already reports it.
+      ;; Perhaps we should just discard stderr?
+      (and (looking-at "bzr: WARNING: bzrlib version doesn't match")
+           (re-search-forward "^bzr is version" nil t)
+           (forward-line 1))
       (while (not (eobp))
         ;; Bzr 2.3.0 added this if there are shelves.  (Bug#8170)
         (unless (looking-at "[0-9]+ shel\\(f\\|ves\\) exists?\\.")
@@ -997,7 +1003,7 @@ stream.  Standard error output is discarded."
               (push (list new-name 'edited
                           (vc-bzr-create-extra-fileinfo old-name)) result)))
            ;; do nothing for non existent files
-           ((memq translated '(not-found ignored)))
+           ((eq translated 'not-found))
            (t
             (push (list (file-relative-name
                          (buffer-substring-no-properties
@@ -1007,26 +1013,19 @@ stream.  Standard error output is discarded."
         (forward-line))
       (funcall update-function result)))
 
-(defun vc-bzr-dir-status (dir update-function)
-  "Return a list of conses (file . state) for DIR."
-  (vc-bzr-command "status" (current-buffer) 'async dir "-v" "-S")
-  (vc-exec-after
-   `(vc-bzr-after-dir-status (quote ,update-function)
-			     ;; "bzr status" results are relative to
-			     ;; the bzr root directory, NOT to the
-			     ;; directory "bzr status" was invoked in.
-			     ;; Ugh.
-			     ;; We pass the relative directory here so
-			     ;; that `vc-bzr-after-dir-status' can
-			     ;; frob the results accordingly.
-			     (file-relative-name ,dir (vc-bzr-root ,dir)))))
-
-(defun vc-bzr-dir-status-files (dir files _default-state update-function)
+(defun vc-bzr-dir-status-files (dir files update-function)
   "Return a list of conses (file . state) for DIR."
   (apply 'vc-bzr-command "status" (current-buffer) 'async dir "-v" "-S" files)
-  (vc-exec-after
-   `(vc-bzr-after-dir-status (quote ,update-function)
-			     (file-relative-name ,dir (vc-bzr-root ,dir)))))
+  (vc-run-delayed
+   (vc-bzr-after-dir-status update-function
+                            ;; "bzr status" results are relative to
+                            ;; the bzr root directory, NOT to the
+                            ;; directory "bzr status" was invoked in.
+                            ;; Ugh.
+                            ;; We pass the relative directory here so
+                            ;; that `vc-bzr-after-dir-status' can
+                            ;; frob the results accordingly.
+                            (file-relative-name dir (vc-bzr-root dir)))))
 
 (defvar vc-bzr-shelve-map
   (let ((map (make-sparse-keymap)))
@@ -1146,11 +1145,12 @@ stream.  Standard error output is discarded."
                   (file &optional keep noquery reset-vc-info))
 
 (defun vc-bzr-shelve (name)
-  "Create a shelve."
+  "Shelve the changes of the selected files."
   (interactive "sShelf name: ")
-  (let ((root (vc-bzr-root default-directory)))
+  (let ((root (vc-bzr-root default-directory))
+        (fileset (vc-deduce-fileset)))
     (when root
-      (vc-bzr-command "shelve" nil 0 nil "--all" "-m" name)
+      (vc-bzr-command "shelve" nil 0 (nth 1 fileset) "--all" "-m" name)
       (vc-resynch-buffer root t t))))
 
 (defun vc-bzr-shelve-show (name)
@@ -1180,10 +1180,7 @@ stream.  Standard error output is discarded."
   "Create a stash with the current tree state."
   (interactive)
   (vc-bzr-command "shelve" nil 0 nil "--all" "-m"
-		  (let ((ct (current-time)))
-		    (concat
-		     (format-time-string "Snapshot on %Y-%m-%d" ct)
-		     (format-time-string " at %H:%M" ct))))
+		  (format-time-string "Snapshot on %Y-%m-%d at %H:%M"))
   (vc-bzr-command "unshelve" nil 0 nil "--apply" "--keep")
   (vc-resynch-buffer (vc-bzr-root default-directory) t t))
 

@@ -1,6 +1,6 @@
 /* runemacs --- Simple program to start Emacs with its console window hidden.
 
-Copyright (C) 2001-2013 Free Software Foundation, Inc.
+Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -59,6 +59,7 @@ WinMain (HINSTANCE hSelf, HINSTANCE hPrev, LPSTR cmdline, int nShow)
   char *new_cmdline;
   char *p;
   char modname[MAX_PATH];
+  static const char iconic_opt[] = "--iconic ", maximized_opt[] = "--maximized ";
 
   if (!ensure_unicows_dll ())
     goto error;
@@ -71,7 +72,13 @@ WinMain (HINSTANCE hSelf, HINSTANCE hPrev, LPSTR cmdline, int nShow)
     goto error;
   *p = 0;
 
-  new_cmdline = alloca (MAX_PATH + strlen (cmdline) + 3);
+  new_cmdline = alloca (MAX_PATH
+			+ strlen (cmdline)
+			+ ((nShow == SW_SHOWMINNOACTIVE
+			    || nShow == SW_SHOWMAXIMIZED)
+			   ? max (sizeof (iconic_opt), sizeof (maximized_opt))
+			   : 0)
+			+ 3);
   /* Quote executable name in case of spaces in the path. */
   *new_cmdline = '"';
   strcpy (new_cmdline + 1, modname);
@@ -140,6 +147,14 @@ WinMain (HINSTANCE hSelf, HINSTANCE hPrev, LPSTR cmdline, int nShow)
       while (*++cmdline == ' ');
     }
 
+  /* If the desktop shortcut properties tell to invoke runemacs
+     minimized, or if they invoked runemacs via "start /min", pass
+     '--iconic' to Emacs, as that's what users will expect.  Likewise
+     with invoking runemacs maximized: pass '--maximized' to Emacs.  */
+  if (nShow == SW_SHOWMINNOACTIVE)
+    strcat (new_cmdline, iconic_opt);
+  else if (nShow == SW_SHOWMAXIMIZED)
+    strcat (new_cmdline, maximized_opt);
   strcat (new_cmdline, cmdline);
 
   /* Set emacs_dir variable if runemacs was in "%emacs_dir%\bin".  */
@@ -234,8 +249,6 @@ ensure_unicows_dll (void)
 			       "Emacs cannot load the UNICOWS.DLL library.\n"
 			       "This library is essential for using Emacs\n"
 			       "on this system.  You need to install it.\n\n"
-			       "However, you can still use Emacs by invoking\n"
-			       "it with the '-nw' command-line option.\n\n"
 			       "Emacs will exit when you click OK.",
 			       "Emacs cannot load UNICOWS.DLL",
 			       MB_ICONERROR | MB_TASKMODAL

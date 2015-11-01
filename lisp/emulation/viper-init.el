@@ -1,6 +1,6 @@
 ;;; viper-init.el --- some common definitions for Viper
 
-;; Copyright (C) 1997-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997-2015 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.stonybrook.edu>
 ;; Package: viper
@@ -102,7 +102,7 @@ docstring.  The variable becomes buffer-local whenever set."
   (declare (indent defun))
   `(progn
     (defvar ,var ,default-value
-      ,(format "%s\n\(buffer local\)" documentation))
+      ,(format "%s\n(buffer local)" documentation))
     (make-variable-buffer-local ',var)))
 
 ;; (viper-loop COUNT BODY) Execute BODY COUNT times.
@@ -279,7 +279,7 @@ The minor mode viper-vi-diehard-minor-mode is in effect when
 viper-expert-level is 1 or 2 or when viper-want-emacs-keys-in-vi is t.
 The minor mode viper-insert-diehard-minor-mode is in effect when
 viper-expert-level is 1 or 2 or if viper-want-emacs-keys-in-insert is t.
-Use `M-x viper-set-expert-level' to change this.")
+Use `\\[viper-set-expert-level]' to change this.")
 
 ;; Max expert level supported by Viper.  This is NOT a user option.
 ;; It is here to make it hard for the user from resetting it.
@@ -463,7 +463,7 @@ color displays.  By default, the delimiters are used only on TTYs."
   :type 'boolean
   :group 'viper)
 
-(defcustom viper-read-buffer-function 'read-buffer
+(defcustom viper-read-buffer-function #'read-buffer
   "Function to use for prompting the user for a buffer name."
   :type 'symbol
   :group 'viper)
@@ -583,7 +583,7 @@ the Insert state."
 
 (defcustom viper-keep-point-on-repeat t
   "If t, don't move point when repeating previous command.
-This is useful for doing repeated changes with the '.' key.
+This is useful for doing repeated changes with the `.' key.
 The user can change this to nil, if she likes when the cursor moves
 to a new place after repeating previous Vi command."
   :type 'boolean
@@ -778,7 +778,7 @@ Related buffers can be cycled through via :R and :P commands."
 	  "^\\\\[sb][a-z]*{.*}\\s-*$\\|"	    		; latex
 	  "^@node\\|@table\\|^@m?enu\\|^@itemize\\|^@if\\|"	; texinfo
 	  "^.+:-")			                        ; prolog
-  "Regexps for Headings.  Used by \[\[ and \]\].")
+  "Regexps for Headings.  Used by [[ and ]].")
 
 (defvar viper-heading-end
   (concat "^}\\|"						; C/C++
@@ -786,7 +786,7 @@ Related buffers can be cycled through via :R and :P commands."
 	  "^@end \\|"						; texinfo
 	  ")\n\n[ \t\n]*\\|"					; lisp
 	  "\\.\\s-*$")						; prolog
-      "*Regexps to end Headings/Sections.  Used by \[\].")
+      "*Regexps to end Headings/Sections.  Used by [].")
 
 
 ;; These two vars control the interaction of jumps performed by ' and `.
@@ -922,7 +922,7 @@ value refers to the number of characters affected."
 
 (defcustom viper-vi-style-in-minibuffer t
   "If t, use vi-style editing in minibuffer.
-Should be set in `~/.viper' file."
+Should be set in `viper-custom-file-name'."
   :type 'boolean
   :group 'viper)
 

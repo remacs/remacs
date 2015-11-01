@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual., Abbrevs, This is part of the Emacs manual., Top
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 1999-2013 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 1999-2015 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Maintaining
@@ -8,7 +8,7 @@
   This chapter describes Emacs features for maintaining large
 programs.  If you are maintaining a large Lisp program, then in
 addition to the features described here, you may find
-the @file{ERT} (``Emacs Lisp Regression Testing'') library useful
+the Emacs Lisp Regression Testing (ERT) library useful
 (@pxref{Top,,ERT,ert, Emacs Lisp Regression Testing}).
 
 @menu
@@ -31,11 +31,11 @@ versions of a source file, storing information such as the creation
 time of each version, who made it, and a description of what was
 changed.
 
-  The Emacs version control interface is called @dfn{VC}@.  VC commands
-work with several different version control systems; currently, it
-supports GNU Arch, Bazaar, CVS, Git, Mercurial, Monotone, RCS,
+  The Emacs version control interface is called @dfn{VC}@.  VC
+commands work with several different version control systems;
+currently, it supports Bazaar, CVS, Git, Mercurial, Monotone, RCS,
 SCCS/CSSC, and Subversion.  Of these, the GNU project distributes CVS,
-Arch, RCS, and Bazaar.
+RCS, and Bazaar.
 
   VC is enabled automatically whenever you visit a file governed by a
 version control system.  To disable VC entirely, set the customizable
@@ -163,14 +163,6 @@ similar to CVS but without its problems (e.g., it supports atomic
 commits of filesets, and versioning of directories, symbolic links,
 meta-data, renames, copies, and deletes).
 
-@cindex GNU Arch
-@cindex Arch
-@item
-GNU Arch is one of the earliest @dfn{decentralized} version control
-systems (the other being Monotone).  @xref{VCS Concepts}, for a
-description of decentralized version control systems.  It is no longer
-under active development, and has been deprecated in favor of Bazaar.
-
 @cindex git
 @item
 Git is a decentralized version control system originally invented by
@@ -191,6 +183,18 @@ exception of repository sync operations.
 Bazaar (bzr) is a decentralized version control system that supports
 both repository-based and decentralized versioning.  VC supports most
 basic editing operations under Bazaar.
+
+@cindex SRC
+@cindex src
+@item
+SRC (src) is RCS, reloaded - a specialized version-control system
+designed for single-file projects worked on by only one person.  It
+allows multiple files with independent version-control histories to
+exist in one directory, and is thus particularly well suited for
+maintaining small documents, scripts, and dotfiles.  While it uses RCS
+for revision storage, it presents a modern user interface featuring
+lockless operation and integer sequential version numbers.  VC
+supports almost all SRC operations.
 @end itemize
 
 @node VCS Concepts
@@ -268,8 +272,8 @@ number and severity of conflicts that actually occur.
   SCCS always uses locking.  RCS is lock-based by default but can be
 told to operate in a merging style.  CVS and Subversion are
 merge-based by default but can be told to operate in a locking mode.
-Decentralized version control systems, such as GNU Arch, Git, and
-Mercurial, are exclusively merging-based.
+Decentralized version control systems, such as Git and Mercurial, are
+exclusively merging-based.
 
   VC mode supports both locking and merging version control.  The
 terms ``commit'' and ``update'' are used in newer version control
@@ -391,7 +395,7 @@ instance, @samp{jim}), that is displayed as @samp{RCS:jim:1.3}.
 to the master repository.
 
   On a graphical display, you can move the mouse over this mode line
-indicator to pop up a ``tool-tip'', which displays a more verbose
+indicator to pop up a tool-tip, which displays a more verbose
 description of the version control status.  Pressing @kbd{Mouse-1}
 over the indicator pops up a menu of VC commands, identical to
 @samp{Tools / Version Control} on the menu bar.
@@ -437,14 +441,14 @@ VC fileset.
 @findex vc-next-action
 @kindex C-x v v
   The principal VC command is a multi-purpose command, @kbd{C-x v v}
-(@code{vc-next-action}), which performs the ``most appropriate''
+(@code{vc-next-action}), which performs the most appropriate
 action on the current VC fileset: either registering it with a version
 control system, or committing it, or unlocking it, or merging changes
 into it.  The precise actions are described in detail in the following
 subsections.  You can use @kbd{C-x v v} either in a file-visiting
 buffer or in a VC Directory buffer.
 
-  Note that VC filesets are distinct from the ``named filesets'' used
+  Note that VC filesets are distinct from the named filesets used
 for viewing and visiting files in functional groups
 (@pxref{Filesets}).  Unlike named filesets, VC filesets are not named
 and don't persist across sessions.
@@ -465,8 +469,8 @@ and don't persist across sessions.
 @item
 If there is more than one file in the VC fileset and the files have
 inconsistent version control statuses, signal an error.  (Note,
-however, that a fileset is allowed to include both ``newly-added''
-files and ``modified'' files; @pxref{Registering}.)
+however, that a fileset is allowed to include both newly-added
+files and modified files; @pxref{Registering}.)
 
 @item
 If none of the files in the VC fileset are registered with a version
@@ -487,10 +491,10 @@ commit.  @xref{Log Buffer}.
 If committing to a shared repository, the commit may fail if the
 repository that has been changed since your last update.  In that
 case, you must perform an update before trying again.  On a
-decentralized version control system, use @kbd{C-x v +} (@pxref{VC
-Pull}) or @kbd{C-x v m} (@pxref{Merging}).  On a centralized version
-control system, type @kbd{C-x v v} again to merge in the repository
-changes.
+decentralized version control system, use @kbd{C-x v +}
+(@pxref{Pulling / Pushing}) or @kbd{C-x v m} (@pxref{Merging}).
+On a centralized version control system, type @kbd{C-x v v} again to
+merge in the repository changes.
 
 @item
 Finally, if you are using a centralized version control system, check
@@ -498,7 +502,7 @@ if each work file in the VC fileset is up-to-date.  If any file has
 been changed in the repository, offer to update it.
 @end itemize
 
-  These rules also apply when you use RCS in its ``non-locking'' mode,
+  These rules also apply when you use RCS in its non-locking mode,
 except that changes are not automatically merged from the repository.
 Nothing informs you if another user has committed changes in the same
 file since you began editing it; when you commit your revision, his
@@ -543,7 +547,7 @@ the lock and make the file read-only again.
 
 @item
 If each file is locked by another user, ask whether you want to
-``steal the lock''.  If you say yes, the file becomes locked by you,
+steal the lock.  If you say yes, the file becomes locked by you,
 and a warning message is sent to the user who had formerly locked the
 file.
 @end itemize
@@ -578,11 +582,11 @@ If the fileset is unmodified (and unlocked), this checks the specified
 revision into the working tree.  You can also specify a revision on
 another branch by giving its revision or branch ID (@pxref{Switching
 Branches}).  An empty argument (i.e., @kbd{C-u C-x v v @key{RET}})
-checks out the latest (``head'') revision on the current branch.
+checks out the latest (head) revision on the current branch.
 
-This signals an error on a decentralized version control system.
+This is silently ignored on a decentralized version control system.
 Those systems do not let you specify your own revision IDs, nor do
-they use the concept of ``checking out'' individual files.
+they use the concept of checking out individual files.
 @end itemize
 
 @node Log Buffer
@@ -599,6 +603,7 @@ the buffer and commit the change, together with your log entry.
 @cindex Log Edit mode
 @cindex mode, Log Edit
 @vindex vc-log-mode-hook
+@c FIXME: Mention log-edit-mode-hook here?  --xfq
   The major mode for the @file{*vc-log*} buffer is Log Edit mode, a
 variant of Text mode (@pxref{Text Mode}).  On entering Log Edit mode,
 Emacs runs the hooks @code{text-mode-hook} and @code{vc-log-mode-hook}
@@ -629,7 +634,7 @@ support it, the header is treated as part of the log entry.
 @findex log-edit-show-files
 @kindex C-c C-d @r{(Log Edit mode)}
 @findex log-edit-show-diff
-  While in the @file{*vc-log*} buffer, the ``current VC fileset'' is
+  While in the @file{*vc-log*} buffer, the current VC fileset is
 considered to be the fileset that will be committed if you type
 @w{@kbd{C-c C-c}}.  To view a list of the files in the VC fileset,
 type @w{@kbd{C-c C-f}} (@code{log-edit-show-files}).  To view a diff
@@ -652,7 +657,7 @@ opposite way of working---generating ChangeLog entries from the Log
 Edit buffer.
 @end ifnottex
 
-  To abort a commit, just @strong{don't} type @kbd{C-c C-c} in that
+  To abort a commit, just @emph{don't} type @kbd{C-c C-c} in that
 buffer.  You can switch buffers and do other editing.  As long as you
 don't try to make another commit, the entry you were editing remains
 in the @file{*vc-log*} buffer, and you can go back to that buffer at
@@ -705,7 +710,7 @@ under, it prompts for a repository type, creates a new repository, and
 registers the file into that repository.
 
   On most version control systems, registering a file with @kbd{C-x v
-i} or @kbd{C-x v v} adds it to the ``working tree'' but not to the
+i} or @kbd{C-x v v} adds it to the working tree but not to the
 repository.  Such files are labeled as @samp{added} in the VC
 Directory buffer, and show a revision ID of @samp{@@@@} in the mode
 line.  To make the registration take effect in the repository, you
@@ -819,8 +824,8 @@ window.
 @kindex C-x v g
   Many version control systems allow you to view files @dfn{annotated}
 with per-line revision information, by typing @kbd{C-x v g}
-(@code{vc-annotate}).  This creates a new buffer (the ``annotate
-buffer'') displaying the file's text, with each line colored to show
+(@code{vc-annotate}).  This creates a new ``annotate'' buffer
+displaying the file's text, with each line colored to show
 how old it is.  Red text is new, blue is old, and intermediate colors
 indicate intermediate ages.  By default, the color is scaled over the
 full range of ages, such that the oldest changes are blue, and the
@@ -831,7 +836,7 @@ arguments using the minibuffer: the revision to display and annotate
 (instead of the current file contents), and the time span in days the
 color range should cover.
 
-  From the annotate buffer, these and other color scaling options are
+  From the ``annotate'' buffer, these and other color scaling options are
 available from the @samp{VC-Annotate} menu.  In this buffer, you can
 also use the following keys to browse the annotations of past revisions,
 view diffs, or view log entries:
@@ -896,11 +901,11 @@ Display the change history for the current repository
 (@code{vc-print-root-log}).
 
 @item C-x v I
-Display the changes that a pull operation will retrieve
+Display the changes that a ``pull'' operation will retrieve
 (@code{vc-log-incoming}).
 
 @item C-x v O
-Display the changes that will be sent by the next push operation
+Display the changes that will be sent by the next ``push'' operation
 (@code{vc-log-outgoing}).
 @end table
 
@@ -936,13 +941,13 @@ revision at point.  A second @key{RET} hides it again.
   On a decentralized version control system, the @kbd{C-x v I}
 (@code{vc-log-incoming}) command displays a log buffer showing the
 changes that will be applied, the next time you run the version
-control system's ``pull'' command to get new revisions from another
-repository (@pxref{VC Pull}).  This other repository is the default
+control system's pull command to get new revisions from another
+repository (@pxref{Pulling / Pushing}).  This other repository is the default
 one from which changes are pulled, as defined by the version control
 system; with a prefix argument, @code{vc-log-incoming} prompts for a
 specific repository.  Similarly, @kbd{C-x v O}
 (@code{vc-log-outgoing}) shows the changes that will be sent to
-another repository, the next time you run the ``push'' command; with a
+another repository, the next time you run the push command; with a
 prefix argument, it prompts for a specific destination repository.
 
   In the @file{*vc-change-log*} buffer, you can use the following keys
@@ -1013,8 +1018,6 @@ Revert the work file(s) in the current VC fileset to the last revision
 (@code{vc-revert}).
 @end table
 
-@c `C-x v c' (vc-rollback) was removed, since it's RCS/SCCS specific.
-
 @kindex C-x v u
 @findex vc-revert
 @vindex vc-revert-show-diff
@@ -1043,12 +1046,14 @@ Ignore a file under current version control system.  (@code{vc-ignore}).
 
 @kindex C-x v G
 @findex vc-ignore
-  Many source trees contain some files that do not need to be versioned,
-such as editor backups, object or bytecode files, and built programs.
-You can simply not add them, but then they’ll always crop up as
-unknown files.  You can also tell the version control system to ignore
-these files by adding them to the ignore file at the top of the tree.
-@kbd{C-x v G} (@code{vc-ignore}) can help you do this.
+  Many source trees contain some files that do not need to be
+versioned, such as editor backups, object or bytecode files, and built
+programs.  You can simply not add them, but then they'll always crop
+up as unknown files.  You can also tell the version control system to
+ignore these files by adding them to the ignore file at the top of the
+tree.  @kbd{C-x v G} (@code{vc-ignore}) can help you do this.  When
+called with a prefix argument, you can remove a file from the ignored
+file list.
 
 @node VC Directory Mode
 @subsection VC Directory Mode
@@ -1099,7 +1104,7 @@ PCL-CVS, pcl-cvs, PCL-CVS---The Emacs Front-End to CVS}.
   The VC Directory buffer contains a list of version-controlled files
 and their version control statuses.  It lists files in the current
 directory (the one specified when you called @kbd{C-x v d}) and its
-subdirectories, but only those with a ``noteworthy'' status.  Files
+subdirectories, but only those with a noteworthy status.  Files
 that are up-to-date (i.e., the same as in the repository) are
 omitted.  If all the files in a subdirectory are up-to-date, the
 subdirectory is not listed either.  As an exception, if a file has
@@ -1164,7 +1169,7 @@ directories that are used internally by version control systems.
 @subsubsection VC Directory Commands
 
   Emacs provides several commands for navigating the VC Directory
-buffer, and for ``marking'' files as belonging to the current VC
+buffer, and for marking files as belonging to the current VC
 fileset.
 
 @table @kbd
@@ -1240,7 +1245,7 @@ Revisions}), and @w{@kbd{C-x v u}} (@pxref{VC Undo}).
 
   The VC Directory buffer also defines some single-key shortcuts for
 VC commands with the @kbd{C-x v} prefix: @kbd{=}, @kbd{+}, @kbd{l},
-@kbd{i}, @kbd{D}, @kbd{L}, @kbd{G} and @kbd{v}.
+@kbd{i}, @kbd{D}, @kbd{L}, @kbd{G}, @kbd{I} and @kbd{v}.
 
   For example, you can commit a set of edited files by opening a VC
 Directory buffer, where the files are listed with the @samp{edited}
@@ -1286,8 +1291,8 @@ bring them back at a later time).
 
   One use of version control is to support multiple independent lines
 of development, which are called @dfn{branches}.  Amongst other
-things, branches can be used for maintaining separate ``stable'' and
-``development'' versions of a program, and for developing unrelated
+things, branches can be used for maintaining separate stable and
+development versions of a program, and for developing unrelated
 features in isolation from one another.
 
   VC's support for branch operations is currently fairly limited.  For
@@ -1300,7 +1305,7 @@ different branches.
 
 @menu
 * Switching Branches::    How to get to another existing branch.
-* VC Pull::               Updating the contents of a branch.
+* Pulling / Pushing::     Receiving/sending changes from/to elsewhere.
 * Merging::               Transferring changes between branches.
 * Creating Branches::     How to start a new branch.
 @end menu
@@ -1314,11 +1319,18 @@ implemented, and these differences cannot be entirely concealed by VC.
   On some decentralized version control systems, including Bazaar and
 Mercurial in its normal mode of operation, each branch has its own
 working directory tree, so switching between branches just involves
-switching directories.  On Git, switching between branches is done
-using the @command{git branch} command, which changes the contents of
-the working tree itself.
+switching directories.  On Git, branches are normally @dfn{co-located}
+in the same directory, and switching between branches is done using
+the @command{git checkout} command, which changes the contents of the
+working tree to match the branch you switch to.  Bazaar also supports
+co-located branches, in which case the @command{bzr switch} command
+will switch branches in the current directory.  With Subversion, you
+switch to another branch using the @command{svn switch} command.
 
-  On centralized version control systems, you can switch between
+  The VC command to switch to another branch in the current directory
+is @kbd{C-x v r @var{branch-name} @key{RET}} (@code{vc-retrieve-tag}).
+
+  On centralized version control systems, you can also switch between
 branches by typing @kbd{C-u C-x v v} in an up-to-date work file
 (@pxref{Advanced C-x v v}), and entering the revision ID for a
 revision on another branch.  On CVS, for instance, revisions on the
@@ -1337,8 +1349,8 @@ unlocks (write-protects) the working tree.
 branch until you switch away; for instance, any VC filesets that you
 commit will be committed to that specific branch.
 
-@node VC Pull
-@subsubsection Pulling Changes into a Branch
+@node Pulling / Pushing
+@subsubsection Pulling/Pushing Changes into/from a Branch
 
 @table @kbd
 @item C-x v +
@@ -1347,6 +1359,11 @@ by ``pulling in'' changes from another location.
 
 On a centralized version control system, update the current VC
 fileset.
+
+@item C-x v P
+On a decentralized version control system, ``push'' changes from the
+current branch to another location.  This concept does not exist
+for centralized version control systems.
 @end table
 
 @kindex C-x v +
@@ -1375,6 +1392,21 @@ Log}.
 
   On a centralized version control system like CVS, @kbd{C-x v +}
 updates the current VC fileset from the repository.
+
+@kindex C-x v P
+@findex vc-push
+  On a decentralized version control system, the command @kbd{C-x v P}
+(@code{vc-push}) sends changes from your current branch to another location.
+With a prefix argument, the command prompts for the exact
+version control command to use, which lets you specify where to push
+changes.  Otherwise, it pushes to a default location determined
+by the version control system.
+
+  Prior to pushing, you can use @kbd{C-x v O} (@code{vc-log-outgoing})
+to view a log buffer of the changes to be sent.  @xref{VC Change Log}.
+
+This command is currently supported only by Bazaar, Git, and Mercurial.
+It signals an error for centralized version control systems.
 
 @node Merging
 @subsubsection Merging Branches
@@ -1464,9 +1496,11 @@ different revision with @kbd{C-u C-x v v}.
 @cindex change log
   Many software projects keep a @dfn{change log}.  This is a file,
 normally named @file{ChangeLog}, containing a chronological record of
-when and how the program was changed.  Sometimes, there are several
-change log files, each recording the changes in one directory or
-directory tree.
+when and how the program was changed.  Sometimes, these files are
+automatically generated from the change log entries stored in version
+control systems, or are used to generate these change log entries.
+Sometimes, there are several change log files, each recording the
+changes in one directory or directory tree.
 
 @menu
 * Change Log Commands:: Commands for editing change log files.
@@ -1556,7 +1590,7 @@ dated in May 1993, with two items and one item respectively.
 @smallexample
 1993-05-25  Richard Stallman  <rms@@gnu.org>
 
-        * man.el: Rename symbols `man-*' to `Man-*'.
+        * man.el: Rename symbols 'man-*' to 'Man-*'.
         (manual-entry): Make prompt string clearer.
 
         * simple.el (blink-matching-paren-distance):
@@ -2373,11 +2407,11 @@ information about the project.
 
   A project may contain one or more @dfn{targets}.  A target can be an
 object file, executable program, or some other type of file, which is
-``built'' from one or more of the files in the project.
+built from one or more of the files in the project.
 
   To add a new @dfn{target} to a project, type @kbd{C-c . t}
 (@code{M-x ede-new-target}).  This command also asks if you wish to
-``add'' the current file to that target, which means that the target
+add the current file to that target, which means that the target
 is to be built from that file.  After you have defined a target, you
 can add more files to it by typing @kbd{C-c . a}
 (@code{ede-add-file}).

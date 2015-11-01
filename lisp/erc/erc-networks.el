@@ -1,9 +1,9 @@
 ;;; erc-networks.el --- IRC networks
 
-;; Copyright (C) 2002, 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2002, 2004-2015 Free Software Foundation, Inc.
 
 ;; Author: Mario Lang <mlang@lexx.delysid.org>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: comm
 
 ;; This file is part of GNU Emacs.
@@ -588,7 +588,7 @@ PORTS is either a number, a list of numbers, or a list of port ranges."
     (LagNet "lagnet.org.za")
     (Librenet "librenet.net")
     (LinkNet "link-net.org")
-    (LinuxChix "cats\.meow\.at\\|linuxchix\.org")
+    (LinuxChix "cats\\.meow\\.at\\|linuxchix\\.org")
     (Liquidized "liquidized.net")
     (M-IRC "m-sys.org")
     (MagicStar "magicstar.net")
@@ -724,16 +724,17 @@ MATCHER is used to find a corresponding network to a server while connected to
 server parameter NETWORK if provided, otherwise parse the server name and
 search for a match in `erc-networks-alist'."
   ;; The server made it easy for us and told us the name of the NETWORK
-  (if (assoc "NETWORK" erc-server-parameters)
-      (intern (cdr (assoc "NETWORK" erc-server-parameters)))
-    (or
-     ;; Loop through `erc-networks-alist' looking for a match.
-     (let ((server (or erc-server-announced-name erc-session-server)))
-       (cl-loop for (name matcher) in erc-networks-alist
-		when (and matcher
-			  (string-match (concat matcher "\\'") server))
-		do (cl-return name)))
-     'Unknown)))
+  (let ((network-name (cdr (assoc "NETWORK" erc-server-parameters))))
+    (if network-name
+	(intern network-name)
+      (or
+       ;; Loop through `erc-networks-alist' looking for a match.
+       (let ((server (or erc-server-announced-name erc-session-server)))
+	 (cl-loop for (name matcher) in erc-networks-alist
+		  when (and matcher
+			    (string-match (concat matcher "\\'") server))
+		  do (cl-return name)))
+       'Unknown))))
 
 (defun erc-network ()
   "Return the value of `erc-network' for the current server."
@@ -781,9 +782,9 @@ PORTS should be a list of either:
   numbers between LOW and HIGH (inclusive) is returned.
 
 As an example:
-  (erc-ports-list '(1)) => (1)
-  (erc-ports-list '((1 5))) => (1 2 3 4 5)
-  (erc-ports-list '(1 (3 5))) => (1 3 4 5)"
+  (erc-ports-list \\='(1)) => (1)
+  (erc-ports-list \\='((1 5))) => (1 2 3 4 5)
+  (erc-ports-list \\='(1 (3 5))) => (1 3 4 5)"
   (let (result)
     (dolist (p ports)
       (cond ((numberp p)
@@ -865,4 +866,3 @@ VALUE is the options value.")
 ;; indent-tabs-mode: t
 ;; tab-width: 8
 ;; End:
-

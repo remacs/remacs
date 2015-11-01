@@ -1,6 +1,6 @@
 ;;; ebnf2ps.el --- translate an EBNF to a syntactic chart on PostScript
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: Vinicius Jose Latorre <viniciusjl@ig.com.br>
 ;; Maintainer: Vinicius Jose Latorre <viniciusjl@ig.com.br>
@@ -1899,7 +1899,7 @@ It's only used when `ebnf-syntax' is `iso-ebnf'."
   :group 'ebnf-syntactic)
 
 
-(defcustom ebnf-file-suffix-regexp "\.[Bb][Nn][Ff]$"
+(defcustom ebnf-file-suffix-regexp "\\.[Bb][Nn][Ff]$"
   "Specify file name suffix that contains EBNF.
 
 See `ebnf-eps-directory' command."
@@ -2731,7 +2731,7 @@ See also `ebnf-syntax-buffer'."
       (ebnf-syntax                      . 'ebnf)
       (ebnf-iso-alternative-p           . nil)
       (ebnf-iso-normalize-p             . nil)
-      (ebnf-file-suffix-regexp          . "\.[Bb][Nn][Ff]$")
+      (ebnf-file-suffix-regexp          . "\\.[Bb][Nn][Ff]$")
       (ebnf-eps-prefix                  . "ebnf--")
       (ebnf-eps-header-font             . '(11 Helvetica "Black" "White" bold))
       (ebnf-eps-header                  . nil)
@@ -3912,7 +3912,7 @@ See documentation for `ebnf-terminal-shape', `ebnf-non-terminal-shape' and
  {/Effect EffectP def
   /fP F ForegroundP SetRGB BackgroundP aload pop true BG S
   /Effect 0 def
-  ( :) S false BG}if
+  ( :) S false BG}{pop}ifelse
  xw yw moveto
  hT EL RA
  xp yw moveto
@@ -6345,7 +6345,7 @@ killed after process termination."
   (when ebnf-log
     (with-current-buffer (get-buffer-create "*Ebnf2ps Log*")
       (goto-char (point-max))
-      (insert (apply 'format format-str args) "\n"))))
+      (insert (apply #'format-message format-str args) "\n"))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

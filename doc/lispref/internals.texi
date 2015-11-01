@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1993, 1998-1999, 2001-2013 Free Software
+@c Copyright (C) 1990-1993, 1998-1999, 2001-2015 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node GNU Emacs Internals
@@ -14,7 +14,9 @@ internal aspects of GNU Emacs that may be of interest to C programmers.
 * Building Emacs::      How the dumped Emacs is made.
 * Pure Storage::        Kludge to make preloaded Lisp functions shareable.
 * Garbage Collection::  Reclaiming space for Lisp objects no longer used.
+* Stack-allocated Objects::    Temporary conses and strings on C stack.
 * Memory Usage::        Info about total size of Lisp objects made so far.
+* C Dialect::           What C variant Emacs is written in.
 * Writing Emacs Primitives::   Writing C code for Emacs.
 * Object Internals::    Data formats of buffers, windows, processes.
 * C Integer Types::     How C integer types are used inside Emacs.
@@ -111,11 +113,18 @@ drawback that the documentation strings take up space in Emacs all the
 time.)
 @end itemize
 
+@cindex change @code{load-path} at configure time
+@cindex @option{--enable-locallisppath} option to @command{configure}
   It is not advisable to put anything in @file{site-load.el} or
 @file{site-init.el} that would alter any of the features that users
 expect in an ordinary unmodified Emacs.  If you feel you must override
 normal features for your site, do it with @file{default.el}, so that
 users can override your changes if they wish.  @xref{Startup Summary}.
+Note that if either @file{site-load.el} or @file{site-init.el} changes
+@code{load-path}, the changes will be lost after dumping.
+@xref{Library Search}.  To make a permanent change to
+@code{load-path}, use the @option{--enable-locallisppath} option
+of @command{configure}.
 
   In a package that can be preloaded, it is sometimes necessary (or
 useful) to delay certain evaluations until Emacs subsequently starts
@@ -249,7 +258,7 @@ accessible objects are also accessible.
 matter what the Lisp program or the user does, it is impossible to refer
 to them, since there is no longer a way to reach them.  Their space
 might as well be reused, since no one will miss them.  The second
-(``sweep'') phase of the garbage collector arranges to reuse them.
+(sweep) phase of the garbage collector arranges to reuse them.
 
 @c ??? Maybe add something describing weak hash tables here?
 
@@ -505,6 +514,11 @@ created in this Emacs session.  Each of these counters increments for
 a certain kind of object.  See the documentation string for details.
 @end defun
 
+@defun memory-info
+This functions returns an amount of total system memory and how much
+of it is free.  On an unsupported system, the value may be @code{nil}.
+@end defun
+
 @defvar gcs-done
 This variable contains the total number of garbage collections
 done so far in this Emacs session.
@@ -512,9 +526,38 @@ done so far in this Emacs session.
 
 @defvar gc-elapsed
 This variable contains the total number of seconds of elapsed time
-during garbage collection so far in this Emacs session, as a floating
-point number.
+during garbage collection so far in this Emacs session, as a
+floating-point number.
 @end defvar
+
+@node Stack-allocated Objects
+@section Stack-allocated Objects
+
+@cindex stack allocated Lisp objects
+@cindex Lisp objects, stack-allocated
+  The garbage collector described above is used to manage data visible
+from Lisp programs, as well as most of the data internally used by the
+Lisp interpreter.  Sometimes it may be useful to allocate temporary
+internal objects using the C stack of the interpreter.  This can help
+performance, as stack allocation is typically faster than using heap
+memory to allocate and the garbage collector to free.  The downside is
+that using such objects after they are freed results in undefined
+behavior, so uses should be well thought out and carefully debugged by
+using the @code{GC_CHECK_MARKED_OBJECTS} feature (see
+@file{src/alloc.c}).  In particular, stack-allocated objects should
+never be made visible to user Lisp code.
+
+  Currently, cons cells and strings can be allocated this way.  This
+is implemented by C macros like @code{AUTO_CONS} and
+@code{AUTO_STRING} that define a named @code{Lisp_Object} with block
+lifetime.  These objects are not freed by the garbage collector;
+instead, they have automatic storage duration, i.e., they are
+allocated like local variables and are automatically freed at the end
+of execution of the C block that defined the object.
+
+  For performance reasons, stack-allocated strings are limited to
+@acronym{ASCII} characters, and many of these strings are immutable,
+i.e., calling @code{ASET} on them produces undefined behavior.
 
 @node Memory Usage
 @section Memory Usage
@@ -568,6 +611,19 @@ The total number of strings that have been allocated so far in this
 Emacs session.
 @end defvar
 
+@node C Dialect
+@section C Dialect
+@cindex C programming language
+
+The C part of Emacs is portable to C99 or later: C11-specific features such
+as @samp{<stdalign.h>} and @samp{_Noreturn} are not used without a check,
+typically at configuration time, and the Emacs build procedure
+provides a substitute implementation if necessary.  Some C11 features,
+such as anonymous structures and unions, are too difficult to emulate,
+so they are avoided entirely.
+
+At some point in the future the base C dialect will no doubt change to C11.
+
 @node Writing Emacs Primitives
 @section Writing Emacs Primitives
 @cindex primitive function internals
@@ -582,7 +638,6 @@ to read the source, but we can explain some things here.
 @file{eval.c}.  (An ordinary function would have the same general
 appearance.)
 
-@cindex garbage collection protection
 @smallexample
 @group
 DEFUN ("or", For, Sor, 0, UNEVALLED, 0,
@@ -592,15 +647,10 @@ The remaining args are not evalled at all.
 If all args return nil, return nil.
 @end group
 @group
-usage: (or CONDITIONS ...)  */)
+usage: (or CONDITIONS...)  */)
   (Lisp_Object args)
 @{
-  register Lisp_Object val = Qnil;
-  struct gcpro gcpro1;
-@end group
-
-@group
-  GCPRO1 (args);
+  Lisp_Object val = Qnil;
 @end group
 
 @group
@@ -610,11 +660,11 @@ usage: (or CONDITIONS ...)  */)
       if (!NILP (val))
         break;
       args = XCDR (args);
+      QUIT;
     @}
 @end group
 
 @group
-  UNGCPRO;
   return val;
 @}
 @end group
@@ -718,36 +768,25 @@ a primitive to accept only a certain type of argument, you must check
 the type explicitly using a suitable predicate (@pxref{Type Predicates}).
 @cindex type checking internals
 
-@cindex @code{GCPRO} and @code{UNGCPRO}
+@cindex garbage collection protection
 @cindex protect C variables from garbage collection
-  Within the function @code{For} itself, note the use of the macros
-@code{GCPRO1} and @code{UNGCPRO}.  These macros are defined for the
-sake of the few platforms which do not use Emacs' default
-stack-marking garbage collector.  The @code{GCPRO1} macro ``protects''
-a variable from garbage collection, explicitly informing the garbage
-collector that that variable and all its contents must be as
-accessible.  GC protection is necessary in any function which can
-perform Lisp evaluation by calling @code{eval_sub} or @code{Feval} as
-a subroutine, either directly or indirectly.
+  Within the function @code{For} itself, the local variable
+@code{args} refers to objects controlled by Emacs's stack-marking
+garbage collector.  Although the garbage collector does not reclaim
+objects reachable from C @code{Lisp_Object} stack variables, it may
+move non-object components of an object, such as string contents; so
+functions that access non-object components must take care to refetch
+their addresses after performing Lisp evaluation.  Lisp evaluation can
+occur via calls to @code{eval_sub} or @code{Feval}, either directly or
+indirectly.
 
-  It suffices to ensure that at least one pointer to each object is
-GC-protected.  Thus, a particular local variable can do without
-protection if it is certain that the object it points to will be
-preserved by some other pointer (such as another local variable that
-has a @code{GCPRO}).  Otherwise, the local variable needs a
-@code{GCPRO}.
-
-  The macro @code{GCPRO1} protects just one local variable.  If you
-want to protect two variables, use @code{GCPRO2} instead; repeating
-@code{GCPRO1} will not work.  Macros @code{GCPRO3}, @code{GCPRO4},
-@code{GCPRO5}, and @code{GCPRO6} also exist.  All these macros
-implicitly use local variables such as @code{gcpro1}; you must declare
-these explicitly, with type @code{struct gcpro}.  Thus, if you use
-@code{GCPRO2}, you must declare @code{gcpro1} and @code{gcpro2}.
-
-  @code{UNGCPRO} cancels the protection of the variables that are
-protected in the current function.  It is necessary to do this
-explicitly.
+@cindex @code{QUIT}, use in Lisp primitives
+  Note the call to the @code{QUIT} macro inside the loop: this macro
+checks whether the user pressed @kbd{C-g}, and if so, aborts the
+processing.  You should do that in any loop that can potentially
+require a large number of iterations; in this case, the list of
+arguments could be very long.  This increases Emacs responsiveness and
+improves user experience.
 
   You must not use C initializers for static or global variables unless
 the variables are never written once Emacs is dumped.  These variables
@@ -842,14 +881,14 @@ DEFUN ("coordinates-in-window-p", Fcoordinates_in_window_p,
 @group
   switch (coordinates_in_window (w, x, y))
     @{
-    case ON_NOTHING:            /* NOT in window at all. */
+    case ON_NOTHING:            /* NOT in window at all.  */
       return Qnil;
 @end group
 
     ...
 
 @group
-    case ON_MODE_LINE:          /* In mode line of window. */
+    case ON_MODE_LINE:          /* In mode line of window.  */
       return Qmode_line;
 @end group
 
@@ -876,9 +915,7 @@ the Lisp function @code{funcall} accepts an unlimited number of
 arguments, in C it takes two: the number of Lisp-level arguments, and a
 one-dimensional array containing their values.  The first Lisp-level
 argument is the Lisp function to call, and the rest are the arguments to
-pass to it.  Since @code{Ffuncall} can call the evaluator, you must
-protect pointers from garbage collection around the call to
-@code{Ffuncall}.
+pass to it.
 
   The C functions @code{call0}, @code{call1}, @code{call2}, and so on,
 provide handy ways to call a Lisp function conveniently with a fixed
@@ -912,7 +949,7 @@ following basic data types: integer, symbol, string, cons cell, float,
 vectorlike or miscellaneous object.  Each of these data types has the
 corresponding tag value.  All tags are enumerated by @code{enum Lisp_Type}
 and placed into a 3-bit bitfield of the @code{Lisp_Object}.  The rest of the
-bits is the value itself.  Integer values are immediate, i.e., directly
+bits is the value itself.  Integers are immediate, i.e., directly
 represented by those @dfn{value bits}, and all other objects are represented
 by the C pointers to a corresponding object allocated from the heap.  Width
 of the @code{Lisp_Object} is platform- and configuration-dependent: usually
@@ -940,7 +977,7 @@ Array, a fixed-size set of Lisp objects which may be accessed by an index.
 Symbol, the unique-named entity commonly used as an identifier.
 
 @item struct Lisp_Float
-Floating point value.
+Floating-point value.
 
 @item union Lisp_Misc
 Miscellaneous kinds of objects which don't fit into any of the above.
@@ -1261,6 +1298,8 @@ except to shape their child windows.  Emacs Lisp programs usually have
 no access to the parent windows; they operate on the windows at the
 leaves of the tree, which actually display buffers.
 
+@c FIXME: These two slots and the 'buffer' slot below were replaced
+@c with a single slot 'contents' on 2013-03-28.  --xfq
 @item hchild
 @itemx vchild
 These fields contain the window's leftmost child and its topmost child
@@ -1338,7 +1377,7 @@ The buffer's value of point, as of the last time a redisplay completed
 in this window.
 
 @item last_had_star
-A non-@code{nil} value means the window's buffer was ``modified'' when the
+A non-@code{nil} value means the window's buffer was modified when the
 window was last updated.
 
 @item vertical_scroll_bar
@@ -1432,11 +1471,6 @@ The position in the buffer for which the line number is known, or
 @code{nil} meaning none is known.  If it is a buffer, don't display
 the line number as long as the window shows that buffer.
 
-@item region_showing
-If the region (or part of it) is highlighted in this window, this field
-holds the mark position that made one end of that region.  Otherwise,
-this field is @code{nil}.
-
 @item column_number_displayed
 The column number currently displayed in this window's mode line, or @code{nil}
 if column numbers are not being displayed.
@@ -1464,12 +1498,10 @@ process.  For a network or serial process, it is @code{nil} if the
 process is running or @code{t} if the process is stopped.
 
 @item filter
-If non-@code{nil}, a function used to accept output from the process
-instead of a buffer.
+A function used to accept output from the process.
 
 @item sentinel
-If non-@code{nil}, a function called whenever the state of the process
-changes.
+A function called whenever the state of the process changes.
 
 @item buffer
 The associated buffer of the process.
@@ -1561,7 +1593,7 @@ fit in @code{int} range.
 Do not assume that signed integer arithmetic wraps around on overflow.
 This is no longer true of Emacs porting targets: signed integer
 overflow has undefined behavior in practice, and can dump core or
-even cause earlier or later code to behave ``illogically''.  Unsigned
+even cause earlier or later code to behave illogically.  Unsigned
 overflow does wrap around reliably, modulo a power of two.
 
 @item
@@ -1573,7 +1605,9 @@ similar advice may apply to the unsigned counterparts (e.g.,
 of @code{intptr_t}).
 
 @item
-Prefer @code{int} for Emacs character codes, in the range 0 ..@: 0x3FFFFF.
+Prefer @code{int} for Emacs character codes, in the range 0 ..@: 0x3FFFFF@.
+More generally, prefer @code{int} for integers known to be in
+@code{int} range, e.g., screen column counts.
 
 @item
 Prefer @code{ptrdiff_t} for sizes, i.e., for integers bounded by the
@@ -1583,6 +1617,17 @@ for signed types.  Using @code{ptrdiff_t} limits objects to
 @code{PTRDIFF_MAX} bytes, but larger objects would cause trouble
 anyway since they would break pointer subtraction, so this does not
 impose an arbitrary limit.
+
+@item
+Avoid @code{ssize_t} except when communicating to low-level APIs that
+have @code{ssize_t}-related limitations.  Although it's equivalent to
+@code{ptrdiff_t} on typical platforms, @code{ssize_t} is occasionally
+narrower, so using it for size-related calculations could overflow.
+Also, @code{ptrdiff_t} is more ubiquitous and better-standardized, has
+standard @code{printf} formats, and is the basis for Emacs's internal
+size-overflow checking.  When using @code{ssize_t}, please note that
+POSIX requires support only for values in the range @minus{}1 ..@:
+@code{SSIZE_MAX}.
 
 @item
 Prefer @code{intptr_t} for internal representations of pointers, or
@@ -1606,7 +1651,7 @@ although @code{off_t} is always signed, @code{time_t} need not be.
 
 @item
 Prefer the Emacs-defined type @code{printmax_t} for representing
-values that might be any signed integer value that can be printed,
+values that might be any signed integer that can be printed,
 using a @code{printf}-family function.
 
 @item
@@ -1614,20 +1659,21 @@ Prefer @code{intmax_t} for representing values that might be any
 signed integer value.
 
 @item
-In bitfields, prefer @code{unsigned int} or @code{signed int} to
-@code{int}, as @code{int} is less portable: it might be signed, and
-might not be.  Single-bit bit fields are invariably @code{unsigned
-int} so that their values are 0 and 1.
-
-@item
-In C, Emacs commonly uses @code{bool}, 1, and 0 for boolean values.
-Using @code{bool} for booleans can make programs easier to read and a
-bit faster than using @code{int}.  Although it is also OK to use
-@code{int}, this older style is gradually being phased out.  When
+Prefer @code{bool}, @code{false} and @code{true} for booleans.
+Using @code{bool} can make programs easier to read and a bit faster than
+using @code{int}.  Although it is also OK to use @code{int}, @code{0}
+and @code{1}, this older style is gradually being phased out.  When
 using @code{bool}, respect the limitations of the replacement
 implementation of @code{bool}, as documented in the source file
-@file{lib/stdbool.in.h}, so that Emacs remains portable to pre-C99
-platforms.
+@file{lib/stdbool.in.h}.  In particular, boolean bitfields should be of type
+@code{bool_bf}, not @code{bool}, so that they work correctly even when
+compiling Objective C with standard GCC.
+
+@item
+In bitfields, prefer @code{unsigned int} or @code{signed int} to
+@code{int}, as @code{int} is less portable: it might be signed, and
+might not be.  Single-bit bit fields should be @code{unsigned int} or
+@code{bool_bf} so that their values are 0 or 1.
 @end itemize
 
 @c FIXME Mention src/globals.h somewhere in this file?

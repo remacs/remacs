@@ -1,9 +1,9 @@
 ;;; align.el --- align text to a specific column, by regexp -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: convenience languages lisp
 
 ;; This file is part of GNU Emacs.
@@ -937,7 +937,7 @@ throughout the line.
 See `align-rules-list' for more information about these options.
 
 The non-interactive form of the previous example would look something like:
-  \(align-regexp (point-min) (point-max) \"\\\\(\\\\s-*\\\\)(\")
+  (align-regexp (point-min) (point-max) \"\\\\(\\\\s-*\\\\)(\")
 
 This function is a nothing more than a small wrapper that helps you
 construct a rule to pass to `align-region', which does the real work."
@@ -1130,13 +1130,8 @@ TAB-STOP specifies whether SPACING refers to tab-stop boundaries."
       column
     (if (not tab-stop)
 	(+ column spacing)
-      (let ((stops tab-stop-list))
-	(while stops
-	  (if (and (> (car stops) column)
-		   (= (setq spacing (1- spacing)) 0))
-	      (setq column (car stops)
-		    stops nil)
-	    (setq stops (cdr stops)))))
+      (dotimes (_ spacing)
+	(setq column (indent-next-tab-stop column)))
       column)))
 
 (defsubst align-column (pos)
@@ -1353,7 +1348,7 @@ aligner would have dealt with are."
 	      (if real-beg
 		  (goto-char beg)
 		(if (or (not thissep) (eq thissep 'entire))
-		    (error "Cannot determine alignment region for '%s'"
+		    (error "Cannot determine alignment region for `%s'"
 			   (symbol-name (cdr (assq 'title rule)))))
 		(beginning-of-line)
 		(while (and (not (eobp))
@@ -1442,12 +1437,12 @@ aligner would have dealt with are."
                               (message
                                "Aligning `%s' (rule %d of %d) %d%%..."
                                (symbol-name symbol) rule-index rule-count
-                               (/ (* (- (point) real-beg) 100)
-                                  (- end-mark real-beg)))
+                               (floor (* (- (point) real-beg) 100.0)
+                                      (- end-mark real-beg)))
                             (message
                              "Aligning %d%%..."
-                             (/ (* (- (point) real-beg) 100)
-                                (- end-mark real-beg))))))
+                             (floor (* (- (point) real-beg) 100.0)
+                                    (- end-mark real-beg))))))
 
                     ;; if the search ended us on the beginning of
                     ;; the next line, move back to the end of the
@@ -1603,7 +1598,7 @@ aligner would have dealt with are."
 	    rule-index (1+ rule-index)))
     ;; This function can use a lot of temporary markers, so instead of
     ;; waiting for the next GC we delete them immediately (Bug#10047).
-    (set-marker end-mark nil)
+    (when end-mark (set-marker end-mark nil))
     (dolist (m markers)
       (set-marker m nil))
 

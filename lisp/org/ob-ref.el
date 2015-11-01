@@ -1,6 +1,6 @@
 ;;; ob-ref.el --- org-babel functions for referencing external data
 
-;; Copyright (C) 2009-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
 ;; Authors: Eric Schulte
 ;;	 Dan Davison
@@ -40,7 +40,7 @@
 ;; So an example of a simple src block referencing table data in the
 ;; same file would be
 
-;;  #+TBLNAME: sandbox
+;;  #+NAME: sandbox
 ;;  | 1 |         2 | 3 |
 ;;  | 4 | org-babel | 6 |
 ;;
@@ -49,7 +49,7 @@
 ;;  #+end_src
 
 ;;; Code:
-(require 'ob)
+(require 'ob-core)
 (eval-when-compile
   (require 'cl))
 
@@ -83,7 +83,12 @@ the variable."
     (let ((var (match-string 1 assignment))
 	  (ref (match-string 2 assignment)))
       (cons (intern var)
-	    (let ((out (org-babel-read ref)))
+	    (let ((out (save-excursion
+			 (when org-babel-current-src-block-location
+			   (goto-char (if (markerp org-babel-current-src-block-location)
+					  (marker-position org-babel-current-src-block-location)
+					org-babel-current-src-block-location)))
+			 (org-babel-read ref))))
 	      (if (equal out ref)
 		  (if (string-match "^\".*\"$" ref)
 		      (read ref)
@@ -133,7 +138,7 @@ the variable."
 	  (setq ref (substring ref 0 (match-beginning 0))))
 	;; assign any arguments to pass to source block
 	(when (string-match
-	       "^\\(.+?\\)\\(\\[\\(.*\\)\\]\\|\\(\\)\\)\(\\(.*\\)\)$" ref)
+	       "^\\(.+?\\)\\(\\[\\(.*\\)\\]\\|\\(\\)\\)(\\(.*\\))$" ref)
 	  (setq new-refere      (match-string 1 ref))
 	  (setq new-header-args (match-string 3 ref))
 	  (setq new-referent    (match-string 5 ref))
@@ -171,7 +176,7 @@ the variable."
 	    ;;       buffer (marker-buffer id-loc)
 	    ;;       loc (marker-position id-loc))
 	    ;; (move-marker id-loc nil)
-	    (error "Reference '%s' not found in this buffer" ref))
+	    (error "Reference `%s' not found in this buffer" ref))
 	  (cond
 	   (lob-info (setq type 'lob))
 	   (id (setq type 'id))
@@ -219,7 +224,7 @@ returned, or an empty string or \"*\" both of which are
 interpreted to mean the entire range and as such are equivalent
 to \"0:-1\"."
   (if (and (> (length index) 0) (string-match "^\\([^,]*\\),?" index))
-      (let* ((ind-re "\\(\\([-[:digit:]]+\\):\\([-[:digit:]]+\\)\\|\*\\)")
+      (let* ((ind-re "\\(\\([-[:digit:]]+\\):\\([-[:digit:]]+\\)\\|\\*\\)")
 	     (lgth (length lis))
 	     (portion (match-string 1 index))
 	     (remainder (substring index (match-end 0)))

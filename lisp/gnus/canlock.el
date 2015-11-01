@@ -1,6 +1,6 @@
 ;;; canlock.el --- functions for Cancel-Lock feature
 
-;; Copyright (C) 1998-1999, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-1999, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Katsumi Yamaoka <yamaoka@jpl.org>
 ;; Keywords: news, cancel-lock, hmac, sha1, rfc2104
@@ -35,8 +35,9 @@
 ;; Verifying Cancel-Lock is mainly a function of news servers, however,
 ;; you can verify your own article using the command `canlock-verify' in
 ;; the (raw) article buffer.  You will be prompted for the password for
-;; each time if the option `canlock-password' or `canlock-password-for-
-;; verify' is nil.  Note that setting these options is a bit unsafe.
+;; each time if the option `canlock-password' or
+;; `canlock-password-for-verify' is nil.  Note that setting these
+;; options is a bit unsafe.
 
 ;;; Code:
 

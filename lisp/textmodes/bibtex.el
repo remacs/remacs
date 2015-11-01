@@ -1,6 +1,6 @@
 ;;; bibtex.el --- BibTeX mode for GNU Emacs -*- lexical-binding: t -*-
 
-;; Copyright (C) 1992, 1994-1999, 2001-2013 Free Software Foundation,
+;; Copyright (C) 1992, 1994-1999, 2001-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Stefan Schoef <schoef@offis.uni-oldenburg.de>
@@ -433,7 +433,7 @@ is present; but these fields are required otherwise.
 OPTIONAL is a list of optional fields.
 
 Each element of these lists is a list of the form
-  \(FIELD COMMENT INIT ALTERNATIVE).
+  (FIELD COMMENT INIT ALTERNATIVE).
 COMMENT, INIT, and ALTERNATIVE are optional.
 
 FIELD is the name of the field.
@@ -468,7 +468,7 @@ alternatives, starting from zero."
      nil
      (("editor") ("editora") ("editorb") ("editorc")
       ("translator") ("annotator") ("commentator")
-      ("introduction") ("foreword") ("afterword") ("titleaddon")
+      ("introduction") ("foreword") ("afterword") ("subtitle") ("titleaddon")
       ("maintitle") ("mainsubtitle") ("maintitleaddon")
       ("language") ("origlanguage") ("volume") ("part") ("edition") ("volumes")
       ("series") ("number") ("note") ("publisher") ("location") ("isbn")
@@ -546,9 +546,9 @@ alternatives, starting from zero."
       ("location") ("isbn") ("pagetotal") ("addendum") ("pubstate") ("doi")
       ("eprint") ("eprintclass") ("eprinttype") ("url") ("urldate")))
     ("InCollection" "Article in a Collection"
-     (("author") ("editor") ("title") ("year" nil nil 0) ("date" nil nil 0))
+     (("author") ("title") ("year" nil nil 0) ("date" nil nil 0))
      (("booktitle"))
-     (("editora") ("editorb") ("editorc") ("translator") ("annotator")
+     (("editor") ("editora") ("editorb") ("editorc") ("translator") ("annotator")
       ("commentator") ("introduction") ("foreword") ("afterword")
       ("subtitle") ("titleaddon") ("maintitle") ("mainsubtitle")
       ("maintitleaddon") ("booksubtitle") ("booktitleaddon")
@@ -616,10 +616,11 @@ alternatives, starting from zero."
       ("addendum") ("pubstate") ("doi") ("eprint") ("eprintclass")
       ("eprinttype") ("url") ("urldate")))
     ("Proceedings" "Single-Volume Conference Proceedings"
-     (("editor") ("title") ("year" nil nil 0) ("date" nil nil 0))
+     (("title") ("year" nil nil 0) ("date" nil nil 0))
      nil
      (("subtitle") ("titleaddon") ("maintitle") ("mainsubtitle")
       ("maintitleaddon") ("eventtitle") ("eventdate") ("venue") ("language")
+      ("editor")
       ("volume") ("part") ("volumes") ("series") ("number") ("note")
       ("organization") ("publisher") ("location") ("month")
       ("isbn") ("chapter") ("pages") ("pagetotal") ("addendum") ("pubstate")
@@ -633,9 +634,9 @@ alternatives, starting from zero."
       ("isbn") ("pagetotal") ("addendum") ("pubstate")
       ("doi") ("eprint") ("eprintclass") ("eprinttype") ("url") ("urldate")))
     ("InProceedings" "Article in Conference Proceedings"
-     (("author") ("editor") ("title") ("year" nil nil 0) ("date" nil nil 0))
+     (("author") ("title") ("year" nil nil 0) ("date" nil nil 0))
      (("booktitle"))
-     (("subtitle") ("titleaddon") ("maintitle") ("mainsubtitle")
+     (("editor") ("subtitle") ("titleaddon") ("maintitle") ("mainsubtitle")
       ("maintitleaddon") ("booksubtitle") ("booktitleaddon")
       ("eventtitle") ("eventdate") ("venue") ("language")
       ("volume") ("part") ("volumes") ("series") ("number") ("note")
@@ -2098,7 +2099,7 @@ If FLAG is nil, a message is echoed if point was incremented at least
          (let* ((size (- (point-max) (point-min)))
                 (perc (if (= size 0)
                           100
-                        (/ (* 100 (- (point) (point-min))) size))))
+                        (floor (* 100.0 (- (point) (point-min))) size))))
            (when (>= perc (+ bibtex-progress-lastperc
                              bibtex-progress-interval))
              (setq bibtex-progress-lastperc perc)
@@ -2228,7 +2229,7 @@ Optional arg COMMA is as in `bibtex-enclosing-field'."
                        bibtex-entry-kill-ring))
       ;; If we copied an entry from a buffer containing only this one entry,
       ;; it can be missing the second "\n".
-      (unless (looking-back "\n\n") (insert "\n"))
+      (unless (looking-back "\n\n" (- (point) 2)) (insert "\n"))
       (unless (functionp bibtex-reference-keys)
         ;; update `bibtex-reference-keys'
         (save-excursion
@@ -2619,7 +2620,7 @@ is returned unchanged."
   "Get content of BibTeX field FIELD.  Return empty string if not found.
 Optional arg CHANGE-LIST is a list of substitution patterns that is
 applied to the content of FIELD.  It is an alist with pairs
-\(OLD-REGEXP . NEW-STRING\)."
+\(OLD-REGEXP . NEW-STRING)."
   (let* ((bibtex-expand-strings bibtex-autokey-expand-strings)
          (content (bibtex-text-in-field field bibtex-autokey-use-crossref))
         case-fold-search)
@@ -3646,7 +3647,7 @@ If optional arg CONTENT is non-nil extract content of text fields."
 (defun bibtex-autofill-entry ()
   "Try to fill fields of current BibTeX entry based on neighboring entries.
 The current entry must have a key.  Determine the neighboring entry
-\(previous or next\) whose key is more similar to the key of the current
+\(previous or next) whose key is more similar to the key of the current
 entry.  For all empty fields of the current entry insert the corresponding
 field contents of the neighboring entry.  Finally try to update the text
 based on the difference between the keys of the neighboring and the current
@@ -4231,7 +4232,7 @@ Return t if test was successful, nil otherwise."
                (cond ((not previous))
                      ((member key key-list)
                       (push (cons (bibtex-current-line)
-                                  (format "Duplicate key `%s'" key))
+                                  (format-message "Duplicate key `%s'" key))
                             error-list))
                      ((and bibtex-maintain-sorted-entries
                            (not (bibtex-lessp previous current)))
@@ -4254,8 +4255,9 @@ Return t if test was successful, nil otherwise."
                          (cdr (assoc-string (car key) bibtex-reference-keys)))
                 (bibtex-search-entry (car key))
                 (push (cons (bibtex-current-line)
-                            (format "Duplicate key `%s' in %s" (car key)
-                                    (abbreviate-file-name (buffer-file-name buffer))))
+                            (format-message
+			     "Duplicate key `%s' in %s" (car key)
+			     (abbreviate-file-name (buffer-file-name buffer))))
                       error-list))))
 
           (when test-thoroughly
@@ -4305,14 +4307,16 @@ Return t if test was successful, nil otherwise."
                        (if (setq idx (nth 3 field))
                            (bibtex-vec-push alt-expect idx (car field))
                          (push (cons beg-line
-                                     (format "Required field `%s' missing"
-                                             (car field)))
+                                     (format-message
+				      "Required field `%s' missing"
+				      (car field)))
                                error-list)))
                      (dotimes (idx num-alt)
                        (unless (aref alt-fields idx)
                          (push (cons beg-line
-                                     (format "Alternative fields `%s' missing"
-                                             (aref alt-expect idx)))
+                                     (format-message
+				      "Alternative fields `%s' missing"
+				      (aref alt-expect idx)))
                                error-list))))))))
             (bibtex-progress-message 'done)))))
 
@@ -4326,7 +4330,8 @@ Return t if test was successful, nil otherwise."
             (unless (eq major-mode 'compilation-mode) (compilation-mode))
             (let ((inhibit-read-only t))
               (delete-region (point-min) (point-max))
-              (insert "BibTeX mode command `bibtex-validate'\n"
+              (insert (substitute-command-keys
+		       "BibTeX mode command `bibtex-validate'\n")
                       (if syntax-error
                           "Maybe undetected errors due to syntax errors.  \
 Correct and validate again.\n"
@@ -4337,10 +4342,10 @@ Correct and validate again.\n"
             (goto-char (point-min))
             (forward-line 2)) ; first error message
           (display-buffer err-buf)
-          nil) ; return `nil' (i.e., buffer is invalid)
+          nil) ; return nil (i.e., buffer is invalid)
       (message "%s is syntactically correct"
                (if mark-active "Region" "Buffer"))
-      t))) ; return `t' (i.e., buffer is valid)
+      t))) ; return t (i.e., buffer is valid)
 
 (defun bibtex-validate-globally (&optional strings)
   "Check for duplicate keys in `bibtex-files'.
@@ -4361,9 +4366,10 @@ Return t if test was successful, nil otherwise."
               (if (or (and strings (bibtex-string= entry-type "string"))
                       (assoc-string entry-type bibtex-entry-alist t))
                   (if (member key key-list)
-                      (push (format "%s:%d: Duplicate key `%s'\n"
-                                    (buffer-file-name)
-                                    (bibtex-current-line) key)
+                      (push (format-message
+			     "%s:%d: Duplicate key `%s'\n"
+			     (buffer-file-name)
+			     (bibtex-current-line) key)
                             error-list)
                     (push key key-list))))
             (push (cons buffer key-list) buffer-key-list)))))
@@ -4376,9 +4382,10 @@ Return t if test was successful, nil otherwise."
           (dolist (key (cdr (assq buffer buffer-key-list)))
             (when (assoc-string key current-keys)
               (bibtex-search-entry key)
-              (push (format "%s:%d: Duplicate key `%s' in %s\n"
-                            (buffer-file-name) (bibtex-current-line) key
-                            (abbreviate-file-name (buffer-file-name buffer)))
+              (push (format-message
+		     "%s:%d: Duplicate key `%s' in %s\n"
+		     (buffer-file-name) (bibtex-current-line) key
+		     (abbreviate-file-name (buffer-file-name buffer)))
                     error-list))))))
 
     ;; Process error list
@@ -4388,15 +4395,16 @@ Return t if test was successful, nil otherwise."
             (unless (eq major-mode 'compilation-mode) (compilation-mode))
             (let ((inhibit-read-only t))
               (delete-region (point-min) (point-max))
-              (insert "BibTeX mode command `bibtex-validate-globally'\n\n")
+              (insert (substitute-command-keys
+		       "BibTeX mode command `bibtex-validate-globally'\n\n"))
               (dolist (err (sort error-list 'string-lessp)) (insert err))
               (set-buffer-modified-p nil))
             (goto-char (point-min))
             (forward-line 2)) ; first error message
           (display-buffer err-buf)
-          nil) ; return `nil' (i.e., buffer is invalid)
+          nil) ; return nil (i.e., buffer is invalid)
       (message "No duplicate keys.")
-      t))) ; return `t' (i.e., buffer is valid)
+      t))) ; return t (i.e., buffer is valid)
 
 (defun bibtex-next-field (begin &optional comma)
   "Move point to end of text of next BibTeX field or entry head.
@@ -4839,7 +4847,7 @@ If optional arg MOVE is non-nil move point to end of field."
 If optional prefix JUSTIFY is non-nil justify as well.
 In BibTeX mode this function is bound to `fill-paragraph-function'."
   (interactive "*P")
-  (let ((pnt (copy-marker (point)))
+  (let ((pnt (point-marker))
         (bounds (bibtex-enclosing-field t)))
     (bibtex-fill-field-bounds bounds justify)
     (goto-char pnt)))
@@ -4851,7 +4859,7 @@ names appear in column `bibtex-field-indentation', field text starts in
 column `bibtex-text-indentation' and continuation lines start here, too.
 If `bibtex-align-at-equal-sign' is non-nil, align equal signs, too."
   (interactive "*")
-  (let ((pnt (copy-marker (point)))
+  (let ((pnt (point-marker))
         (beg (bibtex-beginning-of-entry)) ; move point
         bounds)
     (bibtex-delete-whitespace)
@@ -5103,7 +5111,7 @@ entries from minibuffer."
   "Browse a URL for the BibTeX entry at point.
 Optional POS is the location of the BibTeX entry.
 The URL is generated using the schemes defined in `bibtex-generate-url-list'
-\(see there\).  If multiple schemes match for this entry, or the same scheme
+\(see there).  If multiple schemes match for this entry, or the same scheme
 matches more than once, use the one for which the first step's match is the
 closest to POS.  The URL is passed to `browse-url' unless NO-BROWSE is t.
 Return the URL or nil if none can be generated."
@@ -5279,7 +5287,7 @@ where FILE is the BibTeX file of ENTRY."
             (bibtex-display-entries entries)
           (message "No BibTeX entries %smatching `%s'"
                    (if (string= "" field) ""
-                     (format "with field `%s' " field))
+                     (format-message "with field `%s' " field))
                    regexp)))
     entries))
 

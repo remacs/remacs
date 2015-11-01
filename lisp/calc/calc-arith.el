@@ -1,6 +1,6 @@
 ;;; calc-arith.el --- arithmetic functions for Calc
 
-;; Copyright (C) 1990-1993, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1990-1993, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: David Gillespie <daveg@synaptics.com>
 ;; Maintainer: Jay Belanger <jay.p.belanger@gmail.com>
@@ -2249,7 +2249,7 @@
 
 (defun math-min-list (a b)
   (if b
-      (if (or (Math-anglep (car b)) (eq (car b) 'date)
+      (if (or (Math-anglep (car b)) (eq (caar b) 'date)
 	      (and (eq (car (car b)) 'intv) (math-intv-constp (car b)))
 	      (math-infinitep (car b)))
 	  (math-min-list (math-min a (car b)) (cdr b))
@@ -2279,7 +2279,7 @@
 
 (defun math-max-list (a b)
   (if b
-      (if (or (Math-anglep (car b)) (eq (car b) 'date)
+      (if (or (Math-anglep (car b)) (eq (caar b) 'date)
 	      (and (eq (car (car b)) 'intv) (math-intv-constp (car b)))
 	      (math-infinitep (car b)))
 	  (math-max-list (math-max a (car b)) (cdr b))

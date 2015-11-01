@@ -1,6 +1,6 @@
 ;;; org-archive.el --- Archiving for Org-mode
 
-;; Copyright (C) 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
 ;; Keywords: outlines, hypermedia, calendar, wp
@@ -71,6 +71,15 @@ This variable is obsolete and has no effect anymore, instead add or remove
   :group 'org-archive
   :type 'boolean)
 
+(defcustom org-archive-file-header-format "\nArchived entries from file %s\n\n"
+  "The header format string for newly created archive files.
+When nil, no header will be inserted.
+When a string, a %s formatter will be replaced by the file name."
+  :group 'org-archive
+  :version "24.4"
+  :package-version '(Org . "8.0")
+  :type 'string)
+
 (defcustom org-archive-subtree-add-inherited-tags 'infile
   "Non-nil means append inherited tags when archiving a subtree."
   :group 'org-archive
@@ -126,6 +135,7 @@ information."
 	  (match-string 1))
 	 (t org-archive-location))))))
 
+;;;###autoload
 (defun org-add-archive-files (files)
   "Splice the archive files into the list of files.
 This implies visiting all these files and finding out what the
@@ -221,8 +231,7 @@ this heading."
 		       (error "No file associated to buffer"))))
 	    (olpath (mapconcat 'identity (org-get-outline-path) "/"))
 	    (time (format-time-string
-		   (substring (cdr org-time-stamp-formats) 1 -1)
-		   (current-time)))
+		   (substring (cdr org-time-stamp-formats) 1 -1)))
 	    category todo priority ltags itags atags
 	    ;; end of variables that will be used for saving context
 	    location afile heading buffer level newfile-p infile-p visiting
@@ -278,9 +287,9 @@ this heading."
 	      (let ((org-insert-mode-line-in-empty-file t)
 		    (org-inhibit-startup t))
 		(call-interactively 'org-mode)))
-	  (when newfile-p
+	  (when (and newfile-p org-archive-file-header-format)
 	    (goto-char (point-max))
-	    (insert (format "\nArchived entries from file %s\n\n"
+	    (insert (format org-archive-file-header-format
 			    (buffer-file-name this-buffer))))
 	  (when datetree-date
 	    (require 'org-datetree)
@@ -431,8 +440,7 @@ sibling does not exist, it will be created at the end of the subtree."
 	(org-set-property
 	 "ARCHIVE_TIME"
 	 (format-time-string
-	  (substring (cdr org-time-stamp-formats) 1 -1)
-	  (current-time)))
+	  (substring (cdr org-time-stamp-formats) 1 -1)))
 	(outline-up-heading 1 t)
 	(hide-subtree)
 	(org-cycle-show-empty-lines 'folded)

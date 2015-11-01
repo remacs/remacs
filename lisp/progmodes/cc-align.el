@@ -1,6 +1,6 @@
 ;;; cc-align.el --- custom indentation functions for CC Mode
 
-;; Copyright (C) 1985, 1987, 1992-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1987, 1992-2015 Free Software Foundation, Inc.
 
 ;; Authors:    2004- Alan Mackenzie
 ;;             1998- Martin Stjernholm
@@ -325,10 +325,10 @@ operator you typically want to use it together with some other line-up
 settings, e.g. as follows \(the arglist-close setting is just a
 suggestion to get a consistent style):
 
-\(c-set-offset 'arglist-cont '(c-lineup-arglist-operators 0))
-\(c-set-offset 'arglist-cont-nonempty '(c-lineup-arglist-operators
+\(c-set-offset \\='arglist-cont \\='(c-lineup-arglist-operators 0))
+\(c-set-offset \\='arglist-cont-nonempty \\='(c-lineup-arglist-operators
                                         c-lineup-arglist))
-\(c-set-offset 'arglist-close '(c-lineup-arglist-close-under-paren))
+\(c-set-offset \\='arglist-close \\='(c-lineup-arglist-close-under-paren))
 
 Works with: arglist-cont, arglist-cont-nonempty."
   (save-excursion
@@ -1075,7 +1075,7 @@ Works with: brace-list-entry, brace-entry-open, statement,
 arglist-cont."
   (save-excursion
     (goto-char (c-langelem-pos langelem))
-    (when (looking-at "\\s\(")
+    (when (looking-at "\\s(")
       (if (c-go-up-list-backward)
 	  (let ((pos (point)))
 	    (back-to-indentation)
@@ -1093,24 +1093,24 @@ v beg of preceding constr      v beg of preceding constr
 const char msg[] =             if (!running)
   \"Some text.\";	         error(\"Not running!\");
 
-#define X(A, B)  \           #define X(A, B)    \
-do {             \    <->      do {             \    <- c-lineup-cpp-define
-  printf (A, B); \               printf (A, B); \
+#define X(A, B)  \\           #define X(A, B)    \\
+do {             \\    <->      do {             \\    <- c-lineup-cpp-define
+  printf (A, B); \\               printf (A, B); \\
 } while (0)                    } while (0)
 
 If `c-syntactic-indentation-in-macros' is non-nil, the function
 returns the relative indentation to the macro start line to allow
 accumulation with other offsets.  E.g. in the following cases,
 cpp-define-intro is combined with the statement-block-intro that comes
-from the \"do {\" that hangs on the \"#define\" line:
+from the `do {' that hangs on the `#define' line:
 
                              int dribble() {
 const char msg[] =             if (!running)
   \"Some text.\";	         error(\"Not running!\");
 
-#define X(A, B) do { \       #define X(A, B) do { \
-  printf (A, B);     \  <->      printf (A, B);   \  <- c-lineup-cpp-define
-  this->refs++;      \           this->refs++;    \
+#define X(A, B) do { \\       #define X(A, B) do { \\
+  printf (A, B);     \\  <->      printf (A, B);   \\  <- c-lineup-cpp-define
+  this->refs++;      \\           this->refs++;    \\
 } while (0)             <->    } while (0)           <- c-lineup-cpp-define
 
 The relative indentation returned by `c-lineup-cpp-define' is zero and
@@ -1229,6 +1229,18 @@ Works with: Any syntactic symbol."
     (back-to-indentation)
     (vector (current-column))))
 
+(defun c-lineup-respect-col-0 (langelem)
+  "If the current line starts at column 0, return [0].  Otherwise return nil.
+
+This can be used for comments (in conjunction with, say,
+`c-lineup-comment'), to keep comments already at column 0
+anchored there, but reindent other comments."
+  (save-excursion
+    (back-to-indentation)
+    (if (eq (current-column) 0)
+	[0]
+      nil)))
+
 
 (defun c-snug-do-while (syntax pos)
   "Dynamically calculate brace hanginess for do-while statements.
@@ -1333,4 +1345,8 @@ For other semicolon contexts, no determination is made."
 
 (cc-provide 'cc-align)
 
+;; Local Variables:
+;; indent-tabs-mode: t
+;; tab-width: 8
+;; End:
 ;;; cc-align.el ends here

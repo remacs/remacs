@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1999, 2002-2013 Free Software Foundation, Inc.
+@c Copyright (C) 1999, 2002-2015 Free Software Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 
 @c This node must have no pointers.
@@ -30,7 +30,7 @@ minimum of fuss.  But @xref{Dynamic Binding Tips}, for tips to avoid
 making your programs hard to understand.
 
 @item
-Calling a minor mode function from Lisp with a nil or omitted argument
+Calling a minor mode function from Lisp with a @code{nil} or omitted argument
 does not enable the minor mode unconditionally; instead, it toggles
 the minor mode---which is the straightforward thing to do, since that
 is the behavior when invoked interactively.  One downside is that it
@@ -56,8 +56,8 @@ there is no need to worry about the insertion of right-to-left text
 messing up how lines and paragraphs are displayed, the function
 @code{bidi-string-mark-left-to-right} has been removed; so have many
 other functions and variables related to bidirectional display.
-Unicode directionality characters like @code{U+200E} ("left-to-right
-mark") have no special effect on display.
+Unicode directionality characters like @code{U+200E} LEFT-TO-RIGHT
+MARK have no special effect on display.
 
 @item
 Emacs windows now have most of their internal state hidden from Lisp.
@@ -66,7 +66,7 @@ Internal windows are no longer visible to Lisp; functions such as
 and window-local buffer lists have all been removed.  Functions for
 resizing windows can delete windows if they become too small.
 
-The ``action function'' feature for controlling buffer display has
+The action-function feature for controlling buffer display has
 been removed, including @code{display-buffer-overriding-action} and
 related variables, as well as the @var{action} argument to
 @code{display-buffer} and other functions.  The way to
@@ -78,7 +78,7 @@ other variables.
 The standard completion interface has been simplified, eliminating the
 @code{completion-extra-properties} variable, the @code{metadata}
 action flag for completion functions, and the concept of
-``completion categories''.  Lisp programmers may now find the choice
+completion categories.  Lisp programmers may now find the choice
 of methods for tuning completion less bewildering, but if a package
 finds the streamlined interface insufficient for its needs, it must
 implement its own specialized completion feature.

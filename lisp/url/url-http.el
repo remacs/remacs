@@ -1,8 +1,9 @@
 ;;; url-http.el --- HTTP retrieval routines
 
-;; Copyright (C) 1999, 2001, 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999, 2001, 2004-2015 Free Software Foundation, Inc.
 
 ;; Author: Bill Perry <wmperry@gnu.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: comm, data, processes
 
 ;; This file is part of GNU Emacs.
@@ -24,7 +25,9 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl-lib))
+(require 'cl-lib)
+(eval-when-compile
+  (require 'subr-x))
 
 (defvar url-callback-arguments)
 (defvar url-callback-function)
@@ -39,6 +42,7 @@
 (defvar url-http-data)
 (defvar url-http-end-of-headers)
 (defvar url-http-extra-headers)
+(defvar url-http-noninteractive)
 (defvar url-http-method)
 (defvar url-http-no-retry)
 (defvar url-http-process)
@@ -47,11 +51,9 @@
 (defvar url-http-response-version)
 (defvar url-http-target-url)
 (defvar url-http-transfer-encoding)
-(defvar url-http-end-of-headers)
 (defvar url-show-status)
 
 (require 'url-gw)
-(require 'url-util)
 (require 'url-parse)
 (require 'url-cookie)
 (require 'mail-parse)
@@ -133,6 +135,17 @@ request.")
     (507 insufficient-storage            "Insufficient storage"))
   "The HTTP return codes and their text.")
 
+(defcustom url-user-agent (format "User-Agent: %sURL/%s\r\n"
+				  (if url-package-name
+				      (concat url-package-name "/"
+					      url-package-version " ")
+				    "") url-version)
+  "User Agent used by the URL package."
+  :type '(choice (string :tag "A static User-Agent string")
+                 (function :tag "Call a function to get the User-Agent string"))
+  :version "25.1"
+  :group 'url)
+
 ;(eval-when-compile
 ;; These are all macros so that they are hidden from external sight
 ;; when the file is byte-compiled.
@@ -172,7 +185,7 @@ request.")
 	     url-http-open-connections))
   nil)
 
-(defun url-http-find-free-connection (host port)
+(defun url-http-find-free-connection (host port &optional gateway-method)
   (let ((conns (gethash (cons host port) url-http-open-connections))
 	(connection nil))
     (while (and conns (not connection))
@@ -194,7 +207,7 @@ request.")
 	;; `url-open-stream' needs a buffer in which to do things
 	;; like authentication.  But we use another buffer afterwards.
 	(unwind-protect
-	    (let ((proc (url-open-stream host buf host port)))
+	    (let ((proc (url-open-stream host buf host port gateway-method)))
 	      ;; url-open-stream might return nil.
 	      (when (processp proc)
 		;; Drop the temp buffer link before killing the buffer.
@@ -215,11 +228,9 @@ request.")
 	  (and (listp url-privacy-level)
 	       (memq 'agent url-privacy-level)))
       ""
-    (format "User-Agent: %sURL/%s\r\n"
-	    (if url-package-name
-		(concat url-package-name "/" url-package-version " ")
-	      "")
-	    url-version)))
+    (if (functionp url-user-agent)
+        (funcall url-user-agent)
+      url-user-agent)))
 
 (defun url-http-create-request (&optional ref-url)
   "Create an HTTP request for `url-http-target-url', referred to by REF-URL."
@@ -314,7 +325,14 @@ request.")
                  (concat
                   "From: " url-personal-mail-address "\r\n"))
              ;; Encodings we understand
-             (if url-mime-encoding-string
+             (if (or url-mime-encoding-string
+		     ;; MS-Windows loads zlib dynamically, so recheck
+		     ;; in case they made it available since
+		     ;; initialization in url-vars.el.
+		     (and (eq 'system-type 'windows-nt)
+			  (fboundp 'zlib-available-p)
+			  (zlib-available-p)
+			  (setq url-mime-encoding-string "gzip")))
                  (concat
                   "Accept-encoding: " url-mime-encoding-string "\r\n"))
              (if url-mime-charset-string
@@ -357,9 +375,7 @@ request.")
              ;; End request
              "\r\n"
              ;; Any data
-             url-http-data
-	     ;; If `url-http-data' is nil, avoid two CRLFs (Bug#8931).
-	     (if url-http-data "\r\n")))
+             url-http-data))
            ""))
     (url-http-debug "Request is: \n%s" request)
     request))
@@ -417,7 +433,7 @@ Return the number of characters removed."
 	  (goto-char (point-max))
 	  (insert "<hr>Sorry, but I do not know how to handle " type
 		  " authentication.  If you'd like to write it,"
-		  " send it to " url-bug-address ".<hr>")
+		  " please use M-x report-emacs-bug RET.<hr>")
           ;; We used to set a `status' var (declared "special") but I can't
           ;; find the corresponding let-binding, so it's probably an error.
           ;; FIXME: Maybe it was supposed to set `success', i.e. to return t?
@@ -469,6 +485,8 @@ work correctly."
     )
   )
 
+(declare-function gnutls-peer-status "gnutls.c" (proc))
+
 (defun url-http-parse-headers ()
  "Parse and handle HTTP specific headers.
 Return t if and only if the current buffer is still active and
@@ -478,7 +496,14 @@ should be shown to the user."
   (url-http-mark-connection-as-free (url-host url-current-object)
 				    (url-port url-current-object)
 				    url-http-process)
-
+  ;; Pass the https certificate on to the caller.
+  (when (gnutls-available-p)
+    (let ((status (gnutls-peer-status url-http-process)))
+      (when (or status
+		(plist-get (car url-callback-arguments) :peer))
+	(setcar url-callback-arguments
+		(plist-put (car url-callback-arguments)
+			   :peer status)))))
   (if (or (not (boundp 'url-http-end-of-headers))
 	  (not url-http-end-of-headers))
       (error "Trying to parse headers in odd buffer: %s" (buffer-name)))
@@ -621,6 +646,12 @@ should be shown to the user."
                ;; compute the redirection relative to the URL of the proxy.
 	       (setq redirect-uri
 		     (url-expand-file-name redirect-uri url-http-target-url)))
+	   ;; Do not automatically include an authorization header in the
+	   ;; redirect.  If needed it will be regenerated by the relevant
+	   ;; auth scheme when the new request happens.
+	   (setq url-http-extra-headers
+		 (cl-remove "Authorization"
+			    url-http-extra-headers :key 'car :test 'equal))
            (let ((url-request-method url-http-method)
 		 (url-request-data url-http-data)
 		 (url-request-extra-headers url-http-extra-headers))
@@ -858,10 +889,12 @@ should be shown to the user."
     (goto-char (point-min))
     success))
 
+(declare-function zlib-decompress-region "decompress.c" (start end))
+
 (defun url-handle-content-transfer-encoding ()
   (let ((encoding (mail-fetch-field "content-encoding")))
     (when (and encoding
-	       (fboundp 'zlib-decompress-region)
+	       (fboundp 'zlib-available-p)
 	       (zlib-available-p)
 	       (equal (downcase encoding) "gzip"))
       (save-restriction
@@ -876,7 +909,8 @@ should be shown to the user."
   (url-http-mark-connection-as-free (url-host url-current-object)
 				    (url-port url-current-object)
 				    url-http-process)
-  (url-http-debug "Activating callback in buffer (%s)" (buffer-name))
+  (url-http-debug "Activating callback in buffer (%s): %S %S"
+		  (buffer-name) url-callback-function url-callback-arguments)
   (apply url-callback-function url-callback-arguments))
 
 ;; )
@@ -917,7 +951,7 @@ should be shown to the user."
 (defun url-http-simple-after-change-function (st nd length)
   ;; Function used when we do NOT know how long the document is going to be
   ;; Just _very_ simple 'downloaded %d' type of info.
-  (url-lazy-message "Reading %s..." (url-pretty-length nd)))
+  (url-lazy-message "Reading %s..." (file-size-human-readable nd)))
 
 (defun url-http-content-length-after-change-function (st nd length)
   "Function used when we DO know how long the document is going to be.
@@ -930,16 +964,16 @@ the callback to be triggered."
        (url-percentage (- nd url-http-end-of-headers)
 		       url-http-content-length)
        url-http-content-type
-       (url-pretty-length (- nd url-http-end-of-headers))
-       (url-pretty-length url-http-content-length)
+       (file-size-human-readable (- nd url-http-end-of-headers))
+       (file-size-human-readable url-http-content-length)
        (url-percentage (- nd url-http-end-of-headers)
 		       url-http-content-length))
     (url-display-percentage
      "Reading... %s of %s (%d%%)"
      (url-percentage (- nd url-http-end-of-headers)
 		     url-http-content-length)
-     (url-pretty-length (- nd url-http-end-of-headers))
-     (url-pretty-length url-http-content-length)
+     (file-size-human-readable (- nd url-http-end-of-headers))
+     (file-size-human-readable url-http-content-length)
      (url-percentage (- nd url-http-end-of-headers)
 		     url-http-content-length)))
 
@@ -1168,22 +1202,28 @@ the end of the document."
     (when (eq process-buffer (current-buffer))
       (goto-char (point-max)))))
 
-(defun url-http (url callback cbargs &optional retry-buffer)
+(defun url-http (url callback cbargs &optional retry-buffer gateway-method)
   "Retrieve URL via HTTP asynchronously.
 URL must be a parsed URL.  See `url-generic-parse-url' for details.
 
-When retrieval is completed, execute the function CALLBACK, using
-the arguments listed in CBARGS.  The first element in CBARGS
+When retrieval is completed, execute the function CALLBACK, passing it
+an updated value of CBARGS as arguments.  The first element in CBARGS
 should be a plist describing what has happened so far during the
 request, as described in the docstring of `url-retrieve' (if in
 doubt, specify nil).
 
 Optional arg RETRY-BUFFER, if non-nil, specifies the buffer of a
-previous `url-http' call, which is being re-attempted."
+previous `url-http' call, which is being re-attempted.
+
+Optional arg GATEWAY-METHOD specifies the gateway to be used,
+overriding the value of `url-gateway-method'."
   (cl-check-type url vector "Need a pre-parsed URL.")
   (let* ((host (url-host (or url-using-proxy url)))
 	 (port (url-port (or url-using-proxy url)))
-	 (connection (url-http-find-free-connection host port))
+	 (nsm-noninteractive (or url-request-noninteractive
+				 (and (boundp 'url-http-noninteractive)
+				      url-http-noninteractive)))
+	 (connection (url-http-find-free-connection host port gateway-method))
 	 (buffer (or retry-buffer
 		     (generate-new-buffer
                       (format " *http %s:%d*" host port)))))
@@ -1214,6 +1254,7 @@ previous `url-http' call, which is being re-attempted."
 		       url-http-process
 		       url-http-method
 		       url-http-extra-headers
+		       url-http-noninteractive
 		       url-http-data
 		       url-http-target-url
 		       url-http-no-retry
@@ -1223,6 +1264,7 @@ previous `url-http' call, which is being re-attempted."
 
 	(setq url-http-method (or url-request-method "GET")
 	      url-http-extra-headers url-request-extra-headers
+	      url-http-noninteractive url-request-noninteractive
 	      url-http-data url-request-data
 	      url-http-process connection
 	      url-http-chunked-length nil
@@ -1441,9 +1483,8 @@ p3p
 (defmacro url-https-create-secure-wrapper (method args)
   `(defun ,(intern (format (if method "url-https-%s" "url-https") method)) ,args
     ,(format "HTTPS wrapper around `%s' call." (or method "url-http"))
-    (let ((url-gateway-method 'tls))
-      (,(intern (format (if method "url-http-%s" "url-http") method))
-       ,@(remove '&rest (remove '&optional args))))))
+    (,(intern (format (if method "url-http-%s" "url-http") method))
+     ,@(remove '&rest (remove '&optional (append args (if method nil '(nil 'tls))))))))
 
 ;;;###autoload (autoload 'url-https "url-http")
 (url-https-create-secure-wrapper nil (url callback cbargs))

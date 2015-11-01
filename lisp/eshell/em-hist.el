@@ -1,6 +1,6 @@
-;;; em-hist.el --- history list management
+;;; em-hist.el --- history list management  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -306,8 +306,9 @@ element, regardless of any text on the command line.  In that case,
 		   eshell-save-history-on-exit
 		   (or (eq eshell-save-history-on-exit t)
 		       (y-or-n-p
-			(format "Save input history for Eshell buffer `%s'? "
-				(buffer-name buf)))))
+			(format-message
+			 "Save input history for Eshell buffer `%s'? "
+			 (buffer-name buf)))))
 	      (eshell-write-history))))))
 
 (defun eshell/history (&rest args)
@@ -330,7 +331,7 @@ unless a different file is specified on the command line.")
    (and (or (not (ring-p eshell-history-ring))
 	   (ring-empty-p eshell-history-ring))
 	(error "No history"))
-   (let (length command file)
+   (let (length file)
      (when (and args (string-match "^[0-9]+$" (car args)))
        (setq length (min (eshell-convert (car args))
 			 (ring-length eshell-history-ring))
@@ -346,8 +347,7 @@ unless a different file is specified on the command line.")
       (write-history (eshell-write-history file))
       (append-history (eshell-write-history file t))
       (t
-       (let* ((history nil)
-	      (index (1- (or length (ring-length eshell-history-ring))))
+       (let* ((index (1- (or length (ring-length eshell-history-ring))))
 	      (ref (- (ring-length eshell-history-ring) index)))
 	 ;; We have to build up a list ourselves from the ring vector.
 	 (while (>= index 0)
@@ -510,7 +510,8 @@ See also `eshell-read-history'."
 	;; Change "completion" to "history reference"
 	;; to make the display accurate.
 	(with-output-to-temp-buffer history-buffer
-	  (display-completion-list history prefix)
+	  (display-completion-list
+	   (completion-hilit-commonality history (length prefix)))
 	  (set-buffer history-buffer)
 	  (forward-line 3)
 	  (while (search-backward "completion" nil 'move)
@@ -520,7 +521,7 @@ See also `eshell-read-history'."
 	(let ((ch (read-event)))
 	  (if (eq ch ?\ )
 	      (set-window-configuration conf)
-	    (setq unread-command-events (list ch))))))))
+	    (push ch unread-command-events)))))))
 
 (defun eshell-hist-word-reference (ref)
   "Return the word designator index referred to by REF."
@@ -532,7 +533,7 @@ See also `eshell-read-history'."
    ((string= "%" ref)
     (error "`%%' history word designator not yet implemented"))))
 
-(defun eshell-hist-parse-arguments (&optional silent b e)
+(defun eshell-hist-parse-arguments (&optional b e)
   "Parse current command arguments in a history-code-friendly way."
   (let ((end (or e (point)))
 	(begin (or b (save-excursion (eshell-bol) (point))))
@@ -572,7 +573,7 @@ See also `eshell-read-history'."
 
 (defun eshell-expand-history-references (beg end)
   "Parse and expand any history references in current input."
-  (let ((result (eshell-hist-parse-arguments t beg end)))
+  (let ((result (eshell-hist-parse-arguments beg end)))
     (when result
       (let ((textargs (nreverse (nth 0 result)))
 	    (posb (nreverse (nth 1 result)))
@@ -638,7 +639,7 @@ matched."
   ;; `!'
   ;;      Start a history substitution, except when followed by a
   ;;      space, tab, the end of the line, = or (.
-  (if (not (string-match "^![^ \t\n=\(]" reference))
+  (if (not (string-match "^![^ \t\n=(]" reference))
       reference
     (setq eshell-history-index nil)
     (let ((event (eshell-hist-parse-event-designator reference)))
@@ -700,7 +701,7 @@ matched."
 	  (here (point))
 	  textargs)
       (insert hist)
-      (setq textargs (car (eshell-hist-parse-arguments nil here (point))))
+      (setq textargs (car (eshell-hist-parse-arguments here (point))))
       (delete-region here (point))
       (if (string= nth "*")
 	  (if mth
@@ -724,7 +725,7 @@ matched."
 	(setq nth (eshell-hist-word-reference nth)))
       (unless (numberp mth)
 	(setq mth (eshell-hist-word-reference mth)))
-      (cons (mapconcat 'identity (eshell-sublist textargs nth mth) "")
+      (cons (mapconcat 'identity (eshell-sublist textargs nth mth) " ")
 	    end))))
 
 (defun eshell-hist-parse-modifier (hist reference)
@@ -737,7 +738,7 @@ matched."
 	  (goto-char (point-min))
 	  (let ((modifiers (cdr (eshell-parse-modifiers))))
 	    (dolist (mod modifiers)
-	      (setq hist (funcall mod hist)))
+	      (setq hist (car (funcall mod (list hist)))))
 	    hist))
       (delete-region here (point)))))
 
@@ -945,7 +946,7 @@ If N is negative, search backwards for the -Nth previous match."
 (defun eshell-isearch-backward (&optional invert)
   "Do incremental regexp search backward through past commands."
   (interactive)
-  (let ((inhibit-read-only t) end)
+  (let ((inhibit-read-only t))
     (eshell-prepare-for-search)
     (goto-char (point-max))
     (set-marker eshell-last-output-end (point))

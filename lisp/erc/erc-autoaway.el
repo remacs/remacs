@@ -1,9 +1,9 @@
 ;;; erc-autoaway.el --- Provides autoaway for ERC
 
-;; Copyright (C) 2002-2004, 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2004, 2006-2015 Free Software Foundation, Inc.
 
 ;; Author: Jorgen Schaefer <forcer@forcix.cx>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki.pl?ErcAutoAway
 
 ;; This file is part of GNU Emacs.
@@ -270,7 +270,7 @@ active server buffer available."
   ;; existing process.
   (when (or notest (erc-autoaway-some-open-server-buffer))
     (setq erc-autoaway-caused-away t)
-    (erc-cmd-GAWAY (format erc-autoaway-message idle-time))))
+    (erc-cmd-GAWAY (format-message erc-autoaway-message idle-time))))
 
 (defun erc-autoaway-reset-indicators (&rest stuff)
   "Reset indicators used by the erc-autoaway module."

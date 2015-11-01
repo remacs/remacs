@@ -1,6 +1,6 @@
 ;;; mh-alias.el --- MH-E mail alias completion and expansion
 
-;; Copyright (C) 1994-1997, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-1997, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Peter S. Galbraith <psg@debian.org>
 ;; Maintainer: Bill Wohler <wohler@newt.com>
@@ -417,7 +417,7 @@ string is converted to lower case."
 
 (defun mh-alias-insert-file (&optional alias)
   "Return filename which should be used to add ALIAS.
-The value of the option `mh-alias-insert-file' is used if non-nil\;
+The value of the option `mh-alias-insert-file' is used if non-nil;
 otherwise the value of the \"Aliasfile:\" profile component is used.
 If the alias already exists, try to return the name of the file that
 contains it."

@@ -1,6 +1,6 @@
 ;;; wyse50.el --- terminal support code for Wyse 50
 
-;; Copyright (C) 1989, 1993-1994, 2001-2013 Free Software Foundation,
+;; Copyright (C) 1989, 1993-1994, 2001-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Daniel Pfeiffer <occitan@esperanto.org>,
@@ -24,7 +24,6 @@
 
 ;;; Commentary:
 
-;; Uses the Emacs 19 terminal initialization features --- won't work with 18.
 ;; Rewritten for Emacs 19 by jimb,  January 1992
 ;; Cleaned up for new terminal package conventions by esr, March 1993
 ;; Should work well for Televideo TVI 925 although it's overkill.
@@ -132,7 +131,7 @@
 			 (concat "\ea23R" (1+ (frame-width)) "C\eG0"))))))
 
 (defun enable-arrow-keys ()
-  "To be called by `term-setup-hook'. Overrides 6 Emacs standard keys
+  "To be called by `tty-setup-hook'.  Overrides 6 Emacs standard keys
 whose functions are then typed as follows:
 C-a	Funct Left-arrow
 C-h	M-?

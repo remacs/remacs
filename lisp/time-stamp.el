@@ -1,6 +1,6 @@
 ;;; time-stamp.el --- Maintain last change time stamps in files edited by Emacs
 
-;; Copyright (C) 1989, 1993-1995, 1997, 2000-2013 Free Software
+;; Copyright (C) 1989, 1993-1995, 1997, 2000-2015 Free Software
 ;; Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
@@ -255,7 +255,7 @@ time-stamped file itself.")
   "Update the time stamp string(s) in the buffer.
 A template in a file can be automatically updated with a new time stamp
 every time you save the file.  Add this line to your init file:
-    (add-hook 'before-save-hook 'time-stamp)
+    (add-hook \\='before-save-hook \\='time-stamp)
 or customize `before-save-hook' through Custom.
 Normally the template must appear in the first 8 lines of a file and
 look like one of the following:
@@ -420,16 +420,8 @@ format the string."
   (or ts-format
       (setq ts-format time-stamp-format))
   (if (stringp ts-format)
-      (if (stringp time-stamp-time-zone)
-	  (let ((ts-real-time-zone (getenv "TZ")))
-	    (unwind-protect
-		(progn
-		  (setenv "TZ" time-stamp-time-zone)
-		  (format-time-string
-		   (time-stamp-string-preprocess ts-format)))
-	      (setenv "TZ" ts-real-time-zone)))
-	(format-time-string
-	 (time-stamp-string-preprocess ts-format)))
+      (format-time-string (time-stamp-string-preprocess ts-format)
+                          nil time-stamp-time-zone)
     ;; handle version 1 compatibility
     (cond ((or (eq time-stamp-old-format-warn 'error)
 	       (and (eq time-stamp-old-format-warn 'ask)

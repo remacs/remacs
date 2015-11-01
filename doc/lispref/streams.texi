@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1994, 1998-1999, 2001-2013 Free Software
+@c Copyright (C) 1990-1994, 1998-1999, 2001-2015 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Read and Print
@@ -113,8 +113,8 @@ When it is called with no arguments, it should return the next character.
 When it is called with one argument (always a character), @var{function}
 should save the argument and arrange to return it on the next call.
 This is called @dfn{unreading} the character; it happens when the Lisp
-reader reads one character too many and wants to ``put it back where it
-came from''.  In this case, it makes no difference what value
+reader reads one character too many and wants to put it back where it
+came from.  In this case, it makes no difference what value
 @var{function} returns.
 @end itemize
 
@@ -338,6 +338,25 @@ If non-@code{nil}, this variable enables the reading of circular and
 shared structures.  @xref{Circular Objects}.  Its default value is
 @code{t}.
 @end defvar
+
+@cindex binary I/O in batch mode
+When reading or writing from the standard input/output streams of the
+Emacs process in batch mode, it is sometimes required to make sure any
+arbitrary binary data will be read/written verbatim, and/or that no
+translation of newlines to or from CR-LF pairs are performed.  This
+issue does not exist on Posix hosts, only on MS-Windows and MS-DOS@.
+The following function allows to control the I/O mode of any standard
+stream of the Emacs process.
+
+@defun set-binary-mode stream mode
+Switch @var{stream} into binary or text I/O mode.  If @var{mode} is
+non-@code{nil}, switch to binary mode, otherwise switch to text mode.
+The value of @var{stream} can be one of @code{stdin}, @code{stdout},
+or @code{stderr}.  This function flushes any pending output data of
+@var{stream} as a side effect, and returns the previous value of I/O
+mode for @var{stream}.  On Posix hosts, it always returns a
+non-@code{nil} value and does nothing except flushing pending output.
+@end defun
 
 @node Output Streams
 @section Output Streams
@@ -615,10 +634,13 @@ spacing between calls.
 @end example
 @end defun
 
-@defun terpri &optional stream
+@defun terpri &optional stream ensure
 @cindex newline in print
-This function outputs a newline to @var{stream}.  The name stands
-for ``terminate print''.
+This function outputs a newline to @var{stream}.  The name stands for
+``terminate print''.  If @var{ensure} is non-@code{nil} no newline is printed
+if @var{stream} is already at the beginning of a line.  Note in this
+case @var{stream} can not be a function and an error is signalled if
+it is.  This function returns @code{t} if a newline is printed.
 @end defun
 
 @defun write-char character &optional stream
@@ -679,9 +701,14 @@ returns @code{"The buffer is foo"}.
 
 @defun pp object &optional stream
 This function outputs @var{object} to @var{stream}, just like
-@code{prin1}, but does it in a more ``pretty'' way.  That is, it'll
+@code{prin1}, but does it in a prettier way.  That is, it'll
 indent and fill the object to make it more readable for humans.
 @end defun
+
+If you need to use binary I/O in batch mode, e.g., use the functions
+described in this section to write out arbitrary binary data or avoid
+conversion of newlines on non-Posix hosts, see @ref{Input Functions,
+set-binary-mode}.
 
 @node Output Variables
 @section Variables Affecting Output
@@ -824,7 +851,7 @@ to bind it to @code{nil} when you bind @code{print-continuous-numbering}.
 @end defvar
 
 @defvar float-output-format
-This variable specifies how to print floating point numbers.  The
+This variable specifies how to print floating-point numbers.  The
 default is @code{nil}, meaning use the shortest output
 that represents the number without losing information.
 

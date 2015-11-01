@@ -24,7 +24,7 @@
 #  http://home.m05.itscom.net/numa/cde/ucs-conv/appendix.html
 # This program reads the mapping file EUC-JP-MS (of glibc) and
 # generates the Elisp file eucjp-ms.el that defines two translation
-# tables `eucjp-ms-decode' and `eucjp-ms-encode'.
+# tables 'eucjp-ms-decode' and 'eucjp-ms-encode'.
 
 BEGIN {
   FS = "[ \t][ \t]*"
@@ -38,7 +38,7 @@ BEGIN {
   JISX0208_FROM2 = "/xf5/xa1";
   JISX0212_FROM = "/x8f/xf3/xf3";
 
-  print ";;; eucjp-ms.el -- translation table for eucJP-ms. -*- no-byte-compile: t -*-";
+  print ";;; eucjp-ms.el -- translation table for eucJP-ms";
   print ";;; Automatically generated from /usr/share/i18n/charmaps/EUC-JP-MS.gz";
   print "(let ((map";
   print "       '(;JISEXT<->UNICODE";
@@ -106,5 +106,6 @@ END {
   print "	      (setcar x (cdr x)) (setcdr x tmp)))";
   print "	map)";
   print "  (define-translation-table 'eucjp-ms-encode map))";
+  print "";
+  print "(provide 'eucjp-ms)";
 }
-

@@ -1,5 +1,5 @@
 /* systty.h - System-dependent definitions for terminals.
-   Copyright (C) 1993-1994, 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993-1994, 2001-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -16,6 +16,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef EMACS_SYSTTY_H
+#define EMACS_SYSTTY_H
+
 /* Include the proper files.  */
 
 #ifndef DOS_NT
@@ -23,6 +26,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <fcntl.h>
 #endif /* not DOS_NT */
 
+#include <stdbool.h>
 #include <sys/ioctl.h>
 
 #ifdef HPUX
@@ -35,6 +39,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif /* AIX */
 
 #include <unistd.h>
+
+#include "lisp.h"
 
 
 /* Try to establish the correct character to disable terminal functions
@@ -74,10 +80,15 @@ struct emacs_tty {
 #ifndef DOS_NT
   struct termios main;
 #else /* DOS_NT */
-  int main;
+  unsigned main;
 #endif /* DOS_NT */
 };
 
 /* From sysdep.c or w32.c  */
+extern int emacs_get_tty (int, struct emacs_tty *) EXTERNALLY_VISIBLE;
+extern int emacs_set_tty (int, struct emacs_tty *, bool) EXTERNALLY_VISIBLE;
+extern void suppress_echo_on_tty (int);
 extern int serial_open (Lisp_Object);
 extern void serial_configure (struct Lisp_Process *, Lisp_Object);
+
+#endif /* EMACS_SYSTTY_H */

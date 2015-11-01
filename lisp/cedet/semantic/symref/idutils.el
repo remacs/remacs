@@ -1,6 +1,6 @@
 ;;; semantic/symref/idutils.el --- Symref implementation for idutils
 
-;;; Copyright (C) 2009-2013 Free Software Foundation, Inc.
+;;; Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -38,7 +38,7 @@ the hit list.
 
 See the function `cedet-idutils-search' for more details.")
 
-(defmethod semantic-symref-perform-search ((tool semantic-symref-tool-idutils))
+(cl-defmethod semantic-symref-perform-search ((tool semantic-symref-tool-idutils))
   "Perform a search with IDUtils."
   (let ((b (cedet-idutils-search (oref tool :searchfor)
 				 (oref tool :searchtype)
@@ -49,7 +49,7 @@ See the function `cedet-idutils-search' for more details.")
     (semantic-symref-parse-tool-output tool b)
     ))
 
-(defmethod semantic-symref-parse-tool-output-one-line ((tool semantic-symref-tool-idutils))
+(cl-defmethod semantic-symref-parse-tool-output-one-line ((tool semantic-symref-tool-idutils))
   "Parse one line of grep output, and return it as a match list.
 Moves cursor to end of the match."
   (cond ((eq (oref tool :resulttype) 'file)
@@ -60,7 +60,7 @@ Moves cursor to end of the match."
 	 (when (re-search-forward "^\\([^ ]+\\) " nil t)
 	   (match-string 1)))
 	(t
-	 (when (re-search-forward "^\\([^ :]+\\):+\\([0-9]+\\):" nil t)
+	 (when (re-search-forward "^\\(\\(?:[a-zA-Z]:\\)?[^:\n]+\\):\\([0-9]+\\):" nil t)
 	   (cons (string-to-number (match-string 2))
 		 (expand-file-name (match-string 1) default-directory))
 	   ))))

@@ -1,6 +1,6 @@
 ;;; ede/custom.el --- customization of EDE projects.
 
-;; Copyright (C) 2010-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -61,7 +61,7 @@
   "Edit fields of the current target through EIEIO & Custom."
   (interactive)
   (require 'eieio-custom)
-  (if (not (obj-of-class-p ede-object ede-target))
+  (if (not (obj-of-class-p ede-object 'ede-target))
       (error "Current file is not part of a target"))
   (ede-customize-target ede-object))
 
@@ -72,15 +72,15 @@
   "Edit fields of the current target through EIEIO & Custom.
 OBJ is the target object to customize."
   (require 'eieio-custom)
-  (if (and obj (not (obj-of-class-p obj ede-target)))
+  (if (and obj (not (obj-of-class-p obj 'ede-target)))
       (error "No logical target to customize"))
   (ede-customize obj))
 
-(defmethod ede-customize ((proj ede-project))
+(cl-defmethod ede-customize ((proj ede-project))
   "Customize the EDE project PROJ."
   (eieio-customize-object proj 'default))
 
-(defmethod ede-customize ((target ede-target))
+(cl-defmethod ede-customize ((target ede-target))
   "Customize the EDE TARGET."
   (eieio-customize-object target 'default))
 
@@ -177,7 +177,7 @@ OBJ is the target object to customize."
 ;;; Customization hooks
 ;;
 ;; These hooks are used when finishing up a customization.
-(defmethod eieio-done-customizing ((proj ede-project))
+(cl-defmethod eieio-done-customizing ((proj ede-project))
   "Call this when a user finishes customizing PROJ."
   (let ((ov eieio-ede-old-variables)
 	(nv (oref proj local-variables)))
@@ -196,11 +196,11 @@ OBJ is the target object to customize."
 ;; These two methods should be implemented by subclasses of
 ;; project and targets in order to account for user specified
 ;; changes.
-(defmethod eieio-done-customizing ((target ede-target))
+(cl-defmethod eieio-done-customizing ((target ede-target))
   "Call this when a user finishes customizing TARGET."
   nil)
 
-(defmethod ede-commit-project ((proj ede-project))
+(cl-defmethod ede-commit-project ((proj ede-project))
   "Commit any change to PROJ to its file."
   nil
   )

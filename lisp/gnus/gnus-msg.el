@@ -1,6 +1,6 @@
 ;;; gnus-msg.el --- mail and post interface for Gnus
 
-;; Copyright (C) 1995-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
 ;; Author: Masanobu UMEDA <umerin@flab.flab.fujitsu.junet>
 ;;	Lars Magne Ingebrigtsen <larsi@gnus.org>
@@ -433,12 +433,14 @@ Thank you for your help in stamping out bugs.
 	   (,buffer (buffer-name (current-buffer)))
 	   (,article (if (and (gnus-nnir-group-p gnus-newsgroup-name)
 			      gnus-article-reply)
-			 (nnir-article-number gnus-article-reply)
+			 (nnir-article-number (or (car-safe gnus-article-reply)
+						  gnus-article-reply))
 		       gnus-article-reply))
 	   (,yanked gnus-article-yanked-articles)
 	   (,group (if (and (gnus-nnir-group-p gnus-newsgroup-name)
 			    gnus-article-reply)
-		       (nnir-article-group gnus-article-reply)
+		       (nnir-article-group (or (car-safe gnus-article-reply)
+					       gnus-article-reply))
 		     gnus-newsgroup-name))
 	   (message-header-setup-hook
 	    (copy-sequence message-header-setup-hook))
@@ -446,7 +448,7 @@ Thank you for your help in stamping out bugs.
 	   (message-mode-hook (copy-sequence message-mode-hook)))
        (setq mml-buffer-list nil)
        (add-hook 'message-header-setup-hook (lambda ()
-       					      (gnus-inews-insert-gcc ,group)))
+					      (gnus-inews-insert-gcc ,group)))
        ;; message-newsreader and message-mailer were formerly set in
        ;; gnus-inews-add-send-actions, but this is too late when
        ;; message-generate-headers-first is used. --ansel
@@ -539,11 +541,15 @@ instead."
 		      nil yank-action send-actions return-action))
     (let ((buf (current-buffer))
 	  ;; Don't use posting styles corresponding to any existing group.
-	  (gnus-newsgroup-name "")
+	  (group-name gnus-newsgroup-name)
 	  mail-buf)
-      (gnus-setup-message 'message
-	(message-mail to subject other-headers continue
-		      nil yank-action send-actions return-action))
+      (unwind-protect
+	  (progn
+	    (setq gnus-newsgroup-name "")
+	    (gnus-setup-message 'message
+	      (message-mail to subject other-headers continue
+			    nil yank-action send-actions return-action)))
+	(setq gnus-newsgroup-name group-name))
       (when switch-action
 	(setq mail-buf (current-buffer))
 	(switch-to-buffer buf)
@@ -860,7 +866,7 @@ post using the current select method."
   (let ((message-post-method
 	 `(lambda (arg)
 	    (gnus-post-method (eq ',symp 'a) ,gnus-newsgroup-name)))
-	(user-mail-address user-mail-address))
+	(custom-address user-mail-address))
     (dolist (article (gnus-summary-work-articles n))
       (when (gnus-summary-select-article t nil nil article)
 	;; Pretend that we're doing a followup so that we can see what
@@ -870,12 +876,13 @@ post using the current select method."
 	    (gnus-summary-followup nil)
 	    (let ((from (message-fetch-field "from")))
 	      (when from
-		(setq user-mail-address
+		(setq custom-address
 		      (car (mail-header-parse-address from)))))
 	    (kill-buffer (current-buffer))))
 	;; Now cancel the article using the From header we got.
 	(when (gnus-eval-in-buffer-window gnus-original-article-buffer
-		(message-cancel-news))
+		(let ((user-mail-address (or custom-address user-mail-address)))
+		  (message-cancel-news)))
 	  (gnus-summary-mark-as-read article gnus-canceled-mark)
 	  (gnus-cache-remove-article 1))
 	(gnus-article-hide-headers-if-wanted))
@@ -1723,7 +1730,20 @@ this is a reply."
          (var (or gnus-outgoing-message-group gnus-message-archive-group))
 	 (gcc-self-val
 	  (and group (not (gnus-virtual-group-p group))
-	       (gnus-group-find-parameter group 'gcc-self)))
+	       (gnus-group-find-parameter group 'gcc-self t)))
+	 (gcc-self-get (lambda (gcc-self-val group)
+			 (if (stringp gcc-self-val)
+			     (if (string-match " " gcc-self-val)
+				 (concat "\"" gcc-self-val "\"")
+			       gcc-self-val)
+			   ;; In nndoc groups, we use the parent group name
+			   ;; instead of the current group.
+			   (let ((group (or (gnus-group-find-parameter
+					     gnus-newsgroup-name 'parent-group)
+					    group)))
+			     (if (string-match " " group)
+				 (concat "\"" group "\"")
+			       group)))))
 	 result
 	 (groups
 	  (cond
@@ -1774,19 +1794,11 @@ this is a reply."
 	  (if gcc-self-val
 	      ;; Use the `gcc-self' param value instead.
 	      (progn
-		(insert
-		 (if (stringp gcc-self-val)
-		     (if (string-match " " gcc-self-val)
-			 (concat "\"" gcc-self-val "\"")
-		       gcc-self-val)
-		   ;; In nndoc groups, we use the parent group name
-		   ;; instead of the current group.
-		   (let ((group (or (gnus-group-find-parameter
-				     gnus-newsgroup-name 'parent-group)
-				    group)))
-		     (if (string-match " " group)
-			 (concat "\"" group "\"")
-		       group))))
+		(insert (if (listp gcc-self-val)
+			    (mapconcat (lambda (val)
+					 (funcall gcc-self-get val group))
+				       gcc-self-val ", ")
+			    (funcall gcc-self-get gcc-self-val group)))
 		(if (not (eq gcc-self-val 'none))
 		    (insert "\n")
 		  (gnus-delete-line)))
@@ -1823,7 +1835,7 @@ this is a reply."
 		      (with-current-buffer gnus-summary-buffer
 			gnus-posting-styles)
 		    gnus-posting-styles))
-	  style match attribute value v results
+	  style match attribute value v results matched-string
 	  filep name address element)
       ;; If the group has a posting-style parameter, add it at the end with a
       ;; regexp matching everything, to be sure it takes precedence over all
@@ -1843,7 +1855,9 @@ this is a reply."
 	(when (cond
 	       ((stringp match)
 		;; Regexp string match on the group name.
-		(string-match match group))
+		(when (string-match match group)
+                  (setq matched-string group)
+                  t))
 	       ((eq match 'header)
 		;; Obsolete format of header match.
 		(and (gnus-buffer-live-p gnus-article-copy)
@@ -1872,7 +1886,8 @@ this is a reply."
 			   (nnheader-narrow-to-headers)
 			   (let ((header (message-fetch-field (nth 1 match))))
 			     (and header
-				  (string-match (nth 2 match) header)))))))
+				  (string-match (nth 2 match) header)
+				  (setq matched-string header)))))))
 		 (t
 		  ;; This is a form to be evalled.
 		  (eval match)))))
@@ -1893,10 +1908,11 @@ this is a reply."
 	    (setq v
 		  (cond
 		   ((stringp value)
-		    (if (and (stringp match)
+		    (if (and matched-string
 			     (gnus-string-match-p "\\\\[&[:digit:]]" value)
 			     (match-beginning 1))
-			(gnus-match-substitute-replacement value nil nil group)
+			(gnus-match-substitute-replacement value nil nil
+							   matched-string)
 		      value))
 		   ((or (symbolp value)
 			(functionp value))

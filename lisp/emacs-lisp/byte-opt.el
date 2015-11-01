@@ -1,10 +1,10 @@
 ;;; byte-opt.el --- the optimization passes of the emacs-lisp byte compiler -*- lexical-binding: t -*-
 
-;; Copyright (C) 1991, 1994, 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1991, 1994, 2000-2015 Free Software Foundation, Inc.
 
 ;; Author: Jamie Zawinski <jwz@lucid.com>
 ;;	Hallvard Furuseth <hbf@ulrik.uio.no>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal
 ;; Package: emacs
 
@@ -192,7 +192,7 @@
   ;; (if (aref byte-code-vector 0)
   ;;     (error "The old version of the disassembler is loaded.  Reload new-bytecomp as well"))
   (byte-compile-log-1
-   (apply 'format format
+   (apply #'format-message format
      (let (c a)
        (mapcar (lambda (arg)
 		  (if (not (consp arg))
@@ -248,10 +248,10 @@
 (defun byte-compile-inline-expand (form)
   (let* ((name (car form))
          (localfn (cdr (assq name byte-compile-function-environment)))
-	 (fn (or localfn (and (fboundp name) (symbol-function name)))))
+	 (fn (or localfn (symbol-function name))))
     (when (autoloadp fn)
       (autoload-do-load fn)
-      (setq fn (or (and (fboundp name) (symbol-function name))
+      (setq fn (or (symbol-function name)
                    (cdr (assq name byte-compile-function-environment)))))
     (pcase fn
       (`nil
@@ -292,7 +292,7 @@
               (format "Inlining closure %S failed" name))
              form))))
 
-      (t ;; Give up on inlining.
+      (_ ;; Give up on inlining.
        form))))
 
 ;; ((lambda ...) ...)
@@ -302,65 +302,65 @@
   ;; doesn't matter here, because function's behavior is underspecified so it
   ;; can safely be turned into a `let', even though the reverse is not true.
   (or name (setq name "anonymous lambda"))
-  (let ((lambda (car form))
-	(values (cdr form)))
-    (let ((arglist (nth 1 lambda))
-	  (body (cdr (cdr lambda)))
-	  optionalp restp
-	  bindings)
-      (if (and (stringp (car body)) (cdr body))
-	  (setq body (cdr body)))
-      (if (and (consp (car body)) (eq 'interactive (car (car body))))
-	  (setq body (cdr body)))
-      ;; FIXME: The checks below do not belong in an optimization phase.
-      (while arglist
-	(cond ((eq (car arglist) '&optional)
-	       ;; ok, I'll let this slide because funcall_lambda() does...
-	       ;; (if optionalp (error "multiple &optional keywords in %s" name))
-	       (if restp (error "&optional found after &rest in %s" name))
-	       (if (null (cdr arglist))
-		   (error "nothing after &optional in %s" name))
-	       (setq optionalp t))
-	      ((eq (car arglist) '&rest)
-	       ;; ...but it is by no stretch of the imagination a reasonable
-	       ;; thing that funcall_lambda() allows (&rest x y) and
-	       ;; (&rest x &optional y) in arglists.
-	       (if (null (cdr arglist))
-		   (error "nothing after &rest in %s" name))
-	       (if (cdr (cdr arglist))
-		   (error "multiple vars after &rest in %s" name))
-	       (setq restp t))
-	      (restp
-	       (setq bindings (cons (list (car arglist)
-					  (and values (cons 'list values)))
-				    bindings)
-		     values nil))
-	      ((and (not optionalp) (null values))
-	       (byte-compile-warn "attempt to open-code `%s' with too few arguments" name)
-	       (setq arglist nil values 'too-few))
-	      (t
-	       (setq bindings (cons (list (car arglist) (car values))
-				    bindings)
-		     values (cdr values))))
-	(setq arglist (cdr arglist)))
-      (if values
-	  (progn
-	    (or (eq values 'too-few)
-		(byte-compile-warn
-		 "attempt to open-code `%s' with too many arguments" name))
-	    form)
+  (let* ((lambda (car form))
+         (values (cdr form))
+         (arglist (nth 1 lambda))
+         (body (cdr (cdr lambda)))
+         optionalp restp
+         bindings)
+    (if (and (stringp (car body)) (cdr body))
+        (setq body (cdr body)))
+    (if (and (consp (car body)) (eq 'interactive (car (car body))))
+        (setq body (cdr body)))
+    ;; FIXME: The checks below do not belong in an optimization phase.
+    (while arglist
+      (cond ((eq (car arglist) '&optional)
+             ;; ok, I'll let this slide because funcall_lambda() does...
+             ;; (if optionalp (error "multiple &optional keywords in %s" name))
+             (if restp (error "&optional found after &rest in %s" name))
+             (if (null (cdr arglist))
+                 (error "nothing after &optional in %s" name))
+             (setq optionalp t))
+            ((eq (car arglist) '&rest)
+             ;; ...but it is by no stretch of the imagination a reasonable
+             ;; thing that funcall_lambda() allows (&rest x y) and
+             ;; (&rest x &optional y) in arglists.
+             (if (null (cdr arglist))
+                 (error "nothing after &rest in %s" name))
+             (if (cdr (cdr arglist))
+                 (error "multiple vars after &rest in %s" name))
+             (setq restp t))
+            (restp
+             (setq bindings (cons (list (car arglist)
+                                        (and values (cons 'list values)))
+                                  bindings)
+                   values nil))
+            ((and (not optionalp) (null values))
+             (byte-compile-warn "attempt to open-code `%s' with too few arguments" name)
+             (setq arglist nil values 'too-few))
+            (t
+             (setq bindings (cons (list (car arglist) (car values))
+                                  bindings)
+                   values (cdr values))))
+      (setq arglist (cdr arglist)))
+    (if values
+        (progn
+          (or (eq values 'too-few)
+              (byte-compile-warn
+               "attempt to open-code `%s' with too many arguments" name))
+          form)
 
-	;; The following leads to infinite recursion when loading a
-	;; file containing `(defsubst f () (f))', and then trying to
-	;; byte-compile that file.
-	;(setq body (mapcar 'byte-optimize-form body)))
+	                                ;; The following leads to infinite recursion when loading a
+	                                ;; file containing `(defsubst f () (f))', and then trying to
+	                                ;; byte-compile that file.
+                       ;(setq body (mapcar 'byte-optimize-form body)))
 
-	(let ((newform
-	       (if bindings
-		   (cons 'let (cons (nreverse bindings) body))
-		 (cons 'progn body))))
-	  (byte-compile-log "  %s\t==>\t%s" form newform)
-	  newform)))))
+      (let ((newform
+             (if bindings
+                 (cons 'let (cons (nreverse bindings) body))
+               (cons 'progn body))))
+        (byte-compile-log "  %s\t==>\t%s" form newform)
+        newform))))
 
 
 ;;; implementing source-level optimizers
@@ -390,12 +390,13 @@
 	   (and (nth 1 form)
 		(not for-effect)
 		form))
-	  ((eq 'lambda (car-safe fn))
+	  ((eq (car-safe fn) 'lambda)
 	   (let ((newform (byte-compile-unfold-lambda form)))
 	     (if (eq newform form)
 		 ;; Some error occurred, avoid infinite recursion
 		 form
 	       (byte-optimize-form-code-walker newform for-effect))))
+	  ((eq (car-safe fn) 'closure) form)
 	  ((memq fn '(let let*))
 	   ;; recursively enter the optimizer for the bindings and body
 	   ;; of a let or let*.  This for depth-firstness: forms that
@@ -488,10 +489,21 @@
 			      (prin1-to-string form))
 	   nil)
 
-	  ((memq fn '(function condition-case))
-	   ;; These forms are compiled as constants or by breaking out
+	  ((eq fn 'function)
+	   ;; This forms is compiled as constant or by breaking out
 	   ;; all the subexpressions and compiling them separately.
 	   form)
+
+	  ((eq fn 'condition-case)
+           (if byte-compile--use-old-handlers
+               ;; Will be optimized later.
+               form
+             `(condition-case ,(nth 1 form) ;Not evaluated.
+                  ,(byte-optimize-form (nth 2 form) for-effect)
+                ,@(mapcar (lambda (clause)
+                            `(,(car clause)
+                              ,@(byte-optimize-body (cdr clause) for-effect)))
+                          (nthcdr 3 form)))))
 
 	  ((eq fn 'unwind-protect)
 	   ;; the "protected" part of an unwind-protect is compiled (and thus
@@ -504,13 +516,14 @@
 		       (cdr (cdr form)))))
 
 	  ((eq fn 'catch)
-	   ;; the body of a catch is compiled (and thus optimized) as a
-	   ;; top-level form, so don't do it here.  The tag is never
-	   ;; for-effect.  The body should have the same for-effect status
-	   ;; as the catch form itself, but that isn't handled properly yet.
 	   (cons fn
 		 (cons (byte-optimize-form (nth 1 form) nil)
-		       (cdr (cdr form)))))
+                       (if byte-compile--use-old-handlers
+                           ;; The body of a catch is compiled (and thus
+                           ;; optimized) as a top-level form, so don't do it
+                           ;; here.
+                           (cdr (cdr form))
+                         (byte-optimize-body (cdr form) for-effect)))))
 
 	  ((eq fn 'ignore)
 	   ;; Don't treat the args to `ignore' as being
@@ -533,18 +546,6 @@
 	  ((and for-effect (setq tmp (get fn 'side-effect-free))
 		(or byte-compile-delete-errors
 		    (eq tmp 'error-free)
-		    ;; Detect the expansion of (pop foo).
-		    ;; There is no need to compile the call to `car' there.
-		    (and (eq fn 'car)
-			 (eq (car-safe (cadr form)) 'prog1)
-			 (let ((var (cadr (cadr form)))
-			       (last (nth 2 (cadr form))))
-			   (and (symbolp var)
-				(null (nthcdr 3 (cadr form)))
-				(eq (car-safe last) 'setq)
-				(eq (cadr last) var)
-				(eq (car-safe (nth 2 last)) 'cdr)
-				(eq (cadr (nth 2 last)) var))))
 		    (progn
 		      (byte-compile-warn "value returned from %s is unused"
 					 (prin1-to-string form))
@@ -565,7 +566,7 @@
 	       (cons fn args)))))))
 
 (defun byte-optimize-all-constp (list)
-  "Non-nil if all elements of LIST satisfy `macroexp-const-p"
+  "Non-nil if all elements of LIST satisfy `macroexp-const-p'."
   (let ((constant t))
     (while (and list constant)
       (unless (macroexp-const-p (car list))
@@ -859,14 +860,16 @@
 
 
 (defun byte-optimize-binary-predicate (form)
-  (if (macroexp-const-p (nth 1 form))
-      (if (macroexp-const-p (nth 2 form))
-	  (condition-case ()
-	      (list 'quote (eval form))
-	    (error form))
-	;; This can enable some lapcode optimizations.
-	(list (car form) (nth 2 form) (nth 1 form)))
-    form))
+  (cond
+   ((or (not (macroexp-const-p (nth 1 form)))
+        (nthcdr 3 form)) ;; In case there are more than 2 args.
+    form)
+   ((macroexp-const-p (nth 2 form))
+    (condition-case ()
+        (list 'quote (eval form))
+      (error form)))
+   (t ;; This can enable some lapcode optimizations.
+    (list (car form) (nth 2 form) (nth 1 form)))))
 
 (defun byte-optimize-predicate (form)
   (let ((ok t)
@@ -941,15 +944,6 @@
 	       (not (macroexp--const-symbol-p form))))
       form
     (nth 1 form)))
-
-(defun byte-optimize-zerop (form)
-  (cond ((numberp (nth 1 form))
-	 (eval form))
-	(byte-compile-delete-errors
-	 (list '= (nth 1 form) 0))
-	(form)))
-
-(put 'zerop 'byte-optimizer 'byte-optimize-zerop)
 
 (defun byte-optimize-and (form)
   ;; Simplify if less than 2 args.
@@ -1231,7 +1225,7 @@
 	 window-left-child window-left-column window-margins window-minibuffer-p
 	 window-next-buffers window-next-sibling window-new-normal
 	 window-new-total window-normal-size window-parameter window-parameters
-	 window-parent window-pixel-edges window-point window-prev-buffers 
+	 window-parent window-pixel-edges window-point window-prev-buffers
 	 window-prev-sibling window-redisplay-end-trigger window-scroll-bars
 	 window-start window-text-height window-top-child window-top-line
 	 window-total-height window-total-width window-use-time window-vscroll
@@ -1304,7 +1298,7 @@
   "Don't call this!"
   ;; Fetch and return the offset for the current opcode.
   ;; Return nil if this opcode has no offset.
-  (cond ((< bytedecomp-op byte-nth)
+  (cond ((< bytedecomp-op byte-pophandler)
 	 (let ((tem (logand bytedecomp-op 7)))
 	   (setq bytedecomp-op (logand bytedecomp-op 248))
 	   (cond ((eq tem 6)
@@ -1323,7 +1317,9 @@
 	   (setq bytedecomp-op byte-constant)))
 	((or (and (>= bytedecomp-op byte-constant2)
                   (<= bytedecomp-op byte-goto-if-not-nil-else-pop))
-             (= bytedecomp-op byte-stack-set2))
+             (memq bytedecomp-op (eval-when-compile
+                                   (list byte-stack-set2 byte-pushcatch
+                                         byte-pushconditioncase))))
 	 ;; Offset in next 2 bytes.
 	 (setq bytedecomp-ptr (1+ bytedecomp-ptr))
 	 (+ (aref bytes bytedecomp-ptr)

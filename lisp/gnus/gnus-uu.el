@@ -1,6 +1,6 @@
 ;;; gnus-uu.el --- extract (uu)encoded files in Gnus
 
-;; Copyright (C) 1985-1987, 1993-1998, 2000-2013 Free Software
+;; Copyright (C) 1985-1987, 1993-1998, 2000-2015 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
@@ -79,10 +79,10 @@ To change the behavior, you can either edit this variable or set
 
 For example:
 
-To make gnus-uu use 'xli' to display JPEG and GIF files, put the
+To make gnus-uu use `xli' to display JPEG and GIF files, put the
 following in your .emacs file:
 
-  (setq gnus-uu-user-view-rules '((\"jpg$\\\\|gif$\" \"xli\")))
+  (setq gnus-uu-user-view-rules \\='((\"jpg$\\\\|gif$\" \"xli\")))
 
 Both these variables are lists of lists with two string elements.  The
 first string is a regular expression.  If the file name matches this
@@ -140,10 +140,10 @@ details."
 
 (defcustom gnus-uu-user-archive-rules nil
   "A list that can be set to override the default archive unpacking commands.
-To use, for instance, 'untar' to unpack tar files and 'zip -x' to
+To use, for instance, `untar' to unpack tar files and `zip -x' to
 unpack zip files, say the following:
   (setq gnus-uu-user-archive-rules
-    '((\"\\\\.tar$\" \"untar\")
+    \\='((\"\\\\.tar$\" \"untar\")
       (\"\\\\.zip$\" \"zip -x\")))"
   :group 'gnus-extract-archive
   :type '(repeat (group regexp (string :tag "Command"))))
@@ -406,6 +406,7 @@ didn't work, and overwrite existing files.  Otherwise, ask each time."
 	  (read-directory-name "Unbinhex and save in dir: "
 			  gnus-uu-default-dir
 			  gnus-uu-default-dir))))
+  (gnus-uu-initialize)
   (setq gnus-uu-binhex-article-name
 	(mm-make-temp-file (expand-file-name "binhex" gnus-uu-work-dir)))
   (gnus-uu-decode-with-method 'gnus-uu-binhex-article n dir))
@@ -471,6 +472,7 @@ didn't work, and overwrite existing files.  Otherwise, ask each time."
    (list current-prefix-arg
 	 (read-file-name "Unbinhex, view and save in dir: "
 			 gnus-uu-default-dir gnus-uu-default-dir)))
+  (gnus-uu-initialize)
   (setq gnus-uu-binhex-article-name
 	(mm-make-temp-file (expand-file-name "binhex" gnus-uu-work-dir)))
   (let ((gnus-view-pseudos (or gnus-view-pseudos 'automatic)))
@@ -482,8 +484,9 @@ didn't work, and overwrite existing files.  Otherwise, ask each time."
 (defun gnus-uu-digest-mail-forward (&optional n post)
   "Digests and forwards all articles in this series."
   (interactive "P")
+  (gnus-uu-initialize)
   (let ((gnus-uu-save-in-digest t)
-	(file (mm-make-temp-file (nnheader-concat gnus-uu-tmp-dir "forward")))
+	(file (mm-make-temp-file (nnheader-concat gnus-uu-work-dir "forward")))
 	(message-forward-as-mime message-forward-as-mime)
 	(mail-parse-charset gnus-newsgroup-charset)
 	(mail-parse-ignored-charsets gnus-newsgroup-ignored-charsets)
@@ -870,10 +873,9 @@ When called interactively, prompt for REGEXP."
 	  (setq state (list 'middle))))
       (with-current-buffer "*gnus-uu-body*"
 	(goto-char (setq beg (point-max)))
-	(save-excursion
+	(with-current-buffer buffer
 	  (save-restriction
-	    (set-buffer buffer)
-	    (let (buffer-read-only)
+	    (let ((inhibit-read-only t))
 	      (set-text-properties (point-min) (point-max) nil)
 	      ;; These two are necessary for XEmacs 19.12 fascism.
 	      (put-text-property (point-min) (point-max) 'invisible nil)
@@ -907,8 +909,7 @@ When called interactively, prompt for REGEXP."
 				 (match-beginning 0)
 				 (or (and (re-search-forward "^[^ \t]" nil t)
 					  (1- (point)))
-				     (progn (forward-line 1) (point)))))))))
-	    (widen)))
+				     (progn (forward-line 1) (point)))))))))))
 	(if (and message-forward-as-mime gnus-uu-digest-buffer)
 	  (if message-forward-show-mml
 	      (progn
@@ -1836,8 +1837,8 @@ Gnus might fail to display all of it.")
 
 ;; Initializing
 
-(add-hook 'gnus-exit-group-hook 'gnus-uu-clean-up)
-(add-hook 'gnus-exit-group-hook	'gnus-uu-delete-work-dir)
+(add-hook 'gnus-summary-prepare-exit-hook 'gnus-uu-clean-up)
+(add-hook 'gnus-summary-prepare-exit-hook 'gnus-uu-delete-work-dir)
 
 
 

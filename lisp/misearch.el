@@ -1,6 +1,6 @@
 ;;; misearch.el --- isearch extensions for multi-buffer search
 
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Juri Linkov <juri@jurta.org>
 ;; Keywords: matching
@@ -91,6 +91,14 @@ Isearch starts.")
   "The buffer where the search is currently searching.
 The value is nil when the search still is in the initial buffer.")
 
+;;;###autoload
+(defvar multi-isearch-buffer-list nil
+  "Sequence of buffers visited by multiple buffers Isearch.
+This is nil if Isearch is not currently searching more than one buffer.")
+;;;###autoload
+(defvar multi-isearch-file-list nil
+  "Sequence of files visited by multiple file buffers Isearch.")
+
 (defvar multi-isearch-orig-search-fun nil)
 (defvar multi-isearch-orig-wrap nil)
 (defvar multi-isearch-orig-push-state nil)
@@ -119,7 +127,9 @@ Intended to be added to `isearch-mode-hook'."
 (defun multi-isearch-end ()
   "Clean up the multi-buffer search after terminating isearch."
   (setq multi-isearch-current-buffer nil
-	multi-isearch-next-buffer-current-function nil)
+	multi-isearch-next-buffer-current-function nil
+	multi-isearch-buffer-list nil
+	multi-isearch-file-list nil)
   (setq-default isearch-search-fun-function multi-isearch-orig-search-fun
 		isearch-wrap-function       multi-isearch-orig-wrap
 		isearch-push-state-function multi-isearch-orig-push-state)
@@ -204,8 +214,6 @@ Switch to the buffer restored from the search status stack."
 
 ;;; Global multi-buffer search invocations
 
-(defvar multi-isearch-buffer-list nil)
-
 (defun multi-isearch-next-buffer-from-list (&optional buffer wrap)
   "Return the next buffer in the series of buffers.
 This function is used for multiple buffers Isearch.  A sequence of
@@ -229,7 +237,7 @@ set in `multi-isearch-buffers' or `multi-isearch-buffers-regexp'."
 	 (ido-ignore-item-temp-list bufs))
     (while (not (string-equal
 		 (setq buf (read-buffer
-			    (if (eq read-buffer-function 'ido-read-buffer)
+			    (if (eq read-buffer-function #'ido-read-buffer)
 				"Next buffer to search (C-j to end): "
 			      "Next buffer to search (RET to end): ")
 			    nil t))
@@ -239,7 +247,8 @@ set in `multi-isearch-buffers' or `multi-isearch-buffers-regexp'."
     (nreverse bufs)))
 
 (defun multi-isearch-read-matching-buffers ()
-  "Return a list of buffers whose names match specified regexp."
+  "Return a list of buffers whose names match specified regexp.
+Uses `read-regexp' to read the regexp."
   ;; Most code from `multi-occur-in-matching-buffers'
   ;; and `kill-matching-buffers'.
   (let ((bufregexp
@@ -262,11 +271,11 @@ whose names match the specified regexp."
 	     (multi-isearch-read-matching-buffers)
 	   (multi-isearch-read-buffers))))
   (let ((multi-isearch-next-buffer-function
-	 'multi-isearch-next-buffer-from-list)
-	(multi-isearch-buffer-list (mapcar #'get-buffer buffers)))
+	 'multi-isearch-next-buffer-from-list))
+    (setq multi-isearch-buffer-list (mapcar #'get-buffer buffers))
     (switch-to-buffer (car multi-isearch-buffer-list))
     (goto-char (if isearch-forward (point-min) (point-max)))
-    (isearch-forward)))
+    (isearch-forward nil t)))
 
 ;;;###autoload
 (defun multi-isearch-buffers-regexp (buffers)
@@ -280,16 +289,14 @@ whose names match the specified regexp."
 	     (multi-isearch-read-matching-buffers)
 	   (multi-isearch-read-buffers))))
   (let ((multi-isearch-next-buffer-function
-	 'multi-isearch-next-buffer-from-list)
-	(multi-isearch-buffer-list (mapcar #'get-buffer buffers)))
+	 'multi-isearch-next-buffer-from-list))
+    (setq multi-isearch-buffer-list (mapcar #'get-buffer buffers))
     (switch-to-buffer (car multi-isearch-buffer-list))
     (goto-char (if isearch-forward (point-min) (point-max)))
-    (isearch-forward-regexp)))
+    (isearch-forward-regexp nil t)))
 
 
 ;;; Global multi-file search invocations
-
-(defvar multi-isearch-file-list nil)
 
 (defun multi-isearch-next-file-buffer-from-list (&optional buffer wrap)
   "Return the next buffer in the series of file buffers.
@@ -322,8 +329,10 @@ Every next/previous file in the defined sequence is visited by
       (add-to-list 'files file))
     (nreverse files)))
 
+;; A regexp is not the same thing as a file glob - does this matter?
 (defun multi-isearch-read-matching-files ()
-  "Return a list of files whose names match specified wildcard."
+  "Return a list of files whose names match specified wildcard.
+Uses `read-regexp' to read the wildcard."
   ;; Most wildcard code from `find-file-noselect'.
   (let ((filename (read-regexp "Search in files whose names match wildcard")))
     (when (and filename
@@ -346,11 +355,11 @@ whose file names match the specified wildcard."
 	     (multi-isearch-read-matching-files)
 	   (multi-isearch-read-files))))
   (let ((multi-isearch-next-buffer-function
-	 'multi-isearch-next-file-buffer-from-list)
-	(multi-isearch-file-list (mapcar #'expand-file-name files)))
+	 'multi-isearch-next-file-buffer-from-list))
+    (setq multi-isearch-file-list (mapcar #'expand-file-name files))
     (find-file (car multi-isearch-file-list))
     (goto-char (if isearch-forward (point-min) (point-max)))
-    (isearch-forward)))
+    (isearch-forward nil t)))
 
 ;;;###autoload
 (defun multi-isearch-files-regexp (files)
@@ -365,11 +374,32 @@ whose file names match the specified wildcard."
 	     (multi-isearch-read-matching-files)
 	   (multi-isearch-read-files))))
   (let ((multi-isearch-next-buffer-function
-	 'multi-isearch-next-file-buffer-from-list)
-	(multi-isearch-file-list (mapcar #'expand-file-name files)))
+	 'multi-isearch-next-file-buffer-from-list))
+    (setq multi-isearch-file-list (mapcar #'expand-file-name files))
     (find-file (car multi-isearch-file-list))
     (goto-char (if isearch-forward (point-min) (point-max)))
-    (isearch-forward-regexp)))
+    (isearch-forward-regexp nil t)))
+
+(defvar unload-function-defs-list)
+
+(defun multi-isearch-unload-function ()
+  "Remove autoloaded variables from `unload-function-defs-list'.
+Also prevent the feature from being reloaded via `isearch-mode-hook'."
+  (remove-hook 'isearch-mode-hook 'multi-isearch-setup)
+  (let ((defs (list (car unload-function-defs-list)))
+	(auto '(multi-isearch-next-buffer-function
+		multi-isearch-next-buffer-current-function
+		multi-isearch-current-buffer
+		multi-isearch-buffer-list multi-isearch-file-list)))
+    (dolist (def (cdr unload-function-defs-list))
+      (unless (and (symbolp def)
+		   (memq def auto))
+	(push def defs)))
+    (setq unload-function-defs-list (nreverse defs))
+    ;; .
+    nil))
+
+(defalias 'misearch-unload-function 'multi-isearch-unload-function)
 
 
 (provide 'multi-isearch)

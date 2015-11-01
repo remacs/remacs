@@ -1,6 +1,6 @@
 ;;; spam-report.el --- Reporting spam
 
-;; Copyright (C) 2002-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
 ;; Author: Ted Zlatanov <tzz@lifelogs.com>
 ;; Keywords: network, spam, mail, gmane, report
@@ -43,7 +43,7 @@ If you are using spam.el, consider setting gnus-spam-process-newsgroups
 or the gnus-group-spam-exit-processor-report-gmane group/topic parameter
 instead."
   :type '(radio (const nil)
-		(regexp :value "^nntp\+.*:gmane\."))
+		(regexp :value "^nntp\\+.*:gmane\\."))
   :group 'spam-report)
 
 (defcustom spam-report-gmane-use-article-number t
@@ -307,7 +307,7 @@ symbol `ask', query before flushing the queue file."
     (if (or (eq keep nil)
 	    (and (eq keep 'ask)
 		 (y-or-n-p
-		  (format
+		  (gnus-format-message
 		   "Flush requests from `%s'? " (current-buffer)))))
 	(progn
 	  (gnus-message 7 "Flushing request file `%s'"

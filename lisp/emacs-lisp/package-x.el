@@ -1,6 +1,6 @@
 ;;; package-x.el --- Package extras
 
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Tom Tromey <tromey@redhat.com>
 ;; Created: 10 Mar 2007
@@ -114,18 +114,12 @@ inserted after its first occurrence in the file."
 (defun package--archive-contents-from-url (archive-url)
   "Parse archive-contents file at ARCHIVE-URL.
 Return the file contents, as a string, or nil if unsuccessful."
-  (ignore-errors
-    (when archive-url
-      (let* ((buffer (url-retrieve-synchronously
-		      (concat archive-url "archive-contents"))))
-	(set-buffer buffer)
-	(package-handle-response)
-	(re-search-forward "^$" nil 'move)
-	(forward-char)
-	(delete-region (point-min) (point))
-	(prog1 (package-read-from-string
-		(buffer-substring-no-properties (point-min) (point-max)))
-	  (kill-buffer buffer))))))
+  (when archive-url
+    (with-temp-buffer
+      (ignore-errors
+	(url-insert-file-contents (concat archive-url "archive-contents"))
+	(package-read-from-string
+	 (buffer-substring-no-properties (point-min) (point-max)))))))
 
 (defun package--archive-contents-from-file ()
   "Parse the archive-contents at `package-archive-upload-base'"
@@ -162,6 +156,7 @@ DESCRIPTION is the text of the news item."
 			       archive-url))
 
 (declare-function lm-commentary "lisp-mnt" (&optional file))
+(defvar tar-data-buffer)
 
 (defun package-upload-buffer-internal (pkg-desc extension &optional archive-url)
   "Upload a package whose contents are in the current buffer.
@@ -209,15 +204,20 @@ if it exists."
                 (pcase file-type
                   (`single (lm-commentary))
                   (`tar nil))) ;; FIXME: Get it from the README file.
+               (extras (package-desc-extras pkg-desc))
 	       (pkg-version (package-version-join split-version))
 	       (pkg-buffer (current-buffer)))
 
+          ;; `package-upload-file' will error if given a directory,
+          ;; but we check it here as well just in case.
+          (when (eq 'dir file-type)
+            (user-error "Can't upload directory, tar it instead"))
 	  ;; Get archive-contents from ARCHIVE-URL if it's non-nil, or
 	  ;; from `package-archive-upload-base' otherwise.
 	  (let ((contents (or (package--archive-contents-from-url archive-url)
 			      (package--archive-contents-from-file)))
 		(new-desc (package-make-ac-desc
-                           split-version requires desc file-type)))
+                           split-version requires desc file-type extras)))
 	    (if (> (car contents) package-archive-version)
 		(error "Unrecognized archive version %d" (car contents)))
 	    (let ((elt (assq pkg-name (cdr contents))))
@@ -248,7 +248,7 @@ if it exists."
 	        	     (concat (symbol-name pkg-name) "-readme.txt")
 	        	     package-archive-upload-base)))
 
-	    (set-buffer pkg-buffer)
+	    (set-buffer (if (eq file-type 'tar) tar-data-buffer pkg-buffer))
 	    (write-region (point-min) (point-max)
 			  (expand-file-name
 			   (format "%s-%s.%s" pkg-name pkg-version extension)

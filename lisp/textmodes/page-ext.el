@@ -1,6 +1,6 @@
 ;;; page-ext.el --- extended page handling commands
 
-;; Copyright (C) 1990-1991, 1993-1994, 2001-2013 Free Software
+;; Copyright (C) 1990-1991, 1993-1994, 2001-2015 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Robert J. Chassell <bob@gnu.org>
@@ -345,14 +345,13 @@ If point is in the pages directory buffer, insert the new page in the
 buffer associated with the directory.
 
 Insert the new page just before current page if
-  pages-directory-for-adding-new-page-before-current-page-p  variable
-is non-nil.  Else insert at exact location of point.
+`pages-directory-for-adding-new-page-before-current-page-p' is non-nil.
+Else insert at exact location of point.
 
-Narrow to new page if
-  pages-directory-for-adding-page-narrowing-p variable
-is non-nil.
+Narrow to new page if `pages-directory-for-adding-page-narrowing-p' is
+non-nil.
 
-Page begins with a `^L' as the default page-delimiter.
+Page begins with a '^L' as the default `page-delimiter'.
 Use \\[set-page-delimiter] to change the page-delimiter.
 Point is left in the body of page."
   (interactive "sHeader line: ")
@@ -396,8 +395,8 @@ Point is left in the body of page."
   "Search for REGEXP, starting from point, and narrow to page it is in."
   (interactive (list
                 (read-string
-                 (format "Search for `%s' (end with RET): "
-                         (or pages-last-search "regexp")))))
+                 (format-message "Search for `%s' (end with RET): "
+				 (or pages-last-search "regexp")))))
   (if (equal regexp "")
       (setq regexp pages-last-search)
     (setq pages-last-search regexp))
@@ -447,7 +446,7 @@ REVERSE (non-nil means reverse order), BEG and END (region to sort)."
 
 (defun sort-pages-buffer (&optional reverse)
   "Sort pages alphabetically in buffer.  Prefix arg means reverse order.
-\(Non-nil arg if not interactive.\)"
+\(Non-nil arg if not interactive.)"
 
   (interactive "P")
   (or reverse (setq reverse nil))
@@ -462,7 +461,7 @@ REVERSE (non-nil means reverse order), BEG and END (region to sort)."
 (defvar pages-directory-previous-regexp nil
   "Value of previous regexp used by `pages-directory'.
 \(This regular expression may be used to select only those pages that
-contain matches to the regexp.\)")
+contain matches to the regexp.)")
 
 (defvar pages-buffer nil
   "The buffer for which the pages-directory function creates the directory.")
@@ -516,7 +515,7 @@ resets the page-delimiter to the original value."
 (defun pages-directory
   (pages-list-all-headers-p count-lines-p &optional regexp)
   "Display a directory of the page headers in a temporary buffer.
-A header is the first non-blank line after the page-delimiter.
+A header is the first non-blank line after the `page-delimiter'.
 \\[pages-directory-mode]
 You may move point to one of the lines in the temporary buffer,
 then use \\<pages-directory-goto> to go to the same line in the pages buffer.
@@ -550,16 +549,18 @@ directory for only the accessible portion of the buffer."
           (list nil
                 nil
                 (read-string
-                 (format "Select according to `%s' (end with RET): "
-                         (or pages-directory-previous-regexp "regexp")))))
+                 (format-message
+		  "Select according to `%s' (end with RET): "
+		  (or pages-directory-previous-regexp "regexp")))))
          ((> (prefix-numeric-value current-prefix-arg) 0)
           (list t t nil))
          ((< (prefix-numeric-value current-prefix-arg) 0)
           (list nil
                 t
                 (read-string
-                 (format "Select according to `%s' (end with RET): "
-                         (or pages-directory-previous-regexp "regexp")))))))
+                 (format-message
+		  "Select according to `%s' (end with RET): "
+		  (or pages-directory-previous-regexp "regexp")))))))
 
   (if (equal regexp "")
       (setq regexp pages-directory-previous-regexp)
@@ -752,10 +753,10 @@ Move point to one of the lines in the displayed directory,
 then use \\[pages-directory-goto] to go to the same line
 in the addresses buffer.
 
-If    pages-directory-for-addresses-goto-narrowing-p    is non-nil,
+If `pages-directory-for-addresses-goto-narrowing-p' is non-nil,
 `pages-directory-goto' narrows addresses buffer to entry.
 
-If    pages-directory-for-addresses-buffer-keep-windows-p     is nil,
+If `pages-directory-for-addresses-buffer-keep-windows-p' is nil,
 this command deletes other windows when it displays the addresses
 directory."
 

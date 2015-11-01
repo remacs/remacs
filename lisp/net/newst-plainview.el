@@ -1,11 +1,10 @@
 ;;; newst-plainview.el --- Single buffer frontend for newsticker.
 
-;; Copyright (C) 2003-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
 ;; Author:      Ulf Jasper <ulf.jasper@web.de>
 ;; Filename:    newst-plainview.el
 ;; URL:         http://www.nongnu.org/newsticker
-;; Time-stamp:  "Mon 11-Feb-2013 20:27:11 gm on skiddaw"
 ;; Package:     newsticker
 
 ;; ======================================================================
@@ -252,7 +251,7 @@ assures that the current feed is completely visible."
   "List of functions run after the newsticker buffer has been updated.
 Each function is called after `newsticker-buffer-update' has been called.
 
-The default value '`newsticker-w3m-show-inline-images' loads inline
+The default value `\\='newsticker-w3m-show-inline-images' loads inline
 images."
   :type 'hook
   :group 'newsticker-plainview-hooks)
@@ -264,7 +263,7 @@ Each function is called after
 `newsticker-toggle-auto-narrow-to-feed' or
 `newsticker-toggle-auto-narrow-to-item' has been called.
 
-The default value '`newsticker-w3m-show-inline-images' loads inline
+The default value `\\='newsticker-w3m-show-inline-images' loads inline
 images."
   :type 'hook
   :group 'newsticker-plainview-hooks)

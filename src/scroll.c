@@ -1,6 +1,6 @@
 /* Calculate what line insertion or deletion to do, and do it
 
-Copyright (C) 1985-1986, 1990, 1993-1994, 2001-2013 Free Software
+Copyright (C) 1985-1986, 1990, 1993-1994, 2001-2015 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -25,9 +25,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "termchar.h"
 #include "dispextern.h"
-#include "keyboard.h"
 #include "frame.h"
-#include "window.h"
 #include "termhooks.h"
 
 /* All costs measured in characters.
@@ -90,13 +88,13 @@ calculate_scrolling (struct frame *frame,
 		     /* matrix is of size window_size + 1 on each side.  */
 		     struct matrix_elt *matrix,
 		     int window_size, int lines_below,
-		     int *draw_cost, int *old_hash, int *new_hash,
+		     int *draw_cost, unsigned *old_hash, unsigned *new_hash,
 		     int free_at_end)
 {
-  register int i, j;
-  int frame_lines = FRAME_LINES (frame);
-  register struct matrix_elt *p, *p1;
-  register int cost, cost1;
+  int i, j;
+  int frame_total_lines = FRAME_TOTAL_LINES (frame);
+  struct matrix_elt *p, *p1;
+  int cost, cost1;
 
   int lines_moved = window_size
     + (FRAME_SCROLL_REGION_OK (frame) ? 0 : lines_below);
@@ -104,18 +102,18 @@ calculate_scrolling (struct frame *frame,
      at the i'th line of the lines we are considering,
      where I is origin 1 (as it is below).  */
   int *first_insert_cost
-    = &FRAME_INSERT_COST (frame)[frame_lines - 1 - lines_moved];
+    = &FRAME_INSERT_COST (frame)[frame_total_lines - 1 - lines_moved];
   int *first_delete_cost
-    = &FRAME_DELETE_COST (frame)[frame_lines - 1 - lines_moved];
+    = &FRAME_DELETE_COST (frame)[frame_total_lines - 1 - lines_moved];
   int *next_insert_cost
-    = &FRAME_INSERTN_COST (frame)[frame_lines - 1 - lines_moved];
+    = &FRAME_INSERTN_COST (frame)[frame_total_lines - 1 - lines_moved];
   int *next_delete_cost
-    = &FRAME_DELETEN_COST (frame)[frame_lines - 1 - lines_moved];
+    = &FRAME_DELETEN_COST (frame)[frame_total_lines - 1 - lines_moved];
 
   /* Discourage long scrolls on fast lines.
      Don't scroll nearly a full frame height unless it saves
      at least 1/4 second.  */
-  int extra_cost = (int) (baud_rate / (10 * 4 * FRAME_LINES (frame)));
+  int extra_cost = baud_rate / (10 * 4 * frame_total_lines);
 
   if (baud_rate <= 0)
     extra_cost = 1;
@@ -245,18 +243,20 @@ do_scrolling (struct frame *frame, struct glyph_matrix *current_matrix,
 {
   struct matrix_elt *p;
   int i, j, k;
+  USE_SAFE_ALLOCA;
 
   /* True if we have set a terminal window with set_terminal_window.  */
   bool terminal_window_p = 0;
 
   /* A queue for line insertions to be done.  */
   struct queue { int count, pos; };
-  struct queue *queue_start
-    = alloca (current_matrix->nrows * sizeof *queue_start);
+  struct queue *queue_start;
+  SAFE_NALLOCA (queue_start, 1, current_matrix->nrows);
   struct queue *queue = queue_start;
 
-  char *retained_p = alloca (window_size * sizeof *retained_p);
-  int *copy_from = alloca (window_size * sizeof *copy_from);
+  char *retained_p = SAFE_ALLOCA (window_size);
+  int *copy_from;
+  SAFE_NALLOCA (copy_from, 1, window_size);
 
   /* Zero means line is empty.  */
   memset (retained_p, 0, window_size * sizeof (char));
@@ -378,6 +378,7 @@ do_scrolling (struct frame *frame, struct glyph_matrix *current_matrix,
 
   if (terminal_window_p)
     set_terminal_window (frame, 0);
+  SAFE_FREE ();
 }
 
 
@@ -427,31 +428,31 @@ calculate_direct_scrolling (struct frame *frame,
 			    struct matrix_elt *matrix,
 			    int window_size, int lines_below,
 			    int *draw_cost, int *old_draw_cost,
-			    int *old_hash, int *new_hash,
+			    unsigned *old_hash, unsigned *new_hash,
 			    int free_at_end)
 {
-  register int i, j;
-  int frame_lines = FRAME_LINES (frame);
-  register struct matrix_elt *p, *p1;
-  register int cost, cost1, delta;
+  int i, j;
+  int frame_total_lines = FRAME_TOTAL_LINES (frame);
+  struct matrix_elt *p, *p1;
+  int cost, cost1, delta;
 
   /* first_insert_cost[-I] is the cost of doing the first insert-line
      at a position I lines above the bottom line in the scroll window. */
   int *first_insert_cost
-    = &FRAME_INSERT_COST (frame)[frame_lines - 1];
+    = &FRAME_INSERT_COST (frame)[frame_total_lines - 1];
   int *first_delete_cost
-    = &FRAME_DELETE_COST (frame)[frame_lines - 1];
+    = &FRAME_DELETE_COST (frame)[frame_total_lines - 1];
   int *next_insert_cost
-    = &FRAME_INSERTN_COST (frame)[frame_lines - 1];
+    = &FRAME_INSERTN_COST (frame)[frame_total_lines - 1];
   int *next_delete_cost
-    = &FRAME_DELETEN_COST (frame)[frame_lines - 1];
+    = &FRAME_DELETEN_COST (frame)[frame_total_lines - 1];
 
   int scroll_overhead;
 
   /* Discourage long scrolls on fast lines.
      Don't scroll nearly a full frame height unless it saves
      at least 1/4 second.  */
-  int extra_cost = (int) (baud_rate / (10 * 4 * FRAME_LINES (frame)));
+  int extra_cost = baud_rate / (10 * 4 * frame_total_lines);
 
   if (baud_rate <= 0)
     extra_cost = 1;
@@ -649,10 +650,12 @@ do_direct_scrolling (struct frame *frame, struct glyph_matrix *current_matrix,
 {
   struct matrix_elt *p;
   int i, j;
+  USE_SAFE_ALLOCA;
 
   /* A queue of deletions and insertions to be performed.  */
   struct alt_queue { int count, pos, window; };
-  struct alt_queue *queue_start = alloca (window_size * sizeof *queue_start);
+  struct alt_queue *queue_start;
+  SAFE_NALLOCA (queue_start, 1, window_size);
   struct alt_queue *queue = queue_start;
 
   /* True if a terminal window has been set with set_terminal_window.  */
@@ -667,11 +670,12 @@ do_direct_scrolling (struct frame *frame, struct glyph_matrix *current_matrix,
   bool write_follows_p = 1;
 
   /* For each row in the new matrix what row of the old matrix it is.  */
-  int *copy_from = alloca (window_size * sizeof *copy_from);
+  int *copy_from;
+  SAFE_NALLOCA (copy_from, 1, window_size);
 
   /* Non-zero for each row in the new matrix that is retained from the
      old matrix.  Lines not retained are empty.  */
-  char *retained_p = alloca (window_size * sizeof *retained_p);
+  char *retained_p = SAFE_ALLOCA (window_size);
 
   memset (retained_p, 0, window_size * sizeof (char));
 
@@ -787,6 +791,7 @@ do_direct_scrolling (struct frame *frame, struct glyph_matrix *current_matrix,
 
   if (terminal_window_p)
     set_terminal_window (frame, 0);
+  SAFE_FREE ();
 }
 
 
@@ -794,10 +799,11 @@ do_direct_scrolling (struct frame *frame, struct glyph_matrix *current_matrix,
 void
 scrolling_1 (struct frame *frame, int window_size, int unchanged_at_top,
 	     int unchanged_at_bottom, int *draw_cost, int *old_draw_cost,
-	     int *old_hash, int *new_hash, int free_at_end)
+	     unsigned *old_hash, unsigned *new_hash, int free_at_end)
 {
-  struct matrix_elt *matrix
-    = alloca ((window_size + 1) * (window_size + 1) * sizeof *matrix);
+  USE_SAFE_ALLOCA;
+  struct matrix_elt *matrix;
+  SAFE_NALLOCA (matrix, window_size + 1, window_size + 1);
 
   if (FRAME_SCROLL_REGION_OK (frame))
     {
@@ -817,6 +823,8 @@ scrolling_1 (struct frame *frame, int window_size, int unchanged_at_top,
                     frame->current_matrix, matrix, window_size,
 		    unchanged_at_top);
     }
+
+  SAFE_FREE ();
 }
 
 
@@ -829,12 +837,14 @@ scrolling_1 (struct frame *frame, int window_size, int unchanged_at_top,
 
 int
 scrolling_max_lines_saved (int start, int end,
-                           int *oldhash, int *newhash,
+                           unsigned *oldhash, unsigned *newhash,
                            int *cost)
 {
-  struct { int hash; int count; } lines[01000];
-  register int i, h;
-  register int matchcount = 0;
+  enum { LOG2_NLINES = 9 };
+  enum { NLINES = 1 << LOG2_NLINES };
+  struct { unsigned hash; int count; } lines[NLINES];
+  int i, h;
+  int matchcount = 0;
   int avg_length = 0;
   int threshold;
 
@@ -855,7 +865,7 @@ scrolling_max_lines_saved (int start, int end,
     {
       if (cost[i] > threshold)
 	{
-	  h = newhash[i] & 0777;
+	  h = newhash[i] & (NLINES - 1);
 	  lines[h].hash = newhash[i];
 	  lines[h].count++;
 	}
@@ -865,7 +875,7 @@ scrolling_max_lines_saved (int start, int end,
      matches between old lines and new.  */
   for (i = start; i < end; i++)
     {
-      h = oldhash[i] & 0777;
+      h = oldhash[i] & (NLINES - 1);
       if (oldhash[i] == lines[h].hash)
 	{
 	  matchcount++;
@@ -882,14 +892,14 @@ scrolling_max_lines_saved (int start, int end,
 
 static void
 line_ins_del (struct frame *frame, int ov1, int pf1, int ovn, int pfn,
-              register int *ov, register int *mf)
+              int *ov, int *mf)
 {
-  register int i;
-  register int frame_lines = FRAME_LINES (frame);
-  register int insert_overhead = ov1 * 10;
-  register int next_insert_cost = ovn * 10;
+  int i;
+  int frame_total_lines = FRAME_TOTAL_LINES (frame);
+  int insert_overhead = ov1 * 10;
+  int next_insert_cost = ovn * 10;
 
-  for (i = frame_lines-1; i >= 0; i--)
+  for (i = frame_total_lines - 1; i >= 0; i--)
     {
       mf[i] = next_insert_cost / 10;
       next_insert_cost += pfn;
@@ -934,12 +944,12 @@ ins_del_costs (struct frame *frame,
    only) and those that must repeatedly insert one line.
 
    The cost to insert N lines at line L is
-   	    [tt.t_ILov  + (frame_lines + 1 - L) * tt.t_ILpf] +
-	N * [tt.t_ILnov + (frame_lines + 1 - L) * tt.t_ILnpf]
+	    [tt.t_ILov  + (frame_total_lines + 1 - L) * tt.t_ILpf] +
+	N * [tt.t_ILnov + (frame_total_lines + 1 - L) * tt.t_ILnpf]
 
    ILov represents the basic insert line overhead.  ILpf is the padding
    required to allow the terminal time to move a line: insertion at line
-   L changes (frame_lines + 1 - L) lines.
+   L changes (frame_total_lines + 1 - L) lines.
 
    The first bracketed expression above is the overhead; the second is
    the multiply factor.  Both are dependent only on the position at
@@ -964,14 +974,15 @@ do_line_insertion_deletion_costs (struct frame *frame,
 				  const char *cleanup_string,
 				  int coefficient)
 {
+  int frame_total_lines = FRAME_TOTAL_LINES (frame);
   FRAME_INSERT_COST (frame) =
-    xnrealloc (FRAME_INSERT_COST (frame), FRAME_LINES (frame), sizeof (int));
+    xnrealloc (FRAME_INSERT_COST (frame), frame_total_lines, sizeof (int));
   FRAME_DELETEN_COST (frame) =
-    xnrealloc (FRAME_DELETEN_COST (frame), FRAME_LINES (frame), sizeof (int));
+    xnrealloc (FRAME_DELETEN_COST (frame), frame_total_lines, sizeof (int));
   FRAME_INSERTN_COST (frame) =
-    xnrealloc (FRAME_INSERTN_COST (frame), FRAME_LINES (frame), sizeof (int));
+    xnrealloc (FRAME_INSERTN_COST (frame), frame_total_lines, sizeof (int));
   FRAME_DELETE_COST (frame) =
-    xnrealloc (FRAME_DELETE_COST (frame), FRAME_LINES (frame), sizeof (int));
+    xnrealloc (FRAME_DELETE_COST (frame), frame_total_lines, sizeof (int));
 
   ins_del_costs (frame,
 		 ins_line_string, multi_ins_string,

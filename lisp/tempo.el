@@ -1,10 +1,10 @@
 ;;; tempo.el --- Flexible template insertion
 
-;; Copyright (C) 1994-1995, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-1995, 2001-2015 Free Software Foundation, Inc.
 
-;; Author: David K}gedal <davidk@lysator.liu.se>
+;; Author: David Kågedal <davidk@lysator.liu.se>
 ;; Created: 16 Feb 1994
-;; K}gedal's last version number: 1.2.4
+;; Kågedal's last version number: 1.2.4
 ;; Keywords: extensions, languages, tools
 
 ;; This file is part of GNU Emacs.
@@ -270,7 +270,7 @@ The elements in ELEMENTS can be of several types:
  - nil: It is ignored.
  - Anything else: It is evaluated and the result is treated as an
    element to be inserted.  One additional tag is useful for these
-   cases.  If an expression returns a list '(l foo bar), the elements
+   cases.  If an expression returns a list (l foo bar), the elements
    after `l' will be inserted according to the usual rules.  This makes
    it possible to return several elements from one expression."
   (let* ((template-name (intern (concat "tempo-template-"
@@ -611,11 +611,7 @@ function or string that is used by `\\[tempo-complete-tag]' to find a
 string to match the tag against.  It has the same definition as the
 variable `tempo-match-finder'.  In this version, supplying a
 COMPLETION-FUNCTION just sets `tempo-match-finder' locally."
-  (let ((old (assq tag-list tempo-local-tags)))
-    (if old
-	(setcdr old completion-function)
-      (setq tempo-local-tags (cons (cons tag-list completion-function)
-				   tempo-local-tags))))
+  (setf (alist-get tag-list tempo-local-tags) completion-function)
   (if completion-function
       (setq tempo-match-finder completion-function))
   (tempo-invalidate-collection))
@@ -723,13 +719,13 @@ non-nil, a buffer containing possible completions is displayed."
   (if tempo-leave-completion-buffer
       (with-output-to-temp-buffer "*Completions*"
 	(display-completion-list
-	 (all-completions string tag-list)
-	 string))
+	 (completion-hilit-commonality (all-completions string tag-list)
+				       (length string))))
     (save-window-excursion
       (with-output-to-temp-buffer "*Completions*"
 	(display-completion-list
-	 (all-completions string tag-list)
-	 string))
+	 (completion-hilit-commonality (all-completions string tag-list)
+				       (length string))))
       (sit-for 32767))))
 
 ;;;

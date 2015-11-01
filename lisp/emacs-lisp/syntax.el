@@ -1,8 +1,8 @@
 ;;; syntax.el --- helper functions to find syntactic context  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal
 
 ;; This file is part of GNU Emacs.
@@ -42,8 +42,6 @@
 ;; Note: PPSS stands for `parse-partial-sexp state'
 
 (eval-when-compile (require 'cl-lib))
-
-(defvar font-lock-beginning-of-syntax-function)
 
 ;;; Applying syntax-table properties where needed.
 
@@ -105,10 +103,6 @@ Put first the functions more likely to cause a change and cheaper to compute.")
 				     'syntax-multiline nil)
 		  (point-max))))
   (cons beg end))
-
-(defvar syntax-propertize--done -1
-  "Position up to which syntax-table properties have been set.")
-(make-variable-buffer-local 'syntax-propertize--done)
 
 (defun syntax-propertize--shift-groups (re n)
   (replace-regexp-in-string
@@ -290,39 +284,60 @@ The return value is a function suitable for `syntax-propertize-function'."
 
 (defun syntax-propertize (pos)
   "Ensure that syntax-table properties are set until POS."
-  (when (and syntax-propertize-function
-             (< syntax-propertize--done pos))
-    ;; (message "Needs to syntax-propertize from %s to %s"
-    ;;          syntax-propertize--done pos)
-    (set (make-local-variable 'parse-sexp-lookup-properties) t)
-    (save-excursion
-      (with-silent-modifications
-        (let* ((start (max syntax-propertize--done (point-min)))
-               (end (max pos
-                         (min (point-max)
-                              (+ start syntax-propertize-chunk-size))))
-               (funs syntax-propertize-extend-region-functions))
-          (while funs
-            (let ((new (funcall (pop funs) start end)))
-              (if (or (null new)
-                      (and (>= (car new) start) (<= (cdr new) end)))
-                  nil
-                (setq start (car new))
-                (setq end (cdr new))
-                ;; If there's been a change, we should go through the
-                ;; list again since this new position may
-                ;; warrant a different answer from one of the funs we've
-                ;; already seen.
-                (unless (eq funs
-                            (cdr syntax-propertize-extend-region-functions))
-                  (setq funs syntax-propertize-extend-region-functions)))))
-          ;; Move the limit before calling the function, so the function
-          ;; can use syntax-ppss.
-          (setq syntax-propertize--done end)
-          ;; (message "syntax-propertizing from %s to %s" start end)
-          (remove-text-properties start end
-                                  '(syntax-table nil syntax-multiline nil))
-          (funcall syntax-propertize-function start end))))))
+  (when (< syntax-propertize--done pos)
+    (if (null syntax-propertize-function)
+        (setq syntax-propertize--done (max (point-max) pos))
+      ;; (message "Needs to syntax-propertize from %s to %s"
+      ;;          syntax-propertize--done pos)
+      (set (make-local-variable 'parse-sexp-lookup-properties) t)
+      (save-excursion
+        (with-silent-modifications
+          (make-local-variable 'syntax-propertize--done) ;Just in case!
+          (let* ((start (max (min syntax-propertize--done (point-max))
+                             (point-min)))
+                 (end (max pos
+                           (min (point-max)
+                                (+ start syntax-propertize-chunk-size))))
+                 (funs syntax-propertize-extend-region-functions))
+            (while funs
+              (let ((new (funcall (pop funs) start end))
+                    ;; Avoid recursion!
+                    (syntax-propertize--done most-positive-fixnum))
+                (if (or (null new)
+                        (and (>= (car new) start) (<= (cdr new) end)))
+                    nil
+                  (setq start (car new))
+                  (setq end (cdr new))
+                  ;; If there's been a change, we should go through the
+                  ;; list again since this new position may
+                  ;; warrant a different answer from one of the funs we've
+                  ;; already seen.
+                  (unless (eq funs
+                              (cdr syntax-propertize-extend-region-functions))
+                    (setq funs syntax-propertize-extend-region-functions)))))
+            ;; Move the limit before calling the function, so the function
+            ;; can use syntax-ppss.
+            (setq syntax-propertize--done end)
+            ;; (message "syntax-propertizing from %s to %s" start end)
+            (remove-text-properties start end
+                                    '(syntax-table nil syntax-multiline nil))
+            ;; Avoid recursion!
+            (let ((syntax-propertize--done most-positive-fixnum))
+              (funcall syntax-propertize-function start end))))))))
+
+;;; Link syntax-propertize with syntax.c.
+
+(defvar syntax-propertize-chunks
+  ;; We're not sure how far we'll go.  In my tests, using chunks of 2000
+  ;; brings to overhead to something negligible.  Passing ‘charpos’ directly
+  ;; also works (basically works line-by-line) but results in an overhead which
+  ;; I thought was a bit too high (like around 50%).
+  2000)
+
+(defun internal--syntax-propertize (charpos)
+  ;; FIXME: Called directly from C.
+  (save-match-data
+    (syntax-propertize (min (+ syntax-propertize-chunks charpos) (point-max)))))
 
 ;;; Incrementally compute and memoize parser state.
 
@@ -360,13 +375,12 @@ from each other, to avoid keeping too much useless info.")
   "Function to move back outside of any comment/string/paren.
 This function should move the cursor back to some syntactically safe
 point (where the PPSS is equivalent to nil).")
+(make-obsolete-variable 'syntax-begin-function nil "25.1")
 
-(defvar syntax-ppss-cache nil
+(defvar-local syntax-ppss-cache nil
   "List of (POS . PPSS) pairs, in decreasing POS order.")
-(make-variable-buffer-local 'syntax-ppss-cache)
-(defvar syntax-ppss-last nil
+(defvar-local syntax-ppss-last nil
   "Cache of (LAST-POS . LAST-PPSS).")
-(make-variable-buffer-local 'syntax-ppss-last)
 
 (defalias 'syntax-ppss-after-change-function 'syntax-ppss-flush-cache)
 (defun syntax-ppss-flush-cache (beg &rest ignored)
@@ -405,9 +419,14 @@ point (where the PPSS is equivalent to nil).")
 (defun syntax-ppss (&optional pos)
   "Parse-Partial-Sexp State at POS, defaulting to point.
 The returned value is the same as that of `parse-partial-sexp'
-run from point-min to POS except that values at positions 2 and 6
+run from `point-min' to POS except that values at positions 2 and 6
 in the returned list (counting from 0) cannot be relied upon.
-Point is at POS when this function returns."
+Point is at POS when this function returns.
+
+It is necessary to call `syntax-ppss-flush-cache' explicitly if
+this function is called while `before-change-functions' is
+temporarily let-bound, or if the buffer is modified without
+running the hook."
   ;; Default values.
   (unless pos (setq pos (point)))
   (syntax-propertize pos)
@@ -482,11 +501,6 @@ Point is at POS when this function returns."
 	      ;; - The function might be slow.
 	      ;; - If this function almost always finds a safe nearby spot,
 	      ;;   the cache won't be populated, so consulting it is cheap.
-	      (when (and (not syntax-begin-function)
-			 (boundp 'font-lock-beginning-of-syntax-function)
-			 font-lock-beginning-of-syntax-function)
-		(set (make-local-variable 'syntax-begin-function)
-		     font-lock-beginning-of-syntax-function))
 	      (when (and syntax-begin-function
 			 (progn (goto-char pos)
 				(funcall syntax-begin-function)
@@ -569,7 +583,7 @@ Point is at POS when this function returns."
 
 ;; (defun buffer-syntactic-context (&optional buffer)
 ;;   "Syntactic context at point in BUFFER.
-;; Either of `string', `comment' or `nil'.
+;; Either of `string', `comment' or nil.
 ;; This is an XEmacs compatibility function."
 ;;   (with-current-buffer (or buffer (current-buffer))
 ;;     (syntax-ppss-context (syntax-ppss))))

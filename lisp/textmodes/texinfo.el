@@ -1,11 +1,11 @@
-;;; texinfo.el --- major mode for editing Texinfo files -*- coding: utf-8 -*-
+;;; texinfo.el --- major mode for editing Texinfo files
 
-;; Copyright (C) 1985, 1988-1993, 1996-1997, 2000-2013 Free Software
+;; Copyright (C) 1985, 1988-1993, 1996-1997, 2000-2015 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Robert J. Chassell
 ;; Date:   [See date below for texinfo-version]
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: maint, tex, docs
 
 ;; This file is part of GNU Emacs.
@@ -43,6 +43,8 @@
 (declare-function tex-kill-job "tex-mode" ())
 
 (defvar outline-heading-alist)
+
+(defvar skeleton-end-newline)
 
 (defgroup texinfo nil
   "Texinfo Mode."
@@ -84,7 +86,7 @@ command to gain use of `next-error'."
   "Make Info file from current buffer.
 
 Use the \\[next-error] command to move to the next error
-\(if there are errors\)."
+\(if there are errors)."
   t nil)
 
 (autoload 'kill-compilation
@@ -626,6 +628,11 @@ value of `texinfo-mode-hook'."
   (setq-local tex-first-line-header-regexp "^\\\\input")
   (setq-local tex-trailer "@bye\n")
 
+  ;; Prevent skeleton.el from adding a newline to each inserted
+  ;; skeleton.  Those which do want a newline do that explicitly in
+  ;; their define-skeleton form.
+  (setq-local skeleton-end-newline nil)
+
   ;; Prevent filling certain lines, in addition to ones specified by
   ;; the user.
   (setq-local auto-fill-inhibit-regexp
@@ -653,7 +660,7 @@ Puts point on a blank line between them."
   (if (or (string-match "\\`def" str)
           (member str '("table" "ftable" "vtable")))
       '(nil " " -))
-  \n _ \n "@end " str \n)
+  \n _ \n "@end " str \n \n)
 
 (defun texinfo-inside-macro-p (macro &optional bound)
   "Non-nil if inside a macro matching the regexp MACRO."
@@ -682,8 +689,8 @@ Puts point on a blank line between them."
   '("example\\>" "smallexample\\>" "lisp\\>"))
 (defun texinfo-insert-quote (&optional arg)
   "Insert the appropriate quote mark for Texinfo.
-Usually inserts the value of `texinfo-open-quote' (normally ``) or
-`texinfo-close-quote' (normally ''), depending on the context.
+Usually inserts the value of `texinfo-open-quote' (normally \\=`\\=`) or
+`texinfo-close-quote' (normally \\='\\='), depending on the context.
 With prefix argument or inside @code or @example, inserts a plain \"."
   (interactive "*P")
   (let ((top (or (save-excursion (re-search-backward "@node\\>" nil t))
@@ -732,7 +739,7 @@ With prefix argument or inside @code or @example, inserts a plain \"."
       (backward-word 1)
 	     (texinfo-last-unended-begin)
       (or (match-string 1) '-)))
-  \n "@end " str \n)
+  \n "@end " str \n \n)
 
 (define-skeleton texinfo-insert-braces
   "Make a pair of braces and be poised to type inside of them.
@@ -771,7 +778,7 @@ The default is not to surround any existing words with the braces."
 (define-skeleton texinfo-insert-@example
   "Insert the string `@example' in a Texinfo buffer."
   nil
-  \n "@example" \n)
+  \n "@example" \n \n)
 
 (define-skeleton texinfo-insert-@file
   "Insert a `@file{...}' command in a Texinfo buffer.
@@ -816,7 +823,7 @@ Leave point after `@node'."
 
 (define-skeleton texinfo-insert-@quotation
   "Insert the string `@quotation' in a Texinfo buffer."
-  \n "@quotation" \n)
+  \n "@quotation" \n _ \n)
 
 (define-skeleton texinfo-insert-@samp
   "Insert a `@samp{...}' command in a Texinfo buffer.

@@ -1,6 +1,6 @@
 ;;; gnus-eform.el --- a mode for editing forms for Gnus
 
-;; Copyright (C) 1996-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news
@@ -67,21 +67,15 @@
        ["Exit" gnus-edit-form-exit t]))
     (gnus-run-hooks 'gnus-edit-form-menu-hook)))
 
-(defun gnus-edit-form-mode ()
+(define-derived-mode gnus-edit-form-mode fundamental-mode "Edit Form"
   "Major mode for editing forms.
 It is a slightly enhanced emacs-lisp-mode.
 
 \\{gnus-edit-form-mode-map}"
-  (interactive)
   (when (gnus-visual-p 'group-menu 'menu)
     (gnus-edit-form-make-menu-bar))
-  (kill-all-local-variables)
-  (setq major-mode 'gnus-edit-form-mode)
-  (setq mode-name "Edit Form")
-  (use-local-map gnus-edit-form-mode-map)
   (make-local-variable 'gnus-edit-form-done-function)
-  (make-local-variable 'gnus-prev-winconf)
-  (gnus-run-mode-hooks 'gnus-edit-form-mode-hook))
+  (make-local-variable 'gnus-prev-winconf))
 
 (defun gnus-edit-form (form documentation exit-func &optional layout)
   "Edit FORM in a new buffer.
@@ -102,7 +96,8 @@ The optional LAYOUT overrides the `edit-form' window layout."
     (while (not (eobp))
       (insert ";;; ")
       (forward-line 1))
-    (insert ";; Type `C-c C-c' after you've finished editing.\n")
+    (insert (substitute-command-keys
+	     ";; Type `C-c C-c' after you've finished editing.\n"))
     (insert "\n")
     (let ((p (point)))
       (gnus-pp form)

@@ -261,10 +261,18 @@ Do not start with `~/' or `~USERNAME/'."
   :type 'string
   :group 'emerge)
 
+(make-obsolete-variable 'emerge-temp-file-prefix
+			"customize `temporary-file-directory' instead."
+			"24.4" 'set)
+
 (defcustom emerge-temp-file-mode 384	; u=rw only
   "Mode for Emerge temporary files."
   :type 'integer
   :group 'emerge)
+
+(make-obsolete-variable 'emerge-temp-file-mode
+			"it has no effect, temporary files are always private."
+			"24.4" 'set)
 
 (defcustom emerge-combine-versions-template
   "#ifdef NEW\n%b#else /* not NEW */\n%a#endif /* not NEW */\n"
@@ -849,7 +857,7 @@ This is *not* a user option, since Emerge uses it for its own processing.")
 ;;; Functions to start Emerge on files
 
 ;;;###autoload
-(defun emerge-files (arg file-A file-B file-out &optional startup-hooks
+(defun emerge-files (_arg file-A file-B file-out &optional startup-hooks
 		     quit-hooks)
   "Run Emerge on two files."
   (interactive
@@ -869,7 +877,7 @@ This is *not* a user option, since Emerge uses it for its own processing.")
    file-out))
 
 ;;;###autoload
-(defun emerge-files-with-ancestor (arg file-A file-B file-ancestor file-out
+(defun emerge-files-with-ancestor (_arg file-A file-B file-ancestor file-out
 				   &optional startup-hooks quit-hooks)
   "Run Emerge on two files, giving another file as the ancestor."
   (interactive
@@ -1063,7 +1071,7 @@ This is *not* a user option, since Emerge uses it for its own processing.")
        quit-hooks)))
 
 (defun emerge-revisions-internal (file revision-A revision-B &optional
-                                  startup-hooks quit-hooks output-file)
+                                  startup-hooks quit-hooks _output-file)
   (let ((buffer-A (get-buffer-create (format "%s,%s" file revision-A)))
 	(buffer-B (get-buffer-create (format "%s,%s" file revision-B)))
 	(emerge-file-A (emerge-make-temp-file "A"))
@@ -2516,8 +2524,12 @@ for how the template is interpreted.
 Refuses to function if this difference has been edited, i.e., if it is
 neither the A nor the B variant.
 An argument forces the variant to be selected even if the difference has
-been edited."
-  (interactive "cRegister containing template: \nP")
+been edited.
+
+Interactively, reads the register using `register-read-with-preview'."
+  (interactive (list
+		(register-read-with-preview "Register containing template: ")
+		current-prefix-arg))
   (let ((template (get-register char)))
     (if (not (stringp template))
 	(error "Register does not contain text"))
@@ -2871,16 +2883,11 @@ keymap.  Leaves merge in fast mode."
     (setq vars (cdr vars))
     (setq values (cdr values))))
 
-;; Make a temporary file that only we have access to.
-;; PREFIX is appended to emerge-temp-file-prefix to make the filename prefix.
+;; When the pointless option emerge-temp-file-prefix goes,
+;; make this function obsolete too, and just use make-temp-file.
 (defun emerge-make-temp-file (prefix)
-  (let (f (old-modes (default-file-modes)))
-    (unwind-protect
-	(progn
-	  (set-default-file-modes emerge-temp-file-mode)
-	  (setq f (make-temp-file (concat emerge-temp-file-prefix prefix))))
-      (set-default-file-modes old-modes))
-    f))
+  "Make a private temporary file based on `emerge-temp-file-prefix'."
+  (make-temp-file (concat emerge-temp-file-prefix prefix)))
 
 ;;; Functions that query the user before he can write out the current buffer.
 
@@ -3082,7 +3089,7 @@ SPC, it is ignored; if it is anything else, it is processed as a command."
 	    (let* ((echo-keystrokes 0)
 		   (c (read-event)))
 	      (if (not (eq c 32))
-		  (setq unread-command-events (list c)))))
+		  (push c unread-command-events))))
 	(erase-buffer)))))
 
 ;; Improved auto-save file names.

@@ -1,6 +1,6 @@
 ;;; rfc2047.el --- functions for encoding and decoding rfc2047 messages
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;;	MORIOKA Tomohiko <morioka@jaist.ac.jp>
@@ -102,7 +102,7 @@ quoted-printable and base64 respectively.")
 
 (eval-and-compile ;; Necessary to hard code them in `rfc2047-decode-region'.
   (defconst rfc2047-encoded-word-regexp
-    "=\\?\\([^][\000-\040()<>@,\;:*\\\"/?.=]+\\)\\(?:\\*[^?]+\\)?\\?\
+    "=\\?\\([^][\000-\040()<>@,;:*\\\"/?.=]+\\)\\(?:\\*[^?]+\\)?\\?\
 \\(B\\?[+/0-9A-Za-z]*=*\
 \\|Q\\?[ ->@-~]*\
 \\)\\?="
@@ -112,7 +112,7 @@ quoted-printable and base64 respectively.")
     ;; the characters that those encodings may generally use.
     )
   (defconst rfc2047-encoded-word-regexp-loose
-    "=\\?\\([^][\000-\040()<>@,\;:*\\\"/?.=]+\\)\\(?:\\*[^?]+\\)?\\?\
+    "=\\?\\([^][\000-\040()<>@,;:*\\\"/?.=]+\\)\\(?:\\*[^?]+\\)?\\?\
 \\(B\\?[+/0-9A-Za-z]*=*\
 \\|Q\\?\\(?:\\?+[ -<>@-~]\\)?\\(?:[ ->@-~]+\\?+[ -<>@-~]\\)*[ ->@-~]*\\?*\
 \\)\\?="
@@ -1136,7 +1136,7 @@ other than `\"' and `\\' in quoted strings."
 	  ;; `decode-coding-string' in Emacs offers a third optional
 	  ;; arg NOCOPY to avoid consing a new string if the decoding
 	  ;; is "trivial".  Unfortunately it currently doesn't
-	  ;; consider anything else than a `nil' coding system
+	  ;; consider anything else than a nil coding system
 	  ;; trivial.
 	  ;; `rfc2047-decode-string' is called multiple times for each
 	  ;; article during summary buffer generation, and we really

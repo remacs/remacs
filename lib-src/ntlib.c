@@ -1,6 +1,6 @@
 /* Utility and Unix shadow routines for GNU Emacs support programs on NT.
 
-Copyright (C) 1994, 2001-2013 Free Software Foundation, Inc.
+Copyright (C) 1994, 2001-2015 Free Software Foundation, Inc.
 
 Author: Geoff Voelker (voelker@cs.washington.edu)
 Created: 10-8-94
@@ -302,7 +302,7 @@ is_exec (const char * name)
 	 stricmp (p, ".cmd") == 0));
 }
 
-/* FIXME?  This is in config.nt now - is this still needed?  */
+/* FIXME?  This is in configure.ac now - is this still needed?  */
 #define IS_DIRECTORY_SEP(x) ((x) == '/' || (x) == '\\')
 
 /* We need this because nt/inc/sys/stat.h defines struct stat that is

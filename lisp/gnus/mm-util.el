@@ -1,6 +1,6 @@
 ;;; mm-util.el --- Utility functions for Mule and low level things
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;;	MORIOKA Tomohiko <morioka@jaist.ac.jp>
@@ -22,10 +22,6 @@
 ;;; Commentary:
 
 ;;; Code:
-
-;; For Emacs <22.2 and XEmacs.
-(eval-and-compile
-  (unless (fboundp 'declare-function) (defmacro declare-function (&rest r))))
 
 (eval-when-compile (require 'cl))
 (require 'mail-prsvr)
@@ -129,22 +125,6 @@
      (multibyte-char-to-unibyte . identity)
      ;; `set-buffer-multibyte' is an Emacs function, not available in XEmacs.
      (set-buffer-multibyte . ignore)
-     ;; `special-display-p' is an Emacs function, not available in XEmacs.
-     (special-display-p
-      . ,(lambda (buffer-name)
-	   "Returns non-nil if a buffer named BUFFER-NAME gets a special frame."
-	   (and special-display-function
-		(or (and (member buffer-name special-display-buffer-names) t)
-		    (cdr (assoc buffer-name special-display-buffer-names))
-		    (catch 'return
-		      (dolist (elem special-display-regexps)
-			(and (stringp elem)
-			     (string-match elem buffer-name)
-			     (throw 'return t))
-			(and (consp elem)
-			     (stringp (car elem))
-			     (string-match (car elem) buffer-name)
-			     (throw 'return (cdr elem)))))))))
      ;; `substring-no-properties' is available only in Emacs 22.1 or greater.
      (substring-no-properties
       . ,(lambda (string &optional from to)
@@ -173,6 +153,25 @@ to the contents of the accessible portion of the buffer."
 	       (goto-char opoint)
 	       (forward-line 0)
 	       (1+ (count-lines start (point))))))))))
+
+;; `special-display-p' is an Emacs function, not available in XEmacs.
+(defalias 'mm-special-display-p
+  (if (featurep 'emacs)
+      'special-display-p
+    (lambda (buffer-name)
+      "Returns non-nil if a buffer named BUFFER-NAME gets a special frame."
+      (and special-display-function
+	   (or (and (member buffer-name special-display-buffer-names) t)
+	       (cdr (assoc buffer-name special-display-buffer-names))
+	       (catch 'return
+		 (dolist (elem special-display-regexps)
+		   (and (stringp elem)
+			(string-match elem buffer-name)
+			(throw 'return t))
+		   (and (consp elem)
+			(stringp (car elem))
+			(string-match (car elem) buffer-name)
+			(throw 'return (cdr elem))))))))))
 
 ;; `decode-coding-string', `encode-coding-string', `decode-coding-region'
 ;; and `encode-coding-region' are available in Emacs and XEmacs built with
@@ -1059,11 +1058,10 @@ This affects whether coding conversion should be attempted generally."
 		(length (memq (coding-system-base b) priorities)))
 	   t))))
 
-(eval-when-compile
-  (autoload 'latin-unity-massage-name "latin-unity")
-  (autoload 'latin-unity-maybe-remap "latin-unity")
-  (autoload 'latin-unity-representations-feasible-region "latin-unity")
-  (autoload 'latin-unity-representations-present-region "latin-unity"))
+(declare-function latin-unity-massage-name "ext:latin-unity")
+(declare-function latin-unity-maybe-remap "ext:latin-unity")
+(declare-function latin-unity-representations-feasible-region "ext:latin-unity")
+(declare-function latin-unity-representations-present-region "ext:latin-unity")
 
 (defvar latin-unity-coding-systems)
 (defvar latin-unity-ucs-list)
@@ -1242,6 +1240,7 @@ better ways to do a similar thing.  The previous version of this macro
 bound the default value of `enable-multibyte-characters' to nil while
 evaluating FORMS but it is no longer done.  So, some programs assuming
 it if any may malfunction."
+  (declare (obsolete nil "25.1") (indent 0) (debug t))
   (if (featurep 'xemacs)
       `(progn ,@forms)
     (let ((multibyte (make-symbol "multibyte")))
@@ -1252,8 +1251,6 @@ it if any may malfunction."
 	     (progn ,@forms)
 	   (when ,multibyte
 	     (set-buffer-multibyte t)))))))
-(put 'mm-with-unibyte-current-buffer 'lisp-indent-function 0)
-(put 'mm-with-unibyte-current-buffer 'edebug-form-spec '(body))
 
 (defun mm-find-charset-region (b e)
   "Return a list of Emacs charsets in the region B to E."
@@ -1379,13 +1376,12 @@ If INHIBIT is non-nil, inhibit `mm-inhibit-file-name-handlers'."
 ;; It is not a MIME function, but some MIME functions use it.
 (if (and (fboundp 'make-temp-file)
 	 (ignore-errors
-	   (let ((def (symbol-function 'make-temp-file)))
-	     (and (byte-code-function-p def)
-		  (setq def (if (fboundp 'compiled-function-arglist)
-				;; XEmacs
-				(eval (list 'compiled-function-arglist def))
-			      (aref def 0)))
-		  (>= (length def) 4)
+	   (let ((def (if (fboundp 'compiled-function-arglist) ;; XEmacs
+			  (eval (list 'compiled-function-arglist
+				      (symbol-function 'make-temp-file)))
+			(require 'help-fns)
+			(help-function-arglist 'make-temp-file t))))
+	     (and (>= (length def) 4)
 		  (eq (nth 3 def) 'suffix)))))
     (defalias 'mm-make-temp-file 'make-temp-file)
   ;; Stolen (and modified for XEmacs) from Emacs 22.

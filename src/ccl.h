@@ -26,8 +26,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef EMACS_CCL_H
 #define EMACS_CCL_H
 
-#include "character.h" /* For MAX_MULTIBYTE_LENGTH */
-
 /* Macros for exit status of CCL program.  */
 #define CCL_STAT_SUCCESS	0 /* Terminated successfully.  */
 #define CCL_STAT_SUSPEND_BY_SRC	1 /* Terminated by empty input.  */
@@ -51,34 +49,16 @@ struct ccl_program {
   int reg[8];			/* CCL registers, reg[7] is used for
 				   condition flag of relational
 				   operations.  */
-  int private_state;            /* CCL instruction may use this
-				   for private use, mainly for saving
-				   internal states on suspending.
-				   This variable is set to 0 when ccl is
-				   set up.  */
-  int last_block;		/* Set to 1 while processing the last
-				   block. */
   int status;			/* Exit status of the CCL program.  */
   int buf_magnification;	/* Output buffer magnification.  How
 				   many times bigger the output buffer
 				   should be than the input buffer.  */
   int stack_idx;		/* How deep the call of CCL_Call is nested.  */
-  int src_multibyte;		/* 1 if the input buffer is multibyte.  */
-  int dst_multibyte;		/* 1 if the output buffer is multibyte.  */
-  int cr_consumed;		/* Flag for encoding DOS-like EOL
-				   format when the CCL program is used
-				   for encoding by a coding
-				   system.  */
   int consumed;
   int produced;
-  int suppress_error;		/* If nonzero, don't insert error
-				   message in the output.  */
-  int eight_bit_control;	/* If nonzero, ccl_driver counts all
-				   eight-bit-control bytes written by
-				   CCL_WRITE_CHAR.  After execution,
-				   if no such byte is written, set
-				   this value to zero.  */
-  int quit_silently;		/* If nonzero, don't append "CCL:
+  bool_bf last_block : 1;	/* Set to true while processing the last
+				   block. */
+  bool_bf quit_silently : 1;	/* If true, don't append "CCL:
 				   Quitted" to the generated text when
 				   CCL program is quitted. */
 };
@@ -88,25 +68,21 @@ struct ccl_program {
 
 struct ccl_spec {
   struct ccl_program ccl;
-  int cr_carryover;		/* CR carryover flag.  */
-  unsigned char eight_bit_carryover[MAX_MULTIBYTE_LENGTH];
 };
 
 #define CODING_SPEC_CCL_PROGRAM(coding) ((coding)->spec.ccl.ccl)
 
 /* Setup fields of the structure pointed by CCL appropriately for the
    execution of ccl program CCL_PROG (symbol or vector).  */
-extern int setup_ccl_program (struct ccl_program *, Lisp_Object);
+extern bool setup_ccl_program (struct ccl_program *, Lisp_Object);
 
 extern void ccl_driver (struct ccl_program *, int *, int *, int, int,
                         Lisp_Object);
-
-extern Lisp_Object Qccl, Qcclp;
 
 #define CHECK_CCL_PROGRAM(x)			\
   do {						\
     if (NILP (Fccl_program_p (x)))		\
       wrong_type_argument (Qcclp, (x));	\
-  } while (0);
+  } while (false);
 
 #endif /* EMACS_CCL_H */

@@ -1,6 +1,6 @@
 ;;; holidays.el --- holiday functions for the calendar package
 
-;; Copyright (C) 1989-1990, 1992-1994, 1997, 2001-2013 Free Software
+;; Copyright (C) 1989-1990, 1992-1994, 1997, 2001-2015 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Edward M. Reingold <reingold@cs.uiuc.edu>
@@ -43,9 +43,6 @@
 ;; explicitly load this file.
 
 ;;;###autoload
-(define-obsolete-variable-alias 'general-holidays
-  'holiday-general-holidays "23.1")
-;;;###autoload
 (defcustom holiday-general-holidays
   (mapcar 'purecopy
   '((holiday-fixed 1 1 "New Year's Day")
@@ -73,9 +70,6 @@ See the documentation for `calendar-holidays' for details."
 (put 'holiday-general-holidays 'risky-local-variable t)
 
 ;;;###autoload
-(define-obsolete-variable-alias 'oriental-holidays
-  'holiday-oriental-holidays "23.1")
-;;;###autoload
 (defcustom holiday-oriental-holidays
   (mapcar 'purecopy
   '((holiday-chinese-new-year)
@@ -98,8 +92,6 @@ See the documentation for `calendar-holidays' for details."
 (put 'holiday-oriental-holidays 'risky-local-variable t)
 
 ;;;###autoload
-(define-obsolete-variable-alias 'local-holidays 'holiday-local-holidays "23.1")
-;;;###autoload
 (defcustom holiday-local-holidays nil
   "Local holidays.
 See the documentation for `calendar-holidays' for details."
@@ -109,8 +101,6 @@ See the documentation for `calendar-holidays' for details."
 (put 'holiday-local-holidays 'risky-local-variable t)
 
 ;;;###autoload
-(define-obsolete-variable-alias 'other-holidays 'holiday-other-holidays "23.1")
-;;;###autoload
 (defcustom holiday-other-holidays nil
   "User defined holidays.
 See the documentation for `calendar-holidays' for details."
@@ -119,108 +109,6 @@ See the documentation for `calendar-holidays' for details."
 ;;;###autoload
 (put 'holiday-other-holidays 'risky-local-variable t)
 
-;;;###autoload
-(defvar hebrew-holidays-1
-  (mapcar 'purecopy
-  '((holiday-hebrew-rosh-hashanah)
-    (if calendar-hebrew-all-holidays-flag
-        (holiday-julian
-         11
-         (let ((m displayed-month)
-               (y displayed-year)
-               year)
-           (calendar-increment-month m y -1)
-           (setq year (calendar-extract-year
-                       (calendar-julian-from-absolute
-                        (calendar-absolute-from-gregorian (list m 1 y)))))
-           (if (zerop (% (1+ year) 4))
-               22
-             21)) "\"Tal Umatar\" (evening)"))))
-  "Component of the old default value of `holiday-hebrew-holidays'.")
-;;;###autoload
-(put 'hebrew-holidays-1 'risky-local-variable t)
-(make-obsolete-variable 'hebrew-holidays-1 'hebrew-holidays "23.1")
-
-;;;###autoload
-(defvar hebrew-holidays-2
-  (mapcar 'purecopy
-  '((holiday-hebrew-hanukkah) ; respects calendar-hebrew-all-holidays-flag
-    (if calendar-hebrew-all-holidays-flag
-      (holiday-hebrew
-       10
-       (let ((h-year (calendar-extract-year
-                      (calendar-hebrew-from-absolute
-                       (calendar-absolute-from-gregorian
-                        (list displayed-month 28 displayed-year))))))
-         (if (= 6 (% (calendar-hebrew-to-absolute (list 10 10 h-year))
-                     7))
-             11 10))
-       "Tzom Teveth"))
-    (if calendar-hebrew-all-holidays-flag
-        (holiday-hebrew 11 15 "Tu B'Shevat"))))
-  "Component of the old default value of `holiday-hebrew-holidays'.")
-;;;###autoload
-(put 'hebrew-holidays-2 'risky-local-variable t)
-(make-obsolete-variable 'hebrew-holidays-2 'hebrew-holidays "23.1")
-
-;;;###autoload
-(defvar hebrew-holidays-3
-  (mapcar 'purecopy
-  '((if calendar-hebrew-all-holidays-flag
-        (holiday-hebrew
-         11
-         (let* ((m displayed-month)
-                (y displayed-year)
-                (h-year (progn
-                          (calendar-increment-month m y 1)
-                          (calendar-extract-year
-                           (calendar-hebrew-from-absolute
-                            (calendar-absolute-from-gregorian
-                             (list m (calendar-last-day-of-month m y) y))))))
-                (s-s
-                 (calendar-hebrew-from-absolute
-                  (if (= 6
-                         (% (calendar-hebrew-to-absolute
-                             (list 7 1 h-year))
-                            7))
-                      (calendar-dayname-on-or-before
-                       6 (calendar-hebrew-to-absolute
-                          (list 11 17 h-year)))
-                    (calendar-dayname-on-or-before
-                     6 (calendar-hebrew-to-absolute
-                        (list 11 16 h-year))))))
-                (day (calendar-extract-day s-s)))
-           day)
-         "Shabbat Shirah"))))
-  "Component of the old default value of `holiday-hebrew-holidays'.")
-;;;###autoload
-(put 'hebrew-holidays-3 'risky-local-variable t)
-(make-obsolete-variable 'hebrew-holidays-3 'hebrew-holidays "23.1")
-
-;;;###autoload
-(defvar hebrew-holidays-4
-  (mapcar 'purecopy
-  '((holiday-hebrew-passover)
-    (and calendar-hebrew-all-holidays-flag
-         (let* ((m displayed-month)
-                (y displayed-year)
-                (year (progn
-                        (calendar-increment-month m y -1)
-                        (calendar-extract-year
-                         (calendar-julian-from-absolute
-                          (calendar-absolute-from-gregorian (list m 1 y)))))))
-           (= 21 (% year 28)))
-         (holiday-julian 3 26 "Kiddush HaHamah"))
-    (if calendar-hebrew-all-holidays-flag
-        (holiday-hebrew-tisha-b-av))))
-    "Component of the old default value of `holiday-hebrew-holidays'.")
-;;;###autoload
-(put 'hebrew-holidays-4 'risky-local-variable t)
-(make-obsolete-variable 'hebrew-holidays-4 'hebrew-holidays "23.1")
-
-;;;###autoload
-(define-obsolete-variable-alias 'hebrew-holidays
-  'holiday-hebrew-holidays "23.1")
 ;;;###autoload
 (defcustom holiday-hebrew-holidays
   (mapcar 'purecopy
@@ -240,9 +128,6 @@ See the documentation for `calendar-holidays' for details."
 (put 'holiday-hebrew-holidays 'risky-local-variable t)
 
 ;;;###autoload
-(define-obsolete-variable-alias 'christian-holidays
-  'holiday-christian-holidays "23.1")
-;;;###autoload
 (defcustom holiday-christian-holidays
   (mapcar 'purecopy
   '((holiday-easter-etc)    ; respects calendar-christian-all-holidays-flag
@@ -261,9 +146,6 @@ See the documentation for `calendar-holidays' for details."
 ;;;###autoload
 (put 'holiday-christian-holidays 'risky-local-variable t)
 
-;;;###autoload
-(define-obsolete-variable-alias 'islamic-holidays
-  'holiday-islamic-holidays "23.1")
 ;;;###autoload
 (defcustom holiday-islamic-holidays
   (mapcar 'purecopy
@@ -286,30 +168,26 @@ See the documentation for `calendar-holidays' for details."
 (put 'holiday-islamic-holidays 'risky-local-variable t)
 
 ;;;###autoload
-(define-obsolete-variable-alias 'bahai-holidays 'holiday-bahai-holidays "23.1")
-;;;###autoload
 (defcustom holiday-bahai-holidays
   (mapcar 'purecopy
   '((holiday-bahai-new-year)
     (holiday-bahai-ridvan)      ; respects calendar-bahai-all-holidays-flag
     (holiday-fixed  5 23 "Declaration of the Báb")
-    (holiday-fixed  5 29 "Ascension of Bahá'u'lláh")
+    (holiday-fixed  5 29 "Ascension of Bahá’u’lláh")
     (holiday-fixed  7  9 "Martyrdom of the Báb")
     (holiday-fixed 10 20 "Birth of the Báb")
-    (holiday-fixed 11 12 "Birth of Bahá'u'lláh")
+    (holiday-fixed 11 12 "Birth of Bahá’u’lláh")
     (if calendar-bahai-all-holidays-flag
         (append
          (holiday-fixed 11 26 "Day of the Covenant")
-         (holiday-fixed 11 28 "Ascension of `Abdu'l-Bahá")))))
-  "Bahá'í holidays.
+         (holiday-fixed 11 28 "Ascension of `Abdu’l-Bahá")))))
+  "Bahá’í holidays.
 See the documentation for `calendar-holidays' for details."
   :type 'sexp
   :group 'holidays)
 ;;;###autoload
 (put 'holiday-bahai-holidays 'risky-local-variable t)
 
-;;;###autoload
-(define-obsolete-variable-alias 'solar-holidays 'holiday-solar-holidays "23.1")
 ;;;###autoload
 (defcustom holiday-solar-holidays
   (mapcar 'purecopy
@@ -376,7 +254,7 @@ Several basic functions are provided for this purpose:
                                K>0, and MONTH's last day otherwise.
     (holiday-hebrew MONTH DAY STRING)  a fixed date on the Hebrew calendar
     (holiday-islamic MONTH DAY STRING) a fixed date on the Islamic calendar
-    (holiday-bahai MONTH DAY STRING)   a fixed date on the Bahá'í calendar
+    (holiday-bahai MONTH DAY STRING)   a fixed date on the Bahá’í calendar
     (holiday-julian MONTH DAY STRING)  a fixed date on the Julian calendar
     (holiday-sexp SEXP STRING) SEXP is a Gregorian-date-valued expression
                                in the variable `year'; if it evaluates to
@@ -389,9 +267,9 @@ For example, to add Bastille Day, celebrated in France on July 14, add
      (holiday-fixed 7 14 \"Bastille Day\")
 
 to the list.  To add Hurricane Supplication Day, celebrated in the Virgin
-Islands on the fourth Monday in August, add
+Islands on the fourth Monday in July, add
 
-     (holiday-float 8 1 4 \"Hurricane Supplication Day\")
+     (holiday-float 7 1 4 \"Hurricane Supplication Day\")
 
 to the list (the last Monday would be specified with `-1' instead of `4').
 To add the last day of Hanukkah to the list, use
@@ -404,11 +282,11 @@ To add the Islamic feast celebrating Mohammed's birthday, use
      (holiday-islamic 3 12 \"Mohammed's Birthday\")
 
 since the Islamic months are numbered from 1 starting with Muharram.
-To add an entry for the Bahá'í festival of Ridvan, use
+To add an entry for the Bahá’í festival of Ridvan, use
 
      (holiday-bahai 2 13 \"Festival of Ridvan\")
 
-since the Bahá'í months are numbered from 1 starting with Bahá.
+since the Bahá’í months are numbered from 1 starting with Bahá.
 To add Thomas Jefferson's birthday, April 2, 1743 (Julian), use
 
      (holiday-julian 4 2 \"Jefferson's Birthday\")
@@ -418,7 +296,7 @@ example, to include American presidential elections, which occur on the first
 Tuesday after the first Monday in November of years divisible by 4, add
 
      (holiday-sexp
-       '(if (zerop (% year 4))
+       \\='(if (zerop (% year 4))
            (calendar-gregorian-from-absolute
              (1+ (calendar-dayname-on-or-before
                    1 (+ 6 (calendar-absolute-from-gregorian
@@ -516,9 +394,6 @@ use instead of point."
         (message "Looking up holidays...done"))
       holiday-list)))
 
-(define-obsolete-function-alias
-  'list-calendar-holidays 'calendar-list-holidays "23.1")
-
 ;;;###autoload
 (defun holidays (&optional arg)
   "Display the holidays for last month, this month, and next month.
@@ -585,7 +460,7 @@ The optional LABEL is used to label the buffer created."
             (if holiday-islamic-holidays
                 (cons "Islamic" holiday-islamic-holidays))
             (if holiday-bahai-holidays
-                (cons "Bahá'í" holiday-bahai-holidays))
+                (cons "Bahá’í" holiday-bahai-holidays))
             (if holiday-oriental-holidays
                 (cons "Oriental" holiday-oriental-holidays))
             (if holiday-solar-holidays
@@ -644,9 +519,6 @@ strings describing those holidays that apply on DATE, or nil if none do."
     (dolist (h (calendar-holiday-list) holiday-list)
       (if (calendar-date-equal date (car h))
           (setq holiday-list (append holiday-list (cdr h)))))))
-
-(define-obsolete-function-alias
-  'check-calendar-holidays 'calendar-check-holidays "23.1")
 
 
 ;; Formerly cal-tex-list-holidays.
@@ -723,9 +595,6 @@ use instead of point."
     (dolist (holiday (calendar-holiday-list))
       (calendar-mark-visible-date (car holiday) calendar-holiday-marker))
     (message "Marking holidays...done")))
-
-(define-obsolete-function-alias
-  'mark-calendar-holidays 'calendar-mark-holidays "23.1")
 
 ;; Below are the functions that calculate the dates of holidays; these
 ;; are eval'ed in the function calendar-holiday-list.  If you
@@ -812,9 +681,6 @@ HLIST is a list of elements of the form (DATE) TEXT."
   (delq nil (mapcar (lambda (p)
                       (and (car p) (calendar-date-is-visible-p (car p)) p))
                     hlist)))
-
-(define-obsolete-function-alias
-  'filter-visible-calendar-holidays 'holiday-filter-visible-calendar "23.1")
 
 (defun holiday-sexp (sexp string)
   "Sexp holiday for dates in the calendar window.
@@ -925,8 +791,16 @@ is non-nil)."
 ;; Prior call to calendar-julian-from-absolute will autoload cal-julian.
 (declare-function calendar-julian-to-absolute "cal-julian" (date))
 
-(defun holiday-greek-orthodox-easter ()
-  "Date of Easter according to the rule of the Council of Nicaea."
+(defun holiday-greek-orthodox-easter (&optional n string)
+  "Date of Nth day after Easter (named STRING), if visible in calendar window.
+It is calculated according to the rule of the Council of Nicaea.
+Negative values of N are interpreted as days before Easter.
+STRING is used purely for display purposes.  The return value has
+the form ((MONTH DAY YEAR) STRING), where the date is that of the
+Nth day before or after Easter.
+
+For backwards compatibility, if this function is called with no
+arguments, it returns the date of Pascha (Greek Orthodox Easter)."
   (let* ((m displayed-month)
          (y displayed-year)
          (julian-year (progn
@@ -942,16 +816,11 @@ is non-nil)."
          (paschal-moon      ; day after full moon on or after March 21
           (- (calendar-julian-to-absolute (list 4 19 julian-year))
              shifted-epact))
-         (nicaean-easter           ; Sunday following the Paschal moon
-          (calendar-gregorian-from-absolute
-           (calendar-dayname-on-or-before 0 (+ paschal-moon 7)))))
-    (if (calendar-date-is-visible-p nicaean-easter)
-        (list (list nicaean-easter "Pascha (Greek Orthodox Easter)")))))
+	 (abs-easter (calendar-dayname-on-or-before 0 (+ paschal-moon 7)))
+	 (greg (calendar-gregorian-from-absolute (+ abs-easter (or n 0)))))
+    (if (calendar-date-is-visible-p greg)
+	(list (list greg (or string "Pascha (Greek Orthodox Easter)"))))))
 
 (provide 'holidays)
-
-;; Local Variables:
-;; coding: utf-8
-;; End:
 
 ;;; holidays.el ends here

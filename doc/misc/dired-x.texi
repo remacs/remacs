@@ -7,8 +7,9 @@
 @c [Dodd's address no longer valid.]
 
 @comment %**start of header (This is for running Texinfo on a region.)
-@setfilename ../../info/dired-x
+@setfilename ../../info/dired-x.info
 @settitle Dired Extra User's Manual
+@include docstyle.texi
 
 @include emacsver.texi
 
@@ -19,14 +20,14 @@
 @comment %**end of header (This is for running Texinfo on a region.)
 
 @copying
-Copyright @copyright{} 1994--1995, 1999, 2001--2013
+Copyright @copyright{} 1994--1995, 1999, 2001--2015
 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
-Invariant Sections, with the Front-Cover texts being ``A GNU Manual'',
+Invariant Sections, with the Front-Cover Texts being ``A GNU Manual'',
 and with the Back-Cover Texts as in (a) below.  A copy of the license
 is included in the section entitled ``GNU Free Documentation License''.
 
@@ -282,8 +283,8 @@ Marked files are never omitted.
 @end itemize
 
 @table @kbd
-@item M-o
-@kindex M-o
+@item C-x M-o
+@kindex C-x M-o
 @findex dired-omit-mode
 (@code{dired-omit-mode}) Toggle between displaying and omitting
 ``uninteresting'' files.
@@ -323,7 +324,7 @@ Default: @code{nil}
 If non-@code{nil}, ``uninteresting'' files are not listed.
 Uninteresting files are those whose files whose names match regexp
 @code{dired-omit-files}, plus those ending with extensions in
-@code{dired-omit-extensions}.  @kbd{M-o} (@code{dired-omit-mode})
+@code{dired-omit-extensions}.  @kbd{C-x M-o} (@code{dired-omit-mode})
 toggles its value, which is buffer-local.  Put
 
 @example
@@ -332,8 +333,8 @@ toggles its value, which is buffer-local.  Put
 
 @noindent
 inside your @code{dired-mode-hook} to have omitting initially turned on in
-@emph{every} Dired buffer (@pxref{Installation}).  You can then use @kbd{M-o} to
-unomit in that buffer.
+@emph{every} Dired buffer (@pxref{Installation}).  You can then use
+@kbd{C-x M-o} to unomit in that buffer.
 
 To enable omitting automatically only in certain directories you can add
 a directory local setting
@@ -560,7 +561,7 @@ of marked files.
 @vindex dired-guess-shell-alist-default
 Predefined rules for shell commands.  Set this to @code{nil} to turn guessing off.
 The elements of @code{dired-guess-shell-alist-user} (defined by the
-user) will override these rules.@refill
+user) will override these rules.
 
 @item dired-guess-shell-alist-user
 @vindex dired-guess-shell-alist-user
@@ -568,7 +569,6 @@ If non-@code{nil}, a user-defined alist of file regexps and their suggested
 commands.  These rules take precedence over the predefined rules in the
 variable @code{dired-guess-shell-alist-default} (to which they are prepended)
 when @code{dired-do-shell-command} is run).
-@refill
 
 Each element of the alist looks like
 

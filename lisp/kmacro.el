@@ -1,6 +1,6 @@
 ;;; kmacro.el --- enhanced keyboard macros
 
-;; Copyright (C) 2002-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
 ;; Author: Kim F. Storm <storm@cua.dk>
 ;; Keywords: keyboard convenience
@@ -432,7 +432,7 @@ Optional arg EMPTY is message to print if no macros are defined."
       (setq last-input-event nil)))
   (when last-input-event
     (clear-this-command-keys t)
-    (setq unread-command-events (list last-input-event))))
+    (push last-input-event unread-command-events)))
 
 
 (defun kmacro-get-repeat-prefix ()
@@ -445,7 +445,8 @@ Optional arg EMPTY is message to print if no macros are defined."
 
 ;;;###autoload
 (defun kmacro-exec-ring-item (item arg)
-  "Execute item ITEM from the macro ring."
+  "Execute item ITEM from the macro ring.
+ARG is the number of times to execute the item."
   ;; Use counter and format specific to the macro on the ring!
   (let ((kmacro-counter (nth 1 item))
 	(kmacro-counter-format-start (nth 2 item)))
@@ -482,7 +483,8 @@ without repeating the prefix."
 
 (defun kmacro-cycle-ring-next (&optional _arg)
   "Move to next keyboard macro in keyboard macro ring.
-Displays the selected macro in the echo area."
+Displays the selected macro in the echo area.
+The ARG parameter is unused."
   (interactive)
   (unless (kmacro-ring-empty-p)
     (kmacro-push-ring)
@@ -501,7 +503,8 @@ Displays the selected macro in the echo area."
 
 (defun kmacro-cycle-ring-previous (&optional _arg)
   "Move to previous keyboard macro in keyboard macro ring.
-Displays the selected macro in the echo area."
+Displays the selected macro in the echo area.
+The ARG parameter is unused."
   (interactive)
   (unless (kmacro-ring-empty-p)
     (let ((keys (kmacro-get-repeat-prefix))
@@ -528,7 +531,8 @@ Displays the selected macro in the echo area."
 
 
 (defun kmacro-delete-ring-head (&optional _arg)
-  "Delete current macro from keyboard macro ring."
+  "Delete current macro from keyboard macro ring.
+The ARG parameter is unused."
   (interactive)
   (unless (kmacro-ring-empty-p t)
     (if (null kmacro-ring)
@@ -650,10 +654,10 @@ others, use \\[kmacro-name-last-macro]."
 		 (if (and kmacro-call-repeat-with-arg
 			  arg (> arg 1))
 		     (format " %d times" arg) "")))
-      ;; Can't use the `keep-pred' arg because this overlay keymap needs to be
-      ;; removed during the next run of the kmacro (i.e. we need to add&remove
-      ;; this overlay-map at each repetition).
-      (set-temporary-overlay-map
+      ;; Can't use the `keep-pred' arg because this overlay keymap
+      ;; needs to be removed during the next run of the kmacro
+      ;; (i.e. we must add and remove this map at each repetition).
+      (set-transient-map
        (let ((map (make-sparse-keymap)))
          (define-key map (vector repeat-key)
            `(lambda () (interactive)
@@ -792,7 +796,8 @@ You can bind to any valid key sequence, but if you try to bind to
 a key with an existing command binding, you will be asked for
 confirmation whether to replace that binding.  Note that the
 binding is made in the `global-map' keymap, so the macro binding
-may be shaded by a local key binding."
+may be shaded by a local key binding.
+The ARG parameter is unused."
   (interactive "p")
   (if (or defining-kbd-macro executing-kbd-macro)
       (if defining-kbd-macro
@@ -845,11 +850,13 @@ Such a \"function\" cannot be called from Lisp, but it is a valid editor command
   (kmacro-call-macro current-prefix-arg nil nil k))
 
 (defun kmacro-to-register (r)
-  "Store the last keyboard macro in register R."
+  "Store the last keyboard macro in register R.
+
+Interactively, reads the register using `register-read-with-preview'."
   (interactive
    (progn
      (or last-kbd-macro (error "No keyboard macro defined"))
-     (list (read-char "Save to register: "))))
+     (list (register-read-with-preview "Save to register: "))))
   (set-register r (registerv-make
 		   last-kbd-macro
 		   :jump-func 'kmacro-execute-from-register
@@ -862,7 +869,8 @@ Such a \"function\" cannot be called from Lisp, but it is a valid editor command
 
 (defun kmacro-view-macro (&optional _arg)
   "Display the last keyboard macro.
-If repeated, it shows previous elements in the macro ring."
+If repeated, it shows previous elements in the macro ring.
+The ARG parameter is unused."
   (interactive)
   (cond
    ((or (kmacro-ring-empty-p)
@@ -933,7 +941,6 @@ without repeating the prefix."
 (defvar kmacro-step-edit-inserting)  	 ;; inserting into macro
 (defvar kmacro-step-edit-appending)  	 ;; append to end of macro
 (defvar kmacro-step-edit-replace)    	 ;; replace orig macro when done
-(defvar kmacro-step-edit-prefix-index)   ;; index of first prefix arg key
 (defvar kmacro-step-edit-key-index)      ;; index of current key
 (defvar kmacro-step-edit-action)     	 ;; automatic action on next pre-command hook
 (defvar kmacro-step-edit-help)     	 ;; kmacro step edit help enabled
@@ -967,11 +974,6 @@ without repeating the prefix."
 This keymap is an extension to the `query-replace-map', allowing the
 following additional answers: `insert', `insert-1', `replace', `replace-1',
 `append', `append-end', `act-repeat', `skip-end', `skip-keep'.")
-
-(defvar kmacro-step-edit-prefix-commands
-  '(universal-argument universal-argument-more universal-argument-minus
-		       digit-argument negative-argument)
-  "Commands which build up a prefix arg for the current command.")
 
 (defun kmacro-step-edit-prompt (macro index)
   ;; Show step-edit prompt
@@ -1076,21 +1078,13 @@ following additional answers: `insert', `insert-1', `replace', `replace-1',
       ;; Handle prefix arg, or query user
       (cond
        (act act) ;; set above
-       ((memq this-command kmacro-step-edit-prefix-commands)
-	(unless kmacro-step-edit-prefix-index
-	  (setq kmacro-step-edit-prefix-index kmacro-step-edit-key-index))
-	(setq act 'universal-argument))
-       ((eq this-command 'universal-argument-other-key)
-	(setq act 'universal-argument))
        (t
-	(kmacro-step-edit-prompt macro (or kmacro-step-edit-prefix-index kmacro-step-edit-key-index))
+	(kmacro-step-edit-prompt macro kmacro-step-edit-key-index)
 	(setq act (lookup-key kmacro-step-edit-map
 			      (vector (with-current-buffer (current-buffer) (read-event))))))))
 
     ;; Resume macro execution and perform the action
     (cond
-     ((eq act 'universal-argument)
-      nil)
      ((cond
        ((eq act 'act)
 	t)
@@ -1102,7 +1096,6 @@ following additional answers: `insert', `insert-1', `replace', `replace-1',
 	(setq kmacro-step-edit-active 'ignore)
 	nil)
        ((eq act 'skip)
-	(setq kmacro-step-edit-prefix-index nil)
 	nil)
        ((eq act 'skip-keep)
 	(setq this-command 'ignore)
@@ -1115,12 +1108,11 @@ following additional answers: `insert', `insert-1', `replace', `replace-1',
 	(setq act t)
 	t)
        ((member act '(insert-1 insert))
-	(setq executing-kbd-macro-index (or kmacro-step-edit-prefix-index kmacro-step-edit-key-index))
+	(setq executing-kbd-macro-index kmacro-step-edit-key-index)
 	(setq kmacro-step-edit-inserting (if (eq act 'insert-1) 1 t))
 	nil)
        ((member act '(replace-1 replace))
 	(setq kmacro-step-edit-inserting (if (eq act 'replace-1) 1 t))
-	(setq kmacro-step-edit-prefix-index nil)
 	(if (= executing-kbd-macro-index (length executing-kbd-macro))
 	    (setq executing-kbd-macro (vconcat executing-kbd-macro [nil])
 		  kmacro-step-edit-appending t))
@@ -1140,19 +1132,19 @@ following additional answers: `insert', `insert-1', `replace', `replace-1',
 	(setq act t)
 	t)
        ((eq act 'help)
-	(setq executing-kbd-macro-index (or kmacro-step-edit-prefix-index kmacro-step-edit-key-index))
+	(setq executing-kbd-macro-index kmacro-step-edit-key-index)
 	(setq kmacro-step-edit-help (not kmacro-step-edit-help))
 	nil)
        (t ;; Ignore unknown responses
-	(setq executing-kbd-macro-index (or kmacro-step-edit-prefix-index kmacro-step-edit-key-index))
+	(setq executing-kbd-macro-index kmacro-step-edit-key-index)
 	nil))
-      (if (> executing-kbd-macro-index (or kmacro-step-edit-prefix-index kmacro-step-edit-key-index))
+      (if (> executing-kbd-macro-index kmacro-step-edit-key-index)
 	  (setq kmacro-step-edit-new-macro
 		(vconcat kmacro-step-edit-new-macro
 			 (substring executing-kbd-macro
-				    (or kmacro-step-edit-prefix-index kmacro-step-edit-key-index)
-				    (if (eq act t) nil executing-kbd-macro-index)))
-		kmacro-step-edit-prefix-index nil))
+				    kmacro-step-edit-key-index
+				    (if (eq act t) nil
+                                      executing-kbd-macro-index)))))
       (if restore-index
 	  (setq executing-kbd-macro-index restore-index)))
      (t
@@ -1167,12 +1159,10 @@ following additional answers: `insert', `insert-1', `replace', `replace-1',
 	(executing-kbd-macro nil)
 	(defining-kbd-macro nil)
 	cmd keys next-index)
-    (setq executing-kbd-macro-index (or kmacro-step-edit-prefix-index kmacro-step-edit-key-index)
-	  kmacro-step-edit-prefix-index nil)
+    (setq executing-kbd-macro-index kmacro-step-edit-key-index)
     (kmacro-step-edit-prompt macro nil)
     ;; Now, we have read a key sequence from the macro, but we don't want
     ;; to execute it yet.  So push it back and read another sequence.
-    (reset-this-command-lengths)
     (setq keys (read-key-sequence nil nil nil nil t))
     (setq cmd (key-binding keys t nil))
     (if (cond
@@ -1193,28 +1183,12 @@ following additional answers: `insert', `insert-1', `replace', `replace-1',
 		    unread-command-events nil)))
 	  (setq cmd 'ignore)
 	  nil)
-	 ((memq cmd kmacro-step-edit-prefix-commands)
-	  (setq universal-argument-num-events 0)
-	  (reset-this-command-lengths)
-	  nil)
-	 ((eq cmd 'universal-argument-other-key)
-	  (setq kmacro-step-edit-action t)
-	  (setq universal-argument-num-events 0)
-	  (reset-this-command-lengths)
-	  (if (numberp kmacro-step-edit-inserting)
-	      (setq kmacro-step-edit-inserting nil))
-	  nil)
 	 ((numberp kmacro-step-edit-inserting)
 	  (setq kmacro-step-edit-inserting nil)
 	  nil)
 	 ((equal keys "\C-j")
 	  (setq kmacro-step-edit-inserting nil)
 	  (setq kmacro-step-edit-action nil)
-	  ;; Forget any (partial) prefix arg from next command
-	  (setq kmacro-step-edit-prefix-index nil)
-	  (reset-this-command-lengths)
-	  (setq overriding-terminal-local-map nil)
-	  (setq universal-argument-num-events nil)
 	  (setq next-index kmacro-step-edit-key-index)
 	  t)
 	 (t nil))
@@ -1273,7 +1247,6 @@ To customize possible responses, change the \"bindings\" in `kmacro-step-edit-ma
 	(kmacro-step-edit-inserting nil)
 	(kmacro-step-edit-appending nil)
 	(kmacro-step-edit-replace t)
-	(kmacro-step-edit-prefix-index nil)
 	(kmacro-step-edit-key-index 0)
 	(kmacro-step-edit-action nil)
 	(kmacro-step-edit-help nil)

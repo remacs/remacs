@@ -1,9 +1,9 @@
-;;; flyspell.el --- on-the-fly spell checker
+;;; flyspell.el --- On-the-fly spell checker  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1998, 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998, 2000-2015 Free Software Foundation, Inc.
 
 ;; Author: Manuel Serrano <Manuel.Serrano@sophia.inria.fr>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: convenience
 
 ;; This file is part of GNU Emacs.
@@ -39,6 +39,7 @@
 ;;; Code:
 
 (require 'ispell)
+(eval-when-compile (require 'cl-lib))
 
 ;;*---------------------------------------------------------------------*/
 ;;*    Group ...                                                        */
@@ -92,7 +93,7 @@ downcased before comparing with these exceptions."
   :version "21.1"
   :type 'boolean)
 
-(defcustom flyspell-duplicate-distance -1
+(defcustom flyspell-duplicate-distance 400000
   "The maximum distance for finding duplicates of unrecognized words.
 This applies to the feature that when a word is not found in the dictionary,
 if the same spelling occurs elsewhere in the buffer,
@@ -101,7 +102,7 @@ This variable specifies how far to search to find such a duplicate.
 -1 means no limit (search the whole buffer).
 0 means do not search for duplicate unrecognized spellings."
   :group 'flyspell
-  :version "21.1"
+  :version "24.5"			; -1 -> 400000
   :type '(choice (const :tag "no limit" -1)
 		 number))
 
@@ -283,6 +284,7 @@ If this variable is nil, all regions are treated as small."
 (defcustom flyspell-auto-correct-binding
   [(control ?\;)]
   "The key binding for flyspell auto correction."
+  :type 'key-sequence
   :group 'flyspell)
 
 ;;*---------------------------------------------------------------------*/
@@ -302,8 +304,8 @@ Returns t to continue checking, nil otherwise.
 Flyspell mode sets this variable to whatever is the `flyspell-mode-predicate'
 property of the major mode name.")
 (make-variable-buffer-local 'flyspell-generic-check-word-predicate)
-(defvaralias 'flyspell-generic-check-word-p
-  'flyspell-generic-check-word-predicate)
+(define-obsolete-variable-alias 'flyspell-generic-check-word-p
+  'flyspell-generic-check-word-predicate "25.1")
 
 ;;*--- mail mode -------------------------------------------------------*/
 (put 'mail-mode 'flyspell-mode-predicate 'mail-mode-flyspell-verify)
@@ -311,21 +313,22 @@ property of the major mode name.")
 (defvar message-signature-separator)
 (defun mail-mode-flyspell-verify ()
   "Function used for `flyspell-generic-check-word-predicate' in Mail mode."
-  (let ((header-end (save-excursion
-		      (goto-char (point-min))
-		      (re-search-forward
-		       (concat "^"
-			       (regexp-quote mail-header-separator)
-			       "$")
-		       nil t)
-		      (point)))
-	(signature-begin
-         (if (not (boundp 'message-signature-separator))
-             (point-max)
-           (save-excursion
-             (goto-char (point-max))
-             (re-search-backward message-signature-separator nil t)
-             (point)))))
+  (let* ((header-end (save-excursion
+                       (goto-char (point-min))
+                       (re-search-forward
+                        (concat "^\\(?:"
+                                (regexp-quote mail-header-separator)
+                                "\\)?$")
+                        nil t)
+                       (point)))
+         (signature-begin
+          (if (not (boundp 'message-signature-separator))
+              (point-max)
+            (save-excursion
+              (goto-char (point-max))
+              (re-search-backward message-signature-separator
+                                  (max header-end (- (point) 4000)) t)
+              (point)))))
     (cond ((< (point) header-end)
 	   (and (save-excursion (beginning-of-line)
 				(looking-at "^Subject:"))
@@ -395,7 +398,7 @@ like <img alt=\"Some thing.\">."
   "Turn on `flyspell-mode' for comments and strings."
   (interactive)
   (setq flyspell-generic-check-word-predicate
-        'flyspell-generic-progmode-verify)
+        #'flyspell-generic-progmode-verify)
   (flyspell-mode 1)
   (run-hooks 'flyspell-prog-mode-hook))
 
@@ -498,7 +501,7 @@ invoking `ispell-change-dictionary'.
 
 Consider using the `ispell-parser' to check your text.  For instance
 consider adding:
-\(add-hook 'tex-mode-hook (function (lambda () (setq ispell-parser 'tex))))
+\(add-hook \\='tex-mode-hook (function (lambda () (setq ispell-parser \\='tex))))
 in your init file.
 
 \\[flyspell-region] checks all words inside a region.
@@ -790,7 +793,7 @@ before the current command."
 ;;*---------------------------------------------------------------------*/
 ;;*    flyspell-after-change-function ...                               */
 ;;*---------------------------------------------------------------------*/
-(defun flyspell-after-change-function (start stop len)
+(defun flyspell-after-change-function (start stop _len)
   "Save the current buffer and point for Flyspell's post-command hook."
   (push (cons start stop) flyspell-changes))
 
@@ -1009,17 +1012,33 @@ Mostly we check word delimiters."
 ;;*---------------------------------------------------------------------*/
 (defun flyspell-word-search-backward (word bound &optional ignore-case)
   (save-excursion
-    (let ((r '())
-	  (inhibit-point-motion-hooks t)
-	  p)
-      (while (and (not r) (setq p (search-backward word bound t)))
-	(let ((lw (flyspell-get-word)))
-	  (if (and (consp lw)
-		   (if ignore-case
-		       (string-equal (downcase (car lw)) (downcase word))
-		     (string-equal (car lw) word)))
-	      (setq r p)
-	    (goto-char p))))
+    (let* ((r '())
+	   (inhibit-point-motion-hooks t)
+	   (flyspell-not-casechars (flyspell-get-not-casechars))
+	   (bound (if (and bound
+			   (> bound (point-min)))
+		      (- bound 1)))
+	   (word-re (concat
+                     "\\(?:" flyspell-not-casechars "\\|\\`\\)"
+                     (regexp-quote word)
+                     flyspell-not-casechars))
+	   p)
+      (while
+	  (and (not r)
+               (setq p
+                     (and
+                      (re-search-backward word-re bound t)
+		      (if (bobp)
+			  (point)
+                        (forward-char)
+                        (point)))))
+        (let ((lw (flyspell-get-word)))
+          (if (and (consp lw)
+                   (if ignore-case
+                       (string-equal (downcase (car lw)) (downcase word))
+                     (string-equal (car lw) word)))
+              (setq r p)
+            (goto-char p))))
       r)))
 
 ;;*---------------------------------------------------------------------*/
@@ -1027,15 +1046,31 @@ Mostly we check word delimiters."
 ;;*---------------------------------------------------------------------*/
 (defun flyspell-word-search-forward (word bound)
   (save-excursion
-    (let ((r '())
-	  (inhibit-point-motion-hooks t)
-	  p)
-      (while (and (not r) (setq p (search-forward word bound t)))
-	(let ((lw (flyspell-get-word)))
-	  (if (and (consp lw) (string-equal (car lw) word))
-	      (setq r p)
-	    (goto-char (1+ p)))))
+    (let* ((r '())
+	   (inhibit-point-motion-hooks t)
+	   (flyspell-not-casechars (flyspell-get-not-casechars))
+	   (bound (if (and bound
+			   (< bound (point-max)))
+		      (+ bound 1)))
+	   (word-re (concat flyspell-not-casechars
+                            (regexp-quote word)
+                            "\\(?:" flyspell-not-casechars "\\|\\'\\)"))
+	   p)
+      (while
+	  (and (not r)
+               (setq p (and
+                        (re-search-forward word-re bound t)
+                        (if (eobp)
+                            (point)
+                          (backward-char)
+                          (point)))))
+        (let ((lw (flyspell-get-word)))
+          (if (and (consp lw) (string-equal (car lw) word))
+              (setq r p)
+            (goto-char (1+ p)))))
       r)))
+
+(defvar flyspell-word) ;Backward compatibility; some predicates made use of it!
 
 ;;*---------------------------------------------------------------------*/
 ;;*    flyspell-word ...                                                */
@@ -1084,7 +1119,8 @@ misspelling and skips redundant spell-checking step."
 		   (let* ((bound
 			   (- start
 			      (- end start)
-			      (- (skip-chars-backward " \t\n\f"))))
+			      (- (save-excursion
+                                   (skip-chars-backward " \t\n\f")))))
 			  (p (when (>= bound (point-min))
 			       (flyspell-word-search-backward word bound t))))
 		     (and p (/= p start)))))
@@ -1314,7 +1350,7 @@ that may be included as part of a word (see `ispell-dictionary-alist')."
 	(if (and flyspell-issue-message-flag (= count 100))
 	    (progn
 	      (message "Spell Checking...%d%%"
-		       (* 100 (/ (float (- (point) beg)) (- end beg))))
+		       (floor (* 100.0 (- (point) beg)) (- end beg)))
 	      (setq count 0))
 	  (setq count (+ 1 count)))
 	(flyspell-word)
@@ -1367,7 +1403,7 @@ The buffer to mark them in is `flyspell-large-region-buffer'."
 	  ;; be unnecessary too. -- rms.
 	  (if flyspell-issue-message-flag
 	      (message "Spell Checking...%d%% [%s]"
-		       (* 100 (/ (float (point)) (point-max)))
+		       (floor (* 100.0 (point)) (point-max))
 		       word))
 	  (with-current-buffer flyspell-large-region-buffer
 	    (goto-char buffer-scan-pos)
@@ -1419,9 +1455,9 @@ The buffer to mark them in is `flyspell-large-region-buffer'."
 			;; end of last validated match.
 			(setq buffer-scan-pos (point))))
 		  ;; Record if misspelling is not found and try new one
-		  (add-to-list 'words-not-found
-			       (concat " -> " word " - "
-				       (int-to-string wordpos)))
+		  (cl-pushnew (concat " -> " word " - "
+				       (int-to-string wordpos))
+                              words-not-found :test #'equal)
 		  (setq keep nil)))))))
       ;; we are done
       (if flyspell-issue-message-flag (message "Spell Checking completed.")))
@@ -1527,7 +1563,8 @@ The buffer to mark them in is `flyspell-large-region-buffer'."
       (let ((extended-char-mode (ispell-get-extended-character-mode)))
         (and extended-char-mode          ; ~ extended character mode
 	     (string-match "[^~]+$" extended-char-mode)
-	     (add-to-list 'args (concat "-T" (match-string 0 extended-char-mode)))))
+	     (cl-pushnew (concat "-T" (match-string 0 extended-char-mode))
+                         args :test #'equal)))
 
       ;; Add ispell-extra-args
       (setq args (append args ispell-extra-args))
@@ -1791,11 +1828,12 @@ as returned by `ispell-parse-output'."
 ;;*    flyspell-check-previous-highlighted-word ...                     */
 ;;*---------------------------------------------------------------------*/
 (defun flyspell-check-previous-highlighted-word (&optional arg)
-  "Correct the closer misspelled word.
-This function scans a mis-spelled word before the cursor. If it finds one
-it proposes replacement for that word. With prefix arg, count that many
-misspelled words backwards."
-  (interactive)
+  "Correct the closest previous word that is highlighted as misspelled.
+This function scans for a word which starts before point that has been
+highlighted by Flyspell as misspelled.  If it finds one, it proposes
+a replacement for that word.  With prefix arg N, check the Nth word
+before point that's highlighted as misspelled."
+  (interactive "P")
   (let ((pos1 (point))
 	(pos  (point))
 	(arg  (if (or (not (numberp arg)) (< arg 1)) 1 arg))
@@ -1806,7 +1844,7 @@ misspelled words backwards."
 	    (setq pos1 pos)
 	    (if (> pos (point-min))
 		(progn
-		  (setq ovs (overlays-at (1- pos)))
+		  (setq ovs (overlays-at pos))
 		  (while (consp ovs)
 		    (setq ov (car ovs))
 		    (setq ovs (cdr ovs))
@@ -2051,8 +2089,6 @@ If EVENT is non-nil, it is the mouse event that invoked this operation;
 that controls where to put the menu.
 If OPOINT is non-nil, restore point there after adjusting it for replacement."
   (interactive)
-  (unless (mouse-position)
-    (error "Pop-up menus do not work on this terminal"))
   ;; use the correct dictionary
   (flyspell-accept-buffer-local-defs)
   (or opoint (setq opoint (point)))
@@ -2167,9 +2203,8 @@ If OPOINT is non-nil, restore point there after adjusting it for replacement."
 ;;*---------------------------------------------------------------------*/
 (defun flyspell-emacs-popup (event poss word)
   "The Emacs popup menu."
-  (unless window-system
-    (error "This command requires pop-up dialogs"))
-  (if (not event)
+  (if (and (not event)
+           (display-mouse-p))
       (let* ((mouse-pos  (mouse-position))
 	     (mouse-pos  (if (nth 1 mouse-pos)
 			     mouse-pos
@@ -2291,7 +2326,7 @@ If the text between BEG and END is equal to a correction suggested by
 Ispell, after transposing two adjacent characters, correct the text,
 and return t.
 
-The third arg POSS is either the symbol 'doublon' or a list of
+The third arg POSS is either the symbol `doublon' or a list of
 possible corrections as returned by `ispell-parse-output'.
 
 This function is meant to be added to `flyspell-incorrect-hook'."
@@ -2321,7 +2356,7 @@ If the text between BEG and END is equal to a correction suggested by
 Ispell, after removing a pair of doubled characters, correct the text,
 and return t.
 
-The third arg POSS is either the symbol 'doublon' or a list of
+The third arg POSS is either the symbol `doublon' or a list of
 possible corrections as returned by `ispell-parse-output'.
 
 This function is meant to be added to `flyspell-incorrect-hook'."

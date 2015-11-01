@@ -1,6 +1,6 @@
 ;;; flymake-tests.el --- Test suite for flymake
 
-;; Copyright (C) 2011-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
 ;; Author: Eduard Wiebe <usenet@pusto.de>
 
@@ -25,53 +25,54 @@
 (require 'ert)
 (require 'flymake)
 
+(defvar flymake-tests-data-directory
+  (expand-file-name "data/flymake" (getenv "EMACS_TEST_DIRECTORY"))
+  "Directory containing flymake test data.")
+
 
 ;; Warning predicate
 (defun flymake-tests--current-face (file predicate)
-  (let ((buffer (find-file-noselect file)))
+  (let ((buffer (find-file-noselect
+                 (expand-file-name file flymake-tests-data-directory)))
+        (process-environment (cons "LC_ALL=C" process-environment))
+        (i 0))
     (unwind-protect
-        (with-current-buffer (find-file-noselect file)
+        (with-current-buffer buffer
           (setq-local flymake-warning-predicate predicate)
           (goto-char (point-min))
           (flymake-mode 1)
-          ;; XXX: is this reliable enough?
-          (sleep-for (+ 0.5 flymake-no-changes-timeout))
+          ;; Weirdness here...  http://debbugs.gnu.org/17647#25
+          (while (and flymake-is-running (< (setq i (1+ i)) 10))
+            (sleep-for (+ 0.5 flymake-no-changes-timeout)))
           (flymake-goto-next-error)
           (face-at-point))
-      (and buffer (kill-buffer buffer)))))
+      (and buffer (let (kill-buffer-query-functions) (kill-buffer buffer))))))
 
 (ert-deftest warning-predicate-rx-gcc ()
   "Test GCC warning via regexp predicate."
-  :expected-result (if (executable-find "gcc") :passed :failed)
+  (skip-unless (executable-find "gcc"))
   (should (eq 'flymake-warnline
-              (flymake-tests--current-face
-               "flymake/warnpred/test.c"
-               "^[Ww]arning"))))
+              (flymake-tests--current-face "test.c" "^[Ww]arning"))))
 
 (ert-deftest warning-predicate-function-gcc ()
   "Test GCC warning via function predicate."
-  :expected-result (if (and (executable-find "gcc") (executable-find "make"))
-                       :passed
-                     :failed)
+  (skip-unless (and (executable-find "gcc") (executable-find "make")))
   (should (eq 'flymake-warnline
-              (flymake-tests--current-face
-               "flymake/warnpred/test.c"
+              (flymake-tests--current-face "test.c"
                (lambda (msg) (string-match "^[Ww]arning" msg))))))
 
 (ert-deftest warning-predicate-rx-perl ()
   "Test perl warning via regular expression predicate."
-  :expected-result (if (executable-find "perl") :passed :failed)
+  (skip-unless (executable-find "perl"))
   (should (eq 'flymake-warnline
-              (flymake-tests--current-face
-               "flymake/warnpred/test.pl"
-               "^Scalar value"))))
+              (flymake-tests--current-face "test.pl" "^Scalar value"))))
 
 (ert-deftest warning-predicate-function-perl ()
   "Test perl warning via function predicate."
-  :expected-result (if (executable-find "perl") :passed :failed)
+  (skip-unless (executable-find "perl"))
   (should (eq 'flymake-warnline
               (flymake-tests--current-face
-               "flymake/warnpred/test.pl"
+               "test.pl"
                (lambda (msg) (string-match "^Scalar value" msg))))))
 
 (provide 'flymake-tests)

@@ -1,10 +1,10 @@
 ;;; imenu.el --- framework for mode-specific buffer indexes  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1994-1998, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-1998, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Ake Stenhoff <etxaksf@aom.ericsson.se>
 ;;         Lars Lindberg <lli@sypro.cap.se>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Created: 8 Feb 1994
 ;; Keywords: tools convenience
 
@@ -185,6 +185,13 @@ with name concatenation."
   :type 'string
   :group 'imenu)
 
+(defcustom imenu-generic-skip-comments-and-strings t
+  "When non-nil, ignore text inside comments and strings.
+Only affects `imenu--generic-function'."
+  :type 'boolean
+  :group 'imenu
+  :version "24.4")
+
 ;;;###autoload
 (defvar imenu-generic-expression nil
   "List of definition matchers for creating an Imenu index.
@@ -286,8 +293,10 @@ The function in this variable is called when selecting a normal index-item.")
 
 
 (defun imenu--subalist-p (item)
-  (and (consp (cdr item)) (listp (cadr item))
-       (not (eq (car (cadr item)) 'lambda))))
+  (and (consp item)
+       (consp (cdr item))
+       (listp (cadr item))
+       (not (functionp (cadr item)))))
 
 (defmacro imenu-progress-message (_prevpos &optional _relpos _reverse)
   "Macro to display a progress message.
@@ -338,6 +347,12 @@ Don't move point."
 ;;;
 ;;; Lisp
 ;;;
+
+(define-error 'imenu-unavailable "imenu unavailable")
+
+(defun imenu-unavailable-error (format &rest args)
+  (signal 'imenu-unavailable
+          (list (apply #'format-message format args))))
 
 (defun imenu-example--lisp-extract-index-name ()
   ;; Example of a candidate for `imenu-extract-index-name-function'.
@@ -454,7 +469,7 @@ Special elements look like (INDEX-NAME POSITION FUNCTION ARGUMENTS...).
 To \"go to\" a special element means applying FUNCTION
 to INDEX-NAME, POSITION, and the ARGUMENTS.
 
-A nested sub-alist element looks like (INDEX-NAME SUB-ALIST).
+A nested sub-alist element looks like (INDEX-NAME . SUB-ALIST).
 The function `imenu--subalist-p' tests an element and returns t
 if it is a sub-alist.
 
@@ -467,7 +482,7 @@ element recalculates the buffer's index alist.")
 
 (defvar imenu--history-list nil
   ;; Making this buffer local caused it not to work!
-  "History list for 'jump-to-function-in-buffer'.")
+  "History list for `jump-to-function-in-buffer'.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -490,10 +505,7 @@ If REVERSE is non-nil then the beginning is 100 and the end is 0."
   (let ((pos (point))
 	(total (buffer-size)))
     (and reverse (setq pos (- total pos)))
-    (if (> total 50000)
-	;; Avoid overflow from multiplying by 100!
-	(/ (1- pos) (max (/ total 100) 1))
-      (/ (* 100 (1- pos)) (max total 1)))))
+    (floor (* 100.0 (1- pos)) (max total 1))))
 
 (defun imenu--split (list n)
   "Split LIST into sublists of max length N.
@@ -584,7 +596,8 @@ See `imenu--index-alist' for the format of the index alist."
 		  (funcall imenu-create-index-function))))
 	(imenu--truncate-items imenu--index-alist)))
   (or imenu--index-alist noerror
-      (user-error "No items suitable for an index found in this buffer"))
+      (imenu-unavailable-error
+       "No items suitable for an index found in this buffer"))
   (or imenu--index-alist
       (setq imenu--index-alist (list nil)))
   ;; Add a rescan option to the index.
@@ -638,9 +651,11 @@ Non-nil arguments are in recursive calls."
       ;;   (INDEX-NAME (INDEX-NAME . INDEX-POSITION) ...)
       ;; while a bottom-level element looks like
       ;;   (INDEX-NAME . INDEX-POSITION)
+      ;; or
+      ;;   (INDEX-NAME INDEX-POSITION FUNCTION ARGUMENTS...)
       ;; We are only interested in the bottom-level elements, so we need to
-      ;; recurse if TAIL is a list.
-      (cond ((listp tail)
+      ;; recurse if TAIL is a nested ALIST.
+      (cond ((imenu--subalist-p elt)
 	     (if (setq res (imenu--in-alist str tail))
 		 (setq alist nil)))
 	    ((if imenu-name-lookup-function
@@ -696,7 +711,7 @@ The alternate method, which is the one most often used, is to call
 	((and imenu-generic-expression)
 	 (imenu--generic-function imenu-generic-expression))
 	(t
-	 (user-error "This buffer cannot use `imenu-default-create-index-function'"))))
+         (imenu-unavailable-error "This buffer cannot use `imenu-default-create-index-function'"))))
 
 ;;;
 ;;; Generic index gathering function.
@@ -715,8 +730,12 @@ for modes which use `imenu--generic-function'.  If it is not set, but
 ;; so it needs to be careful never to loop!
 (defun imenu--generic-function (patterns)
   "Return an index alist of the current buffer based on PATTERNS.
-PATTERNS should be an alist which has the same form as
-`imenu-generic-expression'.
+PATTERNS should be an alist with the same form as `imenu-generic-expression'.
+
+If `imenu-generic-skip-comments-and-strings' is non-nil, this ignores
+text inside comments and strings.
+
+If `imenu-case-fold-search' is non-nil, this ignores case.
 
 The return value is an alist of the form
  (INDEX-NAME . INDEX-POSITION)
@@ -796,7 +815,9 @@ depending on PATTERNS."
 		      ;; starting with its title (or nil).
 		      (menu (assoc menu-title index-alist)))
 		  ;; Insert the item unless it is already present.
-		  (unless (member item (cdr menu))
+		  (unless (or (member item (cdr menu))
+                              (and imenu-generic-skip-comments-and-strings
+                                   (nth 8 (syntax-ppss))))
 		    (setcdr menu
 			    (cons item (cdr menu)))))
 		;; Go to the start of the match, to make sure we
@@ -919,6 +940,8 @@ The returned value is of the form (INDEX-NAME . INDEX-POSITION)."
 	   (setq result t imenu--index-alist nil)))
     result))
 
+(defvar-local imenu--menubar-keymap nil)
+
 ;;;###autoload
 (defun imenu-add-to-menubar (name)
   "Add an `imenu' entry to the menu bar for the current buffer.
@@ -935,12 +958,13 @@ See the command `imenu' for more information."
 	(let ((newmap (make-sparse-keymap)))
 	  (set-keymap-parent newmap (current-local-map))
 	  (setq imenu--last-menubar-index-alist nil)
+          (setq imenu--menubar-keymap (make-sparse-keymap "Imenu"))
 	  (define-key newmap [menu-bar index]
-	    `(menu-item ,name ,(make-sparse-keymap "Imenu")))
+	    `(menu-item ,name ,imenu--menubar-keymap))
 	  (use-local-map newmap)
 	  (add-hook 'menu-bar-update-hook 'imenu-update-menubar)))
-    (user-error "The mode `%s' does not support Imenu"
-                (format-mode-line mode-name))))
+    (imenu-unavailable-error "The mode `%s' does not support Imenu"
+                             (format-mode-line mode-name))))
 
 ;;;###autoload
 (defun imenu-add-menubar-index ()
@@ -958,28 +982,23 @@ to `imenu-update-menubar'.")
 
 (defun imenu-update-menubar ()
   (when (and (current-local-map)
-	     (keymapp (lookup-key (current-local-map) [menu-bar index]))
+             imenu--menubar-keymap
 	     (/= (buffer-chars-modified-tick) imenu-menubar-modified-tick))
     (setq imenu-menubar-modified-tick (buffer-chars-modified-tick))
     (let ((index-alist (imenu--make-index-alist t)))
       ;; Don't bother updating if the index-alist has not changed
       ;; since the last time we did it.
       (unless (equal index-alist imenu--last-menubar-index-alist)
-	(let (menu menu1 old)
-	  (setq imenu--last-menubar-index-alist index-alist)
-	  (setq index-alist (imenu--split-submenus index-alist))
-	  (setq menu (imenu--split-menu index-alist
-					(buffer-name)))
-	  (setq menu1 (imenu--create-keymap (car menu)
+        (setq imenu--last-menubar-index-alist index-alist)
+        (setq index-alist (imenu--split-submenus index-alist))
+	(let* ((menu (imenu--split-menu index-alist
+                                        (buffer-name)))
+               (menu1 (imenu--create-keymap (car menu)
 					    (cdr (if (< 1 (length (cdr menu)))
 						     menu
 						   (car (cdr menu))))
-					    'imenu--menubar-select))
-	  (setq old (lookup-key (current-local-map) [menu-bar index]))
-	  ;; This should never happen, but in some odd cases, potentially,
-	  ;; lookup-key may return a dynamically composed keymap.
-	  (if (keymapp (cadr old)) (setq old (cadr old)))
-	  (setcdr old (cdr menu1)))))))
+					    'imenu--menubar-select)))
+	  (setcdr imenu--menubar-keymap (cdr menu1)))))))
 
 (defun imenu--menubar-select (item)
   "Use Imenu to select the function or variable named in this menu ITEM."
@@ -995,7 +1014,7 @@ to `imenu-update-menubar'.")
     (imenu item)
     nil))
 
-(defun imenu-default-goto-function (_name position &optional _rest)
+(defun imenu-default-goto-function (_name position &rest _rest)
   "Move to the given position.
 
 NAME is ignored.  POSITION is where to move.  REST is also ignored.
@@ -1017,16 +1036,13 @@ for more information."
   (if (stringp index-item)
       (setq index-item (assoc index-item (imenu--make-index-alist))))
   (when index-item
-    (push-mark nil t)
-    (let* ((is-special-item (listp (cdr index-item)))
-	   (function
-	    (if is-special-item
-		(nth 2 index-item) imenu-default-goto-function))
-	   (position (if is-special-item
-			 (cadr index-item) (cdr index-item)))
-	   (rest (if is-special-item (cddr index-item))))
-      (apply function (car index-item) position rest))
-    (run-hooks 'imenu-after-jump-hook)))
+    (pcase index-item
+      (`(,name ,pos ,fn . ,args)
+       (push-mark nil t)
+       (apply fn name pos args)
+       (run-hooks 'imenu-after-jump-hook))
+      (`(,name . ,pos) (imenu (list name pos imenu-default-goto-function)))
+      (_ (error "Unknown imenu item: %S" index-item)))))
 
 (provide 'imenu)
 

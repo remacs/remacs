@@ -1,10 +1,10 @@
 ;;; erc-fill.el --- Filling IRC messages in various ways
 
-;; Copyright (C) 2001-2004, 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2001-2004, 2006-2015 Free Software Foundation, Inc.
 
 ;; Author: Andreas Fuchs <asf@void.at>
 ;;         Mario Lang <mlang@delysid.org>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki.pl?ErcFilling
 
 ;; This file is part of GNU Emacs.
@@ -101,7 +101,7 @@ function is called."
 
 (defcustom erc-fill-static-center 27
   "Column around which all statically filled messages will be
-centered.  This column denotes the point where the ' ' character
+centered.  This column denotes the point where the ` ' character
 between <nickname> and the entered text will be put, thus aligning
 nick names right and text left."
   :group 'erc-fill
@@ -195,4 +195,3 @@ You can put this on `erc-insert-modify-hook' and/or `erc-send-modify-hook'."
 ;; Local Variables:
 ;; indent-tabs-mode: nil
 ;; End:
-

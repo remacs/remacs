@@ -1,6 +1,6 @@
 ;;; url-domsuf.el --- Say what domain names can have cookies set.
 
-;; Copyright (C) 2012-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 
@@ -32,8 +32,12 @@
 
 (defun url-domsuf-parse-file ()
   (with-temp-buffer
-    (insert-file-contents
-     (expand-file-name "publicsuffix.txt" data-directory))
+    (with-auto-compression-mode
+      (insert-file-contents
+       (let* ((suffixfile (expand-file-name "publicsuffix.txt" data-directory))
+	      (compressed-file (concat suffixfile ".gz")))
+	 (or (and (file-readable-p compressed-file) compressed-file)
+	     suffixfile))))
     (let ((domains nil)
 	  domain exception)
       (while (not (eobp))
@@ -72,11 +76,11 @@
        ((and (null modifier)
 	     (string= domain entry))
 	(setq allowedp nil))
-       ;; "!pref.hokkaido.jp"
+       ;; "!city.yokohama.jp"
        ((and (eq modifier t)
 	     (string= domain entry))
 	(setq allowedp t))
-       ;; "*.ar"
+       ;; "*.bd"
        ((and (numberp modifier)
 	     (= length modifier)
 	     (string= entry upper-domain))
@@ -85,13 +89,14 @@
 
 ;; Tests:
 
+;; TODO convert to a proper test/automated test.
 ;; (url-domsuf-cookie-allowed-p "com") => nil
-;; (url-domsuf-cookie-allowed-p "foo.bar.ar") => t
-;; (url-domsuf-cookie-allowed-p "bar.ar") => nil
+;; (url-domsuf-cookie-allowed-p "foo.bar.bd") => t
+;; (url-domsuf-cookie-allowed-p "bar.bd") => nil
 ;; (url-domsuf-cookie-allowed-p "co.uk") => nil
 ;; (url-domsuf-cookie-allowed-p "foo.bar.hokkaido.jo") => t
-;; (url-domsuf-cookie-allowed-p "bar.hokkaido.jp") => nil
-;; (url-domsuf-cookie-allowed-p "pref.hokkaido.jp") => t
+;; (url-domsuf-cookie-allowed-p "bar.yokohama.jp") => nil
+;; (url-domsuf-cookie-allowed-p "city.yokohama.jp") => t
 
 (provide 'url-domsuf)
 

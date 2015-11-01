@@ -4,19 +4,20 @@
 
 @set VERSION 0.3
 
-@setfilename ../../info/auth
+@setfilename ../../info/auth.info
 @settitle Emacs auth-source Library @value{VERSION}
+@include docstyle.texi
 
 @copying
 This file describes the Emacs auth-source library.
 
-Copyright @copyright{} 2008--2013 Free Software Foundation, Inc.
+Copyright @copyright{} 2008--2015 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
-Invariant Sections, with the Front-Cover texts being ``A GNU Manual,''
+Invariant Sections, with the Front-Cover Texts being ``A GNU Manual,''
 and with the Back-Cover Texts as in (a) below.  A copy of the license
 is included in the section entitled ``GNU Free Documentation License''.
 
@@ -58,6 +59,7 @@ It is a way for multiple applications to share a single configuration
 @menu
 * Overview::                    Overview of the auth-source library.
 * Help for users::
+* Multiple GMail accounts with Gnus::
 * Secret Service API::
 * Help for developers::
 * GnuPG and EasyPG Assistant Configuration::
@@ -105,12 +107,17 @@ The @code{user} is the user name.  It's known as @var{:user} in
 @code{auth-source-search} queries.  You can also use @code{login} and
 @code{account}.
 
-Spaces are always OK as far as auth-source is concerned (but other
-programs may not like them).  Just put the data in quotes, escaping
-quotes as you'd expect with @samp{\}.
+You can use spaces inside a password or other token by surrounding the
+token with either single or double quotes.
 
-All these are optional.  You could just say (but we don't recommend
-it, we're just showing that it's possible)
+You can use apostrophes inside a password or other token by
+surrounding it with double quotes, e.g., @code{"he'llo"}. Similarly you
+can use double quotes inside a password or other token by surrounding
+it with apostrophes, e.g., @code{'he"llo'}. You can't mix both (so a
+password or other token can't have both apostrophes and double quotes).
+
+All this is optional. You could just say (but we don't recommend it,
+we're just showing that it's possible)
 
 @example
 password @var{mypassword}
@@ -126,7 +133,7 @@ later.
 
 If you have problems with the search, set @code{auth-source-debug} to
 @code{'trivia} and see what host, port, and user the library is
-checking in the @samp{*Messages*} buffer.  Ditto for any other
+checking in the @file{*Messages*} buffer.  Ditto for any other
 problems, your first step is always to see what's being checked.  The
 second step, of course, is to write a blog entry about it and wait for
 the answer in the comments.
@@ -222,6 +229,27 @@ Note that the port denotes the Tramp connection method.  When you
 don't use a port entry, you match any Tramp method, as explained
 earlier.  Since Tramp has about 88 connection methods, this may be
 necessary if you have an unusual (see earlier comment on those) setup.
+
+@node Multiple GMail accounts with Gnus
+@chapter Multiple GMail accounts with Gnus
+
+For multiple GMail accounts with Gnus, you have to make two nnimap
+entries in your @code{gnus-secondary-select-methods} with distinct
+names:
+
+@example
+(setq gnus-secondary-select-methods '((nnimap "gmail"
+                                         (nnimap-address "imap.gmail.com"))
+                                      (nnimap "gmail2"
+                                         (nnimap-address "imap.gmail.com"))))
+@end example
+
+Your netrc entries will then be:
+
+@example
+machine gmail login account@@gmail.com password "account password" port imap
+machine gmail2 login account2@@gmail.com password "account2 password" port imap
+@end example
 
 @node Secret Service API
 @chapter Secret Service API
@@ -381,7 +409,7 @@ The auth-source library lets you control logging output easily.
 
 @defvar auth-source-debug
 Set this variable to @code{'trivia} to see lots of output in
-@samp{*Messages*}, or set it to a function that behaves like
+@file{*Messages*}, or set it to a function that behaves like
 @code{message} to do your own logging.
 @end defvar
 
@@ -469,10 +497,10 @@ It returns the number of items forgotten.
 @node GnuPG and EasyPG Assistant Configuration
 @appendix GnuPG and EasyPG Assistant Configuration
 
-If you don't customize @code{auth-sources}, the auth-source library
-reads @file{~/.authinfo.gpg}, which is a GnuPG encrypted file.  Then
-it will check @file{~/.authinfo} but it's not recommended to use such
-an unencrypted file.
+If the @code{auth-sources} variable contains @file{~/.authinfo.gpg}
+before @file{~/.authinfo}, the auth-source library will try to
+read the GnuPG encrypted @file{.gpg} file first, before
+the unencrypted file.
 
 In Emacs 23 or later there is an option @code{auto-encryption-mode} to
 automatically decrypt @file{*.gpg} files.  It is enabled by default.

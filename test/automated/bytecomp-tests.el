@@ -1,6 +1,6 @@
 ;;; bytecomp-testsuite.el
 
-;; Copyright (C) 2008-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 ;; Author:         Shigeru Fukaya <shigeru.fukaya@gmail.com>
 ;; Created:        November 2008
@@ -304,6 +304,121 @@ Subtests signal errors if something goes wrong."
 	(insert (propertize (format "[%s] vs [%s]" v0 v1)
 			    'face fail-face)))
       (insert "\n"))))
+
+(defun test-byte-comp-compile-and-load (compile &rest forms)
+  (let ((elfile nil)
+        (elcfile nil))
+    (unwind-protect
+         (progn
+           (setf elfile (make-temp-file "test-bytecomp" nil ".el"))
+           (when compile
+             (setf elcfile (make-temp-file "test-bytecomp" nil ".elc")))
+           (with-temp-buffer
+             (dolist (form forms)
+               (print form (current-buffer)))
+             (write-region (point-min) (point-max) elfile nil 'silent))
+           (if compile
+               (let ((byte-compile-dest-file-function
+                      (lambda (e) elcfile)))
+                 (byte-compile-file elfile t))
+             (load elfile nil 'nomessage)))
+      (when elfile (delete-file elfile))
+      (when elcfile (delete-file elcfile)))))
+(put 'test-byte-comp-compile-and-load 'lisp-indent-function 1)
+
+(ert-deftest test-byte-comp-macro-expansion ()
+  (test-byte-comp-compile-and-load t
+    '(progn (defmacro abc (arg) 1) (defun def () (abc 2))))
+  (should (equal (funcall 'def) 1)))
+
+(ert-deftest test-byte-comp-macro-expansion-eval-and-compile ()
+  (test-byte-comp-compile-and-load t
+    '(eval-and-compile (defmacro abc (arg) -1) (defun def () (abc 2))))
+  (should (equal (funcall 'def) -1)))
+
+(ert-deftest test-byte-comp-macro-expansion-eval-when-compile ()
+  ;; Make sure we interpret eval-when-compile forms properly.  CLISP
+  ;; and SBCL interpreter eval-when-compile (well, the CL equivalent)
+  ;; in the same way.
+  (test-byte-comp-compile-and-load t
+    '(eval-when-compile
+      (defmacro abc (arg) -10)
+      (defun abc-1 () (abc 2)))
+    '(defmacro abc-2 () (abc-1))
+    '(defun def () (abc-2)))
+  (should (equal (funcall 'def) -10)))
+
+(ert-deftest test-byte-comp-macro-expand-lexical-override ()
+  ;; Intuitively, one might expect the defmacro to override the
+  ;; macrolet since macrolet's is explicitly called out as being
+  ;; equivalent to toplevel, but CLISP and SBCL both evaluate the form
+  ;; this way, so we should too.
+  (test-byte-comp-compile-and-load t
+    '(require 'cl-lib)
+    '(cl-macrolet ((m () 4))
+      (defmacro m () 5)
+      (defun def () (m))))
+  (should (equal (funcall 'def) 4)))
+
+(ert-deftest bytecomp-tests--warnings ()
+  (with-current-buffer (get-buffer-create "*Compile-Log*")
+    (let ((inhibit-read-only t)) (erase-buffer)))
+  (test-byte-comp-compile-and-load t
+    '(progn
+       (defun my-test0 ()
+         (my--test11 3)
+         (my--test12 3)
+         (my--test2 5))
+       (defmacro my--test11 (arg) (+ arg 1))
+       (eval-and-compile
+         (defmacro my--test12 (arg) (+ arg 1))
+         (defun my--test2 (arg) (+ arg 1)))))
+  (with-current-buffer (get-buffer-create "*Compile-Log*")
+    (goto-char (point-min))
+    ;; Should warn that mt--test1[12] are first used as functions.
+    ;; The second alternative is for when the file name is so long
+    ;; that pretty-printing starts the message on the next line.
+    (should (or (re-search-forward "my--test11:\n.*macro" nil t)
+                (re-search-forward "my--test11:\n.*:\n.*macro" nil t)))
+    (should (or (re-search-forward "my--test12:\n.*macro" nil t)
+                (re-search-forward "my--test12:\n.*:\n.*macro" nil t)))
+    (goto-char (point-min))
+    ;; Should not warn that mt--test2 is not known to be defined.
+    (should-not (re-search-forward "my--test2" nil t))))
+
+(ert-deftest test-eager-load-macro-expansion ()
+  (test-byte-comp-compile-and-load nil
+    '(progn (defmacro abc (arg) 1) (defun def () (abc 2))))
+  (should (equal (funcall 'def) 1)))
+
+(ert-deftest test-eager-load-macro-expansion-eval-and-compile ()
+  (test-byte-comp-compile-and-load nil
+    '(eval-and-compile (defmacro abc (arg) -1) (defun def () (abc 2))))
+  (should (equal (funcall 'def) -1)))
+
+(ert-deftest test-eager-load-macro-expansion-eval-when-compile ()
+  ;; Make sure we interpret eval-when-compile forms properly.  CLISP
+  ;; and SBCL interpreter eval-when-compile (well, the CL equivalent)
+  ;; in the same way.
+  (test-byte-comp-compile-and-load nil
+    '(eval-when-compile
+      (defmacro abc (arg) -10)
+      (defun abc-1 () (abc 2)))
+    '(defmacro abc-2 () (abc-1))
+    '(defun def () (abc-2)))
+  (should (equal (funcall 'def) -10)))
+
+(ert-deftest test-eager-load-macro-expand-lexical-override ()
+  ;; Intuitively, one might expect the defmacro to override the
+  ;; macrolet since macrolet's is explicitly called out as being
+  ;; equivalent to toplevel, but CLISP and SBCL both evaluate the form
+  ;; this way, so we should too.
+  (test-byte-comp-compile-and-load nil
+    '(require 'cl-lib)
+    '(cl-macrolet ((m () 4))
+      (defmacro m () 5)
+      (defun def () (m))))
+  (should (equal (funcall 'def) 4)))
 
 
 ;; Local Variables:

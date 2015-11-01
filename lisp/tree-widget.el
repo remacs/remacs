@@ -1,6 +1,6 @@
 ;;; tree-widget.el --- Tree widget
 
-;; Copyright (C) 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
 ;; Author: David Ponce <david@dponce.com>
 ;; Maintainer: David Ponce <david@dponce.com>
@@ -294,9 +294,9 @@ Typically it should contain something like this:
 
   (tree-widget-set-parent-theme \"my-parent-theme\")
   (tree-widget-set-image-properties
-   (if (featurep 'xemacs)
-       '(:ascent center)
-     '(:ascent center :mask (heuristic t))
+   (if (featurep \\='xemacs)
+       \\='(:ascent center)
+     \\='(:ascent center :mask (heuristic t))
      ))"
   (or name (setq name (or tree-widget-theme "default")))
   (unless (string-equal name (tree-widget-theme-name))

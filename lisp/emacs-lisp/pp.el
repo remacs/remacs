@@ -1,6 +1,6 @@
 ;;; pp.el --- pretty printer for Emacs Lisp
 
-;; Copyright (C) 1989, 1993, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1989, 1993, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Randal Schwartz <merlyn@stonehenge.com>
 ;; Keywords: lisp
@@ -129,7 +129,7 @@ Also add the value to the front of the list in the variable `values'."
   (interactive
    (list (read--expression "Eval: ")))
   (message "Evaluating...")
-  (setq values (cons (eval expression) values))
+  (setq values (cons (eval expression lexical-binding) values))
   (pp-display-expression (car values) "*Pp Eval Output*"))
 
 ;;;###autoload
@@ -137,7 +137,7 @@ Also add the value to the front of the list in the variable `values'."
   "Macroexpand EXPRESSION and pretty-print its value."
   (interactive
    (list (read--expression "Macroexpand: ")))
-  (pp-display-expression (macroexpand expression) "*Pp Macroexpand Output*"))
+  (pp-display-expression (macroexpand-1 expression) "*Pp Macroexpand Output*"))
 
 (defun pp-last-sexp ()
   "Read sexp before point.  Ignores leading comment characters."
@@ -165,7 +165,7 @@ With argument, pretty-print output into current buffer.
 Ignores leading comment characters."
   (interactive "P")
   (if arg
-      (insert (pp-to-string (eval (pp-last-sexp))))
+      (insert (pp-to-string (eval (pp-last-sexp) lexical-binding)))
     (pp-eval-expression (pp-last-sexp))))
 
 ;;;###autoload
@@ -175,7 +175,7 @@ With argument, pretty-print output into current buffer.
 Ignores leading comment characters."
   (interactive "P")
   (if arg
-      (insert (pp-to-string (macroexpand (pp-last-sexp))))
+      (insert (pp-to-string (macroexpand-1 (pp-last-sexp))))
     (pp-macroexpand-expression (pp-last-sexp))))
 
 ;;; Test cases for quote

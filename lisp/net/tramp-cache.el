@@ -1,6 +1,6 @@
 ;;; tramp-cache.el --- file information caching for Tramp
 
-;; Copyright (C) 2000, 2005-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2000, 2005-2015 Free Software Foundation, Inc.
 
 ;; Author: Daniel Pittman <daniel@inanna.danann.net>
 ;;         Michael Albinus <michael.albinus@gmx.de>
@@ -66,7 +66,8 @@
 Every entry has the form (REGEXP PROPERTY VALUE).  The regexp
 matches remote file names.  It can be nil.  PROPERTY is a string,
 and VALUE the corresponding value.  They are used, if there is no
-matching entry for PROPERTY in `tramp-cache-data'."
+matching entry for PROPERTY in `tramp-cache-data'.  For more
+details see the info pages."
   :group 'tramp
   :version "24.4"
   :type '(repeat (list (choice :tag "File Name regexp" regexp (const nil))
@@ -120,9 +121,10 @@ matching entries of `tramp-connection-properties'."
 (defun tramp-get-file-property (key file property default)
   "Get the PROPERTY of FILE from the cache context of KEY.
 Returns DEFAULT if not set."
-  ;; Unify localname.
+  ;; Unify localname.  Remove hop from vector.
   (setq key (copy-sequence key))
   (aset key 3 (tramp-run-real-handler 'directory-file-name (list file)))
+  (aset key 4 nil)
   (let* ((hash (tramp-get-hash-table key))
 	 (value (when (hash-table-p hash) (gethash property hash))))
     (if
@@ -136,7 +138,7 @@ Returns DEFAULT if not set."
 		       (tramp-time-diff (current-time) (car value))
 		       remote-file-name-inhibit-cache))
 		 (and (consp remote-file-name-inhibit-cache)
-		      (tramp-time-less-p
+		      (time-less-p
 		       remote-file-name-inhibit-cache (car value)))))
 	(setq value (cdr value))
       (setq value default))
@@ -144,7 +146,7 @@ Returns DEFAULT if not set."
     (tramp-message key 8 "%s %s %s" file property value)
     (when (>= tramp-verbose 10)
       (let* ((var (intern (concat "tramp-cache-get-count-" property)))
-	     (val (or (ignore-errors (symbol-value var)) 0)))
+	     (val (or (and (boundp var) (symbol-value var)) 0)))
 	(set var (1+ val))))
     value))
 
@@ -152,59 +154,75 @@ Returns DEFAULT if not set."
 (defun tramp-set-file-property (key file property value)
   "Set the PROPERTY of FILE to VALUE, in the cache context of KEY.
 Returns VALUE."
-  ;; Unify localname.
+  ;; Unify localname.  Remove hop from vector.
   (setq key (copy-sequence key))
   (aset key 3 (tramp-run-real-handler 'directory-file-name (list file)))
+  (aset key 4 nil)
   (let ((hash (tramp-get-hash-table key)))
     ;; We put the timestamp there.
     (puthash property (cons (current-time) value) hash)
     (tramp-message key 8 "%s %s %s" file property value)
     (when (>= tramp-verbose 10)
       (let* ((var (intern (concat "tramp-cache-set-count-" property)))
-	     (val (or (ignore-errors (symbol-value var)) 0)))
+	     (val (or (and (boundp var) (symbol-value var)) 0)))
 	(set var (1+ val))))
     value))
 
 ;;;###tramp-autoload
 (defun tramp-flush-file-property (key file)
   "Remove all properties of FILE in the cache context of KEY."
-  ;; Remove file property of symlinks.
-  (let ((truename (tramp-get-file-property key file "file-truename" nil)))
+  (let* ((file (tramp-run-real-handler
+		'directory-file-name (list file)))
+	 (truename (tramp-get-file-property key file "file-truename" nil)))
+    ;; Remove file properties of symlinks.
     (when (and (stringp truename)
-	       (not (string-equal file truename)))
-      (tramp-flush-file-property key truename)))
-  ;; Unify localname.
-  (setq key (copy-sequence key))
-  (aset key 3 (tramp-run-real-handler 'directory-file-name (list file)))
-  (tramp-message key 8 "%s" file)
-  (remhash key tramp-cache-data))
+	       (not (string-equal file (directory-file-name truename))))
+      (tramp-flush-file-property key truename))
+    ;; Unify localname.  Remove hop from vector.
+    (setq key (copy-sequence key))
+    (aset key 3 file)
+    (aset key 4 nil)
+    (tramp-message key 8 "%s" file)
+    (remhash key tramp-cache-data)))
 
 ;;;###tramp-autoload
 (defun tramp-flush-directory-property (key directory)
   "Remove all properties of DIRECTORY in the cache context of KEY.
 Remove also properties of all files in subdirectories."
-  (let ((directory (tramp-run-real-handler
-		    'directory-file-name (list directory))))
+  (let* ((directory (tramp-run-real-handler
+		    'directory-file-name (list directory)))
+	 (truename (tramp-get-file-property key directory "file-truename" nil)))
+    ;; Remove file properties of symlinks.
+    (when (and (stringp truename)
+	       (not (string-equal directory (directory-file-name truename))))
+      (tramp-flush-directory-property key truename))
     (tramp-message key 8 "%s" directory)
     (maphash
      (lambda (key _value)
        (when (and (stringp (tramp-file-name-localname key))
-		  (string-match directory (tramp-file-name-localname key)))
+		  (string-match (regexp-quote directory)
+				(tramp-file-name-localname key)))
 	 (remhash key tramp-cache-data)))
      tramp-cache-data)))
 
 ;; Reverting or killing a buffer should also flush file properties.
 ;; They could have been changed outside Tramp.  In eshell, "ls" would
 ;; not show proper directory contents when a file has been copied or
-;; deleted before.
+;; deleted before.  We must apply `save-match-data', because it would
+;; corrupt other packages otherwise (reported from org).
 (defun tramp-flush-file-function ()
-  "Flush all Tramp cache properties from `buffer-file-name'."
-  (let ((bfn (if (stringp (buffer-file-name))
-		 (buffer-file-name)
-	       default-directory)))
-    (when (tramp-tramp-file-p bfn)
-      (with-parsed-tramp-file-name bfn nil
-	(tramp-flush-file-property v localname)))))
+  "Flush all Tramp cache properties from `buffer-file-name'.
+This is suppressed for temporary buffers."
+  (save-match-data
+    (unless (or (null (buffer-name))
+		(string-match "^\\( \\|\\*\\)" (buffer-name)))
+      (let ((bfn (if (stringp (buffer-file-name))
+		     (buffer-file-name)
+		   default-directory))
+	    (tramp-verbose 0))
+	(when (tramp-tramp-file-p bfn)
+	  (with-parsed-tramp-file-name bfn nil
+	    (tramp-flush-file-property v localname)))))))
 
 (add-hook 'before-revert-hook 'tramp-flush-file-function)
 (add-hook 'eshell-pre-command-hook 'tramp-flush-file-function)
@@ -225,11 +243,12 @@ Remove also properties of all files in subdirectories."
   "Get the named PROPERTY for the connection.
 KEY identifies the connection, it is either a process or a vector.
 If the value is not set for the connection, returns DEFAULT."
-  ;; Unify key by removing localname from vector.  Work with a copy in
-  ;; order to avoid side effects.
+  ;; Unify key by removing localname and hop from vector.  Work with a
+  ;; copy in order to avoid side effects.
   (when (vectorp key)
     (setq key (copy-sequence key))
-    (aset key 3 nil))
+    (aset key 3 nil)
+    (aset key 4 nil))
   (let* ((hash (tramp-get-hash-table key))
 	 (value (if (hash-table-p hash)
 		    (gethash property hash default)
@@ -242,11 +261,12 @@ If the value is not set for the connection, returns DEFAULT."
   "Set the named PROPERTY of a connection to VALUE.
 KEY identifies the connection, it is either a process or a vector.
 PROPERTY is set persistent when KEY is a vector."
-  ;; Unify key by removing localname from vector.  Work with a copy in
-  ;; order to avoid side effects.
+  ;; Unify key by removing localname and hop from vector.  Work with a
+  ;; copy in order to avoid side effects.
   (when (vectorp key)
     (setq key (copy-sequence key))
-    (aset key 3 nil))
+    (aset key 3 nil)
+    (aset key 4 nil))
   (let ((hash (tramp-get-hash-table key)))
     (puthash property value hash)
     (setq tramp-cache-data-changed t)
@@ -263,11 +283,12 @@ KEY identifies the connection, it is either a process or a vector."
 (defun tramp-flush-connection-property (key)
   "Remove all properties identified by KEY.
 KEY identifies the connection, it is either a process or a vector."
-  ;; Unify key by removing localname from vector.  Work with a copy in
-  ;; order to avoid side effects.
+  ;; Unify key by removing localname and hop from vector.  Work with a
+  ;; copy in order to avoid side effects.
   (when (vectorp key)
     (setq key (copy-sequence key))
-    (aset key 3 nil))
+    (aset key 3 nil)
+    (aset key 4 nil))
   (tramp-message
    key 7 "%s %s" key
    (let ((hash (gethash key tramp-cache-data))
@@ -285,6 +306,21 @@ KEY identifies the connection, it is either a process or a vector."
     (let (result)
       (maphash
        (lambda (key value)
+	 ;; Remove text properties from KEY and VALUE.
+	 ;; `substring-no-properties' does not exist in XEmacs.
+	 (when (functionp 'substring-no-properties)
+	   (when (vectorp key)
+	     (dotimes (i (length key))
+	       (when (stringp (aref key i))
+		 (aset key i
+		       (tramp-compat-funcall
+			'substring-no-properties (aref key i))))))
+	   (when (stringp key)
+	     (setq key (tramp-compat-funcall 'substring-no-properties key)))
+	   (when (stringp value)
+	     (setq value
+		   (tramp-compat-funcall 'substring-no-properties value))))
+	 ;; Dump.
 	 (let ((tmp (format
 		     "(%s %s)"
 		     (if (processp key)
@@ -336,7 +372,7 @@ KEY identifies the connection, it is either a process or a vector."
 	     (remhash key cache)))
 	 cache)
 	;; Dump it.
-	(with-temp-buffer
+	(with-temp-file tramp-persistency-file-name
 	  (insert
 	   ";; -*- emacs-lisp -*-"
 	   ;; `time-stamp-string' might not exist in all (X)Emacs flavors.
@@ -350,9 +386,7 @@ KEY identifies the connection, it is either a process or a vector."
 	   ";; Tramp connection history.  Don't change this file.\n"
 	   ";; You can delete it, forcing Tramp to reapply the checks.\n\n"
 	   (with-output-to-string
-	     (pp (read (format "(%s)" (tramp-cache-print cache))))))
-	  (write-region
-	   (point-min) (point-max) tramp-persistency-file-name))))))
+	     (pp (read (format "(%s)" (tramp-cache-print cache)))))))))))
 
 (unless noninteractive
   (add-hook 'kill-emacs-hook 'tramp-dump-connection-properties))
@@ -390,6 +424,7 @@ for all methods.  Resulting data are derived from connection history."
       (with-temp-buffer
 	(insert-file-contents tramp-persistency-file-name)
 	(let ((list (read (current-buffer)))
+	      (tramp-verbose 0)
 	      element key item)
 	  (while (setq element (pop list))
 	    (setq key (pop element))
@@ -405,7 +440,7 @@ for all methods.  Resulting data are derived from connection history."
      (clrhash tramp-cache-data))
     (error
      ;; File is corrupted.
-     (message "Tramp persistency file '%s' is corrupted: %s"
+     (message "Tramp persistency file `%s' is corrupted: %s"
 	      tramp-persistency-file-name (error-message-string err))
      (clrhash tramp-cache-data))))
 

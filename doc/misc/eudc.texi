@@ -1,8 +1,11 @@
 \input texinfo.tex
 @c %**start of header
-@setfilename ../../info/eudc
+@setfilename ../../info/eudc.info
 @settitle Emacs Unified Directory Client (EUDC) Manual
+@include docstyle.texi
 @afourpaper
+@syncodeindex fn cp
+@syncodeindex vr cp
 @c %**end of header
 
 @copying
@@ -12,13 +15,13 @@ EUDC is the Emacs Unified Directory Client, a common interface to
 directory servers using various protocols such as LDAP or the CCSO white
 pages directory system (PH/QI)
 
-Copyright @copyright{} 1998, 2000--2013 Free Software Foundation, Inc.
+Copyright @copyright{} 1998, 2000--2015 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
-Invariant Sections, with the Front-Cover texts being ``A GNU Manual'',
+Invariant Sections, with the Front-Cover Texts being ``A GNU Manual'',
 and with the Back-Cover Texts as in (a) below.  A copy of the license
 is included in the section entitled ``GNU Free Documentation License''.
 
@@ -60,8 +63,7 @@ modify this GNU manual.''
 * Usage::                       The various usage possibilities explained
 * Credits::                     Who's done what
 * GNU Free Documentation License:: The license for this documentation.
-* Command and Function Index::
-* Variables Index::
+* Index::
 @end menu
 
 
@@ -136,7 +138,7 @@ location, etc@enddots{} More information about LDAP can be found at
 @url{http://www.openldap.org/}.
 
 EUDC requires external support to access LDAP directory servers
-(@pxref{LDAP Requirements})
+(@pxref{LDAP Configuration})
 
 
 @node CCSO PH/QI
@@ -212,17 +214,200 @@ email composition buffers (@pxref{Inline Query Expansion})
 @end lisp
 
 @menu
-* LDAP Requirements::           EUDC needs external support for LDAP
+* LDAP Configuration::           EUDC needs external support for LDAP
 @end menu
 
-@node LDAP Requirements
-@section LDAP Requirements
+@node LDAP Configuration
+@section LDAP Configuration
 
-LDAP support is added by means of @file{ldap.el}, which is part of Emacs.
-@file{ldap.el} needs an external command line utility named
-@file{ldapsearch}, available as part of Open LDAP
-(@url{http://www.openldap.org/}).
+LDAP support is added by means of @file{ldap.el}, which is part of
+Emacs.  @file{ldap.el} needs an external program called
+@command{ldapsearch}, available as part of OpenLDAP
+(@url{http://www.openldap.org/}).  The configurations in this section
+were tested with OpenLDAP 2.4.23.
 
+Most servers use LDAP-over-SSL these days; the examples here reflect
+that.  The other possibilities are:
+
+@vindex ldap-host-parameters-alist
+@vindex ldap-ldapsearch-args
+@itemize @bullet
+
+@item
+Servers that do not require authentication or that do not encrypt
+authentication traffic.
+
+Include @code{auth simple} in @code{ldap-host-parameters-alist}, which
+causes the @code{-x} option to be passed to @command{ldapsearch}.
+
+@item
+Servers that require SASL authentication.
+
+Pass any required extra options to @command{ldapsearch} using
+@code{ldap-ldapsearch-args}.
+@end itemize
+
+The following examples use a base of
+@code{ou=people,dc=gnu,dc=org} and the host name
+@code{ldap.gnu.org}, a server that supports LDAP-over-SSL (the
+@code{ldaps} protocol, with default port @code{636}) and which
+requires authentication by the user @code{emacsuser} with password
+@code{s3cr3t}.
+
+These configurations are meant to be self-contained; that is, each
+provides everything required for sensible TAB-completion of email
+fields.  BBDB lookups are attempted first; if a matching BBDB entry is
+found then EUDC will not attempt any LDAP lookups.
+
+Wildcard LDAP lookups are supported using the @code{*} character.  For
+example, attempting to TAB-complete the following:
+
+@example
+To: * Smith
+@end example
+
+@noindent
+will return all LDAP entries with surnames that begin with
+@code{Smith}.  In every LDAP query it makes, EUDC implicitly appends
+the wildcard character to the end of the last word.
+
+@menu
+* Emacs-only Configuration::    Configure with @file{.emacs}
+* External Configuration::      Configure with @file{/etc/openldap/ldap.conf}
+* Troubleshooting::             Debug @command{ldapsearch} failures
+@end menu
+
+@node Emacs-only Configuration
+@subsection Emacs-only Configuration
+
+Emacs can pass most required configuration options via the
+@command{ldapsearch} command-line.  One exception is certificate
+configuration for LDAP-over-SSL, which must be specified in
+@file{/etc/openldap/ldap.conf}.  On systems that provide such
+certificates as part of the @code{OpenLDAP} installation, this can be
+as simple as one line:
+
+@example
+TLS_CACERTDIR /etc/openldap/certs
+@end example
+
+In @file{.emacs}, these expressions suffice to configure EUDC for
+LDAP:
+
+@vindex message-mode-map
+@findex eudc-expand-inline
+@vindex eudc-server-hotlist
+@vindex ldap-host-parameters-alist
+@lisp
+(eval-after-load "message"
+  '(define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
+(customize-set-variable 'eudc-server-hotlist
+                        '(("" . bbdb)
+                          ("ldaps://ldap.gnu.org" . ldap)))
+(customize-set-variable 'ldap-host-parameters-alist
+                        '(("ldaps://ldap.gnu.org"
+                           base "ou=people,dc=gnu,dc=org"
+                           binddn "gnu\\emacsuser"
+                           passwd ldap-password-read)))
+@end lisp
+
+@findex ldap-password-read
+@vindex passwd
+@vindex password-cache
+@vindex password-cache-expiry
+@findex password-reset
+Specifying the function @code{ldap-password-read} for @code{passwd}
+will cause Emacs to prompt interactively for the password.  The
+password will then be validated and cached, unless
+@code{password-cache} is nil.  You can customize
+@code{password-cache-expiry} to control the duration for which the
+password is cached.  If you want to clear the cache, call
+@code{password-reset}.
+
+@node External Configuration
+@subsection External Configuration
+
+Your system may already be configured for a default LDAP server.  For
+example, @file{/etc/openldap/ldap.conf} might contain:
+
+@example
+BASE ou=people,dc=gnu,dc=org
+URI ldaps://ldap.gnu.org
+TLS_CACERTDIR /etc/openldap/certs
+@end example
+
+@cindex bind distinguished name
+@cindex binddn
+Authentication requires a password, and a @dfn{bind distinguished name
+(binddn)} representing the user, in this case,
+@code{gnu\emacsuser}.  These can be specified in
+@file{~/.authinfo.gpg} with the following line:
+
+@example
+machine ldaps://ldap.gnu.org binddn gnu\emacsuser password s3cr3t
+@end example
+
+Then in the @file{.emacs} init file, these expressions suffice to
+configure EUDC for LDAP:
+
+@vindex message-mode-map
+@findex eudc-expand-inline
+@vindex eudc-server-hotlist
+@vindex ldap-host-parameters-alist
+@lisp
+(eval-after-load "message"
+  '(define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
+(customize-set-variable 'eudc-server-hotlist
+                        '(("" . bbdb)
+                          ("ldaps://ldap.gnu.org" . ldap)))
+(customize-set-variable 'ldap-host-parameters-alist
+                        '(("ldaps://ldap.gnu.org"
+                           auth-source t)))
+@end lisp
+
+For this example where we only care about one server, the server name
+can be omitted in @file{~/.authinfo.gpg} and @file{.emacs}, in which
+case @command{ldapsearch} defaults to the host name in
+@file{/etc/openldap/ldap.conf}.
+
+The @file{~/.authinfo.gpg} line becomes:
+
+@example
+binddn gnu\emacsuser password s3cr3t
+@end example
+
+@noindent
+and the @file{.emacs} expressions become:
+
+@vindex message-mode-map
+@findex eudc-expand-inline
+@vindex eudc-server-hotlist
+@vindex ldap-host-parameters-alist
+@lisp
+(eval-after-load "message"
+  '(define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
+(customize-set-variable 'eudc-server-hotlist
+                        '(("" . bbdb) ("" . ldap)))
+(customize-set-variable 'ldap-host-parameters-alist
+                        '(("" auth-source t)))
+@end lisp
+
+@node Troubleshooting
+@subsection Troubleshooting
+
+If @command{ldapsearch} exits with an error, you'll see a message like
+this in the @code{*Messages*} buffer (all on one line):
+
+@example
+ldap-search-internal: Failed ldapsearch invocation:
+   ldapsearch "-Hldaps://ldap.gnu.org" "-bou=people,dc=gnu,dc=org"
+   "-Dgnu\emacsuser" "-W" "-LL" "-tt" "(&(mail=name*))"
+   "givenname" "sn" "mail"
+@end example
+
+The @command{ldapsearch} command is formatted such that it can be
+copied and pasted into a terminal.  Set the @command{ldapsearch} debug
+level to 5 by appending @code{-d 5} to the command line.
 
 @node Usage
 @chapter Usage
@@ -282,7 +467,7 @@ may be specified by appending a colon and a number to the name of the
 server. You will not need this unless your server runs on a port other
 than the default (which depends on the protocol).
 If the directory server resides on your own computer (which is the case
-if you use the BBDB back end) then `localhost' is a reasonable value but
+if you use the BBDB back end) then @samp{localhost} is a reasonable value but
 it will be ignored anyway.
 @end defvar
 
@@ -695,11 +880,11 @@ trying to perform an inline query.  Possible values are:
 Only the current directory server is tried
 @item hotlist
 The servers in the hotlist are tried in order until one finds a match
-for the query or `eudc-max-servers-to-query' is reached
+for the query or @code{eudc-max-servers-to-query} is reached
 @item server-then-hotlist
 The current server then the servers in the hotlist are tried in the
 order they appear in the hotlist until one of them finds a match or
-`eudc-max-servers-to-query' is reached.  This is the default.
+@code{eudc-max-servers-to-query} is reached.  This is the default.
 @end table
 @end defvar
 
@@ -928,14 +1113,9 @@ in testing and proofreading the code and docs of @file{ph.el}.
 @appendix GNU Free Documentation License
 @include doclicense.texi
 
-@node Command and Function Index
-@unnumbered Command and Function Index
+@node Index
+@unnumbered Index
 
-@printindex fn
-
-@node Variables Index
-@unnumbered Variables Index
-
-@printindex vr
+@printindex cp
 
 @bye

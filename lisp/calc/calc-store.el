@@ -1,6 +1,6 @@
 ;;; calc-store.el --- value storage functions for Calc
 
-;; Copyright (C) 1990-1993, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1990-1993, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: David Gillespie <daveg@synaptics.com>
 ;; Maintainer: Jay Belanger <jay.p.belanger@gmail.com>
@@ -58,8 +58,8 @@
              (let ((msg
                     (calc-store-value var (or calc-given-value (calc-top 1))
                                       "" calc-given-value-flag)))
-               (message (concat "Stored to variable \"%s\"" msg)
-                        (calc-var-name var)))))
+               (message "Stored to variable \"%s\"%s"
+                        (calc-var-name var) msg))))
        (setq var (calc-is-assignments (calc-top 1)))
        (if var
 	   (while var
@@ -67,8 +67,8 @@
                     (calc-store-value (car (car var)) (cdr (car var))
                                       (if (not (cdr var)) "")
                                       (if (not (cdr var)) 1))))
-               (message (concat "Stored to variable \"%s\"" msg)
-                        (calc-var-name (car (car var)))))
+               (message "Stored to variable \"%s\"%s"
+                        (calc-var-name (car (car var))) msg))
 	     (setq var (cdr var))))))))
 
 (defun calc-store-plus (&optional var)
@@ -422,8 +422,8 @@
                                       (calc-var-name var1)))))
 	 (if var2
 	     (let ((msg (calc-store-value var2 value "")))
-               (message (concat "Variable \"%s\" copied to \"%s\"" msg)
-                        (calc-var-name var1) (calc-var-name var2))))))))
+               (message "Variable \"%s\" copied to \"%s\"%s"
+                        (calc-var-name var1) (calc-var-name var2) msg)))))))
 
 (defvar calc-last-edited-variable nil)
 (defun calc-edit-variable (&optional var)
@@ -442,7 +442,8 @@
 	 (setq calc-last-edited-variable var)
 	 (calc-edit-mode (list 'calc-finish-stack-edit (list 'quote var))
 			 t
-			 (concat "Editing variable `" (calc-var-name var) "'. "))
+			 (format-message
+                          "Editing variable `%s'" (calc-var-name var)))
 	 (and value
 	      (insert (math-format-nice-expr value (frame-width)) "\n")))))
   (calc-show-edit-buffer))
@@ -609,7 +610,8 @@
 
 (defun calc-insert-permanent-variable (var)
   (goto-char (point-min))
-  (if (search-forward (concat "(setq " (symbol-name var) " '") nil t)
+  (if (let (case-fold-search)
+        (search-forward (concat "(setq " (symbol-name var) " '") nil t))
       (progn
 	(setq calc-pv-pos (point-marker))
 	(forward-line -1)
@@ -674,9 +676,5 @@
    (calc-binary-op "sub" 'calcFunc-subscr arg)))
 
 (provide 'calc-store)
-
-;; Local variables:
-;; coding: utf-8
-;; End:
 
 ;;; calc-store.el ends here

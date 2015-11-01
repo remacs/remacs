@@ -1,6 +1,6 @@
-;;; em-glob.el --- extended file name globbing
+;;; em-glob.el --- extended file name globbing  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -180,6 +180,8 @@ interpretation."
 		(goto-char (1+ end))))))))))
 
 (defvar eshell-glob-chars-regexp nil)
+(defvar eshell-glob-matches)
+(defvar message-shown)
 
 (defun eshell-glob-regexp (pattern)
   "Convert glob-pattern PATTERN to a regular expression.
@@ -191,8 +193,8 @@ The basic syntax is:
   *      .*      matches any group of characters (or none)
   #      *       matches zero or more occurrences of preceding
   ##     +       matches one or more occurrences of preceding
-  (x)    \(x\)   makes 'x' a regular expression group
-  |      \|      boolean OR within an expression group
+  (x)    \\(x\\)   makes `x' a regular expression group
+  |      \\|      boolean OR within an expression group
   [a-b]  [a-b]   matches a character or range
   [^a]   [^a]    excludes a character or range
 
@@ -218,7 +220,7 @@ resulting regular expression."
 		  matched-in-pattern (1+ op-begin))
 	  (let ((xlat (assq op-char eshell-glob-translate-alist)))
 	    (if (not xlat)
-		(error "Unrecognized globbing character '%c'" op-char)
+		(error "Unrecognized globbing character `%c'" op-char)
 	      (if (stringp (cdr xlat))
 		  (setq regexp (concat regexp (cdr xlat))
 			matched-in-pattern (1+ op-begin))
@@ -229,6 +231,8 @@ resulting regular expression."
 	    regexp
 	    (regexp-quote (substring pattern matched-in-pattern))
 	    "\\'")))
+
+(defvar ange-cache)			; XEmacs?  See esh-util
 
 (defun eshell-extended-glob (glob)
   "Return a list of files generated from GLOB, perhaps looking for DIRS-ONLY.
@@ -262,9 +266,6 @@ the form:
 	    (error "No matches found: %s" glob)
 	  glob))))
 
-(defvar eshell-glob-matches)
-(defvar message-shown)
-
 ;; FIXME does this really need to abuse eshell-glob-matches, message-shown?
 (defun eshell-glob-entries (path globs &optional recurse-p)
   "Glob the entries in PATHS, possibly recursing if RECURSE-P is non-nil."
@@ -288,7 +289,7 @@ the form:
 		   glob (car globs)
 		   len (length glob)))))
     (if (and recurse-p (not glob))
-	(error "'**' cannot end a globbing pattern"))
+	(error "`**' cannot end a globbing pattern"))
     (let ((index 1))
       (setq incl glob)
       (while (and (eq incl glob)

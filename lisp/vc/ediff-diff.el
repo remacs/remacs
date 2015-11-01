@@ -1,6 +1,6 @@
 ;;; ediff-diff.el --- diff-related utilities
 
-;; Copyright (C) 1994-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-2015 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.stonybrook.edu>
 ;; Package: ediff
@@ -168,7 +168,7 @@ This variable can be set either in .emacs or toggled interactively.
 Use `setq-default' if setting it in .emacs")
 
 (ediff-defvar-local ediff-auto-refine-limit 14000
-  "Auto-refine only the regions of this size \(in bytes\) or less.")
+  "Auto-refine only the regions of this size (in bytes) or less.")
 
 ;;; General
 
@@ -211,7 +211,7 @@ one optional arguments, diff-number to refine.")
 ;; ediff-setup-diff-regions is called via a funcall to
 ;; ediff-setup-diff-regions-function, which can also have the value
 ;; ediff-setup-diff-regions3, which takes 4 arguments.
-(defun ediff-setup-diff-regions (file-A file-B file-C)
+(defun ediff-setup-diff-regions (file-A file-B _file-C)
   ;; looking for '-c', '-i', '-u', or 'c', 'i', 'u' among clustered non-long options
   (if (string-match "^-[ciu]\\| -[ciu]\\|\\(^\\| \\)-[^- ]+[ciu]"
 		    ediff-diff-options)
@@ -587,7 +587,6 @@ one optional arguments, diff-number to refine.")
 	    (setq pt-saved (ediff-with-current-buffer buff (point)))))
       (setq overlay (ediff-make-bullet-proof-overlay begin end buff))
 
-      (ediff-overlay-put overlay 'priority ediff-shadow-overlay-priority)
       (ediff-overlay-put overlay 'ediff-diff-num current-diff)
       (if (and (ediff-has-face-support-p)
 	       ediff-use-faces ediff-highlight-all-diffs)
@@ -819,23 +818,12 @@ one optional arguments, diff-number to refine.")
 						     n &optional default)
   (let ((fine-diff-vector  (ediff-get-fine-diff-vector n buf-type))
 	(face (if default
-		  'default
+		  nil
 		(ediff-get-symbol-from-alist
-		 buf-type ediff-fine-diff-face-alist)
-		))
-	(priority (if default
-		      0
-		    (1+ (or (ediff-overlay-get
-			     (symbol-value
-			      (ediff-get-symbol-from-alist
-			       buf-type
-			       ediff-current-diff-overlay-alist))
-			     'priority)
-			    0)))))
-    (mapcar (lambda (overl)
-	      (ediff-set-overlay-face overl face)
-	      (ediff-overlay-put overl 'priority priority))
-	    fine-diff-vector)))
+		 buf-type ediff-fine-diff-face-alist))))
+    (mapc (lambda (overl)
+	    (ediff-set-overlay-face overl face))
+	  fine-diff-vector)))
 
 ;; Set overlays over the regions that denote delimiters
 (defun ediff-set-fine-overlays-for-combined-merge (diff-list reg-num)
@@ -1223,7 +1211,7 @@ delimiter regions"))
 ;; like shell-command-sentinel but doesn't print an exit status message
 ;; we do this because diff always exits with status 1, if diffs are found
 ;; so shell-command-sentinel displays a confusing message to the user
-(defun ediff-process-sentinel (process signal)
+(defun ediff-process-sentinel (process _signal)
   (if (and (memq (process-status process) '(exit signal))
            (buffer-name (process-buffer process)))
       (progn
@@ -1385,7 +1373,7 @@ affects only files whose names match the expression."
   ;; Normalize empty filter RE to nil.
   (unless (> (length filter-re) 0) (setq filter-re nil))
   ;; Indicate progress
-  (message "Comparing '%s' and '%s' modulo '%s'" d1 d2 filter-re)
+  (message "Comparing `%s' and `%s' modulo `%s'" d1 d2 filter-re)
   (cond
    ;; D1 & D2 directories => recurse
    ((and (file-directory-p d1)

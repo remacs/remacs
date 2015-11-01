@@ -1,6 +1,6 @@
 ;;; speedbar --- quick access to files and tags in a frame
 
-;; Copyright (C) 1996-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: file, tags, tools
@@ -39,20 +39,8 @@ this version is not backward compatible to 0.14 or earlier.")
 ;;
 ;;; Notes:
 ;;
-;;    Users of really old emacsen without the need timer functions
-;; will not have speedbar updating automatically.  Use "g" to refresh
-;; the display after changing directories.  Remember, do not interrupt
-;; the stealthy updates or your display may not be completely
-;; refreshed.
-;;
 ;;    AUC-TEX users: The imenu tags for AUC-TEX mode don't work very
 ;; well.  Use the imenu keywords from tex-mode.el for better results.
-;;
-;; This file requires the library package assoc (association lists)
-;;     assoc should be available in all modern versions of Emacs.
-;; The custom package is optional (for easy configuration of speedbar)
-;;     http://www.dina.kvl.dk/~abraham/custom/
-;;     custom is available in all versions of Emacs version 20 or better.
 ;;
 ;;; Developing for speedbar
 ;;
@@ -135,17 +123,21 @@ this version is not backward compatible to 0.14 or earlier.")
   :group 'etags
   :group 'tools
   :group 'convenience
+  :link '(custom-manual "(speedbar) Top")
+  :link '(info-link "(speedbar) Customizing")
 ;  :version "20.3"
   )
 
 (defgroup speedbar-faces nil
   "Faces used in speedbar."
   :prefix "speedbar-"
+  :link '(info-link "(speedbar) Frames and Faces")
   :group 'speedbar
   :group 'faces)
 
 (defgroup speedbar-vc nil
   "Version control display in speedbar."
+  :link '(info-link "(speedbar) Version Control")
   :prefix "speedbar-"
   :group 'speedbar)
 
@@ -211,7 +203,7 @@ the user is done with the current expansion list.")
     )
   "List of functions to periodically call stealthily.
 This list is of the form:
- '( (\"NAME\" FUNCTION ...)
+  ( (\"NAME\" FUNCTION ...)
     ...)
 where NAME is the name of the major display mode these functions are
 for, and the remaining elements FUNCTION are functions to call in order.
@@ -466,9 +458,9 @@ items is reached."
 (defcustom speedbar-directory-button-trim-method 'span
   "Indicates how the directory button will be displayed.
 Possible values are:
- 'span - span large directories over multiple lines.
- 'trim - trim large directories to only show the last few.
- nil   - no trimming."
+ `span' - span large directories over multiple lines.
+ `trim' - trim large directories to only show the last few.
+ nil    - no trimming."
   :group 'speedbar
   :type '(radio (const :tag "Span large directories over multiple lines."
 		       span)
@@ -1007,9 +999,9 @@ supported at a time.
 				 ;; with the selected frame.
 				 (list 'parent (selected-frame)))
 		       speedbar-frame-parameters)
-		     speedbar-before-delete-hook
-		     speedbar-before-popup-hook
-		     speedbar-after-create-hook)
+		     'speedbar-before-delete-hook
+		     'speedbar-before-popup-hook
+		     'speedbar-after-create-hook)
   ;; Start up the timer
   (if (not speedbar-frame)
       (speedbar-set-timer nil)
@@ -1072,9 +1064,9 @@ If the selected frame is not speedbar, then speedbar frame is
 selected.  If the speedbar frame is active, then select the attached frame."
   (interactive)
   (speedbar-reset-scanners)
-  (dframe-get-focus 'speedbar-frame 'speedbar-frame-mode
-		    (lambda () (let ((speedbar-update-flag t))
-				 (speedbar-timer-fn)))))
+  (dframe-get-focus 'speedbar-frame 'speedbar-frame-mode)
+  (let ((speedbar-update-flag t))
+    (speedbar-timer-fn)))
 
 (defsubst speedbar-frame-width ()
   "Return the width of the speedbar frame in characters.
@@ -2119,9 +2111,10 @@ cell of the form ( 'DIRLIST . 'FILELIST )."
 ;;  in order to make it look nice.
 ;;
 ;;  A generic list is of the form:
-;;  ( ("name" . marker-or-number)              <-- one tag at this level
-;;    ("name" ("name" . mon) ("name" . mon) )  <-- one group of tags
-;;    ("name" mon ("name" . mon) )             <-- group w/ a position and tags
+;;  ( ("name" . marker-or-number)                <-- one tag at this level
+;;    ("name" marker-or-number goto-fun . args)  <-- one tag at this level
+;;    ("name" ("name" . mon) ("name" . mon) )    <-- one group of tags
+;;    ("name" mon ("name" . mon) )               <-- group w/ a position and tags
 (defun speedbar-generic-list-group-p (sublst)
   "Non-nil if SUBLST is a group.
 Groups may optionally contain a position."
@@ -2152,6 +2145,8 @@ Groups may optionally contain a position."
   (and (stringp (car-safe sublst))
        (or (and (number-or-marker-p (cdr-safe sublst))
 		(not (cdr-safe (cdr-safe sublst))))
+           (ignore-errors (and (number-or-marker-p (nth 1 sublst))
+                               (functionp (nth 2 sublst))))
 	   ;; For semantic/bovine items, this is needed
 	   (symbolp (car-safe (cdr-safe sublst))))
        ))
@@ -2862,7 +2857,7 @@ indicator, then do not add a space."
 	(progn
 	  (goto-char speedbar-ro-to-do-point)
 	  (while (and (not (input-pending-p))
-		      (re-search-forward "^\\([0-9]+\\):\\s-*[[<][+-\?][]>] "
+		      (re-search-forward "^\\([0-9]+\\):\\s-*[[<][+-?][]>] "
 					 nil t))
 	    (setq speedbar-ro-to-do-point (point))
 	    (let ((f (speedbar-line-file)))
@@ -2969,7 +2964,7 @@ that will occur on your system."
    (run-hook-with-args 'speedbar-vc-in-control-hook directory name)
    ))
 
-;; Objet File scanning
+;; Object File scanning
 (defun speedbar-check-objects ()
   "Scan all files in a directory, and for each see if there is an object.
 See `speedbar-check-obj-this-line' and `speedbar-obj-alist' for how

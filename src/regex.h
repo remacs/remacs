@@ -1,7 +1,7 @@
 /* Definitions for data structures and routines for the regular
    expression library, version 0.12.
 
-   Copyright (C) 1985, 1989-1993, 1995, 2000-2013 Free Software
+   Copyright (C) 1985, 1989-1993, 1995, 2000-2015 Free Software
    Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -40,7 +40,7 @@ extern "C" {
    The bits are given in alphabetical order, and
    the definitions shifted by one from the previous bit; thus, when we
    add or remove a bit, only one other definition need change.  */
-typedef unsigned long int reg_syntax_t;
+typedef unsigned long reg_syntax_t;
 
 /* If this bit is not set, then \ inside a bracket expression is literal.
    If set, then such a \ quotes the following character.  */
@@ -167,10 +167,14 @@ typedef unsigned long int reg_syntax_t;
 /* extern reg_syntax_t re_syntax_options; */
 
 #ifdef emacs
+# include "lisp.h"
 /* In Emacs, this is the string or buffer in which we
    are matching.  It is used for looking up syntax properties.  */
 /* extern Lisp_Object re_match_object; */
 #endif
+
+/* Roughly the maximum number of failure points on the stack.  */
+extern size_t re_max_failures;
 
 
 /* Define combinations of the above bits for the standard possibilities.
@@ -600,7 +604,9 @@ typedef wchar_t re_wchar_t;
 # define re_wctype_to_bit(cc) 0
 #else
 # define CHAR_CLASS_MAX_LENGTH  9 /* Namely, `multibyte'.  */
-# define btowc(c) c
+# ifndef emacs
+#  define btowc(c) c
+# endif
 
 /* Character classes.  */
 typedef enum { RECC_ERROR = 0,

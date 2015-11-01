@@ -1,6 +1,6 @@
-;;; battery.el --- display battery status information  -*- coding: utf-8 -*-
+;;; battery.el --- display battery status information
 
-;; Copyright (C) 1997-1998, 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997-1998, 2000-2015 Free Software Foundation, Inc.
 
 ;; Author: Ralph Schleicher <rs@nunatak.allgaeu.org>
 ;; Keywords: hardware
@@ -44,27 +44,27 @@
 (defcustom battery-status-function
   (cond ((and (eq system-type 'gnu/linux)
 	      (file-readable-p "/proc/apm"))
-	 'battery-linux-proc-apm)
+	 #'battery-linux-proc-apm)
 	((and (eq system-type 'gnu/linux)
 	      (file-directory-p "/proc/acpi/battery"))
-	 'battery-linux-proc-acpi)
+	 #'battery-linux-proc-acpi)
 	((and (eq system-type 'gnu/linux)
 	      (file-directory-p "/sys/class/power_supply/")
 	      (directory-files "/sys/class/power_supply/" nil
                                battery--linux-sysfs-regexp))
-	 'battery-linux-sysfs)
+	 #'battery-linux-sysfs)
 	((and (eq system-type 'berkeley-unix)
 	      (file-executable-p "/usr/sbin/apm"))
-	 'battery-bsd-apm)
+	 #'battery-bsd-apm)
 	((and (eq system-type 'darwin)
 	      (condition-case nil
 		  (with-temp-buffer
 		    (and (eq (call-process "pmset" nil t nil "-g" "ps") 0)
 			 (> (buffer-size) 0)))
 		(error nil)))
-	 'battery-pmset)
+	 #'battery-pmset)
 	((fboundp 'w32-battery-status)
-	 'w32-battery-status))
+	 #'w32-battery-status))
   "Function for getting battery status information.
 The function has to return an alist of conversion definitions.
 Its cons cells are of the form
@@ -77,14 +77,7 @@ introduced by a `%' character in a control string."
   :group 'battery)
 
 (defcustom battery-echo-area-format
-  (cond ((eq battery-status-function 'battery-linux-proc-acpi)
-	 "Power %L, battery %B at %r (%p%% load, remaining time %t)")
-	((eq battery-status-function 'battery-linux-sysfs)
-	 "Power %L, battery %B (%p%% load, remaining time %t)")
-	((eq battery-status-function 'battery-pmset)
-	 "%L power, battery %B (%p%% load, remaining time %t)")
-	(battery-status-function
-	 "Power %L, battery %B (%p%% load, remaining time %t)"))
+  "Power %L, battery %B (%p%% load, remaining time %t)"
   "Control string formatting the string to display in the echo area.
 Ordinary characters in the control string are printed as-is, while
 conversion specifications introduced by a `%' character in the control
@@ -201,19 +194,18 @@ seconds."
 
 (defun battery-update ()
   "Update battery status information in the mode line."
-  (let ((data (and battery-status-function (funcall battery-status-function))))
+  (let* ((data (and battery-status-function (funcall battery-status-function)))
+         (percentage (car (read-from-string (cdr (assq ?p data))))))
     (setq battery-mode-line-string
 	  (propertize (if (and battery-mode-line-format
-			       (<= (car (read-from-string (cdr (assq ?p data))))
-				   battery-mode-line-limit))
-			  (battery-format
-			   battery-mode-line-format
-			   data)
+			       (numberp percentage)
+                               (<= percentage battery-mode-line-limit))
+			  (battery-format battery-mode-line-format data)
 			"")
 		      'face
-		      (and (<= (car (read-from-string (cdr (assq ?p data))))
-				   battery-load-critical)
-			   'error)
+                      (and (numberp percentage)
+                           (<= percentage battery-load-critical)
+                           'error)
 		      'help-echo "Battery status information")))
   (force-mode-line-update))
 
@@ -437,11 +429,15 @@ The following %-sequences are provided:
 %m Remaining time (to charge or discharge) in minutes
 %h Remaining time (to charge or discharge) in hours
 %t Remaining time (to charge or discharge) in the form `h:min'"
-  (let (charging-state rate temperature hours
-	(charge-full 0.0)
-	(charge-now 0.0)
+  (let (charging-state temperature hours
+        ;; Some batteries report charges and current, other energy and power.
+        ;; In order to reliably be able to combine those data, we convert them
+        ;; all to energy/power (since we can't combine different charges if
+        ;; they're not at the same voltage).
 	(energy-full 0.0)
-	(energy-now 0.0))
+	(energy-now 0.0)
+	(power-now 0.0)
+	(voltage-now 10.8))    ;Arbitrary default, in case the info is missing.
     ;; SysFS provides information about each battery present in the
     ;; system in a separate subdirectory.  We are going to merge the
     ;; available information together.
@@ -453,17 +449,28 @@ The following %-sequences are provided:
 	(erase-buffer)
 	(ignore-errors (insert-file-contents
 			(expand-file-name "uevent" dir)))
+	(goto-char (point-min))
+	(when (re-search-forward
+	       "POWER_SUPPLY_VOLTAGE_NOW=\\([0-9]*\\)$" nil t)
+	  (setq voltage-now (/ (string-to-number (match-string 1)) 1000000.0)))
+	(goto-char (point-min))
 	(when (re-search-forward "POWER_SUPPLY_PRESENT=1$" nil t)
 	  (goto-char (point-min))
 	  (and (re-search-forward "POWER_SUPPLY_STATUS=\\(.*\\)$" nil t)
 	       (member charging-state '("Unknown" "Full" nil))
 	       (setq charging-state (match-string 1)))
+	  (goto-char (point-min))
 	  (when (re-search-forward
                  "POWER_SUPPLY_\\(CURRENT\\|POWER\\)_NOW=\\([0-9]*\\)$"
                  nil t)
-	    (setq rate (float (string-to-number (match-string 2)))))
+	    (cl-incf power-now
+		     (* (float (string-to-number (match-string 2)))
+			(if (eq (char-after (match-beginning 1)) ?C)
+			    voltage-now 1.0))))
+	  (goto-char (point-min))
 	  (when (re-search-forward "POWER_SUPPLY_TEMP=\\([0-9]*\\)$" nil t)
 	    (setq temperature (match-string 1)))
+	  (goto-char (point-min))
 	  (let (full-string now-string)
 	    ;; Sysfs may list either charge (mAh) or energy (mWh).
 	    ;; Keep track of both, and choose which to report later.
@@ -473,37 +480,31 @@ The following %-sequences are provided:
 			(re-search-forward
 			 "POWER_SUPPLY_CHARGE_NOW=\\([0-9]*\\)$" nil t)
 			(setq now-string (match-string 1)))
-		   (setq charge-full (+ charge-full
-					(string-to-number full-string))
-			 charge-now  (+ charge-now
-					(string-to-number now-string))))
-		  ((and (re-search-forward
+		   (cl-incf energy-full (* (string-to-number full-string)
+                                           voltage-now))
+		   (cl-incf energy-now  (* (string-to-number now-string)
+                                           voltage-now)))
+		  ((and (progn (goto-char (point-min)) t)
+			(re-search-forward
 			 "POWER_SUPPLY_ENERGY_FULL=\\([0-9]*\\)$" nil t)
 			(setq full-string (match-string 1))
 			(re-search-forward
 			 "POWER_SUPPLY_ENERGY_NOW=\\([0-9]*\\)$" nil t)
 			(setq now-string (match-string 1)))
-		   (setq energy-full (+ energy-full
-					(string-to-number full-string))
-			 energy-now  (+ energy-now
-					(string-to-number now-string))))))
+		   (cl-incf energy-full (string-to-number full-string))
+		   (cl-incf energy-now  (string-to-number now-string)))))
 	  (goto-char (point-min))
-	  (when (and energy-now rate (not (zerop rate))
-		     (re-search-forward
-                      "POWER_SUPPLY_VOLTAGE_NOW=\\([0-9]*\\)$" nil t))
+	  (unless (zerop power-now)
 	    (let ((remaining (if (string= charging-state "Discharging")
 				 energy-now
 			       (- energy-full energy-now))))
-	      (setq hours (/ (/ (* remaining (string-to-number
-                                              (match-string 1)))
-                                rate)
-			     10000000.0)))))))
-    (list (cons ?c (cond ((or (> charge-full 0) (> charge-now 0))
-			  (number-to-string charge-now))
-			 ((or (> energy-full 0) (> energy-now 0))
-			  (number-to-string energy-now))
+	      (setq hours (/ remaining power-now)))))))
+    (list (cons ?c (cond ((or (> energy-full 0) (> energy-now 0))
+			  (number-to-string (/ energy-now voltage-now)))
 			 (t "N/A")))
-	  (cons ?r (if rate (format "%.1f" (/ rate 1000000.0)) "N/A"))
+	  (cons ?r (if (> power-now 0.0)
+		       (format "%.1f" (/ power-now 1000000.0))
+		     "N/A"))
 	  (cons ?m (if hours (format "%d" (* hours 60)) "N/A"))
 	  (cons ?h (if hours (format "%d" hours) "N/A"))
 	  (cons ?t (if hours
@@ -511,21 +512,24 @@ The following %-sequences are provided:
 		     "N/A"))
 	  (cons ?d (or temperature "N/A"))
 	  (cons ?B (or charging-state "N/A"))
-	  (cons ?p (cond ((and (> charge-full 0) (> charge-now 0))
-			  (format "%.1f"
-				  (/ (* 100 charge-now) charge-full)))
-			 ((> energy-full 0)
+	  (cons ?p (cond ((and (> energy-full 0) (> energy-now 0))
 			  (format "%.1f"
 				  (/ (* 100 energy-now) energy-full)))
 			 (t "N/A")))
-	  (cons ?L (if (file-readable-p "/sys/class/power_supply/AC/online")
-		       (if (battery-search-for-one-match-in-files
-			    (list "/sys/class/power_supply/AC/online"
-				  "/sys/class/power_supply/ACAD/online")
-			    "1" 0)
-			   "AC"
-			 "BAT")
-		     "N/A")))))
+	  (cons ?L (cond
+                    ((battery-search-for-one-match-in-files
+                      (list "/sys/class/power_supply/AC/online"
+                            "/sys/class/power_supply/ACAD/online"
+                            "/sys/class/power_supply/ADP1/online")
+                      "1" 0)
+                     "AC")
+                    ((battery-search-for-one-match-in-files
+                      (list "/sys/class/power_supply/AC/online"
+                            "/sys/class/power_supply/ACAD/online"
+                            "/sys/class/power_supply/ADP1/online")
+                      "0" 0)
+                     "BAT")
+                    (t "N/A"))))))
 
 
 ;;; `apm' interface for BSD.
@@ -615,7 +619,7 @@ The following %-sequences are provided:
     (with-temp-buffer
       (ignore-errors (call-process "pmset" nil t nil "-g" "ps"))
       (goto-char (point-min))
-      (when (re-search-forward "Currentl?y drawing from '\\(AC\\|Battery\\) Power'" nil t)
+      (when (re-search-forward "\\(?:Currentl?y\\|Now\\) drawing from '\\(AC\\|Battery\\) Power'" nil t)
 	(setq power-source (match-string 1))
 	(when (re-search-forward "^ -InternalBattery-0[ \t]+" nil t)
 	  (when (looking-at "\\([0-9]\\{1,3\\}\\)%")

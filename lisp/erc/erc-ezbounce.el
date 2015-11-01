@@ -1,9 +1,9 @@
 ;;; erc-ezbounce.el ---  Handle EZBounce bouncer commands
 
-;; Copyright (C) 2002, 2004, 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2002, 2004, 2006-2015 Free Software Foundation, Inc.
 
 ;; Author: Andreas Fuchs <asf@void.at>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: comm
 
 ;; This file is part of GNU Emacs.
@@ -78,7 +78,7 @@ The alist's format is as follows:
 (defun erc-ezb-get-login (server port)
   "Return an appropriate EZBounce login for SERVER and PORT.
 Look up entries in `erc-ezb-login-alist'. If the username or password
-in the alist is `nil', prompt for the appropriate values."
+in the alist is nil, prompt for the appropriate values."
   (let ((login (cdr (assoc (cons server port) erc-ezb-login-alist))))
     (when login
       (let ((username (car login))

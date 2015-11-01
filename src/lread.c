@@ -1,6 +1,6 @@
 /* Lisp parsing and input streams.
 
-Copyright (C) 1985-1989, 1993-1995, 1997-2013 Free Software Foundation,
+Copyright (C) 1985-1989, 1993-1995, 1997-2015 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -18,6 +18,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* Tell globals.h to define tables needed by init_obarray.  */
+#define DEFINE_SYMBOLS
 
 #include <config.h>
 #include "sysstdio.h"
@@ -26,8 +28,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <sys/file.h>
 #include <errno.h>
 #include <limits.h>	/* For CHAR_BIT.  */
+#include <math.h>
 #include <stat-time.h>
 #include "lisp.h"
+#include "dispextern.h"
 #include "intervals.h"
 #include "character.h"
 #include "buffer.h"
@@ -36,7 +40,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <epaths.h>
 #include "commands.h"
 #include "keyboard.h"
-#include "frame.h"
+#include "systime.h"
 #include "termhooks.h"
 #include "blockinput.h"
 
@@ -63,31 +67,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define file_offset long
 #define file_tell ftell
 #endif
-
-/* Hash table read constants.  */
-static Lisp_Object Qhash_table, Qdata;
-static Lisp_Object Qtest, Qsize;
-static Lisp_Object Qweakness;
-static Lisp_Object Qrehash_size;
-static Lisp_Object Qrehash_threshold;
-
-static Lisp_Object Qread_char, Qget_file_char, Qcurrent_load_list;
-Lisp_Object Qstandard_input;
-Lisp_Object Qvariable_documentation;
-static Lisp_Object Qascii_character, Qload, Qload_file_name;
-Lisp_Object Qbackquote, Qcomma, Qcomma_at, Qcomma_dot, Qfunction;
-static Lisp_Object Qinhibit_file_name_operation;
-static Lisp_Object Qeval_buffer_list;
-Lisp_Object Qlexical_binding;
-static Lisp_Object Qfile_truename, Qdo_after_load_evaluation; /* ACM 2006/5/16 */
-
-/* Used instead of Qget_file_char while loading *.elc files compiled
-   by Emacs 21 or older.  */
-static Lisp_Object Qget_emacs_mule_file_char;
-
-static Lisp_Object Qload_force_doc_strings;
-
-static Lisp_Object Qload_in_progress;
 
 /* The association list of objects read with the #n=object form.
    Each member of the list has the form (n . object), and is used to
@@ -132,7 +111,6 @@ static file_offset prev_saved_doc_string_position;
    Fread initializes this to false, so we need not specbind it
    or worry about what happens to it when there is an error.  */
 static bool new_backquote_flag;
-static Lisp_Object Qold_style_backquotes;
 
 /* A list of file names for files being loaded in Fload.  Used to
    check for recursive loads.  */
@@ -213,7 +191,7 @@ readchar (Lisp_Object readcharfun, bool *multibyte)
       else
 	{
 	  c = BUF_FETCH_BYTE (inbuffer, pt_byte);
-	  if (! ASCII_BYTE_P (c))
+	  if (! ASCII_CHAR_P (c))
 	    c = BYTE8_TO_CHAR (c);
 	  pt_byte++;
 	}
@@ -242,7 +220,7 @@ readchar (Lisp_Object readcharfun, bool *multibyte)
       else
 	{
 	  c = BUF_FETCH_BYTE (inbuffer, bytepos);
-	  if (! ASCII_BYTE_P (c))
+	  if (! ASCII_CHAR_P (c))
 	    c = BYTE8_TO_CHAR (c);
 	  bytepos++;
 	}
@@ -324,7 +302,7 @@ readchar (Lisp_Object readcharfun, bool *multibyte)
     return c;
   if (multibyte)
     *multibyte = 1;
-  if (ASCII_BYTE_P (c))
+  if (ASCII_CHAR_P (c))
     return c;
   if (emacs_mule_encoding)
     return read_emacs_mule_char (c, readbyte, readcharfun);
@@ -609,7 +587,7 @@ read_filtered_event (bool no_switch_frame, bool ascii_required,
 		     bool error_nonascii, bool input_method, Lisp_Object seconds)
 {
   Lisp_Object val, delayed_switch_frame;
-  EMACS_TIME end_time;
+  struct timespec end_time;
 
 #ifdef HAVE_WINDOW_SYSTEM
   if (display_hourglass_p)
@@ -622,8 +600,8 @@ read_filtered_event (bool no_switch_frame, bool ascii_required,
   if (NUMBERP (seconds))
     {
       double duration = extract_float (seconds);
-      EMACS_TIME wait_time = EMACS_TIME_FROM_DOUBLE (duration);
-      end_time = add_emacs_time (current_emacs_time (), wait_time);
+      struct timespec wait_time = dtotimespec (duration);
+      end_time = timespec_add (current_timespec (), wait_time);
     }
 
   /* Read until we get an acceptable event.  */
@@ -970,10 +948,8 @@ load_warn_old_style_backquotes (Lisp_Object file)
 {
   if (!NILP (Vold_style_backquotes))
     {
-      Lisp_Object args[2];
-      args[0] = build_string ("Loading `%s': old-style backquotes detected!");
-      args[1] = file;
-      Fmessage (2, args);
+      AUTO_STRING (format, "Loading `%s': old-style backquotes detected!");
+      CALLN (Fmessage, format, file);
     }
 }
 
@@ -1030,6 +1006,10 @@ in `load-file-rep-suffixes'.  If MUST-SUFFIX is non-nil, only the
 return value of `get-load-suffixes' is used, i.e. the file name is
 required to have a non-empty suffix.
 
+When searching suffixes, this function normally stops at the first
+one that exists.  If the option `load-prefer-newer' is non-nil,
+however, it tries all suffixes, and uses whichever file is the newest.
+
 Loading a file records its definitions, and its `provide' and
 `require' calls, in an element of `load-history' whose
 car is the file name loaded.  See `load-history'.
@@ -1046,7 +1026,6 @@ Return t if the file exists and loads successfully.  */)
   int fd;
   int fd_index;
   ptrdiff_t count = SPECPDL_INDEX ();
-  struct gcpro gcpro1, gcpro2, gcpro3;
   Lisp_Object found, efound, hist_file_name;
   /* True means we printed the ".el is newer" message.  */
   bool newer = 0;
@@ -1054,12 +1033,8 @@ Return t if the file exists and loads successfully.  */)
   bool compiled = 0;
   Lisp_Object handler;
   bool safe_p = 1;
-  const char *fmode = "r";
+  const char *fmode = "r" FOPEN_TEXT;
   int version;
-
-#ifdef DOS_NT
-  fmode = "rt";
-#endif /* DOS_NT */
 
   CHECK_STRING (file);
 
@@ -1069,10 +1044,7 @@ Return t if the file exists and loads successfully.  */)
     if (!NILP (handler))
       return call5 (handler, Qload, file, noerror, nomessage, nosuffix); */
 
-  /* Do this after the handler to avoid
-     the need to gcpro noerror, nomessage and nosuffix.
-     (Below here, we care only whether they are nil or not.)
-     The presence of this call is the result of a historical accident:
+  /* The presence of this call is the result of a historical accident:
      it used to be in every file-operation and when it got removed
      everywhere, it accidentally stayed here.  Since then, enough people
      supposedly have things like (load "$PROJECT/foo.el") in their .emacs
@@ -1098,7 +1070,6 @@ Return t if the file exists and loads successfully.  */)
     {
       Lisp_Object suffixes;
       found = Qnil;
-      GCPRO2 (file, found);
 
       if (! NILP (must_suffix))
 	{
@@ -1122,16 +1093,10 @@ Return t if the file exists and loads successfully.  */)
 	{
 	  suffixes = Fget_load_suffixes ();
 	  if (NILP (must_suffix))
-	    {
-	      Lisp_Object arg[2];
-	      arg[0] = suffixes;
-	      arg[1] = Vload_file_rep_suffixes;
-	      suffixes = Fappend (2, arg);
-	    }
+	    suffixes = CALLN (Fappend, suffixes, Vload_file_rep_suffixes);
 	}
 
-      fd = openp (Vload_path, file, suffixes, &found, Qnil);
-      UNGCPRO;
+      fd = openp (Vload_path, file, suffixes, &found, Qnil, load_prefer_newer);
     }
 
   if (fd == -1)
@@ -1234,8 +1199,6 @@ Return t if the file exists and loads successfully.  */)
 	  struct stat s1, s2;
 	  int result;
 
-	  GCPRO3 (file, found, hist_file_name);
-
 	  if (version < 0
 	      && ! (version = safe_to_load_version (fd)))
 	    {
@@ -1249,34 +1212,37 @@ Return t if the file exists and loads successfully.  */)
 	  compiled = 1;
 
 	  efound = ENCODE_FILE (found);
+	  fmode = "r" FOPEN_BINARY;
 
-#ifdef DOS_NT
-	  fmode = "rb";
-#endif /* DOS_NT */
-	  result = stat (SSDATA (efound), &s1);
-	  if (result == 0)
-	    {
-	      SSET (efound, SBYTES (efound) - 1, 0);
-	      result = stat (SSDATA (efound), &s2);
-	      SSET (efound, SBYTES (efound) - 1, 'c');
-	    }
+          /* openp already checked for newness, no point doing it again.
+             FIXME would be nice to get a message when openp
+             ignores suffix order due to load_prefer_newer.  */
+          if (!load_prefer_newer)
+            {
+              result = stat (SSDATA (efound), &s1);
+              if (result == 0)
+                {
+                  SSET (efound, SBYTES (efound) - 1, 0);
+                  result = stat (SSDATA (efound), &s2);
+                  SSET (efound, SBYTES (efound) - 1, 'c');
+                }
 
-	  if (result == 0
-	      && EMACS_TIME_LT (get_stat_mtime (&s1), get_stat_mtime (&s2)))
-	    {
-	      /* Make the progress messages mention that source is newer.  */
-	      newer = 1;
+              if (result == 0
+                  && timespec_cmp (get_stat_mtime (&s1), get_stat_mtime (&s2)) < 0)
+                {
+                  /* Make the progress messages mention that source is newer.  */
+                  newer = 1;
 
-	      /* If we won't print another message, mention this anyway.  */
-	      if (!NILP (nomessage) && !force_load_messages)
-		{
-		  Lisp_Object msg_file;
-		  msg_file = Fsubstring (found, make_number (0), make_number (-1));
-		  message_with_string ("Source file `%s' newer than byte-compiled file",
-				       msg_file, 1);
-		}
-	    }
-	  UNGCPRO;
+                  /* If we won't print another message, mention this anyway.  */
+                  if (!NILP (nomessage) && !force_load_messages)
+                    {
+                      Lisp_Object msg_file;
+                      msg_file = Fsubstring (found, make_number (0), make_number (-1));
+                      message_with_string ("Source file `%s' newer than byte-compiled file",
+                                           msg_file, 1);
+                    }
+                }
+            } /* !load_prefer_newer */
 	}
     }
   else
@@ -1297,8 +1263,6 @@ Return t if the file exists and loads successfully.  */)
 	  return unbind_to (count, val);
 	}
     }
-
-  GCPRO3 (file, found, hist_file_name);
 
   if (fd < 0)
     {
@@ -1365,8 +1329,6 @@ Return t if the file exists and loads successfully.  */)
   if (!NILP (Ffboundp (Qdo_after_load_evaluation)))
     call1 (Qdo_after_load_evaluation, hist_file_name) ;
 
-  UNGCPRO;
-
   xfree (saved_doc_string);
   saved_doc_string = 0;
   saved_doc_string_size = 0;
@@ -1414,13 +1376,11 @@ directories, make sure the PREDICATE function returns `dir-ok' for them.  */)
   (Lisp_Object filename, Lisp_Object path, Lisp_Object suffixes, Lisp_Object predicate)
 {
   Lisp_Object file;
-  int fd = openp (path, filename, suffixes, &file, predicate);
+  int fd = openp (path, filename, suffixes, &file, predicate, false);
   if (NILP (predicate) && fd >= 0)
     emacs_close (fd);
   return file;
 }
-
-static Lisp_Object Qdir_ok;
 
 /* Search for a file whose name is STR, looking in directories
    in the Lisp list PATH, and trying suffixes from SUFFIX.
@@ -1430,7 +1390,8 @@ static Lisp_Object Qdir_ok;
    SUFFIXES is a list of strings containing possible suffixes.
    The empty suffix is automatically added if the list is empty.
 
-   PREDICATE non-nil means don't open the files,
+   PREDICATE t means the files are binary.
+   PREDICATE non-nil and non-t means don't open the files,
    just look for one that satisfies the predicate.  In this case,
    return 1 on success.  The predicate can be a lisp function or
    an integer to pass to `access' (in which case file-name-handlers
@@ -1441,22 +1402,31 @@ static Lisp_Object Qdir_ok;
    nil is stored there on failure.
 
    If the file we find is remote, return -2
-   but store the found remote file name in *STOREPTR.  */
+   but store the found remote file name in *STOREPTR.
+
+   If NEWER is true, try all SUFFIXes and return the result for the
+   newest file that exists.  Does not apply to remote files,
+   or if a non-nil and non-t PREDICATE is specified.  */
 
 int
 openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
-       Lisp_Object *storeptr, Lisp_Object predicate)
+       Lisp_Object *storeptr, Lisp_Object predicate, bool newer)
 {
   ptrdiff_t fn_size = 100;
   char buf[100];
   char *fn = buf;
-  bool absolute = 0;
+  bool absolute;
   ptrdiff_t want_length;
   Lisp_Object filename;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5, gcpro6;
-  Lisp_Object string, tail, encoded_fn;
+  Lisp_Object string, tail, encoded_fn, save_string;
   ptrdiff_t max_suffix_len = 0;
   int last_errno = ENOENT;
+  int save_fd = -1;
+  USE_SAFE_ALLOCA;
+
+  /* The last-modified time of the newest matching file found.
+     Initialize it to something less than all valid timestamps.  */
+  struct timespec save_mtime = make_timespec (TYPE_MINIMUM (time_t), -1);
 
   CHECK_STRING (str);
 
@@ -1467,14 +1437,12 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 			    SBYTES (XCAR (tail)));
     }
 
-  string = filename = encoded_fn = Qnil;
-  GCPRO6 (str, string, filename, path, suffixes, encoded_fn);
+  string = filename = encoded_fn = save_string = Qnil;
 
   if (storeptr)
     *storeptr = Qnil;
 
-  if (complete_filename_p (str))
-    absolute = 1;
+  absolute = complete_filename_p (str);
 
   for (; CONSP (path); path = XCDR (path))
     {
@@ -1494,13 +1462,17 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 	 this path element/specified file name and any possible suffix.  */
       want_length = max_suffix_len + SBYTES (filename);
       if (fn_size <= want_length)
-	fn = alloca (fn_size = 100 + want_length);
+	{
+	  fn_size = 100 + want_length;
+	  fn = SAFE_ALLOCA (fn_size);
+	}
 
       /* Loop over suffixes.  */
       for (tail = NILP (suffixes) ? list1 (empty_unibyte_string) : suffixes;
 	   CONSP (tail); tail = XCDR (tail))
 	{
-	  ptrdiff_t fnlen, lsuffix = SBYTES (XCAR (tail));
+	  Lisp_Object suffix = XCAR (tail);
+	  ptrdiff_t fnlen, lsuffix = SBYTES (suffix);
 	  Lisp_Object handler;
 
 	  /* Concatenate path element/specified name with the suffix.
@@ -1511,7 +1483,7 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 			   ? 2 : 0);
 	  fnlen = SBYTES (filename) - prefixlen;
 	  memcpy (fn, SDATA (filename) + prefixlen, fnlen);
-	  memcpy (fn + fnlen, SDATA (XCAR (tail)), lsuffix + 1);
+	  memcpy (fn + fnlen, SDATA (suffix), lsuffix + 1);
 	  fnlen += lsuffix;
 	  /* Check that the file exists and is not a directory.  */
 	  /* We used to only check for handlers on non-absolute file names:
@@ -1521,41 +1493,54 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 		  handler = Ffind_file_name_handler (filename, Qfile_exists_p);
 	     It's not clear why that was the case and it breaks things like
 	     (load "/bar.el") where the file is actually "/bar.el.gz".  */
-	  string = make_string (fn, fnlen);
+	  /* make_string has its own ideas on when to return a unibyte
+	     string and when a multibyte string, but we know better.
+	     We must have a unibyte string when dumping, since
+	     file-name encoding is shaky at best at that time, and in
+	     particular default-file-name-coding-system is reset
+	     several times during loadup.  We therefore don't want to
+	     encode the file before passing it to file I/O library
+	     functions.  */
+	  if (!STRING_MULTIBYTE (filename) && !STRING_MULTIBYTE (suffix))
+	    string = make_unibyte_string (fn, fnlen);
+	  else
+	    string = make_string (fn, fnlen);
 	  handler = Ffind_file_name_handler (string, Qfile_exists_p);
-	  if ((!NILP (handler) || !NILP (predicate)) && !NATNUMP (predicate))
+	  if ((!NILP (handler) || (!NILP (predicate) && !EQ (predicate, Qt)))
+	      && !NATNUMP (predicate))
             {
 	      bool exists;
-	      if (NILP (predicate))
+	      if (NILP (predicate) || EQ (predicate, Qt))
 		exists = !NILP (Ffile_readable_p (string));
 	      else
 		{
 		  Lisp_Object tmp = call1 (predicate, string);
 		  if (NILP (tmp))
-		    exists = 0;
+		    exists = false;
 		  else if (EQ (tmp, Qdir_ok)
 			   || NILP (Ffile_directory_p (string)))
-		    exists = 1;
+		    exists = true;
 		  else
 		    {
-		      exists = 0;
+		      exists = false;
 		      last_errno = EISDIR;
 		    }
 		}
 
 	      if (exists)
 		{
-		  /* We succeeded; return this descriptor and filename.  */
-		  if (storeptr)
-		    *storeptr = string;
-		  UNGCPRO;
-		  return -2;
+                  /* We succeeded; return this descriptor and filename.  */
+                  if (storeptr)
+                    *storeptr = string;
+		  SAFE_FREE ();
+                  return -2;
 		}
 	    }
 	  else
 	    {
 	      int fd;
 	      const char *pfn;
+	      struct stat st;
 
 	      encoded_fn = ENCODE_FILE (string);
 	      pfn = SSDATA (encoded_fn);
@@ -1578,7 +1563,8 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 		}
 	      else
 		{
-		  fd = emacs_open (pfn, O_RDONLY, 0);
+		  int oflags = O_RDONLY + (NILP (predicate) ? 0 : O_BINARY);
+		  fd = emacs_open (pfn, oflags, 0);
 		  if (fd < 0)
 		    {
 		      if (errno != ENOENT)
@@ -1586,7 +1572,6 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 		    }
 		  else
 		    {
-		      struct stat st;
 		      int err = (fstat (fd, &st) != 0 ? errno
 				 : S_ISDIR (st.st_mode) ? EISDIR : 0);
 		      if (err)
@@ -1600,19 +1585,46 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 
 	      if (fd >= 0)
 		{
-		  /* We succeeded; return this descriptor and filename.  */
-		  if (storeptr)
-		    *storeptr = string;
-		  UNGCPRO;
-		  return fd;
+                  if (newer && !NATNUMP (predicate))
+                    {
+                      struct timespec mtime = get_stat_mtime (&st);
+
+		      if (timespec_cmp (mtime, save_mtime) <= 0)
+			emacs_close (fd);
+		      else
+                        {
+			  if (0 <= save_fd)
+			    emacs_close (save_fd);
+                          save_fd = fd;
+                          save_mtime = mtime;
+                          save_string = string;
+                        }
+                    }
+                  else
+                    {
+                      /* We succeeded; return this descriptor and filename.  */
+                      if (storeptr)
+                        *storeptr = string;
+		      SAFE_FREE ();
+                      return fd;
+                    }
 		}
+
+              /* No more suffixes.  Return the newest.  */
+	      if (0 <= save_fd && ! CONSP (XCDR (tail)))
+                {
+                  if (storeptr)
+                    *storeptr = save_string;
+		  SAFE_FREE ();
+                  return save_fd;
+                }
 	    }
 	}
       if (absolute)
 	break;
     }
 
-  UNGCPRO;
+  SAFE_FREE ();
   errno = last_errno;
   return -1;
 }
@@ -1705,6 +1717,28 @@ end_of_file_error (void)
   xsignal0 (Qend_of_file);
 }
 
+static Lisp_Object
+readevalloop_eager_expand_eval (Lisp_Object val, Lisp_Object macroexpand)
+{
+  /* If we macroexpand the toplevel form non-recursively and it ends
+     up being a `progn' (or if it was a progn to start), treat each
+     form in the progn as a top-level form.  This way, if one form in
+     the progn defines a macro, that macro is in effect when we expand
+     the remaining forms.  See similar code in bytecomp.el.  */
+  val = call2 (macroexpand, val, Qnil);
+  if (EQ (CAR_SAFE (val), Qprogn))
+    {
+      Lisp_Object subforms = XCDR (val);
+
+      for (val = Qnil; CONSP (subforms); subforms = XCDR (subforms))
+          val = readevalloop_eager_expand_eval (XCAR (subforms),
+                                                macroexpand);
+    }
+  else
+      val = eval_sub (call2 (macroexpand, val, Qt));
+  return val;
+}
+
 /* UNIBYTE specifies how to set load_convert_to_unibyte
    for this invocation.
    READFUN, if non-nil, is used instead of `read'.
@@ -1720,10 +1754,9 @@ readevalloop (Lisp_Object readcharfun,
 	      Lisp_Object unibyte, Lisp_Object readfun,
 	      Lisp_Object start, Lisp_Object end)
 {
-  register int c;
-  register Lisp_Object val;
+  int c;
+  Lisp_Object val;
   ptrdiff_t count = SPECPDL_INDEX ();
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   struct buffer *b = 0;
   bool continue_reading_p;
   Lisp_Object lex_bound;
@@ -1758,7 +1791,7 @@ readevalloop (Lisp_Object readcharfun,
   if (! NILP (start) && !b)
     emacs_abort ();
 
-  specbind (Qstandard_input, readcharfun); /* GCPROs readcharfun.  */
+  specbind (Qstandard_input, readcharfun);
   specbind (Qcurrent_load_list, Qnil);
   record_unwind_protect_int (readevalloop_1, load_convert_to_unibyte);
   load_convert_to_unibyte = !NILP (unibyte);
@@ -1770,8 +1803,6 @@ readevalloop (Lisp_Object readcharfun,
   specbind (Qinternal_interpreter_environment,
 	    (NILP (lex_bound) || EQ (lex_bound, Qunbound)
 	     ? Qnil : list1 (Qt)));
-
-  GCPRO4 (sourcename, readfun, start, end);
 
   /* Try to ensure sourcename is a truename, except whilst preloading.  */
   if (NILP (Vpurify_flag)
@@ -1833,7 +1864,7 @@ readevalloop (Lisp_Object readcharfun,
 
       /* Ignore whitespace here, so we can detect eof.  */
       if (c == ' ' || c == '\t' || c == '\n' || c == '\f' || c == '\r'
-	  || c == 0xa0)  /* NBSP */
+	  || c == NO_BREAK_SPACE)
 	goto read_next;
 
       if (!NILP (Vpurify_flag) && c == '(')
@@ -1872,8 +1903,9 @@ readevalloop (Lisp_Object readcharfun,
 
       /* Now eval what we just read.  */
       if (!NILP (macroexpand))
-	val = call1 (macroexpand, val);
-      val = eval_sub (val);
+        val = readevalloop_eager_expand_eval (val, macroexpand);
+      else
+        val = eval_sub (val);
 
       if (printflag)
 	{
@@ -1889,8 +1921,6 @@ readevalloop (Lisp_Object readcharfun,
 
   build_load_history (sourcename,
 		      stream || whole_buffer);
-
-  UNGCPRO;
 
   unbind_to (count, Qnil);
 }
@@ -1995,7 +2025,7 @@ STREAM or the value of `standard-input' may be:
   if (EQ (stream, Qt))
     stream = Qread_char;
   if (EQ (stream, Qread_char))
-    /* FIXME: ¿¡ When is this used !?  */
+    /* FIXME: ?! When is this used !?  */
     return call1 (intern ("read-minibuffer"),
 		  build_string ("Lisp expression: "));
 
@@ -2006,9 +2036,10 @@ DEFUN ("read-from-string", Fread_from_string, Sread_from_string, 1, 3, 0,
        doc: /* Read one Lisp expression which is represented as text by STRING.
 Returns a cons: (OBJECT-READ . FINAL-STRING-INDEX).
 FINAL-STRING-INDEX is an integer giving the position of the next
- remaining character in STRING.
-START and END optionally delimit a substring of STRING from which to read;
- they default to 0 and (length STRING) respectively.  */)
+remaining character in STRING.  START and END optionally delimit
+a substring of STRING from which to read;  they default to 0 and
+(length STRING) respectively.  Negative values are counted from
+the end of STRING.  */)
   (Lisp_Object string, Lisp_Object start, Lisp_Object end)
 {
   Lisp_Object ret;
@@ -2019,10 +2050,9 @@ START and END optionally delimit a substring of STRING from which to read;
 }
 
 /* Function to set up the global context we need in toplevel read
-   calls.  */
+   calls.  START and END only used when STREAM is a string.  */
 static Lisp_Object
 read_internal_start (Lisp_Object stream, Lisp_Object start, Lisp_Object end)
-/* `start', `end' only used when stream is a string.  */
 {
   Lisp_Object retval;
 
@@ -2044,25 +2074,9 @@ read_internal_start (Lisp_Object stream, Lisp_Object start, Lisp_Object end)
       else
 	string = XCAR (stream);
 
-      if (NILP (end))
-	endval = SCHARS (string);
-      else
-	{
-	  CHECK_NUMBER (end);
-	  if (! (0 <= XINT (end) && XINT (end) <= SCHARS (string)))
-	    args_out_of_range (string, end);
-	  endval = XINT (end);
-	}
+      validate_subarray (string, start, end, SCHARS (string),
+			 &startval, &endval);
 
-      if (NILP (start))
-	startval = 0;
-      else
-	{
-	  CHECK_NUMBER (start);
-	  if (! (0 <= XINT (start) && XINT (start) <= endval))
-	    args_out_of_range (string, start);
-	  startval = XINT (start);
-	}
       read_from_string_index = startval;
       read_from_string_index_byte = string_char_to_byte (string, startval);
       read_from_string_limit = endval;
@@ -2537,21 +2551,38 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	      c = READCHAR;
 	      if (c == '[')
 		{
-		  Lisp_Object tmp;
-		  int depth;
-		  ptrdiff_t size;
+		  /* Sub char-table can't be read as a regular
+		     vector because of a two C integer fields.  */
+		  Lisp_Object tbl, tmp = read_list (1, readcharfun);
+		  ptrdiff_t size = XINT (Flength (tmp));
+		  int i, depth, min_char;
+		  struct Lisp_Cons *cell;
 
-		  tmp = read_vector (readcharfun, 0);
-		  size = ASIZE (tmp);
 		  if (size == 0)
-		    error ("Invalid size char-table");
-		  if (! RANGED_INTEGERP (1, AREF (tmp, 0), 3))
-		    error ("Invalid depth in char-table");
-		  depth = XINT (AREF (tmp, 0));
+		    error ("Zero-sized sub char-table");
+
+		  if (! RANGED_INTEGERP (1, XCAR (tmp), 3))
+		    error ("Invalid depth in sub char-table");
+		  depth = XINT (XCAR (tmp));
 		  if (chartab_size[depth] != size - 2)
-		    error ("Invalid size char-table");
-		  XSETPVECTYPE (XVECTOR (tmp), PVEC_SUB_CHAR_TABLE);
-		  return tmp;
+		    error ("Invalid size in sub char-table");
+		  cell = XCONS (tmp), tmp = XCDR (tmp), size--;
+		  free_cons (cell);
+
+		  if (! RANGED_INTEGERP (0, XCAR (tmp), MAX_CHAR))
+		    error ("Invalid minimum character in sub-char-table");
+		  min_char = XINT (XCAR (tmp));
+		  cell = XCONS (tmp), tmp = XCDR (tmp), size--;
+		  free_cons (cell);
+
+		  tbl = make_uninit_sub_char_table (depth, min_char);
+		  for (i = 0; i < size; i++)
+		    {
+		      XSUB_CHAR_TABLE (tbl)->contents[i] = XCAR (tmp);
+		      cell = XCONS (tmp), tmp = XCDR (tmp);
+		      free_cons (cell);
+		    }
+		  return tbl;
 		}
 	      invalid_syntax ("#^^");
 	    }
@@ -2565,9 +2596,8 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	  if (c == '"')
 	    {
 	      Lisp_Object tmp, val;
-	      EMACS_INT size_in_chars
-		= ((XFASTINT (length) + BOOL_VECTOR_BITS_PER_CHAR - 1)
-		   / BOOL_VECTOR_BITS_PER_CHAR);
+	      EMACS_INT size_in_chars = bool_vector_bytes (XFASTINT (length));
+	      unsigned char *data;
 
 	      UNREAD (c);
 	      tmp = read1 (readcharfun, pch, first_in_list);
@@ -2581,11 +2611,12 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 			    == (SCHARS (tmp) - 1) * BOOL_VECTOR_BITS_PER_CHAR)))
 		invalid_syntax ("#&...");
 
-	      val = Fmake_bool_vector (length, Qnil);
-	      memcpy (XBOOL_VECTOR (val)->data, SDATA (tmp), size_in_chars);
+	      val = make_uninit_bool_vector (XFASTINT (length));
+	      data = bool_vector_uchar_data (val);
+	      memcpy (data, SDATA (tmp), size_in_chars);
 	      /* Clear the extraneous bits in the last byte.  */
 	      if (XINT (length) != size_in_chars * BOOL_VECTOR_BITS_PER_CHAR)
-		XBOOL_VECTOR (val)->data[size_in_chars - 1]
+		data[size_in_chars - 1]
 		  &= (1 << (XINT (length) % BOOL_VECTOR_BITS_PER_CHAR)) - 1;
 	      return val;
 	    }
@@ -2596,21 +2627,23 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	  /* Accept compiled functions at read-time so that we don't have to
 	     build them using function calls.  */
 	  Lisp_Object tmp;
+	  struct Lisp_Vector *vec;
 	  tmp = read_vector (readcharfun, 1);
-	  make_byte_code (XVECTOR (tmp));
+	  vec = XVECTOR (tmp);
+	  if (vec->header.size == 0)
+	    invalid_syntax ("Empty byte-code object");
+	  make_byte_code (vec);
 	  return tmp;
 	}
       if (c == '(')
 	{
 	  Lisp_Object tmp;
-	  struct gcpro gcpro1;
 	  int ch;
 
 	  /* Read the string itself.  */
 	  tmp = read1 (readcharfun, &ch, 0);
 	  if (ch != 0 || !STRINGP (tmp))
 	    invalid_syntax ("#");
-	  GCPRO1 (tmp);
 	  /* Read the intervals and their properties.  */
 	  while (1)
 	    {
@@ -2628,7 +2661,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		invalid_syntax ("Invalid string property list");
 	      Fset_text_properties (beg, end, plist, tmp);
 	    }
-	  UNGCPRO;
+
 	  return tmp;
 	}
 
@@ -2735,7 +2768,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	  uninterned_symbol = 1;
 	  c = READCHAR;
 	  if (!(c > 040
-		&& c != 0xa0	/* NBSP */
+		&& c != NO_BREAK_SPACE
 		&& (c >= 0200
 		    || strchr ("\"';()[]#`,", c) == NULL)))
 	    {
@@ -2778,11 +2811,8 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		  if (c == '=')
 		    {
 		      /* Make a placeholder for #n# to use temporarily.  */
-		      Lisp_Object placeholder;
-		      Lisp_Object cell;
-
-		      placeholder = Fcons (Qnil, Qnil);
-		      cell = Fcons (make_number (n), placeholder);
+		      AUTO_CONS (placeholder, Qnil, Qnil);
+		      Lisp_Object cell = Fcons (make_number (n), placeholder);
 		      read_objects = Fcons (cell, read_objects);
 
 		      /* Read the object itself.  */
@@ -2969,7 +2999,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 
 		ch = read_escape (readcharfun, 1);
 
-		/* CH is -1 if \ newline has just been seen.  */
+		/* CH is -1 if \ newline or \ space has just been seen.  */
 		if (ch == -1)
 		  {
 		    if (p == read_buffer)
@@ -3072,7 +3102,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
     default:
     default_label:
       if (c <= 040) goto retry;
-      if (c == 0xa0) /* NBSP */
+      if (c == NO_BREAK_SPACE)
 	goto retry;
 
     read_symbol:
@@ -3112,7 +3142,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	      c = READCHAR;
 	    }
 	  while (c > 040
-		 && c != 0xa0 /* NBSP */
+		 && c != NO_BREAK_SPACE
 		 && (c >= 0200
 		     || strchr ("\"';()[]#`,", c) == NULL));
 
@@ -3225,11 +3255,11 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
     {
     case Lisp_Vectorlike:
       {
-	ptrdiff_t i, length = 0;
+	ptrdiff_t i = 0, length = 0;
 	if (BOOL_VECTOR_P (subtree))
 	  return subtree;		/* No sub-objects anyway.  */
 	else if (CHAR_TABLE_P (subtree) || SUB_CHAR_TABLE_P (subtree)
-		 || COMPILEDP (subtree))
+		 || COMPILEDP (subtree) || HASH_TABLE_P (subtree))
 	  length = ASIZE (subtree) & PSEUDOVECTOR_SIZE_MASK;
 	else if (VECTORP (subtree))
 	  length = ASIZE (subtree);
@@ -3240,7 +3270,9 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
 	     behavior.  */
 	  wrong_type_argument (Qsequencep, subtree);
 
-	for (i = 0; i < length; i++)
+	if (SUB_CHAR_TABLE_P (subtree))
+	  i = 2;
+	for ( ; i < length; i++)
 	  SUBSTITUTE (AREF (subtree, i),
 		      ASET (subtree, i, true_value));
 	return subtree;
@@ -3261,7 +3293,7 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
 	   substitute_in_interval contains part of the logic.  */
 
 	INTERVAL root_interval = string_intervals (subtree);
-	Lisp_Object arg = Fcons (object, placeholder);
+	AUTO_CONS (arg, object, placeholder);
 
 	traverse_intervals_noorder (root_interval,
 				    &substitute_in_interval, arg);
@@ -3307,10 +3339,6 @@ string_to_number (char const *string, int base, bool ignore_trailing)
   int leading_digit;
   bool float_syntax = 0;
   double value = 0;
-
-  /* Compute NaN and infinities using a variable, to cope with compilers that
-     think they are smarter than we are.  */
-  double zero = 0;
 
   /* Negate the value ourselves.  This treats 0, NaNs, and infinity properly on
      IEEE floating point hosts, and works around a formerly-common bug where
@@ -3363,30 +3391,15 @@ string_to_number (char const *string, int base, bool ignore_trailing)
 	    {
 	      state |= E_EXP;
 	      cp += 3;
-	      value = 1.0 / zero;
+	      value = INFINITY;
 	    }
 	  else if (cp[-1] == '+'
 		   && cp[0] == 'N' && cp[1] == 'a' && cp[2] == 'N')
 	    {
 	      state |= E_EXP;
 	      cp += 3;
-	      value = zero / zero;
-
-	      /* If that made a "negative" NaN, negate it.  */
-	      {
-		int i;
-		union { double d; char c[sizeof (double)]; }
-		  u_data, u_minus_zero;
-		u_data.d = value;
-		u_minus_zero.d = -0.0;
-		for (i = 0; i < sizeof (double); i++)
-		  if (u_data.c[i] & u_minus_zero.c[i])
-		    {
-		      value = -value;
-		      break;
-		    }
-	      }
-	      /* Now VALUE is a positive NaN.  */
+	      /* NAN is a "positive" NaN on all known Emacs hosts.  */
+	      value = NAN;
 	    }
 	  else
 	    cp = ecp;
@@ -3523,14 +3536,13 @@ read_vector (Lisp_Object readcharfun, bool bytecodeflag)
   return vector;
 }
 
-/* FLAG means check for ] to terminate rather than ) and .  */
+/* FLAG means check for ']' to terminate rather than ')' and '.'.  */
 
 static Lisp_Object
 read_list (bool flag, Lisp_Object readcharfun)
 {
   Lisp_Object val, tail;
   Lisp_Object elt, tem;
-  struct gcpro gcpro1, gcpro2;
   /* 0 is the normal case.
      1 means this list is a doc reference; replace it with the number 0.
      2 means this list is a doc reference; replace it with the doc string.  */
@@ -3545,9 +3557,7 @@ read_list (bool flag, Lisp_Object readcharfun)
   while (1)
     {
       int ch;
-      GCPRO2 (val, tail);
       elt = read1 (readcharfun, &ch, first_in_list);
-      UNGCPRO;
 
       first_in_list = 0;
 
@@ -3568,8 +3578,10 @@ read_list (bool flag, Lisp_Object readcharfun)
 	       in the installed Lisp directory.
 	       We don't use Fexpand_file_name because that would make
 	       the directory absolute now.  */
-	    elt = concat2 (build_string ("../lisp/"),
-			 Ffile_name_nondirectory (elt));
+	    {
+	      AUTO_STRING (dot_dot_lisp, "../lisp/");
+	      elt = concat2 (dot_dot_lisp, Ffile_name_nondirectory (elt));
+	    }
 	}
       else if (EQ (elt, Vload_file_name)
 	       && ! NILP (elt)
@@ -3588,13 +3600,12 @@ read_list (bool flag, Lisp_Object readcharfun)
 	    return val;
 	  if (ch == '.')
 	    {
-	      GCPRO2 (val, tail);
 	      if (!NILP (tail))
 		XSETCDR (tail, read0 (readcharfun));
 	      else
 		val = read0 (readcharfun);
 	      read1 (readcharfun, &ch, 0);
-	      UNGCPRO;
+
 	      if (ch == ')')
 		{
 		  if (doc_reference == 1)
@@ -3697,6 +3708,38 @@ check_obarray (Lisp_Object obarray)
   return obarray;
 }
 
+/* Intern symbol SYM in OBARRAY using bucket INDEX.  */
+
+static Lisp_Object
+intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index)
+{
+  Lisp_Object *ptr;
+
+  XSYMBOL (sym)->interned = (EQ (obarray, initial_obarray)
+			     ? SYMBOL_INTERNED_IN_INITIAL_OBARRAY
+			     : SYMBOL_INTERNED);
+
+  if (SREF (SYMBOL_NAME (sym), 0) == ':' && EQ (obarray, initial_obarray))
+    {
+      XSYMBOL (sym)->constant = 1;
+      XSYMBOL (sym)->redirect = SYMBOL_PLAINVAL;
+      SET_SYMBOL_VAL (XSYMBOL (sym), sym);
+    }
+
+  ptr = aref_addr (obarray, XINT (index));
+  set_symbol_next (sym, SYMBOLP (*ptr) ? XSYMBOL (*ptr) : NULL);
+  *ptr = sym;
+  return sym;
+}
+
+/* Intern a symbol with name STRING in OBARRAY using bucket INDEX.  */
+
+Lisp_Object
+intern_driver (Lisp_Object string, Lisp_Object obarray, Lisp_Object index)
+{
+  return intern_sym (Fmake_symbol (string), obarray, index);
+}
+
 /* Intern the C string STR: return a symbol with that name,
    interned in the current obarray.  */
 
@@ -3706,7 +3749,11 @@ intern_1 (const char *str, ptrdiff_t len)
   Lisp_Object obarray = check_obarray (Vobarray);
   Lisp_Object tem = oblookup (obarray, str, len, len);
 
-  return SYMBOLP (tem) ? tem : Fintern (make_string (str, len), obarray);
+  return (SYMBOLP (tem) ? tem
+	  /* The above `oblookup' was done on the basis of nchars==nbytes, so
+	     the string has to be unibyte.  */
+	  : intern_driver (make_unibyte_string (str, len),
+			   obarray, tem));
 }
 
 Lisp_Object
@@ -3715,16 +3762,31 @@ intern_c_string_1 (const char *str, ptrdiff_t len)
   Lisp_Object obarray = check_obarray (Vobarray);
   Lisp_Object tem = oblookup (obarray, str, len, len);
 
-  if (SYMBOLP (tem))
-    return tem;
+  if (!SYMBOLP (tem))
+    {
+      /* Creating a non-pure string from a string literal not implemented yet.
+	 We could just use make_string here and live with the extra copy.  */
+      eassert (!NILP (Vpurify_flag));
+      tem = intern_driver (make_pure_c_string (str, len), obarray, tem);
+    }
+  return tem;
+}
 
-  if (NILP (Vpurify_flag))
-    /* Creating a non-pure string from a string literal not
-       implemented yet.  We could just use make_string here and live
-       with the extra copy.  */
-    emacs_abort ();
+static void
+define_symbol (Lisp_Object sym, char const *str)
+{
+  ptrdiff_t len = strlen (str);
+  Lisp_Object string = make_pure_c_string (str, len);
+  init_symbol (sym, string);
 
-  return Fintern (make_pure_c_string (str, len), obarray);
+  /* Qunbound is uninterned, so that it's not confused with any symbol
+     'unbound' created by a Lisp program.  */
+  if (! EQ (sym, Qunbound))
+    {
+      Lisp_Object bucket = oblookup (initial_obarray, str, len, len);
+      eassert (INTEGERP (bucket));
+      intern_sym (sym, initial_obarray, bucket);
+    }
 }
 
 DEFUN ("intern", Fintern, Sintern, 1, 2, 0,
@@ -3734,43 +3796,16 @@ A second optional argument specifies the obarray to use;
 it defaults to the value of `obarray'.  */)
   (Lisp_Object string, Lisp_Object obarray)
 {
-  register Lisp_Object tem, sym, *ptr;
+  Lisp_Object tem;
 
-  if (NILP (obarray)) obarray = Vobarray;
-  obarray = check_obarray (obarray);
-
+  obarray = check_obarray (NILP (obarray) ? Vobarray : obarray);
   CHECK_STRING (string);
 
-  tem = oblookup (obarray, SSDATA (string),
-		  SCHARS (string),
-		  SBYTES (string));
-  if (!INTEGERP (tem))
-    return tem;
-
-  if (!NILP (Vpurify_flag))
-    string = Fpurecopy (string);
-  sym = Fmake_symbol (string);
-
-  if (EQ (obarray, initial_obarray))
-    XSYMBOL (sym)->interned = SYMBOL_INTERNED_IN_INITIAL_OBARRAY;
-  else
-    XSYMBOL (sym)->interned = SYMBOL_INTERNED;
-
-  if ((SREF (string, 0) == ':')
-      && EQ (obarray, initial_obarray))
-    {
-      XSYMBOL (sym)->constant = 1;
-      XSYMBOL (sym)->redirect = SYMBOL_PLAINVAL;
-      SET_SYMBOL_VAL (XSYMBOL (sym), sym);
-    }
-
-  ptr = aref_addr (obarray, XINT(tem));
-  if (SYMBOLP (*ptr))
-    set_symbol_next (sym, XSYMBOL (*ptr));
-  else
-    set_symbol_next (sym, NULL);
-  *ptr = sym;
-  return sym;
+  tem = oblookup (obarray, SSDATA (string), SCHARS (string), SBYTES (string));
+  if (!SYMBOLP (tem))
+    tem = intern_driver (NILP (Vpurify_flag) ? string : Fpurecopy (string),
+			 obarray, tem);
+  return tem;
 }
 
 DEFUN ("intern-soft", Fintern_soft, Sintern_soft, 1, 2, 0,
@@ -3806,7 +3841,8 @@ DEFUN ("unintern", Funintern, Sunintern, 1, 2, 0,
 The value is t if a symbol was found and deleted, nil otherwise.
 NAME may be a string or a symbol.  If it is a symbol, that symbol
 is deleted, if it belongs to OBARRAY--no other symbol is deleted.
-OBARRAY defaults to the value of the variable `obarray'.  */)
+OBARRAY, if nil, defaults to the value of the variable `obarray'.
+usage: (unintern NAME OBARRAY)  */)
   (Lisp_Object name, Lisp_Object obarray)
 {
   register Lisp_Object string, tem;
@@ -3876,7 +3912,8 @@ OBARRAY defaults to the value of the variable `obarray'.  */)
 
 /* Return the symbol in OBARRAY whose names matches the string
    of SIZE characters (SIZE_BYTE bytes) at PTR.
-   If there is no such symbol in OBARRAY, return nil.
+   If there is no such symbol, return the integer bucket number of
+   where the symbol would be if it were present.
 
    Also store the bucket number in oblookup_last_bucket_number.  */
 
@@ -3966,27 +4003,20 @@ init_obarray (void)
   initial_obarray = Vobarray;
   staticpro (&initial_obarray);
 
-  Qunbound = Fmake_symbol (build_pure_c_string ("unbound"));
-  /* Set temporary dummy values to Qnil and Vpurify_flag to satisfy the
-     NILP (Vpurify_flag) check in intern_c_string.  */
-  Qnil = make_number (-1); Vpurify_flag = make_number (1);
-  Qnil = intern_c_string ("nil");
+  for (int i = 0; i < ARRAYELTS (lispsym); i++)
+    define_symbol (builtin_lisp_symbol (i), defsym_name[i]);
 
-  /* Fmake_symbol inits fields of new symbols with Qunbound and Qnil,
-     so those two need to be fixed manually.  */
-  SET_SYMBOL_VAL (XSYMBOL (Qunbound), Qunbound);
-  set_symbol_function (Qunbound, Qnil);
-  set_symbol_plist (Qunbound, Qnil);
+  DEFSYM (Qunbound, "unbound");
+
+  DEFSYM (Qnil, "nil");
   SET_SYMBOL_VAL (XSYMBOL (Qnil), Qnil);
   XSYMBOL (Qnil)->constant = 1;
-  XSYMBOL (Qnil)->declared_special = 1;
-  set_symbol_plist (Qnil, Qnil);
-  set_symbol_function (Qnil, Qnil);
+  XSYMBOL (Qnil)->declared_special = true;
 
-  Qt = intern_c_string ("t");
+  DEFSYM (Qt, "t");
   SET_SYMBOL_VAL (XSYMBOL (Qt), Qt);
-  XSYMBOL (Qnil)->declared_special = 1;
   XSYMBOL (Qt)->constant = 1;
+  XSYMBOL (Qt)->declared_special = true;
 
   /* Qt is correct even if CANNOT_DUMP.  loadup.el will set to nil at end.  */
   Vpurify_flag = Qt;
@@ -4091,68 +4121,63 @@ defvar_kboard (struct Lisp_Kboard_Objfwd *ko_fwd,
   SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)ko_fwd);
 }
 
-/* Check that the elements of Vload_path exist.  */
+/* Check that the elements of lpath exist.  */
 
 static void
-load_path_check (void)
+load_path_check (Lisp_Object lpath)
 {
   Lisp_Object path_tail;
 
   /* The only elements that might not exist are those from
      PATH_LOADSEARCH, EMACSLOADPATH.  Anything else is only added if
      it exists.  */
-  for (path_tail = Vload_path; !NILP (path_tail); path_tail = XCDR (path_tail))
+  for (path_tail = lpath; !NILP (path_tail); path_tail = XCDR (path_tail))
     {
       Lisp_Object dirfile;
       dirfile = Fcar (path_tail);
       if (STRINGP (dirfile))
         {
           dirfile = Fdirectory_file_name (dirfile);
-          if (! file_accessible_directory_p (SSDATA (dirfile)))
+          if (! file_accessible_directory_p (dirfile))
             dir_warning ("Lisp directory", XCAR (path_tail));
         }
     }
 }
 
-/* Record the value of load-path used at the start of dumping
-   so we can see if the site changed it later during dumping.  */
-static Lisp_Object dump_path;
+/* Return the default load-path, to be used if EMACSLOADPATH is unset.
+   This does not include the standard site-lisp directories
+   under the installation prefix (i.e., PATH_SITELOADSEARCH),
+   but it does (unless no_site_lisp is set) include site-lisp
+   directories in the source/build directories if those exist and we
+   are running uninstalled.
 
-/* Compute the default Vload_path, with the following logic:
-   If CANNOT_DUMP:
-   use EMACSLOADPATH env-var if set; otherwise use PATH_LOADSEARCH,
-   prepending PATH_SITELOADSEARCH unless --no-site-lisp.
+   Uses the following logic:
+   If CANNOT_DUMP: Use PATH_LOADSEARCH.
    The remainder is what happens when dumping works:
    If purify-flag (ie dumping) just use PATH_DUMPLOADSEARCH.
-   Otherwise use EMACSLOADPATH if set, else PATH_LOADSEARCH.
+   Otherwise use PATH_LOADSEARCH.
 
-   If !initialized, then just set both Vload_path and dump_path.
-   If initialized, then if Vload_path != dump_path, do nothing.
-   (Presumably the load-path has already been changed by something.
-   This can only be from a site-load file during dumping,
-   or because EMACSLOADPATH is set.)
+   If !initialized, then just return PATH_DUMPLOADSEARCH.
+   If initialized:
    If Vinstallation_directory is not nil (ie, running uninstalled):
    If installation-dir/lisp exists and not already a member,
    we must be running uninstalled.  Reset the load-path
    to just installation-dir/lisp.  (The default PATH_LOADSEARCH
    refers to the eventual installation directories.  Since we
    are not yet installed, we should not use them, even if they exist.)
-   If installation-dir/lisp does not exist, just add dump_path at the
-   end instead.
-   Add installation-dir/leim (if exists and not already a member) at the front.
+   If installation-dir/lisp does not exist, just add
+   PATH_DUMPLOADSEARCH at the end instead.
    Add installation-dir/site-lisp (if !no_site_lisp, and exists
    and not already a member) at the front.
    If installation-dir != source-dir (ie running an uninstalled,
    out-of-tree build) AND install-dir/src/Makefile exists BUT
    install-dir/src/Makefile.in does NOT exist (this is a sanity
-   check), then repeat the above steps for source-dir/lisp,
-   leim and site-lisp.
-   Finally, add the site-lisp directories at the front (if !no_site_lisp).
-*/
+   check), then repeat the above steps for source-dir/lisp, site-lisp.  */
 
-void
-init_lread (void)
+static Lisp_Object
+load_path_default (void)
 {
+  Lisp_Object lpath = Qnil;
   const char *normal;
 
 #ifdef CANNOT_DUMP
@@ -4162,190 +4187,191 @@ init_lread (void)
 
   normal = PATH_LOADSEARCH;
 #ifdef HAVE_NS
-  Vload_path = decode_env_path ("EMACSLOADPATH", loadpath ? loadpath : normal);
+  lpath = decode_env_path (0, loadpath ? loadpath : normal, 0);
 #else
-  Vload_path = decode_env_path ("EMACSLOADPATH", normal);
+  lpath = decode_env_path (0, normal, 0);
 #endif
 
-  load_path_check ();
-
-  /* FIXME CANNOT_DUMP platforms should get source-dir/lisp etc added
-   to their load-path too, AFAICS.  I don't think we can tell the
-   difference between initialized and !initialized in this case,
-   so we'll have to do it unconditionally when Vinstallation_directory
-   is non-nil.  */
-  if (!no_site_lisp && !egetenv ("EMACSLOADPATH"))
-    {
-      Lisp_Object sitelisp;
-      sitelisp = decode_env_path (0, PATH_SITELOADSEARCH);
-      if (! NILP (sitelisp)) Vload_path = nconc2 (sitelisp, Vload_path);
-    }
 #else  /* !CANNOT_DUMP */
-  if (NILP (Vpurify_flag))
-    {
-      normal = PATH_LOADSEARCH;
-      /* If the EMACSLOADPATH environment variable is set, use its value.
-         This doesn't apply if we're dumping.  */
-      if (egetenv ("EMACSLOADPATH"))
-        Vload_path = decode_env_path ("EMACSLOADPATH", normal);
-    }
-  else
-    normal = PATH_DUMPLOADSEARCH;
 
-  /* In a dumped Emacs, we normally reset the value of Vload_path using
-     PATH_LOADSEARCH, since the value that was dumped uses lisp/ in
-     the source directory, instead of the path of the installed elisp
-     libraries.  However, if it appears that Vload_path has already been
-     changed from the default that was saved before dumping, don't
-     change it further.  Changes can only be due to EMACSLOADPATH, or
-     site-lisp files that were processed during dumping.  */
+  normal = NILP (Vpurify_flag) ? PATH_LOADSEARCH : PATH_DUMPLOADSEARCH;
+
   if (initialized)
     {
-      if (NILP (Fequal (dump_path, Vload_path)))
-        {
-          /* Do not make any changes, just check the elements exist.  */
-          /* Note: --no-site-lisp is ignored.
-             I don't know what to do about this.  */
-          load_path_check ();
-        }
-      else
-	{
 #ifdef HAVE_NS
-	  const char *loadpath = ns_load_path ();
-	  Vload_path = decode_env_path (0, loadpath ? loadpath : normal);
+      const char *loadpath = ns_load_path ();
+      lpath = decode_env_path (0, loadpath ? loadpath : normal, 0);
 #else
-	  Vload_path = decode_env_path (0, normal);
+      lpath = decode_env_path (0, normal, 0);
 #endif
-	  if (!NILP (Vinstallation_directory))
-	    {
-	      Lisp_Object tem, tem1;
+      if (!NILP (Vinstallation_directory))
+        {
+          Lisp_Object tem, tem1;
 
-              /* Add to the path the lisp subdir of the installation
-                 dir, if it is accessible.  Note: in out-of-tree builds,
-                 this directory is empty save for Makefile.  */
-              tem = Fexpand_file_name (build_string ("lisp"),
-                                       Vinstallation_directory);
-              tem1 = Ffile_accessible_directory_p (tem);
-              if (!NILP (tem1))
+          /* Add to the path the lisp subdir of the installation
+             dir, if it is accessible.  Note: in out-of-tree builds,
+             this directory is empty save for Makefile.  */
+          tem = Fexpand_file_name (build_string ("lisp"),
+                                   Vinstallation_directory);
+          tem1 = Ffile_accessible_directory_p (tem);
+          if (!NILP (tem1))
+            {
+              if (NILP (Fmember (tem, lpath)))
                 {
-                  if (NILP (Fmember (tem, Vload_path)))
-                    {
-                      /* We are running uninstalled.  The default load-path
-                         points to the eventual installed lisp, leim
-                         directories.  We should not use those now, even
-                         if they exist, so start over from a clean slate.  */
-                      Vload_path = list1 (tem);
-                    }
+                  /* We are running uninstalled.  The default load-path
+                     points to the eventual installed lisp directories.
+                     We should not use those now, even if they exist,
+                     so start over from a clean slate.  */
+                  lpath = list1 (tem);
                 }
-              else
-                /* That dir doesn't exist, so add the build-time
-                   Lisp dirs instead.  */
-                Vload_path = nconc2 (Vload_path, dump_path);
+            }
+          else
+            /* That dir doesn't exist, so add the build-time
+               Lisp dirs instead.  */
+            {
+              Lisp_Object dump_path =
+                decode_env_path (0, PATH_DUMPLOADSEARCH, 0);
+              lpath = nconc2 (lpath, dump_path);
+            }
 
-              /* Add leim under the installation dir, if it is accessible. */
-              tem = Fexpand_file_name (build_string ("leim"),
-                                       Vinstallation_directory);
-              tem1 = Ffile_accessible_directory_p (tem);
-              if (!NILP (tem1))
-                {
-                  if (NILP (Fmember (tem, Vload_path)))
-                    Vload_path = Fcons (tem, Vload_path);
-                }
-
-              /* Add site-lisp under the installation dir, if it exists.  */
-              if (!no_site_lisp)
-                {
-                  tem = Fexpand_file_name (build_string ("site-lisp"),
-                                           Vinstallation_directory);
-                  tem1 = Ffile_accessible_directory_p (tem);
-                  if (!NILP (tem1))
-                    {
-                      if (NILP (Fmember (tem, Vload_path)))
-                        Vload_path = Fcons (tem, Vload_path);
-                    }
-                }
-
-              /* If Emacs was not built in the source directory,
-                 and it is run from where it was built, add to load-path
-                 the lisp, leim and site-lisp dirs under that directory.  */
-
-              if (NILP (Fequal (Vinstallation_directory, Vsource_directory)))
-                {
-                  Lisp_Object tem2;
-
-                  tem = Fexpand_file_name (build_string ("src/Makefile"),
-                                           Vinstallation_directory);
-                  tem1 = Ffile_exists_p (tem);
-
-                  /* Don't be fooled if they moved the entire source tree
-                     AFTER dumping Emacs.  If the build directory is indeed
-                     different from the source dir, src/Makefile.in and
-                     src/Makefile will not be found together.  */
-                  tem = Fexpand_file_name (build_string ("src/Makefile.in"),
-                                           Vinstallation_directory);
-                  tem2 = Ffile_exists_p (tem);
-                  if (!NILP (tem1) && NILP (tem2))
-                    {
-                      tem = Fexpand_file_name (build_string ("lisp"),
-                                               Vsource_directory);
-
-                      if (NILP (Fmember (tem, Vload_path)))
-                        Vload_path = Fcons (tem, Vload_path);
-
-                      tem = Fexpand_file_name (build_string ("leim"),
-                                               Vsource_directory);
-
-                      if (NILP (Fmember (tem, Vload_path)))
-                        Vload_path = Fcons (tem, Vload_path);
-
-                      if (!no_site_lisp)
-                        {
-                          tem = Fexpand_file_name (build_string ("site-lisp"),
-                                                   Vsource_directory);
-                          tem1 = Ffile_accessible_directory_p (tem);
-                          if (!NILP (tem1))
-                            {
-                              if (NILP (Fmember (tem, Vload_path)))
-                                Vload_path = Fcons (tem, Vload_path);
-                            }
-                        }
-                    }
-                } /* Vinstallation_directory != Vsource_directory */
-
-	    } /* if Vinstallation_directory */
-
-          /* Check before adding the site-lisp directories.
-             The install should have created them, but they are not
-             required, so no need to warn if they are absent.
-             Or we might be running before installation.  */
-          load_path_check ();
-
-          /* Add the site-lisp directories at the front.  */
+          /* Add site-lisp under the installation dir, if it exists.  */
           if (!no_site_lisp)
             {
-              Lisp_Object sitelisp;
-              sitelisp = decode_env_path (0, PATH_SITELOADSEARCH);
-              if (! NILP (sitelisp)) Vload_path = nconc2 (sitelisp, Vload_path);
+              tem = Fexpand_file_name (build_string ("site-lisp"),
+                                       Vinstallation_directory);
+              tem1 = Ffile_accessible_directory_p (tem);
+              if (!NILP (tem1))
+                {
+                  if (NILP (Fmember (tem, lpath)))
+                    lpath = Fcons (tem, lpath);
+                }
             }
-	} /* if dump_path == Vload_path */
+
+          /* If Emacs was not built in the source directory,
+             and it is run from where it was built, add to load-path
+             the lisp and site-lisp dirs under that directory.  */
+
+          if (NILP (Fequal (Vinstallation_directory, Vsource_directory)))
+            {
+              Lisp_Object tem2;
+
+              tem = Fexpand_file_name (build_string ("src/Makefile"),
+                                       Vinstallation_directory);
+              tem1 = Ffile_exists_p (tem);
+
+              /* Don't be fooled if they moved the entire source tree
+                 AFTER dumping Emacs.  If the build directory is indeed
+                 different from the source dir, src/Makefile.in and
+                 src/Makefile will not be found together.  */
+              tem = Fexpand_file_name (build_string ("src/Makefile.in"),
+                                       Vinstallation_directory);
+              tem2 = Ffile_exists_p (tem);
+              if (!NILP (tem1) && NILP (tem2))
+                {
+                  tem = Fexpand_file_name (build_string ("lisp"),
+                                           Vsource_directory);
+
+                  if (NILP (Fmember (tem, lpath)))
+                    lpath = Fcons (tem, lpath);
+
+                  if (!no_site_lisp)
+                    {
+                      tem = Fexpand_file_name (build_string ("site-lisp"),
+                                               Vsource_directory);
+                      tem1 = Ffile_accessible_directory_p (tem);
+                      if (!NILP (tem1))
+                        {
+                          if (NILP (Fmember (tem, lpath)))
+                            lpath = Fcons (tem, lpath);
+                        }
+                    }
+                }
+            } /* Vinstallation_directory != Vsource_directory */
+
+        } /* if Vinstallation_directory */
     }
   else                          /* !initialized */
     {
       /* NORMAL refers to PATH_DUMPLOADSEARCH, ie the lisp dir in the
          source directory.  We used to add ../lisp (ie the lisp dir in
-         the build directory) at the front here, but that caused trouble
-	 because it was copied from dump_path into Vload_path, above,
-	 when Vinstallation_directory was non-nil.  It should not be
-         necessary, since in out of tree builds lisp/ is empty, save
+         the build directory) at the front here, but that should not
+         be necessary, since in out of tree builds lisp/ is empty, save
          for Makefile.  */
-      Vload_path = decode_env_path (0, normal);
-      dump_path = Vload_path;
-      /* No point calling load_path_check; load-path only contains essential
-         elements from the source directory at this point.  They cannot
-         be missing unless something went extremely (and improbably)
-         wrong, in which case the build will fail in obvious ways.  */
+      lpath = decode_env_path (0, normal, 0);
     }
-#endif  /* !CANNOT_DUMP */
+#endif /* !CANNOT_DUMP */
+
+  return lpath;
+}
+
+void
+init_lread (void)
+{
+  /* First, set Vload_path.  */
+
+  /* Ignore EMACSLOADPATH when dumping.  */
+#ifdef CANNOT_DUMP
+  bool use_loadpath = true;
+#else
+  bool use_loadpath = NILP (Vpurify_flag);
+#endif
+
+  if (use_loadpath && egetenv ("EMACSLOADPATH"))
+    {
+      Vload_path = decode_env_path ("EMACSLOADPATH", 0, 1);
+
+      /* Check (non-nil) user-supplied elements.  */
+      load_path_check (Vload_path);
+
+      /* If no nils in the environment variable, use as-is.
+         Otherwise, replace any nils with the default.  */
+      if (! NILP (Fmemq (Qnil, Vload_path)))
+        {
+          Lisp_Object elem, elpath = Vload_path;
+          Lisp_Object default_lpath = load_path_default ();
+
+          /* Check defaults, before adding site-lisp.  */
+          load_path_check (default_lpath);
+
+          /* Add the site-lisp directories to the front of the default.  */
+          if (!no_site_lisp)
+            {
+              Lisp_Object sitelisp;
+              sitelisp = decode_env_path (0, PATH_SITELOADSEARCH, 0);
+              if (! NILP (sitelisp))
+                default_lpath = nconc2 (sitelisp, default_lpath);
+            }
+
+          Vload_path = Qnil;
+
+          /* Replace nils from EMACSLOADPATH by default.  */
+          while (CONSP (elpath))
+            {
+              elem = XCAR (elpath);
+              elpath = XCDR (elpath);
+              Vload_path = CALLN (Fappend, Vload_path,
+				  NILP (elem) ? default_lpath : list1 (elem));
+            }
+        }                       /* Fmemq (Qnil, Vload_path) */
+    }
+  else
+    {
+      Vload_path = load_path_default ();
+
+      /* Check before adding site-lisp directories.
+         The install should have created them, but they are not
+         required, so no need to warn if they are absent.
+         Or we might be running before installation.  */
+      load_path_check (Vload_path);
+
+      /* Add the site-lisp directories at the front.  */
+      if (initialized && !no_site_lisp)
+        {
+          Lisp_Object sitelisp;
+          sitelisp = decode_env_path (0, PATH_SITELOADSEARCH, 0);
+          if (! NILP (sitelisp)) Vload_path = nconc2 (sitelisp, Vload_path);
+        }
+    }
 
   Vvalues = Qnil;
 
@@ -4363,9 +4389,10 @@ init_lread (void)
 void
 dir_warning (char const *use, Lisp_Object dirname)
 {
-  static char const format[] = "Warning: %s `%s': %s\n";
+  static char const format[] = "Warning: %s '%s': %s\n";
   int access_errno = errno;
-  fprintf (stderr, format, use, SSDATA (dirname), strerror (access_errno));
+  fprintf (stderr, format, use, SSDATA (ENCODE_SYSTEM (dirname)),
+	   strerror (access_errno));
 
   /* Don't log the warning before we've initialized!!  */
   if (initialized)
@@ -4452,9 +4479,12 @@ were read in.  */);
 
   DEFVAR_LISP ("load-path", Vload_path,
 	       doc: /* List of directories to search for files to load.
-Each element is a string (directory name) or nil (try default directory).
-Initialized based on EMACSLOADPATH environment variable, if any,
-otherwise to default specified by file `epaths.h' when Emacs was built.  */);
+Each element is a string (directory file name) or nil (meaning
+`default-directory').
+Initialized during startup as described in Info node `(elisp)Library Search'.
+Use `directory-file-name' when adding items to this path.  However, Lisp
+programs that process this list should tolerate directories both with
+and without trailing slashes.  */);
 
   DEFVAR_LISP ("load-suffixes", Vload_suffixes,
 	       doc: /* List of suffixes for (compiled or source) Emacs Lisp files.
@@ -4487,7 +4517,7 @@ customize `jka-compr-load-suffixes' rather than the present variable.  */);
 Each element looks like (REGEXP-OR-FEATURE FUNCS...).
 
 REGEXP-OR-FEATURE is either a regular expression to match file names, or
-a symbol \(a feature name).
+a symbol (a feature name).
 
 When `load' is run and the file-name argument matches an element's
 REGEXP-OR-FEATURE, or when `provide' is run and provides the symbol
@@ -4538,8 +4568,10 @@ of the file, regardless of whether or not it has the `.elc' extension.  */);
 
   DEFVAR_LISP ("load-read-function", Vload_read_function,
 	       doc: /* Function used by `load' and `eval-region' for reading expressions.
-The default is nil, which means use the function `read'.  */);
-  Vload_read_function = Qnil;
+Called with a single argument (the stream from which to read).
+The default is to use the function `read'.  */);
+  DEFSYM (Qread, "read");
+  Vload_read_function = Qread;
 
   DEFVAR_LISP ("load-source-file-function", Vload_source_file_function,
 	       doc: /* Function called in `load' to load an Emacs Lisp source file.
@@ -4570,7 +4602,7 @@ and is not meant for users to change.  */);
 You cannot count on them to still be there!  */);
   Vsource_directory
     = Fexpand_file_name (build_string ("../"),
-			 Fcar (decode_env_path (0, PATH_DUMPLOADSEARCH)));
+			 Fcar (decode_env_path (0, PATH_DUMPLOADSEARCH, 0)));
 
   DEFVAR_LISP ("preloaded-file-list", Vpreloaded_file_list,
 	       doc: /* List of files that were preloaded (when dumping Emacs).  */);
@@ -4621,13 +4653,29 @@ variables, this must be set in the first line of a file.  */);
   Vold_style_backquotes = Qnil;
   DEFSYM (Qold_style_backquotes, "old-style-backquotes");
 
+  DEFVAR_BOOL ("load-prefer-newer", load_prefer_newer,
+               doc: /* Non-nil means `load' prefers the newest version of a file.
+This applies when a filename suffix is not explicitly specified and
+`load' is trying various possible suffixes (see `load-suffixes' and
+`load-file-rep-suffixes').  Normally, it stops at the first file
+that exists unless you explicitly specify one or the other.  If this
+option is non-nil, it checks all suffixes and uses whichever file is
+newest.
+Note that if you customize this, obviously it will not affect files
+that are loaded before your customizations are read!  */);
+  load_prefer_newer = 0;
+
   /* Vsource_directory was initialized in init_lread.  */
 
   DEFSYM (Qcurrent_load_list, "current-load-list");
   DEFSYM (Qstandard_input, "standard-input");
   DEFSYM (Qread_char, "read-char");
   DEFSYM (Qget_file_char, "get-file-char");
+
+  /* Used instead of Qget_file_char while loading *.elc files compiled
+     by Emacs 21 or older.  */
   DEFSYM (Qget_emacs_mule_file_char, "get-emacs-mule-file-char");
+
   DEFSYM (Qload_force_doc_strings, "load-force-doc-strings");
 
   DEFSYM (Qbackquote, "`");
@@ -4644,8 +4692,6 @@ variables, this must be set in the first line of a file.  */);
   DEFSYM (Qfile_truename, "file-truename");
   DEFSYM (Qdir_ok, "dir-ok");
   DEFSYM (Qdo_after_load_evaluation, "do-after-load-evaluation");
-
-  staticpro (&dump_path);
 
   staticpro (&read_objects);
   read_objects = Qnil;

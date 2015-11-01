@@ -2,7 +2,7 @@
 
 # RCS to ChangeLog generator
 
-# Copyright (C) 1992-1998, 2001-2013 Free Software Foundation, Inc.
+# Copyright (C) 1992-1998, 2001-2015 Free Software Foundation, Inc.
 
 # Author: Paul Eggert <eggert@twinsun.com>
 
@@ -20,7 +20,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-Copyright='Copyright (C) 2013 Free Software Foundation, Inc.
+Copyright='Copyright (C) 2015 Free Software Foundation, Inc.
 This program comes with NO WARRANTY, to the extent permitted by law.
 You may redistribute copies of this program
 under the terms of the GNU General Public License.
@@ -130,7 +130,8 @@ do
 		case $1 in
 		-n)	case ${2?}${3?}${4?} in
 			*"$tab"* | *"$nl"*)
-				echo >&2 "$0: -n '$2' '$3' '$4': tabs, newlines not allowed"
+				printf '%s\n' >&2 \
+				  "$0: -n '$2' '$3' '$4': tabs, newlines not allowed"
 				exit 1;;
 			esac
 			login=$2
@@ -140,7 +141,7 @@ do
 			# If $2 is not tab-separated, use colon for separator.
 			case ${2?} in
 			*"$nl"*)
-				echo >&2 "$0: -u '$2': newlines not allowed"
+				printf '%s\n' >&2 "$0: -u '$2': newlines not allowed"
 				exit 1;;
 			*"$tab"*)
 				t=$tab;;
@@ -149,7 +150,7 @@ do
 			esac
 			case $2 in
 			*"$t"*"$t"*"$t"*)
-				echo >&2 "$0: -u '$2': too many fields"
+				printf '%s\n' >&2 "$0: -u '$2': too many fields"
 				exit 1;;
 			*"$t"*"$t"*)
 				uf="[^$t]*$t" # An unselected field, followed by a separator.
@@ -161,7 +162,7 @@ do
 					expr "X$2" : "$uf$uf$sf"
 				`;;
 			*)
-				echo >&2 "$0: -u '$2': not enough fields"
+				printf '%s\n' >&2 "$0: -u '$2': not enough fields"
 				exit 1;;
 			esac
 			shift;;
@@ -186,9 +187,9 @@ do
 	--version)
 		set $Id
 		rcs2logVersion=$3
-		echo >&2 "rcs2log (GNU Emacs) $rcs2logVersion$nl$Copyright"
+		printf '%s\n' >&2 "rcs2log (GNU Emacs) $rcs2logVersion$nl$Copyright"
 		exit 0;;
-	-*)	echo >&2 "Usage: $0 [OPTION]... [FILE ...]$nl$Help"
+	-*)	printf '%s\n' >&2 "Usage: $0 [OPTION]... [FILE ...]$nl$Help"
 		case $1 in
 		--help) exit 0;;
 		*) exit 1;;
@@ -205,11 +206,19 @@ month_data='
 	m[9]="Oct"; m[10]="Nov"; m[11]="Dec"
 '
 
-logdir=$TMPDIR/rcs2log$$
-llogout=$logdir/l
+if type mktemp >/dev/null 2>&1; then
+	logdir=`mktemp -d`
+else
+	logdir=$TMPDIR/rcs2log$$
+	(umask 077 && mkdir "$logdir")
+fi || exit
+case $logdir in
+-*) logdir=./$logdir;;
+esac
 trap exit 1 2 13 15
-trap "rm -fr $logdir 2>/dev/null" 0
-(umask 077 && exec mkdir $logdir) || exit
+trap "rm -fr \"$logdir\" 2>/dev/null" 0
+
+llogout=$logdir/l
 
 # If no rlog-format log file is given, generate one into $rlogfile.
 case $rlogfile in
@@ -295,7 +304,8 @@ case $rlogfile in
 			esac
 			if test ! -d "$repository"
 			then
-				echo >&2 "$0: $repository: bad repository (see CVS/Repository)"
+				printf '%s\n' >&2 \
+				  "$0: $repository: bad repository (see CVS/Repository)"
 				exit 1
 			fi
 			pository=$repository;;
@@ -322,7 +332,7 @@ case $rlogfile in
 				T?*)
 					rlog_options=-r`expr "$CVSTAG" : 'T\(.*\)'`;;
 				*)
-					echo >&2 "$0: invalid CVS/Tag"; exit 1;;
+					printf '%s\n' >&2 "$0: invalid CVS/Tag"; exit 1;;
 				esac
 			fi;;
 		esac
@@ -406,7 +416,7 @@ sort $SORT_K_OPTIONS </dev/null 2>/dev/null || SORT_K_OPTIONS='+2 -4r +4 +0'
 
 
 # Get the full name of each author the logs mention, and set initialize_fullname
-# to awk code that initializes the `fullname' awk associative array.
+# to awk code that initializes the 'fullname' awk associative array.
 # Warning: foreign authors (i.e. not known in the passwd file) are mishandled;
 # you have to fix the resulting output by hand.
 
@@ -417,10 +427,10 @@ case $loginFullnameMailaddrs in
 ?*)
 	case $loginFullnameMailaddrs in
 	*\"* | *\\*)
-		sed 's/["\\]/\\&/g' >$llogout <<EOF || exit
+		sed 's/["\\]/\\&/g' >"$llogout" <<EOF || exit
 $loginFullnameMailaddrs
 EOF
-		loginFullnameMailaddrs=`cat $llogout`;;
+		loginFullnameMailaddrs=`cat "$llogout"`;;
 	esac
 
 	oldIFS=$IFS
@@ -442,29 +452,33 @@ esac
 
 case $logins in
 ?*)
-	sort -u -o $llogout <<EOF
+	sort -u -o "$llogout" <<EOF
 $logins
 EOF
 	;;
 '')
 	: ;;
-esac >$llogout || exit
+esac >"$llogout" || exit
 
 output_authors='/^date: / {
-	if ($2 ~ /^[0-9]*[-\/][0-9][0-9][-\/][0-9][0-9]$/ && $3 ~ /^[0-9][0-9]:[0-9][0-9]:[0-9][0-9][-+0-9:]*;$/ && $4 == "author:" && $5 ~ /^[^;]*;$/) {
-		print substr($5, 1, length($5)-1)
+	cvsformat = $5 == "author:"
+	if ($2 ~ /^[0-9]*[-\/][0-9][0-9][-\/][0-9][0-9]$/ && (cvsformat ? $3 ~ /^[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/ && $4 ~ /^[-+][0-9:]*;$/ : $3 ~ /^[0-9][0-9]:[0-9][0-9]:[0-9][0-9][-+0-9:]*;$/)) {
+		author = $(5 + cvsformat)
+		if ($(4 + cvsformat) == "author:" && author ~ /^[^;]*;$/) {
+			print substr(author, 1, length(author)-1)
+		}
 	}
 }'
 authors=`
-	$AWK "$output_authors" <"$rlogfile" | sort -u | comm -23 - $llogout
+	$AWK "$output_authors" <"$rlogfile" | sort -u | comm -23 - "$llogout"
 `
 case $authors in
 ?*)
-	cat >$llogout <<EOF || exit
+	cat >"$llogout" <<EOF || exit
 $authors
 EOF
 	initialize_author_script='s/["\\]/\\&/g; s/.*/author[\"&\"] = 1/'
-	initialize_author=`sed -e "$initialize_author_script" <$llogout`
+	initialize_author=`sed -e "$initialize_author_script" <"$llogout"`
 	awkscript='
 		BEGIN {
 			alphabet = "abcdefghijklmnopqrstuvwxyz"
@@ -534,8 +548,8 @@ esac
 
 # Function to print a single log line.
 # We don't use awk functions, to stay compatible with old awk versions.
-# `Log' is the log message.
-# `files' contains the affected files.
+# 'Log' is the log message.
+# 'files' contains the affected files.
 printlogline='{
 
 	# Following the GNU coding standards, rewrite
@@ -575,7 +589,7 @@ printlogline='{
 	}
 }'
 
-# Pattern to match the `revision' line of rlog output.
+# Pattern to match the 'revision' line of rlog output.
 rlog_revision_pattern='^revision [0-9]+\.[0-9]+(\.[0-9]+\.[0-9]+)*(['"$tab"' ]+locked by: [^'"$tab"' $,.0-9:;@]*[^'"$tab"' $,:;@][^'"$tab"' $,.0-9:;@]*;)?['"$tab"' ]*$'
 
 case $hostname in
@@ -583,7 +597,7 @@ case $hostname in
 	hostname=`(
 		hostname || uname -n || uuname -l || cat /etc/whoami
 	) 2>/dev/null` || {
-		echo >&2 "$0: cannot deduce hostname"
+		printf '%s\n' >&2 "$0: cannot deduce hostname"
 		exit 1
 	}
 
@@ -644,8 +658,23 @@ $AWK '
 				}
 				date = newdate date
 			}
-			time = substr($3, 1, length($3) - 1)
-			author = substr($5, 1, length($5)-1)
+			time = ""
+			for (i = 3; i <= NF; i++) {
+				time = time $i
+				if (time ~ /;$/) {
+					time = substr(time, 1, length(time) - 1)
+					break
+				}
+			}
+			i++
+			if ($i == "author:") {
+				author = $(i + 1)
+				if (author ~ /;$/) {
+					author = substr(author, 1, length(author) - 1)
+				}
+			} else {
+				author = ""
+			}
 			printf "%s%s%s%s%s%s%s%s%s%s", filename, SOH, rev, SOH, date, SOH, time, SOH, author, SOH
 			rev = "?"
 			next
@@ -769,9 +798,8 @@ $AWK -F"$SOH" '
 
 # Exit successfully.
 
-exec rm -fr $logdir
+exec rm -fr "$logdir"
 
 # Local Variables:
 # tab-width:4
 # End:
-

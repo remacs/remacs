@@ -1,6 +1,6 @@
 ### @configure_input@
 
-# Copyright (C) 2012-2013 Free Software Foundation, Inc.
+# Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
 # Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011
 #   National Institute of Advanced Industrial Science and Technology (AIST)
@@ -21,45 +21,109 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
-SHELL = /bin/sh
+SHELL = @SHELL@
+
+AWK = @AWK@
 
 srcdir = @srcdir@
-abs_builddir = @abs_builddir@
 top_srcdir = @top_srcdir@
-abs_top_builddir = @abs_top_builddir@
+top_builddir = @top_builddir@
 
-EMACS = ${abs_top_builddir}/src/emacs
-DSTDIR = ${top_srcdir}/lisp/international
-emacs = ${EMACS} -batch --no-site-file --no-site-lisp
+EMACS = ${top_builddir}/src/emacs
+unidir = ${top_srcdir}/lisp/international
+emacs = "${EMACS}" -batch --no-site-file --no-site-lisp
 
-all: ${DSTDIR}/charprop.el
+# 'make' verbosity.
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 
-.el.elc:
-	${emacs} -f batch-byte-compile $<
+AM_V_ELC = $(am__v_ELC_@AM_V@)
+am__v_ELC_ = $(am__v_ELC_@AM_DEFAULT_V@)
+am__v_ELC_0 = @echo "  ELC     " $@;
+am__v_ELC_1 =
+
+AM_V_GEN = $(am__v_GEN_@AM_V@)
+am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
+am__v_GEN_0 = @echo "  GEN     " $@;
+am__v_GEN_1 =
+
+AM_V_at = $(am__v_at_@AM_V@)
+am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
+am__v_at_0 = @
+am__v_at_1 =
+
+.PHONY: all unifiles
+
+all: ${top_srcdir}/src/macuvs.h unifiles ${unidir}/charscript.el
+
+## Specify .elc as an order-only prereq so as to not needlessly rebuild
+## target just because the .elc is missing.
+## Same with charprop.el below.
+${top_srcdir}/src/macuvs.h: ${srcdir}/uvs.el ${srcdir}/IVD_Sequences.txt | \
+  ${srcdir}/uvs.elc
+	$(AM_V_GEN)${emacs} -L ${srcdir} -l uvs \
+	  --eval '(uvs-print-table-ivd (unmsys--file-name "${srcdir}/IVD_Sequences.txt") "Adobe-Japan1")' \
+	  > $@
+
+%.elc: %.el
+	$(AM_V_ELC)${emacs} -f batch-byte-compile $<
 
 unidata.txt: ${srcdir}/UnicodeData.txt
-	sed -e 's/\([^;]*\);\(.*\)/(#x\1 "\2")/' -e 's/;/" "/g' < ${srcdir}/UnicodeData.txt > $@
+	$(AM_V_GEN)sed -e 's/\([^;]*\);\(.*\)/(#x\1 "\2")/' -e 's/;/" "/g' \
+	  < $< > $@
 
-${DSTDIR}/charprop.el: ${srcdir}/unidata-gen.elc unidata.txt
-	cd ${DSTDIR} && ${emacs} -l ${srcdir}/unidata-gen \
-	  -f unidata-gen-files ${srcdir} ${abs_builddir}/unidata.txt
+PHONY_EXTRAS =
+.PHONY: $(PHONY_EXTRAS)
 
-## Like the above, but generate in PWD rather than lisp/international.
-charprop.el: ${srcdir}/unidata-gen.elc unidata.txt
-	${emacs} -l ${srcdir}/unidata-gen \
-	  -f unidata-gen-files ${srcdir} unidata.txt
+${unidir}/charprop.el: ${srcdir}/unidata-gen.el \
+  ${srcdir}/UnicodeData.txt ${srcdir}/BidiMirroring.txt \
+  ${srcdir}/BidiBrackets.txt | \
+  ${srcdir}/unidata-gen.elc unidata.txt
+  ifneq (,$(wildcard $@))
+	$(AM_V_at)cd $(unidir) && \
+	for f in charprop.el `sed -n 's/^;; FILE: //p' < charprop.el`; do \
+	  [ ! -f $$f ] || [ -w $$f ] || chmod +w $$f || exit; \
+	done
+  endif
+	$(AM_V_GEN)${emacs} -L ${srcdir} -l unidata-gen -f unidata-gen-files \
+	  ${srcdir} "${unidir}"
 
-install: charprop.el
-	cp charprop.el ${DSTDIR}
-	cp `sed -n 's/^;; FILE: //p' < charprop.el` ${DSTDIR}
+## Check for deleted uni- files, and if any such, force a rebuild.
+## Perhaps a more elegant way would be for the previous rule
+## to generate a Makefile fragment explicitly listing the uni- files,
+## which this file could include.  If no fragment, rebuild everything.
+unifiles: ${unidir}/charprop.el
+	$(AM_V_at)for f in `sed -n 's/^;; FILE: //p' < $<`; do \
+	  [ -f $(unidir)/$$f ] || exec $(MAKE) PHONY_EXTRAS=$< $<; \
+	done
+
+
+.PHONY: charscript.el
+charscript.el: ${unidir}/charscript.el
+
+blocks = ${srcdir}/blocks.awk
+
+${unidir}/charscript.el: ${srcdir}/Blocks.txt ${blocks}
+	$(AM_V_GEN)$(AWK) -f ${blocks} < $< > $@
+
+
+.PHONY: clean bootstrap-clean distclean maintainer-clean extraclean
 
 clean:
-	if test -f charprop.el; then \
-	  rm -f `sed -n 's/^;; FILE: //p' < charprop.el`; \
-	fi
-	rm -f charprop.el ${srcdir}/unidata-gen.elc unidata.txt
+	rm -f ${srcdir}/*.elc unidata.txt
+
+bootstrap-clean: clean
 
 distclean: clean
-	-rm -f ./Makefile
+	rm -f Makefile
 
 maintainer-clean: distclean
+
+## Do not remove these files, even in a bootstrap, because they rarely
+## change and it slows down bootstrap (a tiny bit).
+## Cf leim/ja-dic (which is much slower).
+extraclean:
+	rm -f ${top_srcdir}/src/macuvs.h ${unidir}/charscript.el*
+  ifneq (,$(wildcard $(unidir)/charprop.el))
+	cd $(unidir) && \
+	  rm -f `sed -n 's/^;; FILE: //p' < charprop.el` charprop.el
+  endif

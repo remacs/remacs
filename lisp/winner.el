@@ -1,6 +1,6 @@
 ;;; winner.el --- Restore old window configurations
 
-;; Copyright (C) 1997-1998, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997-1998, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Ivar Rummelhoff <ivarru@math.uio.no>
 ;; Created: 27 Feb 1997
@@ -112,10 +112,7 @@ You may want to include buffer names such as *Help*, *Apropos*,
 ;; Save current configuration.
 ;; (Called below by `winner-save-old-configurations').
 (defun winner-remember ()
-  (let ((entry (assq (selected-frame) winner-currents)))
-    (if entry (setcdr entry (winner-conf))
-      (push (cons (selected-frame) (winner-conf))
-	    winner-currents))))
+  (setf (alist-get (selected-frame) winner-currents) (winner-conf)))
 
 ;; Consult `winner-currents'.
 (defun winner-configuration (&optional frame)
@@ -180,6 +177,12 @@ You may want to include buffer names such as *Help*, *Apropos*,
 ;; Called whenever the window configuration changes
 ;; (a `window-configuration-change-hook').
 (defun winner-change-fun ()
+
+  ;; Cull dead frames.
+  (setq winner-modified-list
+        (cl-loop for frame in winner-modified-list
+             if (frame-live-p frame) collect frame))
+
   (unless (or (memq (selected-frame) winner-modified-list)
               (/= 0 (minibuffer-depth)))
     (push (selected-frame) winner-modified-list)))
@@ -418,7 +421,7 @@ In other words, \"undo\" changes in window configuration."
        (ring-ref winner-pending-undo-ring 0)))
     (unless (eq (selected-window) (minibuffer-window))
       (message "Winner undid undo")))
-   (t (error "Previous command was not a `winner-undo'"))))
+   (t (user-error "Previous command was not a `winner-undo'"))))
 
 (provide 'winner)
 ;;; winner.el ends here

@@ -1,6 +1,6 @@
 ;;; inf-lisp.el --- an inferior-lisp mode
 
-;; Copyright (C) 1988, 1993-1994, 2001-2013 Free Software Foundation,
+;; Copyright (C) 1988, 1993-1994, 2001-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Olin Shivers <shivers@cs.cmu.edu>
@@ -91,12 +91,29 @@ mode.  Default is whitespace followed by 0 or 1 single-letter colon-keyword
     (define-key map "\C-c\C-v" 'lisp-show-variable-documentation)
     map))
 
+(easy-menu-define
+  inferior-lisp-menu
+  inferior-lisp-mode-map
+  "Inferior Lisp Menu"
+  '("Inf-Lisp"
+    ["Eval Last Sexp" lisp-eval-last-sexp t]
+    "--"
+    ["Load File..." lisp-load-file t]
+    ["Compile File..." lisp-compile-file t]
+    "--"
+    ["Show Arglist..." lisp-show-arglist t]
+    ["Describe Symbol..." lisp-describe-sym t]
+    ["Show Documentation for Function..." lisp-show-function-documentation t]
+    ["Show Documentation for Variable..." lisp-show-variable-documentation t]))
+
 ;;; These commands augment Lisp mode, so you can process Lisp code in
 ;;; the source files.
 (define-key lisp-mode-map "\M-\C-x"  'lisp-eval-defun)     ; Gnu convention
 (define-key lisp-mode-map "\C-x\C-e" 'lisp-eval-last-sexp) ; Gnu convention
 (define-key lisp-mode-map "\C-c\C-e" 'lisp-eval-defun)
 (define-key lisp-mode-map "\C-c\C-r" 'lisp-eval-region)
+(define-key lisp-mode-map "\C-c\C-n" 'lisp-eval-form-and-next)
+(define-key lisp-mode-map "\C-c\C-p" 'lisp-eval-paragraph)
 (define-key lisp-mode-map "\C-c\C-c" 'lisp-compile-defun)
 (define-key lisp-mode-map "\C-c\C-z" 'switch-to-lisp)
 (define-key lisp-mode-map "\C-c\C-l" 'lisp-load-file)
@@ -109,7 +126,7 @@ mode.  Default is whitespace followed by 0 or 1 single-letter colon-keyword
 
 ;;; This function exists for backwards compatibility.
 ;;; Previous versions of this package bound commands to C-c <letter>
-;;; bindings, which is not allowed by the gnumacs standard.
+;;; bindings, which is not allowed by the Emacs standard.
 
 ;;;  "This function binds many inferior-lisp commands to C-c <letter> bindings,
 ;;;where they are more accessible. C-c <letter> bindings are reserved for the
@@ -296,6 +313,14 @@ of `inferior-lisp-program').  Runs the hooks from
 ;;;###autoload
 (defalias 'run-lisp 'inferior-lisp)
 
+(defun lisp-eval-paragraph (&optional and-go)
+  "Send the current paragraph to the inferior Lisp process.
+Prefix argument means switch to the Lisp buffer afterwards."
+  (interactive "P")
+  (save-excursion
+    (mark-paragraph)
+    (lisp-eval-region (point) (mark) and-go)))
+
 (defun lisp-eval-region (start end &optional and-go)
   "Send the current region to the inferior Lisp process.
 Prefix argument means switch to the Lisp buffer afterwards."
@@ -345,6 +370,14 @@ Prefix argument means switch to the Lisp buffer afterwards."
 Prefix argument means switch to the Lisp buffer afterwards."
   (interactive "P")
   (lisp-eval-region (save-excursion (backward-sexp) (point)) (point) and-go))
+
+(defun lisp-eval-form-and-next ()
+  "Send the previous sexp to the inferior Lisp process and move to the next one."
+  (interactive "")
+  (while (not (zerop (car (syntax-ppss))))
+    (up-list))
+  (lisp-eval-last-sexp)
+  (forward-sexp))
 
 (defun lisp-compile-region (start end &optional and-go)
   "Compile the current region in the inferior Lisp process.
@@ -477,7 +510,7 @@ Used by these commands to determine defaults."
 				     (file-name-nondirectory file-name)))
   (comint-send-string (inferior-lisp-proc) (concat "(compile-file \""
 						   file-name
-						   "\"\)\n"))
+						   "\")\n"))
   (switch-to-lisp t))
 
 
@@ -629,7 +662,7 @@ See variable `lisp-describe-sym-command'."
 ;;; Changed all keybindings of the form C-c <letter>. These are
 ;;; supposed to be reserved for the user to bind. This affected
 ;;; mainly the compile/eval-defun/region[-and-go] commands.
-;;; This was painful, but necessary to adhere to the gnumacs standard.
+;;; This was painful, but necessary to adhere to the Emacs standard.
 ;;; For some backwards compatibility, see the
 ;;;     cmulisp-install-letter-bindings
 ;;; function.

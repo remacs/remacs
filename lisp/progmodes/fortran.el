@@ -1,6 +1,6 @@
 ;;; fortran.el --- Fortran mode for GNU Emacs
 
-;; Copyright (C) 1986, 1993-1995, 1997-2013 Free Software Foundation,
+;; Copyright (C) 1986, 1993-1995, 1997-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Michael D. Prange <prange@erl.mit.edu>
@@ -244,8 +244,8 @@ line in region."
 (defcustom fortran-column-ruler-fixed
   "0   4 6  10        20        30        40        5\
 0        60        70\n\
-\[   ]|{   |    |    |    |    |    |    |    |    \
-\|    |    |    |    |}\n"
+[   ]|{   |    |    |    |    |    |    |    |    \
+|    |    |    |    |}\n"
   "String displayed above current line by \\[fortran-column-ruler].
 This variable is used in fixed format mode.
 See the variable `fortran-column-ruler-tab' for TAB format mode."
@@ -257,8 +257,8 @@ See the variable `fortran-column-ruler-tab' for TAB format mode."
 (defcustom fortran-column-ruler-tab
   "0       810        20        30        40        5\
 0        60        70\n\
-\[   ]|  { |    |    |    |    |    |    |    |    \
-\|    |    |    |    |}\n"
+[   ]|  { |    |    |    |    |    |    |    |    \
+|    |    |    |    |}\n"
   "String displayed above current line by \\[fortran-column-ruler].
 This variable is used in TAB format mode.
 See the variable `fortran-column-ruler-fixed' for fixed format mode."
@@ -817,15 +817,15 @@ Variables controlling indentation style and extra features:
   Amount of extra indentation for text in full-line comments (default 0).
 `fortran-comment-indent-style'
   How to indent the text in full-line comments. Allowed values are:
-  nil       don't change the indentation
-  fixed     indent to `fortran-comment-line-extra-indent' beyond the
+  nil         don't change the indentation
+  `fixed'     indent to `fortran-comment-line-extra-indent' beyond the
               value of either
                 `fortran-minimum-statement-indent-fixed' (fixed format) or
                 `fortran-minimum-statement-indent-tab' (TAB format),
               depending on the continuation format in use.
-  relative  indent to `fortran-comment-line-extra-indent' beyond the
+  `relative'  indent to `fortran-comment-line-extra-indent' beyond the
               indentation for a line of code.
-  (default 'fixed)
+  (default `fixed')
 `fortran-comment-indent-char'
   Single-character string to be inserted instead of space for
   full-line comment indentation (default \" \").
@@ -916,12 +916,12 @@ with no args, if that value is non-nil."
 
 (defun fortran-line-length (nchars &optional global)
   "Set the length of fixed-form Fortran lines to NCHARS.
-This normally only affects the current buffer, which must be in
-Fortran mode.  If the optional argument GLOBAL is non-nil, it
-affects all Fortran buffers, and also the default.
-If a numeric prefix argument is specified, it will be used as NCHARS,
-otherwise is a non-numeric prefix arg is specified, the length will be
-provided via the minibuffer, and otherwise the current column is used."
+By default this only affects the current buffer, which must be in
+Fortran mode.  If the optional argument GLOBAL is non-nil, it affects
+all Fortran buffers, and also the default.  The default value of NCHARS
+is the current column.  A numeric prefix argument specifies a value to
+use instead of the current column.  A non-numeric prefix argument prompts
+for the value to use."
   (interactive
    (list (cond
           ((numberp current-prefix-arg) current-prefix-arg)
@@ -1117,7 +1117,7 @@ See also `fortran-window-create'."
           (message "Type SPC to continue editing.")
           (let ((char (read-event)))
             (or (equal char ?\s)
-                (setq unread-command-events (list char))))))
+                (push char unread-command-events)))))
     (fortran-window-create)))
 
 (defun fortran-split-line ()

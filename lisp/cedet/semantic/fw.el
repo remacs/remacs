@@ -1,6 +1,6 @@
 ;;; semantic/fw.el --- Framework for Semantic
 
-;;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -38,6 +38,7 @@
   (if (featurep 'xemacs)
       (progn
 	(defalias 'semantic-buffer-local-value 'symbol-value-in-buffer)
+        ;; FIXME: Why not just (require 'overlay)?
 	(defalias 'semantic-overlay-live-p
 	  (lambda (o)
 	    (and (extent-live-p o)
@@ -113,18 +114,13 @@
       "Extract the window from EVENT."
       (car (car (cdr event))))
 
-    (if (> emacs-major-version 21)
-	(defalias 'semantic-buffer-local-value 'buffer-local-value)
+    (defalias 'semantic-buffer-local-value 'buffer-local-value)
 
-      (defun semantic-buffer-local-value (sym &optional buf)
-	"Get the value of SYM from buffer local variable in BUF."
-	(cdr (assoc sym (buffer-local-variables buf)))))
     )
 
 
   (defalias 'semantic-make-local-hook
-    (if (and (not (featurep 'xemacs))
-             (>= emacs-major-version 21))
+    (if (featurep 'emacs)
         #'identity  #'make-local-hook))
 
   (defalias 'semantic-mode-line-update
@@ -177,10 +173,10 @@ recover the cached data with `semantic-get-cache-data'.
 LIFESPAN indicates how long the data cache will be remembered.
 The default LIFESPAN is 'end-of-command.
 Possible Lifespans are:
-  'end-of-command - Remove the cache at the end of the currently
-                    executing command.
-  'exit-cache-zone - Remove when point leaves the overlay at the
-                    end of the currently executing command."
+  `end-of-command' - Remove the cache at the end of the currently
+                     executing command.
+  `exit-cache-zone' - Remove when point leaves the overlay at the
+                      end of the currently executing command."
   ;; Check if LIFESPAN is valid before to create any overlay
   (or lifespan (setq lifespan 'end-of-command))
   (or (memq lifespan '(end-of-command exit-cache-zone))
@@ -307,7 +303,7 @@ error message.
 If `debug-on-error' is set, errors are not caught, so that you can
 debug them.
 Avoid using a large BODY since it is duplicated."
-  ;;(declare (debug t) (indent 1))
+  (declare (debug t) (indent 1))
   `(if debug-on-error
        ;;(let ((inhibit-quit nil)) ,@body)
        ;; Note to self: Doing the above screws up the wisent parser.
@@ -318,10 +314,18 @@ Avoid using a large BODY since it is duplicated."
         (message ,format (format "%S - %s" (current-buffer)
                                  (error-message-string err)))
         nil))))
-(put 'semantic-safe 'lisp-indent-function 1)
 
 ;;; Misc utilities
 ;;
+
+(defvar semantic-new-buffer-fcn-was-run nil
+  "Non-nil after `semantic-new-buffer-fcn' has been executed.")
+(make-variable-buffer-local 'semantic-new-buffer-fcn-was-run)
+
+(defsubst semantic-active-p ()
+  "Return non-nil if the current buffer was set up for parsing."
+  semantic-new-buffer-fcn-was-run)
+
 (defsubst semantic-map-buffers (function)
   "Run FUNCTION for each Semantic enabled buffer found.
 FUNCTION does not have arguments.  When FUNCTION is entered
@@ -361,6 +365,8 @@ later installation should be done in MODE hook."
 ;;
 (defvar semantic-current-input-throw-symbol nil
   "The current throw symbol for `semantic-exit-on-input'.")
+(defvar semantic--on-input-start-marker nil
+  "The marker when starting a semantic-exit-on-input form.")
 
 (defmacro semantic-exit-on-input (symbol &rest forms)
   "Using SYMBOL as an argument to `throw', execute FORMS.
@@ -368,10 +374,11 @@ If FORMS includes a call to `semantic-throw-on-input', then
 if a user presses any key during execution, this form macro
 will exit with the value passed to `semantic-throw-on-input'.
 If FORMS completes, then the return value is the same as `progn'."
-  `(let ((semantic-current-input-throw-symbol ,symbol))
+  (declare (indent 1) (debug def-body))
+  `(let ((semantic-current-input-throw-symbol ,symbol)
+         (semantic--on-input-start-marker (point-marker)))
      (catch ,symbol
        ,@forms)))
-(put 'semantic-exit-on-input 'lisp-indent-function 1)
 
 (defmacro semantic-throw-on-input (from)
   "Exit with `throw' when in `semantic-exit-on-input' on user input.
@@ -379,7 +386,15 @@ FROM is an indication of where this function is called from as a value
 to pass to `throw'.  It is recommended to use the name of the function
 calling this one."
   `(when (and semantic-current-input-throw-symbol
-              (or (input-pending-p) (accept-process-output)))
+              (or (input-pending-p)
+                  (with-current-buffer
+                      (marker-buffer semantic--on-input-start-marker)
+                    ;; Timers might run during accept-process-output.
+                    ;; If they redisplay, point must be where the user
+                    ;; expects. (Bug#15045)
+                    (save-excursion
+                      (goto-char semantic--on-input-start-marker)
+                      (accept-process-output)))))
      (throw semantic-current-input-throw-symbol ,from)))
 
 
@@ -433,12 +448,12 @@ into `mode-local-init-hook'." file filename)
 ;;
 (defmacro semanticdb-without-unloaded-file-searches (forms)
   "Execute FORMS with `unloaded' removed from the current throttle."
+  (declare (indent 1))
   `(let ((semanticdb-find-default-throttle
 	  (if (featurep 'semantic/db-find)
 	      (remq 'unloaded semanticdb-find-default-throttle)
 	    nil)))
      ,forms))
-(put 'semanticdb-without-unloaded-file-searches 'lisp-indent-function 1)
 
 
 ;; ;;; Editor goodies ;-)
@@ -505,12 +520,6 @@ into `mode-local-init-hook'." file filename)
 ;;   (font-lock-add-keywords 'emacs-lisp-mode
 ;;                           semantic-fw-font-lock-keywords))
 
-;;; Interfacing with edebug
-;;
-(defun semantic-fw-add-edebug-spec ()
-  (def-edebug-spec semantic-exit-on-input 'def-body))
-
-(add-hook 'edebug-setup-hook 'semantic-fw-add-edebug-spec)
 
 (provide 'semantic/fw)
 

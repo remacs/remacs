@@ -1,5 +1,5 @@
 /* Pre-process emacs.exe for profiling by MSVC.
-   Copyright (C) 1999, 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2001-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -25,7 +25,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include <fcntl.h>
 #include <time.h>
-#if defined(__GNUC__) && !defined(_W64)
+#if defined(__GNUC__) && !defined(MINGW_W64)
 #define _ANONYMOUS_UNION
 #define _ANONYMOUS_STRUCT
 #endif

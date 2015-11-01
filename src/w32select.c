@@ -1,6 +1,6 @@
 /* Selection processing for Emacs on the Microsoft Windows API.
 
-Copyright (C) 1993-1994, 2001-2013 Free Software Foundation, Inc.
+Copyright (C) 1993-1994, 2001-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -76,11 +76,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "w32common.h"	/* os_subtype */
 #include "w32term.h"	/* for all of the w32 includes */
-#include "keyboard.h"
+#include "keyboard.h"	/* for waiting_for_input */
 #include "blockinput.h"
-#include "charset.h"
 #include "coding.h"
-#include "composite.h"
 
 #ifdef CYGWIN
 #include <string.h>
@@ -95,8 +93,8 @@ static Lisp_Object render_locale (void);
 static Lisp_Object render_all (Lisp_Object ignore);
 static void run_protected (Lisp_Object (*code) (Lisp_Object), Lisp_Object arg);
 static Lisp_Object lisp_error_handler (Lisp_Object error);
-static LRESULT CALLBACK owner_callback (HWND win, UINT msg,
-					WPARAM wp, LPARAM lp);
+static LRESULT CALLBACK ALIGN_STACK owner_callback (HWND win, UINT msg,
+						    WPARAM wp, LPARAM lp);
 static HWND create_owner (void);
 
 static void setup_config (void);
@@ -107,17 +105,11 @@ static Lisp_Object validate_coding_system (Lisp_Object coding_system);
 static void setup_windows_coding_system (Lisp_Object coding_system,
 					 struct coding_system * coding);
 
-
-/* A remnant from X11: Symbol for the CLIPBORD selection type.  Other
-   selections are not used on Windows, so we don't need symbols for
-   PRIMARY and SECONDARY.  */
-Lisp_Object QCLIPBOARD;
-
 /* Internal pseudo-constants, initialized in globals_of_w32select()
    based on current system parameters. */
 static LCID DEFAULT_LCID;
 static UINT ANSICP, OEMCP;
-static Lisp_Object QUNICODE, QANSICP, QOEMCP;
+static Lisp_Object QANSICP, QOEMCP;
 
 /* A hidden window just for the clipboard management. */
 static HWND clipboard_owner;
@@ -420,7 +412,7 @@ lisp_error_handler (Lisp_Object error)
 }
 
 
-static LRESULT CALLBACK
+static LRESULT CALLBACK ALIGN_STACK
 owner_callback (HWND win, UINT msg, WPARAM wp, LPARAM lp)
 {
   switch (msg)
@@ -519,7 +511,7 @@ setup_config (void)
   cfg_clipboard_type = CF_TEXT;
 
   /* Interpret the coding system symbol name */
-  coding_name = SDATA (SYMBOL_NAME (cfg_coding_system));
+  coding_name = SSDATA (SYMBOL_NAME (cfg_coding_system));
 
   /* "(.*-)?utf-16.*" -> CF_UNICODETEXT */
   cp = strstr (coding_name, "utf-16");
@@ -670,7 +662,7 @@ setup_windows_coding_system (Lisp_Object coding_system,
      which both apply to ISO6429 only.  We don't know if these really
      need to be unset on Windows, but it probably doesn't hurt
      either.  */
-  coding->mode &= ~CODING_ANNOTATION_MASK;
+  coding->common_flags &= ~CODING_ANNOTATION_MASK;
   coding->mode |= CODING_MODE_LAST_BLOCK | CODING_MODE_SAFE_ENCODING;
 }
 
@@ -863,7 +855,7 @@ DEFUN ("w32-get-clipboard-data", Fw32_get_clipboard_data,
       {
 	int i;
 
-	nbytes = strlen (src);
+	nbytes = strlen ((char *)src);
 
 	for (i = 0; i < nbytes; i++)
 	  {
@@ -1013,9 +1005,9 @@ DEFUN ("w32-get-clipboard-data", Fw32_get_clipboard_data,
   return (ret);
 }
 
-/* Support checking for a clipboard selection. */
+/* Support checking for a clipboard selection.  */
 
-DEFUN ("x-selection-exists-p", Fx_selection_exists_p, Sx_selection_exists_p,
+DEFUN ("w32-selection-exists-p", Fw32_selection_exists_p, Sw32_selection_exists_p,
        0, 2, 0,
        doc: /* Whether there is an owner for the given X selection.
 SELECTION should be the name of the selection in question, typically
@@ -1031,7 +1023,7 @@ frame's display, or the first available X display.  */)
   CHECK_SYMBOL (selection);
 
   /* Return nil for PRIMARY and SECONDARY selections; for CLIPBOARD, check
-     if the clipboard currently has valid text format contents. */
+     if the clipboard currently has valid text format contents.  */
 
   if (EQ (selection, QCLIPBOARD))
     {
@@ -1060,14 +1052,14 @@ frame's display, or the first available X display.  */)
 }
 
 /* One-time init.  Called in the un-dumped Emacs, but not in the
-   dumped version. */
+   dumped version.  */
 
 void
 syms_of_w32select (void)
 {
   defsubr (&Sw32_set_clipboard_data);
   defsubr (&Sw32_get_clipboard_data);
-  defsubr (&Sx_selection_exists_p);
+  defsubr (&Sw32_selection_exists_p);
 
   DEFVAR_LISP ("selection-coding-system", Vselection_coding_system,
 	       doc: /* Coding system for communicating with other programs.

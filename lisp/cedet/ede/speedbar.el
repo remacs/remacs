@@ -1,6 +1,6 @@
 ;;; ede/speedbar.el --- Speedbar viewing of EDE projects
 
-;; Copyright (C) 1998-2001, 2003, 2005, 2007-2013 Free Software
+;; Copyright (C) 1998-2001, 2003, 2005, 2007-2015 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
@@ -121,9 +121,9 @@ Argument DIR is the directory from which to derive the list of objects."
   (let ((obj (eieio-speedbar-find-nearest-object)))
     (if (not (eieio-object-p obj))
 	nil
-      (cond ((obj-of-class-p obj ede-project)
+      (cond ((obj-of-class-p obj 'ede-project)
 	     (project-compile-project obj))
-	    ((obj-of-class-p obj ede-target)
+	    ((obj-of-class-p obj 'ede-target)
 	     (project-compile-target obj))
 	    (t (error "Error in speedbar structure"))))))
 
@@ -133,9 +133,9 @@ Argument DIR is the directory from which to derive the list of objects."
   (let ((obj (eieio-speedbar-find-nearest-object)))
     (if (not (eieio-object-p obj))
 	(error "Error in speedbar or ede structure")
-      (if (obj-of-class-p obj ede-target)
+      (if (obj-of-class-p obj 'ede-target)
 	  (setq obj (ede-target-parent obj)))
-      (if (obj-of-class-p obj ede-project)
+      (if (obj-of-class-p obj 'ede-project)
 	  obj
 	(error "Error in speedbar or ede structure")))))
 
@@ -181,13 +181,13 @@ Argument DIR is the directory from which to derive the list of objects."
 	(setq depth (1- depth)))
       (speedbar-line-token))))
 
-(defmethod eieio-speedbar-derive-line-path ((obj ede-project) &optional depth)
+(cl-defmethod eieio-speedbar-derive-line-path ((obj ede-project) &optional depth)
   "Return the path to OBJ.
 Optional DEPTH is the depth we start at."
   (file-name-directory (oref obj file))
   )
 
-(defmethod eieio-speedbar-derive-line-path ((obj ede-target) &optional depth)
+(cl-defmethod eieio-speedbar-derive-line-path ((obj ede-target) &optional depth)
   "Return the path to OBJ.
 Optional DEPTH is the depth we start at."
   (let ((proj (ede-target-parent obj)))
@@ -201,42 +201,42 @@ Optional DEPTH is the depth we start at."
 	  (concat (eieio-speedbar-derive-line-path proj)
 		  (ede-find-nearest-file-line)))))))
 
-(defmethod eieio-speedbar-description ((obj ede-project))
+(cl-defmethod eieio-speedbar-description ((obj ede-project))
   "Provide a speedbar description for OBJ."
   (ede-description obj))
 
-(defmethod eieio-speedbar-description ((obj ede-target))
+(cl-defmethod eieio-speedbar-description ((obj ede-target))
   "Provide a speedbar description for OBJ."
   (ede-description obj))
 
-(defmethod eieio-speedbar-child-description ((obj ede-target))
+(cl-defmethod eieio-speedbar-child-description ((obj ede-target))
   "Provide a speedbar description for a plain-child of OBJ.
 A plain child is a child element which is not an EIEIO object."
   (or (speedbar-item-info-file-helper)
       (speedbar-item-info-tag-helper)))
 
-(defmethod eieio-speedbar-object-buttonname ((object ede-project))
+(cl-defmethod eieio-speedbar-object-buttonname ((object ede-project))
   "Return a string to use as a speedbar button for OBJECT."
   (if (ede-parent-project object)
       (ede-name object)
     (concat (ede-name object) " " (oref object version))))
 
-(defmethod eieio-speedbar-object-buttonname ((object ede-target))
+(cl-defmethod eieio-speedbar-object-buttonname ((object ede-target))
   "Return a string to use as a speedbar button for OBJECT."
   (ede-name object))
 
-(defmethod eieio-speedbar-object-children ((this ede-project))
+(cl-defmethod eieio-speedbar-object-children ((this ede-project))
   "Return the list of speedbar display children for THIS."
   (condition-case nil
       (with-slots (subproj targets) this
 	(append subproj targets))
     (error nil)))
 
-(defmethod eieio-speedbar-object-children ((this ede-target))
+(cl-defmethod eieio-speedbar-object-children ((this ede-target))
   "Return the list of speedbar display children for THIS."
   (oref this source))
 
-(defmethod eieio-speedbar-child-make-tag-lines ((this ede-target) depth)
+(cl-defmethod eieio-speedbar-child-make-tag-lines ((this ede-target) depth)
   "Create a speedbar tag line for a child of THIS.
 It has depth DEPTH."
   (with-slots (source) this

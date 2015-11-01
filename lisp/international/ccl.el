@@ -1,6 +1,6 @@
-;;; ccl.el --- CCL (Code Conversion Language) compiler
+;;; ccl.el --- CCL (Code Conversion Language) compiler  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1997-1998, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997-1998, 2001-2015 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
 ;;   2005, 2006, 2007, 2008, 2009, 2010, 2011
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
@@ -479,8 +479,7 @@ If READ-FLAG is non-nil, this statement has the form
   (let ((condition (nth 1 cmd))
 	(true-cmds (nth 2 cmd))
 	(false-cmds (nth 3 cmd))
-	jump-cond-address
-	false-ic)
+	jump-cond-address)
     (if (and (listp condition)
 	     (listp (car condition)))
 	;; If CONDITION is a nested expression, the inner expression
@@ -678,8 +677,7 @@ is a list of CCL-BLOCKs."
 	   (ccl-embed-code 'write-const-jump 0 ccl-loop-head)
 	   (ccl-embed-data arg))
 	  ((stringp arg)
-	   (let ((len (length arg))
-		 (i 0))
+	   (let ((len (length arg)))
 	     (ccl-embed-code 'write-string-jump 0 ccl-loop-head)
 	     (ccl-embed-data len)
 	     (ccl-embed-string len arg)))
@@ -920,8 +918,7 @@ is a list of CCL-BLOCKs."
       (error "CCL: Invalid number of arguments: %s" cmd))
   (let ((RRR (nth 1 cmd))
 	(rrr (nth 2 cmd))
-	(map (nth 3 cmd))
-	id)
+	(map (nth 3 cmd)))
     (ccl-check-register rrr cmd)
     (ccl-check-register RRR cmd)
     (ccl-embed-extended-command 'map-single rrr RRR 0)
@@ -962,12 +959,13 @@ is a list of CCL-BLOCKs."
 (defvar ccl-code)
 
 ;;;###autoload
-(defun ccl-dump (ccl-code)
-  "Disassemble compiled CCL-CODE."
-  (let ((len (length ccl-code))
-	(buffer-mag (aref ccl-code 0)))
+(defun ccl-dump (code)
+  "Disassemble compiled CCL-code CODE."
+  (let* ((ccl-code code)
+         (len (length ccl-code))
+         (buffer-mag (aref ccl-code 0)))
     (cond ((= buffer-mag 0)
-	   (insert "Don't output anything.\n"))
+	   (insert (substitute-command-keys "Don't output anything.\n")))
 	  ((= buffer-mag 1)
 	   (insert "Out-buffer must be as large as in-buffer.\n"))
 	  (t
@@ -1005,7 +1003,7 @@ is a list of CCL-BLOCKs."
 (defun ccl-dump-set-short-const (rrr cc)
   (insert (format "r%d = %d\n" rrr cc)))
 
-(defun ccl-dump-set-const (rrr ignore)
+(defun ccl-dump-set-const (rrr _ignore)
   (insert (format "r%d = %d\n" rrr (ccl-get-next-code))))
 
 (defun ccl-dump-set-array (rrr cc)
@@ -1019,7 +1017,7 @@ is a list of CCL-BLOCKs."
       (setq i (1+ i)))
     (insert "\n")))
 
-(defun ccl-dump-jump (ignore cc &optional address)
+(defun ccl-dump-jump (_ignore cc &optional address)
   (insert (format "jump to %d(" (+ (or address ccl-current-ic) cc)))
   (if (>= cc 0)
       (insert "+"))
@@ -1042,13 +1040,13 @@ is a list of CCL-BLOCKs."
 (defun ccl-extract-arith-op (cc)
   (aref ccl-arith-table (ash cc -6)))
 
-(defun ccl-dump-write-expr-const (ignore cc)
+(defun ccl-dump-write-expr-const (_ignore cc)
   (insert (format "write (r%d %s %d)\n"
 		  (logand cc 7)
 		  (ccl-extract-arith-op cc)
 		  (ccl-get-next-code))))
 
-(defun ccl-dump-write-expr-register (ignore cc)
+(defun ccl-dump-write-expr-register (_ignore cc)
   (insert (format "write (r%d %s r%d)\n"
 		  (logand cc 7)
 		  (ccl-extract-arith-op cc)
@@ -1059,7 +1057,7 @@ is a list of CCL-BLOCKs."
 	((= cc ?\n) (insert " \"^J\""))
 	(t (insert (format " \"%c\"" cc)))))
 
-(defun ccl-dump-write-const-jump (ignore cc)
+(defun ccl-dump-write-const-jump (_ignore cc)
   (let ((address ccl-current-ic))
     (insert "write char")
     (ccl-dump-insert-char (ccl-get-next-code))
@@ -1075,7 +1073,7 @@ is a list of CCL-BLOCKs."
     (ccl-get-next-code)			; Skip dummy READ-JUMP
     ))
 
-(defun ccl-dump-write-string-jump (ignore cc)
+(defun ccl-dump-write-string-jump (_ignore cc)
   (let ((address ccl-current-ic)
 	(len (ccl-get-next-code))
 	(i 0))
@@ -1125,9 +1123,9 @@ is a list of CCL-BLOCKs."
 (defun ccl-dump-write-register (rrr cc)
   (insert (format "write r%d (%d remaining)\n" rrr cc)))
 
-(defun ccl-dump-call (ignore cc)
+(defun ccl-dump-call (_ignore _cc)
   (let ((subroutine (car (ccl-get-next-code))))
-    (insert (format "call subroutine `%s'\n" subroutine))))
+    (insert (format-message "call subroutine `%s'\n" subroutine))))
 
 (defun ccl-dump-write-const-string (rrr cc)
   (if (= rrr 0)
@@ -1160,7 +1158,7 @@ is a list of CCL-BLOCKs."
       (setq i (1+ i)))
     (insert "\n")))
 
-(defun ccl-dump-end (&rest ignore)
+(defun ccl-dump-end (&rest _ignore)
   (insert "end\n"))
 
 (defun ccl-dump-set-assign-expr-const (rrr cc)
@@ -1213,9 +1211,10 @@ is a list of CCL-BLOCKs."
   (insert (format "read r%d, " rrr))
   (ccl-dump-jump-cond-expr-register rrr cc))
 
-(defun ccl-dump-binary (ccl-code)
-  (let ((len (length ccl-code))
-	(i 2))
+(defun ccl-dump-binary (code)
+  (let* ((ccl-code code)
+         (len (length ccl-code))
+         (i 2))
     (while (< i len)
       (let ((code (aref ccl-code i))
 	    (j 27))
@@ -1235,28 +1234,28 @@ is a list of CCL-BLOCKs."
     (insert (format "<%s> " ex-op))
     (funcall (get ex-op 'ccl-dump-function) rrr RRR Rrr)))
 
-(defun ccl-dump-read-multibyte-character (rrr RRR Rrr)
+(defun ccl-dump-read-multibyte-character (rrr RRR _Rrr)
   (insert (format "read-multibyte-character r%d r%d\n" RRR rrr)))
 
-(defun ccl-dump-write-multibyte-character (rrr RRR Rrr)
+(defun ccl-dump-write-multibyte-character (rrr RRR _Rrr)
   (insert (format "write-multibyte-character r%d r%d\n" RRR rrr)))
 
 (defun ccl-dump-translate-character (rrr RRR Rrr)
   (insert (format "translation table(r%d) r%d r%d\n" Rrr RRR rrr)))
 
-(defun ccl-dump-translate-character-const-tbl (rrr RRR Rrr)
+(defun ccl-dump-translate-character-const-tbl (rrr RRR _Rrr)
   (let ((tbl (ccl-get-next-code)))
     (insert (format "translation table(%S) r%d r%d\n" tbl RRR rrr))))
 
-(defun ccl-dump-lookup-int-const-tbl (rrr RRR Rrr)
+(defun ccl-dump-lookup-int-const-tbl (rrr RRR _Rrr)
   (let ((tbl (ccl-get-next-code)))
     (insert (format "hash table(%S) r%d r%d\n" tbl RRR rrr))))
 
-(defun ccl-dump-lookup-char-const-tbl (rrr RRR Rrr)
+(defun ccl-dump-lookup-char-const-tbl (rrr RRR _Rrr)
   (let ((tbl (ccl-get-next-code)))
     (insert (format "hash table(%S) r%d r%d\n" tbl RRR rrr))))
 
-(defun ccl-dump-iterate-multiple-map (rrr RRR Rrr)
+(defun ccl-dump-iterate-multiple-map (rrr RRR _Rrr)
   (let ((notbl (ccl-get-next-code))
 	(i 0) id)
     (insert (format "iterate-multiple-map r%d r%d\n" RRR rrr))
@@ -1267,7 +1266,7 @@ is a list of CCL-BLOCKs."
       (setq i (1+ i)))
     (insert "]\n")))
 
-(defun ccl-dump-map-multiple (rrr RRR Rrr)
+(defun ccl-dump-map-multiple (rrr RRR _Rrr)
   (let ((notbl (ccl-get-next-code))
 	(i 0) id)
     (insert (format "map-multiple r%d r%d\n" RRR rrr))
@@ -1280,7 +1279,7 @@ is a list of CCL-BLOCKs."
       (setq i (1+ i)))
     (insert "]\n")))
 
-(defun ccl-dump-map-single (rrr RRR Rrr)
+(defun ccl-dump-map-single (rrr RRR _Rrr)
   (let ((id (ccl-get-next-code)))
     (insert (format "map-single r%d r%d map(%S)\n" RRR rrr id))))
 
@@ -1355,6 +1354,14 @@ IF :=	(if EXPRESSION CCL_BLOCK_0 CCL_BLOCK_1)
 BRANCH := (branch EXPRESSION CCL_BLOCK_0 [CCL_BLOCK_1 ...])
 
 ;; Execute STATEMENTs until (break) or (end) is executed.
+
+;; Create a block of STATEMENTs for repeating.  The STATEMENTs
+;; are executed sequentially until REPEAT or BREAK is executed.
+;; If REPEAT statement is executed, STATEMENTs are executed from the
+;; start again.  If BREAK statements is executed, the execution
+;; exits from the block.  If neither REPEAT nor BREAK is
+;; executed, the execution exits from the block after executing the
+;; last STATEMENT.
 LOOP := (loop STATEMENT [STATEMENT ...])
 
 ;; Terminate the most inner loop.
@@ -1501,17 +1508,42 @@ ARRAY := `[' integer ... `]'
 
 
 TRANSLATE :=
-	(translate-character REG(table) REG(charset) REG(codepoint))
-	| (translate-character SYMBOL REG(charset) REG(codepoint))
-        ;; SYMBOL must refer to a table defined by `define-translation-table'.
+	;; Decode character SRC, translate it by translate table
+	;; TABLE, and encode it back to DST.  TABLE is specified
+	;; by its id number in REG_0, SRC is specified by its
+	;; charset id number and codepoint in REG_1 and REG_2
+	;; respectively.
+	;; On encoding, the charset of highest priority is selected.
+	;; After the execution, DST is specified by its charset
+	;; id number and codepoint in REG_1 and REG_2 respectively.
+	(translate-character REG_0 REG_1 REG_2)
+
+	;; Same as above except for SYMBOL specifying the name of
+	;; the translate table defined by `define-translation-table'.
+	| (translate-character SYMBOL REG_1 REG_2)
+
 LOOKUP :=
-	(lookup-character SYMBOL REG(charset) REG(codepoint))
+	;; Look up character SRC in hash table TABLE.  TABLE is
+	;; specified by its name in SYMBOL, and SRC is specified by
+	;; its charset id number and codepoint in REG_1 and REG_2
+	;; respectively.
+	;; If its associated value is an integer, set REG_1 to that
+	;; value, and set r7 to 1.  Otherwise, set r7 to 0.
+	(lookup-character SYMBOL REG_1 REG_2)
+
+	;; Look up integer value N in hash table TABLE.  TABLE is
+	;; specified by its name in SYMBOL and N is specified in
+	;; REG.
+	;; If its associated value is a character, set REG to that
+	;; value, and set r7 to 1.  Otherwise, set r7 to 0.
 	| (lookup-integer SYMBOL REG(integer))
-        ;; SYMBOL refers to a table defined by `define-translation-hash-table'.
+
 MAP :=
-     (iterate-multiple-map REG REG MAP-IDs)
-     | (map-multiple REG REG (MAP-SET))
-     | (map-single REG REG MAP-ID)
+	;; The following statements are for internal use only.
+	(iterate-multiple-map REG REG MAP-IDs)
+	| (map-multiple REG REG (MAP-SET))
+	| (map-single REG REG MAP-ID)
+
 MAP-IDs := MAP-ID ...
 MAP-SET := MAP-IDs | (MAP-IDs) MAP-SET
 MAP-ID := integer

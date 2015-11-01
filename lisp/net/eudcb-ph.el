@@ -1,9 +1,10 @@
-;;; eudcb-ph.el --- Emacs Unified Directory Client - CCSO PH/QI Backend -*- coding: utf-8 -*-
+;;; eudcb-ph.el --- Emacs Unified Directory Client - CCSO PH/QI Backend
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 ;; Author: Oscar Figueiredo <oscar@cpe.fr>
-;; Maintainer: Pavel Janík <Pavel@Janik.cz>
+;;         Pavel Janík <Pavel@Janik.cz>
+;; Maintainer: Thomas Fitzsimmons <fitzsim@fitzsim.org>
 ;; Keywords: comm
 ;; Package: eudc
 
@@ -80,7 +81,7 @@ are returned"
   (eudc-ph-do-request "fields")
   (if full-records
       (eudc-ph-parse-query-result)
-    (mapcar 'eudc-caar (eudc-ph-parse-query-result))))
+    (mapcar #'caar (eudc-ph-parse-query-result))))
 
 (defun eudc-ph-parse-query-result (&optional fields)
   "Return a list of alists of key/values from in `eudc-ph-process-buffer'.
@@ -125,9 +126,9 @@ Fields not in FIELDS are discarded."
 		      (memq current-key fields))
 		  (if key
 		      (setq record (cons (cons key value) record)) ; New key
-		    (setcdr (car record) (if (listp (eudc-cdar record))
-					     (append (eudc-cdar record) (list value))
-					   (list (eudc-cdar record) value))))))))
+		    (setcdr (car record) (if (listp (cdar record))
+					     (append (cdar record) (list value))
+					   (list (cdar record) value))))))))
 	(and (not ignore)
 	     (or (null fields)
 		 (eq 'all fields)

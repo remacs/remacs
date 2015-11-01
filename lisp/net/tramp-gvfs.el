@@ -1,6 +1,6 @@
 ;;; tramp-gvfs.el --- Tramp access functions for GVFS daemon
 
-;; Copyright (C) 2009-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
 ;; Author: Michael Albinus <michael.albinus@gmx.de>
 ;; Keywords: comm, processes
@@ -47,16 +47,16 @@
 ;; discovered during development time, is given in respective
 ;; comments.
 
-;; The customer option `tramp-gvfs-methods' contains the list of
-;; supported connection methods.  Per default, these are "dav",
-;; "davs", "obex" and "synce".  Note that with "obex" it might be
-;; necessary to pair with the other bluetooth device, if it hasn't
+;; The custom option `tramp-gvfs-methods' contains the list of
+;; supported connection methods.  Per default, these are "afp", "dav",
+;; "davs", "obex", "sftp" and "synce".  Note that with "obex" it might
+;; be necessary to pair with the other bluetooth device, if it hasn't
 ;; been done already.  There might be also some few seconds delay in
 ;; discovering available bluetooth devices.
 
-;; Other possible connection methods are "ftp", "sftp" and "smb".
-;; When one of these methods is added to the list, the remote access
-;; for that method is performed via GVFS instead of the native Tramp
+;; Other possible connection methods are "ftp" and "smb".  When one of
+;; these methods is added to the list, the remote access for that
+;; method is performed via GVFS instead of the native Tramp
 ;; implementation.
 
 ;; GVFS offers even more connection methods.  The complete list of
@@ -78,10 +78,10 @@
 
 ;; For hostname completion, information is retrieved either from the
 ;; bluez daemon (for the "obex" method), the hal daemon (for the
-;; "synce" method), or from the zeroconf daemon (for the "dav",
+;; "synce" method), or from the zeroconf daemon (for the "afp", "dav",
 ;; "davs", and "sftp" methods).  The zeroconf daemon is pre-configured
 ;; to discover services in the "local" domain.  If another domain
-;; shall be used for discovering services, the customer option
+;; shall be used for discovering services, the custom option
 ;; `tramp-gvfs-zeroconf-domain' can be set accordingly.
 
 ;; Restrictions:
@@ -108,14 +108,14 @@
 (eval-when-compile
   (require 'cl)
   (require 'custom))
-(defvar ls-lisp-use-insert-directory-program)
 
 ;;;###tramp-autoload
-(defcustom tramp-gvfs-methods '("dav" "davs" "obex" "synce")
+(defcustom tramp-gvfs-methods '("afp" "dav" "davs" "obex" "sftp" "synce")
   "List of methods for remote files, accessed with GVFS."
   :group 'tramp
-  :version "23.2"
-  :type '(repeat (choice (const "dav")
+  :version "25.1"
+  :type '(repeat (choice (const "afp")
+			 (const "dav")
 			 (const "davs")
 			 (const "ftp")
 			 (const "obex")
@@ -128,6 +128,7 @@
 ;;;###tramp-autoload
 (add-to-list 'tramp-default-user-alist '("\\`synce\\'" nil nil))
 
+;;;###tramp-autoload
 (defcustom tramp-gvfs-zeroconf-domain "local"
   "Zeroconf domain to be used for discovering services, like host names."
   :group 'tramp
@@ -153,6 +154,7 @@
 (defconst tramp-gvfs-enabled
   (ignore-errors
     (and (featurep 'dbusbind)
+	 (tramp-compat-funcall 'dbus-get-unique-name :system)
 	 (tramp-compat-funcall 'dbus-get-unique-name :session)
 	 (or (tramp-compat-process-running-p "gvfs-fuse-daemon")
 	     (tramp-compat-process-running-p "gvfsd-fuse"))))
@@ -167,9 +169,10 @@
 ;; Introspection data exist since GVFS 1.14.  If there are no such
 ;; data, we expect an earlier interface.
 (defconst tramp-gvfs-methods-mounttracker
-  (dbus-introspect-get-method-names
-   :session tramp-gvfs-service-daemon tramp-gvfs-path-mounttracker
-   tramp-gvfs-interface-mounttracker)
+  (and tramp-gvfs-enabled
+       (dbus-introspect-get-method-names
+	:session tramp-gvfs-service-daemon tramp-gvfs-path-mounttracker
+	tramp-gvfs-interface-mounttracker))
   "The list of supported methods of the mount tracking interface.")
 
 (defconst tramp-gvfs-listmounts
@@ -187,9 +190,10 @@ It has been changed in GVFS 1.14.")
 It has been changed in GVFS 1.14.")
 
 (defconst tramp-gvfs-mountlocation-signature
-  (dbus-introspect-get-signature
-   :session tramp-gvfs-service-daemon tramp-gvfs-path-mounttracker
-   tramp-gvfs-interface-mounttracker tramp-gvfs-mountlocation)
+  (and tramp-gvfs-enabled
+       (dbus-introspect-get-signature
+	:session tramp-gvfs-service-daemon tramp-gvfs-path-mounttracker
+	tramp-gvfs-interface-mounttracker tramp-gvfs-mountlocation))
   "The D-Bus signature of the \"mountLocation\" method.
 It has been changed in GVFS 1.14.")
 
@@ -228,7 +232,8 @@ It has been changed in GVFS 1.14.")
 ;;     ARRAY BYTE	    mount_prefix
 ;;     ARRAY
 ;;       STRUCT		    mount_spec_item
-;;         STRING	      key (server, share, type, user, host, port)
+;;         STRING	      key (type, user, domain, host, server,
+;;                                 share, volume, port, ssl)
 ;;         ARRAY BYTE	      value
 ;;   ARRAY BYTE           default_location	Since GVFS 1.5 only !!!
 
@@ -372,6 +377,7 @@ It has been changed in GVFS 1.14.")
 ;;   </signal>
 ;; </interface>
 
+;;;###tramp-autoload
 (defcustom tramp-bluez-discover-devices-timeout 60
   "Defines seconds since last bluetooth device discovery before rescanning.
 A value of 0 would require an immediate discovery during hostname
@@ -439,6 +445,7 @@ Every entry is a list (NAME ADDRESS).")
     (file-newer-than-file-p . tramp-handle-file-newer-than-file-p)
     (file-notify-add-watch . tramp-gvfs-handle-file-notify-add-watch)
     (file-notify-rm-watch . tramp-handle-file-notify-rm-watch)
+    (file-notify-valid-p . tramp-handle-file-notify-valid-p)
     (file-ownership-preserved-p . ignore)
     (file-readable-p . tramp-gvfs-handle-file-readable-p)
     (file-regular-p . tramp-handle-file-regular-p)
@@ -450,13 +457,13 @@ Every entry is a list (NAME ADDRESS).")
     (find-backup-file-name . tramp-handle-find-backup-file-name)
     ;; `find-file-noselect' performed by default handler.
     ;; `get-file-buffer' performed by default handler.
-    (insert-directory . tramp-gvfs-handle-insert-directory)
-    (insert-file-contents . tramp-gvfs-handle-insert-file-contents)
+    (insert-directory . tramp-handle-insert-directory)
+    (insert-file-contents . tramp-handle-insert-file-contents)
     (load . tramp-handle-load)
-    ;; `make-auto-save-file-name' performed by default handler.
+    (make-auto-save-file-name . tramp-handle-make-auto-save-file-name)
     (make-directory . tramp-gvfs-handle-make-directory)
     (make-directory-internal . ignore)
-    (make-symbolic-link . ignore)
+    (make-symbolic-link . tramp-handle-make-symbolic-link)
     (process-file . ignore)
     (rename-file . tramp-gvfs-handle-rename-file)
     (set-file-acl . ignore)
@@ -490,7 +497,7 @@ Operations not mentioned here will be handled by the default Emacs primitives.")
 First arg specifies the OPERATION, second arg is a list of arguments to
 pass to the OPERATION."
   (unless tramp-gvfs-enabled
-    (tramp-compat-user-error "Package `tramp-gvfs' not supported"))
+    (tramp-user-error nil "Package `tramp-gvfs' not supported"))
   (let ((fn (assoc operation tramp-gvfs-file-name-handler-alist)))
     (if fn
 	(save-match-data (apply (cdr fn) args))
@@ -578,58 +585,127 @@ is no information where to trace the message.")
 
 ;; File name primitives.
 
+(defun tramp-gvfs-do-copy-or-rename-file
+  (op filename newname &optional ok-if-already-exists keep-date
+      preserve-uid-gid preserve-extended-attributes)
+  "Copy or rename a remote file.
+OP must be `copy' or `rename' and indicates the operation to perform.
+FILENAME specifies the file to copy or rename, NEWNAME is the name of
+the new file (for copy) or the new name of the file (for rename).
+OK-IF-ALREADY-EXISTS means don't barf if NEWNAME exists already.
+KEEP-DATE means to make sure that NEWNAME has the same timestamp
+as FILENAME.  PRESERVE-UID-GID, when non-nil, instructs to keep
+the uid and gid if both files are on the same host.
+PRESERVE-EXTENDED-ATTRIBUTES is ignored.
+
+This function is invoked by `tramp-gvfs-handle-copy-file' and
+`tramp-gvfs-handle-rename-file'.  It is an error if OP is neither
+of `copy' and `rename'.  FILENAME and NEWNAME must be absolute
+file names."
+  (unless (memq op '(copy rename))
+    (error "Unknown operation `%s', must be `copy' or `rename'" op))
+
+    (let ((t1 (tramp-tramp-file-p filename))
+	  (t2 (tramp-tramp-file-p newname))
+	  (equal-remote (tramp-equal-remote filename newname))
+	  (file-operation (intern (format "%s-file" op)))
+	  (gvfs-operation (if (eq op 'copy) "gvfs-copy" "gvfs-move"))
+	  (msg-operation (if (eq op 'copy) "Copying" "Renaming")))
+
+      (with-parsed-tramp-file-name (if t1 filename newname) nil
+	(when (and (not ok-if-already-exists) (file-exists-p newname))
+	  (tramp-error
+	   v 'file-already-exists "File %s already exists" newname))
+
+	(if (or (and equal-remote
+		     (tramp-get-connection-property v "direct-copy-failed" nil))
+		(and t1 (not (tramp-gvfs-file-name-p filename)))
+		(and t2 (not (tramp-gvfs-file-name-p newname))))
+
+	    ;; We cannot copy or rename directly.
+	    (let ((tmpfile (tramp-compat-make-temp-file filename)))
+	      (cond
+	       (preserve-extended-attributes
+		(tramp-compat-funcall
+		 file-operation
+		 filename tmpfile t keep-date preserve-uid-gid
+		 preserve-extended-attributes))
+	       (preserve-uid-gid
+		(tramp-compat-funcall
+		 file-operation filename tmpfile t keep-date preserve-uid-gid))
+	       (t
+		(tramp-compat-funcall
+		 file-operation filename tmpfile t keep-date)))
+	      (rename-file tmpfile newname ok-if-already-exists))
+
+	  ;; Direct action.
+	  (with-tramp-progress-reporter
+	      v 0 (format "%s %s to %s" msg-operation filename newname)
+	    (unless
+		(apply
+		 'tramp-gvfs-send-command v gvfs-operation
+		 (append
+		  (and (eq op 'copy) (or keep-date preserve-uid-gid)
+		       (list "--preserve"))
+		  (list
+		   (tramp-gvfs-url-file-name filename)
+		   (tramp-gvfs-url-file-name newname))))
+
+	      (if (or (not equal-remote)
+		      (and equal-remote
+			   (tramp-get-connection-property
+			    v "direct-copy-failed" nil)))
+		  ;; Propagate the error.
+		  (with-current-buffer (tramp-get-connection-buffer v)
+		    (goto-char (point-min))
+		    (tramp-error-with-buffer
+		     nil v 'file-error
+		     "%s failed, see buffer `%s' for details."
+		     msg-operation (buffer-name)))
+
+		;; Some WebDAV server, like the one from QNAP, do not
+		;; support direct copy/move.  Try a fallback.
+		(tramp-set-connection-property v "direct-copy-failed" t)
+		(tramp-gvfs-do-copy-or-rename-file
+		 op filename newname ok-if-already-exists keep-date
+		 preserve-uid-gid preserve-extended-attributes))))
+
+	  (when (and t1 (eq op 'rename))
+	    (with-parsed-tramp-file-name filename nil
+	      (tramp-flush-file-property v (file-name-directory localname))
+	      (tramp-flush-file-property v localname)))
+
+	  (when t2
+	    (with-parsed-tramp-file-name newname nil
+	      (tramp-flush-file-property v (file-name-directory localname))
+	      (tramp-flush-file-property v localname)))))))
+
 (defun tramp-gvfs-handle-copy-file
   (filename newname &optional ok-if-already-exists keep-date
 	    preserve-uid-gid preserve-extended-attributes)
   "Like `copy-file' for Tramp files."
-  (with-parsed-tramp-file-name
-      (if (tramp-tramp-file-p filename) filename newname) nil
-
-    (when (and (not ok-if-already-exists) (file-exists-p newname))
-      (tramp-error
-       v 'file-already-exists "File %s already exists" newname))
-
-    (if (or (and (tramp-tramp-file-p filename)
-		 (not (tramp-gvfs-file-name-p filename)))
-	    (and (tramp-tramp-file-p newname)
-		 (not (tramp-gvfs-file-name-p newname))))
-
-	;; We cannot copy directly.
-	(let ((tmpfile (tramp-compat-make-temp-file filename)))
-	  (cond
-	   (preserve-extended-attributes
-	    (copy-file
-	     filename tmpfile t keep-date preserve-uid-gid
-	     preserve-extended-attributes))
-	   (preserve-uid-gid
-	    (copy-file filename tmpfile t keep-date preserve-uid-gid))
-	   (t
-	    (copy-file filename tmpfile t keep-date)))
-	  (rename-file tmpfile newname ok-if-already-exists))
-
-      ;; Direct copy.
-      (with-tramp-progress-reporter
-	  v 0 (format "Copying %s to %s" filename newname)
-	(unless
-	    (let ((args
-		   (append (if (or keep-date preserve-uid-gid)
-			       (list "--preserve")
-			     nil)
-			   (list
-			    (tramp-gvfs-url-file-name filename)
-			    (tramp-gvfs-url-file-name newname)))))
-	      (apply 'tramp-gvfs-send-command v "gvfs-copy" args))
-	  ;; Propagate the error.
-	  (with-current-buffer (tramp-get-connection-buffer v)
-	    (goto-char (point-min))
-	    (tramp-error-with-buffer
-	     nil v 'file-error
-	     "Copying failed, see buffer `%s' for details." (buffer-name)))))
-
-      (when (file-remote-p newname)
-	(with-parsed-tramp-file-name newname nil
-	  (tramp-flush-file-property v (file-name-directory localname))
-	  (tramp-flush-file-property v localname))))))
+  (setq filename (expand-file-name filename))
+  (setq newname (expand-file-name newname))
+  (cond
+   ;; At least one file a Tramp file?
+   ((or (tramp-tramp-file-p filename)
+	(tramp-tramp-file-p newname))
+    (tramp-gvfs-do-copy-or-rename-file
+     'copy filename newname ok-if-already-exists keep-date
+     preserve-uid-gid preserve-extended-attributes))
+   ;; Compat section.
+   (preserve-extended-attributes
+    (tramp-run-real-handler
+     'copy-file
+     (list filename newname ok-if-already-exists keep-date
+	   preserve-uid-gid preserve-extended-attributes)))
+   (preserve-uid-gid
+    (tramp-run-real-handler
+     'copy-file
+     (list filename newname ok-if-already-exists keep-date preserve-uid-gid)))
+   (t
+    (tramp-run-real-handler
+     'copy-file (list filename newname ok-if-already-exists keep-date)))))
 
 (defun tramp-gvfs-handle-delete-directory (directory &optional recursive trash)
   "Like `delete-directory' for Tramp files."
@@ -657,7 +733,7 @@ is no information where to trace the message.")
   "Like `delete-file' for Tramp files."
   (with-parsed-tramp-file-name filename nil
     (tramp-flush-file-property v (file-name-directory localname))
-    (tramp-flush-directory-property v localname)
+    (tramp-flush-file-property v localname)
     (unless
 	(tramp-gvfs-send-command
 	 v (if (and trash delete-by-moving-to-trash) "gvfs-trash" "gvfs-rm")
@@ -696,7 +772,7 @@ is no information where to trace the message.")
       (unless (tramp-run-real-handler 'file-name-absolute-p (list localname))
 	(setq localname (concat "/" localname)))
       ;; We do not pass "/..".
-      (if (string-equal "smb" method)
+      (if (string-match "^\\(afp\\|smb\\)$" method)
 	  (when (string-match "^/[^/]+\\(/\\.\\./?\\)" localname)
 	    (setq localname (replace-match "/" t t localname 1)))
 	(when (string-match "^/\\.\\./?" localname)
@@ -714,123 +790,120 @@ is no information where to trace the message.")
 (defun tramp-gvfs-handle-file-attributes (filename &optional id-format)
   "Like `file-attributes' for Tramp files."
   (unless id-format (setq id-format 'integer))
-  ;; Don't modify `last-coding-system-used' by accident.
-  (let ((last-coding-system-used last-coding-system-used)
-	dirp res-symlink-target res-numlinks res-uid res-gid res-access
-	res-mod res-change res-size res-filemodes res-inode res-device)
-    (with-parsed-tramp-file-name filename nil
-      (with-tramp-file-property
-	  v localname (format "file-attributes-%s" id-format)
-	(tramp-message v 5 "file attributes: %s" localname)
-	(tramp-gvfs-send-command
-	 v "gvfs-info" (tramp-gvfs-url-file-name filename))
-	;; Parse output ...
-	(with-current-buffer (tramp-get-connection-buffer v)
-	  (goto-char (point-min))
-	  (when (re-search-forward "attributes:" nil t)
-	    ;; ... directory or symlink
+  (ignore-errors
+    ;; Don't modify `last-coding-system-used' by accident.
+    (let ((last-coding-system-used last-coding-system-used)
+	  (process-environment (cons "LC_MESSAGES=C" process-environment))
+	  dirp res-symlink-target res-numlinks res-uid res-gid res-access
+	  res-mod res-change res-size res-filemodes res-inode res-device)
+      (with-parsed-tramp-file-name filename nil
+	(with-tramp-file-property
+	    v localname (format "file-attributes-%s" id-format)
+	  (tramp-message v 5 "file attributes: %s" localname)
+	  (tramp-gvfs-send-command
+	   v "gvfs-info" (tramp-gvfs-url-file-name filename))
+	  ;; Parse output ...
+	  (with-current-buffer (tramp-get-connection-buffer v)
 	    (goto-char (point-min))
-	    (setq dirp (if (re-search-forward "type:\\s-+directory" nil t) t))
-	    (goto-char (point-min))
-	    (setq res-symlink-target
-		  (if (re-search-forward
-		       "standard::symlink-target:\\s-+\\(\\S-+\\)" nil t)
-		      (match-string 1)))
-	    ;; ... number links
-	    (goto-char (point-min))
-	    (setq res-numlinks
-		  (if (re-search-forward "unix::nlink:\\s-+\\([0-9]+\\)" nil t)
-		      (string-to-number (match-string 1)) 0))
-	    ;; ... uid and gid
-	    (goto-char (point-min))
-	    (setq res-uid
-		  (or (if (eq id-format 'integer)
-			  (if (re-search-forward
-			       "unix::uid:\\s-+\\([0-9]+\\)" nil t)
-			      (string-to-number (match-string 1)))
-			(if (re-search-forward
-			     "owner::user:\\s-+\\(\\S-+\\)" nil t)
-			    (match-string 1)))
-		      (tramp-get-local-uid id-format)))
-	    (setq res-gid
-		  (or (if (eq id-format 'integer)
-			  (if (re-search-forward
-			       "unix::gid:\\s-+\\([0-9]+\\)" nil t)
-			      (string-to-number (match-string 1)))
-			(if (re-search-forward
-			     "owner::group:\\s-+\\(\\S-+\\)" nil t)
-			    (match-string 1)))
-		      (tramp-get-local-gid id-format)))
-	    ;; ... last access, modification and change time
-	    (goto-char (point-min))
-	    (setq res-access
-		  (if (re-search-forward
-		       "time::access:\\s-+\\([0-9]+\\)" nil t)
-		      (seconds-to-time (string-to-number (match-string 1)))
-		    '(0 0)))
-	    (goto-char (point-min))
-	    (setq res-mod
-		  (if (re-search-forward
-		       "time::modified:\\s-+\\([0-9]+\\)" nil t)
-		      (seconds-to-time (string-to-number (match-string 1)))
-		    '(0 0)))
-	    (goto-char (point-min))
-	    (setq res-change
-		  (if (re-search-forward
-		       "time::changed:\\s-+\\([0-9]+\\)" nil t)
-		      (seconds-to-time (string-to-number (match-string 1)))
-		    '(0 0)))
-	    ;; ... size
-	    (goto-char (point-min))
-	    (setq res-size
-		  (if (re-search-forward
-		       "standard::size:\\s-+\\([0-9]+\\)" nil t)
-		      (string-to-number (match-string 1)) 0))
-	    ;; ... file mode flags
-	    (goto-char (point-min))
-	    (setq res-filemodes
-		  (if (re-search-forward "unix::mode:\\s-+\\([0-9]+\\)" nil t)
-		      (tramp-file-mode-from-int (match-string 1))
-		    (if dirp "drwx------" "-rwx------")))
-	    ;; ... inode and device
-	    (goto-char (point-min))
-	    (setq res-inode
-		  (if (re-search-forward "unix::inode:\\s-+\\([0-9]+\\)" nil t)
-		      (string-to-number (match-string 1))
-		    (tramp-get-inode v)))
-	    (goto-char (point-min))
-	    (setq res-device
-		  (if (re-search-forward "unix::device:\\s-+\\([0-9]+\\)" nil t)
-		      (string-to-number (match-string 1))
-		    (tramp-get-device v)))
+	    (when (re-search-forward "attributes:" nil t)
+	      ;; ... directory or symlink
+	      (goto-char (point-min))
+	      (setq dirp (if (re-search-forward "type: directory" nil t) t))
+	      (goto-char (point-min))
+	      (setq res-symlink-target
+		    (if (re-search-forward
+			 "standard::symlink-target: \\(.+\\)$" nil t)
+			(match-string 1)))
+	      ;; ... number links
+	      (goto-char (point-min))
+	      (setq res-numlinks
+		    (if (re-search-forward "unix::nlink: \\([0-9]+\\)" nil t)
+			(string-to-number (match-string 1)) 0))
+	      ;; ... uid and gid
+	      (goto-char (point-min))
+	      (setq res-uid
+		    (if (eq id-format 'integer)
+			(if (re-search-forward "unix::uid: \\([0-9]+\\)" nil t)
+			    (string-to-number (match-string 1))
+			  -1)
+		      (if (re-search-forward "owner::user: \\(.+\\)$" nil t)
+			  (match-string 1)
+			"UNKNOWN")))
+	      (setq res-gid
+		    (if (eq id-format 'integer)
+			(if (re-search-forward "unix::gid: \\([0-9]+\\)" nil t)
+			    (string-to-number (match-string 1))
+			  -1)
+		      (if (re-search-forward "owner::group: \\(.+\\)$" nil t)
+			  (match-string 1)
+			"UNKNOWN")))
+	      ;; ... last access, modification and change time
+	      (goto-char (point-min))
+	      (setq res-access
+		    (if (re-search-forward "time::access: \\([0-9]+\\)" nil t)
+			(seconds-to-time (string-to-number (match-string 1)))
+		      '(0 0)))
+	      (goto-char (point-min))
+	      (setq res-mod
+		    (if (re-search-forward "time::modified: \\([0-9]+\\)" nil t)
+			(seconds-to-time (string-to-number (match-string 1)))
+		      '(0 0)))
+	      (goto-char (point-min))
+	      (setq res-change
+		    (if (re-search-forward "time::changed: \\([0-9]+\\)" nil t)
+			(seconds-to-time (string-to-number (match-string 1)))
+		      '(0 0)))
+	      ;; ... size
+	      (goto-char (point-min))
+	      (setq res-size
+		    (if (re-search-forward "standard::size: \\([0-9]+\\)" nil t)
+			(string-to-number (match-string 1)) 0))
+	      ;; ... file mode flags
+	      (goto-char (point-min))
+	      (setq res-filemodes
+		    (if (re-search-forward "unix::mode: \\([0-9]+\\)" nil t)
+			(tramp-file-mode-from-int
+			 (string-to-number (match-string 1)))
+		      (if dirp "drwx------" "-rwx------")))
+	      ;; ... inode and device
+	      (goto-char (point-min))
+	      (setq res-inode
+		    (if (re-search-forward "unix::inode: \\([0-9]+\\)" nil t)
+			(string-to-number (match-string 1))
+		      (tramp-get-inode v)))
+	      (goto-char (point-min))
+	      (setq res-device
+		    (if (re-search-forward "unix::device: \\([0-9]+\\)" nil t)
+			(string-to-number (match-string 1))
+		      (tramp-get-device v)))
 
-	    ;; Return data gathered.
-	    (list
-	     ;; 0. t for directory, string (name linked to) for
-	     ;; symbolic link, or nil.
-	     (or dirp res-symlink-target)
-	     ;; 1. Number of links to file.
-	     res-numlinks
-	     ;; 2. File uid.
-	     res-uid
-	     ;; 3. File gid.
-	     res-gid
-	     ;; 4. Last access time, as a list of integers.
-	     ;; 5. Last modification time, likewise.
-	     ;; 6. Last status change time, likewise.
-	     res-access res-mod res-change
-	     ;; 7. Size in bytes (-1, if number is out of range).
-	     res-size
-	     ;; 8. File modes.
-	     res-filemodes
-	     ;; 9. t if file's gid would change if file were deleted
-	     ;; and recreated.
-	     nil
-	     ;; 10. Inode number.
-	     res-inode
-	     ;; 11. Device number.
-	     res-device
-	     )))))))
+	      ;; Return data gathered.
+	      (list
+	       ;; 0. t for directory, string (name linked to) for
+	       ;; symbolic link, or nil.
+	       (or dirp res-symlink-target)
+	       ;; 1. Number of links to file.
+	       res-numlinks
+	       ;; 2. File uid.
+	       res-uid
+	       ;; 3. File gid.
+	       res-gid
+	       ;; 4. Last access time, as a list of integers.
+	       ;; 5. Last modification time, likewise.
+	       ;; 6. Last status change time, likewise.
+	       res-access res-mod res-change
+	       ;; 7. Size in bytes (-1, if number is out of range).
+	       res-size
+	       ;; 8. File modes.
+	       res-filemodes
+	       ;; 9. t if file's gid would change if file were deleted
+	       ;; and recreated.
+	       nil
+	       ;; 10. Inode number.
+	       res-inode
+	       ;; 11. Device number.
+	       res-device
+	       ))))))))
 
 (defun tramp-gvfs-handle-file-directory-p (filename)
   "Like `file-directory-p' for Tramp files."
@@ -895,7 +968,7 @@ is no information where to trace the message.")
 	       entry)
            ;; Get a list of directories and files.
 	   (tramp-gvfs-send-command
-	    v "gvfs-ls" (tramp-gvfs-url-file-name directory))
+	    v "gvfs-ls" "-h" (tramp-gvfs-url-file-name directory))
 
 	   ;; Now grab the output.
            (with-temp-buffer
@@ -924,24 +997,48 @@ is no information where to trace the message.")
             v (concat localname filename)
 	    "file-name-all-completions" result))))))))
 
-(defun tramp-gvfs-handle-file-notify-add-watch (file-name _flags _callback)
+(defun tramp-gvfs-handle-file-notify-add-watch (file-name flags _callback)
   "Like `file-notify-add-watch' for Tramp files."
   (setq file-name (expand-file-name file-name))
   (with-parsed-tramp-file-name file-name nil
-    (let ((p (start-process
-	      "gvfs-monitor-file" (generate-new-buffer " *gvfs-monitor-file*")
-	      "gvfs-monitor-file" (tramp-gvfs-url-file-name file-name))))
+    ;; We cannot watch directories, because `gvfs-monitor-dir' is not
+    ;; supported for gvfs-mounted directories.
+    (when (file-directory-p file-name)
+      (tramp-error
+       v 'file-notify-error "Monitoring not supported for `%s'" file-name))
+    (let* ((default-directory (file-name-directory file-name))
+	   (events
+	    (cond
+	     ((and (memq 'change flags) (memq 'attribute-change flags))
+	      '(created changed changes-done-hint moved deleted
+			attribute-changed))
+	     ((memq 'change flags)
+	      '(created changed changes-done-hint moved deleted))
+	     ((memq 'attribute-change flags) '(attribute-changed))))
+	   (p (start-process
+	       "gvfs-monitor-file" (generate-new-buffer " *gvfs-monitor-file*")
+	       "gvfs-monitor-file" (tramp-gvfs-url-file-name file-name))))
       (if (not (processp p))
 	  (tramp-error
-	   v 'file-notify-error "gvfs-monitor-file failed to start")
+	   v 'file-notify-error "Monitoring not supported for `%s'" file-name)
+	(tramp-message
+	 v 6 "Run `%s', %S" (mapconcat 'identity (process-command p) " ") p)
+	(tramp-set-connection-property p "vector" v)
+	(tramp-compat-process-put p 'events events)
+	(tramp-compat-process-put p 'watch-name localname)
 	(tramp-compat-set-process-query-on-exit-flag p nil)
-	(set-process-filter p 'tramp-gvfs-file-gvfs-monitor-file-process-filter)
-	(with-current-buffer (process-buffer p)
-	  (setq default-directory (file-name-directory file-name)))
+	(set-process-filter p 'tramp-gvfs-monitor-file-process-filter)
+	;; There might be an error if the monitor is not supported.
+	;; Give the filter a chance to read the output.
+	(tramp-accept-process-output p 1)
+	(unless (memq (process-status p) '(run open))
+	  (tramp-error
+	   v 'file-notify-error "Monitoring not supported for `%s'" file-name))
 	p))))
 
-(defun tramp-gvfs-file-gvfs-monitor-file-process-filter (proc string)
-  "Read output from \"gvfs-monitor-file\" and add corresponding file-notify events."
+(defun tramp-gvfs-monitor-file-process-filter (proc string)
+  "Read output from \"gvfs-monitor-file\" and add corresponding \
+file-notify events."
   (let* ((rest-string (tramp-compat-process-get proc 'rest-string))
 	 (dd (with-current-buffer (process-buffer proc) default-directory))
 	 (ddu (regexp-quote (tramp-gvfs-url-file-name dd))))
@@ -950,8 +1047,10 @@ is no information where to trace the message.")
     (tramp-message proc 6 "%S\n%s" proc string)
     (setq string (concat rest-string string)
 	  ;; Attribute change is returned in unused wording.
-	  string (replace-regexp-in-string
+	  string (tramp-compat-replace-regexp-in-string
 		  "ATTRIB CHANGED" "ATTRIBUTE_CHANGED" string))
+    (when (string-match "Monitoring not supported" string)
+      (delete-process proc))
 
     (while (string-match
 	    (concat "^[\n\r]*"
@@ -959,10 +1058,10 @@ is no information where to trace the message.")
 		    "File = \\([^\n\r]+\\)[\n\r]+"
 		    "Event = \\([^[:blank:]]+\\)[\n\r]+")
 	    string)
-      (let ((action (intern-soft
-		     (replace-regexp-in-string
-		      "_" "-" (downcase (match-string 2 string)))))
-	    (file (match-string 1 string)))
+      (let ((file (match-string 1 string))
+	    (action (intern-soft
+		     (tramp-compat-replace-regexp-in-string
+		      "_" "-" (downcase (match-string 2 string))))))
 	(setq string (replace-match "" nil nil string))
 	;; File names are returned as URL paths.  We must convert them.
 	(when (string-match ddu file)
@@ -998,103 +1097,40 @@ is no information where to trace the message.")
 	(and (file-directory-p (file-name-directory filename))
 	     (file-writable-p (file-name-directory filename)))))))
 
-(defun tramp-gvfs-handle-insert-directory
-  (filename switches &optional wildcard full-directory-p)
-  "Like `insert-directory' for Tramp files."
-  ;; gvfs-* output is hard to parse.  So we let `ls-lisp' do the job.
-  (with-parsed-tramp-file-name (expand-file-name filename) nil
-    (with-tramp-progress-reporter v 0 (format "Opening directory %s" filename)
-      (require 'ls-lisp)
-      (let (ls-lisp-use-insert-directory-program)
-	(tramp-run-real-handler
-	 'insert-directory
-	 (list filename switches wildcard full-directory-p))))))
-
-(defun tramp-gvfs-handle-insert-file-contents
-  (filename &optional visit beg end replace)
-  "Like `insert-file-contents' for Tramp files."
-  (barf-if-buffer-read-only)
-  (setq filename (expand-file-name filename))
-  (let (tmpfile result)
-    (unwind-protect
-	(if (not (file-exists-p filename))
-	    ;; We don't raise a Tramp error, because it might be
-	    ;; suppressed, like in `find-file-noselect-1'.
-	    (signal 'file-error (list "File not found on remote host" filename))
-
-	  (setq tmpfile (file-local-copy filename)
-		result (insert-file-contents tmpfile visit beg end replace)))
-      ;; Save exit.
-      (when visit
-	(setq buffer-file-name filename)
-	(setq buffer-read-only (not (file-writable-p filename)))
-	(set-visited-file-modtime)
-	(set-buffer-modified-p nil))
-      (when (stringp tmpfile)
-	(delete-file tmpfile)))
-
-    ;; Result.
-    (list filename (cadr result))))
-
 (defun tramp-gvfs-handle-make-directory (dir &optional parents)
   "Like `make-directory' for Tramp files."
+  (setq dir (directory-file-name (expand-file-name dir)))
   (with-parsed-tramp-file-name dir nil
-    (unless
-	(apply
-	 'tramp-gvfs-send-command v "gvfs-mkdir"
-	 (if parents
-	     (list "-p" (tramp-gvfs-url-file-name dir))
-	   (list (tramp-gvfs-url-file-name dir))))
-      ;; Propagate the error.
-      (tramp-error v 'file-error "Couldn't make directory %s" dir))))
+    (tramp-flush-file-property v (file-name-directory localname))
+    (tramp-flush-directory-property v localname)
+    (save-match-data
+      (let ((ldir (file-name-directory dir)))
+	;; Make missing directory parts.  "gvfs-mkdir -p ..." does not
+	;; work robust.
+	(when (and parents (not (file-directory-p ldir)))
+	  (make-directory ldir parents))
+	;; Just do it.
+	(unless (tramp-gvfs-send-command
+		 v "gvfs-mkdir" (tramp-gvfs-url-file-name dir))
+	  (tramp-error v 'file-error "Couldn't make directory %s" dir))))))
 
 (defun tramp-gvfs-handle-rename-file
   (filename newname &optional ok-if-already-exists)
   "Like `rename-file' for Tramp files."
-  (with-parsed-tramp-file-name
-      (if (tramp-tramp-file-p filename) filename newname) nil
-
-    (when (and (not ok-if-already-exists) (file-exists-p newname))
-      (tramp-error
-       v 'file-already-exists "File %s already exists" newname))
-
-    (if (or (and (tramp-tramp-file-p filename)
-		 (not (tramp-gvfs-file-name-p filename)))
-	    (and (tramp-tramp-file-p newname)
-		 (not (tramp-gvfs-file-name-p newname))))
-
-	;; We cannot move directly.
-	(let ((tmpfile (tramp-compat-make-temp-file filename)))
-	  (rename-file filename tmpfile t)
-	  (rename-file tmpfile newname ok-if-already-exists))
-
-      ;; Direct move.
-      (with-tramp-progress-reporter
-	  v 0 (format "Renaming %s to %s" filename newname)
-	(unless
-	    (tramp-gvfs-send-command
-	     v "gvfs-move"
-	     (tramp-gvfs-url-file-name filename)
-	     (tramp-gvfs-url-file-name newname))
-	  ;; Propagate the error.
-	  (with-current-buffer (tramp-get-buffer v)
-	    (goto-char (point-min))
-	    (tramp-error-with-buffer
-	     nil v 'file-error
-	     "Renaming failed, see buffer `%s' for details." (buffer-name)))))
-
-      (when (file-remote-p filename)
-	(with-parsed-tramp-file-name filename nil
-	  (tramp-flush-file-property v (file-name-directory localname))
-	  (tramp-flush-file-property v localname)))
-
-      (when (file-remote-p newname)
-	(with-parsed-tramp-file-name newname nil
-	  (tramp-flush-file-property v (file-name-directory localname))
-	  (tramp-flush-file-property v localname))))))
+  ;; Check if both files are local -- invoke normal rename-file.
+  ;; Otherwise, use Tramp from local system.
+  (setq filename (expand-file-name filename))
+  (setq newname (expand-file-name newname))
+  ;; At least one file a Tramp file?
+  (if (or (tramp-tramp-file-p filename)
+          (tramp-tramp-file-p newname))
+      (tramp-gvfs-do-copy-or-rename-file
+       'rename filename newname ok-if-already-exists t t)
+    (tramp-run-real-handler
+     'rename-file (list filename newname ok-if-already-exists))))
 
 (defun tramp-gvfs-handle-write-region
-  (start end filename &optional _append visit _lockname confirm)
+  (start end filename &optional append visit lockname confirm)
   "Like `write-region' for Tramp files."
   (with-parsed-tramp-file-name filename nil
     ;; XEmacs takes a coding system as the seventh argument, not `confirm'.
@@ -1103,7 +1139,16 @@ is no information where to trace the message.")
 	(tramp-error v 'file-error "File not overwritten")))
 
     (let ((tmpfile (tramp-compat-make-temp-file filename)))
-      (write-region start end tmpfile)
+      (when (and append (file-exists-p filename))
+	(copy-file filename tmpfile 'ok))
+      ;; We say `no-message' here because we don't want the visited file
+      ;; modtime data to be clobbered from the temp file.  We call
+      ;; `set-visited-file-modtime' ourselves later on.
+      (tramp-run-real-handler
+       'write-region
+       (if confirm ; don't pass this arg unless defined for backward compat.
+	   (list start end tmpfile append 'no-message lockname confirm)
+	 (list start end tmpfile append 'no-message lockname)))
       (condition-case nil
 	  (rename-file tmpfile filename 'ok-if-already-exists)
 	(error
@@ -1129,7 +1174,7 @@ is no information where to trace the message.")
 (defun tramp-gvfs-url-file-name (filename)
   "Return FILENAME in URL syntax."
   ;; "/" must NOT be hexlified.
-  (let ((url-unreserved-chars (append '(?/) url-unreserved-chars))
+  (let ((url-unreserved-chars (cons ?/ url-unreserved-chars))
 	result)
     (setq
      result
@@ -1140,9 +1185,9 @@ is no information where to trace the message.")
 	      (setq user
 		    (concat (match-string 2 user) ";" (match-string 1 user))))
 	    (url-parse-make-urlobj
-	     method (url-hexify-string user) nil
+	     method (and user (url-hexify-string user)) nil
 	     (tramp-file-name-real-host v) (tramp-file-name-port v)
-	     (url-hexify-string localname) nil nil t))
+	     (and localname (url-hexify-string localname)) nil nil t))
 	(url-parse-make-urlobj
 	 "file" nil nil nil nil
 	 (url-hexify-string (file-truename filename)) nil nil t))))
@@ -1158,7 +1203,8 @@ is no information where to trace the message.")
 (defun tramp-gvfs-file-name (object-path)
   "Retrieve file name from D-Bus OBJECT-PATH."
   (dbus-unescape-from-identifier
-   (replace-regexp-in-string "^.*/\\([^/]+\\)$" "\\1" object-path)))
+   (tramp-compat-replace-regexp-in-string
+    "^.*/\\([^/]+\\)$" "\\1" object-path)))
 
 (defun tramp-bluez-address (device)
   "Return bluetooth device address from a given bluetooth DEVICE name."
@@ -1201,10 +1247,14 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 		      (zerop (logand flags tramp-gvfs-password-need-username))))
 	    (setq user (read-string "User name: ")))
 	  (when (and (zerop (length domain))
-		     (not (zerop (logand flags tramp-gvfs-password-need-domain))))
+		     (not
+		      (zerop (logand flags tramp-gvfs-password-need-domain))))
 	    (setq domain (read-string "Domain name: ")))
 
 	  (tramp-message l 6 "%S %S %S %d" message user domain flags)
+	  (unless (tramp-get-connection-property l "first-password-request" nil)
+	    (tramp-clear-passwd l))
+
 	  (setq tramp-current-method l-method
 		tramp-current-user user
 		tramp-current-host l-host
@@ -1289,12 +1339,14 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 		    (cadr (assoc "port" (cadr mount-spec)))))
 	     (ssl (tramp-gvfs-dbus-byte-array-to-string
 		   (cadr (assoc "ssl" (cadr mount-spec)))))
-	     (prefix (concat (tramp-gvfs-dbus-byte-array-to-string
-			      (car mount-spec))
-			     (tramp-gvfs-dbus-byte-array-to-string
-			      (cadr (assoc "share" (cadr mount-spec)))))))
-	(when (string-match "^smb" method)
-	  (setq method "smb"))
+	     (prefix (concat
+		      (tramp-gvfs-dbus-byte-array-to-string
+		       (car mount-spec))
+		      (tramp-gvfs-dbus-byte-array-to-string
+		       (or (cadr (assoc "share" (cadr mount-spec)))
+			   (cadr (assoc "volume" (cadr mount-spec))))))))
+	(when (string-match "^\\(afp\\|smb\\)" method)
+	  (setq method (match-string 1 method)))
 	(when (string-equal "obex" method)
 	  (setq host (tramp-bluez-device host)))
 	(when (and (string-equal "dav" method) (string-equal "true" ssl))
@@ -1371,12 +1423,15 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 		     (cadr (assoc "port" (cadr mount-spec)))))
 	      (ssl (tramp-gvfs-dbus-byte-array-to-string
 		    (cadr (assoc "ssl" (cadr mount-spec)))))
-	      (prefix (concat (tramp-gvfs-dbus-byte-array-to-string
-			       (car mount-spec))
-			      (tramp-gvfs-dbus-byte-array-to-string
-			       (cadr (assoc "share" (cadr mount-spec)))))))
-	 (when (string-match "^smb" method)
-	   (setq method "smb"))
+	      (prefix (concat
+		       (tramp-gvfs-dbus-byte-array-to-string
+			(car mount-spec))
+		       (tramp-gvfs-dbus-byte-array-to-string
+			(or
+			 (cadr (assoc "share" (cadr mount-spec)))
+			 (cadr (assoc "volume" (cadr mount-spec))))))))
+	 (when (string-match "^\\(afp\\|smb\\)" method)
+	   (setq method (match-string 1 method)))
 	 (when (string-equal "obex" method)
 	   (setq host (tramp-bluez-device host)))
 	 (when (and (string-equal "dav" method) (string-equal "true" ssl))
@@ -1416,48 +1471,43 @@ It was \"a(say)\", but has changed to \"a{sv})\"."
 	 (host (tramp-file-name-real-host vec))
 	 (port (tramp-file-name-port vec))
 	 (localname (tramp-file-name-localname vec))
-	 (ssl (if (string-match "^davs" method) "true" "false"))
-	 (mount-spec '(:array))
-	 (mount-pref "/"))
-
-    (setq
-     mount-spec
-     (append
-      mount-spec
-      (cond
-       ((string-equal "smb" method)
-	(string-match "^/?\\([^/]+\\)" localname)
-	(list (tramp-gvfs-mount-spec-entry "type" "smb-share")
-	      (tramp-gvfs-mount-spec-entry "server" host)
-	      (tramp-gvfs-mount-spec-entry "share" (match-string 1 localname))))
-       ((string-equal "obex" method)
-	(list (tramp-gvfs-mount-spec-entry "type" method)
-	      (tramp-gvfs-mount-spec-entry
-	       "host" (concat "[" (tramp-bluez-address host) "]"))))
-       ((string-match "^dav" method)
-	(list (tramp-gvfs-mount-spec-entry "type" "dav")
-	      (tramp-gvfs-mount-spec-entry "host" host)
-	      (tramp-gvfs-mount-spec-entry "ssl" ssl)))
-       (t
-	(list (tramp-gvfs-mount-spec-entry "type" method)
-	      (tramp-gvfs-mount-spec-entry "host" host))))))
-
-    (when user
-      (add-to-list
-       'mount-spec (tramp-gvfs-mount-spec-entry "user" user) 'append))
-
-    (when domain
-      (add-to-list
-       'mount-spec (tramp-gvfs-mount-spec-entry "domain" domain) 'append))
-
-    (when port
-      (add-to-list
-       'mount-spec (tramp-gvfs-mount-spec-entry "port" (number-to-string port))
-       'append))
-
-    (when (and (string-match "^dav" method)
-	       (string-match "^/?[^/]+" localname))
-      (setq mount-pref (match-string 0 localname)))
+	 (share (when (string-match "^/?\\([^/]+\\)" localname)
+		  (match-string 1 localname)))
+	 (ssl (when (string-match "^davs" method) "true" "false"))
+	 (mount-spec
+          `(:array
+            ,@(cond
+               ((string-equal "smb" method)
+                (list (tramp-gvfs-mount-spec-entry "type" "smb-share")
+                      (tramp-gvfs-mount-spec-entry "server" host)
+                      (tramp-gvfs-mount-spec-entry "share" share)))
+               ((string-equal "obex" method)
+                (list (tramp-gvfs-mount-spec-entry "type" method)
+                      (tramp-gvfs-mount-spec-entry
+                       "host" (concat "[" (tramp-bluez-address host) "]"))))
+               ((string-match "\\`dav" method)
+                (list (tramp-gvfs-mount-spec-entry "type" "dav")
+                      (tramp-gvfs-mount-spec-entry "host" host)
+                      (tramp-gvfs-mount-spec-entry "ssl" ssl)))
+               ((string-equal "afp" method)
+                (list (tramp-gvfs-mount-spec-entry "type" "afp-volume")
+                      (tramp-gvfs-mount-spec-entry "host" host)
+                      (tramp-gvfs-mount-spec-entry "volume" share)))
+               (t
+                (list (tramp-gvfs-mount-spec-entry "type" method)
+                      (tramp-gvfs-mount-spec-entry "host" host))))
+            ,@(when user
+                (list (tramp-gvfs-mount-spec-entry "user" user)))
+            ,@(when domain
+                (list (tramp-gvfs-mount-spec-entry "domain" domain)))
+            ,@(when port
+                (list (tramp-gvfs-mount-spec-entry
+		       "port" (number-to-string port))))))
+	 (mount-pref
+          (if (and (string-match "\\`dav" method)
+                   (string-match "^/?[^/]+" localname))
+              (match-string 0 localname)
+            "/")))
 
     ;; Return.
     `(:struct ,(tramp-gvfs-dbus-string-to-byte-array mount-pref) ,mount-spec)))
@@ -1469,6 +1519,7 @@ It was \"a(say)\", but has changed to \"a{sv})\"."
   "Maybe open a connection VEC.
 Does not do anything if a connection is already open, but re-opens the
 connection if a previous connection has died for some reason."
+  (tramp-check-proper-method-and-host vec)
 
   ;; We set the file name, in case there are incoming D-Bus signals or
   ;; D-Bus errors.
@@ -1497,13 +1548,17 @@ connection if a previous connection has died for some reason."
 		 (string-equal localname "/"))
 	(tramp-error vec 'file-error "Filename must contain a Windows share"))
 
+      (when (and (string-equal method "afp")
+		 (string-equal localname "/"))
+	(tramp-error vec 'file-error "Filename must contain an AFP volume"))
+
       (with-tramp-progress-reporter
 	  vec 3
 	  (if (zerop (length user))
 	      (format "Opening connection for %s using %s" host method)
 	    (format "Opening connection for %s@%s using %s" user host method))
 
-	;; Enable auth-source and password-cache.
+	;; Enable `auth-source'.
 	(tramp-set-connection-property vec "first-password-request" t)
 
 	;; There will be a callback of "askPassword" when a password is
@@ -1546,7 +1601,7 @@ connection if a previous connection has died for some reason."
 	;; indicated by the "mounted" signal, i.e. the "fuse-mountpoint"
 	;; file property.
 	(with-timeout
-	    ((or (tramp-get-method-parameter method 'tramp-connection-timeout)
+	    ((or (tramp-get-method-parameter vec 'tramp-connection-timeout)
 		 tramp-connection-timeout)
 	     (if (zerop (length (tramp-file-name-user vec)))
 		 (tramp-error
@@ -1562,32 +1617,28 @@ connection if a previous connection has died for some reason."
 	;; is marked with the fuse-mountpoint "/".  We shall react.
 	(when (string-equal
 	       (tramp-get-file-property vec "/" "fuse-mountpoint" "") "/")
-	  (tramp-error vec 'file-error "FUSE mount denied"))
+	  (tramp-error vec 'file-error "FUSE mount denied")))))
 
-	;; In `tramp-check-cached-permissions', the connection
-	;; properties {uig,gid}-{integer,string} are used.  We set
-	;; them to their local counterparts.
-	(tramp-set-connection-property
-	 vec "uid-integer" (tramp-get-local-uid 'integer))
-	(tramp-set-connection-property
-	 vec "gid-integer" (tramp-get-local-gid 'integer))
-	(tramp-set-connection-property
-	 vec "uid-string" (tramp-get-local-uid 'string))
-	(tramp-set-connection-property
-	 vec "gid-string" (tramp-get-local-gid 'string))))))
+  ;; In `tramp-check-cached-permissions', the connection properties
+  ;; {uig,gid}-{integer,string} are used.  We set them to their local
+  ;; counterparts.
+  (with-tramp-connection-property
+   vec "uid-integer" (tramp-get-local-uid 'integer))
+  (with-tramp-connection-property
+   vec "gid-integer" (tramp-get-local-gid 'integer))
+  (with-tramp-connection-property
+   vec "uid-string" (tramp-get-local-uid 'string))
+  (with-tramp-connection-property
+   vec "gid-string" (tramp-get-local-gid 'string)))
 
 (defun tramp-gvfs-send-command (vec command &rest args)
   "Send the COMMAND with its ARGS to connection VEC.
 COMMAND is usually a command from the gvfs-* utilities.
-`call-process' is applied, and it returns `t' if the return code is zero."
-  (let (result)
-    (with-current-buffer (tramp-get-connection-buffer vec)
-      (tramp-gvfs-maybe-open-connection vec)
-      (erase-buffer)
-      (tramp-message vec 6 "%s %s" command (mapconcat 'identity args " "))
-      (setq result (apply 'tramp-call-process command nil t nil args))
-      (tramp-message vec 6 "\n%s" (buffer-string))
-      (zerop result))))
+`call-process' is applied, and it returns t if the return code is zero."
+  (with-current-buffer (tramp-get-connection-buffer vec)
+    (tramp-gvfs-maybe-open-connection vec)
+    (erase-buffer)
+    (zerop (apply 'tramp-call-process vec command nil t nil args))))
 
 
 ;; D-Bus BLUEZ functions.
@@ -1637,9 +1688,10 @@ be used."
 	:system tramp-bluez-service (dbus-event-path-name last-input-event)
 	tramp-bluez-interface-adapter "StopDiscovery")))))
 
-(dbus-register-signal
- :system nil nil tramp-bluez-interface-adapter "PropertyChanged"
- 'tramp-bluez-property-changed)
+(when tramp-gvfs-enabled
+  (dbus-register-signal
+   :system nil nil tramp-bluez-interface-adapter "PropertyChanged"
+   'tramp-bluez-property-changed))
 
 (defun tramp-bluez-device-found (device args)
   "Signal handler for the \"org.bluez.Adapter.DeviceFound\" signal."
@@ -1650,9 +1702,10 @@ be used."
     ;; device, and call also SDP in order to find the obex service.
     (add-to-list 'tramp-bluez-devices (list alias address))))
 
-(dbus-register-signal
- :system nil nil tramp-bluez-interface-adapter "DeviceFound"
- 'tramp-bluez-device-found)
+(when tramp-gvfs-enabled
+  (dbus-register-signal
+   :system nil nil tramp-bluez-interface-adapter "DeviceFound"
+   'tramp-bluez-device-found))
 
 (defun tramp-bluez-parse-device-names (_ignore)
   "Return a list of (nil host) tuples allowed to access."
@@ -1661,19 +1714,20 @@ be used."
    (tramp-bluez-list-devices)))
 
 ;; Add completion function for OBEX method.
-(when (member tramp-bluez-service (dbus-list-known-names :system))
+(when (and tramp-gvfs-enabled
+	   (member tramp-bluez-service (dbus-list-known-names :system)))
   (tramp-set-completion-function
    "obex" '((tramp-bluez-parse-device-names ""))))
 
 
 ;; D-Bus zeroconf functions.
 
-(defun tramp-zeroconf-parse-workstation-device-names (_ignore)
+(defun tramp-zeroconf-parse-service-device-names (service)
   "Return a list of (user host) tuples allowed to access."
   (mapcar
    (lambda (x)
      (list nil (zeroconf-service-host x)))
-   (zeroconf-list-services "_workstation._tcp")))
+   (zeroconf-list-services service)))
 
 (defun tramp-zeroconf-parse-webdav-device-names (_ignore)
   "Return a list of (user host) tuples allowed to access."
@@ -1693,15 +1747,20 @@ be used."
        (list user host)))
    (zeroconf-list-services "_webdav._tcp")))
 
-;; Add completion function for DAV and DAVS methods.
-(when (member zeroconf-service-avahi (dbus-list-known-names :system))
+;; Add completion functions for AFP, DAV, DAVS, SFTP and SMB methods.
+(when (and tramp-gvfs-enabled
+	   (member zeroconf-service-avahi (dbus-list-known-names :system)))
   (zeroconf-init tramp-gvfs-zeroconf-domain)
   (tramp-set-completion-function
-   "sftp" '((tramp-zeroconf-parse-workstation-device-names "")))
+   "afp" '((tramp-zeroconf-parse-service-device-names "_afpovertcp._tcp")))
   (tramp-set-completion-function
    "dav" '((tramp-zeroconf-parse-webdav-device-names "")))
   (tramp-set-completion-function
-   "davs" '((tramp-zeroconf-parse-webdav-device-names ""))))
+   "davs" '((tramp-zeroconf-parse-webdav-device-names "")))
+  (tramp-set-completion-function
+   "sftp" '((tramp-zeroconf-parse-service-device-names "_workstation._tcp")))
+  (tramp-set-completion-function
+   "smb" '((tramp-zeroconf-parse-service-device-names "_smb._tcp"))))
 
 
 ;; D-Bus SYNCE functions.
@@ -1717,11 +1776,13 @@ They are retrieved from the hal daemon."
       (when (with-tramp-dbus-call-method tramp-gvfs-dbus-event-vector t
 	      :system tramp-hal-service device tramp-hal-interface-device
 	      "PropertyExists" "sync.plugin")
-	(add-to-list
-	 'tramp-synce-devices
-	 (with-tramp-dbus-call-method tramp-gvfs-dbus-event-vector t
-	   :system tramp-hal-service device tramp-hal-interface-device
-	   "GetPropertyString" "pda.pocketpc.name"))))
+	(let ((prop
+	       (with-tramp-dbus-call-method
+		tramp-gvfs-dbus-event-vector t
+		:system tramp-hal-service device tramp-hal-interface-device
+		"GetPropertyString" "pda.pocketpc.name")))
+	  (unless (member prop tramp-synce-devices)
+	    (push prop tramp-synce-devices)))))
     (tramp-message tramp-gvfs-dbus-event-vector 10 "%s" tramp-synce-devices)
     tramp-synce-devices))
 
@@ -1732,8 +1793,9 @@ They are retrieved from the hal daemon."
    (tramp-synce-list-devices)))
 
 ;; Add completion function for SYNCE method.
-(tramp-set-completion-function
- "synce" '((tramp-synce-parse-device-names "")))
+(when tramp-gvfs-enabled
+  (tramp-set-completion-function
+   "synce" '((tramp-synce-parse-device-names ""))))
 
 (add-hook 'tramp-unload-hook
 	  (lambda ()
@@ -1743,7 +1805,7 @@ They are retrieved from the hal daemon."
 
 ;;; TODO:
 
-;; * Host name completion via smb-server or smb-network.
+;; * Host name completion via afp-server, smb-server or smb-network.
 ;; * Check how two shares of the same SMB server can be mounted in
 ;;   parallel.
 ;; * Apply SDP on bluetooth devices, in order to filter out obex

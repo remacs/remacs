@@ -1,9 +1,10 @@
-;;; eudcb-ldap.el --- Emacs Unified Directory Client - LDAP Backend -*- coding: utf-8 -*-
+;;; eudcb-ldap.el --- Emacs Unified Directory Client - LDAP Backend
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 ;; Author: Oscar Figueiredo <oscar@cpe.fr>
-;; Maintainer: Pavel Janík <Pavel@Janik.cz>
+;;         Pavel Janík <Pavel@Janik.cz>
+;; Maintainer: Thomas Fitzsimmons <fitzsim@fitzsim.org>
 ;; Keywords: comm
 ;; Package: eudc
 
@@ -70,16 +71,14 @@
 		     ("mail" . eudc-display-mail)
 		     ("url" . eudc-display-url))
 		   'ldap)
-(eudc-protocol-set 'eudc-switch-to-server-hook
-		   '(eudc-ldap-check-base)
-		   'ldap)
 
 (defun eudc-ldap-cleanup-record-simple (record)
   "Do some cleanup in a RECORD to make it suitable for EUDC."
+  (declare (obsolete eudc-ldap-cleanup-record-filtering-addresses "25.1"))
   (mapcar
    (function
     (lambda (field)
-      (cons (intern (car field))
+      (cons (intern (downcase (car field)))
 	    (if (cdr (cdr field))
 		(cdr field)
 	      (car (cdr field))))))
@@ -88,22 +87,36 @@
 (defun eudc-filter-$ (string)
   (mapconcat 'identity (split-string string "\\$") "\n"))
 
-;; Cleanup a LDAP record to make it suitable for EUDC:
-;;   Make the record a cons-cell instead of a list if it is single-valued
-;;   Filter the $ character in addresses into \n if not done by the LDAP lib
 (defun eudc-ldap-cleanup-record-filtering-addresses (record)
-  (mapcar
-   (function
-    (lambda (field)
-      (let ((name (intern (car field)))
+  "Clean up RECORD to make it suitable for EUDC.
+Make the record a cons-cell instead of a list if it is
+single-valued.  Change the `$' character in postal addresses to a
+newline.  Combine separate mail fields into one mail field with
+multiple addresses."
+  (let ((clean-up-addresses (or (not (boundp 'ldap-ignore-attribute-codings))
+				(not ldap-ignore-attribute-codings)))
+	result mail-addresses)
+    (dolist (field record)
+      ;; Some servers return case-sensitive names (e.g. givenName
+      ;; instead of givenname); downcase the field's name so that it
+      ;; can be matched against
+      ;; eudc-ldap-attributes-translation-alist.
+      (let ((name (intern (downcase (car field))))
 	    (value (cdr field)))
-	(if (memq name '(postaladdress registeredaddress))
-	    (setq value (mapcar 'eudc-filter-$ value)))
-	(cons name
-	      (if (cdr value)
-		  value
-		(car value))))))
-   record))
+	(when (and clean-up-addresses
+		   (memq name '(postaladdress registeredaddress)))
+	  (setq value (mapcar 'eudc-filter-$ value)))
+	(if (eq name 'mail)
+	    (setq mail-addresses (append mail-addresses value))
+	  (push (cons name (if (cdr value)
+			       value
+			     (car value)))
+		result))))
+    (push (cons 'mail (if (cdr mail-addresses)
+			  mail-addresses
+			(car mail-addresses)))
+          result)
+    (nreverse result)))
 
 (defun eudc-ldap-simple-query-internal (query &optional return-attrs)
   "Query the LDAP server with QUERY.
@@ -116,11 +129,7 @@ RETURN-ATTRS is a list of attributes to return, defaulting to
 			     (if (listp return-attrs)
 				 (mapcar 'symbol-name return-attrs))))
 	final-result)
-    (if (or (not (boundp 'ldap-ignore-attribute-codings))
-	    ldap-ignore-attribute-codings)
-	(setq result
-	      (mapcar 'eudc-ldap-cleanup-record-filtering-addresses result))
-      (setq result (mapcar 'eudc-ldap-cleanup-record-simple result)))
+    (setq result (mapcar 'eudc-ldap-cleanup-record-filtering-addresses result))
 
     (if (and eudc-strict-return-matches
 	     return-attrs
@@ -136,7 +145,7 @@ RETURN-ATTRS is a list of attributes to return, defaulting to
 	 result))
     final-result))
 
-(defun eudc-ldap-get-field-list (dummy &optional objectclass)
+(defun eudc-ldap-get-field-list (_dummy &optional objectclass)
   "Return a list of valid attribute names for the current server.
 OBJECTCLASS is the LDAP object class for which the valid
 attribute names are returned. Default to `person'"
@@ -146,7 +155,7 @@ attribute names are returned. Default to `person'"
   (let ((ldap-host-parameters-alist
 	 (list (cons eudc-server
 		     '(scope subtree sizelimit 1)))))
-    (mapcar 'eudc-ldap-cleanup-record-simple
+    (mapcar 'eudc-ldap-cleanup-record-filtering-addresses
 	    (ldap-search
 	     (eudc-ldap-format-query-as-rfc1558
 	      (list (cons "objectclass"
@@ -170,14 +179,16 @@ attribute names are returned. Default to `person'"
 
 (defun eudc-ldap-format-query-as-rfc1558 (query)
   "Format the EUDC QUERY list as a RFC1558 LDAP search filter."
-  (format "(&%s)"
-	  (apply 'concat
-		 (mapcar (lambda (item)
-                           (format "(%s=%s)"
-                                   (car item)
-                                   (eudc-ldap-escape-query-special-chars (cdr item))))
-			 query))))
-
+  (let ((formatter (lambda (item &optional wildcard)
+		     (format "(%s=%s)"
+			     (car item)
+			     (concat
+			      (eudc-ldap-escape-query-special-chars
+			       (cdr item)) (if wildcard "*" ""))))))
+    (format "(&%s)"
+	    (concat
+	     (mapconcat formatter (butlast query) "")
+	     (funcall formatter (car (last query)) t)))))
 
 ;;}}}
 

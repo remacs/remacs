@@ -1,5 +1,5 @@
 /* Proxy shell designed for use with Emacs on Windows 95 and NT.
-   Copyright (C) 1997, 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 1997, 2001-2015 Free Software Foundation, Inc.
 
    Accepts subset of Unix sh(1) command-line options, for compatibility
    with elisp code written for Unix.  When possible, executes external
@@ -135,7 +135,10 @@ skip_nonspace (const char *str)
   return str;
 }
 
-int escape_char = '\\';
+/* This value is never changed by the code.  We keep the code that
+   supports also the value of '"', but let's allow the compiler to
+   optimize it out, until someone actually uses that.  */
+const int escape_char = '\\';
 
 /* Get next token from input, advancing pointer.  */
 int
@@ -196,11 +199,31 @@ get_next_token (char * buf, const char ** pSrc)
 	      /* End of string, but no ending quote found.  We might want to
 		 flag this as an error, but for now will consider the end as
 		 the end of the token.  */
+	      if (escape_char == '\\')
+		{
+		  /* Output literal backslashes.  Note that if the
+		     token ends with an unpaired backslash, we eat it
+		     up here.  But since this case invokes undefined
+		     behavior anyway, it's okay.  */
+		  while (escape_char_run > 1)
+		    {
+		      *o++ = escape_char;
+		      escape_char_run -= 2;
+		    }
+		}
 	      *o = '\0';
 	      break;
 	    }
 	  else
 	    {
+	      if (escape_char == '\\')
+		{
+		  /* Output literal backslashes.  Note that we don't
+		     treat a backslash as an escape character here,
+		     since it doesn't precede a quote.  */
+		  for ( ; escape_char_run > 0; escape_char_run--)
+		    *o++ = escape_char;
+		}
 	      *o++ = *p++;
 	    }
 	}
@@ -220,6 +243,28 @@ get_next_token (char * buf, const char ** pSrc)
   return o - buf;
 }
 
+/* Return TRUE if PROGNAME is a batch file. */
+BOOL
+batch_file_p (const char *progname)
+{
+  const char *exts[] = {".bat", ".cmd"};
+  int n_exts = sizeof (exts) / sizeof (char *);
+  int i;
+
+  const char *ext = strrchr (progname, '.');
+
+  if (ext)
+    {
+      for (i = 0; i < n_exts; i++)
+        {
+          if (stricmp (ext, exts[i]) == 0)
+            return TRUE;
+        }
+    }
+
+  return FALSE;
+}
+
 /* Search for EXEC file in DIR.  If EXEC does not have an extension,
    DIR is searched for EXEC with the standard extensions appended.  */
 int
@@ -229,13 +274,44 @@ search_dir (const char *dir, const char *exec, int bufsize, char *buffer)
   int n_exts = sizeof (exts) / sizeof (char *);
   char *dummy;
   int i, rc;
+  const char *pext = strrchr (exec, '\\');
+
+  /* Does EXEC already include an extension?  */
+  if (!pext)
+    pext = exec;
+  pext = strchr (pext, '.');
 
   /* Search the directory for the program.  */
-  for (i = 0; i < n_exts; i++)
+  if (pext)
     {
-      rc = SearchPath (dir, exec, exts[i], bufsize, buffer, &dummy);
+      /* SearchPath will not append an extension if the file already
+	 has an extension, so we must append it ourselves.  */
+      char exec_ext[MAX_PATH], *p;
+
+      p = strcpy (exec_ext, exec) + strlen (exec);
+
+      /* Search first without any extension; if found, we are done.  */
+      rc = SearchPath (dir, exec_ext, NULL, bufsize, buffer, &dummy);
       if (rc > 0)
 	return rc;
+
+      /* Try the known extensions.  */
+      for (i = 0; i < n_exts; i++)
+	{
+	  strcpy (p, exts[i]);
+	  rc = SearchPath (dir, exec_ext, NULL, bufsize, buffer, &dummy);
+	  if (rc > 0)
+	    return rc;
+	}
+    }
+  else
+    {
+      for (i = 0; i < n_exts; i++)
+	{
+	  rc = SearchPath (dir, exec, exts[i], bufsize, buffer, &dummy);
+	  if (rc > 0)
+	    return rc;
+	}
     }
 
   return 0;
@@ -292,11 +368,15 @@ make_absolute (const char *prog)
 
   while (*path)
     {
+      size_t len;
+
       /* Get next directory from path.  */
       p = path;
       while (*p && *p != ';') p++;
-      strncpy (dir, path, p - path);
-      dir[p - path] = '\0';
+      /* A broken PATH could have too long directory names in it.  */
+      len = min (p - path, sizeof (dir) - 1);
+      strncpy (dir, path, len);
+      dir[len] = '\0';
 
       /* Search the directory for the program.  */
       if (search_dir (dir, prog, MAX_PATH, absname) > 0)
@@ -319,7 +399,7 @@ try_dequote_cmdline (char* cmdline)
   /* Dequoting can only subtract characters, so the length of the
      original command line is a bound on the amount of scratch space
      we need.  This length, in turn, is bounded by the 32k
-     CreateProces limit.  */
+     CreateProcess limit.  */
   char * old_pos = cmdline;
   char * new_cmdline = alloca (strlen(cmdline));
   char * new_pos = new_cmdline;
@@ -465,6 +545,13 @@ spawn (const char *progname, char *cmdline, const char *dir, int *retcode)
 
   memset (&start, 0, sizeof (start));
   start.cb = sizeof (start);
+
+  /* CreateProcess handles batch files as progname specially. This
+     special handling fails when both the batch file and arguments are
+     quoted.  We pass NULL as progname to avoid the special
+     handling. */
+  if (progname != NULL && cmdline[0] == '"' && batch_file_p (progname))
+      progname = NULL;
 
   if (CreateProcess (progname, cmdline, &sec_attrs, NULL, TRUE,
 		     0, envblock, dir, &start, &child))
@@ -765,7 +852,7 @@ main (int argc, char ** argv)
 	     quotes, since they are illegal in path names).  */
 
 	  remlen = maxlen =
-	    strlen (progname) + extra_arg_space + strlen (cmdline) + 16;
+	    strlen (progname) + extra_arg_space + strlen (cmdline) + 16 + 2;
 	  buf = p = alloca (maxlen + 1);
 
 	  /* Quote progname in case it contains spaces.  */
@@ -780,10 +867,16 @@ main (int argc, char ** argv)
 	      remlen = maxlen - (p - buf);
 	    }
 
+	  /* Now that we know we will be invoking the shell, quote the
+	     command line after the "/c" switch as the shell expects:
+	     a single pair of quotes enclosing the entire command
+	     tail, no matter whether quotes are used in the command
+	     line, and how many of them are there.  See the output of
+	     "cmd /?" for how cmd.exe treats quotes.  */
 	  if (run_command_dot_com)
-	    _snprintf (p, remlen, " /e:%d /c %s", envsize, cmdline);
+	    _snprintf (p, remlen, " /e:%d /c \"%s\"", envsize, cmdline);
 	  else
-	    _snprintf (p, remlen, " /c %s", cmdline);
+	    _snprintf (p, remlen, " /c \"%s\"", cmdline);
 	  cmdline = buf;
 	}
       else
@@ -843,4 +936,3 @@ main (int argc, char ** argv)
 
   return 0;
 }
-

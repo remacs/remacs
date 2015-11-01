@@ -1,6 +1,6 @@
 ;;; sym-comp.el --- mode-dependent symbol completion
 
-;; Copyright (C) 2004, 2008-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2004, 2008-2015 Free Software Foundation, Inc.
 
 ;; Author: Dave Love <fx@gnu.org>
 ;; Keywords: extensions
@@ -165,9 +165,9 @@ Uses `symbol-completion-symbol-function' and
 used something like this in a major mode which provides symbol
 completion:
 
-  (if (featurep 'hippie-exp)
-      (set (make-local-variable 'hippie-expand-try-functions-list)
-	   (cons 'symbol-completion-try-complete
+  (if (featurep \\='hippie-exp)
+      (set (make-local-variable \\='hippie-expand-try-functions-list)
+	   (cons \\='symbol-completion-try-complete
                  hippie-expand-try-functions-list)))"
   (when (and symbol-completion-symbol-function
 	     symbol-completion-completions-function)

@@ -1,6 +1,6 @@
 ;;; type-break.el --- encourage rests from typing at appropriate intervals  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1994-1995, 1997, 2000-2013 Free Software Foundation,
+;; Copyright (C) 1994-1995, 1997, 2000-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Noah Friedman
@@ -45,7 +45,7 @@
 
 ;; If you find echo area messages annoying and would prefer to see messages
 ;; in the mode line instead, do M-x type-break-mode-line-message-mode
-;; or set the variable of the same name to `t'.
+;; or set the variable of the same name to t.
 
 ;; This program can truly cons up a storm because of all the calls to
 ;; `current-time' (which always returns fresh conses).  I'm dismayed by
@@ -208,6 +208,7 @@ key is pressed."
   (locate-user-emacs-file "type-break" ".type-break")
   "Name of file used to save state across sessions.
 If this is nil, no data will be saved across sessions."
+  :version "24.4"                       ; added locate-user
   :type 'file)
 
 (defvar type-break-post-command-hook '(type-break-check)
@@ -604,8 +605,7 @@ INTERVAL is the full length of an interval (defaults to TIME)."
   (type-break-time-warning-schedule time 'reset)
   (type-break-run-at-time (max 1 time) nil 'type-break-alarm)
   (setq type-break-time-next-break
-        (type-break-time-sum (or start (current-time))
-                             (or interval time))))
+        (type-break-time-sum start (or interval time))))
 
 (defun type-break-cancel-schedule ()
   (type-break-cancel-time-warning-schedule)
@@ -677,7 +677,7 @@ INTERVAL is the full length of an interval (defaults to TIME)."
 (defun type-break-check ()
   "Ask to take a typing break if appropriate.
 This may be the case either because the scheduled time has come \(and the
-minimum keystroke threshold has been reached\) or because the maximum
+minimum keystroke threshold has been reached) or because the maximum
 keystroke threshold has been exceeded."
   (type-break-file-keystroke-count)
   (let* ((min-threshold (car type-break-keystroke-threshold))
@@ -803,8 +803,9 @@ this or ask the user to start one right now."
    (type-break-mode-line-message-mode)
    (t
     (beep t)
-    (message "%sYou should take a typing break now.  Do `M-x type-break'."
-             (type-break-time-stamp))
+    (message "%sYou should take a typing break now.  Do `%s'."
+             (type-break-time-stamp)
+             (substitute-command-keys "\\[type-break]"))
     (sit-for 1)
     (beep t)
     ;; return nil so query caller knows to reset reminder, as if user
@@ -961,19 +962,11 @@ FRAC should be the inverse of the fractional value; for example, a value of
 (defun type-break-time-difference (a b)
   (round (float-time (time-subtract b a))))
 
-;; Return (in a new list the same in structure to that returned by
-;; `current-time') the sum of the arguments.  Each argument may be a time
-;; list or a single integer, a number of seconds.
-;; This function keeps the high and low 16 bits of the seconds properly
-;; balanced so that the lower value never exceeds 16 bits.  Otherwise, when
-;; the result is passed to `current-time-string' it will toss some of the
-;; "low" bits and format the time incorrectly.
+;; Return a time value that is the sum of the time-value arguments.
 (defun type-break-time-sum (&rest tmlist)
-  (let ((sum '(0 0 0)))
+  (let ((sum '(0 0)))
     (dolist (tem tmlist)
-      (setq sum (time-add sum (if (integerp tem)
-				  (list (floor tem 65536) (mod tem 65536))
-				tem))))
+      (setq sum (time-add sum tem)))
     sum))
 
 (defun type-break-time-stamp (&optional when)

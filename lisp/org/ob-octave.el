@@ -1,6 +1,6 @@
 ;;; ob-octave.el --- org-babel functions for octave and matlab evaluation
 
-;; Copyright (C) 2010-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 ;; Author: Dan Davison
 ;; Keywords: literate programming, reproducible research
@@ -30,9 +30,6 @@
 
 ;;; Code:
 (require 'ob)
-(require 'ob-ref)
-(require 'ob-comint)
-(require 'ob-eval)
 (eval-when-compile (require 'cl))
 
 (declare-function matlab-shell "ext:matlab-mode")
@@ -64,7 +61,7 @@ if ischar(ans), fid = fopen('%s', 'w'); fprintf(fid, '%%s\\n', ans); fclose(fid)
 else, dlmwrite('%s', ans, '\\t')
 end")
 
-(defvar org-babel-octave-eoe-indicator "\'org_babel_eoe\'")
+(defvar org-babel-octave-eoe-indicator "'org_babel_eoe'")
 
 (defvar org-babel-octave-eoe-output "ans = org_babel_eoe")
 
@@ -130,7 +127,7 @@ specifying a variable of the same value."
 			     (if (listp (car var)) "; " ",")) "]")
     (cond
      ((stringp var)
-      (format "\'%s\'" var))
+      (format "'%s'" var))
      (t
       (format "%s" var)))))
 
@@ -154,7 +151,8 @@ create.  Return the initialized session."
   "Create an octave inferior process buffer.
 If there is not a current inferior-process-buffer in SESSION then
 create.  Return the initialized session."
-  (if matlabp (require 'matlab) (require 'octave-inf))
+  (if matlabp (require 'matlab) (or (require 'octave-inf nil 'noerror)
+				    (require 'octave)))
   (unless (string= session "none")
     (let ((session (or session
 		       (if matlabp "*Inferior Matlab*" "*Inferior Octave*"))))

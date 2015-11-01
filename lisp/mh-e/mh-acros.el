@@ -1,6 +1,6 @@
 ;;; mh-acros.el --- macros used in MH-E
 
-;; Copyright (C) 2004, 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2004, 2006-2015 Free Software Foundation, Inc.
 
 ;; Author: Satyaki Das <satyaki@theforce.stanford.edu>
 ;; Maintainer: Bill Wohler <wohler@newt.com>
@@ -46,6 +46,10 @@
 
 ;;; Compatibility
 
+;; TODO: Replace `cl' with `cl-lib'.
+;; `cl' is deprecated in Emacs 24.3. Use `cl-lib' instead. However,
+;; we'll likely have to insert `cl-' before each use of a Common Lisp
+;; function.
 ;;;###mh-autoload
 (defmacro mh-require-cl ()
   "Macro to load \"cl\" if needed.

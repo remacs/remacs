@@ -1,6 +1,6 @@
 ;;; mspools.el --- show mail spools waiting to be read
 
-;; Copyright (C) 1997, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Stephen Eglen <stephen@gnu.org>
 ;; Maintainer: Stephen Eglen <stephen@gnu.org>
@@ -309,7 +309,7 @@ Buffer is not displayed if SHOW is non-nil."
 ;; to file name.
 ;(defun get-folder-from-spool-safe (name)
 ;  "Return the folder name corresponding to the spool file NAME."
-;  (if (string-match "^\\(.*\\)\.spool$" name)
+;  (if (string-match "^\\(.*\\)\\.spool$" name)
 ;      (substring name (match-beginning 1) (match-end 1))
 ;    (error "Could not extract folder name from spool name %s" name)))
 
@@ -344,19 +344,13 @@ nil."
   (interactive)
   (kill-buffer mspools-buffer))
 
-(defun mspools-mode ()
+(define-derived-mode mspools-mode special-mode "MSpools"
   "Major mode for output from mspools-show.
 \\<mspools-mode-map>Move point to one of the items in this buffer, then use
 \\[mspools-visit-spool] to go to the spool that the current line refers to.
 \\[revert-buffer] to regenerate the list of spools.
 \\{mspools-mode-map}"
-  (kill-all-local-variables)
-  (make-local-variable 'revert-buffer-function)
-  (setq revert-buffer-function 'mspools-revert-buffer)
-  (use-local-map mspools-mode-map)
-  (setq major-mode 'mspools-mode)
-  (setq mode-name "MSpools")
-  (run-mode-hooks 'mspools-mode-hook))
+  (setq-local revert-buffer-function 'mspools-revert-buffer))
 
 (defun mspools-get-spool-files ()
   "Find the list of spool files and display them in *spools* buffer."

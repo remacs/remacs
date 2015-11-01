@@ -1,10 +1,10 @@
-;;; gud.el --- Grand Unified Debugger mode for running GDB and other debuggers
+;;; gud.el --- Grand Unified Debugger mode for running GDB and other debuggers  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1992-1996, 1998, 2000-2013 Free Software Foundation,
+;; Copyright (C) 1992-1996, 1998, 2000-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Eric S. Raymond <esr@snark.thyrsus.com>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: unix, tools
 
 ;; This file is part of GNU Emacs.
@@ -34,7 +34,8 @@
 ;; and added a menu. Brian D. Carlstrom <bdc@ai.mit.edu> combined the IRIX
 ;; kluge with the gud-xdb-directories hack producing gud-dbx-directories.
 ;; Derek L. Davies <ddavies@world.std.com> added support for jdb (Java
-;; debugger.)
+;; debugger.)  Jan Nieuwenhuizen added support for the Guile REPL (Guile
+;; debugger).
 
 ;;; Code:
 
@@ -67,7 +68,7 @@ pdb (Python), and jdb."
   :group 'gud)
 
 (global-set-key (vconcat gud-key-prefix "\C-l") 'gud-refresh)
-(define-key ctl-x-map " " 'gud-break)	;; backward compatibility hack
+;; (define-key ctl-x-map " " 'gud-break); backward compatibility hack
 
 (defvar gud-marker-filter nil)
 (put 'gud-marker-filter 'permanent-local t)
@@ -140,7 +141,7 @@ Used to gray out relevant toolbar icons.")
 			       (display-graphic-p)
 			       (fboundp 'x-show-tip))
 		  :visible (memq gud-minor-mode
-				'(gdbmi dbx sdb xdb pdb))
+				'(gdbmi guiler dbx sdb xdb pdb))
 	          :button (:toggle . gud-tooltip-mode))
     ([refresh]	"Refresh" . gud-refresh)
     ([run]	menu-item "Run" gud-run
@@ -170,11 +171,11 @@ Used to gray out relevant toolbar icons.")
     ([up]	menu-item "Up Stack" gud-up
 		  :enable (not gud-running)
 		  :visible (memq gud-minor-mode
-				 '(gdbmi gdb dbx xdb jdb pdb)))
+				 '(gdbmi gdb guiler dbx xdb jdb pdb)))
     ([down]	menu-item "Down Stack" gud-down
 		  :enable (not gud-running)
 		  :visible (memq gud-minor-mode
-				 '(gdbmi gdb dbx xdb jdb pdb)))
+				 '(gdbmi gdb guiler dbx xdb jdb pdb)))
     ([pp]	menu-item "Print S-expression" gud-pp
                   :enable (and (not gud-running)
 				  (bound-and-true-p gdb-active-process))
@@ -195,7 +196,7 @@ Used to gray out relevant toolbar icons.")
     ([finish]	menu-item "Finish Function" gud-finish
                   :enable (not gud-running)
 		  :visible (memq gud-minor-mode
-				 '(gdbmi gdb xdb jdb pdb)))
+				 '(gdbmi gdb guiler xdb jdb pdb)))
     ([stepi]	menu-item "Step Instruction" gud-stepi
                   :enable (not gud-running)
 		  :visible (memq gud-minor-mode '(gdbmi gdb dbx)))
@@ -255,9 +256,8 @@ Used to gray out relevant toolbar icons.")
        ([menu-bar file] . undefined))))
   "Map used in visited files.")
 
-(let ((m (assq 'gud-minor-mode minor-mode-map-alist)))
-  (if m (setcdr m gud-minor-mode-map)
-    (push (cons 'gud-minor-mode gud-minor-mode-map) minor-mode-map-alist)))
+(setf (alist-get 'gud-minor-mode minor-mode-map-alist)
+      gud-minor-mode-map)
 
 (defvar gud-mode-map
   ;; Will inherit from comint-mode via define-derived-mode.
@@ -321,8 +321,9 @@ Uses `gud-<MINOR-MODE>-directories' to find the source files."
     (when buf
       ;; Copy `gud-minor-mode' to the found buffer to turn on the menu.
       (with-current-buffer buf
-	(set (make-local-variable 'gud-minor-mode) minor-mode)
-	(set (make-local-variable 'tool-bar-map) gud-tool-bar-map)
+	(setq-local gud-minor-mode minor-mode)
+	(if (boundp 'tool-bar-map)      ; not --without-x
+	    (setq-local tool-bar-map gud-tool-bar-map))
 	(when (and gud-tooltip-mode
 		   (eq gud-minor-mode 'gdbmi))
 	  (make-local-variable 'gdb-define-alist)
@@ -802,24 +803,11 @@ directory and source-file directory for your debugger."
   "Completion table for GDB commands.
 COMMAND is the prefix for which we seek completion.
 CONTEXT is the text before COMMAND on the line."
-  (let* ((start (- (point) (field-beginning)))
-         (complete-list
+  (let* ((complete-list
 	  (gud-gdb-run-command-fetch-lines (concat "complete " context command)
 					   (current-buffer)
 					   ;; From string-match above.
 					   (length context))))
-    ;; `gud-gdb-run-command-fetch-lines' has some nasty side-effects on the
-    ;; buffer (via `gud-delete-prompt-marker'): it removes the prompt and then
-    ;; re-adds it later, thus messing up markers and overlays along the way.
-    ;; This is a problem for completion-in-region which uses an overlay to
-    ;; create a field.
-    ;; So we restore completion-in-region's field if needed.
-    ;; FIXME: change gud-gdb-run-command-fetch-lines so it doesn't modify the
-    ;; buffer at all.
-    (when (/= start (- (point) (field-beginning)))
-      (dolist (ol (overlays-at (1- (point))))
-        (when (eq (overlay-get ol 'field) 'completion)
-          (move-overlay ol (- (point) start) (overlay-end ol)))))
     ;; Protect against old versions of GDB.
     (and complete-list
 	 (string-match "^Undefined command: \"complete\"" (car complete-list))
@@ -858,7 +846,14 @@ CONTEXT is the text before COMMAND on the line."
          (save-excursion
            (skip-chars-backward "^ " (comint-line-beginning-position))
            (point))))
-    (list start end
+    ;; FIXME: `gud-gdb-run-command-fetch-lines' has some nasty side-effects on
+    ;; the buffer (via `gud-delete-prompt-marker'): it removes the prompt and
+    ;; then re-adds it later, thus messing up markers and overlays along the
+    ;; way (bug#18282).
+    ;; We use an "insert-before" marker for `start', since it's typically right
+    ;; after the prompt, which works around the problem, but is a hack (and
+    ;; comes with other downsides, e.g. if completion adds text at `start').
+    (list (copy-marker start t) end
           (completion-table-dynamic
            (apply-partially gud-gdb-completion-function
                             (buffer-substring (comint-line-beginning-position)
@@ -1367,7 +1362,7 @@ and source-file directory for your debugger."
   )
 
 ;; ======================================================================
-;; xdb (HP PARISC debugger) functions
+;; xdb (HP PA-RISC debugger) functions
 
 ;; History of argument lists passed to xdb.
 (defvar gud-xdb-history nil)
@@ -1701,6 +1696,83 @@ and source-file directory for your debugger."
   (setq comint-prompt-regexp "^(Pdb) *")
   (setq paragraph-start comint-prompt-regexp)
   (run-hooks 'pdb-mode-hook))
+
+;; ======================================================================
+;; Guile REPL (guiler) functions
+
+;; History of argument lists passed to guiler.
+(defvar gud-guiler-history nil)
+
+(defvar gud-guiler-lastfile nil)
+
+(defun gud-guiler-marker-filter (string)
+  (setq gud-marker-acc (if gud-marker-acc (concat gud-marker-acc string) string))
+
+  (let ((start 0))
+    (while
+	(cond
+	 ((string-match "^In \\(.*\\):" gud-marker-acc start)
+          (setq gud-guiler-lastfile (match-string 1 gud-marker-acc)))
+	 ((string-match "^\\([^:\n]+\\):\\([0-9]+\\):\\([0-9]+\\):[^\n]*"
+			gud-marker-acc start)
+          (setq gud-guiler-lastfile (match-string 1 gud-marker-acc))
+          (setq gud-last-frame
+                (cons gud-guiler-lastfile
+                      (string-to-number (match-string 2 gud-marker-acc)))))
+	 ((string-match "^[ ]*\\([0-9]+\\):\\([0-9]+\\)  [^\n]*"
+			gud-marker-acc start)
+          (if gud-guiler-lastfile
+              (setq gud-last-frame
+                    (cons gud-guiler-lastfile
+                          (string-to-number (match-string 1 gud-marker-acc))))))
+	 ((string-match comint-prompt-regexp gud-marker-acc start) t)
+         ((string= (substring gud-marker-acc start) "") nil)
+         (t nil))
+      (setq start (match-end 0)))
+
+    ;; Search for the last incomplete line in this chunk
+    (while (string-match "\n" gud-marker-acc start)
+      (setq start (match-end 0)))
+
+    ;; If we have an incomplete line, store it in gud-marker-acc.
+    (setq gud-marker-acc (substring gud-marker-acc (or start 0))))
+  string)
+
+
+(defcustom gud-guiler-command-name "guile"
+  "File name for executing the Guile debugger.
+This should be an executable on your path, or an absolute file name."
+  :type 'string
+  :group 'gud)
+
+;;;###autoload
+(defun guiler (command-line)
+  "Run guiler on program FILE in buffer `*gud-FILE*'.
+The directory containing FILE becomes the initial working directory
+and source-file directory for your debugger."
+  (interactive
+   (list (gud-query-cmdline 'guiler)))
+
+  (gud-common-init command-line nil 'gud-guiler-marker-filter)
+  (setq-local gud-minor-mode 'guiler)
+
+;; FIXME: absolute file-names are not grokked yet by Guile's ,break-at-source
+;; and relative file names only when relative to %load-path.
+;;  (gud-def gud-break  ",break-at-source %d%f %l"  "\C-b" "Set breakpoint at current line.")
+  (gud-def gud-break  ",break-at-source %f %l"  "\C-b" "Set breakpoint at current line.")
+;; FIXME: remove breakpoint with file-line not yet supported by Guile
+;;  (gud-def gud-remove ",delete ---> %d%f:%l"  "\C-d" "Remove breakpoint at current line")
+  (gud-def gud-step   ",step"         "\C-s" "Step one source line with display.")
+  (gud-def gud-next   ",next"         "\C-n" "Step one line (skip functions).")
+;;  (gud-def gud-cont   "continue"     "\C-r" "Continue with display.")
+  (gud-def gud-finish ",finish"       "\C-f" "Finish executing current function.")
+  (gud-def gud-up     ",up"           "<" "Up one stack frame.")
+  (gud-def gud-down   ",down"         ">" "Down one stack frame.")
+  (gud-def gud-print  "%e"            "\C-p" "Evaluate Guile expression at point.")
+
+  (setq comint-prompt-regexp "^scheme@([^>]+> ")
+  (setq paragraph-start comint-prompt-regexp)
+  (run-hooks 'guiler-mode-hook))
 
 ;; ======================================================================
 ;;
@@ -2159,10 +2231,8 @@ relative to a classpath directory."
 		    (split-string
 		     ;; Eliminate any subclass references in the class
 		     ;; name string. These start with a "$"
-		     ((lambda (x)
-			(if (string-match "$.*" x)
-			    (replace-match "" t t x) p))
-		      p)
+                     (if (string-match "$.*" p)
+                         (replace-match "" t t p) p)
 		     "\\.") "/")
 	 ".java"))
        (cplist (append gud-jdb-sourcepath gud-jdb-classpath))
@@ -2482,7 +2552,8 @@ comint mode, which see."
   (setq mode-line-process '(":%s"))
   (define-key (current-local-map) "\C-c\C-l" 'gud-refresh)
   (set (make-local-variable 'gud-last-frame) nil)
-  (set (make-local-variable 'tool-bar-map) gud-tool-bar-map)
+  (if (boundp 'tool-bar-map)            ; not --without-x
+      (setq-local tool-bar-map gud-tool-bar-map))
   (make-local-variable 'comint-prompt-regexp)
   ;; Don't put repeated commands in command history many times.
   (set (make-local-variable 'comint-input-ignoredups) t)
@@ -2742,7 +2813,7 @@ Obeying it means displaying in another window the specified file and line."
 	    (gud-find-file true-file)))
 	 (window (and buffer
 		      (or (get-buffer-window buffer)
-			  (display-buffer buffer))))
+			  (display-buffer buffer '(nil (inhibit-same-window . t))))))
 	 (pos))
     (when buffer
       (with-current-buffer buffer
@@ -2784,6 +2855,10 @@ Obeying it means displaying in another window the specified file and line."
 (defun gud-format-command (str arg)
   (let ((insource (not (eq (current-buffer) gud-comint-buffer)))
 	(frame (or gud-last-frame gud-last-last-frame))
+	(buffer-file-name-localized
+         (and (buffer-file-name)
+              (or (file-remote-p (buffer-file-name) 'localname)
+                  (buffer-file-name))))
 	result)
     (while (and str
 		(let ((case-fold-search nil))
@@ -2793,15 +2868,15 @@ Obeying it means displaying in another window the specified file and line."
 	(cond
 	 ((eq key ?f)
 	  (setq subst (file-name-nondirectory (if insource
-						  (buffer-file-name)
+						  buffer-file-name-localized
 						(car frame)))))
 	 ((eq key ?F)
 	  (setq subst (file-name-base (if insource
-                                          (buffer-file-name)
+                                          buffer-file-name-localized
                                         (car frame)))))
 	 ((eq key ?d)
 	  (setq subst (file-name-directory (if insource
-					       (buffer-file-name)
+					       buffer-file-name-localized
 					     (car frame)))))
 	 ((eq key ?l)
 	  (setq subst (int-to-string
@@ -3282,6 +3357,8 @@ Treats actions as defuns."
 
 ;;; Customizable settings
 
+(defvar tooltip-mode)
+
 ;;;###autoload
 (define-minor-mode gud-tooltip-mode
   "Toggle the display of GUD tooltips.
@@ -3448,6 +3525,7 @@ With arg, dereference expr if ARG is positive, otherwise do not dereference."
   "Return a suitable command to print the expression EXPR."
   (pcase gud-minor-mode
     (`gdbmi (concat "-data-evaluate-expression \"" expr "\""))
+    (`guiler expr)
     (`dbx (concat "print " expr))
     ((or `xdb `pdb) (concat "p " expr))
     (`sdb (concat expr "/"))))

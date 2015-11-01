@@ -1,6 +1,6 @@
 ;;; ediff-mult.el --- support for multi-file/multi-buffer processing in Ediff
 
-;; Copyright (C) 1995-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.stonybrook.edu>
 ;; Package: ediff
@@ -140,7 +140,7 @@ Useful commands (type ? to hide them and free up screen):
  uh/um:\tunmark all sessions marked for hiding/operation
  n,SPC:\tnext session
  p,DEL:\tprevious session
-     E:\tbrowse Ediff on-line manual
+     E:\tbrowse Ediff manual
      T:\ttoggle truncation of long file names
      q:\tquit this session group
 ")
@@ -1115,7 +1115,7 @@ behavior."
     (setq overl
 	  (if (featurep 'xemacs)
 	      (map-extents
-	       (lambda (ext maparg)
+	       (lambda (ext _maparg)
 		 (if (and
 		      (ediff-overlay-get ext 'ediff-meta-info)
 		      (eq (ediff-overlay-get ext 'ediff-meta-session-number)
@@ -1444,7 +1444,7 @@ Useful commands:
 
 
 ;; argument is ignored
-(defun ediff-redraw-registry-buffer (&optional ignore)
+(defun ediff-redraw-registry-buffer (&optional _ignore)
   (ediff-with-current-buffer ediff-registry-buffer
     (let ((point (point))
 	  elt bufAname bufBname bufCname cur-diff total-diffs pt
@@ -1456,7 +1456,8 @@ Useful commands:
 	  (map-extents 'delete-extent)
        (mapc 'delete-overlay (overlays-in 1 1)))
 
-      (insert "This is a registry of all active Ediff sessions.
+      (insert (substitute-command-keys "\
+This is a registry of all active Ediff sessions.
 
 Useful commands:
      button2, `v', RET over a session record:  switch to that session
@@ -1464,14 +1465,14 @@ Useful commands:
      R in any Ediff session:   display session registry
      n,SPC: next session
      p,DEL: previous session
-         E: browse Ediff on-line manual
+         E: browse Ediff manual
          q: bury registry
 
 
 \t\tActive Ediff Sessions:
 \t\t----------------------
 
-")
+"))
       ;; purge registry list from dead buffers
       (mapc (lambda (elt)
 	      (if (not (ediff-buffer-live-p elt))

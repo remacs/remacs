@@ -1,7 +1,7 @@
 ;;; trampver.el --- Transparent Remote Access, Multiple Protocol
 ;;; lisp/trampver.el.  Generated from trampver.el.in by configure.
 
-;; Copyright (C) 2003-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
 ;; Author: Kai Großjohann <kai.grossjohann@gmx.net>
 ;; Keywords: comm, processes
@@ -24,19 +24,37 @@
 
 ;;; Code:
 
-;; In the Tramp CVS repository, the version number and the bug report
+;; In the Tramp GIT repository, the version number and the bug report
 ;; address are auto-frobbed from configure.ac, so you should edit that
 ;; file and run "autoconf && ./configure" to change them.  (X)Emacs
 ;; version check is defined in macro AC_EMACS_INFO of aclocal.m4;
 ;; should be changed only there.
 
 ;;;###tramp-autoload
-(defconst tramp-version "2.2.8-pre"
+(defconst tramp-version "2.2.13-pre"
   "This version of Tramp.")
 
 ;;;###tramp-autoload
 (defconst tramp-bug-report-address "tramp-devel@gnu.org"
   "Email address to send bug reports to.")
+
+;; `locate-dominating-file' does not exist in XEmacs. But it is not used here.
+(autoload 'locate-dominating-file "files")
+(autoload 'tramp-compat-replace-regexp-in-string "tramp-compat")
+
+(defun tramp-repository-get-version ()
+  "Try to return as a string the repository revision of the Tramp sources."
+  (unless (featurep 'xemacs)
+    (let ((dir (locate-dominating-file (locate-library "tramp") ".git")))
+      (when dir
+	(with-temp-buffer
+	  (let ((default-directory (file-name-as-directory dir)))
+	    (and (zerop
+		  (ignore-errors
+		    (call-process "git" nil '(t nil) nil "rev-parse" "HEAD")))
+		 (not (zerop (buffer-size)))
+		 (tramp-compat-replace-regexp-in-string
+		  "\n" "" (buffer-string)))))))))
 
 ;; Check for (X)Emacs version.
 (let ((x (if (or (>= emacs-major-version 22)
@@ -44,7 +62,7 @@
 		      (= emacs-major-version 21)
 		      (>= emacs-minor-version 4)))
 	     "ok"
-	   (format "Tramp 2.2.8-pre is not fit for %s"
+	   (format "Tramp 2.2.13-pre is not fit for %s"
 		   (when (string-match "^.*$" (emacs-version))
 		     (match-string 0 (emacs-version)))))))
   (unless (string-match "\\`ok\\'" x) (error "%s" x)))

@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 2004-2013 Free Software Foundation, Inc.
+@c Copyright (C) 2004-2015 Free Software Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @c
 @c This file is included either in emacs-xtra.texi (when producing the
@@ -17,13 +17,13 @@ of buffers for which it is implemented (listed in the menu below).
 Like file buffers, non-file buffers should normally not revert while
 you are working on them, or while they contain information that might
 get lost after reverting.  Therefore, they do not revert if they are
-``modified''.  This can get tricky, because deciding when a non-file
+modified.  This can get tricky, because deciding when a non-file
 buffer should be marked modified is usually more difficult than for
 file buffers.
 
 Another tricky detail is that, for efficiency reasons, Auto Revert
 often does not try to detect all possible changes in the buffer, only
-changes that are ``major'' or easy to detect.  Hence, enabling
+changes that are major or easy to detect.  Hence, enabling
 auto-reverting for a non-file buffer does not always guarantee that
 all information in the buffer is up-to-date, and does not necessarily
 make manual reverts useless.
@@ -47,9 +47,10 @@ explained in the corresponding sections.
 @subsection Auto Reverting the Buffer Menu
 
 If auto-reverting of non-file buffers is enabled, the Buffer Menu
-automatically reverts every @code{auto-revert-interval} seconds,
-whether there is a need for it or not.  (It would probably take longer
-to check whether there is a need than to actually revert.)
+(@pxref{Several Buffers}) automatically reverts every
+@code{auto-revert-interval} seconds, whether there is a need for it or
+not.  (It would probably take longer to check whether there is a need
+than to actually revert.)
 
 If the Buffer Menu inappropriately gets marked modified, just revert
 it manually using @kbd{g} and auto-reverting will resume.  However, if
@@ -103,15 +104,15 @@ arguments to list only some of the files.  @file{*Find*} and
 This section is intended for Elisp programmers who would like to add
 support for auto-reverting new types of buffers.
 
-To support auto-reverting the buffer must first of all have a
+To support auto-reverting the buffer must first of all have a suitable
 @code{revert-buffer-function}.  @xref{Definition of
 revert-buffer-function,, Reverting, elisp, the Emacs Lisp Reference Manual}.
 
-In addition, it @emph{must} have a @code{buffer-stale-function}.
+In addition, it must have a suitable @code{buffer-stale-function}.
 
 @c FIXME only defvar in all of doc/emacs!
 @defvar buffer-stale-function
-The value of this variable is a function to check whether a non-file
+The value of this variable is a function to check whether a
 buffer needs reverting.  This should be a function with one optional
 argument @var{noconfirm}.  The function should return non-@code{nil}
 if the buffer should be reverted.  The buffer is current when this
@@ -132,7 +133,7 @@ If you just want to automatically auto-revert every
 @code{auto-revert-interval} seconds (like the Buffer Menu), use:
 
 @example
-(set (make-local-variable 'buffer-stale-function)
+(setq-local buffer-stale-function
      #'(lambda (&optional noconfirm) 'fast))
 @end example
 
@@ -149,7 +150,7 @@ also be useful if the function is consulted for purposes other than
 auto-reverting.
 @end defvar
 
-Once the buffer has a @code{revert-buffer-function} and a
+Once the buffer has a suitable @code{revert-buffer-function} and
 @code{buffer-stale-function}, several problems usually remain.
 
 The buffer will only auto-revert if it is marked unmodified.  Hence,

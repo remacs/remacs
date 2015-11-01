@@ -1,6 +1,6 @@
 ;;; lmenu.el --- emulate Lucid's menubar support
 
-;; Copyright (C) 1992-1994, 1997, 2001-2013 Free Software Foundation,
+;; Copyright (C) 1992-1994, 1997, 2001-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Keywords: emulations obsolete
@@ -131,7 +131,7 @@
       (setq menu-items (cdr menu-items)))
     menu))
 
-(declare-function x-popup-dialog "xmenu.c" (position contents &optional header))
+(declare-function x-popup-dialog "menu.c" (position contents &optional header))
 
 ;; XEmacs compatibility function
 (defun popup-dialog-box (data)
@@ -160,9 +160,9 @@ The syntax, more precisely:
    active-p	:=  <t, nil, or a form to evaluate to decide whether this
 		    button should be selectable>
    name		:=  <string>
-   partition	:=  'nil'
-   button	:=  '['  name callback active-p ']'
-   dialog	:=  '(' name [ button ]+ [ partition [ button ]+ ] ')'"
+   partition	:=  `nil'
+   button	:=  `['  name callback active-p `]'
+   dialog	:=  `(' name [ button ]+ [ partition [ button ]+ ] `)'"
   (let ((name (car data))
 	(tail (cdr data))
 	converted

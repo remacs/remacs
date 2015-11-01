@@ -1,12 +1,46 @@
                                             -*-mode: text; coding: utf-8;-*-
 
-Copyright (C) 2002-2013 Free Software Foundation, Inc.
+Copyright (C) 2002-2015 Free Software Foundation, Inc.
 See the end of the file for license conditions.
+
+Importing a new Unicode Standard version into Emacs
+-------------------------------------------------------------
+
+Emacs uses the following files from the Unicode Character Database
+(a.k.a. "UCD):
+
+  . UnicodeData.txt
+  . BidiMirroring.txt
+  . IVD_Sequences.txt
+
+First, these files need to be copied into admin/unidata/, and then
+Emacs should be rebuilt for them to take effect.  Rebuilding Emacs
+updates several derived files elsewhere in the Emacs source tree,
+mainly in lisp/international/.
+
+When Emacs is rebuilt for the first time after importing the new
+files, pay attention to any warning or error messages.  In particular,
+admin/unidata/unidata-gen.el will complain if UnicodeData.txt defines
+new bidirectional attributes of characters, because unidata-gen.el,
+bidi.c and dispextern.h need to be updated in that case; failure to do
+so will cause aborts in redisplay.
+
+Next, review the changes in UnicodeData.txt vs the previous version
+used by Emacs.  Any changes, be it introduction of new scripts or
+addition of codepoints to existing scripts, might need corresponding
+changes in the data used for filling the category-table, case-table,
+and char-width-table.  The additional scripts should cause automatic
+updates in charscript.el, but it is a good idea to look at the results
+and see if any changes in admin/unidata/blocks.awk are required.
+
+Any new scripts added by UnicodeData.txt will also need updates to
+script-representative-chars defined in fontset.el.  Other databases in
+fontset.el might also need to be updated as needed.
 
 Problems, fixmes and other unicode-related issues
 -------------------------------------------------------------
 
-Notes by fx to record various things of variable importance.  handa
+Notes by fx to record various things of variable importance.  Handa
 needs to check them -- don't take too seriously, especially with
 regard to completeness.
 
@@ -64,11 +98,11 @@ regard to completeness.
 
  * iso-2022 charsets get unified on i/o.
 
-	With the change on 2003-01-06, decoding routines put `charset'
-	property to decoded text, and iso-2022 encoder pay attention
+	With the change on 2003-01-06, decoding routines put the 'charset'
+	property onto decoded text, and iso-2022 encoder pay attention
 	to it.  Thus, for instance, reading and writing by
 	iso-2022-7bit preserve the original designation sequences.
-	The property name `preferred-charset' may be better?
+	The property name 'preferred-charset' may be better?
 
 	We may have to utilize this property to decide a font.
 
@@ -134,8 +168,8 @@ nontrivial changes to the build process.
 	leim/CXTERM-DIC/QJ.tit
 	leim/CXTERM-DIC/SW.tit
 	leim/CXTERM-DIC/TONEPY.tit
-	leim/MISC-DIC/pinyin.map
 	leim/MISC-DIC/CTLau.html
+	leim/MISC-DIC/pinyin.map
 	leim/MISC-DIC/ziranma.cin
 
  * cp850
@@ -154,19 +188,6 @@ nontrivial changes to the build process.
 
 	leim/MISC-DIC/cangjie-table.cns
 
- * iso-latin-2
-
-     These files are processed by csplain, a program that requires
-     Latin-2 input.  In 2012 the csplain maintainers started
-     recommending UTF-8, but these files haven't been converted yet.
-
-	etc/refcards/cs-dired-ref.tex
-	etc/refcards/cs-refcard.tex
-	etc/refcards/cs-survival.tex
-	etc/refcards/sk-dired-ref.tex
-	etc/refcards/sk-refcard.tex
-	etc/refcards/sk-survival.tex
-
  * japanese-iso-8bit
 
      SKK-JISYO.L is a verbatim copy of a file taken from an external source.
@@ -181,13 +202,6 @@ nontrivial changes to the build process.
 
 	admin/charsets/mapfiles/cns2ucsdkw.txt
 
- * no-conversion
-
-     This file purposely contains arbitrary bytes interspersed within text,
-     to test whether the Emacs distribution is corrupted.
-
-	lib-src/testfile
-
  * iso-2022-7bit
 
      This file switches between CJK charsets, which is not encoded in UTF-8.
@@ -201,11 +215,6 @@ nontrivial changes to the build process.
      operating in some other language environment.
 
 	etc/tutorials/TUTORIAL.ja
-	leim/quail/cyril-jis.el
-	leim/quail/hanja-jis.el
-	leim/quail/japanese.el
-	leim/quail/py-punct.el
-	leim/quail/pypunct-b5.el
 	lisp/international/ja-dic-cnv.el
 	lisp/international/ja-dic-utl.el
 	lisp/international/kinsoku.el
@@ -213,18 +222,47 @@ nontrivial changes to the build process.
 	lisp/international/titdic-cnv.el
 	lisp/language/japan-util.el
 	lisp/language/japanese.el
-	lisp/term/x-win.el
+	lisp/leim/quail/cyril-jis.el
+	lisp/leim/quail/hanja-jis.el
+	lisp/leim/quail/japanese.el
+	lisp/leim/quail/py-punct.el
+	lisp/leim/quail/pypunct-b5.el
+
+     This file contains just Chinese characters, and has same problem.
+     Also, it contains characters that cannot be encoded in UTF-8.
+
+	lisp/international/titdic-cnv.el
 
  * utf-8-emacs
 
      These files contain characters that cannot be encoded in UTF-8.
 
-	leim/quail/tibetan.el
-	leim/quail/ethiopic.el
-	lisp/international/titdic-cnv.el
-	lisp/language/tibetan.el
-	lisp/language/tibet-util.el
+	lisp/language/ethio-util.el
+	lisp/language/ethiopic.el
 	lisp/language/ind-util.el
+	lisp/language/tibet-util.el
+	lisp/language/tibetan.el
+	lisp/leim/quail/ethiopic.el
+	lisp/leim/quail/tibetan.el
+
+ * binary files
+
+     These files contain binary data, and are not text files.
+     Some of the entries in this list are patterns, and stand for any
+     files with the listed extension.
+
+	*.gz
+	*.icns
+	*.ico
+	*.pbm
+	*.pdf
+	*.png
+	*.sig
+	etc/e/eterm-color
+	etc/package-keyring.gpg
+	msdos/emacs.pif
+	nextstep/GNUstep/Emacs.base/Resources/emacs.tiff
+	nt/icons/hand.cur
 
 
 This file is part of GNU Emacs.

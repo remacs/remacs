@@ -1,6 +1,6 @@
 ;;; org-habit.el --- The habit tracking code for Org-mode
 
-;; Copyright (C) 2009-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw at gnu dot org>
 ;; Keywords: outlines, hypermedia, calendar, wp
@@ -84,6 +84,12 @@ today's agenda, even if they are not scheduled."
   :group 'org-habit
   :version "24.1"
   :type 'character)
+
+(defcustom org-habit-show-done-always-green nil
+  "Non-nil means DONE days will always be green in the consistency graph.
+It will be green even if it was done after the deadline."
+  :group 'org-habit
+  :type 'boolean)
 
 (defface org-habit-clear-face
   '((((background light)) (:background "#8270f9"))
@@ -174,7 +180,7 @@ This list represents a \"habit\" for the rest of this module."
 	(error "Habit %s has no scheduled date" habit-entry))
       (unless scheduled-repeat
 	(error
-	 "Habit '%s' has no scheduled repeat period or has an incorrect one"
+	 "Habit `%s' has no scheduled repeat period or has an incorrect one"
 	 habit-entry))
       (setq sr-days (org-habit-duration-to-days scheduled-repeat))
       (unless (> sr-days 0)
@@ -194,7 +200,9 @@ This list represents a \"habit\" for the rest of this module."
 	     (count 0))
 	(unless reversed (goto-char end))
 	(while (and (< count maxdays)
-		    (funcall search "- State \"DONE\".*\\[\\([^]]+\\)\\]" limit t))
+		    (funcall search (format "- State \"%s\".*\\[\\([^]]+\\)\\]"
+					    (regexp-opt org-done-keywords))
+			     limit t))
 	  (push (time-to-days
 		 (org-time-string-to-time (match-string-no-properties 1)))
 		closed-dates)
@@ -272,8 +280,9 @@ Habits are assigned colors on the following basis:
       (if donep
 	  '(org-habit-ready-face . org-habit-ready-future-face)
 	'(org-habit-alert-face . org-habit-alert-future-face)))
-     (t
-      '(org-habit-overdue-face . org-habit-overdue-future-face)))))
+     ((and org-habit-show-done-always-green donep)
+      '(org-habit-ready-face . org-habit-ready-future-face))
+     (t '(org-habit-overdue-face . org-habit-overdue-future-face)))))
 
 (defun org-habit-build-graph (habit starting current ending)
   "Build a graph for the given HABIT, from STARTING to ENDING.
@@ -342,14 +351,7 @@ current time."
   (let ((inhibit-read-only t) l c
 	(buffer-invisibility-spec '(org-link))
 	(moment (time-subtract (current-time)
-			       (list 0 (* 3600 org-extend-today-until) 0)))
-	disabled-overlays)
-    ;; Disable filters; this helps with alignment if there are links.
-    (mapc (lambda (ol)
-	    (when (overlay-get ol 'invisible)
-	      (overlay-put ol 'invisible nil)
-	      (setq disabled-overlays (cons ol disabled-overlays))))
-	  (overlays-in (point-min) (point-max)))
+			       (list 0 (* 3600 org-extend-today-until) 0))))
     (save-excursion
       (goto-char (if line (point-at-bol) (point-min)))
       (while (not (eobp))
@@ -365,9 +367,7 @@ current time."
 	      (time-subtract moment (days-to-time org-habit-preceding-days))
 	      moment
 	      (time-add moment (days-to-time org-habit-following-days))))))
-	(forward-line)))
-    (mapc (lambda (ol) (overlay-put ol 'invisible t))
-	  disabled-overlays)))
+	(forward-line)))))
 
 (defun org-habit-toggle-habits ()
   "Toggle display of habits in an agenda buffer."

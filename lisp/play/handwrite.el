@@ -1,6 +1,6 @@
-;;; handwrite.el --- turns your emacs buffer into a handwritten document -*- coding: utf-8; -*-
+;;; handwrite.el --- turns your emacs buffer into a handwritten document
 
-;; Copyright (C) 1996, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Danny Roozendaal (was: <danny@tvs.kun.nl>)
 ;; Created: October 21 1996
@@ -244,7 +244,7 @@ Variables: `handwrite-linespace'     (default 12)
     (insert "showpage exec Hwsave restore\n\n")
     (insert "%%Pages " (number-to-string ipage) " 0\n")
     (insert "%%EOF\n")
-    ;;To avoid cumbersome code we simply ignore pagefeeds
+    ;;To avoid cumbersome code we simply ignore formfeeds
     (goto-char textp)
     (while (search-forward "\f" nil t)
       (replace-match "" nil t) )
@@ -279,7 +279,7 @@ Variables: `handwrite-linespace'     (default 12)
     (handwrite-set-pagenumber-on)))
 
 (defun handwrite-10pt ()
-  "Specify 10-point output for `handwrite.
+  "Specify 10-point output for `handwrite'.
 This sets `handwrite-fontsize' to 10 and finds correct
 values for `handwrite-linespace' and `handwrite-numlines'."
   (interactive)
@@ -290,7 +290,7 @@ values for `handwrite-linespace' and `handwrite-numlines'."
 
 
 (defun handwrite-11pt ()
-  "Specify 11-point output for `handwrite.
+  "Specify 11-point output for `handwrite'.
 This sets `handwrite-fontsize' to 11 and finds correct
 values for `handwrite-linespace' and `handwrite-numlines'."
   (interactive)
@@ -300,7 +300,7 @@ values for `handwrite-linespace' and `handwrite-numlines'."
   (message "Handwrite output size set to 11 points"))
 
 (defun handwrite-12pt ()
-  "Specify 12-point output for `handwrite.
+  "Specify 12-point output for `handwrite'.
 This sets `handwrite-fontsize' to 12 and finds correct
 values for `handwrite-linespace' and `handwrite-numlines'."
   (interactive)
@@ -310,7 +310,7 @@ values for `handwrite-linespace' and `handwrite-numlines'."
   (message "Handwrite output size set to 12 points"))
 
 (defun handwrite-13pt ()
-  "Specify 13-point output for `handwrite.
+  "Specify 13-point output for `handwrite'.
 This sets `handwrite-fontsize' to 13 and finds correct
 values for `handwrite-linespace' and `handwrite-numlines'."
   (interactive)

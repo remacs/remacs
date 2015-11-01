@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2001-2013 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2001-2015 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Emacs Invocation
@@ -10,6 +10,7 @@
 @cindex switches (command line)
 @cindex startup (command line arguments)
 @cindex invocation (command line arguments)
+@c FIXME: Document '--smid'?  --xfq
 
   Emacs supports command line arguments to request various actions
 when invoking Emacs.  These are for compatibility with other editors
@@ -135,7 +136,14 @@ visited.
 @opindex -L
 @itemx --directory=@var{dir}
 @opindex --directory
-Add directory @var{dir} to the variable @code{load-path}.
+Prepend directory @var{dir} to the variable @code{load-path}.
+If you specify multiple @samp{-L} options, Emacs preserves the
+relative order; i.e., using @samp{-L /foo -L /bar} results in
+a @code{load-path} of the form @code{("/foo" "/bar" @dots{})}.
+If @var{dir} begins with @samp{:}, Emacs removes the @samp{:} and
+appends (rather than prepends) the remainder to @code{load-path}.
+(On MS Windows, use @samp{;} instead of @samp{:}; i.e., use
+the value of @code{path-separator}.)
 
 @item -f @var{function}
 @opindex -f
@@ -157,9 +165,12 @@ Evaluate Lisp expression @var{expression}.
 @item --insert=@var{file}
 @opindex --insert
 @cindex insert file contents, command-line argument
-Insert the contents of @var{file} into the @file{*scratch*} buffer
-(@pxref{Lisp Interaction}).  This is like what @kbd{M-x insert-file}
-does (@pxref{Misc File Ops}).
+Insert the contents of @var{file} into the buffer that is current when
+this command-line argument is processed.  Usually, this is the
+@file{*scratch*} buffer (@pxref{Lisp Interaction}), but if arguments
+earlier on the command line visit files or switch buffers, that might
+be a different buffer.  The effect of this command-line argument is
+like what @kbd{M-x insert-file} does (@pxref{Misc File Ops}).
 
 @item --kill
 @opindex --kill
@@ -431,47 +442,66 @@ special meanings in Emacs.  Most of these variables are also used by
 some other programs.  Emacs does not require any of these environment
 variables to be set, but it uses their values if they are set.
 
+@c This used to be @vtable, but that enters the variables alone into
+@c the Variable Index, which in some cases, like HOME, might be
+@c confused with keys by that name, and other cases, like NAME,
+@c might be confused with general-purpose phrases.
 @table @env
 @item CDPATH
+@vindex CDPATH, environment variable
 Used by the @code{cd} command to search for the directory you specify,
 when you specify a relative directory name.
 @item DBUS_SESSION_BUS_ADDRESS
+@vindex DBUS_SESSION_BUS_ADDRESS, environment variable
 Used by D-Bus when Emacs is compiled with it.  Usually, there is no
 need to change it.  Setting it to a dummy address, like
 @samp{unix:path=/dev/null}, suppresses connections to the D-Bus session
 bus as well as autolaunching the D-Bus session bus if not running yet.
 @item EMACSDATA
+@vindex EMACSDATA, environment variable
 Directory for the architecture-independent files that come with Emacs.
 This is used to initialize the variable @code{data-directory}.
 @item EMACSDOC
+#vindex EMACSDOC, environment variable
 Directory for the documentation string file, which is used to
 initialize the Lisp variable @code{doc-directory}.
 @item EMACSLOADPATH
-A colon-separated list of directories@footnote{ Here and below,
+#vindex EMACSLOADPATH, environment variable
+A colon-separated list of directories@footnote{Here and below,
 whenever we say ``colon-separated list of directories'', it pertains
 to Unix and GNU/Linux systems.  On MS-DOS and MS-Windows, the
 directories are separated by semi-colons instead, since DOS/Windows
-file names might include a colon after a drive letter.}  to search for
-Emacs Lisp files.  If set, it overrides the usual initial value of the
-@code{load-path} variable (@pxref{Lisp Libraries}).
+file names might include a colon after a drive letter.} to search for
+Emacs Lisp files.  If set, it modifies the usual initial value of the
+@code{load-path} variable (@pxref{Lisp Libraries}).  An empty element
+stands for the default value of @code{load-path}; e.g., using
+@samp{EMACSLOADPATH="/tmp:"} adds @file{/tmp} to the front of
+the default @code{load-path}.  To specify an empty element in the
+middle of the list, use 2 colons in a row, as in
+@samp{EMACSLOADPATH="/tmp::/foo"}.
 @item EMACSPATH
+@vindex EMACSPATH, environment variable
 A colon-separated list of directories to search for executable files.
 If set, Emacs uses this in addition to @env{PATH} (see below) when
 initializing the variable @code{exec-path} (@pxref{Shell}).
 @item EMAIL
+@vindex EMAIL, environment variable
 @vindex user-mail-address@r{, initialization}
 Your email address; used to initialize the Lisp variable
 @code{user-mail-address}, which the Emacs mail interface puts into the
 @samp{From} header of outgoing messages (@pxref{Mail Headers}).
 @item ESHELL
+@vindex ESHELL, environment variable
 Used for shell-mode to override the @env{SHELL} environment variable
 (@pxref{Interactive Shell}).
 @item HISTFILE
+@vindex HISTFILE, environment variable
 The name of the file that shell commands are saved in between logins.
 This variable defaults to @file{~/.bash_history} if you use Bash, to
 @file{~/.sh_history} if you use ksh, and to @file{~/.history}
 otherwise.
 @item HOME
+@vindex HOME, environment variable
 The location of your files in the directory tree; used for
 expansion of file names starting with a tilde (@file{~}).  On MS-DOS,
 it defaults to the directory from which Emacs was started, with
@@ -483,20 +513,33 @@ where @var{username} is your user name), though for backwards
 compatibility @file{C:/} will be used instead if a @file{.emacs} file
 is found there.
 @item HOSTNAME
+@vindex HOSTNAME, environment variable
 The name of the machine that Emacs is running on.
+@c complete.el is obsolete since 24.1.
+@ignore
 @item INCPATH
 A colon-separated list of directories.  Used by the @code{complete} package
 to search for files.
+@end ignore
 @item INFOPATH
+@vindex INFOPATH, environment variable
 A colon-separated list of directories in which to search for Info files.
 @item LC_ALL
+@vindex LC_ALL, environment variable
 @itemx LC_COLLATE
+@vindex LC_COLLATE, environment variable
 @itemx LC_CTYPE
+@vindex LC_CTYPE, environment variable
 @itemx LC_MESSAGES
+@vindex LC_MESSAGES, environment variable
 @itemx LC_MONETARY
+@vindex LC_MONETARY, environment variable
 @itemx LC_NUMERIC
+@vindex LC_NUMERIC, environment variable
 @itemx LC_TIME
+@vindex LC_TIME, environment variable
 @itemx LANG
+@vindex LANG, environment variable
 The user's preferred locale.  The locale has six categories, specified
 by the environment variables @env{LC_COLLATE} for sorting,
 @env{LC_CTYPE} for character encoding, @env{LC_MESSAGES} for system
@@ -518,70 +561,89 @@ matched against entries in @code{locale-language-names},
 @code{locale-preferred-coding-systems}, to select a default language
 environment and coding system.  @xref{Language Environments}.
 @item LOGNAME
+@vindex LOGNAME, environment variable
 The user's login name.  See also @env{USER}.
 @item MAIL
+@vindex MAIL, environment variable
 The name of your system mail inbox.
 @ifnottex
 @item MH
+@vindex MH, environment variable
 Name of setup file for the mh system.  @xref{Top,,MH-E,mh-e, The Emacs
 Interface to MH}.
 @end ifnottex
 @item NAME
+@vindex NAME, environment variable
 Your real-world name.  This is used to initialize the variable
 @code{user-full-name} (@pxref{Mail Headers}).
 @item NNTPSERVER
+@vindex NNTPSERVER, environment variable
 The name of the news server.  Used by the mh and Gnus packages.
 @item ORGANIZATION
+@vindex ORGANIZATION, environment variable
 The name of the organization to which you belong.  Used for setting the
-`Organization:' header in your posts from the Gnus package.
+@samp{Organization:} header in your posts from the Gnus package.
 @item PATH
+@vindex PATH, environment variable
 A colon-separated list of directories containing executable files.
 This is used to initialize the variable @code{exec-path}
 (@pxref{Shell}).
 @item PWD
+@vindex PWD, environment variable
 If set, this should be the default directory when Emacs was started.
 @item REPLYTO
+@vindex REPLYTO, environment variable
 If set, this specifies an initial value for the variable
 @code{mail-default-reply-to} (@pxref{Mail Headers}).
 @item SAVEDIR
+@vindex SAVEDIR, environment variable
 The name of a directory in which news articles are saved by default.
 Used by the Gnus package.
 @item SHELL
+@vindex SHELL, environment variable
 The name of an interpreter used to parse and execute programs run from
 inside Emacs.
 @item SMTPSERVER
+@vindex SMTPSERVER, environment variable
 The name of the outgoing mail server.  This is used to initialize the
 variable @code{smtpmail-smtp-server} (@pxref{Mail Sending}).
 @cindex background mode, on @command{xterm}
 @item TERM
+@vindex TERM, environment variable
 The type of the terminal that Emacs is using.  This variable must be
 set unless Emacs is run in batch mode.  On MS-DOS, it defaults to
 @samp{internal}, which specifies a built-in terminal emulation that
 handles the machine's own display.
 @item TERMCAP
+@vindex TERMCAP, environment variable
 The name of the termcap library file describing how to program the
 terminal specified by @env{TERM}.  This defaults to
 @file{/etc/termcap}.
 @item TMPDIR
+@vindex TMPDIR, environment variable
 @itemx TMP
+@vindex TMP, environment variable
 @itemx TEMP
+@vindex TEMP, environment variable
 These environment variables are used to initialize the variable
 @code{temporary-file-directory}, which specifies a directory in which
 to put temporary files (@pxref{Backup}).  Emacs tries to use
 @env{TMPDIR} first.  If that is unset, Emacs normally falls back on
 @file{/tmp}, but on MS-Windows and MS-DOS it instead falls back on
 @env{TMP}, then @env{TEMP}, and finally @file{c:/temp}.
-
 @item TZ
+@vindex TZ, environment variable
 This specifies the current time zone and possibly also daylight
 saving time information.  On MS-DOS, if @env{TZ} is not set in the
 environment when Emacs starts, Emacs defines a default value as
 appropriate for the country code returned by DOS@.  On MS-Windows, Emacs
 does not use @env{TZ} at all.
 @item USER
+@vindex USER, environment variable
 The user's login name.  See also @env{LOGNAME}.  On MS-DOS, this
 defaults to @samp{root}.
 @item VERSION_CONTROL
+@vindex VERSION_CONTROL, environment variable
 Used to initialize the @code{version-control} variable (@pxref{Backup
 Names}).
 @end table
@@ -591,7 +653,7 @@ Names}).
 
 These variables are used only on particular configurations:
 
-@table @env
+@vtable @env
 @item COMSPEC
 On MS-DOS and MS-Windows, the name of the command interpreter to use
 when invoking batch files and commands internal to the shell.  On MS-DOS
@@ -643,7 +705,7 @@ rather than hard-coding an absolute path.  This allows multiple
 versions of Emacs to share the same environment variable settings, and
 it allows you to move the Emacs installation directory, without
 changing any environment or registry settings.
-@end table
+@end vtable
 
 @node MS-Windows Registry
 @appendixsubsec The MS-Windows System Registry
@@ -746,7 +808,7 @@ Use @var{font} as the default font.
 @end table
 
 When passing a font name to Emacs on the command line, you may need to
-``quote'' it, by enclosing it in quotation marks, if it contains
+quote it, by enclosing it in quotation marks, if it contains
 characters that the shell treats specially (e.g., spaces).  For
 example:
 
@@ -885,30 +947,33 @@ the initial frame.
 @itemx --fullscreen
 @opindex --fullscreen
 @cindex fullscreen, command-line argument
-Specify that width and height shall be the size of the screen. Normally
-no window manager decorations are shown.
+Specify that width and height should be that of the screen.  Normally
+no window manager decorations are shown.  (After starting Emacs,
+you can toggle this state using @key{F11}, @code{toggle-frame-fullscreen}.)
 
 @item -mm
 @opindex -mm
 @itemx --maximized
 @opindex --maximized
 @cindex maximized, command-line argument
-Specify that the Emacs frame shall be maximized.  This normally
+Specify that the Emacs frame should be maximized.  This normally
 means that the frame has window manager decorations.
+(After starting Emacs, you can toggle this state using @kbd{M-F10},
+@code{toggle-frame-maximized}.)
 
 @item -fh
 @opindex -fh
 @itemx --fullheight
 @opindex --fullheight
 @cindex fullheight, command-line argument
-Specify that the height shall be the height of the screen.
+Specify that the height should be the height of the screen.
 
 @item -fw
 @opindex -fw
 @itemx --fullwidth
 @opindex --fullwidth
 @cindex fullwidth, command-line argument
-Specify that the width shall be the width of the screen.
+Specify that the width should be the width of the screen.
 @end table
 
 @noindent
@@ -968,10 +1033,10 @@ size with no tool bar, use an X resource to specify ``no tool bar''
 (@pxref{Table of Resources}); then Emacs will already know there's no
 tool bar when it processes the specified geometry.
 
-  When using one of @samp{--fullscreen}, @samp{--maximized}, @samp{--fullwidth}
-or @samp{--fullheight} there may be some space around the frame
-anyway.  That is because Emacs rounds the sizes so they are an
-even number of character heights and widths.
+  When using one of @samp{--fullscreen}, @samp{--maximized},
+@samp{--fullwidth} or @samp{--fullheight}, some window managers require
+you to set the variable @code{frame-resize-pixelwise} to a non-@code{nil}
+value to make a frame appear truly maximized or full-screen.
 
  Some window managers have options that can make them ignore both
 program-specified and user-specified positions.  If these are set,
@@ -1050,7 +1115,7 @@ for the initial Emacs frame.
 @opindex --iconic
 @itemx --iconic
 @cindex start iconified, command-line argument
-Start Emacs in an iconified (``minimized'') state.
+Start Emacs in an iconified state.
 
 @item -nbi
 @opindex -nbi
@@ -1060,9 +1125,9 @@ Start Emacs in an iconified (``minimized'') state.
 Disable the use of the Emacs icon.
 @end table
 
-  Most window managers allow you to ``iconify'' (or ``minimize'') an
+  Most window managers allow you to iconify (or ``minimize'') an
 Emacs frame, hiding it from sight.  Some window managers replace
-iconified windows with tiny ``icons'', while others remove them
+iconified windows with tiny icons, while others remove them
 entirely from sight.  The @samp{-iconic} option tells Emacs to begin
 running in an iconified state, rather than showing a frame right away.
 The text frame doesn't appear until you deiconify (or ``un-minimize'')
@@ -1087,8 +1152,8 @@ rectangle containing the frame's title.
 @c Enable horizontal scroll bars.  Since horizontal scroll bars
 @c are not yet implemented, this actually does nothing.
 
-@item --parent-id @var{ID}
-Open Emacs as a client X window via the XEmbed protocol, with @var{ID}
+@item --parent-id @var{id}
+Open Emacs as a client X window via the XEmbed protocol, with @var{id}
 as the parent X window id.  Currently, this option is mainly useful
 for developers.
 

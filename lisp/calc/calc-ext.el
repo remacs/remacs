@@ -1,6 +1,6 @@
 ;;; calc-ext.el --- various extension functions for Calc
 
-;; Copyright (C) 1990-1993, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1990-1993, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: David Gillespie <daveg@synaptics.com>
 ;; Maintainer: Jay Belanger <jay.p.belanger@gmail.com>
@@ -561,6 +561,7 @@
   (define-key calc-mode-map "ud" 'calc-define-unit)
   (define-key calc-mode-map "ue" 'calc-explain-units)
   (define-key calc-mode-map "ug" 'calc-get-unit-definition)
+  (define-key calc-mode-map "un" 'calc-convert-exact-units)
   (define-key calc-mode-map "up" 'calc-permanent-units)
   (define-key calc-mode-map "ur" 'calc-remove-units)
   (define-key calc-mode-map "us" 'calc-simplify-units)
@@ -573,6 +574,7 @@
   (define-key calc-mode-map "uG" 'calc-vector-geometric-mean)
   (define-key calc-mode-map "uM" 'calc-vector-mean)
   (define-key calc-mode-map "uN" 'calc-vector-min)
+  (define-key calc-mode-map "uR" 'calc-vector-rms)
   (define-key calc-mode-map "uS" 'calc-vector-sdev)
   (define-key calc-mode-map "uU" 'calc-undo)
   (define-key calc-mode-map "uX" 'calc-vector-max)
@@ -931,7 +933,7 @@ calc-preserve-point calc-replace-selections calc-replace-sub-formula
 calc-roll-down-with-selections calc-roll-up-with-selections
 calc-sel-error)
 
- ("calc-stat" calc-vector-op calcFunc-agmean
+ ("calc-stat" calc-vector-op calcFunc-agmean calcFunc-rms
 calcFunc-vcorr calcFunc-vcount calcFunc-vcov calcFunc-vflat
 calcFunc-vgmean calcFunc-vhmean calcFunc-vmax calcFunc-vmean
 calcFunc-vmeane calcFunc-vmedian calcFunc-vmin calcFunc-vpcov
@@ -1096,10 +1098,10 @@ calc-tan calc-tanh calc-to-degrees calc-to-radians)
 
  ("calc-mode" calc-alg-simplify-mode calc-algebraic-mode
 calc-always-load-extensions calc-auto-recompute calc-auto-why
-calc-basic-simplify-mode calc-bin-simplify-mode calc-break-vectors 
-calc-center-justify calc-default-simplify-mode calc-display-raw 
-calc-eng-notation calc-ext-simplify-mode calc-fix-notation 
-calc-full-trail-vectors calc-full-vectors calc-get-modes calc-group-char 
+calc-basic-simplify-mode calc-bin-simplify-mode calc-break-vectors
+calc-center-justify calc-default-simplify-mode calc-display-raw
+calc-eng-notation calc-ext-simplify-mode calc-fix-notation
+calc-full-trail-vectors calc-full-vectors calc-get-modes calc-group-char
 calc-group-digits calc-infinite-mode calc-left-justify calc-left-label
 calc-line-breaking calc-line-numbering calc-matrix-brackets
 calc-matrix-center-justify calc-matrix-left-justify calc-matrix-mode
@@ -1146,8 +1148,8 @@ calc-vector-covariance calc-vector-geometric-mean
 calc-vector-harmonic-mean calc-vector-max calc-vector-mean
 calc-vector-mean-error calc-vector-median calc-vector-min
 calc-vector-pop-covariance calc-vector-pop-sdev
-calc-vector-pop-variance calc-vector-product calc-vector-sdev
-calc-vector-sum calc-vector-variance)
+calc-vector-pop-variance calc-vector-product calc-vector-rms
+calc-vector-sdev calc-vector-sum calc-vector-variance)
 
  ("calc-store" calc-assign calc-copy-special-constant
 calc-copy-variable calc-declare-variable
@@ -1176,7 +1178,8 @@ calc-trail-scroll-right calc-trail-yank)
  ("calc-undo" calc-last-args calc-redo)
 
  ("calc-units" calc-autorange-units calc-base-units
-calc-convert-temperature calc-convert-units calc-define-unit
+calc-convert-temperature calc-convert-units
+calc-convert-exact-units calc-define-unit
 calc-enter-units-table calc-explain-units calc-extract-units
 calc-get-unit-definition calc-permanent-units calc-quick-units
 calc-remove-units calc-simplify-units calc-undefine-unit
@@ -1243,7 +1246,7 @@ calc-kill calc-kill-region calc-yank))))
 
 
 (defun calc-record-message (tag &rest args)
-  (let ((msg (apply 'format args)))
+  (let ((msg (apply #'format-message args)))
     (message "%s" msg)
     (calc-record msg tag))
   (calc-clear-command-flag 'clear-message))
@@ -1290,6 +1293,7 @@ calc-kill calc-kill-region calc-yank))))
   (define-key calc-help-map "?" 'calc-help-for-help)
   (define-key calc-help-map "\C-h" 'calc-help-for-help))
 
+(defvar calc-prefix-help-retry nil)
 (defvar calc-prefix-help-phase 0)
 (defun calc-do-prefix-help (msgs group key)
   (if calc-full-help-flag
@@ -1297,7 +1301,7 @@ calc-kill calc-kill-region calc-yank))))
     (if (cdr msgs)
 	(progn
 	  (setq calc-prefix-help-phase
-		(if (eq this-command last-command)
+		(if calc-prefix-help-retry
 		    (% (1+ calc-prefix-help-phase) (1+ (length msgs)))
 		  0))
 	  (let ((msg (nth calc-prefix-help-phase msgs)))
@@ -1318,7 +1322,13 @@ calc-kill calc-kill-region calc-yank))))
 	      (message "%s: %s: %c-" group (car msgs) key)
 	    (message "%s: (none)  %c-" group key))
 	(message "%s: %s" group (car msgs))))
-    (and key (calc-unread-command key))))
+    (let* ((chr (read-char))
+           (bnd (local-key-binding (if key (string key chr) (string chr)))))
+      (setq calc-prefix-help-retry (= chr ??))
+      (if bnd
+          (call-interactively bnd)
+        (message "%s is undefined"
+                 (key-description (if key (vector key chr) (vector chr))))))))
 
 ;;;; Commands.
 
@@ -1955,7 +1965,7 @@ calc-kill calc-kill-region calc-yank))))
 		  (desc
 		   (if (symbolp func)
 		       (if (= (logand kind 3) 0)
-			   (format "`%c' = %s" key name)
+			   (format-message "`%c' = %s" key name)
 			 (if pos
 			     (format "%s%c%s"
 				     (downcase (substring name 0 pos))
@@ -1986,7 +1996,7 @@ calc-kill calc-kill-region calc-yank))))
      "kbd-macros: [ (if), : (else), | (else-if), ] (end-if)"
      "kbd-macros: < > (repeat), ( ) (for), { } (loop)"
      "kbd-macros: / (break)"
-     "kbd-macros: ` (save), ' (restore)")
+     "kbd-macros: \\=` (save), \\=' (restore)")
    "user" ?Z))
 
 
@@ -3496,9 +3506,5 @@ A key may contain additional specs for Inverse, Hyperbolic, and Inv+Hyp.")
 (run-hooks 'calc-ext-load-hook)
 
 (provide 'calc-ext)
-
-;; Local variables:
-;; coding: utf-8
-;; End:
 
 ;;; calc-ext.el ends here

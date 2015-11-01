@@ -1,6 +1,6 @@
 ;;; w32-win.el --- parse switches controlling interface with W32 window system -*- lexical-binding: t -*-
 
-;; Copyright (C) 1993-1994, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1993-1994, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Kevin Gallo
 ;; Keywords: terminals
@@ -110,8 +110,13 @@
   (let ((f (if (eq system-type 'cygwin)
                (cygwin-convert-file-name-from-windows file-name t)
              (subst-char-in-string ?\\ ?/ file-name)))
-        (coding (or file-name-coding-system
-                    default-file-name-coding-system)))
+        (coding (if (eq system-type 'windows-nt)
+		    ;; Native w32 build pretends that its file names
+		    ;; are encoded in UTF-8, and converts to the
+		    ;; appropriate encoding internally.
+		    'utf-8
+		  (or file-name-coding-system
+		      default-file-name-coding-system))))
 
     (setq file-name
           (mapconcat 'url-hexify-string
@@ -200,12 +205,16 @@ European languages which are distributed with Windows as
 
 See the documentation of `create-fontset-from-fontset-spec' for the format.")
 
-(defun x-win-suspend-error ()
+(defun w32-win-suspend-error ()
   "Report an error when a suspend is attempted."
   (error "Suspending an Emacs running under W32 makes no sense"))
 
 (defvar dynamic-library-alist)
 (defvar libpng-version)                 ; image.c #ifdef HAVE_NTGUI
+(defvar libgif-version)
+(defvar libjpeg-version)
+
+(defvar libgnutls-version)              ; gnutls.c
 
 ;;; Set default known names for external libraries
 (setq dynamic-library-alist
@@ -216,19 +225,52 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
        ;; the version we were compiled against.  (If we were compiled
        ;; without PNG support, libpng-version's value is -1.)
        (if (>= libpng-version 10400)
-	   ;; libpng14-14.dll is libpng 1.4.3 from GTK+
-	   '(png "libpng14-14.dll" "libpng14.dll")
+	   (let ((major (/ libpng-version 10000))
+		 (minor (mod (/ libpng-version 100) 10)))
+	     (list 'png
+		   ;; libpngXY.dll is the default name when building
+		   ;; with CMake or from a lpngXYY tarball on w32,
+		   ;; libpngXY-XY.dll is the DLL name when building
+		   ;; with libtool / autotools
+		   (format "libpng%d%d.dll" major minor)
+		   (format "libpng%d%d-%d%d.dll" major minor major minor)))
 	 '(png "libpng12d.dll" "libpng12.dll" "libpng3.dll" "libpng.dll"
 	       ;; these are libpng 1.2.8 from GTK+
 	       "libpng13d.dll" "libpng13.dll"))
-       '(jpeg "jpeg62.dll" "libjpeg.dll" "jpeg-62.dll" "jpeg.dll")
-       '(tiff "libtiff3.dll" "libtiff.dll")
-       '(gif "giflib4.dll" "libungif4.dll" "libungif.dll")
+       '(tiff "libtiff-5.dll" "libtiff3.dll" "libtiff.dll")
+       (if (> libjpeg-version 62)
+	   ;; Versions of libjpeg after 6b are incompatible with
+	   ;; earlier versions, and each of versions 7, 8, and 9 is
+	   ;; also incompatible with the preceding ones (the core data
+	   ;; structures used for communications with the library
+	   ;; gained additional members with each new version).  So we
+	   ;; must use only the version of the library which Emacs was
+	   ;; compiled against.
+	   (list 'jpeg (format "libjpeg-%d.dll" (/ libjpeg-version 10)))
+	 '(jpeg "jpeg62.dll" "libjpeg.dll" "jpeg-62.dll" "jpeg.dll"))
+       ;; Versions of giflib 5.0.0 and later changed signatures of
+       ;; several functions used by Emacs, which makes those versions
+       ;; incompatible with previous ones.  We select the correct
+       ;; libraries according to the version of giflib we were
+       ;; compiled against.  (If we were compiled without GIF support,
+       ;; libgif-version's value is -1.)
+       (if (>= libgif-version 50100)
+	   ;; Yes, giflib 5.0 uses 6 as the major version of the API,
+	   ;; and giflib 5.1 uses 7, thus "libgif-7.dll" and
+	   ;; "libgif-6.dll" below (giflib 4.x used 5 as the major API
+	   ;; version).  giflib5.dll is from the lua-files project,
+	   ;; and gif.dll is from luapower.
+	   '(gif "libgif-7.dll")
+	 (if (>= libgif-version 50000)
+	     '(gif "libgif-6.dll" "giflib5.dll" "gif.dll")
+	 '(gif "libgif-5.dll" "giflib4.dll" "libungif4.dll" "libungif.dll")))
        '(svg "librsvg-2-2.dll")
        '(gdk-pixbuf "libgdk_pixbuf-2.0-0.dll")
        '(glib "libglib-2.0-0.dll")
        '(gobject "libgobject-2.0-0.dll")
-       '(gnutls "libgnutls-28.dll" "libgnutls-26.dll")
+       (if (>= libgnutls-version 30400)
+	   '(gnutls "libgnutls-30.dll")
+	 '(gnutls "libgnutls-28.dll" "libgnutls-26.dll"))
        '(libxml2 "libxml2-2.dll" "libxml2.dll")
        '(zlib "zlib1.dll" "libz-1.dll")))
 
@@ -238,6 +280,7 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
 
 (declare-function x-open-connection "w32fns.c"
                   (display &optional xrm-string must-succeed))
+(declare-function create-default-fontset "fontset" ())
 (declare-function create-fontset-from-fontset-spec "fontset"
                   (fontset-spec &optional style-variant noerror))
 (declare-function create-fontset-from-x-resource "fontset" ())
@@ -247,7 +290,8 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
 (declare-function x-parse-geometry "frame.c" (string))
 (defvar x-command-line-resources)
 
-(defun w32-initialize-window-system (&optional _display)
+(cl-defmethod window-system-initialization (&context (window-system w32)
+                                            &optional _display)
   "Initialize Emacs for W32 GUI frames."
   (cl-assert (not w32-initialized))
 
@@ -315,7 +359,7 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
                 (cons '(reverse . t) default-frame-alist)))))
 
   ;; Don't let Emacs suspend under Windows.
-  (add-hook 'suspend-hook 'x-win-suspend-error)
+  (add-hook 'suspend-hook #'w32-win-suspend-error)
 
   ;; Turn off window-splitting optimization; w32 is usually fast enough
   ;; that this is only annoying.
@@ -333,9 +377,90 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
   (setq w32-initialized t))
 
 (add-to-list 'display-format-alist '("\\`w32\\'" . w32))
-(add-to-list 'handle-args-function-alist '(w32 . x-handle-args))
-(add-to-list 'frame-creation-function-alist '(w32 . x-create-frame-with-faces))
-(add-to-list 'window-system-initialization-alist '(w32 . w32-initialize-window-system))
+(cl-defmethod handle-args-function (args &context (window-system w32))
+  (x-handle-args args))
+
+(cl-defmethod frame-creation-function (params &context (window-system w32))
+  (x-create-frame-with-faces params))
+
+;;;; Selections
+
+(declare-function w32-set-clipboard-data "w32select.c"
+		  (string &optional ignored))
+(declare-function w32-get-clipboard-data "w32select.c")
+(declare-function w32-selection-exists-p "w32select.c")
+
+;;; Fix interface to (X-specific) mouse.el
+(defun w32--set-selection (type value)
+  (if (eq type 'CLIPBOARD)
+      (w32-set-clipboard-data value)
+    (put 'x-selections (or type 'PRIMARY) value)))
+
+(defun w32--get-selection  (&optional type data-type)
+  (if (and (eq type 'CLIPBOARD)
+           (eq data-type 'STRING))
+      (with-demoted-errors "w32-get-clipboard-data:%S"
+        (w32-get-clipboard-data))
+    (get 'x-selections (or type 'PRIMARY))))
+
+(defun w32--selection-owner-p (selection)
+  (and (memq selection '(nil PRIMARY SECONDARY))
+       (get 'x-selections (or selection 'PRIMARY))))
+
+(cl-defmethod gui-backend-set-selection (type value
+                                         &context (window-system w32))
+  (w32--set-selection type value))
+
+(cl-defmethod gui-backend-get-selection (type data-type
+                                         &context (window-system w32))
+  (w32--get-selection type data-type))
+
+(cl-defmethod gui-backend-selection-owner-p (selection
+                                             &context (window-system w32))
+  (w32--selection-owner-p selection))
+
+(cl-defmethod gui-backend-selection-exists-p (selection
+                                              &context (window-system w32))
+  (w32-selection-exists-p selection))
+
+(when (eq system-type 'windows-nt)
+  ;; Make copy&pasting in w32's console interact with the system's clipboard!
+  ;; We could move those cl-defmethods outside of the `when' and use
+  ;; "&context (system-type (eql windows-nt))" instead!
+  (cl-defmethod gui-backend-set-selection (type value
+                                           &context (window-system nil))
+    (w32--set-selection type value))
+
+  (cl-defmethod gui-backend-get-selection (type data-type
+                                           &context (window-system nil))
+    (w32--get-selection type data-type))
+
+  (cl-defmethod gui-backend-selection-owner-p (selection
+                                               &context (window-system nil))
+    (w32--selection-owner-p selection))
+
+  (cl-defmethod gui-selection-exists-p (selection
+                                        &context (window-system nil))
+    (w32-selection-exists-p selection)))
+
+;; The "Windows" keys on newer keyboards bring up the Start menu
+;; whether you want it or not - make Emacs ignore these keystrokes
+;; rather than beep.
+(global-set-key [lwindow] 'ignore)
+(global-set-key [rwindow] 'ignore)
+
+(declare-function x-server-version "w32fns.c" (&optional terminal))
+
+(defun w32-version ()
+  "Return the MS-Windows version numbers.
+The value is a list of three integers: the major and minor version
+numbers, and the build number."
+  (x-server-version))
+
+(defun w32-using-nt ()
+  "Return non-nil if running on a Windows NT descendant.
+That includes all Windows systems except for 9X/Me."
+  (getenv "SystemRoot"))
 
 (provide 'w32-win)
 

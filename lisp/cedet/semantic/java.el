@@ -1,6 +1,6 @@
 ;;; semantic/java.el --- Semantic functions for Java
 
-;;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: David Ponce <david@dponce.com>
 
@@ -369,7 +369,7 @@ That is @NAME."
 
 (defsubst semantic-java-doc-tag-name (tag)
   "Return name of the doc TAG symbol.
-That is TAG `symbol-name' without the leading '@'."
+That is TAG `symbol-name' without the leading `@'."
   (substring (symbol-name tag) 1))
 
 (defun semantic-java-doc-keyword-before-p (k1 k2)

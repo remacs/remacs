@@ -1,6 +1,6 @@
 ;;; cc-bytecomp.el --- compile time setup for proper compilation
 
-;; Copyright (C) 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
 ;; Author:     Martin Stjernholm
 ;; Maintainer: bug-cc-mode@gnu.org
@@ -65,8 +65,7 @@
 ;; elsewhere in the load path.
 ;;
 ;; To suppress byte compiler warnings, use the macros
-;; `cc-bytecomp-defun', `cc-bytecomp-defvar',
-;; `cc-bytecomp-obsolete-fun', and `cc-bytecomp-obsolete-var'.
+;; `cc-bytecomp-defun' and `cc-bytecomp-defvar'.
 ;;
 ;; This file is not used at all after the package has been byte
 ;; compiled.  It is however necessary when running uncompiled.
@@ -78,19 +77,72 @@
 (defvar cc-bytecomp-original-functions nil)
 (defvar cc-bytecomp-original-properties nil)
 (defvar cc-bytecomp-loaded-files nil)
+
+(setq cc-bytecomp-unbound-variables nil)
+(setq cc-bytecomp-original-functions nil)
+(setq cc-bytecomp-original-properties nil)
+(setq cc-bytecomp-loaded-files nil)
+
 (defvar cc-bytecomp-environment-set nil)
 
 (defmacro cc-bytecomp-debug-msg (&rest args)
   ;;`(message ,@args)
   )
 
+(defun cc-bytecomp-compiling-or-loading ()
+  ;; Determine whether byte-compilation or loading is currently active,
+  ;; returning 'compiling, 'loading or nil.
+  ;; If both are active, the "innermost" activity counts.  Note that
+  ;; compilation can trigger loading (various `require' type forms)
+  ;; and loading can trigger compilation (the package manager does
+  ;; this).  We walk the lisp stack if necessary.
+  (cond
+   ((and load-in-progress
+	 (boundp 'byte-compile-dest-file)
+	 (stringp byte-compile-dest-file))
+    (let ((n 0) elt)
+      (while (and
+	      (setq elt (backtrace-frame n))
+	      (not (and (car elt)
+			(memq (cadr elt)
+			      '(load require
+				byte-compile-file byte-recompile-directory
+				batch-byte-compile)))))
+	(setq n (1+ n)))
+      (cond
+       ((memq (cadr elt) '(load require))
+	'loading)
+       ((memq (cadr elt) '(byte-compile-file
+			   byte-recompile-directory
+			   batch-byte-compile))
+	'compiling)
+       (t				; Can't happen.
+	(message "cc-bytecomp-compiling-or-loading: System flags spuriously set")
+	nil))))
+   (load-in-progress
+    ;; Being loaded.
+    'loading)
+   ((and (boundp 'byte-compile-dest-file)
+	 (stringp byte-compile-dest-file))
+    ;; Being compiled.
+    'compiling)
+   (t
+    ;; Being evaluated interactively.
+    nil)))
+
+(defsubst cc-bytecomp-is-compiling ()
+  "Return non-nil if eval'ed during compilation."
+  (eq (cc-bytecomp-compiling-or-loading) 'compiling))
+
+(defsubst cc-bytecomp-is-loading ()
+  "Return non-nil if eval'ed during loading.
+Nil will be returned if we're in a compilation triggered by the loading."
+  (eq (cc-bytecomp-compiling-or-loading) 'loading))
+
 (defun cc-bytecomp-setup-environment ()
   ;; Eval'ed during compilation to setup variables, functions etc
   ;; declared with `cc-bytecomp-defvar' et al.
-  (if (not load-in-progress)
-      ;; Look at `load-in-progress' to tell whether we're called
-      ;; directly in the file being compiled or just from some file
-      ;; being loaded during compilation.
+  (if (not (cc-bytecomp-is-loading))
       (let (p)
 	(if cc-bytecomp-environment-set
 	    (error "Byte compilation environment already set - \
@@ -138,7 +190,7 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 (defun cc-bytecomp-restore-environment ()
   ;; Eval'ed during compilation to restore variables, functions etc
   ;; declared with `cc-bytecomp-defvar' et al.
-  (if (not load-in-progress)
+  (if (not (cc-bytecomp-is-loading))
       (let (p)
 	(setq p cc-bytecomp-unbound-variables)
 	(while p
@@ -244,7 +296,9 @@ Having cyclic cc-require's will result in infinite recursion.  That's
 somewhat intentional."
   `(progn
      (eval-when-compile
-       (setq cc-bytecomp-noruntime-functions byte-compile-noruntime-functions)
+       (if (boundp 'byte-compile-noruntime-functions) ; in case load uncompiled
+	   (setq cc-bytecomp-noruntime-functions
+		 byte-compile-noruntime-functions))
        (cc-bytecomp-load (symbol-name ,cc-part)))
      ;; Hack to suppress spurious "might not be defined at runtime" warnings.
      ;; The basic issue is that
@@ -280,8 +334,7 @@ use within `eval-when-compile'."
   `(eval-when-compile
      (if (and (fboundp 'cc-bytecomp-is-compiling)
 	      (cc-bytecomp-is-compiling))
-	 (if (or (not load-in-progress)
-		 (not (featurep ,cc-part)))
+	 (if (not (featurep ,cc-part))
 	     (cc-bytecomp-load (symbol-name ,cc-part)))
        (require ,cc-part))))
 
@@ -293,12 +346,6 @@ afterwards.  Don't use within `eval-when-compile'."
      (eval-when-compile (cc-bytecomp-restore-environment))
      (require ,feature)
      (eval-when-compile (cc-bytecomp-setup-environment))))
-
-(defun cc-bytecomp-is-compiling ()
-  "Return non-nil if eval'ed during compilation.  Don't use outside
-`eval-when-compile'."
-  (and (boundp 'byte-compile-dest-file)
-       (stringp byte-compile-dest-file)))
 
 (defmacro cc-bytecomp-defvar (var)
   "Binds the symbol as a variable during compilation of the file,
@@ -313,8 +360,7 @@ to silence the byte compiler.  Don't use within `eval-when-compile'."
 	      "cc-bytecomp-defvar: Saving %s (as unbound)" ',var)
 	     (setq cc-bytecomp-unbound-variables
 		   (cons ',var cc-bytecomp-unbound-variables))))
-       (if (and (cc-bytecomp-is-compiling)
-		(not load-in-progress))
+       (if (cc-bytecomp-is-compiling)
 	   (progn
 	     (defvar ,var)
 	     (set ',var (intern (concat "cc-bytecomp-ignore-var:"
@@ -342,8 +388,7 @@ at compile time, e.g. for macros and inline functions."
 	     (setq cc-bytecomp-original-functions
 		   (cons (list ',fun nil 'unbound)
 			 cc-bytecomp-original-functions))))
-       (if (and (cc-bytecomp-is-compiling)
-		(not load-in-progress))
+       (if (cc-bytecomp-is-compiling)
 	   (progn
 	     (fset ',fun (intern (concat "cc-bytecomp-ignore-fun:"
 					 (symbol-name ',fun))))
@@ -367,33 +412,6 @@ the file.  Don't use outside `eval-when-compile'."
      (cc-bytecomp-debug-msg
       "cc-bytecomp-put: Bound property %s for %s to %s"
       ,propname ,symbol ,value)))
-
-(defmacro cc-bytecomp-obsolete-var (symbol)
-  "Suppress warnings that the given symbol is an obsolete variable.
-Don't use within `eval-when-compile'."
-  `(eval-when-compile
-     (if (get ',symbol 'byte-obsolete-variable)
-	 (cc-bytecomp-put ',symbol 'byte-obsolete-variable nil)
-       ;; This avoids a superfluous compiler warning
-       ;; about calling `get' for effect.
-       t)))
-
-(defun cc-bytecomp-ignore-obsolete (form)
-  ;; Wraps a call to `byte-compile-obsolete' that suppresses the warning.
-  (let ((byte-compile-warnings byte-compile-warnings))
-    (byte-compile-disable-warning 'obsolete)
-    (byte-compile-obsolete form)))
-
-(defmacro cc-bytecomp-obsolete-fun (symbol)
-  "Suppress warnings that the given symbol is an obsolete function.
-Don't use within `eval-when-compile'."
-  `(eval-when-compile
-     (if (eq (get ',symbol 'byte-compile) 'byte-compile-obsolete)
-	 (cc-bytecomp-put ',symbol 'byte-compile
-			  'cc-bytecomp-ignore-obsolete)
-       ;; This avoids a superfluous compiler warning
-       ;; about calling `get' for effect.
-       t)))
 
 (defmacro cc-bytecomp-boundp (symbol)
   "Return non-nil if the given symbol is bound as a variable outside
@@ -421,4 +439,8 @@ exclude any functions that have been bound during compilation with
 
 (provide 'cc-bytecomp)
 
+;; Local Variables:
+;; indent-tabs-mode: t
+;; tab-width: 8
+;; End:
 ;;; cc-bytecomp.el ends here

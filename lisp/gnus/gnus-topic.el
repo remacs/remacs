@@ -1,6 +1,6 @@
 ;;; gnus-topic.el --- a folding minor mode for Gnus group buffers
 
-;; Copyright (C) 1995-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
 ;; Author: Ilja Weis <kult@uni-paderborn.de>
 ;;	Lars Magne Ingebrigtsen <larsi@gnus.org>
@@ -154,7 +154,7 @@ See Info node `(gnus)Formatting Variables'."
   "Go to TOPIC."
   (interactive
    (list (gnus-completing-read "Go to topic" (gnus-topic-list) t)))
-  (let ((buffer-read-only nil))
+  (let ((inhibit-read-only t))
     (dolist (topic (gnus-current-topics topic))
       (unless (gnus-topic-goto-topic topic)
 	(gnus-topic-goto-missing-topic topic)
@@ -427,7 +427,7 @@ If PREDICATE is a function, list groups that the function returns non-nil;
 if it is t, list groups that have no unread articles.
 If LOWEST is non-nil, list all newsgroups of level LOWEST or higher."
   (set-buffer gnus-group-buffer)
-  (let ((buffer-read-only nil)
+  (let ((inhibit-read-only t)
 	(lowest (or lowest 1))
 	(not-in-list
 	 (and gnus-group-listed-groups
@@ -508,7 +508,6 @@ articles in the topic and its subtopics."
 	 (all-entries entries)
 	 (point-max (point-max))
 	 (unread 0)
-	 (topic (car type))
 	 info entry end active tick)
     ;; Insert any sub-topics.
     (while topicl
@@ -582,15 +581,11 @@ articles in the topic and its subtopics."
        (not (eq (nth 2 type) 'hidden))
        level all-entries unread))
     (gnus-topic-update-unreads (car type) unread)
-    (when gnus-group-update-tool-bar
-      (gnus-put-text-property beg end 'point-entered
-			      'gnus-tool-bar-update)
-      (gnus-put-text-property beg end 'point-left
-			      'gnus-tool-bar-update))
+    (gnus-group--setup-tool-bar-update beg end)
     (goto-char end)
     unread))
 
-(defun gnus-topic-remove-topic (&optional insert total-remove hide in-level)
+(defun gnus-topic-remove-topic (&optional insert total-remove _hide in-level)
   "Remove the current topic."
   (let ((topic (gnus-group-topic-name))
 	(level (gnus-group-topic-level))
@@ -634,6 +629,8 @@ articles in the topic and its subtopics."
 	    (gnus-topic-remove-topic
 	     (or insert (not (gnus-topic-visible-p))) nil nil 9)
 	    (gnus-topic-enter-dribble)))))))
+
+(defvar gnus-tmp-header)
 
 (defun gnus-topic-insert-topic-line (name visiblep shownp level entries
 					  &optional unread)
@@ -684,7 +681,7 @@ articles in the topic and its subtopics."
 	     gnus-topic-mode)
     (let ((group (gnus-group-group-name))
 	  (m (point-marker))
-	  (buffer-read-only nil))
+	  (inhibit-read-only t))
       (when (and group
 		 (gnus-get-info group)
 		 (gnus-topic-goto-topic (gnus-current-topic)))
@@ -698,8 +695,7 @@ articles in the topic and its subtopics."
   (let* ((topic (gnus-group-topic group))
 	 (groups (cdr (assoc topic gnus-topic-alist)))
 	 (g (cdr (member group groups)))
-	 (unfound t)
-	 entry)
+	 (unfound t))
     ;; Try to jump to a visible group.
     (while (and g
 		(not (gnus-group-goto-group (car g) t)))
@@ -902,7 +898,7 @@ articles in the topic and its subtopics."
 (defun gnus-topic-change-level (group level oldlevel &optional previous)
   "Run when changing levels to enter/remove groups from topics."
   (with-current-buffer gnus-group-buffer
-    (let ((buffer-read-only nil))
+    (let ((inhibit-read-only t))
       (unless gnus-topic-inhibit-change-level
 	(gnus-group-goto-group (or (car (nth 2 previous)) group))
 	(when (and gnus-topic-mode
@@ -1131,22 +1127,17 @@ articles in the topic and its subtopics."
 	["Edit parameters" gnus-topic-edit-parameters t])
        ["List active" gnus-topic-list-active t]))))
 
-(defun gnus-topic-mode (&optional arg redisplay)
+(define-minor-mode gnus-topic-mode
   "Minor mode for topicsifying Gnus group buffers."
-  ;; FIXME: Use define-minor-mode.
-  (interactive (list current-prefix-arg t))
-  (when (eq major-mode 'gnus-group-mode)
-    (make-local-variable 'gnus-topic-mode)
-    (setq gnus-topic-mode
-	  (if (null arg) (not gnus-topic-mode)
-	    (> (prefix-numeric-value arg) 0)))
+  :lighter " Topic" :keymap gnus-topic-mode-map
+  (if (not (derived-mode-p 'gnus-group-mode))
+      (setq gnus-topic-mode nil)
     ;; Infest Gnus with topics.
     (if (not gnus-topic-mode)
 	(setq gnus-goto-missing-group-function nil)
       (when (gnus-visual-p 'topic-menu 'menu)
 	(gnus-topic-make-menu-bar))
       (gnus-set-format 'topic t)
-      (add-minor-mode 'gnus-topic-mode " Topic" gnus-topic-mode-map)
       (add-hook 'gnus-group-catchup-group-hook 'gnus-topic-update-topic)
       (set (make-local-variable 'gnus-group-prepare-function)
 	   'gnus-group-prepare-topics)
@@ -1168,8 +1159,7 @@ articles in the topic and its subtopics."
       (setq gnus-topology-checked-p nil)
       ;; We check the topology.
       (when gnus-newsrc-alist
-	(gnus-topic-check-topology))
-      (gnus-run-hooks 'gnus-topic-mode-hook))
+	(gnus-topic-check-topology)))
     ;; Remove topic infestation.
     (unless gnus-topic-mode
       (remove-hook 'gnus-summary-exit-hook 'gnus-topic-update-topic)
@@ -1177,7 +1167,7 @@ articles in the topic and its subtopics."
       (remove-hook 'gnus-check-bogus-groups-hook 'gnus-topic-clean-alist)
       (setq gnus-group-prepare-function 'gnus-group-prepare-flat)
       (setq gnus-group-sort-alist-function 'gnus-group-sort-flat))
-    (when redisplay
+    (when (gmm-called-interactively-p 'any)
       (gnus-group-list-groups))))
 
 (defun gnus-topic-select-group (&optional all)
@@ -1229,10 +1219,10 @@ Also see `gnus-group-catchup'."
       (call-interactively 'gnus-group-catchup-current)
     (save-excursion
       (let* ((groups
-	     (mapcar (lambda (entry) (car (nth 2 entry)))
-		     (gnus-topic-find-groups topic gnus-level-killed t
-					     nil t)))
-	     (buffer-read-only nil)
+              (mapcar (lambda (entry) (car (nth 2 entry)))
+                      (gnus-topic-find-groups topic gnus-level-killed t
+                                              nil t)))
+	     (inhibit-read-only t)
 	     (gnus-group-marked groups))
 	(gnus-group-catchup-current)
 	(mapcar 'gnus-topic-update-topics-containing-group groups)))))
@@ -1336,7 +1326,7 @@ If COPYP, copy the groups instead."
      (lambda (group)
        (gnus-group-remove-mark group use-marked)
        (let ((topicl (assoc (gnus-current-topic) gnus-topic-alist))
-	     (buffer-read-only nil))
+	     (inhibit-read-only t))
 	 (when (and topicl group)
 	   (gnus-delete-line)
 	   (gnus-delete-first group topicl))
@@ -1464,7 +1454,7 @@ If NON-RECURSIVE (which is the prefix) is t, don't mark its subtopics."
 	  (funcall (if unmark 'gnus-group-remove-mark 'gnus-group-set-mark)
 		   (gnus-info-group (nth 2 (pop groups)))))))))
 
-(defun gnus-topic-unmark-topic (topic &optional dummy non-recursive)
+(defun gnus-topic-unmark-topic (topic &optional _dummy non-recursive)
   "Remove the process mark from all groups in the TOPIC.
 If NON-RECURSIVE (which is the prefix) is t, don't unmark its subtopics."
   (interactive (list (gnus-group-topic-name)
@@ -1498,15 +1488,14 @@ If NON-RECURSIVE (which is the prefix) is t, don't unmark its subtopics."
   (gnus-group-mark-regexp regexp)
   (gnus-topic-move-group nil topic copyp))
 
-(defun gnus-topic-copy-matching (regexp topic &optional copyp)
+(defun gnus-topic-copy-matching (regexp topic &optional _copyp)
   "Copy all groups that match REGEXP to some topic."
   (interactive
-   (let (topic)
+   (let ((topic (gnus-completing-read "Copy to topic"
+                                      (mapcar #'car gnus-topic-alist) t)))
      (nreverse
-      (list
-       (setq topic (gnus-completing-read "Copy to topic"
-                                         (mapcar 'car gnus-topic-alist) t))
-       (read-string (format "Copy to %s (regexp): " topic))))))
+      (list topic
+            (read-string (format "Copy to %s (regexp): " topic))))))
   (gnus-topic-move-matching regexp topic t))
 
 (defun gnus-topic-delete (topic)
@@ -1515,7 +1504,7 @@ If NON-RECURSIVE (which is the prefix) is t, don't unmark its subtopics."
   (unless topic
     (error "No topic to be deleted"))
   (let ((entry (assoc topic gnus-topic-alist))
-	(buffer-read-only nil))
+	(inhibit-read-only t))
     (when (cdr entry)
       (error "Topic not empty"))
     ;; Delete if visible.
@@ -1535,7 +1524,7 @@ If NON-RECURSIVE (which is the prefix) is t, don't unmark its subtopics."
 	   (read-string (format "Rename %s to: " topic) topic))))
   ;; Check whether the new name exists.
   (when (gnus-topic-find-topology new-name)
-    (error "Topic '%s' already exists" new-name))
+    (error "Topic `%s' already exists" new-name))
   ;; "nil" is an invalid name, for reasons I'd rather not go
   ;; into here.  Trust me.
   (when (equal new-name "nil")
@@ -1560,7 +1549,7 @@ If UNINDENT, remove an indentation."
       (gnus-topic-unindent)
     (let* ((topic (gnus-current-topic))
 	   (parent (gnus-topic-previous-topic topic))
-	   (buffer-read-only nil))
+	   (inhibit-read-only t))
       (unless parent
 	(error "Nothing to indent %s into" topic))
       (when topic
@@ -1626,8 +1615,8 @@ If performed on a topic, edit the topic parameters instead."
       (let ((topic (gnus-group-topic-name)))
 	(gnus-edit-form
 	 (gnus-topic-parameters topic)
-	 (format "Editing the topic parameters for `%s'."
-		 (or group topic))
+	 (gnus-format-message "Editing the topic parameters for `%s'."
+			      (or group topic))
 	 `(lambda (form)
 	    (gnus-topic-set-parameters ,topic form)))))))
 

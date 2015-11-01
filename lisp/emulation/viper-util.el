@@ -1,6 +1,6 @@
 ;;; viper-util.el --- Utilities used by viper.el
 
-;; Copyright (C) 1994-1997, 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-1997, 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.stonybrook.edu>
 ;; Package: viper
@@ -379,7 +379,7 @@ Otherwise return the normal value."
 
 ;; Append LIS2 to LIS1, both alists, by side-effect and returns LIS1
 ;; LIS2 is modified by filtering it: deleting its members of the form
-;; \(car elt\) such that (car elt') is in LIS1.
+;; (car elt) such that (car elt') is in LIS1.
 (defun viper-append-filter-alist (lis1 lis2)
   (let ((temp lis1)
 	elt)
@@ -426,7 +426,7 @@ Otherwise return the normal value."
       ;; Issue an error, if no match.
       (unless (eq 0 status)
 	(save-excursion
-	  (skip-chars-forward " \t\n\j")
+	  (skip-chars-forward " \t\n")
 	  (if (looking-at "ls:")
 	      (viper-forward-Word 1))
 	  (error "%s: %s"
@@ -859,7 +859,7 @@ Otherwise return the normal value."
 
 (defsubst viper-is-in-minibuffer ()
   (save-match-data
-    (string-match "\*Minibuf-" (buffer-name))))
+    (string-match "\\*Minibuf-" (buffer-name))))
 
 
 
@@ -984,7 +984,7 @@ Otherwise return the normal value."
 ;; macros, since it enables certain macros to be shared between X and TTY modes
 ;; by correctly mapping key sequences for Left/Right/... (on an ascii
 ;; terminal) into logical keys left, right, etc.
-(defun viper-read-key ()
+(defun viper-read-key () ;; FIXME: Use `read-key'?
   (let ((overriding-local-map viper-overriding-map)
 	(inhibit-quit t)
 	help-char key)
@@ -1301,7 +1301,7 @@ Usually contains ` ', linefeed, TAB or formfeed.")
     ))
 
 ;; SYMBOL is used because customize requires it, but it is ignored, unless it
-;; is `nil'.  If nil, use setq.
+;; is nil.  If nil, use setq.
 (defun viper-set-syntax-preference (&optional symbol value)
   "Set Viper syntax preference.
 If called interactively or if SYMBOL is nil, sets syntax preference in current
@@ -1330,7 +1330,7 @@ Works best when set in the hooks to various major modes.
 `strict-vi' means Viper words are (hopefully) exactly as in Vi.
 
 `reformed-vi' means Viper words are like Emacs words \(as determined using
-Emacs syntax tables, which are different for different major modes\) with two
+Emacs syntax tables, which are different for different major modes) with two
 exceptions: the symbol `_' is always part of a word and typical Vi non-word
 symbols, such as `,',:,\",),{, etc., are excluded.
 This behaves very close to `strict-vi', but also works well with non-ASCII

@@ -1,6 +1,6 @@
 ;;; elint.el --- Lint Emacs Lisp
 
-;; Copyright (C) 1997, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Peter Liljenberg <petli@lysator.liu.se>
 ;; Created: May 1997
@@ -45,8 +45,6 @@
 ;; * Prevent recursive requires.
 
 ;;; Code:
-
-(require 'help-fns)
 
 (defgroup elint nil
   "Linting for Emacs Lisp."
@@ -251,9 +249,9 @@ This environment can be passed to `macroexpand'."
     (elint-set-mode-line t)
     (with-current-buffer elint-log-buffer
       (unless (string-equal default-directory dir)
-	(elint-log-message (format "\nLeaving directory `%s'"
-				   default-directory) t)
-	(elint-log-message (format "Entering directory `%s'" dir) t)
+	(elint-log-message (format-message "\nLeaving directory `%s'"
+                                           default-directory) t)
+	(elint-log-message (format-message "Entering directory `%s'" dir) t)
 	(setq default-directory dir))))
   (let ((str (format "Linting file %s" file)))
     (message "%s..." str)
@@ -374,9 +372,9 @@ Returns the forms."
 	(let ((elint-current-pos (point)))
 	  ;; non-list check could be here too. errors may be out of seq.
 	  ;; quoted check cannot be elsewhere, since quotes skipped.
-	  (if (looking-back "'")
+	  (if (looking-back "'" (1- (point)))
 	      ;; Eg cust-print.el uses ' as a comment syntax.
-	      (elint-warning "Skipping quoted form `'%.20s...'"
+	      (elint-warning "Skipping quoted form `%c%.20s...'" ?\'
 			   (read (current-buffer)))
 	    (condition-case nil
 		(setq tops (cons
@@ -385,7 +383,7 @@ Returns the forms."
 			    tops))
 	      (end-of-file
 	       (goto-char elint-current-pos)
-	       (error "Missing ')' in top form: %s"
+	       (error "Missing `)' in top form: %s"
 		      (buffer-substring elint-current-pos
 					(line-end-position))))))))
       (nreverse tops))))
@@ -522,7 +520,7 @@ Return nil if there are no more forms, t otherwise."
 	      ;;; 	(with-syntax-table emacs-lisp-mode-syntax-table
 	      ;;; 	  (elint-update-env))
 	      ;;; 	(setq env (elint-env-add-env env elint-buffer-env))))
-	      ;;(message "Elint processed (require '%s)" name))
+	      ;;(message "%s" (format "Elint processed (require '%s)" name))
 	  (error "%s.el not found in load-path" libname)))
     (error
      (message "Can't get variables from require'd library %s: %s"
@@ -984,7 +982,7 @@ Does basic handling of `featurep' tests."
 						    (line-beginning-position))))
 			       0)	; unknown position
 			     type
-			     (apply 'format string args))))
+			     (apply #'format-message string args))))
 
 (defun elint-error (string &rest args)
   "Report a linting error.
@@ -1145,8 +1143,8 @@ Marks the function with their arguments, and returns a list of variables."
 (defun elint-find-builtins ()
   "Return a list of all built-in functions."
   (let (subrs)
-    (mapatoms (lambda (s) (and (fboundp s) (subrp (symbol-function s))
-			       (setq subrs (cons s subrs)))))
+    (mapatoms (lambda (s) (and (subrp (symbol-function s))
+                          (push s subrs))))
     subrs))
 
 (defun elint-find-builtin-args (&optional list)

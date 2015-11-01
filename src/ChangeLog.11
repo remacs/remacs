@@ -1837,6 +1837,8 @@
 	(float_to_string): Use dtoastr rather than rolling our own code,
 	which had an off-by-one bug on non-IEEE hosts.
 
+	* config.in: Regenerate.
+
 	Automate syncing from gnulib.
 	* Makefile.in (lib): New macro.
 	(ALL_CFLAGS): Add -I$(lib) -I$(srcdir)/../lib.
@@ -2239,7 +2241,7 @@
 	* xdisp.c (try_scrolling): Avoid infloop if the first line is
 	obscured due to a vscroll (Bug#7537).
 
-2010-12-13  Jan Djärv  <jhd@zeplinf.localdomain>
+2010-12-13  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* nsterm.h (FRAME_NS_TOOLBAR_HEIGHT): Rename to FRAME_TOOLBAR_HEIGHT.
 
@@ -4198,7 +4200,7 @@
 	(record_property_change, Fprimitive_undo): Adjust prototypes.
 
 2010-09-22  Juanma Barranquero  <lekktu@gmail.com>
-            Eli Zaretskii  <eliz@gnu.org>
+	    Eli Zaretskii  <eliz@gnu.org>
 
 	* w32.c (get_emacs_configuration_options): Fix buffer overrun.
 
@@ -5253,7 +5255,7 @@
 	(x_set_window_size, ns_draw_fringe_bitmap, judge): Move declarations
 	before code.
 
-	* nsterm.h : Include sysselect.h.
+	* nsterm.h: Include sysselect.h.
 	(x_sync, x_get_focus_frame, x_set_mouse_position)
 	(x_set_mouse_pixel_position, x_make_frame_visible)
 	(x_make_frame_invisible, x_iconify_frame, x_char_width, x_char_height)
@@ -6751,7 +6753,7 @@
 	to standard C.
 
 2010-07-04  Tetsurou Okazaki  <okazaki@be.to>  (tiny change)
-            Stefan Monnier  <monnier@iro.umontreal.ca>
+	    Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* lread.c (read1): Fix up last change to not mess up `c'.
 
@@ -8067,7 +8069,7 @@
 	can specify the frame to use, when applicable.  Adjust callers.
 
 2010-05-07  Vincent Belaïche  <vincent.belaiche@gmail.com>
-            Stefan Monnier  <monnier@iro.umontreal.ca>
+	    Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* floatfns.c (Fisnan, Fcopysign, Ffrexp, Fldexp): New functions.
 
@@ -8695,7 +8697,7 @@
 	(Frename_file): Preserve selinux context when renaming by copy-file.
 
 2010-04-21  Juanma Barranquero  <lekktu@gmail.com>
-            Eli Zaretskii  <eliz@gnu.org>
+	    Eli Zaretskii  <eliz@gnu.org>
 
 	Don't depend on cm.c or termcap.c on Windows, use stubs.
 	* makefile.w32-in (OBJ1): Remove cm.$(O) and termcap.$(O).
@@ -8971,7 +8973,7 @@
 	* Makefile.in (DBUS_CFLAGS, DBUS_LIBS, GCONF_CFLAGS, GCONF_LIBS)
 	(LIBSOUND, CFLAGS_SOUND, RSVG_LIBS, RSVG_CFLAGS, INTERVALS_H)
 	(GETLOADAVG_LIBS, RUN_TEMACS): Move to the autoconf section.
-	(ORDINARY_LINK): Remove, defined in src/s/gnu.h.
+	(ORDINARY_LINK): Remove, defined in s/gnu.h.
 	(CRT0_COMPILE): Remove, inline it in the only user.
 
 2010-04-14  Juri Linkov  <juri@jurta.org>
@@ -16876,7 +16878,7 @@
 	<after-change-functions>: Reflow docstrings.
 
 2008-08-04  Adrian Robert  <Adrian.B.Robert@gmail.com>
-            Ken Raeburn  <raeburn@gnu.org>
+	    Ken Raeburn  <raeburn@gnu.org>
 
 	Dock menu customization, based on a patch by Ken Raeburn, plus some
 	other fixes.
@@ -16939,7 +16941,7 @@
 	* xdisp.c (redisplay_internal, note_mouse_highlight): Under NS,
 	shortcircuit if popup_activated like GTK and X toolkit.
 
-	* m/inter386.h: Change DARWIN to DARWIN_OS.
+	* m/intel386.h: Change DARWIN to DARWIN_OS.
 
 	* s/darwin.h: Add #define DARWIN_OS.  Get rid of C_SWITCH_SYSTEM def.
 	Change LIBS_MACGUI to LIBS_NSGUI.  Move temacs-conditionalized defs
@@ -17941,7 +17943,7 @@
 	batch-compiling for bootstrap).
 
 2008-07-15  Chris Hall  <chris@web.workinglinux.com>  (tiny change)
-            YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
+	    YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
 
 	* frame.c (make_initial_frame): Call init_frame_faces(f) in
 	CANNOT_DUMP case -- fix crash due to different init order.
@@ -18559,7 +18561,7 @@
 	(USG_SHARED_LIBRARIES): Remove duplicate definition.
 
 2008-06-26  Juanma Barranquero  <lekktu@gmail.com>
-            Eli Zaretskii  <eliz@gnu.org>
+	    Eli Zaretskii  <eliz@gnu.org>
 
 	* makefile.w32-in (LOCAL_FLAGS):
 	Don't include WINDOWSNT, DOS_NT and _UCHAR_T.
@@ -18807,7 +18809,7 @@
 	the property of LFACE_FONT of LFACE (if any).
 
 2008-06-21  Seiji Zenitani  <zenitani@mac.com>
-            Ryo Yoshitake  <ryo@shiftmode.net>
+	    Ryo Yoshitake  <ryo@shiftmode.net>
 
 	* xterm.c (x_set_frame_alpha): Add x_catch_errors for bug#437.
 
@@ -18932,7 +18934,7 @@
 	(ftfont_spec_pattern): Don't check QCfc_unknown_spec and QCname.
 	(ftfont_list) [FC_FONTFORMAT]: Include FC_FONTFORMAT in objset.
 
-	* xftfont.c (QChinting , QCautohint, QChintstyle, QCrgba)
+	* xftfont.c (QChinting, QCautohint, QChintstyle, QCrgba)
 	(QCembolden): New variables.
 	(syms_of_xftfont): DEFSYM them.
 	(xftfont_open): Call XftFontMatch.  Don't trust the result of
@@ -19903,7 +19905,7 @@
 	* xterm.c (x_set_frame_alpha): Move declarations before statements.
 
 2008-05-21  Seiji Zenitani  <zenitani@mac.com>
-            Ryo Yoshitake  <ryo@shiftmode.net>
+	    Ryo Yoshitake  <ryo@shiftmode.net>
 
 	* frame.c (Qalpha): Add a new frame parameter `alpha'.
 	(Vframe_alpha_lower_limit): New variable.
@@ -28495,7 +28497,7 @@
 
 2007-11-09  Jason Rumney  <jasonr@gnu.org>
 
-	* s/ms-w32.c (USE_TOOLKIT_SCROLL_BARS): Define.
+	* s/ms-w32.h (USE_TOOLKIT_SCROLL_BARS): Define.
 
 	* w32term.c (w32_scroll_bar_handle_click): Use SCROLL_BAR_CLICK_EVENT.
 
@@ -31383,7 +31385,7 @@ See ChangeLog.10 for earlier changes.
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 2007-2013 Free Software Foundation, Inc.
+  Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

@@ -1,6 +1,6 @@
 ;;; nndiary.el --- A diary back end for Gnus
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author:        Didier Verna <didier@xemacs.org>
 ;; Maintainer:    Didier Verna <didier@xemacs.org>
@@ -151,15 +151,15 @@ maximum in the reminder is not that painful, I think.  Although this
 scheme might appear somewhat weird at a first glance, it is very powerful.
 In order to make this clear, here are some examples:
 
-- '(0 . day): this is the default value of `nndiary-reminders'.  It means
+- (0 . day): this is the default value of `nndiary-reminders'.  It means
   pop up the appointments of the day each morning at 00:00.
 
-- '(1 . day): this means pop up the appointments the day before, at 00:00.
+- (1 . day): this means pop up the appointments the day before, at 00:00.
 
-- '(6 . hour): for an appointment at 18:30, this would pop up the
+- (6 . hour): for an appointment at 18:30, this would pop up the
   appointment message at 12:00.
 
-- '(360 . minute): for an appointment at 18:30 and 15 seconds, this would
+- (360 . minute): for an appointment at 18:30 and 15 seconds, this would
   pop up the appointment message at 12:30."
   :group 'nndiary
   :type '(repeat (cons :format "%v\n"
@@ -423,7 +423,7 @@ all.  This may very well take some time.")
 		   (> number nnmail-large-newsgroup)
 		   (zerop (% count 20))
 		   (nnheader-message 6 "nndiary: Receiving headers... %d%%"
-				     (/ (* count 100) number))))
+				     (floor (* count 100.0) number))))
 
 	    (and (numberp nnmail-large-newsgroup)
 		 (> number nnmail-large-newsgroup)
@@ -1314,6 +1314,8 @@ all.  This may very well take some time.")
        res))
     (sort res 'time-less-p)))
 
+;; FIXME: "occurrence" is misspelled in this function name.
+
 (defun nndiary-last-occurence (sched)
   ;; Returns the last occurrence of schedule SCHED as an Emacs time struct, or
   ;; nil for permanent schedule or errors.
@@ -1393,6 +1395,8 @@ all.  This may very well take some time.")
 	   (nnheader-report 'nndiary "Undecidable schedule")
 	   nil))
 	))))
+
+;; FIXME: "occurrence" is misspelled in this function name.
 
 (defun nndiary-next-occurence (sched now)
   ;; Returns the next occurrence of schedule SCHED, starting from time NOW.

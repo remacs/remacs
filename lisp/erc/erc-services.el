@@ -1,8 +1,8 @@
 ;;; erc-services.el --- Identify to NickServ
 
-;; Copyright (C) 2002-2004, 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2004, 2006-2015 Free Software Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 
 ;; This file is part of GNU Emacs.
 
@@ -83,11 +83,11 @@ communication with those Services."
 
 Possible settings are:.
 
-'autodetect  - Identify when the real Nickserv sends an identify request.
-'nick-change - Identify when you log in or change your nickname.
-'both        - Do the former if the network supports it, otherwise do the
-               latter.
-nil          - Disables automatic Nickserv identification.
+`autodetect'  - Identify when the real Nickserv sends an identify request.
+`nick-change' - Identify when you log in or change your nickname.
+`both'        - Do the former if the network supports it, otherwise do the
+                latter.
+nil           - Disables automatic Nickserv identification.
 
 You can also use M-x erc-nickserv-identify-mode to change modes."
   :group 'erc-services
@@ -172,7 +172,7 @@ You can also use M-x erc-nickserv-identify-mode to change modes."
 
 Example of use:
   (setq erc-nickserv-passwords
-        '((freenode ((\"nick-one\" . \"password\")
+        \\='((freenode ((\"nick-one\" . \"password\")
                      (\"nick-two\" . \"password\")))
           (DALnet ((\"nick\" . \"password\")))))"
   :group 'erc-services
@@ -280,7 +280,7 @@ Example of use:
      "IDENTIFY" nil nil nil))
    "Alist of NickServer details, sorted by network.
 Every element in the list has the form
-  \(SYMBOL NICKSERV REGEXP NICK KEYWORD USE-CURRENT ANSWER SUCCESS-REGEXP)
+  (SYMBOL NICKSERV REGEXP NICK KEYWORD USE-CURRENT ANSWER SUCCESS-REGEXP)
 
 SYMBOL is a network identifier, a symbol, as used in `erc-networks-alist'.
 NICKSERV is the description of the nickserv in the form nick!user@host.
@@ -447,4 +447,3 @@ When called interactively, read the password using `read-passwd'."
 ;; indent-tabs-mode: t
 ;; tab-width: 8
 ;; End:
-

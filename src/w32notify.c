@@ -1,5 +1,5 @@
 /* Filesystem notifications support for GNU Emacs on the Microsoft Windows API.
-   Copyright (C) 2012-2013 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -105,7 +105,7 @@ struct notification {
   OVERLAPPED *io_info;	/* the OVERLAPPED structure for async I/O */
   BOOL subtree;		/* whether to watch subdirectories */
   DWORD filter;		/* bit mask for events to watch */
-  char *watchee;	/* the file we are interested in */
+  char *watchee;	/* the file we are interested in, UTF-8 encoded */
   HANDLE dir;		/* handle to the watched directory */
   HANDLE thr;		/* handle to the thread that watches */
   volatile int terminate; /* if non-zero, request for the thread to terminate */
@@ -118,9 +118,7 @@ BYTE file_notifications[16384];
 DWORD notifications_size;
 void *notifications_desc;
 
-static Lisp_Object Qfile_name, Qdirectory_name, Qattributes, Qsize;
-static Lisp_Object Qlast_write_time, Qlast_access_time, Qcreation_time;
-static Lisp_Object Qsecurity_desc, Qsubtree, watch_list;
+static Lisp_Object watch_list;
 
 /* Signal to the main thread that we have file notifications for it to
    process.  */
@@ -163,7 +161,12 @@ send_notifications (BYTE *info, DWORD info_size, void *desc,
 	       && PostThreadMessage (dwMainThreadId, WM_EMACS_FILENOTIFY, 0, 0))
 	      || (FRAME_W32_P (f)
 		  && PostMessage (FRAME_W32_WINDOW (f),
-				  WM_EMACS_FILENOTIFY, 0, 0)))
+				  WM_EMACS_FILENOTIFY, 0, 0))
+	      /* When we are running in batch mode, there's no one to
+		 send a message, so we just signal the data is
+		 available and hope sys_select will be called soon and
+		 will read the data.  */
+	      || (FRAME_INITIAL_P (f) && noninteractive))
 	    notification_buffer_in_use = 1;
 	  done = 1;
 	}
@@ -242,7 +245,6 @@ watch_worker (LPVOID arg)
 
   do {
     BOOL status;
-    DWORD sleep_result;
     DWORD bytes_ret = 0;
 
     if (dirwatch->dir)
@@ -270,7 +272,7 @@ watch_worker (LPVOID arg)
     /* Sleep indefinitely until awoken by the I/O completion, which
        could be either a change notification or a cancellation of the
        watch.  */
-    sleep_result = SleepEx (INFINITE, TRUE);
+    SleepEx (INFINITE, TRUE);
   } while (!dirwatch->terminate);
 
   return 0;
@@ -282,7 +284,6 @@ static struct notification *
 start_watching (const char *file, HANDLE hdir, BOOL subdirs, DWORD flags)
 {
   struct notification *dirwatch = xzalloc (sizeof (struct notification));
-  HANDLE thr;
 
   dirwatch->signature = DIRWATCH_SIGNATURE;
   dirwatch->buf = xmalloc (16384);
@@ -324,18 +325,46 @@ add_watch (const char *parent_dir, const char *file, BOOL subdirs, DWORD flags)
   HANDLE hdir;
   struct notification *dirwatch = NULL;
 
-  if (!file || !*file)
+  if (!file)
     return NULL;
 
-  hdir = CreateFile (parent_dir,
-		     FILE_LIST_DIRECTORY,
-		     /* FILE_SHARE_DELETE doesn't preclude other
-			processes from deleting files inside
-			parent_dir.  */
-		     FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-		     NULL, OPEN_EXISTING,
-		     FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
-		     NULL);
+  if (w32_unicode_filenames)
+    {
+      wchar_t dir_w[MAX_PATH], file_w[MAX_PATH];
+
+      filename_to_utf16 (parent_dir, dir_w);
+      if (*file)
+	filename_to_utf16 (file, file_w);
+      else
+	file_w[0] = 0;
+
+      hdir = CreateFileW (dir_w,
+			  FILE_LIST_DIRECTORY,
+			  /* FILE_SHARE_DELETE doesn't preclude other
+			     processes from deleting files inside
+			     parent_dir.  */
+			  FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+			  NULL, OPEN_EXISTING,
+			  FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
+			  NULL);
+    }
+  else
+    {
+      char dir_a[MAX_PATH], file_a[MAX_PATH];
+
+      filename_to_ansi (parent_dir, dir_a);
+      if (*file)
+	filename_to_ansi (file, file_a);
+      else
+	file_a[0] = '\0';
+
+      hdir = CreateFileA (dir_a,
+			  FILE_LIST_DIRECTORY,
+			  FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+			  NULL, OPEN_EXISTING,
+			  FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
+			  NULL);
+    }
   if (hdir == INVALID_HANDLE_VALUE)
     return NULL;
 
@@ -485,9 +514,7 @@ will never come in.  Volumes shared from remote Windows machines do
 generate notifications correctly, though.  */)
   (Lisp_Object file, Lisp_Object filter, Lisp_Object callback)
 {
-  Lisp_Object encoded_file, watch_object, watch_descriptor;
-  char parent_dir[MAX_PATH], *basename;
-  size_t fn_len;
+  Lisp_Object dirfn, basefn, watch_object, watch_descriptor;
   DWORD flags;
   BOOL subdirs = FALSE;
   struct notification *dirwatch = NULL;
@@ -498,48 +525,40 @@ generate notifications correctly, though.  */)
 
   /* The underlying features are available only since XP.  */
   if (os_subtype == OS_9X
-      || (w32_major_version == 5 && w32_major_version < 1))
+      || (w32_major_version == 5 && w32_minor_version < 1))
     {
       errno = ENOSYS;
-      report_file_error ("Watching filesystem events is not supported",
-			 Qnil);
+      report_file_notify_error ("Watching filesystem events is not supported",
+				Qnil);
     }
 
-  /* We need a full absolute file name of FILE, and we need to remove
-     any trailing slashes from it, so that GetFullPathName below gets
-     the basename part correctly.  */
+  /* filenotify.el always passes us a directory, either the parent
+     directory of a file to be watched, or the directory to be
+     watched.  */
   file = Fdirectory_file_name (Fexpand_file_name (file, Qnil));
-  encoded_file = ENCODE_FILE (file);
-
-  fn_len = GetFullPathName (SDATA (encoded_file), MAX_PATH, parent_dir,
-			    &basename);
-  if (!fn_len)
+  if (NILP (Ffile_directory_p (file)))
     {
-      errstr = w32_strerror (0);
-      errno = EINVAL;
-      if (!NILP (Vlocale_coding_system))
-	lisp_errstr
-	  = code_convert_string_norecord (build_unibyte_string (errstr),
-					  Vlocale_coding_system, 0);
-      else
-	lisp_errstr = build_string (errstr);
-      report_file_error ("GetFullPathName failed",
-			 Fcons (lisp_errstr, Fcons (file, Qnil)));
+      /* This should only happen if we are called directly, not via
+	 filenotify.el.  If BASEFN is empty, the argument was the root
+	 directory on its drive.  */
+      dirfn = ENCODE_FILE (Ffile_name_directory (file));
+      basefn = ENCODE_FILE (Ffile_name_nondirectory (file));
+      if (*SDATA (basefn) == '\0')
+	subdirs = TRUE;
     }
-  /* We need the parent directory without the slash that follows it.
-     If BASENAME is NULL, the argument was the root directory on its
-     drive.  */
-  if (basename)
-    basename[-1] = '\0';
   else
-    subdirs = TRUE;
+    {
+      dirfn = ENCODE_FILE (file);
+      basefn = Qnil;
+    }
 
   if (!NILP (Fmember (Qsubtree, filter)))
     subdirs = TRUE;
 
   flags = filter_list_to_flags (filter);
 
-  dirwatch = add_watch (parent_dir, basename, subdirs, flags);
+  dirwatch = add_watch (SSDATA (dirfn), NILP (basefn) ? "" : SSDATA (basefn),
+			subdirs, flags);
   if (!dirwatch)
     {
       DWORD err = GetLastError ();
@@ -554,14 +573,14 @@ generate notifications correctly, though.  */)
 					      Vlocale_coding_system, 0);
 	  else
 	    lisp_errstr = build_string (errstr);
-	  report_file_error ("Cannot watch file",
-			     Fcons (lisp_errstr, Fcons (file, Qnil)));
+	  report_file_notify_error ("Cannot watch file",
+				    Fcons (lisp_errstr, Fcons (file, Qnil)));
 	}
       else
-	report_file_error ("Cannot watch file", Fcons (file, Qnil));
+	report_file_notify_error ("Cannot watch file", Fcons (file, Qnil));
     }
   /* Store watch object in watch list. */
-  watch_descriptor = XIL ((EMACS_INT)dirwatch);
+  watch_descriptor = make_pointer_integer (dirwatch);
   watch_object = Fcons (watch_descriptor, callback);
   watch_list = Fcons (watch_object, watch_list);
 
@@ -586,14 +605,14 @@ WATCH-DESCRIPTOR should be an object returned by `w32notify-add-watch'.  */)
   if (!NILP (watch_object))
     {
       watch_list = Fdelete (watch_object, watch_list);
-      dirwatch = (struct notification *)XLI (watch_descriptor);
+      dirwatch = (struct notification *)XINTPTR (watch_descriptor);
       if (w32_valid_pointer_p (dirwatch, sizeof(struct notification)))
 	status = remove_watch (dirwatch);
     }
 
   if (status == -1)
-    report_file_error ("Invalid watch descriptor", Fcons (watch_descriptor,
-							  Qnil));
+    report_file_notify_error ("Invalid watch descriptor",
+			      Fcons (watch_descriptor, Qnil));
 
   return Qnil;
 }
@@ -601,12 +620,36 @@ WATCH-DESCRIPTOR should be an object returned by `w32notify-add-watch'.  */)
 Lisp_Object
 w32_get_watch_object (void *desc)
 {
-  Lisp_Object descriptor = XIL ((EMACS_INT)desc);
+  Lisp_Object descriptor = make_pointer_integer (desc);
 
   /* This is called from the input queue handling code, inside a
      critical section, so we cannot possibly QUIT if watch_list is not
      in the right condition.  */
   return NILP (watch_list) ? Qnil : assoc_no_quit (descriptor, watch_list);
+}
+
+DEFUN ("w32notify-valid-p", Fw32notify_valid_p, Sw32notify_valid_p, 1, 1, 0,
+       doc: /* "Check a watch specified by its WATCH-DESCRIPTOR for validity.
+
+WATCH-DESCRIPTOR should be an object returned by `w32notify-add-watch'.
+
+A watch can become invalid if the directory it watches is deleted, or if
+the watcher thread exits abnormally for any other reason.  Removing the
+watch by calling `w32notify-rm-watch' also makes it invalid.  */)
+     (Lisp_Object watch_descriptor)
+{
+  Lisp_Object watch_object = Fassoc (watch_descriptor, watch_list);
+
+  if (!NILP (watch_object))
+    {
+      struct notification *dirwatch =
+	(struct notification *)XINTPTR (watch_descriptor);
+      if (w32_valid_pointer_p (dirwatch, sizeof(struct notification))
+	  && dirwatch->dir != NULL)
+	return Qt;
+    }
+
+  return Qnil;
 }
 
 void
@@ -621,7 +664,6 @@ syms_of_w32notify (void)
   DEFSYM (Qfile_name, "file-name");
   DEFSYM (Qdirectory_name, "directory-name");
   DEFSYM (Qattributes, "attributes");
-  DEFSYM (Qsize, "size");
   DEFSYM (Qlast_write_time, "last-write-time");
   DEFSYM (Qlast_access_time, "last-access-time");
   DEFSYM (Qcreation_time, "creation-time");
@@ -630,6 +672,7 @@ syms_of_w32notify (void)
 
   defsubr (&Sw32notify_add_watch);
   defsubr (&Sw32notify_rm_watch);
+  defsubr (&Sw32notify_valid_p);
 
   staticpro (&watch_list);
 

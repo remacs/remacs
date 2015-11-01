@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1995, 1998-1999, 2001-2013 Free Software
+@c Copyright (C) 1990-1995, 1998-1999, 2001-2015 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Sequences Arrays Vectors
@@ -72,6 +72,7 @@ string, bool-vector, or char-table, @code{nil} otherwise.
 @cindex vector length
 @cindex sequence length
 @cindex char-table length
+@anchor{Definition of length}
 This function returns the number of elements in @var{sequence}.  If
 @var{sequence} is a dotted list, a @code{wrong-type-argument} error is
 signaled.  Circular lists may cause an infinite loop.  For a
@@ -107,12 +108,13 @@ Emacs character code.
 @noindent
 See also @code{string-bytes}, in @ref{Text Representations}.
 
-If you need to compute the width of a string on display, you should
-use @code{string-width} (@pxref{Width}), not @code{length}, since
-@code{length} only counts the number of characters, but does not
+If you need to compute the width of a string on display, you should use
+@code{string-width} (@pxref{Size of Displayed Text}), not @code{length},
+since @code{length} only counts the number of characters, but does not
 account for the display width of each character.
 
 @defun elt sequence index
+@anchor{Definition of elt}
 @cindex elements of sequences
 This function returns the element of @var{sequence} indexed by
 @var{index}.  Legitimate values of @var{index} are integers ranging
@@ -216,6 +218,794 @@ y @result{} [foo (69 2)]
 @end group
 @end example
 @end defun
+
+@defun reverse sequence
+@cindex string reverse
+@cindex list reverse
+@cindex vector reverse
+@cindex sequence reverse
+This function creates a new sequence whose elements are the elements
+of @var{sequence}, but in reverse order.  The original argument @var{sequence}
+is @emph{not} altered.  Note that char-tables cannot be reversed.
+
+@example
+@group
+(setq x '(1 2 3 4))
+     @result{} (1 2 3 4)
+@end group
+@group
+(reverse x)
+     @result{} (4 3 2 1)
+x
+     @result{} (1 2 3 4)
+@end group
+@group
+(setq x [1 2 3 4])
+     @result{} [1 2 3 4]
+@end group
+@group
+(reverse x)
+     @result{} [4 3 2 1]
+x
+     @result{} [1 2 3 4]
+@end group
+@group
+(setq x "xyzzy")
+     @result{} "xyzzy"
+@end group
+@group
+(reverse x)
+     @result{} "yzzyx"
+x
+     @result{} "xyzzy"
+@end group
+@end example
+@end defun
+
+@defun nreverse sequence
+@cindex reversing a string
+@cindex reversing a list
+@cindex reversing a vector
+  This function reverses the order of the elements of @var{sequence}.
+Unlike @code{reverse} the original @var{sequence} may be modified.
+
+  For example:
+
+@example
+@group
+(setq x '(a b c))
+     @result{} (a b c)
+@end group
+@group
+x
+     @result{} (a b c)
+(nreverse x)
+     @result{} (c b a)
+@end group
+@group
+;; @r{The cons cell that was first is now last.}
+x
+     @result{} (a)
+@end group
+@end example
+
+  To avoid confusion, we usually store the result of @code{nreverse}
+back in the same variable which held the original list:
+
+@example
+(setq x (nreverse x))
+@end example
+
+  Here is the @code{nreverse} of our favorite example, @code{(a b c)},
+presented graphically:
+
+@smallexample
+@group
+@r{Original list head:}                       @r{Reversed list:}
+ -------------        -------------        ------------
+| car  | cdr  |      | car  | cdr  |      | car | cdr  |
+|   a  |  nil |<--   |   b  |   o  |<--   |   c |   o  |
+|      |      |   |  |      |   |  |   |  |     |   |  |
+ -------------    |   --------- | -    |   -------- | -
+                  |             |      |            |
+                   -------------        ------------
+@end group
+@end smallexample
+
+  For the vector, it is even simpler because you don't need setq:
+
+@example
+(setq x [1 2 3 4])
+     @result{} [1 2 3 4]
+(nreverse x)
+     @result{} [4 3 2 1]
+x
+     @result{} [4 3 2 1]
+@end example
+
+Note that unlike @code{reverse}, this function doesn't work with strings.
+Although you can alter string data by using @code{aset}, it is strongly
+encouraged to treat strings as immutable.
+
+@end defun
+
+@defun sort sequence predicate
+@cindex stable sort
+@cindex sorting lists
+@cindex sorting vectors
+This function sorts @var{sequence} stably.  Note that this function doesn't work
+for all sequences; it may be used only for lists and vectors.  If @var{sequence}
+is a list, it is modified destructively.  This functions returns the sorted
+@var{sequence} and compares elements using @var{predicate}.  A stable sort is
+one in which elements with equal sort keys maintain their relative order before
+and after the sort.  Stability is important when successive sorts are used to
+order elements according to different criteria.
+
+The argument @var{predicate} must be a function that accepts two
+arguments.  It is called with two elements of @var{sequence}.  To get an
+increasing order sort, the @var{predicate} should return non-@code{nil} if the
+first element is ``less'' than the second, or @code{nil} if not.
+
+The comparison function @var{predicate} must give reliable results for
+any given pair of arguments, at least within a single call to
+@code{sort}.  It must be @dfn{antisymmetric}; that is, if @var{a} is
+less than @var{b}, @var{b} must not be less than @var{a}.  It must be
+@dfn{transitive}---that is, if @var{a} is less than @var{b}, and @var{b}
+is less than @var{c}, then @var{a} must be less than @var{c}.  If you
+use a comparison function which does not meet these requirements, the
+result of @code{sort} is unpredictable.
+
+The destructive aspect of @code{sort} for lists is that it rearranges the
+cons cells forming @var{sequence} by changing @sc{cdr}s.  A nondestructive
+sort function would create new cons cells to store the elements in their
+sorted order.  If you wish to make a sorted copy without destroying the
+original, copy it first with @code{copy-sequence} and then sort.
+
+Sorting does not change the @sc{car}s of the cons cells in @var{sequence};
+the cons cell that originally contained the element @code{a} in
+@var{sequence} still has @code{a} in its @sc{car} after sorting, but it now
+appears in a different position in the list due to the change of
+@sc{cdr}s.  For example:
+
+@example
+@group
+(setq nums '(1 3 2 6 5 4 0))
+     @result{} (1 3 2 6 5 4 0)
+@end group
+@group
+(sort nums '<)
+     @result{} (0 1 2 3 4 5 6)
+@end group
+@group
+nums
+     @result{} (1 2 3 4 5 6)
+@end group
+@end example
+
+@noindent
+@strong{Warning}: Note that the list in @code{nums} no longer contains
+0; this is the same cons cell that it was before, but it is no longer
+the first one in the list.  Don't assume a variable that formerly held
+the argument now holds the entire sorted list!  Instead, save the result
+of @code{sort} and use that.  Most often we store the result back into
+the variable that held the original list:
+
+@example
+(setq nums (sort nums '<))
+@end example
+
+For the better understanding of what stable sort is, consider the following
+vector example.  After sorting, all items whose @code{car} is 8 are grouped
+at the beginning of @code{vector}, but their relative order is preserved.
+All items whose @code{car} is 9 are grouped at the end of @code{vector},
+but their relative order is also preserved:
+
+@example
+@group
+(setq
+  vector
+  (vector '(8 . "xxx") '(9 . "aaa") '(8 . "bbb") '(9 . "zzz")
+          '(9 . "ppp") '(8 . "ttt") '(8 . "eee") '(9 . "fff")))
+     @result{} [(8 . "xxx") (9 . "aaa") (8 . "bbb") (9 . "zzz")
+         (9 . "ppp") (8 . "ttt") (8 . "eee") (9 . "fff")]
+@end group
+@group
+(sort vector (lambda (x y) (< (car x) (car y))))
+     @result{} [(8 . "xxx") (8 . "bbb") (8 . "ttt") (8 . "eee")
+         (9 . "aaa") (9 . "zzz") (9 . "ppp") (9 . "fff")]
+@end group
+@end example
+
+@xref{Sorting}, for more functions that perform sorting.
+See @code{documentation} in @ref{Accessing Documentation}, for a
+useful example of @code{sort}.
+@end defun
+
+@cindex sequence functions in seq
+@cindex seq library
+  The @file{seq.el} library provides the following additional sequence
+manipulation macros and functions, prefixed with @code{seq-}.  To use
+them, you must first load the @file{seq} library.
+
+  All functions defined in this library are free of side-effects;
+i.e., they do not modify any sequence (list, vector, or string) that
+you pass as an argument.  Unless otherwise stated, the result is a
+sequence of the same type as the input.  For those functions that take
+a predicate, this should be a function of one argument.
+
+  The @file{seq.el} library can be extended to work with additional
+types of sequential data-structures.  For that purpose, all functions
+are defined using @code{cl-defgeneric}.
+
+@defun seq-elt sequence index
+  This function the element at the index @var{index} in
+@var{sequence}.  @var{index} can be an integer from zero up to the
+length of @var{sequence} minus one.  For out-of-range values on
+built-in sequence types, @code{seq-elt} behaves like @code{elt}.
+@xref{Definition of elt}.
+
+@example
+@group
+(seq-elt [1 2 3 4] 2)
+@result{} 3
+@end group
+
+  @code{seq-elt} returns settable places using @code{setf}.
+
+@group
+(setq vec [1 2 3 4])
+(setf (seq-elt vec 2) 5)
+vec
+@result{} [1 2 5 4]
+@end group
+@end example
+@end defun
+
+@defun seq-length sequence
+  This function returns the number of elements in @var{sequence}.  For
+built-in sequence types, @code{seq-length} behaves like @code{length}.
+@xref{Definition of length}.
+@end defun
+
+@defun seq-p sequence
+  This function returns non-@code{nil} if @var{sequence} is a sequence
+(a list or array), or any additional type of sequence defined via
+@file{seq.el} generic functions.
+
+@example
+@group
+(seq-p [1 2])
+@result{} t
+@end group
+@group
+(seq-p 2)
+@result{} nil
+@end group
+@end example
+@end defun
+
+@defun seq-drop sequence n
+  This function returns all but the first @var{n} (an integer)
+elements of @var{sequence}.  If @var{n} is negative or zero,
+the result is @var{sequence}.
+
+@example
+@group
+(seq-drop [1 2 3 4 5 6] 3)
+@result{} [4 5 6]
+@end group
+@group
+(seq-drop "hello world" -4)
+@result{} "hello world"
+@end group
+@end example
+@end defun
+
+@defun seq-take sequence n
+  This function returns the first @var{n} (an integer) elements of
+@var{sequence}.  If @var{n} is negative or zero, the result
+is @code{nil}.
+
+@example
+@group
+(seq-take '(1 2 3 4) 3)
+@result{} (1 2 3)
+@end group
+@group
+(seq-take [1 2 3 4] 0)
+@result{} []
+@end group
+@end example
+@end defun
+
+@defun seq-take-while predicate sequence
+  This function returns the members of @var{sequence} in order,
+stopping before the first one for which @var{predicate} returns @code{nil}.
+
+@example
+@group
+(seq-take-while (lambda (elt) (> elt 0)) '(1 2 3 -1 -2))
+@result{} (1 2 3)
+@end group
+@group
+(seq-take-while (lambda (elt) (> elt 0)) [-1 4 6])
+@result{} []
+@end group
+@end example
+@end defun
+
+@defun seq-drop-while predicate sequence
+  This function returns the members of @var{sequence} in order,
+starting from the first one for which @var{predicate} returns @code{nil}.
+
+@example
+@group
+(seq-drop-while (lambda (elt) (> elt 0)) '(1 2 3 -1 -2))
+@result{} (-1 -2)
+@end group
+@group
+(seq-drop-while (lambda (elt) (< elt 0)) [1 4 6])
+@result{} [1 4 6]
+@end group
+@end example
+@end defun
+
+@defun seq-do function sequence
+  This function applies @var{function} to each element of
+@var{sequence} in turn (presumably for side effects) and returns
+@var{sequence}.
+@end defun
+
+@defun seq-map function sequence
+  This function returns the result of applying @var{function} to each
+element of @var{sequence}.  The returned value is a list.
+
+@example
+@group
+(seq-map #'1+ '(2 4 6))
+@result{} (3 5 7)
+@end group
+@group
+(seq-map #'symbol-name [foo bar])
+@result{} ("foo" "bar")
+@end group
+@end example
+@end defun
+
+@defun seq-mapn function &rest sequences
+  This function returns the result of applying @var{function} to each
+element of @var{sequences}.  The arity of @var{function} must match
+the number of sequences.  Mapping stops at the shortest sequence, and
+the returned value is a list.
+
+@example
+@group
+(seq-mapn #'+ '(2 4 6) '(20 40 60))
+@result{} (22 44 66)
+@end group
+@group
+(seq-mapn #'concat '("moskito" "bite") ["bee" "sting"])
+@result{} ("moskitobee" "bitesting")
+@end group
+@end example
+@end defun
+
+@defun seq-filter predicate sequence
+@cindex filtering sequences
+  This function returns a list of all the elements in @var{sequence}
+for which @var{predicate} returns non-@code{nil}.
+
+@example
+@group
+(seq-filter (lambda (elt) (> elt 0)) [1 -1 3 -3 5])
+@result{} (1 3 5)
+@end group
+@group
+(seq-filter (lambda (elt) (> elt 0)) '(-1 -3 -5))
+@result{} nil
+@end group
+@end example
+@end defun
+
+@defun seq-remove predicate sequence
+@cindex removing from sequences
+  This function returns a list of all the elements in @var{sequence}
+for which @var{predicate} returns @code{nil}.
+
+@example
+@group
+(seq-remove (lambda (elt) (> elt 0)) [1 -1 3 -3 5])
+@result{} (-1 -3)
+@end group
+@group
+(seq-remove (lambda (elt) (< elt 0)) '(-1 -3 -5))
+@result{} nil
+@end group
+@end example
+@end defun
+
+@defun seq-reduce function sequence initial-value
+@cindex reducing sequences
+  This function returns the result of calling @var{function} with
+@var{initial-value} and the first element of @var{sequence}, then calling
+@var{function} with that result and the second element of @var{sequence},
+then with that result and the third element of @var{sequence}, etc.
+@var{function} should be a function of two arguments.  If
+@var{sequence} is empty, this returns @var{initial-value} without
+calling @var{function}.
+
+@example
+@group
+(seq-reduce #'+ [1 2 3 4] 0)
+@result{} 10
+@end group
+@group
+(seq-reduce #'+ '(1 2 3 4) 5)
+@result{} 15
+@end group
+@group
+(seq-reduce #'+ '() 3)
+@result{} 3
+@end group
+@end example
+@end defun
+
+@defun seq-some predicate sequence
+  This function returns the first non-@code{nil} value returned by
+applying @var{predicate} to each element of @var{sequence} in turn.
+
+@example
+@group
+(seq-some #'numberp ["abc" 1 nil])
+@result{} t
+@end group
+@group
+(seq-some #'numberp ["abc" "def"])
+@result{} nil
+@end group
+@group
+(seq-some #'null ["abc" 1 nil])
+@result{} t
+@end group
+@group
+(seq-some #'1+ [2 4 6])
+@result{} 3
+@end group
+@end example
+@end defun
+
+@defun seq-find predicate sequence &optional default
+  This function returns the first element for which @var{predicate}
+returns non-@code{nil} in @var{sequence}.  If no element matches
+@var{predicate}, @var{default} is returned.
+
+Note that this function has an ambiguity if the found element is
+identical to @var{default}, as it cannot be known if an element was
+found or not.
+
+@example
+@group
+(seq-find #'numberp ["abc" 1 nil])
+@result{} 1
+@end group
+@group
+(seq-find #'numberp ["abc" "def"])
+@result{} nil
+@end group
+@end example
+@end defun
+
+@defun seq-every-p predicate sequence
+  This function returns non-@code{nil} if applying @var{predicate}
+to every element of @var{sequence} returns non-@code{nil}.
+
+@example
+@group
+(seq-every-p #'numberp [2 4 6])
+@result{} t
+@end group
+@group
+(seq-some #'numberp [2 4 "6"])
+@result{} nil
+@end group
+@end example
+@end defun
+
+@defun seq-empty-p sequence
+  This function returns non-@code{nil} if @var{sequence} is empty.
+
+@example
+@group
+(seq-empty-p "not empty")
+@result{} nil
+@end group
+@group
+(seq-empty-p "")
+@result{} t
+@end group
+@end example
+@end defun
+
+@defun seq-count predicate sequence
+  This function returns the number of elements in @var{sequence} for which
+@var{predicate} returns non-@code{nil}.
+
+@example
+(seq-count (lambda (elt) (> elt 0)) [-1 2 0 3 -2])
+@result{} 2
+@end example
+@end defun
+
+@cindex sorting sequences
+@defun seq-sort function sequence
+  This function returns a copy of @var{sequence} that is sorted
+according to @var{function}, a function of two arguments that returns
+non-@code{nil} if the first argument should sort before the second.
+@end defun
+
+@defun seq-contains sequence elt &optional function
+  This function returns the first element in @var{sequence} that is equal to
+@var{elt}.  If the optional argument @var{function} is non-@code{nil},
+it is a function of two arguments to use instead of the default @code{equal}.
+
+@example
+@group
+(seq-contains '(symbol1 symbol2) 'symbol1)
+@result{} symbol1
+@end group
+@group
+(seq-contains '(symbol1 symbol2) 'symbol3)
+@result{} nil
+@end group
+@end example
+
+@end defun
+
+@defun seq-position sequence elt &optional function
+  This function returns the index of the first element in
+@var{sequence} that is equal to @var{elt}.  If the optional argument
+@var{function} is non-@code{nil}, it is a function of two arguments to
+use instead of the default @code{equal}.
+
+@example
+@group
+(seq-position '(a b c) 'b)
+@result{} 1
+@end group
+@group
+(seq-position '(a b c) 'd)
+@result{} nil
+@end group
+@end example
+@end defun
+
+
+@defun seq-uniq sequence &optional function
+  This function returns a list of the elements of @var{sequence} with
+duplicates removed.  If the optional argument @var{function} is non-@code{nil},
+it is a function of two arguments to use instead of the default @code{equal}.
+
+@example
+@group
+(seq-uniq '(1 2 2 1 3))
+@result{} (1 2 3)
+@end group
+@group
+(seq-uniq '(1 2 2.0 1.0) #'=)
+@result{} [3 4]
+@end group
+@end example
+@end defun
+
+@defun seq-subseq sequence start &optional end
+  This function returns a subset of @var{sequence} from @var{start}
+to @var{end}, both integers (@var{end} defaults to the last element).
+If @var{start} or @var{end} is negative, it counts from the end of
+@var{sequence}.
+
+@example
+@group
+(seq-subseq '(1 2 3 4 5) 1)
+@result{} (2 3 4 5)
+@end group
+@group
+(seq-subseq '[1 2 3 4 5] 1 3)
+@result{} [2 3]
+@end group
+@group
+(seq-subseq '[1 2 3 4 5] -3 -1)
+@result{} [3 4]
+@end group
+@end example
+@end defun
+
+@defun seq-concatenate type &rest sequences
+  This function returns a sequence of type @var{type} made of the
+concatenation of @var{sequences}.  @var{type} may be: @code{vector},
+@code{list} or @code{string}.
+
+@example
+@group
+(seq-concatenate 'list '(1 2) '(3 4) [5 6])
+@result{} (1 2 3 5 6)
+@end group
+@group
+(seq-concatenate 'string "Hello " "world")
+@result{} "Hello world"
+@end group
+@end example
+@end defun
+
+@defun seq-mapcat function sequence &optional type
+  This function returns the result of applying @code{seq-concatenate}
+to the result of applying @var{function} to each element of
+@var{sequence}.  The result is a sequence of type @var{type}, or a
+list if @var{type} is @code{nil}.
+
+@example
+@group
+(seq-mapcat #'seq-reverse '((3 2 1) (6 5 4)))
+@result{} (1 2 3 4 5 6)
+@end group
+@end example
+@end defun
+
+@defun seq-partition sequence n
+  This function returns a list of the elements of @var{sequence}
+grouped into sub-sequences of length @var{n}.  The last sequence may
+contain less elements than @var{n}.  @var{n} must be an integer.  If
+@var{n} is a negative integer or 0, nil is returned.
+
+@example
+@group
+(seq-partition '(0 1 2 3 4 5 6 7) 3)
+@result{} ((0 1 2) (3 4 5) (6 7))
+@end group
+@end example
+@end defun
+
+@defun seq-intersection sequence1 sequence2 &optional function
+  This function returns a list of the elements that appear both in
+@var{sequence1} and @var{sequence2}.  If the optional argument
+@var{function} is non-@code{nil}, it is a function of two arguments to
+use to compare elements instead of the default @code{equal}.
+
+@example
+@group
+(seq-intersection [2 3 4 5] [1 3 5 6 7])
+@result{} (3 5)
+@end group
+@end example
+@end defun
+
+
+@defun seq-difference sequence1 sequence2 &optional function
+  This function returns a list of the elements that appear in
+@var{sequence1} but not in @var{sequence2}.  If the optional argument
+@var{function} is non-@code{nil}, it is a function of two arguments to
+use to compare elements instead of the default @code{equal}.
+
+@example
+@group
+(seq-difference '(2 3 4 5) [1 3 5 6 7])
+@result{} (2 4)
+@end group
+@end example
+@end defun
+
+@defun seq-group-by function sequence
+  This function separates the elements of @var{sequence} into an alist
+whose keys are the result of applying @var{function} to each element
+of @var{sequence}.  Keys are compared using @code{equal}.
+
+@example
+@group
+(seq-group-by #'integerp '(1 2.1 3 2 3.2))
+@result{} ((t 1 3 2) (nil 2.1 3.2))
+@end group
+@group
+(seq-group-by #'car '((a 1) (b 2) (a 3) (c 4)))
+@result{} ((b (b 2)) (a (a 1) (a 3)) (c (c 4)))
+@end group
+@end example
+@end defun
+
+@defun seq-into sequence type
+  This function converts the sequence @var{sequence} into a sequence
+of type @var{type}.  @var{type} can be one of the following symbols:
+@code{vector}, @code{string} or @code{list}.
+
+@example
+@group
+(seq-into [1 2 3] 'list)
+@result{} (1 2 3)
+@end group
+@group
+(seq-into nil 'vector)
+@result{} []
+@end group
+@group
+(seq-into "hello" 'vector)
+@result{} [104 101 108 108 111]
+@end group
+@end example
+@end defun
+
+@defun seq-min sequence
+  This function returns the smallest element of
+@var{sequence}. @var{sequence} must be a sequence of numbers or
+markers.
+
+@example
+@group
+(seq-min [3 1 2])
+@result{} 1
+@end group
+@group
+(seq-min "Hello")
+@result{} 72
+@end group
+@end example
+@end defun
+
+@defun seq-max sequence
+  This function returns the largest element of
+@var{sequence}. @var{sequence} must be a sequence of numbers or
+markers.
+
+@example
+@group
+(seq-max [1 3 2])
+@result{} 3
+@end group
+@group
+(seq-max "Hello")
+@result{} 111
+@end group
+@end example
+@end defun
+
+@defmac seq-doseq (var sequence) body@dots{}
+@cindex sequence iteration
+  This macro is like @code{dolist}, except that @var{sequence} can be a list,
+vector or string (@pxref{Iteration} for more information about the
+@code{dolist} macro).  This is primarily useful for side-effects.
+@end defmac
+
+@defmac seq-let arguments sequence body@dots{}
+@cindex sequence destructuring
+  This macro binds the variables defined in @var{arguments} to the
+elements of the sequence @var{sequence}.  @var{arguments} can itself
+include sequences allowing for nested destructuring.
+
+The @var{arguments} sequence can also include the @code{&rest} marker
+followed by a variable name to be bound to the rest of
+@code{sequence}.
+
+@example
+@group
+(seq-let [first second] [1 2 3 4]
+  (list first second))
+@result{} (1 2)
+@end group
+@group
+(seq-let (_ a _ b) '(1 2 3 4)
+  (list a b))
+@result{} (2 4)
+@end group
+@group
+(seq-let [a [b [c]]] [1 [2 [3]]]
+  (list a b c))
+@result{} (1 2 3)
+@end group
+@group
+(seq-let [a b &rest others] [1 2 3 4]
+  others)
+@end group
+@result{} [3 4]
+@end example
+@end defmac
+
 
 @node Arrays
 @section Arrays
@@ -471,11 +1261,11 @@ each initialized to @var{object}.
 @cindex copying vectors
 This function returns a new vector containing all the elements of
 @var{sequences}.  The arguments @var{sequences} may be true lists,
-vectors, strings or bool-vectors.  If no @var{sequences} are given, an
-empty vector is returned.
+vectors, strings or bool-vectors.  If no @var{sequences} are given,
+the empty vector is returned.
 
-The value is a newly constructed vector that is not @code{eq} to any
-existing vector.
+The value is either the empty vector, or is a newly constructed
+nonempty vector that is not @code{eq} to any existing vector.
 
 @example
 @group
@@ -600,13 +1390,13 @@ This function sets the parent of @var{char-table} to @var{new-parent}.
 @end defun
 
 @defun char-table-extra-slot char-table n
-This function returns the contents of extra slot @var{n} of
-@var{char-table}.  The number of extra slots in a char-table is
+This function returns the contents of extra slot @var{n} (zero based)
+of @var{char-table}.  The number of extra slots in a char-table is
 determined by its subtype.
 @end defun
 
 @defun set-char-table-extra-slot char-table n value
-This function stores @var{value} in extra slot @var{n} of
+This function stores @var{value} in extra slot @var{n} (zero based) of
 @var{char-table}.
 @end defun
 
@@ -699,7 +1489,7 @@ value into an element of the bool-vector, the effect is to store
 and the length cannot be changed once the bool-vector is created.
 Bool-vectors are constants when evaluated.
 
-  There are two special functions for working with bool-vectors; aside
+  Several functions work specifically with bool-vectors; aside
 from that, you manipulate them with same functions used for other kinds
 of arrays.
 
@@ -708,14 +1498,87 @@ Return a new bool-vector of @var{length} elements,
 each one initialized to @var{initial}.
 @end defun
 
+@defun bool-vector &rest objects
+This function creates and returns a bool-vector whose elements are the
+arguments, @var{objects}.
+@end defun
+
 @defun bool-vector-p object
 This returns @code{t} if @var{object} is a bool-vector,
 and @code{nil} otherwise.
 @end defun
 
-  Here is an example of creating, examining, and updating a
-bool-vector.  Note that the printed form represents up to 8 boolean
-values as a single character.
+There are also some bool-vector set operation functions, described below:
+
+@defun bool-vector-exclusive-or a b &optional c
+Return @dfn{bitwise exclusive or} of bool vectors @var{a} and @var{b}.
+If optional argument @var{c} is given, the result of this operation is
+stored into @var{c}.  All arguments should be bool vectors of the same length.
+@end defun
+
+@defun bool-vector-union a b &optional c
+Return @dfn{bitwise or} of bool vectors @var{a} and @var{b}.  If
+optional argument @var{c} is given, the result of this operation is
+stored into @var{c}.  All arguments should be bool vectors of the same length.
+@end defun
+
+@defun bool-vector-intersection a b &optional c
+Return @dfn{bitwise and} of bool vectors @var{a} and @var{b}.  If
+optional argument @var{c} is given, the result of this operation is
+stored into @var{c}.  All arguments should be bool vectors of the same length.
+@end defun
+
+@defun bool-vector-set-difference a b &optional c
+Return @dfn{set difference} of bool vectors @var{a} and @var{b}.  If
+optional argument @var{c} is given, the result of this operation is
+stored into @var{c}.  All arguments should be bool vectors of the same length.
+@end defun
+
+@defun bool-vector-not a &optional b
+Return @dfn{set complement} of bool vector @var{a}.  If optional
+argument @var{b} is given, the result of this operation is stored into
+@var{b}.  All arguments should be bool vectors of the same length.
+@end defun
+
+@defun bool-vector-subsetp a b
+Return @code{t} if every @code{t} value in @var{a} is also t in
+@var{b}, @code{nil} otherwise.  All arguments should be bool vectors of the
+same length.
+@end defun
+
+@defun bool-vector-count-consecutive a b i
+Return the number of consecutive elements in @var{a} equal @var{b}
+starting at @var{i}.  @code{a} is a bool vector, @var{b} is @code{t}
+or @code{nil}, and @var{i} is an index into @code{a}.
+@end defun
+
+@defun bool-vector-count-population a
+Return the number of elements that are @code{t} in bool vector @var{a}.
+@end defun
+
+  The printed form represents up to 8 boolean values as a single
+character:
+
+@example
+@group
+(bool-vector t nil t nil)
+     @result{} #&4"^E"
+(bool-vector)
+     @result{} #&0""
+@end group
+@end example
+
+You can use @code{vconcat} to print a bool-vector like other vectors:
+
+@example
+@group
+(vconcat (bool-vector nil t nil t))
+     @result{} [nil t nil t]
+@end group
+@end example
+
+  Here is another example of creating, examining, and updating a
+bool-vector:
 
 @example
 (setq bv (make-bool-vector 5 t))
@@ -741,7 +1604,7 @@ deletion, rotation, and modulo-indexed reference and traversal.  An
 efficient ring data structure is implemented by the @code{ring}
 package.  It provides the functions listed in this section.
 
-  Note that several ``rings'' in Emacs, like the kill ring and the
+  Note that several rings in Emacs, like the kill ring and the
 mark ring, are actually implemented as simple lists, @emph{not} using
 the @code{ring} package; thus the following functions won't work on
 them.

@@ -1,6 +1,6 @@
 ;;; two-column.el --- minor mode for editing of two-column text
 
-;; Copyright (C) 1992-1995, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1992-1995, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Daniel Pfeiffer <occitan@esperanto.org>
 ;; Adapted-By: ESR, Daniel Pfeiffer
@@ -349,6 +349,9 @@ accepting the proposed default buffer.
     (if b1 (setq 2C-window-width (- (frame-width) b1)))
     (2C-two-columns b2)))
 
+(autoload 'scroll-bar-columns "scroll-bar")
+(eval-when-compile
+  (require 'fringe))			; fringe-columns defsubst
 
 ;;;###autoload
 (defun 2C-split (arg)
@@ -370,9 +373,8 @@ First column's text    sSs  Second column's text
 \(See  \\[describe-mode] .)"
   (interactive "*p")
   (and (2C-other)
-       (if (y-or-n-p (concat "Overwrite associated buffer `"
-			     (buffer-name (2C-other))
-			     "'? "))
+       (if (y-or-n-p (format-message "Overwrite associated buffer `%s'? "
+				     (buffer-name (2C-other))))
 	   (with-current-buffer (2C-other)
 	     (erase-buffer))
 	 (signal 'quit nil)))

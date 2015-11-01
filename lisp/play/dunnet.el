@@ -1,10 +1,10 @@
 ;;; dunnet.el --- text adventure for Emacs
 
-;; Copyright (C) 1992-1993, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1992-1993, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Ron Schnell <ronnie@driver-aces.com>
 ;; Created: 25 Jul 1992
-;; Version: 2.01
+;; Version: 2.02
 ;; Keywords: games
 
 ;; This file is part of GNU Emacs.
@@ -100,7 +100,8 @@
 
 (defun dun-describe-room (room)
   (if (and (not (member (abs room) dun-light-rooms))
-	   (not (member obj-lamp dun-inventory)))
+	   (not (member obj-lamp dun-inventory))
+	   (not (member obj-lamp (nth dun-current-room dun-room-objects))))
       (dun-mprincl "It is pitch dark.  You are likely to be eaten by a grue.")
     (dun-mprincl (cadr (nth (abs room) dun-rooms)))
     (if (and (and (or (member room dun-visited)
@@ -615,7 +616,8 @@ just try dropping it.")
 
 (defun dun-move (dir)
   (if (and (not (member dun-current-room dun-light-rooms))
-	   (not (member obj-lamp dun-inventory)))
+	   (not (member obj-lamp dun-inventory))
+	   (not (member obj-lamp (nth dun-current-room dun-room-objects))))
       (progn
 	(dun-mprinc
 "You trip over a grue and fall into a pit and break every bone in your
@@ -892,15 +894,15 @@ to swim.")
     (dun-mprincl " endgame points out of a possible 110.")
     (if (= (dun-endgame-score) 110)
 	(dun-mprincl
-"\n\nCongratulations.  You have won.  The wizard password is 'moby'"))))
+"\n\nCongratulations.  You have won.  The wizard password is ‘moby’"))))
 
 (defun dun-help (args)
   (dun-mprincl
-"Welcome to dunnet (2.01), by Ron Schnell (ronnie@driver-aces.com).
+"Welcome to dunnet (2.02), by Ron Schnell (ronnie@driver-aces.com - @RonnieSchnell).
 Here is some useful information (read carefully because there are one
 or more clues in here):
 - If you have a key that can open a door, you do not need to explicitly
-  open it.  You may just use 'in' or walk in the direction of the door.
+  open it.  You may just use ‘in’ or walk in the direction of the door.
 
 - If you have a lamp, it is always lit.
 
@@ -914,8 +916,8 @@ or more clues in here):
   If this happens, your score will decrease, and in many cases you can never
   get credit for it again.
 
-- You can save your game with the 'save' command, and use restore it
-  with the 'restore' command.
+- You can save your game with the ‘save’ command, and use restore it
+  with the ‘restore’ command.
 
 - There are no limits on lengths of object names.
 
@@ -1051,7 +1053,7 @@ for a moment, then straighten yourself up.
 (if (not dun-endgame-questions)
     (progn
       (dun-mprincl "Your question is:")
-      (dun-mprincl "No more questions, just do 'answer foo'.")
+      (dun-mprincl "No more questions, just do ‘answer foo’.")
       (setq dun-correct-answer '("foo")))
   (let (which i newques)
     (setq i 0)
@@ -1385,8 +1387,8 @@ for a moment, then straighten yourself up.
 (setq dungeon-mode 'dungeon)
 (setq dun-unix-verbs '((ls . dun-ls) (ftp . dun-ftp) (echo . dun-echo)
 		       (exit . dun-uexit) (cd . dun-cd) (pwd . dun-pwd)
-		       (rlogin . dun-rlogin) (uncompress . dun-uncompress)
-		       (cat . dun-cat)))
+		       (rlogin . dun-rlogin) (ssh . dun-rlogin)
+		       (uncompress . dun-uncompress) (cat . dun-cat)))
 
 (setq dun-dos-verbs '((dir . dun-dos-dir) (type . dun-dos-type)
 		      (exit . dun-dos-exit) (command . dun-dos-spawn)
@@ -1462,8 +1464,8 @@ kept.  The exit is to the west."
 "You are in a computer room.  It seems like most of the equipment has
 been removed.  There is a VAX 11/780 in front of you, however, with
 one of the cabinets wide open.  A sign on the front of the machine
-says: This VAX is named 'pokey'.  To type on the console, use the
-'type' command.  The exit is to the east."
+says: This VAX is named ‘pokey’.  To type on the console, use the
+‘type’ command.  The exit is to the east."
                "Computer room"
 	       )
 	      (
@@ -1473,7 +1475,7 @@ to the west, and a door leads to the south."
 	       )
 	      (
 "You are in a round, stone room with a door to the east.  There
-is a sign on the wall that reads: 'receiving room'."
+is a sign on the wall that reads: ‘receiving room’."
                "Receiving room"
 	       )
 	      (
@@ -1550,7 +1552,7 @@ northeast through the brush you can see the bear hangout."
 	      (
 "The entrance to a cave is to the south.  To the north, a road leads
 towards a deep lake.  On the ground nearby there is a chute, with a sign
-that says 'put treasures here for points'."
+that says ‘put treasures here for points’."
                "Cave Entrance"                      ;28
 	       )
 	      (
@@ -1829,13 +1831,13 @@ starvation.  Doors lead out to the south and east."
 	       )
 	      (
 "You are in some sort of maintenance room for the museum.  There is a
-switch on the wall labeled 'BL'.  There are doors to the west and north."
+switch on the wall labeled ‘BL’.  There are doors to the west and north."
                "Maintenance room"                   ;87
 	       )
 	      (
 "You are in a classroom where school children were taught about natural
-history.  On the blackboard is written, 'No children allowed downstairs.'
-There is a door to the east with an 'exit' sign on it.  There is another
+history.  On the blackboard is written, ‘No children allowed downstairs.’
+There is a door to the east with an ‘exit’ sign on it.  There is another
 door to the west."
                "Classroom"                          ;88
 	       )
@@ -1869,7 +1871,7 @@ a room to the northeast."
 	      (
 "You are in another computer room.  There is a computer in here larger
 than you have ever seen.  It has no manufacturers name on it, but it
-does have a sign that says: This machine's name is 'endgame'.  The
+does have a sign that says: This machine's name is ‘endgame’.  The
 exit is to the southwest.  There is no console here on which you could
 type."
                "Endgame computer room"         ;95
@@ -1880,7 +1882,7 @@ type."
 	       )
 	      (
 "You have reached a question room.  You must answer a question correctly in
-order to get by.  Use the 'answer' command to answer the question."
+order to get by.  Use the ‘answer’ command to answer the question."
                "Question room 1"              ;97
 	       )
 	      (
@@ -1911,7 +1913,7 @@ a hallway leads to the south."
 	      (
 "You have reached a dead end.  There is a PC on the floor here.  Above
 it is a sign that reads:
-          Type the 'reset' command to type on the PC.
+          Type the ‘reset’ command to type on the PC.
 A hole leads north."
                "PC area"                       ;104
                )
@@ -2355,8 +2357,8 @@ nil))
 2 Megabytes of RAM onboard."
 "It looks like some kind of meat.  Smells pretty bad."
 nil
-"The paper says: Don't forget to type 'help' for help.  Also, remember
-this word: 'worms'"
+"The paper says: Don't forget to type ‘help’ for help.  Also, remember
+this word: ‘worms’"
 "The statuette is of the likeness of Richard Stallman, the author of the
 famous EMACS editor.  You notice that he is not wearing any shoes."
 nil
@@ -2412,10 +2414,10 @@ flush handle is so clean that you can see your reflection in it."
 nil
 nil
 "The box has a slit in the top of it, and on it, in sloppy handwriting, is
-written: 'For key upgrade, put key in here.'"
+written: ‘For key upgrade, put key in here.’"
 nil
-"It says 'express mail' on it."
-"It is a 35 passenger bus with the company name 'mobytours' on it."
+"It says ‘express mail’ on it."
+"It is a 35 passenger bus with the company name ‘mobytours’ on it."
 "It is a large metal gate that is too big to climb over."
 "It is a HIGH cliff."
 "Unfortunately you do not know enough about dinosaurs to tell very much about
@@ -2447,14 +2449,14 @@ nil
 
 (setq dun-endgame-questions '(
 			  (
-"What is your password on the machine called 'pokey'?" "robert")
+"What is your password on the machine called ‘pokey’?" "robert")
 			  (
 "What password did you use during anonymous ftp to gamma?" "foo")
 			  (
 "Excluding the endgame, how many places are there where you can put
 treasures for points?" "4" "four")
 			  (
-"What is your login name on the 'endgame' machine?" "toukmond"
+"What is your login name on the ‘endgame’ machine?" "toukmond"
 )
 			  (
 "What is the nearest whole dollar to the price of the shovel?" "20" "twenty")
@@ -2537,25 +2539,31 @@ treasures for points?" "4" "four")
 	  (dun-mprincl "Incorrect.")))
 
     (let (varname epoint afterq i value)
-      (setq varname (substring line 0 esign))
-      (if (not (setq epoint (string-match ")" line)))
-	  (if (string= (substring line (1+ esign) (+ esign 2))
-		       "\"")
-	      (progn
-		(setq afterq (substring line (+ esign 2)))
-		(setq epoint (+
-			      (string-match "\"" afterq)
-			      (+ esign 3))))
+      (setq varname (replace-regexp-in-string " " "" (substring line 0 esign)))
 
-	    (if (not (setq epoint (string-match " " line)))
-		(setq epoint (length line))))
-	(setq epoint (1+ epoint))
-	(while (and
-		(not (= epoint (length line)))
-		(setq i (string-match ")" (substring line epoint))))
-	  (setq epoint (+ epoint i 1))))
-      (setq value (substring line (1+ esign) epoint))
-      (dun-eval varname value))))
+      (if (or (= (length varname) 0) (< (- (length line) esign) 2))
+	  (progn
+	    (dun-mprinc line)
+	    (dun-mprincl " : not found."))
+
+	(if (not (setq epoint (string-match ")" line)))
+	    (if (string= (substring line (1+ esign) (+ esign 2))
+			 "\"")
+		(progn
+		  (setq afterq (substring line (+ esign 2)))
+		  (setq epoint (+
+				(string-match "\"" afterq)
+				(+ esign 3))))
+
+	      (if (not (setq epoint (string-match " " line)))
+		  (setq epoint (length line))))
+	  (setq epoint (1+ epoint))
+	  (while (and
+		  (not (= epoint (length line)))
+		  (setq i (string-match ")" (substring line epoint))))
+	    (setq epoint (+ epoint i 1))))
+	(setq value (substring line (1+ esign) epoint))
+	(dun-eval varname value)))))
 
 (defun dun-eval (varname value)
   (let (eval-error)
@@ -2739,16 +2747,20 @@ drwxr-xr-x  3 root     staff          2048 Jan 1 1970 ..")
 		  (if dun-batch-mode
 		      (dun-mprincl "Login failed.")
 		    (dun-mprincl "\nLogin failed."))
-		(if dun-batch-mode
-		   (dun-mprincl
-		    "Guest login okay, user access restrictions apply.")
-		  (dun-mprincl
-		   "\nGuest login okay, user access restrictions apply."))
-		(dun-ftp-commands)
-		(setq newlist
+		(if (= (length ident) 0)
+		    (if dun-batch-mode
+			(dun-mprincl "Password is required.")
+		      (dun-mprincl "\nPassword is required."))
+		  (if dun-batch-mode
+		      (dun-mprincl
+		       "Guest login okay, user access restrictions apply.")
+		    (dun-mprincl
+		     "\nGuest login okay, user access restrictions apply."))
+		  (dun-ftp-commands)
+		  (setq newlist
 '("What password did you use during anonymous ftp to gamma?"))
-		(setq newlist (append newlist (list ident)))
-		(rplaca (nthcdr 1 dun-endgame-questions) newlist)))))))))
+		  (setq newlist (append newlist (list ident)))
+		  (rplaca (nthcdr 1 dun-endgame-questions) newlist))))))))))
 
 (defun dun-ftp-commands ()
     (setq dun-exitf nil)
@@ -3087,7 +3099,7 @@ File not found")))
 (defun dun-dos-boot-msg ()
   (sleep-for 3)
   (dun-mprinc "Current time is ")
-  (dun-mprincl (substring (current-time-string) 12 20))
+  (dun-mprincl (format-time-string "%H:%M:%S"))
   (dun-mprinc "Enter new time: ")
   (dun-read-line)
   (if (not dun-batch-mode)

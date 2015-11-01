@@ -1,6 +1,6 @@
-@c -*-texinfo-*-
+@c -*- mode: texinfo; coding: utf-8 -*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1998-1999, 2001-2013 Free Software Foundation, Inc.
+@c Copyright (C) 1998-1999, 2001-2015 Free Software Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Non-ASCII Characters
 @chapter Non-@acronym{ASCII} Characters
@@ -50,7 +50,7 @@ inclusive.  Emacs extends this range with codepoints in the range
 @code{#x110000..#x3FFFFF}, which it uses for representing characters
 that are not unified with Unicode and @dfn{raw 8-bit bytes} that
 cannot be interpreted as characters.  Thus, a character codepoint in
-Emacs is a 22-bit integer number.
+Emacs is a 22-bit integer.
 
 @cindex internal representation of characters
 @cindex characters, representation in buffers and strings
@@ -248,6 +248,7 @@ unibyte string, it is returned unchanged.  Use this function for
 characters.
 @end defun
 
+@c FIXME: Should '@var{character}' be '@var{byte}'?
 @defun byte-to-string byte
 @cindex byte to string
 This function returns a unibyte string containing a single byte of
@@ -258,7 +259,7 @@ character data, @var{character}.  It signals an error if
 @defun multibyte-char-to-unibyte char
 This converts the multibyte character @var{char} to a unibyte
 character, and returns that character.  If @var{char} is neither
-@acronym{ASCII} nor eight-bit, the function returns -1.
+@acronym{ASCII} nor eight-bit, the function returns @minus{}1.
 @end defun
 
 @defun unibyte-char-to-multibyte char
@@ -401,12 +402,14 @@ specifies how the character behaves and how it should be handled
 during text processing and display.  Thus, character properties are an
 important part of specifying the character's semantics.
 
+@c FIXME: Use the latest URI of this chapter?
+@c http://www.unicode.org/versions/latest/ch04.pdf
   On the whole, Emacs follows the Unicode Standard in its implementation
 of character properties.  In particular, Emacs supports the
 @uref{http://www.unicode.org/reports/tr23/, Unicode Character Property
 Model}, and the Emacs character property database is derived from the
 Unicode Character Database (@acronym{UCD}).  See the
-@uref{http://www.unicode.org/versions/Unicode5.0.0/ch04.pdf, Character
+@uref{http://www.unicode.org/versions/Unicode6.2.0/ch04.pdf, Character
 Properties chapter of the Unicode Standard}, for a detailed
 description of Unicode character properties and their meaning.  This
 section assumes you are already familiar with that chapter of the
@@ -437,7 +440,7 @@ properties that Emacs knows about:
 Corresponds to the @code{Name} Unicode property.  The value is a
 string consisting of upper-case Latin letters A to Z, digits, spaces,
 and hyphen @samp{-} characters.  For unassigned codepoints, the value
-is an empty string.
+is @code{nil}.
 
 @cindex unicode general category
 @item general-category
@@ -448,7 +451,7 @@ is @code{Cn}.
 
 @item canonical-combining-class
 Corresponds to the @code{Canonical_Combining_Class} Unicode property.
-The value is an integer number.  For unassigned codepoints, the value
+The value is an integer.  For unassigned codepoints, the value
 is zero.
 
 @cindex bidirectional class of characters
@@ -471,32 +474,36 @@ inside @samp{<..>} brackets, but the tag names in Emacs do not include
 the brackets; e.g., Unicode specifies @samp{<small>} where Emacs uses
 @samp{small}.  }; the other elements are characters that give the
 compatibility decomposition sequence of this character.  For
-unassigned codepoints, the value is the character itself.
+characters that don't have decomposition sequences, and for unassigned
+codepoints, the value is a list with a single member, the character
+itself.
 
 @item decimal-digit-value
 Corresponds to the Unicode @code{Numeric_Value} property for
-characters whose @code{Numeric_Type} is @samp{Digit}.  The value is an
-integer number.  For unassigned codepoints, the value is @code{nil},
-which means @acronym{NaN}, or ``not-a-number''.
+characters whose @code{Numeric_Type} is @samp{Decimal}.  The value is
+an integer, or @code{nil} if the character has no decimal digit value.
+For unassigned codepoints, the value is @code{nil}, which means
+@acronym{NaN}, or ``not a number''.
 
 @item digit-value
 Corresponds to the Unicode @code{Numeric_Value} property for
-characters whose @code{Numeric_Type} is @samp{Decimal}.  The value is
-an integer number.  Examples of such characters include compatibility
-subscript and superscript digits, for which the value is the
-corresponding number.  For unassigned codepoints, the value is
-@code{nil}, which means @acronym{NaN}.
+characters whose @code{Numeric_Type} is @samp{Digit}.  The value is an
+integer.  Examples of such characters include compatibility subscript
+and superscript digits, for which the value is the corresponding
+number.  For characters that don't have any numeric value, and for
+unassigned codepoints, the value is @code{nil}, which means
+@acronym{NaN}.
 
 @item numeric-value
 Corresponds to the Unicode @code{Numeric_Value} property for
 characters whose @code{Numeric_Type} is @samp{Numeric}.  The value of
-this property is an integer or a floating-point number.  Examples of
-characters that have this property include fractions, subscripts,
-superscripts, Roman numerals, currency numerators, and encircled
-numbers.  For example, the value of this property for the character
-@code{U+2155} (@sc{vulgar fraction one fifth}) is @code{0.2}.  For
-unassigned codepoints, the value is @code{nil}, which means
-@acronym{NaN}.
+this property is a number.  Examples of characters that have this
+property include fractions, subscripts, superscripts, Roman numerals,
+currency numerators, and encircled numbers.  For example, the value of
+this property for the character @code{U+2155} (@sc{vulgar fraction one
+fifth}) is @code{0.2}.  For characters that don't have any numeric
+value, and for unassigned codepoints, the value is @code{nil}, which
+means @acronym{NaN}.
 
 @cindex mirroring of characters
 @item mirrored
@@ -517,13 +524,33 @@ property to display mirror images of characters when appropriate
 (@pxref{Bidirectional Display}).  For unassigned codepoints, the value
 is @code{nil}.
 
+@item paired-bracket
+Corresponds to the Unicode @code{Bidi_Paired_Bracket} property.  The
+value of this property is the codepoint of a character's @dfn{paired
+bracket}, or @code{nil} if the character is not a bracket character.
+This establishes a mapping between characters that are treated as
+bracket pairs by the Unicode Bidirectional Algorithm; Emacs uses this
+property when it decides how to reorder for display parentheses,
+braces, and other similar characters (@pxref{Bidirectional Display}).
+
+@item bracket-type
+Corresponds to the Unicode @code{Bidi_Paired_Bracket_Type} property.
+For characters whose @code{paired-bracket} property is non-@code{nil},
+the value of this property is a symbol, either @code{o} (for opening
+bracket characters) or @code{c} (for closing bracket characters).  For
+characters whose @code{paired-bracket} property is @code{nil}, the
+value is the symbol @code{n} (None).  Like @code{paired-bracket}, this
+property is used for bidirectional display.
+
 @item old-name
 Corresponds to the Unicode @code{Unicode_1_Name} property.  The value
-is a string.  For unassigned codepoints, the value is an empty string.
+is a string.  For unassigned codepoints, and characters that have no
+value for this property, the value is @code{nil}.
 
 @item iso-10646-comment
 Corresponds to the Unicode @code{ISO_Comment} property.  The value is
-a string.  For unassigned codepoints, the value is an empty string.
+either a string or @code{nil}.  For unassigned codepoints, the value
+is @code{nil}.
 
 @item uppercase
 Corresponds to the Unicode @code{Simple_Uppercase_Mapping} property.
@@ -548,27 +575,35 @@ This function returns the value of @var{char}'s @var{propname} property.
 
 @example
 @group
-(get-char-code-property ?  'general-category)
+(get-char-code-property ?\s 'general-category)
      @result{} Zs
 @end group
 @group
-(get-char-code-property ?1  'general-category)
+(get-char-code-property ?1 'general-category)
      @result{} Nd
 @end group
 @group
-;; subscript 4
+;; U+2084 SUBSCRIPT FOUR
 (get-char-code-property ?\u2084 'digit-value)
      @result{} 4
 @end group
 @group
-;; one fifth
+;; U+2155 VULGAR FRACTION ONE FIFTH
 (get-char-code-property ?\u2155 'numeric-value)
      @result{} 0.2
 @end group
 @group
-;; Roman IV
+;; U+2163 ROMAN NUMERAL FOUR
 (get-char-code-property ?\u2163 'numeric-value)
      @result{} 4
+@end group
+@group
+(get-char-code-property ?\( 'paired-bracket)
+     @result{} 41  ;; closing parenthesis
+@end group
+@group
+(get-char-code-property ?\) 'bracket-type)
+     @result{} c
 @end group
 @end example
 @end defun
@@ -605,6 +640,7 @@ property as a symbol.
 @end defvar
 
 @defvar char-script-table
+@cindex script symbols
 The value of this variable is a char-table that specifies, for each
 character, a symbol whose name is the script to which the character
 belongs, according to the Unicode Standard classification of the
@@ -681,6 +717,7 @@ which case the returned charset must be supported by that coding
 system (@pxref{Coding Systems}).
 @end defun
 
+@c TODO: Explain the properties here and add indexes such as 'charset property'.
 @defun charset-plist charset
 This function returns the property list of the character set
 @var{charset}.  Although @var{charset} is a symbol, this is not the
@@ -751,6 +788,8 @@ of them is @code{nil}, it defaults to the first or last codepoint of
 
 @node Scanning Charsets
 @section Scanning for Character Sets
+@cindex scanning for character sets
+@cindex character set, searching
 
   Sometimes it is useful to find out which character set a particular
 character belongs to.  One use for this is in determining which coding
@@ -846,6 +885,8 @@ systems specifies its own translation tables, the table that is the
 value of this variable, if non-@code{nil}, is applied after them.
 @end defvar
 
+@c FIXME: This variable is obsolete since 23.1.  We should mention
+@c that here or simply remove this defvar.  --xfq
 @defvar translation-table-for-input
 Self-inserting characters are translated through this translation
 table before they are inserted.  Search commands also translate their
@@ -954,7 +995,8 @@ Unix convention, used on GNU and Unix systems, is to use the linefeed
 character (also called newline).  The DOS convention, used on
 MS-Windows and MS-DOS systems, is to use a carriage-return and a
 linefeed at the end of a line.  The Mac convention is to use just
-carriage-return.
+carriage-return.  (This was the convention used on the Macintosh
+system prior to OS X.)
 
 @cindex base coding system
 @cindex variant coding system
@@ -1097,6 +1139,16 @@ new coding system.  If you try to save one of these buffers under the
 visited file name, saving may use the wrong file name, or it may get
 an error.  If such a problem happens, use @kbd{C-x C-w} to specify a
 new file name for that buffer.
+
+@cindex file-name encoding, MS-Windows
+  On Windows 2000 and later, Emacs by default uses Unicode APIs to
+pass file names to the OS, so the value of
+@code{file-name-coding-system} is largely ignored.  Lisp applications
+that need to encode or decode file names on the Lisp level should use
+@code{utf-8} coding-system when @code{system-type} is
+@code{windows-nt}; the conversion of UTF-8 encoded file names to the
+encoding appropriate for communicating with the OS is performed
+internally by Emacs.
 
 @node Lisp and Coding Systems
 @subsection Coding Systems in Lisp
@@ -1268,17 +1320,18 @@ Sets}) supported by @var{coding-system}.  Some coding systems that
 support too many character sets to list them all yield special values:
 @itemize @bullet
 @item
-If @var{coding-system} supports all the ISO-2022 charsets, the value
-is @code{iso-2022}.
-@item
 If @var{coding-system} supports all Emacs characters, the value is
 @code{(emacs)}.
 @item
-If @var{coding-system} supports all emacs-mule characters, the value
-is @code{emacs-mule}.
-@item
 If @var{coding-system} supports all Unicode characters, the value is
 @code{(unicode)}.
+@item
+If @var{coding-system} supports all ISO-2022 charsets, the value is
+@code{iso-2022}.
+@item
+If @var{coding-system} supports all the characters in the internal
+coding system used by Emacs version 21 (prior to the implementation of
+internal Unicode support), the value is @code{emacs-mule}.
 @end itemize
 @end defun
 
@@ -1327,7 +1380,7 @@ alternatives described above.
 
 The optional argument @var{accept-default-p}, if non-@code{nil},
 should be a function to determine whether a coding system selected
-without user interaction is acceptable. @code{select-safe-coding-system}
+without user interaction is acceptable.  @code{select-safe-coding-system}
 calls this function with one argument, the base coding system of the
 selected coding system.  If @var{accept-default-p} returns @code{nil},
 @code{select-safe-coding-system} rejects the silently selected coding
@@ -1389,7 +1442,7 @@ don't change these variables; instead, override them using
 @cindex file contents, and default coding system
 @defopt auto-coding-regexp-alist
 This variable is an alist of text patterns and corresponding coding
-systems. Each element has the form @code{(@var{regexp}
+systems.  Each element has the form @code{(@var{regexp}
 . @var{coding-system})}; a file whose first few kilobytes match
 @var{regexp} is decoded with @var{coding-system} when its contents are
 read into a buffer.  The settings in this alist take priority over
@@ -1563,7 +1616,7 @@ the alist; otherwise it returns @code{nil}.
 
 If @var{operation} is @code{insert-file-contents}, the argument
 corresponding to the target may be a cons cell of the form
-@code{(@var{filename} . @var{buffer})}).  In that case, @var{filename}
+@code{(@var{filename} . @var{buffer})}.  In that case, @var{filename}
 is a file name to look up in @code{file-coding-system-alist}, and
 @var{buffer} is a buffer that contains the file's contents (not yet
 decoded).  If @code{file-coding-system-alist} specifies a function to
@@ -1574,6 +1627,9 @@ contents (as it usually does), it should examine the contents of
 
 @node Specifying Coding Systems
 @subsection Specifying a Coding System for One Operation
+@cindex specify coding system
+@cindex force coding system for operation
+@cindex coding system for operation
 
   You can specify the coding system for a specific operation by binding
 the variables @code{coding-system-for-read} and/or
@@ -1596,8 +1652,7 @@ of the right way to use the variable:
 
 @example
 ;; @r{Read the file with no character code conversion.}
-;; @r{Assume @acronym{crlf} represents end-of-line.}
-(let ((coding-system-for-read 'emacs-mule-dos))
+(let ((coding-system-for-read 'no-conversion))
   (insert-file-contents filename))
 @end example
 
@@ -1767,7 +1822,7 @@ original text:
 @example
 @group
 (decode-coding-string "Gr\374ss Gott" 'latin-1)
-     @result{} #("Gr@"uss Gott" 0 9 (charset iso-8859-1))
+     @result{} #("Grüss Gott" 0 9 (charset iso-8859-1))
 @end group
 @end example
 @end defun
@@ -1786,24 +1841,23 @@ decoding, you can call this function.
 @node Terminal I/O Encoding
 @subsection Terminal I/O Encoding
 
-  Emacs can decode keyboard input using a coding system, and encode
+  Emacs can use coding systems to decode keyboard input and encode
 terminal output.  This is useful for terminals that transmit or
-display text using a particular encoding such as Latin-1.  Emacs does
-not set @code{last-coding-system-used} for encoding or decoding of
+display text using a particular encoding, such as Latin-1.  Emacs does
+not set @code{last-coding-system-used} when encoding or decoding
 terminal I/O.
 
 @defun keyboard-coding-system &optional terminal
-This function returns the coding system that is in use for decoding
-keyboard input from @var{terminal}---or @code{nil} if no coding system
-is to be used for that terminal.  If @var{terminal} is omitted or
-@code{nil}, it means the selected frame's terminal.  @xref{Multiple
-Terminals}.
+This function returns the coding system used for decoding keyboard
+input from @var{terminal}.  A value of @code{no-conversion} means no
+decoding is done.  If @var{terminal} is omitted or @code{nil}, it
+means the selected frame's terminal.  @xref{Multiple Terminals}.
 @end defun
 
 @deffn Command set-keyboard-coding-system coding-system &optional terminal
 This command specifies @var{coding-system} as the coding system to use
 for decoding keyboard input from @var{terminal}.  If
-@var{coding-system} is @code{nil}, that means do not decode keyboard
+@var{coding-system} is @code{nil}, that means not to decode keyboard
 input.  If @var{terminal} is a frame, it means that frame's terminal;
 if it is @code{nil}, that means the currently selected frame's
 terminal.  @xref{Multiple Terminals}.
@@ -1811,18 +1865,19 @@ terminal.  @xref{Multiple Terminals}.
 
 @defun terminal-coding-system &optional terminal
 This function returns the coding system that is in use for encoding
-terminal output from @var{terminal}---or @code{nil} if the output is
-not encoded.  If @var{terminal} is a frame, it means that frame's
-terminal; if it is @code{nil}, that means the currently selected
-frame's terminal.
+terminal output from @var{terminal}.  A value of @code{no-conversion}
+means no encoding is done.  If @var{terminal} is a frame, it means
+that frame's terminal; if it is @code{nil}, that means the currently
+selected frame's terminal.
 @end defun
 
 @deffn Command set-terminal-coding-system coding-system &optional terminal
 This command specifies @var{coding-system} as the coding system to use
 for encoding terminal output from @var{terminal}.  If
-@var{coding-system} is @code{nil}, terminal output is not encoded.  If
-@var{terminal} is a frame, it means that frame's terminal; if it is
-@code{nil}, that means the currently selected frame's terminal.
+@var{coding-system} is @code{nil}, that means not to encode terminal
+output.  If @var{terminal} is a frame, it means that frame's terminal;
+if it is @code{nil}, that means the currently selected frame's
+terminal.
 @end deffn
 
 @node Input Methods
@@ -1901,7 +1956,7 @@ and @ref{Invoking the Input Method}.
 @section Locales
 @cindex locale
 
-  POSIX defines a concept of ``locales'' which control which language
+  In POSIX, locales control which language
 to use in language-related features.  These Emacs variables control
 how Emacs interacts with these features.
 
@@ -1909,6 +1964,7 @@ how Emacs interacts with these features.
 @cindex keyboard input decoding on X
 This variable specifies the coding system to use for decoding system
 error messages and---on X Window system only---keyboard input, for
+sending batch output to the standard output and error streams, for
 encoding the format argument to @code{format-time-string}, and for
 decoding the return value of @code{format-time-string}.
 @end defvar

@@ -1,8 +1,8 @@
 ;;; rmailedit.el --- "RMAIL edit mode"  Edit the current message
 
-;; Copyright (C) 1985, 1994, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1994, 2001-2015 Free Software Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: mail
 ;; Package: rmail
 
@@ -44,6 +44,8 @@
 
 (declare-function rmail-summary-disable "rmailsum" ())
 
+;; We can't straightforwardly make this derive from text-mode, because
+;; we need to bind (rmail-buffer-swapped) around the text-mode call.  :(
 (defun rmail-edit-mode ()
   "Major mode for editing the contents of an Rmail message.
 The editing commands are the same as in Text mode, together with

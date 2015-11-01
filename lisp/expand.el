@@ -1,6 +1,6 @@
 ;;; expand.el --- make abbreviations more usable
 
-;; Copyright (C) 1995-1996, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1995-1996, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Frederic Lepied <Frederic.Lepied@sugix.frmug.org>
 ;; Maintainer: Frederic Lepied <Frederic.Lepied@sugix.frmug.org>
@@ -213,7 +213,7 @@
     "for"                               ; foreach
     (concat
      "for (  )\n"
-     "{\n\n\}"
+     "{\n\n}"
      )
     (list 7 12))
 
@@ -221,7 +221,7 @@
     "whi"                               ; foreach
     (concat
      "while (  )\n"
-     "{\n\n\}"
+     "{\n\n}"
      )
     (list 9 15))
 
@@ -233,7 +233,7 @@
     "iff"
     (concat
      "if (  )\n"
-     "{\n\n\}"
+     "{\n\n}"
      )
     (list 6 12))
 

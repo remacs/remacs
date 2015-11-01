@@ -1,6 +1,6 @@
 ;;; registry.el --- Track and remember data items by various fields
 
-;; Copyright (C) 2011-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
 ;; Author: Teodor Zlatanov <tzz@lifelogs.com>
 ;; Keywords: data
@@ -25,11 +25,11 @@
 ;; This library provides a general-purpose EIEIO-based registry
 ;; database with persistence, initialized with these fields:
 
-;; version: a float, 0.1 currently (don't change it)
+;; version: a float
 
-;; max-hard: an integer, default 5000000
+;; max-size: an integer, default most-positive-fixnum
 
-;; max-soft: an integer, default 50000
+;; prune-factor: a float between 0 and 1, default 0.1
 
 ;; precious: a list of symbols
 
@@ -57,14 +57,15 @@
 ;; Note that whether a field has one or many pieces of data, the data
 ;; is always a list of values.
 
-;; The user decides which fields are "precious", F2 for example.  At
-;; PRUNE TIME (when the :prune-function is called), the registry will
-;; trim any entries without the F2 field until the size is :max-soft
-;; or less.  No entries with the F2 field will be removed at PRUNE
-;; TIME.
+;; The user decides which fields are "precious", F2 for example.  When
+;; the registry is pruned, any entries without the F2 field will be
+;; removed until the size is :max-size * :prune-factor _less_ than the
+;; maximum database size. No entries with the F2 field will be removed
+;; at PRUNE TIME, which means it may not be possible to prune back all
+;; the way to the target size.
 
-;; When an entry is inserted, the registry will reject new entries
-;; if they bring it over the max-hard limit, even if they have the F2
+;; When an entry is inserted, the registry will reject new entries if
+;; they bring it over the :max-size limit, even if they have the F2
 ;; field.
 
 ;; The user decides which fields are "tracked", F1 for example.  Any
@@ -82,28 +83,37 @@
 (require 'eieio)
 (require 'eieio-base)
 
+;; The version number needs to be kept outside of the class definition
+;; itself.  The persistent-save process does *not* write to file any
+;; slot values that are equal to the default :initform value.  If a
+;; database object is at the most recent version, therefore, its
+;; version number will not be written to file.  That makes it
+;; difficult to know when a database needs to be upgraded.
+(defvar registry-db-version 0.2
+  "The current version of the registry format.")
+
 (defclass registry-db (eieio-persistent)
   ((version :initarg :version
-            :initform 0.1
-            :type float
-            :custom float
+            :initform nil
+            :type (or null float)
             :documentation "The registry version.")
-   (max-hard :initarg :max-hard
-             :initform 5000000
+   (max-size :initarg :max-size
+	     ;; EIEIO's :initform is not 100% compatible with CLOS in
+	     ;; that if the form is an atom, it assumes it's constant
+	     ;; value rather than an expression, so in order to get the value
+	     ;; of `most-positive-fixnum', we need to use an
+	     ;; expression that's not just a symbol.
+             :initform (symbol-value 'most-positive-fixnum)
              :type integer
              :custom integer
-             :documentation "Never accept more than this many elements.")
-   (max-soft :initarg :max-soft
-             :initform 50000
-             :type integer
-             :custom integer
-             :documentation "Prune as much as possible to get to this size.")
+             :documentation "The maximum number of registry entries.")
    (prune-factor
     :initarg :prune-factor
     :initform 0.1
     :type float
     :custom float
-    :documentation "At the max-hard limit, prune size * this entries.")
+    :documentation "Prune to (:max-size * :prune-factor) less
+    than the :max-size limit.  Should be a float between 0 and 1.")
    (tracked :initarg :tracked
             :initform nil
             :type t
@@ -119,6 +129,23 @@
          :type hash-table
          :documentation "The data hashtable.")))
 
+(defmethod initialize-instance :BEFORE ((this registry-db) slots)
+  "Check whether a registry object needs to be upgraded."
+  ;; Hardcoded upgrade routines.  Version 0.1 to 0.2 requires the
+  ;; :max-soft slot to disappear, and the :max-hard slot to be renamed
+  ;; :max-size.
+  (let ((current-version
+	 (and (plist-member slots :version)
+	      (plist-get slots :version))))
+    (when (or (null current-version)
+	      (eql current-version 0.1))
+      (setq slots
+	    (plist-put slots :max-size (plist-get slots :max-hard)))
+      (setq slots
+	    (plist-put slots :version registry-db-version))
+      (cl-remf slots :max-hard)
+      (cl-remf slots :max-soft))))
+
 (defmethod initialize-instance :AFTER ((this registry-db) slots)
   "Set value of data slot of THIS after initialization."
   (with-slots (data tracker) this
@@ -131,7 +158,7 @@
 (defmethod registry-lookup ((db registry-db) keys)
   "Search for KEYS in the registry-db THIS.
 Returns an alist of the key followed by the entry in a list, not a cons cell."
-  (let ((data (oref db :data)))
+  (let ((data (oref db data)))
     (delq nil
 	  (mapcar
 	   (lambda (k)
@@ -142,7 +169,7 @@ Returns an alist of the key followed by the entry in a list, not a cons cell."
 (defmethod registry-lookup-breaks-before-lexbind ((db registry-db) keys)
   "Search for KEYS in the registry-db THIS.
 Returns an alist of the key followed by the entry in a list, not a cons cell."
-  (let ((data (oref db :data)))
+  (let ((data (oref db data)))
     (delq nil
 	  (loop for key in keys
 		when (gethash key data)
@@ -158,8 +185,8 @@ When CREATE is not nil, create the secondary index hashtable if needed."
       (when create
 	(puthash tracksym
 		 (make-hash-table :size 800 :rehash-size 2.0 :test 'equal)
-		 (oref db :tracker))
-	(gethash tracksym (oref db :tracker))))))
+		 (oref db tracker))
+	(gethash tracksym (oref db tracker))))))
 
 (defmethod registry-lookup-secondary-value ((db registry-db) tracksym val
 					    &optional set)
@@ -195,15 +222,15 @@ When SET is not nil, set it for VAL (use t for an empty list)."
 
 (defmethod registry-search ((db registry-db) &rest spec)
   "Search for SPEC across the registry-db THIS.
-For example calling with :member '(a 1 2) will match entry '((a 3 1)).
-Calling with :all t (any non-nil value) will match all.
-Calling with :regex '\(a \"h.llo\") will match entry '((a \"hullo\" \"bye\").
+For example calling with `:member \\='(a 1 2)' will match entry \((a 3 1)).
+Calling with `:all t' (any non-nil value) will match all.
+Calling with `:regex \\='(a \"h.llo\")' will match entry \(a \"hullo\" \"bye\").
 The test order is to check :all first, then :member, then :regex."
   (when db
     (let ((all (plist-get spec :all))
 	  (member (plist-get spec :member))
 	  (regex (plist-get spec :regex)))
-      (loop for k being the hash-keys of (oref db :data)
+      (loop for k being the hash-keys of (oref db data)
 	    using (hash-values v)
 	    when (or
 		  ;; :all non-nil returns all
@@ -219,10 +246,10 @@ The test order is to check :all first, then :member, then :regex."
 If KEYS is nil, use SPEC to do a search.
 Updates the secondary ('tracked') indices as well.
 With assert non-nil, errors out if the key does not exist already."
-  (let* ((data (oref db :data))
+  (let* ((data (oref db data))
 	 (keys (or keys
 		   (apply 'registry-search db spec)))
-	 (tracked (oref db :tracked)))
+	 (tracked (oref db tracked)))
 
     (dolist (key keys)
       (let ((entry (gethash key data)))
@@ -249,31 +276,31 @@ With assert non-nil, errors out if the key does not exist already."
 
 (defmethod registry-size ((db registry-db))
   "Returns the size of the registry-db object THIS.
-This is the key count of the :data slot."
-  (hash-table-count (oref db :data)))
+This is the key count of the `data' slot."
+  (hash-table-count (oref db data)))
 
 (defmethod registry-full ((db registry-db))
   "Checks if registry-db THIS is full."
   (>= (registry-size db)
-      (oref db :max-hard)))
+      (oref db max-size)))
 
 (defmethod registry-insert ((db registry-db) key entry)
   "Insert ENTRY under KEY into the registry-db THIS.
 Updates the secondary ('tracked') indices as well.
 Errors out if the key exists already."
 
-  (assert (not (gethash key (oref db :data))) nil
+  (assert (not (gethash key (oref db data))) nil
 	  "Key already exists in database")
 
   (assert (not (registry-full db))
 	  nil
-	  "registry max-hard size limit reached")
+	  "registry max-size limit reached")
 
   ;; store the entry
-  (puthash key entry (oref db :data))
+  (puthash key entry (oref db data))
 
   ;; store the secondary indices
-  (dolist (tr (oref db :tracked))
+  (dolist (tr (oref db tracked))
     ;; for every value in the entry under that key...
     (dolist (val (cdr-safe (assq tr entry)))
       (let* ((value-keys (registry-lookup-secondary-value db tr val)))
@@ -284,8 +311,8 @@ Errors out if the key exists already."
 (defmethod registry-reindex ((db registry-db))
   "Rebuild the secondary indices of registry-db THIS."
   (let ((count 0)
-	(expected (* (length (oref db :tracked)) (registry-size db))))
-    (dolist (tr (oref db :tracked))
+	(expected (* (length (oref db tracked)) (registry-size db))))
+    (dolist (tr (oref db tracked))
       (let (values)
 	(maphash
 	 (lambda (key v)
@@ -293,65 +320,59 @@ Errors out if the key exists already."
 	   (when (and (< 0 expected)
 		      (= 0 (mod count 1000)))
 	     (message "reindexing: %d of %d (%.2f%%)"
-		      count expected (/ (* 100 count) expected)))
+		      count expected (/ (* 100.0 count) expected)))
 	   (dolist (val (cdr-safe (assq tr v)))
 	     (let* ((value-keys (registry-lookup-secondary-value db tr val)))
 	       (push key value-keys)
 	       (registry-lookup-secondary-value db tr val value-keys))))
-	 (oref db :data))))))
+	 (oref db data))))))
 
-(defmethod registry-prune ((db registry-db) &optional sortfun)
-  "Prunes the registry-db object THIS.
-Removes only entries without the :precious keys if it can,
-then removes oldest entries first.
-Returns the number of deleted entries.
-If SORTFUN is given, tries to keep entries that sort *higher*.
-SORTFUN is passed only the two keys so it must look them up directly."
-  (dolist (collector '(registry-prune-soft-candidates
-		       registry-prune-hard-candidates))
-    (let* ((size (registry-size db))
-	   (collected (funcall collector db))
-	   (limit (nth 0 collected))
-	   (candidates (nth 1 collected))
-	   ;; sort the candidates if SORTFUN was given
-	   (candidates (if sortfun (sort candidates sortfun) candidates))
-	   (candidates-count (length candidates))
-	   ;; are we over max-soft?
-	   (prune-needed (> size limit)))
+(defmethod registry-prune ((db registry-db) &optional sortfunc)
+  "Prunes the registry-db object DB.
 
-      ;; while we have more candidates than we need to remove...
-      (while (and (> candidates-count (- size limit)) candidates)
-	(decf candidates-count)
-	(setq candidates (cdr candidates)))
+Attempts to prune the number of entries down to \(*
+:max-size :prune-factor) less than the max-size limit, so
+pruning doesn't need to happen on every save. Removes only
+entries without the :precious keys, so it may not be possible to
+reach the target limit.
 
-      (registry-delete db candidates nil)
-      (length candidates))))
+Entries to be pruned are first sorted using SORTFUNC.  Entries
+from the front of the list are deleted first.
 
-(defmethod registry-prune-soft-candidates ((db registry-db))
-  "Collects pruning candidates from the registry-db object THIS.
-Proposes only entries without the :precious keys."
-  (let* ((precious (oref db :precious))
+Returns the number of deleted entries."
+  (let ((size (registry-size db))
+	(target-size
+	 (floor (- (oref db max-size)
+		   (* (oref db max-size)
+		      (oref db prune-factor)))))
+	candidates)
+    (if (registry-full db)
+	(progn
+	  (setq candidates
+		(registry-collect-prune-candidates
+		 db (- size target-size) sortfunc))
+	  (length (registry-delete db candidates nil)))
+      0)))
+
+(defmethod registry-collect-prune-candidates ((db registry-db) limit sortfunc)
+  "Collects pruning candidates from the registry-db object DB.
+
+Proposes only entries without the :precious keys, and attempts to
+return LIMIT such candidates.  If SORTFUNC is provided, sort
+entries first and return candidates from beginning of list."
+  (let* ((precious (oref db precious))
 	 (precious-p (lambda (entry-key)
 		       (cdr (memq (car entry-key) precious))))
-	 (data (oref db :data))
-	 (limit (oref db :max-soft))
-	 (candidates (loop for k being the hash-keys of data
-			   using (hash-values v)
-			   when (notany precious-p v)
-			   collect k)))
-    (list limit candidates)))
-
-(defmethod registry-prune-hard-candidates ((db registry-db))
-  "Collects pruning candidates from the registry-db object THIS.
-Proposes any entries over the max-hard limit minus size * prune-factor."
-  (let* ((data (oref db :data))
-	 ;; prune to (size * prune-factor) below the max-hard limit so
-	 ;; we're not pruning all the time
-	 (limit (max 0 (- (oref db :max-hard)
-			  (* (registry-size db) (oref db :prune-factor)))))
-	 (candidates (loop for k being the hash-keys of data
-			   collect k)))
-    (list limit candidates)))
+	 (data (oref db data))
+	 (candidates (cl-loop for k being the hash-keys of data
+			      using (hash-values v)
+			      when (notany precious-p v)
+			      collect (cons k v))))
+    ;; We want the full entries for sorting, but should only return a
+    ;; list of entry keys.
+    (when sortfunc
+      (setq candidates (sort candidates sortfunc)))
+    (cl-subseq (mapcar #'car candidates) 0 (min limit (length candidates)))))
 
 (provide 'registry)
 ;;; registry.el ends here

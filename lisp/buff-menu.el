@@ -1,9 +1,9 @@
 ;;; buff-menu.el --- Interface for viewing and manipulating buffers
 
-;; Copyright (C) 1985-1987, 1993-1995, 2000-2013 Free Software
+;; Copyright (C) 1985-1987, 1993-1995, 2000-2015 Free Software
 ;; Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: convenience
 ;; Package: emacs
 
@@ -353,14 +353,22 @@ It will be displayed by the \\<Buffer-menu-mode-map>\\[Buffer-menu-select] comma
   "Cancel all requested operations on buffer on this line and move down.
 Optional prefix arg means move up."
   (interactive "P")
-  (tabulated-list-set-col 0 " " t)
+  (Buffer-menu--unmark)
   (forward-line (if backup -1 1)))
 
 (defun Buffer-menu-backup-unmark ()
   "Move up and cancel all requested operations on buffer on line above."
   (interactive)
   (forward-line -1)
-  (tabulated-list-set-col 0 " " t))
+  (Buffer-menu--unmark))
+
+(defun Buffer-menu--unmark ()
+  (tabulated-list-set-col 0 " " t)
+  (let ((buf (Buffer-menu-buffer)))
+    (when buf
+      (if (buffer-modified-p buf)
+          (tabulated-list-set-col 2 "*" t)
+        (tabulated-list-set-col 2 " " t)))))
 
 (defun Buffer-menu-delete (&optional arg)
   "Mark the buffer on this Buffer Menu buffer line for deletion.
@@ -531,7 +539,7 @@ The current window remains selected."
 
 (defun Buffer-menu-toggle-read-only ()
   "Toggle read-only status of buffer on this line.
-This behaves like invoking \\[toggle-read-only] in that buffer."
+This behaves like invoking \\[read-only-mode] in that buffer."
   (interactive)
   (let ((read-only
          (with-current-buffer (Buffer-menu-buffer t)

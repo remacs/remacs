@@ -1,5 +1,5 @@
 ;;; gnus-news.el --- a hack to create GNUS-NEWS from texinfo source
-;; Copyright (C) 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
 ;; Author: Reiner Steib  <Reiner.Steib@gmx.de>
 ;; Keywords: tools
@@ -26,7 +26,7 @@
 (defvar gnus-news-header-disclaimer
 "GNUS NEWS -- history of user-visible changes.
 
-Copyright (C) 1999-2013 Free Software Foundation, Inc.
+Copyright (C) 1999-2015 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
 Please send Gnus bug reports to bugs@gnus.org.
@@ -85,7 +85,7 @@ paragraph-separate: \"[ 	]*$\"\nend:\n")
 	 (infile (concat dir infile))
 	 (buffer (find-file-noselect (concat dir outfile))))
     (with-temp-buffer
-      ;; Could be done using `texinfmt' stuff as in `infohack.el'.
+      ;; Could be done using 'texinfmt' stuff as in 'infohack.el'.
       (insert
        (shell-command-to-string
 	(concat gnus-news-makeinfo-command " "
@@ -102,7 +102,7 @@ paragraph-separate: \"[ 	]*$\"\nend:\n")
       (save-excursion
 	(while (re-search-forward "^     " nil t)
 	  (replace-match "")))
-      ;; Avoid `*' from @ref at beginning of line:
+      ;; Avoid '*' from @ref at beginning of line:
       (save-excursion
 	(while (re-search-forward "^\\*Note" nil t)
 	  (replace-match " \\&")))

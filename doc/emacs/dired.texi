@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2013 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2015 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Dired
@@ -14,7 +14,7 @@ optionally some of its subdirectories as well.  You can use the normal
 Emacs commands to move around in this buffer, and special Dired
 commands to operate on the listed files.
 
-    The Dired buffer is ``read-only'', and inserting text in it is not
+    The Dired buffer is read-only, and inserting text in it is not
 allowed.  Ordinary printing characters such as @kbd{d} and @kbd{x} are
 redefined for special Dired commands.  Some Dired commands @dfn{mark}
 or @dfn{flag} the @dfn{current file} (that is, the file on the current
@@ -281,9 +281,9 @@ say they are backup files---that is, files whose names end in
 the backup files for deletion: all but the oldest few and newest few
 backups of any one file.  Normally, the number of newest versions kept
 for each file is given by the variable @code{dired-kept-versions}
-(@strong{not} @code{kept-new-versions}; that applies only when
-saving).  The number of oldest versions to keep is given by the
-variable @code{kept-old-versions}.
+(@emph{not} @code{kept-new-versions}; that applies only when saving).
+The number of oldest versions to keep is given by the variable
+@code{kept-old-versions}.
 
   Period with a positive numeric argument, as in @kbd{C-u 3 .},
 specifies the number of newest versions to keep, overriding
@@ -376,7 +376,7 @@ for @file{..} and typing @kbd{f} there.
 @end table
 
 @node Marks vs Flags
-@section Dired Marks vs. Flags
+@section Dired Marks vs.@: Flags
 
 @cindex marking many files (in Dired)
   Instead of flagging a file with @samp{D}, you can @dfn{mark} the
@@ -522,7 +522,7 @@ flags on all the files that have no marks, while unflagging all those
 that already have @samp{D} flags:
 
 @example
-* c D t  * c SPC D  * c t SPC
+* c D t  * c @key{SPC} D  * c t @key{SPC}
 @end example
 
 This assumes that no files were already marked with @samp{t}.
@@ -722,7 +722,17 @@ suitable guess made using the variables @code{lpr-command} and
 @cindex compressing files (in Dired)
 @item Z
 Compress the specified files (@code{dired-do-compress}).  If the file
-appears to be a compressed file already, uncompress it instead.
+appears to be a compressed file already, uncompress it instead.  Each
+marked file is compressed into its own archive.
+
+@findex dired-do-compress-to
+@kindex c @r{(Dired)}
+@cindex compressing files (in Dired)
+@item c
+Compress the specified files (@code{dired-do-compress-to}) into a
+single archive anywhere on the file system. The compression algorithm
+is determined by the extension of the archive, see
+@code{dired-compress-files-alist}.
 
 @findex epa-dired-do-decrypt
 @kindex :d @r{(Dired)}
@@ -924,7 +934,7 @@ from the name of the old file.
   The four regular-expression substitution commands effectively
 perform a search-and-replace on the selected file names.  They read
 two arguments: a regular expression @var{from}, and a substitution
-pattern @var{to}; they match each ``old'' file name against
+pattern @var{to}; they match each old file name against
 @var{from}, and then replace the matching part with @var{to}.  You can
 use @samp{\&} and @samp{\@var{digit}} in @var{to} to refer to all or
 part of what the pattern matched in the old file name, as in
@@ -1108,7 +1118,8 @@ can use hiding to temporarily exclude subdirectories from operations
 without having to remove the Dired marks on files in those
 subdirectories.
 
-@xref{Dired Updating}, for how to insert or delete a subdirectory listing.
+@xref{Subdirectories in Dired}, for how to insert a subdirectory
+listing, and @pxref{Dired Updating} for how delete it.
 
 @node Dired Updating
 @section Updating the Dired Buffer
@@ -1261,7 +1272,7 @@ and erases all flags and marks.
 @findex wdired-change-to-wdired-mode
   Wdired is a special mode that allows you to perform file operations
 by editing the Dired buffer directly (the ``W'' in ``Wdired'' stands
-for ``writable''.)  To enter Wdired mode, type @kbd{C-x C-q}
+for ``writable'').  To enter Wdired mode, type @kbd{C-x C-q}
 (@code{dired-toggle-read-only}) while in a Dired buffer.
 Alternatively, use the @samp{Immediate / Edit File Names} menu item.
 
@@ -1306,24 +1317,24 @@ buffer containing image-dired, corresponding to the marked files.
   You can also enter Image-Dired directly by typing @kbd{M-x
 image-dired}.  This prompts for a directory; specify one that has
 image files.  This creates thumbnails for all the images in that
-directory, and displays them all in the ``thumbnail buffer''.  This
+directory, and displays them all in the thumbnail buffer.  This
 takes a long time if the directory contains many image files, and it
 asks for confirmation if the number of image files exceeds
 @code{image-dired-show-all-from-dir-max-files}.
 
-  With point in the thumbnail buffer, you can type @kbd{RET}
+  With point in the thumbnail buffer, you can type @key{RET}
 (@code{image-dired-display-thumbnail-original-image}) to display a
 sized version of it in another window.  This sizes the image to fit
 the window.  Use the arrow keys to move around in the buffer.  For
-easy browsing, use @kbd{SPC}
+easy browsing, use @key{SPC}
 (@code{image-dired-display-next-thumbnail-original}) to advance and
-display the next image.  Typing @kbd{DEL}
+display the next image.  Typing @key{DEL}
 (@code{image-dired-display-previous-thumbnail-original}) backs up to
 the previous thumbnail and displays that instead.
 
 @vindex image-dired-external-viewer
   To view and the image in its original size, either provide a prefix
-argument (@kbd{C-u}) before pressing @kbd{RET}, or type
+argument (@kbd{C-u}) before pressing @key{RET}, or type
 @kbd{C-@key{RET}} (@code{image-dired-thumbnail-display-external}) to
 display the image in an external viewer.  You must first configure
 @code{image-dired-external-viewer}.
@@ -1347,9 +1358,9 @@ with a certain tag, you can use @kbd{C-t d} to view them.
 
   You can also tag a file directly from the thumbnail buffer by typing
 @kbd{t t} and you can remove a tag by typing @kbd{t r}.  There is also
-a special ``tag'' called ``comment'' for each file (it is not a tag in
+a special tag called ``comment'' for each file (it is not a tag in
 the exact same sense as the other tags, it is handled slightly
-different).  That is used to enter a comment or description about the
+differently).  That is used to enter a comment or description about the
 image.  You comment a file from the thumbnail buffer by typing
 @kbd{c}.  You will be prompted for a comment.  Type @kbd{C-t c} to add
 a comment from Dired (@code{image-dired-dired-comment-files}).
@@ -1374,7 +1385,7 @@ the directory already exists.
 @findex dired-do-isearch
 @findex dired-do-isearch-regexp
   The command @kbd{M-s a C-s} (@code{dired-do-isearch}) begins a
-``multi-file'' incremental search on the marked files.  If a search
+multi-file incremental search on the marked files.  If a search
 fails at the end of a file, typing @kbd{C-s} advances to the next
 marked file and repeats the search; at the end of the last marked
 file, the search wraps around to the first marked file.  The command
@@ -1382,7 +1393,7 @@ file, the search wraps around to the first marked file.  The command
 a regular expression search.  @xref{Repeat Isearch}, for information
 about search repetition.
 
-@cindex Adding to the kill ring in Dired.
+@cindex adding to the kill ring in Dired
 @kindex w @r{(Dired)}
 @findex dired-copy-filename-as-kill
   The command @kbd{w} (@code{dired-copy-filename-as-kill}) puts the
@@ -1403,6 +1414,19 @@ names into arguments for other Emacs commands.  It also displays what
 it added to the kill ring, so you can use it to display the list of
 currently marked files in the echo area.
 
+@kindex ( @r{(Dired)}
+@findex dired-hide-details-mode
+@vindex dired-hide-details-hide-symlink-targets
+@vindex dired-hide-details-hide-information-lines
+@cindex hiding details in Dired
+  The command @kbd{(} (@code{dired-hide-details-mode}) toggles whether
+details, such as ownership or file permissions, are visible in the
+current Dired buffer.  By default, it also hides the targets of
+symbolic links, and all lines other than the header line and
+file/directory listings.  To change this, customize the options
+@code{dired-hide-details-hide-symlink-targets} and
+@code{dired-hide-details-hide-information-lines}, respectively.
+
 @cindex Dired and version control
   If the directory you are visiting is under version control
 (@pxref{Version Control}), then the normal VC diff and log commands
@@ -1411,21 +1435,21 @@ will operate on the selected files.
 @findex dired-compare-directories
   The command @kbd{M-x dired-compare-directories} is used to compare
 the current Dired buffer with another directory.  It marks all the files
-that are ``different'' between the two directories.  It puts these marks
+that differ between the two directories.  It puts these marks
 in all Dired buffers where these files are listed, which of course includes
 the current buffer.
 
   The default comparison method (used if you type @key{RET} at the
-prompt) is to compare just the file names---each file name that does
-not appear in the other directory is ``different''.  You can specify
+prompt) is to compare just the file names---file names differ if
+they do not appear in the other directory.  You can specify
 more stringent comparisons by entering a Lisp expression, which can
 refer to the variables @code{size1} and @code{size2}, the respective
 file sizes; @code{mtime1} and @code{mtime2}, the last modification
 times in seconds, as floating point numbers; and @code{fa1} and
 @code{fa2}, the respective file attribute lists (as returned by the
 function @code{file-attributes}).  This expression is evaluated for
-each pair of like-named files, and if the expression's value is
-non-@code{nil}, those files are considered ``different''.
+each pair of like-named files, and files differ if the expression's
+value is non-@code{nil}.
 
   For instance, the sequence @code{M-x dired-compare-directories
 @key{RET} (> mtime1 mtime2) @key{RET}} marks files newer in this
@@ -1434,7 +1458,7 @@ directory than in this one.  It also marks files with no counterpart,
 in both directories, as always.
 
 @cindex drag and drop, Dired
-  On the X Window System, Emacs supports the ``drag and drop''
+  On the X Window System, Emacs supports the drag and drop
 protocol.  You can drag a file object from another program, and drop
 it onto a Dired buffer; this either moves, copies, or creates a link
 to the file in that directory.  Precisely which action is taken is

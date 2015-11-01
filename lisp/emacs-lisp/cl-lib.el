@@ -1,6 +1,6 @@
 ;;; cl-lib.el --- Common Lisp extensions for Emacs  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1993, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1993, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Dave Gillespie <daveg@synaptics.com>
 ;; Version: 1.0
@@ -152,9 +152,6 @@ an element already on the list.
 	`(setq ,place (cl-adjoin ,x ,place ,@keys)))
     `(cl-callf2 cl-adjoin ,x ,place ,@keys)))
 
-(defun cl--set-elt (seq n val)
-  (if (listp seq) (setcar (nthcdr n seq) val) (aset seq n val)))
-
 (defun cl--set-buffer-substring (start end val)
   (save-excursion (delete-region start end)
 		  (goto-char start)
@@ -252,16 +249,6 @@ so that they are registered at compile-time as well as run-time."
       `(progn ,@body))))           ; Avoid loading cl-macs.el for cl-eval-when.
 
 
-;;; Symbols.
-
-(defun cl--random-time ()
-  (let* ((time (copy-sequence (current-time-string))) (i (length time)) (v 0))
-    (while (>= (cl-decf i) 0) (setq v (+ (* v 3) (aref time i))))
-    v))
-
-(defvar cl--gensym-counter (* (logand (cl--random-time) 1023) 100))
-
-
 ;;; Numbers.
 
 (define-obsolete-function-alias 'cl-floatp-safe 'floatp "24.4")
@@ -281,6 +268,30 @@ so that they are registered at compile-time as well as run-time."
 (defun cl-evenp (integer)
   "Return t if INTEGER is even."
   (eq (logand integer 1) 0))
+
+(defconst cl-digit-char-table
+  (let* ((digits (make-vector 256 nil))
+         (populate (lambda (start end base)
+                     (mapc (lambda (i)
+                             (aset digits i (+ base (- i start))))
+                           (number-sequence start end)))))
+    (funcall populate ?0 ?9 0)
+    (funcall populate ?A ?Z 10)
+    (funcall populate ?a ?z 10)
+    digits))
+
+(defun cl-digit-char-p (char &optional radix)
+  "Test if CHAR is a digit in the specified RADIX (default 10).
+If true return the decimal value of digit CHAR in RADIX."
+  (or (<= 2 (or radix 10) 36)
+      (signal 'args-out-of-range (list 'radix radix '(2 36))))
+  (let ((n (aref cl-digit-char-table char)))
+    (and n (< n (or radix 10)) n)))
+
+(defun cl--random-time ()
+  (let* ((time (copy-sequence (current-time-string))) (i (length time)) (v 0))
+    (while (>= (cl-decf i) 0) (setq v (+ (* v 3) (aref time i))))
+    v))
 
 (defvar cl--random-state
   (vector 'cl--random-state-tag -1 30 (cl--random-time)))
@@ -361,7 +372,13 @@ SEQ, this is like `mapcar'.  With several, it is like the Common Lisp
 (cl--defalias 'cl-first 'car)
 (cl--defalias 'cl-second 'cadr)
 (cl--defalias 'cl-rest 'cdr)
-(cl--defalias 'cl-endp 'null)
+
+(defun cl-endp (x)
+  "Return true if X is the empty list; false if it is a cons.
+Signal an error if X is not a list."
+  (if (listp x)
+      (null x)
+    (signal 'wrong-type-argument (list 'listp x 'x))))
 
 (cl--defalias 'cl-third 'cl-caddr "Return the third element of the list X.")
 (cl--defalias 'cl-fourth 'cl-cadddr "Return the fourth element of the list X.")
@@ -398,122 +415,122 @@ SEQ, this is like `mapcar'.  With several, it is like the Common Lisp
 
 (defun cl-caaar (x)
   "Return the `car' of the `car' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (car (car x))))
 
 (defun cl-caadr (x)
   "Return the `car' of the `car' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (car (cdr x))))
 
 (defun cl-cadar (x)
   "Return the `car' of the `cdr' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (cdr (car x))))
 
 (defun cl-caddr (x)
   "Return the `car' of the `cdr' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (cdr (cdr x))))
 
 (defun cl-cdaar (x)
   "Return the `cdr' of the `car' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (car (car x))))
 
 (defun cl-cdadr (x)
   "Return the `cdr' of the `car' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (car (cdr x))))
 
 (defun cl-cddar (x)
   "Return the `cdr' of the `cdr' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (cdr (car x))))
 
 (defun cl-cdddr (x)
   "Return the `cdr' of the `cdr' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (cdr (cdr x))))
 
 (defun cl-caaaar (x)
   "Return the `car' of the `car' of the `car' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (car (car (car x)))))
 
 (defun cl-caaadr (x)
   "Return the `car' of the `car' of the `car' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (car (car (cdr x)))))
 
 (defun cl-caadar (x)
   "Return the `car' of the `car' of the `cdr' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (car (cdr (car x)))))
 
 (defun cl-caaddr (x)
   "Return the `car' of the `car' of the `cdr' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (car (cdr (cdr x)))))
 
 (defun cl-cadaar (x)
   "Return the `car' of the `cdr' of the `car' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (cdr (car (car x)))))
 
 (defun cl-cadadr (x)
   "Return the `car' of the `cdr' of the `car' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (cdr (car (cdr x)))))
 
 (defun cl-caddar (x)
   "Return the `car' of the `cdr' of the `cdr' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (cdr (cdr (car x)))))
 
 (defun cl-cadddr (x)
   "Return the `car' of the `cdr' of the `cdr' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (car (cdr (cdr (cdr x)))))
 
 (defun cl-cdaaar (x)
   "Return the `cdr' of the `car' of the `car' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (car (car (car x)))))
 
 (defun cl-cdaadr (x)
   "Return the `cdr' of the `car' of the `car' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (car (car (cdr x)))))
 
 (defun cl-cdadar (x)
   "Return the `cdr' of the `car' of the `cdr' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (car (cdr (car x)))))
 
 (defun cl-cdaddr (x)
   "Return the `cdr' of the `car' of the `cdr' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (car (cdr (cdr x)))))
 
 (defun cl-cddaar (x)
   "Return the `cdr' of the `cdr' of the `car' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (cdr (car (car x)))))
 
 (defun cl-cddadr (x)
   "Return the `cdr' of the `cdr' of the `car' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (cdr (car (cdr x)))))
 
 (defun cl-cdddar (x)
   "Return the `cdr' of the `cdr' of the `cdr' of the `car' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (cdr (cdr (car x)))))
 
 (defun cl-cddddr (x)
   "Return the `cdr' of the `cdr' of the `cdr' of the `cdr' of X."
-  (declare (compiler-macro cl--compiler-macro-cXXr))
+  (declare (compiler-macro internal--compiler-macro-cXXr))
   (cdr (cdr (cdr (cdr x)))))
 
 ;;(defun last* (x &optional n)
@@ -607,7 +624,6 @@ the process stops as soon as KEYS or VALUES run out.
 If ALIST is non-nil, the new pairs are prepended to it."
   (nconc (cl-mapcar 'cons keys values) alist))
 
-
 ;;; Generalized variables.
 
 ;; These used to be in cl-macs.el since all macros that use them (like setf)
@@ -625,7 +641,6 @@ If ALIST is non-nil, the new pairs are prepended to it."
   `(insert (prog1 ,store (erase-buffer))))
 (gv-define-simple-setter buffer-substring cl--set-buffer-substring)
 (gv-define-simple-setter current-buffer set-buffer)
-(gv-define-simple-setter current-case-table set-case-table)
 (gv-define-simple-setter current-column move-to-column t)
 (gv-define-simple-setter current-global-map use-global-map t)
 (gv-define-setter current-input-mode (store)
@@ -680,7 +695,6 @@ If ALIST is non-nil, the new pairs are prepended to it."
 (gv-define-setter window-width (store)
   `(progn (enlarge-window (- ,store (window-width)) t) ,store))
 (gv-define-simple-setter x-get-secondary-selection x-own-secondary-selection t)
-(gv-define-simple-setter x-get-selection x-own-selection t)
 
 ;; More complex setf-methods.
 
@@ -703,35 +717,19 @@ If ALIST is non-nil, the new pairs are prepended to it."
 (gv-define-expander substring
   (lambda (do place from &optional to)
     (gv-letplace (getter setter) place
-      (macroexp-let2 nil start from
-        (macroexp-let2 nil end to
-          (funcall do `(substring ,getter ,start ,end)
-                   (lambda (v)
-                     (funcall setter `(cl--set-substring
-                                       ,getter ,start ,end ,v)))))))))
+      (macroexp-let2* nil ((start from) (end to))
+        (funcall do `(substring ,getter ,start ,end)
+                 (lambda (v)
+                   (funcall setter `(cl--set-substring
+                                     ,getter ,start ,end ,v))))))))
 
 ;;; Miscellaneous.
 
-;;;###autoload
-(progn
-  ;; The `assert' macro from the cl package signals
-  ;; `cl-assertion-failed' at runtime so always define it.
-  (define-error 'cl-assertion-failed (purecopy "Assertion failed"))
-  ;; Make sure functions defined with cl-defsubst can be inlined even in
-  ;; packages which do not require CL.  We don't put an autoload cookie
-  ;; directly on that function, since those cookies only go to cl-loaddefs.
-  (autoload 'cl--defsubst-expand "cl-macs")
-  ;; Autoload, so autoload.el and font-lock can use it even when CL
-  ;; is not loaded.
-  (put 'cl-defun    'doc-string-elt 3)
-  (put 'cl-defmacro 'doc-string-elt 3)
-  (put 'cl-defsubst 'doc-string-elt 3)
-  (put 'cl-defstruct 'doc-string-elt 2))
-
 (provide 'cl-lib)
-(or (load "cl-loaddefs" 'noerror 'quiet)
-    ;; When bootstrapping, cl-loaddefs hasn't been built yet!
-    (require 'cl-macs))
+(unless (load "cl-loaddefs" 'noerror 'quiet)
+  ;; When bootstrapping, cl-loaddefs hasn't been built yet!
+  (require 'cl-macs)
+  (require 'cl-seq))
 
 ;; Local variables:
 ;; byte-compile-dynamic: t

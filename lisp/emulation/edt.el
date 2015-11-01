@@ -1,6 +1,6 @@
 ;;; edt.el --- enhanced EDT keypad mode emulation for GNU Emacs
 
-;; Copyright (C) 1986, 1992-1995, 2000-2013 Free Software Foundation,
+;; Copyright (C) 1986, 1992-1995, 2000-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Kevin Gallagher <Kevin.Gallagher@boeing.com>
@@ -51,7 +51,7 @@
 ;; you initiate a GNU Emacs session, by adding the following line to
 ;; your init file:
 ;;
-;;    (add-hook term-setup-hook 'edt-emulation-on)
+;;    (add-hook 'emacs-startup-hook 'edt-emulation-on)
 
 ;; IMPORTANT: Be sure to read the Info node `edt' for more details.
 ;; It contains very helpful user information.
@@ -213,23 +213,23 @@ use within the EDT emulation."
 
 (defcustom edt-word-entities '(?\t)
   "Specifies the list of EDT word entity characters.
-The default list, (\?\\t), contains just the TAB character, which
+The default list, (?\\t), contains just the TAB character, which
 emulates EDT.  Characters are specified in the list using their
 decimal ASCII values.  A question mark, followed by the actual
 character, can be used to indicate the numerical value of the
 character, instead of the actual decimal value.  So, ?A means the
-numerical value for the letter A, \?/ means the numerical value for /,
+numerical value for the letter A, ?/ means the numerical value for /,
 etc.  Several unprintable and special characters have special
 representations, which you can also use:
 
-            \?\\b  specifies  BS, C-h
-            \?\\t  specifies  TAB, C-i
-            \?\\n  specifies  LFD, C-j
-            \?\\v  specifies  VTAB, C-k
-            \?\\f  specifies  FF, C-l
-            \?\\r  specifies  CR, C-m
-            \?\\e  specifies  ESC, C-[
-            \?\\\\  specifies  \\
+            ?\\b  specifies  BS, C-h
+            ?\\t  specifies  TAB, C-i
+            ?\\n  specifies  LFD, C-j
+            ?\\v  specifies  VTAB, C-k
+            ?\\f  specifies  FF, C-l
+            ?\\r  specifies  CR, C-m
+            ?\\e  specifies  ESC, C-[
+            ?\\\\  specifies  \\
 
 In EDT Emulation movement-by-word commands, each character in the list
 will be treated as if it were a separate word."
@@ -311,10 +311,10 @@ This means that an edt-user.el file was found in the user's `load-path'.")
 ;;;     o edt-emulation-on      o edt-load-keys
 ;;;
 (defconst edt-emacs-variant (if (featurep 'emacs) "gnu" "xemacs")
-  "Indicates Emacs variant:  GNU Emacs or XEmacs \(aka Lucid Emacs\).")
+  "Indicates Emacs variant:  GNU Emacs or XEmacs (aka Lucid Emacs).")
 
 (defconst edt-window-system (if (featurep 'emacs) window-system (console-type))
-  "Indicates window system \(in GNU Emacs\) or console type \(in XEmacs\).")
+  "Indicates window system (in GNU Emacs) or console type (in XEmacs).")
 
 (declare-function x-server-vendor "xfns.c" (&optional terminal))
 
@@ -1984,7 +1984,8 @@ created."
                  (if (edt-y-or-n-p "Do you want to run it now? ")
                      (load-file path)
                    (error "EDT Emulation not configured")))
-             (insert "Nope, I can't seem to find it.  :-(\n\n")
+             (insert (substitute-command-keys
+		      "Nope, I can't seem to find it.  :-(\n\n"))
              (sit-for 20)
              (error "EDT Emulation not configured"))))))
 
@@ -2034,7 +2035,8 @@ created."
   ;; Make highlighting of selected text work properly for EDT commands.
   (if (featurep 'emacs)
       (progn
-	(setq edt-orig-transient-mark-mode transient-mark-mode)
+	(setq edt-orig-transient-mark-mode
+              (default-value 'transient-mark-mode))
 	(add-hook 'activate-mark-hook
 		  (function
 		   (lambda ()
@@ -2069,7 +2071,7 @@ created."
   (edt-reset)
   (force-mode-line-update t)
   (if (featurep 'emacs)
-    (setq transient-mark-mode edt-orig-transient-mark-mode))
+      (setq-default transient-mark-mode edt-orig-transient-mark-mode))
   (message "Original key bindings restored; EDT Emulation disabled"))
 
 (defun edt-default-menu-bar-update-buffers ()

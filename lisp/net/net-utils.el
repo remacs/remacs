@@ -1,6 +1,6 @@
 ;;; net-utils.el --- network functions
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 ;; Author:  Peter Breton <pbreton@cs.umb.edu>
 ;; Created: Sun Mar 16 1997
@@ -204,7 +204,7 @@ This variable is only used if the variable
   :group 'net-utils
   :type  '(repeat string))
 
-(defcustom smbclient-prompt-regexp "^smb: \>"
+(defcustom smbclient-prompt-regexp "^smb: >"
   "Regexp which matches the smbclient program's prompt.
 
 This variable is only used if the variable
@@ -326,9 +326,19 @@ This variable is only used if the variable
         (insert filtered-string)
         (set-marker (process-mark process) (point))))))
 
+(declare-function w32-get-console-output-codepage "w32proc.c" ())
+
 (defun net-utils-run-program (name header program args)
   "Run a network information program."
-  (let ((buf (get-buffer-create (concat "*" name "*"))))
+  (let ((buf (get-buffer-create (concat "*" name "*")))
+	(coding-system-for-read
+	 ;; MS-Windows versions of network utilities output text
+	 ;; encoded in the console (a.k.a. "OEM") codepage, which is
+	 ;; different from the default system (a.k.a. "ANSI")
+	 ;; codepage.
+	 (if (eq system-type 'windows-nt)
+	     (intern (format "cp%d" (w32-get-console-output-codepage)))
+	   coding-system-for-read)))
     (set-buffer buf)
     (erase-buffer)
     (insert header "\n")
@@ -352,7 +362,15 @@ This variable is only used if the variable
       (when proc
         (set-process-filter proc nil)
         (delete-process proc)))
-    (let ((inhibit-read-only t))
+    (let ((inhibit-read-only t)
+	(coding-system-for-read
+	 ;; MS-Windows versions of network utilities output text
+	 ;; encoded in the console (a.k.a. "OEM") codepage, which is
+	 ;; different from the default system (a.k.a. "ANSI")
+	 ;; codepage.
+	 (if (eq system-type 'windows-nt)
+	     (intern (format "cp%d" (w32-get-console-output-codepage)))
+	   coding-system-for-read)))
       (erase-buffer))
     (net-utils-mode)
     (setq-local net-utils--revert-cmd

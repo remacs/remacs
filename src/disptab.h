@@ -1,5 +1,5 @@
 /* Things for GLYPHS and glyph tables.
-   Copyright (C) 1993, 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993, 2001-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -17,6 +17,11 @@ You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Access the slots of a display-table, according to their purpose.  */
+
+#ifndef EMACS_DISPTAB_H
+#define EMACS_DISPTAB_H
+
+#include "lisp.h"
 
 #define DISP_TABLE_P(obj)						    \
   (CHAR_TABLE_P (obj)							    \
@@ -48,9 +53,6 @@ extern struct Lisp_Char_Table *window_display_table (struct window *);
 /* Defined in indent.c.  */
 extern struct Lisp_Char_Table *buffer_display_table (void);
 
-/* This is the `purpose' slot of a display table.  */
-extern Lisp_Object Qdisplay_table;
-
 /* Return the current length of the GLYPH table,
    or 0 if the table isn't currently valid.  */
 #define GLYPH_TABLE_LENGTH  \
@@ -80,7 +82,7 @@ extern Lisp_Object Qdisplay_table;
       SET_GLYPH_CHAR ((g), XINT ((base)[GLYPH_CHAR (g)]));	\
     if (!GLYPH_CHAR_VALID_P (g))				\
       SET_GLYPH_CHAR (g, ' ');					\
-  } while (0)
+  } while (false)
 
 /* Assuming that GLYPH_SIMPLE_P (BASE, LEN, G) is 0,
    return the length and the address of the character-sequence
@@ -95,3 +97,5 @@ extern Lisp_Object Qdisplay_table;
 
 #define SET_GLYPH_FROM_CHAR(glyph, c) \
   SET_GLYPH (glyph, c, DEFAULT_FACE_ID)
+
+#endif /* EMACS_DISPTAB_H */

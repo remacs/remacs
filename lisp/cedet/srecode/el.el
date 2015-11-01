@@ -1,6 +1,6 @@
 ;;; srecode/el.el --- Emacs Lisp specific arguments
 
-;; Copyright (C) 2008-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -50,7 +50,7 @@ Adds the following:
 (defun srecode-semantic-handle-:el-custom (dict)
   "Add macros into the dictionary DICT based on the current Emacs Lisp file.
 Adds the following:
-  GROUP - The 'defgroup' name we guess you want for variables.
+  GROUP - The `defgroup' name we guess you want for variables.
   FACEGROUP - The `defgroup' name you might want for faces."
   (require 'semantic/db-find)
   (let ((groups (semanticdb-strip-find-results

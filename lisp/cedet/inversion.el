@@ -1,6 +1,6 @@
 ;;; inversion.el --- When you need something in version XX.XX
 
-;;; Copyright (C) 2002-2003, 2005-2013 Free Software Foundation, Inc.
+;;; Copyright (C) 2002-2003, 2005-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Version: 1.3
@@ -230,8 +230,8 @@ string.	 INCOMPATIBLE-VERSION can be nil.
 RESERVED arguments are kept for a later use.
 Return:
 - nil if everything is ok.
-- 'outdated if VERSION is less than MINIMUM.
-- 'incompatible if VERSION is not backward compatible with MINIMUM.
+- `outdated' if VERSION is less than MINIMUM.
+- `incompatible' if VERSION is not backward compatible with MINIMUM.
 - t if the check failed."
   (let ((code (if (stringp version)
 		  (inversion-decode-version version)

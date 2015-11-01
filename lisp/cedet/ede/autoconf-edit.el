@@ -1,6 +1,6 @@
 ;;; ede/autoconf-edit.el --- Keymap for autoconf
 
-;; Copyright (C) 1998-2000, 2009-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2000, 2009-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: project
@@ -60,6 +60,7 @@ configure the initial configure script using `autoconf-new-automake-string'"
 
 (defvar autoconf-preferred-macro-order
   '("AC_INIT"
+    "AC_CONFIG_SRCDIR"
     "AM_INIT_AUTOMAKE"
     "AM_CONFIG_HEADER"
     ;; Arg parsing

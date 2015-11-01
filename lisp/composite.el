@@ -1,5 +1,7 @@
 ;;; composite.el --- support character composition
 
+;; Copyright (C) 2001-2015 Free Software Foundation, Inc.
+
 ;; Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
 ;;   2008, 2009, 2010, 2011
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
@@ -555,7 +557,11 @@ All non-spacing characters have this function in
 		 (rbearing (lglyph-rbearing glyph))
 		 (lbearing (lglyph-lbearing glyph))
 		 (center (/ (+ lbearing rbearing) 2))
+		 ;; Artificial vertical gap between the glyphs.
 		 (gap (round (* (font-get (lgstring-font gstring) :size) 0.1))))
+	    (if (= gap 0)
+		;; Assure at least 1 pixel vertical gap.
+		(setq gap 1))
 	    (dotimes (i nchars)
 	      (setq glyph (lgstring-glyph gstring i))
 	      (when (> i 0)
@@ -566,8 +572,10 @@ All non-spacing characters have this function in
 		       (as (lglyph-ascent glyph))
 		       (de (lglyph-descent glyph))
 		       (ce (/ (+ lb rb) 2))
+		       (w (lglyph-width glyph))
 		       xoff yoff)
-		  (when (and class (>= class 200) (<= class 240))
+		  (cond
+		   ((and class (>= class 200) (<= class 240))
 		    (setq xoff 0 yoff 0)
 		    (cond
 		     ((= class 200)
@@ -621,6 +629,38 @@ All non-spacing characters have this function in
 			  rb (+ lb xoff)
 			  as (- as yoff)
 			  de (+ de yoff)))
+		   ((and (= class 0)
+			 (eq (get-char-code-property (lglyph-char glyph)
+						     'general-category) 'Me))
+		    ;; Artificially laying out glyphs in an enclosing
+		    ;; mark is difficult.  All we can do is to adjust
+		    ;; the x-offset and width of the base glyph to
+		    ;; align it at the center of the glyph of the
+		    ;; enclosing mark hoping that the enclosing mark
+		    ;; is big enough.  We also have to adjust the
+		    ;; x-offset and width of the mark ifself properly
+		    ;; depending on how the glyph is designed.
+
+		    ;; (non-spacing or not).  For instance, when we
+		    ;; have these glyphs:
+		    ;;   X position  |
+		    ;;   base:       <-*-> lbearing=0 rbearing=5 width=5
+		    ;;   mark: <----------.> lb=-11 rb=2 w=0
+		    ;; we get a correct layout by moving them as this:
+		    ;;   base:           <-*-> XOFF=4 WAD=9
+		    ;;   mark:       <----------.> xoff=2 wad=4
+		    ;; we have moved the base to the left by 4-pixel
+		    ;; and make its width 9-pixel, then move the mark
+		    ;; to the left 2-pixel and make its width 4-pixel.
+		    (let* (;; Adjustment for the base glyph
+			   (XOFF (/ (- rb lb width) 2))
+			   (WAD (+ width XOFF))
+			   ;; Adjustment for the enclosing mark glyph
+			   (xoff (- (+ lb WAD)))
+			   (wad (- rb lb WAD)))
+		      (lglyph-set-adjustment glyph xoff 0 wad)
+		      (setq glyph (lgstring-glyph gstring 0))
+		      (lglyph-set-adjustment glyph XOFF 0 WAD))))
 		  (if (< ascent as)
 		      (setq ascent as))
 		  (if (< descent de)
@@ -631,13 +671,61 @@ All non-spacing characters have this function in
 	      (setq i (1+ i))))
 	  gstring))))))
 
-(let ((elt `([,(purecopy "\\c.\\c^+") 1 compose-gstring-for-graphic]
-	     [nil 0 compose-gstring-for-graphic])))
-  (map-char-table
-   #'(lambda (key val)
-       (if (memq val '(Mn Mc Me))
-	   (set-char-table-range composition-function-table key elt)))
-   unicode-category-table))
+(defun compose-gstring-for-dotted-circle (gstring)
+  (let* ((dc (lgstring-glyph gstring 0)) ; glyph of dotted-circle
+	 (dc-id (lglyph-code dc))
+	 (fc (lgstring-glyph gstring 1)) ; glyph of the following char
+	 (fc-id (lglyph-code fc))
+	 (gstr (and nil (font-shape-gstring gstring))))
+    (if (and gstr
+	     (or (= (lgstring-glyph-len gstr) 1)
+		 (and (= (lgstring-glyph-len gstr) 2)
+		      (= (lglyph-to (lgstring-glyph gstr 0))
+			 (lglyph-to (lgstring-glyph gstr 1))))))
+	;; It seems that font-shape-gstring has composed glyphs.
+	gstr
+      ;; Artificially compose the following glyph with the preceding
+      ;; dotted-circle.
+      (setq dc (lgstring-glyph gstring 0)
+	    fc (lgstring-glyph gstring 1))
+      (let ((dc-width (lglyph-width dc))
+	    (fc-width (- (lglyph-rbearing fc) (lglyph-lbearing fc)))
+	    (from (lglyph-from dc))
+	    (to (lglyph-to fc))
+	    (xoff 0) (yoff 0) (width 0))
+	(if (and (< (lglyph-descent fc) 0)
+		 (> (lglyph-ascent dc) (- (lglyph-descent fc))))
+	    ;; Set YOFF so that the following glyph is put on top of
+	    ;; the dotted-circle.
+	    (setq yoff (- (- (lglyph-descent fc)) (lglyph-ascent dc))))
+	(if (> (lglyph-width fc) 0)
+	    (setq xoff (- (lglyph-rbearing fc))))
+	(if (< dc-width fc-width)
+	    ;; The following glyph is wider, but we don't know how to
+	    ;; align both glyphs.  So, try the easiest method;
+	    ;; i.e. align left edges of the glyphs.
+	    (setq xoff (- xoff (- dc-width) (- (lglyph-lbearing fc )))
+		  width (- fc-width dc-width)))
+	(if (or (/= xoff 0) (/= yoff 0) (/= width 0) (/= (lglyph-width fc) 0))
+	    (lglyph-set-adjustment fc xoff yoff width))
+	(lglyph-set-from-to dc from to)
+	(lglyph-set-from-to fc from to))
+      (if (> (lgstring-glyph-len gstring) 2)
+	  (lgstring-set-glyph gstring 2 nil))
+      gstring)))
+
+;; Allow for bootstrapping without uni-*.el.
+(when unicode-category-table
+  (let ((elt `([,(purecopy "\\c.\\c^+") 1 compose-gstring-for-graphic]
+	       [nil 0 compose-gstring-for-graphic])))
+    (map-char-table
+     #'(lambda (key val)
+	 (if (memq val '(Mn Mc Me))
+	     (set-char-table-range composition-function-table key elt)))
+     unicode-category-table))
+  ;; for dotted-circle
+  (aset composition-function-table #x25CC
+	`([,(purecopy ".\\c^") 0 compose-gstring-for-dotted-circle])))
 
 (defun compose-gstring-for-terminal (gstring)
   "Compose glyph-string GSTRING for terminal display.

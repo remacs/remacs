@@ -1,6 +1,6 @@
 ;;; todo-mode.el --- major mode for editing TODO list files
 
-;; Copyright (C) 1997, 1999, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997, 1999, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Oliver Seidel <privat@os10000.net>
 ;; Maintainer: Stephen Berman <stephen.berman@gmx.net>
@@ -272,7 +272,7 @@
 
 This is useful in conjunction with `calendar' and `diary' if you use
 
-#include \"~/.todo-do\"
+#include \"~/.emacs.d/todo-do\"
 
 in your diary file to include your todo list file as part of your
 diary.  With the default value \"*/*\" the diary displays each entry
@@ -284,10 +284,12 @@ the diary file somewhat."
   :group 'todo)
 (defcustom todo-file-do    (locate-user-emacs-file "todo-do" ".todo-do")
   "TODO mode list file."
+  :version "24.4"                       ; added locate-user-emacs-file
   :type 'file
   :group 'todo)
 (defcustom todo-file-done  (locate-user-emacs-file "todo-done" ".todo-done")
   "TODO mode archive file."
+  :version "24.4"                       ; added locate-user-emacs-file
   :type 'file
   :group 'todo)
 (defcustom todo-mode-hook  nil
@@ -321,6 +323,7 @@ window."
 
 Not in TODO format, but diary compatible.
 Automatically generated when `todo-save-top-priorities' is non-nil."
+  :version "24.4"                       ; added locate-user-emacs-file
   :type 'string
   :group 'todo)
 
@@ -645,7 +648,7 @@ If point is on an empty line, insert the entry there."
     (forward-line (1- todo-previous-line))
     (let ((item (todo-item-string-start)))
       (setq todo-previous-answer
-            (y-or-n-p (concat "More important than '" item "'? ")))))
+            (y-or-n-p (format-message "More important than `%s'? " item)))))
   todo-previous-answer)
 (defalias 'todo-ask-p 'todo-more-important-p)
 
@@ -731,7 +734,7 @@ If point is on an empty line, insert the entry there."
 Number of entries for each category is given by NOF-PRIORITIES which
 defaults to `todo-show-priorities'.
 
-If CATEGORY-PR-PAGE is non-nil, a page separator \'^L\' is inserted
+If CATEGORY-PR-PAGE is non-nil, a page separator `^L' is inserted
 between each category.
 INTERACTIVE should be non-nil if this function is called interactively."
 
@@ -916,7 +919,7 @@ If INCLUDE-SEP is non-nil, return point after the separator."
                     ["Quit"                 todo-quit t]
                     ))
 
-;; As calendar reads .todo-do before todo-mode is loaded.
+;; As calendar reads todo-file-do before todo-mode is loaded.
 ;;;###autoload
 (define-derived-mode todo-mode nil "TODO"
   "Major mode for editing TODO lists."

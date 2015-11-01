@@ -1,6 +1,6 @@
 ;;; gnus-cus.el --- customization commands for Gnus
 
-;; Copyright (C) 1996, 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996, 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: news
@@ -33,7 +33,7 @@
 
 ;;; Widgets:
 
-(defun gnus-custom-mode ()
+(define-derived-mode gnus-custom-mode fundamental-mode "Gnus Customize"
   "Major mode for editing Gnus customization buffers.
 
 The following commands are available:
@@ -45,9 +45,6 @@ The following commands are available:
 
 Entry to this mode calls the value of `gnus-custom-mode-hook'
 if that value is non-nil."
-  (kill-all-local-variables)
-  (setq major-mode 'gnus-custom-mode
-	mode-name "Gnus Customize")
   (use-local-map widget-keymap)
   ;; Emacs stuff:
   (when (and (facep 'custom-button-face)
@@ -63,8 +60,7 @@ if that value is non-nil."
     (set (make-local-variable 'widget-push-button-prefix) "")
     (set (make-local-variable 'widget-push-button-suffix) "")
     (set (make-local-variable 'widget-link-prefix) "")
-    (set (make-local-variable 'widget-link-suffix) ""))
-  (gnus-run-mode-hooks 'gnus-custom-mode-hook))
+    (set (make-local-variable 'widget-link-suffix) "")))
 
 ;;; Group Customization:
 
@@ -276,7 +272,7 @@ DOC is a documentation string for the parameter.")
                (repeat (list (string :format "%v" :tag "File name"))))
        "Which score files to use when using score to select articles to fetch.
 
-    `nil'
+    nil
          All articles will be scored to zero (0).
 
     `file'
@@ -440,7 +436,7 @@ to the groups in this topic, then edit the value to suit your taste."
                                        :greedy t
                                        :tag "Agent Parameters"
                                        :format "%t:\n%h%v"
-                                       :doc "\ These agent parameters are
+                                       :doc "These agent parameters are
 recognized by Gnus.  They control article selection and expiration for
 use in the unplugged cache.  Check the [ ] for the parameters you want
 to apply to this group or to the groups in this topic, then edit the

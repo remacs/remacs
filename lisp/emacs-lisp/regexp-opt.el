@@ -1,9 +1,9 @@
 ;;; regexp-opt.el --- generate efficient regexps to match strings
 
-;; Copyright (C) 1994-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-2015 Free Software Foundation, Inc.
 
 ;; Author: Simon Marshall <simon@gnu.org>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: strings, regexps, extensions
 
 ;; This file is part of GNU Emacs.
@@ -92,7 +92,7 @@ is enclosed by at least one regexp grouping construct.
 The returned regexp is typically more efficient than the equivalent regexp:
 
  (let ((open (if PAREN \"\\\\(\" \"\")) (close (if PAREN \"\\\\)\" \"\")))
-   (concat open (mapconcat 'regexp-quote STRINGS \"\\\\|\") close))
+   (concat open (mapconcat \\='regexp-quote STRINGS \"\\\\|\") close))
 
 If PAREN is `words', then the resulting regexp is additionally surrounded
 by \\=\\< and \\>.
@@ -143,7 +143,7 @@ If LAX non-nil, don't output parentheses if it doesn't require them.
 Merges keywords to avoid backtracking in Emacs's regexp matcher."
   ;; The basic idea is to find the shortest common prefix or suffix, remove it
   ;; and recurse.  If there is no prefix, we divide the list into two so that
-  ;; \(at least) one half will have at least a one-character common prefix.
+  ;; (at least) one half will have at least a one-character common prefix.
 
   ;; Also we delay the addition of grouping parenthesis as long as possible
   ;; until we're sure we need them, and try to remove one-character sequences
@@ -205,9 +205,7 @@ Merges keywords to avoid backtracking in Emacs's regexp matcher."
 		      (regexp-opt-group suffixes t t)
 		      close-group))
 
-	  (let* ((sgnirts (mapcar (lambda (s)
-				    (concat (nreverse (string-to-list s))))
-				  strings))
+	  (let* ((sgnirts (mapcar #'reverse strings))
 		 (xiffus (try-completion "" sgnirts)))
 	    (if (> (length xiffus) 0)
 		;; common suffix: take it and recurse on the prefixes.
@@ -218,8 +216,7 @@ Merges keywords to avoid backtracking in Emacs's regexp matcher."
 			      'string-lessp)))
 		  (concat open-group
 			  (regexp-opt-group prefixes t t)
-			  (regexp-quote
-			   (concat (nreverse (string-to-list xiffus))))
+			  (regexp-quote (nreverse xiffus))
 			  close-group))
 
 	      ;; Otherwise, divide the list into those that start with a
@@ -285,7 +282,9 @@ CHARS should be a list of characters."
     ;;
     ;; Make sure a caret is not first and a dash is first or last.
     (if (and (string-equal charset "") (string-equal bracket ""))
-	(concat "[" dash caret "]")
+	(if (string-equal dash "")
+            "\\^"                       ; [^] is not a valid regexp
+          (concat "[" dash caret "]"))
       (concat "[" bracket charset caret dash "]"))))
 
 (provide 'regexp-opt)

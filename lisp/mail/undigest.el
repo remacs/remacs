@@ -1,9 +1,9 @@
 ;;; undigest.el --- digest-cracking support for the RMAIL mail reader
 
-;; Copyright (C) 1985-1986, 1994, 1996, 2001-2013 Free Software
+;; Copyright (C) 1985-1986, 1994, 1996, 2001-2015 Free Software
 ;; Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: mail
 
 ;; This file is part of GNU Emacs.
@@ -79,7 +79,7 @@ See rmail-digest-methods."
  (rmail-digest-rfc1153
   "^-\\{70\\}\n\n"
   "^\n-\\{30\\}\n\n"
-  "^\n-\\{30\\}\n\nEnd of .* Digest.*\n\\*\\{15,\\}\n+\'"))
+  "^\n-\\{30\\}\n\nEnd of .* Digest.*\n\\*\\{15,\\}\n+\\'"))
 
 (defun rmail-digest-parse-rfc1153sloppy ()
   "Parse using the method defined in RFC 1153, allowing for some sloppiness.

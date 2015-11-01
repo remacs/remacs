@@ -1,0 +1,50 @@
+# Attributes of Emacs files in the Git repository.
+
+# Copyright 2015 Free Software Foundation, Inc.
+
+# This file is part of GNU Emacs.
+
+# GNU Emacs is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# GNU Emacs is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+
+# A few files use CRLF endings, even on non-Microsoft platforms.
+# Do not warn about trailing whitespace with these files.
+*.bat whitespace=cr-at-eol
+admin/charsets/mapfiles/PTCP154 whitespace=cr-at-eol
+leim/MISC-DIC/cangjie-table.b5 whitespace=cr-at-eol
+leim/MISC-DIC/cangjie-table.cns whitespace=cr-at-eol
+leim/MISC-DIC/pinyin.map whitespace=cr-at-eol
+lib-src/update-game-score.exe.manifest whitespace=cr-at-eol
+nt/nmake.defs whitespace=cr-at-eol
+test/etags/c-src/dostorture.c whitespace=cr-at-eol
+test/etags/cp-src/c.C whitespace=cr-at-eol
+test/etags/html-src/algrthms.html whitespace=cr-at-eol
+
+# The upstream maintainer does not want to remove trailing whitespace.
+doc/misc/texinfo.tex -whitespace=blank-at-eol
+
+# Some files should not be treated as text when diffing or merging.
+*.gpg binary
+*.gz binary
+*.icns binary
+*.ico binary
+*.pbm binary
+*.pdf binary
+*.png binary
+*.sig binary
+*.tiff binary
+etc/e/eterm-color binary
+
+# Hooks for non-default diff hunk headers; see autogen.sh.
+*.el diff=elisp
+*.texi diff=texinfo

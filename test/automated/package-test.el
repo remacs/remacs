@@ -1,6 +1,6 @@
 ;;; package-test.el --- Tests for the Emacs package system
 
-;; Copyright (C) 2013 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2015 Free Software Foundation, Inc.
 
 ;; Author: Daniel Hackney <dan@haxney.org>
 ;; Version: 1.0
@@ -36,6 +36,8 @@
 (require 'ert)
 (require 'cl-lib)
 
+(setq package-menu-async nil)
+
 (defvar package-test-user-dir nil
   "Directory to use for installing packages during testing.")
 
@@ -47,29 +49,28 @@
   (package-desc-create :name 'simple-single
                        :version '(1 3)
                        :summary "A single-file package with no dependencies"
-                       :kind 'single)
+                       :kind 'single
+                       :extras '((:authors ("J. R. Hacker" . "jrh@example.com"))
+                                 (:maintainer "J. R. Hacker" . "jrh@example.com")
+                                 (:url . "http://doodles.au")))
   "Expected `package-desc' parsed from simple-single-1.3.el.")
-
-(defvar simple-single-desc-1-4
-  (package-desc-create :name 'simple-single
-                       :version '(1 4)
-                       :summary "A single-file package with no dependencies"
-                       :kind 'single)
-  "Expected `package-desc' parsed from simple-single-1.4.el.")
 
 (defvar simple-depend-desc
   (package-desc-create :name 'simple-depend
                        :version '(1 0)
                        :summary "A single-file package with a dependency."
                        :kind 'single
-                       :reqs '((simple-single (1 3))))
+                       :reqs '((simple-single (1 3)))
+                       :extras '((:authors ("J. R. Hacker" . "jrh@example.com"))
+                                 (:maintainer "J. R. Hacker" . "jrh@example.com")))
   "Expected `package-desc' parsed from simple-depend-1.0.el.")
 
 (defvar multi-file-desc
   (package-desc-create :name 'multi-file
                        :version '(0 2 3)
                        :summary "Example of a multi-file tar package"
-                       :kind 'tar)
+                       :kind 'tar
+                       :extras '((:url . "http://puddles.li")))
   "Expected `package-desc' from \"multi-file-0.2.3.tar\".")
 
 (defvar new-pkg-desc
@@ -77,6 +78,24 @@
                        :version '(1 0)
                        :kind 'single)
   "Expected `package-desc' parsed from new-pkg-1.0.el.")
+
+(defvar simple-depend-desc-1
+  (package-desc-create :name 'simple-depend-1
+                       :version '(1 0)
+                       :summary "A single-file package with a dependency."
+                       :kind 'single
+                       :reqs '((simple-depend (1 0))
+                               (multi-file (0 1))))
+  "`package-desc' used for testing dependencies.")
+
+(defvar simple-depend-desc-2
+  (package-desc-create :name 'simple-depend-2
+                       :version '(1 0)
+                       :summary "A single-file package with a dependency."
+                       :kind 'single
+                       :reqs '((simple-depend-1 (1 0))
+                               (multi-file (0 1))))
+  "`package-desc' used for testing dependencies.")
 
 (defvar package-test-data-dir (expand-file-name "data/package" package-test-file-dir)
   "Base directory of package test files.")
@@ -88,16 +107,19 @@
 (cl-defmacro with-package-test ((&optional &key file
                                            basedir
                                            install
+                                           location
                                            update-news
                                            upload-base)
                                 &rest body)
   "Set up temporary locations and variables for testing."
   (declare (indent 1))
   `(let* ((package-test-user-dir (make-temp-file "pkg-test-user-dir-" t))
+          (process-environment (cons (format "HOME=%s" package-test-user-dir)
+                                     process-environment))
           (package-user-dir package-test-user-dir)
-          (package-archives `(("gnu" . ,package-test-data-dir)))
-          (old-yes-no-defn (symbol-function 'yes-or-no-p))
-          (old-pwd default-directory)
+          (package-archives `(("gnu" . ,(or ,location package-test-data-dir))))
+          (default-directory package-test-file-dir)
+          abbreviated-home-dir
           package--initialized
           package-alist
           ,@(if update-news
@@ -106,30 +128,32 @@
           ,@(if upload-base
                 '((package-test-archive-upload-base (make-temp-file "pkg-archive-base-" t))
                   (package-archive-upload-base package-test-archive-upload-base))
-              (list (cl-gensym)))) ;; Dummy value so `let' doesn't try to bind `nil'
+              (list (cl-gensym)))) ;; Dummy value so `let' doesn't try to bind nil
+     (let ((buf (get-buffer "*Packages*")))
+       (when (buffer-live-p buf)
+         (kill-buffer buf)))
      (unwind-protect
          (progn
            ,(if basedir `(cd ,basedir))
-           (setf (symbol-function 'yes-or-no-p) #'(lambda (&rest r) t))
            (unless (file-directory-p package-user-dir)
              (mkdir package-user-dir))
-           ,@(when install
-               `((package-initialize)
-                 (package-refresh-contents)
-                 (mapc 'package-install ,install)))
-           (with-temp-buffer
-             ,(if file
-                  `(insert-file-contents ,file))
-             ,@body))
+           (cl-letf (((symbol-function 'yes-or-no-p) (lambda (&rest r) t))
+                     ((symbol-function 'y-or-n-p)    (lambda (&rest r) t)))
+             ,@(when install
+                 `((package-initialize)
+                   (package-refresh-contents)
+                   (mapc 'package-install ,install)))
+             (with-temp-buffer
+               ,(if file
+                    `(insert-file-contents ,file))
+               ,@body)))
 
        (when (file-directory-p package-test-user-dir)
          (delete-directory package-test-user-dir t))
 
        (when (and (boundp 'package-test-archive-upload-base)
                   (file-directory-p package-test-archive-upload-base))
-         (delete-directory package-test-archive-upload-base t))
-       (setf (symbol-function 'yes-or-no-p) old-yes-no-defn)
-       (cd old-pwd))))
+         (delete-directory package-test-archive-upload-base t)))))
 
 (defmacro with-fake-help-buffer (&rest body)
   "Execute BODY in a temp buffer which is treated as the \"*Help*\" buffer."
@@ -181,6 +205,12 @@ Must called from within a `tar-mode' buffer."
     (should (package-install-from-buffer))
     (package-initialize)
     (should (package-installed-p 'simple-single))
+    ;; Check if we properly report an "already installed".
+    (package-install 'simple-single)
+    (with-current-buffer "*Messages*"
+      (should (string-match "^[`‘']simple-single[’'] is already installed\n?\\'"
+                            (buffer-string))))
+    (should (package-installed-p 'simple-single))
     (let* ((simple-pkg-dir (file-name-as-directory
                             (expand-file-name
                              "simple-single-1.3"
@@ -192,9 +222,14 @@ Must called from within a `tar-mode' buffer."
         (insert-file-contents (expand-file-name "simple-single-pkg.el"
                                                 simple-pkg-dir))
         (should (string= (buffer-string)
-                         (concat "(define-package \"simple-single\" \"1.3\" "
+                         (concat ";;; -*- no-byte-compile: t -*-\n"
+                                 "(define-package \"simple-single\" \"1.3\" "
                                  "\"A single-file package "
-                                 "with no dependencies\" 'nil)\n"))))
+                                 "with no dependencies\" 'nil "
+                                 ":authors '((\"J. R. Hacker\" . \"jrh@example.com\")) "
+                                 ":maintainer '(\"J. R. Hacker\" . \"jrh@example.com\") "
+                                 ":url \"http://doodles.au\""
+                                 ")\n"))))
       (should (file-exists-p autoloads-file))
       (should-not (get-file-buffer autoloads-file)))))
 
@@ -207,12 +242,22 @@ Must called from within a `tar-mode' buffer."
     (should (package-installed-p 'simple-single))
     (should (package-installed-p 'simple-depend))))
 
+(ert-deftest package-test-install-two-dependencies ()
+  "Install a package which includes a dependency."
+  (with-package-test ()
+    (package-initialize)
+    (package-refresh-contents)
+    (package-install 'simple-two-depend)
+    (should (package-installed-p 'simple-single))
+    (should (package-installed-p 'simple-depend))
+    (should (package-installed-p 'simple-two-depend))))
+
 (ert-deftest package-test-refresh-contents ()
   "Parse an \"archive-contents\" file."
   (with-package-test ()
     (package-initialize)
     (package-refresh-contents)
-    (should (eq 3 (length package-archive-contents)))))
+    (should (eq 4 (length package-archive-contents)))))
 
 (ert-deftest package-test-install-single-from-archive ()
   "Install a single package from a package archive."
@@ -220,6 +265,23 @@ Must called from within a `tar-mode' buffer."
     (package-initialize)
     (package-refresh-contents)
     (package-install 'simple-single)))
+
+(ert-deftest package-test-install-prioritized ()
+  "Install a lower version from a higher-prioritized archive."
+  (with-package-test ()
+    (let* ((newer-version (expand-file-name "data/package/newer-versions"
+                                            package-test-file-dir))
+           (package-archives `(("older" . ,package-test-data-dir)
+                               ("newer" . ,newer-version)))
+           (package-archive-priorities '(("older" . 100))))
+
+      (package-initialize)
+      (package-refresh-contents)
+      (package-install 'simple-single)
+
+      (let ((installed (cadr (assq 'simple-single package-alist))))
+        (should (version-list-= '(1 3)
+                                (package-desc-version installed)))))))
 
 (ert-deftest package-test-install-multifile ()
   "Check properties of the installed multi-file package."
@@ -255,6 +317,7 @@ Must called from within a `tar-mode' buffer."
       (search-forward-regexp "^ +simple-single")
       (package-menu-mark-install)
       (package-menu-execute)
+      (run-hooks 'post-command-hook)
       (should (package-installed-p 'simple-single))
       (switch-to-buffer "*Packages*")
       (goto-char (point-min))
@@ -279,7 +342,7 @@ Must called from within a `tar-mode' buffer."
 
         ;; New version should be available and old version should be installed
         (goto-char (point-min))
-        (should (re-search-forward "^\\s-+simple-single\\s-+1.4\\s-+new" nil t))
+        (should (re-search-forward "^\\s-+simple-single\\s-+1.4\\s-+available" nil t))
         (should (re-search-forward "^\\s-+simple-single\\s-+1.3\\s-+installed" nil t))
 
         (goto-char (point-min))
@@ -290,6 +353,37 @@ Must called from within a `tar-mode' buffer."
         (package-menu-refresh)
         (should (package-installed-p 'simple-single '(1 4)))))))
 
+(ert-deftest package-test-update-archives-async ()
+  "Test updating package archives asynchronously."
+  (skip-unless (executable-find "python2"))
+  ;; For some reason this test doesn't work reliably on hydra.nixos.org.
+  (skip-unless (not (getenv "NIX_STORE")))
+  (with-package-test (:basedir
+                      package-test-data-dir
+                      :location "http://0.0.0.0:8000/")
+    (let* ((package-menu-async t)
+           (process (start-process
+                     "package-server" "package-server-buffer"
+                     (executable-find "python2")
+                     (expand-file-name "package-test-server.py"))))
+      (unwind-protect
+          (progn
+            (list-packages)
+            (should package--downloads-in-progress)
+            (should mode-line-process)
+            (should-not
+             (with-timeout (10 'timeout)
+               (while package--downloads-in-progress
+                 (accept-process-output nil 1))
+               nil))
+            ;; If the server process died, there's some non-Emacs problem.
+            ;; Eg maybe the port was already in use.
+            (skip-unless (process-live-p process))
+            (goto-char (point-min))
+            (should
+             (search-forward-regexp "^ +simple-single" nil t)))
+        (if (process-live-p process) (kill-process process))))))
+
 (ert-deftest package-test-describe-package ()
   "Test displaying help for a package."
 
@@ -299,8 +393,9 @@ Must called from within a `tar-mode' buffer."
    (describe-package '5x5)
    (goto-char (point-min))
    (should (search-forward "5x5 is a built-in package." nil t))
-   (should (search-forward "Status: Built-in." nil t))
-   (should (search-forward "Summary: simple little puzzle game" nil t))
+   ;; Don't assume the descriptions are in any particular order.
+   (save-excursion (should (search-forward "Status: Built-in." nil t)))
+   (save-excursion (should (search-forward "Summary: simple little puzzle game" nil t)))
    (should (search-forward "The aim of 5x5" nil t)))
 
   ;; Installed
@@ -312,29 +407,15 @@ Must called from within a `tar-mode' buffer."
      (describe-package 'simple-single)
      (goto-char (point-min))
      (should (search-forward "simple-single is an installed package." nil t))
-     (should (search-forward
-              (format "Status: Installed in `%s/'."
-                      (expand-file-name "simple-single-1.3" package-user-dir))
-              nil t))
-     (should (search-forward "Version: 1.3" nil t))
-     (should (search-forward "Summary: A single-file package with no dependencies"
-                             nil t))
+     (save-excursion (should (re-search-forward "Status: Installed in ['`‘]simple-single-1.3/['’] (unsigned)." nil t)))
+     (save-excursion (should (search-forward "Version: 1.3" nil t)))
+     (save-excursion (should (search-forward "Summary: A single-file package with no dependencies" nil t)))
+     (save-excursion (should (search-forward "Homepage: http://doodles.au" nil t)))
+     (save-excursion (should (re-search-forward "Keywords: \\[?frobnicate\\]?" nil t)))
      ;; No description, though. Because at this point we don't know
      ;; what archive the package originated from, and we don't have
      ;; its readme file saved.
      )))
-
-(ert-deftest package-test-describe-not-installed-package ()
-  "Test displaying of the readme for not-installed package."
-
-  (with-package-test ()
-    (package-initialize)
-    (package-refresh-contents)
-    (with-fake-help-buffer
-     (describe-package 'simple-single)
-     (goto-char (point-min))
-     (should (search-forward "This package provides a minor mode to frobnicate"
-                             nil t)))))
 
 (ert-deftest package-test-describe-non-installed-package ()
   "Test displaying of the readme for non-installed package."
@@ -345,6 +426,7 @@ Must called from within a `tar-mode' buffer."
     (with-fake-help-buffer
      (describe-package 'simple-single)
      (goto-char (point-min))
+     (should (search-forward "Homepage: http://doodles.au" nil t))
      (should (search-forward "This package provides a minor mode to frobnicate"
                              nil t)))))
 
@@ -357,8 +439,172 @@ Must called from within a `tar-mode' buffer."
     (with-fake-help-buffer
      (describe-package 'multi-file)
      (goto-char (point-min))
+     (should (search-forward "Homepage: http://puddles.li" nil t))
      (should (search-forward "This is a bare-bones readme file for the multi-file"
                              nil t)))))
+
+(ert-deftest package-test-signed ()
+  "Test verifying package signature."
+  (skip-unless (ignore-errors
+		 (let ((homedir (make-temp-file "package-test" t)))
+		   (unwind-protect
+		       (let ((process-environment
+			      (cons (format "HOME=%s" homedir)
+				    process-environment)))
+			 (epg-check-configuration (epg-configuration))
+			 t)
+		     (delete-directory homedir t)))))
+  (let* ((keyring (expand-file-name "key.pub" package-test-data-dir))
+	 (package-test-data-dir
+	   (expand-file-name "data/package/signed" package-test-file-dir)))
+    (with-package-test ()
+      (package-initialize)
+      (package-import-keyring keyring)
+      (package-refresh-contents)
+      (should (package-install 'signed-good))
+      (should-error (package-install 'signed-bad))
+      ;; Check if the installed package status is updated.
+      (let ((buf (package-list-packages)))
+	(package-menu-refresh)
+	(should (re-search-forward
+		 "^\\s-+signed-good\\s-+\\(\\S-+\\)\\s-+\\(\\S-+\\)\\s-"
+		 nil t))
+	(should (string-equal (match-string-no-properties 1) "1.0"))
+	(should (string-equal (match-string-no-properties 2) "installed")))
+      ;; Check if the package description is updated.
+      (with-fake-help-buffer
+       (describe-package 'signed-good)
+       (goto-char (point-min))
+       (should (re-search-forward "signed-good is an? \\(\\S-+\\) package." nil t))
+       (should (string-equal (match-string-no-properties 1) "installed"))
+       (should (re-search-forward
+		"Status: Installed in ['`‘]signed-good-1.0/['’]."
+		nil t))))))
+
+
+
+;;; Tests for package-x features.
+
+(require 'package-x)
+
+(defvar package-x-test--single-archive-entry-1-3
+  (cons 'simple-single
+        (package-make-ac-desc '(1 3) nil
+                              "A single-file package with no dependencies"
+                              'single
+                              '((:authors ("J. R. Hacker" . "jrh@example.com"))
+                                (:maintainer "J. R. Hacker" . "jrh@example.com")
+                                (:url . "http://doodles.au"))))
+  "Expected contents of the archive entry from the \"simple-single\" package.")
+
+(defvar package-x-test--single-archive-entry-1-4
+  (cons 'simple-single
+        (package-make-ac-desc '(1 4) nil
+                              "A single-file package with no dependencies"
+                              'single
+                              '((:authors ("J. R. Hacker" . "jrh@example.com"))
+                                (:maintainer "J. R. Hacker" . "jrh@example.com"))))
+  "Expected contents of the archive entry from the updated \"simple-single\" package.")
+
+(ert-deftest package-x-test-upload-buffer ()
+  "Test creating an \"archive-contents\" file"
+  (with-package-test (:basedir "data/package"
+                               :file "simple-single-1.3.el"
+                               :upload-base t)
+    (package-upload-buffer)
+    (should (file-exists-p (expand-file-name "archive-contents"
+                                             package-archive-upload-base)))
+    (should (file-exists-p (expand-file-name "simple-single-1.3.el"
+                                             package-archive-upload-base)))
+    (should (file-exists-p (expand-file-name "simple-single-readme.txt"
+                                             package-archive-upload-base)))
+
+    (let (archive-contents)
+      (with-temp-buffer
+        (insert-file-contents
+         (expand-file-name "archive-contents"
+                           package-archive-upload-base))
+        (setq archive-contents
+              (package-read-from-string
+               (buffer-substring (point-min) (point-max)))))
+      (should (equal archive-contents
+                     (list 1 package-x-test--single-archive-entry-1-3))))))
+
+(ert-deftest package-x-test-upload-new-version ()
+  "Test uploading a new version of a package"
+  (with-package-test (:basedir "data/package"
+                               :file "simple-single-1.3.el"
+                               :upload-base t)
+    (package-upload-buffer)
+    (with-temp-buffer
+      (insert-file-contents "newer-versions/simple-single-1.4.el")
+      (package-upload-buffer))
+
+    (let (archive-contents)
+      (with-temp-buffer
+        (insert-file-contents
+         (expand-file-name "archive-contents"
+                           package-archive-upload-base))
+        (setq archive-contents
+              (package-read-from-string
+               (buffer-substring (point-min) (point-max)))))
+      (should (equal archive-contents
+                     (list 1 package-x-test--single-archive-entry-1-4))))))
+
+(ert-deftest package-test-get-deps ()
+  "Test `package--get-deps' with complex structures."
+  (let ((package-alist
+         (mapcar (lambda (p) (list (package-desc-name p) p))
+           (list simple-single-desc
+                 simple-depend-desc
+                 multi-file-desc
+                 new-pkg-desc
+                 simple-depend-desc-1
+                 simple-depend-desc-2))))
+    (should
+     (equal (package--get-deps 'simple-depend)
+            '(simple-single)))
+    (should
+     (equal (package--get-deps 'simple-depend 'indirect)
+            nil))
+    (should
+     (equal (package--get-deps 'simple-depend 'direct)
+            '(simple-single)))
+    (should
+     (equal (package--get-deps 'simple-depend-2)
+            '(simple-depend-1 multi-file simple-depend simple-single)))
+    (should
+     (equal (package--get-deps 'simple-depend-2 'indirect)
+            '(simple-depend multi-file simple-single)))
+    (should
+     (equal (package--get-deps 'simple-depend-2 'direct)
+            '(simple-depend-1 multi-file)))))
+
+(ert-deftest package-test-sort-by-dependence ()
+  "Test `package--sort-by-dependence' with complex structures."
+  (let ((package-alist
+         (mapcar (lambda (p) (list (package-desc-name p) p))
+           (list simple-single-desc
+                 simple-depend-desc
+                 multi-file-desc
+                 new-pkg-desc
+                 simple-depend-desc-1
+                 simple-depend-desc-2)))
+        (delete-list
+         (list simple-single-desc
+               simple-depend-desc
+               multi-file-desc
+               new-pkg-desc
+               simple-depend-desc-1
+               simple-depend-desc-2)))
+    (should
+     (equal (package--sort-by-dependence delete-list)
+            (list simple-depend-desc-2 simple-depend-desc-1 new-pkg-desc
+                  multi-file-desc simple-depend-desc simple-single-desc)))
+    (should
+     (equal (package--sort-by-dependence (reverse delete-list))
+            (list new-pkg-desc simple-depend-desc-2 simple-depend-desc-1
+                  multi-file-desc simple-depend-desc simple-single-desc)))))
 
 (provide 'package-test)
 

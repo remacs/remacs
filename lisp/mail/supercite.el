@@ -1,10 +1,10 @@
 ;;; supercite.el --- minor mode for citing mail and news replies
 
-;; Copyright (C) 1993, 1997, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1993, 1997, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: 1993 Barry A. Warsaw <bwarsaw@python.org>
-;; Maintainer:    Glenn Morris <rgm@gnu.org>
-;; Created:       February 1993
+;; Maintainer: emacs-devel@gnu.org
+;; Created: February 1993
 ;; Keywords: mail, news
 
 ;; This file is part of GNU Emacs.
@@ -886,10 +886,10 @@ Action can be one of: View, Modify, Add, or Delete."
 
 (defun sc-attribs-%@-addresses (from &optional delim)
   "Extract the author's email terminus from email address FROM.
-Match addresses of the style ``name%[stuff].'' when called with DELIM
-of \"%\" and addresses of the style ``[stuff]name@[stuff]'' when
+Match addresses of the style \"name%[stuff].\" when called with DELIM
+of \"%\" and addresses of the style \"[stuff]name@[stuff]\" when
 called with DELIM \"@\".  If DELIM is nil or not provided, matches
-addresses of the style ``name''."
+addresses of the style \"name\"."
   (and (string-match (concat "[-[:alnum:]_.]+" delim) from 0)
        (substring from
 		  (match-beginning 0)
@@ -897,7 +897,7 @@ addresses of the style ``name''."
 
 (defun sc-attribs-!-addresses (from)
   "Extract the author's email terminus from email address FROM.
-Match addresses of the style ``[stuff]![stuff]...!name[stuff].''"
+Match addresses of the style \"[stuff]![stuff]...!name[stuff].\""
   (let ((eos (length from))
 	(mstart (string-match "![-[:alnum:]_.]+\\([^-![:alnum:]_.]\\|$\\)"
 			      from 0))
@@ -907,7 +907,7 @@ Match addresses of the style ``[stuff]![stuff]...!name[stuff].''"
 
 (defun sc-attribs-<>-addresses (from)
   "Extract the author's email terminus from email address FROM.
-Match addresses of the style ``<name[stuff]>.''"
+Match addresses of the style \"<name[stuff]>.\""
   (and (string-match "<\\(.*\\)>" from)
        (match-string 1 from)))
 

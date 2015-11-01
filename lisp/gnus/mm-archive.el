@@ -1,6 +1,6 @@
 ;;; mm-archive.el --- Functions for parsing archive files as MIME
 
-;; Copyright (C) 2012-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; This file is part of GNU Emacs.
@@ -23,9 +23,8 @@
 ;;; Code:
 
 (require 'mm-decode)
-(eval-when-compile
-  (autoload 'gnus-recursive-directory-files "gnus-util")
-  (autoload 'mailcap-extension-to-mime "mailcap"))
+(autoload 'gnus-recursive-directory-files "gnus-util")
+(autoload 'mailcap-extension-to-mime "mailcap")
 
 (defvar mm-archive-decoders
   '(("application/ms-tnef" t "tnef" "-f" "-" "-C")

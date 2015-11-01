@@ -1,6 +1,6 @@
-/* Record indices of function doc strings stored in a file.
+/* Record indices of function doc strings stored in a file. -*- coding: utf-8 -*-
 
-Copyright (C) 1985-1986, 1993-1995, 1997-2013 Free Software Foundation,
+Copyright (C) 1985-1986, 1993-1995, 1997-2015 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -31,17 +31,18 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "lisp.h"
 #include "character.h"
+#include "coding.h"
 #include "buffer.h"
-#include "keyboard.h"
+#include "disptab.h"
 #include "keymap.h"
-
-Lisp_Object Qfunction_documentation;
 
 /* Buffer used for reading from documentation file.  */
 static char *get_doc_string_buffer;
 static ptrdiff_t get_doc_string_buffer_size;
 
 static unsigned char *read_bytecode_pointer;
+
+static char const sibling_etc[] = "../etc/";
 
 /* `readchar' in lread.c calls back here to fetch the next byte.
    If UNREADFLAG is 1, we unread a byte.  */
@@ -81,7 +82,6 @@ get_doc_string (Lisp_Object filepos, bool unibyte, bool definition)
 {
   char *from, *to, *name, *p, *p1;
   int fd;
-  ptrdiff_t minsize;
   int offset;
   EMACS_INT position;
   Lisp_Object file, tem, pos;
@@ -114,21 +114,14 @@ get_doc_string (Lisp_Object filepos, bool unibyte, bool definition)
 
   tem = Ffile_name_absolute_p (file);
   file = ENCODE_FILE (file);
-  if (NILP (tem))
-    {
-      Lisp_Object docdir = ENCODE_FILE (Vdoc_directory);
-      minsize = SCHARS (docdir);
-      /* sizeof ("../etc/") == 8 */
-      if (minsize < 8)
-	minsize = 8;
-      name = SAFE_ALLOCA (minsize + SCHARS (file) + 8);
-      strcpy (name, SSDATA (docdir));
-      strcat (name, SSDATA (file));
-    }
-  else
-    {
-      name = SSDATA (file);
-    }
+  Lisp_Object docdir
+    = NILP (tem) ? ENCODE_FILE (Vdoc_directory) : empty_unibyte_string;
+  ptrdiff_t docdir_sizemax = SBYTES (docdir) + 1;
+#ifndef CANNOT_DUMP
+  docdir_sizemax = max (docdir_sizemax, sizeof sibling_etc);
+#endif
+  name = SAFE_ALLOCA (docdir_sizemax + SBYTES (file));
+  lispstpcpy (lispstpcpy (name, docdir), file);
 
   fd = emacs_open (name, O_RDONLY, 0);
   if (fd < 0)
@@ -138,8 +131,7 @@ get_doc_string (Lisp_Object filepos, bool unibyte, bool definition)
 	{
 	  /* Preparing to dump; DOC file is probably not installed.
 	     So check in ../etc.  */
-	  strcpy (name, "../etc/");
-	  strcat (name, SSDATA (file));
+	  lispstpcpy (stpcpy (name, sibling_etc), file);
 
 	  fd = emacs_open (name, O_RDONLY, 0);
 	}
@@ -147,8 +139,9 @@ get_doc_string (Lisp_Object filepos, bool unibyte, bool definition)
       if (fd < 0)
 	{
 	  SAFE_FREE ();
-	  return concat3 (build_string ("Cannot open doc string file \""),
-			  file, build_string ("\"\n"));
+	  AUTO_STRING (cannot_open, "Cannot open doc string file \"");
+	  AUTO_STRING (quote_nl, "\"\n");
+	  return concat3 (cannot_open, file, quote_nl);
 	}
     }
   count = SPECPDL_INDEX ();
@@ -307,19 +300,6 @@ read_doc_string (Lisp_Object filepos)
 static bool
 reread_doc_file (Lisp_Object file)
 {
-#if 0
-  Lisp_Object reply, prompt[3];
-  struct gcpro gcpro1;
-  GCPRO1 (file);
-  prompt[0] = build_string ("File ");
-  prompt[1] = NILP (file) ? Vdoc_file_name : file;
-  prompt[2] = build_string (" is out of sync.  Reload? ");
-  reply = Fy_or_n_p (Fconcat (3, prompt));
-  UNGCPRO;
-  if (NILP (reply))
-    return 0;
-#endif
-
   if (NILP (file))
     Fsnarf_documentation (Vdoc_file_name);
   else
@@ -416,21 +396,6 @@ string is passed through `substitute-command-keys'.  */)
       xsignal1 (Qinvalid_function, fun);
     }
 
-  /* Check for a dynamic docstring.  These come with
-     a dynamic-docstring-function text property.  */
-  if (STRINGP (doc))
-    {
-      Lisp_Object func
-	= Fget_text_property (make_number (0),
-			      intern ("dynamic-docstring-function"),
-				      doc);
-      if (!NILP (func))
-	/* Pass both `doc' and `function' since `function' can be needed, and
-	   finding `doc' can be annoying: calling `documentation' is not an
-	   option because it would infloop.  */
-	doc = call2 (func, doc, function);
-    }
-
   /* If DOC is 0, it's typically because of a dumped file missing
      from the DOC file (bug in src/Makefile.in).  */
   if (EQ (doc, make_number (0)))
@@ -442,10 +407,7 @@ string is passed through `substitute-command-keys'.  */)
       if (NILP (tem) && try_reload)
 	{
 	  /* The file is newer, we need to reset the pointers.  */
-	  struct gcpro gcpro1, gcpro2;
-	  GCPRO2 (function, raw);
 	  try_reload = reread_doc_file (Fcar_safe (doc));
-	  UNGCPRO;
 	  if (try_reload)
 	    {
 	      try_reload = 0;
@@ -487,10 +449,7 @@ aren't strings.  */)
       if (NILP (tem) && try_reload)
 	{
 	  /* The file is newer, we need to reset the pointers.  */
-	  struct gcpro gcpro1, gcpro2, gcpro3;
-	  GCPRO3 (symbol, prop, raw);
 	  try_reload = reread_doc_file (Fcar_safe (doc));
-	  UNGCPRO;
 	  if (try_reload)
 	    {
 	      try_reload = 0;
@@ -551,6 +510,14 @@ store_function_docstring (Lisp_Object obj, ptrdiff_t offset)
 	 docstring, since we've found a docstring for it.  */
       if ((ASIZE (fun) & PSEUDOVECTOR_SIZE_MASK) > COMPILED_DOC_STRING)
 	ASET (fun, COMPILED_DOC_STRING, make_number (offset));
+      else
+	{
+	  AUTO_STRING (format, "No docstring slot for %s");
+	  CALLN (Fmessage, format,
+		 (SYMBOLP (obj)
+		  ? SYMBOL_NAME (obj)
+		  : build_string ("<anonymous>")));
+	}
     }
 }
 
@@ -574,6 +541,14 @@ the same file name is found in the `doc-directory'.  */)
   char *p, *name;
   bool skip_file = 0;
   ptrdiff_t count;
+  char const *dirname;
+  ptrdiff_t dirlen;
+  /* Preloaded defcustoms using custom-initialize-delay are added to
+     this list, but kept unbound.  See http://debbugs.gnu.org/11565  */
+  Lisp_Object delayed_init =
+    find_symbol_value (intern ("custom-delayed-init-variables"));
+
+  if (EQ (delayed_init, Qunbound)) delayed_init = Qnil;
 
   CHECK_STRING (filename);
 
@@ -584,16 +559,20 @@ the same file name is found in the `doc-directory'.  */)
       (0)
 #endif /* CANNOT_DUMP */
     {
-      name = alloca (SCHARS (filename) + 14);
-      strcpy (name, "../etc/");
+      dirname = sibling_etc;
+      dirlen = sizeof sibling_etc - 1;
     }
   else
     {
       CHECK_STRING (Vdoc_directory);
-      name = alloca (SCHARS (filename) + SCHARS (Vdoc_directory) + 1);
-      strcpy (name, SSDATA (Vdoc_directory));
+      dirname = SSDATA (Vdoc_directory);
+      dirlen = SBYTES (Vdoc_directory);
     }
-  strcat (name, SSDATA (filename)); 	/*** Add this line ***/
+
+  count = SPECPDL_INDEX ();
+  USE_SAFE_ALLOCA;
+  name = SAFE_ALLOCA (dirlen + SBYTES (filename) + 1);
+  lispstpcpy (stpcpy (name, dirname), filename); 	/*** Add this line ***/
 
   /* Vbuild_files is nil when temacs is run, and non-nil after that.  */
   if (NILP (Vbuild_files))
@@ -602,7 +581,7 @@ the same file name is found in the `doc-directory'.  */)
 	{
 	  #include "buildobj.h"
 	};
-      int i = sizeof buildobj / sizeof *buildobj;
+      int i = ARRAYELTS (buildobj);
       while (0 <= --i)
 	Vbuild_files = Fcons (build_string (buildobj[i]), Vbuild_files);
       Vbuild_files = Fpurecopy (Vbuild_files);
@@ -615,7 +594,6 @@ the same file name is found in the `doc-directory'.  */)
       report_file_errno ("Opening doc string file", build_string (name),
 			 open_errno);
     }
-  count = SPECPDL_INDEX ();
   record_unwind_protect_int (close_file_unwind, fd);
   Vdoc_file_name = filename;
   filled = 0;
@@ -644,7 +622,7 @@ the same file name is found in the `doc-directory'.  */)
                   && (end[-1] == 'o' || end[-1] == 'c'))
                 {
                   ptrdiff_t len = end - p - 2;
-                  char *fromfile = alloca (len + 1);
+                  char *fromfile = SAFE_ALLOCA (len + 1);
                   memcpy (fromfile, &p[2], len);
                   fromfile[len] = 0;
                   if (fromfile[len-1] == 'c')
@@ -671,7 +649,8 @@ the same file name is found in the `doc-directory'.  */)
 		  /* Install file-position as variable-documentation property
 		     and make it negative for a user-variable
 		     (doc starts with a `*').  */
-                  if (!NILP (Fboundp (sym)))
+                  if (!NILP (Fboundp (sym))
+                      || !NILP (Fmemq (sym, delayed_init)))
                     Fput (sym, Qvariable_documentation,
                           make_number ((pos + end + 1 - buf)
                                        * (end[1] == '*' ? -1 : 1)));
@@ -694,9 +673,39 @@ the same file name is found in the `doc-directory'.  */)
       filled -= end - buf;
       memmove (buf, end, filled);
     }
+
+  SAFE_FREE ();
   return unbind_to (count, Qnil);
 }
 
+/* Return true if text quoting style should default to quote `like this'.  */
+static bool
+default_to_grave_quoting_style (void)
+{
+  if (!text_quoting_flag)
+    return true;
+  if (! DISP_TABLE_P (Vstandard_display_table))
+    return false;
+  Lisp_Object dv = DISP_CHAR_VECTOR (XCHAR_TABLE (Vstandard_display_table),
+				     LEFT_SINGLE_QUOTATION_MARK);
+  return (VECTORP (dv) && ASIZE (dv) == 1
+	  && EQ (AREF (dv, 0), make_number ('`')));
+}
+
+/* Return the current effective text quoting style.  */
+enum text_quoting_style
+text_quoting_style (void)
+{
+  if (NILP (Vtext_quoting_style)
+      ? default_to_grave_quoting_style ()
+      : EQ (Vtext_quoting_style, Qgrave))
+    return GRAVE_QUOTING_STYLE;
+  else if (EQ (Vtext_quoting_style, Qstraight))
+    return STRAIGHT_QUOTING_STYLE;
+  else
+    return CURVE_QUOTING_STYLE;
+}
+
 DEFUN ("substitute-command-keys", Fsubstitute_command_keys,
        Ssubstitute_command_keys, 1, 1, 0,
        doc: /* Substitute key descriptions for command names in STRING.
@@ -707,30 +716,35 @@ is not on any keys.
 Each substring of the form \\=\\{MAPVAR} is replaced by a summary of
 the value of MAPVAR as a keymap.  This summary is similar to the one
 produced by `describe-bindings'.  The summary ends in two newlines
-\(used by the helper function `help-make-xrefs' to find the end of the
+(used by the helper function `help-make-xrefs' to find the end of the
 summary).
 
 Each substring of the form \\=\\<MAPVAR> specifies the use of MAPVAR
 as the keymap for future \\=\\[COMMAND] substrings.
-\\=\\= quotes the following character and is discarded;
-thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ into the output.
+
+Each \\=‘ and \\=` is replaced by left quote, and each \\=’ and \\='
+is replaced by right quote.  Left and right quote characters are
+specified by `text-quoting-style'.
+
+\\=\\= quotes the following character and is discarded; thus,
+\\=\\=\\=\\= puts \\=\\= into the output, \\=\\=\\=\\[ puts \\=\\[ into the output, and
+\\=\\=\\=` puts \\=` into the output.
 
 Return the original STRING if no substitutions are made.
-Otherwise, return a new string, without any text properties.  */)
+Otherwise, return a new string.  */)
   (Lisp_Object string)
 {
   char *buf;
-  bool changed = 0;
+  bool changed = false;
   unsigned char *strp;
   char *bufp;
   ptrdiff_t idx;
   ptrdiff_t bsize;
   Lisp_Object tem;
   Lisp_Object keymap;
-  unsigned char *start;
+  unsigned char const *start;
   ptrdiff_t length, length_byte;
   Lisp_Object name;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   bool multibyte;
   ptrdiff_t nchars;
 
@@ -741,7 +755,8 @@ Otherwise, return a new string, without any text properties.  */)
   tem = Qnil;
   keymap = Qnil;
   name = Qnil;
-  GCPRO4 (string, tem, keymap, name);
+
+  enum text_quoting_style quoting_style = text_quoting_style ();
 
   multibyte = STRING_MULTIBYTE (string);
   nchars = 0;
@@ -753,6 +768,12 @@ Otherwise, return a new string, without any text properties.  */)
   keymap = Voverriding_local_map;
 
   bsize = SBYTES (string);
+
+  /* Add some room for expansion due to quote replacement.  */
+  enum { EXTRA_ROOM = 20 };
+  if (bsize <= STRING_BYTES_BOUND - EXTRA_ROOM)
+    bsize += EXTRA_ROOM;
+
   bufp = buf = xmalloc (bsize);
 
   strp = SDATA (string);
@@ -762,7 +783,7 @@ Otherwise, return a new string, without any text properties.  */)
 	{
 	  /* \= quotes the next character;
 	     thus, to put in \[ without its special meaning, use \=\[.  */
-	  changed = 1;
+	  changed = true;
 	  strp += 2;
 	  if (multibyte)
 	    {
@@ -785,7 +806,6 @@ Otherwise, return a new string, without any text properties.  */)
 	  ptrdiff_t start_idx;
 	  bool follow_remap = 1;
 
-	  changed = 1;
 	  strp += 2;		/* skip \[ */
 	  start = strp;
 	  start_idx = start - SDATA (string);
@@ -850,8 +870,8 @@ Otherwise, return a new string, without any text properties.  */)
 	  /* This is for computing the SHADOWS arg for describe_map_tree.  */
 	  Lisp_Object active_maps = Fcurrent_active_maps (Qnil, Qnil);
 	  Lisp_Object earlier_maps;
+	  ptrdiff_t count = SPECPDL_INDEX ();
 
-	  changed = 1;
 	  strp += 2;		/* skip \{ or \< */
 	  start = strp;
 	  start_idx = start - SDATA (string);
@@ -886,15 +906,21 @@ Otherwise, return a new string, without any text properties.  */)
 	  /* Now switch to a temp buffer.  */
 	  oldbuf = current_buffer;
 	  set_buffer_internal (XBUFFER (Vprin1_to_string_buffer));
+	  /* This is for an unusual case where some after-change
+	     function uses 'format' or 'prin1' or something else that
+	     will thrash Vprin1_to_string_buffer we are using.  */
+	  specbind (Qinhibit_modification_hooks, Qt);
 
 	  if (NILP (tem))
 	    {
 	      name = Fsymbol_name (name);
-	      insert_string ("\nUses keymap `");
+	      AUTO_STRING (msg_prefix, "\nUses keymap `");
+	      insert1 (Fsubstitute_command_keys (msg_prefix));
 	      insert_from_string (name, 0, 0,
 				  SCHARS (name),
 				  SBYTES (name), 1);
-	      insert_string ("', which is not currently defined.\n");
+	      AUTO_STRING (msg_suffix, "', which is not currently defined.\n");
+	      insert1 (Fsubstitute_command_keys (msg_suffix));
 	      if (start[-1] == '<') keymap = Qnil;
 	    }
 	  else if (start[-1] == '<')
@@ -910,12 +936,14 @@ Otherwise, return a new string, without any text properties.  */)
 	  tem = Fbuffer_string ();
 	  Ferase_buffer ();
 	  set_buffer_internal (oldbuf);
+	  unbind_to (count, Qnil);
 
 	subst_string:
 	  start = SDATA (tem);
 	  length = SCHARS (tem);
 	  length_byte = SBYTES (tem);
 	subst:
+	  changed = true;
 	  {
 	    ptrdiff_t offset = bufp - buf;
 	    if (STRING_BYTES_BOUND - length_byte < bsize)
@@ -929,19 +957,44 @@ Otherwise, return a new string, without any text properties.  */)
 	    strp = SDATA (string) + idx;
 	  }
 	}
-      else if (! multibyte)		/* just copy other chars */
+      else if ((strp[0] == '`' || strp[0] == '\'')
+	       && quoting_style == CURVE_QUOTING_STYLE)
+	{
+	  start = (unsigned char const *) (strp[0] == '`' ? uLSQM : uRSQM);
+	  length = 1;
+	  length_byte = sizeof uLSQM - 1;
+	  idx = strp - SDATA (string) + 1;
+	  goto subst;
+	}
+      else if (strp[0] == '`' && quoting_style == STRAIGHT_QUOTING_STYLE)
+	{
+	  *bufp++ = '\'';
+	  strp++;
+	  nchars++;
+	  changed = true;
+	}
+      else if (! multibyte)
 	*bufp++ = *strp++, nchars++;
       else
 	{
 	  int len;
-
-	  STRING_CHAR_AND_LENGTH (strp, len);
-	  if (len == 1)
-	    *bufp = *strp;
+	  int ch = STRING_CHAR_AND_LENGTH (strp, len);
+	  if ((ch == LEFT_SINGLE_QUOTATION_MARK
+	       || ch == RIGHT_SINGLE_QUOTATION_MARK)
+	      && quoting_style != CURVE_QUOTING_STYLE)
+	    {
+	      *bufp++ = ((ch == LEFT_SINGLE_QUOTATION_MARK
+			  && quoting_style == GRAVE_QUOTING_STYLE)
+			 ? '`' : '\'');
+	      strp += len;
+	      changed = true;
+	    }
 	  else
-	    memcpy (bufp, strp, len);
-	  strp += len;
-	  bufp += len;
+	    {
+	      do
+		*bufp++ = *strp++;
+	      while (--len != 0);
+	    }
 	  nchars++;
 	}
     }
@@ -951,13 +1004,15 @@ Otherwise, return a new string, without any text properties.  */)
   else
     tem = string;
   xfree (buf);
-  RETURN_UNGCPRO (tem);
+  return tem;
 }
 
 void
 syms_of_doc (void)
 {
   DEFSYM (Qfunction_documentation, "function-documentation");
+  DEFSYM (Qgrave, "grave");
+  DEFSYM (Qstraight, "straight");
 
   DEFVAR_LISP ("internal-doc-file-name", Vdoc_file_name,
 	       doc: /* Name of file containing documentation strings of built-in symbols.  */);
@@ -966,6 +1021,19 @@ syms_of_doc (void)
   DEFVAR_LISP ("build-files", Vbuild_files,
                doc: /* A list of files used to build this Emacs binary.  */);
   Vbuild_files = Qnil;
+
+  DEFVAR_LISP ("text-quoting-style", Vtext_quoting_style,
+               doc: /* Style to use for single quotes when generating text.
+`curve' means quote with curved single quotes \\=‘like this\\=’.
+`straight' means quote with straight apostrophes \\='like this\\='.
+`grave' means quote with grave accent and apostrophe \\=`like this\\='.
+The default value nil acts like `curve' if curved single quotes are
+displayable, and like `grave' otherwise.  */);
+  Vtext_quoting_style = Qnil;
+
+  DEFVAR_BOOL ("internal--text-quoting-flag", text_quoting_flag,
+	       doc: /* If nil, a nil `text-quoting-style' is treated as `grave'.  */);
+  /* Initialized by ‘main’.  */
 
   defsubr (&Sdocumentation);
   defsubr (&Sdocumentation_property);

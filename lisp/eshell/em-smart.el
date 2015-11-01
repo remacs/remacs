@@ -1,6 +1,6 @@
-;;; em-smart.el --- smart display of output
+;;; em-smart.el --- smart display of output  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -188,19 +188,20 @@ The options are `begin', `after' or `end'."
     (add-hook 'eshell-post-command-hook
 	      (function
 	       (lambda ()
-		 (setq eshell-smart-command-done t))) t t)
+		 (setq eshell-smart-command-done t)))
+              t t)
 
     (unless (eq eshell-review-quick-commands t)
       (add-hook 'eshell-post-command-hook
 		'eshell-smart-maybe-jump-to-end nil t))))
 
-(defun eshell-smart-scroll-window (wind start)
+;; This is called by window-scroll-functions with two arguments.
+(defun eshell-smart-scroll-window (wind _start)
   "Scroll the given Eshell window accordingly."
   (unless eshell-currently-handling-window
     (let ((inhibit-point-motion-hooks t)
 	  (eshell-currently-handling-window t))
-      (save-selected-window
-	(select-window wind)
+      (with-selected-window wind
 	(eshell-smart-redisplay)))))
 
 (defun eshell-refresh-windows (&optional frame)
@@ -211,12 +212,12 @@ The options are `begin', `after' or `end'."
       (lambda (wind)
 	(with-current-buffer (window-buffer wind)
 	  (if eshell-mode
-	      (let (window-scroll-functions)
+	      (let (window-scroll-functions) ;;FIXME: Why?
 		(eshell-smart-scroll-window wind (window-start))
 		(setq affected t))))))
      0 frame)
     (if affected
-	(let (window-scroll-functions)
+	(let (window-scroll-functions) ;;FIXME: Why?
 	  (eshell-redisplay)))))
 
 (defun eshell-smart-display-setup ()
@@ -237,7 +238,8 @@ The options are `begin', `after' or `end'."
   (add-hook 'pre-command-hook 'eshell-smart-display-move nil t)
   (eshell-refresh-windows))
 
-(defun eshell-disable-after-change (b e l)
+;; Called from after-change-functions with 3 arguments.
+(defun eshell-disable-after-change (_b _e _l)
   "Disable smart display mode if the buffer changes in any way."
   (when eshell-smart-command-done
     (remove-hook 'pre-command-hook 'eshell-smart-display-move t)

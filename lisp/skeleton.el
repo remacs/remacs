@@ -1,9 +1,9 @@
-;;; skeleton.el --- Lisp language extension for writing statement skeletons -*- coding: utf-8 -*-
+;;; skeleton.el --- Lisp language extension for writing statement skeletons
 
-;; Copyright (C) 1993-1996, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1993-1996, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Daniel Pfeiffer <occitan@esperanto.org>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: extensions, abbrev, languages, tools
 
 ;; This file is part of GNU Emacs.
@@ -55,22 +55,15 @@ Typical examples might be `upcase' or `capitalize'.")
 When the region is visible (due to `transient-mark-mode' or marking a region
 with the mouse) and this is non-nil and the function was called without an
 explicit ARG, then the ARG defaults to -1, i.e. wrapping around the visible
-region.
-
-We will probably delete this variable in a future Emacs version
-unless we get a substantial number of complaints about the auto-wrap
-feature.")
+region.")
+(make-obsolete-variable 'skeleton-autowrap nil "24.5")
 
 (defvar skeleton-end-newline t
   "If non-nil, make sure that the skeleton inserted ends with a newline.
 This just influences the way the default `skeleton-end-hook' behaves.")
 
-(defvar skeleton-end-hook
-  (lambda ()
-    (or (eolp) (not skeleton-end-newline) (newline-and-indent)))
+(defvar skeleton-end-hook nil
   "Hook called at end of skeleton but before going to point of interest.
-By default this moves out anything following to next line,
-  unless `skeleton-end-newline' is set to nil.
 The variables `v1' and `v2' are still set when calling this.")
 
 
@@ -183,7 +176,7 @@ of `str' whereas the skeleton's interactor is then ignored."
 With optional second argument REGIONS, wrap first interesting point
 \(`_') in skeleton around next REGIONS words, if REGIONS is positive.
 If REGIONS is negative, wrap REGIONS preceding interregions into first
-REGIONS interesting positions \(successive `_'s) in skeleton.
+REGIONS interesting positions (successive `_'s) in skeleton.
 
 An interregion is the stretch of text between two contiguous marked
 points.  If you marked A B C [] (where [] is the cursor) in
@@ -200,7 +193,9 @@ not needed, a prompt-string or an expression for complex read functions.
 If ELEMENT is a string or a character it gets inserted (see also
 `skeleton-transformation-function').  Other possibilities are:
 
-	\\n	go to next line and indent according to mode
+	\\n	go to next line and indent according to mode, unless
+                this is the first/last element of a skeleton and point
+                is at bol/eol
 	_	interesting point, interregion here
 	-	interesting point, no interregion interaction, overrides
 		interesting point set by _
@@ -208,21 +203,26 @@ If ELEMENT is a string or a character it gets inserted (see also
 	@	add position to `skeleton-positions'
 	&	do next ELEMENT if previous moved point
 	|	do next ELEMENT if previous didn't move point
-	-num	delete num preceding characters (see `skeleton-untabify')
+	-NUM	delete NUM preceding characters (see `skeleton-untabify')
 	resume:	skipped, continue here if quit is signaled
 	nil	skipped
 
 After termination, point will be positioned at the last occurrence of -
 or at the first occurrence of _ or at the end of the inserted text.
 
-Further elements can be defined via `skeleton-further-elements'.  ELEMENT may
-itself be a SKELETON with an INTERACTOR.  The user is prompted repeatedly for
-different inputs.  The SKELETON is processed as often as the user enters a
-non-empty string.  \\[keyboard-quit] terminates skeleton insertion, but
-continues after `resume:' and positions at `_' if any.  If INTERACTOR in such
-a subskeleton is a prompt-string which contains a \".. %s ..\" it is
-formatted with `skeleton-subprompt'.  Such an INTERACTOR may also be a list of
-strings with the subskeleton being repeated once for each string.
+Note that \\n as the last element of the skeleton only inserts a
+newline if not at eol.  If you want to unconditionally insert a newline
+at the end of the skeleton, use \"\\n\" instead.  Likewise with \\n
+as the first element when at bol.
+
+Further elements can be defined via `skeleton-further-elements'.
+ELEMENT may itself be a SKELETON with an INTERACTOR.  The user is prompted
+repeatedly for different inputs.  The SKELETON is processed as often as
+the user enters a non-empty string.  \\[keyboard-quit] terminates skeleton insertion, but
+continues after `resume:' and positions at `_' if any.  If INTERACTOR in
+such a subskeleton is a prompt-string which contains a \".. %s ..\" it is
+formatted with `skeleton-subprompt'.  Such an INTERACTOR may also be a list
+of strings with the subskeleton being repeated once for each string.
 
 Quoted Lisp expressions are evaluated for their side-effects.
 Other Lisp expressions are evaluated and the value treated as above.
@@ -264,6 +264,7 @@ When done with skeleton, but before going back to `_'-point call
               (mapcar #'car skeleton-further-elements)
               (mapcar (lambda (x) (eval (cadr x))) skeleton-further-elements)
             (skeleton-internal-list skeleton str))
+	(or (eolp) (not skeleton-end-newline) (newline-and-indent))
 	(run-hooks 'skeleton-end-hook)
 	(sit-for 0)
 	(or (pos-visible-in-window-p beg)
@@ -276,7 +277,8 @@ When done with skeleton, but before going back to `_'-point call
 (defun skeleton-read (prompt &optional initial-input recursive)
   "Function for reading a string from the minibuffer within skeletons.
 
-PROMPT must be a string or a form that evaluates to a string.
+PROMPT must be a string or a function that evaluates to a string.
+It may also be a form that evaluates to a string (deprecated).
 It may contain a `%s' which will be replaced by `skeleton-subprompt'.
 If non-nil second arg INITIAL-INPUT or variable `input' is a string or
 cons with index to insert before reading.  If third arg RECURSIVE is non-nil
@@ -305,12 +307,14 @@ automatically, and you are prompted to fill in the variable parts.")))
 	;; before point.
         (save-excursion (insert "\n")))
     (unwind-protect
-	(setq prompt (if (stringp prompt)
-			 (read-string (format prompt skeleton-subprompt)
-				      (setq initial-input
-					    (or initial-input
-						(symbol-value 'input))))
-		       (eval prompt)))
+	(setq prompt (cond ((stringp prompt)
+                            (read-string (format prompt skeleton-subprompt)
+                                         (setq initial-input
+                                               (or initial-input
+                                                   (symbol-value 'input)))))
+                           ((functionp prompt)
+                            (funcall prompt))
+                           (t (eval prompt))))
       (or eolp
 	  (delete-char 1))))
   (if (and recursive
@@ -356,15 +360,6 @@ automatically, and you are prompted to fill in the variable parts.")))
       (signal 'quit 'recursive)
     recursive))
 
-(defun skeleton-newline ()
-  (if (or (eq (point) skeleton-point)
-          (eq (point) (car skeleton-positions)))
-      ;; If point is recorded, avoid `newline' since it may do things like
-      ;; strip trailing spaces, and since recorded points are commonly placed
-      ;; right after a trailing space, calling `newline' can destroy the
-      ;; position and renders the recorded position incorrect.
-      (insert "\n")
-    (newline)))
 
 (defun skeleton-internal-1 (element &optional literal recursive)
   (cond
@@ -384,7 +379,7 @@ automatically, and you are prompted to fill in the variable parts.")))
     (let ((pos (if (eq element '>) (point))))
       (cond
        ((and skeleton-regions (eq (nth 1 skeleton-il) '_))
-	(or (eolp) (newline))
+	(or (eolp) (insert "\n"))
 	(if pos (save-excursion (goto-char pos) (indent-according-to-mode)))
 	(indent-region (line-beginning-position)
 		       (car skeleton-regions) nil))
@@ -393,13 +388,13 @@ automatically, and you are prompted to fill in the variable parts.")))
 	(if pos (indent-according-to-mode)))
        (skeleton-newline-indent-rigidly
 	(let ((pt (point)))
-	  (skeleton-newline)
+          (insert "\n")
 	  (indent-to (save-excursion
 		       (goto-char pt)
 		       (if pos (indent-according-to-mode))
 		       (current-indentation)))))
        (t (if pos (reindent-then-newline-and-indent)
-	    (skeleton-newline)
+	    (insert "\n")
 	    (indent-according-to-mode))))))
    ((eq element '>)
     (if (and skeleton-regions (eq (nth 1 skeleton-il) '_))
@@ -489,7 +484,7 @@ This allows for context-sensitive checking whether pairing is appropriate.")
 Each alist element, which looks like (ELEMENT ...), is passed to
 `skeleton-insert' with no interactor.  Variable `str' does nothing.
 
-Elements might be (?` ?` _ \"''\"), (?\\( ?  _ \" )\") or (?{ \\n > _ \\n ?} >).")
+Elements might be (?\\=` ?\\=` _ \"\\='\\='\"), (?\\( ?  _ \" )\") or (?{ \\n > _ \\n ?} >).")
 
 (defvar skeleton-pair-default-alist '((?( _ ?)) (?\))
 				      (?[ _ ?]) (?\])
@@ -510,15 +505,15 @@ Pairing is also prohibited if we are right after a quoting character
 such as backslash.
 
 If a match is found in `skeleton-pair-alist', that is inserted, else
-the defaults are used.  These are (), [], {}, <> and `' for the
-symmetrical ones, and the same character twice for the others."
+the defaults are used.  These are (), [], {}, <> and (grave
+accent, apostrophe) for the paired ones, and the same character
+twice for the others."
   (interactive "*P")
   (if (or arg (not skeleton-pair))
       (self-insert-command (prefix-numeric-value arg))
     (let* ((mark (and skeleton-autowrap
 		      (or (eq last-command 'mouse-drag-region)
 			  (and transient-mark-mode mark-active))))
-	   (skeleton-end-hook)
 	   (char last-command-event)
 	   (skeleton (or (assq char skeleton-pair-alist)
 			 (assq char skeleton-pair-default-alist)
@@ -529,7 +524,9 @@ symmetrical ones, and the same character twice for the others."
 		       (if (not skeleton-pair-on-word) (looking-at "\\w"))
 		       (funcall skeleton-pair-filter-function))))
 	  (self-insert-command (prefix-numeric-value arg))
-	(skeleton-insert (cons nil skeleton) (if mark -1))))))
+	;; Newlines not desirable for inserting pairs.  See bug#16138.
+	(let ((skeleton-end-newline nil))
+	  (skeleton-insert (cons nil skeleton) (if mark -1)))))))
 
 
 ;; A more serious example can be found in sh-script.el

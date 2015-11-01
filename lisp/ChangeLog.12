@@ -932,7 +932,7 @@
 
 	* international/quail.el (quail-setup-completion-buf): Make the
 	completion buffer read-only.
-	(quail-completion): Adjusted for the above change.  Leave the
+	(quail-completion): Adjust for the above change.  Leave the
 	modified flag nil.
 
 2007-03-20  David Kastrup  <dak@gnu.org>
@@ -1092,9 +1092,9 @@
 	North American rule.  Replace "daylight savings" with "daylight
 	saving" in doc.
 
-	* calendar/cal-china.el, cal-dst.el, calendar.el, diary-lib.el:
-	* calendar/lunar.el, solar.el: Replace "daylight savings" with
-	"daylight saving" in text.
+	* calendar/cal-china.el, calendar/cal-dst.el, calendar/calendar.el:
+	* calendar/diary-lib.el, calendar/lunar.el, calendar/solar.el:
+	Replace "daylight savings" with "daylight saving" in text.
 
 	* woman.el (woman-change-fonts): Tweak previous change by using
 	woman-request-regexp rather than "^\\.".
@@ -2371,8 +2371,8 @@
 2007-01-27  Eli Zaretskii  <eliz@gnu.org>
 
 	* ls-lisp.el (ls-lisp-use-localized-time-format): New defcustom.
-	(ls-lisp-format-time-list): Doc fix.  Mention
-	ls-lisp-use-localized-time-format.
+	(ls-lisp-format-time-list): Doc fix.
+	Mention ls-lisp-use-localized-time-format.
 	(ls-lisp-format-time): Use ls-lisp-format-time-list if
 	ls-lisp-use-localized-time-format is non-nil, even if a valid
 	locale is defined.
@@ -3410,8 +3410,8 @@
 
 	* wdired.el (wdired-change-to-wdired-mode, wdired-finish-edit)
 	(wdired-search-and-rename): Simplify code.
-	(wdired-preprocess-files, wdired-preprocess-perms): Make
-	read-only property of preceding character rear-nonsticky to
+	(wdired-preprocess-files, wdired-preprocess-perms):
+	Make read-only property of preceding character rear-nonsticky to
 	avoid that it can be modified.  Put old-name and old-link
 	properties on character preceding name and replace
 	put-text-property by add-text-properties.
@@ -3560,8 +3560,8 @@
 2006-12-04  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp.el (tramp-methods): Add "ControlPath" and
-	"ControlMaster" to scp, scp1 and scp2 methods.  Suggested by
-	Andreas Schwab <schwab@suse.de>.
+	"ControlMaster" to scp, scp1 and scp2 methods.
+	Suggested by Andreas Schwab <schwab@suse.de>.
 	(tramp-do-copy-or-rename-file-out-of-band)
 	(tramp-open-connection-rsh): Compute format spec for ?t.
 	(tramp-process-actions): Trace command parameters.
@@ -5113,7 +5113,7 @@
 
 	* version.el (emacs-version): Use mac-carbon-version-string.
 
-	* term/macterm.el (res-geometry): Apply 2006-10-18 change for x-win.el.
+	* term/mac-win.el (res-geometry): Apply 2006-10-18 change for x-win.el.
 
 2006-10-19  Jan Djärv  <jan.h.d@swipnet.se>
 
@@ -6782,9 +6782,9 @@
 	* mail/feedmail.el (feedmail-buffer-to-sendmail): Look for
 	sendmail in several common directories.
 
-	* mail/sendmail.el (sendmail-program): Moved here from paths.el.
+	* mail/sendmail.el (sendmail-program): Move here from paths.el.
 
-	* paths.el (sendmail-program): Removed.
+	* paths.el (sendmail-program): Remove.
 
 2006-09-04  Daiki Ueno  <ueno@unixuser.org>
 
@@ -6822,8 +6822,8 @@
 
 	* net/rcirc.el (rcirc-keywords): New variable.
 	(rcirc-bright-nicks, rcirc-dim-nicks): New variables.
-	(rcirc-bright-nick-regexp, rcirc-dim-nick-regexp): Remove
-	variables.
+	(rcirc-bright-nick-regexp, rcirc-dim-nick-regexp):
+	Remove variables.
 	(rcirc-responses-no-activity): New function.
 	(rcirc-handler-generic): Check for responses in above.
 	(rcirc-process-command): Add ?: character to arguments of raw
@@ -6870,8 +6870,8 @@
 2006-08-31  Richard Stallman  <rms@gnu.org>
 
 	* cus-edit.el (custom-save-variables): Slight cleanup.
-	(Custom-no-edit): Renamed from custom-no-edit.
-	(Custom-newline): Renamed from custom-newline.
+	(Custom-no-edit): Rename from custom-no-edit.
+	(Custom-newline): Rename from custom-newline.
 	(custom-mode-map): Use new names.
 
 	* emacs-lisp/easy-mmode.el (define-minor-mode): Reference manual
@@ -7465,7 +7465,7 @@
 
 2006-08-09  John Wiegley  <johnw@newartisans.com>
 
-	* calendar/timeclock.el (timeclock-use-elapsed): Added a new
+	* calendar/timeclock.el (timeclock-use-elapsed): Add a new
 	variable, which causes timeclock to report elapsed time worked,
 	instead of just work remaining.
 
@@ -8041,8 +8041,8 @@
 	instead of retired `allout-resumptions'.  For hook functions, use
 	`local' parameter so hook settings are created and removed as
 	buffer-local settings.  Revise (resumptions) setting
-	auto-fill-function so it is set only if already active.  The
-	related fill-function settings are all made in either case, so
+	auto-fill-function so it is set only if already active.
+	The related fill-function settings are all made in either case, so
 	that activating auto-fill-mode activity will have the custom
 	allout-mode behaviors (hanging indent on topics, if configured for it).
 	Remove all allout-exposure-category overlays on mode deactivation.
@@ -8191,8 +8191,9 @@
 
 2006-07-10  Alan Mackenzie  <acm@muc.de>
 
-	* progmodes/cc-awk.el, cc-defs.el, cc-fonts.el, cc-langs.el:
-	* cc-mode.el: Changes to eradicate eval-after-load.
+	* progmodes/cc-awk.el, progmodes/cc-defs.el, progmodes/cc-fonts.el:
+	* progmodes/cc-langs.el, progmodes/cc-mode.el:
+	Changes to eradicate eval-after-load.
 
 2006-07-09  Chong Yidong  <cyd@stupidchicken.com>
 
@@ -9913,7 +9914,7 @@
 	* progmodes/idlw-shell.el (idlwave-shell-move-or-history):
 	Remove spurious move to point-max (new comint behavior fixes).
 
-	* progmodes/idlwave.el (idlwave-push-mark): Removed obsolete
+	* progmodes/idlwave.el (idlwave-push-mark): Remove obsolete
 	compatibility function (Emacs 18/19).
 	(idlwave-is-continuation-line): Always return point at start of
 	previous non-blank continuation line.
@@ -9977,12 +9978,12 @@
 	`point'.
 	(diff-hunk-text, diff-goto-source): Doc fix.
 
-	* startup.el (fancy-splash-screens, normal-splash-screen): Use
-	face `mode-line-buffer-id' for mode-line buffer face instead of
+	* startup.el (fancy-splash-screens, normal-splash-screen):
+	Use face `mode-line-buffer-id' for mode-line buffer face instead of
 	hard-coded `(:weight bold)'.
 
-	* arc-mode.el (archive-set-buffer-as-visiting-file): Bind
-	buffer-undo-list to t (undo-ask is reproducible by visiting
+	* arc-mode.el (archive-set-buffer-as-visiting-file):
+	Bind buffer-undo-list to t (undo-ask is reproducible by visiting
 	nested archives).
 
 2006-05-09  Kim F. Storm  <storm@cua.dk>
@@ -9998,9 +9999,9 @@
 
 2006-05-09  Masatake YAMATO  <jet@gyve.org>
 
-	* font-lock.el (cpp-font-lock-keywords-source-directives): Added
-	"warning" and "import".
-	(cpp-font-lock-keywords): Added "warning".
+	* font-lock.el (cpp-font-lock-keywords-source-directives):
+	Add "warning" and "import".
+	(cpp-font-lock-keywords): Add "warning".
 
 2006-05-08  Dan Nicolaescu  <dann@ics.uci.edu>
 
@@ -12212,41 +12213,41 @@
 	* progmodes/etags.el (tags-completion-table): Do completion from
 	all the tables in the current list, as documented in the manual.
 
-2006-02-24  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2006-02-24  Alan Mackenzie  <acm@muc.de>
 
 	* CC Mode Update to 5.31.3.
 
-2006-02-24  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2006-02-24  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-mode.el (c-postprocess-file-styles):
 	Bind inhibit-read-only to t, around the call to
 	c-remove-any-local-eval-or-mode-variables, so that it works on a
 	RO file.
 
-2006-02-24  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2006-02-24  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-awk.el: Correct a typo.
 
-2006-02-24  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2006-02-24  Alan Mackenzie  <acm@muc.de>
 
-	* progmodes/cc-cmds.el, cc-mode.el: Rename c-hungry-backspace to
+	* progmodes/cc-cmds.el, progmodes/cc-mode.el: Rename c-hungry-backspace to
 	c-hungry-delete-backwards, at the request of RMS.  Leave the old
 	name as an alias.
 
-2006-02-24  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2006-02-24  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-mode.el: Correct a typo.
 
-2006-02-24  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2006-02-24  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-defs.el: Update the version number to 5.31.3.
 
-2006-02-24  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2006-02-24  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-cmds.el (c-electric-brace): Fix clean-up
 	brace-else-brace (error due to mbeg, mend being undefined).
 
-2006-02-24  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2006-02-24  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-mode.el: File Local variables: Solve the problem
 	where both `mode' and c-file-offsets are specified: `mode' will
@@ -12256,7 +12257,7 @@
 	c-tentative-buffer-change, to splat `mode' and `eval' before the
 	second hack-local-variables.
 
-2006-02-24  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2006-02-24  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-mode.el:
 	[Supersedes patch to cc-engine.el 2005-12-16T20:07:49Z!monnier@iro.umontreal.ca]
@@ -12271,7 +12272,7 @@
 	with save-match-data.  It was being corrupted when Font Lock was
 	not enabled.
 
-2006-02-24  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2006-02-24  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-langs.el (c-mode-menu): Add menu items for Electric
 	Mode and Subword Mode.
@@ -12283,7 +12284,7 @@
 
 	* progmodes/cc-defs.el (c-version): Update version number to 5.31.2.
 
-	* progmodes/cc-cmds.el, cc-mode.el, cc-engine.el
+	* progmodes/cc-cmds.el, progmodes/cc-mode.el, progmodes/cc-engine.el
 	(c-update-modeline): Concatenate the minor mode indicators
 	directly onto mode-name, removing c-submode-indicators.
 	Sometimes, c-s-i got separated from the mode name on the mode line.
@@ -12291,7 +12292,7 @@
 	* progmodes/cc-cmds.el (c-electric-brace, c-electric-semi&comma)
 	(c-electric-colon): Correct doc-strings: "/ln" -> "/la".
 
-2006-02-24  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2006-02-24  Martin Stjernholm  <mast@lysator.liu.se>
 
 	* progmodes/cc-langs.el (c-make-init-lang-vars-fun): Improve the
 	error message when there's an evaluation error to show whether
@@ -12629,8 +12630,8 @@
 	(Info-isearch-push-state): Add quote before Info-current-file and
 	Info-current-node.
 	(Info-isearch-pop-state): Use `equal' instead of `string='.
-	(Info-extract-pointer, Info-following-node-name): Use
-	`match-string-no-properties' instead of `match-string'.
+	(Info-extract-pointer, Info-following-node-name):
+	Use `match-string-no-properties' instead of `match-string'.
 	(Info-up): Check `old-file' for `stringp'.
 	(Info-history): Use `equal' instead of `string-equal'.
 	Check `file' for `stringp'.
@@ -12680,8 +12681,8 @@
 	(rcirc-get-buffer-create): Fix bug with setting the target.
 	(rcirc-any-buffer): Rename from rcirc-get-any-buffer, and include
 	test for rcirc-always-use-server-buffer-flag here.
-	(rcirc-response-formats): Add %N, which is a facified nick.  %n
-	uses the default face.  Change the ACTION format string.  If the
+	(rcirc-response-formats): Add %N, which is a facified nick.
+	%n uses the default face.  Change the ACTION format string.  If the
 	"nick" is the server, don't print anything for that field.
 	Comment fixes.
 	(rcirc-target-buffer): Don't test
@@ -12706,7 +12707,7 @@
 	(allout-version): Incremented, corrected, revised, and refined
 	module commentary.
 
-	(provide 'allout): Moved to the bottom, added a require of overlay.
+	(provide 'allout): Move to the bottom, added a require of overlay.
 
 	(allout-encrypt-unencrypted-on-saves): Defaults to t instead of
 	`except-current'.
@@ -12729,19 +12730,19 @@
 	Clarify provision for various write-file hook var names.
 	Adjusted for invisible-text overlays instead of selective-display.
 
-	(allout-depth): Really return 0 if not within any topic.  This
-	rectifies `allout-beginning-of-level' and sequence numbering
+	(allout-depth): Really return 0 if not within any topic.
+	This rectifies `allout-beginning-of-level' and sequence numbering
 	errors that occur when cutting and pasting numbered topics.
 	Changed from a in-line subst to a regular function, as well.
 
-	(allout-pre-next-prefix): Renamed from allout-pre-next-preface.
+	(allout-pre-next-prefix): Rename from allout-pre-next-preface.
 
 	(allout-end-of-subtree, allout-end-of-subtree)
 	(allout-end-of-entry, allout-end-of-current-heading)
 	(allout-next-visible-heading, allout-open-topic, allout-show-entry)
 	(allout-show-children, allout-show-to-offshoot)
-	(allout-hide-current-entry, allout-show-current-entry): Rectified
-	handling of trailing blank lines between items.
+	(allout-hide-current-entry, allout-show-current-entry):
+	Rectified handling of trailing blank lines between items.
 
 	(allout-line-boundary-regexp, set-allout-regexp, allout-depth)
 	(allout-current-depth, allout-unprotected, allout-hidden-p)
@@ -12752,11 +12753,11 @@
 	(allout-hide-region-body, allout-toggle-subtree-encryption)
 	(allout-encrypt-string, allout-encrypted-key-info)
 	(allout-next-topic-pending-encryption, allout-encrypt-decrypted)
-	(allout-file-vars-section-data): Adjusted for use with
+	(allout-file-vars-section-data): Adjust for use with
 	invisible-text overlays instead of selective-display.
 
 	(allout-kill-line, allout-kill-topic, allout-yank-processing):
-	Reworked for use with invisible text overlays.
+	Rework for use with invisible text overlays.
 
 	(allout-current-topic-collapsed-p): New function.
 
@@ -12776,8 +12777,8 @@
 
 	(allout-overlay-insert-in-front-handler)
 	(allout-overlay-interior-modification-handler)
-	(allout-before-change-handler, allout-isearch-end-handler): New
-	functions to handle extraordinary actions affecting concealed
+	(allout-before-change-handler, allout-isearch-end-handler):
+	New functions to handle extraordinary actions affecting concealed
 	text.
 
 	(allout-flag-region): Use overlays instead of selective-display
@@ -12809,8 +12810,8 @@
 
 2006-02-17  Agustín Martín  <agustin.martin@hispalinux.es>
 
-	* textmodes/ispell.el (ispell-change-dictionary): Call
-	ispell-buffer-local-dict instead of
+	* textmodes/ispell.el (ispell-change-dictionary):
+	Call ispell-buffer-local-dict instead of
 	ispell-accept-buffer-local-defs.
 	(ispell-local-dictionary-alist): Accept as valid any coding-system
 	supported by Emacs.
@@ -12917,8 +12918,8 @@
 	(hack-local-variables): Construct list of variable-value pairs,
 	and apply or reject them in one go.  Ask for confirmation if
 	variables are not known safe.
-	(hack-local-variables-confirm): Complete rewrite.  Support
-	`safe-local-variable-values'.
+	(hack-local-variables-confirm): Complete rewrite.
+	Support `safe-local-variable-values'.
 	(enable-local-variables): Update docstring to reflect new
 	behavior.
 	(ignored-local-variables): Ignore ignored-local-variables and
@@ -13017,8 +13018,8 @@
 2006-02-12  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp.el (tramp-remote-path): Add "/usr/xpg4/bin" on top,
-	because on Solaris a POSIX compatible "id" is needed.  Reported by
-	Magnus Henoch <mange@freemail.hu>.
+	because on Solaris a POSIX compatible "id" is needed.
+	Reported by Magnus Henoch <mange@freemail.hu>.
 
 2006-02-12  Juri Linkov  <juri@jurta.org>
 
@@ -13102,10 +13103,10 @@
 	* help.el (describe-key-briefly): Now a wrapper for
 	describe-key-briefly-internal.  Bind enable-disabled-menus-and-buttons
 	to t.  Populate yank-menu if empty.
-	(describe-key-briefly-internal): Renamed from describe-key-briefly.
+	(describe-key-briefly-internal): Rename from describe-key-briefly.
 	(describe-key): Now a wrapper for describe-key-internal.  Bind
 	enable-disabled-menus-and-buttons to t.  Populate yank-menu if empty.
-	(describe-key-internal): Renamed from describe-key.
+	(describe-key-internal): Rename from describe-key.
 
 2006-02-11  Milan Zamazal  <pdm@zamazal.org>
 
@@ -13528,7 +13529,7 @@
 	(last-arg): Add defvar.
 
 	* makefile.w32-in (WINS): Add erc.
-	(MH_E_SRC): Update (copied from lisp/Makefile.in).
+	(MH_E_SRC): Update (copied from Makefile.in).
 
 2006-01-29  Bill Wohler  <wohler@newt.com>
 
@@ -13640,8 +13641,8 @@
 
 2006-01-22  Kenichi Handa  <handa@m17n.org>
 
-	* international/mule.el (make-subsidiary-coding-system): Reset
-	`coding-system-define-form' property of subsidiaries to nil.
+	* international/mule.el (make-subsidiary-coding-system):
+	Reset `coding-system-define-form' property of subsidiaries to nil.
 	Avoid duplicated entry in coding-system-alist.
 	(make-coding-system): Avoid duplicated entry in
 	coding-system-alist.
@@ -13789,8 +13790,8 @@
 	(tramp-unload-file-name-handler-alist)
 	(tramp-unload-tramp): New defuns.
 	(tramp-advice-PC-expand-many-files): New defadvice.
-	(tramp-save-PC-expand-many-files, tramp-setup-complete): Defuns
-	removed.
+	(tramp-save-PC-expand-many-files, tramp-setup-complete):
+	Defuns removed.
 	(tramp-handle-expand-file-name): Remove double slash.
 	(tramp-handle-file-attributes-with-ls): Return t as 9th attribute.
 	It doesn't matter, because it will be converted later on.
@@ -13868,7 +13869,7 @@
 
 2006-01-20  Carsten Dominik  <dominik@science.uva.nl>
 
-	* textmodes/org.el (org-open-at-point): Fixed bug with matching a
+	* textmodes/org.el (org-open-at-point): Fix bug with matching a
 	link.  Fixed buggy argument sequence in call to `org-view-tags'.
 	(org-compile-prefix-format): Set `org-prefix-has-tag'.
 	(org-prefix-has-tag): New variable.
@@ -13885,8 +13886,8 @@
 	images remain visible.
 	(thumbs-file-alist): Construct list in thumbs-buffer and reverse
 	order.
-	(thumbs-show-image-num): Get image from thumbs-file-alist.  Set
-	mode name.
+	(thumbs-show-image-num): Get image from thumbs-file-alist.
+	Set mode name.
 	(thumbs-next-image, thumbs-previous-image): Make them work.
 
 2006-01-19  Luc Teirlinck  <teirllm@auburn.edu>
@@ -14196,8 +14197,8 @@
 
 2006-01-12  Masatake YAMATO  <jet@gyve.org>
 
-	* progmodes/ld-script.el (auto-mode-alist): Support
-	suffix conventions used in netbsd and eCos.
+	* progmodes/ld-script.el (auto-mode-alist):
+	Support suffix conventions used in netbsd and eCos.
 
 2006-01-11  Luc Teirlinck  <teirllm@auburn.edu>
 
@@ -15572,7 +15573,7 @@
 
 	* hi-lock.el (hi-lock-mode): Rename from hi-lock-buffer-mode;
 	react if global-hi-lock-mode seems intended.
-	(global-hi-lock-mode): Renamed from hi-lock-mode.
+	(global-hi-lock-mode): Rename from hi-lock-mode.
 	(hi-lock-archaic-interface-message-used)
 	(hi-lock-archaic-interface-deduce): New variables.
 	(turn-on-hi-lock-if-enabled, hi-lock-line-face-buffer)
@@ -15722,7 +15723,7 @@
 	No need to check gud-comint-buffer is bound.
 	(gdb): Prevent multiple debugging when first session uses gdba.
 
-2005-12-08  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-12-08  Alan Mackenzie  <acm@muc.de>
 
 	CC Mode update to 5.31.
 
@@ -15730,11 +15731,12 @@
 	Emacsen which lack `define-minor-mode'.  (Currently Emacs <21.
 	We might do this function properly in the future).
 
-	* progmodes/cc-cmds.el, cc-defs.el, cc-styles.el, cc-vars.el:
+	* progmodes/cc-cmds.el, progmodes/cc-defs.el:
+	* progmodes/cc-styles.el, progmodes/cc-vars.el:
 	New macros c-sentence-end and c-default-value-sentence end, to cope
 	with Emacs 22's new function `sentence-end'.
 
-2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-12-08  Martin Stjernholm  <mast@lysator.liu.se>
 
 	* progmodes/cc-cmds.el (c-show-syntactic-information): Solve the
 	compat issue using `c-put-overlay' and `c-delete-overlay'.
@@ -15742,7 +15744,7 @@
 	* progmodes/cc-defs.el (c-put-overlay, c-delete-overlay):
 	New compat macros to handle overlays/extents.
 
-2005-12-08  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-12-08  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-fix.el: Add definitions of the macros push and pop
 	(for GNU Emacs 20.4).
@@ -15759,7 +15761,7 @@
 	call to the new macro c-int-to-char.  This solves XEmacs's
 	regarding characters as different from integers.
 
-2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-12-08  Martin Stjernholm  <mast@lysator.liu.se>
 
 	* progmodes/cc-fonts.el (c-make-syntactic-matcher):
 	New internal helper.
@@ -15775,22 +15777,22 @@
 	* progmodes/cc-fonts.el (c-negation-char-face-name): New variable
 	to map to `font-lock-negation-char-face' in emacsen where it exists.
 
-2005-12-08  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-12-08  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-mode.el: Bind c-subword-mode to C-c C-w.
 
-	* progmodes/cc-subword.el, cc-cmds.el, cc-mode.el:
+	* progmodes/cc-subword.el, progmodes/cc-cmds.el, progmodes/cc-mode.el:
 	Rename "c-subword-move-mode" as "c-subword-mode".
 
 	* progmodes/cc-mode.el: Added tty suitable bindings for C-c
 	<delete> and C-c C-<delete>.  (To the c-hungry- delete functions).
 
-2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-12-08  Martin Stjernholm  <mast@lysator.liu.se>
 
 	* progmodes/cc-mode.el: Added autoload directive for
 	`c-subword-move-mode' for use in older emacsen.
 
-2005-12-08  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-12-08  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-mode.el:
 	(i): Insert a binding for C-c C-backspace into
@@ -15808,9 +15810,9 @@
 
 	* progmodes/cc-awk.el: Apply a tidy-up patch (from Stefan Monnier).
 
-2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-12-08  Martin Stjernholm  <mast@lysator.liu.se>
 
-	* progmodes/cc-fonts.el, cc-vars.el
+	* progmodes/cc-fonts.el, progmodes/cc-vars.el
 	(gtkdoc-font-lock-doc-comments, gtkdoc-font-lock-doc-protection)
 	(gtkdoc-font-lock-keywords): GtkDoc patterns contributed by
 	Masatake YAMATO.
@@ -15827,7 +15829,7 @@
 	<delete> key behavior in XEmacs according to `delete-forward-p'.
 	C.f. `c-electric-delete'.
 
-2005-12-08  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-12-08  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-mode.el: Give c-hungry-backspace and
 	c-hungry-delete-forward permanent key bindings.
@@ -15845,7 +15847,7 @@
 	response to a report from Joseph Kiniry <kiniry@acm.org> that it
 	was difficult to understand.
 
-2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-12-08  Martin Stjernholm  <mast@lysator.liu.se>
 
 	* progmodes/cc-engine.el (c-on-identifier): Fix bug when at the
 	first char of an identifier.
@@ -15853,7 +15855,7 @@
 	* progmodes/cc-engine.el (c-on-identifier): Handle the "operator
 	+" syntax in C++.
 
-2005-12-08  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-12-08  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-cmds.el (c-mask-paragraph): Correct, so that
 	auto-fill doesn't split a c-comment's last word from a hanging
@@ -15869,7 +15871,7 @@
 	with blank comment-prefix, and a blank line as the comment's
 	second line.
 
-2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-12-08  Martin Stjernholm  <mast@lysator.liu.se>
 
 	* progmodes/cc-fonts.el (c-cpp-matchers, c-basic-matchers-before):
 	Incorporate the patterns added in the Emacs development branch
@@ -15881,16 +15883,16 @@
 	* progmodes/cc-engine.el (c-literal-faces):
 	Add `font-lock-comment-delimiter-face' which is new in Emacs 22.
 
-2005-12-08  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-12-08  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-cmds.el: Make C-c C-a (`c-toggle-auto-newline')
 	forcibly enable c-electric-flag.
 
-	* progmodes/cc-vars.el, cc-cmds.el: New clean-up
+	* progmodes/cc-vars.el, progmodes/cc-cmds.el: New clean-up
 	`comment-close-slash' on c-electric-slash: if enabled, typing `/' just
 	after the comment-prefix of a C-style comment will close that comment.
 
-2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-12-08  Martin Stjernholm  <mast@lysator.liu.se>
 
 	* progmodes/cc-fonts.el (c-basic-matchers-before)
 	(c-complex-decl-matchers): Fix the "not-arrow-prefix" regexp used
@@ -15899,7 +15901,7 @@
 	* progmodes/cc-langs.el (c-other-op-syntax-tokens): Only C++ has
 	digraphs.
 
-	* progmodes/cc-fonts.el, cc-langs.el, cc-engine.el
+	* progmodes/cc-fonts.el, progmodes/cc-langs.el, progmodes/cc-engine.el
 	(c-cpp-message-directives, c-cpp-include-directives)
 	(c-opt-cpp-macro-define, c-opt-cpp-macro-define-start)
 	(c-cpp-expr-directives): Introduce new language constants to
@@ -15909,7 +15911,7 @@
 
 	(c-cpp-matchers, c-forward-to-cpp-define-body): Use them.
 
-	* progmodes/cc-langs.el, cc-fonts.el (c-string-escaped-newlines)
+	* progmodes/cc-langs.el, progmodes/cc-fonts.el (c-string-escaped-newlines)
 	(c-multiline-string-start-char): New language constants and
 	variables to specify how newlines in string literals work.
 
@@ -15923,13 +15925,13 @@
 	(c-electric-brace): Indent syntactically after the cleanups since
 	lineup functions might do it differently then.
 
-	* progmodes/cc-engine.el, cc-langs.el
+	* progmodes/cc-engine.el, progmodes/cc-langs.el
 	(c-opt-op-identifier-prefix): New language constant and variable.
 
 	(c-just-after-func-arglist-p, c-after-special-operator-id)
 	(c-search-decl-header-end, c-inside-bracelist-p): Use it.
 
-	* progmodes/cc-align.el, cc-engine.el
+	* progmodes/cc-align.el, progmodes/cc-engine.el
 	(c-after-special-operator-id): New helper to handle C++ operator
 	identifiers.
 
@@ -15954,11 +15956,11 @@
 	Enable heuristics below the point to cope with classes inside special
 	brace lists in Pike.
 
-2005-12-08  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-12-08  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-cmds.el: Amend c-point-syntax to handle macros.
 
-2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-12-08  Martin Stjernholm  <mast@lysator.liu.se>
 
 	* progmodes/cc-guess.el (cc-guess-install): New function to
 	install an already guessed style in another buffer.
@@ -15967,7 +15969,7 @@
 	sets `inhibit-read-only' - `c-save-buffer-state' should be used
 	anyway if the change always is undone.
 
-2005-12-08  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-12-08  Alan Mackenzie  <acm@muc.de>
 
 	Implement togglable electricity:
 
@@ -16007,13 +16009,14 @@
 	(c-electric-semi&comma, c-electric-colon, c-electric-paren):
 	restructure a bit.
 
-2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-12-08  Martin Stjernholm  <mast@lysator.liu.se>
 
 	* progmodes/cc-cmds.el (c-show-syntactic-information): Show the
 	anchor position(s) using faces.  Thanks to Masatake YAMATO for the idea.
 
-	* progmodes/cc-mode.el, cc-cmds.el, cc-defs.el, cc-engine.el
-	(c-submode-indicators): Change name from `c-auto-hungry-string'
+	* progmodes/cc-mode.el, progmodes/cc-cmds.el, progmodes/cc-defs.el:
+	* progmodes/cc-engine.el (c-submode-indicators):
+	Change name from `c-auto-hungry-string'
 	since it's now used to track another submode.
 
 	(c-update-modeline): Convert to function and extended to check
@@ -16034,7 +16037,7 @@
 	(c-subword-move-mode): Minor mode that replaces all the standard
 	word handling functions with their subword equivalences.
 
-2005-12-08  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-12-08  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-vars.el (c-cleanup-list): Insert a customization
 	entry for one-liner-defun.
@@ -16061,7 +16064,7 @@
 	c-max-one-liner-length.  In c-default-style, set the default style
 	for AWK to "awk".
 
-2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-12-08  Martin Stjernholm  <mast@lysator.liu.se>
 
 	* progmodes/cc-engine.el (c-forward-label): Fix fontification of
 	macros inside labels.
@@ -16084,7 +16087,7 @@
 	to avoid heuristics that doesn't work for unclosed blocks.
 	(c-at-statement-start-p): New function.
 
-	* progmodes/cc-engine.el, cc-fonts.el: Fixes in handling of
+	* progmodes/cc-engine.el, progmodes/cc-fonts.el: Fixes in handling of
 	Objective-C directives, e.g. directives spanning lines should work
 	reasonably well now.
 
@@ -16136,7 +16139,7 @@
 	* progmodes/cc-engine.el (c-beginning-of-statement-1): Fix a
 	macro related issue.
 
-2005-12-08  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-12-08  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-awk.el: Change the terminology of regexps: A char
 	list is now [asdf], a char class [:alpha:].
@@ -16168,18 +16171,18 @@
 	(c-forward-single-comment, c-backward-single-comment): Comment out
 	the (now redundant) "special" AWK stuff.
 
-	* progmodes/cc-styles.el, cc-vars.el: Change the settings of
+	* progmodes/cc-styles.el, progmodes/cc-vars.el: Change the settings of
 	c-string-par-start, c-string-par-separate to be more like Text
 	Mode than Fundamental Mode.
 
-2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-12-08  Martin Stjernholm  <mast@lysator.liu.se>
 
 	* progmodes/cc-fonts.el (c-font-lock-declarations): Always narrow
 	to the fontified region so that fontification doesn't occur
 	outside it (could happen e.g. when fontifying a line with an
 	unfinished declaration).
 
-2005-12-08  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-12-08  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-awk.el: Move regexps for analyzing AWK code to near the
 	start of the file.  ^L now separate sections of the file.
@@ -16217,7 +16220,7 @@
 	* progmodes/cc-mode.el: Fix what's almost a semantic ambiguity in
 	a comment.
 
-2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-12-08  Martin Stjernholm  <mast@lysator.liu.se>
 
 	* progmodes/cc-cmds.el (c-electric-brace): Clean up using
 	`c-tentative-buffer-changes'.
@@ -16237,8 +16240,8 @@
 	the checks for paren sexps between the point and the keyword, to
 	avoid some false alarms.
 
-	* progmodes/cc-engine.el, cc-langs.el (c-looking-at-inexpr-block):
-	Fixed a situation where an error could be thrown for unbalanced
+	* progmodes/cc-engine.el, progmodes/cc-langs.el (c-looking-at-inexpr-block):
+	Fix a situation where an error could be thrown for unbalanced
 	parens.  Changed to make use of c-keyword-member' to avoid some
 	repeated regexp matches.
 
@@ -16276,9 +16279,10 @@
 
 	* progmodes/cc-defs.el (c-point): Add `bosws' and `eosws'.
 
-2005-12-08  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-12-08  Alan Mackenzie  <acm@muc.de>
 
-	* progmodes/cc-cmds.el, cc-styles.el, cc-vars.el: New variables
+	* progmodes/cc-cmds.el, progmodes/cc-styles.el:
+	* progmodes/cc-vars.el: New variables
 	c-string-par-start/separate c-sentence-end-with-esc-eol,
 	initialized in c-setup-paragraph-variables, used in string
 	scanning subroutines of c-beginning-of-statement.
@@ -16286,9 +16290,9 @@
 	* progmodes/cc-cmds.el (c-electric-brace): Don't delete a comment
 	which precedes the newly inserted `{'.
 
-2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-12-08  Martin Stjernholm  <mast@lysator.liu.se>
 
-	* progmodes/cc-engine.el, cc-langs.el: Rewrote the recognition
+	* progmodes/cc-engine.el, progmodes/cc-langs.el: Rewrote the recognition
 	function for declaration level blocks.  It should now cope with
 	templates better and also be a lot more comprehensible.
 
@@ -16340,7 +16344,7 @@
 	the point could be left directly after an open paren when finding
 	the beginning of the first decl in the block.
 
-	* progmodes/cc-engine.el, cc-fonts.el (c-forward-keyword-clause):
+	* progmodes/cc-engine.el, progmodes/cc-fonts.el (c-forward-keyword-clause):
 	Specify which submatch to use.
 
 	* progmodes/cc-langs.el (c-symbol-start): Include `@' in ObjC.
@@ -16405,7 +16409,7 @@
 	(c-specifier-key, c-not-decl-init-keywords): Some cleanup using new
 	language constants `c-type-start-kwds' and `c-prefix-spec-kwds'.
 
-	* progmodes/cc-fonts.el, cc-langs.el, cc-engine.el:
+	* progmodes/cc-fonts.el, progmodes/cc-langs.el, progmodes/cc-engine.el:
 	Internal cleanups to properly detect the declared identifiers in
 	various declarations.
 
@@ -16446,11 +16450,12 @@
 	* progmodes/cc-engine.el (c-maybe-labelp): Provide no default
 	value - this variable is always dynamically bound.
 
-	* progmodes/cc-engine.el, cc-fonts.el, cc-langs.el, cc-menus.el
-	* cc-mode.el, cc-styles.el, cc-vars.el, cc-align.el, cc-awk.el
-	* cc-cmds.el, cc-defs.el: Change the policy for marking up
-	functions that might do hidden buffer changes: All such internal
-	functions are now marked instead of those that don't.
+	* progmodes/cc-engine.el, progmodes/cc-fonts.el, progmodes/cc-langs.el:
+	* progmodes/cc-menus.el, progmodes/cc-mode.el, progmodes/cc-styles.el:
+	* progmodes/cc-vars.el, progmodes/cc-align.el, progmodes/cc-awk.el:
+	* progmodes/cc-cmds.el, progmodes/cc-defs.el: Change the policy
+	for marking up functions that might do hidden buffer changes:
+	All such internal functions are now marked instead of those that don't.
 
 	(c-beginning-of-macro, c-end-of-macro, c-(forward|backward)-comments)
 	(c-(forward|backward)-single-comment, c-parse-state, c-on-identifier)
@@ -16470,7 +16475,7 @@
 	when macros occur in obscure places.  Optimized the sexp movement
 	a bit.
 
-2005-12-08  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-12-08  Alan Mackenzie  <acm@muc.de>
 
 	Enhancements for c-beginning-of-statement to work in AWK Mode:
 
@@ -16493,9 +16498,10 @@
 
 	* progmodes/cc-mode.el: Put M-a and M-e into awk-mode-map.
 
-2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-12-08  Martin Stjernholm  <mast@lysator.liu.se>
 
-	* progmodes/cc-engine.el, cc-fonts.el, cc-langs.el: Cleaned up the
+	* progmodes/cc-engine.el, progmodes/cc-fonts.el:
+	* progmodes/cc-langs.el: Cleaned up the
 	label handling.  Labels are now recognized in a uniform and more
 	robust way, regardless of context.  Text properties are put on all
 	labels to recognize the following declarations better.
@@ -16552,7 +16558,7 @@
 	* progmodes/cc-align.el (c-lineup-arglist): Fix bug when the
 	first argument starts with a special brace list.
 
-	* progmodes/cc-engine.el, cc-fonts.el (c-forward-decl-or-cast-1)
+	* progmodes/cc-engine.el, progmodes/cc-fonts.el (c-forward-decl-or-cast-1)
 	(c-font-lock-declarations): Break out the declaration and cast
 	recognition from `c-font-lock-declarations' to a new function, so
 	that it can be used in the indentation engine.
@@ -16644,15 +16650,15 @@
 
 	(c-lineup-math): Change to use `c-lineup-assignments'.
 
-2005-12-08  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-12-08  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-cmds.el: Fix some bugs in subfunctions of
 	c-beginning-of-statement.  New subfunctions
 	c-in-comment-line-prefix-p, c-narrow-to-comment-innards.
 
-2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-12-08  Martin Stjernholm  <mast@lysator.liu.se>
 
-	* progmodes/cc-fonts.el, cc-langs.el: Use `c-simple-ws' instead of
+	* progmodes/cc-fonts.el, progmodes/cc-langs.el: Use `c-simple-ws' instead of
 	hardcoded char classes wherever possible.  Changed a couple of
 	places to use skip by syntax instead of skip by char class.
 
@@ -16682,7 +16688,7 @@
 	in `regexp-opt' in Emacs 20 and XEmacs when strings contain
 	newlines.  Allow and ignore nil elements in the list.
 
-2005-12-08  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-12-08  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-cmds.el: Comment out a (n almost certainly
 	superfluous) check, (eq here (point-max)) in c-beginning-of-statement.
@@ -16702,11 +16708,11 @@
 	* progmodes/cc-cmds.el: Tidy c-beginning-of-sentence (and
 	subfunctions) so that it works at BOB and EOB.
 
-	* progmodes/cc-cmds.el, cc-vars.el: More updating of
+	* progmodes/cc-cmds.el, progmodes/cc-vars.el: More updating of
 	c-beginning-of-statement, including new variable
 	c-block-comment-start-regexp.
 
-2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-12-08  Martin Stjernholm  <mast@lysator.liu.se>
 
 	* progmodes/cc-langs.el (c-known-type-key): Optimize simple
 	symbols from `*-font-lock-extra-types' so that there's no need to
@@ -16725,7 +16731,7 @@
 	* progmodes/cc-vars.el (c-emacs-features): Remove compatibility
 	with older emacsen: We now require `pps-extended-state'.
 
-2005-12-08  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-12-08  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-cmds.el: New function c-beginning-of-sentence,
 	which obviates the need to hack sentence-end.  This now handles
@@ -16740,9 +16746,9 @@
 	* progmodes/cc-cmds.el: Restructure c-beginning-of-statement:
 	Improve its doc-string.  Improve the handling of certain specific cases.
 
-2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-12-08  Martin Stjernholm  <mast@lysator.liu.se>
 
-	* progmodes/cc-engine.el, cc-fonts.el, cc-langs.el
+	* progmodes/cc-engine.el, progmodes/cc-fonts.el, progmodes/cc-langs.el
 	(c-guess-basic-syntax): Change the way class-level labels are
 	recognized; they can now contain essentially any symbols.
 
@@ -16765,7 +16771,7 @@
 	Remove some cruft and fixed a bug that could cause it to go to a
 	position further down.
 
-	* progmodes/cc-langs.el, cc-engine.el
+	* progmodes/cc-langs.el, progmodes/cc-engine.el
 	(c-beginning-of-statement-1): Improve detection of labels in
 	declaration contexts.
 
@@ -16780,7 +16786,7 @@
 	* progmodes/cc-defs.el (c-forward-sexp, c-backward-sexp):
 	Make these behave as documented when used at the buffer limits.
 
-	* progmodes/cc-mode.el, cc-engine.el, cc-langs.el
+	* progmodes/cc-mode.el, progmodes/cc-engine.el, progmodes/cc-langs.el
 	(c-type-decl-end-used): Made this a language variable.
 
 	* progmodes/cc-mode.el (c-after-change): Widen the buffer to work
@@ -16807,7 +16813,8 @@
 	* progmodes/cc-mode.el (c-basic-common-init): Turn on syntax-table
 	text property lookup only when it's needed.
 
-	* progmodes/cc-langs.el, cc-engine.el, cc-fonts.el, cc-mode.el:
+	* progmodes/cc-langs.el, progmodes/cc-engine.el:
+	* progmodes/cc-fonts.el, progmodes/cc-mode.el:
 	Change the policy for paren marked angle brackets to be more
 	persistent; once marked they remain marked even when they're found
 	to be unbalanced in the searched region.  This should keep the
@@ -16850,29 +16857,31 @@
 	`template-args-cont' in nested template arglists.  There's still
 	much to be desired in this area, though.
 
-2005-12-08  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-12-08  Alan Mackenzie  <acm@muc.de>
 
-	* progmodes/cc-cmds.el, cc-engine.el, cc-langs.el, cc-vars.el:
+	* progmodes/cc-cmds.el, progmodes/cc-engine.el:
+	* progmodes/cc-langs.el, progmodes/cc-vars.el:
 	Make the "Text Filling and Line Breaking" commands work for AWK buffers.
 
-2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-12-08  Martin Stjernholm  <mast@lysator.liu.se>
 
-	* progmodes/cc-defs.el, cc-engine.el (c-mode-is-new-awk-p):
-	Removed; (c-major-mode-is 'awk-mode) can be used instead now.
+	* progmodes/cc-defs.el, progmodes/cc-engine.el (c-mode-is-new-awk-p):
+	Remove; (c-major-mode-is 'awk-mode) can be used instead now.
 
 	* progmodes/cc-mode.el: Always set up AWK mode since emacsen where
 	it doesn't work no longer are supported.
 
-	* progmodes/cc-mode.el, cc-styles.el, cc-vars.el, cc-defs.el
-	* cc-engine.el, cc-fonts.el, cc-langs.el, cc-cmds.el: CC Mode now
+	* progmodes/cc-mode.el, progmodes/cc-styles.el, progmodes/cc-vars.el:
+	* progmodes/cc-defs.el, progmodes/cc-engine.el, progmodes/cc-fonts.el:
+	* progmodes/cc-langs.el, progmodes/cc-cmds.el: CC Mode now
 	requires support for the syntax-table' text property, which rules
 	out Emacs 19 and XEmacs < 21.4.  Removed various compatibility
 	cruft associated with those versions.
 
-	* progmodes/cc-defs.el, cc-fix.el: CC Mode now requires support
-	for the `syntax-table' text property, which rules out Emacs 19 and
-	XEmacs < 21.4.  Removed various compatibility cruft associated
-	with those versions.
+	* progmodes/cc-defs.el, progmodes/cc-fix.el: CC Mode now requires
+	support for the `syntax-table' text property, which rules out
+	Emacs 19 and XEmacs < 21.4.  Remove various compatibility cruft
+	associated with those versions.
 
 	* progmodes/cc-vars.el (c-emacs-features): CC Mode now requires
 	support for the `syntax-table' text property.
@@ -17355,7 +17364,7 @@
 
 	* calc/calc-embed.el (calc-do-embedded): Update help message.
 
-	* calc/calc-prog.el (calc-user-define-invokation): Update help message.
+	* calc/calc-prog.el (calc-user-define-invocation): Update help message.
 
 2005-11-28  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -17604,7 +17613,7 @@
 
 2005-11-24  Chong Yidong  <cyd@stupidchicken.com>
 
-	* hi-lock.el (hi-lock-buffer-mode): Renamed from `hi-lock-mode'.
+	* hi-lock.el (hi-lock-buffer-mode): Rename from `hi-lock-mode'.
 	Use define-minor-mode, and make it a local mode.  Turn on font-lock.
 	(hi-lock-mode): New global minor mode.
 	(turn-on-hi-lock-if-enabled): New function.
@@ -17650,8 +17659,8 @@
 	New functions.
 	(org-move-item-down, org-move-item-up): New commands.
 	(org-export-as-html): New classes for CSS support.  Bug fix in
-	regular expression detecting fixed-width regions.  Respect
-	`org-local-list-ordered-item-terminator'.
+	regular expression detecting fixed-width regions.
+	Respect `org-local-list-ordered-item-terminator'.
 	(org-set-autofill-regexps, org-adaptive-fill-function): "1)" is
 	also a list item.
 	(org-metaup, org-metadown, org-shiftmetaup, org-shiftmetadown):
@@ -17676,8 +17685,8 @@
 	(gdb-var-update-handler): Find values for all variable objects.
 	(gdb-info-frames-custom): Identify frames by leading "#".
 
-	* progmodes/gud.el (gud-speedbar-menu-items): Add
-	gdb-speedbar-auto-raise as radio button.
+	* progmodes/gud.el (gud-speedbar-menu-items):
+	Add gdb-speedbar-auto-raise as radio button.
 	(gud-speedbar-buttons): Raise speedbar if requested.
 	Don't match on "char **...".
 	(gud-speedbar-buttons): Add (pointer) value for non-leaves.
@@ -20080,8 +20089,8 @@
 2005-10-17  Bill Wohler  <wohler@newt.com>
 
 	Move all remaining images from lisp/toolbar to etc/images, move
-	lisp/toolbar/tool-bar to lisp and "delete" lisp/toolbar.  Place
-	the low resolution images in their own directory (low-color).
+	lisp/toolbar/tool-bar to lisp and "delete" lisp/toolbar.
+	Place the low resolution images in their own directory (low-color).
 
 	* toolbar/attach.*, toolbar/cancel.*, toolbar/close.*
 	* toolbar/copy.*, toolbar/cut.*, toolbar/diropen.*, toolbar/exit.*
@@ -20348,8 +20357,8 @@
 2005-10-13  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* toolbar/diropen.xpm, toolbar/diropen.pbm: New versions made from
-	Gnome file-manager.png.  Suggested by
-	Joachim Nilsson <joachim.nilsson@vmlinux.org>.
+	Gnome file-manager.png.
+	Suggested by Joachim Nilsson <joachim.nilsson@vmlinux.org>.
 
 	* toolbar/README: Add diropen.xpm.
 
@@ -20627,8 +20636,8 @@
 	trailing ":".  Reported by Kurt Steinkraus <kurt@steinkraus.us>.
 	(tramp-chunksize): Improve docstring.
 	(tramp-set-auto-save-file-modes): Octal integer code #o600 breaks
-	Emacs 20.  Use `tramp-octal-to-decimal' therefore.  Reported by
-	Christian Joergensen <bugs@razor.dk>.
+	Emacs 20.  Use `tramp-octal-to-decimal' therefore.
+	Reported by Christian Joergensen <bugs@razor.dk>.
 
 2005-10-07  Glenn Morris  <rgm@gnu.org>
 
@@ -20671,8 +20680,6 @@
 	(recentf-mode): Use it.
 
 2005-10-06  Bill Wohler  <wohler@newt.com>
-
-	* mh-e/mh-loaddefs.el: Remove.  Now generated automatically.
 
 	* Makefile.in (AUTOGENEL): Add mh-e/mh-loaddefs.el.
 	(MH-E-SRC): New.  Used by mh-autoloads.
@@ -20785,8 +20792,8 @@
 
 	* emulation/viper-cmd.el (viper-normalize-minor-mode-map-alist)
 	(viper-refresh-mode-line): Use make-local-variable to localize
-	some vars instead of make-variable-buffer-local.  Suggested by
-	Stefan Monnier.
+	some vars instead of make-variable-buffer-local.
+	Suggested by Stefan Monnier.
 
 	* emulation/viper-init.el (viper-make-variable-buffer-local):
 	Delete alias.
@@ -21028,23 +21035,23 @@
 
 	Frame management code (including timer, and mouse click specifics)
 	moved to dframe.el:
-	(speedbar-attached-frame): Removed.  Use dframe-attached-frame.
-	(speedbar-timer): Removed.  Use dframe-timer.
-	(speedbar-close-frame): Removed.  Use dframe-close-frame.
-	(speedbar-activity-change-focus-flag): Removed.  Use
-	dframe-activity-change-focus-flag.
-	(speedbar-update-speed, speedbar-navigating-speed): Obsolete.  Use
-	dframe-update-speed.
+	(speedbar-attached-frame): Remove.  Use dframe-attached-frame.
+	(speedbar-timer): Remove.  Use dframe-timer.
+	(speedbar-close-frame): Remove.  Use dframe-close-frame.
+	(speedbar-activity-change-focus-flag): Remove.
+	Use dframe-activity-change-focus-flag.
+	(speedbar-update-speed, speedbar-navigating-speed): Obsolete.
+	Use dframe-update-speed.
 
 	(speedbar-current-frame): New macro.  Use this instead of the
 	variable speedbar-frame.
 
 	(speedbar-use-images, speedbar-expand-image-button-alist)
-	(speedbar-insert-image-button-maybe): Moved to sb-image.el.
+	(speedbar-insert-image-button-maybe): Move to sb-image.el.
 
-	(speedbar-find-image-on-load-path): Removed.  Replaced by
+	(speedbar-find-image-on-load-path): Remove.  Replaced by
 	defezimage in ezimage.el.
-	(speedbar-expand-image-button-alist): Removed.  Replaced by
+	(speedbar-expand-image-button-alist): Remove.  Replaced by
 	ezimage-expand-image-button-alist in ezimage.el.
 
 	(speedbar-ignored-directory-regexp)
@@ -21052,7 +21059,7 @@
 	(speedbar-ignored-directory-expressions)
 	(speedbar-line-directory, speedbar-buffers-line-directory)
 	(speedbar-directory-line, speedbar-buffers-line-directory):
-	Renamed, replacing `path' with `directory'.
+	Rename, replacing `path' with `directory'.
 
 	(speedbar-create-directory, speedbar-expand-line-descendants)
 	(speedbar-toggle-line-expansion)
@@ -21610,8 +21617,8 @@
 
 2005-09-17  Milan Zamazal  <pdm@zamazal.org>
 
-	* progmodes/glasses.el (glasses-make-readable): If
-	glasses-separator differs from underscore, put appropriate
+	* progmodes/glasses.el (glasses-make-readable):
+	If glasses-separator differs from underscore, put appropriate
 	overlays over underscore characters.
 	(glasses-convert-to-unreadable): If glasses-separator differs from
 	underscore, try to convert glasses-separator characters to
@@ -21968,7 +21975,7 @@
 	* custom.el (custom-known-themes): Clarify meaning of "standard".
 	(custom-push-theme): Save old values in the standard theme.
 	(disable-theme): Correct typo.
-	(custom-face-theme-value): Deleted unused function.
+	(custom-face-theme-value): Delete unused function.
 	(custom-theme-recalc-face): Rewritten to treat enable/disable properly.
 
 2005-09-05  Stefan Monnier  <monnier@iro.umontreal.ca>
@@ -22919,10 +22926,6 @@
 	* info.el: Add handler to desktop-buffer-mode-handlers.
 	(Info-restore-desktop-buffer): Remove autoload cookie.
 	(Info-mode): Add autoload cookie.
-
-	* mh-e/mh-e.el: Add handler to desktop-buffer-mode-handlers.
-	(mh-restore-desktop-buffer): Remove autoload cookie.
-	(mh-folder-mode): Add autoload cookie.
 
 	* mail/rmail.el: Add handler to desktop-buffer-mode-handlers.
 	(rmail-restore-desktop-buffer): Remove autoload cookie.
@@ -25825,14 +25828,14 @@
 	(antlr-font-lock-default-face, antlr-font-lock-keyword-face)
 	(antlr-font-lock-syntax-face, antlr-font-lock-ruledef-face)
 	(antlr-font-lock-tokendef-face, antlr-font-lock-ruleref-face)
-	(antlr-font-lock-tokenref-face, antlr-font-lock-literal-face): New
-	backward-compatibility aliases for renamed faces.
+	(antlr-font-lock-tokenref-face, antlr-font-lock-literal-face):
+	New backward-compatibility aliases for renamed faces.
 	(antlr-default-face, antlr-keyword-face, antlr-syntax-face)
 	(antlr-ruledef-face, antlr-tokendef-face, antlr-ruleref-face)
 	(antlr-tokenref-face, antlr-literal-face): Variables renamed to
 	remove "font-lock-".  Use renamed antlr-mode faces.
-	(antlr-font-lock-additional-keywords): Use renamed faces.  Replace
-	literal face-names with face variable references.
+	(antlr-font-lock-additional-keywords): Use renamed faces.
+	Replace literal face-names with face variable references.
 
 	* buff-menu.el (Buffer-menu-buffer): Remove "-face" suffix from
 	face name.
@@ -26775,16 +26778,6 @@
 	(iswitchb-common-match-inserted): New variable.
 	(iswitchb-complete, iswitchb-completion-help): Use it.
 
-2005-06-04  David Reitter  <david.reitter@gmail.com>  (tiny change)
-
-	* url/url-http.el (url-http-chunked-encoding-after-change-function):
-	Use `url-http-debug' instead of `message'.
-
-2005-06-04  Thierry Emery  <thierry.emery@free.fr>  (tiny change)
-
-	* url/url-http.el (url-http-parse-headers): Pass redirected URL
-	as a callback argument.
-
 2005-06-04  Kim F. Storm  <storm@cua.dk>
 
 	* simple.el (line-move): Only call sit-for when moving backwards.
@@ -27394,7 +27387,7 @@
 
 	* emacs-lisp/cl.el (acons, pairlis): Add docstring.
 
-2005-05-23  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2005-05-23  Martin Stjernholm  <mast@lysator.liu.se>
 
 	CC Mode update to 5.30.10:
 
@@ -27408,14 +27401,14 @@
 	* progmodes/cc-engine.el (c-guess-basic-syntax): Handle operator
 	declarations somewhat better in C++.
 
-	* progmodes/cc-styles.el, cc-mode.el (c-run-mode-hooks):
+	* progmodes/cc-styles.el, progmodes/cc-mode.el (c-run-mode-hooks):
 	New helper macro to make use of `run-mode-hooks'
 	which has been added in Emacs 21.1.
 	(c-mode, c++-mode, objc-mode, java-mode, idl-mode, pike-mode)
 	(awk-mode): Use it.
 	(make-local-hook): Suppress warning about obsolescence.
 
-	* progmodes/cc-engine.el, cc-align.el, cc-cmds.el
+	* progmodes/cc-engine.el, progmodes/cc-align.el, progmodes/cc-cmds.el
 	(c-append-backslashes-forward, c-delete-backslashes-forward)
 	(c-find-decl-spots, c-semi&comma-no-newlines-before-nonblanks):
 	Compensate for return value from `forward-line' when it has moved
@@ -27424,13 +27417,13 @@
 	* progmodes/cc-engine.el (c-guess-basic-syntax): Fix anchoring in
 	`objc-method-intro' and `objc-method-args-cont'.
 
-2005-05-23  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2005-05-23  Alan Mackenzie  <acm@muc.de>
 
 	CC Mode update to 5.30.10:
 
-	* progmodes/cc-mode.el, cc-engine.el, cc-align.el: Change the FSF's
-	address in the copyright statement.  Incidentally, change "along with
-	GNU Emacs" to "along with this program" where it occurs.
+	* progmodes/cc-mode.el, progmodes/cc-engine.el, progmodes/cc-align.el:
+	Change the FSF's address in the copyright statement.  Incidentally,
+	change "along with GNU Emacs" to "along with this program" where it occurs.
 
 	* progmodes/cc-mode.el: Add a fourth parameter `t' to the awk-mode
 	autoload, so that it is interactive, hence can be found by M-x awk-mode
@@ -28301,8 +28294,8 @@
 
 2005-05-11  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* files.el (executable-find): Move from executable.el.  Use
-	locate-file.
+	* files.el (executable-find): Move from executable.el.
+	Use locate-file.
 	* progmodes/executable.el (executable-find): Move to files.el.
 
 	* font-lock.el (font-lock-fontify-keywords-region): Use a marker
@@ -28531,8 +28524,8 @@
 
 	* term/mac-win.el: Don't define or bind scroll bar functions if
 	x-toolkit-scroll-bars is t.
-	(x-select-text, x-get-selection-value): Clear
-	x-last-selected-text-clipboard if x-select-enable-clipboard is
+	(x-select-text, x-get-selection-value):
+	Clear x-last-selected-text-clipboard if x-select-enable-clipboard is
 	nil.
 	(PRIMARY): Put mac-scrap-name property.
 	(mac-select-convert-to-file-url): New function.
@@ -29693,11 +29686,6 @@
 	* abbrev.el (define-abbrevs): Read system abbrevs properly.
 
 	* emacs-lisp/map-ynp.el (map-y-or-n-p): Clarify RET/q in help message.
-
-2005-04-10  Chong Yidong  <cyd@stupidchicken.com>
-
-	* url/url-ldap.el (url-ldap): Add docstring.  Fix call to
-	`ldap-search-internal'.
 
 2005-04-10  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -30866,8 +30854,8 @@
 	Catch `dont-send' signal.
 	(tramp-set-auto-save-file-modes): Set always permissions, because
 	there might be an old auto-saved file belonging to another
-	original file.  This could be a security threat.  Reported by
-	Kjetil Kjernsmo <kjetil@kjernsmo.net>.
+	original file.  This could be a security threat.
+	Reported by Kjetil Kjernsmo <kjetil@kjernsmo.net>.
 	Check for Emacs 21.3.50 removed.
 
 	* net/tramp-smb.el (all): Remove debug construct for
@@ -31395,7 +31383,7 @@
 
 2005-03-07  Karl Chen  <quarl@cs.berkeley.edu>
 
-	* align.el (align-rules-list): Added an alignment rule for CSS
+	* align.el (align-rules-list): Add an alignment rule for CSS
 	declarations (applies to css-mode and html-mode buffers).
 
 2005-03-07  Stefan Monnier  <monnier@iro.umontreal.ca>
@@ -32506,7 +32494,7 @@
 	(bibtex-field-list, bibtex-find-crossref): Fix typos in error messages.
 
 2005-01-24  Dan Nicolaescu  <dann@ics.uci.edu>
-            Juri Linkov  <juri@jurta.org>
+	    Juri Linkov  <juri@jurta.org>
 
 	* textmodes/reftex-global.el (reftex-isearch-push-state-function)
 	(reftex-isearch-pop-state-function, reftex-isearch-isearch-search)
@@ -32743,8 +32731,8 @@
 
 	* net/tramp-vc.el (tramp-vc-do-command, tramp-vc-do-command-new)
 	(tramp-vc-simple-command): Call `tramp-handle-shell-command' but
-	`shell-command', because it isn't magic in XEmacs.  Reported by
-	Adrian Aichner <adrian@xemacs.org>.
+	`shell-command', because it isn't magic in XEmacs.
+	Reported by Adrian Aichner <adrian@xemacs.org>.
 
 	* net/tramp-smb.el (tramp-smb-file-name-handler-alist): Add entry for
 	`substitute-in-file-name'.
@@ -33346,7 +33334,7 @@ See ChangeLog.11 for earlier changes.
 ;; add-log-time-zone-rule: t
 ;; End:
 
-    Copyright (C) 2005-2013 Free Software Foundation, Inc.
+    Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

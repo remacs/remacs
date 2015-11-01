@@ -1,7 +1,7 @@
 /* unexec() support for Cygwin;
    complete rewrite of xemacs Cygwin unexec() code
 
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -21,7 +21,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 #include "unexec.h"
 #include "lisp.h"
-
+#include <string.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <a.out.h>
@@ -33,12 +33,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 extern void report_sheap_usage (int);
 
 extern int bss_sbrk_did_unexec;
-
-extern int __malloc_initialized;
-
-/* emacs symbols that indicate where bss and data end for emacs internals */
-extern char my_endbss[];
-extern char my_edata[];
 
 /*
 ** header for Windows executable files
@@ -81,8 +75,7 @@ read_exe_header (int fd, exe_header_t * exe_header_buffer)
 #endif
   assert (exe_header_buffer->file_header.f_nscns > 0);
   assert (exe_header_buffer->file_header.f_nscns <=
-	  sizeof (exe_header_buffer->section_header) /
-	  sizeof (exe_header_buffer->section_header[0]));
+          ARRAYELTS (exe_header_buffer->section_header));
   assert (exe_header_buffer->file_header.f_opthdr > 0);
 
   ret =
@@ -234,12 +227,9 @@ fixup_executable (int fd)
 	    lseek (fd, (long) (exe_header->section_header[i].s_scnptr),
 		   SEEK_SET);
 	  assert (ret != -1);
-	  /* force the dumped emacs to reinitialize malloc */
-	  __malloc_initialized = 0;
 	  ret =
 	    write (fd, (char *) start_address,
 		   my_endbss - (char *) start_address);
-	  __malloc_initialized = 1;
 	  assert (ret == (my_endbss - (char *) start_address));
 	  if (debug_unexcw)
 	    printf ("         .bss, mem start %#lx mem length %d\n",
@@ -285,13 +275,6 @@ unexec (const char *outfile, const char *infile)
   int fd_out;
   int ret;
   int ret2;
-
-  if (bss_sbrk_did_unexec)
-    {
-      /* can only dump once */
-      printf ("You can only dump Emacs once on this platform.\n");
-      return;
-    }
 
   report_sheap_usage (1);
 

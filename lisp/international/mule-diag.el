@@ -1,6 +1,6 @@
 ;;; mule-diag.el --- show diagnosis of multilingual environment (Mule)
 
-;; Copyright (C) 1997-1998, 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997-1998, 2000-2015 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
 ;;   2005, 2006, 2007, 2008, 2009, 2010, 2011
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
@@ -332,7 +332,7 @@ meanings of these arguments."
       (let ((char (charset-iso-final-char charset)))
 	(when (> char 0)
 	  (insert "Final char of ISO2022 designation sequence: ")
-	  (insert (format "`%c'\n" char))))
+	  (insert (format-message "`%c'\n" char))))
       (let (aliases)
 	(dolist (c charset-list)
 	  (if (and (not (eq c charset))
@@ -581,7 +581,7 @@ docstring, and print only the first line of the docstring."
 	    (if (string-match "\n" doc)
 		(setq doc (substring doc 0 (match-beginning 0))))
 	    (setq doc (concat "  " doc)))
-	  (princ (format "%s\n" doc))))))
+	  (princ (format "%s\n" (substitute-command-keys doc)))))))
 
 ;;;###autoload
 (defun describe-current-coding-system ()
@@ -770,7 +770,7 @@ but still contains full information about each coding system."
 # MNEMONIC-LETTER -- CODING-SYSTEM-NAME
 #   DOC-STRING
 ")
-    (princ "\
+    (princ (substitute-command-keys "\
 #########################
 ## LIST OF CODING SYSTEMS
 ## Each line corresponds to one coding system
@@ -794,7 +794,7 @@ but still contains full information about each coding system."
 ##      0
 ##  POST-READ-CONVERSION, PRE-WRITE-CONVERSION = function name to be called
 ##
-"))
+")))
   (dolist (coding-system (sort-coding-systems (coding-system-list 'base-only)))
     (if (null arg)
 	(print-coding-system-briefly coding-system 'tightly)
@@ -825,10 +825,18 @@ but still contains full information about each coding system."
 The IGNORED argument is ignored."
   (print-list "name (opened by):" (aref font-info 0))
   (print-list "       full name:" (aref font-info 1))
+  (and (aref font-info 12)
+       (print-list "       file name:" (aref font-info 12)))
   (print-list "            size:" (format "%2d" (aref font-info 2)))
   (print-list "          height:" (format "%2d" (aref font-info 3)))
   (print-list " baseline-offset:" (format "%2d" (aref font-info 4)))
-  (print-list "relative-compose:" (format "%2d" (aref font-info 5))))
+  (print-list "relative-compose:" (format "%2d" (aref font-info 5)))
+  (print-list "  default-ascent:" (format "%2d" (aref font-info 6)))
+  (print-list "          ascent:" (format "%2d" (aref font-info 8)))
+  (print-list "         descent:" (format "%2d" (aref font-info 9)))
+  (print-list "   average-width:" (format "%2d" (aref font-info 11)))
+  (print-list "     space-width:" (format "%2d" (aref font-info 10)))
+  (print-list "       max-width:" (format "%2d" (aref font-info 7))))
 
 ;;;###autoload
 (defun describe-font (fontname)
@@ -1030,7 +1038,8 @@ see the function `describe-fontset' for the format of the list."
       (save-excursion
 	(goto-char (point-min))
 	(while (re-search-forward
-		"^  \\([^ ]+\\) (`.*' in mode line)$" nil t)
+		(substitute-command-keys "^  \\([^ ]+\\) (`.*' in mode line)$")
+                nil t)
 	  (help-xref-button 1 'help-input-method (match-string 1)))))))
 
 (defun list-input-methods-1 ()
@@ -1038,7 +1047,8 @@ see the function `describe-fontset' for the format of the list."
       (princ "
 No input method is available, perhaps because you have not
 installed LEIM (Libraries of Emacs Input Methods).")
-    (princ "LANGUAGE\n  NAME (`TITLE' in mode line)\n")
+    (princ (substitute-command-keys
+            "LANGUAGE\n  NAME (`TITLE' in mode line)\n"))
     (princ "    SHORT-DESCRIPTION\n------------------------------\n")
     (setq input-method-alist
 	  (sort input-method-alist
@@ -1050,16 +1060,18 @@ installed LEIM (Libraries of Emacs Input Methods).")
 	  (setq language (nth 1 elt))
 	  (princ language)
 	  (terpri))
-	(princ (format "  %s (`%s' in mode line)\n    %s\n"
-		       (car elt)
-		       (let ((title (nth 3 elt)))
-			 (if (and (consp title) (stringp (car title)))
-			     (car title)
-			   title))
-		       ;; If the doc is multi-line, indent all
-		       ;; non-blank lines. (Bug#8066)
-		       (replace-regexp-in-string "\n\\(.\\)" "\n    \\1"
-						 (or (nth 4 elt) ""))))))))
+	(princ (format-message
+                "  %s (`%s' in mode line)\n    %s\n"
+                (car elt)
+                (let ((title (nth 3 elt)))
+                  (if (and (consp title) (stringp (car title)))
+                      (car title)
+                    title))
+                ;; If the doc is multi-line, indent all
+                ;; non-blank lines. (Bug#8066)
+                (replace-regexp-in-string
+                 "\n\\(.\\)" "\n    \\1"
+                 (substitute-command-keys (or (nth 4 elt) "")))))))))
 
 ;;; DIAGNOSIS
 

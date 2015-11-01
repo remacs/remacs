@@ -1,11 +1,11 @@
 ;;; org-bibtex.el --- Org links to BibTeX entries
 ;;
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 ;;
-;; Authors: Bastien Guerry <bzg at altern dot org>
+;; Authors: Bastien Guerry <bzg@gnu.org>
 ;;       Carsten Dominik <carsten dot dominik at gmail dot com>
 ;;       Eric Schulte <schulte dot eric at gmail dot com>
-;; Keywords: org, wp, remember
+;; Keywords: org, wp, capture
 ;;
 ;; This file is part of GNU Emacs.
 ;;
@@ -31,7 +31,7 @@
 ;; the link that contains the author name, the year and a short title.
 ;;
 ;; It also stores detailed information about the entry so that
-;; remember templates can access and enter this information easily.
+;; capture templates can access and enter this information easily.
 ;;
 ;; The available properties for each entry are listed here:
 ;;
@@ -41,14 +41,14 @@
 ;; :booktitle     :month          :annote      :abstract
 ;; :key           :btype
 ;;
-;; Here is an example of a remember template that use some of this
+;; Here is an example of a capture template that use some of this
 ;; information (:author :year :title :journal :pages):
 ;;
-;; (setq org-remember-templates
+;; (setq org-capture-templates
 ;;   '((?b "* READ %?\n\n%a\n\n%:author (%:year): %:title\n   \
 ;;          In %:journal, %:pages.")))
 ;;
-;; Let's say you want to remember this BibTeX entry:
+;; Let's say you want to capture this BibTeX entry:
 ;;
 ;; @Article{dolev83,
 ;;   author = 	 {Danny Dolev and Andrew C. Yao},
@@ -61,7 +61,7 @@
 ;;   month =	 {Mars}
 ;; }
 ;;
-;; M-x `org-remember' on this entry will produce this buffer:
+;; M-x `org-capture' on this entry will produce this buffer:
 ;;
 ;; =====================================================================
 ;; * READ <== [point here]
@@ -94,7 +94,7 @@
 ;;
 ;; The link creation part has been part of Org-mode for a long time.
 ;;
-;; Creating better remember template information was inspired by a request
+;; Creating better capture template information was inspired by a request
 ;; of Austin Frank: http://article.gmane.org/gmane.emacs.orgmode/4112
 ;; and then implemented by Bastien Guerry.
 ;;
@@ -195,7 +195,7 @@
     (:howpublished . "How something strange has been published.  The first word should be capitalized.")
     (:institution  . "The sponsoring institution of a technical report.")
     (:journal      . "A journal name.")
-    (:key          . "Used for alphabetizing, cross-referencing, and creating a label when the author information is missing.  This field should not be confused with the key that appears in the \cite command and at the beginning of the database entry.")
+    (:key          . "Used for alphabetizing, cross-referencing, and creating a label when the author information is missing.  This field should not be confused with the key that appears in the \\cite command and at the beginning of the database entry.")
     (:month        . "The month in which the work was published or, for an unpublished work, in which it was written.  You should use the standard three-letter abbreviation,")
     (:note         . "Any additional information that can help the reader.  The first word should be capitalized.")
     (:number       . "Any additional information that can help the reader.  The first word should be capitalized.")
@@ -203,7 +203,7 @@
     (:pages        . "One or more page numbers or range of numbers, such as 42-111 or 7,41,73-97 or 43+ (the ‘+’ in this last example indicates pages following that don’t form simple range). BibTEX requires double dashes for page ranges (--).")
     (:publisher    . "The publisher’s name.")
     (:school       . "The name of the school where a thesis was written.")
-    (:series       . "The name of a series or set of books.  When citing an entire book, the the title field gives its title and an optional series field gives the name of a series or multi-volume set in which the book is published.")
+    (:series       . "The name of a series or set of books.  When citing an entire book, the title field gives its title and an optional series field gives the name of a series or multi-volume set in which the book is published.")
     (:title        . "The work’s title, typed as explained in the LaTeX book.")
     (:type         . "The type of a technical report for example, 'Research Note'.")
     (:volume       . "The volume of a journal or multi-volume book.")
@@ -221,10 +221,12 @@
 
 (defcustom org-bibtex-prefix nil
   "Optional prefix for all bibtex property names.
-For example setting to 'BIB_' would allow interoperability with fireforg."
+For example setting to `BIB_' would allow interoperability with fireforg."
   :group 'org-bibtex
   :version "24.1"
-  :type  'string)
+  :type  '(choice
+	   (const nil)
+	   (string)))
 
 (defcustom org-bibtex-treat-headline-as-title t
   "Treat headline text as title if title property is absent.
@@ -277,7 +279,7 @@ not be exported."
 
 (defcustom org-bibtex-no-export-tags nil
   "List of tag(s) that should not be converted to keywords.
-This variable is relevant only if `org-bibtex-export-tags-as-keywords' is t."
+This variable is relevant only if `org-bibtex-tags-are-keywords' is t."
   :group 'org-bibtex
   :version "24.1"
   :type '(repeat :tag "Tag" (string)))
@@ -291,12 +293,13 @@ This variable is relevant only if `org-bibtex-export-tags-as-keywords' is t."
 
 ;;; Utility functions
 (defun org-bibtex-get (property)
-  ((lambda (it) (when it (org-babel-trim it)))
-   (let ((org-special-properties
-	  (delete "FILE" (copy-sequence org-special-properties))))
-     (or
-      (org-entry-get (point) (upcase property))
-      (org-entry-get (point) (concat org-bibtex-prefix (upcase property)))))))
+  (let ((it (let ((org-special-properties
+                   (delete "FILE" (copy-sequence org-special-properties))))
+              (or
+               (org-entry-get (point) (upcase property))
+               (org-entry-get (point) (concat org-bibtex-prefix
+                                              (upcase property)))))))
+    (when it (org-babel-trim it))))
 
 (defun org-bibtex-put (property value)
   (let ((prop (upcase (if (keywordp property)
@@ -368,7 +371,9 @@ This variable is relevant only if `org-bibtex-export-tags-as-keywords' is t."
 	    (bibtex-beginning-of-entry)
 	    (if (re-search-forward "keywords.*=.*{\\(.*\\)}" nil t)
 		(progn (goto-char (match-end 1)) (insert ", "))
-	      (bibtex-make-field "keywords" t t))
+	      (search-forward ",\n" nil t)
+	      (insert "  keywords={},\n")
+	      (search-backward "}," nil t))
 	    (insert (mapconcat #'identity tags ", ")))
 	  (buffer-string))))))
 
@@ -382,8 +387,8 @@ This variable is relevant only if `org-bibtex-export-tags-as-keywords' is t."
 	(princ (cdr (assoc field org-bibtex-fields))))
       (with-current-buffer buf-name (visual-line-mode 1))
       (org-fit-window-to-buffer (get-buffer-window buf-name))
-      ((lambda (result) (when (> (length result) 0) result))
-       (read-from-minibuffer (format "%s: " name))))))
+      (let ((result (read-from-minibuffer (format "%s: " name))))
+        (when (> (length result) 0) result)))))
 
 (defun org-bibtex-autokey ()
   "Generate an autokey for the current headline."
@@ -531,26 +536,27 @@ With optional argument OPTIONAL, also prompt for optional fields."
 ;;; Bibtex <-> Org-mode headline translation functions
 (defun org-bibtex (&optional filename)
   "Export each headline in the current file to a bibtex entry.
-Headlines are exported using `org-bibtex-export-headline'."
+Headlines are exported using `org-bibtex-headline'."
   (interactive
    (list (read-file-name
 	  "Bibtex file: " nil nil nil
 	  (file-name-nondirectory
 	   (concat (file-name-sans-extension (buffer-file-name)) ".bib")))))
-  ((lambda (error-point)
-     (when error-point
-       (goto-char error-point)
-       (message "Bibtex error at %S" (nth 4 (org-heading-components)))))
-   (catch 'bib
-     (let ((bibtex-entries (remove nil (org-map-entries
-					(lambda ()
-					  (condition-case foo
-					      (org-bibtex-headline)
-					    (error (throw 'bib (point)))))))))
-       (with-temp-file filename
-	 (insert (mapconcat #'identity bibtex-entries "\n")))
-       (message "Successfully exported %d BibTeX entries to %s"
-		(length bibtex-entries) filename) nil))))
+  (let ((error-point
+         (catch 'bib
+           (let ((bibtex-entries
+                  (remove nil (org-map-entries
+                               (lambda ()
+                                 (condition-case foo
+                                     (org-bibtex-headline)
+                                   (error (throw 'bib (point)))))))))
+             (with-temp-file filename
+               (insert (mapconcat #'identity bibtex-entries "\n")))
+             (message "Successfully exported %d BibTeX entries to %s"
+                      (length bibtex-entries) filename) nil))))
+    (when error-point
+      (goto-char error-point)
+      (message "Bibtex error at %S" (nth 4 (org-heading-components))))))
 
 (defun org-bibtex-check (&optional optional)
   "Check the current headline for required fields.
@@ -558,8 +564,8 @@ With prefix argument OPTIONAL also prompt for optional fields."
   (interactive "P")
   (save-restriction
     (org-narrow-to-subtree)
-    (let ((type ((lambda (name) (when name (intern (concat ":" name))))
-                 (org-bibtex-get org-bibtex-type-property-name))))
+    (let ((type (let ((name (org-bibtex-get org-bibtex-type-property-name)))
+                  (when name (intern (concat ":" name))))))
       (when type (org-bibtex-fleshout type optional)))))
 
 (defun org-bibtex-check-all (&optional optional)
@@ -609,7 +615,8 @@ This uses `bibtex-parse-entry'."
 	(strip-delim
 	 (lambda (str)	     ; strip enclosing "..." and {...}
 	   (dolist (pair '((34 . 34) (123 . 125) (123 . 125)))
-	     (when (and (= (aref str 0) (car pair))
+	     (when (and (> (length str) 1)
+			(= (aref str 0) (car pair))
 			(= (aref str (1- (length str))) (cdr pair)))
 	       (setf str (substring str 1 (1- (length str)))))) str)))
     (push (mapcar
@@ -622,6 +629,27 @@ This uses `bibtex-parse-entry'."
                    (funcall clean-space (funcall strip-delim (cdr pair)))))
            (save-excursion (bibtex-beginning-of-entry) (bibtex-parse-entry)))
           org-bibtex-entries)))
+
+(defun org-bibtex-read-buffer (buffer)
+  "Read all bibtex entries in BUFFER and save to `org-bibtex-entries'.
+Return the number of saved entries."
+  (interactive "bbuffer: ")
+  (let ((start-length (length org-bibtex-entries)))
+    (with-current-buffer buffer
+      (save-excursion
+	(goto-char (point-max))
+	(while (not (= (point) (point-min)))
+	  (backward-char 1)
+	  (org-bibtex-read)
+	  (bibtex-beginning-of-entry))))
+    (let ((added (- (length org-bibtex-entries) start-length)))
+      (message "parsed %d entries" added)
+      added)))
+
+(defun org-bibtex-read-file (file)
+  "Read FILE with `org-bibtex-read-buffer'."
+  (interactive "ffile: ")
+  (org-bibtex-read-buffer (find-file-noselect file 'nowarn 'rawfile)))
 
 (defun org-bibtex-write ()
   "Insert a heading built from the first element of `org-bibtex-entries'."
@@ -663,6 +691,14 @@ This uses `bibtex-parse-entry'."
     (if entry
 	(org-bibtex-write)
       (error "Yanked text does not appear to contain a BibTeX entry"))))
+
+(defun org-bibtex-import-from-file (file)
+  "Read bibtex entries from FILE and insert as Org-mode headlines after point."
+  (interactive "ffile: ")
+  (dotimes (_ (org-bibtex-read-file file))
+    (save-excursion (org-bibtex-write))
+    (re-search-forward org-property-end-re)
+    (open-line 1) (forward-char 1)))
 
 (defun org-bibtex-export-to-kill-ring ()
   "Export current headline to kill ring as bibtex entry."

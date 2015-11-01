@@ -1,6 +1,6 @@
 ;;; semantic.el --- Semantic buffer evaluator.
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: syntax tools
@@ -311,14 +311,6 @@ a parse of the buffer.")
 (semantic-varalias-obsolete 'semantic-init-db-hooks
 			    'semantic-init-db-hook "23.2")
 
-(defvar semantic-new-buffer-fcn-was-run nil
-  "Non-nil after `semantic-new-buffer-fcn' has been executed.")
-(make-variable-buffer-local 'semantic-new-buffer-fcn-was-run)
-
-(defsubst semantic-active-p ()
-  "Return non-nil if the current buffer was set up for parsing."
-  semantic-new-buffer-fcn-was-run)
-
 (defsubst semantic-error-if-unparsed ()
   "Raise an error if current buffer was not parsed by Semantic."
   (unless semantic-new-buffer-fcn-was-run
@@ -390,7 +382,7 @@ Arguments START and END bound the time being calculated."
 (defun bovinate (&optional clear)
   "Parse the current buffer.  Show output in a temp buffer.
 Optional argument CLEAR will clear the cache before parsing.
-If CLEAR is negative, it will do a full reparse, and also not display
+If CLEAR is negative, it will do a full reparse, and also display
 the output buffer."
   (interactive "P")
   (if clear (semantic-clear-toplevel-cache))
@@ -400,7 +392,8 @@ the output buffer."
 	 (end (current-time)))
     (message "Retrieving tags took %.2f seconds."
 	     (semantic-elapsed-time start end))
-    (when (or (null clear) (not (listp clear)))
+    (when (or (null clear) (not (listp clear))
+	      (and (numberp clear) (< 0 clear)))
       (pop-to-buffer "*Parser Output*")
       (require 'pp)
       (erase-buffer)
@@ -580,6 +573,7 @@ string."
 ;; The best way to call the parser from programs is via
 ;; `semantic-fetch-tags'.  This, in turn, uses other internal
 ;; API functions which plug-in parsers can take advantage of.
+(defvar semantic-parser-warnings)
 
 (defun semantic-fetch-tags ()
   "Fetch semantic tags from the current buffer.
@@ -609,49 +603,49 @@ was marked unparseable, then do nothing, and return the cache."
      (garbage-collect)
      (cond
 
-;;;; Try the incremental parser to do a fast update.
-     ((semantic-parse-tree-needs-update-p)
-      (setq res (semantic-parse-changes))
-      (if (semantic-parse-tree-needs-rebuild-p)
-          ;; If the partial reparse fails, jump to a full reparse.
-          (semantic-fetch-tags)
-        ;; Clear the cache of unmatched syntax tokens
-        ;;
-        ;; NOTE TO SELF:
-        ;;
-        ;; Move this into the incremental parser.  This is a bug.
-        ;;
-        (semantic-clear-unmatched-syntax-cache)
-        (run-hook-with-args ;; Let hooks know the updated tags
-         'semantic-after-partial-cache-change-hook res))
-      (setq semantic--completion-cache nil))
+      ;; Try the incremental parser to do a fast update.
+      ((semantic-parse-tree-needs-update-p)
+       (setq res (semantic-parse-changes))
+       (if (semantic-parse-tree-needs-rebuild-p)
+           ;; If the partial reparse fails, jump to a full reparse.
+           (semantic-fetch-tags)
+         ;; Clear the cache of unmatched syntax tokens
+         ;;
+         ;; NOTE TO SELF:
+         ;;
+         ;; Move this into the incremental parser.  This is a bug.
+         ;;
+         (semantic-clear-unmatched-syntax-cache)
+         (run-hook-with-args ;; Let hooks know the updated tags
+          'semantic-after-partial-cache-change-hook res))
+       (setq semantic--completion-cache nil))
 
-;;;; Parse the whole system.
-     ((semantic-parse-tree-needs-rebuild-p)
-      ;; Use Emacs's built-in progress-reporter (only interactive).
-      (if noninteractive
-	  (setq res (semantic-parse-region (point-min) (point-max)))
-	(let ((semantic--progress-reporter
-	       (and (>= (point-max) semantic-minimum-working-buffer-size)
-		    (eq semantic-working-type 'percent)
-		    (make-progress-reporter
-		     (semantic-parser-working-message (buffer-name))
-		     0 100))))
-	  (setq res (semantic-parse-region (point-min) (point-max)))
-	  (if semantic--progress-reporter
-	      (progress-reporter-done semantic--progress-reporter))))
+      ;; Parse the whole system.
+      ((semantic-parse-tree-needs-rebuild-p)
+       ;; Use Emacs's built-in progress-reporter (only interactive).
+       (if noninteractive
+           (setq res (semantic-parse-region (point-min) (point-max)))
+         (let ((semantic--progress-reporter
+                (and (>= (point-max) semantic-minimum-working-buffer-size)
+                     (eq semantic-working-type 'percent)
+                     (make-progress-reporter
+                      (semantic-parser-working-message (buffer-name))
+                      0 100))))
+           (setq res (semantic-parse-region (point-min) (point-max)))
+           (if semantic--progress-reporter
+               (progress-reporter-done semantic--progress-reporter))))
 
-      ;; Clear the caches when we see there were no errors.
-      ;; But preserve the unmatched syntax cache and warnings!
-      (let (semantic-unmatched-syntax-cache
-	    semantic-unmatched-syntax-cache-check
-	    semantic-parser-warnings)
-	(semantic-clear-toplevel-cache))
-      ;; Set up the new overlays
-      (semantic--tag-link-list-to-buffer res)
-      ;; Set up the cache with the new results
-      (semantic--set-buffer-cache res)
-      ))))
+       ;; Clear the caches when we see there were no errors.
+       ;; But preserve the unmatched syntax cache and warnings!
+       (let (semantic-unmatched-syntax-cache
+             semantic-unmatched-syntax-cache-check
+             semantic-parser-warnings)
+         (semantic-clear-toplevel-cache))
+       ;; Set up the new overlays
+       (semantic--tag-link-list-to-buffer res)
+       ;; Set up the cache with the new results
+       (semantic--set-buffer-cache res)
+       ))))
 
   ;; Always return the current parse tree.
   semantic--buffer-cache)
@@ -775,8 +769,8 @@ This function returns semantic tags without overlays."
 	       (eq semantic-working-type 'percent)
 	       (progress-reporter-update
 		semantic--progress-reporter
-		(/ (* 100 (semantic-lex-token-start (car stream)))
-		   (point-max))))))
+		(floor (* 100.0 (semantic-lex-token-start (car stream)))
+		       (point-max))))))
     result))
 
 ;;; Parsing Warnings:
@@ -1134,8 +1128,16 @@ Semantic mode.
 	;; Add semantic-ia-complete-symbol to
 	;; completion-at-point-functions, so that it is run from
 	;; M-TAB.
+	;;
+	;; Note: The first entry added is the last entry run, so the
+	;;       most specific entry should be last.
 	(add-hook 'completion-at-point-functions
-		  'semantic-completion-at-point-function)
+		  'semantic-analyze-nolongprefix-completion-at-point-function)
+	(add-hook 'completion-at-point-functions
+		  'semantic-analyze-notc-completion-at-point-function)
+	(add-hook 'completion-at-point-functions
+		  'semantic-analyze-completion-at-point-function)
+
 	(if global-ede-mode
 	    (define-key cedet-menu-map [cedet-menu-separator] '("--")))
 	(dolist (b (buffer-list))
@@ -1147,7 +1149,12 @@ Semantic mode.
     ;; Semantic can be re-activated cleanly.
     (remove-hook 'mode-local-init-hook 'semantic-new-buffer-fcn)
     (remove-hook 'completion-at-point-functions
-		 'semantic-completion-at-point-function)
+		 'semantic-analyze-completion-at-point-function)
+    (remove-hook 'completion-at-point-functions
+		 'semantic-analyze-notc-completion-at-point-function)
+    (remove-hook 'completion-at-point-functions
+		 'semantic-analyze-nolongprefix-completion-at-point-function)
+
     (remove-hook 'after-change-functions
 		 'semantic-change-function)
     (define-key cedet-menu-map [cedet-menu-separator] nil)
@@ -1163,8 +1170,56 @@ Semantic mode.
     ;; re-activated.
     (setq semantic-new-buffer-fcn-was-run nil)))
 
-(defun semantic-completion-at-point-function ()
-  'semantic-ia-complete-symbol)
+;;; Completion At Point functions
+(defun semantic-analyze-completion-at-point-function ()
+  "Return possible analysis completions at point.
+The completions provided are via `semantic-analyze-possible-completions'.
+This function can be used by `completion-at-point-functions'."
+  (when (semantic-active-p)
+    (let* ((ctxt (semantic-analyze-current-context))
+           (possible (semantic-analyze-possible-completions ctxt)))
+
+      ;; The return from this is either:
+      ;; nil - not applicable here.
+      ;; A list: (START END COLLECTION . PROPS)
+      (when possible
+        (list (car (oref ctxt bounds))
+              (cdr (oref ctxt bounds))
+              possible))
+      )))
+
+(defun semantic-analyze-notc-completion-at-point-function ()
+  "Return possible analysis completions at point.
+The completions provided are via `semantic-analyze-possible-completions',
+but with the 'no-tc option passed in, which means constraints based
+on what is being assigned to are ignored.
+This function can be used by `completion-at-point-functions'."
+  (when (semantic-active-p)
+    (let* ((ctxt (semantic-analyze-current-context))
+           (possible (semantic-analyze-possible-completions ctxt 'no-tc)))
+
+      (when possible
+        (list (car (oref ctxt bounds))
+              (cdr (oref ctxt bounds))
+              possible))
+      )))
+
+(defun semantic-analyze-nolongprefix-completion-at-point-function ()
+  "Return possible analysis completions at point.
+The completions provided are via `semantic-analyze-possible-completions',
+but with the 'no-tc and 'no-longprefix option passed in, which means
+constraints resulting in a long multi-symbol dereference are ignored.
+This function can be used by `completion-at-point-functions'."
+  (when (semantic-active-p)
+    (let* ((ctxt (semantic-analyze-current-context))
+           (possible (semantic-analyze-possible-completions
+                      ctxt 'no-tc 'no-longprefix)))
+
+      (when possible
+        (list (car (oref ctxt bounds))
+              (cdr (oref ctxt bounds))
+              possible))
+      )))
 
 ;;; Autoload some functions that are not in semantic/loaddefs
 

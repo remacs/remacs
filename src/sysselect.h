@@ -1,5 +1,5 @@
 /* sysselect.h - System-dependent definitions for the select function.
-   Copyright (C) 1995, 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 1995, 2001-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -16,12 +16,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef EMACS_SYSSELECT_H
-#define EMACS_SYSSELECT_H
+#ifndef SYSSELECT_H
+#define SYSSELECT_H 1
 
 #ifndef DOS_NT
 #include <sys/select.h>
 #endif
+
+#include "lisp.h"
 
 #ifdef WINDOWSNT
 
@@ -53,20 +55,17 @@ typedef struct {
 
 #include "systime.h"
 extern int sys_select (int, SELECT_TYPE *, SELECT_TYPE *, SELECT_TYPE *,
-		       EMACS_TIME *, sigset_t *);
+		       struct timespec *, sigset_t *);
 
 #else  /* not WINDOWSNT */
 
 #ifdef FD_SET
-#ifdef FD_SETSIZE
-#define MAXDESC FD_SETSIZE
-#else
-#define MAXDESC 64
+#ifndef FD_SETSIZE
+#define FD_SETSIZE 64
 #endif
-#define SELECT_TYPE fd_set
 #else /* no FD_SET */
-#define MAXDESC 32
-#define SELECT_TYPE int
+#define FD_SETSIZE 32
+typedef int fd_set;
 
 /* Define the macros to access a single-int bitmap of descriptors.  */
 #define FD_SET(n, p) (*(p) |= (1 << (n)))
@@ -84,4 +83,41 @@ extern int sys_select (int, SELECT_TYPE *, SELECT_TYPE *, SELECT_TYPE *,
 #define pselect sys_select
 #endif
 
-#endif	/* EMACS_SYSSELECT_H */
+#ifndef WINDOWSNT
+INLINE_HEADER_BEGIN
+
+/* Check for out-of-range errors if ENABLE_CHECKING is defined.  */
+
+INLINE void
+fd_CLR (int fd, fd_set *set)
+{
+  eassume (0 <= fd && fd < FD_SETSIZE);
+  FD_CLR (fd, set);
+}
+
+INLINE bool
+fd_ISSET (int fd, fd_set *set)
+{
+  eassume (0 <= fd && fd < FD_SETSIZE);
+  return FD_ISSET (fd, set) != 0;
+}
+
+INLINE void
+fd_SET (int fd, fd_set *set)
+{
+  eassume (0 <= fd && fd < FD_SETSIZE);
+  FD_SET (fd, set);
+}
+
+#undef FD_CLR
+#undef FD_ISSET
+#undef FD_SET
+#define FD_CLR(fd, set) fd_CLR (fd, set)
+#define FD_ISSET(fd, set) fd_ISSET (fd, set)
+#define FD_SET(fd, set) fd_SET (fd, set)
+
+INLINE_HEADER_END
+
+#endif	/* !WINDOWSNT */
+
+#endif

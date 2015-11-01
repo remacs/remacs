@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2001-2013 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2001-2015 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Fixit
@@ -78,6 +78,7 @@ the undo command.
 previous undo commands, use @kbd{M-x undo-only}.  This is like
 @code{undo}, but will not redo changes you have just undone.
 
+@c What about @kbd{M-x revert-buffer}? --xfq
   If you notice that a buffer has been modified accidentally, the
 easiest way to recover is to type @kbd{C-/} repeatedly until the stars
 disappear from the front of the mode line (@pxref{Mode Line}).
@@ -190,7 +191,7 @@ point forward across three other characters.  It would change
 @samp{f@point{}oobar} into @samp{oobf@point{}ar}.  This is equivalent to
 repeating @kbd{C-t} three times.  @kbd{C-u - 4 M-t} moves the word
 before point backward across four words.  @kbd{C-u - C-M-t} would cancel
-the effect of plain @kbd{C-M-t}.@refill
+the effect of plain @kbd{C-M-t}.
 
   A numeric argument of zero is assigned a special meaning (because
 otherwise a command with a repeat count of zero would do nothing): to
@@ -216,7 +217,7 @@ Convert last word to lower case with capital initial.
 the word case-conversion commands @kbd{M-l}, @kbd{M-u} and @kbd{M-c} have a
 special feature when used with a negative argument: they do not move the
 cursor.  As soon as you see you have mistyped the last word, you can simply
-case-convert it and go on typing.  @xref{Case}.@refill
+case-convert it and go on typing.  @xref{Case}.
 
 @node Spelling
 @section Checking and Correcting Spelling
@@ -285,7 +286,7 @@ messages.  @xref{Sending Mail}.
 
   When one of these commands encounters what appears to be an
 incorrect word, it asks you what to do.  It usually displays a list of
-numbered ``near-misses''---words that are close to the incorrect word.
+numbered @dfn{near-misses}---words that are close to the incorrect word.
 Then you must type a single-character response.  Here are the valid
 responses:
 
@@ -330,7 +331,7 @@ file.
 
 @item l @var{word} @key{RET}
 Look in the dictionary for words that match @var{word}.  These words
-become the new list of ``near-misses''; you can select one of them as
+become the new list of near-misses; you can select one of them as
 the replacement by typing a digit.  You can use @samp{*} in @var{word} as a
 wildcard.
 
@@ -403,10 +404,17 @@ mode in the current buffer.  To enable Flyspell mode in all text mode
 buffers, add @code{flyspell-mode} to @code{text-mode-hook}.
 @xref{Hooks}.
 
+@findex flyspell-correct-word
+@findex flyspell-auto-correct-word
+@findex flyspell-correct-word-before-point
   When Flyspell mode highlights a word as misspelled, you can click on
-it with @kbd{Mouse-2} to display a menu of possible corrections and
-actions.  You can also correct the word by editing it manually in any
-way you like.
+it with @kbd{Mouse-2} (@code{flyspell-correct-word}) to display a menu
+of possible corrections and actions.  In addition, @kbd{C-.} or
+@kbd{@key{ESC}-@key{TAB}} (@code{flyspell-auto-correct-word}) will
+propose various successive corrections for the word at point, and
+@kbd{C-c $} (@code{flyspell-correct-word-before-point}) will pop up a
+menu of possible corrections.  Of course, you can always correct the
+misspelled word by editing it manually in any way you like.
 
 @findex flyspell-prog-mode
   Flyspell Prog mode works just like ordinary Flyspell mode, except

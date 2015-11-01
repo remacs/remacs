@@ -1,6 +1,6 @@
 ;;; compile-tests.el --- Test suite for font parsing.
 
-;; Copyright (C) 2011-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
 ;; Author: Chong Yidong <cyd@stupidchicken.com>
 ;; Keywords:       internal
@@ -190,6 +190,10 @@
      1 nil 54 "G:/cygwin/dev/build-myproj.xml")
     ("{standard input}:27041: Warning: end of file not at end of a line; newline inserted"
      1 nil 27041 "{standard input}")
+    ;; Guile
+    ("In foo.scm:\n" 1 nil nil "foo.scm")
+    ("  63:4 [call-with-prompt prompt0 ...]" 1 4 63 nil)
+    ("1038: 1 [main (\"gud-break.scm\")]" 1 1 1038 nil)
     ;; lcc
     ("E, file.cc(35,52) Illegal operation on pointers" 1 52 35 "file.cc")
     ("W, file.cc(36,52) blah blah" 1 52 36 "file.cc")
@@ -200,9 +204,11 @@
     ("makepp: bla bla `/foo/bar.c' and `/foo/bar.h'" 35 nil nil "/foo/bar.h")
     ;; maven
     ("FooBar.java:[111,53] no interface expected here"
-     1 53 111 "FooBar.java")
+     1 53 111 "FooBar.java" 2)
     ("  [ERROR] /Users/cinsk/hello.java:[651,96] ';' expected"
-     15 96 651 "/Users/cinsk/hello.java") ;Bug#11517.
+     15 96 651 "/Users/cinsk/hello.java" 2) ;Bug#11517.
+    ("[WARNING] /foo/bar/Test.java:[27,43] unchecked conversion"
+     11 43 27 "/foo/bar/Test.java" 1) ;Bug#20556
     ;; mips-1 mips-2
     ("TrimMask (255) in solomon.c may be indistinguishable from TrimMasks (93) in solomo.c due to truncation"
      11 nil 255 "solomon.c")
@@ -222,10 +228,10 @@
     ("1>test_main.cpp(29): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int"
      3 nil 29 "test_main.cpp")
     ;; watcom
-    ("..\src\ctrl\lister.c(109): Error! E1009: Expecting ';' but found '{'"
-     1 nil 109 "..\src\ctrl\lister.c")
-    ("..\src\ctrl\lister.c(120): Warning! W201: Unreachable code"
-     1 nil 120 "..\src\ctrl\lister.c")
+    ("..\\src\\ctrl\\lister.c(109): Error! E1009: Expecting ';' but found '{'"
+     1 nil 109 "..\\src\\ctrl\\lister.c")
+    ("..\\src\\ctrl\\lister.c(120): Warning! W201: Unreachable code"
+     1 nil 120 "..\\src\\ctrl\\lister.c")
     ;; oracle
     ("Semantic error at line 528, column 5, file erosacqdb.pc:"
      1 5 528 "erosacqdb.pc")
@@ -331,6 +337,7 @@ END-LINE, if that matched.")
 	    (col  (nth 2 test))
 	    (line (nth 3 test))
 	    (file (nth 4 test))
+            (type (nth 5 test))
 	    end-col end-line)
 	(if (consp col)
 	    (setq end-col (cdr col) col (car col)))
@@ -338,12 +345,15 @@ END-LINE, if that matched.")
 	    (setq end-line (cdr line) line (car line)))
 	(and (equal (compilation--loc->col loc) col)
 	     (equal (compilation--loc->line loc) line)
-	     (equal (caar (compilation--loc->file-struct loc)) file)
+             (or (not file)
+                 (equal (caar (compilation--loc->file-struct loc)) file))
 	     (or (null end-col)
 	     	 (equal (car (cadr (nth 2 (compilation--loc->file-struct loc))))
 	     		end-col))
 	     (equal (car (nth 2 (compilation--loc->file-struct loc)))
-	     	    (or end-line line)))))))
+                    (or end-line line))
+             (or (null type)
+                 (equal type (compilation--message->type msg))))))))
 
 (ert-deftest compile-test-error-regexps ()
   "Test the `compilation-error-regexp-alist' regexps.

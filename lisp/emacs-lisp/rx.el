@@ -1,9 +1,9 @@
 ;;; rx.el --- sexp notation for regular expressions
 
-;; Copyright (C) 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Gerd Moellmann <gerd@gnu.org>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: strings, regexps, extensions
 
 ;; This file is part of GNU Emacs.
@@ -258,7 +258,8 @@ regular expressions.")
     (not-at-end-of-line		. ?<)
     (not-at-beginning-of-line	. ?>)
     (alpha-numeric-two-byte	. ?A)
-    (chinse-two-byte		. ?C)
+    (chinese-two-byte		. ?C)
+    (chinse-two-byte		. ?C) ;; A typo in Emacs 21.1-24.3.
     (greek-two-byte		. ?G)
     (japanese-hiragana-two-byte . ?H)
     (indian-two-byte		. ?I)
@@ -767,8 +768,8 @@ of all atomic regexps."
      ((= l 3) (string-match "\\`\\(?:\\\\[cCsS_]\\|\\[[^^]\\]\\)" r))
      ((null lax)
       (cond
-       ((string-match "\\`\\[^?\]?\\(?:\\[:[a-z]+:]\\|[^\]]\\)*\\]\\'" r))
-       ((string-match "\\`\\\\(\\(?:[^\\]\\|\\\\[^\)]\\)*\\\\)\\'" r)))))))
+       ((string-match "\\`\\[^?\]?\\(?:\\[:[a-z]+:]\\|[^]]\\)*\\]\\'" r))
+       ((string-match "\\`\\\\(\\(?:[^\\]\\|\\\\[^)]\\)*\\\\)\\'" r)))))))
 
 
 (defun rx-syntax (form)
@@ -814,9 +815,9 @@ of all atomic regexps."
 
 (defun rx-greedy (form)
   "Parse and produce code from FORM.
-If FORM is '(minimal-match FORM1)', non-greedy versions of `*',
+If FORM is `(minimal-match FORM1)', non-greedy versions of `*',
 `+', and `?' operators will be used in FORM1.  If FORM is
-'(maximal-match FORM1)', greedy operators will be used."
+`(maximal-match FORM1)', greedy operators will be used."
   (rx-check form)
   (let ((rx-greedy-flag (eq (car form) 'maximal-match)))
     (rx-form (cadr form) rx-parent)))
@@ -871,7 +872,7 @@ NO-GROUP non-nil means don't put shy groups around the result."
 REGEXPS is a non-empty sequence of forms of the sort listed below.
 
 Note that `rx' is a Lisp macro; when used in a Lisp program being
- compiled, the translation is performed by the compiler.
+compiled, the translation is performed by the compiler.
 See `rx-to-string' for how to do such a translation at run-time.
 
 The following are valid subforms of regular expressions in sexp
@@ -964,20 +965,20 @@ CHAR
      matches space and tab only.
 
 `graphic', `graph'
-     matches graphic characters--everything except ASCII control chars,
-     space, and DEL.
+     matches graphic characters--everything except whitespace, ASCII
+     and non-ASCII control characters, surrogates, and codepoints
+     unassigned by Unicode.
 
 `printing', `print'
-     matches printing characters--everything except ASCII control chars
-     and DEL.
+     matches whitespace and graphic characters.
 
 `alphanumeric', `alnum'
-     matches letters and digits.  (But at present, for multibyte characters,
-     it matches anything that has word syntax.)
+     matches alphabetic characters and digits.  (For multibyte characters,
+     it matches according to Unicode character properties.)
 
 `letter', `alphabetic', `alpha'
-     matches letters.  (But at present, for multibyte characters,
-     it matches anything that has word syntax.)
+     matches alphabetic characters.  (For multibyte characters,
+     it matches according to Unicode character properties.)
 
 `ascii'
      matches ASCII (unibyte) characters.
@@ -1045,7 +1046,7 @@ CHAR
      `not-at-end-of-line'		(\\c<)
      `not-at-beginning-of-line'		(\\c>)
      `alpha-numeric-two-byte'		(\\cA)
-     `chinse-two-byte'			(\\cC)
+     `chinese-two-byte'			(\\cC)
      `greek-two-byte'			(\\cG)
      `japanese-hiragana-two-byte'	(\\cH)
      `indian-tow-byte'			(\\cI)

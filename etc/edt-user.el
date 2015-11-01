@@ -1,6 +1,6 @@
 ;;; edt-user.el --- Sample user customizations for Emacs EDT emulation
 
-;; Copyright (C) 1986, 1992-1993, 2000-2013 Free Software Foundation,
+;; Copyright (C) 1986, 1992-1993, 2000-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Kevin Gallagher <kgallagh@@spd.dsccc.com>
@@ -160,7 +160,7 @@ G-C-\\: Split Window
   G-%: Go to Percentage
   G- : Undo  (GOLD Spacebar)
   G-=: Go to Line
-  G-`: What line
+  G-\\=`: What line
   G-/: Query-Replace"
 
   (interactive)

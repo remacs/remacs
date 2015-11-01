@@ -1,5 +1,5 @@
-# manywarnings.m4 serial 5
-dnl Copyright (C) 2008-2013 Free Software Foundation, Inc.
+# manywarnings.m4 serial 7
+dnl Copyright (C) 2008-2015 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -93,6 +93,14 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
   fi
 
   # List all gcc warning categories.
+  # To compare this list to your installed GCC's, run this Bash command:
+  #
+  # comm -3 \
+  #  <(sed -n 's/^  *\(-[^ ]*\) .*/\1/p' manywarnings.m4 | sort) \
+  #  <(gcc --help=warnings | sed -n 's/^  \(-[^ ]*\) .*/\1/p' | sort |
+  #      grep -v -x -f <(
+  #         awk '/^[^#]/ {print $1}' ../build-aux/gcc-warning.spec))
+
   gl_manywarn_set=
   for gl_manywarn_item in \
     -W \
@@ -100,20 +108,25 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     -Waddress \
     -Waggressive-loop-optimizations \
     -Wall \
-    -Warray-bounds \
     -Wattributes \
     -Wbad-function-cast \
+    -Wbool-compare \
     -Wbuiltin-macro-redefined \
     -Wcast-align \
     -Wchar-subscripts \
+    -Wchkp \
     -Wclobbered \
     -Wcomment \
     -Wcomments \
     -Wcoverage-mismatch \
     -Wcpp \
+    -Wdate-time \
     -Wdeprecated \
     -Wdeprecated-declarations \
+    -Wdesignated-init \
     -Wdisabled-optimization \
+    -Wdiscarded-array-qualifiers \
+    -Wdiscarded-qualifiers \
     -Wdiv-by-zero \
     -Wdouble-promotion \
     -Wempty-body \
@@ -124,6 +137,7 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     -Wformat-extra-args \
     -Wformat-nonliteral \
     -Wformat-security \
+    -Wformat-signedness \
     -Wformat-y2k \
     -Wformat-zero-length \
     -Wfree-nonheap-object \
@@ -131,29 +145,33 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     -Wimplicit \
     -Wimplicit-function-declaration \
     -Wimplicit-int \
+    -Wincompatible-pointer-types \
     -Winit-self \
     -Winline \
+    -Wint-conversion \
     -Wint-to-pointer-cast \
     -Winvalid-memory-model \
     -Winvalid-pch \
     -Wjump-misses-init \
+    -Wlogical-not-parentheses \
     -Wlogical-op \
     -Wmain \
     -Wmaybe-uninitialized \
+    -Wmemset-transposed-args \
     -Wmissing-braces \
     -Wmissing-declarations \
     -Wmissing-field-initializers \
     -Wmissing-include-dirs \
     -Wmissing-parameter-type \
     -Wmissing-prototypes \
-    -Wmudflap \
     -Wmultichar \
     -Wnarrowing \
     -Wnested-externs \
     -Wnonnull \
-    -Wnormalized=nfc \
+    -Wodr \
     -Wold-style-declaration \
     -Wold-style-definition \
+    -Wopenmp-simd \
     -Woverflow \
     -Woverlength-strings \
     -Woverride-init \
@@ -168,6 +186,9 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     -Wreturn-type \
     -Wsequence-point \
     -Wshadow \
+    -Wshift-count-negative \
+    -Wshift-count-overflow \
+    -Wsizeof-array-argument \
     -Wsizeof-pointer-memaccess \
     -Wstack-protector \
     -Wstrict-aliasing \
@@ -177,7 +198,10 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     -Wsuggest-attribute=format \
     -Wsuggest-attribute=noreturn \
     -Wsuggest-attribute=pure \
+    -Wsuggest-final-methods \
+    -Wsuggest-final-types \
     -Wswitch \
+    -Wswitch-bool \
     -Wswitch-default \
     -Wsync-nand \
     -Wsystem-headers \
@@ -208,6 +232,22 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     ; do
     gl_manywarn_set="$gl_manywarn_set $gl_manywarn_item"
   done
+
+  # gcc --help=warnings outputs an unusual form for these options; list
+  # them here so that the above 'comm' command doesn't report a false match.
+  gl_manywarn_set="$gl_manywarn_set -Warray-bounds=2"
+  gl_manywarn_set="$gl_manywarn_set -Wnormalized=nfc"
+
+  # These are needed for older GCC versions.
+  if test -n "$GCC"; then
+    case `($CC --version) 2>/dev/null` in
+      'gcc (GCC) '[[0-3]].* | \
+      'gcc (GCC) '4.[[0-7]].*)
+        gl_manywarn_set="$gl_manywarn_set -fdiagnostics-show-option"
+        gl_manywarn_set="$gl_manywarn_set -funit-at-a-time"
+          ;;
+    esac
+  fi
 
   # Disable specific options as needed.
   if test "$gl_cv_cc_nomfi_needed" = yes; then

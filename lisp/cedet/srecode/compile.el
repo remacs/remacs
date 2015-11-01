@@ -1,6 +1,6 @@
 ;;; srecode/compile --- Compilation of srecode template files.
 
-;; Copyright (C) 2005, 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2005, 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: codegeneration
@@ -34,6 +34,7 @@
 (eval-when-compile (require 'cl))
 (require 'semantic)
 (require 'eieio)
+(require 'cl-generic)
 (require 'eieio-base)
 (require 'srecode/table)
 (require 'srecode/dictionary)
@@ -74,7 +75,7 @@ any incoming dictionaries values.")
 	   :initform nil
 	   :documentation
 	   "During template insertion, this is the stack of active templates.
-The top-most template is the 'active' template.  Use the accessor methods
+The top-most template is the `active' template.  Use the accessor methods
 for push, pop, and peek for the active template.")
    (table :initarg :table
 	  :documentation
@@ -87,10 +88,10 @@ for push, pop, and peek for the active template.")
 Useful if something goes wrong in SRecode, and the active template
 stack is broken."
   (interactive)
-  (if (oref srecode-template active)
+  (if (oref-default 'srecode-template active)
       (when (y-or-n-p (format "%d active templates.  Flush? "
-			      (length (oref srecode-template active))))
-	(oset-default srecode-template active nil))
+			      (length (oref-default 'srecode-template active))))
+	(oset-default 'srecode-template active nil))
     (message "No active templates to flush."))
   )
 
@@ -115,23 +116,23 @@ additional static argument data."))
 Plain text strings are not handled via this baseclass."
   :abstract t)
 
-(defmethod srecode-parse-input ((ins srecode-template-inserter)
-				tag input STATE)
+(cl-defmethod srecode-parse-input ((_ins srecode-template-inserter)
+                                   _tag input _STATE)
   "For the template inserter INS, parse INPUT.
 Shorten input only by the amount needed.
 Return the remains of INPUT.
 STATE is the current compilation state."
   input)
 
-(defmethod srecode-match-end ((ins srecode-template-inserter) name)
+(cl-defmethod srecode-match-end ((_ins srecode-template-inserter) _name)
   "For the template inserter INS, do I end a section called NAME?"
   nil)
 
-(defmethod srecode-inserter-apply-state ((ins srecode-template-inserter) STATE)
+(cl-defmethod srecode-inserter-apply-state ((_ins srecode-template-inserter) _STATE)
   "For the template inserter INS, apply information from STATE."
   nil)
 
-(defmethod srecode-inserter-prin-example :STATIC ((ins srecode-template-inserter)
+(cl-defmethod srecode-inserter-prin-example ((ins (subclass srecode-template-inserter))
 						  escape-start escape-end)
   "Insert an example using inserter INS.
 Arguments ESCAPE-START and ESCAPE-END are the current escape sequences in use."
@@ -158,7 +159,7 @@ Arguments ESCAPE-START and ESCAPE-END are the current escape sequences in use."
    )
   "Current state of the compile.")
 
-(defmethod srecode-compile-add-prompt ((state srecode-compile-state)
+(cl-defmethod srecode-compile-add-prompt ((state srecode-compile-state)
 				       prompttag)
   "Add PROMPTTAG to the current list of prompts."
   (with-slots (prompts) state
@@ -289,7 +290,7 @@ Arguments ESCAPE-START and ESCAPE-END are the current escape sequences in use."
        )
       ;; Continue
       (setq tags (cdr tags)))
-    
+
     ;; MSG - Before install since nreverse whacks our list.
     (when (called-interactively-p 'interactive)
       (message "%d templates compiled for %s"
@@ -414,7 +415,7 @@ If END-NAME is specified, and the input string"
 				 (match-end 0)))
 	       (namestart (match-end 0))
 	       (junk (string-match regexend what namestart))
-	       end tail name key)
+	       end tail name)
 	  ;; Add string to compiled output
 	  (when (> (length prefix) 0)
 	    (setq comp (cons prefix comp)))
@@ -452,8 +453,7 @@ If END-NAME is specified, and the input string"
 			  (semantic-tag-name tag)))
 		  )
 	    ;; Add string to compiled output
-	    (setq name (substring what namestart end)
-		  key nil)
+	    (setq name (substring what namestart end))
 	    ;; Trim WHAT back.
 	    (setq what (substring what tail))
 	    ;; Get the inserter
@@ -514,7 +514,7 @@ to the inserter constructor."
   ;;(message "Compile: %s %S" name props)
   (if (not key)
       (apply 'srecode-template-inserter-variable name props)
-    (let ((classes (eieio-class-children srecode-template-inserter))
+    (let ((classes (eieio-class-children 'srecode-template-inserter))
 	  (new nil))
       ;; Loop over the various subclasses and
       ;; create the correct inserter.
@@ -522,7 +522,7 @@ to the inserter constructor."
 	(setq classes (append classes (eieio-class-children (car classes))))
 	;; Do we have a match?
 	(when (and (not (class-abstract-p (car classes)))
-		   (equal (oref (car classes) key) key))
+		   (equal (oref-default (car classes) key) key))
 	  ;; Create the new class, and apply state.
 	  (setq new (apply (car classes) name props))
 	  (srecode-inserter-apply-state new STATE)
@@ -595,7 +595,7 @@ A list of defined variables VARS provides a variable table."
 ;; Dump out information about the current srecoder compiled templates.
 ;;
 
-(defmethod srecode-dump ((tmp srecode-template))
+(cl-defmethod srecode-dump ((tmp srecode-template))
   "Dump the contents of the SRecode template tmp."
   (princ "== Template \"")
   (princ (eieio-object-name-string tmp))
@@ -641,7 +641,7 @@ Argument INDENT specifies the indentation level for the list."
 	(princ "\n"))))
   )
 
-(defmethod srecode-dump ((ins srecode-template-inserter) indent)
+(cl-defmethod srecode-dump ((ins srecode-template-inserter) _indent)
   "Dump the state of the SRecode template inserter INS."
   (princ "INS: \"")
   (princ (eieio-object-name-string ins))

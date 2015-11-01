@@ -1,9 +1,9 @@
 ;; erc-button.el --- A way of buttonizing certain things in ERC buffers  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1996-2004, 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2004, 2006-2015 Free Software Foundation, Inc.
 
 ;; Author: Mario Lang <mlang@delysid.org>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: irc, button, url, regexp
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki.pl?ErcButton
 
@@ -183,12 +183,14 @@ PAR is a number of a regexp grouping whose text will be passed to
   'nicknames, these are ignored, and CALLBACK will be called with
   the nickname matched as the argument."
   :group 'erc-button
-  :version "24.3"                       ; remove finger (bug#4443)
+  :version "24.1"                       ; remove finger (bug#4443)
   :type '(repeat
           (list :tag "Button"
                 (choice :tag "Matches"
                         regexp
                         (variable :tag "Variable containing regexp")
+                        ;; FIXME It really does mean 'nicknames
+                        ;; rather than just nicknames.
                         (const :tag "Nicknames" 'nicknames))
                 (integer :tag "Number of the regexp section that matches")
                 (choice :tag "When to buttonize"
@@ -267,7 +269,7 @@ specified by `erc-button-alist'."
             (inhibit-point-motion-hooks t)
             (inhibit-field-text-motion t)
             (alist erc-button-alist)
-            entry regexp data)
+            regexp)
         (erc-button-remove-old-buttons)
         (dolist (entry alist)
           (if (equal (car entry) (quote (quote nicknames)))
@@ -407,7 +409,7 @@ REGEXP is the regular expression which matched for this button."
 ;; Since Emacs runs this directly, rather than with
 ;; widget-button-click, we need to fake an extra arg in the
 ;; interactive spec.
-(defun erc-button-click-button (ignore event)
+(defun erc-button-click-button (_ignore event)
   "Call `erc-button-press-button'."
   (interactive "P\ne")
   (save-excursion
@@ -416,7 +418,7 @@ REGEXP is the regular expression which matched for this button."
 
 ;; XEmacs calls this via widget-button-press with a bunch of arguments
 ;; which we don't care about.
-(defun erc-button-press-button (&rest ignore)
+(defun erc-button-press-button (&rest _ignore)
   "Check text at point for a callback function.
 If the text at point has a `erc-callback' property,
 call it with the value of the `erc-data' text property."
@@ -509,12 +511,13 @@ Examples:
 
 (defun erc-nick-popup (nick)
   (let* ((completion-ignore-case t)
-         (action (completing-read (concat "What action to take on '" nick "'? ")
+         (action (completing-read (format-message
+                                   "What action to take on `%s'? " nick)
                                   erc-nick-popup-alist))
          (code (cdr (assoc action erc-nick-popup-alist))))
     (when code
       (erc-set-active-buffer (current-buffer))
-      (eval code))))
+      (eval code `((nick . ,nick))))))
 
 ;;; Callback functions
 (defun erc-button-describe-symbol (symbol-name)
@@ -535,8 +538,8 @@ and `apropos' for other symbols."
                      (- (car (current-time-zone)))))
          (hours (mod (floor seconds 3600) 24))
          (minutes (mod (round seconds 60) 60)))
-    (message (format "@%s is %d:%02d local time"
-                     beats hours minutes))))
+    (message "@%s is %d:%02d local time"
+             beats hours minutes)))
 
 (provide 'erc-button)
 
@@ -544,4 +547,3 @@ and `apropos' for other symbols."
 ;; Local Variables:
 ;; indent-tabs-mode: nil
 ;; End:
-

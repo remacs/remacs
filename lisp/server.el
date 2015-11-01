@@ -1,10 +1,10 @@
 ;;; server.el --- Lisp code for GNU Emacs running as server process -*- lexical-binding: t -*-
 
-;; Copyright (C) 1986-1987, 1992, 1994-2013 Free Software Foundation,
+;; Copyright (C) 1986-1987, 1992, 1994-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: William Sommerfeld <wesommer@athena.mit.edu>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: processes
 
 ;; Changes by peck@sun.com and by rms.
@@ -104,10 +104,10 @@
   "The name or IP address to use as host address of the server process.
 If set, the server accepts remote connections; otherwise it is local.
 
-DO NOT give this a non-nil value unless you know what you are
-doing!  On unsecured networks, accepting remote connections is
-very dangerous, because server-client communication (including
-session authentication) is not encrypted."
+DO NOT give this a non-nil value unless you know what you are doing!
+On unsecured networks, accepting remote connections is very dangerous,
+because server-client communication (including session authentication)
+is not encrypted."
   :group 'server
   :type '(choice
           (string :tag "Name or IP address")
@@ -245,6 +245,7 @@ in this way."
   :type 'boolean
   :version "21.1")
 
+;; FIXME? This is not a minor mode; what's the point of this?  (See bug#20201)
 (or (assq 'server-buffer-clients minor-mode-alist)
     (push '(server-buffer-clients " Server") minor-mode-alist))
 
@@ -532,7 +533,8 @@ Creates the directory if necessary and makes sure:
 		  ((and w32 (zerop uid))	  ; on FAT32?
 		   (display-warning
 		    'server
-		    (format "Using `%s' to store Emacs-server authentication files.
+		    (format-message "\
+Using `%s' to store Emacs-server authentication files.
 Directories on FAT32 filesystems are NOT secure against tampering.
 See variable `server-auth-dir' for details."
 			    (file-name-as-directory dir))
@@ -573,7 +575,7 @@ If the key is not valid, signal an error."
   (if server-auth-key
     (if (string-match-p "^[!-~]\\{64\\}$" server-auth-key)
         server-auth-key
-      (error "The key '%s' is invalid" server-auth-key))
+      (error "The key `%s' is invalid" server-auth-key))
     (server-generate-key)))
 
 ;;;###autoload
@@ -623,8 +625,9 @@ To force-start a server, do \\[server-force-delete] and then
 	 (concat "Unable to start the Emacs server.\n"
 		 (format "There is an existing Emacs server, named %S.\n"
 			 server-name)
-		 "To start the server in this Emacs process, stop the existing
-server or call `M-x server-force-delete' to forcibly disconnect it.")
+		 (substitute-command-keys
+                  "To start the server in this Emacs process, stop the existing
+server or call `\\[server-force-delete]' to forcibly disconnect it."))
 	 :warning)
 	(setq leave-dead t))
       ;; If this Emacs already had a server, clear out associated status.
@@ -642,8 +645,6 @@ server or call `M-x server-force-delete' to forcibly disconnect it.")
 	(cl-letf (((default-file-modes) ?\700))
 	  (add-hook 'suspend-tty-functions 'server-handle-suspend-tty)
 	  (add-hook 'delete-frame-functions 'server-handle-delete-frame)
-	  (add-hook 'kill-buffer-query-functions
-                    'server-kill-buffer-query-function)
 	  (add-hook 'kill-emacs-query-functions
                     'server-kill-emacs-query-function)
 	  (add-hook 'kill-emacs-hook 'server-force-stop) ;Cleanup upon exit.
@@ -652,8 +653,8 @@ server or call `M-x server-force-delete' to forcibly disconnect it.")
 		       :name server-name
 		       :server t
 		       :noquery t
-		       :sentinel 'server-sentinel
-		       :filter 'server-process-filter
+		       :sentinel #'server-sentinel
+		       :filter #'server-process-filter
 		       ;; We must receive file names without being decoded.
 		       ;; Those are decoded by server-process-filter according
 		       ;; to file-name-coding-system.  Also don't get
@@ -796,32 +797,33 @@ This handles splitting the command if it would be bigger than
     (error "Invalid terminal type"))
   (add-to-list 'frame-inherited-parameters 'client)
   (let ((frame
-         (server-with-environment (process-get proc 'env)
-				  '("LANG" "LC_CTYPE" "LC_ALL"
-				    ;; For tgetent(3); list according to ncurses(3).
-				    "BAUDRATE" "COLUMNS" "ESCDELAY" "HOME" "LINES"
-				    "NCURSES_ASSUMED_COLORS" "NCURSES_NO_PADDING"
-				    "NCURSES_NO_SETBUF" "TERM" "TERMCAP" "TERMINFO"
-				    "TERMINFO_DIRS" "TERMPATH"
-				    ;; rxvt wants these
-				    "COLORFGBG" "COLORTERM")
-				  (make-frame `((window-system . nil)
-						(tty . ,tty)
-						(tty-type . ,type)
-						;; Ignore nowait here; we always need to
-						;; clean up opened ttys when the client dies.
-						(client . ,proc)
-						;; This is a leftover from an earlier
-						;; attempt at making it possible for process
-						;; run in the server process to use the
-						;; environment of the client process.
-						;; It has no effect now and to make it work
-						;; we'd need to decide how to make
-						;; process-environment interact with client
-						;; envvars, and then to change the
-						;; C functions `child_setup' and
-						;; `getenv_internal' accordingly.
-						(environment . ,(process-get proc 'env)))))))
+         (server-with-environment
+             (process-get proc 'env)
+             '("LANG" "LC_CTYPE" "LC_ALL"
+               ;; For tgetent(3); list according to ncurses(3).
+               "BAUDRATE" "COLUMNS" "ESCDELAY" "HOME" "LINES"
+               "NCURSES_ASSUMED_COLORS" "NCURSES_NO_PADDING"
+               "NCURSES_NO_SETBUF" "TERM" "TERMCAP" "TERMINFO"
+               "TERMINFO_DIRS" "TERMPATH"
+               ;; rxvt wants these
+               "COLORFGBG" "COLORTERM")
+           (make-frame `((window-system . nil)
+                         (tty . ,tty)
+                         (tty-type . ,type)
+                         ;; Ignore nowait here; we always need to
+                         ;; clean up opened ttys when the client dies.
+                         (client . ,proc)
+                         ;; This is a leftover from an earlier
+                         ;; attempt at making it possible for process
+                         ;; run in the server process to use the
+                         ;; environment of the client process.
+                         ;; It has no effect now and to make it work
+                         ;; we'd need to decide how to make
+                         ;; process-environment interact with client
+                         ;; envvars, and then to change the
+                         ;; C functions `child_setup' and
+                         ;; `getenv_internal' accordingly.
+                         (environment . ,(process-get proc 'env)))))))
 
     ;; ttys don't use the `display' parameter, but callproc.c does to set
     ;; the DISPLAY environment on subprocesses.
@@ -840,9 +842,6 @@ This handles splitting the command if it would be bigger than
          (w (or (cdr (assq 'window-system parameters))
                 (window-system-for-display display))))
 
-    (unless (assq w window-system-initialization-alist)
-      (setq w nil))
-
     ;; Special case for ns.  This is because DISPLAY may not be set at all
     ;; which in the ns case isn't an error.  The variable display then becomes
     ;; the fully qualified hostname, which make-frame-on-display below
@@ -850,7 +849,12 @@ This handles splitting the command if it would be bigger than
     ;; It may also be a valid X display, but if Emacs is compiled for ns, it
     ;; can not make X frames.
     (if (featurep 'ns-win)
-	(setq w 'ns display "ns"))
+	(setq w 'ns display "ns")
+      ;; FIXME! Not sure what this was for, and not sure how it should work
+      ;; in the cl-defmethod new world!
+      ;;(unless (assq w window-system-initialization-alist)
+      ;;  (setq w nil))
+      )
 
     (cond (w
            ;; Flag frame as client-created, but use a dummy client.
@@ -1140,9 +1144,12 @@ The following commands are accepted by the client:
                  ;; frame.  If running a GUI server, force the frame
                  ;; type to GUI.  (Cygwin is perfectly happy with
                  ;; multi-tty support, so don't override the user's
-                 ;; choice there.)
+                 ;; choice there.)  In daemon mode on Windows, we can't
+                 ;; make tty frames, so force the frame type to GUI
+                 ;; there too.
                  (when (and (eq system-type 'windows-nt)
-                            (eq window-system 'w32))
+                            (or (daemonp)
+                                (eq window-system 'w32)))
                    (push "-window-system" args-left)))
 
                 ;; -position LINE[:COLUMN]:  Set point to the given
@@ -1162,10 +1169,17 @@ The following commands are accepted by the client:
                  (let ((file (pop args-left)))
                    (if coding-system
                        (setq file (decode-coding-string file coding-system)))
+                   ;; Allow Cygwin's emacsclient to be used as a file
+                   ;; handler on MS-Windows, in which case FILENAME
+                   ;; might start with a drive letter.
+                   (when (and (eq system-type 'cygwin)
+                              (string-match "\\`[A-Za-z]:" file))
+                     (setq file (cygwin-convert-file-name-from-windows file)))
                    (setq file (expand-file-name file dir))
                    (push (cons file filepos) files)
                    (server-log (format "New file: %s %s"
-                                       file (or filepos "")) proc))
+                                       file (or filepos ""))
+                               proc))
                  (setq filepos nil))
 
                 ;; -eval EXPR:  Evaluate a Lisp expression.
@@ -1216,7 +1230,10 @@ The following commands are accepted by the client:
 					   terminal-frame)))))
 		    (setq tty-name nil tty-type nil)
 		    (if display (server-select-display display)))
-		   ((eq tty-name 'window-system)
+		   ((or (and (eq system-type 'windows-nt)
+			     (daemonp)
+			     (setq display "w32"))
+		        (eq tty-name 'window-system))
 		    (server-create-window-system-frame display nowait proc
 						       parent-id
 						       frame-parameters))
@@ -1472,31 +1489,14 @@ specifically for the clients and did not exist before their request for it."
 	(save-buffer)))
     (server-buffer-done (current-buffer))))
 
-;; Ask before killing a server buffer.
-;; It was suggested to release its client instead,
-;; but I think that is dangerous--the client would proceed
-;; using whatever is on disk in that file. -- rms.
-(defun server-kill-buffer-query-function ()
-  "Ask before killing a server buffer."
-  (or (not server-buffer-clients)
-      (let ((res t))
-	(dolist (proc server-buffer-clients)
-          (when (and (memq proc server-clients)
-                     (eq (process-status proc) 'open))
-            (setq res nil)))
-         res)
-      (yes-or-no-p (format "Buffer `%s' still has clients; kill it? "
-			   (buffer-name (current-buffer))))))
-
 (defun server-kill-emacs-query-function ()
   "Ask before exiting Emacs if it has live clients."
-  (or (not server-clients)
-      (let (live-client)
-	(dolist (proc server-clients)
-	  (when (memq t (mapcar 'buffer-live-p (process-get
-						proc 'buffers)))
-	    (setq live-client t)))
-        live-client)
+  (or (not (let (live-client)
+             (dolist (proc server-clients)
+               (when (memq t (mapcar 'buffer-live-p (process-get
+                                                     proc 'buffers)))
+                 (setq live-client t)))
+             live-client))
       (yes-or-no-p "This Emacs session has clients; exit anyway? ")))
 
 (defun server-kill-buffer ()
@@ -1634,7 +1634,7 @@ only these files will be asked to be saved."
 (define-key ctl-x-map "#" 'server-edit)
 
 (defun server-unload-function ()
-  "Unload the server library."
+  "Unload the Server library."
   (server-mode -1)
   (substitute-key-definition 'server-edit nil ctl-x-map)
   (save-current-buffer
@@ -1648,7 +1648,7 @@ only these files will be asked to be saved."
   "Contact the Emacs server named SERVER and evaluate FORM there.
 Returns the result of the evaluation, or signals an error if it
 cannot contact the specified server.  For example:
-  \(server-eval-at \"server\" '(emacs-pid))
+  (server-eval-at \"server\" \\='(emacs-pid))
 returns the process ID of the Emacs instance running \"server\"."
   (let* ((server-dir (if server-use-tcp server-auth-dir server-socket-dir))
 	 (server-file (expand-file-name server server-dir))

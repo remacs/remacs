@@ -24,11 +24,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define EMACS_CHARACTER_H
 
 #include <verify.h>
+#include "lisp.h"
 
 INLINE_HEADER_BEGIN
-#ifndef CHARACTER_INLINE
-# define CHARACTER_INLINE INLINE
-#endif
 
 /* character code	1st byte   byte sequence
    --------------	--------   -------------
@@ -62,6 +60,30 @@ INLINE_HEADER_BEGIN
 /* Maximum leading code of multibyte characters.  */
 #define MAX_MULTIBYTE_LEADING_CODE 0xF8
 
+/* Unicode character values.  */
+enum
+{
+  NO_BREAK_SPACE = 0x00A0,
+  SOFT_HYPHEN = 0x00AD,
+  ZERO_WIDTH_NON_JOINER = 0x200C,
+  ZERO_WIDTH_JOINER = 0x200D,
+  HYPHEN = 0x2010,
+  NON_BREAKING_HYPHEN = 0x2011,
+  LEFT_SINGLE_QUOTATION_MARK = 0x2018,
+  RIGHT_SINGLE_QUOTATION_MARK = 0x2019,
+  PARAGRAPH_SEPARATOR = 0x2029,
+  LEFT_POINTING_ANGLE_BRACKET = 0x2329,
+  RIGHT_POINTING_ANGLE_BRACKET = 0x232A,
+  LEFT_ANGLE_BRACKET = 0x3008,
+  RIGHT_ANGLE_BRACKET = 0x3009,
+  OBJECT_REPLACEMENT_CHARACTER = 0xFFFC,
+};
+
+/* UTF-8 encodings.  Use \x escapes, so they are portable to pre-C11
+   compilers and can be concatenated with ordinary string literals.  */
+#define uLSQM "\xE2\x80\x98" /* U+2018 LEFT SINGLE QUOTATION MARK */
+#define uRSQM "\xE2\x80\x99" /* U+2019 RIGHT SINGLE QUOTATION MARK */
+
 /* Nonzero iff C is a character that corresponds to a raw 8-bit
    byte.  */
 #define CHAR_BYTE8_P(c) ((c) > MAX_5_BYTE_CHAR)
@@ -70,20 +92,15 @@ INLINE_HEADER_BEGIN
 #define BYTE8_TO_CHAR(byte) ((byte) + 0x3FFF00)
 
 #define UNIBYTE_TO_CHAR(byte) \
-  (ASCII_BYTE_P (byte) ? (byte) : BYTE8_TO_CHAR (byte))
+  (ASCII_CHAR_P (byte) ? (byte) : BYTE8_TO_CHAR (byte))
 
 /* Return the raw 8-bit byte for character C.  */
-#define CHAR_TO_BYTE8(c)	\
-  (CHAR_BYTE8_P (c)		\
-   ? (c) - 0x3FFF00		\
-   : multibyte_char_to_unibyte (c))
+#define CHAR_TO_BYTE8(c) (CHAR_BYTE8_P (c) ? (c) - 0x3FFF00 : (c & 0xFF))
 
 /* Return the raw 8-bit byte for character C,
    or -1 if C doesn't correspond to a byte.  */
-#define CHAR_TO_BYTE_SAFE(c)	\
-  (CHAR_BYTE8_P (c)		\
-   ? (c) - 0x3FFF00		\
-   : multibyte_char_to_unibyte_safe (c))
+#define CHAR_TO_BYTE_SAFE(c)						\
+  (ASCII_CHAR_P (c) ? c : (CHAR_BYTE8_P (c) ? (c) - 0x3FFF00 : -1))
 
 /* Nonzero iff BYTE is the 1st byte of a multibyte form of a character
    that corresponds to a raw 8-bit byte.  */
@@ -94,7 +111,7 @@ INLINE_HEADER_BEGIN
   do {				\
     if (! ASCII_CHAR_P (c))	\
       c = CHAR_TO_BYTE8 (c);	\
-  } while (0)
+  } while (false)
 
 
 /* If C is not ASCII, make it multibyte.  Assumes C < 256.  */
@@ -103,13 +120,6 @@ INLINE_HEADER_BEGIN
 
 /* This is the maximum byte length of multibyte form.  */
 #define MAX_MULTIBYTE_LENGTH 5
-
-/* Return a Lisp character whose character code is C.  Assumes C is
-   a valid character code.  */
-#define make_char(c) make_number (c)
-
-/* Nonzero iff C is an ASCII byte.  */
-#define ASCII_BYTE_P(c) UNSIGNED_CMP (c, <, 0x80)
 
 /* Nonzero iff X is a character.  */
 #define CHARACTERP(x) (NATNUMP (x) && XFASTINT (x) <= MAX_CHAR)
@@ -126,14 +136,14 @@ INLINE_HEADER_BEGIN
     Lisp_Object tmp = XCAR (x);		\
     CHECK_CHARACTER (tmp);		\
     XSETCAR ((x), tmp);			\
-  } while (0)
+  } while (false)
 
 #define CHECK_CHARACTER_CDR(x) \
   do {					\
     Lisp_Object tmp = XCDR (x);		\
     CHECK_CHARACTER (tmp);		\
     XSETCDR ((x), tmp);			\
-  } while (0)
+  } while (false)
 
 /* Nonzero iff C is a character of code less than 0x100.  */
 #define SINGLE_BYTE_CHAR_P(c) UNSIGNED_CMP (c, <, 0x100)
@@ -212,7 +222,7 @@ INLINE_HEADER_BEGIN
 	verify (sizeof (c) <= sizeof (unsigned));	\
 	(p) += char_string (c, p);		\
       }						\
-  } while (0)
+  } while (false)
 
 
 /* Nonzero iff BYTE starts a non-ASCII character in a multibyte
@@ -225,7 +235,7 @@ INLINE_HEADER_BEGIN
 
 /* Nonzero iff BYTE starts a character in a multibyte form.
    This is equivalent to:
-	(ASCII_BYTE_P (byte) || LEADING_CODE_P (byte))  */
+	(ASCII_CHAR_P (byte) || LEADING_CODE_P (byte))  */
 #define CHAR_HEAD_P(byte) (((byte) & 0xC0) != 0x80)
 
 /* How many bytes a character that starts with BYTE occupies in a
@@ -277,7 +287,7 @@ INLINE_HEADER_BEGIN
   do {					\
     if ((p) < (limit))			\
       (p) += BYTES_BY_CHAR_HEAD (*(p));	\
-  } while (0)
+  } while (false)
 
 
 /* If P is after LIMIT, advance P to the previous character boundary.
@@ -294,7 +304,7 @@ INLINE_HEADER_BEGIN
 	} while (chp >= limit && ! CHAR_HEAD_P (*chp));			\
 	(p) = (BYTES_BY_CHAR_HEAD (*chp) == (p) - chp) ? chp : (p) - 1;	\
       }									\
-  } while (0)
+  } while (false)
 
 /* Return the character code of character whose multibyte form is at
    P.  Note that this macro unifies CJK characters whose codepoints
@@ -385,7 +395,7 @@ INLINE_HEADER_BEGIN
 	  BYTEIDX++;							\
 	}								\
     }									\
-  while (0)
+  while (false)
 
 /* Like FETCH_STRING_CHAR_ADVANCE, but return a multibyte character
    even if STRING is unibyte.  */
@@ -409,7 +419,7 @@ INLINE_HEADER_BEGIN
 	  MAKE_CHAR_MULTIBYTE (OUTPUT);					      \
 	}								      \
     }									      \
-  while (0)
+  while (false)
 
 
 /* Like FETCH_STRING_CHAR_ADVANCE, but assumes STRING is multibyte.  */
@@ -424,7 +434,7 @@ INLINE_HEADER_BEGIN
       BYTEIDX += fetch_len;						     \
       CHARIDX++;							     \
     }									     \
-  while (0)
+  while (false)
 
 
 /* Like FETCH_STRING_CHAR_ADVANCE, but fetch character from the current
@@ -448,7 +458,7 @@ INLINE_HEADER_BEGIN
 	  BYTEIDX++;						\
 	}							\
     }								\
-  while (0)
+  while (false)
 
 
 /* Like FETCH_CHAR_ADVANCE, but assumes the current buffer is multibyte.  */
@@ -463,7 +473,7 @@ INLINE_HEADER_BEGIN
       BYTEIDX += chlen;						\
       CHARIDX++;						\
     }								\
-  while (0)
+  while (false)
 
 
 /* Increment the buffer byte position POS_BYTE of the current buffer to
@@ -473,7 +483,7 @@ INLINE_HEADER_BEGIN
   do {							\
     unsigned char *chp = BYTE_POS_ADDR (pos_byte);	\
     pos_byte += BYTES_BY_CHAR_HEAD (*chp);		\
-  } while (0)
+  } while (false)
 
 
 /* Decrement the buffer byte position POS_BYTE of the current buffer to
@@ -493,7 +503,7 @@ INLINE_HEADER_BEGIN
 	chp--;					\
 	pos_byte--;				\
       }						\
-  } while (0)
+  } while (false)
 
 /* Increment both CHARPOS and BYTEPOS, each in the appropriate way.  */
 
@@ -506,7 +516,7 @@ INLINE_HEADER_BEGIN
       else							\
 	INC_POS ((bytepos));					\
     }								\
-  while (0)
+  while (false)
 
 
 /* Decrement both CHARPOS and BYTEPOS, each in the appropriate way.  */
@@ -520,7 +530,7 @@ INLINE_HEADER_BEGIN
       else							\
 	DEC_POS ((bytepos));					\
     }								\
-  while (0)
+  while (false)
 
 
 /* Increment the buffer byte position POS_BYTE of the current buffer to
@@ -532,7 +542,7 @@ INLINE_HEADER_BEGIN
   do {								\
     unsigned char *chp = BUF_BYTE_ADDRESS (buf, pos_byte);	\
     pos_byte += BYTES_BY_CHAR_HEAD (*chp);			\
-  } while (0)
+  } while (false)
 
 
 /* Decrement the buffer byte position POS_BYTE of the current buffer to
@@ -551,14 +561,14 @@ INLINE_HEADER_BEGIN
 	chp--;								\
 	pos_byte--;							\
       }									\
-  } while (0)
+  } while (false)
 
 
 /* Return a non-outlandish value for the tab width.  */
 
 #define SANE_TAB_WIDTH(buf) \
   sanitize_tab_width (XFASTINT (BVAR (buf, tab_width)))
-CHARACTER_INLINE int
+INLINE int
 sanitize_tab_width (EMACS_INT width)
 {
   return 0 < width && width <= 1000 ? width : 8;
@@ -579,7 +589,7 @@ sanitize_tab_width (EMACS_INT width)
 
 /* Return a non-outlandish value for a character width.  */
 
-CHARACTER_INLINE int
+INLINE int
 sanitize_char_width (EMACS_INT width)
 {
   return 0 <= width && width <= 1000 ? width : 1000;
@@ -605,7 +615,7 @@ sanitize_char_width (EMACS_INT width)
    : 0)
 
 /* If C is a high surrogate, return 1.  If C is a low surrogate,
-   return 0.  Otherwise, return 0.  */
+   return 2.  Otherwise, return 0.  */
 
 #define CHAR_SURROGATE_PAIR_P(c)	\
   ((c) < 0xD800 ? 0			\
@@ -616,7 +626,7 @@ sanitize_char_width (EMACS_INT width)
 /* Data type for Unicode general category.
 
    The order of members must be in sync with the 8th element of the
-   member of unidata-prop-alist (in admin/unidata/unidata-getn.el) for
+   member of unidata-prop-alist (in admin/unidata/unidata-gen.el) for
    Unicode character property `general-category'.  */
 
 typedef enum {
@@ -659,8 +669,6 @@ extern int string_char (const unsigned char *,
                         const unsigned char **, int *);
 
 extern int translate_char (Lisp_Object, int c);
-extern void parse_str_as_multibyte (const unsigned char *,
-				    ptrdiff_t, ptrdiff_t *, ptrdiff_t *);
 extern ptrdiff_t count_size_as_multibyte (const unsigned char *, ptrdiff_t);
 extern ptrdiff_t str_as_multibyte (unsigned char *, ptrdiff_t, ptrdiff_t,
 				   ptrdiff_t *);
@@ -674,13 +682,31 @@ extern ptrdiff_t c_string_width (const unsigned char *, ptrdiff_t, int,
 extern ptrdiff_t lisp_string_width (Lisp_Object, ptrdiff_t,
 				    ptrdiff_t *, ptrdiff_t *);
 
-extern Lisp_Object Qcharacterp;
 extern Lisp_Object Vchar_unify_table;
 extern Lisp_Object string_escape_byte8 (Lisp_Object);
 
+extern bool alphabeticp (int);
+extern bool decimalnump (int);
+extern bool graphicp (int);
+extern bool printablep (int);
+
 /* Return a translation table of id number ID.  */
 #define GET_TRANSLATION_TABLE(id) \
-  (XCDR(XVECTOR(Vtranslation_table_vector)->contents[(id)]))
+  (XCDR (XVECTOR (Vtranslation_table_vector)->contents[(id)]))
+
+/* Look up the element in char table OBJ at index CH, and return it as
+   an integer.  If the element is not a character, return CH itself.  */
+
+INLINE int
+char_table_translate (Lisp_Object obj, int ch)
+{
+  /* This internal function is expected to be called with valid arguments,
+     so there is a eassert instead of CHECK_xxx for the sake of speed.  */
+  eassert (CHAR_VALID_P (ch));
+  eassert (CHAR_TABLE_P (obj));
+  obj = CHAR_TABLE_REF (obj, ch);
+  return CHARACTERP (obj) ? XINT (obj) : ch;
+}
 
 INLINE_HEADER_END
 

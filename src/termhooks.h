@@ -1,6 +1,6 @@
 /* Parameters and display hooks for terminal devices.
 
-Copyright (C) 1985-1986, 1993-1994, 2001-2013 Free Software Foundation,
+Copyright (C) 1985-1986, 1993-1994, 2001-2015 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -18,21 +18,20 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
-
+#ifndef EMACS_TERMHOOKS_H
+#define EMACS_TERMHOOKS_H
+
 /* Miscellanea.   */
 
+#include "lisp.h"
 #include "systime.h" /* for Time */
 
-INLINE_HEADER_BEGIN
-#ifndef TERMHOOKS_INLINE
-# define TERMHOOKS_INLINE INLINE
-#endif
-
 struct glyph;
-struct frame;
-
+
+INLINE_HEADER_BEGIN
 
 enum scroll_bar_part {
+  scroll_bar_nowhere,
   scroll_bar_above_handle,
   scroll_bar_handle,
   scroll_bar_below_handle,
@@ -41,15 +40,28 @@ enum scroll_bar_part {
   scroll_bar_to_top,
   scroll_bar_to_bottom,
   scroll_bar_end_scroll,
-  scroll_bar_move_ratio
+  scroll_bar_move_ratio,
+  scroll_bar_before_handle,
+  scroll_bar_horizontal_handle,
+  scroll_bar_after_handle,
+  scroll_bar_left_arrow,
+  scroll_bar_right_arrow,
+  scroll_bar_to_leftmost,
+  scroll_bar_to_rightmost
 };
 
-/* If the value of the frame parameter changed, whis hook is called.
-   For example, if going from fullscreen to not fullscreen this hook
-   may do something OS dependent, like extended window manager hints on X11.  */
-extern void (*fullscreen_hook) (struct frame *f);
+/* Output method of a terminal (and frames on this terminal, respectively).  */
 
-
+enum output_method
+{
+  output_initial,
+  output_termcap,
+  output_x_window,
+  output_msdos_raw,
+  output_w32,
+  output_ns
+};
+
 /* Input queue declarations and hooks.  */
 
 enum event_kind
@@ -116,6 +128,19 @@ enum event_kind
 				   user.  */
 #endif
   SCROLL_BAR_CLICK_EVENT,	/* .code gives the number of the mouse button
+				   that was clicked.
+				   .modifiers holds the state of the modifier
+				   keys.
+				   .part is a lisp symbol indicating which
+				   part of the scroll bar got clicked.
+				   .x gives the distance from the start of the
+				   scroll bar of the click; .y gives the total
+				   length of the scroll bar.
+				   .frame_or_window gives the window
+				   whose scroll bar was clicked in.
+				   .timestamp gives a timestamp (in
+				   milliseconds) for the click.  */
+  HORIZONTAL_SCROLL_BAR_CLICK_EVENT,	/* .code gives the number of the mouse button
 				   that was clicked.
 				   .modifiers holds the state of the modifier
 				   keys.
@@ -221,6 +246,9 @@ enum event_kind
 
 };
 
+/* Bit width of an enum event_kind tag at the start of structs and unions.  */
+enum { EVENT_KIND_WIDTH = 16 };
+
 /* If a struct input_event has a kind which is SELECTION_REQUEST_EVENT
    or SELECTION_CLEAR_EVENT, then its contents are really described
    by `struct selection_input_event'; see xterm.h.  */
@@ -233,29 +261,36 @@ enum event_kind
 struct input_event
 {
   /* What kind of event was this?  */
-  enum event_kind kind;
+  ENUM_BF (event_kind) kind : EVENT_KIND_WIDTH;
+
+  /* Used in scroll back click events.  */
+  ENUM_BF (scroll_bar_part) part : 16;
 
   /* For an ASCII_KEYSTROKE_EVENT and MULTIBYTE_CHAR_KEYSTROKE_EVENT,
      this is the character.
      For a NON_ASCII_KEYSTROKE_EVENT, this is the keysym code.
-     For a mouse event, this is the button number.
-     For a HELP_EVENT, this is the position within the object
-      (stored in ARG below) where the help was found.  */
-  /* In WindowsNT, for a mouse wheel event, this is the delta.  */
-  ptrdiff_t code;
-  enum scroll_bar_part part;
+     For a mouse event, this is the button number.  */
+  unsigned code;
 
-  int modifiers;		/* See enum below for interpretation.  */
+  /* See enum below for interpretation.  */
+  unsigned modifiers;
 
+  /* One would prefer C integers, but HELP_EVENT uses these to
+     record frame or window object and a help form, respectively.  */
   Lisp_Object x, y;
+
+  /* Usually a time as reported by window system-specific event loop.
+     For a HELP_EVENT, this is the position within the object (stored
+     in ARG below) where the help was found.  */
   Time timestamp;
 
   /* This field is copied into a vector while the event is in
      the queue, so that garbage collections won't kill it.  */
   Lisp_Object frame_or_window;
 
-  /* Additional event argument.  This is used for TOOL_BAR_EVENTs and
-     HELP_EVENTs and avoids calling Fcons during signal handling.  */
+  /* This additional argument is used in attempt to avoid extra consing
+     when building events.  Unfortunately some events have to pass much
+     more data than it's reasonable to pack directly into this structure.  */
   Lisp_Object arg;
 };
 
@@ -321,11 +356,6 @@ extern void term_mouse_moveto (int, int);
 extern struct tty_display_info *gpm_tty;
 #endif
 
-
-struct ns_display_info;
-struct x_display_info;
-struct w32_display_info;
-
 /* Terminal-local parameters. */
 struct terminal
 {
@@ -355,6 +385,11 @@ struct terminal
      The only (eq) parts of this list that are visible from Lisp are
     the selection-values.  */
   Lisp_Object Vselection_alist;
+
+  /* If a char-table, this maps characters to terminal glyph codes.
+     If t, the mapping is not available.  If nil, it is not known
+     whether the mapping is available.  */
+  Lisp_Object glyph_code_table;
 
   /* All fields before `next_terminal' should be Lisp_Object and are traced
      by the GC.  All fields afterwards are ignored by the GC.  */
@@ -405,23 +440,6 @@ struct terminal
      the function `set-keyboard-coding-system'.  */
   struct coding_system *keyboard_coding;
 
-  /* Terminal characteristics.  */
-  /* XXX Are these really used on non-termcap displays?  */
-
-  int must_write_spaces;	/* Nonzero means spaces in the text must
-				   actually be output; can't just skip over
-				   some columns to leave them blank.  */
-  int fast_clear_end_of_line;   /* Nonzero means terminal has a `ce' string.  */
-
-  int line_ins_del_ok;          /* Terminal can insert and delete lines.  */
-  int char_ins_del_ok;          /* Terminal can insert and delete chars.  */
-  int scroll_region_ok;         /* Terminal supports setting the scroll
-                                   window.  */
-  int scroll_region_cost;	/* Cost of setting the scroll window,
-                                   measured in characters.  */
-  int memory_below_frame;	/* Terminal remembers lines scrolled
-                                   off bottom.  */
-
   /* Window-based redisplay interface for this device (0 for tty
      devices). */
   struct redisplay_interface *rif;
@@ -444,7 +462,7 @@ struct terminal
   void (*delete_glyphs_hook) (struct frame *, int);
 
   void (*ring_bell_hook) (struct frame *f);
-  void (*toggle_invisible_pointer_hook) (struct frame *f, int invisible);
+  void (*toggle_invisible_pointer_hook) (struct frame *f, bool invisible);
 
   void (*reset_terminal_modes_hook) (struct terminal *);
   void (*set_terminal_modes_hook) (struct terminal *);
@@ -489,17 +507,24 @@ struct terminal
      support overlapping frames, so there's no need to raise or lower
      anything.
 
-     If RAISE_FLAG is non-zero, F is brought to the front, before all other
-     windows.  If RAISE_FLAG is zero, F is sent to the back, behind all other
+     If RAISE_FLAG, F is brought to the front, before all other
+     windows.  If !RAISE_FLAG, F is sent to the back, behind all other
      windows.  */
-  void (*frame_raise_lower_hook) (struct frame *f, int raise_flag);
+  void (*frame_raise_lower_hook) (struct frame *f, bool raise_flag);
 
-  /* If the value of the frame parameter changed, whis hook is called.
+  /* If the value of the frame parameter changed, this hook is called.
      For example, if going from fullscreen to not fullscreen this hook
      may do something OS dependent, like extended window manager hints on X11.  */
   void (*fullscreen_hook) (struct frame *f);
 
-  
+  /* This hook is called to display menus.  */
+  Lisp_Object (*menu_show_hook) (struct frame *f, int x, int y, int menuflags,
+				 Lisp_Object title, const char **error_name);
+
+  /* This hook is called to display popup dialog.  */
+  Lisp_Object (*popup_dialog_hook) (struct frame *f, Lisp_Object header,
+				    Lisp_Object contents);
+
   /* Scroll bar hooks.  */
 
   /* The representation of scroll bars is determined by the code which
@@ -530,6 +555,16 @@ struct terminal
   void (*set_vertical_scroll_bar_hook) (struct window *window,
                                         int portion, int whole,
                                         int position);
+
+
+  /* Set the horizontal scroll bar for WINDOW to have its upper left
+     corner at (TOP, LEFT), and be LENGTH rows high.  Set its handle to
+     indicate that we are displaying PORTION characters out of a total
+     of WHOLE characters, starting at POSITION.  If WINDOW doesn't yet
+     have a scroll bar, create one for it.  */
+  void (*set_horizontal_scroll_bar_hook) (struct window *window,
+					  int portion, int whole,
+					  int position);
 
 
   /* The following three hooks are used when we're doing a thorough
@@ -608,12 +643,12 @@ struct terminal
 
 /* Most code should use these functions to set Lisp fields in struct
    terminal.  */
-TERMHOOKS_INLINE void
+INLINE void
 tset_charset_list (struct terminal *t, Lisp_Object val)
 {
   t->charset_list = val;
 }
-TERMHOOKS_INLINE void
+INLINE void
 tset_selection_alist (struct terminal *t, Lisp_Object val)
 {
   t->Vselection_alist = val;
@@ -622,13 +657,12 @@ tset_selection_alist (struct terminal *t, Lisp_Object val)
 /* Chain of all terminal devices currently in use.  */
 extern struct terminal *terminal_list;
 
-#define FRAME_MUST_WRITE_SPACES(f) ((f)->terminal->must_write_spaces)
-#define FRAME_FAST_CLEAR_END_OF_LINE(f) ((f)->terminal->fast_clear_end_of_line)
-#define FRAME_LINE_INS_DEL_OK(f) ((f)->terminal->line_ins_del_ok)
-#define FRAME_CHAR_INS_DEL_OK(f) ((f)->terminal->char_ins_del_ok)
-#define FRAME_SCROLL_REGION_OK(f) ((f)->terminal->scroll_region_ok)
-#define FRAME_SCROLL_REGION_COST(f) ((f)->terminal->scroll_region_cost)
-#define FRAME_MEMORY_BELOW_FRAME(f) ((f)->terminal->memory_below_frame)
+#define FRAME_MUST_WRITE_SPACES(f) (FRAME_TTY (f)->must_write_spaces)
+#define FRAME_LINE_INS_DEL_OK(f) (FRAME_TTY (f)->line_ins_del_ok)
+#define FRAME_CHAR_INS_DEL_OK(f) (FRAME_TTY (f)->char_ins_del_ok)
+#define FRAME_SCROLL_REGION_OK(f) (FRAME_TTY (f)->scroll_region_ok)
+#define FRAME_SCROLL_REGION_COST(f) (FRAME_TTY (f)->scroll_region_cost)
+#define FRAME_MEMORY_BELOW_FRAME(f) (FRAME_TTY (f)->memory_below_frame)
 
 #define FRAME_TERMINAL_CODING(f) ((f)->terminal->terminal_coding)
 #define FRAME_KEYBOARD_CODING(f) ((f)->terminal->keyboard_coding)
@@ -645,9 +679,26 @@ extern struct terminal *terminal_list;
   (((d)->type != output_termcap && (d)->type != output_msdos_raw)	\
    || (d)->display_info.tty->input)
 
-extern struct terminal *get_terminal (Lisp_Object terminal, bool);
-extern struct terminal *create_terminal (void);
+/* Return font cache data for the specified terminal.  The historical
+   name is grossly misleading, actually it is (NAME . FONT-LIST-CACHE).  */
+#if defined (HAVE_X_WINDOWS)
+#define TERMINAL_FONT_CACHE(t)						\
+  (t->type == output_x_window ? t->display_info.x->name_list_element : Qnil)
+#elif defined (HAVE_NTGUI)
+#define TERMINAL_FONT_CACHE(t)						\
+  (t->type == output_w32 ? t->display_info.w32->name_list_element : Qnil)
+#elif defined (HAVE_NS)
+#define TERMINAL_FONT_CACHE(t)						\
+  (t->type == output_ns ? t->display_info.ns->name_list_element : Qnil)
+#endif
+
+extern struct terminal *decode_live_terminal (Lisp_Object);
+extern struct terminal *decode_tty_terminal (Lisp_Object);
+extern struct terminal *get_named_terminal (const char *);
+extern struct terminal *create_terminal (enum output_method,
+					 struct redisplay_interface *);
 extern void delete_terminal (struct terminal *);
+extern Lisp_Object terminal_glyph_code (struct terminal *, int);
 
 /* The initial terminal device, created by initial_term_init.  */
 extern struct terminal *initial_terminal;
@@ -659,4 +710,14 @@ extern unsigned char *encode_terminal_code (struct glyph *, int,
 extern void close_gpm (int gpm_fd);
 #endif
 
+#ifdef WINDOWSNT
+extern int cursorX (struct tty_display_info *);
+extern int cursorY (struct tty_display_info *);
+#else
+#define cursorX(t)  curX(t)
+#define cursorY(t)  curY(t)
+#endif
+
 INLINE_HEADER_END
+
+#endif /* EMACS_TERMHOOKS_H */

@@ -1,9 +1,10 @@
-;;; eudc-export.el --- functions to export EUDC query results -*- coding: utf-8 -*-
+;;; eudc-export.el --- functions to export EUDC query results
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 ;; Author: Oscar Figueiredo <oscar@cpe.fr>
-;; Maintainer: Pavel Janík <Pavel@Janik.cz>
+;;         Pavel Janík <Pavel@Janik.cz>
+;; Maintainer: Thomas Fitzsimmons <fitzsim@fitzsim.org>
 ;; Keywords: comm
 ;; Package: eudc
 
@@ -173,7 +174,7 @@ LOCATION is used as the phone location for BBDB."
       (condition-case err
 	  (setq phone-list (bbdb-parse-phone-number phone))
 	(error
-	 (if (string= "phone number unparsable." (eudc-cadr err))
+	 (if (string= "phone number unparsable." (cadr err))
 	     (if (not (y-or-n-p (format "BBDB claims %S to be unparsable--insert anyway? " phone)))
 		 (error "Phone number unparsable")
 	       (setq phone-list (list (bbdb-string-trim phone))))

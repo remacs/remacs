@@ -1,6 +1,6 @@
 ;;; ede/base.el --- Baseclasses for EDE.
 
-;; Copyright (C) 2010-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -27,6 +27,7 @@
 
 ;;; Code:
 (require 'eieio)
+(require 'cl-generic)
 (require 'eieio-speedbar)
 (require 'ede/auto)
 
@@ -104,7 +105,7 @@ which files this object is interested in."
 	 :accessor ede-object-menu)
    )
   "A target is a structure that describes a file set that produces something.
-Targets, as with 'Make', is an entity that will manage a file set
+Targets, as with `Make', is an entity that will manage a file set
 and knows how to compile or otherwise transform those files into some
 other desired outcome.")
 
@@ -159,6 +160,9 @@ and querying them will cause the actual project to get loaded.")
 ;; Projects can also affect how EDE works, by changing what appears in
 ;; the EDE menu, or how some keys are bound.
 ;;
+(unless (fboundp 'ede-target-list-p)
+  (cl-deftype ede-target-list () '(list-of ede-target)))
+
 (defclass ede-project (ede-project-placeholder)
   ((subproj :initform nil
 	    :type list
@@ -287,16 +291,18 @@ All specific project types must derive from this project."
 ;;
 (defmacro ede-with-projectfile (obj &rest forms)
   "For the project in which OBJ resides, execute FORMS."
-  `(save-window-excursion
-     (let* ((pf (if (obj-of-class-p ,obj ede-target)
-		    (ede-target-parent ,obj)
-		  ,obj))
-	    (dbka (get-file-buffer (oref pf file))))
-       (if (not dbka) (find-file (oref pf file))
-	 (switch-to-buffer dbka))
+  (declare (indent 1))
+  (unless (symbolp obj)
+    (message "Beware! ede-with-projectfile's first arg is copied: %S" obj))
+  `(let* ((pf (if (obj-of-class-p ,obj 'ede-target)
+                  (ede-target-parent ,obj)
+                ,obj))
+          (dbka (get-file-buffer (oref pf file))))
+     (with-current-buffer
+         (if (not dbka) (find-file-noselect (oref pf file))
+           dbka)
        ,@forms
        (if (not dbka) (kill-buffer (current-buffer))))))
-(put 'ede-with-projectfile 'lisp-indent-function 1)
 
 ;;; The EDE persistent cache.
 ;;
@@ -397,7 +403,7 @@ If set to nil, then the cache is not saved."
 ;;
 ;; Mode related methods are in ede.el.  These methods are related
 ;; project specific activities not directly tied to a keybinding.
-(defmethod ede-subproject-relative-path ((proj ede-project) &optional parent-in)
+(cl-defmethod ede-subproject-relative-path ((proj ede-project) &optional parent-in)
   "Get a path name for PROJ which is relative to the parent project.
 If PARENT is specified, then be relative to the PARENT project.
 Specifying PARENT is useful for sub-sub projects relative to the root project."
@@ -407,7 +413,7 @@ Specifying PARENT is useful for sub-sub projects relative to the root project."
 	(file-relative-name dir (file-name-directory (oref parent file)))
       "")))
 
-(defmethod ede-subproject-p ((proj ede-project))
+(cl-defmethod ede-subproject-p ((proj ede-project))
   "Return non-nil if PROJ is a sub project."
   ;; @TODO - Use this in more places, and also pay attention to
   ;; metasubproject in ede/proj.el
@@ -420,26 +426,26 @@ Specifying PARENT is useful for sub-sub projects relative to the root project."
 ;; no need to in most situations because they are either a) simple, or
 ;; b) cosmetic.
 
-(defmethod ede-name ((this ede-target))
+(cl-defmethod ede-name ((this ede-target))
   "Return the name of THIS target."
   (oref this name))
 
-(defmethod ede-target-name ((this ede-target))
+(cl-defmethod ede-target-name ((this ede-target))
   "Return the name of THIS target, suitable for make or debug style commands."
   (oref this name))
 
-(defmethod ede-name ((this ede-project))
+(cl-defmethod ede-name ((this ede-project))
   "Return a short-name for THIS project file.
 Do this by extracting the lowest directory name."
   (oref this name))
 
-(defmethod ede-description ((this ede-project))
+(cl-defmethod ede-description ((this ede-project))
   "Return a description suitable for the minibuffer about THIS."
   (format "Project %s: %d subprojects, %d targets."
 	  (ede-name this) (length (oref this subproj))
 	  (length (oref this targets))))
 
-(defmethod ede-description ((this ede-target))
+(cl-defmethod ede-description ((this ede-target))
   "Return a description suitable for the minibuffer about THIS."
   (format "Target %s: with %d source files."
 	  (ede-name this) (length (oref this source))))
@@ -458,11 +464,11 @@ Not all buffers need headers, so return nil if no applicable."
       (ede-buffer-header-file ede-object (current-buffer))
     nil))
 
-(defmethod ede-buffer-header-file ((this ede-project) buffer)
+(cl-defmethod ede-buffer-header-file ((this ede-project) buffer)
   "Return nil, projects don't have header files."
   nil)
 
-(defmethod ede-buffer-header-file ((this ede-target) buffer)
+(cl-defmethod ede-buffer-header-file ((this ede-target) buffer)
   "There are no default header files in EDE.
 Do a quick check to see if there is a Header tag in this buffer."
   (with-current-buffer buffer
@@ -484,12 +490,12 @@ Some projects may have multiple documentation files, so return a list."
       (ede-buffer-documentation-files ede-object (current-buffer))
     nil))
 
-(defmethod ede-buffer-documentation-files ((this ede-project) buffer)
+(cl-defmethod ede-buffer-documentation-files ((this ede-project) buffer)
   "Return all documentation in project THIS based on BUFFER."
   ;; Find the info node.
   (ede-documentation this))
 
-(defmethod ede-buffer-documentation-files ((this ede-target) buffer)
+(cl-defmethod ede-buffer-documentation-files ((this ede-target) buffer)
   "Check for some documentation files for THIS.
 Also do a quick check to see if there is a Documentation tag in this BUFFER."
   (with-current-buffer buffer
@@ -500,7 +506,7 @@ Also do a quick check to see if there is a Documentation tag in this BUFFER."
       (let ((cp (ede-toplevel)))
 	(ede-buffer-documentation-files cp (current-buffer))))))
 
-(defmethod ede-documentation ((this ede-project))
+(cl-defmethod ede-documentation ((this ede-project))
   "Return a list of files that provide documentation.
 Documentation is not for object THIS, but is provided by THIS for other
 files in the project."
@@ -515,7 +521,7 @@ files in the project."
 	    proj (cdr proj)))
     found))
 
-(defmethod ede-documentation ((this ede-target))
+(cl-defmethod ede-documentation ((this ede-target))
   "Return a list of files that provide documentation.
 Documentation is not for object THIS, but is provided by THIS for other
 files in the project."
@@ -526,7 +532,7 @@ files in the project."
   (ede-html-documentation (ede-toplevel))
   )
 
-(defmethod ede-html-documentation ((this ede-project))
+(cl-defmethod ede-html-documentation ((this ede-project))
   "Return a list of HTML files provided by project THIS."
 
   )
@@ -536,7 +542,7 @@ files in the project."
 ;; These methods are used to determine if a target "wants", or could
 ;; somehow handle a file, or some source type.
 ;;
-(defmethod ede-want-file-p ((this ede-target) file)
+(cl-defmethod ede-want-file-p ((this ede-target) file)
   "Return non-nil if THIS target wants FILE."
   ;; By default, all targets reference the source object, and let it decide.
   (let ((src (ede-target-sourcecode this)))
@@ -544,7 +550,7 @@ files in the project."
       (setq src (cdr src)))
     src))
 
-(defmethod ede-want-file-source-p ((this ede-target) file)
+(cl-defmethod ede-want-file-source-p ((this ede-target) file)
   "Return non-nil if THIS target wants FILE."
   ;; By default, all targets reference the source object, and let it decide.
   (let ((src (ede-target-sourcecode this)))
@@ -552,7 +558,7 @@ files in the project."
       (setq src (cdr src)))
     src))
 
-(defmethod ede-target-sourcecode ((this ede-target))
+(cl-defmethod ede-target-sourcecode ((this ede-target))
   "Return the sourcecode objects which THIS permits."
   (let ((sc (oref this sourcetype))
 	(rs nil))
@@ -605,7 +611,7 @@ Display the results as a debug list."
   "Return the ede project which is the root of the current project.
 Optional argument SUBPROJ indicates a subproject to start from
 instead of the current project."
-  (or ede-object-root-project
+  (or (when (not subproj) ede-object-root-project)
       (let* ((cp (or subproj (ede-current-project))))
 	(or (and cp (ede-project-root cp))
 	    (progn
@@ -620,7 +626,7 @@ instead of the current project."
 (defun ede-normalize-file/directory (this project-file-name)
   "Fills :directory or :file slots if they're missing in project THIS.
 The other slot will be used to calculate values.
-PROJECT-FILE-NAME is a name of project file (short name, like 'pom.xml', etc."
+PROJECT-FILE-NAME is a name of project file (short name, like `pom.xml', etc."
   (when (and (or (not (slot-boundp this :file))
 		 (not (oref this :file)))
 	     (slot-boundp this :directory)

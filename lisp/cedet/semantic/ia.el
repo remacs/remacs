@@ -1,6 +1,6 @@
 ;;; semantic/ia.el --- Interactive Analysis functions
 
-;;; Copyright (C) 2000-2013 Free Software Foundation, Inc.
+;;; Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: syntax
@@ -123,7 +123,8 @@ Completion options are calculated with `semantic-analyze-possible-completions'."
 	      ;; the smart completion engine sometimes fails.
 	      (semantic-complete-symbol))
 	;; Use try completion to seek a common substring.
-	(let ((tc (try-completion (or pre "")  syms)))
+	(let* ((completion-ignore-case (string= (downcase pre) pre))
+	       (tc (try-completion (or pre "")  syms)))
 	  (if (and (stringp tc) (not (string= tc (or pre ""))))
 	      (let ((tok (semantic-find-first-tag-by-name
 			  tc syms)))
@@ -161,11 +162,14 @@ Completion options are calculated with `semantic-analyze-possible-completions'."
     ;; Complete this symbol.
     (if (not syms)
 	(progn
-	  (message "No smart completions found.  Trying Senator.")
-	  (when (semantic-analyze-context-p a)
-	    ;; This is a quick way of getting a nice completion list
-	    ;; in the menu if the regular context mechanism fails.
-	    (senator-completion-menu-popup)))
+	  (message "No smart completions found.")
+          ;; Disabled - see http://debbugs.gnu.org/14522
+	  ;; (message "No smart completions found.  Trying Senator.")
+	  ;; (when (semantic-analyze-context-p a)
+	  ;;   ;; This is a quick way of getting a nice completion list
+	  ;;   ;; in the menu if the regular context mechanism fails.
+	  ;;   (senator-completion-menu-popup))
+          )
 
       (let* ((menu
 	      (mapcar
@@ -179,7 +183,7 @@ Completion options are calculated with `semantic-analyze-possible-completions'."
 	       ;; XEmacs needs that the menu has at least 2 items.  So,
 	       ;; include a nil item that will be ignored by imenu.
 	       (cons nil menu)
-	       (senator-completion-menu-point-as-event)
+	       `(down-mouse-1 ,(posn-at-point))
 	       "Completions")))
 	(when ans
 	  (if (not (semantic-tag-p ans))
@@ -360,21 +364,30 @@ origin of the code at point."
       (let ((secondclass (car (reverse (oref ctxt prefixtypes)))))
 	(cond
 	 ((and (semantic-tag-with-position-p secondclass)
-	       (y-or-n-p (format "Could not find `%s'.  Jump to %s? "
-				 first (semantic-tag-name secondclass))))
+	       (y-or-n-p (format-message
+			  "Could not find `%s'.  Jump to %s? "
+			  first (semantic-tag-name secondclass))))
 	  (semantic-ia--fast-jump-helper secondclass)
 	  )
 	 ;; If we missed out on the class of the second item, then
 	 ;; just visit SECOND.
 	 ((and (semantic-tag-p second)
-	       (y-or-n-p (format "Could not find `%s'.  Jump to %s? "
-				 first (semantic-tag-name second))))
+	       (y-or-n-p (format-message
+			  "Could not find `%s'.  Jump to %s? "
+			  first (semantic-tag-name second))))
 	  (semantic-ia--fast-jump-helper second)
 	  ))))
 
      ((semantic-tag-of-class-p (semantic-current-tag) 'include)
       ;; Just borrow this cool fcn.
       (require 'semantic/decorate/include)
+
+      ;; Push the mark, so you can pop global mark back, or
+      ;; use semantic-mru-bookmark mode to do so.
+      (push-mark)
+      (when (fboundp 'push-tag-mark)
+	(push-tag-mark))
+
       (semantic-decoration-include-visit)
       )
 

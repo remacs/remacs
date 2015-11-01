@@ -1,6 +1,6 @@
 ;;; f90.el --- Fortran-90 mode (free format)  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1995-1997, 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1995-1997, 2000-2015 Free Software Foundation, Inc.
 
 ;; Author: Torbjörn Einarsson <Torbjorn.Einarsson@era.ericsson.se>
 ;; Maintainer: Glenn Morris <rgm@gnu.org>
@@ -71,8 +71,8 @@
 ;; For example:
 ;; (add-to-list 'auto-mode-alist '("\\.f\\'" . f90-mode))
 
-;; Once you have entered f90-mode, you may get more info by using
-;; the command describe-mode (C-h m). For online help use
+;; Once you have entered f90-mode, you can get more info by using
+;; the command describe-mode (C-h m).  For help use
 ;; C-h f <Name of function you want described>, or
 ;; C-h v <Name of variable you want described>.
 
@@ -240,7 +240,7 @@
   :group 'f90-indent)
 
 (defcustom f90-beginning-ampersand t
-  "Non-nil gives automatic insertion of \& at start of continuation line."
+  "Non-nil gives automatic insertion of `&' at start of continuation line."
   :type  'boolean
   :safe  'booleanp
   :group 'f90)
@@ -342,8 +342,10 @@ The options are 'downcase-word, 'upcase-word, 'capitalize-word and nil."
                  "final" "generic" "import" "non_intrinsic" "non_overridable"
                  "nopass" "pass" "protected" "same_type_as" "value" "volatile"
                  ;; F2008.
+                 ;; FIXME f90-change-keywords does not work right if
+                 ;; there are spaces.
                  "contiguous" "submodule" "concurrent" "codimension"
-                 "sync all" "sync memory" "critical" "image_index"
+                 "sync all" "sync memory" "critical" "image_index" "error stop"
                  ))
    "\\_>")
   "Regexp used by the function `f90-change-keywords'.")
@@ -417,6 +419,8 @@ The options are 'downcase-word, 'upcase-word, 'capitalize-word and nil."
              "norm2" "parity" "findloc" "is_contiguous"
              "sync images" "lock" "unlock" "image_index"
              "lcobound" "ucobound" "num_images" "this_image"
+             "acosh" "asinh" "atanh"
+             "atomic_define" "atomic_ref" "execute_command_line"
              ;; F2008 iso_fortran_env module.
              "compiler_options" "compiler_version"
              ;; F2008 iso_c_binding module.
@@ -645,11 +649,12 @@ forall\\|block\\|critical\\)\\)\\_>"
 \\|enumerator\\|procedure\\|\
 logical\\|double[ \t]*precision\\|type[ \t]*(\\(?:\\sw\\|\\s_\\)+)\\|none\\)[ \t]*"
       (1 font-lock-keyword-face) (2 font-lock-type-face))
-    '("\\_<\\(namelist\\|common\\)[ \t]*\/\\(\\(?:\\sw\\|\\s_\\)+\\)?\/"
+    '("\\_<\\(namelist\\|common\\)[ \t]*/\\(\\(?:\\sw\\|\\s_\\)+\\)?\/"
       (1 font-lock-keyword-face) (2 font-lock-constant-face nil t))
     "\\_<else\\([ \t]*if\\|where\\)?\\_>"
     '("\\(&\\)[ \t]*\\(!\\|$\\)"  (1 font-lock-keyword-face))
-    "\\_<\\(then\\|continue\\|format\\|include\\|stop\\|return\\)\\_>"
+    "\\_<\\(then\\|continue\\|format\\|include\\|\\(?:error[ \t]+\\)?stop\\|\
+return\\)\\_>"
     '("\\_<\\(exit\\|cycle\\)[ \t]*\\(\\(?:\\sw\\|\\s_\\)+\\)?\\_>"
       (1 font-lock-keyword-face) (2 font-lock-constant-face nil t))
     '("\\_<\\(case\\)[ \t]*\\(default\\|(\\)" . 1)
@@ -830,7 +835,7 @@ Can be overridden by the value of `font-lock-maximum-decoration'.")
   (font-lock-mode 1)
   (setq font-lock-keywords
         (symbol-value (intern-soft (format "f90-font-lock-keywords-%d" n))))
-  (font-lock-fontify-buffer))
+  (font-lock-flush))
 
 (defun f90-font-lock-1 ()
   "Set `font-lock-keywords' to `f90-font-lock-keywords-1'."
@@ -893,11 +898,13 @@ Can be overridden by the value of `font-lock-maximum-decoration'.")
 (defconst f90-type-def-re
   ;; type word
   ;; type :: word
-  ;; type, stuff :: word
-  ;; type, bind(c) :: word
+  ;; type, attr-list :: word
+  ;;   where attr-list = attr [, attr ...]
+  ;;   and attr may include bind(c) or extends(thing)
   ;; NOT "type ("
   "\\_<\\(type\\)\\_>\\(?:\\(?:[^()\n]*\\|\
-.*,[ \t]*bind[ \t]*([ \t]*c[ \t]*)[ \t]*\\)::\\)?[ \t]*\\(\\(?:\\sw\\|\\s_\\)+\\)"
+.*,[ \t]*\\(?:bind\\|extends\\)[ \t]*(.*).*\\)::\\)?\
+[ \t]*\\(\\(?:\\sw\\|\\s_\\)+\\)"
   "Regexp matching the definition of a derived type.")
 
 (defconst f90-typeis-re
@@ -947,8 +954,8 @@ Used in the F90 entry in `hs-special-modes-alist'.")
    ;; and also variables of derived type "type (foo)".
    ;; "type, foo" must be a block (?).
    "type[ \t,]\\("
-   "[^i(!\n\"\& \t]\\|"                 ; not-i(
-   "i[^s!\n\"\& \t]\\|"                 ; i not-s
+   "[^i(!\n\"& \t]\\|"                 ; not-i(
+   "i[^s!\n\"& \t]\\|"                 ; i not-s
    "is\\(?:\\sw\\|\\s_\\)\\)\\|"
    ;; "abstract interface" is F2003; "submodule" is F2008.
    "program\\|\\(?:abstract[ \t]*\\)?interface\\|\\(?:sub\\)?module\\|"
@@ -985,9 +992,9 @@ Set subexpression 1 in the match-data to the name of the type."
     found))
 
 (defvar f90-imenu-generic-expression
-  (let ((good-char "[^!\"\&\n \t]") (not-e "[^e!\n\"\& \t]")
-        (not-n "[^n!\n\"\& \t]") (not-d "[^d!\n\"\& \t]")
-        ;; (not-ib "[^i(!\n\"\& \t]") (not-s "[^s!\n\"\& \t]")
+  (let ((good-char "[^!\"&\n \t]") (not-e "[^e!\n\"& \t]")
+        (not-n "[^n!\n\"& \t]") (not-d "[^d!\n\"& \t]")
+        ;; (not-ib "[^i(!\n\"& \t]") (not-s "[^s!\n\"& \t]")
         )
     `((nil "^[ \t0-9]*program[ \t]+\\(\\(?:\\sw\\|\\s_\\)+\\)" 1)
       ("Submodules" "^[ \t0-9]*submodule[ \t]*([^)\n]+)[ \t]*\
@@ -1008,7 +1015,7 @@ Set subexpression 1 in the match-data to the name of the type."
          "\\("
          ;; At least three non-space characters before function/subroutine.
          ;; Check that the last three non-space characters do not spell E N D.
-         "[^!\"\&\n]*\\("
+         "[^!\"&\n]*\\("
          not-e good-char good-char "\\|"
          good-char not-n good-char "\\|"
          good-char good-char not-d "\\)"
@@ -1108,7 +1115,7 @@ For fixed format code, use `fortran-mode'.
  indented line.
 \\[f90-indent-subprogram] indents the current subprogram.
 
-Type `? or `\\[help-command] to display a list of built-in\
+Type \\=`? or \\=`\\[help-command] to display a list of built-in\
  abbrevs for F90 keywords.
 
 Key definitions:
@@ -1147,7 +1154,7 @@ Variables controlling indentation style and extra features:
   Non-nil causes `f90-do-auto-fill' to break lines before delimiters
   (default t).
 `f90-beginning-ampersand'
-  Automatic insertion of \& at beginning of continuation lines (default t).
+  Automatic insertion of `&' at beginning of continuation lines (default t).
 `f90-smart-end'
   From an END statement, check and fill the end using matching block start.
   Allowed values are `blink', `no-blink', and nil, which determine
@@ -1371,7 +1378,7 @@ write\\)[ \t]*([^)\n]*)")
    ((looking-at "\\(submodule\\)[ \t]*([^)\n]+)[ \t]*\\(\\(?:\\sw\\|\\s_\\)+\\)\\_>")
     (list (match-string 1) (match-string 2)))
    ((and (not (looking-at "end[ \t]*\\(function\\|subroutine\\)"))
-         (looking-at "[^!'\"\&\n]*\\(function\\|subroutine\\)[ \t]+\
+         (looking-at "[^!'\"&\n]*\\(function\\|subroutine\\)[ \t]+\
 \\(\\(?:\\sw\\|\\s_\\)+\\)"))
     (list (match-string 1) (match-string 2)))))
 ;; Following will match an un-named main program block; however
@@ -1418,7 +1425,7 @@ single - statement is not continued.
 begin  - current line is the first in a continued statement.
 end    - current line is the last in a continued statement
 middle - current line is neither first nor last in a continued statement.
-Comment lines embedded amongst continued lines return 'middle."
+Comment lines embedded amongst continued lines return `middle'."
   (let (pcont cont)
     (save-excursion
       (setq pcont (if (f90-previous-statement) (f90-line-continued))))
@@ -1445,7 +1452,7 @@ if all else fails."
     (not (or (looking-at "end")
              (looking-at "\\(do\\|if\\|else\\(if\\|where\\)?\
 \\|select[ \t]*\\(case\\|type\\)\\|case\\|where\\|forall\\|\
-block\\|critical\\)\\_>")
+block\\|critical\\|enum\\)\\_>")
              (looking-at "\\(program\\|\\(?:sub\\)?module\\|\
 \\(?:abstract[ \t]*\\)?interface\\|block[ \t]*data\\)\\_>")
              (looking-at "\\(contains\\|\\(?:\\sw\\|\\s_\\)+[ \t]*:\\)")
@@ -1629,7 +1636,10 @@ Return (TYPE NAME), or nil if not found."
                 (re-search-backward f90-program-block-re nil 'move))
       (beginning-of-line)
       (skip-chars-forward " \t0-9")
-      (cond ((setq matching-beg (f90-looking-at-program-block-start))
+      ;; Check if in string in case using non-standard feature where
+      ;; continued strings do not need "&" at start of continuations.
+      (cond ((f90-in-string))
+            ((setq matching-beg (f90-looking-at-program-block-start))
              (setq count (1- count)))
             ((f90-looking-at-program-block-end)
              (setq count (1+ count)))))
@@ -1654,7 +1664,8 @@ Return (TYPE NAME), or nil if not found."
                 (re-search-forward f90-program-block-re nil 'move))
       (beginning-of-line)
       (skip-chars-forward " \t0-9")
-      (cond ((f90-looking-at-program-block-start)
+      (cond ((f90-in-string))
+            ((f90-looking-at-program-block-start)
              (setq count (1+ count)))
             ((setq matching-end (f90-looking-at-program-block-end))
              (setq count (1- count))))
@@ -2099,7 +2110,7 @@ Like `join-line', but handles F90 syntax."
   (if arg (forward-line 1))
   (when (eq (preceding-char) ?\n)
     (skip-chars-forward " \t")
-    (if (looking-at "\&") (delete-char 1))
+    (if (looking-at "&") (delete-char 1))
     (beginning-of-line)
     (delete-region (point) (1- (point)))
     (skip-chars-backward " \t")
@@ -2194,8 +2205,12 @@ Leave point at the end of line."
         (end-point (point))
         (case-fold-search t)
         matching-beg beg-name end-name beg-block end-block end-struct)
+    ;; Check if in string in case using non-standard feature where
+    ;; continued strings do not need "&" at start of continuations.
     (when (save-excursion (beginning-of-line) (skip-chars-forward " \t0-9")
-                          (setq end-struct (f90-looking-at-program-block-end)))
+                          (unless (f90-in-string)
+                            (setq end-struct
+                                  (f90-looking-at-program-block-end))))
       (setq end-block (car end-struct)
             end-name  (cadr end-struct))
       (save-excursion
@@ -2254,12 +2269,12 @@ Leave point at the end of line."
 ;; Abbrevs and keywords.
 
 (defun f90-abbrev-start ()
-  "Typing `\\[help-command] or `? lists all the F90 abbrevs.
+  "Typing \\=`\\[help-command] or \\=`? lists all the F90 abbrevs.
 Any other key combination is executed normally."
   (interactive "*")
   (self-insert-command 1)
   (when abbrev-mode
-    (set-temporary-overlay-map
+    (set-transient-map
      (let ((map (make-sparse-keymap)))
        (define-key map [??] 'f90-abbrev-help)
        (define-key map (vector help-char) 'f90-abbrev-help)
@@ -2338,6 +2353,8 @@ CHANGE-WORD should be one of 'upcase-word, 'downcase-word, 'capitalize-word."
                             (skip-chars-forward " \t0-9")
                             (looking-at "#"))))
               (setq ref-point (point)
+                    ;; FIXME this does not work for constructs with
+                    ;; embedded space, eg "sync all".
                     back-point (save-excursion (backward-word 1) (point))
                     saveword (buffer-substring back-point ref-point))
               (funcall change-word -1)
@@ -2357,16 +2374,12 @@ With optional argument ALL, change the default for all present
 and future F90 buffers.  F90 mode normally treats backslash as an
 escape character."
   (or (derived-mode-p 'f90-mode)
-      (error "This function should only be used in F90 buffers"))
+      (user-error "This function should only be used in F90 buffers"))
   (when (equal (char-syntax ?\\ ) ?\\ )
     (or all (set-syntax-table (copy-syntax-table (syntax-table))))
     (modify-syntax-entry ?\\ ".")))
 
 
 (provide 'f90)
-
-;; Local Variables:
-;; coding: utf-8
-;; End:
 
 ;;; f90.el ends here

@@ -1,6 +1,6 @@
 ;;; cedet-global.el --- GNU Global support for CEDET.
 
-;; Copyright (C) 2008-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 ;; Package: cedet
@@ -36,7 +36,7 @@
 
 (defcustom cedet-global-gtags-command "gtags"
   "Command name for the GNU Global gtags executable.
-GTAGS is used to create the tags table queried by the 'global' command."
+GTAGS is used to create the tags table queried by the `global' command."
   :type 'string
   :group 'cedet)
 
@@ -93,6 +93,13 @@ SCOPE is the scope of the search, such as 'project or 'subdirs."
     (apply 'call-process cedet-global-gtags-command
 	   nil b nil
 	   flags)
+
+    ;; Check for warnings.
+    (with-current-buffer b
+      (goto-char (point-min))
+      (when (re-search-forward "Error\\|Warning\\|invalid" nil t)
+	(error "Output:\n%S" (buffer-string))))
+
     b))
 
 (defun cedet-gnu-global-expand-filename (filename)
@@ -179,10 +186,14 @@ If a database already exists, then just update it."
   (let ((root (cedet-gnu-global-root dir)))
     (if root (setq dir root))
     (let ((default-directory dir))
-      (cedet-gnu-global-gtags-call
-       (when root
-	 '("-i");; Incremental update flag.
-	 )))))
+      (if root
+          ;; Incremental update. This can be either "gtags -i" or
+          ;; "global -u"; the gtags manpage says it's better to use
+          ;; "global -u".
+	  (cedet-gnu-global-call (list "-u"))
+	(cedet-gnu-global-gtags-call nil)
+	)
+      )))
 
 (provide 'cedet-global)
 

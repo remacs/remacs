@@ -1,6 +1,6 @@
 ;;; ert-x.el --- Staging area for experimental extensions to ERT  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2008, 2010-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2008, 2010-2015 Free Software Foundation, Inc.
 
 ;; Author: Lennart Borgman (lennart O borgman A gmail O com)
 ;;         Christian Ohler <ohler@gnu.org>
@@ -137,7 +137,7 @@ the name of the test and the result of NAME-FORM."
 
 This effectively executes
 
-  \(apply (car COMMAND) (cdr COMMAND)\)
+  (apply (car COMMAND) (cdr COMMAND))
 
 and returns the same value, but additionally runs hooks like
 `pre-command-hook' and `post-command-hook', and sets variables
@@ -189,7 +189,7 @@ test for `called-interactively' in the command will fail."
   "Return a copy of S with all matches of REGEXPS removed.
 
 Elements of REGEXPS may also be two-element lists \(REGEXP
-SUBEXP\), where SUBEXP is the number of a subexpression in
+SUBEXP), where SUBEXP is the number of a subexpression in
 REGEXP.  In that case, only that subexpression will be removed
 rather than the entire match."
   ;; Use a temporary buffer since replace-match copies strings, which
@@ -214,8 +214,8 @@ property list, or no properties if there is no plist before it.
 
 As a simple example,
 
-\(ert-propertized-string \"foo \" '(face italic) \"bar\" \" baz\" nil \
-\" quux\"\)
+\(ert-propertized-string \"foo \" \\='(face italic) \"bar\" \" baz\" nil \
+\" quux\")
 
 would return the string \"foo bar baz quux\" where the substring
 \"bar baz\" has a `face' property with the value `italic'.

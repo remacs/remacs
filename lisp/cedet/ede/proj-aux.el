@@ -1,6 +1,6 @@
 ;;; ede/proj-aux.el --- EDE Generic Project auxiliary file support
 
-;; Copyright (C) 1998-2000, 2007, 2009-2013 Free Software Foundation,
+;; Copyright (C) 1998-2000, 2007, 2009-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
@@ -39,7 +39,7 @@
 		  :sourcepattern "^[A-Z]+$\\|\\.txt$")
   "Miscellaneous fields definition.")
 
-(defmethod ede-proj-makefile-sourcevar ((this ede-proj-target-aux))
+(cl-defmethod ede-proj-makefile-sourcevar ((this ede-proj-target-aux))
   "Return the variable name for THIS's sources."
   (concat (ede-pmake-varname this) "_AUX"))
 

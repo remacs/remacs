@@ -1,6 +1,6 @@
-;;; hideshow.el --- minor mode cmds to selectively display code/comment blocks -*- coding: utf-8 -*-
+;;; hideshow.el --- minor mode cmds to selectively display code/comment blocks
 
-;; Copyright (C) 1994-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-2015 Free Software Foundation, Inc.
 
 ;; Author: Thien-Thi Nguyen <ttn@gnu.org>
 ;;      Dan Nicolaescu <dann@ics.uci.edu>
@@ -323,13 +323,13 @@ Hideshow puts a unique overlay on each range of text to be hidden
 in the buffer.  Here is a simple example of how to use this variable:
 
   (defun display-code-line-counts (ov)
-    (when (eq 'code (overlay-get ov 'hs))
-      (overlay-put ov 'display
+    (when (eq \\='code (overlay-get ov \\='hs))
+      (overlay-put ov \\='display
                    (format \"... / %d\"
                            (count-lines (overlay-start ov)
                                         (overlay-end ov))))))
 
-  (setq hs-set-up-overlay 'display-code-line-counts)
+  (setq hs-set-up-overlay \\='display-code-line-counts)
 
 This example shows how to get information from the overlay as well
 as how to set its `display' property.  See `hs-make-overlay' and
@@ -390,37 +390,31 @@ Use the command `hs-minor-mode' to toggle or set this variable.")
       :help "Do not hidden code or comment blocks when isearch matches inside them"
       :active t :style radio :selected (eq hs-isearch-open nil)])))
 
-(defvar hs-c-start-regexp nil
+(defvar-local hs-c-start-regexp nil
   "Regexp for beginning of comments.
 Differs from mode-specific comment regexps in that
 surrounding whitespace is stripped.")
-(make-variable-buffer-local 'hs-c-start-regexp)
 
-(defvar hs-block-start-regexp nil
+(defvar-local hs-block-start-regexp nil
   "Regexp for beginning of block.")
-(make-variable-buffer-local 'hs-block-start-regexp)
 
-(defvar hs-block-start-mdata-select nil
+(defvar-local hs-block-start-mdata-select nil
   "Element in `hs-block-start-regexp' match data to consider as block start.
 The internal function `hs-forward-sexp' moves point to the beginning of this
 element (using `match-beginning') before calling `hs-forward-sexp-func'.")
-(make-variable-buffer-local 'hs-block-start-mdata-select)
 
-(defvar hs-block-end-regexp nil
+(defvar-local hs-block-end-regexp nil
   "Regexp for end of block.")
-(make-variable-buffer-local 'hs-block-end-regexp)
 
-
-(defvar hs-forward-sexp-func 'forward-sexp
+(defvar-local hs-forward-sexp-func 'forward-sexp
   "Function used to do a `forward-sexp'.
 Should change for Algol-ish modes.  For single-character block
 delimiters -- ie, the syntax table regexp for the character is
 either `(' or `)' -- `hs-forward-sexp-func' would just be
 `forward-sexp'.  For other modes such as simula, a more specialized
 function is necessary.")
-(make-variable-buffer-local 'hs-forward-sexp-func)
 
-(defvar hs-adjust-block-beginning nil
+(defvar-local hs-adjust-block-beginning nil
   "Function used to tweak the block beginning.
 The block is hidden from the position returned by this function,
 as opposed to hiding it from the position returned when searching
@@ -439,7 +433,6 @@ It should return the position from where we should start hiding.
 It should not move the point.
 
 See `hs-c-like-adjust-block-beginning' for an example of using this.")
-(make-variable-buffer-local 'hs-adjust-block-beginning)
 
 (defvar hs-headline nil
   "Text of the line where a hidden block begins, set during isearch.
@@ -789,6 +782,7 @@ If `hs-hide-comments-when-hiding-all' is non-nil, also hide the comments."
      (unless hs-allow-nesting
        (hs-discard-overlays (point-min) (point-max)))
      (goto-char (point-min))
+     (syntax-propertize (point-max))
      (let ((spew (make-progress-reporter "Hiding all blocks..."
                                          (point-min) (point-max)))
            (re (concat "\\("

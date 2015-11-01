@@ -1,6 +1,6 @@
 ;;; calc-yank.el --- kill-ring functionality for Calc
 
-;; Copyright (C) 1990-1993, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1990-1993, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: David Gillespie <daveg@synaptics.com>
 ;; Maintainer: Jay Belanger <jay.p.belanger@gmail.com>
@@ -107,29 +107,131 @@
   (interactive "r")
   (calc-kill-region top bot t))
 
+(defun math-number-regexp (radix-num)
+  "Return a regexp which will match a Calc number base RADIX-NUM."
+  (let* ((digit-range
+          (cond
+           ;; radix 2 to 10
+           ((and (<= 2 radix-num)
+                 (>= 10 radix-num))
+            (concat "[0-"
+                    (number-to-string (1- radix-num))
+                    "]"))
+           ;; radix 11
+           ((= 11 radix-num) "[0-9aA]")
+           ;; radix 12+
+           (t
+            (concat "[0-9"
+                    "a-" (format "%c" (+ (- ?a 11) radix-num))
+                    "A-" (format "%c" (+ (- ?A 11) radix-num))
+                    "]"))))
+         (integer-regexp (concat digit-range "+"))
+         (decimal-regexp (concat digit-range "+\\." digit-range "*")))
+    (concat
+     " *\\("
+     ;; "e" notation
+     "[-_+]?" decimal-regexp "[eE][-+]?[0-9]+"
+     "\\|"
+     "[-_+]?" integer-regexp "[eE][-+]?[0-9]+"
+     "\\|"
+     ;; Integer+fractions
+     "[-_+]?" integer-regexp "*[:/]" integer-regexp "[:/]" integer-regexp
+     "\\|"
+     ;; Fractions
+     "[-_+]?" integer-regexp "[:/]" integer-regexp
+     "\\|"
+     ;; Decimal point
+     "[-_+]?" decimal-regexp
+     "\\|"
+     ;; Integers
+     "[-_+]?" integer-regexp
+     "\\) *\\(\n\\|\\'\\)")))
+
 ;; This function uses calc-last-kill if possible to get an exact result,
 ;; otherwise it just parses the yanked string.
 ;; Modified to use Emacs 19 extended concept of kill-ring. -- daveg 12/15/96
 ;;;###autoload
-(defun calc-yank ()
-  (interactive)
+(defun calc-yank (radix)
+  "Yank a value into the Calculator buffer.
+
+Valid numeric prefixes for RADIX: 0, 2, 6, 8
+No radix notation is prepended for any other numeric prefix.
+
+If RADIX is 2, prepend \"2#\"  - Binary.
+If RADIX is 8, prepend \"8#\"  - Octal.
+If RADIX is 0, prepend \"10#\" - Decimal.
+If RADIX is 6, prepend \"16#\" - Hexadecimal.
+
+If RADIX is a non-nil list (created using \\[universal-argument]), the user
+will be prompted to enter the radix in the minibuffer.
+
+If RADIX is nil or if the yanked string already has a calc radix prefix, the
+yanked string will be passed on directly to the Calculator buffer without any
+alteration."
+  (interactive "P")
   (calc-wrapper
    (calc-pop-push-record-list
     0 "yank"
-    (let ((thing (if (fboundp 'current-kill)
-		     (current-kill 0 t)
-		   (car kill-ring-yank-pointer))))
-      (if (eq (car-safe calc-last-kill) thing)
-	  (cdr calc-last-kill)
-	(if (stringp thing)
-	    (let ((val (math-read-exprs (calc-clean-newlines thing))))
-	      (if (eq (car-safe val) 'error)
-		  (progn
-		    (setq val (math-read-exprs thing))
-		    (if (eq (car-safe val) 'error)
-			(error "Bad format in yanked data")
-		      val))
-		val))))))))
+    (let* (radix-num
+           radix-notation
+           valid-num-regexp
+           (thing-raw
+            (if (fboundp 'current-kill)
+                (current-kill 0 t)
+              (car kill-ring-yank-pointer)))
+           (thing
+            (if (or (null radix)
+                    ;; Match examples: -2#10, 10\n(10#10,01)
+                    (string-match-p "^[-(]*[0-9]\\{1,2\\}#" thing-raw))
+                thing-raw
+              (progn
+                (if (listp radix)
+                    (progn
+                      (setq radix-num
+                            (read-number
+                             "Set radix for yanked content (2-36): "))
+                      (when (not (and (integerp radix-num)
+                                      (<= 2 radix-num)
+                                      (>= 36 radix-num)))
+                        (error (concat "The radix has to be an "
+                                       "integer between 2 and 36."))))
+                  (setq radix-num
+                        (cond ((eq radix 2) 2)
+                              ((eq radix 8) 8)
+                              ((eq radix 0) 10)
+                              ((eq radix 6) 16)
+                              (t (message
+                                  (concat "No radix prepended "
+                                          "for invalid *numeric* "
+                                          "prefix %0d.")
+                                  radix)
+                                 nil))))
+                (if radix-num
+                    (progn
+                      (setq radix-notation
+                            (concat (number-to-string radix-num) "#"))
+                      (setq valid-num-regexp
+                            (math-number-regexp radix-num))
+                      ;; Ensure that the radix-notation is prefixed
+                      ;; correctly even for multi-line yanks like below,
+                      ;;   111
+                      ;;   1111
+                      (replace-regexp-in-string
+                       valid-num-regexp
+                       (concat radix-notation "\\&")
+                       thing-raw))
+                  thing-raw)))))
+      (if (eq (car-safe calc-last-kill) thing-raw)
+          (cdr calc-last-kill)
+        (if (stringp thing)
+            (let ((val (math-read-exprs (calc-clean-newlines thing))))
+              (if (eq (car-safe val) 'error)
+                  (progn
+                    (setq val (math-read-exprs thing))
+                    (if (eq (car-safe val) 'error)
+                        (error "Bad format in yanked data")
+                      val))
+                val))))))))
 
 ;;; The Calc set- and get-register commands are modified versions of functions
 ;;; in register.el
@@ -143,16 +245,13 @@ TEXT and CALCVAL are the TEXT and internal structure of stack entries.")
   "Set the contents of the Calc register REGISTER to (TEXT . CALCVAL),
 as well as set the contents of the Emacs register REGISTER to TEXT."
   (set-register register text)
-  (let ((aelt (assq register calc-register-alist)))
-    (if aelt
-        (setcdr aelt (cons text calcval))
-      (push (cons register (cons text calcval)) calc-register-alist))))
+  (setf (alist-get register calc-register-alist) (cons text calcval)))
 
 (defun calc-get-register (reg)
   "Return the CALCVAL portion of the contents of the Calc register REG,
 unless the TEXT portion doesn't match the contents of the Emacs register REG,
 in which case either return the contents of the Emacs register (if it is
-text) or `nil'."
+text) or nil."
   (let ((cval (cdr (assq reg calc-register-alist)))
         (val (cdr (assq reg register-alist))))
     (if (stringp val)
@@ -163,8 +262,12 @@ text) or `nil'."
 
 (defun calc-copy-to-register (register start end &optional delete-flag)
   "Copy the lines in the region into register REGISTER.
-With prefix arg, delete as well."
-  (interactive "cCopy to register: \nr\nP")
+With prefix arg, delete as well.
+
+Interactively, reads the register using `register-read-with-preview'."
+  (interactive (list (register-read-with-preview "Copy to register: ")
+		     (region-beginning) (region-end)
+		     current-prefix-arg))
   (if (eq major-mode 'calc-mode)
       (let* ((top-num (calc-locate-cursor-element start))
              (top-pos (save-excursion
@@ -183,8 +286,10 @@ With prefix arg, delete as well."
     (copy-to-register register start end delete-flag)))
 
 (defun calc-insert-register (register)
-  "Insert the contents of register REGISTER."
-  (interactive "cInsert register: ")
+  "Insert the contents of register REGISTER.
+
+Interactively, reads the register using `register-read-with-preview'."
+  (interactive (list (register-read-with-preview "Insert register: ")))
   (if (eq major-mode 'calc-mode)
       (let ((val (calc-get-register register)))
         (calc-wrapper
@@ -237,16 +342,24 @@ otherwise the end.  If DELETE-FLAG is non-nil, also delete the region."
 
 (defun calc-append-to-register (register start end &optional delete-flag)
   "Copy the lines in the region to the end of register REGISTER.
-With prefix arg, also delete the region."
-  (interactive "cAppend to register: \nr\nP")
+With prefix arg, also delete the region.
+
+Interactively, reads the register using `register-read-with-preview'."
+  (interactive (list (register-read-with-preview "Append to register: ")
+		     (region-beginning) (region-end)
+		     current-prefix-arg))
   (if (eq major-mode 'calc-mode)
       (calc-add-to-register register start end nil delete-flag)
     (append-to-register register start end delete-flag)))
 
 (defun calc-prepend-to-register (register start end &optional delete-flag)
   "Copy the lines in the region to the beginning of register REGISTER.
-With prefix arg, also delete the region."
-  (interactive "cPrepend to register: \nr\nP")
+With prefix arg, also delete the region.
+
+Interactively, reads the register using `register-read-with-preview'."
+  (interactive (list (register-read-with-preview "Prepend to register: ")
+		     (region-beginning) (region-end)
+		     current-prefix-arg))
   (if (eq major-mode 'calc-mode)
       (calc-add-to-register register start end t delete-flag)
     (prepend-to-register register start end delete-flag)))
@@ -588,13 +701,13 @@ To cancel the edit, simply kill the *Calc Edit* buffer."
     (add-hook 'kill-buffer-hook (lambda ()
                                   (let ((calc-edit-handler nil))
                                     (calc-edit-finish t))
-                                  (message "(Cancelled)")) t t)
+                                  (message "(Canceled)")) t t)
     (insert (propertize
              (concat
               (or title title "Calc Edit Mode. ")
-              "Press `C-c C-c'"
+              (format-message "Press `C-c C-c'")
               (if allow-ret "" " or RET")
-              " to finish, `C-x k RET' to cancel.\n\n")
+              (format-message " to finish, `C-x k RET' to cancel.\n\n"))
              'font-lock-face 'italic 'read-only t 'rear-nonsticky t 'front-sticky t))
     (make-local-variable 'calc-edit-top)
     (setq calc-edit-top (point))))
@@ -669,7 +782,7 @@ To cancel the edit, simply kill the *Calc Edit* buffer."
   (interactive)
   (let ((calc-edit-handler nil))
     (calc-edit-finish))
-  (message "(Cancelled)"))
+  (message "(Canceled)"))
 
 (defun calc-finish-stack-edit (num)
   (let ((buf (current-buffer))

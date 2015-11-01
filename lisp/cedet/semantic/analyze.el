@@ -1,6 +1,6 @@
 ;;; semantic/analyze.el --- Analyze semantic tags against local context
 
-;; Copyright (C) 2000-2005, 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2005, 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -168,7 +168,7 @@ of the parent function.")
 ;;
 ;; Simple methods against the context classes.
 ;;
-(defmethod semantic-analyze-type-constraint
+(cl-defmethod semantic-analyze-type-constraint
   ((context semantic-analyze-context) &optional desired-type)
   "Return a type constraint for completing :prefix in CONTEXT.
 Optional argument DESIRED-TYPE may be a non-type tag to analyze."
@@ -189,17 +189,17 @@ Optional argument DESIRED-TYPE may be a non-type tag to analyze."
 	  )
     desired-type))
 
-(defmethod semantic-analyze-type-constraint
+(cl-defmethod semantic-analyze-type-constraint
   ((context semantic-analyze-context-functionarg))
   "Return a type constraint for completing :prefix in CONTEXT."
-  (call-next-method context (car (oref context argument))))
+  (cl-call-next-method context (car (oref context argument))))
 
-(defmethod semantic-analyze-type-constraint
+(cl-defmethod semantic-analyze-type-constraint
   ((context semantic-analyze-context-assignment))
   "Return a type constraint for completing :prefix in CONTEXT."
-  (call-next-method context (car (reverse (oref context assignee)))))
+  (cl-call-next-method context (car (reverse (oref context assignee)))))
 
-(defmethod semantic-analyze-interesting-tag
+(cl-defmethod semantic-analyze-interesting-tag
   ((context semantic-analyze-context))
   "Return a tag from CONTEXT that would be most interesting to a user."
   (let ((prefix (reverse (oref context :prefix))))
@@ -209,15 +209,15 @@ Optional argument DESIRED-TYPE may be a non-type tag to analyze."
     ;; Return the found tag, or nil.
     (car prefix)))
 
-(defmethod semantic-analyze-interesting-tag
+(cl-defmethod semantic-analyze-interesting-tag
   ((context semantic-analyze-context-functionarg))
   "Try the base, and if that fails, return what we are assigning into."
-  (or (call-next-method) (car-safe (oref context :function))))
+  (or (cl-call-next-method) (car-safe (oref context :function))))
 
-(defmethod semantic-analyze-interesting-tag
+(cl-defmethod semantic-analyze-interesting-tag
   ((context semantic-analyze-context-assignment))
   "Try the base, and if that fails, return what we are assigning into."
-  (or (call-next-method) (car-safe (oref context :assignee))))
+  (or (cl-call-next-method) (car-safe (oref context :assignee))))
 
 ;;; ANALYSIS
 ;;
@@ -226,8 +226,8 @@ Optional argument DESIRED-TYPE may be a non-type tag to analyze."
 ;; by an application that doesn't need to calculate the full
 ;; context.
 
-(define-overloadable-function semantic-analyze-find-tag-sequence (sequence &optional
-							      scope typereturn throwsym)
+(define-overloadable-function semantic-analyze-find-tag-sequence
+  (sequence &optional scope typereturn throwsym &rest flags)
   "Attempt to find all tags in SEQUENCE.
 Optional argument LOCALVAR is the list of local variables to use when
 finding the details on the first element of SEQUENCE in case
@@ -237,53 +237,67 @@ scoped.  These are not local variables, but symbols available in a structure
 which doesn't need to be dereferenced.
 Optional argument TYPERETURN is a symbol in which the types of all found
 will be stored.  If nil, that data is thrown away.
-Optional argument THROWSYM specifies a symbol the throw on non-recoverable error.")
+Optional argument THROWSYM specifies a symbol the throw on non-recoverable error.
+Remaining arguments FLAGS are additional flags to apply when searching.")
 
-(defun semantic-analyze-find-tag-sequence-default (sequence &optional
-							    scope typereturn
-							    throwsym)
+(defun semantic-analyze-find-tag-sequence-default
+  ;; Note: overloadable fcn uses &rest, but it is a list already, so we don't need
+  ;; to do that in the -default.
+  (sequence &optional scope typereturn throwsym flags)
   "Attempt to find all tags in SEQUENCE.
 SCOPE are extra tags which are in scope.
 TYPERETURN is a symbol in which to place a list of tag classes that
 are found in SEQUENCE.
-Optional argument THROWSYM specifies a symbol the throw on non-recoverable error."
+Optional argument THROWSYM specifies a symbol the throw on non-recoverable error.
+Remaining arguments FLAGS are additional flags to apply when searching.
+This function knows of flags:
+  `mustbeclassvariable'"
   (let ((s sequence)			; copy of the sequence
 	(tmp nil)			; tmp find variable
 	(tag nil)			; tag return list
 	(tagtype nil)			; tag types return list
 	(fname nil)
 	(miniscope (when scope (clone scope)))
+	(tagclass (if (memq 'mustbeclassvariable flags)
+		      'variable nil))
 	)
     ;; First order check.  Is this wholly contained in the typecache?
     (setq tmp (semanticdb-typecache-find sequence))
 
-    (if tmp
-	(progn
+    (when tmp
+      (if (or (not tagclass) (semantic-tag-of-class-p tmp tagclass))
 	  ;; We are effectively done...
-	  (setq s nil)
-	  (setq tag (list tmp)))
+	  (setq s nil
+		tag (list tmp))
+	;; tagclass doesn't match, so fail this.
+	(setq tmp nil)))
 
-      ;; For the first entry, it better be a variable, but it might
-      ;; be in the local context too.
-      ;; NOTE: Don't forget c++ namespace foo::bar.
-      (setq tmp (or
-		 ;; Is this tag within our scope.  Scopes can sometimes
-		 ;; shadow other things, so it goes first.
-		 (and scope (semantic-scope-find (car s) nil scope))
-		 ;; Find the tag out there... somewhere, but not in scope
-		 (semantic-analyze-find-tag (car s))
-		 ))
+    (unless tmp
+      ;; For tag class filtering, only apply the filter if the first entry
+      ;; is also the only entry.
+      (let ((lftagclass (if (= (length s) 1) tagclass)))
 
-      (if (and (listp tmp) (semantic-tag-p (car tmp)))
-	  (setq tmp (semantic-analyze-select-best-tag tmp)))
-      (if (not (semantic-tag-p tmp))
-	  (if throwsym
-	      (throw throwsym "Cannot find definition")
-	    (error "Cannot find definition for \"%s\"" (car s))))
-      (setq s (cdr s))
-      (setq tag (cons tmp tag)) ; tag is nil here...
-      (setq fname (semantic-tag-file-name tmp))
-      )
+	;; For the first entry, it better be a variable, but it might
+	;; be in the local context too.
+	;; NOTE: Don't forget c++ namespace foo::bar.
+	(setq tmp (or
+		   ;; Is this tag within our scope.  Scopes can sometimes
+		   ;; shadow other things, so it goes first.
+		   (and scope (semantic-scope-find (car s) lftagclass scope))
+		   ;; Find the tag out there... somewhere, but not in scope
+		   (semantic-analyze-find-tag (car s) lftagclass)
+		   ))
+
+	(if (and (listp tmp) (semantic-tag-p (car tmp)))
+	    (setq tmp (semantic-analyze-select-best-tag tmp lftagclass)))
+	(if (not (semantic-tag-p tmp))
+	    (if throwsym
+		(throw throwsym "Cannot find definition")
+	      (error "Cannot find definition for \"%s\"" (car s))))
+	(setq s (cdr s))
+	(setq tag (cons tmp tag)) ; tag is nil here...
+	(setq fname (semantic-tag-file-name tmp))
+	))
 
     ;; For the middle entries
     (while s
@@ -295,18 +309,10 @@ Optional argument THROWSYM specifies a symbol the throw on non-recoverable error
 	      ;; In some cases the found TMP is a type,
 	      ;; and we can use it directly.
 	      (cond ((semantic-tag-of-class-p tmp 'type)
-		     ;; update the miniscope when we need to analyze types directly.
-		     (when miniscope
-		       (let ((rawscope
-			      (apply 'append
-				     (mapcar 'semantic-tag-type-members
-					     tagtype))))
-			 (oset miniscope fullscope rawscope)))
-		     ;; Now analyze the type to remove metatypes.
 		     (or (semantic-analyze-type tmp miniscope)
 			 tmp))
 		    (t
-		     (semantic-analyze-tag-type tmp scope))))
+		     (semantic-analyze-tag-type tmp miniscope))))
 	     (typefile
 	      (when tmptype
 		(semantic-tag-file-name tmptype)))
@@ -336,6 +342,11 @@ Optional argument THROWSYM specifies a symbol the throw on non-recoverable error
 	  (semantic--tag-put-property tmp :filename fname))
 	(setq tag (cons tmp tag))
 	(setq tagtype (cons tmptype tagtype))
+	(when miniscope
+	  (let ((rawscope
+		 (apply 'append
+			(mapcar 'semantic-tag-type-members tagtype))))
+	    (oset miniscope fullscope rawscope)))
 	)
       (setq s (cdr s)))
 
@@ -385,7 +396,8 @@ searches use the same arguments."
 	    ;; Search in the typecache.  First entries in a sequence are
 	    ;; often there.
 	    (setq retlist (semanticdb-typecache-find name))
-	    (if retlist
+	    (if (and retlist (or (not tagclass)
+				 (semantic-tag-of-class-p retlist 'tagclass)))
 		retlist
 	      (semantic-analyze-select-best-tag
 	       (semanticdb-strip-find-results
@@ -650,7 +662,7 @@ Returns an object based on symbol `semantic-analyze-context'."
 	   ;; We have some sort of an assignment
 	   (condition-case err
 	       (setq asstag (semantic-analyze-find-tag-sequence
-			     assign scope))
+			     assign scope nil nil 'mustbeclassvariable))
 	     (error (semantic-analyze-push-error err)
 		    nil)))
 
@@ -697,7 +709,7 @@ Returns nil if no alias was found."
   (when (eq (semantic-tag-get-attribute (car taglist) :kind) 'alias)
     (let ((tagname
 	   (semantic-analyze-split-name
-	    (semantic-tag-name 
+	    (semantic-tag-name
 	     (car (semantic-tag-get-attribute (car taglist) :members))))))
       (append (if (listp tagname)
 		  tagname
@@ -731,7 +743,7 @@ Optional argument CTXT is the context to show."
 ;;
 (declare-function pulse-momentary-highlight-region "pulse")
 
-(defmethod semantic-analyze-pulse ((context semantic-analyze-context))
+(cl-defmethod semantic-analyze-pulse ((context semantic-analyze-context))
   "Pulse the region that CONTEXT affects."
   (require 'pulse)
   (with-current-buffer (oref context :buffer)
@@ -749,24 +761,28 @@ Some useful functions are found in `semantic-format-tag-functions'."
   "Send the tag SEQUENCE to standard out.
 Use PREFIX as a label.
 Use BUFF as a source of override methods."
-  (while sequence
-      (princ prefix)
-      (cond
-       ((semantic-tag-p (car sequence))
-	(princ (funcall semantic-analyze-summary-function
-			(car sequence))))
-       ((stringp (car sequence))
-	(princ "\"")
-	(princ (semantic--format-colorize-text (car sequence) 'variable))
-	(princ "\""))
-       (t
-	(princ (format "'%S" (car sequence)))))
-      (princ "\n")
-      (setq sequence (cdr sequence))
-      (setq prefix (make-string (length prefix) ? ))
-      ))
+  ;; If there is no sequence, at least show the field as being empty.
+  (unless sequence (princ prefix) (princ "<none>\n"))
 
-(defmethod semantic-analyze-show ((context semantic-analyze-context))
+  ;; Display the sequence column aligned.
+  (while sequence
+    (princ prefix)
+    (cond
+     ((semantic-tag-p (car sequence))
+      (princ (funcall semantic-analyze-summary-function
+		      (car sequence))))
+     ((stringp (car sequence))
+      (princ "\"")
+      (princ (semantic--format-colorize-text (car sequence) 'variable))
+      (princ "\""))
+     (t
+      (princ (format "'%S" (car sequence)))))
+    (princ "\n")
+    (setq sequence (cdr sequence))
+    (setq prefix (make-string (length prefix) ? ))
+    ))
+
+(cl-defmethod semantic-analyze-show ((context semantic-analyze-context))
   "Insert CONTEXT into the current buffer in a nice way."
   (semantic-analyze-princ-sequence (oref context prefix) "Prefix: " )
   (semantic-analyze-princ-sequence (oref context prefixclass) "Prefix Classes: ")
@@ -780,19 +796,19 @@ Use BUFF as a source of override methods."
     (semantic-analyze-show (oref context scope)))
   )
 
-(defmethod semantic-analyze-show ((context semantic-analyze-context-assignment))
+(cl-defmethod semantic-analyze-show ((context semantic-analyze-context-assignment))
   "Insert CONTEXT into the current buffer in a nice way."
   (semantic-analyze-princ-sequence (oref context assignee) "Assignee: ")
-  (call-next-method))
+  (cl-call-next-method))
 
-(defmethod semantic-analyze-show ((context semantic-analyze-context-functionarg))
+(cl-defmethod semantic-analyze-show ((context semantic-analyze-context-functionarg))
   "Insert CONTEXT into the current buffer in a nice way."
   (semantic-analyze-princ-sequence (oref context function) "Function: ")
   (princ "Argument Index: ")
   (princ (oref context index))
   (princ "\n")
   (semantic-analyze-princ-sequence (oref context argument) "Argument: ")
-  (call-next-method))
+  (cl-call-next-method))
 
 (defun semantic-analyze-pop-to-context (context)
   "Display CONTEXT in a temporary buffer.

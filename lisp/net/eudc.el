@@ -1,9 +1,10 @@
-;;; eudc.el --- Emacs Unified Directory Client -*- coding: utf-8 -*-
+;;; eudc.el --- Emacs Unified Directory Client
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 ;; Author: Oscar Figueiredo <oscar@cpe.fr>
-;; Maintainer: Pavel Janík <Pavel@Janik.cz>
+;;         Pavel Janík <Pavel@Janik.cz>
+;; Maintainer: Thomas Fitzsimmons <fitzsim@fitzsim.org>
 ;; Keywords: comm
 
 ;; This file is part of GNU Emacs.
@@ -46,6 +47,8 @@
 
 (require 'wid-edit)
 
+(eval-when-compile (require 'cl-lib))
+
 (eval-and-compile
   (if (not (fboundp 'make-overlay))
       (require 'overlay)))
@@ -76,10 +79,6 @@
 
 (defvar mode-popup-menu)
 
-;; List of known servers
-;; Alist of (SERVER . PROTOCOL)
-(defvar eudc-server-hotlist nil)
-
 ;; List of variables that have server- or protocol-local bindings
 (defvar eudc-local-vars nil)
 
@@ -107,18 +106,6 @@
 ;; Protocol local. Whether the protocol supports queries with no specified
 ;; attribute name
 (defvar eudc-protocol-has-default-query-attributes nil)
-
-(defun eudc-cadr (obj)
-  (car (cdr obj)))
-
-(defun eudc-cdar (obj)
-  (cdr (car obj)))
-
-(defun eudc-caar (obj)
-  (car (car obj)))
-
-(defun eudc-cdaar (obj)
-  (cdr (car (car obj))))
 
 (defun eudc-plist-member (plist prop)
   "Return t if PROP has a value specified in PLIST."
@@ -518,12 +505,12 @@ otherwise they are formatted according to `eudc-user-attribute-names-alist'."
 	   precords))
 	(insert "\n")
 	(widget-create 'push-button
-		       :notify (lambda (&rest ignore)
+		       :notify (lambda (&rest _ignore)
 				 (eudc-query-form))
 		       "New query")
 	(widget-insert " ")
 	(widget-create 'push-button
-		       :notify (lambda (&rest ignore)
+		       :notify (lambda (&rest _ignore)
 				 (kill-this-buffer))
 		       "Quit")
 	(eudc-mode)
@@ -558,10 +545,10 @@ otherwise they are formatted according to `eudc-user-attribute-names-alist'."
 
     ;; Search for multiple records
     (while (and rec
-		(not (listp (eudc-cdar rec))))
+		(not (listp (cdar rec))))
       (setq rec (cdr rec)))
 
-    (if (null (eudc-cdar rec))
+    (if (null (cdar rec))
 	(list record)			; No duplicate attrs in this record
       (mapc (function
 	     (lambda (field)
@@ -593,7 +580,7 @@ otherwise they are formatted according to `eudc-user-attribute-names-alist'."
 	     ((eq 'first method)
 	      (setq result
 		    (eudc-add-field-to-records (cons (car field)
-						     (eudc-cadr field))
+						     (cadr field))
 					       result)))
 	     ((eq 'concat method)
 	      (setq result
@@ -652,7 +639,7 @@ Each copy is added a new field containing one of the values of FIELD."
     result))
 
 
-(defun eudc-mode ()
+(define-derived-mode eudc-mode special-mode "EUDC"
   "Major mode used in buffers displaying the results of directory queries.
 There is no sense in calling this command from a buffer other than
 one containing the results of a directory query.
@@ -663,15 +650,9 @@ These are the special commands of EUDC mode:
     n -- Move to next record.
     p -- Move to previous record.
     b -- Insert record at point into the BBDB database."
-  (interactive)
-  (kill-all-local-variables)
-  (setq major-mode 'eudc-mode)
-  (setq mode-name "EUDC")
-  (use-local-map eudc-mode-map)
   (if (not (featurep 'xemacs))
       (easy-menu-define eudc-emacs-menu eudc-mode-map "" (eudc-menu))
-    (setq mode-popup-menu (eudc-menu)))
-  (run-mode-hooks 'eudc-mode-hook))
+    (setq mode-popup-menu (eudc-menu))))
 
 ;;}}}
 
@@ -694,7 +675,8 @@ server for future sessions."
 						    (cons (symbol-name elt)
 							  elt))
 						 eudc-known-protocols)))))
-  (unless (or (member protocol
+  (unless (or (null protocol)
+	      (member protocol
 		      eudc-supported-protocols)
 	      (load (concat "eudcb-" (symbol-name protocol)) t))
     (error "Unsupported protocol: %s" protocol))
@@ -718,7 +700,7 @@ If ERROR is non-nil, report an error if there is none."
   (let ((result (eudc-query (list (cons 'name name)) '(email)))
 	email)
     (if (null (cdr result))
-	(setq email (eudc-cdaar result))
+	(setq email (cl-cdaar result))
       (error "Multiple match--use the query form"))
     (if error
 	(if email
@@ -736,7 +718,7 @@ If ERROR is non-nil, report an error if there is none."
   (let ((result (eudc-query (list (cons 'name name)) '(phone)))
 	phone)
     (if (null (cdr result))
-	(setq phone (eudc-cdaar result))
+	(setq phone (cl-cdaar result))
       (error "Multiple match--use the query form"))
     (if error
 	(if phone
@@ -772,10 +754,9 @@ otherwise a list of symbols is returned."
 		  format (cdr format)))
 	  ;; If the same attribute appears more than once, merge
 	  ;; the corresponding values
-	  (setq query-alist (nreverse query-alist))
 	  (while query-alist
-	    (setq key (eudc-caar query-alist)
-		  val (eudc-cdar query-alist)
+	    (setq key (caar query-alist)
+		  val (cdar query-alist)
 		  cell (assq key query))
 	    (if cell
 		(setcdr cell (concat (cdr cell) " " val))
@@ -818,19 +799,29 @@ If REPLACE is non-nil, then this expansion replaces the name in the buffer.
 Multiple servers can be tried with the same query until one finds a match,
 see `eudc-inline-expansion-servers'"
   (interactive)
-  (if (memq eudc-inline-expansion-servers
-	    '(current-server server-then-hotlist))
-      (or eudc-server
-	  (call-interactively 'eudc-set-server))
+  (cond
+   ((eq eudc-inline-expansion-servers 'current-server)
+    (or eudc-server
+	(call-interactively 'eudc-set-server)))
+   ((eq eudc-inline-expansion-servers 'server-then-hotlist)
+    (or eudc-server
+	;; Allow server to be nil if hotlist is set.
+	eudc-server-hotlist
+	(call-interactively 'eudc-set-server)))
+   ((eq eudc-inline-expansion-servers 'hotlist)
     (or eudc-server-hotlist
 	(error "No server in the hotlist")))
+   (t
+    (error "Wrong value for `eudc-inline-expansion-servers': %S"
+	   eudc-inline-expansion-servers)))
   (let* ((end (point))
 	 (beg (save-excursion
 		(if (re-search-backward "\\([:,]\\|^\\)[ \t]*"
 					(point-at-bol) 'move)
 		    (goto-char (match-end 0)))
 		(point)))
-	 (query-words (split-string (buffer-substring beg end) "[ \t]+"))
+	 (query-words (split-string (buffer-substring-no-properties beg end)
+				    "[ \t]+"))
 	 query-formats
 	 response
 	 response-string
@@ -846,24 +837,23 @@ see `eudc-inline-expansion-servers'"
 	   ((eq eudc-inline-expansion-servers 'hotlist)
 	    eudc-server-hotlist)
 	   ((eq eudc-inline-expansion-servers 'server-then-hotlist)
-	    (cons (cons eudc-server eudc-protocol)
-		  (delete (cons eudc-server eudc-protocol) servers)))
+	    (if eudc-server
+		(cons (cons eudc-server eudc-protocol)
+		      (delete (cons eudc-server eudc-protocol) servers))
+	      eudc-server-hotlist))
 	   ((eq eudc-inline-expansion-servers 'current-server)
-	    (list (cons eudc-server eudc-protocol)))
-	   (t
-	    (error "Wrong value for `eudc-inline-expansion-servers': %S"
-		   eudc-inline-expansion-servers))))
+	    (list (cons eudc-server eudc-protocol)))))
     (if (and eudc-max-servers-to-query
 	     (> (length servers) eudc-max-servers-to-query))
 	(setcdr (nthcdr (1- eudc-max-servers-to-query) servers) nil))
 
-    (condition-case signal
+    (unwind-protect
 	(progn
 	  (setq response
 		(catch 'found
 		  ;; Loop on the servers
 		  (while servers
-		    (eudc-set-server (eudc-caar servers) (eudc-cdar servers) t)
+		    (eudc-set-server (caar servers) (cdar servers) t)
 
 		    ;; Determine which formats apply in the query-format list
 		    (setq query-formats
@@ -893,14 +883,15 @@ see `eudc-inline-expansion-servers'"
 
 	    ;; Process response through eudc-inline-expansion-format
 	    (while response
-	      (setq response-string (apply 'format
-					   (car eudc-inline-expansion-format)
-					   (mapcar (function
-						    (lambda (field)
-						      (or (cdr (assq field (car response)))
-							  "")))
-						   (eudc-translate-attribute-list
-						    (cdr eudc-inline-expansion-format)))))
+	      (setq response-string
+                    (apply 'format
+                           (car eudc-inline-expansion-format)
+                           (mapcar (function
+                                    (lambda (field)
+                                      (or (cdr (assq field (car response)))
+                                          "")))
+                                   (eudc-translate-attribute-list
+                                    (cdr eudc-inline-expansion-format)))))
 	      (if (> (length response-string) 0)
 		  (setq response-strings
 			(cons response-string response-strings)))
@@ -922,15 +913,10 @@ see `eudc-inline-expansion-servers'"
 	      (delete-region beg end)
 	      (insert (mapconcat 'identity response-strings ", ")))
 	     ((eq eudc-multiple-match-handling-method 'abort)
-	      (error "There is more than one match for the query"))))
-	  (or (and (equal eudc-server eudc-former-server)
-		   (equal eudc-protocol eudc-former-protocol))
-	      (eudc-set-server eudc-former-server eudc-former-protocol t)))
-      (error
-       (or (and (equal eudc-server eudc-former-server)
-		(equal eudc-protocol eudc-former-protocol))
-	   (eudc-set-server eudc-former-server eudc-former-protocol t))
-       (signal (car signal) (cdr signal))))))
+	      (error "There is more than one match for the query")))))
+      (or (and (equal eudc-server eudc-former-server)
+	       (equal eudc-protocol eudc-former-protocol))
+	  (eudc-set-server eudc-former-server eudc-former-protocol t)))))
 
 ;;;###autoload
 (defun eudc-query-form (&optional get-fields-from-server)
@@ -995,17 +981,17 @@ queries the server for the existing fields and displays a corresponding form."
 	  fields)
     (widget-insert "\n\n")
     (widget-create 'push-button
-		   :notify (lambda (&rest ignore)
+		   :notify (lambda (&rest _ignore)
 			     (eudc-process-form))
 		   "Query Server")
     (widget-insert " ")
     (widget-create 'push-button
-		   :notify (lambda (&rest ignore)
+		   :notify (lambda (&rest _ignore)
 			     (eudc-query-form))
 		   "Reset Form")
     (widget-insert " ")
     (widget-create 'push-button
-		   :notify (lambda (&rest ignore)
+		   :notify (lambda (&rest _ignore)
 			     (kill-this-buffer))
 		   "Quit")
     (goto-char pt)
@@ -1051,14 +1037,14 @@ queries the server for the existing fields and displays a corresponding form."
 				 (point))
 		  (setq set-server-p t))
 		 ((and (eq (car sexp)  'setq)
-		       (eq (eudc-cadr sexp) 'eudc-server-hotlist))
+		       (eq (cadr sexp) 'eudc-server-hotlist))
 		  (delete-region (save-excursion
 				   (backward-sexp)
 				   (point))
 				 (point))
 		  (setq set-hotlist-p t))
 		 ((and (eq (car sexp)  'provide)
-		       (equal (eudc-cadr sexp) '(quote eudc-options-file)))
+		       (equal (cadr sexp) '(quote eudc-options-file)))
 		  (setq provide-p t)))
 	      (if (and provide-p
 		       set-hotlist-p
@@ -1084,7 +1070,7 @@ queries the server for the existing fields and displays a corresponding form."
 (defun eudc-move-to-next-record ()
   "Move to next record, in a buffer displaying directory query results."
   (interactive)
-  (if (not (eq major-mode 'eudc-mode))
+  (if (not (derived-mode-p 'eudc-mode))
       (error "Not in a EUDC buffer")
     (let ((pt (next-overlay-change (point))))
       (if (< pt (point-max))
@@ -1094,7 +1080,7 @@ queries the server for the existing fields and displays a corresponding form."
 (defun eudc-move-to-previous-record ()
   "Move to previous record, in a buffer displaying directory query results."
   (interactive)
-  (if (not (eq major-mode 'eudc-mode))
+  (if (not (derived-mode-p 'eudc-mode))
       (error "Not in a EUDC buffer")
     (let ((pt (previous-overlay-change (point))))
       (if (> pt (point-min))
@@ -1122,7 +1108,7 @@ queries the server for the existing fields and displays a corresponding form."
 	  (overlay-get (car (overlays-at (point))) 'eudc-record))
      :help "Insert record at point into the BBDB database"]
     ["Insert All Records into BBDB" eudc-batch-export-records-to-bbdb
-     (and (eq major-mode 'eudc-mode)
+     (and (derived-mode-p 'eudc-mode)
 	  (or (featurep 'bbdb)
 	      (prog1 (locate-library "bbdb") (message ""))))
      :help "Insert all the records returned by a directory query into BBDB"]

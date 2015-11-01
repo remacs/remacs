@@ -1,6 +1,6 @@
 ;;; gnus-sync.el --- synchronization facility for Gnus
 
-;; Copyright (C) 2010-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 ;; Author: Ted Zlatanov <tzz@lifelogs.com>
 ;; Keywords: news synchronization nntp nnrss
@@ -90,10 +90,7 @@
 (require 'gnus-util)
 
 (defvar gnus-topic-alist) ;; gnus-group.el
-(eval-when-compile
-  (autoload 'gnus-group-topic "gnus-topic")
-  (autoload 'gnus-topic-create-topic "gnus-topic" nil t)
-  (autoload 'gnus-topic-enter-dribble "gnus-topic"))
+(autoload 'gnus-group-topic "gnus-topic")
 
 (defgroup gnus-sync nil
   "The Gnus synchronization facility."
@@ -139,8 +136,9 @@ and `gnus-topic-alist'.  Also see `gnus-variable-list'."
   "Carrier for newsrc data")
 
 (defcustom gnus-sync-file-encrypt-to nil
-  "If non-nil, `epa-file-encrypt-to' is set from this for encrypting the Sync
-  file."
+  "If non-nil, set `epa-file-encrypt-to' from this for encrypting the Sync file."
+  :version "24.4"
+  :type '(choice string (repeat string))
   :group 'gnus-sync)
 
 (defcustom gnus-sync-lesync-name (system-name)
@@ -603,6 +601,10 @@ unwanted groups via the LeSync URL."
         (gnus-message 5 "%s: ignoring entry %s, %s not in sources %S"
                       loc name gnus-sync-lesync-name (or sources "")))
       nil)))
+
+(declare-function gnus-topic-create-topic "gnus-topic"
+                  (topic parent &optional previous full-topic))
+(declare-function gnus-topic-enter-dribble "gnus-topic" ())
 
 (defun gnus-sync-lesync-install-group-entry (name)
   (let* ((master (assoc name gnus-newsrc-alist))

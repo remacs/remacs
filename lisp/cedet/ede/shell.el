@@ -1,6 +1,6 @@
 ;;; ede/shell.el --- A shell controlled by EDE.
 ;;
-;; Copyright (C) 2009-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2015 Free Software Foundation, Inc.
 ;;
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -33,7 +33,7 @@
 
 (declare-function comint-send-input "comint")
 
-(defmethod ede-shell-run-something ((target ede-target) command)
+(cl-defmethod ede-shell-run-something ((target ede-target) command)
   "Create a shell to run stuff for TARGET.
 COMMAND is a text string representing the thing to be run."
   (let* ((buff (ede-shell-buffer target))
@@ -42,10 +42,15 @@ COMMAND is a text string representing the thing to be run."
     ;; Show the new buffer.
     (when (not (get-buffer-window buff))
       (switch-to-buffer-other-window buff t))
-    ;; Force a shell into the buffer.
-    (shell buff)
-    (while (eq (point-min) (point))
-      (accept-process-output))
+    ;; Force a shell into the buffer, but only if the buffer
+    ;; doesn't already have a shell in it.
+    ;; Newer versions of `shell' pop the window forward.
+    (set-buffer buff)
+    (when (not (eq major-mode 'shell-mode))
+      (shell buff)
+      ;; Make sure the shell has started.
+      (while (eq (point-min) (point))
+	(accept-process-output)))
     ;; Change the default directory
     (if (not (string= (file-name-as-directory (expand-file-name default-directory))
 		      (file-name-as-directory (expand-file-name dd))))
@@ -67,7 +72,7 @@ COMMAND is a text string representing the thing to be run."
   (comint-send-input)
   )
 
-(defmethod ede-shell-buffer ((target ede-target))
+(cl-defmethod ede-shell-buffer ((target ede-target))
   "Get the buffer for running shell commands for TARGET."
   (let ((name (ede-name target)))
     (get-buffer-create (format "*EDE Shell %s*" name))))

@@ -1,11 +1,12 @@
 : #-*- Perl -*-
-eval 'exec perl -w -S $0 ${1+"$@"}' # Portability kludge
+eval 'exec perl -S $0 ${1+"$@"}' # Portability kludge
     if 0;
 
 # Author: Martin Buchholz
 # This program is in the public domain.
 
 use strict;
+use warnings;
 use POSIX;
 
 (my $myName = $0) =~ s@.*/@@; my $usage="
@@ -17,7 +18,7 @@ formal parameters, docstrings, and lispref texi.
 This program is in the public domain.\n";
 
 die $usage if @ARGV;
-die $usage unless -r "src/alloc.c" && -d ".bzr" && -d "lisp";
+die $usage unless -r "src/alloc.c" && -d "lisp";
 
 my %texi_funtype;
 my %texi_arglist;

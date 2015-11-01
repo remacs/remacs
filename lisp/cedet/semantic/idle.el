@@ -1,6 +1,6 @@
 ;;; idle.el --- Schedule parsing tasks in idle time
 
-;; Copyright (C) 2003-2006, 2008-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2006, 2008-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: syntax
@@ -216,6 +216,7 @@ current buffer.")
 And also manages services that depend on tag values."
   (when semantic-idle-scheduler-verbose-flag
     (message "IDLE: Core handler..."))
+  ;; FIXME: Use `while-no-input'?
   (semantic-exit-on-input 'idle-timer
     (let* ((inhibit-quit nil)
            (buffers (delq (current-buffer)
@@ -715,8 +716,8 @@ It might be useful to override this variable to add comment faces
 specific to a major mode.  For example, in jde mode:
 
 \(defvar-mode-local jde-mode semantic-idle-summary-out-of-context-faces
-   (append (default-value 'semantic-idle-summary-out-of-context-faces)
-	   '(jde-java-font-lock-doc-tag-face
+   (append (default-value \\='semantic-idle-summary-out-of-context-faces)
+	   \\='(jde-java-font-lock-doc-tag-face
 	     jde-java-font-lock-link-face
 	     jde-java-font-lock-bold-face
 	     jde-java-font-lock-underline-face
@@ -830,8 +831,14 @@ turned on in every Semantic-supported buffer."
 ;; of all uses of the symbol that is under the cursor.
 ;;
 ;; This is to mimic the Eclipse tool of a similar nature.
-(defvar semantic-idle-symbol-highlight-face 'region
+(defface semantic-idle-symbol-highlight
+  '((t :inherit region))
+  "Face used for highlighting local symbols."
+  :group 'semantic-faces)
+(defvar semantic-idle-symbol-highlight-face 'semantic-idle-symbol-highlight
   "Face used for highlighting local symbols.")
+(make-obsolete-variable 'semantic-idle-symbol-highlight-face
+    "customize the face `semantic-idle-symbol-highlight' instead" "24.4" 'set)
 
 (defun semantic-idle-symbol-maybe-highlight (tag)
   "Perhaps add highlighting to the symbol represented by TAG.

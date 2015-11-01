@@ -1,6 +1,6 @@
 ;;; gnus-bookmark.el --- Bookmarks in Gnus
 
-;; Copyright (C) 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
 ;; Author: Bastien Guerry <bzg AT altern DOT org>
 ;; Keywords: news
@@ -101,7 +101,7 @@ List of details is defined in `gnus-bookmark-bookmark-inline-details'.
 This may result in truncated bookmark names.  To disable this, put the
 following in your `.emacs' file:
 
-\(setq gnus-bookmark-bmenu-toggle-infos nil\)"
+\(setq gnus-bookmark-bmenu-toggle-infos nil)"
   :type 'boolean
   :group 'gnus-bookmark)
 
@@ -118,7 +118,7 @@ You can toggle whether details are shown with \\<gnus-bookmark-bmenu-mode-map>\\
 
 (defcustom gnus-bookmark-bookmark-inline-details '(author)
   "Details to be shown with `gnus-bookmark-bmenu-toggle-infos'.
-The default value is \(subject\)."
+The default value is \(subject)."
   :type '(list :tag "Gnus bookmark details"
 	       (set :inline t
 		    (const :tag "Author" author)
@@ -131,7 +131,7 @@ The default value is \(subject\)."
 (defcustom gnus-bookmark-bookmark-details
   '(author subject date group annotation)
   "Details to be shown with `gnus-bookmark-bmenu-show-details'.
-The default value is \(author subject date group annotation\)."
+The default value is \(author subject date group annotation)."
   :type '(list :tag "Gnus bookmark details"
 	       (set :inline t
 		    (const :tag "Author" author)
@@ -160,17 +160,17 @@ You should never need to change this.")
   "Association list of Gnus bookmarks and their records.
 The format of the alist is
 
-     \(BMK1 BMK2 ...\)
+     (BMK1 BMK2 ...)
 
 where each BMK is of the form
 
 \(NAME
-  \(group . GROUP\)
-  \(message-id . MESSAGE-ID\)
-  \(author . AUTHOR\)
-  \(date . DATE\)
-  \(subject . SUBJECT\)
-  \(annotation . ANNOTATION\)\)
+  (group . GROUP)
+  (message-id . MESSAGE-ID)
+  (author . AUTHOR)
+  (date . DATE)
+  (subject . SUBJECT)
+  (annotation . ANNOTATION))
 
 So the cdr of each bookmark is an alist too.")
 
@@ -190,7 +190,7 @@ So the cdr of each bookmark is an alist too.")
   "Set a bookmark for this article."
   (interactive)
   (gnus-bookmark-maybe-load-default-file)
-  (if (or (not (eq major-mode 'gnus-summary-mode))
+  (if (or (not (derived-mode-p 'gnus-summary-mode))
 	  (not gnus-article-current))
       (error "Please select an article in the Gnus summary buffer")
     (let* ((group (car gnus-article-current))
@@ -251,7 +251,7 @@ So the cdr of each bookmark is an alist too.")
   (interactive)
   (save-excursion
     (save-window-excursion
-      ;; Avoir warnings?
+      ;; Avoid warnings?
       ;; (message "Saving Gnus bookmarks to file %s..." gnus-bookmark-default-file)
       (set-buffer (get-buffer-create  " *Gnus bookmarks*"))
       (erase-buffer)
@@ -432,7 +432,7 @@ That is, all information but the name."
   (car (cdr (gnus-bookmark-get-bookmark bookmark))))
 
 (defun gnus-bookmark-name-from-full-record (full-record)
-  "Return name of FULL-RECORD \(an alist element instead of a string\)."
+  "Return name of FULL-RECORD (an alist element instead of a string)."
   (car full-record))
 
 (defvar gnus-bookmark-bmenu-bookmark-column nil)
@@ -473,7 +473,7 @@ That is, all information but the name."
 ;; Been to lazy to use gnus-bookmark-save...
 (defalias 'gnus-bookmark-bmenu-save 'gnus-bookmark-write-file)
 
-(defun gnus-bookmark-bmenu-mode ()
+(define-derived-mode gnus-bookmark-bmenu-mode fundamental-mode "Bookmark Menu"
   "Major mode for editing a list of Gnus bookmarks.
 Each line describes one of the bookmarks in Gnus.
 Letters do not insert themselves; instead, they are commands.
@@ -484,7 +484,7 @@ Gnus bookmarks names preceded by a \"*\" have annotations.
   Also show bookmarks marked using m in other windows.
 \\[gnus-bookmark-bmenu-toggle-infos] -- toggle displaying of details (they may obscure long bookmark names).
 \\[gnus-bookmark-bmenu-locate] -- display (in minibuffer) location of this bookmark.
-\\[gnus-bookmark-bmenu-rename] -- rename this bookmark \(prompts for new name\).
+\\[gnus-bookmark-bmenu-rename] -- rename this bookmark (prompts for new name).
 \\[gnus-bookmark-bmenu-delete] -- mark this bookmark to be deleted, and move down.
 \\[gnus-bookmark-bmenu-delete-backwards] -- mark this bookmark to be deleted, and move up.
 \\[gnus-bookmark-bmenu-execute-deletions] -- delete bookmarks marked with `\\[gnus-bookmark-bmenu-delete]'.
@@ -497,13 +497,8 @@ Gnus bookmarks names preceded by a \"*\" have annotations.
   in another buffer.
 \\[gnus-bookmark-bmenu-show-all-annotations] -- show the annotations of all bookmarks in another buffer.
 \\[gnus-bookmark-bmenu-edit-annotation] -- edit the annotation for the current bookmark."
-  (kill-all-local-variables)
-  (use-local-map gnus-bookmark-bmenu-mode-map)
   (setq truncate-lines t)
-  (setq buffer-read-only t)
-  (setq major-mode 'gnus-bookmark-bmenu-mode)
-  (setq mode-name "Bookmark Menu")
-  (gnus-run-mode-hooks 'gnus-bookmark-bmenu-mode-hook))
+  (setq buffer-read-only t))
 
 ;; avoid compilation warnings
 (defvar gnus-bookmark-bmenu-toggle-infos nil)
@@ -811,7 +806,7 @@ command."
 Removes only the first instance of a bookmark with that name.  If
 there are one or more other bookmarks with the same name, they will
 not be deleted.  Defaults to the \"current\" bookmark \(that is, the
-one most recently used in this file, if any\).
+one most recently used in this file, if any).
 Optional second arg BATCH means don't update the bookmark list buffer,
 probably because we were called from there."
   (gnus-bookmark-maybe-load-default-file)

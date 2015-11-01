@@ -1,6 +1,6 @@
 ;;; ps-print.el --- print text from the buffer as PostScript
 
-;; Copyright (C) 1993-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
 ;; Author: Jim Thompson (was <thompson@wg2.waii.com>)
 ;;	Jacques Duthen (was <duthen@cegelec-red.fr>)
@@ -20,7 +20,7 @@ Emacs without changes to the version number.  When reporting bugs, please also
 report the version of Emacs, if any, that ps-print was distributed with.
 
 Please send all bug fixes and enhancements to
-	Vinicius Jose Latorre <viniciusjl@ig.com.br>.")
+	bug-gnu-emacs@gnu.org and Vinicius Jose Latorre <viniciusjl@ig.com.br>.")
 
 ;; This file is part of GNU Emacs.
 
@@ -809,7 +809,7 @@ Please send all bug fixes and enhancements to
 ;; on next page.  Visually, valid values are (the character `+' at right of
 ;; each column indicates that a line is printed):
 ;;
-;;		   `nil'        `follow'        `full'        `full-follow'
+;;		    nil         `follow'        `full'        `full-follow'
 ;; Current Page --------     -----------     ---------     ----------------
 ;;		1  XXXXX +   1  XXXXXXXX +   1  XXXXXX +   1  XXXXXXXXXXXXX +
 ;;		2  XXXXX +   2  XXXXXXXX +   2  XXXXXX +   2  XXXXXXXXXXXXX +
@@ -1684,7 +1684,7 @@ non-default settings would be \"LPT1\" to \"LPT3\" for parallel printers, or
 for a shared network printer.  You can also set it to a name of a file, in
 which case the output gets appended to that file.  \(Note that `ps-print'
 package already has facilities for printing to a file, so you might as well use
-them instead of changing the setting of this variable.\)  If you want to
+them instead of changing the setting of this variable.)  If you want to
 silently discard the printed output, set this to \"NUL\".
 
 Set to t, if the utility given by `ps-lpr-command' needs an empty printer name.
@@ -1771,7 +1771,7 @@ See `ps-lpr-command'."
 
 (defcustom ps-print-region-function
   (if (memq system-type '(ms-dos windows-nt))
-      #'direct-ps-print-region-function
+      #'w32-direct-ps-print-region-function
     #'call-process-region)
   "Specify a function to print the region on a PostScript printer.
 See definition of `call-process-region' for calling conventions.  The fourth
@@ -1953,7 +1953,7 @@ If you set option `ps-selected-pages', first the pages are
 filtered by option `ps-selected-pages' and then by `ps-even-or-odd-pages'.
 For example, if we have:
 
-   (setq ps-selected-pages '(1 4 (6 . 10) (12 . 16) 20))
+   (setq ps-selected-pages \\='(1 4 (6 . 10) (12 . 16) 20))
 
 Combining with `ps-even-or-odd-pages' and option `ps-n-up-printing', we have:
 
@@ -2117,7 +2117,7 @@ See also documentation for `ps-zebra-stripes' and `ps-zebra-stripe-height'."
 Visually, valid values are (the character `+' at right of each column indicates
 that a line is printed):
 
-		   `nil'        `follow'        `full'        `full-follow'
+		    nil         `follow'        `full'        `full-follow'
    Current Page --------     -----------     ---------     ----------------
 		1  XXXXX +   1  XXXXXXXX +   1  XXXXXX +   1  XXXXXXXXXXXXX +
 		2  XXXXX +   2  XXXXXXXX +   2  XXXXXX +   2  XXXXXXXXXXXXX +
@@ -2249,9 +2249,9 @@ X, Y, XSCALE, YSCALE and ROTATION may be a floating point number, an integer
 number or a string.  If it is a string, the string should contain PostScript
 programming that returns a float or integer value.
 
-For example, if you wish to print an EPS image on all pages do:
+For example, if you wish to print an EPS image on all pages use:
 
-   '((\"~/images/EPS-image.ps\"))"
+   ((\"~/images/EPS-image.ps\"))"
   :type '(repeat
 	  (list
 	   (file   :tag "EPS File")
@@ -2300,9 +2300,9 @@ X, Y, FONTSIZE, GRAY and ROTATION may be a floating point number, an integer
 number or a string.  If it is a string, the string should contain PostScript
 programming that returns a float or integer value.
 
-For example, if you wish to print text \"Preliminary\" on all pages do:
+For example, if you wish to print text \"Preliminary\" on all pages use:
 
-   '((\"Preliminary\"))"
+   ((\"Preliminary\"))"
   :type '(repeat
 	  (list
 	   (string :tag "Text")
@@ -3172,7 +3172,7 @@ This variable is used only when `ps-print-color-p' is set to `black-white'."
       font-lock-variable-name-face
       font-lock-keyword-face
       font-lock-warning-face))
-  "A list of the \(non-bold\) faces that should be printed in bold font.
+  "A list of the (non-bold) faces that should be printed in bold font.
 This applies to generating PostScript."
   :type '(repeat face)
   :version "20"
@@ -3185,7 +3185,7 @@ This applies to generating PostScript."
       font-lock-string-face
       font-lock-comment-face
       font-lock-warning-face))
-  "A list of the \(non-italic\) faces that should be printed in italic font.
+  "A list of the (non-italic) faces that should be printed in italic font.
 This applies to generating PostScript."
   :type '(repeat face)
   :version "20"
@@ -3196,7 +3196,7 @@ This applies to generating PostScript."
     '(font-lock-function-name-face
       font-lock-constant-face
       font-lock-warning-face))
-  "A list of the \(non-underlined\) faces that should be printed underlined.
+  "A list of the (non-underlined) faces that should be printed underlined.
 This applies to generating PostScript."
   :type '(repeat face)
   :version "20"
@@ -3822,6 +3822,7 @@ If `ps-prefix-quote' is nil, it's set to t after generating string."
 
 (defun ps-get (alist-sym key)
   "Return element from association list ALIST-SYM which car is `eq' to KEY."
+  (declare (obsolete alist-get "25.1"))
   (assq key (symbol-value alist-sym)))
 
 
@@ -3829,6 +3830,7 @@ If `ps-prefix-quote' is nil, it's set to t after generating string."
   "Store element (KEY . VALUE) into association list ALIST-SYM.
 If KEY already exists in ALIST-SYM, modify cdr to VALUE.
 It can be retrieved with `(ps-get ALIST-SYM KEY)'."
+  (declare (obsolete "use (setf (alist-get ..) ..) instead" "25.1"))
   (let ((elt: (assq key (symbol-value alist-sym)))) ; to avoid name conflict
     (if elt:
 	(setcdr elt: value)
@@ -3839,6 +3841,7 @@ It can be retrieved with `(ps-get ALIST-SYM KEY)'."
 
 (defun ps-del (alist-sym key)
   "Delete by side effect element KEY from association list ALIST-SYM."
+  (declare (obsolete "use (setf (alist-get k alist nil t) nil) instead" "25.1"))
   (let ((a:list: (symbol-value alist-sym)) ; to avoid name conflict
 	old)
     (while a:list:
@@ -4601,8 +4604,8 @@ page-height == ((floor print-height ((th + ls) * zh)) * ((th + ls) * zh)) - th
 		       (setq prompt "File is unwritable"))
 		      ((file-exists-p res)
 		       (setq prompt "File exists")
-		       (not (y-or-n-p (format "File `%s' exists; overwrite? "
-					      res))))
+		       (not (y-or-n-p (format-message
+				       "File `%s' exists; overwrite? " res))))
 		      (t nil))
 	   (setq res (read-file-name
 		      (format "%s; save PostScript to file: " prompt)
@@ -5708,7 +5711,7 @@ XSTART YSTART are the relative position for the first page in a sheet.")
 	 (error "Invalid %s `%S'%s"
 		mess size
 		(if arg
-		    (format " for `%S'" arg)
+		    (format-message " for `%S'" arg)
 		  "")))
     siz))
 
@@ -6040,10 +6043,7 @@ XSTART YSTART are the relative position for the first page in a sheet.")
 	    (progn
 	      (setq ps-razchunk q-done)
 	      (message "Formatting...%3d%%"
-		       (if (< q-todo 100)
-			   (/ (* 100 q-done) q-todo)
-			 (/ q-done (/ q-todo 100)))
-		       ))))))
+		       (floor (* 100.0 q-done) q-todo)))))))
 
 (defvar ps-last-font nil)
 
@@ -6121,7 +6121,7 @@ to the equivalent Latin-1 characters.")
     (goto-char from)
 
     ;; ...break the region up into chunks separated by tabs, linefeeds,
-    ;; pagefeeds, control characters, and plot each chunk.
+    ;; formfeeds, control characters, and plot each chunk.
     (while (< from to)
       ;; skip lines between cut markers
       (and ps-begin-cut-regexp ps-end-cut-regexp
@@ -6293,6 +6293,10 @@ If FACE is not a valid face name, use default face."
    ;; only background color, not a `real' face
    ((ps-face-background-color-p (car face-or-list))
     (vector 0 nil (ps-face-extract-color face-or-list)))
+   ;; Anonymous face.
+   ((keywordp (car face-or-list))
+    (vector 0 (plist-get face-or-list :foreground)
+	    (plist-get face-or-list :background)))
    ;; list of faces
    (t
     (let ((effects 0)
@@ -6425,6 +6429,7 @@ If FACE is not a valid face name, use default face."
   (save-restriction
     (narrow-to-region from to)
     (ps-print-ensure-fontified from to)
+    (deactivate-mark)                   ;bug#16866.
     (ps-generate-postscript-with-faces1 from to)))
 
 (defun ps-generate-postscript (from to)
@@ -6584,7 +6589,7 @@ If FACE is not a valid face name, use default face."
 ;; To make this file smaller, some commands go in a separate file.
 ;; But autoload them here to make the separation invisible.
 
-;;;### (autoloads nil "ps-mule" "ps-mule.el" "a90e8414a27ac8fdf093251ac648d761")
+;;;### (autoloads nil "ps-mule" "ps-mule.el" "231b07356e5a37ebf517c613a3a12bba")
 ;;; Generated autoloads from ps-mule.el
 
 (defvar ps-multibyte-buffer nil "\

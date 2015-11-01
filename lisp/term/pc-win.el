@@ -1,10 +1,10 @@
-;;; pc-win.el --- setup support for `PC windows' (whatever that is)
+;;; pc-win.el --- setup support for `PC windows' (whatever that is)  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1994, 1996-1997, 1999, 2001-2013 Free Software
+;; Copyright (C) 1994, 1996-1997, 1999, 2001-2015 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Morten Welinder <terra@diku.dk>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 
 ;; This file is part of GNU Emacs.
 
@@ -45,20 +45,20 @@
 (declare-function w16-get-clipboard-data "w16select.c")
 (declare-function msdos-setup-keyboard "internal" (frame))
 
-;;; This was copied from etc/rgb.txt, except that some values were changed
-;;; a bit to make them consistent with DOS console colors, and the RGB
-;;; values were scaled up to 16 bits, as `tty-define-color' requires.
+;; This was copied from etc/rgb.txt, except that some values were changed
+;; a bit to make them consistent with DOS console colors, and the RGB
+;; values were scaled up to 16 bits, as `tty-define-color' requires.
 ;;;
-;;; The mapping between the 16 standard EGA/VGA colors and X color names
-;;; was done by running a Unix version of Emacs inside an X client and a
-;;; DJGPP-compiled Emacs on the same PC.  The names of X colors used to
-;;; define the pixel values are shown as comments to each color below.
+;; The mapping between the 16 standard EGA/VGA colors and X color names
+;; was done by running a Unix version of Emacs inside an X client and a
+;; DJGPP-compiled Emacs on the same PC.  The names of X colors used to
+;; define the pixel values are shown as comments to each color below.
 ;;;
-;;; If you want to change the RGB values, keep in mind that various pieces
-;;; of Emacs think that a color whose RGB values add up to less than 0.6 of
-;;; the values for WHITE (i.e. less than 117963) are ``dark'', otherwise the
-;;; color is ``light''; see `frame-set-background-mode' in lisp/faces.el for
-;;; an example.
+;; If you want to change the RGB values, keep in mind that various pieces
+;; of Emacs think that a color whose RGB values add up to less than 0.6 of
+;; the values for WHITE (i.e. less than 117963) are ``dark'', otherwise the
+;; color is ``light''; see `frame-set-background-mode' in lisp/faces.el for
+;; an example.
 (defvar msdos-color-values
   '(("black"          0     0     0     0)
     ("blue"           1     0     0 52480) ; MediumBlue
@@ -165,6 +165,27 @@ created."
 
 ;; From src/xfns.c
 (defun x-list-fonts (_pattern &optional _face _frame _maximum width)
+  "Return a list of the names of available fonts matching PATTERN.
+If optional arguments FACE and FRAME are specified, return only fonts
+the same size as FACE on FRAME.
+
+PATTERN should be a string containing a font name in the XLFD,
+Fontconfig, or GTK format.  A font name given in the XLFD format may
+contain wildcard characters:
+  the * character matches any substring, and
+  the ? character matches any single character.
+  PATTERN is case-insensitive.
+
+The return value is a list of strings, suitable as arguments to
+`set-face-font'.
+
+Fonts Emacs can't use may or may not be excluded
+even if they match PATTERN and FACE.
+The optional fourth argument MAXIMUM sets a limit on how many
+fonts to match.  The first MAXIMUM fonts are reported.
+The optional fifth argument WIDTH, if specified, is a number of columns
+occupied by a character of a font.  In that case, return only fonts
+the WIDTH times as wide as FACE on FRAME."
   (if (or (null width) (and (numberp width) (= width 1)))
       (list "ms-dos")
     (list "no-such-font")))
@@ -197,148 +218,55 @@ the operating system.")
 ;; From lisp/term/w32-win.el
 ;
 ;;;; Selections
-;
-;;; We keep track of the last text selected here, so we can check the
-;;; current selection against it, and avoid passing back our own text
-;;; from x-selection-value.
-(defvar x-last-selected-text nil)
 
-(defcustom x-select-enable-clipboard t
-  "Non-nil means cutting and pasting uses the clipboard.
-This is in addition to, but in preference to, the primary selection.
+;; gui-get-selection is used in select.el
+(cl-defmethod gui-backend-get-selection (_selection-symbol _target-type
+                                         &context (window-system pc))
+  "Return the value of the current selection.
+Consult the selection.  Treat empty strings as if they were unset."
+  ;; Don't die if x-get-selection signals an error.
+  (with-demoted-errors "w16-get-clipboard-data:%s"
+    (w16-get-clipboard-data)))
 
-Note that MS-Windows does not support selection types other than the
-clipboard.  (The primary selection that is set by Emacs is not
-accessible to other programs on MS-Windows.)
+(declare-function w16-selection-exists-p "w16select.c")
+;; gui-selection-owner-p is used in simple.el.
+(cl-defmethod gui-backend-selection-exists-p (selection
+                                              &context (window-system pc))
+  (w16-selection-exists-p selection))
 
-This variable is not used by the Nextstep port."
-  :type 'boolean
-  :group 'killing)
+(cl-defmethod gui-backend-selection-owner-p (selection
+                                             &context (window-system pc))
+  (w16-selection-owner-p selection))
 
-(defun x-select-text (text)
-  "Select TEXT, a string, according to the window system.
+(defun w16-selection-owner-p (_selection)
+  ;; FIXME: Other systems don't obey select-enable-clipboard here.
+  (if select-enable-clipboard
+      (let ((text
+             ;; Don't die if w16-get-clipboard-data signals an error.
+             (with-demoted-errors "w16-get-clipboard-data: %S"
+               (w16-get-clipboard-data))))
+        ;; We consider ourselves the owner of the selection
+        ;; if it does not exist, or exists and compares
+        ;; equal with the last text we've put into the
+        ;; Windows clipboard.
+        (cond
+         ((not text) t)
+         ((equal text gui--last-selected-text-clipboard) text)
+         (t nil)))))
 
-On X, if `x-select-enable-clipboard' is non-nil, copy TEXT to the
-clipboard.  If `x-select-enable-primary' is non-nil, put TEXT in
-the primary selection.
-
-On MS-Windows, make TEXT the current selection.  If
-`x-select-enable-clipboard' is non-nil, copy the text to the
-clipboard as well.
-
-On Nextstep, put TEXT in the pasteboard (`x-select-enable-clipboard'
-is not used)."
-  (if x-select-enable-clipboard
-      (w16-set-clipboard-data text))
-  (setq x-last-selected-text text))
-
-;;; Return the value of the current selection.
-;;; Consult the selection.  Treat empty strings as if they were unset.
-(defun x-get-selection-value ()
-  (if x-select-enable-clipboard
-      (let (text)
-	;; Don't die if x-get-selection signals an error.
-	(condition-case c
-	    (setq text (w16-get-clipboard-data))
-	  (error (message "w16-get-clipboard-data:%s" c)))
-	(if (string= text "") (setq text nil))
-	(cond
-	 ((not text) nil)
-	 ((eq text x-last-selected-text) nil)
-	 ((string= text x-last-selected-text)
-	  ;; Record the newer string, so subsequent calls can use the 'eq' test.
-	  (setq x-last-selected-text text)
-	  nil)
-	 (t
-	  (setq x-last-selected-text text))))))
-
-;; x-selection-owner-p is used in simple.el.
-(defun x-selection-owner-p (&optional _selection _terminal)
-  "Whether the current Emacs process owns the given X Selection.
-The arg should be the name of the selection in question, typically one of
-the symbols `PRIMARY', `SECONDARY', or `CLIPBOARD'.
-\(Those are literal upper-case symbol names, since that's what X expects.)
-For convenience, the symbol nil is the same as `PRIMARY',
-and t is the same as `SECONDARY'.
-
-TERMINAL should be a terminal object or a frame specifying the X
-server to query.  If omitted or nil, that stands for the selected
-frame's display, or the first available X display.
-
-On Nextstep, TERMINAL is unused.
-
-\(fn &optional SELECTION TERMINAL)"
-    (if x-select-enable-clipboard
-      (let (text)
-	;; Don't die if w16-get-clipboard-data signals an error.
-	(ignore-errors
-	  (setq text (w16-get-clipboard-data)))
-	;; We consider ourselves the owner of the selection if it does
-	;; not exist, or exists and compares equal with the last text
-	;; we've put into the Windows clipboard.
-	(cond
-	 ((not text) t)
-	 ((or (eq text x-last-selected-text)
-	      (string= text x-last-selected-text))
-	  text)
-	 (t nil)))))
-
-;; x-own-selection-internal and x-disown-selection-internal are used
-;; in select.el:x-set-selection.
-(defun x-own-selection-internal (_selection value &optional _frame)
-  "Assert an X selection of the type SELECTION with and value VALUE.
-SELECTION is a symbol, typically `PRIMARY', `SECONDARY', or `CLIPBOARD'.
-\(Those are literal upper-case symbol names, since that's what X expects.)
-VALUE is typically a string, or a cons of two markers, but may be
-anything that the functions on `selection-converter-alist' know about.
-
-FRAME should be a frame that should own the selection.  If omitted or
-nil, it defaults to the selected frame.
-
-On Nextstep, FRAME is unused.
-
-\(fn SELECTION VALUE &optional FRAME)"
-  (ignore-errors
-    (x-select-text value))
-  value)
-
-(defun x-disown-selection-internal (selection &optional _time-object _terminal)
-  "If we own the selection SELECTION, disown it.
-Disowning it means there is no such selection.
-
-Sets the last-change time for the selection to TIME-OBJECT (by default
-the time of the last event).
-
-TERMINAL should be a terminal object or a frame specifying the X
-server to query.  If omitted or nil, that stands for the selected
-frame's display, or the first available X display.
-
-On Nextstep, the TIME-OBJECT and TERMINAL arguments are unused.
-On MS-DOS, all this does is return non-nil if we own the selection.
-
-\(fn SELECTION &optional TIME-OBJECT TERMINAL)"
-  (if (x-selection-owner-p selection)
-      t))
-
-;; x-get-selection-internal is used in select.el
-(defun x-get-selection-internal (_selection-symbol _target-type
-						  &optional _time-stamp _terminal)
-  "Return text selected from some X window.
-SELECTION-SYMBOL is typically `PRIMARY', `SECONDARY', or `CLIPBOARD'.
-\(Those are literal upper-case symbol names, since that's what X expects.)
-TARGET-TYPE is the type of data desired, typically `STRING'.
-
-TIME-STAMP is the time to use in the XConvertSelection call for foreign
-selections.  If omitted, defaults to the time for the last event.
-
-TERMINAL should be a terminal object or a frame specifying the X
-server to query.  If omitted or nil, that stands for the selected
-frame's display, or the first available X display.
-
-On Nextstep, TIME-STAMP and TERMINAL are unused.
-
-\(fn SELECTION-SYMBOL TARGET-TYPE &optional TIME-STAMP TERMINAL)"
-  (x-get-selection-value))
+;; gui-set-selection is used in gui-set-selection.
+(declare-function w16-set-clipboard-data "w16select.c"
+		  (string &optional ignored))
+(cl-defmethod gui-backend-set-selection (selection value
+                                         &context (window-system pc))
+  (if (not value)
+      (if (w16-selection-owner-p selection)
+          t)
+    ;; FIXME: Other systems don't obey
+    ;; gui-select-enable-clipboard here.
+    (with-demoted-errors "w16-set-clipboard-data: %S"
+      (w16-set-clipboard-data value))
+    value))
 
 ;; From src/fontset.c:
 (fset 'query-fontset 'ignore)
@@ -386,15 +314,15 @@ This is used by `msdos-show-help'.")
 
 ;; Initialization.
 ;; ---------------------------------------------------------------------------
-;; This function is run, by faces.el:tty-create-frame-with-faces, only
-;; for the initial frame (on each terminal, but we have only one).
+;; This function is run, by the tty method of `frame-creation-function'
+;; (in faces.el), only for the initial frame (on each terminal, but we have
+;; only one).
 ;; This works by setting the `terminal-initted' terminal parameter to
-;; this function, the first time `tty-create-frame-with-faces' is
-;; called on that terminal.  `tty-create-frame-with-faces' is called
-;; directly from startup.el and also by `make-frame' through
-;; `frame-creation-function-alist'.  `make-frame' will call this
-;; function if `msdos-create-frame-with-faces' (see below) is not
-;; found in `frame-creation-function-alist', which means something is
+;; this function, the first time `frame-creation-function' is
+;; called on that terminal.  `frame-creation-function' is called
+;; directly from startup.el and also by `make-frame'.
+;; `make-frame' should call our own `frame-creation-function' method instead
+;; (see below) so if terminal-init-internal is called it means something is
 ;; _very_ wrong, because "internal" terminal emulator should not be
 ;; turned on if our window-system is not `pc'.  Therefore, the only
 ;; Right Thing for us to do here is scream bloody murder.
@@ -404,7 +332,9 @@ Errors out because it is not supposed to be called, ever."
   (error "terminal-init-internal called for window-system `%s'"
 	 (window-system)))
 
-(defun msdos-initialize-window-system (&optional _display)
+;; window-system-initialization is called by startup.el:command-line.
+(cl-defmethod window-system-initialization (&context (window-system pc)
+                                            &optional _display)
   "Initialization function for the `pc' \"window system\"."
   (or (eq (window-system) 'pc)
       (error
@@ -443,20 +373,17 @@ Errors out because it is not supposed to be called, ever."
   (setq split-window-keep-point t)
   ;; Arrange for the kill and yank functions to set and check the
   ;; clipboard.
-  (setq interprogram-cut-function 'x-select-text)
-  (setq interprogram-paste-function 'x-get-selection-value)
   (menu-bar-enable-clipboard)
   (run-hooks 'terminal-init-msdos-hook))
 
-;; frame-creation-function-alist is examined by frame.el:make-frame.
-(add-to-list 'frame-creation-function-alist
-	     '(pc . msdos-create-frame-with-faces))
-;; window-system-initialization-alist is examined by startup.el:command-line.
-(add-to-list 'window-system-initialization-alist
-	     '(pc . msdos-initialize-window-system))
+;; frame-creation-function is called by frame.el:make-frame.
+(cl-defmethod frame-creation-function (params &context (window-system pc))
+  (msdos-create-frame-with-faces params))
+
 ;; We don't need anything beyond tty-handle-args for handling
 ;; command-line argument; see startup.el.
-(add-to-list 'handle-args-function-alist '(pc . tty-handle-args))
+(cl-defmethod handle-args-function (args &context (window-system pc))
+  (tty-handle-args args))
 
 ;; ---------------------------------------------------------------------------
 

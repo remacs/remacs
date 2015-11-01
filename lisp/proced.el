@@ -1,6 +1,6 @@
 ;;; proced.el --- operate on system processes like dired
 
-;; Copyright (C) 2008-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 ;; Author: Roland Winkler <winkler@gnu.org>
 ;; Keywords: Processes, Unix
@@ -48,8 +48,6 @@
 ;;   What about something like `proced-restart-pid'?
 
 ;;; Code:
-
-(require 'time-date)                 ; for `with-decoded-time-value'
 
 (defgroup proced nil
   "Proced mode."
@@ -1186,17 +1184,8 @@ Return nil otherwise."
 (defun proced-time-lessp (t1 t2)
   "Return t if time value T1 is less than time value T2.
 Return `equal' if T1 equals T2.  Return nil otherwise."
-  (with-decoded-time-value ((high1 low1 micro1 pico1 type1 t1)
-			    (high2 low2 micro2 pico2 type2 t2))
-    (cond ((< high1 high2))
-          ((< high2 high1) nil)
-          ((< low1 low2))
-          ((< low2 low1) nil)
-          ((< micro1 micro2))
-          ((< micro2 micro1) nil)
-	  ((< pico1 pico2))
-	  ((< pico2 pico1) nil)
-          (t 'equal))))
+  (or (time-less-p t1 t2)
+      (if (not (time-less-p t2 t1)) 'equal)))
 
 ;;; Sorting
 
@@ -1926,7 +1915,7 @@ and \f (formfeed) at the end."
       (let (buffer-read-only)
 	(cond ((stringp log)
 	       (insert (if args
-			   (apply 'format log args)
+			   (apply #'format-message log args)
 			 log)))
 	      ((bufferp log)
 	       (insert-buffer-substring log))
@@ -1935,8 +1924,8 @@ and \f (formfeed) at the end."
 	       (unless (bolp)
 		 (insert "\n"))
 	       (insert (current-time-string)
-		       "\tBuffer `" (buffer-name obuf) "', "
-                       (format "signal `%s'\n" (car args)))
+		       (format-message "\tBuffer `%s', signal `%s'\n"
+				       (buffer-name obuf) (car args)))
 	       (goto-char (point-max))
 	       (insert "\f\n")))))))
 

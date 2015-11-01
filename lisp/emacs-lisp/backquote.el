@@ -1,10 +1,10 @@
 ;;; backquote.el --- implement the ` Lisp construct
 
-;; Copyright (C) 1990, 1992, 1994, 2001-2013 Free Software Foundation,
+;; Copyright (C) 1990, 1992, 1994, 2001-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Rick Sladkey <jrs@world.std.com>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: extensions, internal
 ;; Package: emacs
 
@@ -99,9 +99,9 @@ places where expressions are evaluated and inserted or spliced in.
 For example:
 
 b              => (ba bb bc)		; assume b has this value
-`(a b c)       => (a b c)		; backquote acts like quote
-`(a ,b c)      => (a (ba bb bc) c)	; insert the value of b
-`(a ,@b c)     => (a ba bb bc c)	; splice in the value of b
+\\=`(a b c)       => (a b c)		; backquote acts like quote
+\\=`(a ,b c)      => (a (ba bb bc) c)	; insert the value of b
+\\=`(a ,@b c)     => (a ba bb bc c)	; splice in the value of b
 
 Vectors work just like lists.  Nested backquotes are permitted."
   (cdr (backquote-process structure)))
@@ -120,9 +120,7 @@ Vectors work just like lists.  Nested backquotes are permitted."
 This simply recurses through the body."
   (let ((exp (backquote-listify (list (cons 0 (list 'quote (car s))))
                                 (backquote-process (cdr s) level))))
-    (if (eq (car-safe exp) 'quote)
-        (cons 0 (list 'quote s))
-      (cons 1 exp))))
+    (cons (if (eq (car-safe exp) 'quote) 0 1) exp)))
 
 (defun backquote-process (s &optional level)
   "Process the body of a backquote.
@@ -148,16 +146,26 @@ LEVEL is only used internally and indicates the nesting level:
 		 (t
 		  (list 'apply '(function vector) (cdr n))))))))
    ((atom s)
+    ;; FIXME: Use macroexp-quote!
     (cons 0 (if (or (null s) (eq s t) (not (symbolp s)))
 		s
 	      (list 'quote s))))
    ((eq (car s) backquote-unquote-symbol)
     (if (<= level 0)
-        (cons 1 (nth 1 s))
+        (cond
+         ((> (length s) 2)
+          ;; We could support it with: (cons 2 `(list . ,(cdr s)))
+          ;; But let's not encourage such uses.
+          (error "Multiple args to , are not supported: %S" s))
+         (t (cons (if (eq (car-safe (nth 1 s)) 'quote) 0 1)
+                  (nth 1 s))))
       (backquote-delay-process s (1- level))))
    ((eq (car s) backquote-splice-symbol)
     (if (<= level 0)
-        (cons 2 (nth 1 s))
+        (if (> (length s) 2)
+            ;; (cons 2 `(append . ,(cdr s)))
+            (error "Multiple args to ,@ are not supported: %S" s)
+          (cons 2 (nth 1 s)))
       (backquote-delay-process s (1- level))))
    ((eq (car s) backquote-backquote-symbol)
       (backquote-delay-process s (1+ level)))
@@ -208,9 +216,7 @@ LEVEL is only used internally and indicates the nesting level:
       ;; Tack on any initial elements.
       (if firstlist
 	  (setq expression (backquote-listify firstlist (cons 1 expression))))
-      (if (eq (car-safe expression) 'quote)
-	  (cons 0 (list 'quote s))
-	(cons 1 expression))))))
+      (cons (if (eq (car-safe expression) 'quote) 0 1) expression)))))
 
 ;; backquote-listify takes (tag . structure) pairs from backquote-process
 ;; and decides between append, list, backquote-list*, and cons depending

@@ -1,6 +1,6 @@
 ;;; spam.el --- Identifying spam
 
-;; Copyright (C) 2002-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Maintainer: Ted Zlatanov <tzz@lifelogs.com>
@@ -37,10 +37,6 @@
 ;;; Code:
 
 ;;{{{ compilation directives and autoloads/requires
-
-;; For Emacs <22.2 and XEmacs.
-(eval-and-compile
-  (unless (fboundp 'declare-function) (defmacro declare-function (&rest r))))
 
 (eval-when-compile (require 'cl))
 
@@ -2058,7 +2054,7 @@ See the Info node `(gnus)Fancy Mail Splitting' for more details."
                 (if spam-use-dig
                     (let ((query-result (query-dig query-string)))
                       (when query-result
-                        (gnus-message 6 "(DIG): positive blackhole check '%s'"
+                        (gnus-message 6 "(DIG): positive blackhole check `%s'"
                                       query-result)
                         (push (list ip server query-result)
                               matches)))
@@ -2235,15 +2231,6 @@ Uses `gnus-newsgroup-name' if category is nil (for ham registration)."
 ;;}}}
 
 ;;{{{ spam-stat
-
-(eval-when-compile
-  (autoload 'spam-stat-buffer-change-to-non-spam "spam-stat")
-  (autoload 'spam-stat-buffer-change-to-spam "spam-stat")
-  (autoload 'spam-stat-buffer-is-non-spam "spam-stat")
-  (autoload 'spam-stat-buffer-is-spam "spam-stat")
-  (autoload 'spam-stat-load "spam-stat")
-  (autoload 'spam-stat-save "spam-stat")
-  (autoload 'spam-stat-split-fancy "spam-stat"))
 
 (require 'spam-stat)
 
@@ -2903,25 +2890,27 @@ explicitly, and matters only if you need the extra headers
 installed through `spam-necessary-extra-headers'."
   (interactive)
 
-  (dolist (var symbols)
-    (set var t))
+  (when spam-install-hooks
+    (dolist (var symbols)
+      (set var t))
 
-  (dolist (header (spam-necessary-extra-headers))
-    (add-to-list 'nnmail-extra-headers header)
-    (add-to-list 'gnus-extra-headers header))
+    (dolist (header (spam-necessary-extra-headers))
+      (add-to-list 'nnmail-extra-headers header)
+      (add-to-list 'gnus-extra-headers header))
 
-  (setq spam-install-hooks t)
-  ;; TODO: How do we redo this every time the `spam' face is customized?
-  (push '((eq mark gnus-spam-mark) . spam)
-        gnus-summary-highlight)
-  ;; Add hooks for loading and saving the spam stats
-  (add-hook 'gnus-save-newsrc-hook 'spam-maybe-spam-stat-save)
-  (add-hook 'gnus-get-top-new-news-hook 'spam-maybe-spam-stat-load)
-  (add-hook 'gnus-startup-hook 'spam-maybe-spam-stat-load)
-  (add-hook 'gnus-summary-prepare-exit-hook 'spam-summary-prepare-exit)
-  (add-hook 'gnus-summary-prepare-hook 'spam-summary-prepare)
-  (add-hook 'gnus-get-new-news-hook 'spam-setup-widening)
-  (add-hook 'gnus-summary-prepared-hook 'spam-find-spam))
+    ;; TODO: How do we redo this every time the `spam' face is customized?
+    (push '((eq mark gnus-spam-mark) . spam)
+	  gnus-summary-highlight)
+    ;; Add hooks for loading and saving the spam stats
+    (add-hook 'gnus-save-newsrc-hook 'spam-maybe-spam-stat-save)
+    (add-hook 'gnus-get-top-new-news-hook 'spam-maybe-spam-stat-load)
+    (add-hook 'gnus-startup-hook 'spam-maybe-spam-stat-load)
+    (add-hook 'gnus-summary-prepare-exit-hook 'spam-summary-prepare-exit)
+    (add-hook 'gnus-summary-prepare-hook 'spam-summary-prepare)
+    (add-hook 'gnus-get-new-news-hook 'spam-setup-widening)
+    (add-hook 'gnus-summary-prepared-hook 'spam-find-spam)
+    ;; Don't install things more than once.
+    (setq spam-install-hooks nil)))
 
 (defun spam-unload-hook ()
   "Uninstall the spam.el hooks."
@@ -2936,8 +2925,6 @@ installed through `spam-necessary-extra-headers'."
 
 (add-hook 'spam-unload-hook 'spam-unload-hook)
 
-(when spam-install-hooks
-  (spam-initialize))
 ;;}}}
 
 (provide 'spam)

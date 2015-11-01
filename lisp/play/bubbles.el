@@ -1,6 +1,6 @@
-;;; bubbles.el --- Puzzle game for Emacs -*- coding: utf-8 -*-
+;;; bubbles.el --- Puzzle game for Emacs
 
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 ;; Author:      Ulf Jasper <ulf.jasper@web.de>
 ;; URL:         http://ulf.epplejasper.de/
@@ -101,31 +101,31 @@ and a shift mode."
   :group 'bubbles)
 
 (defun bubbles-set-game-easy ()
-  "Set game theme to 'easy'."
+  "Set game theme to `easy'."
   (interactive)
   (setq bubbles-game-theme 'easy)
   (bubbles))
 
 (defun bubbles-set-game-medium ()
-  "Set game theme to 'medium'."
+  "Set game theme to `medium'."
   (interactive)
   (setq bubbles-game-theme 'medium)
   (bubbles))
 
 (defun bubbles-set-game-difficult ()
-  "Set game theme to 'difficult'."
+  "Set game theme to `difficult'."
   (interactive)
   (setq bubbles-game-theme 'difficult)
   (bubbles))
 
 (defun bubbles-set-game-hard ()
-  "Set game theme to 'hard'."
+  "Set game theme to `hard'."
   (interactive)
   (setq bubbles-game-theme 'hard)
   (bubbles))
 
 (defun bubbles-set-game-userdefined ()
-  "Set game theme to 'user-defined'."
+  "Set game theme to `user-defined'."
   (interactive)
   (setq bubbles-game-theme 'user-defined)
   (bubbles))
@@ -211,7 +211,7 @@ the number of colors, see `bubbles-colors'."
 Available modes are `shift-default' and `shift-always'."
   :type '(radio (const :tag "Default" default)
                 (const :tag "Shifter" always)
-                ;;(const :tag "Mega Shifter" 'mega)
+                ;;(const :tag "Mega Shifter" mega)
                 )
   :group 'bubbles)
 
@@ -231,7 +231,7 @@ Available modes are `shift-default' and `shift-always'."
 (defvar bubbles--score 0
   "Current Bubbles score.")
 
-(defvar bubbles--neighbourhood-score 0
+(defvar bubbles--neighborhood-score 0
   "Score of active bubbles neighborhood.")
 
 (defvar bubbles--faces nil
@@ -925,7 +925,7 @@ static char * dot3d_xpm[] = {
   (buffer-disable-undo)
   (force-mode-line-update)
   (redisplay)
-  (add-hook 'post-command-hook 'bubbles--mark-neighbourhood t t))
+  (add-hook 'post-command-hook 'bubbles--mark-neighborhood t t))
 
 ;;;###autoload
 (defun bubbles ()
@@ -1005,20 +1005,17 @@ Set `bubbles--col-offset' and `bubbles--row-offset'."
     (set-buffer-modified-p nil)
     (erase-buffer)
     (insert " ")
-    (add-text-properties
-     (point-min) (point) (list 'intangible t 'display
-                               (cons 'space
-                                     (list :height bubbles--row-offset))))
+    (put-text-property (point-min) (point)
+                       'display
+                       (cons 'space (list :height bubbles--row-offset)))
     (insert "\n")
     (let ((max-char (length (bubbles--colors))))
       (dotimes (i (bubbles--grid-height))
         (let ((p (point)))
           (insert " ")
-          (add-text-properties
-           p (point) (list 'intangible t
-                           'display (cons 'space
-                                          (list :width
-                                                bubbles--col-offset)))))
+          (put-text-property p (point)
+                             'display
+                             (cons 'space (list :width bubbles--col-offset))))
         (dotimes (j (bubbles--grid-width))
           (let* ((index (random max-char))
                  (char (nth index bubbles-chars)))
@@ -1026,10 +1023,9 @@ Set `bubbles--col-offset' and `bubbles--row-offset'."
             (add-text-properties (1- (point)) (point) (list 'index index))))
         (insert "\n"))
       (insert "\n ")
-      (add-text-properties
-       (1- (point)) (point) (list 'intangible t 'display
-                                  (cons 'space
-                                        (list :width bubbles--col-offset)))))
+      (put-text-property (1- (point)) (point)
+                         'display
+                         (cons 'space (list :width bubbles--col-offset))))
     (put-text-property (point-min) (point-max) 'pointer 'arrow))
   (bubbles-mode)
   (bubbles--reset-score)
@@ -1087,7 +1083,7 @@ Set `bubbles--col-offset' and `bubbles--row-offset'."
         (char-after (point))
       nil)))
 
-(defun bubbles--mark-direct-neighbours (row col char)
+(defun bubbles--mark-direct-neighbors (row col char)
   "Mark direct neighbors of bubble at ROW COL with same CHAR."
   (save-excursion
     (let ((count 0))
@@ -1097,38 +1093,37 @@ Set `bubbles--col-offset' and `bubbles--row-offset'."
         (add-text-properties (point) (1+ (point))
                              '(active t face 'bubbles--highlight-face))
         (setq count (+ 1
-                       (bubbles--mark-direct-neighbours row (1+ col) char)
-                       (bubbles--mark-direct-neighbours row (1- col) char)
-                       (bubbles--mark-direct-neighbours (1+ row) col char)
-                       (bubbles--mark-direct-neighbours (1- row) col char))))
+                       (bubbles--mark-direct-neighbors row (1+ col) char)
+                       (bubbles--mark-direct-neighbors row (1- col) char)
+                       (bubbles--mark-direct-neighbors (1+ row) col char)
+                       (bubbles--mark-direct-neighbors (1- row) col char))))
       count)))
 
-(defun bubbles--mark-neighbourhood (&optional pos)
+(defun bubbles--mark-neighborhood (&optional pos)
   "Mark neighborhood of point.
 Use optional parameter POS instead of point if given."
   (when bubbles--playing
     (unless pos (setq pos (point)))
-    (condition-case err
-        (let ((char (char-after pos))
-              (inhibit-read-only t)
-              (row (bubbles--row (point)))
-              (col (bubbles--col (point))))
-          (add-text-properties (point-min) (point-max)
-                               '(face default active nil))
-          (let ((count 0))
-            (when (and row col (not (eq char (bubbles--empty-char))))
-              (setq count (bubbles--mark-direct-neighbours row col char))
-              (unless (> count 1)
-                (add-text-properties (point-min) (point-max)
-                                     '(face default active nil))
-                (setq count 0)))
-            (bubbles--update-neighbourhood-score count))
-          (put-text-property (point-min) (point-max) 'pointer 'arrow)
-          (bubbles--update-faces-or-images)
-          (sit-for 0))
-      (error (message "Bubbles: Internal error %s" err)))))
+    (with-demoted-errors "Bubbles: Internal error %s"
+      (let ((char (char-after pos))
+            (inhibit-read-only t)
+            (row (bubbles--row (point)))
+            (col (bubbles--col (point))))
+        (add-text-properties (point-min) (point-max)
+                             '(face default active nil))
+        (let ((count 0))
+          (when (and row col (not (eq char (bubbles--empty-char))))
+            (setq count (bubbles--mark-direct-neighbors row col char))
+            (unless (> count 1)
+              (add-text-properties (point-min) (point-max)
+                                   '(face default active nil))
+              (setq count 0)))
+          (bubbles--update-neighborhood-score count))
+        (put-text-property (point-min) (point-max) 'pointer 'arrow)
+        (bubbles--update-faces-or-images)
+        (sit-for 0)))))
 
-(defun bubbles--neighbourhood-available ()
+(defun bubbles--neighborhood-available ()
   "Return t if another valid neighborhood is available."
   (catch 'found
     (save-excursion
@@ -1154,20 +1149,20 @@ Use optional parameter POS instead of point if given."
 
 (defun bubbles--reset-score ()
   "Reset bubbles score."
-  (setq bubbles--neighbourhood-score 0
+  (setq bubbles--neighborhood-score 0
         bubbles--score 0)
   (bubbles--update-score))
 
 (defun bubbles--update-score ()
   "Calculate and display new bubbles score."
-  (setq bubbles--score (+ bubbles--score bubbles--neighbourhood-score))
+  (setq bubbles--score (+ bubbles--score bubbles--neighborhood-score))
   (bubbles--show-scores))
 
-(defun bubbles--update-neighbourhood-score (size)
+(defun bubbles--update-neighborhood-score (size)
   "Calculate and display score of active neighborhood from its SIZE."
   (if (> size 1)
-      (setq bubbles--neighbourhood-score (expt (- size 1) 2))
-    (setq bubbles--neighbourhood-score 0))
+      (setq bubbles--neighborhood-score (expt (- size 1) 2))
+    (setq bubbles--neighborhood-score 0))
   (bubbles--show-scores))
 
 (defun bubbles--show-scores ()
@@ -1178,12 +1173,11 @@ Use optional parameter POS instead of point if given."
     (let ((inhibit-read-only t)
           (pos (point)))
       (delete-region (point) (point-max))
-      (insert (format "Selected: %4d\n" bubbles--neighbourhood-score))
+      (insert (format "Selected: %4d\n" bubbles--neighborhood-score))
       (insert " ")
-      (add-text-properties (1- (point)) (point)
-                           (list 'intangible t 'display
-                                 (cons 'space
-                                       (list :width bubbles--col-offset))))
+      (put-text-property (1- (point)) (point)
+                         'display
+                         (cons 'space (list :width bubbles--col-offset)))
       (insert (format "Score:    %4d" bubbles--score))
       (put-text-property pos (point) 'status t))))
 
@@ -1201,10 +1195,9 @@ Use optional parameter POS instead of point if given."
   (goto-char (point-max))
   (let* ((inhibit-read-only t))
     (insert "\n ")
-    (add-text-properties (1- (point)) (point)
-                         (list 'intangible t 'display
-                               (cons 'space
-                                     (list :width bubbles--col-offset))))
+    (put-text-property (1- (point)) (point)
+                       'display
+                       (cons 'space (list :width bubbles--col-offset)))
     (insert "Game Over!"))
   ;; save score
   (gamegrid-add-score (format "bubbles-%s-%d-%d-%d-scores"
@@ -1217,10 +1210,10 @@ Use optional parameter POS instead of point if given."
   "Remove active bubbles region."
   (interactive)
   (when (and bubbles--playing
-             (> bubbles--neighbourhood-score 0))
+             (> bubbles--neighborhood-score 0))
     (setq bubbles--save-data (list bubbles--score (buffer-string)))
     (let ((inhibit-read-only t))
-      ;; blank out current neighbourhood
+      ;; blank out current neighborhood
       (let ((row (bubbles--row (point)))
             (col (bubbles--col (point))))
         (goto-char (point-max))
@@ -1290,7 +1283,7 @@ Use optional parameter POS instead of point if given."
           (bubbles--update-faces-or-images)
           (sit-for 0)))
       (put-text-property (point-min) (point-max) 'removed nil)
-      (unless (bubbles--neighbourhood-available)
+      (unless (bubbles--neighborhood-available)
         (bubbles--game-over)))
     ;; undo
     (setq buffer-undo-list '((apply bubbles-undo . nil)))

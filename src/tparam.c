@@ -1,6 +1,6 @@
 /* Merge parameters into a termcap entry string.
-   Copyright (C) 1985, 1987, 1993, 1995, 2000-2008, 2013 Free Software
-   Foundation, Inc.
+   Copyright (C) 1985, 1987, 1993, 1995, 2000-2008, 2013-2015 Free
+   Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -79,14 +79,14 @@ tparam1 (const char *string, char *outstring, int len,
   register int tem;
   int *old_argp = argp;                 /* can move */
   int *fixed_argp = argp;               /* never moves */
-  int explicit_param_p = 0;             /* set by %p */
+  bool explicit_param_p = false;        /* set by %p */
   ptrdiff_t doleft = 0;
   ptrdiff_t doup = 0;
   ptrdiff_t append_len = 0;
 
   outend = outstring + len;
 
-  while (1)
+  while (true)
     {
       /* If the buffer might be too short, make it bigger.  */
       while (outend - op - append_len <= 5)
@@ -115,7 +115,7 @@ tparam1 (const char *string, char *outstring, int len,
 	{
 	  c = *p++;
 	  if (explicit_param_p)
-	    explicit_param_p = 0;
+	    explicit_param_p = false;
 	  else
 	    tem = *argp;
 	  switch (c)
@@ -142,7 +142,7 @@ tparam1 (const char *string, char *outstring, int len,
 	      break;
             case 'p':           /* %pN means use param N for next subst.  */
 	      tem = fixed_argp[(*p++) - '1'];
-	      explicit_param_p = 1;
+	      explicit_param_p = true;
 	      break;
 	    case 'C':
 	      /* For c-100: print quotient of value by 96, if nonzero,
@@ -255,9 +255,9 @@ tparam1 (const char *string, char *outstring, int len,
     }
   *op = 0;
   while (doup-- > 0)
-    strcat (op, up);
+    op = stpcpy (op, up);
   while (doleft-- > 0)
-    strcat (op, left);
+    op = stpcpy (op, left);
   return outstring;
 }
 

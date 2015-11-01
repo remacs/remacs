@@ -1,9 +1,9 @@
 ;;; nxml-parse.el --- XML parser, sharing infrastructure with nxml-mode
 
-;; Copyright (C) 2003, 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2003, 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: James Clark
-;; Keywords: XML
+;; Keywords: wp, hypermedia, languages, XML
 
 ;; This file is part of GNU Emacs.
 
@@ -304,7 +304,7 @@ same way as well-formedness error."
 (defun nxml-parse-error (position &rest args)
   (nxml-signal-file-parse-error nxml-parse-file-name
 				(or position xmltok-start)
-				(apply 'format args)))
+				(apply #'format-message args)))
 
 (defun nxml-check-xmltok-errors ()
   (when xmltok-errors

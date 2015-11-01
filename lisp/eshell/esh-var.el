@@ -1,6 +1,6 @@
-;;; esh-var.el --- handling of variables
+;;; esh-var.el --- handling of variables  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -116,7 +116,7 @@
 (require 'ring)
 
 (defgroup eshell-var nil
-  "Variable interpolation is introduced whenever the '$' character
+  "Variable interpolation is introduced whenever the `$' character
 appears unquoted in any argument (except when that argument is
 surrounded by single quotes).  It may be used to interpolate a
 variable value, a subcommand, or even the result of a Lisp form."
@@ -148,7 +148,7 @@ variable value, a subcommand, or even the result of a Lisp form."
 
 (defcustom eshell-variable-name-regexp "[A-Za-z0-9_-]+"
   "A regexp identifying what constitutes a variable name reference.
-Note that this only applies for '$NAME'.  If the syntax '$<NAME>' is
+Note that this only applies for `$NAME'.  If the syntax `$<NAME>' is
 used, then NAME can contain any character, including angle brackets,
 if they are quoted with a backslash."
   :type 'regexp
@@ -184,14 +184,14 @@ if they are quoted with a backslash."
 				   indices)))))
   "This list provides aliasing for variable references.
 It is very similar in concept to what `eshell-user-aliases-list' does
-for commands.  Each member of this defines defines the name of a
-command, and the Lisp value to return for that variable if it is
-accessed via the syntax '$NAME'.
+for commands.  Each member of this defines the name of a command,
+and the Lisp value to return for that variable if it is accessed
+via the syntax `$NAME'.
 
 If the value is a function, that function will be called with two
 arguments: the list of the indices that was used in the reference, and
 whether the user is requesting the length of the ultimate element.
-For example, a reference of '$NAME[10][20]' would result in the
+For example, a reference of `$NAME[10][20]' would result in the
 function for alias `NAME' being called (assuming it were aliased to a
 function), and the arguments passed to this function would be the list
 '(10 20)', and nil."
@@ -231,7 +231,7 @@ function), and the arguments passed to this function would be the list
 	      'eshell-complete-variable-assignment nil t)))
 
 (defun eshell-handle-local-variables ()
-  "Allow for the syntax 'VAR=val <command> <args>'."
+  "Allow for the syntax `VAR=val <command> <args>'."
   ;; strip off any null commands, which can only happen if a variable
   ;; evaluates to nil, such as "$var x", where `var' is nil.  The
   ;; command name in that case becomes `x', for compatibility with
@@ -395,12 +395,9 @@ process any indices that come after the variable reference."
 	  indices (and (not (eobp))
 		       (eq (char-after) ?\[)
 		       (eshell-parse-indices))
-	  value (list 'let
-		      (list (list 'indices
-				  (list 'quote indices)))
-		      value))
+	  value `(let ((indices ',indices)) ,value))
     (if get-len
-	(list 'length value)
+	`(length ,value)
       value)))
 
 (defun eshell-parse-variable-ref ()
@@ -414,67 +411,68 @@ Possible options are:
   <LONG-NAME>   disambiguates the length of the name
   {COMMAND}     result of command is variable's value
   (LISP-FORM)   result of Lisp form is variable's value"
-  (let (end)
-    (cond
-     ((eq (char-after) ?{)
-      (let ((end (eshell-find-delimiter ?\{ ?\})))
-	(if (not end)
-	    (throw 'eshell-incomplete ?\{)
-	  (prog1
-	      (list 'eshell-convert
-		    (list 'eshell-command-to-value
-			  (list 'eshell-as-subcommand
-				(eshell-parse-command
-				 (cons (1+ (point)) end)))))
-	    (goto-char (1+ end))))))
-     ((memq (char-after) '(?\' ?\"))
-      (let ((name (if (eq (char-after) ?\')
-		      (eshell-parse-literal-quote)
-		    (eshell-parse-double-quote))))
-	(if name
+  (cond
+   ((eq (char-after) ?{)
+    (let ((end (eshell-find-delimiter ?\{ ?\})))
+      (if (not end)
+          (throw 'eshell-incomplete ?\{)
+        (prog1
+            (list 'eshell-convert
+                  (list 'eshell-command-to-value
+                        (list 'eshell-as-subcommand
+                              (eshell-parse-command
+                               (cons (1+ (point)) end)))))
+          (goto-char (1+ end))))))
+   ((memq (char-after) '(?\' ?\"))
+    (let ((name (if (eq (char-after) ?\')
+                    (eshell-parse-literal-quote)
+                  (eshell-parse-double-quote))))
+      (if name
 	  (list 'eshell-get-variable (eval name) 'indices))))
-     ((eq (char-after) ?\<)
-      (let ((end (eshell-find-delimiter ?\< ?\>)))
-	(if (not end)
-	    (throw 'eshell-incomplete ?\<)
-	  (let* ((temp (make-temp-file temporary-file-directory))
-		 (cmd (concat (buffer-substring (1+ (point)) end)
-			      " > " temp)))
-	    (prog1
-		(list
-		 'let (list (list 'eshell-current-handles
-				  (list 'eshell-create-handles temp
-					(list 'quote 'overwrite))))
-		 (list
-		  'progn
-		  (list 'eshell-as-subcommand
-			(eshell-parse-command cmd))
-		  (list 'ignore
-			(list 'nconc 'eshell-this-command-hook
-			      (list 'list
-				    (list 'function
-					  (list 'lambda nil
-						(list 'delete-file temp))))))
-		  (list 'quote temp)))
-	      (goto-char (1+ end)))))))
-     ((eq (char-after) ?\()
-      (condition-case err
-	  (list 'eshell-command-to-value
-		(list 'eshell-lisp-command
-		      (list 'quote (read (current-buffer)))))
-	(end-of-file
-	 (throw 'eshell-incomplete ?\())))
-     ((assoc (char-to-string (char-after))
-	     eshell-variable-aliases-list)
-      (forward-char)
-      (list 'eshell-get-variable
-	    (char-to-string (char-before)) 'indices))
-     ((looking-at eshell-variable-name-regexp)
-      (prog1
-	  (list 'eshell-get-variable (match-string 0) 'indices)
-	(goto-char (match-end 0))))
-     (t
-      (error "Invalid variable reference")))))
+   ((eq (char-after) ?\<)
+    (let ((end (eshell-find-delimiter ?\< ?\>)))
+      (if (not end)
+          (throw 'eshell-incomplete ?\<)
+        (let* ((temp (make-temp-file temporary-file-directory))
+               (cmd (concat (buffer-substring (1+ (point)) end)
+                            " > " temp)))
+          (prog1
+              (list
+               'let (list (list 'eshell-current-handles
+                                (list 'eshell-create-handles temp
+                                      (list 'quote 'overwrite))))
+               (list
+                'progn
+                (list 'eshell-as-subcommand
+                      (eshell-parse-command cmd))
+                (list 'ignore
+                      (list 'nconc 'eshell-this-command-hook
+                            (list 'list
+                                  (list 'function
+                                        (list 'lambda nil
+                                              (list 'delete-file temp))))))
+                (list 'quote temp)))
+            (goto-char (1+ end)))))))
+   ((eq (char-after) ?\()
+    (condition-case nil
+        (list 'eshell-command-to-value
+              (list 'eshell-lisp-command
+                    (list 'quote (read (current-buffer)))))
+      (end-of-file
+       (throw 'eshell-incomplete ?\())))
+   ((assoc (char-to-string (char-after))
+           eshell-variable-aliases-list)
+    (forward-char)
+    (list 'eshell-get-variable
+          (char-to-string (char-before)) 'indices))
+   ((looking-at eshell-variable-name-regexp)
+    (prog1
+        (list 'eshell-get-variable (match-string 0) 'indices)
+      (goto-char (match-end 0))))
+   (t
+    (error "Invalid variable reference"))))
+
+(defvar eshell-glob-function)
 
 (defun eshell-parse-indices ()
   "Parse and return a list of list of indices."
@@ -504,6 +502,7 @@ Possible options are:
 	 (let ((sym (intern-soft var)))
 	   (if (and sym (boundp sym)
 		    (or eshell-prefer-lisp-variables
+			(memq sym eshell--local-vars) ; bug#15372
 			(not (getenv var))))
 	       (symbol-value sym)
 	     (getenv var))))

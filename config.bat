@@ -1,7 +1,7 @@
 @echo off
 rem   ----------------------------------------------------------------------
 rem   Configuration script for MSDOS
-rem   Copyright (C) 1994-1999, 2001-2013 Free Software Foundation, Inc.
+rem   Copyright (C) 1994-1999, 2001-2015 Free Software Foundation, Inc.
 
 rem   This file is part of GNU Emacs.
 
@@ -22,10 +22,10 @@ rem   ----------------------------------------------------------------------
 rem   YOU'LL NEED THE FOLLOWING UTILITIES TO MAKE EMACS:
 rem
 rem   + msdos version 3 or better.
-rem   + DJGPP version 2.0 or later (version 2.03 or later recommended).
+rem   + DJGPP version 2.02 or later (version 2.03 or later recommended).
 rem   + make utility that allows breaking of the 128 chars limit on
 rem     command lines.  ndmake (as of version 4.5) won't work due to a
-rem     line length limit.  The make that comes with DJGPP does work (and is
+rem     line length limit.  The DJGPP port of make works (and is
 rem     recommended).
 rem   + rm, mv, and cp (from GNU file utilities).
 rem   + sed (you can use the port that comes with DJGPP).
@@ -109,7 +109,7 @@ Goto End
 :djgppOk
 echo int main()           >junk.c
 echo #ifdef __DJGPP__    >>junk.c
-echo {return (__DJGPP__)*10;} >>junk.c
+echo {return (__DJGPP__)*10 + (__DJGPP_MINOR__);} >>junk.c
 echo #else               >>junk.c
 echo #ifdef __GO32__     >>junk.c
 echo {return 10;}         >>junk.c
@@ -126,8 +126,8 @@ Echo To compile 'Emacs' under MS-DOS you MUST have DJGPP installed!
 Goto End
 :go32Ok
 set djgpp_ver=2
-If Not ErrorLevel 20 Echo To build 'Emacs' you need DJGPP v2.0 or later!
-If Not ErrorLevel 20 Goto End
+If Not ErrorLevel 22 Echo To build 'Emacs' you need DJGPP v2.02 or later!
+If Not ErrorLevel 22 Goto End
 rm -f junk.c junk junk.exe
 rem DJECHO is used by the top-level Makefile in the v2.x build
 Echo Checking whether 'djecho' is available...
@@ -135,7 +135,6 @@ redir -o Nul -eo djecho -o junk.$$$ foo
 If Exist junk.$$$ Goto djechoOk
 Echo To build 'Emacs' you need the 'djecho.exe' program!
 Echo 'djecho.exe' is part of 'djdevNNN.zip' basic DJGPP development kit.
-Echo Versions of DJGPP before 2.02 called this program 'echo.exe'.
 Echo Either unpack 'djecho.exe' from the 'djdevNNN.zip' archive,
 Echo or, if you have 'echo.exe', copy it to 'djecho.exe'.
 Echo Then run CONFIG.BAT again with the same arguments you did now.
@@ -155,10 +154,10 @@ rm -f epaths.tmp
 rem   Create "config.h"
 rm -f config.h2 config.tmp
 if exist config.in sed -e '' config.in > config.tmp
-if exist ..\autogen\config.in sed -e '' ../autogen/config.in > config.tmp
+if exist ..\msdos\autogen\config.in sed -e '' ../msdos/autogen/config.in > config.tmp
 if "%X11%" == "" goto src4
 if exist config.in sed -f ../msdos/sed2x.inp < config.in > config.tmp
-if exist ..\autogen\config.in sed -f ../msdos/sed2x.inp < ..\autogen\config.in > config.tmp
+if exist ..\msdos\autogen\config.in sed -f ../msdos/sed2x.inp < ..\msdos\autogen\config.in > config.tmp
 :src4
 sed -f ../msdos/sed2v2.inp <config.tmp >config.h2
 Rem See if they have libxml2 later than v2.2.0 installed
@@ -264,8 +263,14 @@ cd lib
 Rem Rename files like djtar on plain DOS filesystem would.
 If Exist build-aux\snippet\c++defs.h update build-aux/snippet/c++defs.h build-aux/snippet/cxxdefs.h
 If Exist alloca.in.h update alloca.in.h alloca.in-h
+If Exist byteswap.in.h update byteswap.in.h byteswap.in-h
+If Exist dirent.in.h update dirent.in.h dirent.in-h
+If Exist errno.in.h update errno.in.h errno.in-h
 If Exist execinfo.in.h update execinfo.in.h execinfo.in-h
+If Exist fcntl.in.h update fcntl.in.h fcntl.in-h
 If Exist getopt.in.h update getopt.in.h getopt.in-h
+If Exist inttypes.in.h update inttypes.in.h inttypes.in-h
+If Exist stdarg.in.h update stdarg.in.h stdarg.in-h
 If Exist stdalign.in.h update stdalign.in.h stdalign.in-h
 If Exist stdbool.in.h update stdbool.in.h stdbool.in-h
 If Exist signal.in.h update signal.in.h signal.in-h
@@ -274,12 +279,15 @@ If Exist stddef.in.h update stddef.in.h  stddef.in-h
 If Exist stdint.in.h update stdint.in.h  stdint.in-h
 If Exist stdio.in.h update stdio.in.h stdio.in-h
 If Exist stdlib.in.h update stdlib.in.h stdlib.in-h
+If Exist string.in.h update string.in.h string.in-h
+If Exist sys_select.in.h update sys_select.in.h sys_select.in-h
 If Exist sys_stat.in.h update sys_stat.in.h sys_stat.in-h
 If Exist sys_types.in.h update sys_types.in.h sys_types.in-h
+If Exist sys_time.in.h update sys_time.in.h sys_time.in-h
 If Exist time.in.h update time.in.h time.in-h
 If Exist unistd.in.h update unistd.in.h unistd.in-h
 If Exist Makefile.in sed -f ../msdos/sedlibcf.inp < Makefile.in > makefile.tmp
-If Exist ..\autogen\Makefile.in sed -f ../msdos/sedlibcf.inp < ..\autogen\Makefile.in > makefile.tmp
+If Exist ..\msdos\autogen\Makefile.in sed -f ../msdos/sedlibcf.inp < ..\msdos\autogen\Makefile.in > makefile.tmp
 sed -f ../msdos/sedlibmk.inp < makefile.tmp > Makefile
 rm -f makefile.tmp
 Rem Create .Po files for new files in lib/
@@ -294,13 +302,18 @@ If Exist gnus\.dir-locals.el update gnus/.dir-locals.el gnus/_dir-locals.el
 sed -f ../msdos/sedlisp.inp < Makefile.in > Makefile
 cd ..
 rem   ----------------------------------------------------------------------
-If not Exist leim\quail\latin-pre.el goto maindir
 Echo Configuring the leim directory...
 cd leim
 sed -f ../msdos/sedleim.inp < Makefile.in > Makefile
 cd ..
 rem   ----------------------------------------------------------------------
-:maindir
+If Not Exist admin\unidata goto noadmin
+Echo Configuring the admin/unidata directory...
+cd admin\unidata
+sed -f ../../msdos/sedadmin.inp < Makefile.in > Makefile
+cd ..\..
+:noadmin
+rem   ----------------------------------------------------------------------
 Echo Configuring the main directory...
 If Exist .dir-locals.el update .dir-locals.el _dir-locals.el
 If Exist src\.dbxinit update src/.dbxinit src/_dbxinit

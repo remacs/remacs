@@ -1,9 +1,9 @@
 ;;; help-mode.el --- `help-mode' used by *Help* buffers
 
-;; Copyright (C) 1985-1986, 1993-1994, 1998-2013 Free Software
+;; Copyright (C) 1985-1986, 1993-1994, 1998-2015 Free Software
 ;; Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help, internal
 ;; Package: emacs
 
@@ -30,6 +30,7 @@
 ;;; Code:
 
 (require 'button)
+(require 'cl-lib)
 (eval-when-compile (require 'easymenu))
 
 (defvar help-mode-map
@@ -37,6 +38,8 @@
     (set-keymap-parent map (make-composed-keymap button-buffer-map
                                                  special-mode-map))
     (define-key map [mouse-2] 'help-follow-mouse)
+    (define-key map "l" 'help-go-back)
+    (define-key map "r" 'help-go-forward)
     (define-key map "\C-c\C-b" 'help-go-back)
     (define-key map "\C-c\C-f" 'help-go-forward)
     (define-key map [XF86Back] 'help-go-back)
@@ -146,7 +149,7 @@ The format is (FUNCTION ARGS...).")
 
 (define-button-type 'help-symbol
   :supertype 'help-xref
-  'help-function #'help-xref-interned
+  'help-function #'describe-symbol
   'help-echo (purecopy "mouse-2, RET: describe this symbol"))
 
 (define-button-type 'help-back
@@ -189,7 +192,7 @@ The format is (FUNCTION ARGS...).")
 
 (define-button-type 'help-function-def
   :supertype 'help-xref
-  'help-function (lambda (fun file)
+  'help-function (lambda (fun file &optional type)
 		   (require 'find-func)
 		   (when (eq file 'C-source)
 		     (setq file
@@ -197,7 +200,7 @@ The format is (FUNCTION ARGS...).")
 		   ;; Don't use find-function-noselect because it follows
 		   ;; aliases (which fails for built-in functions).
 		   (let ((location
-			  (find-function-search-for-symbol fun nil file)))
+			  (find-function-search-for-symbol fun type file)))
 		     (pop-to-buffer (car location))
 		     (if (cdr location)
 			 (goto-char (cdr location))
@@ -214,7 +217,8 @@ The format is (FUNCTION ARGS...).")
 			 (goto-char (point-min))
 			 (if (re-search-forward
 			      (format "^[ \t]*(\\(cl-\\)?define-compiler-macro[ \t]+%s"
-				      (regexp-quote (symbol-name fun))) nil t)
+				      (regexp-quote (symbol-name fun)))
+                              nil t)
 			     (forward-line 0)
 			   (message "Unable to find location in file")))
 		     (message "Unable to find file")))
@@ -290,21 +294,15 @@ Commands:
 
 ;;;###autoload
 (defun help-mode-setup ()
+  "Enter Help Mode in the current buffer."
   (help-mode)
   (setq buffer-read-only nil))
 
 ;;;###autoload
 (defun help-mode-finish ()
-  (when (eq major-mode 'help-mode)
+  "Finalize Help Mode setup in current buffer."
+  (when (derived-mode-p 'help-mode)
     (setq buffer-read-only t)
-    (save-excursion
-      (goto-char (point-min))
-      (let ((inhibit-read-only t))
-	(when (re-search-forward "^This [^[:space:]]+ is advised.$" nil t)
-	  (put-text-property (match-beginning 0)
-			     (match-end 0)
-			     'face 'font-lock-warning-face))))
-
     (help-make-xrefs (current-buffer))))
 
 ;; Grokking cross-reference information in doc strings and
@@ -328,7 +326,7 @@ Commands:
 		    "\\(source \\(?:code \\)?\\(?:of\\|for\\)\\)\\)"
 		    "[ \t\n]+\\)?"
 		    ;; Note starting with word-syntax character:
-		    "`\\(\\sw\\(\\sw\\|\\s_\\)+\\)'"))
+		    "['`‘]\\(\\sw\\(\\sw\\|\\s_\\)+\\)['’]"))
   "Regexp matching doc string references to symbols.
 
 The words preceding the quoted symbol can be used in doc strings to
@@ -343,11 +341,12 @@ when help commands related to multilingual environment (e.g.,
 
 
 (defconst help-xref-info-regexp
-  (purecopy "\\<[Ii]nfo[ \t\n]+\\(node\\|anchor\\)[ \t\n]+`\\([^']+\\)'")
+  (purecopy
+   "\\<[Ii]nfo[ \t\n]+\\(node\\|anchor\\)[ \t\n]+['`‘]\\([^'’]+\\)['’]")
   "Regexp matching doc string references to an Info node.")
 
 (defconst help-xref-url-regexp
-  (purecopy "\\<[Uu][Rr][Ll][ \t\n]+`\\([^']+\\)'")
+  (purecopy "\\<[Uu][Rr][Ll][ \t\n]+['`‘]\\([^'’]+\\)['’]")
   "Regexp matching doc string references to a URL.")
 
 ;;;###autoload
@@ -389,6 +388,15 @@ it does not already exist."
      (unless (derived-mode-p 'help-mode)
        (error "Current buffer is not in Help mode"))
      (current-buffer))))
+
+(defvar describe-symbol-backends
+  `((nil ,#'fboundp ,(lambda (s _b _f) (describe-function s)))
+    ("face" ,#'facep ,(lambda (s _b _f) (describe-face s)))
+    (nil
+     ,(lambda (symbol)
+        (or (and (boundp symbol) (not (keywordp symbol)))
+            (get symbol 'variable-documentation)))
+     ,#'describe-variable)))
 
 ;;;###autoload
 (defun help-make-xrefs (&optional buffer)
@@ -492,28 +500,9 @@ that."
                             ;;       (pop-to-buffer (car location))
                             ;; 	(goto-char (cdr location))))
                             (help-xref-button 8 'help-function-def sym))
-                           ((and
-                             (facep sym)
-                             (save-match-data (looking-at "[ \t\n]+face\\W")))
-                            (help-xref-button 8 'help-face sym))
-                           ((and (or (boundp sym)
-                                     (get sym 'variable-documentation))
-                                 (fboundp sym))
-                            ;; We can't intuit whether to use the
-                            ;; variable or function doc -- supply both.
-                            (help-xref-button 8 'help-symbol sym))
-                           ((and
-                             (or (boundp sym)
-                                 (get sym 'variable-documentation))
-                             (or
-                              (documentation-property
-                               sym 'variable-documentation)
-                              (documentation-property
-                               (indirect-variable sym)
-                               'variable-documentation)))
-                            (help-xref-button 8 'help-variable sym))
-                           ((fboundp sym)
-                            (help-xref-button 8 'help-function sym)))))))
+                           ((cl-some (lambda (x) (funcall (nth 1 x) sym))
+                                     describe-symbol-backends)
+                            (help-xref-button 8 'help-symbol sym)))))))
                 ;; An obvious case of a key substitution:
                 (save-excursion
                   (while (re-search-forward
@@ -627,57 +616,9 @@ See `help-make-xrefs'."
 
 
 ;; Additional functions for (re-)creating types of help buffers.
-(defun help-xref-interned (symbol)
-  "Follow a hyperlink which appeared to be an arbitrary interned SYMBOL.
-Both variable, function and face documentation are extracted into a single
-help buffer."
-  (with-current-buffer (help-buffer)
-    ;; Push the previous item on the stack before clobbering the output buffer.
-    (help-setup-xref nil nil)
-    (let ((facedoc (when (facep symbol)
-		     ;; Don't record the current entry in the stack.
-		     (setq help-xref-stack-item nil)
-		     (describe-face symbol)))
-	  (fdoc (when (fboundp symbol)
-		  ;; Don't record the current entry in the stack.
-		  (setq help-xref-stack-item nil)
-		  (describe-function symbol)))
-	  (sdoc (when (or (boundp symbol)
-			  (get symbol 'variable-documentation))
-		  ;; Don't record the current entry in the stack.
-		  (setq help-xref-stack-item nil)
-		  (describe-variable symbol))))
-      (cond
-       (sdoc
-	;; We now have a help buffer on the variable.
-	;; Insert the function and face text before it.
-	(when (or fdoc facedoc)
-	  (goto-char (point-min))
-	  (let ((inhibit-read-only t))
-	    (when fdoc
-	      (insert fdoc "\n\n")
-	      (when facedoc
-		(insert (make-string 30 ?-) "\n\n" (symbol-name symbol)
-			" is also a " "face." "\n\n")))
-	    (when facedoc
-	      (insert facedoc "\n\n"))
-	    (insert (make-string 30 ?-) "\n\n" (symbol-name symbol)
-		    " is also a " "variable." "\n\n"))
-	  ;; Don't record the `describe-variable' item in the stack.
-	  (setq help-xref-stack-item nil)
-	  (help-setup-xref (list #'help-xref-interned symbol) nil)))
-       (fdoc
-	;; We now have a help buffer on the function.
-	;; Insert face text before it.
-	(when facedoc
-	  (goto-char (point-max))
-	  (let ((inhibit-read-only t))
-	    (insert "\n\n" (make-string 30 ?-) "\n\n" (symbol-name symbol)
-		    " is also a " "face." "\n\n" facedoc))
-	  ;; Don't record the `describe-function' item in the stack.
-	  (setq help-xref-stack-item nil)
-	  (help-setup-xref (list #'help-xref-interned symbol) nil))))
-      (goto-char (point-min)))))
+
+;;;###autoload
+(define-obsolete-function-alias 'help-xref-interned 'describe-symbol "25.1")
 
 
 ;; Navigation/hyperlinking with xrefs
@@ -727,14 +668,14 @@ help buffer."
   (interactive)
   (if help-xref-stack
       (help-xref-go-back (current-buffer))
-    (error "No previous help buffer")))
+    (user-error "No previous help buffer")))
 
 (defun help-go-forward ()
-  "Go back to next topic in this help buffer."
+  "Go to the next topic in this help buffer."
   (interactive)
   (if help-xref-forward-stack
       (help-xref-go-forward (current-buffer))
-    (error "No next help buffer")))
+    (user-error "No next help buffer")))
 
 (defun help-do-xref (_pos function args)
   "Call the help cross-reference function FUNCTION with args ARGS.
@@ -742,7 +683,8 @@ Things are set up properly so that the resulting help-buffer has
 a proper [back] button."
   ;; There is a reference at point.  Follow it.
   (let ((help-xref-following t))
-    (apply function args)))
+    (apply function (if (eq function 'info)
+			(append args (list (generate-new-buffer-name "*info*"))) args))))
 
 ;; The doc string is meant to explain what buttons do.
 (defun help-follow-mouse ()
@@ -756,7 +698,7 @@ a proper [back] button."
 
 For the cross-reference format, see `help-make-xrefs'."
   (interactive)
-  (error "No cross-reference here"))
+  (user-error "No cross-reference here"))
 
 (defun help-follow-symbol (&optional pos)
   "In help buffer, show docs for symbol at POS, defaulting to point.
@@ -775,7 +717,7 @@ Show all docs for that symbol as either a variable, function or face."
     (when (or (boundp sym)
 	      (get sym 'variable-documentation)
 	      (fboundp sym) (facep sym))
-      (help-do-xref pos #'help-xref-interned (list sym)))))
+      (help-do-xref pos #'describe-symbol (list sym)))))
 
 (defun help-mode-revert-buffer (_ignore-auto noconfirm)
   (when (or noconfirm (yes-or-no-p "Revert help buffer? "))

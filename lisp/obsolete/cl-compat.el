@@ -1,6 +1,6 @@
 ;;; cl-compat.el --- Common Lisp extensions for GNU Emacs Lisp (compatibility)
 
-;; Copyright (C) 1993, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1993, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Dave Gillespie <daveg@synaptics.com>
 ;; Version: 2.02
@@ -128,14 +128,6 @@
     (if key (setq elt (funcall key elt)))
     (if test-not (not (funcall test-not item elt))
       (funcall (or test 'eql) item elt))))
-
-
-;;; Rounding functions with old-style multiple value returns.
-
-(defun cl-floor (a &optional b) (Values-list (floor* a b)))
-(defun cl-ceiling (a &optional b) (Values-list (ceiling* a b)))
-(defun cl-round (a &optional b) (Values-list (round* a b)))
-(defun cl-truncate (a &optional b) (Values-list (truncate* a b)))
 
 (defun safe-idiv (a b)
   (let* ((q (/ (abs a) (abs b)))

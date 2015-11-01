@@ -1,5 +1,5 @@
 /* Definitions and global variables for intervals.
-   Copyright (C) 1993-1994, 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993-1994, 2000-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -16,12 +16,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "dispextern.h"
+#ifndef EMACS_INTERVALS_H
+#define EMACS_INTERVALS_H
 
 INLINE_HEADER_BEGIN
-#ifndef INTERVALS_INLINE
-# define INTERVALS_INLINE INLINE
-#endif
 
 /* Basic data type for use of intervals.  */
 
@@ -45,19 +43,19 @@ struct interval
     struct interval *interval;
     Lisp_Object obj;
   } up;
-  unsigned int up_obj : 1;
+  bool_bf up_obj : 1;
 
-  unsigned gcmarkbit : 1;
+  bool_bf gcmarkbit : 1;
 
   /* The remaining components are `properties' of the interval.
      The first four are duplicates for things which can be on the list,
      for purposes of speed.  */
 
-  unsigned int write_protect : 1;   /* Non-zero means can't modify.  */
-  unsigned int visible : 1;	    /* Zero means don't display.  */
-  unsigned int front_sticky : 1;    /* Non-zero means text inserted just
+  bool_bf write_protect : 1;	    /* True means can't modify.  */
+  bool_bf visible : 1;		    /* False means don't display.  */
+  bool_bf front_sticky : 1;	    /* True means text inserted just
 				       before this interval goes into it.  */
-  unsigned int rear_sticky : 1;	    /* Likewise for just after it.  */
+  bool_bf rear_sticky : 1;	    /* Likewise for just after it.  */
   Lisp_Object plist;		    /* Other properties.  */
 };
 
@@ -119,7 +117,7 @@ struct interval
 
 /* Test what type of parent we have.  Three possibilities: another
    interval, a buffer or string object, or NULL.  */
-#define INTERVAL_HAS_PARENT(i) ((i)->up_obj == 0 && (i)->up.interval != 0)
+#define INTERVAL_HAS_PARENT(i) (! (i)->up_obj && (i)->up.interval != 0)
 #define INTERVAL_HAS_OBJECT(i) ((i)->up_obj)
 
 /* Use these macros to get parent of an interval.
@@ -129,21 +127,29 @@ struct interval
    progress.  */
 
 #define INTERVAL_PARENT(i)					\
-   (eassert ((i) != 0 && (i)->up_obj == 0), (i)->up.interval)
+   (eassert ((i) != 0 && ! (i)->up_obj), (i)->up.interval)
 
-#define GET_INTERVAL_OBJECT(d,s) (eassert ((s)->up_obj == 1), (d) = (s)->up.obj)
+#define GET_INTERVAL_OBJECT(d,s) (eassert ((s)->up_obj), (d) = (s)->up.obj)
 
 /* Use these functions to set Lisp_Object
    or pointer slots of struct interval.  */
 
-INTERVALS_INLINE void
+INLINE void
+set_interval_object (INTERVAL i, Lisp_Object obj)
+{
+  eassert (BUFFERP (obj) || STRINGP (obj));
+  i->up_obj = 1;
+  i->up.obj = obj;
+}
+
+INLINE void
 set_interval_parent (INTERVAL i, INTERVAL parent)
 {
-  i->up_obj = 0;
+  i->up_obj = false;
   i->up.interval = parent;
 }
 
-INTERVALS_INLINE void
+INLINE void
 set_interval_plist (INTERVAL i, Lisp_Object plist)
 {
   i->plist = plist;
@@ -157,33 +163,33 @@ set_interval_plist (INTERVAL i, Lisp_Object plist)
 
 /* Reset this interval to its vanilla, or no-property state.  */
 #define RESET_INTERVAL(i)		      \
-{					      \
+ do {					      \
   (i)->total_length = (i)->position = 0;      \
   (i)->left = (i)->right = NULL;	      \
   set_interval_parent (i, NULL);	      \
-  (i)->write_protect = 0;		      \
-  (i)->visible = 0;			      \
-  (i)->front_sticky = (i)->rear_sticky = 0;   \
+  (i)->write_protect = false;		      \
+  (i)->visible = false;			      \
+  (i)->front_sticky = (i)->rear_sticky = false;	\
   set_interval_plist (i, Qnil);		      \
-}
+ } while (false)
 
 /* Copy the cached property values of interval FROM to interval TO.  */
 #define COPY_INTERVAL_CACHE(from,to)		\
-{						\
+ do {						\
   (to)->write_protect = (from)->write_protect;	\
   (to)->visible = (from)->visible;		\
   (to)->front_sticky = (from)->front_sticky;	\
   (to)->rear_sticky = (from)->rear_sticky;	\
-}
+ } while (false)
 
 /* Copy only the set bits of FROM's cache.  */
-#define MERGE_INTERVAL_CACHE(from,to)		      \
-{						      \
-  if ((from)->write_protect) (to)->write_protect = 1; \
-  if ((from)->visible) (to)->visible = 1;	      \
-  if ((from)->front_sticky) (to)->front_sticky = 1;   \
-  if ((from)->rear_sticky) (to)->rear_sticky = 1;     \
-}
+#define MERGE_INTERVAL_CACHE(from,to)				\
+ do {								\
+  if ((from)->write_protect) (to)->write_protect = true;	\
+  if ((from)->visible) (to)->visible = true;			\
+  if ((from)->front_sticky) (to)->front_sticky = true;		\
+  if ((from)->rear_sticky) (to)->rear_sticky = true;		\
+ } while (false)
 
 /* Is this interval visible?  Replace later with cache access.  */
 #define INTERVAL_VISIBLE_P(i) \
@@ -192,6 +198,7 @@ set_interval_plist (INTERVAL i, Lisp_Object plist)
 /* Is this interval writable?  Replace later with cache access.  */
 #define INTERVAL_WRITABLE_P(i)					\
   (i && (NILP (textget ((i)->plist, Qread_only))		\
+         || !NILP (textget ((i)->plist, Qinhibit_read_only))	\
 	 || ((CONSP (Vinhibit_read_only)			\
 	      ? !NILP (Fmemq (textget ((i)->plist, Qread_only),	\
 			      Vinhibit_read_only))		\
@@ -201,7 +208,7 @@ set_interval_plist (INTERVAL i, Lisp_Object plist)
    should stick to it.  Now we have Vtext_property_default_nonsticky,
    so these macros are unreliable now and never used.  */
 
-#if 0
+#if false
 #define FRONT_STICKY_P(i)				\
   (i && ! NILP (textget ((i)->plist, Qfront_sticky)))
 #define END_NONSTICKY_P(i)				\
@@ -217,7 +224,7 @@ set_interval_plist (INTERVAL i, Lisp_Object plist)
 #define TEXT_PROP_MEANS_INVISIBLE(prop)					\
   (EQ (BVAR (current_buffer, invisibility_spec), Qt)			\
    ? !NILP (prop)							\
-   : invisible_p (prop, BVAR (current_buffer, invisibility_spec)))
+   : invisible_prop (prop, BVAR (current_buffer, invisibility_spec)))
 
 /* Declared in alloc.c.  */
 
@@ -263,25 +270,9 @@ extern INTERVAL validate_interval_range (Lisp_Object, Lisp_Object *,
 extern INTERVAL interval_of (ptrdiff_t, Lisp_Object);
 
 /* Defined in xdisp.c.  */
-extern int invisible_p (Lisp_Object, Lisp_Object);
+extern int invisible_prop (Lisp_Object, Lisp_Object);
 
-/* Declared in textprop.c.  */
-
-/* Types of hooks.  */
-extern Lisp_Object Qpoint_left;
-extern Lisp_Object Qpoint_entered;
-extern Lisp_Object Qmodification_hooks;
-extern Lisp_Object Qcategory;
-extern Lisp_Object Qlocal_map;
-extern Lisp_Object Qkeymap;
-
-/* Visual properties text (including strings) may have.  */
-extern Lisp_Object Qfont;
-extern Lisp_Object Qinvisible, Qintangible;
-
-/* Sticky properties.  */
-extern Lisp_Object Qfront_sticky, Qrear_nonsticky;
-
+/* Defined in textprop.c.  */
 extern Lisp_Object copy_text_properties (Lisp_Object, Lisp_Object,
                                          Lisp_Object, Lisp_Object,
                                          Lisp_Object, Lisp_Object);
@@ -299,11 +290,9 @@ Lisp_Object get_char_property_and_overlay (Lisp_Object, Lisp_Object,
                                            Lisp_Object, Lisp_Object*);
 extern int text_property_stickiness (Lisp_Object prop, Lisp_Object pos,
                                      Lisp_Object buffer);
-extern Lisp_Object get_pos_property (Lisp_Object pos, Lisp_Object prop,
-                                     Lisp_Object object);
 
 extern void syms_of_textprop (void);
 
-#include "composite.h"
-
 INLINE_HEADER_END
+
+#endif /* EMACS_INTERVALS_H */

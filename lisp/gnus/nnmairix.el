@@ -1,10 +1,10 @@
 ;;; nnmairix.el --- Mairix back end for Gnus, the Emacs newsreader
 
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: David Engster <dengste@eml.cc>
 ;; Keywords: mail searching
-;; Version: 0.6
+;; Old-Version: 0.6
 
 ;; This file is part of GNU Emacs.
 
@@ -243,7 +243,7 @@ unused nnmairix groups on the back end using
 
 (defcustom nnmairix-mairix-update-options '("-F" "-Q")
   "Options when calling mairix for updating the database.
-The default is '-F' and '-Q' for making updates faster.  You
+The default is \"-F\" and \"-Q\" for making updates faster.  You
 should call mairix without these options from time to
 time (e.g. via cron job)."
   :version "23.1"
@@ -252,7 +252,7 @@ time (e.g. via cron job)."
 
 (defcustom nnmairix-mairix-search-options '("-Q")
   "Options when calling mairix for searching.
-The default is '-Q' for making searching faster."
+The default is \"-Q\" for making searching faster."
   :version "23.1"
   :type '(repeat string)
   :group 'nnmairix)
@@ -308,13 +308,13 @@ The default chooses the largest window in the current frame."
 
 (defcustom nnmairix-propagate-marks-upon-close t
   "Flag if marks should be propagated upon closing a group.
-The default of this variable is t. If set to 'ask, the
+The default of this variable is t.  If set to 'ask, the
 user will be asked if the flags should be propagated when the
 group is closed.  If set to nil, the user will have to manually
-call 'nnmairix-propagate-marks'."
+call `nnmairix-propagate-marks'."
   :version "23.1"
   :type '(choice (const :tag "always" t)
-		 (const :tag "ask" 'ask)
+		 (const :tag "ask" ask)
 		 (const :tag "never" nil))
   :group 'nnmairix)
 
@@ -417,7 +417,7 @@ Other back ends might or might not work.")
 
 (nnoo-define-basics nnmairix)
 
-(gnus-declare-backend "nnmairix" 'mail 'address)
+(gnus-declare-backend "nnmairix" 'mail 'address 'virtual)
 
 (deffoo nnmairix-open-server (server &optional definitions)
   ;; just set server variables
@@ -1943,7 +1943,9 @@ Fill in VALUES if based on an article."
     (kill-all-local-variables)
     (erase-buffer)
     (widget-insert "Specify your query for Mairix (check boxes for activating fields):\n\n")
-    (widget-insert "(Whitespaces will be converted to ',' (i.e. AND). Use '/' for OR.)\n\n")
+    (widget-insert
+     (substitute-command-keys
+      "(Whitespaces will be converted to `,' (i.e. AND). Use `/' for OR.)\n\n"))
 ;    (make-local-variable 'nnmairix-widgets)
     (setq nnmairix-widgets (nnmairix-widget-build-editable-fields values))
     (when (member 'flags nnmairix-widget-other)

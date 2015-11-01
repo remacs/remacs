@@ -1,6 +1,6 @@
 ;;; tetris.el --- implementation of Tetris for Emacs
 
-;; Copyright (C) 1997, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Glynn Clements <glynn@sensei.co.uk>
 ;; Version: 2.01
@@ -265,7 +265,7 @@ each one of its four blocks.")
     (define-key map [left]	'tetris-move-left)
     (define-key map [right]	'tetris-move-right)
     (define-key map [up]	'tetris-rotate-prev)
-    (define-key map [down]	'tetris-rotate-next)
+    (define-key map [down]	'tetris-move-down)
     map))
 
 (defvar tetris-null-map
@@ -522,6 +522,16 @@ Drops the shape one square, testing for collision."
     (setq tetris-pos-x (1+ tetris-pos-x))
     (if (tetris-test-shape)
 	(setq tetris-pos-x (1- tetris-pos-x)))
+    (tetris-draw-shape)))
+
+(defun tetris-move-down ()
+  "Move the shape one square to the bottom."
+  (interactive)
+  (unless tetris-paused
+    (tetris-erase-shape)
+    (setq tetris-pos-y (1+ tetris-pos-y))
+    (if (tetris-test-shape)
+	(setq tetris-pos-y (1- tetris-pos-y)))
     (tetris-draw-shape)))
 
 (defun tetris-rotate-prev ()

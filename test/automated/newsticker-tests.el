@@ -1,6 +1,6 @@
 ;;; newsticker-testsuite.el --- Test suite for newsticker.
 
-;; Copyright (C) 2003-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
 ;; Author:      Ulf Jasper <ulf.jasper@web.de>
 ;; Keywords:    News, RSS, Atom
@@ -142,6 +142,26 @@ Signals an error if something goes wrong."
     (newsticker--group-manage-orphan-feeds)
     (should (equal '("Feeds" "feed3" "feed2" "feed1")
                    newsticker-groups))))
+
+(ert-deftest newsticker--group-find-parent-group ()
+  "Test `newsticker--group-find-parent-group'."
+  (let ((newsticker-groups '("g1" "f1a" ("g2" "f2" ("g3" "f3a" "f3b")) "f1b")))
+    ;; feeds
+    (should (equal "g1" (car (newsticker--group-find-parent-group "f1a"))))
+    (should (equal "g1" (car (newsticker--group-find-parent-group "f1b"))))
+    (should (equal "g2" (car (newsticker--group-find-parent-group "f2"))))
+    (should (equal "g3" (car (newsticker--group-find-parent-group "f3b"))))
+    ;; groups
+    (should (equal "g1" (car (newsticker--group-find-parent-group "g2"))))
+    (should (equal "g2" (car (newsticker--group-find-parent-group "g3"))))))
+
+(ert-deftest newsticker--group-do-rename-group ()
+  "Test `newsticker--group-do-rename-group'."
+  (let ((newsticker-groups '("g1" "f1a" ("g2" "f2" ("g3" "f3a" "f3b")) "f1b")))
+    (should (equal '("g1" "f1a" ("h2" "f2" ("g3" "f3a" "f3b")) "f1b")
+                   (newsticker--group-do-rename-group "g2" "h2")))
+    ))
+
 
 (provide 'newsticker-tests)
 

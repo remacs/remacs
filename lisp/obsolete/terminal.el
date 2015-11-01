@@ -1,10 +1,10 @@
 ;;; terminal.el --- terminal emulator for GNU Emacs
 
-;; Copyright (C) 1986-1989, 1993-1994, 2001-2013 Free Software
+;; Copyright (C) 1986-1989, 1993-1994, 2001-2015 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Richard Mlynarik <mly@eddie.mit.edu>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Obsolete-since: 24.4
 ;; Keywords: comm, terminals
 
@@ -291,7 +291,9 @@ Other chars following \"%s\" are interpreted as follows:\n"
 ;; not used.
 (defun te-escape-extended-command-unread ()
   (interactive)
-  (setq unread-command-events (listify-key-sequence (this-command-keys)))
+  (setq unread-command-events
+        (nconc (listify-key-sequence (this-command-keys))
+               unread-command-events))
   (te-escape-extended-command))
 
 (defun te-set-escape-char (c)

@@ -1,7 +1,8 @@
 \input texinfo  @c -*-texinfo-*-
 @c %**start of header
-@setfilename ../../info/reftex
+@setfilename ../../info/reftex.info
 @settitle RefTeX User Manual
+@include docstyle.texi
 @synindex ky cp
 @syncodeindex vr cp
 @syncodeindex fn cp
@@ -45,13 +46,13 @@ This manual documents @RefTeX{} (version @value{VERSION}), a package
 to do labels, references, citations and indices for LaTeX documents
 with Emacs.
 
-Copyright @copyright{} 1997--2013 Free Software Foundation, Inc.
+Copyright @copyright{} 1997--2015 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
-Invariant Sections, with the Front-Cover texts being ``A GNU Manual'',
+Invariant Sections, with the Front-Cover Texts being ``A GNU Manual'',
 and with the Back-Cover Texts as in (a) below.  A copy of the license
 is included in the section entitled ``GNU Free Documentation License''.
 
@@ -97,6 +98,8 @@ modify this GNU manual.''
 @ifnottex
 @node Top
 @top @RefTeX{}
+
+@insertcopying
 
 @RefTeX{} is a package for managing Labels, References, Citations and
 index entries with GNU Emacs.
@@ -605,7 +608,7 @@ Show calling point in another window.  This is the point from where
 
 @item <
 Promote the current section.  This will convert @code{\section} to
-@code{\chapter}, @code{\subsection} to @code{\section} etc. If there is
+@code{\chapter}, @code{\subsection} to @code{\section} etc.  If there is
 an active region, all sections in the region will be promoted, including
 the one at point.  To avoid mistakes, @RefTeX{} requires a fresh
 document scan before executing this command; if necessary, it will
@@ -997,7 +1000,7 @@ In eqs. (1), (2), (3)--(4), (5) and (6)
 @item u
 Unmark a marked entry.
 
-@c FIXME: Do we need `A' as well for consistency?
+@c FIXME: Do we need 'A' as well for consistency?
 @cindex LaTeX packages, @code{saferef}
 @cindex @code{saferef}, LaTeX package
 @item a
@@ -1564,7 +1567,7 @@ Here is the setup:
 @cindex @code{linguex}, LaTeX package
 @cindex LaTeX packages, @code{linguex}
 A more complex example is the @file{linguex.sty} package which defines
-list macros @samp{\ex.}, @samp{\a.}, @samp{\b.} etc. for lists which are
+list macros @samp{\ex.}, @samp{\a.}, @samp{\b.} etc.@: for lists which are
 terminated by @samp{\z.} or by an empty line.
 
 @example
@@ -2890,6 +2893,9 @@ default.  If you want to have these key bindings available, set in your
 (setq reftex-extra-bindings t)
 @end lisp
 
+Note that this variable has to be set before @RefTeX{} is loaded to
+have an effect.
+
 @vindex reftex-load-hook
 Changing and adding to @RefTeX{}'s key bindings is best done in the hook
 @code{reftex-load-hook}.  For information on the keymaps
@@ -2958,6 +2964,12 @@ label itself in order to be processed correctly by @RefTeX{}.  The only
 exception is that section labels referring to a section statement
 outside the current file can still use that section title as
 context.
+
+@item
+@vindex reftex-include-file-commands
+@RefTeX{} knows about the @code{\include} and @code{\input} macros.
+In case you use different commands to include files in a multifile
+document, customize the variable @code{reftex-include-file-commands}.
 @end itemize
 
 @node Language Support
@@ -3890,6 +3902,10 @@ Lisp (and even if you are) you might find it more comfortable to use
 @code{customize} to look at and change these variables. @kbd{M-x
 reftex-customize} will get you there.
 
+In case you don't use the @code{customize} interface, here's a caveat:
+Changing (mostly parsing-related) options might require a call to
+@code{reftex-compile-variables} in order to become effective.
+
 @menu
 * Options - Table of Contents::
 * Options - Defining Label Environments::
@@ -4075,7 +4091,7 @@ group which contains all labels.
 This may also be a function to do local parsing and identify point to be
 in a non-standard label environment.  The function must take an
 argument @var{bound} and limit backward searches to this value.  It
-should return either nil or a cons cell @code{(@var{function}
+should return either @code{nil} or a cons cell @code{(@var{function}
 . @var{position})} with the function symbol and the position where the
 special environment starts.  See the Info documentation for an
 example.
@@ -4179,7 +4195,7 @@ List of magic words which identify a reference to be of this type.  If
 the word before point is equal to one of these words when calling
 @code{reftex-reference}, the label list offered will be automatically
 restricted to labels of the correct type.  If the first element of this
-word list is the symbol `regexp', the strings are interpreted as regular
+word list is the symbol @code{regexp}, the strings are interpreted as regular
 expressions.
 
 @item @var{toc-level}
@@ -4232,9 +4248,9 @@ special packages like fancyref) are being used.  RefTeX can and by
 default does parse around each label to detect the correct label type,
 but this process can be slow when a document contains thousands of
 labels.  If you use label prefixes consistently, you may speed up
-document parsing by setting this variable to a non-nil value.  RefTeX
+document parsing by setting this variable to a non-@code{nil} value.  RefTeX
 will then compare the label prefix with the prefixes found in
-`reftex-label-alist' and derive the correct label type in this way.
+@code{reftex-label-alist} and derive the correct label type in this way.
 Possible values for this option are:
 
 @example
@@ -4819,7 +4835,7 @@ case.
 
 @defopt reftex-index-verify-function
 A function which is called at each match during global indexing.
-If the function returns nil, the current match is skipped.
+If the function returns @code{nil}, the current match is skipped.
 @end defopt
 
 @defopt reftex-index-phrases-skip-indexed-matches
@@ -4900,7 +4916,7 @@ The keymap which is active in the @file{*Index*} buffer
 
 @defopt reftex-view-crossref-extra
 Macros which can be used for the display of cross references.
-This is used when `reftex-view-crossref' is called with point in an
+This is used when @code{reftex-view-crossref} is called with point in an
 argument of a macro.  Note that crossref viewing for citations,
 references (both ways) and index entries is hard-coded.  This variable
 is only to configure additional structures for which crossreference
@@ -4939,7 +4955,7 @@ escapes.
 
 @defopt reftex-revisit-to-echo
 Non-@code{nil} means, automatic citation display will revisit files if
-necessary.  When nil, citation display in echo area will only be active
+necessary.  When @code{nil}, citation display in echo area will only be active
 for cached echo strings (see @code{reftex-cache-cite-echo}), or for
 @BibTeX{} database files which are already visited by a live associated
 buffers.
@@ -5272,8 +5288,8 @@ will
 - supply arguments for macros like @code{\index}         (flag 5)
 @end example
 
-You may also set the variable itself to t or nil in order to turn all
-options on or off, respectively.@*
+You may also set the variable itself to @code{t} or @code{nil} in
+order to turn all options on or off, respectively.@*
 Supplying labels in new sections and environments applies when creating
 sections with @kbd{C-c C-s} and environments with @kbd{C-c C-e}.@*
 Supplying macro arguments applies when you insert such a macro
@@ -5283,7 +5299,7 @@ See the @AUCTeX{} documentation for more information.
 
 @defopt reftex-revisit-to-follow
 Non-@code{nil} means, follow-mode will revisit files if necessary.
-When nil, follow-mode will be suspended for stuff in unvisited files.
+When @code{nil}, follow-mode will be suspended for stuff in unvisited files.
 @end defopt
 
 @defopt reftex-allow-detached-macro-args
@@ -5392,8 +5408,8 @@ if you'd like RefTeX to base its classification of labels on prefixes.
 This can speed-up document parsing, but may in some cases reduce the
 quality of the context used by RefTeX to describe a label.
 @item
-Fixed bug in @code{reftex-create-bibtex-file} when @code{reftex-comment-citations}
-is non-nil.
+Fixed bug in @code{reftex-create-bibtex-file} when
+@code{reftex-comment-citations} is non-@code{nil}.
 @item
 Fixed bugs in indexing: Case-sensitive search, quotes before and/or
 after words.  Disabled indexing in comment lines.
@@ -5434,7 +5450,7 @@ deleted from the toc buffer with the @kbd{d} key.
 @noindent @b{Version 4.19}
 @itemize @bullet
 @item
-New command `reftex-toc-recenter' (@kbd{C-c -}) which shows the current
+New command @code{reftex-toc-recenter} (@kbd{C-c -}) which shows the current
 section in the TOC buffer without selecting the TOC window.
 @item
 Recentering happens automatically in idle time when the option
@@ -5446,7 +5462,7 @@ buffer.
 The highlight in the TOC buffer stays when the focus moves to a
 different window.
 @item
-New command `reftex-goto-label'.
+New command @code{reftex-goto-label}.
 @item
 Part numbers are no longer included in chapter numbers, and a new
 part does not reset the chapter counter.  See new option
@@ -5740,7 +5756,7 @@ New option @code{reftex-cache-cite-echo}.
 @kbd{M-x reftex-reset-mode} now also removes the file with parsing
 info.
 @item
-Default of @code{reftex-revisit-to-follow} changed to nil.
+Default of @code{reftex-revisit-to-follow} changed to @code{nil}.
 @end itemize
 
 @noindent @b{Version 3.24}
@@ -5893,7 +5909,7 @@ When no BibTeX database files are specified, citations can also use
 @noindent @b{Version 3.11}
 @itemize @bullet
 @item
-Fixed bug which led to naked label in (e.g.@:) footnotes.
+Fixed bug which led to naked label in (e.g.)@: footnotes.
 @item
 Added scroll-other-window functions to RefTeX-Select.
 @end itemize

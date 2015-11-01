@@ -1,6 +1,6 @@
 ;;; ediff-init.el --- Macros, variables, and defsubsts used by Ediff
 
-;; Copyright (C) 1994-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-2015 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.stonybrook.edu>
 ;; Package: ediff
@@ -23,6 +23,8 @@
 ;;; Commentary:
 
 ;;; Code:
+
+(require 'cl-lib)
 
 ;; Start compiler pacifier
 (defvar ediff-metajob-name)
@@ -118,11 +120,8 @@ It needs to be killed when we quit the session.")
     (?C . ediff-buffer-C)))
 
 ;;; Macros
-(defmacro ediff-odd-p (arg)
-  `(eq (logand ,arg 1) 1))
-
-(defmacro ediff-buffer-live-p (buf)
-  `(and ,buf (get-buffer ,buf) (buffer-name (get-buffer ,buf))))
+(defsubst ediff-buffer-live-p (buf)
+  (and buf (get-buffer buf) (buffer-name (get-buffer buf))))
 
 (defmacro ediff-get-buffer (arg)
   `(cond ((eq ,arg 'A) ediff-buffer-A)
@@ -567,7 +566,8 @@ and ediff-after-flag.  On a non-window system, differences are always
 highlighted using ASCII flags."
   :type 'boolean
   :group 'ediff-highlighting)
-(ediff-defvar-local ediff-use-faces t "")
+(make-variable-buffer-local 'ediff-use-faces)
+(put 'ediff-use-faces 'permanent-local t)
 
 ;; this indicates that diff regions are word-size, so fine diffs are
 ;; permanently nixed; used in ediff-windows-wordwise and ediff-regions-wordwise
@@ -610,7 +610,8 @@ Otherwise, all difference regions are highlighted, but the selected region is
 shown in brighter colors."
   :type 'boolean
   :group 'ediff-highlighting)
-(ediff-defvar-local ediff-highlight-all-diffs t "")
+(make-variable-buffer-local 'ediff-highlight-all-diffs)
+(put 'ediff-highlight-all-diffs 'permanent-local t)
 
 
 ;; The suffix of the control buffer name.
@@ -705,9 +706,6 @@ shown in brighter colors."
 ;; List of difference overlays disturbed by working with the current diff.
 (defvar ediff-disturbed-overlays nil "")
 
-;; Priority of non-selected overlays.
-(defvar ediff-shadow-overlay-priority  100 "")
-
 (defcustom ediff-version-control-package 'vc
   "Version control package used.
 Currently, Ediff supports vc.el, rcs.el, pcl-cvs.el, and generic-sc.el.  The
@@ -778,7 +776,7 @@ TYPE-OF-EMACS is either 'xemacs or 'emacs."
 
 ;; A var local to each control panel buffer.  Indicates highlighting style
 ;; in effect for this buffer: `face', `ascii',
-;; `off' -- turned off \(on a dumb terminal only\).
+;; `off' -- turned off (on a dumb terminal only).
 (ediff-defvar-local ediff-highlighting-style
   (if (and (ediff-has-face-support-p) ediff-use-faces) 'face 'ascii)
   "")
@@ -808,9 +806,9 @@ TYPE-OF-EMACS is either 'xemacs or 'emacs."
 
 (defun ediff-set-overlay-face (extent face)
   (ediff-overlay-put extent 'face face)
-  (ediff-overlay-put extent 'help-echo 'ediff-region-help-echo))
+  (ediff-overlay-put extent 'help-echo (if face 'ediff-region-help-echo)))
 
-(defun ediff-region-help-echo (extent-or-window &optional overlay point)
+(defun ediff-region-help-echo (extent-or-window &optional overlay _point)
   (unless overlay
     (setq overlay extent-or-window))
   (let ((is-current (ediff-overlay-get overlay 'ediff))
@@ -950,7 +948,9 @@ this variable represents.")
 
 (defface ediff-current-diff-Ancestor
   (if (featurep 'emacs)
-      '((((class color) (min-colors 16))
+      '((((class color) (min-colors 88))
+	 (:background "VioletRed"))
+	(((class color) (min-colors 16))
 	 (:foreground "Black" :background "VioletRed"))
 	(((class color))
 	 (:foreground "black" :background "magenta3"))
@@ -1058,7 +1058,9 @@ this variable represents.")
 
 (defface ediff-fine-diff-Ancestor
   (if (featurep 'emacs)
-      '((((class color) (min-colors 16))
+      '((((class color) (min-colors 88))
+	 (:background "Green"))
+	(((class color) (min-colors 16))
 	 (:foreground "Black" :background "Green"))
 	(((class color))
 	 (:foreground "red3" :background "green"))
@@ -1092,6 +1094,8 @@ this variable represents.")
   (if (featurep 'emacs)
       `((((type pc))
 	 (:foreground "green3" :background "light grey"))
+	(((class color) (min-colors 88))
+	 (:background "light grey"))
 	(((class color) (min-colors 16))
 	 (:foreground "Black" :background "light grey"))
 	(((class color))
@@ -1116,7 +1120,9 @@ this variable represents.")
 
 (defface ediff-even-diff-B
   (if (featurep 'emacs)
-      `((((class color) (min-colors 16))
+      `((((class color) (min-colors 88))
+	 (:background "Grey"))
+	(((class color) (min-colors 16))
 	 (:foreground "White" :background "Grey"))
 	(((class color))
 	 (:foreground "blue3" :background "Grey" :weight bold))
@@ -1139,6 +1145,8 @@ this variable represents.")
   (if (featurep 'emacs)
       `((((type pc))
 	 (:foreground "yellow3" :background "light grey"))
+	(((class color) (min-colors 88))
+	 (:background "light grey"))
 	(((class color) (min-colors 16))
 	 (:foreground "Black" :background "light grey"))
 	(((class color))
@@ -1165,6 +1173,8 @@ this variable represents.")
   (if (featurep 'emacs)
       `((((type pc))
 	 (:foreground "cyan3" :background "light grey"))
+	(((class color) (min-colors 88))
+	 (:background "Grey"))
 	(((class color) (min-colors 16))
 	 (:foreground "White" :background "Grey"))
 	(((class color))
@@ -1198,6 +1208,8 @@ this variable represents.")
   (if (featurep 'emacs)
       '((((type pc))
 	 (:foreground "green3" :background "gray40"))
+	(((class color) (min-colors 88))
+	 (:background "Grey"))
 	(((class color) (min-colors 16))
 	 (:foreground "White" :background "Grey"))
 	(((class color))
@@ -1223,6 +1235,8 @@ this variable represents.")
   (if (featurep 'emacs)
       '((((type pc))
 	 (:foreground "White" :background "gray40"))
+	(((class color) (min-colors 88))
+	 (:background "light grey"))
 	(((class color) (min-colors 16))
 	 (:foreground "Black" :background "light grey"))
 	(((class color))
@@ -1247,6 +1261,8 @@ this variable represents.")
   (if (featurep 'emacs)
       '((((type pc))
 	 (:foreground "yellow3" :background "gray40"))
+	(((class color) (min-colors 88))
+	 (:background "Grey"))
 	(((class color) (min-colors 16))
 	 (:foreground "White" :background "Grey"))
 	(((class color))
@@ -1269,7 +1285,9 @@ this variable represents.")
 
 (defface ediff-odd-diff-Ancestor
   (if (featurep 'emacs)
-      '((((class color) (min-colors 16))
+      '((((class color) (min-colors 88))
+	 (:background "gray40"))
+	(((class color) (min-colors 16))
 	 (:foreground "cyan3" :background "gray40"))
 	(((class color))
 	 (:foreground "green3" :background "black" :weight bold))
@@ -1327,35 +1345,7 @@ this variable represents.")
 (ediff-defvar-local ediff-current-diff-overlay-Ancestor nil
   "Overlay for the current difference region in the ancestor buffer.")
 
-;; Compute priority of a current ediff overlay.
-(defun ediff-highest-priority (start end buffer)
-  (let ((pos (max 1 (1- start)))
-	ovr-list)
-    (if (featurep 'xemacs)
-	(1+ ediff-shadow-overlay-priority)
-      (ediff-with-current-buffer buffer
-	(while (< pos (min (point-max) (1+ end)))
-	  (setq ovr-list (append (overlays-at pos) ovr-list))
-	  (setq pos (next-overlay-change pos)))
-	(+ 1 ediff-shadow-overlay-priority
-	   (apply 'max
-		  (cons
-		   1
-		   (mapcar
-		    (lambda (ovr)
-		      (if (and ovr
-			       ;; exclude ediff overlays from priority
-			       ;; calculation, or else priority will keep
-			       ;; increasing
-			       (null (ediff-overlay-get ovr 'ediff))
-			       (null (ediff-overlay-get ovr 'ediff-diff-num)))
-			  ;; use the overlay priority or 0
-			  (or (ediff-overlay-get ovr 'priority) 0)
-			0))
-		    ovr-list))))))))
-
-
-(defvar ediff-toggle-read-only-function 'toggle-read-only
+(defvar ediff-toggle-read-only-function 'read-only-mode
   "Function to be used to toggle read-only status of the buffer.
 If nil, Ediff tries using the command bound to C-x C-q.")
 
@@ -1465,7 +1455,7 @@ This default should work without changes."
   ;; The value of dif-num is always 1- the one that user sees.
   ;; This is why even face is used when dif-num is odd.
   (ediff-get-symbol-from-alist
-   buf-type (if (ediff-odd-p dif-num)
+   buf-type (if (cl-oddp dif-num)
 		ediff-even-diff-face-alist
 	      ediff-odd-diff-face-alist)
    ))
@@ -1729,6 +1719,9 @@ Unless optional argument INPLACE is non-nil, return a new string."
 	    (aset newstr i tochar)))
       newstr)))
 
+(unless (fboundp 'format-message)
+  (defalias 'format-message 'format))
+
 (defun ediff-abbrev-jobname (jobname)
   (cond ((eq jobname 'ediff-directories)
 	 "Compare two directories")
@@ -1768,7 +1761,7 @@ Unless optional argument INPLACE is non-nil, return a new string."
   (or n (setq n ediff-current-difference))
   (and (>= n 0) (< n ediff-number-of-differences)))
 
-(defsubst ediff-show-all-diffs (n)
+(defsubst ediff-show-all-diffs (_n)
   "Don't skip difference regions."
   nil)
 

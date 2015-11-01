@@ -1,6 +1,6 @@
 ;;; gnus-int.el --- backend interface functions for Gnus
 
-;; Copyright (C) 1996-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news
@@ -113,7 +113,8 @@ If CONFIRM is non-nil, the user will be asked for an NNTP server."
 	(setq gnus-nntp-server
 	      (gnus-completing-read "NNTP server"
                                     (cons gnus-nntp-server
-                                          gnus-secondary-servers)
+					  (if (boundp 'gnus-secondary-servers)
+					      gnus-secondary-servers))
                                     nil gnus-nntp-server)))
 
       (when (and gnus-nntp-server
@@ -163,8 +164,8 @@ If CONFIRM is non-nil, the user will be asked for an NNTP server."
        (gnus-open-server gnus-select-method)
        gnus-batch-mode
        (gnus-y-or-n-p
-	(format
-	 "%s (%s) open error: '%s'.  Continue? "
+	(gnus-format-message
+	 "%s (%s) open error: `%s'.  Continue? "
 	 (car gnus-select-method) (cadr gnus-select-method)
 	 (gnus-status-message gnus-select-method)))
        (gnus-error 1 "Couldn't open server on %s"
@@ -302,7 +303,7 @@ If it is down, start it up (again)."
         (setcar
 	 (cdr elem)
 	 (cond (result
-		(if (eq open-server-function #'nnagent-open-server)
+		(if (eq open-server-function 'nnagent-open-server)
 		    ;; The agent's backend has a "special" status
 		    'offline
 		  'ok))
@@ -438,6 +439,14 @@ If it is down, start it up (again)."
       (funcall (gnus-get-function gnus-command-method func)
 	       (gnus-group-real-name group) (nth 1 gnus-command-method)))))
 
+(defun gnus-request-group-scan (group info)
+  "Request that GROUP get a complete rescan."
+  (let ((gnus-command-method (gnus-find-method-for-group group))
+	(func 'request-group-scan))
+    (when (gnus-check-backend-function func group)
+      (funcall (gnus-get-function gnus-command-method func)
+	       (gnus-group-real-name group) (nth 1 gnus-command-method) info))))
+
 (defun gnus-close-group (group)
   "Request the GROUP be closed."
   (let ((gnus-command-method (inline (gnus-find-method-for-group group))))
@@ -546,7 +555,7 @@ the group's summary.
   (let ((saved-display
          (gnus-group-get-parameter group 'display :allow-list)))
 
-    ;; Tell gnus we really don't want any articles 
+    ;; Tell gnus we really don't want any articles
     (gnus-group-set-parameter group 'display 0)
 
     (unwind-protect
@@ -564,7 +573,7 @@ the group's summary.
   ;; Create it now and insert the message
   (let ((group-is-new (gnus-summary-setup-buffer group)))
     (condition-case err
-        (let ((article-number 
+        (let ((article-number
                (gnus-summary-insert-subject message-id)))
           (unless article-number
             (signal 'error "message-id not in group"))
@@ -753,7 +762,6 @@ If GROUP is nil, all groups on GNUS-COMMAND-METHOD are scanned."
 
 (defun gnus-request-accept-article (group &optional gnus-command-method last
 					  no-encode)
-  ;; Make sure there's a newline at the end of the article.
   (when (stringp gnus-command-method)
     (setq gnus-command-method (gnus-server-to-method gnus-command-method)))
   (when (and (not gnus-command-method)
@@ -761,6 +769,7 @@ If GROUP is nil, all groups on GNUS-COMMAND-METHOD are scanned."
     (setq gnus-command-method (or (gnus-find-method-for-group group)
                                   (gnus-group-name-to-method group))))
   (goto-char (point-max))
+  ;; Make sure there's a newline at the end of the article.
   (unless (bolp)
     (insert "\n"))
   (unless no-encode

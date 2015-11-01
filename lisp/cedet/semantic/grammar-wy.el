@@ -1,6 +1,6 @@
 ;;; semantic/grammar-wy.el --- Generated parser support file
 
-;; Copyright (C) 2002-2004, 2009-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2004, 2009-2015 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -387,12 +387,12 @@
 		 (let
 		     ((s $1))
 		   (if
-		       (string-match "^{[\n	 ]*" s)
+		       (string-match "^{[\r\n\t ]*" s)
 		       (setq s
 			     (substring s
 					(match-end 0))))
 		   (if
-		       (string-match "[\n	 ]*}$" s)
+		       (string-match "[\r\n\t ]*}$" s)
 		       (setq s
 			     (substring s 0
 					(match-beginning 0))))

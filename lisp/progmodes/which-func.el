@@ -1,6 +1,6 @@
 ;;; which-func.el --- print current function in mode line
 
-;; Copyright (C) 1994, 1997-1998, 2001-2013 Free Software Foundation,
+;; Copyright (C) 1994, 1997-1998, 2001-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author:   Alex Rezinsky <alexr@msil.sps.mot.com>
@@ -187,21 +187,20 @@ and you want to simplify them for the mode line
                which-func-unknown))))
 ;;;###autoload (put 'which-func-current 'risky-local-variable t)
 
-(defvar which-func-mode nil
+(defvar-local which-func-mode nil
   "Non-nil means display current function name in mode line.
 This makes a difference only if `which-function-mode' is non-nil.")
-(make-variable-buffer-local 'which-func-mode)
-;;(put 'which-func-mode 'permanent-local t)
 
 (add-hook 'find-file-hook 'which-func-ff-hook t)
 
 (defun which-func-ff-hook ()
   "File find hook for Which Function mode.
 It creates the Imenu index for the buffer, if necessary."
-  (setq which-func-mode
-	(and which-function-mode
-	     (or (eq which-func-modes t)
-		 (member major-mode which-func-modes))))
+  (unless (local-variable-p 'which-func-mode)
+    (setq which-func-mode
+          (and which-function-mode
+               (or (eq which-func-modes t)
+                   (member major-mode which-func-modes)))))
 
   (condition-case err
       (if (and which-func-mode
@@ -210,11 +209,11 @@ It creates the Imenu index for the buffer, if necessary."
 		   (< buffer-saved-size which-func-maxout)
 		   (= which-func-maxout 0)))
 	  (setq imenu--index-alist
-		(save-excursion (funcall imenu-create-index-function))))
+                (save-excursion (funcall imenu-create-index-function))))
+    (imenu-unavailable
+     (setq which-func-mode nil))
     (error
-     (unless (equal err
-                    '(user-error "This buffer cannot use `imenu-default-create-index-function'"))
-       (message "which-func-ff-hook error: %S" err))
+     (message "which-func-ff-hook error: %S" err)
      (setq which-func-mode nil))))
 
 (defun which-func-update ()
@@ -259,15 +258,13 @@ in certain major modes."
       ;;Turn it on
       (progn
         (setq which-func-update-timer
-              (run-with-idle-timer idle-update-delay t 'which-func-update))
+              (run-with-idle-timer idle-update-delay t #'which-func-update))
         (dolist (buf (buffer-list))
           (with-current-buffer buf
-            (setq which-func-mode
-                  (or (eq which-func-modes t)
-                      (member major-mode which-func-modes))))))
-    ;; Turn it off
-    (dolist (buf (buffer-list))
-      (with-current-buffer buf (setq which-func-mode nil)))))
+            (unless (local-variable-p 'which-func-mode)
+              (setq which-func-mode
+                    (or (eq which-func-modes t)
+                        (member major-mode which-func-modes)))))))))
 
 (defvar which-function-imenu-failed nil
   "Locally t in a buffer if `imenu--make-index-alist' found nothing there.")
@@ -347,10 +344,11 @@ If no function name is found, return nil."
 (defvar ediff-window-B)
 (defvar ediff-window-C)
 
+;; FIXME: Why does ediff require special support?
 (defun which-func-update-ediff-windows ()
   "Update Which-Function mode display for Ediff windows.
 This function is meant to be called from `ediff-select-hook'."
-  (when (eq major-mode 'ediff-mode)
+  (when (and (derived-mode-p 'ediff-mode) which-function-mode)
     (when ediff-window-A
       (which-func-update-1 ediff-window-A))
     (when ediff-window-B

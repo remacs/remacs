@@ -1,9 +1,9 @@
 ;;; ldap.el --- client interface to LDAP for Emacs
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 ;; Author: Oscar Figueiredo <oscar@cpe.fr>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Created: April 1998
 ;; Keywords: comm
 
@@ -34,6 +34,7 @@
 ;;; Code:
 
 (require 'custom)
+(require 'password-cache)
 
 (autoload 'auth-source-search "auth-source")
 
@@ -47,15 +48,13 @@
 A TCP port number can be appended to that name using a colon as
 a separator."
   :type '(choice (string :tag "Host name")
-		 (const :tag "Use library default" nil))
-  :group 'ldap)
+		 (const :tag "Use library default" nil)))
 
 (defcustom ldap-default-port nil
   "Default TCP port for LDAP connections.
 Initialized from the LDAP library at build time. Default value is 389."
   :type '(choice (const :tag "Use library default" nil)
-		 (integer :tag "Port number"))
-  :group 'ldap)
+		 (integer :tag "Port number")))
 
 (defcustom ldap-default-base nil
   "Default base for LDAP searches.
@@ -63,8 +62,7 @@ This is a string using the syntax of RFC 1779.
 For instance, \"o=ACME, c=US\" limits the search to the
 Acme organization in the United States."
   :type '(choice (const :tag "Use library default" nil)
-		 (string :tag "Search base"))
-  :group 'ldap)
+		 (string :tag "Search base")))
 
 
 (defcustom ldap-host-parameters-alist nil
@@ -144,35 +142,35 @@ Valid properties include:
 				   :tag "Size Limit"
 				   :inline t
 				   (const :tag "Size Limit" sizelimit)
-				   (integer :tag "(number of records)")))))
-  :group 'ldap)
+				   (integer :tag "(number of records)"))))))
 
 (defcustom ldap-ldapsearch-prog "ldapsearch"
   "The name of the ldapsearch command line program."
-  :type '(string :tag "`ldapsearch' Program")
-  :group 'ldap)
+  :type '(string :tag "`ldapsearch' Program"))
 
 (defcustom ldap-ldapsearch-args '("-LL" "-tt")
   "A list of additional arguments to pass to `ldapsearch'."
   :type '(repeat :tag "`ldapsearch' Arguments"
-		 (string :tag "Argument"))
-  :group 'ldap)
+		 (string :tag "Argument")))
+
+(defcustom ldap-ldapsearch-password-prompt-regexp "Enter LDAP Password: "
+  "A regular expression used to recognize the `ldapsearch'
+program's password prompt."
+  :type 'regexp
+  :version "25.1")
 
 (defcustom ldap-ignore-attribute-codings nil
   "If non-nil, do not encode/decode LDAP attribute values."
-  :type 'boolean
-  :group 'ldap)
+  :type 'boolean)
 
 (defcustom ldap-default-attribute-decoder nil
   "Decoder function to use for attributes whose syntax is unknown."
-  :type 'symbol
-  :group 'ldap)
+  :type 'symbol)
 
 (defcustom ldap-coding-system 'utf-8
   "Coding system of LDAP string values.
 LDAP v3 specifies the coding system of strings to be UTF-8."
-  :type 'symbol
-  :group 'ldap)
+  :type 'symbol)
 
 (defvar ldap-attribute-syntax-encoders
   [nil					; 1  ACI Item                        N
@@ -378,9 +376,19 @@ RFC2252 section 4.3.2")
     (houseidentifier . 15)
     (supportedalgorithms . 49)
     (deltarevocationlist . 9)
-    (dmdname . 15))
+    (dmdname . 15)
+    (carlicense . 15)
+    (departmentnumber . 15)
+    (displayname . 15)
+    (employeenumber . 15)
+    (employeetype . 15)
+    (jpegphoto . 28)
+    (preferredlanguage . 15)
+    (usersmimecertificate . 5)
+    (userpkcs12 . 5))
   "A map of LDAP attribute names to their type object id minor number.
-This table is built from RFC2252 Section 5 and RFC2256 Section 5")
+This table is built from RFC2252 Section 5, RFC2256 Section 5 and
+RFC2798 Section 9.1.1")
 
 
 ;; Coding/decoding functions
@@ -476,6 +484,47 @@ Additional search parameters can be specified through
 		(mapcar 'ldap-decode-attribute record))
 	      result))))
 
+(defun ldap-password-read (host)
+  "Read LDAP password for HOST.
+If the password is cached, it is read from the cache, otherwise the user
+is prompted for the password.  If `password-cache' is non-nil the password
+is verified and cached.  The `password-cache-expiry' variable
+controls for how long the password is cached.
+
+This function can be specified for the `passwd' property in
+`ldap-host-parameters-alist' when interactive password prompting
+is desired for HOST."
+  ;; Add ldap: namespace to allow empty string for default host.
+  (let* ((host-key (concat "ldap:" host))
+	 (password (password-read
+		    (format "Enter LDAP Password%s: "
+			    (if (equal host "")
+				""
+			      (format " for %s" host)))
+		    host-key)))
+    (when (and password-cache
+	       (not (password-in-cache-p host-key))
+	       ;; Confirm the password is valid before adding it to
+	       ;; the password cache.  ldap-search-internal will throw
+	       ;; an error if the password is invalid.
+	       (not (ldap-search-internal
+		     `(host ,host
+			    ;; Specify an arbitrary filter that should
+			    ;; produce no results, since only
+			    ;; authentication success is of interest.
+			    filter "emacs-test-password="
+			    attributes nil
+			    attrsonly nil
+			    withdn nil
+			    ;; Preempt passwd ldap-password-read
+			    ;; setting in ldap-host-parameters-alist.
+			    passwd ,password
+			    ,@(cdr
+			       (assoc
+				host
+				ldap-host-parameters-alist))))))
+      (password-cache-add host-key password))
+    password))
 
 (defun ldap-search-internal (search-plist)
   "Perform a search on a LDAP server.
@@ -507,8 +556,8 @@ not their associated values.
   `auth' is one of the symbols `simple', `krbv41' or `krbv42'.
   `base' is the base for the search as described in RFC 1779.
   `scope' is one of the three symbols `sub', `base' or `one'.
-  `binddn' is the distinguished name of the user to bind as (in RFC 1779 syntax).
-  `auth' is one of the symbols `simple', `krbv41' or `krbv42'
+  `binddn' is the distinguished name of the user to bind as (in
+RFC 1779 syntax).
   `passwd' is the password to use for simple authentication.
   `deref' is one of the symbols `never', `always', `search' or `find'.
   `timelimit' is the timeout limit for the connection in seconds.
@@ -531,7 +580,11 @@ an alist of attribute/value pairs."
          (passwd (or (plist-get search-plist 'passwd)
                      (plist-get asfound :secret)))
          ;; convert the password from a function call if needed
-         (passwd (if (functionp passwd) (funcall passwd) passwd))
+         (passwd (if (functionp passwd)
+		     (if (eq passwd 'ldap-password-read)
+			 (funcall passwd host)
+		       (funcall passwd))
+		   passwd))
          ;; get the binddn from the search-list or from the
          ;; auth-source user or binddn tokens
          (binddn (or (plist-get search-plist 'binddn)
@@ -550,7 +603,7 @@ an alist of attribute/value pairs."
 	(sizelimit (plist-get search-plist 'sizelimit))
 	(withdn (plist-get search-plist 'withdn))
 	(numres 0)
-	arglist dn name value record result)
+	arglist dn name value record result proc)
     (if (or (null filter)
 	    (equal "" filter))
 	(error "No search filter"))
@@ -559,7 +612,13 @@ an alist of attribute/value pairs."
       (erase-buffer)
       (if (and host
 	       (not (equal "" host)))
-	  (setq arglist (nconc arglist (list (format "-h%s" host)))))
+	  (setq arglist (nconc arglist
+			       (list (format
+				      ;; Use -H if host is a new-style LDAP URI.
+				      (if (string-match "^[a-zA-Z]+://" host)
+					  "-H%s"
+					"-h%s")
+				      host)))))
       (if (and attrsonly
 	       (not (equal "" attrsonly)))
 	  (setq arglist (nconc arglist (list "-A"))))
@@ -575,9 +634,9 @@ an alist of attribute/value pairs."
       (if (and auth
 	       (equal 'simple auth))
 	  (setq arglist (nconc arglist (list "-x"))))
-      (if (and passwd
-	       (not (equal "" passwd)))
-	  (setq arglist (nconc arglist (list (format "-w%s" passwd)))))
+      ;; Allow passwd to be set to "", representing a blank password.
+      (if passwd
+	  (setq arglist (nconc arglist (list "-W"))))
       (if (and deref
 	       (not (equal "" deref)))
 	  (setq arglist (nconc arglist (list (format "-a%s" deref)))))
@@ -587,14 +646,43 @@ an alist of attribute/value pairs."
       (if (and sizelimit
 	       (not (equal "" sizelimit)))
 	  (setq arglist (nconc arglist (list (format "-z%s" sizelimit)))))
-      (apply #'call-process ldap-ldapsearch-prog
-	     ;; Ignore stderr, which can corrupt results
-	     nil (list buf nil) nil
-	     (append arglist ldap-ldapsearch-args filter))
+      (if passwd
+	  (let* ((process-connection-type nil)
+		 (proc-args (append arglist ldap-ldapsearch-args
+				    filter))
+		 (proc (apply #'start-process "ldapsearch" buf
+			      ldap-ldapsearch-prog
+			      proc-args)))
+	    (while (null (progn
+			   (goto-char (point-min))
+			   (re-search-forward
+			    ldap-ldapsearch-password-prompt-regexp
+			    (point-max) t)))
+	      (accept-process-output proc 1))
+	    (process-send-string proc passwd)
+	    (process-send-string proc "\n")
+	    (while (not (memq (process-status proc) '(exit signal)))
+	      (sit-for 0.1))
+	    (let ((status (process-exit-status proc)))
+	      (when (not (eq status 0))
+		;; Handle invalid credentials exit status specially
+		;; for ldap-password-read.
+		(if (eq status 49)
+		    (error (concat "Incorrect LDAP password or"
+				   " bind distinguished name (binddn)"))
+		  (error "Failed ldapsearch invocation: %s \"%s\""
+			 ldap-ldapsearch-prog
+			 (mapconcat 'identity proc-args "\" \""))))))
+	(apply #'call-process ldap-ldapsearch-prog
+	       ;; Ignore stderr, which can corrupt results
+	       nil (list buf nil) nil
+	       (append arglist ldap-ldapsearch-args filter)))
       (insert "\n")
       (goto-char (point-min))
 
-      (while (re-search-forward "[\t\n\f]+ " nil t)
+      (while (re-search-forward (concat "[\t\n\f]+ \\|"
+					ldap-ldapsearch-password-prompt-regexp)
+				nil t)
 	(replace-match "" nil nil))
       (goto-char (point-min))
 

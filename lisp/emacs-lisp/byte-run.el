@@ -1,10 +1,10 @@
 ;;; byte-run.el --- byte-compiler support for inlining  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1992, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1992, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Jamie Zawinski <jwz@lucid.com>
 ;;	Hallvard Furuseth <hbf@ulrik.uio.no>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal
 ;; Package: emacs
 
@@ -29,6 +29,18 @@
 ;; This only happens when source-code optimization is turned on.
 
 ;;; Code:
+
+(defalias 'function-put
+  ;; We don't want people to just use `put' because we can't conveniently
+  ;; hook into `put' to remap old properties to new ones.  But for now, there's
+  ;; no such remapping, so we just call `put'.
+  #'(lambda (function prop value)
+      "Set FUNCTION's property PROP to VALUE.
+The namespace for PROP is shared with symbols.
+So far, FUNCTION can only be a symbol, not a lambda expression."
+      (put function prop value)))
+(function-put 'defmacro 'doc-string-elt 3)
+(function-put 'defmacro 'lisp-indent-function 2)
 
 ;; `macro-declaration-function' are both obsolete (as marked at the end of this
 ;; file) but used in many .elc files.
@@ -69,6 +81,7 @@ The return value of this function is not used."
 ;; handle declarations in macro definitions and this is the first file
 ;; loaded by loadup.el that uses declarations in macros.
 
+;; Add any new entries to info node `(elisp)Declare Form'.
 (defvar defun-declarations-alist
   (list
    ;; We can only use backquotes inside the lambdas and not for those
@@ -81,43 +94,77 @@ The return value of this function is not used."
          #'(lambda (f _args new-name when)
              (list 'make-obsolete
                    (list 'quote f) (list 'quote new-name) (list 'quote when))))
+   (list 'interactive-only
+         #'(lambda (f _args instead)
+             (list 'function-put (list 'quote f)
+                   ''interactive-only (list 'quote instead))))
+   ;; FIXME: Merge `pure' and `side-effect-free'.
+   (list 'pure
+         #'(lambda (f _args val)
+             (list 'function-put (list 'quote f)
+                   ''pure (list 'quote val)))
+         "If non-nil, the compiler can replace calls with their return value.
+This may shift errors from run-time to compile-time.")
+   (list 'side-effect-free
+         #'(lambda (f _args val)
+             (list 'function-put (list 'quote f)
+                   ''side-effect-free (list 'quote val)))
+         "If non-nil, calls can be ignored if their value is unused.
+If `error-free', drop calls even if `byte-compile-delete-errors' is nil.")
    (list 'compiler-macro
          #'(lambda (f args compiler-function)
-             `(eval-and-compile
-                (put ',f 'compiler-macro
-                     ,(if (eq (car-safe compiler-function) 'lambda)
-                          `(lambda ,(append (cadr compiler-function) args)
-                             ,@(cddr compiler-function))
-                        `#',compiler-function)))))
+             (if (not (eq (car-safe compiler-function) 'lambda))
+                 `(eval-and-compile
+                    (function-put ',f 'compiler-macro #',compiler-function))
+               (let ((cfname (intern (concat (symbol-name f) "--anon-cmacro"))))
+                 `(progn
+                    (eval-and-compile
+                      (function-put ',f 'compiler-macro #',cfname))
+                    ;; Don't autoload the compiler-macro itself, since the
+                    ;; macroexpander will find this file via `f's autoload,
+                    ;; if needed.
+                    :autoload-end
+                    (eval-and-compile
+                      (defun ,cfname (,@(cadr compiler-function) ,@args)
+                        ,@(cddr compiler-function))))))))
    (list 'doc-string
          #'(lambda (f _args pos)
-             (list 'put (list 'quote f) ''doc-string-elt (list 'quote pos))))
+             (list 'function-put (list 'quote f)
+                   ''doc-string-elt (list 'quote pos))))
    (list 'indent
          #'(lambda (f _args val)
-             (list 'put (list 'quote f)
+             (list 'function-put (list 'quote f)
                    ''lisp-indent-function (list 'quote val)))))
   "List associating function properties to their macro expansion.
 Each element of the list takes the form (PROP FUN) where FUN is
 a function.  For each (PROP . VALUES) in a function's declaration,
 the FUN corresponding to PROP is called with the function name,
 the function's arglist, and the VALUES and should return the code to use
-to set this property.")
+to set this property.
+
+This is used by `declare'.")
 
 (defvar macro-declarations-alist
   (cons
    (list 'debug
-         #'(lambda (name _args spec)
-             (list 'progn :autoload-end
-                   (list 'put (list 'quote name)
-                         ''edebug-form-spec (list 'quote spec)))))
-   defun-declarations-alist)
+	 #'(lambda (name _args spec)
+	     (list 'progn :autoload-end
+		   (list 'put (list 'quote name)
+			 ''edebug-form-spec (list 'quote spec)))))
+   (cons
+    (list 'no-font-lock-keyword
+	  #'(lambda (name _args val)
+	      (list 'function-put (list 'quote name)
+		    ''no-font-lock-keyword (list 'quote val))))
+    defun-declarations-alist))
   "List associating properties of macros to their macro expansion.
-Each element of the list takes the form (PROP FUN) where FUN is
-a function.  For each (PROP . VALUES) in a macro's declaration,
-the FUN corresponding to PROP is called with the function name
-and the VALUES and should return the code to use to set this property.")
+Each element of the list takes the form (PROP FUN) where FUN is a function.
+For each (PROP . VALUES) in a macro's declaration, the FUN corresponding
+to PROP is called with the macro name, the macro's arglist, and the VALUES
+and should return the code to use to set this property.
 
-(put 'defmacro 'doc-string-elt 3)
+This is used by `declare'.")
+
 (defalias 'defmacro
   (cons
    'macro
@@ -159,6 +206,19 @@ The return value is undefined.
 			  (message "Warning: Unknown macro property %S in %S"
 				   (car x) name))))
 		  decls)))
+	   ;; Refresh font-lock if this is a new macro, or it is an
+	   ;; existing macro whose 'no-font-lock-keyword declaration
+	   ;; has changed.
+	   (if (and
+		;; If lisp-mode hasn't been loaded, there's no reason
+		;; to flush.
+		(fboundp 'lisp--el-font-lock-flush-elisp-buffers)
+		(or (not (fboundp name)) ;; new macro
+		    (and (fboundp name)  ;; existing macro
+			 (member `(function-put ',name 'no-font-lock-keyword
+						',(get name 'no-font-lock-keyword))
+				 declarations))))
+	       (lisp--el-font-lock-flush-elisp-buffers))
 	   (if declarations
 	       (cons 'prog1 (cons def declarations))
 	     def))))))
@@ -179,7 +239,7 @@ The return value is undefined.
   ;;    (defun foo (arg) (toto) nil)
   ;; from
   ;;    (defun foo (arg) (toto)).
-  (declare (doc-string 3))
+  (declare (doc-string 3) (indent 2))
   (let ((decls (cond
                 ((eq (car-safe docstring) 'declare)
                  (prog1 (cdr docstring) (setq docstring nil)))
@@ -217,7 +277,8 @@ The return value is undefined.
                                  (cons arglist body))))))
       (if declarations
           (cons 'prog1 (cons def declarations))
-        def))))
+          def))))
+
 
 ;; Redefined in byte-optimize.el.
 ;; This is not documented--it's not clear that we should promote it.
@@ -284,7 +345,6 @@ was first made obsolete, for example a date or a release number."
   (declare (advertised-calling-convention
             ;; New code should always provide the `when' argument.
             (obsolete-name current-name when) "23.1"))
-  (interactive "aMake function obsolete: \nxObsoletion replacement: ")
   (put obsolete-name 'byte-obsolete-info
        ;; The second entry used to hold the `byte-compile' handler, but
        ;; is not used any more nowadays.
@@ -295,12 +355,12 @@ was first made obsolete, for example a date or a release number."
 						   &optional when docstring)
   "Set OBSOLETE-NAME's function definition to CURRENT-NAME and mark it obsolete.
 
-\(define-obsolete-function-alias 'old-fun 'new-fun \"22.1\" \"old-fun's doc.\")
+\(define-obsolete-function-alias \\='old-fun \\='new-fun \"22.1\" \"old-fun's doc.\")
 
 is equivalent to the following two lines of code:
 
-\(defalias 'old-fun 'new-fun \"old-fun's doc.\")
-\(make-obsolete 'old-fun 'new-fun \"22.1\")
+\(defalias \\='old-fun \\='new-fun \"old-fun's doc.\")
+\(make-obsolete \\='old-fun \\='new-fun \"22.1\")
 
 See the docstrings of `defalias' and `make-obsolete' for more details."
   (declare (doc-string 4)
@@ -333,7 +393,7 @@ ACCESS-TYPE if non-nil should specify the kind of access that will trigger
 This uses `defvaralias' and `make-obsolete-variable' (which see).
 See the Info node `(elisp)Variable Aliases' for more details.
 
-If CURRENT-NAME is a defcustom (more generally, any variable
+If CURRENT-NAME is a defcustom or a defvar (more generally, any variable
 where OBSOLETE-NAME may be set, e.g. in an init file, before the
 alias is defined), then the define-obsolete-variable-alias
 statement should be evaluated before the defcustom, if user
@@ -347,7 +407,7 @@ variable (this is due to the way `defvaralias' works).
 For the benefit of `custom-set-variables', if OBSOLETE-NAME has
 any of the following properties, they are copied to
 CURRENT-NAME, if it does not already have them:
-'saved-value, 'saved-variable-comment."
+`saved-value', `saved-variable-comment'."
   (declare (doc-string 4)
            (advertised-calling-convention
             ;; New code should always provide the `when' argument.
@@ -389,13 +449,20 @@ If you think you need this, you're probably making a mistake somewhere."
 
 (defmacro eval-when-compile (&rest body)
   "Like `progn', but evaluates the body at compile time if you're compiling.
-Thus, the result of the body appears to the compiler as a quoted constant.
-In interpreted code, this is entirely equivalent to `progn'."
-  (declare (debug t) (indent 0))
+Thus, the result of the body appears to the compiler as a quoted
+constant.  In interpreted code, this is entirely equivalent to
+`progn', except that the value of the expression may be (but is
+not necessarily) computed at load time if eager macro expansion
+is enabled."
+  (declare (debug (&rest def-form)) (indent 0))
   (list 'quote (eval (cons 'progn body) lexical-binding)))
 
 (defmacro eval-and-compile (&rest body)
-  "Like `progn', but evaluates the body at compile time and at load time."
+  "Like `progn', but evaluates the body at compile time and at
+load time.  In interpreted code, this is entirely equivalent to
+`progn', except that the value of the expression may be (but is
+not necessarily) computed at load time if eager macro expansion
+is enabled."
   (declare (debug t) (indent 0))
   ;; When the byte-compiler expands code, this macro is not used, so we're
   ;; either about to run `body' (plain interpretation) or we're doing eager

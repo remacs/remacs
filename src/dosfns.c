@@ -1,6 +1,6 @@
 /* MS-DOS specific Lisp utilities.  Coded by Manabu Higashida, 1991.
    Major changes May-July 1993 Morten Welinder (only 10% original code left)
-   Copyright (C) 1991, 1993, 1996-1998, 2001-2013 Free Software
+   Copyright (C) 1991, 1993, 1996-1998, 2001-2015 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -370,13 +370,6 @@ init_dosfns (void)
      Don't OR it with the previous value, so the value recorded at dump
      time, possibly with `preserve-case' flags set, won't get through.  */
   __opendir_flags = __OPENDIR_FIND_HIDDEN;
-
-#if __DJGPP_MINOR__ == 0
-  /* Under LFN, preserve the case of files as recorded in the directory
-     (in DJGPP 2.01 and later this is automagically done by the library).  */
-  if (!NILP (Fmsdos_long_file_names ()))
-    __opendir_flags |= __OPENDIR_PRESERVE_CASE;
-#endif /* __DJGPP_MINOR__ == 0 */
 }
 
 #ifndef HAVE_X_WINDOWS
@@ -402,7 +395,7 @@ msdos_stdcolor_idx (const char *name)
 {
   int i;
 
-  for (i = 0; i < sizeof (vga_colors) / sizeof (vga_colors[0]); i++)
+  for (i = 0; i < ARRAYELTS (vga_colors); i++)
     if (xstrcasecmp (name, vga_colors[i]) == 0)
       return i;
 
@@ -416,13 +409,11 @@ msdos_stdcolor_idx (const char *name)
 Lisp_Object
 msdos_stdcolor_name (int idx)
 {
-  extern Lisp_Object Qunspecified;
-
   if (idx == FACE_TTY_DEFAULT_FG_COLOR)
     return build_string (unspecified_fg);
   else if (idx == FACE_TTY_DEFAULT_BG_COLOR)
     return build_string (unspecified_bg);
-  else if (idx >= 0 && idx < sizeof (vga_colors) / sizeof (vga_colors[0]))
+  else if (idx >= 0 && idx < ARRAYELTS (vga_colors))
     return build_string (vga_colors[idx]);
   else
     return Qunspecified;	/* meaning the default */
@@ -472,7 +463,7 @@ x_set_title (struct frame *f, Lisp_Object name)
   if (EQ (name, f->title))
     return;
 
-  update_mode_lines = 1;
+  update_mode_lines = 13;
 
   fset_title (f, name);
 
@@ -640,6 +631,48 @@ system_process_attributes (Lisp_Object pid)
 
   return attrs;
 }
+
+/* Support for memory-info.  */
+int
+dos_memory_info (unsigned long *totalram, unsigned long *freeram,
+		 unsigned long *totalswap, unsigned long *freeswap)
+{
+  _go32_dpmi_meminfo info;
+  unsigned long mem1, mem2, freemem;
+
+  _go32_dpmi_get_free_memory_information (&info);
+  /* DPMI server of Windows NT and its descendants reports in
+     info.available_memory a much lower amount that is really
+     available, which causes bogus "past 95% of memory limit"
+     warnings.  Try to overcome that via circumstantial evidence.  */
+  mem1 = info.available_memory;
+  mem2 = info.available_physical_pages;
+  /* DPMI Spec: "Fields that are unavailable will hold -1."  */
+  if ((long)mem1 == -1L)
+    mem1 = 0;
+  if ((long)mem2 == -1L)
+    mem2 = 0;
+  else
+    mem2 *= 4096;
+  /* Surely, the available memory is at least what we have physically
+     available, right?  */
+  if (mem1 >= mem2)
+    freemem = mem1;
+  else
+    freemem = mem2;
+  *freeram = freemem;
+  *totalswap =
+    ((long)info.max_pages_in_paging_file == -1L)
+    ? 0
+    : info.max_pages_in_paging_file * 4096;
+  *totalram =
+    ((long)info.total_physical_pages == -1L)
+    ? (freemem + (unsigned long)sbrk (0) + *totalswap)
+    : info.total_physical_pages * 4096;
+  *freeswap = 0;
+  return 0;
+}
+
 
 void
 dos_cleanup (void)

@@ -1,6 +1,6 @@
 ;;; ediff-merg.el --- merging utilities
 
-;; Copyright (C) 1994-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-2015 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.stonybrook.edu>
 ;; Package: ediff
@@ -91,6 +91,8 @@ Buffer B."
   :group 'ediff-merge
   )
 (make-variable-buffer-local 'ediff-skip-merge-regions-that-differ-from-default)
+
+(defvar state-of-merge)			; dynamic var
 
 ;; check if there is no clash between the ancestor and one of the variants.
 ;; if it is not a merge job then return true
@@ -266,8 +268,8 @@ Buffer B."
     (setq ediff-default-variant
 	  (intern
 	   (completing-read
-	    (format "Current merge default is `%S'.  New default: "
-		    ediff-default-variant)
+	    (format-message "Current merge default is `%S'.  New default: "
+			    ediff-default-variant)
 	    actual-alist nil 'must-match)))
     (ediff-do-merge ediff-current-difference 'remerge)
     (ediff-recenter)
@@ -350,8 +352,6 @@ Combining is done according to the specifications in variable
 
 	(reverse delim-regs-list)
 	)))
-
-(defvar state-of-merge)			; dynamic var
 
 ;; Check if the non-preferred merge has been modified since originally set.
 ;; This affects only the regions that are marked as default-A/B or combined.

@@ -1,6 +1,6 @@
 ;;; calc-units.el --- unit conversion functions for Calc
 
-;; Copyright (C) 1990-1993, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1990-1993, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: David Gillespie <daveg@synaptics.com>
 ;; Maintainer: Jay Belanger <jay.p.belanger@gmail.com>
@@ -422,7 +422,7 @@ If EXPR is nil, return nil."
   "Put the units in EXPR in the default units table.
 If COMP or STD is non-nil, put that in the units table instead."
   (let* ((new-units (or comp std (math-get-units expr)))
-         (standard-units (math-get-standard-units 
+         (standard-units (math-get-standard-units
                           (cond
                            (comp (math-simplify-units expr))
                            (std expr)
@@ -457,9 +457,9 @@ If COMP or STD is non-nil, put that in the units table instead."
                                 (eq (math-get-standard-units expr) 1))))
        (let ((uold (or old-units
 		       (progn
-			 (setq uoldname 
+			 (setq uoldname
                                (if unitscancel
-                                   (read-string 
+                                   (read-string
                                     "(The expression is unitless when simplified) Old Units: ")
                                  (read-string "Old units: ")))
 			 (if (equal uoldname "")
@@ -470,6 +470,8 @@ If COMP or STD is non-nil, put that in the units table instead."
 			   (if (string-match "\\` */" uoldname)
 			       (setq uoldname (concat "1" uoldname)))
 			   (math-read-expr uoldname))))))
+         (unless (math-units-in-expr-p uold t)
+           (error "No units specified"))
 	 (when (eq (car-safe uold) 'error)
 	   (error "Bad format in units expression: %s" (nth 1 uold)))
 	 (setq expr (math-mul expr uold))))
@@ -513,6 +515,38 @@ If COMP or STD is non-nil, put that in the units table instead."
          (unless std
            (math-put-default-units (if noold units res) (if comp units)))
          (calc-enter-result 1 "cvun" res))))))
+
+(defun calc-convert-exact-units ()
+  (interactive)
+  (calc-slow-wrapper
+   (let* ((expr (calc-top-n 1)))
+     (unless (math-units-in-expr-p expr t)
+       (error "No units in expression."))
+     (let* ((old-units (math-extract-units expr))
+            (defunits (math-get-default-units expr))
+            units
+            (new-units
+             (read-string (concat "New units"
+                                  (if defunits
+                                     (concat
+                                      " (default "
+                                      defunits
+                                      "): ")
+                                   ": ")))))
+       (if (and
+            (string= new-units "")
+            defunits)
+           (setq new-units defunits))
+       (setq units (math-read-expr new-units))
+       (when (eq (car-safe units) 'error)
+         (error "Bad format in units expression: %s" (nth 2 units)))
+       (math-check-unit-consistency old-units units)
+       (let ((res
+              (list '* (math-mul (math-remove-units expr)
+                                 (math-simplify-units
+                                  (math-to-standard-units (list '/ old-units units) nil)))
+                    units)))
+         (calc-enter-result 1 "cvxu" res))))))
 
 (defun calc-autorange-units (arg)
   (interactive "P")
@@ -904,10 +938,12 @@ If COMP or STD is non-nil, put that in the units table instead."
   (and (consp expr)
        (if (eq (car expr) 'var)
 	   (math-check-unit-name expr)
-	 (and (or sub-exprs
-		  (memq (car expr) '(* / ^)))
-	      (or (math-units-in-expr-p (nth 1 expr) sub-exprs)
-		  (math-units-in-expr-p (nth 2 expr) sub-exprs))))))
+	 (if (eq (car expr) 'neg)
+	     (math-units-in-expr-p (nth 1 expr) sub-exprs)
+	   (and (or sub-exprs
+		    (memq (car expr) '(* / ^)))
+		(or (math-units-in-expr-p (nth 1 expr) sub-exprs)
+		    (math-units-in-expr-p (nth 2 expr) sub-exprs)))))))
 
 (defun math-only-units-in-expr-p (expr)
   (and (consp expr)
@@ -924,6 +960,8 @@ If COMP or STD is non-nil, put that in the units table instead."
   (cond ((math-scalarp expr) nil)
 	((eq (car expr) 'var)
 	 (math-check-unit-name expr))
+	((eq (car expr) 'neg)
+	 (math-single-units-in-expr-p (nth 1 expr)))
 	((eq (car expr) '*)
 	 (let ((u1 (math-single-units-in-expr-p (nth 1 expr)))
 	       (u2 (math-single-units-in-expr-p (nth 2 expr))))
@@ -941,7 +979,7 @@ If COMP or STD is non-nil, put that in the units table instead."
   (or
    (and (eq (car-safe newunits) 'var)
         (assq (nth 1 newunits) math-standard-units-systems))
-   (math-numberp (math-get-units (list '/ expr newunits)))))
+   (math-numberp (math-get-units (math-to-standard-units (list '/ expr newunits) nil)))))
 
 (defun math-check-unit-consistency (expr units)
   "Give an error if EXPR and UNITS do not have consistent units."
@@ -1079,6 +1117,8 @@ If COMP or STD is non-nil, put that in the units table instead."
 	((eq (car-safe expr) '/)
 	 (or (math-find-compatible-unit-rec (nth 1 expr) pow)
 	     (math-find-compatible-unit-rec (nth 2 expr) (- pow))))
+	((eq (car-safe expr) 'neg)
+	 (math-find-compatible-unit-rec (nth 1 expr) pow))
 	((and (eq (car-safe expr) '^)
 	      (integerp (nth 2 expr)))
 	 (math-find-compatible-unit-rec (nth 1 expr) (* pow (nth 2 expr))))
@@ -1497,6 +1537,8 @@ If COMP or STD is non-nil, put that in the units table instead."
    ((memq (car-safe expr) '(* /))
     (cons (car expr)
           (mapcar 'math-extract-units (cdr expr))))
+   ((eq (car-safe expr) 'neg)
+    (math-extract-units (nth 1 expr)))
    ((eq (car-safe expr) '^)
     (list '^ (math-extract-units (nth 1 expr)) (nth 2 expr)))
    ((math-check-unit-name expr) expr)
@@ -1579,11 +1621,14 @@ If COMP or STD is non-nil, put that in the units table instead."
               (insert "   " (nth 2 u) "\n")
               (while (eq (car (car (setq uptr (cdr uptr)))) 0)))
             (insert "\n\n")
-            (insert "(**) When in TeX or LaTeX display mode, the TeX specific unit\n"
-                     "names will not use the `tex' prefix; the unit name for a\n"
-                     "TeX point will be `pt' instead of `texpt', for example.\n"
-                     "To avoid conflicts, the unit names for pint and parsec will\n"
-                     "be `pint' and `parsec' instead of `pt' and `pc'."))
+            (insert
+             (format-message
+              (concat
+               "(**) When in TeX or LaTeX display mode, the TeX specific unit\n"
+               "names will not use the `tex' prefix; the unit name for a\n"
+               "TeX point will be `pt' instead of `texpt', for example.\n"
+               "To avoid conflicts, the unit names for pint and parsec will\n"
+               "be `pint' and `parsec' instead of `pt' and `pc'."))))
 	  (view-mode)
 	  (message "Formatting units table...done"))
 	(setq math-units-table-buffer-valid t)
@@ -2117,9 +2162,5 @@ If non-nil, return a list consisting of the note and the cents coefficient."
 
 
 (provide 'calc-units)
-
-;; Local variables:
-;; coding: utf-8
-;; End:
 
 ;;; calc-units.el ends here

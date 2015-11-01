@@ -1,6 +1,6 @@
-;;;; testcover.el -- Visual code-coverage tool
+;;;; testcover.el -- Visual code-coverage tool  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2002-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
 ;; Author: Jonathan Yavner <jyavner@member.fsf.org>
 ;; Maintainer: Jonathan Yavner <jyavner@member.fsf.org>
@@ -146,7 +146,8 @@ call to one of the `testcover-1value-functions'."
   '(add-hook and beep or remove-hook unless when)
   "Functions that are potentially 1-valued.  No brown splotch if actually
 1-valued, no error if actually multi-valued."
-  :group 'testcover)
+  :group 'testcover
+  :type '(repeat symbol))
 
 (defface testcover-nohits
   '((t (:background "DeepPink2")))
@@ -190,8 +191,9 @@ problems with type-ahead or post-command-hook, etc.  If BYTE-COMPILE is
 non-nil, byte-compiles each function after instrumenting."
   (interactive "fStart covering file: ")
   (let ((buf                (find-file filename))
-	(load-read-function 'testcover-read)
-	(edebug-all-defs t))
+	(load-read-function load-read-function))
+    (add-function :around load-read-function
+                  #'testcover--read)
     (setq edebug-form-data                       nil
 	  testcover-module-constants             nil
 	  testcover-module-1value-functions nil)
@@ -206,22 +208,26 @@ non-nil, byte-compiles each function after instrumenting."
 (defun testcover-this-defun ()
   "Start coverage on function under point."
   (interactive)
-  (let* ((edebug-all-defs t)
-	 (x (symbol-function (eval-defun nil))))
+  (let ((x (let ((edebug-all-defs t))
+             (symbol-function (eval-defun nil)))))
     (testcover-reinstrument x)
     x))
 
-(defun testcover-read (&optional stream)
+(defun testcover--read (orig &optional stream)
   "Read a form using edebug, changing edebug callbacks to testcover callbacks."
-  (let ((x (edebug-read stream)))
-    (testcover-reinstrument x)
-    x))
+  (or stream (setq stream standard-input))
+  (if (eq stream (current-buffer))
+      (let ((x (let ((edebug-all-defs t))
+                 (edebug-read-and-maybe-wrap-form))))
+        (testcover-reinstrument x)
+        x)
+    (funcall (or orig #'read) stream)))
 
 (defun testcover-reinstrument (form)
   "Reinstruments FORM to use testcover instead of edebug.  This
 function modifies the list that FORM points to.  Result is nil if
 FORM should return multiple values, t if should always return same
-value, 'maybe if either is acceptable."
+value, `maybe' if either is acceptable."
   (let ((fun (car-safe form))
 	id val)
     (cond
@@ -494,7 +500,7 @@ eliminated by adding more test cases."
 	 (len      (length points))
 	 (changed (buffer-modified-p))
 	 (coverage (get def 'edebug-coverage))
-	 ov j item)
+	 ov j)
     (or (and def-mark points coverage)
 	(error "Missing edebug data for function %s" def))
     (when (> len 0)

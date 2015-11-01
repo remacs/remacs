@@ -1,6 +1,6 @@
 ;;; cc-cmds.el --- user level commands for CC Mode
 
-;; Copyright (C) 1985, 1987, 1992-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1987, 1992-2015 Free Software Foundation, Inc.
 
 ;; Authors:    2003- Alan Mackenzie
 ;;             1998- Martin Stjernholm
@@ -258,9 +258,11 @@ With universal argument, inserts the analysis as a comment on that line."
 			 "a" "")
 		     (if c-hungry-delete-key "h" "")
 		     (if (and
-			  ;; subword might not be loaded.
-			  (boundp 'subword-mode)
-			  (symbol-value 'subword-mode))
+			  ;; (cc-)subword might not be loaded.
+			  (boundp 'c-subword-mode)
+			  (symbol-value 'c-subword-mode))
+                         ;; FIXME: subword-mode already comes with its
+                         ;; own lighter!
 			 "w"
 		       "")))
         ;; FIXME: Derived modes might want to use something else
@@ -356,6 +358,8 @@ left out."
   (interactive "P")
   (setq c-electric-flag (c-calculate-state arg c-electric-flag))
   (c-update-modeline)
+  (when (fboundp 'electric-indent-local-mode) ; Emacs 24.4 or later.
+    (electric-indent-local-mode (if c-electric-flag 1 0)))
   (c-keep-region-active))
 
 
@@ -424,7 +428,7 @@ the function `delete-forward-p' is defined and returns non-nil, it
 deletes forward.  Otherwise it deletes backward.
 
 Note: This is the way in XEmacs to choose the correct action for the
-\[delete] key, whichever key that means.  Other flavors don't use this
+[delete] key, whichever key that means.  Other flavors don't use this
 function to control that."
   (interactive "*P")
   (if (and (fboundp 'delete-forward-p)
@@ -441,7 +445,7 @@ forward using `c-hungry-delete-forward'.  Otherwise it deletes
 backward using `c-hungry-backspace'.
 
 Note: This is the way in XEmacs to choose the correct action for the
-\[delete] key, whichever key that means.  Other flavors don't use this
+[delete] key, whichever key that means.  Other flavors don't use this
 function to control that."
   (interactive)
   (if (and (fboundp 'delete-forward-p)
@@ -1088,7 +1092,7 @@ numeric argument is supplied, or the point is inside a literal."
 
   (interactive "*P")
   (let ((c-echo-syntactic-information-p nil)
-	final-pos close-paren-inserted found-delim case-fold-search)
+	final-pos found-delim case-fold-search)
 
     (self-insert-command (prefix-numeric-value arg))
     (setq final-pos (point))
@@ -1139,9 +1143,9 @@ numeric argument is supplied, or the point is inside a literal."
 			   (eq (char-before) ?<))
 			 (progn
 			   (backward-char)
-			   (looking-at "\\s\("))))
+			   (looking-at "\\s("))))
 		    (and (eq (char-after) ?<)
-			 (not (looking-at "\\s\("))
+			 (not (looking-at "\\s("))
 			 (progn (c-backward-syntactic-ws)
 				(c-simple-skip-symbol-backward))
 			 (or (looking-at c-opt-<>-sexp-key)
@@ -1153,11 +1157,12 @@ numeric argument is supplied, or the point is inside a literal."
       (when (and (eq (char-before) ?>)
 		 (not executing-kbd-macro)
 		 blink-paren-function)
-	    ;; Note: Most paren blink functions, such as the standard
-	    ;; `blink-matching-open', currently doesn't handle paren chars
-	    ;; marked with text properties very well.  Maybe we should avoid
-	    ;; this call for the time being?
-	    (funcall blink-paren-function)))))
+	;; Currently (2014-10-19), the syntax-table text properties on < and >
+	;; are only applied in code called during Emacs redisplay.  We thus
+	;; explicitly cause a redisplay so that these properties have been
+	;; applied when `blink-paren-function' gets called.
+	(sit-for 0)
+	(funcall blink-paren-function)))))
 
 (defun c-electric-paren (arg)
   "Insert a parenthesis.
@@ -1301,20 +1306,46 @@ keyword on the line, the keyword is not inserted inside a literal, and
 (declare-function subword-forward "subword" (&optional arg))
 (declare-function subword-backward "subword" (&optional arg))
 
+(cond
+ ((and (fboundp 'subword-mode) (not (fboundp 'c-subword-mode)))
+  ;; Recent Emacsen come with their own subword support.  Use that.
+  (define-obsolete-function-alias 'c-subword-mode 'subword-mode "24.3")
+  (define-obsolete-variable-alias 'c-subword-mode 'subword-mode "24.3"))
+ (t
+  ;; Autoload directive for emacsen that doesn't have an older CC Mode
+  ;; version in the dist.
+  (autoload 'c-subword-mode "cc-subword"
+    "Mode enabling subword movement and editing keys." t)))
+
+(declare-function c-forward-subword "ext:cc-subword" (&optional arg))
+(declare-function c-backward-subword "ext:cc-subword" (&optional arg))
+
 ;; "nomenclature" functions + c-scope-operator.
 (defun c-forward-into-nomenclature (&optional arg)
   "Compatibility alias for `c-forward-subword'."
   (interactive "p")
-  (require 'subword)
-  (subword-forward arg))
-(make-obsolete 'c-forward-into-nomenclature 'subword-forward "23.2")
+  (if (fboundp 'subword-mode)
+      (progn
+        (require 'subword)
+        (subword-forward arg))
+    (require 'cc-subword)
+    (c-forward-subword arg)))
+(make-obsolete 'c-forward-into-nomenclature
+               (if (fboundp 'subword-mode) 'subword-forward 'c-forward-subword)
+               "23.2")
 
 (defun c-backward-into-nomenclature (&optional arg)
   "Compatibility alias for `c-backward-subword'."
   (interactive "p")
-  (require 'subword)
-  (subword-backward arg))
-(make-obsolete 'c-backward-into-nomenclature 'subword-backward "23.2")
+  (if (fboundp 'subword-mode)
+      (progn
+        (require 'subword)
+        (subword-backward arg))
+    (require 'cc-subword)
+    (c-backward-subword arg)))
+(make-obsolete
+ 'c-backward-into-nomenclature
+ (if (fboundp 'subword-mode) 'subword-backward 'c-backward-subword) "23.2")
 
 (defun c-scope-operator ()
   "Insert a double colon scope operator at point.
@@ -1349,13 +1380,13 @@ No indentation or other \"electric\" behavior is performed."
 		;; be the return type of a function, or the like.  Exclude
 		;; this case.
 		(c-syntactic-re-search-forward
-		 (concat "[;=\(\[{]\\|\\("
+		 (concat "[;=([{]\\|\\("
 			 c-opt-block-decls-with-vars-key
 			 "\\)")
 		 eo-block t t t)
 		(match-beginning 1)	; Is there a "struct" etc., somewhere?
 		(not (eq (char-before) ?_))
-		(c-syntactic-re-search-forward "[;=\(\[{]" eo-block t t t)
+		(c-syntactic-re-search-forward "[;=([{]" eo-block t t t)
 		(eq (char-before) ?\{)
 		bod)))))
 
@@ -1414,12 +1445,15 @@ No indentation or other \"electric\" behavior is performed."
 	      (car (c-beginning-of-decl-1
 		    ;; NOTE: If we're in a K&R region, this might be the start
 		    ;; of a parameter declaration, not the actual function.
+		    ;; It might also leave us at a label or "label" like
+		    ;; "private:".
 		    (and least-enclosing ; LIMIT for c-b-of-decl-1
 			 (c-safe-position least-enclosing paren-state)))))
 
 	;; Has the declaration we've gone back to got braces?
-	(setq brace-decl-p
-	      (save-excursion
+	(or (eq decl-result 'label)
+	    (setq brace-decl-p
+		  (save-excursion
 		    (and (c-syntactic-re-search-forward "[;{]" nil t t)
 			 (or (eq (char-before) ?\{)
 			     (and c-recognize-knr-p
@@ -1427,10 +1461,11 @@ No indentation or other \"electric\" behavior is performed."
 				  ;; ';' in a K&R argdecl.  In
 				  ;; that case the declaration
 				  ;; should contain a block.
-				  (c-in-knr-argdecl))))))
+				  (c-in-knr-argdecl)))))))
 
 	(cond
-	 ((= (point) kluge-start)	; might be BOB or unbalanced parens.
+	 ((or (eq decl-result 'label)	; e.g. "private:" or invalid syntax.
+	      (= (point) kluge-start))	; might be BOB or unbalanced parens.
 	  'outwith-function)
 	 ((eq decl-result 'same)
 	  (if brace-decl-p
@@ -1578,7 +1613,7 @@ defun."
 
   (or (not (eq this-command 'c-beginning-of-defun))
       (eq last-command 'c-beginning-of-defun)
-      (and transient-mark-mode mark-active)
+      (c-region-is-active-p)
       (push-mark))
 
   (c-save-buffer-state
@@ -1702,7 +1737,7 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
 
   (or (not (eq this-command 'c-end-of-defun))
       (eq last-command 'c-end-of-defun)
-      (and transient-mark-mode mark-active)
+      (c-region-is-active-p)
       (push-mark))
 
   (c-save-buffer-state
@@ -1774,7 +1809,7 @@ with a brace block."
   (c-save-buffer-state
       (beginning-of-defun-function end-of-defun-function
        where pos name-end case-fold-search)
- 
+
     (save-restriction
       (widen)
       (save-excursion
@@ -1806,7 +1841,7 @@ with a brace block."
 	      (looking-at c-symbol-key))
 	    (match-string-no-properties 0))
 
-	   ((looking-at "DEFUN\\_>")
+	   ((looking-at "DEFUN\\s-*(") ;"DEFUN\\_>") think of XEmacs!
 	    ;; DEFUN ("file-name-directory", Ffile_name_directory, Sfile_name_directory, ...) ==> Ffile_name_directory
 	    ;; DEFUN(POSIX::STREAM-LOCK, stream lockp &key BLOCK SHARED START LENGTH) ==> POSIX::STREAM-LOCK
 	    (down-list 1)
@@ -1999,7 +2034,7 @@ function does not require the declaration to contain a brace block."
 		   (eq last-command 'c-mark-function)))
 	     (push-mark-p (and (eq this-command 'c-mark-function)
 			       (not extend-region-p)
-			       (not (and transient-mark-mode mark-active)))))
+			       (not (c-region-is-active-p)))))
 	(if push-mark-p (push-mark (point)))
 	(if extend-region-p
 	    (progn
@@ -2818,19 +2853,28 @@ sentence motion in or near comments and multiline strings."
 
 ;; set up electric character functions to work with pending-del,
 ;; (a.k.a. delsel) mode.  All symbols get the t value except
-;; the functions which delete, which gets 'supersede.
+;; the functions which delete, which gets 'supersede, and (from Emacs
+;; 25) `c-electric-brace' and `c-electric-paren' get special handling
+;; so as to work gracefully with `electric-pair-mode'.
 (mapc
  (function
   (lambda (sym)
     (put sym 'delete-selection t)	; for delsel (Emacs)
     (put sym 'pending-delete t)))	; for pending-del (XEmacs)
  '(c-electric-pound
-   c-electric-brace
    c-electric-slash
    c-electric-star
    c-electric-semi&comma
    c-electric-lt-gt
-   c-electric-colon
+   c-electric-colon))
+(mapc
+ (function
+  (lambda (sym)
+    (put sym 'delete-selection (if (fboundp 'delete-selection-uses-region-p)
+				   'delete-selection-uses-region-p
+				 t))
+    (put sym 'pending-delete t)))
+ '(c-electric-brace
    c-electric-paren))
 (put 'c-electric-delete    'delete-selection 'supersede) ; delsel
 (put 'c-electric-delete    'pending-delete   'supersede) ; pending-del
@@ -3336,7 +3380,7 @@ Otherwise, with a prefix argument, rigidly reindent the expression
 starting on the current line.
 Otherwise reindent just the current line."
   (interactive
-   (list current-prefix-arg (use-region-p)))
+   (list current-prefix-arg (c-region-is-active-p)))
   (if region
       (c-indent-region (region-beginning) (region-end))
     (c-indent-command arg)))
@@ -3377,7 +3421,7 @@ Otherwise reindent just the current line."
       (if (< c-progress-interval (- now lastsecs))
 	  (progn
 	    (message "Indenting region... (%d%% complete)"
-		     (/ (* 100 (- (point) start)) (- end start)))
+		     (floor (* 100.0 (- (point) start)) (- end start)))
 	    (aset c-progress-info 2 now)))
       )))
 
@@ -4411,7 +4455,7 @@ is in situations like the following:
 
 char description[] = \"\\
 A very long description of something that you want to fill to make
-nicely formatted output.\"\;
+nicely formatted output.\";
 
 If point is in any other situation, i.e. in normal code, do nothing.
 
@@ -4725,4 +4769,8 @@ normally bound to C-o.  See `c-context-line-break' for the details."
 
 (cc-provide 'cc-cmds)
 
+;; Local Variables:
+;; indent-tabs-mode: t
+;; tab-width: 8
+;; End:
 ;;; cc-cmds.el ends here

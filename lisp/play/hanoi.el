@@ -1,7 +1,7 @@
 ;;; hanoi.el --- towers of hanoi in Emacs
 
 ;; Author: Damon Anton Permezel
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: games
 
 ; Author (a) 1985, Damon Anton Permezel
@@ -277,7 +277,7 @@ BITS must be of length nrings.  Start at START-TIME."
 	     ;; Disable display of line and column numbers, for speed.
 	     (line-number-mode nil) (column-number-mode nil))
 	  ;; do it!
-	  (hanoi-n bits rings (car poles) (cadr poles) (cl-caddr poles)
+	  (hanoi-n bits rings (nth 0 poles) (nth 1 poles) (nth 2 poles)
 		   start-time))
 	(message "Done"))
     (setq buffer-read-only t)

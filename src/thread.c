@@ -33,7 +33,8 @@ static struct thread_state *all_threads = &primary_thread;
 
 static sys_mutex_t global_lock;
 
-Lisp_Object Qthreadp, Qmutexp, Qcondition_variable_p;
+extern int poll_suppress_count;
+extern volatile int interrupt_input_blocked;
 
 
 
@@ -265,7 +266,7 @@ mutex_unlock_callback (void *arg)
 
 DEFUN ("mutex-unlock", Fmutex_unlock, Smutex_unlock, 1, 1, 0,
        doc: /* Release the mutex.
-If this thread does not own MUTEX, signal an error.	       
+If this thread does not own MUTEX, signal an error.
 Otherwise, decrement the mutex's count.  If the count is zero,
 release MUTEX.   */)
   (Lisp_Object mutex)
@@ -478,10 +479,10 @@ struct select_args
 {
   select_func *func;
   int max_fds;
-  SELECT_TYPE *rfds;
-  SELECT_TYPE *wfds;
-  SELECT_TYPE *efds;
-  EMACS_TIME *timeout;
+  fd_set *rfds;
+  fd_set *wfds;
+  fd_set *efds;
+  struct timespec *timeout;
   sigset_t *sigmask;
   int result;
 };
@@ -499,8 +500,8 @@ really_call_select (void *arg)
 }
 
 int
-thread_select (select_func *func, int max_fds, SELECT_TYPE *rfds,
-	       SELECT_TYPE *wfds, SELECT_TYPE *efds, EMACS_TIME *timeout,
+thread_select (select_func *func, int max_fds, fd_set *rfds,
+	       fd_set *wfds, fd_set *efds, struct timespec *timeout,
 	       sigset_t *sigmask)
 {
   struct select_args sa;
@@ -526,30 +527,13 @@ mark_one_thread (struct thread_state *thread)
 
   mark_specpdl (thread->m_specpdl, thread->m_specpdl_ptr);
 
-#if (GC_MARK_STACK == GC_MAKE_GCPROS_NOOPS \
-     || GC_MARK_STACK == GC_MARK_STACK_CHECK_GCPROS)
   mark_stack (thread->m_stack_bottom, thread->stack_top);
-#else
-  {
-    struct gcpro *tail;
-    for (tail = thread->m_gcprolist; tail; tail = tail->next)
-      for (i = 0; i < tail->nvars; i++)
-	mark_object (tail->var[i]);
-  }
-
-#if BYTE_MARK_STACK
-  if (thread->m_byte_stack_list)
-    mark_byte_stack (thread->m_byte_stack_list);
-#endif
-
-  mark_catchlist (thread->m_catchlist);
 
   for (handler = thread->m_handlerlist; handler; handler = handler->next)
     {
-      mark_object (handler->handler);
-      mark_object (handler->var);
+      mark_object (handler->tag_or_ch);
+      mark_object (handler->val);
     }
-#endif
 
   if (thread->m_current_buffer)
     {
@@ -591,7 +575,7 @@ unmark_threads (void)
 
   for (iter = all_threads; iter; iter = iter->next_thread)
     if (iter->m_byte_stack_list)
-      unmark_byte_stack (iter->m_byte_stack_list);
+      relocate_byte_stack (iter->m_byte_stack_list);
 }
 
 
@@ -645,6 +629,18 @@ run_thread (void *state)
 
   acquire_global_lock (self);
 
+  { /* Put a dummy catcher at top-level so that handlerlist is never NULL.
+       This is important since handlerlist->nextfree holds the freelist
+       which would otherwise leak every time we unwind back to top-level.   */
+    struct handler *c;
+    handlerlist_sentinel = xzalloc (sizeof (struct handler));
+    handlerlist = handlerlist_sentinel->nextfree = handlerlist_sentinel;
+    PUSH_HANDLER (c, Qunbound, CATCHER);
+    eassert (c == handlerlist_sentinel);
+    handlerlist_sentinel->nextfree = NULL;
+    handlerlist_sentinel->next = NULL;
+  }
+
   /* It might be nice to do something with errors here.  */
   internal_condition_case (invoke_thread_function, Qt, do_nothing);
 
@@ -654,6 +650,15 @@ run_thread (void *state)
   self->m_specpdl = NULL;
   self->m_specpdl_ptr = NULL;
   self->m_specpdl_size = 0;
+
+  {
+    struct handler *c, *c_next;
+    for (c = handlerlist_sentinel; c; c = c_next)
+      {
+	c_next = c->nextfree;
+	xfree (c);
+      }
+  }
 
   current_thread = NULL;
   sys_cond_broadcast (&self->thread_condvar);
@@ -687,6 +692,7 @@ If NAME is given, it names the new thread.  */)
   struct thread_state *new_thread;
   Lisp_Object result;
   const char *c_name = NULL;
+  size_t offset = offsetof (struct thread_state, m_byte_stack_list);
 
   /* Can't start a thread in temacs.  */
   if (!initialized)
@@ -695,11 +701,10 @@ If NAME is given, it names the new thread.  */)
   if (!NILP (name))
     CHECK_STRING (name);
 
-  new_thread = ALLOCATE_PSEUDOVECTOR (struct thread_state, m_gcprolist,
+  new_thread = ALLOCATE_PSEUDOVECTOR (struct thread_state, m_byte_stack_list,
 				      PVEC_THREAD);
-  memset ((char *) new_thread + offsetof (struct thread_state, m_gcprolist),
-	  0, sizeof (struct thread_state) - offsetof (struct thread_state,
-						      m_gcprolist));
+  memset ((char *) new_thread + offset, 0,
+	  sizeof (struct thread_state) - offset);
 
   new_thread->function = function;
   new_thread->name = name;
@@ -910,7 +915,7 @@ static void
 init_primary_thread (void)
 {
   primary_thread.header.size
-    = PSEUDOVECSIZE (struct thread_state, m_gcprolist);
+    = PSEUDOVECSIZE (struct thread_state, m_byte_stack_list);
   XSETPVECTYPE (&primary_thread, PVEC_THREAD);
   primary_thread.m_last_thing_searched = Qnil;
   primary_thread.m_saved_last_thing_searched = Qnil;
@@ -965,10 +970,7 @@ syms_of_threads (void)
       defsubr (&Scondition_name);
     }
 
-  Qthreadp = intern_c_string ("threadp");
-  staticpro (&Qthreadp);
-  Qmutexp = intern_c_string ("mutexp");
-  staticpro (&Qmutexp);
-  Qcondition_variable_p = intern_c_string ("condition-variable-p");
-  staticpro (&Qcondition_variable_p);
+  DEFSYM (Qthreadp, "threadp");
+  DEFSYM (Qmutexp, "mutexp");
+  DEFSYM (Qcondition_variable_p, "condition-variable-p");
 }

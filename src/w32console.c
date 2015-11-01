@@ -1,5 +1,5 @@
 /* Terminal hooks for GNU Emacs on the Microsoft Windows API.
-   Copyright (C) 1992, 1999, 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1999, 2001-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -28,20 +28,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <windows.h>
 
 #include "lisp.h"
-#include "character.h"
 #include "coding.h"
-#include "disptab.h"
-#include "frame.h"
-#include "window.h"
-#include "termhooks.h"
-#include "termchar.h"
-#include "dispextern.h"
+#include "termchar.h"	/* for FRAME_TTY */
+#include "menu.h"	/* for tty_menu_show */
 #include "w32term.h"
-#include "w32common.h" /* for os_subtype */
+#include "w32common.h"	/* for os_subtype */
 #include "w32inevt.h"
-
-/* from window.c */
-extern Lisp_Object Frecenter (Lisp_Object);
 
 static void w32con_move_cursor (struct frame *f, int row, int col);
 static void w32con_clear_to_end (struct frame *f);
@@ -53,7 +45,6 @@ static void w32con_write_glyphs (struct frame *f, struct glyph *string, int len)
 static void w32con_delete_glyphs (struct frame *f, int n);
 static void w32con_reset_terminal_modes (struct terminal *t);
 static void w32con_set_terminal_modes (struct terminal *t);
-static void w32con_set_terminal_window (struct frame *f, int size);
 static void w32con_update_begin (struct frame * f);
 static void w32con_update_end (struct frame * f);
 static WORD w32_face_attributes (struct frame *f, int face_id);
@@ -63,6 +54,7 @@ static HANDLE	prev_screen, cur_screen;
 static WORD	char_attr_normal;
 static DWORD	prev_console_mode;
 
+static CONSOLE_CURSOR_INFO console_cursor_info;
 #ifndef USE_SEPARATE_SCREEN
 static CONSOLE_CURSOR_INFO prev_console_cursor;
 #endif
@@ -96,12 +88,28 @@ w32con_move_cursor (struct frame *f, int row, int col)
   SetConsoleCursorPosition (cur_screen, cursor_coords);
 }
 
+void
+w32con_hide_cursor (void)
+{
+  GetConsoleCursorInfo (cur_screen, &console_cursor_info);
+  console_cursor_info.bVisible = FALSE;
+  SetConsoleCursorInfo (cur_screen, &console_cursor_info);
+}
+
+void
+w32con_show_cursor (void)
+{
+  GetConsoleCursorInfo (cur_screen, &console_cursor_info);
+  console_cursor_info.bVisible = TRUE;
+  SetConsoleCursorInfo (cur_screen, &console_cursor_info);
+}
+
 /* Clear from cursor to end of screen.  */
 static void
 w32con_clear_to_end (struct frame *f)
 {
   w32con_clear_end_of_line (f, FRAME_COLS (f) - 1);
-  w32con_ins_del_lines (f, cursor_coords.Y, FRAME_LINES (f) - cursor_coords.Y - 1);
+  w32con_ins_del_lines (f, cursor_coords.Y, FRAME_TOTAL_LINES (f) - cursor_coords.Y - 1);
 }
 
 /* Clear the frame.  */
@@ -116,7 +124,7 @@ w32con_clear_frame (struct frame *f)
   GetConsoleScreenBufferInfo (GetStdHandle (STD_OUTPUT_HANDLE), &info);
 
   /* Remember that the screen buffer might be wider than the window.  */
-  n = FRAME_LINES (f) * info.dwSize.X;
+  n = FRAME_TOTAL_LINES (f) * info.dwSize.X;
   dest.X = dest.Y = 0;
 
   FillConsoleOutputAttribute (cur_screen, char_attr_normal, n, dest, &r);
@@ -158,18 +166,18 @@ w32con_ins_del_lines (struct frame *f, int vpos, int n)
   if (n < 0)
     {
       scroll.Top = vpos - n;
-      scroll.Bottom = FRAME_LINES (f);
+      scroll.Bottom = FRAME_TOTAL_LINES (f);
       dest.Y = vpos;
     }
   else
     {
       scroll.Top = vpos;
-      scroll.Bottom = FRAME_LINES (f) - n;
+      scroll.Bottom = FRAME_TOTAL_LINES (f) - n;
       dest.Y = vpos + n;
     }
   clip.Top = clip.Left = scroll.Left = 0;
   clip.Right = scroll.Right = FRAME_COLS (f);
-  clip.Bottom = FRAME_LINES (f);
+  clip.Bottom = FRAME_TOTAL_LINES (f);
 
   dest.X = 0;
 
@@ -280,7 +288,7 @@ w32con_write_glyphs (struct frame *f, register struct glyph *string,
 {
   DWORD r;
   WORD char_attr;
-  unsigned char *conversion_buffer;
+  LPCSTR conversion_buffer;
   struct coding_system *coding;
 
   if (len <= 0)
@@ -311,7 +319,7 @@ w32con_write_glyphs (struct frame *f, register struct glyph *string,
       if (n == len)
 	/* This is the last run.  */
 	coding->mode |= CODING_MODE_LAST_BLOCK;
-      conversion_buffer = encode_terminal_code (string, n, coding);
+      conversion_buffer = (LPCSTR) encode_terminal_code (string, n, coding);
       if (coding->produced > 0)
 	{
 	  /* Set the attribute for these characters.  */
@@ -348,7 +356,7 @@ w32con_write_glyphs_with_face (struct frame *f, register int x, register int y,
 			       register struct glyph *string, register int len,
 			       register int face_id)
 {
-  unsigned char *conversion_buffer;
+  LPCSTR conversion_buffer;
   struct coding_system *coding;
 
   if (len <= 0)
@@ -363,7 +371,7 @@ w32con_write_glyphs_with_face (struct frame *f, register int x, register int y,
      they all have the same face.  So this _is_ the last block.  */
   coding->mode |= CODING_MODE_LAST_BLOCK;
 
-  conversion_buffer = encode_terminal_code (string, len, coding);
+  conversion_buffer = (LPCSTR) encode_terminal_code (string, len, coding);
   if (coding->produced > 0)
     {
       DWORD filled, written;
@@ -497,11 +505,6 @@ w32con_update_end (struct frame * f)
   SetConsoleCursorPosition (cur_screen, cursor_coords);
 }
 
-static void
-w32con_set_terminal_window (struct frame *f, int size)
-{
-}
-
 /***********************************************************************
 			stubs from termcap.c
  ***********************************************************************/
@@ -558,6 +561,21 @@ Wcm_clear (struct tty_display_info *tty)
 }
 
 
+/* Report the current cursor position.  The following two functions
+   are used in term.c's tty menu code, so they are not really
+   "stubs".  */
+int
+cursorX (struct tty_display_info *tty)
+{
+  return cursor_coords.X;
+}
+
+int
+cursorY (struct tty_display_info *tty)
+{
+  return cursor_coords.Y;
+}
+
 /***********************************************************************
 				Faces
  ***********************************************************************/
@@ -604,7 +622,6 @@ void
 initialize_w32_display (struct terminal *term, int *width, int *height)
 {
   CONSOLE_SCREEN_BUFFER_INFO	info;
-  Mouse_HLInfo *hlinfo;
 
   term->rif = 0; /* No window based redisplay on the console.  */
   term->cursor_to_hook		= w32con_move_cursor;
@@ -619,30 +636,26 @@ initialize_w32_display (struct terminal *term, int *width, int *height)
   term->ring_bell_hook		= w32_sys_ring_bell;
   term->reset_terminal_modes_hook = w32con_reset_terminal_modes;
   term->set_terminal_modes_hook	= w32con_set_terminal_modes;
-  term->set_terminal_window_hook = w32con_set_terminal_window;
+  term->set_terminal_window_hook = NULL;
   term->update_begin_hook	= w32con_update_begin;
   term->update_end_hook		= w32con_update_end;
 
   term->read_socket_hook = w32_console_read_socket;
   term->mouse_position_hook = w32_console_mouse_position;
+  term->menu_show_hook = tty_menu_show;
 
   /* The following are not used on the console.  */
   term->frame_rehighlight_hook = 0;
   term->frame_raise_lower_hook = 0;
   term->set_vertical_scroll_bar_hook = 0;
+  term->set_horizontal_scroll_bar_hook = 0;
   term->condemn_scroll_bars_hook = 0;
   term->redeem_scroll_bar_hook = 0;
   term->judge_scroll_bars_hook = 0;
   term->frame_up_to_date_hook = 0;
 
   /* Initialize the mouse-highlight data.  */
-  hlinfo = &term->display_info.tty->mouse_highlight;
-  hlinfo->mouse_face_beg_row = hlinfo->mouse_face_beg_col = -1;
-  hlinfo->mouse_face_end_row = hlinfo->mouse_face_end_col = -1;
-  hlinfo->mouse_face_face_id = DEFAULT_FACE_ID;
-  hlinfo->mouse_face_mouse_frame = NULL;
-  hlinfo->mouse_face_window = Qnil;
-  hlinfo->mouse_face_hidden = 0;
+  reset_mouse_highlight (&term->display_info.tty->mouse_highlight);
 
   /* Initialize interrupt_handle.  */
   init_crit ();

@@ -1,6 +1,6 @@
-;;; em-pred.el --- argument predicates and modifiers (ala zsh)
+;;; em-pred.el --- argument predicates and modifiers (ala zsh)  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -119,7 +119,8 @@ The format of each entry is
                (function
                 (lambda (str)
                   (eshell-stringify
-                   (car (eshell-parse-argument str))))) lst)))
+                   (car (eshell-parse-argument str)))))
+               lst)))
     (?L . #'(lambda (lst) (mapcar 'downcase lst)))
     (?U . #'(lambda (lst) (mapcar 'upcase lst)))
     (?C . #'(lambda (lst) (mapcar 'capitalize lst)))
@@ -171,18 +172,18 @@ PERMISSION BITS (for owner/group/world):
 
 OWNERSHIP:
   U               owned by effective uid
-  u(UID|'user')   owned by UID/user
-  g(GID|'group')  owned by GID/group
+  u(UID|\\='user\\=')   owned by UID/user
+  g(GID|\\='group\\=')  owned by GID/group
 
 FILE ATTRIBUTES:
   l[+-]N                 +/-/= N links
-  a[Mwhms][+-](N|'FILE') access time +/-/= N months/weeks/hours/mins/secs
+  a[Mwhms][+-](N|\\='FILE\\=') access time +/-/= N months/weeks/hours/mins/secs
 			 (days if unspecified) if FILE specified,
-			 use as comparison basis; so a+'file.c'
+			 use as comparison basis; so a+\\='file.c\\='
 			 shows files accessed before file.c was
 			 last accessed
-  m[Mwhms][+-](N|'FILE') modification time...
-  c[Mwhms][+-](N|'FILE') change time...
+  m[Mwhms][+-](N|\\='FILE\\=') modification time...
+  c[Mwhms][+-](N|\\='FILE\\=') change time...
   L[kmp][+-]N            file size +/-/= N Kb/Mb/blocks
 
 EXAMPLES:
@@ -192,7 +193,7 @@ EXAMPLES:
   ***/*~f*(-/)  recursively (though not traversing symlinks),
 		find all directories (or symlinks referring to
 		directories) whose names do not begin with f.
-  e*(*Lk+50)    executables 50k or larger beginning with 'e'")
+  e*(*Lk+50)    executables 50k or larger beginning with `e'")
 
 (defvar eshell-modifier-help-string
   "Eshell modifier quick reference:
@@ -296,18 +297,17 @@ This function is specially for adding onto `eshell-parse-argument-hook'."
 
 (defun eshell-parse-modifiers ()
   "Parse value modifiers and predicates at point.
-If ALLOW-PREDS is non-nil, predicates will be parsed as well.
 Return a cons cell of the form
 
   (PRED-FUNC-LIST . MOD-FUNC-LIST)
 
-NEW-STRING is STRING minus any modifiers.  PRED-FUNC-LIST is a list of
-predicate functions.  MOD-FUNC-LIST is a list of result modifier
-functions.  PRED-FUNCS take a filename and return t if the test
-succeeds; MOD-FUNCS take any string and preform a modification,
-returning the resultant string."
-  (let (result negate follow preds mods)
-    (condition-case err
+PRED-FUNC-LIST is a list of predicate functions.  MOD-FUNC-LIST
+is a list of result modifier functions.  PRED-FUNCS take a
+filename and return t if the test succeeds; MOD-FUNCS take any
+list of strings and perform a modification, returning the
+resultant list of strings."
+  (let (negate follow preds mods)
+    (condition-case nil
 	(while (not (eobp))
 	  (let ((char (char-after)))
 	    (cond
@@ -318,7 +318,7 @@ returning the resultant string."
 		    (if (and func (functionp func))
 			(setq preds (eshell-add-pred-func func preds
 							  negate follow))
-		      (error "Invalid function predicate '%s'"
+		      (error "Invalid function predicate `%s'"
 			     (eshell-stringify func))))
 		(error "Invalid function predicate")))
 	     ((eq char ?^)
@@ -336,20 +336,20 @@ returning the resultant string."
 			      (cons `(lambda (lst)
 				       (mapcar (function ,func) lst))
 				    mods))
-		      (error "Invalid function modifier '%s'"
+		      (error "Invalid function modifier `%s'"
 			     (eshell-stringify func))))
 		(error "Invalid function modifier")))
 	     ((eq char ?:)
 	      (forward-char)
 	      (let ((mod (assq (char-after) eshell-modifier-alist)))
 		(if (not mod)
-		    (error "Unknown modifier character '%c'" (char-after))
+		    (error "Unknown modifier character `%c'" (char-after))
 		  (forward-char)
 		  (setq mods (cons (eval (cdr mod)) mods)))))
 	     (t
 	      (let ((pred (assq char eshell-predicate-alist)))
 		(if (not pred)
-		    (error "Unknown predicate character '%c'" char)
+		    (error "Unknown predicate character `%c'" char)
 		  (forward-char)
 		  (setq preds
 			(eshell-add-pred-func (eval (cdr pred)) preds
@@ -399,7 +399,7 @@ returning the resultant string."
 (defun eshell-pred-file-time (mod-char mod-type attr-index)
   "Return a predicate to test whether a file matches a certain time."
   (let* ((quantum 86400)
-	 qual amount when open close end)
+	 qual when open close end)
     (when (memq (char-after) '(?M ?w ?h ?m ?s))
       (setq quantum (char-after))
       (cond
@@ -451,7 +451,7 @@ returning the resultant string."
 (defun eshell-pred-file-type (type)
   "Return a test which tests that the file is of a certain TYPE.
 TYPE must be a character, and should be one of the possible options
-that 'ls -l' will show in the first column of its display. "
+that `ls -l' will show in the first column of its display. "
   (when (eq type ?%)
     (setq type (char-after))
     (if (memq type '(?b ?c))

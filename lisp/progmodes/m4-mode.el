@@ -1,9 +1,8 @@
 ;;; m4-mode.el --- m4 code editing commands for Emacs
 
-;; Copyright (C) 1996-1997, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-1997, 2001-2015 Free Software Foundation, Inc.
 
-;; Author: Andrew Csillag <drew_csillag@geocities.com>
-;; Maintainer: Andrew Csillag <drew_csillag@geocities.com>
+;; Author: Andrew Csillag <drew@thecsillags.com>
 ;; Keywords: languages, faces
 
 ;; This file is part of GNU Emacs.
@@ -65,14 +64,12 @@ If m4 is not in your PATH, set this to an absolute file name."
 
 (defvar m4-font-lock-keywords
   `(
-    ("\\(\\b\\(m4_\\)?dnl\\b\\|^\\#\\).*$" . font-lock-comment-face)
-;    ("\\(\\bdnl\\b\\|\\bm4_dnl\\b\\|^\\#\\).*$" . font-lock-comment-face)
+    ("\\(\\_<\\(m4_\\)?dnl\\_>\\).*$" . font-lock-comment-face)
     ("\\$[*#@0-9]" . font-lock-variable-name-face)
-    ("\\\$\\\@" . font-lock-variable-name-face)
-    ("\\\$\\\*" . font-lock-variable-name-face)
-    ("\\b\\(builtin\\|change\\(com\\|quote\\|word\\)\\|d\\(e\\(bug\\(file\\|mode\\)\\|cr\\|f\\(ine\\|n\\)\\)\\|iv\\(ert\\|num\\)\\|nl\\|umpdef\\)\\|e\\(rrprint\\|syscmd\\|val\\)\\|f\\(ile\\|ormat\\)\\|gnu\\|i\\(f\\(def\\|else\\)\\|n\\(c\\(lude\\|r\\)\\|d\\(ex\\|ir\\)\\)\\)\\|l\\(en\\|ine\\)\\|m\\(4\\(exit\\|wrap\\)\\|aketemp\\)\\|p\\(atsubst\\|opdef\\|ushdef\\)\\|regexp\\|s\\(hift\\|include\\|ubstr\\|ys\\(cmd\\|val\\)\\)\\|tra\\(ceo\\(ff\\|n\\)\\|nslit\\)\\|un\\(d\\(efine\\|ivert\\)\\|ix\\)\\)\\b" . font-lock-keyword-face)
-    ("\\b\\(m4_\\(builtin\\|change\\(com\\|quote\\|word\\)\\|d\\(e\\(bug\\(file\\|mode\\)\\|cr\\|f\\(ine\\|n\\)\\)\\|iv\\(ert\\|num\\)\\|nl\\|umpdef\\)\\|e\\(rrprint\\|syscmd\\|val\\)\\|f\\(ile\\|ormat\\)\\|i\\(f\\(def\\|else\\)\\|n\\(c\\(lude\\|r\\)\\|d\\(ex\\|ir\\)\\)\\)\\|l\\(en\\|ine\\)\\|m\\(4\\(_undefine\\|exit\\|wrap\\)\\|aketemp\\)\\|p\\(atsubst\\|opdef\\|ushdef\\)\\|regexp\\|s\\(hift\\|include\\|ubstr\\|ys\\(cmd\\|val\\)\\)\\|tra\\(ceo\\(ff\\|n\\)\\|nslit\\)\\|undivert\\)\\)\\b" . font-lock-keyword-face))
-  "Default font-lock-keywords for `m4 mode'.")
+    ("\\$\\@" . font-lock-variable-name-face)
+    ("\\$\\*" . font-lock-variable-name-face)
+    ("\\_<\\(m4_\\)?\\(builtin\\|change\\(com\\|quote\\|word\\)\\|d\\(e\\(bug\\(file\\|mode\\)\\|cr\\|f\\(ine\\|n\\)\\)\\|iv\\(ert\\|num\\)\\|nl\\|umpdef\\)\\|e\\(rrprint\\|syscmd\\|val\\)\\|f\\(ile\\|ormat\\)\\|gnu\\|i\\(f\\(def\\|else\\)\\|n\\(c\\(lude\\|r\\)\\|d\\(ex\\|ir\\)\\)\\)\\|l\\(en\\|ine\\)\\|m\\(4\\(exit\\|wrap\\)\\|aketemp\\)\\|p\\(atsubst\\|opdef\\|ushdef\\)\\|regexp\\|s\\(hift\\|include\\|ubstr\\|ys\\(cmd\\|val\\)\\)\\|tra\\(ceo\\(ff\\|n\\)\\|nslit\\)\\|un\\(d\\(efine\\|ivert\\)\\|ix\\)\\)\\_>" . font-lock-keyword-face))
+  "Default `font-lock-keywords' for M4 mode.")
 
 (defcustom m4-mode-hook nil
   "Hook called by `m4-mode'."
@@ -86,18 +83,25 @@ If m4 is not in your PATH, set this to an absolute file name."
     (modify-syntax-entry ?' ")`" table)
     (modify-syntax-entry ?# "<\n" table)
     (modify-syntax-entry ?\n ">#" table)
-    (modify-syntax-entry ?{  "_" table)
-    (modify-syntax-entry ?}  "_" table)
-    ;; FIXME: This symbol syntax for underscore looks OK on its own, but it's
-    ;; odd that it should have the same syntax as { and } are these really
-    ;; valid in m4 symbols?
+    (modify-syntax-entry ?{  "." table)
+    (modify-syntax-entry ?}  "." table)
     (modify-syntax-entry ?_  "_" table)
-    ;; FIXME: These three chars with word syntax look wrong.
-    (modify-syntax-entry ?*  "w" table)
-    (modify-syntax-entry ?\"  "w" table)
-    (modify-syntax-entry ?\"  "w" table)
+    (modify-syntax-entry ?*  "." table)
+    (modify-syntax-entry ?\"  "." table)
     table)
   "Syntax table used while in `m4-mode'.")
+
+(defun m4--quoted-p (pos)
+  "Return non-nil if POS is inside a quoted string."
+  (let ((quoted nil))
+    (dolist (o (nth 9 (save-excursion (syntax-ppss pos))))
+      (if (eq (char-after o) ?\`) (setq quoted t)))
+    quoted))
+
+(defconst m4-syntax-propertize
+  (syntax-propertize-rules
+   ("#" (0 (when (m4--quoted-p (match-beginning 0))
+             (string-to-syntax "."))))))
 
 (defvar m4-mode-map
   (let ((map (make-sparse-keymap))
@@ -148,7 +152,8 @@ If m4 is not in your PATH, set this to an absolute file name."
   (setq-local comment-start "#")
   (setq-local parse-sexp-ignore-comments t)
   (setq-local add-log-current-defun-function #'m4-current-defun-name)
-  (setq font-lock-defaults '(m4-font-lock-keywords nil)))
+  (setq-local syntax-propertize-function m4-syntax-propertize)
+  (setq-local font-lock-defaults '(m4-font-lock-keywords nil)))
 
 (provide 'm4-mode)
 ;;stuff to play with for debugging

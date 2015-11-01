@@ -1,6 +1,6 @@
 ;;; parse-time.el --- parsing time strings
 
-;; Copyright (C) 1996, 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996, 2000-2015 Free Software Foundation, Inc.
 
 ;; Author: Erik Naggum <erik@naggum.no>
 ;; Keywords: util
@@ -34,20 +34,11 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl-lib))
-
-(defvar parse-time-digits (make-vector 256 nil))
+(require 'cl-lib)
 
 ;; Byte-compiler warnings
 (defvar parse-time-elt)
 (defvar parse-time-val)
-
-(unless (aref parse-time-digits ?0)
-  (cl-loop for i from ?0 to ?9
-           do (aset parse-time-digits i (- i ?0))))
-
-(defsubst digit-char-p (char)
-  (aref parse-time-digits char))
 
 (defsubst parse-time-string-chars (char)
   (save-match-data
@@ -58,30 +49,6 @@
 	    ((string-match "[[:upper:]]" (setq str (string char))) ?A)
 	    ((string-match "[[:lower:]]" str) ?a)
 	    ((string-match "[[:digit:]]" str) ?0)))))
-
-(put 'parse-error 'error-conditions '(parse-error error))
-(put 'parse-error 'error-message "Parsing error")
-
-(defsubst parse-integer (string &optional start end)
-  "[CL] Parse and return the integer in STRING, or nil if none."
-  (let ((integer 0)
-	(digit 0)
-	(index (or start 0))
-	(end (or end (length string))))
-    (when (< index end)
-      (let ((sign (aref string index)))
-	(if (or (eq sign ?+) (eq sign ?-))
-	    (setq sign (parse-time-string-chars sign)
-		  index (1+ index))
-	  (setq sign 1))
-	(while (and (< index end)
-		    (setq digit (digit-char-p (aref string index))))
-	  (setq integer (+ (* integer 10) digit)
-		index (1+ index)))
-	(if (/= index end)
-	    (signal 'parse-error `("not an integer"
-				   ,(substring string (or start 0) end)))
-	  (* sign integer))))))
 
 (defun parse-time-tokenize (string)
   "Tokenize STRING into substrings."
@@ -100,7 +67,7 @@
 		  (setq c (parse-time-string-chars (aref string index))))
 	(setq all-digits (and all-digits (eq c ?0))))
       (if (<= index end)
-	  (push (if all-digits (parse-integer string start index)
+	  (push (if all-digits (cl-parse-integer string :start start :end index)
 		  (substring string start index))
 		list)))
     (nreverse list)))
@@ -131,7 +98,7 @@
   `(((6) parse-time-weekdays)
     ((3) (1 31))
     ((4) parse-time-months)
-    ((5) (100 4038))
+    ((5) (100 ,most-positive-fixnum))
     ((2 1 0)
      ,#'(lambda () (and (stringp parse-time-elt)
 			(= (length parse-time-elt) 8)
@@ -147,8 +114,8 @@
 	       (= 5 (length parse-time-elt))
 	       (or (= (aref parse-time-elt 0) ?+)
 		   (= (aref parse-time-elt 0) ?-))))
-     ,#'(lambda () (* 60 (+ (parse-integer parse-time-elt 3 5)
-			    (* 60 (parse-integer parse-time-elt 1 3)))
+     ,#'(lambda () (* 60 (+ (cl-parse-integer parse-time-elt :start 3 :end 5)
+			    (* 60 (cl-parse-integer parse-time-elt :start 1 :end 3)))
 		      (if (= (aref parse-time-elt 0) ?-) -1 1))))
     ((5 4 3)
      ,#'(lambda () (and (stringp parse-time-elt)
@@ -210,13 +177,76 @@ unknown are returned as nil."
 		(let ((new-val (if rule
 				   (let ((this (pop rule)))
 				     (if (vectorp this)
-					 (parse-integer
+					 (cl-parse-integer
 					  parse-time-elt
-					  (aref this 0) (aref this 1))
+					  :start (aref this 0)
+					  :end (aref this 1))
 				       (funcall this)))
 				 parse-time-val)))
 		  (rplaca (nthcdr (pop slots) time) new-val))))))))
     time))
+
+(defconst parse-time-iso8601-regexp
+  (let* ((dash "-?")
+	 (colon ":?")
+	 (4digit "\\([0-9][0-9][0-9][0-9]\\)")
+	 (2digit "\\([0-9][0-9]\\)")
+	 (date-fullyear 4digit)
+	 (date-month 2digit)
+	 (date-mday 2digit)
+	 (time-hour 2digit)
+	 (time-minute 2digit)
+	 (time-second 2digit)
+	 (time-secfrac "\\(\\.[0-9]+\\)?")
+	 (time-numoffset (concat "[-+]\\(" time-hour "\\):" time-minute))
+	 (time-offset (concat "Z" time-numoffset))
+	 (partial-time (concat time-hour colon time-minute colon time-second
+			       time-secfrac))
+	 (full-date (concat date-fullyear dash date-month dash date-mday))
+	 (full-time (concat partial-time time-offset))
+	 (date-time (concat full-date "T" full-time)))
+    (list (concat "^" full-date)
+	  (concat "T" partial-time)
+	  (concat "Z" time-numoffset)))
+  "List of regular expressions matching ISO 8601 dates.
+1st regular expression matches the date.
+2nd regular expression matches the time.
+3rd regular expression matches the (optional) timezone specification.")
+
+(defun parse-iso8601-time-string (date-string)
+  (let* ((date-re (nth 0 parse-time-iso8601-regexp))
+	 (time-re (nth 1 parse-time-iso8601-regexp))
+	 (tz-re (nth 2 parse-time-iso8601-regexp))
+	 re-start
+	 time seconds minute hour fractional-seconds
+	 day month year day-of-week dst tz)
+    ;; We need to populate 'time' with
+    ;; (SEC MIN HOUR DAY MON YEAR DOW DST TZ)
+
+    ;; Nobody else handles iso8601 correctly, let's do it ourselves.
+    (when (string-match date-re date-string re-start)
+      (setq year (string-to-number (match-string 1 date-string))
+	    month (string-to-number (match-string 2 date-string))
+	    day (string-to-number (match-string 3 date-string))
+	    re-start (match-end 0))
+      (when (string-match time-re date-string re-start)
+	(setq hour (string-to-number (match-string 1 date-string))
+	      minute (string-to-number (match-string 2 date-string))
+	      seconds (string-to-number (match-string 3 date-string))
+	      fractional-seconds (string-to-number (or
+                                                    (match-string 4 date-string)
+                                                    "0"))
+	      re-start (match-end 0))
+	(when (string-match tz-re date-string re-start)
+	  (setq tz (match-string 1 date-string)))
+	(setq time (list seconds minute hour day month year day-of-week dst tz))))
+
+    ;; Fall back to having Gnus do fancy things for us.
+    (when (not time)
+      (setq time (parse-time-string date-string)))
+
+    (and time
+	 (apply 'encode-time time))))
 
 (provide 'parse-time)
 

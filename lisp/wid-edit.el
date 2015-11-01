@@ -1,9 +1,9 @@
 ;;; wid-edit.el --- Functions for creating and using widgets -*-byte-compile-dynamic: t; lexical-binding:t -*-
 ;;
-;; Copyright (C) 1996-1997, 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-1997, 1999-2015 Free Software Foundation, Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: extensions
 ;; Package: emacs
 
@@ -232,23 +232,20 @@ minibuffer."
 	(t
 	 ;; Construct a menu of the choices
 	 ;; and then use it for prompting for a single character.
-	 (let* ((overriding-terminal-local-map (make-sparse-keymap))
-		(next-digit ?0)
-		map choice some-choice-enabled value)
-	   ;; Define SPC as a prefix char to get to this menu.
-	   (define-key overriding-terminal-local-map " "
-	     (setq map (make-sparse-keymap title)))
+	 (let* ((next-digit ?0)
+		(map (make-sparse-keymap))
+                choice some-choice-enabled value)
 	   (with-current-buffer (get-buffer-create " widget-choose")
 	     (erase-buffer)
 	     (insert "Available choices:\n\n")
 	     (while items
-	       (setq choice (car items) items (cdr items))
-	       (if (consp choice)
-		   (let* ((name (car choice))
-			 (function (cdr choice)))
-		     (insert (format "%c = %s\n" next-digit name))
-		     (define-key map (vector next-digit) function)
-		     (setq some-choice-enabled t)))
+	       (setq choice (pop items))
+	       (when (consp choice)
+                 (let* ((name (substitute-command-keys (car choice)))
+                        (function (cdr choice)))
+                   (insert (format "%c = %s\n" next-digit name))
+                   (define-key map (vector next-digit) function)
+                   (setq some-choice-enabled t)))
 	       ;; Allocate digits to disabled alternatives
 	       ;; so that the digit of a given alternative never varies.
 	       (setq next-digit (1+ next-digit)))
@@ -257,43 +254,29 @@ minibuffer."
 	     (forward-line))
 	   (or some-choice-enabled
 	       (error "None of the choices is currently meaningful"))
-	   (define-key map [?\C-g] 'keyboard-quit)
-	   (define-key map [t] 'keyboard-quit)
 	   (define-key map [?\M-\C-v] 'scroll-other-window)
 	   (define-key map [?\M--] 'negative-argument)
-	   (setcdr map (nreverse (cdr map)))
-	   ;; Read a char with the menu, and return the result
-	   ;; that corresponds to it.
 	   (save-window-excursion
 	     (let ((buf (get-buffer " widget-choose")))
 	       (fit-window-to-buffer (display-buffer buf))
 	       (let ((cursor-in-echo-area t)
-		     keys
-		     (char 0)
 		     (arg 1))
-		 (while (not (or (and (integerp char)
-				      (>= char ?0) (< char next-digit))
-				 (eq value 'keyboard-quit)))
-		   ;; Unread a SPC to lead to our new menu.
-		   (setq unread-command-events (cons ?\s unread-command-events))
-		   (setq keys (read-key-sequence title))
-		   (setq value
-			 (lookup-key overriding-terminal-local-map keys t)
-			 char (aref keys 1))
-		   (cond ((eq value 'scroll-other-window)
-			  (let ((minibuffer-scroll-window
-				 (get-buffer-window buf)))
-			    (if (> 0 arg)
-				(scroll-other-window-down
-				 (window-height minibuffer-scroll-window))
-			      (scroll-other-window))
-			    (setq arg 1)))
-			 ((eq value 'negative-argument)
-			  (setq arg -1))
-			 (t
-			  (setq arg 1)))))))
-	   (when (eq value 'keyboard-quit)
-	     (error "Canceled"))
+                 (while (not value)
+                   (setq value (lookup-key map (read-key-sequence (format "%s: " title))))
+                   (unless value
+                     (user-error "Canceled"))
+                   (when
+                       (cond ((eq value 'scroll-other-window)
+                               (let ((minibuffer-scroll-window
+                                      (get-buffer-window buf)))
+                                 (if (> 0 arg)
+                                     (scroll-other-window-down
+                                      (window-height minibuffer-scroll-window))
+                                   (scroll-other-window))
+                                 (setq arg 1)))
+                              ((eq value 'negative-argument)
+                               (setq arg -1)))
+                     (setq value nil))))))
 	   value))))
 
 ;;; Widget text specifications.
@@ -1520,7 +1503,8 @@ The value of the :type attribute should be an unconverted widget type."
 		  (insert-char ?\s (widget-get widget :indent))))
 	       ((eq escape ?t)
 		(let ((image (widget-get widget :tag-glyph))
-		      (tag (widget-get widget :tag)))
+		      (tag (substitute-command-keys
+			    (widget-get widget :tag))))
 		  (cond (image
 			 (widget-image-insert widget (or tag "image") image))
 			(tag
@@ -1532,7 +1516,7 @@ The value of the :type attribute should be an unconverted widget type."
 		(let ((doc (widget-get widget :doc)))
 		  (when doc
 		    (setq doc-begin (point))
-		    (insert doc)
+		    (insert (substitute-command-keys doc))
 		    (while (eq (preceding-char) ?\n)
 		      (delete-char -1))
 		    (insert ?\n)
@@ -1692,7 +1676,7 @@ as the argument to `documentation-property'."
 		   (cond ((functionp doc-prop)
 			  (funcall doc-prop value))
 			 ((symbolp doc-prop)
-			  (documentation-property value doc-prop)))))))
+			  (documentation-property value doc-prop t)))))))
     (when (and (stringp doc) (> (length doc) 0))
       ;; Remove any redundant `*' in the beginning.
       (when (eq (aref doc 0) ?*)
@@ -1776,7 +1760,7 @@ If END is omitted, it defaults to the length of LIST."
 
 (defun widget-push-button-value-create (widget)
   "Insert text representing the `on' and `off' states."
-  (let* ((tag (or (widget-get widget :tag)
+  (let* ((tag (or (substitute-command-keys (widget-get widget :tag))
 		  (widget-get widget :value)))
 	 (tag-glyph (widget-get widget :tag-glyph))
 	 (text (concat widget-push-button-prefix
@@ -2184,7 +2168,8 @@ when he invoked the menu."
 (defun widget-toggle-value-create (widget)
   "Insert text representing the `on' and `off' states."
   (let* ((val (widget-value widget))
-	 (text (widget-get widget (if val :on :off)))
+	 (text (substitute-command-keys
+		(widget-get widget (if val :on :off))))
 	 (img (widget-image-find
 	       (widget-get widget (if val :on-glyph :off-glyph)))))
     (widget-image-insert widget (or text "")
@@ -2626,7 +2611,7 @@ Return an alist of (TYPE MATCH)."
   (let* ((value (widget-get widget :value))
 	 (type (nth 0 (widget-get widget :args)))
 	 children)
-    (widget-put widget :value-pos (copy-marker (point)))
+    (widget-put widget :value-pos (point-marker))
     (set-marker-insertion-type (widget-get widget :value-pos) t)
     (while value
       (let ((answer (widget-match-inline type value)))
@@ -2669,8 +2654,7 @@ Return an alist of (TYPE MATCH)."
   (save-excursion
     (let ((children (widget-get widget :children))
 	  (inhibit-read-only t)
-	  before-change-functions
-	  after-change-functions)
+	  (inhibit-modification-hooks t))
       (cond (before
 	     (goto-char (widget-get before :entry-from)))
 	    (t
@@ -2694,8 +2678,7 @@ Return an alist of (TYPE MATCH)."
     (let ((buttons (copy-sequence (widget-get widget :buttons)))
 	  button
 	  (inhibit-read-only t)
-	  before-change-functions
-	  after-change-functions)
+	  (inhibit-modification-hooks t))
       (while buttons
 	(setq button (car buttons)
 	      buttons (cdr buttons))
@@ -2706,8 +2689,7 @@ Return an alist of (TYPE MATCH)."
     (let ((entry-from (widget-get child :entry-from))
 	  (entry-to (widget-get child :entry-to))
 	  (inhibit-read-only t)
-	  before-change-functions
-	  after-change-functions)
+	  (inhibit-modification-hooks t))
       (widget-delete child)
       (delete-region entry-from entry-to)
       (set-marker entry-from nil)
@@ -2863,16 +2845,24 @@ The following properties have special meanings for this widget:
     (if (and (fboundp symbol) (boundp symbol))
 	;; If there are two doc strings, give the user a way to pick one.
 	(apropos (concat "\\`" (regexp-quote string) "\\'"))
-      (if (fboundp symbol)
-	  (describe-function symbol)
-	(describe-variable symbol)))))
+      (cond
+       ((fboundp symbol)
+	(describe-function symbol))
+       ((facep symbol)
+	(describe-face symbol))
+       ((featurep symbol)
+	(describe-package symbol))
+       ((or (boundp symbol) (get symbol 'variable-documentation))
+	(describe-variable symbol))
+       (t
+	(message "No documentation available for %s" symbol))))))
 
 (defcustom widget-documentation-links t
   "Add hyperlinks to documentation strings when non-nil."
   :type 'boolean
   :group 'widget-documentation)
 
-(defcustom widget-documentation-link-regexp "`\\([^\n`' ]+\\)'"
+(defcustom widget-documentation-link-regexp "['`‘]\\([^\n `'‘’]+\\)['’]"
   "Regexp for matching potential links in documentation strings.
 The first group should be the link itself."
   :type 'regexp
@@ -2923,7 +2913,7 @@ link for that string."
 
 (defun widget-documentation-string-value-create (widget)
   ;; Insert documentation string.
-  (let ((doc (widget-value widget))
+  (let ((doc (substitute-command-keys (widget-value widget)))
 	(indent (widget-get widget :indent))
 	(shown (widget-get (widget-get widget :parent) :documentation-shown))
 	(start (point)))
@@ -3328,7 +3318,7 @@ It reads a directory name from an editable text field."
 	    ;; Avoid a confusing end-of-file error.
 	    (skip-syntax-forward "\\s-")
 	    (if (eobp)
-		(setq err "Empty sexp -- use `nil'?")
+		(setq err "Empty sexp -- use nil?")
 	      (unless (widget-apply widget :match (read (current-buffer)))
 		(setq err (widget-get widget :type-error))))
 	    ;; Allow whitespace after expression.
@@ -3462,14 +3452,14 @@ To use this type, you must define :match or :match-alternatives."
 ;; Recursive datatypes.
 
 (define-widget 'lazy 'default
-  "Base widget for recursive datastructures.
+  "Base widget for recursive data structures.
 
 The `lazy' widget will, when instantiated, contain a single inferior
 widget, of the widget type specified by the :type parameter.  The
 value of the `lazy' widget is the same as the value of the inferior
 widget.  When deriving a new widget from the 'lazy' widget, the :type
 parameter is allowed to refer to the widget currently being defined,
-thus allowing recursive datastructures to be described.
+thus allowing recursive data structures to be described.
 
 The :type parameter takes the same arguments as the defcustom
 parameter with the same name.
@@ -3479,15 +3469,15 @@ not allow recursion.  That is, when you define a new widget type, none
 of the inferior widgets may be of the same type you are currently
 defining.
 
-In Lisp, however, it is custom to define datastructures in terms of
+In Lisp, however, it is custom to define data structures in terms of
 themselves.  A list, for example, is defined as either nil, or a cons
 cell whose cdr itself is a list.  The obvious way to translate this
 into a widget type would be
 
-  (define-widget 'my-list 'choice
+  (define-widget \\='my-list \\='choice
     \"A list of sexps.\"
     :tag \"Sexp list\"
-    :args '((const nil) (cons :value (nil) sexp my-list)))
+    :args \\='((const nil) (cons :value (nil) sexp my-list)))
 
 Here we attempt to define my-list as a choice of either the constant
 nil, or a cons-cell containing a sexp and my-lisp.  This will not work
@@ -3496,13 +3486,13 @@ because the `choice' widget does not allow recursion.
 Using the `lazy' widget you can overcome this problem, as in this
 example:
 
-  (define-widget 'sexp-list 'lazy
+  (define-widget \\='sexp-list \\='lazy
     \"A list of sexps.\"
     :tag \"Sexp list\"
-    :type '(choice (const nil) (cons :value (nil) sexp sexp-list)))"
+    :type \\='(choice (const nil) (cons :value (nil) sexp sexp-list)))"
   :format "%{%t%}: %v"
   ;; We don't convert :type because we want to allow recursive
-  ;; datastructures.  This is slow, so we should not create speed
+  ;; data structures.  This is slow, so we should not create speed
   ;; critical widgets by deriving from this.
   :convert-widget 'widget-value-convert-widget
   :value-create 'widget-type-value-create
@@ -3713,9 +3703,9 @@ example:
 	(widget-value-set ',(widget-get widget :parent) color)
 	(let* ((buf (get-buffer "*Colors*"))
 	       (win (get-buffer-window buf 0)))
-	  (bury-buffer buf)
-	  (and win (> (length (window-list)) 1)
-	       (delete-window win)))
+	  (if win
+	      (quit-window nil win)
+	    (bury-buffer buf)))
 	(pop-to-buffer ,(current-buffer))))))
 
 (defun widget-color-sample-face-get (widget)

@@ -1,9 +1,9 @@
 ;;; msb.el --- customizable buffer-selection with multiple menus
 
-;; Copyright (C) 1993-1995, 1997-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1993-1995, 1997-2015 Free Software Foundation, Inc.
 
 ;; Author: Lars Lindberg <lars.lindberg@home.se>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Created: 8 Oct 1993
 ;; Lindberg's last update version: 3.34
 ;; Keywords: mouse buffer menu
@@ -659,7 +659,7 @@ If the argument is left out or nil, then the current buffer is considered."
 (defun msb--create-function-info (menu-cond-elt)
   "Create a vector from an element MENU-COND-ELT of `msb-menu-cond'.
 This takes the form:
-\[BUFFER-LIST-VARIABLE CONDITION MENU-SORT-KEY MENU-TITLE ITEM-HANDLER SORTER]
+[BUFFER-LIST-VARIABLE CONDITION MENU-SORT-KEY MENU-TITLE ITEM-HANDLER SORTER]
 See `msb-menu-cond' for a description of its elements."
   (let* ((list-symbol (make-symbol "-msb-buffer-list"))
 	 (tmp-ih (and (> (length menu-cond-elt) 3)
@@ -745,7 +745,7 @@ to the buffer-list variable in FUNCTION-INFO."
 	    (msb--add-to-menu buffer info max-buffer-name-length)))
       (error (unless msb--error
 	       (setq msb--error
-		     (format
+		     (format-message
 		      "In msb-menu-cond, error for buffer `%s'."
 		      (buffer-name buffer)))
 	       (error "%s" msb--error))))))
@@ -777,7 +777,7 @@ SORT-PREDICATE.
 
 Example:
 \(msb--aggregate-alist
- '((a . a1) (a . a2) (b . b1) (c . c3) (a . a4) (a . a3) (b . b3) (b . b2))
+ \\='((a . a1) (a . a2) (b . b1) (c . c3) (a . a4) (a . a3) (b . b3) (b . b2))
  (function string=)
  (lambda (item1 item2)
    (string< (symbol-name item1) (symbol-name item2))))
@@ -1064,7 +1064,7 @@ variable `msb-menu-cond'."
     list))
 
 (defun msb--make-keymap-menu (raw-menu)
-  (let ((end (cons '(nil) 'menu-bar-select-buffer))
+  (let ((end 'menu-bar-select-buffer)
 	(mcount 0))
     (mapcar
      (lambda (sub-menu)
@@ -1105,13 +1105,12 @@ variable `msb-menu-cond'."
 	    (setcdr (nthcdr msb-max-menu-items frames) nil))
 	  (setq frames-menu
 		(nconc
-		 (list 'frame f-title '(nil) 'keymap f-title)
+		 (list 'frame f-title 'keymap f-title)
 		 (mapcar
 		  (lambda (frame)
 		    (nconc
 		     (list (frame-parameter frame 'name)
-			   (frame-parameter frame 'name)
-			   (cons nil nil))
+			   (frame-parameter frame 'name))
                      `(lambda ()
                         (interactive) (menu-bar-select-frame ,frame))))
 		  frames)))))

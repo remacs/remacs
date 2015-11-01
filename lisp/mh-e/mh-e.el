@@ -1,11 +1,11 @@
 ;;; mh-e.el --- GNU Emacs interface to the MH mail system
 
-;; Copyright (C) 1985-1988, 1990, 1992-1995, 1997, 1999-2013 Free
+;; Copyright (C) 1985-1988, 1990, 1992-1995, 1997, 1999-2015 Free
 ;; Software Foundation, Inc.
 
 ;; Author: Bill Wohler <wohler@newt.com>
 ;; Maintainer: Bill Wohler <wohler@newt.com>
-;; Version: 8.5
+;; Version: 8.6
 ;; Keywords: mail
 
 ;; This file is part of GNU Emacs.
@@ -112,7 +112,7 @@
                "\\(defgroup-mh\\)"
                "\\)\\>"
                ;; Any whitespace and defined object.
-               "[ \t'\(]*"
+               "[ \t'(]*"
                "\\(setf[ \t]+\\sw+)\\|\\sw+\\)?")
       (1 font-lock-keyword-face)
       (7 (cond ((match-beginning 2) font-lock-function-name-face)
@@ -127,7 +127,7 @@
 ;; Try to keep variables local to a single file. Provide accessors if
 ;; variables are shared. Use this section as a last resort.
 
-(defconst mh-version "8.5" "Version number of MH-E.")
+(defconst mh-version "8.6" "Version number of MH-E.")
 
 ;; Variants
 
@@ -739,7 +739,7 @@ is described by the variable `mh-variants'."
             (setq dir (file-chase-links (directory-file-name dir)))
             (add-to-list 'list-unique dir))
       (loop for dir in (nreverse list-unique) do
-            (when (and dir (file-directory-p dir) (file-readable-p dir))
+            (when (and dir (file-accessible-directory-p dir))
               (let ((variant (mh-variant-info dir)))
                 (if variant
                     (add-to-list 'mh-variants variant)))))
@@ -1353,8 +1353,8 @@ show window is toggled off."
 This option is consulted when a prefix argument is used with
 \\[mh-sort-folder]. Normally default arguments to \"sortm\" are
 specified in the MH profile. This option may be used to provide
-an alternate view. For example, \"'(\"-nolimit\" \"-textfield\"
-\"subject\")\" is a useful setting."
+an alternate view. For example, (\"-nolimit\" \"-textfield\"
+\"subject\") is a useful setting."
   :type '(repeat string)
   :group 'mh-folder
   :package-version '(MH-E . "8.0"))
@@ -1657,7 +1657,7 @@ using the Emacs 22 command \"emacsclient\" as follows:
         origMode
         polltime 10
         headertime 0
-        command emacsclient --eval '(mh-inc-spool-mh-e)'
+        command emacsclient --eval \\='(mh-inc-spool-mh-e)\\='
 
 In XEmacs, the command \"gnuclient\" is used in a similar
 fashion."
@@ -1834,7 +1834,7 @@ message without line wrapping."
   "Default method to use in security tags.
 
 This option is used to select between a variety of mail security
-mechanisms. The default is \"PGP (MIME)\" if it is supported\;
+mechanisms. The default is \"PGP (MIME)\" if it is supported;
 otherwise, the default is \"None\". Other mechanisms include
 vanilla \"PGP\" and \"S/MIME\".
 
@@ -2901,11 +2901,11 @@ This option contains the Unix command line which performs the
 actual printing for the \\[mh-print-msg] command. The string can
 contain one escape, \"%s\", which is replaced by the name of the
 folder and the message number and is useful for print job names.
-I use \"mpage -h'%s' -b Letter -H1of -mlrtb -P\" which produces a
+I use \"mpage -h\\='%s\\=' -b Letter -H1of -mlrtb -P\" which produces a
 nice header and adds a bit of margin so the text fits within my
 printer's margins.
 
-This options is not used by the commands \\[mh-ps-print-msg] or
+This option is not used by the commands \\[mh-ps-print-msg] or
 \\[mh-ps-print-msg-file]."
   :type 'string
   :group 'mh-show

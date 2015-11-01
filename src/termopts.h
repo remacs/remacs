@@ -1,5 +1,5 @@
 /* Flags and parameters describing user options for handling the terminal.
-   Copyright (C) 1985-1986, 1990, 2001-2013 Free Software Foundation,
+   Copyright (C) 1985-1986, 1990, 2001-2015 Free Software Foundation,
    Inc.
 
 This file is part of GNU Emacs.
@@ -17,9 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef EMACS_TERMOPTS_H
+#define EMACS_TERMOPTS_H
 
 /* Nonzero means use interrupt-driven input.  */
 extern bool interrupt_input;
 
 /* Nonzero while interrupts are temporarily deferred during redisplay.  */
 extern bool interrupts_deferred;
+
+#endif /* EMACS_TERMOPTS_H */

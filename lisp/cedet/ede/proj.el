@@ -1,6 +1,6 @@
 ;;; ede/proj.el --- EDE Generic Project file driver
 
-;; Copyright (C) 1998-2003, 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2003, 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: project, make
@@ -162,12 +162,12 @@ These are the linkers the user can choose from when setting the
 	      :initform t
 	      :type boolean
 	      :custom boolean
-	      :label "Part of `all:' target"
+	      :label "Part of all: target"
 	      :group make
 	      :documentation
-	      "Non nil means the rule created is part of the all target.
+	      "Non nil means the rule created is part of the all: target.
 Setting this to nil creates the rule to build this item, but does not
-include it in the ALL`all:' rule.")
+include it in the all: rule.")
    (configuration-variables
     :initarg :configuration-variables
     :initform nil
@@ -297,7 +297,7 @@ for the tree being read in.  If ROOTPROJ is nil, then assume that
 the PROJECT being read in is the root project."
   (save-excursion
     (let ((ret (eieio-persistent-read (concat project "Project.ede")
-				      ede-proj-project))
+				      'ede-proj-project))
 	  (subdirs (directory-files project nil "[^.].*" nil)))
       (if (not (object-of-class-p ret 'ede-proj-project))
 	  (error "Corrupt project file"))
@@ -310,7 +310,7 @@ the PROJECT being read in is the root project."
 	(let ((sd (file-name-as-directory
 		   (expand-file-name (car subdirs) project))))
 	  (if (and (file-directory-p sd)
-		   (ede-directory-project-p sd))
+		   (file-exists-p (expand-file-name "Project.ede" sd)))
 	      (oset ret subproj
 		    (cons (ede-proj-load sd (or rootproj ret))
 			  (oref ret subproj))))
@@ -329,27 +329,27 @@ the PROJECT being read in is the root project."
 	;; Restore the directory slot
  	(oset project directory cdir))) ))
 
-(defmethod ede-commit-local-variables ((proj ede-proj-project))
+(cl-defmethod ede-commit-local-variables ((proj ede-proj-project))
   "Commit change to local variables in PROJ."
   (ede-proj-save proj))
 
-(defmethod eieio-done-customizing ((proj ede-proj-project))
+(cl-defmethod eieio-done-customizing ((proj ede-proj-project))
   "Call this when a user finishes customizing this object.
 Argument PROJ is the project to save."
-  (call-next-method)
+  (cl-call-next-method)
   (ede-proj-save proj))
 
-(defmethod eieio-done-customizing ((target ede-proj-target))
+(cl-defmethod eieio-done-customizing ((target ede-proj-target))
   "Call this when a user finishes customizing this object.
 Argument TARGET is the project we are completing customization on."
-  (call-next-method)
+  (cl-call-next-method)
   (ede-proj-save (ede-current-project)))
 
-(defmethod ede-commit-project ((proj ede-proj-project))
+(cl-defmethod ede-commit-project ((proj ede-proj-project))
   "Commit any change to PROJ to its file."
   (ede-proj-save proj))
 
-(defmethod ede-buffer-mine ((this ede-proj-project) buffer)
+(cl-defmethod ede-buffer-mine ((this ede-proj-project) buffer)
   "Return t if object THIS lays claim to the file in BUFFER."
   (let ((f (ede-convert-path this (buffer-file-name buffer))))
     (or (string= (file-name-nondirectory (oref this file)) f)
@@ -360,9 +360,9 @@ Argument TARGET is the project we are completing customization on."
 	(member f '("AUTHORS" "NEWS" "COPYING" "INSTALL" "README"))
 	)))
 
-(defmethod ede-buffer-mine ((this ede-proj-target) buffer)
+(cl-defmethod ede-buffer-mine ((this ede-proj-target) buffer)
   "Return t if object THIS lays claim to the file in BUFFER."
-  (or (call-next-method)
+  (or (cl-call-next-method)
       (ede-target-buffer-in-sourcelist this buffer (oref this auxsource))))
 
 
@@ -371,7 +371,7 @@ Argument TARGET is the project we are completing customization on."
 (defvar ede-proj-target-history nil
   "History when querying for a target type.")
 
-(defmethod project-new-target ((this ede-proj-project)
+(cl-defmethod project-new-target ((this ede-proj-project)
 			       &optional name type autoadd)
   "Create a new target in THIS based on the current buffer."
   (let* ((name (or name (read-string "Name: " "")))
@@ -409,7 +409,7 @@ Argument TARGET is the project we are completing customization on."
     ;; And save
     (ede-proj-save this)))
 
-(defmethod project-new-target-custom ((this ede-proj-project))
+(cl-defmethod project-new-target-custom ((this ede-proj-project))
   "Create a new target in THIS for custom."
   (let* ((name (read-string "Name: " ""))
 	 (type (completing-read "Type: " ede-proj-target-alist
@@ -418,7 +418,7 @@ Argument TARGET is the project we are completing customization on."
 	     :path (ede-convert-path this default-directory)
 	     :source nil)))
 
-(defmethod project-delete-target ((this ede-proj-target))
+(cl-defmethod project-delete-target ((this ede-proj-target))
   "Delete the current target THIS from its parent project."
   (let ((p (ede-current-project))
 	(ts (oref this source)))
@@ -439,7 +439,7 @@ Argument TARGET is the project we are completing customization on."
     (oset p targets (delq this (oref p targets)))
     (ede-proj-save (ede-current-project))))
 
-(defmethod project-add-file ((this ede-proj-target) file)
+(cl-defmethod project-add-file ((this ede-proj-target) file)
   "Add to target THIS the current buffer represented as FILE."
   (let ((file (ede-convert-path this file))
 	(src (ede-target-sourcecode this)))
@@ -454,7 +454,7 @@ Argument TARGET is the project we are completing customization on."
 	    (t (error "`project-add-file(ede-target)' source mismatch error")))
       (ede-proj-save))))
 
-(defmethod project-remove-file ((target ede-proj-target) file)
+(cl-defmethod project-remove-file ((target ede-proj-target) file)
   "For TARGET, remove FILE.
 FILE must be massaged by `ede-convert-path'."
   ;; Speedy delete should be safe.
@@ -462,11 +462,11 @@ FILE must be massaged by `ede-convert-path'."
   (object-remove-from-list target 'auxsource (ede-convert-path target file))
   (ede-proj-save))
 
-(defmethod project-update-version ((this ede-proj-project))
+(cl-defmethod project-update-version ((this ede-proj-project))
   "The :version of project THIS has changed."
   (ede-proj-save))
 
-(defmethod project-make-dist ((this ede-proj-project))
+(cl-defmethod project-make-dist ((this ede-proj-project))
   "Build a distribution for the project based on THIS target."
   (let ((pm (ede-proj-dist-makefile this))
 	(df (project-dist-files this)))
@@ -479,14 +479,14 @@ FILE must be massaged by `ede-convert-path'."
 				   (file-name-directory pm))))
     (compile (concat ede-make-command " -f " pm " dist"))))
 
-(defmethod project-dist-files ((this ede-proj-project))
+(cl-defmethod project-dist-files ((this ede-proj-project))
   "Return a list of files that constitutes a distribution of THIS project."
   (list
    ;; Note to self, keep this first for the above fn to check against.
    (concat (oref this name) "-" (oref this version) ".tar.gz")
    ))
 
-(defmethod project-compile-project ((proj ede-proj-project) &optional command)
+(cl-defmethod project-compile-project ((proj ede-proj-project) &optional command)
   "Compile the entire current project PROJ.
 Argument COMMAND is the command to use when compiling."
   (let ((pm (ede-proj-dist-makefile proj))
@@ -499,12 +499,12 @@ Argument COMMAND is the command to use when compiling."
 
 ;;; Target type specific compilations/debug
 ;;
-(defmethod project-compile-target ((obj ede-proj-target) &optional command)
+(cl-defmethod project-compile-target ((obj ede-proj-target) &optional command)
   "Compile the current target OBJ.
 Argument COMMAND is the command to use for compiling the target."
   (project-compile-project (ede-current-project) command))
 
-(defmethod project-compile-target ((obj ede-proj-target-makefile)
+(cl-defmethod project-compile-target ((obj ede-proj-target-makefile)
 				   &optional command)
   "Compile the current target program OBJ.
 Optional argument COMMAND is the s the alternate command to use."
@@ -512,21 +512,21 @@ Optional argument COMMAND is the s the alternate command to use."
   (compile (concat ede-make-command " -f " (oref obj makefile) " "
 		   (ede-proj-makefile-target-name obj))))
 
-(defmethod project-debug-target ((obj ede-proj-target))
+(cl-defmethod project-debug-target ((obj ede-proj-target))
   "Run the current project target OBJ in a debugger."
   (error "Debug-target not supported by %s" (eieio-object-name obj)))
 
-(defmethod project-run-target ((obj ede-proj-target))
+(cl-defmethod project-run-target ((obj ede-proj-target))
   "Run the current project target OBJ."
   (error "Run-target not supported by %s" (eieio-object-name obj)))
 
-(defmethod ede-proj-makefile-target-name ((this ede-proj-target))
+(cl-defmethod ede-proj-makefile-target-name ((this ede-proj-target))
   "Return the name of the main target for THIS target."
   (ede-name this))
 
 ;;; Compiler and source code generators
 ;;
-(defmethod ede-want-file-auxiliary-p ((this ede-target) file)
+(cl-defmethod ede-want-file-auxiliary-p ((this ede-target) file)
   "Return non-nil if THIS target wants FILE."
   ;; By default, all targets reference the source object, and let it decide.
   (let ((src (ede-target-sourcecode this)))
@@ -534,7 +534,7 @@ Optional argument COMMAND is the s the alternate command to use."
       (setq src (cdr src)))
     src))
 
-(defmethod ede-proj-compilers ((obj ede-proj-target))
+(cl-defmethod ede-proj-compilers ((obj ede-proj-target))
   "List of compilers being used by OBJ.
 If the `compiler' slot is empty, concoct one on a first match found
 basis for any given type from the `availablecompilers' slot.
@@ -570,7 +570,7 @@ You may need to add support for this type of file."
       ;; Return the discovered compilers.
       comp)))
 
-(defmethod ede-proj-linkers ((obj ede-proj-target))
+(cl-defmethod ede-proj-linkers ((obj ede-proj-target))
   "List of linkers being used by OBJ.
 If the `linker' slot is empty, concoct one on a first match found
 basis for any given type from the `availablelinkers' slot.
@@ -624,7 +624,7 @@ Converts all symbols into the objects to be used."
   "Return non-nil if the current project PROJ is automake mode."
   (eq (ede-proj-makefile-type proj) 'Makefile))
 
-(defmethod ede-proj-dist-makefile ((this ede-proj-project))
+(cl-defmethod ede-proj-dist-makefile ((this ede-proj-project))
   "Return the name of the Makefile with the DIST target in it for THIS."
   (cond ((eq (oref this makefile-type) 'Makefile.am)
 	 (concat (file-name-directory (oref this file))
@@ -651,7 +651,7 @@ Converts all symbols into the objects to be used."
   (interactive)
   (ede-proj-setup-buildenvironment (ede-current-project) t))
 
-(defmethod ede-proj-makefile-create-maybe ((this ede-proj-project) mfilename)
+(cl-defmethod ede-proj-makefile-create-maybe ((this ede-proj-project) mfilename)
   "Create a Makefile for all Makefile targets in THIS if needed.
 MFILENAME is the makefile to generate."
   ;; For now, pass through until dirty is implemented.
@@ -660,7 +660,7 @@ MFILENAME is the makefile to generate."
 	  (file-newer-than-file-p (oref this file) mfilename))
       (ede-proj-makefile-create this mfilename)))
 
-(defmethod ede-proj-setup-buildenvironment ((this ede-proj-project)
+(cl-defmethod ede-proj-setup-buildenvironment ((this ede-proj-project)
 					    &optional force)
   "Setup the build environment for project THIS.
 Handles the Makefile, or a Makefile.am configure.ac combination.
@@ -686,11 +686,14 @@ Optional argument FORCE will force items to be regenerated."
 
 ;;; Lower level overloads
 ;;
-(defmethod project-rescan ((this ede-proj-project))
+(cl-defmethod project-rescan ((this ede-proj-project))
   "Rescan the EDE proj project THIS."
   (let ((root (or (ede-project-root this) this))
 	)
-    (setq ede-projects (delq root ede-projects))
+    ;; @TODO - VERIFY THE BELOW WORKS
+    (ede-project-directory-remove-hash
+     (file-name-directory (ede-project-root-directory root)))
+    (ede-delete-project-from-global-list root)
     ;; NOTE : parent function double-checks that this dir was
     ;; already in memory once.
     (ede-load-project-file (ede-project-root-directory root))

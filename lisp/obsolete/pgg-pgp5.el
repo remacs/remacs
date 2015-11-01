@@ -1,6 +1,6 @@
 ;;; pgg-pgp5.el --- PGP 5.* support for PGG.
 
-;; Copyright (C) 1999-2000, 2002-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2000, 2002-2015 Free Software Foundation, Inc.
 
 ;; Author: Daiki Ueno <ueno@unixuser.org>
 ;; Created: 1999/11/02
@@ -35,22 +35,22 @@
   :group 'pgg)
 
 (defcustom pgg-pgp5-pgpe-program "pgpe"
-  "PGP 5.* 'pgpe' executable."
+  "PGP 5.* `pgpe' executable."
   :group 'pgg-pgp5
   :type 'string)
 
 (defcustom pgg-pgp5-pgps-program "pgps"
-  "PGP 5.* 'pgps' executable."
+  "PGP 5.* `pgps' executable."
   :group 'pgg-pgp5
   :type 'string)
 
 (defcustom pgg-pgp5-pgpk-program "pgpk"
-  "PGP 5.* 'pgpk' executable."
+  "PGP 5.* `pgpk' executable."
   :group 'pgg-pgp5
   :type 'string)
 
 (defcustom pgg-pgp5-pgpv-program "pgpv"
-  "PGP 5.* 'pgpv' executable."
+  "PGP 5.* `pgpv' executable."
   :group 'pgg-pgp5
   :type 'string)
 
@@ -115,7 +115,7 @@ Bourne shell or its equivalent \(not tcsh) is needed for \"2>\"."
 	    (pgg-convert-lbt-region (point-min)(point-max) 'LF)
 
 	    (if (memq status '(stop signal))
-		(error "%s exited abnormally: '%s'" program exit-status))
+		(error "%s exited abnormally: `%s'" program exit-status))
 	    (if (= 127 exit-status)
 		(error "%s could not be found" program))
 
@@ -208,15 +208,11 @@ Bourne shell or its equivalent \(not tcsh) is needed for \"2>\"."
 (defun pgg-pgp5-verify-region (start end &optional signature)
   "Verify region between START and END as the detached signature SIGNATURE."
   (let ((orig-file (pgg-make-temp-file "pgg"))
-	(args '("+verbose=1" "+batchmode=1" "+language=us"))
-	(orig-mode (default-file-modes)))
-    (unwind-protect
-	(progn
-	  (set-default-file-modes 448)
-	  (let ((coding-system-for-write 'binary)
-		jka-compr-compression-info-list jam-zcat-filename-list)
-	    (write-region start end orig-file)))
-      (set-default-file-modes orig-mode))
+	(args '("+verbose=1" "+batchmode=1" "+language=us")))
+    (with-file-modes 448
+      (let ((coding-system-for-write 'binary)
+	    jka-compr-compression-info-list jam-zcat-filename-list)
+	(write-region start end orig-file)))
     (when (stringp signature)
       (copy-file signature (setq signature (concat orig-file ".asc")))
       (setq args (append args (list signature))))

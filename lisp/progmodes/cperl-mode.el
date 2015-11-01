@@ -1,6 +1,6 @@
 ;;; cperl-mode.el --- Perl code editing commands for Emacs
 
-;; Copyright (C) 1985-1987, 1991-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1985-1987, 1991-2015 Free Software Foundation, Inc.
 
 ;; Author: Ilya Zakharevich
 ;;	Bob Olson
@@ -282,7 +282,7 @@ This is in addition to cperl-continued-statement-offset."
 
 (defcustom cperl-indent-wrt-brace t
   "*Non-nil means indent statements in if/etc block relative brace, not if/etc.
-Versions 5.2 ... 5.20 behaved as if this were `nil'."
+Versions 5.2 ... 5.20 behaved as if this were nil."
   :type 'boolean
   :group 'cperl-indentation-details)
 
@@ -395,12 +395,12 @@ Affects: `cperl-font-lock', `cperl-electric-lbrace-space',
   :type 'boolean
   :group 'cperl-indentation-details)
 
-(defcustom cperl-vc-sccs-header '("($sccs) = ('%W\%' =~ /(\\d+(\\.\\d+)+)/) ;")
+(defcustom cperl-vc-sccs-header '("($sccs) = ('%W\ %' =~ /(\\d+(\\.\\d+)+)/) ;")
   "*Special version of `vc-sccs-header' that is used in CPerl mode buffers."
   :type '(repeat string)
   :group 'cperl)
 
-(defcustom cperl-vc-rcs-header '("($rcs) = (' $Id\$ ' =~ /(\\d+(\\.\\d+)+)/);")
+(defcustom cperl-vc-rcs-header '("($rcs) = (' $Id\ $ ' =~ /(\\d+(\\.\\d+)+)/);")
   "*Special version of `vc-rcs-header' that is used in CPerl mode buffers."
   :type '(repeat string)
      :group 'cperl)
@@ -412,15 +412,15 @@ Affects: `cperl-font-lock', `cperl-electric-lbrace-space',
  "use cperl-vc-rcs-header or cperl-vc-sccs-header instead."
  "22.1")
 
-(defcustom cperl-clobber-mode-lists
-  (not
-   (and
-    (boundp 'interpreter-mode-alist)
-    (assoc "miniperl" interpreter-mode-alist)
-    (assoc "\\.\\([pP][Llm]\\|al\\)$" auto-mode-alist)))
-  "*Whether to install us into `interpreter-' and `extension' mode lists."
-  :type 'boolean
-  :group 'cperl)
+;; (defcustom cperl-clobber-mode-lists
+;;   (not
+;;    (and
+;;     (boundp 'interpreter-mode-alist)
+;;     (assoc "miniperl" interpreter-mode-alist)
+;;     (assoc "\\.\\([pP][Llm]\\|al\\)$" auto-mode-alist)))
+;;   "*Whether to install us into `interpreter-' and `extension' mode lists."
+;;   :type 'boolean
+;;   :group 'cperl)
 
 (defcustom cperl-info-on-command-no-prompt nil
   "*Not-nil (and non-null) means not to prompt on C-h f.
@@ -724,7 +724,7 @@ mode-compile.el.
 If your Emacs does not default to `cperl-mode' on Perl files, and you
 want it to: put the following into your .emacs file:
 
-  (defalias 'perl-mode 'cperl-mode)
+  (defalias \\='perl-mode \\='cperl-mode)
 
 Get perl5-info from
   $CPAN/doc/manual/info/perl5-old/perl5-info.tar.gz
@@ -793,7 +793,7 @@ corrected problems are: POD sections, here-documents, regexps.  The
 operations are: highlighting, indentation, electric keywords, electric
 braces.
 
-This may be confusing, since the regexp s#//#/#\; may be highlighted
+This may be confusing, since the regexp s#//#/#; may be highlighted
 as a comment, but it will be recognized as a regexp by the indentation
 code.  Or the opposite case, when a POD section is highlighted, but
 may break the indentation of the following code (though indentation
@@ -1042,11 +1042,11 @@ In regular expressions (including character classes):
   cperl-can-font-lock)
 
 (defun cperl-putback-char (c)		; Emacs 19
-  (set 'unread-command-events (list c))) ; Avoid undefined warning
+  (push c unread-command-events))       ; Avoid undefined warning
 
 (if (featurep 'xemacs)
     (defun cperl-putback-char (c)	; XEmacs >= 19.12
-      (setq unread-command-events (list (eval '(character-to-event c))))))
+      (push (eval '(character-to-event c)) unread-command-events)))
 
 (or (fboundp 'uncomment-region)
     (defun uncomment-region (beg end)
@@ -2281,8 +2281,8 @@ to nil."
 	     (search-backward ")")
 	     (if (eq last-command-event ?\()
 		 (progn			; Avoid "if (())"
-		   (delete-backward-char 1)
-		   (delete-backward-char -1))))
+		   (delete-char -1)
+		   (delete-char 1))))
 	   (if delete
 	       (cperl-putback-char cperl-del-back-ch))
 	   (if cperl-message-electric-keyword
@@ -2588,7 +2588,7 @@ Will untabify if `cperl-electric-backspace-untabify' is non-nil."
 	  (delete-region (point) p))
       (if cperl-electric-backspace-untabify
 	  (backward-delete-char-untabify arg)
-	(delete-backward-char arg)))))
+	(call-interactively 'delete-backward-char)))))
 
 (put 'cperl-electric-backspace 'delete-selection 'supersede)
 
@@ -3124,7 +3124,7 @@ and closing parentheses and brackets."
 	  (+ (if (or (memq (elt i 2) (append "}])" nil)) ; char-after
                      (eq 'continuation ; do not stagger continuations
                          (elt (cperl-sniff-for-indent parse-data) 0)))
-		 0 ; Closing parenth or continuation of a continuation
+		 0 ; Closing parenthesis or continuation of a continuation
 	       cperl-continued-statement-offset)
 	     (if (or (elt i 3)		; is-block
 		     (not (elt i 4))		; is-brace
@@ -3672,7 +3672,7 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
 	 is-REx is-x-REx REx-subgr-start REx-subgr-end was-subgr i2 hairy-RE
 	 (case-fold-search nil) (inhibit-read-only t) (buffer-undo-list t)
 	 (modified (buffer-modified-p)) overshoot is-o-REx name
-	 (after-change-functions nil)
+	 (inhibit-modification-hooks t)
 	 (cperl-font-locking t)
 	 (use-syntax-state (and cperl-syntax-state
 				(>= min (car cperl-syntax-state))))
@@ -4585,13 +4585,13 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
 					 ((eq (char-after b) ?\: )
 					  "\\\\*\\[\\\\:\\^?\\sw+\\\\:]")
 					 ((eq (char-after b) ?^ )
-					  "\\\\*\\[:\\(\\\\\\^\\)?\\sw+:\]")
+					  "\\\\*\\[:\\(\\\\\\^\\)?\\sw+:]")
 					 ((eq (char-syntax (char-after b))
 					      ?w)
 					  (concat
 					   "\\\\*\\[:\\(\\\\\\^\\)?\\(\\\\"
 					   (char-to-string (char-after b))
-					   "\\|\\sw\\)+:\]"))
+					   "\\|\\sw\\)+:]"))
 					 (t "\\\\*\\[:\\^?\\sw*:]")))
 				       (goto-char REx-subgr-end)
 				       (cperl-highlight-charclass
@@ -4828,9 +4828,9 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
       (and (memq (char-syntax (preceding-char)) '(?w ?_))
 	   (progn
 	     (backward-sexp)
-	     ;; sub {BLK}, print {BLK} $data, but NOT `bless', `return', `tr'
+	     ;; sub {BLK}, print {BLK} $data, but NOT `bless', `return', `tr', `constant'
 	     (or (and (looking-at "[a-zA-Z0-9_:]+[ \t\n\f]*[{#]") ; Method call syntax
-		      (not (looking-at "\\(bless\\|return\\|q[wqrx]?\\|tr\\|[smy]\\)\\>")))
+		      (not (looking-at "\\(bless\\|return\\|q[wqrx]?\\|tr\\|[smy]\\|constant\\)\\>")))
 		 ;; sub bless::foo {}
 		 (progn
 		   (cperl-backward-to-noncomment (point-min))
@@ -5043,7 +5043,7 @@ conditional/loop constructs."
 		  (goto-char top))
 	      (if (looking-at		; Try Plan C: continuation block
 		   (concat cperl-maybe-white-and-comment-rex
-			   "\\<\\(else\\|elsif\|continue\\)\\>"))
+			   "\\<\\(else\\|elsif\\|continue\\)\\>"))
 		  (progn
 		    (goto-char (match-end 0))
 		    (setq tmp-end (point-at-eol)))
@@ -5145,7 +5145,7 @@ Returns some position at the last line."
 	      (if (eq (following-char) ?\( )
 		  (progn
 		    (forward-sexp 1)
-		    (setq pp (point)))	; past parenth-group
+		    (setq pp (point)))	; past parenthesis-group
 		;; after `else' or nothing
 		(if ml			; after `else'
 		    (skip-chars-backward " \t\n")
@@ -5706,7 +5706,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
 		 "redo" "return" "local" "exec" "sub" "do" "dump" "use" "our"
 		 "require" "package" "eval" "my" "BEGIN" "END" "CHECK" "INIT")
 	       "\\|")			; Flow control
-	      "\\)\\>") 2)		; was "\\)[ \n\t;():,\|&]"
+	      "\\)\\>") 2)		; was "\\)[ \n\t;():,|&]"
 					; In what follows we use `type' style
 					; for overwritable builtins
 	    (list
@@ -5850,7 +5850,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
 		      (1 font-lock-string-face t))))
 		  (t '("\\([]}\\\\%@>*&]\\|\\$[a-zA-Z0-9_:]*\\)[ \t]*{[ \t]*\\(-?[a-zA-Z0-9_:]+\\)[ \t]*}"
 		       2 font-lock-string-face t)))
-	    '("[\[ \t{,(]\\(-?[a-zA-Z0-9_:]+\\)[ \t]*=>" 1
+	    '("[[ \t{,(]\\(-?[a-zA-Z0-9_:]+\\)[ \t]*=>" 1
 	      font-lock-string-face t)
 	    '("^[ \t]*\\([a-zA-Z0-9_]+[ \t]*:\\)[ \t]*\\($\\|{\\|\\<\\(until\\|while\\|for\\(each\\)?\\|do\\)\\>\\)" 1
 	      font-lock-constant-face)	; labels
@@ -5935,7 +5935,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
 		 (and (string< "21.1.10" emacs-version)
 		      (string< emacs-version "21.1.2")))
 		'(
-		  ("\\(\\([@%]\\|\$#\\)[a-zA-Z_:][a-zA-Z0-9_:]*\\)" 1
+		  ("\\(\\([@%]\\|\\$#\\)[a-zA-Z_:][a-zA-Z0-9_:]*\\)" 1
 		   (if (eq (char-after (match-beginning 2)) ?%)
 		       'cperl-hash-face
 		     'cperl-array-face)
@@ -6535,7 +6535,7 @@ side-effect of memorizing only.  Examples in `cperl-style-examples'."
     (eval '(mode-compile))))		; Avoid a warning
 
 (declare-function Info-find-node "info"
-		  (filename nodename &optional no-going-back))
+		  (filename nodename &optional no-going-back strict-case))
 
 (defun cperl-info-buffer (type)
   ;; Returns buffer with documentation.  Creates if missing.
@@ -7607,7 +7607,7 @@ than a line.  Your contribution to update/shorten it is appreciated."
 
 (defvar cperl-short-docs 'please-ignore-this-line
   ;; Perl4 version was written by Johan Vromans (jvromans@squirrel.nl)
-  "# based on '@(#)@ perl-descr.el 1.9 - describe-perl-symbol' [Perl 5]
+  "# based on \\='@(#)@ perl-descr.el 1.9 - describe-perl-symbol\\=' [Perl 5]
 ...	Range (list context); flip/flop [no flop when flip] (scalar context).
 ! ...	Logical negation.
 ... != ...	Numeric inequality.
@@ -7630,8 +7630,8 @@ $7	Match of the 7th set of parentheses in the last match (auto-local).
 $8	Match of the 8th set of parentheses in the last match (auto-local).
 $9	Match of the 9th set of parentheses in the last match (auto-local).
 $&	The string matched by the last pattern match (auto-local).
-$'	The string after what was matched by the last match (auto-local).
-$`	The string before what was matched by the last match (auto-local).
+$\\='	The string after what was matched by the last match (auto-local).
+$\\=`	The string before what was matched by the last match (auto-local).
 
 $(	The real gid of this process.
 $)	The effective gid of this process.
@@ -7647,7 +7647,7 @@ $;	Subscript separator for multi-dim array emulation.  Default \"\\034\".
 $<	The real uid of this process.
 $=	The page length of the current output channel.  Default is 60 lines.
 $>	The effective uid of this process.
-$?	The status returned by the last ``, pipe close or `system'.
+$?	The status returned by the last \\=`\\=`, pipe close or `system'.
 $@	The perl error message from the last eval or do @var{EXPR} command.
 $ARGV	The name of the current file used with <> .
 $[	Deprecated: The index of the first element/char in an array/string.
@@ -7886,9 +7886,9 @@ pop(ARRAY)
 print [FILEHANDLE] [(LIST)]
 printf [FILEHANDLE] (FORMAT,LIST)
 push(ARRAY,LIST)
-q/STRING/	Synonym for 'STRING'
+q/STRING/	Synonym for \\='STRING\\='
 qq/STRING/	Synonym for \"STRING\"
-qx/STRING/	Synonym for `STRING`
+qx/STRING/	Synonym for \\=`STRING\\=`
 rand[(EXPR)]
 read(FILEHANDLE,SCALAR,LENGTH[,OFFSET])
 readdir(DIRHANDLE)
@@ -7988,7 +7988,7 @@ DESTROY		Shorthand for `sub DESTROY {...}'.
 abs [ EXPR ]	absolute value
 ... and ...		Low-precedence synonym for &&.
 bless REFERENCE [, PACKAGE]	Makes reference into an object of a package.
-chomp [LIST]	Strips $/ off LIST/$_.  Returns count.  Special if $/ eq ''!
+chomp [LIST]	Strips $/ off LIST/$_.  Returns count.  Special if $/ eq \\='\\='!
 chr		Converts a number to char with the same ordinal.
 else		Part of if/unless {BLOCK} elsif {BLOCK} else {BLOCK}.
 elsif		Part of if/unless {BLOCK} elsif {BLOCK} else {BLOCK}.
@@ -8005,9 +8005,9 @@ not ...		Low-precedence synonym for ! - negation.
 ... or ...		Low-precedence synonym for ||.
 pos STRING    Set/Get end-position of the last match over this string, see \\G.
 quotemeta [ EXPR ]	Quote regexp metacharacters.
-qw/WORD1 .../		Synonym of split('', 'WORD1 ...')
+qw/WORD1 .../		Synonym of split(\\='\\=', \\='WORD1 ...\\=')
 readline FH	Synonym of <FH>.
-readpipe CMD	Synonym of `CMD`.
+readpipe CMD	Synonym of \\=`CMD\\=`.
 ref [ EXPR ]	Type of EXPR when dereferenced.
 sysopen FH, FILENAME, MODE [, PERM]	(MODE is numeric, see Fcntl.)
 tie VAR, PACKAGE, LIST	Hide an object behind a simple Perl variable.
@@ -8882,7 +8882,7 @@ Delay of auto-help controlled by `cperl-lazy-help-time'."
 (defun cperl-font-lock-unfontify-region-function (beg end)
   (let* ((modified (buffer-modified-p)) (buffer-undo-list t)
 	 (inhibit-read-only t) (inhibit-point-motion-hooks t)
-	 before-change-functions after-change-functions
+	 (inhibit-modification-hooks t)
 	 deactivate-mark buffer-file-name buffer-file-truename)
     (remove-text-properties beg end '(face nil))
     (if (and (not modified) (buffer-modified-p))
@@ -8900,8 +8900,9 @@ do extra unwind via `cperl-unwind-to-safe'."
 		  (beginning-of-line)
 		  (eq (get-text-property (setq beg (point)) 'syntax-type)
 		      'multiline)))
-      (if (setq beg (cperl-beginning-of-property beg 'syntax-type))
-	  (goto-char beg)))
+      (let ((new-beg (cperl-beginning-of-property beg 'syntax-type)))
+	(setq beg (if (= new-beg beg) nil new-beg))
+	(goto-char new-beg)))
     (setq beg (point))
     (goto-char end)
     (while (and end

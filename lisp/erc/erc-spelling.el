@@ -1,9 +1,9 @@
 ;;; erc-spelling.el --- use flyspell in ERC
 
-;; Copyright (C) 2005-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
 ;; Author: Jorgen Schaefer <forcer@forcix.cx>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: irc
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki.pl?ErcSpelling
 
@@ -71,7 +71,7 @@ The current buffer is given by BUFFER."
               (if dicts
                   (cadr (car dicts))
                 (erc-with-server-buffer ispell-local-dictionary)))))
-    (setq flyspell-generic-check-word-p 'erc-spelling-flyspell-verify)
+    (setq flyspell-generic-check-word-predicate #'erc-spelling-flyspell-verify)
     (flyspell-mode 1)))
 
 (defun erc-spelling-unhighlight-word (word)
@@ -85,6 +85,7 @@ The cadr is the beginning and the caddr is the end."
 
 (defun erc-spelling-flyspell-verify ()
   "Flyspell only the input line, nothing else."
+  ;; FIXME: Don't use `flyspell-word'!
   (let ((word-data (and (boundp 'flyspell-word)
                         flyspell-word)))
     (when word-data

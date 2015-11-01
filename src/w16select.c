@@ -1,6 +1,6 @@
 /* 16-bit Windows Selection processing for emacs on MS-Windows
 
-Copyright (C) 1996-1997, 2001-2013 Free Software Foundation, Inc.
+Copyright (C) 1996-1997, 2001-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -600,7 +600,7 @@ DEFUN ("w16-get-clipboard-data", Fw16_get_clipboard_data, Sw16_get_clipboard_dat
       coding.mode |= CODING_MODE_LAST_BLOCK;
       /* We explicitly disable composition handling because selection
 	 data should not contain any composition sequence.  */
-      coding.mode &= CODING_ANNOTATION_MASK;
+      coding.common_flags &= ~CODING_ANNOTATION_MASK;
       decode_coding_object (&coding, Qnil, 0, 0, truelen, truelen, Qt);
       ret = coding.dst_object;
       Vlast_coding_system_used = CODING_ID_NAME (coding.id);
@@ -625,9 +625,9 @@ DEFUN ("w16-get-clipboard-data", Fw16_get_clipboard_data, Sw16_get_clipboard_dat
   return (ret);
 }
 
-/* Support checking for a clipboard selection. */
+/* Support checking for a clipboard selection.  */
 
-DEFUN ("x-selection-exists-p", Fx_selection_exists_p, Sx_selection_exists_p,
+DEFUN ("w16-selection-exists-p", Fw16_selection_exists_p, Sw16_selection_exists_p,
        0, 2, 0,
        doc: /* Whether there is an owner for the given X selection.
 SELECTION should be the name of the selection in question, typically
@@ -677,7 +677,7 @@ syms_of_win16select (void)
 {
   defsubr (&Sw16_set_clipboard_data);
   defsubr (&Sw16_get_clipboard_data);
-  defsubr (&Sx_selection_exists_p);
+  defsubr (&Sw16_selection_exists_p);
 
   DEFVAR_LISP ("selection-coding-system", Vselection_coding_system,
 	       doc: /* Coding system for communicating with other programs.
@@ -686,7 +686,7 @@ For MS-Windows and MS-DOS:
 When sending or receiving text via selection and clipboard, the text
 is encoded or decoded by this coding system.  The default value is
 the current system default encoding on 9x/Me, `utf-16le-dos'
-\(Unicode) on NT/W2K/XP, and `iso-latin-1-dos' on MS-DOS.
+(Unicode) on NT/W2K/XP, and `iso-latin-1-dos' on MS-DOS.
 
 For X Windows:
 When sending text via selection and clipboard, if the target

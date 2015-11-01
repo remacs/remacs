@@ -1,6 +1,6 @@
 ;;; org-plot.el --- Support for plotting from Org-mode
 
-;; Copyright (C) 2008-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2015 Free Software Foundation, Inc.
 ;;
 ;; Author: Eric Schulte <schulte dot eric at gmail dot com>
 ;; Keywords: tables, plotting
@@ -30,7 +30,6 @@
 
 ;;; Code:
 (require 'org)
-(require 'org-exp)
 (require 'org-table)
 (eval-when-compile
   (require 'cl))
@@ -95,7 +94,7 @@ Return value is the point at the beginning of the table."
   (goto-char (org-table-begin)))
 
 (defun org-plot/collect-options (&optional params)
-  "Collect options from an org-plot '#+Plot:' line.
+  "Collect options from an org-plot `#+Plot:' line.
 Accepts an optional property list PARAMS, to which the options
 will be added.  Returns the resulting property list."
   (interactive)

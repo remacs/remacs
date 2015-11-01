@@ -1,6 +1,6 @@
-;;; esh-ext.el --- commands external to Eshell
+;;; esh-ext.el --- commands external to Eshell  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -60,14 +60,15 @@ loaded into memory, thus beginning a new process."
   :type '(repeat string)
   :group 'eshell-ext)
 
-(defcustom eshell-force-execution nil
-  "If non-nil, try to execute binary files regardless of permissions.
+(defcustom eshell-force-execution
+  (not (null (memq system-type '(windows-nt ms-dos))))
+  "If non-nil, try to execute files regardless of execute permissions.
 This can be useful on systems like Windows, where the operating system
-doesn't happen to honor the permission bits in certain cases; or in
-cases where you want to associate an interpreter with a particular
-kind of script file, but the language won't let you but a '#!'
-interpreter line in the file, and you don't want to make it executable
-since nothing else but Eshell will be able to understand
+doesn't support the execution bit for shell scripts; or in cases where
+you want to associate an interpreter with a particular kind of script
+file, but the language won't let you but a `#!' interpreter line in
+the file, and you don't want to make it executable since nothing else
+but Eshell will be able to understand
 `eshell-interpreter-alist'."
   :type 'boolean
   :group 'eshell-ext)
@@ -78,6 +79,8 @@ since nothing else but Eshell will be able to understand
       name
     (let ((list (eshell-parse-colon-path eshell-path-env))
 	  suffixes n1 n2 file)
+      (if (eshell-under-windows-p)
+          (push "." list))
       (while list
 	(setq n1 (concat (car list) name))
 	(setq suffixes eshell-binary-suffixes)
@@ -91,6 +94,10 @@ since nothing else but Eshell will be able to understand
 	  (setq suffixes (cdr suffixes)))
 	(setq list (cdr list)))
       file)))
+
+;; This file provides itself then eval-when-compile loads files that require it.
+;; This causes spurious "might not be defined at runtime" warnings.
+(declare-function eshell-search-path "esh-ext" (name))
 
 (defcustom eshell-windows-shell-file
   (if (eshell-under-windows-p)
@@ -292,6 +299,11 @@ line of the form #!<interp>."
       (let ((fullname (if (file-name-directory file) file
 			(eshell-search-path file)))
 	    (suffixes eshell-binary-suffixes))
+	(if (and fullname
+		 (not (file-remote-p fullname))
+		 (file-remote-p default-directory))
+	    (setq fullname (expand-file-name
+			    (concat "./" fullname) default-directory)))
 	(if (and fullname (not (or eshell-force-execution
 				   (file-executable-p fullname))))
 	    (while suffixes

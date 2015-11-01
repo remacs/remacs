@@ -1,6 +1,6 @@
 ;;; longlines.el --- automatically wrap long lines   -*- coding:utf-8 -*-
 
-;; Copyright (C) 2000-2001, 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2001, 2004-2015 Free Software Foundation, Inc.
 
 ;; Authors:    Kai Grossjohann <Kai.Grossjohann@CS.Uni-Dortmund.DE>
 ;;             Alex Schroeder <alex@gnu.org>
@@ -143,7 +143,7 @@ newlines are indicated with a symbol."
                     'longlines-window-change-function nil t))
         (let ((buffer-undo-list t)
               (inhibit-read-only t)
-	      (after-change-functions nil)
+	      (inhibit-modification-hooks t)
               (mod (buffer-modified-p))
 	      buffer-file-name buffer-file-truename)
           ;; Turning off undo is OK since (spaces + newlines) is
@@ -184,7 +184,7 @@ newlines are indicated with a symbol."
     (if longlines-showing
         (longlines-unshow-hard-newlines))
     (let ((buffer-undo-list t)
-	  (after-change-functions nil)
+	  (inhibit-modification-hooks t)
           (inhibit-read-only t)
 	  buffer-file-name buffer-file-truename)
       (if longlines-decoded
@@ -464,14 +464,9 @@ This is called by `window-configuration-change-hook'."
 
 (defun longlines-search-function ()
   (cond
-   (isearch-word
-    (if isearch-forward 'word-search-forward 'word-search-backward))
-   (isearch-regexp
-    (if isearch-forward 're-search-forward 're-search-backward))
-   (t
-    (if isearch-forward
-	'longlines-search-forward
-      'longlines-search-backward))))
+   ((or isearch-regexp-function isearch-regexp) (isearch-search-fun-default))
+   (isearch-forward #'longlines-search-forward)
+   (t #'longlines-search-backward)))
 
 (defun longlines-search-forward (string &optional bound noerror count)
   (let ((search-spaces-regexp " *[ \n]"))

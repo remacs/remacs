@@ -1,6 +1,6 @@
 ;;; ediff-ptch.el --- Ediff's  patch support
 
-;; Copyright (C) 1996-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.stonybrook.edu>
 ;; Package: ediff
@@ -90,14 +90,14 @@ See also `ediff-backup-specs'."
 	   ;; traditional `patch'
 	   (format "-b %s" ediff-backup-extension))))
   "Backup directives to pass to the patch program.
-Ediff requires that the old version of the file \(before applying the patch\)
+Ediff requires that the old version of the file \(before applying the patch)
 be saved in a file named `the-patch-file.extension'.  Usually `extension' is
 `.orig', but this can be changed by the user and may depend on the system.
 Therefore, Ediff needs to know the backup extension used by the patch program.
 
 Some versions of the patch program let you specify `-b backup-extension'.
 Other versions only permit `-b', which assumes the extension `.orig'
-\(in which case ediff-backup-extension MUST be also `.orig'\).  The latest
+\(in which case ediff-backup-extension MUST be also `.orig').  The latest
 versions of GNU patch require `-b -z backup-extension'.
 
 Note that both `ediff-backup-extension' and `ediff-backup-specs'
@@ -333,7 +333,7 @@ program."
 		      (ediff-with-current-buffer standard-output
 			(fundamental-mode))
 		      (princ
-		       (format "
+		       (format-message "
 The patch file contains a context diff for
 	%s
 	%s
@@ -342,7 +342,7 @@ to be patched on your system.  If you know the correct file name,
 please enter it now.
 
 If you don't know and still would like to apply patches to
-other files, enter /dev/null
+other files, enter `/dev/null'.
 "
 			       (substring (car proposed-file-names) 6)
 			       (substring (cdr proposed-file-names) 6))))
@@ -406,7 +406,7 @@ other files, enter /dev/null
 		  (with-output-to-temp-buffer ediff-msg-buffer
 		    (ediff-with-current-buffer standard-output
 		      (fundamental-mode))
-		    (princ (format "
+		    (princ (format-message "
 Ediff has inferred that
 	%s
 	%s
@@ -723,7 +723,7 @@ optional argument, then use it."
 	  (with-output-to-temp-buffer ediff-msg-buffer
 	    (ediff-with-current-buffer standard-output
 	      (fundamental-mode))
-	    (princ (format
+	    (princ (format-message
 		    "Patch program has failed due to a bad patch file,
 it couldn't apply all hunks, OR
 it couldn't create the backup for the file being patched.
@@ -735,7 +735,7 @@ The second problem might be due to an incompatibility among these settings:
     ediff-patch-program    = %S             ediff-patch-options    = %S
     ediff-backup-extension = %S             ediff-backup-specs     = %S
 
-See Ediff on-line manual for more details on these variables.
+See Ediff manual for more details on these variables.
 In particular, check the documentation for `ediff-backup-specs'.
 
 In any of the above cases, Ediff doesn't compare files automatically.

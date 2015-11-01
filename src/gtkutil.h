@@ -1,6 +1,6 @@
 /* Definitions and headers for GTK widgets.
 
-Copyright (C) 2003-2013 Free Software Foundation, Inc.
+Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -24,7 +24,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef USE_GTK
 
 #include <gtk/gtk.h>
-#include "frame.h"
+#include "../lwlib/lwlib-widget.h"
 #include "xterm.h"
 
 /* Minimum and maximum values used for GTK scroll bars  */
@@ -32,6 +32,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define XG_SB_MIN 1
 #define XG_SB_MAX 10000000
 #define XG_SB_RANGE (XG_SB_MAX-XG_SB_MIN)
+#define YG_SB_MIN 1
+#define YG_SB_MAX 10000000
+#define YG_SB_RANGE (YG_SB_MAX-YG_SB_MIN)
 
 /* Key for data that is valid for menus and scroll bars in a frame  */
 #define XG_FRAME_DATA "emacs_frame"
@@ -74,12 +77,7 @@ typedef struct xg_menu_item_cb_data_
 
 } xg_menu_item_cb_data;
 
-struct _widget_value;
-
-extern struct _widget_value *malloc_widget_value (void);
-extern void free_widget_value (struct _widget_value *);
-
-extern bool xg_uses_old_file_dialog (void) ATTRIBUTE_CONST;
+extern bool xg_uses_old_file_dialog (void);
 
 extern char *xg_get_file_name (struct frame *f,
                                char *prompt,
@@ -107,9 +105,7 @@ extern void xg_modify_menubar_widgets (GtkWidget *menubar,
 
 extern void xg_update_frame_menubar (struct frame *f);
 
-extern bool xg_event_is_for_menubar (struct frame *f, XEvent *event);
-
-extern bool xg_have_tear_offs (void);
+extern bool xg_event_is_for_menubar (struct frame *, const XEvent *);
 
 extern ptrdiff_t xg_get_scroll_id_for_window (Display *dpy, Window wid);
 
@@ -118,6 +114,11 @@ extern void xg_create_scroll_bar (struct frame *f,
                                   GCallback scroll_callback,
                                   GCallback end_callback,
                                   const char *scroll_bar_name);
+extern void xg_create_horizontal_scroll_bar (struct frame *f,
+					     struct scroll_bar *bar,
+					     GCallback scroll_callback,
+					     GCallback end_callback,
+					     const char *scroll_bar_name);
 extern void xg_remove_scroll_bar (struct frame *f, ptrdiff_t scrollbar_id);
 
 extern void xg_update_scrollbar_pos (struct frame *f,
@@ -126,22 +127,34 @@ extern void xg_update_scrollbar_pos (struct frame *f,
                                      int left,
                                      int width,
                                      int height);
+extern void xg_update_horizontal_scrollbar_pos (struct frame *f,
+						ptrdiff_t scrollbar_id,
+						int top,
+						int left,
+						int width,
+						int height);
 
 extern void xg_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar,
                                              int portion,
                                              int position,
                                              int whole);
-extern bool xg_event_is_for_scrollbar (struct frame *f, XEvent *event);
+extern void xg_set_toolkit_horizontal_scroll_bar_thumb (struct scroll_bar *bar,
+							int portion,
+							int position,
+							int whole);
+extern bool xg_event_is_for_scrollbar (struct frame *, const XEvent *);
 extern int xg_get_default_scrollbar_width (void);
+extern int xg_get_default_scrollbar_height (void);
 
 extern void update_frame_tool_bar (struct frame *f);
 extern void free_frame_tool_bar (struct frame *f);
 extern void xg_change_toolbar_position (struct frame *f, Lisp_Object pos);
 
+extern void xg_clear_under_internal_border (struct frame *f);
 extern void xg_frame_resized (struct frame *f,
                               int pixelwidth,
                               int pixelheight);
-extern void xg_frame_set_char_size (struct frame *f, int cols, int rows);
+extern void xg_frame_set_char_size (struct frame *f, int width, int height);
 extern GtkWidget * xg_win_to_widget (Display *dpy, Window wdesc);
 
 extern void xg_display_open (char *display_name, Display **dpy);
@@ -166,6 +179,11 @@ extern bool xg_prepare_tooltip (struct frame *f,
 extern void xg_show_tooltip (struct frame *f, int root_x, int root_y);
 extern bool xg_hide_tooltip (struct frame *f);
 
+#ifdef USE_CAIRO
+extern void xg_page_setup_dialog (void);
+extern Lisp_Object xg_get_page_setup (void);
+extern void xg_print_frames_dialog (Lisp_Object);
+#endif
 
 /* Mark all callback data that are Lisp_object:s during GC.  */
 extern void xg_mark_data (void);

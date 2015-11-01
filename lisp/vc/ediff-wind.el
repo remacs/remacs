@@ -1,6 +1,6 @@
 ;;; ediff-wind.el --- window manipulation utilities
 
-;; Copyright (C) 1994-1997, 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-1997, 2000-2015 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.stonybrook.edu>
 ;; Package: ediff
@@ -40,7 +40,7 @@
 
 ;; declare-function does not exist in XEmacs
 (eval-and-compile
-  (unless (fboundp 'declare-function) (defmacro declare-function (&rest  r))))
+  (unless (fboundp 'declare-function) (defmacro declare-function (&rest  _r))))
 
 (require 'ediff-init)
 (require 'ediff-help)
@@ -211,7 +211,7 @@ responsibility."
   "Function to call to determine the desired location for the control panel.
 Expects three parameters: the control buffer, the desired width and height
 of the control frame.  It returns an association list
-of the form \(\(top . <position>\) \(left . <position>\)\)"
+of the form \((top . <position>) \(left . <position>))"
   :type 'function
   :group 'ediff-window)
 
@@ -280,7 +280,7 @@ into icons, regardless of the window manager."
 
 ;;; Functions
 
-(defun ediff-get-window-by-clicking (wind prev-wind wind-number)
+(defun ediff-get-window-by-clicking (_wind _prev-wind wind-number)
   (let (event)
     (message
      "Select windows by clicking.  Please click on Window %d " wind-number)
@@ -289,9 +289,9 @@ into icons, regardless of the window manager."
 	  (beep 1))
       (message "Please click on Window %d " wind-number))
     (ediff-read-event) ; discard event
-    (setq wind (if (featurep 'xemacs)
-		   (event-window event)
-		 (posn-window (event-start event))))))
+    (if (featurep 'xemacs)
+        (event-window event)
+      (posn-window (event-start event)))))
 
 
 ;; Select the lowest window on the frame.
@@ -432,7 +432,7 @@ into icons, regardless of the window manager."
 	    three-way-comparison ediff-3way-comparison-job))
     ;; if in minibuffer go somewhere else
     (if (save-match-data
-	  (string-match "\*Minibuf-" (buffer-name (window-buffer))))
+	  (string-match "\\*Minibuf-" (buffer-name (window-buffer))))
 	(select-window (next-window nil 'ignore-minibuf)))
     (delete-other-windows)
     (set-window-dedicated-p (selected-window) nil)

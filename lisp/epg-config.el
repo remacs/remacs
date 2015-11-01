@@ -1,6 +1,6 @@
 ;;; epg-config.el --- configuration of the EasyPG Library
 
-;; Copyright (C) 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
 ;; Author: Daiki Ueno <ueno@unixuser.org>
 ;; Keywords: PGP, GnuPG
@@ -39,15 +39,20 @@
   :group 'data
   :group 'external)
 
-(defcustom epg-gpg-program (or (executable-find "gpg")
-			       (executable-find "gpg2")
-			       "gpg")
+(defcustom epg-gpg-program (cond ((executable-find "gpg") "gpg")
+				 ((executable-find "gpg2") "gpg2")
+				 (t "gpg"))
   "The `gpg' executable."
   :group 'epg
   :type 'string)
 
 (defcustom epg-gpgsm-program "gpgsm"
   "The `gpgsm' executable."
+  :group 'epg
+  :type 'string)
+
+(defcustom epg-gpgconf-program "gpgconf"
+  "The `gpgconf' executable."
   :group 'epg
   :type 'string)
 

@@ -1,9 +1,9 @@
 ;;; doctor.el --- psychological help for frustrated users
 
-;; Copyright (C) 1985, 1987, 1994, 1996, 2000-2013 Free Software
+;; Copyright (C) 1985, 1987, 1994, 1996, 2000-2015 Free Software
 ;; Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: games
 
 ;; This file is part of GNU Emacs.
@@ -989,7 +989,7 @@ Otherwise call the Doctor to parse preceding sentence."
 Put dialogue in buffer."
   (let (a
 	(prompt (concat (doctor-make-string x)
-			" what \?  "))
+			" what ?  "))
 	retval)
     (while (not retval)
 	   (while (not a)

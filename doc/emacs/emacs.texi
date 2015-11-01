@@ -1,7 +1,8 @@
 \input texinfo  @c -*- coding: utf-8 -*-
 
-@setfilename ../../info/emacs
+@setfilename ../../info/emacs.info
 @settitle GNU Emacs Manual
+@include docstyle.texi
 
 @c The edition number appears in more than one place in this file
 @c I don't really know what it means...
@@ -26,14 +27,14 @@ This is the @cite{GNU Emacs Manual},
 @end ifnottex
 updated for Emacs version @value{EMACSVER}.
 
-Copyright @copyright{} 1985--1987, 1993--2013 Free Software Foundation, Inc.
+Copyright @copyright{} 1985--1987, 1993--2015 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with the
 Invariant Sections being ``The GNU Manifesto,'' ``Distribution'' and
-``GNU GENERAL PUBLIC LICENSE,'' with the Front-Cover texts being ``A GNU
+``GNU GENERAL PUBLIC LICENSE,'' with the Front-Cover Texts being ``A GNU
 Manual,'' and with the Back-Cover Texts as in (a) below.  A copy of the
 license is included in the section entitled ``GNU Free Documentation
 License.''
@@ -44,11 +45,9 @@ developing GNU and promoting software freedom.''
 @end quotation
 @end copying
 
-@documentencoding UTF-8
-
 @dircategory Emacs
 @direntry
-* Emacs: (emacs).       The extensible self-documenting text editor.
+* Emacs: (emacs).               The extensible self-documenting text editor.
 @end direntry
 
 @c in general, keep the following line commented out, unless doing a
@@ -94,7 +93,7 @@ developing GNU and promoting software freedom.''
 Published by the Free Software Foundation @*
 51 Franklin Street, Fifth Floor @*
 Boston, MA 02110-1301 USA @*
-ISBN 978-0-9831592-4-7
+ISBN 978-0-9831592-5-4
 
 @sp 2
 Cover art by Etienne Suvasa; cover design by Matt Lee.
@@ -115,6 +114,7 @@ display editor.  This manual describes how to edit with Emacs and
 some of the ways to customize it; it corresponds to GNU Emacs version
 @value{EMACSVER}.
 
+@c See 'manual-html-mono' and 'manual-html-node' in admin/admin.el.
 @ifset WWW_GNU_ORG
 @html
 The homepage for GNU Emacs is at
@@ -160,7 +160,7 @@ Fundamental Editing Commands
 * Help::                Commands for asking Emacs about its commands.
 
 Important Text-Changing Commands
-* Mark::                The mark: how to delimit a "region" of text.
+* Mark::                The mark: how to delimit a region of text.
 * Killing::             Killing (cutting) and yanking (copying) text.
 * Registers::           Saving a text string or a location in the buffer.
 * Display::             Controlling what text is displayed.
@@ -172,7 +172,7 @@ Major Structures of Emacs
 * Files::               All about handling files.
 * Buffers::             Multiple buffers; editing several files at once.
 * Windows::             Viewing multiple pieces of text in one frame.
-* Frames::              Using multiple "windows" on your display.
+* Frames::              Using multiple windows on your display.
 * International::       Using non-@acronym{ASCII} character sets.
 
 Advanced Features
@@ -188,7 +188,9 @@ Advanced Features
 * Sending Mail::        Sending mail in Emacs.
 * Rmail::               Reading mail in Emacs.
 * Gnus::                A flexible mail and news reader.
+* Network Security::    Managing the network security.
 * Document View::       Viewing PDF, PS and DVI files.
+* EWW::                 A web browser in Emacs.
 * Shell::               Executing shell commands from Emacs.
 * Emacs Server::        Using Emacs as an editing server.
 * Printing::            Printing hardcopies of buffers or regions.
@@ -198,8 +200,7 @@ Advanced Features
 @end ifnottex
 * Editing Binary Files::  Editing binary files with Hexl mode.
 * Saving Emacs Sessions:: Saving Emacs state from one session to the next.
-* Recursive Edit::      Performing edits while "within another command".
-* Emulation::           Emulating some other editors with Emacs.
+* Recursive Edit::      Performing edits while within another command.
 * Hyperlinking::        Following links in buffers.
 * Amusements::          Various games and hacks.
 * Packages::            Installing additional features.
@@ -237,9 +238,9 @@ Indexes (each index contains a large menu)
 * Concept Index::       An item for each concept.
 
 @c Do NOT modify the following 3 lines!  They must have this form to
-@c be correctly identified by `texinfo-multiple-files-update'.  In
+@c be correctly identified by 'texinfo-multiple-files-update'.  In
 @c particular, the detailed menu header line MUST be identical to the
-@c value of `texinfo-master-menu-header'.  See texnfo-upd.el.
+@c value of 'texinfo-master-menu-header'.  See texnfo-upd.el.
 
 @detailmenu
  --- The Detailed Node Listing ---
@@ -300,7 +301,7 @@ Help
 * Language Help::       Help relating to international language support.
 * Misc Help::           Other help commands.
 * Help Files::          Commands to display auxiliary help files.
-* Help Echo::           Help on active text and tooltips ("balloon help").
+* Help Echo::           Help on active text and tooltips.
 
 The Mark and the Region
 
@@ -336,7 +337,7 @@ Yanking
 * Earlier Kills::       Yanking something killed some time ago.
 * Appending Kills::     Several kills in a row all yank together.
 
-"Cut and Paste" Operations on Graphical Displays
+Cut and Paste Operations on Graphical Displays
 
 * Clipboard::           How Emacs uses the system clipboard.
 * Primary Selection::   The temporarily selected text selection.
@@ -344,13 +345,14 @@ Yanking
 
 Registers
 
-* Position Registers::      Saving positions in registers.
-* Text Registers::          Saving text in registers.
-* Rectangle Registers::     Saving rectangles in registers.
-* Configuration Registers:: Saving window configurations in registers.
-* Number Registers::        Numbers in registers.
-* File Registers::          File names in registers.
-* Bookmarks::               Bookmarks are like registers, but persistent.
+* Position Registers::       Saving positions in registers.
+* Text Registers::           Saving text in registers.
+* Rectangle Registers::      Saving rectangles in registers.
+* Configuration Registers::  Saving window configurations in registers.
+* Number Registers::         Numbers in registers.
+* File Registers::           File names in registers.
+* Keyboard Macro Registers:: Keyboard macros in registers.
+* Bookmarks::                Bookmarks are like registers, but persistent.
 
 Controlling the Display
 
@@ -462,7 +464,7 @@ Saving Files
 * Customize Save::      Customizing the saving of files.
 * Interlocking::        How Emacs protects against simultaneous editing
                           of one file by two users.
-* File Shadowing::      Copying files to "shadows" automatically.
+* File Shadowing::      Copying files to shadows automatically.
 * Time Stamps::         Emacs can update time stamps on saved files.
 
 Backup Files
@@ -490,7 +492,7 @@ Using Multiple Buffers
 
 * Select Buffer::       Creating a new buffer or reselecting an old one.
 * List Buffers::        Getting a list of buffers that exist.
-* Misc Buffer::         Renaming; changing read-onlyness; copying text.
+* Misc Buffer::         Renaming; changing read-only status; copying text.
 * Kill Buffer::         Killing buffers you no longer need.
 * Several Buffers::     How to go through the list of all buffers
                           and operate variously on several of them.
@@ -501,7 +503,7 @@ Using Multiple Buffers
 Convenience Features and Customization of Buffer Handling
 
 * Uniquify::            Making buffer names unique with directory parts.
-* Iswitchb::            Switching between buffers with substrings.
+* Icomplete::           Fast minibuffer selection.
 * Buffer Menus::        Configurable buffer menu.
 
 Multiple Windows
@@ -595,7 +597,7 @@ Commands for Human Languages
 * TeX Mode::            Editing TeX and LaTeX files.
 * HTML Mode::           Editing HTML and SGML files.
 * Nroff Mode::          Editing input to the nroff formatter.
-* Enriched Text::       Editing text "enriched" with fonts, colors, etc.
+* Enriched Text::       Editing text enriched with fonts, colors, etc.
 * Text Based Tables::   Commands for editing text-based tables.
 * Two-Column::          Splitting text columns into separate windows.
 
@@ -636,7 +638,7 @@ Enriched Text
 * Enriched Indentation::    Changing the left and right margins.
 * Enriched Justification::  Centering, setting text flush with the
                               left or right margin, etc.
-* Enriched Properties::     The "special" text properties submenu.
+* Enriched Properties::     The ``Special text properties'' submenu.
 
 @c The automatic texinfo menu update inserts some duplicate items here
 @c (faces, colors, indentation, justification, properties), because
@@ -665,7 +667,7 @@ Editing Programs
 * Documentation::       Getting documentation of functions you plan to call.
 * Hideshow::            Displaying blocks selectively.
 * Symbol Completion::   Completion on symbol names of your program or language.
-* Glasses::             Making identifiersLikeThis more readable.
+* MixedCase Words::     Dealing with identifiersLikeThis.
 * Semantic::            Suite of editing tools based on source code parsing.
 * Misc for Programs::   Other Emacs features useful for editing programs.
 * C Modes::             Special commands of C, C++, Objective-C,
@@ -829,7 +831,7 @@ VC Directory Mode
 Version Control Branches
 
 * Switching Branches::    How to get to another existing branch.
-* VC Pull::               Updating the contents of a branch.
+* Pulling / Pushing::     Receiving/sending changes from/to elsewhere.
 * Merging::               Transferring changes between branches.
 * Creating Branches::     How to start a new branch.
 
@@ -893,7 +895,7 @@ Editing Pictures
 
 * Basic Picture::         Basic concepts and simple commands of Picture Mode.
 * Insert in Picture::     Controlling direction of cursor motion
-                            after "self-inserting" characters.
+                            after self-inserting characters.
 * Tabs in Picture::       Various features for tab stops and indentation.
 * Rectangles in Picture:: Clearing and superimposing rectangles.
 @end ifnottex
@@ -959,8 +961,8 @@ Conversion To and From Other Calendars
 
 The Diary
 
-* Displaying the Diary::   Viewing diary entries and associated calendar dates.
 * Format of Diary File::   Entering events in your diary.
+* Displaying the Diary::   Viewing diary entries and associated calendar dates.
 * Date Formats::           Various ways you can specify dates.
 * Adding to Diary::        Commands to create diary entries.
 * Special Diary Entries::  Anniversaries, blocks of dates, cyclic entries, etc.
@@ -1090,7 +1092,7 @@ Customization
                           to decide what to do; by setting variables,
                           you can control their functioning.
 * Key Bindings::        The keymaps say what command each key runs.
-                          By changing them, you can "redefine" keys.
+                          By changing them, you can redefine keys.
 * Init File::           How to write common customizations in the
                           initialization file.
 
@@ -1146,7 +1148,7 @@ The Emacs Initialization File
 Dealing with Emacs Trouble
 
 * DEL Does Not Delete:: What to do if @key{DEL} doesn't delete.
-* Stuck Recursive::     `[...]' in mode line around the parentheses.
+* Stuck Recursive::     '[...]' in mode line around the parentheses.
 * Screen Garbled::      Garbage on the screen.
 * Text Garbled::        Garbage in the text.
 * Memory Full::         How to cope when you run out of memory.
@@ -1189,7 +1191,7 @@ X Options and Resources
 * Resources::           Using X resources with Emacs (in general).
 * Table of Resources::  Table of specific X resources that affect Emacs.
 * Lucid Resources::     X resources for Lucid menus.
-* LessTif Resources::   X resources for LessTif and Motif menus.
+* Motif Resources::     X resources for Motif and LessTif menus.
 * GTK resources::       Resources for GTK widgets.
 
 GTK resources
@@ -1336,9 +1338,12 @@ If you find GNU Emacs useful, please @strong{send a donation} to the
 Free Software Foundation to support our work.  Donations to the Free
 Software Foundation are tax deductible in the US@.  If you use GNU Emacs
 at your workplace, please suggest that the company make a donation.
-For more information on how you can help, see
+To donate, see @url{https://my.fsf.org/donate/}.
+For other ways in which you can help, see
 @url{http://www.gnu.org/help/help.html}.
 
+@c The command view-order-manuals uses this anchor.
+@anchor{Printed Books}
 We also sell hardcopy versions of this manual and @cite{An
 Introduction to Programming in Emacs Lisp}, by Robert J. Chassell.
 You can visit our online store at @url{http://shop.fsf.org/}.
@@ -1360,12 +1365,14 @@ USA
 @node Acknowledgments
 @unnumberedsec Acknowledgments
 
+@c It's hard to update this fairly.
+@c I wonder if it would be better to drop it in favor of AUTHORS?
 Contributors to GNU Emacs include Jari Aalto, Per Abrahamsen, Tomas
 Abrahamsson, Jay K. Adams, Alon Albert, Michael Albinus, Nagy
 Andras, Benjamin Andresen, Ralf Angeli, Dmitry Antipov, Joe Arceneaux, Emil Åström,
 Miles Bader, David Bakhash, Juanma Barranquero, Eli Barzilay, Thomas
 Baumann, Steven L. Baur, Jay Belanger, Alexander L. Belikoff,
-Thomas Bellman, Scott Bender, Boaz Ben-Zvi, Sergey Berezin, Karl
+Thomas Bellman, Scott Bender, Boaz Ben-Zvi, Sergey Berezin, Stephen Berman, Karl
 Berry, Anna M. Bigatti, Ray Blaak, Martin Blais, Jim Blandy, Johan
 Bockgård, Jan Böcker, Joel Boehland, Lennart Borgman, Per Bothner,
 Terrence Brannon, Frank Bresz, Peter Breton, Emmanuel Briot, Kevin
@@ -1385,13 +1392,13 @@ Eglen, Christian Egli, Torbjörn Einarsson, Tsugutomo Enami, David
 Engster, Hans Henrik Eriksen, Michael Ernst, Ata Etemadi, Frederick
 Farnbach, Oscar Figueiredo, Fred Fish, Steve Fisk, Karl Fogel, Gary
 Foster, Eric S. Fraga, Romain Francoise, Noah Friedman, Andreas
-Fuchs, Shigeru Fukaya, Hallvard Furuseth, Keith Gabryelski, Peter S.
+Fuchs, Shigeru Fukaya, Xue Fuqiao, Hallvard Furuseth, Keith Gabryelski, Peter S.
 Galbraith, Kevin Gallagher, Fabián E. Gallina, Kevin Gallo, Juan León Lahoz García,
 Howard Gayle, Daniel German, Stephen Gildea, Julien Gilles, David
 Gillespie, Bob Glickstein, Deepak Goel, David De La Harpe Golden, Boris
 Goldowsky, David Goodger, Chris Gray, Kevin Greiner, Michelangelo Grigni, Odd
 Gripenstam, Kai Großjohann, Michael Gschwind, Bastien Guerry, Henry
-Guillaume, Doug Gwyn, Bruno Haible, Ken'ichi Handa, Lars Hansen, Chris
+Guillaume, Dmitry Gutov, Doug Gwyn, Bruno Haible, Ken'ichi Handa, Lars Hansen, Chris
 Hanson, Jesper Harder, Alexandru Harsanyi, K. Shane Hartman, John
 Heidemann, Jon K. Hellan, Magnus Henoch, Markus Heritsch, Dirk
 Herrmann, Karl Heuer, Manabu Higashida, Konrad Hinsen, Anders Holst,
@@ -1409,25 +1416,25 @@ Ryszard Kubiak, Igor Kuzmin, David Kågedal, Daniel LaLiberte, Karl
 Landstrom, Mario Lang, Aaron Larson, James R. Larus, Vinicius Jose
 Latorre, Werner Lemberg, Frederic Lepied, Peter Liljenberg, Christian
 Limpach, Lars Lindberg, Chris Lindblad, Anders Lindgren, Thomas Link,
-Juri Linkov, Francis Litterio, Sergey Litvinov, Emilio C. Lopes,
+Juri Linkov, Francis Litterio, Sergey Litvinov, Leo Liu, Emilio C. Lopes,
 Martin Lorentzon, Dave Love, Eric Ludlam, Károly Lőrentey, Sascha
 Lüdecke, Greg McGary, Roland McGrath, Michael McNamara, Alan Mackenzie,
 Christopher J. Madsen, Neil M. Mager, Ken Manheimer, Bill Mann,
 Brian Marick, Simon Marshall, Bengt Martensson, Charlie Martin,
 Yukihiro Matsumoto, Tomohiro Matsuyama, David Maus, Thomas May, Will Mengarini, David
 Megginson, Stefan Merten, Ben A. Mesander, Wayne Mesard, Brad
-Miller, Lawrence Mitchell, Richard Mlynarik, Gerd Moellmann, Stefan
+Miller, Lawrence Mitchell, Richard Mlynarik, Gerd Möllmann, Dani Moncayo, Stefan
 Monnier, Keith Moore, Jan Moringen, Morioka Tomohiko, Glenn Morris,
 Don Morrison, Diane Murray, Riccardo Murri, Sen Nagata, Erik Naggum,
 Gergely Nagy, Nobuyoshi Nakada, Thomas Neumann, Mike Newton, Thien-Thi Nguyen,
-Jurgen Nickelsen, Dan Nicolaescu, Hrvoje Niksic, Jeff Norden,
+Jurgen Nickelsen, Dan Nicolaescu, Hrvoje Nikšić, Jeff Norden,
 Andrew Norman, Edward O'Connor, Kentaro Ohkouchi, Christian Ohler,
 Kenichi Okada, Alexandre Oliva, Bob Olson, Michael Olson, Takaaki Ota,
 Pieter E. J. Pareit, Ross Patterson, David Pearson, Juan Pechiar,
 Jeff Peck, Damon Anton Permezel, Tom Perrine, William M. Perry, Per
 Persson, Jens Petersen, Daniel Pfeiffer, Justus Piater, Richard L.
 Pieri, Fred Pierresteguy, François Pinard, Daniel Pittman, Christian
-Plaunt, Alexander Pohoyda, David Ponce, Francesco A. Potorti,
+Plaunt, Alexander Pohoyda, David Ponce, Francesco A. Potortì,
 Michael D. Prange, Mukesh Prasad, Ken Raeburn, Marko Rahamaa, Ashwin
 Ram, Eric S. Raymond, Paul Reilly, Edward M. Reingold, David
 Reitter, Alex Rezinsky, Rob Riepel, Lara Rios, Adrian Robert, Nick
@@ -1435,10 +1442,10 @@ Roberts, Roland B. Roberts, John Robinson, Denis B. Roegel, Danny
 Roozendaal, Sebastian Rose, William Rosenblatt, Markus Rost, Guillermo
 J. Rozas, Martin Rudalics, Ivar Rummelhoff, Jason Rumney, Wolfgang
 Rupprecht, Benjamin Rutt, Kevin Ryde, James B. Salem, Masahiko Sato,
-Timo Savola, Jorgen Schaefer, Holger Schauer, William Schelter, Ralph
+Timo Savola, Jorgen Schäfer, Holger Schauer, William Schelter, Ralph
 Schleicher, Gregor Schmid, Michael Schmidt, Ronald S. Schnell,
 Philippe Schnoebelen, Jan Schormann, Alex Schroeder, Stefan Schoef,
-Rainer Schoepf, Raymond Scholz, Eric Schulte, Andreas Schwab, Randal
+Rainer Schöpf, Raymond Scholz, Eric Schulte, Andreas Schwab, Randal
 Schwartz, Oliver Seidel, Manuel Serrano, Paul Sexton, Hovav Shacham,
 Stanislav Shalunov, Marc Shapiro, Richard Sharman, Olin Shivers, Tibor
 Šimko, Espen Skoglund, Rick Sladkey, Lynn Slater, Chris Smith,
@@ -1447,7 +1454,7 @@ South, Andre Spiegel, Michael Staats, Thomas Steffen, Ulf Stegemann,
 Reiner Steib, Sam Steingold, Ake Stenhoff, Peter Stephenson, Ken
 Stevens, Andy Stewart, Jonathan Stigelman, Martin Stjernholm, Kim F.
 Storm, Steve Strassmann, Christopher Suckling, Olaf Sylvester, Naoto
-Takahashi, Steven Tamm, Luc Teirlinck, Jean-Philippe Theberge, Jens
+Takahashi, Steven Tamm, Jan Tatarik, Luc Teirlinck, Jean-Philippe Theberge, Jens
 T. Berger Thielemann, Spencer Thomas, Jim Thompson, Toru Tomabechi,
 David O'Toole, Markus Triska, Tom Tromey, Enami Tsugutomo, Eli
 Tziperman, Daiki Ueno, Masanobu Umeda, Rajesh Vaidheeswarran, Neil
@@ -1460,7 +1467,7 @@ Wohler, Steven A. Wood, Dale R. Worley, Francis J. Wright, Felix
 S. T. Wu, Tom Wurgler, Yamamoto Mitsuharu, Katsumi Yamaoka,
 Masatake Yamato, Jonathan Yavner, Ryan Yeske, Ilya Zakharevich, Milan
 Zamazal, Victor Zandy, Eli Zaretskii, Jamie Zawinski, Andrew Zhilin,
-Shenghuo Zhu, Piotr Zielinski, Ian T. Zimmermann, Reto Zimmermann,
+Shenghuo Zhu, Piotr Zieliński, Ian T. Zimmermann, Reto Zimmermann,
 Neal Ziring, Teodor Zlatanov, and Detlev Zundel.
 @end iftex
 
@@ -1469,7 +1476,16 @@ Neal Ziring, Teodor Zlatanov, and Detlev Zundel.
 
   You are reading about GNU Emacs, the GNU incarnation of the
 advanced, self-documenting, customizable, extensible editor Emacs.
-(The `G' in `GNU' is not silent.)
+(The @samp{G} in
+@c Workaround makeinfo 4 bug.
+@c http://lists.gnu.org/archive/html/bug-texinfo/2004-08/msg00009.html
+@iftex
+@acronym{GNU, @acronym{GNU}'s Not Unix}
+@end iftex
+@ifnottex
+@acronym{GNU, GNU's Not Unix}
+@end ifnottex
+is not silent.)
 
   We call Emacs @dfn{advanced} because it can do much more than simple
 insertion and deletion of text.  It can control subprocesses, indent
@@ -1558,8 +1574,8 @@ Lisp programming.
 
 @include anti.texi
 @include macos.texi
-@c Includes msdog-xtra.
-@include msdog.texi
+@c Includes msdos-xtra.
+@include msdos.texi
 @include gnu.texi
 @include glossary.texi
 @ifnottex

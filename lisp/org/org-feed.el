@@ -1,6 +1,6 @@
 ;;; org-feed.el --- Add RSS feed items to Org files
 ;;
-;; Copyright (C) 2009-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2015 Free Software Foundation, Inc.
 ;;
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
 ;; Keywords: outlines, hypermedia, calendar, wp
@@ -690,7 +690,8 @@ formatted as a string, not the original XML data."
 				  (xml-node-children content)))))
 	 (t
 	  (setq entry (plist-put entry :description
-				 (format "Unknown '%s' content." type)))))))
+				 (format-message
+                                  "Unknown `%s' content." type)))))))
     entry))
 
 (provide 'org-feed)

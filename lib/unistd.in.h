@@ -1,5 +1,5 @@
 /* Substitute for and wrapper around <unistd.h>.
-   Copyright (C) 2003-2013 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,9 +21,23 @@
 #endif
 @PRAGMA_COLUMNS@
 
+#ifdef _GL_INCLUDING_UNISTD_H
+/* Special invocation convention:
+   - On Mac OS X 10.3.9 we have a sequence of nested includes
+     <unistd.h> -> <signal.h> -> <pthread.h> -> <unistd.h>
+     In this situation, the functions are not yet declared, therefore we cannot
+     provide the C++ aliases.  */
+
+#@INCLUDE_NEXT@ @NEXT_UNISTD_H@
+
+#else
+/* Normal invocation convention.  */
+
 /* The include_next requires a split double-inclusion guard.  */
 #if @HAVE_UNISTD_H@
+# define _GL_INCLUDING_UNISTD_H
 # @INCLUDE_NEXT@ @NEXT_UNISTD_H@
+# undef _GL_INCLUDING_UNISTD_H
 #endif
 
 /* Get all possible declarations of gethostname().  */
@@ -116,6 +130,9 @@
 # include <getopt.h>
 #endif
 
+#ifndef _GL_INLINE_HEADER_BEGIN
+ #error "Please include config.h first."
+#endif
 _GL_INLINE_HEADER_BEGIN
 #ifndef _GL_UNISTD_INLINE
 # define _GL_UNISTD_INLINE _GL_INLINE
@@ -384,6 +401,12 @@ _GL_WARN_ON_USE (dup3, "dup3 is unportable - "
 /* Set of environment variables and values.  An array of strings of the form
    "VARIABLE=VALUE", terminated with a NULL.  */
 #  if defined __APPLE__ && defined __MACH__
+#   include <TargetConditionals.h>
+#   if !TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR
+#    define _GL_USE_CRT_EXTERNS
+#   endif
+#  endif
+#  ifdef _GL_USE_CRT_EXTERNS
 #   include <crt_externs.h>
 #   define environ (*_NSGetEnviron ())
 #  else
@@ -651,10 +674,19 @@ _GL_WARN_ON_USE (getdomainname, "getdomainname is unportable - "
 #if @GNULIB_GETDTABLESIZE@
 /* Return the maximum number of file descriptors in the current process.
    In POSIX, this is same as sysconf (_SC_OPEN_MAX).  */
-# if !@HAVE_GETDTABLESIZE@
+# if @REPLACE_GETDTABLESIZE@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef getdtablesize
+#   define getdtablesize rpl_getdtablesize
+#  endif
+_GL_FUNCDECL_RPL (getdtablesize, int, (void));
+_GL_CXXALIAS_RPL (getdtablesize, int, (void));
+# else
+#  if !@HAVE_GETDTABLESIZE@
 _GL_FUNCDECL_SYS (getdtablesize, int, (void));
-# endif
+#  endif
 _GL_CXXALIAS_SYS (getdtablesize, int, (void));
+# endif
 _GL_CXXALIASWARN (getdtablesize);
 #elif defined GNULIB_POSIXCHECK
 # undef getdtablesize
@@ -1261,13 +1293,24 @@ _GL_WARN_ON_USE (readlink, "readlink is unportable - "
 
 
 #if @GNULIB_READLINKAT@
-# if !@HAVE_READLINKAT@
+# if @REPLACE_READLINKAT@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   define readlinkat rpl_readlinkat
+#  endif
+_GL_FUNCDECL_RPL (readlinkat, ssize_t,
+                  (int fd, char const *file, char *buf, size_t len)
+                  _GL_ARG_NONNULL ((2, 3)));
+_GL_CXXALIAS_RPL (readlinkat, ssize_t,
+                  (int fd, char const *file, char *buf, size_t len));
+# else
+#  if !@HAVE_READLINKAT@
 _GL_FUNCDECL_SYS (readlinkat, ssize_t,
                   (int fd, char const *file, char *buf, size_t len)
                   _GL_ARG_NONNULL ((2, 3)));
-# endif
+#  endif
 _GL_CXXALIAS_SYS (readlinkat, ssize_t,
                   (int fd, char const *file, char *buf, size_t len));
+# endif
 _GL_CXXALIASWARN (readlinkat);
 #elif defined GNULIB_POSIXCHECK
 # undef readlinkat
@@ -1381,13 +1424,25 @@ _GL_WARN_ON_USE (symlink, "symlink is not portable - "
 
 
 #if @GNULIB_SYMLINKAT@
-# if !@HAVE_SYMLINKAT@
+# if @REPLACE_SYMLINKAT@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef symlinkat
+#   define symlinkat rpl_symlinkat
+#  endif
+_GL_FUNCDECL_RPL (symlinkat, int,
+                  (char const *contents, int fd, char const *file)
+                  _GL_ARG_NONNULL ((1, 3)));
+_GL_CXXALIAS_RPL (symlinkat, int,
+                  (char const *contents, int fd, char const *file));
+# else
+#  if !@HAVE_SYMLINKAT@
 _GL_FUNCDECL_SYS (symlinkat, int,
                   (char const *contents, int fd, char const *file)
                   _GL_ARG_NONNULL ((1, 3)));
-# endif
+#  endif
 _GL_CXXALIAS_SYS (symlinkat, int,
                   (char const *contents, int fd, char const *file));
+# endif
 _GL_CXXALIASWARN (symlinkat);
 #elif defined GNULIB_POSIXCHECK
 # undef symlinkat
@@ -1527,4 +1582,5 @@ _GL_CXXALIASWARN (write);
 _GL_INLINE_HEADER_END
 
 #endif /* _@GUARD_PREFIX@_UNISTD_H */
+#endif /* _GL_INCLUDING_UNISTD_H */
 #endif /* _@GUARD_PREFIX@_UNISTD_H */

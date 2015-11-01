@@ -2508,7 +2508,7 @@
 	If `suspend-emacs-hook' returns t don't suspend
 	-- assume the hook did the equivalent of `suspending' for us
 	(including calling suspend-resume-hook if necessary.)
-        Otherwise, call sys_suspend and so forth normally.
+	Otherwise, call sys_suspend and so forth normally.
 
 1986-12-20  Richard M. Stallman  (rms@prep)
 
@@ -3961,7 +3961,7 @@
 
 1986-09-01  Richard M. Stallman  (rms@prep)
 
-	* xterm.c/xfns.c: Many changes from rlk,
+	* xterm.c, xfns.c: Many changes from rlk,
 	including using sigblock/sigsetmask to block signals
 	instead of turning handler off and on.
 
@@ -4050,7 +4050,7 @@
 
 1986-08-21  Richard Mlynarik  (mly@prep)
 
-        * process.c (handle_process_output):
+	* process.c (handle_process_output):
 	do a set-buffer back to original buffer
 	after calling a process' filter function so that
 	all filter functions needn't save-excursion.
@@ -4131,7 +4131,7 @@
 	and DEFVAR_PER_BUFFER.  They expand into calls to
 	defvar_lisp, etc.
 
-	* all .c files:
+	* All .c files:
 	All Def...Var renamed to DEFVAR... in syms_of_....
 
 	* doc.c (FSnarf_documentation): Understand new DOC format
@@ -4221,7 +4221,7 @@
 
 	* unexec.c (write_segment):
 	Kludgy coercions ("(int)") to get this line to compile:
-         nwrite = (((int) ptr + 128) & ~127) - (int) ptr;
+	 nwrite = (((int) ptr + 128) & ~127) - (int) ptr;
 	Also changed incorrect ~128 to ~127.
 
 	* process.c:
@@ -4771,7 +4771,7 @@
 
 See ChangeLog.1 for earlier changes.
 
-    Copyright (C) 1986-1988, 2001-2013 Free Software Foundation, Inc.
+    Copyright (C) 1986-1988, 2001-2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

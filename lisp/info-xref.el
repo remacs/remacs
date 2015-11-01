@@ -1,6 +1,6 @@
 ;;; info-xref.el --- check external references in an Info document
 
-;; Copyright (C) 2003-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
 ;; Author: Kevin Ryde <user42@zip.com.au>
 ;; Keywords: docs
@@ -170,13 +170,13 @@ overall good/bad count summary inserted at the very end."
                          info-xref-good info-xref-bad info-xref-unavail))))
 
 (defun info-xref-output (fmt &rest args)
-  "Emit a `format'-ed message FMT+ARGS to the `info-xref-output-buffer'."
+  "Emit a `format-message'-ed message FMT+ARGS to the `info-xref-output-buffer'."
   (with-current-buffer info-xref-output-buffer
     (save-excursion
       (goto-char (point-max))
       (let ((inhibit-read-only t))
         (insert info-xref-output-heading
-                (apply 'format fmt args)
+                (apply #'format-message fmt args)
                 "\n")))
     (setq info-xref-output-heading "")
     ;; all this info-xref can be pretty slow, display now so the user sees
@@ -454,7 +454,7 @@ and can take a long time."
         (cond ((symbolp load)
                (condition-case cause (require load)
                  (error
-                  (info-xref-output "Symbol `%s': cannot require '%s: %s"
+                  (info-xref-output "Symbol `%s': cannot require `%s': %s"
                                     symbol load cause))))
               ;; skip if previously loaded
               ((assoc load load-history))

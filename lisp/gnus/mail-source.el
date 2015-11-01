@@ -1,6 +1,6 @@
 ;;; mail-source.el --- functions for fetching mail
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news, mail
@@ -23,10 +23,6 @@
 ;;; Commentary:
 
 ;;; Code:
-
-;; For Emacs <22.2 and XEmacs.
-(eval-and-compile
-  (unless (fboundp 'declare-function) (defmacro declare-function (&rest r))))
 
 (require 'format-spec)
 (eval-when-compile
@@ -616,7 +612,7 @@ If CONFIRM is non-nil, ask for confirmation before removing a file."
 	(when (and (> (- currday fileday) diff)
 		   (if confirm
 		       (y-or-n-p
-			(format "\
+			(gnus-format-message "\
 Delete old (> %s day(s)) incoming mail file `%s'? " diff bfile))
 		     (gnus-message 8 "\
 Deleting old (> %s day(s)) incoming mail file `%s'." diff bfile)
@@ -754,13 +750,16 @@ Deleting old (> %s day(s)) incoming mail file `%s'." diff bfile)
       (setq script (substring script 0 (match-beginning 0))
 	    background 0))
     (setq result
-	  (call-process shell-file-name nil background nil
+	  (call-process shell-file-name nil stderr nil
 			shell-command-switch script))
-    (when (and result
-	       (not (zerop result)))
-      (set-buffer stderr)
-      (message "Mail source error: %s" (buffer-string)))
-    (kill-buffer stderr)))
+    (if (and result
+             (not (zerop result)))
+        (progn
+          (split-window-vertically)
+          (other-window 1)
+          (switch-to-buffer stderr)
+          (message "Mail source error: %s " (buffer-string)))
+      (kill-buffer stderr))))
 
 ;;;
 ;;; Different fetchers
@@ -935,7 +934,7 @@ authentication.  To do that, you need to set the
 `message-send-mail-function' variable as `message-smtpmail-send-it'
 and put the following line in your ~/.gnus.el file:
 
-\(add-hook 'message-send-mail-hook 'mail-source-touch-pop)
+\(add-hook \\='message-send-mail-hook \\='mail-source-touch-pop)
 
 See the Gnus manual for details."
   (let ((sources (if mail-source-primary-source
@@ -1091,10 +1090,13 @@ This only works when `display-time' is enabled."
       (if (and (imap-open server port stream authentication buf)
 	       (imap-authenticate
 		user (or (cdr (assoc from mail-source-password-cache))
-			 password) buf)
-	       (imap-mailbox-select mailbox nil buf))
+                         password) buf))
+          (let ((mailbox-list (if (listp mailbox) mailbox (list mailbox))))
+            (dolist (mailbox mailbox-list)
+              (when (imap-mailbox-select mailbox nil buf)
 	  (let ((coding-system-for-write mail-source-imap-file-coding-system)
 		str)
+            (message "Fetching from %s..." mailbox)
 	    (with-temp-file mail-source-crash-box
 	      ;; Avoid converting 8-bit chars from inserted strings to
 	      ;; multibyte.
@@ -1129,8 +1131,8 @@ This only works when `display-time' is enabled."
 	       fetchflag nil buf))
 	    (if dontexpunge
 		(imap-mailbox-unselect buf)
-	      (imap-mailbox-close nil buf))
-	    (imap-close buf))
+              (imap-mailbox-close nil buf)))))
+            (imap-close buf))
 	(imap-close buf)
 	;; We nix out the password in case the error
 	;; was because of a wrong password being given.

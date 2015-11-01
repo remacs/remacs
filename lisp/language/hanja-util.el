@@ -1,6 +1,6 @@
 ;;; hanja-util.el --- Korean Hanja util module  -*- coding: utf-8 -*-
 
-;; Copyright (C) 2008-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 ;; Author: Jihyun Cho <jihyun.jo@gmail.com>
 ;; Keywords: multilingual, input method, Korean, Hanja
@@ -6585,7 +6585,9 @@ The value is a hanja character that is selected interactively."
 		     (cmd (lookup-key hanja-keymap seq)))
 		(if (functionp cmd)
 		    (funcall cmd)
-		  (setq unread-command-events (listify-key-sequence seq))
+		  (setq unread-command-events
+                        (nconc (listify-key-sequence seq)
+                               unread-command-events))
 		  (throw 'exit-input-loop nil))))))
       (setq hanja-conversions nil))))
 

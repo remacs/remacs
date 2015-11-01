@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1995, 1998-1999, 2001-2013 Free Software
+@c Copyright (C) 1990-1995, 1998-1999, 2001-2015 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Buffers
@@ -23,9 +23,9 @@ not be displayed in any windows.
 * Buffer File Name::    The buffer file name indicates which file is visited.
 * Buffer Modification:: A buffer is @dfn{modified} if it needs to be saved.
 * Modification Time::   Determining whether the visited file was changed
-                         "behind Emacs's back".
+                         behind Emacs's back.
 * Read Only Buffers::   Modifying text is not allowed in a read-only buffer.
-* The Buffer List::     How to look at all the existing buffers.
+* Buffer List::         How to look at all the existing buffers.
 * Creating Buffers::    Functions that create buffers.
 * Killing Buffers::     Buffers exist until explicitly killed.
 * Indirect Buffers::    An indirect buffer shares text with some other buffer.
@@ -632,13 +632,12 @@ exceptional places where the usual test to avoid overwriting a changed
 file should not be done.
 @end defun
 
-@c Emacs 19 feature
 @defun visited-file-modtime
 This function returns the current buffer's recorded last file
 modification time, as a list of the form @code{(@var{high} @var{low}
-@var{microsec} @var{picosec})}.
-(This is the same format that @code{file-attributes} uses to return
-time values; see @ref{File Attributes}.)
+@var{microsec} @var{picosec})}.  (This is the same format that
+@code{file-attributes} uses to return time values; @pxref{File
+Attributes}.)
 
 If the buffer has no recorded last modification time, this function
 returns zero.  This case occurs, for instance, if the buffer is not
@@ -648,17 +647,9 @@ visiting a file or if the time has been explicitly cleared by
 too.  For instance, in a Dired buffer listing a directory, it returns
 the last modification time of that directory, as recorded by Dired.
 
-For a new buffer visiting a not yet existing file, @var{high} is
-@minus{}1 and @var{low} is 65535, that is,
-@ifnottex
-@w{2**16 @minus{} 1.}
-@end ifnottex
-@tex
-@math{2^{16}-1}.
-@end tex
+If the buffer is not visiting a file, this function returns -1.
 @end defun
 
-@c Emacs 19 feature
 @defun set-visited-file-modtime &optional time
 This function updates the buffer's record of the last modification time
 of the visited file, to the value specified by @var{time} if @var{time}
@@ -768,9 +759,10 @@ buffer is read-only.  @xref{Using Interactive}, for another way to
 signal an error if the current buffer is read-only.
 @end defun
 
-@node The Buffer List
+@node Buffer List
 @section The Buffer List
 @cindex buffer list
+@cindex listing all buffers
 
   The @dfn{buffer list} is a list of all live buffers.  The order of the
 buffers in this list is based primarily on how recently each buffer has
@@ -852,7 +844,7 @@ names start with a space are not considered at all.
 
 If @var{buffer} is not supplied (or if it is not a live buffer), then
 @code{other-buffer} returns the first buffer in the selected frame's
-local buffer list. (If @var{frame} is non-@code{nil}, it returns the
+local buffer list.  (If @var{frame} is non-@code{nil}, it returns the
 first buffer in @var{frame}'s local buffer list instead.)
 
 If @var{frame} has a non-@code{nil} @code{buffer-predicate} parameter,
@@ -872,7 +864,7 @@ If no suitable buffer exists, the buffer @file{*scratch*} is returned
 
 @defun last-buffer &optional buffer visible-ok frame
 This function returns the last buffer in @var{frame}'s buffer list other
-than @var{BUFFER}.  If @var{frame} is omitted or @code{nil}, it uses the
+than @var{buffer}.  If @var{frame} is omitted or @code{nil}, it uses the
 selected frame's buffer list.
 
 The argument @var{visible-ok} is handled as with @code{other-buffer},
@@ -901,7 +893,7 @@ another buffer is shown in it.  More precisely, if the selected window
 is dedicated (@pxref{Dedicated Windows}) and there are other windows on
 its frame, the window is deleted.  If it is the only window on its frame
 and that frame is not the only frame on its terminal, the frame is
-``dismissed'' by calling the function specified by
+dismissed by calling the function specified by
 @code{frame-auto-hide-function} (@pxref{Quitting Windows}).  Otherwise,
 it calls @code{switch-to-prev-buffer} (@pxref{Window History}) to show
 another buffer in that window.  If @var{buffer-or-name} is displayed in
@@ -919,6 +911,13 @@ buffer returned by @code{last-buffer} (see above), in the selected
 window.
 @end deffn
 
+@defvar buffer-list-update-hook
+This is a normal hook run whenever the buffer list changes.  Functions
+(implicitly) running this hook are @code{get-buffer-create}
+(@pxref{Creating Buffers}), @code{rename-buffer} (@pxref{Buffer Names}),
+@code{kill-buffer} (@pxref{Killing Buffers}), @code{bury-buffer} (see
+above) and @code{select-window} (@pxref{Selecting Windows}).
+@end defvar
 
 @node Creating Buffers
 @section Creating Buffers
@@ -1033,7 +1032,7 @@ memory for other uses or to be returned to the operating system.  If
 buffer.
 
 Any processes that have this buffer as the @code{process-buffer} are
-sent the @code{SIGHUP} (``hangup'') signal, which normally causes them
+sent the @code{SIGHUP} (hangup) signal, which normally causes them
 to terminate.  @xref{Signals to Processes}.
 
 If the buffer is visiting a file and contains unsaved changes,
@@ -1140,7 +1139,7 @@ be a live buffer or the name (a string) of an existing buffer.  If
 @var{name} is the name of an existing buffer, an error is signaled.
 
 If @var{clone} is non-@code{nil}, then the indirect buffer originally
-shares the ``state'' of @var{base-buffer} such as major mode, minor
+shares the state of @var{base-buffer} such as major mode, minor
 modes, buffer local variables and so on.  If @var{clone} is omitted
 or @code{nil} the indirect buffer's state is set to the default state
 for new buffers.
@@ -1217,6 +1216,7 @@ in the text it is swapped with will not interfere with auto-saving.
 
 @node Buffer Gap
 @section The Buffer Gap
+@cindex buffer gap
 
   Emacs buffers are implemented using an invisible @dfn{gap} to make
 insertion and deletion faster.  Insertion works by filling in part of

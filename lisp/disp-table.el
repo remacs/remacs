@@ -1,11 +1,11 @@
 ;;; disp-table.el --- functions for dealing with char tables
 
-;; Copyright (C) 1987, 1994-1995, 1999, 2001-2013 Free Software
+;; Copyright (C) 1987, 1994-1995, 1999, 2001-2015 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Erik Naggum <erik@naggum.no>
 ;; Based on a previous version by Howard Gayle
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: i18n
 ;; Package: emacs
 
@@ -281,7 +281,8 @@ in `.emacs'."
 	       (set-terminal-coding-system nil))))
 
     (display-warning 'i18n
-		     "`standard-display-european' is semi-obsolete; see its doc string for details"
+		     (format-message
+		      "`standard-display-european' is semi-obsolete; see its doc string for details")
 		     :warning)
 
     ;; Switch to Latin-1 language environment

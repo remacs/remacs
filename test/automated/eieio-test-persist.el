@@ -1,6 +1,6 @@
 ;;; eieio-persist.el --- Tests for eieio-persistent class
 
-;; Copyright (C) 2011-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -32,28 +32,37 @@
 (require 'eieio-base)
 (require 'ert)
 
+(defun eieio--attribute-to-initarg (class attribute)
+  "In CLASS, convert the ATTRIBUTE into the corresponding init argument tag.
+This is usually a symbol that starts with `:'."
+  (let ((tuple (rassoc attribute (eieio--class-initarg-tuples class))))
+    (if tuple
+	(car tuple)
+      nil)))
+
 (defun persist-test-save-and-compare (original)
   "Compare the object ORIGINAL against the one read fromdisk."
 
   (eieio-persistent-save original)
 
-  (let* ((file (oref original :file))
+  (let* ((file (oref original file))
 	 (class (eieio-object-class original))
 	 (fromdisk (eieio-persistent-read file class))
-	 (cv (class-v class))
-	 (slot-names  (eieio--class-public-a cv))
-	 (slot-deflt  (eieio--class-public-d cv))
+	 (cv (cl--find-class class))
+	 (slots  (eieio--class-slots cv))
 	 )
     (unless (object-of-class-p fromdisk class)
       (error "Persistent class %S != original class %S"
 	     (eieio-object-class fromdisk)
 	     class))
 
-    (while slot-names
-      (let* ((oneslot (car slot-names))
+    (dotimes (i (length slots))
+      (let* ((slot (aref slots i))
+             (oneslot (cl--slot-descriptor-name slot))
 	     (origvalue (eieio-oref original oneslot))
 	     (fromdiskvalue (eieio-oref fromdisk oneslot))
-	     (initarg-p (eieio-attribute-to-initarg class oneslot))
+	     (initarg-p (eieio--attribute-to-initarg
+                         (cl--find-class class) oneslot))
 	     )
 
 	(if initarg-p
@@ -61,12 +70,9 @@
 	      (error "Slot %S Original Val %S != Persistent Val %S"
 		     oneslot origvalue fromdiskvalue))
 	  ;; Else !initarg-p
-	  (unless (equal (car slot-deflt) fromdiskvalue)
+	  (unless (equal (cl--slot-descriptor-initform slot) fromdiskvalue)
 	    (error "Slot %S Persistent Val %S != Default Value %S"
-		   oneslot fromdiskvalue (car slot-deflt))))
-	
-	(setq slot-names (cdr slot-names)
-	      slot-deflt (cdr slot-deflt))
+		   oneslot fromdiskvalue (cl--slot-descriptor-initform slot))))
 	))))
 
 ;;; Simple Case
@@ -175,7 +181,7 @@ persistent class.")
 
 (defclass persistent-with-objs-slot-subs (eieio-persistent)
   ((pnp :initarg :pnp
-	:type (or null persist-not-persistent-child)
+	:type (or null persist-not-persistent)
 	:initform nil))
   "Class for testing the saving of slots with objects in them.")
 
@@ -194,7 +200,7 @@ persistent class.")
 ;; A slot that contains another object that isn't persistent
 (defclass persistent-with-objs-list-slot (eieio-persistent)
   ((pnp :initarg :pnp
-	:type persist-not-persistent-list
+	:type (list-of persist-not-persistent)
 	:initform nil))
   "Class for testing the saving of slots with objects in them.")
 

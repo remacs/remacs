@@ -1,5 +1,5 @@
 /* Markers: examining, setting and deleting.
-   Copyright (C) 1985, 1997-1998, 2001-2013 Free Software Foundation,
+   Copyright (C) 1985, 1997-1998, 2001-2015 Free Software Foundation,
    Inc.
 
 This file is part of GNU Emacs.
@@ -455,21 +455,8 @@ attach_marker (struct Lisp_Marker *m, struct buffer *b,
 static struct buffer *
 live_buffer (Lisp_Object buffer)
 {
-  struct buffer *b;
-
-  if (NILP (buffer))
-    {
-      b = current_buffer;
-      eassert (BUFFER_LIVE_P (b));
-    }
-  else
-    {
-      CHECK_BUFFER (buffer);
-      b = XBUFFER (buffer);
-      if (!BUFFER_LIVE_P (b))
-       b = NULL;
-    }
-  return b;
+  struct buffer *b = decode_buffer (buffer);
+  return BUFFER_LIVE_P (b) ? b : NULL;
 }
 
 /* Internal function to set MARKER in BUFFER at POSITION.  Non-zero

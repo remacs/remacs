@@ -1,6 +1,6 @@
 ;;; mm-decode.el --- Functions for decoding MIME things
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;;	MORIOKA Tomohiko <morioka@jaist.ac.jp>
@@ -22,10 +22,6 @@
 ;;; Commentary:
 
 ;;; Code:
-
-;; For Emacs <22.2 and XEmacs.
-(eval-and-compile
-  (unless (fboundp 'declare-function) (defmacro declare-function (&rest r))))
 
 (require 'mail-parse)
 (require 'mm-bodies)
@@ -124,7 +120,6 @@
 	((executable-find "w3m") 'gnus-w3m)
 	((executable-find "links") 'links)
 	((executable-find "lynx") 'lynx)
-	((locate-library "w3") 'w3)
 	((locate-library "html2text") 'html2text)
 	(t nil))
   "Render of HTML contents.
@@ -136,13 +131,11 @@ The defined renderer types are:
 `w3m-standalone': use plain w3m;
 `links': use links;
 `lynx': use lynx;
-`w3': use Emacs/W3;
 `html2text': use html2text;
 nil    : use external viewer (default web browser)."
   :version "24.1"
   :type '(choice (const shr)
                  (const gnus-w3m)
-                 (const w3)
                  (const w3m :tag "emacs-w3m")
 		 (const w3m-standalone :tag "standalone w3m" )
 		 (const links)
@@ -153,9 +146,9 @@ nil    : use external viewer (default web browser)."
   :group 'mime-display)
 
 (defcustom mm-inline-text-html-with-images nil
-  "If non-nil, Gnus will allow retrieving images in HTML contents with
-the <img> tags.  It has no effect on Emacs/w3.  See also the
-documentation for the `mm-w3m-safe-url-regexp' variable."
+  "If non-nil, Gnus will allow retrieving images in HTML that has <img> tags.
+See also the documentation for the `mm-w3m-safe-url-regexp'
+variable."
   :version "22.1"
   :type 'boolean
   :group 'mime-display)
@@ -538,14 +531,6 @@ result of the verification."
     map)
   "Keymap for input viewer with completion.")
 
-(defvar mm-viewer-completion-map
-  (let ((map (make-sparse-keymap 'mm-viewer-completion-map)))
-    (set-keymap-parent map minibuffer-local-completion-map)
-    ;; Should we bind other key to minibuffer-complete-word?
-    (define-key map " " 'self-insert-command)
-    map)
-  "Keymap for input viewer with completion.")
-
 ;;; The functions.
 
 (defun mm-alist-to-plist (alist)
@@ -607,19 +592,19 @@ files left at the next time."
 		    (split-string (buffer-string) "\n" t))))
 	 fails)
     (dolist (temp (append cache mm-temp-files-to-be-deleted))
-      (unless (and (file-exists-p temp)
-		   (if (file-directory-p temp)
-		       ;; A parent directory left at the previous time.
+      (when (and (file-exists-p temp)
+		 (if (file-directory-p temp)
+		     ;; A parent directory left at the previous time.
+		     (progn
+		       (ignore-errors (delete-directory temp))
+		       (file-exists-p temp))
+		   ;; Delete a temporary file and its parent directory.
+		   (ignore-errors (delete-file temp))
+		   (or (file-exists-p temp)
 		       (progn
+			 (setq temp (file-name-directory temp))
 			 (ignore-errors (delete-directory temp))
-			 (not (file-exists-p temp)))
-		     ;; Delete a temporary file and its parent directory.
-		     (ignore-errors (delete-file temp))
-		     (and (not (file-exists-p temp))
-			  (progn
-			    (setq temp (file-name-directory temp))
-			    (ignore-errors (delete-directory temp))
-			    (not (file-exists-p temp))))))
+			 (file-exists-p temp)))))
 	(push temp fails)))
     (if fails
 	;; Schedule the deletion of the files left at the next time.
@@ -662,7 +647,7 @@ MIME-Version header before proceeding."
 	  (unless from
 	    (setq from (mail-fetch-field "from")))
 	  ;; FIXME: In some circumstances, this code is running within
-	  ;; an unibyte macro.  mail-extract-address-components
+	  ;; a unibyte macro.  mail-extract-address-components
 	  ;; creates unibyte buffers. This `if', though not a perfect
 	  ;; solution, avoids most of them.
 	  (if from
@@ -672,9 +657,9 @@ MIME-Version header before proceeding."
 				 description)))))
       (if (or (not ctl)
 	      (not (string-match "/" (car ctl))))
-	  (mm-dissect-singlepart
+	    (mm-dissect-singlepart
 	   (list mm-dissect-default-type)
-	   (and cte (intern (downcase (mail-header-strip cte))))
+	     (and cte (intern (downcase (mail-header-strip cte))))
 	   no-strict-mime
 	   (and cd (mail-header-parse-content-disposition cd))
 	   description)
@@ -803,6 +788,14 @@ MIME-Version header before proceeding."
 (autoload 'mailcap-parse-mailcaps "mailcap")
 (autoload 'mailcap-mime-info "mailcap")
 
+(defun mm-head-p (&optional point)
+  "Return non-nil if point is in the article header."
+  (let ((point (or point (point))))
+    (save-excursion
+      (goto-char point)
+      (and (not (re-search-backward "^$" nil t))
+	   (re-search-forward "^$" nil t)))))
+
 (defun mm-display-part (handle &optional no-default force)
   "Display the MIME part represented by HANDLE.
 Returns nil if the part is removed; inline if displayed inline;
@@ -836,7 +829,10 @@ external if displayed external."
 	  'inline)
 	 ((and (mm-inlinable-p ehandle)
 	       (mm-inlined-p ehandle))
-	  (forward-line 1)
+	  (when force
+	    (if (mm-head-p)
+		(re-search-forward "^$" nil t)
+	      (forward-line 1)))
 	  (mm-display-inline handle)
 	  'inline)
 	 ((or method
@@ -849,18 +845,18 @@ external if displayed external."
 		'inline)
 	    (setq external
 		  (and method	      ;; If nil, we always use "save".
-		       (stringp method) ;; 'mailcap-save-binary-file
 		       (or (eq mm-enable-external t)
 			   (and (eq mm-enable-external 'ask)
 				(y-or-n-p
 				 (concat
 				  "Display part (" type
-				  ") using external program"
-				  ;; Can non-string method ever happen?
+				  ") "
 				  (if (stringp method)
 				      (concat
-				       " \"" (format method filename) "\"")
-				    "")
+				       "using external program \""
+				       (format method filename) "\"")
+				    (gnus-format-message
+				     "by calling `%s' on the contents)" method))
 				  "? "))))))
 	    (if external
 		(mm-display-external
@@ -901,7 +897,15 @@ external if displayed external."
 				     (mm-handle-media-type handle) t))))
 	      (unwind-protect
 		  (if method
-		      (funcall method)
+		      (progn
+			(when (and (boundp 'gnus-summary-buffer)
+				   (bufferp gnus-summary-buffer)
+				   (buffer-name gnus-summary-buffer))
+			  ;; So that we pop back to the right place, sort of.
+			  (switch-to-buffer gnus-summary-buffer)
+			  (switch-to-buffer mm))
+			(delete-other-windows)
+			(funcall method))
 		    (mm-save-part handle))
 		(when (and (not non-viewer)
 			   method)
@@ -1415,7 +1419,7 @@ Return t if meta tag is added or replaced."
 	(goto-char (point-min))
 	(if (re-search-forward "\
 <meta\\s-+http-equiv=[\"']?content-type[\"']?\\s-+content=[\"']\
-text/\\(\\sw+\\)\\(?:\;\\s-*charset=\\(.+\\)\\)?[\"'][^>]*>" nil t)
+text/\\(\\sw+\\)\\(?:;\\s-*charset=\\([^\"'>]+\\)\\)?[^>]*>" nil t)
 	    (if (and (not force-charset)
 		     (match-beginning 2)
 		     (string-match "\\`html\\'" (match-string 1)))
@@ -1820,9 +1824,10 @@ If RECURSIVE, search recursively."
 	      (not (mm-long-lines-p 76))))))
 
 (declare-function libxml-parse-html-region "xml.c"
-		  (start end &optional base-url))
+		  (start end &optional base-url discard-comments))
 (declare-function shr-insert-document "shr" (dom))
 (defvar shr-blocked-images)
+(defvar shr-use-fonts)
 (defvar gnus-inhibit-images)
 (autoload 'gnus-blocked-images "gnus-art")
 
@@ -1830,6 +1835,10 @@ If RECURSIVE, search recursively."
   ;; Require since we bind its variables.
   (require 'shr)
   (let ((article-buffer (current-buffer))
+	(shr-width (if (and (boundp 'shr-use-fonts)
+			    shr-use-fonts)
+		       nil
+		     fill-column))
 	(shr-content-function (lambda (id)
 				(let ((handle (mm-get-content-id id)))
 				  (when handle
@@ -1903,6 +1912,8 @@ If RECURSIVE, search recursively."
 	 :keymap shr-map
 	 (get-text-property start 'shr-url))
 	(put-text-property start end 'local-map nil)
+	(dolist (overlay (overlays-at start))
+	  (overlay-put overlay 'face nil))
 	(setq start end)))))
 
 (defun mm-handle-filename (handle)

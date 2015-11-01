@@ -1,6 +1,6 @@
 ;;; smtpmail.el --- simple SMTP protocol (RFC 821) for sending mail
 
-;; Copyright (C) 1995-1996, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1995-1996, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Tomoji Kagatani <kagatani@rbc.ncl.omron.co.jp>
 ;; Maintainer: Simon Josefsson <simon@josefsson.org>
@@ -687,6 +687,7 @@ Returns an error if the server cannot be contacted."
 		   "smtpmail" process-buffer host port
 		   :type smtpmail-stream-type
 		   :return-list t
+		   :warn-unless-encrypted ask-for-password
 		   :capability-command (format "EHLO %s\r\n" (smtpmail-fqdn))
 		   :end-of-command "^[0-9]+ .*\r\n"
 		   :success "^2.*\n"
@@ -733,7 +734,7 @@ Returns an error if the server cannot be contacted."
 				(plist-get (cdr result) :capabilities)
 				"\r\n")))
 		  (let ((name
-			 (with-case-table ascii-case-table
+			 (with-case-table ascii-case-table ;FIXME: Why?
 			   (mapcar (lambda (s) (intern (downcase s)))
 				   (split-string (substring line 4) "[ ]")))))
 		    (when (= (length name) 1)

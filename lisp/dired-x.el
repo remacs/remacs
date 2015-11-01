@@ -1,6 +1,6 @@
-;;; dired-x.el --- extra Dired functionality
+;;; dired-x.el --- extra Dired functionality  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1993-1994, 1997, 2001-2013 Free Software Foundation,
+;; Copyright (C) 1993-1994, 1997, 2001-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Sebastian Kremer <sk@thp.uni-koeln.de>
@@ -149,7 +149,7 @@ regexp `dired-omit-files', nor files ending with extensions in
 To enable omitting in every Dired buffer, you can put this in
 your init file:
 
-  (add-hook 'dired-mode-hook (lambda () (dired-omit-mode)))
+  (add-hook \\='dired-mode-hook (lambda () (dired-omit-mode)))
 
 See Info node `(dired-x) Omitting Variables' for more information."
   :group 'dired-x
@@ -241,7 +241,7 @@ to nil: a pipe using `zcat' or `gunzip -c' will be used."
 
 ;;; KEY BINDINGS.
 
-(define-key dired-mode-map "\M-o" 'dired-omit-mode)
+(define-key dired-mode-map "\C-x\M-o" 'dired-omit-mode)
 (define-key dired-mode-map "*O" 'dired-mark-omitted)
 (define-key dired-mode-map "\M-(" 'dired-mark-sexp)
 (define-key dired-mode-map "*(" 'dired-mark-sexp)
@@ -402,6 +402,7 @@ See variables `dired-texinfo-unclean-extensions',
                                 dired-tex-unclean-extensions
                                 (list ".dvi"))))
 
+(defvar tar-superior-buffer)
 ;;; JUMP.
 
 ;;;###autoload
@@ -416,30 +417,32 @@ Interactively with prefix argument, read FILE-NAME and
 move to its line in dired."
   (interactive
    (list nil (and current-prefix-arg
-		  (read-file-name "Jump to Dired file: "))))
-  (let* ((file (or file-name buffer-file-name))
-         (dir (if file (file-name-directory file) default-directory)))
-    (if (and (eq major-mode 'dired-mode) (null file-name))
-        (progn
-          (setq dir (dired-current-directory))
-          (dired-up-directory other-window)
-          (unless (dired-goto-file dir)
+                  (read-file-name "Jump to Dired file: "))))
+  (if (bound-and-true-p tar-subfile-mode)
+      (switch-to-buffer tar-superior-buffer)
+    (let* ((file (or file-name buffer-file-name))
+           (dir (if file (file-name-directory file) default-directory)))
+      (if (and (eq major-mode 'dired-mode) (null file-name))
+          (progn
+            (setq dir (dired-current-directory))
+            (dired-up-directory other-window)
+            (unless (dired-goto-file dir)
               ;; refresh and try again
-            (dired-insert-subdir (file-name-directory dir))
-            (dired-goto-file dir)))
-      (if other-window
-          (dired-other-window dir)
-        (dired dir))
-      (if file
-          (or (dired-goto-file file)
-              ;; refresh and try again
-              (progn
-                (dired-insert-subdir (file-name-directory file))
-                (dired-goto-file file))
-              ;; Toggle omitting, if it is on, and try again.
-	      (when dired-omit-mode
-                (dired-omit-mode)
-                (dired-goto-file file)))))))
+              (dired-insert-subdir (file-name-directory dir))
+              (dired-goto-file dir)))
+        (if other-window
+            (dired-other-window dir)
+          (dired dir))
+        (if file
+            (or (dired-goto-file file)
+                ;; refresh and try again
+                (progn
+                  (dired-insert-subdir (file-name-directory file))
+                  (dired-goto-file file))
+                ;; Toggle omitting, if it is on, and try again.
+                (when dired-omit-mode
+                  (dired-omit-mode)
+                  (dired-goto-file file))))))))
 
 ;;;###autoload
 (defun dired-jump-other-window (&optional file-name)
@@ -556,8 +559,9 @@ interactively, prompt for REGEXP.
 With prefix argument, unflag all those files.
 Optional fourth argument LOCALP is as in `dired-get-filename'."
   (interactive
-   (list (dired-read-regexp
-	  "Mark unmarked files matching regexp (default all): ")
+   (list (read-regexp
+	  "Mark unmarked files matching regexp (default all): "
+          nil 'dired-regexp-history)
 	 nil current-prefix-arg nil))
   (let ((dired-marker-char (if unflag-p ?\s dired-marker-char)))
     (dired-mark-if
@@ -686,8 +690,8 @@ to put saved Dired buffers automatically into Virtual Dired mode.
 
 Also useful for `auto-mode-alist' like this:
 
-  (add-to-list 'auto-mode-alist
-               '(\"[^/]\\\\.dired\\\\'\" . dired-virtual-mode))"
+  (add-to-list \\='auto-mode-alist
+               \\='(\"[^/]\\\\.dired\\\\\\='\" . dired-virtual-mode))"
   (interactive)
   (dired-virtual (dired-virtual-guess-dir)))
 
@@ -1047,7 +1051,8 @@ Each element of this list looks like
     (REGEXP COMMAND...)
 
 where each COMMAND can either be a string or a Lisp expression that evaluates
-to a string.  If several COMMANDs are given, the first one will be the default
+to a string.  This expression can access the file name as the variable `file'.
+If several COMMANDs are given, the first one will be the default
 and the rest will be added temporarily to the history and can be retrieved
 with \\[previous-history-element] (M-p) .
 
@@ -1105,8 +1110,8 @@ See `dired-guess-shell-alist-user'."
     ;; Return commands or nil if flist is still non-nil.
     ;; Evaluate the commands in order that any logical testing will be done.
     (if (cdr cmds)
-	(delete-dups (mapcar #'eval cmds))
-      (eval (car cmds)))))		; single command
+	(delete-dups (mapcar (lambda (cmd) (eval cmd `((file . ,file)))) cmds))
+      (eval (car cmds) `((file . ,file))))))		; single command
 
 (defun dired-guess-shell-command (prompt files)
   "Ask user with PROMPT for a shell command, guessing a default from FILES."
@@ -1185,7 +1190,7 @@ results in
           (setq count (1+ count)
                 start (1+ start)))
         ;; ... and prepend a "../" for each slash found:
-        (dotimes (_n count)
+        (dotimes (_ count)
           (setq name1 (concat "../" name1)))))
     (make-symbolic-link
      (directory-file-name name1)        ; must not link to foo/
@@ -1351,12 +1356,12 @@ otherwise."
   (interactive)
   (let ((file (dired-get-filename t)))
     (if dired-bind-vm
-	(if (y-or-n-p (concat "Visit `" file
-			      "' as a mail folder with VM?"))
+	(if (y-or-n-p (format-message
+		       "Visit `%s' as a mail folder with VM?" file))
 	    (dired-vm))
       ;; Read mail folder using rmail.
-      (if (y-or-n-p (concat "Visit `" file
-			    "' as a mailbox with RMAIL?"))
+      (if (y-or-n-p (format-message
+		     "Visit `%s' as a mailbox with RMAIL?" file))
 	  (dired-rmail)))))
 
 
@@ -1394,24 +1399,24 @@ Considers buffers closer to the car of `buffer-list' to be more recent."
 ;;     result))
 
 
+;; Needed if ls -lh is supported and also for GNU ls -ls.
+(defun dired-x--string-to-number (str)
+  "Like `string-to-number' but recognize a trailing unit prefix.
+For example, 2K is expanded to 2048.0.  The caller should make
+sure that a trailing letter in STR is one of BKkMGTPEZY."
+  (let* ((val (string-to-number str))
+         (u (unless (zerop val)
+              (aref str (1- (length str))))))
+    (when (and u (> u ?9))
+      (when (= u ?k)
+        (setq u ?K))
+      (let ((units '(?B ?K ?M ?G ?T ?P ?E ?Z ?Y)))
+        (while (and units (/= (pop units) u))
+          (setq val (* 1024.0 val)))))
+    val))
+
 ;; Does anyone use this? - lrd 6/29/93.
 ;; Apparently people do use it. - lrd 12/22/97.
-
-(with-no-warnings
-  ;; Warnings are suppressed to avoid "global/dynamic var `X' lacks a prefix".
-  ;; This is unbearably ugly, but not more than having global variables
-  ;; named size, time, name or s, however practical it can be while writing
-  ;; `dired-mark-sexp' predicates.
-  (defvar inode)
-  (defvar s)
-  (defvar mode)
-  (defvar nlink)
-  (defvar uid)
-  (defvar gid)
-  (defvar size)
-  (defvar time)
-  (defvar name)
-  (defvar sym))
 
 (defun dired-mark-sexp (predicate &optional unflag-p)
   "Mark files for which PREDICATE returns non-nil.
@@ -1436,7 +1441,19 @@ For example, use
 
         (equal 0 size)
 
-to mark all zero length files."
+to mark all zero length files.
+
+There's an ambiguity when a single integer not followed by a unit
+prefix precedes the file mode: It is then parsed as inode number
+and not as block size (this always works for GNU coreutils ls).
+
+Another limitation is that the uid field is needed for the
+function to work correctly.  In particular, the field is not
+present for some values of `ls-lisp-emulation'.
+
+This function operates only on the buffer content and does not
+refer at all to the underlying file system.  Contrast this with
+`find-dired', which might be preferable for the task at hand."
   ;; Using sym="" instead of nil avoids the trap of
   ;; (string-match "foo" sym) into which a user would soon fall.
   ;; Give `equal' instead of `=' in the example, as this works on
@@ -1456,56 +1473,96 @@ to mark all zero length files."
         ;; to nil or the appropriate value, so they need not be initialized.
         ;; Moves point within the current line.
         (dired-move-to-filename)
-        (let (pos
-              (mode-len 10) ; length of mode string
-              ;; like in dired.el, but with subexpressions \1=inode, \2=s:
-              (dired-re-inode-size "\\s *\\([0-9]*\\)\\s *\\([0-9]*\\) ?"))
-          (beginning-of-line)
-          (forward-char 2)
-          (if (looking-at dired-re-inode-size)
-              (progn
-                (goto-char (match-end 0))
-                (setq inode (string-to-number
-                             (buffer-substring (match-beginning 1)
-                                               (match-end 1)))
-                      s (string-to-number
-                         (buffer-substring (match-beginning 2)
-                                           (match-end 2)))))
-            (setq inode nil
-                  s nil))
+        (let ((mode-len 10) ; length of mode string
+	      ;; like in dired.el, but with subexpressions \1=inode, \2=s:
+	      ;; GNU ls -hs suffixes the block count with a unit and
+	      ;; prints it as a float, FreeBSD does neither.
+	      (dired-re-inode-size "\\=\\s *\\([0-9]+\\s +\\)?\
+\\(?:\\([0-9]+\\(?:\\.[0-9]*\\)?[BkKMGTPEZY]?\\)? ?\\)"))
+	  (beginning-of-line)
+	  (forward-char 2)
+	  (search-forward-regexp dired-re-inode-size nil t)
+          ;; XXX Might be a size not followed by a unit prefix.
+          ;; We could set s to inode if it were otherwise nil,
+          ;; with a similar reasoning as below for setting gid to uid,
+          ;; but it would be even more whimsical.
+	  (setq inode (when (match-string 1)
+			(string-to-number (match-string 1))))
+	  (setq s (when (match-string 2)
+		    (dired-x--string-to-number (match-string 2))))
           (setq mode (buffer-substring (point) (+ mode-len (point))))
           (forward-char mode-len)
+          ;; Skip any extended attributes marker ("." or "+").
+          (or (looking-at " ")
+              (forward-char 1))
           (setq nlink (read (current-buffer)))
           ;; Karsten Wenger <kw@cis.uni-muenchen.de> fixed uid.
-          (setq uid (buffer-substring (1+ (point))
-                                      (progn (forward-word 1) (point))))
-          (re-search-forward directory-listing-before-filename-regexp)
-          (goto-char (match-beginning 1))
-          (forward-char -1)
-          (setq size (string-to-number
-                      (buffer-substring (save-excursion
-                                          (backward-word 1)
-                                          (setq pos (point)))
+          ;; Another issue is that GNU ls -n right-justifies numerical
+          ;; UIDs and GIDs, while FreeBSD left-justifies them, so
+          ;; don't rely on a specific whitespace layout.  Both of them
+          ;; right-justify all other numbers, though.
+          ;; XXX Return a number if the uid or gid seems to be
+          ;; numerical?
+          (setq uid (buffer-substring (progn
+                                        (skip-chars-forward " \t")
+                                        (point))
+                                      (progn
+                                        (skip-chars-forward "^ \t")
                                         (point))))
-          (goto-char pos)
-          (backward-word 1)
-          ;; if no gid is displayed, gid will be set to uid
-          ;; but user will then not reference it anyway in PREDICATE.
-          (setq gid (buffer-substring (save-excursion
-                                        (forward-word 1) (point))
+	  (dired-move-to-filename)
+          (save-excursion
+            (setq time
+                  ;; The regexp below tries to match from the last
+                  ;; digit of the size field through a space after the
+                  ;; date.  Also, dates may have different formats
+                  ;; depending on file age, so the date column need
+                  ;; not be aligned to the right.
+                  (buffer-substring (save-excursion
+                                      (skip-chars-backward " \t")
                                       (point))
-                time (buffer-substring (match-beginning 1)
-                                       (1- (dired-move-to-filename)))
-                name (buffer-substring (point)
-                                       (or
-                                        (dired-move-to-end-of-filename t)
-                                        (point)))
-                sym (if (looking-at-p " -> ")
-                        (buffer-substring (progn (forward-char 4) (point))
-                                          (line-end-position))
-                      ""))
+                                    (progn
+                                      (re-search-backward
+                                       directory-listing-before-filename-regexp)
+                                      (skip-chars-forward "^ \t")
+                                      (1+ (point))))
+                  size (dired-x--string-to-number
+                        ;; We know that there's some kind of number
+                        ;; before point because the regexp search
+                        ;; above succeeded.  I don't think it's worth
+                        ;; doing an extra check for leading garbage.
+                        (buffer-substring (point)
+                                          (progn
+                                            (skip-chars-backward "^ \t")
+                                            (point))))
+                  ;; If no gid is displayed, gid will be set to uid
+                  ;; but the user will then not reference it anyway in
+                  ;; PREDICATE.
+                  gid (buffer-substring (progn
+                                          (skip-chars-backward " \t")
+                                          (point))
+                                        (progn
+                                          (skip-chars-backward "^ \t")
+                                          (point)))))
+	  (setq name (buffer-substring (point)
+				       (or
+					(dired-move-to-end-of-filename t)
+					(point)))
+		sym (if (looking-at " -> ")
+			(buffer-substring (progn (forward-char 4) (point))
+					  (line-end-position))
+		      ""))
           t)
-        (eval predicate)))
+        (eval predicate
+              `((inode . ,inode)
+                (s . ,s)
+                (mode . ,mode)
+                (nlink . ,nlink)
+                (uid . ,uid)
+                (gid . ,gid)
+                (size . ,size)
+                (time . ,time)
+                (name . ,name)
+                (sym . ,sym)))))
      (format "'%s file" predicate))))
 
 

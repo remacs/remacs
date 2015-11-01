@@ -1,9 +1,9 @@
 ;;; macros.el --- non-primitive commands for keyboard macros
 
-;; Copyright (C) 1985-1987, 1992, 1994-1995, 2001-2013 Free Software
+;; Copyright (C) 1985-1987, 1992, 1994-1995, 2001-2015 Free Software
 ;; Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: abbrev
 ;; Package: emacs
 
@@ -39,19 +39,20 @@ The symbol's function definition becomes the keyboard macro string.
 Such a \"function\" cannot be called from Lisp, but it is a valid editor command."
   (interactive "SName for last kbd macro: ")
   (or last-kbd-macro
-      (error "No keyboard macro defined"))
+      (user-error "No keyboard macro defined"))
   (and (fboundp symbol)
        (not (stringp (symbol-function symbol)))
        (not (vectorp (symbol-function symbol)))
-       (error "Function %s is already defined and not a keyboard macro"
+       (user-error "Function %s is already defined and not a keyboard macro"
 	      symbol))
   (if (string-equal symbol "")
-      (error "No command name given"))
+      (user-error "No command name given"))
   (fset symbol last-kbd-macro))
 
 ;;;###autoload
 (defun insert-kbd-macro (macroname &optional keys)
-  "Insert in buffer the definition of kbd macro NAME, as Lisp code.
+  "Insert in buffer the definition of kbd macro MACRONAME, as Lisp code.
+MACRONAME should be a symbol.
 Optional second arg KEYS means also record the keys it is on
 \(this is the prefix argument, when calling interactively).
 
@@ -165,7 +166,7 @@ Your options are: \\<query-replace-map>
   (interactive "P")
   (or executing-kbd-macro
       defining-kbd-macro
-      (error "Not defining or executing kbd macro"))
+      (user-error "Not defining or executing kbd macro"))
   (if flag
       (let (executing-kbd-macro defining-kbd-macro)
 	(recursive-edit))
@@ -259,7 +260,7 @@ and then select the region of un-tablified names and use
   (or macro
       (progn
 	(if (null last-kbd-macro)
-	    (error "No keyboard macro has been defined"))
+	    (user-error "No keyboard macro has been defined"))
 	(setq macro last-kbd-macro)))
   (save-excursion
     (let ((end-marker (copy-marker bottom))

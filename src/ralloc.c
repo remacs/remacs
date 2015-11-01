@@ -1,5 +1,5 @@
 /* Block-relocating memory allocator.
-   Copyright (C) 1993, 1995, 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1995, 2000-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -35,9 +35,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define M_TOP_PAD           -2
 extern int mallopt (int, int);
 #else /* not DOUG_LEA_MALLOC */
-#ifndef SYSTEM_MALLOC
+#if !defined SYSTEM_MALLOC && !defined HYBRID_MALLOC
 extern size_t __malloc_extra_blocks;
-#endif /* SYSTEM_MALLOC */
+#endif /* not SYSTEM_MALLOC and not HYBRID_MALLOC */
 #endif /* not DOUG_LEA_MALLOC */
 
 #else /* not emacs */
@@ -85,7 +85,7 @@ static int extra_bytes;
 /* Macros for rounding.  Note that rounding to any value is possible
    by changing the definition of PAGE.  */
 #define PAGE (getpagesize ())
-#define ROUNDUP(size) (((size_t) (size) + page_size - 1) \
+#define PAGE_ROUNDUP(size) (((size_t) (size) + page_size - 1) \
 		       & ~((size_t) (page_size - 1)))
 
 #define MEM_ALIGN sizeof (double)
@@ -95,7 +95,7 @@ static int extra_bytes;
 /* The hook `malloc' uses for the function which gets more space
    from the system.  */
 
-#ifndef SYSTEM_MALLOC
+#if !defined SYSTEM_MALLOC && !defined HYBRID_MALLOC
 extern void *(*__morecore) (ptrdiff_t);
 #endif
 
@@ -281,7 +281,7 @@ obtain (void *address, size_t size)
 	 Get some extra, so we can come here less often.  */
 
       get = size + extra_bytes - already_available;
-      get = (char *) ROUNDUP ((char *) last_heap->end + get)
+      get = (char *) PAGE_ROUNDUP ((char *) last_heap->end + get)
 	- (char *) last_heap->end;
 
       if (real_morecore (get) != last_heap->end)
@@ -344,7 +344,7 @@ relinquish (void)
       else
 	{
 	  excess = ((char *) last_heap->end
-		    - (char *) ROUNDUP ((char *) last_heap->end - excess));
+		    - (char *) PAGE_ROUNDUP ((char *) last_heap->end - excess));
 	  /* If the system doesn't want that much memory back, leave
 	     the end of the last heap unchanged to reflect that.  This
 	     can occur if break_value is still within the original
@@ -768,9 +768,9 @@ r_alloc_sbrk (ptrdiff_t size)
 	 not always find a space which is contiguous to the previous.  */
       void *new_bloc_start;
       heap_ptr h = first_heap;
-      size_t get = ROUNDUP (size);
+      size_t get = PAGE_ROUNDUP (size);
 
-      address = (void *) ROUNDUP (virtual_break_value);
+      address = (void *) PAGE_ROUNDUP (virtual_break_value);
 
       /* Search the list upward for a heap which is large enough.  */
       while ((char *) h->end < (char *) MEM_ROUNDUP ((char *) address + get))
@@ -778,7 +778,7 @@ r_alloc_sbrk (ptrdiff_t size)
 	  h = h->next;
 	  if (h == NIL_HEAP)
 	    break;
-	  address = (void *) ROUNDUP (h->start);
+	  address = (void *) PAGE_ROUNDUP (h->start);
 	}
 
       /* If not found, obtain more space.  */
@@ -790,9 +790,9 @@ r_alloc_sbrk (ptrdiff_t size)
 	    return 0;
 
 	  if (first_heap == last_heap)
-	    address = (void *) ROUNDUP (virtual_break_value);
+	    address = (void *) PAGE_ROUNDUP (virtual_break_value);
 	  else
-	    address = (void *) ROUNDUP (last_heap->start);
+	    address = (void *) PAGE_ROUNDUP (last_heap->start);
 	  h = last_heap;
 	}
 
@@ -1054,7 +1054,7 @@ r_alloc_check (void)
   for (h = first_heap; h; h = h->next)
     {
       assert (h->prev == ph);
-      assert ((void *) ROUNDUP (h->end) == h->end);
+      assert ((void *) PAGE_ROUNDUP (h->end) == h->end);
 #if 0 /* ??? The code in ralloc.c does not really try to ensure
 	 the heap start has any sort of alignment.
 	 Perhaps it should.  */
@@ -1179,7 +1179,7 @@ r_alloc_init (void)
   r_alloc_initialized = 1;
 
   page_size = PAGE;
-#ifndef SYSTEM_MALLOC
+#if !defined SYSTEM_MALLOC && !defined HYBRID_MALLOC
   real_morecore = __morecore;
   __morecore = r_alloc_sbrk;
 
@@ -1190,7 +1190,7 @@ r_alloc_init (void)
   if (break_value == NULL)
     emacs_abort ();
 
-  extra_bytes = ROUNDUP (50000);
+  extra_bytes = PAGE_ROUNDUP (50000);
 #endif
 
 #ifdef DOUG_LEA_MALLOC
@@ -1198,7 +1198,7 @@ r_alloc_init (void)
   mallopt (M_TOP_PAD, 64 * 4096);
   unblock_input ();
 #else
-#ifndef SYSTEM_MALLOC
+#if !defined SYSTEM_MALLOC && !defined HYBRID_MALLOC
   /* Give GNU malloc's morecore some hysteresis so that we move all
      the relocatable blocks much less often.  The number used to be
      64, but alloc.c would override that with 32 in code that was
@@ -1211,8 +1211,8 @@ r_alloc_init (void)
 #endif
 #endif
 
-#ifndef SYSTEM_MALLOC
-  first_heap->end = (void *) ROUNDUP (first_heap->start);
+#if !defined SYSTEM_MALLOC && !defined HYBRID_MALLOC
+  first_heap->end = (void *) PAGE_ROUNDUP (first_heap->start);
 
   /* The extra call to real_morecore guarantees that the end of the
      address space is a multiple of page_size, even if page_size is

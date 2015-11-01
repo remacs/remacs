@@ -1,6 +1,6 @@
 ;;; isearch-x.el --- extended isearch handling commands
 
-;; Copyright (C) 1997, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997, 2001-2015 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
 ;;   2005, 2006, 2007, 2008, 2009, 2010, 2011
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
@@ -71,6 +71,7 @@
 
 (defun isearch-with-keyboard-coding ()
   (interactive)
+  ;; FIXME: What does this after-change-functions binding do here?
   (let ((after-change-functions '(isearch-exit-recursive-edit)))
     (recursive-edit))
   (exit-minibuffer))

@@ -1,6 +1,6 @@
 ;;; vc-hooks.el --- resident support for version-control
 
-;; Copyright (C) 1992-1996, 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1992-1996, 1998-2015 Free Software Foundation, Inc.
 
 ;; Author:     FSF (see vc.el for full credits)
 ;; Maintainer: Andre Spiegel <spiegel@gnu.org>
@@ -32,6 +32,69 @@
 
 (eval-when-compile (require 'cl-lib))
 
+;; Faces
+
+(defgroup vc-state-faces nil
+  "Faces used in the mode line by the VC state indicator."
+  :group 'vc-faces
+  :group 'mode-line
+  :version "25.1")
+
+(defface vc-state-base-face
+  '((default))
+  "Base face for VC state indicator."
+  :group 'vc-faces
+  :group 'mode-line
+  :version "25.1")
+
+(defface vc-up-to-date-state
+  '((default :inherit vc-state-base-face))
+  "Face for VC modeline state when the file is up to date."
+  :version "25.1"
+  :group 'vc-faces)
+
+(defface vc-needs-update-state
+  '((default :inherit vc-state-base-face))
+  "Face for VC modeline state when the file needs update."
+  :version "25.1"
+  :group 'vc-faces)
+
+(defface vc-locked-state
+  '((default :inherit vc-state-base-face))
+  "Face for VC modeline state when the file locked."
+  :version "25.1"
+  :group 'vc-faces)
+
+(defface vc-locally-added-state
+  '((default :inherit vc-state-base-face))
+  "Face for VC modeline state when the file is locally added."
+  :version "25.1"
+  :group 'vc-faces)
+
+(defface vc-conflict-state
+  '((default :inherit vc-state-base-face))
+  "Face for VC modeline state when the file contains merge conflicts."
+  :version "25.1"
+  :group 'vc-faces)
+
+(defface vc-removed-state
+  '((default :inherit vc-state-base-face))
+  "Face for VC modeline state when the file was removed from the VC system."
+  :version "25.1"
+  :group 'vc-faces)
+
+(defface vc-missing-state
+  '((default :inherit vc-state-base-face))
+  "Face for VC modeline state when the file is missing from the file system."
+  :version "25.1"
+  :group 'vc-faces)
+
+(defface vc-edited-state
+  '((default :inherit vc-state-base-face))
+  "Face for VC modeline state when the file is up to date."
+  :version "25.1"
+  :group 'vc-faces)
+
 ;; Customization Variables (the rest is in vc.el)
 
 (defcustom vc-ignore-dir-regexp
@@ -44,8 +107,8 @@ interpreted as hostnames."
   :type 'regexp
   :group 'vc)
 
-(defcustom vc-handled-backends '(RCS CVS SVN SCCS Bzr Git Hg Mtn Arch)
-  ;; RCS, CVS, SVN and SCCS come first because they are per-dir
+(defcustom vc-handled-backends '(RCS CVS SVN SCCS SRC Bzr Git Hg Mtn)
+  ;; RCS, CVS, SVN, SCCS, and SRC come first because they are per-dir
   ;; rather than per-tree.  RCS comes first because of the multibackend
   ;; support intended to use RCS for local commits (with a remote CVS server).
   "List of version control backends for which VC will be used.
@@ -55,13 +118,14 @@ Removing an entry from the list prevents VC from being activated
 when visiting a file managed by that backend.
 An empty list disables VC altogether."
   :type '(repeat symbol)
-  :version "23.1"
+  :version "25.1"
   :group 'vc)
 
 ;; Note: we don't actually have a darcs back end yet.
-;; Also, Meta-CVS (corresponding to MCVS) is unsupported.
+;; Also, Meta-CVS (corresponding to MCVS) and Arch are unsupported.
+;; The Arch back end will be retrieved and fixed if it is ever required.
 (defcustom vc-directory-exclusion-list (purecopy '("SCCS" "RCS" "CVS" "MCVS"
-					 ".svn" ".git" ".hg" ".bzr"
+					 ".src" ".svn" ".git" ".hg" ".bzr"
 					 "_MTN" "_darcs" "{arch}"))
   "List of directory names to be ignored when walking directory trees."
   :type '(repeat string)
@@ -100,87 +164,6 @@ Otherwise, not displayed."
   :type 'boolean
   :group 'vc)
 
-(defcustom vc-keep-workfiles t
-  "Whether to keep work files on disk after commits, on a locking VCS.
-This variable has no effect on modern merging-based version
-control systems."
-  :type 'boolean
-  :group 'vc)
-
-;; If you fix bug#11490, probably you can set this back to nil.
-(defcustom vc-mistrust-permissions t
-  "If non-nil, don't assume permissions/ownership track version-control status.
-If nil, do rely on the permissions.
-See also variable `vc-consult-headers'."
-  :version "24.3"                       ; nil->t, bug#11490
-  :type 'boolean
-  :group 'vc)
-
-(defun vc-mistrust-permissions (file)
-  "Internal access function to variable `vc-mistrust-permissions' for FILE."
-  (or (eq vc-mistrust-permissions 't)
-      (and vc-mistrust-permissions
-	   (funcall vc-mistrust-permissions
-		    (vc-backend-subdirectory-name file)))))
-
-(defcustom vc-stay-local 'only-file
-  "Non-nil means use local operations when possible for remote repositories.
-This avoids slow queries over the network and instead uses heuristics
-and past information to determine the current status of a file.
-
-If value is the symbol `only-file', `vc-dir' will connect to the
-server, but heuristics will be used to determine the status for
-all other VC operations.
-
-The value can also be a regular expression or list of regular
-expressions to match against the host name of a repository; then VC
-only stays local for hosts that match it.  Alternatively, the value
-can be a list of regular expressions where the first element is the
-symbol `except'; then VC always stays local except for hosts matched
-by these regular expressions."
-  :type '(choice
-	  (const :tag "Always stay local" t)
-	  (const :tag "Only for file operations" only-file)
-	  (const :tag "Don't stay local" nil)
-	  (list :format "\nExamine hostname and %v" :tag "Examine hostname ..."
-		(set :format "%v" :inline t (const :format "%t" :tag "don't" except))
-		(regexp :format " stay local,\n%t: %v" :tag "if it matches")
-		(repeat :format "%v%i\n" :inline t (regexp :tag "or"))))
-  :version "23.1"
-  :group 'vc)
-
-(defun vc-stay-local-p (file &optional backend)
-  "Return non-nil if VC should stay local when handling FILE.
-This uses the `repository-hostname' backend operation.
-If FILE is a list of files, return non-nil if any of them
-individually should stay local."
-  (if (listp file)
-      (delq nil (mapcar (lambda (arg) (vc-stay-local-p arg backend)) file))
-    (setq backend (or backend (vc-backend file)))
-    (let* ((sym (vc-make-backend-sym backend 'stay-local))
-	   (stay-local (if (boundp sym) (symbol-value sym) vc-stay-local)))
-      (if (symbolp stay-local) stay-local
-	(let ((dirname (if (file-directory-p file)
-			   (directory-file-name file)
-			 (file-name-directory file))))
-	  (eq 'yes
-	      (or (vc-file-getprop dirname 'vc-stay-local-p)
-		  (vc-file-setprop
-		   dirname 'vc-stay-local-p
-		   (let ((hostname (vc-call-backend
-				    backend 'repository-hostname dirname)))
-		     (if (not hostname)
-			 'no
-		       (let ((default t))
-			 (if (eq (car-safe stay-local) 'except)
-			     (setq default nil stay-local (cdr stay-local)))
-			 (when (consp stay-local)
-			   (setq stay-local
-				 (mapconcat 'identity stay-local "\\|")))
-			 (if (if (string-match stay-local hostname)
-				 default (not default))
-			     'yes 'no))))))))))))
-
 ;;; This is handled specially now.
 ;; Tell Emacs about this new kind of minor mode
 ;; (add-to-list 'minor-mode-alist '(vc-mode vc-mode))
@@ -189,6 +172,11 @@ individually should stay local."
 (put 'vc-mode 'risky-local-variable t)
 (make-variable-buffer-local 'vc-mode)
 (put 'vc-mode 'permanent-local t)
+
+;;; We signal this error when we try to do something a VC backend
+;;; doesn't support.  Two arguments: the method that's not supported
+;;; and the backend
+(define-error 'vc-not-supported "VC method not implemented for backend")
 
 (defun vc-mode (&optional _arg)
   ;; Dummy function for C-h m
@@ -268,10 +256,10 @@ It is usually called via the `vc-call' macro."
       (setq f (vc-find-backend-function backend function-name))
       (push (cons function-name f) (get backend 'vc-functions)))
     (cond
-     ((null f)
-      (error "Sorry, %s is not implemented for %s" function-name backend))
-     ((consp f)	(apply (car f) (cdr f) args))
-     (t		(apply f args)))))
+      ((null f)
+       (signal 'vc-not-supported (list function-name backend)))
+      ((consp f)	(apply (car f) (cdr f) args))
+      (t		(apply f args)))))
 
 (defmacro vc-call (fun file &rest args)
   "A convenience macro for calling VC backend functions.
@@ -386,33 +374,20 @@ If the argument is a list, the files must all have the same back end."
   "Return where the repository for the current directory is kept."
   (symbol-name (vc-backend file)))
 
-(defun vc-name (file)
-  "Return the master name of FILE.
-If the file is not registered, or the master name is not known, return nil."
-  ;; TODO: This should ultimately become obsolete, at least up here
-  ;; in vc-hooks.
-  (or (vc-file-getprop file 'vc-name)
-      ;; force computation of the property by calling
-      ;; vc-BACKEND-registered explicitly
-      (let ((backend (vc-backend file)))
-	(if (and backend
-		 (vc-call-backend backend 'registered file))
-	    (vc-file-getprop file 'vc-name)))))
-
 (defun vc-checkout-model (backend files)
   "Indicate how FILES are checked out.
 
 If FILES are not registered, this function always returns nil.
 For registered files, the possible values are:
 
-  'implicit   FILES are always writable, and checked out `implicitly'
+  `implicit'   FILES are always writable, and checked out `implicitly'
               when the user saves the first changes to the file.
 
-  'locking    FILES are read-only if up-to-date; user must type
+  `locking'   FILES are read-only if up-to-date; user must type
               \\[vc-next-action] before editing.  Strict locking
               is assumed.
 
-  'announce   FILES are read-only if up-to-date; user must type
+  `announce'  FILES are read-only if up-to-date; user must type
               \\[vc-next-action] before editing.  But other users
               may be editing at the same time."
   (vc-call-backend backend 'checkout-model files))
@@ -441,10 +416,10 @@ For registered files, the possible values are:
 A return of nil from this function means we have no information on the
 status of this file.  Otherwise, the value returned is one of:
 
-  'up-to-date        The working file is unmodified with respect to the
+  `up-to-date'       The working file is unmodified with respect to the
                      latest version on the current branch, and not locked.
 
-  'edited            The working file has been edited by the user.  If
+  `edited'           The working file has been edited by the user.  If
                      locking is used for the file, this state means that
                      the current version is locked by the calling user.
                      This status should *not* be reported for files
@@ -454,44 +429,44 @@ status of this file.  Otherwise, the value returned is one of:
   USER               The current version of the working file is locked by
                      some other USER (a string).
 
-  'needs-update      The file has not been edited by the user, but there is
+  `needs-update'     The file has not been edited by the user, but there is
                      a more recent version on the current branch stored
                      in the repository.
 
-  'needs-merge       The file has been edited by the user, and there is also
+  `needs-merge'      The file has been edited by the user, and there is also
                      a more recent version on the current branch stored in
                      the repository.  This state can only occur if locking
                      is not used for the file.
 
-  'unlocked-changes  The working version of the file is not locked,
+  `unlocked-changes' The working version of the file is not locked,
                      but the working file has been changed with respect
                      to that version.  This state can only occur for files
                      with locking; it represents an erroneous condition that
                      should be resolved by the user (vc-next-action will
                      prompt the user to do it).
 
-  'added             Scheduled to go into the repository on the next commit.
+  `added'            Scheduled to go into the repository on the next commit.
                      Often represented by vc-working-revision = \"0\" in VCSes
                      with monotonic IDs like Subversion and Mercurial.
 
-  'removed           Scheduled to be deleted from the repository on next commit.
+  `removed'          Scheduled to be deleted from the repository on next commit.
 
-  'conflict          The file contains conflicts as the result of a merge.
+  `conflict'         The file contains conflicts as the result of a merge.
                      For now the conflicts are text conflicts.  In the
                      future this might be extended to deal with metadata
                      conflicts too.
 
-  'missing           The file is not present in the file system, but the VC
+  `missing'          The file is not present in the file system, but the VC
                      system still tracks it.
 
-  'ignored           The file showed up in a dir-status listing with a flag
+  `ignored'          The file showed up in a dir-status listing with a flag
                      indicating the version-control system is ignoring it,
                      Note: This property is not set reliably (some VCSes
                      don't have useful directory-status commands) so assume
                      that any file with vc-state nil might be ignorable
                      without VC knowing it.
 
-  'unregistered      The file is not under version control."
+  `unregistered'     The file is not under version control."
 
   ;; Note: in Emacs 22 and older, return of nil meant the file was
   ;; unregistered.  This is potentially a source of
@@ -501,7 +476,7 @@ status of this file.  Otherwise, the value returned is one of:
   ;; - `copied' and `moved' (might be handled by `removed' and `added')
   (or (vc-file-getprop file 'vc-state)
       (when (> (length file) 0)         ;Why??  --Stef
-	(setq backend (or backend (vc-backend file)))
+	(setq backend (or backend (vc-responsible-backend file)))
 	(when backend
           (vc-state-refresh file backend)))))
 
@@ -509,57 +484,18 @@ status of this file.  Otherwise, the value returned is one of:
   "Quickly recompute the `state' of FILE."
   (vc-file-setprop
    file 'vc-state
-   (vc-call-backend backend 'state-heuristic file)))
+   (vc-call-backend backend 'state file)))
 
 (defsubst vc-up-to-date-p (file)
   "Convenience function that checks whether `vc-state' of FILE is `up-to-date'."
   (eq (vc-state file) 'up-to-date))
-
-(defun vc-default-state-heuristic (backend file)
-  "Default implementation of vc-BACKEND-state-heuristic.
-It simply calls the real state computation function `vc-BACKEND-state'
-and does not employ any heuristic at all."
-   (vc-call-backend backend 'state file))
-
-(defun vc-workfile-unchanged-p (file)
-  "Return non-nil if FILE has not changed since the last checkout."
-  (let ((checkout-time (vc-file-getprop file 'vc-checkout-time))
-        (lastmod (nth 5 (file-attributes file))))
-    ;; This is a shortcut for determining when the workfile is
-    ;; unchanged.  It can fail under some circumstances; see the
-    ;; discussion in bug#694.
-    (if (and checkout-time
-	     ;; Tramp and Ange-FTP return this when they don't know the time.
-	     (not (equal lastmod '(0 0))))
-	(equal checkout-time lastmod)
-      (let ((unchanged (vc-call workfile-unchanged-p file)))
-	(vc-file-setprop file 'vc-checkout-time (if unchanged lastmod 0))
-	unchanged))))
-
-(defun vc-default-workfile-unchanged-p (backend file)
-  "Check if FILE is unchanged by diffing against the repository version.
-Return non-nil if FILE is unchanged."
-  (zerop (condition-case err
-             ;; If the implementation supports it, let the output
-             ;; go to *vc*, not *vc-diff*, since this is an internal call.
-             (vc-call-backend backend 'diff (list file) nil nil "*vc*")
-           (wrong-number-of-arguments
-            ;; If this error came from the above call to vc-BACKEND-diff,
-            ;; try again without the optional buffer argument (for
-            ;; backward compatibility).  Otherwise, resignal.
-            (if (or (not (eq (cadr err)
-                             (indirect-function
-                              (vc-find-backend-function backend 'diff))))
-                    (not (eq (cl-caddr err) 4)))
-                (signal (car err) (cdr err))
-              (vc-call-backend backend 'diff (list file)))))))
 
 (defun vc-working-revision (file &optional backend)
   "Return the repository version from which FILE was checked out.
 If FILE is not registered, this function always returns nil."
   (or (vc-file-getprop file 'vc-working-revision)
       (progn
-	(setq backend (or backend (vc-backend file)))
+	(setq backend (or backend (vc-responsible-backend file)))
 	(when backend
 	  (vc-file-setprop file 'vc-working-revision
 			   (vc-call-backend backend 'working-revision file))))))
@@ -579,9 +515,10 @@ If FILE is not registered, this function always returns nil."
       (put backend 'vc-templates-grabbed t))
     (let ((result (vc-check-master-templates file (symbol-value sym))))
       (if (stringp result)
-	  (vc-file-setprop file 'vc-name result)
+	  (vc-file-setprop file 'vc-master-name result)
 	nil))))				; Not registered
 
+;;;###autoload
 (defun vc-possible-master (s dirname basename)
   (cond
    ((stringp s) (format s dirname basename))
@@ -628,8 +565,15 @@ this function."
 	       (throw 'found trial))))
        templates))))
 
-(define-obsolete-function-alias
-  'vc-toggle-read-only 'toggle-read-only "24.1")
+
+;; toggle-read-only is obsolete since 24.3, but since vc-t-r-o was made
+;; obsolete earlier, it is ok for the latter to be an alias to the former,
+;; since the latter will be removed first.  We can't just make it
+;; an alias for read-only-mode, since that is not 100% the same.
+(defalias 'vc-toggle-read-only 'toggle-read-only)
+(make-obsolete 'vc-toggle-read-only
+               "use `read-only-mode' instead (or `toggle-read-only' in older versions of Emacs)."
+               "24.1")
 
 (defun vc-default-make-version-backups-p (_backend _file)
   "Return non-nil if unmodified versions should be backed up locally.
@@ -788,33 +732,42 @@ This function assumes that the file is registered."
   (let* ((backend-name (symbol-name backend))
 	 (state   (vc-state file backend))
 	 (state-echo nil)
+	 (face nil)
 	 (rev     (vc-working-revision file backend)))
     (propertize
      (cond ((or (eq state 'up-to-date)
 		(eq state 'needs-update))
 	    (setq state-echo "Up to date file")
+	    (setq face 'vc-up-to-date-state)
 	    (concat backend-name "-" rev))
 	   ((stringp state)
 	    (setq state-echo (concat "File locked by" state))
+	    (setq face 'vc-locked-state)
 	    (concat backend-name ":" state ":" rev))
            ((eq state 'added)
             (setq state-echo "Locally added file")
+	    (setq face 'vc-locally-added-state)
             (concat backend-name "@" rev))
            ((eq state 'conflict)
             (setq state-echo "File contains conflicts after the last merge")
+	    (setq face 'vc-conflict-state)
             (concat backend-name "!" rev))
            ((eq state 'removed)
             (setq state-echo "File removed from the VC system")
+	    (setq face 'vc-removed-state)
             (concat backend-name "!" rev))
            ((eq state 'missing)
             (setq state-echo "File tracked by the VC system, but missing from the file system")
+	    (setq face 'vc-missing-state)
             (concat backend-name "?" rev))
 	   (t
 	    ;; Not just for the 'edited state, but also a fallback
 	    ;; for all other states.  Think about different symbols
 	    ;; for 'needs-update and 'needs-merge.
 	    (setq state-echo "Locally modified file")
+	    (setq face 'vc-edited-state)
 	    (concat backend-name ":" rev)))
+     'face face
      'help-echo (concat state-echo " under the " backend-name
 			" version control system"))))
 
@@ -837,8 +790,9 @@ current, and kill the buffer that visits the link."
 (defun vc-default-find-file-hook (_backend)
   nil)
 
-(defun vc-find-file-hook ()
-  "Function for `find-file-hook' activating VC mode if appropriate."
+(defun vc-refresh-state ()
+  "Activate or deactivate VC mode as appropriate."
+  (interactive)
   ;; Recompute whether file is version controlled,
   ;; if user has killed the buffer and revisited.
   (when vc-mode
@@ -885,18 +839,19 @@ current, and kill the buffer that visits the link."
 
 		 (vc-follow-link)
 		 (message "Followed link to %s" buffer-file-name)
-		 (vc-find-file-hook))
+		 (vc-refresh-state))
 		(t
 		 (if (yes-or-no-p (format
 				   "Symbolic link to %s-controlled source file; follow link? " link-type))
 		     (progn (vc-follow-link)
 			    (message "Followed link to %s" buffer-file-name)
-			    (vc-find-file-hook))
+			    (vc-refresh-state))
 		   (message
 		    "Warning: editing through the link bypasses version control")
 		   )))))))))
 
-(add-hook 'find-file-hook 'vc-find-file-hook)
+(add-hook 'find-file-hook #'vc-refresh-state)
+(define-obsolete-function-alias 'vc-find-file-hook 'vc-refresh-state "25.1")
 
 (defun vc-kill-buffer-hook ()
   "Discard VC info about a file when we kill its buffer."
@@ -915,7 +870,6 @@ current, and kill the buffer that visits the link."
   (let ((map (make-sparse-keymap)))
     (define-key map "a" 'vc-update-change-log)
     (define-key map "b" 'vc-switch-backend)
-    (define-key map "c" 'vc-rollback)
     (define-key map "d" 'vc-dir)
     (define-key map "g" 'vc-annotate)
     (define-key map "G" 'vc-ignore)
@@ -931,9 +885,12 @@ current, and kill the buffer that visits the link."
     (define-key map "u" 'vc-revert)
     (define-key map "v" 'vc-next-action)
     (define-key map "+" 'vc-update)
+    ;; I'd prefer some kind of symmetry with vc-update:
+    (define-key map "P" 'vc-push)
     (define-key map "=" 'vc-diff)
     (define-key map "D" 'vc-root-diff)
     (define-key map "~" 'vc-revision-other-window)
+    (define-key map "x" 'vc-delete-file)
     map))
 (fset 'vc-prefix-map vc-prefix-map)
 (define-key ctl-x-map "v" 'vc-prefix-map)
@@ -984,16 +941,13 @@ current, and kill the buffer that visits the link."
       '(menu-item "Insert Header" vc-insert-headers
 		  :help "Insert headers into a file for use with a version control system.
 "))
-    (bindings--define-key map [undo]
-      '(menu-item "Undo Last Check-In" vc-rollback
-                  :enable (let ((backend (if buffer-file-name
-                                             (vc-backend buffer-file-name))))
-                            (or (not backend)
-                                (vc-find-backend-function backend 'rollback)))
-		  :help "Remove the most recent changeset committed to the repository"))
     (bindings--define-key map [vc-revert]
       '(menu-item "Revert to Base Version" vc-revert
 		  :help "Revert working copies of the selected file set to their repository contents"))
+    ;; TODO Only :enable if (vc-find-backend-function backend 'push)
+    (bindings--define-key map [vc-push]
+      '(menu-item "Push Changes" vc-push
+		  :help "Push the current branch's changes"))
     (bindings--define-key map [vc-update]
       '(menu-item "Update to Latest Version" vc-update
 		  :help "Update the current fileset's files to their tip revisions"))

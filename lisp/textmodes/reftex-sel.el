@@ -1,6 +1,6 @@
 ;;; reftex-sel.el --- the selection modes for RefTeX
 
-;; Copyright (C) 1997-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997-2015 Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <dominik@science.uva.nl>
 ;; Maintainer: auctex-devel@gnu.org
@@ -102,7 +102,8 @@
 This keymap can be used to configure the label selection process which is
 started with the command \\[reftex-reference].")
 
-(define-derived-mode reftex-select-label-mode fundamental-mode "LSelect"
+;;;###autoload
+(define-derived-mode reftex-select-label-mode special-mode "LSelect"
   "Major mode for selecting a label in a LaTeX document.
 This buffer was created with RefTeX.
 It only has a meaningful keymap when you are in the middle of a
@@ -147,7 +148,8 @@ During a selection process, these are the local bindings.
 This keymap can be used to configure the BibTeX selection process which is
 started with the command \\[reftex-citation].")
 
-(define-derived-mode reftex-select-bib-mode fundamental-mode "BSelect"
+;;;###autoload
+(define-derived-mode reftex-select-bib-mode special-mode "BSelect"
   "Major mode for selecting a citation key in a LaTeX document.
 This buffer was created with RefTeX.
 It only has a meaningful keymap when you are in the middle of a
@@ -188,6 +190,7 @@ During a selection process, these are the local bindings.
 ;;           (throw 'exit entry)))
 ;;     nil))))
 
+;;;###autoload
 (defun reftex-get-offset (buf here-am-I &optional typekey toc index file)
   ;; Find the correct offset data, like insert-docstruct would, but faster.
   ;; Buffer BUF knows the correct docstruct to use.
@@ -212,6 +215,7 @@ During a selection process, these are the local bindings.
               (throw 'exit (or lastentry entry))))
         nil))))
 
+;;;###autoload
 (defun reftex-insert-docstruct
   (buf toc labels index-entries files context counter show-commented
             here-I-am xr-prefix toc-buffer)
@@ -292,7 +296,7 @@ During a selection process, these are the local bindings.
           (setq to (point))
           (when font
             (put-text-property from to
-                               'face reftex-file-boundary-face))
+                               'font-lock-face reftex-file-boundary-face))
           (when toc-buffer
             (if mouse-face
                 (put-text-property from (1- to)
@@ -310,7 +314,7 @@ During a selection process, these are the local bindings.
           (setq to (point))
           (when font
             (put-text-property from to
-                               'face reftex-section-heading-face))
+                               'font-lock-face reftex-section-heading-face))
           (when toc-buffer
             (if mouse-face
                 (put-text-property from (1- to)
@@ -349,7 +353,7 @@ During a selection process, these are the local bindings.
             (setq to (point))
             (put-text-property
              (- (point) (length label)) to
-             'face (if comment
+             'font-lock-face (if comment
                        'font-lock-comment-face
                      label-face))
             (goto-char to))
@@ -379,14 +383,14 @@ During a selection process, these are the local bindings.
           (setq index-tag (format "<%s>" (nth 1 cell)))
           (and font
                (put-text-property 0 (length index-tag)
-                                  'face reftex-index-tag-face index-tag))
+                                  'font-lock-face reftex-index-tag-face index-tag))
           (insert label-indent index-tag " " (nth 7 cell))
 
           (when font
             (setq to (point))
             (put-text-property
              (- (point) (length (nth 7 cell))) to
-             'face index-face)
+             'font-lock-face index-face)
             (goto-char to))
           (insert "\n")
           (setq to (point))
@@ -412,6 +416,7 @@ During a selection process, these are the local bindings.
     (run-hooks 'reftex-display-copied-context-hook)
     offset))
 
+;;;###autoload
 (defun reftex-find-start-point (fallback &rest locations)
   ;; Set point to the first available LOCATION.  When a LOCATION is a list,
   ;; search for such a :data text property.  When it is an integer,
@@ -440,6 +445,7 @@ During a selection process, these are the local bindings.
 (defvar reftex-last-line nil)
 (defvar reftex-select-marked nil)
 
+;;;###autoload
 (defun reftex-select-item (reftex-select-prompt help-string keymap
                                   &optional offset
                                   call-back cb-flag)
@@ -684,7 +690,7 @@ Cycle in reverse order if optional argument REVERSE is non-nil."
           eoe (or (next-single-property-change (point) :data) (point-max)))
     (setq ovl (reftex-make-overlay boe eoe))
     (push (list data ovl separator) reftex-select-marked)
-    (reftex-overlay-put ovl 'face reftex-select-mark-face)
+    (reftex-overlay-put ovl 'font-lock-face reftex-select-mark-face)
     (reftex-overlay-put ovl 'before-string
                         (if separator
                             (format "*%c%d* " separator
@@ -737,3 +743,7 @@ Cycle in reverse order if optional argument REVERSE is non-nil."
 (provide 'reftex-sel)
 
 ;;; reftex-sel.el ends here
+
+;; Local Variables:
+;; generated-autoload-file: "reftex.el"
+;; End:

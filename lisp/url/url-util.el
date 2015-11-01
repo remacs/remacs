@@ -1,9 +1,10 @@
 ;;; url-util.el --- Miscellaneous helper routines for URL library
 
-;; Copyright (C) 1996-1999, 2001, 2004-2013 Free Software Foundation,
+;; Copyright (C) 1996-1999, 2001, 2004-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Bill Perry <wmperry@gnu.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: comm, data, processes
 
 ;; This file is part of GNU Emacs.
@@ -189,8 +190,7 @@ Will not do anything if `url-show-status' is nil."
 (defun url-get-normalized-date (&optional specified-time)
  "Return a 'real' date string that most HTTP servers can understand."
  (let ((system-time-locale "C"))
-  (format-time-string "%a, %d %b %Y %T GMT"
-   (or specified-time (current-time)) t)))
+  (format-time-string "%a, %d %b %Y %T GMT" specified-time t)))
 
 ;;;###autoload
 (defun url-eat-trailing-space (x)
@@ -211,15 +211,9 @@ Will not do anything if `url-show-status' is nil."
       (setq z (1+ z)))
     (substring x z nil)))
 
-;;;###autoload
-(defun url-pretty-length (n)
-  (cond
-   ((< n 1024)
-    (format "%d bytes" n))
-   ((< n (* 1024 1024))
-    (format "%dk" (/ n 1024.0)))
-   (t
-    (format "%2.2fM" (/ n (* 1024 1024.0))))))
+
+(define-obsolete-function-alias 'url-pretty-length
+  'file-size-human-readable "24.4")
 
 ;;;###autoload
 (defun url-display-percentage (fmt perc &rest args)
@@ -291,7 +285,7 @@ Will not do anything if `url-show-status' is nil."
   "Build a query-string.
 
 Given a QUERY in the form:
-'((key1 val1)
+ ((key1 val1)
   (key2 val2)
   (key3 val1 val2)
   (key4)
@@ -634,14 +628,9 @@ Creates FILE and its parent directories if they do not exist."
       (make-directory dir t)))
   ;; Based on doc-view-make-safe-dir.
   (condition-case nil
-      (let ((umask (default-file-modes)))
-        (unwind-protect
-            (progn
-              (set-default-file-modes #o0600)
-              (with-temp-buffer
-                (write-region (point-min) (point-max)
-                              file nil 'silent nil 'excl)))
-          (set-default-file-modes umask)))
+      (with-file-modes #o0600
+        (with-temp-buffer
+          (write-region (point-min) (point-max) file nil 'silent nil 'excl)))
     (file-already-exists
      (if (file-symlink-p file)
          (error "Danger: `%s' is a symbolic link" file))

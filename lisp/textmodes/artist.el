@@ -1,6 +1,6 @@
 ;;; artist.el --- draw ascii graphics with your mouse
 
-;; Copyright (C) 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
 ;; Author:       Tomas Abrahamsson <tab@lysator.liu.se>
 ;; Maintainer:   Tomas Abrahamsson <tab@lysator.liu.se>
@@ -298,7 +298,7 @@ during the flood-fill."
 (defcustom artist-ellipse-right-char ?\)
   "Character to use at the rightmost position when drawing narrow ellipses.
 
-In this figure, it is the right parenthesis (the ``)'' character):
+In this figure, it is the right parenthesis (the \")\" character):
              -----
             (     )
              -----"
@@ -309,7 +309,7 @@ In this figure, it is the right parenthesis (the ``)'' character):
 (defcustom artist-ellipse-left-char ?\(
   "Character to use at the leftmost position when drawing narrow ellipses.
 
-In this figure, it is the left parenthesis (the ``('' character):
+In this figure, it is the left parenthesis (the \"(\" character):
              -----
             (     )
              -----"
@@ -331,7 +331,7 @@ Accept this many characters cutting off a line and still treat
 it as one line.
 Example:
  If `artist-vaporize-fuzziness' is 2, then those will be recognized as
- lines from A to B (provided you start vaporizing them at the ``*''):
+ lines from A to B (provided you start vaporizing them at the \"*\"):
                          /
             A----*------/-----------B
                       \\/
@@ -342,7 +342,7 @@ Example:
                       \\/ /
             A----*----/\\/----------B
                      / /\\
- (in fact, only the left part [between the A and the leftmost ``/''
+ (in fact, only the left part [between the A and the leftmost \"/\"
  crossing the line] will be vaporized)."
   :group 'artist
   :type 'integer)
@@ -397,8 +397,8 @@ Example:
   ;; This is a defvar, not a defcustom, since the custom
   ;; package shows lists of characters as a lists of integers,
   ;; which is confusing
-  "Characters (``color'') to use when spraying.
-They should be ordered from the ``lightest'' to the ``heaviest''
+  "Characters (\"color\") to use when spraying.
+They should be ordered from the \"lightest\" to the \"heaviest\"
 since spraying replaces a light character with the next heavier one.")
 
 
@@ -1275,7 +1275,7 @@ Drawing with the mouse:
 		* Cut copies, then clears the rectangle/square.
 
 		* When drawing lines or poly-lines, you can set arrows.
-		  See below under ``Arrows'' for more info.
+		  See below under \"Arrows\" for more info.
 
 		* The mode line shows the currently selected drawing operation.
 		  In addition, if it has an asterisk (*) at the end, you
@@ -1383,8 +1383,8 @@ Variables
  artist-vaporize-fuzziness      Tolerance when recognizing lines
  artist-spray-interval          Seconds between repeated sprayings
  artist-spray-radius            Size of the spray-area
- artist-spray-chars             The spray-``color''
- artist-spray-new-chars         Initial spray-``color''
+ artist-spray-chars             The spray-\"color\"
+ artist-spray-new-chars         Initial spray-\"color\"
 
 Hooks
 
@@ -2020,7 +2020,7 @@ The replacement is used to convert tabs and new-lines to spaces."
 (defsubst artist-replace-string (string &optional see-thru)
   "Replace contents at point with STRING.
 With optional argument SEE-THRU set to non-nil, text in the buffer
-``shines thru'' blanks in the STRING."
+\"shines thru\" blanks in the STRING."
   (let ((char-list (append string nil))	; convert the string to a list
 	(overwrite-mode 'overwrite-mode-textual)
 	(fill-column 32765)		; Large :-)
@@ -2385,7 +2385,7 @@ in the coord."
 ;; Pretend we are plotting a pixel. Instead we just list it
 ;;
 (defmacro artist-put-pixel (point-list x y)
-  "In POINT-LIST, store a ``pixel'' at coord X,Y."
+  "In POINT-LIST, store a \"pixel\" at coord X,Y."
   `(setq ,point-list
 	 (append ,point-list (list (artist-new-coord ,x ,y)))))
 
@@ -2928,7 +2928,7 @@ This is done by calling the function specified by
 `artist-text-renderer-function', which must return a list of strings,
 to be inserted in the buffer.
 
-Text already in the buffer ``shines thru'' blanks in the rendered text."
+Text already in the buffer \"shines thru\" blanks in the rendered text."
   (let* ((input-text (read-string "Type text to render: "))
 	 (rendered-text (artist-funcall artist-text-renderer-function input-text)))
     (artist-text-insert-see-thru x y rendered-text)))
@@ -2958,7 +2958,7 @@ Blanks in the rendered text overwrite any text in the buffer."
 Returns a list of points.  Each point is on the form (X1 . Y1)."
   (let ((points))
     (while (> n 0)
-      (let* ((angle (* (random 359) (/ float-pi 180)))
+      (let* ((angle (degrees-to-radians (random 359)))
 	     (dist  (random radius))
 	     (point (cons (round (* dist (cos angle)))
 			  (round (* dist (sin angle))))))
@@ -3372,7 +3372,7 @@ The POINT-LIST is expected to cover the first quadrant."
     ;; Create the other half by mirroring the first half.
     (setq both-halves
 	  (append first-half
-		  (mapc
+		  (mapcar
 		   (lambda (i)
 		     (artist-new-fill-item (artist-fill-item-get-x i)
 					   (- (artist-fill-item-get-y i))
@@ -4963,52 +4963,58 @@ The event, EV, is the mouse event."
     (artist-funcall init-fn x1 y1)
     (if (not artist-rubber-banding)
 	(artist-no-rb-set-point1 x1 y1))
-    (track-mouse
-      (while (or (mouse-movement-p ev)
-		 (member 'down (event-modifiers ev)))
-	(setq ev-start-pos (artist-coord-win-to-buf
-			    (posn-col-row (event-start ev))))
-	(setq x1 (car ev-start-pos))
-	(setq y1 (cdr ev-start-pos))
+    (unwind-protect
+        (track-mouse
+          ;; We don't want flickering of mouse pointer shape while we
+          ;; drag the mouse.
+          (setq track-mouse 'dragging)
+          (while (or (mouse-movement-p ev)
+                     (member 'down (event-modifiers ev)))
+            (setq ev-start-pos (artist-coord-win-to-buf
+                                (posn-col-row (event-start ev))))
+            (setq x1 (car ev-start-pos))
+            (setq y1 (cdr ev-start-pos))
 
-	;; Cancel previous timer
-	(if timer
-	    (cancel-timer timer))
+            ;; Cancel previous timer
+            (if timer
+                (cancel-timer timer))
 
-	(if (not (eq initial-win (posn-window (event-start ev))))
-	    ;; If we moved outside the window, do nothing
-	    nil
+            (if (not (eq initial-win (posn-window (event-start ev))))
+                ;; If we moved outside the window, do nothing
+                nil
 
-	  ;; Still in same window:
-	  ;;
-	  ;; Check if user presses or releases shift key
-	  (if (artist-shift-has-changed shift-state ev)
+              ;; Still in same window:
+              ;;
+              ;; Check if user presses or releases shift key
+              (if (artist-shift-has-changed shift-state ev)
 
-	      ;; First check that the draw-how is the same as we
-	      ;; already have. Otherwise, ignore the changed shift-state.
-	      (if (not (eq draw-how
-			   (artist-go-get-draw-how-from-symbol
-			    (if (not shift-state) shifted unshifted))))
-		  (message "Cannot switch to shifted operation")
+                  ;; First check that the draw-how is the same as we
+                  ;; already have. Otherwise, ignore the changed shift-state.
+                  (if (not (eq draw-how
+                               (artist-go-get-draw-how-from-symbol
+                                (if (not shift-state) shifted unshifted))))
+                      (message "Cannot switch to shifted operation")
 
-		;; progn is "implicit" since this is the else-part
-		(setq shift-state (not shift-state))
-		(setq op          (if shift-state shifted unshifted))
-		(setq draw-how    (artist-go-get-draw-how-from-symbol op))
-		(setq draw-fn     (artist-go-get-draw-fn-from-symbol op))))
+                    ;; progn is "implicit" since this is the else-part
+                    (setq shift-state (not shift-state))
+                    (setq op          (if shift-state shifted unshifted))
+                    (setq draw-how    (artist-go-get-draw-how-from-symbol op))
+                    (setq draw-fn     (artist-go-get-draw-fn-from-symbol op))))
 
-	  ;; Draw the new shape
-	  (setq shape (artist-funcall draw-fn x1 y1))
-	  (artist-move-to-xy x1 y1)
+              ;; Draw the new shape
+              (setq shape (artist-funcall draw-fn x1 y1))
+              (artist-move-to-xy x1 y1)
 
-	  ;; Start the timer to call `draw-fn' repeatedly every
-	  ;; `interval' second
-	  (if (and interval draw-fn)
-	      (setq timer (run-at-time interval interval draw-fn x1 y1))))
+              ;; Start the timer to call `draw-fn' repeatedly every
+              ;; `interval' second
+              (if (and interval draw-fn)
+                  (setq timer (run-at-time interval interval draw-fn x1 y1))))
 
-	;; Read next event
-	(setq ev (read-event))))
-
+            ;; Read next event
+            (setq ev (read-event))))
+      ;; Cleanup: get rid of any active timer.
+      (if timer
+          (cancel-timer timer)))
     ;; Cancel any timers
     (if timer
 	(cancel-timer timer))

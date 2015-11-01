@@ -1,6 +1,6 @@
 ;;; characters.el --- set syntax and category for multibyte characters
 
-;; Copyright (C) 1997, 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997, 2000-2015 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
 ;;   2005, 2006, 2007, 2008, 2009, 2010, 2011
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
@@ -484,13 +484,24 @@ with L, LRE, or LRO Unicode bidi character type.")
 
 ;; Bidi categories
 
-(map-char-table (lambda (key val)
-		  (cond
-		   ((memq val '(R AL RLO RLE))
-		    (modify-category-entry key ?R))
-		   ((memq val '(L LRE LRO))
-		    (modify-category-entry key ?L))))
-		(unicode-property-table-internal 'bidi-class))
+;; If bootstrapping without generated uni-*.el files, table not defined.
+(let ((table (unicode-property-table-internal 'bidi-class)))
+  (when table
+    (map-char-table (lambda (key val)
+		      (cond
+		       ((memq val '(R AL RLO RLE))
+			(modify-category-entry key ?R))
+		       ((memq val '(L LRE LRO))
+			(modify-category-entry key ?L))))
+		    table)))
+
+;; Load uni-mirrored.el and uni-brackets.el if available, so that they
+;; get dumped into Emacs.  This allows to start Emacs with
+;; force-load-messages in ~/.emacs, and avoid infinite recursion in
+;; bidi_initialize, which needs to load uni-mirrored.el and
+;; uni-brackets.el in order to display the "Loading" messages.
+(unicode-property-table-internal 'mirroring)
+(unicode-property-table-internal 'bracket-type)
 
 ;; Latin
 
@@ -638,6 +649,68 @@ with L, LRE, or LRO Unicode bidi character type.")
 	 (set-case-syntax-pair c (1+ c) tbl))
     (setq c (1+ c)))
 
+  ;; Latin Extended-C
+  (setq c #x2C60)
+  (while (<= c #x2C7F)
+    (modify-category-entry c ?l)
+    (setq c (1+ c)))
+
+  (let ((pair-ranges '((#x2C60 . #x2C61)
+                       (#x2C67 . #x2C6C)
+                       (#x2C72 . #x2C73)
+                       (#x2C75 . #x2C76))))
+    (dolist (elt pair-ranges)
+      (let ((from (car elt)) (to (cdr elt)))
+        (while (< from to)
+          (set-case-syntax-pair from (1+ from) tbl)
+          (setq from (+ from 2))))))
+
+  (set-case-syntax-pair ?Ɫ ?ɫ tbl)
+  (set-case-syntax-pair ?Ᵽ ?ᵽ tbl)
+  (set-case-syntax-pair ?Ɽ ?ɽ tbl)
+  (set-case-syntax-pair ?Ɑ ?ɑ tbl)
+  (set-case-syntax-pair ?Ɱ ?ɱ tbl)
+  (set-case-syntax-pair ?Ɐ ?ɐ tbl)
+  (set-case-syntax-pair ?Ɒ ?ɒ tbl)
+  (set-case-syntax-pair ?Ȿ ?ȿ tbl)
+  (set-case-syntax-pair ?Ɀ ?ɀ tbl)
+
+  ;; Latin Extended-D
+  (setq c #xA720)
+  (while (<= c #xA7FF)
+    (modify-category-entry c ?l)
+    (setq c (1+ c)))
+
+  (let ((pair-ranges '((#xA722 . #xA72F)
+                       (#xA732 . #xA76F)
+                       (#xA779 . #xA77C)
+                       (#xA77E . #xA787)
+                       (#xA78B . #xA78E)
+                       (#xA790 . #xA793)
+                       (#xA796 . #xA7A9)
+                       (#xA7B4 . #xA7B7))))
+    (dolist (elt pair-ranges)
+      (let ((from (car elt)) (to (cdr elt)))
+        (while (< from to)
+          (set-case-syntax-pair from (1+ from) tbl)
+          (setq from (+ from 2))))))
+
+  (set-case-syntax-pair ?Ᵹ ?ᵹ tbl)
+  (set-case-syntax-pair ?Ɦ ?ɦ tbl)
+  (set-case-syntax-pair ?Ɜ ?ɜ tbl)
+  (set-case-syntax-pair ?Ɡ ?ɡ tbl)
+  (set-case-syntax-pair ?Ɬ ?ɬ tbl)
+  (set-case-syntax-pair ?Ʞ ?ʞ tbl)
+  (set-case-syntax-pair ?Ʇ ?ʇ tbl)
+  (set-case-syntax-pair ?Ʝ ?ʝ tbl)
+  (set-case-syntax-pair ?Ꭓ ?ꭓ tbl)
+
+  ;; Latin Extended-E
+  (setq c #xAB30)
+  (while (<= c #xAB64)
+    (modify-category-entry c ?l)
+    (setq c (1+ c)))
+
   ;; Greek
   (modify-category-entry '(#x0370 . #x03ff) ?g)
   (setq c #x0370)
@@ -713,14 +786,29 @@ with L, LRE, or LRO Unicode bidi character type.")
     (and (zerop (% c 2))
 	 (or (and (>= c #x0460) (<= c #x0480))
 	     (and (>= c #x048c) (<= c #x04be))
-	     (and (>= c #x04d0) (<= c #x04f4)))
+	     (and (>= c #x04d0) (<= c #x052e)))
 	 (set-case-syntax-pair c (1+ c) tbl))
     (setq c (1+ c)))
   (set-case-syntax-pair ?Ӂ ?ӂ tbl)
   (set-case-syntax-pair ?Ӄ ?ӄ tbl)
   (set-case-syntax-pair ?Ӈ ?ӈ tbl)
   (set-case-syntax-pair ?Ӌ ?ӌ tbl)
-  (set-case-syntax-pair ?Ӹ ?ӹ tbl)
+
+  (modify-category-entry '(#xA640 . #xA69F) ?y)
+  (setq c #xA640)
+  (while (<= c #xA66C)
+    (set-case-syntax-pair c (+ c 1) tbl)
+    (setq c (+ c 2)))
+  (setq c #xA680)
+  (while (<= c #xA69A)
+    (set-case-syntax-pair c (+ c 1) tbl)
+    (setq c (+ c 2)))
+
+  ;; Georgian
+  (setq c #x10A0)
+  (while (<= c #x10CD)
+    (set-case-syntax-pair c (+ c #x1C60) tbl)
+    (setq c (1+ c)))
 
   ;; general punctuation
   (setq c #x2000)
@@ -781,6 +869,26 @@ with L, LRE, or LRO Unicode bidi character type.")
     (modify-category-entry (+ c 26) ?l)
     (setq c (1+ c)))
 
+  ;; Glagolitic
+  (setq c #x2C00)
+  (while (<= c #x2C2E)
+    (set-case-syntax-pair c (+ c 48) tbl)
+    (setq c (1+ c)))
+
+  ;; Coptic
+  (let ((pair-ranges '((#x2C80 . #x2CE2)
+		       (#x2CEB . #x2CF2))))
+    (dolist (elt pair-ranges)
+      (let ((from (car elt)) (to (cdr elt)))
+	(while (< from to)
+	  (set-case-syntax-pair from (1+ from) tbl)
+	  (setq from (+ from 2))))))
+  ;; There's no Coptic category.  However, Coptic letters that are
+  ;; part of the Greek block above get the Greek category, and those
+  ;; in this block are derived from Greek letters, so let's be
+  ;; consistent about their category.
+  (modify-category-entry '(#x2C80 . #x2CFF) ?g)
+
   ;; Fullwidth Latin
   (setq c #xff21)
   (while (<= c #xff3a)
@@ -789,10 +897,28 @@ with L, LRE, or LRO Unicode bidi character type.")
     (modify-category-entry (+ c #x20) ?l)
     (setq c (1+ c)))
 
+  ;; Deseret
+  (setq c #x10400)
+  (while (<= c #x10427)
+    (set-case-syntax-pair c (+ c 28) tbl)
+    (setq c (1+ c)))
+
+  ;; Old Hungarian
+  (setq c #x10c80)
+  (while (<= c #x10cb2)
+    (set-case-syntax-pair c (+ c #x40) tbl)
+    (setq c (1+ c)))
+
+  ;; Warang Citi
+  (setq c #x118a0)
+  (while (<= c #x118bf)
+    (set-case-syntax-pair c (+ c #x20) tbl)
+    (setq c (1+ c)))
+
   ;; Combining diacritics
   (modify-category-entry '(#x300 . #x362) ?^)
   ;; Combining marks
-  (modify-category-entry '(#x20d0 . #x20e3) ?^)
+  (modify-category-entry '(#x20d0 . #x20ff) ?^)
 
   ;; Fixme: syntax for symbols &c
   )
@@ -1091,7 +1217,7 @@ with L, LRE, or LRO Unicode bidi character type.")
 ;;   (LOCALE TABLE (CHARSET (FROM-CODE . TO-CODE) ...) ...)
 ;; LOCALE: locale symbol
 ;; TABLE: char-table used for char-width-table, initially nil.
-;; CAHRSET: character set
+;; CHARSET: character set
 ;; FROM-CODE, TO-CODE: range of code-points in CHARSET
 
 (defvar cjk-char-width-table-list
@@ -1138,191 +1264,11 @@ Setup char-width-table appropriate for non-CJK language environment."
 
 
 ;; Setting char-script-table.
-
-;; The data is compiled from Blocks.txt and Scripts.txt in the
-;; "Unicode Character Database", simplified to lump together all the
-;; blocks belonging to the same language.  E.g., "Basic Latin",
-;; "Latin-1 Supplement", "Latin Extended-A", etc. are all lumped
-;; together under "latin".
-;;
-;; The Unicode blocks actually extend past some of these ranges with
-;; undefined codepoints.
-(let ((script-list nil))
-  (dolist
-      (elt
-       '((#x0000 #x007F latin)
-	 (#x00A0 #x024F latin)
-	 (#x0250 #x02AF phonetic)
-	 (#x02B0 #x036F latin)
-	 (#x0370 #x03E1 greek)
-	 (#x03E2 #x03EF coptic)
-	 (#x03F0 #x03F3 greek)
-	 (#x0400 #x052F cyrillic)
-	 (#x0530 #x058F armenian)
-	 (#x0590 #x05FF hebrew)
-	 (#x0600 #x06FF arabic)
-	 (#x0700 #x074F syriac)
-	 (#x0750 #x077F arabic)
-	 (#x0780 #x07BF thaana)
-	 (#x07C0 #x07FF nko)
-	 (#x0800 #x083F samaritan)
-	 (#x0840 #x085F mandaic)
-	 (#x08A0 #x08FF arabic)
-	 (#x0900 #x097F devanagari)
-	 (#x0980 #x09FF bengali)
-	 (#x0A00 #x0A7F gurmukhi)
-	 (#x0A80 #x0AFF gujarati)
-	 (#x0B00 #x0B7F oriya)
-	 (#x0B80 #x0BFF tamil)
-	 (#x0C00 #x0C7F telugu)
-	 (#x0C80 #x0CFF kannada)
-	 (#x0D00 #x0D7F malayalam)
-	 (#x0D80 #x0DFF sinhala)
-	 (#x0E00 #x0E7F thai)
-	 (#x0E80 #x0EFF lao)
-	 (#x0F00 #x0FFF tibetan)
-	 (#x1000 #x109F burmese) ; according to Unicode 6.1, should be "myanmar"
-	 (#x10A0 #x10FF georgian)
-	 (#x1100 #x11FF hangul)
-	 (#x1200 #x139F ethiopic)
-	 (#x13A0 #x13FF cherokee)
-	 (#x1400 #x167F canadian-aboriginal)
-	 (#x1680 #x169F ogham)
-	 (#x16A0 #x16FF runic)
-	 (#x1700 #x171F tagalog)
-	 (#x1720 #x173F hanunoo)
-	 (#x1740 #x175F buhid)
-	 (#x1760 #x177F tagbanwa)
-	 (#x1780 #x17FF khmer)
-	 (#x1800 #x18AF mongolian)
-	 (#x18B0 #x18FF canadian-aboriginal)
-	 (#x1900 #x194F limbu)
-	 (#x1950 #x197F tai-le)
-	 (#x1980 #x19DF tai-lue)
-	 (#x19E0 #x19FF khmer)
-	 (#x1A00 #x1A00 buginese)
-	 (#x1A20 #x1AAF tai-tham)
-	 (#x1B00 #x1B7F balinese)
-	 (#x1B80 #x1BBF sundanese)
-	 (#x1BC0 #x1BFF batak)
-	 (#x1C00 #x1C4F lepcha)
-	 (#x1C50 #x1C7F ol-chiki)
-	 (#x1CC0 #x1CCF sundanese)
-	 (#x1CD0 #x1CFF vedic)
-	 (#x1D00 #x1DBF phonetic)
-	 (#x1DC0 #x1EFF latin)
-	 (#x1F00 #x1FFF greek)
-	 (#x2000 #x27FF symbol)
-	 (#x2800 #x28FF braille)
-	 (#x2900 #x2BFF symbol)
-	 (#x2C00 #x2C5F glagolitic)
-	 (#x2C60 #x2C7F latin)
-	 (#x2C80 #x2CFF coptic)
-	 (#x2D00 #x2D2F georgian)
-	 (#x2D30 #x2D7F tifinagh)
-	 (#x2D80 #x2DDF ethiopic)
-	 (#x2DE0 #x2DFF cyrillic)
-	 (#x2E00 #x2E7F symbol)
-	 (#x2E80 #x2FDF han)
-	 (#x2FF0 #x2FFF ideographic-description)
-	 (#x3000 #x303F cjk-misc)
-	 (#x3040 #x30FF kana)
-	 (#x3100 #x312F bopomofo)
-	 (#x3130 #x318F hangul)
-	 (#x3190 #x319F kanbun)
-	 (#x31A0 #x31BF bopomofo)
-	 (#x31C0 #x31EF cjk-misc)
-	 (#x31F0 #x31FF kana)
-	 (#x3200 #x9FAF han)
-	 (#xA000 #xA4CF yi)
-	 (#xA4D0 #xA4FF lisu)
-	 (#xA500 #xA63F vai)
-	 (#xA640 #xA69F cyrillic)
-	 (#xA6A0 #xA6FF bamum)
-	 (#xA700 #xA7FF latin)
-	 (#xA800 #xA82F syloti-nagri)
-	 (#xA830 #xA83F north-indic-number)
-	 (#xA840 #xA87F phags-pa)
-	 (#xA880 #xA8DF saurashtra)
-	 (#xA8E0 #xA8FF devanagari)
-	 (#xA900 #xA92F kayah-li)
-	 (#xA930 #xA95F rejang)
-	 (#xA960 #xA97F hangul)
-	 (#xA980 #xA9DF javanese)
-	 (#xAA00 #xAA5F cham)
-	 (#xAA60 #xAA7B burmese)	; Unicode 6.1: "myanmar"
-	 (#xAA80 #xAADF tai-viet)
-	 (#xAAE0 #xAAFF meetei-mayek)
-	 (#xAB00 #xAB2F ethiopic)
-	 (#xABC0 #xABFF meetei-mayek)
-	 (#xAC00 #xD7FF hangul)
-	 (#xF900 #xFAFF han)
-	 (#xFB1D #xFB4F hebrew)
-	 (#xFB50 #xFDFF arabic)
-	 (#xFE30 #xFE4F han)
-	 (#xFE70 #xFEFF arabic)
-	 (#xFF00 #xFF5F cjk-misc)
-	 (#xFF61 #xFF9F kana)
-	 (#xFFE0 #xFFE6 cjk-misc)
-	 (#x10000 #x100FF linear-b)
-	 (#x10100 #x1013F aegean-number)
-	 (#x10140 #x1018F ancient-greek-number)
-	 (#x10190 #x101CF ancient-symbol)
-	 (#x101D0 #x101FF phaistos-disc)
-	 (#x10280 #x1029F lycian)
-	 (#x102A0 #x102DF carian)
-	 (#x10300 #x1032F olt-italic)
-	 (#x10330 #x1034F gothic)
-	 (#x10380 #x1039F ugaritic)
-	 (#x103A0 #x103DF old-persian)
-	 (#x10400 #x1044F deseret)
-	 (#x10450 #x1047F shavian)
-	 (#x10480 #x104AF osmanya)
-	 (#x10800 #x1083F cypriot-syllabary)
-	 (#x10840 #x1085F aramaic)
-	 (#x10900 #x1091F phoenician)
-	 (#x10920 #x1093F lydian)
-	 (#x10980 #x109FF meroitic)
-	 (#x10A00 #x10A5F kharoshthi)
-	 (#x10A60 #x10A7F old-south-arabian)
-	 (#x10B00 #x10B3F avestan)
-	 (#x10B40 #x10B5F inscriptional-parthian)
-	 (#x10B60 #x10B7F inscriptional-pahlavi)
-	 (#x10C00 #x10C4F old-turkic)
-	 (#x10E60 #x10E7F rumi-number)
-	 (#x11000 #x1107F brahmi)
-	 (#x11080 #x110CF kaithi)
-	 (#x110D0 #x110FF sora-sompeng)
-	 (#x11100 #x1114F chakma)
-	 (#x11180 #x111DF sharada)
-	 (#x11680 #x116CF takri)
-	 (#x12000 #x123FF cuneiform)
-	 (#x12400 #x1247F cuneiform-numbers-and-punctuation)
-	 (#x13000 #x1342F egyptian)
-	 (#x16800 #x16A3F bamum)
-	 (#x16F00 #x16F9F miao)
-	 (#x1B000 #x1B0FF kana)
-	 (#x1D000 #x1D0FF byzantine-musical-symbol)
-	 (#x1D100 #x1D1FF musical-symbol)
-	 (#x1D200 #x1D24F ancient-greek-musical-notation)
-	 (#x1D300 #x1D35F tai-xuan-jing-symbol)
-	 (#x1D360 #x1D37F counting-rod-numeral)
-	 (#x1D400 #x1D7FF mathematical)
-	 (#x1EE00 #x1EEFF arabic)
-	 (#x1F000 #x1F02F mahjong-tile)
-	 (#x1F030 #x1F09F domino-tile)
-	 (#x1F0A0 #x1F0FF playing-cards)
-	 (#x1F100 #x1F1FF symbol)
-	 (#x1F200 #x1F2FF han)
-	 (#x1F300 #x1F64F symbol)
-	 (#x1F680 #x1F77F symbol)
-	 (#x20000 #x2B81F han)
-	 (#x2F800 #x2FFFF han)))
-    (set-char-table-range char-script-table
-			  (cons (car elt) (nth 1 elt)) (nth 2 elt))
-    (or (memq (nth 2 elt) script-list)
-	(setq script-list (cons (nth 2 elt) script-list))))
-  (set-char-table-extra-slot char-script-table 0 (nreverse script-list)))
+(if purify-flag
+    ;; While dumping, we can't use require, and international is not
+    ;; in load-path.
+    (load "international/charscript")
+  (require 'charscript))
 
 (map-charset-chars
  #'(lambda (range _ignore)
@@ -1332,15 +1278,17 @@ Setup char-width-table appropriate for non-CJK language environment."
 
 ;;; Setting unicode-category-table.
 
-(setq unicode-category-table
-      (unicode-property-table-internal 'general-category))
-(map-char-table #'(lambda (key val)
-		    (if (and val
-			     (or (and (/= (aref (symbol-name val) 0) ?M)
-				      (/= (aref (symbol-name val) 0) ?C))
-				 (eq val 'Zs)))
-			(modify-category-entry key ?.)))
-		unicode-category-table)
+(when (setq unicode-category-table
+	    (unicode-property-table-internal 'general-category))
+  (map-char-table #'(lambda (key val)
+		      (if val
+			  (cond ((or (and (/= (aref (symbol-name val) 0) ?M)
+					  (/= (aref (symbol-name val) 0) ?C))
+				     (eq val 'Zs))
+				 (modify-category-entry key ?.))
+				((eq val 'Mn)
+				 (modify-category-entry key ?^)))))
+		  unicode-category-table))
 
 (optimize-char-table (standard-category-table))
 
@@ -1426,23 +1374,24 @@ This function updates the char-table `glyphless-char-display'."
 	     (glyphless-set-char-table-range glyphless-char-display
 					     #x80 #x9F method))
 	    ((eq target 'format-control)
-	     (map-char-table
-	      #'(lambda (char category)
-		  (if (eq category 'Cf)
-		      (let ((this-method method)
-			    from to)
-			(if (consp char)
-			    (setq from (car char) to (cdr char))
-			  (setq from char to char))
-			(while (<= from to)
-			  (when (/= from #xAD)
-			    (if (eq method 'acronym)
-				(setq this-method
-				      (aref char-acronym-table from)))
-			    (set-char-table-range glyphless-char-display
-						  from this-method))
-			  (setq from (1+ from))))))
-	      unicode-category-table))
+	     (when unicode-category-table
+	       (map-char-table
+		#'(lambda (char category)
+		    (if (eq category 'Cf)
+			(let ((this-method method)
+			      from to)
+			  (if (consp char)
+			      (setq from (car char) to (cdr char))
+			    (setq from char to char))
+			  (while (<= from to)
+			    (when (/= from #xAD)
+			      (if (eq method 'acronym)
+				  (setq this-method
+					(aref char-acronym-table from)))
+			      (set-char-table-range glyphless-char-display
+						    from this-method))
+			    (setq from (1+ from))))))
+		unicode-category-table)))
 	    ((eq target 'no-font)
 	     (set-char-table-extra-slot glyphless-char-display 0 method))
 	    (t
@@ -1485,7 +1434,12 @@ METHOD must be one of these symbols:
   `empty-box':  display an empty box.
   `acronym':    display an acronym of the character in a box.  The
                 acronym is taken from `char-acronym-table', which see.
-  `hex-code':   display the hexadecimal character code in a box."
+  `hex-code':   display the hexadecimal character code in a box.
+
+Do not set its value directly from Lisp; the value takes effect
+only via a custom `:set'
+function (`update-glyphless-char-display'), which updates
+`glyphless-char-display'."
   :version "24.1"
   :type '(alist :key-type (symbol :tag "Character Group")
 		:value-type (symbol :tag "Display Method"))

@@ -1,12 +1,12 @@
 ;;; autoinsert.el --- automatic mode-dependent insertion of text into new files
 
-;; Copyright (C) 1985-1987, 1994-1995, 1998, 2000-2013 Free Software
+;; Copyright (C) 1985-1987, 1994-1995, 1998, 2000-2015 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Charlie Martin <crm@cs.duke.edu>
 ;; Adapted-By: Daniel Pfeiffer <occitan@esperanto.org>
 ;; Keywords: convenience
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 
 ;; This file is part of GNU Emacs.
 
@@ -67,7 +67,7 @@ Insertion is possible when something appropriate is found in
 `auto-insert-alist'.  When the insertion is marked as unmodified, you can
 save it with  \\[write-file] RET.
 This variable is used when the function `auto-insert' is called, e.g.
-when you do (add-hook 'find-file-hook 'auto-insert).
+when you do (add-hook \\='find-file-hook \\='auto-insert).
 With \\[auto-insert], this is always treated as if it were t."
   :type '(choice (const :tag "Insert if possible" t)
                  (const :tag "Do nothing" nil)
@@ -91,23 +91,24 @@ If this contains a %s, that will be replaced by the matching rule."
 
 
 (defcustom auto-insert-alist
-  '((("\\.\\([Hh]\\|hh\\|hpp\\)\\'" . "C / C++ header")
-     (upcase (concat (file-name-nondirectory
-		      (file-name-sans-extension buffer-file-name))
-		     "_"
-		     (file-name-extension buffer-file-name)))
+  '((("\\.\\([Hh]\\|hh\\|hpp\\|hxx\\|h\\+\\+\\)\\'" . "C / C++ header")
+     (replace-regexp-in-string
+      "[^A-Z0-9]" "_"
+      (replace-regexp-in-string
+       "\\+" "P"
+       (upcase (file-name-nondirectory buffer-file-name))))
      "#ifndef " str \n
      "#define " str "\n\n"
      _ "\n\n#endif")
 
-    (("\\.\\([Cc]\\|cc\\|cpp\\)\\'" . "C / C++ program")
+    (("\\.\\([Cc]\\|cc\\|cpp\\|cxx\\|c\\+\\+\\)\\'" . "C / C++ program")
      nil
      "#include \""
-     (let ((stem (file-name-sans-extension buffer-file-name)))
-       (cond ((file-exists-p (concat stem ".h"))
-	      (file-name-nondirectory (concat stem ".h")))
-	     ((file-exists-p (concat stem ".hh"))
-	      (file-name-nondirectory (concat stem ".hh")))))
+     (let ((stem (file-name-sans-extension buffer-file-name))
+           ret)
+       (dolist (ext '("H" "h" "hh" "hpp" "hxx" "h++") ret)
+         (when (file-exists-p (concat stem "." ext))
+           (setq ret (file-name-nondirectory (concat stem "." ext))))))
      & ?\" | -10)
 
     (("[Mm]akefile\\'" . "Makefile") . "makefile.inc")
@@ -166,7 +167,7 @@ If this contains a %s, that will be replaced by the matching rule."
      "Short description: "
      ";;; " (file-name-nondirectory (buffer-file-name)) " --- " str
      (make-string (max 2 (- 80 (current-column) 27)) ?\s)
-     "-*- lexical-binding: t; -*-"
+     "-*- lexical-binding: t; -*-" '(setq lexical-binding t)
      "
 
 ;; Copyright (C) " (format-time-string "%Y") "  "
@@ -305,6 +306,7 @@ file-name or one relative to `auto-insert-directory' or a function to call.
 ACTION may also be a vector containing several successive single actions as
 described above, e.g. [\"header.insert\" date-and-author-update]."
   :type 'sexp
+  :version "25.1"
   :group 'auto-insert)
 
 

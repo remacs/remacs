@@ -1,10 +1,10 @@
 ;;; cc-awk.el --- AWK specific code within cc-mode.
 
-;; Copyright (C) 1988, 1994, 1996, 2000-2013 Free Software Foundation,
+;; Copyright (C) 1988, 1994, 1996, 2000-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Alan Mackenzie <acm@muc.de> (originally based on awk-mode.el)
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: AWK, cc-mode, unix, languages
 ;; Package: cc-mode
 
@@ -61,6 +61,7 @@
 (cc-bytecomp-defun c-backward-token-1)
 (cc-bytecomp-defun c-beginning-of-statement-1)
 (cc-bytecomp-defun c-backward-sws)
+(cc-bytecomp-defun c-forward-sws)
 
 (defvar awk-mode-syntax-table
   (let ((st (make-syntax-table)))
@@ -214,7 +215,7 @@
 (defconst c-awk-neutrals*-re
   (concat "\\(" c-awk-neutral-re "\\)*"))
 ;;   A (possibly empty) string of neutral characters (or character pairs).
-(defconst c-awk-var-num-ket-re "[]\)0-9a-zA-Z_$.\x80-\xff]+")
+(defconst c-awk-var-num-ket-re "[])0-9a-zA-Z_$.\x80-\xff]+")
 ;;   Matches a char which is a constituent of a variable or number, or a ket
 ;; (i.e. closing bracKET), round or square.  Assume that all characters \x80 to
 ;; \xff are "letters".
@@ -226,7 +227,7 @@
 ;; will only work when there won't be a preceding " or / before the sought /
 ;; to foul things up.
 (defconst c-awk-non-arith-op-bra-re
-  "[[\({&=:!><,?;'~|]")
+  "[[({&=:!><,?;'~|]")
 ;;   Matches an opening BRAcket (of any sort), or any operator character
 ;; apart from +,-,/,*,%.  For the purpose at hand (detecting a / which is a
 ;; regexp bracket) these arith ops are unnecessary and a pain, because of "++"
@@ -265,7 +266,7 @@
 ;; Matches optional whitespace followed by a "/" with string syntax (a matched
 ;; regexp delimiter).
 (defconst c-awk-space*-unclosed-regexp-/-re
-  (concat c-awk-escaped-nls*-with-space* "\\s\|"))
+  (concat c-awk-escaped-nls*-with-space* "\\s|"))
 ;; Matches optional whitespace followed by a "/" with string fence syntax (an
 ;; unmatched regexp delimiter).
 
@@ -1146,4 +1147,8 @@ comment at the start of cc-engine.el for more info."
 
 (cc-provide 'cc-awk)			; Changed from 'awk-mode, ACM 2002/5/21
 
+;; Local Variables:
+;; indent-tabs-mode: t
+;; tab-width: 8
+;; End:
 ;;; awk-mode.el ends here

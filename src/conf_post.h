@@ -1,6 +1,6 @@
 /* conf_post.h --- configure.ac includes this via AH_BOTTOM
 
-Copyright (C) 1988, 1993-1994, 1999-2002, 2004-2013 Free Software
+Copyright (C) 1988, 1993-1994, 1999-2002, 2004-2015 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -32,6 +32,17 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 # include config_opsysfile
 #endif
 
+#include <stdbool.h>
+
+/* The type of bool bitfields.  Needed to compile Objective-C with
+   standard GCC.  It was also needed to port to pre-C99 compilers,
+   although we don't care about that any more.  */
+#if NS_IMPL_GNUSTEP
+typedef unsigned int bool_bf;
+#else
+typedef bool bool_bf;
+#endif
+
 #ifndef WINDOWSNT
 /* On AIX 3 this must be included before any other include file.  */
 #include <alloca.h>
@@ -40,8 +51,19 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 #endif
 
+/* When not using Clang, assume its attributes and features are absent.  */
 #ifndef __has_attribute
-# define __has_attribute(a) 0 /* non-clang */
+# define __has_attribute(a) false
+#endif
+#ifndef __has_feature
+# define __has_feature(a) false
+#endif
+
+/* True if addresses are being sanitized.  */
+#if defined __SANITIZE_ADDRESS__ || __has_feature (address_sanitizer)
+# define ADDRESS_SANITIZER true
+#else
+# define ADDRESS_SANITIZER false
 #endif
 
 #ifdef DARWIN_OS
@@ -49,8 +71,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define malloc unexec_malloc
 #define realloc unexec_realloc
 #define free unexec_free
-/* Don't use posix_memalign because it is not compatible with unexmacosx.c.  */
-#undef HAVE_POSIX_MEMALIGN
 #endif
 /* The following solves the problem that Emacs hangs when evaluating
    (make-comint "test0" "/nodir/nofile" nil "") when /nodir/nofile
@@ -60,6 +80,23 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define vfork fork
 #endif  /* DARWIN_OS */
 
+/* If HYBRID_MALLOC is defined (e.g., on Cygwin), emacs will use
+   gmalloc before dumping and the system malloc after dumping.
+   hybrid_malloc and friends, defined in gmalloc.c, are wrappers that
+   accomplish this.  */
+#ifdef HYBRID_MALLOC
+#ifdef emacs
+#define malloc hybrid_malloc
+#define realloc hybrid_realloc
+#define calloc hybrid_calloc
+#define free hybrid_free
+#if defined HAVE_GET_CURRENT_DIR_NAME && !defined BROKEN_GET_CURRENT_DIR_NAME
+#define HYBRID_GET_CURRENT_DIR_NAME 1
+#define get_current_dir_name hybrid_get_current_dir_name
+#endif
+#endif
+#endif	/* HYBRID_MALLOC */
+
 /* We have to go this route, rather than the old hpux9 approach of
    renaming the functions via macros.  The system's stdlib.h has fully
    prototyped declarations, which yields a conflicting definition of
@@ -68,10 +105,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef HPUX
 #undef srandom
 #undef random
-/* We try to avoid checking for random and rint on hpux in
-   configure.ac, but some other configure test might check for them as
-   a dependency, so to be safe we also undefine them here.
- */
 #undef HAVE_RANDOM
 #undef HAVE_RINT
 #endif  /* HPUX */
@@ -80,7 +113,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef emacs
 char *_getpty();
 #endif
-
+#define INET6 /* Needed for struct sockaddr_in6.  */
+#undef HAVE_GETADDRINFO /* IRIX has getaddrinfo but not struct addrinfo.  */
 #endif /* IRIX6_5 */
 
 #ifdef MSDOS
@@ -101,16 +135,17 @@ You lose; /* Emacs for DOS must be compiled with DJGPP */
 #else
 # define lstat stat
 #endif
-/* The "portable" definition of _GL_INLINE on config.h does not work
-   with DJGPP GCC 3.4.4: it causes unresolved externals in sysdep.c,
-   although lib/execinfo.h is included and the inline functions there
-   are visible.  */
-#if __GNUC__ < 4
-# define _GL_EXECINFO_INLINE inline
-#endif
+
+/* We must intercept 'opendir' calls to stash away the directory name,
+   so we could reuse it in readlinkat; see msdos.c.  */
+#define opendir sys_opendir
+
 /* End of gnulib-related stuff.  */
 
 #define emacs_raise(sig) msdos_fatal_signal (sig)
+
+/* DATA_START is needed by vm-limit.c and unexcoff.c. */
+#define DATA_START (&etext + 1)
 
 /* Define one of these for easier conditionals.  */
 #ifdef HAVE_X_WINDOWS
@@ -128,7 +163,7 @@ You lose; /* Emacs for DOS must be compiled with DJGPP */
    directory tree).  Given the unknown policy of different DPMI
    hosts regarding loading of untouched pages, I'm not going to risk
    enlarging Emacs footprint by another 100+ KBytes.  */
-#define SYSTEM_PURESIZE_EXTRA (-170000+65000)
+#define SYSTEM_PURESIZE_EXTRA (-170000+90000)
 #endif
 #endif  /* MSDOS */
 
@@ -140,6 +175,10 @@ You lose; /* Emacs for DOS must be compiled with DJGPP */
 #elif defined DARWIN_OS
 #  define SYSTEM_PURESIZE_EXTRA 200000
 #endif
+#endif
+
+#ifdef CYGWIN
+#define SYSTEM_PURESIZE_EXTRA 10000
 #endif
 
 #if defined HAVE_NTGUI && !defined DebPrint
@@ -154,6 +193,10 @@ extern void _DebPrint (const char *fmt, ...);
 #if defined CYGWIN && defined HAVE_NTGUI
 # define NTGUI_UNICODE /* Cygwin runs only on UNICODE-supporting systems */
 # define _WIN32_WINNT 0x500 /* Win2k */
+/* The following was in /usr/include/string.h prior to Cygwin 1.7.33.  */
+#ifndef strnicmp
+#define strnicmp strncasecmp
+#endif
 #endif
 
 #ifdef emacs /* Don't do this for lib-src.  */
@@ -162,6 +205,13 @@ extern void _DebPrint (const char *fmt, ...);
 #define RE_TRANSLATE(TBL, C) char_table_translate (TBL, C)
 #define RE_TRANSLATE_P(TBL) (!EQ (TBL, make_number (0)))
 #endif
+
+/* Tell time_rz.c to use Emacs's getter and setter for TZ.
+   Only Emacs uses time_rz so this is OK.  */
+#define getenv_TZ emacs_getenv_TZ
+#define setenv_TZ emacs_setenv_TZ
+extern char *emacs_getenv_TZ (void);
+extern int emacs_setenv_TZ (char const *);
 
 #include <string.h>
 #include <stdlib.h>
@@ -196,6 +246,48 @@ extern void _DebPrint (const char *fmt, ...);
 
 #define ATTRIBUTE_CONST _GL_ATTRIBUTE_CONST
 
+#if 3 <= __GNUC__
+# define ATTRIBUTE_MALLOC __attribute__ ((__malloc__))
+#else
+# define ATTRIBUTE_MALLOC
+#endif
+
+#if (__clang__					\
+     ? __has_attribute (alloc_size)		\
+     : 4 < __GNUC__ + (3 <= __GNUC_MINOR__))
+# define ATTRIBUTE_ALLOC_SIZE(args) __attribute__ ((__alloc_size__ args))
+#else
+# define ATTRIBUTE_ALLOC_SIZE(args)
+#endif
+
+#define ATTRIBUTE_MALLOC_SIZE(args) ATTRIBUTE_MALLOC ATTRIBUTE_ALLOC_SIZE (args)
+
+/* Work around GCC bug 59600: when a function is inlined, the inlined
+   code may have its addresses sanitized even if the function has the
+   no_sanitize_address attribute.  This bug is fixed in GCC 4.9.0 and
+   clang 3.4.  */
+#if (! ADDRESS_SANITIZER \
+     || ((4 < __GNUC__ + (9 <= __GNUC_MINOR__)) \
+	 || 3 < __clang_major__ + (4 <= __clang_minor__)))
+# define ADDRESS_SANITIZER_WORKAROUND /* No workaround needed.  */
+#else
+# define ADDRESS_SANITIZER_WORKAROUND NO_INLINE
+#endif
+
+/* Attribute of functions whose code should not have addresses
+   sanitized.  */
+
+#if (__has_attribute (no_sanitize_address) \
+     || 4 < __GNUC__ + (8 <= __GNUC_MINOR__))
+# define ATTRIBUTE_NO_SANITIZE_ADDRESS \
+    __attribute__ ((no_sanitize_address)) ADDRESS_SANITIZER_WORKAROUND
+#elif __has_attribute (no_address_safety_analysis)
+# define ATTRIBUTE_NO_SANITIZE_ADDRESS \
+    __attribute__ ((no_address_safety_analysis)) ADDRESS_SANITIZER_WORKAROUND
+#else
+# define ATTRIBUTE_NO_SANITIZE_ADDRESS
+#endif
+
 /* Some versions of GNU/Linux define noinline in their headers.  */
 #ifdef noinline
 #undef noinline
@@ -208,11 +300,8 @@ extern void _DebPrint (const char *fmt, ...);
       [#include any other .h files first.]
       ...
       INLINE_HEADER_BEGIN
-      #ifndef FOO_INLINE
-      # define FOO_INLINE INLINE
-      #endif
       ...
-      FOO_INLINE int
+      INLINE int
       incr (int i)
       {
         return i + 1;
@@ -220,44 +309,47 @@ extern void _DebPrint (const char *fmt, ...);
       ...
       INLINE_HEADER_END
 
-   The corresponding foo.c file should do this:
+   For every executable, exactly one file that includes the header
+   should do this:
 
-      #define FOO_INLINE EXTERN_INLINE
+      #define INLINE EXTERN_INLINE
 
-   before including any .h file other than config.h.
-   Other .c files should not define FOO_INLINE.
+   before including config.h or any other .h file.
+   Other .c files should not define INLINE.
+   For Emacs, this is done by having emacs.c first '#define INLINE
+   EXTERN_INLINE' and then include every .h file that uses INLINE.
+
+   The INLINE_HEADER_BEGIN and INLINE_HEADER_END suppress bogus
+   warnings in some GCC versions; see ../m4/extern-inline.m4.
 
    C99 compilers compile functions like 'incr' as C99-style extern
-   inline functions.  Pre-C99 GCCs do something similar with
-   GNU-specific keywords.  Pre-C99 non-GCC compilers use static
+   inline functions.  Buggy GCC implementations do something similar with
+   GNU-specific keywords.  Buggy non-GCC compilers use static
    functions, which bloats the code but is good enough.  */
 
-#define INLINE _GL_INLINE
+#ifndef INLINE
+# define INLINE _GL_INLINE
+#endif
 #define EXTERN_INLINE _GL_EXTERN_INLINE
 #define INLINE_HEADER_BEGIN _GL_INLINE_HEADER_BEGIN
 #define INLINE_HEADER_END _GL_INLINE_HEADER_END
 
 /* To use the struct hack with N elements, declare the struct like this:
      struct s { ...; t name[FLEXIBLE_ARRAY_MEMBER]; };
-   and allocate (offsetof (struct s, name) + N * sizeof (t)) bytes.  */
-#if 199901 <= __STDC_VERSION__
-# define FLEXIBLE_ARRAY_MEMBER
-#elif __GNUC__ && !defined __STRICT_ANSI__
-# define FLEXIBLE_ARRAY_MEMBER 0
-#else
+   and allocate (offsetof (struct s, name) + N * sizeof (t)) bytes.
+   IBM xlc 12.1 claims to do C99 but mishandles flexible array members.  */
+#ifdef __IBMC__
 # define FLEXIBLE_ARRAY_MEMBER 1
+#else
+# define FLEXIBLE_ARRAY_MEMBER
 #endif
 
 /* Use this to suppress gcc's `...may be used before initialized' warnings. */
 #ifdef lint
 /* Use CODE only if lint checking is in effect.  */
 # define IF_LINT(Code) Code
-/* Assume that the expression COND is true.  This differs in intent
-   from 'assert', as it is a message from the programmer to the compiler.  */
-# define lint_assume(cond) ((cond) ? (void) 0 : abort ())
 #else
 # define IF_LINT(Code) /* empty */
-# define lint_assume(cond) ((void) (0 && (cond)))
 #endif
 
 /* conf_post.h ends here */

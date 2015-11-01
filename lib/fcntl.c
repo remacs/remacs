@@ -1,6 +1,6 @@
 /* Provide file descriptor control.
 
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -89,8 +89,25 @@ dupfd (int oldfd, int newfd, int flags)
                             inherit,                /* InheritHandle */
                             DUPLICATE_SAME_ACCESS)) /* Options */
         {
-          /* TODO: Translate GetLastError () into errno.  */
-          errno = EMFILE;
+          switch (GetLastError ())
+            {
+              case ERROR_TOO_MANY_OPEN_FILES:
+                errno = EMFILE;
+                break;
+              case ERROR_INVALID_HANDLE:
+              case ERROR_INVALID_TARGET_HANDLE:
+              case ERROR_DIRECT_ACCESS_HANDLE:
+                errno = EBADF;
+                break;
+              case ERROR_INVALID_PARAMETER:
+              case ERROR_INVALID_FUNCTION:
+              case ERROR_INVALID_ACCESS:
+                errno = EINVAL;
+                break;
+              default:
+                errno = EACCES;
+                break;
+            }
           result = -1;
           break;
         }
@@ -98,7 +115,6 @@ dupfd (int oldfd, int newfd, int flags)
       if (duplicated_fd < 0)
         {
           CloseHandle (new_handle);
-          errno = EMFILE;
           result = -1;
           break;
         }

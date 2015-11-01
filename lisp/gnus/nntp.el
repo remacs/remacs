@@ -1,6 +1,6 @@
 ;;; nntp.el --- nntp access for Gnus
 
-;; Copyright (C) 1987-1990, 1992-1998, 2000-2013 Free Software
+;; Copyright (C) 1987-1990, 1992-1998, 2000-2015 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
@@ -25,9 +25,7 @@
 
 ;;; Code:
 
-;; For Emacs <22.2 and XEmacs.
 (eval-and-compile
-  (unless (fboundp 'declare-function) (defmacro declare-function (&rest r)))
   ;; In Emacs 24, `open-protocol-stream' is an autoloaded alias for
   ;; `make-network-stream'.
   (unless (fboundp 'open-protocol-stream)
@@ -74,7 +72,7 @@ For instance, if you want Gnus to beep every time you connect
 to innd, you could say something like:
 
 \(setq nntp-server-action-alist
-       '((\"innd\" (ding))))
+       \\='((\"innd\" (ding))))
 
 You probably don't want to do that, though.")
 
@@ -177,7 +175,7 @@ This variable is used by the various nntp-open-via-* methods.")
   "*Whether both telnet client and server support the ENVIRON option.
 If non-nil, there will be no prompt for a login name.")
 
-(defvoo nntp-via-shell-prompt "bash\\|\$ *\r?$\\|> *\r?"
+(defvoo nntp-via-shell-prompt "bash\\|[$>] *\r?$"
   "*Regular expression to match the shell prompt on an intermediate host.
 This variable is used by the `nntp-open-via-telnet-and-telnet' method.")
 
@@ -293,7 +291,7 @@ update their active files often, this can help.")
 (defvar nntp-async-process-list nil)
 
 (defvar nntp-authinfo-rejected nil
-"A custom error condition used to report 'Authentication Rejected' errors.
+"A custom error condition used to report `Authentication Rejected' errors.
 Condition handlers that match just this condition ensure that the nntp
 backend doesn't catch this error.")
 (put 'nntp-authinfo-rejected 'error-conditions '(error nntp-authinfo-rejected))
@@ -730,7 +728,7 @@ command whose response triggered the error."
                     (> number nntp-large-newsgroup)
                     (zerop (% received 20))
                     (nnheader-message 6 "NNTP: Receiving headers... %d%%"
-                                      (/ (* received 100) number)))
+                                      (floor (* received 100.0) number)))
                (nntp-accept-response))))
          (and (numberp nntp-large-newsgroup)
               (> number nntp-large-newsgroup)
@@ -967,7 +965,7 @@ command whose response triggered the error."
                   (> number nntp-large-newsgroup)
                   (zerop (% received 20))
                   (nnheader-message 6 "NNTP: Receiving articles... %d%%"
-                                    (/ (* received 100) number)))
+                                    (floor (* received 100.0) number)))
              (nntp-accept-response))))
        (and (numberp nntp-large-newsgroup)
             (> number nntp-large-newsgroup)
@@ -1221,14 +1219,17 @@ If SEND-IF-FORCE, only send authinfo to the server if the
 	      nntp-authinfo-user user))
       (unless (member user '(nil ""))
 	(nntp-send-command "^3.*\r?\n" "AUTHINFO USER" user)
-	(when t				;???Should check if AUTHINFO succeeded
-	  (nntp-send-command
-	   "^2.*\r?\n" "AUTHINFO PASS"
-	   (or passwd
-	       nntp-authinfo-password
-	       (setq nntp-authinfo-password
-		     (read-passwd (format "NNTP (%s@%s) password: "
-					  user nntp-address))))))))))
+	(let ((result
+	       (nntp-send-command
+		"^2.*\r?\n" "AUTHINFO PASS"
+		(or passwd
+		    nntp-authinfo-password
+		    (setq nntp-authinfo-password
+			  (read-passwd (format "NNTP (%s@%s) password: "
+					       user nntp-address)))))))
+	  (if (not result)
+	      (signal 'nntp-authinfo-rejected "Password rejected")
+	    result))))))
 
 ;;; Internal functions.
 
@@ -1763,7 +1764,7 @@ If SEND-IF-FORCE, only send authinfo to the server if the
 (defvoo nntp-open-telnet-envuser nil
   "*If non-nil, telnet session (client and server both) will support the ENVIRON option and not prompt for login name.")
 
-(defvoo nntp-telnet-shell-prompt "bash\\|\$ *\r?$\\|> *\r?"
+(defvoo nntp-telnet-shell-prompt "bash\\|[$>] *\r?$"
   "*Regular expression to match the shell prompt on the remote machine.")
 
 (defvoo nntp-rlogin-program "rsh"

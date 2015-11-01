@@ -1,10 +1,10 @@
 ;;; cl-indent.el --- enhanced lisp-indent mode
 
-;; Copyright (C) 1987, 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1987, 2000-2015 Free Software Foundation, Inc.
 
 ;; Author: Richard Mlynarik <mly@eddie.mit.edu>
 ;; Created: July 1987
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: lisp, tools
 ;; Package: emacs
 
@@ -27,6 +27,8 @@
 
 ;; This package supplies a single entry point, common-lisp-indent-function,
 ;; which performs indentation in the preferred style for Common Lisp code.
+;; It is also a suitable function for indenting Emacs lisp code.
+;;
 ;; To enable it:
 ;;
 ;; (setq lisp-indent-function 'common-lisp-indent-function)
@@ -136,6 +138,19 @@ If non-nil, alignment is done with the first parameter
   :type 'boolean
   :group 'lisp-indent)
 
+(defcustom lisp-indent-backquote-substitution-mode t
+  "How to indent substitutions in backquotes.
+If t, the default, indent substituted forms normally.
+If nil, do not apply special indentation rule to substituted
+forms.  If `corrected', subtract the `,' or `,@' from the form
+column, indenting as if this character sequence were not present.
+In any case, do not backtrack beyond a backquote substitution.
+
+Until Emacs 25.1, the nil behavior was hard-wired."
+  :version "25.1"
+  :type '(choice (const corrected) (const nil) (const t))
+  :group 'lisp-indent)
+
 
 (defvar lisp-indent-defun-method '(4 &lambda &body)
   "Defun-like indentation method.
@@ -143,7 +158,7 @@ This applies when the value of the `common-lisp-indent-function' property
 is set to `defun'.")
 
 
-(defun extended-loop-p (loop-start)
+(defun lisp-extended-loop-p (loop-start)
   "True if an extended loop form starts at LOOP-START."
   (condition-case ()
       (save-excursion
@@ -154,16 +169,36 @@ is set to `defun'.")
 	(looking-at "\\sw"))
     (error t)))
 
+(defun lisp-indent-find-method (symbol &optional no-compat)
+  "Find the lisp indentation function for SYMBOL.
+If NO-COMPAT is non-nil, do not retrieve indenters intended for
+the standard lisp indent package."
+  (or (and (derived-mode-p 'emacs-lisp-mode)
+           (get symbol 'common-lisp-indent-function-for-elisp))
+      (get symbol 'common-lisp-indent-function)
+      (and (not no-compat)
+           (get symbol 'lisp-indent-function))))
 
 (defun common-lisp-loop-part-indentation (indent-point state)
   "Compute the indentation of loop form constituents."
   (let* ((loop-indentation (save-excursion
 			     (goto-char (elt state 1))
-			     (current-column))))
+                             (current-column))))
+    (when (and (eq lisp-indent-backquote-substitution-mode 'corrected))
+      (save-excursion
+        (goto-char (elt state 1))
+        (incf loop-indentation
+              (cond ((eq (char-before) ?,) -1)
+                    ((and (eq (char-before) ?@)
+                          (progn (backward-char)
+                                 (eq (char-before) ?,)))
+                     -2)
+                    (t 0)))))
+
     (goto-char indent-point)
     (beginning-of-line)
     (list
-     (cond ((not (extended-loop-p (elt state 1)))
+     (cond ((not (lisp-extended-loop-p (elt state 1)))
 	    (+ loop-indentation lisp-simple-loop-indentation))
 	   ((looking-at "^\\s-*\\(:?\\sw+\\|;\\)")
 	    (+ loop-indentation lisp-loop-keyword-indentation))
@@ -245,9 +280,23 @@ For example, the function `case' has an indent property
   * indent the first argument by 4.
   * arguments after the first should be lists, and there may be any number
     of them.  The first list element has an offset of 2, all the rest
-    have an offset of 2+1=3."
+    have an offset of 2+1=3.
+
+If the current mode is actually `emacs-lisp-mode', look for a
+`common-lisp-indent-function-for-elisp' property before looking
+at `common-lisp-indent-function' and, if set, use its value
+instead."
+  ;; FIXME: why do we need to special-case loop?
   (if (save-excursion (goto-char (elt state 1))
-		      (looking-at "([Ll][Oo][Oo][Pp]"))
+                      (and (looking-at (if (derived-mode-p 'emacs-lisp-mode)
+                                           "(\\(cl-\\)?loop"
+                                         "([Ll][Oo][Oo][Pp]"))
+                           (or lisp-indent-backquote-substitution-mode
+                               (not
+                                (or (and (eq (char-before) ?@)
+                                         (progn (backward-char)
+                                                (eq (char-before) ?,)))
+                                    (eq (char-before) ?,))))))
       (common-lisp-loop-part-indentation indent-point state)
     (common-lisp-indent-function-1 indent-point state)))
 
@@ -291,18 +340,29 @@ For example, the function `case' has an indent property
               (setq function (downcase (buffer-substring-no-properties
                                         tem (point))))
               (goto-char tem)
+              ;; Elisp generally provides CL functionality with a CL
+              ;; prefix, so if we have a special indenter for the
+              ;; unprefixed version, prefer it over whatever's defined
+              ;; for the cl- version.  Users can override this
+              ;; heuristic by defining a
+              ;; common-lisp-indent-function-for-elisp property on the
+              ;; cl- version.
+              (when (and (derived-mode-p 'emacs-lisp-mode)
+                         (not (lisp-indent-find-method
+                               (intern-soft function) t))
+                         (string-match "\\`cl-" function)
+                         (setf tem (intern-soft
+                                    (substring function (match-end 0))))
+                         (lisp-indent-find-method tem t))
+                (setf function (symbol-name tem)))
               (setq tem (intern-soft function)
-                    method (get tem 'common-lisp-indent-function))
-              (cond ((and (null method)
-                          (string-match ":[^:]+" function))
-                     ;; The pleblisp package feature
-                     (setq function (substring function
-                                               (1+ (match-beginning 0)))
-                           method (get (intern-soft function)
-                                       'common-lisp-indent-function)))
-                    ((and (null method))
-                     ;; backwards compatibility
-                     (setq method (get tem 'lisp-indent-function)))))
+                    method (lisp-indent-find-method tem))
+              ;; The pleblisp package feature
+              (when (and (null tem)
+                         (string-match ":[^:]+" function))
+                (setq function (substring function (1+ (match-beginning 0)))
+                      tem (intern-soft function)
+                      method (lisp-indent-find-method tem))))
             (let ((n 0))
               ;; How far into the containing form is the current form?
               (if (< (point) indent-point)
@@ -343,11 +403,21 @@ For example, the function `case' has an indent property
                         (not (eq (char-after (- containing-sexp 2)) ?\#)))
                    ;; No indentation for "'(...)" elements
                    (setq calculated (1+ sexp-column)))
-                  ((or (eq (char-after (1- containing-sexp)) ?\,)
-                       (and (eq (char-after (1- containing-sexp)) ?\@)
-                            (eq (char-after (- containing-sexp 2)) ?\,)))
-                   ;; ",(...)" or ",@(...)"
-                   (setq calculated normal-indent))
+                  ((when
+                       (or (eq (char-after (1- containing-sexp)) ?\,)
+                           (and (eq (char-after (1- containing-sexp)) ?\@)
+                                (eq (char-after (- containing-sexp 2)) ?\,)))
+                     ;; ",(...)" or ",@(...)"
+                     (when (eq lisp-indent-backquote-substitution-mode
+                               'corrected)
+                       (incf sexp-column -1)
+                       (when (eq (char-after (1- containing-sexp)) ?\@)
+                         (incf sexp-column -1)))
+                     (cond (lisp-indent-backquote-substitution-mode
+                            (setf tentative-calculated normal-indent)
+                            (setq depth lisp-indent-maximum-backtracking)
+                            nil)
+                           (t (setq calculated normal-indent)))))
                   ((eq (char-after (1- containing-sexp)) ?\#)
                    ;; "#(...)"
                    (setq calculated (1+ sexp-column)))
@@ -756,6 +826,7 @@ optional\\|rest\\|key\\|allow-other-keys\\|aux\\|whole\\|body\\|environment\
            (when 1)
            (with-accessors . multiple-value-bind)
            (with-condition-restarts . multiple-value-bind)
+	   (with-compilation-unit (&lambda &body))
            (with-output-to-string (4 2))
            (with-slots . multiple-value-bind)
            (with-standard-io-syntax (2)))))
@@ -763,7 +834,12 @@ optional\\|rest\\|key\\|allow-other-keys\\|aux\\|whole\\|body\\|environment\
     (put (car el) 'common-lisp-indent-function
          (if (symbolp (cdr el))
              (get (cdr el) 'common-lisp-indent-function)
-             (car (cdr el))))))
+           (car (cdr el))))))
+
+;; In elisp, the else part of `if' is in an implicit progn, so indent
+;; it more.
+(put 'if 'common-lisp-indent-function-for-elisp 2)
+(put 'with-output-to-string 'common-lisp-indent-function-for-elisp 0)
 
 
 ;(defun foo (x)

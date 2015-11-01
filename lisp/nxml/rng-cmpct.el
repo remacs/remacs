@@ -1,9 +1,9 @@
 ;;; rng-cmpct.el --- parsing of RELAX NG Compact Syntax schemas
 
-;; Copyright (C) 2003, 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2003, 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: James Clark
-;; Keywords: XML, RelaxNG
+;; Keywords: wp, hypermedia, languages, XML, RelaxNG
 
 ;; This file is part of GNU Emacs.
 
@@ -363,7 +363,7 @@ OVERRIDE is either nil, require or t."
 	    "*")))
 
 (defun rng-c-process-escapes ()
-  ;; Check for any nuls, since we will use nul chars
+  ;; Check for any NULs, since we will use NUL chars
   ;; for internal purposes.
   (let ((pos (search-forward "\C-@" nil t)))
     (and pos
@@ -400,7 +400,7 @@ OVERRIDE is either nil, require or t."
 (defun rng-c-error (&rest args)
   (rng-c-signal-incorrect-schema rng-c-file-name
 				 (rng-c-translate-position (point))
-				 (apply 'format args)))
+				 (apply #'format-message args)))
 
 (defun rng-c-parse-top-level (context)
   (let ((rng-c-namespace-decls nil)
@@ -932,4 +932,3 @@ Current token after parse is token following ]."
 (provide 'rng-cmpct)
 
 ;;; rng-cmpct.el
-

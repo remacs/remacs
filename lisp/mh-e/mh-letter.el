@@ -1,6 +1,6 @@
 ;;; mh-letter.el --- MH-Letter mode
 
-;; Copyright (C) 1993, 1995, 1997, 2000-2013 Free Software Foundation,
+;; Copyright (C) 1993, 1995, 1997, 2000-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Bill Wohler <wohler@newt.com>
@@ -553,7 +553,7 @@ one space."
 (defun mh-letter-confirm-address ()
   "Flash alias expansion.
 
-Addresses are separated by a comma\; when you press the comma,
+Addresses are separated by a comma; when you press the comma,
 this command flashes the alias expansion in the minibuffer if
 `mh-alias-flash-on-comma' is turned on."
   (interactive)
@@ -932,7 +932,7 @@ Any match found replaces the text from BEGIN to END."
     (and (stringp file)
          (file-exists-p file)
          (or (and (not (mh-have-file-command))
-                  (not (null (string-match "\.vcf$" file))))
+                  (not (null (string-match "\\.vcf$" file))))
              (string-equal "text/x-vcard" (mh-file-mime-type file))))))
 
 ;;;###mh-autoload

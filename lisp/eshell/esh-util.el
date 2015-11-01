@@ -1,6 +1,6 @@
-;;; esh-util.el --- general utilities
+;;; esh-util.el --- general utilities  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -23,6 +23,8 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'cl-lib))
+
 (defgroup eshell-util nil
   "This is general utility code, meant for use by Eshell itself."
   :tag "General utilities"
@@ -31,7 +33,7 @@
 ;;; User Variables:
 
 (defcustom eshell-stringify-t t
-  "If non-nil, the string representation of t is 't'.
+  "If non-nil, the string representation of t is \"t\".
 If nil, t will be represented only in the exit code of the function,
 and not printed as a string.  This causes Lisp functions to behave
 similarly to external commands, as far as successful result output."
@@ -86,7 +88,7 @@ specification of filenames (for example, in calling `find-file', or
 some other Lisp function that deals with files, not numbers), add the
 following in your init file:
 
-  (put 'find-file 'eshell-no-numeric-conversions t)
+  (put \\='find-file \\='eshell-no-numeric-conversions t)
 
 Any function with the property `eshell-no-numeric-conversions' set to
 a non-nil value, will be passed strings, not numbers, even when an
@@ -142,7 +144,7 @@ function `string-to-number'."
 Otherwise, evaluates FORM with no error handling."
   (declare (indent 2))
   (if eshell-handle-errors
-      `(condition-case ,tag
+      `(condition-case-unless-debug ,tag
 	   ,form
 	 ,@handlers)
     form))
@@ -215,8 +217,7 @@ then quoting is done by a backslash, rather than a doubled delimiter."
 (defun eshell-sublist (l &optional n m)
   "Return from LIST the N to M elements.
 If N or M is nil, it means the end of the list."
-  (let* ((a (copy-sequence l))
-	 result)
+  (let ((a (copy-sequence l)))
     (if (and m (consp (nthcdr m a)))
 	(setcdr (nthcdr m a) nil))
     (if n
@@ -227,7 +228,7 @@ If N or M is nil, it means the end of the list."
 
 (defvar eshell-path-env (getenv "PATH")
   "Content of $PATH.
-It might be different from \(getenv \"PATH\"\), when
+It might be different from \(getenv \"PATH\"), when
 `default-directory' points to a remote host.")
 (make-variable-buffer-local 'eshell-path-env)
 
@@ -476,20 +477,20 @@ list."
 (defalias 'eshell-user-name 'user-login-name)
 
 (defun eshell-read-hosts-file (filename)
-  "Read in the hosts from the /etc/hosts file."
+  "Read in the hosts from FILENAME, default `eshell-hosts-file'."
   (let (hosts)
     (with-temp-buffer
-      (insert-file-contents eshell-hosts-file)
+      (insert-file-contents (or filename eshell-hosts-file))
       (goto-char (point-min))
       (while (re-search-forward
 	      "^\\([^#[:space:]]+\\)\\s-+\\(\\S-+\\)\\(\\s-*\\(\\S-+\\)\\)?" nil t)
 	(if (match-string 1)
-	    (add-to-list 'hosts (match-string 1)))
+	    (cl-pushnew (match-string 1) hosts :test #'equal))
 	(if (match-string 2)
-	    (add-to-list 'hosts (match-string 2)))
+	    (cl-pushnew (match-string 2) hosts :test #'equal))
 	(if (match-string 4)
-	    (add-to-list 'hosts (match-string 4)))))
-    (sort hosts 'string-lessp)))
+	    (cl-pushnew (match-string 4) hosts :test #'equal))))
+    (sort hosts #'string-lessp)))
 
 (defun eshell-read-hosts (file result-var timestamp-var)
   "Read the contents of /etc/passwd for user names."
@@ -538,20 +539,17 @@ Unless optional argument INPLACE is non-nil, return a new string."
 
 (defmacro eshell-with-file-modes (modes &rest forms)
   "Evaluate, with file-modes set to MODES, the given FORMS."
-  `(let ((modes (default-file-modes)))
-     (set-default-file-modes ,modes)
-     (unwind-protect
-	 (progn ,@forms)
-       (set-default-file-modes modes))))
+  (declare (obsolete with-file-modes "25.1"))
+  `(with-file-modes ,modes ,@forms))
 
 (defmacro eshell-with-private-file-modes (&rest forms)
   "Evaluate FORMS with private file modes set."
-  `(eshell-with-file-modes ,eshell-private-file-modes ,@forms))
+  `(with-file-modes ,eshell-private-file-modes ,@forms))
 
 (defsubst eshell-make-private-directory (dir &optional parents)
   "Make DIR with file-modes set to `eshell-private-directory-modes'."
-  (eshell-with-file-modes eshell-private-directory-modes
-			  (make-directory dir parents)))
+  (with-file-modes eshell-private-directory-modes
+    (make-directory dir parents)))
 
 (defsubst eshell-substring (string sublen)
   "Return the beginning of STRING, up to SUBLEN bytes."
@@ -560,9 +558,13 @@ Unless optional argument INPLACE is non-nil, return a new string."
 	  (substring string 0 sublen)
 	string)))
 
+(defvar ange-cache)
+
+;; Partial reimplementation of Emacs's builtin directory-files-and-attributes.
+;; id-format not implemented.
 (and (featurep 'xemacs)
      (not (fboundp 'directory-files-and-attributes))
-     (defun directory-files-and-attributes (directory &optional full match nosort id-format)
+     (defun directory-files-and-attributes (directory &optional full match nosort _id-format)
     "Return a list of names of files and their attributes in DIRECTORY.
 There are three optional arguments:
 If FULL is non-nil, return absolute file names.  Otherwise return names
@@ -576,8 +578,6 @@ If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
 	(lambda (file)
 	  (cons file (eshell-file-attributes (expand-file-name file directory)))))
        (directory-files directory full match nosort)))))
-
-(defvar ange-cache)
 
 (defun eshell-directory-files-and-attributes (dir &optional full match nosort id-format)
   "Make sure to use the handler for `directory-file-and-attributes'."
@@ -653,7 +653,7 @@ If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
 				   (match-string 6))))
 		      (if (nth 0 moment)
 			  (setcar (nthcdr 5 moment)
-				  (nth 5 (decode-time (current-time))))
+				  (nth 5 (decode-time)))
 			(setcar (nthcdr 0 moment) 0)
 			(setcar (nthcdr 1 moment) 0)
 			(setcar (nthcdr 2 moment) 0))

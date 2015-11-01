@@ -1,6 +1,6 @@
 ;;; semantic/bovine/c.el --- Semantic details for C
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -27,6 +27,7 @@
 
 (require 'semantic)
 (require 'semantic/analyze)
+(require 'semantic/analyze/refs)
 (require 'semantic/bovine)
 (require 'semantic/bovine/gcc)
 (require 'semantic/idle)
@@ -224,7 +225,7 @@ to store your global macros in a more natural way."
   )
 
 (defcustom semantic-c-member-of-autocast 't
-  "Non-nil means classes with a '->' operator will cast to its return type.
+  "Non-nil means classes with a `->' operator will cast to its return type.
 
 For Examples:
 
@@ -269,7 +270,7 @@ Return the defined symbol as a special spp lex token."
 						 (if (looking-back "/\\*.*" beginning-of-define)
 						     (progn
 						       (goto-char (match-beginning 0))
-						       (1- (point)))
+						       (point))
 						   (point)))))
 	   )
 
@@ -497,13 +498,19 @@ code to parse."
 	 (parsedtokelist
 	  (condition-case nil
 	      ;; This is imperfect, so always assume on error.
-	      (hif-canonicalize)
+	      (hif-canonicalize hif-ifx-regexp)
 	    (error nil))))
 
-    (let ((eval-form (eval parsedtokelist)))
+    (let ((eval-form (condition-case err
+			 (eval parsedtokelist)
+		       (error
+			(semantic-push-parser-warning
+			 (format "Hideif forms produced an error.  Assuming false.\n%S" err)
+			 (point) (1+ (point)))
+			nil))))
       (if (or (not eval-form)
               (and (numberp eval-form)
-                   (equal eval-form 0)));; ifdefline resulted in false
+                   (equal eval-form 0)));; ifdef line resulted in false
 
 	;; The if indicates to skip this preprocessor section
 	(let ((pt nil))
@@ -812,7 +819,7 @@ Use semantic-cpp-lexer for parsing text inside a CPP macro."
   ;; semantic-lex-spp-replace-or-symbol-or-keyword
   semantic-lex-symbol-or-keyword
   semantic-lex-charquote
-  semantic-lex-paren-or-list
+  semantic-lex-spp-paren-or-list
   semantic-lex-close-paren
   semantic-lex-ignore-comments
   semantic-lex-punctuation
@@ -1042,8 +1049,8 @@ now.
     return-list))
 
 (defun semantic-expand-c-extern-C (tag)
-  "Expand TAG containing an 'extern \"C\"' statement.
-This will return all members of TAG with 'extern \"C\"' added to
+  "Expand TAG containing an `extern \"C\"' statement.
+This will return all members of TAG with `extern \"C\"' added to
 the typemodifiers attribute."
     (when (eq (semantic-tag-class tag) 'extern)
       (let* ((mb (semantic-tag-get-attribute tag :members))
@@ -1058,7 +1065,7 @@ the typemodifiers attribute."
 (defun semantic-expand-c-complex-type (tag)
   "Check if TAG has a full :type with a name on its own.
 If so, extract it, and replace it with a reference to that type.
-Thus, 'struct A { int a; } B;' will create 2 toplevel tags, one
+Thus, `struct A { int a; } B;' will create 2 toplevel tags, one
 is type A, and the other variable B where the :type of B is just
 a type tag A that is a prototype, and the actual struct info of A
 is its own toplevel tag.  This function will return (cons A B)."
@@ -1118,7 +1125,8 @@ is its own toplevel tag.  This function will return (cons A B)."
 		       (semantic-tag-new-variable
 			(car cur)	;name
 			ty		;type
-			(if default
+			(if (and default
+				 (listp (cdr default)))
 			    (buffer-substring-no-properties
 			     (car default) (car (cdr default))))
 			:constant-flag (semantic-tag-variable-constant-p tag)
@@ -1173,11 +1181,7 @@ is its own toplevel tag.  This function will return (cons A B)."
 			     (nth 1 (car names)) ; name
 			     "typedef"
 			     (semantic-tag-type-members tag)
-			     ;; parent is just the name of what
-			     ;; is passed down as a tag.
-			     (list
-			      (semantic-tag-name
-			       (semantic-tag-type-superclasses tag)))
+			     nil
 			     :pointer
 			     (let ((stars (car (car (car names)))))
 			       (if (= stars 0) nil stars))
@@ -1227,6 +1231,45 @@ or \"struct\".")
 	name
       (delete "" ans))))
 
+(define-mode-local-override semantic-analyze-tag-references c-mode (tag &optional db)
+  "Analyze the references for TAG.
+Returns a class with information about TAG.
+
+Optional argument DB is a database.  It will be used to help
+locate TAG.
+
+Use `semantic-analyze-current-tag' to debug this fcn."
+  (when (not (semantic-tag-p tag))  (signal 'wrong-type-argument (list 'semantic-tag-p tag)))
+  (let ((allhits nil)
+	(scope nil)
+	(refs nil))
+    (save-excursion
+      (semantic-go-to-tag tag db)
+      (setq scope (semantic-calculate-scope))
+
+      (setq allhits (semantic--analyze-refs-full-lookup tag scope t))
+
+      (when (or (zerop (semanticdb-find-result-length allhits))
+		(and (= (semanticdb-find-result-length allhits) 1)
+		     (eq (car (semanticdb-find-result-nth allhits 0)) tag)))
+	;; It found nothing or only itself - not good enough.  As a
+	;; last resort, let's remove all namespaces from the scope and
+	;; search again.
+	(oset scope parents
+	      (let ((parents (oref scope parents))
+		    newparents)
+		(dolist (cur parents)
+		  (unless (string= (semantic-tag-type cur) "namespace")
+		    (push cur newparents)))
+		(reverse newparents)))
+	(setq allhits (semantic--analyze-refs-full-lookup tag scope t)))
+
+      (setq refs (semantic-analyze-references (semantic-tag-name tag)
+				    :tag tag
+				    :tagdb db
+				    :scope scope
+				    :rawsearchdata allhits)))))
+
 (defun semantic-c-reconstitute-token (tokenpart declmods typedecl)
   "Reconstitute a token TOKENPART with DECLMODS and TYPEDECL.
 This is so we don't have to match the same starting text several times.
@@ -1258,7 +1301,8 @@ Optional argument STAR and REF indicate the number of * and & in the typedef."
 			  (nth 10 tokenpart) ; initializers
 			  )
 		      (not (car (nth 3 tokenpart)))))
-		(fcnpointer (string-match "^\\*" (car tokenpart)))
+		(fcnpointer (and (> (length (car tokenpart)) 0)
+				 (= (aref (car tokenpart) 0) ?*)))
 		(fnname (if fcnpointer
 			    (substring (car tokenpart) 1)
 			  (car tokenpart)))
@@ -1266,69 +1310,79 @@ Optional argument STAR and REF indicate the number of * and & in the typedef."
 			      nil
 			    t))
 		)
-	   (if fcnpointer
-	       ;; Function pointers are really variables.
-	       (semantic-tag-new-variable
-		fnname
-		typedecl
-		nil
-		;; It is a function pointer
-		:functionpointer-flag t
-		)
-	     ;; The function
-	     (semantic-tag-new-function
-	      fnname
-	      (or typedecl		;type
-		  (cond ((car (nth 3 tokenpart) )
-			 "void")	; Destructors have no return?
-			(constructor
-			 ;; Constructors return an object.
-			 (semantic-tag-new-type
-			  ;; name
-			  (or (car semantic-c-classname)
-			      (let ((split (semantic-analyze-split-name-c-mode
-					    (car (nth 2 tokenpart)))))
-				(if (stringp split) split
-				  (car (last split)))))
-			  ;; type
-			  (or (cdr semantic-c-classname)
-			      "class")
-			  ;; members
-			  nil
-			  ;; parents
-			  nil
-			  ))
-			(t "int")))
-	      (nth 4 tokenpart)		;arglist
-	      :constant-flag (if (member "const" declmods) t nil)
-	      :typemodifiers (delete "const" declmods)
-	      :parent (car (nth 2 tokenpart))
-	      :destructor-flag (if (car (nth 3 tokenpart) ) t)
-	      :constructor-flag (if constructor t)
-	      :pointer (nth 7 tokenpart)
-	      :operator-flag operator
-	      ;; Even though it is "throw" in C++, we use
-	      ;; `throws' as a common name for things that toss
-	      ;; exceptions about.
-	      :throws (nth 5 tokenpart)
-	      ;; Reentrant is a C++ thingy.  Add it here
-	      :reentrant-flag (if (member "reentrant" (nth 6 tokenpart)) t)
-	      ;; A function post-const is funky.  Try stuff
-	      :methodconst-flag (if (member "const" (nth 6 tokenpart)) t)
-	      ;; prototypes are functions w/ no body
-	      :prototype-flag (if (nth 8 tokenpart) t)
-	      ;; Pure virtual
-	      :pure-virtual-flag (if (eq (nth 8 tokenpart) :pure-virtual-flag) t)
-	      ;; Template specifier.
-	      :template-specifier (nth 9 tokenpart)
-	      )))
-	 )
-	))
+	   ;; The function
+	   (semantic-tag-new-function
+	    fnname
+	    (or typedecl		;type
+		(cond ((car (nth 3 tokenpart) )
+		       "void")	; Destructors have no return?
+		      (constructor
+		       ;; Constructors return an object.
+		       (semantic-tag-new-type
+			;; name
+			(or (car semantic-c-classname)
+			    (let ((split (semantic-analyze-split-name-c-mode
+					  (car (nth 2 tokenpart)))))
+			      (if (stringp split) split
+				(car (last split)))))
+			;; type
+			(or (cdr semantic-c-classname)
+			    "class")
+			;; members
+			nil
+			;; parents
+			nil
+			))
+		      (t "int")))
+	    ;; Argument list can contain things like function pointers
+	    (semantic-c-reconstitute-function-arglist (nth 4 tokenpart))
+	    :constant-flag (if (member "const" declmods) t nil)
+	    :typemodifiers (delete "const" declmods)
+	    :parent (car (nth 2 tokenpart))
+	    :destructor-flag (if (car (nth 3 tokenpart) ) t)
+	    :constructor-flag (if constructor t)
+	    :function-pointer fcnpointer
+	    :pointer (nth 7 tokenpart)
+	    :operator-flag operator
+	    ;; Even though it is "throw" in C++, we use
+	    ;; `throws' as a common name for things that toss
+	    ;; exceptions about.
+	    :throws (nth 5 tokenpart)
+	    ;; Reentrant is a C++ thingy.  Add it here
+	    :reentrant-flag (if (member "reentrant" (nth 6 tokenpart)) t)
+	    ;; A function post-const is funky.  Try stuff
+	    :methodconst-flag (if (member "const" (nth 6 tokenpart)) t)
+	    ;; prototypes are functions w/ no body
+	    :prototype-flag (if (nth 8 tokenpart) t)
+	    ;; Pure virtual
+	    :pure-virtual-flag (if (eq (nth 8 tokenpart) :pure-virtual-flag) t)
+	    ;; Template specifier.
+	    :template-specifier (nth 9 tokenpart))))))
 
 (defun semantic-c-reconstitute-template (tag specifier)
   "Reconstitute the token TAG with the template SPECIFIER."
   (semantic-tag-put-attribute tag :template (or specifier ""))
   tag)
+
+(defun semantic-c-reconstitute-function-arglist (arglist)
+  "Reconstitute the argument list of a function.
+This currently only checks if the function expects a function
+pointer as argument."
+  (let (result)
+    (dolist (arg arglist)
+      ;; Names starting with a '*' denote a function pointer
+      (if (and (> (length (semantic-tag-name arg)) 0)
+	       (= (aref (semantic-tag-name arg) 0) ?*))
+	  (setq result
+		(append result
+			(list
+			 (semantic-tag-new-function
+			  (substring (semantic-tag-name arg) 1)
+			  (semantic-tag-type arg)
+			  (cadr (semantic-tag-attributes arg))
+			  :function-pointer t))))
+	(setq result (append result (list arg)))))
+    result))
 
 
 ;;; Override methods & Variables
@@ -1338,7 +1392,7 @@ Optional argument STAR and REF indicate the number of * and & in the typedef."
   "Convert TAG to a string that is the print name for TAG.
 Optional PARENT and COLOR are ignored."
   (let ((name (semantic-format-tag-name-default tag parent color))
-	(fnptr (semantic-tag-get-attribute tag :functionpointer-flag))
+	(fnptr (semantic-tag-get-attribute tag :function-pointer))
 	)
     (if (not fnptr)
 	name
@@ -1546,7 +1600,7 @@ Optional PARENT and COLOR as specified with
   "Return non-nil if TAG is considered abstract.
 PARENT is tag's parent.
 In C, a method is abstract if it is `virtual', which is already
-handled.  A class is abstract iff its destructor is virtual."
+handled.  A class is abstract only if its destructor is virtual."
   (cond
    ((eq (semantic-tag-class tag) 'type)
     (require 'semantic/find)
@@ -1602,7 +1656,7 @@ SPEC-LIST is the template specifier of the datatype instantiated."
 
 (defun semantic-c--template-name-1 (spec-list)
   "Return a string used to compute template class name.
-Based on SPEC-LIST, for ref<Foo,Bar> it will return 'Foo,Bar'."
+Based on SPEC-LIST, for ref<Foo,Bar> it will return `Foo,Bar'."
   (when (car spec-list)
     (let* ((endpart (semantic-c--template-name-1 (cdr spec-list)))
 	   (separator (and endpart ",")))
@@ -1611,7 +1665,7 @@ Based on SPEC-LIST, for ref<Foo,Bar> it will return 'Foo,Bar'."
 (defun semantic-c--template-name (type spec-list)
   "Return a template class name for TYPE based on SPEC-LIST.
 For a type `ref' with a template specifier of (Foo Bar) it will
-return 'ref<Foo,Bar>'."
+return `ref<Foo,Bar>'."
   (concat (semantic-tag-name type)
 	  "<" (semantic-c--template-name-1 (cdr spec-list)) ">"))
 
@@ -1639,7 +1693,7 @@ instantiated as specified in TYPE-DECLARATION."
 ;;; Patch here by "Raf" for instantiating templates.
 (defun semantic-c-dereference-member-of (type scope &optional type-declaration)
   "Dereference through the `->' operator of TYPE.
-Uses the return type of the '->' operator if it is contained in TYPE.
+Uses the return type of the `->' operator if it is contained in TYPE.
 SCOPE is the current local scope to perform searches in.
 TYPE-DECLARATION is passed through."
   (if semantic-c-member-of-autocast
@@ -1655,8 +1709,8 @@ TYPE-DECLARATION is passed through."
 ;; tests 5 and following.
 
 (defun semantic-c-dereference-namespace (type scope &optional type-declaration)
-  "Dereference namespace which might hold an 'alias' for TYPE.
-Such an alias can be created through 'using' statements in a
+  "Dereference namespace which might hold an `alias' for TYPE.
+Such an alias can be created through `using' statements in a
 namespace declaration.  This function checks the namespaces in
 SCOPE for such statements."
   (let ((scopetypes (oref scope scopetypes))
@@ -1772,7 +1826,7 @@ or nil if it cannot be found."
 (define-mode-local-override semantic-analyze-dereference-metatype
   c-mode (type scope &optional type-declaration)
   "Dereference TYPE as described in `semantic-analyze-dereference-metatype'.
-Handle typedef, template instantiation, and '->' operator."
+Handle typedef, template instantiation, and `->' operator."
   (let* ((dereferencer-list '(semantic-c-dereference-typedef
                               semantic-c-dereference-template
                               semantic-c-dereference-member-of
@@ -1823,31 +1877,31 @@ DO NOT return the list of tags encompassing point."
     (let ((idx 0)
 	  (len (semanticdb-find-result-length tmp)))
       (while (< idx len)
-	(setq tagreturn (cons (semantic-tag-type (car (semanticdb-find-result-nth tmp idx))) tagreturn))
-	(setq idx (1+ idx)))
-      )
-    ;; Use the encompassed types around point to also look for using statements.
-    ;;(setq tagreturn (cons "bread_name" tagreturn))
-    (while (cdr tagsaroundpoint)  ; don't search the last one
-      (setq tmp (semantic-find-tags-by-class 'using (semantic-tag-components (car tagsaroundpoint))))
-      (dolist (T tmp)
-	(setq tagreturn (cons (semantic-tag-type T) tagreturn))
-	)
-      (setq tagsaroundpoint (cdr tagsaroundpoint))
-      )
-    ;; If in a function...
-    (when (and (semantic-tag-of-class-p (car tagsaroundpoint) 'function)
-	       ;; ...search for using statements in the local scope...
-	       (setq tmp (semantic-find-tags-by-class
-			  'using
-			  (semantic-get-local-variables))))
-      ;; ... and add them.
-      (setq tagreturn
-	    (append tagreturn
-		    (mapcar 'semantic-tag-type tmp))))
+	(setq tagreturn
+	      (append tagreturn (list (semantic-tag-type
+				       (car (semanticdb-find-result-nth tmp idx))))))
+	(setq idx (1+ idx))))
+    ;; Use the encompassed types around point to also look for using
+    ;; statements.  If we deal with types, search inside members; for
+    ;; functions, we have to call `semantic-get-local-variables' to
+    ;; parse inside the function's body.
+    (dolist (cur tagsaroundpoint)
+      (cond
+       ((and (eq (semantic-tag-class cur) 'type)
+	     (setq tmp (semantic-find-tags-by-class
+			'using
+			(semantic-tag-components (car tagsaroundpoint)))))
+	(dolist (T tmp)
+	  (setq tagreturn (cons (semantic-tag-type T) tagreturn))))
+       ((and (semantic-tag-of-class-p (car (last tagsaroundpoint)) 'function)
+	     (setq tmp (semantic-find-tags-by-class
+			'using
+			(semantic-get-local-variables))))
+	(setq tagreturn
+	      (append tagreturn
+		      (mapcar 'semantic-tag-type tmp))))))
     ;; Return the stuff
-    tagreturn
-    ))
+    tagreturn))
 
 (define-mode-local-override semantic-ctxt-imported-packages c++-mode (&optional point)
   "Return the list of using tag types in scope of POINT."
@@ -2122,7 +2176,8 @@ actually in their parent which is not accessible.")
 
       (princ "\n\nInclude Path Summary:\n")
       (when (and (boundp 'ede-object) ede-object)
-	(princ "\n  This file's project include is handled by:\n")
+	(princ (substitute-command-keys
+		"\n  This file's project include is handled by:\n"))
 	(let ((objs (if (listp ede-object)
 			ede-object
 		      (list ede-object))))
@@ -2140,14 +2195,16 @@ actually in their parent which is not accessible.")
 	)
 
       (when semantic-dependency-include-path
-	(princ "\n  This file's generic include path is:\n")
+	(princ (substitute-command-keys
+		"\n  This file's generic include path is:\n"))
 	(dolist (dir semantic-dependency-include-path)
 	  (princ "    ")
 	  (princ dir)
 	  (princ "\n")))
 
       (when semantic-dependency-system-include-path
-	(princ "\n  This file's system include path is:\n")
+	(princ (substitute-command-keys
+		"\n  This file's system include path is:\n"))
 	(dolist (dir semantic-dependency-system-include-path)
 	  (princ "    ")
 	  (princ dir)

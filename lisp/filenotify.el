@@ -1,6 +1,6 @@
-;;; filenotify.el --- watch files for changes on disk
+;;; filenotify.el --- watch files for changes on disk  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2013 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2015 Free Software Foundation, Inc.
 
 ;; Author: Michael Albinus <michael.albinus@gmx.de>
 
@@ -41,25 +41,62 @@ could use another implementation.")
   "Hash table for registered file notification descriptors.
 A key in this hash table is the descriptor as returned from
 `gfilenotify', `inotify', `w32notify' or a file name handler.
-The value in the hash table is the cons cell (DIR FILE CALLBACK).")
+The value in the hash table is a list
+
+  (DIR (FILE . CALLBACK) (FILE . CALLBACK) ...)
+
+Several values for a given DIR happen only for `inotify', when
+different files from the same directory are watched.")
+
+(defun file-notify--rm-descriptor (descriptor &optional what)
+  "Remove DESCRIPTOR from `file-notify-descriptors'.
+DESCRIPTOR should be an object returned by `file-notify-add-watch'.
+If it is registered in `file-notify-descriptors', a stopped event is sent.
+WHAT is a file or directory name to be removed, needed just for `inotify'."
+  (let* ((desc (if (consp descriptor) (car descriptor) descriptor))
+	 (file (if (consp descriptor) (cdr descriptor)))
+         (registered (gethash desc file-notify-descriptors))
+	 (dir (car registered)))
+
+    (when (and (consp registered) (or (null what) (string-equal dir what)))
+      ;; Send `stopped' event.
+      (dolist (entry (cdr registered))
+	(funcall (cdr entry)
+		 `(,(file-notify--descriptor desc) stopped
+		   ,(or (and (stringp (car entry))
+			     (expand-file-name (car entry) dir))
+			dir))))
+
+      ;; Modify `file-notify-descriptors'.
+      (if (not file)
+	  (remhash desc file-notify-descriptors)
+	(setcdr registered
+		(delete (assoc file (cdr registered)) (cdr registered)))
+	(if (null (cdr registered))
+	    (remhash desc file-notify-descriptors)
+	  (puthash desc registered file-notify-descriptors))))))
 
 ;; This function is used by `gfilenotify', `inotify' and `w32notify' events.
 ;;;###autoload
 (defun file-notify-handle-event (event)
   "Handle file system monitoring event.
-If EVENT is a filewatch event, call its callback.
+If EVENT is a filewatch event, call its callback.  It has the format
+
+  (file-notify (DESCRIPTOR ACTIONS FILE [FILE1-OR-COOKIE]) CALLBACK)
+
 Otherwise, signal a `file-notify-error'."
   (interactive "e")
+  ;;(message "file-notify-handle-event %S" event)
   (if (and (eq (car event) 'file-notify)
 	   (>= (length event) 3))
       (funcall (nth 2 event) (nth 1 event))
     (signal 'file-notify-error
 	    (cons "Not a valid file-notify event" event))))
 
-(defvar file-notify--pending-events nil
-  "List of pending file notification events for a future `renamed' action.
-The entries are a list (DESCRIPTOR ACTION FILE COOKIE).  ACTION
-is either `moved-from' or `renamed-from'.")
+;; Needed for `inotify' and `w32notify'.  In the latter case, COOKIE is nil.
+(defvar file-notify--pending-event nil
+  "A pending file notification events for a future `renamed' action.
+It is a form ((DESCRIPTOR ACTION FILE [FILE1-OR-COOKIE]) CALLBACK).")
 
 (defun file-notify--event-file-name (event)
   "Return file name of file notification event, or nil."
@@ -81,115 +118,155 @@ This is available in case a file has been moved."
 This is available in case a file has been moved."
   (nth 3 event))
 
+;; `inotify' returns the same descriptor when the file (directory)
+;; uses the same inode.  We want to distinguish, and apply a virtual
+;; descriptor which make the difference.
+(defun file-notify--descriptor (descriptor)
+  "Return the descriptor to be used in `file-notify-*-watch'.
+For `gfilenotify' and `w32notify' it is the same descriptor as
+used in the low-level file notification package."
+  (if (and (natnump descriptor) (eq file-notify--library 'inotify))
+      (cons descriptor
+            (car (cadr (gethash descriptor file-notify-descriptors))))
+    descriptor))
+
 ;; The callback function used to map between specific flags of the
 ;; respective file notifications, and the ones we return.
 (defun file-notify-callback (event)
   "Handle an EVENT returned from file notification.
-EVENT is the same one as in `file-notify-handle-event' except the
-car of that event, which is the symbol `file-notify'."
+EVENT is the cadr of the event in `file-notify-handle-event'
+\(DESCRIPTOR ACTIONS FILE [FILE1-OR-COOKIE])."
   (let* ((desc (car event))
 	 (registered (gethash desc file-notify-descriptors))
-	 (pending-event (assoc desc file-notify--pending-events))
 	 (actions (nth 1 event))
 	 (file (file-notify--event-file-name event))
-	 file1 callback)
+	 file1 callback pending-event stopped)
 
     ;; Make actions a list.
     (unless (consp actions) (setq actions (cons actions nil)))
 
-    ;; Check, that event is meant for us.
-    (unless (setq callback (nth 2 registered))
-      (setq actions nil))
+    ;; Loop over registered entries.  In fact, more than one entry
+    ;; happens only for `inotify'.
+    (dolist (entry (cdr registered))
 
-    ;; Loop over actions.  In fact, more than one action happens only
-    ;; for `inotify'.
-    (dolist (action actions)
+      ;; Check, that event is meant for us.
+      (unless (setq callback (cdr entry))
+	(setq actions nil))
 
-      ;; Send pending event, if it doesn't match.
-      (when (and pending-event
-		 ;; The cookie doesn't match.
-		 (not (eq (file-notify--event-cookie pending-event)
-			  (file-notify--event-cookie event)))
-		 (or
-		  ;; inotify.
-		  (and (eq (nth 1 pending-event) 'moved-from)
-		       (not (eq action 'moved-to)))
-		  ;; w32notify.
-		  (and (eq (nth 1 pending-event) 'renamed-from)
-		       (not (eq action 'renamed-to)))))
-	(funcall callback
-		 (list desc 'deleted
-		       (file-notify--event-file-name pending-event)))
-	(setq file-notify--pending-events
-	      (delete pending-event file-notify--pending-events)))
+      ;; Loop over actions.  In fact, more than one action happens only
+      ;; for `inotify'.
+      (dolist (action actions)
 
-      ;; Map action.  We ignore all events which cannot be mapped.
-      (setq action
-	    (cond
-	     ;; gfilenotify.
-	     ((memq action '(attribute-changed changed created deleted)) action)
-	     ((eq action 'moved)
-	      (setq file1 (file-notify--event-file1-name event))
-	      'renamed)
+	;; Send pending event, if it doesn't match.
+	(when (and file-notify--pending-event
+		   ;; The cookie doesn't match.
+		   (not (eq (file-notify--event-cookie
+                             (car file-notify--pending-event))
+			    (file-notify--event-cookie event)))
+		   (or
+		    ;; inotify.
+		    (and (eq (nth 1 (car file-notify--pending-event))
+                             'moved-from)
+			 (not (eq action 'moved-to)))
+		    ;; w32notify.
+		    (and (eq (nth 1 (car file-notify--pending-event))
+                             'renamed-from)
+			 (not (eq action 'renamed-to)))))
+          (setq pending-event file-notify--pending-event
+                file-notify--pending-event nil)
+          (setcar (cdar pending-event) 'deleted))
 
-	     ;; inotify.
-	     ((eq action 'attrib) 'attribute-changed)
-	     ((eq action 'create) 'created)
-	     ((eq action 'modify) 'changed)
-	     ((memq action '(delete 'delete-self move-self)) 'deleted)
-	     ;; Make the event pending.
-	     ((eq action 'moved-from)
-	      (add-to-list 'file-notify--pending-events
-			   (list desc action file
-				 (file-notify--event-cookie event)))
-	      nil)
-	     ;; Look for pending event.
-	     ((eq action 'moved-to)
-	      (if (null pending-event)
-		  'created
-		(setq file1 file
-		      file (file-notify--event-file-name pending-event)
-		      file-notify--pending-events
-		      (delete pending-event file-notify--pending-events))
-		'renamed))
+	;; Map action.  We ignore all events which cannot be mapped.
+	(setq action
+	      (cond
+	       ;; gfilenotify.
+	       ((memq action '(attribute-changed changed created deleted))
+		action)
+	       ((eq action 'moved)
+		(setq file1 (file-notify--event-file1-name event))
+		'renamed)
 
-	     ;; w32notify.
-	     ((eq action 'added) 'created)
-	     ((eq action 'modified) 'changed)
-	     ((eq action 'removed) 'deleted)
-	     ;; Make the event pending.
-	     ((eq 'renamed-from action)
-	      (add-to-list 'file-notify--pending-events
-			   (list desc action file
-				 (file-notify--event-cookie event)))
-	      nil)
-	     ;; Look for pending event.
-	     ((eq 'renamed-to action)
-	      (if (null pending-event)
-		  'created
-		(setq file1 file
-		      file (file-notify--event-file-name pending-event)
-		      file-notify--pending-events
-		      (delete pending-event file-notify--pending-events))
-		'renamed))))
+	       ;; inotify, w32notify.
+	       ((eq action 'ignored)
+                (setq stopped t actions nil))
+	       ((eq action 'attrib) 'attribute-changed)
+	       ((memq action '(create added)) 'created)
+	       ((memq action '(modify modified)) 'changed)
+	       ((memq action '(delete delete-self move-self removed)) 'deleted)
+	       ;; Make the event pending.
+	       ((memq action '(moved-from renamed-from))
+		(setq file-notify--pending-event
+                      `((,desc ,action ,file ,(file-notify--event-cookie event))
+                        ,callback))
+		nil)
+	       ;; Look for pending event.
+	       ((memq action '(moved-to renamed-to))
+		(if (null file-notify--pending-event)
+		    'created
+		  (setq file1 file
+			file (file-notify--event-file-name
+                              (car file-notify--pending-event)))
+                  ;; If the source is handled by another watch, we
+                  ;; must fire the rename event there as well.
+                  (when (not (equal (file-notify--descriptor desc)
+                                    (file-notify--descriptor
+                                     (caar file-notify--pending-event))))
+                    (setq pending-event
+                          `((,(caar file-notify--pending-event)
+                             renamed ,file ,file1)
+                            ,(cadr file-notify--pending-event))))
+                  (setq file-notify--pending-event nil)
+                  'renamed))))
 
-      ;; Apply callback.
-      (when (and action
-		 (or
-		  ;; If there is no relative file name for that watch,
-		  ;; we watch the whole directory.
-		  (null (nth 1 registered))
-		  ;; File matches.
-		  (string-equal
-		   (nth 1 registered) (file-name-nondirectory file))
-		  ;; File1 matches.
-		  (and (stringp file1)
-		       (string-equal
-			(nth 1 registered) (file-name-nondirectory file1)))))
-	(if file1
-	    (funcall callback (list desc action file file1))
-	  (funcall callback (list desc action file)))))))
+        ;; Apply pending callback.
+        (when pending-event
+          (setcar
+           (car pending-event) (file-notify--descriptor (caar pending-event)))
+          (funcall (cadr pending-event) (car pending-event))
+          (setq pending-event nil))
 
+        ;; Check for stopped.
+	;;(message "file-notify-callback %S %S" file registered)
+        (setq
+         stopped
+         (or
+          stopped
+          (and
+           (memq action '(deleted renamed))
+           (= (length (cdr registered)) 1)
+           (string-equal
+            (file-name-nondirectory file)
+	    (or (file-name-nondirectory (car registered))
+		(car (cadr registered)))))))
+
+	;; Apply callback.
+	(when (and action
+		   (or
+		    ;; If there is no relative file name for that watch,
+		    ;; we watch the whole directory.
+		    (null (nth 0 entry))
+		    ;; File matches.
+		    (string-equal
+		     (nth 0 entry) (file-name-nondirectory file))
+		    ;; File1 matches.
+		    (and (stringp file1)
+			 (string-equal
+			  (nth 0 entry) (file-name-nondirectory file1)))))
+	  (if file1
+	      (funcall
+	       callback
+	       `(,(file-notify--descriptor desc) ,action ,file ,file1))
+	    (funcall
+	     callback
+	     `(,(file-notify--descriptor desc) ,action ,file)))))
+
+      ;; Modify `file-notify-descriptors'.
+      (when stopped
+        (file-notify--rm-descriptor (file-notify--descriptor desc) file)))))
+
+;; `gfilenotify' and `w32notify' return a unique descriptor for every
+;; `file-notify-add-watch', while `inotify' returns a unique
+;; descriptor per inode only.
 (defun file-notify-add-watch (file flags callback)
   "Add a watch for filesystem events pertaining to FILE.
 This arranges for filesystem events pertaining to FILE to be reported
@@ -206,8 +283,8 @@ include the following symbols:
   `attribute-change' -- watch for file attributes changes, like
                         permissions or modification time
 
-If FILE is a directory, 'change' watches for file creation or
-deletion in that directory.
+If FILE is a directory, `change' watches for file creation or
+deletion in that directory.  This does not work recursively.
 
 When any event happens, Emacs will call the CALLBACK function passing
 it a single argument EVENT, which is of the form
@@ -223,100 +300,140 @@ following:
   `changed'           -- FILE has changed
   `renamed'           -- FILE has been renamed to FILE1
   `attribute-changed' -- a FILE attribute was changed
+  `stopped'           -- watching FILE has been stopped
 
 FILE is the name of the file whose event is being reported."
   ;; Check arguments.
   (unless (stringp file)
-    (signal 'wrong-type-argument (list file)))
+    (signal 'wrong-type-argument `(,file)))
   (setq file (expand-file-name file))
   (unless (and (consp flags)
 	       (null (delq 'change (delq 'attribute-change (copy-tree flags)))))
-    (signal 'wrong-type-argument (list flags)))
+    (signal 'wrong-type-argument `(,flags)))
   (unless (functionp callback)
-    (signal 'wrong-type-argument (list callback)))
+    (signal 'wrong-type-argument `(,callback)))
 
   (let* ((handler (find-file-name-handler file 'file-notify-add-watch))
 	 (dir (directory-file-name
-	       (if (or (and (not handler) (eq file-notify--library 'w32notify))
-		       (file-directory-p file))
+	       (if (file-directory-p file)
 		   file
 		 (file-name-directory file))))
-	desc func l-flags)
+	desc func l-flags registered)
 
-    ;; Check, whether this has been registered already.
-;    (maphash
-;     (lambda (key value)
-;       (when (equal (cons file callback) value) (setq desc key)))
-;     file-notify-descriptors)
+    (unless (file-directory-p dir)
+      (signal 'file-notify-error `("Directory does not exist" ,dir)))
 
-    (unless desc
-      (if handler
-	  ;; A file name handler could exist even if there is no local
-	  ;; file notification support.
-	  (setq desc (funcall
-		      handler 'file-notify-add-watch dir flags callback))
+    (if handler
+	;; A file name handler could exist even if there is no local
+	;; file notification support.
+	(setq desc (funcall
+		    handler 'file-notify-add-watch dir flags callback))
 
-	;; Check, whether Emacs has been compiled with file
-	;; notification support.
-	(unless file-notify--library
-	  (signal 'file-notify-error
-		  '("No file notification package available")))
+      ;; Check, whether Emacs has been compiled with file notification
+      ;; support.
+      (unless file-notify--library
+	(signal 'file-notify-error
+		'("No file notification package available")))
 
-	;; Determine low-level function to be called.
-	(setq func
-	      (cond
-	       ((eq file-notify--library 'gfilenotify) 'gfile-add-watch)
-	       ((eq file-notify--library 'inotify) 'inotify-add-watch)
-	       ((eq file-notify--library 'w32notify) 'w32notify-add-watch)))
+      ;; Determine low-level function to be called.
+      (setq func
+	    (cond
+	     ((eq file-notify--library 'gfilenotify) 'gfile-add-watch)
+	     ((eq file-notify--library 'inotify) 'inotify-add-watch)
+	     ((eq file-notify--library 'w32notify) 'w32notify-add-watch)))
 
-	;; Determine respective flags.
-	(if (eq file-notify--library 'gfilenotify)
-	    (setq l-flags '(watch-mounts send-moved))
-	  (when (memq 'change flags)
-	    (setq
-	     l-flags
-	     (cond
-	      ((eq file-notify--library 'inotify) '(create modify move delete))
-	      ((eq file-notify--library 'w32notify)
-	       '(file-name directory-name size last-write-time)))))
-	  (when (memq 'attribute-change flags)
-	    (add-to-list
-	     'l-flags
-	     (cond
-	      ((eq file-notify--library 'inotify) 'attrib)
-	      ((eq file-notify--library 'w32notify) 'attributes)))))
+      ;; Determine respective flags.
+      (if (eq file-notify--library 'gfilenotify)
+	  (setq l-flags (append '(watch-mounts send-moved) flags))
+	(when (memq 'change flags)
+	  (setq
+	   l-flags
+	   (cond
+	    ((eq file-notify--library 'inotify)
+	     '(create delete delete-self modify move-self move))
+	    ((eq file-notify--library 'w32notify)
+	     '(file-name directory-name size last-write-time)))))
+	(when (memq 'attribute-change flags)
+	  (push (cond
+                 ((eq file-notify--library 'inotify) 'attrib)
+                 ((eq file-notify--library 'w32notify) 'attributes))
+                l-flags)))
 
-	;; Call low-level function.
-	(setq desc (funcall func dir l-flags 'file-notify-callback))))
+      ;; Call low-level function.
+      (setq desc (funcall func dir l-flags 'file-notify-callback)))
+
+    ;; Modify `file-notify-descriptors'.
+    (setq registered (gethash desc file-notify-descriptors))
+    (puthash
+     desc
+     `(,dir
+       (,(unless (file-directory-p file) (file-name-nondirectory file))
+	. ,callback)
+       . ,(cdr registered))
+     file-notify-descriptors)
 
     ;; Return descriptor.
-    (puthash desc
-             (list (directory-file-name
-		    (if (file-directory-p dir) dir (file-name-directory dir)))
-                   (unless (file-directory-p file)
-		     (file-name-nondirectory file))
-		   callback)
-             file-notify-descriptors)
-    desc))
+    (file-notify--descriptor desc)))
 
 (defun file-notify-rm-watch (descriptor)
   "Remove an existing watch specified by its DESCRIPTOR.
 DESCRIPTOR should be an object returned by `file-notify-add-watch'."
-  (let ((file (car (gethash descriptor file-notify-descriptors)))
-	handler)
+  (let* ((desc (if (consp descriptor) (car descriptor) descriptor))
+	 (file (if (consp descriptor) (cdr descriptor)))
+         (registered (gethash desc file-notify-descriptors))
+	 (dir (car registered))
+	 (handler (and (stringp dir)
+                       (find-file-name-handler dir 'file-notify-rm-watch))))
 
-    (when (stringp file)
-      (setq handler (find-file-name-handler file 'file-notify-rm-watch))
-      (if handler
-	  (funcall handler 'file-notify-rm-watch descriptor)
-	(funcall
-	 (cond
-	  ((eq file-notify--library 'gfilenotify) 'gfile-rm-watch)
-	  ((eq file-notify--library 'inotify) 'inotify-rm-watch)
-	  ((eq file-notify--library 'w32notify) 'w32notify-rm-watch))
-	 descriptor)))
+    (when (stringp dir)
+      ;; Call low-level function.
+      (when (or (not file)
+                (and (= (length (cdr registered)) 1)
+                     (assoc file (cdr registered))))
+        (condition-case nil
+            (if handler
+                ;; A file name handler could exist even if there is no local
+                ;; file notification support.
+                (funcall handler 'file-notify-rm-watch desc)
 
-    (remhash descriptor file-notify-descriptors)))
+              (funcall
+               (cond
+                ((eq file-notify--library 'gfilenotify) 'gfile-rm-watch)
+                ((eq file-notify--library 'inotify) 'inotify-rm-watch)
+                ((eq file-notify--library 'w32notify) 'w32notify-rm-watch))
+               desc))
+          (file-notify-error nil)))
+
+      ;; Modify `file-notify-descriptors'.
+      (file-notify--rm-descriptor descriptor))))
+
+(defun file-notify-valid-p (descriptor)
+  "Check a watch specified by its DESCRIPTOR.
+DESCRIPTOR should be an object returned by `file-notify-add-watch'."
+  (let* ((desc (if (consp descriptor) (car descriptor) descriptor))
+	 (file (if (consp descriptor) (cdr descriptor)))
+         (registered (gethash desc file-notify-descriptors))
+	 (dir (car registered))
+	 handler)
+
+    (when (stringp dir)
+      (setq handler (find-file-name-handler dir 'file-notify-valid-p))
+
+      (and (or ;; It is a directory.
+               (not file)
+               ;; The file is registered.
+               (assoc file (cdr registered)))
+           (if handler
+               ;; A file name handler could exist even if there is no
+               ;; local file notification support.
+               (funcall handler 'file-notify-valid-p descriptor)
+             (funcall
+              (cond
+               ((eq file-notify--library 'gfilenotify) 'gfile-valid-p)
+               ((eq file-notify--library 'inotify) 'inotify-valid-p)
+               ((eq file-notify--library 'w32notify) 'w32notify-valid-p))
+              desc))
+           t))))
 
 ;; The end:
 (provide 'filenotify)

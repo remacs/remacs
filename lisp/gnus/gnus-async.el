@@ -1,6 +1,6 @@
 ;;; gnus-async.el --- asynchronous support for Gnus
 
-;; Copyright (C) 1996-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news
@@ -225,9 +225,6 @@ that was fetched."
   "Return a callback function."
   `(lambda (arg)
      (gnus-async-article-callback arg ,group ,article ,mark ,summary ,next)))
-
-(eval-when-compile
-  (autoload 'gnus-html-prefetch-images "gnus-html"))
 
 (defun gnus-async-article-callback (arg group article mark summary next)
   "Function called when an async article is done being fetched."

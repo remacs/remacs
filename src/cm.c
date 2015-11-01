@@ -1,5 +1,5 @@
 /* Cursor motion subroutines for GNU Emacs.
-   Copyright (C) 1985, 1995, 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 1985, 1995, 2001-2015 Free Software Foundation, Inc.
     based primarily on public domain code written by Chris Torek
 
 This file is part of GNU Emacs.
@@ -22,9 +22,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <stdio.h>
 
 #include "lisp.h"
-#include "frame.h"
 #include "cm.h"
-#include "termhooks.h"
 #include "termchar.h"
 #include "tparam.h"
 

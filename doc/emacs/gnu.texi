@@ -1,4 +1,4 @@
-@c Copyright (C) 1985-1987, 1993, 1995, 2001-2013 Free Software
+@c Copyright (C) 1985-1987, 1993, 1995, 2001-2015 Free Software
 @c Foundation, Inc.
 @c
 @c Permission is granted to anyone to make or distribute verbatim copies
@@ -83,7 +83,7 @@ memory, because they are the easiest machines to make it run on.  The extra
 effort to make it run on smaller machines will be left to someone who wants
 to use it on them.
 
-To avoid horrible confusion, please pronounce the `G' in the word `GNU'
+To avoid horrible confusion, please pronounce the ``G'' in the word ``GNU''
 when it is the name of this project.
 
 @unnumberedsec Why I Must Write GNU

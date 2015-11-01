@@ -1,9 +1,9 @@
 ;;; pop3.el --- Post Office Protocol (RFC 1460) interface
 
-;; Copyright (C) 1996-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
 ;; Author: Richard L. Pieri <ratinox@peorth.gweep.net>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: mail
 
 ;; This file is part of GNU Emacs.
@@ -82,7 +82,7 @@
 (defcustom pop3-authentication-scheme 'pass
   "*POP3 authentication scheme.
 Defaults to `pass', for the standard USER/PASS authentication.  The other
-valid value is 'apop'."
+valid value is `apop'."
   :type '(choice (const :tag "Normal user/password" pass)
 		 (const :tag "APOP" apop))
   :version "22.1" ;; Oort Gnus
@@ -107,7 +107,7 @@ days since you first checked new mails.  If this is nil, mails will be
 deleted on the server right after fetching.
 
 Gnus users should use the `:leave' keyword in a mail source to direct
-the behaviour per server, rather than directly modifying this value.
+the behavior per server, rather than directly modifying this value.
 
 Note that POP servers maintain no state information between sessions,
 so what the client believes is there and what is actually there may
@@ -561,6 +561,7 @@ Returns the process associated with the connection."
 		     'tls)
 		    (t
 		     (or pop3-stream-type 'network)))
+	     :warn-unless-encrypted t
 	     :capability-command "CAPA\r\n"
 	     :end-of-command "^\\(-ERR\\|+OK\\).*\n"
 	     :end-of-capability "^\\.\r?\n\\|^-ERR"

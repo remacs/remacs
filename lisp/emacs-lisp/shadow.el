@@ -1,6 +1,6 @@
 ;;; shadow.el --- locate Emacs Lisp file shadowings
 
-;; Copyright (C) 1995, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1995, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Terry Jones <terry@santafe.edu>
 ;; Keywords: lisp
@@ -45,7 +45,7 @@
 ;;
 ;;     emacs -batch -f list-load-path-shadows
 ;;
-;; Thanks to Francesco Potorti` <pot@cnuce.cnr.it> for suggestions,
+;; Thanks to Francesco Potortì <pot@cnuce.cnr.it> for suggestions,
 ;; rewritings & speedups.
 
 ;;; Code:
@@ -68,9 +68,9 @@ This is slower, but filters out some innocuous shadowing."
   "Return a list of Emacs Lisp files that create shadows.
 This function does the work for `list-load-path-shadows'.
 
-We traverse PATH looking for shadows, and return a \(possibly empty\)
+We traverse PATH looking for shadows, and return a \(possibly empty)
 even-length list of files.  A file in this list at position 2i shadows
-the file in position 2i+1.  Emacs Lisp file suffixes \(.el and .elc\)
+the file in position 2i+1.  Emacs Lisp file suffixes \(.el and .elc)
 are stripped from the file names in the list.
 
 See the documentation for `list-load-path-shadows' for further information."
@@ -115,7 +115,9 @@ See the documentation for `list-load-path-shadows' for further information."
 	  ;; FILE now contains the current file name, with no suffix.
 	  (unless (or (member file files-seen-this-dir)
 		      ;; Ignore these files.
-		      (member file '("subdirs" "leim-list")))
+		      (member file (list "subdirs" "leim-list"
+					 (file-name-sans-extension
+					  dir-locals-file))))
 	    ;; File has not been seen yet in this directory.
 	    ;; This test prevents us declaring that XXX.el shadows
 	    ;; XXX.elc (or vice-versa) when they are in the same directory.
@@ -211,7 +213,7 @@ For example, suppose `load-path' is set to
 
 and that each of these directories contains a file called XXX.el.  Then
 XXX.el in the site-lisp directory is referred to by all of:
-\(require 'XXX), (autoload .... \"XXX\"), (load-library \"XXX\") etc.
+\(require \\='XXX), (autoload .... \"XXX\"), (load-library \"XXX\") etc.
 
 The first XXX.el file prevents Emacs from seeing the second (unless
 the second is loaded explicitly via `load-file').

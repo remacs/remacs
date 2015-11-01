@@ -1,6 +1,6 @@
 ;;; gv.el --- generalized variables  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2012-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: extensions
@@ -74,6 +74,8 @@
 ;; (defvar gv--macro-environment nil
 ;;   "Macro expanders for generalized variables.")
 
+(define-error 'gv-invalid-place "%S is not a valid place expression")
+
 ;;;###autoload
 (defun gv-get (place do)
   "Build the code that applies DO to PLACE.
@@ -84,15 +86,17 @@ and SETTER is a function which returns the code to set PLACE when called
 with a (not necessarily copyable) Elisp expression that returns the value to
 set it to.
 DO must return an Elisp expression."
-  (if (symbolp place)
-      (funcall do place (lambda (v) `(setq ,place ,v)))
+  (cond
+   ((symbolp place) (funcall do place (lambda (v) `(setq ,place ,v))))
+   ((not (consp place)) (signal 'gv-invalid-place (list place)))
+   (t
     (let* ((head (car place))
            (gf (function-get head 'gv-expander 'autoload)))
       (if gf (apply gf do (cdr place))
-        (let ((me (macroexpand place    ;FIXME: expand one step at a time!
-                               ;; (append macroexpand-all-environment
-                               ;;         gv--macro-environment)
-                               macroexpand-all-environment)))
+        (let ((me (macroexpand-1 place
+                                 ;; (append macroexpand-all-environment
+                                 ;;         gv--macro-environment)
+                                 macroexpand-all-environment)))
           (if (and (eq me place) (get head 'compiler-macro))
               ;; Expand compiler macros: this takes care of all the accessors
               ;; defined via cl-defsubst, such as cXXXr and defstruct slots.
@@ -102,8 +106,21 @@ DO must return an Elisp expression."
               ;; Follow aliases.
               (setq me (cons (symbol-function head) (cdr place))))
           (if (eq me place)
-              (error "%S is not a valid place expression" place)
-            (gv-get me do)))))))
+              (if (and (symbolp head) (get head 'setf-method))
+                  (error "Incompatible place needs recompilation: %S" head)
+                (let* ((setter (gv-setter head)))
+                  (gv--defsetter head (lambda (&rest args) `(,setter ,@args))
+                                 do (cdr place))))
+            (gv-get me do))))))))
+
+(defun gv-setter (name)
+  ;; The name taken from Scheme's SRFI-17.  Actually, for SRFI-17, the argument
+  ;; could/should be a function value rather than a symbol.
+  "Return the symbol where the (setf NAME) function should be placed."
+  (if (get name 'gv-expander)
+      (error "gv-expander conflicts with (setf %S)" name))
+  ;; FIXME: This is wrong if `name' is uninterned (or interned elsewhere).
+  (intern (format "(setf %s)" name)))
 
 ;;;###autoload
 (defmacro gv-letplace (vars place &rest body)
@@ -155,11 +172,15 @@ arguments as NAME.  DO is a function as defined in `gv-get'."
         (_ (message "Unknown %s declaration %S" symbol handler) nil))))
 
 ;;;###autoload
-(push `(gv-expander ,(apply-partially #'gv--defun-declaration 'gv-expander))
-      defun-declarations-alist)
+(or (assq 'gv-expander defun-declarations-alist)
+    (let ((x `(gv-expander
+               ,(apply-partially #'gv--defun-declaration 'gv-expander))))
+      (push x macro-declarations-alist)
+      (push x defun-declarations-alist)))
 ;;;###autoload
-(push `(gv-setter ,(apply-partially #'gv--defun-declaration 'gv-setter))
-      defun-declarations-alist)
+(or (assq 'gv-setter defun-declarations-alist)
+    (push `(gv-setter ,(apply-partially #'gv--defun-declaration 'gv-setter))
+	  defun-declarations-alist))
 
 ;; (defmacro gv-define-expand (name expander)
 ;;   "Use EXPANDER to handle NAME as a generalized var.
@@ -197,7 +218,7 @@ return a Lisp form that does the assignment.
 The first arg in ARGLIST (the one that receives VAL) receives an expression
 which can do arbitrary things, whereas the other arguments are all guaranteed
 to be pure and copyable.  Example use:
-  (gv-define-setter aref (v a i) `(aset ,a ,i ,v))"
+  (gv-define-setter aref (v a i) \\=`(aset ,a ,i ,v))"
   (declare (indent 2) (debug (&define name sexp body)))
   `(gv-define-expander ,name
      (lambda (do &rest args)
@@ -212,7 +233,7 @@ turned into calls of the form (SETTER ARGS... VAL).
 
 If FIX-RETURN is non-nil, then SETTER is not assumed to return VAL and
 instead the assignment is turned into something equivalent to
-  \(let ((temp VAL))
+  (let ((temp VAL))
     (SETTER ARGS... temp)
     temp)
 so as to preserve the semantics of `setf'."
@@ -278,9 +299,9 @@ The return value is the last VAL in the list.
 ;; containing a non-trivial `push' even before gv.el was loaded.
 ;;;###autoload
 (put 'gv-place 'edebug-form-spec 'edebug-match-form)
+
 ;; CL did the equivalent of:
 ;;(gv-define-macroexpand edebug-after (lambda (before index place) place))
-
 (put 'edebug-after 'gv-expander
      (lambda (do before index place)
        (gv-letplace (getter setter) place
@@ -336,13 +357,50 @@ The return value is the last VAL in the list.
 (gv-define-simple-setter process-filter set-process-filter)
 (gv-define-simple-setter process-sentinel set-process-sentinel)
 (gv-define-simple-setter process-get process-put)
-(gv-define-simple-setter window-buffer set-window-buffer)
-(gv-define-simple-setter window-display-table set-window-display-table 'fix)
-(gv-define-simple-setter window-dedicated-p set-window-dedicated-p)
-(gv-define-simple-setter window-hscroll set-window-hscroll)
 (gv-define-simple-setter window-parameter set-window-parameter)
-(gv-define-simple-setter window-point set-window-point)
-(gv-define-simple-setter window-start set-window-start)
+(gv-define-setter window-buffer (v &optional w)
+  (macroexp-let2 nil v v
+    `(progn (set-window-buffer ,w ,v) ,v)))
+(gv-define-setter window-display-table (v &optional w)
+  (macroexp-let2 nil v v
+    `(progn (set-window-display-table ,w ,v) ,v)))
+(gv-define-setter window-dedicated-p (v &optional w)
+  `(set-window-dedicated-p ,w ,v))
+(gv-define-setter window-hscroll (v &optional w) `(set-window-hscroll ,w ,v))
+(gv-define-setter window-point (v &optional w) `(set-window-point ,w ,v))
+(gv-define-setter window-start (v &optional w) `(set-window-start ,w ,v))
+
+(gv-define-setter buffer-local-value (val var buf)
+  (macroexp-let2 nil v val
+    `(with-current-buffer ,buf (set (make-local-variable ,var) ,v))))
+
+(gv-define-expander alist-get
+  (lambda (do key alist &optional default remove)
+    (macroexp-let2 macroexp-copyable-p k key
+      (gv-letplace (getter setter) alist
+        (macroexp-let2 nil p `(assq ,k ,getter)
+          (funcall do (if (null default) `(cdr ,p)
+                        `(if ,p (cdr ,p) ,default))
+                   (lambda (v)
+                     (macroexp-let2 nil v v
+                       (let ((set-exp
+                              `(if ,p (setcdr ,p ,v)
+                                 ,(funcall setter
+                                           `(cons (setq ,p (cons ,k ,v))
+                                                  ,getter)))))
+                         (cond
+                          ((null remove) set-exp)
+                          ((or (eql v default)
+                               (and (eq (car-safe v) 'quote)
+                                    (eq (car-safe default) 'quote)
+                                    (eql (cadr v) (cadr default))))
+                           `(if ,p ,(funcall setter `(delq ,p ,getter))))
+                          (t
+                           `(cond
+                             ((not (eql ,default ,v)) ,set-exp)
+                             (,p ,(funcall setter
+                                           `(delq ,p ,getter)))))))))))))))
+
 
 ;;; Some occasionally handy extensions.
 
@@ -419,6 +477,32 @@ The return value is the last VAL in the list.
              (funcall do `(funcall (car ,gv))
                       (lambda (v) `(funcall (cdr ,gv) ,v))))))))
 
+(defmacro gv-synthetic-place (getter setter)
+  "Special place described by its setter and getter.
+GETTER and SETTER (typically obtained via `gv-letplace') get and
+set that place.  I.e. This macro allows you to do the \"reverse\" of what
+`gv-letplace' does.
+This macro only makes sense when used in a place."
+  (declare (gv-expander funcall))
+  (ignore setter)
+  getter)
+
+(defmacro gv-delay-error (place)
+  "Special place which delays the `gv-invalid-place' error to run-time.
+It behaves just like PLACE except that in case PLACE is not a valid place,
+the `gv-invalid-place' error will only be signaled at run-time when (and if)
+we try to use the setter.
+This macro only makes sense when used in a place."
+  (declare
+   (gv-expander
+    (lambda (do)
+      (condition-case err
+          (gv-get place do)
+        (gv-invalid-place
+         ;; Delay the error until we try to use the setter.
+         (funcall do place (lambda (_) `(signal ',(car err) ',(cdr err)))))))))
+  place)
+
 ;;; Even more debatable extensions.
 
 (put 'cons 'gv-expander
@@ -448,10 +532,24 @@ The return value is the last VAL in the list.
 ;;;###autoload
 (defmacro gv-ref (place)
   "Return a reference to PLACE.
-This is like the `&' operator of the C language."
-  (gv-letplace (getter setter) place
-    `(cons (lambda () ,getter)
-           (lambda (gv--val) ,(funcall setter 'gv--val)))))
+This is like the `&' operator of the C language.
+Note: this only works reliably with lexical binding mode, except for very
+simple PLACEs such as (function-symbol 'foo) which will also work in dynamic
+binding mode."
+  (let ((code
+         (gv-letplace (getter setter) place
+           `(cons (lambda () ,getter)
+                  (lambda (gv--val) ,(funcall setter 'gv--val))))))
+    (if (or lexical-binding
+            ;; If `code' still starts with `cons' then presumably gv-letplace
+            ;; did not add any new let-bindings, so the `lambda's don't capture
+            ;; any new variables.  As a consequence, the code probably works in
+            ;; dynamic binding mode as well.
+            (eq (car-safe code) 'cons))
+        code
+      (macroexp--warn-and-return
+       "Use of gv-ref probably requires lexical-binding"
+       code))))
 
 (defsubst gv-deref (ref)
   "Dereference REF, returning the referenced value.
@@ -463,22 +561,13 @@ REF must have been previously obtained with `gv-ref'."
 ;;  … => (load "gv.el") => (macroexpand-all (defsubst gv-deref …)) => (macroexpand (defun …)) => (load "gv.el")
 (gv-define-setter gv-deref (v ref) `(funcall (cdr ,ref) ,v))
 
-;;; Vaguely related definitions that should be moved elsewhere.
-
-;; (defun alist-get (key alist)
-;;   "Get the value associated to KEY in ALIST."
-;;   (declare
-;;    (gv-expander
-;;     (lambda (do)
-;;       (macroexp-let2 macroexp-copyable-p k key
-;;         (gv-letplace (getter setter) alist
-;;           (macroexp-let2 nil p `(assoc ,k ,getter)
-;;             (funcall do `(cdr ,p)
-;;                      (lambda (v)
-;;                        `(if ,p (setcdr ,p ,v)
-;;                           ,(funcall setter
-;;                                     `(cons (cons ,k ,v) ,getter)))))))))))
-;;   (cdr (assoc key alist)))
+;; (defmacro gv-letref (vars place &rest body)
+;;   (declare (indent 2) (debug (sexp form &rest body)))
+;;   (require 'cl-lib) ;Can't require cl-lib at top-level for bootstrap reasons!
+;;   (gv-letplace (getter setter) place
+;;     `(cl-macrolet ((,(nth 0 vars) () ',getter)
+;;                    (,(nth 1 vars) (v) (funcall ',setter v)))
+;;        ,@body)))
 
 (provide 'gv)
 ;;; gv.el ends here

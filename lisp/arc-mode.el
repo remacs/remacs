@@ -1,10 +1,10 @@
 ;;; arc-mode.el --- simple editing of archives
 
-;; Copyright (C) 1995, 1997-1998, 2001-2013 Free Software Foundation,
+;; Copyright (C) 1995, 1997-1998, 2001-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Morten Welinder <terra@gnu.org>
-;; Keywords: files archives msdog editing major-mode
+;; Keywords: files archives ms-dos editing major-mode
 ;; Favorite-brand-of-beer: None, I hate beer.
 
 ;; This file is part of GNU Emacs.
@@ -31,7 +31,7 @@
 ;; understand the directory level of the archives.  For this reason,
 ;; you should expect this code to need more fiddling than tar-mode.el
 ;; (although it at present has fewer bugs :-)  In particular, I have
-;; not tested this under Ms-Dog myself.
+;; not tested this under MS-DOS myself.
 ;; -------------------------------------
 ;; INTERACTION: arc-mode.el should play together with
 ;;
@@ -78,7 +78,7 @@
 ;;             interaction among members.
 ;;             Headers come in three flavors called level 0, 1 and 2 headers.
 ;;             Level 2 header is free of DOS specific restrictions and most
-;;             prevalently used.  Also level 1 and 2 headers consist of base
+;;             commonly used.  Also level 1 and 2 headers consist of base
 ;;             and extension headers.  For more details see
 ;;             http://homepage1.nifty.com/dangan/en/Content/Program/Java/jLHA/Notes/Notes.html
 ;;             http://www.osirusoft.com/joejared/lzhformat.html
@@ -146,6 +146,14 @@ A local copy of the archive will be used when updating."
 (defcustom archive-extract-hook nil
   "Hook run when an archive member has been extracted."
   :type 'hook
+  :group 'archive)
+
+(defcustom archive-visit-single-files nil
+  "If non-nil, opening an archive with a single file visits that file.
+If nil, visiting such an archive displays the archive summary."
+  :version "25.1"
+  :type '(choice (const :tag "Visit the single file" t)
+                 (const :tag "Show the archive summary" nil))
   :group 'archive)
 ;; ------------------------------
 ;; Arc archive configuration
@@ -218,9 +226,14 @@ Archive and member name will be added."
 ;; ------------------------------
 ;; Zip archive configuration
 
+(defvar archive-7z-program (let ((7z (or (executable-find "7z")
+                                         (executable-find "7za"))))
+                             (when 7z
+                               (file-name-nondirectory 7z))))
+
 (defcustom archive-zip-extract
   (cond ((executable-find "unzip")   '("unzip" "-qq" "-c"))
-	((executable-find "7z")      '("7z" "x" "-so"))
+	(archive-7z-program          `(,archive-7z-program "x" "-so"))
 	((executable-find "pkunzip") '("pkunzip" "-e" "-o-"))
 	(t                           '("unzip" "-qq" "-c")))
   "Program and its options to run in order to extract a zip file member.
@@ -239,7 +252,7 @@ be added."
 
 (defcustom archive-zip-expunge
   (cond ((executable-find "zip")     '("zip" "-d" "-q"))
-	((executable-find "7z")      '("7z" "d"))
+	(archive-7z-program          `(,archive-7z-program "d"))
 	((executable-find "pkzip")   '("pkzip" "-d"))
 	(t                           '("zip" "-d" "-q")))
   "Program and its options to run in order to delete zip file members.
@@ -252,7 +265,7 @@ Archive and member names will be added."
 
 (defcustom archive-zip-update
   (cond ((executable-find "zip")     '("zip" "-q"))
-	((executable-find "7z")      '("7z" "u"))
+	(archive-7z-program          `(,archive-7z-program "u"))
 	((executable-find "pkzip")   '("pkzip" "-u" "-P"))
 	(t                           '("zip" "-q")))
   "Program and its options to run in order to update a zip file member.
@@ -266,7 +279,7 @@ file.  Archive and member name will be added."
 
 (defcustom archive-zip-update-case
   (cond ((executable-find "zip")     '("zip" "-q" "-k"))
-	((executable-find "7z")      '("7z" "u"))
+	(archive-7z-program          `(,archive-7z-program "u"))
 	((executable-find "pkzip")   '("pkzip" "-u" "-P"))
 	(t                           '("zip" "-q" "-k")))
   "Program and its options to run in order to update a case fiddled zip member.
@@ -321,7 +334,7 @@ Archive and member name will be added."
 ;; 7z archive configuration
 
 (defcustom archive-7z-extract
-  '("7z" "x" "-so")
+  `(,(or archive-7z-program "7z") "x" "-so")
   "Program and its options to run in order to extract a 7z file member.
 Extraction should happen to standard output.  Archive and member name will
 be added."
@@ -333,7 +346,7 @@ be added."
   :group 'archive-7z)
 
 (defcustom archive-7z-expunge
-  '("7z" "d")
+  `(,(or archive-7z-program "7z") "d")
   "Program and its options to run in order to delete 7z file members.
 Archive and member names will be added."
   :version "24.1"
@@ -344,7 +357,7 @@ Archive and member names will be added."
   :group 'archive-7z)
 
 (defcustom archive-7z-update
-  '("7z" "u")
+  `(,(or archive-7z-program "7z") "u")
   "Program and its options to run in order to update a 7z file member.
 Options should ensure that specified directory will be put into the 7z
 file.  Archive and member name will be added."
@@ -678,9 +691,9 @@ archive.
       ;; At present we cannot create archives from scratch
       (funcall (or (default-value 'major-mode) 'fundamental-mode))
     (if (and (not force) archive-files) nil
+      (kill-all-local-variables)
       (let* ((type (archive-find-type))
 	     (typename (capitalize (symbol-name type))))
-	(kill-all-local-variables)
 	(make-local-variable 'archive-subtype)
 	(setq archive-subtype type)
 
@@ -737,7 +750,12 @@ archive.
       (if (default-value 'enable-multibyte-characters)
 	  (set-buffer-multibyte 'to))
       (archive-summarize nil)
-      (setq buffer-read-only t))))
+      (setq buffer-read-only t)
+      (when (and archive-visit-single-files
+                 auto-compression-mode
+                 (= (length archive-files) 1))
+        (rename-buffer (concat " " (buffer-name)))
+        (archive-extract)))))
 
 ;; Archive mode is suitable only for specially formatted data.
 (put 'archive-mode 'mode-class 'special)
@@ -756,7 +774,7 @@ archive.
 	  ((looking-at "..-l[hz][0-9ds]-") 'lzh)
 	  ((looking-at "....................[\334]\247\304\375") 'zoo)
 	  ((and (looking-at "\C-z")	; signature too simple, IMHO
-		(string-match "\\.[aA][rR][cC]$"
+		(string-match "\\.[aA][rR][cC]\\'"
 			      (or buffer-file-name (buffer-name))))
 	   'arc)
           ;; This pattern modeled on the BSD/GNU+Linux `file' command.
@@ -821,7 +839,7 @@ when parsing the archive."
   ;; long when the archive -- which has to be moved in memory -- is large.
   (insert
    (apply
-    (function concat)
+    #'concat
     (mapcar
      (lambda (fil)
        ;; Using `concat' here copies the text also, so we can add
@@ -1032,7 +1050,7 @@ using `make-temp-file', and the generated name is returned."
           (setq default-directory arcdir)
           (make-local-variable 'archive-superior-buffer)
           (setq archive-superior-buffer archive-buffer)
-          (add-hook 'write-file-functions 'archive-write-file-member nil t)
+          (add-hook 'write-file-functions #'archive-write-file-member nil t)
           (setq archive-subfile-mode descr)
 	  (setq archive-file-name-coding-system file-name-coding)
 	  (if (and
@@ -1073,7 +1091,7 @@ using `make-temp-file', and the generated name is returned."
               (if read-only-p (setq archive-read-only t))
               ;; We will write out the archive ourselves if it is
               ;; part of another archive.
-              (remove-hook 'write-contents-functions 'archive-write-file t))
+              (remove-hook 'write-contents-functions #'archive-write-file t))
             (run-hooks 'archive-extract-hook)
 	    (if archive-read-only
 		(message "Note: altering this archive is not implemented."))))
@@ -1093,7 +1111,7 @@ using `make-temp-file', and the generated name is returned."
 	 exit-status success)
     (make-directory (directory-file-name default-directory) t)
     (setq exit-status
-	  (apply 'call-process
+	  (apply #'call-process
 		 (car command)
 		 nil
 		 nil
@@ -1118,7 +1136,7 @@ using `make-temp-file', and the generated name is returned."
   (let ((stderr-file (make-temp-file "arc-stderr")))
     (unwind-protect
 	(prog1
-	    (apply 'call-process
+	    (apply #'call-process
 		   (car command)
 		   nil
 		   (if stderr-file (list t stderr-file) t)
@@ -1139,12 +1157,12 @@ using `make-temp-file', and the generated name is returned."
 	(stdout-file (make-temp-file "arc-stdout")))
     (unwind-protect
 	(prog1
-	    (apply 'call-process
+	    (apply #'call-process
 		   (car command)
 		   nil
 		   `(:file ,stdout-file)
 		   nil
-		   (append (cdr command) (list archive name dest)))
+                   `(,archive ,name ,@(cdr command) ,dest))
 	  (with-temp-buffer
 	    (insert-file-contents stdout-file)
 	    (goto-char (point-min))
@@ -1160,8 +1178,10 @@ using `make-temp-file', and the generated name is returned."
 	  (delete-file (expand-file-name name dest)))
       (while (file-name-directory name)
 	(setq name (directory-file-name (file-name-directory name)))
-	(delete-directory (expand-file-name name dest)))
-      (delete-directory dest))))
+	(when (file-directory-p (expand-file-name name dest))
+	  (delete-directory (expand-file-name name dest))))
+      (when (file-directory-p dest)
+	(delete-directory dest)))))
 
 (defun archive-extract-other-window ()
   "In archive mode, find this member in another window."
@@ -1264,7 +1284,7 @@ using `make-temp-file', and the generated name is returned."
 	  (setq ename
 		(encode-coding-string ename archive-file-name-coding-system))
           (let* ((coding-system-for-write 'no-conversion)
-		 (exitcode (apply 'call-process
+		 (exitcode (apply #'call-process
 				  (car command)
 				  nil
 				  nil
@@ -1424,7 +1444,7 @@ as a relative change like \"g+rw\" as for chmod(2)."
 	     (revert-buffer))))))
 
 (defun archive-*-expunge (archive files command)
-  (apply 'call-process
+  (apply #'call-process
 	 (car command)
 	 nil
 	 nil
@@ -1519,7 +1539,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 		      (length files)
 		      (if (= 1 (length files)) "" "s"))
 	      "\n"))
-    (apply 'vector (nreverse files))))
+    (apply #'vector (nreverse files))))
 
 (defun archive-arc-rename-entry (newname descr)
   (if (string-match "[:\\\\/]" newname)
@@ -1688,7 +1708,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 		      (length files)
 		      (if (= 1 (length files)) "" "s"))
 	      "\n"))
-    (apply 'vector (nreverse files))))
+    (apply #'vector (nreverse files))))
 
 (defconst archive-lzh-alternate-display t)
 
@@ -1791,11 +1811,38 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 (defun archive-zip-summarize ()
   (goto-char (- (point-max) (- 22 18)))
   (search-backward-regexp "[P]K\005\006")
-  (let ((p (+ (point-min) (archive-l-e (+ (point) 16) 4)))
+  (let ((p (archive-l-e (+ (point) 16) 4))
         (maxlen 8)
 	(totalsize 0)
         files
-	visual)
+	visual
+        emacs-int-has-32bits)
+    (when (= p -1)
+      ;; If the offset of end-of-central-directory is -1, this is a
+      ;; Zip64 extended ZIP file format, and we need to glean the info
+      ;; from Zip64 records instead.
+      ;;
+      ;; First, find the Zip64 end-of-central-directory locator.
+      (search-backward "PK\006\007")
+      ;; Pay attention: the offset of Zip64 end-of-central-directory
+      ;; is a 64-bit field, so it could overflow the Emacs integer
+      ;; even on a 64-bit host, let alone 32-bit one.  But since we've
+      ;; already read the zip file into a buffer, and this is a byte
+      ;; offset into the file we've read, it must be short enough, so
+      ;; such an overflow can never happen, and we can safely read
+      ;; these 8 bytes into an Emacs integer.  Moreover, on host with
+      ;; 32-bit Emacs integer we can only read 4 bytes, since they are
+      ;; stored in little-endian byte order.
+      (setq emacs-int-has-32bits (<= most-positive-fixnum #x1fffffff))
+      (setq p (+ (point-min)
+                 (archive-l-e (+ (point) 8) (if emacs-int-has-32bits 4 8))))
+      (goto-char p)
+      ;; We should be at Zip64 end-of-central-directory record now.
+      (or (string= "PK\006\006" (buffer-substring p (+ p 4)))
+          (error "Unrecognized ZIP file format"))
+      ;; Offset to central directory:
+      (setq p (archive-l-e (+ p 48) (if emacs-int-has-32bits 4 8))))
+    (setq p (+ p (point-min)))
     (while (string= "PK\001\002" (buffer-substring p (+ p 4)))
       (let* ((creator (byte-after (+ p 5)))
 	     ;; (method  (archive-l-e (+ p 10) 2))
@@ -1858,13 +1905,13 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 		      (length files)
 		      (if (= 1 (length files)) "" "s"))
 	      "\n"))
-    (apply 'vector (nreverse files))))
+    (apply #'vector (nreverse files))))
 
 (defun archive-zip-extract (archive name)
   (cond
    ((member-ignore-case (car archive-zip-extract) '("pkunzip" "pkzip"))
     (archive-*-extract archive name archive-zip-extract))
-   ((equal (car archive-zip-extract) "7z")
+   ((equal (car archive-zip-extract) archive-7z-program)
     (let ((archive-7z-extract archive-zip-extract))
       (archive-7z-extract archive name)))
    (t
@@ -1975,7 +2022,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 		      (length files)
 		      (if (= 1 (length files)) "" "s"))
 	      "\n"))
-    (apply 'vector (nreverse files))))
+    (apply #'vector (nreverse files))))
 
 (defun archive-zoo-extract (archive name)
   (archive-extract-by-stdout archive name archive-zoo-extract))
@@ -1991,37 +2038,36 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
          (maxsize 5)
          (files ()))
     (with-temp-buffer
-      (call-process "unrar-free" nil t nil "--list" (or file copy))
+      (call-process "lsar" nil t nil "-l" (or file copy))
       (if copy (delete-file copy))
       (goto-char (point-min))
-      (re-search-forward "^-+\n")
-      (while (looking-at (concat " \\(.*\\)\n" ;Name.
-                                 ;; Size ; Packed.
-                                 " +\\([0-9]+\\) +[0-9]+"
-                                 ;; Ratio ; Date'
-                                 " +\\([0-9%]+\\) +\\([-0-9]+\\)"
-                                 ;; Time ; Attr.
-                                 " +\\([0-9:]+\\) +[^ \n]\\{6,10\\}"
-                                 ;; CRC; Meth ; Var.
-                                 " +[0-9A-F]+ +[^ \n]+ +[0-9.]+\n"))
+      (re-search-forward "^\\(\s+=+\s?+\\)+\n")
+      (while (looking-at (concat "^\s+[0-9.]+\s+-+\s+"   ; Flags
+                                 "\\([0-9-]+\\)\s+"      ; Size
+                                 "\\([0-9.%]+\\)\s+"     ; Ratio
+                                 "\\([0-9a-zA-Z]+\\)\s+" ; Mode
+                                 "\\([0-9-]+\\)\s+"      ; Date
+                                 "\\([0-9:]+\\)\s+"      ; Time
+                                 "\\(.*\\)\n"            ; Name
+                                 ))
         (goto-char (match-end 0))
-        (let ((name (match-string 1))
-              (size (match-string 2)))
+        (let ((name (match-string 6))
+              (size (match-string 1)))
           (if (> (length name) maxname) (setq maxname (length name)))
           (if (> (length size) maxsize) (setq maxsize (length size)))
           (push (vector name name nil nil
                         ;; Size, Ratio.
-                        size (match-string 3)
+                        size (match-string 2)
                         ;; Date, Time.
                         (match-string 4) (match-string 5))
                 files))))
     (setq files (nreverse files))
     (goto-char (point-min))
     (let* ((format (format " %%s %%s  %%%ds %%5s  %%s" maxsize))
-           (sep (format format "--------" "-----" (make-string maxsize ?-)
+           (sep (format format "----------" "-----" (make-string maxsize ?-)
                         "-----" ""))
            (column (length sep)))
-      (insert (format format "  Date  " "Time " "Size " "Ratio" " Filename") "\n")
+      (insert (format format "   Date   " "Time " "Size" "Ratio" "Filename") "\n")
       (insert sep (make-string maxname ?-) "\n")
       (archive-summarize-files (mapcar (lambda (desc)
                                          (let ((text
@@ -2036,7 +2082,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
                                                    (length text))))
                                        files))
       (insert sep (make-string maxname ?-) "\n")
-      (apply 'vector files))))
+      (apply #'vector files))))
 
 (defun archive-rar-extract (archive name)
   ;; unrar-free seems to have no way to extract to stdout or even to a file.
@@ -2044,7 +2090,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
       ;; The code below assumes the name is relative and may do undesirable
       ;; things otherwise.
       (error "Can't extract files with non-relative names")
-    (archive-extract-by-file archive name '("unrar-free" "--extract") "All OK")))
+    (archive-extract-by-file archive name `("unar" "-no-directory" "-o") "Successfully extracted")))
 
 ;;; Section: Rar self-extracting .exe archives.
 
@@ -2088,7 +2134,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 	(file buffer-file-name)
 	(files ()))
     (with-temp-buffer
-      (call-process "7z" nil t nil "l" "-slt" file)
+      (call-process archive-7z-program nil t nil "l" "-slt" file)
       (goto-char (point-min))
       ;; Four dashes start the meta info section that should be skipped.
       ;; Archive members start with more than four dashes.
@@ -2124,7 +2170,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
                                                    (length text))))
                                        files))
       (insert sep (make-string maxname ?-) "\n")
-      (apply 'vector files))))
+      (apply #'vector files))))
 
 (defun archive-7z-extract (archive name)
   ;; 7z doesn't provide a `quiet' option to suppress non-essential
@@ -2174,11 +2220,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
             (size (string-to-number (match-string 6))))
         ;; Move to the beginning of the data.
         (goto-char (match-end 0))
-        (setq time
-              (format-time-string
-               "%Y-%m-%d %H:%M"
-               (let ((high (truncate (/ time 65536))))
-                 (list high (truncate (- time (* 65536.0 high)))))))
+        (setq time (format-time-string "%Y-%m-%d %H:%M" time))
         (setq extname
               (cond ((equal name "//              ")
                      (propertize ".<ExtNamesTable>." 'face 'italic))
@@ -2229,7 +2271,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
                                                    (length text))))
                                        files))
       (insert sep (make-string maxname ?-) "\n")
-      (apply 'vector files))))
+      (apply #'vector files))))
 
 (defun archive-ar-extract (archive name)
   (let ((destbuf (current-buffer))

@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2013 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2015 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Windows
@@ -134,6 +134,18 @@ clicking @kbd{C-Mouse-2} in the scroll bar, which puts a horizontal
 divider where you click (this feature does not work when Emacs uses
 GTK+ scroll bars).
 
+@vindex window-resize-pixelwise
+  By default, when you split a window, Emacs gives each of the
+resulting windows dimensions that are an integral multiple of the
+default font size of the frame.  That might subdivide the screen
+estate unevenly between the resulting windows.  If you set the
+variable @code{window-resize-pixelwise} to a non-@code{nil} value,
+Emacs will give each window the same number of pixels (give or take
+one pixel if the initial dimension was an odd number of pixels).  Note
+that when a frame's pixel size is not a multiple of the frame's
+character size, at least one window may get resized pixelwise even if
+this option is @code{nil}.
+
 @node Other Window
 @section Using Other Windows
 
@@ -211,10 +223,11 @@ Visit file @var{filename} and select its buffer in another window
 Select a Dired buffer for directory @var{directory} in another window
 (@code{dired-other-window}).  @xref{Dired}.
 
-@findex mail-other-window
+@c Don't index @kbd{C-x 4 m} and @code{compose-mail-other-window}
+@c here, they are indexed in sending.texi, in the "Sending Mail" node.
 @item C-x 4 m
 Start composing a mail message, similar to @kbd{C-x m} (@pxref{Sending
-Mail}), but in another window (@code{mail-other-window}).
+Mail}), but in another window (@code{compose-mail-other-window}).
 
 @findex find-tag-other-window
 @item C-x 4 .
@@ -226,8 +239,10 @@ window (@code{find-file-read-only-other-window}).  @xref{Visiting}.
 @end table
 
 @node Change Window
-@section Deleting and Rearranging Windows
+@section Deleting and Resizing Windows
 
+@cindex delete window
+@cindex deleting windows
 @table @kbd
 @item C-x 0
 Delete the selected window (@code{delete-window}).
@@ -273,6 +288,8 @@ selected window.
 whole frame.  (This command cannot be used while the minibuffer window
 is active; attempting to do so signals an error.)
 
+@cindex resize window
+@cindex resizing windows
 @kindex C-x ^
 @findex enlarge-window
 @kindex C-x @}
@@ -298,6 +315,10 @@ signal an error if you attempt to reduce the width of any window below
 a certain minimum number of columns, specified by the variable
 @code{window-min-width} (the default is 10).
 
+  Mouse clicks on the mode line (@pxref{Mode Line Mouse}) or on window
+dividers (@pxref{Window Dividers}) provide another way to change window
+heights and to split or delete windows.
+
 @kindex C-x -
 @findex shrink-window-if-larger-than-buffer
   @kbd{C-x -} (@code{shrink-window-if-larger-than-buffer}) reduces the
@@ -310,13 +331,10 @@ lines to other windows in the frame.
   You can also use @kbd{C-x +} (@code{balance-windows}) to even out the
 heights of all the windows in the selected frame.
 
-  Mouse clicks on the mode line provide another way to change window
-heights and to delete windows.  @xref{Mode Line Mouse}.
-
 @node Displaying Buffers
 @section Displaying a Buffer in a Window
 
-  It is a common Emacs operation to display or ``pop up'' some buffer
+  It is a common Emacs operation to display or pop up some buffer
 in response to a user command.  There are several different ways in
 which commands do this.
 
@@ -327,7 +345,7 @@ usually work by calling @code{switch-to-buffer} internally
 (@pxref{Select Buffer}).
 
 @findex display-buffer
-  Some commands try to display ``intelligently'', trying not to take
+  Some commands try to display intelligently, trying not to take
 over the selected window, e.g., by splitting off a new window and
 displaying the desired buffer there.  Such commands, which include the
 various help commands (@pxref{Help}), work by calling
@@ -380,7 +398,7 @@ variables are @code{nil}, so this step is skipped.
 
 @item
 Otherwise, if the buffer is already displayed in an existing window,
-``reuse'' that window.  Normally, only windows on the selected frame
+reuse that window.  Normally, only windows on the selected frame
 are considered, but windows on other frames are also reusable if you
 change @code{pop-up-frames} (see below) to @code{t}.
 
@@ -426,7 +444,7 @@ and display the buffer there.
 @cindex window configuration changes, undoing
   Winner mode is a global minor mode that records the changes in the
 window configuration (i.e., how the frames are partitioned into
-windows), so that you can ``undo'' them.  You can toggle Winner mode
+windows), so that you can undo them.  You can toggle Winner mode
 with @kbd{M-x winner-mode}, or by customizing the variable
 @code{winner-mode}.  When the mode is enabled, @kbd{C-c left}
 (@code{winner-undo}) undoes the last window configuration change.  If
@@ -444,7 +462,7 @@ buffer.  @xref{Follow Mode}.
   The Windmove package defines commands for moving directionally
 between neighboring windows in a frame.  @kbd{M-x windmove-right}
 selects the window immediately to the right of the currently selected
-one, and similarly for the ``left'', ``up'', and ``down''
+one, and similarly for the left, up, and down
 counterparts.  @kbd{M-x windmove-default-keybindings} binds these
 commands to @kbd{S-right} etc.; doing so disables shift selection for
 those keys (@pxref{Shift Selection}).

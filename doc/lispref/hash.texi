@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1999, 2001-2013 Free Software Foundation, Inc.
+@c Copyright (C) 1999, 2001-2015 Free Software Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Hash Tables
 @chapter Hash Tables
@@ -31,10 +31,10 @@ the way two alists can share a common tail.
 with a series of functions for operating on them.  Hash tables have a
 special printed representation, which consists of @samp{#s} followed
 by a list specifying the hash table properties and contents.
-@xref{Creating Hash}.  (Note that the term ``hash notation'', which
-refers to the initial @samp{#} character used in the printed
+@xref{Creating Hash}.
+(Hash notation, the initial @samp{#} character used in the printed
 representations of objects with no read representation, has nothing to
-do with the term ``hash table''.  @xref{Printed Representation}.)
+do with hash tables.  @xref{Printed Representation}.)
 
   Obarrays are also a kind of hash table, but they are a different type
 of object and are used only for recording interned symbols
@@ -71,16 +71,16 @@ alternatives:
 
 @table @code
 @item eql
-Keys which are numbers are ``the same'' if they are @code{equal}, that
+Keys which are numbers are the same if they are @code{equal}, that
 is, if they are equal in value and either both are integers or both
-are floating point numbers; otherwise, two distinct objects are never
-``the same''.
+are floating point; otherwise, two distinct objects are never
+the same.
 
 @item eq
-Any two distinct Lisp objects are ``different'' as keys.
+Any two distinct Lisp objects are different as keys.
 
 @item equal
-Two Lisp objects are ``the same'', as keys, if they are equal
+Two Lisp objects are the same, as keys, if they are equal
 according to @code{equal}.
 @end table
 
@@ -128,33 +128,25 @@ doing that takes some extra time.
 The default size is 65.
 
 @item :rehash-size @var{rehash-size}
-When you add an association to a hash table and the table is ``full'',
+When you add an association to a hash table and the table is full,
 it grows automatically.  This value specifies how to make the hash table
 larger, at that time.
 
 If @var{rehash-size} is an integer, it should be positive, and the hash
 table grows by adding that much to the nominal size.  If
-@var{rehash-size} is a floating point number, it had better be greater
+@var{rehash-size} is floating point, it had better be greater
 than 1, and the hash table grows by multiplying the old size by that
 number.
 
 The default value is 1.5.
 
 @item :rehash-threshold @var{threshold}
-This specifies the criterion for when the hash table is ``full'' (so
+This specifies the criterion for when the hash table is full (so
 it should be made larger).  The value, @var{threshold}, should be a
-positive floating point number, no greater than 1.  The hash table is
-``full'' whenever the actual number of entries exceeds this fraction
+positive floating-point number, no greater than 1.  The hash table is
+full whenever the actual number of entries exceeds this fraction
 of the nominal size.  The default for @var{threshold} is 0.8.
 @end table
-@end defun
-
-@defun makehash &optional test
-This is equivalent to @code{make-hash-table}, but with a different style
-argument list.  The argument @var{test} specifies the method
-of key lookup.
-
-This function is obsolete. Use @code{make-hash-table} instead.
 @end defun
 
 You can also create a new hash table using the printed representation
@@ -188,6 +180,8 @@ Such objects may be added to the hash table after it is created.
 
 @node Hash Access
 @section Hash Table Access
+@cindex accessing hash tables
+@cindex hash table access
 
   This section describes the functions for accessing and storing
 associations in a hash table.  In general, any Lisp object can be used
@@ -259,14 +253,14 @@ This function defines a new hash table test, named @var{name}.
 After defining @var{name} in this way, you can use it as the @var{test}
 argument in @code{make-hash-table}.  When you do that, the hash table
 will use @var{test-fn} to compare key values, and @var{hash-fn} to compute
-a ``hash code'' from a key value.
+a hash code from a key value.
 
 The function @var{test-fn} should accept two arguments, two keys, and
-return non-@code{nil} if they are considered ``the same''.
+return non-@code{nil} if they are considered the same.
 
 The function @var{hash-fn} should accept one argument, a key, and return
-an integer that is the ``hash code'' of that key.  For good results, the
-function should use the whole range of integer values for hash codes,
+an integer that is the hash code of that key.  For good results, the
+function should use the whole range of integers for hash codes,
 including negative integers.
 
 The specified functions are stored in the property list of @var{name}

@@ -1,9 +1,9 @@
 ;;; nxml-outln.el --- outline support for nXML mode
 
-;; Copyright (C) 2004, 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2004, 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: James Clark
-;; Keywords: XML
+;; Keywords: wp, hypermedia, languages, XML
 
 ;; This file is part of GNU Emacs.
 
@@ -1003,7 +1003,7 @@ immediately after the section's start-tag."
 ;;; Error handling
 
 (defun nxml-report-outline-error (msg err)
-  (error msg (apply 'format (cdr err))))
+  (error msg (apply #'format-message (cdr err))))
 
 (defun nxml-outline-error (&rest args)
   (signal 'nxml-outline-error args))

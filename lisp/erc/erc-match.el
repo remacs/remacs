@@ -1,9 +1,9 @@
 ;;; erc-match.el --- Highlight messages matching certain regexps
 
-;; Copyright (C) 2002-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
 ;; Author: Andreas Fuchs <asf@void.at>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: comm, faces
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki.pl?ErcMatch
 
@@ -84,17 +84,17 @@ Useful to mark nicks from dangerous hosts."
 
 (defcustom erc-current-nick-highlight-type 'keyword
   "Determines how to highlight text in which your current nickname appears
-\(does not apply to text sent by you\).
+\(does not apply to text sent by you).
 
 The following values are allowed:
 
- nil              - do not highlight the message at all
- 'keyword         - highlight all instances of current nickname in message
- 'nick            - highlight the nick of the user who typed your nickname
- 'nick-or-keyword - highlight the nick of the user who typed your nickname,
-                    or all instances of the current nickname if there was
-                    no sending user
- 'all             - highlight the entire message where current nickname occurs
+ nil               - do not highlight the message at all
+ `keyword'         - highlight all instances of current nickname in message
+ `nick'            - highlight the nick of the user who typed your nickname
+ `nick-or-keyword' - highlight the nick of the user who typed your nickname,
+                     or all instances of the current nickname if there was
+                     no sending user
+ `all'             - highlight the entire message where current nickname occurs
 
 Any other value disables highlighting of current nickname altogether."
   :group 'erc-match
@@ -110,9 +110,9 @@ See `erc-pals'.
 
 The following values are allowed:
 
-    nil   - do not highlight the message at all
-    'nick - highlight pal's nickname only
-    'all  - highlight the entire message from pal
+    nil    - do not highlight the message at all
+    `nick' - highlight pal's nickname only
+    `all'  - highlight the entire message from pal
 
 Any other value disables pal highlighting altogether."
   :group 'erc-match
@@ -126,9 +126,9 @@ See `erc-fools'.
 
 The following values are allowed:
 
-    nil   - do not highlight the message at all
-    'nick - highlight fool's nickname only
-    'all  - highlight the entire message from fool
+    nil    - do not highlight the message at all
+    `nick' - highlight fool's nickname only
+    `all'  - highlight the entire message from fool
 
 Any other value disables fool highlighting altogether."
   :group 'erc-match
@@ -142,8 +142,8 @@ See variable `erc-keywords'.
 
 The following values are allowed:
 
-    'keyword - highlight keyword only
-    'all     - highlight the entire message containing keyword
+    `keyword' - highlight keyword only
+    `all'     - highlight the entire message containing keyword
 
 Any other value disables keyword highlighting altogether."
   :group 'erc-match
@@ -157,8 +157,8 @@ See `erc-dangerous-hosts'.
 
 The following values are allowed:
 
-    'nick - highlight nick from dangerous-host only
-    'all  - highlight the entire message from dangerous-host
+    `nick' - highlight nick from dangerous-host only
+    `all'  - highlight the entire message from dangerous-host
 
 Any other value disables dangerous-host highlighting altogether."
   :group 'erc-match

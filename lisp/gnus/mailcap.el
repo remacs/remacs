@@ -1,6 +1,6 @@
 ;;; mailcap.el --- MIME media types configuration
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 ;; Author: William M. Perry <wmperry@aventail.com>
 ;;	Lars Magne Ingebrigtsen <larsi@gnus.org>
@@ -96,11 +96,9 @@ This is a compatibility function for different Emacsen."
       (type . "application/vnd.ms-excel"))
      ("x-x509-ca-cert"
       (viewer . ssl-view-site-cert)
-      (test . (fboundp 'ssl-view-site-cert))
       (type . "application/x-x509-ca-cert"))
      ("x-x509-user-cert"
       (viewer . ssl-view-user-cert)
-      (test . (fboundp 'ssl-view-user-cert))
       (type . "application/x-x509-user-cert"))
      ("octet-stream"
       (viewer . mailcap-save-binary-file)
@@ -129,29 +127,32 @@ This is a compatibility function for different Emacsen."
       (type   . "application/x-tar"))
      ("x-latex"
       (viewer . tex-mode)
-      (test   . (fboundp 'tex-mode))
       (type   . "application/x-latex"))
      ("x-tex"
       (viewer . tex-mode)
-      (test   . (fboundp 'tex-mode))
       (type   . "application/x-tex"))
      ("latex"
       (viewer . tex-mode)
-      (test   . (fboundp 'tex-mode))
       (type   . "application/latex"))
      ("tex"
       (viewer . tex-mode)
-      (test   . (fboundp 'tex-mode))
       (type   . "application/tex"))
      ("texinfo"
       (viewer . texinfo-mode)
-      (test   . (fboundp 'texinfo-mode))
       (type   . "application/tex"))
      ("zip"
       (viewer . mailcap-save-binary-file)
       (non-viewer . t)
       (type   . "application/zip")
       ("copiousoutput"))
+     ("pdf"
+      (viewer . pdf-view-mode)
+      (type . "application/pdf")
+      (test . (eq window-system 'x)))
+     ("pdf"
+      (viewer . doc-view-mode)
+      (type . "application/pdf")
+      (test . (eq window-system 'x)))
      ("pdf"
       (viewer . "gv -safer %s")
       (type . "application/pdf")
@@ -192,7 +193,6 @@ This is a compatibility function for different Emacsen."
       ("copiousoutput"))
      ("sieve"
       (viewer . sieve-mode)
-      (test   . (fboundp 'sieve-mode))
       (type   . "application/sieve"))
      ("pgp-keys"
       (viewer . "gpg --import --interactive --verbose")
@@ -213,11 +213,6 @@ This is a compatibility function for different Emacsen."
       (type   . "message/rfc822"))
      ("rfc-*822"
       (viewer . vm-mode)
-      (test   . (fboundp 'vm-mode))
-      (type   . "message/rfc822"))
-     ("rfc-*822"
-      (viewer . w3-mode)
-      (test   . (fboundp 'w3-mode))
       (type   . "message/rfc822"))
      ("rfc-*822"
       (viewer . view-mode)
@@ -253,27 +248,16 @@ This is a compatibility function for different Emacsen."
       ("needsx11")))
     ("text"
      ("plain"
-      (viewer  . w3-mode)
-      (test    . (fboundp 'w3-mode))
-      (type    . "text/plain"))
-     ("plain"
       (viewer  . view-mode)
-      (test    . (fboundp 'view-mode))
       (type    . "text/plain"))
      ("plain"
       (viewer  . fundamental-mode)
       (type    . "text/plain"))
      ("enriched"
       (viewer . enriched-decode)
-      (test   . (fboundp 'enriched-decode))
       (type   . "text/enriched"))
-     ("html"
-      (viewer . mm-w3-prepare-buffer)
-      (test   . (fboundp 'w3-prepare-buffer))
-      (type   . "text/html"))
      ("dns"
       (viewer . dns-mode)
-      (test   . (fboundp 'dns-mode))
       (type   . "text/dns")))
     ("video"
      ("mpeg"
@@ -290,8 +274,7 @@ This is a compatibility function for different Emacsen."
     ("archive"
      ("tar"
       (viewer . tar-mode)
-      (type . "archive/tar")
-      (test . (fboundp 'tar-mode)))))
+      (type . "archive/tar"))))
   "The mailcap structure is an assoc list of assoc lists.
 1st assoc list is keyed on the major content-type
 2nd assoc list is keyed on the minor content-type (which can be a regexp)
@@ -312,9 +295,9 @@ attribute name (viewer, test, etc).  This looks like:
   FLAG)
 
 Where VIEWERINFO specifies how the content-type is viewed.  Can be
-a string, in which case it is run through a shell, with
-appropriate parameters, or a symbol, in which case the symbol is
-`funcall'ed, with the buffer as an argument.
+a string, in which case it is run through a shell, with appropriate
+parameters, or a symbol, in which case the symbol is `funcall'ed if
+and only if it exists as a function, with the buffer as an argument.
 
 TESTINFO is a test for the viewer's applicability, or nil.  If nil, it
 means the viewer is always valid.  If it is a Lisp function, it is
@@ -558,8 +541,11 @@ MAILCAPS if set; otherwise (on Unix) use the path from RFC 1524, plus
       results)))
 
 (defun mailcap-mailcap-entry-passes-test (info)
-  "Return non-nil if mailcap entry INFO passes its test clause.
-Also return non-nil if no test clause is present."
+  "Replace the test clause of INFO itself with a boolean for some cases.
+This function supports only `test -n $DISPLAY' and `test -z $DISPLAY',
+replaces them with t or nil.  As for others or if INFO has a interactive
+spec (needsterm, needsterminal, or needsx11) but DISPLAY is not set,
+the test clause will be unchanged."
   (let ((test (assq 'test info))	; The test clause
 	status)
     (setq status (and test (split-string (cdr test) " ")))
@@ -657,10 +643,12 @@ to supply to the test."
   (let* ((test-info (assq 'test viewer-info))
 	 (test (cdr test-info))
 	 (otest test)
-	 (viewer (cdr (assoc 'viewer viewer-info)))
+	 (viewer (cdr (assq 'viewer viewer-info)))
 	 (default-directory (expand-file-name "~/"))
 	 status parsed-test cache result)
-    (cond ((setq cache (assoc test mailcap-viewer-test-cache))
+    (cond ((not (or (stringp viewer) (fboundp viewer)))
+	   nil)				; Non-existent Lisp function
+	  ((setq cache (assoc test mailcap-viewer-test-cache))
 	   (cadr cache))
 	  ((not test-info) t)		; No test clause
 	  (t
@@ -1071,6 +1059,18 @@ If FORCE, re-parse even if already parsed."
 				      "%s" "?" t))))
 			     common-mime-info)))))
     commands))
+
+(defun mailcap-view-mime (type)
+  "View the data in the current buffer that has MIME type TYPE.
+`mailcap-mime-data' determines the method to use."
+  (let ((method (mailcap-mime-info type)))
+    (if (stringp method)
+	(shell-command-on-region (point-min) (point-max)
+				 ;; Use stdin as the "%s".
+				 (format method "-")
+				 (current-buffer)
+				 t)
+      (funcall method))))
 
 (provide 'mailcap)
 

@@ -1,9 +1,9 @@
 ;;; case-table.el --- code to extend the character set and support case tables  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1988, 1994, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1988, 1994, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Howard Gayle
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: i18n
 ;; Package: emacs
 

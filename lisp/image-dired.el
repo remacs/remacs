@@ -1,6 +1,6 @@
 ;;; image-dired.el --- use dired to browse and manipulate your images
 ;;
-;; Copyright (C) 2005-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2015 Free Software Foundation, Inc.
 ;;
 ;; Version: 0.4.11
 ;; Keywords: multimedia
@@ -881,7 +881,7 @@ displayed."
         (progn
           (image-dired-display-thumbs)
           (pop-to-buffer image-dired-thumbnail-buffer))
-      (message "Cancelled."))))
+      (message "Canceled."))))
 
 ;;;###autoload
 (defalias 'image-dired 'image-dired-show-all-from-dir)
@@ -1910,7 +1910,7 @@ overwritten.  This confirmation can be turned off using
       (message "No image at point")
     (let ((file (image-dired-original-file-name))
           command)
-      (if (not (string-match "\.[jJ][pP[eE]?[gG]$" file))
+      (if (not (string-match "\\.[jJ][pP[eE]?[gG]$" file))
           (error "Only JPEG images can be rotated!"))
       (setq command (format-spec
                      image-dired-cmd-rotate-original-options
@@ -1950,7 +1950,7 @@ for traceability.  The format of the returned file name is
 YYYY_MM_DD_HH_MM_DD_ORIG_FILE_NAME.jpg.  Used from
 `image-dired-copy-with-exif-file-name'."
   (let (data no-exif-data-found)
-    (if (not (string-match "\.[Jj][Pp][Ee]?[Gg]$" (expand-file-name file)))
+    (if (not (string-match "\\.[Jj][Pp][Ee]?[Gg]$" (expand-file-name file)))
         (progn
           (setq no-exif-data-found t)
           (setq data
@@ -2572,7 +2572,7 @@ tags to their respective image file.  Internal function used by
 ;;               (let ((fattribs (file-attributes f)))
 ;;                 ;; Get last access time and file size
 ;;                 `(,(nth 4 fattribs) ,(nth 7 fattribs) ,f)))
-;;             (directory-files (image-dired-dir) t ".+\.thumb\..+$"))
+;;             (directory-files (image-dired-dir) t ".+\\.thumb\\..+$"))
 ;;            ;; Sort function. Compare time between two files.
 ;;            (lambda (l1 l2)
 ;;               (time-less-p (car l1) (car l2)))))

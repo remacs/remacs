@@ -1,6 +1,6 @@
 ;;; semantic/wisent/wisent.el --- GNU Bison for Emacs - Runtime
 
-;;; Copyright (C) 2002-2007, 2009-2013 Free Software Foundation, Inc.
+;;; Copyright (C) 2002-2007, 2009-2015 Free Software Foundation, Inc.
 
 ;; Author: David Ponce <david@dponce.com>
 ;; Maintainer: David Ponce <david@dponce.com>
@@ -44,11 +44,11 @@
   "
            /\\_.-^^^-._/\\     The GNU
            \\_         _/
-            (     `o  `      (European ;-) Bison
-             \\      ` /
+            (     \\=`o  \\=`      (European ;-) Bison
+             \\      \\=` /
              (   D  ,\"       for Emacs!
-              ` ~ ,\"
-               `\"\""
+              \\=` ~ ,\"
+               \\=`\"\""
   :group 'semantic)
 
 
@@ -364,7 +364,7 @@ automaton has only one entry point."
 
 - START specify the start symbol (nonterminal) used by the parser as
   its goal.  It defaults to the start symbol defined in the grammar
-  \(see also `wisent-compile-grammar')."
+  (see also `wisent-compile-grammar')."
   (run-hooks 'wisent-pre-parse-hook)
   (let* ((actions (aref automaton 0))
          (gotos   (aref automaton 1))

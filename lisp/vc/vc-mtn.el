@@ -1,6 +1,6 @@
 ;;; vc-mtn.el --- VC backend for Monotone  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: vc
@@ -49,6 +49,17 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
   :version "23.1"
   :group 'vc-mtn)
 
+(defcustom vc-mtn-annotate-switches nil
+  "String or list of strings specifying switches for mtn annotate under VC.
+If nil, use the value of `vc-annotate-switches'.  If t, use no
+switches."
+  :type '(choice (const :tag "Unspecified" nil)
+		 (const :tag "None" t)
+		 (string :tag "Argument String")
+		 (repeat :tag "Argument List" :value ("") string))
+  :version "25.1"
+  :group 'vc-mtn)
+
 (define-obsolete-variable-alias 'vc-mtn-command 'vc-mtn-program "23.1")
 (defcustom vc-mtn-program "mtn"
   "Name of the monotone executable."
@@ -79,13 +90,17 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
 (defun vc-mtn-checkout-model (_files) 'implicit)
 
 (defun vc-mtn-root (file)
-  (setq file (if (file-directory-p file)
+  (setq file (expand-file-name file)
+	file (if (file-directory-p file)
                  (file-name-as-directory file)
                (file-name-directory file)))
   (or (vc-file-getprop file 'vc-mtn-root)
       (vc-file-setprop file 'vc-mtn-root
                        (vc-find-root file vc-mtn-admin-format))))
 
+(defun vc-mtn-find-admin-dir (file)
+  "Return the administrative directory of FILE."
+  (expand-file-name vc-mtn-admin-dir (vc-mtn-root file)))
 
 (defun vc-mtn-registered (file)
   (let ((root (vc-mtn-root file)))
@@ -123,13 +138,14 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
 	     ((match-end 2) (push (list (match-string 3) 'added) result))))
     (funcall update-function result)))
 
-;; -dir-status called from vc-dir, which loads vc, which loads vc-dispatcher.
+;; dir-status-files called from vc-dir, which loads vc,
+;; which loads vc-dispatcher.
 (declare-function vc-exec-after "vc-dispatcher" (code))
 
-(defun vc-mtn-dir-status (dir update-function)
+(defun vc-mtn-dir-status-files (dir _files update-function)
   (vc-mtn-command (current-buffer) 'async dir "status")
-  (vc-exec-after
-   `(vc-mtn-after-dir-status (quote ,update-function))))
+  (vc-run-delayed
+   (vc-mtn-after-dir-status update-function)))
 
 (defun vc-mtn-working-revision (file)
   ;; If `mtn' fails or returns status>0, or if the search fails, just
@@ -151,9 +167,6 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
       (re-search-forward "\\(?:Current b\\|B\\)ranch:  *\\(.*\\)\n?\nChanges against parent \\(.*\\)")
       (match-string 1))))
 
-(defun vc-mtn-workfile-unchanged-p (file)
-  (not (eq (vc-mtn-state file) 'edited)))
-
 ;; Mode-line rewrite code copied from vc-arch.el.
 
 (defcustom vc-mtn-mode-line-rewrite
@@ -166,25 +179,27 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
 (defun vc-mtn-mode-line-string (file)
   "Return a string for `vc-mode-line' to put in the mode line for FILE."
   (let ((branch (vc-mtn-workfile-branch file)))
-    (dolist (rule vc-mtn-mode-line-rewrite)
-      (if (string-match (car rule) branch)
-	  (setq branch (replace-match (cdr rule) t nil branch))))
-    (format "Mtn%c%s"
-	    (pcase (vc-state file)
-	      ((or `up-to-date `needs-update) ?-)
-	      (`added ?@)
-	      (_ ?:))
-	    branch)))
+    (if branch
+        (progn
+          (dolist (rule vc-mtn-mode-line-rewrite)
+            (if (string-match (car rule) branch)
+                (setq branch (replace-match (cdr rule) t nil branch))))
+          (format "Mtn%c%s"
+                  (pcase (vc-state file)
+                    ((or `up-to-date `needs-update) ?-)
+                    (`added ?@)
+                    (_ ?:))
+                  branch))
+      "")))
 
-(defun vc-mtn-register (files &optional _rev _comment)
+(defun vc-mtn-register (files &optional _comment)
   (vc-mtn-command nil 0 files "add"))
 
 (defun vc-mtn-responsible-p (file) (vc-mtn-root file))
-(defun vc-mtn-could-register (file) (vc-mtn-root file))
 
 (declare-function log-edit-extract-headers "log-edit" (headers string))
 
-(defun vc-mtn-checkin (files _rev comment)
+(defun vc-mtn-checkin (files comment &optional _rev)
   (apply 'vc-mtn-command nil 0 files
 	 (nconc (list "commit" "-m")
 		(log-edit-extract-headers '(("Author" . "--author")
@@ -192,17 +207,17 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
 					  comment))))
 
 (defun vc-mtn-find-revision (file rev buffer)
-  (vc-mtn-command buffer 0 file "cat" "-r" rev))
+  ;; null rev means latest revision
+  (if rev
+      (vc-mtn-command buffer 0 file "cat" "-r" rev)
+    (vc-mtn-command buffer 0 file "cat")))
 
-;; (defun vc-mtn-checkout (file &optional editable rev)
+;; (defun vc-mtn-checkout (file &optional rev)
 ;;   )
 
 (defun vc-mtn-revert (file &optional contents-done)
   (unless contents-done
     (vc-mtn-command nil 0 file "revert")))
-
-;; (defun vc-mtn-rollback (files)
-;;   )
 
 (defun vc-mtn-print-log (files buffer &optional _shortlog start-revision limit)
   "Print commit logs associated with FILES into specified BUFFER.
@@ -238,18 +253,21 @@ If LIMIT is non-nil, show no more than this many entries."
 
 (autoload 'vc-switches "vc")
 
-(defun vc-mtn-diff (files &optional rev1 rev2 buffer)
+(defun vc-mtn-diff (files &optional rev1 rev2 buffer async)
   "Get a difference report using monotone between two revisions of FILES."
-  (apply 'vc-mtn-command (or buffer "*vc-diff*") 1 files "diff"
+  (apply 'vc-mtn-command (or buffer "*vc-diff*")
+	 (if async 'async 1)
+	 files "diff"
          (append
            (vc-switches 'mtn 'diff)
            (if rev1 (list "-r" rev1)) (if rev2 (list "-r" rev2)))))
 
 (defun vc-mtn-annotate-command (file buf &optional rev)
-  (apply 'vc-mtn-command buf 'async file "annotate"
-         (if rev (list "-r" rev))))
+  (apply #'vc-mtn-command buf 'async file "annotate"
+	 (append (vc-switches 'mtn 'annotate)
+		 (if rev (list "-r" rev)))))
 
-(declare-function vc-annotate-convert-time "vc-annotate" (time))
+(declare-function vc-annotate-convert-time "vc-annotate" (&optional time))
 
 (defconst vc-mtn-annotate-full-re
   "^ *\\([0-9a-f]+\\)\\.* by [^ ]+ \\([0-9]+\\)-\\([0-9]+\\)-\\([0-9]+\\): ")

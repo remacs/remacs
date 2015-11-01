@@ -1,9 +1,10 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1996-1999, 2001, 2004-2013 Free Software Foundation,
+;; Copyright (C) 1996-1999, 2001, 2004-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Bill Perry <wmperry@gnu.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: comm, data, processes, hypermedia
 
 ;; This file is part of GNU Emacs.
@@ -170,8 +171,8 @@ URL-encoded before it's used."
 (defun url-retrieve-internal (url callback cbargs &optional silent
 				  inhibit-cookies)
   "Internal function; external interface is `url-retrieve'.
-CBARGS is the list of arguments that the callback function will
-receive; its first element should be a plist specifying what has
+The callback function will receive an updated value of CBARGS as
+arguments; its first element should be a plist specifying what has
 happened so far during the request, as described in the docstring
 of `url-retrieve' (if in doubt, specify nil).
 
@@ -220,7 +221,7 @@ URL-encoded before it's used."
     buffer))
 
 ;;;###autoload
-(defun url-retrieve-synchronously (url)
+(defun url-retrieve-synchronously (url &optional silent inhibit-cookies)
   "Retrieve URL synchronously.
 Return the buffer containing the data, or nil if there are no data
 associated with it (the case for dired, info, or mailto URLs that need
@@ -233,7 +234,8 @@ no further processing).  URL is either a string or a parsed URL."
 	  (url-retrieve url (lambda (&rest ignored)
 			      (url-debug 'retrieval "Synchronous fetching done (%S)" (current-buffer))
 			      (setq retrieval-done t
-				    asynch-buffer (current-buffer)))))
+				    asynch-buffer (current-buffer)))
+			nil silent inhibit-cookies))
     (if (null asynch-buffer)
         ;; We do not need to do anything, it was a mailto or something
         ;; similar that takes processing completely outside of the URL

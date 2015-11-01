@@ -1,5 +1,6 @@
+@c -*- coding: utf-8 -*-
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2013 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2015 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Modes
@@ -200,6 +201,12 @@ Auto Save mode saves the buffer contents periodically to reduce the
 amount of work you can lose in case of a crash.  @xref{Auto Save}.
 
 @item
+Electric Quote mode automatically converts quotation marks.  For
+example, it requotes text typed @t{`like this'} to text @t{‘like
+this’}.  You can control what kind of text it operates in, and you can
+disable it entirely in individual buffers.  @xref{Quotation Marks}.
+
+@item
 Enriched mode enables editing and saving of formatted text.
 @xref{Enriched Text}.
 
@@ -245,7 +252,7 @@ In Binary Overwrite mode, digits after @kbd{C-q} specify an octal
 character code, as usual.
 
 @item
-Visual Line mode performs ``word wrapping'', causing long lines to be
+Visual Line mode performs word wrapping, causing long lines to be
 wrapped at word boundaries.  @xref{Visual Line Mode}.
 @end itemize
 
@@ -263,8 +270,7 @@ in the region, if the region is active.  @xref{Using Region}.
 
 @item
 Icomplete mode displays an indication of available completions when
-you are in the minibuffer and completion is active.  @xref{Completion
-Options}.
+you are in the minibuffer and completion is active.  @xref{Icomplete}.
 
 @item
 Line Number mode enables display of the current line number in the
@@ -430,7 +436,8 @@ compares the text at the start of the buffer to the variable
 @code{magic-mode-alist}, described above, except that is consulted
 only after @code{auto-mode-alist}.  By default,
 @code{magic-fallback-mode-alist} contains forms that check for image
-files, HTML/XML/SGML files, and PostScript files.
+files, HTML/XML/SGML files, PostScript files, and Unix style Conf
+files.
 
 @findex normal-mode
   If you have changed the major mode of a buffer, you can return to
@@ -445,6 +452,6 @@ the file's @samp{-*-} line or local variables list (if any).
 a new major mode if the new file name implies a mode (@pxref{Saving}).
 (@kbd{C-x C-s} does this too, if the buffer wasn't visiting a file.)
 However, this does not happen if the buffer contents specify a major
-mode, and certain ``special'' major modes do not allow the mode to
+mode, and certain special major modes do not allow the mode to
 change.  You can turn off this mode-changing feature by setting
 @code{change-major-mode-with-file-name} to @code{nil}.

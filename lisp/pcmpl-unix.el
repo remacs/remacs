@@ -1,6 +1,6 @@
 ;;; pcmpl-unix.el --- standard UNIX completions
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Package: pcomplete
 
@@ -157,7 +157,7 @@ documentation), this function returns nil."
         (while (re-search-forward (concat "^ *" host-re) nil t)
           (add-to-list 'ssh-hosts-list (concat (match-string 1)
                                                (match-string 2)))
-          (while (and (looking-back ",")
+          (while (and (eq (char-before) ?,)
                       (re-search-forward host-re (line-end-position) t))
             (add-to-list 'ssh-hosts-list (concat (match-string 1)
                                                  (match-string 2)))))

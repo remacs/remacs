@@ -1,6 +1,6 @@
 ;; icalendar-tests.el --- Test suite for icalendar.el
 
-;; Copyright (C) 2005, 2008-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2005, 2008-2015 Free Software Foundation, Inc.
 
 ;; Author:         Ulf Jasper <ulf.jasper@web.de>
 ;; Created:        March 2005
@@ -80,31 +80,19 @@
     (should (string=  (concat "yyyDTSTARTyyy")
                       (icalendar--create-uid entry-full contents)))))
 
-(ert-deftest icalendar--calendar-style ()
-  "Test for `icalendar--date-style'."
-  (dolist (calendar-date-style '(iso american european))
-    (should (eq (icalendar--date-style) calendar-date-style)))
-  (let ((cds calendar-date-style)
-        (european-calendar-style t))
-    (makunbound 'calendar-date-style)
-    (should (eq (icalendar--date-style) 'european))
-    (with-no-warnings (setq european-calendar-style nil)) ;still get warning!?! FIXME
-    (should (eq (icalendar--date-style) 'american))
-    (setq calendar-date-style cds)))
-
 (ert-deftest icalendar-convert-anniversary-to-ical ()
   "Test method for `icalendar--convert-anniversary-to-ical'."
   (let* ((calendar-date-style 'iso)
          result)
     (setq result (icalendar--convert-anniversary-to-ical
                   "" "%%(diary-anniversary 1964 6 30) g"))
-    (should (= 2 (length result)))
+    (should (consp result))
     (should (string= (concat
                       "\nDTSTART;VALUE=DATE:19640630"
                       "\nDTEND;VALUE=DATE:19640701"
                       "\nRRULE:FREQ=YEARLY;INTERVAL=1;BYMONTH=06;BYMONTHDAY=30")
                      (car result)))
-    (should (string= "g" (cadr result)))))
+    (should (string= "g" (cdr result)))))
 
 (ert-deftest icalendar--convert-cyclic-to-ical ()
   "Test method for `icalendar--convert-cyclic-to-ical'."
@@ -112,12 +100,12 @@
          result)
     (setq result (icalendar--convert-block-to-ical
                   "" "%%(diary-block 2004 7 19 2004 8 27) Sommerferien"))
-    (should (= 2 (length result)))
+    (should (consp result))
     (should (string= (concat
                       "\nDTSTART;VALUE=DATE:20040719"
                       "\nDTEND;VALUE=DATE:20040828")
                      (car result)))
-    (should (string= "Sommerferien" (cadr result)))))
+    (should (string= "Sommerferien" (cdr result)))))
 
 (ert-deftest icalendar--convert-block-to-ical ()
   "Test method for `icalendar--convert-block-to-ical'."
@@ -125,12 +113,12 @@
          result)
     (setq result (icalendar--convert-block-to-ical
                   "" "%%(diary-block 2004 7 19 2004 8 27) Sommerferien"))
-    (should (= 2 (length result)))
+    (should (consp result))
     (should (string= (concat
                       "\nDTSTART;VALUE=DATE:20040719"
                       "\nDTEND;VALUE=DATE:20040828")
                      (car result)))
-    (should (string= "Sommerferien" (cadr result)))))
+    (should (string= "Sommerferien" (cdr result)))))
 
 (ert-deftest icalendar--convert-yearly-to-ical ()
   "Test method for `icalendar--convert-yearly-to-ical'."
@@ -140,13 +128,13 @@
           ["January" "February" "March" "April" "May" "June" "July" "August"
            "September" "October" "November" "December"]))
     (setq result (icalendar--convert-yearly-to-ical "" "May 1 Tag der Arbeit"))
-    (should (= 2 (length result)))
+    (should (consp result))
     (should (string= (concat
                       "\nDTSTART;VALUE=DATE:19000501"
                       "\nDTEND;VALUE=DATE:19000502"
                       "\nRRULE:FREQ=YEARLY;INTERVAL=1;BYMONTH=5;BYMONTHDAY=1")
                      (car result)))
-    (should (string= "Tag der Arbeit" (cadr result)))))
+    (should (string= "Tag der Arbeit" (cdr result)))))
 
 (ert-deftest icalendar--convert-weekly-to-ical ()
   "Test method for `icalendar--convert-weekly-to-ical'."
@@ -156,12 +144,49 @@
           ["Sunday" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday"
            "Saturday"]))
     (setq result (icalendar--convert-weekly-to-ical "" "Monday 8:30 subject"))
-    (should (= 2 (length result)))
+    (should (consp result))
     (should (string= (concat "\nDTSTART;VALUE=DATE-TIME:20050103T083000"
                              "\nDTEND;VALUE=DATE-TIME:20050103T093000"
                              "\nRRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=MO")
                      (car result)))
-    (should (string= "subject" (cadr result)))))
+    (should (string= "subject" (cdr result)))))
+
+(ert-deftest icalendar--convert-sexp-to-ical ()
+  "Test method for `icalendar--convert-sexp-to-ical'."
+  (let* (result
+         (icalendar-export-sexp-enumeration-days 3))
+    ;; test case %%(diary-hebrew-date)
+    (setq result (icalendar--convert-sexp-to-ical "" "%%(diary-hebrew-date)"))
+    (should (consp result))
+    (should (eq icalendar-export-sexp-enumeration-days (length result)))
+    (mapc (lambda (i)
+            (should (consp i))
+            (should (string-match "Hebrew date (until sunset): .*" (cdr i))))
+          result)))
+
+(ert-deftest icalendar--convert-to-ical ()
+  "Test method for `icalendar--convert-to-ical'."
+  (let* (result
+         (icalendar-export-sexp-enumerate-all t)
+         (icalendar-export-sexp-enumeration-days 3)
+         (calendar-date-style 'iso))
+    ;; test case: %%(diary-anniversary 1642 12 25) Newton
+    ;; forced enumeration not matching the actual day --> empty
+    (setq result (icalendar--convert-sexp-to-ical
+                  "" "%%(diary-anniversary 1642 12 25) Newton's birthday"
+                  (encode-time 1 1 1 6 12 2014)))
+    (should (null result))
+    ;; test case: %%(diary-anniversary 1642 12 25) Newton
+    ;; enumeration does match the actual day -->
+    (setq result (icalendar--convert-sexp-to-ical
+                  "" "%%(diary-anniversary 1642 12 25) Newton's birthday"
+                  (encode-time 1 1 1 24 12 2014)))
+    (should (= 1 (length result)))
+    (should (consp (car result)))
+    (should (string-match
+             "\nDTSTART;VALUE=DATE:20141225\nDTEND;VALUE=DATE:20141226"
+             (car (car result))))
+    (should (string-match "Newton's birthday" (cdr (car result))))))
 
 (ert-deftest icalendar--parse-vtimezone ()
   "Test method for `icalendar--parse-vtimezone'."
@@ -188,7 +213,7 @@ END:VTIMEZONE
     (should (string= "STD-02:00DST-03:00,M3.5.0/03:00:00,M10.5.0/04:00:00"
                      (cdr result)))
     (setq vtimezone (icalendar-tests--get-ical-event "BEGIN:VTIMEZONE
-TZID:anothername\, with a comma
+TZID:anothername, with a comma
 BEGIN:STANDARD
 DTSTART:16010101T040000
 TZOFFSETFROM:+0300
@@ -207,6 +232,27 @@ END:VTIMEZONE
     (should (string= "anothername, with a comma" (car result)))
     (message (cdr result))
     (should (string= "STD-02:00DST-03:00,M3.2.1/03:00:00,M10.2.1/04:00:00"
+                     (cdr result)))
+    ;; offsetfrom = offsetto
+    (setq vtimezone (icalendar-tests--get-ical-event "BEGIN:VTIMEZONE
+TZID:Kolkata, Chennai, Mumbai, New Delhi
+X-MICROSOFT-CDO-TZID:23
+BEGIN:STANDARD
+DTSTART:16010101T000000
+TZOFFSETFROM:+0530
+TZOFFSETTO:+0530
+END:STANDARD
+BEGIN:DAYLIGHT
+DTSTART:16010101T000000
+TZOFFSETFROM:+0530
+TZOFFSETTO:+0530
+END:DAYLIGHT
+END:VTIMEZONE
+"))
+    (setq result (icalendar--parse-vtimezone vtimezone))
+    (should (string= "Kolkata, Chennai, Mumbai, New Delhi" (car result)))
+    (message (cdr result))
+    (should (string= "STD-05:30DST-05:30,M1.1.1/00:00:00,M1.1.1/00:00:00"
                      (cdr result)))))
 
 (ert-deftest icalendar--convert-ordinary-to-ical ()
@@ -215,28 +261,37 @@ END:VTIMEZONE
          result)
     ;; without time
     (setq result (icalendar--convert-ordinary-to-ical "&?" "2010 2 15 subject"))
-    (should (= 2 (length result)))
+    (should (consp result))
     (should (string=  "\nDTSTART;VALUE=DATE:20100215\nDTEND;VALUE=DATE:20100216"
                       (car result)))
-    (should (string= "subject" (cadr result)))
+    (should (string= "subject" (cdr result)))
+
+    ;; with start time
+    (setq result (icalendar--convert-ordinary-to-ical
+                  "&?" "&2010 2 15 12:34 s"))
+    (should (consp result))
+    (should (string=  (concat "\nDTSTART;VALUE=DATE-TIME:20100215T123400"
+                              "\nDTEND;VALUE=DATE-TIME:20100215T133400")
+                      (car result)))
+    (should (string= "s" (cdr result)))
 
     ;; with time
     (setq result (icalendar--convert-ordinary-to-ical
                   "&?" "&2010 2 15 12:34-23:45 s"))
-    (should (= 2 (length result)))
+    (should (consp result))
     (should (string=  (concat "\nDTSTART;VALUE=DATE-TIME:20100215T123400"
                               "\nDTEND;VALUE=DATE-TIME:20100215T234500")
                       (car result)))
-    (should (string= "s" (cadr result)))
+    (should (string= "s" (cdr result)))
 
     ;; with time, again -- test bug#5549
     (setq result (icalendar--convert-ordinary-to-ical
                   "x?" "x2010 2 15 0:34-1:45 s"))
-    (should (= 2 (length result)))
+    (should (consp result))
     (should (string=  (concat "\nDTSTART;VALUE=DATE-TIME:20100215T003400"
                               "\nDTEND;VALUE=DATE-TIME:20100215T014500")
                       (car result)))
-    (should (string= "s" (cadr result)))))
+    (should (string= "s" (cdr result)))))
 
 (ert-deftest icalendar--diarytime-to-isotime ()
   "Test method for `icalendar--diarytime-to-isotime'."
@@ -267,7 +322,9 @@ END:VTIMEZONE
   (should (string= "T120100"
 		   (icalendar--diarytime-to-isotime "1201" "pm")))
   (should (string= "T125900"
-		   (icalendar--diarytime-to-isotime "1259" "pm"))))
+		   (icalendar--diarytime-to-isotime "1259" "pm")))
+  (should (string= "T150000"
+		   (icalendar--diarytime-to-isotime "3" "pm"))))
 
 (ert-deftest icalendar--datetime-to-diary-date ()
   "Test method for `icalendar--datetime-to-diary-date'."
@@ -334,8 +391,8 @@ END:VTIMEZONE
 
 (ert-deftest icalendar--import-format-sample ()
   "Test method for `icalendar-import-format-sample'."
-  (should (string= (concat "SUMMARY=`a' DESCRIPTION=`b' LOCATION=`c' "
-                           "ORGANIZER=`d' STATUS=`' URL=`' CLASS=`'")
+  (should (string= (concat "SUMMARY='a' DESCRIPTION='b' LOCATION='c' "
+                           "ORGANIZER='d' STATUS='' URL='' CLASS=''")
 		   (icalendar-import-format-sample
                     (icalendar-tests--get-ical-event "BEGIN:VEVENT
 DTSTAMP:20030509T043439Z
@@ -414,23 +471,57 @@ END:VEVENT
     (should (not result))
     ))
 
+(ert-deftest icalendar--decode-isodatetime ()
+  "Test `icalendar--decode-isodatetime'."
+  (let ((tz (getenv "TZ"))
+	result)
+    (unwind-protect
+	(progn
+	  ;; Use Eastern European Time (UTC+2, UTC+3 daylight saving)
+	  (setenv "TZ" "EET-2EEST,M3.5.0/3,M10.5.0/4")
+
+          (message "%s" (current-time-zone (encode-time 0 0 10 1 1 2013 0)))
+          (message "%s" (current-time-zone (encode-time 0 0 10 1 8 2013 0)))
+
+          ;; testcase: no time zone in input -> keep time as is
+          ;; 1 Jan 2013 10:00
+          (should (equal '(0 0 10 1 1 2013 2 nil 7200)
+                         (icalendar--decode-isodatetime "20130101T100000")))
+          ;; 1 Aug 2013 10:00 (DST)
+          (should (equal '(0 0 10 1 8 2013 4 t 10800)
+                         (icalendar--decode-isodatetime "20130801T100000")))
+
+          ;; testcase: UTC time zone specifier in input -> convert to local time
+          ;; 31 Dec 2013 23:00 UTC -> 1 Jan 2013 01:00 EET
+          (should (equal '(0 0 1 1 1 2014 3 nil 7200)
+                         (icalendar--decode-isodatetime "20131231T230000Z")))
+          ;; 1 Aug 2013 10:00 UTC -> 1 Aug 2013 13:00 EEST
+          (should (equal '(0 0 13 1 8 2013 4 t 10800)
+                         (icalendar--decode-isodatetime "20130801T100000Z")))
+
+          )
+      ;; restore time-zone even if something went terribly wrong
+      (setenv "TZ" tz)))  )
+
 ;; ======================================================================
 ;; Export tests
 ;; ======================================================================
 
 (defun icalendar-tests--test-export (input-iso input-european input-american
-                                               expected-output)
+                                               expected-output &optional alarms)
   "Perform an export test.
 Argument INPUT-ISO iso style diary string.
 Argument INPUT-EUROPEAN european style diary string.
 Argument INPUT-AMERICAN american style diary string.
 Argument EXPECTED-OUTPUT expected iCalendar result string.
+Optional argument ALARMS the value of `icalendar-export-alarms' for this test.
 
 European style input data must use german month names.  American
 and ISO style input data must use english month names."
   (let ((tz (getenv "TZ"))
 	(calendar-date-style 'iso)
-	(icalendar-recurring-start-year 2000))
+	(icalendar-recurring-start-year 2000)
+        (icalendar-export-alarms alarms))
     (unwind-protect
 	(progn
 ;;;	  (message "Current time zone: %s" (current-time-zone))
@@ -664,6 +755,97 @@ RRULE:FREQ=DAILY;INTERVAL=1;UNTIL=20010706
 SUMMARY:block no end time
 "))
 
+(ert-deftest icalendar-export-alarms ()
+  "Perform export test with different settings for exporting alarms."
+  ;; no alarm
+  (icalendar-tests--test-export
+   "2014 Nov 17 19:30 no alarm"
+   "17 Nov 2014 19:30 no alarm"
+   "Nov 17 2014 19:30 no alarm"
+   "DTSTART;VALUE=DATE-TIME:20141117T193000
+DTEND;VALUE=DATE-TIME:20141117T203000
+SUMMARY:no alarm
+"
+   nil)
+
+    ;; 10 minutes in advance, audio
+    (icalendar-tests--test-export
+     "2014 Nov 17 19:30 audio alarm"
+     "17 Nov 2014 19:30 audio alarm"
+     "Nov 17 2014 19:30 audio alarm"
+     "DTSTART;VALUE=DATE-TIME:20141117T193000
+DTEND;VALUE=DATE-TIME:20141117T203000
+SUMMARY:audio alarm
+BEGIN:VALARM
+ACTION:AUDIO
+TRIGGER:-PT10M
+END:VALARM
+"
+     '(10 ((audio))))
+
+    ;; 20 minutes in advance, display
+    (icalendar-tests--test-export
+     "2014 Nov 17 19:30 display alarm"
+     "17 Nov 2014 19:30 display alarm"
+     "Nov 17 2014 19:30 display alarm"
+     "DTSTART;VALUE=DATE-TIME:20141117T193000
+DTEND;VALUE=DATE-TIME:20141117T203000
+SUMMARY:display alarm
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-PT20M
+DESCRIPTION:display alarm
+END:VALARM
+"
+     '(20 ((display))))
+
+    ;; 66 minutes in advance, email
+    (icalendar-tests--test-export
+     "2014 Nov 17 19:30 email alarm"
+     "17 Nov 2014 19:30 email alarm"
+     "Nov 17 2014 19:30 email alarm"
+     "DTSTART;VALUE=DATE-TIME:20141117T193000
+DTEND;VALUE=DATE-TIME:20141117T203000
+SUMMARY:email alarm
+BEGIN:VALARM
+ACTION:EMAIL
+TRIGGER:-PT66M
+DESCRIPTION:email alarm
+SUMMARY:email alarm
+ATTENDEE:MAILTO:att.one@email.com
+ATTENDEE:MAILTO:att.two@email.com
+END:VALARM
+"
+     '(66 ((email ("att.one@email.com" "att.two@email.com")))))
+
+    ;; 2 minutes in advance, all alarms
+    (icalendar-tests--test-export
+     "2014 Nov 17 19:30 all alarms"
+     "17 Nov 2014 19:30 all alarms"
+     "Nov 17 2014 19:30 all alarms"
+     "DTSTART;VALUE=DATE-TIME:20141117T193000
+DTEND;VALUE=DATE-TIME:20141117T203000
+SUMMARY:all alarms
+BEGIN:VALARM
+ACTION:EMAIL
+TRIGGER:-PT2M
+DESCRIPTION:all alarms
+SUMMARY:all alarms
+ATTENDEE:MAILTO:att.one@email.com
+ATTENDEE:MAILTO:att.two@email.com
+END:VALARM
+BEGIN:VALARM
+ACTION:AUDIO
+TRIGGER:-PT2M
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-PT2M
+DESCRIPTION:all alarms
+END:VALARM
+"
+     '(2 ((email ("att.one@email.com" "att.two@email.com")) (audio) (display)))))
+
 ;; ======================================================================
 ;; Import tests
 ;; ======================================================================
@@ -674,15 +856,14 @@ SUMMARY:block no end time
 Argument INPUT icalendar event string.
 Argument EXPECTED-ISO expected iso style diary string.
 Argument EXPECTED-EUROPEAN expected european style diary string.
-Argument EXPECTED-AMERICAN expected american style diary string."
+Argument EXPECTED-AMERICAN expected american style diary string.
+During import test the timezone is set to Central European Time."
   (let ((timezone (getenv "TZ")))
     (unwind-protect
 	(progn
-;;;	  (message "Current time zone: %s" (current-time-zone))
 	  ;; Use this form so as not to rely on system tz database.
 	  ;; Eg hydra.nixos.org.
 	  (setenv "TZ" "CET-1CEST,M3.5.0/2,M10.5.0/3")
-;;;	  (message "Current time zone: %s" (current-time-zone))
 	  (with-temp-buffer
 	    (if (string-match "^BEGIN:VCALENDAR" input)
 		(insert input)
@@ -718,11 +899,34 @@ Argument EXPECTED-AMERICAN expected american style diary string."
 Argument INPUT input icalendar string.
 Argument EXPECTED-OUTPUT expected diary string."
   (let ((temp-file (make-temp-file "icalendar-test-diary")))
+    ;; Test the Catch-the-mysterious-coding-header logic below.
+    ;; Ruby-mode adds an after-save-hook which inserts the header!
+    ;; (save-excursion
+    ;;   (find-file temp-file)
+    ;;   (ruby-mode))
     (icalendar-import-buffer temp-file t t)
     (save-excursion
       (find-file temp-file)
+      ;; Check for the mysterious "# coding: ..." header, remove it
+      ;; and give a shout
+      (goto-char (point-min))
+      (when (re-search-forward "# coding: .*?\n" nil t)
+        (message (concat "%s\n"
+                         "Found mysterious \"# coding ...\" header!  Removing it.\n"
+                         "Current Modes: %s, %s\n"
+                         "Current test: %s\n"
+                         "%s")
+                 (make-string 70 ?*)
+                 major-mode
+                 minor-mode-list
+                 (ert-running-test)
+                 (make-string 70 ?*))
+        (buffer-disable-undo)
+        (replace-match "")
+        (set-buffer-modified-p nil))
+
       (let ((result (buffer-substring-no-properties (point-min) (point-max))))
-	(should (string= expected-output result)))
+        (should (string= expected-output result)))
       (kill-buffer (find-buffer-visiting temp-file))
       (delete-file temp-file))))
 
@@ -1114,11 +1318,16 @@ DTEND;VALUE=DATE-TIME:20030919T113000"
    "&9/19/2003 09:00-11:30 non-recurring\n UID: 1234567890uid\n"))
 
 (ert-deftest icalendar-import-with-timezone ()
+  ;; This is known to fail on MS-Windows, because the test assumes
+  ;; Posix features of specifying DST rules.
+  :expected-result (if (memq system-type '(windows-nt ms-dos))
+                       :failed
+                     :passed)
   ;; bug#11473
   (icalendar-tests--test-import
    "BEGIN:VCALENDAR
 BEGIN:VTIMEZONE
-TZID:fictional\, nonexistent\, arbitrary
+TZID:fictional, nonexistent, arbitrary
 BEGIN:STANDARD
 DTSTART:20100101T000000
 TZOFFSETFROM:+0200
@@ -1174,7 +1383,8 @@ Argument INPUT icalendar event string."
           (icalendar-import-format-status "\n Status: %s")
           (icalendar-import-format-url "\n URL: %s")
           (icalendar-import-format-class "\n Class: %s")
-          (icalendar-import-format-class "\n UID: %s"))
+          (icalendar-import-format-class "\n UID: %s")
+          (icalendar-export-alarms nil))
       (dolist (calendar-date-style '(iso european american))
         (icalendar-tests--do-test-cycle)))))
 
@@ -1241,6 +1451,11 @@ SUMMARY:and diary-anniversary
 ;; ======================================================================
 (ert-deftest icalendar-real-world ()
   "Perform real-world tests, as gathered from problem reports."
+  ;; This is known to fail on MS-Windows, since it doesn't support DST
+  ;; specification with month and day.
+  :expected-result (if (memq system-type '(windows-nt ms-dos))
+                       :failed
+                     :passed)
   ;; 2003-05-29
   (icalendar-tests--test-import
    "BEGIN:VCALENDAR
@@ -1248,7 +1463,7 @@ METHOD:REQUEST
 PRODID:Microsoft CDO for Microsoft Exchange
 VERSION:2.0
 BEGIN:VTIMEZONE
-TZID:Kolkata\, Chennai\, Mumbai\, New Delhi
+TZID:Kolkata, Chennai, Mumbai, New Delhi
 X-MICROSOFT-CDO-TZID:23
 BEGIN:STANDARD
 DTSTART:16010101T000000
@@ -1298,20 +1513,61 @@ END:VALARM
 END:VEVENT
 END:VCALENDAR"
    nil
-   "&9/5/2003 10:30-15:30 On-Site Interview
+   "&9/5/2003 07:00-12:00 On-Site Interview
  Desc: 10:30am - Blah
  Location: Cccc
  Organizer: MAILTO:aaaaaaa@aaaaaaa.com
  Status: CONFIRMED
  UID: 040000008200E00074C5B7101A82E0080000000080B6DE661216C301000000000000000010000000DB823520692542408ED02D7023F9DFF9
 "
-   "&5/9/2003 10:30-15:30 On-Site Interview
+   "&5/9/2003 07:00-12:00 On-Site Interview
  Desc: 10:30am - Blah
  Location: Cccc
  Organizer: MAILTO:aaaaaaa@aaaaaaa.com
  Status: CONFIRMED
  UID: 040000008200E00074C5B7101A82E0080000000080B6DE661216C301000000000000000010000000DB823520692542408ED02D7023F9DFF9
 ")
+
+  ;; created with http://apps.marudot.com/ical/
+  (icalendar-tests--test-import
+   "BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//www.marudot.com//iCal Event Maker
+X-WR-CALNAME:Test
+CALSCALE:GREGORIAN
+BEGIN:VTIMEZONE
+TZID:Asia/Tehran
+TZURL:http://tzurl.org/zoneinfo-outlook/Asia/Tehran
+X-LIC-LOCATION:Asia/Tehran
+BEGIN:STANDARD
+TZOFFSETFROM:+0330
+TZOFFSETTO:+0330
+TZNAME:IRST
+DTSTART:19700101T000000
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+DTSTAMP:20141116T171439Z
+UID:20141116T171439Z-678877132@marudot.com
+DTSTART;TZID=\"Asia/Tehran\":20141116T070000
+DTEND;TZID=\"Asia/Tehran\":20141116T080000
+SUMMARY:NoDST
+DESCRIPTION:Test event from timezone without DST
+LOCATION:Everywhere
+END:VEVENT
+END:VCALENDAR"
+   nil
+   "&16/11/2014 04:30-05:30 NoDST
+ Desc: Test event from timezone without DST
+ Location: Everywhere
+ UID: 20141116T171439Z-678877132@marudot.com
+"
+   "&11/16/2014 04:30-05:30 NoDST
+ Desc: Test event from timezone without DST
+ Location: Everywhere
+ UID: 20141116T171439Z-678877132@marudot.com
+")
+
 
   ;; 2003-06-18 a
   (icalendar-tests--test-import
@@ -1918,7 +2174,7 @@ METHOD:REQUEST
 PRODID:Microsoft Exchange Server 2007
 VERSION:2.0
 BEGIN:VTIMEZONE
-TZID:(UTC+01:00) Amsterdam\, Berlin\, Bern\, Rome\, Stockholm\, Vienna
+TZID:(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna
 BEGIN:STANDARD
 DTSTART:16010101T030000
 TZOFFSETFROM:+0200

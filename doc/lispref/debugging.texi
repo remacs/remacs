@@ -1,10 +1,11 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1994, 1998-1999, 2001-2013 Free Software
+@c Copyright (C) 1990-1994, 1998-1999, 2001-2015 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Debugging
 @chapter Debugging Lisp Programs
+@cindex debugging lisp programs
 
   There are several ways to find and investigate problems in an Emacs
 Lisp program.
@@ -226,9 +227,7 @@ function, and then step through its caller.
 
 @deffn Command debug-on-entry function-name
 This function requests @var{function-name} to invoke the debugger each
-time it is called.  It works by inserting the form
-@code{(implement-debug-on-entry)} into the function definition as the
-first form.
+time it is called.
 
 Any function or macro defined as Lisp code may be set to break on
 entry, regardless of whether it is interpreted code or compiled code.
@@ -243,11 +242,6 @@ When @code{debug-on-entry} is called interactively, it prompts for
 @var{function-name} in the minibuffer.  If the function is already set
 up to invoke the debugger on entry, @code{debug-on-entry} does nothing.
 @code{debug-on-entry} always returns @var{function-name}.
-
-@strong{Warning:} if you redefine a function after using
-@code{debug-on-entry} on it, the code to enter the debugger is
-discarded by the redefinition.  In effect, redefining the function
-cancels the break-on-entry feature for that function.
 
 Here's an example to illustrate use of this function:
 
@@ -277,12 +271,6 @@ Debugger entered--entering a function:
 ------ Buffer: *Backtrace* ------
 @end group
 
-@group
-(symbol-function 'fact)
-     @result{} (lambda (n)
-          (debug (quote debug))
-          (if (zerop n) 1 (* n (fact (1- n)))))
-@end group
 @end example
 @end deffn
 
@@ -297,6 +285,8 @@ not currently set up to break on entry.
 
 @node Explicit Debug
 @subsection Explicit Entry to the Debugger
+@cindex debugger, explicit entry
+@cindex force entry to debugger
 
   You can cause the debugger to be called at a certain point in your
 program by writing the expression @code{(debug)} at that point.  To do
@@ -388,6 +378,7 @@ the same function.  (To do this, visit the source for the function and
 type @kbd{C-M-x} on its definition.)  You cannot use the Lisp debugger
 to step through a primitive function.
 
+@c FIXME: Add @findex for the following commands?  --xfq
   Here is a list of Debugger mode commands:
 
 @table @kbd
@@ -424,7 +415,8 @@ Flag the current frame like @kbd{b}.  Then continue execution like
 are set up to do so by @code{debug-on-entry}.
 
 @item e
-Read a Lisp expression in the minibuffer, evaluate it, and print the
+Read a Lisp expression in the minibuffer, evaluate it (with the
+relevant lexical environment, if applicable), and print the
 value in the echo area.  The debugger alters certain important
 variables, and the current buffer, as part of its operation; @kbd{e}
 temporarily restores their values from outside the debugger, so you can
@@ -459,13 +451,15 @@ You can't use @kbd{r} when the debugger was entered due to an error.
 @item l
 Display a list of functions that will invoke the debugger when called.
 This is a list of functions that are set to break on entry by means of
-@code{debug-on-entry}.  @strong{Warning:} if you redefine such a
-function and thus cancel the effect of @code{debug-on-entry}, it may
-erroneously show up in this list.
+@code{debug-on-entry}.
+
+@item v
+Toggle the display of local variables of the current stack frame.
 @end table
 
 @node Invoking the Debugger
 @subsection Invoking the Debugger
+@cindex invoking lisp debugger
 
   Here we describe in full detail the function @code{debug} that is used
 to invoke the debugger.
@@ -690,11 +684,11 @@ If @var{frame-number} is out of range, @code{backtrace-frame} returns
 @cindex debugging invalid Lisp syntax
 
   The Lisp reader reports invalid syntax, but cannot say where the real
-problem is.  For example, the error ``End of file during parsing'' in
+problem is.  For example, the error @samp{End of file during parsing} in
 evaluating an expression indicates an excess of open parentheses (or
 square brackets).  The reader detects this imbalance at the end of the
 file, but it cannot figure out where the close parenthesis should have
-been.  Likewise, ``Invalid read syntax: ")"'' indicates an excess close
+been.  Likewise, @samp{Invalid read syntax: ")"} indicates an excess close
 parenthesis or missing open parenthesis, but does not say where the
 missing parenthesis belongs.  How, then, to find what to change?
 
@@ -717,6 +711,7 @@ find the mismatch.)
 
 @node Excess Open
 @subsection Excess Open Parentheses
+@cindex excess open parentheses
 
   The first step is to find the defun that is unbalanced.  If there is
 an excess open parenthesis, the way to do this is to go to the end of
@@ -751,6 +746,7 @@ anything.
 
 @node Excess Close
 @subsection Excess Close Parentheses
+@cindex excess close parentheses
 
   To deal with an excess close parenthesis, first go to the beginning
 of the file, then type @kbd{C-u -1 C-M-u} to find the end of the first
@@ -819,6 +815,7 @@ be cleaner to combine them.
 @node Profiling
 @section Profiling
 @cindex profiling
+@cindex profile
 @cindex measuring resource usage
 @cindex memory usage
 

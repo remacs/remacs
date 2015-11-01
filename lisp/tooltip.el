@@ -1,6 +1,6 @@
 ;;; tooltip.el --- show tooltip windows
 
-;; Copyright (C) 1997, 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997, 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: Gerd Moellmann <gerd@acm.org>
 ;; Keywords: help c mouse tools
@@ -58,9 +58,7 @@ echo area, instead of making a pop-up window."
   :init-value t
   :initialize 'custom-initialize-delay
   :group 'tooltip
-  (unless (or (null tooltip-mode) (fboundp 'x-show-tip))
-    (error "Sorry, tooltips are not yet available on this system"))
-  (if tooltip-mode
+  (if (and tooltip-mode (fboundp 'x-show-tip))
       (progn
 	(add-hook 'pre-command-hook 'tooltip-hide)
 	(add-hook 'tooltip-functions 'tooltip-help-tips))
@@ -217,11 +215,9 @@ This might return nil if the event did not occur over a buffer."
   "Change the value of KEY in alist ALIST to VALUE.
 If there's no association for KEY in ALIST, add one, otherwise
 change the existing association.  Value is the resulting alist."
-  (let ((param (assq key alist)))
-    (if (consp param)
-	(setcdr param value)
-      (push (cons key value) alist))
-    alist))
+  (declare (obsolete "use (setf (alist-get ..) ..) instead" "25.1"))
+  (setf (alist-get key alist) value)
+  alist)
 
 (declare-function x-show-tip "xfns.c"
 		  (string &optional frame parms timeout dx dy))
@@ -246,10 +242,10 @@ in echo area."
 	      (fg (face-attribute 'tooltip :foreground))
 	      (bg (face-attribute 'tooltip :background)))
 	  (when (stringp fg)
-	    (setq params (tooltip-set-param params 'foreground-color fg))
-	    (setq params (tooltip-set-param params 'border-color fg)))
+	    (setf (alist-get 'foreground-color params) fg)
+	    (setf (alist-get 'border-color params) fg))
 	  (when (stringp bg)
-	    (setq params (tooltip-set-param params 'background-color bg)))
+	    (setf (alist-get 'background-color params) bg))
 	  (x-show-tip (propertize text 'face 'tooltip)
 		      (selected-frame)
 		      params
@@ -288,10 +284,6 @@ is based on the current syntax table."
 	(when (> (point) start)
 	  (buffer-substring start (point)))))))
 
-(defmacro tooltip-region-active-p ()
-  "Value is non-nil if the region should override command actions."
-  `(use-region-p))
-
 (defun tooltip-expr-to-print (event)
   "Return an expression that should be printed for EVENT.
 If a region is active and the mouse is inside the region, print
@@ -299,7 +291,7 @@ the region.  Otherwise, figure out the identifier around the point
 where the mouse is."
   (with-current-buffer (tooltip-event-buffer event)
     (let ((point (posn-point (event-end event))))
-      (if (tooltip-region-active-p)
+      (if (use-region-p)
 	  (when (and (<= (region-beginning) point) (<= point (region-end)))
 	    (buffer-substring (region-beginning) (region-end)))
 	(tooltip-identifier-from-point point)))))
@@ -345,10 +337,10 @@ It is also called if Tooltip mode is on, for text-only displays."
      ((stringp help)
       (setq help (replace-regexp-in-string "\n" ", " help))
       (unless (or tooltip-previous-message
-		  (string-equal help (current-message))
+		  (equal-including-properties help (current-message))
 		  (and (stringp tooltip-help-message)
-		       (string-equal tooltip-help-message
-				     (current-message))))
+		       (equal-including-properties tooltip-help-message
+						   (current-message))))
         (setq tooltip-previous-message (current-message)))
       (setq tooltip-help-message help)
       (let ((message-truncate-lines t)
@@ -371,7 +363,7 @@ MSG is either a help string to display, or nil to cancel the display."
 	       ;; Cancel display.  This also cancels a delayed tip, if
 	       ;; there is one.
 	       (tooltip-hide))
-	      ((equal previous-help msg)
+	      ((equal-including-properties previous-help msg)
 	       ;; Same help as before (but possibly the mouse has moved).
 	       ;; Keep what we have.
 	       )

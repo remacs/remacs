@@ -1,8 +1,8 @@
 ;;; mail-utils.el --- utility functions used both by rmail and rnews
 
-;; Copyright (C) 1985, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 2001-2015 Free Software Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: mail, news
 
 ;; This file is part of GNU Emacs.
@@ -50,9 +50,10 @@ also the To field, unless this would leave an empty To field."
 ;;;###autoload
 (defun mail-file-babyl-p (file)
   "Return non-nil if FILE is a Babyl file."
-  (with-temp-buffer
-    (insert-file-contents file nil 0 100)
-    (looking-at "BABYL OPTIONS:")))
+  (let ((epa-inhibit t))
+    (with-temp-buffer
+      (insert-file-contents file nil 0 100)
+      (looking-at "BABYL OPTIONS:"))))
 
 (defun mail-string-delete (string start end)
   "Returns a string containing all of STRING except the part

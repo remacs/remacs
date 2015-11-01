@@ -1,6 +1,6 @@
 ;;; doc-view.el --- View PDF/PostScript/DVI files in Emacs -*- lexical-binding: t -*-
 
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 ;;
 ;; Author: Tassilo Horn <tsdh@gnu.org>
 ;; Maintainer: Tassilo Horn <tsdh@gnu.org>
@@ -198,6 +198,7 @@ Higher values result in larger images."
 If nil, the document is re-rendered every time the scaling factor is modified.
 This only has an effect if the image libraries linked with Emacs support
 scaling."
+  :version "24.4"
   :type 'boolean)
 
 (defcustom doc-view-image-width 850
@@ -335,7 +336,7 @@ of the page moves to the previous page."
       ;; Don't do it if there's a conversion is running, since in that case, it
       ;; will be done later.
       (with-selected-window (car winprops)
-        (doc-view-goto-page 1)))))
+        (doc-view-goto-page (image-mode-window-get 'page t))))))
 
 (defvar-local doc-view--current-files nil
   "Only used internally.")
@@ -405,13 +406,15 @@ Typically \"page-%s.png\".")
     (define-key map (kbd "RET")       'image-next-line)
     ;; Zoom in/out.
     (define-key map "+"               'doc-view-enlarge)
+    (define-key map "="               'doc-view-enlarge)
     (define-key map "-"               'doc-view-shrink)
+    (define-key map "0"               'doc-view-scale-reset)
+    (define-key map [remap text-scale-adjust] 'doc-view-scale-adjust)
     ;; Fit the image to the window
     (define-key map "W"               'doc-view-fit-width-to-window)
     (define-key map "H"               'doc-view-fit-height-to-window)
     (define-key map "P"               'doc-view-fit-page-to-window)
     ;; Killing the buffer (and the process)
-    (define-key map (kbd "k")         'doc-view-kill-proc-and-buffer)
     (define-key map (kbd "K")         'doc-view-kill-proc)
     ;; Slicing the image
     (define-key map (kbd "s s")       'doc-view-set-slice)
@@ -437,10 +440,23 @@ Typically \"page-%s.png\".")
 
 (defun doc-view-revert-buffer (&optional ignore-auto noconfirm)
   "Like `revert-buffer', but preserves the buffer's current modes."
-  ;; FIXME: this should probably be moved to files.el and used for
-  ;; most/all "g" bindings to revert-buffer.
   (interactive (list (not current-prefix-arg)))
-  (revert-buffer ignore-auto noconfirm 'preserve-modes))
+  (cl-labels ((revert ()
+                      (let (revert-buffer-function)
+                        (revert-buffer ignore-auto noconfirm 'preserve-modes))))
+    (if (and (eq 'pdf doc-view-doc-type)
+             (executable-find "pdfinfo"))
+        ;; We don't want to revert if the PDF file is corrupted which
+        ;; might happen when it it currently recompiled from a tex
+        ;; file.  (TODO: We'd like to have something like that also
+        ;; for other types, at least PS, but I don't know a good way
+        ;; to test if a PS file is complete.)
+        (if (= 0 (call-process (executable-find "pdfinfo") nil nil nil
+                               doc-view--buffer-file-name))
+            (revert)
+          (when (called-interactively-p 'interactive)
+            (message "Can't revert right now because the file is corrupted.")))
+      (revert))))
 
 
 (easy-menu-define doc-view-menu doc-view-mode-map
@@ -496,6 +512,7 @@ Typically \"page-%s.png\".")
                  ;; how many pages will be available.
                  (null doc-view--current-converter-processes))
 	(setq page len)))
+    (force-mode-line-update)            ;To update `current-page'.
     (setf (doc-view-current-page) page
 	  (doc-view-current-info)
 	  (concat
@@ -640,25 +657,15 @@ at the top edge of the page moves to the previous page."
     (setq doc-view--current-timer nil))
   (setq mode-line-process nil))
 
-(defun doc-view-kill-proc-and-buffer ()
-  "Kill the current converter process and buffer."
-  (interactive)
-  (doc-view-kill-proc)
-  (when (eq major-mode 'doc-view-mode)
-    (kill-buffer (current-buffer))))
+(define-obsolete-function-alias 'doc-view-kill-proc-and-buffer
+  #'image-kill-buffer "25.1")
 
 (defun doc-view-make-safe-dir (dir)
   (condition-case nil
-      (let ((umask (default-file-modes)))
-	(unwind-protect
-	    (progn
-	      ;; Create temp files with strict access rights.  It's easy to
-	      ;; loosen them later, whereas it's impossible to close the
-	      ;; time-window of loose permissions otherwise.
-	      (set-default-file-modes #o0700)
-	      (make-directory dir))
-	  ;; Reset the umask.
-	  (set-default-file-modes umask)))
+      ;; Create temp files with strict access rights.  It's easy to
+      ;; loosen them later, whereas it's impossible to close the
+      ;; time-window of loose permissions otherwise.
+      (with-file-modes #o0700 (make-directory dir))
     (file-already-exists
      (when (file-symlink-p dir)
        (error "Danger: %s points to a symbolic link" dir))
@@ -752,6 +759,38 @@ OpenDocument format)."
   "Shrink the document."
   (interactive (list doc-view-shrink-factor))
   (doc-view-enlarge (/ 1.0 factor)))
+
+(defun doc-view-scale-reset ()
+  "Reset the document size/zoom level to the initial one."
+  (interactive)
+  (if (and doc-view-scale-internally
+           (eq (plist-get (cdr (doc-view-current-image)) :type)
+               'imagemagick))
+      (progn
+	(kill-local-variable 'doc-view-image-width)
+	(doc-view-insert-image
+	 (plist-get (cdr (doc-view-current-image)) :file)
+	 :width doc-view-image-width))
+    (kill-local-variable 'doc-view-resolution)
+    (doc-view-reconvert-doc)))
+
+(defun doc-view-scale-adjust (factor)
+  "Adjust the scale of the DocView page images by FACTOR.
+FACTOR defaults to `doc-view-shrink-factor'.
+
+The actual adjustment made depends on the final component of the
+key-binding used to invoke the command, with all modifiers removed:
+
+   +, =   Increase the image scale by FACTOR
+   -      Decrease the image scale by FACTOR
+   0      Reset the image scale to the initial scale"
+  (interactive (list doc-view-shrink-factor))
+  (let ((ev last-command-event)
+	(echo-keystrokes nil))
+    (pcase (event-basic-type ev)
+      ((or ?+ ?=) (doc-view-enlarge factor))
+      (?-         (doc-view-shrink factor))
+      (?0         (doc-view-scale-reset)))))
 
 (defun doc-view-fit-width-to-window ()
   "Fit the image width to the window width."
@@ -1361,18 +1400,28 @@ For now these keys are useful:
   (tooltip-show (doc-view-current-info)))
 
 (defun doc-view-open-text ()
-  "Open a buffer with the current doc's contents as text."
+  "Display the current doc's contents as text."
   (interactive)
   (if doc-view--current-converter-processes
       (message "DocView: please wait till conversion finished.")
     (let ((txt (expand-file-name "doc.txt" (doc-view--current-cache-dir))))
       (if (file-readable-p txt)
-	  (let ((name (concat "Text contents of "
-			      (file-name-nondirectory buffer-file-name)))
-		(dir (file-name-directory buffer-file-name)))
-	    (with-current-buffer (find-file txt)
-	      (rename-buffer name)
-	      (setq default-directory dir)))
+	  (let ((inhibit-read-only t)
+		(buffer-undo-list t)
+		(dv-bfn doc-view--buffer-file-name))
+	    (erase-buffer)
+	    (set-buffer-multibyte t)
+	    (insert-file-contents txt)
+	    (text-mode)
+	    (setq-local doc-view--buffer-file-name dv-bfn)
+	    (set-buffer-modified-p nil)
+	    (doc-view-minor-mode)
+	    (add-hook 'write-file-functions
+		      (lambda ()
+			(when (eq major-mode 'text-mode)
+			  (error "Cannot save text contents of document %s"
+				 buffer-file-name)))
+		      nil t))
 	(doc-view-doc->txt txt 'doc-view-open-text)))))
 
 ;;;;; Toggle between editing and viewing
@@ -1384,20 +1433,30 @@ For now these keys are useful:
 (defun doc-view-toggle-display ()
   "Toggle between editing a document as text or viewing it."
   (interactive)
-  (if (eq major-mode 'doc-view-mode)
-      ;; Switch to editing mode
-      (progn
-	(doc-view-kill-proc)
-	(setq buffer-read-only nil)
-	;; Switch to the previously used major mode or fall back to
-	;; normal mode.
-	(doc-view-fallback-mode)
-	(doc-view-minor-mode 1))
+  (cond
+   ((eq major-mode 'doc-view-mode)
+    ;; Switch to editing mode
+    (doc-view-kill-proc)
+    (setq buffer-read-only nil)
+    ;; Switch to the previously used major mode or fall back to
+    ;; normal mode.
+    (doc-view-fallback-mode)
+    (doc-view-minor-mode 1))
+   ((eq major-mode 'text-mode)
+    (let ((buffer-undo-list t))
+      ;; We're currently viewing the document's text contents, so switch
+      ;; back to .
+      (setq buffer-read-only nil)
+      (insert-file-contents doc-view--buffer-file-name nil nil nil t)
+      (doc-view-fallback-mode)
+      (doc-view-minor-mode 1)
+      (set-buffer-modified-p nil)))
+   (t
     ;; Switch to doc-view-mode
     (when (and (buffer-modified-p)
 	       (y-or-n-p "The buffer has been modified.  Save the changes? "))
       (save-buffer))
-    (doc-view-mode)))
+    (doc-view-mode))))
 
 ;;;; Searching
 
@@ -1553,11 +1612,11 @@ If BACKWARD is non-nil, jump to the previous match."
      (concat "No PNG support is available, or some conversion utility for "
 	     (file-name-extension doc-view--buffer-file-name)
 	     " files is missing."))
-    (when (and (executable-find doc-view-pdftotext-program)
-	       (y-or-n-p
-		"Unable to render file.  View extracted text instead? "))
-      (doc-view-open-text))
-    (doc-view-toggle-display)))
+    (if (and (executable-find doc-view-pdftotext-program)
+	     (y-or-n-p
+	      "Unable to render file.  View extracted text instead? "))
+	(doc-view-open-text)
+      (doc-view-toggle-display))))
 
 (defvar bookmark-make-record-function)
 
@@ -1584,24 +1643,26 @@ If BACKWARD is non-nil, jump to the previous match."
   "Figure out the current document type (`doc-view-doc-type')."
   (let ((name-types
 	 (when buffer-file-name
-	   (cdr (assoc (file-name-extension buffer-file-name)
-		       '(
-			 ;; DVI
-			 ("dvi" dvi)
-			 ;; PDF
-			 ("pdf" pdf) ("epdf" pdf)
-			 ;; PostScript
-			 ("ps" ps) ("eps" ps)
-			 ;; DjVu
-			 ("djvu" djvu)
-			 ;; OpenDocument formats
-			 ("odt" odf) ("ods" odf) ("odp" odf) ("odg" odf)
-			 ("odc" odf) ("odi" odf) ("odm" odf) ("ott" odf)
-			 ("ots" odf) ("otp" odf) ("otg" odf)
-			 ;; Microsoft Office formats (also handled
-			 ;; by the odf conversion chain)
-			 ("doc" odf) ("docx" odf) ("xls" odf) ("xlsx" odf)
-			 ("ppt" odf) ("pptx" odf))))))
+	   (cdr (assoc-string
+                 (file-name-extension buffer-file-name)
+                 '(
+                   ;; DVI
+                   ("dvi" dvi)
+                   ;; PDF
+                   ("pdf" pdf) ("epdf" pdf)
+                   ;; PostScript
+                   ("ps" ps) ("eps" ps)
+                   ;; DjVu
+                   ("djvu" djvu)
+                   ;; OpenDocument formats.
+                   ("odt" odf) ("ods" odf) ("odp" odf) ("odg" odf)
+                   ("odc" odf) ("odi" odf) ("odm" odf) ("ott" odf)
+                   ("ots" odf) ("otp" odf) ("otg" odf)
+                   ;; Microsoft Office formats (also handled by the odf
+                   ;; conversion chain).
+                   ("doc" odf) ("docx" odf) ("xls" odf) ("xlsx" odf)
+                   ("ppt" odf) ("pps" odf) ("pptx" odf) ("rtf" odf))
+		 t))))
 	(content-types
 	 (save-excursion
 	   (goto-char (point-min))
@@ -1632,6 +1693,9 @@ If BACKWARD is non-nil, jump to the previous match."
 ;; desktop.el integration
 
 (defun doc-view-desktop-save-buffer (_desktop-dirname)
+  ;; FIXME: This is wrong, since this info is per-window but we only do it once
+  ;; here for the buffer.  IOW it should be saved via something like
+  ;; `window-persistent-parameters'.
   `((page . ,(doc-view-current-page))
     (slice . ,(doc-view-current-slice))))
 
@@ -1642,8 +1706,13 @@ If BACKWARD is non-nil, jump to the previous match."
   (let ((page  (cdr (assq 'page misc)))
 	(slice (cdr (assq 'slice misc))))
     (desktop-restore-file-buffer file name misc)
+    ;; FIXME: We need to run this code after displaying the buffer.
     (with-selected-window (or (get-buffer-window (current-buffer) 0)
 			      (selected-window))
+      ;; FIXME: This should be done for all windows restored that show
+      ;; this buffer.  Basically, the page/slice should be saved as
+      ;; window-parameters in the window-state(s) and then restoring this
+      ;; window-state should call us back (to interpret/use those parameters).
       (doc-view-goto-page page)
       (when slice (apply 'doc-view-set-slice slice)))))
 
@@ -1710,6 +1779,8 @@ toggle between displaying the document or editing it as text.
     (when (not (string= doc-view--buffer-file-name buffer-file-name))
       (write-region nil nil doc-view--buffer-file-name))
 
+    (setq-local revert-buffer-function #'doc-view-revert-buffer)
+
     (add-hook 'change-major-mode-hook
 	      (lambda ()
 		(doc-view-kill-proc)
@@ -1733,9 +1804,12 @@ toggle between displaying the document or editing it as text.
                   "/" (:eval (number-to-string (doc-view-last-page-number)))))
     ;; Don't scroll unless the user specifically asked for it.
     (setq-local auto-hscroll-mode nil)
-    (setq-local mwheel-scroll-up-function #'doc-view-scroll-up-or-next-page)
-    (setq-local mwheel-scroll-down-function
-                #'doc-view-scroll-down-or-previous-page)
+    (if (boundp 'mwheel-scroll-up-function) ; not --without-x build
+        (setq-local mwheel-scroll-up-function
+                    #'doc-view-scroll-up-or-next-page))
+    (if (boundp 'mwheel-scroll-down-function)
+        (setq-local mwheel-scroll-down-function
+                    #'doc-view-scroll-down-or-previous-page))
     (setq-local cursor-type nil)
     (use-local-map doc-view-mode-map)
     (add-hook 'after-revert-hook 'doc-view-reconvert-doc nil t)
@@ -1822,20 +1896,23 @@ See the command `doc-view-mode' for more information on this mode."
          `((page     . ,(doc-view-current-page))
            (handler  . doc-view-bookmark-jump))))
 
-
 ;;;###autoload
 (defun doc-view-bookmark-jump (bmk)
   ;; This implements the `handler' function interface for record type
   ;; returned by `doc-view-bookmark-make-record', which see.
-  (prog1 (bookmark-default-handler bmk)
-    (let ((page (bookmark-prop-get bmk 'page)))
-      (when (not (eq major-mode 'doc-view-mode))
-        (doc-view-toggle-display))
-      (with-selected-window
-       (or (get-buffer-window (current-buffer) 0)
-	   (selected-window))
-       (doc-view-goto-page page)))))
-
+  (let ((page (bookmark-prop-get bmk 'page))
+	(show-fn-sym (make-symbol "doc-view-bookmark-after-jump-hook")))
+    (fset show-fn-sym
+	  (lambda ()
+	    (remove-hook 'bookmark-after-jump-hook show-fn-sym)
+	    (when (not (eq major-mode 'doc-view-mode))
+	      (doc-view-toggle-display))
+	    (with-selected-window
+		(or (get-buffer-window (current-buffer) 0)
+		    (selected-window))
+	      (doc-view-goto-page page))))
+    (add-hook 'bookmark-after-jump-hook show-fn-sym)
+    (bookmark-default-handler bmk)))
 
 (provide 'doc-view)
 

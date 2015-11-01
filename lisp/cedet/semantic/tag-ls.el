@@ -1,6 +1,6 @@
 ;;; semantic/tag-ls.el --- Language Specific override functions for tags
 
-;; Copyright (C) 1999-2004, 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2004, 2006-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -271,11 +271,11 @@ search locally, then semanticdb for that tag (when enabled.)")
 (define-overloadable-function semantic-tag-protection (tag &optional parent)
   "Return protection information about TAG with optional PARENT.
 This function returns on of the following symbols:
-   nil        - No special protection.  Language dependent.
-   'public    - Anyone can access this TAG.
-   'private   - Only methods in the local scope can access TAG.
-   'protected - Like private for outside scopes, like public for child
-                classes.
+   nil         - No special protection.  Language dependent.
+   `public'    - Anyone can access this TAG.
+   `private'   - Only methods in the local scope can access TAG.
+   `protected' - Like private for outside scopes, like public for child
+                 classes.
 Some languages may choose to provide additional return symbols specific
 to themselves.  Use of this function should allow for this.
 

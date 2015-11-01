@@ -1,6 +1,6 @@
 ;;; complete.el --- partial completion mechanism plus other goodies
 
-;; Copyright (C) 1990-1993, 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1990-1993, 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: Dave Gillespie <daveg@synaptics.com>
 ;; Keywords: abbrev convenience
@@ -963,7 +963,7 @@ or properties are considered."
  Environment vars are converted to their values."
    (interactive)
    (let* ((end (point))
-          (beg (if (re-search-backward "[^\\][ \t\n\"\`\'][^ \t\n\"\`\']"
+          (beg (if (re-search-backward "[^\\][ \t\n\"`'][^ \t\n\"`']"
 				       (point-min) t)
                    (+ (point) 2)
                    (point-min)))

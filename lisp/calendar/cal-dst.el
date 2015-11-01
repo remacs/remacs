@@ -1,6 +1,6 @@
 ;;; cal-dst.el --- calendar functions for daylight saving rules
 
-;; Copyright (C) 1993-1996, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1993-1996, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Paul Eggert <eggert@twinsun.com>
 ;;         Edward M. Reingold <reingold@cs.uiuc.edu>
@@ -82,7 +82,7 @@ list and for correcting times of day in the solar and lunar calculations.
 
 For example, if daylight saving time ends on the last Sunday in October:
 
-      '(calendar-nth-named-day -1 0 10 year)
+      (calendar-nth-named-day -1 0 10 year)
 
 If the locale never uses daylight saving time, set this to nil."
   :type 'sexp
@@ -179,6 +179,7 @@ Return nil if no such transition can be found."
          (if (eq (car (current-time-zone probe)) hi-utc-diff)
              (setq hi probe)
            (setq lo probe)))
+       (setcdr hi (list (cdr hi)))
        hi))))
 
 (autoload 'calendar-persian-to-absolute "cal-persia")

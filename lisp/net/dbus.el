@@ -1,6 +1,6 @@
 ;;; dbus.el --- Elisp bindings for D-Bus.
 
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Michael Albinus <michael.albinus@gmx.de>
 ;; Keywords: comm, hardware
@@ -35,7 +35,7 @@
 
 ;; Declare used subroutines and variables.
 (declare-function dbus-message-internal "dbusbind.c")
-(declare-function dbus-init-bus "dbusbind.c")
+(declare-function dbus--init-bus "dbusbind.c")
 (defvar dbus-message-type-invalid)
 (defvar dbus-message-type-method-call)
 (defvar dbus-message-type-method-return)
@@ -54,6 +54,9 @@
 
 (defconst dbus-path-dbus "/org/freedesktop/DBus"
   "The object path used to talk to the bus itself.")
+
+(defconst dbus-path-local (concat dbus-path-dbus "/Local")
+  "The object path used in local/in-process-generated messages.")
 
 ;; Default D-Bus interfaces.
 
@@ -129,6 +132,15 @@ See URL `http://dbus.freedesktop.org/doc/dbus-specification.html#standard-interf
 ;;   </signal>
 ;; </interface>
 
+(defconst dbus-interface-local (concat dbus-interface-dbus ".Local")
+  "An interface whose methods can only be invoked by the local implementation.")
+
+;; <interface name="org.freedesktop.DBus.Local">
+;;   <signal name="Disconnected">
+;;     <arg name="object_path"               type="o"/>
+;;   </signal>
+;; </interface>
+
 ;; Emacs defaults.
 (defconst dbus-service-emacs "org.gnu.Emacs"
   "The well known service name of Emacs.")
@@ -154,7 +166,7 @@ Otherwise, return result of last form in BODY, or all other errors."
 
 (define-obsolete-variable-alias 'dbus-event-error-hooks
   'dbus-event-error-functions "24.3")
-(defvar dbus-event-error-functions nil
+(defvar dbus-event-error-functions '(dbus-notice-synchronous-call-errors)
   "Functions to be called when a D-Bus error happens in the event handler.
 Every function must accept two arguments, the event and the error variable
 caught in `condition-case' by `dbus-error'.")
@@ -167,17 +179,34 @@ caught in `condition-case' by `dbus-error'.")
 A key in this hash table is a list (:serial BUS SERIAL), like in
 `dbus-registered-objects-table'.  BUS is either a Lisp symbol,
 `:system' or `:session', or a string denoting the bus address.
-SERIAL is the serial number of the reply message.")
+SERIAL is the serial number of the reply message.
+
+The value of an entry is a cons (STATE . RESULT).  STATE can be
+either `:pending' (we are still waiting for the result),
+`:complete' (the result is available) or `:error' (the reply
+message was an error message).")
 
 (defun dbus-call-method-handler (&rest args)
   "Handler for reply messages of asynchronous D-Bus message calls.
 It calls the function stored in `dbus-registered-objects-table'.
 The result will be made available in `dbus-return-values-table'."
-  (puthash (list  :serial
-		  (dbus-event-bus-name last-input-event)
-		 (dbus-event-serial-number last-input-event))
-	   (if (= (length args) 1) (car args) args)
-	   dbus-return-values-table))
+  (let* ((key (list :serial
+		    (dbus-event-bus-name last-input-event)
+		    (dbus-event-serial-number last-input-event)))
+         (result (gethash key dbus-return-values-table)))
+    (when (consp result)
+      (setcar result :complete)
+      (setcdr result (if (= (length args) 1) (car args) args)))))
+
+(defun dbus-notice-synchronous-call-errors (ev er)
+  "Detect errors resulting from pending synchronous calls."
+  (let* ((key (list :serial
+		    (dbus-event-bus-name ev)
+		    (dbus-event-serial-number ev)))
+         (result (gethash key dbus-return-values-table)))
+    (when (consp result)
+      (setcar result :error)
+      (setcdr result er))))
 
 (defun dbus-call-method (bus service path interface method &rest args)
   "Call METHOD on the D-Bus BUS.
@@ -248,6 +277,8 @@ object is returned instead of a list containing this single Lisp object.
 
   => \"i686\""
 
+  (or (featurep 'dbusbind)
+      (signal 'dbus-error (list "Emacs not compiled with dbus support")))
   (or (memq bus '(:system :session)) (stringp bus)
       (signal 'wrong-type-argument (list 'keywordp bus)))
   (or (stringp service)
@@ -260,27 +291,44 @@ object is returned instead of a list containing this single Lisp object.
       (signal 'wrong-type-argument (list 'stringp method)))
 
   (let ((timeout (plist-get args :timeout))
+        (check-interval 0.001)
 	(key
 	 (apply
 	  'dbus-message-internal dbus-message-type-method-call
-	  bus service path interface method 'dbus-call-method-handler args)))
+	  bus service path interface method 'dbus-call-method-handler args))
+        (result (cons :pending nil)))
 
     ;; Wait until `dbus-call-method-handler' has put the result into
     ;; `dbus-return-values-table'.  If no timeout is given, use the
     ;; default 25".  Events which are not from D-Bus must be restored.
     ;; `read-event' performs a redisplay.  This must be suppressed; it
     ;; hurts when reading D-Bus events asynchronously.
-    (with-timeout ((if timeout (/ timeout 1000.0) 25))
-      (while (eq (gethash key dbus-return-values-table :ignore) :ignore)
-	(let ((event (let ((inhibit-redisplay t) unread-command-events)
-		       (read-event nil nil 0.1))))
-	  (when (and event (not (ignore-errors (dbus-check-event event))))
-	    (setq unread-command-events
-		  (append unread-command-events (list event)))))))
 
-    ;; Cleanup `dbus-return-values-table'.  Return the result.
-    (prog1
-	(gethash key dbus-return-values-table)
+    ;; Work around bug#16775 by busy-waiting with gradual backoff for
+    ;; dbus calls to complete.  A better approach would involve either
+    ;; adding arbitrary wait condition support to read-event or
+    ;; restructuring dbus as a kind of process object.  Poll at most
+    ;; about once per second for completion.
+
+    (puthash key result dbus-return-values-table)
+    (unwind-protect
+         (progn
+           (with-timeout ((if timeout (/ timeout 1000.0) 25)
+                          (signal 'dbus-error (list "call timed out")))
+             (while (eq (car result) :pending)
+               (let ((event (let ((inhibit-redisplay t) unread-command-events)
+                              (read-event nil nil check-interval))))
+		 (when event
+		   (if (ignore-errors (dbus-check-event event))
+		       (setf result (gethash key dbus-return-values-table))
+		     (setf unread-command-events
+			   (nconc unread-command-events
+				  (cons event nil)))))
+                 (when (< check-interval 1)
+                   (setf check-interval (* check-interval 1.05))))))
+           (when (eq (car result) :error)
+             (signal (cadr result) (cddr result)))
+           (cdr result))
       (remhash key dbus-return-values-table))))
 
 ;; `dbus-call-method' works non-blocking now.
@@ -329,13 +377,15 @@ Example:
 
 \(dbus-call-method-asynchronously
   :system \"org.freedesktop.Hal\" \"/org/freedesktop/Hal/devices/computer\"
-  \"org.freedesktop.Hal.Device\" \"GetPropertyString\" 'message
+  \"org.freedesktop.Hal.Device\" \"GetPropertyString\" \\='message
   \"system.kernel.machine\")
 
-  => \(:serial :system 2)
+  => (:serial :system 2)
 
   -| i686"
 
+  (or (featurep 'dbusbind)
+      (signal 'dbus-error (list "Emacs not compiled with dbus support")))
   (or (memq bus '(:system :session)) (stringp bus)
       (signal 'wrong-type-argument (list 'keywordp bus)))
   (or (stringp service)
@@ -384,6 +434,8 @@ Example:
   :session nil \"/org/gnu/Emacs\" \"org.gnu.Emacs.FileManager\"
   \"FileModified\" \"/home/albinus/.emacs\")"
 
+  (or (featurep 'dbusbind)
+      (signal 'dbus-error (list "Emacs not compiled with dbus support")))
   (or (memq bus '(:system :session)) (stringp bus)
       (signal 'wrong-type-argument (list 'keywordp bus)))
   (or (null service) (stringp service)
@@ -402,6 +454,8 @@ Example:
   "Return for message SERIAL on the D-Bus BUS.
 This is an internal function, it shall not be used outside dbus.el."
 
+  (or (featurep 'dbusbind)
+      (signal 'dbus-error (list "Emacs not compiled with dbus support")))
   (or (memq bus '(:system :session)) (stringp bus)
       (signal 'wrong-type-argument (list 'keywordp bus)))
   (or (stringp service)
@@ -416,6 +470,8 @@ This is an internal function, it shall not be used outside dbus.el."
   "Return error message for message SERIAL on the D-Bus BUS.
 This is an internal function, it shall not be used outside dbus.el."
 
+  (or (featurep 'dbusbind)
+      (signal 'dbus-error (list "Emacs not compiled with dbus support")))
   (or (memq bus '(:system :session)) (stringp bus)
       (signal 'wrong-type-argument (list 'keywordp bus)))
   (or (stringp service)
@@ -488,6 +544,10 @@ placed in the queue.
 
 `:already-owner': Service is already the primary owner."
 
+  ;; Add Peer handler.
+  (dbus-register-method
+   bus service nil dbus-interface-peer "Ping" 'dbus-peer-handler 'dont-register)
+
   ;; Add ObjectManager handler.
   (dbus-register-method
    bus service nil dbus-interface-objectmanager "GetManagedObjects"
@@ -521,7 +581,7 @@ denoting the bus address.  SERVICE must be a known service name.
 The function returns a keyword, indicating the result of the
 operation.  One of the following keywords is returned:
 
-`:released': Service has become the primary owner of the name.
+`:released': We successfully released the service.
 
 `:non-existent': Service name does not exist on this bus.
 
@@ -530,12 +590,13 @@ queue of this service."
 
   (maphash
    (lambda (key value)
-     (dolist (elt value)
-       (ignore-errors
-	 (when (and (equal bus (cadr key)) (string-equal service (cadr elt)))
-	   (unless
-	       (puthash key (delete elt value) dbus-registered-objects-table)
-	     (remhash key dbus-registered-objects-table))))))
+     (unless (equal :serial (car key))
+       (dolist (elt value)
+	 (ignore-errors
+	   (when (and (equal bus (cadr key)) (string-equal service (cadr elt)))
+	     (unless
+		 (puthash key (delete elt value) dbus-registered-objects-table)
+	       (remhash key dbus-registered-objects-table)))))))
    dbus-registered-objects-table)
   (let ((reply (dbus-call-method
 		bus dbus-service-dbus dbus-path-dbus dbus-interface-dbus
@@ -593,10 +654,10 @@ Example:
 
 \(dbus-register-signal
   :system \"org.freedesktop.Hal\" \"/org/freedesktop/Hal/Manager\"
-  \"org.freedesktop.Hal.Manager\" \"DeviceAdded\" 'my-signal-handler)
+  \"org.freedesktop.Hal.Manager\" \"DeviceAdded\" \\='my-signal-handler)
 
-  => \(\(:signal :system \"org.freedesktop.Hal.Manager\" \"DeviceAdded\")
-      \(\"org.freedesktop.Hal\" \"/org/freedesktop/Hal/Manager\" my-signal-handler))
+  => ((:signal :system \"org.freedesktop.Hal.Manager\" \"DeviceAdded\")
+      (\"org.freedesktop.Hal\" \"/org/freedesktop/Hal/Manager\" my-signal-handler))
 
 `dbus-register-signal' returns an object, which can be used in
 `dbus-unregister-object' for removing the registration."
@@ -646,7 +707,8 @@ Example:
 		 (setq counter (match-string 2 (symbol-name key))
 		       args (cdr args)
 		       value (car args))
-		 (unless (and (<= counter 63) (stringp value))
+		 (unless (and (<= (string-to-number counter) 63)
+			      (stringp value))
 		   (signal 'wrong-type-argument
 			   (list "Wrong argument" key value)))
 		 (format
@@ -751,7 +813,7 @@ discovering the still incomplete interface."
   "Unregister OBJECT from D-Bus.
 OBJECT must be the result of a preceding `dbus-register-method',
 `dbus-register-property' or `dbus-register-signal' call.  It
-returns `t' if OBJECT has been unregistered, `nil' otherwise.
+returns t if OBJECT has been unregistered, nil otherwise.
 
 When OBJECT identifies the last method or property, which is
 registered for the respective service, Emacs releases its
@@ -807,7 +869,7 @@ association to the service from D-Bus."
 				;; Service.
 				(string-equal service (cadr e))
 				;; Non-empty object path.
-				(cl-caddr e)
+				(nth 2 e)
 				(throw :found t)))))
 			 dbus-registered-objects-table)
 			nil))))
@@ -827,10 +889,18 @@ STRING shall be UTF8 coded."
       (dolist (elt (string-to-list string) (append '(:array) result))
 	(setq result (append result (list :byte elt)))))))
 
-(defun dbus-byte-array-to-string (byte-array)
+(defun dbus-byte-array-to-string (byte-array &optional multibyte)
   "Transforms BYTE-ARRAY into UTF8 coded string.
-BYTE-ARRAY must be a list of structure (c1 c2 ...)."
-  (apply 'string byte-array))
+BYTE-ARRAY must be a list of structure (c1 c2 ...), or a byte
+array as produced by `dbus-string-to-byte-array'.  The resulting
+string is unibyte encoded, unless MULTIBYTE is non-nil."
+  (apply
+   (if multibyte 'string 'unibyte-string)
+   (if (equal byte-array '(:array :signature "y"))
+       nil
+     (let (result)
+       (dolist (elt byte-array result)
+	 (when (characterp elt) (setq result (append result `(,elt)))))))))
 
 (defun dbus-escape-as-identifier (string)
   "Escape an arbitrary STRING so it follows the rules for a C identifier.
@@ -848,7 +918,7 @@ and a smaller allowed set. As a special case, \"\" is escaped to
 \"_\".
 
 Returns the escaped string.  Algorithm taken from
-telepathy-glib's `tp-escape-as-identifier'."
+telepathy-glib's `tp_escape_as_identifier'."
   (if (zerop (length string))
       "_"
     (replace-regexp-in-string
@@ -857,13 +927,13 @@ telepathy-glib's `tp-escape-as-identifier'."
      string)))
 
 (defun dbus-unescape-from-identifier (string)
-  "Retrieve the original string from the encoded STRING.
-STRING must have been coded with `dbus-escape-as-identifier'"
+  "Retrieve the original string from the encoded STRING as unibyte string.
+STRING must have been encoded with `dbus-escape-as-identifier'."
   (if (string-equal string "_")
       ""
     (replace-regexp-in-string
      "_.."
-     (lambda (x) (format "%c" (string-to-number (substring x 1) 16)))
+     (lambda (x) (byte-to-string (string-to-number (substring x 1) 16)))
      string)))
 
 
@@ -902,7 +972,8 @@ not well formed."
 	       ;; Service.
 	       (or (= dbus-message-type-method-return (nth 2 event))
 		   (= dbus-message-type-error (nth 2 event))
-		   (stringp (nth 4 event)))
+                   (or (stringp (nth 4 event))
+                       (null (nth 4 event))))
 	       ;; Object path.
 	       (or (= dbus-message-type-method-return (nth 2 event))
 		   (= dbus-message-type-error (nth 2 event))
@@ -953,7 +1024,7 @@ If the HANDLER returns a `dbus-error', it is propagated as return message."
 	  (nth 1 event) (nth 4 event) (nth 3 event) (cadr err))))
      ;; Propagate D-Bus error messages.
      (run-hook-with-args 'dbus-event-error-functions event err)
-     (when (or dbus-debug (= dbus-message-type-error (nth 2 event)))
+     (when dbus-debug
        (signal (car err) (cdr err))))))
 
 (defun dbus-event-bus-name (event)
@@ -1021,7 +1092,7 @@ well formed."
 (defun dbus-list-activatable-names (&optional bus)
   "Return the D-Bus service names which can be activated as list.
 If BUS is left nil, `:system' is assumed.  The result is a list
-of strings, which is `nil' when there are no activatable service
+of strings, which is nil when there are no activatable service
 names at all."
   (dbus-ignore-errors
     (dbus-call-method
@@ -1030,7 +1101,7 @@ names at all."
 
 (defun dbus-list-names (bus)
   "Return the service names registered at D-Bus BUS.
-The result is a list of strings, which is `nil' when there are no
+The result is a list of strings, which is nil when there are no
 registered service names at all.  Well known names are strings
 like \"org.freedesktop.DBus\".  Names starting with \":\" are
 unique names for services."
@@ -1048,7 +1119,7 @@ A service has a known name if it doesn't start with \":\"."
 
 (defun dbus-list-queued-owners (bus service)
   "Return the unique names registered at D-Bus BUS and queued for SERVICE.
-The result is a list of strings, or `nil' when there are no
+The result is a list of strings, or nil when there are no
 queued name owners service names at all."
   (dbus-ignore-errors
     (dbus-call-method
@@ -1057,7 +1128,7 @@ queued name owners service names at all."
 
 (defun dbus-get-name-owner (bus service)
   "Return the name owner of SERVICE registered at D-Bus BUS.
-The result is either a string, or `nil' if there is no name owner."
+The result is either a string, or nil if there is no name owner."
   (dbus-ignore-errors
     (dbus-call-method
      bus dbus-service-dbus dbus-path-dbus
@@ -1072,9 +1143,9 @@ Note, that this autoloads SERVICE if it is not running yet.  If
 it shall be checked whether SERVICE is already running, one shall
 apply
 
-  \(member service \(dbus-list-known-names bus))"
+  (member service \(dbus-list-known-names bus))"
   ;; "Ping" raises a D-Bus error if SERVICE does not exist.
-  ;; Otherwise, it returns silently with `nil'.
+  ;; Otherwise, it returns silently with nil.
   (condition-case nil
       (not
        (if (natnump timeout)
@@ -1084,6 +1155,22 @@ apply
 	 (dbus-call-method
 	  bus service dbus-path-dbus dbus-interface-peer "Ping")))
     (dbus-error nil)))
+
+(defun dbus-peer-handler ()
+  "Default handler for the \"org.freedesktop.DBus.Peer\" interface.
+It will be registered for all objects created by `dbus-register-service'."
+  (let* ((last-input-event last-input-event)
+	 (method (dbus-event-member-name last-input-event)))
+    (cond
+     ;; "Ping" does not return an output parameter.
+     ((string-equal method "Ping")
+      :ignore)
+     ;; "GetMachineId" returns "s".
+     ((string-equal method "GetMachineId")
+      (signal
+       'dbus-error
+       (list
+	(format "%s.GetMachineId not implemented" dbus-interface-peer)))))))
 
 
 ;;; D-Bus introspection.
@@ -1248,7 +1335,7 @@ object can contain \"annotation\" children."
 (defun dbus-introspect-get-annotation-names
   (bus service path interface &optional name)
   "Return all annotation names as list of strings.
-If NAME is `nil', the annotations are children of INTERFACE,
+If NAME is nil, the annotations are children of INTERFACE,
 otherwise NAME must be a \"method\", \"signal\", or \"property\"
 object, where the annotations belong to."
   (let ((object
@@ -1265,7 +1352,7 @@ object, where the annotations belong to."
 (defun dbus-introspect-get-annotation
   (bus service path interface name annotation)
   "Return ANNOTATION as XML object.
-If NAME is `nil', ANNOTATION is a child of INTERFACE, otherwise
+If NAME is nil, ANNOTATION is a child of INTERFACE, otherwise
 NAME must be the name of a \"method\", \"signal\", or
 \"property\" object, where the ANNOTATION belongs to."
   (let ((elt (xml-get-children
@@ -1289,7 +1376,7 @@ NAME must be the name of a \"method\", \"signal\", or
   "Return a list of all argument names as list of strings.
 NAME must be a \"method\" or \"signal\" object.
 
-Argument names are optional, the function can return `nil'
+Argument names are optional, the function can return nil
 therefore, even if the method or signal has arguments."
   (let ((object
 	 (or (dbus-introspect-get-method bus service path interface name)
@@ -1317,9 +1404,9 @@ element of the list returned by `dbus-introspect-get-argument-names'."
   (bus service path interface name &optional direction)
   "Return signature of a `method' or `signal', represented by NAME, as string.
 If NAME is a `method', DIRECTION can be either \"in\" or \"out\".
-If DIRECTION is `nil', \"in\" is assumed.
+If DIRECTION is nil, \"in\" is assumed.
 
-If NAME is a `signal', and DIRECTION is non-`nil', DIRECTION must
+If NAME is a `signal', and DIRECTION is non-nil, DIRECTION must
 be \"out\"."
   ;; For methods, we use "in" as default direction.
   (let ((object (or (dbus-introspect-get-method
@@ -1353,7 +1440,7 @@ be \"out\"."
 (defun dbus-get-property (bus service path interface property)
   "Return the value of PROPERTY of INTERFACE.
 It will be checked at BUS, SERVICE, PATH.  The result can be any
-valid D-Bus value, or `nil' if there is no PROPERTY."
+valid D-Bus value, or nil if there is no PROPERTY."
   (dbus-ignore-errors
    ;; "Get" returns a variant, so we must use the `car'.
    (car
@@ -1364,7 +1451,7 @@ valid D-Bus value, or `nil' if there is no PROPERTY."
 (defun dbus-set-property (bus service path interface property value)
   "Set value of PROPERTY of INTERFACE to VALUE.
 It will be checked at BUS, SERVICE, PATH.  When the value has
-been set successful, the result is VALUE.  Otherwise, `nil' is
+been set successful, the result is VALUE.  Otherwise, nil is
 returned."
   (dbus-ignore-errors
    ;; "Set" requires a variant.
@@ -1378,7 +1465,7 @@ returned."
   "Return all properties of INTERFACE at BUS, SERVICE, PATH.
 The result is a list of entries.  Every entry is a cons of the
 name of the property, and its value.  If there are no properties,
-`nil' is returned."
+nil is returned."
   (dbus-ignore-errors
     ;; "GetAll" returns "a{sv}".
     (let (result)
@@ -1544,22 +1631,22 @@ name, and the cdr is the list of properties as returned by
 
 \(dbus-get-all-managed-objects :session \"org.gnome.SettingsDaemon\" \"/\")
 
-  => \(\(\"/org/gnome/SettingsDaemon/MediaKeys\"
-       \(\"org.gnome.SettingsDaemon.MediaKeys\")
-       \(\"org.freedesktop.DBus.Peer\")
-       \(\"org.freedesktop.DBus.Introspectable\")
-       \(\"org.freedesktop.DBus.Properties\")
-       \(\"org.freedesktop.DBus.ObjectManager\"))
-      \(\"/org/gnome/SettingsDaemon/Power\"
-       \(\"org.gnome.SettingsDaemon.Power.Keyboard\")
-       \(\"org.gnome.SettingsDaemon.Power.Screen\")
-       \(\"org.gnome.SettingsDaemon.Power\"
-        \(\"Icon\" . \". GThemedIcon battery-full-charged-symbolic \")
-        \(\"Tooltip\" . \"Laptop battery is charged\"))
-       \(\"org.freedesktop.DBus.Peer\")
-       \(\"org.freedesktop.DBus.Introspectable\")
-       \(\"org.freedesktop.DBus.Properties\")
-       \(\"org.freedesktop.DBus.ObjectManager\"))
+  => ((\"/org/gnome/SettingsDaemon/MediaKeys\"
+       (\"org.gnome.SettingsDaemon.MediaKeys\")
+       (\"org.freedesktop.DBus.Peer\")
+       (\"org.freedesktop.DBus.Introspectable\")
+       (\"org.freedesktop.DBus.Properties\")
+       (\"org.freedesktop.DBus.ObjectManager\"))
+      (\"/org/gnome/SettingsDaemon/Power\"
+       (\"org.gnome.SettingsDaemon.Power.Keyboard\")
+       (\"org.gnome.SettingsDaemon.Power.Screen\")
+       (\"org.gnome.SettingsDaemon.Power\"
+        (\"Icon\" . \". GThemedIcon battery-full-charged-symbolic \")
+        (\"Tooltip\" . \"Laptop battery is charged\"))
+       (\"org.freedesktop.DBus.Peer\")
+       (\"org.freedesktop.DBus.Introspectable\")
+       (\"org.freedesktop.DBus.Properties\")
+       (\"org.freedesktop.DBus.ObjectManager\"))
       ...)
 
 If possible, \"org.freedesktop.DBus.ObjectManager.GetManagedObjects\"
@@ -1606,10 +1693,9 @@ and \"org.freedesktop.DBus.Properties.GetAll\", which is slow."
 
 (defun dbus-managed-objects-handler ()
   "Default handler for the \"org.freedesktop.DBus.ObjectManager\" interface.
-It will be registered for all objects created by `dbus-register-method'."
+It will be registered for all objects created by `dbus-register-service'."
   (let* ((last-input-event last-input-event)
 	 (bus (dbus-event-bus-name last-input-event))
-	 (service (dbus-event-service-name last-input-event))
 	 (path (dbus-event-path-name last-input-event)))
     ;; "GetManagedObjects" returns "a{oa{sa{sv}}}".
     (let (interfaces result)
@@ -1625,8 +1711,7 @@ It will be registered for all objects created by `dbus-register-method'."
       ;; Check all registered object paths.
       (maphash
        (lambda (key val)
-	 (let ((object (or (nth 2 (car-safe val)) ""))
-	       (interface (nth 2 key)))
+	 (let ((object (or (nth 2 (car-safe val)) "")))
 	   (when (and (equal (butlast key 2) (list :method bus))
 		      (string-prefix-p path object))
 	     (dolist (interface (cons (nth 2 key) interfaces))
@@ -1660,6 +1745,63 @@ It will be registered for all objects created by `dbus-register-method'."
 	    (cons :array (mapcar (lambda (y) (cons :dict-entry y)) (cdr x)))))
 	 result)
 	'(:signature "{oa{sa{sv}}}"))))))
+
+(defun dbus-handle-bus-disconnect ()
+  "React to a bus disconnection.
+BUS is the bus that disconnected.  This routine unregisters all
+handlers on the given bus and causes all synchronous calls
+pending at the time of disconnect to fail."
+  (let ((bus (dbus-event-bus-name last-input-event))
+        (keys-to-remove))
+    (maphash
+     (lambda (key value)
+       (when (and (eq (nth 0 key) :serial)
+                  (eq (nth 1 key) bus))
+         (run-hook-with-args
+          'dbus-event-error-functions
+          (list 'dbus-event
+                bus
+                dbus-message-type-error
+                (nth 2 key)
+                nil
+                nil
+                nil
+                nil
+                value)
+          (list 'dbus-error "Bus disconnected" bus))
+         (push key keys-to-remove)))
+     dbus-registered-objects-table)
+    (dolist (key keys-to-remove)
+      (remhash key dbus-registered-objects-table))))
+
+(defun dbus-init-bus (bus &optional private)
+  "Establish the connection to D-Bus BUS.
+
+BUS can be either the symbol `:system' or the symbol `:session', or it
+can be a string denoting the address of the corresponding bus.  For
+the system and session buses, this function is called when loading
+`dbus.el', there is no need to call it again.
+
+The function returns a number, which counts the connections this Emacs
+session has established to the BUS under the same unique name (see
+`dbus-get-unique-name').  It depends on the libraries Emacs is linked
+with, and on the environment Emacs is running.  For example, if Emacs
+is linked with the gtk toolkit, and it runs in a GTK-aware environment
+like Gnome, another connection might already be established.
+
+When PRIVATE is non-nil, a new connection is established instead of
+reusing an existing one.  It results in a new unique name at the bus.
+This can be used, if it is necessary to distinguish from another
+connection used in the same Emacs process, like the one established by
+GTK+.  It should be used with care for at least the `:system' and
+`:session' buses, because other Emacs Lisp packages might already use
+this connection to those buses."
+  (or (featurep 'dbusbind)
+      (signal 'dbus-error (list "Emacs not compiled with dbus support")))
+  (dbus--init-bus bus private)
+  (dbus-register-signal
+   bus nil dbus-path-local dbus-interface-local
+   "Disconnected" #'dbus-handle-bus-disconnect))
 
  
 ;; Initialize `:system' and `:session' buses.  This adds their file

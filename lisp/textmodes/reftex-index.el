@@ -1,6 +1,6 @@
 ;;; reftex-index.el --- index support with RefTeX
 
-;; Copyright (C) 1997-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997-2015 Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <dominik@science.uva.nl>
 ;; Maintainer: auctex-devel@gnu.org
@@ -35,6 +35,7 @@
 (defvar TeX-master)
 ;; END remove for XEmacs release
 
+;;;###autoload
 (defun reftex-index-selection-or-word (&optional arg phrase)
   "Put selection or the word near point into the default index macro.
 This uses the information in `reftex-index-default-macro' to make an index
@@ -87,6 +88,7 @@ which is part of AUCTeX, the string is first processed with the
         (delete-region beg end)
         (reftex-index def-char full-entry def-tag sel)))))
 
+;;;###autoload
 (defun reftex-index (&optional char key tag sel no-insert)
   "Query for an index macro and insert it along with its arguments.
 The index macros available are those defined in `reftex-index-macro' or
@@ -156,6 +158,7 @@ will prompt for other arguments."
                (member tag tag-list)))
       (put reftex-docstruct-symbol 'default-index-tag tag)))
 
+;;;###autoload
 (defun reftex-index-complete-tag (&optional itag opt-args)
   ;; Ask the user for a tag, completing on known tags.
   ;; ITAG is the argument number which contains the tag.
@@ -180,6 +183,7 @@ will prompt for other arguments."
     (reftex-update-default-index tag)
     tag))
 
+;;;###autoload
 (defun reftex-index-select-tag ()
   ;; Have the user select an index tag.
   ;; FIXME: should we cache tag-alist, prompt and help?
@@ -249,6 +253,7 @@ will prompt for other arguments."
             (error "No index tag associated with %c" rpl)))))
      (t (error "This should not happen (reftex-index-select-tag)")))))
 
+;;;###autoload
 (defun reftex-index-complete-key (&optional tag optional initial)
   ;; Read an index key, with completion.
   ;; Restrict completion table on index tag TAG.
@@ -434,6 +439,7 @@ _ ^        Add/Remove parent key (to make this item a subitem).
 } / {      Restrict Index to a single document section / Widen.
 < / >      When restricted, move restriction to previous/next section.")
 
+;;;###autoload
 (defun reftex-index-show-entry (data &optional no-revisit)
   ;; Find an index entry associated with DATA and display it highlighted
   ;; in another window.  NO-REVISIT means we are not allowed to visit
@@ -462,6 +468,7 @@ _ ^        Add/Remove parent key (to make this item a subitem).
       (reftex-highlight 0 (match-beginning 0) (match-end 0) (current-buffer)))
     match))
 
+;;;###autoload
 (defun reftex-display-index (&optional tag overriding-restriction redo
                                        &rest locations)
   "Display a buffer with an index compiled from the current document.
@@ -537,18 +544,28 @@ With prefix 3, restrict index to region."
 
       (setq buffer-read-only nil)
       (insert (format
-"INDEX <%s> on %s
+               "INDEX <%s> on %s
 Restriction: <%s>
 SPC=view TAB=goto RET=goto+hide [e]dit [q]uit [r]escan [f]ollow [?]Help
 ------------------------------------------------------------------------------
-" index-tag (abbreviate-file-name master)
-(if (eq (car (car reftex-index-restriction-data)) 'toc)
-    (nth 2 (car reftex-index-restriction-data))
-  reftex-index-restriction-indicator)))
+"
+               index-tag (abbreviate-file-name master)
+               (if (eq (car (car reftex-index-restriction-data)) 'toc)
+                   (nth 2 (car reftex-index-restriction-data))
+                 reftex-index-restriction-indicator)))
 
       (if (reftex-use-fonts)
-          (put-text-property 1 (point) 'face reftex-index-header-face))
-      (put-text-property 1 (point) 'intangible t)
+          (put-text-property (point-min) (point)
+                             'face reftex-index-header-face))
+      (if (fboundp 'cursor-intangible-mode)
+          (cursor-intangible-mode 1)
+        ;; If `cursor-intangible' is not available, fallback on the old
+        ;; intrusive `intangible' property.
+        (put-text-property (point-min) (point) 'intangible t))
+      (add-text-properties (point-min) (point)
+                           '(cursor-intangible t
+                             front-sticky (cursor-intangible)
+                             rear-nonsticky (cursor-intangible)))
 
       (reftex-insert-index docstruct index-tag)
       (goto-char (point-min))
@@ -690,9 +707,10 @@ SPC=view TAB=goto RET=goto+hide [e]dit [q]uit [r]escan [f]ollow [?]Help
 
 (defun reftex-index-post-command-hook ()
   ;; Used in the post-command-hook for the *Index* buffer
+  ;; FIXME: Lots of redundancy with reftex-toc-post-command-hook!
   (when (get-text-property (point) :data)
-    (and (> (point) 1)
-         (not (get-text-property (point) 'intangible))
+    (and (> (point) 1) ;FIXME: Is this point-min or do we care about narrowing?
+         (not (get-text-property (point) 'cursor-intangible))
          (memq reftex-highlight-selection '(cursor both))
          (reftex-highlight 1
            (or (previous-single-property-change (1+ (point)) :data)
@@ -896,7 +914,7 @@ When index is restricted, select the previous section as restriction criterion."
   ;; If FINAL is t, stay there
   ;; If FINAL is 'hide, hide the *Index* window.
   ;; Otherwise, move cursor back into *Index* window.
-  ;; NO-REVISIT means don't visit files, just use live biffers.
+  ;; NO-REVISIT means don't visit files, just use live buffers.
 
   (let* ((data (get-text-property (point) :data))
          (index-window (selected-window))
@@ -1244,6 +1262,7 @@ This gets refreshed in every phrases command.")
     table)
   "Syntax table for RefTeX Index Phrases mode.")
 
+;;;###autoload
 (defun reftex-index-phrase-selection-or-word (arg)
   "Add current selection or word at point to the phrases buffer.
 When you are in transient-mark-mode and the region is active, the
@@ -1258,6 +1277,7 @@ You get a chance to edit the entry in the phrases buffer - finish with
        (substitute-command-keys
         "Return to LaTeX with \\[reftex-index-phrases-save-and-return]"))))
 
+;;;###autoload
 (defun reftex-index-visit-phrases-buffer ()
   "Switch to the phrases buffer, initialize if empty."
   (interactive)
@@ -1345,6 +1365,7 @@ If the buffer is non-empty, delete the old header first."
 (defvar reftex-index-phrases-menu)
 (defvar reftex-index-phrases-marker)
 (defvar reftex-index-phrases-restrict-file nil)
+;; NB this is a global autoload - see reftex.el.
 ;;;###autoload
 (define-derived-mode reftex-index-phrases-mode fundamental-mode "Phrases"
   "Major mode for managing the Index phrases of a LaTeX document.
@@ -2096,3 +2117,7 @@ Does not do a save-excursion."
 (provide 'reftex-index)
 
 ;;; reftex-index.el ends here
+
+;; Local Variables:
+;; generated-autoload-file: "reftex.el"
+;; End:

@@ -1,9 +1,9 @@
-;;; filesets.el --- handle group of files -*- coding: utf-8 -*-
+;;; filesets.el --- handle group of files
 
-;; Copyright (C) 2002-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
 ;; Author: Thomas Link <sanobast-emacs@yahoo.de>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: filesets convenience
 
 ;; This file is part of GNU Emacs.
@@ -415,10 +415,10 @@ at the last position.
 Possible uses: If you don't want to save `filesets-data' in your normal
 configuration file, you can add a something like this
 
-	\(lambda ()
-	      \(insert (format \"(setq-default filesets-data '%S)\"
+	(lambda ()
+	      (insert (format \"(setq-default filesets-data \\='%S)\"
 			      filesets-data))
-	      \(newline 2))
+	      (newline 2))
 
 to this hook.
 
@@ -550,14 +550,14 @@ will be recursively added to the menu.  `filesets-tree-max-level' tells up
 to which level the directory structure should be scanned/listed,
 i.e. how deep the menu should be.  Try something like
 
-	\(\"HOME -- only one level\"
-	 \(:tree \"~\" \"^[^.].*[^~]$\")
-	 \(:tree-max-level 1)
-	 \(:filter-dirs-flag t))
-	\(\"HOME -- up to 3 levels\"
-	 \(:tree \"~\" \"^[^.].*[^~]$\")
-	 \(:tree-max-level 3)
-	 \(:filter-dirs-flag t))
+	(\"HOME -- only one level\"
+	 (:tree \"~\" \"^[^.].*[^~]$\")
+	 (:tree-max-level 1)
+	 (:filter-dirs-flag t))
+	(\"HOME -- up to 3 levels\"
+	 (:tree \"~\" \"^[^.].*[^~]$\")
+	 (:tree-max-level 3)
+	 (:filter-dirs-flag t))
 
 and it should become clear what this option is about.  In any case,
 including directory trees to the menu can take a lot of memory."
@@ -679,20 +679,20 @@ variables my-ps-viewer, my-pdf-viewer, my-dvi-viewer, my-pic-viewer.
 In order to view pdf or rtf files in an Emacs buffer, you could use these:
 
 
-      \(\"^.+\\\\.pdf\\\\'\" \"pdftotext\"
-       \((:capture-output t)
-	\(:args (\"%S - | fmt -w \" window-width))
-	\(:ignore-on-read-text t)
-	\(:constraintp (lambda ()
-			\(and \(filesets-which-command-p \"pdftotext\")
-			     \(filesets-which-command-p \"fmt\"))))))
-      \(\"^.+\\\\.rtf\\\\'\" \"rtf2htm\"
-       \((:capture-output t)
-	\(:args (\"%S 2> /dev/null | w3m -dump -T text/html\"))
-	\(:ignore-on-read-text t)
-	\(:constraintp (lambda ()
-			\(and (filesets-which-command-p \"rtf2htm\")
-			     \(filesets-which-command-p \"w3m\"))))))"
+      (\"^.+\\\\.pdf\\\\\\='\" \"pdftotext\"
+       ((:capture-output t)
+	(:args (\"%S - | fmt -w \" window-width))
+	(:ignore-on-read-text t)
+	(:constraintp (lambda ()
+			(and (filesets-which-command-p \"pdftotext\")
+			     (filesets-which-command-p \"fmt\"))))))
+      (\"^.+\\\\.rtf\\\\\\='\" \"rtf2htm\"
+       ((:capture-output t)
+	(:args (\"%S 2> /dev/null | w3m -dump -T text/html\"))
+	(:ignore-on-read-text t)
+	(:constraintp (lambda ()
+			(and (filesets-which-command-p \"rtf2htm\")
+			     (filesets-which-command-p \"w3m\"))))))"
   :set (function filesets-set-default)
   :type '(repeat :tag "Viewer"
 		 (list :tag "Definition"
@@ -756,7 +756,7 @@ In order to view pdf or rtf files in an Emacs buffer, you could use these:
 (defcustom filesets-ingroup-patterns
   '(("^.+\\.tex$" t
      (((:name "Package")
-       (:pattern "\\\\usepackage\\W*\\(\\[[^\]]*\\]\\W*\\)?{\\W*\\(.+\\)\\W*}")
+       (:pattern "\\\\usepackage\\W*\\(\\[[^]]*\\]\\W*\\)?{\\W*\\(.+\\)\\W*}")
        (:match-number 2)
        (:stub-flag t)
        (:get-file-name (lambda (master file)
@@ -951,18 +951,18 @@ variable will take effect after rebuilding the menu.
 Caveat: Fileset names have to be unique.
 
 Example definition:
-      '\(\(\"My Wiki\"
-	 \(:ingroup \"~/Etc/My-Wiki/WikiContents\"))
-	\(\"My Homepage\"
-	 \(:pattern \"~/public_html/\" \"^.+\\\\.html$\")
-	 \(:open filesets-find-file))
-	\(\"User Configuration\"
-	 \(:files \"~/.xinitrc\"
+      \\='((\"My Wiki\"
+	 (:ingroup \"~/Etc/My-Wiki/WikiContents\"))
+	(\"My Homepage\"
+	 (:pattern \"~/public_html/\" \"^.+\\\\.html$\")
+	 (:open filesets-find-file))
+	(\"User Configuration\"
+	 (:files \"~/.xinitrc\"
 		 \"~/.bashrc\"
 		 \"~/.bash_profile\"))
-	\(\"HOME\"
-	 \(:tree \"~\" \"^[^.].*[^~]$\")
-	 \(:filter-dirs-flag t)))
+	(\"HOME\"
+	 (:tree \"~\" \"^[^.].*[^~]$\")
+	 (:filter-dirs-flag t)))
 
 `filesets-data' is a list of (NAME-AS-STRING . DEFINITION), DEFINITION
 being an association list with the fields:
@@ -975,7 +975,7 @@ being an association list with the fields:
 
 :pattern DIR PATTERN ... a base directory and a regexp matching
                          files in that directory.  Usually,
-                         PATTERN has the form '^REGEXP$'.  Unlike
+                         PATTERN has the form `^REGEXP$'.  Unlike
                          :tree, this form does not descend
                          recursively into subdirectories.
 
@@ -1767,7 +1767,7 @@ Use LOOKUP-NAME for searching additional data if provided."
 				    n name)))
 	      (dolist (this files nil)
 		(filesets-file-open open-function this))
-	    (message "Filesets: cancelled")))
+	    (message "Filesets: canceled")))
       (filesets-error 'error "Filesets: Unknown fileset: " name))))
 
 (defun filesets-close (&optional mode name lookup-name)
@@ -1799,7 +1799,7 @@ User will be queried, if no fileset name is provided."
 		     (current-buffer)))
 	 (name   (or name
 		     (completing-read
-		      (format "Add '%s' to fileset: " buffer)
+		      (format-message "Add `%s' to fileset: " buffer)
 		      filesets-data nil)))
          (entry  (or (assoc name filesets-data)
                      (when (y-or-n-p
@@ -1808,7 +1808,8 @@ User will be queried, if no fileset name is provided."
                        (progn
       (add-to-list 'filesets-data (list name '(:files)))
       (message
-       "Fileset %s created.  Call `M-x filesets-save-config' to save."
+       (substitute-command-keys
+        "Fileset %s created.  Call `\\[filesets-save-config]' to save.")
        name)
       (car filesets-data))))))
     (if entry
@@ -1818,13 +1819,13 @@ User will be queried, if no fileset name is provided."
 					:test 'filesets-files-equalp)))
 	  (cond
 	   (inlist
-	    (message "Filesets: '%s' is already in '%s'" this name))
+	    (message "Filesets: `%s' is already in `%s'" this name))
 	   ((and (equal (filesets-entry-mode entry) ':files)
 		 this)
 	    (filesets-entry-set-files entry (cons this files) t)
 	    (filesets-set-config name 'filesets-data filesets-data))
 	   (t
-	    (message "Filesets: Can't add '%s' to fileset '%s'" this name)))))))
+	    (message "Filesets: Can't add `%s' to fileset `%s'" this name)))))))
 
 (defun filesets-remove-buffer (&optional name buffer)
   "Remove BUFFER (or current buffer) to fileset NAME.
@@ -1834,7 +1835,7 @@ User will be queried, if no fileset name is provided."
 		     (current-buffer)))
 	 (name   (or name
 		     (completing-read
-		      (format "Remove '%s' from fileset: " buffer)
+		      (format-message "Remove `%s' from fileset: " buffer)
 		      filesets-data nil t)))
 		 (entry (assoc name filesets-data)))
     (if entry
@@ -1847,7 +1848,7 @@ User will be queried, if no fileset name is provided."
 	      (let ((new (list (cons ':files (delete (car inlist) files)))))
 		(setcdr entry new)
 		(filesets-set-config name 'filesets-data filesets-data))
-	    (message "Filesets: Can't remove '%s' from fileset '%s'"
+	    (message "Filesets: Can't remove `%s' from fileset `%s'"
 		     this
 		     name))))))
 
@@ -2436,11 +2437,11 @@ fileset thinks this is necessary or not."
   (filesets-menu-cache-file-load))
 
 (defun filesets-update-pre010505 ()
-  (let ((msg
+  (let ((msg (format-message
 "Filesets: manual editing of user data required!
 
 Filesets has detected that you were using an older version before,
-which requires some manual updating. Type 'y' for editing the startup
+which requires some manual updating. Type `y' for editing the startup
 file now.
 
 The layout of `filesets-data' has changed. Please delete your cache file
@@ -2449,13 +2450,13 @@ and edit your startup file as shown below:
 1. `filesets-data': Edit all :pattern filesets in your startup file and
 transform all entries as shown in this example:
 
-   	\(\"Test\" (:pattern \"~/dir/^pattern$\"))
-	--> \(\"Test\" (:pattern \"~/dir/\" \"^pattern$\"))
+	(\"Test\" (:pattern \"~/dir/^pattern$\"))
+	--> (\"Test\" (:pattern \"~/dir/\" \"^pattern$\"))
 
 2. `filesets-data': Change all occurrences of \":document\" to \":ingroup\":
 
-      \(\(\"Test\" \(:document \"~/dir/file\"))
-      --> \(\(\"Test\" \(:ingroup \"~/dir/file\"))
+      ((\"Test\" (:document \"~/dir/file\"))
+      --> ((\"Test\" (:ingroup \"~/dir/file\"))
 
 3. `filesets-subdocument-patterns': If you already modified the variable
 previously called `filesets-subdocument-patterns', change its name to
@@ -2467,7 +2468,7 @@ variable, change the entry `filesets-subdocument--cache' to
 
 5. Type M-x filesets-update-cleanup and restart Emacs.
 
-We apologize for the inconvenience."))
+We apologize for the inconvenience.")))
     (let* ((cf (or custom-file user-init-file)))
       (switch-to-buffer-other-frame "*Filesets update*")
       (insert msg)

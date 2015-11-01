@@ -1,9 +1,9 @@
 ;;; tmm.el --- text mode access to menu-bar  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1994-1996, 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-1996, 2000-2015 Free Software Foundation, Inc.
 
 ;; Author: Ilya Zakharevich <ilya@math.mps.ohio-state.edu>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: convenience
 
 ;; This file is part of GNU Emacs.
@@ -50,7 +50,11 @@
   "Text-mode emulation of looking and choosing from a menubar.
 See the documentation for `tmm-prompt'.
 X-POSITION, if non-nil, specifies a horizontal position within the menu bar;
-we make that menu bar item (the one at that position) the default choice."
+we make that menu bar item (the one at that position) the default choice.
+
+Note that \\[menu-bar-open] by default drops down TTY menus; if you want it
+to invoke `tmm-menubar' instead, customize the variable
+`tty-menu-open-use-tmm' to a non-nil value."
   (interactive)
   (run-hooks 'menu-bar-update-hook)
   ;; Obey menu-bar-final-items; put those items last.
@@ -145,6 +149,8 @@ specify nil for this variable."
 	'(metadata (display-sort-function . identity))
       (complete-with-action action items string pred))))
 
+(defvar tmm--history nil)
+
 ;;;###autoload
 (defun tmm-prompt (menu &optional in-popup default-item)
   "Text-mode emulation of calling the bindings in keymap.
@@ -163,7 +169,7 @@ Its value should be an event that has a binding in MENU."
   ;; That is used for recursive calls only.
   (let ((gl-str "Menu bar")  ;; The menu bar itself is not a menu keymap
 					; so it doesn't have a name.
-	tmm-km-list out history history-len tmm-table-undef tmm-c-prompt
+	tmm-km-list out history-len tmm-table-undef tmm-c-prompt
 	tmm-old-mb-map tmm-short-cuts
 	chosen-string choice
 	(not-menu (not (keymapp menu))))
@@ -217,16 +223,18 @@ Its value should be an event that has a binding in MENU."
 			 (setq index-of-default (1+ index-of-default)))
 		     (setq tail (cdr tail)))))
              (let ((prompt (concat "^." (regexp-quote tmm-mid-prompt))))
-               (setq history
+               (setq tmm--history
                      (reverse (delq nil
                                     (mapcar
                                      (lambda (elt)
                                        (if (string-match prompt (car elt))
                                            (car elt)))
                                      tmm-km-list)))))
-	     (setq history-len (length history))
-	     (setq history (append history history history history))
-	     (setq tmm-c-prompt (nth (- history-len 1 index-of-default) history))
+	     (setq history-len (length tmm--history))
+	     (setq tmm--history (append tmm--history tmm--history
+                                        tmm--history tmm--history))
+	     (setq tmm-c-prompt (nth (- history-len 1 index-of-default)
+                                     tmm--history))
              (setq out
                    (if default-item
                        (car (nth index-of-default tmm-km-list))
@@ -235,7 +243,7 @@ Its value should be an event that has a binding in MENU."
                         (concat gl-str
                                 " (up/down to change, PgUp to menu): ")
                         (tmm--completion-table tmm-km-list) nil t nil
-                        (cons 'history
+                        (cons 'tmm--history
                               (- (* 2 history-len) index-of-default))))))))
       (setq choice (cdr (assoc out tmm-km-list)))
       (and (null choice)
@@ -363,7 +371,6 @@ Stores a list of all the shortcuts in the free variable `tmm-short-cuts'."
   (unless tmm-c-prompt
     (error "No active menu entries"))
   (setq tmm-old-mb-map (tmm-define-keys t))
-  ;; Get window and hide it for electric mode to get correct size
   (or tmm-completion-prompt
       (add-hook 'completion-setup-hook
                 'tmm-completion-delete-prompt 'append))
@@ -373,9 +380,15 @@ Stores a list of all the shortcuts in the free variable `tmm-short-cuts'."
   (with-current-buffer "*Completions*"
     (tmm-remove-inactive-mouse-face)
     (when tmm-completion-prompt
-      (let ((inhibit-read-only t))
+      (let ((inhibit-read-only t)
+	    (window (get-buffer-window "*Completions*")))
 	(goto-char (point-min))
-	(insert tmm-completion-prompt))))
+	(insert tmm-completion-prompt)
+	(when window
+	  ;; Try to show everything just inserted and preserve height of
+	  ;; *Completions* window.  This should fix a behavior described
+	  ;; in Bug#1291.
+	  (fit-window-to-buffer window nil nil nil nil t)))))
   (insert tmm-c-prompt))
 
 (defun tmm-shortcut ()

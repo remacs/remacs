@@ -1,5 +1,5 @@
 /* Functions for memory limit warnings.
-   Copyright (C) 1990, 1992, 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 1990, 1992, 2001-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -21,7 +21,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 
 #ifdef MSDOS
-#include <dpmi.h>
+#include "dosfns.h"
 extern int etext;
 #endif
 
@@ -51,6 +51,15 @@ char data_start[1] = { 1 };
 # endif
 #endif
 
+/* From gmalloc.c.  */
+extern void (* __after_morecore_hook) (void);
+extern void *(*__morecore) (ptrdiff_t);
+
+/* From ralloc.c.  */
+#ifdef REL_ALLOC
+extern void *(*real_morecore) (ptrdiff_t);
+#endif
+
 /*
   Level number of warnings already issued.
   0 -- no warnings issued.
@@ -71,15 +80,6 @@ static char *data_space_start;
 /* Number of bytes of writable memory we can expect to be able to get.  */
 static size_t lim_data;
 
-/* Return true if PTR cannot be represented as an Emacs Lisp object.  */
-static bool
-exceeds_lisp_ptr (void *ptr)
-{
-  return (! USE_LSB_TAG
-	  && VAL_MAX < UINTPTR_MAX
-	  && ((uintptr_t) ptr & ~DATA_SEG_BITS) >> VALBITS != 0);
-}
-
 #ifdef HAVE_GETRLIMIT
 
 # ifndef RLIMIT_AS
@@ -115,29 +115,10 @@ get_lim_data (void)
 void
 get_lim_data (void)
 {
-  _go32_dpmi_meminfo info;
-  unsigned long lim1, lim2;
+  unsigned long totalram, freeram, totalswap, freeswap;
 
-  _go32_dpmi_get_free_memory_information (&info);
-  /* DPMI server of Windows NT and its descendants reports in
-     info.available_memory a much lower amount that is really
-     available, which causes bogus "past 95% of memory limit"
-     warnings.  Try to overcome that via circumstantial evidence.  */
-  lim1 = info.available_memory;
-  lim2 = info.available_physical_pages;
-  /* DPMI Spec: "Fields that are unavailable will hold -1."  */
-  if ((long)lim1 == -1L)
-    lim1 = 0;
-  if ((long)lim2 == -1L)
-    lim2 = 0;
-  else
-    lim2 *= 4096;
-  /* Surely, the available memory is at least what we have physically
-     available, right?  */
-  if (lim1 >= lim2)
-    lim_data = lim1;
-  else
-    lim_data = lim2;
+  dos_memory_info (&totalram, &freeram, &totalswap, &freeswap);
+  lim_data = freeram;
   /* Don't believe they will give us more that 0.5 GB.   */
   if (lim_data > 512U * 1024U * 1024U)
     lim_data = 512U * 1024U * 1024U;
@@ -158,12 +139,9 @@ ret_lim_data (void)
 static void
 check_memory_limits (void)
 {
-#ifdef REL_ALLOC
-  extern void *(*real_morecore) (ptrdiff_t);
-#else
+#ifndef REL_ALLOC
   void *(*real_morecore) (ptrdiff_t) = 0;
 #endif
-  extern void *(*__morecore) (ptrdiff_t);
 
   char *cp;
   size_t five_percent;
@@ -192,19 +170,13 @@ check_memory_limits (void)
   if (new_warnlevel > warnlevel || new_warnlevel == warned_95)
     {
       warnlevel = new_warnlevel;
-      switch (warnlevel)
+      static char const *const warn_diagnostic[] =
 	{
-	case warned_75:
-	  (*warn_function) ("Warning: past 75% of memory limit");
-	  break;
-
-	case warned_85:
-	  (*warn_function) ("Warning: past 85% of memory limit");
-	  break;
-
-	case warned_95:
-	  (*warn_function) ("Warning: past 95% of memory limit");
-	}
+	  "Warning: past 75% of memory limit",
+	  "Warning: past 85% of memory limit",
+	  "Warning: past 95% of memory limit"
+	};
+      warn_function (warn_diagnostic[warnlevel - 1]);
     }
   /* Handle going down in usage levels, with some hysteresis.  */
   else
@@ -222,9 +194,6 @@ check_memory_limits (void)
       else if (warnlevel > warned_85 && data_size < five_percent * 18)
 	warnlevel = warned_85;
     }
-
-  if (exceeds_lisp_ptr (cp))
-    (*warn_function) ("Warning: memory in use exceeds lisp pointer size");
 }
 
 /* Enable memory usage warnings.
@@ -234,8 +203,6 @@ check_memory_limits (void)
 void
 memory_warnings (void *start, void (*warnfun) (const char *))
 {
-  extern void (* __after_morecore_hook) (void);     /* From gmalloc.c */
-
   data_space_start = start ? start : data_start;
 
   warn_function = warnfun;

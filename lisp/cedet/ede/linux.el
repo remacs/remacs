@@ -1,6 +1,6 @@
 ;;; ede/linux.el --- Special project for Linux
 
-;; Copyright (C) 2008-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -32,6 +32,8 @@
 ;; * Add texinfo lookup options.
 ;; * Add website
 
+(eval-when-compile (require 'cl))
+
 (require 'ede)
 (require 'ede/make)
 
@@ -46,6 +48,21 @@
   :group 'ede
   :version "24.3")
 
+(defcustom project-linux-build-directory-default 'ask
+  "Build directory."
+  :version "24.4"
+  :group 'project-linux
+  :type '(choice (const :tag "Same as source directory" same)
+                 (const :tag "Ask the user" ask)))
+
+(defcustom project-linux-architecture-default 'ask
+  "Target architecture to assume when not auto-detected."
+  :version "24.4"
+  :group 'project-linux
+  :type '(choice (string :tag "Architecture name")
+                 (const :tag "Ask the user" ask)))
+
+
 (defcustom project-linux-compile-target-command (concat ede-make-command " -k -C %s SUBDIRS=%s")
   "*Default command used to compile a target."
   :group 'project-linux
@@ -55,37 +72,6 @@
   "*Default command used to compile a project."
   :group 'project-linux
   :type 'string)
-
-(defvar ede-linux-project-list nil
-  "List of projects created by option `ede-linux-project'.")
-
-(defun ede-linux-file-existing (dir)
-  "Find a Linux project in the list of Linux projects.
-DIR is the directory to search from."
-  (let ((projs ede-linux-project-list)
-	(ans nil))
-    (while (and projs (not ans))
-      (let ((root (ede-project-root-directory (car projs))))
-	(when (string-match (concat "^" (regexp-quote root)) dir)
-	  (setq ans (car projs))))
-      (setq projs (cdr projs)))
-    ans))
-
-;;;###autoload
-(defun ede-linux-project-root (&optional dir)
-  "Get the root directory for DIR."
-  (when (not dir) (setq dir default-directory))
-  (let ((case-fold-search t)
-	(proj (ede-linux-file-existing dir)))
-    (if proj
-	(ede-up-directory (file-name-directory
-			   (oref proj :file)))
-      ;; No pre-existing project.  Let's take a wild-guess if we have
-      ;; an Linux project here.
-      (when (string-match "linux[^/]*" dir)
-	(let ((base (substring dir 0 (match-end 0))))
-	  (when (file-exists-p (expand-file-name "scripts/ver_linux" base))
-	      base))))))
 
 (defun ede-linux-version (dir)
   "Find the Linux version for the Linux src in DIR."
@@ -107,42 +93,131 @@ DIR is the directory to search from."
 	  (kill-buffer buff)
 	  )))))
 
-(defclass ede-linux-project (ede-project eieio-instance-tracker)
-  ((tracking-symbol :initform 'ede-linux-project-list)
-   )
+(defclass ede-linux-project (ede-project)
+  ((build-directory :initarg :build-directory
+                    :type string
+                    :documentation "Build directory.")
+   (architecture :initarg :architecture
+                 :type string
+                 :documentation "Target architecture.")
+   (include-path :initarg :include-path
+                 :type list
+                 :documentation "Include directories.
+Contains both common and target architecture-specific directories."))
   "Project Type for the Linux source code."
   :method-invocation-order :depth-first)
 
+
+(defun ede-linux--get-build-directory (dir)
+  "Detect build directory for sources in DIR.
+If DIR has not been used as a build directory, fall back to
+`project-linux-build-directory-default'."
+  (or
+   ;; detected build on source directory
+   (and (file-exists-p (expand-file-name ".config" dir)) dir)
+   ;; use configuration
+   (case project-linux-build-directory-default
+     (same dir)
+     (ask (read-directory-name "Select Linux' build directory: " dir)))))
+
+
+(defun ede-linux--get-archs (dir)
+  "Returns a list of architecture names found in DIR."
+  (let ((archs-dir (expand-file-name "arch" dir))
+        archs)
+    (when (file-directory-p archs-dir)
+      (mapc (lambda (elem)
+              (when (and
+                     (not (string= elem "."))
+                     (not (string= elem ".."))
+                     (not (string= elem "x86_64")) ; has no separate sources
+                     (file-directory-p
+                      (expand-file-name elem archs-dir)))
+                (add-to-list 'archs elem t)))
+            (directory-files archs-dir)))
+    archs))
+
+
+(defun ede-linux--detect-architecture (dir)
+  "Try to auto-detect the architecture as configured in DIR.
+DIR is Linux' build directory. If it cannot be auto-detected,
+returns `project-linux-architecture-default'."
+  (let ((archs-dir (expand-file-name "arch" dir))
+        (archs (ede-linux--get-archs dir))
+        arch found)
+    (or (and
+         archs
+         ;; Look for /arch/<arch>/include/generated
+         (progn
+           (while (and archs (not found))
+             (setq arch (car archs))
+             (when (file-directory-p
+                    (expand-file-name (concat arch "/include/generated")
+                                      archs-dir))
+               (setq found arch))
+             (setq archs (cdr archs)))
+           found))
+       project-linux-architecture-default)))
+
+(defun ede-linux--get-architecture (dir bdir)
+  "Try to auto-detect the architecture as configured in BDIR.
+Uses `ede-linux--detect-architecture' for the auto-detection. If
+the result is `ask', let the user choose from architectures found
+in DIR."
+  (let ((arch (ede-linux--detect-architecture bdir)))
+    (case arch
+      (ask
+       (completing-read "Select target architecture: "
+                        (ede-linux--get-archs dir)))
+      (t arch))))
+
+
+(defun ede-linux--include-path (dir bdir arch)
+  "Returns a list with include directories.
+Returned directories might not exist, since they are not created
+until Linux is built for the first time."
+  (map 'list
+       (lambda (elem) (format (concat (car elem) "/" (cdr elem)) arch))
+       ;; XXX: taken from the output of "make V=1"
+       (list (cons  dir "arch/%s/include")
+             (cons bdir "arch/%s/include/generated")
+             (cons  dir "include")
+             (cons bdir "include")
+             (cons  dir "arch/%s/include/uapi")
+             (cons bdir "arch/%s/include/generated/uapi")
+             (cons  dir "include/uapi")
+             (cons bdir "include/generated/uapi"))))
+
 ;;;###autoload
-(defun ede-linux-load (dir &optional rootproj)
+(defun ede-linux-load (dir &optional _rootproj)
   "Return an Linux Project object if there is a match.
 Return nil if there isn't one.
 Argument DIR is the directory it is created for.
 ROOTPROJ is nil, since there is only one project."
-  (or (ede-linux-file-existing dir)
-      ;; Doesn't already exist, so let's make one.
-      (let ((proj (ede-linux-project
-		   "Linux"
-		   :name "Linux"
-		   :version (ede-linux-version dir)
-		   :directory (file-name-as-directory dir)
-		   :file (expand-file-name "scripts/ver_linux"
-					   dir))))
-	(ede-add-project-to-global-list proj))
-      ))
+  ;; Doesn't already exist, so let's make one.
+  (let* ((bdir (ede-linux--get-build-directory dir))
+	 (arch (ede-linux--get-architecture dir bdir))
+	 (include-path (ede-linux--include-path dir bdir arch)))
+    (make-instance 'ede-linux-project
+     :name "Linux"
+     :version (ede-linux-version dir)
+     :directory (file-name-as-directory dir)
+     :file (expand-file-name "scripts/ver_linux"
+			     dir)
+     :build-directory bdir
+     :architecture arch
+     :include-path include-path)))
 
 ;;;###autoload
 (ede-add-project-autoload
- (ede-project-autoload "linux"
-		       :name "LINUX ROOT"
-		       :file 'ede/linux
-		       :proj-file "scripts/ver_linux"
-		       :proj-root-dirmatch "linux[^/]*"
-		       :proj-root 'ede-linux-project-root
-		       :load-type 'ede-linux-load
-		       :class-sym 'ede-linux-project
-		       :new-p nil
-		       :safe-p t)
+ (make-instance 'ede-project-autoload
+                :name "LINUX ROOT"
+                :file 'ede/linux
+                :proj-file "scripts/ver_linux"
+                :load-type 'ede-linux-load
+                :class-sym 'ede-linux-project
+                :new-p nil
+                :safe-p t)
  'unique)
 
 (defclass ede-linux-target-c (ede-target)
@@ -155,26 +230,26 @@ All directories need at least one target.")
   "EDE Linux Project target for Misc files.
 All directories need at least one target.")
 
-(defmethod initialize-instance ((this ede-linux-project)
-				&rest fields)
+(cl-defmethod initialize-instance ((this ede-linux-project)
+                                   &rest _fields)
   "Make sure the targets slot is bound."
-  (call-next-method)
+  (cl-call-next-method)
   (unless (slot-boundp this 'targets)
     (oset this :targets nil)))
 
 ;;; File Stuff
 ;;
-(defmethod ede-project-root-directory ((this ede-linux-project)
-				       &optional file)
+(cl-defmethod ede-project-root-directory ((this ede-linux-project)
+                                          &optional _file)
   "Return the root for THIS Linux project with file."
   (ede-up-directory (file-name-directory (oref this file))))
 
-(defmethod ede-project-root ((this ede-linux-project))
+(cl-defmethod ede-project-root ((this ede-linux-project))
   "Return my root."
   this)
 
-(defmethod ede-find-subproject-for-directory ((proj ede-linux-project)
-					      dir)
+(cl-defmethod ede-find-subproject-for-directory ((proj ede-linux-project)
+                                                 _dir)
   "Return PROJ, for handling all subdirs below DIR."
   proj)
 
@@ -185,12 +260,12 @@ All directories need at least one target.")
   (let ((match nil))
     (dolist (T targets)
       (when (and (object-of-class-p T class)
-		 (string= (oref T :path) dir))
+		 (string= (oref T path) dir))
 	(setq match T)
       ))
     match))
 
-(defmethod ede-find-target ((proj ede-linux-project) buffer)
+(cl-defmethod ede-find-target ((proj ede-linux-project) buffer)
   "Find an EDE target in PROJ for BUFFER.
 If one doesn't exist, create a new one for this directory."
   (let* ((ext (file-name-extension (buffer-file-name buffer)))
@@ -216,7 +291,7 @@ If one doesn't exist, create a new one for this directory."
 
 ;;; UTILITIES SUPPORT.
 ;;
-(defmethod ede-preprocessor-map ((this ede-linux-target-c))
+(cl-defmethod ede-preprocessor-map ((this ede-linux-target-c))
   "Get the pre-processor map for Linux C code.
 All files need the macros from lisp.h!"
   (require 'semantic/db)
@@ -241,25 +316,32 @@ All files need the macros from lisp.h!"
   (let ((F (expand-file-name name (expand-file-name subdir root))))
     (when (file-exists-p F) F)))
 
-(defmethod ede-expand-filename-impl ((proj ede-linux-project) name)
+(cl-defmethod ede-expand-filename-impl ((proj ede-linux-project) name)
   "Within this project PROJ, find the file NAME.
 Knows about how the Linux source tree is organized."
   (let* ((ext (file-name-extension name))
-	 (root (ede-project-root proj))
-	 (dir (ede-project-root-directory root))
-	 (F (cond
-	     ((not ext) nil)
-	     ((string-match "h" ext)
-	      (or (ede-linux-file-exists-name name dir "")
-		  (ede-linux-file-exists-name name dir "include"))
-	      )
-	     ((string-match "txt" ext)
-	      (ede-linux-file-exists-name name dir "Documentation"))
-	     (t nil)))
-	 )
-    (or F (call-next-method))))
+         (root (ede-project-root proj))
+         (dir (ede-project-root-directory root))
+         (bdir (oref proj build-directory))
+         (F (cond
+             ((not ext) nil)
+             ((string-match "h" ext)
+              (let ((dirs (oref proj include-path))
+                    found)
+                (while (and dirs (not found))
+                  (setq found
+                        (or (ede-linux-file-exists-name name bdir (car dirs))
+                           (ede-linux-file-exists-name name dir (car dirs))))
+                  (setq dirs (cdr dirs)))
+                found))
+             ((string-match "txt" ext)
+              (ede-linux-file-exists-name name dir "Documentation"))
+             (t nil))))
+    (or F (cl-call-next-method))))
 
-(defmethod project-compile-project ((proj ede-linux-project)
+;;; Command Support
+;;
+(cl-defmethod project-compile-project ((proj ede-linux-project)
 				    &optional command)
   "Compile the entire current project.
 Argument COMMAND is the command to use when compiling."
@@ -276,7 +358,7 @@ Argument COMMAND is the command to use when compiling."
 
     (compile command)))
 
-(defmethod project-compile-target ((obj ede-linux-target-c) &optional command)
+(cl-defmethod project-compile-target ((obj ede-linux-target-c) &optional command)
   "Compile the current target.
 Argument COMMAND is the command to use for compiling the target."
   (let* ((proj (ede-target-parent obj))
@@ -294,6 +376,19 @@ Argument COMMAND is the command to use for compiling the target."
 	       dir subdir)))
 
     (compile command)))
+
+(cl-defmethod project-rescan ((this ede-linux-project))
+  "Rescan this Linux project from the sources."
+  (let* ((dir (ede-project-root-directory this))
+	 (bdir (ede-linux--get-build-directory dir))
+	 (arch (ede-linux--get-architecture dir bdir))
+	 (inc (ede-linux--include-path dir bdir arch))
+	 (ver (ede-linux-version dir)))
+    (oset this version ver)
+    (oset this :build-directory bdir)
+    (oset this :architecture arch)
+    (oset this :include-path inc)
+    ))
 
 (provide 'ede/linux)
 

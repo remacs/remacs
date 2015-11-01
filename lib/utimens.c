@@ -1,6 +1,6 @@
 /* Set file access and modification times.
 
-   Copyright (C) 2003-2013 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by the
@@ -24,7 +24,6 @@
 #define _GL_UTIMENS_INLINE _GL_EXTERN_INLINE
 #include "utimens.h"
 
-#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdbool.h>
@@ -87,13 +86,14 @@ validate_timespec (struct timespec timespec[2])
 {
   int result = 0;
   int utime_omit_count = 0;
-  assert (timespec);
   if ((timespec[0].tv_nsec != UTIME_NOW
        && timespec[0].tv_nsec != UTIME_OMIT
-       && (timespec[0].tv_nsec < 0 || 1000000000 <= timespec[0].tv_nsec))
+       && ! (0 <= timespec[0].tv_nsec
+             && timespec[0].tv_nsec < TIMESPEC_RESOLUTION))
       || (timespec[1].tv_nsec != UTIME_NOW
           && timespec[1].tv_nsec != UTIME_OMIT
-          && (timespec[1].tv_nsec < 0 || 1000000000 <= timespec[1].tv_nsec)))
+          && ! (0 <= timespec[1].tv_nsec
+                && timespec[1].tv_nsec < TIMESPEC_RESOLUTION)))
     {
       errno = EINVAL;
       return -1;

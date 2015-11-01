@@ -1,9 +1,9 @@
 ;;; cmacexp.el --- expand C macros in a region
 
-;; Copyright (C) 1992, 1994, 1996, 2000-2013 Free Software Foundation,
+;; Copyright (C) 1992, 1994, 1996, 2000-2015 Free Software Foundation,
 ;; Inc.
 
-;; Author: Francesco Potorti` <pot@gnu.org>
+;; Author: Francesco Potortì <pot@gnu.org>
 ;; Adapted-By: ESR
 ;; Keywords: c
 
@@ -70,7 +70,7 @@
 ;; BUG REPORTS =======================================================
 
 ;; Please report bugs, suggestions, complaints and so on to
-;; pot@gnu.org (Francesco Potorti`).
+;; bug-gnu-emacs@gnu.org and pot@gnu.org (Francesco Potortì).
 
 ;; IMPROVEMENTS OVER emacs 18.xx cmacexp.el ==========================
 
@@ -364,8 +364,8 @@ Optional arg DISPLAY non-nil means show messages in the echo area."
 	    ;; Find and delete the mark of the start of the expansion.
 	    ;; Look for `# nn "file.c"' lines and delete them.
 	    (goto-char (point-min))
-	    (search-forward startmarker)
-	    (delete-region 1 (point)))
+            (if (search-forward startmarker nil t)
+                (delete-region 1 (point))))
 	  (while (re-search-forward (concat "^# [0-9]+ \""
 					    (regexp-quote filename)
 					    "\"") nil t)
@@ -389,8 +389,9 @@ Optional arg DISPLAY non-nil means show messages in the echo area."
 		;; Put the messages inside a comment, so they won't get in
 		;; the way of font-lock, highlighting etc.
 		(insert
-		 (format "/* Preprocessor terminated with status %s\n\n   Messages from `%s\':\n\n"
-			 exit-status cppcommand))
+		 (format
+		  "/* Preprocessor terminated with status %s\n\n   Messages from '%s':\n\n"
+		  exit-status cppcommand))
 		(goto-char (+ (point)
 			      (nth 1 (insert-file-contents tempname))))
 		(insert "\n\n*/\n")))

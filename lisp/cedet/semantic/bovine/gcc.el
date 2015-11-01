@@ -1,6 +1,6 @@
 ;;; semantic/bovine/gcc.el --- gcc querying special code for the C parser
 
-;; Copyright (C) 2008-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -86,13 +86,11 @@ to give to the program."
           (let ((chars (append line nil)))
             (when (= 32 (nth 0 chars))
               (let ((path (substring line 1)))
-                (when (file-accessible-directory-p path)
-                  (when (if (memq system-type '(windows-nt))
-                            (/= ?/ (nth 1 chars))
-                          (= ?/ (nth 1 chars)))
-                    (add-to-list 'inc-path
-                                 (expand-file-name (substring line 1))
-                                 t)))))))))
+                (when (and (file-accessible-directory-p path)
+                           (file-name-absolute-p path))
+                  (add-to-list 'inc-path
+                               (expand-file-name path)
+                               t))))))))
     inc-path))
 
 
@@ -139,9 +137,9 @@ to give to the program."
   "The GCC setup data.
 This is setup by `semantic-gcc-setup'.
 This is an alist, and should include keys of:
-  'version  - the version of gcc
-  '--host   - the host symbol (used in include directories)
-  '--prefix - where GCC was installed.
+  `version'  - the version of gcc
+  `--host'   - the host symbol (used in include directories)
+  `--prefix' - where GCC was installed.
 It should also include other symbols GCC was compiled with.")
 
 ;;;###autoload
@@ -166,8 +164,9 @@ It should also include other symbols GCC was compiled with.")
          (host (or (cdr (assoc 'target fields))
                    (cdr (assoc '--target fields))
                    (cdr (assoc '--host fields))))
-         (prefix (cdr (assoc '--prefix fields)))
+         ;; (prefix (cdr (assoc '--prefix fields)))
          ;; gcc output supplied paths
+         ;; FIXME: Where are `c-include-path' and `c++-include-path' used?
          (c-include-path (semantic-gcc-get-include-paths "c"))
          (c++-include-path (semantic-gcc-get-include-paths "c++"))
 	 (gcc-exe (locate-file "gcc" exec-path exec-suffixes 'executable))
@@ -210,7 +209,8 @@ It should also include other symbols GCC was compiled with.")
       (semantic-add-system-include D 'c-mode))
     (dolist (D (semantic-gcc-get-include-paths "c++"))
       (semantic-add-system-include D 'c++-mode)
-      (let ((cppconfig (list (concat D "/bits/c++config.h") (concat D "/sys/cdefs.h"))))
+      (let ((cppconfig (list (concat D "/bits/c++config.h") (concat D "/sys/cdefs.h")
+			     (concat D "/features.h"))))
 	(dolist (cur cppconfig)
 	  ;; Presumably there will be only one of these files in the try-paths list...
 	  (when (file-readable-p cur)

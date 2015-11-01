@@ -1,9 +1,9 @@
 ;;; abbrev.el --- abbrev mode commands for Emacs -*- lexical-binding: t -*-
 
-;; Copyright (C) 1985-1987, 1992, 2001-2013 Free Software Foundation,
+;; Copyright (C) 1985-1987, 1992, 2001-2015 Free Software Foundation,
 ;; Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: abbrev convenience
 ;; Package: emacs
 
@@ -67,13 +67,15 @@ be replaced by its expansion."
 (put 'abbrev-mode 'safe-local-variable 'booleanp)
 
 
-(defvar edit-abbrevs-map
+(defvar edit-abbrevs-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-x\C-s" 'abbrev-edit-save-buffer)
     (define-key map "\C-x\C-w" 'abbrev-edit-save-to-file)
     (define-key map "\C-c\C-c" 'edit-abbrevs-redefine)
     map)
   "Keymap used in `edit-abbrevs'.")
+(define-obsolete-variable-alias 'edit-abbrevs-map
+  'edit-abbrevs-mode-map "24.4")
 
 (defun kill-all-abbrevs ()
   "Undefine all defined abbrevs."
@@ -143,16 +145,6 @@ Otherwise display all abbrevs."
       (goto-char (point-min))
       (set-buffer-modified-p nil)
       (current-buffer))))
-
-(defun edit-abbrevs-mode ()
-  "Major mode for editing the list of abbrev definitions.
-\\{edit-abbrevs-map}"
-  (interactive)
-  (kill-all-local-variables)
-  (setq major-mode 'edit-abbrevs-mode)
-  (setq mode-name "Edit-Abbrevs")
-  (use-local-map edit-abbrevs-map)
-  (run-mode-hooks 'edit-abbrevs-mode-hook))
 
 (defun edit-abbrevs ()
   "Alter abbrev definitions by editing a list of them.
@@ -407,7 +399,7 @@ A prefix argument means don't query; expand all abbrevs."
 		   (buffer-substring-no-properties
 		    (save-excursion (forward-word -1) (point))
 		    pnt)))
-	    (if (or noquery (y-or-n-p (format "Expand `%s'? " string)))
+	    (if (or noquery (y-or-n-p (format-message "Expand `%s'? " string)))
 		(expand-abbrev)))))))
 
 ;;; Abbrev properties.
@@ -429,7 +421,7 @@ A prefix argument means don't query; expand all abbrevs."
 \(fn ABBREV PROP)")
 
 (defalias 'abbrev-put 'put
-  "Set the property PROP of abbrev ABREV to value VAL.
+  "Set the property PROP of abbrev ABBREV to value VAL.
 See `define-abbrev' for the effect of some special properties.
 
 \(fn ABBREV PROP VAL)")
@@ -596,7 +588,7 @@ An obsolete but still supported calling form is:
                  (boundp sym) (symbol-value sym)
                  (not (abbrev-get sym :system)))
       (unless (or system-flag
-                  (and (boundp sym) (fboundp sym)
+                  (and (boundp sym)
                        ;; load-file-name
                        (equal (symbol-value sym) expansion)
                        (equal (symbol-function sym) hook)))
@@ -615,9 +607,9 @@ An obsolete but still supported calling form is:
   "Check if the characters in ABBREV have word syntax in either the
 current (if global is nil) or standard syntax table."
   (with-syntax-table
-      (cond ((null global) (standard-syntax-table))
+      (cond ((null global) (syntax-table))
             ;; ((syntax-table-p global) global)
-            (t (syntax-table)))
+            (t (standard-syntax-table)))
     (when (string-match "\\W" abbrev)
       (let ((badchars ())
             (pos 0))
@@ -832,23 +824,28 @@ see `define-abbrev' for details."
     value))
 
 (defvar abbrev-expand-functions nil
-  "Wrapper hook around `expand-abbrev'.")
+  "Wrapper hook around `abbrev--default-expand'.")
 (make-obsolete-variable 'abbrev-expand-functions 'abbrev-expand-function "24.4")
 
 (defvar abbrev-expand-function #'abbrev--default-expand
-  "Function to perform abbrev expansion.
+  "Function that `expand-abbrev' uses to perform abbrev expansion.
 Takes no argument and should return the abbrev symbol if expansion took place.")
 
 (defun expand-abbrev ()
   "Expand the abbrev before point, if there is an abbrev there.
 Effective when explicitly called even when `abbrev-mode' is nil.
-Returns the abbrev symbol, if expansion took place.  (The actual
-return value is that of `abbrev-insert'.)"
+Before doing anything else, runs `pre-abbrev-expand-hook'.
+Calls `abbrev-expand-function' with no argument to do the work,
+and returns whatever it does.  (This should be the abbrev symbol
+if expansion occurred, else nil.)"
   (interactive)
   (run-hooks 'pre-abbrev-expand-hook)
   (funcall abbrev-expand-function))
 
 (defun abbrev--default-expand ()
+  "Default function to use for `abbrev-expand-function'.
+This respects the wrapper hook `abbrev-expand-functions'.
+Calls `abbrev-insert' to insert any expansion, and returns what it does."
   (with-wrapper-hook abbrev-expand-functions ()
     (pcase-let ((`(,sym ,name ,wordstart ,wordend) (abbrev--before-point)))
       (when sym
@@ -956,7 +953,6 @@ Abbrevs marked as \"system abbrevs\" are omitted."
 	  (insert "   ))\n\n")))
       nil)))
 
-(put 'define-abbrev-table 'doc-string-elt 3)
 (defun define-abbrev-table (tablename definitions
                                       &optional docstring &rest props)
   "Define TABLENAME (a symbol) as an abbrev table name.
@@ -976,10 +972,15 @@ Properties with special meaning:
 - `:enable-function' can be set to a function of no argument which returns
   non-nil if and only if the abbrevs in this table should be used for this
   instance of `expand-abbrev'."
+  (declare (doc-string 3))
   ;; We used to manually add the docstring, but we also want to record this
   ;; location as the definition of the variable (in load-history), so we may
   ;; as well just use `defvar'.
-  (eval `(defvar ,tablename nil ,@(if (stringp docstring) (list docstring))))
+  (if (and docstring props (symbolp docstring))
+      ;; There is really no docstring, instead the docstring arg
+      ;; is a property name.
+      (push docstring props) (setq docstring nil))
+  (eval `(defvar ,tablename nil ,@(if docstring (list docstring))))
   (let ((table (if (boundp tablename) (symbol-value tablename))))
     (unless table
       (setq table (make-abbrev-table))
@@ -990,6 +991,7 @@ Properties with special meaning:
     ;; if the table was pre-existing as is the case if it was created by
     ;; loading the user's abbrev file.
     (while (consp props)
+      (unless (cdr props) (error "Missing value for property %S" (car props)))
       (abbrev-table-put table (pop props) (pop props)))
     (dolist (elt definitions)
       (apply 'define-abbrev table elt))))
@@ -1012,6 +1014,11 @@ SORTFUN is passed to `sort' to change the default ordering."
     (nconc (make-sparse-keymap prompt)
            (sort entries (lambda (x y)
                 (funcall sortfun (nth 2 x) (nth 2 y)))))))
+
+;; Keep it after define-abbrev-table, since define-derived-mode uses
+;; define-abbrev-table.
+(define-derived-mode edit-abbrevs-mode fundamental-mode "Edit-Abbrevs"
+  "Major mode for editing the list of abbrev definitions.")
 
 (provide 'abbrev)
 

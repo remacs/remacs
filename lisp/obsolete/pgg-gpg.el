@@ -1,6 +1,6 @@
 ;;; pgg-gpg.el --- GnuPG support for PGG.
 
-;; Copyright (C) 1999-2000, 2002-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2000, 2002-2015 Free Software Foundation, Inc.
 
 ;; Author: Daiki Ueno <ueno@unixuser.org>
 ;; Symmetric encryption and gpg-agent support added by:
@@ -122,7 +122,7 @@
 		  (insert-file-contents output-file-name)))
 	    (set-buffer errors-buffer)
 	    (if (memq status '(stop signal))
-		(error "%s exited abnormally: '%s'" program exit-status))
+		(error "%s exited abnormally: `%s'" program exit-status))
 	    (if (= 127 exit-status)
 		(error "%s could not be found" program))))
       (if passphrase-with-newline

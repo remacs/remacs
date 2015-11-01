@@ -1,9 +1,9 @@
 ;;; bindings.el --- define standard key bindings and some variables
 
-;; Copyright (C) 1985-1987, 1992-1996, 1999-2013 Free Software
+;; Copyright (C) 1985-1987, 1992-1996, 1999-2015 Free Software
 ;; Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal
 ;; Package: emacs
 
@@ -36,7 +36,7 @@ corresponding to the mode line clicked."
 
 
 (defun mode-line-toggle-read-only (event)
-  "Like `toggle-read-only', for the mode-line."
+  "Like toggling `read-only-mode', for the mode-line."
   (interactive "e")
   (with-selected-window (posn-window (event-start event))
     (read-only-mode 'toggle)))
@@ -229,11 +229,13 @@ mnemonics of the following coding systems:
 	 'help-echo (purecopy (lambda (window _object _point)
  				(format "%s"
 					(with-selected-window window
-					  (concat
-					   (if (file-remote-p default-directory)
-					       "Current directory is remote: "
-					     "Current directory is local: ")
-					   default-directory)))))))
+					  (if (stringp default-directory)
+					      (concat
+					       (if (file-remote-p default-directory)
+						   "Current directory is remote: "
+						 "Current directory is local: ")
+					       default-directory)
+					    "Current directory is nil")))))))
   "Mode line construct to indicate a remote buffer.")
 ;;;###autoload
 (put 'mode-line-remote 'risky-local-variable t)
@@ -631,7 +633,7 @@ okay.  See `mode-line-format'.")
       ;; file-supersession should all be user-errors!
       `(beginning-of-line beginning-of-buffer end-of-line
 	end-of-buffer end-of-file buffer-read-only
-	file-supersession
+	file-supersession mark-inactive
         user-error ;; That's the main one!
         ))
 
@@ -710,7 +712,7 @@ cursor movements produce identical results."
   :type '(choice (const :tag "Logical-order cursor movement" nil)
 		 (const :tag "Visual-order cursor movement" t))
   :group 'display
-  :version "24.5")
+  :version "24.4")
 
 (defun right-char (&optional n)
   "Move point N characters to the right (to the left if N is negative).
@@ -795,7 +797,6 @@ if `inhibit-field-text-motion' is non-nil."
 ;; suspend only the relevant terminal.
 (substitute-key-definition 'suspend-emacs 'suspend-frame global-map)
 
-(define-key global-map "\C-j" 'newline-and-indent)
 (define-key global-map "\C-m" 'newline)
 (define-key global-map "\C-o" 'open-line)
 (define-key esc-map "\C-o" 'split-line)
@@ -838,11 +839,11 @@ if `inhibit-field-text-motion' is non-nil."
 (let ((map minibuffer-local-map))
   (define-key map "\en"   'next-history-element)
   (define-key map [next]  'next-history-element)
-  (define-key map [down]  'next-history-element)
+  (define-key map [down]  'next-line-or-history-element)
   (define-key map [XF86Forward] 'next-history-element)
   (define-key map "\ep"   'previous-history-element)
   (define-key map [prior] 'previous-history-element)
-  (define-key map [up]    'previous-history-element)
+  (define-key map [up]    'previous-line-or-history-element)
   (define-key map [XF86Back] 'previous-history-element)
   (define-key map "\es"   'next-matching-history-element)
   (define-key map "\er"   'previous-matching-history-element)
@@ -873,6 +874,11 @@ if `inhibit-field-text-motion' is non-nil."
 
 ;; Update tutorial--default-keys if you change these.
 (define-key global-map "\177" 'delete-backward-char)
+;; We explicitly want C-d to use `delete-char' instead of
+;; `delete-forward-char' so that it ignores `delete-active-region':
+;; Most C-d users are old-timers who don't expect
+;; `delete-active-region' here, while newer users who expect
+;; `delete-active-region' use C-d much less.
 (define-key global-map "\C-d" 'delete-char)
 
 (define-key global-map "\C-k" 'kill-line)
@@ -891,6 +897,7 @@ if `inhibit-field-text-motion' is non-nil."
 
 (define-key ctl-x-map "\C-x" 'exchange-point-and-mark)
 (define-key ctl-x-map "\C-@" 'pop-global-mark)
+(define-key ctl-x-map " " 'rectangle-mark-mode)
 (define-key ctl-x-map [?\C- ] 'pop-global-mark)
 
 (define-key global-map "\C-n" 'next-line)
@@ -918,14 +925,15 @@ if `inhibit-field-text-motion' is non-nil."
   "Keymap for search related commands.")
 (define-key esc-map "s" search-map)
 
-(define-key search-map "o"  'occur)
-(define-key search-map "hr" 'highlight-regexp)
-(define-key search-map "hp" 'highlight-phrase)
-(define-key search-map "hl" 'highlight-lines-matching-regexp)
-(define-key search-map "h." 'highlight-symbol-at-point)
-(define-key search-map "hu" 'unhighlight-regexp)
-(define-key search-map "hf" 'hi-lock-find-patterns)
-(define-key search-map "hw" 'hi-lock-write-interactive-patterns)
+(define-key search-map "o"    'occur)
+(define-key search-map "\M-w" 'eww-search-words)
+(define-key search-map "hr"   'highlight-regexp)
+(define-key search-map "hp"   'highlight-phrase)
+(define-key search-map "hl"   'highlight-lines-matching-regexp)
+(define-key search-map "h."   'highlight-symbol-at-point)
+(define-key search-map "hu"   'unhighlight-regexp)
+(define-key search-map "hf"   'hi-lock-find-patterns)
+(define-key search-map "hw"   'hi-lock-write-interactive-patterns)
 
 ;;(defun function-key-error ()
 ;;  (interactive)
@@ -1055,36 +1063,34 @@ if `inhibit-field-text-motion' is non-nil."
 ;; FIXME: rather than list such mappings for every modifier-combination,
 ;;   we should come up with a way to do it generically, something like
 ;;   (define-key function-key-map [*-kp-home] [*-home])
-(define-key function-key-map [kp-home] [home])
-(define-key function-key-map [kp-left] [left])
-(define-key function-key-map [kp-up] [up])
-(define-key function-key-map [kp-right] [right])
-(define-key function-key-map [kp-down] [down])
-(define-key function-key-map [kp-prior] [prior])
-(define-key function-key-map [kp-next] [next])
-(define-key function-key-map [M-kp-next] [M-next])
-(define-key function-key-map [kp-end] [end])
-(define-key function-key-map [kp-begin] [begin])
-(define-key function-key-map [kp-insert] [insert])
+;; Currently we add keypad key combinations with basic modifiers
+;; (to complement plain bindings in "Keypad support" section in simple.el)
+;; Until [*-kp-home] is implemented, for more modifiers we could also use:
+;; (todo-powerset '(control meta shift hyper super alt))  (Bug#14397)
+(let ((modifiers '(nil (control) (meta) (control meta) (shift)
+		   (control shift) (meta shift) (control meta shift)))
+      (keys '((kp-delete delete) (kp-insert insert)
+	      (kp-end end) (kp-down down) (kp-next next)
+	      (kp-left left) (kp-begin begin) (kp-right right)
+	      (kp-home home) (kp-up up) (kp-prior prior)
+	      (kp-enter enter) (kp-decimal ?.)
+	      (kp-0 ?0) (kp-1 ?1) (kp-2 ?2) (kp-3 ?3) (kp-4 ?4)
+	      (kp-5 ?5) (kp-6 ?6) (kp-7 ?7) (kp-8 ?8) (kp-9 ?9)
+	      (kp-add ?+) (kp-subtract ?-) (kp-multiply ?*) (kp-divide ?/))))
+  (dolist (pair keys)
+    (let ((keypad (nth 0 pair))
+	  (normal (nth 1 pair)))
+      (when (characterp normal)
+	(put keypad 'ascii-character normal))
+      (dolist (mod modifiers)
+	(define-key function-key-map
+	  (vector (append mod (list keypad)))
+	  (vector (append mod (list normal))))))))
+
 (define-key function-key-map [backspace] [?\C-?])
 (define-key function-key-map [delete] [?\C-?])
 (define-key function-key-map [kp-delete] [?\C-?])
-(define-key function-key-map [S-kp-end] [S-end])
-(define-key function-key-map [S-kp-down] [S-down])
-(define-key function-key-map [S-kp-next] [S-next])
-(define-key function-key-map [S-kp-left] [S-left])
-(define-key function-key-map [S-kp-right] [S-right])
-(define-key function-key-map [S-kp-home] [S-home])
-(define-key function-key-map [S-kp-up] [S-up])
-(define-key function-key-map [S-kp-prior] [S-prior])
-(define-key function-key-map [C-S-kp-end] [C-S-end])
-(define-key function-key-map [C-S-kp-down] [C-S-down])
-(define-key function-key-map [C-S-kp-next] [C-S-next])
-(define-key function-key-map [C-S-kp-left] [C-S-left])
-(define-key function-key-map [C-S-kp-right] [C-S-right])
-(define-key function-key-map [C-S-kp-home] [C-S-home])
-(define-key function-key-map [C-S-kp-up] [C-S-up])
-(define-key function-key-map [C-S-kp-prior] [C-S-prior])
+
 ;; Don't bind shifted keypad numeric keys, they reportedly
 ;; interfere with the feature of some keyboards to produce
 ;; numbers when NumLock is off.
@@ -1096,14 +1102,14 @@ if `inhibit-field-text-motion' is non-nil."
 ;(define-key function-key-map [S-kp-7] [S-home])
 ;(define-key function-key-map [S-kp-8] [S-up])
 ;(define-key function-key-map [S-kp-9] [S-prior])
-(define-key function-key-map [C-S-kp-1] [C-S-end])
-(define-key function-key-map [C-S-kp-2] [C-S-down])
-(define-key function-key-map [C-S-kp-3] [C-S-next])
-(define-key function-key-map [C-S-kp-4] [C-S-left])
-(define-key function-key-map [C-S-kp-6] [C-S-right])
-(define-key function-key-map [C-S-kp-7] [C-S-home])
-(define-key function-key-map [C-S-kp-8] [C-S-up])
-(define-key function-key-map [C-S-kp-9] [C-S-prior])
+;(define-key function-key-map [C-S-kp-1] [C-S-end])
+;(define-key function-key-map [C-S-kp-2] [C-S-down])
+;(define-key function-key-map [C-S-kp-3] [C-S-next])
+;(define-key function-key-map [C-S-kp-4] [C-S-left])
+;(define-key function-key-map [C-S-kp-6] [C-S-right])
+;(define-key function-key-map [C-S-kp-7] [C-S-home])
+;(define-key function-key-map [C-S-kp-8] [C-S-up])
+;(define-key function-key-map [C-S-kp-9] [C-S-prior])
 
 ;; Hitting C-SPC on text terminals, usually sends the ascii code 0 (aka C-@),
 ;; so we can't distinguish those two keys, but usually we consider C-SPC
@@ -1124,6 +1130,7 @@ if `inhibit-field-text-motion' is non-nil."
 (define-key esc-map "j" 'indent-new-comment-line)
 (define-key esc-map "\C-j" 'indent-new-comment-line)
 (define-key ctl-x-map ";" 'comment-set-column)
+(define-key ctl-x-map [?\C-\;] 'comment-line)
 (define-key ctl-x-map "f" 'set-fill-column)
 (define-key ctl-x-map "$" 'set-selective-display)
 
@@ -1258,9 +1265,9 @@ if `inhibit-field-text-motion' is non-nil."
 (define-key abbrev-map "e" 'expand-abbrev)
 (define-key abbrev-map "'" 'expand-abbrev)
 ;; (define-key ctl-x-map "\C-a" 'add-mode-abbrev)
-;; (define-key ctl-x-map "\+" 'add-global-abbrev)
+;; (define-key ctl-x-map "+" 'add-global-abbrev)
 ;; (define-key ctl-x-map "\C-h" 'inverse-add-mode-abbrev)
-;; (define-key ctl-x-map "\-" 'inverse-add-global-abbrev)
+;; (define-key ctl-x-map "-" 'inverse-add-global-abbrev)
 (define-key esc-map "'" 'abbrev-prefix-mark)
 (define-key ctl-x-map "'" 'expand-abbrev)
 (define-key ctl-x-map "\C-b" 'list-buffers)

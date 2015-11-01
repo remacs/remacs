@@ -1,6 +1,6 @@
 ;;; gnus-bcklg.el --- backlog functions for Gnus
 
-;; Copyright (C) 1996-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news
@@ -61,7 +61,7 @@
 
 (defun gnus-backlog-enter-article (group number buffer)
   (when (and (numberp number)
-	     (not (string-match "^nnvirtual" group)))
+	     (not (gnus-virtual-group-p group)))
     (gnus-backlog-setup)
     (let ((ident (intern (concat group ":" (int-to-string number))
 			 gnus-backlog-hashtb))
@@ -126,7 +126,7 @@
 
 (defun gnus-backlog-request-article (group number &optional buffer)
   (when (and (numberp number)
-	     (not (string-match "^nnvirtual" group)))
+	     (not (gnus-virtual-group-p group)))
     (gnus-backlog-setup)
     (let ((ident (intern (concat group ":" (int-to-string number))
 			 gnus-backlog-hashtb))

@@ -1,9 +1,9 @@
 ;;; rng-uri.el --- URI parsing and manipulation
 
-;; Copyright (C) 2003, 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2003, 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: James Clark
-;; Keywords: XML
+;; Keywords: wp, hypermedia, languages, XML
 
 ;; This file is part of GNU Emacs.
 
@@ -85,7 +85,7 @@ Signal an error if URI is not a valid file URL."
 	  ((not (string= (downcase scheme) "file"))
 	   (rng-uri-error "URI `%s' does not use the `file:' scheme" uri)))
     (when (not (member authority
-		       (cons system-name '(nil "" "localhost"))))
+		       (cons (system-name) '(nil "" "localhost"))))
       (rng-uri-error "URI `%s' does not start with `file:///' or `file://localhost/'"
 	     uri))
     (when query
@@ -125,7 +125,7 @@ Signal an error if URI is not a valid file URL."
 	  (t path))))
 
 (defun rng-uri-error (&rest args)
-  (signal 'rng-uri-error (list (apply 'format args))))
+  (signal 'rng-uri-error (list (apply #'format-message args))))
 
 (define-error 'rng-uri-error "Invalid URI")
 

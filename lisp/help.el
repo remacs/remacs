@@ -1,9 +1,9 @@
 ;;; help.el --- help commands for Emacs
 
-;; Copyright (C) 1985-1986, 1993-1994, 1998-2013 Free Software
+;; Copyright (C) 1985-1986, 1993-1994, 1998-2015 Free Software
 ;; Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help, internal
 ;; Package: emacs
 
@@ -24,7 +24,7 @@
 
 ;;; Commentary:
 
-;; This code implements GNU Emacs's on-line help system, the one invoked by
+;; This code implements GNU Emacs's built-in help system, the one invoked by
 ;; `M-x help-for-help'.
 
 ;;; Code:
@@ -46,6 +46,9 @@
 ;; visible.
 (defvar help-window-point-marker (make-marker)
   "Marker to override default `window-point' in help windows.")
+
+(defvar help-window-old-frame nil
+  "Frame selected at the time `with-help-window' is invoked.")
 
 (defvar help-map
   (let ((map (make-sparse-keymap)))
@@ -92,6 +95,7 @@
     (define-key map "k" 'describe-key)
     (define-key map "l" 'view-lossage)
     (define-key map "m" 'describe-mode)
+    (define-key map "o" 'describe-symbol)
     (define-key map "n" 'view-emacs-news)
     (define-key map "p" 'finder-by-keyword)
     (define-key map "P" 'describe-package)
@@ -133,7 +137,9 @@ This function assumes that `standard-output' is the help buffer.
 It computes a message, and applies the optional argument FUNCTION to it.
 If FUNCTION is nil, it applies `message', thus displaying the message.
 In addition, this function sets up `help-return-method', which see, that
-specifies what to do when the user exits the help buffer."
+specifies what to do when the user exits the help buffer.
+
+Do not call this in the scope of `with-help-window'."
   (and (not (get-buffer-window standard-output))
        (let ((first-message
 	      (cond ((or
@@ -201,22 +207,24 @@ d PATTERN   Show a list of functions, variables, and other items whose
               documentation matches the PATTERN (a list of words or a regexp).
 e           Go to the *Messages* buffer which logs echo-area messages.
 f FUNCTION  Display documentation for the given function.
-F COMMAND   Show the on-line manual's section that describes the command.
+F COMMAND   Show the Emacs manual's section that describes the command.
 g           Display information about the GNU project.
 h           Display the HELLO file which illustrates various scripts.
-i           Start the Info documentation reader: read on-line manuals.
+i           Start the Info documentation reader: read included manuals.
 I METHOD    Describe a specific input method, or RET for current.
 k KEYS      Display the full documentation for the key sequence.
-K KEYS      Show the on-line manual's section for the command bound to KEYS.
+K KEYS      Show the Emacs manual's section for the command bound to KEYS.
 l           Show last 300 input keystrokes (lossage).
 L LANG-ENV  Describes a specific language environment, or RET for current.
 m           Display documentation of current minor modes and current major mode,
               including their special commands.
 n           Display news of recent Emacs changes.
+o SYMBOL    Display the given function or variable's documentation and value.
 p TOPIC     Find packages matching a given topic keyword.
+P PACKAGE   Describe the given Emacs Lisp package.
 r           Display the Emacs manual in Info mode.
 s           Display contents of current syntax table, plus explanations.
-S SYMBOL    Show the section for the given symbol in the on-line manual
+S SYMBOL    Show the section for the given symbol in the Info manual
               for the programming language used in this buffer.
 t           Start the Emacs learn-by-doing tutorial.
 v VARIABLE  Display the given variable's documentation and value.
@@ -294,10 +302,11 @@ If that doesn't give a function, return nil."
   (interactive)
   (view-help-file "COPYING"))
 
+;; Maybe this command should just be removed.
 (defun describe-gnu-project ()
-  "Display info on the GNU project."
+  "Browse online information on the GNU project."
   (interactive)
-  (view-help-file "THE-GNU-PROJECT"))
+  (browse-url "http://www.gnu.org/gnu/thegnuproject.html"))
 
 (define-obsolete-function-alias 'describe-project 'describe-gnu-project "22.2")
 
@@ -346,12 +355,12 @@ With argument, display info only for the selected version."
 		   (while (re-search-forward
 			   (if (member file '("NEWS.18" "NEWS.1-17"))
 			       "Changes in \\(?:Emacs\\|version\\)?[ \t]*\\([0-9]+\\(?:\\.[0-9]+\\)?\\)"
-			     "^\* [^0-9\n]*\\([0-9]+\\.[0-9]+\\)") nil t)
+			     "^\\* [^0-9\n]*\\([0-9]+\\.[0-9]+\\)") nil t)
 		     (setq res (cons (match-string-no-properties 1) res)))))
 	       (cons "NEWS"
 		     (directory-files data-directory nil
 				      "^NEWS\\.[0-9][-0-9]*$" nil)))
-	      (sort (delete-dups res) (lambda (a b) (string< b a)))))
+	      (sort (delete-dups res) #'string>)))
 	   (current (car all-versions)))
       (setq version (completing-read
 		     (format "Read NEWS for the version (default %s): " current)
@@ -383,7 +392,7 @@ With argument, display info only for the selected version."
       (when (re-search-forward
 	     (concat (if (< vn 19)
 			 "Changes in Emacs[ \t]*"
-		       "^\* [^0-9\n]*") version "$")
+		       "^\\* [^0-9\n]*") version "$")
 	     nil t)
 	(beginning-of-line)
 	(narrow-to-region
@@ -393,7 +402,7 @@ With argument, display info only for the selected version."
 			     (re-search-forward
 			      (if (< vn 19)
 				  "Changes in \\(?:Emacs\\|version\\)?[ \t]*\\([0-9]+\\(?:\\.[0-9]+\\)?\\)"
-				"^\* [^0-9\n]*\\([0-9]+\\.[0-9]+\\)") nil t))
+				"^\\* [^0-9\n]*\\([0-9]+\\.[0-9]+\\)") nil t))
 		       (equal (match-string-no-properties 1) version)))
 	   (or res (goto-char (point-max)))
 	   (beginning-of-line)
@@ -412,14 +421,15 @@ With argument, display info only for the selected version."
 The number of messages retained in that buffer
 is specified by the variable `message-log-max'."
   (interactive)
-  (with-current-buffer (get-buffer-create "*Messages*")
+  (with-current-buffer (messages-buffer)
     (goto-char (point-max))
     (display-buffer (current-buffer))))
 
 (defun view-order-manuals ()
-  "Display the Emacs ORDERS file."
+  "Display information on how to buy printed copies of Emacs manuals."
   (interactive)
-  (view-help-file "ORDERS"))
+;;  (view-help-file "ORDERS")
+  (info "(emacs)Printed Books"))
 
 (defun view-emacs-FAQ ()
   "Display the Emacs Frequently Asked Questions (FAQ) file."
@@ -437,31 +447,39 @@ is specified by the variable `message-log-max'."
   (interactive)
   (view-help-file "DEBUG"))
 
+;; This used to visit MORE.STUFF; maybe it should just be removed.
 (defun view-external-packages ()
-  "Display external packages and information about Emacs."
+  "Display info on where to get more Emacs packages."
   (interactive)
-  (view-help-file "MORE.STUFF"))
+  (info "(efaq)Packages that do not come with Emacs"))
 
 (defun view-lossage ()
-  "Display last 300 input keystrokes.
+  "Display last few input keystrokes and the commands run.
 
-To record all your input on a file, use `open-dribble-file'."
+To record all your input, use `open-dribble-file'."
   (interactive)
   (help-setup-xref (list #'view-lossage)
 		   (called-interactively-p 'interactive))
   (with-help-window (help-buffer)
+    (princ " ")
     (princ (mapconcat (lambda (key)
-			(if (or (integerp key) (symbolp key) (listp key))
-			    (single-key-description key)
-			  (prin1-to-string key nil)))
-		      (recent-keys)
+			(cond
+			 ((and (consp key) (null (car key)))
+			  (format "[%s]\n" (if (symbolp (cdr key)) (cdr key)
+					   "anonymous-command")))
+			 ((or (integerp key) (symbolp key) (listp key))
+			  (single-key-description key))
+			 (t
+			  (prin1-to-string key nil))))
+		      (recent-keys 'include-cmds)
 		      " "))
     (with-current-buffer standard-output
       (goto-char (point-min))
-      (while (progn (move-to-column 50) (not (eobp)))
-        (when (search-forward " " nil t)
-          (delete-char -1))
-        (insert "\n"))
+      (while (not (eobp))
+	(move-to-column 50)
+	(unless (eolp)
+	  (fill-region (line-beginning-position) (line-end-position)))
+	(forward-line 1))
       ;; jidanni wants to see the last keystrokes immediately.
       (set-marker help-window-point-marker (point)))))
 
@@ -469,8 +487,8 @@ To record all your input on a file, use `open-dribble-file'."
 ;; Key bindings
 
 (defun describe-bindings (&optional prefix buffer)
-  "Show a list of all defined keys, and their definitions.
-We put that list in a buffer, and display the buffer.
+  "Display a buffer showing a list of all defined keys, and their definitions.
+The keys are displayed in order of precedence.
 
 The optional argument PREFIX, if non-nil, should be a key sequence;
 then we display only bindings that start with that prefix.
@@ -481,8 +499,11 @@ or a buffer name."
   (or buffer (setq buffer (current-buffer)))
   (help-setup-xref (list #'describe-bindings prefix buffer)
 		   (called-interactively-p 'interactive))
-  (with-current-buffer buffer
-    (describe-bindings-internal nil prefix)))
+  (with-help-window (help-buffer)
+    ;; Be aware that `describe-buffer-bindings' puts its output into
+    ;; the current buffer.
+    (with-current-buffer (help-buffer)
+      (describe-buffer-bindings buffer prefix))))
 
 ;; This function used to be in keymap.c.
 (defun describe-bindings-internal (&optional menus prefix)
@@ -493,9 +514,12 @@ The optional argument MENUS, if non-nil, says to mention menu bindings.
 \(Ordinarily these are omitted from the output.)
 The optional argument PREFIX, if non-nil, should be a key sequence;
 then we display only bindings that start with that prefix."
+  (declare (obsolete describe-buffer-bindings "24.4"))
   (let ((buf (current-buffer)))
-    (with-help-window "*Help*"
-      (with-current-buffer standard-output
+    (with-help-window (help-buffer)
+      ;; Be aware that `describe-buffer-bindings' puts its output into
+      ;; the current buffer.
+      (with-current-buffer (help-buffer)
 	(describe-buffer-bindings buf prefix menus)))))
 
 (defun where-is (definition &optional insert)
@@ -510,8 +534,10 @@ If INSERT (the prefix arg) is non-nil, insert the message in the buffer."
 		(if fn
 		    (format "Where is command (default %s): " fn)
 		  "Where is command: ")
-		obarray 'commandp t))
-     (list (if (equal val "") fn (intern val)) current-prefix-arg)))
+		obarray 'commandp t nil nil
+		(and fn (symbol-name fn))))
+     (list (unless (equal val "") (intern val))
+	   current-prefix-arg)))
   (unless definition (error "No command"))
   (let ((func (indirect-function definition))
         (defs nil)
@@ -637,6 +663,69 @@ temporarily enables it to allow getting help on disabled items and buttons."
 	(princ (format "%s%s is undefined" key-desc mouse-msg))
       (princ (format "%s%s runs the command %S" key-desc mouse-msg defn)))))
 
+(defun help--key-binding-keymap (key &optional accept-default no-remap position)
+  "Return a keymap holding a binding for KEY within current keymaps.
+The effect of the arguments KEY, ACCEPT-DEFAULT, NO-REMAP and
+POSITION is as documented in the function `key-binding'."
+  (let* ((active-maps (current-active-maps t position))
+         map found)
+    ;; We loop over active maps like key-binding does.
+    (while (and
+            (not found)
+            (setq map (pop active-maps)))
+      (setq found (lookup-key map key accept-default))
+      (when (integerp found)
+        ;; The first `found' characters of KEY were found but not the
+        ;; whole sequence.
+        (setq found nil)))
+    (when found
+      (if (and (symbolp found)
+               (not no-remap)
+               (command-remapping found))
+          ;; The user might want to know in which map the binding is
+          ;; found, or in which map the remapping is found.  The
+          ;; default is to show the latter.
+          (help--key-binding-keymap (vector 'remap found))
+        map))))
+
+(defun help--binding-locus (key position)
+  "Describe in which keymap KEY is defined.
+Return a symbol pointing to that keymap if one exists ; otherwise
+return nil.  The argument POSITION is as documented in the
+function `key-binding'."
+  (let ((map (help--key-binding-keymap key t nil position)))
+    (when map
+      (catch 'found
+        (let ((advertised-syms (nconc
+                                (list 'overriding-terminal-local-map
+                                      'overriding-local-map)
+                                (delq nil
+                                      (mapcar
+                                       (lambda (mode-and-map)
+                                         (let ((mode (car mode-and-map)))
+                                           (when (symbol-value mode)
+                                             (intern-soft
+                                              (format "%s-map" mode)))))
+                                       minor-mode-map-alist))
+                                (list 'global-map
+                                      (intern-soft (format "%s-map" major-mode)))))
+              found)
+          ;; Look into these advertised symbols first.
+          (dolist (sym advertised-syms)
+            (when (and
+                   (boundp sym)
+                   (eq map (symbol-value sym)))
+              (throw 'found sym)))
+          ;; Only look in other symbols otherwise.
+          (mapatoms
+           (lambda (x)
+             (when (and (boundp x)
+                        ;; Avoid let-bound symbols.
+                        (special-variable-p x)
+                        (eq (symbol-value x) map))
+               (throw 'found x))))
+          nil)))))
+
 (defun describe-key (&optional key untranslated up-event)
   "Display documentation of the function invoked by KEY.
 KEY can be any kind of a key sequence; it can include keyboard events,
@@ -699,6 +788,7 @@ temporarily enables it to allow getting help on disabled items and buttons."
 	 (mouse-msg (if (or (memq 'click modifiers) (memq 'down modifiers)
 			    (memq 'drag modifiers)) " at that spot" ""))
 	 (defn (key-binding key t))
+         key-locus key-locus-up key-locus-up-tricky
 	 defn-up defn-up-tricky ev-type
 	 mouse-1-remapped mouse-1-tricky)
 
@@ -737,15 +827,19 @@ temporarily enables it to allow getting help on disabled items and buttons."
 		   (setcar up-event (elt mouse-1-remapped 0)))
 		  (t (setcar up-event 'mouse-2))))
 	  (setq defn-up (key-binding sequence nil nil (event-start up-event)))
+          (setq key-locus-up (help--binding-locus sequence (event-start up-event)))
 	  (when mouse-1-tricky
 	    (setq sequence (vector up-event))
 	    (aset sequence 0 'mouse-1)
-	    (setq defn-up-tricky (key-binding sequence nil nil (event-start up-event))))))
+	    (setq defn-up-tricky (key-binding sequence nil nil (event-start up-event)))
+            (setq key-locus-up-tricky (help--binding-locus sequence (event-start up-event))))))
+      (setq key-locus (help--binding-locus key (event-start event)))
       (with-help-window (help-buffer)
 	(princ (help-key-description key untranslated))
-	(princ (format "\
-%s runs the command %S, which is "
-		       mouse-msg defn))
+	(princ (format "%s runs the command %S%s, which is "
+		       mouse-msg defn (if key-locus
+                                          (format " (found in %s)" key-locus)
+                                        "")))
 	(describe-function-1 defn)
 	(when up-event
 	  (unless (or (null defn-up)
@@ -755,13 +849,15 @@ temporarily enables it to allow getting help on disabled items and buttons."
 
 ----------------- up-event %s----------------
 
-%s%s%s runs the command %S, which is "
+%s%s%s runs the command %S%s, which is "
 			   (if mouse-1-tricky "(short click) " "")
 			   (key-description (vector up-event))
 			   mouse-msg
 			   (if mouse-1-remapped
                                " is remapped to <mouse-2>, which" "")
-			   defn-up))
+			   defn-up (if key-locus-up
+                                       (format " (found in %s)" key-locus-up)
+                                     "")))
 	    (describe-function-1 defn-up))
 	  (unless (or (null defn-up-tricky)
 		      (integerp defn-up-tricky)
@@ -771,10 +867,12 @@ temporarily enables it to allow getting help on disabled items and buttons."
 ----------------- up-event (long click) ----------------
 
 Pressing <%S>%s for longer than %d milli-seconds
-runs the command %S, which is "
+runs the command %S%s, which is "
 			   ev-type mouse-msg
 			   mouse-1-click-follows-link
-			   defn-up-tricky))
+			   defn-up-tricky (if key-locus-up-tricky
+                                              (format " (found in %s)" key-locus-up-tricky)
+                                            "")))
 	    (describe-function-1 defn-up-tricky)))))))
 
 (defun describe-mode (&optional buffer)
@@ -866,11 +964,13 @@ documentation for the major and minor modes of that buffer."
 	(let* ((mode major-mode)
 	       (file-name (find-lisp-object-file-name mode nil)))
 	  (when file-name
-	    (princ (concat " defined in `" (file-name-nondirectory file-name) "'"))
+	    (princ (format-message " defined in `%s'"
+                                   (file-name-nondirectory file-name)))
 	    ;; Make a hyperlink to the library.
 	    (with-current-buffer standard-output
 	      (save-excursion
-		(re-search-backward "`\\([^`']+\\)'" nil t)
+		(re-search-backward (substitute-command-keys "`\\([^`']+\\)'")
+                                    nil t)
 		(help-xref-button 1 'help-function-def mode file-name)))))
 	(princ ":\n")
 	(princ (documentation major-mode)))))
@@ -984,6 +1084,23 @@ function is called, the window to be resized is selected."
   :group 'help
   :version "24.3")
 
+(defcustom temp-buffer-max-width
+  (lambda (buffer)
+    (if (eq (selected-window) (frame-root-window))
+	(/ (x-display-pixel-width) (frame-char-width) 2)
+      (/ (- (frame-width) 2) 2)))
+  "Maximum width of a window displaying a temporary buffer.
+This is effective only when Temp Buffer Resize mode is enabled.
+The value is the maximum width (in columns) which
+`resize-temp-buffer-window' will give to a window displaying a
+temporary buffer.  It can also be a function to be called to
+choose the width for such a buffer.  It gets one argument, the
+buffer, and should return a positive integer.  At the time the
+function is called, the window to be resized is selected."
+  :type '(choice integer function)
+  :group 'help
+  :version "24.4")
+
 (define-minor-mode temp-buffer-resize-mode
   "Toggle auto-resizing temporary buffer windows (Temp Buffer Resize Mode).
 With a prefix argument ARG, enable Temp Buffer Resize mode if ARG
@@ -1011,46 +1128,66 @@ and some others."
 
 (defun resize-temp-buffer-window (&optional window)
   "Resize WINDOW to fit its contents.
-WINDOW can be any live window and defaults to the selected one.
+WINDOW must be a live window and defaults to the selected one.
+Do not resize if WINDOW was not created by `display-buffer'.
 
-Do not make WINDOW higher than `temp-buffer-max-height' nor
-smaller than `window-min-height'.  Do nothing if WINDOW is not
-vertically combined, some of its contents are scrolled out of
-view, or WINDOW was not created by `display-buffer'."
+If WINDOW is part of a vertical combination, restrain its new
+size by `temp-buffer-max-height' and do not resize if its minimum
+accessible position is scrolled out of view.  If WINDOW is part
+of a horizontal combination, restrain its new size by
+`temp-buffer-max-width'.  In both cases, the value of the option
+`fit-window-to-buffer-horizontally' can inhibit resizing.
+
+If WINDOW is the root window of its frame, resize the frame
+provided `fit-frame-to-buffer' is non-nil.
+
+This function may call `preserve-window-size' to preserve the
+size of WINDOW."
   (setq window (window-normalize-window window t))
   (let ((height (if (functionp temp-buffer-max-height)
 		    (with-selected-window window
 		      (funcall temp-buffer-max-height (window-buffer)))
 		  temp-buffer-max-height))
+	(width (if (functionp temp-buffer-max-width)
+		   (with-selected-window window
+		     (funcall temp-buffer-max-width (window-buffer)))
+		 temp-buffer-max-width))
 	(quit-cadr (cadr (window-parameter window 'quit-restore))))
-    (cond
-     ;; Resize WINDOW iff it was split off by `display-buffer'.
-     ((and (eq quit-cadr 'window)
-	   (pos-visible-in-window-p (point-min) window)
-	   (window-combined-p window))
-      (fit-window-to-buffer window height))
-     ;; Resize FRAME iff it was created by `display-buffer'.
-     ((and fit-frame-to-buffer
-	   (eq quit-cadr 'frame)
-	   (eq window (frame-root-window window)))
-      (let ((frame (window-frame window)))
-	(fit-frame-to-buffer
-	 frame (+ (frame-height frame)
-		  (- (window-total-size window))
-		  height)))))))
+    ;; Resize WINDOW iff it was made by `display-buffer'.
+    (when (or (and (eq quit-cadr 'window)
+		   (or (and (window-combined-p window)
+			    (not (eq fit-window-to-buffer-horizontally
+				     'only))
+			    (pos-visible-in-window-p (point-min) window))
+		       (and (window-combined-p window t)
+			    fit-window-to-buffer-horizontally)))
+	      (and (eq quit-cadr 'frame)
+                   fit-frame-to-buffer
+                   (eq window (frame-root-window window))))
+	(fit-window-to-buffer window height nil width nil t))))
 
 ;;; Help windows.
-(defcustom help-window-select 'other
-    "Non-nil means select help window for viewing.
+(defcustom help-window-select nil
+  "Non-nil means select help window for viewing.
 Choices are:
+
  never (nil) Select help window only if there is no other window
              on its frame.
- other       Select help window unless the selected window is the
-             only other window on the help window's frame.
+
+ other       Select help window if and only if it appears on the
+             previously selected frame, that frame contains at
+             least two other windows and the help window is
+             either new or showed a different buffer before.
+
  always (t)  Always select the help window.
 
+If this option is non-nil and the help window appears on another
+frame, then give that frame input focus too.  Note also that if
+the help window appears on another frame, it may get selected and
+its frame get input focus even if this option is nil.
+
 This option has effect if and only if the help window was created
-by `with-help-window'"
+by `with-help-window'."
   :type '(choice (const :tag "never (nil)" nil)
 		 (const :tag "other" other)
 		 (const :tag "always (t)" t))
@@ -1090,28 +1227,45 @@ window."
     (message "%s"
      (substitute-command-keys (concat quit-part scroll-part)))))
 
-(defun help-window-setup (help-window)
-  "Set up help window for `with-help-window'.
-HELP-WINDOW is the window used for displaying the help buffer."
-  (let* ((help-buffer (when (window-live-p help-window)
-			(window-buffer help-window)))
-	 (help-setup (when (window-live-p help-window)
-		       (car (window-parameter help-window 'quit-restore)))))
+(defun help-window-setup (window &optional value)
+  "Set up help window WINDOW for `with-help-window'.
+WINDOW is the window used for displaying the help buffer.
+Return VALUE."
+  (let* ((help-buffer (when (window-live-p window)
+			(window-buffer window)))
+	 (help-setup (when (window-live-p window)
+		       (car (window-parameter window 'quit-restore))))
+	 (frame (window-frame window)))
+
     (when help-buffer
       ;; Handle `help-window-point-marker'.
       (when (eq (marker-buffer help-window-point-marker) help-buffer)
-	(set-window-point help-window help-window-point-marker)
+	(set-window-point window help-window-point-marker)
 	;; Reset `help-window-point-marker'.
 	(set-marker help-window-point-marker nil))
 
+      ;; If the help window appears on another frame, select it if
+      ;; `help-window-select' is non-nil and give that frame input focus
+      ;; too.  See also Bug#19012.
+      (when (and help-window-select
+		 (frame-live-p help-window-old-frame)
+		 (not (eq frame help-window-old-frame)))
+	(select-window window)
+	(select-frame-set-input-focus frame))
+
       (cond
-       ((or (eq help-window (selected-window))
-	    (and (or (eq help-window-select t)
-		     (eq help-setup 'frame)
+       ((or (eq window (selected-window))
+	    ;; If the help window is on the selected frame, select
+	    ;; it if `help-window-select' is t or `help-window-select'
+	    ;; is 'other, the frame contains at least three windows, and
+	    ;; the help window did show another buffer before.  See also
+	    ;; Bug#11039.
+	    (and (eq frame (selected-frame))
+		 (or (eq help-window-select t)
 		     (and (eq help-window-select 'other)
-			  (eq (window-frame help-window) (selected-frame))
-			  (> (length (window-list nil 'no-mini)) 2)))
-		 (select-window help-window)))
+			  (> (length (window-list nil 'no-mini)) 2)
+			  (not (eq help-setup 'same))))
+		 (select-window window)))
 	;; The help window is or gets selected ...
 	(help-window-display-message
 	 (cond
@@ -1119,12 +1273,13 @@ HELP-WINDOW is the window used for displaying the help buffer."
 	   ;; ... and is new, ...
 	   "Type \"q\" to delete help window")
 	  ((eq help-setup 'frame)
-	   "Type \"q\" to delete help frame")
+	   ;; ... on a new frame, ...
+	   "Type \"q\" to quit the help frame")
 	  ((eq help-setup 'other)
 	   ;; ... or displayed some other buffer before.
 	   "Type \"q\" to restore previous buffer"))
-	 help-window t))
-       ((and (eq (window-frame help-window) (selected-frame))
+	 window t))
+       ((and (eq (window-frame window) help-window-old-frame)
 	     (= (length (window-list nil 'no-mini)) 2))
 	;; There are two windows on the help window's frame and the
 	;; other one is the selected one.
@@ -1134,7 +1289,7 @@ HELP-WINDOW is the window used for displaying the help buffer."
 	   "Type \\[delete-other-windows] to delete the help window")
 	  ((eq help-setup 'other)
 	   "Type \"q\" in help window to restore its previous buffer"))
-	 help-window 'other))
+	 window 'other))
        (t
 	;; The help window is not selected ...
 	(help-window-display-message
@@ -1145,40 +1300,45 @@ HELP-WINDOW is the window used for displaying the help buffer."
 	  ((eq help-setup 'other)
 	   ;; ... or displayed some other buffer before.
 	   "Type \"q\" in help window to restore previous buffer"))
-	 help-window))))))
+	 window))))
+    ;; Return VALUE.
+    value))
 
-;; `with-help-window' is a wrapper for `with-output-to-temp-buffer'
+;; `with-help-window' is a wrapper for `with-temp-buffer-window'
 ;; providing the following additional twists:
 
-;; (1) Issue more accurate messages telling how to scroll and quit the
-;; help window.
+;; (1) It puts the buffer in `help-mode' (via `help-mode-setup') and
+;;     adds cross references (via `help-mode-finish').
 
-;; (2) An option (customizable via `help-window-select') to select the
-;; help window automatically.
+;; (2) It issues a message telling how to scroll and quit the help
+;;     window (via `help-window-setup').
 
-;; (3) A marker (`help-window-point-marker') to move point in the help
-;; window to an arbitrary buffer position.
+;; (3) An option (customizable via `help-window-select') to select the
+;;     help window automatically.
 
-;; Note: It's usually always wrong to use `help-print-return-message' in
-;; the body of `with-help-window'.
+;; (4) A marker (`help-window-point-marker') to move point in the help
+;;     window to an arbitrary buffer position.
 (defmacro with-help-window (buffer-name &rest body)
-  "Display buffer with name BUFFER-NAME in a help window evaluating BODY.
-Select help window if the actual value of the user option
+  "Display buffer named BUFFER-NAME in a help window.
+Evaluate the forms in BODY with standard output bound to a buffer
+called BUFFER-NAME (creating it if it does not exist), put that
+buffer in `help-mode', display the buffer in a window (see
+`with-temp-buffer-window' for details) and issue a message how to
+deal with that \"help\" window when it's no more needed.  Select
+the help window if the current value of the user option
 `help-window-select' says so.  Return last value in BODY."
   (declare (indent 1) (debug t))
   `(progn
      ;; Make `help-window-point-marker' point nowhere.  The only place
      ;; where this should be set to a buffer position is within BODY.
      (set-marker help-window-point-marker nil)
-     (let* (help-window
-            (temp-buffer-show-hook
-             (cons (lambda () (setq help-window (selected-window)))
-                   temp-buffer-show-hook)))
-       ;; Return value returned by `with-output-to-temp-buffer'.
-       (prog1
-	   (with-output-to-temp-buffer ,buffer-name
-	     (progn ,@body))
-	 (help-window-setup help-window)))))
+     (let ((temp-buffer-window-setup-hook
+	    (cons 'help-mode-setup temp-buffer-window-setup-hook))
+	   (temp-buffer-window-show-hook
+	    (cons 'help-mode-finish temp-buffer-window-show-hook)))
+       (setq help-window-old-frame (selected-frame))
+       (with-temp-buffer-window
+	,buffer-name nil 'help-window-setup (progn ,@body)))))
 
 ;; Called from C, on encountering `help-char' when reading a char.
 ;; Don't print to *Help*; that would clobber Help history.
@@ -1188,6 +1348,128 @@ Select help window if the actual value of the user option
     (if (stringp msg)
 	(with-output-to-temp-buffer " *Char Help*"
 	  (princ msg)))))
+
+
+(defun help--docstring-quote (string)
+  "Return a doc string that represents STRING.
+The result, when formatted by `substitute-command-keys', should equal STRING."
+  (replace-regexp-in-string "['\\`‘’]" "\\\\=\\&" string))
+
+;; The following functions used to be in help-fns.el, which is not preloaded.
+;; But for various reasons, they are more widely needed, so they were
+;; moved to this file, which is preloaded.  http://debbugs.gnu.org/17001
+
+(defun help-split-fundoc (docstring def)
+  "Split a function DOCSTRING into the actual doc and the usage info.
+Return (USAGE . DOC) or nil if there's no usage info, where USAGE info
+is a string describing the argument list of DEF, such as
+\"(apply FUNCTION &rest ARGUMENTS)\".
+DEF is the function whose usage we're looking for in DOCSTRING."
+  ;; Functions can get the calling sequence at the end of the doc string.
+  ;; In cases where `function' has been fset to a subr we can't search for
+  ;; function's name in the doc string so we use `fn' as the anonymous
+  ;; function name instead.
+  (when (and docstring (string-match "\n\n(fn\\(\\( .*\\)?)\\)\\'" docstring))
+    (let ((doc (unless (zerop (match-beginning 0))
+		 (substring docstring 0 (match-beginning 0))))
+	  (usage-tail (match-string 1 docstring)))
+      (cons (format "(%s%s"
+		    ;; Replace `fn' with the actual function name.
+		    (if (symbolp def)
+			(help--docstring-quote (format "%S" def))
+		      'anonymous)
+		    usage-tail)
+	    doc))))
+
+(defun help-add-fundoc-usage (docstring arglist)
+  "Add the usage info to DOCSTRING.
+If DOCSTRING already has a usage info, then just return it unchanged.
+The usage info is built from ARGLIST.  DOCSTRING can be nil.
+ARGLIST can also be t or a string of the form \"(FUN ARG1 ARG2 ...)\"."
+  (unless (stringp docstring) (setq docstring ""))
+  (if (or (string-match "\n\n(fn\\(\\( .*\\)?)\\)\\'" docstring)
+          (eq arglist t))
+      docstring
+    (concat docstring
+	    (if (string-match "\n?\n\\'" docstring)
+		(if (< (- (match-end 0) (match-beginning 0)) 2) "\n" "")
+	      "\n\n")
+	    (if (stringp arglist)
+                (if (string-match "\\`[^ ]+\\(.*\\))\\'" arglist)
+                    (concat "(fn" (match-string 1 arglist) ")")
+                  (error "Unrecognized usage format"))
+	      (help--make-usage-docstring 'fn arglist)))))
+
+(defun help-function-arglist (def &optional preserve-names)
+  "Return a formal argument list for the function DEF.
+IF PRESERVE-NAMES is non-nil, return a formal arglist that uses
+the same names as used in the original source code, when possible."
+  ;; Handle symbols aliased to other symbols.
+  (if (and (symbolp def) (fboundp def)) (setq def (indirect-function def)))
+  ;; If definition is a macro, find the function inside it.
+  (if (eq (car-safe def) 'macro) (setq def (cdr def)))
+  (cond
+   ((and (byte-code-function-p def) (listp (aref def 0))) (aref def 0))
+   ((eq (car-safe def) 'lambda) (nth 1 def))
+   ((eq (car-safe def) 'closure) (nth 2 def))
+   ((or (and (byte-code-function-p def) (integerp (aref def 0)))
+        (subrp def))
+    (or (when preserve-names
+          (let* ((doc (condition-case nil (documentation def) (error nil)))
+                 (docargs (if doc (car (help-split-fundoc doc nil))))
+                 (arglist (if docargs
+                              (cdar (read-from-string (downcase docargs)))))
+                 (valid t))
+            ;; Check validity.
+            (dolist (arg arglist)
+              (unless (and (symbolp arg)
+                           (let ((name (symbol-name arg)))
+                             (if (eq (aref name 0) ?&)
+                                 (memq arg '(&rest &optional))
+                               (not (string-match "\\." name)))))
+                (setq valid nil)))
+            (when valid arglist)))
+        (let* ((args-desc (if (not (subrp def))
+                              (aref def 0)
+                            (let ((a (subr-arity def)))
+                              (logior (car a)
+                                      (if (numberp (cdr a))
+                                          (lsh (cdr a) 8)
+                                        (lsh 1 7))))))
+               (max (lsh args-desc -8))
+               (min (logand args-desc 127))
+               (rest (logand args-desc 128))
+               (arglist ()))
+          (dotimes (i min)
+            (push (intern (concat "arg" (number-to-string (1+ i)))) arglist))
+          (when (> max min)
+            (push '&optional arglist)
+            (dotimes (i (- max min))
+              (push (intern (concat "arg" (number-to-string (+ 1 i min))))
+                    arglist)))
+          (unless (zerop rest) (push '&rest arglist) (push 'rest arglist))
+          (nreverse arglist))))
+   ((and (autoloadp def) (not (eq (nth 4 def) 'keymap)))
+    "[Arg list not available until function definition is loaded.]")
+   (t t)))
+
+(defun help--make-usage (function arglist)
+  (cons (if (symbolp function) function 'anonymous)
+	(mapcar (lambda (arg)
+		  (if (not (symbolp arg)) arg
+		    (let ((name (symbol-name arg)))
+		      (cond
+                       ((string-match "\\`&" name) arg)
+                       ((string-match "\\`_." name)
+                        (intern (upcase (substring name 1))))
+                       (t (intern (upcase name)))))))
+		arglist)))
+
+(define-obsolete-function-alias 'help-make-usage 'help--make-usage "25.1")
+
+(defun help--make-usage-docstring (fn arglist)
+  (help--docstring-quote (format "%S" (help--make-usage fn arglist))))
+
 
 (provide 'help)
 

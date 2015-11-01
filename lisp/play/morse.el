@@ -1,6 +1,6 @@
-;;; morse.el --- convert text to morse code and back             -*- coding: utf-8 -*-
+;;; morse.el --- convert text to morse code and back
 
-;; Copyright (C) 1995, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1995, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Rick Farnbach <rick_farnbach@MENTORG.COM>
 ;; Keywords: games
@@ -144,9 +144,9 @@
 			(")" . "Close")
 			("@" . "At"))
   "NATO phonetic alphabet.
-See ''International Code of Signals'' (INTERCO), United States
+See “International Code of Signals” (INTERCO), United States
 Edition, 1969 Edition (Revised 2003) available from National
-Geospatial-Intelligence Agency at http://www.nga.mil/")
+Geospatial-Intelligence Agency at URL `http://www.nga.mil/'")
 
 ;;;###autoload
 (defun morse-region (beg end)

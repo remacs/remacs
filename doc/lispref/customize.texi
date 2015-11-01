@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1997-2013 Free Software Foundation, Inc.
+@c Copyright (C) 1997-2015 Free Software Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Customization
 @chapter Customization Settings
@@ -287,13 +287,17 @@ customizable variable).  You should not quote @var{option}.
 
 The argument @var{standard} is an expression that specifies the
 standard value for @var{option}.  Evaluating the @code{defcustom} form
-evaluates @var{standard}, but does not necessarily install the
-standard value.  If @var{option} already has a default value,
-@code{defcustom} does not change it.  If the user has saved a
-customization for @var{option}, @code{defcustom} installs the user's
-customized value as @var{option}'s default value.  If neither of those
-cases applies, @code{defcustom} installs the result of evaluating
-@var{standard} as the default value.
+evaluates @var{standard}, but does not necessarily bind the option to
+that value.  If @var{option} already has a default value, it is left
+unchanged.  If the user has already saved a customization for
+@var{option}, the user's customized value is installed as the default
+value.  Otherwise, the result of evaluating @var{standard} is
+installed as the default value.
+
+Like @code{defvar}, this macro marks @code{option} as a special
+variable, meaning that it should always be dynamically bound.  If
+@var{option} is already lexically bound, that lexical binding remains
+in effect until the binding construct exits.  @xref{Variable Scoping}.
 
 The expression @var{standard} can be evaluated at various other times,
 too---whenever the customization facility needs to know @var{option}'s
@@ -349,8 +353,9 @@ option when using the Customize interface.  The function
 @var{setfunction} should take two arguments, a symbol (the option
 name) and the new value, and should do whatever is necessary to update
 the value properly for this option (which may not mean simply setting
-the option as a Lisp variable).  The default for @var{setfunction} is
-@code{set-default}.
+the option as a Lisp variable); preferably, though, it should not
+modify its value argument destructively.  The default for
+@var{setfunction} is @code{set-default}.
 
 If you specify this keyword, the variable's documentation string
 should describe how to do the same job in hand-written Lisp code.
@@ -360,7 +365,7 @@ should describe how to do the same job in hand-written Lisp code.
 Specify @var{getfunction} as the way to extract the value of this
 option.  The function @var{getfunction} should take one argument, a
 symbol, and should return whatever customize should use as the
-``current value'' for that symbol (which need not be the symbol's Lisp
+current value for that symbol (which need not be the symbol's Lisp
 value).  The default is @code{default-value}.
 
 You have to really understand the workings of Custom to use
@@ -436,7 +441,7 @@ those other variables already have their intended values.
 @end table
 
   It is useful to specify the @code{:require} keyword for an option
-that ``turns on'' a certain feature.  This causes Emacs to load the
+that turns on a certain feature.  This causes Emacs to load the
 feature, if it is not already loaded, whenever the option is set.
 @xref{Common Keywords}.  Here is an example, from the library
 @file{saveplace.el}:
@@ -567,7 +572,7 @@ The value must be an integer.
 The value must be a number (floating point or integer).
 
 @item float
-The value must be a floating point number.
+The value must be floating point.
 
 @item string
 The value must be a string.  The customization buffer shows the string
@@ -718,7 +723,7 @@ simply atoms, which stand for themselves.  For example:
 @end example
 
 @noindent
-specifies that there are three ``known'' keys, namely @code{"foo"},
+specifies that there are three known keys, namely @code{"foo"},
 @code{"bar"} and @code{"baz"}, which will always be shown first.
 
 You may want to restrict the value type for specific keys, for
@@ -837,7 +842,7 @@ symbols, and symbols are not treated like other Lisp expressions.
 
 @item (radio @var{element-types}@dots{})
 This is similar to @code{choice}, except that the choices are displayed
-using `radio buttons' rather than a menu.  This has the advantage of
+using radio buttons rather than a menu.  This has the advantage of
 displaying documentation for the choices when applicable and so is often
 a good choice for a choice between constant functions
 (@code{function-item} customization types).
@@ -1222,6 +1227,8 @@ arguments, which will be used when creating the @code{radio-button} or
 
 @node Defining New Types
 @subsection Defining New Types
+@cindex customization types, define new
+@cindex define new customization types
 
 In the previous sections we have described how to construct elaborate
 type specifications for @code{defcustom}.  In some cases you may want
@@ -1291,6 +1298,7 @@ its @code{:type} argument only when needed.
 
 @node Applying Customizations
 @section Applying Customizations
+@cindex applying customizations
 
 The following functions are responsible for installing the user's
 customization settings for variables and faces, respectively.  When
@@ -1348,6 +1356,7 @@ evaluated.  @var{comment} is a string describing the customization.
 @node Custom Themes
 @section Custom Themes
 
+@cindex custom themes
   @dfn{Custom themes} are collections of settings that can be enabled
 or disabled as a unit.  @xref{Custom Themes,,, emacs, The GNU Emacs
 Manual}.  Each Custom theme is defined by an Emacs Lisp source file,
@@ -1369,8 +1378,8 @@ the theme; this is the description shown when the user invokes the
 Themes*} buffer.
 
 Two special theme names are disallowed (using them causes an error):
-@code{user} is a ``dummy'' theme that stores the user's direct
-customization settings, and @code{changed} is a ``dummy'' theme that
+@code{user} is a dummy theme that stores the user's direct
+customization settings, and @code{changed} is a dummy theme that
 stores changes made outside of the Customize system.
 @end defmac
 
@@ -1413,7 +1422,7 @@ where the list entries have the same meanings as in
 @end defun
 
   In theory, a theme file can also contain other Lisp forms, which
-would be evaluated when loading the theme, but that is ``bad form''.
+would be evaluated when loading the theme, but that is bad form.
 To protect against loading themes containing malicious code, Emacs
 displays the source file and asks for confirmation from the user
 before loading any non-built-in theme for the first time.
@@ -1427,6 +1436,17 @@ is the name of a Custom theme (i.e., a Custom theme which has been
 loaded into Emacs, whether or not the theme is enabled).  Otherwise,
 it returns @code{nil}.
 @end defun
+
+@defvar custom-known-themes
+The value of this variable is a list of themes loaded into Emacs.
+Each theme is represented by a Lisp symbol (the theme name).  The
+default value of this variable is a list containing two dummy
+themes: @code{(user changed)}.  The @code{changed} theme stores
+settings made before any Custom themes are applied (e.g., variables
+set outside of Customize).  The @code{user} theme stores settings the
+user has customized and saved.  Any additional themes declared with
+the @code{deftheme} macro are added to the front of this list.
+@end defvar
 
 @deffn Command load-theme theme &optional no-confirm no-enable
 This function loads the Custom theme named @var{theme} from its source

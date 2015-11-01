@@ -1,6 +1,6 @@
 ;;; semantic/tag.el --- tag creation and access
 
-;; Copyright (C) 1999-2005, 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2005, 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -95,7 +95,7 @@ print statement."
 
 (defsubst semantic-tag-class (tag)
   "Return the class of TAG.
-That is, the symbol 'variable, 'function, 'type, or other.
+This is a symbol like `variable', `function', or `type'.
 There is no limit to the symbols that may represent the class of a tag.
 Each parser generates tags with classes defined by it.
 
@@ -172,7 +172,7 @@ That function is for internal use only."
       (semantic--tag-set-overlay tag (vector start end)))))
 
 (defun semantic-tag-in-buffer-p (tag)
-  "Return the buffer TAG resides in IFF tag is already in a buffer.
+  "Return the buffer TAG resides in, if tag is already in a buffer.
 If a tag is not in a buffer, return nil."
   (let ((o (semantic-tag-overlay tag)))
      ;; TAG is currently linked to a buffer, return it.
@@ -621,7 +621,7 @@ buffer, the originating buffer file name is kept in the `:filename'
 property of the copied tag.
 If KEEP-FILE is a string, and the originating buffer is NOT available,
 then KEEP-FILE is stored on the `:filename' property.
-This runs the tag hook `unlink-copy-hook`."
+This runs the tag hook `unlink-copy-hook'."
   ;; Right now, TAG is a list.
   (let ((copy (semantic-tag-clone tag name)))
 
@@ -958,7 +958,7 @@ Return nil if TAG is not of class 'alias."
   "Return a list of components for TAG.
 A Component is a part of TAG which itself may be a TAG.
 Examples include the elements of a structure in a
-tag of class `type, or the list of arguments to a
+tag of class 'type, or the list of arguments to a
 tag of class 'function."
   )
 
@@ -1212,7 +1212,7 @@ Returns a list of cooked tags.
   The parser returns raw tags with positional data START END at the
 end of the tag data structure (a list for now).  We convert it from
 that to a cooked state that uses an overlay proxy, that is, a vector
-\[START END].
+[START END].
 
   The raw tag is changed with side effects and maybe expanded in
 several derived tags when the variable `semantic-tag-expand-function'

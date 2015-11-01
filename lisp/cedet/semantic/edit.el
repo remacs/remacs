@@ -1,6 +1,6 @@
 ;;; semantic/edit.el --- Edit Management for Semantic
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -463,11 +463,11 @@ See `semantic-edits-change-leaf-tag' for details on parents."
 
 (defun semantic-parse-changes-failed (&rest args)
   "Signal that Semantic failed to parse changes.
-That is, display a message by passing all ARGS to `format', then throw
+That is, display a message by passing all ARGS to `format-message', then throw
 a 'semantic-parse-changes-failed exception with value t."
   (when semantic-edits-verbose-flag
     (message "Semantic parse changes failed: %S"
-	     (apply 'format args)))
+	     (apply #'format-message args)))
   (throw 'semantic-parse-changes-failed t))
 
 (defsubst semantic-edits-incremental-fail ()
@@ -907,11 +907,11 @@ pre-positioned to a convenient location."
 
 (defun semantic-edits-splice-insert (newtags parent cachelist)
   "Insert NEWTAGS into PARENT using CACHELIST.
-PARENT could be nil, in which case CACHLIST is the buffer cache
+PARENT could be nil, in which case CACHELIST is the buffer cache
 which must be updated.
 CACHELIST must be searched to find where NEWTAGS are to be inserted.
 The positions of NEWTAGS must be synchronized with those in
-CACHELIST for this to work.  Some routines pre-position CACHLIST at a
+CACHELIST for this to work.  Some routines pre-position CACHELIST at a
 convenient location, so use that."
   (let* ((start (semantic-tag-start (car newtags)))
 	 (newtagendcell (nthcdr (1- (length newtags)) newtags))

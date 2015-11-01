@@ -1,8 +1,8 @@
 ;;; lucid.el --- emulate some Lucid Emacs functions
 
-;; Copyright (C) 1993, 1995, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1993, 1995, 2001-2015 Free Software Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: emulations
 ;; Obsolete-since: 23.2
 
@@ -29,27 +29,6 @@
 (require 'cl)
 
 (defalias 'current-time-seconds 'current-time)
-
-(defun read-number (prompt &optional integers-only)
-  "Read a number from the minibuffer.
-Keep reentering the minibuffer until we get suitable input.
-If optional argument INTEGERS-ONLY is non-nil, insist on an integer."
-  (interactive)
-  (let (success
-	(number nil)
-	(predicate (if integers-only 'integerp 'numberp)))
-    (while (not success)
-      (let ((input-string (read-string prompt)))
-	(condition-case ()
-	    (setq number (read input-string))
-	  (error))
-	(if (funcall predicate number)
-	    (setq success t)
-	  (let ((cursor-in-echo-area t))
-	    (message "Please type %s"
-		     (if integers-only "an integer" "a number"))
-	    (sit-for 1)))))
-    number))
 
 (defun real-path-name (name &optional default)
   (file-truename (expand-file-name name default)))
@@ -125,7 +104,7 @@ This is an XEmacs compatibility function."
 
 (defun extent-at (pos &optional object property before)
   (with-current-buffer (or object (current-buffer))
-    (let ((overlays (overlays-at pos)))
+    (let ((overlays (overlays-at pos 'sorted)))
       (when property
 	(let (filtered)
 	  (while overlays
@@ -133,14 +112,6 @@ This is an XEmacs compatibility function."
 		(setq filtered (cons (car overlays) filtered)))
 	    (setq overlays (cdr overlays)))
 	  (setq overlays filtered)))
-      (setq overlays
-	    (sort overlays
-		  (function (lambda (o1 o2)
-			      (let ((p1 (or (overlay-get o1 'priority) 0))
-				    (p2 (or (overlay-get o2 'priority) 0)))
-				(or (> p1 p2)
-				    (and (= p1 p2)
-					 (> (overlay-start o1) (overlay-start o2)))))))))
       (if before
 	  (nth 1 (memq before overlays))
 	(car overlays)))))

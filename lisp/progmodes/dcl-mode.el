@@ -1,6 +1,6 @@
 ;;; dcl-mode.el --- major mode for editing DCL command files
 
-;; Copyright (C) 1997, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Odd Gripenstam <gripenstamol@decus.se>
 ;; Maintainer: Odd Gripenstam <gripenstamol@decus.se>
@@ -173,7 +173,7 @@ It can have the following values:
   first-line  indentation for the first line in a buffer or SUBROUTINE.
 CUR-INDENT is the indentation of the preceding command line.
 EXTRA-INDENT is the default change in indentation for this line
-\(a negative number for 'outdent).
+\(a negative number for “outdent”).
 LAST-POINT is the buffer position of the first significant word on the
 previous line or nil if the current line is the first line.
 THIS-POINT is the buffer position of the first significant word on the
@@ -259,12 +259,12 @@ never indented."
   :group 'dcl)
 
 (defcustom dcl-imenu-generic-expression
-  `((nil "^\\$[ \t]*\\([A-Za-z0-9_\$]+\\):[ \t]+SUBROUTINE\\b" 1)
+  `((nil "^\\$[ \t]*\\([A-Za-z0-9_$]+\\):[ \t]+SUBROUTINE\\b" 1)
     (,dcl-imenu-label-labels
-     "^\\$[ \t]*\\([A-Za-z0-9_\$]+\\):\\([ \t]\\|$\\)" 1)
-    (,dcl-imenu-label-goto "\\s-GOTO[ \t]+\\([A-Za-z0-9_\$]+\\)" 1)
-    (,dcl-imenu-label-gosub "\\s-GOSUB[ \t]+\\([A-Za-z0-9_\$]+\\)" 1)
-    (,dcl-imenu-label-call "\\s-CALL[ \t]+\\([A-Za-z0-9_\$]+\\)" 1))
+     "^\\$[ \t]*\\([A-Za-z0-9_$]+\\):\\([ \t]\\|$\\)" 1)
+    (,dcl-imenu-label-goto "\\s-GOTO[ \t]+\\([A-Za-z0-9_$]+\\)" 1)
+    (,dcl-imenu-label-gosub "\\s-GOSUB[ \t]+\\([A-Za-z0-9_$]+\\)" 1)
+    (,dcl-imenu-label-call "\\s-CALL[ \t]+\\([A-Za-z0-9_$]+\\)" 1))
   "Default imenu generic expression for DCL.
 
 The default includes SUBROUTINE labels in the main listing and
@@ -369,7 +369,7 @@ followed by space or tab."
 
 
 (defcustom dcl-label-r
-  "[a-zA-Z0-9_\$]*:\\([ \t!]\\|$\\)"
+  "[a-zA-Z0-9_$]*:\\([ \t!]\\|$\\)"
   "Regular expression describing a label.
 A label is a name followed by a colon followed by white-space or end-of-line."
   :type 'regexp
@@ -453,12 +453,12 @@ Preloaded with all known option names from dcl-option-alist")
 ;; above.  This version won't find GOTOs in comments or text strings.
 ;(defvar dcl-imenu-generic-expression
 ;  (`
-;   ((nil "^\\$[ \t]*\\([A-Za-z0-9_\$]+\\):[ \t]+SUBROUTINE\\b" 1)
-;    ("Labels" "^\\$[ \t]*\\([A-Za-z0-9_\$]+\\):\\([ \t]\\|$\\)" 1)
-;    ("GOTO" (, (concat dcl-cmd-r "GOTO[ \t]+\\([A-Za-z0-9_\$]+\\)")) 5)
+;   ((nil "^\\$[ \t]*\\([A-Za-z0-9_$]+\\):[ \t]+SUBROUTINE\\b" 1)
+;    ("Labels" "^\\$[ \t]*\\([A-Za-z0-9_$]+\\):\\([ \t]\\|$\\)" 1)
+;    ("GOTO" (, (concat dcl-cmd-r "GOTO[ \t]+\\([A-Za-z0-9_$]+\\)")) 5)
 ;    ("GOSUB" (, (concat dcl-cmd-r
-;			"GOSUB[ \t]+\\([A-Za-z0-9_\$]+\\)")) 5)
-;    ("CALL" (, (concat dcl-cmd-r "CALL[ \t]+\\([A-Za-z0-9_\$]+\\)")) 5)))
+;			"GOSUB[ \t]+\\([A-Za-z0-9_$]+\\)")) 5)
+;    ("CALL" (, (concat dcl-cmd-r "CALL[ \t]+\\([A-Za-z0-9_$]+\\)")) 5)))
 ;  "*Default imenu generic expression for DCL.
 
 ;The default includes SUBROUTINE labels in the main listing and

@@ -1,6 +1,6 @@
 ### @configure_input@
 
-# Copyright (C) 1994-1999, 2001-2013 Free Software Foundation, Inc.
+# Copyright (C) 1994-1999, 2001-2015 Free Software Foundation, Inc.
 
 # This file is part of GNU Emacs.
 
@@ -17,17 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
-SHELL = /bin/sh
+SHELL = @SHELL@
 
-# NB If you add any more configure variables,
-# update the sed rules in the dist target below.
 srcdir = @srcdir@
-version=@version@
 
 buildinfodir = $(srcdir)/../../info
 # Directory with the (customized) texinfo.tex file.
 texinfodir = $(srcdir)/../misc
-# Directory with emacsver.texi.
+# Directory with docstyle.texi and emacsver.texi.
 emacsdir =  $(srcdir)/../emacs
 
 prefix = @prefix@
@@ -46,9 +43,8 @@ GZIP_PROG = @GZIP_PROG@
 
 HTML_OPTS = --no-split --html
 
-INFO_EXT=@INFO_EXT@
 # Options used only when making info output.
-INFO_OPTS=@INFO_OPTS@
+INFO_OPTS= --no-split
 
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -59,50 +55,58 @@ TEXI2DVI = texi2dvi
 TEXI2PDF = texi2pdf
 DVIPS = dvips
 
-ENVADD = TEXINPUTS="$(srcdir):$(texinfodir):$(emacsdir):$(TEXINPUTS)" \
-         MAKEINFO="$(MAKEINFO) $(MAKEINFO_OPTS)"
+# 'make' verbosity.
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+
+AM_V_GEN = $(am__v_GEN_@AM_V@)
+am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
+am__v_GEN_0 = @echo "  GEN     " $@;
+am__v_GEN_1 =
+
+ENVADD = \
+  $(AM_V_GEN)TEXINPUTS="$(srcdir):$(texinfodir):$(emacsdir):$(TEXINPUTS)" \
+  MAKEINFO="$(MAKEINFO) $(MAKEINFO_OPTS)"
 
 DVI_TARGETS = emacs-lisp-intro.dvi
 HTML_TARGETS = emacs-lisp-intro.html
 PDF_TARGETS = emacs-lisp-intro.pdf
 PS_TARGETS = emacs-lisp-intro.ps
 
-mkinfodir = @${MKDIR_P} ${buildinfodir}
-
 srcs = ${srcdir}/emacs-lisp-intro.texi ${srcdir}/doclicense.texi \
-  ${emacsdir}/emacsver.texi
+  ${emacsdir}/docstyle.texi ${emacsdir}/emacsver.texi
+
+## Disable implicit rules.
+%.texi: ;
 
 .PHONY: info dvi html pdf ps
 
-.SUFFIXES: .ps .dvi
-
-.dvi.ps:
-	$(DVIPS) -o $@ $<
-
-info: ${buildinfodir}/eintr$(INFO_EXT)
-
+info: ${buildinfodir}/eintr.info
 dvi: $(DVI_TARGETS)
 html: $(HTML_TARGETS)
 pdf: $(PDF_TARGETS)
 ps: $(PS_TARGETS)
 
+${buildinfodir}:
+	${MKDIR_P} $@
+
 # The file name eintr must fit within 5 characters, to allow for
 # -NN extensions to fit into DOS 8+3 limits without clashing.
-# Note: "<" is not portable in ordinary make rules.
-${buildinfodir}/eintr$(INFO_EXT): ${srcs}
-	$(mkinfodir)
-	$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) -o $@ ${srcdir}/emacs-lisp-intro.texi
+${buildinfodir}/eintr.info: ${srcs} | ${buildinfodir}
+	$(AM_V_GEN)$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) -o $@ $<
 
 emacs-lisp-intro.dvi: ${srcs}
-	$(ENVADD) $(TEXI2DVI) ${srcdir}/emacs-lisp-intro.texi
+	$(ENVADD) $(TEXI2DVI) $<
 
 emacs-lisp-intro.pdf: ${srcs}
-	$(ENVADD) $(TEXI2PDF) ${srcdir}/emacs-lisp-intro.texi
+	$(ENVADD) $(TEXI2PDF) $<
 
 emacs-lisp-intro.html: ${srcs}
-	$(MAKEINFO) $(MAKEINFO_OPTS) $(HTML_OPTS) -o $@ ${srcdir}/emacs-lisp-intro.texi
+	$(AM_V_GEN)$(MAKEINFO) $(MAKEINFO_OPTS) $(HTML_OPTS) -o $@ $<
 
-.PHONY: mostlyclean clean distclean maintainer-clean infoclean
+emacs-lisp-intro.ps: emacs-lisp-intro.dvi
+	$(DVIPS) -o $@ $<
+
+.PHONY: mostlyclean clean distclean bootstrap-clean maintainer-clean infoclean
 
 mostlyclean:
 	rm -f *.aux *.log *.toc *.cp *.cps *.fn *.fns *.ky *.kys \
@@ -110,56 +114,35 @@ mostlyclean:
 
 clean: mostlyclean
 	rm -f $(DVI_TARGETS) $(HTML_TARGETS) $(PDF_TARGETS) $(PS_TARGETS)
-	rm -f emacs-lispintro-${version}.tar*
 
 distclean: clean
+	rm -f Makefile
 
 infoclean:
-	-cd $(buildinfodir) && rm -f eintr$(INFO_EXT) eintr$(INFO_EXT)-[1-9]
+	rm -f \
+	  $(buildinfodir)/eintr.info \
+	  $(buildinfodir)/eintr.info-[1-9]
 
-maintainer-clean: distclean infoclean
-
-.PHONY: dist
-
-dist:
-	rm -rf emacs-lispintro-${version}
-	mkdir emacs-lispintro-${version}
-	cp ${srcdir}/*.texi ${srcdir}/*.eps ${srcdir}/*.pdf \
-	  ${texinfodir}/texinfo.tex ${emacsdir}/emacsver.texi \
-	  ${srcdir}/ChangeLog* ${srcdir}/README emacs-lispintro-${version}/
-	sed -e 's/@sr[c]dir@/./' -e 's/^\(texinfodir *=\).*/\1 ./' \
-	  -e 's/^\(emacsdir *=\).*/\1 ./' \
-	  -e 's/^\(buildinfodir *=\).*/\1 ./' \
-	  -e 's/^\(clean:.*\)/\1 infoclean/' \
-	  -e "s/@ver[s]ion@/${version}/" \
-	  -e 's/@MAKE[I]NFO@/makeinfo/' -e 's/@MK[D]IR_P@/mkdir -p/' \
-	  -e 's/@IN[F]O_EXT@/.info/' -e 's/@IN[F]O_OPTS@//' \
-	  ${srcdir}/Makefile.in > emacs-lispintro-${version}/Makefile
-	@if grep '@[a-zA-Z_]*@' emacs-lispintro-${version}/Makefile; then \
-	  echo "Unexpanded configure variables in Makefile?" 1>&2; exit 1; \
-	fi
-	tar -cf emacs-lispintro-${version}.tar emacs-lispintro-${version}
-	rm -rf emacs-lispintro-${version}
-
+bootstrap-clean maintainer-clean: distclean infoclean
 
 .PHONY: install-dvi install-html install-pdf install-ps install-doc
 
 install-dvi: dvi
-	umask 022; $(MKDIR_P) $(DESTDIR)$(dvidir)
-	$(INSTALL_DATA) $(DVI_TARGETS) $(DESTDIR)$(dvidir)
+	umask 022; $(MKDIR_P) "$(DESTDIR)$(dvidir)"
+	$(INSTALL_DATA) $(DVI_TARGETS) "$(DESTDIR)$(dvidir)"
 install-html: html
-	umask 022; $(MKDIR_P) $(DESTDIR)$(htmldir)
-	$(INSTALL_DATA) $(HTML_TARGETS) $(DESTDIR)$(htmldir)
+	umask 022; $(MKDIR_P) "$(DESTDIR)$(htmldir)"
+	$(INSTALL_DATA) $(HTML_TARGETS) "$(DESTDIR)$(htmldir)"
 install-pdf: pdf
-	 umask 022;$(MKDIR_P) $(DESTDIR)$(pdfdir)
-	$(INSTALL_DATA) $(PDF_TARGETS) $(DESTDIR)$(pdfdir)
+	 umask 022;$(MKDIR_P) "$(DESTDIR)$(pdfdir)"
+	$(INSTALL_DATA) $(PDF_TARGETS) "$(DESTDIR)$(pdfdir)"
 install-ps: ps
-	umask 022; $(MKDIR_P) $(DESTDIR)$(psdir)
+	umask 022; $(MKDIR_P) "$(DESTDIR)$(psdir)"
 	for file in $(PS_TARGETS); do \
-	  $(INSTALL_DATA) $${file} $(DESTDIR)$(psdir); \
+	  $(INSTALL_DATA) $${file} "$(DESTDIR)$(psdir)"; \
 	  [ -n "${GZIP_PROG}" ] || continue; \
-	  rm -f $(DESTDIR)$(psdir)/$${file}.gz; \
-	  ${GZIP_PROG} -9n $(DESTDIR)$(psdir)/$${file}; \
+	  rm -f "$(DESTDIR)$(psdir)/$${file}.gz"; \
+	  ${GZIP_PROG} -9n "$(DESTDIR)$(psdir)/$${file}"; \
 	done
 
 ## Top-level Makefile installs the info pages.
@@ -170,20 +153,20 @@ install-doc: install-dvi install-html install-pdf install-ps
 
 uninstall-dvi:
 	for file in $(DVI_TARGETS); do \
-	  rm -f $(DESTDIR)$(dvidir)/$${file}; \
+	  rm -f "$(DESTDIR)$(dvidir)/$${file}"; \
 	done
 uninstall-html:
 	for file in $(HTML_TARGETS); do \
-	  rm -f $(DESTDIR)$(htmldir)/$${file}; \
+	  rm -f "$(DESTDIR)$(htmldir)/$${file}"; \
 	done
 uninstall-ps:
 	ext= ; [ -n "${GZIP_PROG}" ] && ext=.gz; \
 	for file in $(PS_TARGETS); do \
-	  rm -f $(DESTDIR)$(psdir)/$${file}$${ext}; \
+	  rm -f "$(DESTDIR)$(psdir)/$${file}$${ext}"; \
 	done
 uninstall-pdf:
 	for file in $(PDF_TARGETS); do \
-	  rm -f $(DESTDIR)$(pdfdir)/$${file}; \
+	  rm -f "$(DESTDIR)$(pdfdir)/$${file}"; \
 	done
 
 uninstall-doc: uninstall-dvi uninstall-html uninstall-pdf uninstall-ps

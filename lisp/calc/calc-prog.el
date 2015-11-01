@@ -1,6 +1,6 @@
 ;;; calc-prog.el --- user programmability functions for Calc
 
-;; Copyright (C) 1990-1993, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1990-1993, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: David Gillespie <daveg@synaptics.com>
 ;; Maintainer: Jay Belanger <jay.p.belanger@gmail.com>
@@ -139,6 +139,7 @@
 					 "calc-"))))
       (let* ((kmap (calc-user-key-map))
 	     (old (assq key kmap)))
+        ;; FIXME: Why not (define-key kmap (vector key) func)?
 	(if old
 	    (setcdr old func)
 	  (setcdr kmap (cons (cons key func) (cdr kmap))))))))
@@ -322,6 +323,7 @@
      (if key
 	 (let* ((kmap (calc-user-key-map))
 		(old (assq key kmap)))
+           ;; FIXME: Why not (define-key kmap (vector key) cmd)?
 	   (if old
 	       (setcdr old cmd)
 	     (setcdr kmap (cons (cons key cmd) (cdr kmap)))))))
@@ -467,6 +469,7 @@
 			      (format "z%c" key)))))
       (let* ((kmap (calc-user-key-map))
 	     (old (assq key kmap)))
+        ;; FIXME: Why not (define-key kmap (vector key) func)?
 	(if old
 	    (setcdr old cmd)
 	  (setcdr kmap (cons (cons key cmd) (cdr kmap))))))))
@@ -594,9 +597,9 @@
 	 ",")
 	((equal name "#")
 	 (search-backward "#")
-	 (error "Token '#' is reserved"))
+	 (error "Token `#' is reserved"))
 	((and unquoted (string-match "#" name))
-	 (error "Tokens containing '#' must be quoted"))
+	 (error "Tokens containing `#' must be quoted"))
 	((not (string-match "[^ ]" name))
 	 (search-backward "\"" nil t)
 	 (error "Blank tokens are not allowed"))
@@ -607,7 +610,7 @@
 	(quoted nil))
     (while (progn
 	     (skip-chars-forward "\n\t ")
-	     (if (eobp) (error "Expected '%s'" eterm))
+	     (if (eobp) (error "Expected `%s'" eterm))
 	     (not (looking-at term)))
       (cond ((looking-at "%%")
 	     (end-of-line))
@@ -615,7 +618,7 @@
 	     (forward-char 2)
 	     (let ((p (calc-read-parse-table-part "}" "}")))
 	       (or (looking-at "[+*?]")
-		   (error "Expected '+', '*', or '?'"))
+		   (error "Expected `+', `*', or `?'"))
 	       (let ((sym (intern (buffer-substring (point) (1+ (point))))))
 		 (forward-char 1)
 		 (looking-at "[^\n\t ]*")
@@ -647,7 +650,7 @@
 					      (match-end 1)))))))
 	     (goto-char (match-end 0)))
 	    ((looking-at ":=[\n\t ]")
-	     (error "Misplaced ':='"))
+	     (error "Misplaced `:='"))
 	    (t
 	     (looking-at "[^\n\t ]*")
 	     (let ((end (match-end 0)))
@@ -1284,37 +1287,37 @@ Redefine the corresponding command."
   (setq rpt-count (if rpt-count (prefix-numeric-value rpt-count) 1000000))
   (let* ((count 0)
 	 (parts nil)
-	 (body "")
+	 (body (vector))
 	 (open last-command-event)
 	 (counter initial)
 	 ch)
     (or executing-kbd-macro
 	(message "Reading loop body..."))
     (while (>= count 0)
-      (setq ch (read-char))
-      (if (= ch -1)
+      (setq ch (read-event))
+      (if (eq ch -1)
 	  (error "Unterminated Z%c in keyboard macro" open))
-      (if (= ch ?Z)
+      (if (eq ch ?Z)
 	  (progn
-	    (setq ch (read-char)
-		  body (concat body "Z" (char-to-string ch)))
+	    (setq ch (read-event)
+		  body (vconcat body (vector ?Z ch)))
 	    (cond ((memq ch '(?\< ?\( ?\{))
 		   (setq count (1+ count)))
 		  ((memq ch '(?\> ?\) ?\}))
 		   (setq count (1- count)))
 		  ((and (= ch ?/)
 			(= count 0))
-		   (setq parts (nconc parts (list (concat (substring body 0 -2)
-							  "Z]")))
+		   (setq parts (nconc parts (list (vconcat (substring body 0 -2)
+							  (vector ?Z ?\])  )))
 			 body ""))
 		  ((eq ch 7)
 		   (keyboard-quit))))
-	(setq body (concat body (char-to-string ch)))))
+	(setq body (vconcat body (vector ch)))))
     (if (/= ch (cdr (assq open '( (?\< . ?\>) (?\( . ?\)) (?\{ . ?\}) ))))
 	(error "Mismatched Z%c and Z%c in keyboard macro" open ch))
     (or executing-kbd-macro
 	(message "Looping..."))
-    (setq body (concat (substring body 0 -2) "Z]"))
+    (setq body (vconcat (substring body 0 -2) (vector ?Z ?\])   ))
     (and (not executing-kbd-macro)
 	 (= rpt-count 1000000)
 	 (null parts)
@@ -1438,7 +1441,7 @@ Redefine the corresponding command."
 	   (let ((calc-kbd-push-level 0))
 	     (execute-kbd-macro (substring body 0 -2))))
        (let ((calc-kbd-push-level (1+ calc-kbd-push-level)))
-	 (message "Saving modes; type Z' to restore")
+	 (message "%s" "Saving modes; type Z' to restore")
 	 (recursive-edit))))))
 
 (defun calc-kbd-pop ()
@@ -1447,7 +1450,7 @@ Redefine the corresponding command."
       (progn
 	(message "Mode settings restored")
 	(exit-recursive-edit))
-    (error "Unbalanced Z' in keyboard macro")))
+    (error "%s" "Unbalanced Z' in keyboard macro")))
 
 
 ;; (defun calc-kbd-report (msg)

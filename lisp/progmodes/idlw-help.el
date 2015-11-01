@@ -1,6 +1,6 @@
 ;;; idlw-help.el --- HTML Help code for IDLWAVE
 
-;; Copyright (C) 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2015 Free Software Foundation, Inc.
 ;;
 ;; Authors: J.D. Smith <jdsmith@as.arizona.edu>
 ;;          Carsten Dominik <dominik@science.uva.nl>
@@ -32,7 +32,7 @@
 ;; along with new versions of IDLWAVE, documentation, and more
 ;; information, at:
 ;;
-;;           http://idlwave.org
+;;           http://github.com/jdtsmith/idlwave
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -434,7 +434,7 @@ It collects and prints the diagnostics messages."
 
        ;; A system variable -- only system help
        ((string-match
-	 "\\`!\\([a-zA-Z0-9_]+\\)\\(\.\\([A-Za-z0-9_]+\\)\\)?"
+	 "\\`!\\([a-zA-Z0-9_]+\\)\\(\\.\\([A-Za-z0-9_]+\\)\\)?"
 	 this-word)
 	(let* ((word  (match-string-no-properties 1 this-word))
 	       (entry (assq (idlwave-sintern-sysvar word)
@@ -1177,15 +1177,13 @@ Useful when source code is displayed as help.  See the option
   (if (featurep 'font-lock)
       (let ((major-mode 'idlwave-mode)
 	    (font-lock-verbose
-	     (if (called-interactively-p 'interactive) font-lock-verbose nil))
-	    (syntax-table (syntax-table)))
-	(unwind-protect
-	    (progn
-	      (set-syntax-table idlwave-mode-syntax-table)
-	      (set (make-local-variable 'font-lock-defaults)
-		   idlwave-font-lock-defaults)
-	      (font-lock-fontify-buffer))
-	  (set-syntax-table syntax-table)))))
+	     (if (called-interactively-p 'interactive) font-lock-verbose nil)))
+	(with-syntax-table idlwave-mode-syntax-table
+          (set (make-local-variable 'font-lock-defaults)
+               idlwave-font-lock-defaults)
+          (if (fboundp 'font-lock-ensure)
+              (font-lock-ensure)
+            (font-lock-fontify-buffer))))))
 
 
 (defun idlwave-help-error (name type class keyword)
@@ -1314,7 +1312,7 @@ IDL assistant.")
   (let ((help-loc (idlwave-html-help-location))
 	topic anchor file just-started exists full-link)
 
-    (if (string-match "\.html" link)
+    (if (string-match "\\.html" link)
 	(setq topic (substring link 0 (match-beginning 0))
 	      anchor (substring link (match-end 0)))
       (error "Malformed help link"))

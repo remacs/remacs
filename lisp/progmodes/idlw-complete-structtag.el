@@ -1,6 +1,6 @@
 ;;; idlw-complete-structtag.el --- Completion of structure tags.
 
-;; Copyright (C) 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <dominik@astro.uva.nl>
 ;; Maintainer: J.D. Smith <jdsmith@as.arizona.edu>
@@ -49,14 +49,14 @@
 ;;
 ;; New versions of IDLWAVE, documentation, and more information available
 ;; from:
-;;                 http://idlwave.org
+;;                 http://github.com/jdtsmith/idlwave
 ;;
 ;; INSTALLATION
 ;; ============
 ;; Put this file on the emacs load path and load it with the following
 ;; line in your init file:
 ;;
-;;   (add-hook 'idlwave-load-hook 
+;;   (add-hook 'idlwave-load-hook
 ;;             (lambda () (require 'idlw-complete-structtag)))
 ;;
 ;; DESCRIPTION

@@ -1,8 +1,8 @@
 ;;; timer.el --- run a function with args at some time in future
 
-;; Copyright (C) 1996, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996, 2001-2015 Free Software Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Package: emacs
 
 ;; This file is part of GNU Emacs.
@@ -125,9 +125,7 @@ of SECS seconds since the epoch.  SECS may be a fraction."
   "Advance TIME by SECS seconds and optionally USECS microseconds
 and PSECS picoseconds.  SECS may be either an integer or a
 floating point number."
-  (let ((delta (if (floatp secs)
-		   (seconds-to-time secs)
-		 (list (floor secs 65536) (mod secs 65536)))))
+  (let ((delta secs))
     (if (or usecs psecs)
 	(setq delta (time-add delta (list 0 0 (or usecs 0) (or psecs 0)))))
     (time-add time delta)))
@@ -207,7 +205,7 @@ timers).  If nil, allocate a new cell."
   "Insert TIMER into `timer-idle-list'.
 This arranges to activate TIMER whenever Emacs is next idle.
 If optional argument DONT-WAIT is non-nil, set TIMER to activate
-immediately \(see below\), or at the right time, if Emacs is
+immediately \(see below), or at the right time, if Emacs is
 already idle.
 
 REUSE-CELL, if non-nil, is a cons cell to reuse when inserting
@@ -290,42 +288,51 @@ This function is called, by name, directly by the C code."
           (cell
            ;; Delete from queue.  Record the cons cell that was used.
            (cancel-timer-internal timer)))
-      ;; Re-schedule if requested.
-      (if (timer--repeat-delay timer)
-          (if (timer--idle-delay timer)
-              (timer-activate-when-idle timer nil cell)
-            (timer-inc-time timer (timer--repeat-delay timer) 0)
-            ;; If real time has jumped forward,
-            ;; perhaps because Emacs was suspended for a long time,
-            ;; limit how many times things get repeated.
-            (if (and (numberp timer-max-repeats)
-                     (< 0 (timer-until timer (current-time))))
-                (let ((repeats (/ (timer-until timer (current-time))
-                                  (timer--repeat-delay timer))))
-                  (if (> repeats timer-max-repeats)
-                      (timer-inc-time timer (* (timer--repeat-delay timer)
-                                               repeats)))))
-            ;; Place it back on the timer-list before running
-            ;; timer--function, so it can cancel-timer itself.
-            (timer-activate timer t cell)
-            (setq retrigger t)))
-      ;; Run handler.
-      (condition-case-unless-debug err
-          ;; Timer functions should not change the current buffer.
-          ;; If they do, all kinds of nasty surprises can happen,
-          ;; and it can be hellish to track down their source.
-          (save-current-buffer
-            (apply (timer--function timer) (timer--args timer)))
-        (error (message "Error running timer%s: %S"
-                        (if (symbolp (timer--function timer))
-                            (format " `%s'" (timer--function timer)) "")
-                        err)))
-      (when (and retrigger
-                 ;; If the timer's been canceled, don't "retrigger" it
-                 ;; since it might still be in the copy of timer-list kept
-                 ;; by keyboard.c:timer_check (bug#14156).
-                 (memq timer timer-list))
-        (setf (timer--triggered timer) nil)))))
+      ;; If `cell' is nil, it means the timer was already canceled, so we
+      ;; shouldn't be running it at all.  This can happen for example with the
+      ;; following scenario (bug#17392):
+      ;; - we run timers, starting with A (and remembering the rest as (B C)).
+      ;; - A runs and a does a sit-for.
+      ;; - during sit-for we run timer D which cancels timer B.
+      ;; - timer A finally finishes, so we move on to timers B and C.
+      (when cell
+        ;; Re-schedule if requested.
+        (if (timer--repeat-delay timer)
+            (if (timer--idle-delay timer)
+                (timer-activate-when-idle timer nil cell)
+              (timer-inc-time timer (timer--repeat-delay timer) 0)
+              ;; If real time has jumped forward,
+              ;; perhaps because Emacs was suspended for a long time,
+              ;; limit how many times things get repeated.
+              (if (and (numberp timer-max-repeats)
+                       (< 0 (timer-until timer nil)))
+                  (let ((repeats (/ (timer-until timer nil)
+                                    (timer--repeat-delay timer))))
+                    (if (> repeats timer-max-repeats)
+                        (timer-inc-time timer (* (timer--repeat-delay timer)
+                                                 repeats)))))
+              ;; Place it back on the timer-list before running
+              ;; timer--function, so it can cancel-timer itself.
+              (timer-activate timer t cell)
+              (setq retrigger t)))
+        ;; Run handler.
+        (condition-case-unless-debug err
+            ;; Timer functions should not change the current buffer.
+            ;; If they do, all kinds of nasty surprises can happen,
+            ;; and it can be hellish to track down their source.
+            (save-current-buffer
+              (apply (timer--function timer) (timer--args timer)))
+          (error (message "Error running timer%s: %S"
+                          (if (symbolp (timer--function timer))
+                              (format-message " `%s'" (timer--function timer))
+                            "")
+                          err)))
+        (when (and retrigger
+                   ;; If the timer's been canceled, don't "retrigger" it
+                   ;; since it might still be in the copy of timer-list kept
+                   ;; by keyboard.c:timer_check (bug#14156).
+                   (memq timer timer-list))
+          (setf (timer--triggered timer) nil))))))
 
 ;; This function is incompatible with the one in levents.el.
 (defun timeout-event-p (event)
@@ -338,18 +345,26 @@ This function is called, by name, directly by the C code."
 (defun run-at-time (time repeat function &rest args)
   "Perform an action at time TIME.
 Repeat the action every REPEAT seconds, if REPEAT is non-nil.
-TIME should be one of: a string giving an absolute time like
-\"11:23pm\" (the acceptable formats are those recognized by
-`diary-entry-time'; note that such times are interpreted as times
-today, even if in the past); a string giving a relative time like
-\"2 hours 35 minutes\" (the acceptable formats are those
-recognized by `timer-duration'); nil meaning now; a number of
-seconds from now; a value from `encode-time'; or t (with non-nil
-REPEAT) meaning the next integral multiple of REPEAT.  REPEAT may
-be an integer or floating point number.  The action is to call
-FUNCTION with arguments ARGS.
+REPEAT may be an integer or floating point number.
+TIME should be one of:
+- a string giving today's time like \"11:23pm\"
+  (the acceptable formats are HHMM, H:MM, HH:MM, HHam, HHAM,
+  HHpm, HHPM, HH:MMam, HH:MMAM, HH:MMpm, or HH:MMPM;
+  a period `.' can be used instead of a colon `:' to separate
+  the hour and minute parts);
+- a string giving a relative time like \"90\" or \"2 hours 35 minutes\"
+  (the acceptable forms are a number of seconds without units
+  or some combination of values using units in `timer-duration-words');
+- nil, meaning now;
+- a number of seconds from now;
+- a value from `encode-time';
+- or t (with non-nil REPEAT) meaning the next integral
+  multiple of REPEAT.
 
-This function returns a timer object which you can use in `cancel-timer'."
+The action is to call FUNCTION with arguments ARGS.
+
+This function returns a timer object which you can use in
+`cancel-timer'."
   (interactive "sRun at time: \nNRepeat interval: \naFunction: ")
 
   (or (null repeat)
@@ -366,13 +381,13 @@ This function returns a timer object which you can use in `cancel-timer'."
 
   ;; Handle numbers as relative times in seconds.
   (if (numberp time)
-      (setq time (timer-relative-time (current-time) time)))
+      (setq time (timer-relative-time nil time)))
 
   ;; Handle relative times like "2 hours 35 minutes"
   (if (stringp time)
       (let ((secs (timer-duration time)))
 	(if secs
-	    (setq time (timer-relative-time (current-time) secs)))))
+	    (setq time (timer-relative-time nil secs)))))
 
   ;; Handle "11:23pm" and the like.  Interpret it as meaning today
   ;; which admittedly is rather stupid if we have passed that time
@@ -478,7 +493,7 @@ The value is a list that the debugger can pass to `with-timeout-unsuspend'
 when it exits, to make these timers start counting again."
   (mapcar (lambda (timer)
 	    (cancel-timer timer)
-	    (list timer (time-subtract (timer--time timer) (current-time))))
+	    (list timer (time-subtract (timer--time timer) nil)))
 	  with-timeout-timers))
 
 (defun with-timeout-unsuspend (timer-spec-list)
@@ -487,7 +502,7 @@ The argument should be a value previously returned by `with-timeout-suspend'."
   (dolist (elt timer-spec-list)
     (let ((timer (car elt))
 	  (delay (cadr elt)))
-      (timer-set-time timer (time-add (current-time) delay))
+      (timer-set-time timer (time-add nil delay))
       (timer-activate timer))))
 
 (defun y-or-n-p-with-timeout (prompt seconds default-value)

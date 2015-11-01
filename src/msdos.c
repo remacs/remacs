@@ -1,6 +1,6 @@
 /* MS-DOS specific C utilities.          -*- coding: cp850 -*-
 
-Copyright (C) 1993-1997, 1999-2013 Free Software Foundation, Inc.
+Copyright (C) 1993-1997, 1999-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -50,6 +50,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <unistd.h>	 /* for chdir, dup, dup2, etc. */
 #include <dir.h>	 /* for getdisk */
 #pragma pack(0)		 /* dir.h does a pack(4), which isn't GCC's default */
+#undef opendir
+#include <dirent.h>	 /* for opendir */
 #include <fcntl.h>
 #include <io.h>		 /* for setmode */
 #include <dpmi.h>	 /* for __dpmi_xxx stuff */
@@ -69,6 +71,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "coding.h"
 #include "disptab.h"
 #include "window.h"
+#include "menu.h"
 #include "buffer.h"
 #include "commands.h"
 #include "blockinput.h"
@@ -408,7 +411,7 @@ static int term_setup_done;
 
 static unsigned short outside_cursor;
 
-/* Similar to the_only_frame.  */
+/* The only display since MS-DOS does not support multiple ones.  */
 struct tty_display_info the_only_display_info;
 
 /* Support for DOS/V (allows Japanese characters to be displayed on
@@ -564,7 +567,7 @@ dos_set_window_size (int *rows, int *cols)
       };
       int i = 0;
 
-      while (i < sizeof (std_dimension) / sizeof (std_dimension[0]))
+      while (i < ARRAYELTS (std_dimension))
 	{
 	 if (std_dimension[i].need_vga <= have_vga
 	     && std_dimension[i].rows >= *rows)
@@ -602,11 +605,7 @@ dos_set_window_size (int *rows, int *cols)
       Lisp_Object window = hlinfo->mouse_face_window;
 
       if (! NILP (window) && XFRAME (XWINDOW (window)->frame) == f)
-	{
-	  hlinfo->mouse_face_beg_row = hlinfo->mouse_face_beg_col = -1;
-	  hlinfo->mouse_face_end_row = hlinfo->mouse_face_end_col = -1;
-	  hlinfo->mouse_face_window = Qnil;
-	}
+	reset_mouse_highlight (hlinfo);
     }
 
   /* Enable bright background colors.  */
@@ -950,9 +949,6 @@ IT_write_glyphs (struct frame *f, struct glyph *str, int str_len)
 			  Mouse Highlight (and friends..)
  ************************************************************************/
 
-/* Last window where we saw the mouse.  Used by mouse-autoselect-window.  */
-static Lisp_Object last_mouse_window;
-
 static int mouse_preempted = 0;	/* non-zero when XMenu gobbles mouse events */
 
 int
@@ -1229,7 +1225,7 @@ IT_cmgoto (struct frame *f)
 static void
 IT_update_begin (struct frame *f)
 {
-  struct tty_display_info *display_info = FRAME_X_DISPLAY_INFO (f);
+  struct tty_display_info *display_info = FRAME_DISPLAY_INFO (f);
   Mouse_HLInfo *hlinfo = &display_info->mouse_highlight;
   struct frame *mouse_face_frame = hlinfo->mouse_face_mouse_frame;
 
@@ -1276,14 +1272,9 @@ IT_update_begin (struct frame *f)
 	}
     }
   else if (mouse_face_frame && !FRAME_LIVE_P (mouse_face_frame))
-    {
-      /* If the frame with mouse highlight was deleted, invalidate the
-	 highlight info.  */
-      hlinfo->mouse_face_beg_row = hlinfo->mouse_face_beg_col = -1;
-      hlinfo->mouse_face_end_row = hlinfo->mouse_face_end_col = -1;
-      hlinfo->mouse_face_window = Qnil;
-      hlinfo->mouse_face_mouse_frame = NULL;
-    }
+    /* If the frame with mouse highlight was deleted, invalidate the
+       highlight info.  */
+    reset_mouse_highlight (hlinfo);
 
   unblock_input ();
 }
@@ -1291,7 +1282,7 @@ IT_update_begin (struct frame *f)
 static void
 IT_update_end (struct frame *f)
 {
-  struct tty_display_info *dpyinfo = FRAME_X_DISPLAY_INFO (f);
+  struct tty_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
 
   if (dpyinfo->termscript)
     fprintf (dpyinfo->termscript, "\n<UPDATE_END\n");
@@ -1389,13 +1380,6 @@ static void
 IT_delete_glyphs (struct frame *f, int n)
 {
   emacs_abort ();
-}
-
-/* set-window-configuration on window.c needs this.  */
-void
-x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
-{
-  set_menu_bar_lines (f, value, oldval);
 }
 
 /* This was copied from xfaces.c  */
@@ -1553,11 +1537,6 @@ IT_reset_terminal_modes (struct terminal *term)
   startup_screen_buffer = NULL;
 
   term_setup_done = 0;
-}
-
-static void
-IT_set_terminal_window (struct frame *f, int foo)
-{
 }
 
 /* Remember the screen colors of the current frame, to serve as the
@@ -1754,7 +1733,7 @@ IT_set_frame_parameters (struct frame *f, Lisp_Object alist)
 
   if (redraw)
     {
-      face_change_count++;	/* forces xdisp.c to recompute basic faces */
+      face_change = true;	/* forces xdisp.c to recompute basic faces */
       if (f == SELECTED_FRAME ())
 	redraw_frame (f);
     }
@@ -1813,7 +1792,7 @@ internal_terminal_init (void)
 	}
 
       Vinitial_window_system = Qpc;
-      Vwindow_system_version = make_number (24); /* RE Emacs version */
+      Vwindow_system_version = make_number (25); /* RE Emacs version */
       tty->terminal->type = output_msdos_raw;
 
       /* If Emacs was dumped on DOS/V machine, forget the stale VRAM
@@ -1843,17 +1822,8 @@ internal_terminal_init (void)
 	  if (colors[1] >= 0 && colors[1] < 16)
 	    FRAME_BACKGROUND_PIXEL (SELECTED_FRAME ()) = colors[1];
 	}
-      the_only_display_info.mouse_highlight.mouse_face_mouse_frame = NULL;
-      the_only_display_info.mouse_highlight.mouse_face_beg_row =
-	the_only_display_info.mouse_highlight.mouse_face_beg_col = -1;
-      the_only_display_info.mouse_highlight.mouse_face_end_row =
-	the_only_display_info.mouse_highlight.mouse_face_end_col = -1;
-      the_only_display_info.mouse_highlight.mouse_face_face_id = DEFAULT_FACE_ID;
-      the_only_display_info.mouse_highlight.mouse_face_window = Qnil;
-      the_only_display_info.mouse_highlight.mouse_face_mouse_x =
-	the_only_display_info.mouse_highlight.mouse_face_mouse_y = 0;
-      the_only_display_info.mouse_highlight.mouse_face_defer = 0;
-      the_only_display_info.mouse_highlight.mouse_face_hidden = 0;
+
+      reset_mouse_highlight (&the_only_display_info.mouse_highlight);
 
       if (have_mouse)	/* detected in dos_ttraw, which see */
 	{
@@ -1889,11 +1859,12 @@ initialize_msdos_display (struct terminal *term)
   term->ring_bell_hook = IT_ring_bell;
   term->reset_terminal_modes_hook = IT_reset_terminal_modes;
   term->set_terminal_modes_hook = IT_set_terminal_modes;
-  term->set_terminal_window_hook = IT_set_terminal_window;
+  term->set_terminal_window_hook = NULL;
   term->update_begin_hook = IT_update_begin;
   term->update_end_hook = IT_update_end;
   term->frame_up_to_date_hook = IT_frame_up_to_date;
   term->mouse_position_hook = 0; /* set later by dos_ttraw */
+  term->menu_show_hook = x_menu_show;
   term->frame_rehighlight_hook = 0;
   term->frame_raise_lower_hook = 0;
   term->set_vertical_scroll_bar_hook = 0;
@@ -1915,18 +1886,6 @@ dos_get_saved_screen (char **screen, int *rows, int *cols)
   return 0;
 #endif
 }
-
-#ifndef HAVE_X_WINDOWS
-
-/* We are not X, but we can emulate it well enough for our needs... */
-void
-check_window_system (void)
-{
-  if (! FRAME_MSDOS_P (SELECTED_FRAME ()))
-    error ("Not running under a window system");
-}
-
-#endif
 
 
 /* ----------------------- Keyboard control ----------------------
@@ -2691,10 +2650,10 @@ dos_rawgetc (void)
 	  /* Generate SELECT_WINDOW_EVENTs when needed.  */
 	  if (!NILP (Vmouse_autoselect_window))
 	    {
-	      mouse_window = window_from_coordinates (SELECTED_FRAME (),
-						      mouse_last_x,
-						      mouse_last_y,
-						      0, 0);
+	      static Lisp_Object last_mouse_window;
+
+	      mouse_window = window_from_coordinates
+		(SELECTED_FRAME (), mouse_last_x, mouse_last_y, 0, 0);
 	      /* A window will be selected only when it is not
 		 selected now, and the last mouse movement event was
 		 not in it.  A minibuffer window will be selected iff
@@ -2709,10 +2668,9 @@ dos_rawgetc (void)
 		  event.timestamp = event_timestamp ();
 		  kbd_buffer_store_event (&event);
 		}
+	      /* Remember the last window where we saw the mouse.  */
 	      last_mouse_window = mouse_window;
 	    }
-	  else
-	    last_mouse_window = Qnil;
 
 	  previous_help_echo_string = help_echo_string;
 	  help_echo_string = help_echo_object = help_echo_window = Qnil;
@@ -3329,7 +3287,7 @@ void msdos_downcase_filename (unsigned char *);
 /* Destructively turn backslashes into slashes.  */
 
 void
-dostounix_filename (char *p, int ignore)
+dostounix_filename (char *p)
 {
   msdos_downcase_filename (p);
 
@@ -3499,7 +3457,7 @@ init_environment (int argc, char **argv, int skip_args)
   static const char * const tempdirs[] = {
     "$TMPDIR", "$TEMP", "$TMP", "c:/"
   };
-  const int imax = sizeof (tempdirs) / sizeof (tempdirs[0]);
+  const int imax = ARRAYELTS (tempdirs);
 
   /* Make sure they have a usable $TMPDIR.  Many Emacs functions use
      temporary files and assume "/tmp" if $TMPDIR is unset, which
@@ -3593,7 +3551,7 @@ init_environment (int argc, char **argv, int skip_args)
   if (!s) s = "c:/command.com";
   t = alloca (strlen (s) + 1);
   strcpy (t, s);
-  dostounix_filename (t, 0);
+  dostounix_filename (t);
   setenv ("SHELL", t, 0);
 
   /* PATH is also downcased and backslashes mirrored.  */
@@ -3603,7 +3561,7 @@ init_environment (int argc, char **argv, int skip_args)
   /* Current directory is always considered part of MsDos's path but it is
      not normally mentioned.  Now it is.  */
   strcat (strcpy (t, ".;"), s);
-  dostounix_filename (t, 0); /* Not a single file name, but this should work.  */
+  dostounix_filename (t); /* Not a single file name, but this should work.  */
   setenv ("PATH", t, 1);
 
   /* In some sense all dos users have root privileges, so...  */
@@ -3909,6 +3867,9 @@ int setpgid (int pid, int pgid) { return 0; }
 int setpriority (int x, int y, int z) { return 0; }
 pid_t setsid (void) { return 0; }
 
+
+/* Gnulib support and emulation.  */
+
 #if __DJGPP__ == 2 && __DJGPP_MINOR__ < 4
 ssize_t
 readlink (const char *name, char *dummy1, size_t dummy2)
@@ -3919,6 +3880,38 @@ readlink (const char *name, char *dummy1, size_t dummy2)
   return -1;
 }
 #endif
+
+/* dir_pathname is set by sys_opendir and used in readlinkat and in
+   fstatat, when they get a special FD of zero, which means use the
+   last directory opened by opendir.  */
+static char dir_pathname[MAXPATHLEN];
+DIR *
+sys_opendir (const char *dirname)
+{
+  _fixpath (dirname, dir_pathname);
+  return opendir (dirname);
+}
+
+ssize_t
+readlinkat (int fd, char const *name, char *buffer, size_t buffer_size)
+{
+  /* Rely on a hack: an open directory is modeled as file descriptor 0,
+     as in fstatat.  FIXME: Add proper support for readlinkat.  */
+  char fullname[MAXPATHLEN];
+
+  if (fd != AT_FDCWD)
+    {
+      if (strlen (dir_pathname) + strlen (name) + 1 >= MAXPATHLEN)
+	{
+	  errno = ENAMETOOLONG;
+	  return -1;
+	}
+      sprintf (fullname, "%s/%s", dir_pathname, name);
+      name = fullname;
+    }
+
+  return readlink (name, buffer, buffer_size);
+}
 
 char *
 careadlinkat (int fd, char const *filename,
@@ -3947,104 +3940,83 @@ careadlinkat (int fd, char const *filename,
   return buffer;
 }
 
-
-#if __DJGPP__ == 2 && __DJGPP_MINOR__ < 2
-
-/* Augment DJGPP library POSIX signal functions.  This is needed
-   as of DJGPP v2.01, but might be in the library in later releases. */
-
-#include <libc/bss.h>
-
-/* A counter to know when to re-initialize the static sets.  */
-static int sigprocmask_count = -1;
-
-/* Which signals are currently blocked (initially none).  */
-static sigset_t current_mask;
-
-/* Which signals are pending (initially none).  */
-static sigset_t msdos_pending_signals;
-
-/* Previous handlers to restore when the blocked signals are unblocked.  */
-typedef void (*sighandler_t)(int);
-static sighandler_t prev_handlers[320];
-
-/* A signal handler which just records that a signal occurred
-   (it will be raised later, if and when the signal is unblocked).  */
-static void
-sig_suspender (int signo)
-{
-  sigaddset (&msdos_pending_signals, signo);
-}
-
+/* Emulate faccessat(2).  */
 int
-sigprocmask (int how, const sigset_t *new_set, sigset_t *old_set)
+faccessat (int dirfd, const char * path, int mode, int flags)
 {
-  int signo;
-  sigset_t new_mask;
+  /* We silently ignore FLAGS.  */
+  flags = flags;
 
-  /* If called for the first time, initialize.  */
-  if (sigprocmask_count != __bss_count)
+  if (dirfd != AT_FDCWD
+      && !(IS_DIRECTORY_SEP (path[0])
+	   || IS_DEVICE_SEP (path[1])))
     {
-      sigprocmask_count = __bss_count;
-      sigemptyset (&msdos_pending_signals);
-      sigemptyset (&current_mask);
-      for (signo = 0; signo < 320; signo++)
-	prev_handlers[signo] = SIG_ERR;
+      errno = EBADF;
+      return -1;
     }
 
-  if (old_set)
-    *old_set = current_mask;
+  return access (path, mode);
+}
 
-  if (new_set == 0)
-    return 0;
+/* Emulate fstatat.  */
+int
+fstatat (int fd, char const *name, struct stat *st, int flags)
+{
+  /* Rely on a hack: an open directory is modeled as file descriptor 0.
+     This is good enough for the current usage in Emacs, but is fragile.
 
-  if (how != SIG_BLOCK && how != SIG_UNBLOCK && how != SIG_SETMASK)
+     FIXME: Add proper support for fdopendir, fstatat, readlinkat.
+     Gnulib does this and can serve as a model.  */
+  char fullname[MAXPATHLEN];
+
+  flags = flags;
+
+  if (fd != AT_FDCWD)
+    {
+      char lastc = dir_pathname[strlen (dir_pathname) - 1];
+
+      if (strlen (dir_pathname) + strlen (name) + IS_DIRECTORY_SEP (lastc)
+	  >= MAXPATHLEN)
+	{
+	  errno = ENAMETOOLONG;
+	  return -1;
+	}
+
+      sprintf (fullname, "%s%s%s",
+	       dir_pathname, IS_DIRECTORY_SEP (lastc) ? "" : "/", name);
+      name = fullname;
+    }
+
+#if __DJGPP__ > 2 || __DJGPP_MINOR__ > 3
+  return (flags & AT_SYMLINK_NOFOLLOW) ? lstat (name, st) : stat (name, st);
+#else
+  return stat (name, st);
+#endif
+}
+
+#if __DJGPP__ == 2 && __DJGPP_MINOR__ < 4
+/* Emulate the Posix unsetenv.  DJGPP v2.04 has this in the library.  */
+int
+unsetenv (const char *name)
+{
+  char *var;
+  size_t name_len;
+  int retval;
+
+  if (name == NULL || *name == '\0' || strchr (name, '=') != NULL)
     {
       errno = EINVAL;
       return -1;
     }
 
-  sigemptyset (&new_mask);
+  /* DJGPP's 'putenv' deletes the entry if it doesn't include '='.  */
+  putenv (name);
 
-  /* DJGPP supports upto 320 signals.  */
-  for (signo = 0; signo < 320; signo++)
-    {
-      if (sigismember (&current_mask, signo))
-	sigaddset (&new_mask, signo);
-      else if (sigismember (new_set, signo) && how != SIG_UNBLOCK)
-	{
-	  sigaddset (&new_mask, signo);
-
-	  /* SIGKILL is silently ignored, as on other platforms.  */
-	  if (signo != SIGKILL && prev_handlers[signo] == SIG_ERR)
-	    prev_handlers[signo] = signal (signo, sig_suspender);
-	}
-      if ((   how == SIG_UNBLOCK
-	      && sigismember (&new_mask, signo)
-	      && sigismember (new_set, signo))
-	  || (how == SIG_SETMASK
-	      && sigismember (&new_mask, signo)
-	      && !sigismember (new_set, signo)))
-	{
-	  sigdelset (&new_mask, signo);
-	  if (prev_handlers[signo] != SIG_ERR)
-	    {
-	      signal (signo, prev_handlers[signo]);
-	      prev_handlers[signo] = SIG_ERR;
-	    }
-	  if (sigismember (&msdos_pending_signals, signo))
-	    {
-	      sigdelset (&msdos_pending_signals, signo);
-	      raise (signo);
-	    }
-	}
-    }
-  current_mask = new_mask;
   return 0;
 }
+#endif
 
-#endif /* not __DJGPP_MINOR__ < 2 */
-
+
 #ifndef HAVE_SELECT
 #include "sysselect.h"
 
@@ -4072,8 +4044,8 @@ dos_yield_time_slice (void)
 /* We don't have to call timer_check here
    because wait_reading_process_output takes care of that.  */
 int
-sys_select (int nfds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
-	    EMACS_TIME *timeout, void *ignored)
+sys_select (int nfds, fd_set *rfds, fd_set *wfds, fd_set *efds,
+	    struct timespec *timeout, void *ignored)
 {
   int check_input;
   struct timespec t;
@@ -4103,20 +4075,20 @@ sys_select (int nfds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
     }
   else
     {
-      EMACS_TIME clnow, cllast, cldiff;
+      struct timespec clnow, cllast, cldiff;
 
       gettime (&t);
-      cllast = make_emacs_time (t.tv_sec, t.tv_nsec);
+      cllast = make_timespec (t.tv_sec, t.tv_nsec);
 
       while (!check_input || !detect_input_pending ())
 	{
 	  gettime (&t);
-	  clnow = make_emacs_time (t.tv_sec, t.tv_nsec);
-	  cldiff = sub_emacs_time (clnow, cllast);
-	  *timeout = sub_emacs_time (*timeout, cldiff);
+	  clnow = make_timespec (t.tv_sec, t.tv_nsec);
+	  cldiff = timespec_sub (clnow, cllast);
+	  *timeout = timespec_sub (*timeout, cldiff);
 
 	  /* Stop when timeout value crosses zero.  */
-	  if (EMACS_TIME_SIGN (*timeout) <= 0)
+	  if (timespec_sign (*timeout) <= 0)
 	    return 0;
 	  cllast = clnow;
 	  dos_yield_time_slice ();
@@ -4191,15 +4163,7 @@ msdos_abort (void)
   dos_ttcooked ();
   ScreenSetCursor (10, 0);
   cputs ("\r\n\nEmacs aborted!\r\n");
-#if __DJGPP__ == 2 && __DJGPP_MINOR__ < 2
-  if (screen_virtual_segment)
-    dosv_refresh_virtual_screen (2 * 10 * screen_size_X, 4 * screen_size_X);
-  /* Generate traceback, so we could tell whodunit.  */
-  signal (SIGINT, SIG_DFL);
-  __asm__ __volatile__ ("movb $0x1b,%al;call ___djgpp_hw_exception");
-#else  /* __DJGPP_MINOR__ >= 2 */
   raise (SIGABRT);
-#endif /* __DJGPP_MINOR__ >= 2 */
   exit (2);
 }
 

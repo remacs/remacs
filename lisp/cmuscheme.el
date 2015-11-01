@@ -1,10 +1,10 @@
 ;;; cmuscheme.el --- Scheme process in a buffer. Adapted from tea.el
 
-;; Copyright (C) 1988, 1994, 1997, 2001-2013 Free Software Foundation,
+;; Copyright (C) 1988, 1994, 1997, 2001-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Olin Shivers <olin.shivers@cs.cmu.edu>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: processes, lisp
 
 ;; This file is part of GNU Emacs.
@@ -37,7 +37,7 @@
 ;;
 ;; NOTE: MIT Cscheme, when invoked with the -emacs flag, has a special user
 ;; interface that communicates process state back to the superior emacs by
-;; outputting special control sequences. The gnumacs package, xscheme.el, has
+;; outputting special control sequences. The Emacs package, xscheme.el, has
 ;; lots and lots of special purpose code to read these control sequences, and
 ;; so is very tightly integrated with the cscheme process. The cscheme
 ;; interrupt handler and debugger read single character commands in cbreak
@@ -430,7 +430,7 @@ in the next one.")
 				       (file-name-nondirectory file-name)))
   (comint-send-string (scheme-proc) (concat "(load \""
 					    file-name
-					    "\"\)\n")))
+					    "\")\n")))
 
 (defun scheme-compile-file (file-name)
   "Compile a Scheme file FILE-NAME in the inferior Scheme process."
@@ -444,7 +444,7 @@ in the next one.")
 				       (file-name-nondirectory file-name)))
   (comint-send-string (scheme-proc) (concat "(compile-file \""
 					    file-name
-					    "\"\)\n")))
+					    "\")\n")))
 
 
 (defvar scheme-buffer nil "The current scheme process buffer.

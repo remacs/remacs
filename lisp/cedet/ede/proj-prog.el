@@ -1,6 +1,6 @@
 ;;; ede-proj-prog.el --- EDE Generic Project program support
 
-;; Copyright (C) 1998-2001, 2005, 2008-2013 Free Software Foundation,
+;; Copyright (C) 1998-2001, 2005, 2008-2015 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
@@ -62,21 +62,21 @@ specified with ldlibs.")
 	   "Libraries, such as \"m\" or \"Xt\" which this program depends on.
 The linker flag \"-l\" is automatically prepended.  Do not include a \"lib\"
 prefix, or a \".so\" suffix.
-Use the 'ldflags' slot to specify where in-project libraries might be.
+Use the `ldflags' slot to specify where in-project libraries might be.
 
 Note: Currently only used for Automake projects."
 	   )
    )
    "This target is an executable program.")
 
-(defmethod ede-proj-makefile-insert-automake-pre-variables
+(cl-defmethod ede-proj-makefile-insert-automake-pre-variables
   ((this ede-proj-target-makefile-program))
   "Insert bin_PROGRAMS variables needed by target THIS."
   (ede-pmake-insert-variable-shared "bin_PROGRAMS"
     (insert (ede-name this)))
-  (call-next-method))
+  (cl-call-next-method))
 
-(defmethod ede-proj-makefile-insert-automake-post-variables
+(cl-defmethod ede-proj-makefile-insert-automake-post-variables
   ((this ede-proj-target-makefile-program))
   "Insert bin_PROGRAMS variables needed by target THIS."
   (ede-pmake-insert-variable-shared
@@ -86,11 +86,11 @@ Note: Currently only used for Automake projects."
     (when (oref this ldlibs)
       (mapc (lambda (d) (insert " -l" d)) (oref this ldlibs)))
     )
-  (call-next-method))
+  (cl-call-next-method))
 
-(defmethod ede-proj-makefile-insert-variables ((this ede-proj-target-makefile-program))
+(cl-defmethod ede-proj-makefile-insert-variables ((this ede-proj-target-makefile-program))
   "Insert variables needed by the compiler THIS."
-  (call-next-method)
+  (cl-call-next-method)
   (let ((lf (mapconcat 'identity (oref this ldflags) " ")))
     (with-slots (ldlibs) this
       (if ldlibs
@@ -100,7 +100,7 @@ Note: Currently only used for Automake projects."
     (when (and lf (not (string= "" lf)))
       (ede-pmake-insert-variable-once "LDDEPS" (insert lf)))))
 
-(defmethod project-debug-target ((obj ede-proj-target-makefile-program))
+(cl-defmethod project-debug-target ((obj ede-proj-target-makefile-program))
   "Debug a program target OBJ."
   (let ((tb (get-buffer-create " *padt*"))
 	(dd (if (not (string= (oref obj path) ""))
@@ -118,7 +118,7 @@ Note: Currently only used for Automake projects."
 	  (funcall ede-debug-program-function cmd))
       (kill-buffer tb))))
 
-(defmethod project-run-target ((obj ede-proj-target-makefile-program) &optional command)
+(cl-defmethod project-run-target ((obj ede-proj-target-makefile-program) &optional command)
   "Run a program target OBJ.
 Optional COMMAND is the command to run in place of asking the user."
   (require 'ede/shell)

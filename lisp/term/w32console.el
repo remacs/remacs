@@ -1,6 +1,6 @@
 ;;; w32console.el -- Setup w32 console keys and colors.
 
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: FSF
 ;; Keywords: terminals
@@ -65,7 +65,10 @@
 	(when oem-cs-p
 	  (set-keyboard-coding-system oem-code-page-coding)
 	  (set-terminal-coding-system
-	   (if oem-o-cs-p oem-code-page-output-coding oem-code-page-coding))))
+	   (if oem-o-cs-p oem-code-page-output-coding oem-code-page-coding))
+          ;; Since we changed the terminal encoding, we need to repeat
+          ;; the test for Unicode quotes being displayable.
+          (startup--setup-quote-display)))
   (let* ((colors w32-tty-standard-colors)
          (color (car colors)))
     (tty-color-clear)

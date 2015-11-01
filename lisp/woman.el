@@ -1,9 +1,9 @@
 ;;; woman.el --- browse UN*X manual pages `wo (without) man'
 
-;; Copyright (C) 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
 ;; Author: Francis J. Wright <F.J.Wright@qmul.ac.uk>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help, unix
 ;; Adapted-By: Eli Zaretskii <eliz@gnu.org>
 ;; Version: 0.551
@@ -161,7 +161,7 @@
 
 ;; The WoMan menu provides an option to make a contents menu for the
 ;; current man page (using imenu).  Alternatively, if you set the
-;; variable `woman-imenu' to `t' then WoMan will do it automatically
+;; variable `woman-imenu' to t then WoMan will do it automatically
 ;; for every man page.  The menu title is the value of the variable
 ;; `woman-imenu-title', which is "CONTENTS" by default.  By default,
 ;; the menu shows manual sections and subsections, but you can change
@@ -179,7 +179,7 @@
 ;; Howard Melman made (essentially) the following suggestions, which
 ;; are slightly different from the expression that I currently use.
 ;; You may prefer one of Howard's suggestions, which I think assume
-;; that `case-fold-search' is `t' (which it is by default):
+;; that `case-fold-search' is t (which it is by default):
 
 ;; (setq woman-imenu-generic-expression
 ;;       '((nil "^\\(   \\)?\\([A-Z][A-Z ]+[A-Z]\\)[ \t]*$" 2)))
@@ -217,7 +217,7 @@
 ;; This is modeled on the byte-compiler.  It logs all files formatted
 ;; by WoMan, and if WoMan finds anything that it cannot handle then it
 ;; writes a warning to this buffer.  If the variable `woman-show-log'
-;; is non-nil (by default it is `nil') then WoMan automatically
+;; is non-nil (by default it is nil) then WoMan automatically
 ;; displays this buffer.  Many WoMan warnings can be completely
 ;; ignored, because they are reporting the fact that WoMan has ignored
 ;; requests that it is correct to ignore.  In some future version this
@@ -228,8 +228,8 @@
 
 ;; Uninterpreted ?roff requests can optionally be left in the
 ;; formatted buffer to indicate precisely where they occur by
-;; resetting the variable `woman-ignore' to `nil' (by default it is
-;; `t').
+;; resetting the variable `woman-ignore' to nil (by default it is
+;; t).
 
 ;; Automatic initiation of woman decoding
 
@@ -278,7 +278,7 @@
 ;; CASE-DEPENDENCE OF FILENAMES.  By default, WoMan ignores case in
 ;; file pathnames only when it seems appropriate.  MS-Windows users
 ;; who want complete case independence should set the NTEmacs variable
-;; `w32-downcase-file-names' to `t' and use all lower case when
+;; `w32-downcase-file-names' to t and use all lower case when
 ;; setting WoMan file paths.
 
 ;; (1) INCOMPATIBLE CHANGE!  WoMan no longer uses a persistent topic
@@ -414,17 +414,11 @@
 	       (substring arg 0 (match-end 1))
 	     arg))))
 
+(require 'cl-lib)
+
 (eval-when-compile			; to avoid compiler warnings
   (require 'dired)
-  (require 'cl-lib)
   (require 'apropos))
-
-(defun woman-mapcan (fn x)
-  "Return concatenated list of FN applied to successive `car' elements of X.
-FN must return a list, cons or nil.  Useful for splicing into a list."
-  ;; Based on the Standard Lisp function MAPCAN but with args swapped!
-  ;; More concise implementation than the recursive one.  -- dak
-  (apply #'nconc (mapcar fn x)))
 
 (defun woman-parse-colon-path (paths)
   "Explode search path string PATHS into a list of directory names.
@@ -440,7 +434,7 @@ As a special case, if PATHS is nil then replace it by calling
 	     (mapcar 'woman-Cyg-to-Win (woman-parse-man.conf)))
 	    ((string-match-p ";" paths)
 	     ;; Assume DOS-style path-list...
-	     (woman-mapcan		; splice list into list
+	     (cl-mapcan			; splice list into list
 	      (lambda (x)
 		(if x
 		    (list x)
@@ -451,14 +445,14 @@ As a special case, if PATHS is nil then replace it by calling
 	     (list paths))
 	    (t
 	     ;; Assume UNIX/Cygwin-style path-list...
-	     (woman-mapcan		; splice list into list
+	     (cl-mapcan			; splice list into list
 	      (lambda (x)
 		(mapcar 'woman-Cyg-to-Win
 			(if x (list x) (woman-parse-man.conf))))
 	      (let ((path-separator ":"))
 		(parse-colon-path paths)))))
     ;; Assume host-default-style path-list...
-    (woman-mapcan			; splice list into list
+    (cl-mapcan				; splice list into list
      (lambda (x) (if x (list x) (woman-parse-man.conf)))
      (parse-colon-path (or paths "")))))
 
@@ -495,6 +489,8 @@ As a special case, if PATHS is nil then replace it by calling
 (defgroup woman nil
   "Browse UNIX manual pages `wo (without) man'."
   :tag "WoMan"
+  :link '(custom-manual "(woman) Top")
+  :link '(emacs-commentary-link :tag "Commentary" "woman.el")
   :group 'help)
 
 (defcustom woman-show-log nil
@@ -790,7 +786,7 @@ without interactive confirmation, if it exists as a topic."
 
 (defvar woman-file-regexp nil
   "Regexp used to select (possibly compressed) man source files, e.g.
-\"\\.\\([0-9lmnt]\\w*\\)\\(\\.\\(g?z\\|bz2\\|xz\\)\\)?\\'\".
+\"\\.\\([0-9lmnt]\\w*\\)\\(\\.\\(g?z\\|bz2\\|xz\\)\\)?\\\\='\".
 Built automatically from the customizable user options
 `woman-uncompressed-file-regexp' and `woman-file-compression-regexp'.")
 
@@ -820,7 +816,7 @@ becoming more common in the GNU world.  For example, the man pages
 in the ncurses package include `toe.1m', `form.3x', etc.
 
 Note: an optional compression regexp will be appended, so this regexp
-MUST NOT end with any kind of string terminator such as $ or \\'."
+MUST NOT end with any kind of string terminator such as $ or \\\\='."
   :type 'regexp
   :set 'set-woman-file-regexp
   :group 'woman-interface)
@@ -830,8 +826,8 @@ MUST NOT end with any kind of string terminator such as $ or \\'."
   "Do not change this unless you are sure you know what you are doing!
 Regexp used to match compressed man file extensions for which
 decompressors are available and handled by auto-compression mode,
-e.g. \"\\\\.\\\\(g?z\\\\|bz2\\\\|xz\\\\)\\\\'\" for `gzip', `bzip2', or `xz'.
-Should begin with \\. and end with \\' and MUST NOT be optional."
+e.g. \"\\\\.\\\\(g?z\\\\|bz2\\\\|xz\\\\)\\\\\\='\" for `gzip', `bzip2', or `xz'.
+Should begin with \\. and end with \\\\=' and MUST NOT be optional."
   ;; Should be compatible with car of
   ;; `jka-compr-file-name-handler-entry', but that is unduly
   ;; complicated, includes an inappropriate extension (.tgz) and is
@@ -949,7 +945,7 @@ or different fonts."
 
 (defun woman-default-faces ()
   "Set foreground colors of italic and bold faces to their default values."
-  (declare (obsolete choose-completion-guess-base-position "23.2"))
+  (declare (obsolete "customize the woman-* faces instead." "24.4"))
   (interactive)
   (face-spec-set 'woman-italic (face-user-default-spec 'woman-italic))
   (face-spec-set 'woman-bold (face-user-default-spec 'woman-bold)))
@@ -957,7 +953,7 @@ or different fonts."
 (defun woman-monochrome-faces ()
   "Set foreground colors of italic and bold faces to that of the default face.
 This is usually either black or white."
-  (declare (obsolete choose-completion-guess-base-position "23.2"))
+  (declare (obsolete "customize the woman-* faces instead." "24.4"))
   (interactive)
   (set-face-foreground 'woman-italic 'unspecified)
   (set-face-foreground 'woman-bold 'unspecified))
@@ -1655,7 +1651,7 @@ Do not call directly!"
 	     (setq woman-frame (make-frame)))))
     (set-buffer (get-buffer-create bufname))
     (condition-case nil
-        (switch-to-buffer (current-buffer))
+        (display-buffer (current-buffer))
       (error (pop-to-buffer (current-buffer))))
     (buffer-disable-undo)
     (setq buffer-read-only nil)
@@ -2065,14 +2061,14 @@ alist in `woman-buffer-alist' and return nil."
   (if (zerop woman-buffer-number)
       (let ((buffer (get-buffer (cdr (car woman-buffer-alist)))))
 	(if buffer
-	    (switch-to-buffer buffer)
+	    (display-buffer buffer)
 	  ;; Delete alist element:
 	  (setq woman-buffer-alist (cdr woman-buffer-alist))
 	  nil))
     (let* ((prev-ptr (nthcdr (1- woman-buffer-number) woman-buffer-alist))
 	   (buffer (get-buffer (cdr (car (cdr prev-ptr))))))
       (if buffer
-	  (switch-to-buffer buffer)
+	  (display-buffer buffer)
 	;; Delete alist element:
 	(setcdr prev-ptr (cdr (cdr prev-ptr)))
 	(if (>= woman-buffer-number (length woman-buffer-alist))
@@ -2300,7 +2296,7 @@ Currently set only from '\" t in the first line of the source file.")
 
     ;; Process \k escapes BEFORE changing tab width (?):
     (goto-char from)
-    (woman-mark-horizonal-position)
+    (woman-mark-horizontal-position)
 
     ;; Set buffer-local variables:
     (setq fill-column woman-fill-column
@@ -2720,7 +2716,7 @@ If DELETE is non-nil then delete from point."
 
 (defsubst woman-unescape (macro)
   "Replace escape sequences in the body of MACRO.
-Replaces || by |, but | by \, where | denotes the internal escape."
+Replaces || by |, but | by \\, where | denotes the internal escape."
   (let (start)
     (while (setq start (string-match woman-unescape-regex macro start))
       (setq macro
@@ -2842,7 +2838,7 @@ special characters."
 (defun woman-strings (&optional to)
   "Process ?roff string requests and escape sequences up to buffer position TO.
 Strings are defined/updated by `.ds xx string' requests and
-interpolated by `\*x' and `\*(xx' escapes."
+interpolated by `\\*x' and `\\*(xx' escapes."
   ;; Add support for .as and .rm?
   (while
       ;; Find .ds requests and \* escapes:
@@ -3452,7 +3448,7 @@ Format paragraphs upto TO.  Supports special chars.
 Each element has the form (KEY VALUE . INC) -- inc may be nil.
 Also bound locally in `woman2-roff-buffer'.")
 
-(defun woman-mark-horizonal-position ()
+(defun woman-mark-horizontal-position ()
   "\\kx -- Store current horizontal position in INPUT LINE in register x."
   (while (re-search-forward "\\\\k\\(.\\)" nil t)
     (goto-char (match-beginning 0))
@@ -3553,7 +3549,7 @@ The expression may be an argument in quotes."
 		       (if (> (woman-parse-numeric-value) 0) 1 0))
 		     )))
 	    ))
-;    (if (looking-at "[ \t\nRC\)\"]")	; R, C are tab types
+;    (if (looking-at "[ \t\nRC)\"]")	; R, C are tab types
 ;	()
 ;      (WoMan-warn "Unimplemented numerical operator `%c' in %s"
 ;		  (following-char)
@@ -3587,7 +3583,7 @@ expression in parentheses.  Leaves point after the value."
 		    ;; string-to-number returns 0 if number not parsed.
 		    (string-to-number (match-string 0)))
 		   ((looking-at "\\\\n\\([-+]\\)?\\(?:\
-\\[\\([^]]+\\)\\]\\|\(\\(..\\)\\|\\(.\\)\\)")
+\\[\\([^]]+\\)\\]\\|(\\(..\\)\\|\\(.\\)\\)")
 		    ;; interpolate number register, maybe auto-incremented
 		    (let* ((pm (match-string-no-properties 1))
 			   (name (or (match-string-no-properties 2)
@@ -3723,7 +3719,7 @@ expression in parentheses.  Leaves point after the value."
   "Find and return start of next control line.
 PAT, if non-nil, specifies an additional component of the control
 line regexp to search for, which is appended to the default
-regexp, \"\\(\\\\c\\)?\\n[.']\"."
+regexp, \"\\(\\\\c\\)?\\n[.\\=']\"."
   (let ((pattern (concat "\\(\\\\c\\)?\n[.']" pat))
         to)
     (save-excursion
@@ -3765,7 +3761,7 @@ Round to whole lines, default 1 line.  Format paragraphs upto TO.
 
 (defun woman2-TH (to)
   ".TH n c x v m -- Begin a man page.  Format paragraphs upto TO.
-n is the name of the page in chapter c\; x is extra commentary\;
+n is the name of the page in chapter c; x is extra commentary;
 v alters page foot left; m alters page head center.
 \(Should set prevailing indent and tabs to 5.)"
   (woman-forward-arg 'unquote 'concat)
@@ -3985,7 +3981,7 @@ Optional argument NUMERIC, if non-nil, means the argument is numeric."
     (goto-char from)))
 
 (defun woman-horizontal-line ()
-  "\\l'Nc' -- Draw a horizontal line of length N using character c, default _."
+  "\\l\\='Nc\\=' -- Draw a horizontal line of length N using character c, default _."
   (delete-char -1)
   (delete-char 1)
   (looking-at "\\(.\\)\\(.*\\)\\1")
@@ -4353,7 +4349,7 @@ Format paragraphs upto TO."
 
 (defun woman2-ta (to)
   ".ta Nt ... -- Set tabs, left type, unless t=R(right), C(centered).
-\(Breaks, but should not.)  The tab stops are separated by spaces\;
+\(Breaks, but should not.)  The tab stops are separated by spaces;
 a value preceded by + represents an increment to the previous stop value.
 Format paragraphs upto TO."
   (setq tab-stop-list nil)
@@ -4552,11 +4548,11 @@ Format paragraphs upto TO."
 
 (defun WoMan-log (format &rest args)
   "Log a message out of FORMAT control string and optional ARGS."
-  (WoMan-log-1 (apply 'format format args)))
+  (WoMan-log-1 (apply #'format-message format args)))
 
 (defun WoMan-warn (format &rest args)
   "Log a warning message out of FORMAT control string and optional ARGS."
-  (setq format (apply 'format format args))
+  (setq format (apply #'format-message format args))
   (WoMan-log-1 (concat "**  " format)))
 
 ;; request is not used dynamically by any callees.
@@ -4630,10 +4626,5 @@ logging the message."
      `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
 
 (provide 'woman)
-
-
-;; Local Variables:
-;; coding: utf-8
-;; End:
 
 ;;; woman.el ends here

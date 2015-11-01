@@ -1,6 +1,6 @@
 ;;; bookmark.el --- set bookmarks, maybe annotate them, jump to them later
 
-;; Copyright (C) 1993-1997, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1993-1997, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Karl Fogel <kfogel@red-bean.com>
 ;; Maintainer: Karl Fogel <kfogel@red-bean.com>
@@ -130,14 +130,15 @@ recently set ones come first, oldest ones come last)."
   :group 'bookmark)
 
 (defcustom bookmark-bmenu-use-header-line t
-  "Non-nil means to use an immovable header line, as opposed to inline
-text at the top of the buffer."
+  "Non-nil means to use an immovable header line.
+This is as opposed to inline text at the top of the buffer."
+  :version "24.4"
   :type 'boolean
   :group 'bookmark)
 
 (defconst bookmark-bmenu-inline-header-height 2
   "Number of lines used for the *Bookmark List* header
-\(only significant when `bookmark-bmenu-use-header-line' is nil\).")
+\(only significant when `bookmark-bmenu-use-header-line' is nil).")
 
 (defconst bookmark-bmenu-marks-width 2
   "Number of columns (chars) used for the *Bookmark List* marks column,
@@ -841,8 +842,11 @@ whose annotation is being edited.")
   "Return default annotation text for BOOKMARK-NAME.
 The default annotation text is simply some text explaining how to use
 annotations."
-  (concat "#  Type the annotation for bookmark '" bookmark-name "' here.\n"
-	  "#  All lines which start with a '#' will be deleted.\n"
+  (concat (format-message
+           "#  Type the annotation for bookmark `%s' here.\n"
+           bookmark-name)
+	  (format-message
+           "#  All lines which start with a `#' will be deleted.\n")
 	  "#  Type C-c C-c when done.\n#\n"
 	  "#  Author: " (user-full-name) " <" (user-login-name) "@"
 	  (system-name) ">\n"
@@ -862,31 +866,25 @@ It takes one argument, the name of the bookmark, as a string.")
     map)
   "Keymap for editing an annotation of a bookmark.")
 
-
-(defun bookmark-edit-annotation-mode (bookmark-name-or-record)
-  "Mode for editing the annotation of bookmark BOOKMARK-NAME-OR-RECORD.
-When you have finished composing, type \\[bookmark-send-annotation].
-
-\\{bookmark-edit-annotation-mode-map}"
-  (interactive)
-  (kill-all-local-variables)
-  (make-local-variable 'bookmark-annotation-name)
-  (setq bookmark-annotation-name bookmark-name-or-record)
-  (use-local-map bookmark-edit-annotation-mode-map)
-  (setq major-mode 'bookmark-edit-annotation-mode
-        mode-name "Edit Bookmark Annotation")
+(defun bookmark-insert-annotation (bookmark-name-or-record)
   (insert (funcall bookmark-edit-annotation-text-func bookmark-name-or-record))
   (let ((annotation (bookmark-get-annotation bookmark-name-or-record)))
     (if (and annotation (not (string-equal annotation "")))
-	(insert annotation)))
-  (run-mode-hooks 'text-mode-hook))
+	(insert annotation))))
+
+(define-derived-mode bookmark-edit-annotation-mode
+  text-mode "Edit Bookmark Annotation"
+  "Mode for editing the annotation of bookmarks.
+When you have finished composing, type \\[bookmark-send-annotation].
+
+\\{bookmark-edit-annotation-mode-map}")
 
 
 (defun bookmark-send-edited-annotation ()
   "Use buffer contents as annotation for a bookmark.
 Lines beginning with `#' are ignored."
   (interactive)
-  (if (not (eq major-mode 'bookmark-edit-annotation-mode))
+  (if (not (derived-mode-p 'bookmark-edit-annotation-mode))
       (error "Not in bookmark-edit-annotation-mode"))
   (goto-char (point-min))
   (while (< (point) (point-max))
@@ -906,7 +904,10 @@ Lines beginning with `#' are ignored."
 (defun bookmark-edit-annotation (bookmark-name-or-record)
   "Pop up a buffer for editing bookmark BOOKMARK-NAME-OR-RECORD's annotation."
   (pop-to-buffer (generate-new-buffer-name "*Bookmark Annotation Compose*"))
-  (bookmark-edit-annotation-mode bookmark-name-or-record))
+  (bookmark-insert-annotation bookmark-name-or-record)
+  (bookmark-edit-annotation-mode)
+  (set (make-local-variable 'bookmark-annotation-name)
+       bookmark-name-or-record))
 
 
 (defun bookmark-buffer-name ()
@@ -1300,8 +1301,8 @@ is greater than `bookmark-alist-modification-count'."
 
 ;;;###autoload
 (defun bookmark-write ()
-  "Write bookmarks to a file (reading the file name with the minibuffer).
-Don't use this in Lisp programs; use `bookmark-save' instead."
+  "Write bookmarks to a file (reading the file name with the minibuffer)."
+  (declare (interactive-only bookmark-save))
   (interactive)
   (bookmark-maybe-load-default-file)
   (bookmark-save t))
@@ -1422,8 +1423,7 @@ explicitly.
 
 If you load a file containing bookmarks with the same names as
 bookmarks already present in your Emacs, the new bookmarks will get
-unique numeric suffixes \"<2>\", \"<3>\", ... following the same
-method buffers use to resolve name collisions."
+unique numeric suffixes \"<2>\", \"<3>\", etc."
   (interactive
    (list (read-file-name
           (format "Load bookmarks from: (%s) "
@@ -1543,7 +1543,7 @@ deletion, or > if it is flagged for displaying."
   (let ((inhibit-read-only t))
     (erase-buffer)
     (if (not bookmark-bmenu-use-header-line)
-      (insert "% Bookmark\n- --------\n"))    
+      (insert "% Bookmark\n- --------\n"))
     (add-text-properties (point-min) (point)
 			 '(font-lock-face bookmark-menu-heading))
     (dolist (full-record (bookmark-maybe-sort-alist))
@@ -1584,9 +1584,9 @@ deletion, or > if it is flagged for displaying."
 (defun bookmark-bmenu-set-header ()
   "Sets the immutable header line."
   (let ((header (concat "%% " "Bookmark")))
-    (when bookmark-bmenu-toggle-filenames 
-      (setq header (concat header 
-			   (make-string (- bookmark-bmenu-file-column 
+    (when bookmark-bmenu-toggle-filenames
+      (setq header (concat header
+			   (make-string (- bookmark-bmenu-file-column
 					   (- (length header) 3))  ?\s)
 			   "File")))
     (let ((pos 0))
@@ -1759,7 +1759,7 @@ if an annotation exists."
   (save-selected-window
     (pop-to-buffer (get-buffer-create "*Bookmark Annotation*") t)
     (delete-region (point-min) (point-max))
-    (dolist (full-record bookmark-alist)
+    (dolist (full-record (bookmark-maybe-sort-alist))
       (let* ((name (bookmark-name-from-full-record full-record))
              (ann  (bookmark-get-annotation full-record)))
         (insert (concat name ":\n"))
@@ -2067,7 +2067,8 @@ To carry out the deletions that you've marked, use \\<bookmark-bmenu-mode-map>\\
 (defun bookmark-bmenu-goto-bookmark (name)
   "Move point to bookmark with name NAME."
   (goto-char (point-min))
-  (while (not (equal name (bookmark-bmenu-bookmark)))
+  (while (not (or (equal name (bookmark-bmenu-bookmark))
+                  (eobp)))
     (forward-line 1))
   (forward-line 0))
 

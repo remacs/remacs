@@ -1,6 +1,6 @@
 ;;; vc-dir.el --- Directory status display under VC  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 ;; Author:   Dan Nicolaescu <dann@ics.uci.edu>
 ;; Keywords: vc tools
@@ -111,7 +111,7 @@ See `run-hooks'."
           (current-buffer)))))
 
 (defvar vc-dir-menu-map
-  (let ((map (make-sparse-keymap "VC-dir")))
+  (let ((map (make-sparse-keymap "VC-Dir")))
     (define-key map [quit]
       '(menu-item "Quit" quit-window
 		  :help "Quit"))
@@ -169,6 +169,9 @@ See `run-hooks'."
     (define-key map [ise]
       '(menu-item "Isearch Files..." vc-dir-isearch
 		  :help "Incremental search a string in the marked files"))
+    (define-key map [display]
+      '(menu-item "Display in Other Window" vc-dir-display-file
+		  :help "Display the file on the current line, in another window"))
     (define-key map [open-other]
       '(menu-item "Open in Other Window" vc-dir-find-file-other-window
 		  :help "Find the file on the current line, in another window"))
@@ -201,6 +204,10 @@ See `run-hooks'."
 		  :help "List the change log for the current tree in a window"))
     ;; VC commands.
     (define-key map [sepvccmd] '("--"))
+    (define-key map [push]
+      '(menu-item "Push Changes" vc-push
+		  :enable (vc-find-backend-function vc-dir-backend 'push)
+		  :help "Push the current branch's changes"))
     (define-key map [update]
       '(menu-item "Update to Latest Version" vc-update
 		  :help "Update the current fileset's files to their tip revisions"))
@@ -243,8 +250,11 @@ See `run-hooks'."
     (define-key map "D" 'vc-root-diff)	   ;; C-x v D
     (define-key map "i" 'vc-register)	   ;; C-x v i
     (define-key map "+" 'vc-update)	   ;; C-x v +
+    ;; I'd prefer some kind of symmetry with vc-update:
+    (define-key map "P" 'vc-push)	   ;; C-x v P
     (define-key map "l" 'vc-print-log)	   ;; C-x v l
     (define-key map "L" 'vc-print-root-log) ;; C-x v L
+    (define-key map "I" 'vc-log-incoming)   ;; C-x v I
     ;; More confusing than helpful, probably
     ;;(define-key map "R" 'vc-revert) ;; u is taken by vc-dir-unmark.
     ;;(define-key map "A" 'vc-annotate) ;; g is taken by revert-buffer
@@ -272,6 +282,7 @@ See `run-hooks'."
     (define-key map "e" 'vc-dir-find-file) ; dired-mode compatibility
     (define-key map "\C-m" 'vc-dir-find-file)
     (define-key map "o" 'vc-dir-find-file-other-window)
+    (define-key map "\C-o" 'vc-dir-display-file)
     (define-key map "\C-c\C-c" 'vc-dir-kill-dir-status-process)
     (define-key map [down-mouse-3] 'vc-dir-menu)
     (define-key map [mouse-2] 'vc-dir-toggle-mark)
@@ -289,7 +300,7 @@ See `run-hooks'."
       `(menu-item
 	;; VC backends can use this to add mode-specific menu items to
 	;; vc-dir-menu-map.
-	"VC-dir" ,vc-dir-menu-map :filter vc-dir-menu-map-filter))
+	"VC-Dir" ,vc-dir-menu-map :filter vc-dir-menu-map-filter))
     map)
   "Keymap for directory buffer.")
 
@@ -432,7 +443,8 @@ If NOINSERT, ignore elements on ENTRIES which are not in the ewoc."
 	      ;; previous node was in a different directory.
 	      (let* ((rd (file-relative-name entrydir))
 		     (prev-node (ewoc-prev vc-ewoc node))
-		     (prev-dir (vc-dir-node-directory prev-node)))
+		     (prev-dir (if prev-node
+				   (vc-dir-node-directory prev-node))))
 		(unless (string-equal entrydir prev-dir)
 		  (ewoc-enter-before
 		   vc-ewoc node (vc-dir-create-fileinfo rd nil nil nil entrydir))))
@@ -753,6 +765,13 @@ that share the same state."
   (if event (posn-set-point (event-end event)))
   (find-file-other-window (vc-dir-current-file)))
 
+(defun vc-dir-display-file (&optional event)
+  "Display the file on the current line, in another window."
+  (interactive (list last-nonmenu-event))
+  (if event (posn-set-point (event-end event)))
+  (display-buffer (find-file-noselect (vc-dir-current-file))
+		  t))
+
 (defun vc-dir-isearch ()
   "Search for a string through all marked buffers using Isearch."
   (interactive)
@@ -913,7 +932,7 @@ If it is a file, return the corresponding cons for the file itself."
 
 (defun vc-dir-resynch-file (&optional fname)
   "Update the entries for FNAME in any directory buffers that list it."
-  (let ((file (or fname (expand-file-name buffer-file-name)))
+  (let ((file (expand-file-name (or fname buffer-file-name)))
         (drop '()))
     (save-current-buffer
       ;; look for a vc-dir buffer that might show this file.
@@ -1012,7 +1031,7 @@ specific headers."
    (vc-call-backend backend 'dir-extra-headers dir)
    "\n"))
 
-(defun vc-dir-refresh-files (files default-state)
+(defun vc-dir-refresh-files (files)
   "Refresh some files in the *VC-dir* buffer."
   (let ((def-dir default-directory)
 	(backend vc-dir-backend))
@@ -1030,7 +1049,7 @@ specific headers."
         (setq default-directory def-dir)
         (erase-buffer)
         (vc-call-backend
-         backend 'dir-status-files def-dir files default-state
+         backend 'dir-status-files def-dir files
          (lambda (entries &optional more-to-come)
            ;; ENTRIES is a list of (FILE VC_STATE EXTRA) items.
            ;; If MORE-TO-COME is true, then more updates will come from
@@ -1095,7 +1114,7 @@ Throw an error if another update process is in progress."
           (setq default-directory def-dir)
           (erase-buffer)
           (vc-call-backend
-           backend 'dir-status def-dir
+           backend 'dir-status-files def-dir nil
            (lambda (entries &optional more-to-come)
              ;; ENTRIES is a list of (FILE VC_STATE EXTRA) items.
              ;; If MORE-TO-COME is true, then more updates will come from
@@ -1108,8 +1127,7 @@ Throw an error if another update process is in progress."
                          vc-ewoc 'vc-dir-fileinfo->needs-update)))
                    (if remaining
                        (vc-dir-refresh-files
-                        (mapcar 'vc-dir-fileinfo->name remaining)
-                        'up-to-date)
+                        (mapcar 'vc-dir-fileinfo->name remaining))
                      (setq mode-line-process nil))))))))))))
 
 (defun vc-dir-show-fileentry (file)
@@ -1123,18 +1141,18 @@ outside of VC) and one wants to do some operation on it."
   "Hide items that are in STATE from display.
 See `vc-state' for valid values of STATE.
 
-If STATE is nil, default it to up-to-date.
+If STATE is nil, hide both `up-to-date' and `ignored' items.
 
 Interactively, if `current-prefix-arg' is non-nil, set STATE to
-state of item at point.  Otherwise, set STATE to up-to-date."
+state of item at point, if any."
   (interactive (list
 		(and current-prefix-arg
 		     ;; Command is prefixed.  Infer STATE from point.
 		     (let ((node (ewoc-locate vc-ewoc)))
 		       (and node (vc-dir-fileinfo->state (ewoc-data node)))))))
-  ;; If STATE is un-specified, use up-to-date.
-  (setq state (or state 'up-to-date))
-  (message "Hiding items in state \"%s\"" state)
+  (if state
+      (message "Hiding items in state \"%s\"" state)
+    (message "Hiding up-to-date and ignored items"))
   (let ((crt (ewoc-nth vc-ewoc -1))
 	(first (ewoc-nth vc-ewoc 0)))
     ;; Go over from the last item to the first and remove the
@@ -1155,8 +1173,10 @@ state of item at point.  Otherwise, set STATE to up-to-date."
 		     ;; Next item is a directory.
 		     (vc-dir-fileinfo->directory (ewoc-data next))))
 	       ;; Remove files in specified STATE.  STATE can be a
-	       ;; symbol or a user-name.
-	       (equal (vc-dir-fileinfo->state data) state))
+	       ;; symbol, a user-name, or nil.
+               (if state
+                   (equal (vc-dir-fileinfo->state data) state)
+                 (memq (vc-dir-fileinfo->state data) '(up-to-date ignored))))
 	  (ewoc-delete vc-ewoc crt))
 	(setq crt prev)))))
 
@@ -1227,7 +1247,7 @@ These are the commands available for use in the file status buffer:
     ;; Otherwise if you do C-x v d -> C-x C-f -> C-c v d
     ;; you may get a new *vc-dir* buffer, different from the original
     (file-truename (read-directory-name "VC status for directory: "
-					default-directory default-directory t
+					(vc-root-dir) nil t
 					nil))
     (if current-prefix-arg
 	(intern

@@ -1,6 +1,6 @@
 ;;; sieve-mode.el --- Sieve code editing commands for Emacs
 
-;; Copyright (C) 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Simon Josefsson <simon@josefsson.org>
 
@@ -140,7 +140,8 @@
 	   'sieve-action-commands-face)
      ;; test commands
      (cons (regexp-opt '("address" "allof" "anyof" "exists" "false"
-			 "true" "header" "not" "size" "envelope")
+			 "true" "header" "not" "size" "envelope"
+                         "body")
                        'words)
 	   'sieve-test-commands-face)
      (cons "\\Sw+:\\sw+"

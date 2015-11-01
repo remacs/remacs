@@ -1,6 +1,6 @@
 ;;; semantic/grammar.el --- Major mode framework for Semantic grammars
 
-;; Copyright (C) 2002-2005, 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2005, 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: David Ponce <david@dponce.com>
 ;; Maintainer: David Ponce <david@dponce.com>
@@ -33,6 +33,8 @@
 (require 'semantic/wisent)
 (require 'semantic/ctxt)
 (require 'semantic/format)
+;; FIXME this is a generated file, but we need to load this file to
+;; generate it!
 (require 'semantic/grammar-wy)
 (require 'semantic/idle)
 (require 'help-fns)
@@ -605,6 +607,11 @@ The symbols in the template are local variables in
 
 \(provide '" libr ")
 
+;; Local Variables:
+;; version-control: never
+;; no-update-autoloads: t
+;; End:
+
 ;;; " file " ends here
 ")
   "Generated footer template.
@@ -621,39 +628,38 @@ The symbols in the list are local variables in
                              t)
       (match-string 0))))
 
+(defun semantic-grammar--template-expand (template env)
+  (mapconcat (lambda (S)
+               (if (stringp S) S
+                 (let ((x (assq S env)))
+                   (cond
+                    (x (cdr x))
+                    ((symbolp S) (symbol-value S))))))
+             template ""))
+
 (defun semantic-grammar-header ()
   "Return text of a generated standard header."
-  (let ((file (semantic-grammar-buffer-file
+  (semantic-grammar--template-expand
+   semantic-grammar-header-template
+   `((file . ,(semantic-grammar-buffer-file
                semantic--grammar-output-buffer))
-        (gram (semantic-grammar-buffer-file))
-        (date (format-time-string "%Y-%m-%d %T%z"))
-        (vcid (concat "$" "Id" "$")) ;; Avoid expansion
-        ;; Try to get the copyright from the input grammar, or
-        ;; generate a new one if not found.
-        (copy (or (semantic-grammar-copyright-line)
+     (gram . ,(semantic-grammar-buffer-file))
+     (date . ,(format-time-string "%Y-%m-%d %T%z"))
+     (vcid . ,(concat "$" "Id" "$")) ;; Avoid expansion
+     ;; Try to get the copyright from the input grammar, or
+     ;; generate a new one if not found.
+     (copy . ,(or (semantic-grammar-copyright-line)
                   (concat (format-time-string ";; Copyright (C) %Y ")
-                          user-full-name)))
-	(out ""))
-    (dolist (S semantic-grammar-header-template)
-      (cond ((stringp S)
-	     (setq out (concat out S)))
-	    ((symbolp S)
-	     (setq out (concat out (symbol-value S))))))
-    out))
+                          user-full-name))))))
 
 (defun semantic-grammar-footer ()
   "Return text of a generated standard footer."
-  (let* ((file (semantic-grammar-buffer-file
-                semantic--grammar-output-buffer))
-         (libr (or semantic--grammar-provide
-		   semantic--grammar-package))
-	 (out ""))
-    (dolist (S semantic-grammar-footer-template)
-      (cond ((stringp S)
-	     (setq out (concat out S)))
-	    ((symbolp S)
-	     (setq out (concat out (symbol-value S))))))
-    out))
+  (semantic-grammar--template-expand
+   semantic-grammar-footer-template
+   `((file . ,(semantic-grammar-buffer-file
+               semantic--grammar-output-buffer))
+     (libr . ,(or semantic--grammar-provide
+                  semantic--grammar-package)))))
 
 (defun semantic-grammar-token-data ()
   "Return the string value of the table of lexical tokens."
@@ -707,7 +713,7 @@ Block definitions are read from the current table of lexical types."
         (let* ((blocks       (cdr (semantic-lex-type-value "block" t)))
                (open-delims  (cdr (semantic-lex-type-value "open-paren" t)))
                (close-delims (cdr (semantic-lex-type-value "close-paren" t)))
-               olist clist block-spec delim-spec open-spec close-spec)
+               olist clist delim-spec open-spec close-spec)
           (dolist (block-spec blocks)
             (setq delim-spec (semantic-grammar--lex-delim-spec block-spec)
                   open-spec  (assq (car  delim-spec) open-delims)
@@ -811,7 +817,7 @@ Block definitions are read from the current table of lexical types."
 
 ;;; Generation of the grammar support file.
 ;;
-(defcustom semantic-grammar-file-regexp "\\.[wb]y$"
+(defcustom semantic-grammar-file-regexp "\\.[wb]y\\'"
   "Regexp which matches grammar source files."
   :group 'semantic
   :type 'regexp)
@@ -822,9 +828,10 @@ Block definitions are read from the current table of lexical types."
       (noninteractive)
     noninteractive))
 
-(defun semantic-grammar-create-package (&optional force)
+(defun semantic-grammar-create-package (&optional force uptodate)
   "Create package Lisp code from grammar in current buffer.
-Does nothing if the Lisp code seems up to date.
+If the Lisp code seems up to date, do nothing (if UPTODATE
+is non-nil, return nil in such cases).
 If optional argument FORCE is non-nil, unconditionally re-generate the
 Lisp code."
   (interactive "P")
@@ -854,13 +861,18 @@ Lisp code."
              (file-newer-than-file-p
               (buffer-file-name semantic--grammar-output-buffer)
               (buffer-file-name semantic--grammar-input-buffer)))
-        (message "Package `%s' is up to date." semantic--grammar-package)
+	(progn
+	  (message "Package `%s' is up to date." semantic--grammar-package)
+	  ;; It would be better if this were always the case, IMO,
+	  ;; but the (unspecified) return value of this function is
+	  ;; assumed to be non-nil in some places, it seems.
+	  (if uptodate (setq output nil)))
       ;; Create the package
       (set-buffer semantic--grammar-output-buffer)
       ;; Use Unix EOLs, so that the file is portable to all platforms.
       (setq buffer-file-coding-system 'raw-text-unix)
       (erase-buffer)
-      (unless (eq major-mode 'emacs-lisp-mode)
+      (unless (derived-mode-p 'emacs-lisp-mode)
         (emacs-lisp-mode))
 
 ;;;; Header + Prologue
@@ -1060,7 +1072,7 @@ See also the variable `semantic-grammar-file-regexp'."
 (defvar semantic--grammar-macros-regexp-2 nil)
 (make-variable-buffer-local 'semantic--grammar-macros-regexp-2)
 
-(defun semantic--grammar-clear-macros-regexp-2 (&rest ignore)
+(defun semantic--grammar-clear-macros-regexp-2 (&rest _)
   "Clear the cached regexp that match macros local in this grammar.
 IGNORE arguments.
 Added to `before-change-functions' hooks to be run before each text
@@ -1102,7 +1114,9 @@ END is the limit of the search."
 ;;;; Define major mode
 ;;;;
 
-(defvar semantic-grammar-syntax-table
+(define-obsolete-variable-alias 'semantic-grammar-syntax-table
+  'semantic-grammar-mode-syntax-table "24.1")
+(defvar semantic-grammar-mode-syntax-table
   (let ((table (make-syntax-table (standard-syntax-table))))
     (modify-syntax-entry ?\: "."     table) ;; COLON
     (modify-syntax-entry ?\> "."     table) ;; GT
@@ -1158,19 +1172,25 @@ END is the limit of the search."
 
 (defvar semantic-grammar-mode-keywords-2
   (append semantic-grammar-mode-keywords-1
-          lisp-font-lock-keywords-1)
+	  (if (boundp 'lisp-font-lock-keywords-1)
+	      lisp-font-lock-keywords-1
+	    lisp-el-font-lock-keywords-1))
   "Font Lock keywords used to highlight Semantic grammar buffers.")
 
 (defvar semantic-grammar-mode-keywords-3
   (append semantic-grammar-mode-keywords-1
-          lisp-font-lock-keywords-2)
+	  (if (boundp 'lisp-font-lock-keywords-2)
+	      lisp-font-lock-keywords-2
+	    lisp-el-font-lock-keywords-2))
   "Font Lock keywords used to highlight Semantic grammar buffers.")
 
 (defvar semantic-grammar-mode-keywords
   semantic-grammar-mode-keywords-1
   "Font Lock keywords used to highlight Semantic grammar buffers.")
 
-(defvar semantic-grammar-map
+(define-obsolete-variable-alias 'semantic-grammar-map
+  'semantic-grammar-mode-map "24.1")
+(defvar semantic-grammar-mode-map
   (let ((km (make-sparse-keymap)))
 
     (define-key km "|" 'semantic-grammar-electric-punctuation)
@@ -1271,22 +1291,17 @@ the change bounds to encompass the whole nonterminal tag."
                                (semantic-tag-start outer)
                                (semantic-tag-end outer)))))
 
-(defun semantic-grammar-mode ()
+(define-derived-mode semantic-grammar-mode
+  fundamental-mode "Semantic Grammar Framework"
   "Initialize a buffer for editing Semantic grammars.
 
-\\{semantic-grammar-map}"
-  (interactive)
-  (kill-all-local-variables)
-  (setq major-mode 'semantic-grammar-mode
-        mode-name "Semantic Grammar Framework")
+\\{semantic-grammar-mode-map}"
   (set (make-local-variable 'parse-sexp-ignore-comments) t)
   (set (make-local-variable 'comment-start) ";;")
   ;; Look within the line for a ; following an even number of backslashes
   ;; after either a non-backslash or the line beginning.
   (set (make-local-variable 'comment-start-skip)
        "\\(\\(^\\|[^\\\\\n]\\)\\(\\\\\\\\\\)*\\);+ *")
-  (set-syntax-table semantic-grammar-syntax-table)
-  (use-local-map semantic-grammar-map)
   (set (make-local-variable 'indent-line-function)
        'semantic-grammar-indent)
   (set (make-local-variable 'fill-paragraph-function)
@@ -1335,15 +1350,14 @@ the change bounds to encompass the whole nonterminal tag."
   (semantic-make-local-hook 'semantic-edits-new-change-functions)
   (add-hook 'semantic-edits-new-change-functions
             'semantic-grammar-edits-new-change-hook-fcn
-            nil t)
-  (semantic-run-mode-hooks 'semantic-grammar-mode-hook))
+            nil t))
 
 ;;;;
 ;;;; Useful commands
 ;;;;
 
 (defvar semantic-grammar-skip-quoted-syntax-table
-  (let ((st (copy-syntax-table semantic-grammar-syntax-table)))
+  (let ((st (copy-syntax-table semantic-grammar-mode-syntax-table)))
     (modify-syntax-entry ?\' "$" st)
     st)
   "Syntax table to skip a whole quoted expression in grammar code.
@@ -1644,20 +1658,17 @@ Select the buffer containing the tag's definition, and move point there."
     )
   "Association of syntax elements, and the corresponding help.")
 
-(declare-function eldoc-function-argstring "eldoc")
-(declare-function eldoc-docstring-format-sym-doc "eldoc")
-(declare-function eldoc-last-data-store "eldoc")
-(declare-function eldoc-get-fnsym-args-string "eldoc")
-(declare-function eldoc-get-var-docstring "eldoc")
+(defvar semantic-grammar-eldoc-last-data (cons nil nil))
 
 (defun semantic-grammar-eldoc-get-macro-docstring (macro expander)
   "Return a one-line docstring for the given grammar MACRO.
 EXPANDER is the name of the function that expands MACRO."
   (require 'eldoc)
-  (if (and (eq expander (aref eldoc-last-data 0))
-           (eq 'function (aref eldoc-last-data 2)))
-      (aref eldoc-last-data 1)
-    (let ((doc (help-split-fundoc (documentation expander t) expander)))
+  (cond
+   ((eq expander (car semantic-grammar-eldoc-last-data))
+    (cdr semantic-grammar-eldoc-last-data))
+   ((fboundp 'eldoc-function-argstring) ;; Emacs<25
+    (let* ((doc (help-split-fundoc (documentation expander t) expander)))
       (cond
        (doc
         (setq doc (car doc))
@@ -1669,8 +1680,17 @@ EXPANDER is the name of the function that expands MACRO."
         (setq doc
 	      (eldoc-docstring-format-sym-doc
 	       macro (format "==> %s %s" expander doc) 'default))
-        (eldoc-last-data-store expander doc 'function))
-      doc)))
+        (setq semantic-grammar-eldoc-last-data (cons expander doc)))
+      doc))
+   ((fboundp 'elisp-get-fnsym-args-string) ;; Emacs≥25
+    (elisp-get-fnsym-args-string
+     expander nil
+     (concat (propertize (symbol-name macro)
+                         'face 'font-lock-keyword-face)
+             " ==> "
+             (propertize (symbol-name macro)
+                         'face 'font-lock-function-name-face)
+             ": ")))))
 
 (define-mode-local-override semantic-idle-summary-current-symbol-info
   semantic-grammar-mode ()
@@ -1701,10 +1721,14 @@ Otherwise return nil."
         (setq val (semantic-grammar-eldoc-get-macro-docstring elt val)))
        ;; Function
        ((and elt (fboundp elt))
-        (setq val (eldoc-get-fnsym-args-string elt)))
+        (setq val (if (fboundp 'eldoc-get-fnsym-args-string)
+                      (eldoc-get-fnsym-args-string elt)
+                    (elisp-get-fnsym-args-string elt))))
        ;; Variable
        ((and elt (boundp elt))
-        (setq val (eldoc-get-var-docstring elt)))
+        (setq val (if (fboundp 'eldoc-get-var-docstring)
+                      (eldoc-get-var-docstring elt)
+                    (elisp-get-var-docstring elt))))
        (t nil)))
     (or val (semantic-idle-summary-current-symbol-info-default))))
 
@@ -1912,6 +1936,7 @@ Optional argument COLOR determines if color is added to the text."
 
 (provide 'semantic/grammar)
 
+
 ;; Local variables:
 ;; generated-autoload-load-name: "semantic/grammar"
 ;; End:

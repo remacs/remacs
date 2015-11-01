@@ -1,6 +1,6 @@
 ;;; semantic/decorate/include.el --- Decoration modes for include statements
 
-;; Copyright (C) 2008-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -42,8 +42,8 @@
 ;;; Code:
 
 ;;; FACES AND KEYMAPS
-(defvar semantic-decoratiton-mouse-3 (if (featurep 'xemacs) [ button3 ] [ mouse-3 ])
-  "The keybinding lisp object to use for binding the right mouse button.")
+(defvar semantic-decoration-mouse-3 (if (featurep 'xemacs) [ button3 ] [ mouse-3 ])
+  "The keybinding Lisp object to use for binding the right mouse button.")
 
 ;;; Includes that are in a happy state!
 ;;
@@ -55,7 +55,7 @@ Used by the decoration style: `semantic-decoration-on-includes'."
 
 (defvar semantic-decoration-on-include-map
   (let ((km (make-sparse-keymap)))
-    (define-key km semantic-decoratiton-mouse-3 'semantic-decoration-include-menu)
+    (define-key km semantic-decoration-mouse-3 'semantic-decoration-include-menu)
     km)
   "Keymap used on includes.")
 
@@ -126,7 +126,7 @@ Used by the decoration style: `semantic-decoration-on-unknown-includes'."
 (defvar semantic-decoration-on-unknown-include-map
   (let ((km (make-sparse-keymap)))
     ;(define-key km [ mouse-2 ] 'semantic-decoration-unknown-include-describe)
-    (define-key km semantic-decoratiton-mouse-3 'semantic-decoration-unknown-include-menu)
+    (define-key km semantic-decoration-mouse-3 'semantic-decoration-unknown-include-menu)
     km)
   "Keymap used on unparsed includes.")
 
@@ -189,7 +189,7 @@ Used by the decoration style: `semantic-decoration-on-fileless-includes'."
 (defvar semantic-decoration-on-fileless-include-map
   (let ((km (make-sparse-keymap)))
     ;(define-key km [ mouse-2 ] 'semantic-decoration-fileless-include-describe)
-    (define-key km semantic-decoratiton-mouse-3 'semantic-decoration-fileless-include-menu)
+    (define-key km semantic-decoration-mouse-3 'semantic-decoration-fileless-include-menu)
     km)
   "Keymap used on unparsed includes.")
 
@@ -251,7 +251,7 @@ Used by the decoration style: `semantic-decoration-on-unparsed-includes'."
 
 (defvar semantic-decoration-on-unparsed-include-map
   (let ((km (make-sparse-keymap)))
-    (define-key km semantic-decoratiton-mouse-3 'semantic-decoration-unparsed-include-menu)
+    (define-key km semantic-decoration-mouse-3 'semantic-decoration-unparsed-include-menu)
     km)
   "Keymap used on unparsed includes.")
 
@@ -335,6 +335,9 @@ This mode provides a nice context menu on the include statements."
 (defun semantic-decoration-on-includes-highlight-default (tag)
   "Highlight the include TAG to show that semantic can't find it."
   (let* ((file (semantic-dependency-tag-file tag))
+	 ;; Don't actually load includes
+	 (semanticdb-find-default-throttle
+	  (remq 'unloaded semanticdb-find-default-throttle))
 	 (table (semanticdb-find-table-for-include tag (current-buffer)))
 	 (face nil)
 	 (map nil)
@@ -365,8 +368,8 @@ This mode provides a nice context menu on the include statements."
 	(semanticdb-cache-get
 	 table 'semantic-decoration-unparsed-include-cache)
 	;; Add a dependency.
-	(let ((table semanticdb-current-table))
-	  (semanticdb-add-reference table tag))
+	(let ((currenttable semanticdb-current-table))
+	  (semanticdb-add-reference currenttable tag))
 	)
       ))
 
@@ -500,7 +503,8 @@ Argument EVENT is the mouse clicked event."
       (princ "Include File: ")
       (princ (semantic-format-tag-name tag nil t))
       (princ "\n\n")
-      (princ "This header file has been marked \"Unknown\".
+      (princ (substitute-command-keys "\
+This header file has been marked \"Unknown\".
 This means that Semantic has not been able to locate this file on disk.
 
 When Semantic cannot find an include file, this means that the
@@ -518,9 +522,9 @@ M-x semantic-add-system-include RET /path/to/includes RET
 
 or, in your .emacs file do:
 
-  (semantic-add-system-include \"/path/to/include\" '")
+  (semantic-add-system-include \"/path/to/include\" \\='"))
       (princ (symbol-name mm))
-      (princ ")
+      (princ (substitute-command-keys ")
 
 to add the path to Semantic's search.
 
@@ -528,7 +532,7 @@ If this is an include file that belongs to your project, then you may
 need to update `semanticdb-project-roots' or better yet, use `ede'
 to manage your project.  See the ede manual for projects that will
 wrap existing project code for Semantic's benefit.
-")
+"))
 
       (when (or (eq mm 'c++-mode) (eq mm 'c-mode))
 	(princ "
@@ -536,7 +540,7 @@ For C/C++ includes located within a project, you can use a special
 EDE project that will wrap an existing build system.  You can do that
 like this in your .emacs file:
 
-  (ede-cpp-root-project \"NAME\" :file \"FILENAME\" :locate-fcn 'MYFCN)
+  (ede-cpp-root-project \"NAME\" :file \"FILENAME\" :locate-fcn \\='MYFCN)
 
 See the CEDET manual, the EDE manual, or the commentary in
 ede/cpp-root.el for more.
@@ -742,7 +746,8 @@ Argument EVENT describes the event that caused this function to be called."
       (when (and (boundp 'ede-object)
 		 (boundp 'ede-object-project)
 		 ede-object)
-	(princ "  This file's project include search is handled by the EDE object:\n")
+	(princ (substitute-command-keys
+		"  This file's project include search is handled by the EDE object:\n"))
 	(princ "    Buffer Target:  ")
 	(princ (object-print ede-object))
 	(princ "\n")
@@ -766,7 +771,8 @@ Argument EVENT describes the event that caused this function to be called."
 	      (princ "\n"))
 	    )))
 
-      (princ "\n  This file's system include path is:\n")
+      (princ (substitute-command-keys
+	      "\n  This file's system include path is:\n"))
       (dolist (dir semantic-dependency-system-include-path)
 	(princ "    ")
 	(princ dir)
@@ -828,7 +834,7 @@ When an include's referring file is parsed, we need to undecorate
 any decorated referring includes.")
 
 
-(defmethod semantic-reset ((obj semantic-decoration-unparsed-include-cache))
+(cl-defmethod semantic-reset ((obj semantic-decoration-unparsed-include-cache))
   "Reset OBJ back to it's empty settings."
   (let ((table (oref obj table)))
     ;; This is a hack.  Add in something better?
@@ -838,13 +844,13 @@ any decorated referring includes.")
 	     ))
     ))
 
-(defmethod semanticdb-partial-synchronize ((cache semantic-decoration-unparsed-include-cache)
+(cl-defmethod semanticdb-partial-synchronize ((cache semantic-decoration-unparsed-include-cache)
 					   new-tags)
   "Synchronize CACHE with some NEW-TAGS."
   (if (semantic-find-tags-by-class 'include new-tags)
       (semantic-reset cache)))
 
-(defmethod semanticdb-synchronize ((cache semantic-decoration-unparsed-include-cache)
+(cl-defmethod semanticdb-synchronize ((cache semantic-decoration-unparsed-include-cache)
 				   new-tags)
   "Synchronize a CACHE with some NEW-TAGS."
   (semantic-reset cache))

@@ -1,6 +1,6 @@
 ;;; nndoc.el --- single file access for Gnus
 
-;; Copyright (C) 1995-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;;	Masanobu UMEDA <umerin@flab.flab.fujitsu.junet>
@@ -56,6 +56,10 @@ from the document.")
   `((mmdf
      (article-begin .  "^\^A\^A\^A\^A\n")
      (body-end .  "^\^A\^A\^A\^A\n"))
+    (debbugs-db
+     (file-begin    . "^\005")
+     (article-begin . "^[\005\007]\n")
+     (body-end      . "^\003"))
     (mime-digest
      (article-begin . "")
      (head-begin . "^ ?\n")
@@ -195,7 +199,7 @@ from the document.")
 ;; lines in the body.  For MIME dissections only, ARTICLE-INSERT [5] and
 ;; SUMMARY-INSERT [6] give headers to insert for full article or summary line
 ;; generation, respectively.  Other headers usually follow directly from the
-;; buffer.  Value `nil' means no insert.
+;; buffer.  Value nil means no insert.
 (defvoo nndoc-dissection-alist nil)
 (defvoo nndoc-prepare-body-function nil)
 (defvoo nndoc-generate-head-function nil)
@@ -458,6 +462,10 @@ from the document.")
 
 (defun nndoc-mmdf-type-p ()
   (when (looking-at "\^A\^A\^A\^A$")
+    t))
+
+(defun nndoc-debbugs-db-type-p ()
+  (when (looking-at "\006$")
     t))
 
 (defun nndoc-news-type-p ()
@@ -734,7 +742,7 @@ from the document.")
 				   nil t)
 	    (setq subject (concat (match-string 1) subject))
 	    (setq from (concat (match-string 2) " " from))))))
-    (while (and from (string-match "(\[^)\]*)" from))
+    (while (and from (string-match "([^)]*)" from))
       (setq from (replace-match "" t t from)))
     (insert "From: "  (or from "unknown")
 	    "\nSubject: " (or subject "(no subject)") "\n")

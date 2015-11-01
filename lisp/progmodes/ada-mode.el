@@ -1,6 +1,6 @@
 ;;; ada-mode.el --- major-mode for editing Ada sources
 
-;; Copyright (C) 1994-1995, 1997-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-1995, 1997-2015 Free Software Foundation, Inc.
 
 ;; Author: Rolf Ebert      <ebert@inf.enst.fr>
 ;;      Markus Heritsch <Markus.Heritsch@studbox.uni-stuttgart.de>
@@ -31,11 +31,6 @@
 ;; independent from the GNU Ada compiler GNAT, distributed by Ada
 ;; Core Technologies.  All the other files rely heavily on features
 ;; provided only by GNAT.
-;;
-;; Note: this mode will not work with Emacs 19. If you are on a VMS
-;; system, where the latest version of Emacs is 19.28, you will need
-;; another file, called ada-vms.el, that provides some required
-;; functions.
 
 ;;; Usage:
 ;; Emacs should enter Ada mode automatically when you load an Ada file.
@@ -149,6 +144,8 @@ This is a good place to add Ada environment specific bindings.")
 (defgroup ada nil
   "Major mode for editing and compiling Ada source in Emacs."
   :link '(custom-group-link :tag "Font Lock Faces group" font-lock-faces)
+  :link '(custom-manual "(ada-mode) Top")
+  :link '(emacs-commentary-link :tag "Commentary" "ada-mode.el")
   :group 'languages)
 
 (defcustom ada-auto-case t
@@ -289,11 +286,11 @@ type A is
   :type 'boolean :group 'ada)
 
 (defcustom ada-indent-is-separate t
-  "Non-nil means indent 'is separate' or 'is abstract' if on a single line."
+  "Non-nil means indent `is separate' or `is abstract' if on a single line."
   :type 'boolean :group 'ada)
 
 (defcustom ada-indent-record-rel-type 3
-  "Indentation for 'record' relative to 'type' or 'use'.
+  "Indentation for `record' relative to `type' or `use'.
 
 An example is:
    type A is
@@ -312,7 +309,7 @@ An example is:
   :type 'integer :group 'ada)
 
 (defcustom ada-indent-return 0
-  "Indentation for 'return' relative to the matching 'function' statement.
+  "Indentation for `return' relative to the matching `function' statement.
 If `ada-indent-return' is null or negative, the indentation is done relative to
 the open parenthesis (if there is no parenthesis, `ada-broken-indent' is used).
 
@@ -352,7 +349,7 @@ This is also used for <<..>> labels"
   :type '(choice (const ada83) (const ada95) (const ada2005)) :group 'ada)
 
 (defcustom ada-move-to-declaration nil
-  "Non-nil means `ada-move-to-start' moves to the subprogram declaration, not to 'begin'."
+  "Non-nil means `ada-move-to-start' moves to the subprogram declaration, not to `begin'."
   :type 'boolean :group 'ada)
 
 (defcustom ada-popup-key '[down-mouse-3]
@@ -400,7 +397,7 @@ Must be one of :
   :group 'ada)
 
 (defcustom ada-use-indent ada-broken-indent
-  "Indentation for the lines in a 'use' statement.
+  "Indentation for the lines in a `use' statement.
 
 An example is:
    use Ada.Text_IO,
@@ -408,7 +405,7 @@ An example is:
   :type 'integer :group 'ada)
 
 (defcustom ada-when-indent 3
-  "Indentation for 'when' relative to 'exception' or 'case'.
+  "Indentation for `when' relative to `exception' or `case'.
 
 An example is:
    case A is
@@ -416,7 +413,7 @@ An example is:
   :type 'integer :group 'ada)
 
 (defcustom ada-with-indent ada-broken-indent
-  "Indentation for the lines in a 'with' statement.
+  "Indentation for the lines in a `with' statement.
 
 An example is:
    with Ada.Text_IO,
@@ -496,7 +493,7 @@ Used to define `ada-*-keywords.'"))
   "Alist of substrings (entities) that have special casing.
 The substrings are detected for word constituent when the word
 is not itself in `ada-case-exception', and only for substrings that
-either are at the beginning or end of the word, or start after '_'.")
+either are at the beginning or end of the word, or start after `_'.")
 
 (defvar ada-lfd-binding nil
   "Variable to save key binding of LFD when casing is activated.")
@@ -1016,7 +1013,7 @@ If PARSE-RESULT is non-nil, use it instead of calling `parse-partial-sexp'."
 
 (defsubst ada-in-numeric-literal-p ()
   "Return t if point is after a prefix of a numeric literal."
-  (looking-back "\\([0-9]+#[0-9a-fA-F_]+\\)"))
+  (looking-back "\\([0-9]+#[0-9a-fA-F_]+\\)" (line-beginning-position)))
 
 ;;------------------------------------------------------------------
 ;; Contextual menus
@@ -1692,7 +1689,7 @@ See also `ada-auto-case' to disable auto casing altogether."
   nil)
 
 (defun ada-capitalize-word (&optional _arg)
-  "Upcase first letter and letters following '_', lower case other letters.
+  "Upcase first letter and letters following `_', lower case other letters.
 ARG is ignored, and is there for compatibility with `capitalize-word' only."
   (interactive)
   (let ((end   (save-excursion (skip-syntax-forward  "w") (point)))
@@ -2685,7 +2682,7 @@ if INITIAL-POS is non-nil, moves point to INITIAL-POS before calculation."
 	 ;; "then" has to be included in the case of "select...then abort"
 	 ;; statements, since (goto-stmt-start) at the beginning of
 	 ;; the current function would leave the cursor on that position
-	 ((looking-at "\\(\\(els\\)?if\\>\\)\\|then abort\\\>")
+	 ((looking-at "\\(\\(els\\)?if\\>\\)\\|then abort\\>")
 	  (ada-get-indent-if orgpoint))
 	 ;;
 	 ((looking-at "case\\>")
@@ -2837,7 +2834,7 @@ ORGPOINT is the limit position used in the calculation."
       (save-excursion
 	(goto-char (car match-cons))
 	(unless (ada-search-ignore-string-comment "when" t opos)
-	  (error "Missing 'when' between 'case' and '=>'"))
+	  (error "Missing `when' between `case' and `=>'"))
 	(list (save-excursion (back-to-indentation) (point)) 'ada-indent)))
      ;;
      ;; case..is..when
@@ -3006,7 +3003,7 @@ ORGPOINT is the limit position used in the calculation."
       (list cur-indent 'ada-broken-indent)))))
 
 (defun ada-get-indent-noindent (orgpoint)
-  "Calculate the indentation when point is just before a 'noindent stmt'.
+  "Calculate the indentation when point is just before a `noindent stmt'.
 ORGPOINT is the limit position used in the calculation."
   (let ((label 0))
     (save-excursion
@@ -3432,7 +3429,7 @@ Return the new position of point or nil if not found."
 Moves point to the matching block start."
   (ada-goto-matching-start 0)
   (unless (looking-at (concat "\\<" keyword "\\>"))
-    (error "Matching start is not '%s'" keyword)))
+    (error "Matching start is not `%s'" keyword)))
 
 
 (defun ada-check-defun-name (defun-name)
@@ -3670,7 +3667,7 @@ otherwise throw error."
   "Move point to the beginning of a block-start.
 Which block depends on the value of NEST-LEVEL, which defaults to zero.
 If NOERROR is non-nil, it only returns nil if no matching start was found.
-If GOTOTHEN is non-nil, point moves to the 'then' following 'if'."
+If GOTOTHEN is non-nil, point moves to the `then' following `if'."
   (let ((nest-count (if nest-level nest-level 0))
 	(found nil)
 
@@ -3737,7 +3734,7 @@ If GOTOTHEN is non-nil, point moves to the 'then' following 'if'."
 		(if pos
 		    (goto-char (car pos))
 		  (error (concat
-			  "No matching 'is' or 'renames' for 'package' at"
+			  "No matching `is' or `renames' for `package' at"
 			  " line "
 			  (number-to-string (count-lines 1 (1+ current)))))))
 	      (unless (looking-at "renames")
@@ -3865,7 +3862,7 @@ If GOTOTHEN is non-nil, point moves to the 'then' following 'if'."
 	     ((looking-at "do")
 	      (unless (ada-search-ignore-string-comment
 		       "\\<accept\\|return\\>" t)
-		(error "Missing 'accept' or 'return' in front of 'do'"))))
+		(error "Missing `accept' or `return' in front of `do'"))))
 	    (point))
 
 	(if noerror
@@ -4076,7 +4073,7 @@ Assumes point to be at the end of a statement."
 
 
 (defun ada-looking-at-semi-or ()
-  "Return t if looking at an 'or' following a semicolon."
+  "Return t if looking at an `or' following a semicolon."
   (save-excursion
     (and (looking-at "\\<or\\>")
 	 (progn
@@ -4149,7 +4146,7 @@ Return nil if the private is part of the package name, as in
 			   "type\\)\\>"))))))
 
 (defun ada-search-ignore-complex-boolean (regexp backwardp)
-  "Search for REGEXP, ignoring comments, strings, 'and then', 'or else'.
+  "Search for REGEXP, ignoring comments, strings, `and then', `or else'.
 If BACKWARDP is non-nil, search backward; search forward otherwise."
   (let (result)
   (while (and (setq result (ada-search-ignore-string-comment regexp backwardp))
@@ -4369,7 +4366,7 @@ of the region.  Otherwise, operate only on the current line."
 
 (defun ada-move-to-end ()
   "Move point to the end of the block around point.
-Moves to 'begin' if in a declarative part."
+Moves to `begin' if in a declarative part."
   (interactive)
   (let ((pos (point))
 	decl-start)
@@ -5293,7 +5290,7 @@ for `ada-procedure-start-regexp'."
 	    (setq functype (buffer-substring (point)
 					     (progn
 					       (skip-chars-forward
-						"a-zA-Z0-9_\.")
+						"a-zA-Z0-9_.")
 					       (point))))))
       ;; look for next non WS
       (cond
