@@ -5,42 +5,30 @@
 2015-10-31  Juanma Barranquero  <lekktu@gmail.com>
 
 	Fix bug#21762
-
 	* lisp/progmodes/python.el (python-syntax-closing-paren-p): Check with
 	`eql' instead of `=' to accommodate the case that (syntax-after (point))
 	returns nil.
-
 	* test/automated/python-tests.el (python-indent-inside-paren-7):
 	New test.
 
 2015-10-31  Juanma Barranquero  <lekktu@gmail.com>
 
-	* test/automated/python-tests.el: Avoid warnings
-
+	* test/automated/python-tests.el: Avoid warnings.
 	(python-tests-with-temp-buffer, python-tests-with-temp-file):
 	Bind `python-indent-guess-indent-offset' to nil.
-	# Please enter the commit message for your changes. Lines starting
-	# with '#' will be ignored, and an empty message aborts the commit.
-	# On branch master
-	# Your branch is up-to-date with 'origin/master'.
-	#
-	# Changes to be committed:
-	#	modified:   test/automated/python-tests.el
-	#
 
 2015-10-31  Juanma Barranquero  <lekktu@gmail.com>
 
-	* src/alloc.c: Silence compiler warnings
-
+	* src/alloc.c: Silence compiler warnings.
 	(pointers_fit_in_lispobj_p, mmap_lisp_allowed_p): #ifdef DOUG_LEA_MALLOC.
 
 2015-10-31  Jackson Ray Hamilton  <jackson@jacksonrayhamilton.com>
 
-	* etc/NEWS: Fix js-jsx-mode entry punctuation
+	* etc/NEWS: Fix js-jsx-mode entry punctuation.
 
 2015-10-31  Jackson Ray Hamilton  <jackson@jacksonrayhamilton.com>
 
-	Add JSX indentation via js-jsx-mode.  (Bug#21799)
+	Add JSX indentation via js-jsx-mode  (Bug#21799)
 
 	* progmodes/js.el: Add JSX indentation support.
 	(js-jsx-indent-line)
@@ -63,7 +51,7 @@
 
 2015-10-30  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Merge from gnulib.
+	Merge from gnulib
 
 	This incorporates:
 	2015-10-30 intprops: add WRAPV and const flavors for GCC 5
@@ -73,17 +61,14 @@
 
 2015-10-30  Eli Zaretskii  <eliz@gnu.org>
 
-	Fix a typo in a macro name
-
 	* src/w32proc.c (_NLSCMPERROR): Fix a typo in the name of this macro.
 	(w32_compare_strings): Adjust for the correction.
 
 2015-10-30  Michael Albinus  <michael.albinus@gmx.de>
 
-	Add result messages in vc-tests.el
-
 	* test/automated/vc-tests.el (vc-test--state)
-	(vc-test--working-revision, vc-test--checkout-model): Add result messages.
+	(vc-test--working-revision, vc-test--checkout-model):
+	Add result messages.
 
 2015-10-30  Artur Malabarba  <bruce.connor.am@gmail.com>
 
@@ -92,17 +77,15 @@
 2015-10-30  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* lisp/faces.el (faces--attribute-at-point): Fix bug
-
 	introduced by previous commit.
 
 2015-10-30  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* test/automated/faces-tests.el: New file
+	* test/automated/faces-tests.el: New file.
 
 2015-10-30  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/faces.el: Refactor common code and fix a bug
-
+	* lisp/faces.el: Refactor common code and fix a bug.
 	(faces--attribute-at-point): New function.  Fix a bug when the
 	face at point is a list of faces and the desired attribute is not
 	on the first one.
@@ -110,18 +93,16 @@
 
 2015-10-30  Przemysław Wojnowski  <esperanto@cumego.com>
 
-	* etc/tutorials/TUTORIAL.translators: Fix PL names
+	* etc/tutorials/TUTORIAL.translators: Fix PL names.
 
 2015-10-30  Juanma Barranquero  <lekktu@gmail.com>
 
-	* lisp/character-fold.el: Provide `character-fold'
+	* lisp/character-fold.el: Provide `character-fold'.
 
 2015-10-30  Tassilo Horn  <tsdh@gnu.org>
 
-	Add more faces for Gnus and ivy
-
-	* etc/themes/tsdh-dark-theme.el (tsdh-dark): add more faces for Gnus and
-	ivy.
+	* etc/themes/tsdh-dark-theme.el (tsdh-dark): Add more faces
+	for Gnus and ivy.
 
 2015-10-30  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -140,8 +121,7 @@
 
 2015-10-30  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* test/automated/sort-tests.el: New file
-
+	* test/automated/sort-tests.el: New file.
 	Tests in this file are randomly generated and then tested with
 	regular, reverse, and case-fold sorting.
 
@@ -155,13 +135,12 @@
 
 2015-10-30  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/isearch.el: Avoid an error that blocks isearch
-
+	* lisp/isearch.el: Avoid an error that blocks isearch.
 	(isearch-update): Don't error if `isearch--current-buffer' has
 	been killed.
 
-	* test/automated/isearch-tests.el (isearch--test-update): New
-	file.
+	* test/automated/isearch-tests.el (isearch--test-update):
+	New file.
 
 2015-10-30  Phil Sainty  <psainty@orcon.net.nz>
 
@@ -179,8 +158,7 @@
 
 2015-10-29  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* lisp/gnus/auth-source.el: Silence lexical-binding warnings
-
+	* lisp/gnus/auth-source.el: Silence lexical-binding warnings.
 	(auth-source-netrc-use-gpg-tokens): Simplify (symbol-value 'VAR) to
 	just VAR.
 	(auth-source-backend-parse): Use make-instance.
@@ -212,14 +190,12 @@
 2015-10-29  Juri Linkov  <juri@linkov.net>
 
 	* lisp/dired.el (dired-unmark-all-files-query): Declare.
-
 	(dired-unmark-all-files): Let-bind it and use instead of ‘query’.
 	(Bug#21746)
 
 2015-10-29  Juri Linkov  <juri@linkov.net>
 
 	* lisp/ielm.el (ielm-indent-line): Use non-nil arg of comint-bol
-
 	to go to the beginning of text line instead of command line.
 	http://lists.gnu.org/archive/html/emacs-devel/2015-10/msg02360.html
 
@@ -232,8 +208,7 @@
 
 2015-10-29  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* lisp/emacs-lisp/cl-generic.el: Add (major-mode MODE) context
-
+	* lisp/emacs-lisp/cl-generic.el: Add (major-mode MODE) context.
 	(cl--generic-derived-specializers): New function.
 	(cl--generic-derived-generalizer): New generalizer.
 	(cl-generic-generalizers): New specializer (derived-mode MODE).
@@ -273,15 +248,13 @@
 
 2015-10-29  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* lisp/emacs-lisp/smie.el: Use `declare' for `pure'
-
-	(smie-precs->prec2, smie-merge-prec2s, smie-bnf->prec2, smie-prec2->grammar):
-	Use `declare'.
+	* lisp/emacs-lisp/smie.el: Use `declare' for `pure'.
+	(smie-precs->prec2, smie-merge-prec2s, smie-bnf->prec2)
+	(smie-prec2->grammar): Use `declare'.
 
 2015-10-29  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* lisp/emacs-lisp/cl-generic.el: Accomodate future changes
-
+	* lisp/emacs-lisp/cl-generic.el: Accomodate future changes.
 	(cl--generic-generalizer): Add `name' field.
 	(cl-generic-make-generalizer): Add corresponding `name' argument.
 	(cl-generic-define-generalizer): New macro.
@@ -298,12 +271,15 @@
 	(cl--generic-struct-tag, cl--generic-struct-specializers):
 	Allow extra arguments.
 
-	* lisp/emacs-lisp/eieio-compat.el (eieio--generic-static-symbol-generalizer)
-	(eieio--generic-static-object-generalizer): Use cl-generic-define-generalizer.
+	* lisp/emacs-lisp/eieio-compat.el
+	(eieio--generic-static-symbol-generalizer)
+	(eieio--generic-static-object-generalizer):
+	Use cl-generic-define-generalizer.
 	(eieio--generic-static-symbol-specializers): Allow extra arguments.
 
 	* lisp/emacs-lisp/eieio-core.el (eieio--generic-generalizer)
-	(eieio--generic-subclass-generalizer): Use cl-generic-define-generalizer.
+	(eieio--generic-subclass-generalizer):
+	Use cl-generic-define-generalizer.
 	(eieio--generic-subclass-specializers): Allow extra arguments.
 
 2015-10-29  Stefan Monnier  <monnier@iro.umontreal.ca>
@@ -356,13 +332,13 @@
 
 2015-10-28  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/isearch.el: Delete some outdated comments
+	* lisp/isearch.el: Delete some outdated comments.
 
 2015-10-28  Vibhav Pant  <vibhavp@gmail.com>
 
 	Fix eshell/clear not working if the output has a small line count
 
-	* lisp/eshell/esh-mode.el: (eshell/clear): Use (window-size) as the
+	* lisp/eshell/esh-mode.el (eshell/clear): Use (window-size) as the
 	number of newlines to be inserted. This fixes the issue where
 	eshell/clear wouldn't work if the prompt was not at the bottom of the
 	window, and the output wasn't too long.
@@ -377,8 +353,7 @@
 
 2015-10-28  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* lisp/emacs-lisp/macroexp.el: Tweak macroexp-if optimizations
-
+	* lisp/emacs-lisp/macroexp.el: Tweak macroexp-if optimizations.
 	(macroexp-unprogn): Make sure we never return an empty list.
 	(macroexp-if): Remove unused (and unsafe) optimization.
 	Optimize (if A T (if B T E)) into (if (or A B) T E) instead, which does
@@ -387,7 +362,6 @@
 2015-10-28  Juanma Barranquero  <lekktu@gmail.com>
 
 	Fix bug#21766 and add test
-
 	* lisp/simple.el (delete-trailing-whitespace): Save match data when
 	calling `skip-syntax-backward'.
 	* test/automated/simple-test.el (simple-delete-trailing-whitespace):
@@ -395,7 +369,7 @@
 
 2015-10-28  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* doc/lispref/sequences.texi (Sequence Functions): Fix typo
+	* doc/lispref/sequences.texi (Sequence Functions): Fix typo.
 
 2015-10-28  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -404,19 +378,17 @@
 2015-10-28  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* lisp/character-fold.el (character-fold-to-regexp): Fix case
-
 	where string ends in space
 
 2015-10-28  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/emacs-lisp/seq.el (seq-mapn): New function
+	* lisp/emacs-lisp/seq.el (seq-mapn): New function.
 
-	* doc/lispref/sequences.texi (Sequence Functions): Document seq-mapn
+	* doc/lispref/sequences.texi (Sequence Functions): Document seq-mapn.
 
 2015-10-28  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/character-fold.el: Make compatible with lax-whitespace
-
+	* lisp/character-fold.el: Make compatible with lax-whitespace.
 	(character-fold-to-regexp): Rework internals to play nice with
 	lax-whitespacing.
 
@@ -433,18 +405,16 @@
 
 2015-10-28  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/isearch.el: Refactor momentary messages
-
+	* lisp/isearch.el: Refactor momentary messages.
 	(isearch--momentary-message): New function.
 	(isearch-toggle-lax-whitespace, isearch-toggle-case-fold)
 	(isearch-toggle-invisible): Use it.
 
 2015-10-28  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/isearch.el: Define all toggles with `isearch-define-mode-toggle'
-
+	* lisp/isearch.el: Define all toggles with `isearch-define-mode-toggle'.
 	(isearch-define-mode-toggle): New macro.
-	(isearch-toggle-invisible): Renamed to
+	(isearch-toggle-invisible): Rename to
 	`isearch-define-mode-toggle'.
 	(isearch-toggle-case-fold, isearch-toggle-invisible)
 	(isearch-toggle-regexp, isearch-toggle-lax-whitespace): Define
@@ -467,18 +437,16 @@
 
 2015-10-28  Michael Albinus  <michael.albinus@gmx.de>
 
-	Revert 692bce5b9eccfae19ae2a5a23a9ccd8d6bf86076
-
 	* lisp/net/tramp-smb.el (tramp-smb-handle-directory-files):
 	Revert 692bce5b9eccfae19ae2a5a23a9ccd8d6bf86076, `delete-dups'
 	does not exist in XEmacs 21.4.
 
 2015-10-28  Anders Lindgren  <andlind@gmail.com>
 
-	Fixed OS X startup crash.
+	Fixed OS X startup crash
 
 	Input events started to arrive before ns_term_init() was finished.
-	Solved by blocking input. This also seems to correct the "You
+	Solved by blocking input.  This also seems to correct the "You
 	can't open the application "Emacs" because it may be damaged or
 	incomplete" error issued when double-clicking on the Emacs
 	application.
@@ -492,8 +460,7 @@
 
 2015-10-28  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* src/process.c (Fget_buffer_process): Improve docstring
-
+	* src/process.c (Fget_buffer_process): Improve docstring.
 	Document the fact that it doesn't return dead processes.
 
 2015-10-28  Anders Lindgren  <andlind@gmail.com>
@@ -526,8 +493,8 @@
 
 	Prettify TeX macros not ending in a word char
 
-	* lisp/textmodes/tex-mode.el (tex--prettify-symbols-compose-p): Prettify
-	macros which don't end in a word character.
+	* lisp/textmodes/tex-mode.el (tex--prettify-symbols-compose-p):
+	Prettify macros which don't end in a word character.
 
 2015-10-27  Dmitry Gutov  <dgutov@yandex.ru>
 
@@ -540,15 +507,14 @@
 
 2015-10-27  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* lisp/net/tramp-smb.el: Avoid using `add-to-list' on a let-local var
+	* lisp/net/tramp-smb.el: Avoid using `add-to-list' on a let-local var.
+	(tramp-smb-handle-directory-files): Use `delete-dups'.
 
-	* lisp/net/tramp-smb.el (tramp-smb-handle-directory-files): Use `delete-dups'.
 	* lisp/net/tramp.el (auto-save-file-name-transforms): Declare.
 
 2015-10-27  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* lisp/international/ccl.el: Use lexical-binding
-
+	* lisp/international/ccl.el: Use lexical-binding.
 	(ccl-compile-if): Remove unused var `false-ic'.
 	(ccl-compile-write-repeat): Remove unused var `i'.
 	(ccl-compile-map-single): Remove unused var `id'.
@@ -557,18 +523,17 @@
 
 2015-10-27  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* lisp/json.el (json-new-object): Optimize trivial `list' call
+	* lisp/json.el (json-new-object): Optimize trivial `list' call.
 
 2015-10-27  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* lisp/help.el: Fix bug with incorrect arglist string
-
-	(help-add-fundoc-usage): Don't mistake a mis-formatted string for a list.
+	* lisp/help.el: Fix bug with incorrect arglist string.
+	(help-add-fundoc-usage): Don't mistake a mis-formatted string
+	for a list.
 
 2015-10-27  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* lisp/gnus/gnus-topic.el: Silence some warnings
-
+	* lisp/gnus/gnus-topic.el: Silence some warnings.
 	(gnus-topic-prepare-topic): Remove unused var `topic'.
 	(gnus-topic-remove-topic): Mark unused arg `hide'.
 	(gnus-tmp-header): Declare.
@@ -581,13 +546,13 @@
 
 	Minor CEDET fixes
 
-	* lisp/cedet/cedet-global.el (cedet-gnu-global-gtags-call): Handle
-	warnings from gtags about invalid options.
+	* lisp/cedet/cedet-global.el (cedet-gnu-global-gtags-call):
+	Handle warnings from gtags about invalid options.
 	(cedet-gnu-global-create/update-database): Do incremental update
 	properly.
 
-	* lisp/cedet/ede/generic.el (ede-enable-generic-projects): Get monotone
-	root right.
+	* lisp/cedet/ede/generic.el (ede-enable-generic-projects):
+	Get monotone root right.
 
 2015-10-27  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -610,7 +575,7 @@
 
 2015-10-27  Nicolas Petton  <nicolas@petton.fr>
 
-	Use a plain svg file for the icon
+	Use a plain SVG file for the icon
 
 	* etc/images/icons/hicolor/scalable/apps/emacs.svg: Use a plain SVG
 	  format instead of the Inkscape SVG format.
@@ -629,18 +594,18 @@
 
 	* lisp/emacs-lisp/seq.el: Better docstrings.
 
-	* lisp/emacs-lisp/seq.el: Rename all seq argumentss to sequence.
+	* lisp/emacs-lisp/seq.el: Rename all seq arguments to sequence.
 
 2015-10-26  Phillip Lord  <phillip.lord@russet.org.uk>
 
-	* lisp/emacs-lisp/ert.el: Print results without newline escaping
+	* lisp/emacs-lisp/ert.el: Print results without newline escaping.
 
 2015-10-26  Stephen Leake  <stephen_leake@stephe-leake.org>
 
 	Clarify that load-path contents should be directory file names
 
 	* doc/lispref/files.texi (Directory Names): Define and use "directory
-	file name". Recommend `expand-file-name'.
+	file name".  Recommend `expand-file-name'.
 
 	* src/lread.c (load-path): Fix doc string; elements are directory file
 	names.
@@ -649,14 +614,13 @@
 
 	Fix simple-test.el test
 
-	* test/automated/simple-test.el (simple-test--dummy-buffer): Make
-	sure indentation doesn't use TABs, otherwise the 6th test might
-	fail.
+	* test/automated/simple-test.el (simple-test--dummy-buffer):
+	Make sure indentation doesn't use TABs, otherwise the 6th test
+	might fail.
 
 2015-10-26  Mark Oteiza  <mvoteiza@udel.edu>
 
 	* lisp/net/eww.el (eww-bookmark-prepare): Use truncate-string-to-width.
-
 	`substring' does not account for full width characters.
 
 2015-10-26  Michael Albinus  <michael.albinus@gmx.de>
@@ -683,7 +647,7 @@
 
 2015-10-26  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* src/keyboard.c (post-command-hook): Shorten docstring
+	* src/keyboard.c (post-command-hook): Shorten docstring.
 
 2015-10-26  Tassilo Horn  <tsdh@gnu.org>
 
@@ -694,42 +658,36 @@
 
 2015-10-25  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/isearch.el (search-default-regexp-mode): Revert to nil
-
+	* lisp/isearch.el (search-default-regexp-mode): Revert to nil.
 	Character-fold search _still_ doesn't play well with
 	lax-whitespace.  So disable it by default (again) for now.
 
 2015-10-25  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/isearch.el: No visual feedback for default search mode
-
+	* lisp/isearch.el: No visual feedback for default search mode.
 	During an isearch where character-folding is the default, we don't
 	want to take up minibuffer space just to tell the user that
 	"Char-fold " is on.  The same goes for other modes, if the user
 	changes the default.  In contrast, if the user toggles OFF the
 	default mode, they should see "Literal", to distinguish it from
 	the default mode.
-
 	(isearch--describe-regexp-mode): Return "" if describing the
 	default mode, and return "literal " if describing a plain search
 	and it is not default.
 
 2015-10-25  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* test/automated/simple-test.el: New file
-
+	* test/automated/simple-test.el: New file.
 	Define tests for `newline' and `open-line'.
 
 2015-10-25  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/simple.el (open-line): Integrate with electric-indent-mode
-
+	* lisp/simple.el (open-line): Integrate with electric-indent-mode.
 	Also run `post-self-insert-hook' when called interactively.
 
 2015-10-25  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/simple.el (open-line): Fix docstring
-
+	* lisp/simple.el (open-line): Fix docstring.
 	Also explain apparently redundant line.
 
 2015-10-25  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
@@ -737,111 +695,113 @@
 
 	Sync with soap-client repository, version 3.0.1
 
-	* soap-client.el, soap-inspect.el: Bump version to 3.0.1.
+	* lisp/net/soap-client.el, lisp/net/soap-inspect.el:
+	Bump version to 3.0.1.
 
-	* soap-client.el, soap-inspect.el: Update home page.
+	* lisp/net/soap-client.el, lisp/net/soap-inspect.el: Update home page.
 
-	* soap-client.el, soap-inspect.el: Bump version to 3.0.0.
+	* lisp/net/soap-client.el, lisp/net/soap-inspect.el:
+	Bump version to 3.0.0.
 
-	* soap-inspect.el: Merge in changes from Emacs master branch.
+	* lisp/net/soap-inspect.el: Merge in changes from Emacs master branch.
 
-	* soap-client.el: Merge in changes from Emacs master branch.
+	* lisp/net/soap-client.el: Merge in changes from Emacs master branch.
 
-	* soap-inspect.el: Shorten first line description.
+	* lisp/net/soap-inspect.el: Shorten first line description.
 
-	* soap-client.el: Make a small whitespace fix.
+	* lisp/net/soap-client.el: Make a small whitespace fix.
 
-	* soap-inspect.el: Update copyright years.
+	* lisp/net/soap-inspect.el: Update copyright years.
 
-	* soap-client.el (soap-encoded-namespaces): Move above first use
-	in soap-encode-xs-element.
+	* lisp/net/soap-client.el (soap-encoded-namespaces): Move above
+	first use in soap-encode-xs-element.
 
-	* soap-client.el (soap-type-is-array?): new defun
+	* lisp/net/soap-client.el (soap-type-is-array?): new defun
 	(soap-encode-xs-element): handle array elements in this function
 	(soap-encode-xs-complex-type): flag error if asked to encode an
 	array type, this is handled in `soap-encode-xs-element'
 
-	* soap-inspect.el (soap-inspect-xs-attribute-group): Do not print
-	type for attribute group.
+	* lisp/net/soap-inspect.el (soap-inspect-xs-attribute-group):
+	Do not print type for attribute group.
 
-	* soap-inspect.el (soap-sample-value-for-xs-attribute-group): New
-	function.
+	* lisp/net/soap-inspect.el (soap-sample-value-for-xs-attribute-group)
+	New function.
 	(soap-inspect-xs-attribute-group): Likewise.
 
-	* soap-inspect.el
+	* lisp/net/soap-inspect.el
 	(soap-resolve-references-for-xs-attribute-group): Resolve
 	references of attributes in an attribute group.
 
-	* soap-client.el (soap-decode-xs-attributes): Process attribute
+	* lisp/net/soap-client.el (soap-decode-xs-attributes): Process attribute
 	type directly, not through soap-wsdl-get.
 
-	* soap-client.el (soap-xs-parse-attribute): Leave reference nil if
-	reference attribute is nil.
+	* lisp/net/soap-client.el (soap-xs-parse-attribute): Leave reference
+	nil if reference attribute is nil.
 
-	* soap-client.el (soap-resolve-references-for-xs-attribute):
+	* lisp/net/soap-client.el (soap-resolve-references-for-xs-attribute):
 	Convert XML schema attributes to xsd:string.
 
-	* soap-inspect.el (soap-sample-value-for-xs-attribute): New
-	function.
-	(soap-sample-value-for-xs-simple-type): Prepend attributes to
-	result.
+	* lisp/net/soap-inspect.el (soap-sample-value-for-xs-attribute):
+	New function.
+	(soap-sample-value-for-xs-simple-type): Prepend attributes to result.
 	(soap-sample-value-for-xs-complex-type): Likewise.
 	(soap-inspect-xs-attribute): New function.
 	(soap-inspect-xs-simple-type): Print attributes.
 	(soap-inspect-xs-complex-type): Likewise.
 
-	* soap-inspect.el (soap-resolve-references-for-xs-simple-type):
+	* lisp/net/soap-inspect.el (soap-resolve-references-for-xs-simple-type):
 	Resolve references for attributes.
 	(soap-resolve-references-for-xs-complex-type): Likewise.
 
-	* soap-client.el (soap-xml-node-find-matching-child): Rename from
-	soap-xml-node-first-child.
+	* lisp/net/soap-client.el (soap-xml-node-find-matching-child):
+	Rename from soap-xml-node-first-child.
 	(soap-xs-parse-attribute): Call soap-xml-node-find-matching-child.
 	(soap-xs-parse-simple-type): Likewise.
 
-	* soap-client.el (soap-invoke-async): Add error checking.
+	* lisp/net/soap-client.el (soap-invoke-async): Add error checking.
 
-	* soap-client.el (soap-invoke-internal): New function.
+	* lisp/net/soap-client.el (soap-invoke-internal): New function.
 	(soap-invoke-async): Call soap-invoke-internal.
 	(soap-invoke): Likewise.
 
-	* soap-client.el (soap-invoke-async): Ensure buffer passed to
+	* lisp/net/soap-client.el (soap-invoke-async): Ensure buffer passed to
 	url-retrieve callback is killed.
 
-	* soap-client.el (soap-parse-wsdl-phase-validate-node): Rename
-	function.
+	* lisp/net/soap-client.el (soap-parse-wsdl-phase-validate-node):
+	Rename function.
 	(soap-parse-wsdl-phase-fetch-imports): Likewise.
 	(soap-parse-wsdl-phase-parse-schema): Likewise.
 	(soap-parse-wsdl-phase-fetch-schema): Likewise.
 	(soap-parse-wsdl-phase-finish-parsing): Likewise.
 	(soap-parse-wsdl): Update calls.
 
-	* soap-client.el (soap-invoke-async): Fix callback invocation.
+	* lisp/net/soap-client.el (soap-invoke-async): Fix callback invocation.
 
-	* soap-client.el (soap-invoke-async): New function.
+	* lisp/net/soap-client.el (soap-invoke-async): New function.
 	(soap-invoke): Reimplement using soap-invoke-async.
 
-	* soap-client.el (soap-parse-server-response): Improve docstring.
+	* lisp/net/soap-client.el (soap-parse-server-response):
+	Improve docstring.
 	(soap-invoke): Inline call to soap-parse-server-response.
 
-	* soap-client.el (soap-decode-xs-complex-type): Prevent incorrect
-	warning.
+	* lisp/net/soap-client.el (soap-decode-xs-complex-type):
+	Prevent incorrect warning.
 
-	* soap-client.el (soap-parse-server-response): Rename
-	soap-process-url-response.  Destroy the mime part.
+	* lisp/net/soap-client.el (soap-parse-server-response):
+	Rename soap-process-url-response.  Destroy the mime part.
 	(soap-invoke): Call soap-parse-server-response.
 
-	* soap-client.el: Update copyright date.
+	* lisp/net/soap-client.el: Update copyright date.
 
-	* soap-client.el: Fix checkdoc issues.
+	* lisp/net/soap-client.el: Fix checkdoc issues.
 
-	* soap-client.el: Fix indentation and long lines.
+	* lisp/net/soap-client.el: Fix indentation and long lines.
 
-	* soap-client.el (soap-time-format): Remove variable.
+	* lisp/net/soap-client.el (soap-time-format): Remove variable.
 	(soap-encode-xs-basic-type): Simplify date-time format detection.
 	(soap-decode-xs-basic-type): Remove soap-time-format support.
 
-	* soap-client.el (soap-process-url-response): New function.
+	* lisp/net/soap-client.el (soap-process-url-response): New function.
 	(soap-fetch-xml-from-url): Call soap-process-url-response.
 	(soap-parse-wsdl-phase-1): New function.
 	(soap-parse-wsdl-phase-2): Likewise.
@@ -850,18 +810,18 @@
 	(soap-parse-wsdl-phase-5): Likewise.
 	(soap-parse-wsdl): Call phase functions.
 
-	* soap-client.el (soap-decode-xs-basic-type): Remove one-argument
-	and call.
+	* lisp/net/soap-client.el (soap-decode-xs-basic-type):
+	Remove one-argument and call.
 
-	* soap-client.el (soap-decode-date-time): Improve docstring.
+	* lisp/net/soap-client.el (soap-decode-date-time): Improve docstring.
 
-	* soap-client.el (soap-xmlschema-imports): Remove variable.
+	* lisp/net/soap-client.el (soap-xmlschema-imports): Remove variable.
 	(soap-parse-schema): Add wsdl argument.  Look up XML schema
 	imports from wsdl.
 	(soap-load-wsdl): Do not set soap-xmlschema-imports.
 	(soap-parse-wsdl): Get XML schema imports from wsdl.
 
-	* soap-client.el (soap-current-file): Remove variable.
+	* lisp/net/soap-client.el (soap-current-file): Remove variable.
 	(soap-wsdl): Add current-file slot.
 	(soap-fetch-xml-from-url): Add wsdl argument.  Look up current
 	file from wsdl.
@@ -870,7 +830,7 @@
 	(soap-load-wsdl): Always create wsdl object first.
 	(soap-parse-wsdl): Pass wsdl to soap-fetch-xml.
 
-	* soap-client.el (soap-xs-element): Add is-group slot.
+	* lisp/net/soap-client.el (soap-xs-element): Add is-group slot.
 	(soap-xs-parse-element): Set is-group slot.
 	(soap-resolve-references-for-xs-element): Skip is-group elements.
 	(soap-xs-complex-type): Add is-group slot.
@@ -880,15 +840,17 @@
 	from referenced xsd:group nodes.
 	(soap-parse-schema): Parse xsd:group nodes.
 
-	* soap-client.el (soap-invoke): Don't set url-http-version to 1.0.
+	* lisp/net/soap-client.el (soap-invoke):
+	Don't set url-http-version to 1.0.
 
-	* soap-client.el (soap-decode-xs-complex-type): Allow choice nodes
-	to accept multiple values.
+	* lisp/net/soap-client.el (soap-decode-xs-complex-type):
+	Allow choice nodes to accept multiple values.
 
-	* soap-client.el (soap-encode-body): Check parameters argument for
-	extra header values.
+	* lisp/net/soap-client.el (soap-encode-body): Check parameters argument
+	for extra header values.
 
-	* soap-client.el (soap-well-known-xmlns): Add wsa and wsaw tags.
+	* lisp/net/soap-client.el (soap-well-known-xmlns):
+	Add wsa and wsaw tags.
 	(soap-operation): Add input-action and output-action slots.
 	(soap-parse-operation): Parse wsaw:Action nodes.
 	(soap-encode-body): Encode service-url for WS-Addressing.
@@ -896,67 +858,67 @@
 	(soap-invoke): Update soap-create-envelope call to provide
 	service-url argument.
 
-	* soap-client.el (soap-decode-xs-complex-type): Support xsi:type
-	override attribute.
+	* lisp/net/soap-client.el (soap-decode-xs-complex-type):
+	Support xsi:type override attribute.
 	(soap-decode-array): Likewise.
 
-	* soap-client.el (soap-parse-schema): Handle location attribute.
+	* lisp/net/soap-client.el (soap-parse-schema):
+	Handle location attribute.
 
-	* soap-client.el (soap-decode-type): Check that multiRef matched
-	validation regexp.
+	* lisp/net/soap-client.el (soap-decode-type): Check that multiRef
+	matched validation regexp.
 
-	* soap-client.el (soap-encode-xs-simple-type): Encode xsd:list
-	nodes.
+	* lisp/net/soap-client.el (soap-encode-xs-simple-type):
+	Encode xsd:list nodes.
 	(soap-decode-xs-simple-type): Decode xsd:list nodes.
 
-	* soap-client.el (soap-get-candidate-elements): Fix reference
-	handling.
+	* lisp/net/soap-client.el (soap-get-candidate-elements):
+	Fix reference handling.
 
-	* soap-client.el (soap-xs-simple-type): Add is-list slot.
-	(soap-xs-parse-simple-type): Call soap-xs-add-list for xsd:list
-	nodes.
+	* lisp/net/soap-client.el (soap-xs-simple-type): Add is-list slot.
+	(soap-xs-parse-simple-type): Call soap-xs-add-list for xsd:list nodes.
 	(soap-xs-add-list): New function.
 
-	* soap-client.el (soap-encode-xs-element): When a boolean is
+	* lisp/net/soap-client.el (soap-encode-xs-element): When a boolean is
 	expected, interpret nil as "false".
 
-	* soap-client.el (soap-make-xs-basic-types): Add gYearMonth,
+	* lisp/net/soap-client.el (soap-make-xs-basic-types): Add gYearMonth,
 	gYear, gMonthDay, gDay and gMonth.
 
-	* soap-client.el (soap-time-format): New variable.
+	* lisp/net/soap-client.el (soap-time-format): New variable.
 	(soap-encode-xs-basic-type): Handle dateTime, time, date,
 	gYearMonth, gYear, gMonthDay, gDay and gMonth.
 	(soap-decode-date-time): New function.
 	(soap-decode-xs-basic-type): Use soap-decode-date-time.
 
-	* soap-client.el (soap-encode-xs-basic-type): Validate value after
-	encoding.
+	* lisp/net/soap-client.el (soap-encode-xs-basic-type): Validate value
+	after encoding.
 	(soap-decode-xs-basic-type): Validate value before decoding.
 
-	* soap-client.el (soap-validate-xs-basic-type): New function.
+	* lisp/net/soap-client.el (soap-validate-xs-basic-type): New function.
 	(soap-validate-xs-simple-type): Call soap-validate-xs-basic-type.
 
-	* soap-client.el (soap-xs-add-union): Append result to base
+	* lisp/net/soap-client.el (soap-xs-add-union): Append result to base
 	instead of overwriting it.
 	(soap-validate-xs-simple-type): Add union support.
 
-	* soap-client.el (soap-xs-add-restriction): Translate pattern to
-	Emacs regexp using xsdre-translate.
+	* lisp/net/soap-client.el (soap-xs-add-restriction): Translate pattern
+	to Emacs regexp using xsdre-translate.
 	(soap-validate-xs-simple-type): Validate value against pattern.
 
-	* soap-client.el (soap-xs-add-union): Preserve WSDL order of
+	* lisp/net/soap-client.el (soap-xs-add-union): Preserve WSDL order of
 	inline simpleType nodes.
 	(soap-decode-type): Handle union types.
 
-	* soap-client.el (soap-decode-xs-attributes): Decode basic-type
+	* lisp/net/soap-client.el (soap-decode-xs-attributes): Decode basic-type
 	attributes.
 
-	* soap-client.el (soap-get-xs-attributes-from-groups): renamed
+	* lisp/net/soap-client.el (soap-get-xs-attributes-from-groups): Rename
 	from soap-xs-attribute-group-consolidate, all callers updated
-	(soap-get-xs-attributes): renamed from
+	(soap-get-xs-attributes): Rename from
 	soap-xs-attributes-consolidate, all callers updated
 
-	* soap-client.el (soap-xs-type): Add attribute-group slot.
+	* lisp/net/soap-client.el (soap-xs-type): Add attribute-group slot.
 	(soap-xs-attribute-group): New type.
 	(soap-xs-parse-attribute-group): New function.
 	(soap-resolve-references-for-xs-attribute-group): Likewise.
@@ -969,36 +931,34 @@
 	(soap-xs-attributes-consolidate): Handle attribute groups.
 	(soap-parse-schema): Likewise.
 
-	* soap-client.el (soap-encode-xs-basic-type): Fix boolean
-	encoding.
+	* lisp/net/soap-client.el (soap-encode-xs-basic-type):
+	Fix boolean encoding.
 
-	* soap-client.el (soap-encode-xs-complex-type): Print ref element
-	names in warnings.
+	* lisp/net/soap-client.el (soap-encode-xs-complex-type): Print ref
+	element names in warnings.
 
-	* soap-client.el (soap-decode-xs-complex-type): Fix splicing.
+	* lisp/net/soap-client.el (soap-decode-xs-complex-type): Fix splicing.
 
-	* soap-client.el (soap-decode-xs-complex-type): Eliminate invalid
-	warnings for choice types.
+	* lisp/net/soap-client.el (soap-decode-xs-complex-type):
+	Eliminate invalid warnings for choice types.
 
-	* soap-client.el (soap-encode-xs-complex-type-attributes): Also
-	encode base type attributes.
+	* lisp/net/soap-client.el (soap-encode-xs-complex-type-attributes):
+	Also encode base type attributes.
 
-	* soap-client.el (soap-encode-xs-complex-type): Fix compilation
+	* lisp/net/soap-client.el (soap-encode-xs-complex-type): Fix compilation
 	warning.  Print e-name in warnings, or element if e-name is nil.
 
-	* soap-client.el (soap-xs-element): Add alternatives slot.
+	* lisp/net/soap-client.el (soap-xs-element): Add alternatives slot.
 	(soap-xs-parse-element): Set substitution-group.
-	(soap-resolve-references-for-xs-element): Populate alternatives
-	slot.
+	(soap-resolve-references-for-xs-element): Populate alternatives slot.
 	(soap-get-candidate-elements): New function.
-	(soap-encode-xs-complex-type): Iterate through all candidate
-	elements.  Handle types with nil type indicator.  Fix warning
-	logic.
+	(soap-encode-xs-complex-type): Iterate through all candidate elements.
+	Handle types with nil type indicator.  Fix warning logic.
 
-	* soap-client.el (soap-current-wsdl): moved declaration earlier in
-	the file to prevent compiler warning.
+	* lisp/net/soap-client.el (soap-current-wsdl): Move declaration
+	earlier in the file to prevent compiler warning.
 
-	* soap-client.el (soap-node-optional): New function.
+	* lisp/net/soap-client.el (soap-node-optional): New function.
 	(soap-node-multiple): Likewise.
 	(soap-xs-parse-element): Call soap-node-optional and
 	soap-node-multiple.
@@ -1009,44 +969,41 @@
 	(soap-xs-complex-type-multiple-p): Likewise.
 	(soap-xs-attributes-consolidate): Likewise.
 	(soap-decode-xs-attributes): Likewise.
-	(soap-decode-xs-complex-type): Decode types with nil type
-	indicator.  Support children that use local namespaces.  Decode
-	attributes.  Add type considerations to optional? and multiple?
-	warnings.
+	(soap-decode-xs-complex-type): Decode types with nil type indicator.
+	Support children that use local namespaces.  Decode attributes.
+	Add type considerations to optional? and multiple? warnings.
 
-	* soap-client.el (soap-xs-parse-extension-or-restriction): Store
-	parsed attributes.
-	(soap-encode-xs-complex-type-attributes): Encode custom
-	attributes.
+	* lisp/net/soap-client.el (soap-xs-parse-extension-or-restriction):
+	Store parsed attributes.
+	(soap-encode-xs-complex-type-attributes): Encode custom attributes.
 
-	* soap-client.el (soap-encode-xs-complex-type-attributes): don't
-	add the xsi:type attribute (Exchange refuses requests which have
-	this attribute)
+	* lisp/net/soap-client.el (soap-encode-xs-complex-type-attributes):
+	Don't add the xsi:type attribute (Exchange refuses requests which have
+	this attribute).
 
-	* soap-client.el, soap-inspect.el: converted to lexical binding,
-	corrected compiler warnings about unused function arguments and
+	* lisp/net/soap-client.el, soap-inspect.el: Convert to lexical binding,
+	correct compiler warnings about unused function arguments and
 	local variables.
 
-	* soap-client.el (soap-decode-xs-complex-type): Handle nil type
-	indicator.
+	* lisp/net/soap-client.el (soap-decode-xs-complex-type): Handle nil
+	type indicator.
 	(soap-parse-envelope): Handle response headers.
-	(soap-parse-response): Likewise.  Only return non-nil decoded
-	values.
+	(soap-parse-response): Likewise.  Only return non-nil decoded values.
 
-	* soap-client.el (soap-validate-xs-simple-type): Return validated
-	value.
+	* lisp/net/soap-client.el (soap-validate-xs-simple-type):
+	Return validated value.
 
-	* soap-client.el (soap-xs-parse-element)
+	* lisp/net/soap-client.el (soap-xs-parse-element)
 	(soap-xs-parse-simple-type)
 	(soap-xs-parse-complex-type)
 	(soap-parse-message)
-	(soap-parse-operation): add the current namespace to the element
-	being created
+	(soap-parse-operation): Add the current namespace to the element
+	being created.
 	(soap-resolve-references-for-xs-element)
 	(soap-resolve-references-for-xs-simple-type)
 	(soap-resolve-references-for-xs-complex-type)
-	(soap-resolve-references-for-operation): resolve the namespace to
-	the namespace tag
+	(soap-resolve-references-for-operation): Resolve the namespace to
+	the namespace tag.
 	(soap-make-wsdl): specify a namespace tag when creating the xsd
 	and soapenc namespaces
 	(soap-wsdl-resolve-references): don't update namespace tags in
@@ -1055,85 +1012,86 @@
 	(soap-encode-body): don't add nil namespace tags to
 	soap-encoded-namespaces
 
-	* soap-inspect.el: use `soap-make-wsdl` to construct the object
-	for registering the soap-inspect method.Make debbugs tests pass
-	* soap-client.el (soap-decode-any-type): use soap-l2fq on the type
-	name, also skip string only nodes when decoding a structure.
-	(soap-xs-parse-complex-type): (BUG) dispatch parsing for choice
-	types too
-	(soap-encode-body): grab the header value from the param table
+	* lisp/net/soap-inspect.el: Use `soap-make-wsdl` to construct the object
+	for registering the soap-inspect method.  Make debbugs tests pass.
+	* lisp/net/soap-client.el (soap-decode-any-type): Use soap-l2fq on the
+	type name, also skip string only nodes when decoding a structure.
+	(soap-xs-parse-complex-type): (BUG) Dispatch parsing for choice
+	types too.
+	(soap-encode-body): Grab the header value from the param table.
 
-	* soap-client.el (soap-should-encode-value-for-xs-element): new
-	function
-	(soap-encode-xs-element): don't encode nil value unless needed
+	* lisp/net/soap-client.el (soap-should-encode-value-for-xs-element):
+	New function.
+	(soap-encode-xs-element): Don't encode nil value unless needed.
 
-	* soap-client.el (soap-bound-operation): new slot `soap-body`
-	(soap-parse-binding): parse the message parts required in the body
-	(soap-encode-body): encode only the parts that are declared to be
-	part of the body
+	* lisp/net/soap-client.el (soap-bound-operation): New slot `soap-body`.
+	(soap-parse-binding): Parse the message parts required in the body.
+	(soap-encode-body): Encode only the parts that are declared to be
+	part of the body.
 
-	* soap-client.el (soap-encode-xs-element): use the fq name when
-	writing out the tag.
-	(soap-encode-body): remove hack that inserts the xmlns in the
+	* lisp/net/soap-client.el (soap-encode-xs-element): use the fq name
+	when writing out the tag.
+	(soap-encode-body): Remove hack that inserts the xmlns in the
 	element attributes list.
 
-	* soap-client.el (soap-xs-attribute): add "default" slot
-	(soap-xs-parse-attribute): default slot is set from the XML
+	* lisp/net/soap-client.el (soap-xs-attribute): Add "default" slot.
+	(soap-xs-parse-attribute): Default slot is set from the XML
 	"fixed" attribute.
-	(soap-encode-xs-complex-type-attributes): encode any attributes
+	(soap-encode-xs-complex-type-attributes): Encode any attributes
 	that have a default value.  Also, don't put the xsi:nil attribute
 	when the complex type has no content anyway.
 
-	* soap-client.el (soap-well-known-xmlns): add the xml namespace
-	(soap-local-xmlns): start with the xml namespace
-	(soap-xml-node-first-child): skip xsd:annotation nodes too
-	(soap-make-xs-basic-types): more xsd types added
-	(soap-encode-xs-basic-type, soap-decode-xs-basic-type): handle
-	"language", "time", "date", "nonNegativeInteger"
-	(soap-resolve-references-for-xs-element): don't signal an error if
+	* lisp/net/soap-client.el (soap-well-known-xmlns):
+	Add the xml namespace.
+	(soap-local-xmlns): Start with the xml namespace.
+	(soap-xml-node-first-child): Skip xsd:annotation nodes too.
+	(soap-make-xs-basic-types): More xsd types added.
+	(soap-encode-xs-basic-type, soap-decode-xs-basic-type):
+	Handle "language", "time", "date", "nonNegativeInteger".
+	(soap-resolve-references-for-xs-element): Don't signal an error if
 	the element does not have a type.
-	(soap-xs-parse-simple-type): subtypes are handled with ecase,
-	added stum for xsd:list
-	(soap-xs-add-union): call soap-l2fq on all union members
-	(soap-xs-add-extension): call soap-l2fq on the base member
-	(soap-resolve-references-for-xs-simple-type): don't signal an
+	(soap-xs-parse-simple-type): Subtypes are handled with ecase,
+	added stum for xsd:list.
+	(soap-xs-add-union): Call soap-l2fq on all union members.
+	(soap-xs-add-extension): Call soap-l2fq on the base member.
+	(soap-resolve-references-for-xs-simple-type): Don't signal an
 	error if the simple type has no base.
-	(soap-resolve-references-for-xs-simple-type): bugfix, call
-	soap-wsdl-get on each type of the base
+	(soap-resolve-references-for-xs-simple-type): Bugfix, call
+	soap-wsdl-get on each type of the base.
 
-	* soap-client.el (soap-resolve-references-for-xs-attribute):
-	referenced type can be eiher a simple type or a basic type
+	* lisp/net/soap-client.el (soap-resolve-references-for-xs-attribute):
+	Referenced type can be eiher a simple type or a basic type.
 	(soap-xs-add-restriction)
-	(soap-xs-parse-extension-or-restriction): use `soap-l2fq' on base
+	(soap-xs-parse-extension-or-restriction): Use `soap-l2fq' on base.
 	(soap-make-xs-basic-types)
-	(soap-encode-xs-basic-type, soap-decode-xs-basic-type): add
-	support for more XMLSchema basic types
-	(soap-current-file, soap-xmlschema-imports): new defvars
-	(soap-parse-schema): add locations from xsd:import tags to
-	`soap-xmlschema-imports'
-	(soap-wsdl): make destructor private
-	(soap-make-wsdl): new defun, SOAP-WSDL object constructor
-	(soap-wsdl-add-alias): check if we try to replace aliases
+	(soap-encode-xs-basic-type, soap-decode-xs-basic-type):
+	Add support for more XMLSchema basic types.
+	(soap-current-file, soap-xmlschema-imports): New defvars.
+	(soap-parse-schema): Add locations from xsd:import tags to
+	`soap-xmlschema-imports'.
+	(soap-wsdl): Make destructor private.
+	(soap-make-wsdl): New defun, SOAP-WSDL object constructor.
+	(soap-wsdl-add-alias): Check if we try to replace aliases.
 	(soap-fetch-xml-from-url, soap-fetch-xml-from-file)
-	(soap-fetch-xml): new defuns
-	(soap-load-wsdl): updated to load the WSDL from either a file or
-	an url
-	(soap-load-wsdl-from-url): now an alias to `soap-load-wsdl'
-	(soap-parse-wsdl): process wsdl:import tags and imports from
-	`soap-xmlschema-imports'
-	* soap-client.el (soap-l2wk): bugfix: call symbolp instead of
-	symbol-name
-	(soap-l2fq): make the name part always a string
-	(soap-name-p): new defun, used for name tests
+	(soap-fetch-xml): New defuns.
+	(soap-load-wsdl): Update to load the WSDL from either a file or
+	an url.
+	(soap-load-wsdl-from-url): Now an alias to `soap-load-wsdl'.
+	(soap-parse-wsdl): Process wsdl:import tags and imports from
+	`soap-xmlschema-imports'.
+	* lisp/net/soap-client.el (soap-l2wk): Bugfix: call symbolp instead of
+	symbol-name.
+	(soap-l2fq): Make the name part always a string.
+	(soap-name-p): New defun, used for name tests.
 
-	* soap-inspect.el (soap-sample-value-for-xs-complex-type): supply
-	sample values for choice types with a special tag
-	* soap-client.el (soap-encode-xs-complex-type): handle anonymous
-	elements correctly
-	(soap-encode-value): accept nodes that have no namespace tag
+	* lisp/net/soap-inspect.el (soap-sample-value-for-xs-complex-type):
+	Supply sample values for choice types with a special tag.
+	* lisp/net/soap-client.el (soap-encode-xs-complex-type):
+	Handle anonymous elements correctly.
+	(soap-encode-value): Accept nodes that have no namespace tag.
 
-	* soap-client.el (soap-invoke): encode the string for
-	`url-request-data' as UTF-8. Fixes issue 16
+	* lisp/net/soap-client.el (soap-invoke): Encode the string for
+	`url-request-data' as UTF-8.  Fixes issue 16.
 
 2015-10-25  Eli Zaretskii  <eliz@gnu.org>
 
@@ -1141,24 +1099,19 @@
 
 2015-10-25  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* src/keyboard.c (post-command-hook): Extend the docstring
-
+	* src/keyboard.c (post-command-hook): Extend the docstring.
 	Mainly, explain how to use it without hanging Emacs, or giving the
 	impression that it is hanging.  Also mention `pre-command-hook'.
-
 	(pre-command-hook): Mention `post-command-hook'.
 
 2015-10-25  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/custom.el (custom-declare-variable): Shorten code again
-
-	Without using pcase this time.  We can't use pcase because it is loaded
-	after custom in loadup.el.  Also add a comment explaining this to future
-	dummies like me.
+	* lisp/custom.el (custom-declare-variable): Shorten code again.
+	Without using pcase this time.  We can't use pcase because it is
+	loaded after custom in loadup.el.  Also add a comment explaining
+	this to future dummies like me.
 
 2015-10-25  Michael Albinus  <michael.albinus@gmx.de>
-
-	Document file notification `stopped' event
 
 	* doc/lispref/os.texi (File Notifications): Document `stopped event'.
 
@@ -1298,8 +1251,8 @@
 
 	Update frame title when scrolling the selected window
 
-	* src/window.c (wset_update_mode_line): New function, sets either the
-	window's update_mode_line flag or the global update_mode_lines
+	* src/window.c (wset_update_mode_line): New function, sets either
+	the window's update_mode_line flag or the global update_mode_lines
 	variable.
 	(Fset_window_start, set_window_buffer, window_scroll_pixel_based)
 	(window_scroll_line_based): Call it instead of only setting the
@@ -1311,7 +1264,7 @@
 
 	* src/window.c (set_window_buffer): If the window is the frame's
 	selected window, set update_mode_lines, not the window's
-	update_mode_line flag.  (Bug#21739)
+	update_mode_line flag.
 	* src/buffer.c (Fkill_buffer): Undo last change.
 	(set_update_modelines_for_buf): Function deleted.
 
@@ -1400,7 +1353,7 @@
 
 2015-10-23  Michael Albinus  <michael.albinus@gmx.de>
 
-	Fix Bug#21669
+	Fix bug#21669
 
 	* lisp/filenotify.el (file-notify-rm-watch): Improve check for
 	calling low-level functions.
