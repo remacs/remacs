@@ -563,6 +563,14 @@ CHOICES = (('some', 'choice'),
    (should (eq (car (python-indent-context)) :inside-paren))
    (should (= (python-indent-calculate-indentation) 11))))
 
+(ert-deftest python-indent-inside-paren-7 ()
+  "Test for Bug#21762."
+  (python-tests-with-temp-buffer
+   "import re as myre\nvar = [\n"
+   (goto-char (point-max))
+   ;; This signals an error if the test fails
+   (should (eq (car (python-indent-context)) :inside-paren-newline-start))))
+
 (ert-deftest python-indent-after-block-1 ()
   "The most simple after-block case that shouldn't fail."
   (python-tests-with-temp-buffer
