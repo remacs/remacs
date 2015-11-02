@@ -29,6 +29,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "lisp.h"
+
 /* Only MS-DOS does not define `subprocesses'.  */
 #ifdef subprocesses
 
@@ -92,8 +94,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #endif	/* subprocesses */
 
-#include "lisp.h"
-
 #include "systime.h"
 #include "systty.h"
 
@@ -126,7 +126,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 
 #ifdef WINDOWSNT
-#include "w32.h"
+extern int sys_select (int, fd_set *, fd_set *, fd_set *,
+                       struct timespec *, sigset_t *);
 #endif
 
 /* Work around GCC 4.7.0 bug with strict overflow checking; see

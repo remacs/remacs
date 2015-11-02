@@ -25,40 +25,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "lisp.h"
 
-#ifdef WINDOWSNT
-
-/* File descriptor set emulation.  */
-
-/* MSVC runtime library has limit of 64 descriptors by default */
-#define FD_SETSIZE  64
-typedef struct {
-  unsigned int bits[FD_SETSIZE / 32];
-} fd_set;
-
-/* standard access macros */
-#define FD_SET(n, p) \
-  do { \
-    if ((n) < FD_SETSIZE) { \
-      (p)->bits[(n)/32] |= (1 << (n)%32); \
-    } \
-  } while (0)
-#define FD_CLR(n, p) \
-  do { \
-    if ((n) < FD_SETSIZE) { \
-      (p)->bits[(n)/32] &= ~(1 << (n)%32); \
-    } \
-  } while (0)
-#define FD_ISSET(n, p) ((n) < FD_SETSIZE ? ((p)->bits[(n)/32] & (1 << (n)%32)) : 0)
-#define FD_ZERO(p) memset((p), 0, sizeof(fd_set))
-
-#define SELECT_TYPE fd_set
-
-#include "systime.h"
-extern int sys_select (int, SELECT_TYPE *, SELECT_TYPE *, SELECT_TYPE *,
-		       struct timespec *, sigset_t *);
-
-#else  /* not WINDOWSNT */
-
+/* The w32 build defines select stuff in w32.h, which is included
+   where w32 needs it, but not where sysselect.h is included.  The w32
+   definitions in w32.h are incompatible with the below.  */
+#ifndef WINDOWSNT
 #ifdef FD_SET
 #ifndef FD_SETSIZE
 #define FD_SETSIZE 64

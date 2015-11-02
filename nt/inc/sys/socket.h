@@ -74,7 +74,7 @@ typedef unsigned short uint16_t;
 
 /* allow us to provide our own version of fd_set */
 #define fd_set ws_fd_set
-#include "sysselect.h"
+#include "w32.h"
 #endif	/* EMACS_CONFIG_H */
 
 #if defined (HAVE_TIMEVAL) && defined (_MSC_VER)

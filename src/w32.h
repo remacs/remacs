@@ -25,6 +25,32 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <windows.h>
 
+/* File descriptor set emulation.  */
+
+/* MSVC runtime library has limit of 64 descriptors by default */
+#define FD_SETSIZE  64
+typedef struct {
+  unsigned int bits[FD_SETSIZE / 32];
+} fd_set;
+
+/* standard access macros */
+#define FD_SET(n, p) \
+  do { \
+    if ((n) < FD_SETSIZE) { \
+      (p)->bits[(n)/32] |= (1 << (n)%32); \
+    } \
+  } while (0)
+#define FD_CLR(n, p) \
+  do { \
+    if ((n) < FD_SETSIZE) { \
+      (p)->bits[(n)/32] &= ~(1 << (n)%32); \
+    } \
+  } while (0)
+#define FD_ISSET(n, p) ((n) < FD_SETSIZE ? ((p)->bits[(n)/32] & (1 << (n)%32)) : 0)
+#define FD_ZERO(p) memset((p), 0, sizeof(fd_set))
+
+#define SELECT_TYPE fd_set
+
 /* ------------------------------------------------------------------------- */
 
 /* child_process.status values */

@@ -39,17 +39,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <c-ctype.h>
 #include <utimens.h>
 
-#ifdef HAVE_SOCKETS
-#include <sys/socket.h>
-#include <netdb.h>
-#endif /* HAVE_SOCKETS */
-
-#ifdef TRY_AGAIN
-#ifndef HAVE_H_ERRNO
-extern int h_errno;
-#endif
-#endif /* TRY_AGAIN */
-
 #include "lisp.h"
 #include "sysselect.h"
 #include "blockinput.h"
@@ -67,6 +56,17 @@ extern int h_errno;
 
 # include <math.h>
 #endif
+
+#ifdef HAVE_SOCKETS
+#include <sys/socket.h>
+#include <netdb.h>
+#endif /* HAVE_SOCKETS */
+
+#ifdef TRY_AGAIN
+#ifndef HAVE_H_ERRNO
+extern int h_errno;
+#endif
+#endif /* TRY_AGAIN */
 
 #ifdef WINDOWSNT
 #define read sys_read
