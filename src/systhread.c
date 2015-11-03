@@ -207,7 +207,7 @@ uintptr_t _beginthread (void (__cdecl *)(void *), unsigned, void *);
 
 /* Mutexes are implemented as critical sections, because they are
    faster than Windows mutex objects (implemented in userspace), and
-   satisfy the requirements, since we only needto synchronize within a
+   satisfy the requirements, since we only need to synchronize within a
    single process.  */
 void
 sys_mutex_init (sys_mutex_t *mutex)
@@ -234,7 +234,7 @@ sys_mutex_destroy (sys_mutex_t *mutex)
 {
   /* FIXME: According to MSDN, deleting a critical session that is
      owned by a thread leaves the other threads waiting for the
-     critical session in an undefined state.  Posix docs seems to say
+     critical session in an undefined state.  Posix docs seem to say
      the same about pthread_mutex_destroy.  Do we need to protect
      against such calamities?  */
   DeleteCriticalSection ((LPCRITICAL_SECTION)mutex);
@@ -354,6 +354,8 @@ sys_thread_equal (sys_thread_t one, sys_thread_t two)
 
 static thread_creation_function *thread_start_address;
 
+/* _beginthread wants a void function, while we are passed a function
+   that returns a pointer.  So we use a wrapper.  */
 static void
 w32_beginthread_wrapper (void *arg)
 {
@@ -369,12 +371,10 @@ sys_thread_create (sys_thread_t *thread_ptr, const char *name,
      the main program.  On GNU/Linux, it seems like the stack is 2MB
      by default, overridden by RLIMIT_STACK at program start time.
      Not sure what to do with this.  See also the comment in
-     w32proc"new_child.  */
+     w32proc.c:new_child.  */
   const unsigned stack_size = 0;
   uintptr_t thandle;
 
-  /* _beginthread wants a void function, while we are passed a
-     function that returns a pointer.  So we use a wrapper.  */
   thread_start_address = func;
 
   /* We use _beginthread rather than CreateThread because the former
