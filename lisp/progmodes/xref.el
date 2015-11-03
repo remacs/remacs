@@ -802,10 +802,9 @@ to search in, and the file name pattern to search for."
          (dirs (if current-prefix-arg
                    (list (read-directory-name "Base directory: "
                                               nil default-directory t))
-                 (project-prune-directories
-                  (append
-                   (project-roots proj)
-                   (project-search-path proj)))))
+                 (append
+                  (project-roots proj)
+                  (project-library-roots proj))))
          (xref-find-function
           (lambda (_kind regexp)
             (cl-mapcan

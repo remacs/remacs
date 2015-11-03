@@ -230,7 +230,7 @@ Blank lines separate paragraphs.  Semicolons start comments.
   :group 'lisp
   (defvar xref-find-function)
   (defvar xref-identifier-completion-table-function)
-  (defvar project-search-path-function)
+  (defvar project-library-roots-function)
   (lisp-mode-variables nil nil 'elisp)
   (add-hook 'after-load-functions #'elisp--font-lock-flush-elisp-buffers)
   (setq-local electric-pair-text-pairs
@@ -242,7 +242,7 @@ Blank lines separate paragraphs.  Semicolons start comments.
   (setq-local xref-find-function #'elisp-xref-find)
   (setq-local xref-identifier-completion-table-function
               #'elisp--xref-identifier-completion-table)
-  (setq-local project-search-path-function #'elisp-search-path)
+  (setq-local project-library-roots-function #'elisp-library-roots)
   (add-hook 'completion-at-point-functions
             #'elisp-completion-at-point nil 'local))
 
@@ -801,7 +801,7 @@ non-nil result supercedes the xrefs produced by
 
     xrefs))
 
-(declare-function project-search-path "project")
+(declare-function project-library-roots "project")
 (declare-function project-current "project")
 
 (defun elisp--xref-find-references (symbol)
@@ -809,7 +809,10 @@ non-nil result supercedes the xrefs produced by
   (cl-mapcan
    (lambda (dir)
      (xref-collect-references symbol dir))
-   (project-search-path (project-current))))
+   (let ((pr (project-current)))
+     (append
+      (project-roots pr)
+      (project-library-roots pr)))))
 
 (defun elisp--xref-find-apropos (regexp)
   (apply #'nconc
@@ -846,7 +849,7 @@ non-nil result supercedes the xrefs produced by
 (cl-defmethod xref-location-group ((l xref-elisp-location))
   (xref-elisp-location-file l))
 
-(defun elisp-search-path ()
+(defun elisp-library-roots ()
   (defvar package-user-dir)
   (cons package-user-dir load-path))
 

@@ -23,7 +23,7 @@
 ;; projects, and a number of public functions: finding the current
 ;; root, related project directories, search path, etc.
 ;;
-;; The goal is to make it easy for Lisp programs to operate on the
+;; The goal is to make it easier for Lisp programs to operate on the
 ;; current project, without having to know which package handles
 ;; detection of that project type, parsing its config files, etc.
 
@@ -38,19 +38,33 @@ Each functions on this hook is called in turn with one
 argument (the directory) and should return either nil to mean
 that it is not applicable, or a project instance.")
 
-(declare-function etags-search-path "etags" ())
+;; FIXME: Using the current approach, we don't have access to the
+;; "library roots" of language A from buffers of language B, which
+;; seems desirable in multi-language projects, at least for some
+;; potential uses, like "jump to a file in project or library".
+;;
+;; We can add a second argument to this function: a file extension, or
+;; a language name.  Some projects will know the set of languages used
+;; in them; for others, like VC-based projects, we'll need
+;; auto-detection.  I see two options:
+;;
+;; - That could be implemented as a separate second hook, with a
+;;   list of functions that return file extensions.
+;;
+;; - This variable will be turned into a hook with "append" semantics,
+;;   and each function in it will perform auto-detection when passed
+;;   nil instead of an actual file extension.  Then this hook will, in
+;;   general, be modified globally, and not from major mode functions.
+(defvar project-library-roots-function 'etags-library-roots
+  "Function that returns a list of library roots.
 
-(defvar project-search-path-function #'etags-search-path
-  "Function that returns a list of source root directories.
+It should return a list of directories that contain source files
+related to the current buffer.  Depending on the language, it
+should include the headers search path, load path, class path,
+and so on.
 
-The directories in which we can recursively look for the
-declarations or other references to the symbols used in the
-current buffer.  Depending on the language, it should include the
-headers search path, load path, class path, or so on.
-
-The directory names should be absolute.  This variable is
-normally set by the major mode.  Used in the default
-implementation of `project-search-path'.")
+The directory names should be absolute.  Used in the default
+implementation of `project-library-roots'.")
 
 ;;;###autoload
 (defun project-current (&optional dir)
@@ -59,35 +73,39 @@ implementation of `project-search-path'.")
   (run-hook-with-args-until-success 'project-find-functions dir))
 
 ;; FIXME: Add MODE argument, like in `ede-source-paths'?
-(cl-defgeneric project-search-path (project)
+(cl-defgeneric project-library-roots (project)
   "Return the list of source root directories.
-Any directory roots where source (or header, etc) files used by
-the current project may be found, inside or outside of the
-current project tree(s).  The directory names should be absolute.
 
-Unless it really knows better, a specialized implementation
-should take into account the value returned by
-`project-search-path-function' and call
-`project-prune-directories' on the result."
-  (project-prune-directories
-   (append
-    ;; We don't know the project layout, like where the sources are,
-    ;; so we simply include the roots.
-    (project-roots project)
-    (funcall project-search-path-function))))
+It's the list of directories outside of the current project that
+contain related source files.
+
+Project-specific version of `project-library-roots-function',
+which see.  Unless it knows better, a specialized implementation
+should use the value returned by that function."
+  (project-subtract-directories
+   (project-combine-directories
+    (funcall project-library-roots-function))
+   (project-roots project)))
 
 (cl-defgeneric project-roots (project)
-  "Return the list of directory roots related to the current project.
-It should include the current project root, as well as the roots
-of any other currently open projects, if they're meant to be
-edited together.  The directory names should be absolute.")
+  "Return the list of directory roots belonging to the current project.
+
+Most often it's just one directory, which contains the project
+file and everything else in the project.  But in more advanced
+configurations, a project can span multiple directories.
+
+The rule of tumb for whether to include a directory here, and not
+in `project-library-roots', is whether its contents are meant to
+be edited together with the rest of the project.
+
+The directory names should be absolute.")
 
 (cl-defgeneric project-ignores (_project _dir)
   "Return the list of glob patterns to ignore inside DIR.
 Patterns can match both regular files and directories.
 To root an entry, start it with `./'.  To match directories only,
-end it with `/'.  DIR must be either one of `project-roots', or
-an element of `project-search-path'."
+end it with `/'.  DIR must be one of `project-roots' or
+`project-library-roots'."
   (require 'grep)
   (defvar grep-find-ignored-files)
   (nconc
@@ -101,8 +119,8 @@ an element of `project-search-path'."
   "Project implementation using the VC package."
   :group 'tools)
 
-(defcustom project-vc-search-path nil
-  "List ot directories to include in `project-search-path'.
+(defcustom project-vc-library-roots nil
+  "List ot directories to include in `project-library-roots'.
 The file names can be absolute, or relative to the project root."
   :type '(repeat file)
   :safe 'listp)
@@ -121,12 +139,12 @@ The file names can be absolute, or relative to the project root."
 (cl-defmethod project-roots ((project (head vc)))
   (list (cdr project)))
 
-(cl-defmethod project-search-path ((project (head vc)))
+(cl-defmethod project-library-roots ((project (head vc)))
   (append
    (let ((root (cdr project)))
      (mapcar
-      (lambda (dir) (expand-file-name dir root))
-      (project--value-in-dir 'project-vc-search-path root)))
+      (lambda (dir) (file-name-as-directory (expand-file-name dir root)))
+      (project--value-in-dir 'project-vc-library-roots root)))
    (cl-call-next-method)))
 
 (cl-defmethod project-ignores ((project (head vc)) dir)
@@ -150,13 +168,16 @@ The file names can be absolute, or relative to the project root."
 (cl-defmethod project-roots ((project (head user)))
   (list (cdr project)))
 
-(defun project-prune-directories (dirs)
-  "Returns a copy of DIRS sorted, without subdirectories or non-existing ones."
+(defun project-combine-directories (&rest lists-of-dirs)
+  "Return a sorted and culled list of directory names.
+Appends the elements of LISTS-OF-DIRS together, removes
+non-existing directories, as well as directories a parent of
+whose is already in the list."
   (let* ((dirs (sort
                 (mapcar
                  (lambda (dir)
                    (file-name-as-directory (expand-file-name dir)))
-                 dirs)
+                 (apply #'append lists-of-dirs))
                 #'string<))
          (ref dirs))
     ;; Delete subdirectories from the list.
@@ -165,6 +186,12 @@ The file names can be absolute, or relative to the project root."
           (setcdr ref (cddr ref))
         (setq ref (cdr ref))))
     (cl-delete-if-not #'file-exists-p dirs)))
+
+(defun project-subtract-directories (files dirs)
+  "Return a list of elements from FILES that are outside of DIRS.
+DIRS must contain directory names."
+  (cl-set-difference files dirs
+                     :test (lambda (file dir) (string-prefix-p dir file))))
 
 (defun project--value-in-dir (var dir)
   (with-temp-buffer
