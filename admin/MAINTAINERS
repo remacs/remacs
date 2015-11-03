@@ -46,12 +46,6 @@ Stefan Monnier
 	minibuffer completion
 	lisp/outline.el
 
-Jay Belanger
-        Calc
-            lisp/calc/*
-            etc/calccard.tex
-            doc/misc/calc.texi
-
 Bastien Guerry
         Org
             lisp/org/*
