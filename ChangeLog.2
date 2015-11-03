@@ -31,8 +31,16 @@
 	Add JSX indentation via js-jsx-mode  (Bug#21799)
 
 	* progmodes/js.el: Add JSX indentation support.
+	(js--jsx-end-tag-re)
+	(js--jsx-after-tag-re): New variables.
+	(js--jsx-find-before-tag)
+	(js--jsx-indented-element-p)
+	(js--as-sgml)
+	(js--expression-in-sgml-indent-line)
 	(js-jsx-indent-line)
 	(js-jsx-mode): New functions.
+	* test/indent/js-jsx.el: New file.
+	* etc/NEWS: Add information about js-jsx-mode.
 
 2015-10-31  Michael Albinus  <michael.albinus@gmx.de>
 
