@@ -82,6 +82,7 @@ Simen Heggestøyl
 Nicolas Petton
 	lisp/emacs-lisp/map.el
 	lisp/emacs-lisp/seq.el
+	lisp/emacs-lisp/thunk.el
 
 The GNU AUCTeX maintainers (auctex-devel@gnu.org)
 	RefTeX
