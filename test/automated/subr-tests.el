@@ -82,5 +82,19 @@
   (should (string-greaterp 'acb 'abc))
   (should (string-greaterp "acb" 'abc)))
 
+(ert-deftest subr-test-when ()
+  (should (equal (when t 1) 1))
+  (should (equal (when t 2) 2))
+  (should (equal (when nil 1) nil))
+  (should (equal (when nil 2) nil))
+  (should (equal (when t 'x 1) 1))
+  (should (equal (when t 'x 2) 2))
+  (should (equal (when nil 'x 1) nil))
+  (should (equal (when nil 'x 2) nil))
+  (should (equal (macroexpand-all '(when a b))
+                 '(if a b)))
+  (should (equal (macroexpand-all '(when a b c d))
+                 '(if a (progn b c d)))))
+
 (provide 'subr-tests)
 ;;; subr-tests.el ends here
