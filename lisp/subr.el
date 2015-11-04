@@ -179,7 +179,7 @@ value of last one, or nil if there are none.
 
 \(fn COND BODY...)"
   (declare (indent 1) (debug t))
-  (list 'if cond (macroexp-progn body)))
+  (list 'if cond (cons 'progn body)))
 
 (defmacro unless (cond &rest body)
   "If COND yields nil, do BODY, else return nil.
