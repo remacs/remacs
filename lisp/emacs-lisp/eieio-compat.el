@@ -143,7 +143,7 @@ Summary:
   ;; Give it a slightly higher priority than `class' so that the
   ;; interleaved list comes before the class's non-interleaved list.
   51 #'cl--generic-struct-tag
-  (lambda (tag _targets)
+  (lambda (tag &rest _)
     (and (symbolp tag) (boundp tag) (setq tag (symbol-value tag))
          (eieio--class-p tag)
          (let ((superclasses (eieio--class-precedence-list tag))
