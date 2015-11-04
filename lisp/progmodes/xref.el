@@ -92,7 +92,7 @@ This is typically the filename.")
 Line numbers start from 1 and columns from 0.")
 
 (defun xref-make-file-location (file line column)
-  "Create and return a new xref-file-location."
+  "Create and return a new `xref-file-location'."
   (make-instance 'xref-file-location :file file :line line :column column))
 
 (cl-defmethod xref-location-marker ((l xref-file-location))
@@ -117,7 +117,7 @@ Line numbers start from 1 and columns from 0.")
    (position :type fixnum :initarg :position)))
 
 (defun xref-make-buffer-location (buffer position)
-  "Create and return a new xref-buffer-location."
+  "Create and return a new `xref-buffer-location'."
   (make-instance 'xref-buffer-location :buffer buffer :position position))
 
 (cl-defmethod xref-location-marker ((l xref-buffer-location))
@@ -138,7 +138,7 @@ indicate errors, e.g. when we know that a function exists but the
 actual location is not known.")
 
 (defun xref-make-bogus-location (message)
-  "Create and return a new xref-bogus-location."
+  "Create and return a new `xref-bogus-location'."
   (make-instance 'xref-bogus-location :message message))
 
 (cl-defmethod xref-location-marker ((l xref-bogus-location))
@@ -162,7 +162,7 @@ to the reference's target."))
 somewhere.")
 
 (defun xref-make (summary location)
-  "Create and return a new xref item.
+  "Create and return a new `xref-item'.
 SUMMARY is a short string to describe the xref.
 LOCATION is an `xref-location'."
   (make-instance 'xref-item :summary summary :location location))
@@ -183,7 +183,7 @@ somewhere.")
           end-column)))
 
 (defun xref-make-match (summary end-column location)
-  "Create and return a new xref match item.
+  "Create and return a new `xref-match-item'.
 SUMMARY is a short string to describe the xref.
 END-COLUMN is the match end column number inside SUMMARY.
 LOCATION is an `xref-location'."
@@ -633,7 +633,7 @@ meantime are preserved."
 
 (defun xref--insert-xrefs (xref-alist)
   "Insert XREF-ALIST in the current-buffer.
-XREF-ALIST is of the form ((GROUP . (XREF ...)) ...).  Where
+XREF-ALIST is of the form ((GROUP . (XREF ...)) ...), where
 GROUP is a string for decoration purposes and XREF is an
 `xref-item' object."
   (require 'compile) ; For the compilation faces.
