@@ -2456,10 +2456,30 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
     External (RIF); fringe-related
    -------------------------------------------------------------------------- */
 {
+  /* Fringe bitmaps comes in two variants, normal and periodic.  A
+     periodic bitmap is used to create a continuous pattern.  Since a
+     bitmap is rendered one text line at a time, the start offset (dh)
+     of the bitmap varies.  Concretely, this is used for the empty
+     line indicator.
+
+     For a bitmap, "h + dh" is the full height and is always
+     invariant.  For a normal bitmap "dh" is zero.
+
+     For example, when the period is three and the full height is 72
+     the following combinations exists:
+
+       h=72 dh=0
+       h=71 dh=1
+       h=70 dh=2 */
+
   struct frame *f = XFRAME (WINDOW_FRAME (w));
   struct face *face = p->face;
   static EmacsImage **bimgs = NULL;
   static int nBimgs = 0;
+
+  NSTRACE ("ns_draw_fringe_bitmap");
+  NSTRACE_MSG ("which:%d cursor:%d overlay:%d width:%d height:%d period:%d",
+               p->which, p->cursor_p, p->overlay_p, p->wd, p->h, p->dh);
 
   /* grow bimgs if needed */
   if (nBimgs < max_used_fringe_bitmap)
@@ -2493,18 +2513,23 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
 
       if (!img)
         {
-          unsigned short *bits = p->bits + p->dh;
-          int len = p->h;
+          // Note: For "periodic" images, allocate one EmacsImage for
+          // the base image, and use it for all dh:s.
+          unsigned short *bits = p->bits;
+          int full_height = p->h + p->dh;
           int i;
-          unsigned char *cbits = xmalloc (len);
+          unsigned char *cbits = xmalloc (full_height);
 
-          for (i = 0; i < len; i++)
-            cbits[i] = ~(bits[i] & 0xff);
-          img = [[EmacsImage alloc] initFromXBM: cbits width: 8 height: p->h
+          for (i = 0; i < full_height; i++)
+            cbits[i] = bits[i];
+          img = [[EmacsImage alloc] initFromXBM: cbits width: 8
+                                         height: full_height
                                              fg: 0 bg: 0];
           bimgs[p->which - 1] = img;
           xfree (cbits);
         }
+
+      NSTRACE_RECT ("r", r);
 
       NSRectClip (r);
       /* Since we composite the bitmap instead of just blitting it, we need
@@ -2523,9 +2548,15 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
         [img setXBMColor: bm_color];
       }
 
+      // Note: For periodic images, the full image height is "h + hd".
+      // By using the height h, a suitable part of the image is used.
+      NSRect fromRect = NSMakeRect(0, 0, p->wd, p->h);
+
+      NSTRACE_RECT ("fromRect", fromRect);
+
 #ifdef NS_IMPL_COCOA
       [img drawInRect: r
-              fromRect: NSZeroRect
+              fromRect: fromRect
              operation: NSCompositeSourceOver
               fraction: 1.0
            respectFlipped: YES
