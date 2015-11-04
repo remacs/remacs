@@ -2283,18 +2283,7 @@ unless NOMODES is non-nil."
       (view-mode-enter))
     (run-hooks 'find-file-hook)))
 
-(defmacro report-errors (format &rest body)
-  "Eval BODY and turn any error into a FORMAT message.
-FORMAT can have a %s escape which will be replaced with the actual error.
-If `debug-on-error' is set, errors are not caught, so that you can
-debug them.
-Avoid using a large BODY since it is duplicated."
-  (declare (debug t) (indent 1))
-  `(if debug-on-error
-       (progn . ,body)
-     (condition-case err
-	 (progn . ,body)
-       (error (message ,format (prin1-to-string err))))))
+(define-obsolete-function-alias 'report-errors 'with-demoted-errors "25.1")
 
 (defun normal-mode (&optional find-file)
   "Choose the major mode for this buffer automatically.
@@ -2315,9 +2304,9 @@ in that case, this function acts as if `enable-local-variables' were t."
   (let ((enable-local-variables (or (not find-file) enable-local-variables)))
     ;; FIXME this is less efficient than it could be, since both
     ;; s-a-m and h-l-v may parse the same regions, looking for "mode:".
-    (report-errors "File mode specification error: %s"
+    (with-demoted-errors "File mode specification error: %s"
       (set-auto-mode))
-    (report-errors "File local-variables error: %s"
+    (with-demoted-errors "File local-variables error: %s"
       (hack-local-variables)))
   ;; Turn font lock off and on, to make sure it takes account of
   ;; whatever file local variables are relevant to it.
@@ -3316,7 +3305,7 @@ local variables, but directory-local variables may still be applied."
 	result)
     (unless mode-only
       (setq file-local-variables-alist nil)
-      (report-errors "Directory-local variables error: %s"
+      (with-demoted-errors "Directory-local variables error: %s"
 	;; Note this is a no-op if enable-local-variables is nil.
 	(hack-dir-local-variables)))
     ;; This entire function is basically a no-op if enable-local-variables
