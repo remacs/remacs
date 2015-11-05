@@ -43,10 +43,12 @@
     sentinel-called))
 
 (ert-deftest process-test-sentinel-accept-process-output ()
+  (skip-unless (executable-find "bash"))
   (should (process-test-sentinel-wait-function-working-p
            #'accept-process-output)))
 
 (ert-deftest process-test-sentinel-sit-for ()
+  (skip-unless (executable-find "bash"))
   (should
    (process-test-sentinel-wait-function-working-p (lambda () (sit-for 0.01 t)))))
 
