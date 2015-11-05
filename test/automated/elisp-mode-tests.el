@@ -1,4 +1,4 @@
-d;;; elisp-mode-tests.el --- Tests for emacs-lisp-mode  -*- lexical-binding: t; -*-
+;;; elisp-mode-tests.el --- Tests for emacs-lisp-mode  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2015 Free Software Foundation, Inc.
 
