@@ -208,8 +208,9 @@ to (xref-elisp-test-descr-to-target xref)."
   (declare (indent defun)
            (debug (symbolp "name")))
   `(ert-deftest ,(intern (concat "xref-elisp-test-" (symbol-name name))) ()
-     (xref-elisp-test-run ,computed-xrefs ,expected-xrefs)
-     ))
+     (let ((find-file-suppress-same-file-warnings t))
+       (xref-elisp-test-run ,computed-xrefs ,expected-xrefs)
+       )))
 
 ;; When tests are run from the Makefile, 'default-directory' is $HOME,
 ;; so we must provide this dir to expand-file-name in the expected
