@@ -142,4 +142,22 @@
     (should (equal "hello stderr!\n"
 		   (mapconcat #'identity (nreverse stderr-output) "")))))
 
+(ert-deftest start-process-should-not-modify-arguments ()
+  "`start-process' must not modify its arguments in-place."
+  ;; See bug#21831.
+  (let* ((path (pcase system-type
+                 ((or 'windows-nt 'ms-dos)
+                  ;; Make sure the file name uses forward slashes.
+                  ;; The original bug was that 'start-process' would
+                  ;; convert forward slashes to backslashes.
+                  (expand-file-name (executable-find "attrib.exe")))
+                 (_ "/bin//sh")))
+         (samepath (copy-sequence path)))
+    ;; Make sure 'start-process' actually goes all the way and invokes
+    ;; the program.
+    (should (process-live-p (condition-case nil
+                                (start-process "" nil path)
+                              (error nil))))
+    (should (equal path samepath))))
+
 (provide 'process-tests)
