@@ -91,8 +91,15 @@
   (should (equal (when t 'x 2) 2))
   (should (equal (when nil 'x 1) nil))
   (should (equal (when nil 'x 2) nil))
-  (should (equal (macroexpand-all '(when a b))
-                 '(if a b)))
+  (let ((x 1))
+    (should-not (when nil
+                  (setq x (1+ x))
+                  x))
+    (should (= x 1))
+    (should (= 2 (when true
+                   (setq x (1+ x))
+                   x)))
+    (should (= x 2)))
   (should (equal (macroexpand-all '(when a b c d))
                  '(if a (progn b c d)))))
 
