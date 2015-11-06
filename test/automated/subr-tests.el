@@ -96,7 +96,7 @@
                   (setq x (1+ x))
                   x))
     (should (= x 1))
-    (should (= 2 (when true
+    (should (= 2 (when t
                    (setq x (1+ x))
                    x)))
     (should (= x 2)))
