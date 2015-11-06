@@ -664,6 +664,8 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 
 ;; This part of the UI seems fairly uncontroversial: it reads the
 ;; identifier and deals with the single definition case.
+;; (FIXME: do we really want this case to be handled like that in
+;; "find references" and "find regexp searches"?)
 ;;
 ;; The controversial multiple definitions case is handed off to
 ;; xref-show-xrefs-function.
@@ -675,18 +677,15 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 
 (defvar xref--read-pattern-history nil)
 
-(defun xref--show-xrefs (input kind arg window)
-  (let* ((xrefs (funcall xref-find-function kind arg)))
-    (cond
-     ((null xrefs)
-      (user-error "No %s found for: %s" (symbol-name kind) input))
-     ((not (cdr xrefs))
-      (xref-push-marker-stack)
-      (xref--pop-to-location (car xrefs) window))
-     (t
-      (xref-push-marker-stack)
-      (funcall xref-show-xrefs-function xrefs
-               `((window . ,window)))))))
+(defun xref--show-xrefs (xrefs window)
+  (cond
+   ((not (cdr xrefs))
+    (xref-push-marker-stack)
+    (xref--pop-to-location (car xrefs) window))
+   (t
+    (xref-push-marker-stack)
+    (funcall xref-show-xrefs-function xrefs
+             `((window . ,window))))))
 
 (defun xref--prompt-p (command)
   (or (eq xref-prompt-for-identifier t)
@@ -714,8 +713,14 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 
 ;;; Commands
 
+(defun xref--find-xrefs (input kind arg window)
+  (let ((xrefs (funcall xref-find-function kind arg)))
+    (unless xrefs
+      (user-error "No %s found for: %s" (symbol-name kind) input))
+    (xref--show-xrefs xrefs window)))
+
 (defun xref--find-definitions (id window)
-  (xref--show-xrefs id 'definitions id window))
+  (xref--find-xrefs id 'definitions id window))
 
 ;;;###autoload
 (defun xref-find-definitions (identifier)
@@ -749,35 +754,7 @@ display the list in a buffer."
   "Find references to the identifier at point.
 With prefix argument, prompt for the identifier."
   (interactive (list (xref--read-identifier "Find references of: ")))
-  (xref--show-xrefs identifier 'references identifier nil))
-
-;; TODO: Rename and move to project-find-regexp, as soon as idiomatic
-;; usage of xref from other packages has stabilized.
-;;;###autoload
-(defun xref-find-regexp (regexp)
-  "Find all matches for REGEXP.
-With \\[universal-argument] prefix, you can specify the directory
-to search in, and the file name pattern to search for."
-  (interactive (list (xref--read-identifier "Find regexp: ")))
-  (require 'grep)
-  (let* ((proj (project-current))
-         (files (if current-prefix-arg
-                    (grep-read-files regexp)
-                  "*"))
-         (dirs (if current-prefix-arg
-                   (list (read-directory-name "Base directory: "
-                                              nil default-directory t))
-                 (append
-                  (project-roots proj)
-                  (project-library-roots proj))))
-         (xref-find-function
-          (lambda (_kind regexp)
-            (cl-mapcan
-             (lambda (dir)
-               (xref-collect-matches regexp files dir
-                                     (project-ignores proj dir)))
-             dirs))))
-    (xref--show-xrefs regexp 'matches regexp nil)))
+  (xref--find-xrefs identifier 'references identifier nil))
 
 (declare-function apropos-parse-pattern "apropos" (pattern))
 
@@ -789,7 +766,7 @@ The argument has the same meaning as in `apropos'."
                       "Search for pattern (word list or regexp): "
                       nil 'xref--read-pattern-history)))
   (require 'apropos)
-  (xref--show-xrefs pattern 'apropos
+  (xref--find-xrefs pattern 'apropos
                     (apropos-parse-pattern
                      (if (string-equal (regexp-quote pattern) pattern)
                          ;; Split into words
@@ -833,7 +810,6 @@ and just use etags."
 
 (declare-function semantic-symref-find-references-by-name "semantic/symref")
 (declare-function semantic-find-file-noselect "semantic/fw")
-(declare-function grep-read-files "grep")
 (declare-function grep-expand-template "grep")
 
 (defun xref-collect-references (symbol dir)

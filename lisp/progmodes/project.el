@@ -199,5 +199,54 @@ DIRS must contain directory names."
     (hack-dir-local-variables-non-file-buffer)
     (symbol-value var)))
 
+(declare-function grep-read-files "grep")
+(declare-function xref-collect-matches "xref")
+(declare-function xref--show-xrefs "xref")
+
+;;;###autoload
+(defun project-find-regexp (regexp)
+  "Find all matches for REGEXP in the current project.
+With \\[universal-argument] prefix, you can specify the directory
+to search in, and the file name pattern to search for."
+  (interactive (list (project--read-regexp)))
+  (let* ((pr (project-current))
+         (dirs (if current-prefix-arg
+                   (list (read-directory-name "Base directory: "
+                                              nil default-directory t))
+                 (project-roots pr))))
+    (project--find-regexp-in dirs regexp pr)))
+
+;;;###autoload
+(defun project-or-libraries-find-regexp (regexp)
+  "Find all matches for REGEXP in the current project or libraries.
+With \\[universal-argument] prefix, you can specify the file name
+pattern to search for."
+  (interactive (list (project--read-regexp)))
+  (let* ((pr (project-current))
+         (dirs (append
+                (project-roots pr)
+                (project-library-roots pr))))
+    (project--find-regexp-in dirs regexp pr)))
+
+(defun project--read-regexp ()
+  (defvar xref-identifier-at-point-function)
+  (require 'xref)
+  (read-regexp "Find regexp"
+               (funcall xref-identifier-at-point-function)))
+
+(defun project--find-regexp-in (dirs regexp project)
+  (require 'grep)
+  (let* ((files (if current-prefix-arg
+                    (grep-read-files regexp)
+                  "*"))
+         (xrefs (cl-mapcan
+                 (lambda (dir)
+                   (xref-collect-matches regexp files dir
+                                         (project-ignores project dir)))
+                 dirs)))
+    (unless xrefs
+      (user-error "No matches for: %s" regexp))
+    (xref--show-xrefs xrefs nil)))
+
 (provide 'project)
 ;;; project.el ends here
