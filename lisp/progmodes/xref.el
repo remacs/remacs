@@ -56,6 +56,9 @@
 (require 'pcase)
 (require 'project)
 
+(eval-when-compile
+  (require 'semantic/symref)) ;; for hit-lines slot
+
 (defgroup xref nil "Cross-referencing commands"
   :group 'tools)
 
