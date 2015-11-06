@@ -201,48 +201,6 @@ then exclude that commit from the merge to trunk.
 
 ** Other process information
 
-*** Non-ASCII characters in Emacs files
-
-If you introduce non-ASCII characters into Emacs source files, it is a
-good idea to add a 'coding' cookie to the file to state its encoding.
-Please use the UTF-8 encoding unless it cannot do the job for some
-good reason.  As of Emacs 24.4, it is no longer necessary to have
-explicit 'coding' cookies in *.el files if they are encoded in UTF-8,
-but other files need them even if encoded in UTF-8.  However, if
-an *.el file is intended for use with older Emacs versions (e.g. if
-it's also distributed via ELPA), having an explicit encoding
-specification is still a good idea.
-
-*** Useful files in the admin/ directory
-
-See all the files in admin/notes/* .  In particular, see
-admin/notes/newfile, see admin/notes/repo.
-
-The file admin/MAINTAINERS records the areas of interest of frequent
-Emacs contributors.  If you are making changes in one of the files
-mentioned there, it is a good idea to consult the person who expressed
-an interest in that file, and/or get his/her feedback for the changes.
-If you are a frequent contributor and have interest in maintaining
-specific files, please record those interests in that file, so that
-others could be aware of that.
-
-*** git vs rename
-
-Git does not explicitly represent a file renaming; it uses a percent
-changed heuristic to deduce that a file was renamed.  So if you are
-planning to make extensive changes to a file after renaming it (or
-moving it to another directory), you should:
-
-- create a feature branch
-
-- commit the rename without any changes
-
-- make other changes
-
-- merge the feature branch to trunk, _not_ squashing the commits into
-  one.  The commit message on this merge should summarize the renames
-  and all the changes.
-
 ** Emacs Mailing lists.
 
 Discussion about Emacs development takes place on emacs-devel@gnu.org.
@@ -259,6 +217,17 @@ to create a file, and then attach the file to your email.  This nicely
 packages the patch's commit message and changes.  To send just one
 such patch without additional remarks, you can use a command like
 'git send-email --to=bug-gnu-emacs@gnu.org 0001-DESCRIPTION.patch'.
+
+** Issue tracker (a.k.a. "bug tracker")
+
+The Emacs issue tracker is at http://debbugs.gnu.org/.  The form
+presented by that page allows to view bug reports and search the
+database for bugs matching several criteria.  Messages posted to the
+bug-gnu-emacs@gnu.org mailing list, mentioned above, are recorded by
+the tracker with the corresponding bugs/issues.
+
+GNU ELPA has a 'debbugs' package that allows accessing the tracker
+database from Emacs.
 
 ** Document your changes.
 
@@ -300,6 +269,48 @@ such as xdisp.c, have large commentaries describing the design and
 implementation in more detail.
 
 The file etc/DEBUG describes how to debug Emacs bugs.
+
+*** Non-ASCII characters in Emacs files
+
+If you introduce non-ASCII characters into Emacs source files, it is a
+good idea to add a 'coding' cookie to the file to state its encoding.
+Please use the UTF-8 encoding unless it cannot do the job for some
+good reason.  As of Emacs 24.4, it is no longer necessary to have
+explicit 'coding' cookies in *.el files if they are encoded in UTF-8,
+but other files need them even if encoded in UTF-8.  However, if
+an *.el file is intended for use with older Emacs versions (e.g. if
+it's also distributed via ELPA), having an explicit encoding
+specification is still a good idea.
+
+*** Useful files in the admin/ directory
+
+See all the files in admin/notes/* .  In particular, see
+admin/notes/newfile, see admin/notes/repo.
+
+The file admin/MAINTAINERS records the areas of interest of frequent
+Emacs contributors.  If you are making changes in one of the files
+mentioned there, it is a good idea to consult the person who expressed
+an interest in that file, and/or get his/her feedback for the changes.
+If you are a frequent contributor and have interest in maintaining
+specific files, please record those interests in that file, so that
+others could be aware of that.
+
+*** git vs rename
+
+Git does not explicitly represent a file renaming; it uses a percent
+changed heuristic to deduce that a file was renamed.  So if you are
+planning to make extensive changes to a file after renaming it (or
+moving it to another directory), you should:
+
+- create a feature branch
+
+- commit the rename without any changes
+
+- make other changes
+
+- merge the feature branch to trunk, _not_ squashing the commits into
+  one.  The commit message on this merge should summarize the renames
+  and all the changes.
 
 
 
