@@ -839,6 +839,9 @@ static NSRect constrain_frame_rect(NSRect frameRect)
 
 static void
 ns_constrain_all_frames (void)
+/* --------------------------------------------------------------------------
+     Ensure that the menu bar doesn't cover any frames.
+   -------------------------------------------------------------------------- */
 {
   Lisp_Object tail, frame;
 
@@ -851,10 +854,14 @@ ns_constrain_all_frames (void)
       struct frame *f = XFRAME (frame);
       if (FRAME_NS_P (f))
         {
-          NSView *view = FRAME_NS_VIEW (f);
+          EmacsView *view = FRAME_NS_VIEW (f);
 
-          [[view window] setFrame:constrain_frame_rect([[view window] frame])
-                          display:NO];
+          if (![view isFullscreen])
+            {
+              [[view window]
+                setFrame:constrain_frame_rect([[view window] frame])
+                 display:NO];
+            }
         }
     }
 
@@ -862,10 +869,11 @@ ns_constrain_all_frames (void)
 }
 
 
-/* Show or hide the menu bar, based on user setting.  */
-
 static void
 ns_update_auto_hide_menu_bar (void)
+/* --------------------------------------------------------------------------
+     Show or hide the menu bar, based on user setting.
+   -------------------------------------------------------------------------- */
 {
 #ifdef NS_IMPL_COCOA
   NSTRACE ("ns_update_auto_hide_menu_bar");
