@@ -1240,6 +1240,7 @@ set_internal (Lisp_Object symbol, Lisp_Object newval, Lisp_Object where,
 	return;
     }
 
+  maybe_set_redisplay (symbol);
   sym = XSYMBOL (symbol);
 
  start:

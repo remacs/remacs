@@ -620,6 +620,16 @@ bset_update_mode_line (struct buffer *b)
   b->text->redisplay = true;
 }
 
+void
+maybe_set_redisplay (Lisp_Object symbol)
+{
+  if (!NILP (Fassoc_string (symbol, Vredisplay__variables, Qnil)))
+    {
+      bset_update_mode_line (current_buffer);
+      current_buffer->prevent_redisplay_optimizations_p = true;
+    }
+}
+
 #ifdef GLYPH_DEBUG
 
 /* True means print traces of redisplay if compiled with
@@ -31465,6 +31475,10 @@ display table takes effect; in this case, Emacs does not consult
   DEFVAR_LISP ("redisplay--mode-lines-cause", Vredisplay__mode_lines_cause,
 	       doc: /*  */);
   Vredisplay__mode_lines_cause = Fmake_hash_table (0, NULL);
+
+  DEFVAR_LISP ("redisplay--variables", Vredisplay__variables,
+     doc: /* A list of variables changes to which trigger a thorough redisplay.  */);
+  Vredisplay__variables = Qnil;
 }
 
 

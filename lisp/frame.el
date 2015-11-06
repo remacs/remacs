@@ -2231,6 +2231,13 @@ See also `toggle-frame-maximized'."
 (make-obsolete-variable
  'window-system-version "it does not give useful information." "24.3")
 
+;; These variables should trigger redisplay of the current buffer.
+(setq redisplay--variables
+      '(line-spacing
+        overline-margin
+        line-prefix
+        wrap-prefix))
+
 (provide 'frame)
 
 ;;; frame.el ends here
