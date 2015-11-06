@@ -11963,6 +11963,10 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   dpyinfo->display = dpy;
   dpyinfo->connection = ConnectionNumber (dpyinfo->display);
 
+  /* http://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00194.html  */
+  dpyinfo->smallest_font_height = 1;
+  dpyinfo->smallest_char_width = 1;
+
   /* Set the name of the terminal. */
   terminal->name = xlispstrdup (display_name);
 
