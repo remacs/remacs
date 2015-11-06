@@ -1116,10 +1116,17 @@ include additional formats for integers \(octal, hexadecimal, and
 character)."
   (let ((standard-output (if eval-last-sexp-arg-internal (current-buffer) t)))
     ;; Setup the lexical environment if lexical-binding is enabled.
-    (elisp--eval-last-sexp-print-value
-     (eval (eval-sexp-add-defvars (elisp--preceding-sexp)) lexical-binding)
-     eval-last-sexp-arg-internal)))
-
+    (prog1
+        (elisp--eval-last-sexp-print-value
+         (eval (eval-sexp-add-defvars (elisp--preceding-sexp)) lexical-binding)
+         eval-last-sexp-arg-internal)
+      ;; If we are going to display the result in the echo area, force
+      ;; a more thorough redisplay, in case the sexp we evaluated
+      ;; changes something that should affect the display of the
+      ;; current window.  Otherwise, Emacs might decide that only the
+      ;; echo area needs to be redisplayed.
+      (if (eq standard-output t)
+          (force-mode-line-update 'all)))))
 
 (defun elisp--eval-last-sexp-print-value (value &optional eval-last-sexp-arg-internal)
   (let ((unabbreviated (let ((print-length nil) (print-level nil))
