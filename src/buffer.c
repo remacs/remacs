@@ -4481,6 +4481,23 @@ report_overlay_modification (Lisp_Object start, Lisp_Object end, bool after,
     Lisp_Object *copy;
     ptrdiff_t i;
 
+    if (size)
+      {
+	Lisp_Object ovl
+	  = XVECTOR (last_overlay_modification_hooks)->contents[1];
+
+	/* If the buffer of the first overlay in the array doesn't
+	   match the current buffer, then these modification hooks
+	   should not be run in this buffer.  This could happen when
+	   some code calls some insdel functions, such as del_range_1,
+	   with the PREPARE argument false -- in that case this
+	   function is never called to record the overlay modification
+	   hook functions in the last_overlay_modification_hooks
+	   array, so anything we find there is not ours.  */
+	if (XMARKER (OVERLAY_START (ovl))->buffer != current_buffer)
+	  return;
+      }
+
     USE_SAFE_ALLOCA;
     SAFE_ALLOCA_LISP (copy, size);
     memcpy (copy, XVECTOR (last_overlay_modification_hooks)->contents,
