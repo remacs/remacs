@@ -87,6 +87,7 @@ be replaced by its expansion."
   "Make a new abbrev-table with the same abbrevs as TABLE.
 Does not copy property lists."
   (let ((new-table (make-abbrev-table)))
+    (message "modif: %s" (abbrev-table-get new-table :abbrev-table-modiff))
     (mapatoms
      (lambda (symbol)
        (define-abbrev new-table
@@ -580,6 +581,8 @@ An obsolete but still supported calling form is:
                   ,@(if (cadr props) (list :system (cadr props))))))
   (unless (plist-get props :count)
     (setq props (plist-put props :count 0)))
+  (setq props (plist-put props :abbrev-table-modiff
+                         (abbrev-table-get table :abbrev-table-modiff)))
   (let ((system-flag (plist-get props :system))
         (sym (intern name table)))
     ;; Don't override a prior user-defined abbrev with a system abbrev,
