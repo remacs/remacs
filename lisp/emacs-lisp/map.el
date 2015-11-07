@@ -279,9 +279,9 @@ MAP can be a list, hash-table or array."
 MAP can be a list, hash-table or array."
   (catch 'map--break
     (map-apply (lambda (key value)
-                 (or (funcall pred key value)
-                     (throw 'map--break nil)))
-               map)
+              (or (funcall pred key value)
+                  (throw 'map--break nil)))
+            map)
     t))
 
 (defun map-merge (type &rest maps)
@@ -291,8 +291,23 @@ MAP can be a list, hash-table or array."
   (let (result)
     (while maps
       (map-apply (lambda (key value)
-                   (setf (map-elt result key) value))
-                 (pop maps)))
+                (setf (map-elt result key) value))
+              (pop maps)))
+    (map-into result type)))
+
+(defun map-merge-with (type function &rest maps)
+  "Merge into a map of type TYPE all the key/value pairs in MAPS.
+When two maps contain the same key, call FUNCTION on the two
+values and use the value returned by it.
+MAP can be a list, hash-table or array."
+  (let (result)
+    (while maps
+      (map-apply (lambda (key value)
+                (setf (map-elt result key)
+                      (if (map-contains-key result key)
+                          (funcall function (map-elt result key) value)
+                        value)))
+              (pop maps)))
     (map-into result type)))
 
 (defun map-into (map type)

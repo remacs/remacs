@@ -320,5 +320,12 @@ Evaluate BODY for each created map.
     (should (= b 2))
     (should (null c))))
 
+(ert-deftest test-map-merge-with ()
+  (should (equal (map-merge-with 'list #'+
+                                 '((1 . 2))
+                                 '((1 . 3) (2 . 4))
+                                 '((1 . 1) (2 . 5) (3 . 0)))
+                 '((3 . 0) (2 . 9) (1 . 6)))))
+
 (provide 'map-tests)
 ;;; map-tests.el ends here
