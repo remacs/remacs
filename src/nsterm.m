@@ -6380,7 +6380,11 @@ not_in_argv (NSString *arg)
 - (void)windowDidResize: (NSNotification *)notification
 {
   NSTRACE ("windowDidResize");
-
+  if (!FRAME_LIVE_P (emacsframe))
+    {
+      NSTRACE_MSG ("Ignored (frame dead)");
+      return;
+    }
   if (emacsframe->output_data.ns->in_animation)
     {
       NSTRACE_MSG ("Ignored (in animation)");
@@ -6902,7 +6906,11 @@ not_in_argv (NSString *arg)
 - (void)windowWillExitFullScreen:(NSNotification *)notification
 {
   NSTRACE ("windowWillExitFullScreen");
-
+  if (!FRAME_LIVE_P (emacsframe))
+    {
+      NSTRACE_MSG ("Ignored (frame dead)");
+      return;
+    }
   if (next_maximized != -1)
     fs_before_fs = next_maximized;
 }
@@ -6910,7 +6918,11 @@ not_in_argv (NSString *arg)
 - (void)windowDidExitFullScreen:(NSNotification *)notification
 {
   NSTRACE ("windowDidExitFullScreen");
-
+  if (!FRAME_LIVE_P (emacsframe))
+    {
+      NSTRACE_MSG ("Ignored (frame dead)");
+      return;
+    }
   [self setFSValue: fs_before_fs];
   fs_before_fs = -1;
 #ifdef HAVE_NATIVE_FS
