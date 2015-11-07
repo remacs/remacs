@@ -103,7 +103,12 @@ connected to automatically.
 `:encryption'
 
 VALUE must be `plain' (the default) for unencrypted connections, or `tls'
-for connections using SSL/TLS."
+for connections using SSL/TLS.
+
+`:server-alias'
+
+VALUE must be a string that will be used instead of the server name for
+display purposes. If absent, the real server name will be displayed instead."
   :type '(alist :key-type string
 		:value-type (plist :options
                                    ((:nick string)
@@ -113,7 +118,8 @@ for connections using SSL/TLS."
                                     (:full-name string)
                                     (:channels (repeat string))
                                     (:encryption (choice (const tls)
-                                                         (const plain))))))
+                                                         (const plain)))
+                                    (:server-alias string))))
   :group 'rcirc)
 
 (defcustom rcirc-default-port 6667
@@ -484,22 +490,26 @@ If ARG is non-nil, instead prompt for connection parameters."
 	      (channels (plist-get (cdr c) :channels))
               (password (plist-get (cdr c) :password))
               (encryption (plist-get (cdr c) :encryption))
+              (server-alias (plist-get (cdr c) :server-alias))
               contact)
 	  (when server
 	    (let (connected)
 	      (dolist (p (rcirc-process-list))
-		(when (string= server (process-name p))
+		(when (string= (or server-alias server) (process-name p))
 		  (setq connected p)))
 	      (if (not connected)
 		  (condition-case nil
 		      (rcirc-connect server port nick user-name
-				     full-name channels password encryption)
-		    (quit (message "Quit connecting to %s" server)))
+                                     full-name channels password encryption
+                                     server-alias)
+		    (quit (message "Quit connecting to %s"
+                                   (or server-alias server))))
 		(with-current-buffer (process-buffer connected)
                   (setq contact (process-contact
-                                 (get-buffer-process (current-buffer)) :host))
+                                 (get-buffer-process (current-buffer)) :name))
                   (setq connected-servers
-                        (cons (if (stringp contact) contact server)
+                        (cons (if (stringp contact)
+                                  contact (or server-alias server))
                               connected-servers))))))))
       (when connected-servers
 	(message "Already connected to %s"
@@ -528,9 +538,10 @@ If ARG is non-nil, instead prompt for connection parameters."
 
 ;;;###autoload
 (defun rcirc-connect (server &optional port nick user-name
-                             full-name startup-channels password encryption)
+                             full-name startup-channels password encryption
+                             server-alias)
   (save-excursion
-    (message "Connecting to %s..." server)
+    (message "Connecting to %s..." (or server-alias server))
     (let* ((inhibit-eol-conversion)
            (port-number (if port
 			    (if (stringp port)
@@ -542,7 +553,7 @@ If ARG is non-nil, instead prompt for connection parameters."
 	   (full-name (or full-name rcirc-default-full-name))
 	   (startup-channels startup-channels)
            (process (open-network-stream
-                     server nil server port-number
+                     (or server-alias server) nil server port-number
                      :type (or encryption 'plain))))
       ;; set up process
       (set-process-coding-system process 'raw-text 'raw-text)
@@ -557,7 +568,8 @@ If ARG is non-nil, instead prompt for connection parameters."
 			password encryption))
       (setq-local rcirc-process process)
       (setq-local rcirc-server server)
-      (setq-local rcirc-server-name server) ; Update when we get 001 response.
+      (setq-local rcirc-server-name
+                  (or server-alias server)) ; Update when we get 001 response.
       (setq-local rcirc-buffer-alist nil)
       (setq-local rcirc-nick-table (make-hash-table :test 'equal))
       (setq-local rcirc-nick nick)
@@ -584,7 +596,7 @@ If ARG is non-nil, instead prompt for connection parameters."
 	(setq rcirc-keepalive-timer
 	      (run-at-time 0 (/ rcirc-timeout-seconds 2) 'rcirc-keepalive)))
 
-      (message "Connecting to %s...done" server)
+      (message "Connecting to %s...done" (or server-alias server))
 
       ;; return process object
       process)))
