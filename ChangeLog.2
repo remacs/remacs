@@ -708,6 +708,186 @@
 
 	* lisp/net/soap-client.el, lisp/net/soap-inspect.el: Update home page.
 
+2015-10-25  Eli Zaretskii  <eliz@gnu.org>
+
+	* lisp/progmodes/grep.el (grep): Doc fix.  (Bug#21754)
+
+2015-10-25  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* src/keyboard.c (post-command-hook): Extend the docstring.
+	Mainly, explain how to use it without hanging Emacs, or giving the
+	impression that it is hanging.  Also mention `pre-command-hook'.
+	(pre-command-hook): Mention `post-command-hook'.
+
+2015-10-25  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/custom.el (custom-declare-variable): Shorten code again.
+	Without using pcase this time.  We can't use pcase because it is
+	loaded after custom in loadup.el.  Also add a comment explaining
+	this to future dummies like me.
+
+2015-10-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	* doc/lispref/os.texi (File Notifications): Document `stopped event'.
+
+2015-10-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Introduce `stopped' event in file notification
+
+	* lisp/filenotify.el (file-notify--rm-descriptor): New defun.
+	(file-notify-rm-watch): Use it.
+	(file-notify-callback): Implement `stopped' event.
+	(file-notify-add-watch): Mention `stopped' in the docstring.
+	Check, that upper directory exists.
+
+	* test/automated/file-notify-tests.el (file-notify-test01-add-watch):
+	Add two test cases.
+	(file-notify-test02-events): Handle also `stopped' event.
+	(file-notify-test04-file-validity): Add another test case.
+
+2015-10-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Revert commit that broke 'make bootstrap'
+
+	* lisp/custom.el (custom-declare-variable): Revert commit
+	79fac080d277fed07b3c192890ad59d36d9f83b6.  custom.el needs to work
+	even when pcase has not been defined yet, when doing bootstrapping.
+
+2015-10-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port recent inline functions fix to Standard C
+
+	* src/lisp.h (LISP_MACRO_DEFUN, LISP_MACRO_DEFUN_VOID): Remove.
+	All uses rewritten to define the function directly rather than to
+	use a macro to define the function.  This conforms to Standard C,
+	which does not allow stray semicolons at the top level.  I hope it
+	also avoids the problems with TAGS.  Those macros, though clever,
+	were pretty confusing anyway, and it wasn’t clear they were worth
+	the aggravation even without the TAGS problem.
+
+2015-10-24  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/isearch.el: Make character-fold search the default again.
+
+2015-10-24  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/character-fold.el: Many improvements.
+	(character-fold-search-forward, character-fold-search-backward):
+	New command.
+	(character-fold-to-regexp): Remove lax-whitespace hack.
+	(character-fold-search): Remove variable.  Only isearch and
+	query-replace use char-folding, and they both have their own
+	variables to configure that.
+
+2015-10-24  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/isearch.el: Generalize definition of regexp-function toggles.
+	(isearch-specify-regexp-function): New macro for specifying
+	possible values of `isearch-regexp-function'.
+	(isearch-toggle-character-fold, isearch-toggle-symbol)
+	(isearch-toggle-word): Define with `isearch-specify-regexp-function'.
+
+2015-10-24  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/isearch.el (search-default-regexp-mode): New variable.
+	(isearch-mode): Use it.
+
+2015-10-24  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/isearch.el (search-exit-option, search-slow-window-lines)
+	(search-slow-speed, search-upper-case)
+	(search-nonincremental-instead, search-whitespace-regexp)
+	(search-invisible, isearch-hide-immediately)
+	(isearch-resume-in-command-history, search-ring-max)
+	(regexp-search-ring-max, search-ring-update, search-highlight)
+	(isearch-fail): Delete :group entries.
+
+2015-10-24  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/custom.el (custom-declare-variable): Shorten code a bit.
+
+2015-10-24  Juanma Barranquero  <lekktu@gmail.com>
+
+	addpm.c: Silence some warnings.
+
+	* nt/addpm.c (DdeCommand): Cast pData argument of DdeClientTransaction
+	to LPBYTE.
+	(add_registry): Pass NULL to optional lpClass argument of
+	RegCreateKeyEx, not an empty string.
+
+2015-10-24  Juanma Barranquero  <lekktu@gmail.com>
+
+	addpm.c: Do not add obsolete GTK libraries to the path.
+
+	* nt/addpm.c (REG_GTK, REG_RUNEMACS_PATH): Delete.
+	(add_registry): Remove variables `size' and `gtk_key'.
+	Do not add the GTK DLL directory to the library search path; it is
+	confusing behavior (in particular, the same Emacs version with and
+	without invoking addpm will use a different path), and the GTK image
+	libraries are obsolete anyway.
+
+2015-10-24  Juanma Barranquero  <lekktu@gmail.com>
+
+	addpm.c: Replace existing registry entries, but do not create new ones
+
+	* nt/addpm.c (add_registry): If the Emacs registry key exists, replace
+	existing values from previous versions, but do not add new ones; the
+	key could exist for other reasons unrelated to old Emacsen, like X-style
+	resources, or to set some environment variables like HOME or LANG, and
+	in that case we don't want to populate it with obsolete values.
+
+2015-10-24  Juanma Barranquero  <lekktu@gmail.com>
+
+	* nt/addpm.c (add_registry): Do not compute unused return value.
+
+2015-10-24  Juanma Barranquero  <lekktu@gmail.com>
+
+	addpm.c: Don't pass REG_OPTION_NON_VOLATILE to RegOpenKeyEx
+
+	* nt/addpm.c (add_registry): Pass 0 to ulOptions argument of
+	RegOpenKeyEx, not REG_OPTION_NON_VOLATILE.  This doesn't change
+	current behavior because REG_OPTION_NON_VOLATILE is defined to
+	be 0L anyway, but that option is actually documented only for
+	RegCreateKeyEx.
+
+2015-10-24  Juanma Barranquero  <lekktu@gmail.com>
+
+	* src/w32notify.c (Fw32notify_add_watch): Fix version check.
+
+2015-10-24  Eli Zaretskii  <eliz@gnu.org>
+
+	Update frame title when redisplay scrolls selected window
+
+	* src/xdisp.c (redisplay_window): Reconsider the frame's title
+	when the mode-line of the frame's selected window needs to be
+	updated.
+
+2015-10-24  Eli Zaretskii  <eliz@gnu.org>
+
+	Update frame title when scrolling the selected window
+
+	* src/window.c (wset_update_mode_line): New function, sets either
+	the window's update_mode_line flag or the global update_mode_lines
+	variable.
+	(Fset_window_start, set_window_buffer, window_scroll_pixel_based)
+	(window_scroll_line_based): Call it instead of only setting the
+	window's update_mode_line flag.
+
+2015-10-24  Eli Zaretskii  <eliz@gnu.org>
+
+	An even better fix for bug#21739
+
+	* src/window.c (set_window_buffer): If the window is the frame's
+	selected window, set update_mode_lines, not the window's
+	update_mode_line flag.
+	* src/buffer.c (Fkill_buffer): Undo last change.
+	(set_update_modelines_for_buf): Function deleted.
+
+2015-10-24  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+	    Alexandru Harsanyi  <AlexHarsanyi@gmail.com>
+
+	Sync with soap-client repository, version 3.0.0
+
 	* lisp/net/soap-client.el, lisp/net/soap-inspect.el:
 	Bump version to 3.0.0.
 
@@ -1100,185 +1280,6 @@
 
 	* lisp/net/soap-client.el (soap-invoke): Encode the string for
 	`url-request-data' as UTF-8.  Fixes issue 16.
-
-2015-10-25  Eli Zaretskii  <eliz@gnu.org>
-
-	* lisp/progmodes/grep.el (grep): Doc fix.  (Bug#21754)
-
-2015-10-25  Artur Malabarba  <bruce.connor.am@gmail.com>
-
-	* src/keyboard.c (post-command-hook): Extend the docstring.
-	Mainly, explain how to use it without hanging Emacs, or giving the
-	impression that it is hanging.  Also mention `pre-command-hook'.
-	(pre-command-hook): Mention `post-command-hook'.
-
-2015-10-25  Artur Malabarba  <bruce.connor.am@gmail.com>
-
-	* lisp/custom.el (custom-declare-variable): Shorten code again.
-	Without using pcase this time.  We can't use pcase because it is
-	loaded after custom in loadup.el.  Also add a comment explaining
-	this to future dummies like me.
-
-2015-10-25  Michael Albinus  <michael.albinus@gmx.de>
-
-	* doc/lispref/os.texi (File Notifications): Document `stopped event'.
-
-2015-10-25  Michael Albinus  <michael.albinus@gmx.de>
-
-	Introduce `stopped' event in file notification
-
-	* lisp/filenotify.el (file-notify--rm-descriptor): New defun.
-	(file-notify-rm-watch): Use it.
-	(file-notify-callback): Implement `stopped' event.
-	(file-notify-add-watch): Mention `stopped' in the docstring.
-	Check, that upper directory exists.
-
-	* test/automated/file-notify-tests.el (file-notify-test01-add-watch):
-	Add two test cases.
-	(file-notify-test02-events): Handle also `stopped' event.
-	(file-notify-test04-file-validity): Add another test case.
-
-2015-10-25  Paul Eggert  <eggert@cs.ucla.edu>
-
-	Revert commit that broke 'make bootstrap'
-
-	* lisp/custom.el (custom-declare-variable): Revert commit
-	79fac080d277fed07b3c192890ad59d36d9f83b6.  custom.el needs to work
-	even when pcase has not been defined yet, when doing bootstrapping.
-
-2015-10-25  Paul Eggert  <eggert@cs.ucla.edu>
-
-	Port recent inline functions fix to Standard C
-
-	* src/lisp.h (LISP_MACRO_DEFUN, LISP_MACRO_DEFUN_VOID): Remove.
-	All uses rewritten to define the function directly rather than to
-	use a macro to define the function.  This conforms to Standard C,
-	which does not allow stray semicolons at the top level.  I hope it
-	also avoids the problems with TAGS.  Those macros, though clever,
-	were pretty confusing anyway, and it wasn’t clear they were worth
-	the aggravation even without the TAGS problem.
-
-2015-10-24  Artur Malabarba  <bruce.connor.am@gmail.com>
-
-	* lisp/isearch.el: Make character-fold search the default again.
-
-2015-10-24  Artur Malabarba  <bruce.connor.am@gmail.com>
-
-	* lisp/character-fold.el: Many improvements.
-	(character-fold-search-forward, character-fold-search-backward):
-	New command.
-	(character-fold-to-regexp): Remove lax-whitespace hack.
-	(character-fold-search): Remove variable.  Only isearch and
-	query-replace use char-folding, and they both have their own
-	variables to configure that.
-
-2015-10-24  Artur Malabarba  <bruce.connor.am@gmail.com>
-
-	* lisp/isearch.el: Generalize definition of regexp-function toggles.
-	(isearch-specify-regexp-function): New macro for specifying
-	possible values of `isearch-regexp-function'.
-	(isearch-toggle-character-fold, isearch-toggle-symbol)
-	(isearch-toggle-word): Define with `isearch-specify-regexp-function'.
-
-2015-10-24  Artur Malabarba  <bruce.connor.am@gmail.com>
-
-	* lisp/isearch.el (search-default-regexp-mode): New variable.
-	(isearch-mode): Use it.
-
-2015-10-24  Artur Malabarba  <bruce.connor.am@gmail.com>
-
-	* lisp/isearch.el (search-exit-option, search-slow-window-lines)
-	(search-slow-speed, search-upper-case)
-	(search-nonincremental-instead, search-whitespace-regexp)
-	(search-invisible, isearch-hide-immediately)
-	(isearch-resume-in-command-history, search-ring-max)
-	(regexp-search-ring-max, search-ring-update, search-highlight)
-	(isearch-fail): Delete :group entries.
-
-2015-10-24  Artur Malabarba  <bruce.connor.am@gmail.com>
-
-	* lisp/custom.el (custom-declare-variable): Shorten code a bit.
-
-2015-10-24  Juanma Barranquero  <lekktu@gmail.com>
-
-	addpm.c: Silence some warnings.
-
-	* nt/addpm.c (DdeCommand): Cast pData argument of DdeClientTransaction
-	to LPBYTE.
-	(add_registry): Pass NULL to optional lpClass argument of
-	RegCreateKeyEx, not an empty string.
-
-2015-10-24  Juanma Barranquero  <lekktu@gmail.com>
-
-	addpm.c: Do not add obsolete GTK libraries to the path.
-
-	* nt/addpm.c (REG_GTK, REG_RUNEMACS_PATH): Delete.
-	(add_registry): Remove variables `size' and `gtk_key'.
-	Do not add the GTK DLL directory to the library search path; it is
-	confusing behavior (in particular, the same Emacs version with and
-	without invoking addpm will use a different path), and the GTK image
-	libraries are obsolete anyway.
-
-2015-10-24  Juanma Barranquero  <lekktu@gmail.com>
-
-	addpm.c: Replace existing registry entries, but do not create new ones
-
-	* nt/addpm.c (add_registry): If the Emacs registry key exists, replace
-	existing values from previous versions, but do not add new ones; the
-	key could exist for other reasons unrelated to old Emacsen, like X-style
-	resources, or to set some environment variables like HOME or LANG, and
-	in that case we don't want to populate it with obsolete values.
-
-2015-10-24  Juanma Barranquero  <lekktu@gmail.com>
-
-	* nt/addpm.c (add_registry): Do not compute unused return value.
-
-2015-10-24  Juanma Barranquero  <lekktu@gmail.com>
-
-	addpm.c: Don't pass REG_OPTION_NON_VOLATILE to RegOpenKeyEx
-
-	* nt/addpm.c (add_registry): Pass 0 to ulOptions argument of
-	RegOpenKeyEx, not REG_OPTION_NON_VOLATILE.  This doesn't change
-	current behavior because REG_OPTION_NON_VOLATILE is defined to
-	be 0L anyway, but that option is actually documented only for
-	RegCreateKeyEx.
-
-2015-10-24  Juanma Barranquero  <lekktu@gmail.com>
-
-	* src/w32notify.c (Fw32notify_add_watch): Fix version check.
-
-2015-10-24  Eli Zaretskii  <eliz@gnu.org>
-
-	Update frame title when redisplay scrolls selected window
-
-	* src/xdisp.c (redisplay_window): Reconsider the frame's title
-	when the mode-line of the frame's selected window needs to be
-	updated.
-
-2015-10-24  Eli Zaretskii  <eliz@gnu.org>
-
-	Update frame title when scrolling the selected window
-
-	* src/window.c (wset_update_mode_line): New function, sets either
-	the window's update_mode_line flag or the global update_mode_lines
-	variable.
-	(Fset_window_start, set_window_buffer, window_scroll_pixel_based)
-	(window_scroll_line_based): Call it instead of only setting the
-	window's update_mode_line flag.
-
-2015-10-24  Eli Zaretskii  <eliz@gnu.org>
-
-	An even better fix for bug#21739
-
-	* src/window.c (set_window_buffer): If the window is the frame's
-	selected window, set update_mode_lines, not the window's
-	update_mode_line flag.
-	* src/buffer.c (Fkill_buffer): Undo last change.
-	(set_update_modelines_for_buf): Function deleted.
-
-2015-10-24  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
-
-	Sync with soap-client repository, version 3.0.0
 
 2015-10-24  Nicolas Petton  <nicolas@petton.fr>
 
