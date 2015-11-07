@@ -3508,6 +3508,14 @@ x_create_bitmap_from_xpm_data (struct frame *f, const char **bits)
   attrs.valuemask |= XpmVisual;
   attrs.valuemask |= XpmColormap;
 
+#ifdef ALLOC_XPM_COLORS
+  attrs.color_closure = f;
+  attrs.alloc_color = xpm_alloc_color;
+  attrs.free_colors = xpm_free_colors;
+  attrs.valuemask |= XpmAllocColor | XpmFreeColors | XpmColorClosure;
+  xpm_init_color_cache (f, &attrs);
+#endif
+
   rc = XpmCreatePixmapFromData (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f),
 				(char **) bits, &bitmap, &mask, &attrs);
   if (rc != XpmSuccess)
@@ -3526,6 +3534,9 @@ x_create_bitmap_from_xpm_data (struct frame *f, const char **bits)
   dpyinfo->bitmaps[id - 1].depth = attrs.depth;
   dpyinfo->bitmaps[id - 1].refcount = 1;
 
+#ifdef ALLOC_XPM_COLORS
+  xpm_free_color_cache ();
+#endif
   XpmFreeAttributes (&attrs);
   return id;
 }
