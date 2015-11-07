@@ -11551,9 +11551,10 @@ x_consider_frame_title (Lisp_Object frame)
 {
   struct frame *f = XFRAME (frame);
 
-  if (FRAME_WINDOW_P (f)
-      || FRAME_MINIBUF_ONLY_P (f)
-      || f->explicit_name)
+  if ((FRAME_WINDOW_P (f)
+       || FRAME_MINIBUF_ONLY_P (f)
+       || f->explicit_name)
+      && NILP (Fframe_parameter (frame, Qtooltip)))
     {
       /* Do we have more than one visible frame on this X display?  */
       Lisp_Object tail, other_frame, fmt;
