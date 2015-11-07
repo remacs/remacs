@@ -87,7 +87,6 @@ be replaced by its expansion."
   "Make a new abbrev-table with the same abbrevs as TABLE.
 Does not copy property lists."
   (let ((new-table (make-abbrev-table)))
-    (message "modif: %s" (abbrev-table-get new-table :abbrev-table-modiff))
     (mapatoms
      (lambda (symbol)
        (define-abbrev new-table
