@@ -206,7 +206,8 @@
 
 (cl-defstruct (mystruct
                (:constructor cl-lib--con-1 (&aux (abc 1)))
-               (:constructor cl-lib--con-2 (&optional def)))
+               (:constructor cl-lib--con-2 (&optional def) "Constructor docstring."))
+  "General docstring."
   (abc 5 :readonly t) (def nil))
 (ert-deftest cl-lib-struct-accessors ()
   (let ((x (make-mystruct :abc 1 :def 2)))
@@ -220,6 +221,11 @@
               (`((cl-tag-slot) (abc 5 :readonly t)
                  (def . ,(or `nil `(nil))))
                t)))))
+(ert-deftest cl-lib-struct-constructors ()
+  (should (equal (documentation 'cl-lib--con-2 t)
+                 "Constructor docstring."))
+  (should (mystruct-p (cl-lib--con-1)))
+  (should (mystruct-p (cl-lib--con-2))))
 
 (ert-deftest cl-lib-arglist-performance ()
   ;; An `&aux' should not cause lambda's arglist to be turned into an &rest
