@@ -194,6 +194,7 @@ x_real_pos_and_offsets (struct frame *f,
   unsigned char *tmp_data = NULL;
   Atom target_type = XA_CARDINAL;
   unsigned int ow IF_LINT (= 0), oh IF_LINT (= 0);
+  unsigned int fw, fh;
 
   block_input ();
 
@@ -223,10 +224,10 @@ x_real_pos_and_offsets (struct frame *f,
       unsigned int tmp_nchildren;
       int success;
 
-      success = XQueryTree (FRAME_X_DISPLAY (f), win, &rootw,
+      success = XQueryTree (dpy, win, &rootw,
 			    &wm_window, &tmp_children, &tmp_nchildren);
 
-      had_errors = x_had_errors_p (FRAME_X_DISPLAY (f));
+      had_errors = x_had_errors_p (dpy);
 
       /* Don't free tmp_children if XQueryTree failed.  */
       if (! success)
@@ -246,7 +247,7 @@ x_real_pos_and_offsets (struct frame *f,
       Window child, rootw;
 
       /* Get the real coordinates for the WM window upper left corner */
-      XGetGeometry (FRAME_X_DISPLAY (f), win,
+      XGetGeometry (dpy, win,
                     &rootw, &real_x, &real_y, &ow, &oh, &bw, &ign);
 
       if (outer_border)
@@ -262,17 +263,20 @@ x_real_pos_and_offsets (struct frame *f,
          | -----------------         v y
          | |  our window
       */
-      XTranslateCoordinates (FRAME_X_DISPLAY (f),
+      XTranslateCoordinates (dpy,
 
 			     /* From-window, to-window.  */
 			     FRAME_DISPLAY_INFO (f)->root_window,
                              FRAME_X_WINDOW (f),
 
 			     /* From-position, to-position.  */
-                             real_x, real_y, &win_x, &win_y,
+                             0, 0, &win_x, &win_y,
 
 			     /* Child of win.  */
 			     &child);
+
+      win_x += real_x;
+      win_y += real_y;
 
       if (FRAME_X_WINDOW (f) == FRAME_OUTER_WINDOW (f))
 	{
@@ -281,20 +285,23 @@ x_real_pos_and_offsets (struct frame *f,
 	}
       else
         {
-          XTranslateCoordinates (FRAME_X_DISPLAY (f),
+          XTranslateCoordinates (dpy,
 
                                  /* From-window, to-window.  */
                                  FRAME_DISPLAY_INFO (f)->root_window,
                                  FRAME_OUTER_WINDOW (f),
 
                                  /* From-position, to-position.  */
-                                 real_x, real_y, &outer_x, &outer_y,
+                                 0, 0, &outer_x, &outer_y,
 
                                  /* Child of win.  */
                                  &child);
+
+	  outer_x += real_x;
+	  outer_y += real_y;
 	}
 
-      had_errors = x_had_errors_p (FRAME_X_DISPLAY (f));
+      had_errors = x_had_errors_p (dpy);
     }
 
   if (!had_errors && dpyinfo->root_window == f->output_data.x->parent_desc)
@@ -319,6 +326,16 @@ x_real_pos_and_offsets (struct frame *f,
       if (tmp_data) XFree (tmp_data);
     }
 
+  if (right_offset_x || bottom_offset_y)
+    {
+      int xy_ign;
+      unsigned int ign;
+      Window rootw;
+
+      XGetGeometry (dpy, FRAME_OUTER_WINDOW (f),
+		    &rootw, &xy_ign, &xy_ign, &fw, &fh, &ign, &ign);
+    }
+
   x_uncatch_errors ();
 
   unblock_input ();
@@ -334,17 +351,8 @@ x_real_pos_and_offsets (struct frame *f,
   if (xptr) *xptr = real_x;
   if (yptr) *yptr = real_y;
 
-  if (right_offset_x || bottom_offset_y)
-    {
-      int xy_ign;
-      unsigned int ign, fw, fh;
-      Window rootw;
-
-      XGetGeometry (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
-		    &rootw, &xy_ign, &xy_ign, &fw, &fh, &ign, &ign);
-      if (right_offset_x) *right_offset_x = ow - fw + outer_x;
-      if (bottom_offset_y) *bottom_offset_y = oh - fh + outer_y;
-    }
+  if (right_offset_x) *right_offset_x = ow - fw + outer_x;
+  if (bottom_offset_y) *bottom_offset_y = oh - fh + outer_y;
 }
 
 /* Store the screen positions of frame F into XPTR and YPTR.
