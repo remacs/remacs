@@ -10096,20 +10096,45 @@ get_current_wm_state (struct frame *f,
                       int *size_state,
                       bool *sticky)
 {
-  Atom actual_type;
-  unsigned long actual_size, bytes_remaining;
-  int i, rc, actual_format;
+  unsigned long actual_size;
+  int i;
   bool is_hidden = false;
   struct x_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
   long max_len = 65536;
-  Display *dpy = FRAME_X_DISPLAY (f);
   unsigned char *tmp_data = NULL;
   Atom target_type = XA_ATOM;
+  /* If XCB is available, we can avoid three XSync calls.  */
+#ifdef USE_XCB
+  xcb_get_property_cookie_t prop_cookie;
+  xcb_get_property_reply_t *prop;
+#else
+  Display *dpy = FRAME_X_DISPLAY (f);
+  unsigned long bytes_remaining;
+  int rc, actual_format;
+  Atom actual_type;
+#endif
 
   *sticky = false;
   *size_state = FULLSCREEN_NONE;
 
   block_input ();
+
+#ifdef USE_XCB
+  prop_cookie = xcb_get_property (dpyinfo->xcb_connection, 0, window,
+                                  dpyinfo->Xatom_net_wm_state,
+                                  target_type, 0, max_len);
+  prop = xcb_get_property_reply (dpyinfo->xcb_connection, prop_cookie, NULL);
+  if (prop && prop->type == target_type)
+    {
+      tmp_data = xcb_get_property_value (prop);
+      actual_size = xcb_get_property_value_length (prop);
+    }
+  else
+    {
+      actual_size = 0;
+      is_hidden = FRAME_ICONIFIED_P (f);
+    }
+#else
   x_catch_errors (dpy);
   rc = XGetWindowProperty (dpy, window, dpyinfo->Xatom_net_wm_state,
                            0, max_len, False, target_type,
@@ -10118,13 +10143,12 @@ get_current_wm_state (struct frame *f,
 
   if (rc != Success || actual_type != target_type || x_had_errors_p (dpy))
     {
-      if (tmp_data) XFree (tmp_data);
-      x_uncatch_errors ();
-      unblock_input ();
-      return !FRAME_ICONIFIED_P (f);
+      actual_size = 0;
+      is_hidden = FRAME_ICONIFIED_P (f);
     }
 
   x_uncatch_errors ();
+#endif
 
   for (i = 0; i < actual_size; ++i)
     {
@@ -10151,7 +10175,12 @@ get_current_wm_state (struct frame *f,
         *sticky = true;
     }
 
+#ifdef USE_XCB
+  free (prop);
+#else
   if (tmp_data) XFree (tmp_data);
+#endif
+
   unblock_input ();
   return ! is_hidden;
 }
