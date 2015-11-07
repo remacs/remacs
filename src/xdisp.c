@@ -623,7 +623,8 @@ bset_update_mode_line (struct buffer *b)
 void
 maybe_set_redisplay (Lisp_Object symbol)
 {
-  if (!NILP (Fassoc_string (symbol, Vredisplay__variables, Qnil)))
+  if (HASH_TABLE_P (Vredisplay__variables)
+      && hash_lookup (XHASH_TABLE (Vredisplay__variables), symbol, NULL) >= 0)
     {
       bset_update_mode_line (current_buffer);
       current_buffer->prevent_redisplay_optimizations_p = true;
@@ -31478,7 +31479,7 @@ display table takes effect; in this case, Emacs does not consult
   Vredisplay__mode_lines_cause = Fmake_hash_table (0, NULL);
 
   DEFVAR_LISP ("redisplay--variables", Vredisplay__variables,
-     doc: /* A list of variables changes to which trigger a thorough redisplay.  */);
+     doc: /* A hash-table of variables changing which triggers a thorough redisplay.  */);
   Vredisplay__variables = Qnil;
 }
 
