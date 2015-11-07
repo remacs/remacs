@@ -11773,6 +11773,9 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   struct terminal *terminal;
   struct x_display_info *dpyinfo;
   XrmDatabase xrdb;
+#ifdef USE_XCB
+  xcb_connection_t *xcb_conn;
+#endif
 
   block_input ();
 
@@ -11911,6 +11914,25 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
       return 0;
     }
 
+#ifdef USE_XCB
+  xcb_conn = XGetXCBConnection (dpy);
+  if (xcb_conn == 0)
+    {
+#ifdef USE_GTK
+      xg_display_close (dpy);
+#else
+#ifdef USE_X_TOOLKIT
+      XtCloseDisplay (dpy);
+#else
+      XCloseDisplay (dpy);
+#endif
+#endif /* ! USE_GTK */
+
+      unblock_input ();
+      return 0;
+    }
+#endif
+
   /* We have definitely succeeded.  Record the new connection.  */
 
   dpyinfo = xzalloc (sizeof *dpyinfo);
@@ -11961,6 +11983,9 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   dpyinfo->name_list_element = Fcons (display_name, Qnil);
   dpyinfo->display = dpy;
   dpyinfo->connection = ConnectionNumber (dpyinfo->display);
+#ifdef USE_XCB
+  dpyinfo->xcb_connection = xcb_conn;
+#endif
 
   /* http://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00194.html  */
   dpyinfo->smallest_font_height = 1;
