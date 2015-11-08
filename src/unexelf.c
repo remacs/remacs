@@ -1118,7 +1118,7 @@ temacs:
 	}
 #endif /* __sgi */
 
-      /* If it is the symbol table, its st_shndx field needs to be patched.  */
+      /* Patch st_shndx field of symbol table.  */
       if (new_shdr->sh_type == SHT_SYMTAB
 	  || new_shdr->sh_type == SHT_DYNSYM)
 	{
@@ -1126,9 +1126,10 @@ temacs:
 	  ElfW (Sym) *sym = (ElfW (Sym) *) (new_shdr->sh_offset + new_base);
 	  for (; num--; sym++)
 	    {
-	      if ((sym->st_shndx == SHN_UNDEF)
-		  || (sym->st_shndx == SHN_ABS)
-		  || (sym->st_shndx == SHN_COMMON))
+	      if (sym->st_shndx == SHN_XINDEX)
+		fatal ("SHT_SYMTAB_SHNDX unsupported");
+	      if (sym->st_shndx == SHN_UNDEF
+		  || sym->st_shndx >= SHN_LORESERVE)
 		continue;
 
 	      PATCH_INDEX (sym->st_shndx);
