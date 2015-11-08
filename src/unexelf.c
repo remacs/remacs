@@ -1015,12 +1015,12 @@ temacs:
       /* Write out the sections. .data and .data1 (and data2, called
 	 ".data" in the strings table) get copied from the current process
 	 instead of the old file.  */
-      if (!strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".data")
-	  || !strcmp ((old_section_names + NEW_SECTION_H (n).sh_name),
+      if (!strcmp (old_section_names + NEW_SECTION_H (nn).sh_name, ".data")
+	  || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
 		      ".sdata")
-	  || !strcmp ((old_section_names + NEW_SECTION_H (n).sh_name),
+	  || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
 		      ".lit4")
-	  || !strcmp ((old_section_names + NEW_SECTION_H (n).sh_name),
+	  || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
 		      ".lit8")
 	  /* The conditional bit below was in Oliva's original code
 	     (1999-08-25) and seems to have been dropped by mistake
@@ -1043,14 +1043,14 @@ temacs:
 	     loader, but I never got anywhere with an SGI support call
 	     seeking clues.  -- fx 2002-11-29.  */
 #ifdef IRIX6_5
-	  || !strcmp ((old_section_names + NEW_SECTION_H (n).sh_name),
+	  || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
 		      ".got")
 #endif
-	  || !strcmp ((old_section_names + NEW_SECTION_H (n).sh_name),
+	  || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
 		      ".sdata1")
-	  || !strcmp ((old_section_names + NEW_SECTION_H (n).sh_name),
+	  || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
 		      ".data1")
-	  || !strcmp ((old_section_names + NEW_SECTION_H (n).sh_name),
+	  || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
 		      ".sbss"))
 	src = (caddr_t) OLD_SECTION_H (n).sh_addr;
       else
