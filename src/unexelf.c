@@ -660,9 +660,6 @@ unexec (const char *new_name, const char *old_name)
   ptrdiff_t n, nn;
   ptrdiff_t old_bss_index, old_sbss_index, old_plt_index;
   ptrdiff_t old_data_index, new_data2_index;
-#if defined _SYSTYPE_SYSV || defined __sgi
-  ptrdiff_t old_mdebug_index;
-#endif
   struct stat stat_buf;
   off_t old_file_size;
 
@@ -705,13 +702,6 @@ unexec (const char *new_name, const char *old_name)
   old_section_h = (ElfW (Shdr) *) ((byte *) old_base + old_file_h->e_shoff);
   old_section_names = (char *) old_base
     + OLD_SECTION_H (old_file_h->e_shstrndx).sh_offset;
-
-  /* Find the mdebug section, if any.  */
-
-#if defined _SYSTYPE_SYSV || defined __sgi
-  old_mdebug_index = find_section (".mdebug", old_section_names,
-				   old_name, old_file_h, old_section_h, 1);
-#endif
 
   /* Find the old .bss section.  Figure out parameters of the new
      data2 and bss sections.  */
@@ -1055,51 +1045,31 @@ temacs:
 
       memcpy (new_shdr->sh_offset + new_base, src, new_shdr->sh_size);
 
-#if defined __alpha__ && !defined __OpenBSD__
-      /* Update Alpha COFF symbol table: */
-      if (strcmp (old_section_names + old_shdr->sh_name, ".mdebug") == 0)
+#if (defined __alpha__ && !defined __OpenBSD__) || defined _SYSTYPE_SYSV
+      /* Update Alpha and MIPS COFF debug symbol table.  */
+      if (strcmp (old_section_names + new_shdr->sh_name, ".mdebug") == 0
+	  && new_shdr->sh_offset - old_shdr->sh_offset != 0
+#if defined _SYSTYPE_SYSV
+	  && new_shdr->sh_type == SHT_MIPS_DEBUG
+#endif
+	  )
 	{
-	  pHDRR symhdr = (pHDRR) (new_shdr->sh_offset + new_base);
-
-	  symhdr->cbLineOffset += new_data2_size;
-	  symhdr->cbDnOffset += new_data2_size;
-	  symhdr->cbPdOffset += new_data2_size;
-	  symhdr->cbSymOffset += new_data2_size;
-	  symhdr->cbOptOffset += new_data2_size;
-	  symhdr->cbAuxOffset += new_data2_size;
-	  symhdr->cbSsOffset += new_data2_size;
-	  symhdr->cbSsExtOffset += new_data2_size;
-	  symhdr->cbFdOffset += new_data2_size;
-	  symhdr->cbRfdOffset += new_data2_size;
-	  symhdr->cbExtOffset += new_data2_size;
-	}
-#endif /* __alpha__ && !__OpenBSD__ */
-
-#if defined (_SYSTYPE_SYSV)
-      if (new_shdr->sh_type == SHT_MIPS_DEBUG
-	  && old_mdebug_index != -1)
-	{
-	  ptrdiff_t new_offset = new_shdr->sh_offset;
-	  ptrdiff_t old_offset = OLD_SECTION_H (old_mdebug_index).sh_offset;
-	  ptrdiff_t diff = new_offset - old_offset;
+	  ptrdiff_t diff = new_shdr->sh_offset - old_shdr->sh_offset;
 	  HDRR *phdr = (HDRR *) (new_shdr->sh_offset + new_base);
 
-	  if (diff)
-	    {
-	      phdr->cbLineOffset += diff;
-	      phdr->cbDnOffset   += diff;
-	      phdr->cbPdOffset   += diff;
-	      phdr->cbSymOffset  += diff;
-	      phdr->cbOptOffset  += diff;
-	      phdr->cbAuxOffset  += diff;
-	      phdr->cbSsOffset   += diff;
-	      phdr->cbSsExtOffset += diff;
-	      phdr->cbFdOffset   += diff;
-	      phdr->cbRfdOffset  += diff;
-	      phdr->cbExtOffset  += diff;
-	    }
+	  phdr->cbLineOffset += diff;
+	  phdr->cbDnOffset += diff;
+	  phdr->cbPdOffset += diff;
+	  phdr->cbSymOffset += diff;
+	  phdr->cbOptOffset += diff;
+	  phdr->cbAuxOffset += diff;
+	  phdr->cbSsOffset += diff;
+	  phdr->cbSsExtOffset += diff;
+	  phdr->cbFdOffset += diff;
+	  phdr->cbRfdOffset += diff;
+	  phdr->cbExtOffset += diff;
 	}
-#endif /* _SYSTYPE_SYSV */
+#endif /* __alpha__ || _SYSTYPE_SYSV */
 
 #if __sgi
       /* Adjust  the HDRR offsets in .mdebug and copy the
@@ -1110,7 +1080,8 @@ temacs:
 	 the ld bug that gets the line table in a hole in the
 	 elf file rather than in the .mdebug section proper.
 	 David Anderson. davea@sgi.com  Jan 16,1994.  */
-      if (n == old_mdebug_index)
+      if (strcmp (old_section_names + new_shdr->sh_name, ".mdebug") == 0
+	  && new_shdr->sh_offset - old_shdr->sh_offset != 0)
 	{
 #define MDEBUGADJUST(__ct,__fileaddr)		\
   if (n_phdrr->__ct > 0)			\
@@ -1120,7 +1091,7 @@ temacs:
 
 	  HDRR *o_phdrr = (HDRR *) ((byte *) old_base + old_shdr->sh_offset);
 	  HDRR *n_phdrr = (HDRR *) ((byte *) new_base + new_shdr->sh_offset);
-	  unsigned movement = new_data2_size;
+	  ptrdiff_t movement = new_shdr->sh_offset - old_shdr->sh_offset;
 
 	  MDEBUGADJUST (idnMax, cbDnOffset);
 	  MDEBUGADJUST (ipdMax, cbPdOffset);
@@ -1136,22 +1107,13 @@ temacs:
 	     requires special handling.  */
 	  if (n_phdrr->cbLine > 0)
 	    {
+	      n_phdrr->cbLineOffset += movement;
+
 	      if (o_phdrr->cbLineOffset > (old_shdr->sh_offset
 					   + old_shdr->sh_size))
-		{
-		  /* line data is in a hole in elf. do special copy and adjust
-		     for this ld mistake.
-		     */
-		  n_phdrr->cbLineOffset += movement;
-
-		  memcpy (n_phdrr->cbLineOffset + new_base,
-			  o_phdrr->cbLineOffset + old_base, n_phdrr->cbLine);
-		}
-	      else
-		{
-		  /* somehow line data is in .mdebug as it is supposed to be.  */
-		  MDEBUGADJUST (cbLine, cbLineOffset);
-		}
+		/* If not covered by section, it hasn't yet been copied.  */
+		memcpy (n_phdrr->cbLineOffset + new_base,
+			o_phdrr->cbLineOffset + old_base, n_phdrr->cbLine);
 	    }
 	}
 #endif /* __sgi */
