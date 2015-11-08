@@ -2120,6 +2120,15 @@ read0 (Lisp_Object readcharfun)
 static ptrdiff_t read_buffer_size;
 static char *read_buffer;
 
+/* Grow the read buffer by at least MAX_MULTIBYTE_LENGTH bytes.  */
+
+static void
+grow_read_buffer (void)
+{
+  read_buffer = xpalloc (read_buffer, &read_buffer_size,
+			 MAX_MULTIBYTE_LENGTH, -1, 1);
+}
+
 /* Read a \-escape sequence, assuming we already read the `\'.
    If the escape sequence forces unibyte, return eight-bit char.  */
 
@@ -2985,10 +2994,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	    if (end - p < MAX_MULTIBYTE_LENGTH)
 	      {
 		ptrdiff_t offset = p - read_buffer;
-		if (min (PTRDIFF_MAX, SIZE_MAX) / 2 < read_buffer_size)
-		  memory_full (SIZE_MAX);
-		read_buffer = xrealloc (read_buffer, read_buffer_size * 2);
-		read_buffer_size *= 2;
+		grow_read_buffer ();
 		p = read_buffer + offset;
 		end = read_buffer + read_buffer_size;
 	      }
@@ -3119,10 +3125,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	      if (end - p < MAX_MULTIBYTE_LENGTH)
 		{
 		  ptrdiff_t offset = p - read_buffer;
-		  if (min (PTRDIFF_MAX, SIZE_MAX) / 2 < read_buffer_size)
-		    memory_full (SIZE_MAX);
-		  read_buffer = xrealloc (read_buffer, read_buffer_size * 2);
-		  read_buffer_size *= 2;
+		  grow_read_buffer ();
 		  p = read_buffer + offset;
 		  end = read_buffer + read_buffer_size;
 		}
@@ -3149,10 +3152,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	  if (p == end)
 	    {
 	      ptrdiff_t offset = p - read_buffer;
-	      if (min (PTRDIFF_MAX, SIZE_MAX) / 2 < read_buffer_size)
-		memory_full (SIZE_MAX);
-	      read_buffer = xrealloc (read_buffer, read_buffer_size * 2);
-	      read_buffer_size *= 2;
+	      grow_read_buffer ();
 	      p = read_buffer + offset;
 	      end = read_buffer + read_buffer_size;
 	    }
