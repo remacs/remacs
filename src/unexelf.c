@@ -1176,20 +1176,25 @@ temacs:
 		       "_OBJC_", sizeof ("_OBJC_") - 1) == 0)
 	    {
 	      ElfW (Shdr) *new_shdr = &NEW_SECTION_H (symp->st_shndx);
-	      ptrdiff_t reladdr = symp->st_value - new_shdr->sh_addr;
-	      ptrdiff_t newoff = reladdr + new_shdr->sh_offset;
-
-	      /* "Unpatch" index.  */
-	      nn = symp->st_shndx;
-	      if (nn > old_bss_index)
-		nn--;
-	      if (nn == old_bss_index)
-		memset (new_base + newoff, 0, symp->st_size);
-	      else
+	      if (new_shdr->sh_type != SHT_NOBITS)
 		{
-		  ElfW (Shdr) *old_shdr = &OLD_SECTION_H (nn);
-		  ptrdiff_t oldoff = reladdr + old_shdr->sh_offset;
-		  memcpy (new_base + newoff, old_base + oldoff, symp->st_size);
+		  ElfW (Shdr) *old_shdr;
+		  ptrdiff_t reladdr = symp->st_value - new_shdr->sh_addr;
+		  ptrdiff_t newoff = reladdr + new_shdr->sh_offset;
+
+		  /* "Unpatch" index.  */
+		  nn = symp->st_shndx;
+		  if (nn > old_bss_index)
+		    nn--;
+		  old_shdr = &OLD_SECTION_H (nn);
+		  if (old_shdr->sh_type == SHT_NOBITS)
+		    memset (new_base + newoff, 0, symp->st_size);
+		  else
+		    {
+		      ptrdiff_t oldoff = reladdr + old_shdr->sh_offset;
+		      memcpy (new_base + newoff, old_base + oldoff,
+			      symp->st_size);
+		    }
 		}
 	    }
 #endif
