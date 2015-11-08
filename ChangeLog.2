@@ -1,3 +1,373 @@
+2015-11-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Prefer xpalloc to doubling buffers by hand
+
+	* src/lread.c (grow_read_buffer): New function, which uses xpalloc.
+	(read1): Use it for simplicity.
+	* src/macros.c (store_kbd_macro_char):
+	* src/minibuf.c (read_minibuf_noninteractive):
+	* src/term.c (encode_terminal_code):
+	* src/xrdb.c (magic_db):
+	Prefer xpalloc to growing buffers by hand.
+	This doesn’t fix any bugs, but simplifies the code a bit.
+
+2015-11-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib
+
+	This incorporates:
+	2015-11-05 timespec-sub: fix overflow bug; add tests
+	2015-11-04 intprops: revise _WRAPV macros, revert _OVERFLOW
+	2015-11-03 intprops: add parentheses
+	* lib/intprops.h, lib/timespec-add.c, lib/timespec-sub.c:
+	Copy from gnulib.
+
+2015-11-07  Eli Zaretskii  <eliz@gnu.org>
+
+	;* test/automated/abbrev-tests.el: Fix a typo in a comment
+
+2015-11-07  David Reitter  <david.reitter@gmail.com>
+
+	Provide NS notification objects where required to eliminate warnings
+
+	* nsterm.m (windowDidResize:, toggleFullScreen:):
+	Call notification functions with notification objects
+	as per delegate APIs.
+
+2015-11-07  Noam Postavsky  <npostavs@users.sourceforge.net>
+
+	Add test for bug #21824
+
+	* test/automated/buffer-tests.el: New file.
+	(overlay-modification-hooks-message-other-buf): New test.
+
+2015-11-07  Kelvin White  <kwhite@gnu.org>
+
+	erc-pcomplete.el (pcomplete-erc-nicks): Fix bug#18771
+
+2015-11-07  l3thal  <kwhite@gnu.org>
+
+	erc-pcomplete.el (pcomplete-erc-nicks): Fix bug#18771
+
+2015-11-07  David Reitter  <david.reitter@gmail.com>
+
+	Ignore fullscreen exit notifications on NS when frame is dead
+
+	* nsterm.m (windowDidResize:,windowWillExitFullScreen:)
+	  (windowDidExitFullScreen:): Return if frame is dead.
+	  These functions may be called when a fullscreen frame
+	  is closed; they are called before, not after.
+
+	May address Bug#21428.
+
+2015-11-07  Eli Zaretskii  <eliz@gnu.org>
+
+	Speed up lookup in redisplay--variables
+
+	* lisp/frame.el (redisplay--variables): Make it a hash-table.
+
+	* src/xdisp.c (maybe_set_redisplay): Access redisplay--variables
+	as a hash-table.  This speeds up this function by an order of
+	magnitude: where previously a setq was slowed down by 100% by
+	introducing the maybe_set_redisplay test, it is now only 5%
+	slower.
+	(syms_of_xdisp) <redisplay--variables>: Doc fix.
+
+2015-11-07  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/cl-macs.el (cl-defstruct): Fix a bug
+
+	The defsubst was being created as:
+	    (cl-defsubst name (args) ("DOC") ...)
+
+	* test/automated/cl-lib-tests.el (cl-lib-struct-constructors): Add test
+
+2015-11-07  Mihai Olteanu  <mihai_olteanu@fastmail.fm>  (tiny change)
+
+	Update doc string of hexl-mode
+
+	* lisp/hexl.el (hexl-mode): Doc fix.  (Bug#21800)
+
+2015-11-07  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix error in copy-abbrev-table
+
+	* lisp/abbrev.el (define-abbrev): Don't erase the :abbrev-table-modiff
+	property of the abbrev-table.  (Bug#21828)
+
+	* test/automated/abbrev-tests.el: New file.
+
+2015-11-07  Michael Albinus  <michael.albinus@gmx.de>
+
+	Add test to auto-revert-tests.el for Bug#21841
+
+	* test/automated/auto-revert-tests.el
+	(auto-revert-test01-auto-revert-several-files): New test.
+	(auto-revert-test02-auto-revert-tail-mode)
+	(auto-revert-test03-auto-revert-mode-dired): Rename them.
+
+2015-11-07  Martin Rudalics  <rudalics@gmx.at>
+
+	* doc/lispref/windows.texi (Coordinates and Windows): Fix typo.
+
+2015-11-07  Martin Rudalics  <rudalics@gmx.at>
+
+	In x_consider_frame_title don't set title of tooltip frames
+
+	* src/xdisp.c (x_consider_frame_title): Return immediately for
+	tooltip frames to avoid displaying empty tooltips.
+
+2015-11-06  Anders Lindgren  <andlind@gmail.com>
+
+	Fixed NextStep fullscreen problem (bug#21770).
+
+	* nsterm.m (ns_constrain_all_frames): Don't constrain fullscreen
+	frames.
+
+2015-11-06  Eli Zaretskii  <eliz@gnu.org>
+
+	Ensure redisplay after evaluation
+
+	* lisp/progmodes/elisp-mode.el (elisp--eval-last-sexp): Revert
+	last change.
+	* lisp/frame.el (redisplay--variables): Populate the
+	redisplay--variables list.
+	* src/xdisp.c (maybe_set_redisplay): New function.
+	(syms_of_xdisp) <redisplay--variables>: New variable.
+	* src/window.h (maybe_set_redisplay): Declare prototype.
+	* src/data.c (set_internal): Call maybe_set_redisplay.  (Bug#21835)
+
+2015-11-06  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* test/automated/subr-tests.el (subr-test-when): Fix again
+
+2015-11-06  Eli Zaretskii  <eliz@gnu.org>
+
+	Don't invoke overlay modification hooks in wrong buffer
+
+	* src/buffer.c (report_overlay_modification): When called with
+	AFTER non-zero, don't invoke overlay modification hooks if the
+	buffer recorded in last_overlay_modification_hooks is different
+	from the current buffer.  (Bug#21824)
+
+2015-11-06  Juanma Barranquero  <lekktu@gmail.com>
+
+	* admin/notes/repo: Fix a few obsolete references to Bazaar
+
+2015-11-06  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* test/automated/subr-tests.el (subr-test-when): Fix test
+
+2015-11-06  Martin Rudalics  <rudalics@gmx.at>
+
+	Avoid division by zero crash observed by Yuan MEI.
+
+	See http://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00194.html.
+
+	* src/dispnew.c (required_matrix_height, required_matrix_width):
+	Avoid division by zero.
+	* src/xterm.c (x_term_init): Init dpyinfo->smallest_font_height and
+	dpyinfo->smallest_char_width to 1.
+
+2015-11-06  Eli Zaretskii  <eliz@gnu.org>
+
+	Ensure redisplay after "C-x C-e"
+
+	* lisp/progmodes/elisp-mode.el (elisp--eval-last-sexp): Make sure
+	redisplay happens to account for any side effects of the evaluated
+	sexp.  (Bug#21835)
+
+2015-11-06  Michael Albinus  <michael.albinus@gmx.de>
+
+	Skip some file notification tests for cygwin
+
+	* test/automated/file-notify-tests.el (file-notify--test-with-events):
+	Remove argument TIMEOUT.  Adapt all callees.
+	(file-notify-test02-events, file-notify-test04-file-validity):
+	Skip for cygwin.  (Bug#21804)
+
+2015-11-05  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	* lisp/progmodes/xref.el: require semantic/symref during compilation.
+
+2015-11-05  Daiki Ueno  <ueno@gnu.org>
+
+	Suppress redundant Pinentry startup messages
+
+	* lisp/net/pinentry.el (pinentry-start): Add optional QUIET
+	argument.
+	* lisp/epg.el: Declare `pinentry-start'.
+	(epg--start): Call `pinentry-start' with QUIET argument set.
+
+2015-11-05  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* doc/emacs/ack.texi (Acknowledgments): Updates.
+
+2015-11-05  Juanma Barranquero  <lekktu@gmail.com>
+
+	* test/automated/elisp-mode-test.el: Silence some run-time warnings
+
+	(xref-elisp-deftest): Bind `find-file-suppress-same-file-warnings' to t.
+
+2015-11-05  Tassilo Horn  <tsdh@gnu.org>
+
+	Add prettify symbol for \times
+
+	* lisp/textmodes/tex-mode.el (tex--prettify-symbols-alist): Add
+	prettification support for \times.
+
+2015-11-05  Juanma Barranquero  <lekktu@gmail.com>
+
+	* test/automated/process-tests.el: Skip tests when bash is not available
+
+	(process-test-sentinel-accept-process-output)
+	(process-test-sentinel-sit-for): skip-unless bash executable found.
+
+2015-11-05  Eli Zaretskii  <eliz@gnu.org>
+
+	Add test for bug #21831
+
+	* test/automated/process-tests.el
+	(start-process-should-not-modify-arguments): New test.  (Bug#21831)
+	Suggested by Nicolas Richard <youngfrog@members.fsf.org>
+
+2015-11-04  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/emacs-lisp/eieio-compat.el: Typo caught by tests
+
+	(eieio--generic-static-object-generalizer): Fix typo.
+	* test/automated/eieio-tests.el: Byte-compile it again.
+	It looks like the underlying cause of bug#17852 was fixed in the mean time.
+
+2015-11-04  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	Revert "* lisp/subr.el (when): Use `macroexp-progn'"
+
+	This reverts commit 8e843831eaf271801836b7a3e4dd3b4fb0bb72b8.
+	It breaks bootstrapping (duh).
+
+2015-11-04  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/files.el (report-errors): Obsolete
+
+	(normal-mode, hack-local-variables, dir-locals-find-file): Use
+	`with-demoted-errors' instead.
+
+2015-11-04  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/subr.el (when): Use `macroexp-progn'
+
+	* test/automated/subr-tests.el (subr-test-when): New test
+
+2015-11-04  Juanma Barranquero  <lekktu@gmail.com>
+
+	* lisp/progmodes/xref.el: Doc fixes
+
+	(xref-make-file-location, xref-make-buffer-location, xref-make)
+	(xref-make-bogus-location, xref-make-match): Add cross-references.
+	(xref--insert-xrefs): Fix typo in docstring.
+
+2015-11-04  Anders Lindgren  <andlind@gmail.com>
+
+	Render fringe bitmaps correctly on NextStep (bug#21301).
+
+	The fringe bitmaps were inverted, the background was not transparent,
+	the image data was horizontally mirrored, and periodic fringe bitmaps
+	were not supported.
+
+	* nsimage.m ([EmacsImage initFromXBM:width:height:fg:bg:]): When
+	both background and foreground colors are 0, set the background
+	alpha channel to 0 (making the background transparent).  When
+	copying the image data, do this from the most significant bit
+	(leftmost) to the least (rightmost), to avoid mirroring.
+	* nsterm.m (ns_draw_fringe_bitmap): Don't invert the image bits. Add
+	support for periodic images (e.g. the empty line indicator).
+
+2015-11-03  Michael Heerdegen  <michael_heerdegen@web.de>
+
+	* lisp/emacs-lisp/pcase.el (pcase): Tweak docstring.
+
+2015-11-03  Nicolas Petton  <nicolas@petton.fr>
+
+	* admin/MAINTAINERS: Add seq-tests.el, map-tests.el, and thunk-tests.el.
+
+	* admin/MAINTAINERS: Add thunk.el.
+
+2015-11-03  Jay Belanger  <jay.p.belanger@gmail.com>
+
+	Change maintainer address.
+
+	* lisp/calc/calc (calc-bug-address): Change address.
+
+2015-11-03  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix a stupid error in gfilenotify.c.
+
+	* src/gfilenotify.c (dir_monitor_callback): Cancel monitor only,
+	if we've got a `deleted' signal AND the file name is the watched one.
+
+2015-11-03  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	Fix Bug#21816; case insensitive file system in elisp-mode-tests.el
+
+	* test/automated/elisp-mode-tests.el (xref-elisp-test-run): Use
+	case-insensitive string compare for file names.
+	(emacs-test-dir): Add 'downcase' to cause case differences (at least on
+	my system).
+
+2015-11-03  Jackson Ray Hamilton  <jackson@jacksonrayhamilton.com>
+
+	Fix ChangeLog.2 entry for js-jsx-mode
+
+2015-11-02  Juanma Barranquero  <lekktu@gmail.com>
+
+	flymake-tests.el (warning-predicate-rx-gcc): Fix check.
+
+	* test/automated/flymake-tests.el (warning-predicate-rx-gcc):
+	Also check that "make" is available, not just "gcc".
+
+2015-11-02  Ken Brown  <kbrown@cornell.edu>
+
+	Document behavior of collation on Cygwin
+
+	* test/automated/fns-tests.el (fns-tests-collate-sort): Mark as
+	expected failure on Cygwin.
+	* doc/lispref/strings.texi (Text Comparison): Document that
+	punctuation and whitespace are not ignored for sorting on Cygwin.
+
+2015-11-02  Dani Moncayo  <dmoncayo@gmail.com>
+
+	* build-aux/msys-to-w32: Prevent double slashes in w32 path list.
+
+2015-11-01  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/progmodes/f90.el (f90-no-block-limit):
+
+	Add associate.  (Bug#21794)
+	* test/automated/f90.el (f90-test-bug21794): New test.
+
+2015-11-01  Juanma Barranquero  <lekktu@gmail.com>
+
+	Fix incompatibility with TCC in test for bug#18745
+
+	* test/automated/process-tests.el (process-test-quoted-batfile):
+	Remove spaces unrelated to the bug being tested.
+
+2015-11-01  Michael Albinus  <michael.albinus@gmx.de>
+
+	Improve completion in tramp-gvfs.el
+
+	* lisp/net/tramp-gvfs.el (tramp-zeroconf-parse-device-names):
+	Renamed from `tramp-zeroconf-parse-service-device-names'.
+	(tramp-zeroconf-parse-webdav-device-names): Removed.  Code merged
+	with `tramp-zeroconf-parse-device-names'.
+	(tramp-gvfs-parse-device-names): New defun.
+	(top): Use it when `tramp-zeroconf-parse-device-names' is not
+	applicable.
+
+	* lisp/net/tramp.el (tramp-set-completion-function): The argument
+	could also be a zeroconf service type.
+
 2015-10-31  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
 	Change version of ntlm.el to 2.0.0
@@ -17618,7 +17988,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit cb56d4cec80a4da41710e2fa68dcd3d95e2a8e4c (inclusive).
+commit 8a8613bcf4227dfe46a694b761e9575bdf6ca2ce (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
