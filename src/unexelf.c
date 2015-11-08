@@ -40,347 +40,6 @@ what you give them.   Help stamp out software-hoarding!  */
  * On some machines, an existing old_name file is required.
  *
  */
-
-/* Even more heavily modified by james@bigtex.cactus.org of Dell Computer Co.
- * ELF support added.
- *
- * Basic theory: the data space of the running process needs to be
- * dumped to the output file.  Normally we would just enlarge the size
- * of .data, scooting everything down.  But we can't do that in ELF,
- * because there is often something between the .data space and the
- * .bss space.
- *
- * In the temacs dump below, notice that the Global Offset Table
- * (.got) and the Dynamic link data (.dynamic) come between .data1 and
- * .bss.  It does not work to overlap .data with these fields.
- *
- * The solution is to create a new .data segment.  This segment is
- * filled with data from the current process.  Since the contents of
- * various sections refer to sections by index, the new .data segment
- * is made the last in the table to avoid changing any existing index.
-
- * This is an example of how the section headers are changed.  "Addr"
- * is a process virtual address.  "Offset" is a file offset.
-
-raid:/nfs/raid/src/dist-18.56/src> dump -h temacs
-
-temacs:
-
-           **** SECTION HEADER TABLE ****
- [No]    Type    Flags   Addr         Offset       Size          Name
-         Link    Info    Adralgn      Entsize
-
- [1]     1       2       0x80480d4    0xd4         0x13          .interp
-         0       0       0x1          0
-
- [2]     5       2       0x80480e8    0xe8         0x388         .hash
-         3       0       0x4          0x4
-
- [3]     11      2       0x8048470    0x470        0x7f0         .dynsym
-         4       1       0x4          0x10
-
- [4]     3       2       0x8048c60    0xc60        0x3ad         .dynstr
-         0       0       0x1          0
-
- [5]     9       2       0x8049010    0x1010       0x338         .rel.plt
-         3       7       0x4          0x8
-
- [6]     1       6       0x8049348    0x1348       0x3           .init
-         0       0       0x4          0
-
- [7]     1       6       0x804934c    0x134c       0x680         .plt
-         0       0       0x4          0x4
-
- [8]     1       6       0x80499cc    0x19cc       0x3c56f       .text
-         0       0       0x4          0
-
- [9]     1       6       0x8085f3c    0x3df3c      0x3           .fini
-         0       0       0x4          0
-
- [10]    1       2       0x8085f40    0x3df40      0x69c         .rodata
-         0       0       0x4          0
-
- [11]    1       2       0x80865dc    0x3e5dc      0xd51         .rodata1
-         0       0       0x4          0
-
- [12]    1       3       0x8088330    0x3f330      0x20afc       .data
-         0       0       0x4          0
-
- [13]    1       3       0x80a8e2c    0x5fe2c      0x89d         .data1
-         0       0       0x4          0
-
- [14]    1       3       0x80a96cc    0x606cc      0x1a8         .got
-         0       0       0x4          0x4
-
- [15]    6       3       0x80a9874    0x60874      0x80          .dynamic
-         4       0       0x4          0x8
-
- [16]    8       3       0x80a98f4    0x608f4      0x449c        .bss
-         0       0       0x4          0
-
- [17]    2       0       0            0x608f4      0x9b90        .symtab
-         18      371     0x4          0x10
-
- [18]    3       0       0            0x6a484      0x8526        .strtab
-         0       0       0x1          0
-
- [19]    3       0       0            0x729aa      0x93          .shstrtab
-         0       0       0x1          0
-
- [20]    1       0       0            0x72a3d      0x68b7        .comment
-         0       0       0x1          0
-
- raid:/nfs/raid/src/dist-18.56/src> dump -h xemacs
-
- xemacs:
-
-            **** SECTION HEADER TABLE ****
- [No]    Type    Flags   Addr         Offset       Size          Name
-         Link    Info    Adralgn      Entsize
-
- [1]     1       2       0x80480d4    0xd4         0x13          .interp
-         0       0       0x1          0
-
- [2]     5       2       0x80480e8    0xe8         0x388         .hash
-         3       0       0x4          0x4
-
- [3]     11      2       0x8048470    0x470        0x7f0         .dynsym
-         4       1       0x4          0x10
-
- [4]     3       2       0x8048c60    0xc60        0x3ad         .dynstr
-         0       0       0x1          0
-
- [5]     9       2       0x8049010    0x1010       0x338         .rel.plt
-         3       7       0x4          0x8
-
- [6]     1       6       0x8049348    0x1348       0x3           .init
-         0       0       0x4          0
-
- [7]     1       6       0x804934c    0x134c       0x680         .plt
-         0       0       0x4          0x4
-
- [8]     1       6       0x80499cc    0x19cc       0x3c56f       .text
-         0       0       0x4          0
-
- [9]     1       6       0x8085f3c    0x3df3c      0x3           .fini
-         0       0       0x4          0
-
- [10]    1       2       0x8085f40    0x3df40      0x69c         .rodata
-         0       0       0x4          0
-
- [11]    1       2       0x80865dc    0x3e5dc      0xd51         .rodata1
-         0       0       0x4          0
-
- [12]    1       3       0x8088330    0x3f330      0x20afc       .data
-         0       0       0x4          0
-
- [13]    1       3       0x80a8e2c    0x5fe2c      0x89d         .data1
-         0       0       0x4          0
-
- [14]    1       3       0x80a96cc    0x606cc      0x1a8         .got
-         0       0       0x4          0x4
-
- [15]    6       3       0x80a9874    0x60874      0x80          .dynamic
-         4       0       0x4          0x8
-
- [16]    8       3       0x80c6800    0x7d800      0             .bss
-         0       0       0x4          0
-
- [17]    2       0       0            0x7d800      0x9b90        .symtab
-         18      371     0x4          0x10
-
- [18]    3       0       0            0x87390      0x8526        .strtab
-         0       0       0x1          0
-
- [19]    3       0       0            0x8f8b6      0x93          .shstrtab
-         0       0       0x1          0
-
- [20]    1       0       0            0x8f949      0x68b7        .comment
-         0       0       0x1          0
-
- [21]    1       3       0x80a98f4    0x608f4      0x1cf0c       .data
-         0       0       0x4          0
-
-  * This is an example of how the file header is changed.  "Shoff" is
-  * the section header offset within the file.  Since that table is
-  * after the new .data section, it is moved.  "Shnum" is the number of
-  * sections, which we increment.
-  *
-  * "Phoff" is the file offset to the program header.  "Phentsize" and
-  * "Shentsz" are the program and section header entries sizes respectively.
-  * These can be larger than the apparent struct sizes.
-
- raid:/nfs/raid/src/dist-18.56/src> dump -f temacs
-
- temacs:
-
-                     **** ELF HEADER ****
- Class        Data       Type         Machine     Version
- Entry        Phoff      Shoff        Flags       Ehsize
- Phentsize    Phnum      Shentsz      Shnum       Shstrndx
-
- 1            1          2            3           1
- 0x80499cc    0x34       0x792f4      0           0x34
- 0x20         5          0x28         21          19
-
- raid:/nfs/raid/src/dist-18.56/src> dump -f xemacs
-
- xemacs:
-
-                     **** ELF HEADER ****
- Class        Data       Type         Machine     Version
- Entry        Phoff      Shoff        Flags       Ehsize
- Phentsize    Phnum      Shentsz      Shnum       Shstrndx
-
- 1            1          2            3           1
- 0x80499cc    0x34       0x96200      0           0x34
- 0x20         5          0x28         22          19
-
-  * These are the program headers.  "Offset" is the file offset to the
-  * segment.  "Vaddr" is the memory load address.  "Filesz" is the
-  * segment size as it appears in the file, and "Memsz" is the size in
-  * memory.  Below, the third segment is the code and the fourth is the
-  * data: the difference between Filesz and Memsz is .bss
-
- raid:/nfs/raid/src/dist-18.56/src> dump -o temacs
-
- temacs:
-  ***** PROGRAM EXECUTION HEADER *****
- Type        Offset      Vaddr       Paddr
- Filesz      Memsz       Flags       Align
-
- 6           0x34        0x8048034   0
- 0xa0        0xa0        5           0
-
- 3           0xd4        0           0
- 0x13        0           4           0
-
- 1           0x34        0x8048034   0
- 0x3f2f9     0x3f2f9     5           0x1000
-
- 1           0x3f330     0x8088330   0
- 0x215c4     0x25a60     7           0x1000
-
- 2           0x60874     0x80a9874   0
- 0x80        0           7           0
-
- raid:/nfs/raid/src/dist-18.56/src> dump -o xemacs
-
- xemacs:
-  ***** PROGRAM EXECUTION HEADER *****
- Type        Offset      Vaddr       Paddr
- Filesz      Memsz       Flags       Align
-
- 6           0x34        0x8048034   0
- 0xa0        0xa0        5           0
-
- 3           0xd4        0           0
- 0x13        0           4           0
-
- 1           0x34        0x8048034   0
- 0x3f2f9     0x3f2f9     5           0x1000
-
- 1           0x3f330     0x8088330   0
- 0x3e4d0     0x3e4d0     7           0x1000
-
- 2           0x60874     0x80a9874   0
- 0x80        0           7           0
-
-
- */
-
-/* Modified by wtien@urbana.mcd.mot.com of Motorola Inc.
- *
- * The above mechanism does not work if the unexeced ELF file is being
- * re-layout by other applications (such as `strip'). All the applications
- * that re-layout the internal of ELF will layout all sections in ascending
- * order of their file offsets. After the re-layout, the data2 section will
- * still be the LAST section in the section header vector, but its file offset
- * is now being pushed far away down, and causes part of it not to be mapped
- * in (ie. not covered by the load segment entry in PHDR vector), therefore
- * causes the new binary to fail.
- *
- * The solution is to modify the unexec algorithm to insert the new data2
- * section header right before the new bss section header, so their file
- * offsets will be in the ascending order. Since some of the section's (all
- * sections AFTER the bss section) indexes are now changed, we also need to
- * modify some fields to make them point to the right sections. This is done
- * by macro PATCH_INDEX. All the fields that need to be patched are:
- *
- * 1. ELF header e_shstrndx field.
- * 2. section header sh_link and sh_info field.
- * 3. symbol table entry st_shndx field.
- *
- * The above example now should look like:
-
-           **** SECTION HEADER TABLE ****
- [No]    Type    Flags   Addr         Offset       Size          Name
-         Link    Info    Adralgn      Entsize
-
- [1]     1       2       0x80480d4    0xd4         0x13          .interp
-         0       0       0x1          0
-
- [2]     5       2       0x80480e8    0xe8         0x388         .hash
-         3       0       0x4          0x4
-
- [3]     11      2       0x8048470    0x470        0x7f0         .dynsym
-         4       1       0x4          0x10
-
- [4]     3       2       0x8048c60    0xc60        0x3ad         .dynstr
-         0       0       0x1          0
-
- [5]     9       2       0x8049010    0x1010       0x338         .rel.plt
-         3       7       0x4          0x8
-
- [6]     1       6       0x8049348    0x1348       0x3           .init
-         0       0       0x4          0
-
- [7]     1       6       0x804934c    0x134c       0x680         .plt
-         0       0       0x4          0x4
-
- [8]     1       6       0x80499cc    0x19cc       0x3c56f       .text
-         0       0       0x4          0
-
- [9]     1       6       0x8085f3c    0x3df3c      0x3           .fini
-         0       0       0x4          0
-
- [10]    1       2       0x8085f40    0x3df40      0x69c         .rodata
-         0       0       0x4          0
-
- [11]    1       2       0x80865dc    0x3e5dc      0xd51         .rodata1
-         0       0       0x4          0
-
- [12]    1       3       0x8088330    0x3f330      0x20afc       .data
-         0       0       0x4          0
-
- [13]    1       3       0x80a8e2c    0x5fe2c      0x89d         .data1
-         0       0       0x4          0
-
- [14]    1       3       0x80a96cc    0x606cc      0x1a8         .got
-         0       0       0x4          0x4
-
- [15]    6       3       0x80a9874    0x60874      0x80          .dynamic
-         4       0       0x4          0x8
-
- [16]    1       3       0x80a98f4    0x608f4      0x1cf0c       .data
-         0       0       0x4          0
-
- [17]    8       3       0x80c6800    0x7d800      0             .bss
-         0       0       0x4          0
-
- [18]    2       0       0            0x7d800      0x9b90        .symtab
-         19      371     0x4          0x10
-
- [19]    3       0       0            0x87390      0x8526        .strtab
-         0       0       0x1          0
-
- [20]    3       0       0            0x8f8b6      0x93          .shstrtab
-         0       0       0x1          0
-
- [21]    1       0       0            0x8f949      0x68b7        .comment
-         0       0       0x1          0
-
- */
 
 /* We do not use mmap because that fails with NFS.
    Instead we read the whole file, modify it, and write it out.  */
@@ -552,45 +211,15 @@ entry_address (void *section_h, ptrdiff_t idx, ptrdiff_t entsize)
 #define NEW_PROGRAM_H(n) \
   (*(ElfW (Phdr) *) entry_address (new_program_h, n, new_file_h->e_phentsize))
 
-#define PATCH_INDEX(n) ((n) += old_bss_index <= (n))
 typedef unsigned char byte;
-
-/* Return the index of the section named NAME.
-   SECTION_NAMES, FILE_NAME and FILE_H give information
-   about the file we are looking in.
-
-   If we don't find the section NAME, that is a fatal error
-   if NOERROR is false; return -1 if NOERROR is true.  */
-
-static ptrdiff_t
-find_section (const char *name, const char *section_names, const char *file_name,
-	      ElfW (Ehdr) *old_file_h, ElfW (Shdr) *old_section_h,
-	      bool noerror)
-{
-  ptrdiff_t idx;
-
-  for (idx = 1; idx < old_file_h->e_shnum; idx++)
-    {
-      char const *found_name = section_names + OLD_SECTION_H (idx).sh_name;
-#ifdef UNEXELF_DEBUG
-      fprintf (stderr, "Looking for %s - found %s\n", name, found_name);
-#endif
-      if (strcmp (name, found_name) == 0)
-	return idx;
-    }
-
-  if (! noerror)
-    fatal ("Can't find %s in %s", name, file_name);
-  return -1;
-}
 
 /* ****************************************************************
  * unexec
  *
  * driving logic.
  *
- * In ELF, this works by replacing the old .bss section with a new
- * .data section, and inserting an empty .bss immediately afterwards.
+ * In ELF, this works by replacing the old bss SHT_NOBITS section with
+ * a new, larger, SHT_PROGBITS section.
  *
  */
 void
@@ -615,18 +244,16 @@ unexec (const char *new_name, const char *old_name)
   ElfW (Phdr) *old_program_h, *new_program_h;
   ElfW (Shdr) *old_section_h, *new_section_h;
 
-  /* Point to the section name table in the old file.  */
-  char *old_section_names;
+  /* Point to the section name table.  */
+  char *old_section_names, *new_section_names;
 
   ElfW (Phdr) *old_bss_seg, *new_bss_seg;
   ElfW (Addr) old_bss_addr, new_bss_addr;
   ElfW (Word) old_bss_size, new_data2_size;
-  ElfW (Off)  new_data2_offset;
-  ElfW (Addr) new_data2_addr;
-  ElfW (Off)  old_bss_offset;
+  ElfW (Off)  old_bss_offset, new_data2_offset;
 
-  ptrdiff_t n, nn;
-  ptrdiff_t old_bss_index, old_data_index;
+  ptrdiff_t n;
+  ptrdiff_t old_bss_index;
   struct stat stat_buf;
   off_t old_file_size;
 
@@ -688,7 +315,7 @@ unexec (const char *new_name, const char *old_name)
   old_bss_offset = old_bss_seg->p_offset + old_bss_seg->p_filesz;
   old_bss_size = old_bss_seg->p_memsz - old_bss_seg->p_filesz;
 
-  /* Find the first bss style section in the bss segment range.  */
+  /* Find the last bss style section in the bss segment range.  */
   old_bss_index = -1;
   for (n = old_file_h->e_shnum; --n > 0; )
     {
@@ -697,22 +324,15 @@ unexec (const char *new_name, const char *old_name)
 	  && shdr->sh_addr >= old_bss_addr
 	  && shdr->sh_addr + shdr->sh_size <= old_bss_addr + old_bss_size
 	  && (old_bss_index == -1
-	      || OLD_SECTION_H (old_bss_index).sh_addr > shdr->sh_addr))
+	      || OLD_SECTION_H (old_bss_index).sh_addr < shdr->sh_addr))
 	old_bss_index = n;
     }
 
   if (old_bss_index == -1)
     fatal ("no bss section found");
 
-  /* Find the old .data section.  Figure out parameters of
-     the new data2 and bss sections.  */
-
-  old_data_index = find_section (".data", old_section_names,
-				 old_name, old_file_h, old_section_h, 0);
-
   new_break = sbrk (0);
   new_bss_addr = (ElfW (Addr)) new_break;
-  new_data2_addr = old_bss_addr;
   new_data2_size = new_bss_addr - old_bss_addr;
   new_data2_offset = old_bss_offset;
 
@@ -722,7 +342,6 @@ unexec (const char *new_name, const char *old_name)
   DEBUG_LOG (old_bss_size);
   DEBUG_LOG (old_bss_offset);
   DEBUG_LOG (new_bss_addr);
-  DEBUG_LOG (new_data2_addr);
   DEBUG_LOG (new_data2_size);
   DEBUG_LOG (new_data2_offset);
 #endif
@@ -738,7 +357,7 @@ unexec (const char *new_name, const char *old_name)
   if (new_file < 0)
     fatal ("Can't creat (%s): %s", new_name, strerror (errno));
 
-  new_file_size = old_file_size + old_file_h->e_shentsize + new_data2_size;
+  new_file_size = old_file_size + new_data2_size;
 
   if (ftruncate (new_file, new_file_size))
     fatal ("Can't ftruncate (%s): %s", new_name, strerror (errno));
@@ -754,21 +373,18 @@ unexec (const char *new_name, const char *old_name)
   new_file_h = (ElfW (Ehdr) *) new_base;
   memcpy (new_file_h, old_file_h, old_file_h->e_ehsize);
 
-  /* Fix up file header.  We'll add one section.  Section header is
-     further away now.  */
+  /* Fix up file header.  Section header is further away now.  */
 
   if (new_file_h->e_shoff >= old_bss_offset)
     new_file_h->e_shoff += new_data2_size;
-  new_file_h->e_shnum += 1;
-
-  /* Modify the e_shstrndx if necessary. */
-  PATCH_INDEX (new_file_h->e_shstrndx);
 
   new_program_h = (ElfW (Phdr) *) ((byte *) new_base + new_file_h->e_phoff);
   new_section_h = (ElfW (Shdr) *) ((byte *) new_base + new_file_h->e_shoff);
 
   memcpy (new_program_h, old_program_h,
 	  old_file_h->e_phnum * old_file_h->e_phentsize);
+  memcpy (new_section_h, old_section_h,
+	  old_file_h->e_shnum * old_file_h->e_shentsize);
 
 #ifdef UNEXELF_DEBUG
   DEBUG_LOG (old_file_h->e_shoff);
@@ -787,42 +403,21 @@ unexec (const char *new_name, const char *old_name)
   /* Copy over what we have in memory now for the bss area. */
   memcpy (new_base + new_data2_offset, (caddr_t) old_bss_addr, new_data2_size);
 
-  /* Fix up section headers based on new .data2 section.  Any section
-     whose offset or virtual address is after the new .data2 section
-     gets its value adjusted.  .bss size becomes zero.  data2 section
-     header gets added by copying the existing .data header and
-     modifying the offset, address and size.  */
-
-  /* Walk through all section headers, insert the new data2 section right
-     before the new bss section. */
-  for (n = 1, nn = 1; n < old_file_h->e_shnum; n++, nn++)
+  /* Walk through all section headers, copying data and updating.  */
+  for (n = 1; n < old_file_h->e_shnum; n++)
     {
       caddr_t src;
       ElfW (Shdr) *old_shdr = &OLD_SECTION_H (n);
-      ElfW (Shdr) *new_shdr = &NEW_SECTION_H (nn);
-
-      /* If it is (s)bss section, insert the new data2 section before it.  */
-      if (n == old_bss_index)
-	{
-	  /* Steal the data section header for this data2 section. */
-	  memcpy (new_shdr, &OLD_SECTION_H (old_data_index),
-		  new_file_h->e_shentsize);
-
-	  new_shdr->sh_addr = new_data2_addr;
-	  new_shdr->sh_offset = new_data2_offset;
-	  new_shdr->sh_size = new_data2_size;
-	  new_shdr->sh_addralign = 1;
-	  nn++;
-	  new_shdr++;
-	}
-
-      memcpy (new_shdr, old_shdr, old_file_h->e_shentsize);
+      ElfW (Shdr) *new_shdr = &NEW_SECTION_H (n);
 
       if (new_shdr->sh_type == SHT_NOBITS
 	  && new_shdr->sh_addr >= old_bss_addr
 	  && (new_shdr->sh_addr + new_shdr->sh_size
 	      <= old_bss_addr + old_bss_size))
 	{
+	  /* This section now has file backing.  */
+	  new_shdr->sh_type = SHT_PROGBITS;
+
 	  /* SHT_NOBITS sections do not need a valid sh_offset, so it
 	     might be incorrect.  Write the correct value.  */
 	  new_shdr->sh_offset = (new_shdr->sh_addr - new_bss_seg->p_vaddr
@@ -837,35 +432,20 @@ unexec (const char *new_name, const char *old_name)
 	  if (strcmp (old_section_names + new_shdr->sh_name, ".plt") == 0)
 	    memset (new_shdr->sh_offset + new_base, 0, new_shdr->sh_size);
 
-	  /* Set the new bss and sbss section's size to zero, because
-	     we've already covered this address range by .data2.  */
-	  new_shdr->sh_size = 0;
-	}
-      else
-	{
-	  /* Any section that was originally placed after the .bss
-	     section should now be off by NEW_DATA2_SIZE.  */
+	  /* Extend the size of the last bss section to cover dumped
+	     data.  */
+	  if (n == old_bss_index)
+	    new_shdr->sh_size = new_bss_addr - new_shdr->sh_addr;
 
-	  if (new_shdr->sh_offset >= old_bss_offset)
-	    new_shdr->sh_offset += new_data2_size;
-
-	  /* Any section that was originally placed after the section
-	     header table should now be off by the size of one section
-	     header table entry.  */
-	  if (new_shdr->sh_offset > new_file_h->e_shoff)
-	    new_shdr->sh_offset += new_file_h->e_shentsize;
+	  /* We have already copied this section from the current
+	     process.  */
+	  continue;
 	}
 
-      /* If any section hdr refers to the section after the new .data
-	 section, make it refer to next one because we have inserted
-	 a new section in between.  */
-
-      PATCH_INDEX (new_shdr->sh_link);
-      /* For symbol tables, info is a symbol table index,
-	 so don't change it.  */
-      if (new_shdr->sh_type != SHT_SYMTAB
-	  && new_shdr->sh_type != SHT_DYNSYM)
-	PATCH_INDEX (new_shdr->sh_info);
+      /* Any section that was originally placed after the .bss
+	 section should now be offset by NEW_DATA2_SIZE.  */
+      if (new_shdr->sh_offset >= old_bss_offset)
+	new_shdr->sh_offset += new_data2_size;
 
       /* Now, start to copy the content of sections.  */
       if (new_shdr->sh_type == SHT_NULL
@@ -981,24 +561,6 @@ unexec (const char *new_name, const char *old_name)
 	    }
 	}
 #endif /* __sgi */
-
-      /* Patch st_shndx field of symbol table.  */
-      if (new_shdr->sh_type == SHT_SYMTAB
-	  || new_shdr->sh_type == SHT_DYNSYM)
-	{
-	  ptrdiff_t num = new_shdr->sh_size / new_shdr->sh_entsize;
-	  ElfW (Sym) *sym = (ElfW (Sym) *) (new_shdr->sh_offset + new_base);
-	  for (; num--; sym++)
-	    {
-	      if (sym->st_shndx == SHN_XINDEX)
-		fatal ("SHT_SYMTAB_SHNDX unsupported");
-	      if (sym->st_shndx == SHN_UNDEF
-		  || sym->st_shndx >= SHN_LORESERVE)
-		continue;
-
-	      PATCH_INDEX (sym->st_shndx);
-	    }
-	}
     }
 
   /* Update the symbol values of _edata and _end.  */
@@ -1042,15 +604,10 @@ unexec (const char *new_name, const char *old_name)
 	      ElfW (Shdr) *new_shdr = &NEW_SECTION_H (symp->st_shndx);
 	      if (new_shdr->sh_type != SHT_NOBITS)
 		{
-		  ElfW (Shdr) *old_shdr;
+		  ElfW (Shdr) *old_shdr = &OLD_SECTION_H (symp->st_shndx);
 		  ptrdiff_t reladdr = symp->st_value - new_shdr->sh_addr;
 		  ptrdiff_t newoff = reladdr + new_shdr->sh_offset;
 
-		  /* "Unpatch" index.  */
-		  nn = symp->st_shndx;
-		  if (nn > old_bss_index)
-		    nn--;
-		  old_shdr = &OLD_SECTION_H (nn);
 		  if (old_shdr->sh_type == SHT_NOBITS)
 		    memset (new_base + newoff, 0, symp->st_size);
 		  else
@@ -1063,6 +620,25 @@ unexec (const char *new_name, const char *old_name)
 	    }
 #endif
 	}
+    }
+
+  /* Modify the names of sections we changed from SHT_NOBITS to
+     SHT_PROGBITS.  This is really just cosmetic, but some tools that
+     (wrongly) operate on section names rather than types might be
+     confused by a SHT_PROGBITS .bss section.  */
+  new_section_names = ((char *) new_base
+		       + NEW_SECTION_H (new_file_h->e_shstrndx).sh_offset);
+  for (n = new_file_h->e_shnum; 0 < --n; )
+    {
+      ElfW (Shdr) *old_shdr = &OLD_SECTION_H (n);
+      ElfW (Shdr) *new_shdr = &NEW_SECTION_H (n);
+
+      /* Replace the leading '.' with ','.  When .shstrtab is string
+	 merged this will rename both .bss and .rela.bss to ,bss and
+	 .rela,bss.  */
+      if (old_shdr->sh_type == SHT_NOBITS
+	  && new_shdr->sh_type == SHT_PROGBITS)
+	*(new_section_names + new_shdr->sh_name) = ',';
     }
 
   /* This loop seeks out relocation sections for the data section, so
