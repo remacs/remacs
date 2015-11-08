@@ -6267,7 +6267,10 @@ not_in_argv (NSString *arg)
       wr = NSMakeRect (0, 0, neww, newh);
       NSTRACE_RECT ("setFrame", wr);
       [view setFrame: wr];
-      [self windowDidMove:nil];   // Update top/left.
+      // to do: consider using [NSNotificationCenter postNotificationName:].
+      [self windowDidMove: // Update top/left.
+	      [NSNotification notificationWithName:NSWindowDidMoveNotification
+					    object:[view window]]];
     }
   else
     {
@@ -7051,13 +7054,17 @@ not_in_argv (NSString *arg)
 
       nonfs_window = w;
 
-      [self windowWillEnterFullScreen:nil];
+      [self windowWillEnterFullScreen:
+	      [NSNotification notificationWithName:NSWindowWillEnterFullScreenNotification
+					    object:[self window]]];
       [fw makeKeyAndOrderFront:NSApp];
       [fw makeFirstResponder:self];
       [w orderOut:self];
       r = [fw frameRectForContentRect:[screen frame]];
       [fw setFrame: r display:YES animate:ns_use_fullscreen_animation];
-      [self windowDidEnterFullScreen:nil];
+      [self windowDidEnterFullScreen:
+	      [NSNotification notificationWithName:NSWindowDidEnterFullScreenNotification
+					    object:[self window]]];
       [fw display];
     }
   else
@@ -7085,11 +7092,17 @@ not_in_argv (NSString *arg)
       if (FRAME_EXTERNAL_TOOL_BAR (f))
         FRAME_TOOLBAR_HEIGHT (f) = tobar_height;
 
-      [self windowWillExitFullScreen:nil];
+      // to do: consider using [NSNotificationCenter postNotificationName:] to send notifications.
+
+      [self windowWillExitFullScreen:
+	      [NSNotification notificationWithName:NSWindowWillExitFullScreenNotification
+					    object:[self window]]];
       [fw setFrame: [w frame] display:YES animate:ns_use_fullscreen_animation];
       [fw close];
       [w makeKeyAndOrderFront:NSApp];
-      [self windowDidExitFullScreen:nil];
+      [self windowDidExitFullScreen:
+	      [NSNotification notificationWithName:NSWindowDidExitFullScreenNotification
+					    object:[self window]]];
       [self updateFrameSize:YES];
     }
 }
