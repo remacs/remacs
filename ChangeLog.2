@@ -22,10 +22,6 @@
 	* lib/intprops.h, lib/timespec-add.c, lib/timespec-sub.c:
 	Copy from gnulib.
 
-2015-11-07  Eli Zaretskii  <eliz@gnu.org>
-
-	;* test/automated/abbrev-tests.el: Fix a typo in a comment
-
 2015-11-07  David Reitter  <david.reitter@gmail.com>
 
 	Provide NS notification objects where required to eliminate warnings
@@ -43,20 +39,16 @@
 
 2015-11-07  Kelvin White  <kwhite@gnu.org>
 
-	erc-pcomplete.el (pcomplete-erc-nicks): Fix bug#18771
-
-2015-11-07  l3thal  <kwhite@gnu.org>
-
-	erc-pcomplete.el (pcomplete-erc-nicks): Fix bug#18771
+	* lisp/erc/erc-pcomplete.el (pcomplete-erc-nicks): Fix bug#18771.
 
 2015-11-07  David Reitter  <david.reitter@gmail.com>
 
 	Ignore fullscreen exit notifications on NS when frame is dead
 
-	* nsterm.m (windowDidResize:,windowWillExitFullScreen:)
-	  (windowDidExitFullScreen:): Return if frame is dead.
-	  These functions may be called when a fullscreen frame
-	  is closed; they are called before, not after.
+	* nsterm.m (windowDidResize:, windowWillExitFullScreen:)
+	(windowDidExitFullScreen:): Return if frame is dead.
+	These functions may be called when a fullscreen frame
+	is closed; they are called before, not after.
 
 	May address Bug#21428.
 
@@ -75,12 +67,13 @@
 
 2015-11-07  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/emacs-lisp/cl-macs.el (cl-defstruct): Fix a bug
+	* lisp/emacs-lisp/cl-macs.el (cl-defstruct): Fix a bug.
 
 	The defsubst was being created as:
 	    (cl-defsubst name (args) ("DOC") ...)
 
-	* test/automated/cl-lib-tests.el (cl-lib-struct-constructors): Add test
+	* test/automated/cl-lib-tests.el (cl-lib-struct-constructors):
+	Add test.
 
 2015-11-07  Mihai Olteanu  <mihai_olteanu@fastmail.fm>  (tiny change)
 
@@ -121,15 +114,15 @@
 
 	Fixed NextStep fullscreen problem (bug#21770).
 
-	* nsterm.m (ns_constrain_all_frames): Don't constrain fullscreen
-	frames.
+	* src/nsterm.m (ns_constrain_all_frames): Don't constrain
+	fullscreen frames.
 
 2015-11-06  Eli Zaretskii  <eliz@gnu.org>
 
 	Ensure redisplay after evaluation
 
-	* lisp/progmodes/elisp-mode.el (elisp--eval-last-sexp): Revert
-	last change.
+	* lisp/progmodes/elisp-mode.el (elisp--eval-last-sexp):
+	Revert last change.
 	* lisp/frame.el (redisplay--variables): Populate the
 	redisplay--variables list.
 	* src/xdisp.c (maybe_set_redisplay): New function.
@@ -139,7 +132,7 @@
 
 2015-11-06  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* test/automated/subr-tests.el (subr-test-when): Fix again
+	* test/automated/subr-tests.el (subr-test-when): Fix again.
 
 2015-11-06  Eli Zaretskii  <eliz@gnu.org>
 
@@ -152,15 +145,15 @@
 
 2015-11-06  Juanma Barranquero  <lekktu@gmail.com>
 
-	* admin/notes/repo: Fix a few obsolete references to Bazaar
+	* admin/notes/repo: Fix a few obsolete references to Bazaar.
 
 2015-11-06  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* test/automated/subr-tests.el (subr-test-when): Fix test
+	* test/automated/subr-tests.el (subr-test-when): Fix test.
 
 2015-11-06  Martin Rudalics  <rudalics@gmx.at>
 
-	Avoid division by zero crash observed by Yuan MEI.
+	Avoid division by zero crash observed by Yuan MEI
 
 	See http://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00194.html.
 
@@ -188,14 +181,13 @@
 
 2015-11-05  Stephen Leake  <stephen_leake@stephe-leake.org>
 
-	* lisp/progmodes/xref.el: require semantic/symref during compilation.
+	* lisp/progmodes/xref.el: Require semantic/symref during compilation.
 
 2015-11-05  Daiki Ueno  <ueno@gnu.org>
 
 	Suppress redundant Pinentry startup messages
 
-	* lisp/net/pinentry.el (pinentry-start): Add optional QUIET
-	argument.
+	* lisp/net/pinentry.el (pinentry-start): Add optional QUIET argument.
 	* lisp/epg.el: Declare `pinentry-start'.
 	(epg--start): Call `pinentry-start' with QUIET argument set.
 
@@ -205,21 +197,17 @@
 
 2015-11-05  Juanma Barranquero  <lekktu@gmail.com>
 
-	* test/automated/elisp-mode-test.el: Silence some run-time warnings
-
+	* test/automated/elisp-mode-test.el: Silence some run-time warnings.
 	(xref-elisp-deftest): Bind `find-file-suppress-same-file-warnings' to t.
 
 2015-11-05  Tassilo Horn  <tsdh@gnu.org>
 
-	Add prettify symbol for \times
-
-	* lisp/textmodes/tex-mode.el (tex--prettify-symbols-alist): Add
-	prettification support for \times.
+	* lisp/textmodes/tex-mode.el (tex--prettify-symbols-alist):
+	Add prettification support for \times.
 
 2015-11-05  Juanma Barranquero  <lekktu@gmail.com>
 
-	* test/automated/process-tests.el: Skip tests when bash is not available
-
+	* test/automated/process-tests.el: Skip tests when bash is unavailable.
 	(process-test-sentinel-accept-process-output)
 	(process-test-sentinel-sit-for): skip-unless bash executable found.
 
@@ -233,11 +221,11 @@
 
 2015-11-04  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* lisp/emacs-lisp/eieio-compat.el: Typo caught by tests
+	* lisp/emacs-lisp/eieio-compat.el: Typo caught by tests.
 
 	(eieio--generic-static-object-generalizer): Fix typo.
-	* test/automated/eieio-tests.el: Byte-compile it again.
-	It looks like the underlying cause of bug#17852 was fixed in the mean time.
+	* test/automated/eieio-tests.el: Byte-compile it again.  It looks
+	like the underlying cause of bug#17852 was fixed in the mean time.
 
 2015-11-04  Artur Malabarba  <bruce.connor.am@gmail.com>
 
@@ -248,40 +236,39 @@
 
 2015-11-04  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/files.el (report-errors): Obsolete
+	* lisp/files.el (report-errors): Obsolete.
 
-	(normal-mode, hack-local-variables, dir-locals-find-file): Use
-	`with-demoted-errors' instead.
+	(normal-mode, hack-local-variables, dir-locals-find-file):
+	Use `with-demoted-errors' instead.
 
 2015-11-04  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/subr.el (when): Use `macroexp-progn'
+	* lisp/subr.el (when): Use `macroexp-progn'.
 
-	* test/automated/subr-tests.el (subr-test-when): New test
+	* test/automated/subr-tests.el (subr-test-when): New test.
 
 2015-11-04  Juanma Barranquero  <lekktu@gmail.com>
 
-	* lisp/progmodes/xref.el: Doc fixes
-
+	* lisp/progmodes/xref.el: Doc fixes.
 	(xref-make-file-location, xref-make-buffer-location, xref-make)
 	(xref-make-bogus-location, xref-make-match): Add cross-references.
 	(xref--insert-xrefs): Fix typo in docstring.
 
 2015-11-04  Anders Lindgren  <andlind@gmail.com>
 
-	Render fringe bitmaps correctly on NextStep (bug#21301).
+	Render fringe bitmaps correctly on NextStep (bug#21301)
 
 	The fringe bitmaps were inverted, the background was not transparent,
 	the image data was horizontally mirrored, and periodic fringe bitmaps
 	were not supported.
 
-	* nsimage.m ([EmacsImage initFromXBM:width:height:fg:bg:]): When
-	both background and foreground colors are 0, set the background
+	* src/nsimage.m ([EmacsImage initFromXBM:width:height:fg:bg:]):
+	When both background and foreground colors are 0, set the background
 	alpha channel to 0 (making the background transparent).  When
 	copying the image data, do this from the most significant bit
 	(leftmost) to the least (rightmost), to avoid mirroring.
-	* nsterm.m (ns_draw_fringe_bitmap): Don't invert the image bits. Add
-	support for periodic images (e.g. the empty line indicator).
+	* src/nsterm.m (ns_draw_fringe_bitmap): Don't invert the image bits.
+	Add support for periodic images (e.g. the empty line indicator).
 
 2015-11-03  Michael Heerdegen  <michael_heerdegen@web.de>
 
@@ -295,13 +282,11 @@
 
 2015-11-03  Jay Belanger  <jay.p.belanger@gmail.com>
 
-	Change maintainer address.
-
-	* lisp/calc/calc (calc-bug-address): Change address.
+	* lisp/calc/calc (calc-bug-address): Change maintainer address.
 
 2015-11-03  Michael Albinus  <michael.albinus@gmx.de>
 
-	Fix a stupid error in gfilenotify.c.
+	Fix a stupid error in gfilenotify.c
 
 	* src/gfilenotify.c (dir_monitor_callback): Cancel monitor only,
 	if we've got a `deleted' signal AND the file name is the watched one.
@@ -310,18 +295,14 @@
 
 	Fix Bug#21816; case insensitive file system in elisp-mode-tests.el
 
-	* test/automated/elisp-mode-tests.el (xref-elisp-test-run): Use
-	case-insensitive string compare for file names.
-	(emacs-test-dir): Add 'downcase' to cause case differences (at least on
-	my system).
-
-2015-11-03  Jackson Ray Hamilton  <jackson@jacksonrayhamilton.com>
-
-	Fix ChangeLog.2 entry for js-jsx-mode
+	* test/automated/elisp-mode-tests.el (xref-elisp-test-run):
+	Use case-insensitive string compare for file names.
+	(emacs-test-dir): Add 'downcase' to cause case differences (at
+	least on my system).
 
 2015-11-02  Juanma Barranquero  <lekktu@gmail.com>
 
-	flymake-tests.el (warning-predicate-rx-gcc): Fix check.
+	flymake-tests.el (warning-predicate-rx-gcc): Fix check
 
 	* test/automated/flymake-tests.el (warning-predicate-rx-gcc):
 	Also check that "make" is available, not just "gcc".
@@ -341,9 +322,8 @@
 
 2015-11-01  Glenn Morris  <rgm@gnu.org>
 
-	* lisp/progmodes/f90.el (f90-no-block-limit):
-
-	Add associate.  (Bug#21794)
+	* lisp/progmodes/f90.el (f90-no-block-limit): Add associate.
+	(Bug#21794)
 	* test/automated/f90.el (f90-test-bug21794): New test.
 
 2015-11-01  Juanma Barranquero  <lekktu@gmail.com>
@@ -358,8 +338,8 @@
 	Improve completion in tramp-gvfs.el
 
 	* lisp/net/tramp-gvfs.el (tramp-zeroconf-parse-device-names):
-	Renamed from `tramp-zeroconf-parse-service-device-names'.
-	(tramp-zeroconf-parse-webdav-device-names): Removed.  Code merged
+	Rename from `tramp-zeroconf-parse-service-device-names'.
+	(tramp-zeroconf-parse-webdav-device-names): Remove.  Code merged
 	with `tramp-zeroconf-parse-device-names'.
 	(tramp-gvfs-parse-device-names): New defun.
 	(top): Use it when `tramp-zeroconf-parse-device-names' is not
@@ -370,7 +350,6 @@
 
 2015-10-31  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
-	Change version of ntlm.el to 2.0.0
 	* lisp/net/ntlm.el: Change version to 2.0.0.
 
 2015-10-31  Juanma Barranquero  <lekktu@gmail.com>
