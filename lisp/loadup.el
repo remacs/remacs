@@ -153,6 +153,7 @@
 (load "emacs-lisp/nadvice")
 (load "emacs-lisp/cl-preloaded")
 (load "minibuffer")            ;After loaddefs, for define-minor-mode.
+(load "obarray")        ;abbrev.el is implemented in terms of obarrays.
 (load "abbrev")         ;lisp-mode.el and simple.el use define-abbrev-table.
 (load "simple")
 
