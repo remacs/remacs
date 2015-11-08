@@ -49,5 +49,24 @@
   (should (equal (json-read-from-string "\"\\nasd\\u0444\\u044b\\u0432fgh\\t\"")
                  "\nasdфывfgh\t")))
 
+(ert-deftest test-json-path-to-position-with-objects ()
+  (let* ((json-string "{\"foo\": {\"bar\": {\"baz\": \"value\"}}}")
+         (matched-path (json-path-to-position 32 json-string)))
+    (should (equal (plist-get matched-path :path) '("foo" "bar" "baz")))
+    (should (equal (plist-get matched-path :match-start) 25))
+    (should (equal (plist-get matched-path :match-end) 32))))
+
+(ert-deftest test-json-path-to-position-with-arrays ()
+  (let* ((json-string "{\"foo\": [\"bar\", [\"baz\"]]}")
+         (matched-path (json-path-to-position 20 json-string)))
+    (should (equal (plist-get matched-path :path) '("foo" 1 0)))
+    (should (equal (plist-get matched-path :match-start) 18))
+    (should (equal (plist-get matched-path :match-end) 23))))
+
+(ert-deftest test-json-path-to-position-no-match ()
+  (let* ((json-string "{\"foo\": {\"bar\": \"baz\"}}")
+         (matched-path (json-path-to-position 5 json-string)))
+    (should (null matched-path))))
+
 (provide 'json-tests)
 ;;; json-tests.el ends here

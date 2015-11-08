@@ -111,6 +111,17 @@ Used only when `json-encoding-pretty-print' is non-nil.")
   "If non-nil, ] and } closings will be formatted lisp-style,
 without indentation.")
 
+(defvar json-pre-element-read-function nil
+  "Function called (if non-nil) by `json-read-array' and
+`json-read-object' right before reading a JSON array or object,
+respectively.  The function is called with one argument, which is
+the current JSON key.")
+
+(defvar json-post-element-read-function nil
+  "Function called (if non-nil) by `json-read-array' and
+`json-read-object' right after reading a JSON array or object,
+respectively.")
+
 
 
 ;;; Utilities
@@ -195,6 +206,61 @@ Unlike `reverse', this keeps the property-value pairs intact."
   '(end-of-file json-error))
 
 
+
+;;; Paths
+
+(defvar json--path '()
+  "Used internally by `json-path-to-position' to keep track of
+the path during recursive calls to `json-read'.")
+
+(defun json--record-path (key)
+  "Record the KEY to the current JSON path.
+Used internally by `json-path-to-position'."
+  (push (cons (point) key) json--path))
+
+(defun json--check-position (position)
+  "Check if the last parsed JSON structure passed POSITION.
+Used internally by `json-path-to-position'."
+  (let ((start (caar json--path)))
+    (when (< start position (+ (point) 1))
+      (throw :json-path (list :path (nreverse (mapcar #'cdr json--path))
+                              :match-start start
+                              :match-end (point)))))
+  (pop json--path))
+
+(defun json-path-to-position (position &optional string)
+  "Return the path to the JSON element at POSITION.
+
+When STRING is provided, return the path to the position in the
+string, else to the position in the current buffer.
+
+The return value is a property list with the following
+properties:
+
+:path        -- A list of strings and numbers forming the path to
+                the JSON element at the given position.  Strings
+                denote object names, while numbers denote array
+                indexes.
+
+:match-start -- Position where the matched JSON element begins.
+
+:match-end   -- Position where the matched JSON element ends.
+
+This can for instance be useful to determine the path to a JSON
+element in a deeply nested structure."
+  (save-excursion
+    (unless string
+      (goto-char (point-min)))
+    (let* ((json--path '())
+           (json-pre-element-read-function #'json--record-path)
+           (json-post-element-read-function
+            (apply-partially #'json--check-position position))
+           (path (catch :json-path
+                   (if string
+                       (json-read-from-string string)
+                     (json-read)))))
+      (when (plist-get path :path)
+        path))))
 
 ;;; Keywords
 
@@ -403,7 +469,12 @@ Please see the documentation of `json-object-type' and `json-key-type'."
       (if (char-equal (json-peek) ?:)
           (json-advance)
         (signal 'json-object-format (list ":" (json-peek))))
+      (json-skip-whitespace)
+      (when json-pre-element-read-function
+        (funcall json-pre-element-read-function key))
       (setq value (json-read))
+      (when json-post-element-read-function
+        (funcall json-post-element-read-function))
       (setq elements (json-add-to-object elements key value))
       (json-skip-whitespace)
       (unless (char-equal (json-peek) ?})
@@ -509,7 +580,12 @@ become JSON objects."
   ;; read values until "]"
   (let (elements)
     (while (not (char-equal (json-peek) ?\]))
+      (json-skip-whitespace)
+      (when json-pre-element-read-function
+        (funcall json-pre-element-read-function (length elements)))
       (push (json-read) elements)
+      (when json-post-element-read-function
+        (funcall json-post-element-read-function))
       (json-skip-whitespace)
       (unless (char-equal (json-peek) ?\])
         (if (char-equal (json-peek) ?,)
