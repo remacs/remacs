@@ -208,8 +208,6 @@ entry_address (void *section_h, ptrdiff_t idx, ptrdiff_t entsize)
   (*(ElfW (Shdr) *) entry_address (new_section_h, n, new_file_h->e_shentsize))
 #define OLD_PROGRAM_H(n) \
   (*(ElfW (Phdr) *) entry_address (old_program_h, n, old_file_h->e_phentsize))
-#define NEW_PROGRAM_H(n) \
-  (*(ElfW (Phdr) *) entry_address (new_program_h, n, new_file_h->e_phentsize))
 
 typedef unsigned char byte;
 
@@ -250,7 +248,7 @@ unexec (const char *new_name, const char *old_name)
   ElfW (Phdr) *old_bss_seg, *new_bss_seg;
   ElfW (Addr) old_bss_addr, new_bss_addr;
   ElfW (Word) old_bss_size, new_data2_size;
-  ElfW (Off)  old_bss_offset, new_data2_offset;
+  ElfW (Off) old_bss_offset, new_data2_offset;
 
   ptrdiff_t n;
   ptrdiff_t old_bss_index;
