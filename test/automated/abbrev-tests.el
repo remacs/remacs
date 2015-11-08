@@ -40,4 +40,4 @@
 
 (provide 'abbrev-tests)
 
-;;; add-log-tests.el ends here
+;;; abbrev-tests.el ends here
