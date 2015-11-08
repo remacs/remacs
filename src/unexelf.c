@@ -812,26 +812,27 @@ unexec (const char *new_name, const char *old_name)
   if (new_base == MAP_FAILED)
     fatal ("Can't allocate buffer for %s: %s", old_name, strerror (errno));
 
-  new_file_h = (ElfW (Ehdr) *) new_base;
-  new_program_h = (ElfW (Phdr) *) ((byte *) new_base + old_file_h->e_phoff);
-  new_section_h = (ElfW (Shdr) *)
-    ((byte *) new_base + old_file_h->e_shoff + new_data2_incr);
-
   /* Make our new file, program and section headers as copies of the
      originals.  */
 
+  new_file_h = (ElfW (Ehdr) *) new_base;
   memcpy (new_file_h, old_file_h, old_file_h->e_ehsize);
-  memcpy (new_program_h, old_program_h,
-	  old_file_h->e_phnum * old_file_h->e_phentsize);
-
-  /* Modify the e_shstrndx if necessary. */
-  PATCH_INDEX (new_file_h->e_shstrndx);
 
   /* Fix up file header.  We'll add one section.  Section header is
      further away now.  */
 
   new_file_h->e_shoff += new_data2_incr;
   new_file_h->e_shnum += 1;
+
+  /* Modify the e_shstrndx if necessary. */
+  PATCH_INDEX (new_file_h->e_shstrndx);
+
+  new_program_h = (ElfW (Phdr) *) ((byte *) new_base + old_file_h->e_phoff);
+  new_section_h = (ElfW (Shdr) *)
+    ((byte *) new_base + old_file_h->e_shoff + new_data2_incr);
+
+  memcpy (new_program_h, old_program_h,
+	  old_file_h->e_phnum * old_file_h->e_phentsize);
 
 #ifdef UNEXELF_DEBUG
   DEBUG_LOG (old_file_h->e_shoff);
@@ -905,32 +906,35 @@ unexec (const char *new_name, const char *old_name)
   for (n = 1, nn = 1; n < old_file_h->e_shnum; n++, nn++)
     {
       caddr_t src;
+      ElfW (Shdr) *old_shdr = &OLD_SECTION_H (n);
+      ElfW (Shdr) *new_shdr = &NEW_SECTION_H (nn);
+
       /* If it is (s)bss section, insert the new data2 section before it.  */
       /* new_data2_index is the index of either old_sbss or old_bss, that was
 	 chosen as a section for new_data2.   */
       if (n == new_data2_index)
 	{
 	  /* Steal the data section header for this data2 section. */
-	  memcpy (&NEW_SECTION_H (nn), &OLD_SECTION_H (old_data_index),
+	  memcpy (new_shdr, &OLD_SECTION_H (old_data_index),
 		  new_file_h->e_shentsize);
 
-	  NEW_SECTION_H (nn).sh_addr = new_data2_addr;
-	  NEW_SECTION_H (nn).sh_offset = new_data2_offset;
-	  NEW_SECTION_H (nn).sh_size = new_data2_size;
+	  new_shdr->sh_addr = new_data2_addr;
+	  new_shdr->sh_offset = new_data2_offset;
+	  new_shdr->sh_size = new_data2_size;
 	  /* Use the bss section's alignment. This will assure that the
 	     new data2 section always be placed in the same spot as the old
 	     bss section by any other application. */
-	  NEW_SECTION_H (nn).sh_addralign = OLD_SECTION_H (n).sh_addralign;
+	  new_shdr->sh_addralign = old_shdr->sh_addralign;
 
 	  /* Now copy over what we have in the memory now. */
-	  memcpy (NEW_SECTION_H (nn).sh_offset + new_base,
-		  (caddr_t) OLD_SECTION_H (n).sh_addr,
+	  memcpy (new_shdr->sh_offset + new_base,
+		  (caddr_t) old_shdr->sh_addr,
 		  new_data2_size);
 	  nn++;
+	  new_shdr++;
 	}
 
-      memcpy (&NEW_SECTION_H (nn), &OLD_SECTION_H (n),
-	      old_file_h->e_shentsize);
+      memcpy (new_shdr, old_shdr, old_file_h->e_shentsize);
 
       if (n == old_bss_index
 	  /* The new bss and sbss section's size is zero, and its file offset
@@ -939,13 +943,13 @@ unexec (const char *new_name, const char *old_name)
 	  )
 	{
 	  /* NN should be `old_s?bss_index + 1' at this point. */
-	  NEW_SECTION_H (nn).sh_offset = new_data2_offset + new_data2_size;
-	  NEW_SECTION_H (nn).sh_addr = new_data2_addr + new_data2_size;
+	  new_shdr->sh_offset = new_data2_offset + new_data2_size;
+	  new_shdr->sh_addr = new_data2_addr + new_data2_size;
 	  /* Let the new bss section address alignment be the same as the
 	     section address alignment followed the old bss section, so
 	     this section will be placed in exactly the same place. */
-	  NEW_SECTION_H (nn).sh_addralign = OLD_SECTION_H (nn).sh_addralign;
-	  NEW_SECTION_H (nn).sh_size = 0;
+	  new_shdr->sh_addralign = OLD_SECTION_H (nn).sh_addralign;
+	  new_shdr->sh_size = 0;
 	}
       else
 	{
@@ -975,53 +979,50 @@ temacs:
 	25	1709	0x4          0x10
 	  */
 
-	  if (NEW_SECTION_H (nn).sh_offset >= old_bss_offset
-	      || (NEW_SECTION_H (nn).sh_offset + NEW_SECTION_H (nn).sh_size
+	  if (new_shdr->sh_offset >= old_bss_offset
+	      || (new_shdr->sh_offset + new_shdr->sh_size
 		  > new_data2_offset))
-	    NEW_SECTION_H (nn).sh_offset += new_data2_incr;
+	    new_shdr->sh_offset += new_data2_incr;
 
 	  /* Any section that was originally placed after the section
 	     header table should now be off by the size of one section
 	     header table entry.  */
-	  if (NEW_SECTION_H (nn).sh_offset > new_file_h->e_shoff)
-	    NEW_SECTION_H (nn).sh_offset += new_file_h->e_shentsize;
+	  if (new_shdr->sh_offset > new_file_h->e_shoff)
+	    new_shdr->sh_offset += new_file_h->e_shentsize;
 	}
 
       /* If any section hdr refers to the section after the new .data
 	 section, make it refer to next one because we have inserted
 	 a new section in between.  */
 
-      PATCH_INDEX (NEW_SECTION_H (nn).sh_link);
+      PATCH_INDEX (new_shdr->sh_link);
       /* For symbol tables, info is a symbol table index,
 	 so don't change it.  */
-      if (NEW_SECTION_H (nn).sh_type != SHT_SYMTAB
-	  && NEW_SECTION_H (nn).sh_type != SHT_DYNSYM)
-	PATCH_INDEX (NEW_SECTION_H (nn).sh_info);
+      if (new_shdr->sh_type != SHT_SYMTAB
+	  && new_shdr->sh_type != SHT_DYNSYM)
+	PATCH_INDEX (new_shdr->sh_info);
 
       if (old_sbss_index != -1)
-	if (!strcmp (old_section_names + NEW_SECTION_H (nn).sh_name, ".sbss"))
+	if (!strcmp (old_section_names + new_shdr->sh_name, ".sbss"))
 	  {
-	    NEW_SECTION_H (nn).sh_offset =
-	      round_up (NEW_SECTION_H (nn).sh_offset,
-			NEW_SECTION_H (nn).sh_addralign);
-	    NEW_SECTION_H (nn).sh_type = SHT_PROGBITS;
+	    new_shdr->sh_offset =
+	      round_up (new_shdr->sh_offset,
+			new_shdr->sh_addralign);
+	    new_shdr->sh_type = SHT_PROGBITS;
 	  }
 
       /* Now, start to copy the content of sections.  */
-      if (NEW_SECTION_H (nn).sh_type == SHT_NULL
-	  || NEW_SECTION_H (nn).sh_type == SHT_NOBITS)
+      if (new_shdr->sh_type == SHT_NULL
+	  || new_shdr->sh_type == SHT_NOBITS)
 	continue;
 
       /* Write out the sections. .data and .data1 (and data2, called
 	 ".data" in the strings table) get copied from the current process
 	 instead of the old file.  */
-      if (!strcmp (old_section_names + NEW_SECTION_H (nn).sh_name, ".data")
-	  || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
-		      ".sdata")
-	  || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
-		      ".lit4")
-	  || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
-		      ".lit8")
+      if (!strcmp (old_section_names + new_shdr->sh_name, ".data")
+	  || !strcmp (old_section_names + new_shdr->sh_name, ".sdata")
+	  || !strcmp (old_section_names + new_shdr->sh_name, ".lit4")
+	  || !strcmp (old_section_names + new_shdr->sh_name, ".lit8")
 	  /* The conditional bit below was in Oliva's original code
 	     (1999-08-25) and seems to have been dropped by mistake
 	     subsequently.  It prevents a crash at startup under X in
@@ -1043,28 +1044,22 @@ temacs:
 	     loader, but I never got anywhere with an SGI support call
 	     seeking clues.  -- fx 2002-11-29.  */
 #ifdef IRIX6_5
-	  || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
-		      ".got")
+	  || !strcmp (old_section_names + new_shdr->sh_name, ".got")
 #endif
-	  || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
-		      ".sdata1")
-	  || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
-		      ".data1")
-	  || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
-		      ".sbss"))
-	src = (caddr_t) OLD_SECTION_H (n).sh_addr;
+	  || !strcmp (old_section_names + new_shdr->sh_name, ".sdata1")
+	  || !strcmp (old_section_names + new_shdr->sh_name, ".data1")
+	  || !strcmp (old_section_names + new_shdr->sh_name, ".sbss"))
+	src = (caddr_t) old_shdr->sh_addr;
       else
-	src = old_base + OLD_SECTION_H (n).sh_offset;
+	src = old_base + old_shdr->sh_offset;
 
-      memcpy (NEW_SECTION_H (nn).sh_offset + new_base, src,
-	      NEW_SECTION_H (nn).sh_size);
+      memcpy (new_shdr->sh_offset + new_base, src, new_shdr->sh_size);
 
 #if defined __alpha__ && !defined __OpenBSD__
       /* Update Alpha COFF symbol table: */
-      if (strcmp (old_section_names + OLD_SECTION_H (n).sh_name, ".mdebug")
-	  == 0)
+      if (strcmp (old_section_names + old_shdr->sh_name, ".mdebug") == 0)
 	{
-	  pHDRR symhdr = (pHDRR) (NEW_SECTION_H (nn).sh_offset + new_base);
+	  pHDRR symhdr = (pHDRR) (new_shdr->sh_offset + new_base);
 
 	  symhdr->cbLineOffset += new_data2_size;
 	  symhdr->cbDnOffset += new_data2_size;
@@ -1081,13 +1076,13 @@ temacs:
 #endif /* __alpha__ && !__OpenBSD__ */
 
 #if defined (_SYSTYPE_SYSV)
-      if (NEW_SECTION_H (nn).sh_type == SHT_MIPS_DEBUG
+      if (new_shdr->sh_type == SHT_MIPS_DEBUG
 	  && old_mdebug_index != -1)
 	{
-	  ptrdiff_t new_offset = NEW_SECTION_H (nn).sh_offset;
+	  ptrdiff_t new_offset = new_shdr->sh_offset;
 	  ptrdiff_t old_offset = OLD_SECTION_H (old_mdebug_index).sh_offset;
 	  ptrdiff_t diff = new_offset - old_offset;
-	  HDRR *phdr = (HDRR *)(NEW_SECTION_H (nn).sh_offset + new_base);
+	  HDRR *phdr = (HDRR *) (new_shdr->sh_offset + new_base);
 
 	  if (diff)
 	    {
@@ -1123,8 +1118,8 @@ temacs:
       n_phdrr->__fileaddr += movement;		\
     }
 
-	  HDRR * o_phdrr = (HDRR *)((byte *)old_base + OLD_SECTION_H (n).sh_offset);
-	  HDRR * n_phdrr = (HDRR *)((byte *)new_base + NEW_SECTION_H (nn).sh_offset);
+	  HDRR *o_phdrr = (HDRR *) ((byte *) old_base + old_shdr->sh_offset);
+	  HDRR *n_phdrr = (HDRR *) ((byte *) new_base + new_shdr->sh_offset);
 	  unsigned movement = new_data2_size;
 
 	  MDEBUGADJUST (idnMax, cbDnOffset);
@@ -1141,8 +1136,8 @@ temacs:
 	     requires special handling.  */
 	  if (n_phdrr->cbLine > 0)
 	    {
-	      if (o_phdrr->cbLineOffset > (OLD_SECTION_H (n).sh_offset
-					   + OLD_SECTION_H (n).sh_size))
+	      if (o_phdrr->cbLineOffset > (old_shdr->sh_offset
+					   + old_shdr->sh_size))
 		{
 		  /* line data is in a hole in elf. do special copy and adjust
 		     for this ld mistake.
@@ -1162,13 +1157,11 @@ temacs:
 #endif /* __sgi */
 
       /* If it is the symbol table, its st_shndx field needs to be patched.  */
-      if (NEW_SECTION_H (nn).sh_type == SHT_SYMTAB
-	  || NEW_SECTION_H (nn).sh_type == SHT_DYNSYM)
+      if (new_shdr->sh_type == SHT_SYMTAB
+	  || new_shdr->sh_type == SHT_DYNSYM)
 	{
-	  ElfW (Shdr) *spt = &NEW_SECTION_H (nn);
-	  ptrdiff_t num = spt->sh_size / spt->sh_entsize;
-	  ElfW (Sym) * sym = (ElfW (Sym) *) (NEW_SECTION_H (nn).sh_offset +
-					   new_base);
+	  ptrdiff_t num = new_shdr->sh_size / new_shdr->sh_entsize;
+	  ElfW (Sym) *sym = (ElfW (Sym) *) (new_shdr->sh_offset + new_base);
 	  for (; num--; sym++)
 	    {
 	      if ((sym->st_shndx == SHN_UNDEF)
@@ -1186,15 +1179,16 @@ temacs:
     {
       byte *symnames;
       ElfW (Sym) *symp, *symendp;
+      ElfW (Shdr) *sym_shdr = &NEW_SECTION_H (n);
 
-      if (NEW_SECTION_H (n).sh_type != SHT_DYNSYM
-	  && NEW_SECTION_H (n).sh_type != SHT_SYMTAB)
+      if (sym_shdr->sh_type != SHT_DYNSYM
+	  && sym_shdr->sh_type != SHT_SYMTAB)
 	continue;
 
       symnames = ((byte *) new_base
-		  + NEW_SECTION_H (NEW_SECTION_H (n).sh_link).sh_offset);
-      symp = (ElfW (Sym) *) (NEW_SECTION_H (n).sh_offset + new_base);
-      symendp = (ElfW (Sym) *) ((byte *)symp + NEW_SECTION_H (n).sh_size);
+		  + NEW_SECTION_H (sym_shdr->sh_link).sh_offset);
+      symp = (ElfW (Sym) *) (sym_shdr->sh_offset + new_base);
+      symendp = (ElfW (Sym) *) ((byte *) symp + sym_shdr->sh_size);
 
       for (; symp < symendp; symp ++)
 	{
@@ -1218,22 +1212,21 @@ temacs:
 	  if (strncmp ((char *) (symnames + symp->st_name),
 		       "_OBJC_", sizeof ("_OBJC_") - 1) == 0)
 	    {
-	      caddr_t old, new;
+	      ElfW (Shdr) *new_shdr = &NEW_SECTION_H (symp->st_shndx);
+	      ptrdiff_t reladdr = symp->st_value - new_shdr->sh_addr;
+	      ptrdiff_t newoff = reladdr + new_shdr->sh_offset;
 
-	      new = ((symp->st_value - NEW_SECTION_H (symp->st_shndx).sh_addr)
-		     + NEW_SECTION_H (symp->st_shndx).sh_offset + new_base);
 	      /* "Unpatch" index.  */
 	      nn = symp->st_shndx;
 	      if (nn > old_bss_index)
 		nn--;
 	      if (nn == old_bss_index)
-		memset (new, 0, symp->st_size);
+		memset (new_base + newoff, 0, symp->st_size);
 	      else
 		{
-		  old = ((symp->st_value
-			  - NEW_SECTION_H (symp->st_shndx).sh_addr)
-			 + OLD_SECTION_H (nn).sh_offset + old_base);
-		  memcpy (new, old, symp->st_size);
+		  ElfW (Shdr) *old_shdr = &OLD_SECTION_H (nn);
+		  ptrdiff_t oldoff = reladdr + old_shdr->sh_offset;
+		  memcpy (new_base + newoff, old_base + oldoff, symp->st_size);
 		}
 	    }
 #endif
@@ -1244,13 +1237,10 @@ temacs:
      that it can undo relocations performed by the runtime linker.  */
   for (n = new_file_h->e_shnum; 0 < --n; )
     {
-      ElfW (Shdr) section = NEW_SECTION_H (n);
+      ElfW (Shdr) *rel_shdr = &NEW_SECTION_H (n);
+      ElfW (Shdr) *shdr;
 
-      /* Cause a compilation error if anyone uses n instead of nn below.  */
-      #define n ((void) 0);
-      n /* Prevent 'macro "n" is not used' warnings.  */
-
-      switch (section.sh_type)
+      switch (rel_shdr->sh_type)
 	{
 	default:
 	  break;
@@ -1259,28 +1249,22 @@ temacs:
 	  /* This code handles two different size structs, but there should
 	     be no harm in that provided that r_offset is always the first
 	     member.  */
-	  nn = section.sh_info;
-	  if (!strcmp (old_section_names + NEW_SECTION_H (nn).sh_name, ".data")
-	      || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
-			  ".sdata")
-	      || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
-			  ".lit4")
-	      || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
-			  ".lit8")
+	  shdr = &NEW_SECTION_H (rel_shdr->sh_info);
+	  if (!strcmp (old_section_names + shdr->sh_name, ".data")
+	      || !strcmp (old_section_names + shdr->sh_name, ".sdata")
+	      || !strcmp (old_section_names + shdr->sh_name, ".lit4")
+	      || !strcmp (old_section_names + shdr->sh_name, ".lit8")
 #ifdef IRIX6_5			/* see above */
-	      || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
-			  ".got")
+	      || !strcmp (old_section_names + shdr->sh_name, ".got")
 #endif
-	      || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
-			  ".sdata1")
-	      || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
-			  ".data1"))
+	      || !strcmp (old_section_names + shdr->sh_name, ".sdata1")
+	      || !strcmp (old_section_names + shdr->sh_name, ".data1"))
 	    {
-	      ElfW (Addr) offset = (NEW_SECTION_H (nn).sh_addr
-				   - NEW_SECTION_H (nn).sh_offset);
-	      caddr_t reloc = old_base + section.sh_offset, end;
-	      for (end = reloc + section.sh_size; reloc < end;
-		   reloc += section.sh_entsize)
+	      ElfW (Addr) offset = shdr->sh_addr - shdr->sh_offset;
+	      caddr_t reloc = old_base + rel_shdr->sh_offset, end;
+	      for (end = reloc + rel_shdr->sh_size;
+		   reloc < end;
+		   reloc += rel_shdr->sh_entsize)
 		{
 		  ElfW (Addr) addr = ((ElfW (Rel) *) reloc)->r_offset - offset;
 #ifdef __alpha__
@@ -1295,8 +1279,6 @@ temacs:
 	    }
 	  break;
 	}
-
-      #undef n
     }
 
   /* Write out new_file, and free the buffers.  */
