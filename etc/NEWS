@@ -321,6 +321,10 @@ standards.
 
 * Changes in Specialized Modes and Packages in Emacs 25.1
 
+** New function `bookmark-set-no-overwrite' bound to C-x r M.
+It raises an error if a bookmark of that name already exists,
+unlike `bookmark-set' which silently updates an existing bookmark.
+
 ** JSON
 ---
 *** `json-pretty-print' and `json-pretty-print-buffer' now maintain
