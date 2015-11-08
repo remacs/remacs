@@ -267,25 +267,22 @@
 
    The INT_<op>_OVERFLOW macros return 1 if the corresponding C operators
    might not yield numerically correct answers due to arithmetic overflow.
-   The INT_<op>_WRAPV macros return the low-order bits of the answer.
-   For example, INT_ADD_WRAPV (INT_MAX, 1) returns INT_MIN on a two's
-   complement host, even if INT_MAX + 1 would trap.
-
+   The INT_<op>_WRAPV macros also store the low-order bits of the answer.
    These macros work correctly on all known practical hosts, and do not rely
    on undefined behavior due to signed arithmetic overflow.
 
-   Example usage:
+   Example usage, assuming A and B are long int:
 
-     long int a = ...;
-     long int b = ...;
      long int result = INT_MULTIPLY_WRAPV (a, b);
      printf ("result is %ld (%s)\n", result,
              INT_MULTIPLY_OVERFLOW (a, b) ? "after overflow" : "no overflow");
 
-     enum {
-       INT_PRODUCTS_FIT_IN_LONG
-         = ! INT_CONST_MULTIPLY_OVERFLOW ((long int) INT_MIN, INT_MIN)
-     };
+   Example usage with WRAPV flavor:
+
+     long int result;
+     bool overflow = INT_MULTIPLY_WRAPV (a, b, &result);
+     printf ("result is %ld (%s)\n", result,
+             overflow ? "after overflow" : "no overflow");
 
    Restrictions on these macros:
 
@@ -296,35 +293,21 @@
    These macros may evaluate their arguments zero or multiple times, so the
    arguments should not have side effects.
 
-   On non-GCC-compatible compilers that do not support C11, the type
-   of INT_<op>_WRAPV (A, B) might differ from the native type of (A op
-   B), so it is wise to convert the result to the native type.  Such a
-   conversion is safe and cannot trap.
-
-   For runtime efficiency GCC 5 and later has builtin functions for +,
-   -, * when doing integer overflow checking or wraparound arithmetic.
-   Unfortunately, these builtins require nonnull pointer arguments and
-   so cannot be used in constant expressions; see GCC bug 68120
-   <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=68120>.  In constant
-   expressions, use the macros INT_CONST_ADD_OVERFLOW and
-   INT_CONST_ADD_WRAPV instead, and similarly for SUBTRACT and
-   MULTIPLY; these macros avoid the builtins and are slower in
-   non-constant expressions.  Perhaps someday GCC's API for overflow
-   checking will be improved and we can remove the need for the
-   INT_CONST_ variants.
+   The WRAPV macros are not constant expressions.  They support only
+   +, binary -, and *.  The result type must be signed.
 
    These macros are tuned for their last argument being a constant.
 
    Return 1 if the integer expressions A * B, A - B, -A, A * B, A / B,
    A % B, and A << B would overflow, respectively.  */
 
-#define INT_CONST_ADD_OVERFLOW(a, b) \
+#define INT_ADD_OVERFLOW(a, b) \
   _GL_BINARY_OP_OVERFLOW (a, b, _GL_ADD_OVERFLOW)
-#define INT_CONST_SUBTRACT_OVERFLOW(a, b) \
+#define INT_SUBTRACT_OVERFLOW(a, b) \
   _GL_BINARY_OP_OVERFLOW (a, b, _GL_SUBTRACT_OVERFLOW)
 #define INT_NEGATE_OVERFLOW(a) \
   INT_NEGATE_RANGE_OVERFLOW (a, _GL_INT_MINIMUM (a), _GL_INT_MAXIMUM (a))
-#define INT_CONST_MULTIPLY_OVERFLOW(a, b) \
+#define INT_MULTIPLY_OVERFLOW(a, b) \
   _GL_BINARY_OP_OVERFLOW (a, b, _GL_MULTIPLY_OVERFLOW)
 #define INT_DIVIDE_OVERFLOW(a, b) \
   _GL_BINARY_OP_OVERFLOW (a, b, _GL_DIVIDE_OVERFLOW)
@@ -343,95 +326,104 @@
                       _GL_INT_MINIMUM (0 * (b) + (a)),          \
                       _GL_INT_MAXIMUM (0 * (b) + (a)))
 
-/* Return the low order bits of the integer expressions
-   A * B, A - B, -A, A * B, A / B, A % B, and A << B, respectively.
-   See above for restrictions.  */
-#define INT_CONST_ADD_WRAPV(a, b) _GL_INT_OP_WRAPV (a, b, +)
-#define INT_CONST_SUBTRACT_WRAPV(a, b) _GL_INT_OP_WRAPV (a, b, -)
-#define INT_NEGATE_WRAPV(a) INT_CONST_SUBTRACT_WRAPV (0, a)
-#define INT_CONST_MULTIPLY_WRAPV(a, b) _GL_INT_OP_WRAPV (a, b, *)
-#define INT_DIVIDE_WRAPV(a, b) \
-  (INT_DIVIDE_OVERFLOW(a, b) ? INT_NEGATE_WRAPV (a) : (a) / (b))
-#define INT_REMAINDER_WRAPV(a, b) \
-  (INT_REMAINDER_OVERFLOW(a, b) ? 0 : (a) % (b))
-#define INT_LEFT_SHIFT_WRAPV(a, b) _GL_INT_OP_WRAPV (a, b, <<)
+/* Compute A + B, A - B, A * B, respectively, storing the result into *R.
+   Return 1 if the result overflows.  See above for restrictions.  */
+#define INT_ADD_WRAPV(a, b, r) \
+  _GL_INT_OP_WRAPV (a, b, r, +, __builtin_add_overflow, INT_ADD_OVERFLOW)
+#define INT_SUBTRACT_WRAPV(a, b, r) \
+  _GL_INT_OP_WRAPV (a, b, r, -, __builtin_sub_overflow, INT_SUBTRACT_OVERFLOW)
+#define INT_MULTIPLY_WRAPV(a, b, r) \
+  _GL_INT_OP_WRAPV (a, b, r, *, __builtin_mul_overflow, INT_MULTIPLY_OVERFLOW)
 
-/* Return the low order bits of A <op> B, where OP specifies the operation.
-   See above for restrictions.  */
-#if !_GL_HAVE___TYPEOF__ && 201112 <= __STDC_VERSION__
-# define _GL_INT_OP_WRAPV(a, b, op) \
-   _Generic ((a) op (b), \
-             int: _GL_INT_OP_WRAPV_VIA_UNSIGNED (a, b, op, int), \
-             long int: _GL_INT_OP_WRAPV_VIA_UNSIGNED (a, b, op, long int), \
-             long long int: _GL_INT_OP_WRAPV_VIA_UNSIGNED (a, b, op, \
-                                                           long long int), \
-             default: (a) op (b))
+#ifndef __has_builtin
+# define __has_builtin(x) 0
+#endif
+
+/* Nonzero if this compiler has GCC bug 68193 or Clang bug 25390.  See:
+   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=68193
+   https://llvm.org/bugs/show_bug.cgi?id=25390
+   For now, assume all versions of GCC-like compilers generate bogus
+   warnings for _Generic.  This matters only for older compilers that
+   lack __builtin_add_overflow.  */
+#if __GNUC__
+# define _GL__GENERIC_BOGUS 1
 #else
-# define _GL_INT_OP_WRAPV(a, b, op) \
-   (! _GL_INT_SIGNED ((0 * (a)) op (0 * (b))) \
-    ? ((a) op (b)) \
-    : _GL_EXPR_CAST ((a) op (b), \
-                     (sizeof ((a) op (b)) <= sizeof (int) \
-                      ? _GL_INT_OP_WRAPV_VIA_UNSIGNED (a, b, op, int) \
-                      : _GL_INT_OP_WRAPV_LONGISH (a, b, op))))
+# define _GL__GENERIC_BOGUS 0
+#endif
 
-/* Cast to E's type the value of V if possible.  Yield V as-is otherwise.  */
-# if _GL_HAVE___TYPEOF__
-#  define _GL_EXPR_CAST(e, v) ((__typeof__ (e)) (v))
-# else
-#  define _GL_EXPR_CAST(e, v) (v)
-# endif
-
+/* Store A <op> B into *R, where OP specifies the operation.
+   BUILTIN is the builtin operation, and OVERFLOW the overflow predicate.
+   See above for restrictions.  */
+#if 5 <= __GNUC__ || __has_builtin (__builtin_add_oveflow)
+# define _GL_INT_OP_WRAPV(a, b, r, op, builtin, overflow) builtin (a, b, r)
+#elif 201112 <= __STDC_VERSION__ && !_GL__GENERIC_BOGUS
+# define _GL_INT_OP_WRAPV(a, b, r, op, builtin, overflow) \
+   (_Generic \
+    (*(r), \
+     signed char: \
+       _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned char, \
+                        signed char, SCHAR_MIN, SCHAR_MAX), \
+     short int: \
+       _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned short int, \
+                        short int, SHRT_MIN, SHRT_MAX), \
+     int: \
+       _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned int, \
+                        int, INT_MIN, INT_MAX), \
+     long int: \
+       _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned long int, \
+                        long int, LONG_MIN, LONG_MAX), \
+     long long int: \
+       _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned long long int, \
+                        long long int, LLONG_MIN, LLONG_MAX)))
+#else
+# define _GL_INT_OP_WRAPV(a, b, r, op, builtin, overflow) \
+   (sizeof *(r) == sizeof (signed char) \
+    ? _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned char, \
+                       signed char, SCHAR_MIN, SCHAR_MAX) \
+    : sizeof *(r) == sizeof (short int) \
+    ? _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned short int, \
+                       short int, SHRT_MIN, SHRT_MAX) \
+    : sizeof *(r) == sizeof (int) \
+    ? _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned int, \
+                       int, INT_MIN, INT_MAX) \
+    : _GL_INT_OP_WRAPV_LONGISH(a, b, r, op, overflow))
 # ifdef LLONG_MAX
-#  define _GL_INT_OP_WRAPV_LONGISH(a, b, op) \
-    (sizeof ((a) op (b)) <= sizeof (long int) \
-     ? _GL_INT_OP_WRAPV_VIA_UNSIGNED (a, b, op, long int) \
-     : _GL_INT_OP_WRAPV_VIA_UNSIGNED (a, b, op, long long int))
+#  define _GL_INT_OP_WRAPV_LONGISH(a, b, r, op, overflow) \
+    (sizeof *(r) == sizeof (long int) \
+     ? _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned long int, \
+                        long int, LONG_MIN, LONG_MAX) \
+     : _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned long long int, \
+                        long long int, LLONG_MIN, LLONG_MAX))
 # else
-#  define _GL_INT_OP_WRAPV_LONGISH(a, b, op) \
-    _GL_INT_OP_WRAPV_VIA_UNSIGNED (a, b, op, long int)
+#  define _GL_INT_OP_WRAPV_LONGISH(a, b, r, op, overflow) \
+    _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned long int, \
+                     long int, LONG_MIN, LONG_MAX))
 # endif
 #endif
 
-/* Return A <op> B, where the operation is given by OP and the result
-   type is T.  T is a signed integer type that is at least as wide as int.
-   Do arithmetic using 'unsigned T' to avoid signed integer overflow.
-   Subtract TYPE_MINIMUM (T) before converting back to T, and add it
-   back afterwards, to avoid signed overflow during conversion.  */
-#define _GL_INT_OP_WRAPV_VIA_UNSIGNED(a, b, op, t) \
-  ((unsigned t) (a) op (unsigned t) (b) <= TYPE_MAXIMUM (t) \
-   ? (t) ((unsigned t) (a) op (unsigned t) (b)) \
-   : ((t) ((unsigned t) (a) op (unsigned t) (b) - TYPE_MINIMUM (t)) \
-      + TYPE_MINIMUM (t)))
+/* Store the low-order bits of A <op> B into *R, where the operation
+   is given by OP.  Use the unsigned type UT for calculation to avoid
+   overflow problems.  *R's type is T, with extremal values TMIN and
+   TMAX.  T must be a signed integer type.  */
+#define _GL_INT_OP_CALC(a, b, r, op, overflow, ut, t, tmin, tmax) \
+  (sizeof ((a) op (b)) < sizeof (t) \
+   ? _GL_INT_OP_CALC1 ((t) (a), (t) (b), r, op, overflow, ut, t, tmin, tmax) \
+   : _GL_INT_OP_CALC1 (a, b, r, op, overflow, ut, t, tmin, tmax))
+#define _GL_INT_OP_CALC1(a, b, r, op, overflow, ut, t, tmin, tmax) \
+  ((overflow (a, b) \
+    || (_GL_INT_SIGNED ((a) op (b)) && ((a) op (b)) < (tmin)) \
+    || (tmax) < ((a) op (b))) \
+   ? (*(r) = _GL_INT_OP_WRAPV_VIA_UNSIGNED (a, b, op, ut, t, tmin, tmax), 1) \
+   : (*(r) = _GL_INT_OP_WRAPV_VIA_UNSIGNED (a, b, op, ut, t, tmin, tmax), 0))
 
-/* Calls to the INT_<op>_<result> macros are like their INT_CONST_<op>_<result>
-   counterparts, except they are faster with GCC 5 or later, and they
-   are not constant expressions due to limitations in the GNU C API.  */
-
-#define INT_ADD_OVERFLOW(a, b) \
-  _GL_OP_OVERFLOW (a, b, INT_CONST_ADD_OVERFLOW, __builtin_add_overflow)
-#define INT_SUBTRACT_OVERFLOW(a, b) \
-  _GL_OP_OVERFLOW (a, b, INT_CONST_SUBTRACT_OVERFLOW, __builtin_sub_overflow)
-#define INT_MULTIPLY_OVERFLOW(a, b) \
-  _GL_OP_OVERFLOW (a, b, INT_CONST_MULTIPLY_OVERFLOW, __builtin_mul_overflow)
-
-#define INT_ADD_WRAPV(a, b) \
-  _GL_OP_WRAPV (a, b, INT_CONST_ADD_WRAPV, __builtin_add_overflow)
-#define INT_SUBTRACT_WRAPV(a, b) \
-  _GL_OP_WRAPV (a, b, INT_CONST_SUBTRACT_WRAPV, __builtin_sub_overflow)
-#define INT_MULTIPLY_WRAPV(a, b) \
-  _GL_OP_WRAPV (a, b, INT_CONST_MULTIPLY_WRAPV, __builtin_mul_overflow)
-
-#if __GNUC__ < 5
-# define _GL_OP_OVERFLOW(a, b, portable, builtin) portable (a, b)
-# define _GL_OP_WRAPV(a, b, portable, builtin) portable (a, b)
-#else
-# define _GL_OP_OVERFLOW(a, b, portable, builtin) \
-   builtin (a, b, &(__typeof__ ((a) + (b))) {0})
-# define _GL_OP_WRAPV(a, b, portable, builtin) \
-   _GL_OP_WRAPV_GENSYM(a, b, builtin, __gl_wrapv##__COUNTER__)
-# define _GL_OP_WRAPV_GENSYM(a, b, builtin, r) \
-   ({__typeof__ ((a) + (b)) r; builtin (a, b, &r); r; })
-#endif
+/* Return A <op> B, where the operation is given by OP.  Use the
+   unsigned type UT for calculation to avoid overflow problems.
+   Convert the result to type T without overflow by subtracting TMIN
+   from large values before converting, and adding it afterwards.
+   Compilers can optimize all the operations except OP.  */
+#define _GL_INT_OP_WRAPV_VIA_UNSIGNED(a, b, op, ut, t, tmin, tmax) \
+  (((ut) (a) op (ut) (b)) <= (tmax) \
+   ? (t) ((ut) (a) op (ut) (b)) \
+   : ((t) (((ut) (a) op (ut) (b)) - (tmin)) + (tmin)))
 
 #endif /* _GL_INTPROPS_H */
