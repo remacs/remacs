@@ -1202,7 +1202,7 @@ temacs:
     }
 
   /* This loop seeks out relocation sections for the data section, so
-     that it can undo relocations performed by the runtime linker.  */
+     that it can undo relocations performed by the runtime loader.  */
   for (n = new_file_h->e_shnum; 0 < --n; )
     {
       ElfW (Shdr) *rel_shdr = &NEW_SECTION_H (n);
@@ -1235,14 +1235,14 @@ temacs:
 		   reloc += rel_shdr->sh_entsize)
 		{
 		  ElfW (Addr) addr = ((ElfW (Rel) *) reloc)->r_offset - offset;
-#ifdef __alpha__
-		  /* The Alpha ELF binutils currently have a bug that
-		     sometimes results in relocs that contain all
-		     zeroes.  Work around this for now...  */
+		  /* Ignore R_*_NONE relocs.  */
 		  if (((ElfW (Rel) *) reloc)->r_offset == 0)
 		    continue;
-#endif
-		  memcpy (new_base + addr, old_base + addr, sizeof (ElfW (Addr)));
+		  /* Assume reloc applies to a word.
+		     ??? This is not always true, eg. TLS module/index
+		     pair in .got which occupies two words.  */
+		  memcpy (new_base + addr, old_base + addr,
+			  sizeof (ElfW (Addr)));
 		}
 	    }
 	  break;
