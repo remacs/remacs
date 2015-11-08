@@ -74,10 +74,10 @@ implementation of `project-library-roots'.")
 
 ;; FIXME: Add MODE argument, like in `ede-source-paths'?
 (cl-defgeneric project-library-roots (project)
-  "Return the list of source root directories.
+  "Return the list of library roots for PROJECT.
 
-It's the list of directories outside of the current project that
-contain related source files.
+It's the list of directories outside of the project that contain
+related source files.
 
 Project-specific version of `project-library-roots-function',
 which see.  Unless it knows better, a specialized implementation
