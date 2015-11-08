@@ -535,29 +535,6 @@ verify ((! TYPE_SIGNED (ElfW (Half))
 /* Get the address of a particular section or program header entry,
  * accounting for the size of the entries.
  */
-/*
-   On PPC Reference Platform running Solaris 2.5.1
-   the plt section is also of type NOBI like the bss section.
-   (not really stored) and therefore sections after the bss
-   section start at the plt offset. The plt section is always
-   the one just before the bss section.
-   Thus, we modify the test from
-      if (NEW_SECTION_H (nn).sh_offset >= new_data2_offset)
-   to
-      if (NEW_SECTION_H (nn).sh_offset >=
-               OLD_SECTION_H (old_bss_index-1).sh_offset)
-   This is just a hack. We should put the new data section
-   before the .plt section.
-   And we should not have this routine at all but use
-   the libelf library to read the old file and create the new
-   file.
-   The changed code is minimal and depends on prep set in m/prep.h
-   Erik Deumens
-   Quantum Theory Project
-   University of Florida
-   deumens@qtp.ufl.edu
-   Apr 23, 1996
-   */
 
 static void *
 entry_address (void *section_h, ptrdiff_t idx, ptrdiff_t entsize)
@@ -570,22 +547,13 @@ entry_address (void *section_h, ptrdiff_t idx, ptrdiff_t entsize)
   (*(ElfW (Shdr) *) entry_address (old_section_h, n, old_file_h->e_shentsize))
 #define NEW_SECTION_H(n) \
   (*(ElfW (Shdr) *) entry_address (new_section_h, n, new_file_h->e_shentsize))
+#define OLD_PROGRAM_H(n) \
+  (*(ElfW (Phdr) *) entry_address (old_program_h, n, old_file_h->e_phentsize))
 #define NEW_PROGRAM_H(n) \
   (*(ElfW (Phdr) *) entry_address (new_program_h, n, new_file_h->e_phentsize))
 
 #define PATCH_INDEX(n) ((n) += old_bss_index <= (n))
 typedef unsigned char byte;
-
-/* Round X up to a multiple of Y.  */
-
-static ElfW (Addr)
-round_up (ElfW (Addr) x, ElfW (Addr) y)
-{
-  ElfW (Addr) rem = x % y;
-  if (rem == 0)
-    return x;
-  return x - rem + y;
-}
 
 /* Return the index of the section named NAME.
    SECTION_NAMES, FILE_NAME and FILE_H give information
@@ -650,16 +618,15 @@ unexec (const char *new_name, const char *old_name)
   /* Point to the section name table in the old file.  */
   char *old_section_names;
 
+  ElfW (Phdr) *old_bss_seg, *new_bss_seg;
   ElfW (Addr) old_bss_addr, new_bss_addr;
   ElfW (Word) old_bss_size, new_data2_size;
   ElfW (Off)  new_data2_offset;
   ElfW (Addr) new_data2_addr;
   ElfW (Off)  old_bss_offset;
-  ElfW (Word) new_data2_incr;
 
   ptrdiff_t n, nn;
-  ptrdiff_t old_bss_index, old_sbss_index, old_plt_index;
-  ptrdiff_t old_data_index, new_data2_index;
+  ptrdiff_t old_bss_index, old_data_index;
   struct stat stat_buf;
   off_t old_file_size;
 
@@ -703,53 +670,39 @@ unexec (const char *new_name, const char *old_name)
   old_section_names = (char *) old_base
     + OLD_SECTION_H (old_file_h->e_shstrndx).sh_offset;
 
-  /* Find the old .bss section.  Figure out parameters of the new
-     data2 and bss sections.  */
-
-  old_bss_index = find_section (".bss", old_section_names,
-				old_name, old_file_h, old_section_h, 0);
-
-  old_sbss_index = find_section (".sbss", old_section_names,
-				 old_name, old_file_h, old_section_h, 1);
-  if (old_sbss_index != -1)
-    if (OLD_SECTION_H (old_sbss_index).sh_type != SHT_NOBITS)
-      old_sbss_index = -1;
-
-  /* PowerPC64 has .plt in the BSS section.  */
-  old_plt_index = find_section (".plt", old_section_names,
-				old_name, old_file_h, old_section_h, 1);
-  if (old_plt_index != -1)
-    if (OLD_SECTION_H (old_plt_index).sh_type != SHT_NOBITS)
-      old_plt_index = -1;
-
-  if (old_sbss_index == -1 && old_plt_index == -1)
+  /* Find the PT_LOAD header covering the highest address.  This
+     segment will be where bss sections are located, past p_filesz.  */
+  old_bss_seg = 0;
+  for (n = old_file_h->e_phnum; --n >= 0; )
     {
-      old_bss_addr = OLD_SECTION_H (old_bss_index).sh_addr;
-      old_bss_size = OLD_SECTION_H (old_bss_index).sh_size;
-      old_bss_offset = OLD_SECTION_H (old_bss_index).sh_offset;
-      new_data2_index = old_bss_index;
+      ElfW (Phdr) *seg = &OLD_PROGRAM_H (n);
+      if (seg->p_type == PT_LOAD
+	  && (old_bss_seg == 0
+	      || seg->p_vaddr > old_bss_seg->p_vaddr))
+	old_bss_seg = seg;
     }
-  else if (old_plt_index != -1
-	   && (old_sbss_index == -1
-	       || (OLD_SECTION_H (old_sbss_index).sh_addr
-		   > OLD_SECTION_H (old_plt_index).sh_addr)))
+
+  /* Note that old_bss_addr may be lower than the first bss section
+     address, since the section may need aligning.  */
+  old_bss_addr = old_bss_seg->p_vaddr + old_bss_seg->p_filesz;
+  old_bss_offset = old_bss_seg->p_offset + old_bss_seg->p_filesz;
+  old_bss_size = old_bss_seg->p_memsz - old_bss_seg->p_filesz;
+
+  /* Find the first bss style section in the bss segment range.  */
+  old_bss_index = -1;
+  for (n = old_file_h->e_shnum; --n > 0; )
     {
-      old_bss_addr = OLD_SECTION_H (old_plt_index).sh_addr;
-      old_bss_size = OLD_SECTION_H (old_bss_index).sh_size
-	+ OLD_SECTION_H (old_plt_index).sh_size;
-      if (old_sbss_index != -1)
-	old_bss_size += OLD_SECTION_H (old_sbss_index).sh_size;
-      old_bss_offset = OLD_SECTION_H (old_plt_index).sh_offset;
-      new_data2_index = old_plt_index;
+      ElfW (Shdr) *shdr = &OLD_SECTION_H (n);
+      if (shdr->sh_type == SHT_NOBITS
+	  && shdr->sh_addr >= old_bss_addr
+	  && shdr->sh_addr + shdr->sh_size <= old_bss_addr + old_bss_size
+	  && (old_bss_index == -1
+	      || OLD_SECTION_H (old_bss_index).sh_addr > shdr->sh_addr))
+	old_bss_index = n;
     }
-  else
-    {
-      old_bss_addr = OLD_SECTION_H (old_sbss_index).sh_addr;
-      old_bss_size = OLD_SECTION_H (old_bss_index).sh_size
-	+ OLD_SECTION_H (old_sbss_index).sh_size;
-      old_bss_offset = OLD_SECTION_H (old_sbss_index).sh_offset;
-      new_data2_index = old_sbss_index;
-    }
+
+  if (old_bss_index == -1)
+    fatal ("no bss section found");
 
   /* Find the old .data section.  Figure out parameters of
      the new data2 and bss sections.  */
@@ -761,13 +714,7 @@ unexec (const char *new_name, const char *old_name)
   new_bss_addr = (ElfW (Addr)) new_break;
   new_data2_addr = old_bss_addr;
   new_data2_size = new_bss_addr - old_bss_addr;
-  new_data2_offset = OLD_SECTION_H (old_data_index).sh_offset
-    + (new_data2_addr - OLD_SECTION_H (old_data_index).sh_addr);
-  /* This is the amount by which the sections following the bss sections
-     must be shifted in the image.  It can differ from new_data2_size if
-     the end of the old .data section (and thus the offset of the .bss
-     section) was unaligned.  */
-  new_data2_incr = new_data2_size + (new_data2_offset - old_bss_offset);
+  new_data2_offset = old_bss_offset;
 
 #ifdef UNEXELF_DEBUG
   fprintf (stderr, "old_bss_index %td\n", old_bss_index);
@@ -778,7 +725,6 @@ unexec (const char *new_name, const char *old_name)
   DEBUG_LOG (new_data2_addr);
   DEBUG_LOG (new_data2_size);
   DEBUG_LOG (new_data2_offset);
-  DEBUG_LOG (new_data2_incr);
 #endif
 
   if (new_bss_addr < old_bss_addr + old_bss_size)
@@ -792,7 +738,7 @@ unexec (const char *new_name, const char *old_name)
   if (new_file < 0)
     fatal ("Can't creat (%s): %s", new_name, strerror (errno));
 
-  new_file_size = old_file_size + old_file_h->e_shentsize + new_data2_incr;
+  new_file_size = old_file_size + old_file_h->e_shentsize + new_data2_size;
 
   if (ftruncate (new_file, new_file_size))
     fatal ("Can't ftruncate (%s): %s", new_name, strerror (errno));
@@ -811,15 +757,15 @@ unexec (const char *new_name, const char *old_name)
   /* Fix up file header.  We'll add one section.  Section header is
      further away now.  */
 
-  new_file_h->e_shoff += new_data2_incr;
+  if (new_file_h->e_shoff >= old_bss_offset)
+    new_file_h->e_shoff += new_data2_size;
   new_file_h->e_shnum += 1;
 
   /* Modify the e_shstrndx if necessary. */
   PATCH_INDEX (new_file_h->e_shstrndx);
 
-  new_program_h = (ElfW (Phdr) *) ((byte *) new_base + old_file_h->e_phoff);
-  new_section_h = (ElfW (Shdr) *)
-    ((byte *) new_base + old_file_h->e_shoff + new_data2_incr);
+  new_program_h = (ElfW (Phdr) *) ((byte *) new_base + new_file_h->e_phoff);
+  new_section_h = (ElfW (Shdr) *) ((byte *) new_base + new_file_h->e_shoff);
 
   memcpy (new_program_h, old_program_h,
 	  old_file_h->e_phnum * old_file_h->e_phentsize);
@@ -831,65 +777,21 @@ unexec (const char *new_name, const char *old_name)
   fprintf (stderr, "New section count %td\n", (ptrdiff_t) new_file_h->e_shnum);
 #endif
 
-  /* Fix up a new program header.  Extend the writable data segment so
-     that the bss area is covered too. Find that segment by looking
-     for a segment that ends just before the .bss area.  Make sure
-     that no segments are above the new .data2.  Put a loop at the end
-     to adjust the offset and address of any segment that is above
-     data2, just in case we decide to allow this later.  */
+  /* Fix up program header.  Extend the writable data segment so
+     that the bss area is covered too.  */
 
-  for (n = new_file_h->e_phnum; --n >= 0; )
-    {
-      /* Compute maximum of all requirements for alignment of section.  */
-      ElfW (Word) alignment = (NEW_PROGRAM_H (n)).p_align;
-      if ((OLD_SECTION_H (old_bss_index)).sh_addralign > alignment)
-	alignment = OLD_SECTION_H (old_bss_index).sh_addralign;
+  new_bss_seg = new_program_h + (old_bss_seg - old_program_h);
+  new_bss_seg->p_filesz = new_bss_addr - new_bss_seg->p_vaddr;
+  new_bss_seg->p_memsz = new_bss_seg->p_filesz;
 
-#ifdef __sgi
-	  /* According to r02kar@x4u2.desy.de (Karsten Kuenne)
-	     and oliva@gnu.org (Alexandre Oliva), on IRIX 5.2, we
-	     always get "Program segment above .bss" when dumping
-	     when the executable doesn't have an sbss section.  */
-      if (old_sbss_index != -1)
-#endif /* __sgi */
-      if (NEW_PROGRAM_H (n).p_vaddr + NEW_PROGRAM_H (n).p_filesz
-	  > (old_sbss_index == -1
-	     ? old_bss_addr
-	     : round_up (old_bss_addr, alignment)))
-	  fatal ("Program segment above .bss in %s", old_name);
-
-      if (NEW_PROGRAM_H (n).p_type == PT_LOAD
-	  && (round_up ((NEW_PROGRAM_H (n)).p_vaddr
-			+ (NEW_PROGRAM_H (n)).p_filesz,
-			alignment)
-	      == round_up (old_bss_addr, alignment)))
-	break;
-    }
-  if (n < 0)
-    fatal ("Couldn't find segment next to .bss in %s", old_name);
-
-  /* Make sure that the size includes any padding before the old .bss
-     section.  */
-  NEW_PROGRAM_H (n).p_filesz = new_bss_addr - NEW_PROGRAM_H (n).p_vaddr;
-  NEW_PROGRAM_H (n).p_memsz = NEW_PROGRAM_H (n).p_filesz;
-
-#if 0 /* Maybe allow section after data2 - does this ever happen? */
-  for (n = new_file_h->e_phnum; --n >= 0; )
-    {
-      if (NEW_PROGRAM_H (n).p_vaddr
-	  && NEW_PROGRAM_H (n).p_vaddr >= new_data2_addr)
-	NEW_PROGRAM_H (n).p_vaddr += new_data2_size - old_bss_size;
-
-      if (NEW_PROGRAM_H (n).p_offset >= new_data2_offset)
-	NEW_PROGRAM_H (n).p_offset += new_data2_incr;
-    }
-#endif
+  /* Copy over what we have in memory now for the bss area. */
+  memcpy (new_base + new_data2_offset, (caddr_t) old_bss_addr, new_data2_size);
 
   /* Fix up section headers based on new .data2 section.  Any section
      whose offset or virtual address is after the new .data2 section
-     gets its value adjusted.  .bss size becomes zero and new address
-     is set.  data2 section header gets added by copying the existing
-     .data header and modifying the offset, address and size.  */
+     gets its value adjusted.  .bss size becomes zero.  data2 section
+     header gets added by copying the existing .data header and
+     modifying the offset, address and size.  */
 
   /* Walk through all section headers, insert the new data2 section right
      before the new bss section. */
@@ -900,9 +802,7 @@ unexec (const char *new_name, const char *old_name)
       ElfW (Shdr) *new_shdr = &NEW_SECTION_H (nn);
 
       /* If it is (s)bss section, insert the new data2 section before it.  */
-      /* new_data2_index is the index of either old_sbss or old_bss, that was
-	 chosen as a section for new_data2.   */
-      if (n == new_data2_index)
+      if (n == old_bss_index)
 	{
 	  /* Steal the data section header for this data2 section. */
 	  memcpy (new_shdr, &OLD_SECTION_H (old_data_index),
@@ -911,68 +811,43 @@ unexec (const char *new_name, const char *old_name)
 	  new_shdr->sh_addr = new_data2_addr;
 	  new_shdr->sh_offset = new_data2_offset;
 	  new_shdr->sh_size = new_data2_size;
-	  /* Use the bss section's alignment. This will assure that the
-	     new data2 section always be placed in the same spot as the old
-	     bss section by any other application. */
-	  new_shdr->sh_addralign = old_shdr->sh_addralign;
-
-	  /* Now copy over what we have in the memory now. */
-	  memcpy (new_shdr->sh_offset + new_base,
-		  (caddr_t) old_shdr->sh_addr,
-		  new_data2_size);
+	  new_shdr->sh_addralign = 1;
 	  nn++;
 	  new_shdr++;
 	}
 
       memcpy (new_shdr, old_shdr, old_file_h->e_shentsize);
 
-      if (n == old_bss_index
-	  /* The new bss and sbss section's size is zero, and its file offset
-	     and virtual address should be off by NEW_DATA2_SIZE.  */
-	  || n == old_sbss_index || n == old_plt_index
-	  )
+      if (new_shdr->sh_type == SHT_NOBITS
+	  && new_shdr->sh_addr >= old_bss_addr
+	  && (new_shdr->sh_addr + new_shdr->sh_size
+	      <= old_bss_addr + old_bss_size))
 	{
-	  /* NN should be `old_s?bss_index + 1' at this point. */
-	  new_shdr->sh_offset = new_data2_offset + new_data2_size;
-	  new_shdr->sh_addr = new_data2_addr + new_data2_size;
-	  /* Let the new bss section address alignment be the same as the
-	     section address alignment followed the old bss section, so
-	     this section will be placed in exactly the same place. */
-	  new_shdr->sh_addralign = OLD_SECTION_H (nn).sh_addralign;
+	  /* SHT_NOBITS sections do not need a valid sh_offset, so it
+	     might be incorrect.  Write the correct value.  */
+	  new_shdr->sh_offset = (new_shdr->sh_addr - new_bss_seg->p_vaddr
+				 + new_bss_seg->p_offset);
+
+	  /* If this is was a SHT_NOBITS .plt section, then it is
+	     probably a PowerPC PLT.  If it is PowerPC64 ELFv1 then
+	     glibc ld.so doesn't initialize the toc pointer word.  A
+	     non-zero toc pointer word can defeat Power7 thread safety
+	     during lazy update of a PLT entry.  This only matters if
+	     emacs becomes multi-threaded.  */
+	  if (strcmp (old_section_names + new_shdr->sh_name, ".plt") == 0)
+	    memset (new_shdr->sh_offset + new_base, 0, new_shdr->sh_size);
+
+	  /* Set the new bss and sbss section's size to zero, because
+	     we've already covered this address range by .data2.  */
 	  new_shdr->sh_size = 0;
 	}
       else
 	{
 	  /* Any section that was originally placed after the .bss
-	     section should now be off by NEW_DATA2_INCR.  If a
-	     section overlaps the .bss section, consider it to be
-	     placed after the .bss section.  Overlap can occur if the
-	     section just before .bss has less-strict alignment; this
-	     was observed between .symtab and .bss on Solaris 2.5.1
-	     (sparc) with GCC snapshot 960602.
+	     section should now be off by NEW_DATA2_SIZE.  */
 
-> dump -h temacs
-
-temacs:
-
-	   **** SECTION HEADER TABLE ****
-[No]	Type	Flags	Addr         Offset       Size        	Name
-	Link	Info	Adralgn      Entsize
-
-[22]	1	3	0x335150     0x315150     0x4          	.data.rel.local
-	0	0	0x4          0
-
-[23]	8	3	0x335158     0x315158     0x42720      	.bss
-	0	0	0x8          0
-
-[24]	2	0	0            0x315154     0x1c9d0      	.symtab
-	25	1709	0x4          0x10
-	  */
-
-	  if (new_shdr->sh_offset >= old_bss_offset
-	      || (new_shdr->sh_offset + new_shdr->sh_size
-		  > new_data2_offset))
-	    new_shdr->sh_offset += new_data2_incr;
+	  if (new_shdr->sh_offset >= old_bss_offset)
+	    new_shdr->sh_offset += new_data2_size;
 
 	  /* Any section that was originally placed after the section
 	     header table should now be off by the size of one section
@@ -992,23 +867,13 @@ temacs:
 	  && new_shdr->sh_type != SHT_DYNSYM)
 	PATCH_INDEX (new_shdr->sh_info);
 
-      if (old_sbss_index != -1)
-	if (!strcmp (old_section_names + new_shdr->sh_name, ".sbss"))
-	  {
-	    new_shdr->sh_offset =
-	      round_up (new_shdr->sh_offset,
-			new_shdr->sh_addralign);
-	    new_shdr->sh_type = SHT_PROGBITS;
-	  }
-
       /* Now, start to copy the content of sections.  */
       if (new_shdr->sh_type == SHT_NULL
 	  || new_shdr->sh_type == SHT_NOBITS)
 	continue;
 
-      /* Write out the sections. .data and .data1 (and data2, called
-	 ".data" in the strings table) get copied from the current process
-	 instead of the old file.  */
+      /* Some sections are copied from the current process instead of
+	 the old file.  */
       if (!strcmp (old_section_names + new_shdr->sh_name, ".data")
 	  || !strcmp (old_section_names + new_shdr->sh_name, ".sdata")
 	  || !strcmp (old_section_names + new_shdr->sh_name, ".lit4")
@@ -1037,8 +902,7 @@ temacs:
 	  || !strcmp (old_section_names + new_shdr->sh_name, ".got")
 #endif
 	  || !strcmp (old_section_names + new_shdr->sh_name, ".sdata1")
-	  || !strcmp (old_section_names + new_shdr->sh_name, ".data1")
-	  || !strcmp (old_section_names + new_shdr->sh_name, ".sbss"))
+	  || !strcmp (old_section_names + new_shdr->sh_name, ".data1"))
 	src = (caddr_t) old_shdr->sh_addr;
       else
 	src = old_base + old_shdr->sh_offset;
