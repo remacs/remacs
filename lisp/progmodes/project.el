@@ -140,12 +140,15 @@ The file names can be absolute, or relative to the project root."
   (list (cdr project)))
 
 (cl-defmethod project-library-roots ((project (head vc)))
-  (append
-   (let ((root (cdr project)))
-     (mapcar
-      (lambda (dir) (file-name-as-directory (expand-file-name dir root)))
-      (project--value-in-dir 'project-vc-library-roots root)))
-   (cl-call-next-method)))
+  (project-subtract-directories
+   (project-combine-directories
+    (append
+     (let ((root (cdr project)))
+       (mapcar
+        (lambda (dir) (file-name-as-directory (expand-file-name dir root)))
+        (project--value-in-dir 'project-vc-library-roots root)))
+     (funcall project-library-roots-function)))
+   (project-roots project)))
 
 (cl-defmethod project-ignores ((project (head vc)) dir)
   (let* ((root (cdr project))
