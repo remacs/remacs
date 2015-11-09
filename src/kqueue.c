@@ -21,10 +21,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef HAVE_KQUEUE
 #include <stdio.h>
 #include <sys/event.h>
+#include <sys/file.h>
 #include "lisp.h"
-#include "coding.h"
-#include "termhooks.h"
 #include "keyboard.h"
+#include "process.h"
 
 
 /* File handle for kqueue.  */
@@ -33,149 +33,103 @@ static int kqueuefd = -1;
 /* This is a list, elements are triples (DESCRIPTOR FILE FLAGS CALLBACK)  */
 static Lisp_Object watch_list;
 
-#if 0
-/* This is the callback function for arriving signals from
-   g_file_monitor.  It shall create a Lisp event, and put it into
-   Emacs input queue.  */
-static gboolean
-dir_monitor_callback (GFileMonitor *monitor,
-		      GFile *file,
-		      GFile *other_file,
-		      GFileMonitorEvent event_type,
-		      gpointer user_data)
+/* This is the callback function for arriving input on kqueuefd.  It
+   shall create a Lisp event, and put it into Emacs input queue.  */
+static void
+kqueue_callback (int fd, void *data)
 {
-  Lisp_Object symbol, monitor_object, watch_object, flags;
-  char *name = g_file_get_parse_name (file);
-  char *oname = other_file ? g_file_get_parse_name (other_file) : NULL;
+  for (;;) {
+    struct kevent kev;
+    struct input_event event;
+    Lisp_Object monitor_object, watch_object, name, callback, actions;
 
-  /* Determine event symbol.  */
-  switch (event_type)
-    {
-    case G_FILE_MONITOR_EVENT_CHANGED:
-      symbol = Qchanged;
-      break;
-    case G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT:
-      symbol = Qchanges_done_hint;
-      break;
-    case G_FILE_MONITOR_EVENT_DELETED:
-      symbol = Qdeleted;
-      break;
-    case G_FILE_MONITOR_EVENT_CREATED:
-      symbol = Qcreated;
-      break;
-    case G_FILE_MONITOR_EVENT_ATTRIBUTE_CHANGED:
-      symbol = Qattribute_changed;
-      break;
-    case G_FILE_MONITOR_EVENT_PRE_UNMOUNT:
-      symbol = Qpre_unmount;
-      break;
-    case G_FILE_MONITOR_EVENT_UNMOUNTED:
-      symbol = Qunmounted;
-      break;
-    case G_FILE_MONITOR_EVENT_MOVED:
-      symbol = Qmoved;
-      break;
-    default:
-      goto cleanup;
+    static const struct timespec nullts = { 0, 0 };
+    int ret = kevent (kqueuefd, NULL, 0, &kev, 1, NULL);
+    if (ret < 1) {
+      /* All events read.  */
+      return;
     }
 
-  /* Determine callback function.  */
-  monitor_object = make_pointer_integer (monitor);
-  eassert (INTEGERP (monitor_object));
-  watch_object = assq_no_quit (monitor_object, watch_list);
+    /* Determine file name and callback function.  */
+    monitor_object = make_number (kev.ident);
+    watch_object = assq_no_quit (monitor_object, watch_list);
 
-  if (CONSP (watch_object))
-    {
-      struct input_event event;
-      Lisp_Object otail = oname ? list1 (build_string (oname)) : Qnil;
+    if (CONSP (watch_object)) {
+      name = XCAR (XCDR (watch_object));
+      callback = XCAR (XCDR (XCDR (XCDR (watch_object))));
+    }
+    else
+      continue;
 
-      /* Check, whether event_type is expected.  */
-      flags = XCAR (XCDR (XCDR (watch_object)));
-      if ((!NILP (Fmember (Qchange, flags)) &&
-	   !NILP (Fmember (symbol, list5 (Qchanged, Qchanges_done_hint,
-					  Qdeleted, Qcreated, Qmoved)))) ||
-	  (!NILP (Fmember (Qattribute_change, flags)) &&
-	   ((EQ (symbol, Qattribute_changed)))))
-	{
-	  /* Construct an event.  */
-	  EVENT_INIT (event);
-	  event.kind = FILE_NOTIFY_EVENT;
-	  event.frame_or_window = Qnil;
-	  event.arg = list2 (Fcons (monitor_object,
-				    Fcons (symbol,
-					   Fcons (build_string (name),
-						  otail))),
-			     XCAR (XCDR (XCDR (XCDR (watch_object)))));
+    /* Determine event actions.  */
+    actions = Qnil;
+    if (kev.fflags & NOTE_DELETE)
+      actions = Fcons (Qdelete, actions);
+    if (kev.fflags & NOTE_WRITE)
+      actions = Fcons (Qwrite, actions);
+    if (kev.fflags & NOTE_EXTEND)
+      actions = Fcons (Qextend, actions);
+    if (kev.fflags & NOTE_ATTRIB)
+      actions = Fcons (Qattrib, actions);
+    if (kev.fflags & NOTE_LINK)
+      actions = Fcons (Qlink, actions);
+    if (kev.fflags & NOTE_RENAME)
+      actions = Fcons (Qrename, actions);
 
-	  /* Store it into the input event queue.  */
-	  kbd_buffer_store_event (&event);
-	  // XD_DEBUG_MESSAGE ("%s", XD_OBJECT_TO_STRING (event.arg));
-	}
+    if (!NILP (actions)) {
+      /* Construct an event.  */
+      EVENT_INIT (event);
+      event.kind = FILE_NOTIFY_EVENT;
+      event.frame_or_window = Qnil;
+      event.arg = list2 (Fcons (monitor_object,
+				Fcons (actions, Fcons (name, Qnil))),
+			 callback);
 
-      /* Cancel monitor if file or directory is deleted.  */
-      if (!NILP (Fmember (symbol, list2 (Qdeleted, Qmoved))) &&
-	  (strcmp (name, SSDATA (XCAR (XCDR (watch_object)))) == 0) &&
-	  !g_file_monitor_is_cancelled (monitor))
-	g_file_monitor_cancel (monitor);
+      /* Store it into the input event queue.  */
+      kbd_buffer_store_event (&event);
     }
 
-  /* Cleanup.  */
- cleanup:
-  g_free (name);
-  g_free (oname);
-
-  return TRUE;
+    /* Cancel monitor if file or directory is deleted.  */
+    /* TODO: Implement it.  */
+  }
+  return;
 }
-#endif /* 0  */
 
 DEFUN ("kqueue-add-watch", Fkqueue_add_watch, Skqueue_add_watch, 3, 3, 0,
        doc: /* Add a watch for filesystem events pertaining to FILE.
 
 This arranges for filesystem events pertaining to FILE to be reported
-to Emacs.  Use `gfile-rm-watch' to cancel the watch.
+to Emacs.  Use `kqueue-rm-watch' to cancel the watch.
 
 Value is a descriptor for the added watch.  If the file cannot be
 watched for some reason, this function signals a `file-notify-error' error.
 
-FLAGS is a list of conditions to set what will be watched for.  It can
-include the following symbols:
+FLAGS is a list of events to be watched for.  It can include the
+following symbols:
 
-  `change'           -- watch for file changes
-  `attribute-change' -- watch for file attributes changes, like
-                        permissions or modification time
-  `watch-mounts'     -- watch for mount events
-  `send-moved'       -- pair `deleted' and `created' events caused by
-                        file renames and send a single `renamed' event
-                        instead
+  `delete' -- FILE was deleted
+  `write'  -- FILE has changed
+  `extend' -- FILE was extended
+  `attrib' -- a FILE attribute was changed
+  `link'   -- a FILE's link count was changed
+  `rename' -- FILE was moved to FILE1
 
 When any event happens, Emacs will call the CALLBACK function passing
 it a single argument EVENT, which is of the form
 
-  (DESCRIPTOR ACTION FILE [FILE1])
+  (DESCRIPTOR ACTIONS FILE [FILE1])
 
 DESCRIPTOR is the same object as the one returned by this function.
-ACTION is the description of the event.  It could be any one of the
-following:
-
-  `changed'           -- FILE has changed
-  `changes-done-hint' -- a hint that this was probably the last change
-                         in a set of changes
-  `deleted'           -- FILE was deleted
-  `created'           -- FILE was created
-  `attribute-changed' -- a FILE attribute was changed
-  `pre-unmount'       -- the FILE location will soon be unmounted
-  `unmounted'         -- the FILE location was unmounted
-  `moved'             -- FILE was moved to FILE1
+ACTIONS is a list of events.
 
 FILE is the name of the file whose event is being reported.  FILE1
-will be reported only in case of the `moved' event.  */)
+will be reported only in case of the `rename' event.  */)
   (Lisp_Object file, Lisp_Object flags, Lisp_Object callback)
 {
   Lisp_Object watch_object;
-  GFile *gfile;
-  GFileMonitor *monitor;
-  GFileMonitorFlags gflags = G_FILE_MONITOR_NONE;
-  GError *gerror = NULL;
+  int fd;
+  u_short fflags = 0;
+  struct kevent ev;
 
   /* Check parameters.  */
   CHECK_STRING (file);
@@ -183,80 +137,62 @@ will be reported only in case of the `moved' event.  */)
   if (NILP (Ffile_exists_p (file)))
     report_file_error ("File does not exist", file);
 
+  /* TODO: Directories shall be supported as well.  */
+  if (!NILP (Ffile_directory_p (file)))
+    report_file_error ("Directory watching is not supported (yet)", file);
+
   CHECK_LIST (flags);
 
   if (!FUNCTIONP (callback))
     wrong_type_argument (Qinvalid_function, callback);
 
-  /* Create GFile name.  */
-  //  gfile = g_file_new_for_path (SSDATA (ENCODE_FILE (file)));
-
-  /* Assemble flags.  */
-  //  if (!NILP (Fmember (Qwatch_mounts, flags)))
-  //    gflags |= G_FILE_MONITOR_WATCH_MOUNTS;
-  //  if (!NILP (Fmember (Qsend_moved, flags)))
-  //    gflags |= G_FILE_MONITOR_SEND_MOVED;
-
   if (kqueuefd < 0)
     {
+      /* Create kqueue descriptor.  */
       kqueuefd = kqueue ();
       if (kqueuefd < 0)
 	report_file_notify_error ("File watching is not available", Qnil);
+
+      /* Start monitoring for possible I/O.  */
+      add_read_fd (kqueuefd, kqueue_callback, NULL); //data);
+
       watch_list = Qnil;
-      //      add_read_fd (inotifyfd, &inotify_callback, NULL);
     }
 
+  /* Open file.  */
+  file = ENCODE_FILE (file);
+  fd = emacs_open (SSDATA (file), O_NONBLOCK | O_BINARY | O_RDONLY, 0);
+  if (fd == -1)
+    report_file_error ("File cannot be opened", file);
 
-}
-#if 0
+  /* Assemble filter flags  */
+  if (!NILP (Fmember (Qdelete, flags))) fflags |= NOTE_DELETE;
+  if (!NILP (Fmember (Qwrite, flags)))  fflags |= NOTE_WRITE;
+  if (!NILP (Fmember (Qextend, flags))) fflags |= NOTE_EXTEND;
+  if (!NILP (Fmember (Qattrib, flags))) fflags |= NOTE_ATTRIB;
+  if (!NILP (Fmember (Qlink, flags)))   fflags |= NOTE_LINK;
+  if (!NILP (Fmember (Qrename, flags))) fflags |= NOTE_RENAME;
 
-  mask = aspect_to_inotifymask (aspect);
-  encoded_file_name = ENCODE_FILE (file_name);
-  watchdesc = inotify_add_watch (inotifyfd, SSDATA (encoded_file_name), mask);
-  if (watchdesc == -1)
-    report_file_notify_error ("Could not add watch for file", file_name);
+  /* Register event.  */
+    EV_SET (&ev, fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
+	    fflags, 0, NULL);
 
-  /* Enable watch.  */
-  monitor = g_file_monitor (gfile, gflags, NULL, &gerror);
-  g_object_unref (gfile);
-  if (gerror)
-    {
-      char msg[1024];
-      strcpy (msg, gerror->message);
-      g_error_free (gerror);
-      xsignal1 (Qfile_notify_error, build_string (msg));
-    }
-  if (! monitor)
-    xsignal2 (Qfile_notify_error, build_string ("Cannot watch file"), file);
-
-  Lisp_Object watch_descriptor = make_pointer_integer (monitor);
-
-  /* Check the dicey assumption that make_pointer_integer is safe.  */
-  if (! INTEGERP (watch_descriptor))
-    {
-      g_object_unref (monitor);
-      xsignal2 (Qfile_notify_error, build_string ("Unsupported file watcher"),
-		file);
-    }
-
-  /* The default rate limit is 800 msec.  We adapt this.  */
-  g_file_monitor_set_rate_limit (monitor, 100);
-
-  /* Subscribe to the "changed" signal.  */
-  g_signal_connect (monitor, "changed",
-		    (GCallback) dir_monitor_callback, NULL);
+  if (kevent (kqueuefd, &ev, 1, NULL, 0, NULL) < 0)
+    report_file_error ("Cannot watch file", file);
 
   /* Store watch object in watch list.  */
+  Lisp_Object watch_descriptor = make_number (fd);
   watch_object = list4 (watch_descriptor, file, flags, callback);
   watch_list = Fcons (watch_object, watch_list);
 
   return watch_descriptor;
 }
 
-DEFUN ("gfile-rm-watch", Fgfile_rm_watch, Sgfile_rm_watch, 1, 1, 0,
+#if 0
+DEFUN ("kqueue-rm-watch", Fkqueue_rm_watch, Skqueue_rm_watch, 1, 1, 0,
        doc: /* Remove an existing WATCH-DESCRIPTOR.
 
-WATCH-DESCRIPTOR should be an object returned by `gfile-add-watch'.  */)
+WATCH-DESCRIPTOR should be an object returned by `kqueue-add-watch'.  */)
      (Lisp_Object watch_descriptor)
 {
   Lisp_Object watch_object = assq_no_quit (watch_descriptor, watch_list);
@@ -316,12 +252,6 @@ syms_of_kqueue (void)
   defsubr (&Skqueue_add_watch);
   //  defsubr (&Skqueue_rm_watch);
   //  defsubr (&Skqueue_valid_p);
-
-  /* Filter objects.  */
-  DEFSYM (Qchange, "change");
-  DEFSYM (Qattribute_change, "attribute-change");
-  DEFSYM (Qwatch_mounts, "watch-mounts"); /* G_FILE_MONITOR_WATCH_MOUNTS  */
-  DEFSYM (Qsend_moved, "send-moved");	/* G_FILE_MONITOR_SEND_MOVED  */
 
   /* Event types.  */
   DEFSYM (Qdelete, "delete");	/* NOTE_DELETE  */
