@@ -2068,6 +2068,13 @@ changes from the current branch."
     (message "File contains conflicts.")))
 
 ;;;###autoload
+(defun vc-message-unresolved-conflicts (filename)
+  "Display a message indicating unresolved conflicts in FILENAME."
+  ;; This enables all VC backends to give a standard, recognizeable
+  ;; conflict message that indicates which file is conflicted.
+  (message "There are unresolved conflicts in %s" filename))
+
+;;;###autoload
 (defalias 'vc-resolve-conflicts 'smerge-ediff)
 
 ;; TODO: This is OK but maybe we could integrate it better.
