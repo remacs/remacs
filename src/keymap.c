@@ -853,7 +853,9 @@ store_in_keymap (Lisp_Object keymap, register Lisp_Object idx, Lisp_Object def)
 		XSETCDR (elt, def);
 		return def;
 	      }
-	    else if (CONSP (idx) && CHARACTERP (XCAR (idx)))
+	    else if (CONSP (idx)
+		     && CHARACTERP (XCAR (idx))
+		     && CHARACTERP (XCAR (elt)))
 	      {
 		int from = XFASTINT (XCAR (idx));
 		int to = XFASTINT (XCDR (idx));
