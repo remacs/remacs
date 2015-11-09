@@ -1433,8 +1433,9 @@ Argument BACKEND is the backend you are using."
    (lambda (str)
      ;; Commented or empty lines.
      (string-match-p "\\`\\(?:#\\|[ \t\r\n]*\\'\\)" str))
-   (vc--read-lines
-    (vc-call-backend backend 'find-ignore-file file))))
+   (let ((file (vc-call-backend backend 'find-ignore-file file)))
+     (and (file-exists-p file)
+          (vc--read-lines file)))))
 
 (defun vc--read-lines (file)
   "Return a list of lines of FILE."
