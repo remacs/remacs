@@ -802,9 +802,10 @@ void *
 xnmalloc (ptrdiff_t nitems, ptrdiff_t item_size)
 {
   eassert (0 <= nitems && 0 < item_size);
-  if (min (PTRDIFF_MAX, SIZE_MAX) / item_size < nitems)
+  ptrdiff_t nbytes;
+  if (INT_MULTIPLY_WRAPV (nitems, item_size, &nbytes) || SIZE_MAX < nbytes)
     memory_full (SIZE_MAX);
-  return xmalloc (nitems * item_size);
+  return xmalloc (nbytes);
 }
 
 
@@ -815,9 +816,10 @@ void *
 xnrealloc (void *pa, ptrdiff_t nitems, ptrdiff_t item_size)
 {
   eassert (0 <= nitems && 0 < item_size);
-  if (min (PTRDIFF_MAX, SIZE_MAX) / item_size < nitems)
+  ptrdiff_t nbytes;
+  if (INT_MULTIPLY_WRAPV (nitems, item_size, &nbytes) || SIZE_MAX < nbytes)
     memory_full (SIZE_MAX);
-  return xrealloc (pa, nitems * item_size);
+  return xrealloc (pa, nbytes);
 }
 
 
@@ -848,33 +850,43 @@ void *
 xpalloc (void *pa, ptrdiff_t *nitems, ptrdiff_t nitems_incr_min,
 	 ptrdiff_t nitems_max, ptrdiff_t item_size)
 {
+  ptrdiff_t n0 = *nitems;
+  eassume (0 < item_size && 0 < nitems_incr_min && 0 <= n0 && -1 <= nitems_max);
+
   /* The approximate size to use for initial small allocation
      requests.  This is the largest "small" request for the GNU C
      library malloc.  */
   enum { DEFAULT_MXFAST = 64 * sizeof (size_t) / 4 };
 
   /* If the array is tiny, grow it to about (but no greater than)
-     DEFAULT_MXFAST bytes.  Otherwise, grow it by about 50%.  */
-  ptrdiff_t n = *nitems;
-  ptrdiff_t tiny_max = DEFAULT_MXFAST / item_size - n;
-  ptrdiff_t half_again = n >> 1;
-  ptrdiff_t incr_estimate = max (tiny_max, half_again);
-
-  /* Adjust the increment according to three constraints: NITEMS_INCR_MIN,
+     DEFAULT_MXFAST bytes.  Otherwise, grow it by about 50%.
+     Adjust the growth according to three constraints: NITEMS_INCR_MIN,
      NITEMS_MAX, and what the C language can represent safely.  */
-  ptrdiff_t C_language_max = min (PTRDIFF_MAX, SIZE_MAX) / item_size;
-  ptrdiff_t n_max = (0 <= nitems_max && nitems_max < C_language_max
-		     ? nitems_max : C_language_max);
-  ptrdiff_t nitems_incr_max = n_max - n;
-  ptrdiff_t incr = max (nitems_incr_min, min (incr_estimate, nitems_incr_max));
 
-  eassert (0 < item_size && 0 < nitems_incr_min && 0 <= n && -1 <= nitems_max);
+  ptrdiff_t n, nbytes;
+  if (INT_ADD_WRAPV (n0, n0 >> 1, &n))
+    n = PTRDIFF_MAX;
+  if (0 <= nitems_max && nitems_max < n)
+    n = nitems_max;
+
+  ptrdiff_t adjusted_nbytes
+    = ((INT_MULTIPLY_WRAPV (n, item_size, &nbytes) || SIZE_MAX < nbytes)
+       ? min (PTRDIFF_MAX, SIZE_MAX)
+       : nbytes < DEFAULT_MXFAST ? DEFAULT_MXFAST : 0);
+  if (adjusted_nbytes)
+    {
+      n = adjusted_nbytes / item_size;
+      nbytes = adjusted_nbytes - adjusted_nbytes % item_size;
+    }
+
   if (! pa)
     *nitems = 0;
-  if (nitems_incr_max < incr)
+  if (n - n0 < nitems_incr_min
+      && (INT_ADD_WRAPV (n0, nitems_incr_min, &n)
+	  || (0 <= nitems_max && nitems_max < n)
+	  || INT_MULTIPLY_WRAPV (n, item_size, &nbytes)))
     memory_full (SIZE_MAX);
-  n += incr;
-  pa = xrealloc (pa, n * item_size);
+  pa = xrealloc (pa, nbytes);
   *nitems = n;
   return pa;
 }
@@ -2104,9 +2116,8 @@ INIT must be an integer that represents a character.  */)
       EMACS_INT string_len = XINT (length);
       unsigned char *p, *beg, *end;
 
-      if (string_len > STRING_BYTES_MAX / len)
+      if (INT_MULTIPLY_WRAPV (len, string_len, &nbytes))
 	string_overflow ();
-      nbytes = len * string_len;
       val = make_uninit_multibyte_string (string_len, nbytes);
       for (beg = SDATA (val), p = beg, end = beg + nbytes; p < end; p += len)
 	{

@@ -2631,30 +2631,16 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
       switch (code)
 	{
 	case Aadd:
-	  if (INT_ADD_OVERFLOW (accum, next))
-	    {
-	      overflow = 1;
-	      accum &= INTMASK;
-	    }
-	  accum += next;
+	  overflow |= INT_ADD_WRAPV (accum, next, &accum);
 	  break;
 	case Asub:
-	  if (INT_SUBTRACT_OVERFLOW (accum, next))
-	    {
-	      overflow = 1;
-	      accum &= INTMASK;
-	    }
-	  accum = argnum ? accum - next : nargs == 1 ? - next : next;
+	  if (! argnum)
+	    accum = nargs == 1 ? - next : next;
+	  else
+	    overflow |= INT_SUBTRACT_WRAPV (accum, next, &accum);
 	  break;
 	case Amult:
-	  if (INT_MULTIPLY_OVERFLOW (accum, next))
-	    {
-	      EMACS_UINT a = accum, b = next, ab = a * b;
-	      overflow = 1;
-	      accum = ab & INTMASK;
-	    }
-	  else
-	    accum *= next;
+	  overflow |= INT_MULTIPLY_WRAPV (accum, next, &accum);
 	  break;
 	case Adiv:
 	  if (! (argnum || nargs == 1))
@@ -2663,7 +2649,10 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 	    {
 	      if (next == 0)
 		xsignal0 (Qarith_error);
-	      accum /= next;
+	      if (INT_DIVIDE_OVERFLOW (accum, next))
+		overflow = true;
+	      else
+		accum /= next;
 	    }
 	  break;
 	case Alogand:

@@ -4447,40 +4447,24 @@ extern void *record_xmalloc (size_t) ATTRIBUTE_ALLOC_SIZE ((1));
     }					\
   } while (false)
 
-
-/* Return floor (NBYTES / WORD_SIZE).  */
-
-INLINE ptrdiff_t
-lisp_word_count (ptrdiff_t nbytes)
-{
-  if (-1 >> 1 == -1)
-    switch (word_size + 0)
-      {
-      case 2: return nbytes >> 1;
-      case 4: return nbytes >> 2;
-      case 8: return nbytes >> 3;
-      case 16: return nbytes >> 4;
-      default: break;
-      }
-  return nbytes / word_size - (nbytes % word_size < 0);
-}
-
 /* SAFE_ALLOCA_LISP allocates an array of Lisp_Objects.  */
 
 #define SAFE_ALLOCA_LISP(buf, nelt)			       \
   do {							       \
-    if ((nelt) <= lisp_word_count (sa_avail))		       \
-      (buf) = AVAIL_ALLOCA ((nelt) * word_size);	       \
-    else if ((nelt) <= min (PTRDIFF_MAX, SIZE_MAX) / word_size) \
+    ptrdiff_t alloca_nbytes;				       \
+    if (INT_MULTIPLY_WRAPV (nelt, word_size, &alloca_nbytes)   \
+	|| SIZE_MAX < alloca_nbytes)			       \
+      memory_full (SIZE_MAX);				       \
+    else if (alloca_nbytes <= sa_avail)			       \
+      (buf) = AVAIL_ALLOCA (alloca_nbytes);		       \
+    else						       \
       {							       \
 	Lisp_Object arg_;				       \
-	(buf) = xmalloc ((nelt) * word_size);		       \
+	(buf) = xmalloc (alloca_nbytes);		       \
 	arg_ = make_save_memory (buf, nelt);		       \
 	sa_must_free = true;				       \
 	record_unwind_protect (free_save_value, arg_);	       \
       }							       \
-    else						       \
-      memory_full (SIZE_MAX);				       \
   } while (false)
 
 

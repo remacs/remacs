@@ -11773,7 +11773,6 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   struct terminal *terminal;
   struct x_display_info *dpyinfo;
   XrmDatabase xrdb;
-  ptrdiff_t lim;
 
   block_input ();
 
@@ -11974,13 +11973,13 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   XSetAfterFunction (x_current_display, x_trace_wire);
 #endif
 
-  lim = min (PTRDIFF_MAX, SIZE_MAX) - sizeof "@";
   Lisp_Object system_name = Fsystem_name ();
-  if (lim - SBYTES (Vinvocation_name) < SBYTES (system_name))
+  ptrdiff_t nbytes;
+  if (INT_ADD_WRAPV (SBYTES (Vinvocation_name), SBYTES (system_name) + 2,
+		     &nbytes))
     memory_full (SIZE_MAX);
   dpyinfo->x_id = ++x_display_id;
-  dpyinfo->x_id_name = xmalloc (SBYTES (Vinvocation_name)
-				+ SBYTES (system_name) + 2);
+  dpyinfo->x_id_name = xmalloc (nbytes);
   char *nametail = lispstpcpy (dpyinfo->x_id_name, Vinvocation_name);
   *nametail++ = '@';
   lispstpcpy (nametail, system_name);
