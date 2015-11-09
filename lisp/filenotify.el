@@ -22,15 +22,16 @@
 ;;; Commentary
 
 ;; This package is an abstraction layer from the different low-level
-;; file notification packages `gfilenotify', `inotify' and
+;; file notification packages `inotify', `kqueue', `gfilenotify' and
 ;; `w32notify'.
 
 ;;; Code:
 
 (defconst file-notify--library
   (cond
-   ((featurep 'gfilenotify) 'gfilenotify)
    ((featurep 'inotify) 'inotify)
+   ((featurep 'kqueue) 'kqueue)
+   ((featurep 'gfilenotify) 'gfilenotify)
    ((featurep 'w32notify) 'w32notify))
   "Non-nil when Emacs has been compiled with file notification support.
 The value is the name of the low-level file notification package
@@ -40,8 +41,8 @@ could use another implementation.")
 (defvar file-notify-descriptors (make-hash-table :test 'equal)
   "Hash table for registered file notification descriptors.
 A key in this hash table is the descriptor as returned from
-`gfilenotify', `inotify', `w32notify' or a file name handler.
-The value in the hash table is a list
+`inotify', `kqueue', `gfilenotify', `w32notify' or a file name
+handler.  The value in the hash table is a list
 
   (DIR (FILE . CALLBACK) (FILE . CALLBACK) ...)
 
@@ -76,7 +77,8 @@ WHAT is a file or directory name to be removed, needed just for `inotify'."
 	    (remhash desc file-notify-descriptors)
 	  (puthash desc registered file-notify-descriptors))))))
 
-;; This function is used by `gfilenotify', `inotify' and `w32notify' events.
+;; This function is used by `inotify', `kqueue', `gfilenotify' and
+;; `w32notify' events.
 ;;;###autoload
 (defun file-notify-handle-event (event)
   "Handle file system monitoring event.
@@ -159,7 +161,7 @@ EVENT is the cadr of the event in `file-notify-handle-event'
 	(setq actions nil))
 
       ;; Loop over actions.  In fact, more than one action happens only
-      ;; for `inotify'.
+      ;; for `inotify' and `kqueue'.
       (dolist (action actions)
 
 	;; Send pending event, if it doesn't match.
@@ -184,19 +186,17 @@ EVENT is the cadr of the event in `file-notify-handle-event'
 	;; Map action.  We ignore all events which cannot be mapped.
 	(setq action
 	      (cond
-	       ;; gfilenotify.
-	       ((memq action '(attribute-changed changed created deleted))
+	       ((memq action
+                      '(attribute-changed changed created deleted renamed))
 		action)
 	       ((eq action 'moved)
 		(setq file1 (file-notify--event-file1-name event))
 		'renamed)
-
-	       ;; inotify, w32notify.
 	       ((eq action 'ignored)
                 (setq stopped t actions nil))
-	       ((eq action 'attrib) 'attribute-changed)
+	       ((memq action '(attrib link)) 'attribute-changed)
 	       ((memq action '(create added)) 'created)
-	       ((memq action '(modify modified)) 'changed)
+	       ((memq action '(modify modified write)) 'changed)
 	       ((memq action '(delete delete-self move-self removed)) 'deleted)
 	       ;; Make the event pending.
 	       ((memq action '(moved-from renamed-from))
@@ -275,8 +275,8 @@ EVENT is the cadr of the event in `file-notify-handle-event'
         (file-notify--rm-descriptor
          (file-notify--descriptor desc file) file)))))
 
-;; `gfilenotify' and `w32notify' return a unique descriptor for every
-;; `file-notify-add-watch', while `inotify' returns a unique
+;; `kqueue', `gfilenotify' and `w32notify' return a unique descriptor
+;; for every `file-notify-add-watch', while `inotify' returns a unique
 ;; descriptor per inode only.
 (defun file-notify-add-watch (file flags callback)
   "Add a watch for filesystem events pertaining to FILE.
@@ -349,8 +349,9 @@ FILE is the name of the file whose event is being reported."
       ;; Determine low-level function to be called.
       (setq func
 	    (cond
-	     ((eq file-notify--library 'gfilenotify) 'gfile-add-watch)
 	     ((eq file-notify--library 'inotify) 'inotify-add-watch)
+	     ((eq file-notify--library 'kqueue) 'kqueue-add-watch)
+	     ((eq file-notify--library 'gfilenotify) 'gfile-add-watch)
 	     ((eq file-notify--library 'w32notify) 'w32notify-add-watch)))
 
       ;; Determine respective flags.
@@ -362,11 +363,14 @@ FILE is the name of the file whose event is being reported."
 	   (cond
 	    ((eq file-notify--library 'inotify)
 	     '(create delete delete-self modify move-self move))
+	    ((eq file-notify--library 'kqueue)
+	     '(delete write extend rename))
 	    ((eq file-notify--library 'w32notify)
 	     '(file-name directory-name size last-write-time)))))
 	(when (memq 'attribute-change flags)
 	  (push (cond
                  ((eq file-notify--library 'inotify) 'attrib)
+                 ((eq file-notify--library 'kqueue) 'attrib)
                  ((eq file-notify--library 'w32notify) 'attributes))
                 l-flags)))
 
@@ -410,8 +414,9 @@ DESCRIPTOR should be an object returned by `file-notify-add-watch'."
 
               (funcall
                (cond
-                ((eq file-notify--library 'gfilenotify) 'gfile-rm-watch)
                 ((eq file-notify--library 'inotify) 'inotify-rm-watch)
+                ((eq file-notify--library 'kqueue) 'kqueue-rm-watch)
+                ((eq file-notify--library 'gfilenotify) 'gfile-rm-watch)
                 ((eq file-notify--library 'w32notify) 'w32notify-rm-watch))
                desc))
           (file-notify-error nil)))
@@ -441,8 +446,9 @@ DESCRIPTOR should be an object returned by `file-notify-add-watch'."
                (funcall handler 'file-notify-valid-p descriptor)
              (funcall
               (cond
-               ((eq file-notify--library 'gfilenotify) 'gfile-valid-p)
                ((eq file-notify--library 'inotify) 'inotify-valid-p)
+               ((eq file-notify--library 'kqueue) 'kqueue-valid-p)
+               ((eq file-notify--library 'gfilenotify) 'gfile-valid-p)
                ((eq file-notify--library 'w32notify) 'w32notify-valid-p))
               desc))
            t))))
