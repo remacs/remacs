@@ -114,7 +114,7 @@ Line numbers start from 1 and columns from 0.")
         (save-excursion
           (goto-char (point-min))
           (beginning-of-line line)
-          (move-to-column column)
+          (forward-char column)
           (point-marker))))))
 
 (cl-defmethod xref-location-group ((l xref-file-location))
@@ -821,10 +821,9 @@ tools are used, and when."
          (hits (and res (oref res hit-lines)))
          (orig-buffers (buffer-list)))
     (unwind-protect
-        (delq nil
-              (mapcar (lambda (hit) (xref--collect-match
-                                hit (format "\\_<%s\\_>" (regexp-quote symbol))))
-                      hits))
+        (cl-mapcan (lambda (hit) (xref--collect-matches
+                             hit (format "\\_<%s\\_>" (regexp-quote symbol))))
+                   hits)
       (mapc #'kill-buffer
             (cl-set-difference (buffer-list) orig-buffers)))))
 
@@ -855,9 +854,8 @@ IGNORES is a list of glob patterns."
                     (match-string 1))
               hits)))
     (unwind-protect
-        (delq nil
-              (mapcar (lambda (hit) (xref--collect-match hit regexp))
-                      (nreverse hits)))
+        (cl-mapcan (lambda (hit) (xref--collect-matches hit regexp))
+                   (nreverse hits))
       (mapc #'kill-buffer
             (cl-set-difference (buffer-list) orig-buffers)))))
 
@@ -913,7 +911,7 @@ IGNORES is a list of glob patterns."
                (match-string 1 str)))))
    str t t))
 
-(defun xref--collect-match (hit regexp)
+(defun xref--collect-matches (hit regexp)
   (pcase-let* ((`(,line . ,file) hit)
                (buf (or (find-buffer-visiting file)
                         (semantic-find-file-noselect file))))
@@ -921,18 +919,22 @@ IGNORES is a list of glob patterns."
       (save-excursion
         (goto-char (point-min))
         (forward-line (1- line))
-        (syntax-propertize (line-end-position))
-        ;; TODO: Handle multiple matches per line.
-        (when (re-search-forward regexp (line-end-position) t)
-          (goto-char (match-beginning 0))
-          (let ((loc (xref-make-file-location file line
-                                              (current-column))))
-            (goto-char (match-end 0))
-            (xref-make-match (buffer-substring
-                              (line-beginning-position)
-                              (line-end-position))
-                             loc
-                             (- (match-end 0) (match-beginning 0)))))))))
+        (let ((line-end (line-end-position))
+              (line-beg (line-beginning-position))
+              matches)
+          (syntax-propertize line-end)
+          ;; FIXME: This results in several lines with the same
+          ;; summary. Solve with composite pattern?
+          (while (re-search-forward regexp line-end t)
+            (let* ((beg-column (- (match-beginning 0) line-beg))
+                   (end-column (- (match-end 0) line-beg))
+                   (loc (xref-make-file-location file line beg-column))
+                   (summary (buffer-substring line-beg line-end)))
+              (add-face-text-property beg-column end-column 'highlight
+                                      t summary)
+              (push (xref-make-match summary loc (- end-column beg-column))
+                    matches)))
+          (nreverse matches))))))
 
 (provide 'xref)
 
