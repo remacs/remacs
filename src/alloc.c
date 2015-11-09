@@ -5328,11 +5328,35 @@ compact_font_cache_entry (Lisp_Object entry)
 	     are not marked too.  But we must be sure that nothing is
 	     marked within OBJ before we really drop it.  */
 	  for (i = 0; i < size; i++)
-	    if (VECTOR_MARKED_P (XFONT_ENTITY (AREF (XCDR (obj), i))))
-	      break;
+            {
+              Lisp_Object objlist;
+
+              if (VECTOR_MARKED_P (XFONT_ENTITY (AREF (XCDR (obj), i))))
+                break;
+
+              objlist = AREF (AREF (XCDR (obj), i), FONT_OBJLIST_INDEX);
+              for (; CONSP (objlist); objlist = XCDR (objlist))
+                {
+                  Lisp_Object val = XCAR (objlist);
+                  struct font *font = XFONT_OBJECT (val);
+
+                  if (!NILP (AREF (val, FONT_TYPE_INDEX))
+                      && VECTOR_MARKED_P(font))
+                    break;
+                }
+              if (CONSP (objlist))
+		{
+		  /* Foiund a marked font, bail out.  */
+		  break;
+		}
+            }
 
 	  if (i == size)
-	    drop = 1;
+	    {
+	      /* No marked fonts were found, so this entire font
+		 entity can be dropped.  */
+	      drop = 1;
+	    }
 	}
       if (drop)
 	*prev = XCDR (tail);
