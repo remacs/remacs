@@ -756,7 +756,6 @@ This expects to be called from `point-min' in a bookmark file."
     (define-key map "\C-w" 'bookmark-yank-word)
     map))
 
-;;;###autoload
 (defun bookmark-set-internal (prompt name overwrite-or-push)
   "Interactively set a bookmark named NAME at the current location.
 
@@ -824,6 +823,7 @@ is ever deleted."
     (setq bookmark-current-buffer nil)))
 
 
+;;;###autoload
 (defun bookmark-set (&optional name no-overwrite)
   "Set a bookmark named NAME at the current location.
 If NAME is nil, then prompt the user.
@@ -853,6 +853,7 @@ the list of bookmarks.)"
          (if no-overwrite "Set bookmark" "Set bookmark unconditionally")))
     (bookmark-set-internal prompt name (if no-overwrite 'push 'overwrite))))
 
+;;;###autoload
 (defun bookmark-set-no-overwrite (&optional name push-bookmark)
   "Set a bookmark named NAME at the current location.
 If NAME is nil, then prompt the user.
