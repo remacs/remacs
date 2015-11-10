@@ -390,7 +390,7 @@ binding) but the same name."
 
 ;; SOAP WSDL documents use XML Schema to define the types that are part of the
 ;; message exchange.  We include here an XML schema model with a parser and
-;; serializer/deserialiser.
+;; serializer/deserializer.
 
 (defstruct (soap-xs-type (:include soap-element))
   id
@@ -710,7 +710,7 @@ This is a specialization of `soap-decode-type' for
 (defun soap-xs-element-type (element)
   "Retrieve the type of ELEMENT.
 This is normally stored in the TYPE^ slot, but if this element
-contains a reference, we retrive the type of the reference."
+contains a reference, retrieve the type of the reference."
   (if (soap-xs-element-reference element)
       (soap-xs-element-type (soap-xs-element-reference element))
     (soap-xs-element-type^ element)))
@@ -1989,7 +1989,7 @@ This is a specialization of `soap-decode-type' for
   )
 
 (defun soap-make-wsdl (origin)
-  "Create a new WSDL document, loaded from ORIGIN, and intialize it."
+  "Create a new WSDL document, loaded from ORIGIN, and initialize it."
   (let ((wsdl (soap-make-wsdl^ :origin origin)))
 
     ;; Add the XSD types to the wsdl document

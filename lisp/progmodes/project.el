@@ -108,7 +108,7 @@ Most often it's just one directory, which contains the project
 file and everything else in the project.  But in more advanced
 configurations, a project can span multiple directories.
 
-The rule of tumb for whether to include a directory here, and not
+The rule of thumb for whether to include a directory here, and not
 in `project-library-roots', is whether its contents are meant to
 be edited together with the rest of the project.
 

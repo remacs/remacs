@@ -334,7 +334,7 @@ soap-xs-attribute-group, in the current buffer."
       (insert "\t")
       (soap-insert-describe-button type)))
   (when (soap-xs-simple-type-enumeration type)
-    (insert "\nEnumeraton values: ")
+    (insert "\nEnumeration values: ")
     (dolist (e (soap-xs-simple-type-enumeration type))
       (insert "\n\t")
       (pp e)))

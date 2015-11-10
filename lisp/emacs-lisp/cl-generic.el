@@ -268,7 +268,7 @@ This macro can only be used within the lexical scope of a cl-generic method."
 
 (defmacro cl-generic-define-context-rewriter (name args &rest body)
   "Define a special kind of context named NAME.
-Whenever a context specializer of the form (NAME . ACTUALS) appears,
+Whenever a context specializer of the form (NAME . ARGS) appears,
 the specializer used will be the one returned by BODY."
   (declare (debug (&define name lambda-list def-body)) (indent defun))
   `(eval-and-compile

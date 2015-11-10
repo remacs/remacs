@@ -6353,7 +6353,7 @@ not_in_argv (NSString *arg)
 
   /* Restrict the new size to the text gird.
 
-     Don't restict the width if the user only adjusted the height, and
+     Don't restrict the width if the user only adjusted the height, and
      vice versa.  (Without this, the frame would shrink, and move
      slightly, if the window was resized by dragging one of its
      borders.) */
@@ -7591,7 +7591,7 @@ not_in_argv (NSString *arg)
 /* Constrain size and placement of a frame.
 
    By returning the original "frameRect", the frame is not
-   contrained. This can lead to unwanted situations where, for
+   constrained. This can lead to unwanted situations where, for
    example, the menu bar covers the frame.
 
    The default implementation (accessed using "super") constrains the
@@ -7647,7 +7647,7 @@ not_in_argv (NSString *arg)
 
 #if 0
   // Native zoom done using the standard zoom animation.  Size of the
-  // resulting frame reduced to accomodate the Dock and, if present,
+  // resulting frame reduced to accommodate the Dock and, if present,
   // the menu-bar.
   [super zoom:sender];
 
@@ -7661,8 +7661,8 @@ not_in_argv (NSString *arg)
   //
   // This works for all practical purposes.  (The only minor oddity is
   // when transiting from full-height frame to a maximized, the
-  // animation reduces the height of the frame slighty (to the 4
-  // pixels needed to accomodate the Doc) before it snaps back into
+  // animation reduces the height of the frame slightly (to the 4
+  // pixels needed to accommodate the Doc) before it snaps back into
   // full height.  The user would need a very trained eye to spot
   // this.)
   NSScreen * screen = [self screen];
@@ -7702,8 +7702,8 @@ not_in_argv (NSString *arg)
         }
     }
 #else
-  // Non-native zoom which is done instantaneous.  The resulting frame
-  // covert the entire scrren, except the menu-bar, if present.
+  // Non-native zoom which is done instantaneously.  The resulting frame
+  // covers the entire screen, except the menu-bar, if present.
   NSScreen * screen = [self screen];
   if (screen != nil)
     {

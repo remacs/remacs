@@ -5346,7 +5346,7 @@ compact_font_cache_entry (Lisp_Object entry)
                 }
               if (CONSP (objlist))
 		{
-		  /* Foiund a marked font, bail out.  */
+		  /* Found a marked font, bail out.  */
 		  break;
 		}
             }

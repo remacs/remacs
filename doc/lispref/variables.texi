@@ -1790,7 +1790,7 @@ specify different values for the same variable, the file sorted after
 will override the value of the previous file (for instance, values in
 @file{.dir-locals2.el} override those in @file{.dir-locals.el}).  Note
 that, because of how lexicographic order works, values in
-@file{.dir-locals10.el} are overriden by values in @file{.dir-locals2.el}.
+@file{.dir-locals10.el} are overridden by values in @file{.dir-locals2.el}.
 This can be avoided by using @file{.dir-locals02.el} instead.
 @end defvr
 

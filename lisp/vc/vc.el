@@ -2071,7 +2071,7 @@ changes from the current branch."
 ;;;###autoload
 (defun vc-message-unresolved-conflicts (filename)
   "Display a message indicating unresolved conflicts in FILENAME."
-  ;; This enables all VC backends to give a standard, recognizeable
+  ;; This enables all VC backends to give a standard, recognizable
   ;; conflict message that indicates which file is conflicted.
   (message "There are unresolved conflicts in %s" filename))
 
