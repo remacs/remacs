@@ -31,8 +31,7 @@
 
 (require 'cl-generic)
 
-(defvar project-find-functions (list #'project-try-vc
-                                     #'project-ask-user)
+(defvar project-find-functions (list #'project-try-vc)
   "Special hook to find the project containing a given directory.
 Each functions on this hook is called in turn with one
 argument (the directory) and should return either nil to mean
@@ -67,9 +66,22 @@ The directory names should be absolute.  Used in the default
 implementation of `project-library-roots'.")
 
 ;;;###autoload
-(defun project-current (&optional dir)
-  "Return the project instance in DIR or `default-directory'."
+(defun project-current (&optional maybe-prompt dir)
+  "Return the project instance in DIR or `default-directory'.
+When no project found in DIR, and MAYBE-PROMPT is non-nil, ask
+the user for a different directory to look in."
   (unless dir (setq dir default-directory))
+  (let ((pr (project--find-in-directory dir)))
+    (cond
+     (pr)
+     (maybe-prompt
+      (setq dir (read-directory-name "Choose the project directory: " dir nil t)
+            pr (project--find-in-directory dir))
+      (unless pr
+        (user-error "No project found in `%s'" dir))))
+    pr))
+
+(defun project--find-in-directory (dir)
   (run-hook-with-args-until-success 'project-find-functions dir))
 
 ;; FIXME: Add MODE argument, like in `ede-source-paths'?
@@ -165,12 +177,6 @@ The file names can be absolute, or relative to the project root."
      (project--value-in-dir 'project-vc-ignores root)
      (cl-call-next-method))))
 
-(defun project-ask-user (dir)
-  (cons 'user (read-directory-name "Project root: " dir nil t)))
-
-(cl-defmethod project-roots ((project (head user)))
-  (list (cdr project)))
-
 (defun project-combine-directories (&rest lists-of-dirs)
   "Return a sorted and culled list of directory names.
 Appends the elements of LISTS-OF-DIRS together, removes
@@ -193,8 +199,8 @@ whose is already in the list."
 (defun project-subtract-directories (files dirs)
   "Return a list of elements from FILES that are outside of DIRS.
 DIRS must contain directory names."
-  (cl-set-difference files dirs
-                     :test (lambda (file dir) (string-prefix-p dir file))))
+  ;; Sidestep the issue of expanded/abbreviated file names here.
+  (cl-set-difference files dirs :test #'file-in-directory-p))
 
 (defun project--value-in-dir (var dir)
   (with-temp-buffer
@@ -212,7 +218,7 @@ DIRS must contain directory names."
 With \\[universal-argument] prefix, you can specify the directory
 to search in, and the file name pattern to search for."
   (interactive (list (project--read-regexp)))
-  (let* ((pr (project-current))
+  (let* ((pr (project-current t))
          (dirs (if current-prefix-arg
                    (list (read-directory-name "Base directory: "
                                               nil default-directory t))
@@ -225,7 +231,7 @@ to search in, and the file name pattern to search for."
 With \\[universal-argument] prefix, you can specify the file name
 pattern to search for."
   (interactive (list (project--read-regexp)))
-  (let* ((pr (project-current))
+  (let* ((pr (project-current t))
          (dirs (append
                 (project-roots pr)
                 (project-library-roots pr))))

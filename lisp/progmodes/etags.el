@@ -2098,7 +2098,7 @@ for \\[find-tag] (which see)."
   (cl-mapcan
    (lambda (dir)
      (xref-collect-references symbol dir))
-   (let ((pr (project-current)))
+   (let ((pr (project-current t)))
      (append
       (project-roots pr)
       (project-library-roots pr)))))
