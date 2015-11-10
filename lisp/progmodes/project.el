@@ -38,8 +38,9 @@ Each functions on this hook is called in turn with one
 argument (the directory) and should return either nil to mean
 that it is not applicable, or a project instance.")
 
-;; FIXME: Using the current approach, we don't have access to the
-;; "library roots" of language A from buffers of language B, which
+;; FIXME: Using the current approach, major modes are supposed to set
+;; this variable to a buffer-local value.  So we don't have access to
+;; the "library roots" of language A from buffers of language B, which
 ;; seems desirable in multi-language projects, at least for some
 ;; potential uses, like "jump to a file in project or library".
 ;;
