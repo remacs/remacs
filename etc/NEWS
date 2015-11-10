@@ -103,6 +103,9 @@ and can contain escape sequences for command keys, quotes, and the like.
 
 * Changes in Emacs 25.1
 
+** Any file of the form .dir-locals*.el is now considered a dir-local
+   file, and multiple can be used in the same directory. See the
+   variable `dir-locals-file' for more information.
 ** `xref-find-definitions' and `describe-function' now display
    information about mode local overrides (defined by
    cedet/mode-local.el `define-overloadable-function' and

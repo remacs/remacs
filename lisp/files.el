@@ -3701,7 +3701,11 @@ VARIABLES list of the class.  The list is processed in order.
 (defconst dir-locals-file ".dir-locals*.el"
   "Pattern for files that contain directory-local variables.
 It has to be constant to enforce uniform values across different
-environments and users.")
+environments and users.
+
+Multiple dir-locals files in the same directory are loaded in
+`string<' order.
+See Info node `(elisp)Directory Local Variables' for details.")
 
 (defun dir-locals--all-files (file-or-dir)
   "Return a list of all readable dir-locals files matching FILE-OR-DIR.
