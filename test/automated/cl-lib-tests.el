@@ -117,8 +117,8 @@
       (should (equal (cl-set-difference b b) e))
       ;; Note: this test (and others) is sensitive to the order of the
       ;; result, which is not documented.
-      (should (equal (cl-set-difference a b) (list c2 "x" "" nil 'a)))
-      (should (equal (cl-set-difference b a) (list 'x 'y)))
+      (should (equal (cl-set-difference a b) (list 'a  nil "" "x" c2)))
+      (should (equal (cl-set-difference b a) (list 'y 'x)))
 
       ;; We aren't testing whether this is really using `eq' rather than `eql'.
       (should (equal (cl-set-difference e e :test 'eq) e))
@@ -128,8 +128,8 @@
       (should (equal (cl-set-difference b e :test 'eq) b))
       (should (equal (cl-set-difference e b :test 'eq) e))
       (should (equal (cl-set-difference b b :test 'eq) e))
-      (should (equal (cl-set-difference a b :test 'eq) (list c2 "x" "" nil 'a)))
-      (should (equal (cl-set-difference b a :test 'eq) (list 'x 'y)))
+      (should (equal (cl-set-difference a b :test 'eq) (list 'a  nil "" "x" c2)))
+      (should (equal (cl-set-difference b a :test 'eq) (list 'y 'x)))
 
       (should (equal (cl-union e e) e))
       (should (equal (cl-union a e) a))

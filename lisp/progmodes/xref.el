@@ -414,20 +414,6 @@ WINDOW controls how the buffer is displayed:
 (defvar-local xref--display-history nil
   "List of pairs (BUFFER . WINDOW), for temporarily displayed buffers.")
 
-(defvar-local xref--temporary-buffers nil
-  "List of buffers created by xref code.")
-
-(defvar-local xref--current nil
-  "Non-nil if this buffer was once current, except while displaying xrefs.
-Used for temporary buffers.")
-
-(defvar xref--inhibit-mark-current nil)
-
-(defun xref--mark-selected ()
-  (unless xref--inhibit-mark-current
-    (setq xref--current t))
-  (remove-hook 'buffer-list-update-hook #'xref--mark-selected t))
-
 (defun xref--save-to-history (buf win)
   (let ((restore (window-parameter win 'quit-restore)))
     ;; Save the new entry if the window displayed another buffer
@@ -449,15 +435,9 @@ Used for temporary buffers.")
 
 (defun xref--show-location (location)
   (condition-case err
-      (let ((bl (buffer-list))
-            (xref--inhibit-mark-current t)
-            (marker (xref-location-marker location)))
-        (let ((buf (marker-buffer marker)))
-          (unless (memq buf bl)
-            ;; Newly created.
-            (add-hook 'buffer-list-update-hook #'xref--mark-selected nil t)
-            (push buf xref--temporary-buffers))
-          (xref--display-position marker t buf)))
+      (let* ((marker (xref-location-marker location))
+             (buf (marker-buffer marker)))
+        (xref--display-position marker t buf))
     (user-error (message (error-message-string err)))))
 
 (defun xref-show-location-at-point ()
@@ -594,8 +574,7 @@ Used for temporary buffers.")
 (defun xref-quit (&optional kill)
   "Bury temporarily displayed buffers, then quit the current window.
 
-If KILL is non-nil, kill all buffers that were created in the
-process of showing xrefs, and also kill the current buffer.
+If KILL is non-nil, also kill the current buffer.
 
 The buffers that the user has otherwise interacted with in the
 meantime are preserved."
@@ -607,13 +586,6 @@ meantime are preserved."
       (when (and (window-live-p win)
                  (eq buf (window-buffer win)))
         (quit-window nil win)))
-    (when kill
-      (let ((xref--inhibit-mark-current t)
-            kill-buffer-query-functions)
-        (dolist (buf xref--temporary-buffers)
-          (unless (buffer-local-value 'xref--current buf)
-            (kill-buffer buf)))
-        (setq xref--temporary-buffers nil)))
     (quit-window kill window)))
 
 (defconst xref-buffer-name "*xref*"
@@ -687,15 +659,13 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
         (pop-to-buffer (current-buffer))
         (goto-char (point-min))
         (setq xref--window (assoc-default 'window alist))
-        (setq xref--temporary-buffers (assoc-default 'temporary-buffers alist))
-        (dolist (buf xref--temporary-buffers)
-          (with-current-buffer buf
-            (add-hook 'buffer-list-update-hook #'xref--mark-selected nil t)))
         (current-buffer)))))
 
 
 ;; This part of the UI seems fairly uncontroversial: it reads the
 ;; identifier and deals with the single definition case.
+;; (FIXME: do we really want this case to be handled like that in
+;; "find references" and "find regexp searches"?)
 ;;
 ;; The controversial multiple definitions case is handed off to
 ;; xref-show-xrefs-function.
@@ -707,21 +677,15 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 
 (defvar xref--read-pattern-history nil)
 
-(defun xref--show-xrefs (input kind arg window)
-  (let* ((bl (buffer-list))
-         (xrefs (funcall xref-find-function kind arg))
-         (tb (cl-set-difference (buffer-list) bl)))
-    (cond
-     ((null xrefs)
-      (user-error "No %s found for: %s" (symbol-name kind) input))
-     ((not (cdr xrefs))
-      (xref-push-marker-stack)
-      (xref--pop-to-location (car xrefs) window))
-     (t
-      (xref-push-marker-stack)
-      (funcall xref-show-xrefs-function xrefs
-               `((window . ,window)
-                 (temporary-buffers . ,tb)))))))
+(defun xref--show-xrefs (xrefs window)
+  (cond
+   ((not (cdr xrefs))
+    (xref-push-marker-stack)
+    (xref--pop-to-location (car xrefs) window))
+   (t
+    (xref-push-marker-stack)
+    (funcall xref-show-xrefs-function xrefs
+             `((window . ,window))))))
 
 (defun xref--prompt-p (command)
   (or (eq xref-prompt-for-identifier t)
@@ -749,8 +713,14 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 
 ;;; Commands
 
+(defun xref--find-xrefs (input kind arg window)
+  (let ((xrefs (funcall xref-find-function kind arg)))
+    (unless xrefs
+      (user-error "No %s found for: %s" (symbol-name kind) input))
+    (xref--show-xrefs xrefs window)))
+
 (defun xref--find-definitions (id window)
-  (xref--show-xrefs id 'definitions id window))
+  (xref--find-xrefs id 'definitions id window))
 
 ;;;###autoload
 (defun xref-find-definitions (identifier)
@@ -784,36 +754,7 @@ display the list in a buffer."
   "Find references to the identifier at point.
 With prefix argument, prompt for the identifier."
   (interactive (list (xref--read-identifier "Find references of: ")))
-  (xref--show-xrefs identifier 'references identifier nil))
-
-;; TODO: Rename and move to project-find-regexp, as soon as idiomatic
-;; usage of xref from other packages has stabilized.
-;;;###autoload
-(defun xref-find-regexp (regexp)
-  "Find all matches for REGEXP.
-With \\[universal-argument] prefix, you can specify the directory
-to search in, and the file name pattern to search for."
-  (interactive (list (xref--read-identifier "Find regexp: ")))
-  (require 'grep)
-  (let* ((proj (project-current))
-         (files (if current-prefix-arg
-                    (grep-read-files regexp)
-                  "*"))
-         (dirs (if current-prefix-arg
-                   (list (read-directory-name "Base directory: "
-                                              nil default-directory t))
-                 (project-prune-directories
-                  (append
-                   (project-roots proj)
-                   (project-search-path proj)))))
-         (xref-find-function
-          (lambda (_kind regexp)
-            (cl-mapcan
-             (lambda (dir)
-               (xref-collect-matches regexp files dir
-                                     (project-ignores proj dir)))
-             dirs))))
-    (xref--show-xrefs regexp 'matches regexp nil)))
+  (xref--find-xrefs identifier 'references identifier nil))
 
 (declare-function apropos-parse-pattern "apropos" (pattern))
 
@@ -825,7 +766,7 @@ The argument has the same meaning as in `apropos'."
                       "Search for pattern (word list or regexp): "
                       nil 'xref--read-pattern-history)))
   (require 'apropos)
-  (xref--show-xrefs pattern 'apropos
+  (xref--find-xrefs pattern 'apropos
                     (apropos-parse-pattern
                      (if (string-equal (regexp-quote pattern) pattern)
                          ;; Split into words
@@ -869,7 +810,6 @@ and just use etags."
 
 (declare-function semantic-symref-find-references-by-name "semantic/symref")
 (declare-function semantic-find-file-noselect "semantic/fw")
-(declare-function grep-read-files "grep")
 (declare-function grep-expand-template "grep")
 
 (defun xref-collect-references (symbol dir)
