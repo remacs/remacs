@@ -3808,6 +3808,7 @@ is found.  Returns the new class name."
          (class-name (intern dir-name))
          (files (dir-locals--all-files file))
          (read-circle nil)
+         (success nil)
          (variables))
     (with-demoted-errors "Error reading dir-locals: %S"
       (dolist (file files)
@@ -3818,13 +3819,19 @@ is found.  Returns the new class name."
                     (map-merge-with 'list (lambda (a b) (map-merge 'list a b))
                                     variables
                                     (read (current-buffer))))
-            (end-of-file nil)))))
+            (end-of-file nil))))
+      (setq success t))
     (dir-locals-set-class-variables class-name variables)
     (dir-locals-set-directory-class
      dir-name class-name
-     (seconds-to-time (apply #'max (mapcar (lambda (file)
-                                             (time-to-seconds (nth 5 (file-attributes file))))
-                                           files))))
+     (seconds-to-time
+      (if success
+          (apply #'max (mapcar (lambda (file)
+                                 (time-to-seconds (nth 5 (file-attributes file))))
+                               files))
+        ;; If there was a problem, use the values we could get but
+        ;; don't let the cache prevent future reads.
+        0)))
     class-name))
 
 (defcustom enable-remote-dir-locals nil
