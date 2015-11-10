@@ -22,8 +22,7 @@
 
 #include <limits.h>
 
-/* Return an integer value, converted to the same type as the integer
-   expression E after integer type promotion.  V is the unconverted value.  */
+/* Return a value with the common real type of E and V and the value of V.  */
 #define _GL_INT_CONVERT(e, v) (0 * (e) + (v))
 
 /* Act like _GL_INT_CONVERT (E, -V) but work around a bug in IRIX 6.5 cc; see
@@ -48,12 +47,12 @@
 /* True if the signed integer expression E uses two's complement.  */
 #define _GL_INT_TWOS_COMPLEMENT(e) (~ _GL_INT_CONVERT (e, 0) == -1)
 
-/* True if the arithmetic type T is signed.  */
+/* True if the real type T is signed.  */
 #define TYPE_SIGNED(t) (! ((t) 0 < (t) -1))
 
-/* Return 1 if the integer expression E, after integer promotion, has
-   a signed type.  */
-#define _GL_INT_SIGNED(e) (_GL_INT_NEGATE_CONVERT (e, 1) < 0)
+/* Return 1 if the real expression E, after promotion, has a
+   signed or floating type.  */
+#define EXPR_SIGNED(e) (_GL_INT_NEGATE_CONVERT (e, 1) < 0)
 
 
 /* Minimum and maximum values for integer types and expressions.  These
@@ -76,11 +75,11 @@
 /* The maximum and minimum values for the type of the expression E,
    after integer promotion.  E should not have side effects.  */
 #define _GL_INT_MINIMUM(e)                                              \
-  (_GL_INT_SIGNED (e)                                                   \
+  (EXPR_SIGNED (e)                                                      \
    ? - _GL_INT_TWOS_COMPLEMENT (e) - _GL_SIGNED_INT_MAXIMUM (e)         \
    : _GL_INT_CONVERT (e, 0))
 #define _GL_INT_MAXIMUM(e)                                              \
-  (_GL_INT_SIGNED (e)                                                   \
+  (EXPR_SIGNED (e)                                                      \
    ? _GL_SIGNED_INT_MAXIMUM (e)                                         \
    : _GL_INT_NEGATE_CONVERT (e, 1))
 #define _GL_SIGNED_INT_MAXIMUM(e)                                       \
@@ -354,7 +353,7 @@
 /* Store A <op> B into *R, where OP specifies the operation.
    BUILTIN is the builtin operation, and OVERFLOW the overflow predicate.
    See above for restrictions.  */
-#if 5 <= __GNUC__ || __has_builtin (__builtin_add_oveflow)
+#if 5 <= __GNUC__ || __has_builtin (__builtin_add_overflow)
 # define _GL_INT_OP_WRAPV(a, b, r, op, builtin, overflow) builtin (a, b, r)
 #elif 201112 <= __STDC_VERSION__ && !_GL__GENERIC_BOGUS
 # define _GL_INT_OP_WRAPV(a, b, r, op, builtin, overflow) \
@@ -411,7 +410,7 @@
    : _GL_INT_OP_CALC1 (a, b, r, op, overflow, ut, t, tmin, tmax))
 #define _GL_INT_OP_CALC1(a, b, r, op, overflow, ut, t, tmin, tmax) \
   ((overflow (a, b) \
-    || (_GL_INT_SIGNED ((a) op (b)) && ((a) op (b)) < (tmin)) \
+    || (EXPR_SIGNED ((a) op (b)) && ((a) op (b)) < (tmin)) \
     || (tmax) < ((a) op (b))) \
    ? (*(r) = _GL_INT_OP_WRAPV_VIA_UNSIGNED (a, b, op, ut, t, tmin, tmax), 1) \
    : (*(r) = _GL_INT_OP_WRAPV_VIA_UNSIGNED (a, b, op, ut, t, tmin, tmax), 0))
