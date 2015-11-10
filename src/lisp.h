@@ -3345,17 +3345,9 @@ extern Lisp_Object arithcompare (Lisp_Object num1, Lisp_Object num2,
 #define INTEGER_TO_CONS(i)					    \
   (! FIXNUM_OVERFLOW_P (i)					    \
    ? make_number (i)						    \
-   : ! ((FIXNUM_OVERFLOW_P (INTMAX_MIN >> 16)			    \
-	 || FIXNUM_OVERFLOW_P (UINTMAX_MAX >> 16))		    \
-	&& FIXNUM_OVERFLOW_P ((i) >> 16))			    \
-   ? Fcons (make_number ((i) >> 16), make_number ((i) & 0xffff))    \
-   : ! ((FIXNUM_OVERFLOW_P (INTMAX_MIN >> 16 >> 24)		    \
-	 || FIXNUM_OVERFLOW_P (UINTMAX_MAX >> 16 >> 24))	    \
-	&& FIXNUM_OVERFLOW_P ((i) >> 16 >> 24))			    \
-   ? Fcons (make_number ((i) >> 16 >> 24),			    \
-	    Fcons (make_number ((i) >> 16 & 0xffffff),		    \
-		   make_number ((i) & 0xffff)))			    \
-   : make_float (i))
+   : EXPR_SIGNED (i) ? intbig_to_lisp (i) : uintbig_to_lisp (i))
+extern Lisp_Object intbig_to_lisp (intmax_t);
+extern Lisp_Object uintbig_to_lisp (uintmax_t);
 
 /* Convert the Emacs representation CONS back to an integer of type
    TYPE, storing the result the variable VAR.  Signal an error if CONS

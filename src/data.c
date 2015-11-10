@@ -2409,6 +2409,33 @@ DEFUN ("/=", Fneq, Sneq, 2, 2, 0,
   return arithcompare (num1, num2, ARITH_NOTEQUAL);
 }
 
+/* Convert the integer I to a cons-of-integers, where I is not in
+   fixnum range.  */
+
+#define INTBIG_TO_LISP(i, extremum)				    \
+  (eassert (FIXNUM_OVERFLOW_P (i)),				    \
+   (! (FIXNUM_OVERFLOW_P ((extremum) >> 16)			    \
+       && FIXNUM_OVERFLOW_P ((i) >> 16))			    \
+    ? Fcons (make_number ((i) >> 16), make_number ((i) & 0xffff))   \
+    : ! (FIXNUM_OVERFLOW_P ((extremum) >> 16 >> 24)		    \
+	 && FIXNUM_OVERFLOW_P ((i) >> 16 >> 24))		    \
+    ? Fcons (make_number ((i) >> 16 >> 24),			    \
+	     Fcons (make_number ((i) >> 16 & 0xffffff),		    \
+		    make_number ((i) & 0xffff)))		    \
+    : make_float (i)))
+
+Lisp_Object
+intbig_to_lisp (intmax_t i)
+{
+  return INTBIG_TO_LISP (i, INTMAX_MIN);
+}
+
+Lisp_Object
+uintbig_to_lisp (uintmax_t i)
+{
+  return INTBIG_TO_LISP (i, UINTMAX_MAX);
+}
+
 /* Convert the cons-of-integers, integer, or float value C to an
    unsigned value with maximum value MAX.  Signal an error if C does not
    have a valid format or is out of range.  */
