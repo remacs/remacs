@@ -21,7 +21,8 @@
 
 ;; This file contains generic infrastructure for dealing with
 ;; projects, and a number of public functions: finding the current
-;; root, related project directories, search path, etc.
+;; root, related project directories, and library directories.  This
+;; list is to be extended in future versions.
 ;;
 ;; The goal is to make it easier for Lisp programs to operate on the
 ;; current project, without having to know which package handles
