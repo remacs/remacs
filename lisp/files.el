@@ -3751,26 +3751,16 @@ wildcards, then the return value is not a proper filename, it is
 an absolute version of `dir-locals-file' which is guaranteed to
 expand to at least one file."
   (setq file (expand-file-name file))
-  (let* ((dir-locals-file-name (if (eq system-type 'ms-dos)
-                                   (dosified-file-name dir-locals-file)
-                                 dir-locals-file))
-         (locals-dir (locate-dominating-file
-                      (file-name-directory file)
-                      (lambda (dir)
-                        (let ((default-directory dir))
-                          (file-expand-wildcards dir-locals-file-name 'full)))))
+  (let* ((locals-dir (locate-dominating-file (file-name-directory file)
+                                             #'dir-locals--all-files))
          locals-file dir-elt)
     ;; `locate-dominating-file' may have abbreviated the name.
     (when locals-dir
       (setq locals-dir (expand-file-name locals-dir))
-      (setq locals-file (expand-file-name dir-locals-file-name locals-dir)))
-    ;; Let dir-locals-read-from-file inform us via demoted-errors
-    ;; about unreadable files, etc.
-    ;; Maybe we'd want to keep searching though - that is
-    ;; a locate-dominating-file issue.
-;;;	 (or (not (file-readable-p locals-file))
-;;;	     (not (file-regular-p locals-file)))
-;;;	 (setq locals-file nil))
+      (setq locals-file (expand-file-name (if (eq system-type 'ms-dos)
+                                              (dosified-file-name dir-locals-file)
+                                            dir-locals-file)
+                                          locals-dir)))
     ;; Find the best cached value in `dir-locals-directory-cache'.
     (dolist (elt dir-locals-directory-cache)
       (when (and (string-prefix-p (car elt) file
