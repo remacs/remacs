@@ -6866,12 +6866,26 @@ not_in_argv (NSString *arg)
 }
 #endif
 
+#if !defined (NS_IMPL_COCOA) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
+#define NSWindowDidEnterFullScreenNotification "NSWindowDidEnterFullScreenNotification"
+#endif
+
 - (void)windowWillEnterFullScreen:(NSNotification *)notification
+{
+  [self windowWillEnterFullScreen];
+}
+- (void)windowWillEnterFullScreen /* provided for direct calls */
 {
   NSTRACE ("windowWillEnterFullScreen");
   fs_before_fs = fs_state;
 }
 
+- (void)windowDidEnterFullScreen /* provided for direct calls */
+{
+  [self windowDidEnterFullScreen:
+	      [NSNotification notificationWithName:NSWindowDidEnterFullScreenNotification
+					    object:[self window]]];
+}
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
 {
   NSTRACE ("windowDidEnterFullScreen");
@@ -6908,6 +6922,11 @@ not_in_argv (NSString *arg)
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
 {
+  [self windowWillExitFullScreen];
+}
+
+- (void)windowWillExitFullScreen /* provided for direct calls */
+{
   NSTRACE ("windowWillExitFullScreen");
   if (!FRAME_LIVE_P (emacsframe))
     {
@@ -6919,6 +6938,11 @@ not_in_argv (NSString *arg)
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification
+{
+  [self windowDidExitFullScreen];
+}
+
+- (void)windowDidExitFullScreen /* provided for direct calls */
 {
   NSTRACE ("windowDidExitFullScreen");
   if (!FRAME_LIVE_P (emacsframe))
@@ -7054,17 +7078,13 @@ not_in_argv (NSString *arg)
 
       nonfs_window = w;
 
-      [self windowWillEnterFullScreen:
-	      [NSNotification notificationWithName:NSWindowWillEnterFullScreenNotification
-					    object:[self window]]];
+      [self windowWillEnterFullScreen];
       [fw makeKeyAndOrderFront:NSApp];
       [fw makeFirstResponder:self];
       [w orderOut:self];
       r = [fw frameRectForContentRect:[screen frame]];
       [fw setFrame: r display:YES animate:ns_use_fullscreen_animation];
-      [self windowDidEnterFullScreen:
-	      [NSNotification notificationWithName:NSWindowDidEnterFullScreenNotification
-					    object:[self window]]];
+      [self windowDidEnterFullScreen];
       [fw display];
     }
   else
@@ -7094,15 +7114,11 @@ not_in_argv (NSString *arg)
 
       // to do: consider using [NSNotificationCenter postNotificationName:] to send notifications.
 
-      [self windowWillExitFullScreen:
-	      [NSNotification notificationWithName:NSWindowWillExitFullScreenNotification
-					    object:[self window]]];
+      [self windowWillExitFullScreen];
       [fw setFrame: [w frame] display:YES animate:ns_use_fullscreen_animation];
       [fw close];
       [w makeKeyAndOrderFront:NSApp];
-      [self windowDidExitFullScreen:
-	      [NSNotification notificationWithName:NSWindowDidExitFullScreenNotification
-					    object:[self window]]];
+      [self windowDidExitFullScreen];
       [self updateFrameSize:YES];
     }
 }
