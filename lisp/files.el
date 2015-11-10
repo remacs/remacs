@@ -3699,36 +3699,28 @@ VARIABLES list of the class.  The list is processed in order.
   (setf (alist-get class dir-locals-class-alist) variables))
 
 (defconst dir-locals-file ".dir-locals*.el"
-  "File that contains directory-local variables.
-It has to be constant to enforce uniform values
-across different environments and users.")
-
-(defcustom dir-locals-sort-predicate #'string<
-  "Predicate used to sort dir-locals files before loading them.
-The function should take two arguments (file names) and return
-non-nil if the first argument should be loaded first (which means
-the values in the second file will override those in the first)."
-  :group 'files
-  :type 'function)
+  "Pattern for files that contain directory-local variables.
+It has to be constant to enforce uniform values across different
+environments and users.")
 
 (defun dir-locals--all-files (file-or-dir)
   "Return a list of all readable dir-locals files matching FILE-OR-DIR.
 If FILE-OR-DIR is a file pattern, expand wildcards in it and
 return a sorted list of the results.  If it is a directory name,
 return a sorted list of all files matching `dir-locals-file' in
-this directory."
+this directory.
+The returned list is sorted by `string<' order."
   (require 'seq)
   (let ((default-directory (if (file-directory-p file-or-dir)
                                file-or-dir
                              default-directory)))
-    (sort (seq-filter (lambda (f) (and (file-readable-p f)
-                                  (file-regular-p f)))
-                      (file-expand-wildcards
-                       (cond ((not (file-directory-p file-or-dir)) file-or-dir)
-                             ((eq system-type 'ms-dos) (dosified-file-name dir-locals-file))
-                             (t dir-locals-file))
-                       'full))
-          dir-locals-sort-predicate)))
+    (seq-filter (lambda (f) (and (file-readable-p f)
+                            (file-regular-p f)))
+                (file-expand-wildcards
+                 (cond ((not (file-directory-p file-or-dir)) file-or-dir)
+                       ((eq system-type 'ms-dos) (dosified-file-name dir-locals-file))
+                       (t dir-locals-file))
+                 'full))))
 
 (defun dir-locals-find-file (file)
   "Find the directory-local variables for FILE.
@@ -6087,6 +6079,7 @@ by `sh' are supported."
 (defun file-expand-wildcards (pattern &optional full)
   "Expand wildcard pattern PATTERN.
 This returns a list of file names which match the pattern.
+Files are sorted in `string<' order.
 
 If PATTERN is written as an absolute file name,
 the values are absolute also.
