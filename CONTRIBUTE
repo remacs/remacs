@@ -248,7 +248,9 @@ for documentation errors before submitting a patch.
 ** Test your changes.
 
 Please test your changes before committing them or sending them to the
-list.
+list.  If possible, add a new test along with any bug fix or new
+functionality you commit (of course, some changes cannot be easily
+tested).
 
 Emacs uses ERT, Emacs Lisp Regression Testing, for testing.  See (info
 "(ert)") or https://www.gnu.org/software/emacs/manual/html_node/ert/
