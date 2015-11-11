@@ -2893,7 +2893,7 @@ of setting this variable for supporting images on MS-Windows:
         (svg "librsvg-2-2.dll")
         (gdk-pixbuf "libgdk_pixbuf-2.0-0.dll")
         (glib "libglib-2.0-0.dll")
-	(gobject "libgobject-2.0-0.dll")))
+        (gobject "libgobject-2.0-0.dll")))
 @end example
 
 Note that image types @code{pbm} and @code{xbm} do not need entries in
