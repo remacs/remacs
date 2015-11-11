@@ -2732,6 +2732,13 @@ case $with_file_notification,$NOTIFY_OBJ in
        NOTIFY_LIBS=$KQUEUE_LIBS
        NOTIFY_OBJ=kqueue.o
        NOTIFY_SUMMARY="yes -lkqueue"
+    else
+       AC_SEARCH_LIBS(kqueue, [])
+       if test "$ac_cv_search_kqueue" != no; then
+         AC_DEFINE(HAVE_KQUEUE, 1, [Define to 1 to use kqueue.])
+	 NOTIFY_OBJ=kqueue.o
+	 NOTIFY_SUMMARY="yes (kqueue)"
+       fi
     fi ;;
 esac
 
