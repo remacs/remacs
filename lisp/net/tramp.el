@@ -2910,9 +2910,29 @@ User is always nil."
   (and (file-directory-p filename)
        (file-readable-p filename)))
 
+(defun tramp-handle-file-equal-p (filename1 filename2)
+  "Like `file-equalp-p' for Tramp files."
+  ;; Native `file-equalp-p' calls `file-truename', which requires a
+  ;; remote connection.  This can be avoided, if FILENAME1 and
+  ;; FILENAME2 are not located on the same remote host.
+  (when (string-equal
+	 (file-remote-p (expand-file-name filename1))
+	 (file-remote-p (expand-file-name filename2)))
+    (tramp-run-real-handler 'file-equal-p (list filename1 filename2))))
+
 (defun tramp-handle-file-exists-p (filename)
   "Like `file-exists-p' for Tramp files."
   (not (null (file-attributes filename))))
+
+(defun tramp-handle-file-in-directory-p (filename directory)
+  "Like `file-in-directory-p' for Tramp files."
+  ;; Native `file-in-directory-p' calls `file-truename', which
+  ;; requires a remote connection.  This can be avoided, if FILENAME
+  ;; and DIRECTORY are not located on the same remote host.
+  (when (string-equal
+	 (file-remote-p (expand-file-name filename))
+	 (file-remote-p (expand-file-name directory)))
+    (tramp-run-real-handler 'file-in-directory-p (list filename directory))))
 
 (defun tramp-handle-file-modes (filename)
   "Like `file-modes' for Tramp files."
