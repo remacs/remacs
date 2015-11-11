@@ -163,7 +163,7 @@ will be reported only in case of the `rename' event.  */)
 
   /* Open file.  */
   file = ENCODE_FILE (file);
-  fd = emacs_open (SSDATA (file), O_NONBLOCK | O_BINARY | O_RDONLY, 0);
+  fd = emacs_open (SSDATA (file), O_NONBLOCK | O_RDONLY, 0);
   if (fd == -1)
     report_file_error ("File cannot be opened", file);
 
