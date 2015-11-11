@@ -171,6 +171,11 @@ is non-nil if the user quits the search.")
   "Function to call to display the search prompt.
 If nil, use function `isearch-message'.")
 
+(defmacro isearch-call-message (&optional cqh ellip)
+  `(if isearch-message-function
+       (funcall isearch-message-function ,cqh ,ellip)
+     (isearch-message ,cqh ,ellip)))
+
 (defvar isearch-wrap-function nil
   "Function to call to wrap the search when search is failed.
 If nil, move point to the beginning of the buffer for a forward search,
@@ -969,12 +974,10 @@ The last thing it does is to run `isearch-update-post-hook'."
 	   (null executing-kbd-macro))
       (progn
         (if (not (input-pending-p))
-	    (if isearch-message-function
-		(funcall isearch-message-function)
-	      (isearch-message)))
+            (isearch-call-message))
         (if (and isearch-slow-terminal-mode
                  (not (or isearch-small-window
-                          (pos-visible-in-window-p))))
+                          (pos-visible-in-window-p nil nil nil t))))
             (let ((found-point (point)))
               (setq isearch-small-window t)
               (move-to-window-line 0)
@@ -995,7 +998,7 @@ The last thing it does is to run `isearch-update-post-hook'."
 	  (let ((current-scroll (window-hscroll))
 		visible-p)
 	    (set-window-hscroll (selected-window) isearch-start-hscroll)
-	    (setq visible-p (pos-visible-in-window-p nil nil t))
+	    (setq visible-p (pos-visible-in-window-p nil nil t t))
 	    (if (or (not visible-p)
 		    ;; When point is not visible because of hscroll,
 		    ;; pos-visible-in-window-p returns non-nil, but
@@ -1049,7 +1052,7 @@ NOPUSH is t and EDIT is t."
   (setq minibuffer-message-timeout isearch-original-minibuffer-message-timeout)
   (isearch-dehighlight)
   (lazy-highlight-cleanup lazy-highlight-cleanup)
-  (let ((found-start (window-start))
+  (let ((found-start (window-start nil t))
 	(found-point (point)))
     (when isearch-window-configuration
       (set-window-configuration isearch-window-configuration)
@@ -1059,7 +1062,7 @@ NOPUSH is t and EDIT is t."
 	;; This has an annoying side effect of clearing the last_modiff
 	;; field of the window, which can cause unwanted scrolling,
 	;; so don't do it unless truly necessary.
-	(set-window-start (selected-window) found-start t))))
+	(set-window-start (selected-window) found-start t t))))
 
   (setq isearch-mode nil)
   (if isearch-input-method-local-p
@@ -1282,13 +1285,6 @@ You can update the global isearch variables by setting new values to
 	  (unwind-protect
 	      (progn ,@body)
 
-	    ;; Set point at the start (end) of old match if forward (backward),
-	    ;; so after exiting minibuffer isearch resumes at the start (end)
-	    ;; of this match and can find it again.
-	    (if (and old-other-end (eq old-point (point))
-		     (eq isearch-forward isearch-new-forward))
-		(goto-char old-other-end))
-
 	    ;; Always resume isearching by restarting it.
 	    (isearch-mode isearch-forward
 			  isearch-regexp
@@ -1301,7 +1297,17 @@ You can update the global isearch variables by setting new values to
 		  isearch-message isearch-new-message
 		  isearch-forward isearch-new-forward
 		  isearch-regexp-function isearch-new-regexp-function
-		  isearch-case-fold-search isearch-new-case-fold))
+		  isearch-case-fold-search isearch-new-case-fold)
+
+	    ;; Restore the minibuffer message before moving point.
+	    (isearch-call-message nil t)
+
+	    ;; Set point at the start (end) of old match if forward (backward),
+	    ;; so after exiting minibuffer isearch resumes at the start (end)
+	    ;; of this match and can find it again.
+	    (if (and old-other-end (eq old-point (point))
+		     (eq isearch-forward isearch-new-forward))
+		(goto-char old-other-end)))
 
 	  ;; Empty isearch-string means use default.
 	  (when (= 0 (length isearch-string))
@@ -1895,6 +1901,7 @@ If search string is empty, just beep."
 					    (length isearch-string))))
           isearch-message (mapconcat 'isearch-text-char-description
                                      isearch-string "")))
+  (isearch-call-message nil t) 		; Do this before moving point.
   ;; Use the isearch-other-end as new starting point to be able
   ;; to find the remaining part of the search string again.
   ;; This is like what `isearch-search-and-update' does,
@@ -2071,6 +2078,7 @@ With argument, add COUNT copies of the character."
 	      (setq isearch-case-fold-search
 		    (isearch-no-upper-case-p isearch-string isearch-regexp))))
       ;; Not regexp, not reverse, or no match at point.
+      (isearch-call-message nil t)	; Do this before moving point.
       (if (and isearch-other-end (not isearch-adjusted))
 	  (goto-char (if isearch-forward isearch-other-end
 		       (min isearch-opoint
@@ -2237,10 +2245,12 @@ Return nil if it's completely visible, or if point is visible,
 together with as much of the search string as will fit; the symbol
 `above' if we need to scroll the text downwards; the symbol `below',
 if upwards."
-  (let ((w-start (window-start))
-        (w-end (window-end nil t))
-        (w-L1 (save-excursion (move-to-window-line 1) (point)))
-        (w-L-1 (save-excursion (move-to-window-line -1) (point)))
+  (let ((w-start (window-start nil t))
+        (w-end (window-end nil t t))
+        (w-L1 (save-excursion
+                (save-selected-window (move-to-window-line 1 t) (point))))
+        (w-L-1 (save-excursion
+                 (save-selected-window (move-to-window-line -1 t) (point))))
         start end)                  ; start and end of search string in buffer
     (if isearch-forward
         (setq end isearch-point  start (or isearch-other-end isearch-point))
@@ -2267,15 +2277,15 @@ the bottom."
     (if above
         (progn
           (goto-char start)
-          (recenter 0)
-          (when (>= isearch-point (window-end nil t))
+          (recenter 0 t)
+          (when (>= isearch-point (window-end nil t t))
             (goto-char isearch-point)
-            (recenter -1)))
+            (recenter -1 t)))
       (goto-char end)
-      (recenter -1)
-      (when (< isearch-point (window-start))
+      (recenter -1 t)
+      (when (< isearch-point (window-start nil t))
         (goto-char isearch-point)
-        (recenter 0))))
+        (recenter 0 t))))
   (goto-char isearch-point))
 
 (defvar isearch-pre-scroll-point nil)
@@ -2422,6 +2432,7 @@ Search is updated accordingly."
   (isearch-ring-adjust1 advance)
   (if search-ring-update
       (progn
+	(isearch-call-message nil t)
 	(isearch-search)
 	(isearch-push-state)
 	(isearch-update))
@@ -2494,6 +2505,13 @@ If there is no completion possible, say so and continue searching."
 
 (defun isearch-message (&optional c-q-hack ellipsis)
   ;; Generate and print the message string.
+
+  ;; N.B.: This function should always be called with point at the
+  ;; search point, because in certain (rare) circumstances, undesired
+  ;; scrolling can happen when point is elsewhere.  These
+  ;; circumstances are when follow-mode is active, the search string
+  ;; spans two (or several) windows, and the message about to be
+  ;; displayed will cause the echo area to expand.
   (let ((cursor-in-echo-area ellipsis)
 	(m isearch-message)
 	(fail-pos (isearch-fail-pos t)))
@@ -2680,9 +2698,6 @@ update the match data, and return point."
 
 (defun isearch-search ()
   ;; Do the search with the current search string.
-  (if isearch-message-function
-      (funcall isearch-message-function nil t)
-    (isearch-message nil t))
   (if (and (eq isearch-case-fold-search t) search-upper-case)
       (setq isearch-case-fold-search
 	    (isearch-no-upper-case-p isearch-string isearch-regexp)))
@@ -2980,6 +2995,7 @@ since they have special meaning in a regexp."
 (defvar isearch-lazy-highlight-timer nil)
 (defvar isearch-lazy-highlight-last-string nil)
 (defvar isearch-lazy-highlight-window nil)
+(defvar isearch-lazy-highlight-window-group nil)
 (defvar isearch-lazy-highlight-window-start nil)
 (defvar isearch-lazy-highlight-window-end nil)
 (defvar isearch-lazy-highlight-case-fold-search nil)
@@ -3012,7 +3028,21 @@ is nil.  This function is called when exiting an incremental search if
                                 "22.1")
 
 (defun isearch-lazy-highlight-new-loop (&optional beg end)
-  "Cleanup any previous `lazy-highlight' loop and begin a new one.
+  "Set an idle timer, which will trigger a new `lazy-highlight' loop.
+BEG and END specify the bounds within which highlighting should
+occur.  This is called when `isearch-update' is invoked (which
+can cause the search string to change or the window(s) to
+scroll).  It is also used by other Emacs features.  Do not start
+the loop when we are executing a keyboard macro."
+  (setq isearch-lazy-highlight-start-limit beg
+        isearch-lazy-highlight-end-limit end)
+  (when (null executing-kbd-macro)
+    (setq isearch-lazy-highlight-timer
+          (run-with-idle-timer lazy-highlight-initial-delay nil
+                               'isearch-lazy-highlight-maybe-new-loop))))
+
+(defun isearch-lazy-highlight-maybe-new-loop ()
+  "If needed cleanup any previous `lazy-highlight' loop and begin a new one.
 BEG and END specify the bounds within which highlighting should occur.
 This is called when `isearch-update' is invoked (which can cause the
 search string to change or the window to scroll).  It is also used
@@ -3021,8 +3051,8 @@ by other Emacs features."
              (sit-for 0)         ;make sure (window-start) is credible
              (or (not (equal isearch-string
                              isearch-lazy-highlight-last-string))
-                 (not (eq (selected-window)
-                          isearch-lazy-highlight-window))
+                 (not (memq (selected-window)
+                            isearch-lazy-highlight-window-group))
 		 (not (eq isearch-lazy-highlight-case-fold-search
 			  isearch-case-fold-search))
 		 (not (eq isearch-lazy-highlight-regexp
@@ -3033,9 +3063,9 @@ by other Emacs features."
 			  isearch-lax-whitespace))
 		 (not (eq isearch-lazy-highlight-regexp-lax-whitespace
 			  isearch-regexp-lax-whitespace))
-                 (not (= (window-start)
+                 (not (= (window-start nil t)
                          isearch-lazy-highlight-window-start))
-                 (not (= (window-end)   ; Window may have been split/joined.
+                 (not (= (window-end nil nil t) ; Window may have been split/joined.
 			 isearch-lazy-highlight-window-end))
 		 (not (eq isearch-forward
 			  isearch-lazy-highlight-forward))
@@ -3043,16 +3073,15 @@ by other Emacs features."
 		 (not (equal isearch-error
 			     isearch-lazy-highlight-error))))
     ;; something important did indeed change
-    (lazy-highlight-cleanup t) ;kill old loop & remove overlays
+    (lazy-highlight-cleanup t)        ;kill old loop & remove overlays
     (setq isearch-lazy-highlight-error isearch-error)
     ;; It used to check for `(not isearch-error)' here, but actually
     ;; lazy-highlighting might find matches to highlight even when
     ;; `isearch-error' is non-nil.  (Bug#9918)
-    (setq isearch-lazy-highlight-start-limit beg
-	  isearch-lazy-highlight-end-limit end)
     (setq isearch-lazy-highlight-window       (selected-window)
-	  isearch-lazy-highlight-window-start (window-start)
-	  isearch-lazy-highlight-window-end   (window-end)
+          isearch-lazy-highlight-window-group (selected-window-group)
+	  isearch-lazy-highlight-window-start (window-start nil t)
+	  isearch-lazy-highlight-window-end   (window-end nil nil t)
 	  ;; Start lazy-highlighting at the beginning of the found
 	  ;; match (`isearch-other-end').  If no match, use point.
 	  ;; One of the next two variables (depending on search direction)
@@ -3070,10 +3099,8 @@ by other Emacs features."
 	  isearch-lazy-highlight-regexp-lax-whitespace isearch-regexp-lax-whitespace
 	  isearch-lazy-highlight-regexp-function  isearch-regexp-function
 	  isearch-lazy-highlight-forward      isearch-forward)
-      (unless (equal isearch-string "")
-	(setq isearch-lazy-highlight-timer
-	      (run-with-idle-timer lazy-highlight-initial-delay nil
-				   'isearch-lazy-highlight-update)))))
+    (unless (equal isearch-string "")
+      (isearch-lazy-highlight-update))))
 
 (defun isearch-lazy-highlight-search ()
   "Search ahead for the next or previous match, for lazy highlighting.
@@ -3096,13 +3123,13 @@ Attempt to do the search exactly the way the pending Isearch would."
 				(+ isearch-lazy-highlight-start
 				   ;; Extend bound to match whole string at point
 				   (1- (length isearch-lazy-highlight-last-string)))
-			      (window-end)))
+			      (window-end nil nil t)))
 		     (max (or isearch-lazy-highlight-start-limit (point-min))
 			  (if isearch-lazy-highlight-wrapped
 			      (- isearch-lazy-highlight-end
 				 ;; Extend bound to match whole string at point
 				 (1- (length isearch-lazy-highlight-last-string)))
-			    (window-start))))))
+			    (window-start nil t))))))
 	;; Use a loop like in `isearch-search'.
 	(while retry
 	  (setq success (isearch-search-string
@@ -3126,7 +3153,7 @@ Attempt to do the search exactly the way the pending Isearch would."
     (with-local-quit
       (save-selected-window
 	(if (and (window-live-p isearch-lazy-highlight-window)
-		 (not (eq (selected-window) isearch-lazy-highlight-window)))
+		 (not (memq (selected-window) isearch-lazy-highlight-window-group)))
 	    (select-window isearch-lazy-highlight-window))
 	(save-excursion
 	  (save-match-data
@@ -3146,12 +3173,12 @@ Attempt to do the search exactly the way the pending Isearch would."
 			  (if isearch-lazy-highlight-forward
 			      (if (= mb (if isearch-lazy-highlight-wrapped
 					    isearch-lazy-highlight-start
-					  (window-end)))
+					  (window-end nil nil t)))
 				  (setq found nil)
 				(forward-char 1))
 			    (if (= mb (if isearch-lazy-highlight-wrapped
 					  isearch-lazy-highlight-end
-					(window-start)))
+					(window-start nil t)))
 				(setq found nil)
 			      (forward-char -1)))
 
@@ -3161,8 +3188,8 @@ Attempt to do the search exactly the way the pending Isearch would."
 			  ;; 1000 is higher than ediff's 100+,
 			  ;; but lower than isearch main overlay's 1001
 			  (overlay-put ov 'priority 1000)
-			  (overlay-put ov 'face lazy-highlight-face)
-			  (overlay-put ov 'window (selected-window))))
+			  (overlay-put ov 'face lazy-highlight-face)))
+			  ;(overlay-put ov 'window (selected-window))))
 		      ;; Remember the current position of point for
 		      ;; the next call of `isearch-lazy-highlight-update'
 		      ;; when `lazy-highlight-max-at-a-time' is too small.
@@ -3178,12 +3205,12 @@ Attempt to do the search exactly the way the pending Isearch would."
 		      (setq isearch-lazy-highlight-wrapped t)
 		      (if isearch-lazy-highlight-forward
 			  (progn
-			    (setq isearch-lazy-highlight-end (window-start))
+			    (setq isearch-lazy-highlight-end (window-start nil t))
 			    (goto-char (max (or isearch-lazy-highlight-start-limit (point-min))
-					    (window-start))))
-			(setq isearch-lazy-highlight-start (window-end))
+					    (window-start nil t))))
+			(setq isearch-lazy-highlight-start (window-end nil nil t))
 			(goto-char (min (or isearch-lazy-highlight-end-limit (point-max))
-					(window-end))))))))
+					(window-end nil nil t))))))))
 	    (unless nomore
 	      (setq isearch-lazy-highlight-timer
 		    (run-at-time lazy-highlight-interval nil
