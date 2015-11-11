@@ -20,6 +20,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifdef HAVE_KQUEUE
 #include <stdio.h>
+#include <sys/types.h>
 #include <sys/event.h>
 #include <sys/file.h>
 #include "lisp.h"
@@ -41,9 +42,9 @@ kqueue_callback (int fd, void *data)
   for (;;) {
     struct kevent kev;
     struct input_event event;
-    Lisp_Object monitor_object, watch_object, name, callback, actions;
+    Lisp_Object monitor_object, watch_object, file, callback, actions;
 
-    static const struct timespec nullts = { 0, 0 };
+    /* Read one event.  */
     int ret = kevent (kqueuefd, NULL, 0, &kev, 1, NULL);
     if (ret < 1) {
       /* All events read.  */
@@ -55,7 +56,7 @@ kqueue_callback (int fd, void *data)
     watch_object = assq_no_quit (monitor_object, watch_list);
 
     if (CONSP (watch_object)) {
-      name = XCAR (XCDR (watch_object));
+      file = XCAR (XCDR (watch_object));
       callback = XCAR (XCDR (XCDR (XCDR (watch_object))));
     }
     else
@@ -76,13 +77,13 @@ kqueue_callback (int fd, void *data)
     if (kev.fflags & NOTE_RENAME)
       actions = Fcons (Qrename, actions);
 
-    if (!NILP (actions)) {
+    if (! NILP (actions)) {
       /* Construct an event.  */
       EVENT_INIT (event);
       event.kind = FILE_NOTIFY_EVENT;
       event.frame_or_window = Qnil;
       event.arg = list2 (Fcons (monitor_object,
-				Fcons (actions, Fcons (name, Qnil))),
+				Fcons (actions, Fcons (file, Qnil))),
 			 callback);
 
       /* Store it into the input event queue.  */
@@ -90,7 +91,8 @@ kqueue_callback (int fd, void *data)
     }
 
     /* Cancel monitor if file or directory is deleted.  */
-    /* TODO: Implement it.  */
+    if (kev.fflags & (NOTE_DELETE | NOTE_RENAME))
+      Fkqueue_rm_watch (monitor_object);
   }
   return;
 }
@@ -101,7 +103,7 @@ DEFUN ("kqueue-add-watch", Fkqueue_add_watch, Skqueue_add_watch, 3, 3, 0,
 This arranges for filesystem events pertaining to FILE to be reported
 to Emacs.  Use `kqueue-rm-watch' to cancel the watch.
 
-Value is a descriptor for the added watch.  If the file cannot be
+Returned value is a descriptor for the added watch.  If the file cannot be
 watched for some reason, this function signals a `file-notify-error' error.
 
 FLAGS is a list of events to be watched for.  It can include the
@@ -138,12 +140,12 @@ will be reported only in case of the `rename' event.  */)
     report_file_error ("File does not exist", file);
 
   /* TODO: Directories shall be supported as well.  */
-  if (!NILP (Ffile_directory_p (file)))
+  if (! NILP (Ffile_directory_p (file)))
     report_file_error ("Directory watching is not supported (yet)", file);
 
   CHECK_LIST (flags);
 
-  if (!FUNCTIONP (callback))
+  if (! FUNCTIONP (callback))
     wrong_type_argument (Qinvalid_function, callback);
 
   if (kqueuefd < 0)
@@ -166,16 +168,16 @@ will be reported only in case of the `rename' event.  */)
     report_file_error ("File cannot be opened", file);
 
   /* Assemble filter flags  */
-  if (!NILP (Fmember (Qdelete, flags))) fflags |= NOTE_DELETE;
-  if (!NILP (Fmember (Qwrite, flags)))  fflags |= NOTE_WRITE;
-  if (!NILP (Fmember (Qextend, flags))) fflags |= NOTE_EXTEND;
-  if (!NILP (Fmember (Qattrib, flags))) fflags |= NOTE_ATTRIB;
-  if (!NILP (Fmember (Qlink, flags)))   fflags |= NOTE_LINK;
-  if (!NILP (Fmember (Qrename, flags))) fflags |= NOTE_RENAME;
+  if (! NILP (Fmember (Qdelete, flags))) fflags |= NOTE_DELETE;
+  if (! NILP (Fmember (Qwrite, flags)))  fflags |= NOTE_WRITE;
+  if (! NILP (Fmember (Qextend, flags))) fflags |= NOTE_EXTEND;
+  if (! NILP (Fmember (Qattrib, flags))) fflags |= NOTE_ATTRIB;
+  if (! NILP (Fmember (Qlink, flags)))   fflags |= NOTE_LINK;
+  if (! NILP (Fmember (Qrename, flags))) fflags |= NOTE_RENAME;
 
   /* Register event.  */
-    EV_SET (&ev, fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
-	    fflags, 0, NULL);
+  EV_SET (&ev, fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
+	  fflags, 0, NULL);
 
   if (kevent (kqueuefd, &ev, 1, NULL, 0, NULL) < 0)
     report_file_error ("Cannot watch file", file);
@@ -188,7 +190,6 @@ will be reported only in case of the `rename' event.  */)
   return watch_descriptor;
 }
 
-#if 0
 DEFUN ("kqueue-rm-watch", Fkqueue_rm_watch, Skqueue_rm_watch, 1, 1, 0,
        doc: /* Remove an existing WATCH-DESCRIPTOR.
 
@@ -202,42 +203,35 @@ WATCH-DESCRIPTOR should be an object returned by `kqueue-add-watch'.  */)
 	      watch_descriptor);
 
   eassert (INTEGERP (watch_descriptor));
-  GFileMonitor *monitor = XINTPTR (watch_descriptor);
-  if (!g_file_monitor_is_cancelled (monitor) &&
-      !g_file_monitor_cancel (monitor))
-      xsignal2 (Qfile_notify_error, build_string ("Could not rm watch"),
-		watch_descriptor);
+  int fd = XINT (watch_descriptor);
+  if ( fd >= 0)
+    emacs_close (fd);
 
   /* Remove watch descriptor from watch list.  */
   watch_list = Fdelq (watch_object, watch_list);
 
-  /* Cleanup.  */
-  g_object_unref (monitor);
+  if (NILP (watch_list) && (kqueuefd >= 0)) {
+    delete_read_fd (kqueuefd);
+    emacs_close (kqueuefd);
+    kqueuefd = -1;
+  }
 
   return Qt;
 }
 
-DEFUN ("gfile-valid-p", Fgfile_valid_p, Sgfile_valid_p, 1, 1, 0,
+DEFUN ("kqueue-valid-p", Fkqueue_valid_p, Skqueue_valid_p, 1, 1, 0,
        doc: /* "Check a watch specified by its WATCH-DESCRIPTOR.
 
-WATCH-DESCRIPTOR should be an object returned by `gfile-add-watch'.
+WATCH-DESCRIPTOR should be an object returned by `kqueue-add-watch'.
 
 A watch can become invalid if the file or directory it watches is
 deleted, or if the watcher thread exits abnormally for any other
-reason.  Removing the watch by calling `gfile-rm-watch' also makes it
+reason.  Removing the watch by calling `kqueue-rm-watch' also makes it
 invalid.  */)
      (Lisp_Object watch_descriptor)
 {
-  Lisp_Object watch_object = Fassoc (watch_descriptor, watch_list);
-  if (NILP (watch_object))
-    return Qnil;
-  else
-    {
-      GFileMonitor *monitor = XINTPTR (watch_descriptor);
-      return g_file_monitor_is_cancelled (monitor) ? Qnil : Qt;
-    }
+  return NILP (assq_no_quit (watch_descriptor, watch_list)) ? Qnil : Qt;
 }
-#endif /* 0  */
 
 
 void
@@ -250,8 +244,8 @@ void
 syms_of_kqueue (void)
 {
   defsubr (&Skqueue_add_watch);
-  //  defsubr (&Skqueue_rm_watch);
-  //  defsubr (&Skqueue_valid_p);
+  defsubr (&Skqueue_rm_watch);
+  defsubr (&Skqueue_valid_p);
 
   /* Event types.  */
   DEFSYM (Qdelete, "delete");	/* NOTE_DELETE  */
@@ -267,3 +261,11 @@ syms_of_kqueue (void)
 }
 
 #endif /* HAVE_KQUEUE  */
+
+/* TODO
+   * Implement watching directories.
+   * Add FILE1 in case of `rename'.  */
+
+/* PROBLEMS
+   * https://bugs.launchpad.net/ubuntu/+source/libkqueue/+bug/1514837
+     prevents tests on Ubuntu.  */
