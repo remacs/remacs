@@ -26,30 +26,30 @@
 (require 'obarray)
 (require 'ert)
 
-(ert-deftest obarray-p-test ()
+(ert-deftest obarrayp-test ()
   "Should assert that given object is an obarray."
-  (should-not (obarray-p 42))
-  (should-not (obarray-p "aoeu"))
-  (should-not (obarray-p '()))
-  (should-not (obarray-p []))
-  (should (obarray-p (make-vector 7 0))))
+  (should-not (obarrayp 42))
+  (should-not (obarrayp "aoeu"))
+  (should-not (obarrayp '()))
+  (should-not (obarrayp []))
+  (should (obarrayp (make-vector 7 0))))
 
-(ert-deftest obarray-p-unchecked-content-test ()
+(ert-deftest obarrayp-unchecked-content-test ()
   "Should fail to check content of passed obarray."
   :expected-result :failed
-  (should-not (obarray-p ["a" "b" "c"]))
-  (should-not (obarray-p [1 2 3])))
+  (should-not (obarrayp ["a" "b" "c"]))
+  (should-not (obarrayp [1 2 3])))
 
 (ert-deftest obarray-make-default-test ()
   (let ((table (obarray-make)))
-    (should (obarray-p table))
+    (should (obarrayp table))
     (should (equal (make-vector 59 0) table))))
 
 (ert-deftest obarray-make-with-size-test ()
   (should-error (obarray-make -1) :type 'wrong-type-argument)
   (should-error (obarray-make 0) :type 'wrong-type-argument)
   (let ((table (obarray-make 1)))
-    (should (obarray-p table))
+    (should (obarrayp table))
     (should (equal (make-vector 1 0) table))))
 
 (ert-deftest obarray-get-test ()

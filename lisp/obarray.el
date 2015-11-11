@@ -37,7 +37,7 @@
         (make-vector size 0)
       (signal 'wrong-type-argument '(size 0)))))
 
-(defun obarray-p (object)
+(defun obarrayp (object)
   "Return t if OBJECT is an obarray."
   (and (vectorp object)
        (< 0 (length object))))
