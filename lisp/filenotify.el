@@ -88,7 +88,7 @@ If EVENT is a filewatch event, call its callback.  It has the format
 
 Otherwise, signal a `file-notify-error'."
   (interactive "e")
-  ;;(message "file-notify-handle-event %S" event)
+  (message "file-notify-handle-event %S" event)
   (if (and (eq (car event) 'file-notify)
 	   (>= (length event) 3))
       (funcall (nth 2 event) (nth 1 event))
@@ -236,7 +236,7 @@ EVENT is the cadr of the event in `file-notify-handle-event'
           (setq pending-event nil))
 
         ;; Check for stopped.
-	;;(message "file-notify-callback %S %S" file registered)
+	(message "file-notify-callback %S %S" file registered)
         (setq
          stopped
          (or
