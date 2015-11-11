@@ -57,7 +57,7 @@ Creates and adds the symbol if doesn't exist."
 Return t on success, nil otherwise."
   (unintern name obarray))
 
-(defun obarray-foreach (fn obarray)
+(defun obarray-map (fn obarray)
   "Call function FN on every symbol in OBARRAY and return nil."
   (mapatoms fn obarray))
 

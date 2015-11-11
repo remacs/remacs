@@ -73,17 +73,17 @@
     (should (obarray-remove table "aoeu"))
     (should-not (obarray-get table "aoeu"))))
 
-(ert-deftest obarray-foreach-test ()
+(ert-deftest obarray-map-test ()
   "Should execute function on all elements of obarray."
   (let* ((table (obarray-make 3))
          (syms '())
          (collect-names (lambda (sym) (push (symbol-name sym) syms))))
-    (obarray-foreach collect-names table)
+    (obarray-map collect-names table)
     (should (null syms))
     (obarray-put table "a")
     (obarray-put table "b")
     (obarray-put table "c")
-    (obarray-foreach collect-names table)
+    (obarray-map collect-names table)
     (should (equal (sort syms #'string<) '("a" "b" "c")))))
 
 (provide 'obarray-tests)
