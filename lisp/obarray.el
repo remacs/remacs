@@ -42,24 +42,25 @@
   (and (vectorp object)
        (< 0 (length object))))
 
-(defun obarray-get (obarray name)
-  "Return symbol named NAME if it is contained in OBARRAY.
+;; Don’t use obarray as a variable name to avoid shadowing.
+(defun obarray-get (ob name)
+  "Return symbol named NAME if it is contained in obarray OB.
 Return nil otherwise."
-  (intern-soft name obarray))
+  (intern-soft name ob))
 
-(defun obarray-put (obarray name)
-  "Return symbol named NAME from OBARRAY.
+(defun obarray-put (ob name)
+  "Return symbol named NAME from obarray OB.
 Creates and adds the symbol if doesn't exist."
-  (intern name obarray))
+  (intern name ob))
 
-(defun obarray-remove (obarray name)
-  "Remove symbol named NAME if it is contained in OBARRAY.
+(defun obarray-remove (ob name)
+  "Remove symbol named NAME if it is contained in obarray OB.
 Return t on success, nil otherwise."
-  (unintern name obarray))
+  (unintern name ob))
 
-(defun obarray-map (fn obarray)
-  "Call function FN on every symbol in OBARRAY and return nil."
-  (mapatoms fn obarray))
+(defun obarray-map (fn ob)
+  "Call function FN on every symbol in obarray OB and return nil."
+  (mapatoms fn ob))
 
 (provide 'obarray)
 ;;; obarray.el ends here
