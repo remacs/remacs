@@ -551,7 +551,8 @@ current buffer, regardless of which buffer is displayed in
 any buffer, whether or not it is currently displayed in some window.
 @end defun
 
-@deffn Command move-to-window-line count
+@deffn Command move-to-window-line count group
+@vindex move-to-window-line-group-function
 This function moves point with respect to the text currently displayed
 in the selected window.  It moves point to the beginning of the screen
 line @var{count} screen lines from the top of the window.  If
@@ -570,6 +571,16 @@ In an interactive call, @var{count} is the numeric prefix argument.
 
 The value returned is the window line number point has moved to, with
 the top line in the window numbered 0.
+
+If @var{group} is non-@code{nil}, and the selected window is a part of
+a group of windows (@pxref{Basic Windows}), @code{move-to-window-line}
+will move to a position with respect to the entire group, not just the
+single window.  This condition holds when the buffer local variable
+@code{move-to-window-line-group-function} is set to a function.  In
+this case, @code{move-to-window-line} calls the function with the
+argument @var{count}, then returns its result, instead of performing
+the actions described above.  Typically, the function will call
+@code{move-to-window-line} recursively.
 @end deffn
 
 @defun compute-motion from frompos to topos width offsets window

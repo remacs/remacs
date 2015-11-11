@@ -1540,13 +1540,23 @@ WINDOW must be a live window and defaults to the selected one.  */)
   return Fmarker_position (decode_live_window (window)->old_pointm);
 }
 
-DEFUN ("window-start", Fwindow_start, Swindow_start, 0, 1, 0,
+DEFUN ("window-start", Fwindow_start, Swindow_start, 0, 2, 0,
        doc: /* Return position at which display currently starts in WINDOW.
 WINDOW must be a live window and defaults to the selected one.
-This is updated by redisplay or by calling `set-window-start'.  */)
-  (Lisp_Object window)
+This is updated by redisplay or by calling `set-window-start'.
+
+If GROUP is non-nil, and WINDOW is part of a group of windows collectively
+displaying a buffer (such as with Follow Mode), return the start position of
+the group rather than of the individual WINDOW.  This condition holds when
+`window-start-group-function' is set to a function, in which case
+`window-start' calls the function with the argument WINDOW, then returns its
+result, instead of doing its normal processing.  */)
+  (Lisp_Object window, Lisp_Object group)
 {
-  return Fmarker_position (decode_live_window (window)->start);
+  return (!NILP (group)
+          && FUNCTIONP (Vwindow_start_group_function))
+    ? call1 (Vwindow_start_group_function, window)
+    : Fmarker_position (decode_live_window (window)->start);
 }
 
 /* This is text temporarily removed from the doc string below.
@@ -1560,7 +1570,7 @@ have been if redisplay had finished, do this:
       (vertical-motion (1- (window-height window)) window)
       (point))")  */
 
-DEFUN ("window-end", Fwindow_end, Swindow_end, 0, 2, 0,
+DEFUN ("window-end", Fwindow_end, Swindow_end, 0, 3, 0,
        doc: /* Return position at which display currently ends in WINDOW.
 WINDOW must be a live window and defaults to the selected one.
 This is updated by redisplay, when it runs to completion.
@@ -1569,65 +1579,77 @@ does not update this value.
 Return nil if there is no recorded value.  (This can happen if the
 last redisplay of WINDOW was preempted, and did not finish.)
 If UPDATE is non-nil, compute the up-to-date position
-if it isn't already recorded.  */)
-  (Lisp_Object window, Lisp_Object update)
+if it isn't already recorded.
+
+If GROUP is non-nil, and WINDOW is part of a group of windows collectively
+displaying a buffer (such as with Follow Mode), return the end position of
+the group rather than of the individual WINDOW.  This condition holds when
+`window-end-group-function' is set to a function, in which case `window-end'
+calls the function with the two arguments WINDOW and UPDATE, then returns its
+result, instead of doing its normal processing.  */)
+  (Lisp_Object window, Lisp_Object update, Lisp_Object group)
 {
-  Lisp_Object value;
-  struct window *w = decode_live_window (window);
-  Lisp_Object buf;
-  struct buffer *b;
+  if (!NILP (group)
+      && FUNCTIONP (Vwindow_end_group_function))
+    return call2 (Vwindow_end_group_function, window, update);
+  {
+    Lisp_Object value;
+    struct window *w = decode_live_window (window);
+    Lisp_Object buf;
+    struct buffer *b;
 
-  buf = w->contents;
-  CHECK_BUFFER (buf);
-  b = XBUFFER (buf);
+    buf = w->contents;
+    CHECK_BUFFER (buf);
+    b = XBUFFER (buf);
 
-  if (! NILP (update)
-      && (windows_or_buffers_changed
-	  || !w->window_end_valid
-	  || b->clip_changed
-	  || b->prevent_redisplay_optimizations_p
-	  || window_outdated (w))
-      /* Don't call display routines if we didn't yet create any real
-	 frames, because the glyph matrices are not yet allocated in
-	 that case.  This could happen in some code that runs in the
-	 daemon during initialization (e.g., see bug#20565).  */
-      && !(noninteractive || FRAME_INITIAL_P (WINDOW_XFRAME (w))))
-    {
-      struct text_pos startp;
-      struct it it;
-      struct buffer *old_buffer = NULL;
-      void *itdata = NULL;
+    if (! NILP (update)
+        && (windows_or_buffers_changed
+            || !w->window_end_valid
+            || b->clip_changed
+            || b->prevent_redisplay_optimizations_p
+            || window_outdated (w))
+        /* Don't call display routines if we didn't yet create any real
+           frames, because the glyph matrices are not yet allocated in
+           that case.  This could happen in some code that runs in the
+           daemon during initialization (e.g., see bug#20565).  */
+        && !(noninteractive || FRAME_INITIAL_P (WINDOW_XFRAME (w))))
+      {
+        struct text_pos startp;
+        struct it it;
+        struct buffer *old_buffer = NULL;
+        void *itdata = NULL;
 
-      /* Cannot use Fvertical_motion because that function doesn't
-	 cope with variable-height lines.  */
-      if (b != current_buffer)
-	{
-	  old_buffer = current_buffer;
-	  set_buffer_internal (b);
-	}
+        /* Cannot use Fvertical_motion because that function doesn't
+           cope with variable-height lines.  */
+        if (b != current_buffer)
+          {
+            old_buffer = current_buffer;
+            set_buffer_internal (b);
+          }
 
-      /* In case W->start is out of the range, use something
-         reasonable.  This situation occurred when loading a file with
-         `-l' containing a call to `rmail' with subsequent other
-         commands.  At the end, W->start happened to be BEG, while
-         rmail had already narrowed the buffer.  */
-      CLIP_TEXT_POS_FROM_MARKER (startp, w->start);
+        /* In case W->start is out of the range, use something
+           reasonable.  This situation occurred when loading a file with
+           `-l' containing a call to `rmail' with subsequent other
+           commands.  At the end, W->start happened to be BEG, while
+           rmail had already narrowed the buffer.  */
+        CLIP_TEXT_POS_FROM_MARKER (startp, w->start);
 
-      itdata = bidi_shelve_cache ();
-      start_display (&it, w, startp);
-      move_it_vertically (&it, window_box_height (w));
-      if (it.current_y < it.last_visible_y)
-	move_it_past_eol (&it);
-      value = make_number (IT_CHARPOS (it));
-      bidi_unshelve_cache (itdata, false);
+        itdata = bidi_shelve_cache ();
+        start_display (&it, w, startp);
+        move_it_vertically (&it, window_box_height (w));
+        if (it.current_y < it.last_visible_y)
+          move_it_past_eol (&it);
+        value = make_number (IT_CHARPOS (it));
+        bidi_unshelve_cache (itdata, false);
 
-      if (old_buffer)
-	set_buffer_internal (old_buffer);
-    }
-  else
-    XSETINT (value, BUF_Z (b) - w->window_end_pos);
+        if (old_buffer)
+          set_buffer_internal (old_buffer);
+      }
+    else
+      XSETINT (value, BUF_Z (b) - w->window_end_pos);
 
-  return value;
+    return value;
+  }
 }
 
 DEFUN ("set-window-point", Fset_window_point, Sset_window_point, 2, 2, 0,
@@ -1666,30 +1688,43 @@ Return POS.  */)
   return pos;
 }
 
-DEFUN ("set-window-start", Fset_window_start, Sset_window_start, 2, 3, 0,
+DEFUN ("set-window-start", Fset_window_start, Sset_window_start, 2, 4, 0,
        doc: /* Make display in WINDOW start at position POS in WINDOW's buffer.
 WINDOW must be a live window and defaults to the selected one.  Return
 POS.  Optional third arg NOFORCE non-nil inhibits next redisplay from
-overriding motion of point in order to display at this exact start.  */)
-  (Lisp_Object window, Lisp_Object pos, Lisp_Object noforce)
+overriding motion of point in order to display at this exact start.
+
+If GROUP is non-nil, and WINDOW is part of a group of windows collectively
+displaying a buffer (such as with Follow Mode), set the start position of
+the group rather than of the individual WINDOW.  This condition holds when
+`set-window-start-group-function' is set to a function, in which case
+`set-window-start' calls the function with the three arguments WINDOW, POS,
+and NOFORCE, then returns its result, instead of doing its normal
+processing.  */)
+  (Lisp_Object window, Lisp_Object pos, Lisp_Object noforce, Lisp_Object group)
 {
-  register struct window *w = decode_live_window (window);
+  if (!NILP (group)
+      && FUNCTIONP (Vset_window_start_group_function))
+    return call3 (Vset_window_start_group_function, window, pos, noforce);
+  {
+    register struct window *w = decode_live_window (window);
 
-  set_marker_restricted (w->start, pos, w->contents);
-  /* This is not right, but much easier than doing what is right.  */
-  w->start_at_line_beg = false;
-  if (NILP (noforce))
-    w->force_start = true;
-  wset_update_mode_line (w);
-  /* Bug#15957.  */
-  w->window_end_valid = false;
-  wset_redisplay (w);
+    set_marker_restricted (w->start, pos, w->contents);
+    /* This is not right, but much easier than doing what is right.  */
+    w->start_at_line_beg = false;
+    if (NILP (noforce))
+      w->force_start = true;
+    wset_update_mode_line (w);
+    /* Bug#15957.  */
+    w->window_end_valid = false;
+    wset_redisplay (w);
 
-  return pos;
+    return pos;
+  }
 }
 
 DEFUN ("pos-visible-in-window-p", Fpos_visible_in_window_p,
-       Spos_visible_in_window_p, 0, 3, 0,
+       Spos_visible_in_window_p, 0, 4, 0,
        doc: /* Return non-nil if position POS is currently on the frame in WINDOW.
 WINDOW must be a live window and defaults to the selected one.
 
@@ -1709,9 +1744,21 @@ of the window.  The remaining elements are omitted if the character after
 POS is fully visible; otherwise, RTOP and RBOT are the number of pixels
 off-window at the top and bottom of the screen line ("row") containing
 POS, ROWH is the visible height of that row, and VPOS is the row number
-(zero-based).  */)
-  (Lisp_Object pos, Lisp_Object window, Lisp_Object partially)
+(zero-based).
+
+If GROUP is non-nil, and WINDOW is part of a group of windows collectively
+displaying a buffer (such as with Follow Mode), test whether POS is visible
+in the group of windows rather than in the individual WINDOW.  This
+condition holds when `pos-visible-in-window-p-function' is set to a
+function, in which case `pos-visible-in-window-p' calls the function with
+the three arguments POS, WINDOW, and PARTIALLY, then returns its result,
+instead of doing its normal processing.  */)
+  (Lisp_Object pos, Lisp_Object window, Lisp_Object partially, Lisp_Object group)
 {
+  if (!NILP (group)
+      && FUNCTIONP (Vpos_visible_in_window_p_group_function))
+    return call3 (Vpos_visible_in_window_p_group_function, pos, window, partially);
+  {
   struct window *w;
   EMACS_INT posint;
   struct buffer *buf;
@@ -1760,6 +1807,7 @@ POS, ROWH is the visible height of that row, and VPOS is the row number
     }
 
   return in_window;
+  }
 }
 
 DEFUN ("window-line-height", Fwindow_line_height,
@@ -5157,7 +5205,7 @@ window_scroll_line_based (Lisp_Object window, int n, bool whole, bool noerror)
     }
 
   XSETFASTINT (tem, PT);
-  tem = Fpos_visible_in_window_p (tem, window, Qnil);
+  tem = Fpos_visible_in_window_p (tem, window, Qnil, Qnil);
 
   if (NILP (tem))
     {
@@ -5546,7 +5594,7 @@ displayed_window_lines (struct window *w)
 }
 
 
-DEFUN ("recenter", Frecenter, Srecenter, 0, 1, "P",
+DEFUN ("recenter", Frecenter, Srecenter, 0, 2, "P\ni",
        doc: /* Center point in selected window and maybe redisplay frame.
 With a numeric prefix argument ARG, recenter putting point on screen line ARG
 relative to the selected window.  If ARG is negative, it counts up from the
@@ -5560,208 +5608,221 @@ height needed); if `recenter-redisplay' has the special value `tty',
 then only tty frames are redrawn.
 
 Just C-u as prefix means put point in the center of the window
-and redisplay normally--don't erase and redraw the frame.  */)
-  (register Lisp_Object arg)
+and redisplay normally--don't erase and redraw the frame.
+
+When `recenter' is called from a program, GROUP is non-nil, and WINDOW is
+part of a group of windows collectively displaying a buffer (such as with
+Follow Mode), perform `recenter''s actions on the group rather than on the
+individual WINDOW.  This condition holds when `recenter-group-function' is
+set to a function, in which case `recenter' calls the function with the
+argument ARG, then returns its value, instead of doing its normal
+processing.  */)
+  (register Lisp_Object arg, Lisp_Object group)
 {
-  struct window *w = XWINDOW (selected_window);
-  struct buffer *buf = XBUFFER (w->contents);
-  bool center_p = false;
-  ptrdiff_t charpos, bytepos;
-  EMACS_INT iarg IF_LINT (= 0);
-  int this_scroll_margin;
+  if (!NILP (group)
+      && FUNCTIONP (Vrecenter_group_function))
+    return call1 (Vrecenter_group_function, arg);
+  {
+    struct window *w = XWINDOW (selected_window);
+    struct buffer *buf = XBUFFER (w->contents);
+    bool center_p = false;
+    ptrdiff_t charpos, bytepos;
+    EMACS_INT iarg IF_LINT (= 0);
+    int this_scroll_margin;
 
-  if (buf != current_buffer)
-    error ("`recenter'ing a window that does not display current-buffer.");
+    if (buf != current_buffer)
+      error ("`recenter'ing a window that does not display current-buffer.");
 
-  /* If redisplay is suppressed due to an error, try again.  */
-  buf->display_error_modiff = 0;
+    /* If redisplay is suppressed due to an error, try again.  */
+    buf->display_error_modiff = 0;
 
-  if (NILP (arg))
-    {
-      if (!NILP (Vrecenter_redisplay)
-	  && (!EQ (Vrecenter_redisplay, Qtty)
-	      || !NILP (Ftty_type (selected_frame))))
-	{
-	  ptrdiff_t i;
+    if (NILP (arg))
+      {
+        if (!NILP (Vrecenter_redisplay)
+            && (!EQ (Vrecenter_redisplay, Qtty)
+                || !NILP (Ftty_type (selected_frame))))
+          {
+            ptrdiff_t i;
 
-	  /* Invalidate pixel data calculated for all compositions.  */
-	  for (i = 0; i < n_compositions; i++)
-	    composition_table[i]->font = NULL;
+            /* Invalidate pixel data calculated for all compositions.  */
+            for (i = 0; i < n_compositions; i++)
+              composition_table[i]->font = NULL;
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
-	  WINDOW_XFRAME (w)->minimize_tool_bar_window_p = 1;
+            WINDOW_XFRAME (w)->minimize_tool_bar_window_p = 1;
 #endif
-	  Fredraw_frame (WINDOW_FRAME (w));
-	  SET_FRAME_GARBAGED (WINDOW_XFRAME (w));
-	}
+            Fredraw_frame (WINDOW_FRAME (w));
+            SET_FRAME_GARBAGED (WINDOW_XFRAME (w));
+          }
 
+        center_p = true;
+      }
+    else if (CONSP (arg)) /* Just C-u.  */
       center_p = true;
-    }
-  else if (CONSP (arg)) /* Just C-u.  */
-    center_p = true;
-  else
-    {
-      arg = Fprefix_numeric_value (arg);
-      CHECK_NUMBER (arg);
-      iarg = XINT (arg);
-    }
+    else
+      {
+        arg = Fprefix_numeric_value (arg);
+        CHECK_NUMBER (arg);
+        iarg = XINT (arg);
+      }
 
-  /* Do this after making BUF current
-     in case scroll_margin is buffer-local.  */
-  this_scroll_margin
-    = max (0, min (scroll_margin, w->total_lines / 4));
+    /* Do this after making BUF current
+       in case scroll_margin is buffer-local.  */
+    this_scroll_margin
+      = max (0, min (scroll_margin, w->total_lines / 4));
 
-  /* Don't use redisplay code for initial frames, as the necessary
-     data structures might not be set up yet then.  */
-  if (!FRAME_INITIAL_P (XFRAME (w->frame)))
-    {
-      if (center_p)
-	{
-	  struct it it;
-	  struct text_pos pt;
-	  void *itdata = bidi_shelve_cache ();
+    /* Don't use redisplay code for initial frames, as the necessary
+       data structures might not be set up yet then.  */
+    if (!FRAME_INITIAL_P (XFRAME (w->frame)))
+      {
+        if (center_p)
+          {
+            struct it it;
+            struct text_pos pt;
+            void *itdata = bidi_shelve_cache ();
 
-	  SET_TEXT_POS (pt, PT, PT_BYTE);
-	  start_display (&it, w, pt);
-	  move_it_vertically_backward (&it, window_box_height (w) / 2);
-	  charpos = IT_CHARPOS (it);
-	  bytepos = IT_BYTEPOS (it);
-	  bidi_unshelve_cache (itdata, false);
-	}
-      else if (iarg < 0)
-	{
-	  struct it it;
-	  struct text_pos pt;
-	  ptrdiff_t nlines = min (PTRDIFF_MAX, -iarg);
-	  int extra_line_spacing;
-	  int h = window_box_height (w);
-	  int ht = window_internal_height (w);
-	  void *itdata = bidi_shelve_cache ();
+            SET_TEXT_POS (pt, PT, PT_BYTE);
+            start_display (&it, w, pt);
+            move_it_vertically_backward (&it, window_box_height (w) / 2);
+            charpos = IT_CHARPOS (it);
+            bytepos = IT_BYTEPOS (it);
+            bidi_unshelve_cache (itdata, false);
+          }
+        else if (iarg < 0)
+          {
+            struct it it;
+            struct text_pos pt;
+            ptrdiff_t nlines = min (PTRDIFF_MAX, -iarg);
+            int extra_line_spacing;
+            int h = window_box_height (w);
+            int ht = window_internal_height (w);
+            void *itdata = bidi_shelve_cache ();
 
-	  nlines = clip_to_bounds (this_scroll_margin + 1, nlines,
-				   ht - this_scroll_margin);
+            nlines = clip_to_bounds (this_scroll_margin + 1, nlines,
+                                     ht - this_scroll_margin);
 
-	  SET_TEXT_POS (pt, PT, PT_BYTE);
-	  start_display (&it, w, pt);
+            SET_TEXT_POS (pt, PT, PT_BYTE);
+            start_display (&it, w, pt);
 
-	  /* Be sure we have the exact height of the full line containing PT.  */
-	  move_it_by_lines (&it, 0);
+            /* Be sure we have the exact height of the full line containing PT.  */
+            move_it_by_lines (&it, 0);
 
-	  /* The amount of pixels we have to move back is the window
-	     height minus what's displayed in the line containing PT,
-	     and the lines below.  */
-	  it.current_y = 0;
-	  it.vpos = 0;
-	  move_it_by_lines (&it, nlines);
+            /* The amount of pixels we have to move back is the window
+               height minus what's displayed in the line containing PT,
+               and the lines below.  */
+            it.current_y = 0;
+            it.vpos = 0;
+            move_it_by_lines (&it, nlines);
 
-	  if (it.vpos == nlines)
-	    h -= it.current_y;
-	  else
-	    {
-	      /* Last line has no newline.  */
-	      h -= line_bottom_y (&it);
-	      it.vpos++;
-	    }
+            if (it.vpos == nlines)
+              h -= it.current_y;
+            else
+              {
+                /* Last line has no newline.  */
+                h -= line_bottom_y (&it);
+                it.vpos++;
+              }
 
-	  /* Don't reserve space for extra line spacing of last line.  */
-	  extra_line_spacing = it.max_extra_line_spacing;
+            /* Don't reserve space for extra line spacing of last line.  */
+            extra_line_spacing = it.max_extra_line_spacing;
 
-	  /* If we can't move down NLINES lines because we hit
-	     the end of the buffer, count in some empty lines.  */
-	  if (it.vpos < nlines)
-	    {
-	      nlines -= it.vpos;
-	      extra_line_spacing = it.extra_line_spacing;
-	      h -= nlines * (FRAME_LINE_HEIGHT (it.f) + extra_line_spacing);
-	    }
-	  if (h <= 0)
-	    {
-	      bidi_unshelve_cache (itdata, false);
-	      return Qnil;
-	    }
+            /* If we can't move down NLINES lines because we hit
+               the end of the buffer, count in some empty lines.  */
+            if (it.vpos < nlines)
+              {
+                nlines -= it.vpos;
+                extra_line_spacing = it.extra_line_spacing;
+                h -= nlines * (FRAME_LINE_HEIGHT (it.f) + extra_line_spacing);
+              }
+            if (h <= 0)
+              {
+                bidi_unshelve_cache (itdata, false);
+                return Qnil;
+              }
 
-	  /* Now find the new top line (starting position) of the window.  */
-	  start_display (&it, w, pt);
-	  it.current_y = 0;
-	  move_it_vertically_backward (&it, h);
+            /* Now find the new top line (starting position) of the window.  */
+            start_display (&it, w, pt);
+            it.current_y = 0;
+            move_it_vertically_backward (&it, h);
 
-	  /* If extra line spacing is present, we may move too far
-	     back.  This causes the last line to be only partially
-	     visible (which triggers redisplay to recenter that line
-	     in the middle), so move forward.
-	     But ignore extra line spacing on last line, as it is not
-	     considered to be part of the visible height of the line.
-	  */
-	  h += extra_line_spacing;
-	  while (-it.current_y > h)
-	    move_it_by_lines (&it, 1);
+            /* If extra line spacing is present, we may move too far
+               back.  This causes the last line to be only partially
+               visible (which triggers redisplay to recenter that line
+               in the middle), so move forward.
+               But ignore extra line spacing on last line, as it is not
+               considered to be part of the visible height of the line.
+            */
+            h += extra_line_spacing;
+            while (-it.current_y > h)
+              move_it_by_lines (&it, 1);
 
-	  charpos = IT_CHARPOS (it);
-	  bytepos = IT_BYTEPOS (it);
+            charpos = IT_CHARPOS (it);
+            bytepos = IT_BYTEPOS (it);
 
-	  bidi_unshelve_cache (itdata, false);
-	}
-      else
-	{
-	  struct it it;
-	  struct text_pos pt;
-	  ptrdiff_t nlines = min (PTRDIFF_MAX, iarg);
-	  int ht = window_internal_height (w);
-	  void *itdata = bidi_shelve_cache ();
+            bidi_unshelve_cache (itdata, false);
+          }
+        else
+          {
+            struct it it;
+            struct text_pos pt;
+            ptrdiff_t nlines = min (PTRDIFF_MAX, iarg);
+            int ht = window_internal_height (w);
+            void *itdata = bidi_shelve_cache ();
 
-	  nlines = clip_to_bounds (this_scroll_margin, nlines,
-				   ht - this_scroll_margin - 1);
+            nlines = clip_to_bounds (this_scroll_margin, nlines,
+                                     ht - this_scroll_margin - 1);
 
-	  SET_TEXT_POS (pt, PT, PT_BYTE);
-	  start_display (&it, w, pt);
+            SET_TEXT_POS (pt, PT, PT_BYTE);
+            start_display (&it, w, pt);
 
-	  /* Move to the beginning of screen line containing PT.  */
-	  move_it_by_lines (&it, 0);
+            /* Move to the beginning of screen line containing PT.  */
+            move_it_by_lines (&it, 0);
 
-	  /* Move back to find the point which is ARG screen lines above PT.  */
-	  if (nlines > 0)
-	    {
-	      it.current_y = 0;
-	      it.vpos = 0;
-	      move_it_by_lines (&it, -nlines);
-	    }
+            /* Move back to find the point which is ARG screen lines above PT.  */
+            if (nlines > 0)
+              {
+                it.current_y = 0;
+                it.vpos = 0;
+                move_it_by_lines (&it, -nlines);
+              }
 
-	  charpos = IT_CHARPOS (it);
-	  bytepos = IT_BYTEPOS (it);
+            charpos = IT_CHARPOS (it);
+            bytepos = IT_BYTEPOS (it);
 
-	  bidi_unshelve_cache (itdata, false);
-	}
-    }
-  else
-    {
-      struct position pos;
-      int ht = window_internal_height (w);
+            bidi_unshelve_cache (itdata, false);
+          }
+      }
+    else
+      {
+        struct position pos;
+        int ht = window_internal_height (w);
 
-      if (center_p)
-	iarg = ht / 2;
-      else if (iarg < 0)
-	iarg += ht;
+        if (center_p)
+          iarg = ht / 2;
+        else if (iarg < 0)
+          iarg += ht;
 
-      /* Don't let it get into the margin at either top or bottom.  */
-      iarg = clip_to_bounds (this_scroll_margin, iarg,
-			     ht - this_scroll_margin - 1);
+        /* Don't let it get into the margin at either top or bottom.  */
+        iarg = clip_to_bounds (this_scroll_margin, iarg,
+                               ht - this_scroll_margin - 1);
 
-      pos = *vmotion (PT, PT_BYTE, - iarg, w);
-      charpos = pos.bufpos;
-      bytepos = pos.bytepos;
-    }
+        pos = *vmotion (PT, PT_BYTE, - iarg, w);
+        charpos = pos.bufpos;
+        bytepos = pos.bytepos;
+      }
 
-  /* Set the new window start.  */
-  set_marker_both (w->start, w->contents, charpos, bytepos);
-  w->window_end_valid = false;
+    /* Set the new window start.  */
+    set_marker_both (w->start, w->contents, charpos, bytepos);
+    w->window_end_valid = false;
 
-  w->optional_new_start = true;
+    w->optional_new_start = true;
 
-  w->start_at_line_beg = (bytepos == BEGV_BYTE
-			  || FETCH_BYTE (bytepos - 1) == '\n');
+    w->start_at_line_beg = (bytepos == BEGV_BYTE
+                            || FETCH_BYTE (bytepos - 1) == '\n');
 
-  wset_redisplay (w);
+    wset_redisplay (w);
 
-  return Qnil;
+    return Qnil;
+  }
 }
 
 DEFUN ("window-text-width", Fwindow_text_width, Swindow_text_width,
@@ -5808,52 +5869,68 @@ pixels.  */)
 }
 
 DEFUN ("move-to-window-line", Fmove_to_window_line, Smove_to_window_line,
-       1, 1, "P",
+       1, 2, "P\ni",
        doc: /* Position point relative to window.
 ARG nil means position point at center of window.
 Else, ARG specifies vertical position within the window;
-zero means top of window, negative means relative to bottom of window.  */)
-  (Lisp_Object arg)
+zero means top of window, negative means relative to bottom of window.
+
+When GROUP is non-nil, and `move-to-window-line-group-function' is set to a
+function, then instead of the above, that function is called with the
+single argument ARG, and its result returned.
+
+If GROUP is non-nil, and WINDOW is part of a group of windows collectively
+displaying a buffer (such as with Follow Mode), position point relative to
+the group of windows as a whole rather than the individual WINDOW.  This
+condition holds when `move-to-window-line-group-function' is set to a
+function, in which case `move-to-window-line' calls the function with the
+argument ARG, then returns its result, instead of doing its normal
+processing.  */)
+  (Lisp_Object arg, Lisp_Object group)
 {
-  struct window *w = XWINDOW (selected_window);
-  int lines, start;
-  Lisp_Object window;
+  if (!NILP (group)
+      && FUNCTIONP (Vmove_to_window_line_group_function))
+    return call1 (Vmove_to_window_line_group_function, arg);
+  {
+    struct window *w = XWINDOW (selected_window);
+    int lines, start;
+    Lisp_Object window;
 #if false
-  int this_scroll_margin;
+    int this_scroll_margin;
 #endif
 
-  if (!(BUFFERP (w->contents) && XBUFFER (w->contents) == current_buffer))
-    /* This test is needed to make sure PT/PT_BYTE make sense in w->contents
-       when passed below to set_marker_both.  */
-    error ("move-to-window-line called from unrelated buffer");
+    if (!(BUFFERP (w->contents) && XBUFFER (w->contents) == current_buffer))
+      /* This test is needed to make sure PT/PT_BYTE make sense in w->contents
+         when passed below to set_marker_both.  */
+      error ("move-to-window-line called from unrelated buffer");
 
-  window = selected_window;
-  start = marker_position (w->start);
-  if (start < BEGV || start > ZV)
-    {
-      int height = window_internal_height (w);
-      Fvertical_motion (make_number (- (height / 2)), window, Qnil);
-      set_marker_both (w->start, w->contents, PT, PT_BYTE);
-      w->start_at_line_beg = !NILP (Fbolp ());
-      w->force_start = true;
-    }
-  else
-    Fgoto_char (w->start);
+    window = selected_window;
+    start = marker_position (w->start);
+    if (start < BEGV || start > ZV)
+      {
+        int height = window_internal_height (w);
+        Fvertical_motion (make_number (- (height / 2)), window, Qnil);
+        set_marker_both (w->start, w->contents, PT, PT_BYTE);
+        w->start_at_line_beg = !NILP (Fbolp ());
+        w->force_start = true;
+      }
+    else
+      Fgoto_char (w->start);
 
-  lines = displayed_window_lines (w);
+    lines = displayed_window_lines (w);
 
 #if false
-  this_scroll_margin = max (0, min (scroll_margin, lines / 4));
+    this_scroll_margin = max (0, min (scroll_margin, lines / 4));
 #endif
 
-  if (NILP (arg))
-    XSETFASTINT (arg, lines / 2);
-  else
-    {
-      EMACS_INT iarg = XINT (Fprefix_numeric_value (arg));
+    if (NILP (arg))
+      XSETFASTINT (arg, lines / 2);
+    else
+      {
+        EMACS_INT iarg = XINT (Fprefix_numeric_value (arg));
 
-      if (iarg < 0)
-	iarg = iarg + lines;
+        if (iarg < 0)
+          iarg = iarg + lines;
 
 #if false /* This code would prevent move-to-window-line from moving point
 	     to a place inside the scroll margins (which would cause the
@@ -5861,19 +5938,20 @@ zero means top of window, negative means relative to bottom of window.  */)
 	     it is probably better not to install it.  However, it is here
 	     inside #if false so as not to lose it.  -- rms.  */
 
-      /* Don't let it get into the margin at either top or bottom.  */
-      iarg = max (iarg, this_scroll_margin);
-      iarg = min (iarg, lines - this_scroll_margin - 1);
+        /* Don't let it get into the margin at either top or bottom.  */
+        iarg = max (iarg, this_scroll_margin);
+        iarg = min (iarg, lines - this_scroll_margin - 1);
 #endif
 
-      arg = make_number (iarg);
-    }
+        arg = make_number (iarg);
+      }
 
-  /* Skip past a partially visible first line.  */
-  if (w->vscroll)
-    XSETINT (arg, XINT (arg) + 1);
+    /* Skip past a partially visible first line.  */
+    if (w->vscroll)
+      XSETINT (arg, XINT (arg) + 1);
 
-  return Fvertical_motion (arg, window, Qnil);
+    return Fvertical_motion (arg, window, Qnil);
+  }
 }
 
 
@@ -7147,6 +7225,12 @@ syms_of_window (void)
   DEFSYM (Qclone_of, "clone-of");
   DEFSYM (Qfloor, "floor");
   DEFSYM (Qceiling, "ceiling");
+  DEFSYM (Qwindow_start_group_function, "window-start-group-function");
+  DEFSYM (Qwindow_end_group_function, "window-end-group-function");
+  DEFSYM (Qset_window_start_group_function, "set-window-start-group-function");
+  DEFSYM (Qrecenter_group_function, "recenter-group-function");
+  DEFSYM (Qpos_visible_in_window_p_group_function, "pos-visible-in-window-p-group-function");
+  DEFSYM (Qmove_to_window_line_group_function, "move-to-window-line-group-function");
 
   staticpro (&Vwindow_list);
 
@@ -7317,6 +7401,72 @@ are actually going to be displayed get fontified.
 Note that this optimization can cause the portion of the buffer
 displayed after a scrolling operation to be somewhat inaccurate.  */);
   Vfast_but_imprecise_scrolling = false;
+
+  DEFVAR_LISP ("window-start-group-function", Vwindow_start_group_function,
+               doc: /* Function to call for `window-start' when its GROUP parameter is non-nil.
+When this variable contains a function, and `window-start' is called with a
+non-nil GROUP parameter, the function is called instead of `window-start''s
+normal action.  `window-start' passes the function its argument WINDOW, which
+might be nil.  The function may recursively call `window-start'.  */);
+  Vwindow_start_group_function = Qnil;
+  Fmake_variable_buffer_local (Qwindow_start_group_function);
+  Fput (Qwindow_start_group_function, Qpermanent_local, Qt);
+
+  DEFVAR_LISP ("window-end-group-function", Vwindow_end_group_function,
+               doc: /* Function to call for `window-end' if its GROUP parameter is non-nil.
+When this variable contains a function, and `window-end' is called with a
+non-nil GROUP parameter, the function is called instead of `window-end''s
+normal action.  `window-end' passes the function its two parameters WINDOW,
+and UPDATE.  The function may call `window-end' recursively.  */);
+  Vwindow_end_group_function = Qnil;
+  Fmake_variable_buffer_local (Qwindow_end_group_function);
+  Fput (Qwindow_end_group_function, Qpermanent_local, Qt);
+
+  DEFVAR_LISP ("set-window-start-group-function",
+               Vset_window_start_group_function,
+               doc: /* The function to call for `set-window-start' when its GROUP parameter is non-nil.
+When this variable contains a function, and `set-window-start' is called
+with a non-nil GROUP parameter, the function is called instead of
+`set-window-start''s normal action.  `set-window-start' passes the function
+its three parameters WINDOW, POS, and NOFORCE.  The function may call
+`set-window-start' recursively.  */);
+  Vset_window_start_group_function = Qnil;
+  Fmake_variable_buffer_local (Qset_window_start_group_function);
+  Fput (Qset_window_start_group_function, Qpermanent_local, Qt);
+
+  DEFVAR_LISP ("recenter-group-function", Vrecenter_group_function,
+               doc: /* Function to call for `recenter' when its GROUP parameter is non-nil.
+When this variable contains a function, and `recenter' is called with a
+non-nil GROUP parameter, the function is called instead of `recenter''s
+normal action.  `recenter' passes the function its parameter ARG.  The
+function may call `recenter' recursively.  */);
+  Vrecenter_group_function = Qnil;
+  Fmake_variable_buffer_local (Qrecenter_group_function);
+  Fput (Qrecenter_group_function, Qpermanent_local, Qt);
+
+  DEFVAR_LISP ("pos-visible-in-window-p-group-function",
+               Vpos_visible_in_window_p_group_function,
+               doc: /*  Function for `pos-visible-in-window-p' when its GROUP parameter is non-nil.
+When this variable contains a function, and `pos-visible-in-window-p' is
+called with a non-nil GROUP parameter, the function is called instead of
+`pos-visible-in-window-p''s normal action.  `pos-visible-in-window-p'
+passes the function its three parameters POS, WINDOW, and PARTIALLY.  The
+function may call `pos-visible-in-window-p' recursively.  */);
+  Vpos_visible_in_window_p_group_function = Qnil;
+  Fmake_variable_buffer_local (Qpos_visible_in_window_p_group_function);
+  Fput (Qpos_visible_in_window_p_group_function, Qpermanent_local, Qt);
+
+  DEFVAR_LISP ("move-to-window-line-group-function",
+               Vmove_to_window_line_group_function,
+               doc: /* Function for `move-to-window-line' when its GROUP parameter is non-nil.
+When this variable contains a function, and `move-to-window-line' is
+called with a non-nil GROUP parameter, the function is called instead of
+`move-to-window-line''s normal action.  `move-to-window-line' passes the
+function its parameter ARG.  The function may call `move-to-window-line'
+recursively.  */);
+  Vmove_to_window_line_group_function = Qnil;
+  Fmake_variable_buffer_local (Qmove_to_window_line_group_function);
+  Fput (Qmove_to_window_line_group_function, Qpermanent_local, Qt);
 
   defsubr (&Sselected_window);
   defsubr (&Sminibuffer_window);

@@ -28,6 +28,17 @@
 
 ;;; Code:
 
+(defvar selected-window-group-function nil)
+(make-variable-buffer-local 'selected-window-group-function)
+(put 'selected-window-group-function 'permanent-local t)
+(defun selected-window-group ()
+  "Return the list of windows in the group containing the selected window.
+When a grouping mode (such as Follow Mode) is not active, the
+result is a list containing only the selected window."
+  (if (functionp selected-window-group-function)
+      (funcall selected-window-group-function)
+    (list (selected-window))))
+
 (defun internal--before-save-selected-window ()
   (cons (selected-window)
         ;; We save and restore all frames' selected windows, because
