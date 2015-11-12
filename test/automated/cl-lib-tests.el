@@ -222,8 +222,8 @@
                  (def . ,(or `nil `(nil))))
                t)))))
 (ert-deftest cl-lib-struct-constructors ()
-  (should (equal (documentation 'cl-lib--con-2 t)
-                 "Constructor docstring."))
+  (should (string-match "\\`Constructor docstring."
+                        (documentation 'cl-lib--con-2 t)))
   (should (mystruct-p (cl-lib--con-1)))
   (should (mystruct-p (cl-lib--con-2))))
 
