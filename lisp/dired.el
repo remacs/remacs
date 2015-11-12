@@ -2031,7 +2031,7 @@ Otherwise, toggle `read-only-mode'."
 (defun dired-next-line (arg)
   "Move down lines then position at filename.
 Optional prefix ARG says how many lines to move; default is one line."
-  (interactive "p")
+  (interactive "^p")
   (let ((line-move-visual)
 	(goal-column))
     (line-move arg t))
@@ -2044,7 +2044,7 @@ Optional prefix ARG says how many lines to move; default is one line."
 (defun dired-previous-line (arg)
   "Move up lines then position at filename.
 Optional prefix ARG says how many lines to move; default is one line."
-  (interactive "p")
+  (interactive "^p")
   (dired-next-line (- (or arg 1))))
 
 (defun dired-next-dirline (arg &optional opoint)
