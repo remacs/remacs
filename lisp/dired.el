@@ -1542,7 +1542,8 @@ Do so according to the former subdir alist OLD-SUBDIR-ALIST."
     (define-key map "<" 'dired-prev-dirline)
     (define-key map ">" 'dired-next-dirline)
     (define-key map "^" 'dired-up-directory)
-    (define-key map " "  'dired-next-line)
+    (define-key map " " 'dired-next-line)
+    (define-key map [?\S-\ ] 'dired-previous-line)
     (define-key map [remap next-line] 'dired-next-line)
     (define-key map [remap previous-line] 'dired-previous-line)
     ;; hiding
