@@ -8756,6 +8756,8 @@ Internal use only.  */)
   return menubar_in_use ? Qt : Qnil;
 }
 
+#ifndef __CYGWIN__
+
 /***********************************************************************
 			  Tray notifications
  ***********************************************************************/
@@ -8781,15 +8783,9 @@ typedef struct MY_NOTIFYICONDATAW {
   HICON hBalloonIcon;
 } MY_NOTIFYICONDATAW;
 
-#ifndef NOTIFYICONDATAW_V1_SIZE
-# define NOTIFYICONDATAW_V1_SIZE offsetof (MY_NOTIFYICONDATAW, szTip[64])
-#endif
-#ifndef NOTIFYICONDATAW_V2_SIZE
-# define NOTIFYICONDATAW_V2_SIZE offsetof (MY_NOTIFYICONDATAW, guidItem)
-#endif
-#ifndef NOTIFYICONDATAW_V3_SIZE
-# define NOTIFYICONDATAW_V3_SIZE offsetof (MY_NOTIFYICONDATAW, hBalloonIcon)
-#endif
+#define MYNOTIFYICONDATAW_V1_SIZE offsetof (MY_NOTIFYICONDATAW, szTip[64])
+#define MYNOTIFYICONDATAW_V2_SIZE offsetof (MY_NOTIFYICONDATAW, guidItem)
+#define MYNOTIFYICONDATAW_V3_SIZE offsetof (MY_NOTIFYICONDATAW, hBalloonIcon)
 #ifndef NIF_INFO
 # define NIF_INFO     0x00000010
 #endif
@@ -8901,11 +8897,11 @@ add_tray_notification (struct frame *f, const char *icon, const char *tip,
       if (shell_dll_version >= MAKEDLLVERULL (6, 1, 0, 0)) /* >= Windows 7 */
 	nidw.cbSize = sizeof (nidw);
       else if (shell_dll_version >= MAKEDLLVERULL (6, 0, 0, 0)) /* XP */
-	nidw.cbSize = NOTIFYICONDATAW_V3_SIZE;
+	nidw.cbSize = MYNOTIFYICONDATAW_V3_SIZE;
       else if (shell_dll_version >= MAKEDLLVERULL (5, 0, 0, 0)) /* W2K */
-	nidw.cbSize = NOTIFYICONDATAW_V2_SIZE;
+	nidw.cbSize = MYNOTIFYICONDATAW_V2_SIZE;
       else
-	nidw.cbSize = NOTIFYICONDATAW_V1_SIZE; 			/* < W2K */
+	nidw.cbSize = MYNOTIFYICONDATAW_V1_SIZE;		/* < W2K */
       nidw.hWnd = FRAME_W32_WINDOW (f);
       nidw.uID = EMACS_TRAY_NOTIFICATION_ID;
       nidw.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_INFO;
@@ -8955,7 +8951,7 @@ add_tray_notification (struct frame *f, const char *icon, const char *tip,
 
       /* Windows 9X and NT4 support only 64 characters in the Tip,
 	 later versions support up to 128.  */
-      if (nidw.cbSize == NOTIFYICONDATAW_V1_SIZE)
+      if (nidw.cbSize == MYNOTIFYICONDATAW_V1_SIZE)
 	{
 	  tiplen = pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS,
 					 tip, utf8_mbslen_lim (tip, 63),
@@ -8980,7 +8976,7 @@ add_tray_notification (struct frame *f, const char *icon, const char *tip,
       wcscpy (nidw.szTip, tipw);
 
       /* The rest of the structure is only supported since Windows 2000.  */
-      if (nidw.cbSize > NOTIFYICONDATAW_V1_SIZE)
+      if (nidw.cbSize > MYNOTIFYICONDATAW_V1_SIZE)
 	{
 	  int slen;
 
@@ -9222,6 +9218,8 @@ DEFUN ("w32-notification-close",
 
   return Qnil;
 }
+
+#endif	/* !__CYGWIN__ */
 
 
 /***********************************************************************
