@@ -26,13 +26,17 @@
 (ert-deftest keymap-store_in_keymap-FASTINT-on-nonchars ()
   "Check for bug fixed in \"Fix assertion violation in define-key\",
 commit 86c19714b097aa477d339ed99ffb5136c755a046."
-  (should-not (eq (lookup-key Buffer-menu-mode-map [32]) 'undefined))
-  ;; This will cause an assertion violation if the bug is present.
-  ;; We could run an inferior Emacs process and check for the return
-  ;; status, but in some environments an assertion failure triggers
-  ;; an abort dialog that requires user intervention anyway.
-  (define-key Buffer-menu-mode-map [(32 . 126)] 'undefined)
-  (should (eq (lookup-key Buffer-menu-mode-map [32]) 'undefined)))
+  (let ((def (lookup-key Buffer-menu-mode-map [32])))
+    (unwind-protect
+        (progn
+          (should-not (eq def 'undefined))
+          ;; This will cause an assertion violation if the bug is present.
+          ;; We could run an inferior Emacs process and check for the return
+          ;; status, but in some environments an assertion failure triggers
+          ;; an abort dialog that requires user intervention anyway.
+          (define-key Buffer-menu-mode-map [(32 . 32)] 'undefined)
+          (should (eq (lookup-key Buffer-menu-mode-map [32]) 'undefined)))
+      (define-key Buffer-menu-mode-map [32] def))))
 
 (provide 'keymap-tests)
 
