@@ -332,6 +332,10 @@ unlike `bookmark-set' which silently updates an existing bookmark.
 ---
 *** `json-pretty-print' and `json-pretty-print-buffer' now maintain
 the ordering of object keys by default.
+---
+*** New commands `json-pretty-print-ordered' and
+`json-pretty-print-buffer-ordered' pretty prints JSON objects with
+object keys sorted alphabetically.
 
 ** You can recompute the VC state of a file buffer with `M-x vc-refresh-state'
 ** Prog mode has some support for multi-mode indentation.

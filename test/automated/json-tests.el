@@ -28,10 +28,39 @@
   (should (equal (json--plist-reverse '(:a 1 :b 2 :c 3))
                  '(:c 3 :b 2 :a 1))))
 
+(ert-deftest test-json-plist-to-alist ()
+  (should (equal (json--plist-to-alist '()) '()))
+  (should (equal (json--plist-to-alist '(:a 1)) '((:a . 1))))
+  (should (equal (json--plist-to-alist '(:a 1 :b 2 :c 3))
+                 '((:a . 1) (:b . 2) (:c . 3)))))
+
+(ert-deftest test-json-encode-plist ()
+  (let ((plist '(:a 1 :b 2)))
+    (should (equal (json-encode plist) "{\"a\":1,\"b\":2}"))))
+
 (ert-deftest json-encode-simple-alist ()
   (should (equal (json-encode '((a . 1)
                                 (b . 2)))
                  "{\"a\":1,\"b\":2}")))
+
+(ert-deftest test-json-encode-hash-table ()
+  (let ((hash-table (make-hash-table))
+        (json-encoding-object-sort-predicate 'string<))
+    (puthash :a 1 hash-table)
+    (puthash :b 2 hash-table)
+    (puthash :c 3 hash-table)
+    (should (equal (json-encode hash-table)
+                   "{\"a\":1,\"b\":2,\"c\":3}"))))
+
+(ert-deftest test-json-encode-alist-with-sort-predicate ()
+  (let ((alist '((:c . 3) (:a . 1) (:b . 2)))
+        (json-encoding-object-sort-predicate 'string<))
+    (should (equal (json-encode alist) "{\"a\":1,\"b\":2,\"c\":3}"))))
+
+(ert-deftest test-json-encode-plist-with-sort-predicate ()
+  (let ((plist '(:c 3 :a 1 :b 2))
+        (json-encoding-object-sort-predicate 'string<))
+    (should (equal (json-encode plist) "{\"a\":1,\"b\":2,\"c\":3}"))))
 
 (ert-deftest json-read-simple-alist ()
   (let ((json-object-type 'alist))
