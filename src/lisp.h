@@ -4008,7 +4008,6 @@ extern void syms_of_casetab (void);
 extern Lisp_Object echo_message_buffer;
 extern struct kboard *echo_kboard;
 extern void cancel_echoing (void);
-extern Lisp_Object last_undo_boundary;
 extern bool input_pending;
 #ifdef HAVE_STACK_OVERFLOW_HANDLING
 extern sigjmp_buf return_to_command_loop;
