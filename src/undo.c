@@ -35,7 +35,7 @@ static ptrdiff_t last_boundary_position;
 static Lisp_Object pending_boundary;
 
 void
-run_undoable_change ()
+run_undoable_change (void)
 {
   call0 (Qundo_auto__undoable_change);
 }
@@ -235,7 +235,6 @@ record_property_change (ptrdiff_t beg, ptrdiff_t length,
 {
   Lisp_Object lbeg, lend, entry;
   struct buffer *obuf = current_buffer, *buf = XBUFFER (buffer);
-  bool boundary = false;
 
   if (EQ (BVAR (buf, undo_list), Qt))
     return;
