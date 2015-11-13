@@ -9294,6 +9294,7 @@ syms_of_w32fns (void)
   DEFSYM (Qframes, "frames");
   DEFSYM (Qtip_frame, "tip-frame");
   DEFSYM (Qunicode_sip, "unicode-sip");
+#if defined WINDOWSNT && !defined HAVE_DBUS
   DEFSYM (QCicon, ":icon");
   DEFSYM (QCtip, ":tip");
   DEFSYM (QClevel, ":level");
@@ -9302,6 +9303,7 @@ syms_of_w32fns (void)
   DEFSYM (QCtimeout, ":timeout");
   DEFSYM (QCtitle, ":title");
   DEFSYM (QCbody, ":body");
+#endif
 
   /* Symbols used elsewhere, but only in MS-Windows-specific code.  */
   DEFSYM (Qgnutls_dll, "gnutls");
