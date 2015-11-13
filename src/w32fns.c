@@ -8756,7 +8756,7 @@ Internal use only.  */)
   return menubar_in_use ? Qt : Qnil;
 }
 
-#ifndef __CYGWIN__
+#if defined WINDOWSNT && !defined HAVE_DBUS
 
 /***********************************************************************
 			  Tray notifications
@@ -9219,7 +9219,7 @@ DEFUN ("w32-notification-close",
   return Qnil;
 }
 
-#endif	/* !__CYGWIN__ */
+#endif	/* WINDOWSNT && !HAVE_DBUS */
 
 
 /***********************************************************************
@@ -9635,8 +9635,10 @@ This variable has effect only on Windows Vista and later.  */);
   defsubr (&Sw32_window_exists_p);
   defsubr (&Sw32_battery_status);
   defsubr (&Sw32__menu_bar_in_use);
+#if defined WINDOWSNT && !defined HAVE_DBUS
   defsubr (&Sw32_notification_notify);
   defsubr (&Sw32_notification_close);
+#endif
 
 #ifdef WINDOWSNT
   defsubr (&Sfile_system_info);
