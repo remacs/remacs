@@ -6634,7 +6634,8 @@ current object."
       (setq pos1 (funcall aux -1))
       (goto-char (car pos1))
       (setq pos2 (funcall aux arg))
-      (transpose-subr-1 pos1 pos2)))))
+      (transpose-subr-1 pos1 pos2)
+      (goto-char (+ (car pos2) (- (cdr pos1) (car pos1))))))))
 
 (defun transpose-subr-1 (pos1 pos2)
   (when (> (car pos1) (cdr pos1)) (setq pos1 (cons (cdr pos1) (car pos1))))
