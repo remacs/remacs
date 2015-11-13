@@ -2603,12 +2603,6 @@ Notification severity level, one of @code{info}, @code{warning}, or
 left of the notification title, but only if the @code{:title} parameter
 (see below) is also specified and is a string.
 
-@item :timeout @var{timeout}
-@var{timeout} is the time in seconds after which the notification
-disappears.  The value can be integer or floating-point.  This is
-ignored on Vista and later systems, where the duration is fixed at 9
-sec and can only be customized via system-wide Accessibility settings.
-
 @item :title @var{title}
 The title of the notification.  If @var{title} is a string, it is
 displayed in a larger font immediately above the body text.  The title

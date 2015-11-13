@@ -9111,13 +9111,6 @@ The following parameters are supported:
                     parameter (see below) is also specified and is a
                     string.
 
-:timeout TIMEOUT -- TIMEOUT is the time in seconds after which the
-                    notification disappears.  The value can be integer
-                    or floating-point.  This is ignored on Vista and
-                    later systems, where the duration is fixed at 9 sec
-                    and can only be customized via system-wide
-                    Accessibility settings.
-
 :title TITLE     -- The title of the notification.  If TITLE is a string,
                     it is displayed in a larger font immediately above
                     the body text.  The title text can be up to 63
@@ -9178,13 +9171,6 @@ usage: (w32-notification-notify &rest PARAMS)  */)
     severity = Ni_Err;
   else
     severity = Ni_Info;
-
-  /* Timeout.  */
-  lres = Fplist_get (arg_plist, QCtimeout);
-  if (NUMBERP (lres))
-    timeout = 1000 * (INTEGERP (lres) ? XINT (lres) : XFLOAT_DATA (lres));
-  else
-    timeout = 0;
 
   /* Title.  */
   lres = Fplist_get (arg_plist, QCtitle);
@@ -9300,7 +9286,6 @@ syms_of_w32fns (void)
   DEFSYM (QClevel, ":level");
   DEFSYM (Qinfo, "info");
   DEFSYM (Qwarning, "warning");
-  DEFSYM (QCtimeout, ":timeout");
   DEFSYM (QCtitle, ":title");
   DEFSYM (QCbody, ":body");
 #endif
