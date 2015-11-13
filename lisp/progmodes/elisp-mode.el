@@ -802,6 +802,7 @@ non-nil result supercedes the xrefs produced by
     xrefs))
 
 (declare-function project-library-roots "project")
+(declare-function project-roots "project")
 (declare-function project-current "project")
 
 (defun elisp--xref-find-references (symbol)
