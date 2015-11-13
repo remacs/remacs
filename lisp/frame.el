@@ -2238,7 +2238,9 @@ See also `toggle-frame-maximized'."
       '(line-spacing
         overline-margin
         line-prefix
-        wrap-prefix))
+        wrap-prefix
+        bidi-paragraph-direction
+        bidi-display-reordering))
 
 (provide 'frame)
 
