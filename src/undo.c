@@ -34,7 +34,7 @@ static ptrdiff_t last_boundary_position;
    an undo-boundary.  */
 static Lisp_Object pending_boundary;
 
-void
+static void
 run_undoable_change (void)
 {
   call0 (Qundo_auto__undoable_change);
