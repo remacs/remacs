@@ -31,7 +31,7 @@
 ;; should be changed only there.
 
 ;;;###tramp-autoload
-(defconst tramp-version "2.2.13-pre"
+(defconst tramp-version "2.2.13-25.1"
   "This version of Tramp.")
 
 ;;;###tramp-autoload
