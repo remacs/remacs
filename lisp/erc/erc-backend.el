@@ -376,7 +376,7 @@ alist."
   :type '(repeat (cons (string :tag "Target")
                        coding-system)))
 
-(defcustom erc-server-connect-function 'open-network-stream
+(defcustom erc-server-connect-function 'erc-open-network-stream
   "Function used to initiate a connection.
 It should take same arguments as `open-network-stream' does."
   :group 'erc-server
@@ -505,6 +505,10 @@ The current buffer is given by BUFFER."
          (memq (process-status erc-server-process) '(run open)))))
 
 ;;;; Connecting to a server
+(defun erc-open-network-stream (name buffer host service)
+  "As `open-network-stream', but does non-blocking IO"
+  (make-network-process :name name :buffer  buffer
+                        :host host :service service :nowait t))
 
 (defun erc-server-connect (server port buffer)
   "Perform the connection and login using the specified SERVER and PORT.
@@ -565,9 +569,14 @@ Make sure you are in an ERC buffer when running this."
       (setq erc-server-last-sent-time 0)
       (setq erc-server-lines-sent 0)
       (let ((erc-server-connect-function (or erc-session-connector
-                                             'open-network-stream)))
+                                             'erc-open-network-stream)))
         (erc-open erc-session-server erc-session-port erc-server-current-nick
                   erc-session-user-full-name t erc-session-password)))))
+
+(defun erc-server-delayed-reconnect (event buffer)
+  (if (buffer-live-p buffer)
+    (with-current-buffer buffer
+      (erc-server-reconnect))))
 
 (defun erc-server-filter-function (process string)
   "The process filter for the ERC server."
@@ -615,17 +624,16 @@ EVENT is the message received from the closed connection process."
            (or erc-server-timed-out
                (not (string-match "^deleted" event)))
            ;; open-network-stream-nowait error for connection refused
-           (not (string-match "^failed with code 111" event)))))
+           (if (string-match "^failed with code 111" event) 'nonblocking t))))
 
 (defun erc-process-sentinel-2 (event buffer)
   "Called when `erc-process-sentinel-1' has detected an unexpected disconnect."
   (if (not (buffer-live-p buffer))
       (erc-update-mode-line)
     (with-current-buffer buffer
-      (let ((reconnect-p (erc-server-reconnect-p event)))
-        (erc-display-message nil 'error (current-buffer)
-                             (if reconnect-p 'disconnected
-                               'disconnected-noreconnect))
+      (let ((reconnect-p (erc-server-reconnect-p event)) message delay)
+        (setq message (if reconnect-p 'disconnected 'disconnected-noreconnect))
+        (erc-display-message nil 'error (current-buffer) message)
         (if (not reconnect-p)
             ;; terminate, do not reconnect
             (progn
@@ -637,23 +645,16 @@ EVENT is the message received from the closed connection process."
           ;; reconnect
           (condition-case err
               (progn
-                (setq erc-server-reconnecting nil)
-                (erc-server-reconnect)
-                (setq erc-server-reconnect-count 0))
-            (error (when (buffer-live-p buffer)
-                     (set-buffer buffer)
-                     (if (integerp erc-server-reconnect-attempts)
-                         (setq erc-server-reconnect-count
-                               (1+ erc-server-reconnect-count))
-                       (message "%s ... %s"
-                                "Reconnecting until we succeed"
-                                "kill the ERC server buffer to stop"))
-                     (if (numberp erc-server-reconnect-timeout)
-                         (run-at-time erc-server-reconnect-timeout nil
-                                      #'erc-process-sentinel-2
-                                      event buffer)
-                       (error (concat "`erc-server-reconnect-timeout'"
-                                      " must be a number")))))))))))
+                (setq erc-server-reconnecting   nil
+                      erc-server-reconnect-count (1+ erc-server-reconnect-count))
+                (setq delay erc-server-reconnect-timeout)
+                (run-at-time delay nil
+                             #'erc-server-delayed-reconnect event buffer))
+            (error (unless (integerp erc-server-reconnect-attempts)
+                     (message "%s ... %s"
+                              "Reconnecting until we succeed"
+                              "kill the ERC server buffer to stop"))
+                   (erc-server-delayed-reconnect event buffer))))))))
 
 (defun erc-process-sentinel-1 (event buffer)
   "Called when `erc-process-sentinel' has decided that we're disconnecting.
