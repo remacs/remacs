@@ -1963,7 +1963,9 @@ Returns the buffer for the given server or channel."
     (erc-update-modules)
     (set-buffer buffer)
     (setq old-point (point))
-    (erc-mode)
+    (let ((old-recon-count erc-server-reconnect-count))
+      (erc-mode)
+      (setq erc-server-reconnect-count old-recon-count))
     (setq erc-server-announced-name server-announced-name)
     (setq erc-server-connected connected-p)
     ;; connection parameters
@@ -2203,6 +2205,7 @@ Arguments are the same as for `erc'."
 The process will be given the name NAME, its target buffer will be
 BUFFER.  HOST and PORT specify the connection target."
   (open-network-stream name buffer host port
+		       :nowait t
                        :type 'tls))
 
 ;;; Displaying error messages
@@ -4483,6 +4486,7 @@ Set user modes and run `erc-after-connect' hook."
             (nick (car (erc-response.command-args parsed)))
             (buffer (process-buffer proc)))
         (setq erc-server-connected t)
+	(setq erc-server-reconnect-count 0)
         (erc-update-mode-line)
         (erc-set-initial-user-mode nick buffer)
         (erc-server-setup-periodical-ping buffer)
