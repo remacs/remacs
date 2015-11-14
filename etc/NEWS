@@ -121,13 +121,16 @@ the variable `dir-locals-file' for more information.
 information about mode local overrides (defined by cedet/mode-local.el
 `define-overloadable-function' `define-mode-local-overrides').
 
++++
 ** New `display-buffer' action function `display-buffer-use-some-frame'.
 This displays the buffer in an existing frame other than the current
 frame, and allows the caller to specify a frame predicate to exclude
 frames.
 
++++
 ** New documentation command `describe-symbol'.
-Works for functions, variables, faces, etc.
+Works for functions, variables, faces, etc.  It is bound to `C-h o' by
+default.
 
 ** New user option `search-default-regexp-mode'
 specifies the default mode for I-search.

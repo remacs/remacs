@@ -997,7 +997,10 @@ file-local variable.\n")
 ;;;###autoload
 (defun describe-symbol (symbol &optional buffer frame)
   "Display the full documentation of SYMBOL.
-Will show the info of SYMBOL as a function, variable, and/or face."
+Will show the info of SYMBOL as a function, variable, and/or face.
+Optional arguments BUFFER and FRAME specify for which buffer and
+frame to show the information about SYMBOL; they default to the
+current buffer and the selected frame, respectively."
   (interactive
    (let* ((v-or-f (symbol-at-point))
           (found (cl-some (lambda (x) (funcall (nth 1 x) v-or-f))
