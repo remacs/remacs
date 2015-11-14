@@ -101,7 +101,7 @@ If no tools are supported, then 'grep is assumed.")
 
 (defun semantic-symref-calculate-rootdir ()
   "Calculate the root directory for a symref search.
-Start with and EDE project, or use the default directory."
+Start with an EDE project, or use the default directory."
   (let* ((rootproj (when (and (featurep 'ede) ede-minor-mode)
 		     (ede-toplevel)))
 	 (rootdirbase (if rootproj

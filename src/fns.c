@@ -1580,7 +1580,8 @@ sublist by modifying its list structure, then returns the resulting
 list.
 
 Write `(setq foo (delq element foo))' to be sure of correctly changing
-the value of a list `foo'.  */)
+the value of a list `foo'.  See also `remq', which does not modify the
+argument.  */)
   (register Lisp_Object elt, Lisp_Object list)
 {
   Lisp_Object tail, tortoise, prev = Qnil;
