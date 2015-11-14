@@ -28,6 +28,7 @@ otherwise leave it unmarked.
 +++
 ** Building Emacs now requires C99 or later.
 
++++
 ** Building Emacs now requires GNU make, version 3.81 or later.
 
 ** New configure option --with-cairo.
