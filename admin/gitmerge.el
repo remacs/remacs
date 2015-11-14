@@ -65,7 +65,7 @@ Auto-commit"
   '((t (:strike-through t)))
   "Face for skipped commits.")
 
-(defconst gitmerge-default-branch "origin/emacs-24"
+(defconst gitmerge-default-branch "origin/emacs-25"
   "Default for branch that should be merged.")
 
 (defconst gitmerge-buffer "*gitmerge*"
@@ -183,8 +183,8 @@ if and why this commit should be skipped."
     ;; Go through the log and remember all commits that match
     ;; `gitmerge-skip-regexp' or are marked by --cherry-mark.
     (with-temp-buffer
-      (call-process "git" nil t nil "log" "--cherry-mark" from
-		    (concat "^" (car (vc-git-branches))))
+      (call-process "git" nil t nil "log" "--cherry-mark"
+		    (concat from "..." (car (vc-git-branches))))
       (goto-char (point-max))
       (while (re-search-backward "^commit \\(.+\\) \\([0-9a-f]+\\).*" nil t)
 	(let ((cherrymark (match-string 1))
