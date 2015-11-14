@@ -183,7 +183,7 @@ if and why this commit should be skipped."
     ;; Go through the log and remember all commits that match
     ;; `gitmerge-skip-regexp' or are marked by --cherry-mark.
     (with-temp-buffer
-      (call-process "git" nil t nil "log" "--cherry-mark"
+      (call-process "git" nil t nil "log" "--cherry-mark" "--left-only"
 		    (concat from "..." (car (vc-git-branches))))
       (goto-char (point-max))
       (while (re-search-backward "^commit \\(.+\\) \\([0-9a-f]+\\).*" nil t)
@@ -206,9 +206,9 @@ if and why this commit should be skipped."
   "Create the buffer for choosing commits."
   (with-current-buffer (get-buffer-create gitmerge-buffer)
     (erase-buffer)
-    (call-process "git" nil t nil "log"
+    (call-process "git" nil t nil "log" "--left-only"
 		  "--pretty=format:%h %<(20,trunc) %an: %<(100,trunc) %s"
-		  from (concat "^" (car (vc-git-branches))))
+		  (concat from "..." (car (vc-git-branches))))
     (goto-char (point-min))
     (while (looking-at "^\\([a-f0-9]+\\)")
       (let ((skipreason (gitmerge-skip-commit-p (match-string 1) commits)))
