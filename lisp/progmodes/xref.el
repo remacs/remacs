@@ -23,14 +23,21 @@
 ;; referencing commands, in particular "find-definition".
 ;;
 ;; Some part of the functionality must be implemented in a language
-;; dependent way and that's done by defining `xref-find-function',
-;; `xref-identifier-at-point-function' and
-;; `xref-identifier-completion-table-function', which see.
+;; dependent way and that's done by defining an xref backend.
 ;;
-;; A major mode should make these variables buffer-local first.
+;; That consists of a constructor function, which should return a
+;; backend value, and a set of implementations for the generic
+;; functions:
 ;;
-;; `xref-find-function' can be called in several ways, see its
-;; description.  It has to operate with "xref" and "location" values.
+;; `xref-backend-identifier-at-point',
+;; `xref-backend-identifier-completion-table',
+;; `xref-backend-definitions', `xref-backend-references',
+;; `xref-backend-apropos', which see.
+;;
+;; A major mode would normally use `add-hook' to add the backend
+;; constructor to `xref-backend-functions'.
+;;
+;; The last three methods operate with "xref" and "location" values.
 ;;
 ;; One would usually call `make-xref' and `xref-make-file-location',
 ;; `xref-make-buffer-location' or `xref-make-bogus-location' to create
@@ -46,12 +53,11 @@
 ;; Each identifier must be represented as a string.  Implementers can
 ;; use string properties to store additional information about the
 ;; identifier, but they should keep in mind that values returned from
-;; `xref-identifier-completion-table-function' should still be
+;; `xref-backend-identifier-completion-table' should still be
 ;; distinct, because the user can't see the properties when making the
 ;; choice.
 ;;
-;; See the functions `etags-xref-find' and `elisp-xref-find' for full
-;; examples.
+;; See the etags and elisp-mode implementations for full examples.
 
 ;;; Code:
 
@@ -195,35 +201,46 @@ LENGTH is the match length, in characters."
 
 ;;; API
 
-(declare-function etags-xref-find "etags" (action id))
-(declare-function tags-lazy-completion-table "etags" ())
+;; We make the etags backend the default for now, until something
+;; better comes along.
+(defvar xref-backend-functions (list #'xref--etags-backend)
+  "Special hook to find the xref backend for the current context.
+Each functions on this hook is called in turn with no arguments
+and should return either nil to mean that it is not applicable,
+or an xref backend, which is a value to be used to dispatch the
+generic functions.")
 
-;; For now, make the etags backend the default.
-(defvar xref-find-function #'etags-xref-find
-  "Function to look for cross-references.
-It can be called in several ways:
+(defun xref-find-backend ()
+  (run-hook-with-args-until-success 'xref-backend-functions))
 
- (definitions IDENTIFIER): Find definitions of IDENTIFIER.  The
-result must be a list of xref objects.  If IDENTIFIER contains
-sufficient information to determine a unique definition, returns
-only that definition. If there are multiple possible definitions,
-return all of them.  If no definitions can be found, return nil.
+(defun xref--etags-backend () 'etags)
 
- (references IDENTIFIER): Find references of IDENTIFIER.  The
-result must be a list of xref objects.  If no references can be
-found, return nil.
+(cl-defgeneric xref-backend-definitions (backend identifier)
+  "Find definitions of IDENTIFIER.
 
- (apropos PATTERN): Find all symbols that match PATTERN.  PATTERN
-is a regexp.
+The result must be a list of xref objects.  If IDENTIFIER
+contains sufficient information to determine a unique definition,
+return only that definition. If there are multiple possible
+definitions, return all of them.  If no definitions can be found,
+return nil.
 
 IDENTIFIER can be any string returned by
-`xref-identifier-at-point-function', or from the table returned
-by `xref-identifier-completion-table-function'.
+`xref-backend-identifier-at-point', or from the table returned by
+`xref-backend-identifier-completion-table'.
 
 To create an xref object, call `xref-make'.")
 
-(defvar xref-identifier-at-point-function #'xref-default-identifier-at-point
-  "Function to get the relevant identifier at point.
+(cl-defgeneric xref-backend-references (backend identifier)
+  "Find references of IDENTIFIER.
+The result must be a list of xref objects.  If no references can
+be found, return nil.")
+
+(cl-defgeneric xref-backend-apropos (backend pattern)
+  "Find all symbols that match PATTERN.
+PATTERN is a regexp")
+
+(cl-defgeneric xref-backend-identifier-at-point (_backend)
+  "Return the relevant identifier at point.
 
 The return value must be a string or nil.  nil means no
 identifier at point found.
@@ -231,15 +248,13 @@ identifier at point found.
 If it's hard to determine the identifier precisely (e.g., because
 it's a method call on unknown type), the implementation can
 return a simple string (such as symbol at point) marked with a
-special text property which `xref-find-function' would recognize
-and then delegate the work to an external process.")
-
-(defvar xref-identifier-completion-table-function #'tags-lazy-completion-table
-  "Function that returns the completion table for identifiers.")
-
-(defun xref-default-identifier-at-point ()
+special text property which e.g. `xref-backend-definitions' would
+recognize and then delegate the work to an external process."
   (let ((thing (thing-at-point 'symbol)))
     (and thing (substring-no-properties thing))))
+
+(cl-defgeneric xref-backend-identifier-completion-table (backend)
+  "Returns the completion table for identifiers.")
 
 
 ;;; misc utilities
@@ -690,7 +705,8 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 
 (defun xref--read-identifier (prompt)
   "Return the identifier at point or read it from the minibuffer."
-  (let ((id (funcall xref-identifier-at-point-function)))
+  (let* ((backend (xref-find-backend))
+         (id (xref-backend-identifier-at-point backend)))
     (cond ((or current-prefix-arg
                (not id)
                (xref--prompt-p this-command))
@@ -700,7 +716,7 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
                                                              "[ :]+\\'" prompt))
                                         id)
                               prompt)
-                            (funcall xref-identifier-completion-table-function)
+                            (xref-backend-identifier-completion-table backend)
                             nil nil nil
                             'xref--read-identifier-history id))
           (t id))))
@@ -709,7 +725,9 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 ;;; Commands
 
 (defun xref--find-xrefs (input kind arg window)
-  (let ((xrefs (funcall xref-find-function kind arg)))
+  (let ((xrefs (funcall (intern (format "xref-backend-%s" kind))
+                        (xref-find-backend)
+                        arg)))
     (unless xrefs
       (user-error "No %s found for: %s" (symbol-name kind) input))
     (xref--show-xrefs xrefs window)))
@@ -824,6 +842,8 @@ tools are used, and when."
         (cl-mapcan (lambda (hit) (xref--collect-matches
                              hit (format "\\_<%s\\_>" (regexp-quote symbol))))
                    hits)
+      ;; TODO: Implement "lightweight" buffer visiting, so that we
+      ;; don't have to kill them.
       (mapc #'kill-buffer
             (cl-set-difference (buffer-list) orig-buffers)))))
 
@@ -856,6 +876,7 @@ IGNORES is a list of glob patterns."
     (unwind-protect
         (cl-mapcan (lambda (hit) (xref--collect-matches hit regexp))
                    (nreverse hits))
+      ;; TODO: Same as above.
       (mapc #'kill-buffer
             (cl-set-difference (buffer-list) orig-buffers)))))
 
