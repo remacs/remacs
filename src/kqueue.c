@@ -1,5 +1,5 @@
-/* Filesystem notifications support with glib API.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+/* Filesystem notifications support with kqueue API.
+   Copyright (C) 2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -22,6 +22,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/event.h>
+#include <sys/time.h>
 #include <sys/file.h>
 #include "lisp.h"
 #include "keyboard.h"
@@ -31,8 +32,96 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* File handle for kqueue.  */
 static int kqueuefd = -1;
 
-/* This is a list, elements are triples (DESCRIPTOR FILE FLAGS CALLBACK)  */
+/* This is a list, elements are (DESCRIPTOR FILE FLAGS CALLBACK [DIRLIST])  */
 static Lisp_Object watch_list;
+
+/* Generate a file notification event.  */
+static void
+kqueue_generate_event
+(Lisp_Object ident, Lisp_Object actions, Lisp_Object file, Lisp_Object callback)
+{
+  struct input_event event;
+  EVENT_INIT (event);
+  event.kind = FILE_NOTIFY_EVENT;
+  event.frame_or_window = Qnil;
+  event.arg = list2 (Fcons (ident, Fcons (actions, Fcons (file, Qnil))),
+		     callback);
+
+  /* Store it into the input event queue.  */
+  kbd_buffer_store_event (&event);
+}
+
+/* This compares two directory listings in case of a `write' event for
+   a directory.  The old directory listing is stored in watch_object,
+   it will be replaced by a new directory listing at the end.  */
+static void
+kqueue_compare_dir_list (Lisp_Object watch_object)
+{
+  Lisp_Object dir, callback, old_dl, new_dl, dl, actions;
+
+  dir = XCAR (XCDR (watch_object));
+  callback = XCAR (XCDR (XCDR (XCDR (watch_object))));
+  old_dl = XCAR (XCDR (XCDR (XCDR (XCDR (watch_object)))));
+  new_dl = directory_files_internal (dir, Qnil, Qnil, Qnil, 1, Qnil);
+
+  for (dl = old_dl; ! NILP (dl); dl = XCDR (dl)) {
+    Lisp_Object old_entry, new_entry;
+    old_entry = XCAR (dl);
+    new_entry = Fassoc (XCAR (old_entry), new_dl);
+
+    /* We ignore "." and "..".  */
+    if ((strcmp (".", SSDATA (XCAR (old_entry))) == 0) ||
+	(strcmp ("..", SSDATA (XCAR (old_entry))) == 0))
+      continue;
+
+    /* A file has disappeared.  */
+    if (NILP (new_entry))
+      kqueue_generate_event
+	(XCAR (watch_object), Fcons (Qdelete, Qnil),
+	 XCAR (old_entry), callback);
+
+    else {
+      /* A file has changed.  We compare last modification time.  */
+      if (NILP
+	  (Fequal
+	   (XCAR (XCDR (XCDR (XCDR (XCDR (XCDR (XCDR (old_entry))))))),
+	    XCAR (XCDR (XCDR (XCDR (XCDR (XCDR (XCDR (new_entry))))))))))
+	kqueue_generate_event
+	  (XCAR (watch_object), Fcons (Qwrite, Qnil),
+	   XCAR (old_entry), callback);
+
+      /* A file attribute has changed.  We compare last status change time.  */
+      if (NILP
+	  (Fequal
+	   (XCAR (XCDR (XCDR (XCDR (XCDR (XCDR (XCDR (XCDR (old_entry)))))))),
+	    XCAR (XCDR (XCDR (XCDR (XCDR (XCDR (XCDR (XCDR (new_entry)))))))))))
+	kqueue_generate_event
+	  (XCAR (watch_object), Fcons (Qattrib, Qnil),
+	   XCAR (old_entry), callback);
+    }
+  }
+
+  for (dl = new_dl; ! NILP (dl); dl = XCDR (dl)) {
+    Lisp_Object old_entry, new_entry;
+    new_entry = XCAR (dl);
+    old_entry = Fassoc (XCAR (new_entry), old_dl);
+
+    /* We ignore "." and "..".  */
+    if ((strcmp (".", SSDATA (XCAR (new_entry))) == 0) ||
+	(strcmp ("..", SSDATA (XCAR (new_entry))) == 0))
+      continue;
+
+    /* A new file has appeared.  */
+    if (NILP (old_entry))
+      kqueue_generate_event
+	(XCAR (watch_object), Fcons (Qcreate, Qnil),
+	 XCAR (new_entry), callback);
+  }
+
+  /* Replace directory listing with the new one.  */
+  XSETCDR (XCDR (XCDR (XCDR (watch_object))), Fcons (new_dl, Qnil));
+  return;
+}
 
 /* This is the callback function for arriving input on kqueuefd.  It
    shall create a Lisp event, and put it into Emacs input queue.  */
@@ -41,11 +130,11 @@ kqueue_callback (int fd, void *data)
 {
   for (;;) {
     struct kevent kev;
-    struct input_event event;
-    Lisp_Object monitor_object, watch_object, file, callback, actions;
+    static const struct timespec nullts = { 0, 0 };
+    Lisp_Object monitor_object, watch_object, file, callback, dirp, actions;
 
     /* Read one event.  */
-    int ret = kevent (kqueuefd, NULL, 0, &kev, 1, NULL);
+    int ret = kevent (kqueuefd, NULL, 0, &kev, 1, &nullts);
     if (ret < 1) {
       /* All events read.  */
       return;
@@ -58,6 +147,7 @@ kqueue_callback (int fd, void *data)
     if (CONSP (watch_object)) {
       file = XCAR (XCDR (watch_object));
       callback = XCAR (XCDR (XCDR (XCDR (watch_object))));
+      dirp = XCDR (XCDR (XCDR (XCDR (watch_object))));
     }
     else
       continue;
@@ -66,8 +156,12 @@ kqueue_callback (int fd, void *data)
     actions = Qnil;
     if (kev.fflags & NOTE_DELETE)
       actions = Fcons (Qdelete, actions);
-    if (kev.fflags & NOTE_WRITE)
-      actions = Fcons (Qwrite, actions);
+    if (kev.fflags & NOTE_WRITE) {
+      if (NILP (dirp))
+	actions = Fcons (Qwrite, actions);
+      else
+	kqueue_compare_dir_list (watch_object);
+    }
     if (kev.fflags & NOTE_EXTEND)
       actions = Fcons (Qextend, actions);
     if (kev.fflags & NOTE_ATTRIB)
@@ -77,18 +171,9 @@ kqueue_callback (int fd, void *data)
     if (kev.fflags & NOTE_RENAME)
       actions = Fcons (Qrename, actions);
 
-    if (! NILP (actions)) {
-      /* Construct an event.  */
-      EVENT_INIT (event);
-      event.kind = FILE_NOTIFY_EVENT;
-      event.frame_or_window = Qnil;
-      event.arg = list2 (Fcons (monitor_object,
-				Fcons (actions, Fcons (file, Qnil))),
-			 callback);
-
-      /* Store it into the input event queue.  */
-      kbd_buffer_store_event (&event);
-    }
+    /* Construct an event.  */
+    if (! NILP (actions))
+      kqueue_generate_event (monitor_object, actions, file, callback);
 
     /* Cancel monitor if file or directory is deleted.  */
     if (kev.fflags & (NOTE_DELETE | NOTE_RENAME))
@@ -109,6 +194,7 @@ watched for some reason, this function signals a `file-notify-error' error.
 FLAGS is a list of events to be watched for.  It can include the
 following symbols:
 
+  `create' -- FILE was created
   `delete' -- FILE was deleted
   `write'  -- FILE has changed
   `extend' -- FILE was extended
@@ -128,7 +214,7 @@ FILE is the name of the file whose event is being reported.  FILE1
 will be reported only in case of the `rename' event.  */)
   (Lisp_Object file, Lisp_Object flags, Lisp_Object callback)
 {
-  Lisp_Object watch_object;
+  Lisp_Object watch_object, dir_list;
   int fd;
   u_short fflags = 0;
   struct kevent ev;
@@ -138,10 +224,6 @@ will be reported only in case of the `rename' event.  */)
   file = Fdirectory_file_name (Fexpand_file_name (file, Qnil));
   if (NILP (Ffile_exists_p (file)))
     report_file_error ("File does not exist", file);
-
-  /* TODO: Directories shall be supported as well.  */
-  if (! NILP (Ffile_directory_p (file)))
-    report_file_error ("Directory watching is not supported (yet)", file);
 
   CHECK_LIST (flags);
 
@@ -156,14 +238,14 @@ will be reported only in case of the `rename' event.  */)
 	report_file_notify_error ("File watching is not available", Qnil);
 
       /* Start monitoring for possible I/O.  */
-      add_read_fd (kqueuefd, kqueue_callback, NULL); //data);
+      add_read_fd (kqueuefd, kqueue_callback, NULL);
 
       watch_list = Qnil;
     }
 
   /* Open file.  */
   file = ENCODE_FILE (file);
-  fd = emacs_open (SSDATA (file), O_NONBLOCK | O_RDONLY, 0);
+  fd = emacs_open (SSDATA (file), O_RDONLY, 0);
   if (fd == -1)
     report_file_error ("File cannot be opened", file);
 
@@ -179,12 +261,19 @@ will be reported only in case of the `rename' event.  */)
   EV_SET (&ev, fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
 	  fflags, 0, NULL);
 
-  if (kevent (kqueuefd, &ev, 1, NULL, 0, NULL) < 0)
+  if (kevent (kqueuefd, &ev, 1, NULL, 0, NULL) < 0) {
+    emacs_close (fd);
     report_file_error ("Cannot watch file", file);
+  }
 
   /* Store watch object in watch list.  */
   Lisp_Object watch_descriptor = make_number (fd);
-  watch_object = list4 (watch_descriptor, file, flags, callback);
+  if (NILP (Ffile_directory_p (file)))
+    watch_object = list4 (watch_descriptor, file, flags, callback);
+  else {
+    dir_list = directory_files_internal (file, Qnil, Qnil, Qnil, 1, Qnil);
+    watch_object = list5 (watch_descriptor, file, flags, callback, dir_list);
+  }
   watch_list = Fcons (watch_object, watch_list);
 
   return watch_descriptor;
@@ -248,6 +337,7 @@ syms_of_kqueue (void)
   defsubr (&Skqueue_valid_p);
 
   /* Event types.  */
+  DEFSYM (Qcreate, "create");
   DEFSYM (Qdelete, "delete");	/* NOTE_DELETE  */
   DEFSYM (Qwrite, "write");	/* NOTE_WRITE  */
   DEFSYM (Qextend, "extend");	/* NOTE_EXTEND  */
@@ -263,7 +353,6 @@ syms_of_kqueue (void)
 #endif /* HAVE_KQUEUE  */
 
 /* TODO
-   * Implement watching directories.
    * Add FILE1 in case of `rename'.  */
 
 /* PROBLEMS
