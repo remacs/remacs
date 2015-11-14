@@ -1040,15 +1040,17 @@ Will show the info of SYMBOL as a function, variable, and/or face."
         (let ((inhibit-read-only t)
               (name (caar docs))        ;Name of doc currently at BOB.
               (doc (cdr (cadr docs))))  ;Doc to add at BOB.
-          (insert doc)
-          (delete-region (point) (progn (skip-chars-backward " \t\n") (point)))
-          (insert "\n\n"
-                  (eval-when-compile
-                    (propertize "\n" 'face '(:height 0.1 :inverse-video t)))
-                  "\n")
-          (when name
-            (insert (symbol-name symbol)
-                    " is also a " name "." "\n\n")))
+          (when doc
+            (insert doc)
+            (delete-region (point)
+                           (progn (skip-chars-backward " \t\n") (point)))
+            (insert "\n\n"
+                    (eval-when-compile
+                      (propertize "\n" 'face '(:height 0.1 :inverse-video t)))
+                    "\n")
+            (when name
+              (insert (symbol-name symbol)
+                      " is also a " name "." "\n\n"))))
         (setq docs (cdr docs)))
       (unless single
         ;; Don't record the `describe-variable' item in the stack.
