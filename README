@@ -15,6 +15,9 @@ user-visible changes in recent versions of Emacs.
 The file etc/PROBLEMS contains information on many common problems that
 occur in building, installing and running Emacs.
 
+The file CONTRIBUTE contains information on contributing to Emacs as a
+developer.
+
 You may encounter bugs in this release.  If you do, please report
 them; your bug reports are valuable contributions to the FSF, since
 they allow us to notice and fix problems on machines we don't have, or
