@@ -812,14 +812,9 @@ and just use etags."
   :lighter ""
   (if xref-etags-mode
       (progn
-        (setq xref-etags-mode--saved
-              (cons xref-find-function
-                    xref-identifier-completion-table-function))
-        (kill-local-variable 'xref-find-function)
-        (kill-local-variable 'xref-identifier-completion-table-function))
-    (setq-local xref-find-function (car xref-etags-mode--saved))
-    (setq-local xref-identifier-completion-table-function
-                (cdr xref-etags-mode--saved))))
+        (setq xref-etags-mode--saved xref-backend-functions)
+        (kill-local-variable 'xref-backend-functions))
+    (setq-local xref-backend-functions xref-etags-mode--saved)))
 
 (declare-function semantic-symref-find-references-by-name "semantic/symref")
 (declare-function semantic-find-file-noselect "semantic/fw")
