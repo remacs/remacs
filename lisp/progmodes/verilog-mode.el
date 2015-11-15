@@ -3234,23 +3234,27 @@ A change is considered significant if it affects the buffer text
 in any way that isn't completely restored again.  Any
 user-visible changes to the buffer must not be within a
 `verilog-save-buffer-state'."
-  ;; From c-save-buffer-state
-  `(let* ((modified (buffer-modified-p))
-	  (buffer-undo-list t)
-	  (inhibit-read-only t)
-	  (inhibit-point-motion-hooks t)
-	  (inhibit-modification-hooks t)
-	  (verilog-no-change-functions t)
-	  before-change-functions ; XEmacs ignores inhibit-modification-hooks
-	  after-change-functions ; XEmacs ignores inhibit-modification-hooks
-	  deactivate-mark
-	  buffer-file-name ; Prevent primitives checking
-	  buffer-file-truename)	; for file modification
-     (unwind-protect
-	 (progn ,@body)
-       (and (not modified)
-	    (buffer-modified-p)
-	    (verilog-restore-buffer-modified-p nil)))))
+  `(let ((inhibit-point-motion-hooks t)
+         (verilog-no-change-functions t))
+     ,(if (fboundp 'with-silent-modifications)
+          (with-silent-modifications ,@body)
+        ;; From c-save-buffer-state
+        `(let* ((modified (buffer-modified-p))
+                (buffer-undo-list t)
+                (inhibit-read-only t)
+                (inhibit-modification-hooks t)
+                ;; XEmacs ignores inhibit-modification-hooks.
+                before-change-functions after-change-functions
+                deactivate-mark
+                buffer-file-name        ; Prevent primitives checking
+                buffer-file-truename)	; for file modification
+           (unwind-protect
+               (progn ,@body)
+             (and (not modified)
+                  (buffer-modified-p)
+                  (if (fboundp 'restore-buffer-modified-p)
+                      (restore-buffer-modified-p nil)
+                    (set-buffer-modified-p nil))))))))
 
 
 (defvar verilog-save-font-mod-hooked nil
@@ -3271,6 +3275,8 @@ For insignificant changes, see instead `verilog-save-buffer-state'."
     ;; Therefore we must remove and restore font-lock mode
     (verilog-run-hooks 'verilog-before-save-font-hook)
     (let* ((verilog-save-font-mod-hooked (- (point-max) (point-min)))
+           ;; FIXME: Doesn't the before/after-change-functions dance make this
+           ;; font-lock-mode dance unnecessary?
            (fontlocked (when (and (boundp 'font-lock-mode) font-lock-mode)
                          (font-lock-mode 0)
                          t)))
@@ -3280,8 +3286,10 @@ For insignificant changes, see instead `verilog-save-buffer-state'."
           (let* ((inhibit-point-motion-hooks t)
                  (inhibit-modification-hooks t)
                  (verilog-no-change-functions t)
-                 before-change-functions ; XEmacs ignores inhibit-modification-hooks
-                 after-change-functions) ; XEmacs ignores inhibit-modification-hooks
+                 ,@(when (featurep 'xemacs)
+                     ;; XEmacs ignores inhibit-modification-hooks.
+                     '(before-change-functions
+                       after-change-functions)))
             (progn ,@body))
         ;; Unwind forms
         (run-hook-with-args 'after-change-functions (point-min) (point-max)
