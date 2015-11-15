@@ -189,7 +189,7 @@ EVENT is the cadr of the event in `file-notify-handle-event'
 	       ((memq action
                       '(attribute-changed changed created deleted renamed))
 		action)
-	       ((eq action 'moved)
+	       ((memq action '(moved rename))
 		(setq file1 (file-notify--event-file1-name event))
 		'renamed)
 	       ((eq action 'ignored)
@@ -329,7 +329,7 @@ FILE is the name of the file whose event is being reported."
 	       (if (file-directory-p file)
 		   file
 		 (file-name-directory file))))
-	desc func l-flags registered)
+	desc func l-flags registered entry)
 
     (unless (file-directory-p dir)
       (signal 'file-notify-error `("Directory does not exist" ,dir)))
@@ -378,18 +378,15 @@ FILE is the name of the file whose event is being reported."
       (setq desc (funcall func dir l-flags 'file-notify-callback)))
 
     ;; Modify `file-notify-descriptors'.
-    (setq registered (gethash desc file-notify-descriptors))
-    (puthash
-     desc
-     `(,dir
-       (,(unless (file-directory-p file) (file-name-nondirectory file))
-	. ,callback)
-       . ,(cdr registered))
-     file-notify-descriptors)
+    (setq file (unless (file-directory-p file) (file-name-nondirectory file))
+	  desc (file-notify--descriptor desc file)
+	  registered (gethash desc file-notify-descriptors)
+	  entry `(,file . ,callback))
+    (unless (member entry (cdr registered))
+      (puthash desc `(,dir ,entry . ,(cdr registered)) file-notify-descriptors))
 
     ;; Return descriptor.
-    (file-notify--descriptor
-     desc (unless (file-directory-p file) (file-name-nondirectory file)))))
+    desc))
 
 (defun file-notify-rm-watch (descriptor)
   "Remove an existing watch specified by its DESCRIPTOR.

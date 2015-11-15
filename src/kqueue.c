@@ -35,16 +35,42 @@ static int kqueuefd = -1;
 /* This is a list, elements are (DESCRIPTOR FILE FLAGS CALLBACK [DIRLIST])  */
 static Lisp_Object watch_list;
 
+/* Generate a temporary list from the directory_files_internal output.
+   Items are (INODE FILE_NAME LAST_MOD LAST_STATUS_MOD SIZE).  */
+Lisp_Object
+kqueue_directory_listing (Lisp_Object directory_files)
+{
+  Lisp_Object dl, result = Qnil;
+  for (dl = directory_files; ! NILP (dl); dl = XCDR (dl)) {
+    result = Fcons
+      (list5 (/* inode.  */
+	      XCAR (Fnthcdr (make_number (11), XCAR (dl))),
+	      /* filename.  */
+	      XCAR (XCAR (dl)),
+	      /* last modification time.  */
+	      XCAR (Fnthcdr (make_number (6), XCAR (dl))),
+	      /* last status change time.  */
+	      XCAR (Fnthcdr (make_number (7), XCAR (dl))),
+	      /* size.  */
+	      XCAR (Fnthcdr (make_number (8), XCAR (dl)))),
+       result);
+  }
+  return result;
+}
+
 /* Generate a file notification event.  */
 static void
 kqueue_generate_event
-(Lisp_Object ident, Lisp_Object actions, Lisp_Object file, Lisp_Object callback)
+(Lisp_Object ident, Lisp_Object actions, Lisp_Object file, Lisp_Object file1, Lisp_Object callback)
 {
   struct input_event event;
   EVENT_INIT (event);
   event.kind = FILE_NOTIFY_EVENT;
   event.frame_or_window = Qnil;
-  event.arg = list2 (Fcons (ident, Fcons (actions, Fcons (file, Qnil))),
+  event.arg = list2 (Fcons (ident, Fcons (actions,
+					  NILP (file1)
+					  ? Fcons (file, Qnil)
+					  : list2 (file, file1))),
 		     callback);
 
   /* Store it into the input event queue.  */
@@ -53,73 +79,140 @@ kqueue_generate_event
 
 /* This compares two directory listings in case of a `write' event for
    a directory.  The old directory listing is stored in watch_object,
-   it will be replaced by a new directory listing at the end.  */
+   it will be replaced by a new directory listing at the end of this
+   function.  */
 static void
-kqueue_compare_dir_list (Lisp_Object watch_object)
+kqueue_compare_dir_list
+(Lisp_Object watch_object)
 {
-  Lisp_Object dir, callback, old_dl, new_dl, dl, actions;
+  Lisp_Object dir, callback, actions;
+  Lisp_Object old_directory_files, old_dl, new_directory_files, new_dl, dl;
 
   dir = XCAR (XCDR (watch_object));
-  callback = XCAR (XCDR (XCDR (XCDR (watch_object))));
-  old_dl = XCAR (XCDR (XCDR (XCDR (XCDR (watch_object)))));
-  new_dl = directory_files_internal (dir, Qnil, Qnil, Qnil, 1, Qnil);
+  callback = XCAR (Fnthcdr (make_number (3), watch_object));
+  old_directory_files = XCAR (Fnthcdr (make_number (4), watch_object));
+  old_dl = kqueue_directory_listing (old_directory_files);
+  new_directory_files =
+    directory_files_internal (dir, Qnil, Qnil, Qnil, 1, Qnil);
+  new_dl = kqueue_directory_listing (new_directory_files);
 
-  for (dl = old_dl; ! NILP (dl); dl = XCDR (dl)) {
+  /* Parse through the old list.  */
+  dl = old_dl;
+  while (1) {
     Lisp_Object old_entry, new_entry;
-    old_entry = XCAR (dl);
-    new_entry = Fassoc (XCAR (old_entry), new_dl);
+    if (NILP (dl))
+      break;
 
     /* We ignore "." and "..".  */
-    if ((strcmp (".", SSDATA (XCAR (old_entry))) == 0) ||
-	(strcmp ("..", SSDATA (XCAR (old_entry))) == 0))
-      continue;
+    old_entry = XCAR (dl);
+    if ((strcmp (".", SSDATA (XCAR (XCDR (old_entry)))) == 0) ||
+	(strcmp ("..", SSDATA (XCAR (XCDR (old_entry)))) == 0))
+      goto the_end;
 
-    /* A file has disappeared.  */
-    if (NILP (new_entry))
-      kqueue_generate_event
-	(XCAR (watch_object), Fcons (Qdelete, Qnil),
-	 XCAR (old_entry), callback);
+    /* Search for an entry with the same inode.  */
+    new_entry = Fassoc (XCAR (old_entry), new_dl);
+    if (! NILP (Fequal (old_entry, new_entry))) {
+      /* Both entries are identical.  Nothing happens.  */
+      new_dl = Fdelq (new_entry, new_dl);
+      goto the_end;
+    }
 
-    else {
-      /* A file has changed.  We compare last modification time.  */
-      if (NILP
-	  (Fequal
-	   (XCAR (XCDR (XCDR (XCDR (XCDR (XCDR (XCDR (old_entry))))))),
-	    XCAR (XCDR (XCDR (XCDR (XCDR (XCDR (XCDR (new_entry))))))))))
+    if (! NILP (new_entry)) {
+      /* Both entries have the same inode.  */
+      if (strcmp (SSDATA (XCAR (XCDR (old_entry))),
+		  SSDATA (XCAR (XCDR (new_entry)))) == 0) {
+	/* Both entries have the same file name.  */
+	if (! NILP (Fequal (XCAR (Fnthcdr (make_number (2), old_entry)),
+			    XCAR (Fnthcdr (make_number (2), new_entry)))))
+	  /* Modification time has been changed, the file has been written.  */
+	  kqueue_generate_event
+	    (XCAR (watch_object), Fcons (Qwrite, Qnil),
+	     XCAR (XCDR (old_entry)), Qnil, callback);
+	if (! NILP (Fequal (XCAR (Fnthcdr (make_number (3), old_entry)),
+			    XCAR (Fnthcdr (make_number (3), new_entry)))))
+	  /* Status change time has been changed, the file attributes
+	     have changed.  */
+	  kqueue_generate_event
+	    (XCAR (watch_object), Fcons (Qattrib, Qnil),
+	     XCAR (XCDR (old_entry)), Qnil, callback);
+
+      } else {
+	/* The file has been renamed.  */
+	kqueue_generate_event
+	  (XCAR (watch_object), Fcons (Qrename, Qnil),
+	   XCAR (XCDR (old_entry)), XCAR (XCDR (new_entry)), callback);
+      }
+      new_dl = Fdelq (new_entry, new_dl);
+      goto the_end;
+    }
+
+    /* Search, whether there is a file with the same name (with
+       another inode).  */
+    Lisp_Object dl1;
+    for (dl1 = new_dl; ! NILP (dl1); dl1 = XCDR (dl1)) {
+      new_entry = XCAR (dl1);
+      if (strcmp (SSDATA (XCAR (XCDR (old_entry))),
+		  SSDATA (XCAR (XCDR (new_entry)))) == 0) {
 	kqueue_generate_event
 	  (XCAR (watch_object), Fcons (Qwrite, Qnil),
-	   XCAR (old_entry), callback);
-
-      /* A file attribute has changed.  We compare last status change time.  */
-      if (NILP
-	  (Fequal
-	   (XCAR (XCDR (XCDR (XCDR (XCDR (XCDR (XCDR (XCDR (old_entry)))))))),
-	    XCAR (XCDR (XCDR (XCDR (XCDR (XCDR (XCDR (XCDR (new_entry)))))))))))
-	kqueue_generate_event
-	  (XCAR (watch_object), Fcons (Qattrib, Qnil),
-	   XCAR (old_entry), callback);
+	   XCAR (XCDR (old_entry)), Qnil, callback);
+	new_dl = Fdelq (new_entry, new_dl);
+	goto the_end;
+      }
     }
+
+    /* A file has been deleted.  */
+    kqueue_generate_event
+      (XCAR (watch_object), Fcons (Qdelete, Qnil),
+       XCAR (XCDR (old_entry)), Qnil, callback);
+
+  the_end:
+    dl = XCDR (dl);
+    old_dl = Fdelq (old_entry, old_dl);
   }
 
-  for (dl = new_dl; ! NILP (dl); dl = XCDR (dl)) {
-    Lisp_Object old_entry, new_entry;
-    new_entry = XCAR (dl);
-    old_entry = Fassoc (XCAR (new_entry), old_dl);
+  /* Parse through the shortened new list.  */
+  dl = new_dl;
+  while (1) {
+    Lisp_Object new_entry;
+    if (NILP (dl))
+      break;
 
     /* We ignore "." and "..".  */
-    if ((strcmp (".", SSDATA (XCAR (new_entry))) == 0) ||
-	(strcmp ("..", SSDATA (XCAR (new_entry))) == 0))
+    new_entry = XCAR (dl);
+    if ((strcmp (".", SSDATA (XCAR (XCDR (new_entry)))) == 0) ||
+	(strcmp ("..", SSDATA (XCAR (XCDR (new_entry)))) == 0)) {
+      dl = XCDR (dl);
+      new_dl = Fdelq (new_entry, new_dl);
       continue;
+    }
 
     /* A new file has appeared.  */
-    if (NILP (old_entry))
+    kqueue_generate_event
+      (XCAR (watch_object), Fcons (Qcreate, Qnil),
+       XCAR (XCDR (new_entry)), Qnil, callback);
+
+    /* Check size of that file.  */
+    Lisp_Object size = XCAR (Fnthcdr (make_number (4), new_entry));
+    if (FLOATP (size) || (XINT (size) > 0))
       kqueue_generate_event
-	(XCAR (watch_object), Fcons (Qcreate, Qnil),
-	 XCAR (new_entry), callback);
+	(XCAR (watch_object), Fcons (Qwrite, Qnil),
+	 XCAR (XCDR (new_entry)), Qnil, callback);
+
+    dl = XCDR (dl);
+    new_dl = Fdelq (new_entry, new_dl);
   }
 
+  /* At this point, both old_dl and new_dl shall be empty.  Let's make
+     a check for this (might be removed once the code is stable).  */
+  if (! NILP (old_dl))
+    report_file_error ("Old list not empty", old_dl);
+  if (! NILP (new_dl))
+    report_file_error ("New list not empty", new_dl);
+
   /* Replace directory listing with the new one.  */
-  XSETCDR (XCDR (XCDR (XCDR (watch_object))), Fcons (new_dl, Qnil));
+  XSETCDR (XCDR (XCDR (XCDR (watch_object))),
+	   Fcons (new_directory_files, Qnil));
   return;
 }
 
@@ -173,7 +266,7 @@ kqueue_callback (int fd, void *data)
 
     /* Construct an event.  */
     if (! NILP (actions))
-      kqueue_generate_event (monitor_object, actions, file, callback);
+      kqueue_generate_event (monitor_object, actions, file, Qnil, callback);
 
     /* Cancel monitor if file or directory is deleted.  */
     if (kev.fflags & (NOTE_DELETE | NOTE_RENAME))
@@ -351,9 +444,6 @@ syms_of_kqueue (void)
 }
 
 #endif /* HAVE_KQUEUE  */
-
-/* TODO
-   * Add FILE1 in case of `rename'.  */
 
 /* PROBLEMS
    * https://bugs.launchpad.net/ubuntu/+source/libkqueue/+bug/1514837
