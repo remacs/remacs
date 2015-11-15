@@ -49,40 +49,33 @@
 
 2015-11-14  Xue Fuqiao  <xfq.free@gmail.com>
 
-	Mention CONTRIBUTE in README
-
 	Mention CONTRIBUTE in README, since it was moved from etc/ to root.
 	* etc/TODO: Remove the reference to `etc/CONTRIBUTE'.
 	* README: Mention CONTRIBUTE.
 
 2015-11-13  Wilson Snyder  <wsnyder@wsnyder.org>
 
-	Update verilog-mode.el to 2015-11-09-b121d60-vpo.
+	Update verilog-mode.el to 2015-11-09-b121d60-vpo
 
 	* verilog-mode.el (verilog-auto, verilog-delete-auto)
 	(verilog-modi-cache-results, verilog-save-buffer-state)
-	(verilog-save-font-no-change-functions): When internally suppressing change
-	functions, use `inhibit-modification-hooks' and call
-	`after-change-funtions' to more nicely work with user hooks.  Reported by
-	Stefan Monnier.
-
+	(verilog-save-font-no-change-functions): When internally suppressing
+	change functions, use `inhibit-modification-hooks' and call
+	`after-change-funtions' to more nicely work with user hooks.
+	Reported by Stefan Monnier.
 	(verilog-auto, verilog-delete-auto, verilog-delete-auto-buffer):
 	Create `verilog-delete-auto-buffer' to avoid double-calling
 	fontification hooks.
-
 	(verilog-restore-buffer-modified-p, verilog-auto)
 	(verilog-save-buffer-state): Prefer restore-buffer-modified-p over
-	set-buffer-modified-p. Reported by Stefan Monnier.
-
+	set-buffer-modified-p.  Reported by Stefan Monnier.
 	(verilog-diff-auto, verilog-diff-buffers-p)
 	(verilog-diff-ignore-regexp): Add `verilog-diff-ignore-regexp'.
-
 	(verilog-auto-inst-port, verilog-read-sub-decls-expr): Fix
-	AUTOINST with unpacked dimensional parameters, bug981. Reported by
+	AUTOINST with unpacked dimensional parameters, bug981.  Reported by
 	by Amol Nagapurkar.
-
 	(verilog-read-decls, verilog-read-sub-decls-line): Avoid unneeded
-	properties inside internal structures. No functional change
+	properties inside internal structures.  No functional change
 	intended.
 
 2015-11-13  Dmitry Gutov  <dgutov@yandex.ru>
@@ -101,8 +94,8 @@
 	(xref-backend-identifier-completion-table):
 	New generic functions.
 
-	* lisp/progmodes/elisp-mode.el (emacs-lisp-mode): Add
-	`elisp--xref-backend' to the beginning of
+	* lisp/progmodes/elisp-mode.el (emacs-lisp-mode):
+	Add `elisp--xref-backend' to the beginning of
 	`xref-backend-functions', locally.  Delete references to
 	removed functions and vars.
 	(elisp-xref-find): Remove.
@@ -120,7 +113,8 @@
 
 	Support rectangular regions for more commands
 
-	* lisp/simple.el (region-extract-function): Handle the arg value ‘bounds’.
+	* lisp/simple.el (region-extract-function): Handle the arg
+	value ‘bounds’.
 	(region-insert-function): New function.
 	(shell-command-on-region): Add arg ‘region-noncontiguous-p’.
 	If non-nil, operate on multiple chunks.
@@ -146,7 +140,7 @@
 	If non-nil, operate on multiple chunks.
 
 	* src/casefiddle.c (Fdowncase_region): Add arg ‘region-noncontiguous-p’.
-	If non-nil, operate on multiple chunks. (Bug#19829)
+	If non-nil, operate on multiple chunks.  (Bug#19829)
 
 2015-11-13  Dmitry Gutov  <dgutov@yandex.ru>
 
@@ -229,7 +223,6 @@
 2015-11-13  Juanma Barranquero  <lekktu@gmail.com>
 
 	* test/automated/simple-test.el: Add test for bug#20698 (bug#21885)
-
 	(simple-test--transpositions): New macro.
 	(simple-transpose-subr): New test.
 
@@ -240,7 +233,6 @@
 2015-11-13  Juanma Barranquero  <lekktu@gmail.com>
 
 	* src/undo.c: Small fixes for previous change
-
 	(run_undoable_change): Mark void argument list.
 	(record_property_change): Remove unused variable `boundary'.
 
@@ -301,7 +293,7 @@
 	shr: don't invoke unbound function (Bug#21895)
 
 	* lisp/net/shr.el (have-fringes-p): New function.
-	  (shr-insert-document, shr-fill-text): Use it.
+	(shr-insert-document, shr-fill-text): Use it.
 
 2015-11-12  Juanma Barranquero  <lekktu@gmail.com>
 
@@ -313,11 +305,8 @@
 
 2015-11-12  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* test/automated/cl-lib-tests.el (cl-lib-struct-constructors): Small fix
-
-2015-11-12  Phillip Lord  <phillip.lord@russet.org.uk>
-
-	: Tests for undo-auto functionality.
+	* test/automated/cl-lib-tests.el (cl-lib-struct-constructors):
+	Small fix.
 
 2015-11-12  Phillip Lord  <phillip.lord@newcastle.ac.uk>
 
@@ -334,7 +323,7 @@
 
 2015-11-12  Juri Linkov  <juri@linkov.net>
 
-	Bind [?\S-\ ] to previous line command in Dired-like modes.
+	Bind [?\S-\ ] to previous line command in Dired-like modes
 
 	* lisp/arc-mode.el (archive-mode-map):
 	* lisp/dired.el (dired-mode-map):
@@ -358,8 +347,8 @@
 
 	Enable sorting of JSON object keys when encoding
 
-	* lisp/json.el (json-encoding-object-sort-predicate): New variable for
-	specifying a sorting predicate for JSON objects during encoding.
+	* lisp/json.el (json-encoding-object-sort-predicate): New variable
+	for specifying a sorting predicate for JSON objects during encoding.
 	(json--plist-to-alist): New utility function.
 	(json-encode-hash-table): Re-use `json-encode-alist' when object keys
 	are to be sorted.
@@ -369,8 +358,8 @@
 	to be sorted.
 	(json-pretty-print-buffer-ordered): New command to pretty print the
 	buffer with object keys sorted alphabetically.
-	(json-pretty-print-ordered): New command to pretty print the region with
-	object keys sorted alphabetically.
+	(json-pretty-print-ordered): New command to pretty print the region
+	with object keys sorted alphabetically.
 
 	* test/automated/json-tests.el (test-json-plist-to-alist)
 	(test-json-encode-plist, test-json-encode-hash-table)
@@ -381,7 +370,7 @@
 
 2015-11-12  Juanma Barranquero  <lekktu@gmail.com>
 
-	* test/automated/keymap-tests.el: New test file
+	* test/automated/keymap-tests.el: New test file.
 
 2015-11-12  Ken Raeburn  <raeburn@raeburn.org>
 
@@ -428,9 +417,9 @@
 
 	Use color cache for creating bitmap
 
-	* src/image.c (x_create_bitmap_from_xpm_data) [ALLOC_XPM_COLORS]: Set
-	attributes to use the caching color allocator.  Initialize and free
-	the cache.
+	* src/image.c (x_create_bitmap_from_xpm_data) [ALLOC_XPM_COLORS]:
+	Set attributes to use the caching color allocator.  Initialize and
+	free the cache.
 
 2015-11-12  Eli Barzilay  <eli@barzilay.org>
 
@@ -462,27 +451,27 @@
 
 2015-11-11  Alan Mackenzie  <acm@muc.de>
 
-	CC Mode: Respect users' settings of open-paren-in-column-0-is-defun-start.
+	CC Mode: Respect users' settings of open-paren-in-column-0-is-defun-start
 
-	lisp/progmodes/cc-engine.el (c-backward-single-comment, c-backward-comments)
-	(c-invalidate-state-cache-1, c-parse-state-1, c-guess-basic-syntax):
-	remove bindings of open-paren-in-column-0-is-defun-start to nil.
+	* lisp/progmodes/cc-engine.el (c-backward-single-comment)
+	(c-backward-comments, c-invalidate-state-cache-1, c-parse-state-1)
+	(c-guess-basic-syntax):
+	Remove bindings of open-paren-in-column-0-is-defun-start to nil.
 	(c-get-fallback-scan-pos): "New" function (existed several years ago).
 	(c-parse-state-get-strategy): Reintroduce the 'BOD strategy, using
 	c-get-fallback-scan-pos.
 	(c-parse-state-1): Handle 'BOD strategy.
 
-	lisp/progmodes/cc-mode.el (c-before-change, c-after-change)
-	c-font-lock-fontify-region): remove bindings of
+	* lisp/progmodes/cc-mode.el (c-before-change, c-after-change)
+	(c-font-lock-fontify-region): Remove bindings of
 	open-paren-in-column-0-is-defun-start to nil.
 
-	cc-mode.texi (Performance Issues, Limitations and Known Bugs): Fix mix up
-	between @chapter and @appendix.
+	* doc/misc/cc-mode.texi (Performance Issues)
+	(Limitations and Known Bugs): Fix mix up between @chapter and @appendix.
 
 2015-11-11  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/obarray.el: Fix shadowed variables
-
+	* lisp/obarray.el: Fix shadowed variables.
 	(obarray-map, obarray-remove, obarray-put, obarray-get):
 	Change OBARRAY arg to OB to avoid shadowing ‘obarray’.
 
@@ -518,10 +507,10 @@
 
 2015-11-11  Przemysław Wojnowski  <esperanto@cumego.com>
 
-	New file with obarray functions.
+	New file with obarray functions
 
-	* lisp/obarray.el: basic obarray functions extracted from abbrev.el
-	* test/automated/obarray-tests.el: new file
+	* lisp/obarray.el: Basic obarray functions extracted from abbrev.el.
+	* test/automated/obarray-tests.el: New file.
 
 2015-11-11  Eli Zaretskii  <eliz@gnu.org>
 
@@ -548,7 +537,7 @@
 
 	* lisp/net/tramp.el (tramp-handle-file-equal-p)
 	(tramp-handle-file-in-directory-p): New defuns.  Suggested by
-	Harvey Chapman <hchapman@3gfp.com>
+	Harvey Chapman <hchapman@3gfp.com>.
 
 	* lisp/net/tramp-adb.el (tramp-adb-file-name-handler-alist):
 	* lisp/net/tramp-gvfs.el (tramp-gvfs-file-name-handler-alist):
@@ -575,11 +564,11 @@
 
 	Avoid creating notification objects when possible
 
-	* src/nsterm.m (windowWillEnterFullScreen, windowWillExitFullScreen:,
-	windowDidEnterFullScreen, windowDidExitFullScreen): provide
-	convenience functions that do not require a notification object.  When
-	needed, define NSWindowDidEnterFullScreenNotification to allow for
-	compilation on OS X 10.6.8.
+	* src/nsterm.m (windowWillEnterFullScreen, windowWillExitFullScreen:)
+	(windowDidEnterFullScreen, windowDidExitFullScreen): Provide convenience
+	functions that do not require a notification object.  When needed,
+	define NSWindowDidEnterFullScreenNotification to allow for compilation
+	on OS X 10.6.8.
 
 2015-11-10  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -612,8 +601,7 @@
 2015-11-10  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* doc/lispref/variables.texi (Directory Local Variables):
-
-	Document dir-locals wildcards
+	Document dir-locals wildcards.
 
 	* lisp/files.el (dir-locals-file): Point to Info node.
 
@@ -624,14 +612,12 @@
 
 2015-11-10  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/files.el: Don't allow customization of dir-locals sorting
-
+	* lisp/files.el: Don't allow customization of dir-locals sorting.
 	In retrospect, this is not a good idea for the same reason that
 	`dir-locals-file' is a defconst, because it is important that this
 	behaviour be "uniform across different environments and users".
 	Sure, the user can still change the sorting with a hack, but we
 	shouldn't encourage them to change it.
-
 	(dir-locals--all-files): Return list in the order returned by
 	`file-expand-wildcards'.
 	(file-expand-wildcards): Document the sorting predicate used.
@@ -639,44 +625,42 @@
 
 2015-11-10  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/files.el (dir-locals-read-from-file): Better handle errors
+	* lisp/files.el (dir-locals-read-from-file): Better handle errors.
 
-	* lisp/isearch.el (search-default-regexp-mode): change default value
+	* lisp/isearch.el (search-default-regexp-mode): Change default value.
 
 2015-11-10  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/files.el (dir-locals-find-file): Don't stop at unreadable files
-
+	* lisp/files.el (dir-locals-find-file): Don't stop at unreadable files.
 	`locate-dominating-file' will now keep looking if the files it finds in
 	a given directory are unreadable (or not files).
 
 2015-11-10  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/files.el (dir-locals-file): Allow wildcards
-
+	* lisp/files.el (dir-locals-file): Allow wildcards.
 	(dir-locals-find-file, dir-locals-collect-variables)
 	(dir-locals-read-from-file): Update accordingly.
 	(hack-dir-local-variables): Rename a local variable.
 
-	* lisp/files-x.el (modify-dir-local-variable): Update accordingly
+	* lisp/files-x.el (modify-dir-local-variable): Update accordingly.
 
-	* lisp/help-fns.el (describe-variable): Update accordingly
+	* lisp/help-fns.el (describe-variable): Update accordingly.
 
-	* .gitignore: Add .dir-locals?.el
+	* .gitignore: Add .dir-locals?.el.
 
 2015-11-10  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/emacs-lisp/map.el (map-merge-with): New function
+	* lisp/emacs-lisp/map.el (map-merge-with): New function.
 
-	* test/automated/map-tests.el (test-map-merge-with): New test
+	* test/automated/map-tests.el (test-map-merge-with): New test.
 
 2015-11-09  Karl Fogel  <kfogel@red-bean.com>
 
 	Fix some recently-perturbed bookmark autoloads
 
 	* lisp/bookmark.el (bookmark-set-internal): Remove unnecessary autoload.
-	  (bookmark-set): Restore autoload.
-	  (bookmark-set-no-overwrite): Add autoload.
+	(bookmark-set): Restore autoload.
+	(bookmark-set-no-overwrite): Add autoload.
 
 	Thanks to Juanma Barranquero for noticing the autoload problems
 	introduced by my recent commit adding/changing the above functions
@@ -684,9 +668,9 @@
 
 2015-11-09  Noah Friedman  <friedman@splode.com>
 
-	(ydump-buffer): Handle case where gap is at the start of buffer.
-	I don't recall if older versions of gdb were less strict but you
-	cannot dump a 0-length range in gdb 7.9.1.
+	* etc/emacs-buffer.gdb (ydump-buffer): Handle case where gap is at
+	the start of buffer.  I don't recall if older versions of gdb were
+	less strict but you cannot dump a 0-length range in gdb 7.9.1.
 
 2015-11-09  Dmitry Gutov  <dgutov@yandex.ru>
 
@@ -698,8 +682,8 @@
 
 	Fold `project-ask-user' into `project-current'
 
-	* lisp/progmodes/project.el (project-find-functions): Remove
-	`project-ask-user'.
+	* lisp/progmodes/project.el (project-find-functions):
+	Remove `project-ask-user'.
 	(project-ask-user): Remove function and the corresponding
 	`project-roots' implementation.
 	(project-current): Add a new argument, MAYBE-PROMPT.  Prompt the
@@ -834,13 +818,13 @@
 	Offer non-overwrite bookmark setter (Bug#15746)
 
 	* lisp/bookmark.el (bookmark-set-internal): New helper function to do
-	  what `bookmark-set' used to do, but with more choices for overwrite
-	  vs push, and with minor changes to the interactive prompt format.
-	  (bookmark-set): Rewrite as wrapper around above.
-	  If overwriting, inform the user of that in the prompt.
-	  (bookmark-set-no-overwrite): New function, also done as wrapper.
-	  Bind to "M" in `ctl-x-r-map' autoloads.
-	  (bookmark-map): Similarly bind "M" here.
+	what `bookmark-set' used to do, but with more choices for overwrite
+	vs push, and with minor changes to the interactive prompt format.
+	(bookmark-set): Rewrite as wrapper around above.
+	If overwriting, inform the user of that in the prompt.
+	(bookmark-set-no-overwrite): New function, also done as wrapper.
+	Bind to "M" in `ctl-x-r-map' autoloads.
+	(bookmark-map): Similarly bind "M" here.
 
 2015-11-08  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -865,7 +849,7 @@
 	sections.  Of course there is no real problem with having such symbols
 	in SHT_PROGBITS sections.  glibc ld.so handles them fine.
 
-	* unexelf.c: Delete outdated comments.
+	* src/unexelf.c: Delete outdated comments.
 	(PATCH_INDEX): Delete.
 	(find_section): Delete.
 	(unexec): Don't add a new section.  Instead reuse the last bss
@@ -890,7 +874,7 @@
 	p_filesz of the last PT_LOAD header, then matching SHT_NOBITS sections
 	in that address range.
 
-	* unexelf.c: Delete old ppc comment.
+	* src/unexelf.c: Delete old ppc comment.
 	(OLD_PROGRAM_H): Define.
 	(round_up): Delete.
 	(unexec): Don't search for bss style sections by name.  Instead,
@@ -913,7 +897,7 @@
 
 	These should be ignored on all targets.
 
-	* unexelf.c (unexec): Ignore R_*_NONE relocs for any target,
+	* src/unexelf.c (unexec): Ignore R_*_NONE relocs for any target,
 	not just Alpha.  Comment on reloc size assumption.
 
 2015-11-08  Alan Modra  <amodra@gmail.com>
@@ -926,21 +910,22 @@
 	unchanged, in which case no clearing is needed (and sh_offset isn't
 	necessarily valid, which can lead to a wild memset).
 
-	* unexelf.c (unexec): Properly handle _OBJC_ symbols in bss sections.
+	* src/unexelf.c (unexec): Properly handle _OBJC_ symbols in
+	bss sections.
 
 2015-11-08  Alan Modra  <amodra@gmail.com>
 
 	ELF unexec: Symbol table patching
 
 	No st_shndx value larger than SHN_LORESERVE should be changed.
-	* unexelf.c (unexec): Don't adjust any st_shndx larger than
+	* src/unexelf.c (unexec): Don't adjust any st_shndx larger than
 	SHN_LORESERVE.  Error on SHN_XINDEX.
 
 2015-11-08  Alan Modra  <amodra@gmail.com>
 
 	ELF unexec: Merge Alpha and MIPS COFF debug handling
 
-	* unexelf.c (unexec): Merge Alpha and MIPS COFF debug handling.
+	* src/unexelf.c (unexec): Merge Alpha and MIPS COFF debug handling.
 	Don't find .mdebug section index, find the section in the loop.
 	Allow for unlikely possibility that .mdebug is located at sh_offset
 	before bss segment, by calculating move from difference in
@@ -954,7 +939,7 @@
 	Separate out some of the more mechanical changes so following patches
 	are smaller.
 
-	* unexelf.c (unexec): Rearrange initialisation of program
+	* src/unexelf.c (unexec): Rearrange initialisation of program
 	header vars.  Use pointer vars in loops rather than indexing
 	section header array via macros.  Simplify _OBJC_ sym code
 	and reloc handling code.
@@ -971,7 +956,7 @@
 	the next section) was copied from memory.  A later patch removes the
 	bogus .sbss handling anyway.
 
-	* unexelf.c (unexec): Use correct index to look up names.
+	* src/unexelf.c (unexec): Use correct index to look up names.
 
 2015-11-08  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -987,8 +972,8 @@
 
 	Remove dirs in vc project roots from the the vc project library roots
 
-	* lisp/progmodes/project.el (project-library-roots): Remove
-	directories inside the project roots from the result.
+	* lisp/progmodes/project.el (project-library-roots):
+	Remove directories inside the project roots from the result.
 	(http://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00536.html)
 
 2015-11-07  Dmitry Gutov  <dgutov@yandex.ru>
@@ -2810,7 +2795,7 @@
 
 2015-10-23  Anders Lindgren  <andlind@gmail.com>
 
-	NextSten maximization and NSTRACE rewrite
+	NextStep maximization and NSTRACE rewrite
 
 	Full-height, full-width, and maximized windows now cover the
 	entire screen (except the menu bar), including the part where the
