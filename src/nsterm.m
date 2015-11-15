@@ -6440,6 +6440,12 @@ not_in_argv (NSString *arg)
 - (void)windowDidBecomeKey: (NSNotification *)notification
 /* cf. x_detect_focus_change(), x_focus_changed(), x_new_focus_frame() */
 {
+  [self windowDidBecomeKey];
+}
+
+
+- (void)windowDidBecomeKey      /* for direct calls */
+{
   struct ns_display_info *dpyinfo = FRAME_DISPLAY_INFO (emacsframe);
   struct frame *old_focus = dpyinfo->x_focus_frame;
 
@@ -6866,10 +6872,6 @@ not_in_argv (NSString *arg)
 }
 #endif
 
-#if !defined (NS_IMPL_COCOA) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
-#define NSWindowDidEnterFullScreenNotification "NSWindowDidEnterFullScreenNotification"
-#endif
-
 - (void)windowWillEnterFullScreen:(NSNotification *)notification
 {
   [self windowWillEnterFullScreen];
@@ -6880,19 +6882,18 @@ not_in_argv (NSString *arg)
   fs_before_fs = fs_state;
 }
 
-- (void)windowDidEnterFullScreen /* provided for direct calls */
-{
-  [self windowDidEnterFullScreen:
-	      [NSNotification notificationWithName:NSWindowDidEnterFullScreenNotification
-					    object:[self window]]];
-}
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
+{
+  [self windowDidEnterFullScreen];
+}
+
+- (void)windowDidEnterFullScreen /* provided for direct calls */
 {
   NSTRACE ("windowDidEnterFullScreen");
   [self setFSValue: FULLSCREEN_BOTH];
   if (! [self fsIsNative])
     {
-      [self windowDidBecomeKey:notification];
+      [self windowDidBecomeKey];
       [nonfs_window orderOut:self];
     }
   else

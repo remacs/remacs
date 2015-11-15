@@ -412,6 +412,13 @@ void nstrace_leave(int *);
 - (void)windowDidMove: (id)sender;
 #endif
 - (int)fullscreenState;
+
+/* Non-notification versions of NSView methods. Used for direct calls. */
+- (void)windowWillEnterFullScreen;
+- (void)windowDidEnterFullScreen;
+- (void)windowWillExitFullScreen;
+- (void)windowDidExitFullScreen;
+- (void)windowDidBecomeKey;
 @end
 
 
