@@ -498,7 +498,9 @@ WINDOW controls how the buffer is displayed:
                 (save-excursion
                   (let* ((loc (xref-item-location item))
                          (beg (xref-location-marker loc))
-                         (len (xref-match-length item)))
+                         (end (move-marker (make-marker)
+                                           (+ beg (xref-match-length item))
+                                           (marker-buffer beg))))
                     ;; Perform sanity check first.
                     (xref--goto-location loc)
                     ;; FIXME: The check should probably be a generic
@@ -510,17 +512,18 @@ WINDOW controls how the buffer is displayed:
                                     (line-end-position))
                                    (xref-item-summary item))
                       (user-error "Search results out of date"))
-                    (push (cons beg len) pairs)))))
+                    (push (cons beg end) pairs)))))
             (setq pairs (nreverse pairs)))
           (unless pairs (user-error "No suitable matches here"))
           (xref--query-replace-1 from to pairs))
       (dolist (pair pairs)
-        (move-marker (car pair) nil)))))
+        (move-marker (car pair) nil)
+        (move-marker (cdr pair) nil)))))
 
 ;; FIXME: Write a nicer UI.
 (defun xref--query-replace-1 (from to pairs)
   (let* ((query-replace-lazy-highlight nil)
-         current-beg current-len current-buf
+         current-beg current-end current-buf
          ;; Counteract the "do the next match now" hack in
          ;; `perform-replace'.  And still, it'll report that those
          ;; matches were "filtered out" at the end.
@@ -529,18 +532,18 @@ WINDOW controls how the buffer is displayed:
             (and current-beg
                  (eq (current-buffer) current-buf)
                  (>= beg current-beg)
-                 (<= end (+ current-beg current-len)))))
+                 (<= end current-end))))
          (replace-re-search-function
           (lambda (from &optional _bound noerror)
             (let (found pair)
               (while (and (not found) pairs)
                 (setq pair (pop pairs)
                       current-beg (car pair)
-                      current-len (cdr pair)
+                      current-end (cdr pair)
                       current-buf (marker-buffer current-beg))
                 (pop-to-buffer current-buf)
                 (goto-char current-beg)
-                (when (re-search-forward from (+ current-beg current-len) noerror)
+                (when (re-search-forward from current-end noerror)
                   (setq found t)))
               found))))
     ;; FIXME: Despite this being a multi-buffer replacement, `N'
