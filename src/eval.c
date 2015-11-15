@@ -1145,7 +1145,9 @@ Both TAG and VALUE are evalled.  */
   if (!NILP (tag))
     for (c = handlerlist; c; c = c->next)
       {
-	if (c->type == CATCHER && EQ (c->tag_or_ch, tag))
+	if (c->type == CATCHER_ALL)
+          unwind_to_catch (c, Fcons (tag, value));
+        if (c->type == CATCHER && EQ (c->tag_or_ch, tag))
 	  unwind_to_catch (c, value);
       }
   xsignal2 (Qno_catch, tag, value);
@@ -1392,6 +1394,55 @@ internal_condition_case_n (Lisp_Object (*bfun) (ptrdiff_t, Lisp_Object *),
   clobbered_eassert (handlerlist == c);
   handlerlist = handlerlist->next;
   return val;
+}
+
+static void init_handler (struct handler *c, Lisp_Object tag_ch_val,
+                          enum handlertype handlertype);
+
+void push_handler (struct handler **const c, const Lisp_Object tag_ch_val,
+                   const enum handlertype handlertype)
+{
+  if (handlerlist->nextfree)
+    *c = handlerlist->nextfree;
+  else
+    {
+      *c = xmalloc (sizeof (struct handler));
+      (*c)->nextfree = NULL;
+      handlerlist->nextfree = *c;
+    }
+  init_handler (*c, tag_ch_val, handlertype);
+}
+
+bool push_handler_nosignal (struct handler **const c, const Lisp_Object tag_ch_val,
+                            const enum handlertype handlertype)
+{
+  if (handlerlist->nextfree)
+    *c = handlerlist->nextfree;
+  else
+    {
+      struct handler *const h = malloc (sizeof (struct handler));
+      if (! h) return false;
+      *c = h;
+      h->nextfree = NULL;
+      handlerlist->nextfree = h;
+    }
+  init_handler (*c, tag_ch_val, handlertype);
+  return true;
+}
+
+static void init_handler (struct handler *const c, const Lisp_Object tag_ch_val,
+                          const enum handlertype handlertype)
+{
+  c->type = handlertype;
+  c->tag_or_ch = tag_ch_val;
+  c->val = Qnil;
+  c->next = handlerlist;
+  c->lisp_eval_depth = lisp_eval_depth;
+  c->pdlcount = SPECPDL_INDEX ();
+  c->poll_suppress_count = poll_suppress_count;
+  c->interrupt_input_blocked = interrupt_input_blocked;
+  c->byte_stack = byte_stack_list;
+  handlerlist = c;
 }
 
 

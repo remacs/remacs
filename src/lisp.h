@@ -3104,7 +3104,9 @@ SPECPDL_INDEX (void)
    A call like (throw TAG VAL) searches for a catchtag whose `tag_or_ch'
    member is TAG, and then unbinds to it.  The `val' member is used to
    hold VAL while the stack is unwound; `val' is returned as the value
-   of the catch form.
+   of the catch form.  If there is a handler of type CATCHER_ALL, it will
+   be treated as a handler for all invocations of `throw'; in this case
+   `val' will be set to (TAG . VAL).
 
    All the other members are concerned with restoring the interpreter
    state.
@@ -3112,7 +3114,7 @@ SPECPDL_INDEX (void)
    Members are volatile if their values need to survive _longjmp when
    a 'struct handler' is a local variable.  */
 
-enum handlertype { CATCHER, CONDITION_CASE };
+enum handlertype { CATCHER, CONDITION_CASE, CATCHER_ALL };
 
 struct handler
 {
@@ -3142,25 +3144,15 @@ struct handler
 
 /* Fill in the components of c, and put it on the list.  */
 #define PUSH_HANDLER(c, tag_ch_val, handlertype)	\
-  if (handlerlist->nextfree)				\
-    (c) = handlerlist->nextfree;			\
-  else							\
-    {							\
-      (c) = xmalloc (sizeof (struct handler));		\
-      (c)->nextfree = NULL;				\
-      handlerlist->nextfree = (c);			\
-    }							\
-  (c)->type = (handlertype);				\
-  (c)->tag_or_ch = (tag_ch_val);			\
-  (c)->val = Qnil;					\
-  (c)->next = handlerlist;				\
-  (c)->lisp_eval_depth = lisp_eval_depth;		\
-  (c)->pdlcount = SPECPDL_INDEX ();			\
-  (c)->poll_suppress_count = poll_suppress_count;	\
-  (c)->interrupt_input_blocked = interrupt_input_blocked;\
-  (c)->byte_stack = byte_stack_list;			\
-  handlerlist = (c);
+  push_handler(&(c), (tag_ch_val), (handlertype))
 
+extern void push_handler (struct handler **c, Lisp_Object tag_ch_val,
+                          enum handlertype handlertype);
+
+/* Like push_handler, but don't signal if the handler could not be
+   allocated.  Instead return false in that case. */
+extern bool push_handler_nosignal (struct handler **c, Lisp_Object tag_ch_val,
+                                   enum handlertype handlertype);
 
 extern Lisp_Object memory_signal_data;
 
@@ -3407,7 +3399,8 @@ Lisp_Object make_hash_table (struct hash_table_test, Lisp_Object, Lisp_Object,
 ptrdiff_t hash_lookup (struct Lisp_Hash_Table *, Lisp_Object, EMACS_UINT *);
 ptrdiff_t hash_put (struct Lisp_Hash_Table *, Lisp_Object, Lisp_Object,
 		    EMACS_UINT);
-extern struct hash_table_test hashtest_eql, hashtest_equal;
+void hash_remove_from_table (struct Lisp_Hash_Table *, Lisp_Object);
+extern struct hash_table_test hashtest_eq, hashtest_eql, hashtest_equal;
 extern void validate_subarray (Lisp_Object, Lisp_Object, Lisp_Object,
 			       ptrdiff_t, ptrdiff_t *, ptrdiff_t *);
 extern Lisp_Object substring_both (Lisp_Object, ptrdiff_t, ptrdiff_t,
