@@ -975,6 +975,16 @@ This uses the variables `load-suffixes' and `load-file-rep-suffixes'.  */)
   return Fnreverse (lst);
 }
 
+/* Returns true if STRING ends with SUFFIX */
+static bool
+suffix_p (Lisp_Object string, const char *suffix)
+{
+  const size_t suffix_len = strlen (suffix);
+  const size_t string_len = SBYTES (string);
+
+  return string_len >= suffix_len && !strcmp (SSDATA (string) + string_len - suffix_len, suffix);
+}
+
 DEFUN ("load", Fload, Sload, 1, 5, 0,
        doc: /* Execute a file of Lisp code named FILE.
 First try FILE with `.elc' appended, then try with `.el',
@@ -1075,11 +1085,7 @@ Return t if the file exists and loads successfully.  */)
 	{
 	  /* Don't insist on adding a suffix if FILE already ends with one.  */
 	  ptrdiff_t size = SBYTES (file);
-	  if (size > 3
-	      && !strcmp (SSDATA (file) + size - 3, ".el"))
-	    must_suffix = Qnil;
-	  else if (size > 4
-		   && !strcmp (SSDATA (file) + size - 4, ".elc"))
+	  if (suffix_p (file, ".el") || suffix_p (file, ".elc"))
 	    must_suffix = Qnil;
 	  /* Don't insist on adding a suffix
 	     if the argument includes a directory name.  */
@@ -1151,6 +1157,13 @@ Return t if the file exists and loads successfully.  */)
       record_unwind_protect_int (close_file_unwind, fd);
     }
 
+#ifdef HAVE_MODULES
+  if (suffix_p (found, MODULES_SUFFIX))
+    {
+      return Fmodule_load (found);
+    }
+#endif
+
   /* Check if we're stuck in a recursive load cycle.
 
      2000-09-21: It's not possible to just check for the file loaded
@@ -1189,8 +1202,7 @@ Return t if the file exists and loads successfully.  */)
   specbind (Qold_style_backquotes, Qnil);
   record_unwind_protect (load_warn_old_style_backquotes, file);
 
-  if (!memcmp (SDATA (found) + SBYTES (found) - 4, ".elc", 4)
-      || (fd >= 0 && (version = safe_to_load_version (fd)) > 0))
+  if (suffix_p (found, ".elc") || (fd >= 0 && (version = safe_to_load_version (fd)) > 0))
     /* Load .elc files directly, but not when they are
        remote and have no handler!  */
     {
@@ -4491,8 +4503,14 @@ and without trailing slashes.  */);
 This list should not include the empty string.
 `load' and related functions try to append these suffixes, in order,
 to the specified file name if a Lisp suffix is allowed or required.  */);
+#ifdef HAVE_MODULES
+  Vload_suffixes = list3 (build_pure_c_string (".elc"),
+			  build_pure_c_string (".el"),
+			  build_pure_c_string (MODULES_SUFFIX));
+#else
   Vload_suffixes = list2 (build_pure_c_string (".elc"),
 			  build_pure_c_string (".el"));
+#endif
   DEFVAR_LISP ("load-file-rep-suffixes", Vload_file_rep_suffixes,
 	       doc: /* List of suffixes that indicate representations of \
 the same file.
