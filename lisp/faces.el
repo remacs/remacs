@@ -1971,7 +1971,11 @@ unnamed faces (e.g, `foreground-color')."
                         (get-char-property (point) 'font-lock-face))
                    (get-char-property (point) 'face)))
         (found nil))
-    (dolist (face (if (listp faces) faces (list faces)))
+    ;; The attribute might be a face, a list of faces, or a list of
+    ;; attributes that make a face.  Normalize it to a list of faces.
+    (dolist (face (if (and (listp faces) (facep (car faces)))
+                      faces
+                    (list faces)))
       (cond (found)
             ((and face (symbolp face))
              (let ((value (face-attribute-specified-or
