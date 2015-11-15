@@ -2193,8 +2193,9 @@ See `font-lock-syntax-table'.")
     ;; Constants.
     ("\\(?:\\_<\\|::\\)\\([A-Z]+\\(\\w\\|_\\)*\\)"
      1 (unless (eq ?\( (char-after)) font-lock-type-face))
-    ("\\(^\\s *\\|[[{(,]\\s *\\|\\sw\\s +\\)\\(\\(\\sw\\|_\\)+\\):[^:]"
-     (2 font-lock-constant-face))
+    ;; Ruby 1.9-style symbol hash keys.
+    ("\\(?:^\\s *\\|[[{(,]\\s *\\|\\sw\\s +\\)\\(\\(\\sw\\|_\\)+:\\)[^:]"
+     (1 (progn (forward-char -1) font-lock-constant-face)))
     ;; Conversion methods on Kernel.
     (,(concat ruby-font-lock-keyword-beg-re
               (regexp-opt '("Array" "Complex" "Float" "Hash"
