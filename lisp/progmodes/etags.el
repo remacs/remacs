@@ -2089,15 +2089,6 @@ for \\[find-tag] (which see)."
 (cl-defmethod xref-backend-identifier-completion-table ((_backend (eql etags)))
   (tags-lazy-completion-table))
 
-(cl-defmethod xref-backend-references ((_backend (eql etags)) symbol)
-  (cl-mapcan
-   (lambda (dir)
-     (xref-collect-references symbol dir))
-   (let ((pr (project-current t)))
-     (append
-      (project-roots pr)
-      (project-library-roots pr)))))
-
 (cl-defmethod xref-backend-definitions ((_backend (eql etags)) symbol)
   (etags--xref-find-definitions symbol))
 

@@ -795,18 +795,6 @@ non-nil result supercedes the xrefs produced by
     xrefs))
 
 (declare-function project-library-roots "project")
-(declare-function project-roots "project")
-(declare-function project-current "project")
-
-(cl-defmethod xref-backend-references ((_backend (eql elisp)) symbol)
-  "Find all references to SYMBOL (a string) in the current project."
-  (cl-mapcan
-   (lambda (dir)
-     (xref-collect-references symbol dir))
-   (let ((pr (project-current t)))
-     (append
-      (project-roots pr)
-      (project-library-roots pr)))))
 
 (cl-defmethod xref-backend-apropos ((_backend (eql elisp)) regexp)
   (apply #'nconc
