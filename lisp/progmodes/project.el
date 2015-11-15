@@ -213,6 +213,7 @@ DIRS must contain directory names."
 (declare-function grep-read-files "grep")
 (declare-function xref-collect-matches "xref")
 (declare-function xref--show-xrefs "xref")
+(declare-function xref-backend-identifier-at-point "xref")
 
 ;;;###autoload
 (defun project-find-regexp (regexp)
@@ -240,10 +241,8 @@ pattern to search for."
     (project--find-regexp-in dirs regexp pr)))
 
 (defun project--read-regexp ()
-  (defvar xref-identifier-at-point-function)
-  (require 'xref)
   (read-regexp "Find regexp"
-               (funcall xref-identifier-at-point-function)))
+               (xref-backend-identifier-at-point (xref-find-backend))))
 
 (defun project--find-regexp-in (dirs regexp project)
   (require 'grep)

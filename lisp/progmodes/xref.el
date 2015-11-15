@@ -210,6 +210,7 @@ and should return either nil to mean that it is not applicable,
 or an xref backend, which is a value to be used to dispatch the
 generic functions.")
 
+;;;###autoload
 (defun xref-find-backend ()
   (run-hook-with-args-until-success 'xref-backend-functions))
 
