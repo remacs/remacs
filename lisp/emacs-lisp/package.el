@@ -1165,16 +1165,16 @@ BODY (does not apply to errors signaled by ERROR-FORM).
                                                  (when-let ((er (plist-get status :error)))
                                                    (error "Error retrieving: %s %S" url er))
                                                  (unless (search-forward-regexp "^\r?\n\r?" nil 'noerror)
-                                                   (rest-error 'rest-unintelligible-result))
-                                                 (delete-region (point-min) (point))
-                                                 ,@body)
-                                  (when (buffer-live-p b)
-                                    (kill-buffer b)))))))
+                                                   (error "Error retrieving: %s %S" url "incomprehensible buffer"))
+                                                 (with-temp-buffer
+                                                   (url-insert-buffer-contents b url)
+                                                   (kill-buffer b)
+                                                   (goto-char (point-min))
+                                                   ,@body)))))))
              (if ,async
                  (wrap-errors (url-retrieve url callback nil 'silent))
-               (let ((buffer (wrap-errors (url-retrieve-synchronously url 'silent))))
-                 (with-current-buffer buffer
-                   (funcall callback nil)))))
+               (with-current-buffer (wrap-errors (url-retrieve-synchronously url 'silent))
+                 (funcall callback nil))))
          (wrap-errors (with-temp-buffer
                         (let ((url (expand-file-name ,file ,url-1)))
                           (unless (file-name-absolute-p url)
