@@ -2258,9 +2258,10 @@ See `font-lock-syntax-table'.")
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist
-             (cons (purecopy (concat "\\(?:\\."
+             (cons (purecopy (concat "\\(?:\\.\\(?:"
                                      "rb\\|ru\\|rake\\|thor"
                                      "\\|jbuilder\\|rabl\\|gemspec\\|podspec"
+                                     "\\)"
                                      "\\|/"
                                      "\\(?:Gem\\|Rake\\|Cap\\|Thor"
                                      "\\|Puppet\\|Berks"
