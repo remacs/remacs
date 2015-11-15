@@ -62,7 +62,7 @@
 ;; Folding mode should use invisible text properties instead.  -- Dave
 ;; Love]
 ;;
-;; From Anders Lindgren <andersl@csd.uu.se>
+;; From Anders Lindgren
 ;;
 ;; Problem summary: Wayne Adams has found a problem when using folding
 ;; mode in conjunction with font-lock for a mode defined in

@@ -763,7 +763,7 @@ see the variables `c-font-lock-extra-types', `c++-font-lock-extra-types',
 	      (setq font-lock-removed-keywords-alist
 		    (delq cell font-lock-removed-keywords-alist)))))))
 
-;; Written by Anders Lindgren <andersl@andersl.com>.
+;; Written by Anders Lindgren
 ;;
 ;; Case study:
 ;; (I)  The keywords are removed from a major mode.

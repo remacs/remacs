@@ -3,8 +3,8 @@
 ;; Copyright (C) 1995-1997, 1999, 2001-2015 Free Software Foundation,
 ;; Inc.
 
-;; Author: Anders Lindgren <andersl@andersl.com>
-;; Maintainer: emacs-devel@gnu.org (Anders' email bounces, Sep 2005)
+;; Author: Anders Lindgren
+;; Maintainer: emacs-devel@gnu.org
 ;; Created: 1995-05-25
 ;; Keywords: display, window, minor-mode, convenience
 
