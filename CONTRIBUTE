@@ -144,10 +144,10 @@ messages:
   "2014-01-16T05:43:35Z!esr@thyrsus.com".  Often, "my previous commit"
   will suffice.
 
-- There is no need to mention files such as NEWS, MAINTAINERS, and
-  FOR-RELEASE, or to indicate regeneration of files such as
-  'configure', in the ChangeLog entry.  "There is no need" means you
-  don't have to, but you can if you want to.
+- There is no need to mention files such as NEWS and MAINTAINERS, or
+  to indicate regeneration of files such as 'configure', in the
+  ChangeLog entry.  "There is no need" means you don't have to, but
+  you can if you want to.
 
 ** Generating ChangeLog entries
 
