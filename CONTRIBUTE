@@ -177,13 +177,6 @@ before possibly being merged to the trunk.
 
 Development is discussed on the emacs-devel mailing list.
 
-Sometime before the release of a new major version of Emacs a "feature
-freeze" is imposed on the trunk, to prepare for creating a release
-branch.  No new features may be added to the trunk after this point,
-until the release branch is created.  Announcements about the freeze
-(and other important events) are made on the emacs-devel mailing
-list under the "emacs-announce" topic, and not anywhere else.
-
 The trunk branch is named "master" in git; release branches are named
 "emacs-nn" where "nn" is the major version.
 
