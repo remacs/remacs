@@ -655,6 +655,8 @@ x_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
      `frame-inhibit-implied-resize'. */
   int nlines;
 
+  NSTRACE ("x_set_tool_bar_lines");
+
   if (FRAME_MINIBUF_ONLY_P (f))
     return;
 
@@ -702,6 +704,8 @@ x_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 	  && NILP (get_frame_param (f, Qfullscreen)))
 	 ? 0
 	 : 2);
+
+    NSTRACE_MSG ("inhibit:%d", inhibit);
 
     frame_size_history_add (f, Qupdate_frame_tool_bar, 0, 0, Qnil);
     adjust_frame_size (f, -1, -1, inhibit, 0, Qtool_bar_lines);
