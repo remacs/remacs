@@ -776,6 +776,10 @@ main (int argc, char **argv)
 
   atexit (close_output_streams);
 
+#ifdef HAVE_MODULES
+  module_init ();
+#endif
+
   sort_args (argc, argv);
   argc = 0;
   while (argv[argc]) argc++;
@@ -1450,6 +1454,11 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
       syms_of_terminal ();
       syms_of_term ();
       syms_of_undo ();
+
+#ifdef HAVE_MODULES
+      syms_of_module ();
+#endif
+
 #ifdef HAVE_SOUND
       syms_of_sound ();
 #endif

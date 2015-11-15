@@ -3916,6 +3916,10 @@ extern bool let_shadows_global_binding_p (Lisp_Object symbol);
 /* Defined in alloc.c.  */
 extern Lisp_Object make_user_ptr (void (*finalizer) (void*), void *p);
 
+/* Defined in module.c.  */
+extern void module_init (void);
+extern void mark_modules (void);
+extern void syms_of_module (void);
 #endif
 
 /* Defined in editfns.c.  */

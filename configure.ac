@@ -353,6 +353,7 @@ OPTION_DEFAULT_ON([gsettings],[don't compile with GSettings support])
 OPTION_DEFAULT_ON([selinux],[don't compile with SELinux support])
 OPTION_DEFAULT_ON([gnutls],[don't use -lgnutls for SSL/TLS support])
 OPTION_DEFAULT_ON([zlib],[don't compile with zlib decompression support])
+OPTION_DEFAULT_OFF([modules],[compile with dynamic modules support])
 
 AC_ARG_WITH([file-notification],[AS_HELP_STRING([--with-file-notification=LIB],
  [use a file notification library (LIB one of: yes, gfile, inotify, w32, no)])],
@@ -2191,6 +2192,9 @@ LIBS="$LIBS_SYSTEM $LIBS"
 dnl FIXME replace main with a function we actually want from this library.
 AC_CHECK_LIB(Xbsd, main, LD_SWITCH_X_SITE="$LD_SWITCH_X_SITE -lXbsd")
 
+dnl Check for C11 threads.
+AC_CHECK_HEADERS_ONCE(threads.h)
+
 dnl Check for the POSIX thread library.
 LIB_PTHREAD=
 AC_CHECK_HEADERS_ONCE(pthread.h)
@@ -3284,6 +3288,48 @@ if test "${HAVE_ZLIB}" = "yes"; then
   fi
 fi
 AC_SUBST(LIBZ)
+
+### Dynamic modules support
+LIBMODULES=
+HAVE_MODULES=no
+MODULES_OBJ=
+MODULES_SUFFIX=
+if test "${with_modules}" != "no"; then
+  if test "$opsys" = "gnu-linux"; then
+    LIBMODULES="-ldl"
+    MODULES_SUFFIX=".so"
+    HAVE_MODULES=yes
+  elif test "$opsys" = "cygwin"; then
+    # XXX: not tested
+    LIBMODULES="-lcygwin"
+    MODULES_SUFFIX=".dll"
+    HAVE_MODULES=yes
+  elif test "$opsys" = "darwin"; then
+    MODULES_SUFFIX=".so"
+    HAVE_MODULES=yes
+  elif test "$opsys" = "mingw32"; then
+    MODULES_SUFFIX=".dll"
+    HAVE_MODULES=yes
+  else
+    # BSD system have dlopen in the libc
+    AC_CHECK_FUNC(dlopen, [MODULES_SUFFIX=".so"]
+                          [HAVE_MODULES=yes], [])
+  fi
+
+  if test "${HAVE_MODULES}" = no; then
+    AC_MSG_ERROR([Dynamic modules are not supported on your system])
+  fi
+fi
+
+if test "${HAVE_MODULES}" = yes; then
+   MODULES_OBJ="dynlib.o module.o"
+   AC_DEFINE(HAVE_MODULES, 1, [Define to 1 if dynamic modules are enabled])
+   AC_DEFINE_UNQUOTED(MODULES_SUFFIX, "$MODULES_SUFFIX", [System extension for dynamic libraries])
+fi
+AC_SUBST(MODULES_OBJ)
+AC_SUBST(LIBMODULES)
+AX_GCC_VAR_ATTRIBUTE(cleanup)
+AC_CHECK_FUNCS(dladdr)
 
 ### Use -lpng if available, unless '--with-png=no'.
 HAVE_PNG=no
@@ -5175,7 +5221,7 @@ optsep=
 emacs_config_features=
 for opt in XAW3D XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
   GCONF GSETTINGS NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE M17N_FLT \
-  LIBOTF XFT ZLIB TOOLKIT_SCROLL_BARS X_TOOLKIT X11 NS; do
+  LIBOTF XFT ZLIB TOOLKIT_SCROLL_BARS X_TOOLKIT X11 NS MODULES; do
 
     case $opt in
       NOTIFY|ACL) eval val=\${${opt}_SUMMARY} ;;
@@ -5223,6 +5269,7 @@ AS_ECHO(["  Does Emacs use -lXaw3d?                                 ${HAVE_XAW3D
   Does Emacs use -lotf?                                   ${HAVE_LIBOTF}
   Does Emacs use -lxft?                                   ${HAVE_XFT}
   Does Emacs directly use zlib?                           ${HAVE_ZLIB}
+  Does Emacs has dynamic modules support?                 ${HAVE_MODULES}
   Does Emacs use toolkit scroll bars?                     ${USE_TOOLKIT_SCROLL_BARS}
 "])
 
