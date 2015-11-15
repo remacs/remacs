@@ -27,7 +27,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 INLINE_HEADER_BEGIN
 
 extern void update_syntax_table (ptrdiff_t, EMACS_INT, bool, Lisp_Object);
-extern void update_syntax_table_forward (ptrdiff_t, bool, Lisp_Object);
+extern void update_syntax_table_forward (ptrdiff_t, bool, bool, Lisp_Object);
 
 /* The standard syntax table is stored where it will automatically
    be used in all new buffers.  */
@@ -183,7 +183,15 @@ UPDATE_SYNTAX_TABLE_FORWARD (ptrdiff_t charpos)
 { /* Performs just-in-time syntax-propertization.  */
   if (parse_sexp_lookup_properties && charpos >= gl_state.e_property)
     update_syntax_table_forward (charpos + gl_state.offset,
-				 false, gl_state.object);
+				 false, true, gl_state.object);
+}
+
+INLINE void
+UPDATE_SYNTAX_TABLE_FORWARD_FAST (ptrdiff_t charpos)
+{
+  if (parse_sexp_lookup_properties && charpos >= gl_state.e_property)
+    update_syntax_table_forward (charpos + gl_state.offset,
+				 false, false, gl_state.object);
 }
 
 /* Make syntax table state (gl_state) good for CHARPOS, assuming it is
@@ -203,6 +211,13 @@ UPDATE_SYNTAX_TABLE (ptrdiff_t charpos)
 {
   UPDATE_SYNTAX_TABLE_BACKWARD (charpos);
   UPDATE_SYNTAX_TABLE_FORWARD (charpos);
+}
+
+INLINE void
+UPDATE_SYNTAX_TABLE_FAST (ptrdiff_t charpos)
+{
+  UPDATE_SYNTAX_TABLE_BACKWARD (charpos);
+  UPDATE_SYNTAX_TABLE_FORWARD_FAST (charpos);
 }
 
 /* Set up the buffer-global syntax table.  */
