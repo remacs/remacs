@@ -468,6 +468,9 @@ enum Lisp_Misc_Type
     Lisp_Misc_Overlay,
     Lisp_Misc_Save_Value,
     Lisp_Misc_Finalizer,
+#ifdef HAVE_MODULES
+    Lisp_Misc_User_Ptr,
+#endif
     /* Currently floats are not a misc type,
        but let's define this in case we want to change that.  */
     Lisp_Misc_Float,
@@ -581,6 +584,12 @@ INLINE bool PROCESSP (Lisp_Object);
 INLINE bool PSEUDOVECTORP (Lisp_Object, int);
 INLINE bool SAVE_VALUEP (Lisp_Object);
 INLINE bool FINALIZERP (Lisp_Object);
+
+#ifdef HAVE_MODULES
+INLINE bool USER_PTRP (Lisp_Object);
+INLINE struct Lisp_User_Ptr *(XUSER_PTR) (Lisp_Object);
+#endif
+
 INLINE void set_sub_char_table_contents (Lisp_Object, ptrdiff_t,
 					      Lisp_Object);
 INLINE bool STRINGP (Lisp_Object);
@@ -2230,6 +2239,18 @@ XSAVE_OBJECT (Lisp_Object obj, int n)
   return XSAVE_VALUE (obj)->data[n].object;
 }
 
+#ifdef HAVE_MODULES
+struct Lisp_User_Ptr
+{
+  ENUM_BF (Lisp_Misc_Type) type : 16;	     /* = Lisp_Misc_User_Ptr */
+  bool_bf gcmarkbit : 1;
+  unsigned spacer : 15;
+
+  void (*finalizer) (void*);
+  void *p;
+};
+#endif
+
 /* A finalizer sentinel.  */
 struct Lisp_Finalizer
   {
@@ -2265,6 +2286,9 @@ union Lisp_Misc
     struct Lisp_Overlay u_overlay;
     struct Lisp_Save_Value u_save_value;
     struct Lisp_Finalizer u_finalizer;
+#ifdef HAVE_MODULES
+    struct Lisp_User_Ptr u_user_ptr;
+#endif
   };
 
 INLINE union Lisp_Misc *
@@ -2313,6 +2337,16 @@ XFINALIZER (Lisp_Object a)
   eassert (FINALIZERP (a));
   return & XMISC (a)->u_finalizer;
 }
+
+#ifdef HAVE_MODULES
+INLINE struct Lisp_User_Ptr *
+XUSER_PTR (Lisp_Object a)
+{
+  eassert (USER_PTRP (a));
+  return & XMISC (a)->u_user_ptr;
+}
+#endif
+
 
 
 /* Forwarding pointer to an int variable.
@@ -2597,6 +2631,14 @@ FINALIZERP (Lisp_Object x)
 {
   return MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Finalizer;
 }
+
+#ifdef HAVE_MODULES
+INLINE bool
+USER_PTRP (Lisp_Object x)
+{
+  return MISCP (x) && XMISCTYPE (x) == Lisp_Misc_User_Ptr;
+}
+#endif
 
 INLINE bool
 AUTOLOADP (Lisp_Object x)
@@ -3870,6 +3912,11 @@ Lisp_Object backtrace_top_function (void);
 extern bool let_shadows_buffer_binding_p (struct Lisp_Symbol *symbol);
 extern bool let_shadows_global_binding_p (Lisp_Object symbol);
 
+#ifdef HAVE_MODULES
+/* Defined in alloc.c.  */
+extern Lisp_Object make_user_ptr (void (*finalizer) (void*), void *p);
+
+#endif
 
 /* Defined in editfns.c.  */
 extern void insert1 (Lisp_Object);

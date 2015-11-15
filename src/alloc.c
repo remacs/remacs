@@ -3711,6 +3711,23 @@ make_event_array (ptrdiff_t nargs, Lisp_Object *args)
   }
 }
 
+#ifdef HAVE_MODULES
+/* Create a new module user ptr object. */
+Lisp_Object
+make_user_ptr (void (*finalizer) (void*), void *p)
+{
+  Lisp_Object obj;
+  struct Lisp_User_Ptr *uptr;
+
+  obj = allocate_misc (Lisp_Misc_User_Ptr);
+  uptr = XUSER_PTR (obj);
+  uptr->finalizer = finalizer;
+  uptr->p = p;
+  return obj;
+}
+
+#endif
+
 static void
 init_finalizer_list (struct Lisp_Finalizer *head)
 {
@@ -6301,6 +6318,12 @@ mark_object (Lisp_Object arg)
           mark_object (XFINALIZER (obj)->function);
           break;
 
+#ifdef HAVE_MODULES
+	case Lisp_Misc_User_Ptr:
+	  XMISCANY (obj)->gcmarkbit = true;
+	  break;
+#endif
+
 	default:
 	  emacs_abort ();
 	}
@@ -6677,8 +6700,15 @@ sweep_misc (void)
             {
               if (mblk->markers[i].m.u_any.type == Lisp_Misc_Marker)
                 unchain_marker (&mblk->markers[i].m.u_marker);
-              if (mblk->markers[i].m.u_any.type == Lisp_Misc_Finalizer)
+              else if (mblk->markers[i].m.u_any.type == Lisp_Misc_Finalizer)
                 unchain_finalizer (&mblk->markers[i].m.u_finalizer);
+#ifdef HAVE_MODULES
+	      else if (mblk->markers[i].m.u_any.type == Lisp_Misc_User_Ptr)
+		{
+		  struct Lisp_User_Ptr *uptr = &mblk->markers[i].m.u_user_ptr;
+		  uptr->finalizer (uptr->p);
+		}
+#endif
               /* Set the type of the freed object to Lisp_Misc_Free.
                  We could leave the type alone, since nobody checks it,
                  but this might catch bugs faster.  */
