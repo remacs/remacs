@@ -805,7 +805,8 @@ If no tags table is loaded, do nothing and return nil."
 	  beg)
       (when pattern
 	(save-excursion
-          (forward-char (1- (length pattern)))
+          ;; Avoid end-of-buffer error.
+          (goto-char (+ (point) (length pattern) -1))
           ;; The find-tag function might be overly optimistic.
           (when (search-backward pattern nil t)
             (setq beg (point))
