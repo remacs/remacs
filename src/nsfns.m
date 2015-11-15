@@ -648,6 +648,11 @@ x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 void
 x_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 {
+  /* Currently, when the tool bar change state, the frame is resized.
+
+     TODO: It would be better if this didn't occur when 1) the frame
+     is full height or maximized or 2) when specified by
+     `frame-inhibit-implied-resize'. */
   int nlines;
 
   if (FRAME_MINIBUF_ONLY_P (f))
@@ -669,7 +674,21 @@ x_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
         {
           free_frame_tool_bar (f);
           FRAME_EXTERNAL_TOOL_BAR (f) = 0;
-        }
+
+          {
+            EmacsView *view = FRAME_NS_VIEW (f);
+            int fs_state = [view fullscreenState];
+
+            if (fs_state == FULLSCREEN_MAXIMIZED)
+              {
+                [view setFSValue:FULLSCREEN_WIDTH];
+              }
+            else if (fs_state == FULLSCREEN_HEIGHT)
+              {
+                [view setFSValue:FULLSCREEN_NONE];
+              }
+          }
+       }
     }
 
   {
@@ -680,8 +699,6 @@ x_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 	      || (CONSP (frame_inhibit_implied_resize)
 		  && !NILP (Fmemq (Qtool_bar_lines,
 				   frame_inhibit_implied_resize))))
-	  /* This will probably fail to DTRT in the
-	     fullheight/-width cases.  */
 	  && NILP (get_frame_param (f, Qfullscreen)))
 	 ? 0
 	 : 2);
