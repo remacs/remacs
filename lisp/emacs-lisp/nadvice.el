@@ -279,7 +279,7 @@ a special meaning:
   whereas a depth of -100 means that the advice should be outermost.
 
 If PLACE is a symbol, its `default-value' will be affected.
-Use (local 'SYMBOL) if you want to apply FUNCTION to SYMBOL buffer-locally.
+Use (local \\='SYMBOL) if you want to apply FUNCTION to SYMBOL buffer-locally.
 Use (var VAR) if you want to apply FUNCTION to the (lexical) VAR.
 
 If one of FUNCTION or OLDFUN is interactive, then the resulting function
