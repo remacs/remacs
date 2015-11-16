@@ -2792,6 +2792,9 @@ funcall_lambda (Lisp_Object fun, ptrdiff_t nargs,
     }
   else if (COMPILEDP (fun))
     {
+      ptrdiff_t size = ASIZE (fun) & PSEUDOVECTOR_SIZE_MASK;
+      if (size <= COMPILED_STACK_DEPTH)
+	xsignal1 (Qinvalid_function, fun);
       syms_left = AREF (fun, COMPILED_ARGLIST);
       if (INTEGERP (syms_left))
 	/* A byte-code object with a non-nil `push args' slot means we
@@ -2889,19 +2892,25 @@ DEFUN ("fetch-bytecode", Ffetch_bytecode, Sfetch_bytecode,
 {
   Lisp_Object tem;
 
-  if (COMPILEDP (object) && CONSP (AREF (object, COMPILED_BYTECODE)))
+  if (COMPILEDP (object))
     {
-      tem = read_doc_string (AREF (object, COMPILED_BYTECODE));
-      if (!CONSP (tem))
+      ptrdiff_t size = ASIZE (object) & PSEUDOVECTOR_SIZE_MASK;
+      if (size <= COMPILED_STACK_DEPTH)
+	xsignal1 (Qinvalid_function, object);
+      if (CONSP (AREF (object, COMPILED_BYTECODE)))
 	{
-	  tem = AREF (object, COMPILED_BYTECODE);
-	  if (CONSP (tem) && STRINGP (XCAR (tem)))
-	    error ("Invalid byte code in %s", SDATA (XCAR (tem)));
-	  else
-	    error ("Invalid byte code");
+	  tem = read_doc_string (AREF (object, COMPILED_BYTECODE));
+	  if (!CONSP (tem))
+	    {
+	      tem = AREF (object, COMPILED_BYTECODE);
+	      if (CONSP (tem) && STRINGP (XCAR (tem)))
+		error ("Invalid byte code in %s", SDATA (XCAR (tem)));
+	      else
+		error ("Invalid byte code");
+	    }
+	  ASET (object, COMPILED_BYTECODE, XCAR (tem));
+	  ASET (object, COMPILED_CONSTANTS, XCDR (tem));
 	}
-      ASET (object, COMPILED_BYTECODE, XCAR (tem));
-      ASET (object, COMPILED_CONSTANTS, XCDR (tem));
     }
   return object;
 }
