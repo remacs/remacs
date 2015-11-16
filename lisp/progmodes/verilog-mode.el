@@ -3237,7 +3237,7 @@ user-visible changes to the buffer must not be within a
   `(let ((inhibit-point-motion-hooks t)
          (verilog-no-change-functions t))
      ,(if (fboundp 'with-silent-modifications)
-          (with-silent-modifications ,@body)
+          `(with-silent-modifications ,@body)
         ;; From c-save-buffer-state
         `(let* ((modified (buffer-modified-p))
                 (buffer-undo-list t)
