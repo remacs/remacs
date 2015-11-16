@@ -1161,6 +1161,7 @@ BODY (does not apply to errors signaled by ERROR-FORM).
            (let* ((url (concat ,url-1 ,file))
                   (callback (lambda (status)
                               (let ((b (current-buffer)))
+                                (require 'url-handlers)
                                 (unwind-protect (wrap-errors
                                                  (when-let ((er (plist-get status :error)))
                                                    (error "Error retrieving: %s %S" url er))
