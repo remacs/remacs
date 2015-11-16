@@ -1,0 +1,8 @@
+# built modules
+*.so
+
+# built DOCFILEs
+*.doc
+
+# include makefile for now
+!Makefile
