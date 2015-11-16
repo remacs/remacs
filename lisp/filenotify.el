@@ -379,14 +379,14 @@ FILE is the name of the file whose event is being reported."
 
     ;; Modify `file-notify-descriptors'.
     (setq file (unless (file-directory-p file) (file-name-nondirectory file))
-	  desc (file-notify--descriptor desc file)
+	  desc (if (consp desc) (car desc) desc)
 	  registered (gethash desc file-notify-descriptors)
 	  entry `(,file . ,callback))
     (unless (member entry (cdr registered))
       (puthash desc `(,dir ,entry . ,(cdr registered)) file-notify-descriptors))
 
     ;; Return descriptor.
-    desc))
+    (file-notify--descriptor desc file)))
 
 (defun file-notify-rm-watch (descriptor)
   "Remove an existing watch specified by its DESCRIPTOR.
