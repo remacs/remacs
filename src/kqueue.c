@@ -32,11 +32,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* File handle for kqueue.  */
 static int kqueuefd = -1;
 
-/* This is a list, elements are (DESCRIPTOR FILE FLAGS CALLBACK [DIRLIST])  */
+/* This is a list, elements are (DESCRIPTOR FILE FLAGS CALLBACK [DIRLIST]).  */
 static Lisp_Object watch_list;
 
 /* Generate a temporary list from the directory_files_internal output.
-   Items are (INODE FILE_NAME LAST_MOD LAST_STATUS_MOD SIZE).  */
+   Items are (INODE FILE-NAME LAST-MOD LAST-STATUS-MOD SIZE).  */
 Lisp_Object
 kqueue_directory_listing (Lisp_Object directory_files)
 {
@@ -44,15 +44,15 @@ kqueue_directory_listing (Lisp_Object directory_files)
   for (dl = directory_files; ! NILP (dl); dl = XCDR (dl)) {
     result = Fcons
       (list5 (/* inode.  */
-	      XCAR (Fnthcdr (make_number (11), XCAR (dl))),
+	      Fnth (make_number (11), XCAR (dl)),
 	      /* filename.  */
 	      XCAR (XCAR (dl)),
 	      /* last modification time.  */
-	      XCAR (Fnthcdr (make_number (6), XCAR (dl))),
+	      Fnth (make_number (6), XCAR (dl)),
 	      /* last status change time.  */
-	      XCAR (Fnthcdr (make_number (7), XCAR (dl))),
+	      Fnth (make_number (7), XCAR (dl)),
 	      /* size.  */
-	      XCAR (Fnthcdr (make_number (8), XCAR (dl)))),
+	      Fnth (make_number (8), XCAR (dl))),
        result);
   }
   return result;
@@ -89,11 +89,23 @@ kqueue_compare_dir_list
   Lisp_Object old_directory_files, old_dl, new_directory_files, new_dl, dl;
 
   dir = XCAR (XCDR (watch_object));
-  callback = XCAR (Fnthcdr (make_number (3), watch_object));
-  old_directory_files = XCAR (Fnthcdr (make_number (4), watch_object));
+  callback = Fnth (make_number (3), watch_object);
+
+  old_directory_files = Fnth (make_number (4), watch_object);
   old_dl = kqueue_directory_listing (old_directory_files);
-  new_directory_files =
-    directory_files_internal (dir, Qnil, Qnil, Qnil, 1, Qnil);
+
+  /* Sometimes, the directory write event is triggered when the change
+     is not visible yet in the directory itself.  So we must wait a
+     little bit.  */
+  if (NILP (Ffile_directory_p (dir))) {
+    kqueue_generate_event
+      (XCAR (watch_object), Fcons (Qdelete, Qnil), dir, Qnil, callback);
+    return;
+  }
+  do {
+    new_directory_files =
+      directory_files_internal (dir, Qnil, Qnil, Qnil, 1, Qnil);
+  } while (! NILP (Fequal (old_directory_files, new_directory_files)));
   new_dl = kqueue_directory_listing (new_directory_files);
 
   /* Parse through the old list.  */
@@ -117,21 +129,21 @@ kqueue_compare_dir_list
       goto the_end;
     }
 
+    /* Both entries have the same inode.  */
     if (! NILP (new_entry)) {
-      /* Both entries have the same inode.  */
+      /* Both entries have the same file name.  */
       if (strcmp (SSDATA (XCAR (XCDR (old_entry))),
 		  SSDATA (XCAR (XCDR (new_entry)))) == 0) {
-	/* Both entries have the same file name.  */
-	if (! NILP (Fequal (XCAR (Fnthcdr (make_number (2), old_entry)),
-			    XCAR (Fnthcdr (make_number (2), new_entry)))))
-	  /* Modification time has been changed, the file has been written.  */
+	/* Modification time has been changed, the file has been written.  */
+	if (NILP (Fequal (Fnth (make_number (2), old_entry),
+			  Fnth (make_number (2), new_entry))))
 	  kqueue_generate_event
 	    (XCAR (watch_object), Fcons (Qwrite, Qnil),
 	     XCAR (XCDR (old_entry)), Qnil, callback);
-	if (! NILP (Fequal (XCAR (Fnthcdr (make_number (3), old_entry)),
-			    XCAR (Fnthcdr (make_number (3), new_entry)))))
-	  /* Status change time has been changed, the file attributes
-	     have changed.  */
+	/* Status change time has been changed, the file attributes
+	   have changed.  */
+	  if (NILP (Fequal (Fnth (make_number (3), old_entry),
+			    Fnth (make_number (3), new_entry))))
 	  kqueue_generate_event
 	    (XCAR (watch_object), Fcons (Qattrib, Qnil),
 	     XCAR (XCDR (old_entry)), Qnil, callback);
@@ -193,7 +205,7 @@ kqueue_compare_dir_list
        XCAR (XCDR (new_entry)), Qnil, callback);
 
     /* Check size of that file.  */
-    Lisp_Object size = XCAR (Fnthcdr (make_number (4), new_entry));
+    Lisp_Object size = Fnth (make_number (4), new_entry);
     if (FLOATP (size) || (XINT (size) > 0))
       kqueue_generate_event
 	(XCAR (watch_object), Fcons (Qwrite, Qnil),
@@ -211,7 +223,7 @@ kqueue_compare_dir_list
     report_file_error ("New list not empty", new_dl);
 
   /* Replace directory listing with the new one.  */
-  XSETCDR (XCDR (XCDR (XCDR (watch_object))),
+  XSETCDR (Fnthcdr (make_number (3), watch_object),
 	   Fcons (new_directory_files, Qnil));
   return;
 }
@@ -239,8 +251,8 @@ kqueue_callback (int fd, void *data)
 
     if (CONSP (watch_object)) {
       file = XCAR (XCDR (watch_object));
-      callback = XCAR (XCDR (XCDR (XCDR (watch_object))));
-      dirp = XCDR (XCDR (XCDR (XCDR (watch_object))));
+      callback = Fnth (make_number (3), watch_object);
+      dirp = Fnth (make_number (4), watch_object);
     }
     else
       continue;
