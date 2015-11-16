@@ -246,7 +246,7 @@ SETUP_SYNTAX_TABLE (ptrdiff_t from, ptrdiff_t count)
   if (parse_sexp_lookup_properties)
     {
       if (count > 0)
-	update_syntax_table_forward (from, true, true, Qnil);
+	update_syntax_table_forward (from, true, Qnil);
       else if (from > BEGV)
 	{
 	  update_syntax_table (from - 1, count, true, Qnil);
@@ -502,12 +502,12 @@ parse_sexp_propertize (ptrdiff_t charpos)
 	 e_property_truncated, so the e_property_truncated flag may
 	 occasionally be left raised spuriously.  This should be rare.  */
       gl_state.e_property_truncated = false;
-      update_syntax_table_forward (charpos, false, true, Qnil);
+      update_syntax_table_forward (charpos, false, Qnil);
     }
 }
 
 void
-update_syntax_table_forward (ptrdiff_t charpos, bool init, bool propertize,
+update_syntax_table_forward (ptrdiff_t charpos, bool init,
 			     Lisp_Object object)
 {
   if (gl_state.e_property_truncated)
@@ -518,12 +518,9 @@ update_syntax_table_forward (ptrdiff_t charpos, bool init, bool propertize,
   else
     {
       update_syntax_table (charpos, 1, init, object);
-      propertize &= (NILP (object)
-		     && gl_state.e_property > syntax_propertize__done);
+      if (NILP (object) && gl_state.e_property > syntax_propertize__done)
+	parse_sexp_propertize (charpos);
     }
-
-  if (propertize)
-    parse_sexp_propertize (charpos);
 }
 
 /* Returns true if char at CHARPOS is quoted.
