@@ -2014,6 +2014,10 @@ eval_sub (Lisp_Object form)
   Lisp_Object funcar;
   ptrdiff_t count;
 
+  /* Declare here, as this array may be accessed by call_debugger near
+     the end of this function.  See Bug#21245.  */
+  Lisp_Object argvals[8];
+
   if (SYMBOLP (form))
     {
       /* Look up its binding in the lexical environment.
@@ -2066,13 +2070,8 @@ eval_sub (Lisp_Object form)
 
   if (SUBRP (fun))
     {
-      Lisp_Object numargs;
-      Lisp_Object argvals[8];
-      Lisp_Object args_left;
-      register int i, maxargs;
-
-      args_left = original_args;
-      numargs = Flength (args_left);
+      Lisp_Object args_left = original_args;
+      Lisp_Object numargs = Flength (args_left);
 
       check_cons_list ();
 
@@ -2101,11 +2100,20 @@ eval_sub (Lisp_Object form)
 	  set_backtrace_args (specpdl + count, vals, XINT (numargs));
 
 	  val = (XSUBR (fun)->function.aMANY) (XINT (numargs), vals);
+
+	  check_cons_list ();
+	  lisp_eval_depth--;
+	  /* Do the debug-on-exit now, while VALS still exists.  */
+	  if (backtrace_debug_on_exit (specpdl + count))
+	    val = call_debugger (list2 (Qexit, val));
 	  SAFE_FREE ();
+	  specpdl_ptr--;
+	  return val;
 	}
       else
 	{
-	  maxargs = XSUBR (fun)->max_args;
+	  int i, maxargs = XSUBR (fun)->max_args;
+
 	  for (i = 0; i < maxargs; i++)
 	    {
 	      argvals[i] = eval_sub (Fcar (args_left));
@@ -2165,7 +2173,7 @@ eval_sub (Lisp_Object form)
 	}
     }
   else if (COMPILEDP (fun))
-    val = apply_lambda (fun, original_args, count);
+    return apply_lambda (fun, original_args, count);
   else
     {
       if (NILP (fun))
@@ -2195,7 +2203,7 @@ eval_sub (Lisp_Object form)
 	}
       else if (EQ (funcar, Qlambda)
 	       || EQ (funcar, Qclosure))
-	val = apply_lambda (fun, original_args, count);
+	return apply_lambda (fun, original_args, count);
       else
 	xsignal1 (Qinvalid_function, original_fun);
     }
@@ -2750,14 +2758,13 @@ apply_lambda (Lisp_Object fun, Lisp_Object args, ptrdiff_t count)
   set_backtrace_args (specpdl + count, arg_vector, i);
   tem = funcall_lambda (fun, numargs, arg_vector);
 
+  check_cons_list ();
+  lisp_eval_depth--;
   /* Do the debug-on-exit now, while arg_vector still exists.  */
   if (backtrace_debug_on_exit (specpdl + count))
-    {
-      /* Don't do it again when we return to eval.  */
-      set_backtrace_debug_on_exit (specpdl + count, false);
-      tem = call_debugger (list2 (Qexit, tem));
-    }
+    tem = call_debugger (list2 (Qexit, tem));
   SAFE_FREE ();
+  specpdl_ptr--;
   return tem;
 }
 
