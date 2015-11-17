@@ -6845,7 +6845,7 @@ selected frame."
     (or (and bottom-window-shows-buffer
 	     (window--display-buffer
 	      buffer bottom-window 'reuse alist display-buffer-mark-dedicated))
-     (and (not (frame-parameter nil 'unsplittable))
+	(and (not (frame-parameter nil 'unsplittable))
 	     (let (split-width-threshold)
 	       (setq window (window--try-to-split-window bottom-window alist)))
 	     (window--display-buffer
