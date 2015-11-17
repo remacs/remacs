@@ -201,8 +201,8 @@ Linum mode is a buffer-local minor mode."
       (setq width (ceiling
                    (/ (* width 1.0 (linum--face-width 'linum))
                       (frame-char-width)))))
-        ;; open up space in the left margin, if needed, and record that
-    ;; fact as a the window-parameter `linum--set-margins'
+    ;; open up space in the left margin, if needed, and record that
+    ;; fact as the window-parameter `linum--set-margins'
     (let ((existing-margins (window-margins win)))
       (when (> width (or (car existing-margins) 0))
         (set-window-margins win width (cdr existing-margins))
