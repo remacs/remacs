@@ -694,8 +694,8 @@ Useful for \"rsync\" like methods.")
 
 It can have the following values:
 
-  'ftp -- Ange-FTP respective EFS like syntax (GNU Emacs default)
-  'sep -- Syntax as defined for XEmacs."
+  `ftp' -- Ange-FTP respective EFS like syntax (GNU Emacs default)
+  `sep' -- Syntax as defined for XEmacs."
   :group 'tramp
   :version "24.4"
   :type `(choice (const :tag  ,(if (featurep 'xemacs) "EFS" "Ange-FTP") ftp)

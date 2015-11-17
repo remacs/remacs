@@ -187,7 +187,7 @@ using :expected-result.  See `ert-test-result-type-p' for a
 description of valid values for RESULT-TYPE.
 
 \(fn NAME () [DOCSTRING] [:expected-result RESULT-TYPE] \
-[:tags '(TAG...)] BODY...)"
+[:tags \\='(TAG...)] BODY...)"
   (declare (debug (&define :name test
                            name sexp [&optional stringp]
 			   [&rest keywordp sexp] def-body))

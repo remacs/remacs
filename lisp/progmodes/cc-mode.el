@@ -479,7 +479,7 @@ preferably use the `c-mode-menu' language constant directly."
 and the line breaking/filling code.  Intended to be used by other
 packages that embed CC Mode.
 
-MODE is the CC Mode flavor to set up, e.g. 'c-mode or 'java-mode.
+MODE is the CC Mode flavor to set up, e.g. `c-mode' or `java-mode'.
 DEFAULT-STYLE tells which indentation style to install.  It has the
 same format as `c-default-style'.
 
@@ -647,7 +647,7 @@ In addition to the work done by `c-basic-common-init' and
 customary in CC Mode modes but which aren't strictly necessary for CC
 Mode to operate correctly.
 
-MODE is the symbol for the mode to initialize, like 'c-mode.  See
+MODE is the symbol for the mode to initialize, like `c-mode'.  See
 `c-basic-common-init' for details.  It's only optional to be
 compatible with old code; callers should always specify it."
 

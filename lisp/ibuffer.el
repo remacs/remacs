@@ -128,7 +128,7 @@ own!):
 Thus, if you wanted to use these two formats, the appropriate
 value for this variable would be
 
-  '((mark \" \" name)
+  \\='((mark \" \" name)
     (mark modified read-only
           (name 16 16 :left)
           (size 6 -1 :right)))

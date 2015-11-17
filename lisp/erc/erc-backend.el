@@ -370,7 +370,7 @@ This overrides `erc-server-coding-system' depending on the
 current target as returned by `erc-default-target'.
 
 Example: If you know that the channel #linux-ru uses the coding-system
-`cyrillic-koi8', then add '(\"#linux-ru\" . cyrillic-koi8) to the
+`cyrillic-koi8', then add (\"#linux-ru\" . cyrillic-koi8) to the
 alist."
   :group 'erc-server
   :type '(repeat (cons (string :tag "Target")

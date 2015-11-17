@@ -986,7 +986,7 @@ the callback to be triggered."
 	    (url-http-activate-callback)))))
 
 (defun url-http-chunked-encoding-after-change-function (st nd length)
-  "Function used when dealing with 'chunked' encoding.
+  "Function used when dealing with chunked encoding.
 Cannot give a sophisticated percentage, but we need a different
 function to look for the special 0-length chunk that signifies
 the end of the document."

@@ -453,7 +453,7 @@ second the status (OK, NO, BAD etc) of the command.")
 
 When non-nil, use an alternative UIDS form.  Enabling appears to
 be required for some servers (e.g., Microsoft Exchange 2007)
-which otherwise would trigger a response 'BAD The specified
+which otherwise would trigger a response `BAD The specified
 message set is invalid.'.  We don't unconditionally use this
 form, since this is said to be significantly inefficient.
 
@@ -1564,8 +1564,8 @@ returned, if ITEMS is a symbol only its value is returned."
 (defun imap-mailbox-status-asynch (mailbox items &optional buffer)
   "Send status item requests ITEMS on MAILBOX to server in BUFFER.
 ITEMS can be a symbol or a list of symbols, valid symbols are one of
-the STATUS data items -- i.e. 'messages, 'recent, 'uidnext, 'uidvalidity
-or 'unseen.  The IMAP command tag is returned."
+the STATUS data items -- i.e., `messages', `recent', `uidnext', `uidvalidity'
+or `unseen'.  The IMAP command tag is returned."
   (with-current-buffer (or buffer (current-buffer))
     (imap-send-command (list "STATUS \""
 			     (imap-utf7-encode mailbox)

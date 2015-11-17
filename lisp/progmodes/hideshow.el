@@ -439,9 +439,9 @@ See `hs-c-like-adjust-block-beginning' for an example of using this.")
 You can display this in the mode line by adding the symbol `hs-headline'
 to the variable `mode-line-format'.  For example,
 
-  (unless (memq 'hs-headline mode-line-format)
+  (unless (memq \\='hs-headline mode-line-format)
     (setq mode-line-format
-          (append '(\"-\" hs-headline) mode-line-format)))
+          (append \\='(\"-\" hs-headline) mode-line-format)))
 
 Note that `mode-line-format' is buffer-local.")
 
@@ -934,7 +934,7 @@ if ARG is omitted or nil.
 
 When hideshow minor mode is on, the menu bar is augmented with hideshow
 commands and the hideshow commands are enabled.
-The value '(hs . t) is added to `buffer-invisibility-spec'.
+The value (hs . t) is added to `buffer-invisibility-spec'.
 
 The main commands are: `hs-hide-all', `hs-show-all', `hs-hide-block',
 `hs-show-block', `hs-hide-level' and `hs-toggle-hiding'.  There is also

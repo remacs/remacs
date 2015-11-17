@@ -3908,7 +3908,7 @@ If the feature is provided when evaluating code not associated with a
 file, FORM is evaluated immediately after the provide statement.
 
 Usually FILE is just a library name like \"font-lock\" or a feature name
-like 'font-lock.
+like `font-lock'.
 
 This function makes or adds to an entry on `after-load-alist'."
   (declare (compiler-macro

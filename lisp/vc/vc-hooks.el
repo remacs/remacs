@@ -243,12 +243,12 @@ if that doesn't exist either, return nil."
   "Call for BACKEND the implementation of FUNCTION-NAME with the given ARGS.
 Calls
 
-    (apply 'vc-BACKEND-FUN ARGS)
+    (apply \\='vc-BACKEND-FUN ARGS)
 
 if vc-BACKEND-FUN exists (after trying to find it in vc-BACKEND.el)
 and else calls
 
-    (apply 'vc-default-FUN BACKEND ARGS)
+    (apply \\='vc-default-FUN BACKEND ARGS)
 
 It is usually called via the `vc-call' macro."
   (let ((f (assoc function-name (get backend 'vc-functions))))

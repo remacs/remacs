@@ -629,7 +629,7 @@ See also: `erc-get-channel-user-list'."
 
 (defvar erc-channel-modes nil
   "List of strings representing channel modes.
-E.g. '(\"i\" \"m\" \"s\" \"b Quake!*@*\")
+E.g. (\"i\" \"m\" \"s\" \"b Quake!*@*\")
 \(not sure the ban list will be here, but why not)")
 (make-variable-buffer-local 'erc-channel-modes)
 
@@ -3249,7 +3249,7 @@ LINE has the format \"USER ACTION\"."
 (put 'erc-cmd-ME 'do-not-parse-args t)
 
 (defun erc-cmd-ME\'S (line)
-  "Do a /ME command, but add the string \" 's\" to the beginning."
+  "Do a /ME command, but add the string \" \\='s\" to the beginning."
   (erc-cmd-ME (concat " 's" line)))
 (put 'erc-cmd-ME\'S 'do-not-parse-args t)
 
@@ -5025,7 +5025,7 @@ See also `erc-remove-current-channel-member'."
 (defun erc-update-channel-topic (channel topic &optional modify)
   "Find a buffer for CHANNEL and set the TOPIC for it.
 
-If optional MODIFY is 'append or 'prepend, then append or prepend the
+If optional MODIFY is `append' or `prepend', then append or prepend the
 TOPIC string to the current topic."
   (erc-with-buffer (channel)
     (cond ((eq modify 'append)
@@ -5188,7 +5188,7 @@ person who changed the modes."
               (t (setq erc-channel-user-limit nil))))))
 
 (defun erc-update-channel-key (channel onoff key)
-  "Update CHANNEL's key to KEY if ONOFF is 'on or to nil if it's 'off."
+  "Update CHANNEL's key to KEY if ONOFF is `on' or to nil if it's `off'."
   (erc-with-buffer
       (channel)
     (cond ((eq onoff 'on) (setq erc-channel-key key))
@@ -6730,7 +6730,7 @@ This function should be on `erc-kill-channel-hook'."
   (text-property-not-all (point-min) (point-max) 'erc-parsed nil))
 
 (defun erc-restore-text-properties ()
-  "Restore the property 'erc-parsed for the region."
+  "Restore the property `erc-parsed' for the region."
   (let ((parsed-posn (erc-find-parsed-property)))
     (put-text-property
      (point-min) (point-max)

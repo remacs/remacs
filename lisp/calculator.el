@@ -65,7 +65,7 @@ Note that this requires easymenu.  Must be set before loading."
   :group 'calculator)
 
 (defcustom calculator-unary-style 'postfix
-  "Value is either 'prefix or 'postfix.
+  "Value is either `prefix' or `postfix'.
 This determines the default behavior of unary operators."
   :type    '(choice (const prefix) (const postfix))
   :group   'calculator)
@@ -332,10 +332,10 @@ documentation for an example.")
   "A table to convert input characters to corresponding radix symbols.")
 
 (defvar calculator-output-radix nil
-  "The mode for display, one of: nil (decimal), 'bin, 'oct or 'hex.")
+  "The mode for display, one of: nil (decimal), `bin', `oct' or `hex'.")
 
 (defvar calculator-input-radix nil
-  "The mode for input, one of: nil (decimal), 'bin, 'oct or 'hex.")
+  "The mode for input, one of: nil (decimal), `bin', `oct' or `hex'.")
 
 (defvar calculator-deg nil
   "Non-nil if trig functions operate on degrees instead of radians.")

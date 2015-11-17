@@ -951,7 +951,7 @@ from a different message."
 (defvar compilation--previous-directory-cache nil
   "A pair (POS . RES) caching the result of previous directory search.
 Basically, this pair says that calling
-   (previous-single-property-change POS 'compilation-directory)
+   (previous-single-property-change POS \\='compilation-directory)
 returned RES, i.e. there is no change of `compilation-directory' between
 POS and RES.")
 (make-variable-buffer-local 'compilation--previous-directory-cache)
@@ -967,7 +967,7 @@ POS and RES.")
    (t (setq compilation--previous-directory-cache nil))))
 
 (defun compilation--previous-directory (pos)
-  "Like (previous-single-property-change POS 'compilation-directory), but faster."
+  "Like (previous-single-property-change POS \\='compilation-directory), but faster."
   ;; This avoids an N² behavior when there's no/few compilation-directory
   ;; entries, in which case each call to previous-single-property-change
   ;; ends up having to walk very far back to find the last change.

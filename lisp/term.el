@@ -2140,7 +2140,7 @@ The prompt skip is done by skipping text matching the regular expression
 (defun term-read-noecho (prompt &optional stars)
   "Read a single line of text from user without echoing, and return it.
 Prompt with argument PROMPT, a string.  Optional argument STARS causes
-input to be echoed with '*' characters on the prompt line.  Input ends with
+input to be echoed with `*' characters on the prompt line.  Input ends with
 RET, LFD, or ESC.  DEL or C-h rubs out.  C-u kills line.  C-g aborts (if
 `inhibit-quit' is set because e.g. this function was called from a process
 filter and C-g is pressed, this function returns nil rather than a string).

@@ -1296,8 +1296,8 @@ Returns an alist."
   "Return a VALARM block.
 Argument ADVANCE-TIME is a number giving the time when the alarm
 fires (minutes before the respective event).  Argument ALARM-SPEC
-is a list which must be one of '(audio), '(display) or
-'(email (ADDRESS1 ...)), see `icalendar-export-alarms'.  Argument
+is a list which must be one of (audio), (display) or
+(email (ADDRESS1 ...)), see `icalendar-export-alarms'.  Argument
 SUMMARY is a string which contains a short description for the
 alarm."
   (let* ((action (car alarm-spec))

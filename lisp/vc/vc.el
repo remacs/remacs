@@ -2200,7 +2200,7 @@ Not all VC backends support short logs!")
 In the new log, leave point at WORKING-REVISION (if non-nil).
 LIMIT is the number of entries currently shown.
 Does nothing if IS-START-REVISION is non-nil, or if LIMIT is nil,
-or if PL-RETURN is 'limit-unsupported."
+or if PL-RETURN is `limit-unsupported'."
   (when (and limit (not (eq 'limit-unsupported pl-return))
 	     (not is-start-revision))
     (goto-char (point-max))

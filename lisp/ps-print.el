@@ -3232,7 +3232,7 @@ in the PostScript array HeaderLinesLeft.
 
 Strings are inserted unchanged into the array; those representing
 PostScript string literals should be delimited with PostScript string
-delimiters '(' and ')'.
+delimiters `(' and `)'.
 
 For symbols with bound functions, the function is called and should return a
 string to be inserted into the array.  For symbols with bound values, the value
@@ -3286,8 +3286,8 @@ The value should be a list of strings and symbols, each representing an entry
 in the PostScript array FooterLinesLeft.
 
 Strings are inserted unchanged into the array; those representing PostScript
-string literals should be delimited with PostScript string delimiters '(' and
-')'.
+string literals should be delimited with PostScript string delimiters `(' and
+`)'.
 
 For symbols with bound functions, the function is called and should return a
 string to be inserted into the array.  For symbols with bound values, the value
@@ -3601,7 +3601,7 @@ image in a file with that name."
 (defun ps-line-lengths ()
   "Display the correspondence between a line length and a font size.
 Done using the current ps-print setup.
-Try: pr -t file | awk '{printf \"%3d %s\n\", length($0), $0}' | sort -r | head"
+Try: pr -t file | awk \\='{printf \"%3d %s\n\", length($0), $0}\\=' | sort -r | head"
   (interactive)
   (ps-line-lengths-internal))
 
@@ -4308,7 +4308,7 @@ which long lines wrap around."
 (defun ps-line-lengths-internal ()
   "Display the correspondence between a line length and a font size.
 Done using the current ps-print setup.
-Try: pr -t file | awk '{printf \"%3d %s\n\", length($0), $0}' | sort -r | head"
+Try: pr -t file | awk \\='{printf \"%3d %s\n\", length($0), $0}\\=' | sort -r | head"
   (let* ((ps-font-size-internal
 	  (or ps-font-size-internal
 	      (ps-get-font-size 'ps-font-size)))

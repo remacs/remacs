@@ -742,8 +742,8 @@ not provide the normal completion.  To show the completions, use \\[ido-toggle-i
 
 (defcustom ido-enter-matching-directory 'only
   "Additional methods to enter sub-directory of first/only matching item.
-If value is 'first, enter first matching sub-directory when typing a slash.
-If value is 'only, typing a slash only enters the sub-directory if it is
+If value is `first', enter first matching sub-directory when typing a slash.
+If value is `only', typing a slash only enters the sub-directory if it is
 the only matching item.
 If value is t, automatically enter a sub-directory when it is the only
 matching item, even without typing a slash."
@@ -755,7 +755,7 @@ matching item, even without typing a slash."
 
 (defcustom ido-create-new-buffer 'prompt
   "Specify whether a new buffer is created if no buffer matches substring.
-Choices are 'always to create new buffers unconditionally, 'prompt to
+Choices are `always' to create new buffers unconditionally, `prompt' to
 ask user whether to create buffer, or 'never to never create new buffer."
   :type '(choice (const always)
 		 (const prompt)
@@ -1605,8 +1605,8 @@ With ARG, turn Ido mode on if arg is positive, off otherwise.
 Turning on Ido mode will remap (via a minor-mode keymap) the default
 keybindings for the `find-file' and `switch-to-buffer' families of
 commands to the Ido versions of these functions.
-However, if ARG arg equals 'files, remap only commands for files, or
-if it equals 'buffers, remap only commands for buffer switching.
+However, if ARG arg equals `files', remap only commands for files, or
+if it equals `buffers', remap only commands for buffer switching.
 This function also adds a hook to the minibuffer."
   (interactive "P")
   (setq ido-mode

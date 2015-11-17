@@ -8269,7 +8269,7 @@ backward.
 
 If set to nil, both Delete and Backspace keys delete backward.
 
-If set to 'maybe (which is the default), Emacs automatically
+If set to `maybe' (which is the default), Emacs automatically
 selects a behavior.  On window systems, the behavior depends on
 the keyboard used.  If the keyboard has both a Backspace key and
 a Delete key, and both are mapped to their usual meanings, the

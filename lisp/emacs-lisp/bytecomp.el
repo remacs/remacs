@@ -265,8 +265,8 @@ This option is enabled by default because it reduces Emacs memory usage."
 
 (defcustom byte-optimize-log nil
   "If non-nil, the byte-compiler will log its optimizations.
-If this is 'source, then only source-level optimizations will be logged.
-If it is 'byte, then only byte-level optimizations will be logged.
+If this is `source', then only source-level optimizations will be logged.
+If it is `byte', then only byte-level optimizations will be logged.
 The information is logged to `byte-compile-log-buffer'."
   :group 'bytecomp
   :type '(choice (const :tag "none" nil)
@@ -1691,7 +1691,7 @@ Any other non-nil value of ARG means to ask the user.
 If optional argument LOAD is non-nil, loads the file after compiling.
 
 If compilation is needed, this functions returns the result of
-`byte-compile-file'; otherwise it returns 'no-byte-compile."
+`byte-compile-file'; otherwise it returns `no-byte-compile'."
   (interactive
    (let ((file buffer-file-name)
 	 (file-name nil)

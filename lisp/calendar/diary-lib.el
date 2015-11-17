@@ -1190,7 +1190,7 @@ ensure that all relevant variables are set.
 
 \(setq diary-mail-days 3
       diary-file \"/path/to/diary.file\"
-      calendar-date-style 'european
+      calendar-date-style \\='european
       diary-mail-addr \"user@host.name\")
 
 \(diary-mail-entries)

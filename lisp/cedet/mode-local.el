@@ -627,7 +627,8 @@ SYMBOL is a function that can be overridden."
       (beginning-of-line)
       (forward-line -1))
     (let ((inhibit-read-only t))
-      (insert (overload-docstring-extension symbol) "\n")
+      (insert (substitute-command-keys (overload-docstring-extension symbol))
+              "\n")
       ;; NOTE TO SELF:
       ;; LIST ALL LOADED OVERRIDES FOR SYMBOL HERE
       )))
@@ -641,7 +642,8 @@ SYMBOL is a function that can be overridden."
                       (fetch-overload symbol)))
           modes)
 
-      (insert (overload-docstring-extension symbol) "\n\n")
+      (insert (substitute-command-keys (overload-docstring-extension symbol))
+              "\n\n")
       (insert (format-message "default function: `%s'\n" default))
       (if override
 	  (insert (format-message "\noverride in buffer `%s': `%s'\n"

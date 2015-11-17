@@ -1630,7 +1630,7 @@ this trigger is subscribed to `gdb-buf-publisher' and called with
   (make-comint-in-buffer "gdb-inferior" (current-buffer) nil))
 
 (defcustom gdb-display-io-nopopup nil
-  "When non-nil, and the 'gdb-inferior-io buffer is buried, don't pop it up."
+  "When non-nil, and the `gdb-inferior-io' buffer is buried, don't pop it up."
   :type 'boolean
   :group 'gdb
   :version "25.1")
@@ -2788,7 +2788,7 @@ buffer with `gdb-bind-function-to-buffer'.
 If SIGNAL-LIST is non-nil, GDB-COMMAND is sent only when the
 defined trigger is called with an argument from SIGNAL-LIST.  It's
 not recommended to define triggers with empty SIGNAL-LIST.
-Normally triggers should respond at least to 'update signal.
+Normally triggers should respond at least to the `update' signal.
 
 Normally the trigger defined by this command must be called from
 the buffer where HANDLER-NAME must work.  This should be done so
@@ -3252,7 +3252,7 @@ corresponding to the mode line clicked."
   "Define a NAME command which will act upon thread on the current line.
 
 CUSTOM-DEFUN may use locally bound `thread' variable, which will
-be the value of 'gdb-thread property of the current line.
+be the value of `gdb-thread' property of the current line.
 If `gdb-thread' is nil, error is signaled."
   `(defun ,name (&optional event)
      ,(when doc doc)

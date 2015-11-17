@@ -93,7 +93,7 @@ desktop.  Otherwise, such entries will be retained."
 
 (defcustom eww-restore-desktop nil
   "How to restore EWW buffers on `desktop-restore'.
-If t or 'auto, the buffers will be reloaded automatically.
+If t or `auto', the buffers will be reloaded automatically.
 If nil, buffers will require manual reload, and will contain the text
 specified in `eww-restore-reload-prompt' instead of the actual Web
 page contents."

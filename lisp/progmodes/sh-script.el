@@ -1450,7 +1450,7 @@ This is for the rc shell."
 (defun sh-mkword-regexpr (word)
   "Make a regexp which matches WORD as a word.
 This specifically excludes an occurrence of WORD followed by
-punctuation characters like '-'."
+punctuation characters like `-'."
   (concat word "\\([^-[:alnum:]_]\\|$\\)"))
 
 (defconst sh-re-done (sh-mkword-regexpr "done"))

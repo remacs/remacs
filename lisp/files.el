@@ -787,8 +787,8 @@ return nil.
 PATH should be a list of directories to look in, like the lists in
 `exec-path' or `load-path'.
 If SUFFIXES is non-nil, it should be a list of suffixes to append to
-file name when searching.  If SUFFIXES is nil, it is equivalent to '(\"\").
-Use '(\"/\") to disable PATH search, but still try the suffixes in SUFFIXES.
+file name when searching.  If SUFFIXES is nil, it is equivalent to (\"\").
+Use (\"/\") to disable PATH search, but still try the suffixes in SUFFIXES.
 If non-nil, PREDICATE is used instead of `file-readable-p'.
 
 This function will normally skip directories, so if you want it to find
@@ -6884,7 +6884,7 @@ as in \"og+rX-w\"."
 
 (defun read-file-modes (&optional prompt orig-file)
   "Read file modes in octal or symbolic notation and return its numeric value.
-PROMPT is used as the prompt, default to `File modes (octal or symbolic): '.
+PROMPT is used as the prompt, default to \"File modes (octal or symbolic): \".
 ORIG-FILE is the name of a file on whose mode bits to base returned
 permissions if what user types requests to add, remove, or set permissions
 based on existing mode bits, as in \"og+rX-w\"."

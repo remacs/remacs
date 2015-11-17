@@ -193,7 +193,7 @@ Possible Lifespans are:
     ))
 
 (defun semantic-cache-data-post-command-hook ()
-  "Flush `semantic-cache-data-overlays' based 'lifespan property.
+  "Flush `semantic-cache-data-overlays' based `lifespan' property.
 Remove self from `post-command-hook' if it is empty."
   (let ((newcache nil)
         (oldcache semantic-cache-data-overlays))
