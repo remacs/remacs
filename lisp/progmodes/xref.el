@@ -236,8 +236,9 @@ To create an xref object, call `xref-make'.")
 The result must be a list of xref objects.  If no references can
 be found, return nil.
 
-The default implementation performs a Grep symbol-search inside
-the current project."
+The default implementation uses `semantic-symref-tool-alist' to
+find a search tool; by default, this uses \"find | grep\" in the
+`project-current' roots."
   (cl-mapcan
    (lambda (dir)
      (xref-collect-references identifier dir))
