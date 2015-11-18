@@ -258,6 +258,10 @@ EVENT is the cadr of the event in `file-notify-handle-event'
 		    ;; File matches.
 		    (string-equal
 		     (nth 0 entry) (file-name-nondirectory file))
+		    ;; Directory matches.
+		    (string-equal
+		     (file-name-nondirectory file)
+		     (file-name-nondirectory (car registered)))
 		    ;; File1 matches.
 		    (and (stringp file1)
 			 (string-equal
@@ -364,7 +368,7 @@ FILE is the name of the file whose event is being reported."
 	    ((eq file-notify--library 'inotify)
 	     '(create delete delete-self modify move-self move))
 	    ((eq file-notify--library 'kqueue)
-	     '(delete write extend rename))
+	     '(create delete write extend rename))
 	    ((eq file-notify--library 'w32notify)
 	     '(file-name directory-name size last-write-time)))))
 	(when (memq 'attribute-change flags)

@@ -67,21 +67,39 @@ kqueue_directory_listing (Lisp_Object directory_files)
 /* Generate a file notification event.  */
 static void
 kqueue_generate_event
-(Lisp_Object ident, Lisp_Object actions, Lisp_Object file, Lisp_Object file1,
- Lisp_Object callback)
+(Lisp_Object watch_object, Lisp_Object actions,
+ Lisp_Object file, Lisp_Object file1)
 {
+  Lisp_Object flags, action, entry;
   struct input_event event;
-  EVENT_INIT (event);
-  event.kind = FILE_NOTIFY_EVENT;
-  event.frame_or_window = Qnil;
-  event.arg = list2 (Fcons (ident, Fcons (actions,
-					  NILP (file1)
-					  ? Fcons (file, Qnil)
-					  : list2 (file, file1))),
-		     callback);
+
+  /* Check, whether all actions shall be monitored.  */
+  flags = Fnth (make_number (2), watch_object);
+  action = actions;
+  do {
+    if (NILP (action))
+      break;
+    entry = XCAR (action);
+    if (NILP (Fmember (entry, flags))) {
+      action = XCDR (action);
+      actions = Fdelq (entry, actions);
+    } else
+      action = XCDR (action);
+  } while (1);
 
   /* Store it into the input event queue.  */
-  kbd_buffer_store_event (&event);
+  if (! NILP (actions)) {
+    EVENT_INIT (event);
+    event.kind = FILE_NOTIFY_EVENT;
+    event.frame_or_window = Qnil;
+    event.arg = list2 (Fcons (XCAR (watch_object),
+			      Fcons (actions,
+				     NILP (file1)
+				     ? Fcons (file, Qnil)
+				     : list2 (file, file1))),
+		       Fnth (make_number (3), watch_object));
+    kbd_buffer_store_event (&event);
+  }
 }
 
 /* This compares two directory listings in case of a `write' event for
@@ -93,19 +111,16 @@ static void
 kqueue_compare_dir_list
 (Lisp_Object watch_object)
 {
-  Lisp_Object dir, callback;
-  Lisp_Object old_directory_files, old_dl, new_directory_files, new_dl, dl;
+  Lisp_Object dir, old_directory_files, old_dl, new_directory_files, new_dl, dl;
 
   dir = XCAR (XCDR (watch_object));
-  callback = Fnth (make_number (3), watch_object);
 
   old_directory_files = Fnth (make_number (4), watch_object);
   old_dl = kqueue_directory_listing (old_directory_files);
 
   /* When the directory is not accessible anymore, it has been deleted.  */
   if (NILP (Ffile_directory_p (dir))) {
-    kqueue_generate_event
-      (XCAR (watch_object), Fcons (Qdelete, Qnil), dir, Qnil, callback);
+    kqueue_generate_event (watch_object, Fcons (Qdelete, Qnil), dir, Qnil);
     return;
   }
   new_directory_files =
@@ -137,21 +152,20 @@ kqueue_compare_dir_list
 	if (NILP (Fequal (Fnth (make_number (2), old_entry),
 			  Fnth (make_number (2), new_entry))))
 	  kqueue_generate_event
-	    (XCAR (watch_object), Fcons (Qwrite, Qnil),
-	     XCAR (XCDR (old_entry)), Qnil, callback);
+	    (watch_object, Fcons (Qwrite, Qnil), XCAR (XCDR (old_entry)), Qnil);
 	/* Status change time has been changed, the file attributes
 	   have changed.  */
 	  if (NILP (Fequal (Fnth (make_number (3), old_entry),
 			    Fnth (make_number (3), new_entry))))
 	  kqueue_generate_event
-	    (XCAR (watch_object), Fcons (Qattrib, Qnil),
-	     XCAR (XCDR (old_entry)), Qnil, callback);
+	    (watch_object, Fcons (Qattrib, Qnil),
+	     XCAR (XCDR (old_entry)), Qnil);
 
       } else {
 	/* The file has been renamed.  */
 	kqueue_generate_event
-	  (XCAR (watch_object), Fcons (Qrename, Qnil),
-	   XCAR (XCDR (old_entry)), XCAR (XCDR (new_entry)), callback);
+	  (watch_object, Fcons (Qrename, Qnil),
+	   XCAR (XCDR (old_entry)), XCAR (XCDR (new_entry)));
       }
       new_dl = Fdelq (new_entry, new_dl);
       goto the_end;
@@ -164,8 +178,7 @@ kqueue_compare_dir_list
       if (strcmp (SSDATA (XCAR (XCDR (old_entry))),
 		  SSDATA (XCAR (XCDR (new_entry)))) == 0) {
 	kqueue_generate_event
-	  (XCAR (watch_object), Fcons (Qwrite, Qnil),
-	   XCAR (XCDR (old_entry)), Qnil, callback);
+	  (watch_object, Fcons (Qwrite, Qnil), XCAR (XCDR (old_entry)), Qnil);
 	new_dl = Fdelq (new_entry, new_dl);
 	goto the_end;
       }
@@ -173,8 +186,7 @@ kqueue_compare_dir_list
 
     /* The file has been deleted.  */
     kqueue_generate_event
-      (XCAR (watch_object), Fcons (Qdelete, Qnil),
-       XCAR (XCDR (old_entry)), Qnil, callback);
+      (watch_object, Fcons (Qdelete, Qnil), XCAR (XCDR (old_entry)), Qnil);
 
   the_end:
     dl = XCDR (dl);
@@ -191,15 +203,13 @@ kqueue_compare_dir_list
     /* A new file has appeared.  */
     new_entry = XCAR (dl);
     kqueue_generate_event
-      (XCAR (watch_object), Fcons (Qcreate, Qnil),
-       XCAR (XCDR (new_entry)), Qnil, callback);
+      (watch_object, Fcons (Qcreate, Qnil), XCAR (XCDR (new_entry)), Qnil);
 
     /* Check size of that file.  */
     Lisp_Object size = Fnth (make_number (4), new_entry);
     if (FLOATP (size) || (XINT (size) > 0))
       kqueue_generate_event
-	(XCAR (watch_object), Fcons (Qwrite, Qnil),
-	 XCAR (XCDR (new_entry)), Qnil, callback);
+	(watch_object, Fcons (Qwrite, Qnil), XCAR (XCDR (new_entry)), Qnil);
 
     dl = XCDR (dl);
     new_dl = Fdelq (new_entry, new_dl);
@@ -226,7 +236,7 @@ kqueue_callback (int fd, void *data)
   for (;;) {
     struct kevent kev;
     static const struct timespec nullts = { 0, 0 };
-    Lisp_Object descriptor, watch_object, file, callback, actions;
+    Lisp_Object descriptor, watch_object, file, actions;
 
     /* Read one event.  */
     int ret = kevent (kqueuefd, NULL, 0, &kev, 1, &nullts);
@@ -235,14 +245,11 @@ kqueue_callback (int fd, void *data)
       return;
     }
 
-    /* Determine descriptor, file name and callback function.  */
+    /* Determine descriptor and file name.  */
     descriptor = make_number (kev.ident);
     watch_object = assq_no_quit (descriptor, watch_list);
-
-    if (CONSP (watch_object)) {
+    if (CONSP (watch_object))
       file = XCAR (XCDR (watch_object));
-      callback = Fnth (make_number (3), watch_object);
-    }
     else
       continue;
 
@@ -271,7 +278,7 @@ kqueue_callback (int fd, void *data)
 
     /* Create the event.  */
     if (! NILP (actions))
-      kqueue_generate_event (descriptor, actions, file, Qnil, callback);
+      kqueue_generate_event (watch_object, actions, file, Qnil);
 
     /* Cancel monitor if file or directory is deleted or renamed.  */
     if (kev.fflags & (NOTE_DELETE | NOTE_RENAME))
