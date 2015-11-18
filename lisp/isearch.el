@@ -171,11 +171,6 @@ is non-nil if the user quits the search.")
   "Function to call to display the search prompt.
 If nil, use function `isearch-message'.")
 
-(defmacro isearch-call-message (&optional cqh ellip)
-  `(if isearch-message-function
-       (funcall isearch-message-function ,cqh ,ellip)
-     (isearch-message ,cqh ,ellip)))
-
 (defvar isearch-wrap-function nil
   "Function to call to wrap the search when search is failed.
 If nil, move point to the beginning of the buffer for a forward search,
@@ -974,7 +969,7 @@ The last thing it does is to run `isearch-update-post-hook'."
 	   (null executing-kbd-macro))
       (progn
         (if (not (input-pending-p))
-            (isearch-call-message))
+          (funcall (or isearch-message-function #'isearch-message)))
         (if (and isearch-slow-terminal-mode
                  (not (or isearch-small-window
                           (pos-visible-in-window-p nil nil nil t))))
@@ -1300,7 +1295,7 @@ You can update the global isearch variables by setting new values to
 		  isearch-case-fold-search isearch-new-case-fold)
 
 	    ;; Restore the minibuffer message before moving point.
-	    (isearch-call-message nil t)
+            (funcall (or isearch-message-function #'isearch-message) nil t)
 
 	    ;; Set point at the start (end) of old match if forward (backward),
 	    ;; so after exiting minibuffer isearch resumes at the start (end)
@@ -1901,7 +1896,8 @@ If search string is empty, just beep."
 					    (length isearch-string))))
           isearch-message (mapconcat 'isearch-text-char-description
                                      isearch-string "")))
-  (isearch-call-message nil t) 		; Do this before moving point.
+  ;; Do the following before moving point.
+  (funcall (or isearch-message-function #'isearch-message) nil t)
   ;; Use the isearch-other-end as new starting point to be able
   ;; to find the remaining part of the search string again.
   ;; This is like what `isearch-search-and-update' does,
@@ -2078,7 +2074,8 @@ With argument, add COUNT copies of the character."
 	      (setq isearch-case-fold-search
 		    (isearch-no-upper-case-p isearch-string isearch-regexp))))
       ;; Not regexp, not reverse, or no match at point.
-      (isearch-call-message nil t)	; Do this before moving point.
+      ;; Do the following before moving point.
+      (funcall (or isearch-message-function #'isearch-message) nil t)
       (if (and isearch-other-end (not isearch-adjusted))
 	  (goto-char (if isearch-forward isearch-other-end
 		       (min isearch-opoint
@@ -2432,7 +2429,7 @@ Search is updated accordingly."
   (isearch-ring-adjust1 advance)
   (if search-ring-update
       (progn
-	(isearch-call-message nil t)
+        (funcall (or isearch-message-function #'isearch-message) nil t)
 	(isearch-search)
 	(isearch-push-state)
 	(isearch-update))
