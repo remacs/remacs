@@ -1026,12 +1026,11 @@ If PLAYLIST is t or nil or missing, use the main playlist."
                                                (substring time (match-end 0))
                                              time)))))
                     (`Cover
-                     (let ((dir (file-name-directory
-                                 (mpc-file-local-copy (cdr (assq 'file info))))))
+                     (let ((dir (file-name-directory (cdr (assq 'file info)))))
                        ;; (debug)
                        (push `(equal ',dir (file-name-directory (cdr (assq 'file info)))) pred)
                        (if-let ((covers '(".folder.png" "cover.jpg" "folder.jpg"))
-                                (cover (cl-loop for file in (directory-files dir)
+                                (cover (cl-loop for file in (directory-files (mpc-file-local-copy dir))
                                                 if (member (downcase file) covers)
                                                 return (concat dir file)))
                                 (file (with-demoted-errors "MPC: %s"
