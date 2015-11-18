@@ -20,8 +20,10 @@ At the beginning of this phase, a release branch called "emacs-NN"
 ("NN" represents the major version number of the new Emacs release)
 will be cut from `master'.
 
-This phase is spent fixing bugs and eliminating undocumented new
-features on the "emacs-NN" branch.
+This phase is mostly spent fixing bugs and eliminating undocumented
+new features on the "emacs-NN" branch.  Actually, the default branch
+for pushing any work in this phase should be "emacs-NN", except for
+new features.
 
 In parallel to this phase, `master' can receive new features, to be
 released in the next release cycle.  From time to time, the master
