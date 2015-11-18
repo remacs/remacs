@@ -826,6 +826,9 @@ The songs are returned as alists."
   (mpc-proc-cmd "play")
   (mpc-status-refresh))
 
+(defun mpc-cmd-seekcur (time)
+  (mpc-proc-cmd (list "seekcur" time) #'mpc-status-refresh))
+
 (defun mpc-cmd-add (files &optional playlist)
   "Add the songs FILES to PLAYLIST.
 If PLAYLIST is t or nil or missing, use the main playlist."
@@ -1127,7 +1130,7 @@ If PLAYLIST is t or nil or missing, use the main playlist."
     (define-key map "s" 'mpc-toggle-play)
     (define-key map ">" 'mpc-next)
     (define-key map "<" 'mpc-prev)
-    (define-key map "g" nil)
+    (define-key map "g" 'mpc-seek-current)
     map))
 
 (easy-menu-define mpc-mode-menu mpc-mode-map
@@ -1136,6 +1139,7 @@ If PLAYLIST is t or nil or missing, use the main playlist."
     ["Play/Pause" mpc-toggle-play]      ;FIXME: Add one of ⏯/▶/⏸ in there?
     ["Next Track" mpc-next]             ;FIXME: Add ⇥ there?
     ["Previous Track" mpc-prev]         ;FIXME: Add ⇤ there?
+    ["Seek Within Track" mpc-seek-current]
     "--"
     ["Repeat Playlist" mpc-toggle-repeat :style toggle
      :selected (member '(repeat . "1") mpc-status)]
@@ -2401,6 +2405,12 @@ This is used so that they can be compared with `eq', which is needed for
   "Resume playing."
   (interactive)
   (mpc-cmd-pause "0"))
+
+(defun mpc-seek-current (pos)
+  "Seek within current track."
+  (interactive
+   (list (read-string "Position to go ([+-]seconds): ")))
+  (mpc-cmd-seekcur pos))
 
 (defun mpc-toggle-play ()
   "Toggle between play and pause.
