@@ -3300,8 +3300,6 @@ if test "${with_modules}" != "no"; then
     MODULES_SUFFIX=".so"
     HAVE_MODULES=yes
   elif test "$opsys" = "cygwin"; then
-    # XXX: not tested
-    LIBMODULES="-lcygwin"
     MODULES_SUFFIX=".dll"
     HAVE_MODULES=yes
   elif test "$opsys" = "darwin"; then
@@ -5269,7 +5267,7 @@ AS_ECHO(["  Does Emacs use -lXaw3d?                                 ${HAVE_XAW3D
   Does Emacs use -lotf?                                   ${HAVE_LIBOTF}
   Does Emacs use -lxft?                                   ${HAVE_XFT}
   Does Emacs directly use zlib?                           ${HAVE_ZLIB}
-  Does Emacs has dynamic modules support?                 ${HAVE_MODULES}
+  Does Emacs have dynamic modules support?                ${HAVE_MODULES}
   Does Emacs use toolkit scroll bars?                     ${USE_TOOLKIT_SCROLL_BARS}
 "])
 
