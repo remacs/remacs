@@ -293,7 +293,8 @@ Don't wait longer than timeout seconds for the events to be delivered."
        (let (file-notify--test-events)
          ,@body
          (file-notify--wait-for-events
-          (file-notify--test-timeout)
+          ;; More events need more time.  Use some fudge factor.
+          (* (ceiling (length ,events) 100) (file-notify--test-timeout))
           (= (length ,events) (length file-notify--test-events)))
          (should (equal ,events (mapcar #'cadr file-notify--test-events)))
          (setq ,outer (append ,outer file-notify--test-events)))
@@ -636,6 +637,44 @@ Don't wait longer than timeout seconds for the events to be delivered."
 
 (file-notify--deftest-remote file-notify-test05-dir-validity
   "Check `file-notify-valid-p' via file notification for remote directories.")
+
+(ert-deftest file-notify-test06-many-events ()
+  "Check that events are not dropped."
+  (skip-unless (file-notify--test-local-enabled))
+  ;; Under cygwin there are so bad timings that it doesn't make sense to test.
+  (skip-unless (not (eq system-type 'cygwin)))
+  (setq file-notify--test-tmpfile (file-notify--test-make-temp-name))
+  (make-directory file-notify--test-tmpfile)
+  (setq file-notify--test-desc
+        (file-notify-add-watch
+         file-notify--test-tmpfile
+         '(change) 'file-notify--test-event-handler))
+  (unwind-protect
+      (let ((n 1000)
+            x-file-list y-file-list
+            (default-directory file-notify--test-tmpfile))
+        (dotimes (i n)
+          (push (expand-file-name (format "x%d" i)) x-file-list)
+          (push (expand-file-name (format "y%d" i)) y-file-list))
+        (file-notify--test-with-events (make-list (+ n n) 'created)
+          (dolist (file x-file-list)
+            (write-region "" nil file nil 'no-message))
+          (dolist (file y-file-list)
+            (write-region "" nil file nil 'no-message)))
+        (file-notify--test-with-events (cond
+                                        ;; XXX Different results?
+                                        ((featurep 'kqueue)
+                                         (append (make-list n 'changed)
+                                                 (make-list n 'deleted)))
+                                        (t (make-list n 'renamed)))
+          (let ((x-file-list x-file-list)
+                (y-file-list y-file-list))
+            (while (and x-file-list y-file-list)
+              (rename-file (pop x-file-list) (pop y-file-list) t))))
+        (file-notify--test-with-events (make-list n 'deleted)
+          (dolist (file y-file-list)
+            (delete-file file))))
+    (file-notify--test-cleanup)))
 
 (defun file-notify-test-all (&optional interactive)
   "Run all tests for \\[file-notify]."
