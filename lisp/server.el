@@ -1173,6 +1173,7 @@ The following commands are accepted by the client:
                    ;; handler on MS-Windows, in which case FILENAME
                    ;; might start with a drive letter.
                    (when (and (eq system-type 'cygwin)
+                              (fboundp 'cygwin-convert-file-name-from-windows)
                               (string-match "\\`[A-Za-z]:" file))
                      (setq file (cygwin-convert-file-name-from-windows file)))
                    (setq file (expand-file-name file dir))
