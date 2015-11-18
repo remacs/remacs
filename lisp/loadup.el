@@ -60,6 +60,10 @@
     (let ((dir (car load-path)))
       ;; We'll probably overflow the pure space.
       (setq purify-flag nil)
+      ;; Value of max-lisp-eval-depth when compiling initially.
+      ;; During bootstrapping the byte-compiler is run interpreted when
+      ;; compiling itself, which uses a lot more stack than usual.
+      (setq max-lisp-eval-depth 2200)
       (setq load-path (list (expand-file-name "." dir)
 			    (expand-file-name "emacs-lisp" dir)
 			    (expand-file-name "language" dir)
