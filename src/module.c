@@ -1,22 +1,21 @@
-/*
-  module.c - Module loading and runtime implementation
-  Copyright (C) 2015 Free Software Foundation, Inc.
+/* module.c - Module loading and runtime implementation
 
-  This file is part of GNU Emacs.
+Copyright (C) 2015 Free Software Foundation, Inc.
 
-  GNU Emacs is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+This file is part of GNU Emacs.
 
-  GNU Emacs is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+GNU Emacs is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-  You should have received a copy of the GNU General Public License
-  along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
-*/
+GNU Emacs is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -53,9 +52,11 @@ static thrd_t main_thread;
 static pthread_t main_thread;
 #elif defined(WINDOWSNT)
 #include <windows.h>
-/* On Windows, we store a handle to the main thread instead of the
-   thread ID because the latter can be reused when a thread terminates. */
+/* On Windows, we store both a handle to the main thread and the
+   thread ID because the latter can be reused when a thread
+   terminates. */
 static HANDLE main_thread;
+static DWORD main_thread_id;
 #endif
 
 
@@ -757,7 +758,8 @@ static emacs_value module_vec_get (emacs_env *env,
   eassert (size >= 0);
   if (i >= size)
     {
-      if (i > MOST_POSITIVE_FIXNUM) i = MOST_POSITIVE_FIXNUM;
+      if (i > MOST_POSITIVE_FIXNUM)
+	i = (size_t) MOST_POSITIVE_FIXNUM;
       module_args_out_of_range (env, lvec, make_number (i));
       return NULL;
     }
@@ -899,8 +901,8 @@ static void check_main_thread (void)
   /* CompareObjectHandles would be perfect, but is only available in
      Windows 10.  Also check whether the thread is still running to
      protect against thread identifier reuse. */
-  eassert (GetCurrentThreadID () == GetThreadID (main_thread) &&
-           WaitForSingleObject (main_thread, 0) == WAIT_TIMEOUT);
+  eassert (GetCurrentThreadId () == main_thread_id
+	   && WaitForSingleObject (main_thread, 0) == WAIT_TIMEOUT);
 #endif
 }
 
@@ -1175,11 +1177,22 @@ void module_init (void)
 #elif defined(HAVE_PTHREAD)
   main_thread = pthread_self ();
 #elif defined(WINDOWSNT)
+  /* This calls APIs that are only available on Vista and later.  */
+#if 0
   /* GetCurrentProcess returns a pseudohandle, which we have to duplicate. */
   if (! DuplicateHandle (GetCurrentProcess(), GetCurrentThread(),
                          GetCurrentProcess(), &main_thread,
-                         SYNCHRONIZE | THREAD_QUERY_LIMITED_INFORMATION,
+                         SYNCHRONIZE | THREAD_QUERY_INFORMATION,
                          FALSE, 0))
     emacs_abort ();
+#else
+  /* GetCurrentThread returns a pseudohandle, which we have to duplicate. */
+  HANDLE th = GetCurrentThread ();
+  if (!DuplicateHandle (GetCurrentProcess (), th,
+                        GetCurrentProcess (), &main_thread, 0, FALSE,
+                        DUPLICATE_SAME_ACCESS))
+    emacs_abort ();
+  main_thread_id = GetCurrentThreadId ();
+#endif
 #endif
 }
