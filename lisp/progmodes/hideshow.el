@@ -469,9 +469,9 @@ KIND is either `code' or `comment'.  Optional fourth arg B-OFFSET
 when added to B specifies the actual buffer position where the block
 begins.  Likewise for optional fifth arg E-OFFSET.  If unspecified
 they are taken to be 0 (zero).  The following properties are set
-in the overlay: 'invisible 'hs 'hs-b-offset 'hs-e-offset.  Also,
+in the overlay: `invisible' `hs' `hs-b-offset' `hs-e-offset'.  Also,
 depending on variable `hs-isearch-open', the following properties may
-be present: 'isearch-open-invisible 'isearch-open-invisible-temporary.
+be present: `isearch-open-invisible' `isearch-open-invisible-temporary'.
 If variable `hs-set-up-overlay' is non-nil it should specify a function
 to call with the newly initialized overlay."
   (unless b-offset (setq b-offset 0))

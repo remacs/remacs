@@ -756,7 +756,7 @@ matching item, even without typing a slash."
 (defcustom ido-create-new-buffer 'prompt
   "Specify whether a new buffer is created if no buffer matches substring.
 Choices are `always' to create new buffers unconditionally, `prompt' to
-ask user whether to create buffer, or 'never to never create new buffer."
+ask user whether to create buffer, or `never' to never create new buffer."
   :type '(choice (const always)
 		 (const prompt)
 		 (const never))

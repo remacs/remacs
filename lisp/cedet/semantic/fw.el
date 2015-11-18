@@ -171,7 +171,7 @@ That is remove the unsupported :help stuff."
 NAME specifies a special name that can be searched for later to
 recover the cached data with `semantic-get-cache-data'.
 LIFESPAN indicates how long the data cache will be remembered.
-The default LIFESPAN is 'end-of-command.
+The default LIFESPAN is `end-of-command'.
 Possible Lifespans are:
   `end-of-command' - Remove the cache at the end of the currently
                      executing command.

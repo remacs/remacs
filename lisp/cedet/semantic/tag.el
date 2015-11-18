@@ -958,8 +958,8 @@ Return nil if TAG is not of class `alias'."
   "Return a list of components for TAG.
 A Component is a part of TAG which itself may be a TAG.
 Examples include the elements of a structure in a
-tag of class 'type, or the list of arguments to a
-tag of class 'function."
+tag of class `type', or the list of arguments to a
+tag of class `function'."
   )
 
 (defun semantic-tag-components-default (tag)

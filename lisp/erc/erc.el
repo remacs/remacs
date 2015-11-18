@@ -2419,9 +2419,9 @@ If STRING is nil, the function does nothing."
   "Display STRING in the ERC BUFFER.
 All screen output must be done through this function.  If BUFFER is nil
 or omitted, the default ERC buffer for the `erc-session-server' is used.
-The BUFFER can be an actual buffer, a list of buffers, 'all or 'active.
-If BUFFER = 'all, the string is displayed in all the ERC buffers for the
-current session.  'active means the current active buffer
+The BUFFER can be an actual buffer, a list of buffers, `all' or `active'.
+If BUFFER = `all', the string is displayed in all the ERC buffers for the
+current session.  `active' means the current active buffer
 \(`erc-active-buffer').  If the buffer can't be resolved, the current
 buffer is used.  `erc-display-line-1' is used to display STRING.
 

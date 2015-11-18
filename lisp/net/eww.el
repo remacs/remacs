@@ -1869,7 +1869,7 @@ Generally, the list should not include the (usually overly large)
 
 (defun eww-restore-desktop (file-name buffer-name misc-data)
   "Restore an eww buffer from its desktop file record.
-If `eww-restore-desktop' is t or 'auto, this function will also
+If `eww-restore-desktop' is t or `auto', this function will also
 initiate the retrieval of the respective URI in the background.
 Otherwise, the restored buffer will contain a prompt to do so by using
 \\[eww-reload]."
