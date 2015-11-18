@@ -1165,6 +1165,7 @@ BODY (does not apply to errors signaled by ERROR-FORM).
                                 (unwind-protect (wrap-errors
                                                  (when-let ((er (plist-get status :error)))
                                                    (error "Error retrieving: %s %S" url er))
+                                                 (goto-char (point-min))
                                                  (unless (search-forward-regexp "^\r?\n\r?" nil 'noerror)
                                                    (error "Error retrieving: %s %S" url "incomprehensible buffer"))
                                                  (with-temp-buffer
