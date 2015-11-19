@@ -138,6 +138,21 @@
                      (open-line 1)))
                  '("- - " . "\n(a b c d)"))))
 
+;; For a while, from 24 Oct - 19 Nov 2015, `open-line' in the Emacs
+;; development tree became sensitive to `electric-indent-mode', which
+;; it had not been before.  This sensitivity was reverted for the
+;; Emacs 25 release, so it could be discussed further (see thread
+;; "Questioning the new behavior of `open-line'." on the Emacs Devel
+;; mailing list).  The only test case here that started failing after
+;; the reversion is the third one, the one that currently expects
+;; `("(a b" . "\n   \n   c d)")'.  If `open-line' were again sensitive
+;; to electric indent, then the three spaces between the two newlines
+;; would go away, leaving `("(a b" . "\n\n   c d)")'.
+;;
+;; If electric indent sensitivity were re-enabled, we might also want
+;; to make the test cases below a bit stricter, or add some more test
+;; cases that are specific to `electric-indent-mode', since right now
+;; all but one of the cases pass with or without electric indent.
 (ert-deftest open-line-indent ()
   (should (equal (simple-test--dummy-buffer
                    (electric-indent-local-mode 1)
@@ -152,7 +167,7 @@
                    (let ((current-prefix-arg nil))
                      (call-interactively #'open-line)
                      (call-interactively #'open-line)))
-                 '("(a b" . "\n\n   c d)")))
+                 '("(a b" . "\n   \n   c d)")))
   (should (equal (simple-test--dummy-buffer
                    (electric-indent-local-mode 1)
                    (open-line 5 'interactive))
