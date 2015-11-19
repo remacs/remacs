@@ -451,11 +451,9 @@ module_eq (emacs_env *env, emacs_value a, emacs_value b)
   return EQ (value_to_lisp (a), value_to_lisp (b));
 }
 
-static int64_t
+static intmax_t
 module_extract_integer (emacs_env *env, emacs_value n)
 {
-  verify (INT64_MIN <= MOST_NEGATIVE_FIXNUM);
-  verify (INT64_MAX >= MOST_POSITIVE_FIXNUM);
   check_main_thread ();
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
   const Lisp_Object l = value_to_lisp (n);
@@ -468,16 +466,11 @@ module_extract_integer (emacs_env *env, emacs_value n)
 }
 
 static emacs_value
-module_make_integer (emacs_env *env, int64_t n)
+module_make_integer (emacs_env *env, intmax_t n)
 {
   check_main_thread ();
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
-  if (n < MOST_NEGATIVE_FIXNUM)
-    {
-      module_non_local_exit_signal_1 (env, Qunderflow_error, Qnil);
-      return NULL;
-    }
-  if (n > MOST_POSITIVE_FIXNUM)
+  if (! (MOST_NEGATIVE_FIXNUM <= n && n <= MOST_POSITIVE_FIXNUM))
     {
       module_non_local_exit_signal_1 (env, Qoverflow_error, Qnil);
       return NULL;

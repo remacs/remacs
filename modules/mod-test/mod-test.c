@@ -31,7 +31,8 @@ Fmod_test_return_t (emacs_env *env, int nargs, emacs_value args[], void *data)
 }
 
 /* Expose simple sum function.  */
-static int64_t sum (int64_t a, int64_t b)
+static intmax_t
+sum (intmax_t a, intmax_t b)
 {
   return a + b;
 }
@@ -39,10 +40,10 @@ static int64_t sum (int64_t a, int64_t b)
 static emacs_value
 Fmod_test_sum (emacs_env *env, int nargs, emacs_value args[], void *data)
 {
-  int64_t a = env->extract_integer (env, args[0]);
-  int64_t b = env->extract_integer (env, args[1]);
+  intmax_t a = env->extract_integer (env, args[0]);
+  intmax_t b = env->extract_integer (env, args[1]);
 
-  int64_t r = sum(a, b);
+  intmax_t r = sum (a, b);
 
   return env->make_integer (env, r);
 }

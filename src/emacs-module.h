@@ -142,10 +142,9 @@ struct emacs_env_25
 
   bool (*eq) (emacs_env *env, emacs_value a, emacs_value b);
 
-  int_fast64_t (*extract_integer) (emacs_env *env,
-				   emacs_value value);
+  intmax_t (*extract_integer) (emacs_env *env, emacs_value value);
 
-  emacs_value (*make_integer) (emacs_env *env, int_fast64_t value);
+  emacs_value (*make_integer) (emacs_env *env, intmax_t value);
 
   double (*extract_float) (emacs_env *env, emacs_value value);
 
