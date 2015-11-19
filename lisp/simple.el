@@ -2872,10 +2872,11 @@ See also `undo-auto--buffer-undoably-changed'.")
 (defun undo-auto--add-boundary ()
   "Add an `undo-boundary' in appropriate buffers."
   (undo-auto--boundaries
-   (if undo-auto--this-command-amalgamating
-       'amalgamate
-     'command))
-  (setq undo-auto--this-command-amalgamating nil))
+   (let ((amal undo-auto--this-command-amalgamating))
+       (setq undo-auto--this-command-amalgamating nil)
+       (if amal
+           'amalgamate
+         'command))))
 
 (defun undo-auto--amalgamate ()
   "Amalgamate undo if necessary.

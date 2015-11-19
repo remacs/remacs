@@ -202,7 +202,7 @@ uintmax_t num_input_events;
 
 static EMACS_INT last_auto_save;
 
-/* The value of point when the last command was started.  */
+/* The value of point when the last command was started. */
 static ptrdiff_t last_point_position;
 
 /* The frame in which the last input event occurred, or Qmacro if the
@@ -1448,6 +1448,11 @@ command_loop_1 (void)
             /* Ensure that we have added appropriate undo-boundaries as a
                result of changes from the last command. */
             call0 (Qundo_auto__add_boundary);
+
+            /* Record point and buffer, so we can put point into the undo
+               information if necessary. */
+            point_before_last_command_or_undo = PT;
+            buffer_before_last_command_or_undo = current_buffer;
 
             call1 (Qcommand_execute, Vthis_command);
 

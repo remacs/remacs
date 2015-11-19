@@ -263,5 +263,53 @@
                  '("(s1) (s4)" . " (s2) (s3) (s5)"))))
 
 
+;; Test for a regression introduced by undo-auto--boundaries changes.
+;; https://lists.gnu.org/archive/html/emacs-devel/2015-11/msg01652.html
+(defun undo-test-kill-c-a-then-undo ()
+  (with-temp-buffer
+    (switch-to-buffer (current-buffer))
+    (setq buffer-undo-list nil)
+    (insert "a\nb\n\c\n")
+    (goto-char (point-max))
+    ;; We use a keyboard macro because it adds undo events in the same
+    ;; way as if a user were involved.
+    (kmacro-call-macro nil nil nil
+                       [left
+                        ;; Delete "c"
+                        backspace
+                        left left left
+                        ;; Delete "a"
+                        backspace
+                        ;; C-/ or undo
+                        67108911
+                        ])
+    (point)))
+
+(defun undo-test-point-after-forward-kill ()
+  (with-temp-buffer
+    (switch-to-buffer (current-buffer))
+    (setq buffer-undo-list nil)
+    (insert "kill word forward")
+    ;; Move to word "word".
+    (goto-char 6)
+    (kmacro-call-macro nil nil nil
+                       [
+                        ;; kill-word
+                        C-delete
+                        ;; undo
+                        67108911
+                        ])
+    (point)))
+
+(ert-deftest undo-point-in-wrong-place ()
+  (should
+   ;; returns 5 with the bug
+   (= 2
+      (undo-test-kill-c-a-then-undo)))
+  (should
+   (= 6
+      (undo-test-point-after-forward-kill))))
+
+
 (provide 'simple-test)
 ;;; simple-test.el ends here
