@@ -1,12 +1,28 @@
-/*
- *              Portable API for dynamic loading
- *
- *  Assuming modules are enabled on modern systems...  *Yes*, the
- *  preprocessor macro checks could be more precise.  I don't care.
- *
- *  If you think the abstraction is too leaky use libltdl (libtool),
- *  don't reinvent the wheel by fixing this one.
- */
+/* Portable API for dynamic loading.
+
+Copyright 2015 Free Software Foundation, Inc.
+
+This file is part of GNU Emacs.
+
+GNU Emacs is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+GNU Emacs is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+
+
+/* Assume modules are enabled on modern systems...  *Yes*, the
+   preprocessor macro checks could be more precise.  I don't care.
+
+   If you think the abstraction is too leaky use libltdl (libtool),
+   don't reinvent the wheel by fixing this one.  */
 
 #include "dynlib.h"
 
