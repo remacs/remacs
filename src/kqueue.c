@@ -35,10 +35,6 @@ static int kqueuefd = -1;
 /* This is a list, elements are (DESCRIPTOR FILE FLAGS CALLBACK [DIRLIST]).  */
 static Lisp_Object watch_list;
 
-/* Pending events, being the target of a rename operation.
-   Items are (INODE FILE-NAME LAST-MOD LAST-STATUS-MOD SIZE).  */
-static Lisp_Object pending_events;
-
 /* Generate a list from the directory_files_internal output.
    Items are (INODE FILE-NAME LAST-MOD LAST-STATUS-MOD SIZE).  */
 Lisp_Object
@@ -115,9 +111,11 @@ static void
 kqueue_compare_dir_list
 (Lisp_Object watch_object)
 {
-  Lisp_Object dir, old_directory_files, old_dl, new_directory_files, new_dl, dl;
+  Lisp_Object dir, pending_events;
+  Lisp_Object old_directory_files, old_dl, new_directory_files, new_dl, dl;
 
   dir = XCAR (XCDR (watch_object));
+  pending_events = Qnil;
 
   old_directory_files = Fnth (make_number (4), watch_object);
   old_dl = kqueue_directory_listing (old_directory_files);
@@ -198,6 +196,7 @@ kqueue_compare_dir_list
 	(watch_object, Fcons (Qrename, Qnil),
 	 XCAR (XCDR (old_entry)), XCAR (XCDR (new_entry)));
       new_dl = Fdelq (new_entry, new_dl);
+      pending_events = Fdelq (new_entry, pending_events);
     }
 
   the_end:
@@ -208,31 +207,50 @@ kqueue_compare_dir_list
   /* Parse through the resulting new list.  */
   dl = new_dl;
   while (1) {
-    Lisp_Object new_entry;
+    Lisp_Object entry;
     if (NILP (dl))
       break;
 
     /* A new file has appeared.  */
-    new_entry = XCAR (dl);
+    entry = XCAR (dl);
     kqueue_generate_event
-      (watch_object, Fcons (Qcreate, Qnil), XCAR (XCDR (new_entry)), Qnil);
+      (watch_object, Fcons (Qcreate, Qnil), XCAR (XCDR (entry)), Qnil);
 
     /* Check size of that file.  */
-    Lisp_Object size = Fnth (make_number (4), new_entry);
+    Lisp_Object size = Fnth (make_number (4), entry);
     if (FLOATP (size) || (XINT (size) > 0))
       kqueue_generate_event
-	(watch_object, Fcons (Qwrite, Qnil), XCAR (XCDR (new_entry)), Qnil);
+	(watch_object, Fcons (Qwrite, Qnil), XCAR (XCDR (entry)), Qnil);
 
     dl = XCDR (dl);
-    new_dl = Fdelq (new_entry, new_dl);
+    new_dl = Fdelq (entry, new_dl);
   }
 
-  /* At this point, both old_dl and new_dl shall be empty.  Let's make
-     a check for this (might be removed once the code is stable).  */
+  /* Parse through the resulting pending_events_list.  */
+  dl = pending_events;
+  while (1) {
+    Lisp_Object entry;
+    if (NILP (dl))
+      break;
+
+    /* A file is still pending.  Assume it was a write.  */
+    entry = XCAR (dl);
+    kqueue_generate_event
+      (watch_object, Fcons (Qwrite, Qnil), XCAR (XCDR (entry)), Qnil);
+
+    dl = XCDR (dl);
+    pending_events = Fdelq (entry, pending_events);
+  }
+
+  /* At this point, old_dl, new_dl and pending_events shall be empty.
+     Let's make a check for this (might be removed once the code is
+     stable).  */
   if (! NILP (old_dl))
     report_file_error ("Old list not empty", old_dl);
   if (! NILP (new_dl))
     report_file_error ("New list not empty", new_dl);
+  if (! NILP (pending_events))
+    report_file_error ("Pending events not empty", new_dl);
 
   /* Replace old directory listing with the new one.  */
   XSETCDR (Fnthcdr (make_number (3), watch_object),
@@ -456,7 +474,6 @@ void
 globals_of_kqueue (void)
 {
   watch_list = Qnil;
-  pending_events = Qnil;
 }
 
 void
