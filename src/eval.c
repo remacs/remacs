@@ -61,7 +61,7 @@ union specbinding *specpdl_ptr;
 
 /* Depth in Lisp evaluations and function calls.  */
 
-EMACS_INT lisp_eval_depth;
+static EMACS_INT lisp_eval_depth;
 
 /* The value of num_nonmacro_input_events as of the last time we
    started to enter the debugger.  If we decide to enter the debugger

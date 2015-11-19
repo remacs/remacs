@@ -3837,7 +3837,6 @@ intern_c_string (const char *str)
 }
 
 /* Defined in eval.c.  */
-extern EMACS_INT lisp_eval_depth;
 extern Lisp_Object Vautoload_queue;
 extern Lisp_Object Vrun_hooks;
 extern Lisp_Object Vsignaling_function;

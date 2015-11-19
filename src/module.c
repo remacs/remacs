@@ -697,7 +697,7 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
   void *gpl_sym;
 
   CHECK_STRING (file);
-  handle = dynlib_open (SDATA (file));
+  handle = dynlib_open (SSDATA (file));
   if (!handle)
     error ("Cannot load file %s: %s", SDATA (file), dynlib_error ());
 
@@ -789,6 +789,8 @@ ARGLIST is a list of arguments passed to SUBRPTR.  */)
         finalize_environment (&env);
         Fthrow (tag, value);
       }
+    default:
+      eassume (false);
     }
 }
 
