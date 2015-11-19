@@ -692,19 +692,16 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
   if (!module_init)
     error ("Module %s does not have an init function.", SDATA (file));
 
-  struct {
-    struct emacs_runtime pub;
-    struct emacs_runtime_private priv;
-  } runtime = {
-    .pub = {
-      .size = sizeof runtime.pub,
-      .get_environment = module_get_environment,
-      .private_members = &runtime.priv
-    }
-  };
-  initialize_environment (&runtime.priv.environment);
-  int r = module_init (&runtime.pub);
-  finalize_environment (&runtime.priv.environment);
+  struct emacs_runtime_private priv;
+  struct emacs_runtime pub =
+    {
+      .size = sizeof pub,
+      .private_members = &priv,
+      .get_environment = module_get_environment
+    };
+  initialize_environment (&priv.environment);
+  int r = module_init (&pub);
+  finalize_environment (&priv.environment);
 
   if (r != 0)
     {
