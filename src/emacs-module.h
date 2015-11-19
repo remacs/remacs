@@ -1,4 +1,4 @@
-/* module.h - GNU Emacs module API.
+/* emacs-module.h - GNU Emacs module API.
 
 Copyright (C) 2015 Free Software Foundation, Inc.
 

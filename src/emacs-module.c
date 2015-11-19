@@ -1,4 +1,4 @@
-/* module.c - Module loading and runtime implementation
+/* emacs-module.c - Module loading and runtime implementation
 
 Copyright (C) 2015 Free Software Foundation, Inc.
 
@@ -24,7 +24,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include "lisp.h"
-#include "module.h"
+#include "emacs-module.h"
 #include "dynlib.h"
 #include "coding.h"
 #include "verify.h"

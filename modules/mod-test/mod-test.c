@@ -19,7 +19,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <stdio.h>
-#include <module.h>
+#include <emacs-module.h>
 
 int plugin_is_GPL_compatible;
 

@@ -232,7 +232,7 @@ LIBZ = @LIBZ@
 
 ## system-specific libs for dynamic modules, else empty
 LIBMODULES = @LIBMODULES@
-## dynlib.o module.o if modules enabled, else empty
+## dynlib.o emacs-module.o if modules enabled, else empty
 MODULES_OBJ = @MODULES_OBJ@
 
 XRANDR_LIBS = @XRANDR_LIBS@
