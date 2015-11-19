@@ -11372,7 +11372,7 @@ If an unhandled error happens in running this hook,
 the function in which the error occurred is unconditionally removed, since
 otherwise the error might happen repeatedly and make Emacs nonfunctional.
 
-See also `pre-command-hook'.  */);
+See also `post-command-hook'.  */);
   Vpre_command_hook = Qnil;
 
   DEFVAR_LISP ("post-command-hook", Vpost_command_hook,
