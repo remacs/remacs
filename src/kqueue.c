@@ -35,6 +35,10 @@ static int kqueuefd = -1;
 /* This is a list, elements are (DESCRIPTOR FILE FLAGS CALLBACK [DIRLIST]).  */
 static Lisp_Object watch_list;
 
+/* Pending events, being the target of a rename operation.
+   Items are (INODE FILE-NAME LAST-MOD LAST-STATUS-MOD SIZE).  */
+static Lisp_Object pending_events;
+
 /* Generate a list from the directory_files_internal output.
    Items are (INODE FILE-NAME LAST-MOD LAST-STATUS-MOD SIZE).  */
 Lisp_Object
@@ -136,7 +140,7 @@ kqueue_compare_dir_list
 
     /* Search for an entry with the same inode.  */
     old_entry = XCAR (dl);
-    new_entry = Fassoc (XCAR (old_entry), new_dl);
+    new_entry = assq_no_quit (XCAR (old_entry), new_dl);
     if (! NILP (Fequal (old_entry, new_entry))) {
       /* Both entries are identical.  Nothing to do.  */
       new_dl = Fdelq (new_entry, new_dl);
@@ -177,16 +181,24 @@ kqueue_compare_dir_list
       new_entry = XCAR (dl1);
       if (strcmp (SSDATA (XCAR (XCDR (old_entry))),
 		  SSDATA (XCAR (XCDR (new_entry)))) == 0) {
-	kqueue_generate_event
-	  (watch_object, Fcons (Qwrite, Qnil), XCAR (XCDR (old_entry)), Qnil);
+	pending_events = Fcons (new_entry, pending_events);
 	new_dl = Fdelq (new_entry, new_dl);
 	goto the_end;
       }
     }
 
-    /* The file has been deleted.  */
-    kqueue_generate_event
-      (watch_object, Fcons (Qdelete, Qnil), XCAR (XCDR (old_entry)), Qnil);
+    new_entry = assq_no_quit (XCAR (old_entry), pending_events);
+    if (NILP (new_entry))
+      /* The file has been deleted.  */
+      kqueue_generate_event
+	(watch_object, Fcons (Qdelete, Qnil), XCAR (XCDR (old_entry)), Qnil);
+    else {
+      /* The file has been renamed.  */
+      kqueue_generate_event
+	(watch_object, Fcons (Qrename, Qnil),
+	 XCAR (XCDR (old_entry)), XCAR (XCDR (new_entry)));
+      new_dl = Fdelq (new_entry, new_dl);
+    }
 
   the_end:
     dl = XCDR (dl);
@@ -444,6 +456,7 @@ void
 globals_of_kqueue (void)
 {
   watch_list = Qnil;
+  pending_events = Qnil;
 }
 
 void

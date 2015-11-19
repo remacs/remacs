@@ -661,12 +661,7 @@ Don't wait longer than timeout seconds for the events to be delivered."
             (write-region "" nil file nil 'no-message))
           (dolist (file y-file-list)
             (write-region "" nil file nil 'no-message)))
-        (file-notify--test-with-events (cond
-                                        ;; XXX Different results?
-                                        ((featurep 'kqueue)
-                                         (append (make-list n 'changed)
-                                                 (make-list n 'deleted)))
-                                        (t (make-list n 'renamed)))
+        (file-notify--test-with-events (make-list n 'renamed)
           (let ((x-file-list x-file-list)
                 (y-file-list y-file-list))
             (while (and x-file-list y-file-list)
@@ -675,6 +670,9 @@ Don't wait longer than timeout seconds for the events to be delivered."
           (dolist (file y-file-list)
             (delete-file file))))
     (file-notify--test-cleanup)))
+
+(file-notify--deftest-remote file-notify-test06-many-events
+   "Check that events are not dropped remote directories.")
 
 (defun file-notify-test-all (&optional interactive)
   "Run all tests for \\[file-notify]."
