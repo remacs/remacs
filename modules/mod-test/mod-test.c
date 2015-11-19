@@ -117,7 +117,7 @@ Fmod_test_globref_make (emacs_env *env, int nargs, emacs_value args[],
 {
   /* Make a big string and make it global.  */
   char str[26 * 100];
-  for (size_t i = 0; i < sizeof str; i++)
+  for (int i = 0; i < sizeof str; i++)
     str[i] = 'a' + (i % 26);
 
   /* We don't need to null-terminate str.  */
@@ -133,14 +133,14 @@ Fmod_test_string_a_to_b (emacs_env *env, int nargs, emacs_value args[],
 			 void *data)
 {
   emacs_value lisp_str = args[0];
-  size_t size = 0;
+  ptrdiff_t size = 0;
   char * buf = NULL;
 
   env->copy_string_contents (env, lisp_str, buf, &size);
   buf = malloc (size);
   env->copy_string_contents (env, lisp_str, buf, &size);
 
-  for (size_t i = 0; i + 1 < size; i++)
+  for (ptrdiff_t i = 0; i + 1 < size; i++)
     if (buf[i] == 'a')
       buf[i] = 'b';
 
@@ -191,8 +191,8 @@ Fmod_test_vector_fill (emacs_env *env, int nargs, emacs_value args[], void *data
 {
   emacs_value vec = args[0];
   emacs_value val = args[1];
-  size_t size = env->vec_size (env, vec);
-  for (size_t i = 0; i < size; i++)
+  ptrdiff_t size = env->vec_size (env, vec);
+  for (ptrdiff_t i = 0; i < size; i++)
     env->vec_set (env, vec, i, val);
   return env->intern (env, "t");
 }
@@ -205,8 +205,8 @@ Fmod_test_vector_eq (emacs_env *env, int nargs, emacs_value args[], void *data)
 {
   emacs_value vec = args[0];
   emacs_value val = args[1];
-  size_t size = env->vec_size (env, vec);
-  for (size_t i = 0; i < size; i++)
+  ptrdiff_t size = env->vec_size (env, vec);
+  for (ptrdiff_t i = 0; i < size; i++)
     if (!env->eq (env, env->vec_get (env, vec, i), val))
         return env->intern (env, "nil");
   return env->intern (env, "t");

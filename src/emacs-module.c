@@ -78,7 +78,7 @@ struct emacs_value_frame
   struct emacs_value_tag objects[value_frame_size];
 
   /* Index of the next free value in `objects'.  */
-  size_t offset;
+  int offset;
 
   /* Pointer to next frame, if any.  */
   struct emacs_value_frame *next;
@@ -263,13 +263,13 @@ module_make_global_ref (emacs_env *env, emacs_value ref)
     {
       Lisp_Object value = HASH_VALUE (h, i);
       eassert (NATNUMP (value));
-      EMACS_UINT refcount = XFASTINT (value);
-      if (refcount >= MOST_POSITIVE_FIXNUM)
+      EMACS_INT refcount = XFASTINT (value) + 1;
+      if (refcount > MOST_POSITIVE_FIXNUM)
         {
           module_non_local_exit_signal_1 (env, Qoverflow_error, Qnil);
           return NULL;
         }
-      XSETFASTINT (value, refcount + 1);
+      value = make_natnum (refcount);
       set_hash_value_slot (h, i, value);
     }
   else
@@ -297,15 +297,15 @@ module_free_global_ref (emacs_env *env, emacs_value ref)
     {
       Lisp_Object value = HASH_VALUE (h, i);
       eassert (NATNUMP (value));
-      EMACS_UINT refcount = XFASTINT (value);
-      eassert (refcount > 0);
-      if (refcount > 1)
+      EMACS_INT refcount = XFASTINT (value) - 1;
+      if (refcount > 0)
         {
-          XSETFASTINT (value, refcount - 1);
+          value = make_natnum (refcount - 1);
           set_hash_value_slot (h, i, value);
         }
       else
         {
+          eassert (refcount == 0);
           hash_remove_from_table (h, value);
         }
     }
@@ -503,7 +503,7 @@ module_make_float (emacs_env *env, double d)
 
 static bool
 module_copy_string_contents (emacs_env *env, emacs_value value, char *buffer,
-			     size_t *length)
+			     ptrdiff_t *length)
 {
   check_main_thread ();
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
@@ -515,7 +515,7 @@ module_copy_string_contents (emacs_env *env, emacs_value value, char *buffer,
       return false;
     }
 
-  size_t raw_size = SBYTES (lisp_str);
+  ptrdiff_t raw_size = SBYTES (lisp_str);
 
   /* Emacs internal encoding is more-or-less UTF8, let's assume utf8
      encoded emacs string are the same byte size.  */
@@ -536,7 +536,7 @@ module_copy_string_contents (emacs_env *env, emacs_value value, char *buffer,
 }
 
 static emacs_value
-module_make_string (emacs_env *env, const char *str, size_t length)
+module_make_string (emacs_env *env, const char *str, ptrdiff_t length)
 {
   check_main_thread ();
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
@@ -609,7 +609,7 @@ module_set_user_finalizer (emacs_env *env, emacs_value uptr,
 }
 
 static void
-module_vec_set (emacs_env *env, emacs_value vec, size_t i, emacs_value val)
+module_vec_set (emacs_env *env, emacs_value vec, ptrdiff_t i, emacs_value val)
 {
   check_main_thread ();
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
@@ -633,41 +633,29 @@ module_vec_set (emacs_env *env, emacs_value vec, size_t i, emacs_value val)
 }
 
 static emacs_value
-module_vec_get (emacs_env *env, emacs_value vec, size_t i)
+module_vec_get (emacs_env *env, emacs_value vec, ptrdiff_t i)
 {
-  /* Type of ASIZE (lvec) is ptrdiff_t, make sure it fits.  */
-  verify (PTRDIFF_MAX <= SIZE_MAX);
   check_main_thread ();
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
-  if (i > MOST_POSITIVE_FIXNUM)
-    {
-      module_non_local_exit_signal_1 (env, Qoverflow_error, Qnil);
-      return NULL;
-    }
   Lisp_Object lvec = value_to_lisp (vec);
   if (! VECTORP (lvec))
     {
       module_wrong_type (env, Qvectorp, lvec);
       return NULL;
     }
-  /* Prevent error-prone comparison between types of different signedness.  */
-  size_t size = ASIZE (lvec);
+  ptrdiff_t size = ASIZE (lvec);
   eassert (size >= 0);
-  if (i >= size)
+  if (! (0 <= i && i < size))
     {
-      if (i > MOST_POSITIVE_FIXNUM)
-	i = (size_t) MOST_POSITIVE_FIXNUM;
       module_args_out_of_range (env, lvec, make_number (i));
       return NULL;
     }
   return lisp_to_value (env, AREF (lvec, i));
 }
 
-static size_t
+static ptrdiff_t
 module_vec_size (emacs_env *env, emacs_value vec)
 {
-  /* Type of ASIZE (lvec) is ptrdiff_t, make sure it fits.  */
-  verify (PTRDIFF_MAX <= SIZE_MAX);
   check_main_thread ();
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
   Lisp_Object lvec = value_to_lisp (vec);
@@ -947,7 +935,7 @@ void mark_modules (void)
       for (struct emacs_value_frame *frame = &env->priv.storage.initial;
 	   frame != NULL;
 	   frame = frame->next)
-        for (size_t i = 0; i < frame->offset; ++i)
+        for (int i = 0; i < frame->offset; ++i)
           mark_object (frame->objects[i].v);
     }
 }

@@ -46,7 +46,7 @@ enum emacs_arity { emacs_variadic_function = -2 };
 struct emacs_runtime
 {
   /* Structure size (for version checking).  */
-  size_t size;
+  ptrdiff_t size;
 
   /* Private data; users should not touch this.  */
   struct emacs_runtime_private *private_members;
@@ -82,7 +82,7 @@ enum emacs_funcall_exit
 struct emacs_env_25
 {
   /* Structure size (for version checking).  */
-  size_t size;
+  ptrdiff_t size;
 
   /* Private data; users should not touch this.  */
   struct emacs_env_private *private_members;
@@ -165,11 +165,11 @@ struct emacs_env_25
   bool (*copy_string_contents) (emacs_env *env,
                                 emacs_value value,
                                 char *buffer,
-                                size_t *size_inout);
+                                ptrdiff_t *size_inout);
 
   /* Create a Lisp string from a utf8 encoded string.  */
   emacs_value (*make_string) (emacs_env *env,
-			      const char *contents, size_t length);
+			      const char *contents, ptrdiff_t length);
 
   /* Embedded pointer type.  */
   emacs_value (*make_user_ptr) (emacs_env *env,
@@ -186,12 +186,12 @@ struct emacs_env_25
 			      void (*fin) (void *) EMACS_NOEXCEPT);
 
   /* Vector functions.  */
-  emacs_value (*vec_get) (emacs_env *env, emacs_value vec, size_t i);
+  emacs_value (*vec_get) (emacs_env *env, emacs_value vec, ptrdiff_t i);
 
-  void (*vec_set) (emacs_env *env, emacs_value vec, size_t i,
+  void (*vec_set) (emacs_env *env, emacs_value vec, ptrdiff_t i,
 		   emacs_value val);
 
-  size_t (*vec_size) (emacs_env *env, emacs_value vec);
+  ptrdiff_t (*vec_size) (emacs_env *env, emacs_value vec);
 };
 
 #ifdef __cplusplus
