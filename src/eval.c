@@ -1399,8 +1399,9 @@ internal_condition_case_n (Lisp_Object (*bfun) (ptrdiff_t, Lisp_Object *),
 static void init_handler (struct handler *c, Lisp_Object tag_ch_val,
                           enum handlertype handlertype);
 
-void push_handler (struct handler **const c, const Lisp_Object tag_ch_val,
-                   const enum handlertype handlertype)
+void
+push_handler (struct handler **c, Lisp_Object tag_ch_val,
+	      enum handlertype handlertype)
 {
   if (handlerlist->nextfree)
     *c = handlerlist->nextfree;
@@ -1413,14 +1414,15 @@ void push_handler (struct handler **const c, const Lisp_Object tag_ch_val,
   init_handler (*c, tag_ch_val, handlertype);
 }
 
-bool push_handler_nosignal (struct handler **const c, const Lisp_Object tag_ch_val,
-                            const enum handlertype handlertype)
+bool
+push_handler_nosignal (struct handler **c, Lisp_Object tag_ch_val,
+		       enum handlertype handlertype)
 {
   if (handlerlist->nextfree)
     *c = handlerlist->nextfree;
   else
     {
-      struct handler *const h = malloc (sizeof (struct handler));
+      struct handler *h = malloc (sizeof (struct handler));
       if (! h) return false;
       *c = h;
       h->nextfree = NULL;
@@ -1430,8 +1432,9 @@ bool push_handler_nosignal (struct handler **const c, const Lisp_Object tag_ch_v
   return true;
 }
 
-static void init_handler (struct handler *const c, const Lisp_Object tag_ch_val,
-                          const enum handlertype handlertype)
+static void
+init_handler (struct handler *c, Lisp_Object tag_ch_val,
+	      enum handlertype handlertype)
 {
   c->type = handlertype;
   c->tag_or_ch = tag_ch_val;

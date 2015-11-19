@@ -141,7 +141,7 @@ static void check_main_thread (void);
 static void finalize_environment (struct env_storage *);
 static void initialize_environment (struct env_storage *);
 static void module_args_out_of_range (emacs_env *, Lisp_Object, Lisp_Object);
-static void module_handle_signal (emacs_env *, const Lisp_Object);
+static void module_handle_signal (emacs_env *, Lisp_Object);
 static void module_handle_throw (emacs_env *, Lisp_Object);
 static void module_non_local_exit_signal_1 (emacs_env *, Lisp_Object, Lisp_Object);
 static void module_non_local_exit_throw_1 (emacs_env *, Lisp_Object, Lisp_Object);
@@ -201,7 +201,7 @@ static void module_wrong_type (emacs_env *, Lisp_Object, Lisp_Object);
 	return retval;							\
       }									\
     verify (module_has_cleanup);					\
-    const int dummy __attribute__ ((cleanup (module_reset_handlerlist))); \
+    int dummy __attribute__ ((cleanup (module_reset_handlerlist)));	\
     if (sys_setjmp (c->jmp))						\
       {									\
 	(handlerfunc) (env, c->val);					\
@@ -263,7 +263,7 @@ module_make_global_ref (emacs_env *env, emacs_value ref)
     {
       Lisp_Object value = HASH_VALUE (h, i);
       eassert (NATNUMP (value));
-      const EMACS_UINT refcount = XFASTINT (value);
+      EMACS_UINT refcount = XFASTINT (value);
       if (refcount >= MOST_POSITIVE_FIXNUM)
         {
           module_non_local_exit_signal_1 (env, Qoverflow_error, Qnil);
@@ -297,7 +297,7 @@ module_free_global_ref (emacs_env *env, emacs_value ref)
     {
       Lisp_Object value = HASH_VALUE (h, i);
       eassert (NATNUMP (value));
-      const EMACS_UINT refcount = XFASTINT (value);
+      EMACS_UINT refcount = XFASTINT (value);
       eassert (refcount > 0);
       if (refcount > 1)
         {
@@ -329,7 +329,7 @@ static enum emacs_funcall_exit
 module_non_local_exit_get (emacs_env *env, emacs_value *sym, emacs_value *data)
 {
   check_main_thread ();
-  struct emacs_env_private *const p = env->private_members;
+  struct emacs_env_private *p = env->private_members;
   if (p->pending_non_local_exit != emacs_funcall_exit_return)
     {
       *sym = &p->non_local_exit_symbol;
@@ -366,7 +366,7 @@ module_non_local_exit_throw (emacs_env *env, emacs_value tag, emacs_value value)
 
 static emacs_value
 module_make_function (emacs_env *env, int min_arity, int max_arity,
-		      emacs_subr subr, const char *const documentation,
+		      emacs_subr subr, const char *documentation,
 		      void *data)
 {
   check_main_thread ();
@@ -456,7 +456,7 @@ module_extract_integer (emacs_env *env, emacs_value n)
 {
   check_main_thread ();
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
-  const Lisp_Object l = value_to_lisp (n);
+  Lisp_Object l = value_to_lisp (n);
   if (! INTEGERP (l))
     {
       module_wrong_type (env, Qintegerp, l);
@@ -483,7 +483,7 @@ module_extract_float (emacs_env *env, emacs_value f)
 {
   check_main_thread ();
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
-  const Lisp_Object lisp = value_to_lisp (f);
+  Lisp_Object lisp = value_to_lisp (f);
   if (! FLOATP (lisp))
     {
       module_wrong_type (env, Qfloatp, lisp);
@@ -562,7 +562,7 @@ module_get_user_ptr (emacs_env *env, emacs_value uptr)
 {
   check_main_thread ();
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
-  const Lisp_Object lisp = value_to_lisp (uptr);
+  Lisp_Object lisp = value_to_lisp (uptr);
   if (! USER_PTRP (lisp))
     {
       module_wrong_type (env, Quser_ptr, lisp);
@@ -576,8 +576,9 @@ module_set_user_ptr (emacs_env *env, emacs_value uptr, void *ptr)
 {
   check_main_thread ();
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
-  const Lisp_Object lisp = value_to_lisp (uptr);
-  if (! USER_PTRP (lisp)) module_wrong_type (env, Quser_ptr, lisp);
+  Lisp_Object lisp = value_to_lisp (uptr);
+  if (! USER_PTRP (lisp))
+    module_wrong_type (env, Quser_ptr, lisp);
   XUSER_PTR (lisp)->p = ptr;
 }
 
@@ -586,7 +587,7 @@ module_get_user_finalizer (emacs_env *env, emacs_value uptr)
 {
   check_main_thread ();
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
-  const Lisp_Object lisp = value_to_lisp (uptr);
+  Lisp_Object lisp = value_to_lisp (uptr);
   if (! USER_PTRP (lisp))
     {
       module_wrong_type (env, Quser_ptr, lisp);
@@ -601,8 +602,9 @@ module_set_user_finalizer (emacs_env *env, emacs_value uptr,
 {
   check_main_thread ();
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
-  const Lisp_Object lisp = value_to_lisp (uptr);
-  if (! USER_PTRP (lisp)) module_wrong_type (env, Quser_ptr, lisp);
+  Lisp_Object lisp = value_to_lisp (uptr);
+  if (! USER_PTRP (lisp))
+    module_wrong_type (env, Quser_ptr, lisp);
   XUSER_PTR (lisp)->finalizer = fin;
 }
 
@@ -649,7 +651,7 @@ module_vec_get (emacs_env *env, emacs_value vec, size_t i)
       return NULL;
     }
   /* Prevent error-prone comparison between types of different signedness.  */
-  const size_t size = ASIZE (lvec);
+  size_t size = ASIZE (lvec);
   eassert (size >= 0);
   if (i >= size)
     {
@@ -734,8 +736,8 @@ ENVOBJ is a save pointer to a module_fun_env structure.
 ARGLIST is a list of arguments passed to SUBRPTR.  */)
   (Lisp_Object envobj, Lisp_Object arglist)
 {
-  const struct module_fun_env *const envptr = XSAVE_POINTER (envobj, 0);
-  const EMACS_INT len = XINT (Flength (arglist));
+  struct module_fun_env *envptr = XSAVE_POINTER (envobj, 0);
+  EMACS_INT len = XINT (Flength (arglist));
   eassert (len >= 0);
   if (len > MOST_POSITIVE_FIXNUM)
     xsignal0 (Qoverflow_error);
@@ -771,14 +773,14 @@ ARGLIST is a list of arguments passed to SUBRPTR.  */)
     case emacs_funcall_exit_signal:
       {
         Lisp_Object symbol = value_to_lisp (&env.priv.non_local_exit_symbol);
-        const Lisp_Object data = value_to_lisp (&env.priv.non_local_exit_data);
+        Lisp_Object data = value_to_lisp (&env.priv.non_local_exit_data);
         finalize_environment (&env);
         xsignal (symbol, data);
       }
     case emacs_funcall_exit_throw:
       {
-        const Lisp_Object tag = value_to_lisp (&env.priv.non_local_exit_symbol);
-        const Lisp_Object value = value_to_lisp (&env.priv.non_local_exit_data);
+        Lisp_Object tag = value_to_lisp (&env.priv.non_local_exit_symbol);
+        Lisp_Object value = value_to_lisp (&env.priv.non_local_exit_data);
         finalize_environment (&env);
         Fthrow (tag, value);
       }
@@ -810,7 +812,7 @@ static void
 module_non_local_exit_signal_1 (emacs_env *env, Lisp_Object sym,
 				Lisp_Object data)
 {
-  struct emacs_env_private *const p = env->private_members;
+  struct emacs_env_private *p = env->private_members;
   eassert (p->pending_non_local_exit == emacs_funcall_exit_return);
   p->pending_non_local_exit = emacs_funcall_exit_signal;
   p->non_local_exit_symbol.v = sym;
@@ -821,7 +823,7 @@ static void
 module_non_local_exit_throw_1 (emacs_env *env, Lisp_Object tag,
 			       Lisp_Object value)
 {
-  struct emacs_env_private *const p = env->private_members;
+  struct emacs_env_private *p = env->private_members;
   eassert (p->pending_non_local_exit == emacs_funcall_exit_return);
   p->pending_non_local_exit = emacs_funcall_exit_throw;
   p->non_local_exit_symbol.v = tag;
@@ -869,7 +871,7 @@ value_to_lisp (emacs_value v)
 static emacs_value
 lisp_to_value (emacs_env *env, Lisp_Object o)
 {
-  struct emacs_env_private *const p = env->private_members;
+  struct emacs_env_private *p = env->private_members;
   if (p->pending_non_local_exit != emacs_funcall_exit_return)
     return NULL;
   return allocate_emacs_value (env, &p->storage, o);
@@ -903,7 +905,7 @@ finalize_storage (struct emacs_value_storage *storage)
   struct emacs_value_frame *next = storage->initial.next;
   while (next != NULL)
     {
-      struct emacs_value_frame *const current = next;
+      struct emacs_value_frame *current = next;
       next = current->next;
       free (current);
     }
@@ -929,7 +931,7 @@ allocate_emacs_value (emacs_env *env, struct emacs_value_storage *storage,
       initialize_frame (storage->current->next);
       storage->current = storage->current->next;
     }
-  const emacs_value value = storage->current->objects + storage->current->offset;
+  emacs_value value = storage->current->objects + storage->current->offset;
   value->v = obj;
   ++storage->current->offset;
   return value;
@@ -941,8 +943,8 @@ void mark_modules (void)
 {
   for (Lisp_Object tem = Vmodule_environments; CONSP (tem); tem = XCDR (tem))
     {
-      const struct env_storage *const env = XSAVE_POINTER (tem, 0);
-      for (const struct emacs_value_frame *frame = &env->priv.storage.initial;
+      struct env_storage *env = XSAVE_POINTER (tem, 0);
+      for (struct emacs_value_frame *frame = &env->priv.storage.initial;
 	   frame != NULL;
 	   frame = frame->next)
         for (size_t i = 0; i < frame->offset; ++i)
@@ -1016,7 +1018,7 @@ module_reset_handlerlist (const int *dummy)
 /* Called on `signal'.  ERR is a pair (SYMBOL . DATA), which gets
    stored in the environment.  Set the pending non-local exit flag.  */
 static void
-module_handle_signal (emacs_env *const env, const Lisp_Object err)
+module_handle_signal (emacs_env *env, Lisp_Object err)
 {
   module_non_local_exit_signal_1 (env, XCAR (err), XCDR (err));
 }
@@ -1024,7 +1026,7 @@ module_handle_signal (emacs_env *const env, const Lisp_Object err)
 /* Called on `throw'.  TAG_VAL is a pair (TAG . VALUE), which gets
    stored in the environment.  Set the pending non-local exit flag.  */
 static void
-module_handle_throw (emacs_env *const env, const Lisp_Object tag_val)
+module_handle_throw (emacs_env *env, Lisp_Object tag_val)
 {
   module_non_local_exit_throw_1 (env, XCAR (tag_val), XCDR (tag_val));
 }
@@ -1035,14 +1037,14 @@ module_handle_throw (emacs_env *const env, const Lisp_Object tag_val)
 /* Return a string object that contains a user-friendly
    representation of the function environment.  */
 static Lisp_Object
-module_format_fun_env (const struct module_fun_env *const env)
+module_format_fun_env (const struct module_fun_env *env)
 {
   /* Try to print a function name if possible.  */
   const char *path, *sym;
   if (dynlib_addr (env->subr, &path, &sym))
     {
-      const char *const format = "#<module function %s from %s>";
-      const int size = snprintf (NULL, 0, format, sym, path);
+      static char const format[] = "#<module function %s from %s>";
+      int size = snprintf (NULL, 0, format, sym, path);
       eassert (size > 0);
       char buffer[size + 1];
       snprintf (buffer, sizeof buffer, format, sym, path);
@@ -1050,9 +1052,9 @@ module_format_fun_env (const struct module_fun_env *const env)
     }
   else
     {
-      const char *const format = "#<module function at %p>";
-      const void *const subr = env->subr;
-      const int size = snprintf (NULL, 0, format, subr);
+      static char const format[] = "#<module function at %p>";
+      void *subr = env->subr;
+      int size = snprintf (NULL, 0, format, subr);
       eassert (size > 0);
       char buffer[size + 1];
       snprintf (buffer, sizeof buffer, format, subr);

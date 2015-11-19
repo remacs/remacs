@@ -979,8 +979,8 @@ This uses the variables `load-suffixes' and `load-file-rep-suffixes'.  */)
 static bool
 suffix_p (Lisp_Object string, const char *suffix)
 {
-  const size_t suffix_len = strlen (suffix);
-  const size_t string_len = SBYTES (string);
+  size_t suffix_len = strlen (suffix);
+  size_t string_len = SBYTES (string);
 
   return string_len >= suffix_len && !strcmp (SSDATA (string) + string_len - suffix_len, suffix);
 }

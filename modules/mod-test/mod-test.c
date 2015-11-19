@@ -78,7 +78,7 @@ Fmod_test_non_local_exit_funcall (emacs_env *env, int nargs, emacs_value args[],
 				  void *data)
 {
   assert (nargs == 1);
-  const emacs_value result = env->funcall (env, args[0], 0, NULL);
+  emacs_value result = env->funcall (env, args[0], 0, NULL);
   emacs_value non_local_exit_symbol, non_local_exit_data;
   enum emacs_funcall_exit code
     = env->non_local_exit_get (env, &non_local_exit_symbol,
@@ -90,7 +90,7 @@ Fmod_test_non_local_exit_funcall (emacs_env *env, int nargs, emacs_value args[],
     case emacs_funcall_exit_signal:
       {
         env->non_local_exit_clear (env);
-        const emacs_value Flist = env->intern (env, "list");
+        emacs_value Flist = env->intern (env, "list");
         emacs_value list_args[] = {env->intern (env, "signal"),
 				   non_local_exit_symbol, non_local_exit_data};
         return env->funcall (env, Flist, 3, list_args);
@@ -98,7 +98,7 @@ Fmod_test_non_local_exit_funcall (emacs_env *env, int nargs, emacs_value args[],
     case emacs_funcall_exit_throw:
       {
         env->non_local_exit_clear (env);
-        const emacs_value Flist = env->intern (env, "list");
+        emacs_value Flist = env->intern (env, "list");
         emacs_value list_args[] = {env->intern (env, "throw"),
 				   non_local_exit_symbol, non_local_exit_data};
         return env->funcall (env, Flist, 3, list_args);
@@ -191,7 +191,7 @@ Fmod_test_vector_fill (emacs_env *env, int nargs, emacs_value args[], void *data
 {
   emacs_value vec = args[0];
   emacs_value val = args[1];
-  const size_t size = env->vec_size (env, vec);
+  size_t size = env->vec_size (env, vec);
   for (size_t i = 0; i < size; i++)
     env->vec_set (env, vec, i, val);
   return env->intern (env, "t");
@@ -205,7 +205,7 @@ Fmod_test_vector_eq (emacs_env *env, int nargs, emacs_value args[], void *data)
 {
   emacs_value vec = args[0];
   emacs_value val = args[1];
-  const size_t size = env->vec_size (env, vec);
+  size_t size = env->vec_size (env, vec);
   for (size_t i = 0; i < size; i++)
     if (!env->eq (env, env->vec_get (env, vec, i), val))
         return env->intern (env, "nil");
