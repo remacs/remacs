@@ -141,6 +141,7 @@ src/stamp-h1
 *.o
 *.res
 *.so
+*.dll
 [0-9]*.core
 core
 core.*[0-9]
