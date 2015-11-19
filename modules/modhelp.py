@@ -56,7 +56,8 @@ def cmd_test(args):
         print '[*] %s: running test' % m
         testpath = os.path.join(m, 'test.el')
         if os.path.isfile(testpath):
-            emacs_cmd = [EMACS, '-batch', '-L', '.', '-l', 'ert', '-l', testpath, '-f', 'ert-run-tests-batch-and-exit']
+            emacs_cmd = [EMACS, '-batch', '-L', '.', '-l', 'ert',
+                         '-l', testpath, '-f', 'ert-run-tests-batch-and-exit']
             print ' '.join(emacs_cmd)
             r = sp.call(emacs_cmd)
             if r != 0:
@@ -111,13 +112,16 @@ def main():
     subp = mainp.add_subparsers()
 
     testp = subp.add_parser('test', help='run tests')
-    testp.add_argument('-f', '--force', action='store_true', help='force regeneration (make -B)')
-    testp.add_argument('module', nargs='*', help='path to module to test (default all)')
+    testp.add_argument('-f', '--force', action='store_true',
+                       help='force regeneration (make -B)')
+    testp.add_argument('module', nargs='*',
+                       help='path to module to test (default all)')
     testp.set_defaults(func=cmd_test)
 
     initp = subp.add_parser('init', help='create a test module from a template')
     initp.add_argument('module', help='name of the new module')
-    initp.add_argument('-f', '--fun', default='fun', help='overide name of the default function')
+    initp.add_argument('-f', '--fun', default='fun',
+                       help='overide name of the default function')
     initp.set_defaults(func=cmd_init)
 
     args = mainp.parse_args()
@@ -149,13 +153,15 @@ all: ${module}.so ${module}.doc
 
 int plugin_is_GPL_compatible;
 
-static emacs_value ${c_func} (emacs_env *env, int nargs, emacs_value args[], void *data)
+static emacs_value
+${c_func} (emacs_env *env, int nargs, emacs_value args[], void *data)
 {
   return env->intern (env, "t");
 }
 
-/* Binds NAME to FUN */
-static void bind_function (emacs_env *env, const char *name, emacs_value Sfun)
+/* Bind NAME to FUN.  */
+static void
+bind_function (emacs_env *env, const char *name, emacs_value Sfun)
 {
   emacs_value Qfset = env->intern (env, "fset");
   emacs_value Qsym = env->intern (env, name);
@@ -164,8 +170,9 @@ static void bind_function (emacs_env *env, const char *name, emacs_value Sfun)
   env->funcall (env, Qfset, 2, args);
 }
 
-/* Provide FEATURE to Emacs */
-static void provide (emacs_env *env, const char *feature)
+/* Provide FEATURE to Emacs.  */
+static void
+provide (emacs_env *env, const char *feature)
 {
   emacs_value Qfeat = env->intern (env, feature);
   emacs_value Qprovide = env->intern (env, "provide");
@@ -174,10 +181,12 @@ static void provide (emacs_env *env, const char *feature)
   env->funcall (env, Qprovide, 1, args);
 }
 
-int emacs_module_init (struct emacs_runtime *ert)
+int
+emacs_module_init (struct emacs_runtime *ert)
 {
   emacs_env *env = ert->get_environment (ert);
-  bind_function (env, "${lisp_func}", env->make_function (env, 1, 1, ${c_func}, "doc", NULL));
+  bind_function (env, "${lisp_func}",
+                 env->make_function (env, 1, 1, ${c_func}, "doc", NULL));
   provide (env, "${module}");
   return 0;
 }

@@ -19,11 +19,12 @@
 
 (require 'ert)
 
-(add-to-list 'load-path (file-name-directory (or #$ (expand-file-name (buffer-file-name)))))
+(add-to-list 'load-path
+             (file-name-directory (or #$ (expand-file-name (buffer-file-name)))))
 (require 'mod-test)
 
 ;;
-;; basic tests
+;; Basic tests.
 ;;
 
 (ert-deftest mod-test-sum-test ()
@@ -33,7 +34,7 @@
   (should (string= (documentation 'mod-test-sum) "Return A + B")))
 
 ;;
-;; non-local exists (throw, signal)
+;; Non-local exists (throw, signal).
 ;;
 
 (ert-deftest mod-test-non-local-exit-signal-test ()
@@ -51,7 +52,8 @@
                  23)))
 
 (ert-deftest mod-test-non-local-exit-funcall-signal ()
-  (should (equal (mod-test-non-local-exit-funcall (lambda () (signal 'error '(32))))
+  (should (equal (mod-test-non-local-exit-funcall
+                  (lambda () (signal 'error '(32))))
                  '(signal error (32)))))
 
 (ert-deftest mod-test-non-local-exit-funcall-throw ()
@@ -59,7 +61,7 @@
                  '(throw tag 32))))
 
 ;;
-;; string
+;; String tests.
 ;;
 
 (defun multiply-string (s n)
@@ -77,7 +79,7 @@
   (should (string= (mod-test-string-a-to-b "aaa") "bbb")))
 
 ;;
-;; user-pointer
+;; User-pointer tests.
 ;;
 
 (ert-deftest mod-test-userptr-fun-test ()
@@ -92,7 +94,7 @@
 ;; TODO: try to test finalizer
 
 ;;
-;; vectors
+;; Vector tests.
 ;;
 
 (ert-deftest mod-test-vector-test ()

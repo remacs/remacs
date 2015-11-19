@@ -26,63 +26,68 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "dynlib.h"
 
-/*
- *  Windows systems
- */
-#if defined(_WIN32)
+#if defined _WIN32
+
+/* MS-Windows systems.  */
 
 #include <windows.h>
 
-dynlib_handle_ptr dynlib_open (const char * path)
+dynlib_handle_ptr
+dynlib_open (const char *path)
 {
 
   return (dynlib_handle_ptr) LoadLibrary (path);
 }
 
-void * dynlib_sym (dynlib_handle_ptr h, const char * sym)
+void *
+dynlib_sym (dynlib_handle_ptr h, const char *sym)
 {
   return GetProcAddress ((HMODULE) h, sym);
 }
 
-bool dynlib_addr (void *ptr, const char **path, const char **sym)
+bool
+dynlib_addr (void *ptr, const char **path, const char **sym)
 {
   return false;  /* not implemented */
 }
 
-const char * dynlib_error (void)
+const char *
+dynlib_error (void)
 {
   /* TODO: use GetLastError(), FormatMessage(), ... */
   return "Can't load DLL";
 }
 
-int dynlib_close (dynlib_handle_ptr h)
+int
+dynlib_close (dynlib_handle_ptr h)
 {
   return FreeLibrary ((HMODULE) h) != 0;
 }
 
+#elif defined HAVE_UNISTD_H
 
-/*
- *  POSIX systems
- */
-#elif defined(HAVE_UNISTD_H)
+/* POSIX systems.  */
 
 #include <dlfcn.h>
 
-dynlib_handle_ptr dynlib_open (const char * path)
+dynlib_handle_ptr
+dynlib_open (const char *path)
 {
   return dlopen (path, RTLD_LAZY);
 }
 
-void * dynlib_sym (dynlib_handle_ptr h, const char * sym)
+void *
+dynlib_sym (dynlib_handle_ptr h, const char *sym)
 {
   return dlsym (h, sym);
 }
 
-bool dynlib_addr (void *ptr, const char **path, const char **sym)
+bool
+dynlib_addr (void *ptr, const char **path, const char **sym)
 {
 #ifdef HAVE_DLADDR
   Dl_info info;
-  if (dladdr (ptr, &info) != 0 && info.dli_fname != NULL && info.dli_sname != NULL)
+  if (dladdr (ptr, &info) && info.dli_fname && info.dli_sname)
     {
       *path = info.dli_fname;
       *sym = info.dli_sname;
@@ -92,12 +97,14 @@ bool dynlib_addr (void *ptr, const char **path, const char **sym)
   return false;
 }
 
-const char * dynlib_error (void)
+const char *
+dynlib_error (void)
 {
   return dlerror ();
 }
 
-int dynlib_close (dynlib_handle_ptr h)
+int
+dynlib_close (dynlib_handle_ptr h)
 {
   return dlclose (h) == 0;
 }

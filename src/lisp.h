@@ -2246,7 +2246,7 @@ struct Lisp_User_Ptr
   bool_bf gcmarkbit : 1;
   unsigned spacer : 15;
 
-  void (*finalizer) (void*);
+  void (*finalizer) (void *);
   void *p;
 };
 #endif
@@ -2346,7 +2346,6 @@ XUSER_PTR (Lisp_Object a)
   return & XMISC (a)->u_user_ptr;
 }
 #endif
-
 
 
 /* Forwarding pointer to an int variable.
