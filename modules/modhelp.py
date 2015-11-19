@@ -125,7 +125,7 @@ all: ${module}.so ${module}.doc
 '''),
 
     string.Template('${c_file}'): string.Template('''
-#include <emacs_module.h>
+#include <module.h>
 
 int plugin_is_GPL_compatible;
 

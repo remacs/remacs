@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
-#include <emacs_module.h>
+#include <module.h>
 
 int plugin_is_GPL_compatible;
 

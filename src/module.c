@@ -24,7 +24,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include "lisp.h"
-#include "emacs_module.h"
+#include "module.h"
 #include "dynlib.h"
 #include "coding.h"
 #include "verify.h"

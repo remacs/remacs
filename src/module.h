@@ -1,5 +1,5 @@
 /*
-  emacs_module.h - Module API
+  module.h - Module API
   Copyright (C) 2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
