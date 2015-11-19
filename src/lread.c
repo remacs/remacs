@@ -1084,7 +1084,6 @@ Return t if the file exists and loads successfully.  */)
       if (! NILP (must_suffix))
 	{
 	  /* Don't insist on adding a suffix if FILE already ends with one.  */
-	  ptrdiff_t size = SBYTES (file);
 	  if (suffix_p (file, ".el") || suffix_p (file, ".elc"))
 	    must_suffix = Qnil;
 	  /* Don't insist on adding a suffix
