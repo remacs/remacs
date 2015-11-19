@@ -657,10 +657,12 @@ Don't wait longer than timeout seconds for the events to be delivered."
           (push (expand-file-name (format "x%d" i)) x-file-list)
           (push (expand-file-name (format "y%d" i)) y-file-list))
         (file-notify--test-with-events (make-list (+ n n) 'created)
-          (dolist (file x-file-list)
-            (write-region "" nil file nil 'no-message))
-          (dolist (file y-file-list)
-            (write-region "" nil file nil 'no-message)))
+          (let ((x-file-list x-file-list)
+                (y-file-list y-file-list))
+            (while (and x-file-list y-file-list)
+              (write-region "" nil (pop x-file-list) nil 'no-message)
+              (read-event nil nil 0.1)
+              (write-region "" nil (pop y-file-list) nil 'no-message))))
         (file-notify--test-with-events (make-list n 'renamed)
           (let ((x-file-list x-file-list)
                 (y-file-list y-file-list))
@@ -672,7 +674,7 @@ Don't wait longer than timeout seconds for the events to be delivered."
     (file-notify--test-cleanup)))
 
 (file-notify--deftest-remote file-notify-test06-many-events
-   "Check that events are not dropped remote directories.")
+   "Check that events are not dropped for remote directories.")
 
 (defun file-notify-test-all (&optional interactive)
   "Run all tests for \\[file-notify]."
