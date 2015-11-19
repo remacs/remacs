@@ -793,7 +793,6 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
   dynlib_handle_ptr handle;
   emacs_init_function module_init;
   void *gpl_sym;
-  Lisp_Object doc_name, args[2];
 
   CHECK_STRING (file);
   handle = dynlib_open (SDATA (file));
