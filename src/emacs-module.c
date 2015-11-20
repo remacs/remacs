@@ -293,6 +293,8 @@ module_free_global_ref (emacs_env *env, emacs_value ref)
   check_main_thread ();
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
   /* TODO: This probably never signals.  */
+  /* FIXME: Wait a minute.  Shouldn't this function report an error if
+     the hash lookup fails?  */
   MODULE_HANDLE_SIGNALS_VOID;
   eassert (HASH_TABLE_P (Vmodule_refs_hash));
   struct Lisp_Hash_Table *h = XHASH_TABLE (Vmodule_refs_hash);
@@ -307,7 +309,7 @@ module_free_global_ref (emacs_env *env, emacs_value ref)
       EMACS_INT refcount = XFASTINT (value) - 1;
       if (refcount > 0)
         {
-          value = make_natnum (refcount - 1);
+          value = make_natnum (refcount);
           set_hash_value_slot (h, i, value);
         }
       else
