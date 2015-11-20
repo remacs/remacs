@@ -21,7 +21,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define EMACS_MODULE_H
 
 #include <stdint.h>
-#include <stdlib.h>
+#include <stddef.h>
 #include <stdbool.h>
 
 #if defined __cplusplus && __cplusplus >= 201103L
