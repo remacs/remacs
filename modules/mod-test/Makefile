@@ -28,9 +28,9 @@ LDFLAGS =
 SO      = so
 # -fPIC is a no-op on Windows, but causes a compiler warning
 ifeq ($(SO),dll)
-CFLAGS  = -ggdb3 -Wall
+CFLAGS  = -std=gnu99 -ggdb3 -Wall
 else
-CFLAGS  = -ggdb3 -Wall -fPIC
+CFLAGS  = -std=gnu99 -ggdb3 -Wall -fPIC
 endif
 
 all: mod-test.$(SO)
