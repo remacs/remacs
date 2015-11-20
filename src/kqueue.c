@@ -111,11 +111,12 @@ static void
 kqueue_compare_dir_list
 (Lisp_Object watch_object)
 {
-  Lisp_Object dir, pending_events;
+  Lisp_Object dir, pending_dl, deleted_dl;
   Lisp_Object old_directory_files, old_dl, new_directory_files, new_dl, dl;
 
   dir = XCAR (XCDR (watch_object));
-  pending_events = Qnil;
+  pending_dl = Qnil;
+  deleted_dl = Qnil;
 
   old_directory_files = Fnth (make_number (4), watch_object);
   old_dl = kqueue_directory_listing (old_directory_files);
@@ -168,6 +169,7 @@ kqueue_compare_dir_list
 	kqueue_generate_event
 	  (watch_object, Fcons (Qrename, Qnil),
 	   XCAR (XCDR (old_entry)), XCAR (XCDR (new_entry)));
+	deleted_dl = Fcons (new_entry, deleted_dl);
       }
       new_dl = Fdelq (new_entry, new_dl);
       goto the_end;
@@ -179,24 +181,35 @@ kqueue_compare_dir_list
       new_entry = XCAR (dl1);
       if (strcmp (SSDATA (XCAR (XCDR (old_entry))),
 		  SSDATA (XCAR (XCDR (new_entry)))) == 0) {
-	pending_events = Fcons (new_entry, pending_events);
+	pending_dl = Fcons (new_entry, pending_dl);
 	new_dl = Fdelq (new_entry, new_dl);
 	goto the_end;
       }
     }
 
-    new_entry = assq_no_quit (XCAR (old_entry), pending_events);
-    if (NILP (new_entry))
+    /* Check, whether this a pending file.  */
+    new_entry = assq_no_quit (XCAR (old_entry), pending_dl);
+
+    if (NILP (new_entry)) {
+      /* Check, whether this is an already deleted file (by rename).  */
+      for (dl1 = deleted_dl; ! NILP (dl1); dl1 = XCDR (dl1)) {
+	new_entry = XCAR (dl1);
+	if (strcmp (SSDATA (XCAR (XCDR (old_entry))),
+		    SSDATA (XCAR (XCDR (new_entry)))) == 0) {
+	  deleted_dl = Fdelq (new_entry, deleted_dl);
+	  goto the_end;
+	}
+      }
       /* The file has been deleted.  */
       kqueue_generate_event
 	(watch_object, Fcons (Qdelete, Qnil), XCAR (XCDR (old_entry)), Qnil);
-    else {
+
+    } else {
       /* The file has been renamed.  */
       kqueue_generate_event
 	(watch_object, Fcons (Qrename, Qnil),
 	 XCAR (XCDR (old_entry)), XCAR (XCDR (new_entry)));
-      new_dl = Fdelq (new_entry, new_dl);
-      pending_events = Fdelq (new_entry, pending_events);
+      pending_dl = Fdelq (new_entry, pending_dl);
     }
 
   the_end:
@@ -226,8 +239,8 @@ kqueue_compare_dir_list
     new_dl = Fdelq (entry, new_dl);
   }
 
-  /* Parse through the resulting pending_events_list.  */
-  dl = pending_events;
+  /* Parse through the resulting pending_dl list.  */
+  dl = pending_dl;
   while (1) {
     Lisp_Object entry;
     if (NILP (dl))
@@ -239,18 +252,21 @@ kqueue_compare_dir_list
       (watch_object, Fcons (Qwrite, Qnil), XCAR (XCDR (entry)), Qnil);
 
     dl = XCDR (dl);
-    pending_events = Fdelq (entry, pending_events);
+    pending_dl = Fdelq (entry, pending_dl);
   }
 
-  /* At this point, old_dl, new_dl and pending_events shall be empty.
-     Let's make a check for this (might be removed once the code is
-     stable).  */
+  /* At this point, old_dl, new_dl and pending_dl shall be empty.
+     deleted_dl might not be empty when there was a rename to a
+     nonexisting file.  Let's make a check for this (might be removed
+     once the code is stable).  */
   if (! NILP (old_dl))
     report_file_error ("Old list not empty", old_dl);
   if (! NILP (new_dl))
     report_file_error ("New list not empty", new_dl);
-  if (! NILP (pending_events))
-    report_file_error ("Pending events not empty", new_dl);
+  if (! NILP (pending_dl))
+    report_file_error ("Pending events list not empty", pending_dl);
+  //  if (! NILP (deleted_dl))
+  //    report_file_error ("Deleted events list not empty", deleted_dl);
 
   /* Replace old directory listing with the new one.  */
   XSETCDR (Fnthcdr (make_number (3), watch_object),
