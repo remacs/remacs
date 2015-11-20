@@ -865,10 +865,10 @@ Note that this handles the case when the cache has been set to nil."
     (let ((orig-win (selected-window))
 	  win-start-end)
       (dolist (w windows)
-	(select-window w)
+	(select-window w 'norecord)
 	(push (cons w (cons (window-start) (follow-calc-win-end)))
 	      win-start-end))
-      (select-window orig-win)
+      (select-window orig-win 'norecord)
       (setq follow-windows-start-end-cache (nreverse win-start-end)))))
 
 (defsubst follow-pos-visible (pos win win-start-end)
@@ -1416,33 +1416,30 @@ non-first windows in Follow mode."
   "Redraw all windows in FRAME, when in Follow mode."
   ;; Below, we call `post-command-hook'.  Avoid an infloop.
   (unless follow-inside-post-command-hook
-    (let ((buffers '())
-	  (orig-window (selected-window))
-	  (orig-buffer (current-buffer))
-	  (orig-frame (selected-frame))
-	  windows
-	  buf)
-      (select-frame frame)
-      (unwind-protect
-	  (walk-windows
-	   (lambda (win)
-	     (setq buf (window-buffer win))
-	     (unless (memq buf buffers)
-	       (set-buffer buf)
-	       (when follow-mode
-		 (setq windows (follow-all-followers win))
-		 (if (not (memq orig-window windows))
-		     (follow-redisplay windows win)
-		   ;; Make sure we're redrawing around the selected
-		   ;; window.
-		   (select-window orig-window)
-		   (follow-post-command-hook)
-		   (setq orig-window (selected-window)))
-		 (setq buffers (cons buf buffers)))))
-	   'no-minibuf)
-	(select-frame orig-frame)
-	(set-buffer orig-buffer)
-	(select-window orig-window)))))
+    (save-current-buffer
+      (let ((orig-frame (selected-frame)))
+        (select-frame frame)
+        (let ((picked-window (selected-window))   ; Note: May change below.
+              (seen-buffers '()))
+          (unwind-protect
+              (walk-windows
+               (lambda (win)
+                 (let ((buf (window-buffer win)))
+                   (unless (memq buf seen-buffers)
+                     (set-buffer buf)
+                     (when follow-mode
+                       (let ((windows (follow-all-followers win)))
+                         (if (not (memq picked-window windows))
+                             (follow-redisplay windows win)
+                           ;; Make sure we're redrawing around the selected
+                           ;; window.
+                           (select-window picked-window 'norecord)
+                           (follow-post-command-hook)
+                           (setq picked-window (selected-window))))
+                       (push buf seen-buffers)))))
+               'no-minibuf)
+            (select-window picked-window 'norecord)))
+        (select-frame orig-frame)))))
 
 (add-hook 'window-scroll-functions 'follow-avoid-tail-recenter t)
 
