@@ -192,24 +192,29 @@ static void module_wrong_type (emacs_env *, Lisp_Object, Lisp_Object);
 /* It is very important that pushing the handler doesn't itself raise
    a signal.  Install the cleanup only after the handler has been
    pushed.  Use __attribute__ ((cleanup)) to avoid
-   non-local-exit-prone manual cleanup.  */
+   non-local-exit-prone manual cleanup.
+
+   The do-while forces uses of the macro to be followed by a semicolon.
+   This macro cannot enclose its entire body inside a do-while, as the
+   code after the macro may longjmp back into the macro, which means
+   its local variable C must stay live in later code.  */
+
 #define MODULE_SETJMP_1(handlertype, handlerfunc, retval, c, dummy)	\
-  do {									\
-    eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return); \
-    struct handler *c = push_handler_nosignal (Qt, handlertype);	\
-    if (!c)								\
-      {									\
-	module_out_of_memory (env);					\
-	return retval;							\
-      }									\
-    verify (module_has_cleanup);					\
-    int dummy __attribute__ ((cleanup (module_reset_handlerlist)));	\
-    if (sys_setjmp (c->jmp))						\
-      {									\
-	(handlerfunc) (env, c->val);					\
-	return retval;							\
-      }									\
-  } while (false)
+  eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return); \
+  struct handler *c = push_handler_nosignal (Qt, handlertype);		\
+  if (!c)								\
+    {									\
+      module_out_of_memory (env);					\
+      return retval;							\
+    }									\
+  verify (module_has_cleanup);						\
+  int dummy __attribute__ ((cleanup (module_reset_handlerlist)));	\
+  if (sys_setjmp (c->jmp))						\
+    {									\
+      (handlerfunc) (env, c->val);					\
+      return retval;							\
+    }									\
+  do { } while (false)
 
 
 /* Function environments.  */
