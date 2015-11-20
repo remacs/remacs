@@ -9379,6 +9379,11 @@ globals_of_w32 (void)
     w32_unicode_filenames = 0;
   else
     w32_unicode_filenames = 1;
+
+#ifdef HAVE_MODULES
+  extern void dynlib_reset_last_error (void);
+  dynlib_reset_last_error ();
+#endif
 }
 
 /* For make-serial-process  */

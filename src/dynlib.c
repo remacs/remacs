@@ -28,42 +28,128 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "dynlib.h"
 
-#if defined _WIN32
+#ifdef WINDOWSNT
 
 /* MS-Windows systems.  */
 
-#include <windows.h>
+#include <errno.h>
+#include "lisp.h"
+#include "w32.h"
+
+static DWORD dynlib_last_err;
+
+/* This needs to be called at startup to countermand any non-zero
+   values recorded by temacs.  */
+void
+dynlib_reset_last_error (void)
+{
+  dynlib_last_err = 0;
+}
 
 dynlib_handle_ptr
-dynlib_open (const char *path)
+dynlib_open (const char *dll_fname)
 {
+  HMODULE hdll;
+  char dll_fname_local[MAX_UTF8_PATH];
 
-  return (dynlib_handle_ptr) LoadLibrary (path);
+  if (!dll_fname)
+    {
+      errno = ENOTSUP;
+      return NULL;
+    }
+
+  if (!dll_fname)
+    hdll = GetModuleHandle (NULL);
+  else
+    {
+      /* LoadLibrary wants backslashes.  */
+      strcpy (dll_fname_local, dll_fname);
+      unixtodos_filename (dll_fname_local);
+
+      if (w32_unicode_filenames)
+	{
+	  wchar_t dll_fname_w[MAX_PATH];
+
+	  filename_to_utf16 (dll_fname_local, dll_fname_w);
+	  hdll = LoadLibraryW (dll_fname_w);
+	}
+      else
+	{
+	  char dll_fname_a[MAX_PATH];
+
+	  filename_to_ansi (dll_fname_local, dll_fname_a);
+	  hdll = LoadLibraryA (dll_fname_a);
+	}
+    }
+
+  if (!hdll)
+    dynlib_last_err = GetLastError ();
+
+  return (dynlib_handle_ptr) hdll;
 }
 
 void *
 dynlib_sym (dynlib_handle_ptr h, const char *sym)
 {
-  return GetProcAddress ((HMODULE) h, sym);
+  FARPROC sym_addr = NULL;
+
+  if (!h || h == INVALID_HANDLE_VALUE || !sym)
+    {
+      dynlib_last_err = ERROR_INVALID_PARAMETER;
+      return NULL;
+    }
+
+  sym_addr = GetProcAddress ((HMODULE) h, sym);
+  if (!sym_addr)
+    dynlib_last_err = GetLastError ();
+
+  return (void *)sym_addr;
 }
 
 bool
 dynlib_addr (void *ptr, const char **path, const char **sym)
 {
-  return false;  /* not implemented */
+  return false;  /* Not implemented yet.  */
 }
 
 const char *
 dynlib_error (void)
 {
-  /* TODO: use GetLastError(), FormatMessage(), ... */
-  return "Can't load DLL";
+  char *error_string = NULL;
+
+  if (dynlib_last_err)
+    {
+      error_string = w32_strerror (dynlib_last_err);
+      dynlib_last_err = 0;
+    }
+
+  return error_string;
 }
 
 int
 dynlib_close (dynlib_handle_ptr h)
 {
-  return FreeLibrary ((HMODULE) h) != 0;
+  if (!h || h == INVALID_HANDLE_VALUE)
+    {
+      dynlib_last_err = ERROR_INVALID_PARAMETER;
+      return -1;
+    }
+  /* If the handle is for the main module (the .exe file), it
+     shouldn't be passed to FreeLibrary, because GetModuleHandle
+     doesn't increment the refcount, but FreeLibrary does decrement
+     it.  I don't think this should matter for the main module, but
+     just in case, we avoid the call here, relying on another call to
+     GetModuleHandle to return the same value.  */
+  if (h == GetModuleHandle (NULL))
+    return 0;
+
+  if (!FreeLibrary ((HMODULE) h))
+    {
+      dynlib_last_err = GetLastError ();
+      return -1;
+    }
+
+  return 0;
 }
 
 #elif defined HAVE_UNISTD_H
