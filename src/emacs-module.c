@@ -222,7 +222,7 @@ static void module_wrong_type (emacs_env *, Lisp_Object, Lisp_Object);
 
 struct module_fun_env
 {
-  int min_arity, max_arity;
+  ptrdiff_t min_arity, max_arity;
   emacs_subr subr;
   void *data;
 };
@@ -367,7 +367,7 @@ module_non_local_exit_throw (emacs_env *env, emacs_value tag, emacs_value value)
 		    (module-call envobj arglist)))  */
 
 static emacs_value
-module_make_function (emacs_env *env, int min_arity, int max_arity,
+module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
 		      emacs_subr subr, const char *documentation,
 		      void *data)
 {
@@ -375,24 +375,20 @@ module_make_function (emacs_env *env, int min_arity, int max_arity,
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
   MODULE_HANDLE_SIGNALS;
 
-  if (min_arity > MOST_POSITIVE_FIXNUM || max_arity > MOST_POSITIVE_FIXNUM)
-    xsignal0 (Qoverflow_error);
-
-  if (min_arity < 0
-      || (max_arity >= 0 && max_arity < min_arity)
-      || (max_arity < 0 && max_arity != emacs_variadic_function))
+  if (! (0 <= min_arity
+	 && (max_arity < 0
+	     ? max_arity == emacs_variadic_function
+	     : min_arity <= max_arity)))
     xsignal2 (Qinvalid_arity, make_number (min_arity), make_number (max_arity));
 
-  Lisp_Object envobj;
-
-  /* XXX: This should need to be freed when envobj is GC'd.  */
-  struct module_fun_env *envptr = xzalloc (sizeof *envptr);
+  /* FIXME: This should be freed when envobj is GC'd.  */
+  struct module_fun_env *envptr = xmalloc (sizeof *envptr);
   envptr->min_arity = min_arity;
   envptr->max_arity = max_arity;
   envptr->subr = subr;
   envptr->data = data;
-  envobj = make_save_ptr (envptr);
 
+  Lisp_Object envobj = make_save_ptr (envptr);
   Lisp_Object ret = list4 (Qlambda,
                            list2 (Qand_rest, Qargs),
                            documentation ? build_string (documentation) : Qnil,
@@ -404,7 +400,8 @@ module_make_function (emacs_env *env, int min_arity, int max_arity,
 }
 
 static emacs_value
-module_funcall (emacs_env *env, emacs_value fun, int nargs, emacs_value args[])
+module_funcall (emacs_env *env, emacs_value fun, ptrdiff_t nargs,
+		emacs_value args[])
 {
   check_main_thread ();
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
@@ -413,11 +410,15 @@ module_funcall (emacs_env *env, emacs_value fun, int nargs, emacs_value args[])
 
   /* Make a new Lisp_Object array starting with the function as the
      first arg, because that's what Ffuncall takes.  */
-  Lisp_Object newargs[nargs + 1];
+  Lisp_Object *newargs;
+  USE_SAFE_ALLOCA;
+  SAFE_ALLOCA_LISP (newargs, nargs + 1);
   newargs[0] = value_to_lisp (fun);
-  for (int i = 0; i < nargs; i++)
+  for (ptrdiff_t i = 0; i < nargs; i++)
     newargs[1 + i] = value_to_lisp (args[i]);
-  return lisp_to_value (env, Ffuncall (nargs + 1, newargs));
+  emacs_value result = lisp_to_value (env, Ffuncall (nargs + 1, newargs));
+  SAFE_FREE ();
+  return result;
 }
 
 static emacs_value
@@ -615,20 +616,18 @@ module_vec_set (emacs_env *env, emacs_value vec, ptrdiff_t i, emacs_value val)
 {
   check_main_thread ();
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
-  if (i > MOST_POSITIVE_FIXNUM)
-    {
-      module_non_local_exit_signal_1 (env, Qoverflow_error, Qnil);
-      return;
-    }
   Lisp_Object lvec = value_to_lisp (vec);
   if (! VECTORP (lvec))
     {
       module_wrong_type (env, Qvectorp, lvec);
       return;
     }
-  if (i >= ASIZE (lvec))
+  if (! (0 <= i && i < ASIZE (lvec)))
     {
-      module_args_out_of_range (env, lvec, make_number (i));
+      if (MOST_NEGATIVE_FIXNUM <= i && i <= MOST_POSITIVE_FIXNUM)
+	module_args_out_of_range (env, lvec, make_number (i));
+      else
+	module_non_local_exit_signal_1 (env, Qoverflow_error, Qnil);
       return;
     }
   ASET (lvec, i, value_to_lisp (val));
@@ -645,11 +644,12 @@ module_vec_get (emacs_env *env, emacs_value vec, ptrdiff_t i)
       module_wrong_type (env, Qvectorp, lvec);
       return NULL;
     }
-  ptrdiff_t size = ASIZE (lvec);
-  eassert (size >= 0);
-  if (! (0 <= i && i < size))
+  if (! (0 <= i && i < ASIZE (lvec)))
     {
-      module_args_out_of_range (env, lvec, make_number (i));
+      if (MOST_NEGATIVE_FIXNUM <= i && i <= MOST_POSITIVE_FIXNUM)
+	module_args_out_of_range (env, lvec, make_number (i));
+      else
+	module_non_local_exit_signal_1 (env, Qoverflow_error, Qnil);
       return NULL;
     }
   return lisp_to_value (env, AREF (lvec, i));
@@ -707,9 +707,7 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
 
   if (r != 0)
     {
-      if (r < MOST_NEGATIVE_FIXNUM)
-        xsignal0 (Qunderflow_error);
-      if (r > MOST_POSITIVE_FIXNUM)
+      if (! (MOST_NEGATIVE_FIXNUM <= r && r <= MOST_POSITIVE_FIXNUM))
         xsignal0 (Qoverflow_error);
       xsignal2 (Qmodule_load_failed, file, make_number (r));
     }
@@ -724,22 +722,19 @@ ARGLIST is a list of arguments passed to SUBRPTR.  */)
   (Lisp_Object envobj, Lisp_Object arglist)
 {
   struct module_fun_env *envptr = XSAVE_POINTER (envobj, 0);
-  EMACS_INT len = XINT (Flength (arglist));
-  eassert (len >= 0);
-  if (len > MOST_POSITIVE_FIXNUM)
-    xsignal0 (Qoverflow_error);
-  if (len > INT_MAX || len < envptr->min_arity
-      || (envptr->max_arity >= 0 && len > envptr->max_arity))
+  EMACS_INT len = XFASTINT (Flength (arglist));
+  eassume (0 <= envptr->min_arity);
+  if (! (envptr->min_arity <= len
+	 && len <= (envptr->max_arity < 0 ? PTRDIFF_MAX : envptr->max_arity)))
     xsignal2 (Qwrong_number_of_arguments, module_format_fun_env (envptr),
 	      make_number (len));
 
   struct env_storage env;
   initialize_environment (&env);
 
-  emacs_value *args = xzalloc (len * sizeof *args);
-  int i;
+  emacs_value *args = xnmalloc (len, sizeof *args);
 
-  for (i = 0; i < len; i++)
+  for (ptrdiff_t i = 0; i < len; i++)
     {
       args[i] = lisp_to_value (&env.pub, XCAR (arglist));
       if (! args[i])

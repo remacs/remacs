@@ -60,8 +60,8 @@ struct emacs_runtime
 typedef int (*emacs_init_function) (struct emacs_runtime *ert);
 
 /* Function prototype for the module Lisp functions.  */
-typedef emacs_value (*emacs_subr) (emacs_env *env, int nargs, emacs_value args[],
-				   void *data);
+typedef emacs_value (*emacs_subr) (emacs_env *env, ptrdiff_t nargs,
+				   emacs_value args[], void *data);
 
 /* Function prototype for module user-pointer finalizers.  */
 typedef void (*emacs_finalizer_function) (void *);
@@ -117,17 +117,19 @@ struct emacs_env_25
   /* Function registration.  */
 
   emacs_value (*make_function) (emacs_env *env,
-				int min_arity,
-				int max_arity,
-				emacs_value (*function) (emacs_env *, int,
-							 emacs_value *, void *)
+				ptrdiff_t min_arity,
+				ptrdiff_t max_arity,
+				emacs_value (*function) (emacs_env *env,
+							 ptrdiff_t nargs,
+							 emacs_value args[],
+							 void *)
 				  EMACS_NOEXCEPT,
 				const char *documentation,
 				void *data);
 
   emacs_value (*funcall) (emacs_env *env,
                           emacs_value function,
-                          int nargs,
+                          ptrdiff_t nargs,
                           emacs_value args[]);
 
   emacs_value (*intern) (emacs_env *env,
