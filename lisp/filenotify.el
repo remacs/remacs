@@ -236,7 +236,7 @@ EVENT is the cadr of the event in `file-notify-handle-event'
           (setq pending-event nil))
 
         ;; Check for stopped.
-	;;(message "file-notify-callback %S %S" file registered)
+	;;(message "file-notify-callback %S %S %S" file file1 registered)
         (setq
          stopped
          (or
@@ -342,7 +342,7 @@ FILE is the name of the file whose event is being reported."
 	;; A file name handler could exist even if there is no local
 	;; file notification support.
 	(setq desc (funcall
-		    handler 'file-notify-add-watch dir flags callback))
+		    handler 'file-notify-add-watch file flags callback))
 
       ;; Check, whether Emacs has been compiled with file notification
       ;; support.
@@ -379,7 +379,7 @@ FILE is the name of the file whose event is being reported."
                 l-flags)))
 
       ;; Call low-level function.
-      (setq desc (funcall func dir l-flags 'file-notify-callback)))
+      (setq desc (funcall func file l-flags 'file-notify-callback)))
 
     ;; Modify `file-notify-descriptors'.
     (setq file (unless (file-directory-p file) (file-name-nondirectory file))
