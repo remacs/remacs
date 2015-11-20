@@ -557,7 +557,7 @@ The top left corner of the native frame specifies the @dfn{native
 position} of the frame.  (1)--(3) in the drawing above indicate that
 position for the various builds:
 
-@itemize @w
+@itemize @w{}
 @item (1) non-toolkit and terminal frames
 
 @item (2) Lucid, Motif and Windows frames
