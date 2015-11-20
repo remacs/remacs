@@ -24,6 +24,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    If you think the abstraction is too leaky use libltdl (libtool),
    don't reinvent the wheel by fixing this one.  */
 
+#include <config.h>
+
 #include "dynlib.h"
 
 #if defined _WIN32

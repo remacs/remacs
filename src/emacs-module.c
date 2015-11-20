@@ -17,14 +17,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include <config.h>
+
+#include "emacs-module.h"
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 
-#include <config.h>
 #include "lisp.h"
-#include "emacs-module.h"
 #include "dynlib.h"
 #include "coding.h"
 #include "verify.h"

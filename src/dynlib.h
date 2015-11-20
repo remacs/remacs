@@ -20,7 +20,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef DYNLIB_H
 #define DYNLIB_H
 
-#include <config.h>
 #include <stdbool.h>
 
 typedef void *dynlib_handle_ptr;
