@@ -874,24 +874,6 @@ invoked interactively."
   (when (setq mode (intern-soft mode))
     (mode-local-describe-bindings-1 mode (called-interactively-p 'any))))
 
-;; ;;; find-func support (Emacs 21.4, or perhaps 22.1)
-;; ;;
-;; (condition-case nil
-;;     ;; Try to get find-func so we can modify it.
-;;     (require 'find-func)
-;;   (error nil))
-
-;; (when (boundp 'find-function-regexp)
-;;   (unless (string-match "ine-overload" find-function-regexp)
-;;     (if (string-match "(def\\\\(" find-function-regexp)
-;; 	(let ((end (match-end 0))
-;; 	      )
-;; 	  (setq find-function-regexp
-;; 		(concat (substring find-function-regexp 0 end)
-;; 			"ine-overload\\|ine-mode-local-override\\|"
-;; 			"ine-child-mode\\|"
-;; 			(substring find-function-regexp end)))))))
-
 ;;; edebug support
 ;;
 (defun mode-local-setup-edebug-specs ()
