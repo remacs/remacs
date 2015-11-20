@@ -226,9 +226,8 @@ init_eval (void)
   { /* Put a dummy catcher at top-level so that handlerlist is never NULL.
        This is important since handlerlist->nextfree holds the freelist
        which would otherwise leak every time we unwind back to top-level.   */
-    struct handler *c;
     handlerlist = handlerlist_sentinel.nextfree = &handlerlist_sentinel;
-    PUSH_HANDLER (c, Qunbound, CATCHER);
+    struct handler *c = push_handler (Qunbound, CATCHER);
     eassert (c == &handlerlist_sentinel);
     handlerlist_sentinel.nextfree = NULL;
     handlerlist_sentinel.next = NULL;
@@ -1059,18 +1058,16 @@ usage: (catch TAG BODY...)  */)
    This is how catches are done from within C code.  */
 
 Lisp_Object
-internal_catch (Lisp_Object tag, Lisp_Object (*func) (Lisp_Object), Lisp_Object arg)
+internal_catch (Lisp_Object tag,
+		Lisp_Object (*func) (Lisp_Object), Lisp_Object arg)
 {
   /* This structure is made part of the chain `catchlist'.  */
-  struct handler *c;
-
-  /* Fill in the components of c, and put it on the list.  */
-  PUSH_HANDLER (c, tag, CATCHER);
+  struct handler *c = push_handler (tag, CATCHER);
 
   /* Call FUNC.  */
   if (! sys_setjmp (c->jmp))
     {
-      Lisp_Object val = (*func) (arg);
+      Lisp_Object val = func (arg);
       clobbered_eassert (handlerlist == c);
       handlerlist = handlerlist->next;
       return val;
@@ -1147,7 +1144,7 @@ Both TAG and VALUE are evalled.  */
       {
 	if (c->type == CATCHER_ALL)
           unwind_to_catch (c, Fcons (tag, value));
-        if (c->type == CATCHER && EQ (c->tag_or_ch, tag))
+	if (c->type == CATCHER && EQ (c->tag_or_ch, tag))
 	  unwind_to_catch (c, value);
       }
   xsignal2 (Qno_catch, tag, value);
@@ -1213,7 +1210,6 @@ internal_lisp_condition_case (volatile Lisp_Object var, Lisp_Object bodyform,
 			      Lisp_Object handlers)
 {
   Lisp_Object val;
-  struct handler *c;
   struct handler *oldhandlerlist = handlerlist;
   int clausenb = 0;
 
@@ -1248,7 +1244,7 @@ internal_lisp_condition_case (volatile Lisp_Object var, Lisp_Object bodyform,
 	Lisp_Object condition = XCAR (clause);
 	if (!CONSP (condition))
 	  condition = Fcons (condition, Qnil);
-	PUSH_HANDLER (c, condition, CONDITION_CASE);
+	struct handler *c = push_handler (condition, CONDITION_CASE);
 	if (sys_setjmp (c->jmp))
 	  {
 	    ptrdiff_t count = SPECPDL_INDEX ();
@@ -1296,46 +1292,45 @@ Lisp_Object
 internal_condition_case (Lisp_Object (*bfun) (void), Lisp_Object handlers,
 			 Lisp_Object (*hfun) (Lisp_Object))
 {
-  Lisp_Object val;
-  struct handler *c;
-
-  PUSH_HANDLER (c, handlers, CONDITION_CASE);
+  struct handler *c = push_handler (handlers, CONDITION_CASE);
   if (sys_setjmp (c->jmp))
     {
       Lisp_Object val = handlerlist->val;
       clobbered_eassert (handlerlist == c);
       handlerlist = handlerlist->next;
-      return (*hfun) (val);
+      return hfun (val);
     }
-
-  val = (*bfun) ();
-  clobbered_eassert (handlerlist == c);
-  handlerlist = handlerlist->next;
-  return val;
+  else
+    {
+      Lisp_Object val = bfun ();
+      clobbered_eassert (handlerlist == c);
+      handlerlist = handlerlist->next;
+      return val;
+    }
 }
 
 /* Like internal_condition_case but call BFUN with ARG as its argument.  */
 
 Lisp_Object
 internal_condition_case_1 (Lisp_Object (*bfun) (Lisp_Object), Lisp_Object arg,
-			   Lisp_Object handlers, Lisp_Object (*hfun) (Lisp_Object))
+			   Lisp_Object handlers,
+			   Lisp_Object (*hfun) (Lisp_Object))
 {
-  Lisp_Object val;
-  struct handler *c;
-
-  PUSH_HANDLER (c, handlers, CONDITION_CASE);
+  struct handler *c = push_handler (handlers, CONDITION_CASE);
   if (sys_setjmp (c->jmp))
     {
       Lisp_Object val = handlerlist->val;
       clobbered_eassert (handlerlist == c);
       handlerlist = handlerlist->next;
-      return (*hfun) (val);
+      return hfun (val);
     }
-
-  val = (*bfun) (arg);
-  clobbered_eassert (handlerlist == c);
-  handlerlist = handlerlist->next;
-  return val;
+  else
+    {
+      Lisp_Object val = bfun (arg);
+      clobbered_eassert (handlerlist == c);
+      handlerlist = handlerlist->next;
+      return val;
+    }
 }
 
 /* Like internal_condition_case_1 but call BFUN with ARG1 and ARG2 as
@@ -1348,22 +1343,21 @@ internal_condition_case_2 (Lisp_Object (*bfun) (Lisp_Object, Lisp_Object),
 			   Lisp_Object handlers,
 			   Lisp_Object (*hfun) (Lisp_Object))
 {
-  Lisp_Object val;
-  struct handler *c;
-
-  PUSH_HANDLER (c, handlers, CONDITION_CASE);
+  struct handler *c = push_handler (handlers, CONDITION_CASE);
   if (sys_setjmp (c->jmp))
     {
       Lisp_Object val = handlerlist->val;
       clobbered_eassert (handlerlist == c);
       handlerlist = handlerlist->next;
-      return (*hfun) (val);
+      return hfun (val);
     }
-
-  val = (*bfun) (arg1, arg2);
-  clobbered_eassert (handlerlist == c);
-  handlerlist = handlerlist->next;
-  return val;
+  else
+    {
+      Lisp_Object val = bfun (arg1, arg2);
+      clobbered_eassert (handlerlist == c);
+      handlerlist = handlerlist->next;
+      return val;
+    }
 }
 
 /* Like internal_condition_case but call BFUN with NARGS as first,
@@ -1378,64 +1372,46 @@ internal_condition_case_n (Lisp_Object (*bfun) (ptrdiff_t, Lisp_Object *),
 						ptrdiff_t nargs,
 						Lisp_Object *args))
 {
-  Lisp_Object val;
-  struct handler *c;
-
-  PUSH_HANDLER (c, handlers, CONDITION_CASE);
+  struct handler *c = push_handler (handlers, CONDITION_CASE);
   if (sys_setjmp (c->jmp))
     {
       Lisp_Object val = handlerlist->val;
       clobbered_eassert (handlerlist == c);
       handlerlist = handlerlist->next;
-      return (*hfun) (val, nargs, args);
+      return hfun (val, nargs, args);
     }
-
-  val = (*bfun) (nargs, args);
-  clobbered_eassert (handlerlist == c);
-  handlerlist = handlerlist->next;
-  return val;
-}
-
-static void init_handler (struct handler *c, Lisp_Object tag_ch_val,
-                          enum handlertype handlertype);
-
-void
-push_handler (struct handler **c, Lisp_Object tag_ch_val,
-	      enum handlertype handlertype)
-{
-  if (handlerlist->nextfree)
-    *c = handlerlist->nextfree;
   else
     {
-      *c = xmalloc (sizeof (struct handler));
-      (*c)->nextfree = NULL;
-      handlerlist->nextfree = *c;
+      Lisp_Object val = bfun (nargs, args);
+      clobbered_eassert (handlerlist == c);
+      handlerlist = handlerlist->next;
+      return val;
     }
-  init_handler (*c, tag_ch_val, handlertype);
 }
 
-bool
-push_handler_nosignal (struct handler **c, Lisp_Object tag_ch_val,
-		       enum handlertype handlertype)
+struct handler *
+push_handler (Lisp_Object tag_ch_val, enum handlertype handlertype)
 {
-  if (handlerlist->nextfree)
-    *c = handlerlist->nextfree;
-  else
+  struct handler *c = push_handler_nosignal (tag_ch_val, handlertype);
+  if (!c)
+    memory_full (sizeof *c);
+  return c;
+}
+
+struct handler *
+push_handler_nosignal (Lisp_Object tag_ch_val, enum handlertype handlertype)
+{
+  struct handler *c = handlerlist->nextfree;
+  if (!c)
     {
-      struct handler *h = malloc (sizeof (struct handler));
-      if (! h) return false;
-      *c = h;
-      h->nextfree = NULL;
-      handlerlist->nextfree = h;
+      c = malloc (sizeof *c);
+      if (!c)
+	return c;
+      if (profiler_memory_running)
+	malloc_probe (sizeof *c);
+      c->nextfree = NULL;
+      handlerlist->nextfree = c;
     }
-  init_handler (*c, tag_ch_val, handlertype);
-  return true;
-}
-
-static void
-init_handler (struct handler *c, Lisp_Object tag_ch_val,
-	      enum handlertype handlertype)
-{
   c->type = handlertype;
   c->tag_or_ch = tag_ch_val;
   c->val = Qnil;
@@ -1446,6 +1422,7 @@ init_handler (struct handler *c, Lisp_Object tag_ch_val,
   c->interrupt_input_blocked = interrupt_input_blocked;
   c->byte_stack = byte_stack_list;
   handlerlist = c;
+  return c;
 }
 
 

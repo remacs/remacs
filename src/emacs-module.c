@@ -194,8 +194,8 @@ static void module_wrong_type (emacs_env *, Lisp_Object, Lisp_Object);
 #define MODULE_SETJMP_1(handlertype, handlerfunc, retval, c, dummy)	\
   do {									\
     eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return); \
-    struct handler *c;							\
-    if (!push_handler_nosignal (&c, Qt, handlertype))			\
+    struct handler *c = push_handler_nosignal (Qt, handlertype);	\
+    if (!c)								\
       {									\
 	module_out_of_memory (env);					\
 	return retval;							\

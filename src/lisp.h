@@ -3183,18 +3183,6 @@ struct handler
   struct byte_stack *byte_stack;
 };
 
-/* Fill in the components of c, and put it on the list.  */
-#define PUSH_HANDLER(c, tag_ch_val, handlertype)	\
-  push_handler(&(c), (tag_ch_val), (handlertype))
-
-extern void push_handler (struct handler **c, Lisp_Object tag_ch_val,
-                          enum handlertype handlertype);
-
-/* Like push_handler, but don't signal if the handler could not be
-   allocated.  Instead return false in that case. */
-extern bool push_handler_nosignal (struct handler **c, Lisp_Object tag_ch_val,
-                                   enum handlertype handlertype);
-
 extern Lisp_Object memory_signal_data;
 
 /* An address near the bottom of the stack.
@@ -3880,6 +3868,8 @@ extern Lisp_Object internal_condition_case_2 (Lisp_Object (*) (Lisp_Object, Lisp
 extern Lisp_Object internal_condition_case_n
     (Lisp_Object (*) (ptrdiff_t, Lisp_Object *), ptrdiff_t, Lisp_Object *,
      Lisp_Object, Lisp_Object (*) (Lisp_Object, ptrdiff_t, Lisp_Object *));
+extern struct handler *push_handler (Lisp_Object, enum handlertype);
+extern struct handler *push_handler_nosignal (Lisp_Object, enum handlertype);
 extern void specbind (Lisp_Object, Lisp_Object);
 extern void record_unwind_protect (void (*) (Lisp_Object), Lisp_Object);
 extern void record_unwind_protect_ptr (void (*) (void *), void *);
