@@ -1416,6 +1416,17 @@ See also `multi-occur'."
 			       buf))
 			   (buffer-list))))))
 
+(defun occur-regexp-descr (regexp)
+  (format " for %s\"%s\""
+          (or (get-text-property 0 'isearch-regexp-function-descr regexp)
+              "")
+          (if (get-text-property 0 'isearch-string regexp)
+              (propertize
+               (query-replace-descr
+                (get-text-property 0 'isearch-string regexp))
+               'help-echo regexp)
+            (query-replace-descr regexp))))
+
 (defun occur-1 (regexp nlines bufs &optional buf-name)
   (unless (and regexp (not (equal regexp "")))
     (error "Occur doesn't work with the empty regexp"))
@@ -1484,9 +1495,11 @@ See also `multi-occur'."
 		     (if (= count 1) "" "es")
 		     ;; Don't display regexp if with remaining text
 		     ;; it is longer than window-width.
-		     (if (> (+ (length regexp) 42) (window-width))
-			 "" (format-message
-                             " for `%s'" (query-replace-descr regexp)))))
+		     (if (> (+ (length (or (get-text-property 0 'isearch-string regexp)
+					   regexp))
+			       42)
+			    (window-width))
+			 "" (occur-regexp-descr regexp))))
 	  (setq occur-revert-arguments (list regexp nlines bufs))
           (if (= count 0)
               (kill-buffer occur-buf)
@@ -1647,8 +1660,7 @@ See also `multi-occur'."
 						  lines (if (= lines 1) "" "s")))
 				   ;; Don't display regexp for multi-buffer.
 				   (if (> (length buffers) 1)
-				       "" (format " for \"%s\""
-						  (query-replace-descr regexp)))
+				       "" (occur-regexp-descr regexp))
 				   (buffer-name buf))
 			   'read-only t))
 		  (setq end (point))
@@ -1661,14 +1673,14 @@ See also `multi-occur'."
 	(goto-char (point-min))
 	(let ((beg (point))
 	      end)
-	  (insert (format "%d match%s%s total for \"%s\":\n"
+	  (insert (format "%d match%s%s total%s:\n"
 			  global-matches (if (= global-matches 1) "" "es")
 			  ;; Don't display the same number of lines
 			  ;; and matches in case of 1 match per line.
 			  (if (= global-lines global-matches)
 			      "" (format " in %d line%s"
 					 global-lines (if (= global-lines 1) "" "s")))
-			  (query-replace-descr regexp)))
+			  (occur-regexp-descr regexp)))
 	  (setq end (point))
 	  (when title-face
 	    (add-face-text-property beg end title-face)))

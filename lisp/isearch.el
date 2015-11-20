@@ -1828,7 +1828,13 @@ characters in that string."
 		 isearch-regexp-lax-whitespace
 	       isearch-lax-whitespace)
 	     search-whitespace-regexp)))
-    (occur regexp nlines)))
+    (occur (if isearch-regexp-function
+	       (propertize regexp
+			   'isearch-string isearch-string
+			   'isearch-regexp-function-descr
+                           (isearch--describe-regexp-mode isearch-regexp-function))
+	     regexp)
+	   nlines)))
 
 (declare-function hi-lock-read-face-name "hi-lock" ())
 
