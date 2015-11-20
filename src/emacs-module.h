@@ -196,6 +196,9 @@ struct emacs_env_25
   ptrdiff_t (*vec_size) (emacs_env *env, emacs_value vec);
 };
 
+/* Every module should define a function as follows.  */
+extern int emacs_module_init (struct emacs_runtime *ert);
+
 #ifdef __cplusplus
 }
 #endif
