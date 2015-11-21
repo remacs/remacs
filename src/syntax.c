@@ -514,6 +514,7 @@ update_syntax_table_forward (ptrdiff_t charpos, bool init,
     {
       eassert (NILP (object));
       eassert (charpos >= gl_state.e_property);
+      parse_sexp_propertize (charpos);
     }
   else
     {
