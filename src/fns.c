@@ -4079,13 +4079,10 @@ hash_clear (struct Lisp_Hash_Table *h)
 static bool
 sweep_weak_table (struct Lisp_Hash_Table *h, bool remove_entries_p)
 {
-  ptrdiff_t bucket, n;
-  bool marked;
+  ptrdiff_t n = gc_asize (h->index);
+  bool marked = false;
 
-  n = ASIZE (h->index) & ~ARRAY_MARK_FLAG;
-  marked = 0;
-
-  for (bucket = 0; bucket < n; ++bucket)
+  for (ptrdiff_t bucket = 0; bucket < n; ++bucket)
     {
       Lisp_Object idx, next, prev;
 

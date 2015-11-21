@@ -847,7 +847,9 @@ INLINE EMACS_INT
 INLINE EMACS_INT
 (XFASTINT) (Lisp_Object a)
 {
-  return lisp_h_XFASTINT (a);
+  EMACS_INT n = lisp_h_XFASTINT (a);
+  eassume (0 <= n);
+  return n;
 }
 
 INLINE struct Lisp_Symbol *
@@ -915,7 +917,7 @@ XFASTINT (Lisp_Object a)
 {
   EMACS_INT int0 = Lisp_Int0;
   EMACS_INT n = USE_LSB_TAG ? XINT (a) : XLI (a) - (int0 << VALBITS);
-  eassert (0 <= n);
+  eassume (0 <= n);
   return n;
 }
 
@@ -923,6 +925,7 @@ XFASTINT (Lisp_Object a)
 INLINE struct Lisp_Symbol *
 XSYMBOL (Lisp_Object a)
 {
+  eassert (SYMBOLP (a));
   uintptr_t i = (uintptr_t) XUNTAG (a, Lisp_Symbol);
   void *p = (char *) lispsym + i;
   return p;
@@ -1536,7 +1539,16 @@ aref_addr (Lisp_Object array, ptrdiff_t idx)
 INLINE ptrdiff_t
 ASIZE (Lisp_Object array)
 {
-  return XVECTOR (array)->header.size;
+  ptrdiff_t size = XVECTOR (array)->header.size;
+  eassume (0 <= size);
+  return size;
+}
+
+INLINE ptrdiff_t
+gc_asize (Lisp_Object array)
+{
+  /* Like ASIZE, but also can be used in the garbage collector.  */
+  return XVECTOR (array)->header.size & ~ARRAY_MARK_FLAG;
 }
 
 INLINE void
@@ -1551,7 +1563,7 @@ gc_aset (Lisp_Object array, ptrdiff_t idx, Lisp_Object val)
 {
   /* Like ASET, but also can be used in the garbage collector:
      sweep_weak_table calls set_hash_key etc. while the table is marked.  */
-  eassert (0 <= idx && idx < (ASIZE (array) & ~ARRAY_MARK_FLAG));
+  eassert (0 <= idx && idx < gc_asize (array));
   XVECTOR (array)->contents[idx] = val;
 }
 
@@ -1933,20 +1945,21 @@ struct Lisp_Hash_Table
 };
 
 
-INLINE struct Lisp_Hash_Table *
-XHASH_TABLE (Lisp_Object a)
-{
-  return XUNTAG (a, Lisp_Vectorlike);
-}
-
-#define XSET_HASH_TABLE(VAR, PTR) \
-     (XSETPSEUDOVECTOR (VAR, PTR, PVEC_HASH_TABLE))
-
 INLINE bool
 HASH_TABLE_P (Lisp_Object a)
 {
   return PSEUDOVECTORP (a, PVEC_HASH_TABLE);
 }
+
+INLINE struct Lisp_Hash_Table *
+XHASH_TABLE (Lisp_Object a)
+{
+  eassert (HASH_TABLE_P (a));
+  return XUNTAG (a, Lisp_Vectorlike);
+}
+
+#define XSET_HASH_TABLE(VAR, PTR) \
+     (XSETPSEUDOVECTOR (VAR, PTR, PVEC_HASH_TABLE))
 
 /* Value is the key part of entry IDX in hash table H.  */
 INLINE Lisp_Object

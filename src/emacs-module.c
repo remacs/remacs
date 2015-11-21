@@ -257,7 +257,6 @@ module_make_global_ref (emacs_env *env, emacs_value ref)
   check_main_thread ();
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
   MODULE_HANDLE_SIGNALS;
-  eassert (HASH_TABLE_P (Vmodule_refs_hash));
   struct Lisp_Hash_Table *h = XHASH_TABLE (Vmodule_refs_hash);
   Lisp_Object new_obj = value_to_lisp (ref);
   EMACS_UINT hashcode;
@@ -266,7 +265,6 @@ module_make_global_ref (emacs_env *env, emacs_value ref)
   if (i >= 0)
     {
       Lisp_Object value = HASH_VALUE (h, i);
-      eassert (NATNUMP (value));
       EMACS_INT refcount = XFASTINT (value) + 1;
       if (refcount > MOST_POSITIVE_FIXNUM)
         {
@@ -293,7 +291,6 @@ module_free_global_ref (emacs_env *env, emacs_value ref)
   /* FIXME: Wait a minute.  Shouldn't this function report an error if
      the hash lookup fails?  */
   MODULE_HANDLE_SIGNALS_VOID;
-  eassert (HASH_TABLE_P (Vmodule_refs_hash));
   struct Lisp_Hash_Table *h = XHASH_TABLE (Vmodule_refs_hash);
   Lisp_Object obj = value_to_lisp (ref);
   EMACS_UINT hashcode;
@@ -302,7 +299,6 @@ module_free_global_ref (emacs_env *env, emacs_value ref)
   if (i >= 0)
     {
       Lisp_Object value = HASH_VALUE (h, i);
-      eassert (NATNUMP (value));
       EMACS_INT refcount = XFASTINT (value) - 1;
       if (refcount > 0)
         {
@@ -310,10 +306,7 @@ module_free_global_ref (emacs_env *env, emacs_value ref)
           set_hash_value_slot (h, i, value);
         }
       else
-        {
-          eassert (refcount == 0);
-          hash_remove_from_table (h, value);
-        }
+	hash_remove_from_table (h, value);
     }
 }
 
@@ -670,7 +663,6 @@ module_vec_size (emacs_env *env, emacs_value vec)
       module_wrong_type (env, Qvectorp, lvec);
       return 0;
     }
-  eassert (ASIZE (lvec) >= 0);
   return ASIZE (lvec);
 }
 
@@ -894,7 +886,7 @@ finalize_storage (struct emacs_value_storage *storage)
 }
 
 /* Allocate a new value from STORAGE and stores OBJ in it.  Return
-   NULL if allocations fails and use ENV for non local exit reporting.  */
+   NULL if allocation fails and use ENV for non local exit reporting.  */
 static emacs_value
 allocate_emacs_value (emacs_env *env, struct emacs_value_storage *storage,
 		      Lisp_Object obj)

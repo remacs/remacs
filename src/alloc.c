@@ -5339,7 +5339,7 @@ compact_font_cache_entry (Lisp_Object entry)
 	  && !VECTOR_MARKED_P (XFONT_SPEC (XCAR (obj)))
 	  && VECTORP (XCDR (obj)))
 	{
-	  ptrdiff_t i, size = ASIZE (XCDR (obj)) & ~ARRAY_MARK_FLAG;
+	  ptrdiff_t i, size = gc_asize (XCDR (obj));
 
 	  /* If font-spec is not marked, most likely all font-entities
 	     are not marked too.  But we must be sure that nothing is

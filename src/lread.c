@@ -3941,10 +3941,8 @@ oblookup (Lisp_Object obarray, register const char *ptr, ptrdiff_t size, ptrdiff
   Lisp_Object bucket, tem;
 
   obarray = check_obarray (obarray);
-  obsize = ASIZE (obarray);
-
   /* This is sometimes needed in the middle of GC.  */
-  obsize &= ~ARRAY_MARK_FLAG;
+  obsize = gc_asize (obarray);
   hash = hash_string (ptr, size_byte) % obsize;
   bucket = AREF (obarray, hash);
   oblookup_last_bucket_number = hash;
