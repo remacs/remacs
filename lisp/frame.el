@@ -2249,9 +2249,8 @@ See also `toggle-frame-maximized'."
  'window-system-version "it does not give useful information." "24.3")
 
 ;; Variables which should trigger redisplay of the current buffer.
-(setq redisplay--variables (make-hash-table :test 'eq :size 10))
 (mapc (lambda (var)
-        (puthash var 1 redisplay--variables))
+        (add-variable-watcher var (symbol-function 'set-buffer-redisplay)))
       '(line-spacing
         overline-margin
         line-prefix

@@ -1275,8 +1275,6 @@ set_internal (Lisp_Object symbol, Lisp_Object newval, Lisp_Object where,
     default: emacs_abort ();
     }
 
-  maybe_set_redisplay (symbol);
-
  start:
   switch (sym->redirect)
     {
