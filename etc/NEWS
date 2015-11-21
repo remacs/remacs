@@ -36,6 +36,9 @@ otherwise leave it unmarked.
 This builds Emacs with Cairo drawing.  As a side effect, it provides
 support for built-in printing, when Emacs was built with GTK+.
 
+** New configure option --with-modules.
+This enables support for loading dynamic modules; see below.
+
 ---
 ** By default, Emacs no longer works on IRIX.  We expect that Emacs
 users are not affected by this, as SGI stopped supporting IRIX in
@@ -301,6 +304,14 @@ header.
 ** `tabulated-list-print' takes a second optional argument, update,
 which specifies an alternative printing method which is faster when
 few or no entries have changed.
+
+** Emacs can now load shared/dynamic libraries (modules) that expose a
+C interface.  Such modules can provide additional functions or
+otherwise interact with Emacs just like Lisp code.  Modules have to
+export a function `emacs_module_init' and conform to the API laid out
+in emacs-module.h.  Modules are disabled by default and need to be
+enabled using the --with-modules configure flag.  They are
+experimental and subject to change.
 
 
 * Editing Changes in Emacs 25.1
