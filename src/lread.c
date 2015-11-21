@@ -987,7 +987,8 @@ suffix_p (Lisp_Object string, const char *suffix)
 
 DEFUN ("load", Fload, Sload, 1, 5, 0,
        doc: /* Execute a file of Lisp code named FILE.
-First try FILE with `.elc' appended, then try with `.el',
+First try FILE with `.elc' appended, then try with `.el', then try
+with a system-dependent suffix of dynamic modules (see `load-suffixes'),
 then try FILE unmodified (the exact suffixes in the exact order are
 determined by `load-suffixes').  Environment variable references in
 FILE are replaced with their values by calling `substitute-in-file-name'.
@@ -999,10 +1000,10 @@ Print messages at start and end of loading unless
 optional third arg NOMESSAGE is non-nil (but `force-load-messages'
 overrides that).
 If optional fourth arg NOSUFFIX is non-nil, don't try adding
-suffixes `.elc' or `.el' to the specified name FILE.
+suffixes to the specified name FILE.
 If optional fifth arg MUST-SUFFIX is non-nil, insist on
-the suffix `.elc' or `.el'; don't accept just FILE unless
-it ends in one of those suffixes or includes a directory name.
+the suffix `.elc' or `.el' or the module suffix; don't accept just
+FILE unless it ends in one of those suffixes or includes a directory name.
 
 If NOSUFFIX is nil, then if a file could not be found, try looking for
 a different representation of the file by adding non-empty suffixes to
@@ -1084,7 +1085,9 @@ Return t if the file exists and loads successfully.  */)
       if (! NILP (must_suffix))
 	{
 	  /* Don't insist on adding a suffix if FILE already ends with one.  */
-	  if (suffix_p (file, ".el") || suffix_p (file, ".elc"))
+	  if (suffix_p (file, ".el")
+	      || suffix_p (file, ".elc")
+	      || suffix_p (file, MODULES_SUFFIX))
 	    must_suffix = Qnil;
 	  /* Don't insist on adding a suffix
 	     if the argument includes a directory name.  */
@@ -1158,9 +1161,7 @@ Return t if the file exists and loads successfully.  */)
 
 #ifdef HAVE_MODULES
   if (suffix_p (found, MODULES_SUFFIX))
-    {
-      return Fmodule_load (found);
-    }
+    return Fmodule_load (found);
 #endif
 
   /* Check if we're stuck in a recursive load cycle.
@@ -4498,10 +4499,11 @@ programs that process this list should tolerate directories both with
 and without trailing slashes.  */);
 
   DEFVAR_LISP ("load-suffixes", Vload_suffixes,
-	       doc: /* List of suffixes for (compiled or source) Emacs Lisp files.
+	       doc: /* List of suffixes for Emacs Lisp files and dynamic modules.
+This list includes suffixes for both compiled and source Emacs Lisp files.
 This list should not include the empty string.
 `load' and related functions try to append these suffixes, in order,
-to the specified file name if a Lisp suffix is allowed or required.  */);
+to the specified file name if a suffix is allowed or required.  */);
 #ifdef HAVE_MODULES
   Vload_suffixes = list3 (build_pure_c_string (".elc"),
 			  build_pure_c_string (".el"),

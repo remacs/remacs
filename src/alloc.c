@@ -3712,7 +3712,7 @@ make_event_array (ptrdiff_t nargs, Lisp_Object *args)
 }
 
 #ifdef HAVE_MODULES
-/* Create a new module user ptr object. */
+/* Create a new module user ptr object.  */
 Lisp_Object
 make_user_ptr (void (*finalizer) (void*), void *p)
 {

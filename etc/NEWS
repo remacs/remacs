@@ -305,13 +305,39 @@ header.
 which specifies an alternative printing method which is faster when
 few or no entries have changed.
 
-** Emacs can now load shared/dynamic libraries (modules) that expose a
-C interface.  Such modules can provide additional functions or
-otherwise interact with Emacs just like Lisp code.  Modules have to
-export a function `emacs_module_init' and conform to the API laid out
-in emacs-module.h.  Modules are disabled by default and need to be
-enabled using the --with-modules configure flag.  They are
-experimental and subject to change.
+** Emacs can now load shared/dynamic libraries (modules).
+A dynamic Emacs module is a shared library that provides additional
+functionality for use in Emacs Lisp programs, just like a package
+written in Emacs Lisp would.  The functions `load' and `require' were
+extended to load such modules, as they do with Emacs Lisp packages.
+
+A module should export a C-callable function named
+`emacs_module_init', which Emacs will call as part of the call to
+`load' or `require' which loads the module.  It should also export a
+symbol named `plugin_is_GPL_compatible' to indicate that its code is
+released under the GPL or compatible license; Emacs will refuse to
+load modules that don't export such a symbol.
+
+If a module needs to call Emacs functions, it should do so through the
+API defined and documented in the header file `emacs-module.h'.  Note
+that any module that provides Lisp-callable functions will have to use
+Emacs functions such as `fset' and `funcall', in order to register its
+functions with the Emacs Lisp interpreter.
+
+Modules can create `user-ptr' Lisp objects that embed pointers to C
+struct's defined by the module.  This is useful for keeping around
+complex data structures created by a module, to be passed back to the
+module's functions.  User-ptr objects can also have associated
+"finalizers" -- functions to be run when the object is GC'ed; this is
+useful for freeing any resources allocated for the underlying data
+structure, such as memory, open file descriptors, etc.  A new
+predicate `user-ptr-p' returns non-nil if its argument is a `usr-ptr'
+object.
+
+Loadable modules in Emacs are an experimental feature, and subject to
+change in future releases.  For that reason, their support is disabled
+by default, and must be enabled by using the `--with-modules' option
+at configure time.
 
 
 * Editing Changes in Emacs 25.1
