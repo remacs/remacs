@@ -9925,10 +9925,6 @@ globals_of_w32fns (void)
   InitCommonControls ();
 
   syms_of_w32uniscribe ();
-
-  /* Needed for recovery from C stack overflows in batch mode.  */
-  if (noninteractive)
-    dwMainThreadId = GetCurrentThreadId ();
 }
 
 #ifdef NTGUI_UNICODE

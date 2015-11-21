@@ -6925,6 +6925,15 @@ x_delete_display (struct w32_display_info *dpyinfo)
 
 /* Set up use of W32.  */
 
+void
+w32_init_main_thread (void)
+{
+  dwMainThreadId = GetCurrentThreadId ();
+  DuplicateHandle (GetCurrentProcess (), GetCurrentThread (),
+		   GetCurrentProcess (), &hMainThread, 0, TRUE,
+		   DUPLICATE_SAME_ACCESS);
+}
+
 DWORD WINAPI w32_msg_worker (void * arg);
 
 static void
@@ -6984,10 +6993,6 @@ w32_initialize (void)
   /* Create the window thread - it will terminate itself when the app
      terminates */
   init_crit ();
-
-  dwMainThreadId = GetCurrentThreadId ();
-  DuplicateHandle (GetCurrentProcess (), GetCurrentThread (),
-		   GetCurrentProcess (), &hMainThread, 0, TRUE, DUPLICATE_SAME_ACCESS);
 
   /* Wait for thread to start */
   {

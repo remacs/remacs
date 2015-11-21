@@ -50,12 +50,9 @@ static thrd_t main_thread;
 # include <pthread.h>
 static pthread_t main_thread;
 #elif defined WINDOWSNT
-# include <windows.h>
-/* On Windows, store both a handle to the main thread and the
-   thread ID because the latter can be reused when a thread
-   terminates.  */
-static HANDLE main_thread;
-static DWORD main_thread_id;
+#include <windows.h>
+#include "w32term.h"
+static DWORD main_thread;
 #endif
 
 
@@ -789,11 +786,7 @@ check_main_thread (void)
 #elif defined HAVE_PTHREAD
   eassert (pthread_equal (pthread_self (), main_thread));
 #elif defined WINDOWSNT
-  /* CompareObjectHandles would be perfect, but is only available in
-     Windows 10.  Also check whether the thread is still running to
-     protect against thread identifier reuse.  */
-  eassert (GetCurrentThreadId () == main_thread_id
-	   && WaitForSingleObject (main_thread, 0) == WAIT_TIMEOUT);
+  eassert (GetCurrentThreadId () == main_thread);
 #endif
 }
 
@@ -1123,22 +1116,8 @@ module_init (void)
 #elif defined HAVE_PTHREAD
   main_thread = pthread_self ();
 #elif defined WINDOWSNT
-  /* This calls APIs that are only available on Vista and later.  */
-# if false
-  /* GetCurrentProcess returns a pseudohandle, which must be duplicated.  */
-  if (! DuplicateHandle (GetCurrentProcess (), GetCurrentThread (),
-                         GetCurrentProcess (), &main_thread,
-                         SYNCHRONIZE | THREAD_QUERY_INFORMATION,
-                         FALSE, 0))
-    emacs_abort ();
-# else
-  /* GetCurrentThread returns a pseudohandle, which must be duplicated.  */
-  HANDLE th = GetCurrentThread ();
-  if (!DuplicateHandle (GetCurrentProcess (), th,
-                        GetCurrentProcess (), &main_thread, 0, FALSE,
-                        DUPLICATE_SAME_ACCESS))
-    emacs_abort ();
-  main_thread_id = GetCurrentThreadId ();
-# endif
+  /* The 'main' function already recorded the main thread's thread ID,
+     so we need just to use it . */
+  main_thread = dwMainThreadId;
 #endif
 }
