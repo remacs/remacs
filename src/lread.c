@@ -1087,7 +1087,10 @@ Return t if the file exists and loads successfully.  */)
 	  /* Don't insist on adding a suffix if FILE already ends with one.  */
 	  if (suffix_p (file, ".el")
 	      || suffix_p (file, ".elc")
-	      || suffix_p (file, MODULES_SUFFIX))
+#ifdef HAVE_MODULES
+	      || suffix_p (file, MODULES_SUFFIX)
+#endif
+	      )
 	    must_suffix = Qnil;
 	  /* Don't insist on adding a suffix
 	     if the argument includes a directory name.  */
