@@ -123,7 +123,7 @@
 ;;
 
 ;; This variable will always hold the version number of the mode
-(defconst verilog-mode-version "2015-11-09-b121d60-vpo-GNU"
+(defconst verilog-mode-version "2015-11-21-8112ca0-vpo-GNU"
   "Version of this Verilog mode.")
 (defconst verilog-mode-release-emacs t
   "If non-nil, this version of Verilog mode was released with Emacs itself.")
@@ -3238,7 +3238,7 @@ user-visible changes to the buffer must not be within a
          (verilog-no-change-functions t))
      ,(if (fboundp 'with-silent-modifications)
           `(with-silent-modifications ,@body)
-        ;; From c-save-buffer-state
+        ;; Backward compatible version of with-silent-modifications
         `(let* ((modified (buffer-modified-p))
                 (buffer-undo-list t)
                 (inhibit-read-only t)
@@ -3252,9 +3252,7 @@ user-visible changes to the buffer must not be within a
                (progn ,@body)
              (and (not modified)
                   (buffer-modified-p)
-                  (if (fboundp 'restore-buffer-modified-p)
-                      (restore-buffer-modified-p nil)
-                    (set-buffer-modified-p nil))))))))
+                  (verilog-restore-buffer-modified-p nil)))))))
 
 
 (defvar verilog-save-font-mod-hooked nil
@@ -3267,7 +3265,7 @@ Includes temporary disabling of `font-lock' to restore the buffer
 to full text form for parsing.  Additional actions may be specified with
 `verilog-before-save-font-hook' and `verilog-after-save-font-hook'.
 For insignificant changes, see instead `verilog-save-buffer-state'."
- `(if verilog-save-font-mod-hooked ; A recursive call?
+ `(if verilog-save-font-mod-hooked ; Short-circuit a recursive call
       (progn ,@body)
     ;; Before version 20, match-string with font-lock returns a
     ;; vector that is not equal to the string.  IE if on "input"
@@ -3275,8 +3273,7 @@ For insignificant changes, see instead `verilog-save-buffer-state'."
     ;; Therefore we must remove and restore font-lock mode
     (verilog-run-hooks 'verilog-before-save-font-hook)
     (let* ((verilog-save-font-mod-hooked (- (point-max) (point-min)))
-           ;; FIXME: Doesn't the before/after-change-functions dance make this
-           ;; font-lock-mode dance unnecessary?
+           ;; Significant speed savings with no font-lock properties
            (fontlocked (when (and (boundp 'font-lock-mode) font-lock-mode)
                          (font-lock-mode 0)
                          t)))
@@ -3286,10 +3283,8 @@ For insignificant changes, see instead `verilog-save-buffer-state'."
           (let* ((inhibit-point-motion-hooks t)
                  (inhibit-modification-hooks t)
                  (verilog-no-change-functions t)
-                 ,@(when (featurep 'xemacs)
-                     ;; XEmacs ignores inhibit-modification-hooks.
-                     '(before-change-functions
-                       after-change-functions)))
+                 ;; XEmacs and pre-Emacs 21 ignore inhibit-modification-hooks.
+                 before-change-functions after-change-functions)
             (progn ,@body))
         ;; Unwind forms
         (run-hook-with-args 'after-change-functions (point-min) (point-max)
