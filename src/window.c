@@ -4555,6 +4555,7 @@ grow_mini_window (struct window *w, int delta, bool pixelwise)
 	  /* Enforce full redisplay of the frame.  */
 	  /* FIXME: Shouldn't window--resize-root-window-vertically do it?  */
 	  fset_redisplay (f);
+	  FRAME_WINDOW_SIZES_CHANGED (f) = true;
 	  adjust_frame_glyphs (f);
 	  unblock_input ();
 	}
@@ -4594,6 +4595,7 @@ shrink_mini_window (struct window *w, bool pixelwise)
 	  /* Enforce full redisplay of the frame.  */
 	  /* FIXME: Shouldn't window--resize-root-window-vertically do it?  */
 	  fset_redisplay (f);
+	  FRAME_WINDOW_SIZES_CHANGED (f) = true;
 	  adjust_frame_glyphs (f);
 	  unblock_input ();
 	}

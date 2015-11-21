@@ -4264,10 +4264,10 @@ work.
 @end defvar
 
 @defvar window-size-change-functions
-This variable holds a list of functions to be called if the size of any
-window changes for any reason.  The functions are called just once per
-redisplay, and just once for each frame on which size changes have
-occurred.
+This variable holds a list of functions to be called if the size of
+any window changes for any reason.  The functions are called at the
+beginning of a redisplay cycle, and just once for each frame on which
+size changes have occurred.
 
 Each function receives the frame as its sole argument.  There is no
 direct way to find out which windows on that frame have changed size, or

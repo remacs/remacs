@@ -13536,6 +13536,32 @@ redisplay_internal (void)
     {
       echo_area_display (false);
 
+      /* If echo_area_display resizes the mini-window, the redisplay and
+	 window_sizes_changed flags of the selected frame are set, but
+	 it's too late for the hooks in window-size-change-functions,
+	 which have been examined already in prepare_menu_bars.  So in
+	 that case we call the hooks here only for the selected frame.  */
+      if (sf->redisplay && FRAME_WINDOW_SIZES_CHANGED (sf))
+	{
+	  Lisp_Object functions;
+	  ptrdiff_t count1 = SPECPDL_INDEX ();
+
+	  record_unwind_save_match_data ();
+
+	  /* Clear flag first in case we get an error below.  */
+	  FRAME_WINDOW_SIZES_CHANGED (sf) = false;
+	  functions = Vwindow_size_change_functions;
+
+	  while (CONSP (functions))
+	    {
+	      if (!EQ (XCAR (functions), Qt))
+		call1 (XCAR (functions), selected_frame);
+	      functions = XCDR (functions);
+	    }
+
+	  unbind_to (count1, Qnil);
+	}
+
       if (message_cleared_p)
 	update_miniwindow_p = true;
 
@@ -31132,11 +31158,13 @@ the buffer when it becomes large.  */);
   Vmessage_log_max = make_number (1000);
 
   DEFVAR_LISP ("window-size-change-functions", Vwindow_size_change_functions,
-    doc: /* Functions called before redisplay, if window sizes have changed.
+    doc: /* Functions called during redisplay, if window sizes have changed.
 The value should be a list of functions that take one argument.
-Just before redisplay, for each frame, if any of its windows have changed
-size since the last redisplay, or have been split or deleted,
-all the functions in the list are called, with the frame as argument.  */);
+During the first part of redisplay, for each frame, if any of its windows
+have changed size since the last redisplay, or have been split or deleted,
+all the functions in the list are called, with the frame as argument.
+If redisplay decides to resize the minibuffer window, it calls these
+functions on behalf of that as well.  */);
   Vwindow_size_change_functions = Qnil;
 
   DEFVAR_LISP ("window-scroll-functions", Vwindow_scroll_functions,
