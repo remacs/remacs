@@ -138,21 +138,12 @@
                      (open-line 1)))
                  '("- - " . "\n(a b c d)"))))
 
-;; For a while, from 24 Oct - 19 Nov 2015, `open-line' in the Emacs
+;; For a while, from 24 Oct - 21 Nov 2015, `open-line' in the Emacs
 ;; development tree became sensitive to `electric-indent-mode', which
 ;; it had not been before.  This sensitivity was reverted for the
 ;; Emacs 25 release, so it could be discussed further (see thread
 ;; "Questioning the new behavior of `open-line'." on the Emacs Devel
-;; mailing list).  The only test case here that started failing after
-;; the reversion is the third one, the one that currently expects
-;; `("(a b" . "\n   \n   c d)")'.  If `open-line' were again sensitive
-;; to electric indent, then the three spaces between the two newlines
-;; would go away, leaving `("(a b" . "\n\n   c d)")'.
-;;
-;; If electric indent sensitivity were re-enabled, we might also want
-;; to make the test cases below a bit stricter, or add some more test
-;; cases that are specific to `electric-indent-mode', since right now
-;; all but one of the cases pass with or without electric indent.
+;; mailing list, and bug #21884).
 (ert-deftest open-line-indent ()
   (should (equal (simple-test--dummy-buffer
                    (electric-indent-local-mode 1)
@@ -160,29 +151,34 @@
                  '("(a b" . "\n c d)")))
   (should (equal (simple-test--dummy-buffer
                    (electric-indent-local-mode 1)
-                   (open-line 1 'interactive))
-                 '("(a b" . "\n   c d)")))
+                   (open-line 1))
+                 '("(a b" . "\n c d)")))
   (should (equal (simple-test--dummy-buffer
                    (electric-indent-local-mode 1)
                    (let ((current-prefix-arg nil))
                      (call-interactively #'open-line)
                      (call-interactively #'open-line)))
-                 '("(a b" . "\n   \n   c d)")))
+                 '("(a b" . "\n\n c d)")))
   (should (equal (simple-test--dummy-buffer
                    (electric-indent-local-mode 1)
-                   (open-line 5 'interactive))
-                 '("(a b" . "\n\n\n\n\n   c d)")))
+                   (open-line 5))
+                 '("(a b" . "\n\n\n\n\n c d)")))
   (should (equal (simple-test--dummy-buffer
                    (electric-indent-local-mode 1)
                    (let ((current-prefix-arg 5))
                      (call-interactively #'open-line)))
-                 '("(a b" . "\n\n\n\n\n   c d)")))
+                 '("(a b" . "\n\n\n\n\n c d)")))
   (should (equal (simple-test--dummy-buffer
                    (forward-char 1)
                    (electric-indent-local-mode 1)
-                   (open-line 1 'interactive))
-                 '("(a b" . "\n   c d)"))))
+                   (open-line 1))
+                 '("(a b " . "\nc d)"))))
 
+;; From 24 Oct - 21 Nov 2015, `open-line' took a second argument
+;; INTERACTIVE and ran `post-self-insert-hook' if the argument was
+;; true.  This test tested that.  Currently, however, `open-line'
+;; does not run run `post-self-insert-hook' at all, so for now
+;; this test just makes sure that it doesn't.
 (ert-deftest open-line-hook ()
   (let* ((x 0)
          (inc (lambda () (setq x (1+ x)))))
@@ -192,18 +188,18 @@
     (should (= x 0))
     (simple-test--dummy-buffer
       (add-hook 'post-self-insert-hook inc nil 'local)
-      (open-line 1 'interactive))
-    (should (= x 1))
+      (open-line 1))
+    (should (= x 0))
 
     (unwind-protect
         (progn
           (add-hook 'post-self-insert-hook inc)
           (simple-test--dummy-buffer
             (open-line 1))
-          (should (= x 1))
+          (should (= x 0))
           (simple-test--dummy-buffer
-            (open-line 10 'interactive))
-          (should (= x 2)))
+            (open-line 10))
+          (should (= x 0)))
       (remove-hook 'post-self-insert-hook inc))))
 
 
