@@ -167,7 +167,12 @@ LOCATION is used as the address location for bbdb."
 ;; External.
 (declare-function bbdb-parse-phone-number "ext:bbdb-com"
                   (string &optional number-type))
+(declare-function bbdb-parse-phone "ext:bbdb-com" (string &optional style))
 (declare-function bbdb-string-trim "ext:bbdb" (string))
+
+(defun eudc-bbdbify-company (&rest organizations)
+  "Return ORGANIZATIONS as a list compatible with BBDB."
+  organizations)
 
 (defun eudc-bbdbify-phone (phone location)
   "Parse PHONE into a vector compatible with BBDB.
@@ -179,7 +184,9 @@ LOCATION is used as the phone location for BBDB."
    ((stringp phone)
     (let (phone-list)
       (condition-case err
-	  (setq phone-list (bbdb-parse-phone-number phone))
+	  (setq phone-list (if (eudc--using-bbdb-3-or-newer-p)
+			       (bbdb-parse-phone phone)
+			     (bbdb-parse-phone-number phone)))
 	(error
 	 (if (string= "phone number unparsable." (cadr err))
 	     (if (not (y-or-n-p (format "BBDB claims %S to be unparsable--insert anyway? " phone)))
