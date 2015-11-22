@@ -86,12 +86,19 @@ If SILENT is non-nil then the created BBDB record is not displayed."
 					      (cons (car mapping) value))))
 				       conversion-alist)))
       (setq bbdb-notes (delq nil bbdb-notes))
-      (setq bbdb-record (bbdb-create-internal bbdb-name
-					      bbdb-company
-					      bbdb-net
-					      bbdb-address
-					      bbdb-phones
-					      bbdb-notes))
+      (setq bbdb-record (bbdb-create-internal
+			 bbdb-name
+			 ,@(when (eudc--using-bbdb-3-or-newer-p)
+			     '(nil
+			       nil))
+			 bbdb-company
+			 bbdb-net
+			 ,@(if (eudc--using-bbdb-3-or-newer-p)
+			       '(bbdb-phones
+				 bbdb-address)
+			     '(bbdb-address
+			       bbdb-phones))
+			 bbdb-notes))
       (or silent
 	  (bbdb-display-records (list bbdb-record))))))
 
