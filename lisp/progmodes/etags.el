@@ -1260,24 +1260,21 @@ buffer-local values of tags table format variables."
 	  (point-min) (point-max))))
     (save-excursion
       (goto-char (point-min))
-      ;; This monster regexp matches an etags tag line.
-      ;;   \1 is the string to match;
-      ;;   \2 is not interesting;
-      ;;   \3 is the guessed tag name; XXX guess should be better eg DEFUN
-      ;;   \4 is not interesting;
-      ;;   \5 is the explicitly-specified tag name.
-      ;;   \6 is the line to start searching at;
-      ;;   \7 is the char to start searching at.
+      ;; This regexp matches an explicit tag name or the place where
+      ;; it would start.
       (while (re-search-forward
-	      "^\\(\\([^\177]*[^-a-zA-Z0-9_+*$:\177]+\\)?\
-\\([-a-zA-Z0-9_+*$?:]+\\)[^-a-zA-Z0-9_+*$?:\177]*\\)\177\
-\\(\\([^\n\001]+\\)\001\\)?\\([0-9]+\\)?,\\([0-9]+\\)?\n"
+              "[\f\t\n\r()=,; ]?\177\\\(?:\\([^\n\001]+\\)\001\\)?"
 	      nil t)
-	(push	(prog1 (if (match-beginning 5)
+	(push	(prog1 (if (match-beginning 1)
 			   ;; There is an explicit tag name.
-			   (buffer-substring (match-beginning 5) (match-end 5))
-			 ;; No explicit tag name.  Best guess.
-			 (buffer-substring (match-beginning 3) (match-end 3)))
+			   (buffer-substring (match-beginning 1) (match-end 1))
+			 ;; No explicit tag name.  Backtrack a little,
+                         ;; and look for the implicit one.
+                         (goto-char (match-beginning 0))
+                         (skip-chars-backward "^\f\t\n\r()=,; ")
+                         (prog1
+                             (buffer-substring (point) (match-beginning 0))
+                           (goto-char (match-end 0))))
 		  (progress-reporter-update progress-reporter (point)))
 		table)))
     table))
