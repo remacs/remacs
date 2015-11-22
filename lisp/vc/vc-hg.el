@@ -335,7 +335,7 @@ If LIMIT is non-nil, show no more than this many entries."
 
 (autoload 'vc-switches "vc")
 
-(defun vc-hg-diff (files &optional oldvers newvers buffer async)
+(defun vc-hg-diff (files &optional oldvers newvers buffer _async)
   "Get a difference report using hg between two revisions of FILES."
   (let* ((firstfile (car files))
          (working (and firstfile (vc-working-revision firstfile))))
@@ -345,8 +345,8 @@ If LIMIT is non-nil, show no more than this many entries."
       (setq oldvers working))
     (apply #'vc-hg-command
 	   (or buffer "*vc-diff*")
-	   (if async 'async nil)
-	   files "diff"
+           nil ; bug#21969
+           files "diff"
            (append
             (vc-switches 'hg 'diff)
             (when oldvers
