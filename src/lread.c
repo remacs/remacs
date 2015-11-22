@@ -1164,7 +1164,7 @@ Return t if the file exists and loads successfully.  */)
 
 #ifdef HAVE_MODULES
   if (suffix_p (found, MODULES_SUFFIX))
-    return Fmodule_load (found);
+    return unbind_to (count, Fmodule_load (found));
 #endif
 
   /* Check if we're stuck in a recursive load cycle.
@@ -4512,6 +4512,13 @@ to the specified file name if a suffix is allowed or required.  */);
 #else
   Vload_suffixes = list2 (build_pure_c_string (".elc"),
 			  build_pure_c_string (".el"));
+#endif
+  DEFVAR_LISP ("module-file-suffix", Vmodule_file_suffix,
+	       doc: /* Suffix of loadable module file, or nil of modules are not supported.  */);
+#ifdef HAVE_MODULES
+  Vmodule_file_suffix = build_pure_c_string (MODULES_SUFFIX);
+#else
+  Vmodule_file_suffix = Qnil;
 #endif
   DEFVAR_LISP ("load-file-rep-suffixes", Vload_file_rep_suffixes,
 	       doc: /* List of suffixes that indicate representations of \

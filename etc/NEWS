@@ -308,8 +308,11 @@ few or no entries have changed.
 ** Emacs can now load shared/dynamic libraries (modules).
 A dynamic Emacs module is a shared library that provides additional
 functionality for use in Emacs Lisp programs, just like a package
-written in Emacs Lisp would.  The functions `load' and `require' were
-extended to load such modules, as they do with Emacs Lisp packages.
+written in Emacs Lisp would.  The functions `load', `require',
+`load-file', etc. were extended to load such modules, as they do with
+Emacs Lisp packages.  The new variable `module-file-suffix' holds the
+system-dependent value of the file-name extension (`.so' on Posix
+hosts) of the module files.
 
 A module should export a C-callable function named
 `emacs_module_init', which Emacs will call as part of the call to

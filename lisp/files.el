@@ -772,11 +772,15 @@ If INCLUDE-DIRECTORIES, also include directories that have matching names."
 	    (push (expand-file-name file dir) files)))))
     (nconc result (nreverse files))))
 
+(defvar module-file-suffix)
+
 (defun load-file (file)
   "Load the Lisp file named FILE."
-  ;; This is a case where .elc makes a lot of sense.
+  ;; This is a case where .elc and .so/.dll make a lot of sense.
   (interactive (list (let ((completion-ignored-extensions
-			    (remove ".elc" completion-ignored-extensions)))
+                            (remove module-file-suffix
+                                    (remove ".elc"
+                                            completion-ignored-extensions))))
 		       (read-file-name "Load file: " nil nil 'lambda))))
   (load (expand-file-name file) nil nil t))
 
