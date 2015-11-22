@@ -921,6 +921,14 @@ XFASTINT (Lisp_Object a)
   return n;
 }
 
+/* Extract A's type.  */
+INLINE enum Lisp_Type
+XTYPE (Lisp_Object a)
+{
+  EMACS_UINT i = XLI (a);
+  return USE_LSB_TAG ? i & ~VALMASK : i >> VALBITS;
+}
+
 /* Extract A's value as a symbol.  */
 INLINE struct Lisp_Symbol *
 XSYMBOL (Lisp_Object a)
@@ -929,14 +937,6 @@ XSYMBOL (Lisp_Object a)
   uintptr_t i = (uintptr_t) XUNTAG (a, Lisp_Symbol);
   void *p = (char *) lispsym + i;
   return p;
-}
-
-/* Extract A's type.  */
-INLINE enum Lisp_Type
-XTYPE (Lisp_Object a)
-{
-  EMACS_UINT i = XLI (a);
-  return USE_LSB_TAG ? i & ~VALMASK : i >> VALBITS;
 }
 
 /* Extract A's pointer value, assuming A's type is TYPE.  */
