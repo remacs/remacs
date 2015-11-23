@@ -922,11 +922,11 @@ TAGS tags: lib lib-src src
 	$(MAKE) -C src tags
 
 check: all
-	@if test ! -d test/automated; then \
+	@if test ! -d test; then \
 	  echo "You do not seem to have the test/ directory."; \
 	  echo "Maybe you are using a release tarfile, rather than a repository checkout."; \
 	else \
-	  $(MAKE) -C test/automated check; \
+	  $(MAKE) -C test check; \
 	fi
 
 dist:

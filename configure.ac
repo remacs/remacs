@@ -4147,7 +4147,7 @@ else
   SEPCHAR=':'
 fi
 AC_DEFINE_UNQUOTED(SEPCHAR, ['$SEPCHAR'], [Character that separates PATH elements.])
-dnl This is for MinGW, and is used in test/automated/Makefile.in.
+dnl This is for MinGW, and is used in test/Makefile.in.
 dnl The MSYS Bash has heuristics for replacing ':' with ';' when it
 dnl decides that a command-line argument to be passed to a MinGW program
 dnl is a PATH-style list of directories.  But that heuristics plays it
@@ -5298,13 +5298,13 @@ AC_CONFIG_FILES([Makefile lib/Makefile lib-src/Makefile oldXMenu/Makefile \
        leim/Makefile nextstep/Makefile nt/Makefile])
 
 dnl test/ is not present in release tarfiles.
-opt_makefile=test/automated/Makefile
+opt_makefile=test/Makefile
 
 if test -f "$srcdir/$opt_makefile.in"; then
   SUBDIR_MAKEFILES="$SUBDIR_MAKEFILES $opt_makefile"
   dnl Again, it's best not to use a variable.  Though you can add
   dnl ", [], [opt_makefile='$opt_makefile']" and it should work.
-  AC_CONFIG_FILES([test/automated/Makefile])
+  AC_CONFIG_FILES([test/Makefile])
 fi
 
 
