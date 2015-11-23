@@ -289,7 +289,10 @@ is also interactive.  There are 3 cases:
   argument (the interactive spec of OLDFUN, which it can pass to
   `advice-eval-interactive-spec') and return the list of arguments to use.
 - Else, use the interactive spec of FUNCTION and ignore the one of OLDFUN."
-  (declare (debug t)) ;;(indent 2)
+  (declare
+   ;;(indent 2)
+   (debug (form [&or symbolp ("local" form) ("var" sexp) gv-place]
+           form &optional form)))
   `(advice--add-function ,where (gv-ref ,(advice--normalize-place place))
                          ,function ,props))
 
@@ -311,7 +314,8 @@ is also interactive.  There are 3 cases:
 If FUNCTION was not added to PLACE, do nothing.
 Instead of FUNCTION being the actual function, it can also be the `name'
 of the piece of advice."
-  (declare (debug t))
+  (declare (debug ([&or symbolp ("local" form) ("var" sexp) gv-place]
+                   form)))
   (gv-letplace (getter setter) (advice--normalize-place place)
     (macroexp-let2 nil new `(advice--remove-function ,getter ,function)
       `(unless (eq ,new ,getter) ,(funcall setter new)))))
