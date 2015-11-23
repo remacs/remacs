@@ -477,17 +477,19 @@ places where they originally did not directly appear."
        (while forms
          (let* ((sym (pop forms))
                 (sym-new (or (cdr (assq sym env)) sym))
-                (value (cconv-convert (pop forms) env extend)))
+                (value-in-list
+                 (and forms
+                      (list (cconv-convert (pop forms) env extend)))))
            (push (pcase sym-new
-                   ((pred symbolp) `(setq ,sym-new ,value))
-                   (`(car-safe ,iexp) `(setcar ,iexp ,value))
+                   ((pred symbolp) `(setq ,sym-new ,@value-in-list))
+                   (`(car-safe ,iexp) `(setcar ,iexp ,@value-in-list))
                    ;; This "should never happen", but for variables which are
                    ;; mutated+captured+unused, we may end up trying to `setq'
                    ;; on a closed-over variable, so just drop the setq.
                    (_ ;; (byte-compile-report-error
                     ;;  (format "Internal error in cconv of (setq %s ..)"
                     ;;          sym-new))
-                    value))
+                    (car value-in-list)))
                  prognlist)))
        (if (cdr prognlist)
            `(progn . ,(nreverse prognlist))
