@@ -487,6 +487,10 @@ usage: (setq [SYM VAL]...)  */)
   if (CONSP (args))
     {
       Lisp_Object args_left = args;
+      Lisp_Object numargs = Flength (args);
+
+      if (XINT (numargs) & 1)
+        xsignal2 (Qwrong_number_of_arguments, Qsetq, numargs);
 
       do
 	{
@@ -3654,6 +3658,7 @@ To prevent this happening, set `quit-flag' to nil
 before making `inhibit-quit' nil.  */);
   Vinhibit_quit = Qnil;
 
+  DEFSYM (Qsetq, "setq");
   DEFSYM (Qinhibit_quit, "inhibit-quit");
   DEFSYM (Qautoload, "autoload");
   DEFSYM (Qinhibit_debugger, "inhibit-debugger");
