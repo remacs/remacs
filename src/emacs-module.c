@@ -394,7 +394,8 @@ module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
     {
       ptrdiff_t nbytes = strlen (documentation);
       ptrdiff_t nchars, ignored_nbytes;
-      parse_str_as_multibyte (documentation, nbytes, &nchars, &ignored_nbytes);
+      parse_str_as_multibyte ((unsigned char const *) documentation, nbytes,
+			      &nchars, &ignored_nbytes);
       doc = make_multibyte_string (documentation, nchars, nbytes);
     }
 
@@ -572,7 +573,8 @@ module_make_string (emacs_env *env, const char *str, ptrdiff_t length)
       return NULL;
     }
   ptrdiff_t nchars, ignored_nbytes;
-  parse_str_as_multibyte (str, length, &nchars, &ignored_nbytes);
+  parse_str_as_multibyte ((unsigned char const *) str, length,
+			  &nchars, &ignored_nbytes);
   return lisp_to_value (env, make_multibyte_string (str, nchars, length));
 }
 
