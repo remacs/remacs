@@ -521,9 +521,9 @@ its pixel height is the pixel height of the screen areas spanned by its
 children.
 @end defun
 
-@cindex window pixel height
-@cindex pixel height of a window
-@cindex total pixel height of a window
+@cindex window pixel width
+@cindex pixel width of a window
+@cindex total pixel width of a window
 
 @defun window-pixel-width &optional Lisp_Object &optional window
 This function returns the width of window @var{window} in pixels.
@@ -558,7 +558,6 @@ that of the root window on that frame.  If @var{window} is omitted or
 
 @cindex window body height
 @cindex body height of a window
-@cindex window body width
 The @dfn{body height} of a window is the height of its text area, which
 does not include a mode or header line, a horizontal scroll bar, or a
 bottom divider.
@@ -578,9 +577,8 @@ counted.  It also means that the height of a window's body can never
 exceed its total height as returned by @code{window-total-height}.
 @end defun
 
+@cindex window body width
 @cindex body width of a window
-@cindex body size of a window
-@cindex window body size
 The @dfn{body width} of a window is the width of its text area, which
 does not include the scroll bar, fringes, margins or a right divider.
 
@@ -599,6 +597,8 @@ counted.  It also means that the width of a window's body can never
 exceed its total width as returned by @code{window-total-width}.
 @end defun
 
+@cindex window body size
+@cindex body size of a window
 @defun window-body-size &optional window horizontal pixelwise
 This function returns the body height or body width of @var{window}.  If
 @var{horizontal} is omitted or @code{nil}, it is equivalent to calling
@@ -607,7 +607,7 @@ to calling @code{window-body-width}.  In either case, the optional
 argument @var{pixelwise} is passed to the function called.
 @end defun
 
-  For compatibility with previous versions of Emacs,
+For compatibility with previous versions of Emacs,
 @code{window-height} is an alias for @code{window-total-height}, and
 @code{window-width} is an alias for @code{window-body-width}.  These
 aliases are considered obsolete and will be removed in the future.
@@ -643,7 +643,7 @@ or split them (@pxref{Splitting Windows}), obey the variables
 @code{window-min-height} and @code{window-min-width}, which specify the
 smallest allowable window height and width.  They also obey the variable
 @code{window-size-fixed}, with which a window can be @dfn{fixed} in
-size:
+size (@pxref{Preserving Window Sizes}).
 
 @defopt window-min-height
 This option specifies the minimum total height, in lines, of any window.
