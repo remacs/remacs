@@ -584,28 +584,6 @@ ns_load_path (void)
   return NULL;
 }
 
-static void
-ns_timeout (int usecs)
-/* --------------------------------------------------------------------------
-     Blocking timer utility used by ns_ring_bell
-   -------------------------------------------------------------------------- */
-{
-  struct timespec wakeup = timespec_add (current_timespec (),
-					 make_timespec (0, usecs * 1000));
-
-  /* Keep waiting until past the time wakeup.  */
-  while (1)
-    {
-      struct timespec timeout, now = current_timespec ();
-      if (timespec_cmp (wakeup, now) <= 0)
-	break;
-      timeout = timespec_sub (wakeup, now);
-
-      /* Try to wait that long--but we might wake up sooner.  */
-      pselect (0, NULL, NULL, NULL, &timeout, NULL);
-    }
-}
-
 
 void
 ns_release_object (void *obj)
@@ -1161,6 +1139,77 @@ ns_clip_to_row (struct window *w, struct glyph_row *row,
 }
 
 
+/* ==========================================================================
+
+    Visibel bell and beep.
+
+   ========================================================================== */
+
+
+@interface EmacsBell : NSImageView
+{
+  // Number of currently active bell:s.
+  unsigned int nestCount;
+}
+- (void)show:(NSView *)view;
+- (void)hide;
+@end
+
+@implementation EmacsBell
+
+- (id)init;
+{
+  if ((self = [super init]))
+    {
+      nestCount = 0;
+      self.image = [NSImage imageNamed:NSImageNameCaution];
+    }
+  return self;
+}
+
+- (void)show:(NSView *)view
+{
+  NSTRACE ("[EmacsBell show:]");
+  NSTRACE_MSG ("nestCount: %u", nestCount);
+
+  // Show the image, unless it's already shown.
+  if (nestCount == 0)
+    {
+      NSRect rect = [view bounds];
+      NSPoint pos;
+      pos.x = rect.origin.x + (rect.size.width  - self.image.size.width )/2;
+      pos.y = rect.origin.y + (rect.size.height - self.image.size.height)/2;
+
+      [self setFrameOrigin:pos];
+      [self setFrameSize:self.image.size];
+
+      [[[view window] contentView] addSubview:self
+                                   positioned:NSWindowAbove
+                                   relativeTo:nil];
+    }
+
+  ++nestCount;
+
+  [self performSelector:@selector(hide) withObject:self afterDelay:0.5];
+}
+
+
+- (void)hide
+{
+  // Note: Trace output from this method isn't shown, reason unknown.
+  // NSTRACE ("[EmacsBell hide]");
+
+  --nestCount;
+
+  // Remove the image once the last bell became inactive.
+  if (nestCount == 0)
+    {
+      [self removeFromSuperview];
+    }
+}
+
+@end
+
 static void
 ns_ring_bell (struct frame *f)
 /* --------------------------------------------------------------------------
@@ -1170,37 +1219,24 @@ ns_ring_bell (struct frame *f)
   NSTRACE ("ns_ring_bell");
   if (visible_bell)
     {
-      NSAutoreleasePool *pool;
       struct frame *frame = SELECTED_FRAME ();
       NSView *view;
 
+      static EmacsBell * bell_view = nil;
+      if (bell_view == nil)
+        {
+          bell_view = [[EmacsBell alloc] init];
+          [bell_view retain];
+        }
+
       block_input ();
-      pool = [[NSAutoreleasePool alloc] init];
 
       view = FRAME_NS_VIEW (frame);
       if (view != nil)
         {
-          NSRect r, surr;
-          NSPoint dim = NSMakePoint (128, 128);
-
-          r = [view bounds];
-          r.origin.x += (r.size.width - dim.x) / 2;
-          r.origin.y += (r.size.height - dim.y) / 2;
-          r.size.width = dim.x;
-          r.size.height = dim.y;
-          surr = NSInsetRect (r, -2, -2);
-          ns_focus (frame, &surr, 1);
-          [[view window] cacheImageInRect: [view convertRect: surr toView:nil]];
-          [ns_lookup_indexed_color (NS_FACE_FOREGROUND
-                                      (FRAME_DEFAULT_FACE (frame)), frame) set];
-          NSRectFill (r);
-          [[view window] flushWindow];
-          ns_timeout (150000);
-          [[view window] restoreCachedImage];
-          [[view window] flushWindow];
-          ns_unfocus (frame);
+          [bell_view show:view];
         }
-      [pool release];
+
       unblock_input ();
     }
   else
@@ -1208,6 +1244,7 @@ ns_ring_bell (struct frame *f)
       NSBeep ();
     }
 }
+
 
 /* ==========================================================================
 
