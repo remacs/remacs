@@ -809,7 +809,12 @@ Possible return values:
   nil: we skipped over an identifier, matched parentheses, ..."
   (smie-next-sexp
    (indirect-function smie-backward-token-function)
-   (indirect-function #'backward-sexp)
+   (lambda (n)
+     (if (bobp)
+         ;; Arguably backward-sexp hould signal this error for us.
+         (signal 'scan-error
+                 (list "Beginning of buffer" (point) (point)))
+       (backward-sexp n)))
    (indirect-function #'smie-op-left)
    (indirect-function #'smie-op-right)
    halfsexp))
