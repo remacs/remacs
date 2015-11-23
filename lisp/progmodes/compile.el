@@ -2594,7 +2594,7 @@ and overlay is highlighted between MK and END-MK."
 	(goto-char mk)))
     (if end-mk
         (push-mark end-mk t)
-      (if mark-active (setq mark-active)))
+      (if mark-active (setq mark-active nil)))
     ;; If hideshow got in the way of
     ;; seeing the right place, open permanently.
     (dolist (ov (overlays-at (point)))

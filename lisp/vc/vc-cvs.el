@@ -882,11 +882,11 @@ For an empty string, nil is returned (invalid CVS root)."
             (setq host uhost))
           ;; Remove empty HOST
           (and (equal host "")
-               (setq host))
+               (setq host nil))
           ;; Fix windows style CVS root `:local:C:\\project\\cvs\\some\\dir'
           (and host
                (equal method "local")
-               (setq root (concat host ":" root) host))
+               (setq root (concat host ":" root) host nil))
           ;; Normalize CVS root record
           (list method user host root)))))
 

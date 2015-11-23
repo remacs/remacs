@@ -2287,8 +2287,7 @@ list that represents a doc string reference.
      ;; byte-compile-warn-about-unresolved-functions.
      (if (memq funsym byte-compile-noruntime-functions)
          (setq byte-compile-noruntime-functions
-               (delq funsym byte-compile-noruntime-functions)
-               byte-compile-noruntime-functions)
+               (delq funsym byte-compile-noruntime-functions))
        (setq byte-compile-unresolved-functions
              (delq (assq funsym byte-compile-unresolved-functions)
                    byte-compile-unresolved-functions)))))
