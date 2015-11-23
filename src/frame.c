@@ -518,6 +518,7 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
   if (new_windows_width != old_windows_width)
     {
       resize_frame_windows (f, new_windows_width, 1, 1);
+      FRAME_WINDOW_SIZES_CHANGED (f) = true;
 
       /* MSDOS frames cannot PRETEND, as they change frame size by
 	 manipulating video hardware.  */
@@ -543,6 +544,7 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
       || WINDOW_TOP_PIXEL_EDGE (r) != FRAME_TOP_MARGIN_HEIGHT (f))
     {
       resize_frame_windows (f, new_windows_height, 0, 1);
+      FRAME_WINDOW_SIZES_CHANGED (f) = true;
 
       /* MSDOS frames cannot PRETEND, as they change frame size by
 	 manipulating video hardware.  */
