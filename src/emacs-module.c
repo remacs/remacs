@@ -393,10 +393,8 @@ module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
   else
     {
       ptrdiff_t nbytes = strlen (documentation);
-      ptrdiff_t nchars, ignored_nbytes;
-      parse_str_as_multibyte ((unsigned char const *) documentation, nbytes,
-			      &nchars, &ignored_nbytes);
-      doc = make_multibyte_string (documentation, nchars, nbytes);
+      doc = make_unibyte_string (documentation, nbytes);
+      doc = code_convert_string_norecord (doc, Qutf_8, false);
     }
 
   Lisp_Object ret = list4 (Qlambda,
@@ -555,8 +553,7 @@ module_copy_string_contents (emacs_env *env, emacs_value value, char *buffer,
     }
 
   *length = required_buf_size;
-  memcpy (buffer, SDATA (lisp_str_utf8), raw_size);
-  buffer[raw_size] = 0;
+  memcpy (buffer, SDATA (lisp_str_utf8), raw_size + 1);
 
   return true;
 }
@@ -572,10 +569,9 @@ module_make_string (emacs_env *env, const char *str, ptrdiff_t length)
       module_non_local_exit_signal_1 (env, Qoverflow_error, Qnil);
       return NULL;
     }
-  ptrdiff_t nchars, ignored_nbytes;
-  parse_str_as_multibyte ((unsigned char const *) str, length,
-			  &nchars, &ignored_nbytes);
-  return lisp_to_value (env, make_multibyte_string (str, nchars, length));
+  Lisp_Object lstr = make_unibyte_string (str, length);
+  return lisp_to_value (env,
+			code_convert_string_norecord (lstr, Qutf_8, false));
 }
 
 static emacs_value
