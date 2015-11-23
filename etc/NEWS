@@ -882,6 +882,8 @@ to avoid interfering with the kill ring.
 allow overriding the regular expression that recognizes the ldapsearch
 command line's password prompt.
 
+EUDC's BBDB backend now supports BBDB 3.
+
 ** Eshell
 
 +++
