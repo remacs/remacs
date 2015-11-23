@@ -25,6 +25,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "lisp.h"
 #include "dynlib.h"
@@ -386,9 +387,20 @@ module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
   envptr->data = data;
 
   Lisp_Object envobj = make_save_ptr (envptr);
+  Lisp_Object doc;
+  if (documentation == NULL)
+    doc = Qnil;
+  else
+    {
+      ptrdiff_t nbytes = strlen (documentation);
+      ptrdiff_t nchars, ignored_nbytes;
+      parse_str_as_multibyte (documentation, nbytes, &nchars, &ignored_nbytes);
+      doc = make_multibyte_string (documentation, nchars, nbytes);
+    }
+
   Lisp_Object ret = list4 (Qlambda,
                            list2 (Qand_rest, Qargs),
-                           documentation ? build_string (documentation) : Qnil,
+                           doc,
                            list3 (module_call_func,
                                   envobj,
                                   Qargs));
@@ -515,21 +527,34 @@ module_copy_string_contents (emacs_env *env, emacs_value value, char *buffer,
       return false;
     }
 
-  ptrdiff_t raw_size = SBYTES (lisp_str);
-
-  /* Emacs internal encoding is more-or-less UTF8, let's assume utf8
-     encoded emacs string are the same byte size.  */
-
-  if (!buffer || length == 0 || *length-1 < raw_size)
+  Lisp_Object lisp_str_utf8 = ENCODE_UTF_8 (lisp_str);
+  ptrdiff_t raw_size = SBYTES (lisp_str_utf8);
+  if (raw_size == PTRDIFF_MAX)
     {
-      *length = raw_size + 1;
+      module_non_local_exit_signal_1 (env, Qoverflow_error, Qnil);
+      return false;
+    }
+  ptrdiff_t required_buf_size = raw_size + 1;
+
+  eassert (length != NULL);
+
+  if (buffer == NULL)
+    {
+      *length = required_buf_size;
+      return true;
+    }
+
+  eassert (*length >= 0);
+
+  if (*length < required_buf_size)
+    {
+      *length = required_buf_size;
+      module_non_local_exit_signal_1 (env, Qargs_out_of_range, Qnil);
       return false;
     }
 
-  Lisp_Object lisp_str_utf8 = ENCODE_UTF_8 (lisp_str);
-  eassert (raw_size == SBYTES (lisp_str_utf8));
-  *length = raw_size + 1;
-  memcpy (buffer, SDATA (lisp_str_utf8), SBYTES (lisp_str_utf8));
+  *length = required_buf_size;
+  memcpy (buffer, SDATA (lisp_str_utf8), raw_size);
   buffer[raw_size] = 0;
 
   return true;
@@ -541,13 +566,14 @@ module_make_string (emacs_env *env, const char *str, ptrdiff_t length)
   check_main_thread ();
   eassert (module_non_local_exit_check (env) == emacs_funcall_exit_return);
   MODULE_HANDLE_SIGNALS;
-  if (length > PTRDIFF_MAX)
+  if (length > STRING_BYTES_BOUND)
     {
       module_non_local_exit_signal_1 (env, Qoverflow_error, Qnil);
       return NULL;
     }
-  /* Assume STR is utf8 encoded.  */
-  return lisp_to_value (env, make_string (str, length));
+  ptrdiff_t nchars, ignored_nbytes;
+  parse_str_as_multibyte (str, length, &nchars, &ignored_nbytes);
+  return lisp_to_value (env, make_multibyte_string (str, nchars, length));
 }
 
 static emacs_value
