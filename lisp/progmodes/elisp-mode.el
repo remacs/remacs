@@ -832,8 +832,9 @@ non-nil result supercedes the xrefs produced by
   (xref-elisp-location-file l))
 
 (defun elisp-library-roots ()
-  (defvar package-user-dir)
-  (cons package-user-dir load-path))
+  (if (boundp 'package-user-dir)
+      (cons package-user-dir load-path)
+    load-path))
 
 ;;; Elisp Interaction mode
 
