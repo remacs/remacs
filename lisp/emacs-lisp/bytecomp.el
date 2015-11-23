@@ -3713,7 +3713,11 @@ discarding."
   (let ((args (cdr form)))
     (if args
 	(while args
-	  (byte-compile-form (car (cdr args)))
+	  (if (eq (length args) 1)
+              (byte-compile-warn
+               "missing value for `%S' at end of setq"
+               (car args)))
+          (byte-compile-form (car (cdr args)))
 	  (or byte-compile--for-effect (cdr (cdr args))
 	      (byte-compile-out 'byte-dup 0))
 	  (byte-compile-variable-set (car args))
