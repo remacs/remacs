@@ -988,9 +988,10 @@ support for JSX, an XML-like syntax extension to ECMAScript.
 * Incompatible Lisp Changes in Emacs 25.1
 
 ---
-** `setq' must now be called with an even number of arguments.  The
-earlier behavior of silently supplying a nil to the last variable when
-there was an odd number of arguments has been eliminated.
+** `setq' and `setf' must now be called with an even number of
+arguments.  The earlier behavior of silently supplying a nil to the
+last variable when there was an odd number of arguments has been
+eliminated.
 
 ** `syntax-begin-function' is declared obsolete.
 Removed font-lock-beginning-of-syntax-function and the SYNTAX-BEGIN
