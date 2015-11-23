@@ -1039,25 +1039,19 @@ module_format_fun_env (const struct module_fun_env *env)
 {
   /* Try to print a function name if possible.  */
   const char *path, *sym;
-  if (dynlib_addr (env->subr, &path, &sym))
-    {
-      static char const format[] = "#<module function %s from %s>";
-      int size = snprintf (NULL, 0, format, sym, path);
-      eassert (size > 0);
-      char buffer[size + 1];
-      snprintf (buffer, sizeof buffer, format, sym, path);
-      return make_unibyte_string (buffer, size);
-    }
-  else
-    {
-      static char const format[] = "#<module function at %p>";
-      void *subr = env->subr;
-      int size = snprintf (NULL, 0, format, subr);
-      eassert (size > 0);
-      char buffer[size + 1];
-      snprintf (buffer, sizeof buffer, format, subr);
-      return make_unibyte_string (buffer, size);
-    }
+  char buffer[256];
+  char *buf = buffer;
+  ptrdiff_t bufsize = sizeof buffer;
+  ptrdiff_t size
+    = (dynlib_addr (env->subr, &path, &sym)
+       ? exprintf (&buf, &bufsize, buffer, -1,
+		   "#<module function %s from %s>", sym, path)
+       : exprintf (&buf, &bufsize, buffer, -1,
+		   "#<module function at %p>", env->subr));
+  Lisp_Object unibyte_result = make_unibyte_string (buffer, size);
+  if (buf != buffer)
+    xfree (buf);
+  return code_convert_string_norecord (unibyte_result, Qutf_8, false);
 }
 
 
