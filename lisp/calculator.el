@@ -1486,20 +1486,6 @@ Optional string argument KEYS will force using it as the keys entered."
         (kill-new (replace-regexp-in-string
                    "^\\([^ ]+\\) *\\(\\[[0-9/]+\\]\\)? *$" "\\1" s))))))
 
-(defun calculator-set-register (reg)
-  "Set a register value for REG."
-  ;; FIXME: this should use `register-read-with-preview', but it uses
-  ;; calculator-registers rather than `register-alist'.  (Maybe
-  ;; dynamically rebinding it will get blessed?)  Also in to
-  ;; `calculator-get-register'.
-  (interactive "cRegister to store into: ")
-  (let* ((as  (assq reg calculator-registers))
-         (val (progn (calculator-enter) (car calculator-stack))))
-    (if as
-      (setcdr as val)
-      (push (cons reg val) calculator-registers))
-    (calculator-message "[%c] := %S" reg val)))
-
 (defun calculator-put-value (val)
   "Paste VAL as if entered.
 Used by `calculator-paste' and `get-register'."
@@ -1528,9 +1514,33 @@ Used by `calculator-paste' and `get-register'."
                          (or (match-string 3 str) ""))))
      (ignore-errors (calculator-string-to-number str)))))
 
+(defun calculator-register-read-with-preview (prompt)
+  "Similar to `register-read-with-preview' but for calculator
+registers."
+  (let ((register-alist calculator-registers)
+        (register-preview-delay 1)
+        (register-preview-function
+         (lambda (r)
+           (format "%s: %s\n"
+                   (single-key-description (car r))
+                   (calculator-number-to-string (cdr r))))))
+    (register-read-with-preview prompt)))
+
+(defun calculator-set-register (reg)
+  "Set a register value for REG."
+  (interactive (list (calculator-register-read-with-preview
+                      "Register to store value into: ")))
+  (let* ((as  (assq reg calculator-registers))
+         (val (progn (calculator-enter) (car calculator-stack))))
+    (if as
+      (setcdr as val)
+      (push (cons reg val) calculator-registers))
+    (calculator-message "[%c] := %S" reg val)))
+
 (defun calculator-get-register (reg)
   "Get a value from a register REG."
-  (interactive "cRegister to get value from: ")
+  (interactive (list (calculator-register-read-with-preview
+                      "Register to get value from: ")))
   (calculator-put-value (cdr (assq reg calculator-registers))))
 
 (declare-function electric-describe-mode "ehelp" ())
