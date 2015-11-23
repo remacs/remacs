@@ -260,6 +260,8 @@ The return value is the last VAL in the list.
 
 \(fn PLACE VAL PLACE VAL ...)"
   (declare (debug (&rest [gv-place form])))
+  (if (/= (logand (length args) 1) 0)
+      (signal 'wrong-number-of-arguments (list 'setf (length args))))
   (if (and args (null (cddr args)))
       (let ((place (pop args))
             (val (car args)))
