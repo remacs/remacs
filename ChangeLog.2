@@ -1,3 +1,137 @@
+2015-11-21  Wilson Snyder  <wsnyder@wsnyder.org>
+
+	verilog-mode.el: Commentary and fix pre-Emacs 21 behavior.
+
+	* verilog-mode.el (verilog-save-font-no-change-functions):
+	Commentary and fix pre-Emacs 21 behavior.
+
+2015-11-19  Przemysław Wojnowski  <esperanto@cumego.com>
+
+	Use obarray functions from obarray.
+
+	* lisp/abbrev.el (copy-abbrev-table, abbrev-table-p, make-abbrev-table,
+	  abbrev-table-get, abbrev-table-put, abbrev-table-empty-p,
+	  clear-abbrev-table, define-abbrev, abbrev--symbol, abbrev-table-menu):
+	  delegate to obarray.el functions.
+	* lisp/loadup.el: load obarray before abbrev
+	* test/automated/abbrev-tests.el: new tests
+
+2015-11-18  Christian Schwarzgruber  <c.schwarzgruber.cs@gmail.com>  (tiny change)
+
+	epa.el: Add option to replace original text
+
+	* lisp/epa.el (epa-replace-original-text): New user option.
+	(Bug#21947)
+
+2015-11-18  Mark Oteiza  <mvoteiza@udel.edu>
+
+	Add interactive seek command.
+
+	* lisp/mpc.el (mpc-cmd-seekcur): New function.
+	(mpc-seek-current): New command.
+	(mpc-mode-menu): Add entry for mpc-seek-current
+	(mpc-mode-map): Bind mpc-seek-current to "g"
+
+2015-11-18  Mark Oteiza  <mvoteiza@udel.edu>
+
+	Fix issue where a new tempfile was created every refresh
+
+	* lisp/mpc.el (mpc-format): Leave dir as relative path
+
+2015-11-18  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/progmodes/cc-defs.el: Use with-silent-modifications
+
+	(c-save-buffer-state): Use with-silent-modifications when available.
+	(c--macroexpand-all): Check macroexpand-all directly rather than
+	c--mapcan-status.
+
+2015-11-18  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/loadup.el: Set max-lisp-eval-depth here
+
+	* lisp/Makefile.in (BIG_STACK_DEPTH, BIG_STACK_OPTS): Remove.
+	(BYTE_COMPILE_FLAGS): Adjust accordingly.
+
+2015-11-17  João Távora  <joaotavora@gmail.com>
+
+	Minor fix to comment indentation and typo in last commit
+
+	* linum.el (linum-update-window): Fix comment indentation and a
+	typo.
+
+2015-11-17  João Távora  <joaotavora@gmail.com>
+
+	linum-mode plays more nicely with other margin-setting extensions
+
+	linum.el will only modify the left margin if it needs to, and will
+	only reset the it back to 0 if it guesses that no-one has touched that
+	margin in the meantime.
+
+	As such, this is a more of a workaround than an actual fix, but fixes
+	the problems described in bug#20674 regarding the interaction with
+	modes such as darkroom-mode and olivetti-mode.
+
+	A similar fix was commited to nlinum.el in ELPA.git's
+	e7f5f549fbfb740b911fb7f33b42381ecece56d8
+
+	* linum.el (linum-delete-overlays): Restore margins more
+	criteriously.
+	(linum-update-window): Set margins more criteriously.
+
+2015-11-16  Daiki Ueno  <ueno@gnu.org>
+
+	* lisp/image-mode.el: Support encrypted file
+
+	(image-toggle-display-image): Read content from the buffer instead
+	of the file, if the buffer holds a decrypted data.  (Bug#21870)
+
+2015-11-15  Juanma Barranquero  <lekktu@gmail.com>
+
+	* lisp/progmodes/verilog-mode.el (verilog-save-buffer-state): Add backquote
+
+2015-11-15  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/package.el: Fix a decoding issue
+
+	(package--with-response-buffer): Use `url-insert-buffer-contents'.
+	The previous code had some issues with decoding. Refactoring that
+	function allows us to use the decoding from url-handlers while still
+	treating both sync and async requests the same.
+
+	* lisp/url/url-handlers.el (url-insert-file-contents): Move some code to
+	`url-insert-buffer-contents'.
+	(url-insert-buffer-contents): New function
+
+2015-11-15  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/package.el: Refactor -with-work-buffer-async
+
+	(package--with-work-buffer-async): Reimplement as
+	`package--with-response-buffer'.
+	(package--with-work-buffer): Mark obsolete.
+	(package--with-response-buffer): New macro. This is a more self
+	contained and less contrived version of
+	`package--with-work-buffer-async'.  It uses keyword arguments,
+	doesn't have async on the name, doesn't fallback on
+	`package--with-work-buffer', and has _much_ simpler error
+	handling.
+
+	(package--check-signature, package--download-one-archive)
+	(package-install-from-archive, describe-package-1): Use it.
+
+	(package--download-and-read-archives): Let
+	`package--download-one-archive' take care of calling
+	`package--update-downloads-in-progress'.
+
+2015-11-15  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/progmodes/verilog-mode.el: Use with-silent-modifications
+
+	(verilog-save-buffer-state): Use with-silent-modifications when available.
+	(verilog-save-font-no-change-functions): Don't bind
+	before/after-change-functions if it's not needed.
+
 2015-11-14  Xue Fuqiao  <xfq.free@gmail.com>
 
 	* CONTRIBUTE: Remove information about feature freeze.
@@ -18998,7 +19132,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit ae0653b5ab9ee223751ec389b87011963e1cbbef (inclusive).
+commit ea78129522f428888607151e4f91ade1f4839f3f (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
