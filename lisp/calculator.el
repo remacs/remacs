@@ -621,16 +621,17 @@ argument.
 hex/oct/bin modes can be set for input and for display separately.
 Another toggle-able mode is for using degrees instead of radians for
 trigonometric functions.
-The keys to switch modes are (`X' is shortcut for `H'):
+The keys to switch modes are (both `H' and `X' are for hex):
 * `D'             switch to all-decimal mode, or toggle degrees/radians
 * `B' `O' `H' `X' binary/octal/hexadecimal modes for input & display
 * `i' `o'         followed by one of `D' `B' `O' `H' `X' (case
                   insensitive) sets only the input or display radix mode
 The prompt indicates the current modes:
-* \"D=\": degrees mode;
-* \"?=\": (? is B/O/H) this is the radix for both input and output;
-* \"=?\": (? is B/O/H) the display radix (when input is decimal);
-* \"??\": (? is D/B/O/H) 1st char for input radix, 2nd for display.
+* \"==\": decimal mode (using radians);
+* \"D=\": decimal mode using degrees;
+* \"?=\": ? is B/O/H, the radix for both input and output;
+* \"=?\": ? is B/O/H, the display radix (with decimal input);
+* \"??\": ? is D/B/O/H, 1st char for input radix, 2nd for display.
 
 Also, the quote key can be used to switch display modes for decimal
 numbers (double-quote rotates back), and the two brace characters
@@ -831,7 +832,7 @@ The result should not exceed the screen width."
                          (cond ((or in-r out-r)
                                 (concat (or in-r "=")
                                         (if (equal in-r out-r) "="
-                                            (or out-r "="))))
+                                            (or out-r "D"))))
                                (calculator-deg "D=")
                                (t "=="))))
          (expr
@@ -1555,8 +1556,8 @@ registers."
 * I inverse the next trig function     \
 * \\='/\"/{/}  - display/display args
 * D         - switch to all-decimal, or toggle deg/rad mode
-* B/O/H/X   - binary/octal/hex mode for i/o (X is a shortcut for H)
-* i/o       - prefix for d/b/o/x - set only input/output modes
+* B/O/H/X   - binary/octal/hex mode for i/o (both H and X are for hex)
+* i/o       - prefix for D/B/O/X - set only input/output modes
 * enter/=   - evaluate current expr.   * s/g      - set/get a register
 * space     - evaluate & save on list  * l/v      - list total/average
 * up/down/C-p/C-n - browse saved       * C-delete - clear all saved
