@@ -64,7 +64,7 @@ typedef emacs_value (*emacs_subr) (emacs_env *env, ptrdiff_t nargs,
 				   emacs_value args[], void *data);
 
 /* Function prototype for module user-pointer finalizers.  */
-typedef void (*emacs_finalizer_function) (void *);
+typedef void (*emacs_finalizer_function) (void *) EMACS_NOEXCEPT;
 
 /* Possible Emacs function call outcomes.  */
 enum emacs_funcall_exit
@@ -175,17 +175,17 @@ struct emacs_env_25
 
   /* Embedded pointer type.  */
   emacs_value (*make_user_ptr) (emacs_env *env,
-				void (*fin) (void *) EMACS_NOEXCEPT,
+				emacs_finalizer_function fin,
 				void *ptr);
 
   void *(*get_user_ptr) (emacs_env *env, emacs_value uptr);
   void (*set_user_ptr) (emacs_env *env, emacs_value uptr, void *ptr);
 
-  void (*(*get_user_finalizer) (emacs_env *env, emacs_value uptr))
-    (void *) EMACS_NOEXCEPT;
+  emacs_finalizer_function (*get_user_finalizer) (emacs_env *env,
+						  emacs_value uptr);
   void (*set_user_finalizer) (emacs_env *env,
 			      emacs_value uptr,
-			      void (*fin) (void *) EMACS_NOEXCEPT);
+			      emacs_finalizer_function fin);
 
   /* Vector functions.  */
   emacs_value (*vec_get) (emacs_env *env, emacs_value vec, ptrdiff_t i);
