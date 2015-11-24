@@ -5317,10 +5317,6 @@ total_bytes_of_live_objects (void)
 
 #ifdef HAVE_WINDOW_SYSTEM
 
-/* This code has a few issues on MS-Windows, see Bug#15876 and Bug#16140.  */
-
-#if !defined (HAVE_NTGUI)
-
 /* Remove unmarked font-spec and font-entity objects from ENTRY, which is
    (DRIVER-TYPE NUM-FRAMES FONT-CACHE-DATA ...), and return changed entry.  */
 
@@ -5335,11 +5331,12 @@ compact_font_cache_entry (Lisp_Object entry)
       Lisp_Object obj = XCAR (tail);
 
       /* Consider OBJ if it is (font-spec . [font-entity font-entity ...]).  */
-      if (CONSP (obj) && FONT_SPEC_P (XCAR (obj))
-	  && !VECTOR_MARKED_P (XFONT_SPEC (XCAR (obj)))
+      if (CONSP (obj) && GC_FONT_SPEC_P (XCAR (obj))
+	  && !VECTOR_MARKED_P (GC_XFONT_SPEC (XCAR (obj)))
 	  && VECTORP (XCDR (obj)))
 	{
 	  ptrdiff_t i, size = gc_asize (XCDR (obj));
+	  Lisp_Object obj_cdr = XCDR (obj);
 
 	  /* If font-spec is not marked, most likely all font-entities
 	     are not marked too.  But we must be sure that nothing is
@@ -5348,14 +5345,14 @@ compact_font_cache_entry (Lisp_Object entry)
             {
               Lisp_Object objlist;
 
-              if (VECTOR_MARKED_P (XFONT_ENTITY (AREF (XCDR (obj), i))))
+              if (VECTOR_MARKED_P (GC_XFONT_ENTITY (AREF (obj_cdr, i))))
                 break;
 
-              objlist = AREF (AREF (XCDR (obj), i), FONT_OBJLIST_INDEX);
+              objlist = AREF (AREF (obj_cdr, i), FONT_OBJLIST_INDEX);
               for (; CONSP (objlist); objlist = XCDR (objlist))
                 {
                   Lisp_Object val = XCAR (objlist);
-                  struct font *font = XFONT_OBJECT (val);
+                  struct font *font = GC_XFONT_OBJECT (val);
 
                   if (!NILP (AREF (val, FONT_TYPE_INDEX))
                       && VECTOR_MARKED_P(font))
@@ -5383,8 +5380,6 @@ compact_font_cache_entry (Lisp_Object entry)
   return entry;
 }
 
-#endif /* not HAVE_NTGUI */
-
 /* Compact font caches on all terminals and mark
    everything which is still here after compaction.  */
 
@@ -5396,7 +5391,6 @@ compact_font_caches (void)
   for (t = terminal_list; t; t = t->next_terminal)
     {
       Lisp_Object cache = TERMINAL_FONT_CACHE (t);
-#if !defined (HAVE_NTGUI)
       if (CONSP (cache))
 	{
 	  Lisp_Object entry;
@@ -5404,7 +5398,6 @@ compact_font_caches (void)
 	  for (entry = XCDR (cache); CONSP (entry); entry = XCDR (entry))
 	    XSETCAR (entry, compact_font_cache_entry (XCAR (entry)));
 	}
-#endif /* not HAVE_NTGUI */
       mark_object (cache);
     }
 }
