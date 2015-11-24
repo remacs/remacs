@@ -28,7 +28,17 @@
 ;;
 
 (ert-deftest mod-test-sum-test ()
-  (should (= (mod-test-sum 1 2) 3)))
+  (should (= (mod-test-sum 1 2) 3))
+  (let ((descr (should-error (mod-test-sum 1 2 3))))
+    (should (eq (car descr) 'wrong-number-of-arguments))
+    (should (stringp (nth 1 descr)))
+    (should (eq 0
+                (string-match
+                 (if (eq system-type 'windows-nt)
+                     "#<module function at \\(0x\\)?[0-9a-fA-F]+ from .*>"
+                   "#<module function Fmod_test_sum from .*>")
+                 (nth 1 descr))))
+    (should (= (nth 2 descr) 3))))
 
 (ert-deftest mod-test-sum-docstring ()
   (should (string= (documentation 'mod-test-sum) "Return A + B")))
