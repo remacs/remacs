@@ -403,7 +403,9 @@ The syntax tables aren't stored directly since they're quite large."
 	   table)))
 (c-lang-defvar c++-template-syntax-table
   (and (c-lang-const c++-make-template-syntax-table)
-       (funcall (c-lang-const c++-make-template-syntax-table))))
+       ;; The next eval remove a superfluous ' from '(lambda.  This
+       ;; gets rid of compilation warnings.
+       (funcall (eval (c-lang-const c++-make-template-syntax-table)))))
 
 (c-lang-defconst c-make-no-parens-syntax-table
   ;; A variant of the standard syntax table which is used to find matching
@@ -426,7 +428,8 @@ The syntax tables aren't stored directly since they're quite large."
 	  table))))
 (c-lang-defvar c-no-parens-syntax-table
   (and (c-lang-const c-make-no-parens-syntax-table)
-       (funcall (c-lang-const c-make-no-parens-syntax-table))))
+       ;; See comment in `c++template-syntax-table' about the next `eval'.
+       (funcall (eval (c-lang-const c-make-no-parens-syntax-table)))))
 
 (c-lang-defconst c-identifier-syntax-modifications
   "A list that describes the modifications that should be done to the
