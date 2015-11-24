@@ -1023,10 +1023,11 @@ well as `load-file-rep-suffixes').
 See Info node `(emacs)Lisp Libraries' for more details.
 See `load-file' for a different interface to `load'."
   (interactive
-   (list (completing-read "Load library: "
-			  (apply-partially 'locate-file-completion-table
-                                           load-path
-                                           (get-load-suffixes)))))
+   (let (completion-ignored-extensions)
+     (list (completing-read "Load library: "
+                            (apply-partially 'locate-file-completion-table
+                                             load-path
+                                             (get-load-suffixes))))))
   (load library))
 
 (defun file-remote-p (file &optional identification connected)
