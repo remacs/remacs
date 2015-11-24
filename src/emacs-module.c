@@ -387,16 +387,11 @@ module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
   envptr->data = data;
 
   Lisp_Object envobj = make_save_ptr (envptr);
-  Lisp_Object doc;
-  if (documentation == NULL)
-    doc = Qnil;
-  else
-    {
-      ptrdiff_t nbytes = strlen (documentation);
-      doc = make_unibyte_string (documentation, nbytes);
-      doc = code_convert_string_norecord (doc, Qutf_8, false);
-    }
-
+  Lisp_Object doc
+    = (documentation
+       ? code_convert_string_norecord (build_unibyte_string (documentation),
+				       Qutf_8, false)
+       : Qnil);
   Lisp_Object ret = list4 (Qlambda,
                            list2 (Qand_rest, Qargs),
                            doc,
