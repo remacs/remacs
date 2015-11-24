@@ -262,7 +262,11 @@ at configure time.
 ** M-x suggests shorthands and ignores obsolete commands for completion.
 
 ** Successive single-char deletions are collapsed in the undo-log just like
-successive char insertions.
+successive char insertions. This behaviour can be extended to other
+commands, using the `undo-auto--amalgamate' function.
+
+** The heuristic used to insert `undo-boundary' after each command has changed,
+so that it supports commands which potentially affect multiple buffers.
 
 +++
 ** New command `comment-line' bound to `C-x C-;'.

@@ -2880,7 +2880,7 @@ See also `undo-auto--buffer-undoably-changed'.")
 
 (defun undo-auto--amalgamate ()
   "Amalgamate undo if necessary.
-This function can be called after an amalgamating command.  It
+This function can be called before an amalgamating command.  It
 removes the previous `undo-boundary' if a series of such calls
 have been made.  By default `self-insert-command' and
 `delete-char' are the only amalgamating commands, although this
