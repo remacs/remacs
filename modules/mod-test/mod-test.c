@@ -42,6 +42,8 @@ sum (intmax_t a, intmax_t b)
 static emacs_value
 Fmod_test_sum (emacs_env *env, ptrdiff_t nargs, emacs_value args[], void *data)
 {
+  assert (nargs == 2);
+
   intmax_t a = env->extract_integer (env, args[0]);
   intmax_t b = env->extract_integer (env, args[1]);
 
