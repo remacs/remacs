@@ -34,15 +34,28 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include "lisp.h"
+#include "w32common.h"	/* for os_subtype */
 #include "w32.h"
 
+static BOOL g_b_init_get_module_handle_ex;
 static DWORD dynlib_last_err;
+
+/* Some versions of w32api headers only expose the following when
+   _WIN32_WINNT is set to higher values that we use.  */
+typedef BOOL (WINAPI *GetModuleHandleExA_Proc) (DWORD,LPCSTR,HMODULE*);
+#ifndef GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
+# define GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS 4
+#endif
+#ifndef GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT
+# define GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT 2
+#endif
 
 /* This needs to be called at startup to countermand any non-zero
    values recorded by temacs.  */
 void
 dynlib_reset_last_error (void)
 {
+  g_b_init_get_module_handle_ex = 0;
   dynlib_last_err = 0;
 }
 
@@ -107,9 +120,108 @@ dynlib_sym (dynlib_handle_ptr h, const char *sym)
 }
 
 bool
-dynlib_addr (void *ptr, const char **path, const char **sym)
+dynlib_addr (void *addr, const char **fname, const char **symname)
 {
-  return false;  /* Not implemented yet.  */
+  static char dll_filename[MAX_UTF8_PATH];
+  static char addr_str[22];
+  static GetModuleHandleExA_Proc s_pfn_Get_Module_HandleExA = NULL;
+  char *dll_fn = NULL;
+  HMODULE hm_kernel32 = NULL;
+  bool result = false;
+  HMODULE hm_dll = NULL;
+  wchar_t mfn_w[MAX_PATH];
+  char mfn_a[MAX_PATH];
+
+  /* Step 1: Find the handle of the module where ADDR lives.  */
+  if (os_subtype == OS_9X
+      /* Windows NT family version before XP (v5.1).  */
+      || ((w32_major_version + (w32_minor_version > 0)) < 6))
+    {
+      MEMORY_BASIC_INFORMATION mbi;
+
+      /* According to Matt Pietrek, the module handle is just the base
+	 address where it's loaded in memory.  */
+      if (VirtualQuery (addr, &mbi, sizeof(mbi)))
+	hm_dll = (HMODULE)mbi.AllocationBase;
+    }
+  else
+    {
+      /* Use the documented API when available (XP and later).  */
+      if (g_b_init_get_module_handle_ex == 0)
+	{
+	  g_b_init_get_module_handle_ex = 1;
+	  hm_kernel32 = LoadLibrary ("kernel32.dll");
+	  /* We load the ANSI version of the function because the
+	     address we pass to it is not an address of a string, but
+	     an address of a function.  So we don't care about the
+	     Unicode version.  */
+	  s_pfn_Get_Module_HandleExA =
+	    (GetModuleHandleExA_Proc) GetProcAddress (hm_kernel32,
+						      "GetModuleHandleExA");
+	}
+      if (s_pfn_Get_Module_HandleExA)
+	{
+	  DWORD flags = (GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
+			 /* We don't want to call FreeLibrary at the
+			    end, because then we'd need to remember
+			    whether we obtained the handle by this
+			    method or the above one.  */
+			 | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT);
+
+	  if (!s_pfn_Get_Module_HandleExA (flags, addr, &hm_dll))
+	    {
+	      dynlib_last_err = GetLastError ();
+	      hm_dll = NULL;
+	    }
+	}
+    }
+
+  /* Step 2: Find the absolute file name of the module corresponding
+     to the hm_dll handle.  */
+  if (hm_dll)
+    {
+      DWORD retval;
+
+      if (w32_unicode_filenames)
+	{
+	  retval = GetModuleFileNameW (hm_dll, mfn_w, MAX_PATH);
+	  if (retval > 0 && retval < MAX_PATH
+	      && filename_from_utf16 (mfn_w, dll_filename) == 0)
+	    dll_fn = dll_filename;
+	  else if (retval == MAX_PATH)
+	    dynlib_last_err = ERROR_INSUFFICIENT_BUFFER;
+	  else
+	    dynlib_last_err = GetLastError ();
+	}
+      else
+	{
+	  retval = GetModuleFileNameA (hm_dll, mfn_a, MAX_PATH);
+	  if (retval > 0 && retval < MAX_PATH
+	      && filename_from_ansi (mfn_a, dll_filename) == 0)
+	    dll_fn = dll_filename;
+	  else if (retval == MAX_PATH)
+	    dynlib_last_err = ERROR_INSUFFICIENT_BUFFER;
+	  else
+	    dynlib_last_err = GetLastError ();
+	}
+      if (dll_fn)
+	{
+	  dostounix_filename (dll_fn);
+	  /* We cannot easily produce the function name, since
+	     typically all of the module functions will be unexported,
+	     and probably even static, which means the symbols can be
+	     obtained only if we link against libbfd (and the DLL can
+	     be stripped anyway).  So we just show the address and the
+	     file name; they can use that with addr2line or GDB to
+	     recover the symbolic name.  */
+	  sprintf (addr_str, "at 0x%x", (DWORD_PTR)addr);
+	  *symname = addr_str;
+	  result = true;
+	}
+    }
+
+  *fname = dll_fn;
+  return result;
 }
 
 const char *
