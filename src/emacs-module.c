@@ -710,7 +710,7 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
   if (!gpl_sym)
     error ("Module %s is not GPL compatible", SDATA (file));
 
-  module_init = (emacs_init_function) dynlib_sym (handle, "emacs_module_init");
+  module_init = (emacs_init_function) dynlib_func (handle, "emacs_module_init");
   if (!module_init)
     error ("Module %s does not have an init function.", SDATA (file));
 
@@ -937,7 +937,8 @@ allocate_emacs_value (emacs_env *env, struct emacs_value_storage *storage,
 
 /* Mark all objects allocated from local environments so that they
    don't get garbage-collected.  */
-void mark_modules (void)
+void
+mark_modules (void)
 {
   for (Lisp_Object tem = Vmodule_environments; CONSP (tem); tem = XCDR (tem))
     {

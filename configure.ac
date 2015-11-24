@@ -3316,6 +3316,11 @@ if test "${with_modules}" != "no"; then
 
   if test "${HAVE_MODULES}" = no; then
     AC_MSG_ERROR([Dynamic modules are not supported on your system])
+  else
+    SAVE_LIBS=$LIBS
+    LIBS="$LIBS $LIBMODULES"
+    AC_CHECK_FUNCS([dlfunc])
+    LIBS=$SAVE_LIBS
   fi
 fi
 

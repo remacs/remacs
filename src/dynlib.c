@@ -206,3 +206,13 @@ dynlib_close (dynlib_handle_ptr h)
 #error "No dynamic loading for this system"
 
 #endif
+
+#if !HAVE_DLFUNC
+# define dlfunc dynlib_sym
+#endif
+
+dynlib_function_ptr
+dynlib_func (dynlib_handle_ptr h, const char *sym)
+{
+  return (dynlib_function_ptr) dlfunc (h, sym);
+}
