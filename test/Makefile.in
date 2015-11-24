@@ -99,8 +99,9 @@ WRITE_LOG = > $@ 2>&1 || { stat=ERROR; cat $@; }; echo $$stat: $@
 	$(emacs) -l ert -l $$loadfile \
 	  -f ert-run-tests-batch-and-exit ${WRITE_LOG}
 
-ELFILES = $(sort $(wildcard ${srcdir}/*.el) $(wildcard ${srcdir}/*/*.el) \
-	$(wildcard ${srcdir}/*/*/*.el) $(wildcard ${srcdir}/*/*/*/*.el))
+ELFILES = $(filter-out ./manual%,\
+	$(sort $(wildcard ${srcdir}/*.el) $(wildcard ${srcdir}/*/*.el) \
+	$(wildcard ${srcdir}/*/*/*.el) $(wildcard ${srcdir}/*/*/*/*.el)))
 LOGFILES = $(patsubst %.el,%.log,${ELFILES})
 TESTS = $(subst ${srcdir}/,,$(LOGFILES:.log=))
 
