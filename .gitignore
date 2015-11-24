@@ -42,10 +42,10 @@ InfoPlist.strings
 Makefile
 makefile
 !etc/refcards/Makefile
-!test/automated/data/flymake/Makefile
-!test/indent/Makefile
-!test/etags/Makefile
-!test/etags/make-src/Makefile
+!test/lisp/progmodes/flymake-resources/Makefile
+!test/manual/indent/Makefile
+!test/manual/etags/Makefile
+!test/manual/etags/make-src/Makefile
 /*.cache
 /confdefs.h
 /config.status
