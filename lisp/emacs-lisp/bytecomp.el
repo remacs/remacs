@@ -3713,9 +3713,9 @@ discarding."
     (if args
 	(while args
 	  (if (eq (length args) 1)
-              (byte-compile-warn
-               "missing value for `%S' at end of setq"
-               (car args)))
+              (byte-compile-log-warning
+               (format "missing value for `%S' at end of setq" (car args))
+               nil :error))
           (byte-compile-form (car (cdr args)))
 	  (or byte-compile--for-effect (cdr (cdr args))
 	      (byte-compile-out 'byte-dup 0))
