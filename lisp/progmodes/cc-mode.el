@@ -99,10 +99,9 @@
 (cc-bytecomp-defvar adaptive-fill-first-line-regexp) ; Emacs
 (cc-bytecomp-defun run-mode-hooks)	; Emacs 21.1
 
-;; We set these variables during mode init, yet we don't require
+;; We set this variable during mode init, yet we don't require
 ;; font-lock.
 (cc-bytecomp-defvar font-lock-defaults)
-(cc-bytecomp-defvar font-lock-syntactic-keywords)
 
 ;; Menu support for both XEmacs and Emacs.  If you don't have easymenu
 ;; with your version of Emacs, you are incompatible!

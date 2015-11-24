@@ -252,6 +252,11 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 	(cc-bytecomp-debug-msg
 	 "cc-bytecomp-restore-environment: Done"))))
 
+(defun cc-bytecomp-load (cc-part)
+  ;; A dummy function which will immediately be overwritten by the
+  ;; following at load time.  This should suppress the byte compiler
+  ;; error that the function is "not known to be defined".
+)
 (eval
  ;; This eval is to avoid byte compilation of the function below.
  ;; There's some bug in XEmacs 21.4.6 that can cause it to dump core
