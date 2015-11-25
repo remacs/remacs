@@ -313,7 +313,8 @@ to the SVN command."
   "SVN-specific version of `vc-backend-checkin'."
   (let ((status (apply
                  'vc-svn-command nil 1 files "ci"
-                 (nconc (list "-m" comment) (vc-switches 'SVN 'checkin)))))
+                 (nconc (cons "-m" (log-edit-extract-headers comment))
+                        (vc-switches 'SVN 'checkin)))))
     (set-buffer "*vc*")
     (goto-char (point-min))
     (unless (equal status 0)
