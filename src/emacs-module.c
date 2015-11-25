@@ -1035,15 +1035,15 @@ module_format_fun_env (const struct module_fun_env *env)
 {
   /* Try to print a function name if possible.  */
   const char *path, *sym;
-  char buffer[256];
+  static char const noaddr_format[] = "#<module function at %p>";
+  char buffer[sizeof noaddr_format + INT_STRLEN_BOUND (intptr_t) + 256];
   char *buf = buffer;
   ptrdiff_t bufsize = sizeof buffer;
   ptrdiff_t size
     = (dynlib_addr (env->subr, &path, &sym)
        ? exprintf (&buf, &bufsize, buffer, -1,
 		   "#<module function %s from %s>", sym, path)
-       : exprintf (&buf, &bufsize, buffer, -1,
-		   "#<module function at %p>", env->subr));
+       : sprintf (buffer, noaddr_format, env->subr));
   Lisp_Object unibyte_result = make_unibyte_string (buffer, size);
   if (buf != buffer)
     xfree (buf);
