@@ -135,25 +135,6 @@ frames.
 Works for functions, variables, faces, etc.  It is bound to `C-h o' by
 default.
 
-** New user option `search-default-regexp-mode'
-specifies the default mode for I-search.
-
-** `isearch' and `query-replace' now perform character folding in matches.
-This is analogous to case folding, but instead of disregarding case
-variants, it disregards wider classes of distinctions between similar
-characters.  (Case folding is a special case of character folding.)
-This means many characters in the search string will match entire
-groups of characters instead of just themselves.
-
-For instance, the " will match all variants of double quotes (like “
-and ”), and the letter a will match all of its accented cousins, even
-those composed of multiple characters, as well as many other symbols
-like ℀, ℁, ⒜, and ⓐ.
-
-** New function `character-fold-to-regexp' can be used
-by searching commands to produce a regexp matching anything that
-character-folds into STRING.
-
 ** New command `checkdoc-package-keywords' checks if the
 current package keywords are recognized.  Set the new option
 `checkdoc-package-keywords-flag' to non-nil to make
@@ -174,10 +155,6 @@ added via the new Network Security Manager (NSM) and controlled via
 the `network-security-level' variable.
 
 ** C-h l now also lists the commands that were run.
-
----
-** The new M-s M-w key binding uses eww to search the web for the
-text in the region.
 
 ** M-x suggests shorthands and ignores obsolete commands for completion.
 ** x-select-enable-clipboard is renamed select-enable-clipboard.
@@ -532,6 +509,36 @@ element.  The new commands bound to <up> and <down> in the minibuffer:
 
 ** Search and Replace
 
++++
+*** New user option `search-default-regexp-mode'
+specifies the default mode for I-search.
+
++++
+*** `isearch' and `query-replace' can now perform character folding in matches.
+Isearch does that by default, while `query-replace' will do that if
+the new variable `replace-character-fold' is customized to a non-nil
+value.  This is analogous to case folding, but instead of disregarding
+case variants, it disregards wider classes of distinctions between
+similar characters.  (Case folding is a special case of character
+folding.)  This means many characters in the search string will match
+entire groups of characters instead of just themselves.
+
+For instance, the " will match all variants of double quotes (like “
+and ”), and the letter a will match all of its accented cousins, even
+those composed of multiple characters, as well as many other symbols
+like ℀, ℁, ⒜, and ⓐ.
+
++++
+*** New function `character-fold-to-regexp' can be used
+by searching commands to produce a regexp matching anything that
+character-folds into STRING.
+
++++
+*** The new M-s M-w key binding uses eww to search the web for the
+text in the region.  The search engine to use for this is specified by
+the customizable variable `eww-search-prefix'.
+
++++
 *** Query-replace history is enhanced.
 When query-replace reads the FROM string from the minibuffer, typing
 `M-p' will now show previous replacements as "FROM SEP TO", where FROM

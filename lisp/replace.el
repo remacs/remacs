@@ -111,7 +111,8 @@ strings or patterns."
   :version "22.1")
 
 (defcustom query-replace-show-replacement t
-  "Non-nil means to show what actual replacement text will be."
+  "Non-nil means show substituted replacement text in the minibuffer.
+This variable affects only `query-replace-regexp'."
   :type 'boolean
   :group 'matching
   :version "23.1")

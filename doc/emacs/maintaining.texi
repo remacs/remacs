@@ -2285,7 +2285,7 @@ input.  @xref{Query Replace}, for more information on query replace.
   You can control the case-sensitivity of tags search commands by
 customizing the value of the variable @code{tags-case-fold-search}.  The
 default is to use the same setting as the value of
-@code{case-fold-search} (@pxref{Search Case}).
+@code{case-fold-search} (@pxref{Lax Search}).
 
   It is possible to get through all the files in the tags table with a
 single invocation of @kbd{M-x tags-query-replace}.  But often it is

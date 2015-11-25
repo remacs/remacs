@@ -96,8 +96,12 @@ in Isearch mode is always downcased."
 
 (defcustom search-nonincremental-instead t
   "If non-nil, do a nonincremental search instead of exiting immediately.
-Actually, `isearch-edit-string' is called to let you enter the search
-string, and RET terminates editing and does a nonincremental search."
+This affects the behavior of `isearch-exit' and any key bound to that
+command: if this variable is nil, `isearch-exit' always exits the search;
+if the value is non-nil, and the search string is empty, `isearch-exit'
+starts a nonincremental search instead.  (Actually, `isearch-edit-string'
+is called to let you enter the search string, and RET terminates editing
+and does a nonincremental search.)"
   :type 'boolean)
 
 (defcustom search-whitespace-regexp (purecopy "\\s-+")
@@ -142,9 +146,11 @@ whenever point is in one of them."
 (defcustom isearch-hide-immediately t
   "If non-nil, re-hide an invisible match right away.
 This variable makes a difference when `search-invisible' is set to `open'.
+If non-nil, invisible matches are re-hidden as soon as the match moves
+off the invisible text surrounding the match.
 If nil then do not re-hide opened invisible text when the match moves.
 Whatever the value, all opened invisible text is hidden again after exiting
-the search."
+the search, with the exception of the last successful match, if any."
   :type 'boolean)
 
 (defcustom isearch-resume-in-command-history nil
