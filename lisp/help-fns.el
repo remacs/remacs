@@ -763,8 +763,12 @@ it is displayed along with the global value."
 		(let ((from (point))
 		      (line-beg (line-beginning-position))
 		      (print-rep
-		       (let ((print-quoted t))
-			 (prin1-to-string val))))
+		       (let ((rep
+			      (let ((print-quoted t))
+				(prin1-to-string val))))
+			 (if (and (symbolp val) (not (booleanp val)))
+			     (format-message "`%s'" rep)
+			   rep))))
 		  (if (< (+ (length print-rep) (point) (- line-beg)) 68)
 		      (insert print-rep)
 		    (terpri)
