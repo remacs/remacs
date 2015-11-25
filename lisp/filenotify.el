@@ -49,17 +49,16 @@ handler.  The value in the hash table is a list
 Several values for a given DIR happen only for `inotify', when
 different files from the same directory are watched.")
 
-(defun file-notify--rm-descriptor (descriptor &optional what)
+(defun file-notify--rm-descriptor (descriptor)
   "Remove DESCRIPTOR from `file-notify-descriptors'.
 DESCRIPTOR should be an object returned by `file-notify-add-watch'.
-If it is registered in `file-notify-descriptors', a stopped event is sent.
-WHAT is a file or directory name to be removed, needed just for `inotify'."
+If it is registered in `file-notify-descriptors', a stopped event is sent."
   (let* ((desc (if (consp descriptor) (car descriptor) descriptor))
 	 (file (if (consp descriptor) (cdr descriptor)))
          (registered (gethash desc file-notify-descriptors))
 	 (dir (car registered)))
 
-    (when (and (consp registered) (or (null what) (string-equal dir what)))
+    (when (consp registered)
       ;; Send `stopped' event.
       (dolist (entry (cdr registered))
 	(funcall (cdr entry)
@@ -236,7 +235,6 @@ EVENT is the cadr of the event in `file-notify-handle-event'
           (setq pending-event nil))
 
         ;; Check for stopped.
-	;;(message "file-notify-callback %S %S %S" file file1 registered)
         (setq
          stopped
          (or
@@ -244,10 +242,13 @@ EVENT is the cadr of the event in `file-notify-handle-event'
           (and
            (memq action '(deleted renamed))
            (= (length (cdr registered)) 1)
-           (string-equal
-            (file-name-nondirectory file)
-	    (or (file-name-nondirectory (car registered))
-		(car (cadr registered)))))))
+           (or
+            (string-equal
+             (file-name-nondirectory file)
+	     (file-name-nondirectory (car registered)))
+            (string-equal
+             (file-name-nondirectory file)
+             (car (cadr registered)))))))
 
 	;; Apply callback.
 	(when (and action
@@ -266,6 +267,9 @@ EVENT is the cadr of the event in `file-notify-handle-event'
 		    (and (stringp file1)
 			 (string-equal
 			  (nth 0 entry) (file-name-nondirectory file1)))))
+          ;;(message
+           ;;"file-notify-callback %S %S %S %S %S"
+           ;;(file-notify--descriptor desc file) action file file1 registered)
 	  (if file1
 	      (funcall
 	       callback
@@ -276,8 +280,7 @@ EVENT is the cadr of the event in `file-notify-handle-event'
 
       ;; Modify `file-notify-descriptors'.
       (when stopped
-        (file-notify--rm-descriptor
-         (file-notify--descriptor desc file) file)))))
+        (file-notify-rm-watch (file-notify--descriptor desc file))))))
 
 ;; `kqueue', `gfilenotify' and `w32notify' return a unique descriptor
 ;; for every `file-notify-add-watch', while `inotify' returns a unique
@@ -342,7 +345,12 @@ FILE is the name of the file whose event is being reported."
 	;; A file name handler could exist even if there is no local
 	;; file notification support.
 	(setq desc (funcall
-		    handler 'file-notify-add-watch file flags callback))
+		    handler 'file-notify-add-watch
+                    ;; kqueue does not report file changes in
+                    ;; directory monitor.  So we must watch the file
+                    ;; itself.
+                    (if (eq file-notify--library 'kqueue) file dir)
+                    flags callback))
 
       ;; Check, whether Emacs has been compiled with file notification
       ;; support.
@@ -379,7 +387,9 @@ FILE is the name of the file whose event is being reported."
                 l-flags)))
 
       ;; Call low-level function.
-      (setq desc (funcall func file l-flags 'file-notify-callback)))
+      (setq desc (funcall
+                  func (if (eq file-notify--library 'kqueue) file dir)
+                  l-flags 'file-notify-callback)))
 
     ;; Modify `file-notify-descriptors'.
     (setq file (unless (file-directory-p file) (file-name-nondirectory file))
