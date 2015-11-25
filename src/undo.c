@@ -34,12 +34,6 @@ static ptrdiff_t last_boundary_position;
    an undo-boundary.  */
 static Lisp_Object pending_boundary;
 
-static void
-run_undoable_change (void)
-{
-  call0 (Qundo_auto__undoable_change);
-}
-
 /* Record point as it was at beginning of this command (if necessary)
    and prepare the undo info for recording a change.
    PT is the position of point that will naturally occur as a result of the
@@ -57,8 +51,6 @@ record_point (ptrdiff_t pt)
   /* Allocate a cons cell to be the undo boundary after this command.  */
   if (NILP (pending_boundary))
     pending_boundary = Fcons (Qnil, Qnil);
-
-  run_undoable_change ();
 
   at_boundary = ! CONSP (BVAR (current_buffer, undo_list))
                 || NILP (XCAR (BVAR (current_buffer, undo_list)));
@@ -129,8 +121,6 @@ record_marker_adjustments (ptrdiff_t from, ptrdiff_t to)
   /* Allocate a cons cell to be the undo boundary after this command.  */
   if (NILP (pending_boundary))
     pending_boundary = Fcons (Qnil, Qnil);
-
-  run_undoable_change ();
 
   for (m = BUF_MARKERS (current_buffer); m; m = m->next)
     {
@@ -243,11 +233,6 @@ record_property_change (ptrdiff_t beg, ptrdiff_t length,
   if (NILP (pending_boundary))
     pending_boundary = Fcons (Qnil, Qnil);
 
-  /* Switch temporarily to the buffer that was changed.  */
-  set_buffer_internal (buf);
-
-  run_undoable_change ();
-
   if (MODIFF <= SAVE_MODIFF)
     record_first_change ();
 
@@ -256,9 +241,6 @@ record_property_change (ptrdiff_t beg, ptrdiff_t length,
   entry = Fcons (Qnil, Fcons (prop, Fcons (value, Fcons (lbeg, lend))));
   bset_undo_list (current_buffer,
 		  Fcons (entry, BVAR (current_buffer, undo_list)));
-
-  /* Reset the buffer */
-  set_buffer_internal (obuf);
 }
 
 DEFUN ("undo-boundary", Fundo_boundary, Sundo_boundary, 0, 0, 0,
@@ -432,7 +414,6 @@ void
 syms_of_undo (void)
 {
   DEFSYM (Qinhibit_read_only, "inhibit-read-only");
-  DEFSYM (Qundo_auto__undoable_change, "undo-auto--undoable-change");
   DEFSYM (Qundo_auto__last_boundary_cause, "undo-auto--last-boundary-cause");
   DEFSYM (Qexplicit, "explicit");
 
