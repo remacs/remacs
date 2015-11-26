@@ -799,9 +799,7 @@ If no tags table is loaded, do nothing and return nil."
     (let ((completion-ignore-case (if (memq tags-case-fold-search '(t nil))
 				      tags-case-fold-search
 				    case-fold-search))
-	  (pattern (funcall (or find-tag-default-function
-				(get major-mode 'find-tag-default-function)
-				#'find-tag-default)))
+	  (pattern (find-tag--default))
 	  beg)
       (when pattern
 	(save-excursion
@@ -818,9 +816,7 @@ If no tags table is loaded, do nothing and return nil."
   (let* ((completion-ignore-case (if (memq tags-case-fold-search '(t nil))
 				     tags-case-fold-search
 				   case-fold-search))
-	 (default (funcall (or find-tag-default-function
-			       (get major-mode 'find-tag-default-function)
-			       'find-tag-default)))
+	 (default (find-tag--default))
 	 (spec (completing-read (if default
 				    (format "%s (default %s): "
 					    (substring string 0 (string-match "[ :]+\\'" string))
@@ -831,6 +827,11 @@ If no tags table is loaded, do nothing and return nil."
     (if (equal spec "")
 	(or default (user-error "There is no default tag"))
       spec)))
+
+(defun find-tag--default ()
+  (funcall (or find-tag-default-function
+               (get major-mode 'find-tag-default-function)
+               'find-tag-default)))
 
 (defvar last-tag nil
   "Last tag found by \\[find-tag].")
@@ -2083,6 +2084,9 @@ for \\[find-tag] (which see)."
 (defvar etags-xref-find-definitions-tag-order '(tag-exact-match-p
                                                 tag-implicit-name-match-p)
   "Tag order used in `xref-backend-definitions' to look for definitions.")
+
+(cl-defmethod xref-backend-identifier-at-point ((_backend (eql etags)))
+  (find-tag--default))
 
 (cl-defmethod xref-backend-identifier-completion-table ((_backend (eql etags)))
   (tags-lazy-completion-table))
