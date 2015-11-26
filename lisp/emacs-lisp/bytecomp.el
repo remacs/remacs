@@ -3741,20 +3741,24 @@ discarding."
 (byte-defop-compiler-1 quote)
 
 (defun byte-compile-setq (form)
-  (let ((args (cdr form)))
-    (if args
-	(while args
-	  (if (eq (length args) 1)
-              (byte-compile-log-warning
-               (format "missing value for `%S' at end of setq" (car args))
-               nil :error))
-          (byte-compile-form (car (cdr args)))
-	  (or byte-compile--for-effect (cdr (cdr args))
-	      (byte-compile-out 'byte-dup 0))
-	  (byte-compile-variable-set (car args))
-	  (setq args (cdr (cdr args))))
-      ;; (setq), with no arguments.
-      (byte-compile-form nil byte-compile--for-effect))
+  (let* ((args (cdr form))
+         (len (length args)))
+    (if (= (logand len 1) 1)
+        (progn
+          (byte-compile-log-warning
+           (format "missing value for `%S' at end of setq" (car (last args)))
+           nil :error)
+          (byte-compile-form
+           `(signal 'wrong-number-of-arguments '(setq ,len))))
+      (if args
+          (while args
+            (byte-compile-form (car (cdr args)))
+            (or byte-compile--for-effect (cdr (cdr args))
+                (byte-compile-out 'byte-dup 0))
+            (byte-compile-variable-set (car args))
+            (setq args (cdr (cdr args))))
+        ;; (setq), with no arguments.
+        (byte-compile-form nil byte-compile--for-effect)))
     (setq byte-compile--for-effect nil)))
 
 (defun byte-compile-setq-default (form)
