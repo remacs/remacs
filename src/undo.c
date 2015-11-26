@@ -224,7 +224,7 @@ record_property_change (ptrdiff_t beg, ptrdiff_t length,
 			Lisp_Object buffer)
 {
   Lisp_Object lbeg, lend, entry;
-  struct buffer *obuf = current_buffer, *buf = XBUFFER (buffer);
+  struct buffer *buf = XBUFFER (buffer);
 
   if (EQ (BVAR (buf, undo_list), Qt))
     return;
