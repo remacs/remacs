@@ -41,8 +41,6 @@ prepare_record ()
   if (NILP (pending_boundary))
     pending_boundary = Fcons (Qnil, Qnil);
 
-  run_undoable_change ();
-
   if (MODIFF <= SAVE_MODIFF)
     record_first_change ();
 }
