@@ -3749,7 +3749,8 @@ discarding."
            (format "missing value for `%S' at end of setq" (car (last args)))
            nil :error)
           (byte-compile-form
-           `(signal 'wrong-number-of-arguments '(setq ,len))))
+           `(signal 'wrong-number-of-arguments '(setq ,len))
+           byte-compile--for-effect))
       (if args
           (while args
             (byte-compile-form (car (cdr args)))
