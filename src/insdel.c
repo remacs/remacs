@@ -1785,7 +1785,12 @@ run_undoable_change (void)
    any modification properties the text may have.
 
    If PRESERVE_PTR is nonzero, we relocate *PRESERVE_PTR
-   by holding its value temporarily in a marker.  */
+   by holding its value temporarily in a marker.
+
+   This function runs Lisp, which means it can GC, which means it can
+   compact buffers, including the current buffer being worked on here.
+   So don't you dare calling this function while manipulating the gap,
+   or during some other similar "critical section".  */
 
 void
 prepare_to_modify_buffer_1 (ptrdiff_t start, ptrdiff_t end,
