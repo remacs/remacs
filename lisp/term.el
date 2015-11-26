@@ -110,19 +110,6 @@
 ;;
 ;;             ----------------------------------------
 ;;
-;;  If you'd like to check out my complete configuration, you can download
-;; it from http://www.polito.it/~s64912/things.html, it's ~500k in size and
-;; contains my .cshrc, .emacs and my whole site-lisp subdirectory.  (notice
-;; that this term.el may be newer/older than the one in there, please
-;; check!)
-;;
-;;  This complete configuration contains, among other things, a complete
-;; rectangular marking solution (based on rect-mark.el and
-;; pc-bindings.el) and should be a good example of how extensively Emacs
-;; can be configured on a ppp-connected ws.
-;;
-;;             ----------------------------------------
-;;
 ;;  TODO:
 ;;
 ;;  - Add hooks to allow raw-mode keys to be configurable
