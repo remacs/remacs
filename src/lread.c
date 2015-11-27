@@ -1941,17 +1941,22 @@ readevalloop (Lisp_Object readcharfun,
 }
 
 DEFUN ("eval-buffer", Feval_buffer, Seval_buffer, 0, 5, "",
-       doc: /* Execute the current buffer as Lisp code.
+       doc: /* Execute the accessible portion of current buffer as Lisp code.
+You can use \\[narrow-to-region] to limit the part of buffer to be evaluated.
 When called from a Lisp program (i.e., not interactively), this
 function accepts up to five optional arguments:
-BUFFER is the buffer to evaluate (nil means use current buffer).
-PRINTFLAG controls printing of output:
- A value of nil means discard it; anything else is stream for print.
+BUFFER is the buffer to evaluate (nil means use current buffer),
+ or a name of a buffer (a string).
+PRINTFLAG controls printing of output by any output functions in the
+ evaluated code, such as `print', `princ', and `prin1':
+  a value of nil means discard it; anything else is the stream to print to.
+  See Info node `(elisp)Output Streams' for details on streams.
 FILENAME specifies the file name to use for `load-history'.
 UNIBYTE, if non-nil, specifies `load-convert-to-unibyte' for this
  invocation.
-DO-ALLOW-PRINT, if non-nil, specifies that `print' and related
- functions should work normally even if PRINTFLAG is nil.
+DO-ALLOW-PRINT, if non-nil, specifies that output functions in the
+ evaluated code should work normally even if PRINTFLAG is nil, in
+ which case the output is displayed in the echo area.
 
 This function preserves the position of point.  */)
   (Lisp_Object buffer, Lisp_Object printflag, Lisp_Object filename, Lisp_Object unibyte, Lisp_Object do_allow_print)
@@ -1992,7 +1997,8 @@ When called from programs, expects two arguments,
 giving starting and ending indices in the current buffer
 of the text to be executed.
 Programs can pass third argument PRINTFLAG which controls output:
-A value of nil means discard it; anything else is stream for printing it.
+ a value of nil means discard it; anything else is stream for printing it.
+ See Info node `(elisp)Output Streams' for details on streams.
 Also the fourth argument READ-FUNCTION, if non-nil, is used
 instead of `read' to read each expression.  It gets one argument
 which is the input stream for reading characters.
