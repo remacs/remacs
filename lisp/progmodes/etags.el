@@ -2085,6 +2085,9 @@ for \\[find-tag] (which see)."
                                                 tag-implicit-name-match-p)
   "Tag order used in `xref-backend-definitions' to look for definitions.")
 
+;;;###autoload
+(defun etags--xref-backend () 'etags)
+
 (cl-defmethod xref-backend-identifier-at-point ((_backend (eql etags)))
   (find-tag--default))
 

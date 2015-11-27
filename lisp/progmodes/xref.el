@@ -210,13 +210,11 @@ generic functions.")
 
 ;; We make the etags backend the default for now, until something
 ;; better comes along.
-(add-hook 'xref-backend-functions #'xref--etags-backend)
+(add-hook 'xref-backend-functions #'etags--xref-backend)
 
 ;;;###autoload
 (defun xref-find-backend ()
   (run-hook-with-args-until-success 'xref-backend-functions))
-
-(defun xref--etags-backend () 'etags)
 
 (cl-defgeneric xref-backend-definitions (backend identifier)
   "Find definitions of IDENTIFIER.
