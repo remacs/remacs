@@ -38,9 +38,15 @@
       (map-char-table
        (lambda (char decomp)
          (when (consp decomp)
-           ;; Discard a possible formatting tag.
-           (when (symbolp (car decomp))
-             (setq decomp (cdr decomp)))
+           (if (symbolp (car decomp))
+               ;; Discard a possible formatting tag.
+               (setq decomp (cdr decomp))
+             ;; If there's no formatting tag, ensure that char matches
+             ;; its decomp exactly.  This is because we want 'ä' to
+             ;; match 'ä', but we don't want '¹' to match '1'.
+             (aset equiv char
+                   (cons (apply #'string decomp)
+                         (aref equiv char))))
            ;; Finally, figure out whether char has a simpler
            ;; equivalent (char-aux). If so, ensure that char-aux
            ;; matches char and maybe its decomp too.
