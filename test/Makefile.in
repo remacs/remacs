@@ -112,10 +112,14 @@ TESTS = $(subst ${srcdir}/,,$(LOGFILES:.log=))
 .PHONY: ${TESTS}
 
 ## The short aliases that always re-run the tests, with no logging.
+## Define an alias both with and without the directory name for ease
+## of use.
 define test_template
 $(1):
 	@test ! -f ${srcdir}/$(1).log || mv ${srcdir}/$(1).log ${srcdir}/$(1).log~
 	@${MAKE} ${srcdir}/$(1).log WRITE_LOG=
+
+$(notdir $(1)): $(1)
 endef
 
 $(foreach test,${TESTS},$(eval $(call test_template,${test})))
