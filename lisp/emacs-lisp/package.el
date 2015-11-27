@@ -167,6 +167,7 @@
 
 (require 'tabulated-list)
 (require 'macroexp)
+(require 'url-handlers)
 
 (defgroup package nil
   "Manager for Emacs Lisp packages."
@@ -1114,9 +1115,6 @@ The return result is a `package-desc'."
                                "\n"))
           (insert (format "Error while verifying signature %s:\n" sig-file)))
         (insert "\nCommand output:\n" (epg-context-error-output context))))))
-
-(declare-function url-insert-buffer-contents "url-handlers"
-                  (fn file &optional arglist fileonly))
 
 (defmacro package--with-work-buffer (location file &rest body)
   "Run BODY in a buffer containing the contents of FILE at LOCATION.
