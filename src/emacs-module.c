@@ -111,21 +111,14 @@ struct emacs_env_private
   struct emacs_value_storage storage;
 };
 
-/* Combine public and private parts in one structure.  This structure
-   is used whenever an environment is created.  */
-struct env_storage
-{
-  emacs_env pub;
-  struct emacs_env_private priv;
-};
-
 /* The private parts of an `emacs_runtime' object contain the initial
    environment.  */
 struct emacs_runtime_private
 {
-  struct env_storage environment;
+  /* FIXME: Ideally, we would just define "struct emacs_runtime_private"
+   * as a synonym of "emacs_env", but I don't know how to do that in C.  */
+  emacs_env pub;
 };
-
 
 
 /* Forward declarations.  */
@@ -138,8 +131,8 @@ static emacs_value allocate_emacs_value (emacs_env *, struct emacs_value_storage
 static emacs_value lisp_to_value (emacs_env *, Lisp_Object);
 static enum emacs_funcall_exit module_non_local_exit_check (emacs_env *);
 static void check_main_thread (void);
-static void finalize_environment (struct env_storage *);
-static void initialize_environment (struct env_storage *);
+static void finalize_environment (struct emacs_env_private *);
+static void initialize_environment (emacs_env *, struct emacs_env_private *priv);
 static void module_args_out_of_range (emacs_env *, Lisp_Object, Lisp_Object);
 static void module_handle_signal (emacs_env *, Lisp_Object);
 static void module_handle_throw (emacs_env *, Lisp_Object);
@@ -278,7 +271,7 @@ static emacs_env *
 module_get_environment (struct emacs_runtime *ert)
 {
   check_main_thread ();
-  return &ert->private_members->environment.pub;
+  return &ert->private_members->pub;
 }
 
 /* To make global refs (GC-protected global values) keep a hash that
@@ -764,16 +757,17 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
   if (!module_init)
     error ("Module %s does not have an init function.", SDATA (file));
 
-  struct emacs_runtime_private priv;
+  struct emacs_runtime_private rt; /* Includes the public emacs_env.  */
+  struct emacs_env_private priv;
+  initialize_environment (&rt.pub, &priv);
   struct emacs_runtime pub =
     {
       .size = sizeof pub,
-      .private_members = &priv,
+      .private_members = &rt,
       .get_environment = module_get_environment
     };
-  initialize_environment (&priv.environment);
   int r = module_init (&pub);
-  finalize_environment (&priv.environment);
+  finalize_environment (&priv);
 
   if (r != 0)
     {
@@ -799,41 +793,44 @@ ARGLIST is a list of arguments passed to SUBRPTR.  */)
     xsignal2 (Qwrong_number_of_arguments, module_format_fun_env (envptr),
 	      make_number (len));
 
-  struct env_storage env;
-  initialize_environment (&env);
+  emacs_env pub;
+  struct emacs_env_private priv;
+  initialize_environment (&pub, &priv);
 
   emacs_value *args = xnmalloc (len, sizeof *args);
 
   for (ptrdiff_t i = 0; i < len; i++)
     {
-      args[i] = lisp_to_value (&env.pub, XCAR (arglist));
+      args[i] = lisp_to_value (&pub, XCAR (arglist));
       if (! args[i])
 	memory_full (sizeof *args[i]);
       arglist = XCDR (arglist);
     }
 
-  emacs_value ret = envptr->subr (&env.pub, len, args, envptr->data);
+  emacs_value ret = envptr->subr (&pub, len, args, envptr->data);
   xfree (args);
 
-  switch (env.priv.pending_non_local_exit)
+  eassert (&priv == pub.private_members);
+
+  switch (priv.pending_non_local_exit)
     {
     case emacs_funcall_exit_return:
-      finalize_environment (&env);
+      finalize_environment (&priv);
       if (ret == NULL)
 	xsignal1 (Qinvalid_module_call, module_format_fun_env (envptr));
       return value_to_lisp (ret);
     case emacs_funcall_exit_signal:
       {
-        Lisp_Object symbol = value_to_lisp (&env.priv.non_local_exit_symbol);
-        Lisp_Object data = value_to_lisp (&env.priv.non_local_exit_data);
-        finalize_environment (&env);
+        Lisp_Object symbol = value_to_lisp (&priv.non_local_exit_symbol);
+        Lisp_Object data = value_to_lisp (&priv.non_local_exit_data);
+        finalize_environment (&priv);
         xsignal (symbol, data);
       }
     case emacs_funcall_exit_throw:
       {
-        Lisp_Object tag = value_to_lisp (&env.priv.non_local_exit_symbol);
-        Lisp_Object value = value_to_lisp (&env.priv.non_local_exit_data);
-        finalize_environment (&env);
+        Lisp_Object tag = value_to_lisp (&priv.non_local_exit_symbol);
+        Lisp_Object value = value_to_lisp (&priv.non_local_exit_data);
+        finalize_environment (&priv);
         Fthrow (tag, value);
       }
     default:
@@ -996,8 +993,8 @@ mark_modules (void)
 {
   for (Lisp_Object tem = Vmodule_environments; CONSP (tem); tem = XCDR (tem))
     {
-      struct env_storage *env = XSAVE_POINTER (tem, 0);
-      for (struct emacs_value_frame *frame = &env->priv.storage.initial;
+      struct emacs_env_private *priv = XSAVE_POINTER (tem, 0);
+      for (struct emacs_value_frame *frame = &priv->storage.initial;
 	   frame != NULL;
 	   frame = frame->next)
         for (int i = 0; i < frame->offset; ++i)
@@ -1010,48 +1007,48 @@ mark_modules (void)
 
 /* Must be called before the environment can be used.  */
 static void
-initialize_environment (struct env_storage *env)
+initialize_environment (emacs_env *env, struct emacs_env_private *priv)
 {
-  env->priv.pending_non_local_exit = emacs_funcall_exit_return;
-  initialize_storage (&env->priv.storage);
-  env->pub.size = sizeof env->pub;
-  env->pub.private_members = &env->priv;
-  env->pub.make_global_ref = module_make_global_ref;
-  env->pub.free_global_ref = module_free_global_ref;
-  env->pub.non_local_exit_check = module_non_local_exit_check;
-  env->pub.non_local_exit_clear = module_non_local_exit_clear;
-  env->pub.non_local_exit_get = module_non_local_exit_get;
-  env->pub.non_local_exit_signal = module_non_local_exit_signal;
-  env->pub.non_local_exit_throw = module_non_local_exit_throw;
-  env->pub.make_function = module_make_function;
-  env->pub.funcall = module_funcall;
-  env->pub.intern = module_intern;
-  env->pub.type_of = module_type_of;
-  env->pub.is_not_nil = module_is_not_nil;
-  env->pub.eq = module_eq;
-  env->pub.extract_integer = module_extract_integer;
-  env->pub.make_integer = module_make_integer;
-  env->pub.extract_float = module_extract_float;
-  env->pub.make_float = module_make_float;
-  env->pub.copy_string_contents = module_copy_string_contents;
-  env->pub.make_string = module_make_string;
-  env->pub.make_user_ptr = module_make_user_ptr;
-  env->pub.get_user_ptr = module_get_user_ptr;
-  env->pub.set_user_ptr = module_set_user_ptr;
-  env->pub.get_user_finalizer = module_get_user_finalizer;
-  env->pub.set_user_finalizer = module_set_user_finalizer;
-  env->pub.vec_set = module_vec_set;
-  env->pub.vec_get = module_vec_get;
-  env->pub.vec_size = module_vec_size;
-  Vmodule_environments = Fcons (make_save_ptr (env), Vmodule_environments);
+  priv->pending_non_local_exit = emacs_funcall_exit_return;
+  initialize_storage (&priv->storage);
+  env->size = sizeof *env;
+  env->private_members = priv;
+  env->make_global_ref = module_make_global_ref;
+  env->free_global_ref = module_free_global_ref;
+  env->non_local_exit_check = module_non_local_exit_check;
+  env->non_local_exit_clear = module_non_local_exit_clear;
+  env->non_local_exit_get = module_non_local_exit_get;
+  env->non_local_exit_signal = module_non_local_exit_signal;
+  env->non_local_exit_throw = module_non_local_exit_throw;
+  env->make_function = module_make_function;
+  env->funcall = module_funcall;
+  env->intern = module_intern;
+  env->type_of = module_type_of;
+  env->is_not_nil = module_is_not_nil;
+  env->eq = module_eq;
+  env->extract_integer = module_extract_integer;
+  env->make_integer = module_make_integer;
+  env->extract_float = module_extract_float;
+  env->make_float = module_make_float;
+  env->copy_string_contents = module_copy_string_contents;
+  env->make_string = module_make_string;
+  env->make_user_ptr = module_make_user_ptr;
+  env->get_user_ptr = module_get_user_ptr;
+  env->set_user_ptr = module_set_user_ptr;
+  env->get_user_finalizer = module_get_user_finalizer;
+  env->set_user_finalizer = module_set_user_finalizer;
+  env->vec_set = module_vec_set;
+  env->vec_get = module_vec_get;
+  env->vec_size = module_vec_size;
+  Vmodule_environments = Fcons (make_save_ptr (priv), Vmodule_environments);
 }
 
 /* Must be called before the lifetime of the environment object
    ends.  */
 static void
-finalize_environment (struct env_storage *env)
+finalize_environment (struct emacs_env_private *env)
 {
-  finalize_storage (&env->priv.storage);
+  finalize_storage (&env->storage);
   Vmodule_environments = XCDR (Vmodule_environments);
 }
 
