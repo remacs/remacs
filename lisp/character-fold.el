@@ -30,56 +30,61 @@
            (func (char-table-extra-slot table 1)))
       ;; Ensure the table is populated.
       (map-char-table
-       (lambda (i v) (when (consp i) (funcall func (car i) v table)))
+       (lambda (char v) (when (consp char) (funcall func (car char) v table)))
        table)
 
       ;; Compile a list of all complex characters that each simple
       ;; character should match.
       (map-char-table
-       (lambda (i dec)
-         (when (consp dec)
+       (lambda (char decomp)
+         (when (consp decomp)
            ;; Discard a possible formatting tag.
-           (when (symbolp (car dec))
-             (setq dec (cdr dec)))
+           (when (symbolp (car decomp))
+             (setq decomp (cdr decomp)))
+           ;; Finally, figure out whether char has a simpler
+           ;; equivalent (char-aux). If so, ensure that char-aux
+           ;; matches char and maybe its decomp too.
+
            ;; Skip trivial cases like ?a decomposing to (?a).
-           (unless (or (and (eq i (car dec))
-                            (not  (cdr dec))))
-             (let ((d dec)
+           (unless (or (and (eq char (car decomp))
+                            (not  (cdr decomp))))
+             (let ((dec-aux decomp)
                    (fold-decomp t)
-                   k found)
-               (while (and d (not found))
-                 (setq k (pop d))
-                 ;; Is k a number or letter, per unicode standard?
-                 (setq found (memq (get-char-code-property k 'general-category)
+                   char-aux found)
+               (while (and dec-aux (not found))
+                 (setq char-aux (pop dec-aux))
+                 ;; Is char-aux a number or letter, per unicode standard?
+                 (setq found (memq (get-char-code-property char-aux 'general-category)
                                    '(Lu Ll Lt Lm Lo Nd Nl No))))
                (if found
-                   ;; Check if the decomposition has more than one letter,
-                   ;; because then we don't want the first letter to match
-                   ;; the decomposition.
-                   (dolist (k d)
+                   ;; Check if the decomp has more than one letter,
+                   ;; because then we don't want the first letter to
+                   ;; match the decomposition.  This is because we
+                   ;; want 'f' to match 'ﬀ' but not 'ff'.
+                   (dolist (char-aux dec-aux)
                      (when (and fold-decomp
-                                (memq (get-char-code-property k 'general-category)
+                                (memq (get-char-code-property char-aux 'general-category)
                                       '(Lu Ll Lt Lm Lo Nd Nl No)))
                        (setq fold-decomp nil)))
                  ;; If there's no number or letter on the
-                 ;; decomposition, take the first character in it.
-                 (setq found (car-safe dec)))
-               ;; Finally, we only fold multi-char decomposition if at
+                 ;; decomp, take the first character in it.
+                 (setq found (car-safe decomp)))
+               ;; Finally, we only fold multi-char decomp if at
                ;; least one of the chars is non-spacing (combining).
                (when fold-decomp
                  (setq fold-decomp nil)
-                 (dolist (k dec)
+                 (dolist (char-aux decomp)
                    (when (and (not fold-decomp)
-                              (> (get-char-code-property k 'canonical-combining-class) 0))
+                              (> (get-char-code-property char-aux 'canonical-combining-class) 0))
                      (setq fold-decomp t))))
-               ;; Add i to the list of characters that k can
-               ;; represent. Also possibly add its decomposition, so we can
+               ;; Add char to the list of characters that char-aux can
+               ;; represent. Also possibly add its decomp, so we can
                ;; match multi-char representations like (format "a%c" 769)
-               (when (and found (not (eq i k)))
-                 (let ((chars (cons (char-to-string i) (aref equiv k))))
-                   (aset equiv k
+               (when (and found (not (eq char char-aux)))
+                 (let ((chars (cons (char-to-string char) (aref equiv char-aux))))
+                   (aset equiv char-aux
                          (if fold-decomp
-                             (cons (apply #'string dec) chars)
+                             (cons (apply #'string decomp) chars)
                            chars))))))))
        table)
 
@@ -93,10 +98,11 @@
 
       ;; Convert the lists of characters we compiled into regexps.
       (map-char-table
-       (lambda (i v) (let ((re (regexp-opt (cons (char-to-string i) v))))
-                  (if (consp i)
-                      (set-char-table-range equiv i re)
-                    (aset equiv i re))))
+       (lambda (char dec-list)
+         (let ((re (regexp-opt (cons (char-to-string char) dec-list))))
+           (if (consp char)
+               (set-char-table-range equiv char re)
+             (aset equiv char re))))
        equiv)
       equiv))
   "Used for folding characters of the same group during search.")
