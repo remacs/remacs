@@ -117,9 +117,14 @@ regexp) and other characters are `regexp-quote'd."
   (let* ((spaces 0)
          (chars (mapcar #'identity string))
          (out chars))
-    ;; When the user types a space, we want to match the table entry,
-    ;; but we also want the ?\s to be visible to `search-spaces-regexp'.
-    ;; See commit message for a longer description.
+    ;; When the user types a space, we want to match the table entry
+    ;; for ?\s, which is generally a regexp like "[ ...]".  However,
+    ;; the `search-spaces-regexp' variable doesn't "see" spaces inside
+    ;; these regexp constructs, so we need to use "\\( \\|[ ...]\\)"
+    ;; instead (to manually expose a space).  Furthermore, the lax
+    ;; search engine acts on a bunch of spaces, not on individual
+    ;; spaces, so if the string contains sequential spaces like "  ", we
+    ;; need to keep them grouped together like this: "\\(  \\|[ ...][ ...]\\)".
     (while chars
       (let ((c (car chars)))
         (setcar chars
