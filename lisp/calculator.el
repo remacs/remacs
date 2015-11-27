@@ -290,7 +290,7 @@ user-defined operators, use `calculator-user-operators' instead.")
 (defvar calculator-operators nil
   "The calculator operators, each a list with:
 
-1. The key that is bound to for this operation, a string that is
+1. The key(s) that is bound to for this operation, a string that is
    used with `kbd';
 
 2. The displayed symbol for this function;
@@ -313,8 +313,8 @@ user-defined operators, use `calculator-user-operators' instead.")
 
 It it possible have a unary prefix version of a binary operator if it
 comes later in this list.  If the list begins with the symbol `nobind',
-then no key binding will take place -- this is only useful for
-predefined keys.
+then no key binding will take place -- this is only used for predefined
+keys.
 
 Use `calculator-user-operators' to add operators to this list, see its
 documentation for an example.")
@@ -371,74 +371,95 @@ Used for repeating operations in calculator-repR/L.")
           (list (cons ?e float-e) (cons ?p float-pi)))
   "The association list of calculator register values.")
 
-(defvar calculator-saved-global-map nil
-  "Saved global key map.")
-
 (defvar calculator-restart-other-mode nil
   "Used to hack restarting with the electric mode changed.")
 
 ;;;---------------------------------------------------------------------
 ;;; Key bindings
 
+(defun calculator-define-key (key cmd &optional map)
+  ;; arranges for unbound alphabetic keys to be used as their un/shifted
+  ;; versions if those are bound (mimics the usual Emacs global
+  ;; bindings)
+  (let* ((key  (if (stringp key) (kbd key) key))
+         (map  (or map calculator-mode-map))
+         (omap (keymap-parent map)))
+    (define-key map key cmd)
+    ;; "other" map, used for case-flipped bindings
+    (unless omap
+      (setq omap (make-sparse-keymap))
+      (suppress-keymap omap t)
+      (set-keymap-parent map omap))
+    (let ((m omap))
+      ;; bind all case-flipped versions
+      (dotimes (i (length key))
+        (let* ((c (aref key i))
+               (k (vector c))
+               (b (lookup-key m k))
+               (defkey (lambda (x)
+                         (define-key m k x)
+                         (when (and (characterp c)
+                                    (or (<= ?A c ?Z) (<= ?a c ?z)))
+                           (define-key m (vector (logxor 32 c)) x)))))
+          (cond ((= i (1- (length key)))
+                 ;; prefer longer sequences
+                 (unless (keymapp b) (funcall defkey cmd)))
+                ((keymapp b) (setq m b))
+                (t (let ((sub (make-sparse-keymap)))
+                     (funcall defkey sub)
+                     (setq m sub)))))))))
+
 (defvar calculator-mode-map
   (let ((map (make-sparse-keymap)))
     (suppress-keymap map t)
-    (define-key map "i" nil)
-    (define-key map "o" nil)
-    (let ((p
-           '((calculator-open-paren  "[")
-             (calculator-close-paren "]")
-             (calculator-op-or-exp   "+" "-" [kp-add] [kp-subtract])
-             (calculator-digit       "0" "1" "2" "3" "4" "5" "6" "7" "8"
-                                     "9" "a" "b" "c" "d" "f"
-                                     [kp-0] [kp-1] [kp-2] [kp-3] [kp-4]
-                                     [kp-5] [kp-6] [kp-7] [kp-8] [kp-9])
-             (calculator-op          [kp-divide] [kp-multiply])
-             (calculator-decimal     "." [kp-decimal])
-             (calculator-exp         "e")
-             (calculator-dec/deg-mode "D")
-             (calculator-set-register "s")
-             (calculator-get-register "g")
-             (calculator-radix-mode        "H" "X" "O" "B")
-             (calculator-radix-input-mode  "id" "ih" "ix" "io" "ib"
-                                           "iD" "iH" "iX" "iO" "iB")
-             (calculator-radix-output-mode "od" "oh" "ox" "oo" "ob"
-                                           "oD" "oH" "oX" "oO" "oB")
-             (calculator-rotate-displayer      "'")
-             (calculator-rotate-displayer-back "\"")
-             (calculator-displayer-prev        "{")
-             (calculator-displayer-next        "}")
-             (calculator-saved-up      [up] [?\C-p])
-             (calculator-saved-down    [down] [?\C-n])
-             (calculator-quit          "q" [?\C-g])
-             (calculator-enter         [enter] [linefeed] [kp-enter]
-                                       [return] [?\r] [?\n])
-             (calculator-save-on-list  " " [space])
-             (calculator-clear-saved   [?\C-c] [(control delete)])
-             (calculator-save-and-quit [(control return)]
-                                       [(control kp-enter)])
-             (calculator-paste         [insert] [(shift insert)]
-                                       [paste] [mouse-2] [?\C-y])
-             (calculator-clear         [delete] [?\C-?] [?\C-d])
-             (calculator-help          [?h] [??] [f1] [help])
-             (calculator-copy          [(control insert)] [copy])
-             (calculator-backspace     [backspace])
-             )))
-      (while p
-        ;; reverse the keys so earlier definitions come last -- makes
-        ;; the more sensible bindings visible in the menu
-        (let ((func (caar p)) (keys (reverse (cdar p))))
-          (while keys
-            (define-key map (car keys) func)
-            (setq keys (cdr keys))))
-        (setq p (cdr p))))
+    (dolist (x '((calculator-digit
+                  "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "a" "b" "c"
+                  "d" "f" "<kp-0>" "<kp-1>" "<kp-2>" "<kp-3>" "<kp-4>"
+                  "<kp-5>" "<kp-6>" "<kp-7>" "<kp-8>" "<kp-9>")
+                 (calculator-open-paren  "[")
+                 (calculator-close-paren "]")
+                 (calculator-op-or-exp   "+" "-"
+                                         "<kp-add>" "<kp-subtract>")
+                 (calculator-op          "<kp-divide>" "<kp-multiply>")
+                 (calculator-decimal     "." "<kp-decimal>")
+                 (calculator-exp         "e")
+                 (calculator-dec/deg-mode "D")
+                 (calculator-set-register "s")
+                 (calculator-get-register "g")
+                 (calculator-radix-mode        "H" "X" "O" "B")
+                 (calculator-radix-input-mode  "iD" "iH" "iX" "iO" "iB")
+                 (calculator-radix-output-mode "oD" "oH" "oX" "oO" "oB")
+                 (calculator-rotate-displayer      "'")
+                 (calculator-rotate-displayer-back "\"")
+                 (calculator-displayer-prev        "{")
+                 (calculator-displayer-next        "}")
+                 (calculator-saved-up     "<up>" "C-p")
+                 (calculator-saved-down   "<down>" "C-n")
+                 (calculator-quit         "q" "C-g")
+                 (calculator-enter        "<enter>" "<linefeed>"
+                                          "<kp-enter>" "<return>"
+                                          "RET" "LFD")
+                 (calculator-save-on-list "SPC" "<space>")
+                 (calculator-clear-saved  "C-c" "<C-delete>")
+                 (calculator-save-and-quit "<C-return>" "<C-kp-enter>")
+                 (calculator-paste        "<insert>" "<S-insert>"
+                                          "<paste>" "<mouse-2>" "C-y")
+                 (calculator-clear        "<delete>" "DEL" "C-d")
+                 (calculator-help         "h" "?" "<f1>" "<help>")
+                 (calculator-copy         "<C-insert>" "<copy>")
+                 (calculator-backspace    "<backspace>")
+                 ))
+      ;; reverse the keys so earlier definitions come last -- makes the
+      ;; more sensible bindings visible in the menu
+      (dolist (k (reverse (cdr x)))
+        (calculator-define-key k (car x) map)))
     (if calculator-bind-escape
-      (progn (define-key map [?\e] 'calculator-quit)
-             (define-key map [escape] 'calculator-quit))
-      (define-key map [?\e ?\e ?\e] 'calculator-quit))
+      (progn (calculator-define-key "ESC" 'calculator-quit map)
+             (calculator-define-key "<escape>" 'calculator-quit map))
+      (calculator-define-key "ESC ESC ESC" 'calculator-quit map))
     ;; make C-h work in text-mode
     (unless window-system
-      (define-key map [?\C-h] 'calculator-backspace))
+      (calculator-define-key "C-h" 'calculator-backspace map))
     ;; set up a menu
     (when (and calculator-use-menu (not (boundp 'calculator-menu)))
       (let ((radix-selectors
@@ -691,19 +712,14 @@ See the documentation for `calculator-mode' for more information."
   (if calculator-electric-mode
     (save-window-excursion
       (require 'electric) (message nil) ; hide load message
-      (let (old-g-map old-l-map
-            (old-buf (window-buffer (minibuffer-window)))
+      (let ((old-buf (window-buffer (minibuffer-window)))
             (echo-keystrokes 0)
             (garbage-collection-messages nil)) ; no gc msg when electric
         (set-window-buffer (minibuffer-window) calculator-buffer)
         (select-window (minibuffer-window))
         (calculator-reset)
         (calculator-update-display)
-        (setq old-l-map (current-local-map)
-              old-g-map (current-global-map)
-              calculator-saved-global-map (current-global-map))
-        (use-local-map nil)
-        (use-global-map calculator-mode-map)
+        (use-local-map calculator-mode-map)
         (run-hooks 'calculator-mode-hook)
         (unwind-protect
             (catch 'calculator-done
@@ -714,9 +730,7 @@ See the documentation for `calculator-mode' for more information."
                nil
                (lambda (_x _y) (calculator-update-display))))
           (set-window-buffer (minibuffer-window) old-buf)
-          (kill-buffer calculator-buffer)
-          (use-local-map old-l-map)
-          (use-global-map old-g-map))))
+          (kill-buffer calculator-buffer))))
     (progn
       (cond
         ((not (get-buffer-window calculator-buffer))
@@ -783,23 +797,11 @@ Defaults to 1."
 Adds MORE-OPS to `calculator-operator', called initially to handle
 `calculator-initial-operators' and `calculator-user-operators'."
   (let ((added-ops nil))
-    (while more-ops
-      (unless (eq (caar more-ops) 'nobind)
-        (let ((i -1) (key (caar more-ops)))
-          ;; make sure the key is undefined, so it's easy to define
-          ;; prefix keys
-          (while (< (setq i (1+ i)) (length key))
-            (unless (keymapp (lookup-key calculator-mode-map
-                                         (substring key 0 (1+ i))))
-              (define-key calculator-mode-map (substring key 0 (1+ i))
-                nil)
-              (setq i (length key))))
-          (define-key calculator-mode-map key 'calculator-op)))
-      (push (if (eq (caar more-ops) 'nobind)
-              (cdar more-ops)
-              (car more-ops))
-            added-ops)
-      (setq more-ops (cdr more-ops)))
+    (dolist (op more-ops)
+      (unless (eq (car op) 'nobind)
+        (calculator-define-key (car op) 'calculator-op))
+      (push (if (eq (car op) 'nobind) (cdr op) op)
+            added-ops))
     ;; added-ops come first, but in correct order
     (setq calculator-operators
           (append (nreverse added-ops) calculator-operators))))
@@ -1569,14 +1571,11 @@ registers."
   (if (eq last-command 'calculator-help)
     (let ((mode-name "Calculator")
           (major-mode 'calculator-mode)
-          (g-map (current-global-map))
           (win (selected-window)))
       (require 'ehelp)
       (if (not calculator-electric-mode)
         (describe-mode)
-        (progn (use-global-map calculator-saved-global-map)
-               (electric-describe-mode)
-               (use-global-map g-map)))
+        (electric-describe-mode))
       (select-window win)
       (message nil))
     (let ((one (one-window-p t))
