@@ -1213,6 +1213,14 @@ If MSG is non-nil, use variable `isearch-message', otherwise `isearch-string'."
 	  (length succ-msg)
 	0))))
 
+(defvar isearch-new-regexp-function nil
+  "Holds the next `isearch-regexp-function' inside `with-isearch-suspended'.
+If this is set inside code wrapped by the macro
+`with-isearch-suspended', then the value set will be used as the
+`isearch-regexp-function' once isearch resumes.")
+(define-obsolete-variable-alias 'isearch-new-word
+  'isearch-new-regexp-function "25.1")
+
 (defmacro with-isearch-suspended (&rest body)
   "Exit Isearch mode, run BODY, and reinvoke the pending search.
 You can update the global isearch variables by setting new values to
