@@ -38,7 +38,9 @@
                      "#<module function at \\(0x\\)?[0-9a-fA-F]+ from .*>"
                    "#<module function Fmod_test_sum from .*>")
                  (nth 1 descr))))
-    (should (= (nth 2 descr) 3))))
+    (should (= (nth 2 descr) 3)))
+  (should-error (mod-test-sum "1" 2) :type 'wrong-type-argument)
+  (should-error (mod-test-sum 1 "2") :type 'wrong-type-argument))
 
 (ert-deftest mod-test-sum-docstring ()
   (should (string= (documentation 'mod-test-sum) "Return A + B")))
