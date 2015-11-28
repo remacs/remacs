@@ -37,13 +37,13 @@
 
 
 (ert-deftest character-fold--test-consistency ()
-  (dotimes (n 50)
+  (dotimes (n 30)
     (let ((w (character-fold--random-word n)))
       ;; A folded string should always match the original string.
       (character-fold--test-search-with-contents w w))))
 
 (ert-deftest character-fold--test-lax-whitespace ()
-  (dotimes (n 50)
+  (dotimes (n 40)
     (let ((w1 (character-fold--random-word n))
           (w2 (character-fold--random-word n))
           (search-spaces-regexp "\\s-+"))

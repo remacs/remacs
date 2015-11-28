@@ -150,6 +150,10 @@ Any character in STRING that has an entry in
 `character-fold-table' is replaced with that entry (which is a
 regexp) and other characters are `regexp-quote'd.
 
+Note that this function can potentially return regexps too long
+for Emacs to handle.  If STRING is longer than 30 characters,
+consider not using this function.
+
 FROM is for internal use.  It specifies an index in the STRING
 from which to start."
   (let* ((spaces 0)
