@@ -1,0 +1,89 @@
+;; -*- emacs-lisp -*-
+
+;; The contents of this file are subject to the GPL License, Version 3.0.
+;;
+;; Copyright (C) 2015, Free Software Foundation
+;;
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; This file generates dependencies between test files and the files
+;; that they test.
+
+;; It has an .emacs-lisp extension because it makes the Makefile easier!
+
+(require 'seq)
+
+(defun make-test-deps (directory)
+  (message
+   "%s"
+   (concat
+    (make-test-deps-lisp directory)
+    (make-test-deps-src directory))))
+
+(defun make-test-deps-lisp (directory)
+  (mapconcat
+   (lambda (stem)
+     (format "%s-tests.log: ../%s.elc\n" stem stem))
+   (make-test-test-files directory "lisp") ""))
+
+(defun make-test-deps-src (directory)
+  (mapconcat
+   (lambda (stem)
+     (format "%s-tests.log: ../%s.o\n" stem stem))
+   (make-test-test-files directory "src") ""))
+
+(defun make-test-test-files (stem dir)
+  (make-test-munge-files
+   stem
+   (directory-files-recursively dir ".*-tests.el$")))
+
+(defun make-test-munge-files (stem files)
+  (make-test-sans-suffix
+   (make-test-de-stem
+    stem
+    (make-test-no-legacy
+     (make-test-no-test-dir
+      (make-test-no-resources
+       files))))))
+
+(defun make-test-sans-suffix (files)
+  (mapcar
+   (lambda (file)
+     (substring file 0 -9))
+   files))
+
+(defun make-test-de-stem (stem files)
+  (mapcar
+   (lambda (file)
+     (substring
+      file
+      (+ 1 (length stem))))
+   files))
+
+(defun make-test-no-legacy (list)
+  (make-test-remove list "legacy/"))
+
+(defun make-test-no-resources (list)
+  (make-test-remove list "-resources/"))
+
+(defun make-test-no-test-dir (list)
+  (make-test-remove list "-tests/"))
+
+(defun make-test-remove (list match)
+  (seq-remove
+   (lambda (file)
+     (string-match-p match file))
+   list))

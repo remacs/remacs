@@ -125,6 +125,7 @@ endef
 
 $(foreach test,${TESTS},$(eval $(call test_template,${test})))
 
+-include make-test-deps.mk
 
 ## Re-run all the tests every time.
 check:
@@ -149,4 +150,8 @@ distclean: clean
 
 maintainer-clean: distclean bootstrap-clean
 
+make-test-deps.mk: $(ELFILES) make-test-deps.emacs-lisp
+	../src/emacs --batch -l make-test-deps.emacs-lisp \
+	--eval "(make-test-deps \"`pwd`\")" \
+	2> $@
 # Makefile ends here.
