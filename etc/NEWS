@@ -145,6 +145,7 @@ is intended for adding to 'kill-emacs-query-functions'.
 added via the new Network Security Manager (NSM) and controlled via
 the `network-security-level' variable.
 
++++
 ** C-h l now also lists the commands that were run.
 
 ** M-x suggests shorthands and ignores obsolete commands for completion.
