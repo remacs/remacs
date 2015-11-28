@@ -296,7 +296,7 @@ longer than timeout seconds for the events to be delivered."
     `(let* ((,outer file-notify--test-events)
             (events (if (consp (car ,events)) ,events (list ,events)))
             (max-length (apply 'max (mapcar 'length events)))
-           create-lockfiles result)
+            create-lockfiles result)
        ;; Flush pending events.
        (file-notify--wait-for-events
         (file-notify--test-timeout)
@@ -821,7 +821,7 @@ longer than timeout seconds for the events to be delivered."
 	     ;; w32notify fires both `deleted' and `renamed' events.
 	     ((string-equal (file-notify--test-library) "w32notify")
 	      (let (r)
-		(dotimes (i n r)
+		(dotimes (_i n r)
 		  (setq r (append '(deleted renamed) r)))))
 	     (t (make-list n 'renamed)))
           (let ((source-file-list source-file-list)
