@@ -214,8 +214,8 @@ static void module_wrong_type (emacs_env *, Lisp_Object, Lisp_Object);
 /* A function environment is an auxiliary structure used by
    `module_make_function' to store information about a module
    function.  It is stored in a save pointer and retrieved by
-   `module-call'.  Its members correspond to the arguments given to
-   `module_make_function'.  */
+   `internal--module-call'.  Its members correspond to the arguments
+   given to `module_make_function'.  */
 
 struct module_fun_env
 {
@@ -223,11 +223,6 @@ struct module_fun_env
   emacs_subr subr;
   void *data;
 };
-
-/* The function definition of `module-call'.  `module-call' is
-   uninterned because user code couldn't meaningfully use it, so keep
-   its definition around somewhere else.  */
-static Lisp_Object module_call_func;
 
 
 /* Implementation of runtime and environment functions.
@@ -384,12 +379,12 @@ module_non_local_exit_throw (emacs_env *env, emacs_value tag, emacs_value value)
 				   value_to_lisp (value));
 }
 
-/* A module function is lambda function that calls `module-call',
-   passing the function pointer of the module function along with the
-   module emacs_env pointer as arguments.
+/* A module function is lambda function that calls
+   `internal--module-call', passing the function pointer of the module
+   function along with the module emacs_env pointer as arguments.
 
 	(function (lambda (&rest arglist)
-		    (module-call envobj arglist)))  */
+		    (internal--module-call envobj arglist)))  */
 
 static emacs_value
 module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
@@ -423,7 +418,7 @@ module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
   Lisp_Object ret = list4 (Qlambda,
                            list2 (Qand_rest, Qargs),
                            doc,
-                           list3 (module_call_func,
+                           list3 (Qinternal_module_call,
                                   envobj,
                                   Qargs));
 
@@ -779,12 +774,16 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
   return Qt;
 }
 
-DEFUN ("module-call", Fmodule_call, Smodule_call, 2, 2, 0,
+DEFUN ("internal--module-call", Finternal_module_call, Sinternal_module_call, 2, 2, 0,
        doc: /* Internal function to call a module function.
 ENVOBJ is a save pointer to a module_fun_env structure.
 ARGLIST is a list of arguments passed to SUBRPTR.  */)
   (Lisp_Object envobj, Lisp_Object arglist)
 {
+  CHECK_TYPE (SAVE_VALUEP (envobj), Qsave_value_p, envobj);
+  struct Lisp_Save_Value *save_value = XSAVE_VALUE (envobj);
+  CHECK_TYPE (save_type (save_value, 0) == SAVE_POINTER, Qsave_pointer_p, envobj);
+  CHECK_CONS (arglist);
   struct module_fun_env *envptr = XSAVE_POINTER (envobj, 0);
   EMACS_INT len = XFASTINT (Flength (arglist));
   eassume (0 <= envptr->min_arity);
@@ -1155,14 +1154,13 @@ syms_of_module (void)
      code or modules should not access it.  */
   Funintern (Qmodule_refs_hash, Qnil);
 
+  DEFSYM (Qsave_value_p, "save-value-p");
+  DEFSYM (Qsave_pointer_p, "save-pointer-p");
+
   defsubr (&Smodule_load);
 
-  /* Don't call defsubr on `module-call' because that would intern it,
-     but `module-call' is an internal function that users cannot
-     meaningfully use.  Instead, assign its definition to a private
-     variable.  */
-  XSETPVECTYPE (&Smodule_call, PVEC_SUBR);
-  XSETSUBR (module_call_func, &Smodule_call);
+  DEFSYM (Qinternal_module_call, "internal--module-call");
+  defsubr (&Sinternal_module_call);
 }
 
 /* Unlike syms_of_module, this initializer is called even from an
