@@ -4954,7 +4954,22 @@ Lua_functions (FILE *inf)
       (void)LOOKING_AT (bp, "local"); /* skip possible "local" */
 
       if (LOOKING_AT (bp, "function"))
-	get_tag (bp, NULL);
+	{
+	  char *tag_name, *tp_dot, *tp_colon;
+
+	  get_tag (bp, &tag_name);
+	  /* If the tag ends with ".foo" or ":foo", make an additional tag for
+	     "foo".  */
+	  tp_dot = strrchr (tag_name, '.');
+	  tp_colon = strrchr (tag_name, ':');
+	  if (tp_dot || tp_colon)
+	    {
+	      char *p = tp_dot > tp_colon ? tp_dot : tp_colon;
+	      int len_add = p - tag_name + 1;
+
+	      get_tag (bp + len_add, NULL);
+	    }
+	}
     }
 }
 
