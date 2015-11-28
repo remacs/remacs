@@ -25,13 +25,14 @@
 
 (defconst character-fold-table
   (eval-when-compile
-    (let* ((equiv (make-char-table 'character-fold-table))
-           (table (unicode-property-table-internal 'decomposition))
-           (func (char-table-extra-slot table 1)))
+    (let ((equiv (make-char-table 'character-fold-table))
+          (table (unicode-property-table-internal 'decomposition)))
       ;; Ensure the table is populated.
-      (map-char-table
-       (lambda (char v) (when (consp char) (funcall func (car char) v table)))
-       table)
+      (let ((func (char-table-extra-slot table 1)))
+        (map-char-table (lambda (char v)
+                          (when (consp char)
+                            (funcall func (car char) v table)))
+                        table))
 
       ;; Compile a list of all complex characters that each simple
       ;; character should match.
@@ -126,9 +127,10 @@
 Any character in STRING that has an entry in
 `character-fold-table' is replaced with that entry (which is a
 regexp) and other characters are `regexp-quote'd."
-  (let* ((spaces 0)
-         (chars (mapcar #'identity string))
-         (out chars))
+  (let ((spaces 0)
+        (i 0)
+        (end (length string))
+        (out nil))
     ;; When the user types a space, we want to match the table entry
     ;; for ?\s, which is generally a regexp like "[ ...]".  However,
     ;; the `search-spaces-regexp' variable doesn't "see" spaces inside
@@ -137,24 +139,19 @@ regexp) and other characters are `regexp-quote'd."
     ;; search engine acts on a bunch of spaces, not on individual
     ;; spaces, so if the string contains sequential spaces like "  ", we
     ;; need to keep them grouped together like this: "\\(  \\|[ ...][ ...]\\)".
-    (while chars
-      (let ((c (car chars)))
-        (setcar chars
-                (cond
-                 ((eq c ?\s)
-                  (setq spaces (1+ spaces))
-                  nil)
-                 ((> spaces 0)
-                  (prog1 (concat (character-fold--make-space-string spaces)
-                                 (or (aref character-fold-table c)
-                                     (regexp-quote (string c))))
-                    (setq spaces 0)))
-                 (t (or (aref character-fold-table c)
-                        (regexp-quote (string c))))))
-        (setq chars (cdr chars))))
-    (concat (apply #'concat out)
-            (when (> spaces 0)
-              (character-fold--make-space-string spaces)))))
+    (while (< i end)
+      (pcase (aref string i)
+        (`?\s (setq spaces (1+ spaces)))
+        (c (when (> spaces 0)
+             (push (character-fold--make-space-string spaces) out)
+             (setq spaces 0))
+           (push (or (aref character-fold-table c)
+                     (regexp-quote (string c)))
+                 out)))
+      (setq i (1+ i)))
+    (when (> spaces 0)
+      (push (character-fold--make-space-string spaces) out))
+    (apply #'concat (nreverse out))))
 
 
 ;;; Commands provided for completeness.

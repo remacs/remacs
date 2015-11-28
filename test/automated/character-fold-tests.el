@@ -54,5 +54,15 @@
        (concat w1 "\s\n\s\t\f\t\n\r\t" w2)
        (concat w1 (make-string 90 ?\s) w2)))))
 
+(ert-deftest character-fold--test-fold-to-regexp ()
+  (let ((character-fold-table (make-char-table 'character-fold-table)))
+    (aset character-fold-table ?a "abc")
+    (aset character-fold-table ?1 "123")
+    (aset character-fold-table ?\s "-!-")
+    (should (equal (character-fold-to-regexp "a1a1")
+                   "abc123abc123"))
+    (should (equal (character-fold-to-regexp "a1  a 1")
+                   "abc123\\(?:  \\|-!--!-\\)abc\\(?: \\|-!-\\)123"))))
+
 (provide 'character-fold-tests)
 ;;; character-fold-tests.el ends here
