@@ -434,12 +434,12 @@ they are not themselves part of incremental search.
   Normally, typing a command that is not bound by the incremental
 search exits the search before executing the command.  Thus, the
 command operates on the buffer from which you invoked the search.
-However, if you customize the variable @code{search-exit-option} to a
-@code{nil} value, the characters which you type that are not
-interpreted by the incremental search are simply appended to the
-search string.  This is so you could include in the search string
-control characters, such as @kbd{C-a}, that would normally exit the
-search and invoke the command bound to them on the buffer.
+However, if you customize the variable @code{search-exit-option} to
+@code{nil}, the characters which you type that are not interpreted by
+the incremental search are simply appended to the search string.  This
+is so you could include in the search string control characters, such
+as @kbd{C-a}, that would normally exit the search and invoke the
+command bound to them on the buffer.
 
 @table @asis
 @item Prefix Arguments
@@ -1138,7 +1138,7 @@ close-brackets, quotes, or parentheses, repeated zero or more times.
   Normally, you'd want search commands to disregard certain minor
 differences between the search string you types and the text being
 searched.  For example, sequences of whitespace characters of
-different length are normally perceived as equivalent; letter-case
+different length are usually perceived as equivalent; letter-case
 differences usually don't matter; etc.  This is known as
 @dfn{character equivalence}.
 
@@ -1154,8 +1154,8 @@ tailor them to your needs.
 each space, or sequence of spaces, matches any sequence of one or more
 whitespace characters in the text.  (Incremental regexp search has a
 separate default; see @ref{Regexp Search}.)  Hence, @samp{foo bar}
-matches @samp{foo bar}, @samp{foo@w{ }bar}, @samp{foo@w{ }bar}, and so
-on (but not @samp{foobar}).  More precisely, Emacs matches each
+matches @samp{foo bar}, @samp{foo@w{  }bar}, @samp{foo@w{   }bar}, and
+so on (but not @samp{foobar}).  More precisely, Emacs matches each
 sequence of space characters in the search string to a regular
 expression specified by the variable @code{search-whitespace-regexp}.
 For example, to make spaces match sequences of newlines as well as
@@ -1164,16 +1164,16 @@ variable depends on the buffer's major mode; most major modes classify
 spaces, tabs, and formfeed characters as whitespace.
 
   If you want whitespace characters to match exactly, you can turn lax
-space matching by typing @kbd{M-s @key{SPC}}
+space matching off by typing @kbd{M-s @key{SPC}}
 (@code{isearch-toggle-lax-whitespace}) within an incremental search.
 Another @kbd{M-s @key{SPC}} turns lax space matching back on.  To
-disable this feature entirely, change @code{search-whitespace-regexp}
-to @code{nil}; then each space in the search string matches exactly
-one space.
+disable lax whitespace matching for all searches, change
+@code{search-whitespace-regexp} to @code{nil}; then each space in the
+search string matches exactly one space.
 
 @cindex case folding in search
 @cindex case-sensitivity and search
-  Searches in Emacs normally ignore the case of the text they are
+  Searches in Emacs by default ignore the case of the text they are
 searching through, if you specify the search string in lower case.
 Thus, if you specify searching for @samp{foo}, then @samp{Foo} and
 @samp{foo} also match.  Regexps, and in particular character sets,
@@ -1185,8 +1185,8 @@ supported in both incremental and non-incremental search modes.
   An upper-case letter anywhere in the search string makes the search
 case-sensitive.  Thus, searching for @samp{Foo} does not find
 @samp{foo} or @samp{FOO}.  This applies to regular expression search
-as well as to string search.  The effect ceases if you delete the
-upper-case letter from the search string.  The variable
+as well as to literal string search.  The effect ceases if you delete
+the upper-case letter from the search string.  The variable
 @code{search-upper-case} controls this: if it is non-@code{nil} (the
 default), an upper-case character in the search string make the search
 case-sensitive; setting it to @code{nil} disables this effect of
@@ -1207,8 +1207,8 @@ history matching commands (@pxref{Minibuffer History}).
   Typing @kbd{M-c} or @kbd{M-s c} (@code{isearch-toggle-case-fold})
 within an incremental search toggles the case sensitivity of that
 search.  The effect does not extend beyond the current incremental
-search to the next one, but it does override the effect of adding or
-removing an upper-case letter in the current search.
+search, but it does override the effect of adding or removing an
+upper-case letter in the current search.
 
   Several related variables control case-sensitivity of searching and
 matching for specific commands or activities.  For instance,
@@ -1222,15 +1222,15 @@ apropos-variable @key{RET} case-fold-search @key{RET}}.
 upper-case characters match lower-case variants, and vice versa.  A
 generalization of case folding is @dfn{character folding}, which
 disregards wider classes of distinctions between similar characters.
-For instance, under character folding the letter @code{a} will match
-all of its accented cousins like @code{@"a} and @code{@'a}, i.e., the
+For instance, under character folding the letter @code{a} matches all
+of its accented cousins like @code{@"a} and @code{@'a}, i.e., the
 match disregards the diacriticals that distinguish between these
-variants.  In addition, @code{a} will match other characters that
+variants.  In addition, @code{a} matches other characters that
 resemble it, or have it as part of their graphical representation,
 such as @sc{u+249c parenthesized latin small letter a} and @sc{u+2100
 account of} (which looks like a small @code{a} over @code{c}).
-Similarly, the @acronym{ASCII} double-quote character @code{"} will
-match all the other variants of double quotes defined by the Unicode
+Similarly, the @acronym{ASCII} double-quote character @code{"} matches
+all the other variants of double quotes defined by the Unicode
 standard.
 @ignore @c FIXME: This doesn't work.  Should it?
 Finally, character folding can make a sequence of one or
@@ -1239,17 +1239,18 @@ example, the sequence of two characters @code{ae} matches the ligature
 @code{@ae{}}.
 @end ignore
 Character sequences that match under character folding are called
-@dfn{equivalent}.
+@dfn{equivalent character sequences}.
 
 @kindex M-s ' @r{(Incremental Search)}
 @findex isearch-toggle-character-fold
-  Searches in Emacs normally perform character folding, thus matching
-equivalent character sequences.  You can disable this behavior by
-customizing the variable @code{search-default-regexp-mode} to the
-@code{nil} value.  @xref{Search Customizations}.  Within an
-incremental search, typing @kbd{M-s '}
-(@code{isearch-toggle-character-fold}) toggles character folding, but
-only for that search.
+  Searches in Emacs by default perform character folding, thus
+matching equivalent character sequences.  You can disable this
+behavior by customizing the variable @code{search-default-regexp-mode}
+to @code{nil}.  @xref{Search Customizations}.  Within an incremental
+search, typing @kbd{M-s '} (@code{isearch-toggle-character-fold})
+toggles character folding, but only for that search.  (Replace
+commands have a different default, controlled by a separate option;
+see @ref{Replacement and Lax Matches}.)
 
   Like with case folding, typing an explicit variant of a character,
 such as @code{@"a}, as part of the search string disables character
@@ -1455,10 +1456,11 @@ replacement is done without case conversion.
 @cindex character folding in replace commands
   The replacement commands by default do not use character folding
 (@pxref{Lax Search, character folding}) when looking for the text to
-replace.  To enable character folding for matching, set the variable
+replace.  To enable character folding for matching in
+@code{query-replace} and @code{replace-string}, set the variable
 @code{replace-character-fold} to a non-@code{nil} value.  (This
 setting does not affect the replacement text, only how Emacs finds the
-text to replace.)
+text to replace.  It also doesn't affect @code{replace-regexp}.)
 
 @node Query Replace
 @subsection Query Replace
@@ -1788,16 +1790,16 @@ case folding and lax-whitespace matching.
 @vindex search-highlight
   The current match of an on-going incremental search is highlighted
 using the @code{isearch} face.  This highlighting can be disabled by
-setting the variable @code{search-highlight} to a @code{nil} value.
+setting the variable @code{search-highlight} to @code{nil}.
 
 @cindex lazy highlighting customizations
 @vindex isearch-lazy-highlight
 @cindex lazy-highlight face
   The other matches for the search string that are visible on display
 are highlighted using the @code{lazy-highlight} face.  Setting the
-variable @code{isearch-lazy-highlight} to a @code{nil} value disables
-this highlighting.  Here are some other variables that customize the
-lazy highlighting:
+variable @code{isearch-lazy-highlight} to @code{nil} disables this
+highlighting.  Here are some other variables that customize the lazy
+highlighting:
 
 @table @code
 @item lazy-highlight-initial-delay
@@ -1819,16 +1821,16 @@ matches.  Thus, smaller values make Emacs more responsive.
 search string is empty launches a nonincremental search.  (Actually,
 it lets you edit the search string, and the next @key{RET} does the
 search.)  However, if you customize the variable
-@code{search-nonincremental-instead} to a @code{nil} value, typing
-@key{RET} will always exit the incremental search, even if the search
-string is empty.
+@code{search-nonincremental-instead} to @code{nil}, typing @key{RET}
+will always exit the incremental search, even if the search string is
+empty.
 
 @vindex isearch-hide-immediately
   By default, incremental search and query-replace commands match
 invisible text, but hide any such matches as soon as the current match
 moves off the invisible text.  If you customize the variable
-@code{isearch-hide-immediately} to a @code{nil} value, any invisible
-text where matches were found stays on display until the search or the
+@code{isearch-hide-immediately} to @code{nil}, any invisible text
+where matches were found stays on display until the search or the
 replace command exits.
 
 @cindex search display on slow terminals
