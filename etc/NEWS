@@ -135,15 +135,6 @@ frames.
 Works for functions, variables, faces, etc.  It is bound to `C-h o' by
 default.
 
-** New command `checkdoc-package-keywords' checks if the
-current package keywords are recognized.  Set the new option
-`checkdoc-package-keywords-flag' to non-nil to make
-`checkdoc-current-buffer' call this function automatically.
-
-** New function `checkdoc-file' checks for style errors.
-It's meant for use together with `compile':
-emacs -batch --eval "(checkdoc-file \"subr.el\")"
-
 ** New command `comment-line' bound to `C-x C-;'.
 
 ** New function `custom-prompt-customize-unsaved-options' checks for
@@ -359,6 +350,19 @@ standards.
 
 
 * Changes in Specialized Modes and Packages in Emacs 25.1
+
+** Checkdoc
+
++++
+*** New command `checkdoc-package-keywords' checks if the
+current package keywords are recognized.  Set the new option
+`checkdoc-package-keywords-flag' to non-nil to make
+`checkdoc-current-buffer' call this function automatically.
+
++++
+*** New function `checkdoc-file' checks for style errors.
+It's meant for use together with `compile':
+emacs -batch --eval "(checkdoc-file \"subr.el\")"
 
 ** New function `bookmark-set-no-overwrite' bound to C-x r M.
 It raises an error if a bookmark of that name already exists,
