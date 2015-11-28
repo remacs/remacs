@@ -156,24 +156,14 @@ static void module_wrong_type (emacs_env *, Lisp_Object, Lisp_Object);
    passing information to the handler functions.  */
 
 /* Place this macro at the beginning of a function returning a number
-   or a pointer to handle signals.  The function must have an ENV
-   parameter.  The function will return 0 (or NULL) if a signal is
-   caught.  */
-#define MODULE_HANDLE_SIGNALS MODULE_HANDLE_SIGNALS_RETURN (0)
-
-/* Place this macro at the beginning of a function returning void to
-   handle signals.  The function must have an ENV parameter.  */
-#define MODULE_HANDLE_SIGNALS_VOID MODULE_HANDLE_SIGNALS_RETURN ()
-
-#define MODULE_HANDLE_SIGNALS_RETURN(retval)                                   \
-  MODULE_SETJMP (CONDITION_CASE, module_handle_signal, retval)
-
-/* Place this macro at the beginning of a function returning a pointer
-   to handle non-local exits via `throw'.  The function must have an
-   ENV parameter.  The function will return NULL if a `throw' is
-   caught.  */
-#define MODULE_HANDLE_THROW                                                    \
-  MODULE_SETJMP (CATCHER_ALL, module_handle_throw, NULL)
+   or a pointer to handle non-local exits.  The function must have an
+   ENV parameter.  The function will return the specified value if a
+   signal or throw is caught.  */
+// TODO: Have Fsignal check for CATCHER_ALL so we only have to install
+// one handler.
+#define MODULE_HANDLE_NONLOCAL_EXIT(retval)                     \
+  MODULE_SETJMP (CONDITION_CASE, module_handle_signal, retval); \
+  MODULE_SETJMP (CATCHER_ALL, module_handle_throw, retval)
 
 #define MODULE_SETJMP(handlertype, handlerfunc, retval)			       \
   MODULE_SETJMP_1 (handlertype, handlerfunc, retval,			       \
@@ -189,6 +179,8 @@ static void module_wrong_type (emacs_env *, Lisp_Object, Lisp_Object);
    This macro cannot enclose its entire body inside a do-while, as the
    code after the macro may longjmp back into the macro, which means
    its local variable C must stay live in later code.  */
+
+// TODO: Make backtraces work if this macros is used.
 
 #define MODULE_SETJMP_1(handlertype, handlerfunc, retval, c, dummy)	\
   if (module_non_local_exit_check (env) != emacs_funcall_exit_return)	\
@@ -247,8 +239,8 @@ struct module_fun_env
    4. Any function that needs to call Emacs facilities, such as
       encoding or decoding functions, or 'intern', or 'make_string',
       should protect itself from signals and 'throw' in the called
-      Emacs functions, by placing the macros MODULE_HANDLE_SIGNALS
-      and/or MODULE_HANDLE_THROW right after the above 2 tests.
+      Emacs functions, by placing the macro
+      MODULE_HANDLE_NONLOCAL_EXIT right after the above 2 tests.
 
    5. Do NOT use 'eassert' for checking validity of user code in the
       module.  Instead, make those checks part of the code, and if the
@@ -257,6 +249,16 @@ struct module_fun_env
       because using 'eassert' in these situations will abort Emacs
       instead of reporting the error back to Lisp, and also because
       'eassert' is compiled to nothing in the release version.  */
+
+/* Use MODULE_FUNCTION_BEGIN to implement steps 2 through 4 for most
+   environment functions.  On error it will return its argument, which
+   should be a sentinel value.  */
+
+#define MODULE_FUNCTION_BEGIN(error_retval)                             \
+  check_main_thread ();                                                 \
+  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)   \
+    return error_retval;                                                \
+  MODULE_HANDLE_NONLOCAL_EXIT (error_retval)
 
 /* Catch signals and throws only if the code can actually signal or
    throw.  If checking is enabled, abort if the current thread is not
@@ -275,10 +277,7 @@ module_get_environment (struct emacs_runtime *ert)
 static emacs_value
 module_make_global_ref (emacs_env *env, emacs_value ref)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return NULL;
-  MODULE_HANDLE_SIGNALS;
+  MODULE_FUNCTION_BEGIN (NULL);
   struct Lisp_Hash_Table *h = XHASH_TABLE (Vmodule_refs_hash);
   Lisp_Object new_obj = value_to_lisp (ref);
   EMACS_UINT hashcode;
@@ -307,13 +306,10 @@ module_make_global_ref (emacs_env *env, emacs_value ref)
 static void
 module_free_global_ref (emacs_env *env, emacs_value ref)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return;
   /* TODO: This probably never signals.  */
   /* FIXME: Wait a minute.  Shouldn't this function report an error if
      the hash lookup fails?  */
-  MODULE_HANDLE_SIGNALS_VOID;
+  MODULE_FUNCTION_BEGIN ();
   struct Lisp_Hash_Table *h = XHASH_TABLE (Vmodule_refs_hash);
   Lisp_Object obj = value_to_lisp (ref);
   EMACS_UINT hashcode;
@@ -391,10 +387,7 @@ module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
 		      emacs_subr subr, const char *documentation,
 		      void *data)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return NULL;
-  MODULE_HANDLE_SIGNALS;
+  MODULE_FUNCTION_BEGIN (NULL);
 
   if (! (0 <= min_arity
 	 && (max_arity < 0
@@ -429,11 +422,7 @@ static emacs_value
 module_funcall (emacs_env *env, emacs_value fun, ptrdiff_t nargs,
 		emacs_value args[])
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return NULL;
-  MODULE_HANDLE_SIGNALS;
-  MODULE_HANDLE_THROW;
+  MODULE_FUNCTION_BEGIN (NULL);
 
   /* Make a new Lisp_Object array starting with the function as the
      first arg, because that's what Ffuncall takes.  */
@@ -451,19 +440,14 @@ module_funcall (emacs_env *env, emacs_value fun, ptrdiff_t nargs,
 static emacs_value
 module_intern (emacs_env *env, const char *name)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return NULL;
-  MODULE_HANDLE_SIGNALS;
+  MODULE_FUNCTION_BEGIN (NULL);
   return lisp_to_value (env, intern (name));
 }
 
 static emacs_value
 module_type_of (emacs_env *env, emacs_value value)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return NULL;
+  MODULE_FUNCTION_BEGIN (NULL);
   return lisp_to_value (env, Ftype_of (value_to_lisp (value)));
 }
 
@@ -488,9 +472,7 @@ module_eq (emacs_env *env, emacs_value a, emacs_value b)
 static intmax_t
 module_extract_integer (emacs_env *env, emacs_value n)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return 0;
+  MODULE_FUNCTION_BEGIN (0);
   Lisp_Object l = value_to_lisp (n);
   if (! INTEGERP (l))
     {
@@ -503,9 +485,7 @@ module_extract_integer (emacs_env *env, emacs_value n)
 static emacs_value
 module_make_integer (emacs_env *env, intmax_t n)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return NULL;
+  MODULE_FUNCTION_BEGIN (NULL);
   if (! (MOST_NEGATIVE_FIXNUM <= n && n <= MOST_POSITIVE_FIXNUM))
     {
       module_non_local_exit_signal_1 (env, Qoverflow_error, Qnil);
@@ -517,9 +497,7 @@ module_make_integer (emacs_env *env, intmax_t n)
 static double
 module_extract_float (emacs_env *env, emacs_value f)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return 0;
+  MODULE_FUNCTION_BEGIN (0);
   Lisp_Object lisp = value_to_lisp (f);
   if (! FLOATP (lisp))
     {
@@ -532,10 +510,7 @@ module_extract_float (emacs_env *env, emacs_value f)
 static emacs_value
 module_make_float (emacs_env *env, double d)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return NULL;
-  MODULE_HANDLE_SIGNALS;
+  MODULE_FUNCTION_BEGIN (NULL);
   return lisp_to_value (env, make_float (d));
 }
 
@@ -543,10 +518,7 @@ static bool
 module_copy_string_contents (emacs_env *env, emacs_value value, char *buffer,
 			     ptrdiff_t *length)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return false;
-  MODULE_HANDLE_SIGNALS;
+  MODULE_FUNCTION_BEGIN (false);
   Lisp_Object lisp_str = value_to_lisp (value);
   if (! STRINGP (lisp_str))
     {
@@ -589,10 +561,7 @@ module_copy_string_contents (emacs_env *env, emacs_value value, char *buffer,
 static emacs_value
 module_make_string (emacs_env *env, const char *str, ptrdiff_t length)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return NULL;
-  MODULE_HANDLE_SIGNALS;
+  MODULE_FUNCTION_BEGIN (NULL);
   if (length > STRING_BYTES_BOUND)
     {
       module_non_local_exit_signal_1 (env, Qoverflow_error, Qnil);
@@ -606,18 +575,14 @@ module_make_string (emacs_env *env, const char *str, ptrdiff_t length)
 static emacs_value
 module_make_user_ptr (emacs_env *env, emacs_finalizer_function fin, void *ptr)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return NULL;
+  MODULE_FUNCTION_BEGIN (NULL);
   return lisp_to_value (env, make_user_ptr (fin, ptr));
 }
 
 static void *
 module_get_user_ptr (emacs_env *env, emacs_value uptr)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return NULL;
+  MODULE_FUNCTION_BEGIN (NULL);
   Lisp_Object lisp = value_to_lisp (uptr);
   if (! USER_PTRP (lisp))
     {
@@ -630,6 +595,8 @@ module_get_user_ptr (emacs_env *env, emacs_value uptr)
 static void
 module_set_user_ptr (emacs_env *env, emacs_value uptr, void *ptr)
 {
+  // FIXME: This function should return bool because it can fail.
+  MODULE_FUNCTION_BEGIN ();
   check_main_thread ();
   if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
     return;
@@ -642,9 +609,7 @@ module_set_user_ptr (emacs_env *env, emacs_value uptr, void *ptr)
 static emacs_finalizer_function
 module_get_user_finalizer (emacs_env *env, emacs_value uptr)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return NULL;
+  MODULE_FUNCTION_BEGIN (NULL);
   Lisp_Object lisp = value_to_lisp (uptr);
   if (! USER_PTRP (lisp))
     {
@@ -658,9 +623,8 @@ static void
 module_set_user_finalizer (emacs_env *env, emacs_value uptr,
 			   emacs_finalizer_function fin)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return;
+  // FIXME: This function should return bool because it can fail.
+  MODULE_FUNCTION_BEGIN ();
   Lisp_Object lisp = value_to_lisp (uptr);
   if (! USER_PTRP (lisp))
     module_wrong_type (env, Quser_ptr, lisp);
@@ -670,9 +634,8 @@ module_set_user_finalizer (emacs_env *env, emacs_value uptr,
 static void
 module_vec_set (emacs_env *env, emacs_value vec, ptrdiff_t i, emacs_value val)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return;
+  // FIXME: This function should return bool because it can fail.
+  MODULE_FUNCTION_BEGIN ();
   Lisp_Object lvec = value_to_lisp (vec);
   if (! VECTORP (lvec))
     {
@@ -693,9 +656,7 @@ module_vec_set (emacs_env *env, emacs_value vec, ptrdiff_t i, emacs_value val)
 static emacs_value
 module_vec_get (emacs_env *env, emacs_value vec, ptrdiff_t i)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return NULL;
+  MODULE_FUNCTION_BEGIN (NULL);
   Lisp_Object lvec = value_to_lisp (vec);
   if (! VECTORP (lvec))
     {
@@ -716,9 +677,8 @@ module_vec_get (emacs_env *env, emacs_value vec, ptrdiff_t i)
 static ptrdiff_t
 module_vec_size (emacs_env *env, emacs_value vec)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return 0;
+  // FIXME: Return a sentinel value (e.g., -1) on error.
+  MODULE_FUNCTION_BEGIN (0);
   Lisp_Object lvec = value_to_lisp (vec);
   if (! VECTORP (lvec))
     {
