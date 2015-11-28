@@ -149,10 +149,10 @@ src/*.map
 # Tests.
 test/indent/*.new
 test/biditest.txt
-test/etags/srclist
-test/etags/regexfile
-test/etags/ETAGS
-test/etags/CTAGS
+test/manual/etags/srclist
+test/manual/etags/regexfile
+test/manual/etags/ETAGS
+test/manual/etags/CTAGS
 
 # ctags, etags.
 TAGS
