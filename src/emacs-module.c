@@ -777,13 +777,14 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
 DEFUN ("internal--module-call", Finternal_module_call, Sinternal_module_call, 2, 2, 0,
        doc: /* Internal function to call a module function.
 ENVOBJ is a save pointer to a module_fun_env structure.
-ARGLIST is a list of arguments passed to SUBRPTR.  */)
+ARGLIST is a list of arguments passed to SUBRPTR, or nil.  */)
   (Lisp_Object envobj, Lisp_Object arglist)
 {
   CHECK_TYPE (SAVE_VALUEP (envobj), Qsave_value_p, envobj);
   struct Lisp_Save_Value *save_value = XSAVE_VALUE (envobj);
   CHECK_TYPE (save_type (save_value, 0) == SAVE_POINTER, Qsave_pointer_p, envobj);
-  CHECK_CONS (arglist);
+  if (!NILP (arglist))
+    CHECK_CONS (arglist);
   struct module_fun_env *envptr = XSAVE_POINTER (envobj, 0);
   EMACS_INT len = XFASTINT (Flength (arglist));
   eassume (0 <= envptr->min_arity);
