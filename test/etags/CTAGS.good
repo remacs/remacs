@@ -306,6 +306,7 @@ BUFFERP	c-src/emacs/src/lisp.h	/^BUFFERP (Lisp_Object a)$/
 BUFFERSIZE	objc-src/Subprocess.h	43
 BUFFER_OBJFWDP	c-src/emacs/src/lisp.h	/^BUFFER_OBJFWDP (union Lisp_Fwd *a)$/
 BYTE_MARK_STACK	c-src/emacs/src/lisp.h	3181
+Bar	lua-src/test.lua	/^function Square.something:Bar ()$/
 Bar	perl-src/kai-test.pl	/^package Bar;$/
 Bar::f4	perl-src/kai-test.pl	/^sub Bar::f4 {$/
 Bar::f5	perl-src/kai-test.pl	/^sub f5 {$/
@@ -425,6 +426,7 @@ C_entries	c-src/etags.c	/^C_entries (int c_ext, FILE *inf)$/
 C_stab_entry	c-src/etags.c	2271
 C_symtype	c-src/etags.c	/^C_symtype (char *str, int len, int c_ext)$/
 ChangeFileType	pas-src/common.pas	/^function ChangeFileType; (*(FileName : NameString;/
+Circle.getPos	lua-src/test.lua	/^function Circle.getPos ()$/
 Cjava_entries	c-src/etags.c	/^Cjava_entries (FILE *inf)$/
 Cjava_help	c-src/etags.c	551
 Cjava_suffixes	c-src/etags.c	549
@@ -458,6 +460,7 @@ Create_LL_Task/p	ada-src/2ataspri.adb	/^   procedure Create_LL_Task$/
 Create_LL_Task/p	ada-src/2ataspri.ads	/^   procedure Create_LL_Task$/
 Cstar_entries	c-src/etags.c	/^Cstar_entries (FILE *inf)$/
 Cstar_suffixes	c-src/etags.c	562
+Cube.data.getFoo	lua-src/test.lua	/^function Cube.data.getFoo ()$/
 D	cp-src/fail.C	41
 D	cp-src/fail.C	/^		D() : ::A::T2::T(97), x(1066) {}$/
 DAEMON_RUNNING	c-src/emacs/src/lisp.h	4258
@@ -1193,6 +1196,7 @@ Range	cp-src/Range.h	/^  Range (double b, double l, double i)$/
 ReadVacation	cp-src/functions.cpp	/^void ReadVacation ( char *filename ) {$/
 Read_Lock/p	ada-src/2ataspri.adb	/^   procedure Read_Lock (L : in out Lock; Ceiling_V/
 Read_Lock/p	ada-src/2ataspri.ads	/^   procedure Read_Lock (L : in out Lock; Ceiling_V/
+Rectangle.getPos	lua-src/test.lua	/^function Rectangle.getPos ()$/
 ReleaseNameString	pas-src/common.pas	/^procedure ReleaseNameString; (* (var NSP: NameStri/
 RemoveLayer	lua-src/allegro.lua	/^function RemoveLayer ()$/
 RemoveUnderlineControl	pas-src/common.pas	/^function RemoveUnderlineControl; (*($/
@@ -1309,6 +1313,7 @@ SimpleCalc	objcpp-src/SimpleCalc.H	/^@interface SimpleCalc:Object$/
 SkipBlanks	pas-src/common.pas	/^function SkipBlanks; (*($/
 SkipChars	pas-src/common.pas	/^function SkipChars; (*($/
 SkipSpaces	pas-src/common.pas	/^procedure SkipSpaces; (* (Str : NameString; var I /
+Square.something:Bar	lua-src/test.lua	/^function Square.something:Bar ()$/
 StartDay	cp-src/functions.cpp	/^Date StartDay(Date a,int days){\/\/Function to calcu/
 StripPath	pas-src/common.pas	/^function StripPath; (*($/
 SubString	pas-src/common.pas	/^function SubString; (*($/
@@ -2988,8 +2993,11 @@ generic_object	cp-src/clheir.cpp	/^generic_object::generic_object(void)$/
 generic_object	cp-src/clheir.hpp	13
 getArchs	objc-src/PackInsp.m	/^-(void)getArchs$/
 getDomainNames	php-src/lce_functions.php	/^      function getDomainNames()$/
+getFoo	lua-src/test.lua	/^function Cube.data.getFoo ()$/
 getPOReader	php-src/lce_functions.php	/^      function &getPOReader($domain)$/
 getPath	objc-src/PackInsp.m	/^-(const char *)getPath:(char *)buf forType:(const /
+getPos	lua-src/test.lua	/^function Rectangle.getPos ()$/
+getPos	lua-src/test.lua	/^function Circle.getPos ()$/
 getTextDomains	php-src/lce_functions.php	/^  function getTextDomains($lines)$/
 get_compressor_from_suffix	c-src/etags.c	/^get_compressor_from_suffix (char *file, char **ext/
 get_contiguous_space	c-src/emacs/src/gmalloc.c	/^get_contiguous_space (ptrdiff_t size, void *positi/
