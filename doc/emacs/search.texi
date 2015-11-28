@@ -1231,15 +1231,12 @@ such as @sc{u+249c parenthesized latin small letter a} and @sc{u+2100
 account of} (which looks like a small @code{a} over @code{c}).
 Similarly, the @acronym{ASCII} double-quote character @code{"} matches
 all the other variants of double quotes defined by the Unicode
-standard.
-@ignore @c FIXME: This doesn't work.  Should it?
-Finally, character folding can make a sequence of one or
+standard.  Finally, character folding can make a sequence of one or
 more characters match another sequence of a different length: for
-example, the sequence of two characters @code{ae} matches the ligature
-@code{@ae{}}.
-@end ignore
-Character sequences that match under character folding are called
-@dfn{equivalent character sequences}.
+example, the sequence of two characters @code{ff} matches @sc{u+fb00
+latin small ligature ff}.  Character sequences that are not identical,
+but match under character folding are known as @dfn{equivalent
+character sequences}.
 
 @kindex M-s ' @r{(Incremental Search)}
 @findex isearch-toggle-character-fold
