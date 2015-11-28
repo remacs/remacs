@@ -135,8 +135,6 @@ frames.
 Works for functions, variables, faces, etc.  It is bound to `C-h o' by
 default.
 
-** New command `comment-line' bound to `C-x C-;'.
-
 ** New function `custom-prompt-customize-unsaved-options' checks for
 unsaved customizations and prompts user to customize (if found).
 
@@ -317,6 +315,9 @@ at configure time.
 
 ** Successive single-char deletions are collapsed in the undo-log just like
 successive char insertions.
+
++++
+** New command `comment-line' bound to `C-x C-;'.
 
 ** Unicode names entered via C-x 8 RET now use substring completion by default.
 

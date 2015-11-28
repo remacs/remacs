@@ -917,6 +917,8 @@ will indent the comment to the appropriate position.
 @item @kbd{M-;}
 Insert or realign comment on current line; if the region is active,
 comment or uncomment the region instead (@code{comment-dwim}).
+@item @kbd{C-x C-;}
+Comment or uncomment the current line (@code{comment-line}).
 @item @kbd{C-u M-;}
 Kill comment on current line (@code{comment-kill}).
 @item @kbd{C-x ;}
@@ -970,6 +972,18 @@ starting delimiter.  As an exception, comments starting in column 0
 are not moved.  Even when an existing comment is properly aligned,
 @kbd{M-;} is still useful for moving directly to the start of the
 comment text.
+
+@findex comment-line
+@kindex C-x C-;
+  @kbd{C-x C-;} (@code{comment-line}) comments or uncomments complete
+lines.  When a region is active (@pxref{Mark}), @kbd{C-x C-;} either
+comments or uncomments the lines in the region.  If the region is not
+active, this command comments or uncomments the line point is on.
+With a positive prefix argument @var{n}, it operates on @var{n} lines
+starting with the current one; with a negative @var{n}, it affects
+@var{n} preceding lines.  After invoking this command with a negative
+argument, successive invocations with a positive argument will operate
+on preceding lines as if the argument were negated.
 
 @findex comment-kill
 @kindex C-u M-;
