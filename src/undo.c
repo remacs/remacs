@@ -33,9 +33,9 @@ static Lisp_Object pending_boundary;
 
 /* Record point as it was at beginning of this command (if necessary)
    and prepare the undo info for recording a change.
-/* Prepare the undo info for recording a change. */
+   Prepare the undo info for recording a change. */
 static void
-prepare_record ()
+prepare_record (void)
 {
   /* Allocate a cons cell to be the undo boundary after this command.  */
   if (NILP (pending_boundary))
@@ -60,15 +60,14 @@ record_point (ptrdiff_t pt)
   at_boundary = ! CONSP (BVAR (current_buffer, undo_list))
                 || NILP (XCAR (BVAR (current_buffer, undo_list)));
 
-  prepare_record();
+  prepare_record ();
 
   /* If we are just after an undo boundary, and
      point wasn't at start of deleted range, record where it was.  */
-  if (at_boundary){
+  if (at_boundary)
     bset_undo_list (current_buffer,
 		    Fcons (make_number (pt),
 			   BVAR (current_buffer, undo_list)));
-  }
 }
 
 /* Record an insertion that just happened or is about to happen,
@@ -164,11 +163,9 @@ record_delete (ptrdiff_t beg, Lisp_Object string, bool record_markers)
   if (EQ (BVAR (current_buffer, undo_list), Qt))
     return;
 
-  if (point_before_last_command_or_undo != beg &&
-      buffer_before_last_command_or_undo == current_buffer)
-    {
-      record_point (point_before_last_command_or_undo);
-    }
+  if (point_before_last_command_or_undo != beg
+      && buffer_before_last_command_or_undo == current_buffer)
+    record_point (point_before_last_command_or_undo);
 
   if (PT == beg + SCHARS (string))
     {
