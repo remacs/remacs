@@ -22,11 +22,15 @@
 
 ;;; Code:
 
+(eval-and-compile (put 'character-fold-table 'char-table-extra-slots 1))
 
 (defconst character-fold-table
   (eval-when-compile
     (let ((equiv (make-char-table 'character-fold-table))
+          (equiv-multi (make-char-table 'character-fold-table))
           (table (unicode-property-table-internal 'decomposition)))
+      (set-char-table-extra-slot equiv 0 equiv-multi)
+
       ;; Ensure the table is populated.
       (let ((func (char-table-extra-slot table 1)))
         (map-char-table (lambda (char v)
@@ -36,63 +40,61 @@
 
       ;; Compile a list of all complex characters that each simple
       ;; character should match.
+      ;; In summary this loop does 3 things:
+      ;; - A complex character might be allowed to match its decomp.
+      ;; - The decomp is allowed to match the complex character.
+      ;; - A single char of the decomp might be allowed to match the
+      ;;   character.
+      ;; Some examples in the comments below.
       (map-char-table
        (lambda (char decomp)
          (when (consp decomp)
-           (if (symbolp (car decomp))
-               ;; Discard a possible formatting tag.
-               (setq decomp (cdr decomp))
-             ;; If there's no formatting tag, ensure that char matches
-             ;; its decomp exactly.  This is because we want 'ä' to
-             ;; match 'ä', but we don't want '¹' to match '1'.
-             (aset equiv char
-                   (cons (apply #'string decomp)
-                         (aref equiv char))))
-           ;; Finally, figure out whether char has a simpler
-           ;; equivalent (char-aux). If so, ensure that char-aux
-           ;; matches char and maybe its decomp too.
-
            ;; Skip trivial cases like ?a decomposing to (?a).
-           (unless (or (and (eq char (car decomp))
-                            (not  (cdr decomp))))
-             (let ((dec-aux decomp)
-                   (fold-decomp t)
-                   char-aux found)
-               (while (and dec-aux (not found))
-                 (setq char-aux (pop dec-aux))
-                 ;; Is char-aux a number or letter, per unicode standard?
-                 (setq found (memq (get-char-code-property char-aux 'general-category)
-                                   '(Lu Ll Lt Lm Lo Nd Nl No))))
-               (if found
-                   ;; Check if the decomp has more than one letter,
-                   ;; because then we don't want the first letter to
-                   ;; match the decomposition.  This is because we
-                   ;; want 'f' to match 'ﬀ' but not 'ff'.
-                   (dolist (char-aux dec-aux)
-                     (when (and fold-decomp
-                                (memq (get-char-code-property char-aux 'general-category)
-                                      '(Lu Ll Lt Lm Lo Nd Nl No)))
-                       (setq fold-decomp nil)))
-                 ;; If there's no number or letter on the
-                 ;; decomp, take the first character in it.
-                 (setq found (car-safe decomp)))
-               ;; Finally, we only fold multi-char decomp if at
-               ;; least one of the chars is non-spacing (combining).
-               (when fold-decomp
-                 (setq fold-decomp nil)
-                 (dolist (char-aux decomp)
-                   (when (and (not fold-decomp)
-                              (> (get-char-code-property char-aux 'canonical-combining-class) 0))
-                     (setq fold-decomp t))))
-               ;; Add char to the list of characters that char-aux can
-               ;; represent. Also possibly add its decomp, so we can
-               ;; match multi-char representations like (format "a%c" 769)
-               (when (and found (not (eq char char-aux)))
-                 (let ((chars (cons (char-to-string char) (aref equiv char-aux))))
-                   (aset equiv char-aux
-                         (if fold-decomp
-                             (cons (apply #'string decomp) chars)
-                           chars))))))))
+           (unless (and (not (cdr decomp))
+                        (eq char (car decomp)))
+             (if (symbolp (car decomp))
+                 ;; Discard a possible formatting tag.
+                 (setq decomp (cdr decomp))
+               ;; If there's no formatting tag, ensure that char matches
+               ;; its decomp exactly.  This is because we want 'ä' to
+               ;; match 'ä', but we don't want '¹' to match '1'.
+               (aset equiv char
+                     (cons (apply #'string decomp)
+                           (aref equiv char))))
+
+             ;; Allow the entire decomp to match char.  If decomp has
+             ;; multiple characters, this is done by adding an entry
+             ;; to the alist of the first character in decomp.  This
+             ;; allows 'ff' to match 'ﬀ', 'ä' to match 'ä', and '1' to
+             ;; match '¹'.
+             (let ((make-decomp-match-char
+                    (lambda (decomp char)
+                      (if (cdr decomp)
+                          (aset equiv-multi (car decomp)
+                                (cons (cons (apply #'string (cdr decomp))
+                                            (regexp-quote (string char)))
+                                      (aref equiv-multi (car decomp))))
+                        (aset equiv (car decomp)
+                              (cons (char-to-string char)
+                                    (aref equiv (car decomp))))))))
+               (funcall make-decomp-match-char decomp char)
+               ;; Do it again, without the non-spacing characters.
+               ;; This allows 'a' to match 'ä'.
+               (let ((simpler-decomp nil)
+                     (found-one nil))
+                 (dolist (c decomp)
+                   (if (> (get-char-code-property c 'canonical-combining-class) 0)
+                       (setq found-one t)
+                     (push c simpler-decomp)))
+                 (when (and simpler-decomp found-one)
+                   (funcall make-decomp-match-char simpler-decomp char)
+                   ;; Finally, if the decomp only had one spacing
+                   ;; character, we allow this character to match the
+                   ;; decomp.  This is to let 'a' match 'ä'.
+                   (unless (cdr simpler-decomp)
+                     (aset equiv (car simpler-decomp)
+                           (cons (apply #'string decomp)
+                                 (aref equiv (car simpler-decomp)))))))))))
        table)
 
       ;; Add some manual entries.
@@ -112,7 +114,27 @@
              (aset equiv char re))))
        equiv)
       equiv))
-  "Used for folding characters of the same group during search.")
+  "Used for folding characters of the same group during search.
+This is a char-table with the `character-fold-table' subtype.
+
+Let us refer to the character in question by char-x.
+Each entry is either nil (meaning char-x only matches literally)
+or a regexp.  This regexp should match anything that char-x can
+match by itself \(including char-x).  For instance, the default
+regexp for the ?+ character is \"[+⁺₊﬩﹢＋]\".
+
+This table also has one extra slot which is also a char-table.
+Each entry in the extra slot is an alist used for multi-character
+matching (which may be nil).  The elements of the alist should
+have the form (SUFFIX . OTHER-REGEXP).  If the characters after
+char-x are equal to SUFFIX, then this combination of char-x +
+SUFFIX is allowed to match OTHER-REGEXP.  This is in addition to
+char-x being allowed to match REGEXP.
+For instance, the default alist for ?f includes:
+    \((\"fl\" . \"ﬄ\") (\"fi\" . \"ﬃ\")
+     (\"i\" . \"ﬁ\") (\"f\" . \"ﬀ\"))
+
+Exceptionally for the space character (32), ALIST is ignored.")
 
 (defun character-fold--make-space-string (n)
   "Return a string that matches N spaces."
@@ -122,13 +144,17 @@
                  (make-list n (or (aref character-fold-table ?\s) " ")))))
 
 ;;;###autoload
-(defun character-fold-to-regexp (string &optional _lax)
+(defun character-fold-to-regexp (string &optional _lax from)
   "Return a regexp matching anything that character-folds into STRING.
 Any character in STRING that has an entry in
 `character-fold-table' is replaced with that entry (which is a
-regexp) and other characters are `regexp-quote'd."
+regexp) and other characters are `regexp-quote'd.
+
+FROM is for internal use.  It specifies an index in the STRING
+from which to start."
   (let ((spaces 0)
-        (i 0)
+        (multi-char-table (char-table-extra-slot character-fold-table 0))
+        (i (or from 0))
         (end (length string))
         (out nil))
     ;; When the user types a space, we want to match the table entry
@@ -145,9 +171,36 @@ regexp) and other characters are `regexp-quote'd."
         (c (when (> spaces 0)
              (push (character-fold--make-space-string spaces) out)
              (setq spaces 0))
-           (push (or (aref character-fold-table c)
-                     (regexp-quote (string c)))
-                 out)))
+           (let ((regexp (or (aref character-fold-table c)
+                             (regexp-quote (string c))))
+                 ;; Long string.  The regexp would probably be too long.
+                 (alist (unless (> end 60)
+                          (aref multi-char-table c))))
+             (push (let ((alist-out '("\\)")))
+                     (pcase-dolist (`(,suffix . ,out-regexp) alist)
+                       (let ((len-suf (length suffix)))
+                         (when (eq (compare-strings suffix 0 nil
+                                                    string (1+ i) (+ i 1 len-suf)
+                                                    nil)
+                                   t)
+                           ;; FIXME: If N suffixes match, we "branch"
+                           ;; out into N+1 executions for the rest of
+                           ;; the string.  This involves redundant
+                           ;; work and makes a huge regexp.
+                           (push (concat "\\|" out-regexp
+                                         (character-fold-to-regexp
+                                          string nil (+ i 1 len-suf)))
+                                 alist-out))))
+                     ;; If no suffixes matched, just go on.
+                     (if (not (cdr alist-out))
+                         regexp
+                       ;; Otherwise, add a branch for the
+                       ;; no-suffix case, and stop the loop here.
+                       (prog1 (apply #'concat "\\(?:" regexp
+                                     (character-fold-to-regexp string nil (1+ i))
+                                     alist-out)
+                         (setq i end))))
+                   out))))
       (setq i (1+ i)))
     (when (> spaces 0)
       (push (character-fold--make-space-string spaces) out))
