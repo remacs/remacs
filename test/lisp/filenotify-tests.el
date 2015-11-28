@@ -61,7 +61,6 @@
 (defvar file-notify--test-results nil)
 (defvar file-notify--test-event nil)
 (defvar file-notify--test-events nil)
-(defvar file-notify--test-expected-events nil)
 
 (defun file-notify--test-timeout ()
   "Timeout to wait for arriving events, in seconds."
@@ -93,8 +92,7 @@
         file-notify--test-tmpfile1 nil
         file-notify--test-desc nil
         file-notify--test-results nil
-        file-notify--test-events nil
-        file-notify--test-expected-events nil)
+        file-notify--test-events nil)
   (when file-notify--test-event
     (error "file-notify--test-event should not be set but bound dynamically")))
 
@@ -290,13 +288,15 @@ TIMEOUT is the maximum time to wait for, in seconds."
 
 (defmacro file-notify--test-with-events (events &rest body)
   "Run BODY collecting events and then compare with EVENTS.
-Don't wait longer than timeout seconds for the events to be delivered."
+EVENTS is either a simple list of events, or a list of lists of
+events, which represent different possible results.  Don't wait
+longer than timeout seconds for the events to be delivered."
   (declare (indent 1))
   (let ((outer (make-symbol "outer")))
-    `(let ((,outer file-notify--test-events)
-           create-lockfiles)
-       (setq file-notify--test-expected-events
-	     (append file-notify--test-expected-events ,events))
+    `(let* ((,outer file-notify--test-events)
+            (events (if (consp (car ,events)) ,events (list ,events)))
+            (max-length (apply 'max (mapcar 'length events)))
+           create-lockfiles result)
        ;; Flush pending events.
        (file-notify--wait-for-events
         (file-notify--test-timeout)
@@ -305,9 +305,14 @@ Don't wait longer than timeout seconds for the events to be delivered."
          ,@body
          (file-notify--wait-for-events
           ;; More events need more time.  Use some fudge factor.
-          (* (ceiling (length ,events) 100) (file-notify--test-timeout))
-          (= (length ,events) (length file-notify--test-events)))
-         (should (equal ,events (mapcar #'cadr file-notify--test-events)))
+          (* (ceiling max-length 100) (file-notify--test-timeout))
+          (= max-length (length file-notify--test-events)))
+         ;; One of the possible results shall match.
+         (should
+          (dolist (elt events result)
+            (setq result
+                  (or result
+                      (equal elt (mapcar #'cadr file-notify--test-events))))))
          (setq ,outer (append ,outer file-notify--test-events)))
        (setq file-notify--test-events ,outer))))
 
@@ -355,13 +360,15 @@ Don't wait longer than timeout seconds for the events to be delivered."
 	     ;; cygwin recognizes only `deleted' and `stopped' events.
 	     ((eq system-type 'cygwin)
 	      '(deleted stopped))
-             ;; inotify, kqueueg and gfilenotify raise just one
-             ;; `changed' event, the other backends show us two of
-             ;; them.
+             ;; inotify and kqueue raise just one `changed' event.
              ((or (string-equal "inotify" (file-notify--test-library))
-                  (string-equal "kqueue" (file-notify--test-library))
-                  (string-equal "gfilenotify" (file-notify--test-library)))
+                  (string-equal "kqueue" (file-notify--test-library)))
 	      '(changed deleted stopped))
+             ;; gfilenotify raises one or two `changed' events
+             ;; randomly, no chance to test.  So we accept both cases.
+             ((string-equal "gfilenotify" (file-notify--test-library))
+              '((changed deleted stopped)
+                (changed changed deleted stopped)))
 	     (t '(changed changed deleted stopped)))
           (read-event nil nil 0.1)
           (write-region
@@ -521,8 +528,6 @@ Don't wait longer than timeout seconds for the events to be delivered."
 
         ;; Check the global sequence again just to make sure that
         ;; `file-notify--test-events' has been set correctly.
-        (should (equal (mapcar #'cadr file-notify--test-events)
-		       file-notify--test-expected-events))
         (should file-notify--test-results)
         (dolist (result file-notify--test-results)
           (when (ert-test-failed-p result)
@@ -661,16 +666,18 @@ Don't wait longer than timeout seconds for the events to be delivered."
              ;; cygwin recognizes only `deleted' and `stopped' events.
 	     ((eq system-type 'cygwin)
 	      '(deleted stopped))
-             ;; inotify, kqueueg and gfilenotify raise just one
-             ;; `changed' event, the other backends show us two of
-             ;; them.
+             ;; inotify and kqueue raise just one `changed' event.
              ((or (string-equal "inotify" (file-notify--test-library))
-                  (string-equal "kqueue" (file-notify--test-library))
-                  (string-equal "gfilenotify" (file-notify--test-library)))
+                  (string-equal "kqueue" (file-notify--test-library)))
 	      '(changed deleted stopped))
+             ;; gfilenotify raises one or two `changed' events
+             ;; randomly, no chance to test.  So we accept both cases.
+             ((string-equal "gfilenotify" (file-notify--test-library))
+              '((changed deleted stopped)
+                (changed changed deleted stopped)))
 	     (t '(changed changed deleted stopped)))
-	  (read-event nil nil 0.1)
           (should (file-notify-valid-p file-notify--test-desc))
+	  (read-event nil nil 0.1)
           (write-region
            "another text" nil file-notify--test-tmpfile nil 'no-message)
 	  (read-event nil nil 0.1)
