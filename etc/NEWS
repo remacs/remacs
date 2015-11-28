@@ -135,8 +135,10 @@ frames.
 Works for functions, variables, faces, etc.  It is bound to `C-h o' by
 default.
 
++++
 ** New function `custom-prompt-customize-unsaved-options' checks for
-unsaved customizations and prompts user to customize (if found).
+unsaved customizations and prompts user to customize (if found).  It
+is intended for adding to 'kill-emacs-query-functions'.
 
 +++
 ** Network security (TLS/SSL certificate validity and the like) is
