@@ -37,7 +37,7 @@
 
 
 (ert-deftest character-fold--test-consistency ()
-  (dotimes (n 100)
+  (dotimes (n 50)
     (let ((w (character-fold--random-word n)))
       ;; A folded string should always match the original string.
       (character-fold--test-search-with-contents w w))))
@@ -57,7 +57,12 @@
 (defun character-fold--test-match-exactly (string &rest strings-to-match)
   (let ((re (concat "\\`" (character-fold-to-regexp string) "\\'")))
     (dolist (it strings-to-match)
-      (should (string-match re it)))))
+      (should (string-match re it)))
+    ;; Case folding
+    (let ((case-fold-search t))
+      (dolist (it strings-to-match)
+        (should (string-match (upcase re) (downcase it)))
+        (should (string-match (downcase re) (upcase it)))))))
 
 (ert-deftest character-fold--test-some-defaults ()
   (dolist (it '(("ffl" . "ﬄ") ("ffi" . "ﬃ")
