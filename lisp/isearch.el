@@ -517,8 +517,6 @@ This is like `describe-bindings', but displays only Isearch keys."
     (define-key map "\M-r" 'isearch-toggle-regexp)
     (define-key map "\M-e" 'isearch-edit-string)
 
-    (put 'isearch-toggle-case-fold :advertised-binding "\M-sc")
-    (put 'isearch-toggle-regexp    :advertised-binding "\M-sr")
     (put 'isearch-edit-string      :advertised-binding "\M-se")
 
     (define-key map "\M-se" 'isearch-edit-string)
@@ -1504,14 +1502,15 @@ Use `isearch-exit' to quit without signaling."
 ;;; Toggles for `isearch-regexp-function' and `search-default-regexp-mode'.
 (defmacro isearch-define-mode-toggle (mode key function &optional docstring &rest body)
   "Define a command called `isearch-toggle-MODE' and bind it to `M-s KEY'.
-The first line of the docstring is auto-generated, the remainder
-may be provided in DOCSTRING.
+The first line of the command's docstring is auto-generated, the
+remainder may be provided in DOCSTRING.
 If FUNCTION is a symbol, this command first toggles the value of
 `isearch-regexp-function' between nil and FUNCTION.  Also set the
 `isearch-message-prefix' property of FUNCTION.
 The command then executes BODY and updates the isearch prompt."
   (declare (indent defun))
-  (let ((command-name (intern (format "isearch-toggle-%s" mode))))
+  (let ((command-name (intern (format "isearch-toggle-%s" mode)))
+        (key (concat "\M-s" key)))
     `(progn
        (defun ,command-name ()
          ,(format "Toggle %s searching on or off.%s" mode
@@ -1525,9 +1524,10 @@ The command then executes BODY and updates the isearch prompt."
          ,@body
          (setq isearch-success t isearch-adjusted t)
          (isearch-update))
-       (define-key isearch-mode-map ,(concat "\M-s" key) #',command-name)
+       (define-key isearch-mode-map ,key #',command-name)
        ,@(when (symbolp function)
            `((put ',function 'isearch-message-prefix ,(format "%s " mode))
+             (put ',function :advertised-binding ,key)
              (cl-callf (lambda (types) (cons 'choice
                                         (cons '(const :tag ,(capitalize (format "%s search" mode)) ,function)
                                               (cdr types))))
