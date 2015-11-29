@@ -66,97 +66,6 @@
 
 2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
 
-	Mention kqueue in NEWS
-
-2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
-
-	Merge from scratch/kqueue
-
-	bec57a4 Some final fixes in file notification before merging with master
-	0247489 Rework file notifications, kqueue has problems with directory monitors
-	5154781 Continie with pending events
-	6b490c0 Improve loops in file-notify-test06-many-events
-	c8e266f Handle more complex rename operation in kqueue
-	5044bdf New test with a larger number of events.
-	65ba5a9 Further fixes for kqueue.
-	13f3508 Code cleanup of kqueue.c
-	99aa855 Doc changes for kqueue
-	8deebe1 Finish implementation in kqueue.c
-	90d6c69 * lisp/filenotify.el (file-notify-add-watch): Fix thinko.
-	e95b309 More work on kqueue
-	41d9bd0 Implement directory events
-	c571fc1 Build fixes for kqueue support.
-	e0a68f2 Continue kqueue implementation
-	7543d1c Work on kqueue
-	e3354e2 Add kqueue support
-	c6457ce Minor fix to comment indentation and typo in last commit
-	b92307f linum-mode plays more nicely with other margin-setting extensions
-	58e6235 * lisp/image-mode.el: Support encrypted file
-	9375652 * lisp/progmodes/verilog-mode.el (verilog-save-buffer-state): Add backquote
-	47f83b6 ; ChangeLog.2 fixes
-	7cc233e * lisp/emacs-lisp/package.el: Fix a decoding issue
-	5f9153f * lisp/emacs-lisp/package.el: Refactor -with-work-buffer-async
-	353f5e7 * lisp/progmodes/verilog-mode.el: Use with-silent-modifications
-	70f1fda ; Auto-commit of ChangeLog files.
-	ae0653b * CONTRIBUTE: Remove information about feature freeze.
-	9459456 Merge branch 'release-process-lowercase'
-	9a4aa0f Document the release process
-	f8cc14b * admin/release-process: Rename from admin/FOR-RELEASE.
-	dcd5877 gitmerge: Fix git log command
-	2ac79ae gitmerge: Try to detect cherry-picks
-	5f7a2a9 Increment Emacs version on master branch
-	ed2e7e2 Mention CONTRIBUTE in README
-	9e00a02 Update verilog-mode.el to 2015-11-09-b121d60-vpo.
-	138ad3d ; Fix warnings
-	7126e9a ; Update xref-etags-mode for the latest change
-	246d660 Use generic dispatch for xref backends
-	31f6e93 Support rectangular regions for more commands
-	f103a27 Handle multiple matches on the same line; add highlighting
-	fe973fc Replace xref-match-bounds with xref-match-length
-	92a5010 Merge from gnulib
-	04ac097 Spruce up ftfont.c memory allocation
-	4c4b520 Port recent XCB changes to 64-bit ‘long int’
-	4f0ce9c * src/undo.c (run_undoable_change): Now static.
-	695a6f9 Remove support for ':timeout' from w32 tray notifications
-	a731c2f * test/automated/simple-test.el: Add test for bug#20698 (bug#21885)
-	2b4c0c0 * lisp/progmodes/elisp-mode.el: Declare function `project-roots'
-	66b9f7b * src/undo.c: Small fixes for previous change
-	2fac30e Add a few more variables to redisplay--variables
-	04f69f1 * lisp/loadup.el: Enlarge the size of the hash table to 80000.
-	e221d32 Fix point positioning after transposing with negative arg
-	35f5afb Fix last change in shr.el
-	508e77b Fix last change
-	d60ed3f Another fix for MinGW64 and Cygwin builds due to notifications
-	805a39b Remove intern calls and XXX comments from Fx_export_frames
-	9463abf shr: don't invoke unbound function (Bug#21895)
-	6e5186e * test/automated/keymaps-test.el: Fix test to make it repeatable
-	0c92826 * test/automated/cl-lib-tests.el (cl-lib-struct-constructors): Small fix
-	39dbd1c : Tests for undo-auto functionality.
-	20aa42e ; Merge branch 'fix/no-undo-boundary-on-secondary-buffer-change'
-	44dfa86 The heuristic that Emacs uses to add an `undo-boundary' has been reworked, as it interacts poorly with functions on `post-command-hook' or `after-change-functions'.
-	d2f73db Bind [?\S-\ ] to previous line command in Dired-like modes.
-	c1bc6e5 Fix the MinGW64 and Cygwin-w32 builds
-	1e363a8 Enable sorting of JSON object keys when encoding
-	9dd7da9 * test/automated/keymap-tests.el: New test file
-	aa17de9 Speed up x_real_pos_and_offsets using XCB
-	a838c83 Enable use of XCB for checking window manager state
-	c7f2b6a Detect XCB and save a connection handle
-	e1c27db Reduce some data dependencies between X calls
-	25e32bd Use color cache for creating bitmap
-	851be0f Add "^" to the interactive specs of `dired-next/previous-line'
-	055ca3a Sync with soap-client repository, version 3.0.2
-	e0f64e7 CC Mode: Respect users' settings of open-paren-in-column-0-is-defun-start.
-	952395d * lisp/obarray.el: Fix shadowed variables
-	436d330 Avoid error in submitting a form with EWW
-	e887f6e ; * doc/lispref/os.texi: Fix indentation of sample code.
-	51d840a Rename seq-p and map-p to seqp and mapp
-	23036ba Rename obarray-p to obarrayp
-	20aea42 Rename obarray-foreach to obarray-map
-	a3b2101 New file with obarray functions.
-	9d43941 Implement tray notifications for MS-Windows
-
-2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
-
 	Some final fixes in file notification before merging with master
 
 	* lisp/filenotify.el (file-notify--rm-descriptor): Remove WHAT arg.
@@ -204,7 +113,7 @@
 
 2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
 
-	Continie with pending events
+	Continue with pending events
 
 	* src/kqueue.c (pending_events): Remove global variable.
 	(kqueue_compare_dir_list): Create `write' event for not used
@@ -233,7 +142,7 @@
 
 2015-11-25  Wolfgang Jenkner  <wjenkner@inode.at>
 
-	New test with a larger number of events.
+	New test with a larger number of events
 
 	* test/automated/file-notify-tests.el (file-notify--test-with-events):
 	Make timeout heuristically depend on the number of events.
@@ -242,7 +151,7 @@
 
 2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
 
-	Further fixes for kqueue.
+	Further fixes for kqueue
 
 	* lisp/filenotify.el (file-notify-callback): Raise also event if
 	directory name matches.
@@ -323,7 +232,7 @@
 
 2015-11-25  Wolfgang Jenkner  <wjenkner@inode.at>
 
-	Build fixes for kqueue support.
+	Build fixes for kqueue support
 
 	* src/kqueue.c (Fkqueue_add_watch): O_BINARY is not a POSIX open(3)
 	flag.
