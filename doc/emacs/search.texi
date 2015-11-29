@@ -541,14 +541,19 @@ This enters the minibuffer to read the search string; terminate the
 string with @key{RET}, and then the search takes place.  If the string
 is not found, the search command signals an error.
 
-@findex search-forward
-@findex search-backward
   When you type @kbd{C-s @key{RET}}, the @kbd{C-s} invokes incremental
 search as usual.  That command is specially programmed to invoke the
-command for nonincremental search, @code{search-forward}, if the
-string you specify is empty.  (Such an empty argument would otherwise
-be useless.)  @kbd{C-r @key{RET}} does likewise, invoking the command
-@code{search-backward}.
+command for nonincremental search, if the string you specify is empty.
+(Such an empty argument would otherwise be useless.)  @kbd{C-r
+@key{RET}} does likewise, invoking the nonincremental
+backward-searching command.
+
+@findex search-forward
+@findex search-backward
+  You can also use two simpler commands, @kbd{M-x search-forward} and
+@kbd{M-x search-backward}.  These commands look for the literal
+strings you specify, and don't support any of the lax-search features
+(@pxref{Lax Search}) except case folding.
 
 @node Word Search
 @section Word Search
@@ -729,7 +734,10 @@ starting position.  These search methods are not mirror images.
   Nonincremental search for a regexp is done with the commands
 @code{re-search-forward} and @code{re-search-backward}.  You can
 invoke these with @kbd{M-x}, or by way of incremental regexp search
-with @kbd{C-M-s @key{RET}} and @kbd{C-M-r @key{RET}}.
+with @kbd{C-M-s @key{RET}} and @kbd{C-M-r @key{RET}}.  When you invoke
+these commands with @kbd{M-x}, they search for the exact regexp you
+specify, and thus don't support any lax-search features (@pxref{Lax
+Search}) except case folding.
 
   If you use the incremental regexp search commands with a prefix
 argument, they perform ordinary string search, like
@@ -1240,7 +1248,7 @@ character sequences}.
 
 @kindex M-s ' @r{(Incremental Search)}
 @findex isearch-toggle-character-fold
-  Searches in Emacs by default perform character folding, thus
+  Search commands in Emacs by default perform character folding, thus
 matching equivalent character sequences.  You can disable this
 behavior by customizing the variable @code{search-default-regexp-mode}
 to @code{nil}.  @xref{Search Customizations}.  Within an incremental
