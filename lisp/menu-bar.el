@@ -413,9 +413,8 @@
     menu))
 
 (defun menu-bar-goto-uses-etags-p ()
-  (if (boundp 'xref-find-function)
-      (eq xref-find-function 'etags-xref-find)
-    t))
+  (or (not (boundp 'xref-backend-functions))
+      (eq (car xref-backend-functions) 'etags--xref-backend)))
 
 (defvar yank-menu (cons (purecopy "Select Yank") nil))
 (fset 'yank-menu (cons 'keymap yank-menu))
