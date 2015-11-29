@@ -1,3 +1,885 @@
+2015-11-28  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix a problem with gfilenotify in filenotify-tests.el
+
+	* test/lisp/filenotify-tests.el
+	(file-notify--test-expected-events): Remove.
+	(file-notify--test-cleanup): Do not set that variable.
+	(file-notify--test-with-events): EVENTS can also be a list of lists.
+	(file-notify-test02-events, file-notify-test04-file-validity):
+	Adapt expected result.
+
+2015-11-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* .gitignore: Adjust to changes in 'test' directory structure.
+
+2015-11-28  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix test/manual/etags/Makefile
+
+	* test/manual/etags/Makefile (ETAGS_PROG, CTAGS_PROG): Adjust to
+	changes in 'test' directory structure.
+
+2015-11-27  Phillip Lord  <phillip.lord@russet.org.uk>
+
+	Exclude resource dirs from search for tests.
+
+	* test/Makefile.in: Test file locations are now found with find
+	  rather than using finds native functions.
+
+2015-11-27  Phillip Lord  <phillip.lord@russet.org.uk>
+
+	Add test targets without directory names.
+
+	 * (test/Makefile.in): Extend test_template to add two targets for each
+	   file.
+
+2015-11-27  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/emacs-lisp/package.el: Require url-handlers
+
+2015-11-27  Phillip Lord  <phillip.lord@russet.org.uk>
+
+	Move elisp-mode-tests to new function names.
+
+	 * test/lisp/progmodes/elisp-mode-tests.el (find-defsdefun-c-defvar-c,
+	 find-defs-defun-el-defvar-c): Call `elisp--xref-find-definitions'.
+
+2015-11-27  Juanma Barranquero  <lekktu@gmail.com>
+
+	* lisp/emacs-lisp/package.el: Declare `url-insert-buffer-contents'
+
+2015-11-26  Phillip Lord  <phillip.lord@russet.org.uk>
+
+	Merge branch 'feature/standard-test-location'
+
+2015-11-25  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/emacs-lisp/eieio.el: Add some default implementations
+
+	(standard-class): Mark it obsolete.
+	(slot-missing): Give it a default implementation.
+	(destructor): Simplify and mark it obsolete.
+	(object-print): Give it a default implementation.
+	(eieio-change-class): Rename from change-class.
+	(change-class): Redefine as obsolete alias.
+
+2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Mention kqueue in NEWS
+
+2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Merge from scratch/kqueue
+
+	bec57a4 Some final fixes in file notification before merging with master
+	0247489 Rework file notifications, kqueue has problems with directory monitors
+	5154781 Continie with pending events
+	6b490c0 Improve loops in file-notify-test06-many-events
+	c8e266f Handle more complex rename operation in kqueue
+	5044bdf New test with a larger number of events.
+	65ba5a9 Further fixes for kqueue.
+	13f3508 Code cleanup of kqueue.c
+	99aa855 Doc changes for kqueue
+	8deebe1 Finish implementation in kqueue.c
+	90d6c69 * lisp/filenotify.el (file-notify-add-watch): Fix thinko.
+	e95b309 More work on kqueue
+	41d9bd0 Implement directory events
+	c571fc1 Build fixes for kqueue support.
+	e0a68f2 Continue kqueue implementation
+	7543d1c Work on kqueue
+	e3354e2 Add kqueue support
+	c6457ce Minor fix to comment indentation and typo in last commit
+	b92307f linum-mode plays more nicely with other margin-setting extensions
+	58e6235 * lisp/image-mode.el: Support encrypted file
+	9375652 * lisp/progmodes/verilog-mode.el (verilog-save-buffer-state): Add backquote
+	47f83b6 ; ChangeLog.2 fixes
+	7cc233e * lisp/emacs-lisp/package.el: Fix a decoding issue
+	5f9153f * lisp/emacs-lisp/package.el: Refactor -with-work-buffer-async
+	353f5e7 * lisp/progmodes/verilog-mode.el: Use with-silent-modifications
+	70f1fda ; Auto-commit of ChangeLog files.
+	ae0653b * CONTRIBUTE: Remove information about feature freeze.
+	9459456 Merge branch 'release-process-lowercase'
+	9a4aa0f Document the release process
+	f8cc14b * admin/release-process: Rename from admin/FOR-RELEASE.
+	dcd5877 gitmerge: Fix git log command
+	2ac79ae gitmerge: Try to detect cherry-picks
+	5f7a2a9 Increment Emacs version on master branch
+	ed2e7e2 Mention CONTRIBUTE in README
+	9e00a02 Update verilog-mode.el to 2015-11-09-b121d60-vpo.
+	138ad3d ; Fix warnings
+	7126e9a ; Update xref-etags-mode for the latest change
+	246d660 Use generic dispatch for xref backends
+	31f6e93 Support rectangular regions for more commands
+	f103a27 Handle multiple matches on the same line; add highlighting
+	fe973fc Replace xref-match-bounds with xref-match-length
+	92a5010 Merge from gnulib
+	04ac097 Spruce up ftfont.c memory allocation
+	4c4b520 Port recent XCB changes to 64-bit ‘long int’
+	4f0ce9c * src/undo.c (run_undoable_change): Now static.
+	695a6f9 Remove support for ':timeout' from w32 tray notifications
+	a731c2f * test/automated/simple-test.el: Add test for bug#20698 (bug#21885)
+	2b4c0c0 * lisp/progmodes/elisp-mode.el: Declare function `project-roots'
+	66b9f7b * src/undo.c: Small fixes for previous change
+	2fac30e Add a few more variables to redisplay--variables
+	04f69f1 * lisp/loadup.el: Enlarge the size of the hash table to 80000.
+	e221d32 Fix point positioning after transposing with negative arg
+	35f5afb Fix last change in shr.el
+	508e77b Fix last change
+	d60ed3f Another fix for MinGW64 and Cygwin builds due to notifications
+	805a39b Remove intern calls and XXX comments from Fx_export_frames
+	9463abf shr: don't invoke unbound function (Bug#21895)
+	6e5186e * test/automated/keymaps-test.el: Fix test to make it repeatable
+	0c92826 * test/automated/cl-lib-tests.el (cl-lib-struct-constructors): Small fix
+	39dbd1c : Tests for undo-auto functionality.
+	20aa42e ; Merge branch 'fix/no-undo-boundary-on-secondary-buffer-change'
+	44dfa86 The heuristic that Emacs uses to add an `undo-boundary' has been reworked, as it interacts poorly with functions on `post-command-hook' or `after-change-functions'.
+	d2f73db Bind [?\S-\ ] to previous line command in Dired-like modes.
+	c1bc6e5 Fix the MinGW64 and Cygwin-w32 builds
+	1e363a8 Enable sorting of JSON object keys when encoding
+	9dd7da9 * test/automated/keymap-tests.el: New test file
+	aa17de9 Speed up x_real_pos_and_offsets using XCB
+	a838c83 Enable use of XCB for checking window manager state
+	c7f2b6a Detect XCB and save a connection handle
+	e1c27db Reduce some data dependencies between X calls
+	25e32bd Use color cache for creating bitmap
+	851be0f Add "^" to the interactive specs of `dired-next/previous-line'
+	055ca3a Sync with soap-client repository, version 3.0.2
+	e0f64e7 CC Mode: Respect users' settings of open-paren-in-column-0-is-defun-start.
+	952395d * lisp/obarray.el: Fix shadowed variables
+	436d330 Avoid error in submitting a form with EWW
+	e887f6e ; * doc/lispref/os.texi: Fix indentation of sample code.
+	51d840a Rename seq-p and map-p to seqp and mapp
+	23036ba Rename obarray-p to obarrayp
+	20aea42 Rename obarray-foreach to obarray-map
+	a3b2101 New file with obarray functions.
+	9d43941 Implement tray notifications for MS-Windows
+
+2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Some final fixes in file notification before merging with master
+
+	* lisp/filenotify.el (file-notify--rm-descriptor): Remove WHAT arg.
+	(file-notify-callback): Improve check for `stopped' event.  Call
+	`file-notify-rm-watch' rather than `file-notify--rm-descriptor'.
+	(file-notify-add-watch): In case FILE is not a directory, call the
+	file monitor for the kqueue backend.  Otherwise, call the
+	directory monitor for the upper directory.
+
+	* src/inotify.c (inotifyevent_to_event): Extract file name from
+	watch_object if the event doesn't provide it.
+	(Finotify_add_watch): Add file name to watch_object.
+
+	* test/automated/file-notify-tests.el (file-notify--test-timeout):
+	Use different timeouts for different libraries.
+	(file-notify--test-with-events): Suppress lock files.  Flush
+	outstanding events before running the body.
+	(file-notify-test02-events, file-notify-test04-file-validity): Do
+	not skip cygwin tests.  Add additional test for file creation.
+	Adapt expected result for different backends.
+	(file-notify-test03-autorevert): Some of the tests don't work for
+	w32notify.
+	(file-notify-test06-many-events): Rename into both directions.
+
+2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Rework file notifications, kqueue has problems with directory monitors
+
+	* lisp/filenotify.el (file-notify-add-watch): Call the native
+	add-watch function on the file, not on the dir.
+
+	* src/kqueue.c (kqueue_compare_dir_list): Make also bookkeeping
+	about already deleted entries.
+
+	* test/automated/auto-revert-tests.el
+	(auto-revert-test01-auto-revert-several-files): Do not call "cp -f"
+	since this deletes the target file first.
+
+	* test/automated/file-notify-tests.el (file-notify--test-event-test):
+	Make stronger checks.
+	(file-notify-test01-add-watch, file-notify-test02-events)
+	(file-notify-test04-file-validity, file-notify-test05-dir-validity):
+	Rewrite in order to call file monitors but directory monitors.
+	(file-notify-test06-many-events): Ler rename work in both directions.
+
+2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Continie with pending events
+
+	* src/kqueue.c (pending_events): Remove global variable.
+	(kqueue_compare_dir_list): Create `write' event for not used
+	pending events.
+	(globals_of_kqueue): Remove initialization of pending_events.
+
+2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Improve loops in file-notify-test06-many-events
+
+	* test/automated/file-notify-tests.el (file-notify-test06-many-events):
+	Use `read-event' pauses for the `write-file' loops; otherwise
+	events are lost in inotify and gfilenotify cases.
+
+2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Handle more complex rename operation in kqueue
+
+	* src/kqueue.c (pending_events): New variable.
+	(kqueue_compare_dir_list): Handle more complex rename operation.
+	(globals_of_kqueue): Initialize pending_events.
+
+	* test/automated/file-notify-tests.el (file-notify-test06-many-events):
+	Adapt expected events in the `rename-file' case.
+	(file-notify-test06-many-events-remote): Declare.
+
+2015-11-25  Wolfgang Jenkner  <wjenkner@inode.at>
+
+	New test with a larger number of events.
+
+	* test/automated/file-notify-tests.el (file-notify--test-with-events):
+	Make timeout heuristically depend on the number of events.
+
+	(file-notify-test06-many-events): Use it for new test.
+
+2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Further fixes for kqueue.
+
+	* lisp/filenotify.el (file-notify-callback): Raise also event if
+	directory name matches.
+	(file-notify-add-watch): Add `create' to the flags for `kqueue'.
+
+	* src/kqueue.c (kqueue_generate_event): Use watch_object as
+	argument instead of ident.  Remove callback argument.  Adapt
+	callees.  Check actions whether they are monitored flags.
+
+	* test/automated/file-notify-tests.el (file-notify--test-library):
+	New defun.
+	(file-notify-test00-availability, file-notify-test02-events)
+	(file-notify-test04-file-validity)
+	(file-notify-test05-dir-validity): Use it.
+	(file-notify-test02-events, file-notify-test04-file-validity): Add
+	`read-event' calls between different file actions, in order to
+	give the backends a chance to rais an event.  Needed especially
+	for kqueue.  In case of deleting a directory, there are two
+	`deleted' events.
+
+2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Code cleanup of kqueue.c
+
+	* src/kqueue.c (kqueue_directory_listing): Skip "." and "..".
+	(kqueue_compare_dir_list): Do not loop when calling
+	directory_files_internal.  Remove checks for "." and "..", this is
+	done in kqueue_directory_listing now.
+	(Fkqueue_add_watch): Check for proper emacs_open flags.
+
+2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Doc changes for kqueue
+
+	* doc/lispref/os.texi (File Notifications): Add kqueue as backend.
+	Fix some glitches in the example.
+
+2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Finish implementation in kqueue.c
+
+	* src/kqueue.c (kqueue_directory_listing, kqueue_callback):
+	Simplify access to list.
+	(kqueue_compare_dir_list): Simplify access to list.  Raise
+	`delete' event if directory does not exist any longer.  Otherwise,
+	wait until directory contents has changed.  Fix error in check.
+
+2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	* lisp/filenotify.el (file-notify-add-watch): Fix thinko.
+
+2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	More work on kqueue
+
+	* lisp/filenotify.el (file-notify-callback): Handle also the
+	`rename' event from kqueue.
+	(file-notify-add-watch): Do not register an entry twice.
+
+	* src/kqueue.c (kqueue_directory_listing): New function.
+	(kqueue_generate_event): New argument FILE1.  Adapt callees.
+	(kqueue_compare_dir_list): Rewrite in order to make it more robust.
+
+2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Implement directory events
+
+	* lisp/filenotify.el (file-notify-handle-event)
+	(file-notify-callback): Remove traces.
+
+	* src/kqueue.c: Include <sys/time.h>.
+	(kqueue_generate_event, kqueue_compare_dir_list): New functions.
+	(kqueue_callback): Use them.  Call kevent() with a zero timeout.
+	(Fkqueue_add_watch): Adapt docstring.  Support directory events.
+	Compute initial directory listing.  Close file descriptor in case
+	of errors.
+	(syms_of_kqueue): Declare Qcreate.
+
+2015-11-25  Wolfgang Jenkner  <wjenkner@inode.at>
+
+	Build fixes for kqueue support.
+
+	* src/kqueue.c (Fkqueue_add_watch): O_BINARY is not a POSIX open(3)
+	flag.
+
+	* configure.ac (HAVE_KQUEUE): There is no pkg-config module for native
+	kqueue on *BSD.
+
+2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Continue kqueue implementation
+
+	* lisp/filenotify.el (file-notify-handle-event)
+	(file-notify-callback): Enable trace messages.
+
+	* src/kqueue.c: Include also <sys/types.h>.
+	(kqueue_callback): Remove watch in case of NOTE_DELETE or NOTE_RENAME.
+	(Fkqueue_rm_watch, Fkqueue_valid_p): New functions.
+	(syms_of_kqueue): Add them.
+
+2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Work on kqueue
+
+	* lisp/filenotify.el (file-notify--library)
+	(file-notify-descriptors, file-notify-callback)
+	(file-notify-add-watch, file-notify-rm-watch)
+	(file-notify-valid-p): Add kqueue support.
+
+	* src/keyboard.c (make_lispy_event): Check also for HAVE_KQUEUE.
+
+2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Add kqueue support
+
+	* configure.ac (--with-file-notification): Add kqueue.
+	(top): Remove special test for "${HAVE_NS}" and
+	${with_file_notification}, this is handled inside gfilenotify
+	tests.  Add kqueue tests.  Use NOTIFY_CFLAGS and NOTIFY_LIBS
+	instead of library specific variables.
+
+	* src/Makefile.in: Use NOTIFY_CFLAGS and NOTIFY_LIBS.
+
+	* src/emacs.c (main): Call globals_of_kqueue and syms_of_kqueue.
+
+	* src/kqueue.c: New file.
+
+	* src/lisp.h: Declare extern globals_of_kqueue and syms_of_kqueue.
+
+2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Some final fixes in file notification before merging with master
+
+	* lisp/filenotify.el (file-notify--rm-descriptor): Remove WHAT arg.
+	(file-notify-callback): Improve check for `stopped' event.  Call
+	`file-notify-rm-watch' rather than `file-notify--rm-descriptor'.
+	(file-notify-add-watch): In case FILE is not a directory, call the
+	file monitor for the kqueue backend.  Otherwise, call the
+	directory monitor for the upper directory.
+
+	* src/inotify.c (inotifyevent_to_event): Extract file name from
+	watch_object if the event doesn't provide it.
+	(Finotify_add_watch): Add file name to watch_object.
+
+	* test/automated/file-notify-tests.el (file-notify--test-timeout):
+	Use different timeouts for different libraries.
+	(file-notify--test-with-events): Suppress lock files.  Flush
+	outstanding events before running the body.
+	(file-notify-test02-events, file-notify-test04-file-validity): Do
+	not skip cygwin tests.  Add additional test for file creation.
+	Adapt expected result for different backends.
+	(file-notify-test03-autorevert): Some of the tests don't work for
+	w32notify.
+	(file-notify-test06-many-events): Rename into both directions.
+
+2015-11-24  Phillip Lord  <phillip.lord@russet.org.uk>
+
+	Update elisp-mode-tests for changed file location.
+
+	 * test/lisp/progmodes/elisp-mode-tests.el:
+
+2015-11-24  Phillip Lord  <phillip.lord@russet.org.uk>
+
+	Exclude manual tests from Makefile
+
+	 * test/Makefile.in:
+
+2015-11-24  Phillip Lord  <phillip.lord@russet.org.uk>
+
+	Move package test files to new directory.
+
+	 * test/lisp/emacs-lisp/package-tests.el: Update resoruce file location.
+	 * test/data/package: Moved to test/lisp/emacs-lisp/package-resources
+
+2015-11-24  Phillip Lord  <phillip.lord@russet.org.uk>
+
+	Restore delete Makefiles and fix .gitignore.
+
+	 * .gitignore: Update Makefiles to changed locations
+	 * test/lisp/progmodes/flymake-resources/Makefile,
+	   test/manual/etags/Makefile,
+	   test/manual/etags/make-src/Makefile,
+	   test/manual/indent/Makefile: Restored and moved to new location.
+
+2015-11-24  Phillip Lord  <phillip.lord@russet.org.uk>
+
+	Test infrastructure: updates after directory move
+
+	 * (test/Makefile.in): Support directories several levels deep.
+	 * (test/data/flymake): Rename to test/lisp/progmodes/flymake-resources.
+	 * (test/lisp/progmodes/flymake-tests.el): Support renamed resource directory.
+
+2015-11-24  Phillip Lord  <phillip.lord@russet.org.uk>
+
+	Rename all test files to reflect source layout.
+
+	 * CONTRIBUTE,Makefile.in,configure.ac: Update to reflect
+	   test directory moves.
+	 * test/file-organisation.org: New file.
+	 * test/automated/Makefile.in
+	   test/automated/data/decompress/foo.gz
+	   test/automated/data/epg/pubkey.asc
+	   test/automated/data/epg/seckey.asc
+	   test/automated/data/files-bug18141.el.gz
+	   test/automated/data/flymake/test.c
+	   test/automated/data/flymake/test.pl
+	   test/automated/data/package/archive-contents
+	   test/automated/data/package/key.pub
+	   test/automated/data/package/key.sec
+	   test/automated/data/package/multi-file-0.2.3.tar
+	   test/automated/data/package/multi-file-readme.txt
+	   test/automated/data/package/newer-versions/archive-contents
+	   test/automated/data/package/newer-versions/new-pkg-1.0.el
+	   test/automated/data/package/newer-versions/simple-single-1.4.el
+	   test/automated/data/package/package-test-server.py
+	   test/automated/data/package/signed/archive-contents
+	   test/automated/data/package/signed/archive-contents.sig
+	   test/automated/data/package/signed/signed-bad-1.0.el
+	   test/automated/data/package/signed/signed-bad-1.0.el.sig
+	   test/automated/data/package/signed/signed-good-1.0.el
+	   test/automated/data/package/signed/signed-good-1.0.el.sig
+	   test/automated/data/package/simple-depend-1.0.el
+	   test/automated/data/package/simple-single-1.3.el
+	   test/automated/data/package/simple-single-readme.txt
+	   test/automated/data/package/simple-two-depend-1.1.el
+	   test/automated/abbrev-tests.el
+	   test/automated/auto-revert-tests.el
+	   test/automated/calc-tests.el
+	   test/automated/icalendar-tests.el
+	   test/automated/character-fold-tests.el
+	   test/automated/comint-testsuite.el
+	   test/automated/descr-text-test.el
+	   test/automated/electric-tests.el
+	   test/automated/cl-generic-tests.el
+	   test/automated/cl-lib-tests.el
+	   test/automated/eieio-test-methodinvoke.el
+	   test/automated/eieio-test-persist.el
+	   test/automated/eieio-tests.el
+	   test/automated/ert-tests.el
+	   test/automated/ert-x-tests.el
+	   test/automated/generator-tests.el
+	   test/automated/let-alist.el
+	   test/automated/map-tests.el
+	   test/automated/advice-tests.el
+	   test/automated/package-test.el
+	   test/automated/pcase-tests.el
+	   test/automated/regexp-tests.el
+	   test/automated/seq-tests.el
+	   test/automated/subr-x-tests.el
+	   test/automated/tabulated-list-test.el
+	   test/automated/thunk-tests.el
+	   test/automated/timer-tests.el
+	   test/automated/epg-tests.el
+	   test/automated/eshell.el
+	   test/automated/faces-tests.el
+	   test/automated/file-notify-tests.el
+	   test/automated/auth-source-tests.el
+	   test/automated/gnus-tests.el
+	   test/automated/message-mode-tests.el
+	   test/automated/help-fns.el
+	   test/automated/imenu-test.el
+	   test/automated/info-xref.el
+	   test/automated/mule-util.el
+	   test/automated/isearch-tests.el
+	   test/automated/json-tests.el
+	   test/automated/bytecomp-tests.el
+	   test/automated/coding-tests.el
+	   test/automated/core-elisp-tests.el
+	   test/automated/decoder-tests.el
+	   test/automated/files.el
+	   test/automated/font-parse-tests.el
+	   test/automated/lexbind-tests.el
+	   test/automated/occur-tests.el
+	   test/automated/process-tests.el
+	   test/automated/syntax-tests.el
+	   test/automated/textprop-tests.el
+	   test/automated/undo-tests.el
+	   test/automated/man-tests.el
+	   test/automated/completion-tests.el
+	   test/automated/dbus-tests.el
+	   test/automated/newsticker-tests.el
+	   test/automated/sasl-scram-rfc-tests.el
+	   test/automated/tramp-tests.el
+	   test/automated/obarray-tests.el
+	   test/automated/compile-tests.el
+	   test/automated/elisp-mode-tests.el
+	   test/automated/f90.el
+	   test/automated/flymake-tests.el
+	   test/automated/python-tests.el
+	   test/automated/ruby-mode-tests.el
+	   test/automated/subword-tests.el
+	   test/automated/replace-tests.el
+	   test/automated/simple-test.el
+	   test/automated/sort-tests.el
+	   test/automated/subr-tests.el
+	   test/automated/reftex-tests.el
+	   test/automated/sgml-mode-tests.el
+	   test/automated/tildify-tests.el
+	   test/automated/thingatpt.el
+	   test/automated/url-future-tests.el
+	   test/automated/url-util-tests.el
+	   test/automated/add-log-tests.el
+	   test/automated/vc-bzr.el
+	   test/automated/vc-tests.el
+	   test/automated/xml-parse-tests.el
+	   test/BidiCharacterTest.txt
+	   test/biditest.el
+	   test/cedet/cedet-utests.el
+	   test/cedet/ede-tests.el
+	   test/cedet/semantic-ia-utest.el
+	   test/cedet/semantic-tests.el
+	   test/cedet/semantic-utest-c.el
+	   test/cedet/semantic-utest.el
+	   test/cedet/srecode-tests.el
+	   test/cedet/tests/test.c
+	   test/cedet/tests/test.el
+	   test/cedet/tests/test.make
+	   test/cedet/tests/testdoublens.cpp
+	   test/cedet/tests/testdoublens.hpp
+	   test/cedet/tests/testfriends.cpp
+	   test/cedet/tests/testjavacomp.java
+	   test/cedet/tests/testnsp.cpp
+	   test/cedet/tests/testpolymorph.cpp
+	   test/cedet/tests/testspp.c
+	   test/cedet/tests/testsppcomplete.c
+	   test/cedet/tests/testsppreplace.c
+	   test/cedet/tests/testsppreplaced.c
+	   test/cedet/tests/testsubclass.cpp
+	   test/cedet/tests/testsubclass.hh
+	   test/cedet/tests/testtypedefs.cpp
+	   test/cedet/tests/testvarnames.c
+	   test/etags/CTAGS.good
+	   test/etags/ETAGS.good_1
+	   test/etags/ETAGS.good_2
+	   test/etags/ETAGS.good_3
+	   test/etags/ETAGS.good_4
+	   test/etags/ETAGS.good_5
+	   test/etags/ETAGS.good_6
+	   test/etags/a-src/empty.zz
+	   test/etags/a-src/empty.zz.gz
+	   test/etags/ada-src/2ataspri.adb
+	   test/etags/ada-src/2ataspri.ads
+	   test/etags/ada-src/etags-test-for.ada
+	   test/etags/ada-src/waroquiers.ada
+	   test/etags/c-src/a/b/b.c
+	   test/etags/c-src/abbrev.c
+	   test/etags/c-src/c.c
+	   test/etags/c-src/dostorture.c
+	   test/etags/c-src/emacs/src/gmalloc.c
+	   test/etags/c-src/emacs/src/keyboard.c
+	   test/etags/c-src/emacs/src/lisp.h
+	   test/etags/c-src/emacs/src/regex.h
+	   test/etags/c-src/etags.c
+	   test/etags/c-src/exit.c
+	   test/etags/c-src/exit.strange_suffix
+	   test/etags/c-src/fail.c
+	   test/etags/c-src/getopt.h
+	   test/etags/c-src/h.h
+	   test/etags/c-src/machsyscalls.c
+	   test/etags/c-src/machsyscalls.h
+	   test/etags/c-src/sysdep.h
+	   test/etags/c-src/tab.c
+	   test/etags/c-src/torture.c
+	   test/etags/cp-src/MDiagArray2.h
+	   test/etags/cp-src/Range.h
+	   test/etags/cp-src/burton.cpp
+	   test/etags/cp-src/c.C
+	   test/etags/cp-src/clheir.cpp.gz
+	   test/etags/cp-src/clheir.hpp
+	   test/etags/cp-src/conway.cpp
+	   test/etags/cp-src/conway.hpp
+	   test/etags/cp-src/fail.C
+	   test/etags/cp-src/functions.cpp
+	   test/etags/cp-src/screen.cpp
+	   test/etags/cp-src/screen.hpp
+	   test/etags/cp-src/x.cc
+	   test/etags/el-src/TAGTEST.EL
+	   test/etags/el-src/emacs/lisp/progmodes/etags.el
+	   test/etags/erl-src/gs_dialog.erl
+	   test/etags/f-src/entry.for
+	   test/etags/f-src/entry.strange.gz
+	   test/etags/f-src/entry.strange_suffix
+	   test/etags/forth-src/test-forth.fth
+	   test/etags/html-src/algrthms.html
+	   test/etags/html-src/index.shtml
+	   test/etags/html-src/software.html
+	   test/etags/html-src/softwarelibero.html
+	   test/etags/lua-src/allegro.lua
+	   test/etags/objc-src/PackInsp.h
+	   test/etags/objc-src/PackInsp.m
+	   test/etags/objc-src/Subprocess.h
+	   test/etags/objc-src/Subprocess.m
+	   test/etags/objcpp-src/SimpleCalc.H
+	   test/etags/objcpp-src/SimpleCalc.M
+	   test/etags/pas-src/common.pas
+	   test/etags/perl-src/htlmify-cystic
+	   test/etags/perl-src/kai-test.pl
+	   test/etags/perl-src/yagrip.pl
+	   test/etags/php-src/lce_functions.php
+	   test/etags/php-src/ptest.php
+	   test/etags/php-src/sendmail.php
+	   test/etags/prol-src/natded.prolog
+	   test/etags/prol-src/ordsets.prolog
+	   test/etags/ps-src/rfc1245.ps
+	   test/etags/pyt-src/server.py
+	   test/etags/tex-src/gzip.texi
+	   test/etags/tex-src/nonewline.tex
+	   test/etags/tex-src/testenv.tex
+	   test/etags/tex-src/texinfo.tex
+	   test/etags/y-src/atest.y
+	   test/etags/y-src/cccp.c
+	   test/etags/y-src/cccp.y
+	   test/etags/y-src/parse.c
+	   test/etags/y-src/parse.y
+	   test/indent/css-mode.css
+	   test/indent/js-indent-init-dynamic.js
+	   test/indent/js-indent-init-t.js
+	   test/indent/js-jsx.js
+	   test/indent/js.js
+	   test/indent/latex-mode.tex
+	   test/indent/modula2.mod
+	   test/indent/nxml.xml
+	   test/indent/octave.m
+	   test/indent/pascal.pas
+	   test/indent/perl.perl
+	   test/indent/prolog.prolog
+	   test/indent/ps-mode.ps
+	   test/indent/ruby.rb
+	   test/indent/scheme.scm
+	   test/indent/scss-mode.scss
+	   test/indent/sgml-mode-attribute.html
+	   test/indent/shell.rc
+	   test/indent/shell.sh
+	   test/redisplay-testsuite.el
+	   test/rmailmm.el
+	   test/automated/buffer-tests.el
+	   test/automated/cmds-tests.el
+	   test/automated/data-tests.el
+	   test/automated/finalizer-tests.el
+	   test/automated/fns-tests.el
+	   test/automated/inotify-test.el
+	   test/automated/keymap-tests.el
+	   test/automated/print-tests.el
+	   test/automated/libxml-tests.el
+	   test/automated/zlib-tests.el: Files Moved.
+
+2015-11-20  Michael Albinus  <michael.albinus@gmx.de>
+
+	Rework file notifications, kqueue has problems with directory monitors
+
+	* lisp/filenotify.el (file-notify-add-watch): Call the native
+	add-watch function on the file, not on the dir.
+
+	* src/kqueue.c (kqueue_compare_dir_list): Make also bookkeeping
+	about already deleted entries.
+
+	* test/automated/auto-revert-tests.el
+	(auto-revert-test01-auto-revert-several-files): Do not call "cp -f"
+	since this deletes the target file first.
+
+	* test/automated/file-notify-tests.el (file-notify--test-event-test):
+	Make stronger checks.
+	(file-notify-test01-add-watch, file-notify-test02-events)
+	(file-notify-test04-file-validity, file-notify-test05-dir-validity):
+	Rewrite in order to call file monitors but directory monitors.
+	(file-notify-test06-many-events): Ler rename work in both directions.
+
+2015-11-19  Michael Albinus  <michael.albinus@gmx.de>
+
+	Continie with pending events
+
+	* src/kqueue.c (pending_events): Remove global variable.
+	(kqueue_compare_dir_list): Create `write' event for not used
+	pending events.
+	(globals_of_kqueue): Remove initialization of pending_events.
+
+2015-11-19  Michael Albinus  <michael.albinus@gmx.de>
+
+	Improve loops in file-notify-test06-many-events
+
+	* test/automated/file-notify-tests.el (file-notify-test06-many-events):
+	Use `read-event' pauses for the `write-file' loops; otherwise
+	events are lost in inotify and gfilenotify cases.
+
+2015-11-19  Michael Albinus  <michael.albinus@gmx.de>
+
+	Handle more complex rename operation in kqueue
+
+	* src/kqueue.c (pending_events): New variable.
+	(kqueue_compare_dir_list): Handle more complex rename operation.
+	(globals_of_kqueue): Initialize pending_events.
+
+	* test/automated/file-notify-tests.el (file-notify-test06-many-events):
+	Adapt expected events in the `rename-file' case.
+	(file-notify-test06-many-events-remote): Declare.
+
+2015-11-18  Wolfgang Jenkner  <wjenkner@inode.at>
+
+	New test with a larger number of events.
+
+	* test/automated/file-notify-tests.el (file-notify--test-with-events):
+	Make timeout heuristically depend on the number of events.
+
+	(file-notify-test06-many-events): Use it for new test.
+
+2015-11-18  Michael Albinus  <michael.albinus@gmx.de>
+
+	Further fixes for kqueue.
+
+	* lisp/filenotify.el (file-notify-callback): Raise also event if
+	directory name matches.
+	(file-notify-add-watch): Add `create' to the flags for `kqueue'.
+
+	* src/kqueue.c (kqueue_generate_event): Use watch_object as
+	argument instead of ident.  Remove callback argument.  Adapt
+	callees.  Check actions whether they are monitored flags.
+
+	* test/automated/file-notify-tests.el (file-notify--test-library):
+	New defun.
+	(file-notify-test00-availability, file-notify-test02-events)
+	(file-notify-test04-file-validity)
+	(file-notify-test05-dir-validity): Use it.
+	(file-notify-test02-events, file-notify-test04-file-validity): Add
+	`read-event' calls between different file actions, in order to
+	give the backends a chance to rais an event.  Needed especially
+	for kqueue.  In case of deleting a directory, there are two
+	`deleted' events.
+
+2015-11-17  Michael Albinus  <michael.albinus@gmx.de>
+
+	Code cleanup of kqueue.c
+
+	* src/kqueue.c (kqueue_directory_listing): Skip "." and "..".
+	(kqueue_compare_dir_list): Do not loop when calling
+	directory_files_internal.  Remove checks for "." and "..", this is
+	done in kqueue_directory_listing now.
+	(Fkqueue_add_watch): Check for proper emacs_open flags.
+
+2015-11-16  Michael Albinus  <michael.albinus@gmx.de>
+
+	Doc changes for kqueue
+
+	* doc/lispref/os.texi (File Notifications): Add kqueue as backend.
+	Fix some glitches in the example.
+
+2015-11-16  Michael Albinus  <michael.albinus@gmx.de>
+
+	Finish implementation in kqueue.c
+
+	* src/kqueue.c (kqueue_directory_listing, kqueue_callback):
+	Simplify access to list.
+	(kqueue_compare_dir_list): Simplify access to list.  Raise
+	`delete' event if directory does not exist any longer.  Otherwise,
+	wait until directory contents has changed.  Fix error in check.
+
+2015-11-16  Michael Albinus  <michael.albinus@gmx.de>
+
+	* lisp/filenotify.el (file-notify-add-watch): Fix thinko.
+
+2015-11-15  Michael Albinus  <michael.albinus@gmx.de>
+
+	More work on kqueue
+
+	* lisp/filenotify.el (file-notify-callback): Handle also the
+	`rename' event from kqueue.
+	(file-notify-add-watch): Do not register an entry twice.
+
+	* src/kqueue.c (kqueue_directory_listing): New function.
+	(kqueue_generate_event): New argument FILE1.  Adapt callees.
+	(kqueue_compare_dir_list): Rewrite in order to make it more robust.
+
+2015-11-14  Michael Albinus  <michael.albinus@gmx.de>
+
+	Implement directory events
+
+	* lisp/filenotify.el (file-notify-handle-event)
+	(file-notify-callback): Remove traces.
+
+	* src/kqueue.c: Include <sys/time.h>.
+	(kqueue_generate_event, kqueue_compare_dir_list): New functions.
+	(kqueue_callback): Use them.  Call kevent() with a zero timeout.
+	(Fkqueue_add_watch): Adapt docstring.  Support directory events.
+	Compute initial directory listing.  Close file descriptor in case
+	of errors.
+	(syms_of_kqueue): Declare Qcreate.
+
+2015-11-11  Wolfgang Jenkner  <wjenkner@inode.at>
+
+	Build fixes for kqueue support.
+
+	* src/kqueue.c (Fkqueue_add_watch): O_BINARY is not a POSIX open(3)
+	flag.
+
+	* configure.ac (HAVE_KQUEUE): There is no pkg-config module for native
+	kqueue on *BSD.
+
+2015-11-11  Michael Albinus  <michael.albinus@gmx.de>
+
+	Continue kqueue implementation
+
+	* lisp/filenotify.el (file-notify-handle-event)
+	(file-notify-callback): Enable trace messages.
+
+	* src/kqueue.c: Include also <sys/types.h>.
+	(kqueue_callback): Remove watch in case of NOTE_DELETE or NOTE_RENAME.
+	(Fkqueue_rm_watch, Fkqueue_valid_p): New functions.
+	(syms_of_kqueue): Add them.
+
+2015-11-11  Michael Albinus  <michael.albinus@gmx.de>
+
+	Work on kqueue
+
+	* lisp/filenotify.el (file-notify--library)
+	(file-notify-descriptors, file-notify-callback)
+	(file-notify-add-watch, file-notify-rm-watch)
+	(file-notify-valid-p): Add kqueue support.
+
+	* src/keyboard.c (make_lispy_event): Check also for HAVE_KQUEUE.
+
+2015-11-11  Michael Albinus  <michael.albinus@gmx.de>
+
+	Add kqueue support
+
+	* configure.ac (--with-file-notification): Add kqueue.
+	(top): Remove special test for "${HAVE_NS}" and
+	${with_file_notification}, this is handled inside gfilenotify
+	tests.  Add kqueue tests.  Use NOTIFY_CFLAGS and NOTIFY_LIBS
+	instead of library specific variables.
+
+	* src/Makefile.in: Use NOTIFY_CFLAGS and NOTIFY_LIBS.
+
+	* src/emacs.c (main): Call globals_of_kqueue and syms_of_kqueue.
+
+	* src/kqueue.c: New file.
+
+	* src/lisp.h: Declare extern globals_of_kqueue and syms_of_kqueue.
+
 2015-11-21  Wilson Snyder  <wsnyder@wsnyder.org>
 
 	verilog-mode.el: Commentary and fix pre-Emacs 21 behavior.
@@ -19132,7 +20014,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit ea78129522f428888607151e4f91ade1f4839f3f (inclusive).
+commit 9a2363ec04c24a6959902da9b8eff2f1559ab3e0 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
