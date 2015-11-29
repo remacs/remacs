@@ -1889,12 +1889,13 @@ end of the result if it falls short of @var{width}.  It is also used at
 the beginning of the result if one multi-column character in
 @var{string} extends across the column @var{start-column}.
 
+@vindex truncate-string-ellipsis
 If @var{ellipsis} is non-@code{nil}, it should be a string which will
 replace the end of @var{string} (including any padding) if it extends
 beyond @var{width}, unless the display width of @var{string} is equal
 to or less than the display width of @var{ellipsis}.  If
 @var{ellipsis} is non-@code{nil} and not a string, it stands for
-@code{"..."}.
+the value of the variable @code{truncate-string-ellipsis}.
 
 @example
 (truncate-string-to-width "\tab\t" 12 4)

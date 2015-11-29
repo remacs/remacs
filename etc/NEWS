@@ -166,8 +166,6 @@ have the equivalent of a primary selection.
 ** `insert-register' now leaves point after the inserted text
 when called interactively.  A prefix argument toggles this behavior.
 
-** New var `truncate-string-ellipsis' to choose how to indicate truncation.
-
 +++
 ** The new variable `term-file-aliases' replaces some files from lisp/term.
 The function `tty-run-terminal-initialization' consults this variable
@@ -1301,6 +1299,9 @@ if the terminal cannot display curved quotes.
 
 ** Standard output and error streams now transliterate characters via
 standard-display-table, and encode output using locale-coding-system.
+
++++
+** New var `truncate-string-ellipsis' to choose how to indicate truncation.
 
 ** Miscellaneous name change
 
