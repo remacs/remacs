@@ -24,7 +24,7 @@ CC      = gcc
 LD      = gcc
 LDFLAGS =
 
-# On MS-Windows, say "make SO=.dll" to build the module
+# On MS-Windows, say "make SO=dll" to build the module
 SO      = so
 # -fPIC is a no-op on Windows, but causes a compiler warning
 ifeq ($(SO),dll)
