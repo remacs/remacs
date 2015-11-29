@@ -150,9 +150,8 @@ Any character in STRING that has an entry in
 `character-fold-table' is replaced with that entry (which is a
 regexp) and other characters are `regexp-quote'd.
 
-Note that this function can potentially return regexps too long
-for Emacs to handle.  If STRING is longer than 30 characters,
-consider not using this function.
+If the resulting regexp would be too long for Emacs to handle,
+just return the result of calling `regexp-quote' on STRING.
 
 FROM is for internal use.  It specifies an index in the STRING
 from which to start."
@@ -222,7 +221,11 @@ from which to start."
       (setq i (1+ i)))
     (when (> spaces 0)
       (push (character-fold--make-space-string spaces) out))
-    (apply #'concat (nreverse out))))
+    (let ((regexp (apply #'concat (nreverse out))))
+      ;; Limited by `MAX_BUF_SIZE' in `regex.c'.
+      (if (> (length regexp) 32000)
+          (regexp-quote string)
+        regexp))))
 
 
 ;;; Commands provided for completeness.
