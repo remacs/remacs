@@ -161,6 +161,8 @@ This makes it possible to paste big integers since they will be read as
 floats, otherwise the Emacs reader will fail on them."
   :type  'boolean
   :group 'calculator)
+(make-obsolete-variable 'calculator-paste-decimals
+                        "it is no longer used." nil)
 
 (defcustom calculator-copy-displayer nil
   "If non-nil, this is any value that can be used for
@@ -855,39 +857,13 @@ The result should not exceed the screen width."
   "Convert the given STR to a number, according to the value of
 `calculator-input-radix'."
   (if calculator-input-radix
-    (let ((radix
-           (cdr (assq calculator-input-radix
-                      '((bin . 2) (oct . 8) (hex . 16)))))
-          (i -1) (value 0) (new-value 0))
-      ;; assume mostly valid input (e.g., characters in range)
-      (while (< (setq i (1+ i)) (length str))
-        (setq new-value
-              (let* ((ch (upcase (aref str i)))
-                     (n (cond ((< ch ?0)  nil)
-                              ((<= ch ?9) (- ch ?0))
-                              ((< ch ?A)  nil)
-                              ((<= ch ?Z) (- ch (- ?A 10)))
-                              (t          nil))))
-                (if (and n (<= 0 n) (< n radix))
-                  (+ n (* radix value))
-                  (progn
-                    (calculator-message
-                     "Warning: Ignoring bad input character `%c'." ch)
-                    (sit-for 1)
-                    value))))
-        (when (if (< new-value 0) (> value 0) (< value 0))
-          (calculator-message "Warning: Overflow in input."))
-        (setq value new-value))
-      value)
-    (car (read-from-string
-          (cond ((equal "." str) "0.0")
-                ((string-match-p "[eE][+-]?$" str) (concat str "0"))
-                ((string-match-p "\\.[0-9]\\|[eE]" str) str)
-                ((string-match-p "\\." str)
-                 ;; do this because Emacs reads "23." as an integer
-                 (concat str "0"))
-                ((stringp str) (concat str ".0"))
-                (t "0.0"))))))
+    (string-to-number str (cadr (assq calculator-input-radix
+                                      '((bin 2) (oct 8) (hex 16)))))
+    (let* ((str (replace-regexp-in-string
+                 "\\.\\([^0-9].*\\)?$" ".0\\1" str))
+           (str (replace-regexp-in-string
+                 "[eE][+-]?\\([^0-9].*\\)?$" "e0\\1" str)))
+      (string-to-number str))))
 
 (defun calculator-push-curnum ()
   "Push the numeric value of the displayed number to the stack."
@@ -1329,7 +1305,8 @@ Used with +/- for entering them as digits in numbers like 1e-3 (there is
 no need for negative numbers since these are handled by unary
 operators)."
   (interactive)
-  (if (and (not calculator-display-fragile)
+  (if (and (not calculator-input-radix)
+           (not calculator-display-fragile)
            calculator-curnum
            (string-match-p "[eE]$" calculator-curnum))
     (calculator-digit)
@@ -1497,25 +1474,27 @@ Used by `calculator-paste' and `get-register'."
              (or calculator-display-fragile
                  (not (numberp (car calculator-stack)))))
     (calculator-clear-fragile)
-    (setq calculator-curnum (let ((calculator-displayer "%S"))
-                              (calculator-number-to-string val)))
+    (setq calculator-curnum
+          (let ((calculator-displayer "%S")
+                (calculator-radix-grouping-mode nil)
+                (calculator-output-radix calculator-input-radix))
+            (calculator-number-to-string val)))
     (calculator-update-display)))
 
-(defun calculator-paste ()
-  "Paste a value from the `kill-ring'."
-  (interactive)
-  (calculator-put-value
-   (let ((str (replace-regexp-in-string
-               "^ *\\(.+[^ ]\\) *$" "\\1" (current-kill 0))))
-     (when (and (not calculator-input-radix)
-                calculator-paste-decimals
-                (string-match
-                 "\\([0-9]+\\)\\(\\.[0-9]+\\)?\\(e[0-9]+\\)?"
-                 str))
-       (setq str (concat (or (match-string 1 str) "0")
-                         (or (match-string 2 str) ".0")
-                         (or (match-string 3 str) ""))))
-     (ignore-errors (calculator-string-to-number str)))))
+(defun calculator-paste (arg)
+  "Paste a value from the `kill-ring'.
+
+With a prefix argument, paste the raw string as a sequence of key
+presses, which can be used to paste expressions.  Note that this
+is literal; examples: spaces will store values, pasting \"1+2\"
+will not produce 3 if it's done you're entering a number or after
+a multiplication."
+  (interactive "P")
+  (let ((str (current-kill 0)))
+    (if arg
+      (setq unread-command-events
+            `(,@(listify-key-sequence str) ,@unread-command-events))
+      (calculator-put-value (calculator-string-to-number str)))))
 
 (defun calculator-register-read-with-preview (prompt)
   "Similar to `register-read-with-preview' but for calculator
