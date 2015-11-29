@@ -4851,8 +4851,9 @@ frame.  The selected window is not changed by this function."
 	      (set-window-parameter (window-parent new) 'window-atom t))
 	    (set-window-parameter new 'window-atom t)))
 
-	  ;; Sanitize sizes.
-	  (window--sanitize-window-sizes frame horizontal)
+	  ;; Sanitize sizes unless SIZE was specified.
+	  (unless size
+            (window--sanitize-window-sizes frame horizontal))
 
 	  (run-window-configuration-change-hook frame)
 	  (run-window-scroll-functions new)
