@@ -281,32 +281,6 @@
 
 	* src/lisp.h: Declare extern globals_of_kqueue and syms_of_kqueue.
 
-2015-11-25  Michael Albinus  <michael.albinus@gmx.de>
-
-	Some final fixes in file notification before merging with master
-
-	* lisp/filenotify.el (file-notify--rm-descriptor): Remove WHAT arg.
-	(file-notify-callback): Improve check for `stopped' event.  Call
-	`file-notify-rm-watch' rather than `file-notify--rm-descriptor'.
-	(file-notify-add-watch): In case FILE is not a directory, call the
-	file monitor for the kqueue backend.  Otherwise, call the
-	directory monitor for the upper directory.
-
-	* src/inotify.c (inotifyevent_to_event): Extract file name from
-	watch_object if the event doesn't provide it.
-	(Finotify_add_watch): Add file name to watch_object.
-
-	* test/automated/file-notify-tests.el (file-notify--test-timeout):
-	Use different timeouts for different libraries.
-	(file-notify--test-with-events): Suppress lock files.  Flush
-	outstanding events before running the body.
-	(file-notify-test02-events, file-notify-test04-file-validity): Do
-	not skip cygwin tests.  Add additional test for file creation.
-	Adapt expected result for different backends.
-	(file-notify-test03-autorevert): Some of the tests don't work for
-	w32notify.
-	(file-notify-test06-many-events): Rename into both directions.
-
 2015-11-24  Phillip Lord  <phillip.lord@russet.org.uk>
 
 	Update elisp-mode-tests for changed file location.
