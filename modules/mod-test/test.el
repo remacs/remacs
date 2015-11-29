@@ -36,7 +36,9 @@
                 (string-match
                  (if (eq system-type 'windows-nt)
                      "#<module function at \\(0x\\)?[0-9a-fA-F]+ from .*>"
-                   "#<module function Fmod_test_sum from .*>")
+                   (if (eq system-type 'cygwin)
+                       "#<module function at \\(0x\\)?[0-9a-fA-F]+>"
+                     "#<module function Fmod_test_sum from .*>"))
                  (nth 1 descr))))
     (should (= (nth 2 descr) 3)))
   (should-error (mod-test-sum "1" 2) :type 'wrong-type-argument)
