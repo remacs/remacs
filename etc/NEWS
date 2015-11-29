@@ -181,23 +181,6 @@ for use in Emacs bug reports.
 hiding character but the default `.' can be used by let-binding the
 variable `read-hide-char'.
 
-** The new functions `string-collate-lessp' and `string-collate-equalp'
-preserve the collation order as defined by the system's locale(1)
-environment.  For the time being this is implemented for modern POSIX
-systems and for MS-Windows, for other systems they fall back to their
-counterparts `string-lessp' and `string-equal'.
-
-*** The ls-lisp package uses `string-collate-lessp' to sort file names.
-If you want the old, locale-independent sorting, customize the new
-option `ls-lisp-use-string-collate' to a nil value.
-
-*** The MS-Windows specific variable `w32-collate-ignore-punctuation',
-if set to a non-nil value, causes the above 2 functions to ignore
-symbol and punctuation characters when collating strings.  This
-emulates the behavior of modern Posix platforms when the locale's
-codeset is "UTF-8" (as in "en_US.UTF-8").  This is needed because
-MS-Windows doesn't support UTF-8 as codeset in its locales.
-
 +++
 ** The new function `bidi-find-overridden-directionality' allows to
 find characters whose directionality was, perhaps maliciously,
@@ -1198,6 +1181,26 @@ evaluated (and should return a string) when the closure is built.
 
 ** New function `string-greaterp', which return the opposite result of
 `string-lessp'.
+
++++
+** The new functions `string-collate-lessp' and `string-collate-equalp'
+preserve the collation order as defined by the system's locale(1)
+environment.  For the time being this is implemented for modern POSIX
+systems and for MS-Windows, for other systems they fall back to their
+counterparts `string-lessp' and `string-equal'.
+
+---
+*** The ls-lisp package uses `string-collate-lessp' to sort file names.
+If you want the old, locale-independent sorting, customize the new
+option `ls-lisp-use-string-collate' to a nil value.
+
++++
+*** The MS-Windows specific variable `w32-collate-ignore-punctuation',
+if set to a non-nil value, causes the above 2 functions to ignore
+symbol and punctuation characters when collating strings.  This
+emulates the behavior of modern Posix platforms when the locale's
+codeset is "UTF-8" (as in "en_US.UTF-8").  This is needed because
+MS-Windows doesn't support UTF-8 as codeset in its locales.
 
 ** New function `alist-get', which is also a valid place (aka lvalue).
 
