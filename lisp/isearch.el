@@ -2643,16 +2643,23 @@ Can be changed via `isearch-search-fun-function' for special needs."
                                        (isearch-regexp isearch-regexp-lax-whitespace)
                                        (t isearch-lax-whitespace))
                                   search-whitespace-regexp)))
-      (funcall
-       (if isearch-forward #'re-search-forward #'re-search-backward)
-       (cond (isearch-regexp-function
-              (let ((lax (isearch--lax-regexp-function-p)))
-                (if (functionp isearch-regexp-function)
-                    (funcall isearch-regexp-function string lax)
-                  (word-search-regexp string lax))))
-             (isearch-regexp string)
-             (t (regexp-quote string)))
-       bound noerror count))))
+      (condition-case er
+          (funcall
+           (if isearch-forward #'re-search-forward #'re-search-backward)
+           (cond (isearch-regexp-function
+                  (let ((lax (isearch--lax-regexp-function-p)))
+                    (if (functionp isearch-regexp-function)
+                        (funcall isearch-regexp-function string lax)
+                      (word-search-regexp string lax))))
+                 (isearch-regexp string)
+                 (t (regexp-quote string)))
+           bound noerror count)
+        (search-failed
+         (signal (car er)
+                 (let ((prefix (get isearch-regexp-function 'isearch-message-prefix)))
+                   (if (and isearch-regexp-function (stringp prefix))
+                       (list (format "%s   [using %ssearch]" string prefix))
+                     (cdr er)))))))))
 
 (defun isearch-search-string (string bound noerror)
   "Search for the first occurrence of STRING or its translation.
