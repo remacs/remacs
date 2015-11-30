@@ -1361,7 +1361,7 @@ buffers. So with these a boundary is inserted only every 20th command,
 so that these can be undone as a group.  By default commands
 @code{self-insert-command}, which produces self-inserting input
 characters (@pxref{Commands for Insertion}), and @code{delete-char}
-which deletes characters (@pxref{Deleting Text}) are amalgamating.
+which deletes characters (@pxref{Deletion}) are amalgamating.
 Where a command affects the contents of several buffers as may happen,
 for example, if a function on the @code{post-command-hook} affects a
 buffer other than the @code{current-buffer}, then @code{undo-boundary}
