@@ -125,6 +125,10 @@ endef
 
 $(foreach test,${TESTS},$(eval $(call test_template,${test})))
 
+## Include dependencies between test files and the files they test.
+## We do this without the file and eval directly, but then we would
+## have to run Emacs for every make invocation, and it might not be
+## available during clean.
 -include make-test-deps.mk
 
 ## Re-run all the tests every time.
@@ -141,6 +145,7 @@ check-maybe: ${LOGFILES}
 
 clean mostlyclean:
 	-rm -f ${LOGFILES} ${LOGSAVEFILES}
+	-rm make-test-deps.mk
 
 bootstrap-clean: clean
 	-rm -f ${ELCFILES}
@@ -151,7 +156,7 @@ distclean: clean
 maintainer-clean: distclean bootstrap-clean
 
 make-test-deps.mk: $(ELFILES) make-test-deps.emacs-lisp
-	../src/emacs --batch -l make-test-deps.emacs-lisp \
+	$(EMACS) --batch -l make-test-deps.emacs-lisp \
 	--eval "(make-test-deps \"`pwd`\")" \
 	2> $@
 # Makefile ends here.
