@@ -13581,6 +13581,27 @@ redisplay_internal (void)
 	   && (current_buffer->clip_changed || window_outdated (w))
 	   && resize_mini_window (w, false))
     {
+      if (sf->redisplay)
+	{
+	  Lisp_Object functions;
+	  ptrdiff_t count1 = SPECPDL_INDEX ();
+
+	  record_unwind_save_match_data ();
+
+	  /* Clear flag first in case we get an error below.  */
+	  FRAME_WINDOW_SIZES_CHANGED (sf) = false;
+	  functions = Vwindow_size_change_functions;
+
+	  while (CONSP (functions))
+	    {
+	      if (!EQ (XCAR (functions), Qt))
+		call1 (XCAR (functions), selected_frame);
+	      functions = XCDR (functions);
+	    }
+
+	  unbind_to (count1, Qnil);
+	}
+
       /* Resized active mini-window to fit the size of what it is
          showing if its contents might have changed.  */
       must_finish = true;
