@@ -1577,6 +1577,9 @@ See also `multi-occur'."
 		    ;; Highlight the matches
 		    (let ((len (length curstring))
 			  (start 0))
+		      ;; Count empty lines that don't use next loop (Bug#22062).
+		      (when (zerop len)
+			(setq matches (1+ matches)))
 		      (while (and (< start len)
 				  (string-match regexp curstring start))
 			(setq matches (1+ matches))
