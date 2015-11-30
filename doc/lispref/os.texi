@@ -2929,7 +2929,7 @@ Emacs takes some effort to protect against misuse of these variables,
 a security hole can be created merely by a package setting
 @code{safe-local-variable} too optimistically, a problem that is all
 too common.  To disable this feature for both files and directories,
-set @code{enable-local-variables} to nil.
+set @code{enable-local-variables} to @code{nil}.
 
 @item Access control
 Although Emacs normally respects access permissions of the underlying
