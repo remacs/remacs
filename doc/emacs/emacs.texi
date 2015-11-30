@@ -188,6 +188,7 @@ Advanced Features
 * Sending Mail::        Sending mail in Emacs.
 * Rmail::               Reading mail in Emacs.
 * Gnus::                A flexible mail and news reader.
+* Host Security::       Security issues on a single computer.
 * Network Security::    Managing the network security.
 * Document View::       Viewing PDF, PS and DVI files.
 * EWW::                 A web browser in Emacs.
