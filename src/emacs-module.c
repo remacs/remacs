@@ -850,15 +850,15 @@ static Lisp_Object
 value_to_lisp (emacs_value v)
 {
 #ifdef WIDE_EMACS_INT
-  EMACS_INT tmp = (EMACS_INT)v;
+  ptrdiff_t tmp = (ptrdiff_t)v;
   int tag = tmp & ((1 << GCTYPEBITS) - 1);
   Lisp_Object o;
   switch (tag)
     {
     case_Lisp_Int:
-      o = make_lisp_ptr ((tmp - tag) >> GCTYPEBITS, tag); break;
+      o = make_lisp_ptr ((void *)((tmp - tag) >> GCTYPEBITS), tag); break;
     default:
-      o = make_lisp_ptr ((void*)(tmp - tag), tag);
+      o = make_lisp_ptr ((void *)(tmp - tag), tag);
     }
   /* eassert (lisp_to_value (o) == v); */
   if (CONSP (o) && EQ (XCDR (o), ltv_mark))
@@ -892,9 +892,10 @@ lisp_to_value (Lisp_Object o)
     case_Lisp_Int:
       {
         EMACS_UINT val = i & VALMASK;
-        if (val == (EMACS_UINT)(emacs_value)val)
+        if (val <= (SIZE_MAX >> GCTYPEBITS))
           {
-            emacs_value v = (emacs_value) ((val << GCTYPEBITS) | tag);
+	    size_t tv = (size_t)val;
+            emacs_value v = (emacs_value) ((tv << GCTYPEBITS) | tag);
             eassert (EQ (value_to_lisp (v), o));
             return v;
           }
@@ -904,13 +905,13 @@ lisp_to_value (Lisp_Object o)
     default:
       {
         void *ptr = XUNTAG (o, tag);
-        if (((EMACS_UINT)ptr) & ((1 << GCTYPEBITS) - 1))
+        if (((size_t)ptr) & ((1 << GCTYPEBITS) - 1))
           { /* Pointer is not properly aligned!  */
             eassert (!CONSP (o)); /* Cons cells have to always be aligned!  */
             o = Fcons (o, ltv_mark);
             ptr = XUNTAG (o, tag);
           }
-        emacs_value v = (emacs_value)(((EMACS_UINT) ptr) | tag);
+        emacs_value v = (emacs_value)(((size_t) ptr) | tag);
         eassert (EQ (value_to_lisp (v), o));
         return v;
       }
