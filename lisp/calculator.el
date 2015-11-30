@@ -379,38 +379,6 @@ Used for repeating operations in calculator-repR/L.")
 ;;;---------------------------------------------------------------------
 ;;; Key bindings
 
-(defun calculator-define-key (key cmd &optional map)
-  ;; arranges for unbound alphabetic keys to be used as their un/shifted
-  ;; versions if those are bound (mimics the usual Emacs global
-  ;; bindings)
-  (let* ((key  (if (stringp key) (kbd key) key))
-         (map  (or map calculator-mode-map))
-         (omap (keymap-parent map)))
-    (define-key map key cmd)
-    ;; "other" map, used for case-flipped bindings
-    (unless omap
-      (setq omap (make-sparse-keymap))
-      (suppress-keymap omap t)
-      (set-keymap-parent map omap))
-    (let ((m omap))
-      ;; bind all case-flipped versions
-      (dotimes (i (length key))
-        (let* ((c (aref key i))
-               (k (vector c))
-               (b (lookup-key m k))
-               (defkey (lambda (x)
-                         (define-key m k x)
-                         (when (and (characterp c)
-                                    (or (<= ?A c ?Z) (<= ?a c ?z)))
-                           (define-key m (vector (logxor 32 c)) x)))))
-          (cond ((= i (1- (length key)))
-                 ;; prefer longer sequences
-                 (unless (keymapp b) (funcall defkey cmd)))
-                ((keymapp b) (setq m b))
-                (t (let ((sub (make-sparse-keymap)))
-                     (funcall defkey sub)
-                     (setq m sub)))))))))
-
 (defvar calculator-mode-map
   (let ((map (make-sparse-keymap)))
     (suppress-keymap map t)
@@ -593,6 +561,38 @@ Used for repeating operations in calculator-repR/L.")
             ["Quit"      calculator-quit]))))
     map)
   "The calculator key map.")
+
+(defun calculator-define-key (key cmd &optional map)
+  ;; Arranges for unbound alphabetic keys to be used as their un/shifted
+  ;; versions if those are bound (mimics the usual Emacs global
+  ;; bindings).
+  (let* ((key  (if (stringp key) (kbd key) key))
+         (map  (or map calculator-mode-map))
+         (omap (keymap-parent map)))
+    (define-key map key cmd)
+    ;; "other" map, used for case-flipped bindings
+    (unless omap
+      (setq omap (make-sparse-keymap))
+      (suppress-keymap omap t)
+      (set-keymap-parent map omap))
+    (let ((m omap))
+      ;; Bind all case-flipped versions.
+      (dotimes (i (length key))
+        (let* ((c (aref key i))
+               (k (vector c))
+               (b (lookup-key m k))
+               (defkey (lambda (x)
+                         (define-key m k x)
+                         (when (and (characterp c)
+                                    (or (<= ?A c ?Z) (<= ?a c ?z)))
+                           (define-key m (vector (logxor 32 c)) x)))))
+          (cond ((= i (1- (length key)))
+                 ;; Prefer longer sequences.
+                 (unless (keymapp b) (funcall defkey cmd)))
+                ((keymapp b) (setq m b))
+                (t (let ((sub (make-sparse-keymap)))
+                     (funcall defkey sub)
+                     (setq m sub)))))))))
 
 ;;;---------------------------------------------------------------------
 ;;; Startup and mode stuff
