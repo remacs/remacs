@@ -8065,7 +8065,7 @@ brace.
 Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
   ;; Note to maintainers: this function consumes a great mass of CPU cycles.
-  ;; It's use should thus be minimised as far as possible.
+  ;; Its use should thus be minimized as far as possible.
   (let ((paren-state (c-parse-state)))
     (or (not (c-most-enclosing-brace paren-state))
 	(c-search-uplist-for-classkey paren-state))))

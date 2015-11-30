@@ -811,7 +811,7 @@ Possible return values:
    (indirect-function smie-backward-token-function)
    (lambda (n)
      (if (bobp)
-         ;; Arguably backward-sexp hould signal this error for us.
+         ;; Arguably backward-sexp should signal this error for us.
          (signal 'scan-error
                  (list "Beginning of buffer" (point) (point)))
        (backward-sexp n)))

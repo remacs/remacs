@@ -116,7 +116,7 @@ Fmod_test_non_local_exit_funcall (emacs_env *env, ptrdiff_t nargs,
 }
 
 
-/* Return a global referrence.  */
+/* Return a global reference.  */
 static emacs_value
 Fmod_test_globref_make (emacs_env *env, ptrdiff_t nargs, emacs_value args[],
 			void *data)

@@ -315,7 +315,7 @@ CONDITION should not be quoted."
     '(progn)))
 
 (defmacro cc-conditional-require-after-load (cc-part file condition)
-  "If the CONDITION is satified at compile time, (i) force the
+  "If the CONDITION is satisfied at compile time, (i) force the
 file CC-PART.el in the current directory to be loaded at compile
 time, (ii) generate an `eval-after-load' form to load CC-PART.el
 after the loading of FILE.

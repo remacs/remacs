@@ -318,7 +318,7 @@ to be replaced will match a sequence of whitespace chars defined by the
 regexp in `search-whitespace-regexp'.
 
 If `replace-character-fold' is non-nil, matching uses character folding,
-i.e. it ignores diacriticals and other differences between equivalent
+i.e. it ignores diacritics and other differences between equivalent
 character strings.
 
 Third arg DELIMITED (prefix arg if interactive), if non-nil, means replace
@@ -563,7 +563,7 @@ to be replaced will match a sequence of whitespace chars defined by the
 regexp in `search-whitespace-regexp'.
 
 If `replace-character-fold' is non-nil, matching uses character folding,
-i.e. it ignores diacriticals and other differences between equivalent
+i.e. it ignores diacritics and other differences between equivalent
 character strings.
 
 Third arg DELIMITED (prefix arg if interactive), if non-nil, means replace

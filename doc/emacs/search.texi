@@ -26,7 +26,7 @@ thing, but search for patterns instead of fixed strings.
 * Regexps::                   Syntax of regular expressions.
 * Regexp Backslash::          Regular expression constructs starting with `\'.
 * Regexp Example::            A complex regular expression explained.
-* Lax Search::                Search ignores some distinctions between
+* Lax Search::                Search ignores some distinctions among
                                 similar characters, like letter-case.
 * Replace::                   Search, and replace some or all matches.
 * Other Repeating Search::    Operating on all matches for some regexp.
@@ -1144,7 +1144,7 @@ close-brackets, quotes, or parentheses, repeated zero or more times.
 @cindex lax search
 @cindex character equivalence in search
   Normally, you'd want search commands to disregard certain minor
-differences between the search string you types and the text being
+differences between the search string you type and the text being
 searched.  For example, sequences of whitespace characters of
 different length are usually perceived as equivalent; letter-case
 differences usually don't matter; etc.  This is known as
@@ -1226,13 +1226,13 @@ apropos-variable @key{RET} case-fold-search @key{RET}}.
 
 @cindex character folding in search
 @cindex equivalent character sequences
-  Case folding disregards case distinctions between characters, making
+  Case folding disregards case distinctions among characters, making
 upper-case characters match lower-case variants, and vice versa.  A
 generalization of case folding is @dfn{character folding}, which
-disregards wider classes of distinctions between similar characters.
+disregards wider classes of distinctions among similar characters.
 For instance, under character folding the letter @code{a} matches all
 of its accented cousins like @code{@"a} and @code{@'a}, i.e., the
-match disregards the diacriticals that distinguish between these
+match disregards the diacritics that distinguish these
 variants.  In addition, @code{a} matches other characters that
 resemble it, or have it as part of their graphical representation,
 such as @sc{u+249c parenthesized latin small letter a} and @sc{u+2100

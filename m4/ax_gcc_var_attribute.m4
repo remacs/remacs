@@ -39,7 +39,7 @@
 #    dllexport
 #    init_priority
 #
-#   Unsuppored variable attributes will be tested against a global integer
+#   Unsupported variable attributes will be tested against a global integer
 #   variable and without any arguments given to the attribute itself; the
 #   result of this check might be wrong or meaningless so use with care.
 #

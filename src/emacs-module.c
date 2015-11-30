@@ -1074,7 +1074,7 @@ syms_of_module (void)
 {
   DEFSYM (Qmodule_refs_hash, "module-refs-hash");
   DEFVAR_LISP ("module-refs-hash", Vmodule_refs_hash,
-	       doc: /* Module global referrence table.  */);
+	       doc: /* Module global reference table.  */);
 
   Vmodule_refs_hash
     = make_hash_table (hashtest_eq, make_number (DEFAULT_HASH_SIZE),

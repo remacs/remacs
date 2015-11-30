@@ -2366,7 +2366,7 @@ list that represents a doc string reference.
 	hist-new prov-cons)
     (apply 'require args)
 
-    ;; Record the functions defined by the require in `byte-compille-new-defuns'.
+    ;; Record the functions defined by the require in `byte-compile-new-defuns'.
     (setq hist-new load-history)
     (setq prov-cons (cons 'provide (car args)))
     (while (and hist-new

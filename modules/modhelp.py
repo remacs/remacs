@@ -121,7 +121,7 @@ def main():
     initp = subp.add_parser('init', help='create a test module from a template')
     initp.add_argument('module', help='name of the new module')
     initp.add_argument('-f', '--fun', default='fun',
-                       help='overide name of the default function')
+                       help='override name of the default function')
     initp.set_defaults(func=cmd_init)
 
     args = mainp.parse_args()

@@ -75,7 +75,7 @@ typedef float EmacsCGFloat;
 /* #define NSTRACE_ENABLED 1          */
 
 
-/* When non-zero, trace output is enbled for all parts, except those
+/* When non-zero, trace output is enabled for all parts, except those
    explicitly disabled. */
 /* #define NSTRACE_ALL_GROUPS     1     */
 

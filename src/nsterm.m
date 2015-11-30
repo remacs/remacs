@@ -1141,7 +1141,7 @@ ns_clip_to_row (struct window *w, struct glyph_row *row,
 
 /* ==========================================================================
 
-    Visibel bell and beep.
+    Visible bell and beep.
 
    ========================================================================== */
 
@@ -7029,7 +7029,7 @@ not_in_argv (NSString *arg)
 
 - (void)windowDidExitFullScreen /* provided for direct calls */
 {
-  NSTRACE ("[EamcsView windowDidExitFullScreen]");
+  NSTRACE ("[EmacsView windowDidExitFullScreen]");
   if (!FRAME_LIVE_P (emacsframe))
     {
       NSTRACE_MSG ("Ignored (frame dead)");

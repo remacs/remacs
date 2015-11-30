@@ -16566,7 +16566,7 @@
 	(ns_draw_fringe_bitmap): Remove unused rowY.
 	Change #if to COCOA && >= 10_6.
 	(ns_draw_window_cursor): Remove unused overspill.
-	(ns_draw_underwave): width and x are EamcsCGFloat.
+	(ns_draw_underwave): width and x are EmacsCGFloat.
 	(ns_draw_box): thickness is CGFloat.
 	(ns_dumpglyphs_image): Change #if to COCOA && >= 10_6.
 	(ns_send_appdefined): When NS_IMPL_GNUSTEP, redirect to main thread
