@@ -548,6 +548,9 @@ command for nonincremental search, if the string you specify is empty.
 @key{RET}} does likewise, invoking the nonincremental
 backward-searching command.
 
+  Nonincremental search can also be invoked form the menu bar's
+@samp{Edit->Search} menu.
+
 @findex search-forward
 @findex search-backward
   You can also use two simpler commands, @kbd{M-x search-forward} and
@@ -607,6 +610,9 @@ so that the matching can proceed incrementally as you type.  This
 additional laxity does not apply to the lazy highlight
 (@pxref{Incremental Search}), which always matches whole words.
 
+  The word search commands don't perform character folding and cannot
+support lax whitespace matching (@pxref{Lax Search}).
+
 @kindex M-s M-w
 @findex eww-search-word
 @vindex eww-search-prefix
@@ -663,6 +669,9 @@ search.  In nonincremental symbol searches, the beginning and end of
 the search string are required to match the beginning and end of a
 symbol, respectively.
 
+  The symbol search commands don't perform character folding and
+cannot support lax whitespace matching (@pxref{Lax Search}).
+
 @node Regexp Search
 @section Regular Expression Search
 @cindex regexp search
@@ -709,12 +718,18 @@ regexps saved in the search ring is determined by the value of
 @code{regexp-search-ring-max}, 16 by default.
 
   Unlike ordinary incremental search, incremental regexp search
-do not use lax space matching by default.  To toggle this feature
+does not use lax space matching by default.  To toggle this feature
 use @kbd{M-s @key{SPC}} (@code{isearch-toggle-lax-whitespace}).
 Then any @key{SPC} typed in incremental regexp search will match
 any sequence of one or more whitespace characters.  The variable
 @code{search-whitespace-regexp} specifies the regexp for the lax
 space matching.  @xref{Special Isearch}.
+
+  Also unlike ordinary incremental search, incremental regexp search
+cannot use character folding (@pxref{Lax Search}).  (If you toggle
+character folding during incremental regexp search with @kbd{M-s '},
+the search becomes a non-regexp search and the search pattern you
+typed is interpreted as a literal string.)
 
   In some cases, adding characters to the regexp in an incremental
 regexp search can make the cursor move back and start again.  For

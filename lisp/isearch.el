@@ -774,7 +774,8 @@ as a regexp.  See the command `isearch-forward' for more information.
 In incremental searches, a space or spaces normally matches any
 whitespace defined by the variable `search-whitespace-regexp'.
 To search for a literal space and nothing else, enter C-q SPC.
-To toggle whitespace matching, use `isearch-toggle-lax-whitespace'."
+To toggle whitespace matching, use `isearch-toggle-lax-whitespace'.
+This command does not support character folding."
   (interactive "P\np")
   (isearch-mode t (null not-regexp) nil (not no-recursive-edit)))
 
@@ -783,7 +784,8 @@ To toggle whitespace matching, use `isearch-toggle-lax-whitespace'."
 With a prefix argument, do a regular string search instead.
 Like ordinary incremental search except that your input is treated
 as a sequence of words without regard to how the words are separated.
-See the command `isearch-forward' for more information."
+See the command `isearch-forward' for more information.
+This command does not support character folding or lax space matching."
   (interactive "P\np")
   (isearch-mode t nil nil (not no-recursive-edit) (null not-word)))
 
@@ -792,7 +794,8 @@ See the command `isearch-forward' for more information."
 The prefix argument is currently unused.
 Like ordinary incremental search except that your input is treated
 as a symbol surrounded by symbol boundary constructs \\_< and \\_>.
-See the command `isearch-forward' for more information."
+See the command `isearch-forward' for more information.
+This command does not support character folding or lax space matching."
   (interactive "P\np")
   (isearch-mode t nil nil (not no-recursive-edit) 'isearch-symbol-regexp))
 
@@ -807,7 +810,7 @@ See the command `isearch-forward' for more information."
   "Do incremental search backward for regular expression.
 With a prefix argument, do a regular string search instead.
 Like ordinary incremental search except that your input is treated
-as a regexp.  See the command `isearch-forward' for more information."
+as a regexp.  See the command `isearch-forward-regexp' for more information."
   (interactive "P\np")
   (isearch-mode nil (null not-regexp) nil (not no-recursive-edit)))
 
@@ -1533,9 +1536,12 @@ The command then executes BODY and updates the isearch prompt."
                                               (cdr types))))
                  (get 'search-default-regexp-mode 'custom-type)))))))
 
-(isearch-define-mode-toggle word "w" word-search-regexp)
-(isearch-define-mode-toggle symbol "_" isearch-symbol-regexp)
-(isearch-define-mode-toggle character-fold "'" character-fold-to-regexp)
+(isearch-define-mode-toggle word "w" word-search-regexp "\
+Turning on word search turns off regexp mode.")
+(isearch-define-mode-toggle symbol "_" isearch-symbol-regexp "\
+Turning on symbol search turns off regexp mode.")
+(isearch-define-mode-toggle character-fold "'" character-fold-to-regexp "\
+Turning on character-folding turns off regexp mode.")
 (put 'character-fold-to-regexp 'isearch-message-prefix "char-fold ")
 
 (isearch-define-mode-toggle regexp "r" nil nil
@@ -1618,7 +1624,8 @@ Optional fourth argument is repeat count--search for successive occurrences.
 
 Relies on the function `word-search-regexp' to convert a sequence
 of words in STRING to a regexp used to search words without regard
-to punctuation."
+to punctuation.
+This command does not support character folding or lax space matching."
   (interactive "sWord search backward: ")
   (re-search-backward (word-search-regexp string nil) bound noerror count))
 
@@ -1633,7 +1640,8 @@ Optional fourth argument is repeat count--search for successive occurrences.
 
 Relies on the function `word-search-regexp' to convert a sequence
 of words in STRING to a regexp used to search words without regard
-to punctuation."
+to punctuation.
+This command does not support character folding or lax space matching."
   (interactive "sWord search: ")
   (re-search-forward (word-search-regexp string nil) bound noerror count))
 
@@ -1652,7 +1660,8 @@ Optional fourth argument is repeat count--search for successive occurrences.
 
 Relies on the function `word-search-regexp' to convert a sequence
 of words in STRING to a regexp used to search words without regard
-to punctuation."
+to punctuation.
+This command does not support character folding or lax space matching."
   (interactive "sWord search backward: ")
   (re-search-backward (word-search-regexp string t) bound noerror count))
 
@@ -1671,7 +1680,8 @@ Optional fourth argument is repeat count--search for successive occurrences.
 
 Relies on the function `word-search-regexp' to convert a sequence
 of words in STRING to a regexp used to search words without regard
-to punctuation."
+to punctuation.
+This command does not support character folding or lax space matching."
   (interactive "sWord search: ")
   (re-search-forward (word-search-regexp string t) bound noerror count))
 
