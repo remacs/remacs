@@ -575,8 +575,9 @@ It can be quoted, or be inside a quoted form."
                                        " " (cadr table-etc)))
                     (cddr table-etc)))))))))
 
-(define-obsolete-function-alias
-  'lisp-completion-at-point 'elisp-completion-at-point "25.1")
+(defun lisp-completion-at-point (_predicate)
+  (declare (obsolete elisp-completion-at-point "25.1"))
+  (elisp-completion-at-point))
 
 ;;; Xref backend
 
