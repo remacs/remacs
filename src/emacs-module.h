@@ -26,8 +26,19 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #if defined __cplusplus && __cplusplus >= 201103L
 # define EMACS_NOEXCEPT noexcept
+
+/* Function prototype for module user-pointer finalizers.
+
+   NOTE: C++11 15.4: An exception-specification shall not appear in a
+                     typedef declaration or alias-declaration.
+
+*/
+void emacs_dummy_finalizer_function (void *) noexcept;
+typedef decltype(emacs_dummy_finalizer_function) *emacs_finalizer_function;
+
 #else
 # define EMACS_NOEXCEPT
+typedef void (*emacs_finalizer_function) (void *);
 #endif
 
 #ifdef __cplusplus
@@ -63,9 +74,6 @@ typedef int (*emacs_init_function) (struct emacs_runtime *ert);
 /* Function prototype for the module Lisp functions.  */
 typedef emacs_value (*emacs_subr) (emacs_env *env, ptrdiff_t nargs,
 				   emacs_value args[], void *data);
-
-/* Function prototype for module user-pointer finalizers.  */
-typedef void (*emacs_finalizer_function) (void *) EMACS_NOEXCEPT;
 
 /* Possible Emacs function call outcomes.  */
 enum emacs_funcall_exit
