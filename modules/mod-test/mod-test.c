@@ -61,7 +61,7 @@ Fmod_test_signal (emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   assert (env->non_local_exit_check (env) == emacs_funcall_exit_return);
   env->non_local_exit_signal (env, env->intern (env, "error"),
 			      env->make_integer (env, 56));
-  return NULL;
+  return env->intern (env, "nil");
 }
 
 
@@ -73,7 +73,7 @@ Fmod_test_throw (emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   assert (env->non_local_exit_check (env) == emacs_funcall_exit_return);
   env->non_local_exit_throw (env, env->intern (env, "tag"),
 			     env->make_integer (env, 65));
-  return NULL;
+  return env->intern (env, "nil");
 }
 
 

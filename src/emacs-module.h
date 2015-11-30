@@ -37,7 +37,8 @@ extern "C" {
 /* Current environment.  */
 typedef struct emacs_env_25 emacs_env;
 
-/* Opaque structure pointer representing an Emacs Lisp value.  */
+/* Opaque pointer representing an Emacs Lisp value.
+   BEWARE: Do not assume NULL is a valid value!  */
 typedef struct emacs_value_tag *emacs_value;
 
 enum emacs_arity { emacs_variadic_function = -2 };
