@@ -180,19 +180,19 @@ from which to start."
                              (regexp-quote (string c))))
                  (alist nil))
              ;; Long string.  The regexp would probably be too long.
-             (unless (> end 50)
-               (setq alist (aref multi-char-table c))
-               (when case-fold-search
-                 (let ((other-c (aref lower-case-table c)))
-                   (when (or (not other-c)
-                             (eq other-c c))
-                     (setq other-c (aref upper-case-table c)))
-                   (when other-c
-                     (setq alist (append alist (aref multi-char-table other-c)))
-                     (setq regexp (concat "\\(?:" regexp "\\|"
-                                          (or (aref character-fold-table other-c)
-                                              (regexp-quote (string other-c)))
-                                          "\\)"))))))
+             ;; (unless (> end 50)
+             ;;   (setq alist (aref multi-char-table c))
+             ;;   (when case-fold-search
+             ;;     (let ((other-c (aref lower-case-table c)))
+             ;;       (when (or (not other-c)
+             ;;                 (eq other-c c))
+             ;;         (setq other-c (aref upper-case-table c)))
+             ;;       (when other-c
+             ;;         (setq alist (append alist (aref multi-char-table other-c)))
+             ;;         (setq regexp (concat "\\(?:" regexp "\\|"
+             ;;                              (or (aref character-fold-table other-c)
+             ;;                                  (regexp-quote (string other-c)))
+             ;;                              "\\)"))))))
              (push (let ((alist-out '("\\)")))
                      (pcase-dolist (`(,suffix . ,out-regexp) alist)
                        (let ((len-suf (length suffix)))
@@ -223,7 +223,7 @@ from which to start."
       (push (character-fold--make-space-string spaces) out))
     (let ((regexp (apply #'concat (nreverse out))))
       ;; Limited by `MAX_BUF_SIZE' in `regex.c'.
-      (if (> (length regexp) 32000)
+      (if (> (length regexp) 10000)
           (regexp-quote string)
         regexp))))
 
