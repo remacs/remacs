@@ -181,11 +181,6 @@ for use in Emacs bug reports.
 hiding character but the default `.' can be used by let-binding the
 variable `read-hide-char'.
 
-** New variable `ns-use-fullscreen-animation' controls animation for
-non-native NS fullscreen.  The default is nil.  Set to t to enable
-animation when entering and leaving fullscreen.  For native OSX fullscreen
-this has no effect.
-
 ** A new text property `inhibit-read-only' can be used in read-only
 buffers to allow certain parts of the text to be writable.
 
@@ -196,12 +191,6 @@ files (recursively) under a directory.
 name (as returned from, for instance, `file-name-all-completions' is
 a directory file name.  It returns non-nil if the last character in
 the name is a forward slash.
-
-+++
-** New variable `fast-but-imprecise-scrolling' inhibits
-fontification during full screen scrolling operations, giving less
-hesitant operation during auto-repeat of C-v, M-v at the cost of
-possible inaccuracies in the end position.
 
 ** The function `font-info' now returns more details about a font.
 In particular, it now returns the average width of the font's
@@ -226,21 +215,6 @@ that it accounts for (i) continuation glyphs, (ii) the size of the
 font, and (iii) the specified window.
 
 ** New possible value for `system-type': nacl.
-
-+++
-** New variable `inhibit-message', when bound to non-nil, inhibits
-   `message' and related functions from displaying messages the Echo
-   Area.  The output is still logged to the *Messages* buffer.
-
-+++
-** It is now safe for a mode that derives `tabulated-list-mode' to not
-call `tabulated-list-init-header', in which case it will have no
-header.
-
-+++
-** `tabulated-list-print' takes a second optional argument, update,
-which specifies an alternative printing method which is faster when
-few or no entries have changed.
 
 ** Emacs can now load shared/dynamic libraries (modules).
 A dynamic Emacs module is a shared library that provides additional
@@ -322,6 +296,12 @@ standards.
 
 +++
 ** New buffer-local `electric-pair-local-mode'.
+
++++
+** New variable `fast-but-imprecise-scrolling' inhibits
+fontification during full screen scrolling operations, giving less
+hesitant operation during auto-repeat of C-v, M-v at the cost of
+possible inaccuracies in the end position.
 
 
 * Changes in Specialized Modes and Packages in Emacs 25.1
@@ -929,6 +909,18 @@ compress many marked files into a single named archive.  The
 compression command is determined from the new
 `dired-compress-files-alist' variable.
 
+** Tabulated List Mode
+
++++
+*** It is now safe for a mode that derives `tabulated-list-mode' to not
+call `tabulated-list-init-header', in which case it will have no
+header.
+
++++
+*** `tabulated-list-print' takes a second optional argument, update,
+which specifies an alternative printing method which is faster when
+few or no entries have changed.
+
 ** Obsolete packages
 
 ---
@@ -1007,6 +999,7 @@ large portions of the Emacs display, and want to avoid changes in the
 pointer shape during dragging, should bind the variable `track-mouse'
 to the special value `dragging' in the body of the form.
 
+---
 ** The optional `predicate' argument of `lisp-complete-symbol' no longer
 has any effect.  (This change was made in Emacs 24.4 but was not
 advertised at the time.)
@@ -1014,6 +1007,7 @@ advertised at the time.)
 ** `indirect-function' does not signal `void-function' any more.
 This is mostly a bug-fix, since this change was missed back in 24.4 when
 symbol-function was changed not to signal `void-function' any more.
+
 *** As a consequence, the second arg of `indirect-function' is now obsolete.
 
 ** Comint, term, and compile do not set the EMACS env var any more.
@@ -1141,6 +1135,11 @@ of subprocess.
 `start-process'.  It allows programs to set process parameters such as
 process filter, sentinel, etc., through keyword arguments (similar to
 `make-network-process').
+
++++
+** New variable `inhibit-message', when bound to non-nil, inhibits
+   `message' and related functions from displaying messages the Echo
+   Area.  The output is still logged to the *Messages* buffer.
 
 ** `read-buffer' takes a new `predicate' argument.
 
@@ -1446,6 +1445,12 @@ Pass '--without-ns' to configure to create an X11 build, the old default.
 ** OS X 10.5 or older is no longer supported.
 
 ** OS X on PowerPC is no longer supported.
+
+---
+** New variable `ns-use-fullscreen-animation' controls animation for
+non-native NS fullscreen.  The default is nil.  Set to t to enable
+animation when entering and leaving fullscreen.  For native OSX fullscreen
+this has no effect.
 
 ---
 ** The new function 'w32-application-type' returns the type of an
