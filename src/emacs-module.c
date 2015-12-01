@@ -880,44 +880,48 @@ value_to_lisp (emacs_value v)
 static emacs_value
 lisp_to_value (Lisp_Object o)
 {
-  EMACS_INT i = XLI (o);
 #ifdef WIDE_EMACS_INT
   /* We need to compress the EMACS_INT into the space of a pointer.
      For most objects, this is just a question of shuffling the tags around.
      But in some cases (e.g. large integers) this can't be done, so we
      should allocate a special object to hold the extra data.  */
+  Lisp_Object orig = o;
   int tag = XTYPE (o);
   switch (tag)
     {
     case_Lisp_Int:
       {
-        EMACS_UINT val = i & VALMASK;
-        if (val <= (SIZE_MAX >> GCTYPEBITS))
+        EMACS_UINT ui = (EMACS_UINT) XINT (o);
+        if (ui <= (SIZE_MAX >> GCTYPEBITS))
           {
-	    size_t tv = (size_t)val;
-            emacs_value v = (emacs_value) ((tv << GCTYPEBITS) | tag);
+            uintptr_t uv = (uintptr_t) ui;
+            emacs_value v = (emacs_value) ((uv << GCTYPEBITS) | tag);
             eassert (EQ (value_to_lisp (v), o));
             return v;
           }
         else
-          o = Fcons (o, ltv_mark);
+          {
+            o = Fcons (o, ltv_mark);
+            tag = Lisp_Cons;
+          }
       } /* FALLTHROUGH */
     default:
       {
         void *ptr = XUNTAG (o, tag);
-        if (((size_t)ptr) & ((1 << GCTYPEBITS) - 1))
+        if (((uintptr_t)ptr) & ((1 << GCTYPEBITS) - 1))
           { /* Pointer is not properly aligned!  */
             eassert (!CONSP (o)); /* Cons cells have to always be aligned!  */
             o = Fcons (o, ltv_mark);
             ptr = XUNTAG (o, tag);
           }
-        emacs_value v = (emacs_value)(((size_t) ptr) | tag);
-        eassert (EQ (value_to_lisp (v), o));
+        emacs_value v = (emacs_value) (((uintptr_t) ptr) | tag);
+        eassert (EQ (value_to_lisp (v), orig));
         return v;
       }
     }
 #else
-  emacs_value v = (emacs_value)i;
+  emacs_value v = (emacs_value) XLI (o);
+
   /* Check the assumption made elsewhere that Lisp_Object and emacs_value
      share the same underlying bit representation.  */
   eassert (v == *(emacs_value*)&o);

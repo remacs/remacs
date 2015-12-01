@@ -42,7 +42,11 @@
                  (nth 1 descr))))
     (should (= (nth 2 descr) 3)))
   (should-error (mod-test-sum "1" 2) :type 'wrong-type-argument)
-  (should-error (mod-test-sum 1 "2") :type 'wrong-type-argument))
+  (should-error (mod-test-sum 1 "2") :type 'wrong-type-argument)
+  (should (= (mod-test-sum -1 most-positive-fixnum)
+             (1- most-positive-fixnum)))
+  (should (= (mod-test-sum 1 most-negative-fixnum)
+             (1+ most-negative-fixnum))))
 
 (ert-deftest mod-test-sum-docstring ()
   (should (string= (documentation 'mod-test-sum) "Return A + B")))
