@@ -26,34 +26,43 @@
 
 (require 'seq)
 
-(defun make-test-deps (directory)
-  (message
-   "%s"
-   (concat
-    (make-test-deps-lisp directory)
-    (make-test-deps-src directory))))
+(defun make-test-deps (src-dir)
+  (let ((src-dir (file-truename src-dir)))
+    (message
+     "%s"
+     (concat
+      (make-test-deps-lisp src-dir)
+      (make-test-deps-src src-dir)))))
 
-(defun make-test-deps-lisp (directory)
+(defun make-test-deps-lisp (src-dir)
   (mapconcat
-   (lambda (stem)
-     (format "%s-tests.log: ../%s.elc\n" stem stem))
-   (make-test-test-files directory "lisp") ""))
+   (lambda (file-without-suffix)
+     (format "./%s-tests.log: %s/../%s.el\n"
+             file-without-suffix
+             src-dir
+             file-without-suffix))
+   (make-test-test-files src-dir "lisp") ""))
 
-(defun make-test-deps-src (directory)
+(defun make-test-deps-src (src-dir)
   (mapconcat
-   (lambda (stem)
-     (format "%s-tests.log: ../%s.o\n" stem stem))
-   (make-test-test-files directory "src") ""))
+   (lambda (file-without-suffix)
+     (format "./%s-tests.log: %s/../%s.c\n"
+             file-without-suffix
+             src-dir
+             file-without-suffix))
+   (make-test-test-files src-dir "src") ""))
 
-(defun make-test-test-files (stem dir)
+(defun make-test-test-files (src-dir sub-src-dir)
   (make-test-munge-files
-   stem
-   (directory-files-recursively dir ".*-tests.el$")))
+   src-dir
+   (directory-files-recursively
+    (concat src-dir "/"  sub-src-dir)
+    ".*-tests.el$")))
 
-(defun make-test-munge-files (stem files)
+(defun make-test-munge-files (src-dir files)
   (make-test-sans-suffix
    (make-test-de-stem
-    stem
+    src-dir
     (make-test-no-legacy
      (make-test-no-test-dir
       (make-test-no-resources
