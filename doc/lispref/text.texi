@@ -3267,8 +3267,8 @@ and then remove the property.  @xref{Read Only Buffers}.
 
 @item inhibit-read-only
 @kindex inhibit-read-only @r{(text property)}
-If a character has the property @code{inhibit-read-only}, and the
-buffer is read-only, editing the character in question is allowed.
+Characters that have the property @code{inhibit-read-only} can be
+edited even in read-only buffers.  @xref{Read Only Buffers}.
 
 @item invisible
 @kindex invisible @r{(text property)}

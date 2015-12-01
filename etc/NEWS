@@ -181,9 +181,6 @@ for use in Emacs bug reports.
 hiding character but the default `.' can be used by let-binding the
 variable `read-hide-char'.
 
-** A new text property `inhibit-read-only' can be used in read-only
-buffers to allow certain parts of the text to be writable.
-
 ** A new function `directory-files-recursively' returns all matching
 files (recursively) under a directory.
 
@@ -1142,8 +1139,12 @@ process filter, sentinel, etc., through keyword arguments (similar to
 
 +++
 ** New variable `inhibit-message', when bound to non-nil, inhibits
-   `message' and related functions from displaying messages the Echo
-   Area.  The output is still logged to the *Messages* buffer.
+`message' and related functions from displaying messages the Echo
+Area.  The output is still logged to the *Messages* buffer.
+
++++
+** A new text property `inhibit-read-only' can be used in read-only
+buffers to allow certain parts of the text to be writable.
 
 ** `read-buffer' takes a new `predicate' argument.
 
