@@ -405,9 +405,11 @@ ns_set_name_internal (struct frame *f, Lisp_Object name)
   NSString *str;
   NSView *view = FRAME_NS_VIEW (f);
 
+
   encoded_name = ENCODE_UTF_8 (name);
 
   str = [NSString stringWithUTF8String: SSDATA (encoded_name)];
+
 
   /* Don't change the name if it's already NAME.  */
   if (! [[[view window] title] isEqualToString: str])
@@ -483,9 +485,14 @@ x_implicitly_set_name (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 {
   NSTRACE ("x_implicitly_set_name");
 
+  Lisp_Object frame_title = buffer_local_value
+    (Qframe_title_format, XWINDOW (f->selected_window)->contents);
+  Lisp_Object icon_title = buffer_local_value
+    (Qicon_title_format, XWINDOW (f->selected_window)->contents);
+
   /* Deal with NS specific format t.  */
-  if (FRAME_NS_P (f) && ((FRAME_ICONIFIED_P (f) && EQ (Vicon_title_format, Qt))
-                         || EQ (Vframe_title_format, Qt)))
+  if (FRAME_NS_P (f) && ((FRAME_ICONIFIED_P (f) && EQ (icon_title, Qt))
+                         || EQ (frame_title, Qt)))
     ns_set_name_as_filename (f);
   else
     ns_set_name (f, arg, 0);
@@ -3134,6 +3141,8 @@ void
 syms_of_nsfns (void)
 {
   DEFSYM (Qfontsize, "fontsize");
+  DEFSYM (Qframe_title_format, "frame-title-format");
+  DEFSYM (Qicon_title_format, "icon-title-format");
 
   DEFVAR_LISP ("ns-icon-type-alist", Vns_icon_type_alist,
                doc: /* Alist of elements (REGEXP . IMAGE) for images of icons associated to frames.
