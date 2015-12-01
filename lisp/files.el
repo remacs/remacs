@@ -753,7 +753,7 @@ If INCLUDE-DIRECTORIES, also include directories that have matching names."
 	(files nil)
 	;; When DIR is "/", remote file names like "/method:" could
 	;; also be offered.  We shall suppress them.
-	(tramp-mode (and tramp-mode (file-remote-p dir))))
+	(tramp-mode (and tramp-mode (file-remote-p (expand-file-name dir)))))
     (dolist (file (sort (file-name-all-completions "" dir)
 			'string<))
       (unless (member file '("./" "../"))
@@ -6247,7 +6247,7 @@ invokes the program specified by `directory-free-space-program'
 and `directory-free-space-args'.  If the system call or program
 is unsuccessful, or if DIR is a remote directory, this function
 returns nil."
-  (unless (file-remote-p dir)
+  (unless (file-remote-p (expand-file-name dir))
     ;; Try to find the number of free blocks.  Non-Posix systems don't
     ;; always have df, but might have an equivalent system call.
     (if (fboundp 'file-system-info)
