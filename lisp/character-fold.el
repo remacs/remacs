@@ -180,43 +180,49 @@ from which to start."
                              (regexp-quote (string c))))
                  (alist nil))
              ;; Long string.  The regexp would probably be too long.
-             ;; (unless (> end 50)
-             ;;   (setq alist (aref multi-char-table c))
-             ;;   (when case-fold-search
-             ;;     (let ((other-c (aref lower-case-table c)))
-             ;;       (when (or (not other-c)
-             ;;                 (eq other-c c))
-             ;;         (setq other-c (aref upper-case-table c)))
-             ;;       (when other-c
-             ;;         (setq alist (append alist (aref multi-char-table other-c)))
-             ;;         (setq regexp (concat "\\(?:" regexp "\\|"
-             ;;                              (or (aref character-fold-table other-c)
-             ;;                                  (regexp-quote (string other-c)))
-             ;;                              "\\)"))))))
-             (push (let ((alist-out '("\\)")))
-                     (pcase-dolist (`(,suffix . ,out-regexp) alist)
-                       (let ((len-suf (length suffix)))
+             (unless (> end 50)
+               (setq alist (aref multi-char-table c))
+               (when case-fold-search
+                 (let ((other-c (aref lower-case-table c)))
+                   (when (or (not other-c)
+                             (eq other-c c))
+                     (setq other-c (aref upper-case-table c)))
+                   (when other-c
+                     (setq alist (append alist (aref multi-char-table other-c)))
+                     (setq regexp (concat "\\(?:" regexp "\\|"
+                                          (or (aref character-fold-table other-c)
+                                              (regexp-quote (string other-c)))
+                                          "\\)"))))))
+             (push (let ((matched-entries nil)
+                         (max-length 0))
+                     (dolist (entry alist)
+                       (let* ((suffix (car entry))
+                              (len-suf (length suffix)))
                          (when (eq (compare-strings suffix 0 nil
                                                     string (1+ i) (+ i 1 len-suf)
                                                     nil)
                                    t)
-                           ;; FIXME: If N suffixes match, we "branch"
-                           ;; out into N+1 executions for the rest of
-                           ;; the string.  This involves redundant
-                           ;; work and makes a huge regexp.
-                           (push (concat "\\|" out-regexp
-                                         (character-fold-to-regexp
-                                          string nil (+ i 1 len-suf)))
-                                 alist-out))))
+                           (push (cons len-suf (cdr entry)) matched-entries)
+                           (setq max-length (max max-length len-suf)))))
                      ;; If no suffixes matched, just go on.
-                     (if (not (cdr alist-out))
+                     (if (not matched-entries)
                          regexp
-                       ;; Otherwise, add a branch for the
-                       ;; no-suffix case, and stop the loop here.
-                       (prog1 (apply #'concat "\\(?:" regexp
-                                     (character-fold-to-regexp string nil (1+ i))
-                                     alist-out)
-                         (setq i end))))
+;;; If N suffixes match, we "branch" out into N+1 executions for the
+;;; length of the longest match.  This means "fix" will match "ﬁx" but
+;;; not "fⅸ", but it's necessary to keep the regexp size from scaling
+;;; exponentially.  See https://lists.gnu.org/archive/html/emacs-devel/2015-11/msg02562.html
+                       (let ((subs (substring string (1+ i) (+ i 1 max-length))))
+                         ;; `i' is still going to inc by 1 below.
+                         (setq i (+ i max-length))
+                         (concat
+                          "\\(?:"
+                          (mapconcat (lambda (entry)
+                                       (let ((length (car entry))
+                                             (suffix-regexp (cdr entry)))
+                                         (concat suffix-regexp
+                                                 (character-fold-to-regexp subs nil length))))
+                                     `((0 . ,regexp) . ,matched-entries) "\\|")
+                          "\\)"))))
                    out))))
       (setq i (1+ i)))
     (when (> spaces 0)

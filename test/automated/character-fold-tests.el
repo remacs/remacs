@@ -93,7 +93,10 @@
     (aset multi ?1 '(("2" . "yy")))
     (character-fold--test-match-exactly "a1" "xx44" "99")
     (character-fold--test-match-exactly "a12" "77" "xx442" "992")
-    (character-fold--test-match-exactly "a12" "xxyy")))
+    ;; Support for this case is disabled.  See function definition or:
+    ;; https://lists.gnu.org/archive/html/emacs-devel/2015-11/msg02562.html
+    ;; (character-fold--test-match-exactly "a12" "xxyy")
+    ))
 
 
 (provide 'character-fold-tests)
