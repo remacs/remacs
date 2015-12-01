@@ -4455,7 +4455,7 @@ to find all the symbols in an obarray, use `mapatoms'.  */);
 
   DEFVAR_LISP ("values", Vvalues,
 	       doc: /* List of values of all expressions which were read, evaluated and printed.
-		       Order is reverse chronological.  */);
+Order is reverse chronological.  */);
   XSYMBOL (intern ("values"))->declared_special = 0;
 
   DEFVAR_LISP ("standard-input", Vstandard_input,
