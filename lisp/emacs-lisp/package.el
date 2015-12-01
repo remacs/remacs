@@ -5,7 +5,7 @@
 ;; Author: Tom Tromey <tromey@redhat.com>
 ;;         Daniel Hackney <dan@haxney.org>
 ;; Created: 10 Mar 2007
-;; Version: 1.0.1
+;; Version: 1.1.0
 ;; Keywords: tools
 ;; Package-Requires: ((tabulated-list "1.0"))
 
@@ -23,14 +23,6 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
-
-;;; Change Log:
-
-;;  2 Apr 2007 - now using ChangeLog file
-;; 15 Mar 2007 - updated documentation
-;; 14 Mar 2007 - Changed how obsolete packages are handled
-;; 13 Mar 2007 - Wrote package-install-from-buffer
-;; 12 Mar 2007 - Wrote package-menu mode
 
 ;;; Commentary:
 
@@ -69,6 +61,7 @@
 ;; * Download.  Fetching the package from ELPA.
 ;; * Install.  Untar the package, or write the .el file, into
 ;;   ~/.emacs.d/elpa/ directory.
+;; * Autoload generation.
 ;; * Byte compile.  Currently this phase is done during install,
 ;;   but we may change this.
 ;; * Activate.  Evaluate the autoloads for the package to make it
@@ -127,14 +120,9 @@
 ;; - "installed" instead of a blank in the status column
 ;; - tramp needs its files to be compiled in a certain order.
 ;;   how to handle this?  fix tramp?
-;; - on emacs 21 we don't kill the -autoloads.el buffer.  what about 22?
 ;; - maybe we need separate .elc directories for various emacs versions
 ;;   and also emacs-vs-xemacs.  That way conditional compilation can
 ;;   work.  But would this break anything?
-;; - should store the package's keywords in archive-contents, then
-;;   let the users filter the package-menu by keyword.  See
-;;   finder-by-keyword.  (We could also let people view the
-;;   Commentary, but it isn't clear how useful this is.)
 ;; - William Xu suggests being able to open a package file without
 ;;   installing it
 ;; - Interface with desktop.el so that restarting after an install
@@ -145,15 +133,9 @@
 ;;   private data dir, aka ".../etc".  Or, maybe data-directory
 ;;   needs to be a list (though this would be less nice)
 ;;   a few packages want this, eg sokoban
-;; - package menu needs:
-;;     ability to know which packages are built-in & thus not deletable
-;;     it can sometimes print odd results, like 0.3 available but 0.4 active
-;;        why is that?
-;; - Allow multiple versions on the server...?
-;;   [ why bother? ]
-;; - Don't install a package which will invalidate dependencies overall
-;; - Allow something like (or (>= emacs 21.0) (>= xemacs 21.5))
-;;   [ currently thinking, why bother.. KISS ]
+;; - Allow multiple versions on the server, so that if a user doesn't
+;;   meet the requirements for the most recent version they can still
+;;   install an older one.
 ;; - Allow optional package dependencies
 ;;   then if we require 'bbdb', bbdb-specific lisp in lisp/bbdb
 ;;   and just don't compile to add to load path ...?
