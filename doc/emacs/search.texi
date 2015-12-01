@@ -610,8 +610,9 @@ so that the matching can proceed incrementally as you type.  This
 additional laxity does not apply to the lazy highlight
 (@pxref{Incremental Search}), which always matches whole words.
 
-  The word search commands don't perform character folding and cannot
-support lax whitespace matching (@pxref{Lax Search}).
+  The word search commands don't perform character folding, and
+toggling lax whitespace matching (@pxref{Lax Search, lax space
+matching}) has no effect on them.
 
 @kindex M-s M-w
 @findex eww-search-word
@@ -669,8 +670,9 @@ search.  In nonincremental symbol searches, the beginning and end of
 the search string are required to match the beginning and end of a
 symbol, respectively.
 
-  The symbol search commands don't perform character folding and
-cannot support lax whitespace matching (@pxref{Lax Search}).
+  The symbol search commands don't perform character folding, and
+toggling lax whitespace matching (@pxref{Lax Search, lax space
+matching}) has no effect on them.
 
 @node Regexp Search
 @section Regular Expression Search
