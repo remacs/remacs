@@ -181,9 +181,6 @@ for use in Emacs bug reports.
 hiding character but the default `.' can be used by let-binding the
 variable `read-hide-char'.
 
-** A new function `directory-files-recursively' returns all matching
-files (recursively) under a directory.
-
 ** The new function `directory-name-p' can be used to check whether a file
 name (as returned from, for instance, `file-name-all-completions' is
 a directory file name.  It returns non-nil if the last character in
@@ -1136,6 +1133,10 @@ of subprocess.
 `start-process'.  It allows programs to set process parameters such as
 process filter, sentinel, etc., through keyword arguments (similar to
 `make-network-process').
+
++++
+** A new function `directory-files-recursively' returns all matching
+files (recursively) under a directory.
 
 +++
 ** New variable `inhibit-message', when bound to non-nil, inhibits

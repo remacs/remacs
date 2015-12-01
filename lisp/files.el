@@ -744,11 +744,13 @@ The path separator is colon in GNU and GNU-like systems."
   (and (> (length name) 0)
        (char-equal (aref name (1- (length name))) ?/)))
 
-(defun directory-files-recursively (dir match &optional include-directories)
-  "Return all files under DIR that have file names matching MATCH (a regexp).
+(defun directory-files-recursively (dir regexp &optional include-directories)
+  "Return list of all files under DIR that have file names matching REGEXP.
 This function works recursively.  Files are returned in \"depth first\"
-and alphabetical order.
-If INCLUDE-DIRECTORIES, also include directories that have matching names."
+order, and files from each directory are sorted in alphabetical order.
+Each file name appears in the returned list in its absolute form.
+Optional argument INCLUDE-DIRECTORIES non-nil means also include in the
+output directories whose names match REGEXP."
   (let ((result nil)
 	(files nil)
 	;; When DIR is "/", remote file names like "/method:" could
@@ -764,11 +766,11 @@ If INCLUDE-DIRECTORIES, also include directories that have matching names."
 	      (unless (file-symlink-p full-file)
 		(setq result
 		      (nconc result (directory-files-recursively
-				     full-file match include-directories))))
+				     full-file regexp include-directories))))
 	      (when (and include-directories
-			 (string-match match leaf))
+			 (string-match regexp leaf))
 		(setq result (nconc result (list full-file)))))
-	  (when (string-match match file)
+	  (when (string-match regexp file)
 	    (push (expand-file-name file dir) files)))))
     (nconc result (nreverse files))))
 
