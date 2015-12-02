@@ -850,8 +850,8 @@ static Lisp_Object
 value_to_lisp (emacs_value v)
 {
 #ifdef WIDE_EMACS_INT
-  ptrdiff_t tmp = (ptrdiff_t)v;
-  int tag = tmp & ((1 << GCTYPEBITS) - 1);
+  uintptr_t tmp = (uintptr_t)v;
+  unsigned tag = tmp & ((1 << GCTYPEBITS) - 1);
   Lisp_Object o;
   switch (tag)
     {

@@ -43,10 +43,15 @@
     (should (= (nth 2 descr) 3)))
   (should-error (mod-test-sum "1" 2) :type 'wrong-type-argument)
   (should-error (mod-test-sum 1 "2") :type 'wrong-type-argument)
+  ;; The following tests are for 32-bit build --with-wide-int.
   (should (= (mod-test-sum -1 most-positive-fixnum)
              (1- most-positive-fixnum)))
   (should (= (mod-test-sum 1 most-negative-fixnum)
-             (1+ most-negative-fixnum))))
+             (1+ most-negative-fixnum)))
+  (should (= (mod-test-sum 1 #x1fffffff)
+             (1+  #x1fffffff)))
+  (should (= (mod-test-sum -1 #x20000000)
+             #x1fffffff)))
 
 (ert-deftest mod-test-sum-docstring ()
   (should (string= (documentation 'mod-test-sum) "Return A + B")))
