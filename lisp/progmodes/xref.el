@@ -209,8 +209,9 @@ or an xref backend, which is a value to be used to dispatch the
 generic functions.")
 
 ;; We make the etags backend the default for now, until something
-;; better comes along.
-(add-hook 'xref-backend-functions #'etags--xref-backend)
+;; better comes along.  Use APPEND so that any `add-hook' calls made
+;; before this package is loaded put new items before this one.
+(add-hook 'xref-backend-functions #'etags--xref-backend t)
 
 ;;;###autoload
 (defun xref-find-backend ()
