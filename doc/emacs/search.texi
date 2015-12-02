@@ -1265,14 +1265,15 @@ character sequences}.
 
 @kindex M-s ' @r{(Incremental Search)}
 @findex isearch-toggle-character-fold
-  Search commands in Emacs by default perform character folding, thus
-matching equivalent character sequences.  You can disable this
-behavior by customizing the variable @code{search-default-regexp-mode}
-to @code{nil}.  @xref{Search Customizations}.  Within an incremental
-search, typing @kbd{M-s '} (@code{isearch-toggle-character-fold})
-toggles character folding, but only for that search.  (Replace
-commands have a different default, controlled by a separate option;
-see @ref{Replacement and Lax Matches}.)
+  Generally, search commands in Emacs by default perform character
+folding, thus matching equivalent character sequences.  You can
+disable this behavior by customizing the variable
+@code{search-default-regexp-mode} to @code{nil}.  @xref{Search
+Customizations}.  Within an incremental search, typing @kbd{M-s '}
+(@code{isearch-toggle-character-fold}) toggles character folding, but
+only for that search.  (Replace commands have a different default,
+controlled by a separate option; see @ref{Replacement and Lax
+Matches}.)
 
   Like with case folding, typing an explicit variant of a character,
 such as @code{@"a}, as part of the search string disables character
