@@ -3660,6 +3660,39 @@ tag (or @code{nil}, which stands for the default langsys), and each
 @end table
 @end defun
 
+@cindex font information for layout
+The following four functions return size information about fonts used
+by various faces, allowing various layout considerations in Lisp
+programs.  These functions take face remapping into consideration,
+returning information about the remapped face, if the face in question
+was remapped.  @xref{Face Remapping}.
+
+@defun default-font-width
+This function returns the average width in pixels of the font used by
+the current buffer's default face.
+@end defun
+
+@defun default-font-height
+This function returns the height in pixels of the font used by the
+current buffer's default face.
+@end defun
+
+@defun window-font-width &optional window face
+This function returns the average width in pixels for the font used by
+@var{face} in @var{window}.  The specified @var{window} must be a live
+window.  If @code{nil} or omitted, @var{window} defaults to the
+selected window, and @var{face} defaults to the default face in
+@var{window}.
+@end defun
+
+@defun window-font-height &optional window face
+This function returns the height in pixels for the font used by
+@var{face} in @var{window}.  The specified @var{window} must be a live
+window.  If @code{nil} or omitted, @var{window} defaults to the
+selected window, and @var{face} defaults to the default face in
+@var{window}.
+@end defun
+
 @node Fringes
 @section Fringes
 @cindex fringes

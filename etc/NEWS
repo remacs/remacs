@@ -181,21 +181,6 @@ for use in Emacs bug reports.
 hiding character but the default `.' can be used by let-binding the
 variable `read-hide-char'.
 
-** The function `font-info' now returns more details about a font.
-In particular, it now returns the average width of the font's
-characters, which can be used for geometry-related calculations.
-
-** A new function `default-font-width' returns the average width of a
-character in the current buffer's default font.  If the default face
-is remapped (see `face-remapping-alist'), the value for the remapped
-face is returned.  This function complements the existing function
-`default-font-height'.
-
-** New functions `window-font-height' and `window-font-width' return
-the height and average width of characters in a specified face and
-window.  If FACE is remapped (see `face-remapping-alist'), the
-function returns the information for the remapped face.
-
 ** A new function `window-max-chars-per-line' returns the maximal
 number of characters that can be displayed on one line.  If a face
 and/or window are provided, these values are used for the
@@ -1235,6 +1220,27 @@ name.  The variable `system-name' is now obsolete.
 
 ** If `pwd' is called with a prefix argument, insert the current default
 directory at point.
+
++++
+** New functions return extended information about fonts and faces.
+
++++
+*** The function `font-info' now returns more details about a font.
+In particular, it now returns the average width of the font's
+characters, which can be used for geometry-related calculations.
+
++++
+**** A new function `default-font-width' returns the average width of a
+character in the current buffer's default font.  If the default face
+is remapped (see `face-remapping-alist'), the value for the remapped
+face is returned.  This function complements the existing function
+`default-font-height'.
+
++++
+***** New functions `window-font-height' and `window-font-width' return
+the height and average width of characters in a specified face and
+window.  If FACE is remapped (see `face-remapping-alist'), the
+function returns the information for the remapped face.
 
 ---
 ** New utilities in subr-x.el:
