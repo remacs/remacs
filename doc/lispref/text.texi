@@ -1352,7 +1352,7 @@ Mostly, however, this function is called automatically at an
 appropriate time.
 @end defun
 
-@defun undo-auto--amalgamate
+@defun undo-auto-amalgamate
 The editor command loop automatically calls @code{undo-boundary} just
 before executing each key sequence, so that each undo normally undoes
 the effects of one command.  A few exceptional commands are
@@ -1368,7 +1368,7 @@ buffer other than the @code{current-buffer}, then @code{undo-boundary}
 will be called in each of them.
 @end defun
 
-@defvar undo-auto--boundary-timer
+@defvar undo-auto-current-boundary-timer
 Some buffers, such as process buffers, can change even when no
 commands are executing. In these cases, @code{undo-boundary} is
 normally called periodically by the timer in this variable. Setting

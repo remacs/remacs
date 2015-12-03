@@ -2802,7 +2802,7 @@ an amalgamating command.  The car of the list is the number of
 times an amalgamating command has been called, and the cdr are the
 buffers that were changed during the last command.")
 
-(defvar undo-auto--current-boundary-timer nil
+(defvar undo-auto-current-boundary-timer nil
   "Current timer which will run `undo-auto--boundary-timer' or nil.
 
 If set to non-nil, this will effectively disable the timer.")
@@ -2810,7 +2810,7 @@ If set to non-nil, this will effectively disable the timer.")
 (defvar undo-auto--this-command-amalgamating nil
   "Non-nil if `this-command' should be amalgamated.
 This variable is set to nil by `undo-auto--boundaries' and is set
-by `undo-auto--amalgamate'." )
+by `undo-auto-amalgamate'." )
 
 (defun undo-auto--needs-boundary-p ()
   "Return non-nil if `buffer-undo-list' needs a boundary at the start."
@@ -2820,7 +2820,7 @@ by `undo-auto--amalgamate'." )
   "Return the number of amalgamating last commands or nil.
 Amalgamating commands are, by default, either
 `self-insert-command' and `delete-char', but can be any command
-that calls `undo-auto--amalgamate'."
+that calls `undo-auto-amalgamate'."
   (car-safe undo-auto--last-boundary-cause))
 
 (defun undo-auto--ensure-boundary (cause)
@@ -2851,13 +2851,13 @@ REASON describes the reason that the boundary is being added; see
 
 (defun undo-auto--boundary-timer ()
   "Timer which will run `undo--auto-boundary-timer'."
-  (setq undo-auto--current-boundary-timer nil)
+  (setq undo-auto-current-boundary-timer nil)
   (undo-auto--boundaries 'timer))
 
 (defun undo-auto--boundary-ensure-timer ()
   "Ensure that the `undo-auto-boundary-timer' is set."
-  (unless undo-auto--current-boundary-timer
-    (setq undo-auto--current-boundary-timer
+  (unless undo-auto-current-boundary-timer
+    (setq undo-auto-current-boundary-timer
           (run-at-time 10 nil #'undo-auto--boundary-timer))))
 
 (defvar undo-auto--undoably-changed-buffers nil
@@ -2878,7 +2878,7 @@ See also `undo-auto--buffer-undoably-changed'.")
            'amalgamate
          'command))))
 
-(defun undo-auto--amalgamate ()
+(defun undo-auto-amalgamate ()
   "Amalgamate undo if necessary.
 This function can be called before an amalgamating command.  It
 removes the previous `undo-boundary' if a series of such calls
