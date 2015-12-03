@@ -646,8 +646,30 @@ PKG-DESC is a `package-desc' object."
 (defvar Info-directory-list)
 (declare-function info-initialize "info" ())
 
-(defun package-activate-1 (pkg-desc &optional reload)
+(defun package--load-files-for-activation (pkg-desc reload)
+  "Load files for activating a package given by PKG-DESC.
+Load the autoloads file, and ensure `load-path' is setup.  If
+RELOAD is non-nil, also load all files in the package that
+correspond to previously loaded files."
+  (let* ((loaded-files-list (when reload
+                              (package--list-loaded-files (package-desc-dir pkg-desc)))))
+    ;; Add to load path, add autoloads, and activate the package.
+    (package--activate-autoloads-and-load-path pkg-desc)
+    ;; Call `load' on all files in `package-desc-dir' already present in
+    ;; `load-history'.  This is done so that macros in these files are updated
+    ;; to their new definitions.  If another package is being installed which
+    ;; depends on this new definition, not doing this update would cause
+    ;; compilation errors and break the installation.
+    (with-demoted-errors "Error in package--load-files-for-activation: %s"
+      (mapc (lambda (feature) (load feature nil t))
+            ;; Skip autoloads file since we already evaluated it above.
+            (remove (file-truename (package--autoloads-file-name pkg-desc))
+                    loaded-files-list)))))
+
+(defun package-activate-1 (pkg-desc &optional reload deps)
   "Activate package given by PKG-DESC, even if it was already active.
+If DEPS is non-nil, also activate its dependencies (unless they
+are already activated).
 If RELOAD is non-nil, also `load' any files inside the package which
 correspond to previously loaded files (those returned by
 `package--list-loaded-files')."
@@ -656,20 +678,15 @@ correspond to previously loaded files (those returned by
     (unless pkg-dir
       (error "Internal error: unable to find directory for `%s'"
              (package-desc-full-name pkg-desc)))
-    (let* ((loaded-files-list (when reload
-                                (package--list-loaded-files pkg-dir))))
-      ;; Add to load path, add autoloads, and activate the package.
-      (package--activate-autoloads-and-load-path pkg-desc)
-      ;; Call `load' on all files in `pkg-dir' already present in
-      ;; `load-history'.  This is done so that macros in these files are updated
-      ;; to their new definitions.  If another package is being installed which
-      ;; depends on this new definition, not doing this update would cause
-      ;; compilation errors and break the installation.
-      (with-demoted-errors "Error in package-activate-1: %s"
-        (mapc (lambda (feature) (load feature nil t))
-              ;; Skip autoloads file since we already evaluated it above.
-              (remove (file-truename (package--autoloads-file-name pkg-desc))
-                      loaded-files-list))))
+    ;; Activate its dependencies recursively.
+    ;; FIXME: This doesn't check whether the activated version is the
+    ;; required version.
+    (when deps
+      (dolist (req (package-desc-reqs pkg-desc))
+        (unless (package-activate (car req))
+          (error "Unable to activate package `%s'.\nRequired package `%s-%s' is unavailable"
+                 name (car req) (package-version-join (cadr req))))))
+    (package--load-files-for-activation pkg-desc reload)
     ;; Add info node.
     (when (file-exists-p (expand-file-name "dir" pkg-dir))
       ;; FIXME: not the friendliest, but simple.
@@ -721,7 +738,7 @@ DIR, sorted by most recently loaded last."
 ;; one was already activated.  It also loads a features of this
 ;; package which were already loaded.
 (defun package-activate (package &optional force)
-  "Activate package PACKAGE.
+  "Activate the package named PACKAGE.
 If FORCE is true, (re-)activate it if it's already activated.
 Newer versions are always activated, regardless of FORCE."
   (let ((pkg-descs (cdr (assq package package-alist))))
@@ -741,19 +758,7 @@ Newer versions are always activated, regardless of FORCE."
      ((and (memq package package-activated-list) (not force))
       t)
      ;; Otherwise, proceed with activation.
-     (t
-      (let* ((pkg-vec (car pkg-descs))
-             (fail (catch 'dep-failure
-                     ;; Activate its dependencies recursively.
-                     (dolist (req (package-desc-reqs pkg-vec))
-                       (unless (package-activate (car req))
-                         (throw 'dep-failure req))))))
-        (if fail
-            (warn "Unable to activate package `%s'.
-Required package `%s-%s' is unavailable"
-                  package (car fail) (package-version-join (cadr fail)))
-          ;; If all goes well, activate the package itself.
-          (package-activate-1 pkg-vec force)))))))
+     (t (package-activate-1 (car pkg-descs) nil 'deps)))))
 
 
 ;;; Installation -- Local operations
