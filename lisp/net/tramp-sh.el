@@ -4264,7 +4264,7 @@ process to set up.  VEC specifies the connection."
   (tramp-find-shell vec)
 
   ;; Disable unexpected output.
-  (tramp-send-command vec "mesg n; biff n" t)
+  (tramp-send-command vec "mesg n 2>/dev/null; biff n 2>/dev/null" t)
 
   ;; IRIX64 bash expands "!" even when in single quotes.  This
   ;; destroys our shell functions, we must disable it.  See
@@ -5295,21 +5295,26 @@ Return ATTR."
 	    ;; The login shell could return more than just the $PATH
 	    ;; string.  So we use `tramp-end-of-heredoc' as marker.
 	    (when elt2
-	      (tramp-send-command-and-read
-	       vec
-	       (format
-		"%s %s %s 'echo %s \\\"$PATH\\\"'"
-		(tramp-get-method-parameter vec 'tramp-remote-shell)
-		(mapconcat
-		 'identity
-		 (tramp-get-method-parameter vec 'tramp-remote-shell-login)
-		 " ")
-		(mapconcat
-		 'identity
-		 (tramp-get-method-parameter vec 'tramp-remote-shell-args)
-		 " ")
-		(tramp-shell-quote-argument tramp-end-of-heredoc))
-	       nil (regexp-quote tramp-end-of-heredoc)))))
+	      (or
+	       (tramp-send-command-and-read
+		vec
+		(format
+		 "%s %s %s 'echo %s \\\"$PATH\\\"'"
+		 (tramp-get-method-parameter vec 'tramp-remote-shell)
+		 (mapconcat
+		  'identity
+		  (tramp-get-method-parameter vec 'tramp-remote-shell-login)
+		  " ")
+		 (mapconcat
+		  'identity
+		  (tramp-get-method-parameter vec 'tramp-remote-shell-args)
+		  " ")
+		 (tramp-shell-quote-argument tramp-end-of-heredoc))
+		'noerror (regexp-quote tramp-end-of-heredoc))
+	       (progn
+		 (tramp-message
+		  vec 2 "Could not retrieve `tramp-own-remote-path'")
+		 nil)))))
 
       ;; Replace place holder `tramp-default-remote-path'.
       (when elt1
