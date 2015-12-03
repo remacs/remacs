@@ -181,13 +181,6 @@ for use in Emacs bug reports.
 hiding character but the default `.' can be used by let-binding the
 variable `read-hide-char'.
 
-** A new function `window-max-chars-per-line' returns the maximal
-number of characters that can be displayed on one line.  If a face
-and/or window are provided, these values are used for the
-calculation.  This function is different from `window-body-width' in
-that it accounts for (i) continuation glyphs, (ii) the size of the
-font, and (iii) the specified window.
-
 ** New possible value for `system-type': nacl.
 
 ** Emacs can now load shared/dynamic libraries (modules).
@@ -1230,17 +1223,25 @@ In particular, it now returns the average width of the font's
 characters, which can be used for geometry-related calculations.
 
 +++
-**** A new function `default-font-width' returns the average width of a
+*** A new function `default-font-width' returns the average width of a
 character in the current buffer's default font.  If the default face
 is remapped (see `face-remapping-alist'), the value for the remapped
 face is returned.  This function complements the existing function
 `default-font-height'.
 
 +++
-***** New functions `window-font-height' and `window-font-width' return
+*** New functions `window-font-height' and `window-font-width' return
 the height and average width of characters in a specified face and
 window.  If FACE is remapped (see `face-remapping-alist'), the
 function returns the information for the remapped face.
+
++++
+*** A new function `window-max-chars-per-line' returns the maximal
+number of characters that can be displayed on one line.  If a face
+and/or window are provided, these values are used for the
+calculation.  This function is different from `window-body-width' in
+that it accounts for (i) continuation glyphs, (ii) the size of the
+font, and (iii) the specified window.
 
 ---
 ** New utilities in subr-x.el:

@@ -635,6 +635,22 @@ Functions for retrieving the height and/or width of window dividers
 (@pxref{Scroll Bars}), and display margins (@pxref{Display Margins}) are
 described in the corresponding sections.
 
+If your Lisp program needs to make layout decisions, you will find the
+following function useful:
+
+@defun window-max-chars-per-line &optional window face
+This function returns the number of characters displayed in the
+specified @var{face} in the specified @var{window} (which must be a
+live window).  If @var{face} was remapped (@pxref{Face Remapping}),
+the information is returned for the remapped face.  If omitted or
+@code{nil}, @var{face} defaults to the default face, and @var{window}
+defaults to the selected window.  Unlike @code{window-body-width},
+this function accounts for the actual size of the @var{face}'s font,
+instead of working in units of frame's canonical character width.  It
+also accounts for space used by the continuation glyph, if
+@var{window} lacks one or both of its fringes.
+@end defun
+
 @cindex fixed-size window
 @vindex window-min-height
 @vindex window-min-width
