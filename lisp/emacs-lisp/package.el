@@ -830,12 +830,17 @@ untar into a directory named DIR; otherwise, signal an error."
     ;; Update package-alist.
     (let ((new-desc (package-load-descriptor pkg-dir)))
       ;; FIXME: Check that `new-desc' matches `desc'!
+      ;; Activation has to be done before compilation, so that if we're
+      ;; upgrading and macros have changed we load the new definitions
+      ;; before compiling.
+      (package-activate-1 new-desc :reload :deps)
       ;; FIXME: Compilation should be done as a separate, optional, step.
       ;; E.g. for multi-package installs, we should first install all packages
       ;; and then compile them.
-      (package--compile new-desc))
-    ;; Try to activate it.
-    (package-activate name 'force)
+      (package--compile new-desc)
+      ;; After compilation, load again any files loaded by
+      ;; `activate-1', so that we use the byte-compiled definitions.
+      (package--load-files-for-activation new-desc :reload))
     pkg-dir))
 
 (defun package-generate-description-file (pkg-desc pkg-file)
