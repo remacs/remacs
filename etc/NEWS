@@ -181,11 +181,6 @@ for use in Emacs bug reports.
 hiding character but the default `.' can be used by let-binding the
 variable `read-hide-char'.
 
-** The new function `directory-name-p' can be used to check whether a file
-name (as returned from, for instance, `file-name-all-completions' is
-a directory file name.  It returns non-nil if the last character in
-the name is a forward slash.
-
 ** The function `font-info' now returns more details about a font.
 In particular, it now returns the average width of the font's
 characters, which can be used for geometry-related calculations.
@@ -1301,6 +1296,13 @@ integers.
 +++
 ** New function `set-binary-mode' allows to switch a standard stream
 of the Emacs process to binary I/O mode.
+
++++
+** The new function `directory-name-p' can be used to check whether a file
+name (as returned from, for instance, `file-name-all-completions') is
+a directory file name.  It returns non-nil if the last character in
+the name is a directory separator character (forward slash on GNU and
+Unix systems, forward- or backslash on MS-Windows and MS-DOS).
 
 ** ASCII approximations to curved quotes are put in standard-display-table
 if the terminal cannot display curved quotes.

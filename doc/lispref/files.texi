@@ -2030,11 +2030,6 @@ form.
 @end example
 @end defun
 
-@defun directory-name-p filename
-This function returns non-@code{nil} if @var{filename} ends with a
-forward slash (@samp{/}) character.
-@end defun
-
 @node Directory Names
 @subsection Directory Names
 @cindex directory name
@@ -2074,6 +2069,13 @@ string (if it does not already end in one).
      @result{} "~rms/lewis/"
 @end group
 @end example
+@end defun
+
+@defun directory-name-p filename
+This function returns non-@code{nil} if @var{filename} ends with a
+directory separator character.  This is the forward slash @samp{/} on
+Unix and GNU systems; MS-Windows and MS-DOS recognize both the forward
+slash and the backslash @samp{\} as directory separators.
 @end defun
 
 @defun directory-file-name dirname
