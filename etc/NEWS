@@ -181,8 +181,6 @@ for use in Emacs bug reports.
 hiding character but the default `.' can be used by let-binding the
 variable `read-hide-char'.
 
-** New possible value for `system-type': nacl.
-
 ** Emacs can now load shared/dynamic libraries (modules).
 A dynamic Emacs module is a shared library that provides additional
 functionality for use in Emacs Lisp programs, just like a package
@@ -1319,6 +1317,10 @@ standard-display-table, and encode output using locale-coding-system.
 
 +++
 ** New var `truncate-string-ellipsis' to choose how to indicate truncation.
+
++++
+** New possible value for `system-type': `nacl'.
+This is used by Google's Native Client (NaCl).
 
 ** Miscellaneous name change
 
