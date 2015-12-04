@@ -157,8 +157,6 @@ FROM is for internal use.  It specifies an index in the STRING
 from which to start."
   (let* ((spaces 0)
          (multi-char-table (char-table-extra-slot character-fold-table 0))
-         (lower-case-table (current-case-table))
-         (upper-case-table (char-table-extra-slot lower-case-table 0))
          (i (or from 0))
          (end (length string))
          (out nil))
@@ -178,21 +176,9 @@ from which to start."
              (setq spaces 0))
            (let ((regexp (or (aref character-fold-table c)
                              (regexp-quote (string c))))
-                 (alist nil))
-             ;; Long string.  The regexp would probably be too long.
-             (unless (> end 50)
-               (setq alist (aref multi-char-table c))
-               (when case-fold-search
-                 (let ((other-c (aref lower-case-table c)))
-                   (when (or (not other-c)
-                             (eq other-c c))
-                     (setq other-c (aref upper-case-table c)))
-                   (when other-c
-                     (setq alist (append alist (aref multi-char-table other-c)))
-                     (setq regexp (concat "\\(?:" regexp "\\|"
-                                          (or (aref character-fold-table other-c)
-                                              (regexp-quote (string other-c)))
-                                          "\\)"))))))
+                 ;; Long string.  The regexp would probably be too long.
+                 (alist (unless (> end 50)
+                          (aref multi-char-table c))))
              (push (let ((matched-entries nil)
                          (max-length 0))
                      (dolist (entry alist)
@@ -229,7 +215,7 @@ from which to start."
       (push (character-fold--make-space-string spaces) out))
     (let ((regexp (apply #'concat (nreverse out))))
       ;; Limited by `MAX_BUF_SIZE' in `regex.c'.
-      (if (> (length regexp) 10000)
+      (if (> (length regexp) 5000)
           (regexp-quote string)
         regexp))))
 

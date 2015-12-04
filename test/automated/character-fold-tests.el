@@ -98,6 +98,27 @@
     ;; (character-fold--test-match-exactly "a12" "xxyy")
     ))
 
+(ert-deftest character-fold--speed-test ()
+  (dolist (string (append '("tty-set-up-initial-frame-face"
+                            "tty-set-up-initial-frame-face-frame-faceframe-faceframe-faceframe-face")
+                          (mapcar #'character-fold--random-word '(10 50 100
+                                                                     50 100))))
+    (message "Testing %s" string)
+    ;; Make sure we didn't just fallback on the trivial search.
+    (should-not (string= (regexp-quote string)
+                         (character-fold-to-regexp string)))
+    (with-temp-buffer
+      (save-excursion (insert string))
+      (let ((time (time-to-seconds (current-time))))
+        ;; Our initial implementation of case-folding in char-folding
+        ;; created a lot of redundant paths in the regexp. Because of
+        ;; that, if a really long string "almost" matches, the regexp
+        ;; engine took a long time to realise that it doesn't match.
+        (should-not (character-fold-search-forward (concat string "c") nil 'noerror))
+        ;; Ensure it took less than a second.
+        (should (< (- (time-to-seconds (current-time))
+                      time)
+                   1))))))
 
 (provide 'character-fold-tests)
 ;;; character-fold-tests.el ends here
