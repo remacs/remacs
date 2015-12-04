@@ -2885,7 +2885,7 @@ Of course, we really can't know that for sure, so it's just a heuristic."
 (put 'real 'cl-deftype-satisfies #'numberp)
 (put 'fixnum 'cl-deftype-satisfies #'integerp)
 (put 'base-char 'cl-deftype-satisfies #'characterp)
-(put 'character 'cl-deftype-satisfies #'integerp)
+(put 'character 'cl-deftype-satisfies #'natnump)
 
 
 ;;;###autoload
