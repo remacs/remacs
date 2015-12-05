@@ -244,16 +244,23 @@ affected by the command.
 +++
 ** New command `comment-line' bound to `C-x C-;'.
 
-** Unicode names entered via C-x 8 RET now use substring completion by default.
+** New and improved facilities for inserting Unicode characters
 
-** C-x 8 now has shorthands for these chars: ‐ ‑ ‒ – — ― ‘ ’ “ ” † ‡ • ′ ″
+---
+*** Unicode names entered via C-x 8 RET now use substring completion by default.
+
++++
+*** C-x 8 now has shorthands for these chars: ‐ ‑ ‒ – — ― ‘ ’ “ ” † ‡ • ′ ″
 € № ← → ↔ − ≈ ≠ ≤ ≥.  As before, you can type C-x 8 C-h to list shorthands.
 
-** New minor mode electric-quote-mode for quoting ‘like this’ and “like this”
++++
+*** New minor mode electric-quote-mode for quoting ‘like this’ and “like this”
 as you type.  See also the new variable ‘text-quoting-style’.
 
+---
 ** New minor mode global-eldoc-mode is enabled by default.
 
+---
 ** Emacs now supports "bracketed paste mode" when running on a terminal
 that supports it.  This facility allows Emacs to understand pasted
 chunks of text as strings to be inserted, instead of interpreting each
@@ -261,6 +268,7 @@ character in the pasted text as actual user input.  This results in a
 paste experience similar to that under a window system, and significant
 performance improvements when pasting large amounts of text.
 
++++
 ** Emacs now supports the latest version of the UBA.
 The Emacs implementation of the Unicode Bidirectional Algorithm (UBA)
 was updated to support all the latest additions and changes introduced
