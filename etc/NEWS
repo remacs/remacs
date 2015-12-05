@@ -218,6 +218,7 @@ change in future releases.  For that reason, their support is disabled
 by default, and must be enabled by using the `--with-modules' option
 at configure time.
 
+---
 ** New input method: `tamil-dvorak'.
 
 
