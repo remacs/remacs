@@ -305,6 +305,7 @@ current package keywords are recognized.  Set the new option
 It's meant for use together with `compile':
 emacs -batch --eval "(checkdoc-file \"subr.el\")"
 
++++
 ** New function `bookmark-set-no-overwrite' bound to C-x r M.
 It raises an error if a bookmark of that name already exists,
 unlike `bookmark-set' which silently updates an existing bookmark.
