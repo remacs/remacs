@@ -311,19 +311,23 @@ It raises an error if a bookmark of that name already exists,
 unlike `bookmark-set' which silently updates an existing bookmark.
 
 ** JSON
+
 ---
 *** `json-pretty-print' and `json-pretty-print-buffer' now maintain
 the ordering of object keys by default.
+
 ---
 *** New commands `json-pretty-print-ordered' and
 `json-pretty-print-buffer-ordered' pretty prints JSON objects with
 object keys sorted alphabetically.
 
 ** You can recompute the VC state of a file buffer with `M-x vc-refresh-state'
+
 ** Prog mode has some support for multi-mode indentation.
 See `prog-indentation-context' and `prog-widen'.
 
 ** Prettify Symbols mode
+
 *** Prettify Symbols mode supports custom composition predicates.  By
 overriding the default `prettify-symbols-compose-predicate', modes can
 specify in which contexts a symbol map be composed to some unicode
@@ -346,7 +350,9 @@ and `erc-channel-hide-list' will only hide the specified message types
 for the respective specified targets.
 
 ** Midnight-mode
+
 *** `midnight-mode' is a proper minor mode.
+
 *** clean-buffer-*-regexps can now specify buffers via predicate functions.
 
 ** In xterms, killing text now also sets the CLIPBOARD/PRIMARY selection
