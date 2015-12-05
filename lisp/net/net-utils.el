@@ -41,7 +41,7 @@
 ;; On some systems, programs like ifconfig are not in normal user
 ;; path, but rather in /sbin, /usr/sbin, etc (but non-root users can
 ;; still use them for queries).  Actually the trend these
-;; day is for /sbin to be a symlink to /usr/sbin, but we still need to
+;; days is for /sbin to be a symlink to /usr/sbin, but we still need to
 ;; search both for older systems.
 (defun net-utils--executable-find-sbin (command)
   "Return absolute name of COMMAND if found in an sbin directory."
