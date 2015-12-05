@@ -226,12 +226,19 @@ at configure time.
 +++
 ** M-x suggests shorthands and ignores obsolete commands for completion.
 
-** Successive single-char deletions are collapsed in the undo-log just like
-successive char insertions. This behaviour can be extended to other
-commands, using the `undo-auto--amalgamate' function.
+** Changes in undo
 
-** The heuristic used to insert `undo-boundary' after each command has changed,
-so that it supports commands which potentially affect multiple buffers.
++++
+*** Successive single-char deletions are collapsed in the undo-log just like
+successive char insertions.  Which commands invoke this behavior is
+controlled by the new `undo-auto-amalgamate' function.  See the node
+"Undo" in the ELisp manual for more details.
+
++++
+*** The heuristic used to insert `undo-boundary' after each command
+has changed, so that if a command causes changes in more than just the
+current buffer, Emacs now calls `undo-boundary' in every buffer
+affected by the command.
 
 +++
 ** New command `comment-line' bound to `C-x C-;'.

@@ -1353,26 +1353,27 @@ appropriate time.
 @end defun
 
 @defun undo-auto-amalgamate
+@cindex amalgamating commands, and undo
 The editor command loop automatically calls @code{undo-boundary} just
 before executing each key sequence, so that each undo normally undoes
 the effects of one command.  A few exceptional commands are
-@emph{amalgamating}: these commands generally cause small changes to
-buffers. So with these a boundary is inserted only every 20th command,
-so that these can be undone as a group.  By default commands
+@dfn{amalgamating}: these commands generally cause small changes to
+buffers, so with these a boundary is inserted only every 20th command,
+allowing to undo them as a group.  By default, commands
 @code{self-insert-command}, which produces self-inserting input
 characters (@pxref{Commands for Insertion}), and @code{delete-char}
 which deletes characters (@pxref{Deletion}) are amalgamating.
-Where a command affects the contents of several buffers as may happen,
-for example, if a function on the @code{post-command-hook} affects a
+Where a command affects the contents of several buffers, as may happen,
+for example, when a function on the @code{post-command-hook} affects a
 buffer other than the @code{current-buffer}, then @code{undo-boundary}
-will be called in each of them.
+will be called in each of the affected buffers.
 @end defun
 
 @defvar undo-auto-current-boundary-timer
 Some buffers, such as process buffers, can change even when no
-commands are executing. In these cases, @code{undo-boundary} is
-normally called periodically by the timer in this variable. Setting
-this variable to non-@code{nil} prevents this behaviour.
+commands are executing.  In these cases, @code{undo-boundary} is
+normally called periodically by the timer in this variable.  Setting
+this variable to non-@code{nil} prevents this behavior.
 @end defvar
 
 @defvar undo-in-progress
