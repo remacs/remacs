@@ -277,6 +277,7 @@ This includes full support for directional isolates and the
 Bidirectional Parentheses Algorithm (BPA) specified by these Unicode
 standards.
 
++++
 ** You can access `mouse-buffer-menu' (C-down-mouse-1) using C-f10.
 
 +++
