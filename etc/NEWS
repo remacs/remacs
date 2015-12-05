@@ -210,7 +210,7 @@ module's functions.  User-ptr objects can also have associated
 "finalizers" -- functions to be run when the object is GC'ed; this is
 useful for freeing any resources allocated for the underlying data
 structure, such as memory, open file descriptors, etc.  A new
-predicate `user-ptr-p' returns non-nil if its argument is a `usr-ptr'
+predicate `user-ptrp' returns non-nil if its argument is a `user-ptr'
 object.
 
 Loadable modules in Emacs are an experimental feature, and subject to
