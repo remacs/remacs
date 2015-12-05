@@ -1133,48 +1133,49 @@ Point is after the headers when BODY runs.
 FILE, if provided, is added to URL.
 URL can be a local file name, which must be absolute.
 ASYNC, if non-nil, runs the request asynchronously.
-ERROR-FORM is run only if an error occurs.  If NOERROR is
-non-nil, don't propagate errors caused by the connection or by
-BODY (does not apply to errors signaled by ERROR-FORM).
+ERROR-FORM is run only if a connection error occurs.  If NOERROR
+is non-nil, don't propagate connection errors (does not apply to
+errors signaled by ERROR-FORM or by BODY).
 
 \(fn URL &key ASYNC FILE ERROR-FORM NOERROR &rest BODY)"
   (declare (indent defun) (debug t))
   (while (keywordp (car body))
     (setq body (cdr (cdr body))))
-  (macroexp-let2* nil ((url-1 url))
-    `(cl-macrolet ((wrap-errors (&rest bodyforms)
-                                (let ((err (make-symbol "err")))
-                                  `(condition-case ,err
-                                       ,(macroexp-progn bodyforms)
-                                     ,(list 'error ',error-form
-                                            (list 'unless ',noerror
-                                                  `(signal (car ,err) (cdr ,err))))))))
+  (macroexp-let2* nil ((url-1 url)
+                       (noerror-1 noerror))
+    `(cl-macrolet ((unless-error (body-2 &rest before-body)
+                                 (let ((err (make-symbol "err")))
+                                   `(with-temp-buffer
+                                      (when (condition-case ,err
+                                                (progn ,@before-body t)
+                                              ,(list 'error ',error-form
+                                                     (list 'unless ',noerror-1
+                                                           `(signal (car ,err) (cdr ,err)))))
+                                        ,@body-2)))))
        (if (string-match-p "\\`https?:" ,url-1)
            (let* ((url (concat ,url-1 ,file))
                   (callback (lambda (status)
                               (let ((b (current-buffer)))
                                 (require 'url-handlers)
-                                (unwind-protect (wrap-errors
-                                                 (when-let ((er (plist-get status :error)))
-                                                   (error "Error retrieving: %s %S" url er))
-                                                 (goto-char (point-min))
-                                                 (unless (search-forward-regexp "^\r?\n\r?" nil 'noerror)
-                                                   (error "Error retrieving: %s %S" url "incomprehensible buffer"))
-                                                 (with-temp-buffer
-                                                   (url-insert-buffer-contents b url)
-                                                   (kill-buffer b)
-                                                   (goto-char (point-min))
-                                                   ,@body)))))))
+                                (unless-error ,body
+                                              (when-let ((er (plist-get status :error)))
+                                                (error "Error retrieving: %s %S" url er))
+                                              (goto-char (point-min))
+                                              (unless (search-forward-regexp "^\r?\n\r?" nil 'noerror)
+                                                (error "Error retrieving: %s %S" url "incomprehensible buffer"))
+                                              (url-insert-buffer-contents b url)
+                                              (kill-buffer b)
+                                              (goto-char (point-min)))))))
              (if ,async
-                 (wrap-errors (url-retrieve url callback nil 'silent))
-               (with-current-buffer (wrap-errors (url-retrieve-synchronously url 'silent))
-                 (funcall callback nil))))
-         (wrap-errors (with-temp-buffer
-                        (let ((url (expand-file-name ,file ,url-1)))
-                          (unless (file-name-absolute-p url)
-                            (error "Location %s is not a url nor an absolute file name" url))
-                          (insert-file-contents url))
-                        ,@body))))))
+                 (unless-error nil (url-retrieve url callback nil 'silent))
+               (unless-error ,body (url-insert-file-contents url))))
+         (unless-error ,body
+                       (let ((url (expand-file-name ,file ,url-1)))
+                         (unless (file-name-absolute-p url)
+                           (error "Location %s is not a url nor an absolute file name" url))
+                         (insert-file-contents url)))))))
+
+(define-error 'bad-signature "Failed to verify signature")
 
 (defun package--check-signature-content (content string &optional sig-file)
   "Check signature CONTENT against STRING.
@@ -1186,7 +1187,7 @@ errors."
     (condition-case error
         (epg-verify-string context content string)
       (error (package--display-verify-error context sig-file)
-        (signal (car error) (cdr error))))
+             (signal 'bad-signature error)))
     (let (good-signatures had-fatal-error)
       ;; The .sig file may contain multiple signatures.  Success if one
       ;; of the signatures is good.
@@ -1202,10 +1203,10 @@ errors."
             (setq had-fatal-error t))))
       (when (and (null good-signatures) had-fatal-error)
         (package--display-verify-error context sig-file)
-        (error "Failed to verify signature %s" sig-file))
+        (signal 'bad-signature (list sig-file)))
       good-signatures)))
 
-(defun package--check-signature (location file &optional string async callback)
+(defun package--check-signature (location file &optional string async callback unwind)
   "Check signature of the current buffer.
 Download the signature file from LOCATION by appending \".sig\"
 to FILE.
@@ -1214,18 +1215,35 @@ STRING is the string to verify, it defaults to `buffer-string'.
 If ASYNC is non-nil, the download of the signature file is
 done asynchronously.
 
-If the signature is verified and CALLBACK was provided, CALLBACK
-is `funcall'ed with the list of good signatures as argument (the
-list can be empty).  If the signatures file is not found,
-CALLBACK is called with no arguments."
+If the signature does not verify, signal an error.
+If the signature is verified and CALLBACK was provided, `funcall'
+CALLBACK with the list of good signatures as argument (the list
+can be empty).
+If no signatures file is found, and `package-check-signature' is
+`allow-unsigned', call CALLBACK with a nil argument.
+Otherwise, an error is signaled.
+
+UNWIND, if provided, is a function to be called after everything
+else, even if an error is signaled."
   (let ((sig-file (concat file ".sig"))
         (string (or string (buffer-string))))
     (package--with-response-buffer location :file sig-file
       :async async :noerror t
-      :error-form (when callback (funcall callback nil))
-      (let ((sig (package--check-signature-content (buffer-substring (point) (point-max)) string sig-file)))
-        (when callback (funcall callback sig))
-        sig))))
+      ;; Connection error is assumed to mean "no sig-file".
+      :error-form (let ((allow-unsigned (eq package-check-signature 'allow-unsigned)))
+                    (when (and callback allow-unsigned)
+                      (funcall callback nil))
+                    (when unwind (funcall unwind))
+                    (unless allow-unsigned
+                      (error "Unsigned file `%s' at %s" file location)))
+      ;; OTOH, an error here means "bad signature", which we never
+      ;; suppress.  (Bug#22089)
+      (unwind-protect
+          (let ((sig (package--check-signature-content (buffer-substring (point) (point-max))
+                                                       string sig-file)))
+            (when callback (funcall callback sig))
+            sig)
+        (when unwind (funcall unwind))))))
 
 ;;; Packages on Archives
 ;; The following variables store information about packages available
@@ -1488,19 +1506,12 @@ similar to an entry in `package-alist'.  Save the cached copy to
            location file content async
            ;; This function will be called after signature checking.
            (lambda (&optional good-sigs)
-             (unless (or good-sigs (eq package-check-signature 'allow-unsigned))
-               ;; Even if the sig fails, this download is done, so
-               ;; remove it from the in-progress list.
-               (package--update-downloads-in-progress archive)
-               (error "Unsigned archive `%s'" name))
-             ;; Either everything worked or we don't mind not signing.
-             ;; Write out the archives file.
              (write-region content nil local-file nil 'silent)
              ;; Write out good signatures into archive-contents.signed file.
              (when good-sigs
                (write-region (mapconcat #'epg-signature-to-string good-sigs "\n")
-                             nil (concat local-file ".signed") nil 'silent))
-             (package--update-downloads-in-progress archive))))))))
+                             nil (concat local-file ".signed") nil 'silent)))
+           (lambda () (package--update-downloads-in-progress archive))))))))
 
 (defun package--download-and-read-archives (&optional async)
   "Download descriptions of all `package-archives' and read them.
@@ -1782,11 +1793,6 @@ if all the in-between dependencies are also in PACKAGE-LIST."
            location file content nil
            ;; This function will be called after signature checking.
            (lambda (&optional good-sigs)
-             (unless (or good-sigs (eq package-check-signature 'allow-unsigned))
-               ;; Even if the sig fails, this download is done, so
-               ;; remove it from the in-progress list.
-               (error "Unsigned package: `%s'"
-                 (package-desc-name pkg-desc)))
              ;; Signature checked, unpack now.
              (with-temp-buffer (insert content)
                                (let ((save-silently t))
