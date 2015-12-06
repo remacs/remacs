@@ -16720,6 +16720,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
   startp = run_window_scroll_functions (window, it.current.pos);
 
   /* Redisplay the window.  */
+  bool use_desired_matrix = false;
   if (!current_matrix_up_to_date_p
       || windows_or_buffers_changed
       || f->cursor_type_changed
@@ -16730,7 +16731,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
       || MINI_WINDOW_P (w)
       || !(used_current_matrix_p
 	   = try_window_reusing_current_matrix (w)))
-    try_window (window, startp, 0);
+    use_desired_matrix = (try_window (window, startp, 0) == 1);
 
   /* If new fonts have been loaded (due to fontsets), give up.  We
      have to start a new redisplay since we need to re-adjust glyph
@@ -16770,9 +16771,15 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
      and similar ones.  */
   if (w->cursor.vpos < 0)
     {
+      /* Prefer the desired matrix to the current matrix, if possible,
+	 in the fallback calculations below.  This is because using
+	 the current matrix might completely goof, e.g. if its first
+	 row is after point.  */
+      struct glyph_matrix *matrix =
+	use_desired_matrix ? w->desired_matrix : w->current_matrix;
       /* First, try locating the proper glyph row for PT.  */
       struct glyph_row *row =
-	row_containing_pos (w, PT, w->current_matrix->rows, NULL, 0);
+	row_containing_pos (w, PT, matrix->rows, NULL, 0);
 
       /* Sometimes point is at the beginning of invisible text that is
 	 before the 1st character displayed in the row.  In that case,
@@ -16797,8 +16804,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 		alt_pos = XFASTINT (invis_end);
 	      else
 		alt_pos = ZV;
-	      row = row_containing_pos (w, alt_pos, w->current_matrix->rows,
-					NULL, 0);
+	      row = row_containing_pos (w, alt_pos, matrix->rows, NULL, 0);
 	    }
 	}
       /* Finally, fall back on the first row of the window after the
@@ -16806,11 +16812,11 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	 displaying the cursor at all.  */
       if (!row)
 	{
-	  row = w->current_matrix->rows;
+	  row = matrix->rows;
 	  if (row->mode_line_p)
 	    ++row;
 	}
-      set_cursor_from_row (w, row, w->current_matrix, 0, 0, 0, 0);
+      set_cursor_from_row (w, row, matrix, 0, 0, 0, 0);
     }
 
   if (!cursor_row_fully_visible_p (w, false, false))
@@ -17795,7 +17801,7 @@ row_containing_pos (struct window *w, ptrdiff_t charpos,
   while (true)
     {
       /* Give up if we have gone too far.  */
-      if (end && row >= end)
+      if (end && row >= end || !row->enabled_p)
 	return NULL;
       /* This formerly returned if they were equal.
 	 I think that both quantities are of a "last plus one" type;
