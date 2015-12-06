@@ -357,7 +357,7 @@ error !;
 # define lisp_h_XINT(a) (XLI (a) >> INTTYPEBITS)
 # define lisp_h_XSYMBOL(a) \
     (eassert (SYMBOLP (a)), \
-     (struct Lisp_Symbol *) ((uintptr_t) XLI (a) - Lisp_Symbol \
+     (struct Lisp_Symbol *) ((intptr_t) XLI (a) - Lisp_Symbol \
 			     + (char *) lispsym))
 # define lisp_h_XTYPE(a) ((enum Lisp_Type) (XLI (a) & ~VALMASK))
 # define lisp_h_XUNTAG(a, type) ((void *) (intptr_t) (XLI (a) - (type)))
@@ -713,9 +713,15 @@ struct Lisp_Symbol
 #define DEFUN_ARGS_8	(Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object, \
 			 Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object)
 
-/* Yield an integer that contains TAG along with PTR.  */
+/* Yield a signed integer that contains TAG along with PTR.
+
+   Sign-extend pointers when USE_LSB_TAG (this simplifies emacs-module.c),
+   and zero-extend otherwise (that’s a bit faster here).
+   Sign extension matters only when EMACS_INT is wider than a pointer.  */
 #define TAG_PTR(tag, ptr) \
-  ((USE_LSB_TAG ? (tag) : (EMACS_UINT) (tag) << VALBITS) + (uintptr_t) (ptr))
+  (USE_LSB_TAG \
+   ? (intptr_t) (ptr) + (tag) \
+   : (EMACS_INT) (((EMACS_UINT) (tag) << VALBITS) + (uintptr_t) (ptr)))
 
 /* Yield an integer that contains a symbol tag along with OFFSET.
    OFFSET should be the offset in bytes from 'lispsym' to the symbol.  */
@@ -934,7 +940,8 @@ INLINE struct Lisp_Symbol *
 XSYMBOL (Lisp_Object a)
 {
   eassert (SYMBOLP (a));
-  uintptr_t i = (uintptr_t) XUNTAG (a, Lisp_Symbol);
+  intptr_t i = (intptr_t) XUNTAG (a, Lisp_Symbol);
+  eassert (0 <= i);
   void *p = (char *) lispsym + i;
   return p;
 }
@@ -3919,7 +3926,6 @@ extern Lisp_Object make_user_ptr (void (*finalizer) (void*), void *p);
 
 /* Defined in emacs-module.c.  */
 extern void module_init (void);
-extern void mark_modules (void);
 extern void syms_of_module (void);
 #endif
 

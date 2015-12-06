@@ -56,6 +56,18 @@ static pthread_t main_thread;
 static DWORD main_thread;
 #endif
 
+/* True if Lisp_Object and emacs_value have the same representation.
+   This is typically true unless WIDE_EMACS_INT.  In practice, having
+   the same sizes and alignments and maximums should be a good enough
+   proxy for equality of representation.  */
+enum
+  {
+    plain_values
+      = (sizeof (Lisp_Object) == sizeof (emacs_value)
+	 && alignof (Lisp_Object) == alignof (emacs_value)
+	 && INTPTR_MAX == EMACS_INT_MAX)
+  };
+
 
 /* Private runtime and environment members.  */
 
@@ -103,8 +115,11 @@ static void module_reset_handlerlist (const int *);
 static void module_wrong_type (emacs_env *, Lisp_Object, Lisp_Object);
 
 /* We used to return NULL when emacs_value was a different type from
-   Lisp_Object, but nowadays we just use Qnil instead.  */
-static emacs_value module_nil;
+   Lisp_Object, but nowadays we just use Qnil instead.  Although they
+   happen to be the same thing in the current implementation, module
+   code should not assume this.  */
+verify (NIL_IS_ZERO);
+static emacs_value const module_nil = 0;
 
 /* Convenience macros for non-local exit handling.  */
 
@@ -559,7 +574,7 @@ module_get_user_ptr (emacs_env *env, emacs_value uptr)
 static void
 module_set_user_ptr (emacs_env *env, emacs_value uptr, void *ptr)
 {
-  // FIXME: This function should return bool because it can fail.
+  /* FIXME: This function should return bool because it can fail.  */
   MODULE_FUNCTION_BEGIN ();
   check_main_thread ();
   if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
@@ -587,7 +602,7 @@ static void
 module_set_user_finalizer (emacs_env *env, emacs_value uptr,
 			   emacs_finalizer_function fin)
 {
-  // FIXME: This function should return bool because it can fail.
+  /* FIXME: This function should return bool because it can fail.  */
   MODULE_FUNCTION_BEGIN ();
   Lisp_Object lisp = value_to_lisp (uptr);
   if (! USER_PTRP (lisp))
@@ -598,7 +613,7 @@ module_set_user_finalizer (emacs_env *env, emacs_value uptr,
 static void
 module_vec_set (emacs_env *env, emacs_value vec, ptrdiff_t i, emacs_value val)
 {
-  // FIXME: This function should return bool because it can fail.
+  /* FIXME: This function should return bool because it can fail.  */
   MODULE_FUNCTION_BEGIN ();
   Lisp_Object lvec = value_to_lisp (vec);
   if (! VECTORP (lvec))
@@ -641,7 +656,7 @@ module_vec_get (emacs_env *env, emacs_value vec, ptrdiff_t i)
 static ptrdiff_t
 module_vec_size (emacs_env *env, emacs_value vec)
 {
-  // FIXME: Return a sentinel value (e.g., -1) on error.
+  /* FIXME: Return a sentinel value (e.g., -1) on error.  */
   MODULE_FUNCTION_BEGIN (0);
   Lisp_Object lvec = value_to_lisp (vec);
   if (! VECTORP (lvec))
@@ -729,19 +744,18 @@ usage: (module-call ENVOBJ &rest ARGLIST)   */)
   initialize_environment (&pub, &priv);
 
   USE_SAFE_ALLOCA;
-#ifdef WIDE_EMACS_INT
-  emacs_value *args = SAFE_ALLOCA (len * sizeof *args);
-
-  for (ptrdiff_t i = 0; i < len; i++)
-    args[i] = lisp_to_value (arglist[i + 1]);
-#else
-  /* BEWARE!  Here, we assume that Lisp_Object and
-   * emacs_value have the exact same representation.  */
-  emacs_value *args = (emacs_value*) arglist + 1;
-#endif
+  emacs_value *args;
+  if (plain_values)
+    args = (emacs_value *) arglist + 1;
+  else
+    {
+      args = SAFE_ALLOCA (len * sizeof *args);
+      for (ptrdiff_t i = 0; i < len; i++)
+	args[i] = lisp_to_value (arglist[i + 1]);
+    }
 
   emacs_value ret = envptr->subr (&pub, len, args, envptr->data);
-  SAFE_FREE();
+  SAFE_FREE ();
 
   eassert (&priv == pub.private_members);
 
@@ -838,106 +852,107 @@ module_args_out_of_range (emacs_env *env, Lisp_Object a1, Lisp_Object a2)
 
 /* Value conversion.  */
 
-#ifdef WIDE_EMACS_INT
 /* Unique Lisp_Object used to mark those emacs_values which are really
-   just containers holding a Lisp_Object that's too large for emacs_value.  */
+   just containers holding a Lisp_Object that does not fit as an emacs_value,
+   either because it is an integer out of range, or is not properly aligned.
+   Used only if !plain_values.  */
 static Lisp_Object ltv_mark;
-#endif
 
-/* Convert an `emacs_value' to the corresponding internal object.
+/* Convert V to the corresponding internal object O, such that
+   V == lisp_to_value_bits (O).  Never fails.  */
+static Lisp_Object
+value_to_lisp_bits (emacs_value v)
+{
+  intptr_t i = (intptr_t) v;
+  if (plain_values || USE_LSB_TAG)
+    return XIL (i);
+
+  /* With wide EMACS_INT and when tag bits are the most significant,
+     reassembling integers differs from reassembling pointers in two
+     ways.  First, save and restore the least-significant bits of the
+     integer, not the most-significant bits.  Second, sign-extend the
+     integer when restoring, but zero-extend pointers because that
+     makes TAG_PTR faster.  */
+
+  EMACS_UINT tag = i & (GCALIGNMENT - 1);
+  EMACS_UINT untagged = i - tag;
+  switch (tag)
+    {
+    case_Lisp_Int:
+      {
+	bool negative = tag & 1;
+	EMACS_UINT sign_extension
+	  = negative ? VALMASK & ~(INTPTR_MAX >> INTTYPEBITS): 0;
+	uintptr_t u = i;
+	intptr_t all_but_sign = u >> GCTYPEBITS;
+	untagged = sign_extension + all_but_sign;
+	break;
+      }
+    }
+
+  return XIL ((tag << VALBITS) + untagged);
+}
+
+/* If V was computed from lisp_to_value (O), then return O.
    Never fails.  */
 static Lisp_Object
 value_to_lisp (emacs_value v)
 {
-#ifdef WIDE_EMACS_INT
-  uintptr_t tmp = (uintptr_t)v;
-  unsigned tag = tmp & ((1 << GCTYPEBITS) - 1);
-  Lisp_Object o;
-  switch (tag)
-    {
-    case_Lisp_Int:
-      o = make_lisp_ptr ((void *)((tmp - tag) >> GCTYPEBITS), tag); break;
-    default:
-      o = make_lisp_ptr ((void *)(tmp - tag), tag);
-    }
-  /* eassert (lisp_to_value (o) == v); */
-  if (CONSP (o) && EQ (XCDR (o), ltv_mark))
-    return XCAR (o);
-  else
-    return o;
-#else
-  Lisp_Object o = XIL ((EMACS_INT) v);
-  /* Check the assumption made elsewhere that Lisp_Object and emacs_value
-     share the same underlying bit representation.  */
-  eassert (EQ (o, *(Lisp_Object*)&v));
-  /* eassert (lisp_to_value (o) == v); */
+  Lisp_Object o = value_to_lisp_bits (v);
+  if (! plain_values && CONSP (o) && EQ (XCDR (o), ltv_mark))
+    o = XCAR (o);
   return o;
-#endif
 }
 
-/* Convert an internal object to an `emacs_value'.  Allocate storage
-   from the environment; return NULL if allocation fails.  */
+/* Attempt to convert O to an emacs_value.  Do not do any checking or
+   or allocate any storage; the caller should prevent or detect
+   any resulting bitpattern that is not a valid emacs_value.  */
+static emacs_value
+lisp_to_value_bits (Lisp_Object o)
+{
+  EMACS_UINT u = XLI (o);
+
+  /* Compress U into the space of a pointer, possibly losing information.  */
+  uintptr_t p = (plain_values || USE_LSB_TAG
+		 ? u
+		 : (INTEGERP (o) ? u << VALBITS : u & VALMASK) + XTYPE (o));
+  return (emacs_value) p;
+}
+
+#ifndef HAVE_STRUCT_ATTRIBUTE_ALIGNED
+enum { HAVE_STRUCT_ATTRIBUTE_ALIGNED = 0 };
+#endif
+
+/* Convert O to an emacs_value.  Allocate storage if needed; this can
+   signal if memory is exhausted.  */
 static emacs_value
 lisp_to_value (Lisp_Object o)
 {
-#ifdef WIDE_EMACS_INT
-  /* We need to compress the EMACS_INT into the space of a pointer.
-     For most objects, this is just a question of shuffling the tags around.
-     But in some cases (e.g. large integers) this can't be done, so we
-     should allocate a special object to hold the extra data.  */
-  Lisp_Object orig = o;
-  int tag = XTYPE (o);
-  switch (tag)
+  emacs_value v = lisp_to_value_bits (o);
+
+  if (! EQ (o, value_to_lisp_bits (v)))
     {
-    case_Lisp_Int:
-      {
-        EMACS_UINT ui = (EMACS_UINT) XINT (o);
-        if (ui <= (SIZE_MAX >> GCTYPEBITS))
-          {
-            uintptr_t uv = (uintptr_t) ui;
-            emacs_value v = (emacs_value) ((uv << GCTYPEBITS) | tag);
-            eassert (EQ (value_to_lisp (v), o));
-            return v;
-          }
-        else
-          {
-            o = Fcons (o, ltv_mark);
-            tag = Lisp_Cons;
-          }
-      } /* FALLTHROUGH */
-    default:
-      {
-        void *ptr = XUNTAG (o, tag);
-        if (((uintptr_t)ptr) & ((1 << GCTYPEBITS) - 1))
-          { /* Pointer is not properly aligned!  */
-            eassert (!CONSP (o)); /* Cons cells have to always be aligned!  */
-            o = Fcons (o, ltv_mark);
-            ptr = XUNTAG (o, tag);
-          }
-        emacs_value v = (emacs_value) (((uintptr_t) ptr) | tag);
-        eassert (EQ (value_to_lisp (v), orig));
-        return v;
-      }
+      /* Package the uncompressible object pointer inside a pair
+	 that is compressible.  */
+      Lisp_Object pair = Fcons (o, ltv_mark);
+
+      if (! HAVE_STRUCT_ATTRIBUTE_ALIGNED)
+	{
+	  /* Keep calling Fcons until it returns a compressible pair.
+	     This shouldn't take long.  */
+	  while ((intptr_t) XCONS (pair) & (GCALIGNMENT - 1))
+	    pair = Fcons (o, pair);
+
+	  /* Plant the mark.  The garbage collector will eventually
+	     reclaim any just-allocated uncompressible pairs.  */
+	  XSETCDR (pair, ltv_mark);
+	}
+
+      v = (emacs_value) ((intptr_t) XCONS (pair) + Lisp_Cons);
     }
-#else
-  emacs_value v = (emacs_value) XLI (o);
 
-  /* Check the assumption made elsewhere that Lisp_Object and emacs_value
-     share the same underlying bit representation.  */
-  eassert (v == *(emacs_value*)&o);
-  eassert (EQ (value_to_lisp (v), o));
+  eassert (EQ (o, value_to_lisp (v)));
   return v;
-#endif
-}
-
-
-/* Memory management.  */
-
-/* Mark all objects allocated from local environments so that they
-   don't get garbage-collected.  */
-void
-mark_modules (void)
-{
 }
 
 
@@ -1048,10 +1063,9 @@ module_format_fun_env (const struct module_fun_env *env)
 void
 syms_of_module (void)
 {
-  module_nil = lisp_to_value (Qnil);
-#ifdef WIDE_EMACS_INT
-  ltv_mark = Fcons (Qnil, Qnil);
-#endif
+  if (!plain_values)
+    ltv_mark = Fcons (Qnil, Qnil);
+  eassert (NILP (value_to_lisp (module_nil)));
 
   DEFSYM (Qmodule_refs_hash, "module-refs-hash");
   DEFVAR_LISP ("module-refs-hash", Vmodule_refs_hash,
