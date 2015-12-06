@@ -941,7 +941,6 @@ XSYMBOL (Lisp_Object a)
 {
   eassert (SYMBOLP (a));
   intptr_t i = (intptr_t) XUNTAG (a, Lisp_Symbol);
-  eassert (0 <= i);
   void *p = (char *) lispsym + i;
   return p;
 }
