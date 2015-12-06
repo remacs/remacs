@@ -2809,6 +2809,7 @@ The variable `ispell-highlight-face' selects the face to use for highlighting."
 		  (regexp-quote (buffer-substring-no-properties start end))
 		  "\\b"))
 		(isearch-regexp t)
+		(isearch-regexp-function nil)
 		(isearch-case-fold-search nil)
 		(isearch-forward t)
 		(isearch-other-end start)
