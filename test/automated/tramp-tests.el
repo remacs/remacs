@@ -1987,7 +1987,10 @@ Use the `perl' command."
   (let ((tramp-connection-properties
 	 (append
 	  `((,(regexp-quote (file-remote-p tramp-test-temporary-file-directory))
-	     "stat" nil))
+	     "stat" nil)
+	    ;; See `tramp-sh-handle-file-truename'.
+	    (,(regexp-quote (file-remote-p tramp-test-temporary-file-directory))
+	     "readlink" nil))
 	  tramp-connection-properties)))
     (tramp--test-special-characters)))
 
@@ -2005,7 +2008,10 @@ Use the `ls' command."
 	  `((,(regexp-quote (file-remote-p tramp-test-temporary-file-directory))
 	     "perl" nil)
 	    (,(regexp-quote (file-remote-p tramp-test-temporary-file-directory))
-	     "stat" nil))
+	     "stat" nil)
+	    ;; See `tramp-sh-handle-file-truename'.
+	    (,(regexp-quote (file-remote-p tramp-test-temporary-file-directory))
+	     "readlink" nil))
 	  tramp-connection-properties)))
     (tramp--test-special-characters)))
 
@@ -2059,7 +2065,10 @@ Use the `perl' command."
   (let ((tramp-connection-properties
 	 (append
 	  `((,(regexp-quote (file-remote-p tramp-test-temporary-file-directory))
-	     "stat" nil))
+	     "stat" nil)
+	    ;; See `tramp-sh-handle-file-truename'.
+	    (,(regexp-quote (file-remote-p tramp-test-temporary-file-directory))
+	     "readlink" nil))
 	  tramp-connection-properties)))
     (tramp--test-utf8)))
 
@@ -2077,7 +2086,10 @@ Use the `ls' command."
 	  `((,(regexp-quote (file-remote-p tramp-test-temporary-file-directory))
 	     "perl" nil)
 	    (,(regexp-quote (file-remote-p tramp-test-temporary-file-directory))
-	     "stat" nil))
+	     "stat" nil)
+	    ;; See `tramp-sh-handle-file-truename'.
+	    (,(regexp-quote (file-remote-p tramp-test-temporary-file-directory))
+	     "readlink" nil))
 	  tramp-connection-properties)))
     (tramp--test-utf8)))
 

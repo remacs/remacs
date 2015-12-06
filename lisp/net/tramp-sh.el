@@ -621,10 +621,7 @@ if (!$result) {
     $result = File::Spec->catpath($vol, File::Spec->catdir(@dirs), \"\");
 }
 
-if ($ARGV[0] =~ /\\/$/) {
-    $result = $result . \"/\";
-}
-
+$result =~ s/\"/\\\\\"/g;
 print \"\\\"$result\\\"\\n\";
 ' \"$1\" 2>/dev/null"
   "Perl script to produce output suitable for use with `file-truename'
@@ -1143,20 +1140,17 @@ target of the symlink differ."
 
 	   ;; Do it yourself.  We bind `directory-sep-char' here for
 	   ;; XEmacs on Windows, which would otherwise use backslash.
-	   (t (let* ((directory-sep-char ?/)
-		     (steps (tramp-compat-split-string localname "/"))
-		     (localnamedir (tramp-run-real-handler
-				    'file-name-as-directory (list localname)))
-		     (is-dir (string= localname localnamedir))
-		     (thisstep nil)
-		     (numchase 0)
-		     ;; Don't make the following value larger than
-		     ;; necessary.  People expect an error message in
-		     ;; a timely fashion when something is wrong;
-		     ;; otherwise they might think that Emacs is hung.
-		     ;; Of course, correctness has to come first.
-		     (numchase-limit 20)
-		     symlink-target)
+	   (t (let ((directory-sep-char ?/)
+		    (steps (tramp-compat-split-string localname "/"))
+		    (thisstep nil)
+		    (numchase 0)
+		    ;; Don't make the following value larger than
+		    ;; necessary.  People expect an error message in a
+		    ;; timely fashion when something is wrong;
+		    ;; otherwise they might think that Emacs is hung.
+		    ;; Of course, correctness has to come first.
+		    (numchase-limit 20)
+		    symlink-target)
 		(while (and steps (< numchase numchase-limit))
 		  (setq thisstep (pop steps))
 		  (tramp-message
@@ -1212,10 +1206,8 @@ target of the symlink differ."
 		      (if result
 			  (mapconcat 'identity (cons "" result) "/")
 			"/"))
-		(when (and is-dir
-			   (or (string= "" result)
-			       (not (string= (substring result -1) "/"))))
-		  (setq result (concat result "/"))))))
+		(when (string= "" result)
+		  (setq result "/")))))
 
 	  (tramp-message v 4 "True name of `%s' is `%s'" localname result)
 	  result))))
@@ -1278,8 +1270,12 @@ target of the symlink differ."
 	     (tramp-get-ls-command vec)
 	     ;; On systems which have no quoting style, file names
 	     ;; with special characters could fail.
-	     (if (tramp-get-ls-command-with-quoting-style vec)
-		 "--quoting-style=c" "")
+	     (cond
+	      ((tramp-get-ls-command-with-quoting-style vec)
+	       "--quoting-style=c")
+	      ((tramp-get-ls-command-with-w-option vec)
+	       "-w")
+	      (t ""))
 	     (if (eq id-format 'integer) "-ildn" "-ild")
 	     (tramp-shell-quote-argument localname)))
     ;; Parse `ls -l' output ...
@@ -1837,10 +1833,14 @@ be non-negative integers."
      "-- 2>/dev/null | sed -e 's/\"/\\\\\"/g' -e 's/%s/\"/g'); echo \")\"")
     (tramp-shell-quote-argument localname)
     (tramp-get-ls-command vec)
-    ;; On systems which have no quoting style, file names with
-    ;; special characters could fail.
-    (if (tramp-get-ls-command-with-quoting-style vec)
-	"--quoting-style=shell" "")
+    ;; On systems which have no quoting style, file names with special
+    ;; characters could fail.
+    (cond
+     ((tramp-get-ls-command-with-quoting-style vec)
+      "--quoting-style=shell")
+     ((tramp-get-ls-command-with-w-option vec)
+      "-w")
+     (t ""))
     (tramp-get-remote-stat vec)
     tramp-stat-marker tramp-stat-marker
     tramp-stat-marker tramp-stat-marker
@@ -5416,6 +5416,14 @@ Return ATTR."
       (tramp-send-command-and-check
        vec (format "%s --quoting-style=shell -al /dev/null"
 		   (tramp-get-ls-command vec))))))
+
+(defun tramp-get-ls-command-with-w-option (vec)
+  (save-match-data
+    (with-tramp-connection-property vec "ls-w-option"
+      (tramp-message vec 5 "Checking, whether `ls -w' works")
+      ;; Option "-w" is available on BSD systems.
+      (tramp-send-command-and-check
+       vec (format "%s -alw /dev/null" (tramp-get-ls-command vec))))))
 
 (defun tramp-get-test-command (vec)
   (with-tramp-connection-property vec "test"
