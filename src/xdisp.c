@@ -17801,7 +17801,7 @@ row_containing_pos (struct window *w, ptrdiff_t charpos,
   while (true)
     {
       /* Give up if we have gone too far.  */
-      if (end && row >= end || !row->enabled_p)
+      if ((end && row >= end) || !row->enabled_p)
 	return NULL;
       /* This formerly returned if they were equal.
 	 I think that both quantities are of a "last plus one" type;
