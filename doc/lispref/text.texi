@@ -899,13 +899,25 @@ adds it to the most recent element.  It determines automatically (using
 @code{last-command}) whether the previous command was a kill command,
 and if so appends the killed text to the most recent entry.
 
-@deffn Command kill-region start end
-This function kills the text in the region defined by @var{start} and
-@var{end}.  The text is deleted but saved in the kill ring, along with
-its text properties.  The value is always @code{nil}.
+@cindex filtering killed text
+  The commands described below can filter the killed text before they
+save it in the kill ring.  They call @code{filter-buffer-substring}
+(@pxref{Buffer Contents}) to perform the filtering.  By default,
+there's no filtering, but major and minor modes and hook functions can
+set up filtering, so that text saved in the kill ring is different
+from what was in the buffer.
+
+@deffn Command kill-region start end &optional region
+This function kills the stretch of text between @var{start} and
+@var{end}; but if the optional argument @var{region} is
+non-@code{nil}, it ignores @var{start} and @var{end}, and kills the
+text in the current region instead.  The text is deleted but saved in
+the kill ring, along with its text properties.  The value is always
+@code{nil}.
 
 In an interactive call, @var{start} and @var{end} are point and
-the mark.
+the mark, and @var{region} is always non-@code{nil}, so the command
+always kills the text in the current region.
 
 If the buffer or text is read-only, @code{kill-region} modifies the kill
 ring just the same, then signals an error without modifying the buffer.
@@ -919,18 +931,20 @@ error if the buffer or text is read-only.  Instead, it simply returns,
 updating the kill ring but not changing the buffer.
 @end defopt
 
-@deffn Command copy-region-as-kill start end
-This command saves the region defined by @var{start} and @var{end} on
-the kill ring (including text properties), but does not delete the text
-from the buffer.  It returns @code{nil}.
+@deffn Command copy-region-as-kill start end &optional region
+This function saves the stretch of text between @var{start} and
+@var{end} on the kill ring (including text properties), but does not
+delete the text from the buffer.  However, if the optional argument
+@var{region} is non-@code{nil}, the function ignores @var{start} and
+@var{end}, and saves the current region instead.  It always returns
+@code{nil}.
+
+In an interactive call, @var{start} and @var{end} are point and
+the mark, and @var{region} is always non-@code{nil}, so the command
+always saves the text in the current region.
 
 The command does not set @code{this-command} to @code{kill-region}, so a
 subsequent kill command does not append to the same kill ring entry.
-
-@c FIXME Why is it better?  Why isn't copy-region-as-kill obsolete then?
-@c Why is it used in many places in Emacs?
-In Lisp programs, it is better to use @code{kill-new} or
-@code{kill-append} instead of this command.  @xref{Low-Level Kill Ring}.
 @end deffn
 
 @node Yanking

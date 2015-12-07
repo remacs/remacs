@@ -974,7 +974,8 @@ If DELETE is `delete-only', then only delete the region and the return value
 is undefined.  If DELETE is nil, just return the content as a string.
 If DELETE is `bounds', then don't delete, but just return the
 boundaries of the region as a list of (START . END) positions.
-If anything else, delete the region and return its content as a string.")
+If anything else, delete the region and return its content as a string,
+after filtering it with `filter-buffer-substring'.")
 
 (defvar region-insert-function
   (lambda (lines)
@@ -998,6 +999,10 @@ To disable this, set option `delete-active-region' to nil.
 Optional second arg KILLFLAG, if non-nil, means to kill (save in
 kill ring) instead of delete.  Interactively, N is the prefix
 arg, and KILLFLAG is set if N is explicitly specified.
+
+When killing, the killed text is filtered by
+`filter-buffer-substring' before it is saved in the kill ring, so
+the actual saved text might be different from what was killed.
 
 In Overwrite mode, single character backward deletion may replace
 tabs with spaces so as to back over columns, unless point is at
@@ -1034,7 +1039,11 @@ To disable this, set variable `delete-active-region' to nil.
 
 Optional second arg KILLFLAG non-nil means to kill (save in kill
 ring) instead of delete.  Interactively, N is the prefix arg, and
-KILLFLAG is set if N was explicitly specified."
+KILLFLAG is set if N was explicitly specified.
+
+When killing, the killed text is filtered by
+`filter-buffer-substring' before it is saved in the kill ring, so
+the actual saved text might be different from what was killed."
   (declare (interactive-only delete-char))
   (interactive "p\nP")
   (unless (integerp n)
@@ -4249,21 +4258,25 @@ The command \\[yank] can retrieve it from there.
 If you want to append the killed region to the last killed text,
 use \\[append-next-kill] before \\[kill-region].
 
+Any command that calls this function is a \"kill command\".
+If the previous command was also a kill command,
+the text killed this time appends to the text killed last time
+to make one entry in the kill ring.
+
+The killed text is filtered by `filter-buffer-substring' before it is
+saved in the kill ring, so the actual saved text might be different
+from what was killed.
+
 If the buffer is read-only, Emacs will beep and refrain from deleting
 the text, but put the text in the kill ring anyway.  This means that
 you can use the killing commands to copy text from a read-only buffer.
 
 Lisp programs should use this function for killing text.
  (To delete text, use `delete-region'.)
-Supply two arguments, character positions indicating the stretch of text
- to be killed.
-Any command that calls this function is a \"kill command\".
-If the previous command was also a kill command,
-the text killed this time appends to the text killed last time
-to make one entry in the kill ring.
-
-The optional argument REGION if non-nil, indicates that we're not just killing
-some text between BEG and END, but we're killing the region."
+Supply two arguments, character positions BEG and END indicating the
+ stretch of text to be killed.  If the optional argument REGION is
+ non-nil, the function ignores BEG and END, and kills the current
+ region instead."
   ;; Pass mark first, then point, because the order matters when
   ;; calling `kill-append'.
   (interactive (list (mark) (point) 'region))
@@ -4308,8 +4321,14 @@ In Transient Mark mode, deactivate the mark.
 If `interprogram-cut-function' is non-nil, also save the text for a window
 system cut and paste.
 
-The optional argument REGION if non-nil, indicates that we're not just copying
-some text between BEG and END, but we're copying the region.
+The copied text is filtered by `filter-buffer-substring' before it is
+saved in the kill ring, so the actual saved text might be different
+from what was in the buffer.
+
+When called from Lisp, save in the kill ring the stretch of text
+between BEG and END, unless the optional argument REGION is
+non-nil, in which case ignore BEG and END, and save the current
+region instead.
 
 This command's old key binding has been given to `kill-ring-save'."
   ;; Pass mark first, then point, because the order matters when
@@ -4334,8 +4353,14 @@ system cut and paste.
 If you want to append the killed line to the last killed text,
 use \\[append-next-kill] before \\[kill-ring-save].
 
-The optional argument REGION if non-nil, indicates that we're not just copying
-some text between BEG and END, but we're copying the region.
+The copied text is filtered by `filter-buffer-substring' before it is
+saved in the kill ring, so the actual saved text might be different
+from what was in the buffer.
+
+When called from Lisp, save in the kill ring the stretch of text
+between BEG and END, unless the optional argument REGION is
+non-nil, in which case ignore BEG and END, and save the current
+region instead.
 
 This command is similar to `copy-region-as-kill', except that it gives
 visual feedback indicating the extent of the region being copied."
