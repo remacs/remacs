@@ -4149,7 +4149,8 @@ seconds.  If not, it produces an error message with the given ERROR-ARGS."
   "Set up an interactive shell.
 Mainly sets the prompt and the echo correctly.  PROC is the shell
 process to set up.  VEC specifies the connection."
-  (let ((tramp-end-of-output tramp-initial-end-of-output))
+  (let ((tramp-end-of-output tramp-initial-end-of-output)
+	(case-fold-search t))
     (tramp-open-shell vec (tramp-get-method-parameter vec 'tramp-remote-shell))
 
     ;; Disable tab and echo expansion.
@@ -4182,7 +4183,7 @@ process to set up.  VEC specifies the connection."
 	;; Use MULE to select the right EOL convention for communicating
 	;; with the process.
 	(let ((cs (or (and (memq 'utf-8 (coding-system-list))
-			   (string-match "utf8" (tramp-get-remote-locale vec))
+			   (string-match "utf-?8" (tramp-get-remote-locale vec))
 			   (cons 'utf-8 'utf-8))
 		      (tramp-compat-funcall 'process-coding-system proc)
 		      (cons 'undecided 'undecided)))
@@ -5358,7 +5359,7 @@ Return ATTR."
 (defun tramp-get-remote-locale (vec)
   (with-tramp-connection-property vec "locale"
     (tramp-send-command vec "locale -a")
-    (let ((candidates '("en_US.utf8" "C.utf8"))
+    (let ((candidates '("en_US.utf8" "C.utf8" "en_US.UTF-8"))
 	  locale)
       (with-current-buffer (tramp-get-connection-buffer vec)
 	(while candidates
