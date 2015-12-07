@@ -961,7 +961,8 @@ used to set the value of `isearch-regexp-function'."
 
 (defun isearch-update ()
   "This is called after every isearch command to update the display.
-The last thing it does is to run `isearch-update-post-hook'."
+The second last thing it does is to run `isearch-update-post-hook'.
+The last thing is to trigger a new round of lazy highlighting."
   (unless (eq (current-buffer) isearch--current-buffer)
     (when (buffer-live-p isearch--current-buffer)
       (with-current-buffer isearch--current-buffer
@@ -1018,12 +1019,12 @@ The last thing it does is to run `isearch-update-post-hook'."
   (setq ;; quit-flag nil  not for isearch-mode
    isearch-adjusted nil
    isearch-yank-flag nil)
-  (when isearch-lazy-highlight
-    (isearch-lazy-highlight-new-loop))
   ;; We must prevent the point moving to the end of composition when a
   ;; part of the composition has just been searched.
   (setq disable-point-adjustment t)
-  (run-hooks 'isearch-update-post-hook))
+  (run-hooks 'isearch-update-post-hook)
+  (when isearch-lazy-highlight
+    (isearch-lazy-highlight-new-loop)))
 
 (defun isearch-done (&optional nopush edit)
   "Exit Isearch mode.
@@ -3068,21 +3069,7 @@ is nil.  This function is called when exiting an incremental search if
                                 "22.1")
 
 (defun isearch-lazy-highlight-new-loop (&optional beg end)
-  "Set an idle timer, which will trigger a new `lazy-highlight' loop.
-BEG and END specify the bounds within which highlighting should
-occur.  This is called when `isearch-update' is invoked (which
-can cause the search string to change or the window(s) to
-scroll).  It is also used by other Emacs features.  Do not start
-the loop when we are executing a keyboard macro."
-  (setq isearch-lazy-highlight-start-limit beg
-        isearch-lazy-highlight-end-limit end)
-  (when (null executing-kbd-macro)
-    (setq isearch-lazy-highlight-timer
-          (run-with-idle-timer lazy-highlight-initial-delay nil
-                               'isearch-lazy-highlight-maybe-new-loop))))
-
-(defun isearch-lazy-highlight-maybe-new-loop ()
-  "If needed cleanup any previous `lazy-highlight' loop and begin a new one.
+  "Cleanup any previous `lazy-highlight' loop and begin a new one.
 BEG and END specify the bounds within which highlighting should occur.
 This is called when `isearch-update' is invoked (which can cause the
 search string to change or the window to scroll).  It is also used
@@ -3118,6 +3105,8 @@ by other Emacs features."
     ;; It used to check for `(not isearch-error)' here, but actually
     ;; lazy-highlighting might find matches to highlight even when
     ;; `isearch-error' is non-nil.  (Bug#9918)
+    (setq isearch-lazy-highlight-start-limit beg
+	  isearch-lazy-highlight-end-limit end)
     (setq isearch-lazy-highlight-window       (selected-window)
           isearch-lazy-highlight-window-group (selected-window-group)
 	  isearch-lazy-highlight-window-start (window-start nil t)
@@ -3140,7 +3129,9 @@ by other Emacs features."
 	  isearch-lazy-highlight-regexp-function  isearch-regexp-function
 	  isearch-lazy-highlight-forward      isearch-forward)
     (unless (equal isearch-string "")
-      (isearch-lazy-highlight-update))))
+      (setq isearch-lazy-highlight-timer
+            (run-with-idle-timer lazy-highlight-initial-delay nil
+                                 'isearch-lazy-highlight-update)))))
 
 (defun isearch-lazy-highlight-search ()
   "Search ahead for the next or previous match, for lazy highlighting.

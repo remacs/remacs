@@ -2248,6 +2248,11 @@ If so, ask if it needs to be saved."
   (setq ispell-pdict-modified-p nil))
 
 
+(defvar ispell-update-post-hook nil
+  "A normal hook invoked from the ispell command loop.
+It is called once per iteration, before displaying a prompt to
+the user.")
+
 (defun ispell-command-loop (miss guess word start end)
   "Display possible corrections from list MISS.
 GUESS lists possibly valid affix construction of WORD.
@@ -2315,8 +2320,10 @@ Global `ispell-quit' set to start location to continue spell session."
 	      count (ispell-int-char (1+ count))))
       (setq count (ispell-int-char (- count ?0 skipped))))
 
+    (run-hooks 'ispell-update-post-hook)
+
     ;; ensure word is visible
-    (if (not (pos-visible-in-window-p end))
+    (if (not (pos-visible-in-window-p end nil nil t))
 	(sit-for 0))
 
     ;; Display choices for misspelled word.
@@ -2844,13 +2851,20 @@ Also position fit window to BUFFER and select it."
 		     (prog1
 			 (condition-case nil
 			     (split-window
-			      nil (- ispell-choices-win-default-height) 'above)
+                              ;; Chose the last of a window group, since
+                              ;; otherwise, the lowering of another window's
+                              ;; TL corner would cause the logical order of
+                              ;; the windows to be changed.
+			      (car (last (selected-window-group)))
+                              (- ispell-choices-win-default-height) 'above)
 			   (error nil))
 		       (modify-frame-parameters frame '((unsplittable . t))))))
 	      (and (not unsplittable)
 		   (condition-case nil
 		       (split-window
-			nil (- ispell-choices-win-default-height) 'above)
+                        ;; See comment above.
+			(car (last (selected-window-group)))
+                        (- ispell-choices-win-default-height) 'above)
 		     (error nil)))
 	      (display-buffer buffer))))
     (if (not window)

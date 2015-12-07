@@ -423,6 +423,9 @@ Keys specific to Follow mode:
 	(add-hook 'post-command-hook 'follow-post-command-hook t)
 	(add-hook 'window-size-change-functions 'follow-window-size-change t)
         (add-hook 'after-change-functions 'follow-after-change nil t)
+        (add-hook 'isearch-update-post-hook 'follow-post-command-hook nil t)
+        (add-hook 'replace-update-post-hook 'follow-post-command-hook nil t)
+        (add-hook 'ispell-update-post-hook 'follow-post-command-hook nil t)
 
         (setq window-start-group-function 'follow-window-start)
         (setq window-end-group-function 'follow-window-end)
@@ -431,8 +434,7 @@ Keys specific to Follow mode:
         (setq pos-visible-in-window-p-group-function
               'follow-pos-visible-in-window-p)
         (setq selected-window-group-function 'follow-all-followers)
-        (setq move-to-window-line-group-function 'follow-move-to-window-line)
-        (setq sit*-for-function 'follow-sit-for))
+        (setq move-to-window-line-group-function 'follow-move-to-window-line))
 
     ;; Remove globally-installed hook functions only if there is no
     ;; other Follow mode buffer.
@@ -445,7 +447,6 @@ Keys specific to Follow mode:
 	(remove-hook 'post-command-hook 'follow-post-command-hook)
 	(remove-hook 'window-size-change-functions 'follow-window-size-change)))
 
-    (kill-local-variable 'sit*-for-function)
     (kill-local-variable 'move-to-window-line-group-function)
     (kill-local-variable 'selected-window-group-function)
     (kill-local-variable 'pos-visible-in-window-p-group-function)
@@ -454,6 +455,9 @@ Keys specific to Follow mode:
     (kill-local-variable 'window-end-group-function)
     (kill-local-variable 'window-start-group-function)
 
+    (remove-hook 'ispell-update-post-hook 'follow-post-command-hook t)
+    (remove-hook 'replace-update-post-hook 'follow-post-command-hook t)
+    (remove-hook 'isearch-update-post-hook 'follow-post-command-hook t)
     (remove-hook 'after-change-functions 'follow-after-change t)
     (remove-hook 'compilation-filter-hook 'follow-align-compilation-windows t)))
 

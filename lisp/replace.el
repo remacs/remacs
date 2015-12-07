@@ -2011,6 +2011,9 @@ passed in.  If LITERAL is set, no checking is done, anyway."
   (when backward (goto-char (nth 0 match-data)))
   noedit)
 
+(defvar replace-update-post-hook nil
+  "Function(s) to call after query-replace has found a match in the buffer.")
+
 (defvar replace-search-function nil
   "Function to use when searching for strings to replace.
 It is used by `query-replace' and `replace-string', and is called
@@ -2264,7 +2267,7 @@ It must return a string."
 		(and nonempty-match
 		     (or (not regexp-flag)
 			 (and (if backward
-				  (looking-back search-string)
+				  (looking-back search-string nil)
 				(looking-at search-string))
 			      (let ((match (match-data)))
 				(and (/= (nth 0 match) (nth 1 match))
@@ -2318,7 +2321,8 @@ It must return a string."
 		;; `real-match-data'.
 		(while (not done)
 		  (set-match-data real-match-data)
-		  (replace-highlight
+                  (run-hooks 'replace-update-post-hook) ; Before `replace-highlight'.
+                  (replace-highlight
 		   (match-beginning 0) (match-end 0)
 		   start end search-string
 		   regexp-flag delimited-flag case-fold-search backward)
