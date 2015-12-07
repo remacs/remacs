@@ -143,9 +143,16 @@ Many variables you will encounter while debugging are Lisp objects.
 These are displayed as integer values (or structures, if you used the
 "--enable-check-lisp-object-type" option at configure time) that are
 hard to interpret, especially if they represent long lists.  You can
-use the 'pp' command to display them in their Lisp form.  Additional
-information about displaying Lisp objects can be found under
-"Examining Lisp object values" below.
+use the 'pp' command to display them in their Lisp form.  That command
+displays its output on the standard error stream (on GNU/Linux, you
+can redirect that to a file using "M-x redirect-debugging-output").
+This means that if you attach GDB to a running Emacs that was invoked
+from a desktop icon, chances are you will not see the output at all,
+or it will wind up in an obscure place (check the documentation of
+your desktop environment).
+
+Additional information about displaying Lisp objects can be found
+under "Examining Lisp object values" below.
 
 The rest of this document describes specific useful techniques for
 debugging Emacs; we suggest reading it in its entirety the first time
@@ -240,6 +247,12 @@ You can also use 'pp value' to print the emacs value directly.
 
 To see the current value of a Lisp Variable, use 'pv variable'.
 
+These commands send their output to stderr; if that is closed or
+redirected to some file you don't know, you won't see their output.
+This is particularly so for Emacs invoked on MS-Windows from the
+desktop shortcut.  On GNU/Linux, you can use the command
+'redirect-debugging-output' to redirect stderr to a file.
+
 Note: It is not a good idea to try 'pr', 'pp', or 'pv' if you know that Emacs
 is in deep trouble: its stack smashed (e.g., if it encountered SIGSEGV
 due to stack overflow), or crucial data structures, such as 'obarray',
@@ -310,7 +323,7 @@ Then Emacs hits the breakpoint:
     [...]
   }
 
-Now we can use 'pr' to print the frame parameters:
+Now we can use 'pp' to print the frame parameters:
 
   (gdb) pp $->param_alist
   ((background-mode . light) (display-type . color) [...])
