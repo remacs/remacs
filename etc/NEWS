@@ -845,6 +845,8 @@ command line's password prompt.
 
 EUDC's BBDB backend now supports BBDB 3.
 
+EUDC's PH backend (eudcb-ph.el) is obsolete.
+
 ** Eshell
 
 +++

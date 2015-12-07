@@ -50,7 +50,7 @@ instead."
 
 ;; Known protocols (used in completion)
 ;; Not to be mistaken with `eudc-supported-protocols'
-(defvar eudc-known-protocols '(bbdb ph ldap))
+(defvar eudc-known-protocols '(bbdb ldap))
 
 (defcustom eudc-server-hotlist nil
   "Directory servers to query.
@@ -356,6 +356,10 @@ BBDB fields.  SPECs are sexps which are evaluated:
   :type '(repeat (cons :tag "Field Name"
 		       (symbol :tag "BBDB Field")
 		       (sexp :tag "Conversion Spec"))))
+
+(make-obsolete-variable 'eudc-ph-bbdb-conversion-alist
+                        "the EUDC PH/QI backend is obsolete."
+                        "25.1")
 
 ;;}}}
 
