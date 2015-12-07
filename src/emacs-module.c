@@ -906,7 +906,7 @@ value_to_lisp (emacs_value v)
 
 /* Attempt to convert O to an emacs_value.  Do not do any checking or
    or allocate any storage; the caller should prevent or detect
-   any resulting bitpattern that is not a valid emacs_value.  */
+   any resulting bit pattern that is not a valid emacs_value.  */
 static emacs_value
 lisp_to_value_bits (Lisp_Object o)
 {
@@ -932,7 +932,7 @@ lisp_to_value (Lisp_Object o)
 
   if (! EQ (o, value_to_lisp_bits (v)))
     {
-      /* Package the uncompressible object pointer inside a pair
+      /* Package the incompressible object pointer inside a pair
 	 that is compressible.  */
       Lisp_Object pair = Fcons (o, ltv_mark);
 
@@ -944,7 +944,7 @@ lisp_to_value (Lisp_Object o)
 	    pair = Fcons (o, pair);
 
 	  /* Plant the mark.  The garbage collector will eventually
-	     reclaim any just-allocated uncompressible pairs.  */
+	     reclaim any just-allocated incompressible pairs.  */
 	  XSETCDR (pair, ltv_mark);
 	}
 

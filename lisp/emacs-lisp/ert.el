@@ -515,7 +515,7 @@ Returns nil if they are."
                   for xi = (ert--explain-equal-rec ai bi)
                   do (when xi (cl-return `(array-elt ,i ,xi)))
                   finally (cl-assert (equal a b) t))))
-      ((pred atomp)
+      ((pred atom)
        (if (not (equal a b))
            (if (and (symbolp a) (symbolp b) (string= a b))
                `(different-symbols-with-the-same-name ,a ,b)
