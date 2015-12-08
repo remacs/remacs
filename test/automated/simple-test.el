@@ -226,9 +226,9 @@
 
 
 ;;; auto-boundary tests
-(ert-deftest undo-auto--boundary-timer ()
+(ert-deftest undo-auto-boundary-timer ()
   (should
-   undo-auto--current-boundary-timer))
+   undo-auto-current-boundary-timer))
 
 (ert-deftest undo-auto--boundaries-added ()
   ;; The change in the buffer should have caused addition
