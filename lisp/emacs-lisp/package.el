@@ -1160,9 +1160,10 @@ errors signaled by ERROR-FORM or by BODY).
                                 (unless-error ,body
                                               (when-let ((er (plist-get status :error)))
                                                 (error "Error retrieving: %s %S" url er))
-                                              (goto-char (point-min))
-                                              (unless (search-forward-regexp "^\r?\n\r?" nil 'noerror)
-                                                (error "Error retrieving: %s %S" url "incomprehensible buffer"))
+                                              (with-current-buffer b
+                                                (goto-char (point-min))
+                                                (unless (search-forward-regexp "^\r?\n\r?" nil 'noerror)
+                                                  (error "Error retrieving: %s %S" url "incomprehensible buffer")))
                                               (url-insert-buffer-contents b url)
                                               (kill-buffer b)
                                               (goto-char (point-min)))))))
