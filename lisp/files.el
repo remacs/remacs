@@ -3419,7 +3419,7 @@ local variables, but directory-local variables may still be applied."
 			       (unless hack-local-variables--warned-lexical
 				 (setq hack-local-variables--warned-lexical t)
 				 (display-warning
-                                  :warning
+                                  'files
                                   (format-message
                                    "%s: `lexical-binding' at end of file unreliable"
                                    (file-name-nondirectory
@@ -3883,7 +3883,7 @@ This does nothing if either `enable-local-variables' or
 	      (if (eq (car elt) 'coding)
                   (unless hack-dir-local-variables--warned-coding
                     (setq hack-dir-local-variables--warned-coding t)
-                    (display-warning :warning
+                    (display-warning 'files
                                      "Coding cannot be specified by dir-locals"))
 		(unless (memq (car elt) '(eval mode))
 		  (setq dir-local-variables-alist
