@@ -4353,7 +4353,7 @@ init_lread (void)
           load_path_check (default_lpath);
 
           /* Add the site-lisp directories to the front of the default.  */
-          if (!no_site_lisp)
+          if (!no_site_lisp && PATH_SITELOADSEARCH[0] != '\0')
             {
               Lisp_Object sitelisp;
               sitelisp = decode_env_path (0, PATH_SITELOADSEARCH, 0);
@@ -4384,7 +4384,7 @@ init_lread (void)
       load_path_check (Vload_path);
 
       /* Add the site-lisp directories at the front.  */
-      if (initialized && !no_site_lisp)
+      if (initialized && !no_site_lisp && PATH_SITELOADSEARCH[0] != '\0')
         {
           Lisp_Object sitelisp;
           sitelisp = decode_env_path (0, PATH_SITELOADSEARCH, 0);
