@@ -16301,9 +16301,33 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
       if (w->cursor.vpos < 0)
 	{
 	  /* If point does not appear, try to move point so it does
-	     appear. The desired matrix has been built above, so we
-	     can use it here.  */
-	  new_vpos = window_box_height (w) / 2;
+	     appear.  The desired matrix has been built above, so we
+	     can use it here.  First see if point is in invisible
+	     text, and if so, move it to the first visible buffer
+	     position past that.  */
+	  struct glyph_row *r = NULL;
+	  Lisp_Object invprop =
+	    get_char_property_and_overlay (make_number (PT), Qinvisible,
+					   Qnil, NULL);
+
+	  if (TEXT_PROP_MEANS_INVISIBLE (invprop) != 0)
+	    {
+	      ptrdiff_t alt_pt;
+	      Lisp_Object invprop_end =
+		Fnext_single_char_property_change (make_number (PT), Qinvisible,
+						   Qnil, Qnil);
+
+	      if (NATNUMP (invprop_end))
+		alt_pt = XFASTINT (invprop_end);
+	      else
+		alt_pt = ZV;
+	      r = row_containing_pos (w, alt_pt, w->desired_matrix->rows,
+				      NULL, 0);
+	    }
+	  if (r)
+	    new_vpos = MATRIX_ROW_BOTTOM_Y (r);
+	  else	/* Give up and just move to the middle of the window.  */
+	    new_vpos = window_box_height (w) / 2;
 	}
 
       if (!cursor_row_fully_visible_p (w, false, false))
