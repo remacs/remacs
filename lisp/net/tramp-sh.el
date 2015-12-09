@@ -597,9 +597,14 @@ we have this shell function.")
 use File::Spec;
 use Cwd \"realpath\";
 
+sub myrealpath {
+    my ($file) = @_;
+    return realpath($file) if -e $file;
+}
+
 sub recursive {
     my ($volume, @dirs) = @_;
-    my $real = realpath(File::Spec->catpath(
+    my $real = myrealpath(File::Spec->catpath(
                    $volume, File::Spec->catdir(@dirs), \"\"));
     if ($real) {
         my ($vol, $dir) = File::Spec->splitpath($real, 1);
@@ -613,7 +618,7 @@ sub recursive {
     }
 }
 
-$result = realpath($ARGV[0]);
+$result = myrealpath($ARGV[0]);
 if (!$result) {
     my ($vol, $dir) = File::Spec->splitpath($ARGV[0], 1);
     ($vol, @dirs) = recursive($vol, File::Spec->splitdir($dir));
