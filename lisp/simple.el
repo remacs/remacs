@@ -3818,7 +3818,9 @@ see other processes running on the system, use `list-system-processes'."
 (setq prefix-command--last-echo nil)
 
 (defun internal-echo-keystrokes-prefix ()
-  ;; BEWARE: Called directly from the C code.
+  ;; BEWARE: Called directly from C code.
+  ;; If the return value is non-nil, it means we are in the middle of
+  ;; a command with prefix, such as a command invoked with prefix-arg.
   (if (not prefix-command--needs-update)
       prefix-command--last-echo
     (setq prefix-command--last-echo

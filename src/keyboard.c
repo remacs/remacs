@@ -1486,11 +1486,14 @@ command_loop_1 (void)
       if (!CONSP (last_command_event))
 	kset_last_repeatable_command (current_kboard, Vreal_this_command);
 
-      this_command_key_count = 0;
-      this_single_command_key_start = 0;
-
-      if (current_kboard->immediate_echo
-	  && !NILP (call0 (Qinternal_echo_keystrokes_prefix)))
+      /* Don't reset this_command_key_count if we've processed
+	 prefix-arg.  */
+      if (NILP (call0 (Qinternal_echo_keystrokes_prefix)))
+	{
+	  this_command_key_count = 0;
+	  this_single_command_key_start = 0;
+	}
+      else if (current_kboard->immediate_echo)
 	{
 	  current_kboard->immediate_echo = false;
 	  /* Refresh the echo message.  */
