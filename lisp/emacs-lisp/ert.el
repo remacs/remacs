@@ -1071,7 +1071,7 @@ contained in UNIVERSE."
                      (make-symbol "<unnamed test>")))
                   (`(,operator . ,operands)
                    (pcase operator
-                     ((or 'eql 'and 'not 'or)
+                     ((or 'member 'eql 'and 'not 'or)
                       `(,operator ,@(mapcar #'rec operands)))
                      ((or 'tag 'satisfies)
                       selector))))))
