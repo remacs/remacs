@@ -364,6 +364,7 @@ static void PHP_functions (FILE *);
 static void PS_functions (FILE *);
 static void Prolog_functions (FILE *);
 static void Python_functions (FILE *);
+static void Ruby_functions (FILE *);
 static void Scheme_functions (FILE *);
 static void TeX_commands (FILE *);
 static void Texinfo_nodes (FILE *);
@@ -722,6 +723,12 @@ static const char Python_help [] =
 "In Python code, 'def' or 'class' at the beginning of a line\n\
 generate a tag.";
 
+static const char *Ruby_suffixes [] =
+  { "rb", NULL };
+static const char Ruby_help [] =
+  "In Ruby code, 'def' or 'class' at the beginning of a line\n\
+generate a tag.";
+
 /* Can't do the `SCM' or `scm' prefix with a version number. */
 static const char *Scheme_suffixes [] =
   { "oak", "sch", "scheme", "SCM", "scm", "SM", "sm", "ss", "t", NULL };
@@ -800,6 +807,7 @@ static language lang_names [] =
   { "proc",      no_lang_help,   plain_C_entries,   plain_C_suffixes   },
   { "prolog",    Prolog_help,    Prolog_functions,  Prolog_suffixes    },
   { "python",    Python_help,    Python_functions,  Python_suffixes    },
+  { "ruby",      Ruby_help,      Ruby_functions,    Ruby_suffixes      },
   { "scheme",    Scheme_help,    Scheme_functions,  Scheme_suffixes    },
   { "tex",       TeX_help,       TeX_commands,      TeX_suffixes       },
   { "texinfo",   Texinfo_help,   Texinfo_nodes,     Texinfo_suffixes   },
@@ -4528,6 +4536,31 @@ Python_functions (FILE *inf)
 	    cp++;
 	  make_tag (name, cp - name, true,
 		    lb.buffer, cp - lb.buffer + 1, lineno, linecharno);
+	}
+    }
+}
+
+/*
+ * Ruby support
+ * Original code by Xi Lu <lx@shellcodes.org> (2015)
+ */
+static void
+Ruby_functions (FILE *inf)
+{
+  char *cp = NULL;
+
+  LOOP_ON_INPUT_LINES (inf, lb, cp)
+    {
+      cp = skip_spaces (cp);
+      if (LOOKING_AT (cp, "def") || LOOKING_AT (cp, "class"))
+	{
+	  char *name = cp;
+
+	  while (!notinname (*cp))
+	    cp++;
+
+	  make_tag(name, cp -name, true,
+		   lb.buffer, cp - lb.buffer + 1, lineno, linecharno);
 	}
     }
 }
