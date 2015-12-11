@@ -2973,6 +2973,31 @@ class Configure(760,24879
     def save(797,26022
     def nosave(807,26310
 
+ruby-src/test.rb,594
+module ModuleExample1,0
+    class ClassExample2,21
+        def class_method3,44
+        def ClassExample.singleton_class_method6,116
+        def class_method_exclamation!9,221
+        def class_method_question?12,319
+        def class_method_equals=class_method_equals=15,411
+        def `(18,499
+        def +(21,589
+        def [](24,637
+        def []=([]=27,687
+        def <<(30,749
+        def ==(==33,799
+        def <=(<=36,869
+        def <=>(<=>39,940
+        def ===(===42,987
+    def module_method46,1048
+    def ModuleExample.singleton_module_method49,1110
+
+ruby-src/test1.ruby,37
+class A1,0
+ def a(2,8
+ def b(5,38
+
 tex-src/testenv.tex,52
 \newcommand{\nm}\nm4,77
 \section{blah}blah8,139

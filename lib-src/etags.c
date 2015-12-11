@@ -724,10 +724,10 @@ static const char Python_help [] =
 generate a tag.";
 
 static const char *Ruby_suffixes [] =
-  { "rb", NULL };
+  { "rb", "ruby", NULL };
 static const char Ruby_help [] =
-  "In Ruby code, 'def' or 'class' at the beginning of a line\n\
-generate a tag.";
+  "In Ruby code, 'def' or 'class' or 'module' at the beginning of\n\
+a line generate a tag.";
 
 /* Can't do the `SCM' or `scm' prefix with a version number. */
 static const char *Scheme_suffixes [] =
@@ -4552,15 +4552,19 @@ Ruby_functions (FILE *inf)
   LOOP_ON_INPUT_LINES (inf, lb, cp)
     {
       cp = skip_spaces (cp);
-      if (LOOKING_AT (cp, "def") || LOOKING_AT (cp, "class"))
+      if (LOOKING_AT (cp, "def")
+	  || LOOKING_AT (cp, "class")
+	  || LOOKING_AT (cp, "module"))
 	{
 	  char *name = cp;
 
-	  while (!notinname (*cp))
+	 /* Ruby method names can end in a '='.  Also, operator overloading can
+	    define operators whose names include '='.  */
+	  while (!notinname (*cp) || *cp == '=')
 	    cp++;
 
-	  make_tag(name, cp -name, true,
-		   lb.buffer, cp - lb.buffer + 1, lineno, linecharno);
+	  make_tag (name, cp - name, true,
+		    lb.buffer, cp - lb.buffer + 1, lineno, linecharno);
 	}
     }
 }
