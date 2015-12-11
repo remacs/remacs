@@ -4265,7 +4265,7 @@ by calling `format-decode', which see.  */)
 	  && NILP (replace))
 	/* Visiting a file with these coding system makes the buffer
 	   unibyte.  */
-	bset_enable_multibyte_characters (current_buffer, Qnil);
+	Fset_buffer_multibyte (Qnil);
     }
 
   coding.dst_multibyte = ! NILP (BVAR (current_buffer, enable_multibyte_characters));
