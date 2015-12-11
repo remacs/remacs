@@ -1001,12 +1001,18 @@ parameters of @var{frame} and their values.  If @var{frame} is
 @end defun
 
 @defun modify-frame-parameters frame alist
-This function alters the parameters of frame @var{frame} based on the
-elements of @var{alist}.  Each element of @var{alist} has the form
-@code{(@var{parm} . @var{value})}, where @var{parm} is a symbol naming a
-parameter.  If you don't mention a parameter in @var{alist}, its value
-doesn't change.  If @var{frame} is @code{nil}, it defaults to the selected
-frame.
+This function alters the frame @var{frame} based on the elements of
+@var{alist}.  Each element of @var{alist} has the form
+@code{(@var{parm} . @var{value})}, where @var{parm} is a symbol naming
+a parameter.  If you don't mention a parameter in @var{alist}, its
+value doesn't change.  If @var{frame} is @code{nil}, it defaults to
+the selected frame.
+
+Some parameters are only meaningful for frames on certain kinds of
+display (@pxref{Frames}).  If @var{alist} includes parameters that are
+not meaningful for the @var{frame}'s display, this function will
+change its value in the frame's parameter list, but will otherwise
+ignore it.
 @end defun
 
 @defun set-frame-parameter frame parm value

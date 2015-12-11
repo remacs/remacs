@@ -2641,13 +2641,16 @@ If FRAME is nil, describe the currently selected frame.  */)
 
 DEFUN ("modify-frame-parameters", Fmodify_frame_parameters,
        Smodify_frame_parameters, 2, 2, 0,
-       doc: /* Modify the parameters of frame FRAME according to ALIST.
+       doc: /* Modify FRAME according to new values of its parameters in ALIST.
 If FRAME is nil, it defaults to the selected frame.
 ALIST is an alist of parameters to change and their new values.
 Each element of ALIST has the form (PARM . VALUE), where PARM is a symbol.
-The meaningful PARMs depend on the kind of frame.
-Undefined PARMs are ignored, but stored in the frame's parameter list
-so that `frame-parameters' will return them.
+Which PARMs are meaningful depends on the kind of frame.
+The meaningful parameters are acted upon, i.e. the frame is changed
+according to their new values, and are also stored in the frame's
+parameter list so that `frame-parameters' will return them.
+PARMs that are not meaningful are still stored in the frame's parameter
+list, but are otherwise ignored.
 
 The value of frame parameter FOO can also be accessed
 as a frame-local binding for the variable FOO, if you have
