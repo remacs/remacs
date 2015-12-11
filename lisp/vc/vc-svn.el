@@ -147,7 +147,8 @@ switches."
 (defun vc-svn-registered (file)
   "Check if FILE is SVN registered."
   (setq file (expand-file-name file))
-  (when (vc-svn-root file)
+  (when (and (vc-svn-root file)
+             (file-directory-p (file-name-directory file)))
     (with-temp-buffer
       (cd (file-name-directory file))
       (let* (process-file-side-effects
