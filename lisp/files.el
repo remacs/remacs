@@ -1023,6 +1023,7 @@ Return nil if COMMAND is not found anywhere in `exec-path'."
 
 (defun load-library (library)
   "Load the Emacs Lisp library named LIBRARY.
+LIBRARY should be a string.
 This is an interface to the function `load'.  LIBRARY is searched
 for in `load-path', both with and without `load-suffixes' (as
 well as `load-file-rep-suffixes').
