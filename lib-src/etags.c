@@ -4985,6 +4985,7 @@ Lua_functions (FILE *inf)
 
   LOOP_ON_INPUT_LINES (inf, lb, bp)
     {
+      bp = skip_spaces (bp);
       if (bp[0] != 'f' && bp[0] != 'l')
 	continue;
 

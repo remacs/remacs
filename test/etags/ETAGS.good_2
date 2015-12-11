@@ -2905,7 +2905,7 @@ function MoveLayerBottom 223,5079
 function MoveLayerBefore 236,5457
 function MoveLayerAfter 258,6090
 
-lua-src/test.lua,291
+lua-src/test.lua,442
 function Rectangle.getPos 2,15
 function Rectangle.getPos getPos2,15
 function Circle.getPos 6,61
@@ -2914,6 +2914,10 @@ function Cube.data.getFoo 10,102
 function Cube.data.getFoo getFoo10,102
 function Square.something:Bar 14,148
 function Square.something:Bar Bar14,148
+   function test.me_22a(22,241
+   function test.me_22a(me_22a22,241
+   local function test.me22b 25,297
+   local function test.me22b me22b25,297
 
 make-src/Makefile,1156
 LATEST=1,0

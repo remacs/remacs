@@ -1466,6 +1466,11 @@ qualified names by hand.
 Names of modules, classes, methods, and functions are tagged.
 Overloaded operators are also tagged.
 
+*** Improved support for Lua
+
+Etags now tags functions even if the "function" keyword follows some
+whitespace at line beginning.
+
 
 * Changes in Emacs 25.1 on Non-Free Operating Systems
 

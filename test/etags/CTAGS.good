@@ -3425,6 +3425,8 @@ mcCSC	cp-src/c.C	6
 mcheck	c-src/emacs/src/gmalloc.c	/^mcheck (void (*func) (enum mcheck_status))$/
 mcheck_status	c-src/emacs/src/gmalloc.c	283
 mcheck_used	c-src/emacs/src/gmalloc.c	2012
+me22b	lua-src/test.lua	/^   local function test.me22b (one)$/
+me_22a	lua-src/test.lua	/^   function test.me_22a(one, two)$/
 memalign	c-src/emacs/src/gmalloc.c	/^memalign (size_t alignment, size_t size)$/
 member	prol-src/natded.prolog	/^member(X,[X|_]).$/
 memclear	c-src/emacs/src/lisp.h	/^memclear (void *p, ptrdiff_t nbytes)$/
@@ -4209,6 +4211,8 @@ test	c-src/emacs/src/lisp.h	1871
 test	cp-src/c.C	86
 test	erl-src/gs_dialog.erl	/^test() ->$/
 test	php-src/ptest.php	/^test $/
+test.me22b	lua-src/test.lua	/^   local function test.me22b (one)$/
+test.me_22a	lua-src/test.lua	/^   function test.me_22a(one, two)$/
 test_undefined	c-src/emacs/src/keyboard.c	/^test_undefined (Lisp_Object binding)$/
 texttreelist	prol-src/natded.prolog	/^texttreelist([]).$/
 this	c-src/a/b/b.c	1
