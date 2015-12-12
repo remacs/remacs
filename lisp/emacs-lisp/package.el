@@ -923,11 +923,12 @@ untar into a directory named DIR; otherwise, signal an error."
 ;;;; Compilation
 (defvar warning-minimum-level)
 (defun package--compile (pkg-desc)
-  "Byte-compile installed package PKG-DESC."
+  "Byte-compile installed package PKG-DESC.
+This assumes that `pkg-desc' has already been activated with
+`package-activate-1'."
   (let ((warning-minimum-level :error)
         (save-silently inhibit-message)
         (load-path load-path))
-    (package--activate-autoloads-and-load-path pkg-desc)
     (byte-recompile-directory (package-desc-dir pkg-desc) 0 t)))
 
 ;;;; Inferring package from current buffer
