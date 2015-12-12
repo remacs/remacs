@@ -355,7 +355,8 @@ The default is to check each capability, and use it if available.
 (This variable was introduced in Emacs 24.1, but was not announced in
 its NEWS.)
 
-** The `save-place' variable is replaced by a `save-place-mode'.
+---
+** The `save-place' variable is replaced by `save-place-mode'.
 
 ** ERC
 
