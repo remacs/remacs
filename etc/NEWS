@@ -391,6 +391,7 @@ specified message types for the respective specified targets.
 
 ** package.el
 
++++
 *** New "external" package status.
 An external package is any installed package that's not built-in and
 not from `package-user-dir', which usually means it's from an entry in
@@ -398,14 +399,16 @@ not from `package-user-dir', which usually means it's from an entry in
 packages, in that they cannot be deleted through the package menu and
 are not considered for upgrades.
 
-The effect, is that a user can manually place a specific version of a
+The effect is that a user can manually place a specific version of a
 package inside `package-directory-list' and the package menu will
 always respect that.
 
++++
 *** If a package is available on multiple archives and one has higher
 priority (as per `package-archive-priorities') only that one is
 listed.  This can be configured with `package-menu-hide-low-priority'.
 
++++
 *** `package-menu-toggle-hiding' now toggles the hiding of packages.
 This includes the above-mentioned low-priority packages, as well as
 available packages whose version is lower than the currently installed
@@ -413,31 +416,39 @@ version (which were previously impossible to display).
 This allows users to downgrade a package if a lower version is
 available.
 
+---
 *** When filtering the package menu, keywords starting with "arc:" or
 "status:" represent package archive or status, respectively, instead
 of actual keywords.
 
+---
 *** Most functions which involve downloading information now take an
 ASYNC argument.  If it is non-nil, package.el performs the download(s)
 asynchronously.
 
+---
 *** New variable `package-menu-async' controls whether the
 package-menu uses asynchronous downloads.
 
+---
 *** `package-install-from-buffer' and `package-install-file' work on directories.
 This follows the same rules as installing from a .tar file, except the
 -pkg file is optional.
 
+---
 *** Packages which are dependencies of other packages cannot be deleted.
 The FORCE argument to `package-delete' overrides this.
 
+---
 *** New custom variable `package-selected-packages' tracks packages
 which were installed by the user (as opposed to installed as
 dependencies).  This variable can also be manually customized.
 
+---
 *** New command `package-install-user-selected-packages' installs all
 packages from `package-selected-packages' which are currently missing.
 
+---
 *** New command `package-autoremove' removes all packages which were
 installed strictly as dependencies but are no longer needed.
 
