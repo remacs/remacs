@@ -347,13 +347,28 @@ is suitable for most programming languages such as C or Lisp (but not
 *** Symbols can be unprettified while point is inside them.
 New variable `prettify-symbols-unprettify-at-point' configures this.
 
+** Enhanced xterm support
+
 ---
-** The new variable `xterm-screen-extra-capabilities' for configuring xterm.
+*** The new variable `xterm-screen-extra-capabilities' for configuring xterm.
 This variable tells Emacs which advanced capabilities are available in
 the xterm terminal emulator used to display Emacs text-mode frames.
 The default is to check each capability, and use it if available.
 (This variable was introduced in Emacs 24.1, but was not announced in
 its NEWS.)
+
+---
+*** Killing text now also sets the CLIPBOARD/PRIMARY selection
+in the surrounding GUI (using the OSC-52 escape sequence).  This only works
+if your xterm supports it and enables the `allowWindowOps' options (disabled
+by default at least in Debian, for security reasons).
+
+Similarly, you can yank the CLIPBOARD/PRIMARY selection (using the OSC-52
+escape sequence) if your xterm has the feature enabled but for that you
+additionally need to add `getSelection' to `xterm-extra-capabilities'.
+
++++
+*** `xterm-mouse-mode' now supports mouse-tracking (if your xterm supports it).
 
 ---
 ** The `save-place' variable is replaced by `save-place-mode'.
@@ -368,20 +383,11 @@ specified message types for the respective specified targets.
 
 ** Midnight-mode
 
-*** `midnight-mode' is a proper minor mode.
+---
+*** `midnight-mode' is now a proper minor mode.
 
+---
 *** clean-buffer-*-regexps can now specify buffers via predicate functions.
-
-** In xterms, killing text now also sets the CLIPBOARD/PRIMARY selection
-in the surrounding GUI (using the OSC-52 escape sequence).  This only works
-if your xterm supports it and enables the `allowWindowOps' options (disabled
-by default at least in Debian, for security reasons).
-
-Similarly, you can yank the CLIPBOARD/PRIMARY selection (using the OSC-52
-escape sequence) if your xterm has the feature enabled but for that you
-additionally need to add `getSelection' to `xterm-extra-capabilities'.
-
-** xterm-mouse-mode now supports mouse-tracking (if your xterm supports it).
 
 ** package.el
 
