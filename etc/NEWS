@@ -452,6 +452,7 @@ packages from `package-selected-packages' which are currently missing.
 *** New command `package-autoremove' removes all packages which were
 installed strictly as dependencies but are no longer needed.
 
++++
 ** Shell
 
 When you invoke `shell' interactively, the *shell* buffer will now

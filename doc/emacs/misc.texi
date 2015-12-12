@@ -761,6 +761,10 @@ advancing point, and any terminal input for the subshell comes from
 text in the buffer.  To give input to the subshell, go to the end of
 the buffer and type the input, terminated by @key{RET}.
 
+  By default, when the subshell is invoked interactively, the
+@file{*shell*} buffer is displayed in a new window.  This behavior can
+be customized via @code{display-buffer-alist} (@pxref{Window Choice}).
+
   While the subshell is waiting or running a command, you can switch
 windows or buffers and perform other editing in Emacs.  Emacs inserts
 the output from the subshell into the Shell buffer whenever it has
