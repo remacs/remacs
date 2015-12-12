@@ -6115,8 +6115,21 @@ x_set_window_size (struct frame *f, bool change_gravity,
   int pixelwidth, pixelheight;
   Lisp_Object fullscreen = get_frame_param (f, Qfullscreen);
   RECT rect;
+  MENUBARINFO info;
+  int menu_bar_height;
 
   block_input ();
+
+  /* Get the height of the menu bar here.  It's used below to detect
+     whether the menu bar is wrapped.  It's also used to specify the
+     third argument for AdjustWindowRect.  FRAME_EXTERNAL_MENU_BAR which
+     has been used before for that reason is unreliable because it only
+     specifies whether we _want_ a menu bar for this frame and not
+     whether this frame _has_ a menu bar.  See bug#22105.  */
+  info.cbSize = sizeof (info);
+  info.rcBar.top = info.rcBar.bottom = 0;
+  GetMenuBarInfo (FRAME_W32_WINDOW (f), 0xFFFFFFFD, 0, &info);
+  menu_bar_height = info.rcBar.bottom - info.rcBar.top;
 
   if (pixelwise)
     {
@@ -6135,17 +6148,11 @@ x_set_window_size (struct frame *f, bool change_gravity,
 	 height of the frame then the wrapped menu bar lines are not
 	 accounted for (Bug#15174 and Bug#18720).  Here we add these
 	 extra lines to the frame height.  */
-      MENUBARINFO info;
       int default_menu_bar_height;
-      int menu_bar_height;
 
       /* Why is (apparently) SM_CYMENUSIZE needed here instead of
 	 SM_CYMENU ??  */
       default_menu_bar_height = GetSystemMetrics (SM_CYMENUSIZE);
-      info.cbSize = sizeof (info);
-      info.rcBar.top = info.rcBar.bottom = 0;
-      GetMenuBarInfo (FRAME_W32_WINDOW (f), 0xFFFFFFFD, 0, &info);
-      menu_bar_height = info.rcBar.bottom - info.rcBar.top;
 
       if ((default_menu_bar_height > 0)
 	  && (menu_bar_height > default_menu_bar_height)
@@ -6160,8 +6167,7 @@ x_set_window_size (struct frame *f, bool change_gravity,
   rect.right = pixelwidth;
   rect.bottom = pixelheight;
 
-  AdjustWindowRect (&rect, f->output_data.w32->dwStyle,
-		    FRAME_EXTERNAL_MENU_BAR (f));
+  AdjustWindowRect (&rect, f->output_data.w32->dwStyle, menu_bar_height > 0);
 
   if (!(f->after_make_frame)
       && !(f->want_fullscreen & FULLSCREEN_WAIT)

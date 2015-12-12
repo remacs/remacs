@@ -1666,10 +1666,7 @@ x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
   FRAME_MENU_BAR_LINES (f) = 0;
   FRAME_MENU_BAR_HEIGHT (f) = 0;
   if (nlines)
-    {
-      FRAME_EXTERNAL_MENU_BAR (f) = 1;
-      windows_or_buffers_changed = 23;
-    }
+    FRAME_EXTERNAL_MENU_BAR (f) = 1;
   else
     {
       if (FRAME_EXTERNAL_MENU_BAR (f) == 1)
@@ -4620,8 +4617,7 @@ my_create_tip_window (struct frame *f)
   rect.right = FRAME_PIXEL_WIDTH (f);
   rect.bottom = FRAME_PIXEL_HEIGHT (f);
 
-  AdjustWindowRect (&rect, f->output_data.w32->dwStyle,
-		    FRAME_EXTERNAL_MENU_BAR (f));
+  AdjustWindowRect (&rect, f->output_data.w32->dwStyle, false);
 
   tip_window = FRAME_W32_WINDOW (f)
     = CreateWindow (EMACS_CLASS,
@@ -6681,8 +6677,7 @@ Text larger than the specified size is clipped.  */)
     rect.left = rect.top = 0;
     rect.right = width;
     rect.bottom = height;
-    AdjustWindowRect (&rect, f->output_data.w32->dwStyle,
-		      FRAME_EXTERNAL_MENU_BAR (f));
+    AdjustWindowRect (&rect, f->output_data.w32->dwStyle, false);
 
     /* Position and size tooltip, and put it in the topmost group.
        The add-on of FRAME_COLUMN_WIDTH to the 5th argument is a

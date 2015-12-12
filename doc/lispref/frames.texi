@@ -1013,12 +1013,28 @@ display (@pxref{Frames}).  If @var{alist} includes parameters that are
 not meaningful for the @var{frame}'s display, this function will
 change its value in the frame's parameter list, but will otherwise
 ignore it.
+
+When @var{alist} specifies more than one parameter whose value can
+affect the new size of @var{frame}, the final size of the frame may
+differ according to the toolkit used.  For example, specifying that a
+frame should from now on have a menu and/or tool bar instead of none and
+simultaneously specifying the new height of the frame will inevitably
+lead to a recalculation of the frame's height.  Conceptually, in such
+case, this function will try to have the explicit height specification
+prevail.  It cannot be excluded, however, that the addition (or removal)
+of the menu or tool bar, when eventually performed by the toolkit, will
+defeat this intention.
+
+Sometimes, binding @code{frame-inhibit-implied-resize} (@pxref{Implied
+Frame Resizing}) to a non-@code{nil} value around calls to this function
+may fix the problem sketched here.  Sometimes, however, exactly such
+binding may be hit by the problem.
 @end defun
 
 @defun set-frame-parameter frame parm value
 This function sets the frame parameter @var{parm} to the specified
-@var{value}.  If @var{frame} is @code{nil}, it defaults to the
-selected frame.
+@var{value}.  If @var{frame} is @code{nil}, it defaults to the selected
+frame.
 @end defun
 
 @defun modify-all-frames-parameters alist
