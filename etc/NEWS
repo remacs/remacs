@@ -360,10 +360,11 @@ its NEWS.)
 
 ** ERC
 
-*** Hide message types by network or channel.  `erc-hide-list' will
-hide all messages of the specified type, where `erc-network-hide-list'
-and `erc-channel-hide-list' will only hide the specified message types
-for the respective specified targets.
++++
+*** ERC can now hide message types by network or channel.
+`erc-hide-list' will hide all messages of the specified type, while
+`erc-network-hide-list' and `erc-channel-hide-list' will only hide the
+specified message types for the respective specified targets.
 
 ** Midnight-mode
 
