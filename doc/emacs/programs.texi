@@ -1498,14 +1498,21 @@ with the Foldout package (@pxref{Foldout}).
 
 @findex prettify-symbols-mode
   Prettify Symbols mode is a buffer-local minor mode that replaces
-certain strings with more attractive versions for display
-purposes.  For example, in Emacs Lisp mode, it replaces the string
-@samp{lambda} with the Greek lambda character @samp{λ}.  You may wish
-to use this
-in non-programming modes as well.  You can customize the mode by
-adding more entries to @code{prettify-symbols-alist}.  There is also a
-global version, @code{global-prettify-symbols-mode}, which enables the
-mode in all buffers that support it.
+certain strings with more attractive versions for display purposes.
+For example, in Emacs Lisp mode, it replaces the string @samp{lambda}
+with the Greek lambda character @samp{λ}.  You may wish to use this in
+non-programming modes as well.  You can customize the mode by adding
+more entries to @code{prettify-symbols-alist}.  More elaborate
+customization is available via customizing
+@code{prettify-symbols-compose-predicate} if its default value
+@code{prettify-symbols-default-compose-p} is not appropriate.  There
+is also a global version, @code{global-prettify-symbols-mode}, which
+enables the mode in all buffers that support it.
+
+  The symbol at point can be shown in its original form.  This is
+controlled by the variable @code{prettify-symbols-unprettify-at-point}:
+if non-@code{nil}, the original form of symbol at point will be
+restored for as long as point is at it.
 
 
 @node C Modes

@@ -136,15 +136,15 @@ Each element looks like (SYMBOL . CHARACTER), where the symbol
 matching SYMBOL (a string, not a regexp) will be shown as
 CHARACTER instead.
 
-CHARACTER can be a character or it can be a list or vector, in
+CHARACTER can be a character, or it can be a list or vector, in
 which case it will be used to compose the new symbol as per the
 third argument of `compose-region'.")
 
 (defun prettify-symbols-default-compose-p (start end _match)
   "Return true iff the symbol MATCH should be composed.
 The symbol starts at position START and ends at position END.
-This is default `prettify-symbols-compose-predicate' which is
-suitable for most programming languages such as C or Lisp."
+This is the default for `prettify-symbols-compose-predicate'
+which is suitable for most programming languages such as C or Lisp."
   ;; Check that the chars should really be composed into a symbol.
   (let* ((syntaxes-beg (if (memq (char-syntax (char-after start)) '(?w ?_))
                            '(?w ?_) '(?. ?\\)))
@@ -156,14 +156,14 @@ suitable for most programming languages such as C or Lisp."
 
 (defvar-local prettify-symbols-compose-predicate
   #'prettify-symbols-default-compose-p
-  "A predicate deciding if the currently matched symbol is to be composed.
+  "A predicate for deciding if the currently matched symbol is to be composed.
 The matched symbol is the car of one entry in `prettify-symbols-alist'.
-The predicate receives the match's start and end position as well
+The predicate receives the match's start and end positions as well
 as the match-string as arguments.")
 
 (defun prettify-symbols--compose-symbol (alist)
   "Compose a sequence of characters into a symbol.
-Regexp match data 0 points to the chars."
+Regexp match data 0 specifies the characters to be composed."
   ;; Check that the chars should really be composed into a symbol.
   (let ((start (match-beginning 0))
         (end (match-end 0))

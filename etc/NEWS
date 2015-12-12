@@ -335,13 +335,15 @@ provide indentation should use `prog-widen' instead of `widen' and
 
 ** Prettify Symbols mode
 
++++
 *** Prettify Symbols mode supports custom composition predicates.  By
 overriding the default `prettify-symbols-compose-predicate', modes can
-specify in which contexts a symbol map be composed to some unicode
+specify in which contexts a symbol may be displayed as some Unicode
 character.  `prettify-symbols-default-compose-p' is the default which
 is suitable for most programming languages such as C or Lisp (but not
 (La)TeX).
 
++++
 *** Symbols can be unprettified while point is inside them.
 New variable `prettify-symbols-unprettify-at-point' configures this.
 
