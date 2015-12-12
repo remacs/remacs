@@ -50,49 +50,51 @@
   "Keymap used for programming modes.")
 
 (defvar prog-indentation-context nil
-  "Non-nil while indenting embedded code chunks.
+  "When non-nil, provides context for indenting embedded code chunks.
+
 There are languages where part of the code is actually written in
 a sub language, e.g., a Yacc/Bison or ANTLR grammar also consists
 of plain C code.  This variable enables the major mode of the
-main language to use the indentation engine of the sub mode for
-lines in code chunks written in the sub language.
+main language to use the indentation engine of the sub-mode for
+lines in code chunks written in the sub-mode's language.
 
 When a major mode of such a main language decides to delegate the
 indentation of a line/region to the indentation engine of the sub
-mode, it is supposed to bind this variable to non-nil around the call.
+mode, it should bind this variable to non-nil around the call.
 
-The non-nil value looks as follows
+The non-nil value should be a list of the form:
+
    (FIRST-COLUMN (START . END) PREVIOUS-CHUNKS)
 
-FIRST-COLUMN is the column the indentation engine of the sub mode
-should usually choose for top-level language constructs inside
-the code chunk (instead of 0).
+FIRST-COLUMN is the column the indentation engine of the sub-mode
+should use for top-level language constructs inside the code
+chunk (instead of 0).
 
-START to END is the region of the code chunk.  See function
-`prog-widen' for additional info.
+START and END specify the region of the code chunk.  END can be
+nil, which stands for the value of `point-max'.  The function
+`prog-widen' uses this to restore restrictions imposed by the
+sub-mode's indentation engine.
 
 PREVIOUS-CHUNKS, if non-nil, provides the indentation engine of
-the sub mode with the virtual context of the code chunk.  Valid
+the sub-mode with the virtual context of the code chunk.  Valid
 values are:
 
- - A string containing code which the indentation engine can
+ - A string containing text which the indentation engine can
    consider as standing in front of the code chunk.  To cache the
    string's calculated syntactic information for repeated calls
-   with the same string, it is valid and expected for the inner
-   mode to add text-properties to the string.
+   with the same string, the sub-mode can add text-properties to
+   the string.
 
    A typical use case is for grammars with code chunks which are
-   to be indented like function bodies - the string would contain
-   a corresponding function header.
+   to be indented like function bodies -- the string would contain
+   the corresponding function preamble.
 
- - A function called with the start position of the current
-   chunk.  It will return either the region of the previous chunk
-   as (PREV-START . PREV-END) or nil if there is no further
-   previous chunk.
+ - A function, to be called with the start position of the current
+   chunk.  It should return either the region of the previous chunk
+   as (PREV-START . PREV-END), or nil if there is no previous chunk.
 
-   A typical use case are literate programming sources - the
-   function would successively return the code chunks of the
-   previous macro definitions for the same name.")
+   A typical use case are literate programming sources -- the
+   function would successively return the previous code chunks.")
 
 (defun prog-indent-sexp (&optional defun)
   "Indent the expression after point.
@@ -113,8 +115,8 @@ instead."
 
 (defun prog-widen ()
   "Remove restrictions (narrowing) from current code chunk or buffer.
-This function can be used instead of `widen' in any function used
-by the indentation engine to make it respect the value
+This function should be used instead of `widen' in any function used
+by the indentation engine to make it respect the value of
 `prog-indentation-context'.
 
 This function (like `widen') is useful inside a
@@ -122,8 +124,8 @@ This function (like `widen') is useful inside a
 narrowing is in effect."
   (let ((chunk (cadr prog-indentation-context)))
     (if chunk
-        ;; no widen necessary here, as narrow-to-region changes (not
-        ;; just narrows) existing restrictions
+        ;; No call to `widen' is necessary here, as narrow-to-region
+        ;; changes (not just narrows) the existing restrictions
         (narrow-to-region (car chunk) (or (cdr chunk) (point-max)))
       (widen))))
 
