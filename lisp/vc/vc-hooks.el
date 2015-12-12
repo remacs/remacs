@@ -791,7 +791,11 @@ current, and kill the buffer that visits the link."
   nil)
 
 (defun vc-refresh-state ()
-  "Activate or deactivate VC mode as appropriate."
+  "Refresh the VC state of the current buffer's file.
+
+This command is more thorough than `vc-state-refresh', in that it
+also supports switching a back-end or removing the file from VC.
+In the latter case, VC mode is deactivated for this buffer."
   (interactive)
   ;; Recompute whether file is version controlled,
   ;; if user has killed the buffer and revisited.

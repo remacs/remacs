@@ -321,8 +321,6 @@ the ordering of object keys by default.
 `json-pretty-print-buffer-ordered' pretty prints JSON objects with
 object keys sorted alphabetically.
 
-** You can recompute the VC state of a file buffer with `M-x vc-refresh-state'
-
 ** Prog mode has some support for multi-mode indentation.
 See `prog-indentation-context' and `prog-widen'.
 
@@ -732,6 +730,12 @@ Implemented for Bzr, Git, Hg.  As part of this change, the pre-existing
 (undocumented) command vc-hg-push now behaves slightly differently.
 
 *** The new command vc-region-history shows the log+diff of the active region.
+
++++
+*** You can refresh the VC state of a file buffer with `M-x vc-refresh-state'.
+This command is useful when you perform version control commands
+outside Emacs (e.g., from the shell prompt), or if you switch the VC
+back-end for the buffer's file, or remove it from version control.
 
 *** New option `vc-annotate-background-mode' controls whether
 the color range from `vc-annotate-color-map' is applied to the
