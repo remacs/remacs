@@ -829,7 +829,10 @@ untar into a directory named DIR; otherwise, signal an error."
     (package--make-autoloads-and-stuff pkg-desc pkg-dir)
     ;; Update package-alist.
     (let ((new-desc (package-load-descriptor pkg-dir)))
-      ;; FIXME: Check that `new-desc' matches `desc'!
+      (unless (equal (package-desc-full-name new-desc)
+                     (package-desc-full-name pkg-desc))
+        (error "The retrieved package (`%s') doesn't match what the archive offered (`%s')"
+               (package-desc-full-name new-desc) (package-desc-full-name pkg-desc)))
       ;; Activation has to be done before compilation, so that if we're
       ;; upgrading and macros have changed we load the new definitions
       ;; before compiling.
