@@ -347,7 +347,13 @@ is suitable for most programming languages such as C or Lisp (but not
 *** Symbols can be unprettified while point is inside them.
 New variable `prettify-symbols-unprettify-at-point' configures this.
 
-** New `xterm-screen-extra-capabilities' config.
+---
+** The new variable `xterm-screen-extra-capabilities' for configuring xterm.
+This variable tells Emacs which advanced capabilities are available in
+the xterm terminal emulator used to display Emacs text-mode frames.
+The default is to check each capability, and use it if available.
+(This variable was introduced in Emacs 24.1, but was not announced in
+its NEWS.)
 
 ** The `save-place' variable is replaced by a `save-place-mode'.
 
