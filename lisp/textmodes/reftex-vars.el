@@ -877,7 +877,7 @@ DOWNCASE    t:   Downcase words before using them."
       "\\\\label{\\(?1:[^}]*\\)}"
       ;; keyvals [..., label = {foo}, ...] forms used by ctable,
       ;; listings, minted, ...
-      "\\[[^[]]*\\<label[[:space:]]*=[[:space:]]*{?\\(?1:[^],}]+\\)}?")
+      "\\[[^][]*\\<label[[:space:]]*=[[:space:]]*{?\\(?1:[^],}]+\\)}?")
     "List of regexps matching \\label definitions.
 The default value matches usual \\label{...} definitions and
 keyval style [..., label = {...}, ...] label definitions.  It is
