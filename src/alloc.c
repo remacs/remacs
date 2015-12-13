@@ -406,23 +406,36 @@ ALIGN (void *ptr, int alignment)
    If A is a symbol, extract the hidden pointer's offset from lispsym,
    converted to void *.  */
 
-static void *
-XPNTR_OR_SYMBOL_OFFSET (Lisp_Object a)
-{
-  intptr_t i = USE_LSB_TAG ? XLI (a) - XTYPE (a) : XLI (a) & VALMASK;
-  return (void *) i;
-}
+#define macro_XPNTR_OR_SYMBOL_OFFSET(a) \
+  ((void *) (intptr_t) (USE_LSB_TAG ? XLI (a) - XTYPE (a) : XLI (a) & VALMASK))
 
 /* Extract the pointer hidden within A.  */
 
-static void *
+#define macro_XPNTR(a) \
+  ((void *) ((intptr_t) XPNTR_OR_SYMBOL_OFFSET (a) \
+	     + (SYMBOLP (a) ? (char *) lispsym : NULL)))
+
+/* For pointer access, define XPNTR and XPNTR_OR_SYMBOL_OFFSET as
+   functions, as functions are cleaner and can be used in debuggers.
+   Also, define them as macros if being compiled with GCC without
+   optimization, for performance in that case.  The macro_* names are
+   private to this section of code.  */
+
+static ATTRIBUTE_UNUSED void *
+XPNTR_OR_SYMBOL_OFFSET (Lisp_Object a)
+{
+  return macro_XPNTR_OR_SYMBOL_OFFSET (a);
+}
+static ATTRIBUTE_UNUSED void *
 XPNTR (Lisp_Object a)
 {
-  void *p = XPNTR_OR_SYMBOL_OFFSET (a);
-  if (SYMBOLP (a))
-    p = (intptr_t) p + (char *) lispsym;
-  return p;
+  return macro_XPNTR (a);
 }
+
+#if DEFINE_KEY_OPS_AS_MACROS
+# define XPNTR_OR_SYMBOL_OFFSET(a) macro_XPNTR_OR_SYMBOL_OFFSET (a)
+# define XPNTR(a) macro_XPNTR (a)
+#endif
 
 static void
 XFLOAT_INIT (Lisp_Object f, double n)

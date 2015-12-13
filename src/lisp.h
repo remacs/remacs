@@ -369,6 +369,12 @@ error !;
 #if (defined __NO_INLINE__ \
      && ! defined __OPTIMIZE__ && ! defined __OPTIMIZE_SIZE__ \
      && ! (defined INLINING && ! INLINING))
+# define DEFINE_KEY_OPS_AS_MACROS true
+#else
+# define DEFINE_KEY_OPS_AS_MACROS false
+#endif
+
+#if DEFINE_KEY_OPS_AS_MACROS
 # define XLI(o) lisp_h_XLI (o)
 # define XIL(i) lisp_h_XIL (i)
 # define CHECK_LIST_CONS(x, y) lisp_h_CHECK_LIST_CONS (x, y)
