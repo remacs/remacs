@@ -3559,7 +3559,9 @@ it is put to the start of the list."
     (let* ((len (1- (length dir)))
 	   (non-essential t)
 	   (compl
-	    (or (file-name-all-completions "" dir)
+	    (or ;; We do not want to be disturbed by "File does not
+                ;; exist" errors.
+                (ignore-errors (file-name-all-completions "" dir))
 		;; work around bug in ange-ftp.
 		;; /ftp:user@host: => nil
 		;; /ftp:user@host:./ => ok
