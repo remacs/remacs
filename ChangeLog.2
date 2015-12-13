@@ -1,3 +1,10 @@
+2015-12-07  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/calculator.el (calculator-define-key): Undo last change
+
+	Make map argument mandatory instead (bug#22106).
+	(calculator-add-operators): Pass the argument that's not optional any more.
+
 2015-12-03  Glenn Morris  <rgm@gnu.org>
 
 	* Makefile.in: Avoid duplication.
@@ -20033,7 +20040,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit ffefb6e899fbcdcbd79cb34292d57b7bc3043fcc (inclusive).
+commit 6148555ee5a3d0139ae517803718b3e0357933c7 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
