@@ -10658,7 +10658,7 @@ The `posn-' functions access elements of such lists.  */)
   if (NILP (window))
     window = selected_window;
 
-  tem = Fpos_visible_in_window_p (pos, window, Qt, Qnil);
+  tem = Fpos_visible_in_window_p (pos, window, Qt);
   if (!NILP (tem))
     {
       Lisp_Object x = XCAR (tem);

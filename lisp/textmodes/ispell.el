@@ -2323,7 +2323,7 @@ Global `ispell-quit' set to start location to continue spell session."
     (run-hooks 'ispell-update-post-hook)
 
     ;; ensure word is visible
-    (if (not (pos-visible-in-window-p end nil nil t))
+    (if (not (pos-visible-in-window-group-p end))
 	(sit-for 0))
 
     ;; Display choices for misspelled word.

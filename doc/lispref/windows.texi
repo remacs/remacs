@@ -3104,8 +3104,7 @@ using the commands of Lisp mode, because they trigger this
 readjustment.  To test such code, put it into a command and bind the
 command to a key.
 
-@defun window-start &optional window group
-@vindex window-start-group-function
+@defun window-start &optional window
 @cindex window top line
 This function returns the display-start position of window
 @var{window}.  If @var{window} is @code{nil}, the selected window is
@@ -3121,20 +3120,22 @@ it explicitly since the previous redisplay)---to make sure point appears
 on the screen.  Nothing except redisplay automatically changes the
 window-start position; if you move point, do not expect the window-start
 position to change in response until after the next redisplay.
-
-If @var{group} is non-@code{nil}, and @var{window} is a part of a
-group of windows (@pxref{Basic Windows}), @code{window-start} returns
-the start position of the entire group.  This condition holds when the
-buffer local variable @code{window-start-group-function} is set to a
-function.  In this case, @code{window-start} calls the function with
-the single argument @var{window}, then returns its result, instead of
-performing the actions described above.  Typically, the function will
-call @code{window-start} recursively.
 @end defun
 
-@vindex window-end-group-function
+@defun window-group-start &optional window
+@vindex window-group-start-function
+This function is like @code{window-start}, except that when
+@var{window} is a part of a group of windows (@pxref{Basic Windows}),
+@code{window-group-start} returns the start position of the entire
+group.  This condition holds when the buffer local variable
+@code{window-group-start-function} is set to a function.  In this
+case, @code{window-group-start} calls the function with the single
+argument @var{window}, then returns its result.  The argument to this
+function has the same meaning as in @code{window-start}.
+@end defun
+
 @cindex window end position
-@defun window-end &optional window update group
+@defun window-end &optional window update
 This function returns the position where display of its buffer ends in
 @var{window}.  The default for @var{window} is the selected window.
 
@@ -3157,19 +3158,21 @@ attempt to scroll the display if point has moved off the screen, the
 way real redisplay would do.  It does not alter the
 @code{window-start} value.  In effect, it reports where the displayed
 text will end if scrolling is not required.
-
-If @var{group} is non-@code{nil}, and @var{window} is a part of a
-group of windows (@pxref{Basic Windows}), `window-end' returns the end
-position of the entire group.  This condition holds when the buffer
-local variable @code{window-end-group-function} is set to a function.
-In this case, @code{window-end} calls the function with the two
-arguments @var{window} and @var{update}, then returns its result,
-instead of performing the actions described above.  Typically, the
-function will call @code{window-end} recursively.
 @end defun
 
-@vindex set-window-start-group-function
-@defun set-window-start window position &optional noforce group
+@vindex window-group-end-function
+@defun window-group-end window update
+This function is like @code{window-end}, except that when @var{window}
+is a part of a group of windows (@pxref{Basic Windows}),
+@code{window-group-end} returns the end position of the entire group.
+This condition holds when the buffer local variable
+@code{window-group-end-function} is set to a function.  In this case,
+@code{window-group-end} calls the function with the two arguments
+@var{window} and @var{update}, then returns its result.  The arguments
+to this function have the same meaning as in @code{window-end}.
+@end defun
+
+@defun set-window-start window position &optional noforce
 This function sets the display-start position of @var{window} to
 @var{position} in @var{window}'s buffer.  It returns @var{position}.
 
@@ -3230,20 +3233,22 @@ it is still 1 when redisplay occurs.  Here is an example:
 If @var{noforce} is non-@code{nil}, and @var{position} would place point
 off screen at the next redisplay, then redisplay computes a new window-start
 position that works well with point, and thus @var{position} is not used.
-
-If @var{group} is non-@code{nil}, and @var{window} is a part of a
-group of windows (@pxref{Basic Windows}), @code{set-window-start} sets
-the start position of the entire group.  This condition holds when the
-buffer local variable @code{set-window-start-group-function} is set to
-a function.  In this case, @code{set-window-start} calls the function
-with the three arguments @var{window}, @var{position}, and
-@var{noforce}, then returns its result, instead of performing the
-actions described above.  Typically, the function will call
-@code{set-window-start} recursively.
 @end defun
 
-@defun pos-visible-in-window-p &optional position window partially group
-@vindex pos-visible-in-window-p-group-function
+@vindex set-window-group-start-function
+@defun set-window-group-start window position &optional noforce
+This function is like @code{set-window-start}, except that when
+@var{window} is a part of a group of windows (@pxref{Basic Windows}),
+@code{set-window-group-start} sets the start position of the entire
+group.  This condition holds when the buffer local variable
+@code{set-window-group-start-function} is set to a function.  In this
+case, @code{set-window-group-start} calls the function with the three
+arguments @var{window}, @var{position}, and @var{noforce}, then
+returns its result.  The arguments in this function have the same
+meaning as in @code{set-window-start}.
+@end defun
+
+@defun pos-visible-in-window-p &optional position window partially
 This function returns non-@code{nil} if @var{position} is within the
 range of text currently visible on the screen in @var{window}.  It
 returns @code{nil} if @var{position} is scrolled vertically out of
@@ -3282,18 +3287,19 @@ Here is an example:
     (recenter 0))
 @end group
 @end example
+@end defun
 
-If @var{group} is non-@code{nil}, and @var{window} is a part of a
-group of windows (@pxref{Basic Windows}),
-@code{pos-visible-in-window-p} tests the visibility of @var{pos} in
-the entire group, not just in the single @var{window}.  This condition
-holds when the buffer local variable
-@code{pos-visible-in-window-p-group-function} is set to a function.
-In this case @code{pos-visible-in-window-p} calls the function with
-the three arguments @var{position}, @var{window}, and @var{partially},
-then returns its result, instead of performing the actions described
-above.  Typically, the function will call
-@code{pos-visible-in-window-p} recursively.
+@vindex pos-visible-in-window-group-p-function
+@defun pos-visible-in-window-group-p &optional position window partially
+This function is like @code{pos-visible-in-window-p}, except that when
+@var{window} is a part of a group of windows (@pxref{Basic Windows}),
+@code{pos-visible-in-window-group-p} tests the visibility of @var{pos}
+in the entire group, not just in the single @var{window}.  This
+condition holds when the buffer local variable
+@code{pos-visible-in-window-group-p-function} is set to a function.
+In this case @code{pos-visible-in-window-group-p} calls the function
+with the three arguments @var{position}, @var{window}, and
+@var{partially}, then returns its result.
 @end defun
 
 @defun window-line-height &optional line window
@@ -3511,8 +3517,7 @@ beginning or end of the buffer (depending on scrolling direction);
 only if point is already on that position do they signal an error.
 @end defopt
 
-@deffn Command recenter &optional count group
-@vindex recenter-group-function
+@deffn Command recenter &optional count
 @cindex centering point
 This function scrolls the text in the selected window so that point is
 displayed at a specified vertical position within the window.  It does
@@ -3529,14 +3534,6 @@ If @var{count} is @code{nil} (or a non-@code{nil} list),
 window.  If @var{count} is @code{nil}, this function may redraw the
 frame, according to the value of @code{recenter-redisplay}.
 
-If @var{group} is non-@code{nil}, and the selected window is part of a
-group of windows (@pxref{Basic Windows}), @code{recenter} scrolls the
-entire group.  This condition holds when the buffer local variable
-@code{recenter-group-function} is set to a function.  In this case,
-@code{recenter} calls the function with the argument @var{count}, then
-returns its result, instead of performing the actions described above.
-Typically, the function will call @code{recenter} recursively.
-
 When @code{recenter} is called interactively, @var{count} is the raw
 prefix argument.  Thus, typing @kbd{C-u} as the prefix sets the
 @var{count} to a non-@code{nil} list, while typing @kbd{C-u 4} sets
@@ -3547,6 +3544,17 @@ With an argument of zero, @code{recenter} positions the current line at
 the top of the window.  The command @code{recenter-top-bottom} offers
 a more convenient way to achieve this.
 @end deffn
+
+@vindex recenter-group-function
+@defun recenter-group &optional count
+This function is like @code{recenter}, except that when the selected
+window is part of a group of windows (@pxref{Basic Windows}),
+@code{recenter-group} scrolls the entire group.  This condition holds
+when the buffer local variable @code{recenter-group-function} is set
+to a function.  In this case, @code{recenter-group} calls the function
+with the argument @var{count}, then returns its result.  The argument
+has the same meaning as in @code{recenter}.
+@end defun
 
 @defopt recenter-redisplay
 If this variable is non-@code{nil}, calling @code{recenter} with a

@@ -427,14 +427,14 @@ Keys specific to Follow mode:
         (add-hook 'replace-update-post-hook 'follow-post-command-hook nil t)
         (add-hook 'ispell-update-post-hook 'follow-post-command-hook nil t)
 
-        (setq window-start-group-function 'follow-window-start)
-        (setq window-end-group-function 'follow-window-end)
-        (setq set-window-start-group-function 'follow-set-window-start)
+        (setq window-group-start-function 'follow-window-start)
+        (setq window-group-end-function 'follow-window-end)
+        (setq set-window-group-start-function 'follow-set-window-start)
         (setq recenter-group-function 'follow-recenter)
-        (setq pos-visible-in-window-p-group-function
+        (setq pos-visible-in-window-group-p-function
               'follow-pos-visible-in-window-p)
         (setq selected-window-group-function 'follow-all-followers)
-        (setq move-to-window-line-group-function 'follow-move-to-window-line))
+        (setq move-to-window-group-line-function 'follow-move-to-window-line))
 
     ;; Remove globally-installed hook functions only if there is no
     ;; other Follow mode buffer.
@@ -447,13 +447,13 @@ Keys specific to Follow mode:
 	(remove-hook 'post-command-hook 'follow-post-command-hook)
 	(remove-hook 'window-size-change-functions 'follow-window-size-change)))
 
-    (kill-local-variable 'move-to-window-line-group-function)
+    (kill-local-variable 'move-to-window-group-line-function)
     (kill-local-variable 'selected-window-group-function)
-    (kill-local-variable 'pos-visible-in-window-p-group-function)
+    (kill-local-variable 'pos-visible-in-window-group-p-function)
     (kill-local-variable 'recenter-group-function)
-    (kill-local-variable 'set-window-start-group-function)
-    (kill-local-variable 'window-end-group-function)
-    (kill-local-variable 'window-start-group-function)
+    (kill-local-variable 'set-window-group-start-function)
+    (kill-local-variable 'window-group-end-function)
+    (kill-local-variable 'window-group-start-function)
 
     (remove-hook 'ispell-update-post-hook 'follow-post-command-hook t)
     (remove-hook 'replace-update-post-hook 'follow-post-command-hook t)
