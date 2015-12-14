@@ -877,17 +877,7 @@ DOWNCASE    t:   Downcase words before using them."
       "\\\\label{\\(?1:[^}]*\\)}"
       ;; keyvals [..., label = {foo}, ...] forms used by ctable,
       ;; listings, minted, ...
-      ;;
-      ;; If you think the first shy group is a bit strange, it is like
-      ;; that in order not to overflow the regexp matcher stack in the
-      ;; presence of unbalanced brackets, i.e., a [ and then no
-      ;; closing bracket anymore.  In "[^[],]*,", the "*" repetition
-      ;; will be done without any need to record state for eventual
-      ;; backtracking because the "," is mutually exclusive with the
-      ;; "[^][,]", and the regexp matcher includes a special
-      ;; optimization for that case since it's common and very
-      ;; useful).  (Hint by Stefan Monnier)
-      "\\[\\(?:[^][,]*,\\)*[ \t]*\\<label[[:space:]]*=[[:space:]]*{?\\(?1:[^],}]+\\)}?")
+      "\\[[^][]\\{0,2000\\}\\<label[[:space:]]*=[[:space:]]*{?\\(?1:[^],}]+\\)}?")
     "List of regexps matching \\label definitions.
 The default value matches usual \\label{...} definitions and
 keyval style [..., label = {...}, ...] label definitions.  It is
