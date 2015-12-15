@@ -4288,6 +4288,10 @@ process to set up.  VEC specifies the connection."
 		      (tramp-get-connection-property vec "uname" ""))
     (tramp-send-command vec "stty -oxtabs" t))
 
+  ;; Set utf8 encoding.  Needed for Mac OS X, for example.  This is
+  ;; non-POSIX, so we must expect errors on some systems.
+  (tramp-send-command vec "stty iutf8 2>/dev/null" t)
+
   ;; Set `remote-tty' process property.
   (let ((tty (tramp-send-command-and-read vec "echo \\\"`tty`\\\"" 'noerror)))
     (unless (zerop (length tty))
