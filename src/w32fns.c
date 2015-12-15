@@ -6377,7 +6377,7 @@ compute_tip_xy (struct frame *f,
   if (INTEGERP (left))
     *root_x = XINT (left);
   else if (INTEGERP (right))
-    *root_y = XINT (right) - width;
+    *root_x = XINT (right) - width;
   else if (*root_x + XINT (dx) <= min_x)
     *root_x = 0; /* Can happen for negative dx */
   else if (*root_x + XINT (dx) + width <= max_x)
