@@ -486,6 +486,7 @@ The string is used in `tramp-methods'.")
 ;; Solaris: /usr/xpg4/bin:/usr/ccs/bin:/usr/bin:/opt/SUNWspro/bin
 ;; GNU/Linux (Debian, Suse): /bin:/usr/bin
 ;; FreeBSD: /usr/bin:/bin:/usr/sbin:/sbin: - beware trailing ":"!
+;; Darwin: /usr/bin:/bin:/usr/sbin:/sbin
 ;; IRIX64: /usr/bin
 ;;;###tramp-autoload
 (defcustom tramp-remote-path
@@ -4198,8 +4199,12 @@ process to set up.  VEC specifies the connection."
 	  (setq cs-encode (cdr cs))
 	  (unless cs-decode (setq cs-decode 'undecided))
 	  (unless cs-encode (setq cs-encode 'undecided))
-	  (setq cs-encode (tramp-compat-coding-system-change-eol-conversion
-			   cs-encode 'unix))
+	  (setq cs-encode
+		(tramp-compat-coding-system-change-eol-conversion
+		 cs-encode
+		 (if (string-match
+		      "^Darwin" (tramp-get-connection-property vec "uname" ""))
+		     'mac 'unix)))
 	  (tramp-send-command vec "echo foo ; echo bar" t)
 	  (goto-char (point-min))
 	  (when (search-forward "\r" nil t)
