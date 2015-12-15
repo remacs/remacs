@@ -81,6 +81,7 @@ AUTOGENEL = loaddefs.el \
 	cus-load.el \
 	finder-inf.el \
 	subdirs.el \
+	ps-print-loaddefs.el \
 	emacs-lisp/cl-loaddefs.el \
 	calc/calc-loaddefs.el \
 	eshell/esh-groups.el \
