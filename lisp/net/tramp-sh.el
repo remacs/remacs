@@ -4181,6 +4181,25 @@ process to set up.  VEC specifies the connection."
    vec (format "PS1=%s PS2='' PS3='' PROMPT_COMMAND=''"
 	       (tramp-shell-quote-argument tramp-end-of-output)) t)
 
+  ;; Check whether the output of "uname -sr" has been changed.  If
+  ;; yes, this is a strong indication that we must expire all
+  ;; connection properties.  We start again with
+  ;; `tramp-maybe-open-connection', it will be caught there.
+  (tramp-message vec 5 "Checking system information")
+  (let ((old-uname (tramp-get-connection-property vec "uname" nil))
+	(new-uname
+	 (tramp-set-connection-property
+	  vec "uname"
+	  (tramp-send-command-and-read vec "echo \\\"`uname -sr`\\\""))))
+    (when (and (stringp old-uname) (not (string-equal old-uname new-uname)))
+      (tramp-message
+       vec 3
+       "Connection reset, because remote host changed from `%s' to `%s'"
+       old-uname new-uname)
+      ;; We want to keep the password.
+      (tramp-cleanup-connection vec t t)
+      (throw 'uname-changed (tramp-maybe-open-connection vec))))
+
   ;; Try to set up the coding system correctly.
   ;; CCC this can't be the right way to do it.  Hm.
   (tramp-message vec 5 "Determining coding system")
@@ -4222,25 +4241,6 @@ process to set up.  VEC specifies the connection."
 	(tramp-send-command vec "stty -onlcr" t))))
 
   (tramp-send-command vec "set +o vi +o emacs" t)
-
-  ;; Check whether the output of "uname -sr" has been changed.  If
-  ;; yes, this is a strong indication that we must expire all
-  ;; connection properties.  We start again with
-  ;; `tramp-maybe-open-connection', it will be caught there.
-  (tramp-message vec 5 "Checking system information")
-  (let ((old-uname (tramp-get-connection-property vec "uname" nil))
-	(new-uname
-	 (tramp-set-connection-property
-	  vec "uname"
-	  (tramp-send-command-and-read vec "echo \\\"`uname -sr`\\\""))))
-    (when (and (stringp old-uname) (not (string-equal old-uname new-uname)))
-      (tramp-message
-       vec 3
-       "Connection reset, because remote host changed from `%s' to `%s'"
-       old-uname new-uname)
-      ;; We want to keep the password.
-      (tramp-cleanup-connection vec t t)
-      (throw 'uname-changed (tramp-maybe-open-connection vec))))
 
   ;; Check whether the remote host suffers from buggy
   ;; `send-process-string'.  This is known for FreeBSD (see comment in
