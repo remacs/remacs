@@ -87,7 +87,8 @@ AUTOGENEL = loaddefs.el \
 	cedet/semantic/loaddefs.el \
 	cedet/ede/loaddefs.el \
 	cedet/srecode/loaddefs.el \
-	org/org-loaddefs.el
+	org/org-loaddefs.el \
+	textmodes/reftex-loaddefs.el
 
 # Set load-prefer-newer for the benefit of the non-bootstrappers.
 BYTE_COMPILE_FLAGS = \
