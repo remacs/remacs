@@ -630,12 +630,6 @@ at BOL or EOL, or in whitespace there.  To enable these, customize,
 respectively, show-paren-when-point-inside-paren or
 show-paren-when-point-in-periphery.
 
-** pcase
-*** New UPatterns `quote', `app', `cl-struct', and `eieio'.
-*** New UPatterns can be defined with `pcase-defmacro'.
-+++
-*** New vector QPattern.
-
 ** Lisp mode
 *** Strings after `:documentation' are highlighted as docstrings.
 
@@ -1166,6 +1160,12 @@ that happen, `unhandled-file-name-directory' now defaults to calling
 
 
 * Lisp Changes in Emacs 25.1
+
+** pcase
+*** New UPatterns `quote', `app', `cl-struct', and `eieio'.
+*** New UPatterns can be defined with `pcase-defmacro'.
++++
+*** New vector QPattern.
 
 ** syntax-propertize is now automatically called on-demand during forward
 parsing functions like `forward-sexp'.
