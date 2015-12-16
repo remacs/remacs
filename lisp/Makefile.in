@@ -91,7 +91,8 @@ AUTOGENEL = loaddefs.el \
 	org/org-loaddefs.el \
 	textmodes/reftex-loaddefs.el \
 	mail/rmail-loaddefs.el \
-	ibuffer-loaddefs.el
+	ibuffer-loaddefs.el \
+	htmlfontify-loaddefs
 
 # Set load-prefer-newer for the benefit of the non-bootstrappers.
 BYTE_COMPILE_FLAGS = \
