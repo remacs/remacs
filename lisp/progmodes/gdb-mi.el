@@ -1766,7 +1766,8 @@ static char *magick[] = {
 (defvar gdb-control-commands-regexp
   (concat
    "^\\("
-   "commands\\|if\\|while\\|define\\|document\\|python\\|"
+   "commands\\|if\\|while\\|define\\|document\\|"
+   "python\\|python-interactive\\|pi\\|guile\\|guile-repl\\|gr\\|"
    "while-stepping\\|stepping\\|ws\\|actions"
    "\\)\\([[:blank:]]+.*\\)?$")
   "Regexp matching GDB commands that enter a recursive reading loop.
@@ -1782,21 +1783,27 @@ commands to be prefixed by \"-interpreter-exec console\".")
     (let ((inhibit-read-only t))
       (remove-text-properties (point-min) (point-max) '(face))))
   ;; mimic <RET> key to repeat previous command in GDB
-  (if (not (string= "" string))
-      (if gdb-continuation
-	  (setq gdb-last-command (concat gdb-continuation
-					 (gdb-strip-string-backslash string)
-					 " "))
-	(setq gdb-last-command (gdb-strip-string-backslash string)))
-    (if gdb-last-command (setq string gdb-last-command))
-    (setq gdb-continuation nil))
-  (if (and (not gdb-continuation) (or (string-match "^-" string)
-	  (> gdb-control-level 0)))
+  (when (= gdb-control-level 0)
+    (if (not (string= "" string))
+        (if gdb-continuation
+            (setq gdb-last-command (concat gdb-continuation
+                                           (gdb-strip-string-backslash string)
+                                           " "))
+          (setq gdb-last-command (gdb-strip-string-backslash string)))
+      (if gdb-last-command (setq string gdb-last-command))
+      (setq gdb-continuation nil)))
+  (if (and (not gdb-continuation)
+           (or (string-match "^-" string)
+               (> gdb-control-level 0)))
       ;; Either MI command or we are feeding GDB's recursive reading loop.
       (progn
 	(setq gdb-first-done-or-error t)
 	(process-send-string proc (concat string "\n"))
-	(if (and (string-match "^end$" string)
+	(if (and (string-match
+                  (concat "^\\("
+                          (if (eq system-type 'windows-nt) "\026" "\004")
+                          "\\|,q\\|,quit\\|end\\)$")
+                  string)
 		 (> gdb-control-level 0))
 	    (setq gdb-control-level (1- gdb-control-level))))
     ;; CLI command
@@ -1812,7 +1819,11 @@ commands to be prefixed by \"-interpreter-exec console\".")
         (if gdb-enable-debug
             (push (cons 'mi-send to-send) gdb-debug-log))
         (process-send-string proc to-send))
-      (if (and (string-match "^end$" string)
+      (if (and (string-match
+                  (concat "^\\("
+                          (if (eq system-type 'windows-nt) "\026" "\004")
+                          "\\|,q\\|,quit\\|end\\)$")
+                  string)
 	       (> gdb-control-level 0))
 	  (setq gdb-control-level (1- gdb-control-level)))
       (setq gdb-continuation nil)))
