@@ -619,6 +619,7 @@ invalid certificates are marked in red.
 
 ** Message mode
 
+---
 *** text/html messages that contain inline image parts will be
 transformed into multipart/related messages before sending.
 
