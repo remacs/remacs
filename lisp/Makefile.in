@@ -180,6 +180,13 @@ $(lisp)/loaddefs.el: $(LOADDEFS)
 	    --eval '(setq generated-autoload-file (expand-file-name (unmsys--file-name "$@")))' \
 	    -f batch-update-autoloads ${SUBDIRS_ALMOST}
 
+# autoloads only runs when loaddefs.el is non-existant, although it
+# generates a number of different files. Provide a force option to enable
+# regeneration of all these files.
+autoloads-force .PHONY:
+	rm loaddefs.el
+	$(MAKE) autoloads
+
 # This is required by the bootstrap-emacs target in ../src/Makefile, so
 # we know that if we have an emacs executable, we also have a subdirs.el.
 $(lisp)/subdirs.el:
