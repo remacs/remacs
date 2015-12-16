@@ -44,10 +44,7 @@ enum { module_has_cleanup = false };
 
 /* Handle to the main thread.  Used to verify that modules call us in
    the right thread.  */
-#ifdef HAVE_THREADS_H
-# include <threads.h>
-static thrd_t main_thread;
-#elif defined HAVE_PTHREAD
+#ifdef HAVE_PTHREAD
 # include <pthread.h>
 static pthread_t main_thread;
 #elif defined WINDOWSNT
@@ -789,9 +786,7 @@ usage: (module-call ENVOBJ &rest ARGLIST)   */)
 static void
 check_main_thread (void)
 {
-#ifdef HAVE_THREADS_H
-  eassert (thrd_equal (thdr_current (), main_thread));
-#elif defined HAVE_PTHREAD
+#ifdef HAVE_PTHREAD
   eassert (pthread_equal (pthread_self (), main_thread));
 #elif defined WINDOWSNT
   eassert (GetCurrentThreadId () == main_thread);
@@ -1125,9 +1120,7 @@ module_init (void)
 {
   /* It is not guaranteed that dynamic initializers run in the main thread,
      therefore detect the main thread here.  */
-#ifdef HAVE_THREADS_H
-  main_thread = thrd_current ();
-#elif defined HAVE_PTHREAD
+#ifdef HAVE_PTHREAD
   main_thread = pthread_self ();
 #elif defined WINDOWSNT
   /* The 'main' function already recorded the main thread's thread ID,

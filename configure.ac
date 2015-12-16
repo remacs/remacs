@@ -2192,9 +2192,6 @@ LIBS="$LIBS_SYSTEM $LIBS"
 dnl FIXME replace main with a function we actually want from this library.
 AC_CHECK_LIB(Xbsd, main, LD_SWITCH_X_SITE="$LD_SWITCH_X_SITE -lXbsd")
 
-dnl Check for C11 threads.
-AC_CHECK_HEADERS_ONCE(threads.h)
-
 dnl Check for the POSIX thread library.
 LIB_PTHREAD=
 AC_CHECK_HEADERS_ONCE(pthread.h)
@@ -2202,7 +2199,6 @@ if test "$ac_cv_header_pthread_h" && test "$opsys" != "mingw32"; then
   AC_CACHE_CHECK([for pthread library],
     [emacs_cv_pthread_lib],
     [emacs_cv_pthread_lib=no
-     OLD_CPPFLAGS=$CPPFLAGS
      OLD_LIBS=$LIBS
      for emacs_pthread_lib in 'none needed' -lpthread; do
        case $emacs_pthread_lib in
@@ -2231,8 +2227,7 @@ if test "$ac_cv_header_pthread_h" && test "$opsys" != "mingw32"; then
        if test "$emacs_cv_pthread_lib" != no; then
 	 break
        fi
-     done
-     CPPFLAGS=$OLD_CPPFLAGS])
+     done])
   if test "$emacs_cv_pthread_lib" != no; then
     AC_DEFINE([HAVE_PTHREAD], 1, [Define to 1 if you have POSIX threads.])
     case $emacs_cv_pthread_lib in
