@@ -557,8 +557,8 @@ instrumented function.
 
 +++
 *** New minor mode `global-eldoc-mode'
-It is turned on by default, and turns on `eldoc-mode' in `*scratch*'
-and other buffers whose major mode supports Emacs Lisp.
+It is turned on by default, and affects `*scratch*' and other buffers
+whose major mode supports Emacs Lisp.
 
 ---
 *** `eldoc-documentation-function' now defaults to `ignore'

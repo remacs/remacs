@@ -1268,9 +1268,9 @@ information whenever there is a Lisp function or variable at point;
 for a function, it shows the argument list, and for a variable it
 shows the first line of the variable's documentation string.  To
 toggle Eldoc mode, type @kbd{M-x eldoc-mode}.  There's also a Global
-Eldoc mode, which is turned on by default, and turns Eldoc mode on in
-buffers whose major mode is Emacs Lisp or Lisp Interaction (@kbd{M-x
-global-eldoc-mode} to turn it off globally).
+Eldoc mode, which is turned on by default, and affects buffers, such
+as @samp{*scratch*}, whose major mode is Emacs Lisp or Lisp
+Interaction (@w{@kbd{M-x global-eldoc-mode}} to turn it off globally).
 
 @node Hideshow
 @section Hideshow minor mode
