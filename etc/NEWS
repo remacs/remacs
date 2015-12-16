@@ -627,8 +627,8 @@ transformed into multipart/related messages before sending.
 ** In Show Paren Mode, a parenthesis can be highlighted when point
 stands inside it, and certain parens can be highlighted when point is
 at BOL or EOL, or in whitespace there.  To enable these, customize,
-respectively, show-paren-when-point-inside-paren or
-show-paren-when-point-in-periphery.
+respectively, `show-paren-when-point-inside-paren' or
+`show-paren-when-point-in-periphery'.
 
 ** Lisp mode
 *** Strings after `:documentation' are highlighted as docstrings.
