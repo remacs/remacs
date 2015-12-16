@@ -623,6 +623,13 @@ invalid certificates are marked in red.
 *** text/html messages that contain inline image parts will be
 transformed into multipart/related messages before sending.
 
++++
+** In Show Paren Mode, a parenthesis can be highlighted when point
+stands inside it, and certain parens can be highlighted when point is
+at BOL or EOL, or in whitespace there.  To enable these, customize,
+respectively, show-paren-when-point-inside-paren or
+show-paren-when-point-in-periphery.
+
 ** pcase
 *** New UPatterns `quote', `app', `cl-struct', and `eieio'.
 *** New UPatterns can be defined with `pcase-defmacro'.
