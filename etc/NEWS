@@ -1162,7 +1162,7 @@ that happen, `unhandled-file-name-directory' now defaults to calling
 * Lisp Changes in Emacs 25.1
 
 ** pcase
-*** New UPatterns `quote', `app', `cl-struct', and `eieio'.
+*** New UPatterns `quote', `app', `cl-struct', `eieio', `seq', and `map'.
 *** New UPatterns can be defined with `pcase-defmacro'.
 +++
 *** New vector QPattern.
