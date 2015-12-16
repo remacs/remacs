@@ -90,7 +90,8 @@ AUTOGENEL = loaddefs.el \
 	cedet/srecode/loaddefs.el \
 	org/org-loaddefs.el \
 	textmodes/reftex-loaddefs.el \
-	mail/rmail-loaddefs.el
+	mail/rmail-loaddefs.el \
+	ibuffer-loaddefs.el
 
 # Set load-prefer-newer for the benefit of the non-bootstrappers.
 BYTE_COMPILE_FLAGS = \
