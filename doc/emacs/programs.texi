@@ -1234,13 +1234,16 @@ variables that you want to use.  @xref{Name Help}.
 
 @cindex Eldoc mode
 @findex eldoc-mode
+@findex global-eldoc-mode
   Eldoc is a buffer-local minor mode that helps with looking up Lisp
 documentation.  When it is enabled, the echo area displays some useful
 information whenever there is a Lisp function or variable at point;
 for a function, it shows the argument list, and for a variable it
 shows the first line of the variable's documentation string.  To
-toggle Eldoc mode, type @kbd{M-x eldoc-mode}.  Eldoc mode can be used
-with the Emacs Lisp and Lisp Interaction major modes.
+toggle Eldoc mode, type @kbd{M-x eldoc-mode}.  There's also a Global
+Eldoc mode, which is turned on by default in buffers whose major mode
+is Emacs Lisp or Lisp Interaction (@kbd{M-x global-eldoc-mode} to turn
+it off).
 
 @node Hideshow
 @section Hideshow minor mode

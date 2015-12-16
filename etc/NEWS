@@ -554,8 +554,16 @@ this you can tell Edebug not to stop at the start of the first
 instrumented function.
 
 ** ElDoc
+
++++
 *** New minor mode `global-eldoc-mode'
+It is turned on by default in `*scratch*' and other buffers whose
+major mode supports Emacs Lisp.
+
+---
 *** `eldoc-documentation-function' now defaults to `ignore'
+
+---
 *** `describe-char-eldoc' displays information about character at point,
 and can be used as a default value of `eldoc-documentation-function'.  It is
 useful when, for example, one needs to distinguish various spaces (e.g. ] [,
