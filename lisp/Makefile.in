@@ -93,7 +93,8 @@ AUTOGENEL = loaddefs.el \
 	mail/rmail-loaddefs.el \
 	ibuffer-loaddefs.el \
 	htmlfontify-loaddefs \
-	emacs-lisp/eieio-loaddefs.el
+	emacs-lisp/eieio-loaddefs.el \
+	dired-loaddefs.el
 
 # Set load-prefer-newer for the benefit of the non-bootstrappers.
 BYTE_COMPILE_FLAGS = \
