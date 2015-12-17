@@ -1479,9 +1479,9 @@ non-first windows in Follow mode."
 
 ;; These routines are the Follow Mode versions of the low level
 ;; functions described on page "Window Start and End" of the elisp
-;; manual, e.g. `window*-start'.  The aim is to be able to handle
-;; Follow Mode windows by replacing `window-start' by `window*-start',
-;; etc.
+;; manual, e.g. `window-group-start'.  The aim is to be able to handle
+;; Follow Mode windows by replacing `window-start' by
+;; `window-group-start', etc.
 
 (defun follow-after-change (_beg _end _old-len)
   "After change function: set `follow-start-end-invalid'."
@@ -1614,27 +1614,6 @@ zero means top of the first window in the group, negative means
                                            nil (car elt))
                  lines (+ lines count)))))))
     (+ lines (move-to-window-line arg))))
-
-(defun follow-sit-for (seconds &optional nodisp)
-  "Redisplay, then wait for SECONDS seconds.  Stop when input is available.
-Before redisplaying, synchronise all Follow windows.
-
-SECONDS may be a floating-point value.
-\(On operating systems that do not support waiting for fractions of a
-second, floating-point values are rounded down to the nearest integer.)
-
-Redisplay does not happen if input is available before it starts.
-If optional arg NODISP is t, don't synchronise or redisplay, just
-wait for input.
-
-Value is t if waited the full time with no input arriving, and nil
-otherwise.
-
-The functionality is intended to be the same as `sit-for''s."
-  (when (and (not (input-pending-p t))
-             (not nodisp))
-    (follow-adjust-window (selected-window)))
-  (sit-for seconds nodisp))
 
 ;;; Profile support
 
