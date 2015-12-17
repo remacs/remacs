@@ -2103,8 +2103,8 @@ AC_CACHE_CHECK(
 	  [[malloc_set_state (malloc_get_state ());
 	    __after_morecore_hook = hook;
 	    __malloc_initialize_hook = hook;]])],
-       [emacs_cv_var_doug_lea_malloc=yes])])
-   fi
+       [emacs_cv_var_doug_lea_malloc=yes])
+   fi])
 doug_lea_malloc=$emacs_cv_var_doug_lea_malloc
 
 system_malloc=$emacs_cv_sanitize_address
