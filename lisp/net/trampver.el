@@ -6,6 +6,7 @@
 ;; Author: Kai Großjohann <kai.grossjohann@gmx.net>
 ;; Keywords: comm, processes
 ;; Package: tramp
+;; Version: 2.2.13.25.1
 
 ;; This file is part of GNU Emacs.
 
@@ -31,7 +32,7 @@
 ;; should be changed only there.
 
 ;;;###tramp-autoload
-(defconst tramp-version "2.2.13-25.1"
+(defconst tramp-version "2.2.13.25.1"
   "This version of Tramp.")
 
 ;;;###tramp-autoload
