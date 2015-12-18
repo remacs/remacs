@@ -1274,6 +1274,7 @@ target of the symlink differ."
 	     (tramp-get-test-command vec)
 	     (tramp-shell-quote-argument localname)
 	     (tramp-get-ls-command vec)
+	     (if (eq id-format 'integer) "-ildn" "-ild")
 	     ;; On systems which have no quoting style, file names
 	     ;; with special characters could fail.
 	     (cond
@@ -1282,7 +1283,6 @@ target of the symlink differ."
 	      ((tramp-get-ls-command-with-w-option vec)
 	       "-w")
 	      (t ""))
-	     (if (eq id-format 'integer) "-ildn" "-ild")
 	     (tramp-shell-quote-argument localname)))
     ;; Parse `ls -l' output ...
     (with-current-buffer (tramp-get-buffer vec)
