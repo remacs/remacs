@@ -2311,15 +2311,15 @@ the bottom."
     (if above
         (progn
           (goto-char start)
-          (recenter-group 0)
+          (recenter-window-group 0)
           (when (>= isearch-point (window-group-end nil t))
             (goto-char isearch-point)
-            (recenter-group -1)))
+            (recenter-window-group -1)))
       (goto-char end)
-      (recenter-group -1)
+      (recenter-window-group -1)
       (when (< isearch-point (window-group-start))
         (goto-char isearch-point)
-        (recenter-group 0))))
+        (recenter-window-group 0))))
   (goto-char isearch-point))
 
 (defvar isearch-pre-scroll-point nil)

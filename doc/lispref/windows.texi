@@ -3546,14 +3546,15 @@ the top of the window.  The command @code{recenter-top-bottom} offers
 a more convenient way to achieve this.
 @end deffn
 
-@vindex recenter-group-function
-@defun recenter-group &optional count
+@vindex recenter-window-group-function
+@defun recenter-window-group &optional count
 This function is like @code{recenter}, except that when the selected
 window is part of a group of windows (@pxref{Window Group}),
-@code{recenter-group} scrolls the entire group.  This condition holds
-when the buffer local variable @code{recenter-group-function} is set
-to a function.  In this case, @code{recenter-group} calls the function
-with the argument @var{count}, then returns its result.  The argument
+@code{recenter-window-group} scrolls the entire group.  This condition
+holds when the buffer local variable
+@code{recenter-window-group-function} is set to a function.  In this
+case, @code{recenter-window-group} calls the function with the
+argument @var{count}, then returns its result.  The argument
 @var{count} has the same meaning as in @code{recenter}, but with
 respect to the entire window group.
 @end defun

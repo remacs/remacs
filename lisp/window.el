@@ -7930,10 +7930,10 @@ overriding motion of point in order to display at this exact start."
       (funcall set-window-group-start-function window pos noforce)
     (set-window-start window pos noforce)))
 
-(defvar recenter-group-function nil)
-(make-variable-buffer-local 'recenter-group-function)
-(put 'recenter-group-function 'permanent-local t)
-(defun recenter-group (&optional arg)
+(defvar recenter-window-group-function nil)
+(make-variable-buffer-local 'recenter-window-group-function)
+(put 'recenter-window-group-function 'permanent-local t)
+(defun recenter-window-group (&optional arg)
   "Center point in the group of windows containing the selected window
 and maybe redisplay frame.  When a grouping mode (such as Follow Mode)
 is not active, this function is identical to `recenter'.
@@ -7953,8 +7953,8 @@ are redrawn.
 
 Just C-u as prefix means put point in the center of the window
 and redisplay normally--don't erase and redraw the frame."
-  (if (functionp recenter-group-function)
-      (funcall recenter-group-function arg)
+  (if (functionp recenter-window-group-function)
+      (funcall recenter-window-group-function arg)
     (recenter arg)))
 
 (defvar pos-visible-in-window-group-p-function nil)

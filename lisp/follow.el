@@ -430,7 +430,7 @@ Keys specific to Follow mode:
         (setq window-group-start-function 'follow-window-start)
         (setq window-group-end-function 'follow-window-end)
         (setq set-window-group-start-function 'follow-set-window-start)
-        (setq recenter-group-function 'follow-recenter)
+        (setq recenter-window-group-function 'follow-recenter)
         (setq pos-visible-in-window-group-p-function
               'follow-pos-visible-in-window-p)
         (setq selected-window-group-function 'follow-all-followers)
@@ -450,7 +450,7 @@ Keys specific to Follow mode:
     (kill-local-variable 'move-to-window-group-line-function)
     (kill-local-variable 'selected-window-group-function)
     (kill-local-variable 'pos-visible-in-window-group-p-function)
-    (kill-local-variable 'recenter-group-function)
+    (kill-local-variable 'recenter-window-group-function)
     (kill-local-variable 'set-window-group-start-function)
     (kill-local-variable 'window-group-end-function)
     (kill-local-variable 'window-group-start-function)
