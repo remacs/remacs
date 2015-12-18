@@ -430,9 +430,13 @@ Optional arg REVISION is a revision to annotate from."
 ;;; Miscellaneous
 
 (defun vc-hg-previous-revision (_file rev)
-  (let ((newrev (1- (string-to-number rev))))
-    (when (>= newrev 0)
-      (number-to-string newrev))))
+  ;; We can't simply decrement by 1, because that revision might be
+  ;; e.g. on a different branch (bug#22032).
+  (with-temp-buffer
+    (and (eq 0
+             (vc-hg-command t nil nil "id" "-n" "-r" (concat rev "^")))
+         ;; Trim the trailing newline.
+         (buffer-substring (point-min) (1- (point-max))))))
 
 (defun vc-hg-next-revision (_file rev)
   (let ((newrev (1+ (string-to-number rev)))
