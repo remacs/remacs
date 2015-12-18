@@ -33,7 +33,9 @@
 ;; Finished up by rms in 1992.
 
 ;;; Code:
-(require 'dired-loaddefs)
+
+;; When bootstrapping dired-loaddefs has not been generated.
+(require 'dired-loaddefs nil t)
 
 (declare-function dired-buffer-more-recently-used-p
 		  "dired-x" (buffer1 buffer2))
