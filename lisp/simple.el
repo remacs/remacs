@@ -3360,13 +3360,12 @@ the use of a shell (with its need to quote arguments)."
 	    (shell-command-on-region (point) (point) command
 				     output-buffer nil error-buffer)))))))
 
-(defun display-message-or-buffer (message
-				  &optional buffer-name not-this-window frame)
+(defun display-message-or-buffer (message &optional buffer-name action frame)
   "Display MESSAGE in the echo area if possible, otherwise in a pop-up buffer.
 MESSAGE may be either a string or a buffer.
 
-A buffer is displayed using `display-buffer' if MESSAGE is too long for
-the maximum height of the echo area, as defined by `max-mini-window-height'
+A pop-up buffer is displayed using `display-buffer' if MESSAGE is too long
+for maximum height of the echo area, as defined by `max-mini-window-height'
 if `resize-mini-windows' is non-nil.
 
 Returns either the string shown in the echo area, or when a pop-up
@@ -3378,8 +3377,8 @@ is used, defaulting to `*Message*'.  In the case where MESSAGE is a
 string and it is displayed in the echo area, it is not specified whether
 the contents are inserted into the buffer anyway.
 
-Optional arguments NOT-THIS-WINDOW and FRAME are as for `display-buffer',
-and only used if a buffer is displayed."
+Optional arguments ACTION and FRAME are as for `display-buffer',
+and are only used if a pop-up buffer is displayed."
   (cond ((and (stringp message) (not (string-match "\n" message)))
 	 ;; Trivial case where we can use the echo area
 	 (message "%s" message))
