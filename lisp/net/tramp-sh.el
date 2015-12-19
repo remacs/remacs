@@ -5438,7 +5438,7 @@ Return ATTR."
       (tramp-message vec 5 "Checking, whether `ls -w' works")
       ;; Option "-w" is available on BSD systems.
       (tramp-send-command-and-check
-       vec (format "%s -alw /dev/null" (tramp-get-ls-command vec))))))
+       vec (format "%s -alw" (tramp-get-ls-command vec))))))
 
 (defun tramp-get-test-command (vec)
   (with-tramp-connection-property vec "test"
