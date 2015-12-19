@@ -1133,6 +1133,12 @@ won't confuse other programs that the file is intended for.  The
 example above is for the C programming language, where comments start
 with @samp{/*} and end with @samp{*/}.
 
+If some unrelated text might look to Emacs as a local variables list,
+you can countermand that by inserting a form-feed character (a page
+delimiter, @pxref{Pages}) after that text.  Emacs only looks for
+file-local variables in the last page of a file, after the last page
+delimiter.
+
 @findex add-file-local-variable
 @findex delete-file-local-variable
 @findex copy-dir-locals-to-file-locals
