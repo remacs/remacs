@@ -330,7 +330,7 @@ support them, then @code{message-box} uses the echo area, like
 @code{message}.
 @end defun
 
-@defun display-message-or-buffer message &optional buffer-name not-this-window frame
+@defun display-message-or-buffer message &optional buffer-name action frame
 This function displays the message @var{message}, which may be either a
 string or a buffer.  If it is shorter than the maximum height of the
 echo area, as defined by @code{max-mini-window-height}, it is displayed
@@ -346,7 +346,7 @@ pop-up buffer is used, defaulting to @file{*Message*}.  In the case
 where @var{message} is a string and displayed in the echo area, it is
 not specified whether the contents are inserted into the buffer anyway.
 
-The optional arguments @var{not-this-window} and @var{frame} are as for
+The optional arguments @var{action} and @var{frame} are as for
 @code{display-buffer}, and only used if a buffer is displayed.
 @end defun
 
