@@ -656,7 +656,8 @@ then FUN will be appended to `minibuffer-setup-hook', instead of
 prepending it.
 
 ** cl-lib
-*** New functions cl-fresh-line, cl-digit-char-p and cl-parse-integer.
++++
+*** New functions `cl-fresh-line', `cl-digit-char-p', and `cl-parse-integer'.
 
 ** Calendar and diary
 
