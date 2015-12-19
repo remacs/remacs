@@ -720,9 +720,11 @@ alternatives to currently visited manuals.
 
 ** Rmail
 
++++
 *** The Rmail commands d, C-d and u take optional repeat counts to delete or
 undelete multiple messages.
 
++++
 *** Rmail can now render HTML mail messages if your Emacs was built with
 libxml2 or if you have the Lynx browser installed.  By default, Rmail
 will display the HTML version of a mail message that has both HTML and
