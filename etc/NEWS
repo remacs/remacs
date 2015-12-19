@@ -642,8 +642,10 @@ respectively, `show-paren-when-point-inside-paren' or
 *** C-x C-x in rectangle-mark-mode now cycles through the four corners.
 *** `string-rectangle' provides on-the-fly preview of the result.
 
-** New font-lock functions font-lock-ensure and font-lock-flush, which
-should be used instead of font-lock-fontify-buffer when called from Elisp.
++++
+** New font-lock functions `font-lock-ensure' and `font-lock-flush'.
+These should be used in preference to `font-lock-fontify-buffer' when
+called from Lisp.
 
 ** Macro `minibuffer-with-setup-hook' takes (:append FUN) to mean
 appending FUN to `minibuffer-setup-hook'.
