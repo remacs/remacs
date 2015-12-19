@@ -151,11 +151,6 @@ change in future releases.  For that reason, their support is disabled
 by default, and must be enabled by using the `--with-modules' option
 at configure time.
 
----
-** Info mode now displays symbol names in fixed-pitch font.
-If you want to get the old behavior back, customize the `Info-quoted'
-face to use the same definitions as the default face.
-
 +++
 ** Any file of the form .dir-locals*.el is now considered a dir-local
 file, and multiple such files can be used in the same directory.  See
@@ -705,8 +700,15 @@ The remainder were:
 
 ** New js.el option `js-indent-first-init'.
 
+** Info
+
 ---
-** `Info-fontify-maximum-menu-size' can be t for no limit.
+** Info mode now displays symbol names in fixed-pitch font.
+If you want to get the old behavior back, customize the `Info-quoted'
+face to use the same definitions as the default face.
+
+---
+*** `Info-fontify-maximum-menu-size' can be t for no limit.
 
 +++
 ** `info-display-manual' can now be given a prefix argument which (any
