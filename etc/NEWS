@@ -721,8 +721,8 @@ alternatives to currently visited manuals.
 ** Rmail
 
 +++
-*** The Rmail commands d, C-d and u take optional repeat counts to delete or
-undelete multiple messages.
+*** The Rmail commands `d', `C-d' and `u' take optional repeat counts
+to delete or undelete multiple messages.
 
 +++
 *** Rmail can now render HTML mail messages if your Emacs was built with
