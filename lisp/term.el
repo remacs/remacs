@@ -1432,7 +1432,7 @@ Using \"emacs\" loses, because bash disables editing if $TERM == emacs.")
 :UP=\\E[%%dA:DO=\\E[%%dB:LE=\\E[%%dD:RI=\\E[%%dC\
 :kl=\\EOD:kd=\\EOB:kr=\\EOC:ku=\\EOA:kN=\\E[6~:kP=\\E[5~:@7=\\E[4~:kh=\\E[1~\
 :mk=\\E[8m:cb=\\E[1K:op=\\E[39;49m:Co#8:pa#64:AB=\\E[4%%dm:AF=\\E[3%%dm:cr=^M\
-:bl=^G:do=^J:le=^H:ta=^I:se=\\E[27m:ue=\\E24m\
+:bl=^G:do=^J:le=^H:ta=^I:se=\\E[27m:ue=\\E[24m\
 :kb=^?:kD=^[[3~:sc=\\E7:rc=\\E8:r1=\\Ec:"
   ;; : -undefine ic
   ;; don't define :te=\\E[2J\\E[?47l\\E8:ti=\\E7\\E[?47h\
