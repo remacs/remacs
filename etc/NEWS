@@ -634,7 +634,11 @@ respectively, `show-paren-when-point-inside-paren' or
 *** Strings after `:documentation' are highlighted as docstrings.
 
 ** Rectangle editing
+
++++
 *** Rectangle Mark mode can have corners past EOL or in the middle of a TAB.
+
++++
 *** C-x C-x in rectangle-mark-mode now cycles through the four corners.
 *** `string-rectangle' provides on-the-fly preview of the result.
 
