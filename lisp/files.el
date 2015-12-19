@@ -1431,8 +1431,10 @@ return value, which may be passed as the REQUIRE-MATCH arg to
 
 (defmacro minibuffer-with-setup-hook (fun &rest body)
   "Temporarily add FUN to `minibuffer-setup-hook' while executing BODY.
-FUN can also be (:append FUN1), in which case FUN1 is appended to
-`minibuffer-setup-hook'.
+
+By default, FUN is prepended to `minibuffer-setup-hook'.  But if FUN is of
+the form `(:append FUN1)', FUN1 will be appended to `minibuffer-setup-hook'
+instead of prepending it.
 
 BODY should use the minibuffer at most once.
 Recursive uses of the minibuffer are unaffected (FUN is not

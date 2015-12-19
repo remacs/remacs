@@ -647,8 +647,13 @@ respectively, `show-paren-when-point-inside-paren' or
 These should be used in preference to `font-lock-fontify-buffer' when
 called from Lisp.
 
-** Macro `minibuffer-with-setup-hook' takes (:append FUN) to mean
-appending FUN to `minibuffer-setup-hook'.
+---
+** Macro `minibuffer-with-setup-hook' can optionally append a function
+to `minibuffer-setup-hook'.
+
+If the first argument of the macro is of the form `(:append FUN)',
+then FUN will be appended to `minibuffer-setup-hook', instead of
+prepending it.
 
 ** cl-lib
 *** New functions cl-fresh-line, cl-digit-char-p and cl-parse-integer.
