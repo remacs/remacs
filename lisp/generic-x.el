@@ -1315,7 +1315,7 @@ like an INI file.  You can add this hook to `find-file-hook'."
 ;;;	comment-start-skip	     ""
 	)
   ;; (set-syntax-table rul-generic-mode-syntax-table)
-  (setq font-lock-syntax-table rul-generic-mode-syntax-table))
+  (setq-local font-lock-syntax-table rul-generic-mode-syntax-table))
 
 ;; moved mode-definition behind defun-definition to be warning-free - 15.11.02/RSan
 (define-generic-mode rul-generic-mode
