@@ -86,7 +86,7 @@ struct emacs_env_private
 struct emacs_runtime_private
 {
   /* FIXME: Ideally, we would just define "struct emacs_runtime_private"
-   * as a synonym of "emacs_env", but I don't know how to do that in C.  */
+     as a synonym of "emacs_env", but I don't know how to do that in C.  */
   emacs_env pub;
 };
 
@@ -325,8 +325,7 @@ module_non_local_exit_get (emacs_env *env, emacs_value *sym, emacs_value *data)
   struct emacs_env_private *p = env->private_members;
   if (p->pending_non_local_exit != emacs_funcall_exit_return)
     {
-      /* FIXME: We cannot call lisp_to_value here because that can
-         exit non-locally.  */
+      /* FIXME: lisp_to_value can exit non-locally.  */
       *sym = lisp_to_value (p->non_local_exit_symbol);
       *data = lisp_to_value (p->non_local_exit_data);
     }
@@ -436,7 +435,6 @@ module_is_not_nil (emacs_env *env, emacs_value value)
   check_main_thread ();
   if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
     return false;
-  /* Assume that NILP never exits non-locally.  */
   return ! NILP (value_to_lisp (value));
 }
 
@@ -446,7 +444,6 @@ module_eq (emacs_env *env, emacs_value a, emacs_value b)
   check_main_thread ();
   if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
     return false;
-  /* Assume that EQ never exits non-locally.  */
   return EQ (value_to_lisp (a), value_to_lisp (b));
 }
 
@@ -893,7 +890,7 @@ value_to_lisp_bits (emacs_value v)
 }
 
 /* If V was computed from lisp_to_value (O), then return O.
-   Must never fail or exit non-locally.  */
+   Exits non-locally only if the stack overflows.  */
 static Lisp_Object
 value_to_lisp (emacs_value v)
 {
@@ -923,7 +920,7 @@ enum { HAVE_STRUCT_ATTRIBUTE_ALIGNED = 0 };
 #endif
 
 /* Convert O to an emacs_value.  Allocate storage if needed; this can
-   signal if memory is exhausted.  Must be injective.  */
+   signal if memory is exhausted.  Must be an injective function.  */
 static emacs_value
 lisp_to_value (Lisp_Object o)
 {
