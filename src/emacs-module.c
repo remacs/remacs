@@ -120,6 +120,9 @@ static emacs_value const module_nil = 0;
 
 /* Convenience macros for non-local exit handling.  */
 
+/* FIXME: The following implementation for non-local exit handling
+   does not work with stack overflow detection.  */
+
 /* Emacs uses setjmp and longjmp for non-local exits, but
    module frames cannot be skipped because they are in general
    not prepared for long jumps (e.g., the behavior in C++ is undefined
