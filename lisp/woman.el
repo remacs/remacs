@@ -1749,7 +1749,7 @@ Leave point at end of new text.  Return length of inserted text."
   ;; start in 19.34!
   (save-excursion
     (let ((case-fold-search t))
-      ;; Co-operate with auto-compression mode:
+      ;; Cooperate with auto-compression mode:
       (if (and compressed
 	       (or (eq compressed t)
 		   (string-match-p woman-file-compression-regexp filename))
