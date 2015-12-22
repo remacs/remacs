@@ -326,7 +326,8 @@ Currently this means either text/html or application/xhtml+xml."
 		    (or (cdr (assq 'charset (cdr content-type)))
 			(eww-detect-charset (eww-html-p (car content-type)))
 			"utf-8"))))
-	 (data-buffer (current-buffer)))
+	 (data-buffer (current-buffer))
+	 last-coding-system-used)
     ;; Save the https peer status.
     (with-current-buffer buffer
       (plist-put eww-data :peer (plist-get status :peer)))
@@ -344,11 +345,13 @@ Currently this means either text/html or application/xhtml+xml."
 	   ((string-match-p "\\`image/" (car content-type))
 	    (eww-display-image buffer))
 	   (t
-	    (eww-display-raw buffer encode)))
+	    (eww-display-raw buffer (or encode charset 'utf-8))))
 	  (with-current-buffer buffer
 	    (plist-put eww-data :url url)
 	    (eww-update-header-line-format)
 	    (setq eww-history-position 0)
+	    (and last-coding-system-used
+		 (set-buffer-file-coding-system last-coding-system-used))
 	    (run-hooks 'eww-after-render-hook)))
       (kill-buffer data-buffer))))
 
@@ -394,13 +397,10 @@ Currently this means either text/html or application/xhtml+xml."
 	     (list
 	      'base (list (cons 'href url))
 	      (progn
-		(when (or (and encode
-			       (not (eq charset encode)))
-			  (not (eq charset 'utf-8)))
-		  (condition-case nil
-		      (decode-coding-region (point) (point-max)
-					    (or encode charset))
-		    (coding-system-error nil)))
+		(setq encode (or encode charset 'utf-8))
+		(condition-case nil
+		    (decode-coding-region (point) (point-max) encode)
+		  (coding-system-error nil))
 		(libxml-parse-html-region (point) (point-max))))))
 	(source (and (null document)
 		     (buffer-substring (point) (point-max)))))
@@ -508,11 +508,9 @@ Currently this means either text/html or application/xhtml+xml."
       (let ((inhibit-read-only t))
 	(erase-buffer)
 	(insert data)
-	(unless (eq encode 'utf-8)
-	  (encode-coding-region (point-min) (1+ (length data)) 'utf-8)
-	  (condition-case nil
-	      (decode-coding-region (point-min) (1+ (length data)) encode)
-	    (coding-system-error nil))))
+	(condition-case nil
+	    (decode-coding-region (point-min) (1+ (length data)) encode)
+	  (coding-system-error nil)))
       (goto-char (point-min)))))
 
 (defun eww-display-image (buffer)
