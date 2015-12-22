@@ -1601,6 +1601,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
     (tramp-find-foreign-file-name-handler tramp-test-temporary-file-directory)
     'tramp-sh-file-name-handler))
 
+  (tramp--instrument-test-case 10
   (let* ((default-directory tramp-test-temporary-file-directory)
 	 (tmp-name1 (tramp--test-make-temp-name))
 	 (tmp-name2 (expand-file-name "foo" tmp-name1))
@@ -1652,7 +1653,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	  (should (vc-registered tmp-name2)))
 
       ;; Cleanup.
-      (ignore-errors (delete-directory tmp-name1 'recursive)))))
+      (ignore-errors (delete-directory tmp-name1 'recursive))))))
 
 (ert-deftest tramp-test30-make-auto-save-file-name ()
   "Check `make-auto-save-file-name'."
@@ -2025,6 +2026,7 @@ Use the `ls' command."
 
 (defun tramp--test-utf8 ()
   "Perform the test in `tramp-test32-utf8*'."
+  (tramp--instrument-test-case 10
   (let ((coding-system-for-read 'utf-8)
 	(coding-system-for-write 'utf-8)
 	(file-name-coding-system 'utf-8))
@@ -2033,7 +2035,7 @@ Use the `ls' command."
      (unless (or (tramp--test-hpux-p) (tramp--test-darwin-p))
        "أصبح بوسعك الآن تنزيل نسخة كاملة من موسوعة ويكيبيديا العربية لتصفحها بلا اتصال بالإنترنت")
      "银河系漫游指南系列"
-     "Автостопом по гала́ктике")))
+     "Автостопом по гала́ктике"))))
 
 (ert-deftest tramp-test32-utf8 ()
   "Check UTF8 encoding in file names and file contents."
