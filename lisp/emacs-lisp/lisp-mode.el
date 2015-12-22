@@ -107,7 +107,8 @@
 				"define-globalized-minor-mode"
 				"define-derived-mode" "define-generic-mode"
 				"cl-defun" "cl-defsubst" "cl-defmacro"
-				"cl-define-compiler-macro"
+				"cl-define-compiler-macro" "cl-defgeneric"
+				"cl-defmethod"
                                 ;; CL.
 				"define-compiler-macro" "define-modify-macro"
 				"defsetf" "define-setf-expander"
