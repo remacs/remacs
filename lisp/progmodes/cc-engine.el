@@ -5964,7 +5964,7 @@ comment at the start of cc-engine.el for more info."
   ;; Recursive part of `c-forward-<>-arglist'.
   ;;
   ;; This function might do hidden buffer changes.
-  (let ((start (point)) res pos tmp
+  (let ((start (point)) res pos
 	;; Cover this so that any recorded found type ranges are
 	;; automatically lost if it turns out to not be an angle
 	;; bracket arglist.  It's propagated through the return value
@@ -6059,15 +6059,13 @@ comment at the start of cc-engine.el for more info."
 		  ;; Either an operator starting with '<' or a nested arglist.
 		  (setq pos (point))
 		  (let (id-start id-end subres keyword-match)
-                  (cond
+		    (cond
 		     ;; The '<' begins a multi-char operator.
 		     ((looking-at c-<-op-cont-regexp)
-		      (setq tmp (match-end 0))
 		      (goto-char (match-end 0)))
 		     ;; We're at a nested <.....>
 		     ((progn
-			(setq tmp pos)
-			(backward-char) ; to the '<'
+			(backward-char)	; to the '<'
 			(and
 			 (save-excursion
 			   ;; There's always an identifier before an angle
@@ -6087,7 +6085,9 @@ comment at the start of cc-engine.el for more info."
 				  (and keyword-match
 				       (c-keyword-member
 					(c-keyword-sym (match-string 1))
-					'c-<>-type-kwds)))))))
+					'c-<>-type-kwds))))))
+			(or subres (goto-char pos))
+			subres)
 		      ;; It was an angle bracket arglist.
 		      (setq c-record-found-types subres)
 
@@ -6103,11 +6103,11 @@ comment at the start of cc-engine.el for more info."
 			    (c-record-ref-id (cons id-start id-end))
                         (c-record-type-id (cons id-start id-end)))))
 
-                   ;; At a "less than" operator.
-                   (t
-                    (forward-char)
-                    )))
-                t)                    ; carry on looping.
+		     ;; At a "less than" operator.
+		     (t
+		      ;; (forward-char) ; NO!  We've already gone over the <.
+		      )))
+		  t)			; carry on looping.
 
 		 ((and (not c-restricted-<>-arglists)
 		       (or (and (eq (char-before) ?&)
