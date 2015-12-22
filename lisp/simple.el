@@ -3424,8 +3424,7 @@ and are only used if a pop-up buffer is displayed."
 		   (t
 		    ;; Buffer
 		    (goto-char (point-min))
-		    (display-buffer (current-buffer)
-				    not-this-window frame))))))))
+		    (display-buffer (current-buffer) action frame))))))))
 
 
 ;; We have a sentinel to prevent insertion of a termination message
