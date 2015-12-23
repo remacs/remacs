@@ -467,6 +467,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
      well as "." and "..".  Until shown otherwise, assume we can't exclude
      anything.  */
   bool includeall = 1;
+  bool check_decoded = false;
   ptrdiff_t count = SPECPDL_INDEX ();
 
   elt = Qnil;
@@ -485,6 +486,28 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
      on the encoded file name.  */
   encoded_file = ENCODE_FILE (file);
   encoded_dir = ENCODE_FILE (Fdirectory_file_name (dirname));
+
+  Lisp_Object file_encoding = Vfile_name_coding_system;
+  if (NILP (Vfile_name_coding_system))
+    file_encoding = Vdefault_file_name_coding_system;
+  /* If the file-name encoding decomposes characters, as we do for
+     HFS+ filesystems, we need to make an additional comparison of
+     decoded names in order to filter false positives, such as "a"
+     falsely matching "a-ring".  */
+  if (!NILP (file_encoding)
+      && !NILP (Fplist_get (Fcoding_system_plist (file_encoding),
+			    Qdecomposed_characters)))
+    {
+      check_decoded = true;
+      if (STRING_MULTIBYTE (file))
+	{
+	  /* Recompute FILE to make sure any decomposed characters in
+	     it are re-composed by the post-read-conversion.
+	     Otherwise, any decomposed characters will be rejected by
+	     the additional check below.  */
+	  file = DECODE_FILE (encoded_file);
+	}
+    }
   int fd;
   DIR *d = open_directory (encoded_dir, &fd);
   record_unwind_protect_ptr (directory_files_internal_unwind, d);
@@ -637,6 +660,21 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
       if (!NILP (predicate) && NILP (call1 (predicate, name)))
 	continue;
 
+      /* Reject entries where the encoded strings match, but the
+         decoded don't.  For example, "a" should not match "a-ring" on
+         file systems that store decomposed characters. */
+      Lisp_Object zero = make_number (0);
+      Lisp_Object compare;
+      Lisp_Object cmp;
+      if (check_decoded && SCHARS (file) <= SCHARS (name))
+	{
+	  compare = make_number (SCHARS (file));
+	  cmp = Fcompare_strings (name, zero, compare, file, zero, compare,
+				  completion_ignore_case ? Qt : Qnil);
+	  if (!EQ (cmp, Qt))
+	    continue;
+	}
+
       /* Suitably record this match.  */
 
       matchcount += matchcount <= 1;
@@ -650,15 +688,13 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
 	}
       else
 	{
-	  Lisp_Object zero = make_number (0);
 	  /* FIXME: This is a copy of the code in Ftry_completion.  */
-	  ptrdiff_t compare = min (bestmatchsize, SCHARS (name));
-	  Lisp_Object cmp
-	    = Fcompare_strings (bestmatch, zero,
-				make_number (compare),
-				name, zero,
-				make_number (compare),
-				completion_ignore_case ? Qt : Qnil);
+	  compare = min (bestmatchsize, SCHARS (name));
+	  cmp = Fcompare_strings (bestmatch, zero,
+				  make_number (compare),
+				  name, zero,
+				  make_number (compare),
+				  completion_ignore_case ? Qt : Qnil);
 	  ptrdiff_t matchsize = EQ (cmp, Qt) ? compare : eabs (XINT (cmp)) - 1;
 
 	  if (completion_ignore_case)
@@ -1007,6 +1043,7 @@ syms_of_dired (void)
   DEFSYM (Qfile_attributes, "file-attributes");
   DEFSYM (Qfile_attributes_lessp, "file-attributes-lessp");
   DEFSYM (Qdefault_directory, "default-directory");
+  DEFSYM (Qdecomposed_characters, "decomposed-characters");
 
   defsubr (&Sdirectory_files);
   defsubr (&Sdirectory_files_and_attributes);

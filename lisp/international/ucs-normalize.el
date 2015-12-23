@@ -627,6 +627,10 @@ be decomposed."
   :pre-write-conversion 'ucs-normalize-hfs-nfd-pre-write-conversion
   )
 
+;; This is tested in dired.c:file_name_completion in order to reject
+;; false positives due to comparison of encoded file names.
+(coding-system-put 'utf-8-hfs 'decomposed-characters 't)
+
 (provide 'ucs-normalize)
 
 ;; Local Variables:
