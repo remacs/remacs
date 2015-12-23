@@ -664,13 +664,15 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
          decoded don't.  For example, "a" should not match "a-ring" on
          file systems that store decomposed characters. */
       Lisp_Object zero = make_number (0);
-      Lisp_Object compare;
-      Lisp_Object cmp;
+
       if (check_decoded && SCHARS (file) <= SCHARS (name))
 	{
-	  compare = make_number (SCHARS (file));
-	  cmp = Fcompare_strings (name, zero, compare, file, zero, compare,
-				  completion_ignore_case ? Qt : Qnil);
+	  /* FIXME: This is a copy of the code below.  */
+	  ptrdiff_t compare = SCHARS (file);
+	  Lisp_Object cmp
+	    = Fcompare_strings (name, zero, make_number (compare),
+				file, zero, make_number (compare),
+				completion_ignore_case ? Qt : Qnil);
 	  if (!EQ (cmp, Qt))
 	    continue;
 	}
@@ -689,12 +691,11 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
       else
 	{
 	  /* FIXME: This is a copy of the code in Ftry_completion.  */
-	  compare = min (bestmatchsize, SCHARS (name));
-	  cmp = Fcompare_strings (bestmatch, zero,
-				  make_number (compare),
-				  name, zero,
-				  make_number (compare),
-				  completion_ignore_case ? Qt : Qnil);
+	  ptrdiff_t compare = min (bestmatchsize, SCHARS (name));
+	  Lisp_Object cmp
+	    = Fcompare_strings (bestmatch, zero, make_number (compare),
+				name, zero, make_number (compare),
+				completion_ignore_case ? Qt : Qnil);
 	  ptrdiff_t matchsize = EQ (cmp, Qt) ? compare : eabs (XINT (cmp)) - 1;
 
 	  if (completion_ignore_case)
