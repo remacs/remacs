@@ -1400,12 +1400,37 @@ Differences in #targets are ignored."
   (unless (plist-get status :error)
     (let* ((obj (url-generic-parse-url url))
            (path (car (url-path-and-query obj)))
-           (file (eww-make-unique-file-name (file-name-nondirectory path)
-					    eww-download-directory)))
+           (file (eww-make-unique-file-name
+                  (eww-decode-url-file-name (file-name-nondirectory path))
+                  eww-download-directory)))
       (goto-char (point-min))
       (re-search-forward "\r?\n\r?\n")
       (write-region (point) (point-max) file)
       (message "Saved %s" file))))
+
+(defun eww-decode-url-file-name (string)
+  (let* ((binary (url-unhex-string string))
+         (decoded
+          (decode-coding-string
+           binary
+           ;; Possibly set by `universal-coding-system-argument'.
+           (or coding-system-for-read
+               ;; RFC 3986 says that %AB stuff is utf-8.
+               (if (equal (decode-coding-string binary 'utf-8)
+                          '(unicode))
+                   'utf-8
+                 ;; But perhaps not.
+                 (car (detect-coding-string binary))))))
+         (encodes (find-coding-systems-string decoded)))
+    (if (or (equal encodes '(undecided))
+            (memq (or file-name-coding-system
+                      default-file-name-coding-system)
+                  encodes))
+        decoded
+      ;; If we can't encode the decoded file name (due to language
+      ;; environment settings), then we return the original, hexified
+      ;; string.
+      string)))
 
 (defun eww-make-unique-file-name (file directory)
     (cond
