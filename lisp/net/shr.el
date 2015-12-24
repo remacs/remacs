@@ -1582,7 +1582,7 @@ The preference is a float determined from `shr-prefer-media-type'."
 	 (shr-stylesheet (nconc (list (cons 'background-color bgcolor))
 				shr-stylesheet))
 	 (nheader (if header (shr-max-columns header)))
-	 (nbody (if body (shr-max-columns body)))
+	 (nbody (if body (shr-max-columns body) 0))
 	 (nfooter (if footer (shr-max-columns footer))))
     (if (and (not caption)
 	     (not header)
