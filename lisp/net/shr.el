@@ -135,6 +135,14 @@ cid: URL as the argument.")
 (defvar shr-inhibit-images nil
   "If non-nil, inhibit loading images.")
 
+(defvar shr-external-rendering-functions nil
+  "Alist of tag/function pairs used to alter how shr renders certain tags.
+For instance, eww uses this to alter rendering of title, forms
+and other things:
+((title . eww-tag-title)
+ (form . eww-tag-form)
+ ...)")
+
 ;;; Internal variables.
 
 (defvar shr-folding-mode nil)
@@ -150,7 +158,6 @@ cid: URL as the argument.")
 (defvar shr-depth 0)
 (defvar shr-warning nil)
 (defvar shr-ignore-cache nil)
-(defvar shr-external-rendering-functions nil)
 (defvar shr-target-id nil)
 (defvar shr-table-separator-length 1)
 (defvar shr-table-separator-pixel-width 0)
