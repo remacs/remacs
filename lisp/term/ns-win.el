@@ -51,7 +51,6 @@
 (require 'menu-bar)
 (require 'fontset)
 (require 'dnd)
-(require 'ucs-normalize)
 
 (defgroup ns nil
   "GNUstep/Mac OS X specific features."
@@ -338,12 +337,29 @@ See `ns-insert-working-text'."
   (setq ns-working-overlay nil))
 
 
-;; OS X file system Unicode UTF-8 NFD (decomposed form) support.
-(when (eq system-type 'darwin)
-  ;; Used prior to Emacs 25.
-  (define-coding-system-alias 'utf-8-nfd 'utf-8-hfs)
+(declare-function ns-convert-utf8-nfd-to-nfc "nsfns.m" (str))
 
-  (set-file-name-coding-system 'utf-8-hfs))
+;;;; OS X file system Unicode UTF-8 NFD (decomposed form) support
+;; Lisp code based on utf-8m.el, by Seiji Zenitani, Eiji Honjoh, and
+;; Carsten Bormann.
+(when (eq system-type 'darwin)
+  (defun ns-utf8-nfd-post-read-conversion (length)
+    "Calls `ns-convert-utf8-nfd-to-nfc' to compose char sequences."
+    (save-excursion
+      (save-restriction
+        (narrow-to-region (point) (+ (point) length))
+        (let ((str (buffer-string)))
+          (delete-region (point-min) (point-max))
+          (insert (ns-convert-utf8-nfd-to-nfc str))
+          (- (point-max) (point-min))))))
+
+  (define-coding-system 'utf-8-nfd
+    "UTF-8 NFD (decomposed) encoding."
+    :coding-type 'utf-8
+    :mnemonic ?U
+    :charset-list '(unicode)
+    :post-read-conversion 'ns-utf8-nfd-post-read-conversion)
+  (set-file-name-coding-system 'utf-8-nfd))
 
 ;;;; Inter-app communications support.
 

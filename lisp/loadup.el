@@ -276,7 +276,6 @@
 (if (featurep 'ns)
     (progn
       (load "term/common-win")
-      (load "international/ucs-normalize")
       (load "term/ns-win")))
 (if (fboundp 'x-create-frame)
     ;; Do it after loading term/foo-win.el since the value of the

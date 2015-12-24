@@ -2099,6 +2099,39 @@ there was no result.  */)
 }
 
 
+DEFUN ("ns-convert-utf8-nfd-to-nfc", Fns_convert_utf8_nfd_to_nfc,
+       Sns_convert_utf8_nfd_to_nfc, 1, 1, 0,
+       doc: /* Return an NFC string that matches the UTF-8 NFD string STR.  */)
+     (Lisp_Object str)
+{
+/* TODO: If GNUstep ever implements precomposedStringWithCanonicalMapping,
+         remove this. */
+  NSString *utfStr;
+  Lisp_Object ret = Qnil;
+  NSAutoreleasePool *pool;
+
+  CHECK_STRING (str);
+  pool = [[NSAutoreleasePool alloc] init];
+  utfStr = [NSString stringWithUTF8String: SSDATA (str)];
+#ifdef NS_IMPL_COCOA
+  if (utfStr)
+    utfStr = [utfStr precomposedStringWithCanonicalMapping];
+#endif
+  if (utfStr)
+    {
+      const char *cstr = [utfStr UTF8String];
+      if (cstr)
+        ret = build_string (cstr);
+    }
+
+  [pool release];
+  if (NILP (ret))
+    error ("Invalid UTF-8");
+
+  return ret;
+}
+
+
 #ifdef NS_IMPL_COCOA
 
 /* Compile and execute the AppleScript SCRIPT and return the error
@@ -3174,6 +3207,7 @@ be used as the image of the icon representing the frame.  */);
   defsubr (&Sns_emacs_info_panel);
   defsubr (&Sns_list_services);
   defsubr (&Sns_perform_service);
+  defsubr (&Sns_convert_utf8_nfd_to_nfc);
   defsubr (&Sns_popup_font_panel);
   defsubr (&Sns_popup_color_panel);
 
