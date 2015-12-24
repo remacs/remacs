@@ -1152,7 +1152,9 @@ ones, in case fg and bg are nil."
 
 (defun shr-tag-svg (dom)
   (when (and (image-type-available-p 'svg)
-	     (not shr-inhibit-images))
+	     (not shr-inhibit-images)
+             (dom-attr dom 'width)
+             (dom-attr dom 'height))
     (funcall shr-put-image-function (list (shr-dom-to-xml dom) 'image/svg+xml)
 	     "SVG Image")))
 
