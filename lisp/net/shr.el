@@ -425,8 +425,8 @@ size, and full-buffer size."
 	(shr-stylesheet shr-stylesheet)
 	(shr-depth (1+ shr-depth))
 	(start (point)))
-    ;; shr uses about 12 frames per nested node.
-    (if (> shr-depth (/ max-specpdl-size 12))
+    ;; shr uses many frames per nested node.
+    (if (> shr-depth (/ max-specpdl-size 15))
 	(setq shr-warning "Too deeply nested to render properly; consider increasing `max-specpdl-size'")
       (when style
 	(if (string-match "color\\|display\\|border-collapse" style)
