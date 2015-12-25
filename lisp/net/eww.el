@@ -713,7 +713,8 @@ the like."
   (setq-local desktop-save-buffer #'eww-desktop-misc-data)
   ;; multi-page isearch support
   (setq-local multi-isearch-next-buffer-function #'eww-isearch-next-buffer)
-  (setq truncate-lines t)
+  (setq truncate-lines t
+        bidi-paragraph-direction 'left-to-right)
   (buffer-disable-undo)
   (setq buffer-read-only t))
 
