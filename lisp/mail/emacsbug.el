@@ -234,7 +234,7 @@ usually do not have translators for other languages.\n\n")))
     (let ((txt (delete-and-extract-region (1+ user-point) (point))))
       (insert (propertize "\n" 'display txt)))
 
-    (insert "\n\nIn " (emacs-version) "\n")
+    (insert "\n\nIn " (emacs-version) " built on " emacs-build-system "\n")
     (if (stringp emacs-repository-version)
 	(insert "Repository revision: " emacs-repository-version "\n"))
     (if (fboundp 'x-server-vendor)
