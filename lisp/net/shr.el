@@ -1581,8 +1581,8 @@ The preference is a float determined from `shr-prefer-media-type'."
       (car tbodies))
      (t
       ;; Table with multiple tbodies.  Convert into a single tbody.
-      `(tbody nil
-              ,@(reduce 'append (mapcar 'dom-non-text-children tbodies)))))))
+      `(tbody nil ,@(cl-reduce 'append
+                               (mapcar 'dom-non-text-children tbodies)))))))
 
 (defun shr-tag-table (dom)
   (shr-ensure-paragraph)
