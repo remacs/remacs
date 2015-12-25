@@ -269,7 +269,8 @@ A prefix arg makes KEEP-TIME non-nil."
 	(error "Opening input file: No such file or directory, %s" url))
     (with-current-buffer buffer
       (setq handle (mm-dissect-buffer t)))
-    (mm-save-part-to-file handle newname)
+    (let ((mm-attachment-file-modes (default-file-modes)))
+      (mm-save-part-to-file handle newname))
     (kill-buffer buffer)
     (mm-destroy-parts handle)))
 (put 'copy-file 'url-file-handlers 'url-copy-file)
