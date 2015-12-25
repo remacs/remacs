@@ -419,11 +419,11 @@ commands reverses the effect of this variable."
   :group 'browse-url)
 
 (defcustom browse-url-filename-alist
-  `(("^/\\(ftp@\\|anonymous@\\)?\\([^:]+\\):/*" . "ftp://\\2/")
+  `(("^/\\(ftp@\\|anonymous@\\)?\\([^:/]+\\):/*" . "ftp://\\2/")
     ;; The above loses the username to avoid the browser prompting for
     ;; it in anonymous cases.  If it's not anonymous the next regexp
     ;; applies.
-    ("^/\\([^:@]+@\\)?\\([^:]+\\):/*" . "ftp://\\1\\2/")
+    ("^/\\([^:@/]+@\\)?\\([^:/]+\\):/*" . "ftp://\\1\\2/")
     ,@(if (memq system-type '(windows-nt ms-dos))
           '(("^\\([a-zA-Z]:\\)[\\/]" . "file:///\\1/")
             ("^[\\/][\\/]+" . "file://")))
@@ -441,13 +441,13 @@ address to an HTTP URL:
     (setq browse-url-filename-alist
 	  \\='((\"/webmaster@webserver:/home/www/html/\" .
 	     \"http://www.acme.co.uk/\")
-            (\"^/\\(ftp@\\|anonymous@\\)?\\([^:]+\\):/*\" . \"ftp://\\2/\")
-            (\"^/\\([^:@]+@\\)?\\([^:]+\\):/*\" . \"ftp://\\1\\2/\")
+            (\"^/\\(ftp@\\|anonymous@\\)?\\([^:/]+\\):/*\" . \"ftp://\\2/\")
+            (\"^/\\([^:@/]+@\\)?\\([^:/]+\\):/*\" . \"ftp://\\1\\2/\")
 	    (\"^/+\" . \"file:/\")))"
   :type '(repeat (cons :format "%v"
                        (regexp :tag "Regexp")
                        (string :tag "Replacement")))
-  :version "23.1"
+  :version "25.1"
   :group 'browse-url)
 
 (defcustom browse-url-save-file nil
