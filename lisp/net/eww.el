@@ -415,6 +415,7 @@ Currently this means either text/html or application/xhtml+xml."
                 (textarea . eww-tag-textarea)
                 (select . eww-tag-select)
                 (link . eww-tag-link)
+                (meta . eww-tag-meta)
                 (a . eww-tag-a)))))
 	(erase-buffer)
 	(shr-insert-document document)
@@ -459,6 +460,27 @@ Currently this means either text/html or application/xhtml+xml."
     (and href
 	 where
 	 (plist-put eww-data (cdr where) href))))
+
+(defvar eww-redirect-level 1)
+
+(defun eww-tag-meta (dom)
+  (when (and (cl-equalp (dom-attr dom 'http-equiv) "refresh")
+             (< eww-redirect-level 5))
+    (when-let (refresh (dom-attr dom 'content))
+      (when (or (string-match "^\\([0-9]+\\) *;.*url=\"\\([^\"]+\\)\"" refresh)
+                (string-match "^\\([0-9]+\\) *;.*url=\\([^ ]+\\)" refresh))
+        (let ((timeout (match-string 1 refresh))
+              (url (match-string 2 refresh))
+              (eww-redirect-level (1+ eww-redirect-level)))
+          (if (equal timeout "0")
+              (eww (shr-expand-url url))
+            (eww-tag-a
+             (dom-node 'a `((href . ,(shr-expand-url url)))
+                       (format "Auto refresh in %s second%s disabled"
+                               timeout
+                               (if (equal timeout "1")
+                                   ""
+                                 "s"))))))))))
 
 (defun eww-tag-link (dom)
   (eww-handle-link dom)
