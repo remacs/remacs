@@ -681,6 +681,7 @@ the like."
     (define-key map "E" 'eww-set-character-encoding)
     (define-key map "S" 'eww-list-buffers)
     (define-key map "F" 'eww-toggle-fonts)
+    (define-key map [(meta C)] 'eww-toggle-fonts)
 
     (define-key map "b" 'eww-add-bookmark)
     (define-key map "B" 'eww-list-bookmarks)
@@ -705,6 +706,8 @@ the like."
 	["Add bookmark" eww-add-bookmark t]
 	["List bookmarks" eww-list-bookmarks t]
 	["List cookies" url-cookie-list t]
+	["Toggle fonts" eww-toggle-fonts t]
+	["Toggle colors" eww-toggle-colors t]
        ["Character Encoding" eww-set-character-encoding]))
     map))
 
@@ -1491,6 +1494,15 @@ If CHARSET is nil then use UTF-8."
   (interactive)
   (message "Fonts are now %s"
 	   (if (setq shr-use-fonts (not shr-use-fonts))
+	       "on"
+	     "off"))
+  (eww-reload))
+
+(defun eww-toggle-colors ()
+  "Toggle whether to use HTML-specified colors or not."
+  (interactive)
+  (message "Colors are now %s"
+	   (if (setq shr-use-colors (not shr-use-colors))
 	       "on"
 	     "off"))
   (eww-reload))

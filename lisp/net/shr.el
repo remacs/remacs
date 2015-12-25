@@ -63,6 +63,12 @@ fit these criteria."
   :group 'shr
   :type 'boolean)
 
+(defcustom shr-use-colors t
+  "If non-nil, respect color specifications in the HTML."
+  :version "25.2"
+  :group 'shr
+  :type 'boolean)
+
 (defcustom shr-table-horizontal-line nil
   "Character used to draw horizontal table lines.
 If nil, don't draw horizontal table lines."
@@ -1082,7 +1088,9 @@ ones, in case fg and bg are nil."
                (shr-color-visible bg fg)))))))
 
 (defun shr-colorize-region (start end fg &optional bg)
-  (when (and (or fg bg) (>= (display-color-cells) 88))
+  (when (and shr-use-colors
+             (or fg bg)
+             (>= (display-color-cells) 88))
     (let ((new-colors (shr-color-check fg bg)))
       (when new-colors
 	(when fg
