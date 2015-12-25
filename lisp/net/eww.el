@@ -681,7 +681,7 @@ the like."
     (define-key map "E" 'eww-set-character-encoding)
     (define-key map "S" 'eww-list-buffers)
     (define-key map "F" 'eww-toggle-fonts)
-    (define-key map [(meta C)] 'eww-toggle-fonts)
+    (define-key map [(meta C)] 'eww-toggle-colors)
 
     (define-key map "b" 'eww-add-bookmark)
     (define-key map "B" 'eww-list-bookmarks)
