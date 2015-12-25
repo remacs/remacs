@@ -1572,12 +1572,23 @@ The preference is a float determined from `shr-prefer-media-type'."
     ;; Then render the table again with these new "hard" widths.
     (shr-insert-table (shr-make-table dom sketch-widths t) sketch-widths)))
 
+(defun shr-table-body (dom)
+  (let ((tbodies (dom-by-tag dom 'tbody)))
+    (cond
+     ((null tbodies)
+      dom)
+     ((= (length tbodies) 1)
+      (car tbodies))
+     (t
+      ;; Table with multiple tbodies.  Convert into a single tbody.
+      `(tbody nil
+              ,@(reduce 'append (mapcar 'dom-non-text-children tbodies)))))))
+
 (defun shr-tag-table (dom)
   (shr-ensure-paragraph)
   (let* ((caption (dom-children (dom-child-by-tag dom 'caption)))
 	 (header (dom-non-text-children (dom-child-by-tag dom 'thead)))
-	 (body (dom-non-text-children (or (dom-child-by-tag dom 'tbody)
-					  dom)))
+	 (body (dom-non-text-children (shr-table-body dom)))
 	 (footer (dom-non-text-children (dom-child-by-tag dom 'tfoot)))
          (bgcolor (dom-attr dom 'bgcolor))
 	 (start (point))
