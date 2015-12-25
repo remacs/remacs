@@ -412,6 +412,7 @@ Currently this means either text/html or application/xhtml+xml."
               '((title . eww-tag-title)
                 (form . eww-tag-form)
                 (input . eww-tag-input)
+                (button . eww-form-submit)
                 (textarea . eww-tag-textarea)
                 (select . eww-tag-select)
                 (link . eww-tag-link)
