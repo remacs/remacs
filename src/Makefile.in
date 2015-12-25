@@ -486,6 +486,11 @@ $(srcdir)/macuvs.h $(lispsource)/international/charprop.el: \
   bootstrap-emacs$(EXEEXT) FORCE
 	$(MAKE) -C ../admin/unidata all EMACS="../$(bootstrap_exe)"
 
+## We require charprop.el to exist before ucs-normalize.el is
+## byte-compiled, because ucs-normalize.el needs to load 2 uni-*.el files.
+$(lispsource)/international/ucs-normalize.elc: | \
+  $(lispsource)/international/charprop.el
+
 lispintdir = ${lispsource}/international
 ${lispintdir}/cp51932.el ${lispintdir}/eucjp-ms.el: FORCE
 	${MAKE} -C ../admin/charsets $(notdir $@)
