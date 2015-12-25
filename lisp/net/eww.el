@@ -1426,8 +1426,8 @@ Differences in #targets are ignored."
                  (car (detect-coding-string binary))))))
          (encodes (find-coding-systems-string decoded)))
     (if (or (equal encodes '(undecided))
-            (memq (or file-name-coding-system
-                      default-file-name-coding-system)
+            (memq (coding-system-base (or file-name-coding-system
+                                          default-file-name-coding-system))
                   encodes))
         decoded
       ;; If we can't encode the decoded file name (due to language
