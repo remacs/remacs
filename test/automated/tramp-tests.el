@@ -1601,7 +1601,6 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
     (tramp-find-foreign-file-name-handler tramp-test-temporary-file-directory)
     'tramp-sh-file-name-handler))
 
-  (tramp--instrument-test-case 10
   (let* ((default-directory tramp-test-temporary-file-directory)
 	 (tmp-name1 (tramp--test-make-temp-name))
 	 (tmp-name2 (expand-file-name "foo" tmp-name1))
@@ -1609,6 +1608,10 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	 (vc-handled-backends
 	  (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
 	    (cond
+	     ((tramp-find-executable v vc-git-program (tramp-get-remote-path v))
+	      '(Git))
+	     ((tramp-find-executable v vc-hg-program (tramp-get-remote-path v))
+	      '(Hg))
 	     ((tramp-find-executable v vc-bzr-program (tramp-get-remote-path v))
 	      (setq tramp-remote-process-environment
 		    (cons (format "BZR_HOME=%s"
@@ -1619,10 +1622,6 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	       (tramp-dissect-file-name tramp-test-temporary-file-directory)
 	       nil 'keep-password)
 	      '(Bzr))
-	     ((tramp-find-executable v vc-git-program (tramp-get-remote-path v))
-	      '(Git))
-	     ((tramp-find-executable v vc-hg-program (tramp-get-remote-path v))
-	      '(Hg))
 	     (t nil)))))
     (skip-unless vc-handled-backends)
     (message "%s" vc-handled-backends)
@@ -1638,7 +1637,11 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 
 	  (let ((default-directory tmp-name1))
 	    ;; Create empty repository, and register the file.
-	    (vc-create-repo (car vc-handled-backends))
+	    ;; Sometimes, creation of repository fails (bzr!); we skip
+	    ;; the test then.
+	    (condition-case nil
+		(vc-create-repo (car vc-handled-backends))
+	      (error (skip-unless nil)))
 	    ;; The structure of VC-FILESET is not documented.  Let's
 	    ;; hope it won't change.
 	    (condition-case nil
@@ -1653,7 +1656,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	  (should (vc-registered tmp-name2)))
 
       ;; Cleanup.
-      (ignore-errors (delete-directory tmp-name1 'recursive))))))
+      (ignore-errors (delete-directory tmp-name1 'recursive)))))
 
 (ert-deftest tramp-test30-make-auto-save-file-name ()
   "Check `make-auto-save-file-name'."
