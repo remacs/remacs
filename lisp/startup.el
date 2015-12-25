@@ -544,7 +544,11 @@ It is the default value of the variable `top-level'."
 	    (set-buffer elt)
 	    (if default-directory
 		(setq default-directory
-		      (decode-coding-string default-directory coding t)))))
+                      (if (eq system-type 'windows-nt)
+                          ;; Convert backslashes to forward slashes.
+                          (expand-file-name
+                           (decode-coding-string default-directory coding t))
+                        (decode-coding-string default-directory coding t))))))
 
 	;; Decode all the important variables and directory lists, now
 	;; that we know the locale's encoding.  This is because the
