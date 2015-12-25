@@ -1109,6 +1109,15 @@ ones, in case fg and bg are nil."
 
 ;;; Tag-specific rendering rules.
 
+(defun shr-tag-html (dom)
+  (let ((dir (dom-attr dom 'dir)))
+    (cond
+     ((equal dir "ltr")
+      (setq bidi-paragraph-direction 'left-to-right))
+     ((equal dir "rtl")
+      (setq bidi-paragraph-direction 'right-to-left))))
+  (shr-generic dom))
+
 (defun shr-tag-body (dom)
   (let* ((start (point))
 	 (fgcolor (or (dom-attr dom 'fgcolor) (dom-attr dom 'text)))
