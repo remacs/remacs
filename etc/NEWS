@@ -900,6 +900,10 @@ compress many marked files into a single named archive.  The
 compression command is determined from the new
 `dired-compress-files-alist' variable.
 
++++
+*** `W' is now bound to `browse-url-of-dired-file', and is useful for
+viewing HTML files and the like.
+
 ** Obsolete packages
 
 ---

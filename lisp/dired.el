@@ -1538,6 +1538,7 @@ Do so according to the former subdir alist OLD-SUBDIR-ALIST."
     (define-key map "u" 'dired-unmark)
     (define-key map "v" 'dired-view-file)
     (define-key map "w" 'dired-copy-filename-as-kill)
+    (define-key map "W" 'browse-url-of-dired-file)
     (define-key map "x" 'dired-do-flagged-delete)
     (define-key map "y" 'dired-show-file-type)
     (define-key map "+" 'dired-create-directory)
