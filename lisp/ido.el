@@ -3491,14 +3491,12 @@ This is to make them appear as if they were \"virtual buffers\"."
   ;; the file which the user might thought was still open.
   (unless recentf-mode (recentf-mode 1))
   (setq ido-virtual-buffers nil)
-  (let ((bookmarks (and (boundp 'bookmark-alist)
-                        bookmark-alist))
-        name)
+  (let (name)
     (dolist (head (append
                    recentf-list
-                   (delq nil (mapcar (lambda (bookmark)
-                                       (cdr (assoc 'filename bookmark)))
-                                     bookmarks))))
+                   (and (fboundp 'bookmark-get-filename)
+                        (delq nil (mapcar #'bookmark-get-filename
+                                          (bound-and-true-p bookmark-alist))))))
       (setq name (file-name-nondirectory head))
       ;; In case HEAD is a directory with trailing /.  See bug#14552.
       (when (equal name "")
