@@ -276,7 +276,7 @@ Shorter values mean quicker response, but is more CPU intensive."
   '((gssapi    imap-gssapi-stream-p    imap-gssapi-open)
     (kerberos4 imap-kerberos4-stream-p imap-kerberos4-open)
     (tls       imap-tls-p              imap-tls-open)
-    (ssl       imap-ssl-p              imap-ssl-open)
+    (ssl       imap-tls-p              imap-tls-open)
     (network   imap-network-p          imap-network-open)
     (shell     imap-shell-p            imap-shell-open)
     (starttls  imap-starttls-p         imap-starttls-open))
@@ -643,56 +643,6 @@ sure of changing the value of `foo'."
 	      (delete-process process)
 	      nil)))))
     done))
-
-(defun imap-ssl-p (_buffer)
-  nil)
-
-(defun imap-ssl-open (name buffer server port)
-  "Open an SSL connection to SERVER."
-  (let ((cmds (if (listp imap-ssl-program) imap-ssl-program
-		(list imap-ssl-program)))
-	cmd done)
-    (while (and (not done) (setq cmd (pop cmds)))
-      (message "imap: Opening SSL connection with `%s'..." cmd)
-      (erase-buffer)
-      (let* ((port (or port imap-default-ssl-port))
-	     (coding-system-for-read imap-coding-system-for-read)
-	     (coding-system-for-write imap-coding-system-for-write)
-	     (process-connection-type imap-process-connection-type)
-	     (set-process-query-on-exit-flag
-	      (if (fboundp 'set-process-query-on-exit-flag)
-		  'set-process-query-on-exit-flag
-		'process-kill-without-query))
-	     process)
-	(when (progn
-		(setq process (start-process
-			       name buffer shell-file-name
-			       shell-command-switch
-			       (format-spec cmd
-					    (format-spec-make
-					     ?s server
-					     ?p (number-to-string port)))))
-		(funcall set-process-query-on-exit-flag process nil)
-		process)
-	  (with-current-buffer buffer
-	    (goto-char (point-min))
-	    (while (and (memq (process-status process) '(open run))
-			(set-buffer buffer) ;; XXX "blue moon" nntp.el bug
-			(goto-char (point-max))
-			(forward-line -1)
-			(not (imap-parse-greeting)))
-	      (accept-process-output process 1)
-	      (sit-for 1))
-	    (imap-log buffer)
-	    (erase-buffer)
-	    (when (memq (process-status process) '(open run))
-	      (setq done process))))))
-    (if done
-	(progn
-	  (message "imap: Opening SSL connection with `%s'...done" cmd)
-	  done)
-      (message "imap: Opening SSL connection with `%s'...failed" cmd)
-      nil)))
 
 (defun imap-tls-p (_buffer)
   nil)
@@ -2939,8 +2889,6 @@ Return nil if no complete line has arrived."
 	  imap-error-text
 	  imap-kerberos4s-p
 	  imap-kerberos4-open
-	  imap-ssl-p
-	  imap-ssl-open
 	  imap-network-p
 	  imap-network-open
 	  imap-interactive-login
