@@ -797,14 +797,18 @@ filesystem notifications.
 
 ** SQL mode
 
+---
 *** New user variable `sql-default-directory' enables remote
 connections using Tramp.
 
-*** New command `sql-send-line-and-next' sends the current line to the
-interactive buffer and advances to the next line, skipping whitespace
-and comments.
+---
+*** New command `sql-send-line-and-next'.
+This command, bound to `C-c C-n' by default, sends the current line to
+the SQL process and advances to the next line, skipping whitespace and
+comments.
 
-*** Add support for Vertica SQL.
+---
+*** Added support for Vertica SQL.
 
 ** VC and related modes
 
