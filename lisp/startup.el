@@ -1430,9 +1430,9 @@ settings will be marked as \"CHANGED outside of Customize\"."
       (put 'cursor 'face-modified t))))
 
 (defcustom initial-scratch-message (purecopy "\
-;; This buffer is for notes you don't want to save, and for Lisp evaluation.
+;; This buffer is for notes you don\\='t want to save, and for Lisp evaluation.
 ;; If you want to create a file, visit that file with \\[find-file],
-;; then enter the text in that file's own buffer.
+;; then enter the text in that file\\='s own buffer.
 
 ")
   "Initial documentation displayed in *scratch* buffer at startup.
