@@ -74,8 +74,7 @@
 ;; imap.el supports RFC1730/2060/RFC3501 (IMAP4/IMAP4rev1).  The implemented
 ;; IMAP extensions are RFC2195 (CRAM-MD5), RFC2086 (ACL), RFC2342
 ;; (NAMESPACE), RFC2359 (UIDPLUS), the IMAP-part of RFC2595 (STARTTLS,
-;; LOGINDISABLED) (with use of external library starttls.el and
-;; program starttls), and the GSSAPI / Kerberos V4 sections of RFC1731
+;; LOGINDISABLED), and the GSSAPI / Kerberos V4 sections of RFC1731
 ;; (with use of external program `imtest'), and RFC2971 (ID).  It also
 ;; takes advantage of the UNSELECT extension in Cyrus IMAPD.
 ;;
@@ -140,8 +139,6 @@
 (eval-and-compile
   ;; For Emacs <22.2 and XEmacs.
   (unless (fboundp 'declare-function) (defmacro declare-function (&rest _r)))
-  (autoload 'starttls-open-stream "starttls")
-  (autoload 'starttls-negotiate "starttls")
   (autoload 'sasl-find-mechanism "sasl")
   (autoload 'digest-md5-parse-digest-challenge "digest-md5")
   (autoload 'digest-md5-digest-response "digest-md5")
@@ -151,8 +148,7 @@
   (autoload 'utf7-encode "utf7")
   (autoload 'utf7-decode "utf7")
   (autoload 'format-spec "format-spec")
-  (autoload 'format-spec-make "format-spec")
-  (autoload 'open-tls-stream "tls"))
+  (autoload 'format-spec-make "format-spec"))
 
 ;; User variables.
 
@@ -183,19 +179,6 @@ IMAP commands on stdin and return responses to stdout.  Each entry in
 the list is tried until a successful connection is made."
   :group 'imap
   :type '(repeat string))
-
-(defcustom imap-ssl-program '("openssl s_client -quiet -ssl3 -connect %s:%p"
-			      "openssl s_client -quiet -ssl2 -connect %s:%p"
-			      "s_client -quiet -ssl3 -connect %s:%p"
-			      "s_client -quiet -ssl2 -connect %s:%p")
-  "A string, or list of strings, containing commands for SSL connections.
-Within a string, %s is replaced with the server address and %p with
-port number on server.  The program should accept IMAP commands on
-stdin and return responses to stdout.  Each entry in the list is tried
-until a successful connection is made."
-  :group 'imap
-  :type '(choice string
-		 (repeat string)))
 
 (defcustom imap-shell-program '("ssh %s imapd"
 				"rsh %s imapd"
@@ -718,7 +701,8 @@ sure of changing the value of `foo'."
   (let* ((port (or port imap-default-tls-port))
 	 (coding-system-for-read imap-coding-system-for-read)
 	 (coding-system-for-write imap-coding-system-for-write)
-	 (process (open-tls-stream name buffer server port)))
+	 (process (open-network-stream name buffer server port
+                                       :type 'tls)))
     (when process
       (while (and (memq (process-status process) '(open run))
 		  ;; FIXME: Per the "blue moon" comment, the process/buffer
@@ -803,34 +787,23 @@ sure of changing the value of `foo'."
   (imap-capability 'STARTTLS buffer))
 
 (defun imap-starttls-open (name buffer server port)
+  (message "imap: Connecting with STARTTLS...")
   (let* ((port (or port imap-default-port))
 	 (coding-system-for-read imap-coding-system-for-read)
 	 (coding-system-for-write imap-coding-system-for-write)
-	 (process (starttls-open-stream name buffer server port))
-	 done tls-info)
-    (message "imap: Connecting with STARTTLS...")
-    (when process
-      (while (and (memq (process-status process) '(open run))
-		  (set-buffer buffer) ;; XXX "blue moon" nntp.el bug
-		  (goto-char (point-max))
-		  (forward-line -1)
-		  (not (imap-parse-greeting)))
-	(accept-process-output process 1)
-	(sit-for 1))
-      (imap-send-command "STARTTLS")
-      (while (and (memq (process-status process) '(open run))
-		  (set-buffer buffer) ;; XXX "blue moon" nntp.el bug
-		  (goto-char (point-max))
-		  (forward-line -1)
-		  (not (re-search-forward "[0-9]+ OK.*\r?\n" nil t)))
-	(accept-process-output process 1)
-	(sit-for 1))
-      (imap-log buffer)
-      (when (and (setq tls-info (starttls-negotiate process))
-		 (memq (process-status process) '(open run)))
-	(setq done process)))
-    (if (stringp tls-info)
-	(message "imap: STARTTLS info: %s" tls-info))
+	 (process (open-network-stream
+                   name buffer server port
+                   :type 'starttls
+                   :capability-command "1 CAPABILITY\r\n"
+                   :always-query-capabilities t
+                   :end-of-command "\r\n"
+                   :success " OK "
+                   :starttls-function
+                   (lambda (capabilities)
+                     (when (string-match-p "STARTTLS" capabilities)
+                       "1 STARTTLS\r\n"))))
+         (done (and process
+                    (memq (process-status process) '(open run)))))
     (message "imap: Connecting with STARTTLS...%s" (if done "done" "failed"))
     done))
 
