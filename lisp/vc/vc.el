@@ -2467,7 +2467,8 @@ to the working revision (except for keyword expansion)."
 You must be visiting a version controlled file, or in a `vc-dir' buffer.
 On a distributed version control system, this runs a \"pull\"
 operation to update the current branch, prompting for an argument
-list if required.  Optional prefix ARG forces a prompt.
+list if required.  Optional prefix ARG forces a prompt for the VCS
+command to run.
 
 On a non-distributed version control system, update the current
 fileset to the tip revisions.  For each unchanged and unlocked
@@ -2511,8 +2512,11 @@ tip revision are merged into the working file."
 You must be visiting a version controlled file, or in a `vc-dir' buffer.
 On a distributed version control system, this runs a \"push\"
 operation on the current branch, prompting for the precise command
-if required.  Optional prefix ARG non-nil forces a prompt.
-On a non-distributed version control system, this signals an error."
+if required.  Optional prefix ARG non-nil forces a prompt for the
+VCS command to run.
+
+On a non-distributed version control system, this signals an error.
+It also signals an error in a Bazaar bound branch."
   (interactive "P")
   (let* ((vc-fileset (vc-deduce-fileset t))
 	 (backend (car vc-fileset)))

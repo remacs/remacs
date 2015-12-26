@@ -1364,18 +1364,42 @@ commit will be committed to that specific branch.
 @subsubsection Pulling/Pushing Changes into/from a Branch
 
 @table @kbd
+@item C-x v P
+On a decentralized version control system, update another location
+with changes from the current branch (a.k.a. ``push'' changes).  This
+concept does not exist for centralized version control systems
+
 @item C-x v +
 On a decentralized version control system, update the current branch
 by ``pulling in'' changes from another location.
 
 On a centralized version control system, update the current VC
 fileset.
-
-@item C-x v P
-On a decentralized version control system, ``push'' changes from the
-current branch to another location.  This concept does not exist
-for centralized version control systems.
 @end table
+
+@kindex C-x v P
+@findex vc-push
+On a decentralized version control system, the command @kbd{C-x v P}
+(@code{vc-push}) updates another location with changes from the
+current branch.  With a prefix argument, it prompts for the exact
+version control command to run, which lets you specify where to push
+changes; the default is @command{bzr push} with Bazaar, @command{git
+push} with Git, and @command{hg push} with Mercurial.  The default
+commands always push to a default location determined by the version
+control system from your branch configuration.
+
+Prior to pushing, you can use @kbd{C-x v O} (@code{vc-log-outgoing})
+to view a log buffer of the changes to be sent.  @xref{VC Change Log}.
+
+@cindex bound branch (Bazaar VCS)
+This command is currently supported only by Bazaar, Git, and Mercurial.
+The concept of ``pushing'' does not exist for centralized version
+control systems, where this operation is a part of committing a
+changeset, so invoking this command on a centralized VCS signals an
+error.  This command also signals an error when attempted in a Bazaar
+@dfn{bound branch}, where committing a changeset automatically pushes
+the changes to the remote repository to which the local branch is
+bound.
 
 @kindex C-x v +
 @findex vc-pull
@@ -1388,12 +1412,12 @@ Otherwise, it pulls from a default location determined by the version
 control system.
 
   Amongst decentralized version control systems, @kbd{C-x v +} is
-currently supported only by Bazaar, Git, and Mercurial.  On Bazaar, it
-calls @command{bzr pull} for ordinary branches (to pull from a master
-branch into a mirroring branch), and @command{bzr update} for a bound
-branch (to pull from a central repository).  On Git, it calls
+currently supported only by Bazaar, Git, and Mercurial.  With Bazaar,
+it calls @command{bzr pull} for ordinary branches (to pull from a
+master branch into a mirroring branch), and @command{bzr update} for a
+bound branch (to pull from a central repository).  With Git, it calls
 @command{git pull} to fetch changes from a remote repository and merge
-it into the current branch.  On Mercurial, it calls @command{hg pull
+it into the current branch.  With Mercurial, it calls @command{hg pull
 -u} to fetch changesets from the default remote repository and update
 the working directory.
 
@@ -1403,21 +1427,6 @@ Log}.
 
   On a centralized version control system like CVS, @kbd{C-x v +}
 updates the current VC fileset from the repository.
-
-@kindex C-x v P
-@findex vc-push
-  On a decentralized version control system, the command @kbd{C-x v P}
-(@code{vc-push}) sends changes from your current branch to another location.
-With a prefix argument, the command prompts for the exact
-version control command to use, which lets you specify where to push
-changes.  Otherwise, it pushes to a default location determined
-by the version control system.
-
-  Prior to pushing, you can use @kbd{C-x v O} (@code{vc-log-outgoing})
-to view a log buffer of the changes to be sent.  @xref{VC Change Log}.
-
-This command is currently supported only by Bazaar, Git, and Mercurial.
-It signals an error for centralized version control systems.
 
 @node Merging
 @subsubsection Merging Branches
