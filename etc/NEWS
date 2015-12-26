@@ -831,12 +831,17 @@ back-end for the buffer's file, or remove it from version control.
 the color range from `vc-annotate-color-map' is applied to the
 background or to the foreground.
 
-*** `compare-windows' now compares text with the most recently used window
-instead of the next window.  The new option `compare-windows-get-window-function'
-allows to customize this.
++++
+*** `compare-windows' now compares text with the most recently selected window
+instead of the next window.  If you want the previous behavior of
+comparing with the next window, customize the new option
+`compare-windows-get-window-function' to the value
+`compare-windows-get-next-window'.
 
+---
 *** Two new faces `compare-windows-removed' and `compare-windows-added'
-replace the obsolete face `compare-windows'.
+replace the face `compare-windows', which is now an obsolete alias for
+`compare-windows-added'.
 
 ---
 *** `log-edit-insert-changelog' converts "(tiny change)" to
