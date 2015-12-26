@@ -696,7 +696,11 @@ The remainder were:
 
 **** The nil and list forms of `diary-display-function'.
 
++++
 ** New ERT function `ert-summarize-tests-batch-and-exit'.
+If the output of ERT tests in batch mode execution can be saved to a
+log file, then it can be passed as an argument to the above function
+to produce a neat summary.
 
 ** New js.el option `js-indent-first-init'.
 
