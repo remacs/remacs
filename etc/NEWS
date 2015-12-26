@@ -307,6 +307,7 @@ unlike `bookmark-set' which silently updates an existing bookmark.
 
 ** IMAP
 
+---
 *** `imap-ssl-program' has been removed, and imap.el uses the internal
 GnuTLS encryption functions if possible.
 
