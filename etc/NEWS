@@ -817,6 +817,7 @@ comments.
 Implemented for Bzr, Git, Hg.  As part of this change, the pre-existing
 (undocumented) command vc-hg-push now behaves slightly differently.
 
++++
 *** The new command vc-region-history shows the log+diff of the active region.
 
 +++

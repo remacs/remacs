@@ -1020,6 +1020,22 @@ increase the number of revisions shown in an existing
 entries} or @samp{Show unlimited entries} buttons at the end of the
 buffer.  However, RCS, SCCS, and CVS do not support this feature.
 
+@findex vc-region-history
+A useful variant of examining changes is provided by the command
+@kbd{vc-region-history}, which shows a @file{*VC-history*} buffer with
+the history of changes to the region of the current file between point
+and the mark (@pxref{Mark}).  The history of changes includes the
+commit log messages and also the changes themselves in the Diff
+format.
+
+Invoke this command after marking the region of the current file in
+whose changes you are interested.  In the @file{*VC-history*} buffer
+it pops up, you can use all of the commands available in the
+@file{*vc-change-log*} buffer described above, and also the commands
+defined by Diff mode (@pxref{Diff Mode}).
+
+This command is currently available only with Git.
+
 @node VC Undo
 @subsection Undoing Version Control Actions
 
