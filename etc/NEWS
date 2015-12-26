@@ -768,10 +768,12 @@ protocols as well as for "telnet" and "ftp" are passed to Tramp.
 The new `url-user-agent' variable can be customized to be a string or
 a function.
 
+---
 *** The new interface variable `url-request-noninteractive' can be used
 to specify that we're running in a noninteractive context, and that
 we should not be queried about things like TLS certificate validity.
 
+---
 *** If URL is used with a https connection, the first callback argument
 plist will contain a :peer element that has the output of
 `gnutls-peer-status' (if Emacs is built with GnuTLS support).
