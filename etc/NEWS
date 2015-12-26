@@ -848,14 +848,21 @@ replace the face `compare-windows', which is now an obsolete alias for
 "Copyright-paperwork-exempt: yes".  Set `log-edit-rewrite-tiny-change'
 nil to disable this.
 
-** VHDL mode supports VHDL'08.
+---
+** VHDL mode now supports VHDL'08.
 
-** Calculator: decimal display mode uses "," groups, so it's more
-fitting for use in money calculations; factorial works with
-non-integer inputs.
+** Calculator
 
-** HideIfDef mode now support full C/C++ expressions, argumented macro expansions,
-interactive macro evaluation and automatic scanning of #defined symbols.
+---
+*** Decimal display mode uses "," groups, so it's more
+fitting for use in money calculations
+
+---
+*** Factorial works with non-integer inputs.
+
+** HideIfDef mode now support full C/C++ expressions, argumented macro
+expansions, interactive macro evaluation and automatic scanning of
+#defined symbols.
 
 *** New custom variable `hide-ifdef-header-regexp' to define C/C++ header file
 name patterns.  Default case-insensitive .h, .hh, .hpp, .hxx, and .h++.
