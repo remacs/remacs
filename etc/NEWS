@@ -376,6 +376,9 @@ hide all messages of the specified type, where `erc-network-hide-list'
 and `erc-channel-hide-list' will only hide the specified message types
 for the respective specified targets.
 
+*** New variable `erc-default-port-tls' used to connect to TLS IRC
+servers.
+
 ** Midnight-mode
 *** `midnight-mode' is a proper minor mode.
 *** clean-buffer-*-regexps can now specify buffers via predicate functions.
