@@ -3196,15 +3196,12 @@ unbind_to (ptrdiff_t count, Lisp_Object value)
 	  { /* If variable has a trivial value (no forwarding), we can
 	       just set it.  No need to check for constant symbols here,
 	       since that was already done by specbind.  */
-	    Lisp_Object symbol = specpdl_symbol (specpdl_ptr);
-	    if (SYMBOLP (symbol))
+	    Lisp_Object sym = specpdl_symbol (specpdl_ptr);
+	    if (SYMBOLP (sym) && XSYMBOL (sym)->redirect == SYMBOL_PLAINVAL)
 	      {
-		struct Lisp_Symbol *sym = XSYMBOL (symbol);
-		if (sym->redirect == SYMBOL_PLAINVAL)
-		  {
-		    SET_SYMBOL_VAL (sym, specpdl_old_value (specpdl_ptr));
-		    break;
-		  }
+		SET_SYMBOL_VAL (XSYMBOL (sym),
+				specpdl_old_value (specpdl_ptr));
+		break;
 	      }
 	    else
 	      { /* FALLTHROUGH!!
@@ -3412,12 +3409,12 @@ backtrace_eval_unrewind (int distance)
 	  { /* If variable has a trivial value (no forwarding), we can
 	       just set it.  No need to check for constant symbols here,
 	       since that was already done by specbind.  */
-	    struct Lisp_Symbol *sym = XSYMBOL (specpdl_symbol (tmp));
-	    if (sym->redirect == SYMBOL_PLAINVAL)
+	    Lisp_Object sym = specpdl_symbol (tmp);
+	    if (SYMBOLP (sym) && XSYMBOL (sym)->redirect == SYMBOL_PLAINVAL)
 	      {
 		Lisp_Object old_value = specpdl_old_value (tmp);
-		set_specpdl_old_value (tmp, SYMBOL_VAL (sym));
-		SET_SYMBOL_VAL (sym, old_value);
+		set_specpdl_old_value (tmp, SYMBOL_VAL (XSYMBOL (sym)));
+		SET_SYMBOL_VAL (XSYMBOL (sym), old_value);
 		break;
 	      }
 	    else
