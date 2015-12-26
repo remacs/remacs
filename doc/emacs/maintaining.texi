@@ -832,15 +832,19 @@ corresponding to @var{revision}, saves it to
 window.
 
 @findex vc-annotate
+@vindex vc-annotate-background-mode
 @kindex C-x v g
   Many version control systems allow you to view files @dfn{annotated}
 with per-line revision information, by typing @kbd{C-x v g}
 (@code{vc-annotate}).  This creates a new ``annotate'' buffer
-displaying the file's text, with each line colored to show
-how old it is.  Red text is new, blue is old, and intermediate colors
-indicate intermediate ages.  By default, the color is scaled over the
-full range of ages, such that the oldest changes are blue, and the
-newest changes are red.
+displaying the file's text, with each line colored to show how old it
+is.  Red text is new, blue is old, and intermediate colors indicate
+intermediate ages.  By default, the color is scaled over the full
+range of ages, such that the oldest changes are blue, and the newest
+changes are red.  If the variable @code{vc-annotate-background-mode}
+is non-@code{nil}, the colors expressing the age of each line are
+applied to the background color, leaving the foreground at its default
+color.
 
   When you give a prefix argument to this command, Emacs reads two
 arguments using the minibuffer: the revision to display and annotate
