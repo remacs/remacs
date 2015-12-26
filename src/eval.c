@@ -3196,11 +3196,15 @@ unbind_to (ptrdiff_t count, Lisp_Object value)
 	  { /* If variable has a trivial value (no forwarding), we can
 	       just set it.  No need to check for constant symbols here,
 	       since that was already done by specbind.  */
-	    struct Lisp_Symbol *sym = XSYMBOL (specpdl_symbol (specpdl_ptr));
-	    if (sym->redirect == SYMBOL_PLAINVAL)
+	    Lisp_Object symbol = specpdl_symbol (specpdl_ptr);
+	    if (SYMBOLP (symbol))
 	      {
-		SET_SYMBOL_VAL (sym, specpdl_old_value (specpdl_ptr));
-		break;
+		struct Lisp_Symbol *sym = XSYMBOL (symbol);
+		if (sym->redirect == SYMBOL_PLAINVAL)
+		  {
+		    SET_SYMBOL_VAL (sym, specpdl_old_value (specpdl_ptr));
+		    break;
+		  }
 	      }
 	    else
 	      { /* FALLTHROUGH!!
