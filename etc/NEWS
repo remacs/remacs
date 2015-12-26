@@ -758,6 +758,7 @@ See the doc string of `sh-indent-after-continuation' for details.
 
 ** URL
 
++++
 *** The URL package accepts now the protocols "ssh", "scp" and "rsync".
 When `url-handler-mode' is enabled, file operations for these
 protocols as well as for "telnet" and "ftp" are passed to Tramp.
