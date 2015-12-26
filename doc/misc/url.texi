@@ -1330,6 +1330,14 @@ Connect directly.
 @end table
 @end defopt
 
+@defopt url-user-agent
+The User Agent string used for sending HTTP/HTTPS requests.  The value
+should be a string or a function of no arguments that returns a
+string.  The default value is @w{@samp{User-Agent: @var{package-name}
+URL/Emacs}}, where @var{package-name} is the value of
+@code{url-package-name} and its version, if they are non-@code{nil}.
+@end defopt
+
 @node GNU Free Documentation License
 @appendix GNU Free Documentation License
 @include doclicense.texi

@@ -763,6 +763,7 @@ See the doc string of `sh-indent-after-continuation' for details.
 When `url-handler-mode' is enabled, file operations for these
 protocols as well as for "telnet" and "ftp" are passed to Tramp.
 
++++
 *** The URL package allows customizing the `url-user-agent' string.
 The new `url-user-agent' variable can be customized to be a string or
 a function.

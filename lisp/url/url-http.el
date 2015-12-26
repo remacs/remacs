@@ -135,17 +135,6 @@ request.")
     (507 insufficient-storage            "Insufficient storage"))
   "The HTTP return codes and their text.")
 
-(defcustom url-user-agent (format "User-Agent: %sURL/%s\r\n"
-				  (if url-package-name
-				      (concat url-package-name "/"
-					      url-package-version " ")
-				    "") url-version)
-  "User Agent used by the URL package."
-  :type '(choice (string :tag "A static User-Agent string")
-                 (function :tag "Call a function to get the User-Agent string"))
-  :version "25.1"
-  :group 'url)
-
 ;(eval-when-compile
 ;; These are all macros so that they are hidden from external sight
 ;; when the file is byte-compiled.
