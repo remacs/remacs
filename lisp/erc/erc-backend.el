@@ -703,6 +703,9 @@ Conditionally try to reconnect and take appropriate action."
                    (setq erc-server-ping-handler nil)))
           (run-hook-with-args 'erc-disconnected-hook
                               (erc-current-nick) (system-name) "")
+          (dolist (buf (erc-buffer-filter (lambda () (boundp 'erc-channel-users)) cproc))
+            (with-current-buffer buf
+              (setq erc-channel-users (make-hash-table :test 'equal))))
           ;; Remove the prompt
           (goto-char (or (marker-position erc-input-marker) (point-max)))
           (forward-line 0)
