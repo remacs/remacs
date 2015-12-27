@@ -493,9 +493,19 @@ The current buffer is given by BUFFER."
                                      4 erc-server-send-ping-interval
                                      #'erc-server-send-ping
                                      buffer))
-      (setq erc-server-ping-timer-alist (cons (cons buffer
-                                                    erc-server-ping-handler)
-                                              erc-server-ping-timer-alist)))))
+
+      ;; I check the timer alist for an existing timer. If one exists,
+      ;; I get rid of it
+      (let ((timer-tuple (assq buffer erc-server-ping-timer-alist)))
+        (if timer-tuple
+            ;; this buffer already has a timer. Cancel it and set the new one
+            (progn
+              (erc-cancel-timer (cdr timer-tuple))
+              (setf (cdr (assq buffer erc-server-ping-timer-alist)) erc-server-ping-handler))
+
+          ;; no existing timer for this buffer. Add new one
+          (add-to-list 'erc-server-ping-timer-alist
+                       (cons buffer erc-server-ping-handler)))))))
 
 (defun erc-server-process-alive (&optional buffer)
   "Return non-nil when BUFFER has an `erc-server-process' open or running."
