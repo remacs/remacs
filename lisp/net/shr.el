@@ -429,11 +429,10 @@ size, and full-buffer size."
 
 (defun shr-descend (dom)
   (let ((function
-	 (or
-	  ;; Allow other packages to override (or provide) rendering
-	  ;; of elements.
-	  (cdr (assq (dom-tag dom) shr-external-rendering-functions))
-	  (intern (concat "shr-tag-" (symbol-name (dom-tag dom))) obarray)))
+         (intern (concat "shr-tag-" (symbol-name (dom-tag dom))) obarray))
+        ;; Allow other packages to override (or provide) rendering
+        ;; of elements.
+        (external (cdr (assq (dom-tag dom) shr-external-rendering-functions)))
 	(style (dom-attr dom 'style))
 	(shr-stylesheet shr-stylesheet)
 	(shr-depth (1+ shr-depth))
@@ -448,9 +447,12 @@ size, and full-buffer size."
 	  (setq style nil)))
       ;; If we have a display:none, then just ignore this part of the DOM.
       (unless (equal (cdr (assq 'display shr-stylesheet)) "none")
-	(if (fboundp function)
-	    (funcall function dom)
-	  (shr-generic dom))
+        (cond (external
+               (funcall external dom))
+              ((fboundp function)
+               (funcall function dom))
+              (t
+               (shr-generic dom)))
 	(when (and shr-target-id
 		   (equal (dom-attr dom 'id) shr-target-id))
 	  ;; If the element was empty, we don't have anything to put the
