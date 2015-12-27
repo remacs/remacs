@@ -376,7 +376,7 @@ alist."
   :type '(repeat (cons (string :tag "Target")
                        coding-system)))
 
-(defcustom erc-server-connect-function 'open-network-stream
+(defcustom erc-server-connect-function 'erc-open-network-stream
   "Function used to initiate a connection.
 It should take same arguments as `open-network-stream' does."
   :group 'erc-server
@@ -505,51 +505,53 @@ The current buffer is given by BUFFER."
          (memq (process-status erc-server-process) '(run open)))))
 
 ;;;; Connecting to a server
+(defun erc-open-network-stream (name buffer host service)
+  "As `open-network-stream', but does non-blocking IO"
+  (make-network-process :name name :buffer  buffer
+                        :host host :service service :nowait t))
 
 (defun erc-server-connect (server port buffer)
   "Perform the connection and login using the specified SERVER and PORT.
 We will store server variables in the buffer given by BUFFER."
-  (let ((msg (erc-format-message 'connect ?S server ?p port)))
+  (let ((msg (erc-format-message 'connect ?S server ?p port)) process)
     (message "%s" msg)
-    (let ((process (funcall erc-server-connect-function
-                            (format "erc-%s-%s" server port)
-                            nil server port)))
-      (unless (processp process)
-        (error "Connection attempt failed"))
+    (setq process (funcall erc-server-connect-function
+                           (format "erc-%s-%s" server port) nil server port))
+    (unless (processp process)
+      (error "Connection attempt failed"))
+    ;; Misc server variables
+    (with-current-buffer buffer
+      (setq erc-server-process process)
+      (setq erc-server-quitting nil)
+      (setq erc-server-reconnecting nil)
+      (setq erc-server-timed-out nil)
+      (setq erc-server-banned nil)
+      (setq erc-server-error-occurred nil)
+      (let ((time (erc-current-time)))
+        (setq erc-server-last-sent-time time)
+        (setq erc-server-last-ping-time time)
+        (setq erc-server-last-received-time time))
+      (setq erc-server-lines-sent 0)
+      ;; last peers (sender and receiver)
+      (setq erc-server-last-peers '(nil . nil)))
+    ;; we do our own encoding and decoding
+    (when (fboundp 'set-process-coding-system)
+      (set-process-coding-system process 'raw-text))
+    ;; process handlers
+    (set-process-sentinel process 'erc-process-sentinel)
+    (set-process-filter process 'erc-server-filter-function)
+    (set-process-buffer process buffer)
+    (erc-log "\n\n\n********************************************\n")
+    (message "%s" (erc-format-message
+                   'login ?n
+                   (with-current-buffer buffer (erc-current-nick))))
+    ;; wait with script loading until we receive a confirmation (first
+    ;; MOTD line)
+    (if (eq (process-status process) 'connect)
+        ;; waiting for a non-blocking connect - keep the user informed
+        (erc-display-message nil nil buffer "Opening connection..\n")
       (message "%s...done" msg)
-      ;; Misc server variables
-      (with-current-buffer buffer
-        (setq erc-server-process process)
-        (setq erc-server-quitting nil)
-        (setq erc-server-reconnecting nil)
-        (setq erc-server-timed-out nil)
-        (setq erc-server-banned nil)
-        (setq erc-server-error-occurred nil)
-        (let ((time (erc-current-time)))
-          (setq erc-server-last-sent-time time)
-          (setq erc-server-last-ping-time time)
-          (setq erc-server-last-received-time time))
-        (setq erc-server-lines-sent 0)
-        ;; last peers (sender and receiver)
-        (setq erc-server-last-peers '(nil . nil)))
-      ;; we do our own encoding and decoding
-      (when (fboundp 'set-process-coding-system)
-        (set-process-coding-system process 'raw-text))
-      ;; process handlers
-      (set-process-sentinel process 'erc-process-sentinel)
-      (set-process-filter process 'erc-server-filter-function)
-      (set-process-buffer process buffer)))
-  (erc-log "\n\n\n********************************************\n")
-  (message "%s" (erc-format-message
-            'login ?n
-            (with-current-buffer buffer (erc-current-nick))))
-  ;; wait with script loading until we receive a confirmation (first
-  ;; MOTD line)
-  (if (eq erc-server-connect-function 'open-network-stream-nowait)
-      ;; it's a bit unclear otherwise that it's attempting to establish a
-      ;; connection
-      (erc-display-message nil nil buffer "Opening connection..\n")
-    (erc-login)))
+      (erc-login)) ))
 
 (defun erc-server-reconnect ()
 "Reestablish the current IRC connection.
@@ -565,7 +567,7 @@ Make sure you are in an ERC buffer when running this."
       (setq erc-server-last-sent-time 0)
       (setq erc-server-lines-sent 0)
       (let ((erc-server-connect-function (or erc-session-connector
-                                             'open-network-stream)))
+                                             'erc-open-network-stream)))
         (erc-open erc-session-server erc-session-port erc-server-current-nick
                   erc-session-user-full-name t erc-session-password)))))
 
