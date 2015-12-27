@@ -561,6 +561,7 @@ Currently this means either text/html or application/xhtml+xml."
   (let ((inhibit-read-only t))
     (remove-overlays)
     (erase-buffer))
+  (setq bidi-paragraph-direction 'left-to-right)
   (unless (eq major-mode 'eww-mode)
     (eww-mode)))
 
