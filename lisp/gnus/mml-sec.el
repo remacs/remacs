@@ -310,7 +310,7 @@ either an error is raised or not."
       (when bcc
 	;; Split recipients at "," boundary, omit empty strings (t),
 	;; and strip whitespace.
-	(let ((bcc-list (split-string hdr "," t "\\s-+")))
+	(let ((bcc-list (split-string bcc "," t "\\s-+")))
 	  (unless (gnus-subsetp bcc-list mml-secure-safe-bcc-list)
 	    (unless (yes-or-no-p "Message for encryption contains Bcc header.\
   This may give away all Bcc'ed identities to all recipients.\
