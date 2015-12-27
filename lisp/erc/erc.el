@@ -2025,7 +2025,8 @@ Returns the buffer for the given server or channel."
                            (auth-source-search :host server
                                                :max 1
                                                :user nick
-                                               :port port
+                                               ;; secrets.el wouldn’t accept a number
+                                               :port (if (numberp port) (number-to-string port) port)
                                                :require '(:secret)))
                       :secret)))
                 (if (functionp secret)
