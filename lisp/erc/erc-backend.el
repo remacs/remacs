@@ -640,13 +640,11 @@ EVENT is the message received from the closed connection process."
           (condition-case err
               (progn
                 (setq erc-server-reconnecting nil)
-                (erc-server-reconnect)
-                (setq erc-server-reconnect-count 0))
+                (setq erc-server-reconnect-count (1+ erc-server-reconnect-count))
+                (erc-server-reconnect))
             (error (when (buffer-live-p buffer)
                      (set-buffer buffer)
-                     (if (integerp erc-server-reconnect-attempts)
-                         (setq erc-server-reconnect-count
-                               (1+ erc-server-reconnect-count))
+                     (unless (integerp erc-server-reconnect-attempts)
                        (message "%s ... %s"
                                 "Reconnecting until we succeed"
                                 "kill the ERC server buffer to stop"))
