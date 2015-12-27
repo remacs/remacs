@@ -805,7 +805,9 @@ protection algorithm."
 (defun erc-server-send-ping (buf)
   "Send a ping to the IRC server buffer in BUF.
 Additionally, detect whether the IRC process has hung."
-  (if (buffer-live-p buf)
+  (if (and (buffer-live-p buf)
+           (with-current-buffer buf
+             erc-server-last-received-time))
       (with-current-buffer buf
         (if (and erc-server-send-ping-timeout
                  (>
