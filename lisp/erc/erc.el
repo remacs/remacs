@@ -4826,6 +4826,11 @@ channel."
 			(_ (error "Unknown prefix char `%S'" ch) voice))
 		      'on)))
           (when updatep
+	    ;; If we didn't issue the NAMES request (consider two clients
+	    ;; talking to an IRC proxy), `erc-channel-begin-receiving-names'
+	    ;; will not have been called, so we have to do it here.
+	    (unless erc-channel-new-member-names
+	      (erc-channel-begin-receiving-names))
             (puthash (erc-downcase name) t
                      erc-channel-new-member-names)
             (erc-update-current-channel-member
