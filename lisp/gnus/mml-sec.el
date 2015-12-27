@@ -25,10 +25,13 @@
 
 (eval-when-compile (require 'cl))
 
+(autoload 'gnus-subsetp "gnus-util")
+(autoload 'mail-strip-quoted-names "mail-utils")
 (autoload 'mml2015-sign "mml2015")
 (autoload 'mml2015-encrypt "mml2015")
 (autoload 'mml1991-sign "mml1991")
 (autoload 'mml1991-encrypt "mml1991")
+(autoload 'message-fetch-field "message")
 (autoload 'message-goto-body "message")
 (autoload 'mml-insert-tag "mml")
 (autoload 'mml-smime-sign "mml-smime")
