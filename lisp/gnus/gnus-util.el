@@ -1989,6 +1989,16 @@ to case differences."
   (defun gnus-timer--function (timer)
     (elt timer 5)))
 
+(defun gnus-subsetp (list1 list2)
+  "Return t if LIST1 is a subset of LIST2.
+Similar to `subsetp' but use member for element test so that this works for
+lists of strings."
+  (when (and (listp list1) (listp list2))
+    (if list1
+	(and (member (car list1) list2)
+	     (gnus-subsetp (cdr list1) list2))
+      t)))
+
 (provide 'gnus-util)
 
 ;;; gnus-util.el ends here
