@@ -23,6 +23,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "blockinput.h"
 #include "w32term.h"
+#include "w32common.h"	/* for OS version info */
 
 #include <ctype.h>
 #include <errno.h>
@@ -6237,6 +6238,8 @@ x_set_window_size (struct frame *f, bool change_gravity,
 void
 frame_set_mouse_pixel_position (struct frame *f, int pix_x, int pix_y)
 {
+  UINT trail_num = 0;
+  BOOL ret = false;
   RECT rect;
   POINT pt;
 
@@ -6247,7 +6250,15 @@ frame_set_mouse_pixel_position (struct frame *f, int pix_x, int pix_y)
   pt.y = rect.top + pix_y;
   ClientToScreen (FRAME_W32_WINDOW (f), &pt);
 
+  /* When "mouse trails" are in effect, moving the mouse cursor
+     sometimes leaves behind an annoying "ghost" of the pointer.
+     Avoid that by momentarily switching off mouse trails.  */
+  if (os_subtype == OS_NT
+      && w32_major_version + w32_minor_version >= 6)
+    ret = SystemParametersInfo (SPI_GETMOUSETRAILS, 0, &trail_num, 0);
   SetCursorPos (pt.x, pt.y);
+  if (ret)
+    SystemParametersInfo (SPI_SETMOUSETRAILS, trail_num, NULL, 0);
 
   unblock_input ();
 }

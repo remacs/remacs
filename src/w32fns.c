@@ -8093,11 +8093,22 @@ The coordinates X and Y are interpreted in pixels relative to a position
 (0, 0) of the selected frame's display.  */)
   (Lisp_Object x, Lisp_Object y)
 {
+  UINT trail_num = 0;
+  BOOL ret = false;
+
   CHECK_TYPE_RANGED_INTEGER (int, x);
   CHECK_TYPE_RANGED_INTEGER (int, y);
 
   block_input ();
+  /* When "mouse trails" are in effect, moving the mouse cursor
+     sometimes leaves behind an annoying "ghost" of the pointer.
+     Avoid that by momentarily switching off mouse trails.  */
+  if (os_subtype == OS_NT
+      && w32_major_version + w32_minor_version >= 6)
+    ret = SystemParametersInfo (SPI_GETMOUSETRAILS, 0, &trail_num, 0);
   SetCursorPos (XINT (x), XINT (y));
+  if (ret)
+    SystemParametersInfo (SPI_SETMOUSETRAILS, trail_num, NULL, 0);
   unblock_input ();
 
   return Qnil;
