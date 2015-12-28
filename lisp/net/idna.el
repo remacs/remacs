@@ -33,7 +33,9 @@
   (let ((ascii (seq-filter (lambda (char)
                              (< char 128))
                            string)))
-    (concat "xn--" ascii "-" (idna-encode-complex (length ascii) string))))
+    (if (= (length ascii) (length string))
+        string
+      (concat "xn--" ascii "-" (idna-encode-complex (length ascii) string)))))
 
 (defconst idna-initial-n 128)
 (defconst idna-initial-bias 72)
