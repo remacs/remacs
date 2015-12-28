@@ -29,6 +29,11 @@
 
 (require 'seq)
 
+(defun puny-encode-domain (domain)
+  "Encode DOMAIN according to the IDNA/punycode algorith.
+For instance, \"fśf.org\" => \"xn--ff-2sa.org\"."
+  (mapconcat 'puny-encode-string (split-string domain "[.]") "."))
+
 (defun puny-encode-string (string)
   "Encode STRING according to the IDNA/punycode algorithm.
 This is used to encode non-ASCII domain names.
@@ -40,10 +45,15 @@ For instance, \"bücher\" => \"xn--bcher-kva\"."
         string
       (concat "xn--" ascii "-" (puny-encode-complex (length ascii) string)))))
 
+(defun puny-decode-domain (domain)
+  "Decode DOMAIN according to the IDNA/punycode algorith.
+For instance, \"xn--ff-2sa.org\" => \"fśf.org\"."
+  (mapconcat 'puny-decode-string (split-string domain "[.]") "."))
+
 (defun puny-decode-string (string)
   "Decode an IDNA/punycode-encoded string.
 For instance \"xn--bcher-kva\" => \"bücher\"."
-  (if (string-match "\\`xn--.*-" string)
+  (if (string-match "\\`xn--" string)
       (puny-decode-string-internal (substring string 4))
     string))
 
@@ -54,17 +64,6 @@ For instance \"xn--bcher-kva\" => \"bücher\"."
 (defconst puny-tmin 1)
 (defconst puny-tmax 26)
 (defconst puny-skew 28)
-
-(defun puny-decode-digit (cp)
-  (cond
-   ((<= cp ?9)
-    (- cp ?0))
-   ((<= cp ?Z)
-    (- cp ?A))
-   ((<= cp ?z)
-    (- cp ?a))
-   (t
-    puny-base)))
 
 ;; 0-25  a-z
 ;; 26-36 0-9
@@ -129,48 +128,58 @@ For instance \"xn--bcher-kva\" => \"bücher\"."
       (cl-incf n))
     (nreverse result)))
 
+(defun puny-decode-digit (cp)
+  (cond
+   ((<= cp ?9)
+    (+ (- cp ?0) 26))
+   ((<= cp ?Z)
+    (- cp ?A))
+   ((<= cp ?z)
+    (- cp ?a))
+   (t
+    puny-base)))
+
 (defun puny-decode-string-internal (string)
   (with-temp-buffer
     (insert string)
     (goto-char (point-max))
-    (if (not (search-backward "-" nil t))
-        (error "Invalid PUNY string")
-      ;; The encoded chars are after the final dash.
-      (let ((encoded (buffer-substring (1+ (point)) (point-max)))
-            (ic 0)
-            (i 0)
-            (bias puny-initial-bias)
-            (n puny-initial-n)
-            out)
-        (delete-region (point) (point-max))
-        (while (< ic (length encoded))
-          (let ((old-i i)
-                (w 1)
-                (k puny-base)
-                digit t1)
-            (cl-loop do (progn
-                          (setq digit (puny-decode-digit (aref encoded ic)))
-                          (cl-incf ic)
-                          (cl-incf i (* digit w))
-                          (setq t1 (cond
-                                    ((<= k bias)
-                                     puny-tmin)
-                                    ((>= k (+ bias puny-tmax))
-                                     puny-tmax)
-                                    (t
-                                     (- k bias)))))
-                     while (>= digit t1)
-                     do (setq w (* w (- puny-base t1))
-                              k (+ k puny-base)))
-            (setq out (1+ (buffer-size)))
-            (setq bias (puny-adapt (- i old-i) out (= old-i 0))))
+    (search-backward "-" nil (point-min))
+    ;; The encoded chars are after the final dash.
+    (let ((encoded (buffer-substring (1+ (point)) (point-max)))
+          (ic 0)
+          (i 0)
+          (bias puny-initial-bias)
+          (n puny-initial-n)
+          out)
+      (delete-region (point) (point-max))
+      (while (< ic (length encoded))
+        (let ((old-i i)
+              (w 1)
+              (k puny-base)
+              digit t1)
+          (cl-loop do (progn
+                        (setq digit (puny-decode-digit (aref encoded ic)))
+                        (cl-incf ic)
+                        (cl-incf i (* digit w))
+                        (setq t1 (cond
+                                  ((<= k bias)
+                                   puny-tmin)
+                                  ((>= k (+ bias puny-tmax))
+                                   puny-tmax)
+                                  (t
+                                   (- k bias)))))
+                   while (>= digit t1)
+                   do (setq w (* w (- puny-base t1))
+                            k (+ k puny-base)))
+          (setq out (1+ (buffer-size)))
+          (setq bias (puny-adapt (- i old-i) out (= old-i 0))))
 
-          (setq n (+ n (/ i out))
-                i (mod i out))
-          (goto-char (point-min))
-          (forward-char i)
-          (insert (format "%c" n))
-          (cl-incf i))))
+        (setq n (+ n (/ i out))
+              i (mod i out))
+        (goto-char (point-min))
+        (forward-char i)
+        (insert (format "%c" n))
+        (cl-incf i)))
     (buffer-string)))
 
 (provide 'puny)
