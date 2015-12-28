@@ -1056,7 +1056,7 @@ the end of the document."
 		  (when (looking-at "\r?\n")
 		    (url-http-debug "Removing terminator of last chunk")
 		    (delete-region (match-beginning 0) (match-end 0)))
-		  (if (re-search-forward "^\r*$" nil t)
+		  (if (re-search-forward "^\r?\n" nil t)
 		      (url-http-debug "Saw end of trailers..."))
 		  (if (url-http-parse-headers)
 		      (url-http-activate-callback))))))))))
