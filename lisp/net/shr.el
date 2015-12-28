@@ -316,13 +316,25 @@ redirects somewhere else."
 (defun shr-next-link ()
   "Skip to the next link."
   (interactive)
-  (let ((skip (text-property-any (point) (point-max) 'help-echo nil)))
-    (if (or (eobp)
-	    (not (setq skip (text-property-not-all skip (point-max)
-						   'help-echo nil))))
-	(message "No next link")
+  (let ((current (get-text-property (point) 'shr-url))
+        (start (point))
+        skip)
+    (while (and (not (eobp))
+                (equal (get-text-property (point) 'shr-url) current))
+      (forward-char 1))
+    (cond
+     ((and (not (eobp))
+           (get-text-property (point) 'shr-url))
+      ;; The next link is adjacent.
+      (message "%s" (get-text-property (point) 'help-echo)))
+     ((or (eobp)
+          (not (setq skip (text-property-not-all (point) (point-max)
+                                                 'shr-url nil))))
+      (goto-char start)
+      (message "No next link"))
+     (t
       (goto-char skip)
-      (message "%s" (get-text-property (point) 'help-echo)))))
+      (message "%s" (get-text-property (point) 'help-echo))))))
 
 (defun shr-previous-link ()
   "Skip to the previous link."
