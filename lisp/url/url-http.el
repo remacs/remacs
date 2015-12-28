@@ -26,6 +26,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'puny)
 (eval-when-compile
   (require 'subr-x))
 
@@ -318,8 +319,9 @@ request.")
                      (url-scheme-get-property
                       (url-type url-http-target-url) 'default-port))
                  (format
-                  "Host: %s:%d\r\n" host (url-port url-http-target-url))
-               (format "Host: %s\r\n" host))
+                  "Host: %s:%d\r\n" (puny-encode-domain host)
+                  (url-port url-http-target-url))
+               (format "Host: %s\r\n" (puny-encode-domain host)))
              ;; Who its from
              (if url-personal-mail-address
                  (concat

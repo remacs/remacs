@@ -468,7 +468,7 @@ should return it unchanged."
     (and host
 	 (not (string-match "\\`\\[.*\\]\\'" host))
 	 (setf (url-host obj)
-	       (url-hexify-string host url-host-allowed-chars)))
+               (decode-coding-string (url-host obj) 'utf-8)))
 
     (if path
 	(setq path (url-hexify-string path url-path-allowed-chars)))
