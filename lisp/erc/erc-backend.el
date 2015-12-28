@@ -609,7 +609,6 @@ EVENT is the message received from the closed connection process."
            ;; otherwise go through the full spectrum of checks:
            (and erc-server-auto-reconnect
                 (not erc-server-banned)
-                (not erc-server-error-occurred)
                 ;; make sure we don't infinitely try to reconnect, unless the
                 ;; user wants that
                 (or (eq erc-server-reconnect-attempts t)
