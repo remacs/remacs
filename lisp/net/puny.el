@@ -47,7 +47,11 @@ For instance, \"bücher\" => \"xn--bcher-kva\"."
                            string)))
     (if (= (length ascii) (length string))
         string
-      (concat "xn--" ascii "-" (puny-encode-complex (length ascii) string)))))
+      (concat "xn--"
+              (if (null ascii)
+                  ""
+                (concat ascii "-"))
+              (puny-encode-complex (length ascii) string)))))
 
 (defun puny-decode-domain (domain)
   "Decode DOMAIN according to the IDNA/punycode algorith.
