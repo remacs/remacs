@@ -1,4 +1,4 @@
-;;; idna.el --- translate non-ASCII domain names to ASCII
+;;; puny.el --- translate non-ASCII domain names to ASCII
 
 ;; Copyright (C) 2015 Free Software Foundation, Inc.
 
@@ -29,7 +29,7 @@
 
 (require 'seq)
 
-(defun idna-encode-string (string)
+(defun puny-encode-string (string)
   "Encode STRING according to the IDNA/punycode algorithm.
 This is used to encode non-ASCII domain names.
 For instance, \"bücher\" => \"xn--bcher-kva\"."
@@ -38,24 +38,24 @@ For instance, \"bücher\" => \"xn--bcher-kva\"."
                            string)))
     (if (= (length ascii) (length string))
         string
-      (concat "xn--" ascii "-" (idna-encode-complex (length ascii) string)))))
+      (concat "xn--" ascii "-" (puny-encode-complex (length ascii) string)))))
 
-(defun idna-decode-string (string)
+(defun puny-decode-string (string)
   "Decode an IDNA/punycode-encoded string.
 For instance \"xn--bcher-kva\" => \"bücher\"."
   (if (string-match "\\`xn--.*-" string)
-      (idna-decode-string-internal (substring string 4))
+      (puny-decode-string-internal (substring string 4))
     string))
 
-(defconst idna-initial-n 128)
-(defconst idna-initial-bias 72)
-(defconst idna-base 36)
-(defconst idna-damp 700)
-(defconst idna-tmin 1)
-(defconst idna-tmax 26)
-(defconst idna-skew 28)
+(defconst puny-initial-n 128)
+(defconst puny-initial-bias 72)
+(defconst puny-base 36)
+(defconst puny-damp 700)
+(defconst puny-tmin 1)
+(defconst puny-tmax 26)
+(defconst puny-skew 28)
 
-(defun idna-decode-digit (cp)
+(defun puny-decode-digit (cp)
   (cond
    ((<= cp ?9)
     (- cp ?0))
@@ -64,33 +64,33 @@ For instance \"xn--bcher-kva\" => \"bücher\"."
    ((<= cp ?z)
     (- cp ?a))
    (t
-    idna-base)))
+    puny-base)))
 
 ;; 0-25  a-z
 ;; 26-36 0-9
-(defun idna-encode-digit (d)
+(defun puny-encode-digit (d)
   (if (< d 26)
       (+ ?a d)
     (+ ?0 (- d 26))))
 
-(defun idna-adapt (delta num-points first-time)
+(defun puny-adapt (delta num-points first-time)
   (let ((delta (if first-time
-                   (/ delta idna-damp)
+                   (/ delta puny-damp)
                  (/ delta 2)))
         (k 0))
     (setq delta (+ delta (/ delta num-points)))
-    (while (> delta (/ (* (- idna-base idna-tmin)
-                          idna-tmax)
+    (while (> delta (/ (* (- puny-base puny-tmin)
+                          puny-tmax)
                        2))
-      (setq delta (/ delta (- idna-base idna-tmin))
-            k (+ k idna-base)))
-    (+ k (/ (* (1+ (- idna-base idna-tmin)) delta)
-            (+ delta idna-skew)))))
+      (setq delta (/ delta (- puny-base puny-tmin))
+            k (+ k puny-base)))
+    (+ k (/ (* (1+ (- puny-base puny-tmin)) delta)
+            (+ delta puny-skew)))))
 
-(defun idna-encode-complex (insertion-points string)
-  (let ((n idna-initial-n)
+(defun puny-encode-complex (insertion-points string)
+  (let ((n puny-initial-n)
         (delta 0)
-        (bias idna-initial-bias)
+        (bias puny-initial-bias)
         (h insertion-points)
         result m ijv q)
     (while (< h (length string))
@@ -106,64 +106,64 @@ For instance \"xn--bcher-kva\" => \"bücher\"."
                when (= char ijv)
                do (progn
                     (setq q delta)
-                    (cl-loop with k = idna-base
+                    (cl-loop with k = puny-base
                              for t1 = (cond
                                        ((<= k bias)
-                                        idna-tmin)
-                                       ((>= k (+ bias idna-tmax))
-                                        idna-tmax)
+                                        puny-tmin)
+                                       ((>= k (+ bias puny-tmax))
+                                        puny-tmax)
                                        (t
                                         (- k bias)))
                              while (>= q t1)
-                             do (push (idna-encode-digit
+                             do (push (puny-encode-digit
                                        (+ t1 (mod (- q t1)
-                                                  (- idna-base t1))))
+                                                  (- puny-base t1))))
                                       result)
-                             do (setq q (/ (- q t1) (- idna-base t1))
-                                      k (+ k idna-base)))
-                    (push (idna-encode-digit q) result)
-                    (setq bias (idna-adapt delta (+ h 1) (= h insertion-points))
+                             do (setq q (/ (- q t1) (- puny-base t1))
+                                      k (+ k puny-base)))
+                    (push (puny-encode-digit q) result)
+                    (setq bias (puny-adapt delta (+ h 1) (= h insertion-points))
                           delta 0
                           h (1+ h))))
       (cl-incf delta)
       (cl-incf n))
     (nreverse result)))
 
-(defun idna-decode-string-internal (string)
+(defun puny-decode-string-internal (string)
   (with-temp-buffer
     (insert string)
     (goto-char (point-max))
     (if (not (search-backward "-" nil t))
-        (error "Invalid IDNA string")
+        (error "Invalid PUNY string")
       ;; The encoded chars are after the final dash.
       (let ((encoded (buffer-substring (1+ (point)) (point-max)))
             (ic 0)
             (i 0)
-            (bias idna-initial-bias)
-            (n idna-initial-n)
+            (bias puny-initial-bias)
+            (n puny-initial-n)
             out)
         (delete-region (point) (point-max))
         (while (< ic (length encoded))
           (let ((old-i i)
                 (w 1)
-                (k idna-base)
+                (k puny-base)
                 digit t1)
             (cl-loop do (progn
-                          (setq digit (idna-decode-digit (aref encoded ic)))
+                          (setq digit (puny-decode-digit (aref encoded ic)))
                           (cl-incf ic)
                           (cl-incf i (* digit w))
                           (setq t1 (cond
                                     ((<= k bias)
-                                     idna-tmin)
-                                    ((>= k (+ bias idna-tmax))
-                                     idna-tmax)
+                                     puny-tmin)
+                                    ((>= k (+ bias puny-tmax))
+                                     puny-tmax)
                                     (t
                                      (- k bias)))))
                      while (>= digit t1)
-                     do (setq w (* w (- idna-base t1))
-                              k (+ k idna-base)))
+                     do (setq w (* w (- puny-base t1))
+                              k (+ k puny-base)))
             (setq out (1+ (buffer-size)))
-            (setq bias (idna-adapt (- i old-i) out (= old-i 0))))
+            (setq bias (puny-adapt (- i old-i) out (= old-i 0))))
 
           (setq n (+ n (/ i out))
                 i (mod i out))
@@ -173,6 +173,6 @@ For instance \"xn--bcher-kva\" => \"bücher\"."
           (cl-incf i))))
     (buffer-string)))
 
-(provide 'idna)
+(provide 'puny)
 
-;;; shr.el ends here
+;;; puny.el ends here
