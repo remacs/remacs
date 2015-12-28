@@ -2154,9 +2154,6 @@ for \\[find-tag] (which see)."
   (with-slots (tag-info) l
     (nth 1 tag-info)))
 
-(defun etags-library-roots ()
-  (mapcar #'file-name-directory tags-table-list))
-
 
 (provide 'etags)
 

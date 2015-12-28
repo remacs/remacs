@@ -228,7 +228,7 @@ Blank lines separate paragraphs.  Semicolons start comments.
 
 \\{emacs-lisp-mode-map}"
   :group 'lisp
-  (defvar project-library-roots-function)
+  (defvar project-vc-external-roots-function)
   (lisp-mode-variables nil nil 'elisp)
   (add-hook 'after-load-functions #'elisp--font-lock-flush-elisp-buffers)
   (setq-local electric-pair-text-pairs
@@ -238,7 +238,7 @@ Blank lines separate paragraphs.  Semicolons start comments.
   (add-function :before-until (local 'eldoc-documentation-function)
                 #'elisp-eldoc-documentation-function)
   (add-hook 'xref-backend-functions #'elisp--xref-backend nil t)
-  (setq-local project-library-roots-function #'elisp-library-roots)
+  (setq-local project-vc-external-roots-function #'elisp-load-path-roots)
   (add-hook 'completion-at-point-functions
             #'elisp-completion-at-point nil 'local))
 
@@ -795,7 +795,7 @@ non-nil result supercedes the xrefs produced by
 
     xrefs))
 
-(declare-function project-library-roots "project")
+(declare-function project-external-roots "project")
 
 (cl-defmethod xref-backend-apropos ((_backend (eql elisp)) regexp)
   (apply #'nconc
@@ -832,7 +832,7 @@ non-nil result supercedes the xrefs produced by
 (cl-defmethod xref-location-group ((l xref-elisp-location))
   (xref-elisp-location-file l))
 
-(defun elisp-library-roots ()
+(defun elisp-load-path-roots ()
   (if (boundp 'package-user-dir)
       (cons package-user-dir load-path)
     load-path))

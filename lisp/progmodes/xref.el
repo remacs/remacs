@@ -246,7 +246,7 @@ find a search tool; by default, this uses \"find | grep\" in the
    (let ((pr (project-current t)))
      (append
       (project-roots pr)
-      (project-library-roots pr)))))
+      (project-external-roots pr)))))
 
 (cl-defgeneric xref-backend-apropos (backend pattern)
   "Find all symbols that match PATTERN.
@@ -886,7 +886,7 @@ IGNORES is a list of glob patterns."
               hits)))
     (unwind-protect
         (cl-mapcan (lambda (hit) (xref--collect-matches hit regexp))
-                   (nreverse hits))
+                   hits)
       ;; TODO: Same as above.
       (mapc #'kill-buffer
             (cl-set-difference (buffer-list) orig-buffers)))))
