@@ -166,9 +166,13 @@ unsaved customizations and prompts user to customize (if found).
 added via the new Network Security Manager (NSM) and controlled via
 the `network-security-level' variable.
 
+---
+** International domain names (IDNA) are now encoded via the new
+puny.el library, so that one can visit web sites like
+"http://méxico.icom.museum".
+
 ** C-h l now also lists the commands that were run.
 
----
 ** The new M-s M-w key binding uses eww to search the web for the
 text in the region.
 
