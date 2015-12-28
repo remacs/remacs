@@ -1433,6 +1433,14 @@ properly."
 	    "\\)\\s *"))
 (c-lang-setvar comment-start-skip (c-lang-const comment-start-skip))
 
+(c-lang-defconst comment-end-can-be-escaped
+  "When non-nil, escaped EOLs inside comments are valid.
+This works in Emacs >= 25.1."
+  t nil
+  (c c++ objc) t)
+(c-lang-setvar comment-end-can-be-escaped
+	       (c-lang-const comment-end-can-be-escaped))
+
 (c-lang-defconst c-syntactic-ws-start
   ;; Regexp matching any sequence that can start syntactic whitespace.
   ;; The only uncertain case is '#' when there are cpp directives.

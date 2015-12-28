@@ -1268,6 +1268,11 @@ Area.  The output is still logged to the *Messages* buffer.
 buffers to allow certain parts of the text to be writable.
 
 +++
+** A new variable `comment-end-can-be-escaped' is useful in languages
+   such as C and C++ where line comments with escaped newlines are
+   continued to the next line.
+
++++
 ** New macro `define-advice'.
 
 ** `read-buffer' takes a new `predicate' argument.
