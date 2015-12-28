@@ -162,6 +162,14 @@ Prompts for bug subject.  Leaves you in a mail buffer."
     (setq message-end-point
 	  (with-current-buffer (messages-buffer)
 	    (point-max-marker)))
+    (condition-case nil
+        ;; For the novice user make sure there's always enough space for
+        ;; the mail and the warnings buffer on this frame (Bug#10873).
+        (unless report-emacs-bug-no-explanations
+          (delete-other-windows)
+          (set-window-dedicated-p nil nil)
+          (set-frame-parameter nil 'unsplittable nil))
+      (error nil))
     (compose-mail report-emacs-bug-address topic)
     ;; The rest of this does not execute if the user was asked to
     ;; confirm and said no.
