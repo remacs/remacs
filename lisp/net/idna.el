@@ -27,22 +27,13 @@
 
 ;;; Code:
 
+(require 'seq)
+
 (defun idna-encode-string (string)
-  (cl-destructuring-bind (ascii complex)
-      (cl-loop for i from 0
-               for char across string
-               when (< char 128)
-               collect char into ascii
-               else
-               collect (cons i char) into complex
-               finally (return (list ascii complex)))
-    (concat (mapconcat 'string ascii "")
-            "-"
-            (idna-encode-complex (length ascii)
-                                 (sort complex
-                                       (lambda (e1 e2)
-                                         (< (cdr e1) (cdr e2))))
-                                 string))))
+  (let ((ascii (seq-filter (lambda (char)
+                             (< char 128))
+                           string)))
+    (concat "xn--" ascii "-" (idna-encode-complex (length ascii) string))))
 
 (defconst idna-initial-n 128)
 (defconst idna-initial-bias 72)
@@ -53,13 +44,15 @@
 (defconst idna-skew 28)
 
 (defun idna-decode-digit (cp)
-  (if (< (- cp 48) 10)
-      (- cp 22)
-    (if (< (- cp 65) 26)
-        (- cp 65)
-      (if (< (- cp 97) 26)
-          (- cp 97)
-        idna-base))))
+  (cond
+   ((< (- cp 48) 10)
+    (- cp 22))
+   ((< (- cp 65) 26)
+    (- cp 65))
+   ((< (- cp 97) 26)
+    (- cp 97))
+   (t
+    idna-base)))
 
 ;; 0-25  a-z
 ;; 26-36 0-9
@@ -74,20 +67,20 @@
                  (/ delta 2)))
         (k 0))
     (setq delta (+ delta (/ delta num-points)))
-    (cl-loop while (> delta (/ (* (- idna-base idna-tmin)
-                                  idna-tmax)
-                               2))
-             do (setq delta (/ delta (- idna-base idna-tmin))
-                      k (+ k idna-base)))
+    (while (> delta (/ (* (- idna-base idna-tmin)
+                          idna-tmax)
+                       2))
+      (setq delta (/ delta (- idna-base idna-tmin))
+            k (+ k idna-base)))
     (+ k (/ (* (1+ (- idna-base idna-tmin)) delta)
             (+ delta idna-skew)))))
 
-(defun idna-encode-complex (insertion-points complex string)
+(defun idna-encode-complex (insertion-points string)
   (let ((n idna-initial-n)
         (delta 0)
         (bias idna-initial-bias)
         (h insertion-points)
-        result m)
+        result m ijv q)
     (while (< h (length string))
       (setq ijv (cl-loop for char across string
                          when (>= char n)
@@ -102,11 +95,13 @@
                do (progn
                     (setq q delta)
                     (cl-loop with k = idna-base
-                             for t1 = (if (<= k bias)
-                                          idna-tmin
-                                        (if (>= k (+ bias idna-tmax))
-                                            idna-tmax
-                                          (- k bias)))
+                             for t1 = (cond
+                                       ((<= k bias)
+                                        idna-tmin)
+                                       ((>= k (+ bias idna-tmax))
+                                        idna-tmax)
+                                       (t
+                                        (- k bias)))
                              while (>= q t1)
                              do (push (idna-encode-digit
                                        (+ t1 (mod (- q t1)
