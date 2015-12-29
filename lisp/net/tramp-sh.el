@@ -5425,9 +5425,6 @@ Return ATTR."
   (save-match-data
     (with-tramp-connection-property vec "ls-quoting-style"
       (tramp-message vec 5 "Checking, whether `ls --quoting-style=shell' works")
-      ;; Some "ls" versions are sensible wrt the order of arguments,
-      ;; they fail when "-al" is after the "--dired" argument (for
-      ;; example on FreeBSD).
       (tramp-send-command-and-check
        vec (format "%s --quoting-style=shell -al /dev/null"
 		   (tramp-get-ls-command vec))))))
@@ -5436,7 +5433,9 @@ Return ATTR."
   (save-match-data
     (with-tramp-connection-property vec "ls-w-option"
       (tramp-message vec 5 "Checking, whether `ls -w' works")
-      ;; Option "-w" is available on BSD systems.
+      ;; Option "-w" is available on BSD systems.  No argument is
+      ;; given, because this could return wrong results in case "ls"
+      ;; supports the "-w NUM" argument, as for busyboxes.
       (tramp-send-command-and-check
        vec (format "%s -alw" (tramp-get-ls-command vec))))))
 
