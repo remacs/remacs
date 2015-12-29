@@ -74,8 +74,8 @@ and `gnutls-cli' (version 2.0.1) output."
   :type 'regexp
   :group 'tls)
 
-(defcustom tls-program '("gnutls-cli --insecure -p %p %h"
-			 "gnutls-cli --insecure -p %p %h --protocols ssl3"
+(defcustom tls-program '("gnutls-cli -p %p %h"
+			 "gnutls-cli -p %p %h --protocols ssl3"
 			 "openssl s_client -connect %h:%p -no_ssl2 -ign_eof")
   "List of strings containing commands to start TLS stream to a host.
 Each entry in the list is tried until a connection is successful.
@@ -89,13 +89,13 @@ successful negotiation."
   :type
   '(choice
     (const :tag "Default list of commands"
-	   ("gnutls-cli --insecure -p %p %h"
-	    "gnutls-cli --insecure -p %p %h --protocols ssl3"
+	   ("gnutls-cli -p %p %h"
+	    "gnutls-cli -p %p %h --protocols ssl3"
 	    "openssl s_client -connect %h:%p -no_ssl2 -ign_eof"))
     (list :tag "Choose commands"
 	  :value
-	  ("gnutls-cli --insecure -p %p %h"
-	   "gnutls-cli --insecure -p %p %h --protocols ssl3"
+	  ("gnutls-cli -p %p %h"
+	   "gnutls-cli -p %p %h --protocols ssl3"
 	   "openssl s_client -connect %h:%p -no_ssl2 -ign_eof")
 	  (set :inline t
 	       ;; FIXME: add brief `:tag "..."' descriptions.
@@ -105,8 +105,8 @@ successful negotiation."
 	       (const "gnutls-cli --x509cafile /etc/ssl/certs/ca-certificates.crt -p %p %h --protocols ssl3")
 	       (const "openssl s_client -connect %h:%p -CAfile /etc/ssl/certs/ca-certificates.crt -no_ssl2 -ign_eof")
 	       ;; No trust check:
-	       (const "gnutls-cli --insecure -p %p %h")
-	       (const "gnutls-cli --insecure -p %p %h --protocols ssl3")
+	       (const "gnutls-cli -p %p %h")
+	       (const "gnutls-cli -p %p %h --protocols ssl3")
 	       (const "openssl s_client -connect %h:%p -no_ssl2 -ign_eof"))
 	  (repeat :inline t :tag "Other" (string)))
     (list :tag "List of commands"
