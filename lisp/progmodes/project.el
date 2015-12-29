@@ -58,9 +58,10 @@
 ;;   project is using.
 ;;
 ;; * Command to (re)build the tag files in all project roots.  To that
-;;   end, we might need to add a way to limit etags to certain files
-;;   (e.g. have a whitelist, in addition to the blacklist provided by
-;;   ignores), and/or allow specifying additional tag regexps.
+;;   end, we might need to add a way to provide file whitelist
+;;   wildcards for each root to limit etags to certain files (in
+;;   addition to the blacklist provided by ignores), and/or allow
+;;   specifying additional tag regexps.
 ;;
 ;; * UI for the user to be able to pick the current project for the
 ;;   whole Emacs session, independent of the current directory.  Or,
@@ -69,6 +70,15 @@
 ;;   to search for a regexp across all open projects.  Provide a
 ;;   history of projects that were opened in the past (storing it as a
 ;;   list of directories should suffice).
+;;
+;; * Support for project-local variables: a UI to edit them, and a
+;;   utility function to retrieve a value.  Probably useless without
+;;   support in various built-in commands.  In the API, we might get
+;;   away with only adding a `project-configuration-directory' method,
+;;   defaulting to the project root the current file/buffer is in.
+;;   And prompting otherwise.  How to best mix that with backends that
+;;   want to set/provide certain variables themselves, is up for
+;;   discussion.
 
 ;;; Code:
 
