@@ -190,6 +190,26 @@ For instance \"xn--bcher-kva\" => \"bücher\"."
         (cl-incf i)))
     (buffer-string)))
 
+;; http://www.unicode.org/reports/tr39/#Restriction_Level_Detection
+
+(defun puny-highly-restrictive-p (string)
+  (let ((scripts
+         (seq-uniq
+          (seq-map (lambda (char)
+                     (aref char-script-table char))
+                   string))))
+    (or
+     ;; Every character uses the same script.
+     (= (length scripts) 1)
+     (seq-some 'identity
+               (mapcar (lambda (list)
+                         (seq-every-p (lambda (script)
+                                        (memq script list))
+                                      scripts))
+                       '((latin han hiragana kana)
+                         (latin han bopomofo)
+                         (latin han hangul)))))))
+
 (provide 'puny)
 
 ;;; puny.el ends here
