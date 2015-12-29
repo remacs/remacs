@@ -36,7 +36,7 @@
 ;; Utils:
 ;;
 ;; `project-combine-directories' and `project-subtract-directories',
-;; mainly for use in the aborementioned generics' implementations.
+;; mainly for use in the abovementioned generics' implementations.
 ;;
 ;; Commands:
 ;;
