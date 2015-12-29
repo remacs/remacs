@@ -420,7 +420,7 @@ Return the number of characters removed."
 	(progn
 	  (widen)
 	  (goto-char (point-max))
-	  (insert "<hr>Sorry, but I do not know how to handle " type
+	  (insert "<hr>Sorry, but I do not know how to handle " (or type auth url "")
 		  " authentication.  If you'd like to write it,"
 		  " please use M-x report-emacs-bug RET.<hr>")
           ;; We used to set a `status' var (declared "special") but I can't
