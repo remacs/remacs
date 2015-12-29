@@ -191,13 +191,36 @@ For instance \"xn--bcher-kva\" => \"bücher\"."
     (buffer-string)))
 
 ;; http://www.unicode.org/reports/tr39/#Restriction_Level_Detection
+;; http://www.unicode.org/reports/tr31/#Table_Candidate_Characters_for_Inclusion_in_Identifiers
 
 (defun puny-highly-restrictive-p (string)
   (let ((scripts
-         (seq-uniq
-          (seq-map (lambda (char)
-                     (aref char-script-table char))
-                   string))))
+         (delq
+          t
+          (seq-uniq
+           (seq-map (lambda (char)
+                      (if (memq char
+                                ;; These characters are always allowed
+                                ;; in any string.
+                                '(#x0027 ; APOSTROPHE
+                                  #x002D ; HYPHEN-MINUS
+                                  #x002E ; FULL STOP
+                                  #x003A ; COLON
+                                  #x00B7 ; MIDDLE DOT
+                                  #x058A ; ARMENIAN HYPHEN
+                                  #x05F3 ; HEBREW PUNCTUATION GERESH
+                                  #x05F4 ; HEBREW PUNCTUATION GERSHAYIM
+                                  #x0F0B ; IBETAN MARK INTERSYLLABIC TSHEG
+                                  #x200C ; ERO WIDTH NON-JOINER*
+                                  #x200D ; ERO WIDTH JOINER*
+                                  #x2010 ; YPHEN
+                                  #x2019 ; IGHT SINGLE QUOTATION MARK
+                                  #x2027 ; YPHENATION POINT
+                                  #x30A0 ; KATAKANA-HIRAGANA DOUBLE HYPHEN
+                                  #x30FB)) ; KATAKANA MIDDLE DOT
+                          t
+                        (aref char-script-table char)))
+                    string)))))
     (or
      ;; Every character uses the same script.
      (= (length scripts) 1)
