@@ -5582,6 +5582,8 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
 		       "autoLower", "AutoRaiseLower", RES_TYPE_BOOLEAN);
   x_default_parameter (f, parms, Qcursor_type, Qbox,
 		       "cursorType", "CursorType", RES_TYPE_SYMBOL);
+  x_default_parameter (f, parms, Qalpha, Qnil,
+		       "alpha", "Alpha", RES_TYPE_NUMBER);
 
   /* Dimensions, especially FRAME_LINES (f), must be done via change_frame_size.
      Change will not be effected unless different from the current
