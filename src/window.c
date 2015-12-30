@@ -4064,37 +4064,6 @@ resize_frame_windows (struct frame *f, int size, bool horflag, bool pixelwise)
 	    {
 	      window_resize_apply (r, horflag);
 	      window_pixel_to_total (r->frame, horflag ? Qt : Qnil);
-#if false /* Let's try without safe sizes and/or killing other windows.  */
-	    }
-	  else
-	    {
-	      /* Finally, try with "safe" minimum sizes.  */
-	      resize_root_window (root, delta, horflag ? Qt : Qnil, Qsafe,
-				  pixelwise ? Qt : Qnil);
-	      if (window_resize_check (r, horflag)
-		  && new_pixel_size == XINT (r->new_pixel))
-		{
-		  window_resize_apply (r, horflag);
-		  window_pixel_to_total (r->frame, horflag ? Qt : Qnil);
-		}
-	      else
-		{
-		  /* We lost.  Delete all windows but the frame's
-		     selected one.  */
-		  root = f->selected_window;
-		  Fdelete_other_windows_internal (root, Qnil);
-		  if (horflag)
-		    {
-		      XWINDOW (root)->total_cols = new_size;
-		      XWINDOW (root)->pixel_width = new_pixel_size;
-		    }
-		  else
-		    {
-		      XWINDOW (root)->total_lines = new_size;
-		      XWINDOW (root)->pixel_height = new_pixel_size;
-		    }
-		}
-#endif /* false */
 	    }
 	}
     }
@@ -4117,6 +4086,7 @@ resize_frame_windows (struct frame *f, int size, bool horflag, bool pixelwise)
 	}
     }
 
+  FRAME_WINDOW_SIZES_CHANGED (f) = true;
   fset_redisplay (f);
 }
 
@@ -4555,6 +4525,7 @@ grow_mini_window (struct window *w, int delta, bool pixelwise)
 	  /* Enforce full redisplay of the frame.  */
 	  /* FIXME: Shouldn't window--resize-root-window-vertically do it?  */
 	  fset_redisplay (f);
+	  FRAME_WINDOW_SIZES_CHANGED (f) = true;
 	  adjust_frame_glyphs (f);
 	  unblock_input ();
 	}
@@ -4594,6 +4565,7 @@ shrink_mini_window (struct window *w, bool pixelwise)
 	  /* Enforce full redisplay of the frame.  */
 	  /* FIXME: Shouldn't window--resize-root-window-vertically do it?  */
 	  fset_redisplay (f);
+	  FRAME_WINDOW_SIZES_CHANGED (f) = true;
 	  adjust_frame_glyphs (f);
 	  unblock_input ();
 	}
