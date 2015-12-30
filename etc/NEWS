@@ -885,9 +885,11 @@ name patterns (e.g. all "FOR_DOXYGEN_ONLY_*") to be excluded.
 
 ** TeX mode
 
++++
 *** New custom variable `tex-print-file-extension' to help users who
 use PDF instead of DVI.
 
++++
 *** TeX mode now supports Prettify Symbols mode.  When enabling
 `prettify-symbols-mode' in a tex-mode buffer, \alpha ... \omega, and
 many other math macros are displayed using unicode characters.
