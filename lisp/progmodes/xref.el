@@ -886,7 +886,7 @@ IGNORES is a list of glob patterns."
               hits)))
     (unwind-protect
         (cl-mapcan (lambda (hit) (xref--collect-matches hit regexp))
-                   hits)
+                   (nreverse hits))
       ;; TODO: Same as above.
       (mapc #'kill-buffer
             (cl-set-difference (buffer-list) orig-buffers)))))
