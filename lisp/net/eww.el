@@ -275,6 +275,13 @@ word(s) will be searched for via `eww-search-prefix'."
            (setq url (concat eww-search-prefix
                              (replace-regexp-in-string " " "+" url))))))
   (eww-setup-buffer)
+  ;; Check whether the domain only uses "Highly Restricted" Unicode
+  ;; IDNA characters.  If not, transform to punycode to indicate that
+  ;; there may be funny business going on.
+  (let ((parsed (url-generic-parse-url url)))
+    (unless (puny-highly-restrictive-p (url-host parsed))
+      (setf (url-host parsed) (puny-encode-domain (url-host parsed)))
+      (setq url (url-recreate-url parsed))))
   (plist-put eww-data :url url)
   (plist-put eww-data :title "")
   (eww-update-header-line-format)
