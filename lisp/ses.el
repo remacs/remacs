@@ -3414,15 +3414,17 @@ highlighted range in the spreadsheet."
     (setf (ses-cell--symbol cell) new-name)
     (makunbound sym)
     (and curcell (setq ses--curcell new-name))
-    (let* ((pos (point))
-	   (inhibit-read-only t)
-	   (col (current-column))
-	   (end (save-excursion
-		  (move-to-column (1+ col))
-		  (if (eolp)
-		      (+ pos (ses-col-width col) 1)
-		    (point)))))
-      (put-text-property pos end 'cursor-intangible new-name))
+    (save-excursion
+      (or curcell (ses-goto-print row col))
+      (let* ((pos (point))
+             (inhibit-read-only t)
+             (end (progn
+                    (move-to-column (+ (current-column) (ses-col-width col)))
+                    (if (eolp)
+                        (+ pos (ses-col-width col) 1)
+                      (forward-char)
+                      (point)))))
+        (put-text-property pos end 'cursor-intangible new-name)))
     ;; Update the cell name in the mode-line.
     (force-mode-line-update)))
 
