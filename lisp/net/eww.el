@@ -31,6 +31,7 @@
 (require 'url-queue)
 (require 'url-util)			; for url-get-url-at-point
 (require 'mm-url)
+(require 'puny)
 (eval-when-compile (require 'subr-x)) ;; for string-trim
 
 (defgroup eww nil
