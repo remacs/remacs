@@ -1289,7 +1289,7 @@ printer signaled one (and \"%s\" is used as the default printer), else nil."
                           (and locprn
                                (ses--locprn-compiled locprn))))
                    printer)
-               (or value "")))
+               value))
 	(if (stringp value)
 	    value
 	  (or (stringp (car-safe value))
