@@ -35,8 +35,6 @@
 (defvar dos-codepage)
 (autoload 'widget-value "wid-edit")
 
-(defvar mac-system-coding-system)
-
 ;;; MULE related key bindings and menus.
 
 (defvar mule-keymap
