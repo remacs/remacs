@@ -1325,7 +1325,7 @@ STRING_MULTIBYTE (Lisp_Object str)
 /* Mark STR as a unibyte string.  */
 #define STRING_SET_UNIBYTE(STR)				\
   do {							\
-    if (EQ (STR, empty_multibyte_string))		\
+    if (XSTRING (STR)->size == 0)			\
       (STR) = empty_unibyte_string;			\
     else						\
       XSTRING (STR)->size_byte = -1;			\
@@ -1335,7 +1335,7 @@ STRING_MULTIBYTE (Lisp_Object str)
    ASCII characters in advance.  */
 #define STRING_SET_MULTIBYTE(STR)			\
   do {							\
-    if (EQ (STR, empty_unibyte_string))			\
+    if (XSTRING (STR)->size == 0)			\
       (STR) = empty_multibyte_string;			\
     else						\
       XSTRING (STR)->size_byte = XSTRING (STR)->size;	\

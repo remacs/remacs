@@ -2119,8 +2119,11 @@ INIT must be an integer that represents a character.  */)
     {
       nbytes = XINT (length);
       val = make_uninit_string (nbytes);
-      memset (SDATA (val), c, nbytes);
-      SDATA (val)[nbytes] = 0;
+      if (nbytes)
+	{
+	  memset (SDATA (val), c, nbytes);
+	  SDATA (val)[nbytes] = 0;
+	}
     }
   else
     {
@@ -2145,7 +2148,8 @@ INIT must be an integer that represents a character.  */)
 	      memcpy (p, beg, len);
 	    }
 	}
-      *p = 0;
+      if (nbytes)
+	*p = 0;
     }
 
   return val;
@@ -3188,7 +3192,8 @@ allocate_vector (EMACS_INT len)
   if (min ((nbytes_max - header_size) / word_size, MOST_POSITIVE_FIXNUM) < len)
     memory_full (SIZE_MAX);
   v = allocate_vectorlike (len);
-  v->header.size = len;
+  if (len)
+    v->header.size = len;
   return v;
 }
 
