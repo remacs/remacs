@@ -125,14 +125,6 @@ too much in text characters anyways.")
   (font-lock-mode -1)                   ;Isn't it off already?  --Stef
   )
 
-(defun chart-new-buffer (obj)
-  "Create a new buffer NAME in which the chart OBJ is displayed.
-Returns the newly created buffer."
-  (with-current-buffer (get-buffer-create (format "*%s*" (oref obj title)))
-    (chart-mode)
-    (setq chart-local-object obj)
-    (current-buffer)))
-
 (defclass chart ()
   ((title :initarg :title
 	  :initform "Emacs Chart")
@@ -156,6 +148,14 @@ Returns the newly created buffer."
 	      :initform nil)
    )
   "Superclass for all charts to be displayed in an Emacs buffer.")
+
+(defun chart-new-buffer (obj)
+  "Create a new buffer NAME in which the chart OBJ is displayed.
+Returns the newly created buffer."
+  (with-current-buffer (get-buffer-create (format "*%s*" (oref obj title)))
+    (chart-mode)
+    (setq chart-local-object obj)
+    (current-buffer)))
 
 (cl-defmethod initialize-instance :after ((obj chart) &rest _fields)
   "Initialize the chart OBJ being created with FIELDS.
