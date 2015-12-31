@@ -4410,24 +4410,11 @@ case $opsys in
     AC_DEFINE(PTY_TTY_NAME_SPRINTF, [])
     ;;
 
-  dnl FIXME?  Maybe use same as freebsd - see bug#12040.
-  darwin )
-    AC_DEFINE(PTY_ITERATION, [int i; for (i = 0; i < 1; i++)])
-    dnl Not used, because PTY_ITERATION is defined.
-    AC_DEFINE(FIRST_PTY_LETTER, ['p'])
-    dnl Note that openpty may fork via grantpt on Mac OS X 10.4/Darwin 8.
-    dnl But we don't have to block SIGCHLD because it is blocked in the
-    dnl implementation of grantpt.
-    AC_DEFINE(PTY_OPEN, [ do { int slave; if (openpty (&fd, &slave, pty_name, NULL, NULL) == -1) fd = -1; else emacs_close (slave); } while (false)])
-    AC_DEFINE(PTY_NAME_SPRINTF, [])
-    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [])
-    ;;
-
   gnu | openbsd )
     AC_DEFINE(FIRST_PTY_LETTER, ['p'])
     ;;
 
-  gnu-linux | gnu-kfreebsd | dragonfly | freebsd | netbsd | nacl )
+  gnu-linux | gnu-kfreebsd | dragonfly | freebsd | netbsd | darwin | nacl )
     dnl if HAVE_GRANTPT
     if test "x$ac_cv_func_grantpt" = xyes; then
       AC_DEFINE(UNIX98_PTYS, 1, [Define if the system has Unix98 PTYs.])
