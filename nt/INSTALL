@@ -12,6 +12,9 @@ build will run on Windows 9X and newer systems).
   Do not use this recipe with Cygwin.  For building on Cygwin, use the
   normal installation instructions, ../INSTALL.
 
+  For building Emacs using the MinGW64/MSYS2 toolchain, see the
+  instructions in the file INSTALL.W64 in this directory.
+
 * For the brave (a.k.a. "impatient"):
 
   For those who have a working MSYS/MinGW development environment and
