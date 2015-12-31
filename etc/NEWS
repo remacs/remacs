@@ -210,7 +210,7 @@ hiding character but the default `.' can be used by let-binding the
 variable `read-hide-char'.
 
 ---
-** New input method: `tamil-dvorak'.
+** New input methods: `tamil-dvorak' and `programmer-dvorak'.
 
 
 * Editing Changes in Emacs 25.1
