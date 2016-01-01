@@ -6589,7 +6589,7 @@ If FACE is not a valid face name, use default face."
 ;; To make this file smaller, some commands go in a separate file.
 ;; But autoload them here to make the separation invisible.
 
-;;;### (autoloads nil "ps-mule" "ps-mule.el" "231b07356e5a37ebf517c613a3a12bba")
+;;;### (autoloads nil "ps-mule" "ps-mule.el" "4a263b7a727e853f2e6672922c4e5755")
 ;;; Generated autoloads from ps-mule.el
 
 (defvar ps-multibyte-buffer nil "\

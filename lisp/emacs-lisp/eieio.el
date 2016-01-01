@@ -973,7 +973,7 @@ variable PRINT-FUNCTION.  Optional argument NOESCAPE is passed to
 
 ;;; Start of automatically extracted autoloads.
 
-;;;### (autoloads nil "eieio-custom" "eieio-custom.el" "916f54b818479a77a02f3ecccda84a11")
+;;;### (autoloads nil "eieio-custom" "eieio-custom.el" "e8d466f8eee341f3da967c2931b28043")
 ;;; Generated autoloads from eieio-custom.el
 
 (autoload 'customize-object "eieio-custom" "\
@@ -984,7 +984,7 @@ Optional argument GROUP is the sub-group of slots to display.
 
 ;;;***
 
-;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "d00419c898056fadf2f8e491f864aa1e")
+;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "5bd32f1033d0e2eee7c32c0ad28330fc")
 ;;; Generated autoloads from eieio-opt.el
 
 (autoload 'eieio-browse "eieio-opt" "\
