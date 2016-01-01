@@ -3026,8 +3026,8 @@ See Info node `(calc)Defining Functions'.
 
 ;;;***
 
-;;;### (autoloads nil "calculator" "calculator.el" (22109 33223 416655
-;;;;;;  811000))
+;;;### (autoloads nil "calculator" "calculator.el" (22118 48196 106762
+;;;;;;  331000))
 ;;; Generated autoloads from calculator.el
 
 (autoload 'calculator "calculator" "\
@@ -6442,7 +6442,7 @@ Optional arguments are passed to `dig-invoke'.
 
 ;;;***
 
-;;;### (autoloads nil "dired" "dired.el" (22085 50883 181731 271000))
+;;;### (autoloads nil "dired" "dired.el" (22142 30520 415026 947000))
 ;;; Generated autoloads from dired.el
 
 (defvar dired-listing-switches (purecopy "-al") "\
@@ -8149,15 +8149,15 @@ BUFFER is put back into its original major mode.
 
 ;;;***
 
-;;;### (autoloads nil "eieio" "emacs-lisp/eieio.el" (22102 59970
-;;;;;;  680776 103000))
+;;;### (autoloads nil "eieio" "emacs-lisp/eieio.el" (22131 60223
+;;;;;;  713707 127000))
 ;;; Generated autoloads from emacs-lisp/eieio.el
 (push (purecopy '(eieio 1 4)) package--builtin-versions)
 
 ;;;***
 
-;;;### (autoloads nil "eieio-core" "emacs-lisp/eieio-core.el" (22102
-;;;;;;  59970 668776 103000))
+;;;### (autoloads nil "eieio-core" "emacs-lisp/eieio-core.el" (22131
+;;;;;;  60223 709707 127000))
 ;;; Generated autoloads from emacs-lisp/eieio-core.el
 (push (purecopy '(eieio-core 1 4)) package--builtin-versions)
 
@@ -8786,7 +8786,7 @@ Look at CONFIG and try to expand GROUP.
 
 ;;;***
 
-;;;### (autoloads nil "erc" "erc/erc.el" (22011 58553 477858 469000))
+;;;### (autoloads nil "erc" "erc/erc.el" (22145 6712 764647 100000))
 ;;; Generated autoloads from erc/erc.el
 (push (purecopy '(erc 5 3)) package--builtin-versions)
 
@@ -10050,7 +10050,7 @@ fourth arg NOSEP non-nil inhibits this.
 
 ;;;***
 
-;;;### (autoloads nil "eww" "net/eww.el" (22063 20273 743891 395000))
+;;;### (autoloads nil "eww" "net/eww.el" (22147 48445 679722 290000))
 ;;; Generated autoloads from net/eww.el
 
 (defvar eww-suggest-uris '(eww-links-at-point url-get-url-at-point eww-current-url) "\
@@ -10465,7 +10465,7 @@ you can set `feedmail-queue-reminder-alist' to nil.
 
 ;;;***
 
-;;;### (autoloads nil "ffap" "ffap.el" (21993 28596 82597 473000))
+;;;### (autoloads nil "ffap" "ffap.el" (22142 30520 599026 947000))
 ;;; Generated autoloads from ffap.el
 
 (autoload 'ffap-next "ffap" "\
@@ -12683,8 +12683,8 @@ Add the window configuration CONF to `gnus-buffer-configuration'.
 
 ;;;***
 
-;;;### (autoloads nil "gnutls" "net/gnutls.el" (22011 58553 761858
-;;;;;;  469000))
+;;;### (autoloads nil "gnutls" "net/gnutls.el" (22141 9655 59660
+;;;;;;  171000))
 ;;; Generated autoloads from net/gnutls.el
 
 (defvar gnutls-min-prime-bits 256 "\
@@ -14311,8 +14311,8 @@ Convert HTML to plain text in the current buffer.
 
 ;;;***
 
-;;;### (autoloads nil "htmlfontify" "htmlfontify.el" (22026 25907
-;;;;;;  591502 692000))
+;;;### (autoloads nil "htmlfontify" "htmlfontify.el" (22131 60223
+;;;;;;  733707 127000))
 ;;; Generated autoloads from htmlfontify.el
 (push (purecopy '(htmlfontify 0 21)) package--builtin-versions)
 
@@ -14448,8 +14448,8 @@ bound to the current value of the filter.
 
 ;;;***
 
-;;;### (autoloads nil "ibuffer" "ibuffer.el" (22032 64681 350838
-;;;;;;  183000))
+;;;### (autoloads nil "ibuffer" "ibuffer.el" (22131 60223 745707
+;;;;;;  127000))
 ;;; Generated autoloads from ibuffer.el
 
 (autoload 'ibuffer-list-buffers "ibuffer" "\
@@ -16973,8 +16973,8 @@ A major mode to edit GNU ld script files
 
 ;;;***
 
-;;;### (autoloads nil "let-alist" "emacs-lisp/let-alist.el" (21890
-;;;;;;  39605 402073 663000))
+;;;### (autoloads nil "let-alist" "emacs-lisp/let-alist.el" (22110
+;;;;;;  2280 793544 228000))
 ;;; Generated autoloads from emacs-lisp/let-alist.el
 (push (purecopy '(let-alist 1 0 4)) package--builtin-versions)
 
@@ -19254,8 +19254,8 @@ listed in the PORTS list.
 
 ;;;***
 
-;;;### (autoloads nil "network-stream" "net/network-stream.el" (21855
-;;;;;;  577 147947 107000))
+;;;### (autoloads nil "network-stream" "net/network-stream.el" (22146
+;;;;;;  27578 220451 942000))
 ;;; Generated autoloads from net/network-stream.el
 
 (autoload 'open-network-stream "network-stream" "\
@@ -22021,8 +22021,8 @@ Typing \\<ps-run-mode-map>\\[ps-run-goto-error] when the cursor is at the number
 
 ;;;***
 
-;;;### (autoloads nil "ps-print" "ps-print.el" (22011 58553 993858
-;;;;;;  469000))
+;;;### (autoloads nil "ps-print" "ps-print.el" (22131 60223 805707
+;;;;;;  127000))
 ;;; Generated autoloads from ps-print.el
 (push (purecopy '(ps-print 7 3 5)) package--builtin-versions)
 
@@ -22872,8 +22872,8 @@ For true \"word wrap\" behavior, use `visual-line-mode' instead.
 
 ;;;***
 
-;;;### (autoloads nil "reftex" "textmodes/reftex.el" (22056 47028
-;;;;;;  787798 795000))
+;;;### (autoloads nil "reftex" "textmodes/reftex.el" (22131 60223
+;;;;;;  841707 127000))
 ;;; Generated autoloads from textmodes/reftex.el
 (autoload 'reftex-citation "reftex-cite" nil t)
 (autoload 'reftex-all-document-files "reftex-parse")
@@ -23206,8 +23206,8 @@ variable.
 
 ;;;***
 
-;;;### (autoloads nil "rmail" "mail/rmail.el" (22011 58553 725858
-;;;;;;  469000))
+;;;### (autoloads nil "rmail" "mail/rmail.el" (22131 60223 757707
+;;;;;;  127000))
 ;;; Generated autoloads from mail/rmail.el
 
 (defvar rmail-file-name (purecopy "~/RMAIL") "\
@@ -24606,7 +24606,7 @@ only these files will be asked to be saved.
 
 ;;;***
 
-;;;### (autoloads nil "ses" "ses.el" (21990 52406 736500 385000))
+;;;### (autoloads nil "ses" "ses.el" (22149 3770 262205 950000))
 ;;; Generated autoloads from ses.el
 
 (autoload 'ses-mode "ses" "\
@@ -24917,7 +24917,7 @@ Otherwise, one argument `-i' is passed to the shell.
 
 ;;;***
 
-;;;### (autoloads nil "shr" "net/shr.el" (22085 50883 205731 271000))
+;;;### (autoloads nil "shr" "net/shr.el" (22146 27578 232451 942000))
 ;;; Generated autoloads from net/shr.el
 
 (autoload 'shr-render-region "shr" "\
@@ -29035,8 +29035,8 @@ no further processing).  URL is either a string or a parsed URL.
 
 ;;;***
 
-;;;### (autoloads nil "url-auth" "url/url-auth.el" (21989 31537 943825
-;;;;;;  721000))
+;;;### (autoloads nil "url-auth" "url/url-auth.el" (22142 30520 631026
+;;;;;;  947000))
 ;;; Generated autoloads from url/url-auth.el
 
 (autoload 'url-get-authentication "url-auth" "\
@@ -29178,8 +29178,8 @@ overriding the value of `url-gateway-method'.
 
 ;;;***
 
-;;;### (autoloads nil "url-handlers" "url/url-handlers.el" (22089
-;;;;;;  47939 367694 315000))
+;;;### (autoloads nil "url-handlers" "url/url-handlers.el" (22142
+;;;;;;  30520 631026 947000))
 ;;; Generated autoloads from url/url-handlers.el
 
 (defvar url-handler-mode nil "\
@@ -29226,6 +29226,13 @@ accessible.
 
 \(fn URL &rest IGNORED)" nil nil)
 
+(autoload 'url-insert-buffer-contents "url-handlers" "\
+Insert the contents of BUFFER into current buffer.
+This is like `url-insert', but also decodes the current buffer as
+if it had been inserted from a file named URL.
+
+\(fn BUFFER URL &optional VISIT BEG END REPLACE)" nil nil)
+
 (autoload 'url-insert-file-contents "url-handlers" "\
 
 
@@ -29233,8 +29240,8 @@ accessible.
 
 ;;;***
 
-;;;### (autoloads nil "url-http" "url/url-http.el" (22018 31799 119263
-;;;;;;  120000))
+;;;### (autoloads nil "url-http" "url/url-http.el" (22146 27578 232451
+;;;;;;  942000))
 ;;; Generated autoloads from url/url-http.el
  (autoload 'url-default-expander "url-expand")
 
@@ -29376,8 +29383,8 @@ Fetch a data URL (RFC 2397).
 
 ;;;***
 
-;;;### (autoloads nil "url-parse" "url/url-parse.el" (21670 32331
-;;;;;;  885635 586000))
+;;;### (autoloads nil "url-parse" "url/url-parse.el" (22142 30520
+;;;;;;  663026 947000))
 ;;; Generated autoloads from url/url-parse.el
 
 (autoload 'url-recreate-url "url-parse" "\
@@ -29473,8 +29480,8 @@ would have been passed to OPERATION.
 
 ;;;***
 
-;;;### (autoloads nil "url-util" "url/url-util.el" (21993 28596 418597
-;;;;;;  473000))
+;;;### (autoloads nil "url-util" "url/url-util.el" (22146 27578 232451
+;;;;;;  942000))
 ;;; Generated autoloads from url/url-util.el
 
 (defvar url-debug nil "\
@@ -32317,12 +32324,13 @@ Zone out, completely.
 ;;;;;;  "cedet/srecode/loaddefs.el" "cedet/srecode/map.el" "cedet/srecode/mode.el"
 ;;;;;;  "cedet/srecode/semantic.el" "cedet/srecode/srt.el" "cedet/srecode/table.el"
 ;;;;;;  "cedet/srecode/template.el" "cedet/srecode/texi.el" "cus-dep.el"
-;;;;;;  "dframe.el" "dired-aux.el" "dired-x.el" "dom.el" "dos-fns.el"
-;;;;;;  "dos-vars.el" "dos-w32.el" "dynamic-setting.el" "emacs-lisp/avl-tree.el"
-;;;;;;  "emacs-lisp/bindat.el" "emacs-lisp/byte-opt.el" "emacs-lisp/cl-extra.el"
-;;;;;;  "emacs-lisp/cl-loaddefs.el" "emacs-lisp/cl-macs.el" "emacs-lisp/cl-seq.el"
-;;;;;;  "emacs-lisp/cl.el" "emacs-lisp/eieio-base.el" "emacs-lisp/eieio-compat.el"
-;;;;;;  "emacs-lisp/eieio-custom.el" "emacs-lisp/eieio-datadebug.el"
+;;;;;;  "dframe.el" "dired-aux.el" "dired-loaddefs.el" "dired-x.el"
+;;;;;;  "dom.el" "dos-fns.el" "dos-vars.el" "dos-w32.el" "dynamic-setting.el"
+;;;;;;  "emacs-lisp/avl-tree.el" "emacs-lisp/bindat.el" "emacs-lisp/byte-opt.el"
+;;;;;;  "emacs-lisp/cl-extra.el" "emacs-lisp/cl-loaddefs.el" "emacs-lisp/cl-macs.el"
+;;;;;;  "emacs-lisp/cl-seq.el" "emacs-lisp/cl.el" "emacs-lisp/eieio-base.el"
+;;;;;;  "emacs-lisp/eieio-compat.el" "emacs-lisp/eieio-custom.el"
+;;;;;;  "emacs-lisp/eieio-datadebug.el" "emacs-lisp/eieio-loaddefs.el"
 ;;;;;;  "emacs-lisp/eieio-opt.el" "emacs-lisp/eieio-speedbar.el"
 ;;;;;;  "emacs-lisp/generator.el" "emacs-lisp/lisp-mnt.el" "emacs-lisp/package-x.el"
 ;;;;;;  "emacs-lisp/smie.el" "emacs-lisp/subr-x.el" "emacs-lisp/tcover-ses.el"
@@ -32361,9 +32369,9 @@ Zone out, completely.
 ;;;;;;  "gnus/nntp.el" "gnus/nnvirtual.el" "gnus/nnweb.el" "gnus/registry.el"
 ;;;;;;  "gnus/rfc1843.el" "gnus/rfc2045.el" "gnus/rfc2047.el" "gnus/rfc2231.el"
 ;;;;;;  "gnus/rtree.el" "gnus/sieve-manage.el" "gnus/smime.el" "gnus/spam-stat.el"
-;;;;;;  "gnus/spam-wash.el" "hex-util.el" "hfy-cmap.el" "ibuf-ext.el"
-;;;;;;  "international/charscript.el" "international/fontset.el"
-;;;;;;  "international/iso-ascii.el" "international/ja-dic-cnv.el"
+;;;;;;  "gnus/spam-wash.el" "hex-util.el" "hfy-cmap.el" "htmlfontify-loaddefs.el"
+;;;;;;  "ibuf-ext.el" "ibuffer-loaddefs.el" "international/charscript.el"
+;;;;;;  "international/fontset.el" "international/iso-ascii.el" "international/ja-dic-cnv.el"
 ;;;;;;  "international/ja-dic-utl.el" "international/ogonek.el" "international/uni-bidi.el"
 ;;;;;;  "international/uni-brackets.el" "international/uni-category.el"
 ;;;;;;  "international/uni-combining.el" "international/uni-comment.el"
@@ -32386,13 +32394,13 @@ Zone out, completely.
 ;;;;;;  "leim/quail/symbol-ksc.el" "leim/quail/thai.el" "leim/quail/tibetan.el"
 ;;;;;;  "leim/quail/viqr.el" "leim/quail/vntelex.el" "leim/quail/vnvni.el"
 ;;;;;;  "leim/quail/welsh.el" "loadup.el" "mail/blessmail.el" "mail/mailheader.el"
-;;;;;;  "mail/mspools.el" "mail/rfc2368.el" "mail/rfc822.el" "mail/rmail-spam-filter.el"
-;;;;;;  "mail/rmailedit.el" "mail/rmailkwd.el" "mail/rmailmm.el"
-;;;;;;  "mail/rmailmsc.el" "mail/rmailsort.el" "mail/rmailsum.el"
-;;;;;;  "mail/undigest.el" "mh-e/mh-acros.el" "mh-e/mh-alias.el"
-;;;;;;  "mh-e/mh-buffers.el" "mh-e/mh-compat.el" "mh-e/mh-funcs.el"
-;;;;;;  "mh-e/mh-gnus.el" "mh-e/mh-identity.el" "mh-e/mh-inc.el"
-;;;;;;  "mh-e/mh-junk.el" "mh-e/mh-letter.el" "mh-e/mh-limit.el"
+;;;;;;  "mail/mspools.el" "mail/rfc2368.el" "mail/rfc822.el" "mail/rmail-loaddefs.el"
+;;;;;;  "mail/rmail-spam-filter.el" "mail/rmailedit.el" "mail/rmailkwd.el"
+;;;;;;  "mail/rmailmm.el" "mail/rmailmsc.el" "mail/rmailsort.el"
+;;;;;;  "mail/rmailsum.el" "mail/undigest.el" "mh-e/mh-acros.el"
+;;;;;;  "mh-e/mh-alias.el" "mh-e/mh-buffers.el" "mh-e/mh-compat.el"
+;;;;;;  "mh-e/mh-funcs.el" "mh-e/mh-gnus.el" "mh-e/mh-identity.el"
+;;;;;;  "mh-e/mh-inc.el" "mh-e/mh-junk.el" "mh-e/mh-letter.el" "mh-e/mh-limit.el"
 ;;;;;;  "mh-e/mh-loaddefs.el" "mh-e/mh-mime.el" "mh-e/mh-print.el"
 ;;;;;;  "mh-e/mh-scan.el" "mh-e/mh-search.el" "mh-e/mh-seq.el" "mh-e/mh-show.el"
 ;;;;;;  "mh-e/mh-speed.el" "mh-e/mh-thread.el" "mh-e/mh-tool-bar.el"
@@ -32400,38 +32408,38 @@ Zone out, completely.
 ;;;;;;  "net/dns.el" "net/eudc-vars.el" "net/eudcb-bbdb.el" "net/eudcb-ldap.el"
 ;;;;;;  "net/eudcb-mab.el" "net/eudcb-ph.el" "net/hmac-def.el" "net/hmac-md5.el"
 ;;;;;;  "net/imap.el" "net/ldap.el" "net/mairix.el" "net/newsticker.el"
-;;;;;;  "net/nsm.el" "net/rfc2104.el" "net/sasl-cram.el" "net/sasl-digest.el"
-;;;;;;  "net/sasl-scram-rfc.el" "net/sasl.el" "net/shr-color.el"
-;;;;;;  "net/soap-inspect.el" "net/socks.el" "net/tls.el" "net/tramp-adb.el"
-;;;;;;  "net/tramp-cache.el" "net/tramp-cmds.el" "net/tramp-compat.el"
-;;;;;;  "net/tramp-gvfs.el" "net/tramp-gw.el" "net/tramp-loaddefs.el"
-;;;;;;  "net/tramp-sh.el" "net/tramp-smb.el" "net/tramp-uu.el" "net/trampver.el"
-;;;;;;  "net/zeroconf.el" "notifications.el" "nxml/nxml-enc.el" "nxml/nxml-maint.el"
-;;;;;;  "nxml/nxml-ns.el" "nxml/nxml-outln.el" "nxml/nxml-parse.el"
-;;;;;;  "nxml/nxml-rap.el" "nxml/nxml-util.el" "nxml/rng-dt.el" "nxml/rng-loc.el"
-;;;;;;  "nxml/rng-maint.el" "nxml/rng-match.el" "nxml/rng-parse.el"
-;;;;;;  "nxml/rng-pttrn.el" "nxml/rng-uri.el" "nxml/rng-util.el"
-;;;;;;  "nxml/xsd-regexp.el" "org/ob-C.el" "org/ob-R.el" "org/ob-asymptote.el"
-;;;;;;  "org/ob-awk.el" "org/ob-calc.el" "org/ob-clojure.el" "org/ob-comint.el"
-;;;;;;  "org/ob-core.el" "org/ob-css.el" "org/ob-ditaa.el" "org/ob-dot.el"
-;;;;;;  "org/ob-emacs-lisp.el" "org/ob-eval.el" "org/ob-exp.el" "org/ob-fortran.el"
-;;;;;;  "org/ob-gnuplot.el" "org/ob-haskell.el" "org/ob-io.el" "org/ob-java.el"
-;;;;;;  "org/ob-js.el" "org/ob-keys.el" "org/ob-latex.el" "org/ob-ledger.el"
-;;;;;;  "org/ob-lilypond.el" "org/ob-lisp.el" "org/ob-lob.el" "org/ob-makefile.el"
-;;;;;;  "org/ob-matlab.el" "org/ob-maxima.el" "org/ob-mscgen.el"
-;;;;;;  "org/ob-ocaml.el" "org/ob-octave.el" "org/ob-org.el" "org/ob-perl.el"
-;;;;;;  "org/ob-picolisp.el" "org/ob-plantuml.el" "org/ob-python.el"
-;;;;;;  "org/ob-ref.el" "org/ob-ruby.el" "org/ob-sass.el" "org/ob-scala.el"
-;;;;;;  "org/ob-scheme.el" "org/ob-screen.el" "org/ob-sh.el" "org/ob-shen.el"
-;;;;;;  "org/ob-sql.el" "org/ob-sqlite.el" "org/ob-table.el" "org/ob-tangle.el"
-;;;;;;  "org/ob.el" "org/org-archive.el" "org/org-attach.el" "org/org-bbdb.el"
-;;;;;;  "org/org-bibtex.el" "org/org-clock.el" "org/org-crypt.el"
-;;;;;;  "org/org-ctags.el" "org/org-datetree.el" "org/org-docview.el"
-;;;;;;  "org/org-element.el" "org/org-entities.el" "org/org-eshell.el"
-;;;;;;  "org/org-faces.el" "org/org-feed.el" "org/org-footnote.el"
-;;;;;;  "org/org-gnus.el" "org/org-habit.el" "org/org-id.el" "org/org-indent.el"
-;;;;;;  "org/org-info.el" "org/org-inlinetask.el" "org/org-install.el"
-;;;;;;  "org/org-irc.el" "org/org-list.el" "org/org-loaddefs.el"
+;;;;;;  "net/nsm.el" "net/puny.el" "net/rfc2104.el" "net/sasl-cram.el"
+;;;;;;  "net/sasl-digest.el" "net/sasl-scram-rfc.el" "net/sasl.el"
+;;;;;;  "net/shr-color.el" "net/soap-inspect.el" "net/socks.el" "net/tls.el"
+;;;;;;  "net/tramp-adb.el" "net/tramp-cache.el" "net/tramp-cmds.el"
+;;;;;;  "net/tramp-compat.el" "net/tramp-gvfs.el" "net/tramp-gw.el"
+;;;;;;  "net/tramp-loaddefs.el" "net/tramp-sh.el" "net/tramp-smb.el"
+;;;;;;  "net/tramp-uu.el" "net/trampver.el" "net/zeroconf.el" "notifications.el"
+;;;;;;  "nxml/nxml-enc.el" "nxml/nxml-maint.el" "nxml/nxml-ns.el"
+;;;;;;  "nxml/nxml-outln.el" "nxml/nxml-parse.el" "nxml/nxml-rap.el"
+;;;;;;  "nxml/nxml-util.el" "nxml/rng-dt.el" "nxml/rng-loc.el" "nxml/rng-maint.el"
+;;;;;;  "nxml/rng-match.el" "nxml/rng-parse.el" "nxml/rng-pttrn.el"
+;;;;;;  "nxml/rng-uri.el" "nxml/rng-util.el" "nxml/xsd-regexp.el"
+;;;;;;  "org/ob-C.el" "org/ob-R.el" "org/ob-asymptote.el" "org/ob-awk.el"
+;;;;;;  "org/ob-calc.el" "org/ob-clojure.el" "org/ob-comint.el" "org/ob-core.el"
+;;;;;;  "org/ob-css.el" "org/ob-ditaa.el" "org/ob-dot.el" "org/ob-emacs-lisp.el"
+;;;;;;  "org/ob-eval.el" "org/ob-exp.el" "org/ob-fortran.el" "org/ob-gnuplot.el"
+;;;;;;  "org/ob-haskell.el" "org/ob-io.el" "org/ob-java.el" "org/ob-js.el"
+;;;;;;  "org/ob-keys.el" "org/ob-latex.el" "org/ob-ledger.el" "org/ob-lilypond.el"
+;;;;;;  "org/ob-lisp.el" "org/ob-lob.el" "org/ob-makefile.el" "org/ob-matlab.el"
+;;;;;;  "org/ob-maxima.el" "org/ob-mscgen.el" "org/ob-ocaml.el" "org/ob-octave.el"
+;;;;;;  "org/ob-org.el" "org/ob-perl.el" "org/ob-picolisp.el" "org/ob-plantuml.el"
+;;;;;;  "org/ob-python.el" "org/ob-ref.el" "org/ob-ruby.el" "org/ob-sass.el"
+;;;;;;  "org/ob-scala.el" "org/ob-scheme.el" "org/ob-screen.el" "org/ob-sh.el"
+;;;;;;  "org/ob-shen.el" "org/ob-sql.el" "org/ob-sqlite.el" "org/ob-table.el"
+;;;;;;  "org/ob-tangle.el" "org/ob.el" "org/org-archive.el" "org/org-attach.el"
+;;;;;;  "org/org-bbdb.el" "org/org-bibtex.el" "org/org-clock.el"
+;;;;;;  "org/org-crypt.el" "org/org-ctags.el" "org/org-datetree.el"
+;;;;;;  "org/org-docview.el" "org/org-element.el" "org/org-entities.el"
+;;;;;;  "org/org-eshell.el" "org/org-faces.el" "org/org-feed.el"
+;;;;;;  "org/org-footnote.el" "org/org-gnus.el" "org/org-habit.el"
+;;;;;;  "org/org-id.el" "org/org-indent.el" "org/org-info.el" "org/org-inlinetask.el"
+;;;;;;  "org/org-install.el" "org/org-irc.el" "org/org-list.el" "org/org-loaddefs.el"
 ;;;;;;  "org/org-macro.el" "org/org-mhe.el" "org/org-mobile.el" "org/org-mouse.el"
 ;;;;;;  "org/org-pcomplete.el" "org/org-plot.el" "org/org-protocol.el"
 ;;;;;;  "org/org-rmail.el" "org/org-src.el" "org/org-table.el" "org/org-timer.el"
@@ -32445,23 +32453,25 @@ Zone out, completely.
 ;;;;;;  "progmodes/ebnf-dtd.el" "progmodes/ebnf-ebx.el" "progmodes/ebnf-iso.el"
 ;;;;;;  "progmodes/ebnf-otz.el" "progmodes/ebnf-yac.el" "progmodes/idlw-complete-structtag.el"
 ;;;;;;  "progmodes/idlw-help.el" "progmodes/idlw-toolbar.el" "progmodes/mantemp.el"
-;;;;;;  "progmodes/xscheme.el" "ps-def.el" "ps-mule.el" "ps-samp.el"
-;;;;;;  "sb-image.el" "scroll-bar.el" "soundex.el" "subdirs.el" "tempo.el"
-;;;;;;  "textmodes/bib-mode.el" "textmodes/makeinfo.el" "textmodes/page-ext.el"
-;;;;;;  "textmodes/refbib.el" "textmodes/refer.el" "textmodes/reftex-auc.el"
-;;;;;;  "textmodes/reftex-cite.el" "textmodes/reftex-dcr.el" "textmodes/reftex-global.el"
-;;;;;;  "textmodes/reftex-index.el" "textmodes/reftex-parse.el" "textmodes/reftex-ref.el"
-;;;;;;  "textmodes/reftex-sel.el" "textmodes/reftex-toc.el" "textmodes/texnfo-upd.el"
-;;;;;;  "timezone.el" "tooltip.el" "tree-widget.el" "url/url-about.el"
-;;;;;;  "url/url-cookie.el" "url/url-dired.el" "url/url-domsuf.el"
-;;;;;;  "url/url-expand.el" "url/url-ftp.el" "url/url-future.el"
-;;;;;;  "url/url-history.el" "url/url-imap.el" "url/url-methods.el"
-;;;;;;  "url/url-nfs.el" "url/url-proxy.el" "url/url-vars.el" "vc/ediff-diff.el"
-;;;;;;  "vc/ediff-init.el" "vc/ediff-merg.el" "vc/ediff-ptch.el"
-;;;;;;  "vc/ediff-vers.el" "vc/ediff-wind.el" "vc/pcvs-info.el" "vc/pcvs-parse.el"
-;;;;;;  "vc/pcvs-util.el" "vc/vc-dav.el" "vc/vc-filewise.el" "vcursor.el"
-;;;;;;  "vt-control.el" "vt100-led.el" "w32-fns.el" "w32-vars.el"
-;;;;;;  "x-dnd.el") (22106 57434 227149 199000))
+;;;;;;  "progmodes/xscheme.el" "ps-def.el" "ps-mule.el" "ps-print-loaddefs.el"
+;;;;;;  "ps-samp.el" "sb-image.el" "scroll-bar.el" "soundex.el" "subdirs.el"
+;;;;;;  "tempo.el" "textmodes/bib-mode.el" "textmodes/makeinfo.el"
+;;;;;;  "textmodes/page-ext.el" "textmodes/refbib.el" "textmodes/refer.el"
+;;;;;;  "textmodes/reftex-auc.el" "textmodes/reftex-cite.el" "textmodes/reftex-dcr.el"
+;;;;;;  "textmodes/reftex-global.el" "textmodes/reftex-index.el"
+;;;;;;  "textmodes/reftex-loaddefs.el" "textmodes/reftex-parse.el"
+;;;;;;  "textmodes/reftex-ref.el" "textmodes/reftex-sel.el" "textmodes/reftex-toc.el"
+;;;;;;  "textmodes/texnfo-upd.el" "timezone.el" "tooltip.el" "tree-widget.el"
+;;;;;;  "url/url-about.el" "url/url-cookie.el" "url/url-dired.el"
+;;;;;;  "url/url-domsuf.el" "url/url-expand.el" "url/url-ftp.el"
+;;;;;;  "url/url-future.el" "url/url-history.el" "url/url-imap.el"
+;;;;;;  "url/url-methods.el" "url/url-nfs.el" "url/url-proxy.el"
+;;;;;;  "url/url-vars.el" "vc/ediff-diff.el" "vc/ediff-init.el" "vc/ediff-merg.el"
+;;;;;;  "vc/ediff-ptch.el" "vc/ediff-vers.el" "vc/ediff-wind.el"
+;;;;;;  "vc/pcvs-info.el" "vc/pcvs-parse.el" "vc/pcvs-util.el" "vc/vc-dav.el"
+;;;;;;  "vc/vc-filewise.el" "vcursor.el" "vt-control.el" "vt100-led.el"
+;;;;;;  "w32-fns.el" "w32-vars.el" "x-dnd.el") (22147 48445 679722
+;;;;;;  290000))
 
 ;;;***
 
