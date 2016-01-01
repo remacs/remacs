@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2015-12-17.20}
+\def\texinfoversion{2015-12-20.12}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -5410,6 +5410,9 @@ end
 }
 
 \def\begindoublecolumns{\begingroup % ended by \enddoublecolumns
+  % If not much space left on page, start a new page.
+  \ifdim\pagetotal>0.8\vsize\vfill\eject\fi
+  %
   % Grab any single-column material above us.
   \output = {%
     %
@@ -5467,7 +5470,7 @@ end
   % since nobody clobbers \vsize.)
   \global\doublecolumntopgap = \topskip
   \global\advance\doublecolumntopgap by -1\baselineskip
-  \global\advance\vsize by -1\doublecolumntopgap
+  \advance\vsize by -1\doublecolumntopgap
   \vsize = 2\vsize
   \topskip=0pt
   \global\entrylinedepth=0pt\relax
@@ -5537,23 +5540,20 @@ end
   \penalty0
   %
   \output = {%
-    % Split the last of the double-column material.  Leave it on the
-    % current page, no automatic page break.
+    % Split the last of the double-column material.
     \savemarks
     \balancecolumns
     %
-    % If we end up splitting too much material for the current page,
-    % though, there will be another page break right after this \output
-    % invocation ends.  Having called \balancecolumns once, we do not
+    % Having called \balancecolumns once, we do not
     % want to call it again.  Therefore, reset \output to its normal
-    % definition right away.  (We hope \balancecolumns will never be
-    % called on to balance too much material, but if it is, this makes
-    % the output somewhat more palatable.)
+    % definition right away.
     \global\output = {\onepageout{\pagecontents\PAGE}}%
   }%
   \eject
   \endgroup % started in \begindoublecolumns
   \restoremarks
+  % Leave the double-column material on the current page, no automatic
+  % page break.
   \box\balancedcolumns
   %
   % \pagegoal was set to the doubled \vsize above, since we restarted
