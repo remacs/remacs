@@ -919,9 +919,11 @@ use PDF instead of DVI.
 `prettify-symbols-mode' in a tex-mode buffer, \alpha ... \omega, and
 many other math macros are displayed using unicode characters.
 
-** whitespace-mode: new 'big-indent style highlighting too much indentation.
-By default, 32 spaces and four TABs are considered to be too much but
-`whitespace-big-indent-regexp' can be configured to change that.
++++
+** New `big-indent' style in `whitespace-mode' highlights deep indentation.
+By default, 32 consecutive spaces or four consecutive TABs are
+considered to be too deep, but the new variable
+`whitespace-big-indent-regexp' can be customized to change that.
 
 ** tildify: `tildify-space-string', `tildify-pattern', and
 `tildify-foreach-region-function' variables added making
