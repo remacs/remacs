@@ -1117,13 +1117,7 @@ region, or nil if cursor is not at a cell."
 The end marker is appropriate if some argument is 'end.
 A range is appropriate if some argument is 'range.
 A single cell is appropriate unless some argument is 'needrange."
-  (if t;; Vincent B.:
-      ;; previously (eq ses--curcell t)
-      ;; this is a quick hack to temporary fix the bug implied by changes made by Stefan in
-      ;; http://git.savannah.gnu.org/cgit/emacs.git/commit/lisp/ses.el?id=84e0b7dad6f1a8e53261f9b96f5a9080fea681a4
-      ;;-------------------------------------------------------------------------
-      ;; curcell recalculation was postponed, but user typed ahead.
-      (ses-set-curcell))
+  (ses-set-curcell); fix  bug#21054
   (cond
    ((not ses--curcell)
     (or (memq 'end args)
