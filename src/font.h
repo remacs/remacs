@@ -715,6 +715,12 @@ struct font_driver
   bool (*cached_font_ok) (struct frame *f,
                           Lisp_Object font_object,
                           Lisp_Object entity);
+
+  /* Optional
+
+     Return non-nil if the driver support rendering of combining
+     characters for FONT according to Unicode combining class.  */
+  Lisp_Object (*combining_capability) (struct font *font);
 };
 
 
