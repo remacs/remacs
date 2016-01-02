@@ -383,7 +383,8 @@ This will generate compile-time constants from BINDINGS."
                      ((eq type 'type) font-lock-type-face)
                      ((or (not (match-string 2)) ;; Normal defun.
                           (and (match-string 2)  ;; Setf function.
-                               (match-string 4))) font-lock-function-name-face)))
+                               (match-string 4)))
+                      font-lock-function-name-face)))
              nil t)))
       "Subdued level highlighting for Lisp modes.")
 
@@ -403,7 +404,7 @@ This will generate compile-time constants from BINDINGS."
            (2 font-lock-constant-face nil t))
          ;; Erroneous structures.
          (,(concat "(" el-errs-re "\\_>")
-           (1 font-lock-warning-face))
+          (1 font-lock-warning-face prepend))
          ;; Words inside \\[] tend to be for `substitute-command-keys'.
          (,(concat "\\\\\\\\\\[\\(" lisp-mode-symbol-regexp "\\)\\]")
           (1 font-lock-constant-face prepend))
