@@ -75,14 +75,14 @@ Optional argument MODE specifies the `major-mode' to test."
 	  )))
     ;; Convert the list into some find-flags.
     (cond ((= (length pat) 1)
-	   (concat "-name \"" (car pat) "\""))
+	   (concat "-name " (shell-quote-argument (car pat))))
 	  ((consp pat)
-	   (concat "\\( "
+	   (concat (shell-quote-argument "(") " "
 		   (mapconcat (lambda (s)
-				(concat "-name \"" s "\""))
+				(concat "-name " (shell-quote-argument s)))
 			      pat
 			      " -o ")
-		   " \\)"))
+		   " " (shell-quote-argument ")")))
 	  (t
 	   (error "Customize `semantic-symref-filepattern-alist' for %s" major-mode))
 	  )))
