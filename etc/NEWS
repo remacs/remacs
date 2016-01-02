@@ -877,16 +877,36 @@ fitting for use in money calculations
 ---
 *** Factorial works with non-integer inputs.
 
-** HideIfDef mode now support full C/C++ expressions, argumented macro
-expansions, interactive macro evaluation and automatic scanning of
-#defined symbols.
+** Hide-IfDef mode
 
-*** New custom variable `hide-ifdef-header-regexp' to define C/C++ header file
-name patterns.  Default case-insensitive .h, .hh, .hpp, .hxx, and .h++.
+---
+*** Hide-IfDef mode now support full C/C++ expressions in macros,
+macro argument expansion, interactive macro evaluation and automatic
+scanning of #define'd symbols.
+
+---
+*** New command `hif-evaluate-macro', bound to `C-c @ e', displays the
+result of evaluating a macro.
+
+---
+*** New command `hif-clear-all-ifdef-define', bound to `C-c @ C', clears
+all defined symbols in `hide-ifdef-env'.
+
+---
+*** New custom variable `hide-ifdef-header-regexp' to define C/C++ header
+file name patterns.  Defaults to files whose extension is one of `.h',
+`.hh', `.hpp', `.hxx', or `.h++', matched case-insensitively.
+
+---
 *** New custom variable `hide-ifdef-expand-reinclusion-protection' to prevent
-reinclusion protected header files from being fully hidden.
+reinclusion protected (a.k.a. "idempotent") header files from being hidden.
+(This could happen when an idempotent header file is visited again,
+when its guard symbol is already defined.)  Defaults to `t'.
+
+---
 *** New custom variable `hide-ifdef-exclude-define-regexp' to define symbol
-name patterns (e.g. all "FOR_DOXYGEN_ONLY_*") to be excluded.
+name patterns (e.g. all "FOR_DOXYGEN_ONLY_*") to be ignored when
+looking for macro definitions.  By default, no symbols are ignored.
 
 ** TeX mode
 
