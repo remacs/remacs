@@ -193,7 +193,12 @@ For instance \"xn--bcher-kva\" => \"bücher\"."
 ;; http://www.unicode.org/reports/tr39/#Restriction_Level_Detection
 ;; http://www.unicode.org/reports/tr31/#Table_Candidate_Characters_for_Inclusion_in_Identifiers
 
-(defun puny-highly-restrictive-p (string)
+(defun puny-highly-restrictive-string-p (string)
+  "Say whether STRING is \"highly restrictive\" in the Unicode IDNA sense.
+See http://www.unicode.org/reports/tr39/#Restriction_Level_Detection
+for details.  The main idea is that if you're mixing
+scripts (like latin and cyrillic), you may confuse the user by
+using homographs."
   (let ((scripts
          (delq
           t
@@ -232,6 +237,11 @@ For instance \"xn--bcher-kva\" => \"bücher\"."
                        '((latin han hiragana kana)
                          (latin han bopomofo)
                          (latin han hangul)))))))
+
+(defun puny-highly-restrictive-domain-p (domain)
+  "Say whether DOMAIN is \"highly restrictive\" in the Unicode IDNA sense.
+See `puny-highly-restrictive-string-p' for further details."
+  (seq-every-p 'puny-highly-restrictive-string-p (split-string domain "[.]")))
 
 (provide 'puny)
 
