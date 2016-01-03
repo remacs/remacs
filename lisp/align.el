@@ -888,10 +888,11 @@ on the format of these lists."
       (let ((sec-first end)
 	    (sec-last beg))
 	(align-region beg end
-		      (or exclude-rules
-			  align-mode-exclude-rules-list
-			  align-exclude-rules-list) nil
 		      separator
+		      nil ; rules
+                      (or exclude-rules
+			  align-mode-exclude-rules-list
+			  align-exclude-rules-list)
 		      (function
 		       (lambda (b e mode)
 			 (when (and mode (listp mode))
