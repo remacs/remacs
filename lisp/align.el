@@ -893,11 +893,10 @@ on the format of these lists."
                       (or exclude-rules
 			  align-mode-exclude-rules-list
 			  align-exclude-rules-list)
-		      (function
-		       (lambda (b e mode)
-			 (when (and mode (listp mode))
-			   (setq sec-first (min sec-first b)
-				 sec-last  (max sec-last e))))))
+                      (lambda (b e mode)
+                        (when (consp mode)
+                          (setq sec-first (min sec-first b)
+                                sec-last  (max sec-last e)))))
 	(if (< sec-first sec-last)
 	    (align-region sec-first sec-last 'entire
 			  (or rules align-mode-rules-list align-rules-list)
