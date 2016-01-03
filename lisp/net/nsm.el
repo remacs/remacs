@@ -216,7 +216,7 @@ unencrypted."
 	   (not
 	    (nsm-query
 	     host port status :signature-sha1
-	     "The certificate used to verify the connectio to %s:%s uses the SHA1 algorithm (%s), which is believed to be unsafe."
+	     "The certificate used to verify the connection to %s:%s uses the SHA1 algorithm (%s), which is believed to be unsafe."
 	     host port signature-algorithm)))
       (delete-process process)
       nil)
