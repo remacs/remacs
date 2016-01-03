@@ -1996,6 +1996,14 @@ to case differences."
   (defun gnus-timer--function (timer)
     (elt timer 5)))
 
+(defun gnus-test-list (list predicate)
+  "To each element of LIST apply PREDICATE.
+Return nil if LIST is no list or is empty or some test returns nil;
+otherwise, return t."
+  (when (and list (listp list))
+    (let ((result (mapcar predicate list)))
+      (not (memq nil result)))))
+
 (defun gnus-subsetp (list1 list2)
   "Return t if LIST1 is a subset of LIST2.
 Similar to `subsetp' but use member for element test so that this works for
@@ -2005,6 +2013,13 @@ lists of strings."
 	(and (member (car list1) list2)
 	     (gnus-subsetp (cdr list1) list2))
       t)))
+
+(defun gnus-setdiff (list1 list2)
+  "Return member-based set difference of LIST1 and LIST2."
+  (when (and list1 (listp list1) (listp list2))
+    (if (member (car list1) list2)
+	(gnus-setdiff (cdr list1) list2)
+      (cons (car list1) (gnus-setdiff (cdr list1) list2)))))
 
 (provide 'gnus-util)
 
