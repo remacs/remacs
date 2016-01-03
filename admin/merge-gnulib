@@ -32,7 +32,7 @@ GNULIB_MODULES='
   dtoastr dtotimespec dup2 environ execinfo faccessat
   fcntl fcntl-h fdatasync fdopendir filemode fstatat fsync
   getloadavg getopt-gnu gettime gettimeofday gitlog-to-changelog
-  intprops largefile lstat
+  ignore-value intprops largefile lstat
   manywarnings memrchr mkostemp mktime
   pipe2 pselect pthread_sigmask putenv qcopy-acl readlink readlinkat
   sig2str socklen stat-time stdalign stddef stdio
