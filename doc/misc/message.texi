@@ -938,16 +938,82 @@ Libidn} installed in order to use this functionality.
 @cindex encrypt
 @cindex secure
 
-Using the @acronym{MML} language, Message is able to create digitally
-signed and digitally encrypted messages.  Message (or rather
-@acronym{MML}) currently support @acronym{PGP} (RFC 1991),
-@acronym{PGP/MIME} (RFC 2015/3156) and @acronym{S/MIME}.
+By default, e-mails are transmitted without any protection around the
+Internet, which implies that they can be read and changed by lots of
+different parties.  In particular, they are analyzed under bulk
+surveillance, which violates basic human rights.  To defend those
+rights, digital self-defense is necessary (in addition to legal
+changes), and encryption and digital signatures are powerful
+techniques for self-defense.  In essence, encryption ensures that
+only the intended recipient will be able to read a message, while
+digital signatures make sure that modifications to messages can be
+detected by the recipient.
+
+Nowadays, there are two major incompatible e-mail encryption
+standards, namely @acronym{OpenPGP} and @acronym{S/MIME}.  Both of
+these standards are implemented by the @uref{https://www.gnupg.org/,
+GNU Privacy Guard (GnuPG)}, which needs to be installed as external
+software in addition to GNU Emacs.  Before you can start to encrypt,
+decrypt, and sign messages, you need to create a so-called key-pair,
+which consists of a private key and a public key.  Your @emph{public} key
+(also known as @emph{certificate}, in particular with @acronym{S/MIME}), is
+used by others (a) to encrypt messages intended for you and (b) to verify
+digital signatures created by you.  In contrast, you use your @emph{private}
+key (a) to decrypt messages and (b) to sign messages.  (You may want to
+think of your public key as an open safe that you offer to others such
+that they can deposit messages and lock the door, while your private
+key corresponds to the opening combination for the safe.)
+
+Thus, you need to perform the following steps for e-mail encryption,
+typically outside Emacs.  See, for example, the
+@uref{https://www.gnupg.org/gph/en/manual.html, The GNU Privacy
+Handbook} for details covering the standard @acronym{OpenPGP} with
+@acronym{GnuPG}.
+@enumerate
+@item
+Install GnuPG.
+@item
+Create a key-pair for your own e-mail address.
+@item
+Distribute your public key, e.g., via upload to key servers.
+@item
+Import the public keys for the recipients to which you want to send
+encrypted e-mails.
+@end enumerate
+
+Whether to use the standard @acronym{OpenPGP} or @acronym{S/MIME} is
+beyond the scope of this documentation.  Actually, you can use one
+standard for one set of recipients and the other standard for
+different recipients (depending their preferences or capabilities).
+
+In case you are not familiar with all those acronyms: The standard
+@acronym{OpenPGP} is also called @acronym{PGP} (Pretty Good Privacy).
+The command line tools offered by @acronym{GnuPG} for
+@acronym{OpenPGP} are called @command{gpg} and @command{gpg2}, while
+the one for @acronym{S/MIME} is called @command{gpgsm}.  An
+alternative, but discouraged, tool for @acronym{S/MIME} is
+@command{openssl}.  To make matters worse, e-mail messages can be
+formed in two different ways with @acronym{OpenPGP}, namely
+@acronym{PGP} (RFC 1991/4880) and @acronym{PGP/MIME} (RFC 2015/3156).
+
+The good news, however, is the following: In GNU Emacs, Message
+supports all those variants, comes with reasonable defaults that can
+be customized according to your needs, and invokes the proper command
+line tools behind the scenes for encryption, decryption, as well as
+creation and verification of digital signatures.
+
+Message uses the @acronym{MML} language for the creation of signed
+and/or encrypted messages as explained in the following.
+
 
 @menu
 * Signing and encryption::      Signing and encrypting commands.
 * Using S/MIME::                Using S/MIME
-* Using PGP/MIME::              Using PGP/MIME
+* Using OpenPGP::               Using OpenPGP
+* Passphrase caching::          How to cache passphrases
 * PGP Compatibility::           Compatibility with older implementations
+* Encrypt-to-self::             Reading your own encrypted messages
+* Bcc Warning::                 Do not use encryption with Bcc headers
 @end menu
 
 @node Signing and encryption
@@ -1041,11 +1107,45 @@ programs are required to make things work, and some small general hints.
 @node Using S/MIME
 @subsection Using S/MIME
 
-@emph{Note!}  This section assume you have a basic familiarity with
-modern cryptography, @acronym{S/MIME}, various PKCS standards, OpenSSL and
-so on.
+@acronym{S/MIME} requires an external implementation, such as
+@uref{https://www.gnupg.org/, GNU Privacy Guard} or
+@uref{https://www.openssl.org/, OpenSSL}.  The default Emacs interface
+to the S/MIME implementation is EasyPG (@pxref{Top,,EasyPG Assistant
+User's Manual, epa, EasyPG Assistant User's Manual}), which has been
+included in Emacs since version 23 and which relies on the command
+line tool @command{gpgsm} provided by @acronym{GnuPG}.  That tool
+implements certificate management, including certificate revocation
+and expiry, while such tasks need to be performed manually, if OpenSSL
+is used.
 
-The @acronym{S/MIME} support in Message (and @acronym{MML}) require
+The choice between EasyPG and OpenSSL is controlled by the variable
+@code{mml-smime-use}, which needs to be set to the value @code{epg}
+for EasyPG.  Depending on your version of Emacs that value may be the
+default; if not, you can either customize that variable or place the
+following line in your @file{.emacs} file (that line needs to be
+placed above other code related to message/gnus/encryption):
+
+@lisp
+(require 'epg)
+@end lisp
+
+Moreover, you may want to customize the variables
+@code{mml-default-encrypt-method} and
+@code{mml-default-sign-method} to the string @code{"smime"}.
+
+That's all if you want to use S/MIME with EasyPG, and that's the
+recommended way of using S/MIME with Message.
+
+If you think about using OpenSSL instead of EasyPG, please read the
+BUGS section in the manual for the @command{smime} command coming with
+OpenSSL first.  If you still want to use OpenSSL, the following
+applies.
+
+@emph{Note!}  The remainder of this section assumes you have a basic
+familiarity with modern cryptography, @acronym{S/MIME}, various PKCS
+standards, OpenSSL and so on.
+
+The @acronym{S/MIME} support in Message (and @acronym{MML}) can use
 OpenSSL@.  OpenSSL performs the actual @acronym{S/MIME} sign/encrypt
 operations.  OpenSSL can be found at @uref{http://www.openssl.org/}.
 OpenSSL 0.9.6 and later should work.  Version 0.9.5a cannot extract mail
@@ -1101,26 +1201,44 @@ you use unencrypted keys (e.g., if they are on a secure storage, or if
 you are on a secure single user machine) simply press @code{RET} at
 the passphrase prompt.
 
-@node Using PGP/MIME
-@subsection Using PGP/MIME
+@node Using OpenPGP
+@subsection Using OpenPGP
 
-@acronym{PGP/MIME} requires an external OpenPGP implementation, such
-as @uref{http://www.gnupg.org/, GNU Privacy Guard}. Pre-OpenPGP
+Use of OpenPGP requires an external software, such
+as @uref{https://www.gnupg.org/, GNU Privacy Guard}.  Pre-OpenPGP
 implementations such as PGP 2.x and PGP 5.x are also supported.  The
 default Emacs interface to the PGP implementation is EasyPG
 (@pxref{Top,,EasyPG Assistant User's Manual, epa, EasyPG Assistant
 User's Manual}), but PGG (@pxref{Top, ,PGG, pgg, PGG Manual}) and
 Mailcrypt are also supported.  @xref{PGP Compatibility}.
 
+As stated earlier, messages encrypted with OpenPGP can be formatted
+according to two different standards, namely @acronym{PGP} or
+@acronym{PGP/MIME}.  The variables
+@code{mml-default-encrypt-method} and
+@code{mml-default-sign-method} determine which variant to prefer,
+@acronym{PGP/MIME} by default.
+
+@node Passphrase caching
+@subsection Passphrase caching
+
 @cindex gpg-agent
-Message internally calls GnuPG (the @command{gpg} command) to perform
+Message with EasyPG internally calls GnuPG (the @command{gpg} or
+@command{gpgsm} command) to perform
 data encryption, and in certain cases (decrypting or signing for
-example), @command{gpg} requires user's passphrase.  Currently the
-recommended way to supply your passphrase to @command{gpg} is to use the
+example), @command{gpg}/@command{gpgsm} requires user's passphrase.
+Currently the recommended way to supply your passphrase is to use the
 @command{gpg-agent} program.
 
-To use @command{gpg-agent} in Emacs, you need to run the following
-command from the shell before starting Emacs.
+In particular, the @command{gpg-agent} program supports passphrase
+caching so that you do not need to enter your passphrase for every
+decryption/sign operation.  @xref{Agent Options, , , gnupg, Using the
+GNU Privacy Guard}.
+
+How to use @command{gpg-agent} in Emacs depends on your version of
+GnuPG.  With GnuPG version 2.1, @command{gpg-agent} is started
+automatically if necessary.  With older versions you may need to run
+the following command from the shell before starting Emacs.
 
 @example
 eval `gpg-agent --daemon`
@@ -1135,11 +1253,10 @@ GNU Privacy Guard}.
 Once your @command{gpg-agent} is set up, it will ask you for a
 passphrase as needed for @command{gpg}.  Under the X Window System,
 you will see a new passphrase input dialog appear.  The dialog is
-provided by PIN Entry (the @command{pinentry} command), and as of
-version 0.7.2, @command{pinentry} cannot cooperate with Emacs on a
-single tty.  So, if you are using a text console, you may need to put
-a passphrase into gpg-agent's cache beforehand.  The following command
-does the trick.
+provided by PIN Entry (the @command{pinentry} command), reasonably
+recent versions of which can also cooperate with Emacs on a text
+console.  If that does not work, you may need to put a passphrase into
+gpg-agent's cache beforehand.  The following command does the trick.
 
 @example
 gpg --use-agent --sign < /dev/null > /dev/null
@@ -1180,6 +1297,38 @@ message that can be understood by PGP version 2.
 
 (Refer to @uref{http://www.gnupg.org/gph/en/pgp2x.html} for more
 information about the problem.)
+
+@node Encrypt-to-self
+@subsection Encrypt-to-self
+
+By default, messages are encrypted to all recipients (@code{To},
+@code{Cc}, @code{Bcc} headers).  Thus, you will not be able to decrypt
+your own messages.  To make sure that messages are also encrypted to
+your own key(s), several alternative solutions exist:
+@enumerate
+@item
+Use the @code{encrypt-to} option in the file @file{gpg.conf} (for
+OpenPGP) or @file{gpgsm.conf} (for @acronym{S/MIME} with EasyPG).
+@xref{Invoking GPG, , , gnupg, Using the GNU Privacy Guard}, or
+@xref{Invoking GPGSM, , , gnupg, Using the GNU Privacy Guard}.
+@item
+Include your own e-mail address (for which you created a key-pair)
+among the recipients.
+@item
+Customize the variable @code{mml-secure-openpgp-encrypt-to-self} (for
+OpenPGP) or @code{mml-secure-smime-encrypt-to-self} (for
+@acronym{S/MIME} with EasyPG).
+@end enumerate
+
+@node Bcc Warning
+@subsection Bcc Warning
+
+The @code{Bcc} header is meant to hide recipients of messages.
+However, when encrypted messages are used, the e-mail addresses of all
+@code{Bcc}-headers are given away to all recipients without
+warning, which is a bug, see
+@uref{https://debbugs.gnu.org/cgi/bugreport.cgi?bug=18718}.
+
 
 @node Various Commands
 @section Various Commands
