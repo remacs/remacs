@@ -2746,7 +2746,10 @@ dnl has been added in glib 2.24.  It has been tested under
 dnl GNU/Linux only.
 case $with_file_notification,$NOTIFY_OBJ in
   gfile,* | yes,)
-    if test "${HAVE_NS}" != yes; then
+    if test "${HAVE_NS}" = yes; then
+       AC_MSG_ERROR(['--with-file-notification=gfile' is not supported.
+Consider kqueue instead.])
+    else
        EMACS_CHECK_MODULES([GFILENOTIFY], [gio-2.0 >= 2.24])
        if test "$HAVE_GFILENOTIFY" = "yes"; then
 	  AC_DEFINE(HAVE_GFILENOTIFY, 1, [Define to 1 if using GFile.])
