@@ -2747,7 +2747,7 @@ dnl GNU/Linux only.
 case $with_file_notification,$NOTIFY_OBJ in
   gfile,* | yes,)
     if test "${HAVE_NS}" = yes; then
-       AC_MSG_ERROR(['--with-file-notification=gfile' is not supported.
+       AC_MSG_ERROR(['--with-file-notification=gfile' is not supported in NextStep builds.
 Consider kqueue instead.])
     else
        EMACS_CHECK_MODULES([GFILENOTIFY], [gio-2.0 >= 2.24])
