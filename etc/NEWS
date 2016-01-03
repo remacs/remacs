@@ -955,6 +955,9 @@ As a result of this, the following commands are now obsolete:
 `find-tag-other-window', `find-tag-other-frame', `find-tag-regexp',
 `tags-apropos', and `tags-loop-continue'.
 
+The framework's API is still experimental and can change in major,
+backward-incompatible ways.
+
 *** New variables
 
 `find-tag-marker-ring-length' is now an obsolete alias for
