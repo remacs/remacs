@@ -91,6 +91,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module gettimeofday:
   # Code from module gitlog-to-changelog:
   # Code from module group-member:
+  # Code from module ignore-value:
   # Code from module include_next:
   # Code from module intprops:
   # Code from module inttypes-incomplete:
@@ -905,6 +906,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/gettimeofday.c
   lib/gl_openssl.h
   lib/group-member.c
+  lib/ignore-value.h
   lib/intprops.h
   lib/inttypes.in.h
   lib/lstat.c
