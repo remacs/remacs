@@ -57,7 +57,7 @@ For each new bug, ask the following questions:
   1. Is the bug report written in a way to be easy to reproduce (starts from
      emacs -Q, etc.)?  If not, ask the reporter to try and reproduce it on an
      emacs without customization.
-  2. Is the bug report written against the lastest emacs?  If not, try to
+  2. Is the bug report written against the latest emacs?  If not, try to
      reproduce on the latest version, and if it can't be reproduced, ask the
      reporter to try again with the latest version.
   3. Is the bug the same as another bug?  If so, merge the bugs.
