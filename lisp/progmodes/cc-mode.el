@@ -631,8 +631,11 @@ that requires a literal mode spec at compile time."
     (font-lock-mode 1)))
 
 ;; Buffer local variables defining the region to be fontified by a font lock
-;; after-change function.  They are set in c-after-change to
-;; after-change-functions' BEG and END, and may be modified by functions in
+;; after-change function.  They are initialized in c-before-change to
+;; before-change-functions' BEG and END.  `c-new-END' is amended in
+;; c-after-change with after-change-functions' BEG, END, and OLD-LEN.  These
+;; variables may be modified by any before/after-change function, in
+;; particular by functions in `c-get-state-before-change-functions' and
 ;; `c-before-font-lock-functions'.
 (defvar c-new-BEG 0)
 (make-variable-buffer-local 'c-new-BEG)
@@ -671,8 +674,9 @@ compatible with old code; callers should always specify it."
 		(funcall fn (point-min) (point-max)))
 	      c-get-state-before-change-functions)
 	(mapc (lambda (fn)
-		(funcall fn (point-min) (point-max)
-			 (- (point-max) (point-min))))
+		(if (not (eq fn 'c-restore-<>-properties))
+		    (funcall fn (point-min) (point-max)
+			     (- (point-max) (point-min)))))
 	      c-before-font-lock-functions))))
 
   (set (make-local-variable 'outline-regexp) "[^#\n\^M]")
@@ -1032,6 +1036,8 @@ Note that the style variables are always made local to the buffer."
 	      c-just-done-before-change) ; guard against a spurious second
 					; invocation of before-change-functions.
     (setq c-just-done-before-change t)
+    ;; (c-new-BEG c-new-END) will be the region to fontify.
+    (setq c-new-BEG beg  c-new-END end)
     (setq c-maybe-stale-found-type nil)
     (save-restriction
       (save-match-data
@@ -1126,7 +1132,8 @@ Note that the style variables are always made local to the buffer."
 
   ;; (c-new-BEG c-new-END) will be the region to fontify.  It may become
   ;; larger than (beg end).
-  (setq c-new-BEG beg  c-new-END end)
+  ;; (setq c-new-BEG beg  c-new-END end)
+  (setq c-new-END (- (+ c-new-END (- end beg)) old-len))
 
   (unless (c-called-from-text-property-change-p)
     (setq c-just-done-before-change nil)

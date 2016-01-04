@@ -499,8 +499,13 @@ parameters \(point-min) and \(point-max).")
   ;; For documentation see the following c-lang-defvar of the same name.
   ;; The value here may be a list of functions or a single function.
   t 'c-change-expand-fl-region
-  (c c++ objc) '(c-neutralize-syntax-in-and-mark-CPP
-		 c-change-expand-fl-region)
+  (c objc) '(c-neutralize-syntax-in-and-mark-CPP
+	     c-change-expand-fl-region)
+  c++ '(c-neutralize-syntax-in-and-mark-CPP
+	c-restore-<>-properties
+	c-change-expand-fl-region)
+  java '(c-restore-<>-properties
+	 c-change-expand-fl-region)
   awk 'c-awk-extend-and-syntax-tablify-region)
 (c-lang-defvar c-before-font-lock-functions
 	       (let ((fs (c-lang-const c-before-font-lock-functions)))
