@@ -94,6 +94,7 @@
 ;; This is inspired by Bug#21841.
 (ert-deftest auto-revert-test01-auto-revert-several-files ()
   "Check autorevert for several files at once."
+  :tags '(:expensive-test)
   (skip-unless (executable-find "cp"))
 
   (let* ((cp (executable-find "cp"))
