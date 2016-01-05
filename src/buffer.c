@@ -6204,11 +6204,11 @@ all windows or just the selected window.
 
 Lisp programs may give this variable certain special values:
 
-- A value of \\='lambda (literally) enables Transient Mark mode temporarily.
-  It is disabled again after any subsequent action that would
+- The symbol ‘lambda’ enables Transient Mark mode temporarily.
+  The mode is disabled again after any subsequent action that would
   normally deactivate the mark (e.g. buffer modification).
 
-- A value of (only . OLDVAL) enables Transient Mark mode
+- The pair (only . OLDVAL) enables Transient Mark mode
   temporarily.  After any subsequent point motion command that is
   not shift-translated, or any other action that would normally
   deactivate the mark (e.g. buffer modification), the value of
