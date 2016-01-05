@@ -5803,11 +5803,14 @@ you probably should set this to -2 in that buffer.  */);
   DEFVAR_PER_BUFFER ("selective-display", &BVAR (current_buffer, selective_display),
 		     Qnil,
 		     doc: /* Non-nil enables selective display.
+
 An integer N as value means display only lines
 that start with less than N columns of space.
+
 A value of t means that the character ^M makes itself and
 all the rest of the line invisible; also, when saving the buffer
-in a file, save the ^M as a newline.  */);
+in a file, save the ^M as a newline.  This usage is obsolete; use
+overlays or text properties instead.  */);
 
   DEFVAR_PER_BUFFER ("selective-display-ellipses",
 		     &BVAR (current_buffer, selective_display_ellipses),
