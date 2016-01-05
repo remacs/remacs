@@ -531,8 +531,8 @@ When the mode is initialized, these functions are called with
 parameters \(point-min), \(point-max) and <buffer size>.")
 
 (c-lang-defconst c-before-context-fontification-functions
-  awk nil
-  t 'c-context-expand-fl-region)
+  t 'c-context-expand-fl-region
+  awk nil)
   ;; For documentation see the following c-lang-defvar of the same name.
   ;; The value here may be a list of functions or a single function.
 (c-lang-defvar c-before-context-fontification-functions

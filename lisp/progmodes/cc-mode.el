@@ -1252,7 +1252,8 @@ Note that the style variables are always made local to the buffer."
   (save-restriction
     (widen)
     (save-excursion
-      (let ((new-beg beg) (new-end end) new-region)
+      (let ((new-beg beg) (new-end end)
+	    (new-region (cons beg end)))
 	(mapc (lambda (fn)
 		(setq new-region (funcall fn new-beg new-end))
 		(setq new-beg (car new-region) new-end (cdr new-region)))
