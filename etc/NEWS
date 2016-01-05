@@ -29,6 +29,24 @@ otherwise leave it unmarked.
 and Mac OS X machines.
 
 
+* Changes in Emacs 25.2
+
+** It is possible to disable attempted recovery on fatal signals
+
+Two new variables allow to disable attempts to recover from stack
+overflow and to avoid automatic auto-save when Emacs is delivered a
+fatal signal.  `attempt-stack-overflow-recovery', if set to `nil',
+will disable attempts to recover from C stack overflows; Emacs will
+then crash as with any other fatal signal.
+`attempt-orderly-shutdown-on-fatal-signal', if set to `nil', will
+disable attempts to auto-save the session and shut down in an orderly
+fashion when Emacs receives a fatal signal; instead, Emacs will
+terminate immediately.  Both variables are non-`nil' by default.
+These variables are for users who would like to avoid the small
+probability of data corruption due to techniques Emacs uses to recover
+in these situations.
+
+
 * Changes in Specialized Modes and Packages in Emacs 25.2
 
 ** File Notifications
