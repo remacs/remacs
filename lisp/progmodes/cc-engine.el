@@ -5596,9 +5596,10 @@ comment at the start of cc-engine.el for more info."
   ;; FIXME!!!  This routine ignores the possibility of macros entirely.
   ;; 2010-01-29.
   (save-excursion
-    (let ((beg-lit-limits (progn (goto-char beg) (c-literal-limits)))
-	  (end-lit-limits (progn (goto-char end) (c-literal-limits)))
-	  new-beg new-end beg-limit end-limit)
+    (c-save-buffer-state
+	((beg-lit-limits (progn (goto-char beg) (c-literal-limits)))
+	 (end-lit-limits (progn (goto-char end) (c-literal-limits)))
+	 new-beg new-end beg-limit end-limit)
       ;; Locate the earliest < after the barrier before the changed region,
       ;; which isn't already marked as a paren.
       (goto-char  (if beg-lit-limits (car beg-lit-limits) beg))
