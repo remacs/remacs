@@ -233,7 +233,7 @@ ETAGS = ../lib-src/etags${EXEEXT}
 ${ETAGS}: FORCE
 	${MAKE} -C ../lib-src $(notdir $@)
 
-## The ls | sed | xargs is to stop the command line getting too long
+## The use of xargs is to stop the command line getting too long
 ## on MS Windows, when the MSYS Bash passes it to a MinGW compiled
 ## etags.  It might be better to use find in a similar way to
 ## compile-main.  But maybe this is not even necessary any more now
