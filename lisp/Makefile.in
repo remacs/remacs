@@ -402,7 +402,7 @@ $(TRAMP_DIR)/tramp-loaddefs.el: $(TRAMP_SRC)
 CAL_DIR = $(lisp)/calendar
 ## Those files that may contain internal calendar autoload cookies.
 CAL_SRC = $(addprefix ${CAL_DIR}/,diary-lib.el holidays.el lunar.el solar.el)
-CAL_SRC := $(sort ${CAL_SRC} $(wildcard ${CAL_DIR}/cal*.el))
+CAL_SRC := $(sort ${CAL_SRC} $(wildcard ${CAL_DIR}/cal-*.el))
 CAL_SRC := $(filter-out ${CAL_DIR}/cal-loaddefs.el,${CAL_SRC})
 
 $(CAL_DIR)/cal-loaddefs.el: $(CAL_SRC)
