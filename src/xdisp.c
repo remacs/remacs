@@ -10206,7 +10206,16 @@ message_to_stderr (Lisp_Object m)
     }
   if (STRINGP (m))
     {
-      Lisp_Object s = ENCODE_SYSTEM (m);
+      Lisp_Object coding_system = Vlocale_coding_system;
+      Lisp_Object s;
+
+      if (!NILP (Vcoding_system_for_write))
+	coding_system = Vcoding_system_for_write;
+      if (!NILP (coding_system))
+	s = code_convert_string_norecord (m, coding_system, true);
+      else
+	s = m;
+
       fwrite (SDATA (s), SBYTES (s), 1, stderr);
     }
   if (!cursor_in_echo_area)
