@@ -76,7 +76,7 @@ once you are familiar with the contents of the startup screen."
 
 (defvar startup-screen-inhibit-startup-screen nil)
 
-;; The mechanism uses to ensure that only end users can disable this
+;; The mechanism used to ensure that only end users can disable this
 ;; message is not complex. Clearly, it is possible for a determined
 ;; system administrator to inhibit this message anyway, but at least
 ;; they will do so with knowledge of why the Emacs developers think
@@ -84,7 +84,7 @@ once you are familiar with the contents of the startup screen."
 (defcustom inhibit-startup-echo-area-message nil
   "Non-nil inhibits the initial startup echo area message.
 
-The startup message in the echo area as it provides information
+The startup message is in the echo area as it provides information
 about GNU Emacs and the GNU system in general, which we want all
 users to see. As this is the least intrusive startup message,
 this variable gets specialized treatment to prevent the message
