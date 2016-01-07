@@ -682,8 +682,9 @@ Return FILE if there was no autoload cookie in it, else nil."
 (defun autoload-find-destination (file load-name)
   "Find the destination point of the current buffer's autoloads.
 FILE is the file name of the current buffer.
+LOAD-NAME is the name as it appears in the output.
 Returns a buffer whose point is placed at the requested location.
-Returns nil if the file's autoloads are uptodate, otherwise
+Returns nil if the file's autoloads are up-to-date, otherwise
 removes any prior now out-of-date autoload entries."
   (catch 'up-to-date
     (let* ((buf (current-buffer))
