@@ -100,7 +100,9 @@ then we use the timestamp of the output file instead.  As a result:
       to create the output
    iii) only a subset of the input files are scanned
    These issues are unlikely to happen in practice, and would arguably
-   represent bugs in the build system.")
+   represent bugs in the build system.  Item iii) will happen if you
+   use a command like `update-file-autoloads', though, since it only
+   checks a single input file.")
 
 (defvar autoload-modified-buffers)      ;Dynamically scoped var.
 
