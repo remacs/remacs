@@ -876,7 +876,9 @@ IGNORES is a list of glob patterns."
                                                        grep-find-template t t))
          (grep-highlight-matches nil)
          (command (xref--rgrep-command (xref--regexp-to-extended regexp)
-                                       files dir ignores))
+                                       files
+                                       (expand-file-name dir)
+                                       ignores))
          (orig-buffers (buffer-list))
          (buf (get-buffer-create " *xref-grep*"))
          (grep-re (caar grep-regexp-alist))
@@ -912,23 +914,28 @@ IGNORES is a list of glob patterns."
            " "
            (shell-quote-argument ")"))
    dir
-   (concat
-    (shell-quote-argument "(")
-    " -path "
-    (mapconcat
-     (lambda (ignore)
-       (when (string-match-p "/\\'" ignore)
-         (setq ignore (concat ignore "*")))
-       (if (string-match "\\`\\./" ignore)
-           (setq ignore (replace-match dir t t ignore))
-         (unless (string-prefix-p "*" ignore)
-           (setq ignore (concat "*/" ignore))))
-       (shell-quote-argument ignore))
-     ignores
-     " -o -path ")
-    " "
-    (shell-quote-argument ")")
-    " -prune -o ")))
+   (xref--find-ignores-arguments ignores dir)))
+
+(defun xref--find-ignores-arguments (ignores dir)
+  ;; `shell-quote-argument' quotes the tilde as well.
+  (cl-assert (not (string-match-p "\\`~" dir)))
+  (concat
+   (shell-quote-argument "(")
+   " -path "
+   (mapconcat
+    (lambda (ignore)
+      (when (string-match-p "/\\'" ignore)
+        (setq ignore (concat ignore "*")))
+      (if (string-match "\\`\\./" ignore)
+          (setq ignore (replace-match dir t t ignore))
+        (unless (string-prefix-p "*" ignore)
+          (setq ignore (concat "*/" ignore))))
+      (shell-quote-argument ignore))
+    ignores
+    " -o -path ")
+   " "
+   (shell-quote-argument ")")
+   " -prune -o "))
 
 (defun xref--regexp-to-extended (str)
   (replace-regexp-in-string
