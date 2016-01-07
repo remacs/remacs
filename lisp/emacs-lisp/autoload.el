@@ -716,7 +716,7 @@ removes any prior now out-of-date autoload entries."
                                ;; last-time is the time-stamp (specifying
                                ;; the last time we looked at the file) and
                                ;; the file hasn't been changed since.
-                               (and (listp last-time) (= (length last-time) 2)
+                               (and (listp last-time)
                                     (not (time-less-p last-time file-time)))
                                ;; last-time is an MD5 checksum instead.
                                (and (stringp last-time)
