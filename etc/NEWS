@@ -962,6 +962,14 @@ As a result of this, the following commands are now obsolete:
 The framework's API is still experimental and can change in major,
 backward-incompatible ways.
 
+** New package Project
+
+The new package Project provides generic infrastructure for dealing
+with projects.  The main commands included in it are
+`project-find-file' and `project-find-regexp'.
+
+Like Xref, the project API is still experimental.
+
 *** New variables
 
 `find-tag-marker-ring-length' is now an obsolete alias for
