@@ -868,7 +868,7 @@ write its autoloads into the specified file instead."
       (let ((no-autoloads-time (or last-time '(0 0 0 0))) file-time)
 	(dolist (file files)
 	  (cond
-	   ((member (expand-file-name file) autoload-excludes nil))
+	   ((member (expand-file-name file) autoload-excludes) nil)
 	   ;; Passing nil as second argument forces
 	   ;; autoload-generate-file-autoloads to look for the right
 	   ;; spot where to insert each autoloads section.
