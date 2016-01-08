@@ -258,7 +258,8 @@ DIRS must contain directory names."
 (defun project--value-in-dir (var dir)
   (with-temp-buffer
     (setq default-directory dir)
-    (hack-dir-local-variables-non-file-buffer)
+    (let ((enable-local-variables :all))
+      (hack-dir-local-variables-non-file-buffer))
     (symbol-value var)))
 
 (declare-function grep-read-files "grep")
@@ -310,12 +311,14 @@ pattern to search for."
       (user-error "No matches for: %s" regexp))
     (xref--show-xrefs xrefs nil)))
 
+;;;###autoload
 (defun project-find-file ()
   (interactive)
   (let* ((pr (project-current t))
          (dirs (project-roots pr)))
     (project--find-file-in dirs pr)))
 
+;;;###autoload
 (defun project-or-external-find-file ()
   (interactive)
   (let* ((pr (project-current t))
@@ -326,6 +329,7 @@ pattern to search for."
 
 ;; FIXME: Uniquely abbreviate the roots?
 (defun project--find-file-in (dirs project)
+  (require 'xref)
   (let* ((all-files
           (cl-mapcan
            (lambda (dir)
