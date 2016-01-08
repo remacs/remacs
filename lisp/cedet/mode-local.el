@@ -633,6 +633,9 @@ SYMBOL is a function that can be overridden."
       ;; LIST ALL LOADED OVERRIDES FOR SYMBOL HERE
       )))
 
+;; We are called from describe-function in help-fns.el, where this is defined.
+(defvar describe-function-orig-buffer)
+
 (defun describe-mode-local-overload (symbol)
   "For `help-fns-describe-function-functions'; add overloads for SYMBOL."
   (when (get symbol 'mode-local-overload)
