@@ -365,7 +365,7 @@ AC_ARG_WITH([file-notification],[AS_HELP_STRING([--with-file-notification=LIB],
     g | gf | gfi | gfil | gfile )	val=gfile ;;
     w | w3 | w32 )	val=w32 ;;
     * ) AC_MSG_ERROR(['--with-file-notification=$withval' is invalid;
-this option's value should be 'yes', 'no', 'inotify', 'kqeue', 'gfile' or 'w32'.
+this option's value should be 'yes', 'no', 'inotify', 'kqueue', 'gfile' or 'w32'.
 'yes' is a synonym for 'w32' on MS-Windows, for 'no' on Nextstep,
 otherwise for the first of 'inotify', 'kqueue' or 'gfile' that is usable.])
     ;;
