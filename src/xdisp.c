@@ -4583,14 +4583,15 @@ setup_for_ellipsis (struct it *it, int len)
   it->current.dpvec_index = 0;
   it->dpvec_face_id = -1;
 
-  /* Reset the current face ID to default if the last visible
-     character and the first invisible character have different faces.
-     IT->saved_face_id was set in handle_stop to the face of the
-     preceding character, and will be different from IT->face_id only
-     if the invisible text skipped in handle_invisible_prop has some
-     non-default face.  IT's face is restored in set_iterator_to_next.  */
-  if (it->saved_face_id < 0 || it->saved_face_id != it->face_id)
-    it->saved_face_id = it->face_id = DEFAULT_FACE_ID;
+  /* Use IT->saved_face_id for the ellipsis, so that it has the same
+     face as the preceding text.  IT->saved_face_id was set in
+     handle_stop to the face of the preceding character, and will be
+     different from IT->face_id only if the invisible text skipped in
+     handle_invisible_prop has some non-default face on its first
+     character.  We thus ignore the face of the invisible text when we
+     display the ellipsis.  IT's face is restored in set_iterator_to_next.  */
+  if (it->saved_face_id >= 0)
+    it->face_id = it->saved_face_id;
 
   /* If the ellipsis represents buffer text, it means we advanced in
      the buffer, so we should no longer ignore overlay strings.  */
