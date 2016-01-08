@@ -974,14 +974,14 @@ out of NAME."
              (push (cons "" (cdr (assoc (match-string 0) ; i.e. "(TeX-current-macro)"
                                         preferred-suffix-rules)))
                    guess-rules))
-           (setq kpsewhich-args (mapcar (lambda (rule)
-                                          (concat (car rule) name (cdr rule)))
-                                        guess-rules))
            (with-temp-buffer
              (let ((process-environment (buffer-local-value
                                          'process-environment curbuf))
                    (exec-path (buffer-local-value 'exec-path curbuf)))
-               (apply #'call-process "kpsewhich"  nil  t  nil kpsewhich-args))
+               (apply #'call-process "kpsewhich" nil t nil
+                      (mapcar (lambda (rule)
+                                          (concat (car rule) name (cdr rule)))
+                                        guess-rules)))
              (when (< (point-min) (point-max))
                (buffer-substring (goto-char (point-min)) (point-at-eol))))))))
 
