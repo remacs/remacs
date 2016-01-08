@@ -5688,8 +5688,8 @@ comment at the start of cc-engine.el for more info."
 	(c-backward-token-2)
 	(setq c-restricted-<>-arglists
 	     (and (not (looking-at c-opt-<>-sexp-key))
-		  (progn (c-backward-syntactic-ws) ; to < or ,
-			 (and (memq (char-before) '(?< ?,))
+		  (progn (c-backward-syntactic-ws) ; to ( or ,
+			 (and (memq (char-before) '(?\( ?,)) ; what about <?
 			      (not (eq (c-get-char-property (point) 'c-type)
 				       'c-decl-arg-start)))))))
       (or (c-forward-<>-arglist nil)
@@ -9106,6 +9106,11 @@ comment at the start of cc-engine.el for more info."
 	    (goto-char containing-sexp)
 	    (if (or (save-excursion
 		      (c-backward-syntactic-ws lim)
+		      (while (and (eq (char-before) ?>)
+				  (c-get-char-property (1- (point))
+						       'syntax-table)
+				  (c-go-list-backward nil lim))
+			(c-backward-syntactic-ws lim))
 		      (and (> (point) (or lim (point-min)))
 			   (c-on-identifier)))
 		    (and c-special-brace-lists
