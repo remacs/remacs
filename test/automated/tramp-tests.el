@@ -2037,7 +2037,6 @@ Use the `ls' command."
 
 (defun tramp--test-utf8 ()
   "Perform the test in `tramp-test32-utf8*'."
-  (tramp--instrument-test-case 10
   (let ((coding-system-for-read 'utf-8)
 	(coding-system-for-write 'utf-8)
 	(file-name-coding-system 'utf-8))
@@ -2045,8 +2044,9 @@ Use the `ls' command."
      (unless (tramp--test-hpux-p) "Γυρίστε το Γαλαξία με Ώτο Στοπ")
      (unless (or (tramp--test-hpux-p) (tramp--test-darwin-p))
        "أصبح بوسعك الآن تنزيل نسخة كاملة من موسوعة ويكيبيديا العربية لتصفحها بلا اتصال بالإنترنت")
-     "银河系漫游指南系列"
-     "Автостопом по гала́ктике"))))
+     (unless (tramp--test-darwin-p)
+       "银河系漫游指南系列")
+     "Автостопом по гала́ктике")))
 
 (ert-deftest tramp-test32-utf8 ()
   "Check UTF8 encoding in file names and file contents."
