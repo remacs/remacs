@@ -208,7 +208,7 @@ LENGTH is the match length, in characters."
 
 (defvar xref-backend-functions nil
   "Special hook to find the xref backend for the current context.
-Each functions on this hook is called in turn with no arguments
+Each function on this hook is called in turn with no arguments,
 and should return either nil to mean that it is not applicable,
 or an xref backend, which is a value to be used to dispatch the
 generic functions.")
@@ -502,10 +502,14 @@ WINDOW controls how the buffer is displayed:
     (xref--pop-to-location xref window)))
 
 (defun xref-query-replace (from to)
-  "Perform interactive replacement in all current matches."
+  "Perform interactive replacement of FROM with TO in all displayed xrefs.
+
+This command interactively replaces FROM with TO in the names of the
+references displayed in the current *xref* buffer."
   (interactive
-   (list (read-regexp "Query replace regexp in matches" ".*")
-         (read-regexp "Replace with: ")))
+   (let ((fr (read-regexp "Xref query-replace (regexp)" ".*")))
+     (list fr
+           (read-regexp (format "Xref query-replace (regexp) %s with: " fr)))))
   (let (pairs item)
     (unwind-protect
         (progn
@@ -762,12 +766,10 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 With prefix argument or when there's no identifier at point,
 prompt for it.
 
-If the backend has sufficient information to determine a unique
-definition for IDENTIFIER, it returns only that definition. If
-there are multiple possible definitions, it returns all of them.
-
-If the backend returns one definition, jump to it; otherwise,
-display the list in a buffer."
+If sufficient information is available to determine a unique
+definition for IDENTIFIER, display it in the selected window.
+Otherwise, display the list of the possible definitions in a
+buffer where the user can select from the list."
   (interactive (list (xref--read-identifier "Find definitions of: ")))
   (xref--find-definitions identifier nil))
 
