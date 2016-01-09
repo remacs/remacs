@@ -313,6 +313,10 @@ pattern to search for."
 
 ;;;###autoload
 (defun project-find-file ()
+  "Visit a file in the current project's roots.
+
+This is like `find-file', but it limits the file-name completion
+candidates to the files within the current project roots."
   (interactive)
   (let* ((pr (project-current t))
          (dirs (project-roots pr)))
@@ -320,6 +324,10 @@ pattern to search for."
 
 ;;;###autoload
 (defun project-or-external-find-file ()
+  "Visit a file in the current project's roots or external roots.
+
+This is like `find-file', but it limits the file-name completion
+candidates to the files within the current project roots and external roots."
   (interactive)
   (let* ((pr (project-current t))
          (dirs (append
