@@ -965,6 +965,14 @@ The face @var{face} was defined.
 The feature @var{feature} was required.
 @item (provide . @var{feature})
 The feature @var{feature} was provided.
+@item (cl-defmethod @var{method} @var{specializers})
+The named @var{method} was defined by using @code{cl-defmethod}, with
+@var{specializers} as its specializers.
+@item (cl-defmethod @var{gfun} t @dots{})
+A generic function @var{gfun} was defined by using
+@code{cl-defgeneric}.  The number of @code{t} members of the list
+following @var{gfun} reflects the number of the generic arguments in
+the @var{args} form of the corresponding @code{cl-defgeneric} call.
 @end table
 
 The value of @code{load-history} may have one element whose @sc{car} is
