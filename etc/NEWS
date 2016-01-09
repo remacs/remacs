@@ -938,6 +938,7 @@ New options `tildify-space-string', `tildify-pattern', and
 `tildify-ignored-environments-alist' variables (as well as a few
 helper functions) obsolete.
 
++++
 ** New package Xref replaces Etags's front-end and UI
 
 The new package Xref provides a generic framework and new commands to
@@ -960,7 +961,7 @@ As a result of this, the following commands are now obsolete:
 `find-tag-other-window', `find-tag-other-frame', `find-tag-regexp',
 `tags-apropos', and `tags-loop-continue'.
 
-The framework's API is still experimental and can change in major,
+The framework's Lisp API is still experimental and can change in major,
 backward-incompatible ways.
 
 ** New package Project

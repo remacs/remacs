@@ -785,8 +785,8 @@ Search all the specified files for the regular expression @var{regexp}
 (@code{dired-do-search}).
 
 This command is a variant of @code{tags-search}.  The search stops at
-the first match it finds; use @kbd{M-,} to resume the search and find
-the next match.  @xref{Tags Search}.
+the first match it finds; use @kbd{M-x tags-loop-continue} to resume
+the search and find the next match.  @xref{Identifier Search}.
 
 @kindex Q @r{(Dired)}
 @findex dired-do-query-replace-regexp
@@ -797,8 +797,8 @@ replacing matches for @var{regexp} with the string
 @var{to} (@code{dired-do-query-replace-regexp}).
 
 This command is a variant of @code{tags-query-replace}.  If you exit the
-query replace loop, you can use @kbd{M-,} to resume the scan and replace
-more matches.  @xref{Tags Search}.
+query replace loop, you can use @kbd{M-x tags-loop-continue} to resume
+the scan and replace more matches.  @xref{Identifier Search}.
 @end table
 
 @node Shell Commands in Dired
