@@ -1658,6 +1658,10 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	       (vc-register
 		nil (list (car vc-handled-backends)
 			  (list (file-name-nondirectory tmp-name2))))))
+	    ;; vc-git uses an own process sentinel, Tramp's sentinel
+	    ;; for flushing the cache isn't used.
+	    (with-parsed-tramp-file-name tmp-name1 nil
+	      (tramp-flush-directory-property v localname))
 	    (should (vc-registered (file-name-nondirectory tmp-name2)))))
 
       ;; Cleanup.
@@ -2044,8 +2048,7 @@ Use the `ls' command."
      (unless (tramp--test-hpux-p) "Γυρίστε το Γαλαξία με Ώτο Στοπ")
      (unless (or (tramp--test-hpux-p) (tramp--test-darwin-p))
        "أصبح بوسعك الآن تنزيل نسخة كاملة من موسوعة ويكيبيديا العربية لتصفحها بلا اتصال بالإنترنت")
-     (unless (tramp--test-darwin-p)
-       "银河系漫游指南系列")
+     "银河系漫游指南系列"
      "Автостопом по гала́ктике")))
 
 (ert-deftest tramp-test32-utf8 ()

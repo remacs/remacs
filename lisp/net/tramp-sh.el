@@ -4214,10 +4214,8 @@ process to set up.  VEC specifies the connection."
 		      (cons 'undecided 'undecided)))
 	      cs-decode cs-encode)
 	  (when (symbolp cs) (setq cs (cons cs cs)))
-	  (setq cs-decode (car cs))
-	  (setq cs-encode (cdr cs))
-	  (unless cs-decode (setq cs-decode 'undecided))
-	  (unless cs-encode (setq cs-encode 'undecided))
+	  (setq cs-decode (or (car cs) 'undecided)
+                cs-encode (or (cdr cs) 'undecided))
 	  (setq cs-encode
 		(tramp-compat-coding-system-change-eol-conversion
 		 cs-encode
@@ -4229,7 +4227,13 @@ process to set up.  VEC specifies the connection."
 	  (when (search-forward "\r" nil t)
 	    (setq cs-decode (tramp-compat-coding-system-change-eol-conversion
 			     cs-decode 'dos)))
-	  (tramp-compat-funcall
+          ;; Special setting for Mac OS X.
+          (when (and (string-match
+                      "^Darwin" (tramp-get-connection-property vec "uname" ""))
+                     (memq 'utf-8-hfs (coding-system-list)))
+            (setq cs-decode 'utf-8-hfs
+                  cs-encode 'utf-8-hfs))
+          (tramp-compat-funcall
 	   'set-buffer-process-coding-system cs-decode cs-encode)
 	  (tramp-message
 	   vec 5 "Setting coding system to `%s' and `%s'" cs-decode cs-encode))
