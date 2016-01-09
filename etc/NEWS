@@ -961,6 +961,20 @@ As a result of this, the following commands are now obsolete:
 `find-tag-other-window', `find-tag-other-frame', `find-tag-regexp',
 `tags-apropos', and `tags-loop-continue'.
 
++++
+*** New variables
+
+`find-tag-marker-ring-length' is now an obsolete alias for
+`xref-marker-ring-length'.  `find-tag-marker-ring' is now an obsolete
+alias for a private variable.  `xref-push-marker-stack' and
+`xref-pop-marker-stack' should be used instead to manipulate the stack
+of searches for definitions.
+
+---
+*** `xref-find-definitions' and `describe-function' now display
+information about mode local overrides (defined by cedet/mode-local.el
+`define-overloadable-function' `define-mode-local-overrides').
+
 The framework's Lisp API is still experimental and can change in major,
 backward-incompatible ways.
 
@@ -972,18 +986,6 @@ with projects.  The main commands included in it are
 `project-find-file' and `project-find-regexp'.
 
 The Lisp API of this package is still experimental.
-
-*** New variables
-
-`find-tag-marker-ring-length' is now an obsolete alias for
-`xref-marker-ring-length'.  `find-tag-marker-ring' is now an obsolete
-alias for a private variable.  `xref-push-marker-stack' and
-`xref-pop-marker-stack' should be used to mutate it instead.
-
----
-*** `xref-find-definitions' and `describe-function' now display
-information about mode local overrides (defined by cedet/mode-local.el
-`define-overloadable-function' `define-mode-local-overrides').
 
 ** EUDC
 EUDC's LDAP backend has been improved.
