@@ -1183,11 +1183,10 @@ file and still expect it to be run after startup should set
 `package-enable-at-startup' to t after the call to
 `package-initialize'.
 
+---
 ** `:global' minor mode use `setq-default' rather than `setq'.
 This means that you can't use `make-local-variable' and expect them to
 "magically" become buffer-local.
-
-** `inhibit-point-motion-hooks' now defaults to t and is obsolete.
 
 +++
 ** `track-mouse' no longer freezes the shape of the mouse pointer.
@@ -1335,6 +1334,8 @@ commands other than the predefined C-u.
 Replaced by properties `cursor-intangible' and `cursor-sensor-functions',
 implemented by the new `cursor-intangible-mode' and
 `cursor-sensor-mode' minor modes.
+
+** `inhibit-point-motion-hooks' now defaults to t and is obsolete.
 
 +++
 ** New process type `pipe', which can be used in combination with the
