@@ -1,3 +1,118 @@
+2016-01-09  Andrew Hyatt  <ahyatt@gmail.com>
+
+	Adding example replies to bug-triage.
+
+	* admin/notes/bug-triage: Added example replies. Also, as requested,
+	  making the process notes into more of a checklist.
+
+2016-01-08  Andrew Hyatt  <ahyatt@gmail.com>
+
+	Rename the notes/admin/triage file to bug-triage.
+
+	* CONTRIBUTE: Change reference to the triage file name.
+	* admin/notes/triage: Rename file to admin/notes/bug-triage.
+
+2016-01-08  K. Handa  <handa@gnu.org>
+
+	Fix outdated comments.
+
+2016-01-07  Glenn Morris  <rgm@gnu.org>
+
+	Allow creation of loaddefs files without timestamps.
+
+	* lisp/emacs-lisp/autoload.el (autoload-timestamps): New variable.
+	(autoload-generate-file-autoloads, update-directory-autoloads):
+	If autoload-timestamps is nil, write "t" instead of file timestamp.
+	(autoload-find-destination, update-directory-autoloads):
+	If timestamp is "t", use the modtime of the output file instead.
+
+2016-01-06  Glenn Morris  <rgm@gnu.org>
+
+	Doc tweaks.
+
+	* lisp/calendar/cal-hebrew.el (diary-hebrew-list-entries):
+	* lisp/calendar/cal-iso.el (calendar-iso-to-absolute)
+	(calendar-iso-from-absolute):
+	* lisp/calendar/cal-tex.el (cal-tex-comment):
+	* lisp/calendar/solar.el (calendar-time-display-form): Doc tweaks.
+
+2016-01-06  Glenn Morris  <rgm@gnu.org>
+
+	Build tweaks related to tags files.
+
+	* lib-src/Makefile.in (tagsfiles): New variable.
+	(TAGS): Also depend on the source files.  Use our own etags program.
+	* lisp/Makefile.in (ETAGS): Add EXEEXT.
+	(lisptagsfiles1, lisptagsfiles2, lisptagsfiles3, lisptagsfiles4):
+	Remove.
+	(tagsfiles): New, replacing lisptagsfiles1 etc.
+	Remove irrelevant source files here rather than in the TAGS rule.
+	(${ETAGS}): New rule.
+	(TAGS): Also depend on the etags executable.
+	* lwlib/Makefile.in (EXEEXT): New, set by configure.
+	(ETAGS): Add EXEEXT.
+	(${ETAGS}): New rule.
+	(ctagsfiles): Use "wildcard".
+	(TAGS): Also depend on the etags executable.
+	* nt/Makefile.in (ETAGS, tagsfiles): New variables.
+	(${ETAGS}): New rule.
+	(TAGS): Fix dependencies.
+	* oldXMenu/Makefile.in (EXEEXT): New, set by configure.
+	(ETAGS): New variable, replacing $TAGS.  Use our own etags program.
+	Remove "-t" argument.
+	(${ETAGS}): New rule.
+	(tagsfiles): New variable.
+	(TAGS): New rule, with proper dependencies.
+	* src/Makefile.in (ETAGS): Add EXEEXT.  Add a build rule.
+	(ctagsfiles1, ctagsfiles2): Use "wildcard".
+	(ctagsfiles3): Remove.
+	(TAGS): Depend on etags.
+	(../lisp/TAGS, $(lwlibdir)/TAGS): Let the rules in the relevant
+	directories decide if updates are needed.
+
+2016-01-06  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/Makefile.in (CAL_SRC): Skip calendar.el.
+
+2016-01-06  Glenn Morris  <rgm@gnu.org>
+
+	* test/lisp/emacs-lisp/package-tests.el
+
+	(package-test-macro-compilation): Fixup branch merge.
+
+2016-01-05  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix fallout from merging emacs-25 branch in test/
+
+	* .gitignore: Update for the new place of biditest.txt.
+	* test/automated/: Directory removed.  All files moved to their
+	proper places.
+	* test/etags/: Directory removed.  All files moved to their proper
+	places.
+	* test/automated/url-parse-tests.el: File removed; it was an exact
+	copy of the same file in test/lisp/url/.
+	* test/automated/url-expand-tests.el: Moved to test/lisp/url/.
+
+2016-01-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Spelling fixes
+
+2016-01-04  Daniel Colascione  <dancol@dancol.org>
+
+	Let users disable unsafe signal handling code
+
+	* src/keyboard.c (syms_of_keyboard): New user variables
+	`attempt-stack-overflow-recovery' and
+	`attempt-orderly-shutdown-on-fatal-signal'.
+	* src/sysdep.c (stack_overflow): Check
+	`attempt-stack-overflow-recovery'.
+	* src/emacs.c (terminate_due_to_signal): Check
+	`attempt-orderly-shutdown-on-fatal-signal'.
+
+2016-01-03  Michael Albinus  <michael.albinus@gmx.de>
+
+	* configure.ac: Add error message for gfile on Nextstep.
+
 2016-01-03  John Wiegley  <johnw@newartisans.com>
 
 	Merge branch 'emacs-25-merge'
@@ -25221,7 +25336,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit fb6d826c69939c2d016c1b824d4e9bcb53d9e643 (inclusive).
+commit 384cf23c6ed05e1f151032958a2cc2bb8100344b (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
