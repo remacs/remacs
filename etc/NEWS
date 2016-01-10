@@ -1044,12 +1044,14 @@ EUDC's PH backend (eudcb-ph.el) is obsolete.
 *** The new built-in command `clear' can scroll window contents out of sight.
 If provided with an optional non-nil argument, the scrollback contents will be cleared.
 
++++
 *** New buffer syntax '#<buffer-name>', which is equivalent to
 '#<buffer buffer-name>'.  This shorthand makes interacting with
 buffers from eshell more convenient.  Custom variable
 `eshell-buffer-shorthand', which has been broken for a while, has been
 removed.
 
++++
 *** By default, eshell "visual" program buffers (created by
 `eshell-visual-commands' and similar custom vars) are no longer killed
 when their processes die.  This fixes issues with short-lived commands
