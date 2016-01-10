@@ -1202,10 +1202,12 @@ to the special value `dragging' in the body of the form.
 has any effect.  (This change was made in Emacs 24.4 but was not
 advertised at the time.)
 
++++
 ** `indirect-function' does not signal `void-function' any more.
 This is mostly a bug-fix, since this change was missed back in 24.4 when
 symbol-function was changed not to signal `void-function' any more.
 
++++
 *** As a consequence, the second arg of `indirect-function' is now obsolete.
 
 ** Comint, term, and compile do not set the EMACS env var any more.
