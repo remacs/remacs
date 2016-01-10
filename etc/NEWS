@@ -990,40 +990,52 @@ The Lisp API of this package is still experimental.
 ** EUDC
 EUDC's LDAP backend has been improved.
 
++++
 *** EUDC supports LDAP-over-SSL URLs (ldaps://).
 
+---
 *** EUDC passes LDAP passwords through a pipe to the ldapsearch
 subprocess instead of on the command line.
 
+---
 *** EUDC handles LDAP wildcards automatically so the user shouldn't
 need to configure this manually anymore.
 
++++
 *** The LDAP configuration section of EUDC's manual has been
 rewritten.
 
 There have also been customization changes.
 
++++
 *** New custom variable `eudc-server-hotlist' to allow specifying
 multiple EUDC servers in init file.
 
++++
 *** Custom variable `eudc-inline-query-format' defaults to completing
 on email and firstname instead of surname.
 
+---
 *** Custom variable `eudc-expansion-overwrites-query' defaults to nil
 to avoid interfering with the kill ring.
 
++++
 *** Custom variable `eudc-inline-expansion-format' defaults to
 "Firstname Surname <mail-address>".
 
++++
 *** Custom variable `eudc-options-file' defaults to
 "~/.emacs.d/eudc-options".
 
+---
 *** New custom variable `ldap-ldapsearch-password-prompt-regexp' to
 allow overriding the regular expression that recognizes the ldapsearch
 command line's password prompt.
 
+---
 EUDC's BBDB backend now supports BBDB 3.
 
+---
 EUDC's PH backend (eudcb-ph.el) is obsolete.
 
 ** Eshell
