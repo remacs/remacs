@@ -4607,7 +4607,13 @@ mark_maybe_pointer (void *p)
     VALGRIND_MAKE_MEM_DEFINED (&p, sizeof (p));
 #endif
 
-  if (sizeof (Lisp_Object) == sizeof (void *) || !HAVE_MODULES)
+  if (
+#ifdef HAVE_MODULES
+      sizeof (Lisp_Object) == sizeof (void *)
+#else
+      true
+#endif
+     )
     {
       if (!maybe_lisp_pointer (p))
         return;
