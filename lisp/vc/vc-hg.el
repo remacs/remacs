@@ -397,7 +397,7 @@ Optional arg REVISION is a revision to annotate from."
   (concat
    "^\\(?: *[^ ]+ +\\)?\\([0-9]+\\) "   ;User and revision.
    "\\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\\)" ;Date.
-   "\\( [^:]+\\)?:"))                   ;Filename,
+   "\\(?: +\\([^:]+\\)\\)?:"))                        ;Filename.
 
 (defun vc-hg-annotate-time ()
   (when (looking-at vc-hg-annotate-re)
@@ -415,7 +415,7 @@ Optional arg REVISION is a revision to annotate from."
     (when (looking-at vc-hg-annotate-re)
       (if (match-beginning 3)
           (cons (match-string-no-properties 1)
-                (expand-file-name (substring (match-string-no-properties 3) 1)
+                (expand-file-name (match-string-no-properties 3)
                                   (vc-hg-root default-directory)))
         (match-string-no-properties 1)))))
 

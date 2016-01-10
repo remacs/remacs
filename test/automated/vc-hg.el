@@ -45,7 +45,7 @@
 
 (ert-deftest vc-hg-annotate-extract-revision-at-line-with-both ()
   (with-temp-buffer
-    (save-excursion (insert "philringnalda 218075 2014-11-28 CLOBBER:"))
+    (save-excursion (insert "philringnalda 218075 2014-11-28   CLOBBER:"))
     (should (equal (vc-hg-annotate-extract-revision-at-line)
                    (cons
                     "218075"
