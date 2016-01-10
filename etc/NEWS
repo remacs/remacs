@@ -1062,6 +1062,7 @@ make the new option `eshell-destroy-buffer-when-process-dies' non-nil.
 
 ** Browse-url
 
+---
 *** Support for the Conkeror web browser.
 
 ---
@@ -1114,11 +1115,13 @@ few or no entries have changed.
 ---
 *** gulp.el
 
+---
 *** landmark.el (moved to elpa.gnu.org)
 
 
 * New Modes and Packages in Emacs 25.1
 
+---
 ** pinentry.el allows GnuPG passphrase to be prompted through the
 minibuffer instead of a graphical dialog, depending on whether the gpg
 command is called from Emacs (i.e., INSIDE_EMACS environment variable
@@ -1127,28 +1130,35 @@ later) and Pinentry (0.9.5 or later).
 
 ** cl-generic.el provides CLOS-style multiple-dispatch generic functions.
 
+---
 ** scss-mode (a minor variant of css-mode)
 
+---
 ** let-alist is a new macro (and a package) that allows one to easily
 let-bind the values stored in an alist.
 
+---
 ** `tildify-mode' allows to automatically insert hard spaces as one
 types the text.  Breaking line after a single-character words is
 forbidden by Czech and Polish typography (and may be discouraged in
 other languages), so `auto-tildify-mode' makes it easier to create
 a typographically-correct documents.
 
+---
 ** The `seq' library adds sequence manipulation functions and macros
 that complement basic functions provided by subr.el.  All functions
 are prefixed with `seq-' and work on lists, strings and vectors.
 
+---
 ** The `map' library provides map-manipulation functions that work on
 alists, hash-table and arrays.  All functions are prefixed with
 `map-'.
 
+---
 ** The `thunk' library provides functions and macros to control the
 evaluation of forms.
 
+---
 ** js-jsx-mode (a minor variant of js-mode) provides indentation
 support for JSX, an XML-like syntax extension to ECMAScript.
 
@@ -1227,10 +1237,12 @@ group ID instead of `t'.
 any reference to a buffer position.  The 6th member of the mouse
 position list returned for such events is now nil.
 
+---
 ** Menu items in keymaps do not support the "key shortcut cache" any more.
 These slots used to hold key-shortcut data, but have been obsolete since
 Emacs-21.
 
+---
 ** Emacs no longer downcases the first letter of a system diagnostic
 when signaling a file error.  For example, it now reports "Permission
 denied" instead of "permission denied".  The old behavior was problematic
@@ -1276,6 +1288,7 @@ use [:multibyte:] instead.
 ** The `diff' command uses the unified format now.  To restore the old
 behavior, set `diff-switches' to `-c'.
 
+---
 ** `grep-template' and `grep-find-template' values don't include the
 --color argument anymore.  It's added at the <C> place holder position
 dynamically.  Any third-party code that changes these templates should
@@ -1301,6 +1314,7 @@ that happen, `unhandled-file-name-directory' now defaults to calling
 +++
 *** New vector QPattern.
 
+---
 ** syntax-propertize is now automatically called on-demand during forward
 parsing functions like `forward-sexp'.
 
@@ -1321,10 +1335,12 @@ Replaced by properties `cursor-intangible' and `cursor-sensor-functions',
 implemented by the new `cursor-intangible-mode' and
 `cursor-sensor-mode' minor modes.
 
++++
 ** New process type `pipe', which can be used in combination with the
 `:stderr' keyword of make-process to handle standard error output
 of subprocess.
 
++++
 ** New function `make-process' provides an alternative interface to
 `start-process'.  It allows programs to set process parameters such as
 process filter, sentinel, etc., through keyword arguments (similar to
@@ -1353,13 +1369,17 @@ buffers to allow certain parts of the text to be writable.
 
 ** `read-buffer' takes a new `predicate' argument.
 
++++
 ** Emacs Lisp now supports generators.
+See the "Generators" section of the ELisp manual for the details.
 
-** New finalizer facility for running code when objects
-   become unreachable.
++++
+** New finalizer facility for running code when objects become unreachable.
+See the "Finalizer Type" subsection in the ELisp manual for the
+details.
 
-** lexical closures can use (:documentation <form>) to build their docstring.
-It should be placed right where the docstring would be, and <form> is then
+** lexical closures can use (:documentation FORM) to build their docstring.
+It should be placed right where the docstring would be, and FORM is then
 evaluated (and should return a string) when the closure is built.
 
 ** define-inline provides a new way to define inlinable functions.
@@ -1430,6 +1450,7 @@ have side effects.
 ** New macro `with-file-modes', for evaluating expressions with default file
 permissions set to temporary values (e.g., for creating private files).
 
++++
 ** You can access the slots of structures using `cl-struct-slot-value'.
 
 ** Function `sort' can deal with vectors.
@@ -1442,6 +1463,7 @@ name.  The variable `system-name' is now obsolete.
 +++
 ** Function `write-region' no longer outputs "Wrote FILE" in batch mode.
 
+---
 ** If `pwd' is called with a prefix argument, insert the current default
 directory at point.
 
@@ -1542,11 +1564,16 @@ a directory file name.  It returns non-nil if the last character in
 the name is a directory separator character (forward slash on GNU and
 Unix systems, forward- or backslash on MS-Windows and MS-DOS).
 
+---
 ** ASCII approximations to curved quotes are put in standard-display-table
 if the terminal cannot display curved quotes.
 
++++
 ** Standard output and error streams now transliterate characters via
 standard-display-table, and encode output using locale-coding-system.
+To force a specific encoding, bind `coding-system-for-write' to the
+coding-system of your choice when invoking functions like `prin1' and
+`message'.
 
 +++
 ** New var `truncate-string-ellipsis' to choose how to indicate truncation.
@@ -1557,6 +1584,7 @@ This is used by Google's Native Client (NaCl).
 
 ** Miscellaneous name change
 
+---
 For consistency with the usual Emacs spelling, the Lisp variable
 `hfy-optimisations' has been renamed to `hfy-optimizations'.
 The old name should still work, as an obsolescent alias.
@@ -1567,22 +1595,30 @@ The old name should still work, as an obsolescent alias.
 *** Emacs can now draw horizontal scroll bars on some platforms that
 provide toolkit scroll bars, namely Gtk+, Lucid, Motif and Windows.
 Horizontal scroll bars are turned off by default.
+
 **** New function `horizontal-scroll-bars-available-p' telling whether
     horizontal scroll bars are available on the underlying system.
+
 **** New mode `horizontal-scroll-bar-mode' to toggle horizontal scroll
     bars on all existing and future frames.
+
 **** New function `toggle-horizontal-scroll-bar' to toggle horizontal
     scroll bars on the selected frame.
+
 **** New frame parameters `horizontal-scroll-bars' and
     `scroll-bar-height' to set horizontal scroll bars and their height
     for individual frames and in `default-frame-alist'.
+
 **** New functions `frame-scroll-bar-height' and
     `window-scroll-bar-height' return the height of horizontal scroll
     bars on a specific frame or window.
+
 **** `set-window-scroll-bars' now accepts five parameters where the last
     two specify height and type of the window's horizontal scroll bar.
+
 **** `window-scroll-bars' now returns type and sizes of horizontal scroll
     bars too.
+
 **** New buffer-local variables `horizontal-scroll-bar' and
     `scroll-bar-height'.
 
@@ -1649,6 +1685,7 @@ Those features have been deprecated in Gtk+ for a long time.
 
 ** Etags
 
++++
 *** etags no longer qualifies class members by default.
 
 By default, `etags' will not qualify class members for C-like
@@ -1664,11 +1701,13 @@ using -Q might make some class members become "unknown" to `M-.'
 (`xref-find-definitions'); if so, you can use `C-u M-.' to specify the
 qualified names by hand.
 
++++
 *** New language Ruby
 
 Names of modules, classes, methods, and functions are tagged.
 Overloaded operators are also tagged.
 
++++
 *** Improved support for Lua
 
 Etags now tags functions even if the "function" keyword follows some
@@ -1692,6 +1731,7 @@ of Windows starting with Windows 9X.
 +++
 ** Emacs running on MS-Windows now supports the daemon mode.
 
+---
 ** The byte counts in etags-generated TAGS files are now the same on
 MS-Windows as they are on other platforms.
 
@@ -1699,8 +1739,10 @@ MS-Windows as they are on other platforms.
 ** On OS X, configure creates a Cocoa ("Nextstep") build by default.
 Pass '--without-ns' to configure to create an X11 build, the old default.
 
+---
 ** OS X 10.5 or older is no longer supported.
 
+---
 ** OS X on PowerPC is no longer supported.
 
 ---
