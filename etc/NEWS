@@ -1171,6 +1171,7 @@ arguments.  The earlier behavior of silently supplying a nil to the
 last variable when there was an odd number of arguments has been
 eliminated.
 
++++
 ** `syntax-begin-function' is declared obsolete.
 Removed font-lock-beginning-of-syntax-function and the SYNTAX-BEGIN
 slot in font-lock-defaults.
