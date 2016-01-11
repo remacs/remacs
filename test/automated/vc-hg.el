@@ -34,8 +34,7 @@
     (should (equal (vc-hg-annotate-extract-revision-at-line)
                    (cons
                     "215"
-                    (expand-file-name "test/automated/CONTENTS"
-                                      source-directory))))))
+                    (expand-file-name "CONTENTS"))))))
 
 (ert-deftest vc-hg-annotate-extract-revision-at-line-with-user ()
   (with-temp-buffer
@@ -49,8 +48,7 @@
     (should (equal (vc-hg-annotate-extract-revision-at-line)
                    (cons
                     "218075"
-                    (expand-file-name "test/automated/CLOBBER"
-                                      source-directory))))))
+                    (expand-file-name "CLOBBER"))))))
 
 (ert-deftest vc-hg-annotate-time ()
   (with-temp-buffer
