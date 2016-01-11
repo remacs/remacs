@@ -5525,9 +5525,16 @@ garbage_collect_1 (void *end)
      don't let that cause a recursive GC.  */
   consing_since_gc = 0;
 
-  /* Save what's currently displayed in the echo area.  */
-  message_p = push_message ();
-  record_unwind_protect_void (pop_message_unwind);
+  /* Save what's currently displayed in the echo area.  Don't do that
+     if we are GC'ing because we've run out of memory, since
+     push_message will cons, and we might have no memory for that.  */
+  if (NILP (Vmemory_full))
+    {
+      message_p = push_message ();
+      record_unwind_protect_void (pop_message_unwind);
+    }
+  else
+    message_p = false;
 
   /* Save a copy of the contents of the stack, for debugging.  */
 #if MAX_SAVE_STACK > 0
@@ -5658,7 +5665,7 @@ garbage_collect_1 (void *end)
 	}
     }
 
-  if (garbage_collection_messages)
+  if (garbage_collection_messages && NILP (Vmemory_full))
     {
       if (message_p || minibuf_level > 0)
 	restore_message ();
