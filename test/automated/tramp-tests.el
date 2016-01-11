@@ -44,6 +44,7 @@
 (require 'vc-git)
 (require 'vc-hg)
 
+(autoload 'dired-uncache "dired")
 (declare-function tramp-find-executable "tramp-sh")
 (declare-function tramp-get-remote-path "tramp-sh")
 (declare-function tramp-get-remote-stat "tramp-sh")
@@ -1660,8 +1661,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 			  (list (file-name-nondirectory tmp-name2))))))
 	    ;; vc-git uses an own process sentinel, Tramp's sentinel
 	    ;; for flushing the cache isn't used.
-	    (with-parsed-tramp-file-name tmp-name1 nil
-	      (tramp-flush-directory-property v localname))
+	    (dired-uncache (concat (file-remote-p default-directory) "/"))
 	    (should (vc-registered (file-name-nondirectory tmp-name2)))))
 
       ;; Cleanup.
