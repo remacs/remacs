@@ -3210,7 +3210,8 @@ map_w32_filename (const char * name, const char ** pPath)
       return shortname;
     }
 
-  if (is_fat_volume (name, (const char **)&path)) /* truncate to 8.3 */
+  if (!fatal_error_in_progress	/* disable fancy processing during crash */
+      && is_fat_volume (name, (const char **)&path)) /* truncate to 8.3 */
     {
       register int left = 8;	/* maximum number of chars in part */
       register int extn = 0;	/* extension added? */
