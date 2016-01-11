@@ -6641,16 +6641,22 @@ comment at the start of cc-engine.el for more info."
     res))
 
 (defun c-forward-annotation ()
-  ;; Used for Java code only at the moment.  Assumes point is on the
-  ;; @, moves forward an annotation.  returns nil if there is no
-  ;; annotation at point.
-  (and (looking-at "@")
-       (progn (forward-char) t)
-       (c-forward-type)
-       (progn (c-forward-syntactic-ws) t)
-       (if (looking-at "(")
-	   (c-go-list-forward)
-	 t)))
+  ;; Used for Java code only at the moment.  Assumes point is on the @, moves
+  ;; forward an annotation and returns t.  Leaves point unmoved and returns
+  ;; nil if there is no annotation at point.
+  (let ((pos (point)))
+    (or
+     (and (looking-at "@")
+	  (not (looking-at c-keywords-regexp))
+	  (progn (forward-char) t)
+	  (looking-at c-symbol-key)
+	  (progn (goto-char (match-end 0))
+		 (c-forward-syntactic-ws)
+		 t)
+	  (if (looking-at "(")
+	      (c-go-list-forward)
+	    t))
+     (progn (goto-char pos) nil))))
 
 (defmacro c-pull-open-brace (ps)
   ;; Pull the next open brace from PS (which has the form of paren-state),
@@ -6959,9 +6965,8 @@ comment at the start of cc-engine.el for more info."
 	  (when (or (looking-at c-prefix-spec-kwds-re) ;FIXME!!! includes auto
 		    (and (c-major-mode-is 'java-mode)
 			 (looking-at "@[A-Za-z0-9]+")))
-	    (save-match-data
-	      (if (looking-at c-typedef-key)
-		(setq at-typedef t)))
+	    (if (save-match-data (looking-at c-typedef-key))
+		(setq at-typedef t))
 	    (setq kwd-sym (c-keyword-sym (match-string 1)))
 	    (save-excursion
 	      (c-forward-keyword-clause 1)
