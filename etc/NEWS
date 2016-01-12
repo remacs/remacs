@@ -1762,6 +1762,12 @@ this has no effect.
 ** The new function 'w32-application-type' returns the type of an
 MS-Windows application given the name of its executable program file.
 
+** New variable `w32-pipe-buffer-size'.
+It can be used to tune the size of the buffer of pipes created for
+communicating with subprocesses, when the program run by a subprocess
+exhibits unusual buffering behavior.  Default is zero, which lets the
+OS use its default size.
+
 
 ----------------------------------------------------------------------
 This file is part of GNU Emacs.
