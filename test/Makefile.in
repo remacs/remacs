@@ -133,8 +133,7 @@ $(foreach test,${TESTS},$(eval $(call test_template,${test})))
 ## have to run Emacs for every make invocation, and it might not be
 ## available during clean.
 -include make-test-deps.mk
-
-## Re-run all the tests every time.
+## Rerun default tests.
 check:
 	-@for f in $(LOGFILES); do test ! -f $$f || mv $$f $$f~; done
 	@${MAKE} check-maybe

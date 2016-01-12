@@ -257,6 +257,7 @@ routine.")
 
 (defvar opascal-mode-syntax-table
   (let ((st (make-syntax-table)))
+    (modify-syntax-entry ?\\ "." st)    ; bug#22224
     ;; Strings.
     (modify-syntax-entry ?\" "\"" st)
     (modify-syntax-entry ?\' "\"" st)

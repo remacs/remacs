@@ -5803,11 +5803,14 @@ you probably should set this to -2 in that buffer.  */);
   DEFVAR_PER_BUFFER ("selective-display", &BVAR (current_buffer, selective_display),
 		     Qnil,
 		     doc: /* Non-nil enables selective display.
+
 An integer N as value means display only lines
 that start with less than N columns of space.
+
 A value of t means that the character ^M makes itself and
 all the rest of the line invisible; also, when saving the buffer
-in a file, save the ^M as a newline.  */);
+in a file, save the ^M as a newline.  This usage is obsolete; use
+overlays or text properties instead.  */);
 
   DEFVAR_PER_BUFFER ("selective-display-ellipses",
 		     &BVAR (current_buffer, selective_display_ellipses),
@@ -6201,11 +6204,11 @@ all windows or just the selected window.
 
 Lisp programs may give this variable certain special values:
 
-- A value of \\='lambda (literally) enables Transient Mark mode temporarily.
-  It is disabled again after any subsequent action that would
+- The symbol `lambda' enables Transient Mark mode temporarily.
+  The mode is disabled again after any subsequent action that would
   normally deactivate the mark (e.g. buffer modification).
 
-- A value of (only . OLDVAL) enables Transient Mark mode
+- The pair (only . OLDVAL) enables Transient Mark mode
   temporarily.  After any subsequent point motion command that is
   not shift-translated, or any other action that would normally
   deactivate the mark (e.g. buffer modification), the value of

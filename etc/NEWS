@@ -148,6 +148,10 @@ so if you want to use it, you can always take a copy from an older Emacs.
 Various resolutions are available as etc/images/icons/hicolor/*/apps/emacs.png.
 The old Emacs logo icons are available as `emacs23.png' in the same location.
 
+** New make target `check-expensive' to run additional tests.
+This includes all tests which run via "make check", plus additional
+tests which take more time to perform.
+
 
 * Startup Changes in Emacs 25.1
 

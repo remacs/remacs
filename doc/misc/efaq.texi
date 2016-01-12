@@ -3308,10 +3308,10 @@ available, and then Emacs can automatically download and install the
 packages that you select.  @xref{Packages,,, emacs, The GNU Emacs Manual}.
 
 There are other, non-GNU, Emacs Lisp package servers, including:
-@uref{http://melpa.milkbox.net, MELPA}; and
-@uref{http://marmalade-repo.org, Marmalade}.  To use additional
-package servers, customize the @code{package-archives} variable.
-Be aware that installing a package can run arbitrary code, so only add
+@uref{http://melpa.org/, MELPA}; and
+@uref{https://marmalade-repo.org/, Marmalade}.  To use additional
+package servers, customize the @code{package-archives} variable.  Be
+aware that installing a package can run arbitrary code, so only add
 sources that you trust.
 
 The @uref{https://lists.gnu.org/mailman/listinfo/gnu-emacs-sources,

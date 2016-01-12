@@ -1174,9 +1174,10 @@ the remaining input.")
 
 (defun xscheme-prompt-for-expression-exit ()
   (interactive)
-  (if (eq (xscheme-region-expression-p (point-min) (point-max)) 'one)
+  (if (eq (xscheme-region-expression-p (minibuffer-prompt-end) (point-max))
+	  'one)
       (exit-minibuffer)
-      (error "input must be a single, complete expression")))
+    (error "Input must be a single, complete expression")))
 
 (defun xscheme-region-expression-p (start end)
   (save-excursion

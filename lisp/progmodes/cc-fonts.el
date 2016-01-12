@@ -1205,6 +1205,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; Same as `max-type-decl-*', but used when we're before
 	  ;; `token-pos'.
 	  (max-type-decl-end-before-token 0)
+	  ;; End of <..> construct which has had c-<>-arg-sep c-type
+	  ;; properties set within it.
+	  (max-<>-end 0)
 	  ;; Set according to the context to direct the heuristics for
 	  ;; recognizing C++ templates.
 	  c-restricted-<>-arglists
@@ -1346,6 +1349,28 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	    ;; Now analyze the construct.
 	    (setq decl-or-cast (c-forward-decl-or-cast-1
 				match-pos context last-cast-end))
+
+	    ;; Ensure that c-<>-arg-sep c-type properties are in place on the
+	    ;; commas separating the arguments inside template/generic <..>s.
+	    (when (and (eq (char-before match-pos) ?<)
+		       (> match-pos max-<>-end))
+	      (save-excursion
+		(goto-char match-pos)
+		(c-backward-token-2)
+		(if (and
+		     (eq (char-after) ?<)
+		     (let ((c-restricted-<>-arglists
+			    (save-excursion
+			      (c-backward-token-2)
+			      (and
+			       (not (looking-at c-opt-<>-sexp-key))
+			       (progn (c-backward-syntactic-ws)
+				      (memq (char-before) '(?\( ?,)))
+			       (not (eq (c-get-char-property (1- (point))
+							     'c-type)
+					'c-decl-arg-start))))))
+		       (c-forward-<>-arglist nil)))
+		    (setq max-<>-end (point)))))
 
 	    (cond
 	     ((eq decl-or-cast 'cast)

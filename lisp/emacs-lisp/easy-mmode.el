@@ -152,12 +152,11 @@ For example, you could write
     ...BODY CODE...)"
   (declare (doc-string 2)
            (debug (&define name string-or-null-p
-                           [&optional [&not keywordp] sexp
-                            &optional [&not keywordp] sexp
-                            &optional [&not keywordp] sexp]
-                           [&rest [keywordp sexp]]
-                           def-body))
-           (indent 1))
+			   [&optional [&not keywordp] sexp
+			    &optional [&not keywordp] sexp
+			    &optional [&not keywordp] sexp]
+			   [&rest [keywordp sexp]]
+			   def-body)))
 
   ;; Allow skipping the first three args.
   (cond

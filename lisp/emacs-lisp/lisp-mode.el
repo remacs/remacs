@@ -131,9 +131,10 @@
                               t))
 			   "\\s-+\\(" lisp-mode-symbol-regexp "\\)"))
 	 2)
-   ;; For `defvar', we ignore (defvar FOO) constructs.
+   ;; For `defvar'/`defvar-local', we ignore (defvar FOO) constructs.
    (list (purecopy "Variables")
-	 (purecopy (concat "^\\s-*(defvar\\s-+\\(" lisp-mode-symbol-regexp "\\)"
+	 (purecopy (concat "^\\s-*(defvar\\(?:-local\\)?\\s-+\\("
+                           lisp-mode-symbol-regexp "\\)"
 			   "[[:space:]\n]+[^)]"))
 	 1)
    (list (purecopy "Types")
