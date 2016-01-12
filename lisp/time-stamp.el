@@ -121,9 +121,12 @@ If nil, no notification is given."
   :group 'time-stamp)
 
 (defcustom time-stamp-time-zone nil
-  "If non-nil, a string naming the timezone to be used by \\[time-stamp].
-Format is the same as that used by the environment variable TZ on your system."
-  :type '(choice (const nil) string)
+  "The time zone to be used by \\[time-stamp].
+Its format is that of the ZONE argument of the `format-time-string' function,"
+  :type '(choice (const :tag "Emacs local time" nil)
+                 (const :tag "Universal Time" t)
+                 (const :tag "system wall clock time" wall)
+                 (string :tag "TZ environment variable value"))
   :group 'time-stamp
   :version "20.1")
 ;;;###autoload(put 'time-stamp-time-zone 'safe-local-variable 'string-or-null-p)
@@ -412,6 +415,8 @@ With ARG, turn time stamping on if and only if arg is positive."
 	  (> (prefix-numeric-value arg) 0)))
   (message "time-stamp is now %s." (if time-stamp-active "active" "off")))
 
+(defun time-stamp--format (format time)
+  (format-time-string format time time-stamp-time-zone))
 
 (defun time-stamp-string (&optional ts-format)
   "Generate the new string to be inserted by \\[time-stamp].
@@ -420,8 +425,7 @@ format the string."
   (or ts-format
       (setq ts-format time-stamp-format))
   (if (stringp ts-format)
-      (format-time-string (time-stamp-string-preprocess ts-format)
-                          nil time-stamp-time-zone)
+      (time-stamp--format (time-stamp-string-preprocess ts-format) nil)
     ;; handle version 1 compatibility
     (cond ((or (eq time-stamp-old-format-warn 'error)
 	       (and (eq time-stamp-old-format-warn 'ask)
@@ -515,32 +519,32 @@ and all `time-stamp-format' compatibility."
 	  "%%")
 	 ((eq cur-char ?a)		;day of week
 	  (if change-case
-	      (format-time-string "%#a" time)
+	      (time-stamp--format "%#a" time)
 	    (or alt-form (not (string-equal field-width ""))
 		(time-stamp-conv-warn "%a" "%:a"))
 	    (if (and alt-form (not (string-equal field-width "")))
 		""			;discourage "%:3a"
-	      (format-time-string "%A" time))))
+	      (time-stamp--format "%A" time))))
 	 ((eq cur-char ?A)
 	  (if alt-form
-	      (format-time-string "%A" time)
+	      (time-stamp--format "%A" time)
 	    (or change-case (not (string-equal field-width ""))
 		(time-stamp-conv-warn "%A" "%#A"))
-	    (format-time-string "%#A" time)))
+	    (time-stamp--format "%#A" time)))
 	 ((eq cur-char ?b)		;month name
 	  (if change-case
-	      (format-time-string "%#b" time)
+	      (time-stamp--format "%#b" time)
 	    (or alt-form (not (string-equal field-width ""))
 		(time-stamp-conv-warn "%b" "%:b"))
 	    (if (and alt-form (not (string-equal field-width "")))
 		""			;discourage "%:3b"
-	    (format-time-string "%B" time))))
+	    (time-stamp--format "%B" time))))
 	 ((eq cur-char ?B)
 	  (if alt-form
-	      (format-time-string "%B" time)
+	      (time-stamp--format "%B" time)
 	    (or change-case (not (string-equal field-width ""))
 		(time-stamp-conv-warn "%B" "%#B"))
-	    (format-time-string "%#B" time)))
+	    (time-stamp--format "%#B" time)))
 	 ((eq cur-char ?d)		;day of month, 1-31
 	  (time-stamp-do-number cur-char alt-form field-width time))
 	 ((eq cur-char ?H)		;hour, 0-23
@@ -554,27 +558,27 @@ and all `time-stamp-format' compatibility."
 	 ((eq cur-char ?p)		;am or pm
 	  (or change-case
 	      (time-stamp-conv-warn "%p" "%#p"))
-	  (format-time-string "%#p" time))
+	  (time-stamp--format "%#p" time))
 	 ((eq cur-char ?P)		;AM or PM
-	  (format-time-string "%p" time))
+	  (time-stamp--format "%p" time))
 	 ((eq cur-char ?S)		;seconds, 00-60
 	  (time-stamp-do-number cur-char alt-form field-width time))
 	 ((eq cur-char ?w)		;weekday number, Sunday is 0
-	  (format-time-string "%w" time))
+	  (time-stamp--format "%w" time))
 	 ((eq cur-char ?y)		;year
 	  (or alt-form (not (string-equal field-width ""))
 	      (time-stamp-conv-warn "%y" "%:y"))
-	  (string-to-number (format-time-string "%Y" time)))
+	  (string-to-number (time-stamp--format "%Y" time)))
 	 ((eq cur-char ?Y)		;4-digit year, new style
-	  (string-to-number (format-time-string "%Y" time)))
+	  (string-to-number (time-stamp--format "%Y" time)))
 	 ((eq cur-char ?z)		;time zone lower case
 	  (if change-case
 	      ""			;discourage %z variations
-	    (format-time-string "%#Z" time)))
+	    (time-stamp--format "%#Z" time)))
 	 ((eq cur-char ?Z)
 	  (if change-case
-	      (format-time-string "%#Z" time)
-	    (format-time-string "%Z" time)))
+	      (time-stamp--format "%#Z" time)
+	    (time-stamp--format "%Z" time)))
 	 ((eq cur-char ?f)		;buffer-file-name, base name only
 	  (if buffer-file-name
 	      (file-name-nondirectory buffer-file-name)
@@ -634,7 +638,7 @@ width specification or \"\".  TIME is the time to convert."
 			       (format "%%:%c" format-char)))
     (if (and alt-form (not (string-equal field-width "")))
 	""				;discourage "%:2d" and the like
-      (string-to-number (format-time-string format-string time)))))
+      (string-to-number (time-stamp--format format-string time)))))
 
 (defvar time-stamp-conversion-warn t
   "Warn about soon-to-be-unsupported forms in `time-stamp-format'.
