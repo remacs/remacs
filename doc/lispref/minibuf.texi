@@ -1818,13 +1818,19 @@ emacs, The GNU Emacs Manual}.  Its argument list and return value are
 the same as for @code{display-sort-function}.
 @end table
 
-@defun completion-table-dynamic function
+@defun completion-table-dynamic function &optional switch-buffer
 This function is a convenient way to write a function that can act as
 a programmed completion function.  The argument @var{function} should be
 a function that takes one argument, a string, and returns an alist of
-possible completions of it.  You can think of
+possible completions of it.  It is allowed to ignore the argument and
+return a full list of all possible completions.  You can think of
 @code{completion-table-dynamic} as a transducer between that interface
 and the interface for programmed completion functions.
+
+If the optional argument @var{switch-buffer} is non-@code{nil}, and
+completion is performed in the minibuffer, @var{function} will be
+called with current buffer set to the buffer from which the minibuffer
+was entered.
 @end defun
 
 @defun completion-table-with-cache function &optional ignore-case

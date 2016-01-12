@@ -1225,10 +1225,12 @@ Use `save-mark-and-excursion' if you want the old behavior.
 ** `read-buffer' and `read-buffer-function' can now be called with a 4th
 argument (`predicate').
 
-** completion-table-dynamic stays in the minibuffer.
++++
+** `completion-table-dynamic' by default stays in the minibuffer.
+The minibuffer will be the current buffer when the function is called.
 If you want the old behavior of calling the function in the buffer
-from which the minibuffer was entered, call it with the new argument
-`switch-buffer'.
+from which the minibuffer was entered, use the new argument
+`switch-buffer' to `completion-table-dynamic'.
 
 ** window-configurations no longer record the buffers' marks.
 
