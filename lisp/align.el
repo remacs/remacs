@@ -888,15 +888,15 @@ on the format of these lists."
       (let ((sec-first end)
 	    (sec-last beg))
 	(align-region beg end
-		      (or exclude-rules
-			  align-mode-exclude-rules-list
-			  align-exclude-rules-list) nil
 		      separator
-		      (function
-		       (lambda (b e mode)
-			 (when (and mode (listp mode))
-			   (setq sec-first (min sec-first b)
-				 sec-last  (max sec-last e))))))
+		      nil ; rules
+                      (or exclude-rules
+			  align-mode-exclude-rules-list
+			  align-exclude-rules-list)
+                      (lambda (b e mode)
+                        (when (consp mode)
+                          (setq sec-first (min sec-first b)
+                                sec-last  (max sec-last e)))))
 	(if (< sec-first sec-last)
 	    (align-region sec-first sec-last 'entire
 			  (or rules align-mode-rules-list align-rules-list)

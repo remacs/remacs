@@ -1377,8 +1377,8 @@ files (recursively) under a directory.
 
 +++
 ** New variable `inhibit-message', when bound to non-nil, inhibits
-`message' and related functions from displaying messages the Echo
-Area.  The output is still logged to the *Messages* buffer.
+`message' and related functions from displaying messages in the echo
+area.  The output is still logged to the *Messages* buffer.
 
 +++
 ** A new text property `inhibit-read-only' can be used in read-only
