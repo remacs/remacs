@@ -945,16 +945,36 @@ fitting for use in money calculations
 ---
 *** Factorial works with non-integer inputs.
 
-** HideIfDef mode now support full C/C++ expressions, argumented macro
-expansions, interactive macro evaluation and automatic scanning of
-#defined symbols.
+** Hide-IfDef mode
 
-*** New custom variable `hide-ifdef-header-regexp' to define C/C++ header file
-name patterns.  Default case-insensitive .h, .hh, .hpp, .hxx, and .h++.
+---
+*** Hide-IfDef mode now support full C/C++ expressions in macros,
+macro argument expansion, interactive macro evaluation and automatic
+scanning of #define'd symbols.
+
+---
+*** New command `hif-evaluate-macro', bound to `C-c @ e', displays the
+result of evaluating a macro.
+
+---
+*** New command `hif-clear-all-ifdef-define', bound to `C-c @ C', clears
+all defined symbols in `hide-ifdef-env'.
+
+---
+*** New custom variable `hide-ifdef-header-regexp' to define C/C++ header
+file name patterns.  Defaults to files whose extension is one of `.h',
+`.hh', `.hpp', `.hxx', or `.h++', matched case-insensitively.
+
+---
 *** New custom variable `hide-ifdef-expand-reinclusion-protection' to prevent
-reinclusion protected header files from being fully hidden.
+reinclusion protected (a.k.a. "idempotent") header files from being hidden.
+(This could happen when an idempotent header file is visited again,
+when its guard symbol is already defined.)  Defaults to `t'.
+
+---
 *** New custom variable `hide-ifdef-exclude-define-regexp' to define symbol
-name patterns (e.g. all "FOR_DOXYGEN_ONLY_*") to be excluded.
+name patterns (e.g. all "FOR_DOXYGEN_ONLY_*") to be ignored when
+looking for macro definitions.  By default, no symbols are ignored.
 
 ** TeX mode
 
@@ -967,30 +987,47 @@ use PDF instead of DVI.
 `prettify-symbols-mode' in a tex-mode buffer, \alpha ... \omega, and
 many other math macros are displayed using unicode characters.
 
-** whitespace-mode: new 'big-indent style highlighting too much indentation.
-By default, 32 spaces and four TABs are considered to be too much but
-`whitespace-big-indent-regexp' can be configured to change that.
++++
+** New `big-indent' style in `whitespace-mode' highlights deep indentation.
+By default, 32 consecutive spaces or four consecutive TABs are
+considered to be too deep, but the new variable
+`whitespace-big-indent-regexp' can be customized to change that.
 
-** tildify: `tildify-space-string', `tildify-pattern', and
-`tildify-foreach-region-function' variables added making
+---
+** New options in `tildify-mode'.
+New options `tildify-space-string', `tildify-pattern', and
+`tildify-foreach-region-function' variables make
 `tildify-string-alist', `tildify-pattern-alist', and
 `tildify-ignored-environments-alist' variables (as well as a few
 helper functions) obsolete.
 
-** xref
-The new package provides generic framework and new commands to find
-and move to definitions, as well as pop back to the original location.
+** New package Xref replaces Etags's front-end and UI
 
-*** New key bindings
-`xref-find-definitions' replaces `find-tag' and provides an interface
-to pick one destination among several.  Hence, `tags-loop-continue' is
-unbound.  `xref-pop-marker-stack' replaces `pop-tag-mark', but uses an
-easier binding, which is now unoccupied (`M-,').
+The new package Xref provides a generic framework and new commands to
+find and move to definitions of functions, macros, data structures
+etc., as well as go back to the location where you were before moving
+to a definition.  It supersedes and obsoletes many Etags commands,
+while still using the etags.el code that reads the TAGS tables as one
+of its back-ends.
+
+The command `xref-find-definitions' replaces `find-tag' and provides
+an interface to pick one definition among several.
+`tags-loop-continue' is now unbound.  `xref-pop-marker-stack' replaces
+`pop-tag-mark', but has a keybinding (`M-,'), unlike `pop-tag-mark'.
+
 `xref-find-definitions-other-window' replaces `find-tag-other-window'.
 `xref-find-definitions-other-frame' replaces `find-tag-other-frame'.
 `xref-find-apropos' replaces `find-tag-regexp'.
 
+As a result of this, the following commands are now obsolete:
+`find-tag-other-window', `find-tag-other-frame', `find-tag-regexp',
+`tags-apropos', and `tags-loop-continue'.
+
+The framework's API is still experimental and can change in major,
+backward-incompatible ways.
+
 *** New variables
+
 `find-tag-marker-ring-length' is now an obsolete alias for
 `xref-marker-ring-length'.  `find-tag-marker-ring' is now an obsolete
 alias for a private variable.  `xref-push-marker-stack' and
@@ -1000,11 +1037,6 @@ alias for a private variable.  `xref-push-marker-stack' and
 *** `xref-find-definitions' and `describe-function' now display
 information about mode local overrides (defined by cedet/mode-local.el
 `define-overloadable-function' `define-mode-local-overrides').
-
-** etags
-As a result of the above, these commands are now obsolete:
-`find-tag-other-window', `find-tag-other-frame', `find-tag-regexp',
-`tags-apropos' and `tags-loop-continue'.
 
 ** EUDC
 EUDC's LDAP backend has been improved.
