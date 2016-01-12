@@ -1378,7 +1378,7 @@ The preference is a float determined from `shr-prefer-media-type'."
         (start (point)))
     (unless url
       (setq url (car (shr--extract-best-source dom))))
-    (if image
+    (if (> (length image) 0)
         (shr-tag-img nil image)
       (shr-insert " [video] "))
     (shr-urlify start (shr-expand-url url))))

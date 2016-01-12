@@ -2239,6 +2239,7 @@ See also `toggle-frame-maximized'."
         overline-margin
         line-prefix
         wrap-prefix
+        truncate-lines
         bidi-paragraph-direction
         bidi-display-reordering))
 

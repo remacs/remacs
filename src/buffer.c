@@ -6201,7 +6201,7 @@ all windows or just the selected window.
 
 Lisp programs may give this variable certain special values:
 
-- A value of `lambda' enables Transient Mark mode temporarily.
+- A value of \\='lambda (literally) enables Transient Mark mode temporarily.
   It is disabled again after any subsequent action that would
   normally deactivate the mark (e.g. buffer modification).
 
