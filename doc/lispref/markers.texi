@@ -576,7 +576,7 @@ If an editor command sets this variable non-@code{nil}, then the editor
 command loop deactivates the mark after the command returns (if
 Transient Mark mode is enabled).  All the primitives that change the
 buffer set @code{deactivate-mark}, to deactivate the mark when the
-command is finished.
+command is finished.  Setting this variable makes it buffer-local.
 
 To write Lisp code that modifies the buffer without causing
 deactivation of the mark at the end of the command, bind

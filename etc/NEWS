@@ -1232,11 +1232,14 @@ If you want the old behavior of calling the function in the buffer
 from which the minibuffer was entered, use the new argument
 `switch-buffer' to `completion-table-dynamic'.
 
+---
 ** window-configurations no longer record the buffers' marks.
 
+---
 ** inhibit-modification-hooks now also inhibits lock-file checks, as well as
 active region handling.
 
++++
 ** deactivate-mark is now buffer-local.
 
 ** `cl-the' now asserts that its argument is of the given type.
