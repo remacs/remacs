@@ -3,11 +3,11 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2015-12-20.12}
+\def\texinfoversion{2016-01-11.19}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-% 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015
+% 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016
 % Free Software Foundation, Inc.
 %
 % This texinfo.tex file is free software: you can redistribute it and/or
@@ -9428,6 +9428,45 @@ directory should work if nowhere else does.}
   \global\righthyphenmin = #3\relax
 }
 
+% Get input by bytes instead of by UTF-8 codepoints for XeTeX and LuaTeX, 
+% otherwise the encoding support is completely broken.
+\ifx\XeTeXrevision\thisisundefined
+\else
+\XeTeXdefaultencoding "bytes"  % For subsequent files to be read
+\XeTeXinputencoding "bytes"  % Effective in texinfo.tex only
+% Unfortunately, there seems to be no corresponding XeTeX command for
+% output encoding.  This is a problem for auxiliary index and TOC files.
+% The only solution would be perhaps to write out @U{...} sequences in
+% place of UTF-8 characters.
+\fi
+
+\ifx\luatexversion\thisisundefined
+\else
+\directlua{
+local utf8_char, byte, gsub = unicode.utf8.char, string.byte, string.gsub
+local function convert_char (char)
+  return utf8_char(byte(char))
+end
+
+local function convert_line (line)
+  return gsub(line, ".", convert_char)
+end
+
+callback.register("process_input_buffer", convert_line)
+
+local function convert_line_out (line)
+  local line_out = ""
+  for c in string.utfvalues(line) do
+     line_out = line_out .. string.char(c)
+  end
+  return line_out
+end
+
+callback.register("process_output_buffer", convert_line_out)
+}
+\fi
+
+
 % Helpers for encodings.
 % Set the catcode of characters 128 through 255 to the specified number.
 %
@@ -9452,6 +9491,14 @@ directory should work if nowhere else does.}
 %
 \def\documentencoding{\parseargusing\filenamecatcodes\documentencodingzzz}
 \def\documentencodingzzz#1{%
+  % Get input by bytes instead of by UTF-8 codepoints for XeTeX,
+  % otherwise the encoding support is completely broken.
+  % This settings is for the document root file.
+  \ifx\XeTeXrevision\thisisundefined
+  \else
+    \XeTeXinputencoding "bytes"
+  \fi
+  %
   % Encoding being declared for the document.
   \def\declaredencoding{\csname #1.enc\endcsname}%
   %
@@ -11004,9 +11051,20 @@ directory should work if nowhere else does.}
 {@catcode`@^=7 @catcode`@^^M=13%
 @gdef@eatinput input texinfo#1^^M{@fixbackslash}}
 
+% Emergency active definition of newline, in case an active newline token
+% appears by mistake.
+{@catcode`@^=7 @catcode13=13%
+@gdef@enableemergencynewline{%
+  @gdef^^M{%
+    @par%
+    %<warning: active newline>@par%
+}}}
+
+
 @gdef@fixbackslash{%
   @ifx\@eatinput @let\ = @ttbackslash @fi
   @catcode13=5 % regular end of line
+  @enableemergencynewline
   @let@c=@texinfoc
   % Also turn back on active characters that might appear in the input
   % file name, in case not using a pre-dumped format.
