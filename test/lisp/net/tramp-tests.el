@@ -44,6 +44,7 @@
 (require 'vc-git)
 (require 'vc-hg)
 
+(autoload 'dired-uncache "dired")
 (declare-function tramp-find-executable "tramp-sh")
 (declare-function tramp-get-remote-path "tramp-sh")
 (declare-function tramp-get-remote-stat "tramp-sh")
@@ -1654,6 +1655,9 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	       (vc-register
 		nil (list (car vc-handled-backends)
 			  (list (file-name-nondirectory tmp-name2))))))
+	    ;; vc-git uses an own process sentinel, Tramp's sentinel
+	    ;; for flushing the cache isn't used.
+	    (dired-uncache (concat (file-remote-p default-directory) "/"))
 	    (should (vc-registered (file-name-nondirectory tmp-name2)))))
 
       ;; Cleanup.
@@ -1776,14 +1780,6 @@ Several special characters do not work properly there."
   (with-parsed-tramp-file-name
       (file-truename tramp-test-temporary-file-directory) nil
     (string-match "^HP-UX" (tramp-get-connection-property v "uname" ""))))
-
-(defun tramp--test-darwin-p ()
-  "Check, whether the remote host runs Mac OS X.
-Several special characters do not work properly there."
-  ;; We must refill the cache.  `file-truename' does it.
-  (with-parsed-tramp-file-name
-      (file-truename tramp-test-temporary-file-directory) nil
-    (string-match "^Darwin" (tramp-get-connection-property v "uname" ""))))
 
 (defun tramp--test-check-files (&rest files)
   "Run a simple but comprehensive test over every file in FILES."
@@ -2030,16 +2026,15 @@ Use the `ls' command."
 
 (defun tramp--test-utf8 ()
   "Perform the test in `tramp-test32-utf8*'."
-  (tramp--instrument-test-case 10
   (let ((coding-system-for-read 'utf-8)
 	(coding-system-for-write 'utf-8)
 	(file-name-coding-system 'utf-8))
     (tramp--test-check-files
      (unless (tramp--test-hpux-p) "Γυρίστε το Γαλαξία με Ώτο Στοπ")
-     (unless (or (tramp--test-hpux-p) (tramp--test-darwin-p))
+     (unless (tramp--test-hpux-p)
        "أصبح بوسعك الآن تنزيل نسخة كاملة من موسوعة ويكيبيديا العربية لتصفحها بلا اتصال بالإنترنت")
      "银河系漫游指南系列"
-     "Автостопом по гала́ктике"))))
+     "Автостопом по гала́ктике")))
 
 (ert-deftest tramp-test32-utf8 ()
   "Check UTF8 encoding in file names and file contents."

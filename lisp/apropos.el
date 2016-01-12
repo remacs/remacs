@@ -676,6 +676,10 @@ the output includes key-bindings of commands."
 	;; (autoload (push (cdr x) autoloads))
 	(`require (push (cdr x) requires))
 	(`provide (push (cdr x) provides))
+        (`t nil) ; Skip "was an autoload" entries.
+        ;; FIXME: Print information about each individual method: both
+        ;; its docstring and specializers (bug#21422).
+        (`cl-defmethod (push (cadr x) provides))
 	(_ (push (or (cdr-safe x) x) symbols))))
     (let ((apropos-pattern "")) ;Dummy binding for apropos-symbols-internal.
       (apropos-symbols-internal

@@ -56,6 +56,8 @@
   (require 'custom)
   (require 'format-spec)
   (require 'shell)
+  ;; Introduced in Emacs 23.2.
+  (require 'ucs-normalize nil 'noerror)
 
   (require 'trampver)
   (require 'tramp-loaddefs)

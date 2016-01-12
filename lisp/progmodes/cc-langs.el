@@ -3251,6 +3251,19 @@ way."
   objc t)
 (c-lang-defvar c-type-decl-end-used (c-lang-const c-type-decl-end-used))
 
+(c-lang-defconst c-maybe-decl-faces
+  "List of faces that might be put at the start of a type when
+`c-font-lock-declarations' runs.  This must be evaluated (with `eval') at
+runtime to get the actual list of faces.  This ensures that face name
+aliases in Emacs are resolved."
+  t '(list nil
+	   font-lock-type-face
+	   c-reference-face-name
+	   font-lock-keyword-face)
+  java (append (c-lang-const c-maybe-decl-faces)
+	       '(font-lock-preprocessor-face)))
+(c-lang-defvar c-maybe-decl-faces (c-lang-const c-maybe-decl-faces))
+
 
 ;;; Wrap up the `c-lang-defvar' system.
 

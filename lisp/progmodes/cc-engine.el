@@ -5688,8 +5688,8 @@ comment at the start of cc-engine.el for more info."
 	(c-backward-token-2)
 	(setq c-restricted-<>-arglists
 	     (and (not (looking-at c-opt-<>-sexp-key))
-		  (progn (c-backward-syntactic-ws) ; to < or ,
-			 (and (memq (char-before) '(?< ?,))
+		  (progn (c-backward-syntactic-ws) ; to ( or ,
+			 (and (memq (char-before) '(?\( ?,)) ; what about <?
 			      (not (eq (c-get-char-property (point) 'c-type)
 				       'c-decl-arg-start)))))))
       (or (c-forward-<>-arglist nil)
@@ -6641,16 +6641,22 @@ comment at the start of cc-engine.el for more info."
     res))
 
 (defun c-forward-annotation ()
-  ;; Used for Java code only at the moment.  Assumes point is on the
-  ;; @, moves forward an annotation.  returns nil if there is no
-  ;; annotation at point.
-  (and (looking-at "@")
-       (progn (forward-char) t)
-       (c-forward-type)
-       (progn (c-forward-syntactic-ws) t)
-       (if (looking-at "(")
-	   (c-go-list-forward)
-	 t)))
+  ;; Used for Java code only at the moment.  Assumes point is on the @, moves
+  ;; forward an annotation and returns t.  Leaves point unmoved and returns
+  ;; nil if there is no annotation at point.
+  (let ((pos (point)))
+    (or
+     (and (looking-at "@")
+	  (not (looking-at c-keywords-regexp))
+	  (progn (forward-char) t)
+	  (looking-at c-symbol-key)
+	  (progn (goto-char (match-end 0))
+		 (c-forward-syntactic-ws)
+		 t)
+	  (if (looking-at "(")
+	      (c-go-list-forward)
+	    t))
+     (progn (goto-char pos) nil))))
 
 (defmacro c-pull-open-brace (ps)
   ;; Pull the next open brace from PS (which has the form of paren-state),
@@ -6959,9 +6965,8 @@ comment at the start of cc-engine.el for more info."
 	  (when (or (looking-at c-prefix-spec-kwds-re) ;FIXME!!! includes auto
 		    (and (c-major-mode-is 'java-mode)
 			 (looking-at "@[A-Za-z0-9]+")))
-	    (save-match-data
-	      (if (looking-at c-typedef-key)
-		(setq at-typedef t)))
+	    (if (save-match-data (looking-at c-typedef-key))
+		(setq at-typedef t))
 	    (setq kwd-sym (c-keyword-sym (match-string 1)))
 	    (save-excursion
 	      (c-forward-keyword-clause 1)
@@ -9106,6 +9111,11 @@ comment at the start of cc-engine.el for more info."
 	    (goto-char containing-sexp)
 	    (if (or (save-excursion
 		      (c-backward-syntactic-ws lim)
+		      (while (and (eq (char-before) ?>)
+				  (c-get-char-property (1- (point))
+						       'syntax-table)
+				  (c-go-list-backward nil lim))
+			(c-backward-syntactic-ws lim))
 		      (and (> (point) (or lim (point-min)))
 			   (c-on-identifier)))
 		    (and c-special-brace-lists

@@ -1157,15 +1157,6 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  (setq pos (point))))))     ; acts to make the `while' form continue.
   nil)
 
-(defconst c-font-lock-maybe-decl-faces
-  ;; List of faces that might be put at the start of a type when
-  ;; `c-font-lock-declarations' runs.  This needs to be evaluated to
-  ;; ensure that face name aliases in Emacs are resolved.
-  (list nil
-	font-lock-type-face
-	c-reference-face-name
-	font-lock-keyword-face))
-
 (defun c-font-lock-declarations (limit)
   ;; Fontify all the declarations, casts and labels from the point to LIMIT.
   ;; Assumes that strings and comments have been fontified already.
@@ -1256,7 +1247,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
       (c-find-decl-spots
        limit
        c-decl-start-re
-       c-font-lock-maybe-decl-faces
+       (eval c-maybe-decl-faces)
 
        (lambda (match-pos inside-macro)
 	 ;; Note to maintainers: don't use `limit' inside this lambda form;

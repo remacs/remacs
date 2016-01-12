@@ -1203,7 +1203,7 @@ for a moment, then straighten yourself up.
   (interactive)
   (forward-line (- 0 (- (window-height) 2 )))
   (set-window-start (selected-window) (point))
-  (end-of-buffer))
+  (goto-char (point-max)))
 
 ;;; Insert something into the buffer, followed by newline.
 

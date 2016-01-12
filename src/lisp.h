@@ -3927,7 +3927,7 @@ extern bool let_shadows_global_binding_p (Lisp_Object symbol);
 
 #ifdef HAVE_MODULES
 /* Defined in alloc.c.  */
-extern Lisp_Object make_user_ptr (void (*finalizer) (void*), void *p);
+extern Lisp_Object make_user_ptr (void (*finalizer) (void *), void *p);
 
 /* Defined in emacs-module.c.  */
 extern void module_init (void);
