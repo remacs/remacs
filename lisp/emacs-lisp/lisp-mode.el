@@ -488,6 +488,9 @@ This will generate compile-time constants from BINDINGS."
   "Default expressions to highlight in Lisp modes.")
 
 (defun lisp-string-in-doc-position-p (listbeg startpos)
+   "Return true if a doc string may occur at STARTPOS inside a list.
+LISTBEG is the position of the start of the innermost list
+containing STARTPOS."
   (let* ((firstsym (and listbeg
                         (save-excursion
                           (goto-char listbeg)
@@ -518,6 +521,9 @@ This will generate compile-time constants from BINDINGS."
                 (= (point) startpos))))))
 
 (defun lisp-string-after-doc-keyword-p (listbeg startpos)
+  "Return true if `:documentation' symbol ends at STARTPOS inside a list.
+LISTBEG is the position of the start of the innermost list
+containing STARTPOS."
   (and listbeg                          ; We are inside a Lisp form.
        (save-excursion
          (goto-char startpos)
@@ -526,6 +532,9 @@ This will generate compile-time constants from BINDINGS."
                   (looking-at ":documentation\\_>"))))))
 
 (defun lisp-font-lock-syntactic-face-function (state)
+  "Return syntactic face function for the position represented by STATE.
+STATE is a `parse-partial-sexp' state, and the returned function is the
+Lisp font lock syntactic face function."
   (if (nth 3 state)
       ;; This might be a (doc)string or a |...| symbol.
       (let ((startpos (nth 8 state)))

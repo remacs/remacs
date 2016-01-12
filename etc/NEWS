@@ -706,7 +706,12 @@ respectively, `show-paren-when-point-inside-paren' or
 `show-paren-when-point-in-periphery'.
 
 ** Lisp mode
+
+---
 *** Strings after `:documentation' are highlighted as docstrings.
+This enhances Lisp mode fontification to handle documentation of the
+form `(:documentation "the doc string")' used in Common Lisp code for
+CLOS class and slot documentation.
 
 ** Rectangle editing
 
@@ -953,9 +958,11 @@ name patterns (e.g. all "FOR_DOXYGEN_ONLY_*") to be excluded.
 
 ** TeX mode
 
++++
 *** New custom variable `tex-print-file-extension' to help users who
 use PDF instead of DVI.
 
++++
 *** TeX mode now supports Prettify Symbols mode.  When enabling
 `prettify-symbols-mode' in a tex-mode buffer, \alpha ... \omega, and
 many other math macros are displayed using unicode characters.

@@ -3569,7 +3569,9 @@ using that one instead of current buffer's process."
               (forward-char (length (match-string-no-properties 0)))
               (point))))
          (end (point))
-         (prompt-boundaries (python-util-comint-last-prompt))
+         (prompt-boundaries
+          (with-current-buffer (process-buffer process)
+            (python-util-comint-last-prompt)))
          (prompt
           (with-current-buffer (process-buffer process)
             (when prompt-boundaries
