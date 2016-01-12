@@ -1395,6 +1395,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 
 (ert-deftest tramp-test26-process-file ()
   "Check `process-file'."
+  :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
   (skip-unless
    (not
@@ -1441,6 +1442,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 
 (ert-deftest tramp-test27-start-file-process ()
   "Check `start-file-process'."
+  :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
   (skip-unless
    (not
@@ -1510,6 +1512,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 
 (ert-deftest tramp-test28-shell-command ()
   "Check `shell-command'."
+  :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
   (skip-unless
    (not
@@ -1597,6 +1600,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 
 (ert-deftest tramp-test29-vc-registered ()
   "Check `vc-registered'."
+  :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
   (skip-unless
    (eq
@@ -1967,6 +1971,7 @@ Several special characters do not work properly there."
 (ert-deftest tramp-test31-special-characters-with-stat ()
   "Check special characters in file names.
 Use the `stat' command."
+  :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
   (skip-unless
    (eq
@@ -1985,6 +1990,7 @@ Use the `stat' command."
 (ert-deftest tramp-test31-special-characters-with-perl ()
   "Check special characters in file names.
 Use the `perl' command."
+  :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
   (skip-unless
    (eq
@@ -2006,6 +2012,7 @@ Use the `perl' command."
 (ert-deftest tramp-test31-special-characters-with-ls ()
   "Check special characters in file names.
 Use the `ls' command."
+  :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
   (skip-unless
    (eq
@@ -2045,6 +2052,7 @@ Use the `ls' command."
 (ert-deftest tramp-test32-utf8-with-stat ()
   "Check UTF8 encoding in file names and file contents.
 Use the `stat' command."
+  :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
   (skip-unless
    (eq
@@ -2063,6 +2071,7 @@ Use the `stat' command."
 (ert-deftest tramp-test32-utf8-with-perl ()
   "Check UTF8 encoding in file names and file contents.
 Use the `perl' command."
+  :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
   (skip-unless
    (eq
@@ -2084,6 +2093,7 @@ Use the `perl' command."
 (ert-deftest tramp-test32-utf8-with-ls ()
   "Check UTF8 encoding in file names and file contents.
 Use the `ls' command."
+  :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
   (skip-unless
    (eq
@@ -2109,6 +2119,7 @@ Such requests could arrive from timers, process filters and
 process sentinels.  They shall not disturb each other."
   ;; Mark as failed until bug has been fixed.
   :expected-result :failed
+  :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
   (skip-unless
    (eq
@@ -2220,6 +2231,7 @@ process sentinels.  They shall not disturb each other."
 Since it unloads Tramp, it shall be the last test to run."
   ;; Mark as failed until all symbols are unbound.
   :expected-result (if (featurep 'tramp) :failed :passed)
+  :tags '(:expensive-test)
   (when (featurep 'tramp)
     (unload-feature 'tramp 'force)
     ;; No Tramp feature must be left.

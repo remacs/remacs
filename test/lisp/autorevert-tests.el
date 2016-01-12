@@ -94,6 +94,7 @@
 ;; This is inspired by Bug#21841.
 (ert-deftest auto-revert-test01-auto-revert-several-files ()
   "Check autorevert for several files at once."
+  :tags '(:expensive-test)
   (skip-unless (executable-find "cp"))
 
   (let* ((cp (executable-find "cp"))
@@ -138,7 +139,7 @@
           ;; Strange, that `copy-directory' does not work as expected.
           ;; The following shell command is not portable on all
           ;; platforms, unfortunately.
-          (shell-command (format "%s %s/* %s" cp tmpdir2 tmpdir1))
+          (shell-command (format "%s -f %s/* %s" cp tmpdir2 tmpdir1))
 
           ;; Check, that the buffers have been reverted.
           (dolist (buf (list buf1 buf2))
