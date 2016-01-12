@@ -1221,7 +1221,9 @@ Use the INSIDE_EMACS environment variable instead.
 ** `save-excursion' does not save&restore the mark any more.
 Use `save-mark-and-excursion' if you want the old behavior.
 
-** read-buffer-function can now be called with a 4th argument (`predicate').
++++
+** `read-buffer' and `read-buffer-function' can now be called with a 4th
+argument (`predicate').
 
 ** completion-table-dynamic stays in the minibuffer.
 If you want the old behavior of calling the function in the buffer
