@@ -180,16 +180,6 @@ Hook run when about to switch windows with a mouse command.
 @item mouse-position-function
 @xref{Mouse Position}.
 
-@item post-command-hook
-@itemx pre-command-hook
-@xref{Command Overview}.
-
-@item post-gc-hook
-@xref{Garbage Collection}.
-
-@item post-self-insert-hook
-@xref{Keymaps and Minor Modes}.
-
 @item prefix-command-echo-keystrokes-functions
 @vindex prefix-command-echo-keystrokes-functions
 An abnormal hook run by prefix commands (such as @kbd{C-u}) which
@@ -205,6 +195,20 @@ Hook run when a prefix command needs to preserve the prefix by passing
 the current prefix command state to the next command.  For example,
 @kbd{C-u} needs to pass the state to the next command when the user
 types @kbd{C-u -} or follows @kbd{C-u} with a digit.
+
+@item pre-redisplay-functions
+Hook run in each window just before redisplaying it.  @xref{Forcing
+Redisplay}.
+
+@item post-command-hook
+@itemx pre-command-hook
+@xref{Command Overview}.
+
+@item post-gc-hook
+@xref{Garbage Collection}.
+
+@item post-self-insert-hook
+@xref{Keymaps and Minor Modes}.
 
 @ignore
 @item prog-mode-hook
