@@ -322,7 +322,7 @@ This function is semi-obsolete.  Use `get-char-code-property'."
 					       (nth 13 fields) 16)))))))))))
 
 ;; Not defined on builds without X, but behind display-graphic-p.
-(declare-function internal-char-font "fontset.c" (position &optional ch))
+(declare-function internal-char-font "font.c" (position &optional ch))
 
 ;; Return information about how CHAR is displayed at the buffer
 ;; position POS.  If the selected frame is on a graphic display,
