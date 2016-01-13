@@ -1340,7 +1340,10 @@ parsing functions like `forward-sexp'.
 `prefix-command-preserve-state-hook' allow the definition of prefix
 commands other than the predefined `C-u'.
 
++++
 ** New functions `filepos-to-bufferpos' and `bufferpos-to-filepos'.
+These allow to convert between buffer positions and the corresponding
+file byte offsets, given the file's encoding.
 
 ** The default value of `load-read-function' is now `read'.
 
