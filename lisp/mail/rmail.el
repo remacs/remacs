@@ -692,8 +692,9 @@ Element N specifies the summary line for message N+1.")
 This is set to nil by default.")
 
 (defcustom rmail-get-coding-function nil
-  "Function of no args to try to determine coding system for a message."
-  :type 'function
+  "Function of no args to try to determine coding system for a message.
+If nil, just search for `rmail-mime-charset-pattern'."
+  :type '(choice (const nil) function)
   :group 'rmail
   :version "24.4")
 
