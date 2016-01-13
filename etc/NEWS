@@ -1357,12 +1357,16 @@ It is a bit easier to use than `pre-redisplay-function'.
 ** The second arg of `looking-back' should always be provided explicitly.
 Previously, it was an optional argument, now it's mandatory.
 
-** Obsolete text properties `intangible', `point-entered', and `point-left'.
++++
+** Text properties `intangible', `point-entered', and `point-left' are obsolete.
 Replaced by properties `cursor-intangible' and `cursor-sensor-functions',
 implemented by the new `cursor-intangible-mode' and
 `cursor-sensor-mode' minor modes.
 
-** `inhibit-point-motion-hooks' now defaults to t and is obsolete.
++++
+** `inhibit-point-motion-hooks' now defaults to `t' and is obsolete.
+Use the new minor modes `cursor-intangible-mode' and
+`cursor-sensor-mode' instead.
 
 +++
 ** New process type `pipe', which can be used in combination with the

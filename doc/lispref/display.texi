@@ -1721,7 +1721,8 @@ invisible, which means that it does not appear on the screen.
 @item intangible
 @kindex intangible @r{(overlay property)}
 The @code{intangible} property on an overlay works just like the
-@code{intangible} text property.  @xref{Special Properties}, for details.
+@code{intangible} text property.  It is obsolete.  @xref{Special
+Properties}, for details.
 
 @item isearch-open-invisible
 This property tells incremental search how to make an invisible overlay
