@@ -1130,7 +1130,7 @@ command whose response triggered the error."
        (prog1
            (nntp-send-command
             "^\\.\r?\n" "NEWGROUPS"
-            (format-time-string "%y%m%d %H%M%S" time)
+            (format-time-string "%y%m%d %H%M%S" time t)
             "GMT")
          (nntp-decode-text))))))
 
