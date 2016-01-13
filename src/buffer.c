@@ -1999,7 +1999,7 @@ the current buffer's major mode.  */)
   /* To select a nonfundamental mode,
      select the buffer temporarily and then call the mode function.  */
 
-  record_unwind_protect (save_excursion_restore, save_excursion_save ());
+  record_unwind_current_buffer ();
 
   Fset_buffer (buffer);
   call0 (function);
