@@ -1353,7 +1353,9 @@ Previously, the default value of `nil' implied using `read'.
 ** New hook `pre-redisplay-functions'.
 It is a bit easier to use than `pre-redisplay-function'.
 
++++
 ** The second arg of `looking-back' should always be provided explicitly.
+Previously, it was an optional argument, now it's mandatory.
 
 ** Obsolete text properties `intangible', `point-entered', and `point-left'.
 Replaced by properties `cursor-intangible' and `cursor-sensor-functions',
