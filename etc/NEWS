@@ -1335,9 +1335,10 @@ that happen, `unhandled-file-name-directory' now defaults to calling
 ** syntax-propertize is now automatically called on-demand during forward
 parsing functions like `forward-sexp'.
 
-** New hooks prefix-command-echo-keystrokes-functions and
-prefix-command-preserve-state-hook, to allow the definition of prefix
-commands other than the predefined C-u.
++++
+** New hooks `prefix-command-echo-keystrokes-functions' and
+`prefix-command-preserve-state-hook' allow the definition of prefix
+commands other than the predefined `C-u'.
 
 ** New functions `filepos-to-bufferpos' and `bufferpos-to-filepos'.
 
