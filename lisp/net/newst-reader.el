@@ -69,6 +69,7 @@ This must be one of the functions `newsticker-plainview' or
 (defcustom newsticker-download-logos
   t
   "If non-nil newsticker downloads logo images of subscribed feeds."
+  :version "25.1"
   :type 'boolean
   :group 'newsticker-reader)
 

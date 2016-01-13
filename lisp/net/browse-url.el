@@ -349,6 +349,7 @@ functionality is not available there."
   "Whether to open up new windows in a buffer or a new window.
 If non-nil, then open the URL in a new buffer rather than a new window if
 `browse-url-conkeror' is asked to open it in a new window."
+  :version "25.1"
   :type 'boolean
   :group 'browse-url)
 
@@ -415,6 +416,7 @@ commands reverses the effect of this variable."
 
 (defcustom browse-url-conkeror-arguments nil
   "A list of strings to pass to Conkeror as arguments."
+  :version "25.1"
   :type '(repeat (string :tag "Argument"))
   :group 'browse-url)
 

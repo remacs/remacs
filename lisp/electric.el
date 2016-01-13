@@ -417,14 +417,17 @@ The variable `electric-layout-rules' says when and how to insert newlines."
 
 (defcustom electric-quote-comment t
   "Non-nil means to use electric quoting in program comments."
+  :version "25.1"
   :type 'boolean :safe 'booleanp :group 'electricity)
 
 (defcustom electric-quote-string nil
   "Non-nil means to use electric quoting in program strings."
+  :version "25.1"
   :type 'boolean :safe 'booleanp :group 'electricity)
 
 (defcustom electric-quote-paragraph t
   "Non-nil means to use electric quoting in text paragraphs."
+  :version "25.1"
   :type 'boolean :safe 'booleanp :group 'electricity)
 
 (defun electric--insertable-p (string)

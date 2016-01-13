@@ -265,14 +265,16 @@ A typical value would be \(\"JOIN\" \"PART\" \"QUIT\")."
 (defcustom erc-network-hide-list nil
   "A list of IRC networks to hide message types from.
 A typical value would be \((\"freenode\" \"MODE\")
-(\"OFTC\" \"JOIN\" \"QUIT\"))."
+  \(\"OFTC\" \"JOIN\" \"QUIT\"))."
+  :version "25.1"
   :group 'erc-ignore
   :type 'erc-message-type)
 
 (defcustom erc-channel-hide-list nil
   "A list of IRC channels to hide message types from.
 A typical value would be \((\"#emacs\" \"QUIT\" \"JOIN\")
-(\"#erc\" \"NICK\")."
+  \(\"#erc\" \"NICK\")."
+  :version "25.1"
   :group 'erc-ignore
   :type 'erc-message-type)
 

@@ -1742,6 +1742,7 @@ and source-file directory for your debugger."
 (defcustom gud-guiler-command-name "guile"
   "File name for executing the Guile debugger.
 This should be an executable on your path, or an absolute file name."
+  :version "25.1"
   :type 'string
   :group 'gud)
 

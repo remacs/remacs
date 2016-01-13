@@ -136,6 +136,7 @@ character to the invoked process."
   "If non-nil, term buffers are destroyed after their processes die.
 WARNING: Setting this to non-nil may result in unexpected
 behavior for short-lived processes, see bug#18108."
+  :version "25.1"
   :type 'boolean
   :group 'eshell-term)
 
