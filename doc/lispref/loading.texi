@@ -202,8 +202,8 @@ This variable specifies an alternate expression-reading function for
 @code{load} and @code{eval-region} to use instead of @code{read}.
 The function should accept one argument, just as @code{read} does.
 
-Normally, the variable's value is @code{nil}, which means those
-functions should use @code{read}.
+By default, this variable's value is @code{read}.  @xref{Input
+Functions}.
 
 Instead of using this variable, it is cleaner to use another, newer
 feature: to pass the function as the @var{read-function} argument to

@@ -1345,7 +1345,9 @@ commands other than the predefined `C-u'.
 These allow to convert between buffer positions and the corresponding
 file byte offsets, given the file's encoding.
 
++++
 ** The default value of `load-read-function' is now `read'.
+Previously, the default value of `nil' implied using `read'.
 
 ** New hook `pre-redisplay-functions', a bit easier to use than pre-redisplay-function.
 
