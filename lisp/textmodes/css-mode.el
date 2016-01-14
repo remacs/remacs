@@ -257,13 +257,13 @@
        (if (not sassy)
            ;; We don't allow / as first char, so as not to
            ;; take a comment as the beginning of a selector.
-           "[^@/:{} \t\n][^:{}]+"
+           "[^@/:{}() \t\n][^:{}()]+"
          ;; Same as for non-sassy except we do want to allow { and }
          ;; chars in selectors in the case of #{$foo}
          ;; variable interpolation!
          (concat "\\(?:" scss--hash-re
-                 "\\|[^@/:{} \t\n#]\\)"
-                 "[^:{}#]*\\(?:" scss--hash-re "[^:{}#]*\\)*"))
+                 "\\|[^@/:{}() \t\n#]\\)"
+                 "[^:{}()#]*\\(?:" scss--hash-re "[^:{}()#]*\\)*"))
        ;; Even though pseudo-elements should be prefixed by ::, a
        ;; single colon is accepted for backward compatibility.
        "\\(?:\\(:" (regexp-opt (append css-pseudo-class-ids
@@ -271,8 +271,8 @@
        "\\|\\::" (regexp-opt css-pseudo-element-ids t) "\\)"
        "\\(?:([^)]+)\\)?"
        (if (not sassy)
-           "[^:{}\n]*"
-         (concat "[^:{}\n#]*\\(?:" scss--hash-re "[^:{}\n#]*\\)*"))
+           "[^:{}()\n]*"
+         (concat "[^:{}()\n#]*\\(?:" scss--hash-re "[^:{}()\n#]*\\)*"))
        "\\)*"
        "\\)\\(?:\n[ \t]*\\)*{")
      (1 'css-selector keep))
