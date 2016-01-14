@@ -5,7 +5,6 @@
 
 ;; This file is part of GNU Emacs.
 
-;; Maintainer's Time-stamp: <2006-04-12 20:30:56 rms>
 ;; Maintainer: Stephen Gildea <gildea@stop.mail-abuse.org>
 ;; Keywords: tools
 
@@ -27,7 +26,6 @@
 ;; A template in a file can be updated with a new time stamp when
 ;; you save the file.  For example:
 ;;     static char *ts = "sdmain.c Time-stamp: <2001-08-13 10:20:51 gildea>";
-;; See the top of `time-stamp.el' for another example.
 
 ;; To use time-stamping, add this line to your init file:
 ;;     (add-hook 'before-save-hook 'time-stamp)
