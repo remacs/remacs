@@ -954,7 +954,8 @@ of its back-ends.
 The command `xref-find-definitions' replaces `find-tag' and provides
 an interface to pick one definition among several.
 `tags-loop-continue' is now unbound.  `xref-pop-marker-stack' replaces
-`pop-tag-mark', but has a keybinding (`M-,'), unlike `pop-tag-mark'.
+`pop-tag-mark', but has a keybinding (`M-,') different from the one
+`pop-tag-mark' used.
 
 `xref-find-definitions-other-window' replaces `find-tag-other-window'.
 `xref-find-definitions-other-frame' replaces `find-tag-other-frame'.
@@ -962,7 +963,11 @@ an interface to pick one definition among several.
 
 As a result of this, the following commands are now obsolete:
 `find-tag-other-window', `find-tag-other-frame', `find-tag-regexp',
-`tags-apropos', and `tags-loop-continue'.
+`tags-apropos'.
+
+`tags-loop-continue' is not obsolete because it's still useful in
+`tags-search' and `tags-query-replace', for which there are no direct
+replacements yet.
 
 +++
 *** New variables
