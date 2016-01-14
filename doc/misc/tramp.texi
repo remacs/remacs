@@ -66,7 +66,7 @@
 @end ifclear
 
 @copying
-Copyright @copyright{} 1999--2015 Free Software Foundation, Inc.
+Copyright @copyright{} 1999--2016 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -883,8 +883,8 @@ This method works only for unified file names, see @ref{Issues}.
 @cindex smb method
 
 This is another non-native @value{tramp} method.  @command{smbclient}
-connects to any host with SMB/CIFS protocol, such as MS Windows and
-Samba Servers running on Unixes.  Tests show this @value{tramp} method
+connects to any server supporting the SMB/CIFS protocol, such as MS Windows and
+Samba running on GNU/Linux.  Tests show this @value{tramp} method
 works with MS Windows NT, MS Windows 2000, MS Windows XP, MS Windows
 Vista, and MS Windows 7.
 
@@ -973,13 +973,13 @@ name when a single Android device is connected to @command{adb}.
 name.  @command{adb devices} shows available host names.
 
 @option{adb} method normally does not need user name to authenticate
-on the Andriod device because it runs under the @command{adbd}
+on the Android device because it runs under the @command{adbd}
 process.  But when a user name is specified, however, @value{tramp}
 applies an @command{su} in the syntax.  When authentication does not
 succeed, especially on un-rooted Android devices, @value{tramp}
 displays login errors.
 
-For Andriod devices connected through TCP/IP, a port number can be
+For Android devices connected through TCP/IP, a port number can be
 specified using @file{device#42} host name syntax or @value{tramp} can
 use the default value as declared in @command{adb} command.  Port
 numbers are not applicable to Android devices connected through USB@.
@@ -1965,7 +1965,7 @@ where @samp{192.168.0.1} is the remote host IP address
 
 @value{tramp} uses the @option{adb} method to access Android
 devices.  Android devices provide a restricted shell access through an
-USB connection.  The local host must have Andriod SDK installed.
+USB connection.  The local host must have the Android SDK installed.
 
 Applications such as @code{SSHDroid} that run @command{sshd} process
 on the Android device can accept any @option{ssh}-based methods
@@ -2088,7 +2088,7 @@ To ``turns off'' the backup feature for @value{tramp} files and stop
 
 @ifset emacs
 @noindent
-Disabling backups can be targetted to just @option{su} and
+Disabling backups can be targeted to just the @option{su} and
 @option{sudo} methods:
 
 @lisp
@@ -2173,7 +2173,7 @@ direct all auto saves to that location.
 @end ifset
 @ifset xemacs
 @code{auto-save-directory} can also be used here instead of other
-locations specfied above.
+locations specified above.
 @end ifset
 
 @node Windows setup hints
@@ -2187,7 +2187,7 @@ This section is incomplete.  Please share your solutions.
 
 Cygwin's @command{ssh} works only with a Cygwin version of
 @value{emacsname}.  To check for compatibility: type @kbd{M-x eshell}, and
-start @kbd{ssh test.host}.  Incompatbilities trigger this message:
+start @kbd{ssh test.host}.  Incompatibilities trigger this message:
 
 @example
 Pseudo-terminal will not be allocated because stdin is not a terminal.
@@ -2242,7 +2242,7 @@ authentication, host names, and file names.
 
 Unlike opening local files in @value{emacsname}, which are
 instantaneous, opening remote files in @value{tramp} is slower at
-first.  Sometimes there is a noticable delay before the prompts for
+first.  Sometimes there is a noticeable delay before the prompts for
 passwords or authentication appear in the minibuffer.  Hitting
 @kbd{@key{RET}} or other keys during this gap will be processed by
 @value{emacsname}.  This type-ahead facility is a feature of
@@ -2322,7 +2322,7 @@ This is done by replacing the initial @file{@value{prefix}} with
 @file{@value{prefix}@var{method}@value{postfixhop}} (Note the trailing
 slash!).
 @end ifset
-The syntax specificaton for user, host, and file do not change.
+The syntax specifications for user, host, and file do not change.
 
 To connect to the host @code{melancholia} as @code{daniel}, using
 @option{ssh} method for @file{.emacs} in @code{daniel}'s home
@@ -2400,8 +2400,8 @@ persistently (@pxref{Connection caching}) will be included in the
 completion lists.
 
 After remote host name completion comes completion of file names on
-the remote host.  It works the same as on loal host file completion
-except when killing with double-slash @file{//} kills only the file
+the remote host.  It works the same as with local host file completion,
+except that killing with double-slash @file{//} kills only the file
 name part of the @value{tramp} file name syntax.
 @ifset emacs
 A triple-slash stands for the default behavior.
