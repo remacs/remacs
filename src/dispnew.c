@@ -321,7 +321,9 @@ margin_glyphs_to_reserve (struct window *w, int total_glyphs, int margin)
       int width = w->total_cols;
       double d = max (0, margin);
       d = min (width / 2 - 1, d);
-      return (int) ((double) total_glyphs / width * d);
+      /* Since MARGIN is positive, we cannot possibly have less than
+	 one glyph for the marginal area.  */
+      return max (1, (int) ((double) total_glyphs / width * d));
     }
   return 0;
 }
