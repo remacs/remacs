@@ -959,8 +959,7 @@ Relative ones are stored relative to the output file's directory.\n");
 	Do not create tag entries for global variables in some\n\
 	languages.  This makes the tags file smaller.");
 
-  if (PRINT_UNDOCUMENTED_OPTIONS_HELP)
-    puts ("--no-line-directive\n\
+  puts ("--no-line-directive\n\
         Ignore #line preprocessor directives in C and derived languages.");
 
   if (CTAGS)
