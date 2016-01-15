@@ -89,7 +89,13 @@ WRITE_LOG = > $@ 2>&1 || { stat=ERROR; cat $@; }; echo $$stat: $@
 ## Beware: it approximates 'no-byte-compile', so watch out for false-positives!
 SELECTOR_DEFAULT = (quote (not (tag :expensive-test)))
 SELECTOR_EXPENSIVE = nil
-SELECTOR =
+ifndef SELECTOR
+SELECTOR_ACTUAL=$(SELECTOR_DEFAULT)
+else
+SELECTOR_ACTUAL=$(SELECTOR)
+endif
+
+
 %.log: ${srcdir}/%.el
 	@if grep '^;.*no-byte-compile: t' $< > /dev/null; then \
 	  loadfile=$<; \
@@ -100,7 +106,7 @@ SELECTOR =
 	echo Testing $$loadfile; \
 	stat=OK ; \
 	$(emacs) -l ert -l $$loadfile \
-	  --eval "(ert-run-tests-batch-and-exit ${SELECTOR})" ${WRITE_LOG}
+	  --eval "(ert-run-tests-batch-and-exit ${SELECTOR_ACTUAL})" ${WRITE_LOG}
 
 ELFILES = $(sort $(wildcard ${srcdir}/*.el))
 LOGFILES = $(patsubst %.el,%.log,$(notdir ${ELFILES}))
@@ -123,7 +129,7 @@ $(foreach test,${TESTS},$(eval $(call test_template,${test})))
 
 ## Rerun all default tests.
 check: mostlyclean
-	@${MAKE} check-doit SELECTOR="${SELECTOR_DEFAULT}"
+	@${MAKE} check-doit SELECTOR="${SELECTOR_ACTUAL}"
 
 ## Rerun all default and expensive tests.
 .PHONY: check-expensive
@@ -133,7 +139,7 @@ check-expensive: mostlyclean
 ## Only re-run default tests whose .log is older than the test.
 .PHONY: check-maybe
 check-maybe:
-	@${MAKE} check-doit SELECTOR="${SELECTOR_DEFAULT}"
+	@${MAKE} check-doit SELECTOR="${SELECTOR_ACTUAL}"
 
 ## Run the tests.
 .PHONY: check-doit
