@@ -59,6 +59,11 @@ in these situations.
 
 *** The kqueue library is integrated for *BSD and Mac OS X machines.
 
+** Tramp
+
+*** New connection method "sg", which allows to edit files under
+different group ID.
+
 
 * New Modes and Packages in Emacs 25.2
 
