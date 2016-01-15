@@ -1094,8 +1094,6 @@ to produce a neat summary.
 
 ---
 ** New js.el option `js-indent-first-init'.
-It was renamed from `js-indent-first-initialiser', to avoid issues
-with American vs British spelling.
 
 ** Info
 
