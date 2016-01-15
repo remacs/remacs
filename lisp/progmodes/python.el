@@ -2042,8 +2042,8 @@ virtualenv."
 (defun python-shell-calculate-pythonpath ()
   "Calculate the PYTHONPATH using `python-shell-extra-pythonpaths'."
   (let ((pythonpath
-         (tramp-compat-split-string
-          (or (getenv "PYTHONPATH") "") path-separator)))
+         (split-string
+          (or (getenv "PYTHONPATH") "") path-separator 'omit)))
     (python-shell--add-to-path-with-priority
      pythonpath python-shell-extra-pythonpaths)
     (mapconcat 'identity pythonpath path-separator)))
@@ -2114,7 +2114,7 @@ appends `python-shell-remote-exec-path' instead of `exec-path'."
            (md5 tramp-end-of-output)))
 	unset vars item)
     (while env
-      (setq item (tramp-compat-split-string (car env) "="))
+      (setq item (split-string (car env) "=" 'omit))
       (setcdr item (mapconcat 'identity (cdr item) "="))
       (if (and (stringp (cdr item)) (not (string-equal (cdr item) "")))
 	  (push (format "%s %s" (car item) (cdr item)) vars)
