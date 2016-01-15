@@ -424,6 +424,14 @@ for use in Emacs bug reports.
 hiding character but the default `.' can be used by let-binding the
 variable `read-hide-char'.
 
++++
+** The Emacs pseudo-random number generator can be securely seeded.
+On system where Emacs can access the system entropy or some other
+cryptographically secure random stream, it now uses that when `random'
+is called with its argument `t'.  This allows cryptographically strong
+random values; in particular, the Emacs server now uses this facility
+to produce its authentication key.
+
 ---
 ** New input methods: `tamil-dvorak' and `programmer-dvorak'.
 
