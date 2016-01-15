@@ -1230,6 +1230,14 @@ operators."
 (c-lang-defvar c-assignment-op-regexp
   (c-lang-const c-assignment-op-regexp))
 
+(c-lang-defconst c-:$-multichar-token-regexp
+  ;; Regexp matching all tokens ending in ":" which are longer than one char.
+  ;; Currently (2016-01-07) only used in C++ Mode.
+  t (c-make-keywords-re nil
+      (c-filter-ops (c-lang-const c-operators) t ".+:$")))
+(c-lang-defvar c-:$-multichar-token-regexp
+  (c-lang-const c-:$-multichar-token-regexp))
+
 (c-lang-defconst c-<>-multichar-token-regexp
   ;; Regexp matching all tokens containing "<" or ">" which are longer
   ;; than one char.

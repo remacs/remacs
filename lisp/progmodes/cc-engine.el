@@ -6798,6 +6798,9 @@ comment at the start of cc-engine.el for more info."
 		      (c-backward-syntactic-ws))
 		    (c-back-over-list-of-member-inits)
 		    (and (eq (char-before) ?:)
+			 (save-excursion
+			   (c-backward-token-2)
+			   (not (looking-at c-:$-multichar-token-regexp)))
 			 (c-just-after-func-arglist-p))))
 
 	    (while (and (not (and level-plausible
@@ -6812,6 +6815,9 @@ comment at the start of cc-engine.el for more info."
 		      (c-backward-syntactic-ws)
 		      (c-back-over-list-of-member-inits)
 		      (and (eq (char-before) ?:)
+			   (save-excursion
+			     (c-backward-token-2)
+			     (not (looking-at c-:$-multichar-token-regexp)))
 			   (c-just-after-func-arglist-p)))))
 
 	    (and at-top-level level-plausible)))
