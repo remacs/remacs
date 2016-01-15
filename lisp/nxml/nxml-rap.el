@@ -1,4 +1,4 @@
-;;; nxml-rap.el --- low-level support for random access parsing for nXML mode
+;;; nxml-rap.el --- low-level support for random access parsing for nXML mode  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2003-2004, 2007-2016 Free Software Foundation, Inc.
 

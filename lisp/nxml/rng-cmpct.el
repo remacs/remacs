@@ -1,4 +1,4 @@
-;;; rng-cmpct.el --- parsing of RELAX NG Compact Syntax schemas
+;;; rng-cmpct.el --- parsing of RELAX NG Compact Syntax schemas  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2003, 2007-2016 Free Software Foundation, Inc.
 
