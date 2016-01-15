@@ -262,11 +262,10 @@ and VALUE-END, otherwise a STRING giving the value."
   (vector message start end))
 
 (defun xmltok-add-error (message &optional start end)
-  (setq xmltok-errors
-	(cons (xmltok-make-error message
-				 (or start xmltok-start)
-				 (or end (point)))
-	      xmltok-errors)))
+  (push (xmltok-make-error message
+                           (or start xmltok-start)
+                           (or end (point)))
+        xmltok-errors))
 
 (defun xmltok-forward ()
   (setq xmltok-start (point))
@@ -739,19 +738,11 @@ Return the type of the token."
   (setq xmltok-type 'processing-instruction))
 
 (defun xmltok-scan-after-comment-open ()
-  (let ((found-- (search-forward "--" nil 'move)))
-    (setq xmltok-type
-          (cond ((or (eq (char-after) ?>) (not found--))
-                 (goto-char (1+ (point)))
-                 'comment)
-                (t
-                 ;; just include the <!-- in the token
-                 (goto-char (+ xmltok-start 4))
-                 ;; Need do this after the goto-char because
-                 ;; marked error should just apply to <!--
-                 (xmltok-add-error "First following `--' not followed by `>'")
-                 (goto-char (point-max))
-                 'comment)))))
+  (let (found--)
+    (while (and (setq found-- (re-search-forward "--\\(>\\)?" nil 'move))
+                (not (match-end 1)))
+      (xmltok-add-error "`--' not followed by `>'" (match-beginning 0)))
+    (setq xmltok-type 'comment)))
 
 (defun xmltok-scan-attributes ()
   (let ((recovering nil)
