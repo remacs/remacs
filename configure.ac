@@ -4153,6 +4153,22 @@ fi
 
 AC_TYPE_MBSTATE_T
 
+AC_MSG_CHECKING([whether "/dev/urandom" is available])
+dev_urandom=no
+dnl MSYS, being a Cygwin fork, thinks "/dev/urandom" does exist, so
+dnl don't check this for the MinGW builds.
+if test "${opsys}" != "mingw32"; then
+   if test -r "/dev/urandom"; then
+      AC_DEFINE(HAVE_DEV_URANDOM, 1, [Define if the system supports the "/dev/urandom" device.])
+      dev_urandom=yes
+   fi
+fi
+if test $dev_urandom = yes; then
+   AC_MSG_RESULT(yes)
+else
+   AC_MSG_RESULT(no)
+fi
+
 dnl Fixme: AC_SYS_POSIX_TERMIOS should probably be used, but it's not clear
 dnl how the tty code is related to POSIX and/or other versions of termios.
 dnl The following looks like a useful start.

@@ -2095,8 +2095,35 @@ seed_random (void *seed, ptrdiff_t seed_size)
 void
 init_random (void)
 {
-  struct timespec t = current_timespec ();
-  uintmax_t v = getpid () ^ t.tv_sec ^ t.tv_nsec;
+  uintmax_t v;
+  struct timespec t;
+  bool success = false;
+
+#if HAVE_DEV_URANDOM
+  FILE *fp = fopen ("/dev/urandom", "rb");
+
+  if (fp)
+    {
+      int i;
+
+      for (i = 0, v = 0; i < sizeof (uintmax_t); i++)
+	{
+	  v <<= 8;
+	  v |= fgetc (fp);
+	}
+      fclose (fp);
+      success = true;
+    }
+#elif defined WINDOWSNT
+  if (w32_init_random (&v, sizeof v) == 0)
+    success = true;
+#endif	/* HAVE_DEV_URANDOM || WINDOWSNT */
+  if (!success)
+    {
+      /* Fall back to current time value + PID.  */
+      t = current_timespec ();
+      v = getpid () ^ t.tv_sec ^ t.tv_nsec;
+    }
   seed_random (&v, sizeof v);
 }
 
