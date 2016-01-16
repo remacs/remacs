@@ -623,6 +623,96 @@ definition will have no effect on them.
 and tells the Lisp compiler to perform inline expansion on it.
 @xref{Inline Functions}.
 
+  Alternatively, you can define a function by providing the code which
+will inline it as a compiler macro.  The following macros make this
+possible.
+
+@c FIXME: Can define-inline use the interactive spec?
+@defmac define-inline name args [doc] [declare] body@dots{}
+Define a function @var{name} by providing code that does its inlining,
+as a compiler macro.  The function will accept the argument list
+@var{args} and will have the specified @var{body}.
+
+If present, @var{doc} should be the function's documentation string
+(@pxref{Function Documentation}); @var{declare}, if present, should be
+a @code{declare} form (@pxref{Declare Form}) specifying the function's
+metadata.
+@end defmac
+
+Functions defined via @code{define-inline} have several advantages
+with respect to macros defined by @code{defsubst} or @code{defmacro}:
+
+@itemize @minus
+@item
+They can be passed to @code{mapcar} (@pxref{Mapping Functions}).
+
+@item
+They are more efficient.
+
+@item
+They can be used as @dfn{place forms} to store values
+(@pxref{Generalized Variables}).
+
+@item
+They behave in a more predictable way than @code{cl-defsubst}
+(@pxref{Argument Lists,,, cl, Common Lisp Extensions for GNU Emacs
+Lisp}).
+@end itemize
+
+Like @code{defmacro}, a function inlined with @code{define-inline}
+inherits the scoping rules, either dynamic or lexical, from the call
+site.  @xref{Variable Scoping}.
+
+The following macros should be used in the body of a function defined
+by @code{define-inline}.
+
+@defmac inline-quote expression
+Quote @var{expression} for @code{define-inline}.  This is similar to
+the backquote (@pxref{Backquote}), but quotes code and accepts only
+@code{,}, not @code{,@@}.
+@end defmac
+
+@defmac inline-letevals (bindings@dots{}) body@dots{}
+This is is similar to @code{let} (@pxref{Local Variables}): it sets up
+local variables as specified by @var{bindings}, and then evaluates
+@var{body} with those bindings in effect.  Each element of
+@var{bindings} should be either a symbol or a list of the form
+@w{@code{(@var{var} @var{expr})}}; the result is to evaluate
+@var{expr} and bind @var{var} to the result.  The tail of
+@var{bindings} can be either @code{nil} or a symbol which should hold
+a list of arguments, in which case each argument is evaluated, and the
+symbol is bound to the resulting list.
+@end defmac
+
+@defmac inline-const-p expression
+Return non-@code{nil} if the value of @var{expression} is already
+known.
+@end defmac
+
+@defmac inline-const-val expression
+Return the value of @var{expression}.
+@end defmac
+
+@defmac inline-error format &rest args
+Signal an error, formatting @var{args} according to @var{format}.
+@end defmac
+
+Here's an example of using @code{define-inline}:
+
+@lisp
+(define-inline myaccessor (obj)
+  (inline-letevals (obj)
+    (inline-quote (if (foo-p ,obj) (aref (cdr ,obj) 3) (aref ,obj 2)))))
+@end lisp
+
+@noindent
+This is equivalent to
+
+@lisp
+(defsubst myaccessor (obj)
+  (if (foo-p obj) (aref (cdr obj) 3) (aref obj 2)))
+@end lisp
+
 @node Calling Functions
 @section Calling Functions
 @cindex function invocation
@@ -1706,18 +1796,23 @@ features of Emacs, you should not make a function inline, even if it's
 small, unless its speed is really crucial, and you've timed the code
 to verify that using @code{defun} actually has performance problems.
 
-  It's possible to define a macro to expand into the same code that an
-inline function would execute (@pxref{Macros}).  But the macro would
-be limited to direct use in expressions---a macro cannot be called
-with @code{apply}, @code{mapcar} and so on.  Also, it takes some work
-to convert an ordinary function into a macro.  To convert it into an
-inline function is easy; just replace @code{defun} with
-@code{defsubst}.  Since each argument of an inline function is
-evaluated exactly once, you needn't worry about how many times the
-body uses the arguments, as you do for macros.
-
   After an inline function is defined, its inline expansion can be
 performed later on in the same file, just like macros.
+
+  It's possible to use @code{defsubst} to define a macro to expand
+into the same code that an inline function would execute
+(@pxref{Macros}).  But the macro would be limited to direct use in
+expressions---a macro cannot be called with @code{apply},
+@code{mapcar} and so on.  Also, it takes some work to convert an
+ordinary function into a macro.  To convert it into an inline function
+is easy; just replace @code{defun} with @code{defsubst}.  Since each
+argument of an inline function is evaluated exactly once, you needn't
+worry about how many times the body uses the arguments, as you do for
+macros.
+
+  As an alternative to @code{defsubst}, you can use
+@code{define-inline} to define functions via their exhaustive compiler
+macro.  @xref{Defining Functions, define-inline}.
 
 @node Declare Form
 @section The @code{declare} Form
