@@ -2637,18 +2637,19 @@ defined in the file @file{lisp/term/x-win.el}.  Use @kbd{M-x apropos
 @cindex primary selection
 @cindex secondary selection
 
-  In the X window system, data can be transferred between different
-applications by means of @dfn{selections}.  X defines an arbitrary
-number of @dfn{selection types}, each of which can store its own data;
-however, only three are commonly used: the @dfn{clipboard},
-@dfn{primary selection}, and @dfn{secondary selection}.  @xref{Cut and
-Paste,, Cut and Paste, emacs, The GNU Emacs Manual}, for Emacs
-commands that make use of these selections.  This section documents
-the low-level functions for reading and setting X selections.
+  In window systems, such as X, data can be transferred between
+different applications by means of @dfn{selections}.  X defines an
+arbitrary number of @dfn{selection types}, each of which can store its
+own data; however, only three are commonly used: the @dfn{clipboard},
+@dfn{primary selection}, and @dfn{secondary selection}.  Other window
+systems support only the clipboard.  @xref{Cut and Paste,, Cut and
+Paste, emacs, The GNU Emacs Manual}, for Emacs commands that make use
+of these selections.  This section documents the low-level functions
+for reading and setting window-system selections.
 
-@deffn Command x-set-selection type data
-This function sets an X selection.  It takes two arguments: a
-selection type @var{type}, and the value to assign to it, @var{data}.
+@deffn Command gui-set-selection type data
+This function sets a window-system selection.  It takes two arguments:
+a selection type @var{type}, and the value to assign to it, @var{data}.
 
 @var{type} should be a symbol; it is usually one of @code{PRIMARY},
 @code{SECONDARY} or @code{CLIPBOARD}.  These are symbols with
@@ -2665,14 +2666,14 @@ stands for text in the overlay or between the markers.  The argument
 This function returns @var{data}.
 @end deffn
 
-@defun x-get-selection &optional type data-type
-This function accesses selections set up by Emacs or by other X
-clients.  It takes two optional arguments, @var{type} and
+@defun gui-get-selection &optional type data-type
+This function accesses selections set up by Emacs or by other
+programs.  It takes two optional arguments, @var{type} and
 @var{data-type}.  The default for @var{type}, the selection type, is
 @code{PRIMARY}.
 
 The @var{data-type} argument specifies the form of data conversion to
-use, to convert the raw data obtained from another X client into Lisp
+use, to convert the raw data obtained from another program into Lisp
 data.  Meaningful values include @code{TEXT}, @code{STRING},
 @code{UTF8_STRING}, @code{TARGETS}, @code{LENGTH}, @code{DELETE},
 @code{FILE_NAME}, @code{CHARACTER_POSITION}, @code{NAME},
@@ -2680,7 +2681,8 @@ data.  Meaningful values include @code{TEXT}, @code{STRING},
 @code{HOST_NAME}, @code{USER}, @code{CLASS}, @code{ATOM}, and
 @code{INTEGER}.  (These are symbols with upper-case names in accord
 with X conventions.)  The default for @var{data-type} is
-@code{STRING}.
+@code{STRING}.  Window systems other than X usually support only a
+small subset of these types, in addition to @code{STRING}.
 @end defun
 
 @defopt selection-coding-system
@@ -2692,10 +2694,15 @@ converts to the text representation that X11 normally uses.
 
 @cindex clipboard support (for MS-Windows)
 When Emacs runs on MS-Windows, it does not implement X selections in
-general, but it does support the clipboard.  @code{x-get-selection}
-and @code{x-set-selection} on MS-Windows support the text data type
+general, but it does support the clipboard.  @code{gui-get-selection}
+and @code{gui-set-selection} on MS-Windows support the text data type
 only; if the clipboard holds other types of data, Emacs treats the
-clipboard as empty.
+clipboard as empty.  The supported data type is @code{STRING}.
+
+For backward compatibility, there are obsolete aliases
+@code{x-get-selection} and @code{x-set-selection}, which were the
+names of @code{gui-get-selection} and @code{gui-set-selection} before
+Emacs 25.1.
 
 @node Drag and Drop
 @section Drag and Drop
