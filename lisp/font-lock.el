@@ -1564,6 +1564,7 @@ START should be at the beginning of a line."
   "Put proper face on each string and comment between START and END.
 START should be at the beginning of a line."
   (syntax-propertize end)  ; Apply any needed syntax-table properties.
+  (with-syntax-table (or syntax-ppss-table (syntax-table))
   (let ((comment-end-regexp
 	 (or font-lock-comment-end-skip
 	     (regexp-quote
@@ -1598,7 +1599,7 @@ START should be at the beginning of a line."
 				     font-lock-comment-delimiter-face))))
 	  (< (point) end))
       (setq state (parse-partial-sexp (point) end nil nil state
-				      'syntax-table)))))
+				      'syntax-table))))))
 
 ;;; End of Syntactic fontification functions.
 
