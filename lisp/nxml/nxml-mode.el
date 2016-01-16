@@ -535,8 +535,6 @@ Many aspects this mode can be customized using
         (nxml-clear-inside (point-min) (point-max))
 	(nxml-with-invisible-motion
 	  (nxml-scan-prolog)))))
-  (add-hook 'completion-at-point-functions
-            #'nxml-completion-at-point-function nil t)
   (setq-local syntax-propertize-function #'nxml-after-change)
   (add-hook 'change-major-mode-hook #'nxml-cleanup nil t)
 
@@ -557,7 +555,6 @@ Many aspects this mode can be customized using
           t    ; keywords-only; we highlight comments and strings here
           nil  ; font-lock-keywords-case-fold-search. XML is case sensitive
           nil  ; no special syntax table
-          nil  ; no automatic syntactic fontification
           (font-lock-extend-region-functions . (nxml-extend-region))
           (jit-lock-contextually . t)
           (font-lock-unfontify-region-function . nxml-unfontify-region)))
@@ -1577,30 +1574,7 @@ of the line.  This expects the xmltok-* variables to be set up as by
 	(t (back-to-indentation)))
   (current-column))
 
-;;; Completion
-
-(defun nxml-complete ()
-  "Perform completion on the symbol preceding point.
-
-Inserts as many characters as can be completed.  However, if not even
-one character can be completed, then a buffer with the possibilities
-is popped up and the symbol is read from the minibuffer with
-completion.  If the symbol is complete, then any characters that must
-follow the symbol are also inserted.
-
-The name space used for completion and what is treated as a symbol
-depends on the context.  The contexts in which completion is performed
-depend on `nxml-completion-hook'."
-  (interactive)
-  (unless (run-hook-with-args-until-success 'nxml-completion-hook)
-    ;; Eventually we will complete on entity names here.
-    (ding)
-    (message "Cannot complete in this context")))
-
-(defun nxml-completion-at-point-function ()
-  "Call `nxml-complete' to perform completion at point."
-  (when nxml-bind-meta-tab-to-complete-flag
-    #'nxml-complete))
+(define-obsolete-function-alias 'nxml-complete #'completion-at-point "26.1")
 
 ;;; Movement
 

@@ -1138,9 +1138,8 @@ as empty-element."
 		(rng-match-start-tag-open required)
 		(rng-match-after)
 		(rng-match-start-tag-open name))
-	   (rng-mark-invalid (concat "Missing element "
-				     (rng-quote-string
-				      (rng-name-to-string required)))
+	   (rng-mark-invalid (format "Missing element \"%s\""
+                                     (rng-name-to-string required))
 			     xmltok-start
 			     (1+ xmltok-start)))
 	  ((and (rng-match-optionalize-elements)
@@ -1177,16 +1176,14 @@ as empty-element."
     (cond ((not required-attributes)
 	   "Required attributes missing")
 	  ((not (cdr required-attributes))
-	   (concat "Missing attribute "
-		   (rng-quote-string
-		    (rng-name-to-string (car required-attributes) t))))
+	   (format "Missing attribute \"%s\""
+                   (rng-name-to-string (car required-attributes) t)))
 	  (t
-	   (concat "Missing attributes "
+	   (format "Missing attributes \"%s\""
 		   (mapconcat (lambda (nm)
-				(rng-quote-string
-				 (rng-name-to-string nm t)))
+				 (rng-name-to-string nm t))
 			      required-attributes
-			      ", "))))))
+			      "\", \""))))))
 
 (defun rng-process-end-tag (&optional partial)
   (cond ((not rng-open-elements)
@@ -1229,8 +1226,7 @@ as empty-element."
 (defun rng-missing-element-message ()
   (let ((element (rng-match-required-element-name)))
     (if element
-	(concat "Missing element "
-		(rng-quote-string (rng-name-to-string element)))
+	(format "Missing element \"%s\"" (rng-name-to-string element))
       "Required child elements missing")))
 
 (defun rng-recover-mismatched-end-tag ()
@@ -1258,17 +1254,16 @@ as empty-element."
 
 (defun rng-mark-missing-end-tags (missing)
   (rng-mark-not-well-formed
-   (format "Missing end-tag%s %s"
+   (format "Missing end-tag%s \"%s\""
 	   (if (null (cdr missing)) "" "s")
 	   (mapconcat (lambda (name)
-			(rng-quote-string
-			 (if (car name)
-			     (concat (car name)
-				     ":"
-				     (cdr name))
-			   (cdr name))))
+                        (if (car name)
+                            (concat (car name)
+                                    ":"
+                                    (cdr name))
+                          (cdr name)))
 		      missing
-		      ", "))
+		      "\", \""))
    xmltok-start
    (+ xmltok-start 2)))
 
