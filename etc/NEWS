@@ -168,12 +168,6 @@ the variable `dir-locals-file' for more information.
 added via the new Network Security Manager (NSM) and controlled via
 the `network-security-level' variable.
 
-** If Emacs isn't built with TLS support, an external TLS-capable
-program is used instead.  This program used to be run in --insecure
-mode by default, but has now changed to be secure instead, and will
-fail if you try to connect to non-verifiable hosts.  This is
-controlled by the `tls-program' variable.
-
 +++
 ** C-h l now also lists the commands that were run.
 
@@ -788,6 +782,13 @@ See the doc string of `sh-indent-after-continuation' for details.
 ** TLS
 ---
 *** Fatal TLS errors are now silent by default.
+
+---
+*** If Emacs isn't built with TLS support, an external TLS-capable
+program is used instead.  This program used to be run in --insecure
+mode by default, but has now changed to be secure instead, and will
+fail if you try to connect to non-verifiable hosts.  This is
+controlled by the `tls-program' variable.
 
 ** URL
 
