@@ -1591,7 +1591,7 @@ not be expanded."
      '(nil nil)))
   (let ((case-fold-search nil))
     (save-excursion
-      (unless mark-active
+      (unless (use-region-p)
         (setq rstart nil rend nil)
         (beginning-of-line)
         (when (and (re-search-forward hif-macro-expr-prefix-regexp nil t)
@@ -1922,7 +1922,7 @@ Return as (TOP . BOTTOM) the extent of ifdef block."
 With optional prefix argument ARG, also hide the #ifdefs themselves."
   (interactive "P\nr")
   (let ((hide-ifdef-lines arg))
-    (if mark-active
+    (if (use-region-p)
         (let ((hif-recurse-level (1+ hif-recurse-level)))
           (hif-recurse-on start end t)
           (setq mark-active nil))
