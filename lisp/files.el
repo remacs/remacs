@@ -3732,8 +3732,9 @@ The returned list is sorted by `string<' order."
   (require 'seq)
   (let ((dir (if (file-directory-p file-or-dir)
                  file-or-dir
-               default-directory))
-        (file (cond ((not (file-directory-p file-or-dir)) file-or-dir)
+               (or (file-name-directory file-or-dir)
+                   default-directory)))
+        (file (cond ((not (file-directory-p file-or-dir)) (file-name-nondirectory file-or-dir))
                     ((eq system-type 'ms-dos) (dosified-file-name dir-locals-file))
                     (t dir-locals-file))))
     (seq-filter (lambda (f) (and (file-readable-p f)
