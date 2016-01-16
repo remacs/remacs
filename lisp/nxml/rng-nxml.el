@@ -33,6 +33,7 @@
 (require 'rng-valid)
 (require 'nxml-mode)
 (require 'rng-loc)
+(require 'sgml-mode)
 
 (defcustom rng-nxml-auto-validate-flag t
   "Non-nil means automatically turn on validation with nxml-mode."
@@ -65,6 +66,9 @@ Complete on start-tag names regardless.")
     ["Validation" rng-validate-mode
      :style toggle
      :selected rng-validate-mode]
+    ["Electric Pairs" sgml-electric-tag-pair-mode
+     :style toggle
+     :selected sgml-electric-tag-pair-mode]
     "---"
     ("Set Schema"
      ["Automatically" rng-auto-set-schema]
@@ -107,12 +111,12 @@ Validation will be enabled if `rng-nxml-auto-validate-flag' is non-nil."
                'append)
   (cond (rng-nxml-auto-validate-flag
 	 (rng-validate-mode 1)
-	 (add-hook 'nxml-completion-hook 'rng-complete nil t)
-	 (add-hook 'nxml-in-mixed-content-hook 'rng-in-mixed-content-p nil t))
+	 (add-hook 'nxml-completion-hook #'rng-complete nil t)
+	 (add-hook 'nxml-in-mixed-content-hook #'rng-in-mixed-content-p nil t))
 	(t
 	 (rng-validate-mode 0)
-	 (remove-hook 'nxml-completion-hook 'rng-complete t)
-	 (remove-hook 'nxml-in-mixed-content-hook 'rng-in-mixed-content-p t))))
+	 (remove-hook 'nxml-completion-hook #'rng-complete t)
+	 (remove-hook 'nxml-in-mixed-content-hook #'rng-in-mixed-content-p t))))
 
 (defvar rng-tag-history nil)
 (defvar rng-attribute-name-history nil)
@@ -328,7 +332,7 @@ Return non-nil if in a context it understands."
 	      (nxml-ns-get-default))))
     (if (and ns (memq prefix (nxml-ns-changed-prefixes)))
 	(list (nxml-namespace-name ns))
-      (mapcar 'nxml-namespace-name
+      (mapcar #'nxml-namespace-name
 	      (delq nxml-xml-namespace-uri
 		    (rng-match-possible-namespace-uris))))))
 
@@ -502,14 +506,7 @@ set `xmltok-dtd'.  Returns the position of the end of the token."
 	 (rng-match-attribute-name (cons ns local-name)))))
 
 (defun rng-complete-qname-function (string predicate flag)
-  (let ((alist (mapcar (lambda (name) (cons name nil))
-		       (rng-generate-qname-list string))))
-    (cond ((not flag)
-	   (try-completion string alist predicate))
-	  ((eq flag t)
-	   (all-completions string alist predicate))
-	  ((eq flag 'lambda)
-	   (and (assoc string alist) t)))))
+  (complete-with-action flag (rng-generate-qname-list string) string predicate))
 
 (defun rng-generate-qname-list (&optional string)
   (let ((forced-prefix (and string
@@ -550,7 +547,7 @@ set `xmltok-dtd'.  Returns the position of the end of the token."
 	    (setcdr ns-prefixes (cons nil (cdr ns-prefixes))))))
       (setq iter (cdr iter)))
     (rng-uniquify-equal
-     (sort (apply 'append
+     (sort (apply #'append
 		  (cons rng-complete-extra-strings
 			(mapcar (lambda (name)
 				  (if (car name)
@@ -584,7 +581,7 @@ set `xmltok-dtd'.  Returns the position of the end of the token."
 
 (defun rng-strings-to-completion-alist (strings)
   (mapcar (lambda (s) (cons s s))
-	  (rng-uniquify-equal (sort (mapcar 'rng-escape-string strings)
+	  (rng-uniquify-equal (sort (mapcar #'rng-escape-string strings)
 				    'string<))))
 
 (provide 'rng-nxml)

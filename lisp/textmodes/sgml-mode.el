@@ -862,11 +862,12 @@ Return non-nil if we skipped over matched tags."
                 (if endp
                     (when (sgml-skip-tag-backward 1) (forward-char 1) t)
                   (with-syntax-table sgml-tag-syntax-table
-                    (up-list -1)
-                    (when (sgml-skip-tag-forward 1)
-                      (backward-sexp 1)
-                      (forward-char 2)
-                      t))))
+                    (let ((forward-sexp-function nil))
+                      (up-list -1)
+                      (when (sgml-skip-tag-forward 1)
+                        (backward-sexp 1)
+                        (forward-char 2)
+                        t)))))
                (clones (get-char-property (point) 'text-clones)))
           (when (and match
                      (/= cl-end cl-start)

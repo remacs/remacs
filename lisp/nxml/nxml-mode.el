@@ -26,9 +26,6 @@
 
 ;;; Code:
 
-(when (featurep 'mucs)
-  (error "nxml-mode is not compatible with Mule-UCS"))
-
 (eval-when-compile (require 'cl-lib))
 
 (require 'xmltok)
@@ -339,22 +336,19 @@ The delimiters are <! and >."
 
 ;;; Global variables
 
-(defvar nxml-parent-document nil
+(defvar-local nxml-parent-document nil
   "The parent document for a part of a modular document.
 Use `nxml-parent-document-set' to set it.")
-(make-variable-buffer-local 'nxml-parent-document)
 (put 'nxml-parent-document 'safe-local-variable 'stringp)
 
-(defvar nxml-prolog-regions nil
+(defvar-local nxml-prolog-regions nil
   "List of regions in the prolog to be fontified.
 See the function `xmltok-forward-prolog' for more information.")
-(make-variable-buffer-local 'nxml-prolog-regions)
 
-(defvar nxml-degraded nil
+(defvar-local nxml-degraded nil
   "Non-nil if currently operating in degraded mode.
 Degraded mode is enabled when an internal error is encountered in the
 fontification or after-change functions.")
-(make-variable-buffer-local 'nxml-degraded)
 
 (defvar nxml-completion-hook nil
   "Hook run by `nxml-complete'.
@@ -372,13 +366,12 @@ one of the functions returns nil.")
 (defvar nxml-end-tag-indent-scan-distance 4000
   "Maximum distance from point to scan backwards when indenting end-tag.")
 
-(defvar nxml-char-ref-extra-display t
+(defvar-local nxml-char-ref-extra-display t
   "Non-nil means display extra information for character references.
 The extra information consists of a tooltip with the character name
 and, if `nxml-char-ref-display-glyph-flag' is non-nil, a glyph
 corresponding to the referenced character following the character
 reference.")
-(make-variable-buffer-local 'nxml-char-ref-extra-display)
 
 (defvar nxml-mode-map
   (let ((map (make-sparse-keymap)))
@@ -516,35 +509,24 @@ Many aspects this mode can be customized using
   ;; FIXME: Use the fact that we're parsing the document already
   ;; rather than using regex-based filtering.
   (setq-local tildify-foreach-region-function
-              (apply-partially 'tildify-foreach-ignore-environments
+              (apply-partially #'tildify-foreach-ignore-environments
                                '(("<! *--" . "-- *>") ("<" . ">"))))
-  (set (make-local-variable 'mode-line-process) '((nxml-degraded "/degraded")))
+  (setq-local mode-line-process '((nxml-degraded "/degraded")))
   ;; We'll determine the fill prefix ourselves
-  (make-local-variable 'adaptive-fill-mode)
-  (setq adaptive-fill-mode nil)
-  (make-local-variable 'forward-sexp-function)
-  (setq forward-sexp-function 'nxml-forward-balanced-item)
-  (make-local-variable 'indent-line-function)
-  (setq indent-line-function 'nxml-indent-line)
-  (make-local-variable 'fill-paragraph-function)
-  (setq fill-paragraph-function 'nxml-do-fill-paragraph)
+  (setq-local adaptive-fill-mode nil)
+  (setq-local forward-sexp-function #'nxml-forward-balanced-item)
+  (setq-local indent-line-function #'nxml-indent-line)
+  (setq-local fill-paragraph-function #'nxml-do-fill-paragraph)
   ;; Comment support
   ;; This doesn't seem to work too well;
   ;; I think we should probably roll our own nxml-comment-dwim function.
-  (make-local-variable 'comment-indent-function)
-  (setq comment-indent-function 'nxml-indent-line)
-  (make-local-variable 'comment-start)
-  (setq comment-start "<!--")
-  (make-local-variable 'comment-start-skip)
-  (setq comment-start-skip "<!--[ \t\r\n]*")
-  (make-local-variable 'comment-end)
-  (setq comment-end "-->")
-  (make-local-variable 'comment-end-skip)
-  (setq comment-end-skip "[ \t\r\n]*-->")
-  (make-local-variable 'comment-line-break-function)
-  (setq comment-line-break-function 'nxml-newline-and-indent)
-  (setq-local comment-quote-nested-function 'nxml-comment-quote-nested)
-  (use-local-map nxml-mode-map)
+  (setq-local comment-indent-function #'nxml-indent-line)
+  (setq-local comment-start "<!--")
+  (setq-local comment-start-skip "<!--[ \t\r\n]*")
+  (setq-local comment-end "-->")
+  (setq-local comment-end-skip "[ \t\r\n]*-->")
+  (setq-local comment-line-break-function #'nxml-newline-and-indent)
+  (setq-local comment-quote-nested-function #'nxml-comment-quote-nested)
   (save-excursion
     (save-restriction
       (widen)
@@ -556,13 +538,13 @@ Many aspects this mode can be customized using
   (add-hook 'completion-at-point-functions
             #'nxml-completion-at-point-function nil t)
   (setq-local syntax-propertize-function #'nxml-after-change)
-  (add-hook 'change-major-mode-hook 'nxml-cleanup nil t)
+  (add-hook 'change-major-mode-hook #'nxml-cleanup nil t)
 
   ;; Emacs 23 handles the encoding attribute on the xml declaration
   ;; transparently to nxml-mode, so there is no longer a need for the below
   ;; hook. The hook also had the drawback of overriding explicit user
   ;; instruction to save as some encoding other than utf-8.
-  ;;(add-hook 'write-contents-hooks 'nxml-prepare-to-save)
+  ;;(add-hook 'write-contents-hooks #'nxml-prepare-to-save)
   (when (not (and (buffer-file-name) (file-exists-p (buffer-file-name))))
     (when (and nxml-default-buffer-file-coding-system
 	       (not (local-variable-p 'buffer-file-coding-system)))
@@ -592,7 +574,7 @@ Many aspects this mode can be customized using
     (with-silent-modifications
       (nxml-with-invisible-motion
        (remove-text-properties (point-min) (point-max) '(face)))))
-  (remove-hook 'change-major-mode-hook 'nxml-cleanup t))
+  (remove-hook 'change-major-mode-hook #'nxml-cleanup t))
 
 (defun nxml-degrade (context err)
   (message "Internal nXML mode error in %s (%s), degrading"
@@ -1670,7 +1652,7 @@ single name.  A character reference contains a character number."
 			   (t end)))))
     (nxml-scan-error
      (goto-char (cadr err))
-     (apply 'error (cddr err)))))
+     (apply #'error (cddr err)))))
 
 (defun nxml-backward-single-balanced-item ()
   (condition-case err
@@ -1692,7 +1674,7 @@ single name.  A character reference contains a character number."
 			   (t xmltok-start)))))
     (nxml-scan-error
      (goto-char (cadr err))
-     (apply 'error (cddr err)))))
+     (apply #'error (cddr err)))))
 
 (defun nxml-scan-forward-within (end)
   (setq end (- end (nxml-end-delimiter-length xmltok-type)))
@@ -1876,7 +1858,7 @@ single name.  A character reference contains a character number."
 	  (setq arg (1- arg)))
       (nxml-scan-error
        (goto-char (cadr err))
-       (apply 'error (cddr err))))))
+       (apply #'error (cddr err))))))
 
 (defun nxml-backward-up-element (&optional arg)
   (interactive "p")
@@ -1905,7 +1887,7 @@ single name.  A character reference contains a character number."
 	  (setq arg (1- arg)))
       (nxml-scan-error
        (goto-char (cadr err))
-       (apply 'error (cddr err))))))
+       (apply #'error (cddr err))))))
 
 (defun nxml-down-element (&optional arg)
   "Move forward down into the content of an element.
@@ -1970,7 +1952,7 @@ Negative ARG means move backward."
 	  (setq arg (1- arg)))
     (nxml-scan-error
      (goto-char (cadr err))
-     (apply 'error (cddr err))))))
+     (apply #'error (cddr err))))))
 
 (defun nxml-backward-element (&optional arg)
   "Move backward over one element.
@@ -1992,7 +1974,7 @@ Negative ARG means move forward."
 	  (setq arg (1- arg)))
     (nxml-scan-error
      (goto-char (cadr err))
-     (apply 'error (cddr err))))))
+     (apply #'error (cddr err))))))
 
 (defun nxml-mark-token-after ()
   (interactive)
