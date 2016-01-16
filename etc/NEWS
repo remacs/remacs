@@ -1467,6 +1467,7 @@ MS-Windows doesn't support UTF-8 as codeset in its locales.
 +++
 ** New function `alist-get', which is also a valid place (aka lvalue).
 
++++
 ** New function `funcall-interactively', which works like `funcall'
 but makes `called-interactively-p' treat the function as (you guessed it)
 called interactively.

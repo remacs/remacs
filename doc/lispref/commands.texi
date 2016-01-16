@@ -691,6 +691,14 @@ default is the return value of @code{this-command-keys-vector}.
 @xref{Definition of this-command-keys-vector}.
 @end defun
 
+@defun funcall-interactively function &rest arguments
+This function works like @code{funcall} (@pxref{Calling Functions}),
+but it makes the call look like an interactive invocation: a call to
+@code{called-interactively-p} inside @var{function} will return
+@code{t}.  If @var{function} is not a command, it is called without
+signaling an error.
+@end defun
+
 @defun command-execute command &optional record-flag keys special
 @cindex keyboard macro execution
 This function executes @var{command}.  The argument @var{command} must

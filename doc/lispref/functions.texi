@@ -754,6 +754,10 @@ they make sense only when given the unevaluated argument
 expressions.  @code{funcall} cannot provide these because, as we saw
 above, it never knows them in the first place.
 
+If you need to use @code{funcall} to call a command and make it behave
+as if invoked interactively, use @code{funcall-interactively}
+(@pxref{Interactive Call}).
+
 @example
 @group
 (setq f 'list)
