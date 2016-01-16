@@ -939,7 +939,7 @@ if it is given a local binding.\n"))))
 			(with-current-buffer standard-output
 			  (insert-text-button
 			   file 'type 'help-dir-local-var-def
-                             'help-args (list variable file))))
+                             'help-args (list variable file)))
 			(princ (substitute-command-keys "'.\n"))))
 		  (princ (substitute-command-keys
 			  "  This variable's value is file-local.\n"))))
