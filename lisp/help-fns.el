@@ -918,25 +918,24 @@ if it is given a local binding.\n"))))
                         ;; If the cache element has an mtime, we
                         ;; assume it came from a file.
                         (if (nth 2 file)
-                            (setq file (expand-file-name
-                                        dir-locals-file (car file)))
+                            ;; (car file) is a directory.
+                            (setq file (dir-locals--all-files (car file)))
                           ;; Otherwise, assume it was set directly.
                           (setq file (car file)
                                 is-directory t)))
                       (if (null file)
                           (princ ".\n")
                         (princ ", set ")
-                        (let ((files (file-expand-wildcards file)))
-                          (princ (substitute-command-keys
-                                  (cond
-                                   (is-directory "for the directory\n  `")
-                                   ;; Many files matched.
-                                   ((cdr files)
-                                    (setq file (file-name-directory (car files)))
-                                    (format "by a file\n  matching `%s' in the directory\n  `"
-                                            dir-locals-file))
-                                   (t (setq file (car files))
-                                      "by the file\n  `"))))
+                        (princ (substitute-command-keys
+                                (cond
+                                 (is-directory "for the directory\n  `")
+                                 ;; Many files matched.
+                                 ((and (consp file) (cdr file))
+                                  (setq file (file-name-directory (car file)))
+                                  (format "by one of the\n  %s files in the directory\n  `"
+                                          dir-locals-file))
+                                 (t (setq file (car file))
+                                    "by the file\n  `"))))
 			(with-current-buffer standard-output
 			  (insert-text-button
 			   file 'type 'help-dir-local-var-def
