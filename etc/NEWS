@@ -36,6 +36,7 @@ otherwise leave it unmarked.
 This builds Emacs with Cairo drawing.  As a side effect, it provides
 support for built-in printing, when Emacs was built with GTK+.
 
++++
 ** New configure option --with-modules.
 This enables support for loading dynamic modules; see below.
 
