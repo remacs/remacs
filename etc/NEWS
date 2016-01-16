@@ -1440,6 +1440,7 @@ evaluated (and should return a string) when the closure is built.
 *** x-get-selection-value is renamed to gui-get-primary-selection.
 *** x-set-selection is renamed to gui-set-selection
 
++++
 ** New function `string-greaterp', which return the opposite result of
 `string-lessp'.
 
