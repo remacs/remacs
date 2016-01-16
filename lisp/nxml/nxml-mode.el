@@ -37,6 +37,7 @@
 ;; So we might as well just require it and silence the compiler.
 (provide 'nxml-mode)			; avoid recursive require
 (require 'rng-nxml)
+(require 'sgml-mode)
 
 ;;; Customization
 
@@ -145,16 +146,6 @@ This is not used directly, but only via inheritance by other faces."
 (defface nxml-text
   nil
   "Face used to highlight text."
-  :group 'nxml-faces)
-
-(defface nxml-comment-content
-  '((t (:inherit font-lock-comment-face)))
-  "Face used to highlight the content of comments."
-  :group 'nxml-faces)
-
-(defface nxml-comment-delimiter
-  '((t (:inherit font-lock-comment-delimiter-face)))
-  "Face used for the delimiters of comments, i.e., <!-- and -->."
   :group 'nxml-faces)
 
 (defface nxml-processing-instruction-delimiter
@@ -274,15 +265,6 @@ This includes ths `x' in hex references."
   "Face used for the delimiters of attribute values."
   :group 'nxml-faces)
 
-(defface nxml-namespace-attribute-value
-  '((t (:inherit nxml-attribute-value)))
-  "Face used for the value of namespace attributes."
-  :group 'nxml-faces)
-
-(defface nxml-namespace-attribute-value-delimiter
-  '((t (:inherit nxml-attribute-value-delimiter)))
-  "Face used for the delimiters of namespace attribute values."
-  :group 'nxml-faces)
 
 (defface nxml-prolog-literal-delimiter
   '((t (:inherit nxml-delimited-data)))
@@ -405,7 +387,9 @@ reference.")
 
 (defsubst nxml-set-face (start end face)
   (when (and face (< start end))
-    (font-lock-append-text-property start end 'face face)))
+    ;; Prepend, so the character reference highlighting takes precedence over
+    ;; the string highlighting applied syntactically.
+    (font-lock-prepend-text-property start end 'face face)))
 
 (defun nxml-parent-document-set (parent-document)
   "Set `nxml-parent-document' and inherit the DTD &c."
@@ -530,12 +514,11 @@ Many aspects this mode can be customized using
   (save-excursion
     (save-restriction
       (widen)
-      (setq nxml-scan-end (copy-marker (point-min) nil))
       (with-silent-modifications
-        (nxml-clear-inside (point-min) (point-max))
 	(nxml-with-invisible-motion
 	  (nxml-scan-prolog)))))
-  (setq-local syntax-propertize-function #'nxml-after-change)
+  (setq-local syntax-ppss-table sgml-tag-syntax-table)
+  (setq-local syntax-propertize-function sgml-syntax-propertize-function)
   (add-hook 'change-major-mode-hook #'nxml-cleanup nil t)
 
   ;; Emacs 23 handles the encoding attribute on the xml declaration
@@ -552,7 +535,7 @@ Many aspects this mode can be customized using
 
   (setq font-lock-defaults
         '(nxml-font-lock-keywords
-          t    ; keywords-only; we highlight comments and strings here
+          nil  ; highlight comments and strings based on syntax-tables
           nil  ; font-lock-keywords-case-fold-search. XML is case sensitive
           nil  ; no special syntax table
           (font-lock-extend-region-functions . (nxml-extend-region))
@@ -579,12 +562,7 @@ Many aspects this mode can be customized using
 	   (error-message-string err))
   (ding)
   (setq nxml-degraded t)
-  (setq nxml-prolog-end 1)
-  (save-excursion
-    (save-restriction
-      (widen)
-      (with-silent-modifications
-	(nxml-clear-inside (point-min) (point-max))))))
+  (setq nxml-prolog-end 1))
 
 ;;; Change management
 
@@ -596,41 +574,6 @@ Many aspects this mode can be customized using
     (nxml-extend-region)
     (goto-char font-lock-beg)
     (set-mark font-lock-end)))
-
-(defun nxml-after-change (start end)
-  ;; Called via syntax-propertize-function.
-  (unless nxml-degraded
-    (nxml-with-degradation-on-error 'nxml-after-change
-      (save-restriction
-        (widen)
-        (nxml-with-invisible-motion
-         (nxml-after-change1 start end))))))
-
-(defun nxml-after-change1 (start end)
-  "After-change bookkeeping.
-Returns a cons cell containing a possibly-enlarged change region.
-You must call `nxml-extend-region' on this expanded region to obtain
-the full extent of the area needing refontification.
-
-For bookkeeping, call this function even when fontification is
-disabled."
-  ;; If the prolog might have changed, rescan the prolog.
-  (when (<= start
-            ;; Add 2 so as to include the < and following char that
-            ;; start the instance (document element), since changing
-            ;; these can change where the prolog ends.
-            (+ nxml-prolog-end 2))
-    (nxml-scan-prolog)
-    (setq start (point-min)))
-
-  (when (> end nxml-prolog-end)
-    (goto-char start)
-    (nxml-move-tag-backwards (point-min))
-    (setq start (point))
-    (setq end (max (nxml-scan-after-change start end)
-                   end)))
-
-  (nxml-debug-change "nxml-after-change1" start end))
 
 ;;; Encodings
 
@@ -957,11 +900,11 @@ faces appropriately."
        [1 -1 nxml-entity-ref-name]
        [-1 nil nxml-entity-ref-delimiter]))
 
-(put 'comment
-     'nxml-fontify-rule
-     '([nil 4 nxml-comment-delimiter]
-       [4 -3 nxml-comment-content]
-       [-3 nil nxml-comment-delimiter]))
+;; (put 'comment
+;;      'nxml-fontify-rule
+;;      '([nil 4 nxml-comment-delimiter]
+;;        [4 -3 nxml-comment-content]
+;;        [-3 nil nxml-comment-delimiter]))
 
 (put 'processing-instruction
      'nxml-fontify-rule
@@ -993,7 +936,7 @@ faces appropriately."
      'nxml-fontify-rule
      '([nil nil nxml-attribute-local-name]))
 
-(put 'xml-declaration-attribute-value
+(put 'xml-declaration-attribute-value   ;FIXME: What is this for?
      'nxml-fontify-rule
      '([nil 1 nxml-attribute-value-delimiter]
        [1 -1 nxml-attribute-value]
@@ -1112,28 +1055,11 @@ faces appropriately."
 			'nxml-attribute-prefix
 			'nxml-attribute-colon
 			'nxml-attribute-local-name))
-  (let ((start (xmltok-attribute-value-start att))
-	(end (xmltok-attribute-value-end att))
-	(refs (xmltok-attribute-refs att))
-	(delimiter-face (if namespace-declaration
-			    'nxml-namespace-attribute-value-delimiter
-			  'nxml-attribute-value-delimiter))
-	(value-face (if namespace-declaration
-			'nxml-namespace-attribute-value
-		      'nxml-attribute-value)))
-    (when start
-      (nxml-set-face (1- start) start delimiter-face)
-      (nxml-set-face end (1+ end) delimiter-face)
-      (while refs
-	(let* ((ref (car refs))
-	       (ref-type (aref ref 0))
-	       (ref-start (aref ref 1))
-	       (ref-end (aref ref 2)))
-	  (nxml-set-face start ref-start value-face)
-	  (nxml-apply-fontify-rule ref-type ref-start ref-end)
-	  (setq start ref-end))
-	(setq refs (cdr refs)))
-      (nxml-set-face start end value-face))))
+  (dolist (ref (xmltok-attribute-refs att))
+    (let* ((ref-type (aref ref 0))
+           (ref-start (aref ref 1))
+           (ref-end (aref ref 2)))
+      (nxml-apply-fontify-rule ref-type ref-start ref-end))))
 
 (defun nxml-fontify-qname (start
 			   colon

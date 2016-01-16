@@ -888,7 +888,7 @@ Point is at the end of the tag.  `xmltok-start' is the start."
 		      (nxml-ensure-scan-up-to-date)
 		      (let ((pos (nxml-inside-start (point))))
 			(when pos
-			  (goto-char (1- pos))
+			  (goto-char pos)
 			  t))))
 		   ((progn
 		      (xmltok-forward)
