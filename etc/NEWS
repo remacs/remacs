@@ -1428,7 +1428,8 @@ evaluated (and should return a string) when the closure is built.
 +++
 ** define-inline provides a new way to define inlinable functions.
 
-** New function `macroexpand-1' to perform a single step of macroexpansion.
++++
+** New function `macroexpand-1' to perform a single step of macro expansion.
 
 ** Some "x-*" were obsoleted:
 *** x-select-text is renamed gui-select-text.
