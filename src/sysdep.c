@@ -99,6 +99,15 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "process.h"
 #include "cm.h"
 
+#ifdef HAVE_GNUTLS
+# include <gnutls/gnutls.h>
+#endif
+#if 0x020c00 <= GNUTLS_VERSION_NUMBER
+# include <gnutls/crypto.h>
+#else
+# define gnutls_rnd(level, data, len) (-1)
+#endif
+
 #ifdef WINDOWSNT
 #include <direct.h>
 /* In process.h which conflicts with the local copy.  */
@@ -2068,63 +2077,55 @@ init_signals (bool dumping)
 # endif /* !HAVE_RANDOM */
 #endif /* !RAND_BITS */
 
+#ifdef HAVE_RANDOM
+typedef unsigned int random_seed;
+static void set_random_seed (random_seed arg) { srandom (arg); }
+#elif defined HAVE_LRAND48
+/* Although srand48 uses a long seed, this is unsigned long to avoid
+   undefined behavior on signed integer overflow in init_random.  */
+typedef unsigned long int random_seed;
+static void set_random_seed (random_seed arg) { srand48 (arg); }
+#else
+typedef unsigned int random_seed;
+static void set_random_seed (random_seed arg) { srand (arg); }
+#endif
+
 void
 seed_random (void *seed, ptrdiff_t seed_size)
 {
-#if defined HAVE_RANDOM || ! defined HAVE_LRAND48
-  unsigned int arg = 0;
-#else
-  long int arg = 0;
-#endif
+  random_seed arg = 0;
   unsigned char *argp = (unsigned char *) &arg;
   unsigned char *seedp = seed;
-  ptrdiff_t i;
-  for (i = 0; i < seed_size; i++)
+  for (ptrdiff_t i = 0; i < seed_size; i++)
     argp[i % sizeof arg] ^= seedp[i];
-#ifdef HAVE_RANDOM
-  srandom (arg);
-#else
-# ifdef HAVE_LRAND48
-  srand48 (arg);
-# else
-  srand (arg);
-# endif
-#endif
+  set_random_seed (arg);
 }
 
 void
 init_random (void)
 {
-  uintmax_t v;
-  struct timespec t;
-  bool success = false;
-
-#if HAVE_DEV_URANDOM
-  FILE *fp = fopen ("/dev/urandom", "rb");
-
-  if (fp)
+  random_seed v;
+  if (gnutls_rnd (GNUTLS_RND_NONCE, &v, sizeof v) != 0)
     {
-      int i;
-
-      for (i = 0, v = 0; i < sizeof (uintmax_t); i++)
+      bool success = false;
+#ifndef WINDOWSNT
+      int fd = emacs_open ("/dev/urandom", O_RDONLY | O_BINARY, 0);
+      if (0 <= fd)
 	{
-	  v <<= 8;
-	  v |= fgetc (fp);
+	  success = emacs_read (fd, &v, sizeof v) == sizeof v;
+	  emacs_close (fd);
 	}
-      fclose (fp);
-      success = true;
+#else
+      success = w32_init_random (&v, sizeof v) == 0;
+#endif
+      if (! success)
+	{
+	  /* Fall back to current time value + PID.  */
+	  struct timespec t = current_timespec ();
+	  v = getpid () ^ t.tv_sec ^ t.tv_nsec;
+	}
     }
-#elif defined WINDOWSNT
-  if (w32_init_random (&v, sizeof v) == 0)
-    success = true;
-#endif	/* HAVE_DEV_URANDOM || WINDOWSNT */
-  if (!success)
-    {
-      /* Fall back to current time value + PID.  */
-      t = current_timespec ();
-      v = getpid () ^ t.tv_sec ^ t.tv_nsec;
-    }
-  seed_random (&v, sizeof v);
+  set_random_seed (v);
 }
 
 /*
