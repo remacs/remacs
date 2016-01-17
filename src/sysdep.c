@@ -99,15 +99,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "process.h"
 #include "cm.h"
 
-#ifdef HAVE_GNUTLS
-# include <gnutls/gnutls.h>
-#endif
-#if 0x020c00 <= GNUTLS_VERSION_NUMBER
-# include <gnutls/crypto.h>
-#else
-# define gnutls_rnd(level, data, len) (-1)
-#endif
-
 #ifdef WINDOWSNT
 #include <direct.h>
 /* In process.h which conflicts with the local copy.  */
@@ -2105,25 +2096,22 @@ void
 init_random (void)
 {
   random_seed v;
-  if (gnutls_rnd (GNUTLS_RND_NONCE, &v, sizeof v) != 0)
-    {
-      bool success = false;
+  bool success = false;
 #ifndef WINDOWSNT
-      int fd = emacs_open ("/dev/urandom", O_RDONLY | O_BINARY, 0);
-      if (0 <= fd)
-	{
-	  success = emacs_read (fd, &v, sizeof v) == sizeof v;
-	  emacs_close (fd);
-	}
+  int fd = emacs_open ("/dev/urandom", O_RDONLY | O_BINARY, 0);
+  if (fd >= 0)
+    {
+      success = emacs_read (fd, &v, sizeof v) == sizeof v;
+      emacs_close (fd);
+    }
 #else
-      success = w32_init_random (&v, sizeof v) == 0;
+  success = w32_init_random (&v, sizeof v) == 0;
 #endif
-      if (! success)
-	{
-	  /* Fall back to current time value + PID.  */
-	  struct timespec t = current_timespec ();
-	  v = getpid () ^ t.tv_sec ^ t.tv_nsec;
-	}
+  if (! success)
+    {
+      /* Fall back to current time value + PID.  */
+      struct timespec t = current_timespec ();
+      v = getpid () ^ t.tv_sec ^ t.tv_nsec;
     }
   set_random_seed (v);
 }
@@ -2175,7 +2163,7 @@ snprintf (char *buf, size_t bufsize, char const *format, ...)
 	xfree (b);
     }
 
-  if (INT_MAX < nbytes)
+  if (nbytes > INT_MAX)
     {
 #ifdef EOVERFLOW
       errno = EOVERFLOW;
@@ -2233,7 +2221,7 @@ emacs_backtrace (int backtrace_limit)
     {
       emacs_write (STDERR_FILENO, "\nBacktrace:\n", 12);
       backtrace_symbols_fd (buffer, npointers, STDERR_FILENO);
-      if (bounded_limit < npointers)
+      if (npointers > bounded_limit)
 	emacs_write (STDERR_FILENO, "...\n", 4);
     }
 }
@@ -2262,7 +2250,7 @@ emacs_open (const char *file, int oflags, int mode)
   oflags |= O_CLOEXEC;
   while ((fd = open (file, oflags, mode)) < 0 && errno == EINTR)
     QUIT;
-  if (! O_CLOEXEC && 0 <= fd)
+  if (! O_CLOEXEC && fd >= 0)
     fcntl (fd, F_SETFD, FD_CLOEXEC);
   return fd;
 }
@@ -2829,9 +2817,9 @@ time_from_jiffies (unsigned long long tval, long hz)
   unsigned long long frac = tval % hz;
   int ns;
 
-  if (TYPE_MAXIMUM (time_t) < s)
+  if (s > TYPE_MAXIMUM (time_t))
     time_overflow ();
-  if (LONG_MAX - 1 <= ULLONG_MAX / TIMESPEC_RESOLUTION
+  if (ULLONG_MAX / TIMESPEC_RESOLUTION >= LONG_MAX - 1
       || frac <= ULLONG_MAX / TIMESPEC_RESOLUTION)
     ns = frac * TIMESPEC_RESOLUTION / hz;
   else
@@ -3049,7 +3037,7 @@ system_process_attributes (Lisp_Object pid)
       record_unwind_protect_int (close_file_unwind, fd);
       nread = emacs_read (fd, procbuf, sizeof procbuf - 1);
     }
-  if (0 < nread)
+  if (nread > 0)
     {
       procbuf[nread] = '\0';
       p = procbuf;
@@ -3176,12 +3164,12 @@ system_process_attributes (Lisp_Object pid)
       if (nread)
 	{
 	  /* We don't want trailing null characters.  */
-	  for (p = cmdline + nread; cmdline < p && !p[-1]; p--)
+	  for (p = cmdline + nread; p > cmdline && !p[-1]; p--)
 	    continue;
 
 	  /* Escape-quote whitespace and backslashes.  */
 	  q = cmdline + cmdline_size;
-	  while (cmdline < p)
+	  while (p > cmdline)
 	    {
 	      char c = *--p;
 	      *--q = c ? c : ' ';
