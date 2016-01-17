@@ -51,10 +51,21 @@ typedef bool bool_bf;
 #endif
 #endif
 
-/* When not using Clang, assume its attributes and features are absent.  */
+/* Simulate __has_attribute on compilers that lack it.  It is used only
+   on arguments like alloc_size that are handled in this simulation.  */
 #ifndef __has_attribute
-# define __has_attribute(a) false
+# define __has_attribute(a) __has_attribute_##a
+# define __has_attribute_alloc_size (4 < __GNUC__ + (3 <= __GNUC_MINOR__))
+# define __has_attribute_cleanup (3 < __GNUC__ + (4 <= __GNUC_MINOR__))
+# define __has_attribute_externally_visible \
+    (4 < __GNUC__ + (1 <= __GNUC_MINOR__))
+# define __has_attribute_no_address_safety_analysis false
+# define __has_attribute_no_sanitize_address \
+    (4 < __GNUC__ + (8 <= __GNUC_MINOR__))
 #endif
+
+/* Simulate __has_feature on compilers that lack it.  It is used only
+   to define ADDRESS_SANITIZER below.  */
 #ifndef __has_feature
 # define __has_feature(a) false
 #endif
@@ -222,9 +233,7 @@ extern int emacs_setenv_TZ (char const *);
 #define NO_INLINE
 #endif
 
-#if (__clang__								\
-     ? __has_attribute (externally_visible)				\
-     : (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1)))
+#if __has_attribute (externally_visible)
 #define EXTERNALLY_VISIBLE __attribute__((externally_visible))
 #else
 #define EXTERNALLY_VISIBLE
@@ -253,9 +262,7 @@ extern int emacs_setenv_TZ (char const *);
 # define ATTRIBUTE_MALLOC
 #endif
 
-#if (__clang__					\
-     ? __has_attribute (alloc_size)		\
-     : 4 < __GNUC__ + (3 <= __GNUC_MINOR__))
+#if __has_attribute (alloc_size)
 # define ATTRIBUTE_ALLOC_SIZE(args) __attribute__ ((__alloc_size__ args))
 #else
 # define ATTRIBUTE_ALLOC_SIZE(args)
@@ -278,8 +285,7 @@ extern int emacs_setenv_TZ (char const *);
 /* Attribute of functions whose code should not have addresses
    sanitized.  */
 
-#if (__has_attribute (no_sanitize_address) \
-     || 4 < __GNUC__ + (8 <= __GNUC_MINOR__))
+#if __has_attribute (no_sanitize_address)
 # define ATTRIBUTE_NO_SANITIZE_ADDRESS \
     __attribute__ ((no_sanitize_address)) ADDRESS_SANITIZER_WORKAROUND
 #elif __has_attribute (no_address_safety_analysis)
