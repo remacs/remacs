@@ -5212,6 +5212,7 @@ window_scroll_line_based (Lisp_Object window, int n, bool whole, bool noerror)
       w->force_start = true;
 
       if (!NILP (Vscroll_preserve_screen_position)
+	  && this_scroll_margin == 0
 	  && (whole || !EQ (Vscroll_preserve_screen_position, Qt)))
 	{
 	  SET_PT_BOTH (pos, pos_byte);
@@ -5237,8 +5238,16 @@ window_scroll_line_based (Lisp_Object window, int n, bool whole, bool noerror)
 			 marker_byte_position (opoint_marker));
 	  else if (!NILP (Vscroll_preserve_screen_position))
 	    {
+	      int nlines = window_scroll_preserve_vpos;
+
 	      SET_PT_BOTH (pos, pos_byte);
-	      Fvertical_motion (original_pos, window, Qnil);
+	      if (window_scroll_preserve_vpos < this_scroll_margin)
+		nlines = this_scroll_margin;
+	      else if (window_scroll_preserve_vpos
+		       >= w->total_lines - this_scroll_margin)
+		nlines = w->total_lines - this_scroll_margin - 1;
+	      Fvertical_motion (Fcons (make_number (window_scroll_preserve_hpos),
+				       make_number (nlines)), window, Qnil);
 	    }
 	  else
 	    SET_PT (top_margin);
@@ -5264,8 +5273,16 @@ window_scroll_line_based (Lisp_Object window, int n, bool whole, bool noerror)
 	    {
 	      if (!NILP (Vscroll_preserve_screen_position))
 		{
+		  int nlines = window_scroll_preserve_vpos;
+
 		  SET_PT_BOTH (pos, pos_byte);
-		  Fvertical_motion (original_pos, window, Qnil);
+		  if (window_scroll_preserve_vpos < this_scroll_margin)
+		    nlines = this_scroll_margin;
+		  else if (window_scroll_preserve_vpos
+			   >= ht - this_scroll_margin)
+		    nlines = ht - this_scroll_margin - 1;
+		  Fvertical_motion (Fcons (make_number (window_scroll_preserve_hpos),
+					   make_number (nlines)), window, Qnil);
 		}
 	      else
 		Fvertical_motion (make_number (-1), window, Qnil);
