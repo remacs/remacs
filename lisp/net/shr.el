@@ -1600,7 +1600,9 @@ The preference is a float determined from `shr-prefer-media-type'."
     (shr-insert-table (shr-make-table dom sketch-widths t) sketch-widths)))
 
 (defun shr-table-body (dom)
-  (let ((tbodies (dom-by-tag dom 'tbody)))
+  (let ((tbodies (seq-filter (lambda (child)
+                               (eq (dom-tag child) 'tbody))
+                             (dom-children dom))))
     (cond
      ((null tbodies)
       dom)
