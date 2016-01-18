@@ -100,7 +100,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "cm.h"
 
 #include "gnutls.h"
-#if 0x020c00 <= GNUTLS_VERSION_NUMBER
+#if 0x020c00 <= GNUTLS_VERSION_NUMBER && !defined WINDOWSNT
 # include <gnutls/crypto.h>
 #else
 # define emacs_gnutls_global_init() Qnil
