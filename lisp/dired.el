@@ -1450,7 +1450,7 @@ Do so according to the former subdir alist OLD-SUBDIR-ALIST."
     (define-key map "." 'dired-clean-directory)
     (define-key map "~" 'dired-flag-backup-files)
     ;; Upper case keys (except !) for operating on the marked files
-    (define-key map "A" 'dired-do-search)
+    (define-key map "A" 'dired-do-find-regexp)
     (define-key map "C" 'dired-do-copy)
     (define-key map "B" 'dired-do-byte-compile)
     (define-key map "D" 'dired-do-delete)
@@ -1460,7 +1460,7 @@ Do so according to the former subdir alist OLD-SUBDIR-ALIST."
     (define-key map "M" 'dired-do-chmod)
     (define-key map "O" 'dired-do-chown)
     (define-key map "P" 'dired-do-print)
-    (define-key map "Q" 'dired-do-query-replace-regexp)
+    (define-key map "Q" 'dired-do-find-regexp-and-replace)
     (define-key map "R" 'dired-do-rename)
     (define-key map "S" 'dired-do-symlink)
     (define-key map "T" 'dired-do-touch)
@@ -3905,7 +3905,7 @@ Ask means pop up a menu for the user to select one of copy, move or link."
 
 ;;; Start of automatically extracted autoloads.
 
-;;;### (autoloads nil "dired-aux" "dired-aux.el" "7b7e39be8bcaf5f35b2735c3f5635f40")
+;;;### (autoloads nil "dired-aux" "dired-aux.el" "ab7321f16a90251f12f0031ddd6a710c")
 ;;; Generated autoloads from dired-aux.el
 
 (autoload 'dired-diff "dired-aux" "\
@@ -4407,6 +4407,16 @@ If you exit (\\[keyboard-quit], RET or q), you can resume the query replace
 with the command \\[tags-loop-continue].
 
 \(fn FROM TO &optional DELIMITED)" t nil)
+
+(autoload 'dired-do-find-regexp "dired-aux" "\
+Find all matches for REGEXP in all marked files, recursively.
+
+\(fn REGEXP)" t nil)
+
+(autoload 'dired-do-find-regexp-and-replace "dired-aux" "\
+Replace matches of FROM with TO, in all marked files, recursively.
+
+\(fn FROM TO)" t nil)
 
 (autoload 'dired-show-file-type "dired-aux" "\
 Print the type of FILE, according to the `file' command.

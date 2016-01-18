@@ -511,11 +511,18 @@ references displayed in the current *xref* buffer."
    (let ((fr (read-regexp "Xref query-replace (regexp)" ".*")))
      (list fr
            (read-regexp (format "Xref query-replace (regexp) %s with: " fr)))))
-  (let (pairs item)
+  (let ((reporter (make-progress-reporter (format "Saving search results...")
+                                          0 (line-number-at-pos (point-max))))
+        (counter 0)
+        pairs item)
     (unwind-protect
         (progn
           (save-excursion
             (goto-char (point-min))
+            ;; TODO: This list should be computed on-demand instead.
+            ;; As long as the UI just iterates through matches one by
+            ;; one, there's no need to compute them all in advance.
+            ;; Then we can throw away the reporter.
             (while (setq item (xref--search-property 'xref-item))
               (when (xref-match-length item)
                 (save-excursion
@@ -535,9 +542,11 @@ references displayed in the current *xref* buffer."
                                     (line-end-position))
                                    (xref-item-summary item))
                       (user-error "Search results out of date"))
+                    (progress-reporter-update reporter (cl-incf counter))
                     (push (cons beg end) pairs)))))
             (setq pairs (nreverse pairs)))
           (unless pairs (user-error "No suitable matches here"))
+          (progress-reporter-done reporter)
           (xref--query-replace-1 from to pairs))
       (dolist (pair pairs)
         (move-marker (car pair) nil)
@@ -713,9 +722,9 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 
 (defvar xref--read-pattern-history nil)
 
-(defun xref--show-xrefs (xrefs window)
+(defun xref--show-xrefs (xrefs window &optional always-show-list)
   (cond
-   ((not (cdr xrefs))
+   ((and (not (cdr xrefs)) (not always-show-list))
     (xref-push-marker-stack)
     (xref--pop-to-location (car xrefs) window))
    (t
@@ -866,11 +875,12 @@ tools are used, and when."
       (mapc #'kill-buffer
             (cl-set-difference (buffer-list) orig-buffers)))))
 
+;;;###autoload
 (defun xref-collect-matches (regexp files dir ignores)
   "Collect matches for REGEXP inside FILES in DIR.
 FILES is a string with glob patterns separated by spaces.
 IGNORES is a list of glob patterns."
-  (cl-assert (directory-name-p dir))
+  ;; DIR can also be a regular file for now; let's not advertise that.
   (require 'semantic/fw)
   (grep-compute-defaults)
   (defvar grep-find-template)
@@ -885,6 +895,8 @@ IGNORES is a list of glob patterns."
          (orig-buffers (buffer-list))
          (buf (get-buffer-create " *xref-grep*"))
          (grep-re (caar grep-regexp-alist))
+         (counter 0)
+         reporter
          hits)
     (with-current-buffer buf
       (erase-buffer)
@@ -894,9 +906,17 @@ IGNORES is a list of glob patterns."
         (push (cons (string-to-number (match-string 2))
                     (match-string 1))
               hits)))
+    (setq reporter (make-progress-reporter
+                    (format "Collecting search results...")
+                    0 (length hits)))
     (unwind-protect
-        (cl-mapcan (lambda (hit) (xref--collect-matches hit regexp))
+        (cl-mapcan (lambda (hit)
+                     (prog1
+                         (progress-reporter-update reporter counter)
+                       (cl-incf counter))
+                     (xref--collect-matches hit regexp))
                    (nreverse hits))
+      (progress-reporter-done reporter)
       ;; TODO: Same as above.
       (mapc #'kill-buffer
             (cl-set-difference (buffer-list) orig-buffers)))))
@@ -922,23 +942,24 @@ IGNORES is a list of glob patterns."
 (defun xref--find-ignores-arguments (ignores dir)
   ;; `shell-quote-argument' quotes the tilde as well.
   (cl-assert (not (string-match-p "\\`~" dir)))
-  (concat
-   (shell-quote-argument "(")
-   " -path "
-   (mapconcat
-    (lambda (ignore)
-      (when (string-match-p "/\\'" ignore)
-        (setq ignore (concat ignore "*")))
-      (if (string-match "\\`\\./" ignore)
-          (setq ignore (replace-match dir t t ignore))
-        (unless (string-prefix-p "*" ignore)
-          (setq ignore (concat "*/" ignore))))
-      (shell-quote-argument ignore))
-    ignores
-    " -o -path ")
-   " "
-   (shell-quote-argument ")")
-   " -prune -o "))
+  (when ignores
+    (concat
+     (shell-quote-argument "(")
+     " -path "
+     (mapconcat
+      (lambda (ignore)
+        (when (string-match-p "/\\'" ignore)
+          (setq ignore (concat ignore "*")))
+        (if (string-match "\\`\\./" ignore)
+            (setq ignore (replace-match dir t t ignore))
+          (unless (string-prefix-p "*" ignore)
+            (setq ignore (concat "*/" ignore))))
+        (shell-quote-argument ignore))
+      ignores
+      " -o -path ")
+     " "
+     (shell-quote-argument ")")
+     " -prune -o ")))
 
 (defun xref--regexp-to-extended (str)
   (replace-regexp-in-string
