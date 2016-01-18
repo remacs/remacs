@@ -1188,8 +1188,8 @@ named, this parameter will be @code{nil}.
 @cindex window position on display
 @cindex frame position
 
-  Position parameters' values are normally measured in pixels, but on
-text terminals they count characters or lines instead.
+  Position parameters' values are measured in pixels.  (Note that none
+of these parameters exist on TTY frames.)
 
 @table @code
 @vindex left, a frame parameter
