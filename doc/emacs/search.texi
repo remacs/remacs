@@ -12,10 +12,10 @@ a string.  Emacs also has commands to replace occurrences of a string
 with a different string.  There are also commands that do the same
 thing, but search for patterns instead of fixed strings.
 
-  You can also search multiple files under the control of an
-@code{xref} backend (@pxref{Identifier Search}) or through the Dired
-@kbd{A} command (@pxref{Operating on Files}), or ask the @code{grep}
-program to do it (@pxref{Grep Searching}).
+  You can also search multiple files under the control of @code{xref}
+(@pxref{Identifier Search}) or through the Dired @kbd{A} command
+(@pxref{Operating on Files}), or ask the @code{grep} program to do it
+(@pxref{Grep Searching}).
 
 @menu
 * Incremental Search::        Search happens as you type the string.

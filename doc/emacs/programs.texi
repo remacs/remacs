@@ -1358,7 +1358,7 @@ the @kbd{M-@key{TAB}} key is usually reserved by the window manager
 for switching graphical windows, so you should type @kbd{C-M-i} or
 @kbd{@key{ESC} @key{TAB}} instead.
 
-@cindex xref-based completion
+@cindex tags-based completion
 @findex completion-at-point
 @cindex Lisp symbol completion
 @cindex completion (Lisp symbols)
@@ -1368,7 +1368,7 @@ which generates its completion list in a flexible way.  If Semantic
 mode is enabled, it tries to use the Semantic parser data for
 completion (@pxref{Semantic}).  If Semantic mode is not enabled or
 fails at performing completion, it tries to complete using the
-available @code{xref} backend (@pxref{Xref}).  If in Emacs Lisp mode, it
+selected tags table (@pxref{Tags Tables}).  If in Emacs Lisp mode, it
 performs completion using the function, variable, or property names
 defined in the current Emacs session.
 
