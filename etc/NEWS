@@ -315,6 +315,17 @@ current package keywords are recognized.  Set the new option
 It's meant for use together with `compile':
 emacs -batch --eval "(checkdoc-file \"subr.el\")"
 
+** Desktop
+
+---
+*** The desktop format version has been upgraded from 206 to 208.
+Although Emacs 25.1 can read a version 206 desktop, earlier Emacsen
+cannot read a version 208 desktop.  To upgrade your desktop file, you
+must explicitly request the upgrade, by C-u M-x desktop-save.  You are
+recommended to do this as soon as you have firmly upgraded to Emacs
+25.1 (or later).  Should you ever need to downgrade your desktop file
+to version 206, you can do this with C-u C-u M-x desktop-save.
+
 +++
 ** New function `bookmark-set-no-overwrite' bound to C-x r M.
 It raises an error if a bookmark of that name already exists,

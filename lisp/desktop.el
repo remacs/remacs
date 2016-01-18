@@ -140,8 +140,15 @@
 
 (defvar desktop-file-version "208"
   "Version number of desktop file format.
-Written into the desktop file and used at desktop read to provide
-backward compatibility.")
+Used at desktop read to provide backward compatibility.")
+
+(defconst desktop-native-file-version 208
+  "Format version of the current desktop package, an integer.")
+(defvar desktop-io-file-version nil
+  "The format version of the current desktop file (an integer) or nil.")
+;; Note: Historically, the version number is embedded in the entry for
+;; each buffer.  It is highly inadvisable for different buffer entries
+;; to have different format versions.
 
 ;; ----------------------------------------------------------------------------
 ;; USER OPTIONS -- settings you might want to play with.
@@ -693,6 +700,7 @@ deletes all frames except the selected one (and its minibuffer frame,
 if different)."
   (interactive)
   (desktop-lazy-abort)
+  (setq desktop-io-file-version nil)
   (dolist (var desktop-globals-to-clear)
     (if (symbolp var)
 	(eval `(setq-default ,var nil))
@@ -781,44 +789,46 @@ buffer, which is (in order):
     local variables;
     auxiliary information given by `desktop-var-serdes-funs'."
   (set-buffer buffer)
-  (list
-   ;; base name of the buffer; replaces the buffer name if managed by uniquify
-   (and (fboundp 'uniquify-buffer-base-name) (uniquify-buffer-base-name))
-   ;; basic information
-   (desktop-file-name (buffer-file-name) desktop-dirname)
-   (buffer-name)
-   major-mode
-   ;; minor modes
-   (let (ret)
-     (dolist (minor-mode (mapcar #'car minor-mode-alist) ret)
-       (and (boundp minor-mode)
-            (symbol-value minor-mode)
-            (let* ((special (assq minor-mode desktop-minor-mode-table))
-                   (value (cond (special (cadr special))
-                                ((functionp minor-mode) minor-mode))))
-              (when value (cl-pushnew value ret))))))
-   ;; point and mark, and read-only status
-   (point)
-   (list (mark t) mark-active)
-   buffer-read-only
-   ;; auxiliary information
-   (when (functionp desktop-save-buffer)
-     (funcall desktop-save-buffer desktop-dirname))
-   ;; local variables
-   (let ((loclist (buffer-local-variables))
-	 (ll nil))
-     (dolist (local desktop-locals-to-save)
-       (let ((here (assq local loclist)))
-	 (cond (here
-		(push here ll))
-	       ((member local loclist)
-		(push local ll)))))
-     ll)
-   (mapcar (lambda (record)
-	     (let ((var (car record)))
-	       (list var
-		     (funcall (cadr record) (symbol-value var)))))
-	   desktop-var-serdes-funs)))
+  `(
+    ;; base name of the buffer; replaces the buffer name if managed by uniquify
+    ,(and (fboundp 'uniquify-buffer-base-name) (uniquify-buffer-base-name))
+    ;; basic information
+    ,(desktop-file-name (buffer-file-name) desktop-dirname)
+    ,(buffer-name)
+    ,major-mode
+    ;; minor modes
+    ,(let (ret)
+       (dolist (minor-mode (mapcar #'car minor-mode-alist) ret)
+         (and (boundp minor-mode)
+              (symbol-value minor-mode)
+              (let* ((special (assq minor-mode desktop-minor-mode-table))
+                     (value (cond (special (cadr special))
+                                  ((functionp minor-mode) minor-mode))))
+                (when value (cl-pushnew value ret))))))
+    ;; point and mark, and read-only status
+    ,(point)
+    ,(list (mark t) mark-active)
+    ,buffer-read-only
+    ;; auxiliary information
+    ,(when (functionp desktop-save-buffer)
+       (funcall desktop-save-buffer desktop-dirname))
+    ;; local variables
+    ,(let ((loclist (buffer-local-variables))
+           (ll nil))
+       (dolist (local desktop-locals-to-save)
+         (let ((here (assq local loclist)))
+           (cond (here
+                  (push here ll))
+                 ((member local loclist)
+                  (push local ll)))))
+       ll)
+   ,@(when (>= desktop-io-file-version 208)
+       (list
+        (mapcar (lambda (record)
+                  (let ((var (car record)))
+                    (list var
+                          (funcall (cadr record) (symbol-value var)))))
+                desktop-var-serdes-funs)))))
 
 ;; ----------------------------------------------------------------------------
 (defun desktop--v2s (value)
@@ -983,20 +993,41 @@ Frames with a non-nil `desktop-dont-save' parameter are not saved."
 			    :predicate #'desktop--check-dont-save))))
 
 ;;;###autoload
-(defun desktop-save (dirname &optional release only-if-changed)
+(defun desktop-save (dirname &optional release only-if-changed version)
   "Save the desktop in a desktop file.
 Parameter DIRNAME specifies where to save the desktop file.
-Optional parameter RELEASE says whether we're done with this desktop.
-If ONLY-IF-CHANGED is non-nil, compare the current desktop information
-to that in the desktop file, and if the desktop information has not
-changed since it was last saved then do not rewrite the file."
+Optional parameter RELEASE says whether we're done with this
+desktop.  If ONLY-IF-CHANGED is non-nil, compare the current
+desktop information to that in the desktop file, and if the
+desktop information has not changed since it was last saved then
+do not rewrite the file.
+
+This function can save the desktop in either format version
+208 (which only Emacs 25.1 and later can read) or version
+206 (which is readable by any Emacs from version 22.1 onwards).
+By default, it will use the same format the desktop file had when
+it was last saved, or version 208 when writing a fresh desktop
+file.
+
+To upgrade a version 206 file to version 208, call this command
+explicitly with a bare prefix argument: C-u M-x desktop-save.
+You are recommended to do this once you have firmly upgraded to
+Emacs 25.1 (or later).  To downgrade a version 208 file to version
+206, use a double command prefix: C-u C-u M-x desktop-save.
+Confirmation will be requested in either case.  In a non-interactive
+call, VERSION can be given as an integer, either 206 or 208, which
+will be accepted as the format version in which to save the file
+without further confirmation."
   (interactive (list
                 ;; Or should we just use (car desktop-path)?
                 (let ((default (if (member "." desktop-path)
                                    default-directory
                                  user-emacs-directory)))
                   (read-directory-name "Directory to save desktop file in: "
-                                       default default t))))
+                                       default default t))
+                nil
+                nil
+                current-prefix-arg))
   (setq desktop-dirname (file-name-as-directory (expand-file-name dirname)))
   (save-excursion
     (let ((eager desktop-restore-eager)
@@ -1017,12 +1048,34 @@ changed since it was last saved then do not rewrite the file."
 	    (desktop-release-lock)
 	  (unless (and new-modtime (desktop-owner)) (desktop-claim-lock)))
 
+        ;; What format are we going to write the file in?
+        (setq desktop-io-file-version
+              (cond
+               ((equal version '(4))
+                (if (or (eq desktop-io-file-version 208)
+                        (yes-or-no-p "Save desktop file in format 208 \
+\(Readable by Emacs 25.1 and later only)? "))
+                    208
+                  (or desktop-io-file-version desktop-native-file-version)))
+               ((equal version '(16))
+                (if (or (eq desktop-io-file-version 206)
+                        (yes-or-no-p "Save desktop file in format 206 \
+\(Readable by all Emacs versions since 22.1)? "))
+                    206
+                  (or desktop-io-file-version desktop-native-file-version)))
+               ((memq version '(206 208))
+                version)
+               ((null desktop-io-file-version) ; As yet, no desktop file exists.
+                desktop-native-file-version)
+               (t
+                desktop-io-file-version)))
+
 	(with-temp-buffer
 	  (insert
 	   ";; -*- mode: emacs-lisp; coding: emacs-mule; -*-\n"
 	   desktop-header
 	   ";; Created " (current-time-string) "\n"
-	   ";; Desktop file format version " desktop-file-version "\n"
+	   ";; Desktop file format version " (format "%d" desktop-io-file-version) "\n"
 	   ";; Emacs version " emacs-version "\n")
 	  (save-excursion (run-hooks 'desktop-save-hook))
 	  (goto-char (point-max))
@@ -1052,7 +1105,7 @@ changed since it was last saved then do not rewrite the file."
 			    "desktop-create-buffer"
 			  "desktop-append-buffer-args")
 			" "
-			desktop-file-version)
+			(format "%d" desktop-io-file-version))
 		;; If there's a non-empty base name, we save it instead of the buffer name
 		(when (and base (not (string= base "")))
 		  (setcar (nthcdr 1 l) base))
@@ -1389,6 +1442,8 @@ and try to load that."
      buffer-locals
      compacted-vars
      &rest _unsupported)
+
+  (setq desktop-io-file-version file-version)
 
   (let ((desktop-file-version	    file-version)
 	(desktop-buffer-file-name   buffer-filename)
