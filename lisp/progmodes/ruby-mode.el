@@ -1894,7 +1894,7 @@ It will be properly highlighted even when the call omits parens.")
      (point) end)))
 
 (define-obsolete-function-alias
-  'ruby-syntax-propertize-function 'ruby-syntax-properize "25.1")
+  'ruby-syntax-propertize-function 'ruby-syntax-propertize "25.1")
 
 (defun ruby-syntax-propertize-heredoc (limit)
   (let ((ppss (syntax-ppss))
