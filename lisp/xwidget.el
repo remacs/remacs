@@ -571,7 +571,8 @@ It can be retrieved with `(xwidget-get XWIDGET PROPNAME)'."
 
 ;; This would have felt better in C, but this seems to work well in
 ;; practice though.
-(add-hook 'window-configuration-change-hook 'xwidget-delete-zombies)
+(if (featurep 'xwidget-internal)
+    (add-hook 'window-configuration-change-hook 'xwidget-delete-zombies))
 
 (defun xwidget-kill-buffer-query-function ()
   "Ask beforek illing a buffer that has xwidgets."
@@ -582,7 +583,8 @@ It can be retrieved with `(xwidget-get XWIDGET PROPNAME)'."
          (format "Buffer %S has xwidgets; kill it? "
                  (buffer-name (current-buffer)))))))
 
-(add-hook 'kill-buffer-query-functions 'xwidget-kill-buffer-query-function)
+(if (featurep 'xwidget-internal)
+    (add-hook 'kill-buffer-query-functions 'xwidget-kill-buffer-query-function))
 
 (provide 'xwidget)
 
