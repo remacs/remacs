@@ -160,18 +160,13 @@ DEFUN ("make-xwidget",
        Fmake_xwidget, Smake_xwidget,
        7, 8, 0,
        doc: /* Make an xwidget from BEG to END of TYPE.
-
-If BUFFER is nil it uses the current
-buffer. If BUFFER is a string and no such
-buffer exists, it is created.
-
-TYPE is a symbol which can take one of the
-following values:
+If BUFFER is nil, use the current buffer.
+If BUFFER is a string and no such buffer exists, create it.
+TYPE is a symbol which can take one of the following values:
 
 - webkit_osr
 
-Returns the newly constructed xwidget, or nil if construction
-fails.  */)
+Returns the newly constructed xwidget, or nil if construction fails.  */)
   (Lisp_Object beg, Lisp_Object end,
   Lisp_Object type,
   Lisp_Object title,
@@ -255,7 +250,7 @@ fails.  */)
       gtk_widget_show (xw->widgetscrolledwindow_osr);
 
       /* store some xwidget data in the gtk widgets for convenient
-         retrieval in the event handlers. */
+         retrieval in the event handlers.  */
       g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET,
                          (gpointer) (xw));
       g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET,
@@ -302,7 +297,7 @@ fails.  */)
 DEFUN ("get-buffer-xwidgets", Fget_buffer_xwidgets, Sget_buffer_xwidgets,
        1, 1, 0,
        doc: /* Return a list of xwidgets associated with BUFFER.
-BUFFER  may be a buffer or the name of one.  */)
+BUFFER may be a buffer or the name of one.  */)
   (Lisp_Object buffer)
 {
   Lisp_Object xw, tail, xw_list;
@@ -429,7 +424,7 @@ webkit_mime_type_policy_typedecision_requested_cb (WebKitWebView *webView,
                                                    gpointer user_data)
 {
   // This function makes webkit send a download signal for all unknown
-  // mime types. TODO Defer the decision to lisp, so that its possible
+  // mime types.  TODO Defer the decision to lisp, so that its possible
   // to make Emacs handle teext mime for instance.xs
   if (!webkit_web_view_can_show_mime_type (webView, mimetype))
     {
@@ -502,13 +497,13 @@ xwidget_osr_event_forward (GtkWidget * widget,
                            GdkEvent * event,
                            gpointer user_data)
 {
-  /* Copy events that arrive at the outer widget to the offscreen widget. */
+  /* Copy events that arrive at the outer widget to the offscreen widget.  */
   struct xwidget *xw =
     (struct xwidget *) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
   GdkEvent *eventcopy = gdk_event_copy (event);
   eventcopy->any.window = gtk_widget_get_window (xw->widget_osr);
 
-  //TODO This might leak events. They should be deallocated later,
+  //TODO This might leak events.  They should be deallocated later,
   //perhaps in xwgir_event_cb
   gtk_main_do_event (eventcopy);
   return TRUE;			//dont propagate this event furter
@@ -528,7 +523,7 @@ xwidget_osr_event_set_embedder (GtkWidget * widget,
 }
 
 
-/* Initializes and does initial placement of an xwidget view on screen. */
+/* Initializes and does initial placement of an xwidget view on screen.  */
 static struct xwidget_view *
 xwidget_init_view (struct xwidget *xww,
                    struct glyph_string *s,
@@ -653,9 +648,9 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
          WINDOW_BOTTOM_EDGE_Y (s->w) - WINDOW_MODE_LINE_HEIGHT (s->w) - y);
   clip_top = max (0, WINDOW_TOP_EDGE_Y (s->w) - y);
 
-  // We are conserned with movement of the onscreen area. The area
+  // We are conserned with movement of the onscreen area.  The area
   // might sit still when the widget actually moves.  This happens
-  // when an Emacs window border moves across a widget window. So, if
+  // when an Emacs window border moves across a widget window.  So, if
   // any corner of the outer widget clipping window moves, that counts
   // as movement here, even if it looks like no movement happens
   // because the widget sits still inside the clipping area.  The
@@ -671,8 +666,8 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
                           xv->widgetwindow, x + clip_left, y + clip_top);
     }
   // Clip the widget window if some parts happen to be outside
-  // drawable area. An Emacs window is not a gtk window. A gtk window
-  // covers the entire frame. Clipping might have changed even if we
+  // drawable area.  An Emacs window is not a gtk window.  A gtk window
+  // covers the entire frame.  Clipping might have changed even if we
   // havent actualy moved, we try figure out when we need to reclip
   // for real.
   if ((xv->clip_right != clip_right)
@@ -690,9 +685,9 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
       xv->clip_left = clip_left;
     }
   // If emacs wants to repaint the area where the widget lives, queue
-  // a redraw. It seems its possible to get out of sync with emacs
+  // a redraw.  It seems its possible to get out of sync with emacs
   // redraws so emacs background sometimes shows up instead of the
-  // xwidgets background. It's just a visual glitch though.
+  // xwidgets background.  It's just a visual glitch though.
   if (!xwidget_hidden (xv))
     {
       gtk_widget_queue_draw (xv->widgetwindow);
@@ -717,8 +712,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
 DEFUN ("xwidget-webkit-goto-uri",
        Fxwidget_webkit_goto_uri, Sxwidget_webkit_goto_uri,
        2, 2, 0,
-       doc: /* Make the xwidget webkit instance referenced by XWIDGET
-browse URI. */)
+       doc: /* Make the xwidget webkit instance referenced by XWIDGET browse URI.  */)
   (Lisp_Object xwidget, Lisp_Object uri)
 {
   WEBKIT_FN_INIT ();
@@ -744,7 +738,7 @@ DEFUN ("xwidget-webkit-execute-script",
 DEFUN ("xwidget-webkit-get-title",
        Fxwidget_webkit_get_title, Sxwidget_webkit_get_title,
        1, 1, 0,
-       doc: /* Returns the title from the Webkit instance in XWIDGET.
+       doc: /* Return the title from the Webkit instance in XWIDGET.
 This can be used to work around the lack of a return value from the
 exec method.  */ )
   (Lisp_Object xwidget)
@@ -755,7 +749,7 @@ exec method.  */ )
     webkit_web_view_get_title (WEBKIT_WEB_VIEW (xw->widget_osr));
   if (str == 0)
     {
-      // TODO maybe return Qnil instead. I suppose webkit returns
+      // TODO maybe return Qnil instead.  I suppose webkit returns
       // nullpointer when doc is not properly loaded or something
       return build_string ("");
     }
@@ -763,8 +757,7 @@ exec method.  */ )
 }
 
 DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0,
-       doc: /* Resize XWIDGET.  NEW_WIDTH NEW_HEIGHT defines the new
-size. */ )
+       doc: /* Resize XWIDGET.  NEW_WIDTH, NEW_HEIGHT define the new size.  */ )
   (Lisp_Object xwidget, Lisp_Object new_width, Lisp_Object new_height)
 {
   CHECK_XWIDGET (xwidget);
@@ -817,8 +810,9 @@ size. */ )
 
 DEFUN ("xwidget-set-adjustment",
        Fxwidget_set_adjustment, Sxwidget_set_adjustment, 4, 4, 0,
-       doc: /* Set native scrolling for XWIDGET. AXIS can be 'vertical or
-'horizontal. If RELATIVE is t, scroll relative, otherwise absolutely.
+       doc: /* Set native scrolling for XWIDGET.
+AXIS can be 'vertical or 'horizontal.
+If RELATIVE is t, scroll relative, otherwise absolutely.
 VALUE is the amount to scroll, either relatively or absolutely.  */)
   (Lisp_Object xwidget, Lisp_Object axis, Lisp_Object relative,
    Lisp_Object value)
@@ -863,7 +857,6 @@ DEFUN ("xwidget-size-request",
        Fxwidget_size_request, Sxwidget_size_request,
        1, 1, 0,
        doc: /* Return the desired size of the XWIDGET.
-
 This can be used to read the xwidget desired size, and resizes the
 Emacs allocated area accordingly.  */)
   (Lisp_Object xwidget)
@@ -882,7 +875,7 @@ Emacs allocated area accordingly.  */)
 DEFUN ("xwidgetp",
        Fxwidgetp, Sxwidgetp,
        1, 1, 0,
-       doc: /* Return t if OBJECT is a xwidget.  */)
+       doc: /* Return t if OBJECT is an xwidget.  */)
   (Lisp_Object object)
 {
   return XWIDGETP (object) ? Qt : Qnil;
@@ -891,7 +884,7 @@ DEFUN ("xwidgetp",
 DEFUN ("xwidget-view-p",
        Fxwidget_view_p, Sxwidget_view_p,
        1, 1, 0,
-       doc: /* Return t if OBJECT is a xwidget-view.  */)
+       doc: /* Return t if OBJECT is an xwidget-view.  */)
   (Lisp_Object object)
 {
   return XWIDGET_VIEW_P (object) ? Qt : Qnil;
@@ -900,8 +893,8 @@ DEFUN ("xwidget-view-p",
 DEFUN ("xwidget-info",
        Fxwidget_info, Sxwidget_info,
        1, 1, 0,
-       doc: /* Return XWIDGET properties in a vector.  Currently [TYPE
-TITLE WIDTH HEIGHT]. */)
+       doc: /* Return XWIDGET properties in a vector.
+Currently [TYPE TITLE WIDTH HEIGHT].  */)
   (Lisp_Object xwidget)
 {
   CHECK_XWIDGET (xwidget);
@@ -923,7 +916,7 @@ DEFUN ("xwidget-view-info",
        Fxwidget_view_info, Sxwidget_view_info,
        1, 1, 0,
        doc: /* Return properties of XWIDGET-VIEW in a vector.
-Currently [X Y CLIP_RIGHT CLIP_BOTTOM CLIP_TOP CLIP_LEFT] */)
+Currently [X Y CLIP_RIGHT CLIP_BOTTOM CLIP_TOP CLIP_LEFT].  */)
   (Lisp_Object xwidget_view)
 {
   CHECK_XWIDGET_VIEW (xwidget_view);
@@ -944,7 +937,7 @@ Currently [X Y CLIP_RIGHT CLIP_BOTTOM CLIP_TOP CLIP_LEFT] */)
 DEFUN ("xwidget-view-model",
        Fxwidget_view_model, Sxwidget_view_model,
        1, 1, 0,
-       doc:  /* Return the model associated with XWIDGET-VIEW. */)
+       doc:  /* Return the model associated with XWIDGET-VIEW.  */)
   (Lisp_Object xwidget_view)
 {
   CHECK_XWIDGET_VIEW (xwidget_view);
@@ -954,7 +947,7 @@ DEFUN ("xwidget-view-model",
 DEFUN ("xwidget-view-window",
        Fxwidget_view_window, Sxwidget_view_window,
        1, 1, 0,
-       doc:  /* Return the window of XWIDGET-VIEW. */)
+       doc:  /* Return the window of XWIDGET-VIEW.  */)
   (Lisp_Object xwidget_view)
 {
   CHECK_XWIDGET_VIEW (xwidget_view);
@@ -965,15 +958,15 @@ DEFUN ("xwidget-view-window",
 DEFUN ("delete-xwidget-view",
        Fdelete_xwidget_view, Sdelete_xwidget_view,
        1, 1, 0,
-       doc:  /* Delete the XWIDGET-VIEW. */)
+       doc:  /* Delete the XWIDGET-VIEW.  */)
   (Lisp_Object xwidget_view)
 {
   CHECK_XWIDGET_VIEW (xwidget_view);
   struct xwidget_view *xv = XXWIDGET_VIEW (xwidget_view);
   gtk_widget_destroy (xv->widgetwindow);
   Vxwidget_view_list = Fdelq (xwidget_view, Vxwidget_view_list);
-  // xv->model still has signals pointing to the view. There can be
-  // several views. Find the matching signals and delete them all.
+  // xv->model still has signals pointing to the view.  There can be
+  // several views.  Find the matching signals and delete them all.
   g_signal_handlers_disconnect_matched  (XXWIDGET (xv->model)->widgetwindow_osr,
                                          G_SIGNAL_MATCH_DATA,
                                          0, 0, 0, 0,
@@ -984,9 +977,9 @@ DEFUN ("delete-xwidget-view",
 DEFUN ("xwidget-view-lookup",
        Fxwidget_view_lookup, Sxwidget_view_lookup,
        1, 2, 0,
-       doc: /* Return the xwidget-view associated with XWIDGET in
-WINDOW if specified, otherwise it uses the selected window. Return nil
-if no association is found.  */)
+       doc: /* Return the xwidget-view associated with XWIDGET in WINDOW.
+If WINDOW is unspecified or nil, use the selected window.
+Return nil if no association is found.  */)
   (Lisp_Object xwidget, Lisp_Object window)
 {
   CHECK_XWIDGET (xwidget);
@@ -1044,10 +1037,10 @@ Returns PLIST.  */)
 DEFUN ("set-xwidget-query-on-exit-flag",
        Fset_xwidget_query_on_exit_flag, Sset_xwidget_query_on_exit_flag,
        2, 2, 0,
-       doc: /* Specify if query is needed for XWIDGET when
-Emacs is exited.  If the second argument FLAG is non-nil, Emacs will
-queries the user before exiting or killing a buffer if XWIDGET is
-running.  This function returns FLAG. */)
+       doc: /* Specify if query is needed for XWIDGET when Emacs is exited.
+If the second argument FLAG is non-nil, Emacs will query the user before
+exiting or killing a buffer if XWIDGET is running.
+This function returns FLAG.  */)
   (Lisp_Object xwidget, Lisp_Object flag)
 {
   CHECK_XWIDGET (xwidget);
@@ -1058,8 +1051,7 @@ running.  This function returns FLAG. */)
 DEFUN ("xwidget-query-on-exit-flag",
        Fxwidget_query_on_exit_flag, Sxwidget_query_on_exit_flag,
        1, 1, 0,
-       doc: /* Return the current value of query-on-exit
-flag for XWIDGET. */)
+       doc: /* Return the current value of the query-on-exit flag for XWIDGET.  */)
   (Lisp_Object xwidget)
 {
   CHECK_XWIDGET (xwidget);
@@ -1107,7 +1099,7 @@ syms_of_xwidget (void)
   DEFSYM (QCtitle, ":title");
 
   /* Do not forget to update the docstring of make-xwidget if you add
-     new types. */
+     new types.  */
 
   DEFSYM (Qvertical, "vertical");
   DEFSYM (Qhorizontal, "horizontal");
@@ -1219,7 +1211,7 @@ lookup_xwidget (Lisp_Object spec)
   return xw;
 }
 
-/* Set up detection of touched xwidget*/
+/* Set up detection of touched xwidget  */
 void
 xwidget_start_redisplay (void)
 {
@@ -1258,7 +1250,7 @@ xwidget_end_redisplay (struct window *w, struct glyph_matrix *matrix)
   // Iterate desired glyph matrix of window here, hide gtk widgets
   // not in the desired matrix.
 
-  // This only takes care of xwidgets in active windows.  if a window
+  // This only takes care of xwidgets in active windows.  If a window
   // goes away from screen xwidget views wust be deleted
 
   //  dump_glyph_matrix (matrix, 2);
@@ -1309,7 +1301,7 @@ xwidget_end_redisplay (struct window *w, struct glyph_matrix *matrix)
     }
 }
 
-/* Kill all xwidget in BUFFER. */
+/* Kill all xwidget in BUFFER.  */
 void
 kill_buffer_xwidgets (Lisp_Object buffer)
 {
