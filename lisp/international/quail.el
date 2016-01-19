@@ -2516,7 +2516,7 @@ package to describe."
 	      ")\n\n")
       (save-restriction
 	(narrow-to-region (point) (point))
-	(insert (quail-docstring))
+	(insert (substitute-command-keys (quail-docstring)))
 	(goto-char (point-min))
 	(with-syntax-table emacs-lisp-mode-syntax-table
 	  (while (re-search-forward "\\\\<\\sw\\(\\sw\\|\\s_\\)+>" nil t)
