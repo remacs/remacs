@@ -374,7 +374,7 @@ otherwise for the first of 'inotify' or 'gfile' that is usable.])
  [with_file_notification=$with_features])
 
 OPTION_DEFAULT_OFF([xwidgets],
-  [enable use of some gtk widgets in Emacs buffers])
+  [enable use of some gtk widgets in Emacs buffers (requires gtk3)])
 
 ## For the times when you want to build Emacs but don't have
 ## a suitable makeinfo, and can live without the manuals.
@@ -2583,12 +2583,9 @@ then
   WEBKIT_REQUIRED=1.4.0
   WEBKIT_MODULES="webkitgtk-3.0 >= $WEBKIT_REQUIRED"
 
-  if test "${with_gtk3}" = "yes"; then
-    PKG_CHECK_MODULES(WEBKIT, $WEBKIT_MODULES, HAVE_WEBKIT=yes, HAVE_WEBKIT=no)
-    if test $HAVE_WEBKIT = yes; then
-	AC_DEFINE([HAVE_WEBKIT_OSR], 1,
-	  [Define to 1 if you have webkit_osr support.])
-    fi
+  PKG_CHECK_MODULES(WEBKIT, $WEBKIT_MODULES, HAVE_WEBKIT=yes, HAVE_WEBKIT=no)
+  if test $HAVE_WEBKIT = yes; then
+    AC_DEFINE([HAVE_WEBKIT_OSR], 1, [Define to 1 if you have webkit_osr support.])
   fi
 
   GIR_REQUIRED=1.32.1
@@ -5306,8 +5303,8 @@ AS_ECHO(["  Does Emacs use -lXaw3d?                                 ${HAVE_XAW3D
   Does Emacs directly use zlib?                           ${HAVE_ZLIB}
   Does Emacs have dynamic modules support?                ${HAVE_MODULES}
   Does Emacs use toolkit scroll bars?                     ${USE_TOOLKIT_SCROLL_BARS}
-  Does Emacs support Xwidgets?                            ${HAVE_XWIDGETS}
-      Does xwidgets support webkit(requires gtk3)?        ${HAVE_WEBKIT}
+  Does Emacs support Xwidgets (requires gtk3)?            ${HAVE_XWIDGETS}
+      Does xwidgets support webkit?                       ${HAVE_WEBKIT}
       Does xwidgets support gobject introspection?        ${HAVE_GIR}
 "])
 
