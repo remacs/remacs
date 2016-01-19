@@ -40,6 +40,23 @@
   :group 'frames   ; TODO add xwidgets group if more options are added
   :type '(choice (const native) (const image)))
 
+(declare-function make-xwidget "xwidget.c"
+                  (beg end type title width height arguments &optional buffer))
+(declare-function xwidget-set-adjustment "xwidget.c"
+                  (xwidget axis relative value))
+(declare-function xwidget-buffer "xwidget.c" (xwidget))
+(declare-function xwidget-webkit-get-title "xwidget.c" (xwidget))
+(declare-function xwidget-size-request "xwidget.c" (xwidget))
+(declare-function xwidget-resize "xwidget.c" (xwidget new-width new-height))
+(declare-function xwidget-webkit-execute-script "xwidget.c" (xwidget script))
+(declare-function xwidget-webkit-goto-uri "xwidget.c" (xwidget uri))
+(declare-function xwidget-plist "xwidget.c" (xwidget))
+(declare-function set-xwidget-plist "xwidget.c" (xwidget plist))
+(declare-function xwidget-view-window "xwidget.c" (xwidget-view))
+(declare-function xwidget-view-model "xwidget.c" (xwidget-view))
+(declare-function delete-xwidget-view "xwidget.c" (xwidget-view))
+(declare-function get-buffer-xwidgets "xwidget.c" (buffer))
+
 (defun xwidget-insert (pos type title width height &optional args)
   "Insert an xwidget at POS.
 given ID, TYPE, TITLE WIDTH and
@@ -499,11 +516,6 @@ DEFAULT is the defaultreturn value."
       (setq title default))
     title))
 
-
-;; Use declare here?
-;; (declare-function xwidget-resize-internal "xwidget.c" )
-;; check-declare-function?
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun xwidget-webkit-get-selection ()
   "Get the webkit selection."
@@ -532,6 +544,9 @@ It can be retrieved with `(xwidget-get XWIDGET PROPNAME)'."
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defvar xwidget-view-list)              ; xwidget.c
+(defvar xwidget-list)                   ; xwidget.c
 
 (defun xwidget-delete-zombies ()
   "Helper for `xwidget-cleanup'."
