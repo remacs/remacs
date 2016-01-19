@@ -31,7 +31,6 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'reporter)
 (require 'bookmark)
 
 (defcustom xwidget-webkit-scroll-behaviour 'native
@@ -582,26 +581,6 @@ It can be retrieved with `(xwidget-get XWIDGET PROPNAME)'."
                  (buffer-name (current-buffer)))))))
 
 (add-hook 'kill-buffer-query-functions 'xwidget-kill-buffer-query-function)
-
-(defun report-xwidget-bug ()
-  "Report a bug in GNU Emacs about the XWidget branch.
-Prompts for bug subject.  Leaves you in a mail buffer."
-  (interactive)
-  (let ((reporter-prompt-for-summary-p t))
-    (reporter-submit-bug-report "submit@debbugs.gnu.org" nil nil nil nil
-                                (format "Package: emacs-xwidgets
-
-Please describe exactly what actions triggered the bug, and the
-precise symptoms of the bug.  If you can, give a recipe starting
-from `emacs -Q'.
-
-If Emacs crashed, and you have the Emacs process in the gdb
-deubbger, please include the output from the following gdb
-commands:
-    `bt full' and `xbacktrace'.
-
-For information about debugging Emacs, please read the file
-%s" (expand-file-name "DEBUG" data-directory)))))
 
 (provide 'xwidget)
 
