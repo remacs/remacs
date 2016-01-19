@@ -881,9 +881,10 @@ Time-stamp: " "
 @code{before-save-hook} (@pxref{Hooks}).  When you save the file, this
 function then automatically updates the time stamp with the current
 date and time.  You can also use the command @kbd{M-x time-stamp} to
-update the time stamp manually.  For other customizations, see the
-Custom group @code{time-stamp}.  Note that the time stamp is formatted
-according to your locale setting (@pxref{Environment}).
+update the time stamp manually.  By default the time stamp is
+formatted according to your locale setting (@pxref{Environment}) and
+time zone (@pxref{Time of Day,,, elisp, The Emacs Lisp Reference
+Manual}).  For customizations, see the Custom group @code{time-stamp}.
 
 @node Reverting
 @section Reverting a Buffer

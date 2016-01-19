@@ -1151,16 +1151,17 @@ comes back" twice.
 @end example
 @end defun
 
-@defun looking-back regexp &optional limit greedy
+@defun looking-back regexp limit &optional greedy
 This function returns @code{t} if @var{regexp} matches the text
 immediately before point (i.e., ending at point), and @code{nil} otherwise.
 
 Because regular expression matching works only going forward, this is
 implemented by searching backwards from point for a match that ends at
 point.  That can be quite slow if it has to search a long distance.
-You can bound the time required by specifying @var{limit}, which says
-not to search before @var{limit}.  In this case, the match that is
-found must begin at or after @var{limit}.  Here's an example:
+You can bound the time required by specifying a non-@code{nil} value
+for @var{limit}, which says not to search before @var{limit}.  In this
+case, the match that is found must begin at or after @var{limit}.
+Here's an example:
 
 @example
 @group
@@ -1178,9 +1179,9 @@ comes back" twice.
 
 If @var{greedy} is non-@code{nil}, this function extends the match
 backwards as far as possible, stopping when a single additional
-previous character cannot be part of a match for regexp.  When the
-match is extended, its starting position is allowed to occur before
-@var{limit}.
+previous character cannot be part of a match for @var{regexp}.  When
+the match is extended, its starting position is allowed to occur
+before @var{limit}.
 
 @c http://debbugs.gnu.org/5689
 As a general recommendation, try to avoid using @code{looking-back}

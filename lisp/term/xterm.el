@@ -65,6 +65,7 @@ using the OSC 52 sequence.
 If you select a region larger than this size, it won't be copied to your system
 clipboard.  Since clipboard data is base 64 encoded, the actual number of
 string bytes that can be copied is 3/4 of this value."
+  :version "25.1"
   :type 'integer)
 
 (defconst xterm-paste-ending-sequence "\e[201~"

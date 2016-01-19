@@ -1029,7 +1029,8 @@ of its back-ends.
 The command `xref-find-definitions' replaces `find-tag' and provides
 an interface to pick one definition among several.
 `tags-loop-continue' is now unbound.  `xref-pop-marker-stack' replaces
-`pop-tag-mark', but has a keybinding (`M-,'), unlike `pop-tag-mark'.
+`pop-tag-mark', but has a keybinding (`M-,') different from the one
+`pop-tag-mark' used.
 
 `xref-find-definitions-other-window' replaces `find-tag-other-window'.
 `xref-find-definitions-other-frame' replaces `find-tag-other-frame'.
@@ -1037,7 +1038,11 @@ an interface to pick one definition among several.
 
 As a result of this, the following commands are now obsolete:
 `find-tag-other-window', `find-tag-other-frame', `find-tag-regexp',
-`tags-apropos', and `tags-loop-continue'.
+`tags-apropos'.
+
+`tags-loop-continue' is not obsolete because it's still useful in
+`tags-search' and `tags-query-replace', for which there are no direct
+replacements yet.
 
 +++
 *** New variables
@@ -1292,28 +1297,40 @@ symbol-function was changed not to signal `void-function' any more.
 +++
 *** As a consequence, the second arg of `indirect-function' is now obsolete.
 
++++
 ** Comint, term, and compile do not set the EMACS env var any more.
 Use the INSIDE_EMACS environment variable instead.
 
++++
 ** `save-excursion' does not save&restore the mark any more.
+Use `save-mark-and-excursion' if you want the old behavior.
 
-** read-buffer-function can now be called with a 4th argument (`predicate').
++++
+** `read-buffer' and `read-buffer-function' can now be called with a 4th
+argument (`predicate').
 
-** completion-table-dynamic stays in the minibuffer.
++++
+** `completion-table-dynamic' by default stays in the minibuffer.
+The minibuffer will be the current buffer when the function is called.
 If you want the old behavior of calling the function in the buffer
-from which the minibuffer was entered, call it with the new argument
-`switch-buffer'.
+from which the minibuffer was entered, use the new argument
+`switch-buffer' to `completion-table-dynamic'.
 
+---
 ** window-configurations no longer record the buffers' marks.
 
+---
 ** inhibit-modification-hooks now also inhibits lock-file checks, as well as
 active region handling.
 
++++
 ** deactivate-mark is now buffer-local.
 
++++
 ** `cl-the' now asserts that its argument is of the given type.
 
-** `process-running-child-p` may now return a numeric process
++++
+** `process-running-child-p' may now return a numeric process
 group ID instead of `t'.
 
 +++
@@ -1402,24 +1419,38 @@ that happen, `unhandled-file-name-directory' now defaults to calling
 ** syntax-propertize is now automatically called on-demand during forward
 parsing functions like `forward-sexp'.
 
-** New hooks prefix-command-echo-keystrokes-functions and
-prefix-command-preserve-state-hook, to allow the definition of prefix
-commands other than the predefined C-u.
++++
+** New hooks `prefix-command-echo-keystrokes-functions' and
+`prefix-command-preserve-state-hook' allow the definition of prefix
+commands other than the predefined `C-u'.
 
++++
 ** New functions `filepos-to-bufferpos' and `bufferpos-to-filepos'.
+These allow to convert between buffer positions and the corresponding
+file byte offsets, given the file's encoding.
 
++++
 ** The default value of `load-read-function' is now `read'.
+Previously, the default value of `nil' implied using `read'.
 
-** New hook `pre-redisplay-functions', a bit easier to use than pre-redisplay-function.
++++
+** New hook `pre-redisplay-functions'.
+It is a bit easier to use than `pre-redisplay-function'.
 
++++
 ** The second arg of `looking-back' should always be provided explicitly.
+Previously, it was an optional argument, now it's mandatory.
 
-** Obsolete text properties `intangible', `point-entered', and `point-left'.
++++
+** Text properties `intangible', `point-entered', and `point-left' are obsolete.
 Replaced by properties `cursor-intangible' and `cursor-sensor-functions',
 implemented by the new `cursor-intangible-mode' and
 `cursor-sensor-mode' minor modes.
 
-** `inhibit-point-motion-hooks' now defaults to t and is obsolete.
++++
+** `inhibit-point-motion-hooks' now defaults to `t' and is obsolete.
+Use the new minor modes `cursor-intangible-mode' and
+`cursor-sensor-mode' instead.
 
 +++
 ** New process type `pipe', which can be used in combination with the
@@ -1840,6 +1871,12 @@ this has no effect.
 ---
 ** The new function 'w32-application-type' returns the type of an
 MS-Windows application given the name of its executable program file.
+
+** New variable `w32-pipe-buffer-size'.
+It can be used to tune the size of the buffer of pipes created for
+communicating with subprocesses, when the program run by a subprocess
+exhibits unusual buffering behavior.  Default is zero, which lets the
+OS use its default size.
 
 
 ----------------------------------------------------------------------

@@ -274,7 +274,9 @@ top-level directory.  Most tests are in the directory
 Tests which are tagged ":expensive-test" are enabled additionally, if
 you run "make check-expensive" from the top-level directory.  "make
 <filename>" as mentioned above incorporates expensive tests for
-<filename>.el(c).
+<filename>.el(c). You can also define any ert selector on the command
+line. So "make check SELECTOR=nil" is equivalent to "make
+check-expensive".
 
 ** Understanding Emacs Internals.
 

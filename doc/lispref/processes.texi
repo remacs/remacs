@@ -1138,10 +1138,12 @@ The function returns @var{process}.
 @end defun
 
 @defun process-running-child-p &optional process
-This function will tell you whether a @var{process} has given control of
-its terminal to its own child process.  The value is @code{t} if this is
-true, or if Emacs cannot tell; it is @code{nil} if Emacs can be certain
-that this is not so.
+This function will tell you whether a @var{process} has given control
+of its terminal to its own child process.  If this is true, the
+function returns the numeric ID of the foreground process group of
+@var{process}; it returns @code{nil} if Emacs can be certain that this
+is not so.  The value is @code{t} if Emacs cannot tell whether this is
+true.
 @end defun
 
 @node Signals to Processes

@@ -670,7 +670,7 @@ SYMBOL is a function that can be overridden."
 
 (add-hook 'help-fns-describe-function-functions 'describe-mode-local-overload)
 
-(declare-function xref-item-location "xref" (xref))
+(declare-function xref-item-location "xref" (xref) t)
 
 (defun xref-mode-local--override-present (sym xrefs)
   "Return non-nil if SYM is in XREFS."

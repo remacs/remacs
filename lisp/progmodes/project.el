@@ -156,10 +156,11 @@ end it with `/'.  DIR must be one of `project-roots' or
 
 (defgroup project-vc nil
   "Project implementation using the VC package."
+  :version "25.1"
   :group 'tools)
 
 (defcustom project-vc-ignores nil
-  "List ot patterns to include in `project-ignores'."
+  "List of patterns to include in `project-ignores'."
   :type '(repeat string)
   :safe 'listp)
 

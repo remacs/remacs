@@ -1115,24 +1115,14 @@ command whose response triggered the error."
 
 (deffoo nntp-request-newgroups (date &optional server)
   (nntp-with-open-group
-   nil server
-   (with-current-buffer nntp-server-buffer
-     (let* ((time (date-to-time date))
-            (ls (- (cadr time) (nth 8 (decode-time time)))))
-       (cond ((< ls 0)
-              (setcar time (1- (car time)))
-              (setcar (cdr time) (+ ls 65536)))
-             ((>= ls 65536)
-              (setcar time (1+ (car time)))
-              (setcar (cdr time) (- ls 65536)))
-             (t
-              (setcar (cdr time) ls)))
-       (prog1
-           (nntp-send-command
-            "^\\.\r?\n" "NEWGROUPS"
-            (format-time-string "%y%m%d %H%M%S" time)
-            "GMT")
-         (nntp-decode-text))))))
+      nil server
+    (with-current-buffer nntp-server-buffer
+      (prog1
+	  (nntp-send-command
+	   "^\\.\r?\n" "NEWGROUPS"
+	   (format-time-string "%y%m%d %H%M%S" (date-to-time date) t)
+	   "GMT")
+	(nntp-decode-text)))))
 
 (deffoo nntp-request-post (&optional server)
   (nntp-with-open-group

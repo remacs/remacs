@@ -1794,7 +1794,6 @@ Two variables control the processing we do on each file: the value of
 interesting (it returns non-nil if so) and `tags-loop-operate' is a form to
 evaluate to operate on an interesting file.  If the latter evaluates to
 nil, we exit; otherwise we scan the next file."
-  (declare (obsolete "use `xref-find-definitions' interface instead." "25.1"))
   (interactive)
   (let (new
 	;; Non-nil means we have finished one file

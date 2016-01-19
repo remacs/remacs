@@ -350,9 +350,9 @@ Whether the passphrase is cached at all is controlled by
   (autoload 'epg-expand-group "epg-config")
   (autoload 'epa-select-keys "epa"))
 
-(declare-function epg-key-sub-key-list   "ext:epg" (key))
-(declare-function epg-sub-key-capability "ext:epg" (sub-key))
-(declare-function epg-sub-key-validity   "ext:epg" (sub-key))
+(declare-function epg-key-sub-key-list   "epg" (key) t)
+(declare-function epg-sub-key-capability "epg" (sub-key) t)
+(declare-function epg-sub-key-validity   "epg" (sub-key) t)
 
 (autoload 'mml-compute-boundary "mml")
 

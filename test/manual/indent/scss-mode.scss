@@ -55,3 +55,13 @@ article[role="main"] {
 }
 
 .box { @include border-radius(10px); }
+
+// bug:21230
+$list: (
+   ('a', #000000, #fff)
+   ('b', #000000, #fff)
+   ('c', #000000, #fff)
+   ('d', #000000, #fff)
+   ('e', #000000, #fff)
+   ('f', #000000, #fff)
+);

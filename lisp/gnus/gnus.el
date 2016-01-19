@@ -1637,6 +1637,7 @@ this variable.  I think."
 					     (const post-mail))
 			(checklist :inline t :greedy t
 				   (const :format "%v " address)
+				   (const cloud)
 				   (const global)
 				   (const :format "%v " prompt-address)
 				   (const :format "%v " physical-address)

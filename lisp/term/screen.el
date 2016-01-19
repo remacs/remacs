@@ -7,6 +7,7 @@
   "Extra capabilities supported under \"screen\".
 Some features of screen depend on the terminal emulator in which
 it runs, which can change when the screen session is moved to another tty."
+  :version "25.1"
   :type xterm--extra-capabilities-type
   :group 'xterm)
 

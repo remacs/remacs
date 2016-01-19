@@ -138,7 +138,7 @@
 
 (defcustom hide-ifdef-exclude-define-regexp nil
   "Ignore #define names if those names match this exclusion pattern."
-  :type 'string
+  :type '(choice (const nil) string)
   :version "25.1")
 
 (defcustom hide-ifdef-expand-reinclusion-protection t
