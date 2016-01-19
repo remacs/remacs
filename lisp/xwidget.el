@@ -36,7 +36,9 @@
 (defcustom xwidget-webkit-scroll-behaviour 'native
   "Scroll behaviour of the webkit instance.
 'native or 'image."
-  :group 'xwidgets)
+  :version "25.1"
+  :group 'frames   ; TODO add xwidgets group if more options are added
+  :type '(choice (const native) (const image)))
 
 (defun xwidget-insert (pos type title width height &optional args)
   "Insert an xwidget at POS.
