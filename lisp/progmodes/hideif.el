@@ -1581,14 +1581,17 @@ Refer to `hide-ifdef-expand-reinclusion-protection' for more details."
     result))
 
 (defun hif-evaluate-macro (rstart rend)
-  "Evaluate the macro expansion result for a region.
+  "Evaluate the macro expansion result for the active region.
 If no region active, find the current #ifdefs and evaluate the result.
 Currently it supports only math calculations, strings or argumented macros can
 not be expanded."
-  (interactive "r")
+  (interactive
+   (if (use-region-p)
+       (list (region-beginning) (region-end))
+     '(nil nil)))
   (let ((case-fold-search nil))
     (save-excursion
-      (unless mark-active
+      (unless (use-region-p)
         (setq rstart nil rend nil)
         (beginning-of-line)
         (when (and (re-search-forward hif-macro-expr-prefix-regexp nil t)
@@ -1844,9 +1847,13 @@ This allows #ifdef VAR to be hidden."
 
 (defun hide-ifdef-undef (start end)
   "Undefine a VAR so that #ifdef VAR would not be included."
-  (interactive "r")
+  (interactive
+   (if (use-region-p)
+       (list (region-beginning) (region-end))
+     '(nil nil)))
   (let* ((symstr
-          (or (and mark-active
+          (or (and (number-or-marker-p start)
+                   (number-or-marker-p end)
                    (buffer-substring-no-properties start end))
               (read-string "Undefine what? " (current-word))))
          (sym (and symstr
@@ -1915,7 +1922,7 @@ Return as (TOP . BOTTOM) the extent of ifdef block."
 With optional prefix argument ARG, also hide the #ifdefs themselves."
   (interactive "P\nr")
   (let ((hide-ifdef-lines arg))
-    (if mark-active
+    (if (use-region-p)
         (let ((hif-recurse-level (1+ hif-recurse-level)))
           (hif-recurse-on start end t)
           (setq mark-active nil))
@@ -1931,8 +1938,12 @@ With optional prefix argument ARG, also hide the #ifdefs themselves."
 
 (defun show-ifdef-block (&optional start end)
   "Show the ifdef block (true or false part) enclosing or before the cursor."
-  (interactive "r")
-  (if mark-active
+  (interactive
+   (if (use-region-p)
+       (list (region-beginning) (region-end))
+     '(nil nil)))
+  (if (and (number-or-marker-p start)
+           (number-or-marker-p end))
       (progn
         (dolist (o (overlays-in start end))
           (if (overlay-get o 'hide-ifdef)

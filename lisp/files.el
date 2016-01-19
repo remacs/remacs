@@ -3713,7 +3713,7 @@ VARIABLES list of the class.  The list is processed in order.
   applied by recursively following these rules."
   (setf (alist-get class dir-locals-class-alist) variables))
 
-(defconst dir-locals-file ".dir-locals*.el"
+(defconst dir-locals-file ".dir-locals"
   "Pattern for files that contain directory-local variables.
 It has to be constant to enforce uniform values across different
 environments and users.
@@ -3730,16 +3730,20 @@ return a sorted list of all files matching `dir-locals-file' in
 this directory.
 The returned list is sorted by `string<' order."
   (require 'seq)
-  (let ((default-directory (if (file-directory-p file-or-dir)
-                               file-or-dir
-                             default-directory)))
+  (let ((dir (if (file-directory-p file-or-dir)
+                 file-or-dir
+               (or (file-name-directory file-or-dir)
+                   default-directory)))
+        (file (cond ((not (file-directory-p file-or-dir)) (file-name-nondirectory file-or-dir))
+                    ((eq system-type 'ms-dos) (dosified-file-name dir-locals-file))
+                    (t dir-locals-file))))
     (seq-filter (lambda (f) (and (file-readable-p f)
-                            (file-regular-p f)))
-                (file-expand-wildcards
-                 (cond ((not (file-directory-p file-or-dir)) file-or-dir)
-                       ((eq system-type 'ms-dos) (dosified-file-name dir-locals-file))
-                       (t dir-locals-file))
-                 'full))))
+                            (file-regular-p f)
+                            (not (file-directory-p f))))
+                (mapcar (lambda (f) (expand-file-name f dir))
+                        (nreverse
+                         (let ((completion-regexp-list '("\\.el\\'")))
+                           (file-name-all-completions file dir)))))))
 
 (defun dir-locals-find-file (file)
   "Find the directory-local variables for FILE.

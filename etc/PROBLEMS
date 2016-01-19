@@ -1966,6 +1966,13 @@ runtime shared library, distributed with Windows 9X.
 A workaround is to build Emacs with MinGW runtime 3.x (the latest
 version is 3.20).
 
+** addpm fails to run on Windows NT4, complaining about Shell32.dll
+
+This is likely to happen because Shell32.dll shipped with NT4 lacks
+the updates required by Emacs.  Installing Internet Explorer 4 solves
+the problem.  Note that it is NOT enough to install IE6, because doing
+so will not install the Shell32.dll update.
+
 ** A few seconds delay is seen at startup and for many file operations
 
 This happens when the Net Logon service is enabled.  During Emacs
