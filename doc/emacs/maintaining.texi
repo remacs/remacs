@@ -1686,19 +1686,38 @@ permitted provided the copyright notice and this notice are preserved.
 Of course, you should substitute the proper years and copyright holder.
 
 @node Xref
-@section Find Identifier Definitions and References
+@section Find Identifier References
 @cindex xref
 
-  An @dfn{identifier} is a syntactic elements of the program: a
-function, a subroutine, a method, a class, a data type, a macro, etc.
-In a programming language, each identifier is a symbol in the
-language's syntax.  Many program development tools provide
-capabilities to extract references to identifiers from source files,
-record them on specialized data bases, and then use those data bases
-to quickly find where each identifier was defined and referenced.
+  An @dfn{identifier} is a name of a syntactical subunit of the
+program: a function, a subroutine, a method, a class, a data type, a
+macro, etc.  In a programming language, each identifier is a symbol in
+the language's syntax.  Program development and maintenance requires
+capabilities to quickly find where each identifier was defined and
+referenced, to rename identifiers across the entire project, etc.
 
-Emacs provides a unified user interface to these tools, called
-@samp{xref}.  The tools supported by @samp{xref} include:
+These capabilities are also useful for finding references in major
+modes other than those defined to support programming languages.  For
+example, chapters, sections, appendices, etc.@: of a text or a @TeX{}
+document can be treated as subunits as well, and their names can be
+used as identifiers.  In this chapter, we use the term ``identifiers''
+to collectively refer to the names of any kind of subunits, in program
+source and in other kinds of text alike.
+
+Emacs provides a unified interface to these capabilities, called
+@samp{xref}.
+
+@cindex xref backend
+To do its job, @code{xref} needs to make use of information and to
+employ methods specific to the major mode.  What files to search for
+identifiers, how to find references to identifiers, how to complete on
+identifiers---all this and more is mode-specific knowledge.
+@code{xref} delegates the mode-specific parts of its job to a
+@dfn{backend} provided by the mode; it also includes defaults for some
+of its commands, for those modes that don't provide their own.
+
+A backend can implement its capabilities in a variety of ways.  Here
+are a few examples:
 
 @enumerate a
 @item
@@ -1706,48 +1725,24 @@ Some major modes provide built-in means for looking up the language
 symbols.  For example, Emacs Lisp symbols can be identified by
 searching the package load history, maintained by the Emacs Lisp
 interpreter, and by consulting the built-in documentation strings; the
-Emacs Lisp mode uses these facilities to find definitions of symbols.
+Emacs Lisp mode uses these facilities in its backend to allow finding
+definitions of symbols.  (One disadvantage of this kind of backend is
+that it only knows about subunits that were loaded into the
+interpreter.)
 
 @item
-Etags, the command for tagging identifier definitions which is part of
-the Emacs distribution.  @xref{Create Tags Table}.
-
-@item
-@acronym{GNU} GLOBAL, the source code tagging system, which provides
-the @command{gtags} command and associated utilities.  @xref{Command
-Line, gtags, , global, GNU GLOBAL source code tag system}.
-
-@item
-Cscope (@uref{http://cscope.sourceforge.net/}, a tool for browsing
-source code.
-
-@item
-@acronym{GNU} IDUtils, a package for generating databases of
-identifier references and querying those databases.  @xref{Top,,,
-idutils, ID database utilities}.
-
-@item
-Grep, the venerable program that searches files for lines matching
-patterns.  @xref{Invoking,,, grep, GNU Grep Manual}.
+An external program can extract references by scanning the relevant
+files, and build a database of these references.  A backend can then
+access this database whenever it needs to list or look up references.
+The Emacs distribution includes @command{etags}, a command for tagging
+identifier definitions in programs, which supports many programming
+languages and other major modes, such as HTML, by extracting
+references into @dfn{tags tables}.  @xref{Create Tags Table}.  Major
+modes for languages supported by @command{etags} can use tags tables
+as basis for their backend.  (One disadvantage of this kind of backend
+is that tags tables need to be kept reasonably up to date, by
+rebuilding them from time to time.)
 @end enumerate
-
-@noindent
-Additional tools could be supported as they become available, or as
-user extensions.  Each such tool is used as a @dfn{backend} by
-commands described in this section.  Each command detects which
-backends are available for the current major mode, and uses the most
-capable of the available backends, with Grep generally serving as the
-fall-back backend.
-
-@cindex tag
-The commands described here are useful for finding references in major
-modes other than those defined to support programming languages.  For
-example, chapters, sections, appendices, etc. of a text or a @TeX{}
-document can be treated as identifiers as well.  In this chapter, we
-collectively refer to a reference that specifies the name of the file
-where the corresponding subunit is defined, and the position of the
-subunit's definition in that file, as a @dfn{tag}.  We refer to the
-backends used by @code{xref} as @dfn{tagging backends}.
 
 @menu
 * Find Identifiers::    Commands to find where an identifier is defined
@@ -1759,14 +1754,16 @@ backends used by @code{xref} as @dfn{tagging backends}.
 @node Find Identifiers
 @subsection Find Identifiers
 
-  This subsection describes the commands that use the tagging backends
-in order to find definitions of identifiers, references to
-identifiers, and perform various queries about identifiers.  With most
-backends, these definitions and references were recorded as tags in
-the database created and maintained by the backend.
+  This subsection describes the commands that find references to
+identifiers and perform various queries about identifiers.  Each such
+reference could @emph{define} an identifier, e.g., provide the
+implementation of a program subunit or the text of a document section;
+or it could @emph{use} the identifier, e.g., call a function or a
+method, assign a value to a variable, mention a chapter in a
+cross-reference, etc.
 
 @menu
-* Looking Up Identifiers:: Commands to find the definition of a specific tag.
+* Looking Up Identifiers:: Commands to find the definition of an identifier.
 * Xref Commands::          Commands in the @file{*xref*} buffer.
 * Identifier Search::      Searching and replacing identifiers.
 * List Identifiers::       Listing identifiers and completing on them.
@@ -1794,7 +1791,7 @@ Find definitions of identifier, but display it in another window
 Find definition of identifier, and display it in a new frame
 (@code{xref-find-definitions-other-frame}).
 @item M-,
-Pop back to where you previously invoked @kbd{M-.} and friends
+Go back to where you previously invoked @kbd{M-.} and friends
 (@code{xref-pop-marker-stack}).
 @end table
 
@@ -1832,7 +1829,8 @@ former is @w{@kbd{C-x 4 .}}
   The command @kbd{C-M-.} (@code{xref-find-apropos}) finds the
 definitions of one or more identifiers that match a specified regular
 expression.  It is just like @kbd{M-.} except that it does regexp
-matching of identifiers instead of symbol name matching.
+matching of identifiers instead of matching symbol names as fixed
+strings.
 
   When any of the above commands finds more than one definition, it
 presents the @file{*xref*} buffer showing the definition candidates.
@@ -1896,13 +1894,9 @@ without displaying the references.
 @cindex search and replace in multiple files
 @cindex multiple-file search and replace
 
-  The commands in this section visit and search all the files listed
-in the @code{xref} backend's database, one by one.  For these
-commands, the database serves only to specify a sequence of files to
-search.  These commands scan all the databases starting with the first
-one (if any) that describes the current file, proceed from there to
-the end of the list, and then scan from the beginning of the list
-until they have covered all the databases in the list.
+  The commands in this section perform various search and replace
+operations either on identifiers themselves or on files that reference
+them.
 
 @table @kbd
 @item M-?
@@ -1931,7 +1925,7 @@ referenced.  The XREF mode commands are available in this buffer, see
 
 @findex xref-query-replace
   @kbd{M-x xref-query-replace} reads a regexp to match identifier
-names and a string to replace with, just like ordinary @kbd{M-x
+names and a replacement string, just like ordinary @kbd{M-x
 query-replace-regexp}.  It then performs the specified replacement in
 the names of the matching identifiers in all the places in all the
 files where these identifiers are referenced.  This is useful when you
@@ -1943,15 +1937,14 @@ be invoked in the @file{*xref*} buffer generated by @code{M-?}.
 searches for matches in all the files in the selected tags table, one
 file at a time.  It displays the name of the file being searched so
 you can follow its progress.  As soon as it finds an occurrence,
-@code{tags-search} returns.  This command works only with the etags
-backend, and requires tags tables to be available (@pxref{Tags
-Tables}).
+@code{tags-search} returns.  This command requires tags tables to be
+available (@pxref{Tags Tables}).
 
 @findex tags-loop-continue
-  Having found one match, you probably want to find all the rest.
-Type @kbd{M-x tags-loop-continue}) to resume the @code{tags-search},
-finding one more match.  This searches the rest of the current buffer,
-followed by the remaining files of the tags table.
+  Having found one match with @code{tags-search}, you probably want to
+find all the rest.  Type @kbd{M-x tags-loop-continue} to resume the
+@code{tags-search}, finding one more match.  This searches the rest of
+the current buffer, followed by the remaining files of the tags table.
 
 @findex tags-query-replace
   @kbd{M-x tags-query-replace} performs a single
@@ -1960,7 +1953,6 @@ reads a regexp to search for and a string to replace with, just like
 ordinary @kbd{M-x query-replace-regexp}.  It searches much like @kbd{M-x
 tags-search}, but repeatedly, processing matches according to your
 input.  @xref{Query Replace}, for more information on query replace.
-This command works only with the etags backend.
 
 @vindex tags-case-fold-search
 @cindex case-sensitivity and tags search
@@ -1976,19 +1968,21 @@ has no special query replace meaning.  You can resume the query
 replace subsequently by typing @kbd{M-x tags-loop-continue}; this
 command resumes the last tags search or replace command that you did.
 For instance, to skip the rest of the current file, you can type
-@kbd{M-> M-x tags-loop-continue}.
+@w{@kbd{M-> M-x tags-loop-continue}}.
 
-  The commands in this section carry out much broader searches than
-the @code{xref-find-definitions} family.  The
+  Note that the commands described above carry out much broader
+searches than the @code{xref-find-definitions} family.  The
 @code{xref-find-definitions} commands search only for definitions of
 identifiers that match your string or regexp.  The commands
-@code{tags-search} and @code{tags-query-replace} find every occurrence
-of the regexp, as ordinary search commands and replace commands do in
-the current buffer.
+@code{xref-find-references}, @code{tags-search}, and
+@code{tags-query-replace} find every occurrence of the identifier or
+regexp, as ordinary search commands and replace commands do in the
+current buffer.
 
-  As an alternative to @code{tags-search}, you can run @command{grep}
-as a subprocess and have Emacs show you the matching lines one by one.
-@xref{Grep Searching}.
+  As an alternative to @code{xref-find-references} and
+@code{tags-search}, you can run @command{grep} as a subprocess and
+have Emacs show you the matching lines one by one.  @xref{Grep
+Searching}.
 
 @node List Identifiers
 @subsubsection Identifier Inquiries
@@ -1996,20 +1990,23 @@ as a subprocess and have Emacs show you the matching lines one by one.
 @table @kbd
 @item C-M-i
 @itemx M-@key{TAB}
-Perform completion on the text around point, using the @code{xref}
-backend if one is available (@code{completion-at-point}).
-@item M-x list-tags @key{RET} @var{file} @key{RET}
-Display a list of the tags defined in the program file @var{file}.
+Perform completion on the text around point, using the selected tags
+table if one is loaded (@code{completion-at-point}).
 @item M-x xref-find-apropos @key{RET} @var{regexp} @key{RET}
 Display a list of all known identifiers matching @var{regexp}.
+@item M-x list-tags @key{RET} @var{file} @key{RET}
+Display a list of the identifiers defined in the program file
+@var{file}.
+@item M-x next-file
+Visit files recorded in the selected tags table.
 @end table
 
 @cindex completion (symbol names)
   In most programming language modes, you can type @kbd{C-M-i} or
 @kbd{M-@key{TAB}} (@code{completion-at-point}) to complete the symbol
-at point.  If there is an @code{xref} backend available, this command
-can use it to generate completion candidates more intelligently.
-@xref{Symbol Completion}.
+at point.  If there is a tags table loaded, this command can use it to
+generate completion candidates more intelligently.  @xref{Symbol
+Completion}.
 
 @findex list-tags
   @kbd{M-x list-tags} reads the name of one of the files covered by
@@ -2044,11 +2041,14 @@ for details.
 The first time it is called, it visits the first file covered by the
 table.  Each subsequent call visits the next covered file, unless a
 prefix argument is supplied, in which case it returns to the first
-file.  This command works only with the etags backend.
+file.  This command requires a tags table to be selected.
 
 @node Tags Tables
 @subsection Tags Tables
 @cindex tags and tag tables
+
+@cindex tag
+  A @dfn{tag} is a synonym for identifier reference.  @xref{Xref}.
 
   A @dfn{tags table} records the tags extracted by scanning the source
 code of a certain program or a certain document.  Tags extracted from

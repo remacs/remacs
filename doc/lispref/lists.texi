@@ -1556,6 +1556,14 @@ keys may not be symbols:
 @end smallexample
 @end defun
 
+@defun alist-get key value &optional default
+This function is like @code{assq}, but instead of returning the entire
+association for @var{key}, @code{(@var{key} . @var{value})}, it
+returns just the @var{value}.  It returns @var{default} if @var{key}
+is not found in @var{alist}, defaulting to @code{nil} if @var{default}
+is omitted.
+@end defun
+
 @defun rassq value alist
 This function returns the first association with value @var{value} in
 @var{alist}.  It returns @code{nil} if no association in @var{alist} has

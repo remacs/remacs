@@ -264,7 +264,6 @@ DIRS must contain directory names."
     (symbol-value var)))
 
 (declare-function grep-read-files "grep")
-(declare-function xref-collect-matches "xref")
 (declare-function xref--show-xrefs "xref")
 (declare-function xref-backend-identifier-at-point "xref")
 (declare-function xref--find-ignores-arguments "xref")
@@ -295,8 +294,8 @@ pattern to search for."
     (project--find-regexp-in dirs regexp pr)))
 
 (defun project--read-regexp ()
-  (read-regexp "Find regexp"
-               (xref-backend-identifier-at-point (xref-find-backend))))
+  (let ((id (xref-backend-identifier-at-point (xref-find-backend))))
+    (read-regexp "Find regexp" (and id (regexp-quote id)))))
 
 (defun project--find-regexp-in (dirs regexp project)
   (require 'grep)

@@ -1112,15 +1112,17 @@ The return value is a property list with top-level keys :warnings and
 /* Initialize global GnuTLS state to defaults.
    Call `gnutls-global-deinit' when GnuTLS usage is no longer needed.
    Return zero on success.  */
-static Lisp_Object
+Lisp_Object
 emacs_gnutls_global_init (void)
 {
   int ret = GNUTLS_E_SUCCESS;
 
   if (!gnutls_global_initialized)
-    ret = gnutls_global_init ();
-
-  gnutls_global_initialized = 1;
+    {
+      ret = gnutls_global_init ();
+      if (ret == GNUTLS_E_SUCCESS)
+	gnutls_global_initialized = 1;
+    }
 
   return gnutls_make_error (ret);
 }

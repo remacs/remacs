@@ -3350,7 +3350,6 @@ if test "${HAVE_MODULES}" = yes; then
 fi
 AC_SUBST(MODULES_OBJ)
 AC_SUBST(LIBMODULES)
-AX_GCC_VAR_ATTRIBUTE(cleanup)
 AC_CHECK_FUNCS(dladdr)
 
 ### Use -lpng if available, unless '--with-png=no'.

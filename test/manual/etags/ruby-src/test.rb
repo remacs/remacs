@@ -1,19 +1,19 @@
 module ModuleExample
     class ClassExample
-        def class_method
+        def instance_method
+            puts "in instane_method"
+        end
+        def ClassExample.class_method
             puts "in class_method"
         end
-        def ClassExample.singleton_class_method
-            puts "in singleton_class_method"
+        def instance_method_exclamation!
+            puts "in instance_method_exclamation!"
         end
-        def class_method_exclamation!
-            puts "in class_method_exclamation!"
+        def instance_method_question?
+            puts "in instance_method_question?"
         end
-        def class_method_question?
-            puts "in class_method_question?"
-        end
-        def class_method_equals=
-            puts "in class_method_equals="
+        def instance_method_equals=
+            puts "in instance_method_equals="
         end
         def `(command)
             return "just testing a backquote override"
@@ -43,12 +43,16 @@ module ModuleExample
             self == y
         end
     end
-    def module_method
-        puts "in module_method"
+    def module_instance_method
+        puts "in module_instance_method"
     end
-    def ModuleExample.singleton_module_method
-        puts "in singleton_module_method"
+    def ModuleExample.module_class_method
+        puts "in module_class_method"
     end
 end
 
-ModuleExample::ClassExample.singleton_class_method
+ModuleExample::ClassExample.class_method
+
+# Local Variables:
+# ruby-indent-level: 4
+# End:

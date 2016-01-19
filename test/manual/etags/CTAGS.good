@@ -438,7 +438,7 @@ Cjava_entries	c-src/etags.c	/^Cjava_entries (FILE *inf)$/
 Cjava_help	c-src/etags.c	551
 Cjava_suffixes	c-src/etags.c	549
 ClassExample	ruby-src/test.rb	/^    class ClassExample$/
-ClassExample.singleton_class_method	ruby-src/test.rb	/^        def ClassExample.singleton_class_method$/
+ClassExample.class_method	ruby-src/test.rb	/^        def ClassExample.class_method$/
 Clear/p	ada-src/2ataspri.adb	/^   procedure Clear (Cell : in out TAS_Cell) is$/
 Clear/p	ada-src/2ataspri.ads	/^   procedure Clear        (Cell : in out TAS_Cell)/
 Cobol_help	c-src/etags.c	558
@@ -939,7 +939,7 @@ Metags	c-src/etags.c	/^main (int argc, char **argv)$/
 Mfail	cp-src/fail.C	/^main()$/
 Mkai-test.pl	perl-src/kai-test.pl	/^package main;$/
 ModuleExample	ruby-src/test.rb	/^module ModuleExample$/
-ModuleExample.singleton_module_method	ruby-src/test.rb	/^    def ModuleExample.singleton_module_method$/
+ModuleExample.module_class_method	ruby-src/test.rb	/^    def ModuleExample.module_class_method$/
 More_Lisp_Bits	c-src/emacs/src/lisp.h	801
 MoveLayerAfter	lua-src/allegro.lua	/^function MoveLayerAfter (this_one)$/
 MoveLayerBefore	lua-src/allegro.lua	/^function MoveLayerBefore (this_one)$/
@@ -2620,10 +2620,10 @@ childDidExit	objc-src/Subprocess.m	/^- childDidExit$/
 chunks_free	c-src/emacs/src/gmalloc.c	313
 chunks_used	c-src/emacs/src/gmalloc.c	311
 cjava	c-src/etags.c	2936
-class_method	ruby-src/test.rb	/^        def class_method$/
-class_method_equals=	ruby-src/test.rb	/^        def class_method_equals=$/
-class_method_exclamation!	ruby-src/test.rb	/^        def class_method_exclamation!$/
-class_method_question?	ruby-src/test.rb	/^        def class_method_question?$/
+instance_method	ruby-src/test.rb	/^        def instance_method$/
+instance_method_equals=	ruby-src/test.rb	/^        def instance_method_equals=$/
+instance_method_exclamation!	ruby-src/test.rb	/^        def instance_method_exclamation!$/
+instance_method_question?	ruby-src/test.rb	/^        def instance_method_question?$/
 classifyLine	php-src/lce_functions.php	/^      function classifyLine($line)$/
 clear	cp-src/conway.hpp	/^    void clear(void) { alive = 0; }$/
 clear-abbrev-table	c-src/abbrev.c	/^DEFUN ("clear-abbrev-table", Fclear_abbrev_table, /
@@ -3450,7 +3450,7 @@ miti	html-src/softwarelibero.html	/^Sfatiamo alcuni miti$/
 modifier_names	c-src/emacs/src/keyboard.c	6319
 modifier_symbols	c-src/emacs/src/keyboard.c	6327
 modify_event_symbol	c-src/emacs/src/keyboard.c	/^modify_event_symbol (ptrdiff_t symbol_num, int mod/
-module_method	ruby-src/test.rb	/^    def module_method$/
+module_instance_method	ruby-src/test.rb	/^    def module_instance_method$/
 more_aligned_int	c.c	165
 morecore_nolock	c-src/emacs/src/gmalloc.c	/^morecore_nolock (size_t size)$/
 morecore_recursing	c-src/emacs/src/gmalloc.c	604

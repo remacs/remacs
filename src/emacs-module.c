@@ -35,8 +35,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Feature tests.  */
 
-/* True if __attribute__ ((cleanup (...))) works, false otherwise.  */
-#ifdef HAVE_VAR_ATTRIBUTE_CLEANUP
+#if __has_attribute (cleanup)
 enum { module_has_cleanup = true };
 #else
 enum { module_has_cleanup = false };
