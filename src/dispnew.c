@@ -44,6 +44,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
 
+#ifdef HAVE_XWIDGETS
+# include "xwidget.h"
+#endif
+
 #include <errno.h>
 
 #include <fpending.h>
@@ -3545,6 +3549,9 @@ update_window (struct window *w, bool force_p)
   add_window_display_history (w, w->current_matrix->method, paused_p);
 #endif
 
+#ifdef HAVE_XWIDGETS
+  xwidget_end_redisplay (w, w->current_matrix);
+#endif
   clear_glyph_matrix (desired_matrix);
 
   return paused_p;
@@ -4117,6 +4124,11 @@ scrolling_window (struct window *w, bool header_line_p)
       else
 	break;
     }
+
+#ifdef HAVE_XWIDGETS
+  /* Currently this seems needed to detect xwidget movement reliably. */
+    return 0;
+#endif
 
   /* Give up if some rows in the desired matrix are not enabled.  */
   if (! MATRIX_ROW_ENABLED_P (desired_matrix, i))

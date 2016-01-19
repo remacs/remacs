@@ -121,6 +121,21 @@ and can contain escape sequences for command keys, quotes, and the like.
 * Changes in Emacs 25.1
 
 +++
+** Xwidgets : A new feature for embedding native widgets
+inside Emacs buffers. If you have gtk3 and webkit-devel installed, you
+can access the embedded webkit browser with m-x
+xwidget-webkit-browse-url. This will open a new buffer with the
+embedded browser. The buffer will have a new mode, xwidget-webkit
+mode which is similar to image mode, which supports the webkit widget.
+
+*** New functions for xwidget-webkit mode `xwidget-webkit-insert-string',
+`xwidget-webkit-adjust-size-dispatch', `xwidget-webkit-back',
+`xwidget-webkit-browse-url', `xwidget-webkit-reload',
+`xwidget-webkit-current-url', `xwidget-webkit-scroll-backward',
+`xwidget-webkit-scroll-forward', `xwidget-webkit-scroll-down',
+`xwidget-webkit-scroll-up',
+
++++
 ** Emacs can now load shared/dynamic libraries (modules).
 A dynamic Emacs module is a shared library that provides additional
 functionality for use in Emacs Lisp programs, just like a package

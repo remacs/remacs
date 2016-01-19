@@ -66,6 +66,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "window.h"
 
+#ifdef HAVE_XWIDGETS
+# include "xwidget.h"
+#endif
 #include "atimer.h"
 #include "blockinput.h"
 #include "syssignal.h"
@@ -1485,6 +1488,9 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
       syms_of_xfns ();
       syms_of_xmenu ();
       syms_of_fontset ();
+#ifdef HAVE_XWIDGETS
+      syms_of_xwidget ();
+#endif
       syms_of_xsettings ();
 #ifdef HAVE_X_SM
       syms_of_xsmfns ();

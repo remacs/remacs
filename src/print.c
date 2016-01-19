@@ -33,6 +33,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "intervals.h"
 #include "blockinput.h"
 
+#ifdef HAVE_XWIDGETS
+# include "xwidget.h"
+#endif
+
 #include <c-ctype.h>
 #include <float.h>
 #include <ftoastr.h>
@@ -1736,6 +1740,18 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	  print_c_string (XSUBR (obj)->symbol_name, printcharfun);
 	  printchar ('>', printcharfun);
 	}
+#ifdef HAVE_XWIDGETS
+      else if (XWIDGETP (obj))
+	{
+	  print_c_string ("#<xwidget ", printcharfun);
+	  printchar ('>', printcharfun);
+	}
+      else if (XWIDGET_VIEW_P (obj))
+	{
+	  print_c_string ("#<xwidget ", printcharfun);
+	  printchar ('>', printcharfun);
+	}
+#endif
       else if (WINDOWP (obj))
 	{
 	  int len = sprintf (buf, "#<window %"pI"d",
