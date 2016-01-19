@@ -2583,14 +2583,14 @@ then
   WEBKIT_REQUIRED=1.4.0
   WEBKIT_MODULES="webkitgtk-3.0 >= $WEBKIT_REQUIRED"
 
-  PKG_CHECK_MODULES(WEBKIT, $WEBKIT_MODULES, HAVE_WEBKIT=yes, HAVE_WEBKIT=no)
+  EMACS_CHECK_MODULES(WEBKIT, $WEBKIT_MODULES, HAVE_WEBKIT=yes, HAVE_WEBKIT=no)
   if test $HAVE_WEBKIT = yes; then
     AC_DEFINE([HAVE_WEBKIT_OSR], 1, [Define to 1 if you have webkit_osr support.])
   fi
 
   GIR_REQUIRED=1.32.1
   GIR_MODULES="gobject-introspection-1.0 >= $GIR_REQUIRED"
-  PKG_CHECK_MODULES(GIR, $GIR_MODULES, HAVE_GIR=yes, HAVE_GIR=no)
+  EMACS_CHECK_MODULES(GIR, $GIR_MODULES, HAVE_GIR=yes, HAVE_GIR=no)
   if test $HAVE_GIR = yes; then
      AC_DEFINE([HAVE_GIR], 1, [Define to 1 if you have GIR support.])
   fi
@@ -3136,7 +3136,7 @@ if test "${HAVE_X11}" = "yes"; then
   if test "${with_cairo}" != "no"; then
     CAIRO_REQUIRED=1.12.0
     CAIRO_MODULE="cairo >= $CAIRO_REQUIRED"
-    PKG_CHECK_MODULES(CAIRO, $CAIRO_MODULE, USE_CAIRO=yes, :)
+    EMACS_CHECK_MODULES(CAIRO, $CAIRO_MODULE, USE_CAIRO=yes, :)
     if test $USE_CAIRO = yes; then
       AC_DEFINE(USE_CAIRO, 1, [Define to 1 if using cairo.])
     else
