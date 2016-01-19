@@ -2068,7 +2068,7 @@ cdar      nthcdr
 A call to any of the following Emacs-specific functions:
 
 @smallexample
-default-value                 process-get
+alist-get                     process-get
 frame-parameter               process-sentinel
 terminal-parameter            window-buffer
 keymap-parent                 window-display-table
@@ -2077,7 +2077,7 @@ overlay-get                   window-hscroll
 overlay-start                 window-parameter
 overlay-end                   window-point
 process-buffer                window-start
-process-filter
+process-filter                default-value
 @end smallexample
 @end itemize
 
