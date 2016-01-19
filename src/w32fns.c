@@ -9921,6 +9921,7 @@ globals_of_w32fns (void)
   except_addr = 0;
 #ifndef CYGWIN
   prev_exception_handler = SetUnhandledExceptionFilter (my_exception_handler);
+  resetstkoflw = NULL;
 #endif
 
   DEFVAR_INT ("w32-ansi-code-page",
@@ -9934,8 +9935,6 @@ globals_of_w32fns (void)
     w32_unicode_gui = 0;
 
   after_deadkey = -1;
-
-  resetstkoflw = NULL;
 
   /* MessageBox does not work without this when linked to comctl32.dll 6.0.  */
   InitCommonControls ();
