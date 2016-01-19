@@ -1830,7 +1830,7 @@ It will be properly highlighted even when the call omits parens.")
      "\\)\\s *")
     "Regexp to match text that can be followed by a regular expression."))
 
-(defun ruby-syntax-propertize-function (start end)
+(defun ruby-syntax-propertize (start end)
   "Syntactic keywords for Ruby mode.  See `syntax-propertize-function'."
   (let (case-fold-search)
     (goto-char start)
@@ -1856,6 +1856,8 @@ It will be properly highlighted even when the call omits parens.")
                           (zerop (skip-syntax-backward "w_")))
                         (memq (preceding-char) '(?@ ?$))))
             (string-to-syntax "_"))))
+      ;; Backtick method redefinition.
+      ("^[ \t]*def +\\(`\\)" (1 "_"))
       ;; Regular expressions.  Start with matching unescaped slash.
       ("\\(?:\\=\\|[^\\]\\)\\(?:\\\\\\\\\\)*\\(/\\)"
        (1 (let ((state (save-excursion (syntax-ppss (match-beginning 1)))))
@@ -1890,6 +1892,9 @@ It will be properly highlighted even when the call omits parens.")
       ((concat "\\(?:^\\|[[ \t\n<+(,=]\\)" ruby-percent-literal-beg-re)
        (1 (prog1 "|" (ruby-syntax-propertize-percent-literal end)))))
      (point) end)))
+
+(define-obsolete-function-alias
+  'ruby-syntax-propertize-function 'ruby-syntax-properize "25.1")
 
 (defun ruby-syntax-propertize-heredoc (limit)
   (let ((ppss (syntax-ppss))
@@ -2252,7 +2257,7 @@ See `font-lock-syntax-table'.")
   (setq-local font-lock-keywords ruby-font-lock-keywords)
   (setq-local font-lock-syntax-table ruby-font-lock-syntax-table)
 
-  (setq-local syntax-propertize-function #'ruby-syntax-propertize-function))
+  (setq-local syntax-propertize-function #'ruby-syntax-propertize))
 
 ;;; Invoke ruby-mode when appropriate
 
