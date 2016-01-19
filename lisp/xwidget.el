@@ -87,23 +87,6 @@ defaults to the string looking like a url around the cursor position."
         (xwidget-webkit-new-session url)
       (xwidget-webkit-goto-url url))))
 
-
-;;shims for adapting image mode code to the webkit browser window
-(defun xwidget-image-display-size  (spec &optional pixels frame)
-  "Image code adaptor.  SPEC PIXELS FRAME like the corresponding
-`image-mode' fn."
-  (let ((xwi (xwidget-info  (xwidget-at 1))))
-    (cons (aref xwi 2)
-          (aref xwi 3))))
-
-(defadvice image-display-size (around image-display-size-for-xwidget
-                                      (spec &optional pixels frame)
-                                      activate)
-  "Advice for re-using image mode for xwidget."
-  (if (eq (car spec) 'xwidget)
-      (setq ad-return-value (xwidget-image-display-size spec pixels frame))
-    ad-do-it))
-
 ;;todo.
 ;; - check that the webkit support is compiled in
 (defvar xwidget-webkit-mode-map
