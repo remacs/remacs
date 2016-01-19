@@ -1990,8 +1990,8 @@ Searching}.
 @table @kbd
 @item C-M-i
 @itemx M-@key{TAB}
-Perform completion on the text around point, using the selected tags
-table if one is loaded (@code{completion-at-point}).
+Perform completion on the text around point, possibly using the
+selected tags table if one is loaded (@code{completion-at-point}).
 @item M-x xref-find-apropos @key{RET} @var{regexp} @key{RET}
 Display a list of all known identifiers matching @var{regexp}.
 @item M-x list-tags @key{RET} @var{file} @key{RET}
@@ -2004,9 +2004,10 @@ Visit files recorded in the selected tags table.
 @cindex completion (symbol names)
   In most programming language modes, you can type @kbd{C-M-i} or
 @kbd{M-@key{TAB}} (@code{completion-at-point}) to complete the symbol
-at point.  If there is a tags table loaded, this command can use it to
-generate completion candidates more intelligently.  @xref{Symbol
-Completion}.
+at point.  Some modes provide specialized completion for this command
+tailored to the mode; for those that don't, if there is a tags table
+loaded, this command can use it to generate completion candidates.
+@xref{Symbol Completion}.
 
 @findex list-tags
   @kbd{M-x list-tags} reads the name of one of the files covered by
@@ -2047,17 +2048,17 @@ file.  This command requires a tags table to be selected.
 @subsection Tags Tables
 @cindex tags and tag tables
 
-@cindex tag
-  A @dfn{tag} is a synonym for identifier reference.  @xref{Xref}.
-
-  A @dfn{tags table} records the tags extracted by scanning the source
-code of a certain program or a certain document.  Tags extracted from
-generated files reference the original files, rather than the
-generated files that were scanned during tag extraction.  Examples of
-generated files include C files generated from Cweb source files, from
-a Yacc parser, or from Lex scanner definitions; @file{.i} preprocessed
-C files; and Fortran files produced by preprocessing @file{.fpp}
-source files.
+  A @dfn{tags table} records the tags@footnote{
+A @dfn{tag} is a synonym for identifier reference.  Commands and
+features based on the @code{etags} package traditionally use ``tag''
+with this meaning, and this subsection follows that tradition.
+} extracted by scanning the source code of a certain program or a
+certain document.  Tags extracted from generated files reference the
+original files, rather than the generated files that were scanned
+during tag extraction.  Examples of generated files include C files
+generated from Cweb source files, from a Yacc parser, or from Lex
+scanner definitions; @file{.i} preprocessed C files; and Fortran files
+produced by preprocessing @file{.fpp} source files.
 
 @cindex etags
   To produce a tags table, you run the @command{etags} shell command
