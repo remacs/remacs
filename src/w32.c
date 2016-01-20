@@ -224,6 +224,8 @@ typedef struct _REPARSE_DATA_BUFFER {
 
 #include <iphlpapi.h>	/* should be after winsock2.h */
 
+#include <wincrypt.h>
+
 #include <c-strcase.h>
 
 #include "w32.h"
@@ -2092,6 +2094,34 @@ init_user_info (void)
   xfree (buf);
   if (token)
     CloseHandle (token);
+}
+
+static HCRYPTPROV w32_crypto_hprov;
+static int
+w32_init_crypt_random (void)
+{
+  if (!CryptAcquireContext (&w32_crypto_hprov, NULL, NULL, PROV_RSA_FULL,
+			    CRYPT_VERIFYCONTEXT | CRYPT_SILENT))
+    {
+      DebPrint (("CryptAcquireContext failed with error %x\n",
+		 GetLastError ()));
+      w32_crypto_hprov = 0;
+      return -1;
+    }
+  return 0;
+}
+
+int
+w32_init_random (void *buf, ptrdiff_t buflen)
+{
+  if (!w32_crypto_hprov)
+    w32_init_crypt_random ();
+  if (w32_crypto_hprov)
+    {
+      if (CryptGenRandom (w32_crypto_hprov, buflen, (BYTE *)buf))
+	return 0;
+    }
+  return -1;
 }
 
 int
@@ -9417,6 +9447,8 @@ globals_of_w32 (void)
   extern void dynlib_reset_last_error (void);
   dynlib_reset_last_error ();
 #endif
+
+  w32_crypto_hprov = (HCRYPTPROV)0;
 }
 
 /* For make-serial-process  */
