@@ -121,10 +121,7 @@ struct xwidget_type
 
 struct xwidget *xwidget_from_id (int id);
 
-void xwidget_start_redisplay (void);
 void xwidget_end_redisplay (struct window *w, struct glyph_matrix *matrix);
-
-void xwidget_touch (struct xwidget_view *xw);
 
 struct xwidget *lookup_xwidget (Lisp_Object spec);
 #define XG_XWIDGET "emacs_xwidget"

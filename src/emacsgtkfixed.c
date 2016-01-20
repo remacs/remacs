@@ -50,9 +50,25 @@ static void emacs_fixed_get_preferred_width  (GtkWidget *widget,
 static void emacs_fixed_get_preferred_height (GtkWidget *widget,
                                               gint      *minimum,
                                               gint      *natural);
+
+static GType emacs_fixed_get_type (void);
 G_DEFINE_TYPE (EmacsFixed, emacs_fixed, GTK_TYPE_FIXED)
 
+static EmacsFixed *
+EMACS_FIXED (GtkWidget *widget)
+{
+  return G_TYPE_CHECK_INSTANCE_CAST (widget, emacs_fixed_get_type (),
+				     EmacsFixed);
+}
+
 #ifdef HAVE_XWIDGETS
+
+static EmacsFixedClass *
+EMACS_FIXED_GET_CLASS (GtkWidget *widget)
+{
+  return G_TYPE_INSTANCE_GET_CLASS (widget, emacs_fixed_get_type (),
+				    EmacsFixedClass);
+}
 
 struct GtkFixedPrivateL
 {
@@ -151,7 +167,7 @@ emacs_fixed_class_init (EmacsFixedClass *klass)
 static void
 emacs_fixed_init (EmacsFixed *fixed)
 {
-  fixed->priv = G_TYPE_INSTANCE_GET_PRIVATE (fixed, EMACS_TYPE_FIXED,
+  fixed->priv = G_TYPE_INSTANCE_GET_PRIVATE (fixed, emacs_fixed_get_type (),
                                              EmacsFixedPrivate);
   fixed->priv->f = 0;
 }
@@ -166,7 +182,7 @@ emacs_fixed_init (EmacsFixed *fixed)
 GtkWidget*
 emacs_fixed_new (struct frame *f)
 {
-  EmacsFixed *fixed = g_object_new (EMACS_TYPE_FIXED, NULL);
+  EmacsFixed *fixed = g_object_new (emacs_fixed_get_type (), NULL);
   EmacsFixedPrivate *priv = fixed->priv;
   priv->f = f;
   return GTK_WIDGET (fixed);

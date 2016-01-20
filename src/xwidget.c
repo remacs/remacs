@@ -123,14 +123,13 @@ allocate_xwidget_view (void)
 #define XSETXWIDGET(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_XWIDGET))
 #define XSETXWIDGET_VIEW(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_XWIDGET_VIEW))
 
-struct xwidget_view *xwidget_view_lookup (struct xwidget *, struct window *);
-Lisp_Object xwidget_spec_value (Lisp_Object , Lisp_Object , int *);
-gboolean offscreen_damage_event (GtkWidget * , GdkEvent * , gpointer );
-void webkit_document_load_finished_cb (WebKitWebView *, WebKitWebFrame *,
-                                       gpointer );
-gboolean webkit_download_cb (WebKitWebView *, WebKitDownload *, gpointer);
+static struct xwidget_view *xwidget_view_lookup (struct xwidget *,
+						 struct window *);
+static void webkit_document_load_finished_cb (WebKitWebView *, WebKitWebFrame *,
+					      gpointer);
+static gboolean webkit_download_cb (WebKitWebView *, WebKitDownload *, gpointer);
 
-gboolean
+static gboolean
 webkit_mime_type_policy_typedecision_requested_cb (WebKitWebView *,
                                                    WebKitWebFrame *,
                                                    WebKitNetworkRequest *,
@@ -138,7 +137,7 @@ webkit_mime_type_policy_typedecision_requested_cb (WebKitWebView *,
                                                    WebKitWebPolicyDecision *,
                                                    gpointer);
 
-gboolean
+static gboolean
 webkit_new_window_policy_decision_requested_cb (WebKitWebView *,
                                                 WebKitWebFrame *,
                                                 WebKitNetworkRequest *,
@@ -146,7 +145,7 @@ webkit_new_window_policy_decision_requested_cb (WebKitWebView *,
                                                 WebKitWebPolicyDecision *,
                                                 gpointer);
 
-gboolean
+static gboolean
 webkit_navigation_policy_decision_requested_cb (WebKitWebView *,
                                                 WebKitWebFrame *,
                                                 WebKitNetworkRequest *,
@@ -261,8 +260,7 @@ Returns the newly constructed xwidget, or nil if construction fails.  */)
         {
           g_signal_connect (G_OBJECT (xw->widget_osr),
                             "document-load-finished",
-                            G_CALLBACK
-                            (webkit_document_load_finished_cb), xw);
+                            G_CALLBACK (webkit_document_load_finished_cb), xw);
 
           g_signal_connect (G_OBJECT (xw->widget_osr),
                             "download-requested",
@@ -352,7 +350,7 @@ xwidget_hide_view (struct xwidget_view *xv)
 
 /* When the off-screen webkit master view changes this signal is called.
    It copies the bitmap from the off-screen instance.  */
-gboolean
+static gboolean
 offscreen_damage_event (GtkWidget * widget, GdkEvent * event,
                         gpointer xv_widget)
 {
@@ -415,7 +413,7 @@ webkit_download_cb (WebKitWebView * webkitwebview,
   return FALSE;
 }
 
-gboolean
+static gboolean
 webkit_mime_type_policy_typedecision_requested_cb (WebKitWebView *webView,
                                                    WebKitWebFrame *frame,
                                                    WebKitNetworkRequest * request,
@@ -438,7 +436,7 @@ webkit_mime_type_policy_typedecision_requested_cb (WebKitWebView *webView,
 }
 
 
-gboolean
+static gboolean
 webkit_new_window_policy_decision_requested_cb (WebKitWebView *webView,
                                                 WebKitWebFrame *frame,
                                                 WebKitNetworkRequest *request,
@@ -456,7 +454,7 @@ webkit_new_window_policy_decision_requested_cb (WebKitWebView *webView,
   return FALSE;
 }
 
-gboolean
+static gboolean
 webkit_navigation_policy_decision_requested_cb (WebKitWebView *webView,
                                                 WebKitWebFrame *frame,
                                                 WebKitNetworkRequest *request,
@@ -1138,7 +1136,7 @@ valid_xwidget_spec_p (Lisp_Object object)
 
 
 /* Find a value associated with key in spec.  */
-Lisp_Object
+static Lisp_Object
 xwidget_spec_value (Lisp_Object spec, Lisp_Object key, int *found)
 {
   Lisp_Object tail;
@@ -1180,7 +1178,7 @@ xwidget_view_delete_all_in_window (struct window *w)
     }
 }
 
-struct xwidget_view *
+static struct xwidget_view *
 xwidget_view_lookup (struct xwidget *xw, struct window *w)
 {
   Lisp_Object xwidget, window, ret;
@@ -1210,7 +1208,7 @@ lookup_xwidget (Lisp_Object spec)
 }
 
 /* Set up detection of touched xwidget  */
-void
+static void
 xwidget_start_redisplay (void)
 {
   for (Lisp_Object tail = Vxwidget_view_list; CONSP (tail);
@@ -1223,7 +1221,7 @@ xwidget_start_redisplay (void)
 
 /* The xwidget was touched during redisplay, so it isn't a candidate
    for hiding.  */
-void
+static void
 xwidget_touch (struct xwidget_view *xv)
 {
   xv->redisplayed = 1;
