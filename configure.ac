@@ -2566,35 +2566,32 @@ if test "${HAVE_GTK}" = "yes"; then
 fi
 
 
+dnl Enable xwidgets if GTK3 and WebKitGTK+ are available.
 HAVE_XWIDGETS=no
-HAVE_WEBKIT=no
-HAVE_GIR=no
 XWIDGETS_OBJ=
-if test "$with_xwidgets" != "no" && test "$USE_GTK_TOOLKIT" = "GTK3" &&
-   test "$window_system" != "none"
-then
-  HAVE_XWIDGETS=yes
-  AC_DEFINE([HAVE_XWIDGETS], 1, [Define to 1 if you have xwidgets support.])
+DOES_XWIDGETS_USE_GIR=
+if test "$with_xwidgets" != "no"; then
+  test "$USE_GTK_TOOLKIT" = "GTK3" && test "$window_system" != "none" ||
+    AC_MSG_ERROR([xwidgets requested but gtk3 not used.])
 
-  dnl xwidgets
-  dnl - enable only if GTK3 is enabled, and we have a window system
-  dnl - check for webkit and gobject introspection
-  dnl webkit version for gtk3.
   WEBKIT_REQUIRED=1.4.0
   WEBKIT_MODULES="webkitgtk-3.0 >= $WEBKIT_REQUIRED"
+  EMACS_CHECK_MODULES([WEBKIT], [$WEBKIT_MODULES])
+  HAVE_XWIDGETS=$HAVE_WEBKIT
+  test $HAVE_XWIDGETS = yes ||
+    AC_MSG_ERROR([xwidgets requested but WebKitGTK+ not found.])
 
-  EMACS_CHECK_MODULES(WEBKIT, $WEBKIT_MODULES, HAVE_WEBKIT=yes, HAVE_WEBKIT=no)
-  if test $HAVE_WEBKIT = yes; then
-    AC_DEFINE([HAVE_WEBKIT_OSR], 1, [Define to 1 if you have webkit_osr support.])
-  fi
+  XWIDGETS_OBJ=xwidget.o
+  AC_DEFINE([HAVE_XWIDGETS], 1, [Define to 1 if you have xwidgets support.])
 
   GIR_REQUIRED=1.32.1
   GIR_MODULES="gobject-introspection-1.0 >= $GIR_REQUIRED"
-  EMACS_CHECK_MODULES(GIR, $GIR_MODULES, HAVE_GIR=yes, HAVE_GIR=no)
+  EMACS_CHECK_MODULES([GIR], [$GIR_MODULES])
   if test $HAVE_GIR = yes; then
      AC_DEFINE([HAVE_GIR], 1, [Define to 1 if you have GIR support.])
   fi
-  XWIDGETS_OBJ=xwidget.o
+  DOES_XWIDGETS_USE_GIR="\
+      Does Xwidgets use gobject introspection?            $HAVE_GIR"
 fi
 AC_SUBST(XWIDGETS_OBJ)
 
@@ -5305,9 +5302,7 @@ AS_ECHO(["  Does Emacs use -lXaw3d?                                 ${HAVE_XAW3D
   Does Emacs have dynamic modules support?                ${HAVE_MODULES}
   Does Emacs use toolkit scroll bars?                     ${USE_TOOLKIT_SCROLL_BARS}
   Does Emacs support Xwidgets (requires gtk3)?            ${HAVE_XWIDGETS}
-      Does xwidgets support webkit?                       ${HAVE_WEBKIT}
-      Does xwidgets support gobject introspection?        ${HAVE_GIR}
-"])
+${DOES_XWIDGETS_USE_GIR}"])
 
 if test -n "${EMACSDATA}"; then
    AS_ECHO(["  Environment variable EMACSDATA set to:                  $EMACSDATA"])

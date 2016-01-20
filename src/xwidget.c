@@ -1077,12 +1077,10 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_query_on_exit_flag);
   defsubr (&Sset_xwidget_query_on_exit_flag);
 
-#ifdef HAVE_WEBKIT_OSR
   defsubr (&Sxwidget_webkit_goto_uri);
   defsubr (&Sxwidget_webkit_execute_script);
   defsubr (&Sxwidget_webkit_get_title);
   DEFSYM (Qwebkit_osr, "webkit-osr");
-#endif
 
   defsubr (&Sxwidget_size_request);
   defsubr (&Sdelete_xwidget_view);

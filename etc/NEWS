@@ -121,7 +121,7 @@ and can contain escape sequences for command keys, quotes, and the like.
 * Changes in Emacs 25.1
 
 ** Xwidgets: a new feature for embedding native widgets inside Emacs buffers.
-If you have gtk3 and webkit-devel installed, you can access the
+If you have gtk3 and webkitgtk3 installed, you can access the
 embedded webkit browser with `M-x xwidget-webkit-browse-url'.  This
 opens a new buffer with the embedded browser.  The buffer will
 have a new mode, `xwidget-webkit-mode' (similar to `image-mode'),
