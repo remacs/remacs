@@ -2569,7 +2569,6 @@ fi
 dnl Enable xwidgets if GTK3 and WebKitGTK+ are available.
 HAVE_XWIDGETS=no
 XWIDGETS_OBJ=
-DOES_XWIDGETS_USE_GIR=
 if test "$with_xwidgets" != "no"; then
   test "$USE_GTK_TOOLKIT" = "GTK3" && test "$window_system" != "none" ||
     AC_MSG_ERROR([xwidgets requested but gtk3 not used.])
@@ -2583,15 +2582,6 @@ if test "$with_xwidgets" != "no"; then
 
   XWIDGETS_OBJ=xwidget.o
   AC_DEFINE([HAVE_XWIDGETS], 1, [Define to 1 if you have xwidgets support.])
-
-  GIR_REQUIRED=1.32.1
-  GIR_MODULES="gobject-introspection-1.0 >= $GIR_REQUIRED"
-  EMACS_CHECK_MODULES([GIR], [$GIR_MODULES])
-  if test $HAVE_GIR = yes; then
-     AC_DEFINE([HAVE_GIR], 1, [Define to 1 if you have GIR support.])
-  fi
-  DOES_XWIDGETS_USE_GIR="\
-      Does Xwidgets use gobject introspection?            $HAVE_GIR"
 fi
 AC_SUBST(XWIDGETS_OBJ)
 
@@ -5251,7 +5241,7 @@ emacs_config_features=
 for opt in XAW3D XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
   GCONF GSETTINGS NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE M17N_FLT \
   LIBOTF XFT ZLIB TOOLKIT_SCROLL_BARS X_TOOLKIT X11 NS MODULES \
-  XWIDGETS GIR; do
+  XWIDGETS; do
 
     case $opt in
       NOTIFY|ACL) eval val=\${${opt}_SUMMARY} ;;
@@ -5302,7 +5292,7 @@ AS_ECHO(["  Does Emacs use -lXaw3d?                                 ${HAVE_XAW3D
   Does Emacs have dynamic modules support?                ${HAVE_MODULES}
   Does Emacs use toolkit scroll bars?                     ${USE_TOOLKIT_SCROLL_BARS}
   Does Emacs support Xwidgets (requires gtk3)?            ${HAVE_XWIDGETS}
-${DOES_XWIDGETS_USE_GIR}"])
+"])
 
 if test -n "${EMACSDATA}"; then
    AS_ECHO(["  Environment variable EMACSDATA set to:                  $EMACSDATA"])
