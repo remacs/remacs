@@ -79,7 +79,7 @@ Optional argument ARGS usage depends on the xwidget."
   ;; protected yet and xwidgetp apparently doesn't work yet.
   (let* ((disp (get-text-property pos 'display))
          (xw (car (cdr (cdr  disp)))))
-    ;;(if ( xwidgetp  xw) xw nil)
+    ;;(if (xwidgetp  xw) xw nil)
     (if (equal 'xwidget (car disp)) xw)))
 
 
@@ -97,7 +97,7 @@ defaults to the string looking like a url around the cursor position."
   (interactive (progn
                  (require 'browse-url)
                  (browse-url-interactive-arg "xwidget-webkit URL: "
-                                             ;;( xwidget-webkit-current-url)
+                                             ;;(xwidget-webkit-current-url)
                                              )))
   (when (stringp url)
     (if new-session
@@ -110,9 +110,9 @@ defaults to the string looking like a url around the cursor position."
   (let ((map (make-sparse-keymap)))
     (define-key map "g" 'xwidget-webkit-browse-url)
     (define-key map "a" 'xwidget-webkit-adjust-size-dispatch)
-    (define-key map "b" 'xwidget-webkit-back )
-    (define-key map "r" 'xwidget-webkit-reload )
-    (define-key map "t" (lambda () (interactive) (message "o")) )
+    (define-key map "b" 'xwidget-webkit-back)
+    (define-key map "r" 'xwidget-webkit-reload)
+    (define-key map "t" (lambda () (interactive) (message "o"))) ;FIXME: ?!?
     (define-key map "\C-m" 'xwidget-webkit-insert-string)
     (define-key map "w" 'xwidget-webkit-current-url)
 
@@ -172,14 +172,12 @@ defaults to the string looking like a url around the cursor position."
 ;; The xwidget event needs to go into a higher level handler
 ;; since the xwidget can generate an event even if it's offscreen.
 ;; TODO this needs to use callbacks and consider different xwidget event types.
-(define-key (current-global-map) [xwidget-event] 'xwidget-event-handler)
-(defun xwidget-log ( &rest msg)
+(define-key (current-global-map) [xwidget-event] #'xwidget-event-handler)
+(defun xwidget-log (&rest msg)
   "Log MSG to a buffer."
-  (let ( (buf  (get-buffer-create "*xwidget-log*")))
-    (save-excursion
-      (buffer-disable-undo buf)
-      (set-buffer buf)
-      (insert (apply  'format msg))
+  (let ((buf (get-buffer-create " *xwidget-log*")))
+    (with-current-buffer buf
+      (insert (apply #'format msg))
       (insert "\n"))))
 
 (defun xwidget-event-handler ()
@@ -199,44 +197,43 @@ defaults to the string looking like a url around the cursor position."
 (defun xwidget-webkit-callback (xwidget xwidget-event-type)
   "Callback for xwidgets.
 XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
-  (save-excursion
-    (cond ((buffer-live-p (xwidget-buffer xwidget))
-           (set-buffer (xwidget-buffer xwidget))
-           (let* ((strarg  (nth 3 last-input-event)))
-             (cond ((eq xwidget-event-type 'document-load-finished)
-                    (xwidget-log "webkit finished loading: '%s'"
-                                 (xwidget-webkit-get-title xwidget))
-                    ;;TODO - check the native/internal scroll
-                    ;;(xwidget-adjust-size-to-content xwidget)
-                    (xwidget-webkit-adjust-size-dispatch) ;;TODO xwidget arg
-                    (rename-buffer (format "*xwidget webkit: %s *"
-                                           (xwidget-webkit-get-title xwidget)))
-                    (pop-to-buffer (current-buffer)))
-                   ((eq xwidget-event-type
-                        'navigation-policy-decision-requested)
-                    (if (string-match ".*#\\(.*\\)" strarg)
-                        (xwidget-webkit-show-id-or-named-element
-                         xwidget
-                         (match-string 1 strarg))))
-                   (t (xwidget-log "unhandled event:%s" xwidget-event-type)))))
-          (t (xwidget-log
-              "error: callback called for xwidget with dead buffer")))))
+  (if (not (buffer-live-p (xwidget-buffer xwidget)))
+      (xwidget-log
+       "error: callback called for xwidget with dead buffer")
+    (with-current-buffer (xwidget-buffer xwidget)
+      (let* ((strarg  (nth 3 last-input-event)))
+        (cond ((eq xwidget-event-type 'document-load-finished)
+               (xwidget-log "webkit finished loading: '%s'"
+                            (xwidget-webkit-get-title xwidget))
+               ;;TODO - check the native/internal scroll
+               ;;(xwidget-adjust-size-to-content xwidget)
+               (xwidget-webkit-adjust-size-dispatch) ;;TODO xwidget arg
+               (rename-buffer (format "*xwidget webkit: %s *"
+                                      (xwidget-webkit-get-title xwidget)))
+               (pop-to-buffer (current-buffer)))
+              ((eq xwidget-event-type
+                   'navigation-policy-decision-requested)
+               (if (string-match ".*#\\(.*\\)" strarg)
+                   (xwidget-webkit-show-id-or-named-element
+                    xwidget
+                    (match-string 1 strarg))))
+              (t (xwidget-log "unhandled event:%s" xwidget-event-type)))))))
 
 (defvar bookmark-make-record-function)
 (define-derived-mode xwidget-webkit-mode
-  special-mode "xwidget-webkit" "xwidget webkit view mode"
-  (setq buffer-read-only t)
-  (setq-local bookmark-make-record-function
-              #'xwidget-webkit-bookmark-make-record)
-  ;; Keep track of [vh]scroll when switching buffers
-  (image-mode-setup-winprops))
+    special-mode "xwidget-webkit" "Xwidget webkit view mode."
+    (setq buffer-read-only t)
+    (setq-local bookmark-make-record-function
+                #'xwidget-webkit-bookmark-make-record)
+    ;; Keep track of [vh]scroll when switching buffers
+    (image-mode-setup-winprops))
 
 (defun xwidget-webkit-bookmark-make-record ()
-"Integrate Emacs bookmarks with the webkit xwidget."
+  "Integrate Emacs bookmarks with the webkit xwidget."
   (nconc (bookmark-make-record-default t t)
          `((page     . ,(xwidget-webkit-current-url))
            (handler  . (lambda (bmk) (browse-url
-                                      (bookmark-prop-get bmk 'page)))))))
+                                 (bookmark-prop-get bmk 'page)))))))
 
 
 (defvar xwidget-webkit-last-session-buffer nil)
@@ -256,7 +253,7 @@ The latter might be nil."
 (defun xwidget-adjust-size-to-content (xw)
   "Resize XW to content."
   ;; xwidgets doesn't support widgets that have their own opinions about
-  ;; size well, yet this reads the desired size and resizes the emacs
+  ;; size well, yet this reads the desired size and resizes the Emacs
   ;; allocated area accordingly.
   (let ((size (xwidget-size-request xw)))
     (xwidget-resize xw (car size) (cadr size))))
@@ -307,10 +304,10 @@ Argument STR string."
              (xwidget-webkit-execute-script xww xwidget-webkit-activeelement-js)
              (xwidget-webkit-execute-script-rv
               xww
-              "findactiveelement(document).value;" )))
+              "findactiveelement(document).value;")))
           (field-type (xwidget-webkit-execute-script-rv
                        xww
-                       "findactiveelement(document).type;" )))
+                       "findactiveelement(document).type;")))
      (list xww
            (cond ((equal "text" field-type)
                   (read-string "text:" field-value))
@@ -333,7 +330,7 @@ XW is the xwidget identifier, TEXT is retrieved from the webkit."
   (insert text))
 
 (defun xwidget-webkit-end-edit-textarea ()
-    "End editing of a webkit text area."
+  "End editing of a webkit text area."
   (interactive)
   (goto-char (point-min))
   (while (search-forward "\n" nil t)
@@ -369,7 +366,7 @@ Argument ELEMENT-NAME is the element name to display in the webkit xwidget."
               "document.getElementsByName('%s')[0].getBoundingClientRect().top"
               element-name)
              0))))
-    ;; Now we need to tell emacs to scroll the element into view.
+    ;; Now we need to tell Emacs to scroll the element into view.
     (xwidget-log "scroll: %d" y)
     (set-window-vscroll (selected-window) y t)))
 
@@ -385,7 +382,7 @@ Argument ELEMENT-ID is the id of the element to show."
              (format "document.getElementById('%s').getBoundingClientRect().top"
                      element-id)
              0))))
-    ;; Now we need to tell emacs to scroll the element into view.
+    ;; Now we need to tell Emacs to scroll the element into view.
     (xwidget-log "scroll: %d" y)
     (set-window-vscroll (selected-window) y t)))
 
@@ -404,9 +401,9 @@ Argument ELEMENT-ID is either a name or an element id."
               (xwidget-webkit-execute-script-rv
                xw
                (format "document.getElementById('%s').getBoundingClientRect().top" element-id)
-                                                "0")))
+               "0")))
          (y3 (max y1 y2)))
-    ;; Now we need to tell emacs to scroll the element into view.
+    ;; Now we need to tell Emacs to scroll the element into view.
     (xwidget-log "scroll: %d" y3)
     (set-window-vscroll (selected-window) y3 t)))
 
@@ -431,7 +428,7 @@ Argument ELEMENT-ID is either a name or an element id."
 (defun xwidget-webkit-adjust-size-to-window ()
   "Adjust webkit to window."
   (interactive)
-  (xwidget-resize ( xwidget-webkit-current-session) (window-pixel-width)
+  (xwidget-resize (xwidget-webkit-current-session) (window-pixel-width)
                   (window-pixel-height)))
 
 (defun xwidget-webkit-adjust-size (w h)
@@ -440,7 +437,7 @@ Argument W width.
 Argument H height."
   ;; TODO shouldn't be tied to the webkit xwidget
   (interactive "nWidth:\nnHeight:\n")
-  (xwidget-resize ( xwidget-webkit-current-session) w h))
+  (xwidget-resize (xwidget-webkit-current-session) w h))
 
 (defun xwidget-webkit-fit-width ()
   "Adjust width of webkit to window width."
@@ -460,7 +457,7 @@ Argument H height."
     (setq xw (xwidget-insert 1 'webkit-osr  bufname 1000 1000))
     (xwidget-put xw 'callback 'xwidget-webkit-callback)
     (xwidget-webkit-mode)
-    (xwidget-webkit-goto-uri (xwidget-webkit-last-session) url )))
+    (xwidget-webkit-goto-uri (xwidget-webkit-last-session) url)))
 
 
 (defun xwidget-webkit-goto-url (url)
@@ -488,7 +485,7 @@ Argument H height."
   (let* ((rv (xwidget-webkit-execute-script-rv (xwidget-webkit-current-session)
                                                "document.URL"))
          (url (kill-new (or rv ""))))
-    (message "url: %s" url )
+    (message "url: %s" url)
     url))
 
 (defun xwidget-webkit-execute-script-rv (xw script &optional default)
@@ -565,23 +562,19 @@ It can be retrieved with `(xwidget-get XWIDGET PROPNAME)'."
   ;; Redraw display otherwise ghost of zombies will remain to haunt the screen
   (redraw-display))
 
-;; This would have felt better in C, but this seems to work well in
-;; practice though.
-(if (featurep 'xwidget-internal)
-    (add-hook 'window-configuration-change-hook 'xwidget-delete-zombies))
-
 (defun xwidget-kill-buffer-query-function ()
   "Ask before killing a buffer that has xwidgets."
   (let ((xwidgets (get-buffer-xwidgets (current-buffer))))
     (or (not xwidgets)
-        (not (memq t (mapcar 'xwidget-query-on-exit-flag xwidgets)))
+        (not (memq t (mapcar #'xwidget-query-on-exit-flag xwidgets)))
         (yes-or-no-p
-         (format "Buffer %S has xwidgets; kill it? "
-                 (buffer-name (current-buffer)))))))
+         (format "Buffer %S has xwidgets; kill it? " (buffer-name))))))
 
-(if (featurep 'xwidget-internal)
-    (add-hook 'kill-buffer-query-functions 'xwidget-kill-buffer-query-function))
+(when (featurep 'xwidget-internal)
+  (add-hook 'kill-buffer-query-functions #'xwidget-kill-buffer-query-function)
+  ;; This would have felt better in C, but this seems to work well in
+  ;; practice though.
+  (add-hook 'window-configuration-change-hook #'xwidget-delete-zombies))
 
 (provide 'xwidget)
-
 ;;; xwidget.el ends here
