@@ -169,7 +169,7 @@ return the display size taking the slice property into account.  If the list
 contains `image' but not `slice', return the `image-size' of the specified
 image."
   (cond ((eq (car spec) 'xwidget)
-         (let ((xwi (xwidget-info (xwidget-at 1)))) ; FIXME point-min?
+         (let ((xwi (xwidget-info (xwidget-at (point-min)))))
            (cons (aref xwi 2) (aref xwi 3))))
         ((eq (car spec) 'image)
          (image-size spec pixels frame))

@@ -245,15 +245,13 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
   "Last active webkit, or nil."
   (if (buffer-live-p xwidget-webkit-last-session-buffer)
       (with-current-buffer xwidget-webkit-last-session-buffer
-        (xwidget-at 1))
+        (xwidget-at (point-min)))
     nil))
 
 (defun xwidget-webkit-current-session ()
   "Either the webkit in the current buffer, or the last one used.
 The latter might be nil."
-  (if (xwidget-at 1)
-      (xwidget-at 1)
-    (xwidget-webkit-last-session)))
+  (or (xwidget-at (point-min)) (xwidget-webkit-last-session)))
 
 (defun xwidget-adjust-size-to-content (xw)
   "Resize XW to content."
