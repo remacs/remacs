@@ -132,9 +132,9 @@ Example: (\"Topmost group\" \"feed1\" (\"subgroup1\" \"feed 2\")
 
 (defcustom newsticker-groups-filename
   nil
-  "Name of the newsticker groups settings file.  This variable is obsolete."
+  "Name of the newsticker groups settings file."
   :version "25.1"                       ; changed default value to nil
-  :type 'string
+  :type '(choice (const nil) string)
   :group 'newsticker-treeview)
 (make-obsolete-variable 'newsticker-groups-filename 'newsticker-dir "23.1")
 

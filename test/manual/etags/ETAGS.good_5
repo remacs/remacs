@@ -4059,11 +4059,11 @@ class Configure(760,24879
 ruby-src/test.rb,594
 module ModuleExample1,0
     class ClassExample2,21
-        def class_method3,44
-        def ClassExample.singleton_class_method6,116
-        def class_method_exclamation!9,221
-        def class_method_question?12,319
-        def class_method_equals=class_method_equals=15,411
+        def instance_method3,44
+        def ClassExample.class_method6,116
+        def instance_method_exclamation!9,221
+        def instance_method_question?12,319
+        def instance_method_equals=class_method_equals=15,411
         def `(18,499
         def +(21,589
         def [](24,637
@@ -4073,8 +4073,8 @@ module ModuleExample1,0
         def <=(<=36,869
         def <=>(<=>39,940
         def ===(===42,987
-    def module_method46,1048
-    def ModuleExample.singleton_module_method49,1110
+    def module_instance_method46,1048
+    def ModuleExample.module_class_method49,1110
 
 ruby-src/test1.ruby,37
 class A1,0

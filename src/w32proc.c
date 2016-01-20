@@ -3702,6 +3702,13 @@ of time slices to wait (effectively boosting the priority of the child
 process temporarily).  A value of zero disables waiting entirely.  */);
   w32_pipe_read_delay = 50;
 
+  DEFVAR_INT ("w32-pipe-buffer-size", w32_pipe_buffer_size,
+	      doc: /* Size of buffer for pipes created to communicate with subprocesses.
+The size is in bytes, and must be non-negative.  The default is zero,
+which lets the OS use its default size, usually 4KB (4096 bytes).
+Any negative value means to use the default value of zero.  */);
+  w32_pipe_buffer_size = 0;
+
   DEFVAR_LISP ("w32-downcase-file-names", Vw32_downcase_file_names,
 	       doc: /* Non-nil means convert all-upper case file names to lower case.
 This applies when performing completions and file name expansion.

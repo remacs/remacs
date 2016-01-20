@@ -64,6 +64,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <unistd.h>
 #include <fcntl.h>
 
+#include <ignore-value.h>
+
 #ifdef HAVE_WINDOW_SYSTEM
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
@@ -1234,9 +1236,6 @@ static void adjust_point_for_property (ptrdiff_t, bool);
 Lisp_Object
 command_loop_1 (void)
 {
-  Lisp_Object cmd;
-  Lisp_Object keybuf[30];
-  int i;
   EMACS_INT prev_modiff = 0;
   struct buffer *prev_buffer = NULL;
   bool already_adjusted = 0;
@@ -1280,6 +1279,10 @@ command_loop_1 (void)
 
   while (1)
     {
+      Lisp_Object cmd;
+      Lisp_Object keybuf[30];
+      int i;
+
       if (! FRAME_LIVE_P (XFRAME (selected_frame)))
 	Fkill_emacs (Qnil);
 
@@ -10205,6 +10208,21 @@ deliver_interrupt_signal (int sig)
   deliver_process_signal (sig, handle_interrupt_signal);
 }
 
+/* Output MSG directly to standard output, without buffering.  Ignore
+   failures.  This is safe in a signal handler.  */
+static void
+write_stdout (char const *msg)
+{
+  ignore_value (write (STDOUT_FILENO, msg, strlen (msg)));
+}
+
+/* Read a byte from stdin, without buffering.  Safe in signal handlers.  */
+static int
+read_stdin (void)
+{
+  char c;
+  return read (STDIN_FILENO, &c, 1) == 1 ? c : EOF;
+}
 
 /* If Emacs is stuck because `inhibit-quit' is true, then keep track
    of the number of times C-g has been requested.  If C-g is pressed
@@ -10241,9 +10259,9 @@ handle_interrupt (bool in_signal_handler)
 	  sigemptyset (&blocked);
 	  sigaddset (&blocked, SIGINT);
 	  pthread_sigmask (SIG_BLOCK, &blocked, 0);
+	  fflush (stdout);
 	}
 
-      fflush (stdout);
       reset_all_sys_modes ();
 
 #ifdef SIGTSTP
@@ -10259,8 +10277,9 @@ handle_interrupt (bool in_signal_handler)
       /* Perhaps should really fork an inferior shell?
 	 But that would not provide any way to get back
 	 to the original shell, ever.  */
-      printf ("No support for stopping a process on this operating system;\n");
-      printf ("you can continue or abort.\n");
+      write_stdout ("No support for stopping a process"
+		    " on this operating system;\n"
+		    "you can continue or abort.\n");
 #endif /* not SIGTSTP */
 #ifdef MSDOS
       /* We must remain inside the screen area when the internal terminal
@@ -10271,46 +10290,49 @@ handle_interrupt (bool in_signal_handler)
 	 the code used for auto-saving doesn't cope with the mark bit.  */
       if (!gc_in_progress)
 	{
-	  printf ("Auto-save? (y or n) ");
-	  fflush (stdout);
-	  if (((c = getchar ()) & ~040) == 'Y')
+	  write_stdout ("Auto-save? (y or n) ");
+	  c = read_stdin ();
+	  if ((c & 040) == 'Y')
 	    {
 	      Fdo_auto_save (Qt, Qnil);
 #ifdef MSDOS
-	      printf ("\r\nAuto-save done");
-#else /* not MSDOS */
-	      printf ("Auto-save done\n");
-#endif /* not MSDOS */
+	      write_stdout ("\r\nAuto-save done");
+#else
+	      write_stdout ("Auto-save done\n");
+#endif
 	    }
-	  while (c != '\n') c = getchar ();
+	  while (c != '\n')
+	    c = read_stdin ();
 	}
       else
 	{
 	  /* During GC, it must be safe to reenable quitting again.  */
 	  Vinhibit_quit = Qnil;
+	  write_stdout
+	    (
 #ifdef MSDOS
-	  printf ("\r\n");
-#endif /* not MSDOS */
-	  printf ("Garbage collection in progress; cannot auto-save now\r\n");
-	  printf ("but will instead do a real quit after garbage collection ends\r\n");
-	  fflush (stdout);
+	     "\r\n"
+#endif
+	     "Garbage collection in progress; cannot auto-save now\r\n"
+	     "but will instead do a real quit"
+	     " after garbage collection ends\r\n");
 	}
 
 #ifdef MSDOS
-      printf ("\r\nAbort?  (y or n) ");
-#else /* not MSDOS */
-      printf ("Abort (and dump core)? (y or n) ");
-#endif /* not MSDOS */
-      fflush (stdout);
-      if (((c = getchar ()) & ~040) == 'Y')
+      write_stdout ("\r\nAbort?  (y or n) ");
+#else
+      write_stdout ("Abort (and dump core)? (y or n) ");
+#endif
+      c = read_stdin ();
+      if ((c & ~040) == 'Y')
 	emacs_abort ();
-      while (c != '\n') c = getchar ();
+      while (c != '\n')
+	c = read_stdin ();
 #ifdef MSDOS
-      printf ("\r\nContinuing...\r\n");
+      write_stdout ("\r\nContinuing...\r\n");
 #else /* not MSDOS */
-      printf ("Continuing...\n");
+      write_stdout ("Continuing...\n");
 #endif /* not MSDOS */
-      fflush (stdout);
       init_all_sys_modes ();
     }
   else

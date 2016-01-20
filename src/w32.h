@@ -183,6 +183,7 @@ typedef int (WINAPI *MultiByteToWideChar_Proc)(UINT,DWORD,LPCSTR,int,LPWSTR,int)
 typedef int (WINAPI *WideCharToMultiByte_Proc)(UINT,DWORD,LPCWSTR,int,LPSTR,int,LPCSTR,LPBOOL);
 extern MultiByteToWideChar_Proc pMultiByteToWideChar;
 extern WideCharToMultiByte_Proc pWideCharToMultiByte;
+extern DWORD multiByteToWideCharFlags;
 
 extern void init_environment (char **);
 extern void check_windows_init_file (void);

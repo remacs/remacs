@@ -816,16 +816,14 @@ If in a Dired buffer, reverts it."
   (interactive)
   (if (file-exists-p dired-local-variables-file)
       (error "Old-style dired-local-variables-file `./%s' found;
-replace it with a dir-locals-file `./%s'"
+replace it with a dir-locals-file `./%s.el'"
              dired-local-variables-file
              dir-locals-file))
-  (if (file-exists-p dir-locals-file)
-      (message "File `./%s' already exists." dir-locals-file)
-    (with-temp-buffer
-      (insert "\
-\((dired-mode . ((subdirs . nil)
-                (dired-omit-mode . t))))\n")
-      (write-file dir-locals-file))
+  (if (dir-locals--all-files default-directory)
+      (message "File `./%s' already exists."
+               (car (dir-locals--all-files default-directory)))
+    (add-dir-local-variable 'dired-mode 'subdirs nil)
+    (add-dir-local-variable 'dired-mode 'dired-omit-mode t)
     ;; Run extra-hooks and revert directory.
     (when (derived-mode-p 'dired-mode)
       (hack-dir-local-variables-non-file-buffer)

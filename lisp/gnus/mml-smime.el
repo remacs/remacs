@@ -32,9 +32,17 @@
 (autoload 'message-narrow-to-headers "message")
 (autoload 'message-fetch-field "message")
 
+;; Prefer epg over openssl if it is available as epg uses GnuPG's gpgsm,
+;; which features full-fledged certificate management, while openssl requires
+;; major manual efforts for certificate revocation and expiry and has bugs
+;; as documented under man smime(1).
+(ignore-errors (require 'epg))
+
 (defcustom mml-smime-use (if (featurep 'epg) 'epg 'openssl)
-  "Whether to use OpenSSL or EPG to decrypt S/MIME messages.
-Defaults to EPG if it's loaded."
+  "Whether to use OpenSSL or EasyPG (EPG) to handle S/MIME messages.
+Defaults to EPG if it's available.
+If you think about using OpenSSL, please read the BUGS section in the manual
+for the `smime' command coming with OpenSSL first.  EasyPG is recommended."
   :group 'mime-security
   :type '(choice (const :tag "EPG" epg)
                  (const :tag "OpenSSL" openssl)))
@@ -57,6 +65,9 @@ Defaults to EPG if it's loaded."
   "If t, cache passphrase."
   :group 'mime-security
   :type 'boolean)
+(make-obsolete-variable 'mml-smime-cache-passphrase
+			'mml-secure-cache-passphrase
+			"25.1")
 
 (defcustom mml-smime-passphrase-cache-expiry mml-secure-passphrase-cache-expiry
   "How many seconds the passphrase is cached.
@@ -64,6 +75,9 @@ Whether the passphrase is cached at all is controlled by
 `mml-smime-cache-passphrase'."
   :group 'mime-security
   :type 'integer)
+(make-obsolete-variable 'mml-smime-passphrase-cache-expiry
+			'mml-secure-passphrase-cache-expiry
+			"25.1")
 
 (defcustom mml-smime-signers nil
   "A list of your own key ID which will be used to sign a message."
@@ -202,7 +216,7 @@ Whether the passphrase is cached at all is controlled by
 					"")))))
 	  (if (setq cert (smime-cert-by-dns who))
 	      (setq result (list 'certfile (buffer-name cert)))
-	    (setq bad (gnus-format-message "`%s' not found. " who))))
+	    (setq bad (format "`%s' not found. " who))))
       (quit))
     result))
 
@@ -221,7 +235,7 @@ Whether the passphrase is cached at all is controlled by
 					"")))))
 	  (if (setq cert (smime-cert-by-ldap who))
 	      (setq result (list 'certfile (buffer-name cert)))
-	    (setq bad (gnus-format-message "`%s' not found. " who))))
+	    (setq bad (format "`%s' not found. " who))))
       (quit))
     result))
 
@@ -317,82 +331,28 @@ Whether the passphrase is cached at all is controlled by
 (defvar inhibit-redisplay)
 (defvar password-cache-expiry)
 
-(autoload 'epg-make-context "epg")
-(autoload 'epg-passphrase-callback-function "epg")
-(declare-function epg-context-set-signers "epg" (context signers))
-(declare-function epg-context-result-for "epg" (context name))
-(declare-function epg-new-signature-digest-algorithm "epg" (cl-x) t)
-(declare-function epg-verify-result-to-string "epg" (verify-result))
-(declare-function epg-list-keys "epg" (context &optional name mode))
-(declare-function epg-verify-string "epg"
-		  (context signature &optional signed-text))
-(declare-function epg-sign-string "epg" (context plain &optional mode))
-(declare-function epg-encrypt-string "epg"
-		  (context plain recipients &optional sign always-trust))
-(declare-function epg-context-set-passphrase-callback "epg"
-		  (context passphrase-callback))
-(declare-function epg-sub-key-fingerprint "epg" (cl-x) t)
-(declare-function epg-configuration "epg-config" ())
-(declare-function epg-expand-group "epg-config" (config group))
-(declare-function epa-select-keys "epa"
-		  (context prompt &optional names secret))
-
-(defvar mml-smime-epg-secret-key-id-list nil)
-
-(defun mml-smime-epg-passphrase-callback (context key-id ignore)
-  (if (eq key-id 'SYM)
-      (epg-passphrase-callback-function context key-id nil)
-    (let* (entry
-	   (passphrase
-	    (password-read
-	     (if (eq key-id 'PIN)
-		 "Passphrase for PIN: "
-	       (if (setq entry (assoc key-id epg-user-id-alist))
-		   (format "Passphrase for %s %s: " key-id (cdr entry))
-		 (format "Passphrase for %s: " key-id)))
-	     (if (eq key-id 'PIN)
-		 "PIN"
-	       key-id))))
-      (when passphrase
-	(let ((password-cache-expiry mml-smime-passphrase-cache-expiry))
-	  (password-cache-add key-id passphrase))
-	(setq mml-smime-epg-secret-key-id-list
-	      (cons key-id mml-smime-epg-secret-key-id-list))
-	(copy-sequence passphrase)))))
+(eval-when-compile
+  (autoload 'epg-make-context "epg")
+  (autoload 'epg-context-set-armor "epg")
+  (autoload 'epg-context-set-signers "epg")
+  (autoload 'epg-context-result-for "epg")
+  (autoload 'epg-new-signature-digest-algorithm "epg")
+  (autoload 'epg-verify-result-to-string "epg")
+  (autoload 'epg-list-keys "epg")
+  (autoload 'epg-decrypt-string "epg")
+  (autoload 'epg-verify-string "epg")
+  (autoload 'epg-sign-string "epg")
+  (autoload 'epg-encrypt-string "epg")
+  (autoload 'epg-passphrase-callback-function "epg")
+  (autoload 'epg-context-set-passphrase-callback "epg")
+  (autoload 'epg-sub-key-fingerprint "epg")
+  (autoload 'epg-configuration "epg-config")
+  (autoload 'epg-expand-group "epg-config")
+  (autoload 'epa-select-keys "epa"))
 
 (declare-function epg-key-sub-key-list   "epg" (key) t)
 (declare-function epg-sub-key-capability "epg" (sub-key) t)
 (declare-function epg-sub-key-validity   "epg" (sub-key) t)
-
-(defun mml-smime-epg-find-usable-key (keys usage)
-  (catch 'found
-    (while keys
-      (let ((pointer (epg-key-sub-key-list (car keys))))
-	(while pointer
-	  (if (and (memq usage (epg-sub-key-capability (car pointer)))
-		   (not (memq (epg-sub-key-validity (car pointer))
-			      '(revoked expired))))
-	      (throw 'found (car keys)))
-	  (setq pointer (cdr pointer))))
-      (setq keys (cdr keys)))))
-
-;; XXX: since gpg --list-secret-keys does not return validity of each
-;; key, `mml-smime-epg-find-usable-key' defined above is not enough for
-;; secret keys.  The function `mml-smime-epg-find-usable-secret-key'
-;; below looks at appropriate public keys to check usability.
-(defun mml-smime-epg-find-usable-secret-key (context name usage)
-  (let ((secret-keys (epg-list-keys context name t))
-	secret-key)
-    (while (and (not secret-key) secret-keys)
-      (if (mml-smime-epg-find-usable-key
-	   (epg-list-keys context (epg-sub-key-fingerprint
-				   (car (epg-key-sub-key-list
-					 (car secret-keys)))))
-	   usage)
-	  (setq secret-key (car secret-keys)
-		secret-keys nil)
-	(setq secret-keys (cdr secret-keys))))
-    secret-key))
 
 (autoload 'mml-compute-boundary "mml")
 
@@ -401,146 +361,37 @@ Whether the passphrase is cached at all is controlled by
 (declare-function message-options-set "message" (symbol value))
 
 (defun mml-smime-epg-sign (cont)
-  (let* ((inhibit-redisplay t)
-	 (context (epg-make-context 'CMS))
-	 (boundary (mml-compute-boundary cont))
-	 (sender (message-options-get 'message-sender))
-	 (signer-names (or mml-smime-signers
-			   (if (and mml-smime-sign-with-sender sender)
-			       (list (concat "<" sender ">")))))
-	 signer-key
-	 (signers
-	  (or (message-options-get 'mml-smime-epg-signers)
-	      (message-options-set
-	       'mml-smime-epg-signers
-	       (if (eq mm-sign-option 'guided)
-		   (epa-select-keys context "\
-Select keys for signing.
-If no one is selected, default secret key is used.  "
-				    signer-names
-				    t)
-		 (if (or sender mml-smime-signers)
-		     (delq nil
-			   (mapcar
-			    (lambda (signer)
-			      (setq signer-key
-				    (mml-smime-epg-find-usable-secret-key
-				     context signer 'sign))
-			      (unless (or signer-key
-					  (y-or-n-p
-					   (format
-					    "No secret key for %s; skip it? "
-					    signer)))
-				(error "No secret key for %s" signer))
-			      signer-key)
-			    signer-names)))))))
-	 signature micalg)
-    (epg-context-set-signers context signers)
-    (if mml-smime-cache-passphrase
-	(epg-context-set-passphrase-callback
-	 context
-	 #'mml-smime-epg-passphrase-callback))
-    (condition-case error
-	(setq signature (epg-sign-string context
-					 (mm-replace-in-string (buffer-string)
-							       "\n" "\r\n")
-					 t)
-	      mml-smime-epg-secret-key-id-list nil)
-      (error
-       (while mml-smime-epg-secret-key-id-list
-	 (password-cache-remove (car mml-smime-epg-secret-key-id-list))
-	 (setq mml-smime-epg-secret-key-id-list
-	       (cdr mml-smime-epg-secret-key-id-list)))
-       (signal (car error) (cdr error))))
-    (if (epg-context-result-for context 'sign)
-	(setq micalg (epg-new-signature-digest-algorithm
-		      (car (epg-context-result-for context 'sign)))))
+  (let ((inhibit-redisplay t)
+	(boundary (mml-compute-boundary cont)))
     (goto-char (point-min))
-    (insert (format "Content-Type: multipart/signed; boundary=\"%s\";\n"
-		    boundary))
-    (if micalg
-	(insert (format "\tmicalg=%s; "
-			(downcase
-			 (cdr (assq micalg
-				    epg-digest-algorithm-alist))))))
-    (insert "protocol=\"application/pkcs7-signature\"\n")
-    (insert (format "\n--%s\n" boundary))
-    (goto-char (point-max))
-    (insert (format "\n--%s\n" boundary))
-    (insert "Content-Type: application/pkcs7-signature; name=smime.p7s
+    (let* ((pair (mml-secure-epg-sign 'CMS cont))
+	   (signature (car pair))
+	   (micalg (cdr pair)))
+      (insert (format "Content-Type: multipart/signed; boundary=\"%s\";\n"
+		      boundary))
+      (if micalg
+	  (insert (format "\tmicalg=%s; "
+			  (downcase
+			   (cdr (assq micalg
+				      epg-digest-algorithm-alist))))))
+      (insert "protocol=\"application/pkcs7-signature\"\n")
+      (insert (format "\n--%s\n" boundary))
+      (goto-char (point-max))
+      (insert (format "\n--%s\n" boundary))
+      (insert "Content-Type: application/pkcs7-signature; name=smime.p7s
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename=smime.p7s
 
 ")
-    (insert (base64-encode-string signature) "\n")
-    (goto-char (point-max))
-    (insert (format "--%s--\n" boundary))
-    (goto-char (point-max))))
+      (insert (base64-encode-string signature) "\n")
+      (goto-char (point-max))
+      (insert (format "--%s--\n" boundary))
+      (goto-char (point-max)))))
 
 (defun mml-smime-epg-encrypt (cont)
   (let* ((inhibit-redisplay t)
-	 (context (epg-make-context 'CMS))
-	 (config (epg-configuration))
-	 (recipients (message-options-get 'mml-smime-epg-recipients))
-	 cipher signers
-	 (sender (message-options-get 'message-sender))
-	 (signer-names (or mml-smime-signers
-			   (if (and mml-smime-sign-with-sender sender)
-			       (list (concat "<" sender ">")))))
 	 (boundary (mml-compute-boundary cont))
-	 recipient-key)
-    (unless recipients
-      (setq recipients
-	    (apply #'nconc
-		   (mapcar
-		    (lambda (recipient)
-		      (or (epg-expand-group config recipient)
-			  (list recipient)))
-		    (split-string
-		     (or (message-options-get 'message-recipients)
-			 (message-options-set 'message-recipients
-					      (read-string "Recipients: ")))
-		     "[ \f\t\n\r\v,]+"))))
-      (when mml-smime-encrypt-to-self
-	(unless signer-names
-	  (error "Neither message sender nor mml-smime-signers are set"))
-	(setq recipients (nconc recipients signer-names)))
-      (if (eq mm-encrypt-option 'guided)
-	  (setq recipients
-		(epa-select-keys context "\
-Select recipients for encryption.
-If no one is selected, symmetric encryption will be performed.  "
-				 recipients))
-	(setq recipients
-	      (mapcar
-	       (lambda (recipient)
-		 (setq recipient-key (mml-smime-epg-find-usable-key
-				      (epg-list-keys context recipient)
-				      'encrypt))
-		 (unless (or recipient-key
-			     (y-or-n-p
-			      (format "No public key for %s; skip it? "
-				      recipient)))
-		   (error "No public key for %s" recipient))
-		 recipient-key)
-	       recipients))
-	(unless recipients
-	  (error "No recipient specified")))
-      (message-options-set 'mml-smime-epg-recipients recipients))
-    (if mml-smime-cache-passphrase
-	(epg-context-set-passphrase-callback
-	 context
-	 #'mml-smime-epg-passphrase-callback))
-    (condition-case error
-	(setq cipher
-	      (epg-encrypt-string context (buffer-string) recipients)
-	      mml-smime-epg-secret-key-id-list nil)
-      (error
-       (while mml-smime-epg-secret-key-id-list
-	 (password-cache-remove (car mml-smime-epg-secret-key-id-list))
-	 (setq mml-smime-epg-secret-key-id-list
-	       (cdr mml-smime-epg-secret-key-id-list)))
-       (signal (car error) (cdr error))))
+	 (cipher (mml-secure-epg-encrypt 'CMS cont)))
     (delete-region (point-min) (point-max))
     (goto-char (point-min))
     (insert "\

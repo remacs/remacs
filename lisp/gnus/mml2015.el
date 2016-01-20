@@ -111,6 +111,9 @@ Valid packages include `epg', `pgg' and `mailcrypt'.")
   "If t, cache passphrase."
   :group 'mime-security
   :type 'boolean)
+(make-obsolete-variable 'mml2015-cache-passphrase
+			'mml-secure-cache-passphrase
+			"25.1")
 
 (defcustom mml2015-passphrase-cache-expiry mml-secure-passphrase-cache-expiry
   "How many seconds the passphrase is cached.
@@ -118,6 +121,9 @@ Whether the passphrase is cached at all is controlled by
 `mml2015-cache-passphrase'."
   :group 'mime-security
   :type 'integer)
+(make-obsolete-variable 'mml2015-passphrase-cache-expiry
+			'mml-secure-passphrase-cache-expiry
+			"25.1")
 
 (defcustom mml2015-signers nil
   "A list of your own key ID(s) which will be used to sign a message.
@@ -774,99 +780,6 @@ If set, it overrides the setting of `mml2015-sign-with-sender'."
 (autoload 'epg-expand-group "epg-config")
 (autoload 'epa-select-keys "epa")
 
-(defvar mml2015-epg-secret-key-id-list nil)
-
-(defun mml2015-epg-passphrase-callback (context key-id ignore)
-  (if (eq key-id 'SYM)
-      (epg-passphrase-callback-function context key-id nil)
-    (let* ((password-cache-key-id
-	    (if (eq key-id 'PIN)
-		"PIN"
-	       key-id))
-	   entry
-	   (passphrase
-	    (password-read
-	     (if (eq key-id 'PIN)
-		 "Passphrase for PIN: "
-	       (if (setq entry (assoc key-id epg-user-id-alist))
-		   (format "Passphrase for %s %s: " key-id (cdr entry))
-		 (format "Passphrase for %s: " key-id)))
-	     password-cache-key-id)))
-      (when passphrase
-	(let ((password-cache-expiry mml2015-passphrase-cache-expiry))
-	  (password-cache-add password-cache-key-id passphrase))
-	(setq mml2015-epg-secret-key-id-list
-	      (cons password-cache-key-id mml2015-epg-secret-key-id-list))
-	(copy-sequence passphrase)))))
-
-(defun mml2015-epg-check-user-id (key recipient)
-  (let ((pointer (epg-key-user-id-list key))
-	result)
-    (while pointer
-      (if (and (equal (car (mail-header-parse-address
-			    (epg-user-id-string (car pointer))))
-		      (car (mail-header-parse-address
-			    recipient)))
-	       (not (memq (epg-user-id-validity (car pointer))
-			  '(revoked expired))))
-	  (setq result t
-		pointer nil)
-	(setq pointer (cdr pointer))))
-    result))
-
-(defun mml2015-epg-check-sub-key (key usage)
-  (let ((pointer (epg-key-sub-key-list key))
-	result)
-    ;; The primary key will be marked as disabled, when the entire
-    ;; key is disabled (see 12 Field, Format of colon listings, in
-    ;; gnupg/doc/DETAILS)
-    (unless (memq 'disabled (epg-sub-key-capability (car pointer)))
-      (while pointer
-	(if (and (memq usage (epg-sub-key-capability (car pointer)))
-		 (not (memq (epg-sub-key-validity (car pointer))
-			    '(revoked expired))))
-	    (setq result t
-		  pointer nil)
-	  (setq pointer (cdr pointer)))))
-    result))
-
-(defun mml2015-epg-find-usable-key (context name usage
-					    &optional name-is-key-id)
-  (let ((keys (epg-list-keys context name))
-	key)
-    (while keys
-      (if (and (or name-is-key-id
-		   ;; Non email user-id can be supplied through
-		   ;; mml2015-signers if mml2015-encrypt-to-self is set.
-		   ;; Treat it as valid, as it is user's intention.
-		   (not (string-match "\\`<" name))
-		   (mml2015-epg-check-user-id (car keys) name))
-	       (mml2015-epg-check-sub-key (car keys) usage))
-	  (setq key (car keys)
-		keys nil)
-	(setq keys (cdr keys))))
-    key))
-
-;; XXX: since gpg --list-secret-keys does not return validity of each
-;; key, `mml2015-epg-find-usable-key' defined above is not enough for
-;; secret keys.  The function `mml2015-epg-find-usable-secret-key'
-;; below looks at appropriate public keys to check usability.
-(defun mml2015-epg-find-usable-secret-key (context name usage)
-  (let ((secret-keys (epg-list-keys context name t))
-	secret-key)
-    (while (and (not secret-key) secret-keys)
-      (if (mml2015-epg-find-usable-key
-	   context
-	   (epg-sub-key-fingerprint
-	    (car (epg-key-sub-key-list
-		  (car secret-keys))))
-	   usage
-	   t)
-	  (setq secret-key (car secret-keys)
-		secret-keys nil)
-	(setq secret-keys (cdr secret-keys))))
-    secret-key))
-
 (autoload 'gnus-create-image "gnus-ems")
 
 (defun mml2015-epg-key-image (key-id)
@@ -921,18 +834,15 @@ If set, it overrides the setting of `mml2015-sign-with-sender'."
 	 mm-security-handle 'gnus-info "Corrupted")
 	(throw 'error handle))
       (setq context (epg-make-context))
-      (if mml2015-cache-passphrase
+      (if (or mml2015-cache-passphrase mml-secure-cache-passphrase)
 	  (epg-context-set-passphrase-callback
 	   context
-	   #'mml2015-epg-passphrase-callback))
+	   (cons 'mml-secure-passphrase-callback 'OpenPGP)))
       (condition-case error
 	  (setq plain (epg-decrypt-string context (mm-get-part child))
-		mml2015-epg-secret-key-id-list nil)
+		mml-secure-secret-key-id-list nil)
 	(error
-	 (while mml2015-epg-secret-key-id-list
-	   (password-cache-remove (car mml2015-epg-secret-key-id-list))
-	   (setq mml2015-epg-secret-key-id-list
-		 (cdr mml2015-epg-secret-key-id-list)))
+	 (mml-secure-clear-secret-key-id-list)
 	 (mm-set-handle-multipart-parameter
 	  mm-security-handle 'gnus-info "Failed")
 	 (if (eq (car error) 'quit)
@@ -968,18 +878,15 @@ If set, it overrides the setting of `mml2015-sign-with-sender'."
   (let ((inhibit-redisplay t)
 	(context (epg-make-context))
 	plain)
-    (if mml2015-cache-passphrase
+    (if (or mml2015-cache-passphrase mml-secure-cache-passphrase)
 	(epg-context-set-passphrase-callback
 	 context
-	 #'mml2015-epg-passphrase-callback))
+	 (cons 'mml-secure-passphrase-callback 'OpenPGP)))
     (condition-case error
 	(setq plain (epg-decrypt-string context (buffer-string))
-	      mml2015-epg-secret-key-id-list nil)
+	      mml-secure-secret-key-id-list nil)
       (error
-       (while mml2015-epg-secret-key-id-list
-	 (password-cache-remove (car mml2015-epg-secret-key-id-list))
-	 (setq mml2015-epg-secret-key-id-list
-	       (cdr mml2015-epg-secret-key-id-list)))
+       (mml-secure-clear-secret-key-id-list)
        (mm-set-handle-multipart-parameter
 	mm-security-handle 'gnus-info "Failed")
        (if (eq (car error) 'quit)
@@ -1065,176 +972,37 @@ If set, it overrides the setting of `mml2015-sign-with-sender'."
       (mml2015-extract-cleartext-signature))))
 
 (defun mml2015-epg-sign (cont)
-  (let* ((inhibit-redisplay t)
-	 (context (epg-make-context))
-	 (boundary (mml-compute-boundary cont))
-	 (sender (message-options-get 'message-sender))
-	 (signer-names (or mml2015-signers
-			   (if (and mml2015-sign-with-sender sender)
-			       (list (concat "<" sender ">")))))
-	 signer-key
-	 (signers
-	  (or (message-options-get 'mml2015-epg-signers)
-	      (message-options-set
-	       'mml2015-epg-signers
-	       (if (eq mm-sign-option 'guided)
-		   (epa-select-keys context "\
-Select keys for signing.
-If no one is selected, default secret key is used.  "
-				    signer-names
-				    t)
-		 (if (or sender mml2015-signers)
-		     (delq nil
-			   (mapcar
-			    (lambda (signer)
-			      (setq signer-key
-				    (mml2015-epg-find-usable-secret-key
-				     context signer 'sign))
-			      (unless (or signer-key
-					  (y-or-n-p
-					   (format
-					    "No secret key for %s; skip it? "
-					    signer)))
-				(error "No secret key for %s" signer))
-			      signer-key)
-			    signer-names)))))))
-	 signature micalg)
-    (epg-context-set-armor context t)
-    (epg-context-set-textmode context t)
-    (epg-context-set-signers context signers)
-    (if mml2015-cache-passphrase
-	(epg-context-set-passphrase-callback
-	 context
-	 #'mml2015-epg-passphrase-callback))
+  (let ((inhibit-redisplay t)
+	(boundary (mml-compute-boundary cont)))
     ;; Signed data must end with a newline (RFC 3156, 5).
     (goto-char (point-max))
     (unless (bolp)
       (insert "\n"))
-    (condition-case error
-	(setq signature (epg-sign-string context (buffer-string) t)
-	      mml2015-epg-secret-key-id-list nil)
-      (error
-       (while mml2015-epg-secret-key-id-list
-	 (password-cache-remove (car mml2015-epg-secret-key-id-list))
-	 (setq mml2015-epg-secret-key-id-list
-	       (cdr mml2015-epg-secret-key-id-list)))
-       (signal (car error) (cdr error))))
-    (if (epg-context-result-for context 'sign)
-	(setq micalg (epg-new-signature-digest-algorithm
-		      (car (epg-context-result-for context 'sign)))))
-    (goto-char (point-min))
-    (insert (format "Content-Type: multipart/signed; boundary=\"%s\";\n"
-		    boundary))
-    (if micalg
-	(insert (format "\tmicalg=pgp-%s; "
-			(downcase
-			 (cdr (assq micalg
-				    epg-digest-algorithm-alist))))))
-    (insert "protocol=\"application/pgp-signature\"\n")
-    (insert (format "\n--%s\n" boundary))
-    (goto-char (point-max))
-    (insert (format "\n--%s\n" boundary))
-    (insert "Content-Type: application/pgp-signature; name=\"signature.asc\"\n\n")
-    (insert signature)
-    (goto-char (point-max))
-    (insert (format "--%s--\n" boundary))
-    (goto-char (point-max))))
+    (let* ((pair (mml-secure-epg-sign 'OpenPGP t))
+	   (signature (car pair))
+	   (micalg (cdr pair)))
+      (goto-char (point-min))
+      (insert (format "Content-Type: multipart/signed; boundary=\"%s\";\n"
+		      boundary))
+      (if micalg
+	  (insert (format "\tmicalg=pgp-%s; "
+			  (downcase
+			   (cdr (assq micalg
+				      epg-digest-algorithm-alist))))))
+      (insert "protocol=\"application/pgp-signature\"\n")
+      (insert (format "\n--%s\n" boundary))
+      (goto-char (point-max))
+      (insert (format "\n--%s\n" boundary))
+      (insert "Content-Type: application/pgp-signature; name=\"signature.asc\"\n\n")
+      (insert signature)
+      (goto-char (point-max))
+      (insert (format "--%s--\n" boundary))
+      (goto-char (point-max)))))
 
 (defun mml2015-epg-encrypt (cont &optional sign)
   (let* ((inhibit-redisplay t)
-	 (context (epg-make-context))
 	 (boundary (mml-compute-boundary cont))
-	 (config (epg-configuration))
-	 (recipients (message-options-get 'mml2015-epg-recipients))
-	 cipher
-	 (sender (message-options-get 'message-sender))
-	 (signer-names (or mml2015-signers
-			   (if (and mml2015-sign-with-sender sender)
-			       (list (concat "<" sender ">")))))
-	 signers
-	 recipient-key signer-key)
-    (unless recipients
-      (setq recipients
-	    (apply #'nconc
-		   (mapcar
-		    (lambda (recipient)
-		      (or (epg-expand-group config recipient)
-			  (list (concat "<" recipient ">"))))
-		    (split-string
-		     (or (message-options-get 'message-recipients)
-			 (message-options-set 'message-recipients
-					      (read-string "Recipients: ")))
-		     "[ \f\t\n\r\v,]+"))))
-      (when mml2015-encrypt-to-self
-	(unless signer-names
-	  (error "Neither message sender nor mml2015-signers are set"))
-	(setq recipients (nconc recipients signer-names)))
-      (if (eq mm-encrypt-option 'guided)
-	  (setq recipients
-		(epa-select-keys context "\
-Select recipients for encryption.
-If no one is selected, symmetric encryption will be performed.  "
-				 recipients))
-	(setq recipients
-	      (delq nil
-		    (mapcar
-		     (lambda (recipient)
-		       (setq recipient-key (mml2015-epg-find-usable-key
-					    context recipient 'encrypt))
-		       (unless (or recipient-key
-				   (y-or-n-p
-				    (format "No public key for %s; skip it? "
-					    recipient)))
-			 (error "No public key for %s" recipient))
-		       recipient-key)
-		     recipients)))
-	(unless recipients
-	  (error "No recipient specified")))
-      (message-options-set 'mml2015-epg-recipients recipients))
-    (when sign
-      (setq signers
-	    (or (message-options-get 'mml2015-epg-signers)
-		(message-options-set
-		 'mml2015-epg-signers
-		 (if (eq mm-sign-option 'guided)
-		     (epa-select-keys context "\
-Select keys for signing.
-If no one is selected, default secret key is used.  "
-				      signer-names
-				      t)
-		   (if (or sender mml2015-signers)
-		       (delq nil
-			     (mapcar
-			      (lambda (signer)
-				(setq signer-key
-				      (mml2015-epg-find-usable-secret-key
-				       context signer 'sign))
-				(unless (or signer-key
-					    (y-or-n-p
-					     (format
-					      "No secret key for %s; skip it? "
-					      signer)))
-				  (error "No secret key for %s" signer))
-				signer-key)
-			      signer-names)))))))
-      (epg-context-set-signers context signers))
-    (epg-context-set-armor context t)
-    (epg-context-set-textmode context t)
-    (if mml2015-cache-passphrase
-	(epg-context-set-passphrase-callback
-	 context
-	 #'mml2015-epg-passphrase-callback))
-    (condition-case error
-	(setq cipher
-	      (epg-encrypt-string context (buffer-string) recipients sign
-				  mml2015-always-trust)
-	      mml2015-epg-secret-key-id-list nil)
-      (error
-       (while mml2015-epg-secret-key-id-list
-	 (password-cache-remove (car mml2015-epg-secret-key-id-list))
-	 (setq mml2015-epg-secret-key-id-list
-	       (cdr mml2015-epg-secret-key-id-list)))
-       (signal (car error) (cdr error))))
+	 (cipher (mml-secure-epg-encrypt 'OpenPGP cont sign)))
     (delete-region (point-min) (point-max))
     (goto-char (point-min))
     (insert (format "Content-Type: multipart/encrypted; boundary=\"%s\";\n"

@@ -484,6 +484,7 @@ typedef DWORD (WINAPI *GetAdaptersInfo_Proc) (
 
 int (WINAPI *pMultiByteToWideChar)(UINT,DWORD,LPCSTR,int,LPWSTR,int);
 int (WINAPI *pWideCharToMultiByte)(UINT,DWORD,LPCWSTR,int,LPSTR,int,LPCSTR,LPBOOL);
+DWORD multiByteToWideCharFlags;
 
   /* ** A utility function ** */
 static BOOL
@@ -1550,8 +1551,8 @@ codepage_for_filenames (CPINFO *cp_info)
 int
 filename_to_utf16 (const char *fn_in, wchar_t *fn_out)
 {
-  int result = pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS, fn_in, -1,
-				     fn_out, MAX_PATH);
+  int result = pMultiByteToWideChar (CP_UTF8, multiByteToWideCharFlags, fn_in,
+				     -1, fn_out, MAX_PATH);
 
   if (!result)
     {
@@ -1641,8 +1642,8 @@ filename_from_ansi (const char *fn_in, char *fn_out)
 {
   wchar_t fn_utf16[MAX_PATH];
   int codepage = codepage_for_filenames (NULL);
-  int result = pMultiByteToWideChar (codepage, MB_ERR_INVALID_CHARS, fn_in, -1,
-				     fn_utf16, MAX_PATH);
+  int result = pMultiByteToWideChar (codepage, multiByteToWideCharFlags, fn_in,
+				     -1, fn_utf16, MAX_PATH);
 
   if (!result)
     {
@@ -8043,14 +8044,19 @@ pipe2 (int * phandles, int pipe2_flags)
 {
   int rc;
   unsigned flags;
+  unsigned pipe_size = 0;
 
   eassert (pipe2_flags == (O_BINARY | O_CLOEXEC));
+
+  /* Allow Lisp to override the default buffer size of the pipe.  */
+  if (w32_pipe_buffer_size > 0 && w32_pipe_buffer_size < UINT_MAX)
+    pipe_size = w32_pipe_buffer_size;
 
   /* make pipe handles non-inheritable; when we spawn a child, we
      replace the relevant handle with an inheritable one.  Also put
      pipes into binary mode; we will do text mode translation ourselves
      if required.  */
-  rc = _pipe (phandles, 0, _O_NOINHERIT | _O_BINARY);
+  rc = _pipe (phandles, pipe_size, _O_NOINHERIT | _O_BINARY);
 
   if (rc == 0)
     {
@@ -8632,15 +8638,35 @@ sys_write (int fd, const void * buffer, unsigned int count)
 	 http://thread.gmane.org/gmane.comp.version-control.git/145294
 	 in the git mailing list.  */
       const unsigned char *p = buffer;
-      const unsigned chunk = 30 * 1024 * 1024;
+      const bool is_pipe = (fd < MAXDESC
+			    && ((fd_info[fd].flags & (FILE_PIPE | FILE_NDELAY))
+				== (FILE_PIPE | FILE_NDELAY)));
+      /* Some programs, notably Node.js's node.exe, seem to never
+	 completely empty the pipe, so writing more than the size of
+	 the pipe's buffer always returns ENOSPC, and we loop forever
+	 between send_process and here.  As a workaround, write no
+	 more than the pipe's buffer can hold.  */
+      DWORD pipe_buffer_size;
+      if (is_pipe)
+	{
+	  if (!GetNamedPipeInfo ((HANDLE)_get_osfhandle (fd),
+				NULL, &pipe_buffer_size, NULL, NULL))
+	    {
+	      DebPrint (("GetNamedPipeInfo: error %u\n", GetLastError ()));
+	      pipe_buffer_size = 4096;
+	    }
+	}
+      const unsigned chunk = is_pipe ? pipe_buffer_size : 30 * 1024 * 1024;
 
       nchars = 0;
+      errno = 0;
       while (count > 0)
 	{
 	  unsigned this_chunk = count < chunk ? count : chunk;
 	  int n = _write (fd, p, this_chunk);
 
-	  nchars += n;
+	  if (n > 0)
+	    nchars += n;
 	  if (n < 0)
 	    {
 	      /* When there's no buffer space in a pipe that is in the
@@ -8654,12 +8680,10 @@ sys_write (int fd, const void * buffer, unsigned int count)
 		 avoiding deadlock whereby each side of the pipe is
 		 blocked on write, waiting for the other party to read
 		 its end of the pipe.  */
-	      if (errno == ENOSPC
-		  && fd < MAXDESC
-		  && ((fd_info[fd].flags & (FILE_PIPE | FILE_NDELAY))
-		      == (FILE_PIPE | FILE_NDELAY)))
+	      if (errno == ENOSPC && is_pipe)
 		errno = EAGAIN;
-	      nchars = n;
+	      if (nchars == 0)
+		nchars = -1;
 	      break;
 	    }
 	  else if (n < this_chunk)
@@ -9081,14 +9105,14 @@ check_windows_init_file (void)
 		   "not unpacked properly.\nSee the README.W32 file in the "
 		   "top-level Emacs directory for more information.",
 		   init_file_name, load_path);
-	  needed = pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS, buffer,
-					 -1, NULL, 0);
+	  needed = pMultiByteToWideChar (CP_UTF8, multiByteToWideCharFlags,
+					 buffer, -1, NULL, 0);
 	  if (needed > 0)
 	    {
 	      wchar_t *msg_w = alloca ((needed + 1) * sizeof (wchar_t));
 
-	      pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS, buffer, -1,
-				    msg_w, needed);
+	      pMultiByteToWideChar (CP_UTF8, multiByteToWideCharFlags, buffer,
+				    -1, msg_w, needed);
 	      needed = pWideCharToMultiByte (CP_ACP, 0, msg_w, -1,
 					     NULL, 0, NULL, NULL);
 	      if (needed > 0)
@@ -9275,6 +9299,7 @@ maybe_load_unicows_dll (void)
 	    (MultiByteToWideChar_Proc)GetProcAddress (ret, "MultiByteToWideChar");
 	  pWideCharToMultiByte =
 	    (WideCharToMultiByte_Proc)GetProcAddress (ret, "WideCharToMultiByte");
+          multiByteToWideCharFlags = MB_ERR_INVALID_CHARS;
 	  return ret;
 	}
       else
@@ -9304,6 +9329,11 @@ maybe_load_unicows_dll (void)
 	 pointers; no need for the LoadLibrary dance.  */
       pMultiByteToWideChar = MultiByteToWideChar;
       pWideCharToMultiByte = WideCharToMultiByte;
+      /* On NT 4.0, though, MB_ERR_INVALID_CHARS is not supported.  */
+      if (w32_major_version < 5)
+        multiByteToWideCharFlags = 0;
+      else
+        multiByteToWideCharFlags = MB_ERR_INVALID_CHARS;
       return LoadLibrary ("Gdi32.dll");
     }
 }

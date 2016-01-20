@@ -53,6 +53,7 @@
 
 (defcustom epg-gpgconf-program "gpgconf"
   "The `gpgconf' executable."
+  :version "25.1"
   :group 'epg
   :type 'string)
 

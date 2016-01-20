@@ -102,7 +102,7 @@ VARS should be a list of elements of the form (VAR EXP) or just VAR, in case
 EXP is equal to VAR.  The result is to evaluate EXP and bind the result to VAR.
 
 The tail of VARS can be either nil or a symbol VAR which should hold a list
-of arguments,in which case each argument is evaluated and the resulting
+of arguments, in which case each argument is evaluated and the resulting
 new list is re-bound to VAR.
 
 After VARS is handled, BODY is evaluated in the new environment."

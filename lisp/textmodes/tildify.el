@@ -417,7 +417,7 @@ current `case-fold-search' setting."
   "A list of predicate functions for `tildify-space' function."
   :version "25.1"
   :group 'tildify
-  :type '(repeat 'function))
+  :type '(repeat function))
 
 (defcustom tildify-double-space-undos t
   "Weather `tildify-space' should undo hard space when space is typed again."

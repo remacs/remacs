@@ -461,10 +461,23 @@ You could define @code{put} in terms of @code{setplist} and
 @end example
 @end defun
 
-@defun function-get symbol property
+@defun function-get symbol property &optional autoload
 This function is identical to @code{get}, except that if @var{symbol}
 is the name of a function alias, it looks in the property list of the
-symbol naming the actual function.  @xref{Defining Functions}.
+symbol naming the actual function.  @xref{Defining Functions}.  If the
+optional argument @var{autoload} is non-@code{nil}, and @var{symbol}
+is auto-loaded, this function will try to autoload it, since
+autoloading might set @var{property} of @var{symbol}.  If
+@var{autoload} is the symbol @code{macro}, only try autoloading if
+@var{symbol} is an auto-loaded macro.
+@end defun
+
+@defun function-put function property value
+This function sets @var{property} of @var{function} to @var{value}.
+@var{function} should be a symbol.  This function is preferred to
+calling @code{put} for setting properties of a function, because it
+will allow us some day to implement remapping of old properties to new
+ones.
 @end defun
 
 @node Standard Properties

@@ -6984,12 +6984,12 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
 	    if (errno == ENOENT && filename_buf_w[MAX_PATH - 1] != 0)
 	      report_file_error ("filename too long", default_filename);
 	  }
-	len = pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS,
+	len = pMultiByteToWideChar (CP_UTF8, multiByteToWideCharFlags,
 				    SSDATA (prompt), -1, NULL, 0);
 	if (len > 32768)
 	  len = 32768;
 	prompt_w = alloca (len * sizeof (wchar_t));
-	pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS,
+	pMultiByteToWideChar (CP_UTF8, multiByteToWideCharFlags,
 			      SSDATA (prompt), -1, prompt_w, len);
       }
     else
@@ -7002,12 +7002,12 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
 	    if (errno == ENOENT && filename_buf_a[MAX_PATH - 1] != 0)
 	      report_file_error ("filename too long", default_filename);
 	  }
-	len = pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS,
+	len = pMultiByteToWideChar (CP_UTF8, multiByteToWideCharFlags,
 				    SSDATA (prompt), -1, NULL, 0);
 	if (len > 32768)
 	  len = 32768;
 	prompt_w = alloca (len * sizeof (wchar_t));
-	pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS,
+	pMultiByteToWideChar (CP_UTF8, multiByteToWideCharFlags,
 			      SSDATA (prompt), -1, prompt_w, len);
 	len = pWideCharToMultiByte (CP_ACP, 0, prompt_w, -1, NULL, 0, NULL, NULL);
 	if (len > 32768)
@@ -7489,10 +7489,10 @@ a ShowWindow flag:
   current_dir = ENCODE_FILE (current_dir);
   /* Cannot use filename_to_utf16/ansi with DOCUMENT, since it could
      be a URL that is not limited to MAX_PATH chararcters.  */
-  doclen = pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS,
+  doclen = pMultiByteToWideChar (CP_UTF8, multiByteToWideCharFlags,
 				 SSDATA (document), -1, NULL, 0);
   doc_w = xmalloc (doclen * sizeof (wchar_t));
-  pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS,
+  pMultiByteToWideChar (CP_UTF8, multiByteToWideCharFlags,
 			SSDATA (document), -1, doc_w, doclen);
   if (use_unicode)
     {
@@ -7507,12 +7507,12 @@ a ShowWindow flag:
 	  int len;
 
 	  parameters = ENCODE_SYSTEM (parameters);
-	  len = pMultiByteToWideChar (CP_ACP, MB_ERR_INVALID_CHARS,
+	  len = pMultiByteToWideChar (CP_ACP, multiByteToWideCharFlags,
 				      SSDATA (parameters), -1, NULL, 0);
 	  if (len > 32768)
 	    len = 32768;
 	  params_w = alloca (len * sizeof (wchar_t));
-	  pMultiByteToWideChar (CP_ACP, MB_ERR_INVALID_CHARS,
+	  pMultiByteToWideChar (CP_ACP, multiByteToWideCharFlags,
 				SSDATA (parameters), -1, params_w, len);
 	  params_w[len - 1] = 0;
 	}
@@ -8959,7 +8959,7 @@ add_tray_notification (struct frame *f, const char *icon, const char *tip,
 	 later versions support up to 128.  */
       if (nidw.cbSize == MYNOTIFYICONDATAW_V1_SIZE)
 	{
-	  tiplen = pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS,
+	  tiplen = pMultiByteToWideChar (CP_UTF8, multiByteToWideCharFlags,
 					 tip, utf8_mbslen_lim (tip, 63),
 					 tipw, 64);
 	  if (tiplen >= 63)
@@ -8967,7 +8967,7 @@ add_tray_notification (struct frame *f, const char *icon, const char *tip,
 	}
       else
 	{
-	  tiplen = pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS,
+	  tiplen = pMultiByteToWideChar (CP_UTF8, multiByteToWideCharFlags,
 					 tip, utf8_mbslen_lim (tip, 127),
 					 tipw, 128);
 	  if (tiplen >= 127)
@@ -8986,7 +8986,7 @@ add_tray_notification (struct frame *f, const char *icon, const char *tip,
 	{
 	  int slen;
 
-	  slen = pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS,
+	  slen = pMultiByteToWideChar (CP_UTF8, multiByteToWideCharFlags,
 					     msg, utf8_mbslen_lim (msg, 255),
 					     msgw, 256);
 	  if (slen >= 255)
@@ -8999,7 +8999,7 @@ add_tray_notification (struct frame *f, const char *icon, const char *tip,
 	    }
 	  wcscpy (nidw.szInfo, msgw);
 	  nidw.uTimeout = timeout;
-	  slen = pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS,
+	  slen = pMultiByteToWideChar (CP_UTF8, multiByteToWideCharFlags,
 				       title, utf8_mbslen_lim (title, 63),
 				       titlew, 64);
 	  if (slen >= 63)
@@ -9670,6 +9670,12 @@ static PVOID except_addr;
 
 /* Stack overflow recovery.  */
 
+/* MinGW headers don't declare this (should be in malloc.h).  Also,
+   the function is not present pre-W2K, so make the call through
+   a function pointer.  */
+typedef int (__cdecl *_resetstkoflw_proc) (void);
+static _resetstkoflw_proc resetstkoflw;
+
 /* Re-establish the guard page at stack limit.  This is needed because
    when a stack overflow is detected, Windows removes the guard bit
    from the guard page, so if we don't re-establish that protection,
@@ -9677,12 +9683,14 @@ static PVOID except_addr;
 void
 w32_reset_stack_overflow_guard (void)
 {
-  /* MinGW headers don't declare this (should be in malloc.h).  */
-  _CRTIMP int __cdecl _resetstkoflw (void);
-
+  if (resetstkoflw == NULL)
+    resetstkoflw =
+      (_resetstkoflw_proc)GetProcAddress (GetModuleHandle ("msvcrt.dll"),
+					  "_resetstkoflw");
   /* We ignore the return value.  If _resetstkoflw fails, the next
      stack overflow will crash the program.  */
-  (void)_resetstkoflw ();
+  if (resetstkoflw != NULL)
+    (void)resetstkoflw ();
 }
 
 static void
@@ -9926,6 +9934,8 @@ globals_of_w32fns (void)
     w32_unicode_gui = 0;
 
   after_deadkey = -1;
+
+  resetstkoflw = NULL;
 
   /* MessageBox does not work without this when linked to comctl32.dll 6.0.  */
   InitCommonControls ();

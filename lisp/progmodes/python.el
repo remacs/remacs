@@ -715,6 +715,7 @@ It makes underscores and dots word constituent chars.")
 
 (defcustom python-indent-guess-indent-offset-verbose t
   "Non-nil means to emit a warning when indentation guessing fails."
+  :version "25.1"
   :type 'boolean
   :group 'python
   :safe' booleanp)
@@ -1999,6 +2000,7 @@ hosts PATH before starting processes.  Values defined in
 here.  Normally you wont use this variable directly unless you
 plan to ensure a particular set of paths to all Python shell
 executed through tramp connections."
+  :version "25.1"
   :type '(repeat string)
   :group 'python)
 
@@ -2042,8 +2044,8 @@ virtualenv."
 (defun python-shell-calculate-pythonpath ()
   "Calculate the PYTHONPATH using `python-shell-extra-pythonpaths'."
   (let ((pythonpath
-         (tramp-compat-split-string
-          (or (getenv "PYTHONPATH") "") path-separator)))
+         (split-string
+          (or (getenv "PYTHONPATH") "") path-separator 'omit)))
     (python-shell--add-to-path-with-priority
      pythonpath python-shell-extra-pythonpaths)
     (mapconcat 'identity pythonpath path-separator)))
@@ -2114,7 +2116,7 @@ appends `python-shell-remote-exec-path' instead of `exec-path'."
            (md5 tramp-end-of-output)))
 	unset vars item)
     (while env
-      (setq item (tramp-compat-split-string (car env) "="))
+      (setq item (split-string (car env) "=" 'omit))
       (setcdr item (mapconcat 'identity (cdr item) "="))
       (if (and (stringp (cdr item)) (not (string-equal (cdr item) "")))
 	  (push (format "%s %s" (car item) (cdr item)) vars)
@@ -2621,6 +2623,7 @@ current process to not hang waiting for output by safeguarding
 interactive actions can be performed.  This is useful to safely
 attach setup code for long-running processes that eventually
 provide a shell."
+  :version "25.1"
   :type 'hook
   :group 'python)
 
@@ -3258,18 +3261,22 @@ the full statement in the case of imports."
   (list "pypy")
   "List of disabled interpreters.
 When a match is found, native completion is disabled."
+  :version "25.1"
   :type '(repeat string))
 
 (defcustom python-shell-completion-native-enable t
   "Enable readline based native completion."
+  :version "25.1"
   :type 'boolean)
 
 (defcustom python-shell-completion-native-output-timeout 5.0
   "Time in seconds to wait for completion output before giving up."
+  :version "25.1"
   :type 'float)
 
 (defcustom python-shell-completion-native-try-output-timeout 1.0
   "Time in seconds to wait for *trying* native completion output."
+  :version "25.1"
   :type 'float)
 
 (defvar python-shell-completion-native-redirect-buffer

@@ -59,6 +59,11 @@ in these situations.
 
 *** The kqueue library is integrated for *BSD and Mac OS X machines.
 
+** Tramp
+
+*** New connection method "sg", which allows to edit files under
+different group ID.
+
 
 * New Modes and Packages in Emacs 25.2
 
@@ -67,6 +72,8 @@ in these situations.
 
 
 * Lisp Changes in Emacs 25.2
+
+** New var syntax-ppss-table to control the syntax-table used in syntax-ppss
 
 ** Autoload files can be generated without timestamps,
 by setting `autoload-timestamps' to nil.
@@ -88,6 +95,7 @@ by setting `autoload-timestamps' to nil.
 This builds Emacs with Cairo drawing.  As a side effect, it provides
 support for built-in printing, when Emacs was built with GTK+.
 
++++
 ** New configure option --with-modules.
 This enables support for loading dynamic modules; see below.
 
@@ -171,6 +179,7 @@ and can contain escape sequences for command keys, quotes, and the like.
 
 * Changes in Emacs 25.1
 
++++
 ** Emacs can now load shared/dynamic libraries (modules).
 A dynamic Emacs module is a shared library that provides additional
 functionality for use in Emacs Lisp programs, just like a package
@@ -222,12 +231,6 @@ the `network-security-level' variable.
 ** International domain names (IDNA) are now encoded via the new
 puny.el library, so that one can visit web sites like
 "http://méxico.icom.museum".
-
-** If Emacs isn't built with TLS support, an external TLS-capable
-program is used instead.  This program used to be run in --insecure
-mode by default, but has now changed to be secure instead, and will
-fail if you try to connect to non-verifiable hosts.  This is
-controlled by the `tls-program' variable.
 
 +++
 ** C-h l now also lists the commands that were run.
@@ -370,6 +373,17 @@ current package keywords are recognized.  Set the new option
 *** New function `checkdoc-file' checks for style errors.
 It's meant for use together with `compile':
 emacs -batch --eval "(checkdoc-file \"subr.el\")"
+
+** Desktop
+
+---
+*** The desktop format version has been upgraded from 206 to 208.
+Although Emacs 25.1 can read a version 206 desktop, earlier Emacsen
+cannot read a version 208 desktop.  To upgrade your desktop file, you
+must explicitly request the upgrade, by C-u M-x desktop-save.  You are
+recommended to do this as soon as you have firmly upgraded to Emacs
+25.1 (or later).  Should you ever need to downgrade your desktop file
+to version 206, you can do this with C-u C-u M-x desktop-save.
 
 +++
 ** New function `bookmark-set-no-overwrite' bound to C-x r M.
@@ -849,6 +863,13 @@ See the doc string of `sh-indent-after-continuation' for details.
 ---
 *** Fatal TLS errors are now silent by default.
 
+---
+*** If Emacs isn't built with TLS support, an external TLS-capable
+program is used instead.  This program used to be run in --insecure
+mode by default, but has now changed to be secure instead, and will
+fail if you try to connect to non-verifiable hosts.  This is
+controlled by the `tls-program' variable.
+
 ** URL
 
 +++
@@ -1022,7 +1043,8 @@ of its back-ends.
 The command `xref-find-definitions' replaces `find-tag' and provides
 an interface to pick one definition among several.
 `tags-loop-continue' is now unbound.  `xref-pop-marker-stack' replaces
-`pop-tag-mark', but has a keybinding (`M-,'), unlike `pop-tag-mark'.
+`pop-tag-mark', but has a keybinding (`M-,') different from the one
+`pop-tag-mark' used.
 
 `xref-find-definitions-other-window' replaces `find-tag-other-window'.
 `xref-find-definitions-other-frame' replaces `find-tag-other-frame'.
@@ -1030,7 +1052,11 @@ an interface to pick one definition among several.
 
 As a result of this, the following commands are now obsolete:
 `find-tag-other-window', `find-tag-other-frame', `find-tag-regexp',
-`tags-apropos', and `tags-loop-continue'.
+`tags-apropos'.
+
+`tags-loop-continue' is not obsolete because it's still useful in
+`tags-search' and `tags-query-replace', for which there are no direct
+replacements yet.
 
 +++
 *** New variables
@@ -1285,28 +1311,40 @@ symbol-function was changed not to signal `void-function' any more.
 +++
 *** As a consequence, the second arg of `indirect-function' is now obsolete.
 
++++
 ** Comint, term, and compile do not set the EMACS env var any more.
 Use the INSIDE_EMACS environment variable instead.
 
++++
 ** `save-excursion' does not save&restore the mark any more.
+Use `save-mark-and-excursion' if you want the old behavior.
 
-** read-buffer-function can now be called with a 4th argument (`predicate').
++++
+** `read-buffer' and `read-buffer-function' can now be called with a 4th
+argument (`predicate').
 
-** completion-table-dynamic stays in the minibuffer.
++++
+** `completion-table-dynamic' by default stays in the minibuffer.
+The minibuffer will be the current buffer when the function is called.
 If you want the old behavior of calling the function in the buffer
-from which the minibuffer was entered, call it with the new argument
-`switch-buffer'.
+from which the minibuffer was entered, use the new argument
+`switch-buffer' to `completion-table-dynamic'.
 
+---
 ** window-configurations no longer record the buffers' marks.
 
+---
 ** inhibit-modification-hooks now also inhibits lock-file checks, as well as
 active region handling.
 
++++
 ** deactivate-mark is now buffer-local.
 
++++
 ** `cl-the' now asserts that its argument is of the given type.
 
-** `process-running-child-p` may now return a numeric process
++++
+** `process-running-child-p' may now return a numeric process
 group ID instead of `t'.
 
 +++
@@ -1395,24 +1433,38 @@ that happen, `unhandled-file-name-directory' now defaults to calling
 ** syntax-propertize is now automatically called on-demand during forward
 parsing functions like `forward-sexp'.
 
-** New hooks prefix-command-echo-keystrokes-functions and
-prefix-command-preserve-state-hook, to allow the definition of prefix
-commands other than the predefined C-u.
++++
+** New hooks `prefix-command-echo-keystrokes-functions' and
+`prefix-command-preserve-state-hook' allow the definition of prefix
+commands other than the predefined `C-u'.
 
++++
 ** New functions `filepos-to-bufferpos' and `bufferpos-to-filepos'.
+These allow to convert between buffer positions and the corresponding
+file byte offsets, given the file's encoding.
 
++++
 ** The default value of `load-read-function' is now `read'.
+Previously, the default value of `nil' implied using `read'.
 
-** New hook `pre-redisplay-functions', a bit easier to use than pre-redisplay-function.
++++
+** New hook `pre-redisplay-functions'.
+It is a bit easier to use than `pre-redisplay-function'.
 
++++
 ** The second arg of `looking-back' should always be provided explicitly.
+Previously, it was an optional argument, now it's mandatory.
 
-** Obsolete text properties `intangible', `point-entered', and `point-left'.
++++
+** Text properties `intangible', `point-entered', and `point-left' are obsolete.
 Replaced by properties `cursor-intangible' and `cursor-sensor-functions',
 implemented by the new `cursor-intangible-mode' and
 `cursor-sensor-mode' minor modes.
 
-** `inhibit-point-motion-hooks' now defaults to t and is obsolete.
++++
+** `inhibit-point-motion-hooks' now defaults to `t' and is obsolete.
+Use the new minor modes `cursor-intangible-mode' and
+`cursor-sensor-mode' instead.
 
 +++
 ** New process type `pipe', which can be used in combination with the
@@ -1446,8 +1498,6 @@ buffers to allow certain parts of the text to be writable.
 +++
 ** New macro `define-advice'.
 
-** `read-buffer' takes a new `predicate' argument.
-
 +++
 ** Emacs Lisp now supports generators.
 See the "Generators" section of the ELisp manual for the details.
@@ -1457,15 +1507,19 @@ See the "Generators" section of the ELisp manual for the details.
 See the "Finalizer Type" subsection in the ELisp manual for the
 details.
 
+---
 ** lexical closures can use (:documentation FORM) to build their docstring.
 It should be placed right where the docstring would be, and FORM is then
 evaluated (and should return a string) when the closure is built.
 
++++
 ** define-inline provides a new way to define inlinable functions.
 
-** New function `macroexpand-1' to perform a single step of macroexpansion.
++++
+** New function `macroexpand-1' to perform a single step of macro expansion.
 
-** Some "x-*" were obsoleted:
++++
+** Some "x-*" functions were obsoleted and/or renamed:
 *** x-select-text is renamed gui-select-text.
 *** x-selection-value is renamed gui-selection-value.
 *** x-get-selection is renamed gui-get-selection.
@@ -1473,6 +1527,7 @@ evaluated (and should return a string) when the closure is built.
 *** x-get-selection-value is renamed to gui-get-primary-selection.
 *** x-set-selection is renamed to gui-set-selection
 
++++
 ** New function `string-greaterp', which return the opposite result of
 `string-lessp'.
 
@@ -1496,12 +1551,15 @@ emulates the behavior of modern Posix platforms when the locale's
 codeset is "UTF-8" (as in "en_US.UTF-8").  This is needed because
 MS-Windows doesn't support UTF-8 as codeset in its locales.
 
++++
 ** New function `alist-get', which is also a valid place (aka lvalue).
 
++++
 ** New function `funcall-interactively', which works like `funcall'
 but makes `called-interactively-p' treat the function as (you guessed it)
 called interactively.
 
++++
 ** New function `function-put' to use instead of `put' for function properties.
 
 +++
@@ -1532,6 +1590,7 @@ permissions set to temporary values (e.g., for creating private files).
 +++
 ** You can access the slots of structures using `cl-struct-slot-value'.
 
++++
 ** Function `sort' can deal with vectors.
 
 ** Function `system-name' now returns an updated value if the current
@@ -1759,6 +1818,7 @@ frames.
 `window-divider-default-places', `window-divider-default-bottom-width'
 and `window-divider-default-right-width'.
 
+---
 ** Tearoff menus and detachable toolbars for Gtk+ have been removed.
 Those features have been deprecated in Gtk+ for a long time.
 
@@ -1833,6 +1893,12 @@ this has no effect.
 ---
 ** The new function 'w32-application-type' returns the type of an
 MS-Windows application given the name of its executable program file.
+
+** New variable `w32-pipe-buffer-size'.
+It can be used to tune the size of the buffer of pipes created for
+communicating with subprocesses, when the program run by a subprocess
+exhibits unusual buffering behavior.  Default is zero, which lets the
+OS use its default size.
 
 
 ----------------------------------------------------------------------

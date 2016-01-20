@@ -5630,13 +5630,7 @@ Decimal digits after the % specify field width to which to pad.  */);
 		     doc: /* Symbol for current buffer's major mode.
 The default value (normally `fundamental-mode') affects new buffers.
 A value of nil means to use the current buffer's major mode, provided
-it is not marked as "special".
-
-When a mode is used by default, `find-file' switches to it before it
-reads the contents into the buffer and before it finishes setting up
-the buffer.  Thus, the mode and its hooks should not expect certain
-variables such as `buffer-read-only' and `buffer-file-coding-system'
-to be set up.  */);
+it is not marked as "special".  */);
 
   DEFVAR_PER_BUFFER ("mode-name", &BVAR (current_buffer, mode_name),
                      Qnil,

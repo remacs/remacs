@@ -571,11 +571,17 @@ no characters is less than any other string.
 @end example
 
 Symbols are also allowed as arguments, in which case their print names
-are used.
+are compared.
 @end defun
 
 @defun string-lessp string1 string2
 @code{string-lessp} is another name for @code{string<}.
+@end defun
+
+@defun string-greaterp string1 string2
+This function returns the result of comparing @var{string1} and
+@var{string2} in the opposite order, i.e., it is equivalent to calling
+@code{(string-lessp @var{string2} @var{string1})}.
 @end defun
 
 @cindex locale-dependent string comparison

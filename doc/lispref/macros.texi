@@ -160,6 +160,12 @@ expand the embedded calls to @code{inc}:
 
 @end defun
 
+@defun macroexpand-1 form &optional environment
+This function expands macros like @code{macroexpand}, but it only
+performs one step of the expansion: if the result is another macro
+call, @code{macroexpand-1} will not expand it.
+@end defun
+
 @node Compiling Macros
 @section Macros and Byte Compilation
 @cindex byte-compiling macros

@@ -1236,14 +1236,14 @@ Lisp function.  When possible, do all minibuffer input as part of
 reading the arguments for a command, in the @code{interactive}
 specification.  @xref{Defining Commands}.
 
-@defun read-buffer prompt &optional default require-match
+@defun read-buffer prompt &optional default require-match predicate
 This function reads the name of a buffer and returns it as a string.
-The argument @var{default} is the default name to use, the value to
-return if the user exits with an empty minibuffer.  If non-@code{nil},
-it should be a string, a list of strings, or a buffer.  If it is
-a list, the default value is the first element of this list.  It is
-mentioned in the prompt, but is not inserted in the minibuffer as
-initial input.
+It prompts with @var{prompt}.  The argument @var{default} is the
+default name to use, the value to return if the user exits with an
+empty minibuffer.  If non-@code{nil}, it should be a string, a list of
+strings, or a buffer.  If it is a list, the default value is the first
+element of this list.  It is mentioned in the prompt, but is not
+inserted in the minibuffer as initial input.
 
 The argument @var{prompt} should be a string ending with a colon and a
 space.  If @var{default} is non-@code{nil}, the function inserts it in
@@ -1252,6 +1252,12 @@ the minibuffer with a default value (@pxref{Programming Tips}).
 
 The optional argument @var{require-match} has the same meaning as in
 @code{completing-read}.  @xref{Minibuffer Completion}.
+
+The optional argument @var{predicate}, if non-@code{nil}, specifies a
+function to filter the buffers that should be considered: the function
+will be called with every potential candidate as its argument, and
+should return @code{nil} to reject the candidate, non-@code{nil} to
+accept it.
 
 In the following example, the user enters @samp{minibuffer.t}, and
 then types @key{RET}.  The argument @var{require-match} is @code{t},
@@ -1287,7 +1293,7 @@ its usual work, with the same arguments passed to @code{read-buffer}.
 
 @defopt read-buffer-completion-ignore-case
 If this variable is non-@code{nil}, @code{read-buffer} ignores case
-when performing completion.
+when performing completion while reading the buffer name.
 @end defopt
 
 @defun read-command prompt &optional default
@@ -1812,13 +1818,19 @@ emacs, The GNU Emacs Manual}.  Its argument list and return value are
 the same as for @code{display-sort-function}.
 @end table
 
-@defun completion-table-dynamic function
+@defun completion-table-dynamic function &optional switch-buffer
 This function is a convenient way to write a function that can act as
 a programmed completion function.  The argument @var{function} should be
 a function that takes one argument, a string, and returns an alist of
-possible completions of it.  You can think of
+possible completions of it.  It is allowed to ignore the argument and
+return a full list of all possible completions.  You can think of
 @code{completion-table-dynamic} as a transducer between that interface
 and the interface for programmed completion functions.
+
+If the optional argument @var{switch-buffer} is non-@code{nil}, and
+completion is performed in the minibuffer, @var{function} will be
+called with current buffer set to the buffer from which the minibuffer
+was entered.
 @end defun
 
 @defun completion-table-with-cache function &optional ignore-case

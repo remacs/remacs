@@ -655,7 +655,7 @@ and the right button generates @kbd{mouse-3} events.  If this variable
 is non-@code{nil}, the roles of these two buttons are reversed.
 
 @node Windows Processes
-@section Subprocesses on Windows 9X/ME and Windows NT/2K/XP
+@section Subprocesses on Windows 9X/ME and Windows NT/2K/XP/Vista/7/8/10
 @cindex subprocesses on MS-Windows
 
 @cindex DOS applications, running from Emacs
@@ -663,7 +663,8 @@ is non-@code{nil}, the roles of these two buttons are reversed.
 version) includes full support for asynchronous subprocesses.
 In the Windows version, synchronous and asynchronous subprocesses work
 fine on both
-Windows 9X/ME and Windows NT/2K/XP as long as you run only 32-bit Windows
+Windows 9X/ME and Windows NT/2K/XP/Vista/7/8/10 as long as you run
+only 32-bit or 64-bit Windows
 applications.  However, when you run a DOS application in a subprocess,
 you may encounter problems or be unable to run the application at all;
 and if you run two DOS applications at the same time in two
@@ -712,6 +713,15 @@ the process arguments.  Non-@code{nil} means quote with the @code{"}
 character.  If the value is a character, Emacs uses that character to escape
 any quote characters that appear; otherwise it chooses a suitable escape
 character based on the type of the program.
+
+@vindex w32-pipe-buffer-size
+  The variable @code{w32-pipe-buffer-size} controls the size of the
+buffer Emacs requests from the system when it creates pipes for
+communications with subprocesses.  The default value is zero, which
+lets the OS choose the size.  Any valid positive value will request a
+buffer of that size in bytes.  This can be used to tailor
+communications with subprocesses to programs that exhibit unusual
+behavior with respect to buffering pipe I/O.
 
 @ifnottex
 @findex w32-shell-execute

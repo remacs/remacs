@@ -201,8 +201,8 @@ that are used in Emacs Lisp sources; any other file name will be
 returned unaltered."
   (cond
    ;; See files.el:dir-locals-file.
-   ((string= file-name ".dir-locals.el")
-    "_dir-locals.el")
+   ((string= file-name ".dir-locals")
+    "_dir-locals")
    (t
     file-name)))
 

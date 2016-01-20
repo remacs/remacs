@@ -1453,7 +1453,7 @@ Do so according to the former subdir alist OLD-SUBDIR-ALIST."
     (define-key map "." 'dired-clean-directory)
     (define-key map "~" 'dired-flag-backup-files)
     ;; Upper case keys (except !) for operating on the marked files
-    (define-key map "A" 'dired-do-search)
+    (define-key map "A" 'dired-do-find-regexp)
     (define-key map "C" 'dired-do-copy)
     (define-key map "B" 'dired-do-byte-compile)
     (define-key map "D" 'dired-do-delete)
@@ -1463,7 +1463,7 @@ Do so according to the former subdir alist OLD-SUBDIR-ALIST."
     (define-key map "M" 'dired-do-chmod)
     (define-key map "O" 'dired-do-chown)
     (define-key map "P" 'dired-do-print)
-    (define-key map "Q" 'dired-do-query-replace-regexp)
+    (define-key map "Q" 'dired-do-find-regexp-and-replace)
     (define-key map "R" 'dired-do-rename)
     (define-key map "S" 'dired-do-symlink)
     (define-key map "T" 'dired-do-touch)

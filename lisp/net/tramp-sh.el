@@ -284,6 +284,15 @@ The string is used in `tramp-methods'.")
     (tramp-remote-shell-args    ("-c"))
     (tramp-connection-timeout   10)))
 ;;;###tramp-autoload
+(add-to-list
+ 'tramp-methods
+ '("sg"
+   (tramp-login-program        "sg")
+   (tramp-login-args           (("-") ("%u")))
+   (tramp-remote-shell         "/bin/sh")
+   (tramp-remote-shell-args    ("-c"))
+   (tramp-connection-timeout   10)))
+;;;###tramp-autoload
 (add-to-list 'tramp-methods
   '("sudo"
     (tramp-login-program        "sudo")
@@ -445,12 +454,17 @@ The string is used in `tramp-methods'.")
   "Default list of (FUNCTION FILE) pairs to be examined for su methods.")
 
 ;;;###tramp-autoload
+(defconst tramp-completion-function-alist-sg
+  '((tramp-parse-etc-group "/etc/group"))
+  "Default list of (FUNCTION FILE) pairs to be examined for sg methods.")
+
+;;;###tramp-autoload
 (defconst tramp-completion-function-alist-putty
   `((tramp-parse-putty
      ,(if (memq system-type '(windows-nt))
 	  "HKEY_CURRENT_USER\\Software\\SimonTatham\\PuTTY\\Sessions"
 	"~/.putty/sessions")))
-  "Default list of (FUNCTION REGISTRY) pairs to be examined for putty sessions.")
+ "Default list of (FUNCTION REGISTRY) pairs to be examined for putty sessions.")
 
 ;;;###tramp-autoload
 (eval-after-load 'tramp
@@ -470,6 +484,7 @@ The string is used in `tramp-methods'.")
      (tramp-set-completion-function "su" tramp-completion-function-alist-su)
      (tramp-set-completion-function "sudo" tramp-completion-function-alist-su)
      (tramp-set-completion-function "ksu" tramp-completion-function-alist-su)
+     (tramp-set-completion-function "sg" tramp-completion-function-alist-sg)
      (tramp-set-completion-function
       "krlogin" tramp-completion-function-alist-rsh)
      (tramp-set-completion-function "plink" tramp-completion-function-alist-ssh)
@@ -5724,5 +5739,7 @@ function cell is returned to be applied on a buffer."
 ;;   rsync).
 ;; * Keep a second connection open for out-of-band methods like scp or
 ;;   rsync.
+;; * Check, whether we could also use "getent passwd" and "getent
+;;   group" for user/group name completion.
 
 ;;; tramp-sh.el ends here

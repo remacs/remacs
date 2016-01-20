@@ -245,11 +245,8 @@ Blank lines separate paragraphs.  Semicolons start comments.
 ;; Font-locking support.
 
 (defun elisp--font-lock-flush-elisp-buffers (&optional file)
-  ;; FIXME: Aren't we only ever called from after-load-functions?
-  ;; Don't flush during load unless called from after-load-functions.
-  ;; In that case, FILE is non-nil.  It's somehow strange that
-  ;; load-in-progress is t when an after-load-function is called since
-  ;; that should run *after* the load...
+  ;; We're only ever called from after-load-functions, load-in-progress can
+  ;; still be t in case of nested loads.
   (when (or (not load-in-progress) file)
     ;; FIXME: If the loaded file did not define any macros, there shouldn't
     ;; be any need to font-lock-flush all the Elisp buffers.

@@ -95,11 +95,6 @@ redisplay proceeded to completion; it could have been preempted by
 newly arriving input.
 @end defun
 
-@defvar pre-redisplay-function
-A function run just before redisplay.  It is called with one argument,
-the set of windows to redisplay.
-@end defvar
-
   Although @code{redisplay} tries immediately to redisplay, it does
 not change how Emacs decides which parts of its frame(s) to redisplay.
 By contrast, the following function adds certain windows to the
@@ -116,6 +111,19 @@ windows displaying that buffer are to be updated.  If @var{object} is
 This function does not do a redisplay immediately; Emacs does that as
 it waits for input, or when the function @code{redisplay} is called.
 @end defun
+
+@defvar pre-redisplay-function
+A function run just before redisplay.  It is called with one argument,
+the set of windows to be redisplayed.  The set can be @code{nil},
+meaning only the selected window, or @code{t}, meaning all the
+windows.
+@end defvar
+
+@defvar pre-redisplay-functions
+This hook is run just before redisplay.  It is called once in each
+window that is about to be redisplayed, with @code{current-buffer} set
+to the buffer displayed in that window.
+@end defvar
 
 @node Truncation
 @section Truncation
@@ -1713,7 +1721,8 @@ invisible, which means that it does not appear on the screen.
 @item intangible
 @kindex intangible @r{(overlay property)}
 The @code{intangible} property on an overlay works just like the
-@code{intangible} text property.  @xref{Special Properties}, for details.
+@code{intangible} text property.  It is obsolete.  @xref{Special
+Properties}, for details.
 
 @item isearch-open-invisible
 This property tells incremental search how to make an invisible overlay

@@ -444,10 +444,8 @@ from the MODE alist ignoring the input argument VALUE."
                    (if (nth 2 variables-file)
                        (car (last (dir-locals--all-files (car variables-file))))
                      (cadr variables-file)))
-                  ;; Try to make a proper file-name.  This doesn't cover all
-                  ;; wildcards, but it covers the default value of `dir-locals-file'.
-                  (t (replace-regexp-in-string
-                      "\\*" "" (replace-regexp-in-string  "\\?" "-" dir-locals-file)))))
+                  ;; Try to make a proper file-name.
+                  (t (concat dir-locals-file ".el"))))
       ;; I can't be bothered to handle this case right now.
       ;; Dir locals were set directly from a class.  You need to
       ;; directly modify the class in dir-locals-class-alist.

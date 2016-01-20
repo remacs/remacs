@@ -259,7 +259,7 @@ language environment LANG-ENV."
 	(with-coding-priority coding-priority
           (detect-coding-region from to)))))
 
-(declare-function internal-char-font "fontset.c" (position &optional ch))
+(declare-function internal-char-font "font.c" (position &optional ch))
 
 ;;;###autoload
 (defun char-displayable-p (char)

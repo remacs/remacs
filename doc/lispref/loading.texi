@@ -73,12 +73,15 @@ To find the file, @code{load} first looks for a file named
 @var{filename} with the extension @samp{.elc} appended.  If such a
 file exists, it is loaded.  If there is no file by that name, then
 @code{load} looks for a file named @file{@var{filename}.el}.  If that
-file exists, it is loaded.  Finally, if neither of those names is
-found, @code{load} looks for a file named @var{filename} with nothing
-appended, and loads it if it exists.  (The @code{load} function is not
-clever about looking at @var{filename}.  In the perverse case of a
-file named @file{foo.el.el}, evaluation of @code{(load "foo.el")} will
-indeed find it.)
+file exists, it is loaded.  If Emacs was compiled with support for
+dynamic modules (@pxref{Dynamic Modules}), @code{load} next looks for
+a file named @file{@var{filename}.@var{ext}}, where @var{ext} is a
+system-dependent file-name extension of shared libraries.  Finally, if
+neither of those names is found, @code{load} looks for a file named
+@var{filename} with nothing appended, and loads it if it exists.  (The
+@code{load} function is not clever about looking at @var{filename}.
+In the perverse case of a file named @file{foo.el.el}, evaluation of
+@code{(load "foo.el")} will indeed find it.)
 
 If Auto Compression mode is enabled, as it is by default, then if
 @code{load} can not find a file, it searches for a compressed version
@@ -100,7 +103,8 @@ being tried.
 If the optional argument @var{must-suffix} is non-@code{nil}, then
 @code{load} insists that the file name used must end in either
 @samp{.el} or @samp{.elc} (possibly extended with a compression
-suffix), unless it contains an explicit directory name.
+suffix) or the shared-library extension, unless it contains an
+explicit directory name.
 
 If the option @code{load-prefer-newer} is non-@code{nil}, then when
 searching suffixes, @code{load} selects whichever version of a file
@@ -202,8 +206,8 @@ This variable specifies an alternate expression-reading function for
 @code{load} and @code{eval-region} to use instead of @code{read}.
 The function should accept one argument, just as @code{read} does.
 
-Normally, the variable's value is @code{nil}, which means those
-functions should use @code{read}.
+By default, this variable's value is @code{read}.  @xref{Input
+Functions}.
 
 Instead of using this variable, it is cleaner to use another, newer
 feature: to pass the function as the @var{read-function} argument to
