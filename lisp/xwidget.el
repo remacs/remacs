@@ -23,9 +23,9 @@
 
 ;;; Commentary:
 ;;
-;; See xwidget.c for more api functions
+;; See xwidget.c for more api functions.
 
-;;TODO this breaks compilation when we dont have xwidgets
+;; TODO this breaks compilation when we don't have xwidgets.
 ;;(require 'xwidget-internal)
 
 ;;; Code:
@@ -75,8 +75,8 @@ Optional argument ARGS usage depends on the xwidget."
 
 (defun xwidget-at (pos)
   "Return xwidget at POS."
-  ;;TODO this function is a bit tedious because the C layer isnt well
-  ;;protected yet and xwidgetp aparently doesnt work yet
+  ;; TODO this function is a bit tedious because the C layer isn't well
+  ;; protected yet and xwidgetp apparently doesn't work yet.
   (let* ((disp (get-text-property pos 'display))
          (xw (car (cdr (cdr  disp)))))
     ;;(if ( xwidgetp  xw) xw nil)
@@ -169,9 +169,9 @@ defaults to the string looking like a url around the cursor position."
     (xwidget-webkit-scroll-backward)))
 
 
-;;the xwidget event needs to go into a higher level handler
-;;since the xwidget can generate an event even if its offscreen
-;;TODO this needs to use callbacks and consider different xw ev types
+;; The xwidget event needs to go into a higher level handler
+;; since the xwidget can generate an event even if it's offscreen.
+;; TODO this needs to use callbacks and consider different xwidget event types.
 (define-key (current-global-map) [xwidget-event] 'xwidget-event-handler)
 (defun xwidget-log ( &rest msg)
   "Log MSG to a buffer."
@@ -241,7 +241,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
 
 (defvar xwidget-webkit-last-session-buffer nil)
 
-(defun  xwidget-webkit-last-session ()
+(defun xwidget-webkit-last-session ()
   "Last active webkit, or nil."
   (if (buffer-live-p xwidget-webkit-last-session-buffer)
       (with-current-buffer xwidget-webkit-last-session-buffer
@@ -249,17 +249,17 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
     nil))
 
 (defun xwidget-webkit-current-session ()
-  "Either the webkit in the current buffer, or the last one used,
-which might be nil."
+  "Either the webkit in the current buffer, or the last one used.
+The latter might be nil."
   (if (xwidget-at 1)
       (xwidget-at 1)
     (xwidget-webkit-last-session)))
 
 (defun xwidget-adjust-size-to-content (xw)
   "Resize XW to content."
-  ;;xwidgets doesnt support widgets that have their own opinions about
-  ;;size well yet this reads the desired size and resizes the emacs
-  ;;allocated area accordingly
+  ;; xwidgets doesn't support widgets that have their own opinions about
+  ;; size well, yet this reads the desired size and resizes the emacs
+  ;; allocated area accordingly.
   (let ((size (xwidget-size-request xw)))
     (xwidget-resize xw (car size) (cadr size))))
 
@@ -288,9 +288,9 @@ function findactiveelement(doc){
 "
 
   "javascript that finds the active element."
-  ;;yes its ugly. because:
-  ;; - there is aparently no way to find the active frame other than recursion
-  ;; - the js "for each" construct missbehaved on the "frames" collection
+  ;; Yes it's ugly, because:
+  ;; - there is apparently no way to find the active frame other than recursion
+  ;; - the js "for each" construct misbehaved on the "frames" collection
   ;; - a window with no frameset still has frames.length == 1, but
   ;; frames[0].document.activeElement != document.activeElement
   ;;TODO the activeelement type needs to be examined, for iframe, etc.
@@ -300,7 +300,7 @@ function findactiveelement(doc){
   "Insert string in the active field in the webkit.
 Argument XW webkit.
 Argument STR string."
-  ;;read out the string in the field first and provide for edit
+  ;; Read out the string in the field first and provide for edit.
   (interactive
    (let* ((xww (xwidget-webkit-current-session))
 
@@ -359,7 +359,7 @@ Argument ELEMENT-NAME is the element name to display in the webkit xwidget."
   ;; This function implements a proof-of-concept for this.  Problems
   ;; remaining: - The selected window is scrolled but this is not
   ;; always correct - This needs to be interfaced into browse-url
-  ;; somehow. the tricky part is that we need to do this in two steps:
+  ;; somehow.  The tricky part is that we need to do this in two steps:
   ;; A: load the base url, wait for load signal to arrive B: navigate
   ;; to the anchor when the base url is finished rendering
 
@@ -424,8 +424,8 @@ Argument ELEMENT-ID is either a name or an element id."
       (xwidget-webkit-adjust-size-to-window)
     (xwidget-webkit-adjust-size-to-content))
   ;; The recenter is intended to correct a visual glitch.
-  ;; It errors out if the buffer isn't visible, but then we dont get the glitch,
-  ;; so silence errors
+  ;; It errors out if the buffer isn't visible, but then we don't get
+  ;; the glitch, so silence errors.
   (ignore-errors
     (recenter-top-bottom))
   )
@@ -437,7 +437,7 @@ Argument ELEMENT-ID is either a name or an element id."
                   (window-pixel-height)))
 
 (defun xwidget-webkit-adjust-size (w h)
-  "Manualy set webkit size.
+  "Manually set webkit size.
 Argument W width.
 Argument H height."
   ;; TODO shouldn't be tied to the webkit xwidget
@@ -495,15 +495,15 @@ Argument H height."
 
 (defun xwidget-webkit-execute-script-rv (xw script &optional default)
   "Same as 'xwidget-webkit-execute-script' but but with return value.
-XW is the webkit instance.  SCRIPT is the script to execut.
+XW is the webkit instance.  SCRIPT is the script to execute.
 DEFAULT is the defaultreturn value."
   ;; Notice the ugly "title" hack.  It is needed because the Webkit
   ;; API at the time of writing didn't support returning values.  This
-  ;; is a wrapper for the title hack so its easy to remove should
+  ;; is a wrapper for the title hack so it's easy to remove should
   ;; Webkit someday support JS return values or we find some other way
   ;; to access the DOM.
 
-  ;; Reset webkit title. Not very nice.
+  ;; Reset webkit title.  Not very nice.
   (let* ((emptytag "titlecantbewhitespaceohthehorror")
          title)
     (xwidget-webkit-execute-script xw (format "document.title=\"%s\";"
@@ -529,7 +529,7 @@ DEFAULT is the defaultreturn value."
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Xwidget plist management(similar to the process plist functions)
+;; Xwidget plist management (similar to the process plist functions)
 
 (defun xwidget-get (xwidget propname)
   "Return the value of XWIDGET' PROPNAME property.
@@ -562,7 +562,7 @@ It can be retrieved with `(xwidget-get XWIDGET PROPNAME)'."
   ;; xwidget instances.
   ;; This function tries to implement a workaround should it occur again.
   (interactive)
-  ;; Kill xviews who should have been deleted but stull linger.
+  ;; Kill xviews that should have been deleted but still linger.
   (xwidget-delete-zombies)
   ;; Redraw display otherwise ghost of zombies will remain to haunt the screen
   (redraw-display))
@@ -573,7 +573,7 @@ It can be retrieved with `(xwidget-get XWIDGET PROPNAME)'."
     (add-hook 'window-configuration-change-hook 'xwidget-delete-zombies))
 
 (defun xwidget-kill-buffer-query-function ()
-  "Ask beforek illing a buffer that has xwidgets."
+  "Ask before killing a buffer that has xwidgets."
   (let ((xwidgets (get-buffer-xwidgets (current-buffer))))
     (or (not xwidgets)
         (not (memq t (mapcar 'xwidget-query-on-exit-flag xwidgets)))
