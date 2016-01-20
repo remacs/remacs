@@ -102,7 +102,7 @@
 
 (eval-and-compile
   (defconst ruby-here-doc-beg-re
-  "\\(<\\)<\\(-\\)?\\(\\([a-zA-Z0-9_]+\\)\\|[\"]\\([^\"]+\\)[\"]\\|[']\\([^']+\\)[']\\)"
+  "\\(<\\)<\\([~-]\\)?\\(\\([a-zA-Z0-9_]+\\)\\|[\"]\\([^\"]+\\)[\"]\\|[']\\([^']+\\)[']\\)"
   "Regexp to match the beginning of a heredoc.")
 
   (defconst ruby-expression-expansion-re
