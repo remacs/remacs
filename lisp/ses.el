@@ -302,9 +302,9 @@ default printer and then modify its output.")
       ses--numcols ses--numrows ses--symbolic-formulas
       ses--data-marker ses--params-marker (ses--Dijkstra-attempt-nb . 0)
       ses--Dijkstra-weight-bound
-      ;; This list is useful to speed-up clean-up of symbols when
-      ;; an area containing renamed cell is deleted.
-      ses--renamed-cell-symb-list
+      ;; This list is useful for clean-up of symbols when an area
+      ;; containing renamed cell is deleted.
+      ses--in-killing-named-cell-list
       ;; Global variables that we override
       next-line-add-newlines transient-mark-mode)
     "Buffer-local variables used by SES."))
@@ -445,6 +445,44 @@ is nil if SYM is not a symbol that names a cell."
 		  (and (consp rowcol)
 		       (ses-get-cell (car rowcol) (cdr rowcol)))))))
 
+(defun ses-plist-delq (plist prop)
+  "Return PLIST after deletion of proprerty/value pair.
+
+PROP is the symbol identifying the property/value pair. PLIST may
+be modified by border effect."
+  (cond
+   ((null plist) nil)
+   ((eq (car plist) prop) (cddr plist))
+   (t (let* ((plist-1 (cdr plist))
+             (plist-2 (cdr plist-1)))
+        (setcdr plist-1 (ses-plist-delq plist-2 prop))
+        plist))))
+
+(defvar ses--ses-buffer-list nil "A list of buffers containing a SES spreadsheet.")
+
+(defun ses--unbind-cell-name (name)
+  "Make NAME non longer a renamed cell name."
+  (remhash name ses--named-cell-hashmap)
+  (kill-local-variable name)
+  ;; remove symbol property 'ses-cell from symbol NAME, unless this
+  ;; symbol is also a renamed cell name in another SES buffer.
+  (let (used-elsewhere (buffer-list ses--ses-buffer-list) buf)
+    (while buffer-list
+      (setq buf (pop buffer-list))
+      (cond
+       ((eq buf (current-buffer)))
+       ;; This case should not happen, some SES buffer has been
+       ;; killed without the ses-killbuffer-hook being called.
+       ((null (buffer-live-p buf))
+        ;; Silently repair ses--ses-buffer-list
+        (setq ses--ses-buffer-list (delq buf ses--ses-buffer-list)))
+       (t
+        (with-current-buffer buf
+          (when (gethash name ses--named-cell-hashmap)
+            (setq used-elsewhere t
+                  buffer-list nil))))))
+    (unless used-elsewhere
+      (setplist name (ses-plist-delq (symbol-plist name) 'ses-cell))) ))
 
 (defmacro ses--letref (vars place &rest body)
   (declare (indent 2) (debug (sexp form &rest body)))
@@ -1480,8 +1518,10 @@ by (ROWINCR,COLINCR)."
 	    col (+ col colincr))
       (if (and (>= row startrow) (>= col startcol)
 	       (< row ses--numrows) (< col ses--numcols))
-	  ;;Relocate this variable
-	  (ses-create-cell-symbol row col)
+	  ;;Relocate this variable, unless it is a named cell
+          (if (eq (get sym 'ses-cell) :ses-named)
+              sym
+            (ses-create-cell-symbol row col))
 	;;Delete reference to a deleted cell
 	nil))))
 
@@ -1498,11 +1538,11 @@ removed.  Example:
 Sets `ses-relocate-return' to `delete' if cell-references were removed."
   (let (rowcol result)
     (if (or (atom formula) (eq (car formula) 'quote))
-	(if (and (setq rowcol (ses-sym-rowcol formula))
-		 (string-match-p "\\`[A-Z]+[0-9]+\\'" (symbol-name formula)))
+	(if (setq rowcol (ses-sym-rowcol formula))
 	    (ses-relocate-symbol formula rowcol
 				 startrow startcol rowincr colincr)
-	  formula) ; Pass through as-is.
+	  ;; Constants pass through as-is.
+	  formula)
       (dolist (cur formula)
 	(setq rowcol (ses-sym-rowcol cur))
 	(cond
@@ -1531,7 +1571,7 @@ Sets `ses-relocate-return' to `delete' if cell-references were removed."
       (nreverse result))))
 
 (defun ses-relocate-range (range startrow startcol rowincr colincr)
-  "Relocate one RANGE, of the form (SES-RANGE MIN MAX).  Cells starting
+  "Relocate one RANGE, of the form (ses-range MIN MAX).  Cells starting
 at (STARTROW,STARTCOL) are being shifted by (ROWINCR,COLINCR).  Result is the
 new range, or nil if the entire range is deleted.  If new rows are being added
 just beyond the end of a row range, or new columns just beyond a column range,
@@ -1637,14 +1677,15 @@ to each symbol."
 		      sym
 		      (>= xrow 0)
 		      (>= xcol 0)
-		      (null (eq sym
-				(ses-create-cell-symbol xrow xcol))))
+                      ;; the following could also be tested as
+		      ;; (null (eq sym (ses-create-cell-symbol xrow xcol)))
+                      (eq (get sym 'ses-cell) :ses-named))
 		     ;; This is a renamed cell, do not update the cell
 		     ;; name, but just update the coordinate property.
-		     (put sym 'ses-cell (cons row col))
+                     (puthash sym (cons row col) ses--named-cell-hashmap)
 		   (ses-set-cell row col 'symbol
 				 (setq sym (ses-create-cell-symbol row col)))
-		   (unless (and (boundp sym) (local-variable-p sym))
+		   (unless (local-variable-if-set-p sym)
 		     (set (make-local-variable sym) nil)
 		     (put sym 'ses-cell (cons row col)))))) )))
     ;; Relocate the cell values.
@@ -1659,16 +1700,22 @@ to each symbol."
 	    (setq mycol  (+ col mincol)
 		  xrow   (- myrow rowincr)
 		  xcol   (- mycol colincr))
-	    (let ((sym (ses-cell-symbol myrow mycol))
-		  (xsym (ses-create-cell-symbol xrow xcol)))
-	      ;; Make the value relocation only when if the cell is not
-	      ;; a renamed cell.  Otherwise this is not needed.
-	      (and (eq sym xsym)
-		  (ses-set-cell myrow mycol 'value
-		    (if (and (< xrow ses--numrows) (< xcol ses--numcols))
-			(ses-cell-value xrow xcol)
-		      ;;Cell is off the end of the array
-		      (symbol-value xsym))))))))
+	    (let ((sym (ses-cell-symbol myrow mycol)))
+	      ;; We don't need to relocate value for renamed cells, as they keep the same
+	      ;; symbol.
+	      (unless (eq (get sym 'ses-cell) :ses-named)
+		(ses-set-cell myrow mycol 'value
+			      (if (and (< xrow ses--numrows) (< xcol ses--numcols))
+				  (ses-cell-value xrow xcol)
+				;; Cell is off the end of the array.
+				(symbol-value (ses-create-cell-symbol xrow xcol))))))))
+	(when ses--in-killing-named-cell-list
+	  (message "Unbinding killed named cell symbols...")
+	  (setq ses-start-time (float-time))
+	  (while ses--in-killing-named-cell-list
+	    (ses--time-check "Unbinding killed named cell symbols... (%d left)" (length ses--in-killing-named-cell-list))
+	    (ses--unbind-cell-name (pop ses--in-killing-named-cell-list)) )
+	  (message nil)) )
 
        ((and (wholenump rowincr) (wholenump colincr))
 	;; Insertion of rows and/or columns.  Run the loop backwards.
@@ -1926,6 +1973,11 @@ Delete overlays, remove special text properties."
     (unless was-modified
       (restore-buffer-modified-p nil))))
 
+(defun ses-killbuffer-hook ()
+  "Hook when the current buffer is killed."
+  (setq ses--ses-buffer-list (delq (current-buffer) ses--ses-buffer-list)))
+
+
 ;;;###autoload
 (defun ses-mode ()
   "Major mode for Simple Emacs Spreadsheet.
@@ -1980,6 +2032,8 @@ formula:
 	  ;; calculation).
 	  indent-tabs-mode	 nil)
     (1value (add-hook 'change-major-mode-hook 'ses-cleanup nil t))
+    (1value (add-hook 'kill-buffer-hook 'ses-killbuffer-hook nil t))
+    (cl-pushnew (current-buffer) ses--ses-buffer-list :test 'eq)
     ;; This makes revert impossible if the buffer is read-only.
     ;; (1value (add-hook 'before-revert-hook 'ses-cleanup nil t))
     (setq header-line-format   '(:eval (progn
@@ -2626,6 +2680,20 @@ With prefix, deletes COUNT rows starting from the current one."
     ;;Delete lines from cell data area
     (ses-goto-data row 0)
     (ses-delete-line (* count (1+ ses--numcols)))
+    ;; Collect named cells in the deleted rows, in order to clean the
+    ;; symbols out of the named cell hash map, once the deletion is
+    ;; complete
+    (unless (null ses--in-killing-named-cell-list)
+      (warn "Internal error, `ses--in-killing-named-cell-list' should be nil, but is equal to %S"
+      ses--in-killing-named-cell-list)
+      (setq ses--in-killing-named-cell-list nil))
+    (dotimes-with-progress-reporter (nrow count)
+	"Collecting named cell in deleted rows..."
+      (dotimes (col ses--numcols)
+	(let* ((row (+ row nrow))
+	       (sym (ses-cell-symbol row col)))
+	  (and (eq (get sym 'ses-cell) :ses-named)
+	       (push sym ses--in-killing-named-cell-list)))))
     ;;Relocate variables and formulas
     (ses-set-with-undo 'ses--cells (ses-vector-delete ses--cells row count))
     (ses-relocate-all row 0 (- count) 0)
@@ -2723,10 +2791,22 @@ With prefix, deletes COUNT columns starting from the current one."
     (ses-begin-change)
     (ses-set-parameter 'ses--numcols (- ses--numcols count))
     (ses-adjust-print-width col (- width))
+    ;; Prepare collecting named cells in the deleted columns, in order
+    ;; to clean the symbols out of the named cell hash map, once the
+    ;; deletion is complete
+    (unless (null ses--in-killing-named-cell-list)
+      (warn "Internal error, `ses--in-killing-named-cell-list' should be nil, but is equal to %S"
+      ses--in-killing-named-cell-list)
+      (setq ses--in-killing-named-cell-list nil))
     (dotimes-with-progress-reporter (row ses--numrows) "Deleting column..."
       ;;Delete lines from cell data area
       (ses-goto-data row col)
       (ses-delete-line count)
+      ;; Collect named cells in the deleted columns within this row
+      (dotimes (ncol count)
+	(let ((sym (ses-cell-symbol row (+ col ncol))))
+	  (and (eq (get sym 'ses-cell) :ses-named)
+	       (push sym ses--in-killing-named-cell-list))))
       ;;Delete cells.  Check if deletion area begins or ends with a skip.
       (if (or (eq (ses-cell-value row col) '*skip*)
 	      (and (< col ses--numcols)
@@ -3403,8 +3483,7 @@ highlighted range in the spreadsheet."
 	(setf (ses-cell-references xcell)
               (cons new-name (delq sym
                                    (ses-cell-references xcell))))))
-    (push new-name ses--renamed-cell-symb-list)
-    (set new-name (symbol-value sym))
+    (set (make-local-variable new-name) (symbol-value sym))
     (setf (ses-cell--symbol cell) new-name)
     (makunbound sym)
     (and curcell (setq ses--curcell new-name))
@@ -3412,12 +3491,7 @@ highlighted range in the spreadsheet."
       (or curcell (ses-goto-print row col))
       (let* ((pos (point))
              (inhibit-read-only t)
-             (end (progn
-                    (move-to-column (+ (current-column) (ses-col-width col)))
-                    (if (eolp)
-                        (+ pos (ses-col-width col) 1)
-                      (forward-char)
-                      (point)))))
+             (end  (next-single-property-change pos 'cursor-intangible)))
         (put-text-property pos end 'cursor-intangible new-name)))
     ;; Update the cell name in the mode-line.
     (force-mode-line-update)))
