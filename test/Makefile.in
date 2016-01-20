@@ -164,7 +164,7 @@ check-doit: ${LOGFILES}
 .PHONY: mostlyclean clean bootstrap-clean distclean maintainer-clean
 
 mostlyclean:
-	-@for f in *.log; do test ! -f $$f || mv $$f $$f~; done
+	-@for f in ${LOGFILES}; do test ! -f $$f || mv $$f $$f~; done
 
 clean:
 	-rm -f ${LOGFILES} ${LOGSAVEFILES}
