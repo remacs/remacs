@@ -59,6 +59,9 @@ in these situations.
 
 *** The kqueue library is integrated for *BSD and Mac OS X machines.
 
+---
+** Support for non-string values of `time-stamp-format' has been removed.
+
 ** Tramp
 
 *** New connection method "sg", which allows to edit files under
