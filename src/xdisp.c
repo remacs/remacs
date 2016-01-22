@@ -18828,7 +18828,11 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
   else if (glyph->type == XWIDGET_GLYPH)
     {
       fprintf (stderr,
+#ifdef HAVE_XWIDGETS
 	       "  %5d %4c %6d %c %3d 0x%05x %c %4d %1.1d%1.1d\n",
+#else
+	       "  %5d %4c %6d %c %3d %c %4d %1.1d%1.1d\n",
+#endif
 	       glyph - row->glyphs[TEXT_AREA],
 	       'X',
 	       glyph->charpos,
@@ -18838,7 +18842,9 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
 		   ? 'S'
 		   : '-')),
 	       glyph->pixel_width,
+#ifdef HAVE_XWIDGETS
 	       glyph->u.xwidget,
+#endif
 	       '.',
 	       glyph->face_id,
 	       glyph->left_box_line_p,
