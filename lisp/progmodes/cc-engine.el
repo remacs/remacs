@@ -6808,6 +6808,110 @@ comment at the start of cc-engine.el for more info."
 	;; This identifier is bound only in the inner let.
 	'(setq start id-start))))
 
+(defun c-forward-declarator (&optional limit)
+  ;; Assuming point is at the start of a declarator, move forward over it,
+  ;; leaving point at the next token after it (e.g. a ) or a ; or a ,).
+  ;;
+  ;; Return a list (ID-START ID-END BRACKETS-AFTER-ID GOT-INIT), where ID-START and
+  ;; ID-END are the bounds of the declarator's identifier, and
+  ;; BRACKETS-AFTER-ID is non-nil if a [...] pair is present after the id.
+  ;; GOT-INIT is non-nil when the declarator is followed by "=" or "(".
+  ;;
+  ;; If no declarator is found, leave point unmoved and return nil.  LIMIT is
+  ;; an optional limit for forward searching.
+  ;;
+  ;; Note that the global variable `c-last-identifier-range' is written to, so
+  ;; the caller should bind it if necessary.
+
+  ;; Inside the following "condition form", we move forward over the
+  ;; declarator's identifier up as far as any opening bracket (for array
+  ;; size) or paren (for parameters of function-type) or brace (for
+  ;; array/struct initialization) or "=" or terminating delimiter
+  ;; (e.g. "," or ";" or "}").
+  (let ((here (point))
+	id-start id-end brackets-after-id paren-depth)
+    (or limit (setq limit (point-max)))
+    (if	(and
+	 (< (point) limit)
+
+	 ;; The following form moves forward over the declarator's
+	 ;; identifier (and what precedes it), returning t.  If there
+	 ;; wasn't one, it returns nil.
+	 (let (got-identifier)
+	   (setq paren-depth 0)
+	   ;; Skip over type decl prefix operators, one for each iteration
+	   ;; of the while.  These are, e.g. "*" in "int *foo" or "(" and
+	   ;; "*" in "int (*foo) (void)" (Note similar code in
+	   ;; `c-forward-decl-or-cast-1'.)
+	   (while (and (looking-at c-type-decl-prefix-key)
+		       (if (and (c-major-mode-is 'c++-mode)
+				(match-beginning 3))
+			   ;; If the third submatch matches in C++ then
+			   ;; we're looking at an identifier that's a
+			   ;; prefix only if it specifies a member pointer.
+			   (progn
+			     (setq id-start (point))
+			     (c-forward-name)
+			     (if (looking-at "\\(::\\)")
+				 ;; We only check for a trailing "::" and
+				 ;; let the "*" that should follow be
+				 ;; matched in the next round.
+				 t
+			       ;; It turned out to be the real identifier,
+			       ;; so flag that and stop.
+			       (setq got-identifier t)
+			       nil))
+			 t))
+	     (if (eq (char-after) ?\()
+		 (progn
+		   (setq paren-depth (1+ paren-depth))
+		   (forward-char))
+	       (goto-char (match-end 1)))
+	     (c-forward-syntactic-ws))
+
+	   ;; If we haven't passed the identifier already, do it now.
+	   (unless got-identifier
+	     (setq id-start (point))
+	     (c-forward-name))
+	   (prog1
+	       (/= (point) here)
+	     (save-excursion
+	       (c-backward-syntactic-ws)
+	       (setq id-end (point)))))
+
+	 ;; Skip out of the parens surrounding the identifier.  If closing
+	 ;; parens are missing, this form returns nil.
+	 (or (= paren-depth 0)
+	     (c-safe (goto-char (scan-lists (point) 1 paren-depth))))
+
+	 (<= (point) limit)
+
+	 ;; Skip over any trailing bit, such as "__attribute__".
+	 (progn
+	   (when (looking-at c-decl-hangon-key)
+	     (c-forward-keyword-clause 1))
+	   (<= (point) limit))
+
+	 ;; Search syntactically to the end of the declarator (";",
+	 ;; ",", a closing paren, eob etc) or to the beginning of an
+	 ;; initializer or function prototype ("=" or "\\s\(").
+	 ;; Note that square brackets are now not also treated as
+	 ;; initializers, since this broke when there were also
+	 ;; initializing brace lists.
+	 (let (found)
+	   (while
+	       (and (setq found (c-syntactic-re-search-forward
+				 "[;,]\\|\\s)\\|\\'\\|\\(=\\|\\s(\\)" limit t t))
+		    (eq (char-before) ?\[)
+		    (c-go-up-list-forward))
+	     (setq brackets-after-id t))
+	   (backward-char)
+	   found))
+	(list id-start id-end brackets-after-id (match-beginning 1))
+
+      (goto-char here)
+      nil)))
+
 (defun c-forward-decl-or-cast-1 (preceding-token-end context last-cast-end)
   ;; Move forward over a declaration or a cast if at the start of one.
   ;; The point is assumed to be at the start of some token.  Nil is
@@ -8162,14 +8266,14 @@ comment at the start of cc-engine.el for more info."
   ;; Return the position of the first argument declaration if point is
   ;; inside a K&R style argument declaration list, nil otherwise.
   ;; `c-recognize-knr-p' is not checked.  If LIM is non-nil, it's a
-  ;; position that bounds the backward search for the argument list.
+  ;; position that bounds the backward search for the argument list.  This
+  ;; function doesn't move point.
   ;;
   ;; Point must be within a possible K&R region, e.g. just before a top-level
   ;; "{".  It must be outside of parens and brackets.  The test can return
   ;; false positives otherwise.
   ;;
   ;; This function might do hidden buffer changes.
-
   (save-excursion
     (save-restriction
       ;; If we're in a macro, our search range is restricted to it.  Narrow to
@@ -8178,8 +8282,12 @@ comment at the start of cc-engine.el for more info."
 	     (macro-end (save-excursion (and macro-start (c-end-of-macro) (point))))
 	     (low-lim (max (or lim (point-min))   (or macro-start (point-min))))
 	     before-lparen after-rparen
-	     (pp-count-out 20))	; Max number of paren/brace constructs before
+	     (here (point))
+	     (pp-count-out 20)	; Max number of paren/brace constructs before
 				; we give up
+	     ids	      ; List of identifiers in the parenthesised list.
+	     id-start after-prec-token decl-or-cast decl-res
+	     c-last-identifier-range identifier-ok)
 	(narrow-to-region low-lim (or macro-end (point-max)))
 
 	;; Search backwards for the defun's argument list.  We give up if we
@@ -8198,8 +8306,12 @@ comment at the start of cc-engine.el for more info."
 	;; int foo (bar, baz, yuk)
 	;;     int bar [] ;
 	;;     int (*baz) (my_type) ;
-	;;     int (*) (void) (*yuk) (void) ;
+	;;     int (*(* yuk) (void)) (void) ;
 	;; {
+	;;
+	;; Additionally, for a knr list to be recognized:
+	;; o - The identifier of each deeclarator up to and including the
+	;;   one "near" point must be contained in the arg list.
 
 	(catch 'knr
 	  (while (> pp-count-out 0) ; go back one paren/bracket pair each time.
@@ -8245,21 +8357,58 @@ comment at the start of cc-engine.el for more info."
 		       (goto-char before-lparen)
 		       (c-forward-token-2) ; to first token inside parens
 		       (and
-			(c-on-identifier)
-			(c-forward-token-2)
+			(setq id-start (c-on-identifier)) ; Must be at least one.
 			(catch 'id-list
-			  (while (eq (char-after) ?\,)
+			  (while
+			      (progn
+				(forward-char)
+				(c-end-of-current-token)
+				(push (buffer-substring-no-properties id-start
+								      (point))
+				      ids)
+				(c-forward-syntactic-ws)
+				(eq (char-after) ?\,))
 			    (c-forward-token-2)
-			    (unless (c-on-identifier) (throw 'id-list nil))
-			    (c-forward-token-2))
-			  (eq (char-after) ?\))))))
+			    (unless (setq id-start (c-on-identifier))
+			      (throw 'id-list nil)))
+			  (eq (char-after) ?\)))))
 
+		     ;; Are all the identifiers in the k&r list up to the
+		     ;; current one also in the argument list?
+		     (progn
+		       (forward-char)	; over the )
+		       (setq after-prec-token after-rparen)
+		       (c-forward-syntactic-ws)
+		       (while (and
+			       (or (consp (setq decl-or-cast
+						(c-forward-decl-or-cast-1
+						 after-prec-token
+						 nil ; Or 'arglist ???
+						 nil)))
+				   (progn
+				     (goto-char after-prec-token)
+				     (c-forward-syntactic-ws)
+				     (setq identifier-ok (eq (char-after) ?{))
+				     nil))
+			       (eq (char-after) ?\;)
+			       (setq after-prec-token (1+ (point)))
+			       (goto-char (car decl-or-cast))
+			       (setq decl-res (c-forward-declarator))
+			       (setq identifier-ok
+				     (member (buffer-substring-no-properties
+					(car decl-res) (cadr decl-res))
+				       ids))
+			       (progn
+				 (goto-char after-prec-token)
+				 (prog1 (< (point) here)
+				   (c-forward-syntactic-ws))))
+			 (setq identifier-ok nil))
+		       identifier-ok))
 		    ;; ...Yes.  We've identified the function's argument list.
 		    (throw 'knr
 			   (progn (goto-char after-rparen)
 				  (c-forward-syntactic-ws)
 				  (point)))
-
 		  ;; ...No.  The current parens aren't the function's arg list.
 		  (goto-char before-lparen))
 

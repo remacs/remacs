@@ -1006,6 +1006,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;;(message "c-font-lock-declarators from %s to %s" (point) limit)
   (c-fontify-types-and-refs
       ((pos (point)) next-pos id-start id-end
+       decl-res
        paren-depth
        id-face got-init
        c-last-identifier-range
@@ -1015,93 +1016,15 @@ casts and declarations are fontified.  Used on level 2 and higher."
     ;; The following `while' fontifies a single declarator id each time round.
     ;; It loops only when LIST is non-nil.
     (while
-	;; Inside the following "condition form", we move forward over the
-	;; declarator's identifier up as far as any opening bracket (for array
-	;; size) or paren (for parameters of function-type) or brace (for
-	;; array/struct initialization) or "=" or terminating delimiter
-	;; (e.g. "," or ";" or "}").
-	(and
-	    pos
-	    (< (point) limit)
-
-	    ;; The following form moves forward over the declarator's
-	    ;; identifier (and what precedes it), returning t.  If there
-	    ;; wasn't one, it returns nil, terminating the `while'.
-	    (let (got-identifier)
-	      (setq paren-depth 0)
-	      ;; Skip over type decl prefix operators, one for each iteration
-	      ;; of the while.  These are, e.g. "*" in "int *foo" or "(" and
-	      ;; "*" in "int (*foo) (void)" (Note similar code in
-	      ;; `c-forward-decl-or-cast-1'.)
-	      (while (and (looking-at c-type-decl-prefix-key)
-			  (if (and (c-major-mode-is 'c++-mode)
-				   (match-beginning 3))
-			      ;; If the third submatch matches in C++ then
-			      ;; we're looking at an identifier that's a
-			      ;; prefix only if it specifies a member pointer.
-			      (progn
-				(setq id-start (point))
-				(c-forward-name)
-				(if (looking-at "\\(::\\)")
-				    ;; We only check for a trailing "::" and
-				    ;; let the "*" that should follow be
-				    ;; matched in the next round.
-				    t
-				  ;; It turned out to be the real identifier,
-				  ;; so flag that and stop.
-				  (setq got-identifier t)
-				  nil))
-			    t))
-		(if (eq (char-after) ?\()
-		    (progn
-		      (setq paren-depth (1+ paren-depth))
-		      (forward-char))
-		  (goto-char (match-end 1)))
-		(c-forward-syntactic-ws))
-
-	      ;; If we haven't passed the identifier already, do it now.
-	      (unless got-identifier
-		(setq id-start (point))
-		(c-forward-name))
-	      (setq id-end (point))
-
-	      (/= id-end pos))
-
-	    ;; Skip out of the parens surrounding the identifier.  If closing
-	    ;; parens are missing, this form returns nil.
-	    (or (= paren-depth 0)
-		(c-safe (goto-char (scan-lists (point) 1 paren-depth))))
-
-	    (<= (point) limit)
-
-	    ;; Skip over any trailing bit, such as "__attribute__".
-	    (progn
-	      (when (looking-at c-decl-hangon-key)
-		(c-forward-keyword-clause 1))
-	      (<= (point) limit))
-
-	    ;; Search syntactically to the end of the declarator (";",
-	    ;; ",", a closing paren, eob etc) or to the beginning of an
-	    ;; initializer or function prototype ("=" or "\\s(").
-	    ;; Note that square brackets are now not also treated as
-	    ;; initializers, since this broke when there were also
-	    ;; initializing brace lists.
-	    (let (found)
-	      (while
-		  (and (setq found (c-syntactic-re-search-forward
-			     "[;,]\\|\\s)\\|\\'\\|\\(=\\|\\s(\\)" limit t t))
-		       (eq (char-before) ?\[)
-		       (c-go-up-list-forward))
-		     (setq brackets-after-id t))
-	      found))
-
-      (setq next-pos (match-beginning 0)
-	    id-face (if (and (eq (char-after next-pos) ?\()
-			     (not brackets-after-id))
+	(and pos (setq decl-res (c-forward-declarator limit)))
+      (setq next-pos (point)
+	    id-start (car decl-res)
+	    id-face (if (and (eq (char-after) ?\()
+			     (not (car (cddr decl-res)))) ; brackets-after-id
 			'font-lock-function-name-face
 		      'font-lock-variable-name-face)
-	    got-init (and (match-beginning 1)
-			  (char-after (match-beginning 1))))
+	    got-init (and (cadr (cddr decl-res)) ; got-init
+			  (char-after)))
 
       (if types
 	  ;; Register and fontify the identifier as a type.
