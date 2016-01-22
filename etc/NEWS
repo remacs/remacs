@@ -64,6 +64,10 @@ If gnustep-config is not available, the old heuristics are used.
 unless gfile is explicitly requested via --with-file-notification='gfile'.
 
 ---
+** 'configure' detects the kqueue file notification library on *BSD
+and Mac OS X machines.
+
+---
 ** The configure option '--with-pkg-config-prog' has been removed.
 Use './configure PKG_CONFIG=/full/name/of/pkg-config' if you need to.
 
@@ -1119,6 +1123,9 @@ be added to the archive.
 notifications, if Emacs is compiled with file notification support.
 
 ** File Notifications
+
++++
+*** The kqueue library is integrated for *BSD and Mac OS X machines.
 
 +++
 *** The new event `stopped' signals, that a file notification watch is

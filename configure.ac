@@ -356,17 +356,18 @@ OPTION_DEFAULT_ON([zlib],[don't compile with zlib decompression support])
 OPTION_DEFAULT_OFF([modules],[compile with dynamic modules support])
 
 AC_ARG_WITH([file-notification],[AS_HELP_STRING([--with-file-notification=LIB],
- [use a file notification library (LIB one of: yes, gfile, inotify, w32, no)])],
+ [use a file notification library (LIB one of: yes, inotify, kqueue, gfile, w32, no)])],
  [ case "${withval}" in
     y | ye | yes )	val=yes ;;
     n | no )		val=no  ;;
-    g | gf | gfi | gfil | gfile )	val=gfile ;;
     i | in | ino | inot | inoti | inotif | inotify )	val=inotify ;;
+    k | kq | kqu | kque | kqueu | kqueue )	val=kqueue ;;
+    g | gf | gfi | gfil | gfile )	val=gfile ;;
     w | w3 | w32 )	val=w32 ;;
     * ) AC_MSG_ERROR(['--with-file-notification=$withval' is invalid;
-this option's value should be 'yes', 'no', 'gfile', 'inotify' or 'w32'.
+this option's value should be 'yes', 'no', 'inotify', 'kqueue', 'gfile' or 'w32'.
 'yes' is a synonym for 'w32' on MS-Windows, for 'no' on Nextstep,
-otherwise for the first of 'inotify' or 'gfile' that is usable.])
+otherwise for the first of 'inotify', 'kqueue' or 'gfile' that is usable.])
     ;;
    esac
    with_file_notification=$val
@@ -2712,12 +2713,6 @@ AC_SUBST(LIBGNUTLS_CFLAGS)
 NOTIFY_OBJ=
 NOTIFY_SUMMARY=no
 
-dnl FIXME?  Don't auto-detect on NS, but do allow someone to specify
-dnl a particular library.  This doesn't make much sense?
-if test "${HAVE_NS}" = yes && test ${with_file_notification} = yes; then
-  with_file_notification=no
-fi
-
 dnl MS Windows native file monitor is available for mingw32 only.
 case $with_file_notification,$opsys in
   w32,cygwin)
@@ -2748,16 +2743,44 @@ case $with_file_notification,$NOTIFY_OBJ in
     fi ;;
 esac
 
+dnl kqueue is available on BSD-like systems.
+case $with_file_notification,$NOTIFY_OBJ in
+  kqueue,* | yes,)
+    EMACS_CHECK_MODULES([KQUEUE], [libkqueue])
+    if test "$HAVE_KQUEUE" = "yes"; then
+       AC_DEFINE(HAVE_KQUEUE, 1, [Define to 1 to use kqueue.])
+       CPPFLAGS="$CPPFLAGS -I/usr/include/kqueue"
+       NOTIFY_CFLAGS=$KQUEUE_CFLAGS
+       NOTIFY_LIBS=$KQUEUE_LIBS
+       NOTIFY_OBJ=kqueue.o
+       NOTIFY_SUMMARY="yes -lkqueue"
+    else
+       AC_SEARCH_LIBS(kqueue, [])
+       if test "$ac_cv_search_kqueue" != no; then
+         AC_DEFINE(HAVE_KQUEUE, 1, [Define to 1 to use kqueue.])
+	 NOTIFY_OBJ=kqueue.o
+	 NOTIFY_SUMMARY="yes (kqueue)"
+       fi
+    fi ;;
+esac
+
 dnl g_file_monitor exists since glib 2.18.  G_FILE_MONITOR_EVENT_MOVED
 dnl has been added in glib 2.24.  It has been tested under
 dnl GNU/Linux only.
 case $with_file_notification,$NOTIFY_OBJ in
   gfile,* | yes,)
-    EMACS_CHECK_MODULES([GFILENOTIFY], [gio-2.0 >= 2.24])
-    if test "$HAVE_GFILENOTIFY" = "yes"; then
-       AC_DEFINE(HAVE_GFILENOTIFY, 1, [Define to 1 if using GFile.])
-       NOTIFY_OBJ=gfilenotify.o
-       NOTIFY_SUMMARY="yes -lgio (gfile)"
+    if test "${HAVE_NS}" = yes; then
+       AC_MSG_ERROR(['--with-file-notification=gfile' is not supported in NextStep builds.
+Consider kqueue instead.])
+    else
+       EMACS_CHECK_MODULES([GFILENOTIFY], [gio-2.0 >= 2.24])
+       if test "$HAVE_GFILENOTIFY" = "yes"; then
+	  AC_DEFINE(HAVE_GFILENOTIFY, 1, [Define to 1 if using GFile.])
+	  NOTIFY_CFLAGS=$GFILENOTIFY_CFLAGS
+	  NOTIFY_LIBS=$GFILENOTIFY_LIBS
+	  NOTIFY_OBJ=gfilenotify.o
+	  NOTIFY_SUMMARY="yes -lgio (gfile)"
+       fi
     fi ;;
 esac
 
@@ -2769,9 +2792,9 @@ esac
 if test -n "$NOTIFY_OBJ"; then
    AC_DEFINE(USE_FILE_NOTIFY, 1, [Define to 1 if using file notifications.])
 fi
+AC_SUBST(NOTIFY_CFLAGS)
+AC_SUBST(NOTIFY_LIBS)
 AC_SUBST(NOTIFY_OBJ)
-AC_SUBST(GFILENOTIFY_CFLAGS)
-AC_SUBST(GFILENOTIFY_LIBS)
 
 dnl Do not put whitespace before the #include statements below.
 dnl Older compilers (eg sunos4 cc) choke on it.
@@ -4141,8 +4164,8 @@ OLDCFLAGS="$CFLAGS"
 OLDLIBS="$LIBS"
 CFLAGS="$CFLAGS $GTK_CFLAGS $RSVG_CFLAGS $DBUS_CFLAGS $SETTINGS_CFLAGS"
 LIBS="$LIBS $GTK_LIBS $RSVG_LIBS $DBUS_LIBS $SETTINGS_LIBS"
-CFLAGS="$CFLAGS $GFILENOTIFY_CFLAGS $CAIRO_CFLAGS"
-LIBS="$LIBS $GFILENOTIFY_LIBS $CAIRO_LIBS"
+CFLAGS="$CFLAGS $NOTIFY_CFLAGS $CAIRO_CFLAGS"
+LIBS="$LIBS $NOTIFY_LIBS $CAIRO_LIBS"
 AC_MSG_CHECKING([whether GLib is linked in])
 AC_LINK_IFELSE([AC_LANG_PROGRAM(
 	[[#include <glib.h>
