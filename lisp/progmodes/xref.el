@@ -861,7 +861,13 @@ tools are used, and when."
   (cl-assert (directory-name-p dir))
   (require 'semantic/symref)
   (defvar semantic-symref-tool)
-  (let* ((default-directory dir)
+
+  ;; Some symref backends use `ede-project-root-directory' as the root
+  ;; directory for the search, rather than `default-directory'. Since
+  ;; the caller has specified `dir', we bind `ede-minor-mode' to nil
+  ;; to force the backend to use `default-directory'.
+  (let* ((ede-minor-mode nil)
+         (default-directory dir)
          (semantic-symref-tool 'detect)
          (res (semantic-symref-find-references-by-name symbol 'subdirs))
          (hits (and res (oref res hit-lines)))
