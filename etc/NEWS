@@ -519,10 +519,12 @@ If you need your objects to be named, do it by inheriting from `eieio-named'.
 *** The <class> variables are declared obsolete.
 +++
 *** The <initarg> variables are declared obsolete.
++++
 *** defgeneric and defmethod are declared obsolete.
 Use the equivalent facilities from cl-generic.el instead.
 +++
 *** `constructor' is now an obsolete alias for `make-instance'.
+--- `pcase' accepts a new UPattern `eieio'.
 
 ** ido
 
@@ -709,6 +711,9 @@ prepending it.
 ** cl-lib
 +++
 *** New functions `cl-fresh-line', `cl-digit-char-p', and `cl-parse-integer'.
+
+---
+*** `pcase' accepts the new UPattern `cl-struct'.
 
 ** Calendar and diary
 
@@ -1201,11 +1206,12 @@ a typographically-correct documents.
 ** The `seq' library adds sequence manipulation functions and macros
 that complement basic functions provided by subr.el.  All functions
 are prefixed with `seq-' and work on lists, strings and vectors.
+`pcase' accepts a new Upattern `seq'.
 
 ---
 ** The `map' library provides map-manipulation functions that work on
 alists, hash-table and arrays.  All functions are prefixed with
-`map-'.
+`map-'.  `pcase' accepts a new UPattern `map'.
 
 ---
 ** The `thunk' library provides functions and macros to control the
@@ -1376,7 +1382,7 @@ that happen, `unhandled-file-name-directory' now defaults to calling
 * Lisp Changes in Emacs 25.1
 
 ** pcase
-*** New UPatterns `quote', `app', `cl-struct', `eieio', `seq', and `map'.
+*** New UPatterns `quote', `app'.
 *** New UPatterns can be defined with `pcase-defmacro'.
 +++
 *** New vector QPattern.
