@@ -5960,7 +5960,7 @@ make_lispy_event (struct input_event *event)
 #ifdef HAVE_XWIDGETS
     case XWIDGET_EVENT:
       {
-        return Fcons (Qxwidget_event,event->arg);
+        return Fcons (Qxwidget_event, event->arg);
       }
 #endif
 
@@ -10972,7 +10972,7 @@ syms_of_keyboard (void)
 #endif
 
 #ifdef HAVE_XWIDGETS
-  DEFSYM (Qxwidget_event,"xwidget-event");
+  DEFSYM (Qxwidget_event, "xwidget-event");
 #endif
 
 #ifdef USE_FILE_NOTIFY

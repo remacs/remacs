@@ -39,14 +39,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "syssignal.h"
 #include "systime.h"
 #include "tparam.h"
+#include "xwidget.h"
 
 #ifdef HAVE_WINDOW_SYSTEM
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
-
-#ifdef HAVE_XWIDGETS
-# include "xwidget.h"
-#endif
 
 #include <errno.h>
 
@@ -3549,9 +3546,7 @@ update_window (struct window *w, bool force_p)
   add_window_display_history (w, w->current_matrix->method, paused_p);
 #endif
 
-#ifdef HAVE_XWIDGETS
   xwidget_end_redisplay (w, w->current_matrix);
-#endif
   clear_glyph_matrix (desired_matrix);
 
   return paused_p;
