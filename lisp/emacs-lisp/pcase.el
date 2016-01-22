@@ -119,7 +119,7 @@ A significant difference from `cl-destructuring-bind' is that, if
 a pattern match fails, the next case is tried until either a
 succesful match is found or there are no more cases.
 
-Another difference is that pattern elements may be quoted,
+Another difference is that pattern elements may be backquoted,
 meaning they must match exactly: The pattern (\\='foo \\='bar)
 matches only against two element lists containing the symbols
 `foo' and `bar' in that order.  (As a short-hand, atoms always
@@ -128,9 +128,8 @@ quoted).
 
 Lastly, a pattern can be logical, such as (pred numberp), that
 matches any number-like element; or the symbol `_', that matches
-anything.  Patterns may also be backquoted (with \\=`), so that
-comma (\\=,) can be used to introduce logical patterns inside
-quoted patterns.
+anything.  Also, when patterns are backquoted, a comma may be
+used to introduce logical patterns inside backquoted patterns.
 
 The complete list of standard patterns is as follows:
 
@@ -148,7 +147,7 @@ The complete list of standard patterns is as follows:
   (let PAT EXP)	matches if EXP matches PAT.
   (app FUN PAT)	matches if FUN applied to the object matches PAT.
 
-Additional patterns may be defined using `pcase-defmacro'.
+Additional patterns can be defined using `pcase-defmacro'.
 
 The FUN argument in the `app' pattern may have the following forms:
   SYMBOL or (lambda ARGS BODY)  in which case it's called with one argument.
