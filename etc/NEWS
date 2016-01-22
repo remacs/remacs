@@ -520,6 +520,7 @@ If you need your objects to be named, do it by inheriting from `eieio-named'.
 +++
 *** The <initarg> variables are declared obsolete.
 *** defgeneric and defmethod are declared obsolete.
+Use the equivalent facilities from cl-generic.el instead.
 +++
 *** `constructor' is now an obsolete alias for `make-instance'.
 
@@ -1177,7 +1178,10 @@ command is called from Emacs (i.e., INSIDE_EMACS environment variable
 is set).  This feature requires newer versions of GnuPG (2.1.5 or
 later) and Pinentry (0.9.5 or later).
 
++++
 ** cl-generic.el provides CLOS-style multiple-dispatch generic functions.
+The main entry points are `cl-defgeneric' and `cl-defmethod'.  See the
+node "Generic Functions" in the Emacs Lisp manual for more details.
 
 ---
 ** scss-mode (a minor variant of css-mode)

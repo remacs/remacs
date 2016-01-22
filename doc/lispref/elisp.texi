@@ -536,6 +536,7 @@ Functions
 * Calling Functions::       How to use an existing function.
 * Mapping Functions::       Applying a function to each element of a list, etc.
 * Anonymous Functions::     Lambda expressions are functions with no names.
+* Generic Functions::       Polymorphism, Emacs-style.
 * Function Cells::          Accessing or setting the function definition
                               of a symbol.
 * Closures::                Functions that enclose a lexical environment.
