@@ -145,7 +145,7 @@ This includes password cache, file cache, connection cache, buffers."
   "Kill all remote buffers."
   (interactive)
 
-  ;; Remove all Tramp related buffers.
+  ;; Remove all Tramp related connections.
   (tramp-cleanup-all-connections)
 
   ;; Remove all buffers with a remote default-directory.

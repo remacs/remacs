@@ -5739,7 +5739,5 @@ function cell is returned to be applied on a buffer."
 ;;   rsync).
 ;; * Keep a second connection open for out-of-band methods like scp or
 ;;   rsync.
-;; * Check, whether we could also use "getent passwd" and "getent
-;;   group" for user/group name completion.
 
 ;;; tramp-sh.el ends here
