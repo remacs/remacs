@@ -1014,6 +1014,10 @@ As a result of this, the following commands are now obsolete:
 replacements yet.
 
 +++
+*** Variants of `tags-search' and `tags-query-replace' in Dired were also
+replaced by xref-style commands, see the "Dired" section below.
+
++++
 *** New variables
 
 `find-tag-marker-ring-length' is now an obsolete alias for
@@ -1152,6 +1156,18 @@ directories and decompress zip files.
 compress many marked files into a single named archive.  The
 compression command is determined from the new
 `dired-compress-files-alist' variable.
+
++++
+*** New user interface for the `A' and `Q' commands.
+These keys, now bound to `dired-do-find-regexp' and
+`dired-do-find-regexp-and-replace', work similarly to
+`xref-find-apropos' and `xref-query-replace': they present the matches
+in the `*xref*' buffer and let you move through the matches.  No need
+to use `tags-loop-continue' to resume the search or replace loop.  The
+previous commands, `dired-do-search' and
+`dired-do-query-replace-regexp', are still available, but not bound to
+keys; rebind `A' and `Q' to invoke them if you want the old behavior
+back.  We intend to obsolete the old commands in a future release.
 
 ** Tabulated List Mode
 
