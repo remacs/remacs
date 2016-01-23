@@ -4615,7 +4615,8 @@ lookup_rgb_color (struct frame *f, int r, int g, int b)
 #elif defined HAVE_NS
   return RGB_TO_ULONG (r >> 8, g >> 8, b >> 8);
 #else
-  eassume (false);
+  xsignal1 (Qfile_error,
+	    build_string ("This Emacs mishandles this image file type"));
 #endif
 }
 
