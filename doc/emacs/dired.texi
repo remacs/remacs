@@ -784,7 +784,7 @@ Compilation, elisp, The Emacs Lisp Reference Manual}.
 Search all the specified files for the regular expression @var{regexp}
 (@code{dired-do-find-regexp}).
 
-This command is a variant of @code{xref-find-apropos}
+This command is a variant of @code{xref-find-references}
 (@pxref{Identifier Search}), it displays the @file{*xref*} buffer,
 where you can navigate between matches and display them as needed
 using the commands described in @ref{Xref Commands}.
