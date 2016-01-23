@@ -10072,7 +10072,19 @@ comment at the start of cc-engine.el for more info."
 				       paren-state)))
 
        ;; CASE 14: A case or default label
-       ((looking-at c-label-kwds-regexp)
+       ((save-excursion
+	  (and (looking-at c-label-kwds-regexp)
+	       (or (c-major-mode-is 'idl-mode)
+		   (and
+		    containing-sexp
+		    (goto-char containing-sexp)
+		    (eq (char-after) ?{)
+		    (progn (c-backward-syntactic-ws) t)
+		    (eq (char-before) ?\))
+		    (c-go-list-backward)
+		    (progn (c-backward-syntactic-ws) t)
+		    (c-simple-skip-symbol-backward)
+		    (looking-at c-block-stmt-2-key)))))
 	(if containing-sexp
 	    (progn
 	      (goto-char containing-sexp)
@@ -10088,6 +10100,7 @@ comment at the start of cc-engine.el for more info."
        ((save-excursion
 	  (back-to-indentation)
 	  (and (not (looking-at c-syntactic-ws-start))
+	       (not (looking-at c-label-kwds-regexp))
 	       (c-forward-label)))
 	(cond (containing-decl-open
 	       (setq placeholder (c-add-class-syntax 'inclass

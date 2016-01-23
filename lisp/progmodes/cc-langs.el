@@ -1980,8 +1980,8 @@ will be handled."
 	 ;; In CORBA CIDL:
 	 "bindsTo" "delegatesTo" "implements" "proxy" "storedOn")
   ;; Note: "const" is not used in Java, but it's still a reserved keyword.
-  java '("abstract" "const" "final" "native" "private" "protected" "public"
-	 "static" "strictfp" "synchronized" "transient" "volatile")
+  java '("abstract" "const" "default" "final" "native" "private" "protected"
+	 "public" "static" "strictfp" "synchronized" "transient" "volatile")
   pike '("final" "inline" "local" "nomask" "optional" "private" "protected"
 	 "public" "static" "variant"))
 
