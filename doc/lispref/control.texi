@@ -297,36 +297,147 @@ For example:
 @cindex pcase
 @cindex pattern matching
 
-To compare a particular value against various possible cases, the macro
-@code{pcase} can come handy.  It takes the following form:
+The @code{cond} form lets you choose between alternatives using
+predicate conditions that compare values of expressions against
+specific values known and written in advance.  However, sometimes it
+is useful to select alternatives based on more general conditions that
+distinguish between broad classes of values.  The @code{pcase} macro
+allows to choose between alternatives based on matching the value of
+an expression against a series of patterns.  A pattern can be a
+literal value (comparison to literal values is what @code{cond} does),
+or it can be a more general description of the expected structure of
+the expression's value.
 
-@example
-(pcase @var{exp} @var{branch}1 @var{branch}2 @var{branch}3 @dots{})
-@end example
+@defmac pcase expression &rest clauses
+Evaluate @var{expression} and choose among an arbitrary number of
+alternatives based on the value of @var{expression}.  The possible
+alternatives are specified by @var{clauses}, each of which must be a
+list of the form @code{(@var{pattern} @var{body-forms})}.
+@code{pcase} tries to match the value of @var{expression} to the
+@var{pattern} of each clause, in textual order.  If the value matches,
+the clause succeeds; @code{pcase} then evaluates its @var{body-forms},
+and returns the value of the last of @var{body-forms}.  Any remaining
+@var{clauses} are ignored.
 
-where each @var{branch} takes the form @code{(@var{upattern}
-@var{body-forms}@dots{})}.
+The @var{pattern} part of a clause can be of one of two types:
+@dfn{QPattern}, a pattern quoted with a backquote; or a
+@dfn{UPattern}, which is not quoted.  UPatterns are simpler, so we
+describe them first.
 
-It will first evaluate @var{exp} and then compare the value against each
-@var{upattern} to see which @var{branch} to use, after which it will run the
-corresponding @var{body-forms}.  A common use case is to distinguish
-between a few different constant values:
+Note: In the description of the patterns below, we use ``the value
+being matched'' to refer to the value of the @var{expression} that is
+the first argument of @code{pcase}.
 
+A UPattern can have one of the following forms:
+
+@table @code
+
+@item '@var{val}
+Matches if the value being matched is @code{equal} to @var{val}.
+@item @var{atom}
+Matches any @var{atom}, which can be a keyword, a number, or a string.
+(These are self-quoting, so this kind of UPattern is actually a
+shorthand for @code{'@var{atom}}.)
+@item _
+Matches any value.  This is known as @dfn{don't care} or @dfn{wildcard}.
+@item @var{symbol}
+Matches any value, and additionally let-binds @var{symbol} to the
+value it matched, so that you can later refer to it, either in the
+@var{body-forms} or also later in the pattern.
+@item (pred @var{predfun})
+Matches if the predicate function @var{predfun} returns non-@code{nil}
+when called with the value being matched as its argument.
+@var{predfun} can be one of the possible forms described below.
+@item (guard @var{boolean-expression})
+Matches if @var{boolean-expression} evaluates to non-@code{nil}.  This
+allows to include in a UPattern boolean conditions that refer to
+symbols bound to values (including the value being matched) by
+previous UPatterns.  Typically used inside an @code{and} UPattern, see
+below.  For example, @w{@code{(and x (guard (< x 10)))}} is a pattern
+which matches any number smaller than 10 and let-binds the variable
+@code{x} to that number.
+@item (let @var{upattern} @var{expression})
+Matches if the specified @var{expression} matches the specified
+@var{upattern}.  This allows to match a pattern against the value of
+an @emph{arbitrary} expression, not just the expression that is the
+first argument to @code{pcase}.  (It is called @code{let} because
+@var{upattern} can bind symbols to values using the @var{symbol}
+UPattern.)
+@item (app @var{function} @var{upattern})
+Matches if @var{function} applied to the value being matched returns a
+value that matches @var{upattern}.  This is like the @code{pred}
+UPattern, except that it tests the result against @var{UPattern},
+rather than against a boolean truth value.  The @var{function} call can
+use one of the forms described below.
+@item (or @var{upattern1} @var{upattern2}@dots{})
+Matches if one the argument UPatterns matches.  As soon as the first
+matching UPattern is found, the rest are not tested.  For this reason,
+if any of the UPatterns let-bind symbols to the matched value, they
+should all bind the same symbols.
+@item (and @var{upattern1} @var{upattern2}@dots{})
+Matches if all the argument UPatterns match.
+@end table
+
+The function calls used in the @code{pred} and @code{app} UPatterns
+can have one of the following forms:
+
+@table @asis
+@item function symbol, like @code{integerp}
+In this case, the named function is applied to the value being
+matched.
+@item lambda-function @code{(lambda (@var{arg}) @var{body})}
+In this case, the lambda-function is called with one argument, the
+value being matched.
+@item @code{(@var{func} @var{args}@dots{})}
+This is a function call with @var{n} specified arguments; the function
+is called with these @var{n} arguments and an additional @var{n}+1-th
+argument that is the value being matched.
+@end table
+
+Here's an illustrative example of using UPatterns:
+
+@c FIXME: This example should use every one of the UPatterns described
+@c above at least once.
 @example
 (pcase (get-return-code x)
-  (`success       (message "Done!"))
-  (`would-block   (message "Sorry, can't do it now"))
-  (`read-only     (message "The shmliblick is read-only"))
-  (`access-denied (message "You do not have the needed rights"))
+  ('success       (message "Done!"))
+  ('would-block   (message "Sorry, can't do it now"))
+  ('read-only     (message "The shmliblick is read-only"))
+  ('access-denied (message "You do not have the needed rights"))
   (code           (message "Unknown return code %S" code)))
 @end example
 
-In the last clause, @code{code} is a variable that gets bound to the value that
-was returned by @code{(get-return-code x)}.
+The QPatterns are more powerful.  They allow to match the value of the
+@var{expression} that is the first argument of @code{pcase} against
+specifications of its @emph{structure}.  For example, you can specify
+that the value must be a list of 2 elements whose first element is a
+string and the second element is a number.  QPatterns can have one of
+the following forms:
 
-To give a more complex example, a simple interpreter for a little
-expression language could look like (note that this example requires
-lexical binding):
+@table @code
+@item `(@var{qpattern1} . @var{qpattern2})
+Matches if the value being matched is a cons cell whose @code{car}
+matches @var{qpattern1} and whose @code{cdr} matches @var{qpattern2}.
+@item `[@var{qpattern1} @var{qpattern2} @dots{} @var{qpatternm}]
+Matches if the value being matched is a vector of length @var{m} whose
+@code{0}..@code{(@var{m}-1)}th elements match @var{qpattern1},
+@var{qpattern2} @dots{} @var{qpatternm}, respectively.
+@item `(,@var{upattern1} ,@var{upattern2} @dots{})
+Matches if the value being matched is a list whose elements match the
+corresponding @var{upattern1}, @var{upattern2}, etc.
+@item @var{atom}
+Matches if corresponding element of the value being matched is
+@code{equal} to the specified @var{atom}.
+@item ,@var{upattern}
+Matches if the corresponding element of the value being matched
+matches the specified @var{upattern}.
+@end table
+
+@end defmac
+
+Here is an example of using @code{pcase} to implement a simple
+interpreter for a little expression language (note that this example
+requires lexical binding, @pxref{Lexical Binding}):
 
 @example
 (defun evaluate (exp env)
@@ -340,13 +451,19 @@ lexical binding):
     (_                  (error "Unknown expression %S" exp))))
 @end example
 
-Where @code{`(add ,x ,y)} is a pattern that checks that @code{exp} is a three
-element list starting with the symbol @code{add}, then extracts the second and
-third elements and binds them to the variables @code{x} and @code{y}.
-@code{(pred numberp)} is a pattern that simply checks that @code{exp}
-is a number, and @code{_} is the catch-all pattern that matches anything.
+Here @code{`(add ,x ,y)} is a pattern that checks that @code{exp} is a
+three-element list starting with the literal symbol @code{add}, then
+extracts the second and third elements and binds them to the variables
+@code{x} and @code{y}.  Then it evaluates @code{x} and @code{y} and
+adds the results.  The @code{call} and @code{fn} patterns similarly
+implement two flavors of function calls.  @code{(pred numberp)} is a
+pattern that simply checks that @code{exp} is a number and if so,
+evaluates it.  @code{(pred symbolp)} matches symbols, and returns
+their association.  Finally, @code{_} is the catch-all pattern that
+matches anything, so it's suitable for reporting syntax errors.
 
-Here are some sample programs including their evaluation results:
+Here are some sample programs in this small language, including their
+evaluation results:
 
 @example
 (evaluate '(add 1 2) nil)                 ;=> 3
@@ -355,56 +472,13 @@ Here are some sample programs including their evaluation results:
 (evaluate '(sub 1 2) nil)                 ;=> error
 @end example
 
-There are two kinds of patterns involved in @code{pcase}, called
-@emph{U-patterns} and @emph{Q-patterns}.  The @var{upattern} mentioned above
-are U-patterns and can take the following forms:
+Additional UPatterns can be defined using the @code{pcase-defmacro}
+macro.
 
-@table @code
-@item `@var{qpattern}
-This is one of the most common form of patterns.  The intention is to mimic the
-backquote macro: this pattern matches those values that could have been built
-by such a backquote expression.  Since we're pattern matching rather than
-building a value, the unquote does not indicate where to plug an expression,
-but instead it lets one specify a U-pattern that should match the value at
-that location.
-
-More specifically, a Q-pattern can take the following forms:
-@table @code
-@item (@var{qpattern1} . @var{qpattern2})
-This pattern matches any cons cell whose @code{car} matches @var{qpattern1} and
-whose @code{cdr} matches @var{qpattern2}.
-@item [@var{qpattern1} @var{qpattern2} @dots{} @var{qpatternm}]
-This pattern matches a vector of length @var{M} whose 0..(@var{M}-1)th
-elements match @var{qpattern1}, @var{qpattern2} @dots{} @var{qpatternm},
-respectively.
-@item @var{atom}
-This pattern matches any atom @code{equal} to @var{atom}.
-@item ,@var{upattern}
-This pattern matches any object that matches the @var{upattern}.
-@end table
-
-@item @var{symbol}
-A mere symbol in a U-pattern matches anything, and additionally let-binds this
-symbol to the value that it matched, so that you can later refer to it, either
-in the @var{body-forms} or also later in the pattern.
-@item _
-This so-called @emph{don't care} pattern matches anything, like the previous
-one, but unlike symbol patterns it does not bind any variable.
-@item (pred @var{pred})
-This pattern matches if the function @var{pred} returns non-@code{nil} when
-called with the object being matched.
-@item (or @var{upattern1} @var{upattern2}@dots{})
-This pattern matches as soon as one of the argument patterns succeeds.
-All argument patterns should let-bind the same variables.
-@item (and @var{upattern1} @var{upattern2}@dots{})
-This pattern matches only if all the argument patterns succeed.
-@item (guard @var{exp})
-This pattern ignores the object being examined and simply succeeds if @var{exp}
-evaluates to non-@code{nil} and fails otherwise.  It is typically used inside
-an @code{and} pattern.  For example, @code{(and x (guard (< x 10)))}
-is a pattern which matches any number smaller than 10 and let-binds it to
-the variable @code{x}.
-@end table
+@defmac pcase-defmacro name args &rest body
+Define a new UPattern for @code{pcase}.  The UPattern will have the
+form @code{(@var{name} @var{args})}.
+@end defmac
 
 @node Combining Conditions
 @section Constructs for Combining Conditions
