@@ -1313,7 +1313,6 @@ x_draw_fringe_bitmap (struct window *w, struct glyph_row *row, struct draw_fring
 {
   struct frame *f = XFRAME (WINDOW_FRAME (w));
   Display *display = FRAME_X_DISPLAY (f);
-  Window window = FRAME_X_WINDOW (f);
   GC gc = f->output_data.x->normal_gc;
   struct face *face = p->face;
 
@@ -1356,6 +1355,7 @@ x_draw_fringe_bitmap (struct window *w, struct glyph_row *row, struct draw_fring
 #else  /* not USE_CAIRO */
   if (p->which)
     {
+      Window window = FRAME_X_WINDOW (f);
       char *bits;
       Pixmap pixmap, clipmask = (Pixmap) 0;
       int depth = DefaultDepthOfScreen (FRAME_X_SCREEN (f));
@@ -3758,14 +3758,13 @@ x_delete_glyphs (struct frame *f, register int n)
 /* Like XClearArea, but check that WIDTH and HEIGHT are reasonable.
    If they are <= 0, this is probably an error.  */
 
-static void
+static ATTRIBUTE_UNUSED void
 x_clear_area1 (Display *dpy, Window window,
                int x, int y, int width, int height, int exposures)
 {
   eassert (width > 0 && height > 0);
   XClearArea (dpy, window, x, y, width, height, exposures);
 }
-
 
 void
 x_clear_area (struct frame *f, int x, int y, int width, int height)
