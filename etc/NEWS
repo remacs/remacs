@@ -428,6 +428,9 @@ additionally need to add `getSelection' to `xterm-extra-capabilities'.
 `erc-network-hide-list' and `erc-channel-hide-list' will only hide the
 specified message types for the respective specified targets.
 
+---
+*** Reconnection is now asynchronous.
+
 ** Midnight-mode
 
 ---
