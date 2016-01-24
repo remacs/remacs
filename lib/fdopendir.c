@@ -62,6 +62,41 @@ static DIR *fd_clone_opendir (int, struct saved_cwd const *);
    If this function returns successfully, FD is under control of the
    dirent.h system, and the caller should not close or modify the state of
    FD other than by the dirent.h functions.  */
+# ifdef __KLIBC__
+#  include <InnoTekLIBC/backend.h>
+
+DIR *
+fdopendir (int fd)
+{
+  char path[_MAX_PATH];
+  DIR *dirp;
+
+  /* Get a path from fd */
+  if (__libc_Back_ioFHToPath (fd, path, sizeof (path)))
+    return NULL;
+
+  dirp = opendir (path);
+  if (!dirp)
+    return NULL;
+
+  /* Unregister fd registered by opendir() */
+  _gl_unregister_dirp_fd (dirfd (dirp));
+
+  /* Register our fd */
+  if (_gl_register_dirp_fd (fd, dirp))
+    {
+      int saved_errno = errno;
+
+      closedir (dirp);
+
+      errno = saved_errno;
+
+      dirp = NULL;
+    }
+
+  return dirp;
+}
+# else
 DIR *
 fdopendir (int fd)
 {
@@ -84,6 +119,7 @@ fdopendir (int fd)
 
   return dir;
 }
+# endif
 
 /* Like fdopendir, except that if OLDER_DUPFD is not -1, it is known
    to be a dup of FD which is less than FD - 1 and which will be

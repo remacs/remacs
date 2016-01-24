@@ -19,7 +19,7 @@
 
 /* Define this to have a standalone program to test this implementation of
    mktime.  */
-/* #define DEBUG 1 */
+/* #define DEBUG_MKTIME 1 */
 
 #ifndef _LIBC
 # include <config.h>
@@ -38,13 +38,13 @@
 
 #include <string.h>		/* For the real memcpy prototype.  */
 
-#if defined DEBUG && DEBUG
+#if defined DEBUG_MKTIME && DEBUG_MKTIME
 # include <stdio.h>
 # include <stdlib.h>
 /* Make it work even if the system's libc has its own mktime routine.  */
 # undef mktime
 # define mktime my_mktime
-#endif /* DEBUG */
+#endif /* DEBUG_MKTIME */
 
 /* Some of the code in this file assumes that signed integer overflow
    silently wraps around.  This assumption can't easily be programmed
@@ -600,7 +600,7 @@ libc_hidden_def (mktime)
 libc_hidden_weak (timelocal)
 #endif
 
-#if defined DEBUG && DEBUG
+#if defined DEBUG_MKTIME && DEBUG_MKTIME
 
 static int
 not_equal_tm (const struct tm *a, const struct tm *b)
@@ -732,10 +732,10 @@ main (int argc, char **argv)
   return status;
 }
 
-#endif /* DEBUG */
+#endif /* DEBUG_MKTIME */
 
 /*
 Local Variables:
-compile-command: "gcc -DDEBUG -I. -Wall -W -O2 -g mktime.c -o mktime"
+compile-command: "gcc -DDEBUG_MKTIME -I. -Wall -W -O2 -g mktime.c -o mktime"
 End:
 */
