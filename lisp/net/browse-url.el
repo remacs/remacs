@@ -36,6 +36,7 @@
 ;; Function                           Browser     Earliest version
 ;; browse-url-mozilla                 Mozilla     Don't know
 ;; browse-url-firefox                 Firefox     Don't know (tried with 1.0.1)
+;; browse-url-chrome                  Chrome      47.0.2526.111
 ;; browse-url-chromium                Chromium    3.0
 ;; browse-url-epiphany                Epiphany    Don't know
 ;; browse-url-conkeror                Conkeror    Don't know
@@ -147,6 +148,7 @@ regexp should probably be \".\" to specify a default browser."
 	  (function-item :tag "eww" :value  eww-browse-url)
 	  (function-item :tag "Mozilla" :value  browse-url-mozilla)
 	  (function-item :tag "Firefox" :value browse-url-firefox)
+          (function-item :tag "Google Chrome" :value browse-url-chrome)
 	  (function-item :tag "Chromium" :value browse-url-chromium)
 	  (function-item :tag "Epiphany" :value  browse-url-epiphany)
 	  (function-item :tag "Conkeror" :value  browse-url-conkeror)
@@ -258,6 +260,22 @@ Defaults to the value of `browse-url-firefox-arguments' at the time
 
 (make-obsolete-variable 'browse-url-firefox-startup-arguments
                         "it no longer has any effect." "24.5")
+
+(defcustom browse-url-chrome-program
+  (let ((candidates '("google-chrome-stable" "google-chrome")))
+    (while (and candidates (not (executable-find (car candidates))))
+      (setq candidates (cdr candidates)))
+    (or (car candidates) "chromium"))
+  "The name by which to invoke Chromium."
+  :type 'string
+  :version "24.1"
+  :group 'browse-url)
+
+(defcustom browse-url-chrome-arguments nil
+  "A list of strings to pass to Google Chrome as arguments."
+  :type '(repeat (string :tag "Argument"))
+  :version "24.1"
+  :group 'browse-url)
 
 (defcustom browse-url-chromium-program
   (let ((candidates '("chromium" "chromium-browser")))
@@ -902,6 +920,7 @@ instead of `browse-url-new-window-flag'."
     ((browse-url-can-use-xdg-open) 'browse-url-xdg-open)
 ;;;    ((executable-find browse-url-gnome-moz-program) 'browse-url-gnome-moz)
     ((executable-find browse-url-mozilla-program) 'browse-url-mozilla)
+    ((executable-find browse-url-chrome-program) 'browse-url-chrome)
     ((executable-find browse-url-firefox-program) 'browse-url-firefox)
     ((executable-find browse-url-chromium-program) 'browse-url-chromium)
 ;;;    ((executable-find browse-url-galeon-program) 'browse-url-galeon)
@@ -1124,6 +1143,22 @@ The optional argument NEW-WINDOW is not used."
 	   browse-url-chromium-program
 	   (append
 	    browse-url-chromium-arguments
+	    (list url)))))
+
+(defun browse-url-chrome (url &optional _new-window)
+  "Ask the Google Chrome WWW browser to load URL.
+Default to the URL around or before point.  The strings in
+variable `browse-url-chrome-arguments' are also passed to
+Google Chrome.
+The optional argument NEW-WINDOW is not used."
+  (interactive (browse-url-interactive-arg "URL: "))
+  (setq url (browse-url-encode-url url))
+  (let* ((process-environment (browse-url-process-environment)))
+    (apply 'start-process
+	   (concat "google-chrome " url) nil
+	   browse-url-chrome-program
+	   (append
+	    browse-url-chrome-arguments
 	    (list url)))))
 
 ;;;###autoload

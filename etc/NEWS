@@ -1121,6 +1121,9 @@ make the new option `eshell-destroy-buffer-when-process-dies' non-nil.
 ** Browse-url
 
 ---
+*** Support for the Google Chrome web browser.
+
+---
 *** Support for the Conkeror web browser.
 
 ---
