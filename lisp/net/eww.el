@@ -315,8 +315,9 @@ Currently this means either text/html or application/xhtml+xml."
   (let* ((headers (eww-parse-headers))
 	 (content-type
 	  (mail-header-parse-content-type
-	   (or (cdr (assoc "content-type" headers))
-	       "text/plain")))
+           (if (zerop (length (cdr (assoc "content-type" headers))))
+	       "text/plain"
+             (cdr (assoc "content-type" headers)))))
 	 (charset (intern
 		   (downcase
 		    (or (cdr (assq 'charset (cdr content-type)))
