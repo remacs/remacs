@@ -279,6 +279,9 @@ Changes to files matching one of the regexps in this list are not listed.")
     "ChangeLog.nextstep" "Emacs.clr" "spec.txt"
     "gfdl.1"
     "texi/Makefile.in"
+    "lwlib/autodeps.mk"
+    "oldXMenu/autodeps.mk"
+    "src/autodeps.mk"
     "Imakefile" "icons/sink.ico" "aixcc.lex"
     "nxml/char-name/unicode"
     "spec.txt"
@@ -294,6 +297,7 @@ Changes to files matching one of the regexps in this list are not listed.")
     "cedet/tests/test.cpp"
     "cedet/tests/test.py"
     "cedet/tests/teststruct.cpp"
+    "subdirs.el"
     "*.el"
     ;; Autogen:
     "cus-load.el" "finder-inf.el" "ldefs-boot.el" "loaddefs-boot.el"
@@ -357,12 +361,37 @@ Changes to files matching one of the regexps in this list are not listed.")
     "debian/scripts/startup.erc"
     "debian/scripts/startup.erc-speak"
     ;; Used to be in admin, not very interesting.
-    "emacs-pretesters" "make-announcement" "make-changelog-diff"
+    "emacs-pretesters" "make-announcement" "make-changelog-diff" "admin/FOR-RELEASE" "etc/FOR-RELEASE" "nextstep/FOR-RELEASE" "FOR-RELEASE"
     ;; Textual comments that are not files.
     "All" "Version" "Everywhere" "Many" "Various" "files"
     ;; Directories.
     "vms" "mac" "url" "tree-widget"
     "info/dir"
+    ;; Not in gnulib anymore
+    "lib/qset-acl.c" "lib/qcopy-acl.c" "lib/file-has-acl.c"
+    ;; files from old MS Windows build procedures
+    "makefile.w32-in"
+    "admin/unidata/makefile.w32-in"
+    "lib/makefile.w32-in"
+    "leim/makefile.w32-in"
+    "src/makefile.w32-in"
+    "nt/emacs-src.tags"
+    "doc/emacs/makefile.w32-in"
+    "doc/lispintro/makefile.w32-in"
+    "doc/lispref/makefile.w32-in"
+    "doc/misc/makefile.w32-in"
+    "nt/paths.h"
+    "paths.h"
+    "src/paths.h"
+    "envadd.bat"
+    "multi-install-info.bat"
+    "INSTALL.OLD"
+    "nt/src/paths.h"
+    "nmake.defs"
+    "gmake.defs"
+    "zipdist.bat"
+    "nt/makefile.w32-in"
+    "config.nt"
     )
   "List of files and directories to ignore.
 Changes to files in this list are not listed.")
@@ -762,6 +791,8 @@ in the repository.")
     ("DIFF" . "OTHER.EMACSES")
     ("CCADIFF" . "OTHER.EMACSES")
     ("GOSDIFF" . "OTHER.EMACSES")
+    ;; Nextstep
+    ("nextstep/Cocoa/Emacs.base/Contents/Info.plist" . "nextstep/templates/Info.plist.in")
     ;; Moved from lisp/tpu-doc.el to etc/tpu-edt.doc in Emacs 19.29.
     ;; Removed in Emacs 19.30, replaced by new file etc/edt-user.doc
     ;; (no associated ChangeLog entry).
@@ -886,6 +917,8 @@ in the repository.")
     ("nt/README.W32" . "README.W32")
     ("notes/BRANCH" . "notes/repo")
     ("notes/bzr" . "notes/repo")
+    ;; moved from lisp/ to lisp/net/
+    ("lisp/pinentry.el" . "lisp/net/pinentry.el")
     )
   "Alist of files which have been renamed during their lifetime.
 Elements are (OLDNAME . NEWNAME).")
