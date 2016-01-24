@@ -915,8 +915,9 @@ can still access remote files using UNC file names instead of @value{tramp}:
 //melancholia/daniel$$/.emacs
 @end example
 
-UNC file name specification does not allow to specify a different user
-name for authentication like the @command{smbclient} can.
+UNC file name specification does not allow the specification of a
+different user name for authentication like the @command{smbclient}
+can.
 
 
 @item @option{adb}
@@ -2990,7 +2991,7 @@ longer open.  That is why @value{tramp} prompts for the password again
 even if there is an @command{ssh} already open.
 
 Some @command{ssh} versions support a @code{ControlPersist} option,
-which allows to set the @code{ControlPath} provided the variable
+which allows you to set the @code{ControlPath} provided the variable
 @code{tramp-ssh-controlmaster-options} is customized as follows:
 
 @lisp

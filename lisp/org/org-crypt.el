@@ -225,7 +225,7 @@ See `org-crypt-disable-auto-save'."
 	    ;; outline property starts at the \n of the heading.
 	    (delete-region (1- (point)) end)
 	    ;; Store a checksum of the decrypted and the encrypted
-	    ;; text value.  This allow to reuse the same encrypted text
+	    ;; text value.  This allow reusing the same encrypted text
 	    ;; if the text does not change, and therefore avoid a
 	    ;; re-encryption process.
 	    (insert "\n" (propertize decrypted-text

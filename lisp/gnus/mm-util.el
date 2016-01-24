@@ -496,9 +496,9 @@ Unless LIST is given, `mm-codepage-ibm-list' is used."
       (windows-1257 . (mm-codepage-setup 1257 t))))
   "An alist of (CHARSET . FORM) pairs.
 If an article is encoded in an unknown CHARSET, FORM is
-evaluated.  This allows to load additional libraries providing
-charsets on demand.  If supported by your Emacs version, you
-could use `autoload-coding-system' here."
+evaluated.  This allows the loading of additional libraries
+providing charsets on demand.  If supported by your Emacs
+version, you could use `autoload-coding-system' here."
   :version "22.1" ;; Gnus 5.10.9
   :type '(list (set :inline t
 		    (const (windows-1250 . (mm-codepage-setup 1250 t)))

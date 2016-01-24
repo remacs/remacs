@@ -4422,8 +4422,8 @@ Usage:
     according to option `vhdl-argument-list-indent'.
 
       If option `vhdl-indent-tabs-mode' is nil, spaces are used instead of
-    tabs.  `\\[tabify]' and `\\[untabify]' allow to convert spaces to tabs
-    and vice versa.
+    tabs.  `\\[tabify]' and `\\[untabify]' allow the conversion of spaces to
+    tabs and vice versa.
 
       Syntax-based indentation can be very slow in large files.  Option
     `vhdl-indent-syntax-based' allows you to use faster but simpler indentation.

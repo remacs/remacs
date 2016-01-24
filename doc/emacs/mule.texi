@@ -1216,7 +1216,7 @@ using the internal Emacs representation.
   When Emacs runs on MS-Windows versions that are descendants of the
 NT family (Windows 2000, XP, Vista, Windows 7, and Windows 8), the
 value of @code{file-name-coding-system} is largely ignored, as Emacs
-by default uses APIs that allow to pass Unicode file names directly.
+by default uses APIs that allow passing Unicode file names directly.
 By contrast, on Windows 9X, file names are encoded using
 @code{file-name-coding-system}, which should be set to the codepage
 (@pxref{Coding Systems, codepage}) pertinent for the current system

@@ -1078,7 +1078,7 @@ publishing directory."
   "Return numbering for headline matching FUZZY search in FILE.
 
 Return value is a list of numbers, or nil.  This function allows
-to resolve external fuzzy links like:
+the resolution of external fuzzy links like:
 
   [[file.org::*fuzzy][description]]"
   (when org-publish-cache

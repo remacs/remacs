@@ -7263,7 +7263,7 @@ resizing a window preferably resizes one adjacent window only.
 
 If this variable is t, splitting a window tries to get the space
 proportionally from all windows in the same combination.  This also
-allows to split a window that is otherwise too small or of fixed size.
+allows splitting a window that is otherwise too small or of fixed size.
 Resizing and deleting a window proportionally resize all windows in the
 same combination.
 

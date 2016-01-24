@@ -58,8 +58,8 @@
 ;; ******** FIX THE DOCUMENTATION *********
 ;;
 ;; - rework the displaying of error messages.
-;; - allow to flush messages only
-;; - allow to protect files like ChangeLog from flushing
+;; - allow the flushing of messages only
+;; - allow the protection of files like ChangeLog from flushing
 ;; - query the user for cvs-get-marked (for some cmds or if nothing's selected)
 ;; - don't return the first (resp last) FI if the cursor is before
 ;;   (resp after) it.

@@ -86,7 +86,7 @@
 
 ;; Restrictions:
 
-;; * The current GVFS implementation does not allow to write on the
+;; * The current GVFS implementation does not allow writing on the
 ;;   remote bluetooth device via OBEX.
 ;;
 ;; * Two shares of the same SMB server cannot be mounted in parallel.

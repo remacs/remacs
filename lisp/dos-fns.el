@@ -98,7 +98,7 @@ sure to obey the 8.3 limitations."
 			    string))
 	      (aset string i ?_))
 	    ;; If we don't have a period in the first 8 chars, insert one.
-	    ;; This enables to have 3 more characters from the original
+	    ;; This enables having 3 more characters from the original
 	    ;; name in the extension.
 	    (if (> (or (string-match "\\." string) (length string))
 		   8)

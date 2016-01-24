@@ -138,8 +138,8 @@ name could be @samp{org.gnu.Emacs.TextEditor} or
 @section D-Bus version.
 
 D-Bus has evolved over the years.  New features have been added with
-new D-Bus versions.  There are two variables, which allow to determine
-the used D-Bus version.
+new D-Bus versions.  There are two variables, which allow the determination
+of the D-Bus version used.
 
 @defvar dbus-compiled-version
 This variable, a string, determines the version of D-Bus Emacs is

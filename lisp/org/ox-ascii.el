@@ -35,10 +35,10 @@
 
 ;;; Define Back-End
 ;;
-;; The following setting won't allow to modify preferred charset
+;; The following setting won't allow modifying preferred charset
 ;; through a buffer keyword or an option item, but, since the property
-;; will appear in communication channel nonetheless, it allows to
-;; override `org-ascii-charset' variable on the fly by the ext-plist
+;; will appear in communication channel nonetheless, it allows
+;; overriding `org-ascii-charset' variable on the fly by the ext-plist
 ;; mechanism.
 ;;
 ;; We also install a filter for headlines and sections, in order to

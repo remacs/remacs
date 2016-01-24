@@ -1979,7 +1979,7 @@ and pass it the output of the last Ispell invocation."
 
 (defun ispell-send-replacement (misspelled replacement)
   "Notify Aspell that MISSPELLED should be spelled REPLACEMENT.
-This allows to improve the suggestion list based on actual misspellings."
+This allows improving the suggestion list based on actual misspellings."
   (and ispell-really-aspell
        (ispell-send-string (concat "$$ra " misspelled "," replacement "\n"))))
 

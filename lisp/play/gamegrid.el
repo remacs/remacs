@@ -379,7 +379,7 @@ static unsigned char gamegrid_bits[] = {
     (dotimes (i height)
       (insert line))
     ;; Adjust the height of the default face to the height of the
-    ;; images. Unlike XEmacs, Emacs doesn't allow to make the default
+    ;; images. Unlike XEmacs, Emacs doesn't allow making the default
     ;; face buffer-local; so we do this with an overlay.
     (when (eq gamegrid-display-mode 'glyph)
       (overlay-put (make-overlay (point-min) (point-max))

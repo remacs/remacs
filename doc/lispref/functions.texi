@@ -1248,7 +1248,7 @@ Parent type: @code{array}.
 @item font-object
 @end table
 
-The optional @var{qualifier} allows to combine several applicable
+The optional @var{qualifier} allows combining several applicable
 methods.  If it is not present, the defined method is a @dfn{primary}
 method, responsible for providing the primary implementation of the
 generic function for the specialized arguments.  You can also define
@@ -1270,8 +1270,8 @@ The most specific of such methods will be run before any other method.
 Such methods normally use @code{cl-call-next-method}, described below,
 to invoke the other auxiliary or primary methods.
 @item :extra @var{string}
-This allows to add more methods, distinguished by @var{string}, for
-the same specializers and qualifiers.
+This allows you to add more methods, distinguished by @var{string},
+for the same specializers and qualifiers.
 @end table
 @end defmac
 

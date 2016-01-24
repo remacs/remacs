@@ -496,7 +496,7 @@ with L, LRE, or LRO Unicode bidi character type.")
 		    table)))
 
 ;; Load uni-mirrored.el and uni-brackets.el if available, so that they
-;; get dumped into Emacs.  This allows to start Emacs with
+;; get dumped into Emacs.  This allows starting Emacs with
 ;; force-load-messages in ~/.emacs, and avoid infinite recursion in
 ;; bidi_initialize, which needs to load uni-mirrored.el and
 ;; uni-brackets.el in order to display the "Loading" messages.

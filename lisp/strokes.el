@@ -858,7 +858,7 @@ The command will be executed provided one exists for that stroke,
 based on the variable `strokes-minimum-match-score'.
 If no stroke matches, nothing is done and return value is nil."
   ;; FIXME: Undocument return value.  It is not documented for all cases,
-  ;; and doesn't allow to difference between no stroke matches and
+  ;; and doesn't allow differentiating between no stroke matches and
   ;; command-execute returning nil, anyway.
   (let* ((match (strokes-match-stroke stroke strokes-global-map))
 	 (command (car match))

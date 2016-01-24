@@ -76,7 +76,7 @@ for timed events.  If non-zero, alarms are created.
 
 (defcustom org-icalendar-exclude-tags nil
   "Tags that exclude a tree from export.
-This variable allows to specify different exclude tags from other
+This variable allows specifying different exclude tags from other
 back-ends.  It can also be set with the ICAL_EXCLUDE_TAGS
 keyword."
   :group 'org-export-icalendar

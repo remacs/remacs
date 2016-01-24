@@ -95,7 +95,7 @@ typedef struct _MEMORY_STATUS_EX {
 } MEMORY_STATUS_EX,*LPMEMORY_STATUS_EX;
 
 /* These are here so that GDB would know about these data types.  This
-   allows to attach GDB to Emacs when a fatal exception is triggered
+   allows attaching GDB to Emacs when a fatal exception is triggered
    and Windows pops up the "application needs to be closed" dialog.
    At that point, _gnu_exception_handler, the top-level exception
    handler installed by the MinGW startup code, is somewhere on the

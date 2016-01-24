@@ -803,7 +803,7 @@ if available."
   (setq isearch-adjusted t)
   (isearch-update))
 
-;; Recent versions of GNU Emacs allow to override the isearch search
+;; Recent versions of GNU Emacs allow overriding the isearch search
 ;; function for special needs, and avoid to advice the built-in search
 ;; function :-)
 (defun senator-isearch-search-fun ()
