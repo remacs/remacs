@@ -502,7 +502,7 @@ WINDOW controls how the buffer is displayed:
     (xref-quit)
     (xref--pop-to-location xref window)))
 
-(defun xref-query-replace (from to)
+(defun xref-query-replace-in-results (from to)
   "Perform interactive replacement of FROM with TO in all displayed xrefs.
 
 This command interactively replaces FROM with TO in the names of the
@@ -589,7 +589,7 @@ references displayed in the current *xref* buffer."
     (define-key map [remap quit-window] #'xref-quit)
     (define-key map (kbd "n") #'xref-next-line)
     (define-key map (kbd "p") #'xref-prev-line)
-    (define-key map (kbd "r") #'xref-query-replace)
+    (define-key map (kbd "r") #'xref-query-replace-in-results)
     (define-key map (kbd "RET") #'xref-goto-xref)
     (define-key map (kbd "C-o") #'xref-show-location-at-point)
     ;; suggested by Johan Claesson "to further reduce finger movement":

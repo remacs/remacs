@@ -1875,11 +1875,11 @@ Move to the previous reference and display it in the other window
 @findex xref-show-location-at-point
 Display the reference on the current line in the other window
 (@code{xref-show-location-at-point}).
-@findex xref-query-replace
+@findex xref-query-replace-in-results
 @item r @var{pattern} @key{RET} @var{replacement} @key{RET}
 Perform interactive query-replace on references that match
-@var{pattern} (@code{xref-query-replace}), replacing the match with
-@var{replacement}.  @xref{Identifier Search}.
+@var{pattern} (@code{xref-query-replace-in-results}), replacing
+the match with @var{replacement}.  @xref{Identifier Search}.
 @findex xref-quit
 @item q
 Quit the window showing the @file{*xref*} buffer (@code{xref-quit}).
@@ -1901,7 +1901,7 @@ them.
 @table @kbd
 @item M-?
 Find all the references for the identifier at point.
-@item M-x xref-query-replace @key{RET} @var{regexp} @key{RET} @var{replacement} @key{RET}
+@item M-x xref-query-replace-in-results @key{RET} @var{regexp} @key{RET} @var{replacement} @key{RET}
 Interactively replace @var{regexp} with @var{replacement} in the names
 of all the identifiers shown in the @file{*xref*} buffer.
 @item M-x tags-search @key{RET} @var{regexp} @key{RET}
@@ -1923,8 +1923,8 @@ identifier, showing the file name and the line where the identifier is
 referenced.  The XREF mode commands are available in this buffer, see
 @ref{Xref Commands}.
 
-@findex xref-query-replace
-  @kbd{M-x xref-query-replace} reads a regexp to match identifier
+@findex xref-query-replace-in-results
+  @kbd{M-x xref-query-replace-in-results} reads a regexp to match identifier
 names and a replacement string, just like ordinary @kbd{M-x
 query-replace-regexp}.  It then performs the specified replacement in
 the names of the matching identifiers in all the places in all the
