@@ -5213,7 +5213,7 @@ mouse    @r{Highlighting is mouse driven.}
 both     @r{Both cursor and mouse trigger highlighting.}
 @end example
 
-Changing this variable requires to rebuild the selection and *toc*
+Changing this variable requires rebuilding the selection and *toc*
 buffers to become effective (keys @kbd{g} or @kbd{r}).
 @end defopt
 

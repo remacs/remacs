@@ -641,7 +641,7 @@ strftime_case_ (bool upcase, STREAM_OR_CHAR_T *s,
           break;
         }
 
-      /* As a GNU extension we allow to specify the field width.  */
+      /* As a GNU extension we allow the field width to be specified.  */
       if (ISDIGIT (*f))
         {
           width = 0;

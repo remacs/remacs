@@ -102,7 +102,7 @@ get_permissions (const char *name, int desc, mode_t mode,
      There is an API
        pathconf (name, _PC_ACL_ENABLED)
        fpathconf (desc, _PC_ACL_ENABLED)
-     that allows to determine which of the two kinds of ACLs is supported
+     that allows us to determine which of the two kinds of ACLs is supported
      for the given file.  But some file systems may implement this call
      incorrectly, so better not use it.
      When fetching the source ACL, we simply fetch both ACL types.

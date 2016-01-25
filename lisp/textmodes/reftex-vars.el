@@ -1905,7 +1905,7 @@ instead or as well.  The variable may have one of these values:
    mouse    Highlighting is mouse driven.
    both     Both cursor and mouse trigger highlighting.
 
-Changing this variable requires to rebuild the selection and *toc* buffers
+Changing this variable requires rebuilding the selection and *toc* buffers
 to become effective (keys `g' or `r')."
   :group 'reftex-fontification-configurations
   :type '(choice
