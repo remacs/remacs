@@ -3713,37 +3713,43 @@ VARIABLES list of the class.  The list is processed in order.
   applied by recursively following these rules."
   (setf (alist-get class dir-locals-class-alist) variables))
 
-(defconst dir-locals-file ".dir-locals"
-  "Pattern for files that contain directory-local variables.
+(defconst dir-locals-file ".dir-locals.el"
+  "File that contains directory-local variables.
 It has to be constant to enforce uniform values across different
 environments and users.
-
-Multiple dir-locals files in the same directory are loaded in
-`string<' order.
+See also `dir-locals-file-2', whose values override this one's.
 See Info node `(elisp)Directory Local Variables' for details.")
 
-(defun dir-locals--all-files (file-or-dir)
-  "Return a list of all readable dir-locals files matching FILE-OR-DIR.
-If FILE-OR-DIR is a file pattern, expand wildcards in it and
-return a sorted list of the results.  If it is a directory name,
-return a sorted list of all files matching `dir-locals-file' in
-this directory.
-The returned list is sorted by `string<' order."
-  (require 'seq)
-  (let ((dir (if (file-directory-p file-or-dir)
-                 file-or-dir
-               (or (file-name-directory file-or-dir)
-                   default-directory)))
-        (file (cond ((not (file-directory-p file-or-dir)) (file-name-nondirectory file-or-dir))
-                    ((eq system-type 'ms-dos) (dosified-file-name dir-locals-file))
-                    (t dir-locals-file))))
-    (seq-filter (lambda (f) (and (file-readable-p f)
-                            (file-regular-p f)
-                            (not (file-directory-p f))))
-                (mapcar (lambda (f) (expand-file-name f dir))
-                        (nreverse
-                         (let ((completion-regexp-list '("\\.el\\'")))
-                           (file-name-all-completions file dir)))))))
+(defconst dir-locals-file-2 ".dir-locals-2.el"
+  "File that contains directory-local variables.
+This essentially a second file that can be used like
+`dir-locals-file', so that users can have specify their personal
+dir-local variables even if the current directory already has a
+`dir-locals-file' that is shared with other users (such as in a
+git repository).
+See Info node `(elisp)Directory Local Variables' for details.")
+
+(defun dir-locals--all-files (directory)
+  "Return a list of all readable dir-locals files in DIRECTORY.
+The returned list is sorted by increasing priority.  That is,
+values specified in the last file should take precedence over
+those in the first."
+  (when (file-readable-p directory)
+    (let* ((file-1 (expand-file-name (if (eq system-type 'ms-dos)
+                                        (dosified-file-name dir-locals-file)
+                                      dir-locals-file)
+                                    directory))
+           (file-2 (when (string-match "\\.el\\'" file-1)
+                     (replace-match "-2.el" t nil file-1)))
+          (out nil))
+      ;; The order here is important.
+      (dolist (f (list file-2 file-1))
+        (when (and f
+                   (file-readable-p f)
+                   (file-regular-p f)
+                   (not (file-directory-p f)))
+          (push f out)))
+      out)))
 
 (defun dir-locals-find-file (file)
   "Find the directory-local variables for FILE.

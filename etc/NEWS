@@ -179,9 +179,8 @@ by default, and must be enabled by using the `--with-modules' option
 at configure time.
 
 +++
-** Any file of the form .dir-locals*.el is now considered a dir-local
-file, and multiple such files can be used in the same directory.  See
-the variable `dir-locals-file' for more information.
+** A second dir-local file (.dir-locals-2.el) is now accepted.
+See the variable `dir-locals-file-2' for more information.
 
 +++
 ** Network security (TLS/SSL certificate validity and the like) is
