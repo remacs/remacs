@@ -530,7 +530,7 @@ xwidget_init_view (struct xwidget *xww,
      container later.  Drawing should crop container window if necessary
      to handle case where xwidget is partially obscured by other Emacs
      windows.  Other containers than gtk_fixed where explored, but
-     gtk_fixed had the most predictable behaviour so far.  */
+     gtk_fixed had the most predictable behavior so far.  */
 
   xv->emacswindow = FRAME_GTK_WIDGET (s->f);
   xv->widgetwindow = gtk_fixed_new ();

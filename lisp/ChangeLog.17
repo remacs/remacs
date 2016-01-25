@@ -4437,7 +4437,7 @@
 
 2014-12-07  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
-	* net/eww.el (eww-follow-link): Revert prefix behaviour to
+	* net/eww.el (eww-follow-link): Revert prefix behavior to
 	previous behavior.
 	(eww-copy-page-url): Add doc string.
 
@@ -9140,7 +9140,7 @@
 2014-06-30  Grégoire Jadi  <daimrod@gmail.com>
 
 	* net/rcirc.el (rcirc-buffer-process): Restore previous
-	behaviour.  (Bug#17772)
+	behavior.  (Bug#17772)
 
 2014-06-29  Alan Mackenzie  <acm@muc.de>
 
