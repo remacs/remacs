@@ -33,7 +33,7 @@ emacs_config_options=
 optsep=
 dnl This is the documented way to record the args passed to configure,
 dnl rather than $ac_configure_args.
-for opt in ${1+"$@"} CFLAGS CPPFLAGS LDFLAGS; do
+for opt in "$@" CFLAGS CPPFLAGS LDFLAGS; do
   case $opt in
     -n | --no-create | --no-recursion)
       continue ;;
