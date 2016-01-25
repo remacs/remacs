@@ -34,7 +34,7 @@
 (require 'cl-lib)
 (require 'bookmark)
 
-(defcustom xwidget-webkit-scroll-behaviour 'native
+(defcustom xwidget-webkit-scroll-behavior 'native
   "Scrolling behavior of the webkit instance.
 The possible values are: `native' or `image'."
   :version "25.1"
@@ -140,37 +140,37 @@ Interactively, URL defaults to the string looking like a url around point."
 
 (defun xwidget-webkit-scroll-up ()
   "Scroll webkit up.
-Depending on the value of `xwidget-webkit-scroll-behaviour',
+Depending on the value of `xwidget-webkit-scroll-behavior',
 this scrolls in 'native' fashion, or like `image-mode' would."
   (interactive)
-  (if (eq xwidget-webkit-scroll-behaviour 'native)
+  (if (eq xwidget-webkit-scroll-behavior 'native)
       (xwidget-set-adjustment (xwidget-webkit-last-session) 'vertical t 50)
     (image-scroll-up)))
 
 (defun xwidget-webkit-scroll-down ()
   "Scroll webkit down.
-Depending on the value of `xwidget-webkit-scroll-behaviour',
+Depending on the value of `xwidget-webkit-scroll-behavior',
 this scrolls in 'native' fashion, or like `image-mode' would."
   (interactive)
-  (if (eq xwidget-webkit-scroll-behaviour 'native)
+  (if (eq xwidget-webkit-scroll-behavior 'native)
       (xwidget-set-adjustment (xwidget-webkit-last-session) 'vertical t -50)
     (image-scroll-down)))
 
 (defun xwidget-webkit-scroll-forward ()
   "Scroll webkit forwards.
-Depending on the value of `xwidget-webkit-scroll-behaviour',
+Depending on the value of `xwidget-webkit-scroll-behavior',
 this scrolls in 'native' fashion, or like `image-mode' would."
   (interactive)
-  (if (eq xwidget-webkit-scroll-behaviour 'native)
+  (if (eq xwidget-webkit-scroll-behavior 'native)
       (xwidget-set-adjustment (xwidget-webkit-last-session) 'horizontal t 50)
     (xwidget-webkit-scroll-forward)))   ; FIXME infloop!
 
 (defun xwidget-webkit-scroll-backward ()
   "Scroll webkit backwards.
-Depending on the value of `xwidget-webkit-scroll-behaviour',
+Depending on the value of `xwidget-webkit-scroll-behavior',
 this scrolls in 'native' fashion, or like `image-mode' would."
   (interactive)
-  (if (eq xwidget-webkit-scroll-behaviour 'native)
+  (if (eq xwidget-webkit-scroll-behavior 'native)
       (xwidget-set-adjustment (xwidget-webkit-last-session) 'horizontal t -50)
     (xwidget-webkit-scroll-backward))) ; FIXME infloop!
 
@@ -415,7 +415,7 @@ For example, use this to display an anchor."
 (defun xwidget-webkit-adjust-size-dispatch ()
   "Adjust size according to mode."
   (interactive)
-  (if (eq xwidget-webkit-scroll-behaviour 'native)
+  (if (eq xwidget-webkit-scroll-behavior 'native)
       (xwidget-webkit-adjust-size-to-window)
     (xwidget-webkit-adjust-size-to-content))
   ;; The recenter is intended to correct a visual glitch.
