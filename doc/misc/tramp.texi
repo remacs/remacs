@@ -851,11 +851,9 @@ This method works only for unified file names, see @ref{Issues}.
 @cindex method smb
 @cindex smb method
 
-This is another non-native @value{tramp} method.  @command{smbclient}
-connects to any server supporting the SMB/CIFS protocol, such as MS Windows and
-Samba running on GNU/Linux.  Tests show this @value{tramp} method
-works with MS Windows NT, MS Windows 2000, MS Windows XP, MS Windows
-Vista, and MS Windows 7.
+This non-native @value{tramp} method connects via the Server Message
+Block (SMB) networking protocol to hosts running file servers that are
+typically based on @url{https://www.samba.org/,,Samba} or MS Windows.
 
 Using @command{smbclient} requires a few tweaks when working with
 @value{tramp}:
@@ -863,7 +861,7 @@ Using @command{smbclient} requires a few tweaks when working with
 The first directory in the localname must be a share name on the
 remote host.
 
-Since smb shares end in the @code{$} character, @value{tramp} must use
+Since SMB shares end in the @code{$} character, @value{tramp} must use
 @code{$$} when specifying those shares to avoid environment variable
 substitutions.
 
@@ -907,7 +905,7 @@ uses the anonymous user (without prompting for password).  This
 behavior is unlike other @value{tramp} methods, where local user name
 is substituted.
 
-@option{smb} method is unavailable if @value{emacsname} is run under a
+The @option{smb} method is unavailable if @value{emacsname} is run under a
 local user authentication context in MS Windows.  However such users
 can still access remote files using UNC file names instead of @value{tramp}:
 
