@@ -753,7 +753,7 @@ DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0,
 DEFUN ("xwidget-set-adjustment",
        Fxwidget_set_adjustment, Sxwidget_set_adjustment, 4, 4, 0,
        doc: /* Set native scrolling for XWIDGET.
-AXIS can be 'vertical or 'horizontal.
+AXIS can be `vertical' or `horizontal'.
 If RELATIVE is t, scroll relative, otherwise absolutely.
 VALUE is the amount to scroll, either relatively or absolutely.  */)
   (Lisp_Object xwidget, Lisp_Object axis, Lisp_Object relative,
