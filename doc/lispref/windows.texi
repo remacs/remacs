@@ -1579,7 +1579,7 @@ combination limit of @var{W4} (the parent window of @var{W6} and
 
 Alternatively, the problems sketched above can be avoided by always
 resizing all windows in the same combination whenever one of its windows
-is split or deleted.  This also permits spliting windows that would be
+is split or deleted.  This also permits splitting windows that would be
 otherwise too small for such an operation.
 
 @defopt window-combination-resize

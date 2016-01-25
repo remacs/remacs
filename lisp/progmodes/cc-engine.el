@@ -8284,8 +8284,8 @@ comment at the start of cc-engine.el for more info."
 	     before-lparen after-rparen
 	     (here (point))
 	     (pp-count-out 20)	; Max number of paren/brace constructs before
-				; we give up
-	     ids	      ; List of identifiers in the parenthesised list.
+				; we give up.
+	     ids	      ; List of identifiers in the parenthesized list.
 	     id-start after-prec-token decl-or-cast decl-res
 	     c-last-identifier-range identifier-ok)
 	(narrow-to-region low-lim (or macro-end (point-max)))
@@ -8310,7 +8310,7 @@ comment at the start of cc-engine.el for more info."
 	;; {
 	;;
 	;; Additionally, for a knr list to be recognized:
-	;; o - The identifier of each deeclarator up to and including the
+	;; o - The identifier of each declarator up to and including the
 	;;   one "near" point must be contained in the arg list.
 
 	(catch 'knr

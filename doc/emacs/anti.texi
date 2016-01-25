@@ -197,7 +197,7 @@ for removing the whole bidi support when downgrading to Emacs 23.
 @item
 Horizontal scroll bars are no longer supported.  Enlarge your windows
 and frames instead, or use @code{truncate-lines} and the automatic
-horizontal scrolling of text that Emacs had since time immemoriam.
+horizontal scrolling of text that Emacs had since time immemorial.
 
 @item
 Emacs is again counting the height of a frame's menu and its tool bar

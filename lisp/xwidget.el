@@ -491,7 +491,7 @@ Argument H height."
 (defun xwidget-webkit-execute-script-rv (xw script &optional default)
   "Same as 'xwidget-webkit-execute-script' but but with return value.
 XW is the webkit instance.  SCRIPT is the script to execute.
-DEFAULT is the defaultreturn value."
+DEFAULT is the default return value."
   ;; Notice the ugly "title" hack.  It is needed because the Webkit
   ;; API at the time of writing didn't support returning values.  This
   ;; is a wrapper for the title hack so it's easy to remove should

@@ -1170,7 +1170,7 @@ ns_clip_to_row (struct window *w, struct glyph_row *row,
       // GNUstep doesn't provide named images.  This was reported in
       // 2011, see https://savannah.gnu.org/bugs/?33396
       //
-      // As a drop in replacment, a semi tranparent gray square is used.
+      // As a drop in replacement, a semitransparent gray square is used.
       self.image = [[NSImage alloc] initWithSize:NSMakeSize(32, 32)];
       [self.image lockFocus];
       [[NSColor colorForEmacsRed:0.5 green:0.5 blue:0.5 alpha:0.5] set];
