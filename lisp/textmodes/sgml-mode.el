@@ -842,6 +842,25 @@ Return non-nil if we skipped over matched tags."
       (setq arg (1- arg)))
     return))
 
+(defun sgml-forward-sexp (n)
+  ;; This function is needed in major-modes such as nxml-mode where
+  ;; forward-sexp-function is used to give a more dwimish behavior to
+  ;; the `forward-sexp' command.
+  ;; Without it, we can end up with backtraces like:
+  ;;    "get-text-property" (0xffffc0f0)
+  ;;    "nxml-token-after" (0xffffc2ac)
+  ;;    "nxml-forward-single-balanced-item" (0xffffc46c)
+  ;;    "nxml-forward-balanced-item" (0xffffc61c)
+  ;;    "forward-sexp" (0xffffc7f8)
+  ;;    "sgml-parse-tag-backward" (0xffffc9c8)
+  ;;    "sgml-lexical-context" (0xffffcba8)
+  ;;    "sgml-mode-flyspell-verify" (0xffffcd74)
+  ;;    "flyspell-word" (0xffffcf3c)
+  ;;    "flyspell-post-command-hook" (0xffffd108)
+  ;; FIXME: should we also set the sgml-tag-syntax-table?
+  (let ((forward-sexp-function nil))
+    (forward-sexp n)))
+
 (defvar sgml-electric-tag-pair-overlays nil)
 (defvar sgml-electric-tag-pair-timer nil)
 
@@ -1067,9 +1086,9 @@ With prefix argument ARG, repeat this ARG times."
                  ((and (eq (char-before) ?>)
                        (or (not (eq (char-after) ?<))
                            (> x y)))
-                  (backward-sexp))
+                  (sgml-forward-sexp -1))
                  ((eq (char-after y) ?<)
-                  (forward-sexp)))
+                  (sgml-forward-sexp 1)))
                 (point))))
         (message "Invisible tag: %s"
                  ;; Strip properties, otherwise, the text is invisible.
@@ -1236,7 +1255,7 @@ You might want to turn on `auto-fill-mode' to get better results."
 	(unless (or ;;(looking-at "</")
 		    (progn (skip-chars-backward " \t") (bolp)))
 	  (reindent-then-newline-and-indent))
-	(forward-sexp 1)))
+	(sgml-forward-sexp 1)))
     ;; (indent-region beg end)
     ))
 
@@ -1282,7 +1301,7 @@ Leave point at the beginning of the tag."
 	  (let ((pos (point)))
 	    (condition-case nil
                 ;; FIXME: This does not correctly skip over PI an CDATA tags.
-		(forward-sexp)
+		(sgml-forward-sexp 1)
 	      (scan-error
 	       ;; This < seems to be just a spurious one, let's ignore it.
 	       (goto-char pos)
@@ -1316,7 +1335,7 @@ Leave point at the beginning of the tag."
                 (with-syntax-table sgml-tag-syntax-table
                   (goto-char tag-end)
                   (condition-case nil
-                      (backward-sexp)
+                      (sgml-forward-sexp -1)
                     (scan-error
                      ;; This > isn't really the end of a tag. Skip it.
                      (goto-char (1- tag-end))
@@ -1541,7 +1560,7 @@ LCON is the lexical context, if any."
 
     (`text
      (while (looking-at "</")
-       (forward-sexp 1)
+       (sgml-forward-sexp 1)
        (skip-chars-forward " \t"))
      (let* ((here (point))
 	    (unclosed (and ;; (not sgml-xml-mode)
