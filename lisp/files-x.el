@@ -429,23 +429,24 @@ from the MODE alist ignoring the input argument VALUE."
   (catch 'exit
     (unless enable-local-variables
       (throw 'exit (message "Directory-local variables are disabled")))
-    (let ((variables-file (and (buffer-file-name)
-                               (not (file-remote-p (buffer-file-name)))
-                               (dir-locals-find-file (buffer-file-name))))
-	  variables)
-      (setq variables-file
+    (let* ((dir-or-cache (and (buffer-file-name)
+                              (not (file-remote-p (buffer-file-name)))
+                              (dir-locals-find-file (buffer-file-name))))
+           (variables-file
             ;; If there are several .dir-locals, the user probably
             ;; wants to edit the last one (the highest priority).
-            (cond ((stringp variables-file)
-                   (car (last (dir-locals--all-files variables-file))))
-                  ((consp variables-file)	; result from cache
-                   ;; If cache element has an mtime, assume it came from a file.
-                   ;; Otherwise, assume it was set directly.
-                   (if (nth 2 variables-file)
-                       (car (last (dir-locals--all-files (car variables-file))))
-                     (cadr variables-file)))
+            (cond ((stringp dir-or-cache)
+                   (car (last (dir-locals--all-files dir-or-cache))))
+                  ((consp dir-or-cache)	; result from cache
+                   ;; If cache element has an mtime, assume it came
+                   ;; from a file.  Otherwise, assume it was set
+                   ;; directly.
+                   (if (nth 2 dir-or-cache)
+                       (car (last (dir-locals--all-files (car dir-or-cache))))
+                     (cadr dir-or-cache)))
                   ;; Try to make a proper file-name.
-                  (t (concat dir-locals-file ".el"))))
+                  (t (expand-file-name dir-locals-file))))
+           variables)
       ;; I can't be bothered to handle this case right now.
       ;; Dir locals were set directly from a class.  You need to
       ;; directly modify the class in dir-locals-class-alist.
