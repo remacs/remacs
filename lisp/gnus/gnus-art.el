@@ -1659,7 +1659,9 @@ called with the group name as the parameter, and should return a
 regexp."
   :version "24.1"
   :group 'gnus-art
-  :type '(choice regexp function))
+  :type '(choice (const :tag "Allow all" nil)
+                 (regexp :tag "Regular expression")
+                 (function :tag "Use a function")))
 
 ;;; Internal variables
 
