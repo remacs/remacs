@@ -20,7 +20,7 @@ No need to procrastinate on the dilemma whether you do or don't want
 the new shiny Cairo thing.  Hail, simplicity!
 
 @item
-Emacs still works on SGI IRIX systems.  if you live backwards in time,
+Emacs still works on SGI IRIX systems.  If you live backwards in time,
 this is actually a bonus, as IRIX systems will become more and more
 popular as you move farther back in time.
 
