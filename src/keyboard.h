@@ -415,8 +415,6 @@ extern void unuse_menu_items (void);
 #define EVENT_HEAD_KIND(event_head) \
   (Fget ((event_head), Qevent_kind))
 
-extern void (*handle_user_signal_hook) (int);
-
 /* True while doing kbd input.  */
 extern bool waiting_for_input;
 
