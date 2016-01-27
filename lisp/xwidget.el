@@ -97,6 +97,8 @@ Interactively, URL defaults to the string looking like a url around point."
                  (browse-url-interactive-arg "xwidget-webkit URL: "
                                              ;;(xwidget-webkit-current-url)
                                              )))
+  (or (featurep 'xwidget-internal)
+      (user-error "Your Emacs was not compiled with xwidgets support"))
   (when (stringp url)
     (if new-session
         (xwidget-webkit-new-session url)
