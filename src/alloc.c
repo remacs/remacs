@@ -92,6 +92,18 @@ static bool valgrind_p;
 #include "w32heap.h"	/* for sbrk */
 #endif
 
+#if defined DOUG_LEA_MALLOC || defined GNU_LINUX
+/* The address where the heap starts.  */
+void *
+my_heap_start (void)
+{
+  static void *start;
+  if (! start)
+    start = sbrk (0);
+  return start;
+}
+#endif
+
 #ifdef DOUG_LEA_MALLOC
 
 #include <malloc.h>
@@ -101,7 +113,69 @@ static bool valgrind_p;
 
 #define MMAP_MAX_AREAS 100000000
 
-#endif /* not DOUG_LEA_MALLOC */
+/* A pointer to the memory allocated that copies that static data
+   inside glibc's malloc.  */
+static void *malloc_state_ptr;
+
+/* Get and free this pointer; useful around unexec.  */
+void
+alloc_unexec_pre (void)
+{
+  malloc_state_ptr = malloc_get_state ();
+}
+void
+alloc_unexec_post (void)
+{
+  free (malloc_state_ptr);
+}
+
+/* Restore the dumped malloc state.  Because malloc can be invoked
+   even before main (e.g. by the dynamic linker), the dumped malloc
+   state must be restored as early as possible using this special hook.  */
+static void
+malloc_initialize_hook (void)
+{
+  static bool malloc_using_checking;
+
+  if (! initialized)
+    {
+      my_heap_start ();
+      malloc_using_checking = getenv ("MALLOC_CHECK_") != NULL;
+    }
+  else
+    {
+      if (!malloc_using_checking)
+	{
+	  /* Work around a bug in glibc's malloc.  MALLOC_CHECK_ must be
+	     ignored if the heap to be restored was constructed without
+	     malloc checking.  Can't use unsetenv, since that calls malloc.  */
+	  char **p = environ;
+	  if (p)
+	    for (; *p; p++)
+	      if (strncmp (*p, "MALLOC_CHECK_=", 14) == 0)
+		{
+		  do
+		    *p = p[1];
+		  while (*++p);
+
+		  break;
+		}
+	}
+
+      malloc_set_state (malloc_state_ptr);
+# ifndef XMALLOC_OVERRUN_CHECK
+      alloc_unexec_post ();
+# endif
+    }
+}
+
+# ifndef __MALLOC_HOOK_VOLATILE
+#  define __MALLOC_HOOK_VOLATILE
+# endif
+voidfuncptr __MALLOC_HOOK_VOLATILE __malloc_initialize_hook
+  = malloc_initialize_hook;
+
+#endif
 
 /* Mark, unmark, query mark bit of a Lisp string.  S must be a pointer
    to a struct Lisp_String.  */
