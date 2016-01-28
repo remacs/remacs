@@ -2408,6 +2408,15 @@ if test "${HAVE_X11}" = "yes" || test "${HAVE_NS}" = "yes" || test "${HAVE_W32}"
   fi
 fi
 
+GETADDRINFO_A_LIBS="-lanl"
+AC_CHECK_LIB(anl, getaddrinfo_a, HAVE_GETADDRINFO_A=yes, HAVE_GETADDRINFO_A=no,
+        [$GETADDRINFO_A_LIBS])
+AC_SUBST(GETADDRINFO_A_LIBS)
+
+OLD_LIBS=$LIBS
+LIBS="-lanl $LIBS"
+AC_CHECK_FUNCS(getaddrinfo_a)
+LIBS=$OLD_LIBS
 
 HAVE_GTK=no
 GTK_OBJ=
