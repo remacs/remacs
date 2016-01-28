@@ -161,7 +161,13 @@ struct Lisp_Process
        flag indicates that `raw_status' contains a new status that still
        needs to be synced to `status'.  */
     bool_bf raw_status_new : 1;
+    bool_bf is_non_blocking_client : 1;
+    bool_bf is_server : 1;
     int raw_status;
+    int backlog;
+    int port;
+    int socktype;
+    int ai_protocol;
 
 #ifdef HAVE_GNUTLS
     gnutls_initstage_t gnutls_initstage;
