@@ -2904,11 +2904,14 @@ usage:  (make-serial-process &rest ARGS)  */)
   return proc;
 }
 
-void set_network_socket_coding_system (Lisp_Object proc) {
+void set_network_socket_coding_system (Lisp_Object proc)
+{
   Lisp_Object tem;
   struct Lisp_Process *p = XPROCESS (proc);
   Lisp_Object contact = p->childp;
   Lisp_Object service, host, name;
+  Lisp_Object coding_systems = Qt;
+  Lisp_Object val;
 
   service = Fplist_get (contact, QCservice);
   host = Fplist_get (contact, QChost);
@@ -2918,75 +2921,72 @@ void set_network_socket_coding_system (Lisp_Object proc) {
   if (!NILP (tem) && (!CONSP (tem) || !CONSP (XCDR (tem))))
     tem = Qnil;  /* No error message (too late!).  */
 
-  {
-    /* Setup coding systems for communicating with the network stream.  */
-    /* Qt denotes we have not yet called Ffind_operation_coding_system.  */
-    Lisp_Object coding_systems = Qt;
-    Lisp_Object val;
+  /* Setup coding systems for communicating with the network stream.  */
+  /* Qt denotes we have not yet called Ffind_operation_coding_system.  */
 
-    if (!NILP (tem))
-      {
-	val = XCAR (XCDR (tem));
-	if (CONSP (val))
-	  val = XCAR (val);
-      }
-    else if (!NILP (Vcoding_system_for_read))
-      val = Vcoding_system_for_read;
-    else if ((!NILP (p->buffer) &&
-	      NILP (BVAR (XBUFFER (p->buffer), enable_multibyte_characters)))
-	     || (NILP (p->buffer) && NILP (BVAR (&buffer_defaults, enable_multibyte_characters))))
-      /* We dare not decode end-of-line format by setting VAL to
-	 Qraw_text, because the existing Emacs Lisp libraries
-	 assume that they receive bare code including a sequence of
-	 CR LF.  */
-      val = Qnil;
-    else
-      {
-	if (NILP (host) || NILP (service))
-	  coding_systems = Qnil;
-	else
-	  coding_systems = CALLN (Ffind_operation_coding_system,
-				  Qopen_network_stream, name, p->buffer,
-				  host, service);
-	if (CONSP (coding_systems))
-	  val = XCAR (coding_systems);
-	else if (CONSP (Vdefault_process_coding_system))
-	  val = XCAR (Vdefault_process_coding_system);
-	else
-	  val = Qnil;
-      }
-    pset_decode_coding_system (p, val);
+  if (!NILP (tem))
+    {
+      val = XCAR (XCDR (tem));
+      if (CONSP (val))
+	val = XCAR (val);
+    }
+  else if (!NILP (Vcoding_system_for_read))
+    val = Vcoding_system_for_read;
+  else if ((!NILP (p->buffer) &&
+	    NILP (BVAR (XBUFFER (p->buffer), enable_multibyte_characters)))
+	   || (NILP (p->buffer) && NILP (BVAR (&buffer_defaults, enable_multibyte_characters))))
+    /* We dare not decode end-of-line format by setting VAL to
+       Qraw_text, because the existing Emacs Lisp libraries
+       assume that they receive bare code including a sequence of
+       CR LF.  */
+    val = Qnil;
+  else
+    {
+      if (NILP (host) || NILP (service))
+	coding_systems = Qnil;
+      else
+	coding_systems = CALLN (Ffind_operation_coding_system,
+				Qopen_network_stream, name, p->buffer,
+				host, service);
+      if (CONSP (coding_systems))
+	val = XCAR (coding_systems);
+      else if (CONSP (Vdefault_process_coding_system))
+	val = XCAR (Vdefault_process_coding_system);
+      else
+	val = Qnil;
+    }
+  pset_decode_coding_system (p, val);
 
-    if (!NILP (tem))
-      {
-	val = XCAR (XCDR (tem));
-	if (CONSP (val))
-	  val = XCDR (val);
-      }
-    else if (!NILP (Vcoding_system_for_write))
-      val = Vcoding_system_for_write;
-    else if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
-      val = Qnil;
-    else
-      {
-	if (EQ (coding_systems, Qt))
-	  {
-	    if (NILP (host) || NILP (service))
-	      coding_systems = Qnil;
-	    else
-	      coding_systems = CALLN (Ffind_operation_coding_system,
-				      Qopen_network_stream, name, p->buffer,
-				      host, service);
-	  }
-	if (CONSP (coding_systems))
-	  val = XCDR (coding_systems);
-	else if (CONSP (Vdefault_process_coding_system))
-	  val = XCDR (Vdefault_process_coding_system);
-	else
-	  val = Qnil;
-      }
-    pset_encode_coding_system (p, val);
-  }
+  if (!NILP (tem))
+    {
+      val = XCAR (XCDR (tem));
+      if (CONSP (val))
+	val = XCDR (val);
+    }
+  else if (!NILP (Vcoding_system_for_write))
+    val = Vcoding_system_for_write;
+  else if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
+    val = Qnil;
+  else
+    {
+      if (EQ (coding_systems, Qt))
+	{
+	  if (NILP (host) || NILP (service))
+	    coding_systems = Qnil;
+	  else
+	    coding_systems = CALLN (Ffind_operation_coding_system,
+				    Qopen_network_stream, name, p->buffer,
+				    host, service);
+	}
+      if (CONSP (coding_systems))
+	val = XCDR (coding_systems);
+      else if (CONSP (Vdefault_process_coding_system))
+	val = XCDR (Vdefault_process_coding_system);
+      else
+	val = Qnil;
+    }
+  pset_encode_coding_system (p, val);
+
   setup_process_coding_systems (proc);
 
   pset_decoding_buf (p, empty_unibyte_string);
@@ -2997,7 +2997,8 @@ void set_network_socket_coding_system (Lisp_Object proc) {
     = !(!NILP (tem) || NILP (p->buffer) || !inherit_process_coding_system);
 }
 
-void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses) {
+void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
+{
   ptrdiff_t count = SPECPDL_INDEX ();
   ptrdiff_t count1;
   int s = -1, outch, inch;
@@ -3658,6 +3659,8 @@ usage: (make-network-process &rest ARGS)  */)
 	  ai_protocol = lres->ai_protocol;
 	  family = lres->ai_family;
 	}
+
+      ip_addresses = Fnreverse (ip_addresses);
 
       goto open_socket;
     }
