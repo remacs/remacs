@@ -5040,7 +5040,10 @@ connection if a previous connection has died for some reason."
 			target-alist (cdr target-alist)))
 
 		;; Make initial shell settings.
-		(tramp-open-connection-setup-interactive-shell p vec)))))
+		(tramp-open-connection-setup-interactive-shell p vec)
+
+		;; Mark it as connected.
+		(tramp-set-connection-property p "connected" t)))))
 
       ;; When the user did interrupt, we must cleanup.
       (quit

@@ -3009,7 +3009,8 @@ User is always nil."
     (when (tramp-tramp-file-p filename)
       (let* ((v (tramp-dissect-file-name filename))
 	     (p (tramp-get-connection-process v))
-	     (c (and p (processp p) (memq (process-status p) '(run open)))))
+	     (c (and p (processp p) (memq (process-status p) '(run open))
+		     (tramp-get-connection-property p "connected" nil))))
 	;; We expand the file name only, if there is already a connection.
 	(with-parsed-tramp-file-name
 	    (if c (expand-file-name filename) filename) nil

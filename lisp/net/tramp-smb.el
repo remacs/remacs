@@ -1914,7 +1914,10 @@ If ARGUMENT is non-nil, use it as argument for
 		    ;; character by character; if we send the string
 		    ;; at once, it is read painfully slow.
 		    (tramp-set-connection-property p "smb-share" share)
-		    (tramp-set-connection-property p "chunksize" 1))
+		    (tramp-set-connection-property p "chunksize" 1)
+
+		    ;; Mark it as connected.
+		    (tramp-set-connection-property p "connected" t))
 
 		;; Check for the error reason.  If it was due to wrong
 		;; password, reestablish the connection.  We cannot
