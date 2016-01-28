@@ -3005,7 +3005,7 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
   int xerrno = 0;
   Lisp_Object ip_address;
   int family;
-  struct sockaddr *sa;
+  struct sockaddr *sa = NULL;
   int ret;
   int addrlen;
   struct Lisp_Process *p = XPROCESS (proc);
@@ -3026,6 +3026,8 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 #endif
 
       addrlen = get_lisp_to_sockaddr_size (ip_address, &family);
+      if (sa)
+	free (sa);
       sa = alloca (addrlen);
       conv_lisp_to_sockaddr (family, ip_address, sa, addrlen);
 
