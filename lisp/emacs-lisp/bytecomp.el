@@ -1360,31 +1360,33 @@ extra args."
 (dolist (elt '(format message error))
   (put elt 'byte-compile-format-like t))
 
-;; Warn if a custom definition fails to specify :group.
+;; Warn if a custom definition fails to specify :group, or :type.
 (defun byte-compile-nogroup-warn (form)
-  (if (and (memq (car form) '(custom-declare-face custom-declare-variable))
-           byte-compile-current-group)
-      ;; The group will be provided implicitly.
-      nil
-    (let ((keyword-args (cdr (cdr (cdr (cdr form)))))
-          (name (cadr form)))
-      (or (not (eq (car-safe name) 'quote))
-          (and (eq (car form) 'custom-declare-group)
-               (equal name ''emacs))
-          (plist-get keyword-args :group)
-          (not (and (consp name) (eq (car name) 'quote)))
-          (byte-compile-warn
-           "%s for `%s' fails to specify containing group"
-           (cdr (assq (car form)
-                      '((custom-declare-group . defgroup)
-                        (custom-declare-face . defface)
-                        (custom-declare-variable . defcustom))))
-           (cadr name)))
-      ;; Update the current group, if needed.
-      (if (and byte-compile-current-file ;Only when compiling a whole file.
-               (eq (car form) 'custom-declare-group)
-               (eq (car-safe name) 'quote))
-          (setq byte-compile-current-group (cadr name))))))
+  (let ((keyword-args (cdr (cdr (cdr (cdr form)))))
+	(name (cadr form)))
+    (when (eq (car-safe name) 'quote)
+      (or (not (eq (car form) 'custom-declare-variable))
+	  (plist-get keyword-args :type)
+	  (byte-compile-warn
+	   "defcustom for `%s' fails to specify type" (cadr name)))
+      (if (and (memq (car form) '(custom-declare-face custom-declare-variable))
+	       byte-compile-current-group)
+	  ;; The group will be provided implicitly.
+	  nil
+	(or (and (eq (car form) 'custom-declare-group)
+		 (equal name ''emacs))
+	    (plist-get keyword-args :group)
+	    (byte-compile-warn
+	     "%s for `%s' fails to specify containing group"
+	     (cdr (assq (car form)
+			'((custom-declare-group . defgroup)
+			  (custom-declare-face . defface)
+			  (custom-declare-variable . defcustom))))
+	     (cadr name)))
+	;; Update the current group, if needed.
+	(if (and byte-compile-current-file ;Only when compiling a whole file.
+		 (eq (car form) 'custom-declare-group))
+	    (setq byte-compile-current-group (cadr name)))))))
 
 ;; Warn if the function or macro is being redefined with a different
 ;; number of arguments.
