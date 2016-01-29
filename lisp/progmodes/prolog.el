@@ -2617,6 +2617,8 @@ and end of list building."
   (goto-char (point-max))
 )
 
+(declare-function pltrace-on "ext:pltrace" ())
+
 (defun prolog-enable-sicstus-sd ()
   "Enable the source level debugging facilities of SICStus 3.7 and later."
   (interactive)
@@ -2627,21 +2629,22 @@ and end of list building."
       (progn
         ;; If there is a *prolog* buffer, then call pltrace-on
         (if (get-buffer "*prolog*")
-            ;; Avoid compilation warnings by using eval
-            (eval '(pltrace-on)))
+            (pltrace-on))
         (setq prolog-use-sicstus-sd t)
         )))
+
+(declare-function pltrace-off "ext:pltrace" (&optional remove-process-filter))
 
 (defun prolog-disable-sicstus-sd ()
   "Disable the source level debugging facilities of SICStus 3.7 and later."
   (interactive)
+  (require 'pltrace)
   (setq prolog-use-sicstus-sd nil)
   ;; Remove the hook
   (remove-hook 'prolog-inferior-mode-hook 'pltrace-on)
   ;; If there is a *prolog* buffer, then call pltrace-off
   (if (get-buffer "*prolog*")
-      ;; Avoid compile warnings by using eval
-      (eval '(pltrace-off))))
+      (pltrace-off)))
 
 (defun prolog-toggle-sicstus-sd ()
   ;; FIXME: Use define-minor-mode.
