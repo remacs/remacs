@@ -854,6 +854,7 @@ and just use etags."
 (declare-function semantic-symref-find-references-by-name "semantic/symref")
 (declare-function semantic-find-file-noselect "semantic/fw")
 (declare-function grep-expand-template "grep")
+(defvar ede-minor-mode) ;; ede.el
 
 (defun xref-collect-references (symbol dir)
   "Collect references to SYMBOL inside DIR.
@@ -948,6 +949,9 @@ IGNORES is a list of glob patterns."
    (xref--find-ignores-arguments ignores dir)))
 
 (defun xref--find-ignores-arguments (ignores dir)
+  "Convert IGNORES and DIR to a list of arguments for 'find'.
+IGNORES is a list of glob patterns.  DIR is an absolute
+directory, used as the root of the ignore globs."
   ;; `shell-quote-argument' quotes the tilde as well.
   (cl-assert (not (string-match-p "\\`~" dir)))
   (when ignores

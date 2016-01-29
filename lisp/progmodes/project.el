@@ -154,6 +154,13 @@ end it with `/'.  DIR must be one of `project-roots' or
     vc-directory-exclusion-list)
    grep-find-ignored-files))
 
+(cl-defgeneric project-file-completion-table (_project _dirs)
+  "Return a completion table for files in directories DIRS in PROJECT.
+DIRS is a list of absolute directories; it should be some
+subset of the project roots and external roots.
+PROJECT is used to find the project ignores and other project meta-data."
+  )
+
 (defgroup project-vc nil
   "Project implementation using the VC package."
   :version "25.1"
@@ -313,51 +320,60 @@ pattern to search for."
 
 ;;;###autoload
 (defun project-find-file ()
-  "Visit a file in the current project's roots.
-
-This is like `find-file', but it limits the file-name completion
-candidates to the files within the current project roots."
+  "Visit a file (with completion) in the current project's roots.
+The completion default is the filename at point, if one is
+recognized."
   (interactive)
   (let* ((pr (project-current t))
          (dirs (project-roots pr)))
-    (project--find-file-in dirs pr)))
+    (project-find-file-in (thing-at-point 'filename) dirs pr)))
 
 ;;;###autoload
 (defun project-or-external-find-file ()
-  "Visit a file in the current project's roots or external roots.
-
-This is like `find-file', but it limits the file-name completion
-candidates to the files within the current project roots and external roots."
+  "Visit a file (with completion) in the current project's roots or external roots.
+The completion default is the filename at point, if one is
+recognized."
   (interactive)
   (let* ((pr (project-current t))
          (dirs (append
                 (project-roots pr)
                 (project-external-roots pr))))
-    (project--find-file-in dirs pr)))
+    (project-find-file-in (thing-at-point 'filename) dirs pr)))
 
 ;; FIXME: Uniquely abbreviate the roots?
-(defun project--find-file-in (dirs project)
+(cl-defmethod project-file-completion-table (project dirs)
+  "Default implementation using `find-program'."
   (require 'xref)
-  (let* ((all-files
-          (cl-mapcan
-           (lambda (dir)
-             (let ((command
-                    (format "%s %s %s -type f -print0"
-                            find-program
-                            dir
-                            (xref--find-ignores-arguments
-                             (project-ignores project dir)
-                             (expand-file-name dir)))))
-               (split-string (shell-command-to-string command) "\0" t)))
-           dirs))
-         (table (lambda (string pred action)
-                  (cond
-                   ((eq action 'metadata)
-                    '(metadata . ((category . project-file))))
-                   (t
-                    (complete-with-action action all-files string pred))))))
-    (find-file
-     (completing-read "Find file: " table nil t))))
+  (let ((all-files
+	 (cl-mapcan
+	  (lambda (dir)
+	    (let ((command
+		   (format "%s %s %s -type f -print0"
+			   find-program
+			   dir
+			   (xref--find-ignores-arguments
+			    (project-ignores project dir)
+			    (expand-file-name dir)))))
+	      (split-string (shell-command-to-string command) "\0" t)))
+	  dirs)))
+    (lambda (string pred action)
+      (cond
+       ((eq action 'metadata)
+	'(metadata . ((category . project-file))))
+       (t
+	(complete-with-action action all-files string pred))))
+    ))
+
+(defun project-find-file-in (filename dirs project)
+  "Complete FILENAME in DIRS in PROJECT, visit the file."
+  ;; FIXME: verify that filename is accepted by the completion table
+  (find-file
+   (completing-read
+    (if filename
+        (format "Find file (%s): " filename)
+      "Find file: ")
+    (project--file-completion-table project dirs)
+    nil t nil nil filename)))
 
 (provide 'project)
 ;;; project.el ends here
