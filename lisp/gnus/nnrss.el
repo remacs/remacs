@@ -37,10 +37,7 @@
 (require 'mm-url)
 (require 'rfc2047)
 (require 'mml)
-(eval-when-compile
-  (ignore-errors
-   (require 'xml)))
-(eval '(require 'xml))
+(require 'xml)
 
 (nnoo-declare nnrss)
 
@@ -372,8 +369,6 @@ for decoding when the cdr that the data specify is not available.")
 (nnoo-define-skeleton nnrss)
 
 ;;; Internal functions
-(eval-when-compile (defun xml-rpc-method-call (&rest args)))
-
 (defun nnrss-get-encoding ()
   "Return an encoding attribute specified in the current xml contents.
 If `nnrss-compatible-encoding-alist' specifies the compatible encoding,
@@ -958,6 +953,9 @@ Use Mark Pilgrim's `ultra-liberal rss locator'."
 		rss-link
 	      ;;    4. check syndic8
 	      (nnrss-find-rss-via-syndic8 url))))))))
+
+(declare-function xml-rpc-method-call "ext:xml-rpc"
+		  (server-url method &rest params))
 
 (defun nnrss-find-rss-via-syndic8 (url)
   "Query syndic8 for the rss feeds it has for URL."

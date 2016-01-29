@@ -27,7 +27,7 @@
 
 ;;; Code:
 
-(eval '(run-hooks 'gnus-load-hook))
+(run-hooks 'gnus-load-hook)
 
 (eval-when-compile (require 'cl))
 (require 'wid-edit)
