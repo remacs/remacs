@@ -570,7 +570,7 @@
 ;; Maybe provide complete XEmacs support in the future however the
 ;; "extent" is the single largest obstacle lying ahead, read the
 ;; document in Emacs info.
-;; (eval '(progn (require 'info) (Info-find-node "elisp" "Not Intervals")))
+;; (progn (require 'info) (Info-find-node "elisp" "Not Intervals"))
 ;;
 ;;
 ;; ---------------
