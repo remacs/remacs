@@ -161,13 +161,25 @@ struct Lisp_Process
        flag indicates that `raw_status' contains a new status that still
        needs to be synced to `status'.  */
     bool_bf raw_status_new : 1;
+    /* Whether this is a nonblocking socket. */
     bool_bf is_non_blocking_client : 1;
+    /* Whether this is a server or a client socket. */
     bool_bf is_server : 1;
     int raw_status;
+    /* The length of the socket backlog. */
     int backlog;
+    /* The port number. */
     int port;
+    /* The socket type. */
     int socktype;
+    /* The socket protocol. */
     int ai_protocol;
+
+#ifdef HAVE_GETADDRINFO_A
+    /* Whether the socket is waiting for response from an asynchronous
+       DNS call. */
+    struct gaicb* dns_request;
+#endif
 
 #ifdef HAVE_GNUTLS
     gnutls_initstage_t gnutls_initstage;

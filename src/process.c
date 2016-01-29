@@ -281,6 +281,10 @@ static int max_input_desc;
 
 /* Indexed by descriptor, gives the process (if any) for that descriptor.  */
 static Lisp_Object chan_process[FD_SETSIZE];
+#ifdef HAVE_GETADDRINFO_A
+/* Pending DNS requests. */
+static Lisp_Object dns_process[FD_SETSIZE];
+#endif
 
 /* Alist of elements (NAME . PROCESS).  */
 static Lisp_Object Vprocess_alist;
@@ -3012,7 +3016,7 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
   Lisp_Object contact = p->childp;
   int optbits = 0;
 
-  /* Do this in case we never enter the for-loop below.  */
+  /* Do this in case we never enter the while-loop below.  */
   count1 = SPECPDL_INDEX ();
   s = -1;
 
@@ -3028,7 +3032,7 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
       addrlen = get_lisp_to_sockaddr_size (ip_address, &family);
       if (sa)
 	free (sa);
-      sa = alloca (addrlen);
+      sa = xmalloc (addrlen);
       conv_lisp_to_sockaddr (family, ip_address, sa, addrlen);
 
       s = socket (family, p->socktype | SOCK_CLOEXEC, p->ai_protocol);
@@ -3469,7 +3473,7 @@ usage: (make-network-process &rest ARGS)  */)
   struct Lisp_Process *p;
 #ifdef HAVE_GETADDRINFO
   struct addrinfo ai, *res, *lres;
-  struct addrinfo hints;
+  struct addrinfo *hints;
   const char *portstring;
   char portbuf[128];
 #endif /* HAVE_GETADDRINFO */
@@ -3485,6 +3489,9 @@ usage: (make-network-process &rest ARGS)  */)
   int socktype;
   int family = -1;
   int ai_protocol = 0;
+#ifdef HAVE_GETADDRINFO_A
+  struct gaicb *dns_request = NULL;
+#endif
   ptrdiff_t count = SPECPDL_INDEX ();
 
   if (nargs == 0)
@@ -3610,10 +3617,7 @@ usage: (make-network-process &rest ARGS)  */)
     }
 #endif
 
-#ifdef HAVE_GETADDRINFO
-  /* If we have a host, use getaddrinfo to resolve both host and service.
-     Otherwise, use getservbyname to lookup the service.  */
-
+#if defined (HAVE_GETADDRINFO) || defined (HAVE_GETADDRINFO_A)
   if (!NILP (host))
     {
 
@@ -3632,19 +3636,51 @@ usage: (make-network-process &rest ARGS)  */)
 	  portstring = SSDATA (service);
 	}
 
+      hints = xmalloc (sizeof (struct addrinfo));
+      memset (hints, 0, sizeof (struct addrinfo));
+      hints->ai_flags = 0;
+      hints->ai_family = family;
+      hints->ai_socktype = socktype;
+      hints->ai_protocol = 0;
+    }
+
+#endif
+
+#ifdef HAVE_GETADDRINFO_A
+  if (!NILP (Fplist_get (contact, QCnowait)) &&
+      !NILP (host))
+    {
+      struct gaicb **reqs = xmalloc (sizeof (struct gaicb*));
+
+      dns_request = xmalloc (sizeof (struct gaicb));
+      reqs[0] = dns_request;
+      dns_request->ar_name = strdup (SSDATA (host));
+      dns_request->ar_service = strdup (portstring);
+      dns_request->ar_request = hints;
+      dns_request->ar_result = NULL;
+
+      ret = getaddrinfo_a (GAI_NOWAIT, reqs, 1, NULL);
+      if (ret)
+	error ("%s/%s getaddrinfo_a error %d", SSDATA (host), portstring, ret);
+
+      goto open_socket;
+ }
+#endif /* HAVE_GETADDRINFO_A */
+
+#ifdef HAVE_GETADDRINFO
+  /* If we have a host, use getaddrinfo to resolve both host and service.
+     Otherwise, use getservbyname to lookup the service.  */
+
+  if (!NILP (host))
+    {
       immediate_quit = 1;
       QUIT;
-      memset (&hints, 0, sizeof (hints));
-      hints.ai_flags = 0;
-      hints.ai_family = family;
-      hints.ai_socktype = socktype;
-      hints.ai_protocol = 0;
 
 #ifdef HAVE_RES_INIT
       res_init ();
 #endif
 
-      ret = getaddrinfo (SSDATA (host), portstring, &hints, &res);
+      ret = getaddrinfo (SSDATA (host), portstring, hints, &res);
       if (ret)
 #ifdef HAVE_GAI_STRERROR
 	error ("%s/%s %s", SSDATA (host), portstring, gai_strerror (ret));
@@ -3663,6 +3699,7 @@ usage: (make-network-process &rest ARGS)  */)
 	}
 
       ip_addresses = Fnreverse (ip_addresses);
+      xfree (hints);
 
       goto open_socket;
     }
@@ -3749,6 +3786,7 @@ usage: (make-network-process &rest ARGS)  */)
   p->port = port;
   p->socktype = socktype;
   p->ai_protocol = ai_protocol;
+  p->dns_request = NULL;
 
   unbind_to (count, Qnil);
 
@@ -3774,7 +3812,26 @@ usage: (make-network-process &rest ARGS)  */)
 #endif
     }
 
-  connect_network_socket (proc, ip_addresses);
+  /* If we're doing async address resolution, the list of addresses
+     here will be nil, so we postpone connecting to the server. */
+  if (NILP (ip_addresses))
+    {
+      int channel;
+
+      p->dns_request = dns_request;
+      p->status = Qconnect;
+      for (channel = 0; channel < FD_SETSIZE; ++channel)
+	if (NILP (dns_process[channel]))
+	  {
+	    dns_process[channel] = proc;
+	    break;
+	  }
+    }
+  else
+    {
+      connect_network_socket (proc, ip_addresses);
+    }
+
   return proc;
 }
 
@@ -4479,6 +4536,40 @@ server_accept_connection (Lisp_Object server, int channel)
   exec_sentinel (proc, concat3 (open_from, host_string, nl));
 }
 
+#ifdef HAVE_GETADDRINFO_A
+static int
+check_for_dns (Lisp_Object proc)
+{
+  struct Lisp_Process *p = XPROCESS (proc);
+  Lisp_Object ip_addresses = Qnil;
+  int ret = 0;
+
+  ret = gai_error (p->dns_request);
+  if (ret == EAI_INPROGRESS)
+    return 0;
+
+  /* We got a response. */
+  if (ret == 0)
+    {
+      struct addrinfo *res;
+
+      for (res = p->dns_request->ar_result; res; res = res->ai_next)
+	{
+	  ip_addresses = Fcons (conv_sockaddr_to_lisp
+				(res->ai_addr, res->ai_addrlen),
+				ip_addresses);
+	}
+
+      ip_addresses = Fnreverse (ip_addresses);
+      connect_network_socket (proc, ip_addresses);
+      return 1;
+    }
+
+  pset_status (p, Qfailed);
+  return 0;
+}
+#endif /* HAVE_GETADDRINFO_A */
+
 /* This variable is different from waiting_for_input in keyboard.c.
    It is used to communicate to a lisp process-filter/sentinel (via the
    function Fwaiting_for_user_input_p below) whether Emacs was waiting
@@ -4603,6 +4694,22 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       /* Exit now if the cell we're waiting for became non-nil.  */
       if (! NILP (wait_for_cell) && ! NILP (XCAR (wait_for_cell)))
 	break;
+
+#ifdef HAVE_GETADDRINFO_A
+      for (channel = 0; channel < FD_SETSIZE; ++channel)
+	{
+	  if (! NILP (dns_process[channel]))
+	    {
+	      struct Lisp_Process *p = XPROCESS (dns_process[channel]);
+	      if (p && p->dns_request &&
+		  (! wait_proc || p == wait_proc) &&
+		  check_for_dns (dns_process[channel]))
+		{
+		  dns_process[channel] = Qnil;
+		}
+	    }
+	}
+#endif /* HAVE_GETADDRINFO_A */
 
       /* Compute time from now till when time limit is up.  */
       /* Exit if already run out.  */
@@ -7450,6 +7557,9 @@ init_process_emacs (void)
     {
       chan_process[i] = Qnil;
       proc_buffered_char[i] = -1;
+#ifdef HAVE_GETADDRINFO_A
+      dns_process[i] = Qnil;
+#endif
     }
   memset (proc_decode_coding_system, 0, sizeof proc_decode_coding_system);
   memset (proc_encode_coding_system, 0, sizeof proc_encode_coding_system);
