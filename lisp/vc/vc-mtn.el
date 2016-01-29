@@ -104,7 +104,7 @@ switches."
 
 (defun vc-mtn-find-ignore-file (file)
   "Return the mtn ignore file that controls FILE."
-  (expand-file-name ".mtnignore" (vc-git-root file)))
+  (expand-file-name ".mtnignore" (vc-mtn-root file)))
 
 (defun vc-mtn-registered (file)
   (let ((root (vc-mtn-root file)))

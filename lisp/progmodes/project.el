@@ -372,7 +372,7 @@ recognized."
     (if filename
         (format "Find file (%s): " filename)
       "Find file: ")
-    (project--file-completion-table project dirs)
+    (project-file-completion-table project dirs)
     nil t nil nil filename)))
 
 (provide 'project)
