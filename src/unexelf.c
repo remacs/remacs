@@ -211,6 +211,10 @@ entry_address (void *section_h, ptrdiff_t idx, ptrdiff_t entsize)
 
 typedef unsigned char byte;
 
+#ifdef HYBRID_MALLOC
+extern int bss_sbrk_did_unexec;
+#endif
+
 /* ****************************************************************
  * unexec
  *
@@ -228,7 +232,6 @@ unexec (const char *new_name, const char *old_name)
   void *new_break;
 
 #ifdef HYBRID_MALLOC
-  extern int bss_sbrk_did_unexec;
   bss_sbrk_did_unexec = 1;
 #endif
 
