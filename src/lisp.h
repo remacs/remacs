@@ -619,7 +619,9 @@ extern _Noreturn Lisp_Object wrong_type_argument (Lisp_Object, Lisp_Object);
 extern _Noreturn void wrong_choice (Lisp_Object, Lisp_Object);
 
 /* Defined in emacs.c.  */
+#ifdef DOUG_LEA_MALLOC
 extern bool might_dump;
+#endif
 /* True means Emacs has already been initialized.
    Used during startup to detect startup of dumped Emacs.  */
 extern bool initialized;

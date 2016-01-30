@@ -56,7 +56,6 @@ License along with this library.  If not, see <http://www.gnu.org/licenses/>.
 extern void (*__MALLOC_HOOK_VOLATILE __after_morecore_hook) (void);
 extern void (*__MALLOC_HOOK_VOLATILE __malloc_initialize_hook) (void);
 extern void *(*__morecore) (ptrdiff_t);
-extern void *__default_morecore (ptrdiff_t);
 #endif
 
 /* If HYBRID_MALLOC is defined, then temacs will use malloc,
@@ -1512,8 +1511,8 @@ extern void *__sbrk (ptrdiff_t increment);
 /* Allocate INCREMENT more bytes of data space,
    and return the start of data space, or NULL on errors.
    If INCREMENT is negative, shrink data space.  */
-void *
-__default_morecore (ptrdiff_t increment)
+static void *
+gdefault_morecore (ptrdiff_t increment)
 {
   void *result;
 #ifdef HYBRID_MALLOC
@@ -1528,7 +1527,7 @@ __default_morecore (ptrdiff_t increment)
   return result;
 }
 
-void *(*__morecore) (ptrdiff_t) = __default_morecore;
+void *(*__morecore) (ptrdiff_t) = gdefault_morecore;
 
 /* Copyright (C) 1991, 92, 93, 94, 95, 96 Free Software Foundation, Inc.
 

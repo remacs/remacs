@@ -22,10 +22,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <stdio.h>
 #include <limits.h>		/* For CHAR_BIT.  */
-
-#ifdef ENABLE_CHECKING
-#include <signal.h>		/* For SIGABRT.  */
-#endif
+#include <signal.h>		/* For SIGABRT, SIGDANGER.  */
 
 #ifdef HAVE_PTHREAD
 #include <pthread.h>
@@ -565,6 +562,8 @@ static struct Lisp_Finalizer doomed_finalizers;
 				Malloc
  ************************************************************************/
 
+#if defined SIGDANGER || (!defined SYSTEM_MALLOC && !defined HYBRID_MALLOC)
+
 /* Function malloc calls this if it finds we are near exhausting storage.  */
 
 void
@@ -573,6 +572,7 @@ malloc_warning (const char *str)
   pending_malloc_warning = str;
 }
 
+#endif
 
 /* Display an already-pending malloc warning.  */
 

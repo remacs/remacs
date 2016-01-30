@@ -128,6 +128,9 @@ Lisp_Object Vlibrary_cache;
 bool initialized;
 
 /* Set to true if this instance of Emacs might dump.  */
+#ifndef DOUG_LEA_MALLOC
+static
+#endif
 bool might_dump;
 
 #ifdef DARWIN_OS

@@ -38,7 +38,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "lisp.h"
 
+#if ((!defined SYSTEM_MALLOC && !defined HYBRID_MALLOC && !defined WINDOWSNT) \
+     || defined CYGWIN || defined DARWIN_OS)
 char my_edata[] = "End of Emacs initialized data";
+#endif
 
 /* Help unexec locate the end of the .bss area used by Emacs (which
    isn't always a separate section in NT executables).  */
