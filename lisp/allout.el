@@ -797,9 +797,9 @@ numbers are always used."
   :group 'allout)
 ;;;_  - allout-title
 (defcustom allout-title '(or buffer-file-name (buffer-name))
-  "Expression to be evaluated to determine the title for LaTeX
-formatted copy."
+  "Expression to evaluate to determine the title for LaTeX formatted copy."
   :type 'sexp
+  :risky t
   :group 'allout)
 ;;;_  - allout-line-skip
 (defcustom allout-line-skip ".05cm"

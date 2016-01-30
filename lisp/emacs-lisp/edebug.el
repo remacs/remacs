@@ -225,6 +225,7 @@ After execution is resumed, the error is signaled again."
   "If non-nil, an expression to test for at every stop point.
 If the result is non-nil, then break.  Errors are ignored."
   :type 'sexp
+  :risky t
   :group 'edebug)
 
 (defcustom edebug-sit-for-seconds 1

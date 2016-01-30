@@ -3421,6 +3421,7 @@ it if ARG is omitted or nil."
 Forms in the list are combined with AND.  The default is to display
 only tooltips in the buffer containing the overlay arrow."
   :type 'sexp
+  :risky t
   :group 'gud
   :group 'tooltip)
 

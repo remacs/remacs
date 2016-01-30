@@ -1073,6 +1073,7 @@ If a function, the result from the function will be used instead.
 If a form, the result from the form will be used instead."
   :version "23.2"
   :type 'sexp
+  :risky t
   :link '(custom-manual "(message)Insertion Variables")
   :group 'message-insertion)
 
@@ -1287,6 +1288,7 @@ The value should be an expression to test whether the problem will
 actually occur."
   :group 'message-sending
   :link '(custom-manual "(message)Mail Variables")
+  :risky t
   :type 'sexp)
 
 ;;;###autoload
