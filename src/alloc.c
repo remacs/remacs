@@ -1123,17 +1123,12 @@ lisp_free (void *block)
    clang 3.3 anyway.  */
 
 #if ! ADDRESS_SANITIZER
-# if !defined SYSTEM_MALLOC && !defined DOUG_LEA_MALLOC && !defined HYBRID_MALLOC
-#  define USE_ALIGNED_ALLOC 1
-/* Defined in gmalloc.c.  */
-void *aligned_alloc (size_t, size_t);
-# elif defined HYBRID_MALLOC
-#  if defined ALIGNED_ALLOC || defined HAVE_POSIX_MEMALIGN
+# if defined HYBRID_MALLOC
+#  if defined HAVE_ALIGNED_ALLOC || defined HAVE_POSIX_MEMALIGN
 #   define USE_ALIGNED_ALLOC 1
-#   define aligned_alloc hybrid_aligned_alloc
-/* Defined in gmalloc.c.  */
-void *aligned_alloc (size_t, size_t);
 #  endif
+# elif !defined SYSTEM_MALLOC && !defined DOUG_LEA_MALLOC
+#  define USE_ALIGNED_ALLOC 1
 # elif defined HAVE_ALIGNED_ALLOC
 #  define USE_ALIGNED_ALLOC 1
 # elif defined HAVE_POSIX_MEMALIGN

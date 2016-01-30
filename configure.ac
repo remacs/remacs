@@ -2123,12 +2123,12 @@ case "$opsys" in
 esac
 
 if test "${system_malloc}" != yes && test "${doug_lea_malloc}" != yes \
-   && test "${UNEXEC_OBJ}" = unexelf.o && test "${hybrid_malloc}" != no; then
+   && test "${UNEXEC_OBJ}" = unexelf.o; then
   hybrid_malloc=yes
 fi
 
 GMALLOC_OBJ=
-SHEAP_OBJ=
+HYBRID_MALLOC=
 if test "${system_malloc}" = "yes"; then
   AC_DEFINE([SYSTEM_MALLOC], 1,
     [Define to 1 to use the system memory allocator, even if it is not
@@ -2140,10 +2140,10 @@ if test "${system_malloc}" = "yes"; then
 elif test "$hybrid_malloc" = yes; then
   AC_DEFINE(HYBRID_MALLOC, 1,
     [Define to use gmalloc before dumping and the system malloc after.])
+  HYBRID_MALLOC=1
   GNU_MALLOC=
   GNU_MALLOC_reason="only before dumping"
   GMALLOC_OBJ=gmalloc.o
-  SHEAP_OBJ=sheap.o
   VMLIMIT_OBJ=
 else
   test "$doug_lea_malloc" != "yes" && GMALLOC_OBJ=gmalloc.o
@@ -2163,8 +2163,9 @@ else
        of the main data segment.])
   fi
 fi
+AC_SUBST([HYBRID_MALLOC])
+AM_CONDITIONAL([HYBRID_MALLOC_LIB], [test -n "$HYBRID_MALLOC"])
 AC_SUBST(GMALLOC_OBJ)
-AC_SUBST(SHEAP_OBJ)
 AC_SUBST(VMLIMIT_OBJ)
 
 if test "$doug_lea_malloc" = "yes" && test "$hybrid_malloc" != yes; then

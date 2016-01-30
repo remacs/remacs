@@ -254,8 +254,7 @@ XFIXES_CFLAGS = @XFIXES_CFLAGS@
 ## widget.o if USE_X_TOOLKIT, otherwise empty.
 WIDGET_OBJ=@WIDGET_OBJ@
 
-## sheap.o if HYBRID_MALLOC, otherwise empty.
-SHEAP_OBJ=@SHEAP_OBJ@
+HYBRID_MALLOC = @HYBRID_MALLOC@
 
 ## cygw32.o if CYGWIN, otherwise empty.
 CYGWIN_OBJ=@CYGWIN_OBJ@
@@ -400,6 +399,7 @@ base_obj = dispnew.o frame.o scroll.o xdisp.o menu.o $(XMENU_OBJ) window.o \
 	doprnt.o intervals.o textprop.o composite.o xml.o $(NOTIFY_OBJ) \
 	$(XWIDGETS_OBJ) \
 	profiler.o decompress.o \
+	$(if $(HYBRID_MALLOC),sheap.o) \
 	$(SHEAP_OBJ) \
 	$(MSDOS_OBJ) $(MSDOS_X_OBJ) $(NS_OBJ) $(CYGWIN_OBJ) $(FONT_OBJ) \
 	$(W32_OBJ) $(WINDOW_SYSTEM_OBJ) $(XGSELOBJ)
@@ -580,7 +580,9 @@ globals.h: gl-stamp; @true
 
 $(ALLOBJS): globals.h
 
-$(lib)/libegnu.a: $(config_h)
+LIBEGNU_ARCHIVE = $(lib)/lib$(if $(HYBRID_MALLOC),e)gnu.a
+
+$(LIBEGNU_ARCHIVE): $(config_h)
 	$(MAKE) -C $(lib) all
 
 ## We have to create $(etc) here because init_cmdargs tests its
@@ -588,9 +590,9 @@ $(lib)/libegnu.a: $(config_h)
 ## This goes on to affect various things, and the emacs binary fails
 ## to start if Vinstallation_directory has the wrong value.
 temacs$(EXEEXT): $(LIBXMENU) $(ALLOBJS) \
-	         $(lib)/libegnu.a $(EMACSRES) ${charsets} ${charscript}
+	         $(LIBEGNU_ARCHIVE) $(EMACSRES) ${charsets} ${charscript}
 	$(AM_V_CCLD)$(CC) $(ALL_CFLAGS) $(TEMACS_LDFLAGS) $(LDFLAGS) \
-	  -o temacs $(ALLOBJS) $(lib)/libegnu.a $(W32_RES_LINK) $(LIBES)
+	  -o temacs $(ALLOBJS) $(LIBEGNU_ARCHIVE) $(W32_RES_LINK) $(LIBES)
 	$(MKDIR_P) $(etc)
 ifneq ($(CANNOT_DUMP),yes)
 	$(PAXCTL_if_present) -r $@

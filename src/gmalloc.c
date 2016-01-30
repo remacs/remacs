@@ -65,13 +65,7 @@ extern void *__default_morecore (ptrdiff_t);
    however, will use the system malloc, realloc....  In other source
    files, malloc, realloc... are renamed hybrid_malloc,
    hybrid_realloc... via macros in conf_post.h.  hybrid_malloc and
-   friends are wrapper functions defined later in this file.
-   aligned_alloc is defined as a macro only in alloc.c.
-
-   As of this writing (August 2014), Cygwin is the only platform on
-   which HYBRID_MACRO is defined.  Any other platform that wants to
-   define it will have to define the macros DUMPED and
-   ALLOCATED_BEFORE_DUMPING, defined below for Cygwin.  */
+   friends are wrapper functions defined later in this file.  */
 #undef malloc
 #undef realloc
 #undef calloc
