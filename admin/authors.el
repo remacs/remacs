@@ -919,6 +919,9 @@ in the repository.")
     ("notes/bzr" . "notes/repo")
     ;; moved from lisp/ to lisp/net/
     ("lisp/pinentry.el" . "lisp/net/pinentry.el")
+    ;; module.* moved to emacs-module.*
+    ("src/module.h" . "src/emacs-module.h")
+    ("src/module.c" . "src/emacs-module.c")
     )
   "Alist of files which have been renamed during their lifetime.
 Elements are (OLDNAME . NEWNAME).")
