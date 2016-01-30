@@ -134,8 +134,6 @@ bool might_dump;
 extern void unexec_init_emacs_zone (void);
 #endif
 
-extern void malloc_enable_thread (void);
-
 /* If true, Emacs should not attempt to use a window-specific code,
    but instead should use the virtual terminal under which it was started.  */
 bool inhibit_window_system;

@@ -99,7 +99,6 @@ typedef bool bool_bf;
 #ifdef emacs
 #define malloc hybrid_malloc
 #define realloc hybrid_realloc
-#define calloc hybrid_calloc
 #define aligned_alloc hybrid_aligned_alloc
 #define free hybrid_free
 #endif

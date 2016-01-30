@@ -3769,6 +3769,12 @@ extern void check_cons_list (void);
 INLINE void (check_cons_list) (void) { lisp_h_check_cons_list (); }
 #endif
 
+#if !defined DOUG_LEA_MALLOC && !defined HYBRID_MALLOC && !defined SYSTEM_MALLOC
+/* Defined in gmalloc.c.  */
+extern size_t __malloc_extra_blocks;
+#endif
+extern void malloc_enable_thread (void);
+
 #ifdef REL_ALLOC
 /* Defined in ralloc.c.  */
 extern void *r_alloc (void **, size_t) ATTRIBUTE_ALLOC_SIZE ((2));
