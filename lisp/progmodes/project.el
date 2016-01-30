@@ -154,12 +154,33 @@ end it with `/'.  DIR must be one of `project-roots' or
     vc-directory-exclusion-list)
    grep-find-ignored-files))
 
-(cl-defgeneric project-file-completion-table (_project _dirs)
+(cl-defgeneric project-file-completion-table (project dirs)
   "Return a completion table for files in directories DIRS in PROJECT.
 DIRS is a list of absolute directories; it should be some
 subset of the project roots and external roots.
-PROJECT is used to find the project ignores and other project meta-data."
-  )
+
+The default implementation uses `find-program'.  PROJECT is used
+to find the list of ignores for each directory."
+  ;; FIXME: Uniquely abbreviate the roots?
+  (require 'xref)
+  (let ((all-files
+	 (cl-mapcan
+	  (lambda (dir)
+	    (let ((command
+		   (format "%s %s %s -type f -print0"
+			   find-program
+			   dir
+			   (xref--find-ignores-arguments
+			    (project-ignores project dir)
+			    (expand-file-name dir)))))
+	      (split-string (shell-command-to-string command) "\0" t)))
+	  dirs)))
+    (lambda (string pred action)
+      (cond
+       ((eq action 'metadata)
+	'(metadata . ((category . project-file))))
+       (t
+	(complete-with-action action all-files string pred))))))
 
 (defgroup project-vc nil
   "Project implementation using the VC package."
@@ -340,40 +361,34 @@ recognized."
                 (project-external-roots pr))))
     (project-find-file-in (thing-at-point 'filename) dirs pr)))
 
-;; FIXME: Uniquely abbreviate the roots?
-(cl-defmethod project-file-completion-table (project dirs)
-  "Default implementation using `find-program'."
-  (require 'xref)
-  (let ((all-files
-	 (cl-mapcan
-	  (lambda (dir)
-	    (let ((command
-		   (format "%s %s %s -type f -print0"
-			   find-program
-			   dir
-			   (xref--find-ignores-arguments
-			    (project-ignores project dir)
-			    (expand-file-name dir)))))
-	      (split-string (shell-command-to-string command) "\0" t)))
-	  dirs)))
-    (lambda (string pred action)
-      (cond
-       ((eq action 'metadata)
-	'(metadata . ((category . project-file))))
-       (t
-	(complete-with-action action all-files string pred))))
-    ))
-
 (defun project-find-file-in (filename dirs project)
-  "Complete FILENAME in DIRS in PROJECT, visit the file."
-  ;; FIXME: verify that filename is accepted by the completion table
-  (find-file
-   (completing-read
-    (if filename
-        (format "Find file (%s): " filename)
-      "Find file: ")
-    (project-file-completion-table project dirs)
-    nil t nil nil filename)))
+  "Complete FILENAME in DIRS in PROJECT and visit the result."
+  (let* ((table (project-file-completion-table project dirs))
+         (file (project--completing-read-strict
+                "Find file" table nil nil
+                filename)))
+    (if (string= file "")
+        (user-error "You didn't specify the file")
+      (find-file file))))
+
+(defun project--completing-read-strict (prompt
+                                        collection &optional predicate
+                                        hist default inherit-input-method)
+  (when (and default (not (test-completion default collection predicate)))
+    (setq default (car (completion-try-completion
+                        default collection predicate (length default)))))
+  (let* ((new-prompt (if default
+                         (format "%s (default %s): " prompt default)
+                       (format "%s: " prompt)))
+         (res (completing-read new-prompt
+                               collection predicate t
+                               nil hist default inherit-input-method)))
+    (if (and (equal res default)
+             (not (test-completion res collection predicate)))
+        (completing-read (format "%s: " prompt)
+                         collection predicate t res hist nil
+                         inherit-input-method)
+      res)))
 
 (provide 'project)
 ;;; project.el ends here
