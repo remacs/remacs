@@ -3489,7 +3489,7 @@ usage: (make-network-process &rest ARGS)  */)
   int family = -1;
   int ai_protocol = 0;
 #ifdef HAVE_GETADDRINFO_A
-  struct gaicb **dns_requests;
+  struct gaicb **dns_requests = NULL;
 #endif
   ptrdiff_t count = SPECPDL_INDEX ();
 
@@ -3819,8 +3819,6 @@ usage: (make-network-process &rest ARGS)  */)
      here will be nil, so we postpone connecting to the server. */
   if (!p->is_server && NILP (ip_addresses))
     {
-      int channel;
-
       p->dns_requests = dns_requests;
       p->status = Qconnect;
       dns_processes = Fcons (proc, dns_processes);
