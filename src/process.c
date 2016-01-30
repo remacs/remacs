@@ -3218,7 +3218,7 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 	}
 #endif
 
-      contact = Fplist_put (contact, p->is_server? QCremote: QClocal,
+      contact = Fplist_put (contact, p->is_server? QClocal: QCremote,
 			    conv_sockaddr_to_lisp (sa, addrlen));
 #ifdef HAVE_GETSOCKNAME
       if (!p->is_server)
@@ -3577,7 +3577,8 @@ usage: (make-network-process &rest ARGS)  */)
     {
       /* The "connection" function gets it bind info from the address we're
 	 given, so use this dummy address if nothing is specified. */
-      host = build_string ("127.0.0.1");
+      if (family != AF_LOCAL)
+	host = build_string ("127.0.0.1");
     }
   else
     {
