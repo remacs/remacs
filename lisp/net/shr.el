@@ -35,6 +35,7 @@
 (require 'browse-url)
 (require 'subr-x)
 (require 'dom)
+(require 'seq)
 
 (defgroup shr nil
   "Simple HTML Renderer"
