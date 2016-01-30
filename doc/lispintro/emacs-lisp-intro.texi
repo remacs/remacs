@@ -8681,10 +8681,9 @@ The critical lines are these:
 @end group
 @group
     ;; @r{else}
-  (push string kill-ring)
+    (push string kill-ring)
 @end group
 @group
-    (setq kill-ring (cons string kill-ring))
     (if (> (length kill-ring) kill-ring-max)
         ;; @r{avoid overly long kill ring}
         (setcdr (nthcdr (1- kill-ring-max) kill-ring) nil)))
@@ -9075,7 +9074,7 @@ arguments.
 @item
 The sixth part is nearly like the argument that follows the
 @code{interactive} declaration in a function written in Lisp: a letter
-followed, perhaps, by a prompt.  The only difference from the Lisp is
+followed, perhaps, by a prompt.  The only difference from Lisp is
 when the macro is called with no arguments.  Then you write a @code{0}
 (which is a null string), as in this macro.
 
@@ -9115,7 +9114,7 @@ then return an empty string.
 The @code{del_range_1} function actually deletes the text.  It is a
 complex function we will not look into.  It updates the buffer and
 does other things.  However, it is worth looking at the two arguments
-passed to @code{del_range}.  These are @w{@code{XINT (start)}} and
+passed to @code{del_range_1}.  These are @w{@code{XINT (start)}} and
 @w{@code{XINT (end)}}.
 
 As far as the C language is concerned, @code{start} and @code{end} are
@@ -11644,7 +11643,7 @@ Else, act on the beginning of the list (the @sc{car} of the list)
 @end itemize
 
 @need 1500
-Here is example:
+Here is an example:
 
 @smallexample
 @group
@@ -12538,7 +12537,7 @@ value of @code{arg} to 1, in the case when @code{arg} is bound to
 @code{nil}.
 
 Next is a @code{let}.  That specifies the values of two local
-variables, @code{point} and @code{sentence-end}.  The local value of
+variables, @code{opoint} and @code{sentence-end}.  The local value of
 point, from before the search, is used in the
 @code{constrain-to-field} function which handles forms and
 equivalents.  The @code{sentence-end} variable is set by the
@@ -14184,7 +14183,7 @@ the expression that moves point forward, word by word.
 
 The third part of a recursive function is the recursive call.
 
-Somewhere, also, we also need a part that does the work of the
+Somewhere, we also need a part that does the work of the
 function, a part that does the counting.  A vital part!
 
 @need 1250
@@ -14482,12 +14481,12 @@ First, write a function to count the words in one definition.  This
 includes the problem of handling symbols as well as words.
 
 @item
-Second, write a function to list the numbers of words in each function
+Second, write a function to list the number of words in each function
 in a file.  This function can use the @code{count-words-in-defun}
 function.
 
 @item
-Third, write a function to list the numbers of words in each function
+Third, write a function to list the number of words in each function
 in each of several files.  This entails automatically finding the
 various files, switching to them, and counting the words in the
 definitions within them.
@@ -14952,7 +14951,7 @@ contains two functions, @code{find-file-noselect} and
 According to its documentation as shown by @kbd{C-h f} (the
 @code{describe-function} command), the @code{find-file-noselect}
 function reads the named file into a buffer and returns the buffer.
-(Its most recent version includes an optional wildcards argument,
+(Its most recent version includes an optional @var{wildcards} argument,
 too, as well as another to read a file literally and an other you
 suppress warning messages.  These optional arguments are irrelevant.)
 
@@ -15139,7 +15138,7 @@ either a @code{while} loop or recursion.
 @end ifnottex
 
 The design using a @code{while} loop is routine.  The argument passed
-the function is a list of files.  As we saw earlier (@pxref{Loop
+to the function is a list of files.  As we saw earlier (@pxref{Loop
 Example}), you can write a @code{while} loop so that the body of the
 loop is evaluated if such a list contains elements, but to exit the
 loop if the list is empty.  For this design to work, the body of the
@@ -16106,7 +16105,7 @@ columns.  Very likely, the name of the function will contain either
 the word ``print'' or the word ``insert'' or the word ``column''.
 Therefore, we can simply type @kbd{M-x apropos RET
 print\|insert\|column RET} and look at the result.  On my system, this
-command once too takes quite some time, and then produced a list of 79
+command once took quite some time, and then produced a list of 79
 functions and variables.  Now it does not take much time at all and
 produces a list of 211 functions and variables.  Scanning down the
 list, the only function that looks as if it might do the job is
@@ -16183,7 +16182,7 @@ The number of asterisks in the column is the number specified by the
 current element of the @code{numbers-list}.  We need to construct a
 list of asterisks of the right length for each call to
 @code{insert-rectangle}.  If this list consists solely of the requisite
-number of asterisks, then we will have position point the right number
+number of asterisks, then we will have to position point the right number
 of lines above the base for the graph to print correctly.  This could
 be difficult.
 
@@ -16348,7 +16347,7 @@ As written, @code{column-of-graph} contains a major flaw: the symbols
 used for the blank and for the marked entries in the column are
 hard-coded as a space and asterisk.  This is fine for a prototype,
 but you, or another user, may wish to use other symbols.  For example,
-in testing the graph function, you many want to use a period in place
+in testing the graph function, you may want to use a period in place
 of the space, to make sure the point is being repositioned properly
 each time the @code{insert-rectangle} function is called; or you might
 want to substitute a @samp{+} sign or other symbol for the asterisk.
@@ -16711,7 +16710,7 @@ Write a line graph version of the graph printing functions.
 
 ``You don't have to like Emacs to like it''---this seemingly
 paradoxical statement is the secret of GNU Emacs.  The plain, out-of-the-box
-Emacs is a generic tool.  Most people who use it, customize
+Emacs is a generic tool.  Most people who use it customize
 it to suit themselves.
 
 GNU Emacs is mostly written in Emacs Lisp; this means that by writing
@@ -16907,7 +16906,7 @@ M-x customize
 @end smallexample
 
 @noindent
-and find that the group for editing files of data is called ``data''.
+and find that the group for editing files of text is called ``Text''.
 Enter that group.  Text Mode Hook is the first member.  You can click
 on its various options, such as @code{turn-on-auto-fill}, to set the
 values.  After you click on the button to
