@@ -3785,7 +3785,9 @@ usage: (make-network-process &rest ARGS)  */)
   p->port = port;
   p->socktype = socktype;
   p->ai_protocol = ai_protocol;
+#ifdef HAVE_GETADDRINFO_A
   p->dns_requests = NULL;
+#endif
 
   unbind_to (count, Qnil);
 
@@ -3811,6 +3813,7 @@ usage: (make-network-process &rest ARGS)  */)
 #endif
     }
 
+#ifdef HAVE_GETADDRINFO_A
   /* If we're doing async address resolution, the list of addresses
      here will be nil, so we postpone connecting to the server. */
   if (!p->is_server && NILP (ip_addresses))
@@ -3830,6 +3833,9 @@ usage: (make-network-process &rest ARGS)  */)
     {
       connect_network_socket (proc, ip_addresses);
     }
+#endif /* HAVE_GETADDRINFO_A */
+
+  connect_network_socket (proc, ip_addresses);
 
   return proc;
 }
