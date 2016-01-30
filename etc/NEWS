@@ -486,6 +486,9 @@ specified message types for the respective specified targets.
 *** New variable `erc-default-port-tls' used to connect to TLS IRC
 servers.
 
+---
+*** Reconnection is now asynchronous.
+
 ** Midnight-mode
 
 ---
@@ -1184,6 +1187,9 @@ buffer, even if the "git log" process dies.  For the old behavior,
 make the new option `eshell-destroy-buffer-when-process-dies' non-nil.
 
 ** Browse-url
+
+---
+*** Support for the Google Chrome web browser.
 
 ---
 *** Support for the Conkeror web browser.

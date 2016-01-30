@@ -9174,7 +9174,7 @@
 
 	Provide NS notification objects where required to eliminate warnings
 
-	* nsterm.m (windowDidResize:, toggleFullScreen:):
+	* src/nsterm.m (windowDidResize:, toggleFullScreen:):
 	Call notification functions with notification objects
 	as per delegate APIs.
 
@@ -9193,7 +9193,7 @@
 
 	Ignore fullscreen exit notifications on NS when frame is dead
 
-	* nsterm.m (windowDidResize:, windowWillExitFullScreen:)
+	* src/nsterm.m (windowDidResize:, windowWillExitFullScreen:)
 	(windowDidExitFullScreen:): Return if frame is dead.
 	These functions may be called when a fullscreen frame
 	is closed; they are called before, not after.
@@ -9345,7 +9345,7 @@
 
 2015-11-05  Juanma Barranquero  <lekktu@gmail.com>
 
-	* test/automated/elisp-mode-test.el: Silence some run-time warnings.
+	* test/automated/elisp-mode-tests.el: Silence some run-time warnings.
 	(xref-elisp-deftest): Bind `find-file-suppress-same-file-warnings' to t.
 
 2015-11-05  Tassilo Horn  <tsdh@gnu.org>
@@ -9430,7 +9430,7 @@
 
 2015-11-03  Jay Belanger  <jay.p.belanger@gmail.com>
 
-	* lisp/calc/calc (calc-bug-address): Change maintainer address.
+	* lisp/calc/calc.el (calc-bug-address): Change maintainer address.
 
 2015-11-03  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -9528,7 +9528,7 @@
 
 	Add JSX indentation via js-jsx-mode  (Bug#21799)
 
-	* progmodes/js.el: Add JSX indentation support.
+	* lisp/progmodes/js.el: Add JSX indentation support.
 	(js--jsx-end-tag-re)
 	(js--jsx-after-tag-re): New variables.
 	(js--jsx-find-before-tag)
@@ -9537,7 +9537,7 @@
 	(js--expression-in-sgml-indent-line)
 	(js-jsx-indent-line)
 	(js-jsx-mode): New functions.
-	* test/indent/js-jsx.el: New file.
+	* test/indent/js-jsx.js: New file.
 	* etc/NEWS: Add information about js-jsx-mode.
 
 2015-10-31  Michael Albinus  <michael.albinus@gmx.de>
@@ -9949,8 +9949,8 @@
 	incomplete" error issued when double-clicking on the Emacs
 	application.
 
-	* nsterm.m (ns_constrain_all_frames, ns_init_term): Block input.
-	* nsterm.m (ns_send_appdefined, EmacsApp): Trace output.
+	* src/nsterm.m (ns_constrain_all_frames, ns_init_term): Block input.
+	* src/nsterm.m (ns_send_appdefined, EmacsApp): Trace output.
 
 2015-10-28  Artur Malabarba  <bruce.connor.am@gmail.com>
 
@@ -9961,12 +9961,12 @@
 
 	Fix incorrect NextStep tool-bar-mode -- wrong number of rows in frame.
 
-	* nsterm.h (struct ns_output): New flag, in_animation.
-	* nsfns.m (Fx_create_frame): Initialize in_animation flag.
-	* nsmenu.m (free_frame_tool_bar, update_frame_tool_bar): Set
+	* src/nsterm.h (struct ns_output): New flag, in_animation.
+	* src/nsfns.m (Fx_create_frame): Initialize in_animation flag.
+	* src/nsmenu.m (free_frame_tool_bar, update_frame_tool_bar): Set
 	in_animation flag around call to "setVisible". Set new tool bar
 	height before call to setVisible.
-	* nsterm.m (x_set_window_size): Don't call [view setRow:
+	* src/nsterm.m (x_set_window_size): Don't call [view setRow:
 	andColumns:] as this fools the subsequent call to updateFrameSize
 	from performing the real resize.
 	(windowDidResize): Don't update anything when in_animation is
@@ -9974,9 +9974,9 @@
 
 	Trace output.
 
-	* nsmenu.m (free_frame_tool_bar, update_frame_tool_bar)
+	* src/nsmenu.m (free_frame_tool_bar, update_frame_tool_bar)
 	(EmacsToolbar):
-	* nsterm.m (x_set_window_size, updateFrameSize)
+	* src/nsterm.m (x_set_window_size, updateFrameSize)
 	([EmacsView setRows: andColumns:])
 
 2015-10-28  Nicolas Petton  <nicolas@petton.fr>
@@ -10655,7 +10655,7 @@
 	Don't add the xsi:type attribute (Exchange refuses requests which have
 	this attribute).
 
-	* lisp/net/soap-client.el, soap-inspect.el: Convert to lexical binding,
+	* lisp/net/soap-client.el, lisp/net/soap-inspect.el: Convert to lexical binding,
 	correct compiler warnings about unused function arguments and
 	local variables.
 
@@ -10958,7 +10958,7 @@
 	(NSTRACE_RETURN_what): Macros to print return value for
 	various types.
 
-	* nsterm.m: Remove old NSTRACE macro
+	* src/nsterm.m: Remove old NSTRACE macro
 	* src/nsterm.m (nstrace_num): Trace counter.
 	(nstrace_depth): Current call depth.
 	(nstrace_leave): NSTRACE support function, called when the
@@ -11007,16 +11007,16 @@
 	(resetCursorRects, setPosition, EmacsScroller_mouseDown)
 	(EmacsScroller_mouseDragged, syms_of_nsterm): Use new trace system.
 
-	* nsfns.m: Remove old NSTRACE macro
+	* src/nsfns.m: Remove old NSTRACE macro
 	* src/nsfns.m (x_set_icon_name, ns_set_name, x_explicitly_set_name)
 	(x_implicitly_set_name, x_set_title, ns_set_name_as_filename)
 	(ns_implicitly_set_icon_type, x_set_icon_type): Use new trace system.
 
-	* nsimage.m: Remove old NSTRACE macro
+	* src/nsimage.m: Remove old NSTRACE macro
 	* src/nsimage.m (ns_image_from_XBM, ns_image_for_XPM)
 	(ns_image_from_bitmap_file, ns_load_image): Use new trace system.
 
-	* nsmenu.m: Remove old NSTRACE macro
+	* src/nsmenu.m: Remove old NSTRACE macro
 	* src/nsmenu.m (ns_update_menubar, ns_menu_show, ns_popup_dialog):
 	Use new trace system.
 
@@ -11416,8 +11416,8 @@
 
 	Unbreak `group' option for `mail-sources'
 
-	* nnml.el (nnml-retrieve-groups, nnml-request-scan):
-	* nnmail.el (nnmail-get-new-mail-per-group)
+	* lisp/gnus/nnml.el (nnml-retrieve-groups, nnml-request-scan):
+	* lisp/gnus/nnmail.el (nnmail-get-new-mail-per-group)
 	(nnmail-get-new-mail-1): Unbreak `group' option for `mail-sources'.
 
 2015-10-19  Nicolas Petton  <nicolas@petton.fr>
@@ -11806,7 +11806,7 @@
 
 	Reduce face-related consing during frame creation.
 
-	* faces.el (face--attributes-unspecified): Compute the "unspecified"
+	* lisp/faces.el (face--attributes-unspecified): Compute the "unspecified"
 	attribute list once.
 	(face-spec-reset-face): Use it instead of building the list.
 
@@ -13396,7 +13396,7 @@
 
 	Fixes bug#21365.
 
-	* dec/lispref/edebug.texi (Edebug Execution Modes): Change the
+	* doc/lispref/edebug.texi (Edebug Execution Modes): Change the
 	description of `edebug-initial-mode' from that of its implementation
 	to that of its visual effect and use.  Move the paragraph higher up.
 
@@ -14021,7 +14021,7 @@
 2015-09-15  Jay Belanger  <jay.p.belanger@gmail.com>
 
 	Add new functions for the root mean square of a (Calc) vector
-	* lisp/calc/calc-stats.el (calcFunc-rms, calc-vector-rms):
+	* lisp/calc/calc-stat.el (calcFunc-rms, calc-vector-rms):
 	New functions.
 	* lisp/calc/calc-ext.el (calc-init-extensions): Add keybinding for
 	`calc-vector-rms', add autoloads for `calc-vector-rms' and
@@ -15831,7 +15831,7 @@
 	(mac_font_create_available_families, mac_font_shape):
 	Remove macros for renamed functions.
 	(mac_nsctfont_copy_font_descriptor): Remove unused macro.
-	* src/macterm.m (mac_font_descriptor_supports_languages):
+	* src/macfont.m (mac_font_descriptor_supports_languages):
 	Rename from mac_ctfont_descriptor_supports_languages.
 	(mac_font_create_preferred_family_for_attributes): Rename from
 	mac_ctfont_create_preferred_family_for_attributes.
@@ -17878,7 +17878,7 @@
 
 2015-08-14  Ronnie Schnell  <ronnie@driver-aces.com>
 
-	* doc/emacs/misc.text (Amusements): Fixed typo.
+	* doc/emacs/misc.texi (Amusements): Fixed typo.
 
 2015-08-14  Eli Zaretskii  <eliz@gnu.org>
 
@@ -18233,7 +18233,7 @@
 
 	* test/automated/ert-tests.el (ert-test-deftest): Add FIXME.
 
-	* org.el: Fix up some lexical scoping warnings, and use dolist
+	* lisp/org/org.el: Fix up some lexical scoping warnings, and use dolist
 	* lisp/org/org.el (org-set-regexps-and-options-for-tags, org-goto-map)
 	(org-set-regexps-and-options, org-assign-fast-keys)
 	(org-contextualize-keys, org-contextualize-validate-key)
@@ -18299,7 +18299,7 @@
 2015-08-07  Phillip Lord  <phillip.lord@newcastle.ac.uk>
 
 	Improve error signalling for seq-subseq
-	* lisp/seq.el (seq-subseq): The existing behavior is to error
+	* lisp/emacs-lisp/seq.el (seq-subseq): The existing behavior is to error
 	when indexes are too large, but to silently ignore numbers which
 	are too negative for lists.  String and vector handling errors in
 	both cases.  This has been regularized.  Error signaling behavior
@@ -18336,8 +18336,8 @@
 	Add support for 'inhibit-same-window in 'display-buffer-use-some-frame'
 	* lisp/window.el (display-buffer-use-some-frame): Add support for
 	'inhibit-same-window in alist.
-	* doc/windows.texi (display-buffer-use-some-frame): Doc support for
-	'inhibit-same-window in alist.
+	* doc/lispref/windows.texi (display-buffer-use-some-frame):
+	Doc support for 'inhibit-same-window in alist.
 
 2015-08-07  Eli Zaretskii  <eliz@gnu.org>
 
@@ -19111,7 +19111,7 @@
 	Check also for hits in `tramp-connection-properties'.  Adapt docstring.
 	(tramp-get-remote-tmpdir): Cache only the local name of tmpdir.
 	(all): Adapt `tramp-get-method-parameter' calls.
-	* lisp/net/trampver.el Update release number.
+	* lisp/net/trampver.el: Update release number.
 	* test/automated/tramp-tests.el (tramp--instrument-test-case):
 	Add "^make-symbolic-link not supported$" to `debug-ignored-errors'.
 	(tramp-test13-make-directory, tramp--test-adb-p)
@@ -20905,7 +20905,7 @@
 	* lisp/emacs-lisp/package.el (package--with-work-buffer-async):
 	Fix error reporting.
 
-	* lisp/let-alist.el: Move to lisp/emacs-lisp/let-alist.el
+	* lisp/emacs-lisp/let-alist.el: Move to lisp/emacs-lisp/let-alist.el
 
 	* lisp/emacs-lisp/package.el: Revert buffer after any operation
 	Call `package-menu--post-refresh' after any operation that changes
@@ -21371,7 +21371,7 @@
 
 2015-06-11  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/let-alist.el (let-alist--deep-dot-search): Fix cons.
+	* lisp/emacs-lisp/let-alist.el (let-alist--deep-dot-search): Fix cons.
 	* test/automated/let-alist.el (let-alist-cons): Test it.
 
 2015-06-11  Nicolas Richard  <theonewiththeevillook@yahoo.fr>
@@ -22112,10 +22112,10 @@
 	Throw an error when converting a map into an unknown map type
 	* lisp/emacs-lisp/map.el (map-into): Throw an error if type is
 	not valid.
-	* test/automated/map-test.el: Add a regression test.
+	* test/automated/map-tests.el: Add a regression test.
 
 	New library map.el similar to seq.el but for mapping data structures.
-	* test/automated/map-test.el: New file.
+	* test/automated/map-tests.el: New file.
 	* lisp/emacs-lisp/map.el: New file.
 
 2015-05-30  Dmitry Gutov  <dgutov@yandex.ru>
@@ -27050,7 +27050,7 @@
 2015-04-07  Alan Mackenzie  <acm@muc.de>
 
 	Always mark "<" and ">" in #include directives with text properties.
-	* lisp/progmodes/c-fonts.el (c-cpp-matchers): Replace a font-lock
+	* lisp/progmodes/cc-fonts.el (c-cpp-matchers): Replace a font-lock
 	"anchored matcher" with an invocation of
 	c-make-font-lock-search-function to allow fontification when there's
 	no trailing space on an "#include <..>" line.
