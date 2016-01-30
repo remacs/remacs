@@ -2121,7 +2121,13 @@ case "$opsys" in
   cygwin) hybrid_malloc=yes;;
 esac
 
+if test "${system_malloc}" != yes && test "${doug_lea_malloc}" != yes \
+   && test "${UNEXEC_OBJ}" = unexelf.o && test "${hybrid_malloc}" != no; then
+  hybrid_malloc=yes
+fi
+
 GMALLOC_OBJ=
+SHEAP_OBJ=
 if test "${system_malloc}" = "yes"; then
   AC_DEFINE([SYSTEM_MALLOC], 1,
     [Define to 1 to use the system memory allocator, even if it is not
@@ -2136,6 +2142,7 @@ elif test "$hybrid_malloc" = yes; then
   GNU_MALLOC=
   GNU_MALLOC_reason="only before dumping"
   GMALLOC_OBJ=gmalloc.o
+  SHEAP_OBJ=sheap.o
   VMLIMIT_OBJ=
 else
   test "$doug_lea_malloc" != "yes" && GMALLOC_OBJ=gmalloc.o
@@ -2156,9 +2163,10 @@ else
   fi
 fi
 AC_SUBST(GMALLOC_OBJ)
+AC_SUBST(SHEAP_OBJ)
 AC_SUBST(VMLIMIT_OBJ)
 
-if test "$doug_lea_malloc" = "yes" ; then
+if test "$doug_lea_malloc" = "yes" && test "$hybrid_malloc" != yes; then
   if test "$GNU_MALLOC" = yes ; then
     GNU_MALLOC_reason="
       (Using Doug Lea's new malloc from the GNU C Library.)"
@@ -5035,7 +5043,7 @@ fi
 AC_SUBST(RALLOC_OBJ)
 
 if test "$opsys" = "cygwin"; then
-  CYGWIN_OBJ="sheap.o cygw32.o"
+  CYGWIN_OBJ="cygw32.o"
   ## Cygwin differs because of its unexec().
   PRE_ALLOC_OBJ=
   POST_ALLOC_OBJ=lastfile.o

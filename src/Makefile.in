@@ -254,7 +254,10 @@ XFIXES_CFLAGS = @XFIXES_CFLAGS@
 ## widget.o if USE_X_TOOLKIT, otherwise empty.
 WIDGET_OBJ=@WIDGET_OBJ@
 
-## sheap.o if CYGWIN, otherwise empty.
+## sheap.o if HYBRID_MALLOC, otherwise empty.
+SHEAP_OBJ=@SHEAP_OBJ@
+
+## cygw32.o if CYGWIN, otherwise empty.
 CYGWIN_OBJ=@CYGWIN_OBJ@
 
 ## fontset.o fringe.o image.o if we have any window system
@@ -397,6 +400,7 @@ base_obj = dispnew.o frame.o scroll.o xdisp.o menu.o $(XMENU_OBJ) window.o \
 	doprnt.o intervals.o textprop.o composite.o xml.o $(NOTIFY_OBJ) \
 	$(XWIDGETS_OBJ) \
 	profiler.o decompress.o \
+	$(SHEAP_OBJ) \
 	$(MSDOS_OBJ) $(MSDOS_X_OBJ) $(NS_OBJ) $(CYGWIN_OBJ) $(FONT_OBJ) \
 	$(W32_OBJ) $(WINDOW_SYSTEM_OBJ) $(XGSELOBJ)
 obj = $(base_obj) $(NS_OBJC_OBJ)

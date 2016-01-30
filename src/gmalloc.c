@@ -70,7 +70,7 @@ extern void emacs_abort (void);
 #define aligned_alloc galigned_alloc
 #define free gfree
 
-#ifdef CYGWIN
+#ifdef HYBRID_MALLOC
 extern void *bss_sbrk (ptrdiff_t size);
 extern int bss_sbrk_did_unexec;
 extern char bss_sbrk_buffer[];
@@ -1542,7 +1542,7 @@ void *
 __default_morecore (ptrdiff_t increment)
 {
   void *result;
-#if defined (CYGWIN)
+#ifdef HYBRID_MALLOC
   if (!DUMPED)
     {
       return bss_sbrk (increment);
