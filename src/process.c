@@ -3691,7 +3691,6 @@ usage: (make-network-process &rest ARGS)  */)
 				(lres->ai_addr, lres->ai_addrlen),
 				ip_addresses);
 	  ai_protocol = lres->ai_protocol;
-	  family = lres->ai_family;
 	}
 
       ip_addresses = Fnreverse (ip_addresses);
@@ -3743,7 +3742,6 @@ usage: (make-network-process &rest ARGS)  */)
 	  ip_addresses = Ncons (make_number (host_info_ptr->h_addr,
 					     host_info_ptr->h_length),
 				Qnil);
-	  family = host_info_ptr->h_addrtype;
 	}
       else
 	/* Attempt to interpret host as numeric inet address.  */
