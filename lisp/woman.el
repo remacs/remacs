@@ -752,7 +752,10 @@ Default is t."
   "Imenu support for Sections and Subsections.
 An alist with elements of the form (MENU-TITLE REGEXP INDEX) --
 see the documentation for `imenu-generic-expression'."
-  :type 'sexp
+  :type '(alist :key-type (choice :tag "Title" (const nil) string)
+                :value-type (group (choice (string :tag "Regexp")
+                                           function)
+                                   integer))
   :group 'woman-interface)
 
 (defcustom woman-imenu nil

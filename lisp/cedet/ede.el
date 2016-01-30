@@ -96,7 +96,7 @@ target willing to take the file.  `never' means never perform the check."
 (defcustom ede-debug-program-function 'gdb
   "Default Emacs command used to debug a target."
   :group 'ede
-  :type 'sexp) ; make this be a list of options some day
+  :type 'function) ; make this be a list of options some day
 
 (defcustom ede-project-directories nil
   "Directories in which EDE may search for project files.

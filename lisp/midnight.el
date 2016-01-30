@@ -217,7 +217,7 @@ You should set this variable before loading midnight.el, or
 set it by calling `midnight-delay-set', or use `custom'.
 If you wish, you can use a string instead, it will be passed as the
 first argument to `run-at-time'."
-  :type 'sexp
+  :type '(choice integer string)
   :set #'midnight-delay-set)
 
 (provide 'midnight)

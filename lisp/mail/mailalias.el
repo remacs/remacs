@@ -130,7 +130,12 @@ or like this:
 
 (defcustom mail-directory-stream nil
   "List of (HOST SERVICE) for stream connection to mail directory."
-  :type 'sexp
+  :type '(choice (const nil)
+                 (list (string :tag "Host name or ip address")
+                       (choice (integer :tag "Service port number")
+                               (string :tag "Service name"))
+                       (plist :inline t
+                              :tag "Additional open-network-stream parameters")))
   :group 'mailalias)
 (put 'mail-directory-stream 'risky-local-variable t)
 

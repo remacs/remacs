@@ -554,7 +554,9 @@ RESTORE-FUNCTION nil means don't try to restore the minor mode.
 Only minor modes for which the name of the buffer-local variable
 and the name of the minor mode function are different have to be added to
 this table.  See also `desktop-minor-mode-handlers'."
-  :type 'sexp
+  :type '(alist :key-type (symbol :tag "Minor mode")
+                :value-type (list :tag "Restore function"
+                                  (choice (const nil) function)))
   :group 'desktop)
 
 ;;;###autoload

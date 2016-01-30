@@ -127,7 +127,9 @@ position to pop up the tooltip.
 
 Note that font and color parameters are ignored, and the attributes
 of the `tooltip' face are used instead."
-  :type 'sexp
+  :type '(repeat (cons :format "%v"
+		       (symbol :tag "Parameter")
+		       (sexp :tag "Value")))
   :group 'tooltip)
 
 (defface tooltip

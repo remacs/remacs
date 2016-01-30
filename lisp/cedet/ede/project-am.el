@@ -65,7 +65,7 @@
 (defcustom project-am-debug-target-function 'gdb
   "*Default Emacs command used to debug a target."
   :group 'project-am
-  :type 'sexp) ; make this be a list some day
+  :type 'function) ; make this be a list some day
 
 (defconst project-am-type-alist
   '(("bin" project-am-program "bin_PROGRAMS" t)

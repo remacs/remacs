@@ -3469,11 +3469,11 @@ TOKEN will be the list, and INDENT is the current indentation level."
 ;;
 (defcustom speedbar-select-frame-method 'attached
   "Specify how to select a frame for displaying a file.
-A value of `attached' means to use the attached frame (the frame
-that speedbar was started from.)  A number such as 1 or -1 means to
-pass that number to `other-frame' while selecting a frame from speedbar."
+A number such as 1 or -1 means to pass that number to `other-frame'
+while selecting a frame from speedbar.  Any other value means to use
+the attached frame (the frame that speedbar was started from)."
   :group 'speedbar
-  :type 'sexp)
+  :type '(choice integer (other :tag "attached" attached)))
 
 (defun speedbar-find-file-in-frame (file)
   "This will load FILE into the speedbar attached frame.
