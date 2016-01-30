@@ -4254,9 +4254,7 @@ struct tty_display_info;
 struct terminal;
 
 /* Defined in sysdep.c.  */
-#ifndef HAVE_GET_CURRENT_DIR_NAME
-extern char *get_current_dir_name (void);
-#endif
+extern char *emacs_get_current_dir_name (void);
 extern void stuff_char (char c);
 extern void init_foreground_group (void);
 extern void sys_subshell (void);

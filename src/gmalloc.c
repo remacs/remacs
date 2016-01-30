@@ -28,11 +28,6 @@ License along with this library.  If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 #include <limits.h>
 #include <stdint.h>
-
-#ifdef HYBRID_GET_CURRENT_DIR_NAME
-#undef get_current_dir_name
-#endif
-
 #include <unistd.h>
 
 #ifdef USE_PTHREAD
@@ -41,10 +36,6 @@ License along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifdef WINDOWSNT
 #include <w32heap.h>	/* for sbrk */
-#endif
-
-#ifdef emacs
-extern void emacs_abort (void);
 #endif
 
 /* If HYBRID_MALLOC is defined, then temacs will use malloc,
@@ -63,6 +54,7 @@ extern void emacs_abort (void);
 #undef malloc
 #undef realloc
 #undef calloc
+#undef aligned_alloc
 #undef free
 #define malloc gmalloc
 #define realloc grealloc
@@ -71,13 +63,13 @@ extern void emacs_abort (void);
 #define free gfree
 
 #ifdef HYBRID_MALLOC
-extern void *bss_sbrk (ptrdiff_t size);
-extern int bss_sbrk_did_unexec;
-extern char bss_sbrk_buffer[];
-extern void *bss_sbrk_buffer_end;
-#define DUMPED bss_sbrk_did_unexec
-#define ALLOCATED_BEFORE_DUMPING(P) \
-  ((P) < bss_sbrk_buffer_end && (P) >= (void *) bss_sbrk_buffer)
+# include "sheap.h"
+# define DUMPED bss_sbrk_did_unexec
+static bool
+ALLOCATED_BEFORE_DUMPING (char *p)
+{
+  return bss_sbrk_buffer <= p && p < bss_sbrk_buffer + STATIC_HEAP_SIZE;
+}
 #endif
 
 #ifdef	__cplusplus
@@ -86,10 +78,6 @@ extern "C"
 #endif
 
 #include <stddef.h>
-
-#ifdef emacs
-extern void emacs_abort (void);
-#endif
 
 /* Underlying allocation function; successive calls should
    return contiguous pieces of memory.  */
@@ -255,10 +243,6 @@ extern int _malloc_thread_enabled_p;
 #define UNLOCK_ALIGNED_BLOCKS()
 #endif
 
-/* Given an address in the middle of a malloc'd object,
-   return the address of the beginning of the object.  */
-extern void *malloc_find_object_address (void *ptr);
-
 /* If not NULL, this function is called after each time
    `__morecore' is called to increase the data size.  */
 extern void (*__after_morecore_hook) (void);
@@ -278,6 +262,8 @@ extern void (*__free_hook) (void *ptr);
 extern void *(*__malloc_hook) (size_t size);
 extern void *(*__realloc_hook) (void *ptr, size_t size);
 extern void *(*__memalign_hook) (size_t size, size_t alignment);
+
+#ifdef GC_MCHECK
 
 /* Return values for `mprobe': these are the kinds of inconsistencies that
    `mcheck' enables detection of.  */
@@ -320,6 +306,8 @@ extern struct mstats mstats (void);
 
 /* Call WARNFUN with a warning message when memory usage is high.  */
 extern void memory_warnings (void *start, void (*warnfun) (const char *));
+
+#endif
 
 #undef extern
 
@@ -1797,7 +1785,7 @@ hybrid_aligned_alloc (size_t alignment, size_t size)
 #endif
 }
 #endif
-  
+
 void *
 hybrid_realloc (void *ptr, size_t size)
 {
@@ -1824,19 +1812,6 @@ hybrid_realloc (void *ptr, size_t size)
     return memcpy (result, ptr, min (oldsize, size));
   return result;
 }
-
-#ifdef HYBRID_GET_CURRENT_DIR_NAME
-/* Defined in sysdep.c.  */
-char *gget_current_dir_name (void);
-
-char *
-hybrid_get_current_dir_name (void)
-{
-  if (DUMPED)
-    return get_current_dir_name ();
-  return gget_current_dir_name ();
-}
-#endif
 
 #else	/* ! HYBRID_MALLOC */
 

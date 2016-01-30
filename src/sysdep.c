@@ -19,14 +19,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
-/* If HYBRID_GET_CURRENT_DIR_NAME is defined in conf_post.h, then we
-   need the following before including unistd.h, in order to pick up
-   the right prototype for gget_current_dir_name.  */
-#ifdef HYBRID_GET_CURRENT_DIR_NAME
-#undef get_current_dir_name
-#define get_current_dir_name gget_current_dir_name
-#endif
-
 #include <execinfo.h>
 #include "sysstdio.h"
 #ifdef HAVE_PWD_H
@@ -40,6 +32,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <utimens.h>
 
 #include "lisp.h"
+#include "sheap.h"
 #include "sysselect.h"
 #include "blockinput.h"
 
@@ -137,14 +130,21 @@ static const int baud_convert[] =
     1800, 2400, 4800, 9600, 19200, 38400
   };
 
-#if !defined HAVE_GET_CURRENT_DIR_NAME || defined BROKEN_GET_CURRENT_DIR_NAME \
-  || (defined HYBRID_GET_CURRENT_DIR_NAME)
-/* Return the current working directory.  Returns NULL on errors.
-   Any other returned value must be freed with free. This is used
-   only when get_current_dir_name is not defined on the system.  */
+/* Return the current working directory.  The result should be freed
+   with 'free'.  Return NULL on errors.  */
 char *
-get_current_dir_name (void)
+emacs_get_current_dir_name (void)
 {
+# if HAVE_GET_CURRENT_DIR_NAME && !BROKEN_GET_CURRENT_DIR_NAME
+#  ifdef HYBRID_MALLOC
+  bool use_libc = bss_sbrk_did_unexec;
+#  else
+  bool use_libc = true;
+#  endif
+  if (use_libc)
+    return get_current_dir_name ();
+# endif
+
   char *buf;
   char *pwd = getenv ("PWD");
   struct stat dotstat, pwdstat;
@@ -192,7 +192,6 @@ get_current_dir_name (void)
     }
   return buf;
 }
-#endif
 
 
 /* Discard pending input on all input descriptors.  */

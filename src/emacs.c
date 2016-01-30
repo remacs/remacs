@@ -79,6 +79,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "composite.h"
 #include "dispextern.h"
 #include "regex.h"
+#include "sheap.h"
 #include "syntax.h"
 #include "sysselect.h"
 #include "systime.h"
@@ -134,7 +135,6 @@ extern void unexec_init_emacs_zone (void);
 #endif
 
 extern void malloc_enable_thread (void);
-extern void report_sheap_usage (int);
 
 /* If true, Emacs should not attempt to use a window-specific code,
    but instead should use the virtual terminal under which it was started.  */
@@ -775,7 +775,7 @@ main (int argc, char **argv)
       filename_from_ansi (ch_to_dir, newdir);
       ch_to_dir = newdir;
 #endif
-      original_pwd = get_current_dir_name ();
+      original_pwd = emacs_get_current_dir_name ();
       if (chdir (ch_to_dir) != 0)
         {
           fprintf (stderr, "%s: Can't chdir to %s: %s\n",
@@ -2075,7 +2075,14 @@ You must run Emacs in batch mode in order to dump it.  */)
   Vpurify_flag = Qnil;
 
 #ifdef HYBRID_MALLOC
-  report_sheap_usage (1);
+  {
+    static char const fmt[] = "%d of %d static heap bytes used";
+    char buf[sizeof fmt + 2 * (INT_STRLEN_BOUND (int) - 2)];
+    int max_usage = max_bss_sbrk_ptr - bss_sbrk_buffer;
+    sprintf (buf, fmt, max_usage, STATIC_HEAP_SIZE);
+    /* Don't log messages, because at this point buffers cannot be created.  */
+    message1_nolog (buf);
+  }
 #endif
 
   fflush (stdout);

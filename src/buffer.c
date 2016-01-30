@@ -5277,7 +5277,7 @@ init_buffer (int initialized)
   if (NILP (BVAR (&buffer_defaults, enable_multibyte_characters)))
     Fset_buffer_multibyte (Qnil);
 
-  pwd = get_current_dir_name ();
+  pwd = emacs_get_current_dir_name ();
 
   if (!pwd)
     {

@@ -100,11 +100,8 @@ typedef bool bool_bf;
 #define malloc hybrid_malloc
 #define realloc hybrid_realloc
 #define calloc hybrid_calloc
+#define aligned_alloc hybrid_aligned_alloc
 #define free hybrid_free
-#if defined HAVE_GET_CURRENT_DIR_NAME && !defined BROKEN_GET_CURRENT_DIR_NAME
-#define HYBRID_GET_CURRENT_DIR_NAME 1
-#define get_current_dir_name hybrid_get_current_dir_name
-#endif
 #endif
 #endif	/* HYBRID_MALLOC */
 
