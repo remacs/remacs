@@ -15,6 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
+# GNU Emacs assumes GNU Make.
+AUTOMAKE_OPTIONS = -Wno-portability
+
 BUILT_SOURCES =
 CLEANFILES =
 EXTRA_DIST =
