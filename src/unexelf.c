@@ -227,6 +227,11 @@ unexec (const char *new_name, const char *old_name)
   off_t new_file_size;
   void *new_break;
 
+#ifdef HYBRID_MALLOC
+  extern int bss_sbrk_did_unexec;
+  bss_sbrk_did_unexec = 1;
+#endif
+
   /* Pointers to the base of the image of the two files.  */
   caddr_t old_base, new_base;
 
