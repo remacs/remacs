@@ -3489,7 +3489,7 @@ usage: (make-network-process &rest ARGS)  */)
   int family = -1;
   int ai_protocol = 0;
 #ifdef HAVE_GETADDRINFO_A
-  struct gaicb *dns_request = NULL;
+  struct gaicb **dns_requests;
 #endif
   ptrdiff_t count = SPECPDL_INDEX ();
 
@@ -3635,8 +3635,7 @@ usage: (make-network-process &rest ARGS)  */)
 	  portstring = SSDATA (service);
 	}
 
-      hints = xmalloc (sizeof (struct addrinfo));
-      memset (hints, 0, sizeof (struct addrinfo));
+      hints = xzalloc (sizeof (struct addrinfo));
       hints->ai_flags = 0;
       hints->ai_family = family;
       hints->ai_socktype = socktype;
@@ -3649,17 +3648,15 @@ usage: (make-network-process &rest ARGS)  */)
   if (!NILP (Fplist_get (contact, QCnowait)) &&
       !NILP (host))
     {
-      struct gaicb **reqs = xmalloc (sizeof (struct gaicb*));
-
       printf("Async DNS for '%s'\n", SSDATA (host));
-      dns_request = xmalloc (sizeof (struct gaicb));
-      reqs[0] = dns_request;
-      dns_request->ar_name = strdup (SSDATA (host));
-      dns_request->ar_service = strdup (portstring);
-      dns_request->ar_request = hints;
-      dns_request->ar_result = NULL;
+      dns_requests = xmalloc (sizeof (struct gaicb*));
+      dns_requests[0] = xmalloc (sizeof (struct gaicb));
+      dns_requests[0]->ar_name = strdup (SSDATA (host));
+      dns_requests[0]->ar_service = strdup (portstring);
+      dns_requests[0]->ar_request = hints;
+      dns_requests[0]->ar_result = NULL;
 
-      ret = getaddrinfo_a (GAI_NOWAIT, reqs, 1, NULL);
+      ret = getaddrinfo_a (GAI_NOWAIT, dns_requests, 1, NULL);
       if (ret)
 	error ("%s/%s getaddrinfo_a error %d", SSDATA (host), portstring, ret);
 
@@ -3788,7 +3785,7 @@ usage: (make-network-process &rest ARGS)  */)
   p->port = port;
   p->socktype = socktype;
   p->ai_protocol = ai_protocol;
-  p->dns_request = NULL;
+  p->dns_requests = NULL;
 
   unbind_to (count, Qnil);
 
@@ -3820,7 +3817,7 @@ usage: (make-network-process &rest ARGS)  */)
     {
       int channel;
 
-      p->dns_request = dns_request;
+      p->dns_requests = dns_requests;
       p->status = Qconnect;
       for (channel = 0; channel < FD_SETSIZE; ++channel)
 	if (NILP (dns_process[channel]))
@@ -4546,7 +4543,7 @@ check_for_dns (Lisp_Object proc)
   Lisp_Object ip_addresses = Qnil;
   int ret = 0;
 
-  ret = gai_error (p->dns_request);
+  ret = gai_error (p->dns_requests[0]);
   if (ret == EAI_INPROGRESS)
     return 0;
 
@@ -4555,7 +4552,7 @@ check_for_dns (Lisp_Object proc)
     {
       struct addrinfo *res;
 
-      for (res = p->dns_request->ar_result; res; res = res->ai_next)
+      for (res = p->dns_requests[0]->ar_result; res; res = res->ai_next)
 	{
 	  ip_addresses = Fcons (conv_sockaddr_to_lisp
 				(res->ai_addr, res->ai_addrlen),
@@ -4563,13 +4560,15 @@ check_for_dns (Lisp_Object proc)
 	}
 
       ip_addresses = Fnreverse (ip_addresses);
-      freeaddrinfo (p->dns_request->ar_result);
-      /* Free the calling array, too? FIXME */
+      freeaddrinfo (p->dns_requests[0]->ar_result);
       connect_network_socket (proc, ip_addresses);
-      return 1;
     }
+  else
+    pset_status (p, Qfailed);
 
-  pset_status (p, Qfailed);
+  xfree ((void *)p->dns_requests[0]->ar_request);
+  xfree (p->dns_requests[0]);
+  xfree (p->dns_requests);
   return 1;
 }
 #endif /* HAVE_GETADDRINFO_A */
@@ -4705,7 +4704,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  if (! NILP (dns_process[channel]))
 	    {
 	      struct Lisp_Process *p = XPROCESS (dns_process[channel]);
-	      if (p && p->dns_request &&
+	      if (p && p->dns_requests &&
 		  (! wait_proc || p == wait_proc) &&
 		  check_for_dns (dns_process[channel]))
 		{
