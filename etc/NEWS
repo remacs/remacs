@@ -181,10 +181,6 @@ by default, and must be enabled by using the `--with-modules' option
 at configure time.
 
 +++
-** A second dir-local file (.dir-locals-2.el) is now accepted.
-See the variable `dir-locals-file-2' for more information.
-
-+++
 ** Network security (TLS/SSL certificate validity and the like) is
 added via the new Network Security Manager (NSM) and controlled via
 the `network-security-level' variable.

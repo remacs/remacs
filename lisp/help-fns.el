@@ -911,35 +911,29 @@ if it is given a local binding.\n"))))
                                             (buffer-file-name buffer)))
                                       (dir-locals-find-file
                                        (buffer-file-name buffer))))
-                          (is-directory nil))
+                          (dir-file t))
 		      (princ (substitute-command-keys
 			      "  This variable's value is directory-local"))
-                      (when (consp file) ; result from cache
-                        ;; If the cache element has an mtime, we
-                        ;; assume it came from a file.
-                        (if (nth 2 file)
-                            ;; (car file) is a directory.
-                            (setq file (dir-locals--all-files (car file)))
-                          ;; Otherwise, assume it was set directly.
-                          (setq file (car file)
-                                is-directory t)))
-                      (if (null file)
-                          (princ ".\n")
-                        (princ ", set ")
-                        (princ (substitute-command-keys
-                                (cond
-                                 (is-directory "for the directory\n  `")
-                                 ;; Many files matched.
-                                 ((and (consp file) (cdr file))
-                                  (setq file (file-name-directory (car file)))
-                                  (format "by one of the\n  %s files in the directory\n  `"
-                                          dir-locals-file))
-                                 (t (setq file (car file))
-                                    "by the file\n  `"))))
+		      (if (null file)
+			  (princ ".\n")
+			(princ ", set ")
+                        (if (consp file) ; result from cache
+                            ;; If the cache element has an mtime, we
+                            ;; assume it came from a file.
+                            (if (nth 2 file)
+                                (setq file (expand-file-name
+                                            dir-locals-file (car file)))
+                              ;; Otherwise, assume it was set directly.
+                              (setq file (car file)
+                                    dir-file nil)))
+			(princ (substitute-command-keys
+                                (if dir-file
+                                    "by the file\n  `"
+                                  "for the directory\n  `")))
 			(with-current-buffer standard-output
 			  (insert-text-button
 			   file 'type 'help-dir-local-var-def
-                             'help-args (list variable file)))
+			   'help-args (list variable file)))
 			(princ (substitute-command-keys "'.\n"))))
 		  (princ (substitute-command-keys
 			  "  This variable's value is file-local.\n"))))
