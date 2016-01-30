@@ -215,7 +215,7 @@
 (defconst css-escapes-re
   "\\\\\\(?:[^\000-\037\177]\\|[0-9a-fA-F]+[ \n\t\r\f]?\\)")
 (defconst css-nmchar-re (concat "\\(?:[-[:alnum:]]\\|" css-escapes-re "\\)"))
-(defconst css-nmstart-re (concat "\\(?:--\\)?\\(?:[[:alpha:]]\\|" css-escapes-re "\\)"))
+(defconst css-nmstart-re (concat "\\(?:[[:alpha:]]\\|" css-escapes-re "\\)"))
 (defconst css-ident-re ;; (concat css-nmstart-re css-nmchar-re "*")
   ;; Apparently, "at rules" names can start with a dash, e.g. @-moz-keyframes.
   (concat css-nmchar-re "+"))
@@ -246,6 +246,8 @@
     ;; Since "An at-rule consists of everything up to and including the next
     ;; semicolon (;) or the next block, whichever comes first."
     (,(concat "@" css-ident-re) (0 font-lock-builtin-face))
+    ;; Variables.
+    (,(concat "--" css-ident-re) (0 font-lock-variable-name-face))
     ;; Selectors.
     ;; FIXME: attribute selectors don't work well because they may contain
     ;; strings which have already been highlighted as f-l-string-face and
