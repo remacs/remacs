@@ -947,6 +947,10 @@ MoveLayerAfter	lua-src/allegro.lua	/^function MoveLayerAfter (this_one)$/
 MoveLayerBefore	lua-src/allegro.lua	/^function MoveLayerBefore (this_one)$/
 MoveLayerBottom	lua-src/allegro.lua	/^function MoveLayerBottom ()$/
 MoveLayerTop	lua-src/allegro.lua	/^function MoveLayerTop ()$/
+Mtest.go	go-src/test.go	1
+Mtest.go	go-src/test.go	/^func main() {$/
+Mtest1.go	go-src/test1.go	1
+Mtest1.go	go-src/test1.go	/^func main() {$/
 Mx.cc	cp-src/x.cc	/^main(int argc, char *argv[])$/
 NAME	y-src/cccp.c	8
 NATNUMP	c-src/emacs/src/lisp.h	/^NATNUMP (Lisp_Object x)$/
@@ -1077,6 +1081,8 @@ Pkg1_Proc2/p	ada-src/waroquiers.ada	/^  procedure Pkg1_Proc2 (I : Integer);$/
 Pkg1_Proc2/p	ada-src/waroquiers.ada	/^  procedure Pkg1_Proc2 (I : Integer) is$/
 PostControls	pyt-src/server.py	/^    def PostControls(self):$/
 Pre_Call_State/t	ada-src/2ataspri.ads	/^   type Pre_Call_State is new System.Address;$/
+PrintAdd	go-src/test1.go	/^func (s str) PrintAdd() {$/
+PrintAdd	go-src/test1.go	/^func (n intNumber) PrintAdd() {$/
 Private	objc-src/Subprocess.m	/^@interface Subprocess(Private)$/
 Private_T/b	ada-src/etags-test-for.ada	/^    task body Private_T is$/
 Private_T/b	ada-src/waroquiers.ada	/^    task body Private_T is$/
@@ -3135,6 +3141,7 @@ instance_method_question?	ruby-src/test.rb	/^        def instance_method_questio
 instr	y-src/parse.y	80
 instr	parse.y	80
 instruct	c-src/etags.c	2527
+intNumber	go-src/test1.go	13
 integer	c-src/emacs/src/lisp.h	2127
 integer	cccp.y	113
 integer	y-src/cccp.y	112
@@ -3738,6 +3745,7 @@ plain_C_suffixes	c-src/etags.c	643
 plainc	c-src/etags.c	2934
 plist	c-src/emacs/src/lisp.h	697
 plus	cp-src/functions.cpp	/^void Date::plus ( int days , int month , int year /
+plus	go-src/test1.go	5
 plusvalseq	prol-src/natded.prolog	/^plusvalseq([]) --> [].$/
 pointer	c-src/emacs/src/lisp.h	2125
 poll_for_input	c-src/emacs/src/keyboard.c	/^poll_for_input (struct atimer *timer)$/
@@ -3950,6 +3958,7 @@ save_getcjmp	c-src/emacs/src/keyboard.c	/^save_getcjmp (sys_jmp_buf temp)$/
 save_type	c-src/emacs/src/lisp.h	/^save_type (struct Lisp_Save_Value *v, int n)$/
 savenstr	c-src/etags.c	/^savenstr (const char *cp, int len)$/
 savestr	c-src/etags.c	/^savestr (const char *cp)$/
+say	go-src/test.go	/^func say(msg string) {$/
 scan_separators	c-src/etags.c	/^scan_separators (char *name)$/
 scolonseen	c-src/etags.c	2447
 scratch	c-src/sysdep.h	56
@@ -4075,6 +4084,7 @@ step	cp-src/clheir.hpp	/^    virtual void step(void) { }$/
 step_everybody	cp-src/clheir.cpp	/^void step_everybody(void)$/
 stop_polling	c-src/emacs/src/keyboard.c	/^stop_polling (void)$/
 store_user_signal_events	c-src/emacs/src/keyboard.c	/^store_user_signal_events (void)$/
+str	go-src/test1.go	9
 strcaseeq	c-src/etags.c	/^#define strcaseeq(s,t)	(assert ((s)!=NULL && (t)!=/
 streq	c-src/etags.c	/^#define streq(s,t)	(assert ((s)!=NULL || (t)!=NULL/
 string_intervals	c-src/emacs/src/lisp.h	/^string_intervals (Lisp_Object s)$/
@@ -4217,6 +4227,7 @@ terminateInput	objc-src/Subprocess.m	/^- terminateInput$/
 test	c-src/emacs/src/lisp.h	1871
 test	cp-src/c.C	86
 test	erl-src/gs_dialog.erl	/^test() ->$/
+test	go-src/test1.go	/^func test(p plus) {$/
 test	php-src/ptest.php	/^test $/
 test.me22b	lua-src/test.lua	/^   local function test.me22b (one)$/
 test.me_22a	lua-src/test.lua	/^   function test.me_22a(one, two)$/

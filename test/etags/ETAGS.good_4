@@ -2447,6 +2447,18 @@ constant (a-forth-constant(a-forth-constant38,628
 code assemby-code-word 43,685
 : a-forth-word 50,870
 
+go-src/test.go,48
+package main1,0
+func say(5,28
+func main(9,72
+
+go-src/test1.go,119
+package main1,0
+func (s str) PrintAdd(17,136
+func (n intNumber) PrintAdd(21,189
+func test(25,248
+func main(29,285
+
 html-src/softwarelibero.html,200
 Cos'è il software libero?4,38
 Licenze d'uso di un programmalicenze65,2500

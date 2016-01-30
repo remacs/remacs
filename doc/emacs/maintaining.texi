@@ -2218,6 +2218,9 @@ in the file.
 In Fortran code, functions, subroutines and block data are tags.
 
 @item
+In Go code, packages, functions, and types are tags.
+
+@item
 In HTML input files, the tags are the @code{title} and the @code{h1},
 @code{h2}, @code{h3} headers.  Also, tags are @code{name=} in anchors
 and all occurrences of @code{id=}.

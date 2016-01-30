@@ -354,6 +354,7 @@ static void Cstar_entries (FILE *);
 static void Erlang_functions (FILE *);
 static void Forth_words (FILE *);
 static void Fortran_functions (FILE *);
+static void Go_functions (FILE *);
 static void HTML_labels (FILE *);
 static void Lisp_functions (FILE *);
 static void Lua_functions (FILE *);
@@ -641,6 +642,10 @@ static const char *Fortran_suffixes [] =
 static const char Fortran_help [] =
 "In Fortran code, functions, subroutines and block data are tags.";
 
+static const char *Go_suffixes [] = {"go", NULL};
+static const char Go_help [] =
+  "In Go code, functions, interfaces and packages are tags.";
+
 static const char *HTML_suffixes [] =
   { "htm", "html", "shtml", NULL };
 static const char HTML_help [] =
@@ -727,7 +732,7 @@ static const char *Ruby_suffixes [] =
   { "rb", "ruby", NULL };
 static const char Ruby_help [] =
   "In Ruby code, 'def' or 'class' or 'module' at the beginning of\n\
-a line generate a tag.";
+a line generate a tag.  Constants also generate a tag.";
 
 /* Can't do the `SCM' or `scm' prefix with a version number. */
 static const char *Scheme_suffixes [] =
@@ -794,6 +799,7 @@ static language lang_names [] =
   { "erlang",    Erlang_help,    Erlang_functions,  Erlang_suffixes    },
   { "forth",     Forth_help,     Forth_words,       Forth_suffixes     },
   { "fortran",   Fortran_help,   Fortran_functions, Fortran_suffixes   },
+  { "go",        Go_help,        Go_functions,      Go_suffixes        },
   { "html",      HTML_help,      HTML_labels,       HTML_suffixes      },
   { "java",      Cjava_help,     Cjava_entries,     Cjava_suffixes     },
   { "lisp",      Lisp_help,      Lisp_functions,    Lisp_suffixes      },
@@ -4203,6 +4209,73 @@ Fortran_functions (FILE *inf)
 		F_getit (inf);	/* look for name */
 	    }
 	  continue;
+	}
+    }
+}
+
+
+/*
+ * Go language support
+ * Original code by Xi Lu <lx@shellcodes.org> (2016)
+ */
+static void
+Go_functions(FILE *inf)
+{
+  char *cp, *name;
+
+  LOOP_ON_INPUT_LINES(inf, lb, cp)
+    {
+      cp = skip_spaces (cp);
+
+      if (LOOKING_AT (cp, "package"))
+	{
+	  name = cp;
+	  while (!notinname (*cp) && *cp != '\0')
+	    cp++;
+	  make_tag (name, cp - name, false, lb.buffer,
+		    cp - lb.buffer + 1, lineno, linecharno);
+	}
+      else if (LOOKING_AT (cp, "func"))
+	{
+	  /* Go implementation of interface, such as:
+	     func (n *Integer) Add(m Integer) ...
+	     skip `(n *Integer)` part.
+	  */
+	  if (*cp == '(')
+	    {
+	      while (*cp != ')')
+		cp++;
+	      cp = skip_spaces (cp+1);
+	    }
+
+	  if (*cp)
+	    {
+	      name = cp;
+
+	      while (!notinname (*cp))
+		cp++;
+
+	      make_tag (name, cp - name, true, lb.buffer,
+			cp - lb.buffer + 1, lineno, linecharno);
+	    }
+	}
+      else if (members && LOOKING_AT (cp, "type"))
+	{
+	  name = cp;
+
+	  /* Ignore the likes of the following:
+	     type (
+	            A
+	     )
+	   */
+	  if (*cp == '(')
+	    return;
+
+	  while (!notinname (*cp) && *cp != '\0')
+	    cp++;
+
+	  make_tag (name, cp - name, false, lb.buffer,
+		    cp - lb.buffer + 1, lineno, linecharno);
 	}
     }
 }

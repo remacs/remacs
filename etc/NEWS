@@ -1834,6 +1834,10 @@ Names of modules, classes, methods, functions, and constants are
 tagged.  Overloaded operators are also tagged.
 
 +++
+*** New language Go
+Names of packages, functions, and types are tagged.
+
++++
 *** Improved support for Lua
 
 Etags now tags functions even if the "function" keyword follows some
