@@ -3834,9 +3834,9 @@ usage: (make-network-process &rest ARGS)  */)
     {
       connect_network_socket (proc, ip_addresses);
     }
-#endif /* HAVE_GETADDRINFO_A */
-
+#else /* HAVE_GETADDRINFO_A */
   connect_network_socket (proc, ip_addresses);
+#endif
 
   return proc;
 }
