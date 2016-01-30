@@ -4574,6 +4574,8 @@ check_for_dns (Lisp_Object proc)
     pset_status (p, Qfailed);
 
   xfree ((void *)p->dns_requests[0]->ar_request);
+  xfree ((void *)p->dns_requests[0]->ar_name);
+  xfree ((void *)p->dns_requests[0]->ar_service);
   xfree (p->dns_requests[0]);
   xfree (p->dns_requests);
   return 1;
