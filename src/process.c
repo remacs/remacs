@@ -4563,12 +4563,14 @@ check_for_dns (Lisp_Object proc)
 	}
 
       ip_addresses = Fnreverse (ip_addresses);
+      freeaddrinfo (p->dns_request->ar_result);
+      /* Free the calling array, too? FIXME */
       connect_network_socket (proc, ip_addresses);
       return 1;
     }
 
   pset_status (p, Qfailed);
-  return 0;
+  return 1;
 }
 #endif /* HAVE_GETADDRINFO_A */
 
