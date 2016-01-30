@@ -283,7 +283,7 @@ static int max_input_desc;
 static Lisp_Object chan_process[FD_SETSIZE];
 #ifdef HAVE_GETADDRINFO_A
 /* Pending DNS requests. */
-static Lisp_Object dns_process[FD_SETSIZE];
+static Lisp_Object dns_processes;
 #endif
 
 /* Alist of elements (NAME . PROCESS).  */
@@ -3823,12 +3823,7 @@ usage: (make-network-process &rest ARGS)  */)
 
       p->dns_requests = dns_requests;
       p->status = Qconnect;
-      for (channel = 0; channel < FD_SETSIZE; ++channel)
-	if (NILP (dns_process[channel]))
-	  {
-	    dns_process[channel] = proc;
-	    break;
-	  }
+      dns_processes = Fcons (proc, dns_processes);
     }
   else
     {
@@ -4708,17 +4703,20 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	break;
 
 #ifdef HAVE_GETADDRINFO_A
-      for (channel = 0; channel < FD_SETSIZE; ++channel)
+      if (!NILP (dns_processes))
 	{
-	  if (! NILP (dns_process[channel]))
+	  Lisp_Object dns_list = dns_processes, dns;
+	  struct Lisp_Process *p;
+
+	  while (!NILP (dns_list))
 	    {
-	      struct Lisp_Process *p = XPROCESS (dns_process[channel]);
+	      dns = Fcar (dns_list);
+	      dns_list = Fcdr (dns_list);
+	      p = XPROCESS (dns);
 	      if (p && p->dns_requests &&
 		  (! wait_proc || p == wait_proc) &&
-		  check_for_dns (dns_process[channel]))
-		{
-		  dns_process[channel] = Qnil;
-		}
+		  check_for_dns (dns))
+		dns_processes = Fdelq (dns, dns_processes);
 	    }
 	}
 #endif /* HAVE_GETADDRINFO_A */
@@ -7569,14 +7567,14 @@ init_process_emacs (void)
     {
       chan_process[i] = Qnil;
       proc_buffered_char[i] = -1;
-#ifdef HAVE_GETADDRINFO_A
-      dns_process[i] = Qnil;
-#endif
     }
   memset (proc_decode_coding_system, 0, sizeof proc_decode_coding_system);
   memset (proc_encode_coding_system, 0, sizeof proc_encode_coding_system);
 #ifdef DATAGRAM_SOCKETS
   memset (datagram_address, 0, sizeof datagram_address);
+#endif
+#ifdef HAVE_GETADDRINFO_A
+  dns_processes = Qnil;
 #endif
 
 #if defined (DARWIN_OS)
