@@ -237,11 +237,25 @@
 
 	Re-enable checks in member, memql, delete to complain about non-lists
 
-		* src/fns.c (Fmember, Fmemql, Fdelete): Revert 2007-10-16 change.
+	* src/fns.c (Fmember, Fmemql, Fdelete): Revert 2007-10-16 change.
 
 2016-01-29  Martin Rudalics  <rudalics@gmx.at>
 
-	c:/emacs-git/next/ChangeLog
+	Minor doc(-string) tweaks
+
+	* lisp/window.el (window-in-direction): Fix doc-string typo.
+	* doc/lispref/frames.texi (Frame Font): Mention canonical
+	character width/height.
+	* doc/lispref/windows.texi (Windows and Frames): Clarify
+	handling of minibuffer window for `window-in-direction'.
+	(Window Sizes): Minor tweaks in descriptions of
+	`window-max-chars-per-line', `window-min-width' and
+	`window-min-size'.
+	(Deleting Windows): Minor tweak in `delete-window' description.
+	(Selecting Windows): Clarify window use time description.
+	(Cyclic Window Ordering): Minor tweak.
+	(Switching Buffers): Clarify description of
+	`switch-to-buffer-in-dedicated-window'.
 
 2016-01-29  Eli Zaretskii  <eliz@gnu.org>
 
