@@ -18,12 +18,12 @@ You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <stddef.h>
+#include "lisp.h"
 
-#ifdef ENABLE_CHECKING
-# define STATIC_HEAP_SIZE (28 * 1024 * 1024)
-#else
-# define STATIC_HEAP_SIZE (19 * 1024 * 1024)
-#endif
+/* Size of the static heap.  Guess a value that is probably too large,
+   by up to a factor of two or so.  Typically the unused part is not
+   paged in and so does not cost much.  */
+enum { STATIC_HEAP_SIZE = sizeof (Lisp_Object) << 21 };
 
 extern char bss_sbrk_buffer[STATIC_HEAP_SIZE];
 extern char *max_bss_sbrk_ptr;
